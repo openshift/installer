@@ -18,7 +18,7 @@ Examples of unacceptable behavior by participants include:
 * Personal attacks
 * Trolling or insulting/derogatory comments
 * Public or private harassment
-* Publishing other's private information, such as physical or electronic addresses, without explicit permission
+* Publishing others' private information, such as physical or electronic addresses, without explicit permission
 * Other unethical or unprofessional conduct.
 
 Project maintainers have the right and responsibility to remove, edit, or
@@ -43,7 +43,7 @@ http://contributor-covenant.org/version/1/2/0/
 
 ### CoreOS Events Code of Conduct
 
-CoreOS events are working conference intended for professional networking and
+CoreOS events are working conferences intended for professional networking and
 collaboration in the CoreOS community. Attendees are expected to behave
 according to professional standards and in accordance with their employer’s
 policies on appropriate workplace behavior.
