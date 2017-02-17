@@ -62,8 +62,7 @@ coreos:
         --node-labels=master=true \
         --minimum-container-ttl-duration=6m0s \
         --cluster_dns=10.3.0.10 \
-        --cluster_domain=cluster.local \
-        --cloud-provider=openstack
+        --cluster_domain=cluster.local
       ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
       Restart=always
       RestartSec=10
