@@ -1,0 +1,76 @@
+#cloud-config
+
+write_files:
+  - path: "/opt/bootkube/.empty"
+    permissions: "0420"
+    owner: "root"
+    content: ""
+  - path: "/etc/kubernetes/kubelet.env"
+    permissions: "0644"
+    owner: "root"
+    content: "KUBELET_IMAGE_URL=quay.io/coreos/hyperkube KUBELET_IMAGE_TAG=v1.5.2_coreos.1"
+  - path: "/etc/kubernetes/kubeconfig"
+    permissions: "0644"
+    owner: "root"
+    encoding: "base64"
+    content: ${kube_config}
+  - path: "/etc/sysctl.d/max-user-watches.conf"
+    permissions: "0644"
+    owner: "root"
+    content: "fs.inotify.max_user_watches=16184"
+
+coreos:
+  units:
+  - name: "bootkube.service"
+    enable: "false"
+    content: |
+      [Unit]
+      Description=Bootstrap a Kubernetes control plane with a temp api-server
+
+      [Service]
+      Type=oneshot
+      WorkingDirectory=/opt/bootkube
+      ExecStart=/opt/bootkube/assets/bootkube-start
+
+  - name: "kubelet.service"
+    command: "start"
+    enable: "true"
+    content: |
+      [Unit]
+      Description=Kubelet via Hyperkube ACI
+
+      [Service]
+      Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
+        --volume=resolv,kind=host,source=/etc/resolv.conf \
+        --mount volume=resolv,target=/etc/resolv.conf \
+        --volume var-lib-cni,kind=host,source=/var/lib/cni \
+        --mount volume=var-lib-cni,target=/var/lib/cni \
+        --volume var-log,kind=host,source=/var/log \
+        --mount volume=var-log,target=/var/log"
+      Environment="KUBELET_IMAGE_URL=quay.io/coreos/hyperkube" "KUBELET_IMAGE_TAG=v1.5.2_coreos.1"
+      ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
+      ExecStartPre=/bin/mkdir -p /srv/kubernetes/manifests
+      ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets
+      ExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d
+      ExecStartPre=/bin/mkdir -p /var/lib/cni
+      ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/run/kubelet-pod.uuid
+      ExecStart=/usr/lib/coreos/kubelet-wrapper \
+        --kubeconfig=/etc/kubernetes/kubeconfig \
+        --require-kubeconfig \
+        --cni-conf-dir=/etc/kubernetes/cni/net.d \ 
+        --network-plugin=cni \
+        --lock-file=/var/run/lock/kubelet.lock \
+        --exit-on-lock-contention \
+        --pod-manifest-path=/etc/kubernetes/manifests \
+        --allow-privileged \
+        --node-labels=master=true \
+        --minimum-container-ttl-duration=6m0s \
+        --cluster_dns=10.3.0.10 \
+        --cluster_domain=cluster.local \
+        --cloud-provider=openstack
+      ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
+      Restart=always
+      RestartSec=10
+
+      [Install]
+      WantedBy=multi-user.target
