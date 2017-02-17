@@ -18,7 +18,21 @@ write_files:
     permissions: "0644"
     owner: "root"
     content: "fs.inotify.max_user_watches=16184"
-
+  - path: "/etc/kubernetes/ssl/ca.pem"
+    permissions: "0644"
+    owner: "root"
+    content: ${ca}
+    encoding: "base64"
+  - path: "/etc/kubernetes/ssl/client.pem"
+    permissions: "0644"
+    owner: "root"
+    encoding: "base64"
+    content: ${client_crt}
+  - path: "/etc/kubernetes/ssl/client-key.pem"
+    permissions: "0644"
+    owner: "root"
+    encoding: "base64"
+    content: ${client_crt_key}
 coreos:
   units:
   - name: etcd-member.service
