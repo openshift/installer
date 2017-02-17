@@ -1,0 +1,8 @@
+#cloud-config
+
+write_files:
+  - path: "/etc/motd"
+    permissions: "0644"
+    owner: "root"
+    content: |
+      Good news, everyone!
