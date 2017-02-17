@@ -27,3 +27,13 @@ variable "etcd_count" {
   type    = "string"
   default = "1"
 }
+
+variable "base_domain" {
+  type    = "string"
+  default = "openstack.dev.coreos.systems."
+}
+
+variable "cluster_name" {
+  type    = "string"
+  default = "demo"
+}
