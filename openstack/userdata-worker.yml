@@ -9,6 +9,25 @@ write_files:
 
 coreos:
   units:
+  - name: etcd-member.service
+    enable: true
+    dropins:
+      - name: 40-etcd-gateway.conf
+        contents: |
+          [Service]
+          Environment="ETCD_IMAGE_TAG=v3.1.0"
+          ExecStart=
+          ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
+              --listen-addr=127.0.0.1:2379 \
+              --endpoints=${etcd_fqdn}:2379
+
+  - name: locksmithd.service
+    dropins:
+      - name: 40-etcd-lock.conf
+        contents: |
+          [Service]
+          Environment="REBOOT_STRATEGY=etcd-lock"
+
   - name: "kubelet.service"
     command: "start"
     enable: "true"
@@ -39,7 +58,7 @@ coreos:
         --lock-file=/var/run/lock/kubelet.lock \
         --exit-on-lock-contention \
         --pod-manifest-path=/etc/kubernetes/manifests \
-        --allow-privileged \
+        --allow-privileged=true \
         --node-labels=master=true \
         --minimum-container-ttl-duration=6m0s \
         --cluster_dns=10.3.0.10 \
