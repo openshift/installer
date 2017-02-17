@@ -21,8 +21,28 @@ write_files:
 
 coreos:
   units:
+  - name: etcd-member.service
+    command: "start"
+    enable: true
+    drop-ins:
+      - name: 40-etcd-gateway.conf
+        content: |
+          [Service]
+          Environment="ETCD_IMAGE_TAG=v3.1.0"
+          ExecStart=
+          ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
+                --listen-addr=127.0.0.1:2379 \
+                --endpoints=${etcd_fqdn}:2379
+
+  - name: locksmithd.service
+    drop-ins:
+      - name: 40-etcd-lock.conf
+        content: |
+          [Service]
+          Environment="REBOOT_STRATEGY=etcd-lock"
+
   - name: "bootkube.service"
-    enable: "false"
+    enable: false
     content: |
       [Unit]
       Description=Bootstrap a Kubernetes control plane with a temp api-server
@@ -34,7 +54,7 @@ coreos:
 
   - name: "kubelet.service"
     command: "start"
-    enable: "true"
+    enable: true
     content: |
       [Unit]
       Description=Kubelet via Hyperkube ACI
@@ -57,7 +77,7 @@ coreos:
       ExecStart=/usr/lib/coreos/kubelet-wrapper \
         --kubeconfig=/etc/kubernetes/kubeconfig \
         --require-kubeconfig \
-        --cni-conf-dir=/etc/kubernetes/cni/net.d \ 
+        --cni-conf-dir=/etc/kubernetes/cni/net.d \
         --network-plugin=cni \
         --lock-file=/var/run/lock/kubelet.lock \
         --exit-on-lock-contention \
@@ -66,8 +86,7 @@ coreos:
         --node-labels=master=true \
         --minimum-container-ttl-duration=6m0s \
         --cluster_dns=10.3.0.10 \
-        --cluster_domain=cluster.local \
-        --cloud-provider=openstack
+        --cluster_domain=cluster.local
       ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
       Restart=always
       RestartSec=10
