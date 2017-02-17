@@ -1,5 +1,7 @@
 #cloud-config
 
+hostname: "${node_hostname}"
+
 write_files:
   - path: "/opt/bootkube/.empty"
     permissions: "0420"
@@ -33,7 +35,19 @@ write_files:
     owner: "root"
     encoding: "base64"
     content: ${client_crt_key}
+  - path: "/etc/resolv.conf"
+    permissions: "0644"
+    owner: "root"
+    content: |
+      search ${base_domain}
+      nameserver 8.8.8.8
+      nameserver 8.8.4.4
+
 coreos:
+  update:
+    reboot-strategy: "off"
+  locksmith:
+    endpoint: "http://localhost:2379"
   units:
   - name: etcd-member.service
     command: "start"
@@ -42,6 +56,7 @@ coreos:
       - name: 40-etcd-gateway.conf
         content: |
           [Service]
+          Type=simple
           Environment="ETCD_IMAGE_TAG=v3.1.0"
           ExecStart=
           ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
@@ -49,11 +64,8 @@ coreos:
                 --endpoints=${etcd_fqdn}:2379
 
   - name: locksmithd.service
-    drop-ins:
-      - name: 40-etcd-lock.conf
-        content: |
-          [Service]
-          Environment="REBOOT_STRATEGY=etcd-lock"
+    enable: false
+
 
   - name: "bootkube.service"
     enable: false
@@ -64,6 +76,7 @@ coreos:
       [Service]
       Type=oneshot
       WorkingDirectory=/opt/bootkube
+      ExecStartPre=-chmod a+x /opt/bootkube/assets/bootkube-start
       ExecStart=/opt/bootkube/assets/bootkube-start
 
   - name: "kubelet.service"
@@ -96,7 +109,7 @@ coreos:
         --lock-file=/var/run/lock/kubelet.lock \
         --exit-on-lock-contention \
         --pod-manifest-path=/etc/kubernetes/manifests \
-        --allow-privileged \
+        --allow-privileged=true \
         --node-labels=master=true \
         --minimum-container-ttl-duration=6m0s \
         --cluster_dns=10.3.0.10 \

@@ -9,15 +9,6 @@ resource "openstack_compute_instance_v2" "worker_node" {
     role = "worker"
   }
 
-  user_data    = "${data.template_file.userdata-worker.rendered}"
+  user_data    = "${data.template_file.userdata-worker.*.rendered[count.index]}"
   config_drive = false
-
-  # connection {
-  #   user        = "core"
-  #   private_key = "${tls_private_key.core.private_key_pem}"
-  # }
-  # provisioner "file" {
-  #   source      = "../kubelet.master"
-  #   destination = "/home/core/kubelet.worker"
-  # }
 }

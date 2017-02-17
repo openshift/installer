@@ -1,6 +1,6 @@
 variable "flavor_id" {
   type    = "string"
-  default = "bbcb7eb5-5c8d-498f-9d7e-307c575d3566"
+  default = "5cf64088-893b-46b5-9bb1-ee020277635d"
 }
 
 variable "image_id" {
@@ -30,7 +30,7 @@ variable "etcd_count" {
 
 variable "base_domain" {
   type    = "string"
-  default = "openstack.dev.coreos.systems."
+  default = "openstack.dev.coreos.systems"
 }
 
 variable "cluster_name" {

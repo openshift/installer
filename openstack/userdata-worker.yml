@@ -1,5 +1,7 @@
 #cloud-config
 
+hostname: "${node_hostname}"
+
 write_files:
   - path: "/etc/kubernetes/kubeconfig"
     permissions: "0644"
@@ -21,31 +23,34 @@ write_files:
     owner: "root"
     encoding: "base64"
     content: ${client_crt_key}
+  - path: /etc/resolv.conf
+    permissions: "0644"
+    owner: "root"
+    content: |
+      search ${base_domain}
+      nameserver 8.8.8.8
+      nameserver 8.8.4.4
 
 coreos:
+  update:
+    reboot-strategy: "off"
+  locksmith:
+    endpoint: "http://${etcd_fqdn}:2379"
   units:
   - name: etcd-member.service
     enable: true
-    dropins:
+    drop-ins:
       - name: 40-etcd-gateway.conf
-        contents: |
+        content: |
           [Service]
           Environment="ETCD_IMAGE_TAG=v3.1.0"
           ExecStart=
           ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
               --listen-addr=127.0.0.1:2379 \
               --endpoints=${etcd_fqdn}:2379
-
-  - name: locksmithd.service
-    dropins:
-      - name: 40-etcd-lock.conf
-        contents: |
-          [Service]
-          Environment="REBOOT_STRATEGY=etcd-lock"
-
   - name: "kubelet.service"
     command: "start"
-    enable: "true"
+    enable: true
     content: |
       [Unit]
       Description=Kubelet via Hyperkube ACI
@@ -68,13 +73,12 @@ coreos:
       ExecStart=/usr/lib/coreos/kubelet-wrapper \
         --kubeconfig=/etc/kubernetes/kubeconfig \
         --require-kubeconfig \
-        --cni-conf-dir=/etc/kubernetes/cni/net.d \ 
+        --cni-conf-dir=/etc/kubernetes/cni/net.d \
         --network-plugin=cni \
         --lock-file=/var/run/lock/kubelet.lock \
         --exit-on-lock-contention \
         --pod-manifest-path=/etc/kubernetes/manifests \
         --allow-privileged=true \
-        --node-labels=master=true \
         --minimum-container-ttl-duration=6m0s \
         --cluster_dns=10.3.0.10 \
         --cluster_domain=cluster.local

@@ -1,4 +1,5 @@
 data "template_file" "userdata-worker" {
+  count    = "${var.worker_count}"
   template = "${file("${path.module}/userdata-worker.yml")}"
 
   vars {
@@ -8,5 +9,7 @@ data "template_file" "userdata-worker" {
     ca               = "${base64encode(file("${path.root}/../assets/tls/ca.crt"))}"
     client_crt       = "${base64encode(file("${path.root}/../assets/tls/kubelet.crt"))}"
     client_crt_key   = "${base64encode(file("${path.root}/../assets/tls/kubelet.key"))}"
+    node_hostname    = "${var.cluster_name}-worker-${count.index}"
+    base_domain      = "${var.base_domain}"
   }
 }
