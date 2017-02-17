@@ -47,7 +47,7 @@ coreos:
         --mount volume=var-lib-cni,target=/var/lib/cni \
         --volume var-log,kind=host,source=/var/log \
         --mount volume=var-log,target=/var/log"
-      Environment="KUBELET_IMAGE_URL=quay.io/coreos/hyperkube" "KUBELET_IMAGE_TAG=v1.5.2_coreos.1"
+      Environment="KUBELET_IMAGE_URL=quay.io/coreos/hyperkube" "KUBELET_IMAGE_TAG=${tectonic_version}"
       ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
       ExecStartPre=/bin/mkdir -p /srv/kubernetes/manifests
       ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets

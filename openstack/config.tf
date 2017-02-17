@@ -8,9 +8,9 @@ variable "image_id" {
   default = "3a0c0bac-fa91-4c96-bfcb-ee215ba1cd4d"
 }
 
-variable "external_gateway_id" {
-  type = "string"
-  default = "6d6357ac-0f70-4afa-8bd7-c274cc4ea235"
+variable "tectonic_version" {
+  type    = "string"
+  default = "v1.5.2_coreos.1"
 }
 
 variable "controller_count" {
@@ -21,4 +21,9 @@ variable "controller_count" {
 variable "worker_count" {
   type    = "string"
   default = "3"
+}
+
+variable "etcd_count" {
+  type    = "string"
+  default = "1"
 }
