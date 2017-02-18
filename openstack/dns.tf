@@ -15,7 +15,7 @@ resource "aws_route53_record" "tectonic-console" {
   name    = "${var.cluster_name}"
   type    = "A"
   ttl     = "60"
-  records = ["${openstack_compute_instance_v2.worker_node.*.access_ip_v4[count.index]}"]
+  records = ["${openstack_compute_instance_v2.worker_node.*.access_ip_v4}"]
 }
 
 resource "aws_route53_record" "etcd" {
