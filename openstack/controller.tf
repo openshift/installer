@@ -63,8 +63,7 @@ resource "null_resource" "copy_assets" {
     inline = [
       "sudo mv /home/core/assets /opt/bootkube/",
       "sudo chmod a+x /opt/bootkube/assets/bootkube-start",
+      "sudo systemctl start bootkube",
     ]
-
-    # "sudo systemctl start bootkube",
   }
 }
