@@ -1,3 +1,4 @@
 assets
+assets*.zip
 **/id_rsa*
 **/terraform.tfstate*
