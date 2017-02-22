@@ -1,6 +1,6 @@
 resource "openstack_compute_instance_v2" "etcd_node" {
   count           = "${var.etcd_count}"
-  name            = "etcd_node_${count.index}"
+  name            = "${var.cluster_name}_etcd_node_${count.index}"
   image_id        = "${var.image_id}"
   flavor_id       = "${var.flavor_id}"
   key_pair        = "${openstack_compute_keypair_v2.k8s_keypair.name}"
@@ -12,10 +12,14 @@ resource "openstack_compute_instance_v2" "etcd_node" {
 
   user_data    = "${file("${path.module}/userdata-etcd.yml")}"
   config_drive = false
+
+  network {
+    uuid = "${openstack_networking_network_v2.network.id}"
+  }
 }
 
 resource "openstack_compute_secgroup_v2" "etcd_group" {
-  name        = "etcd_group"
+  name        = "${var.cluster_name}_etcd_group"
   description = "security group for etcd: SSH and etcd client / cluster"
 
   rule {
