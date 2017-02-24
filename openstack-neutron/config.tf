@@ -5,7 +5,7 @@ variable "flavor_id" {
 
 variable "image_id" {
   type    = "string"
-  default = "3a0c0bac-fa91-4c96-bfcb-ee215ba1cd4d"
+  default = "3acad946-7dd9-487d-b76f-75c79b8d550b"
 }
 
 variable "tectonic_version" {
@@ -36,4 +36,14 @@ variable "base_domain" {
 variable "cluster_name" {
   type    = "string"
   default = "demo"
+}
+
+variable "public_network_name" {
+  type    = "string"
+  default = "public"
+}
+
+variable "external_gateway_id" {
+  type    = "string"
+  default = "6d6357ac-0f70-4afa-8bd7-c274cc4ea235"
 }

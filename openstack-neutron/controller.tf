@@ -1,6 +1,6 @@
 resource "openstack_compute_instance_v2" "control_node" {
   count           = "${var.controller_count}"
-  name            = "control_node_${count.index}"
+  name            = "${var.cluster_name}_control_node_${count.index}"
   image_id        = "${var.image_id}"
   flavor_id       = "${var.flavor_id}"
   key_pair        = "${openstack_compute_keypair_v2.k8s_keypair.name}"
@@ -12,10 +12,19 @@ resource "openstack_compute_instance_v2" "control_node" {
 
   user_data    = "${data.template_file.userdata-master.*.rendered[count.index]}"
   config_drive = false
+
+  network {
+    uuid = "${openstack_networking_network_v2.network.id}"
+  }
+
+  network {
+    name           = "${var.public_network_name}"
+    access_network = true
+  }
 }
 
 resource "openstack_compute_secgroup_v2" "k8s_control_group" {
-  name        = "k8s_control_group"
+  name        = "${var.cluster_name}_control_group"
   description = "security group for k8s controllers: SSH and https"
 
   rule {
