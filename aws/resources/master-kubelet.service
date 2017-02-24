@@ -10,7 +10,6 @@ Environment="RKT_OPTS=--uuid-file-save=/var/run/kubelet-pod.uuid \
   --volume var-log,kind=host,source=/var/log \
   --mount volume=var-log,target=/var/log"
 EnvironmentFile=/etc/kubernetes/kubelet.env
-ExecStartPre=/opt/bin/decrypt-tls-assets
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
 ExecStartPre=/bin/mkdir -p /srv/kubernetes/manifests
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets

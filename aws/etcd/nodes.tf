@@ -18,6 +18,6 @@ resource "aws_instance" "etcd_node" {
   vpc_security_group_ids = ["${aws_security_group.etcd_sec_group.id}"]
 
   tags {
-    Name = "etcd-${count.index}"
+    Name = "${var.cluster_name}-etcd-${count.index}"
   }
 }

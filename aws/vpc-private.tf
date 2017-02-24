@@ -23,7 +23,7 @@ resource "aws_route_table_association" "private_routing" {
 
 resource "aws_subnet" "etcd_subnet" {
   count             = "${length(var.external_vpc_id) > 0 ? 0 : var.az_count}"
-  cidr_block        = "${cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block, 8, count.index + 11)}"
+  cidr_block        = "${cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block, 12, count.index + 10)}"
   vpc_id            = "${data.aws_vpc.cluster_vpc.id}"
   availability_zone = "${data.aws_availability_zones.azs.names[count.index]}"
 
@@ -34,7 +34,7 @@ resource "aws_subnet" "etcd_subnet" {
 
 resource "aws_subnet" "master_subnet" {
   count             = "${length(var.external_vpc_id) > 0 ? 0 : var.az_count}"
-  cidr_block        = "${cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block, 8, count.index + 21)}"
+  cidr_block        = "${cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block, 12, count.index)}"
   vpc_id            = "${data.aws_vpc.cluster_vpc.id}"
   availability_zone = "${data.aws_availability_zones.azs.names[count.index]}"
 
@@ -51,7 +51,7 @@ resource "aws_route_table_association" "master_routing" {
 
 resource "aws_subnet" "worker_subnet" {
   count             = "${length(var.external_vpc_id) > 0 ? 0 : var.az_count}"
-  cidr_block        = "${cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block, 8, count.index + 31)}"
+  cidr_block        = "${cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block, 12, count.index + 5)}"
   vpc_id            = "${data.aws_vpc.cluster_vpc.id}"
   availability_zone = "${data.aws_availability_zones.azs.names[count.index]}"
 

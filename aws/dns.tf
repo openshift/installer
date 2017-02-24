@@ -3,6 +3,6 @@ resource "aws_route53_zone" "tectonic-int" {
   name   = "${var.tectonic_domain}"
 }
 
-resource "aws_route53_zone" "tectonic-ext" {
+data "aws_route53_zone" "tectonic-ext" {
   name = "${var.tectonic_domain}"
 }

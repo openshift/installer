@@ -8,7 +8,7 @@ worker_count = 6
 
 tectonic_domain = "k8s.somesan.de"
 
-cluster_name = "demo"
+cluster_name = "proto"
 
 kube_version = "v1.5.2_coreos.2"
 

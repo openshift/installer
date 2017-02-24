@@ -2,6 +2,10 @@ variable "tectonic_domain" {
   type = "string"
 }
 
+variable "cluster_name" {
+  type = "string"
+}
+
 variable "dns_zone" {
   type = "string"
 }

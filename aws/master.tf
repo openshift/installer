@@ -8,19 +8,25 @@ resource "aws_autoscaling_group" "masters" {
 
   load_balancers = ["${aws_elb.api-internal.id}", "${aws_elb.api-external.id}"]
 
+  tag {
+    key                 = "Name"
+    value               = "${var.cluster_name}-master"
+    propagate_at_launch = true
+  }
+
   lifecycle {
     create_before_destroy = true
   }
 }
 
 resource "aws_launch_configuration" "master_conf" {
-  instance_type   = "${var.master_ec2_type}"
-  image_id        = "${data.aws_ami.coreos_ami.image_id}"
-  name_prefix     = "${var.cluster_name}-master-"
-  key_name        = "${aws_key_pair.ssh-key.key_name}"
-  security_groups = ["${aws_security_group.master_sec_group.id}"]
-
-  user_data = "${ignition_config.master.rendered}"
+  instance_type        = "${var.master_ec2_type}"
+  image_id             = "${data.aws_ami.coreos_ami.image_id}"
+  name_prefix          = "${var.cluster_name}-master-"
+  key_name             = "${aws_key_pair.ssh-key.key_name}"
+  security_groups      = ["${aws_security_group.master_sec_group.id}", "${aws_security_group.cluster_default.id}"]
+  iam_instance_profile = "${aws_iam_instance_profile.master_profile.arn}"
+  user_data            = "${ignition_config.master.rendered}"
 
   lifecycle {
     create_before_destroy = true
@@ -58,13 +64,6 @@ resource "aws_security_group" "master_sec_group" {
     to_port     = 10255
   }
 
-  ingress {
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    from_port   = 10250
-    to_port     = 10250
-  }
-
   egress {
     from_port   = 0
     to_port     = 0
@@ -72,4 +71,71 @@ resource "aws_security_group" "master_sec_group" {
     self        = true
     cidr_blocks = ["0.0.0.0/0"]
   }
+}
+
+resource "aws_iam_instance_profile" "master_profile" {
+  name  = "master_profile"
+  roles = ["${aws_iam_role.master_role.name}"]
+}
+
+resource "aws_iam_role" "master_role" {
+  name = "master_role"
+  path = "/"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Principal": {
+                "Service": "ec2.amazonaws.com"
+            },
+            "Effect": "Allow",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "master_policy" {
+  name = "master_policy"
+  role = "${aws_iam_role.master_role.id}"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:Describe*"
+            ],
+            "Resource": [
+                "*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "ec2:AttachVolume",
+                "ec2:DetachVolume"
+            ],
+            "Resource": [
+                "arn:aws:ec2:*:*:instance/*"
+            ]
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "elasticloadbalancing:*"
+            ],
+            "Resource": [
+                "*"
+            ]
+        }
+    ]
+}
+EOF
 }

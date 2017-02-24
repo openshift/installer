@@ -44,4 +44,5 @@ module "etcd" {
   coreos_ami      = "${data.aws_ami.coreos_ami.id}"
   etcd_subnets    = ["${aws_subnet.etcd_subnet.*.id}"]
   tectonic_domain = "${var.tectonic_domain}"
+  cluster_name    = "${var.cluster_name}"
 }
