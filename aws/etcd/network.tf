@@ -1,19 +1,5 @@
-data "aws_vpc" "etcd_vpc" {
-  id = "${var.vpc_id}"
-}
-
-data "aws_subnet" "az_subnet" {
-  count  = "${var.node_count}"
-  vpc_id = "${data.aws_vpc.etcd_vpc.id}"
-
-  filter = {
-    name   = "availabilityZone"
-    values = ["${data.aws_availability_zones.zones.names[count.index]}"]
-  }
-}
-
-resource "aws_default_security_group" "default_sec_group" {
-  vpc_id = "${data.aws_vpc.etcd_vpc.id}"
+resource "aws_security_group" "etcd_sec_group" {
+  vpc_id = "${var.vpc_id}"
 
   ingress {
     protocol  = -1
@@ -27,6 +13,13 @@ resource "aws_default_security_group" "default_sec_group" {
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 22
     to_port     = 22
+  }
+
+  ingress {
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 2379
+    to_port     = 2379
   }
 
   egress {

@@ -8,10 +8,10 @@ resource "aws_key_pair" "ssh-key" {
 
 resource "null_resource" "write_ssh_key" {
   triggers {
-    ssh_key = "aws_key_pair.ssh-key.public_key_openssh"
+    ssh_key = "aws_key_pair.ssh-key-pair.public_key_openssh"
   }
 
   provisioner "local-exec" {
-    command = "echo ${tls_private_key.ssh-key-pair.private_key_pem} > ${path.root}/id_rsa_etcd"
+    command = "echo '${tls_private_key.ssh-key-pair.private_key_pem}' > ${path.root}/ssh-key.pem && chmod 0600 ${path.root}/ssh-key.pem"
   }
 }

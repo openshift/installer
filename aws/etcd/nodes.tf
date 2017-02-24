@@ -1,38 +1,23 @@
-data "aws_availability_zones" "zones" {}
+data "template_file" "userdata" {
+  count    = "${var.node_count}"
+  template = "${file("${path.module}/userdata.yml")}"
 
-data "aws_ami" "coreos_ami" {
-  most_recent = true
-
-  filter {
-    name   = "name"
-    values = ["CoreOS-stable-*"]
-  }
-
-  filter {
-    name   = "architecture"
-    values = ["x86_64"]
-  }
-
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
-
-  filter {
-    name   = "owner-id"
-    values = ["595879546273"]
+  vars {
+    node_name   = "etcd-${count.index}.${var.tectonic_domain}"
+    etcd_domain = "${var.tectonic_domain}"
   }
 }
 
 resource "aws_instance" "etcd_node" {
-  count         = "${var.node_count}"
-  ami           = "${data.aws_ami.coreos_ami.id}"
-  instance_type = "t2.medium"
-  subnet_id     = "${data.aws_subnet.az_subnet.*.id[count.index]}"
-  key_name      = "${aws_key_pair.ssh-key.id}"
-  user_data     = "${data.template_file.userdata.*.rendered[count.index]}"
+  count                  = "${var.node_count}"
+  ami                    = "${var.coreos_ami}"
+  instance_type          = "t2.medium"
+  subnet_id              = "${var.etcd_subnets[count.index]}"
+  key_name               = "${var.ssh_key}"
+  user_data              = "${data.template_file.userdata.*.rendered[count.index]}"
+  vpc_security_group_ids = ["${aws_security_group.etcd_sec_group.id}"]
 
   tags {
-    Name = "node-${count.index}"
+    Name = "etcd-${count.index}"
   }
 }

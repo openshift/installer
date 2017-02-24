@@ -1,0 +1,137 @@
+{
+    "ignition": {
+        "version": "2.0.0",
+        "config": {}
+    },
+    "storage": {
+        "files": [
+            {
+                "filesystem": "root",
+                "path": "/opt/bootkube/.empty",
+                "contents": {
+                    "source": "data:,",
+                    "verification": {}
+                },
+                "mode": 420,
+                "user": {},
+                "group": {}
+            },
+            {
+                "filesystem": "root",
+                "path": "/etc/kubernetes/kubelet.env",
+                "contents": {
+                    "source": "data:,KUBELET_ACI%3Dquay.io%2Fcoreos%2Fhyperkube%0AKUBELET_VERSION%3Dv1.5.2_coreos.2%0A",
+                    "verification": {}
+                },
+                "mode": 420,
+                "user": {},
+                "group": {}
+            },
+            {
+                "filesystem": "root",
+                "path": "/opt/bin/decrypt-tls-assets",
+                "contents": {
+                    "source": "data:,%23!%2Fbin%2Fbash%20-e%0Afor%20encKey%20in%20%24(find%20%2Fetc%2Fkubernetes%2Fssl%2F*.pem.enc)%3Bdo%0A%20%20cat%20%24encKey%20%7C%20base64%20--decode%20-w0%20%7C%20gzip%20-d%20%3E%20%24encKey.raw%0A%20%20sudo%20rkt%20run%20%5C%0A%20%20--volume%3Dssl%2Ckind%3Dhost%2Csource%3D%2Fetc%2Fkubernetes%2Fssl%2CreadOnly%3Dfalse%20%5C%0A%20%20--mount%3Dvolume%3Dssl%2Ctarget%3D%2Fetc%2Fkubernetes%2Fssl%20%5C%0A%20%20--uuid-file-save%3D%2Fvar%2Frun%2Fcoreos%2Fdecrypt-tls-assets.uuid%20%5C%0A%20%20--dns%3D8.8.8.8%20--dns%3D8.8.4.4%20%5C%0A%20%20--net%3Dhost%20%5C%0A%20%20--trust-keys-from-https%20%5C%0A%20%20quay.io%2Fcoreos%2Fawscli%3A025a357f05242fdad6a81e8a6b520098aa65a600%20--exec%3D%2Fbin%2Fbash%20--%20%5C%0A%20%20%20%20-c%20%5C%0A%20%20%20%20%22%2Fusr%2Fbin%2Faws%20%5C%0A%20%20%20%20%20%20--region%20eu-central-1%20kms%20decrypt%20%5C%0A%20%20%20%20%20%20--ciphertext-blob%20fileb%3A%2F%2F%24encKey.raw%20%5C%0A%20%20%20%20%20%20--output%20text%20%5C%0A%20%20%20%20%20%20--query%20Plaintext%20%5C%0A%20%20%20%20%20%20%3E%20%24encKey.b64%22%0A%0A%20%20base64%20--decode%20%3C%20%24encKey.b64%20%3E%20%24%7BencKey%25.enc%7D%0A%20%20sudo%20rkt%20rm%20--uuid-file%3D%2Fvar%2Frun%2Fcoreos%2Fdecrypt-tls-assets.uuid%0Adone%0A",
+                    "verification": {}
+                },
+                "mode": 448,
+                "user": {},
+                "group": {}
+            },
+            {
+                "filesystem": "root",
+                "path": "/etc/kubernetes/ssl/ca.pem.enc",
+                "contents": {
+                    "source": "data:,H4sIAAAJbogA%2FwC%2FBED7AQECAHgmW%2FryTdtlDOp5m2BPn3wOQVOWt49dANr79v1QN6tMZAAABJYwggSSBgkqhkiG9w0BBwagggSDMIIEfwIBADCCBHgGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMcqenjkbUixiCwCdQAgEQgIIESVN3hjGYl9JOwc%2FTcGcYLxGlnz1lfUsTVyLYb25Qvfdiq%2B%2FMM%2BPFa4LmP2yEQdJcCcXyjQaXo6%2BaTBv2qWuySzYRrxELAU6BAwKxH0qhnFgXrd1ZpayMmJOs1iWYW5RMIodt3Y9TavNU2QWGNDtnfFVSroT2NlEqC7i14CMgyvG34dqgxLz4leIlGAke4A%2BNdwPLPnqBzz82%2BZwu2BCzHtPRsTj9C7aRe95f9VHp0EdL1IDNqCCfTjI7UG8%2FAAbM9iG%2BByF6V%2FMCDfX0YlPtz73tB8IwmG8bLFX4ztjj90785ey2M2dl%2BnDLJX4q%2BFhc5A8kQD8VoPGzluQMfQt1%2FTBBmXq%2BEHldfwK8whwe9EoqisNXIABw7vi6mt9XOoOCEf4plIBr7S8g6YNPiL3favJYENXjmT2M7Hv3NZ0eSB1srxQWkqKN5Ra5YCDTeknFMR5YqJun5vl9tCyJ07S%2FM5dcmngWtLkek4Yl6pXelvblDau0bod1sf2F80mrwbVKZPhy7l9UZD2CSWTP3T%2Bk22SY3dbN98R6zDREc9IBYzNW37o7dp%2FGX9q117Z2ZcBEZV8C4ntB9bqYdnCjTvFmg0qS8VL6IC8UcpmXr0%2FBaADBrVfHnbUS4%2Ba14Dgtvva5d3hTzA09FBlX2DVD0cm2qNyoZ7yd5LWrkGLiUTUEgA4IhmAyf%2BGvLc7BGXtlsiarLMuY%2Fi5j4nfUgXbRwJzUamvTIs1kNIWYqxcbha%2FmfXHSJXM%2BgOkPzrVucklN2bX3u0m59TRI%2BC3immWBDFCdbyzXTMltnyvDgbfpvvWDJ2MNfamxh8s4wrth3Nn8jG6x99S%2BJXwFwVchZy%2F745UK2HF6HzFUHLSNz8GCLUzKJnGcrk%2BMRykwnpAKALPAufg4Ocya0sg3%2BdWkSo1cvDHOOPPvr3M63B3FbANAQj%2Btcz2GrsUWwSBBSMrSFDj4yxOELE95Vv%2BbWGP2uIje4w8WAM%2F8%2BvdwMRyJJn78Ks2uBRKCD0IMoDcZLCy20kq%2FnNWB6aobx1wcLrhKEkanDEuCuq8BsG0Xnvae9K0n%2FZXTXdib%2FOYXxOVVnLk9PQoMnj6%2Fh37yPJ1trDTJ2kOZBSNmroFyKxN%2BWpFGfFMI6NiI9xjXO9JBTiSwLytv%2BYnuDYXzxilhmbBwsQPGrLWgjnFnokQTvxngtgFyRNDbezd6XCAjCPYxUp0lqwJr98jxNylmsR%2B6ZokmucJHFENEX3c2TgiCtifnukbd68XD41%2Fh3FliINCiuUu51cGHZMyDq704qShz9gUEPqJnAz6r2LMGcYXYxcnCYLYZISSWAQX2pupKvrXYtruJfrvgdvS%2BMxd9Cs02RNPxSQdPBgn3IWZrwppk2s%2BiCZ6AZOS0Ds1Fs3EnzxcRq%2BK%2F1TYey9Pij0RpcpG00Us2t7plPpwBdMqaaxuWEWLUufCcoTAfibbczn%2B1s47TbMcBqknTAQAA%2F%2F%2FVxKy9vwQAAA%3D%3D%0A",
+                    "verification": {}
+                },
+                "user": {},
+                "group": {}
+            },
+            {
+                "filesystem": "root",
+                "path": "/etc/kubernetes/ssl/client.pem.enc",
+                "contents": {
+                    "source": "data:,H4sIAAAJbogA%2FwDcBCP7AQECAHgmW%2FryTdtlDOp5m2BPn3wOQVOWt49dANr79v1QN6tMZAAABLMwggSvBgkqhkiG9w0BBwagggSgMIIEnAIBADCCBJUGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMVKBUERYqpz6zhWxwAgEQgIIEZv6DH1xfkiWgGvBLdWOku0aaDOB922tZzwdxjVX7h6jqFEQQs01yuxIUoRzCgraDgzQLje%2BZeZPYEpj83b%2BeNIoaSgWCFEGLU4sjIorMw1VAn4Er9%2BPDzb7QZCJdWunuLyVd%2FDRsuX7JTaDHTZetI9BSsvmKVaBtW3MgIqDC0cPVMsxVLxYODQt0%2FEoDHorF6ENxkX%2BPnN3KlHk7nAvjTT2kzptNpQM8lNbtgsecC%2BikjxwuiGejZPErE0shYdccElY4x4xkjsrrb7Yx524nrVRL%2BpxyYFjh9zk1hFUYBMKZE8nbl7DN%2FNAg2ozIuBNt3oLkuAu2Bh26GCQXWt6214DwZDhYn%2BXBdimvCxTfiBN6cL2NX4vjAFZrDu8ESlp8wr5cuJMiguSI6%2FVmPooIU%2BCgkh96fy1thkI6BKSg9R8kLiGt759s0jrXyCI6R8Q55%2Be5x0Z0F%2BdEfV%2B8oARZ5BgnFXqImR2AJ%2BzlqTqAoLgom%2Fy0%2BHzry1ohVknrXlr8DwYENWrdmSe71m55iDIp%2FZj74Nczu1NaAZ1XHiGQPcfWcDxNgDKSPpO4fJJsbI75y28o4byNRLpIxVjhI4nljId%2Bc%2Bs9zQnftS1YopxC4kcLyXcslUFcXSyNehqDeM6pVdiF%2FzjA9YK3AJjgAlJxmi%2FWUOBC6vjOoWtEe3iLCdZ%2F3q1fh0QrCASU1yPgzEGM9WZQcmMXCi4uduglTFpMDHgnE4xVq1fodxJzsZbfy9y0gGKT3e1LODSY9Ly8HqhAo4alhlwEorOvq6S2QUeVnJO5XoKcVKdeytd7ToQ4EFJpU1An21dkIhomxTFtNbxj6cfsMxUnK4x7F0j6fOIB1tm5fx8jHt0uusr73gU0i1UVB7k%2BdNaDtenmHvXCBKa%2BmRM0cdqU%2FQbOabNt6BEHHaZtY1rRJtFQa2FpcLQWNQfCgupvYpnPfO4a8RKQm%2BbLmwdLPxR1qOgxsTdMWxC9cUxls6GnhPc0rCD88b7fhnd55ZsvJEOecZ%2FwWFAfKhruVMA9f45eqmvmGOB%2BO5rR%2FhXQ6gRnmj9VN4Tt%2FQlJX4K1ljTsAQy%2F5LjEOR%2FTzP%2BaGZ6Ywga0L9Mmkr2P0bM6bbio2HJlV9f%2BDUEL6qVCbtjq8VtF22ufo1V%2F7Xt65sU6DhsdRaQD3oLWPHb%2FGLiMN%2F9JR9cxK6OihFhvEvfJViQFwSap13iRfbp1ffoG2uZOlZnIDKirdIpmzNabv2tYMq66vgT%2B7%2BhMPK3PeCC4wJujt%2BVB2uPxSkl3cxml7aISQL0Dn%2B6WLbO2m4cWaIKz3gu9VYFy%2B338UmJQiBhZfMnh1qA2%2BuYNbwVwyT16N4%2BJtqG6wvZuNs5F7%2FNK5ssGaVIC5%2BcFYAVo6sRqcyVi9c0cq3jX2eMopoE8oCHP6RsQ%2B%2FDOBesgL6FwxIDU7GUXq441YriWSXL0hpULF%2FjvdF%2BVInqbocpd105GvgLvCgIrDGQLUR9xU7MwWj%2Fh3F6IuTJsWacNrvoBAAD%2F%2F4EetdDcBAAA%0A",
+                    "verification": {}
+                },
+                "user": {},
+                "group": {}
+            },
+            {
+                "filesystem": "root",
+                "path": "/etc/kubernetes/ssl/client-key.pem.enc",
+                "contents": {
+                    "source": "data:,H4sIAAAJbogA%2FwAcB%2BP4AQECAHgmW%2FryTdtlDOp5m2BPn3wOQVOWt49dANr79v1QN6tMZAAABvMwggbvBgkqhkiG9w0BBwagggbgMIIG3AIBADCCBtUGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQMEAZTdo0XYHXUPBKYAgEQgIIGpgDhvquaRzNkJt%2ByDQB0zR%2BOIpPOCIqZtgPIoBgiX%2FiGPZ%2BaOzoFg5itpaUe1mJAgSbj6kQuHSnia%2BJJ9mU5lS2ZlvT5tk0OQrriyvIZFoBlgmXeL1cuccHA9%2BWihcZUGmy9Hxxuh3Kr6eBQx7FIvpyvPd84nvl11ViQIJXkdjAuKcOdNa3s%2B8Jtr0v6e4ddbU%2ByFq%2BE3iM%2F7LxNS0i6wxV0P%2BHwrjXQm4QuaKpjZtJVtra%2BD%2BW0ERfavmLRTOS1vgAnlfsIV40YKQRlArDtPQ7b25JHVHxGO8YlhtT5VUPGo9bpSPif4jLgKZ5YKMN8kGYZkma22jxt2Mejsf%2BXdAyuZx9RFHOxN0S6nSeRrCZKxSjZPI8oUbo4v3PvnAfKOKBctQhsVsSg4P6QJE7zNqvCM8BsOwnIwXIbWMHdCanNVSnqQA5DVJyEJ9rFqXq1J9fE1Qsip8EgMdfSEGW35BNGOEEGfGzBwDpe5vMBJQY3EkHU%2BBhI2%2FLvOPJ4%2B2jI1qErT7PZIDenwS4m6w9E4%2BVpOWAIsivC%2Baczk%2BAAcg%2FGrmJidGfld520O3joy7jiKefZm4d7PJkjAlDgIqQDOZ4u9cDZCBgcVOIy5yJjRjIfcie4cSQpshdAXhgdVifLVmBXPjcCMeb1pGaaI7C8hklGB67mhvoBq8RSoWjrr2tsuNdOFjfKLwlIXHFhonL7UMwoDYNn%2Fzhqm%2BlzDyZErp6J3Ud%2F%2BssXCIAMNfYBSviRZQMTcN7txP32WCgLeqrhry54xQ8JtM11QphX%2FmO3jW8NAzqu3%2BaIQnU5VDWsEYprkfZa3XOWKPLS8H8c%2FmbaX1CZo4MdBvCB6H%2FM12fqvpKsk%2BwEmRDFBhZyfKwIIR1Ox5Jr0xIXdamza5hR5KJA5GD6cinXJcbpBc6nje6a0rHZjONxOaCaN32XjnPMaDTfSN9y5qdXCWKAbKn4ahxDeNZ2LlOdEwdow7JzkP1ILVYt9Ygttn8yVpRtX%2FCsGDkVtU4Kc05SjwPf4uPCv2Whj5oiu6q2sqp1XPEHhgB2v36qgfGrxA%2B8TnkA1IHRSVWQk509UY74N8ekfvUea10ffN%2FZZhKfZmRVWNaYicQyJHzkDpLHUpvQon7kEx3dzKBJlfh7Mvw8doShYHLI12ROrvn3YVfgdRNvNu7pTxyFYwZDezcDRiY%2Fb2Cq1uSl99ycYQi7BIEwL2elQza%2F2TjMPXZIO3V8hlxPXTh2qH5rlIhrCBCCTvHZFL6CUNDlhf79kNowU6VtQGk2Ctk0a1GhUzCo53YgjqggSYp91w9oKsdwRB00WVVoAfOBT4x%2FVizEg%2BNMPxnKhJIGBu5NF5T2ugxG%2BEz03sTbHkvYTDi4apQHezbozCCgZR0bJLwz0DeSCNji6rOqexO3t5PPI2ikRQLy1Sa2fece%2FuU16GvzGhc2%2BhrGmDkSgCfYiNo77m6j5EnfrKnBWu5p63cWPVz3o6u2GBfP8DS13KSRqk4rNlcXwzELN%2FWHdsmZLCsaMqiuyBflvq4hdWMPxIf%2BdS80jsW%2B6wK1SosI9CV2x950hiQ4ATf1gtiVnWoPxa2tCCaGQzl4i6hIe6nqzdrDtUD2qGhZzAY9FUppn5c65m8Hr8hi2j9ybWg2Xkdwt%2Bb%2B2h4bvRAPBWA5tbZIIIOXNgBaJRqDFvoE2crEf4i2r1RfTYRXm12NpDUIuxloflmORvmHJSa8MONqHAwB0oyfOD0fSofiR70E9Ac987%2FADEOPb8LcRDLdCA3ctlrV3ZXkAEhLekEjD2EkOHIIzOe%2BUSlDU630ydwBtMLuhrzL%2FP40H2%2FjSHYLZDqLG%2B1vWPGaUrNzPQUZU8pd1gdP9hhZQ7I%2BCDMFI6%2BVIZRk%2BSaycVMrIDwm44LNxq7Q33VEobOgmUslukAABVOV2t1ej1oY7RSfwe3uNt74RPgC04Z9RC7a7jSbTzM8qpOJlXt%2BKOS6OhqtB2fKAmFNM%2B3iES2D4HdV0N1P9lyhpUcDxXHIwVi9n9CCnGy1uVlPynua%2BKKxypeiyYkGiHZT3IT9o11DFLxSvafHotjW2Ve%2FWWxMJCMb%2Bk%2B1jQxUR2JI6PMVK57xO%2B3ZPsbNeUKFbIt536TeJGuRsnnJvw4SfrK%2FmFuf9u5EaR5ujTZxCsyx%2BWnS%2BUAzhGbxCI1jBAifpsXXlSI9yffqY5Z0lie28xCfz7nXwNCrxLGcBIXzTaAQQ1qncXjvKEi4oD9smW3KpTKJHA4P0A8rY3AtUBv9zJnJ%2FqTcKhzyRXY7j6EqreYBAAD%2F%2F8E7qJQcBwAA%0A",
+                    "verification": {}
+                },
+                "user": {},
+                "group": {}
+            },
+            {
+                "filesystem": "root",
+                "path": "/etc/kubernetes/kubeconfig",
+                "contents": {
+                    "source": "data:,apiVersion%3A%20v1%0Akind%3A%20Config%0Aclusters%3A%0A-%20name%3A%20local%0A%20%20cluster%3A%0A%20%20%20%20server%3A%20https%3A%2F%2Falexsomesan-k8s.dev.coreos.systems%3A443%0A%20%20%20%20certificate-authority%3A%20%2Fetc%2Fkubernetes%2Fssl%2Fca.pem%0Ausers%3A%0A-%20name%3A%20kubelet%0A%20%20user%3A%0A%20%20%20%20client-certificate%3A%20%2Fetc%2Fkubernetes%2Fssl%2Fclient.pem%0A%20%20%20%20client-key%3A%20%2Fetc%2Fkubernetes%2Fssl%2Fclient-key.pem%0Acontexts%3A%0A-%20context%3A%0A%20%20%20%20cluster%3A%20local%0A%20%20%20%20user%3A%20kubelet%0A",
+                    "verification": {}
+                },
+                "mode": 420,
+                "user": {},
+                "group": {}
+            },
+            {
+                "filesystem": "root",
+                "path": "/etc/sysctl.d/max-user-watches.conf",
+                "contents": {
+                    "source": "data:,fs.inotify.max_user_watches%3D16184%0A",
+                    "verification": {}
+                },
+                "user": {},
+                "group": {}
+            }
+        ]
+    },
+    "systemd": {
+        "units": [
+            {
+                "name": "etcd-member.service",
+                "enable": true,
+                "dropins": [
+                    {
+                        "name": "40-etcd-gateway.conf",
+                        "contents": "[Service]\nEnvironment=\"ETCD_IMAGE_TAG=v3.1.0\"\nExecStart=\nExecStart=/usr/lib/coreos/etcd-wrapper gateway start \\\n    --listen-addr=127.0.0.1:2379 \\\n    --endpoints=alexsomesan-etc.dev.coreos.systems:2379\n"
+                    }
+                ]
+            },
+            {
+                "name": "docker.service",
+                "enable": true
+            },
+            {
+                "name": "locksmithd.service",
+                "dropins": [
+                    {
+                        "name": "40-etcd-lock.conf",
+                        "contents": "[Service]\nEnvironment=\"REBOOT_STRATEGY=etcd-lock\"\n"
+                    }
+                ]
+            },
+            {
+                "name": "wait-for-dns.service",
+                "enable": true,
+                "contents": "[Unit]\nDescription=Wait for DNS entries\nWants=systemd-resolved.service\nBefore=kubelet.service\n[Service]\nType=oneshot\nRemainAfterExit=true\nExecStart=/bin/sh -c 'while ! /usr/bin/grep '^[^#[:space:]]' /etc/resolv.conf \u003e /dev/null; do sleep 1; done'\n[Install]\nRequiredBy=kubelet.service\n"
+            },
+            {
+                "name": "kubelet.service",
+                "enable": true,
+                "contents": "[Unit]\nDescription=Kubelet via Hyperkube ACI\n[Service]\nEnvironment=\"RKT_OPTS=--uuid-file-save=/var/run/kubelet-pod.uuid \\\n  --volume=resolv,kind=host,source=/etc/resolv.conf \\\n  --mount volume=resolv,target=/etc/resolv.conf \\\n  --volume var-lib-cni,kind=host,source=/var/lib/cni \\\n  --mount volume=var-lib-cni,target=/var/lib/cni \\\n  --volume var-log,kind=host,source=/var/log \\\n  --mount volume=var-log,target=/var/log\"\nEnvironmentFile=/etc/kubernetes/kubelet.env\nExecStartPre=/opt/bin/decrypt-tls-assets\nExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests\nExecStartPre=/bin/mkdir -p /srv/kubernetes/manifests\nExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets\nExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d\nExecStartPre=/bin/mkdir -p /var/lib/cni\nExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/run/kubelet-pod.uuid\nExecStart=/usr/lib/coreos/kubelet-wrapper \\\n  --kubeconfig=/etc/kubernetes/kubeconfig \\\n  --require-kubeconfig \\\n  --cni-conf-dir=/etc/kubernetes/cni/net.d \\\n  --network-plugin=cni \\\n  --lock-file=/var/run/lock/kubelet.lock \\\n  --exit-on-lock-contention \\\n  --pod-manifest-path=/etc/kubernetes/manifests \\\n  --allow-privileged \\\n  --node-labels=master=true \\\n  --minimum-container-ttl-duration=6m0s \\\n  --cluster_dns=10.3.0.10 \\\n  --cluster_domain=cluster.local \\\n  --cloud-provider=aws\nExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid\nRestart=always\nRestartSec=10\n[Install]\nWantedBy=multi-user.target\n"
+            },
+            {
+                "name": "bootkube.service",
+                "contents": "[Unit]\nDescription=Bootstrap a Kubernetes control plane with a temp api-server\n[Service]\nType=simple\nWorkingDirectory=/opt/bootkube\nExecStart=/opt/bootkube/assets/bootkube-start\n"
+            }
+        ]
+    },
+    "networkd": {},
+    "passwd": {}
+}
