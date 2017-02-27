@@ -9,6 +9,6 @@ resource "openstack_compute_instance_v2" "worker_node" {
     role = "worker"
   }
 
-  user_data    = "${data.template_file.userdata-worker.*.rendered[count.index]}"
+  user_data    = "${ignition_config.worker.*.rendered[count.index]}"
   config_drive = false
 }
