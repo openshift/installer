@@ -89,11 +89,26 @@ The instructions for Neutron are the same as for Nova.
 
 ## AWS
 
+*Common Prerequsities*
+* Configure AWS credentials via environment variables. 
+[See docs](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment)
+* Configure a region by setting `AWS_REGION` environment variable
+* Run through the official Tectonic intaller steps without clicking `Submit` on the last step. Instead click on `Manual boot` below to download the assets zip file.
+* Populate a cluster configuration in `config.tfvars` following `example-config.tfvars`
+
 ### Using Autoscaling groups
 
-**TODO(alexsomesan)**
+1. Ensure all *prerequsities* are met.
+2. From the root of the repo, run `make apply PLATFORM=aws-asg ASSETS=<name-of-assets.zip>`
+
+To clean up run `make destroy PLATFORM=aws-asg ASSETS=<name-of-assets.zip>`
 
 ### Without Autoscaling groups
+
+1. Ensure all *prerequsities* are met.
+2. From the root of the repo, run `make apply PLATFORM=aws-noasg ASSETS=<name-of-assets.zip>`
+
+To clean up run `make destroy PLATFORM=aws-noasg ASSETS=<name-of-assets.zip>`
 
 **TODO(alexsomesan)**
 

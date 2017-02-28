@@ -4,3 +4,5 @@ assets*.zip
 **/terraform.tfstate*
 .terraform
 **/ssh-key.pem
+build/**
+config.tfvars
