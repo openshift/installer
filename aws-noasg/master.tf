@@ -33,6 +33,14 @@ resource "null_resource" "bootkube" {
     source      = "${path.root}/../assets"
     destination = "$HOME/assets"
   }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo mv /home/core/assets /opt/bootkube/",
+      "sudo chmod a+x /opt/bootkube/assets/bootkube-start",
+      "sudo systemctl start bootkube",
+    ]
+  }
 }
 
 resource "aws_security_group" "master_sec_group" {
