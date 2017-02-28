@@ -2,7 +2,7 @@ resource "aws_autoscaling_group" "masters" {
   name                 = "${var.cluster_name}-masters"
   desired_capacity     = "${var.master_count}"
   max_size             = "${var.master_count * 3}"
-  min_size             = "${var.az_count}"
+  min_size             = "1"
   launch_configuration = "${aws_launch_configuration.master_conf.id}"
   vpc_zone_identifier  = ["${aws_subnet.master_subnet.*.id}"]
 

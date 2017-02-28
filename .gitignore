@@ -3,3 +3,4 @@ assets*.zip
 **/id_rsa*
 **/terraform.tfstate*
 .terraform
+**/ssh-key.pem
