@@ -10,6 +10,7 @@ resource "ignition_config" "master" {
   ]
 
   systemd = [
+    "${ignition_systemd_unit.etcd-member.id}",
     "${ignition_systemd_unit.docker.id}",
     "${ignition_systemd_unit.locksmithd.id}",
     "${ignition_systemd_unit.kubelet-master.id}",
@@ -29,6 +30,7 @@ resource "ignition_config" "worker" {
   ]
 
   systemd = [
+    "${ignition_systemd_unit.etcd-member.id}",
     "${ignition_systemd_unit.docker.id}",
     "${ignition_systemd_unit.locksmithd.id}",
     "${ignition_systemd_unit.kubelet-worker.id}",
@@ -47,7 +49,7 @@ resource "ignition_systemd_unit" "locksmithd" {
   dropin = [
     {
       name    = "40-etcd-lock.conf"
-      content = "[Service]\nEnvironment=REBOOT_STRATEGY=etcd-lock\nEnvironment=LOCKSMITHD_ENDPOINT=${join(",",module.etcd.endpoints)}"
+      content = "[Service]\nEnvironment=REBOOT_STRATEGY=etcd-lock\n"
     },
   ]
 }
@@ -96,6 +98,27 @@ RequiredBy=kubelet.service
 EOF
 }
 
+resource "ignition_systemd_unit" "etcd-member" {
+  name   = "etcd-member.service"
+  enable = true
+
+  dropin = [
+    {
+      name = "40-etcd-gateway.conf"
+
+      content = <<EOF
+[Service]
+Environment="ETCD_IMAGE_TAG=v3.1.0"
+EnvironmentFile=/etc/kubernetes/etcd-endpoints.env
+ExecStart=
+ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
+    --listen-addr=127.0.0.1:2379 \
+    --endpoints=$${TECTONIC_ETCD_ENDPOINTS}
+EOF
+    },
+  ]
+}
+
 resource "ignition_file" "etcd-endpoints" {
   filesystem = "root"
   path       = "/etc/kubernetes/etcd-endpoints.env"
@@ -112,7 +135,6 @@ resource "ignition_file" "kubeconfig" {
   mode       = "420"
 
   content {
-    # content = "${file("${path.module}/../assets/auth/kubeconfig")}"
     content = <<EOF
 apiVersion: v1
 kind: Config

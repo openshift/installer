@@ -2,7 +2,7 @@ external_vpc_id = ""
 
 az_count = 3
 
-master_count = 3
+master_count = 1
 
 worker_count = 6
 
