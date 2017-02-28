@@ -3,12 +3,16 @@ resource "ignition_config" "master" {
     "${ignition_file.etcd-endpoints.id}",
     "${ignition_file.kubeconfig.id}",
     "${ignition_file.kubelet-env.id}",
+    "${ignition_file.opt-bootkube.id}",
+    "${ignition_file.ca-cert.id}",
+    "${ignition_file.client-cert.id}",
+    "${ignition_file.client-key.id}",
   ]
 
   systemd = [
     "${ignition_systemd_unit.docker.id}",
     "${ignition_systemd_unit.locksmithd.id}",
-    "${ignition_systemd_unit.kubelet.id}",
+    "${ignition_systemd_unit.kubelet-master.id}",
     "${ignition_systemd_unit.wait-for-dns.id}",
     "${ignition_systemd_unit.bootkube.id}",
   ]
@@ -19,12 +23,15 @@ resource "ignition_config" "worker" {
     "${ignition_file.etcd-endpoints.id}",
     "${ignition_file.kubeconfig.id}",
     "${ignition_file.kubelet-env.id}",
+    "${ignition_file.ca-cert.id}",
+    "${ignition_file.client-cert.id}",
+    "${ignition_file.client-key.id}",
   ]
 
   systemd = [
     "${ignition_systemd_unit.docker.id}",
     "${ignition_systemd_unit.locksmithd.id}",
-    "${ignition_systemd_unit.kubelet.id}",
+    "${ignition_systemd_unit.kubelet-worker.id}",
     "${ignition_systemd_unit.wait-for-dns.id}",
   ]
 }
@@ -45,10 +52,16 @@ resource "ignition_systemd_unit" "locksmithd" {
   ]
 }
 
-resource "ignition_systemd_unit" "kubelet" {
+resource "ignition_systemd_unit" "kubelet-master" {
   name    = "kubelet.service"
   enable  = true
   content = "${file("${path.module}/resources/master-kubelet.service")}"
+}
+
+resource "ignition_systemd_unit" "kubelet-worker" {
+  name    = "kubelet.service"
+  enable  = true
+  content = "${file("${path.module}/resources/worker-kubelet.service")}"
 }
 
 resource "ignition_systemd_unit" "bootkube" {
@@ -99,7 +112,24 @@ resource "ignition_file" "kubeconfig" {
   mode       = "420"
 
   content {
-    content = "${file("${path.module}/../assets/auth/kubeconfig")}"
+    content = <<EOF
+apiVersion: v1
+kind: Config
+clusters:
+- name: local
+  cluster:
+    server: https://${var.cluster_name}-k8s.${var.tectonic_domain}:443
+    certificate-authority: /etc/kubernetes/ssl/ca.pem
+users:
+- name: kubelet
+  user:
+    client-certificate: /etc/kubernetes/ssl/client.pem
+    client-key: /etc/kubernetes/ssl/client-key.pem
+contexts:
+- context:
+    cluster: local
+    user: kubelet
+EOF
   }
 }
 
@@ -136,16 +166,6 @@ resource "ignition_file" "max-user-watches" {
   }
 }
 
-resource "ignition_file" "client-ca" {
-  filesystem = "root"
-  path       = "/etc/kubernetes/ssl/ca.pem"
-  mode       = "420"
-
-  content {
-    content = "${file("${path.root}/../assets/tls/ca.crt")}"
-  }
-}
-
 resource "ignition_file" "client-key" {
   filesystem = "root"
   path       = "/etc/kubernetes/ssl/client-key.pem"
@@ -163,5 +183,15 @@ resource "ignition_file" "client-cert" {
 
   content {
     content = "${file("${path.root}/../assets/tls/kubelet.crt")}"
+  }
+}
+
+resource "ignition_file" "ca-cert" {
+  filesystem = "root"
+  path       = "/etc/kubernetes/ssl/ca.pem"
+  mode       = "420"
+
+  content {
+    content = "${file("${path.root}/../assets/tls/ca.crt")}"
   }
 }

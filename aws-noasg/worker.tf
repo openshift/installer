@@ -1,31 +1,17 @@
-resource "aws_autoscaling_group" "workers" {
-  name                 = "${var.cluster_name}-worker"
-  desired_capacity     = "${var.worker_count}"
-  max_size             = "${var.worker_count * 3}"
-  min_size             = "${var.worker_count}"
-  launch_configuration = "${aws_launch_configuration.worker_conf.id}"
-  vpc_zone_identifier  = ["${aws_subnet.worker_subnet.*.id}"]
+resource "aws_instance" "worker-node" {
+  count                  = "${var.worker_count}"
+  instance_type          = "${var.worker_ec2_type}"
+  ami                    = "${data.aws_ami.coreos_ami.image_id}"
+  key_name               = "${aws_key_pair.ssh-key.key_name}"
+  vpc_security_group_ids = ["${aws_security_group.worker_sec_group.id}", "${aws_security_group.cluster_default.id}"]
+  source_dest_check      = false
+  iam_instance_profile   = "${aws_iam_instance_profile.worker_profile.id}"
+  user_data              = "${ignition_config.worker.rendered}"
+  subnet_id              = "${aws_subnet.worker_subnet.*.id[count.index % var.az_count]}"
 
-  tag {
-    key                 = "Name"
-    value               = "${var.cluster_name}-worker"
-    propagate_at_launch = true
+  tags {
+    Name = "${var.cluster_name}-worker-${count.index}"
   }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
-resource "aws_launch_configuration" "worker_conf" {
-  instance_type        = "${var.worker_ec2_type}"
-  image_id             = "${data.aws_ami.coreos_ami.image_id}"
-  name_prefix          = "${var.cluster_name}-worker-"
-  key_name             = "${aws_key_pair.ssh-key.key_name}"
-  security_groups      = ["${aws_security_group.worker_sec_group.id}", "${aws_security_group.cluster_default.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.worker_profile.arn}"
-
-  user_data = "${ignition_config.worker.rendered}"
 
   lifecycle {
     create_before_destroy = true
@@ -68,6 +54,14 @@ resource "aws_security_group" "worker_sec_group" {
     cidr_blocks = ["0.0.0.0/0"]
     from_port   = 10250
     to_port     = 10250
+  }
+
+  ingress {
+    protocol    = "tcp"
+    self        = true
+    cidr_blocks = ["0.0.0.0/0"]
+    from_port   = 30000
+    to_port     = 32767
   }
 
   egress {
@@ -144,4 +138,10 @@ resource "aws_iam_role_policy" "worker_policy" {
     ]
 }
 EOF
+}
+
+resource "aws_elb_attachment" "console" {
+  count    = "${var.worker_count}"
+  elb      = "${aws_elb.console.id}"
+  instance = "${aws_instance.worker-node.*.id[count.index]}"
 }

@@ -1,17 +1,16 @@
-resource "aws_autoscaling_group" "masters" {
-  name                 = "${var.cluster_name}-masters"
-  desired_capacity     = "${var.master_count}"
-  max_size             = "${var.master_count * 3}"
-  min_size             = "${var.master_count}"
-  launch_configuration = "${aws_launch_configuration.master_conf.id}"
-  vpc_zone_identifier  = ["${aws_subnet.master_subnet.*.id}"]
+resource "aws_instance" "master-node" {
+  count                  = "${var.master_count}"
+  instance_type          = "${var.master_ec2_type}"
+  ami                    = "${data.aws_ami.coreos_ami.image_id}"
+  key_name               = "${aws_key_pair.ssh-key.key_name}"
+  vpc_security_group_ids = ["${aws_security_group.master_sec_group.id}", "${aws_security_group.cluster_default.id}"]
+  source_dest_check      = false
+  iam_instance_profile   = "${aws_iam_instance_profile.master_profile.id}"
+  user_data              = "${ignition_config.master.rendered}"
+  subnet_id              = "${aws_subnet.master_subnet.*.id[count.index % var.az_count]}"
 
-  load_balancers = ["${aws_elb.api-internal.id}", "${aws_elb.api-external.id}"]
-
-  tag {
-    key                 = "Name"
-    value               = "${var.cluster_name}-master"
-    propagate_at_launch = true
+  tags {
+    Name = "${var.cluster_name}-master-${count.index}"
   }
 
   lifecycle {
@@ -19,17 +18,20 @@ resource "aws_autoscaling_group" "masters" {
   }
 }
 
-resource "aws_launch_configuration" "master_conf" {
-  instance_type        = "${var.master_ec2_type}"
-  image_id             = "${data.aws_ami.coreos_ami.image_id}"
-  name_prefix          = "${var.cluster_name}-master-"
-  key_name             = "${aws_key_pair.ssh-key.key_name}"
-  security_groups      = ["${aws_security_group.master_sec_group.id}", "${aws_security_group.cluster_default.id}"]
-  iam_instance_profile = "${aws_iam_instance_profile.master_profile.arn}"
-  user_data            = "${ignition_config.master.rendered}"
+resource "null_resource" "bootkube" {
+  triggers {
+    master-nodes = "${join(",",aws_elb.api-external.instances)}"
+  }
 
-  lifecycle {
-    create_before_destroy = true
+  connection {
+    host  = "${aws_route53_record.api-external.fqdn}"
+    user  = "core"
+    agent = true
+  }
+
+  provisioner "file" {
+    source      = "${path.root}/../assets"
+    destination = "$HOME/assets"
   }
 }
 
@@ -138,4 +140,10 @@ resource "aws_iam_role_policy" "master_policy" {
     ]
 }
 EOF
+}
+
+resource "aws_elb_attachment" "api" {
+  count    = "${var.master_count}"
+  elb      = "${aws_elb.api-external.id}"
+  instance = "${aws_instance.master-node.*.id[count.index]}"
 }

@@ -14,4 +14,8 @@ resource "null_resource" "write_ssh_key" {
   provisioner "local-exec" {
     command = "echo '${tls_private_key.ssh-key-pair.private_key_pem}' > ${path.root}/ssh-key.pem && chmod 0600 ${path.root}/ssh-key.pem"
   }
+
+  provisioner "local-exec" {
+    command = "ssh-add ${path.root}/ssh-key.pem"
+  }
 }
