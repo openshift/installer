@@ -6,8 +6,8 @@ This document describes the generic compute, network, and storage needs of a Kub
 
 ## DNS Setup
 
-- API server will generally be <cluster-name>-k8s.<subdomain>
-- Console, Dex, etc will generally be <cluster-name>.<subdomain>
+- API server will generally be `<cluster-name>-k8s.<subdomain>`
+- Console, Dex, etc will generally be `<cluster-name>.<subdomain>`
 
 ## Nodes
 
