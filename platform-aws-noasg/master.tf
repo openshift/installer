@@ -10,7 +10,8 @@ resource "aws_instance" "master-node" {
   subnet_id              = "${aws_subnet.master_subnet.*.id[count.index % var.az_count]}"
 
   tags {
-    Name = "${var.cluster_name}-master-${count.index}"
+    Name              = "${var.cluster_name}-master-${count.index}"
+    KubernetesCluster = "${var.cluster_name}"
   }
 
   lifecycle {
@@ -18,33 +19,12 @@ resource "aws_instance" "master-node" {
   }
 }
 
-resource "null_resource" "bootkube" {
-  triggers {
-    master-nodes = "${join(",",aws_elb.api-external.instances)}"
-  }
-
-  connection {
-    host  = "${aws_route53_record.api-external.fqdn}"
-    user  = "core"
-    agent = true
-  }
-
-  provisioner "file" {
-    source      = "${path.root}/../assets"
-    destination = "$HOME/assets"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo mv /home/core/assets /opt/bootkube/",
-      "sudo chmod a+x /opt/bootkube/assets/bootkube-start",
-      "sudo systemctl start bootkube",
-    ]
-  }
-}
-
 resource "aws_security_group" "master_sec_group" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
+
+  tags {
+    Name = "${var.cluster_name}_master_sg"
+  }
 
   ingress {
     protocol  = -1
@@ -84,12 +64,12 @@ resource "aws_security_group" "master_sec_group" {
 }
 
 resource "aws_iam_instance_profile" "master_profile" {
-  name  = "master_profile"
+  name  = "${var.cluster_name}_master_profile"
   roles = ["${aws_iam_role.master_role.name}"]
 }
 
 resource "aws_iam_role" "master_role" {
-  name = "master_role"
+  name = "${var.cluster_name}_master_role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -110,7 +90,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "master_policy" {
-  name = "master_policy"
+  name = "${var.cluster_name}_master_policy"
   role = "${aws_iam_role.master_role.id}"
 
   policy = <<EOF

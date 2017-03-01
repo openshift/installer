@@ -28,6 +28,7 @@ module "vpc" {
   source          = "./vpc"
   external_vpc_id = "${var.external_vpc_id}"
   vpc_cid_block   = "${var.vpc_cid_block}"
+  cluster_name    = "${var.cluster_name}"
 }
 
 data "aws_vpc" "cluster_vpc" {
@@ -38,7 +39,7 @@ module "etcd" {
   source = "./etcd"
 
   vpc_id          = "${data.aws_vpc.cluster_vpc.id}"
-  node_count      = "${var.az_count}"
+  node_count      = "${var.az_count == 5 ? 5 : 3}"
   ssh_key         = "${aws_key_pair.ssh-key.id}"
   dns_zone        = "${aws_route53_zone.tectonic-int.zone_id}"
   coreos_ami      = "${data.aws_ami.coreos_ami.id}"

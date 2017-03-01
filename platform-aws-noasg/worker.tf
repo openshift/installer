@@ -10,7 +10,8 @@ resource "aws_instance" "worker-node" {
   subnet_id              = "${aws_subnet.worker_subnet.*.id[count.index % var.az_count]}"
 
   tags {
-    Name = "${var.cluster_name}-worker-${count.index}"
+    Name              = "${var.cluster_name}-worker-${count.index}"
+    KubernetesCluster = "${var.cluster_name}"
   }
 
   lifecycle {
@@ -20,6 +21,10 @@ resource "aws_instance" "worker-node" {
 
 resource "aws_security_group" "worker_sec_group" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
+
+  tags {
+    Name = "${var.cluster_name}_worker_sg"
+  }
 
   ingress {
     protocol  = -1
@@ -74,12 +79,12 @@ resource "aws_security_group" "worker_sec_group" {
 }
 
 resource "aws_iam_instance_profile" "worker_profile" {
-  name  = "worker_profile"
+  name  = "${var.cluster_name}-worker-profile"
   roles = ["${aws_iam_role.worker_role.name}"]
 }
 
 resource "aws_iam_role" "worker_role" {
-  name = "worker_role"
+  name = "${var.cluster_name}-worker-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -100,7 +105,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "worker_policy" {
-  name = "worker_policy"
+  name = "${var.cluster_name}_worker_policy"
   role = "${aws_iam_role.worker_role.id}"
 
   policy = <<EOF

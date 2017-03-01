@@ -28,6 +28,7 @@ module "vpc" {
   source          = "./vpc"
   external_vpc_id = "${var.external_vpc_id}"
   vpc_cid_block   = "${var.vpc_cid_block}"
+  cluster_name    = "${var.cluster_name}"
 }
 
 data "aws_vpc" "cluster_vpc" {

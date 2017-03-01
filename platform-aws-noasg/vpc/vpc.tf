@@ -6,6 +6,10 @@ variable "vpc_cid_block" {
   type = "string"
 }
 
+variable "cluster_name" {
+  type = "string"
+}
+
 resource "aws_vpc" "new_vpc" {
   count                = "${length(var.external_vpc_id) > 0 ? 0 : 1}"
   cidr_block           = "${var.vpc_cid_block}"
@@ -13,7 +17,7 @@ resource "aws_vpc" "new_vpc" {
   enable_dns_support   = true
 
   tags {
-    Name = "tectonic-cluster"
+    Name = "${var.cluster_name}"
   }
 }
 

@@ -14,6 +14,12 @@ resource "aws_autoscaling_group" "masters" {
     propagate_at_launch = true
   }
 
+  tag {
+    key                 = "KubernetesCluster"
+    value               = "${var.cluster_name}"
+    propagate_at_launch = true
+  }
+
   lifecycle {
     create_before_destroy = true
   }
@@ -33,33 +39,12 @@ resource "aws_launch_configuration" "master_conf" {
   }
 }
 
-resource "null_resource" "bootkube" {
-  triggers {
-    master-nodes = "${aws_autoscaling_group.masters.id}"
-  }
-
-  connection {
-    host  = "${aws_route53_record.api-external.fqdn}"
-    user  = "core"
-    agent = true
-  }
-
-  provisioner "file" {
-    source      = "${path.root}/../assets"
-    destination = "$HOME/assets"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo mv /home/core/assets /opt/bootkube/",
-      "sudo chmod a+x /opt/bootkube/assets/bootkube-start",
-      "sudo systemctl start bootkube",
-    ]
-  }
-}
-
 resource "aws_security_group" "master_sec_group" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
+
+  tags {
+    Name = "${var.cluster_name}_master_sg"
+  }
 
   ingress {
     protocol  = -1
@@ -99,12 +84,12 @@ resource "aws_security_group" "master_sec_group" {
 }
 
 resource "aws_iam_instance_profile" "master_profile" {
-  name  = "master_profile"
+  name  = "${var.cluster_name}-master-profile"
   roles = ["${aws_iam_role.master_role.name}"]
 }
 
 resource "aws_iam_role" "master_role" {
-  name = "master_role"
+  name = "${var.cluster_name}-master-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -125,7 +110,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "master_policy" {
-  name = "master_policy"
+  name = "${var.cluster_name}_master_policy"
   role = "${aws_iam_role.master_role.id}"
 
   policy = <<EOF

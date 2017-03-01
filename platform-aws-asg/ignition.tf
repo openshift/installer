@@ -195,7 +195,7 @@ resource "ignition_file" "client-key" {
   mode       = "420"
 
   content {
-    content = "${file("${path.root}/../assets/tls/kubelet.key")}"
+    content = "${file("${path.cwd}/assets/tls/kubelet.key")}"
   }
 }
 
@@ -205,7 +205,7 @@ resource "ignition_file" "client-cert" {
   mode       = "420"
 
   content {
-    content = "${file("${path.root}/../assets/tls/kubelet.crt")}"
+    content = "${file("${path.cwd}/assets/tls/kubelet.crt")}"
   }
 }
 
@@ -215,6 +215,6 @@ resource "ignition_file" "ca-cert" {
   mode       = "420"
 
   content {
-    content = "${file("${path.root}/../assets/tls/ca.crt")}"
+    content = "${file("${path.cwd}/assets/tls/ca.crt")}"
   }
 }

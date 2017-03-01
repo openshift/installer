@@ -14,6 +14,12 @@ resource "aws_autoscaling_group" "workers" {
     propagate_at_launch = true
   }
 
+  tag {
+    key                 = "KubernetesCluster"
+    value               = "${var.cluster_name}"
+    propagate_at_launch = true
+  }
+
   lifecycle {
     create_before_destroy = true
   }
@@ -36,6 +42,10 @@ resource "aws_launch_configuration" "worker_conf" {
 
 resource "aws_security_group" "worker_sec_group" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
+
+  tags {
+    Name = "${var.cluster_name}_worker_sg"
+  }
 
   ingress {
     protocol  = -1
@@ -89,12 +99,12 @@ resource "aws_security_group" "worker_sec_group" {
 }
 
 resource "aws_iam_instance_profile" "worker_profile" {
-  name  = "worker_profile"
+  name  = "${var.cluster_name}-worker-profile"
   roles = ["${aws_iam_role.worker_role.name}"]
 }
 
 resource "aws_iam_role" "worker_role" {
-  name = "worker_role"
+  name = "${var.cluster_name}-worker-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -115,7 +125,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "worker_policy" {
-  name = "worker_policy"
+  name = "${var.cluster_name}_worker_policy"
   role = "${aws_iam_role.worker_role.id}"
 
   policy = <<EOF

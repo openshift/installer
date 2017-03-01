@@ -25,6 +25,11 @@ resource "aws_elb" "api-external" {
     target              = "TCP:22"
     interval            = 5
   }
+
+  tags {
+    Name              = "${var.cluster_name}-api-external"
+    KubernetesCluster = "${var.cluster_name}"
+  }
 }
 
 resource "aws_elb" "console" {
@@ -53,5 +58,10 @@ resource "aws_elb" "console" {
     timeout             = 3
     target              = "HTTP:32002/healthz"
     interval            = 5
+  }
+
+  tags {
+    Name              = "${var.cluster_name}-console"
+    KubernetesCluster = "${var.cluster_name}"
   }
 }
