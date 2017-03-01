@@ -1,26 +1,27 @@
 .PHONY: build destroy
 
-BUILD_DIR=./build
+CLUSTER ?= demo
+ASSETS ?= assets-$(CLUSTER).zip
+PLATFORM ?= aws-noasg
+TOP_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+BUILD_DIR = $(TOP_DIR)/build/$(CLUSTER)
 
-ASSETS:=assets-demo.zip
+all: apply
 
-$(BUILD_DIR):
-	mkdir -p $(BUILD_DIR)
-
-$(ASSETS):
+$(BUILD_DIR)/$(ASSETS):
 	@echo "Assets '$(ASSETS)' not found!\nPlace assets zip from installer in $(PWD)"
 	exit 1
 
-config.tfvars:
+$(BUILD_DIR)/config.tfvars:
 	@echo "Cluster config missing.\nPlace a 'config.tfvars' file in $(PWD)"
 	exit 1
 
-assets: $(ASSETS)
-	unzip $(ASSETS)
+assets: $(BUILD_DIR)/$(ASSETS)
+	cd $(BUILD_DIR) && unzip $(ASSETS)
 
-apply: $(BUILD_DIR) assets config.tfvars
-	terraform get ./platform-$(PLATFORM)
-	terraform apply -state-out=$(BUILD_DIR)/platform-$(PLATFORM) --var-file=./config.tfvars ./platform-$(PLATFORM)
+apply: assets $(BUILD_DIR)/config.tfvars
+	cd $(BUILD_DIR) && terraform get $(TOP_DIR)/platform-$(PLATFORM)
+	cd $(BUILD_DIR) && terraform apply --var-file=config.tfvars $(TOP_DIR)/platform-$(PLATFORM)
 
-destroy: $(BUILD_DIR) assets config.tfvars
-	terraform destroy -state=$(BUILD_DIR)/platform-$(PLATFORM) --var-file=./config.tfvars ./platform-$(PLATFORM)
+destroy: assets $(BUILD_DIR)/config.tfvars
+	cd $(BUILD_DIR) && terraform destroy --var-file=config.tfvars $(TOP_DIR)/platform-$(PLATFORM)
