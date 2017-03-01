@@ -17,7 +17,7 @@ resource "ignition_file" "worker_kubeconfig" {
   filesystem = "root"
 
   content {
-    content = "${file("${path.root}/../assets/auth/kubeconfig")}"
+    content = "${file("${path.cwd}/assets/auth/kubeconfig")}"
   }
 }
 
@@ -28,7 +28,7 @@ resource "ignition_file" "worker_ca_pem" {
   filesystem = "root"
 
   content {
-    content = "${file("${path.root}/../assets/tls/ca.crt")}"
+    content = "${file("${path.cwd}/assets/tls/ca.crt")}"
   }
 }
 
@@ -39,7 +39,7 @@ resource "ignition_file" "worker_client_pem" {
   filesystem = "root"
 
   content {
-    content = "${file("${path.root}/../assets/tls/kubelet.crt")}"
+    content = "${file("${path.cwd}/assets/tls/kubelet.crt")}"
   }
 }
 
@@ -50,7 +50,7 @@ resource "ignition_file" "worker_client_key" {
   filesystem = "root"
 
   content {
-    content = "${file("${path.root}/../assets/tls/kubelet.key")}"
+    content = "${file("${path.cwd}/assets/tls/kubelet.key")}"
   }
 }
 
@@ -70,11 +70,12 @@ EOF
 }
 
 resource "ignition_systemd_unit" "worker_locksmithd" {
-  name = "locksmithd.service"
+  name   = "locksmithd.service"
   enable = false
 
   dropin {
     name = "40-etcd-lock.conf"
+
     content = <<EOF
 [Service]
 Environment="REBOOT_STRATEGY=off"
@@ -88,6 +89,7 @@ resource "ignition_systemd_unit" "worker_etcd-member" {
 
   dropin {
     name = "40-etcd-gateway.conf"
+
     content = <<EOF
 [Service]
 Type=simple
@@ -101,8 +103,9 @@ EOF
 }
 
 resource "ignition_systemd_unit" "worker_kubelet" {
-  name = "kubelet.service"
+  name   = "kubelet.service"
   enable = true
+
   content = <<EOF
 [Unit]
 Description=Kubelet via Hyperkube ACI
@@ -144,7 +147,7 @@ EOF
 }
 
 resource "ignition_config" "worker" {
-  count    = "${var.worker_count}"
+  count = "${var.worker_count}"
 
   users = [
     "${ignition_user.core.id}",

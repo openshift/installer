@@ -27,7 +27,7 @@ resource "ignition_file" "master_kubeconfig" {
   filesystem = "root"
 
   content {
-    content = "${file("${path.root}/../assets/auth/kubeconfig")}"
+    content = "${file("${path.cwd}/assets/auth/kubeconfig")}"
   }
 }
 
@@ -49,7 +49,7 @@ resource "ignition_file" "master_ca_pem" {
   filesystem = "root"
 
   content {
-    content = "${file("${path.root}/../assets/tls/ca.crt")}"
+    content = "${file("${path.cwd}/assets/tls/ca.crt")}"
   }
 }
 
@@ -60,7 +60,7 @@ resource "ignition_file" "master_client_pem" {
   filesystem = "root"
 
   content {
-    content = "${file("${path.root}/../assets/tls/kubelet.crt")}"
+    content = "${file("${path.cwd}/assets/tls/kubelet.crt")}"
   }
 }
 
@@ -71,7 +71,7 @@ resource "ignition_file" "master_client_key" {
   filesystem = "root"
 
   content {
-    content = "${file("${path.root}/../assets/tls/kubelet.key")}"
+    content = "${file("${path.cwd}/assets/tls/kubelet.key")}"
   }
 }
 

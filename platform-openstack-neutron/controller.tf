@@ -64,7 +64,7 @@ resource "null_resource" "copy_assets" {
   }
 
   provisioner "file" {
-    source      = "${path.module}/../assets"
+    source      = "${path.cwd}/assets"
     destination = "/home/core/assets"
   }
 
