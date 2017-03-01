@@ -22,7 +22,7 @@ Generally:
 $ unzip ~/Downloads/<name>-assets.zip
 ```
 
-## Openstack
+## OpenStack
 
 ### Nova network
 
