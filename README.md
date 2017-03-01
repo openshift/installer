@@ -33,14 +33,14 @@ Ensure you have a configured `aws` CLI installation.
 2. Ensure you have OpenStack credentials set up, i.e. the environment variables `OS_TENANT_NAME`, `OS_USERNAME`, `OS_PASSWORD`, `OS_AUTH_URL`, `OS_REGION_NAME` are set.
 
 ```
-$ ./convert.sh tfvars openstack assets/cloud-formation.json
+$ ./convert.sh tfvars openstack assets/cloud-formation.json >config.tfvars
 $ ./convert.sh assets openstack assets/
 ```
 
 Invoke:
 
 ```
-$ terraform apply -var-file="config.tfvars" 'cluster_name=<name>' openstack-novanet
+$ terraform apply -var-file="config.tfvars" openstack-novanet
 ...
 null_resource.copy_assets: Still creating... (5m50s elapsed)
 null_resource.copy_assets: Creation complete
