@@ -1,5 +1,6 @@
 variable "external_vpc_id" {
-  type = "string"
+  type    = "string"
+  default = ""
 }
 
 variable "vpc_cid_block" {
@@ -28,7 +29,8 @@ variable "cluster_name" {
 }
 
 variable "kube_version" {
-  type = "string"
+  type    = "string"
+  default = "v1.5.2_coreos.2"
 }
 
 variable "master_ec2_type" {
