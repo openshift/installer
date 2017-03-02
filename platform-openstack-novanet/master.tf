@@ -1,6 +1,6 @@
 resource "openstack_compute_instance_v2" "master_node" {
   count           = "${var.master_count}"
-  name            = "master_node_${count.index}"
+  name            = "${var.cluster_name}_master_node_${count.index}"
   image_id        = "${var.image_id}"
   flavor_id       = "${var.flavor_id}"
   key_pair        = "${openstack_compute_keypair_v2.k8s_keypair.name}"
@@ -15,7 +15,7 @@ resource "openstack_compute_instance_v2" "master_node" {
 }
 
 resource "openstack_compute_secgroup_v2" "k8s_master_group" {
-  name        = "k8s_master_group"
+  name        = "${var.cluster_name}_k8s_master_group"
   description = "security group for k8s masters: SSH and https"
 
   rule {
