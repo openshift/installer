@@ -23,17 +23,27 @@ function tfvars {
     case "$1" in
         "openstack"|"aws")
             local cloud_formation="${2}"
+            local az_count=$(jq '.Resources.AutoScaleController.Properties.AvailabilityZones|length' "${cloud_formation}")
             local worker_count=$(jq -r .Resources.AutoScaleWorker.Properties.MinSize "${cloud_formation}")
             local master_count=$(jq -r .Resources.AutoScaleController.Properties.MinSize "${cloud_formation}")
+
+            local master_type=$(jq -r .Resources.LaunchConfigurationController.Properties.InstanceType "${cloud_formation}")
+            local worker_type=$(jq -r .Resources.LaunchConfigurationWorker.Properties.InstanceType "${cloud_formation}")
 
             local tectonic_domain=$(jq -r .Resources.TectonicDomain.Properties.Name "${cloud_formation}")
             local cluster_name=$(echo "${tectonic_domain}" | cut -d '.' -f 1)
             local base_domain=$(echo "${tectonic_domain}" | cut -d '.' -f 2-)
 
             cat <<EOF
+az_count = ${az_count}
+
 worker_count = ${worker_count}
 
 master_count = ${master_count}
+
+master_ec2_type = "${master_type}"
+
+worker_ec2_type = "${worker_type}"
 
 base_domain = "${base_domain}"
 
