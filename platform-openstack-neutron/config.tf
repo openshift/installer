@@ -1,11 +1,11 @@
 variable "flavor_id" {
   type    = "string"
-  default = "5cf64088-893b-46b5-9bb1-ee020277635d"
+  default = "bbcb7eb5-5c8d-498f-9d7e-307c575d3566"
 }
 
 variable "image_id" {
   type    = "string"
-  default = "3acad946-7dd9-487d-b76f-75c79b8d550b"
+  default = "acdcd535-5408-40f3-8e88-ad8ebb6507e6"
 }
 
 variable "tectonic_version" {
@@ -13,7 +13,7 @@ variable "tectonic_version" {
   default = "v1.5.2_coreos.1"
 }
 
-variable "controller_count" {
+variable "master_count" {
   type    = "string"
   default = "1"
 }

@@ -10,7 +10,7 @@ resource "openstack_compute_instance_v2" "etcd_node" {
     role = "etcd"
   }
 
-  user_data    = "${file("${path.module}/userdata-etcd.yml")}"
+  user_data    = "${ignition_config.etcd.*.rendered[count.index]}"
   config_drive = false
 
   network {

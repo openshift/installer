@@ -23,3 +23,13 @@ resource "openstack_networking_router_interface_v2" "interface" {
   router_id = "${openstack_networking_router_v2.router.id}"
   subnet_id = "${openstack_networking_subnet_v2.subnet.id}"
 }
+
+resource "openstack_compute_floatingip_v2" "master" {
+  count = "${var.master_count}"
+  pool  = "public"
+}
+
+resource "openstack_compute_floatingip_v2" "worker" {
+  count = "${var.worker_count}"
+  pool  = "public"
+}

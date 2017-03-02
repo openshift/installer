@@ -54,8 +54,6 @@ The tectonic cluster will be reachable under `https://<name>.<base_domain>:32000
 
 The instructions for Neutron are the same as for Nova.
 
-**TODO(sur): verify**
-
 ## AWS
 
 *Common Prerequsities*

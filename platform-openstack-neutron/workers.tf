@@ -10,9 +10,10 @@ resource "openstack_compute_instance_v2" "worker_node" {
   }
 
   network {
+    floating_ip = "${openstack_compute_floatingip_v2.worker.*.address[count.index]}"
     uuid = "${openstack_networking_network_v2.network.id}"
   }
 
-  user_data    = "${data.template_file.userdata-worker.*.rendered[count.index]}"
+  user_data    = "${ignition_config.worker.*.rendered[count.index]}"
   config_drive = false
 }
