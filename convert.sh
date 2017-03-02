@@ -56,7 +56,7 @@ function assets {
             local tectonic_domain=$(jq -r .Resources.TectonicDomain.Properties.Name "${cloud_formation}")
 
             for f in "${assets}/manifests/kube-apiserver.yaml" "${assets}/manifests/kube-controller-manager.yaml"; do
-                sed -i 's/--cloud-provider=aws/--cloud-provider=openstack/g' $f
+                sed -i '/--cloud-provider=aws/d' $f
             done
 
             for f in $(find "${assets}" -type f -name "*.yaml"); do
