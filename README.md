@@ -65,7 +65,6 @@ The instructions for Neutron are the same as for Nova.
 Instead click on `Manual boot` below to download the assets zip file.
 4. Create a folder with the cluster's name under `./build` (e.g. `./build/<cluster-name>`)
 5. Copy the `assets-<cluster-name>.zip` to `./boot/<cluster-name>`
-6. Create a cluster configuration in `./build/<cluster-name>/config.tfvars` following `example-config.tfvars`
 
 ### Using Autoscaling groups
 
