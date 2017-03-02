@@ -1,4 +1,4 @@
-variable "tectonic_domain" {
+variable "base_domain" {
   type = "string"
 }
 

@@ -19,7 +19,7 @@ variable "worker_count" {
   type = "string"
 }
 
-variable "tectonic_domain" {
+variable "base_domain" {
   type = "string"
 }
 

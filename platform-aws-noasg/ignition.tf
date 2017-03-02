@@ -141,7 +141,7 @@ kind: Config
 clusters:
 - name: local
   cluster:
-    server: https://${var.cluster_name}-k8s.${var.tectonic_domain}:443
+    server: https://${var.cluster_name}-k8s.${var.base_domain}:443
     certificate-authority: /etc/kubernetes/ssl/ca.pem
 users:
 - name: kubelet
