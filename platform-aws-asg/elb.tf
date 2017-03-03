@@ -23,7 +23,7 @@ resource "aws_elb" "api-internal" {
     unhealthy_threshold = 2
     timeout             = 3
     target              = "HTTP:10255/healthz"
-    interval            = 30
+    interval            = 5
   }
 
   tags {
@@ -57,7 +57,7 @@ resource "aws_elb" "api-external" {
     unhealthy_threshold = 2
     timeout             = 3
     target              = "TCP:22"
-    interval            = 30
+    interval            = 5
   }
 
   tags {
