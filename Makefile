@@ -22,6 +22,9 @@ $(BUILD_DIR)/assets: $(BUILD_DIR)/$(ASSETS)
 $(BUILD_DIR)/.terraform:
 	cd $(BUILD_DIR) && terraform get $(TOP_DIR)/platform-$(PLATFORM)
 
+plan: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
+	cd $(BUILD_DIR) && terraform plan --var-file=config.tfvars $(TOP_DIR)/platform-$(PLATFORM)
+
 apply: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
 	cd $(BUILD_DIR) && terraform apply --var-file=config.tfvars $(TOP_DIR)/platform-$(PLATFORM)
 
