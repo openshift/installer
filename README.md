@@ -12,10 +12,10 @@ The unique power of Self-Hosted Kubernetes is that it cleanly separates out the 
 
 ## Getting Started
 
-Generally:
+At this time the Platform SDK relies on the Tectonic Installer to generate all of the Kubernetes assests, certificates, etc. If you don't have a Tectonic installer already [sign-up for one for the free tier](https://coreos.com/tectonic) first, then:
 
-1. Use the tectonic installer to configure an AWS cluster.
-2. Go through the process, do not apply the configuration, but download the assets manually.
+1. Use the Tectonic installer to configure an AWS cluster.
+2. Go through the process to create an AWS cluster, do not apply the configuration, but download the assets manually. This is an advanced option on the last screen
 3. Unzip the assets in this directory:
 
 ```
@@ -28,16 +28,17 @@ $ unzip ~/Downloads/<name>-assets.zip
 
 Prerequsities:
 
+1. The latest Container Linux Alpha (1339.0.0 or later) [uploaded into Glance](https://coreos.com/os/docs/latest/booting-on-openstack.html) and get the image ID
 1. Since openstack nova doesn't provide any DNS registration service, AWS Route53 is being used.
 Ensure you have a configured `aws` CLI installation.
-2. Ensure you have OpenStack credentials set up, i.e. the environment variables `OS_TENANT_NAME`, `OS_USERNAME`, `OS_PASSWORD`, `OS_AUTH_URL`, `OS_REGION_NAME` are set.
+1. Ensure you have OpenStack credentials set up, i.e. the environment variables `OS_TENANT_NAME`, `OS_USERNAME`, `OS_PASSWORD`, `OS_AUTH_URL`, `OS_REGION_NAME` are set.
 
 ```
 $ ./convert.sh tfvars openstack assets/cloud-formation.json >config.tfvars
 $ ./convert.sh assets openstack assets/
 ```
 
-Invoke:
+Next, set the image id from Glance in the config.tfvars file. Then invoke:
 
 ```
 $ terraform apply -var-file="config.tfvars" openstack-novanet
