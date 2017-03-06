@@ -29,8 +29,7 @@ variable "cluster_name" {
 }
 
 variable "kube_version" {
-  type    = "string"
-  default = "v1.5.2_coreos.2"
+  type = "string"
 }
 
 variable "master_ec2_type" {

@@ -8,9 +8,8 @@ variable "image_id" {
   default = "acdcd535-5408-40f3-8e88-ad8ebb6507e6"
 }
 
-variable "tectonic_version" {
-  type    = "string"
-  default = "v1.5.2_coreos.1"
+variable "kube_version" {
+  type = "string"
 }
 
 variable "master_count" {

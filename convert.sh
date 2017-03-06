@@ -33,6 +33,7 @@ function tfvars {
             local tectonic_domain=$(jq -r .Resources.TectonicDomain.Properties.Name "${cloud_formation}")
             local cluster_name=$(echo "${tectonic_domain}" | cut -d '.' -f 1)
             local base_domain=$(echo "${tectonic_domain}" | cut -d '.' -f 2-)
+            local kube_version=$(kube_version "${cloud_formation}")
 
             cat <<EOF
 az_count = ${az_count}
@@ -49,6 +50,7 @@ base_domain = "${base_domain}"
 
 cluster_name = "${cluster_name}"
 
+kube_version = "${kube_version}"
 EOF
             ;;
         *)
@@ -77,6 +79,14 @@ function assets {
             echo "ignoring unsupported platform $1"
             ;;
     esac
+}
+
+function kube_version {
+    local cloud_formation="${1}"
+    local kube_env_encoded=$(jq -r .Resources.LaunchConfigurationController.Properties.UserData "${cloud_formation}" | base64 -D \
+    | jq -r '.storage.files[]|select(.path=="/etc/kubernetes/kubelet.env").contents.source' | cut -d, -f2)
+    local kube_env_decoded=$(printf '%b' "${kube_env_encoded//%/\\x}")
+    echo $kube_env_decoded | cut -d\  -f2 | cut -d=  -f2
 }
 
 main $@
