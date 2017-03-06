@@ -4,6 +4,7 @@ resource "aws_route_table" "private_routing" {
 
   tags {
     Name = "private-${data.aws_availability_zones.azs.names[count.index]}"
+    KubernetesCluster = "${var.cluster_name}"
   }
 }
 
@@ -29,6 +30,7 @@ resource "aws_subnet" "etcd_subnet" {
 
   tags {
     Name = "etcd-${data.aws_availability_zones.azs.names[count.index]}"
+    KubernetesCluster = "${var.cluster_name}"
   }
 }
 
@@ -40,6 +42,7 @@ resource "aws_subnet" "master_subnet" {
 
   tags {
     Name = "master-${data.aws_availability_zones.azs.names[count.index]}"
+    KubernetesCluster = "${var.cluster_name}"
   }
 }
 
@@ -57,6 +60,7 @@ resource "aws_subnet" "worker_subnet" {
 
   tags {
     Name = "worker-${data.aws_availability_zones.azs.names[count.index]}"
+    KubernetesCluster = "${var.cluster_name}"
   }
 }
 

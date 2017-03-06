@@ -45,6 +45,7 @@ resource "aws_security_group" "worker_sec_group" {
 
   tags {
     Name = "${var.cluster_name}_worker_sg"
+    KubernetesCluster = "${var.cluster_name}"
   }
 
   ingress {
