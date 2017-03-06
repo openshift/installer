@@ -1,6 +1,22 @@
-#!/bin/sh
+#!/usr/bin/env bash
+
+SED=""
+BASE64=""
 
 function main {
+    local PLATFORM=$(uname)
+
+    case "${PLATFORM}" in
+        "Darwin")
+            SED=('sed' '-i' '' '-e')
+            BASE64=('base64' '-D')
+            ;;
+        "Linux")
+            SED=('sed' '-i')
+            BASE64=('base64' '-d')
+            ;;
+    esac
+
     case "$1" in
         "tfvars") tfvars "${2}" "${3}";;
         "assets") assets "${2}" "${3}";;
@@ -68,11 +84,11 @@ function assets {
             local tectonic_domain=$(jq -r .Resources.TectonicDomain.Properties.Name "${cloud_formation}")
 
             for f in "${assets}/manifests/kube-apiserver.yaml" "${assets}/manifests/kube-controller-manager.yaml"; do
-                sed -i '/--cloud-provider=aws/d' $f
+                "${SED[@]}" '/--cloud-provider=aws/d' $f
             done
 
             for f in $(find "${assets}" -type f -name "*.yaml"); do
-                sed -i "s/https:\/\/${tectonic_domain}/https:\/\/${tectonic_domain}:32000/g" $f
+                "${SED[@]}" "s/https:\/\/${tectonic_domain}/https:\/\/${tectonic_domain}:32000/g" $f
             done
             ;;
         *)
@@ -83,8 +99,10 @@ function assets {
 
 function kube_version {
     local cloud_formation="${1}"
-    local kube_env_encoded=$(jq -r .Resources.LaunchConfigurationController.Properties.UserData "${cloud_formation}" | base64 -D \
-    | jq -r '.storage.files[]|select(.path=="/etc/kubernetes/kubelet.env").contents.source' | cut -d, -f2)
+    local kube_env_encoded=$(jq -r .Resources.LaunchConfigurationController.Properties.UserData "${cloud_formation}" \
+                                 | "${BASE64[@]}" \
+                                 | jq -r '.storage.files[]|select(.path=="/etc/kubernetes/kubelet.env").contents.source' \
+                                 | cut -d, -f2)
     local kube_env_decoded=$(printf '%b' "${kube_env_encoded//%/\\x}")
     echo $kube_env_decoded | cut -d\  -f2 | cut -d=  -f2
 }

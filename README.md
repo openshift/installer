@@ -34,8 +34,8 @@ Ensure you have a configured `aws` CLI installation.
 1. Ensure you have OpenStack credentials set up, i.e. the environment variables `OS_TENANT_NAME`, `OS_USERNAME`, `OS_PASSWORD`, `OS_AUTH_URL`, `OS_REGION_NAME` are set.
 
 ```
-$ ./convert.sh tfvars openstack assets/cloud-formation.json >config.tfvars
-$ ./convert.sh assets openstack assets/
+$ ./convert.sh tfvars openstack-nova assets/cloud-formation.json >config.tfvars
+$ ./convert.sh assets openstack-nova assets/
 ```
 
 Next, set the image id from Glance in the config.tfvars file. Then invoke:
