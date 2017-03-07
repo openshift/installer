@@ -24,6 +24,7 @@ resource "aws_security_group" "master_sec_group" {
 
   tags {
     Name = "${var.cluster_name}_master_sg"
+    KubernetesCluster = "${var.cluster_name}"
   }
 
   ingress {
