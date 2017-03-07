@@ -9,5 +9,6 @@ resource "aws_instance" "etcd_node" {
 
   tags {
     Name = "${var.cluster_name}-etcd-${count.index}"
+    KubernetesCluster = "${var.cluster_name}"
   }
 }
