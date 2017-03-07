@@ -2,7 +2,7 @@ variable "external_vpc_id" {
   type = "string"
 }
 
-variable "vpc_cid_block" {
+variable "vpc_cidr_block" {
   type = "string"
 }
 
@@ -12,7 +12,7 @@ variable "cluster_name" {
 
 resource "aws_vpc" "new_vpc" {
   count                = "${length(var.external_vpc_id) > 0 ? 0 : 1}"
-  cidr_block           = "${var.vpc_cid_block}"
+  cidr_block           = "${var.vpc_cidr_block}"
   enable_dns_hostnames = true
   enable_dns_support   = true
 

@@ -27,7 +27,7 @@ data "aws_ami" "coreos_ami" {
 module "vpc" {
   source          = "./vpc"
   external_vpc_id = "${var.external_vpc_id}"
-  vpc_cid_block   = "${var.vpc_cid_block}"
+  vpc_cidr_block   = "${var.vpc_cidr_block}"
   cluster_name    = "${var.cluster_name}"
 }
 

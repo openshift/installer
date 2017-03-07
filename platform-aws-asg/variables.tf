@@ -3,7 +3,7 @@ variable "external_vpc_id" {
   default = ""
 }
 
-variable "vpc_cid_block" {
+variable "vpc_cidr_block" {
   type    = "string"
   default = "10.0.0.0/16"
 }
