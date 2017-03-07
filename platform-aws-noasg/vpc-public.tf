@@ -9,6 +9,7 @@ resource "aws_route_table" "default" {
 
   tags {
     Name = "public"
+    KubernetesCluster = "${var.cluster_name}"
   }
 }
 
@@ -32,6 +33,8 @@ resource "aws_subnet" "az_subnet_pub" {
 
   tags {
     Name = "public-${data.aws_availability_zones.azs.names[count.index]}"
+    KubernetesCluster = "${var.cluster_name}"
+    "kubernetes.io/role/elb" = ""
   }
 }
 

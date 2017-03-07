@@ -3,6 +3,7 @@ resource "aws_security_group" "etcd_sec_group" {
 
   tags {
     Name = "${var.cluster_name}_etcd_sg"
+    KubernetesCluster = "${var.cluster_name}"
   }
 
   ingress {

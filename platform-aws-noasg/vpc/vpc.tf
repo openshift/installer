@@ -18,6 +18,7 @@ resource "aws_vpc" "new_vpc" {
 
   tags {
     Name = "${var.cluster_name}"
+    KubernetesCluster = "${var.cluster_name}"
   }
 }
 
