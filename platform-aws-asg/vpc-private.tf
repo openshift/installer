@@ -61,6 +61,7 @@ resource "aws_subnet" "worker_subnet" {
   tags {
     Name = "worker-${data.aws_availability_zones.azs.names[count.index]}"
     KubernetesCluster = "${var.cluster_name}"
+    "kubernetes.io/role/internal-elb" = ""
   }
 }
 
