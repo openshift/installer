@@ -37,11 +37,6 @@ variable "cluster_name" {
   default = "demo"
 }
 
-variable "public_network_name" {
-  type    = "string"
-  default = "public"
-}
-
 variable "external_gateway_id" {
   type    = "string"
   default = "6d6357ac-0f70-4afa-8bd7-c274cc4ea235"
