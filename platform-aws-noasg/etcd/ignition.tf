@@ -17,7 +17,6 @@ resource "ignition_file" "node_hostname" {
   count      = "${var.node_count}"
   path       = "/etc/hostname"
   mode       = 0644
-  uid        = 0
   filesystem = "root"
 
   content {

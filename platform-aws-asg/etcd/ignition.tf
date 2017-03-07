@@ -25,7 +25,8 @@ resource "ignition_file" "node_hostname" {
 }
 
 resource "ignition_systemd_unit" "locksmithd" {
-  name = "locksmithd.service"
+  name   = "locksmithd.service"
+  enable = true
 
   dropin = [
     {
@@ -49,12 +50,12 @@ resource "ignition_systemd_unit" "etcd3" {
 Environment="ETCD_IMAGE_TAG=v3.1.2"
 ExecStart=
 ExecStart=/usr/lib/coreos/etcd-wrapper \
---name=etcd \
---discovery-srv=${var.base_domain} \
---advertise-client-urls=http://etcd-${count.index}.${var.base_domain}:2379 \
---initial-advertise-peer-urls=http://etcd-${count.index}.${var.base_domain}:2380 \
---listen-client-urls=http://0.0.0.0:2379 \
---listen-peer-urls=http://0.0.0.0:2380
+  --name=etcd \
+  --discovery-srv=${var.base_domain} \
+  --advertise-client-urls=http://etcd-${count.index}.${var.base_domain}:2379 \
+  --initial-advertise-peer-urls=http://etcd-${count.index}.${var.base_domain}:2380 \
+  --listen-client-urls=http://0.0.0.0:2379 \
+  --listen-peer-urls=http://0.0.0.0:2380
 EOF
     },
   ]

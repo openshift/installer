@@ -38,12 +38,12 @@ data "aws_vpc" "cluster_vpc" {
 module "etcd" {
   source = "./etcd"
 
-  vpc_id          = "${data.aws_vpc.cluster_vpc.id}"
-  node_count      = "${var.az_count == 5 ? 5 : 3}"
-  ssh_key         = "${aws_key_pair.ssh-key.id}"
-  dns_zone        = "${aws_route53_zone.tectonic-int.zone_id}"
-  coreos_ami      = "${data.aws_ami.coreos_ami.id}"
-  etcd_subnets    = ["${aws_subnet.etcd_subnet.*.id}"]
-  base_domain = "${var.base_domain}"
-  cluster_name    = "${var.cluster_name}"
+  vpc_id       = "${data.aws_vpc.cluster_vpc.id}"
+  node_count   = "${var.az_count == 5 ? 5 : 3}"
+  ssh_key      = "${aws_key_pair.ssh-key.id}"
+  dns_zone     = "${aws_route53_zone.tectonic-int.zone_id}"
+  coreos_ami   = "${data.aws_ami.coreos_ami.id}"
+  etcd_subnets = ["${aws_subnet.etcd_subnet.*.id}"]
+  base_domain  = "${var.base_domain}"
+  cluster_name = "${var.cluster_name}"
 }
