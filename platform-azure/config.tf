@@ -7,9 +7,14 @@ variable "tectonic_azure_vm_size" {
 
 // The image ID as given in `azure image list`.
 // Specifies the OS image of the VM.
-variable "tectonic_azure_image_id" {
-  type    = "string"
-  default = "edd9e119-a2db-4ccd-a205-5290682254e9"
+variable "tectonic_azure_image_reference" {
+  type    = "map"
+  default = {
+     publisher = "CoreOS"
+     offer     = "CoreOS"
+     sku       = "Stable"
+     version   = "latest"
+  }
 }
 
 // The hyperkube "quay.io/coreos/hyperkube" image version.
