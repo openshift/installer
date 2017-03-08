@@ -1,5 +1,4 @@
 resource "azurerm_virtual_machine" "etcd_node" {
-  count           = "${var.tectonic_etcd_count}"
   name            = "${var.tectonic_cluster_name}_etcd_node_${count.index}"
   security_groups = ["${azurerm_network_security_group.etcd_group.name}"]
 
@@ -7,13 +6,12 @@ resource "azurerm_virtual_machine" "etcd_node" {
     role = "etcd"
   }
 
-  user_data    = "${ignition_config.etcd.*.rendered[count.index]}"
+  user_data    = "${ignition_config.etcd.rendered}"
   config_drive = false
 }
 
 resource "azurerm_network_security_group" "etcd_group" {
   name        = "${var.tectonic_cluster_name}_etcd_group"
-  description = "security group for etcd: SSH and etcd client / cluster"
 
   security_rule {
     source_port_range      = 22

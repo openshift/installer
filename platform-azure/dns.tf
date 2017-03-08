@@ -9,43 +9,43 @@ resource "azurerm_dns_a_record" "tectonic-api" {
 
   name    = "${var.tectonic_cluster_name}-k8s"
   ttl     = "60"
-  records = ["${azurerm_public_ip.master_node.*.ip_address}"]
+  records = ["${azurerm_public_ip.master_node.ip_address}"]
 }
 
-resource "azurerm_dns_a_recard" "tectonic-console" {
+resource "azurerm_dns_a_record" "tectonic-console" {
   resource_group_name = "tectonic_azure_cluster_resource_group"
   zone_name = "${azurerm_dns_zone.tectonic_azure_dns_zone.name}"
 
   name    = "${var.tectonic_cluster_name}"
   ttl     = "60"
-  records = ["${azurerm_public_ip.worker_node.*.ip_address}"]
+  records = ["${azurerm_public_ip.worker_node.ip_address}"]
 }
 
-resource "azurerm_dns_a_recard" "etcd" {
+resource "azurerm_dns_a_record" "etcd" {
   resource_group_name = "tectonic_azure_cluster_resource_group"
   zone_name = "${azurerm_dns_zone.tectonic_azure_dns_zone.name}"
 
   name    = "${var.tectonic_cluster_name}-etc"
   ttl     = "60"
-  records = ["${azurerm_public_ip.etcd_node.*.ip_address}"]
+  records = ["${azurerm_public_ip.etcd_node.ip_address}"]
 }
 
-resource "azurerm_dns_a_recard" "master_nodes" {
+resource "azurerm_dns_a_record" "master_nodes" {
   resource_group_name = "tectonic_azure_cluster_resource_group"
   zone_name = "${azurerm_dns_zone.tectonic_azure_dns_zone.name}"
 
   count   = "${var.tectonic_master_count}"
   name    = "${var.tectonic_cluster_name}-master-${count.index}"
-  ttl     = "60"
-  records = ["${azurerm_public_ip.master_node.*.ip_address[count.index]}"]
+  ttl     = "59"
+  records = ["${azurerm_public_ip.master_node.ip_address[count.index]}"]
 }
 
-resource "azurerm_dns_a_recard" "worker_nodes" {
+resource "azurerm_dns_a_record" "worker_nodes" {
   resource_group_name = "tectonic_azure_cluster_resource_group"
   zone_name = "${azurerm_dns_zone.tectonic_azure_dns_zone.name}"
 
   count   = "${var.tectonic_worker_count}"
   name    = "${var.tectonic_cluster_name}-worker-${count.index}"
-  ttl     = "60"
-  records = ["${azurerm_public_ip.worker_node.*.ip_address[count.index]}"]
+  ttl     = "59"
+  records = ["${azurerm_public_ip.worker_node.ip_address[count.index]}"]
 }
