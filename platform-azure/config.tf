@@ -5,6 +5,11 @@ variable "tectonic_azure_vm_size" {
   default = "Standard_D2_v2"
 }
 
+variable "tectonic_azure_dns_resource_group" {
+  type    = "string"
+  default = "tectonic-dns-group"
+}
+
 // The image ID as given in `azure image list`.
 // Specifies the OS image of the VM.
 variable "tectonic_azure_image_reference" {
@@ -20,18 +25,21 @@ variable "tectonic_azure_image_reference" {
 // The hyperkube "quay.io/coreos/hyperkube" image version.
 variable "tectonic_kube_version" {
   type = "string"
+  default = "v1.5.3"
 }
 
 // The amount of master nodes to be created.
 // Example: `1`
 variable "tectonic_master_count" {
   type = "string"
+  default = "1"
 }
 
 // The amount of worker nodes to be created.
 // Example: `3`
 variable "tectonic_worker_count" {
   type = "string"
+  default = "1"
 }
 
 // The amount of etcd nodes to be created.
