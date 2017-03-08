@@ -9,7 +9,7 @@ resource "azurerm_dns_a_record" "tectonic-api" {
 
   name    = "${var.tectonic_cluster_name}-k8s"
   ttl     = "60"
-  records = ["${openstack_compute_instance_v2.master_node.*.access_ip_v4}"]
+  records = ["${azurerm_public_ip.master_node.*.ip_address}"]
 }
 
 resource "azurerm_dns_a_recard" "tectonic-console" {
@@ -18,7 +18,7 @@ resource "azurerm_dns_a_recard" "tectonic-console" {
 
   name    = "${var.tectonic_cluster_name}"
   ttl     = "60"
-  records = ["${openstack_compute_instance_v2.worker_node.*.access_ip_v4}"]
+  records = ["${azurerm_public_ip.worker_node.*.ip_address}"]
 }
 
 resource "azurerm_dns_a_recard" "etcd" {
@@ -27,7 +27,7 @@ resource "azurerm_dns_a_recard" "etcd" {
 
   name    = "${var.tectonic_cluster_name}-etc"
   ttl     = "60"
-  records = ["${openstack_compute_instance_v2.etcd_node.*.access_ip_v4}"]
+  records = ["${azurerm_public_ip.etcd_node.*.ip_address}"]
 }
 
 resource "azurerm_dns_a_recard" "master_nodes" {
@@ -37,7 +37,7 @@ resource "azurerm_dns_a_recard" "master_nodes" {
   count   = "${var.tectonic_master_count}"
   name    = "${var.tectonic_cluster_name}-master-${count.index}"
   ttl     = "60"
-  records = ["${openstack_compute_instance_v2.master_node.*.access_ip_v4[count.index]}"]
+  records = ["${azurerm_public_ip.master_node.*.ip_address[count.index]}"]
 }
 
 resource "azurerm_dns_a_recard" "worker_nodes" {
@@ -47,5 +47,5 @@ resource "azurerm_dns_a_recard" "worker_nodes" {
   count   = "${var.tectonic_worker_count}"
   name    = "${var.tectonic_cluster_name}-worker-${count.index}"
   ttl     = "60"
-  records = ["${openstack_compute_instance_v2.worker_node.*.access_ip_v4[count.index]}"]
+  records = ["${azurerm_public_ip.worker_node.*.ip_address[count.index]}"]
 }
