@@ -85,3 +85,7 @@ variable "tectonic_aws_master_ec2_type" {
 variable "tectonic_aws_worker_ec2_type" {
   type = "string"
 }
+
+variable "tectonic_ssh_key" {
+  type = "string"
+}
