@@ -69,6 +69,26 @@ tectonic_cluster_name = "${tectonic_cluster_name}"
 tectonic_kube_version = "${tectonic_kube_version}"
 EOF
             ;;
+        azure)
+            local cloud_formation="${2}"
+            local tectonic_domain=$(jq -r .Resources.TectonicDomain.Properties.Name "${cloud_formation}")
+            local tectonic_cluster_name=$(echo "${tectonic_domain}" | cut -d '.' -f 1)
+            local tectonic_base_domain=$(echo "${tectonic_domain}" | cut -d '.' -f 2-)
+            local tectonic_kube_version=$(tectonic_kube_version "${cloud_formation}")
+            local tectonic_worker_count=$(jq -r .Resources.AutoScaleWorker.Properties.MinSize "${cloud_formation}")
+            local tectonic_master_count=$(jq -r .Resources.AutoScaleController.Properties.MinSize "${cloud_formation}")
+            cat <<EOF
+tectonic_worker_count = ${tectonic_worker_count}
+
+tectonic_master_count = ${tectonic_master_count}
+
+tectonic_base_domain = "${tectonic_base_domain}"
+
+tectonic_cluster_name = "${tectonic_cluster_name}"
+
+tectonic_kube_version = "${tectonic_kube_version}"
+EOF
+            ;;
         *)
             echo "ignoring unsupported platform $1"
             ;;
@@ -89,6 +109,13 @@ function assets {
 
             for f in $(find "${assets}" -type f -name "*.yaml"); do
                 "${SED[@]}" "s/https:\/\/${tectonic_domain}/https:\/\/${tectonic_domain}:32000/g" $f
+            done
+            ;;
+        azure)
+            local cloud_formation="${assets}/cloud-formation.json"
+            
+            for f in "${assets}/manifests/kube-apiserver.yaml" "${assets}/manifests/kube-controller-manager.yaml"; do
+                "${SED[@]}" '/--cloud-provider=aws/d' $f
             done
             ;;
         *)
