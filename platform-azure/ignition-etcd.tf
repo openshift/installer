@@ -1,10 +1,10 @@
 resource "ignition_systemd_unit" "etcd2" {
-  name = "etcd2.service"
+  name   = "etcd2.service"
   enable = false
 }
 
 resource "ignition_systemd_unit" "etcd" {
-  name = "etcd.service"
+  name   = "etcd.service"
   enable = false
 }
 
@@ -13,6 +13,7 @@ resource "ignition_systemd_unit" "etcd_member" {
 
   dropin {
     name = "40-etcd-cluster.conf"
+
     content = <<EOF
 [Service]
 Environment="ETCD_IMAGE_TAG=v3.1.0"
@@ -30,8 +31,6 @@ EOF
 }
 
 resource "ignition_config" "etcd" {
-  count    = "${var.tectonic_etcd_count}"
-
   users = [
     "${ignition_user.core.id}",
   ]
