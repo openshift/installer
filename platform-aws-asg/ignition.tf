@@ -141,7 +141,7 @@ kind: Config
 clusters:
 - name: local
   cluster:
-    server: https://${var.cluster_name}-k8s.${var.base_domain}:443
+    server: https://${var.tectonic_cluster_name}-k8s.${var.tectonic_base_domain}:443
     certificate-authority: /etc/kubernetes/ssl/ca.pem
 users:
 - name: kubelet
@@ -164,7 +164,7 @@ resource "ignition_file" "kubelet-env" {
   content {
     content = <<EOF
 KUBELET_ACI=quay.io/coreos/hyperkube
-KUBELET_VERSION="${var.kube_version}"
+KUBELET_VERSION="${var.tectonic_kube_version}"
 EOF
   }
 }

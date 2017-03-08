@@ -24,36 +24,32 @@ $ unzip ~/Downloads/<name>-assets.zip
 
 ## OpenStack
 
-### Nova network
-
 Prerequsities:
 
 1. The latest Container Linux Alpha (1339.0.0 or later) [uploaded into Glance](https://coreos.com/os/docs/latest/booting-on-openstack.html) and get the image ID
 1. Since openstack nova doesn't provide any DNS registration service, AWS Route53 is being used.
 Ensure you have a configured `aws` CLI installation.
 1. Ensure you have OpenStack credentials set up, i.e. the environment variables `OS_TENANT_NAME`, `OS_USERNAME`, `OS_PASSWORD`, `OS_AUTH_URL`, `OS_REGION_NAME` are set.
+1. Create a folder with the cluster's name under `./build` (e.g. `./build/<cluster-name>`)
+1. Copy the `assets-<cluster-name>.zip` to `./boot/<cluster-name>`
 
-```
-$ ./convert.sh tfvars openstack-nova assets/cloud-formation.json >config.tfvars
-$ ./convert.sh assets openstack-nova assets/
-```
+### Nova network
 
-Next, set the image id from Glance in the config.tfvars file. Then invoke:
+1. Ensure all *prerequsities* are met.
+1. From the root of the repo, run `make PLATFORM=openstack-novanet CLUSTER=<cluster-name>`
 
-```
-$ terraform apply -var-file="config.tfvars" openstack-novanet
-...
-null_resource.copy_assets: Still creating... (5m50s elapsed)
-null_resource.copy_assets: Creation complete
-
-Apply complete! Resources: 43 added, 0 changed, 0 destroyed.
-```
+To clean up run `make destroy PLATFORM=openstack-novanet CLUSTER=<cluster-name>`
 
 The tectonic cluster will be reachable under `https://<name>.<base_domain>:32000`.
 
 ### Neutron network
 
-The instructions for Neutron are the same as for Nova.
+1. Ensure all *prerequsities* are met.
+1. From the root of the repo, run `make PLATFORM=openstack-neutron CLUSTER=<cluster-name>`
+
+To clean up run `make destroy PLATFORM=openstack-neutron CLUSTER=<cluster-name>`
+
+The tectonic cluster will be reachable under `https://<name>.<base_domain>:32000`.
 
 ## AWS
 
@@ -61,27 +57,25 @@ The instructions for Neutron are the same as for Nova.
 
 1. Configure AWS credentials via environment variables. 
 [See docs](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment)
-2. Configure a region by setting `AWS_REGION` environment variable
-3. Run through the official Tectonic intaller steps without clicking `Submit` on the last step. 
+1. Configure a region by setting `AWS_REGION` environment variable
+1. Run through the official Tectonic intaller steps without clicking `Submit` on the last step. 
 Instead click on `Manual boot` below to download the assets zip file.
-4. Create a folder with the cluster's name under `./build` (e.g. `./build/<cluster-name>`)
-5. Copy the `assets-<cluster-name>.zip` to `./boot/<cluster-name>`
+1. Create a folder with the cluster's name under `./build` (e.g. `./build/<cluster-name>`)
+1. Copy the `assets-<cluster-name>.zip` to `./boot/<cluster-name>`
 
 ### Using Autoscaling groups
 
 1. Ensure all *prerequsities* are met.
-2. From the root of the repo, run `make PLATFORM=aws-asg CLUSTER=<cluster-name>`
+1. From the root of the repo, run `make PLATFORM=aws-asg CLUSTER=<cluster-name>`
 
 To clean up run `make destroy PLATFORM=aws-asg CLUSTER=<cluster-name>`
 
 ### Without Autoscaling groups
 
 1. Ensure all *prerequsities* are met.
-2. From the root of the repo, run `make PLATFORM=aws-noasg CLUSTER=<cluster-name>`
+1. From the root of the repo, run `make PLATFORM=aws-noasg CLUSTER=<cluster-name>`
 
 To clean up run `make destroy PLATFORM=aws-noasg CLUSTER=<cluster-name>`
-
-**TODO(alexsomesan)**
 
 ## Roadmap
 

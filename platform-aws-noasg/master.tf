@@ -1,17 +1,17 @@
 resource "aws_instance" "master-node" {
-  count                  = "${var.master_count}"
-  instance_type          = "${var.master_ec2_type}"
+  count                  = "${var.tectonic_master_count}"
+  instance_type          = "${var.tectonic_aws_master_ec2_type}"
   ami                    = "${data.aws_ami.coreos_ami.image_id}"
   key_name               = "${aws_key_pair.ssh-key.key_name}"
   vpc_security_group_ids = ["${aws_security_group.master_sec_group.id}", "${aws_security_group.cluster_default.id}"]
   source_dest_check      = false
   iam_instance_profile   = "${aws_iam_instance_profile.master_profile.id}"
   user_data              = "${ignition_config.master.rendered}"
-  subnet_id              = "${aws_subnet.master_subnet.*.id[count.index % var.az_count]}"
+  subnet_id              = "${aws_subnet.master_subnet.*.id[count.index % var.tectonic_aws_az_count]}"
 
   tags {
-    Name              = "${var.cluster_name}-master-${count.index}"
-    KubernetesCluster = "${var.cluster_name}"
+    Name              = "${var.tectonic_cluster_name}-master-${count.index}"
+    KubernetesCluster = "${var.tectonic_cluster_name}"
   }
 
   lifecycle {
@@ -23,8 +23,8 @@ resource "aws_security_group" "master_sec_group" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags {
-    Name = "${var.cluster_name}_master_sg"
-    KubernetesCluster = "${var.cluster_name}"
+    Name = "${var.tectonic_cluster_name}_master_sg"
+    KubernetesCluster = "${var.tectonic_cluster_name}"
   }
 
   ingress {
@@ -65,12 +65,12 @@ resource "aws_security_group" "master_sec_group" {
 }
 
 resource "aws_iam_instance_profile" "master_profile" {
-  name  = "${var.cluster_name}_master_profile"
+  name  = "${var.tectonic_cluster_name}_master_profile"
   roles = ["${aws_iam_role.master_role.name}"]
 }
 
 resource "aws_iam_role" "master_role" {
-  name = "${var.cluster_name}_master_role"
+  name = "${var.tectonic_cluster_name}_master_role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -91,7 +91,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "master_policy" {
-  name = "${var.cluster_name}_master_policy"
+  name = "${var.tectonic_cluster_name}_master_policy"
   role = "${aws_iam_role.master_role.id}"
 
   policy = <<EOF
@@ -127,7 +127,7 @@ EOF
 }
 
 resource "aws_elb_attachment" "api" {
-  count    = "${var.master_count}"
+  count    = "${var.tectonic_master_count}"
   elb      = "${aws_elb.api-external.id}"
   instance = "${aws_instance.master-node.*.id[count.index]}"
 }
