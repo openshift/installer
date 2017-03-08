@@ -25,13 +25,13 @@ variable "tectonic_kube_version" {
 // The amount of master nodes to be created.
 // Example: `1`
 variable "tectonic_master_count" {
-  type    = "string"
+  type = "string"
 }
 
 // The amount of worker nodes to be created.
 // Example: `3`
 variable "tectonic_worker_count" {
-  type    = "string"
+  type = "string"
 }
 
 // The amount of etcd nodes to be created.
@@ -44,14 +44,14 @@ variable "tectonic_etcd_count" {
 // The base DNS domain of the cluster.
 // Example: `azure.dev.coreos.systems`
 variable "tectonic_base_domain" {
-  type    = "string"
+  type = "string"
 }
 
 // The name of the cluster.
 // This will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.
 // Example: `demo`
 variable "tectonic_cluster_name" {
-  type    = "string"
+  type = "string"
 }
 
 // ID of existing VPC to build the cluster into.
