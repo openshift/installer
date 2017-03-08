@@ -54,38 +54,6 @@ variable "tectonic_cluster_name" {
   type = "string"
 }
 
-// ID of existing VPC to build the cluster into.
-// Example: `vpc-5c73a334`
-variable "tectonic_aws_external_vpc_id" {
-  type    = "string"
-  default = ""
-}
-
-// IP address range to use when creating the cluster VPC.
-// Example: `10.0.0.0/16`
-variable "tectonic_aws_vpc_cidr_block" {
-  type    = "string"
-  default = "10.0.0.0/16"
-}
-
-// Number of availability zones the cluster should span.
-// Example: `3`
-variable "tectonic_aws_az_count" {
-  type = "string"
-}
-
-// EC2 instance type to use for master nodes.
-// Example: `m4.large`
-variable "tectonic_aws_master_ec2_type" {
-  type = "string"
-}
-
-// EC2 instance type to use for worker nodes. 
-// Example: `m4.large`
-variable "tectonic_aws_worker_ec2_type" {
-  type = "string"
-}
-
 variable "tectonic_ssh_key" {
   type = "string"
 }
