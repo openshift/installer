@@ -19,7 +19,7 @@ resource "azurerm_virtual_machine" "etcd_node" {
 
   os_profile {
     computer_name  = "etcd"
-    admin_username = "${var.admin_username}"
+    admin_username = "core"
     admin_password = "microsoft123"
     custom_data    = "${base64encode(file("${path.module}/userdata.yml"))}"
   }
