@@ -12,7 +12,7 @@ This document gives an overview of the variables used in the different platforms
 | tectonic_aws_worker_ec2_type | EC2 instance type to use for worker nodes. Example: `m4.large` | - | yes |
 | tectonic_base_domain | The base DNS domain of the cluster. Example: `openstack.dev.coreos.systems` | - | yes |
 | tectonic_cluster_name | The name of the cluster. This will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console. Example: `demo` | - | yes |
-| tectonic_etcd_count | The amount of etcd nodes to be created. Example: `1` | - | yes |
+| tectonic_etcd_count | The amount of etcd nodes to be created. Example: `1` | `1` | no |
 | tectonic_kube_version | The hyperkube "quay.io/coreos/hyperkube" image version. | - | yes |
 | tectonic_master_count | The amount of master nodes to be created. Example: `1` | - | yes |
 | tectonic_openstack_external_gateway_id | The ID of the network to be used as the external internet gateway as given in `openstack network list`. | `6d6357ac-0f70-4afa-8bd7-c274cc4ea235` | no |

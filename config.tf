@@ -40,6 +40,7 @@ variable "tectonic_worker_count" {
 // Example: `1`
 variable "tectonic_etcd_count" {
   type    = "string"
+  default = "1"
 }
 
 // The base DNS domain of the cluster.
