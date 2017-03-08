@@ -1,7 +1,5 @@
 # Tectonic Platform SDK
 
-![Lifecycle Prototype](https://img.shields.io/badge/Lifecycle-Prototype-f4cccc.svg)
-
 The Tectonic Platform SDK provides pre-built recipes to help users create the underlying compute infrastructure for a [Self-Hosted Kubernetes Cluster](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/self-hosted-kubernetes.md) ([vid](https://coreos.com/blog/self-hosted-kubernetes.html)) using [Hashicorp Terraform](https://terraform.io), [bootkube](https://github.com/kubernetes-incubator/bootkube), and supporting tooling.
 
 The goal is to provide well-tested defaults that can be customized for various environments and plugged into other systems.
