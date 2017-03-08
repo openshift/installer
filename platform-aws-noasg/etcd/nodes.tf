@@ -8,6 +8,7 @@ resource "aws_instance" "etcd_node" {
   vpc_security_group_ids = ["${aws_security_group.etcd_sec_group.id}"]
 
   tags {
-    Name = "${var.cluster_name}-etcd-${count.index}"
+    Name = "${var.tectonic_cluster_name}-etcd-${count.index}"
+    KubernetesCluster = "${var.tectonic_cluster_name}"
   }
 }

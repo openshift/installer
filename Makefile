@@ -22,8 +22,17 @@ $(BUILD_DIR)/assets: $(BUILD_DIR)/$(ASSETS)
 $(BUILD_DIR)/.terraform:
 	cd $(BUILD_DIR) && terraform get $(TOP_DIR)/platform-$(PLATFORM)
 
+plan: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
+	cd $(BUILD_DIR) && terraform plan --var-file=config.tfvars $(TOP_DIR)/platform-$(PLATFORM)
+
 apply: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
 	cd $(BUILD_DIR) && terraform apply --var-file=config.tfvars $(TOP_DIR)/platform-$(PLATFORM)
+
+# You need to have https://github.com/segmentio/terraform-docs installed
+Documentation/%.md: *.tf
+	echo '# Terraform variables' >$@
+	echo 'This document gives an overview of the variables used in the different platforms of the Tectonic SDK.' >>$@
+	terraform-docs markdown . >>$@
 
 clean: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars
 	cd $(BUILD_DIR) && terraform destroy --var-file=config.tfvars $(TOP_DIR)/platform-$(PLATFORM)

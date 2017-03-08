@@ -1,8 +1,8 @@
 resource "openstack_compute_instance_v2" "etcd_node" {
-  count           = "${var.etcd_count}"
-  name            = "${var.cluster_name}_etcd_node_${count.index}"
-  image_id        = "${var.image_id}"
-  flavor_id       = "${var.flavor_id}"
+  count           = "${var.tectonic_etcd_count}"
+  name            = "${var.tectonic_cluster_name}_etcd_node_${count.index}"
+  image_id        = "${var.tectonic_openstack_image_id}"
+  flavor_id       = "${var.tectonic_openstack_flavor_id}"
   key_pair        = "${openstack_compute_keypair_v2.k8s_keypair.name}"
   security_groups = ["${openstack_compute_secgroup_v2.etcd_group.name}"]
 
@@ -19,7 +19,7 @@ resource "openstack_compute_instance_v2" "etcd_node" {
 }
 
 resource "openstack_compute_secgroup_v2" "etcd_group" {
-  name        = "${var.cluster_name}_etcd_group"
+  name        = "${var.tectonic_cluster_name}_etcd_group"
   description = "security group for etcd: SSH and etcd client / cluster"
 
   rule {

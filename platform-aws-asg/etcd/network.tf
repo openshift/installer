@@ -2,7 +2,8 @@ resource "aws_security_group" "etcd_sec_group" {
   vpc_id = "${var.vpc_id}"
 
   tags {
-    Name = "${var.cluster_name}_etcd_sg"
+    Name = "${var.tectonic_cluster_name}_etcd_sg"
+    KubernetesCluster = "${var.tectonic_cluster_name}"
   }
 
   ingress {

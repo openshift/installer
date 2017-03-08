@@ -1,8 +1,8 @@
 resource "openstack_compute_instance_v2" "master_node" {
-  count           = "${var.master_count}"
-  name            = "${var.cluster_name}_master_node_${count.index}"
-  image_id        = "${var.image_id}"
-  flavor_id       = "${var.flavor_id}"
+  count           = "${var.tectonic_master_count}"
+  name            = "${var.tectonic_cluster_name}_master_node_${count.index}"
+  image_id        = "${var.tectonic_openstack_image_id}"
+  flavor_id       = "${var.tectonic_openstack_flavor_id}"
   key_pair        = "${openstack_compute_keypair_v2.k8s_keypair.name}"
   security_groups = ["${openstack_compute_secgroup_v2.k8s_master_group.name}"]
 
@@ -15,7 +15,7 @@ resource "openstack_compute_instance_v2" "master_node" {
 }
 
 resource "openstack_compute_secgroup_v2" "k8s_master_group" {
-  name        = "${var.cluster_name}_k8s_master_group"
+  name        = "${var.tectonic_cluster_name}_k8s_master_group"
   description = "security group for k8s masters: SSH and https"
 
   rule {
