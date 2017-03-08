@@ -1,12 +1,12 @@
 resource "ignition_file" "worker_hostname" {
-  count      = "${var.worker_count}"
+  count      = "${var.tectonic_worker_count}"
   path       = "/etc/hostname"
   mode       = 0644
   uid        = 0
   filesystem = "root"
 
   content {
-    content = "${var.cluster_name}-worker-${count.index}"
+    content = "${vartectonic_cluster_name}-worker-${count.index}"
   }
 }
 
@@ -62,7 +62,7 @@ resource "ignition_file" "worker_resolv_conf" {
 
   content {
     content = <<EOF
-search ${var.base_domain}
+search ${var.tectonic_base_domain}
 nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
@@ -118,7 +118,7 @@ Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
   --mount volume=var-lib-cni,target=/var/lib/cni \
   --volume var-log,kind=host,source=/var/log \
   --mount volume=var-log,target=/var/log"
-Environment="KUBELET_IMAGE_URL=quay.io/coreos/hyperkube" "KUBELET_IMAGE_TAG=${var.tectonic_version}"
+Environment="KUBELET_IMAGE_URL=quay.io/coreos/hyperkube" "KUBELET_IMAGE_TAG=${var.tectonic_kube_version}"
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
 ExecStartPre=/bin/mkdir -p /srv/kubernetes/manifests
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets
@@ -147,7 +147,7 @@ EOF
 }
 
 resource "ignition_config" "worker" {
-  count = "${var.worker_count}"
+  count = "${var.tectonic_worker_count}"
 
   users = [
     "${ignition_user.core.id}",
