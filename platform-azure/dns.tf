@@ -1,5 +1,5 @@
 resource "azurerm_dns_zone" "tectonic_azure_dns_zone" {
-   name = ""${var.tectonic_base_domain}"
+   name = "${var.tectonic_base_domain}"
    resource_group_name = "${azurerm_resource_group.test.name}"
 }
 
