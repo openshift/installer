@@ -1,0 +1,23 @@
+{
+  "ignition": {
+    "version": "2.0.0",
+    "config": {}
+  },
+  "storage": {},
+  "systemd": {
+    "units": [
+      {
+        "name": "etcd2.service",
+        "enable": true,
+        "dropins": [
+          {
+            "name": "metadata.conf",
+            "contents": "[Unit]\nRequires=coreos-metadata.service\nAfter=coreos-metadata.service\n\n[Service]\nEnvironmentFile=/run/metadata/coreos\nExecStart=\nExecStart=/usr/bin/etcd2 \\n    --advertise-client-urls=http://$private_ipv4 :2379 \\n    --initial-advertise-peer-urls=http://$private_ipv4:2380 \\n    --listen-client-urls=http://0.0.0.0:2379 \\n    --listen-peer-urls=http://$private_ipv4:2380 \\n    --discovery=https://discovery.etcd.io/\u003ctoken\u003e"
+          }
+        ]
+      }
+    ]
+  },
+  "networkd": {},
+  "passwd": {}
+}
