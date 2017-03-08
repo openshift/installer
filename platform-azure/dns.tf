@@ -1,45 +1,51 @@
-data "aws_route53_zone" "tectonic" {
-  name = "${var.tectonic_base_domain}"
+resource "azurerm_dns_zone" "tectonic_azure_dns_zone" {
+   name = ""${var.tectonic_base_domain}"
+   resource_group_name = "${azurerm_resource_group.test.name}"
 }
 
-resource "aws_route53_record" "tectonic-api" {
-  zone_id = "${data.aws_route53_zone.tectonic.zone_id}"
+resource "azurerm_dns_a_record" "tectonic-api" {
+  resource_group_name = "tectonic_azure_cluster_resource_group"
+  zone_name = "${azurerm_dns_zone.tectonic_azure_dns_zone.name}"
+
   name    = "${var.tectonic_cluster_name}-k8s"
-  type    = "A"
   ttl     = "60"
   records = ["${openstack_compute_instance_v2.master_node.*.access_ip_v4}"]
 }
 
-resource "aws_route53_record" "tectonic-console" {
-  zone_id = "${data.aws_route53_zone.tectonic.zone_id}"
+resource "azurerm_dns_a_recard" "tectonic-console" {
+  resource_group_name = "tectonic_azure_cluster_resource_group"
+  zone_name = "${azurerm_dns_zone.tectonic_azure_dns_zone.name}"
+
   name    = "${var.tectonic_cluster_name}"
-  type    = "A"
   ttl     = "60"
   records = ["${openstack_compute_instance_v2.worker_node.*.access_ip_v4}"]
 }
 
-resource "aws_route53_record" "etcd" {
-  zone_id = "${data.aws_route53_zone.tectonic.zone_id}"
+resource "azurerm_dns_a_recard" "etcd" {
+  resource_group_name = "tectonic_azure_cluster_resource_group"
+  zone_name = "${azurerm_dns_zone.tectonic_azure_dns_zone.name}"
+
   name    = "${var.tectonic_cluster_name}-etc"
-  type    = "A"
   ttl     = "60"
   records = ["${openstack_compute_instance_v2.etcd_node.*.access_ip_v4}"]
 }
 
-resource "aws_route53_record" "master_nodes" {
+resource "azurerm_dns_a_recard" "master_nodes" {
+  resource_group_name = "tectonic_azure_cluster_resource_group"
+  zone_name = "${azurerm_dns_zone.tectonic_azure_dns_zone.name}"
+
   count   = "${var.tectonic_master_count}"
-  zone_id = "${data.aws_route53_zone.tectonic.zone_id}"
   name    = "${var.tectonic_cluster_name}-master-${count.index}"
-  type    = "A"
   ttl     = "60"
   records = ["${openstack_compute_instance_v2.master_node.*.access_ip_v4[count.index]}"]
 }
 
-resource "aws_route53_record" "worker_nodes" {
+resource "azurerm_dns_a_recard" "worker_nodes" {
+  resource_group_name = "tectonic_azure_cluster_resource_group"
+  zone_name = "${azurerm_dns_zone.tectonic_azure_dns_zone.name}"
+
   count   = "${var.tectonic_worker_count}"
-  zone_id = "${data.aws_route53_zone.tectonic.zone_id}"
   name    = "${var.tectonic_cluster_name}-worker-${count.index}"
-  type    = "A"
   ttl     = "60"
   records = ["${openstack_compute_instance_v2.worker_node.*.access_ip_v4[count.index]}"]
 }
