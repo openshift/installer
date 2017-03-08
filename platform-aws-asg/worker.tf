@@ -1,8 +1,8 @@
 resource "aws_autoscaling_group" "workers" {
-  name                 = "${var.cluster_name}-worker"
-  desired_capacity     = "${var.worker_count}"
-  max_size             = "${var.worker_count * 3}"
-  min_size             = "${var.worker_count}"
+  name                 = "${var.tectonic_cluster_name}-worker"
+  desired_capacity     = "${var.tectonic_worker_count}"
+  max_size             = "${var.tectonic_worker_count * 3}"
+  min_size             = "${var.tectonic_worker_count}"
   launch_configuration = "${aws_launch_configuration.worker_conf.id}"
   vpc_zone_identifier  = ["${aws_subnet.worker_subnet.*.id}"]
 
@@ -10,13 +10,13 @@ resource "aws_autoscaling_group" "workers" {
 
   tag {
     key                 = "Name"
-    value               = "${var.cluster_name}-worker"
+    value               = "${var.tectonic_cluster_name}-worker"
     propagate_at_launch = true
   }
 
   tag {
     key                 = "KubernetesCluster"
-    value               = "${var.cluster_name}"
+    value               = "${var.tectonic_cluster_name}"
     propagate_at_launch = true
   }
 
@@ -26,9 +26,9 @@ resource "aws_autoscaling_group" "workers" {
 }
 
 resource "aws_launch_configuration" "worker_conf" {
-  instance_type        = "${var.worker_ec2_type}"
+  instance_type        = "${var.tectonic_aws_worker_ec2_type}"
   image_id             = "${data.aws_ami.coreos_ami.image_id}"
-  name_prefix          = "${var.cluster_name}-worker-"
+  name_prefix          = "${var.tectonic_cluster_name}-worker-"
   key_name             = "${aws_key_pair.ssh-key.key_name}"
   security_groups      = ["${aws_security_group.worker_sec_group.id}", "${aws_security_group.cluster_default.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.worker_profile.arn}"
@@ -44,8 +44,8 @@ resource "aws_security_group" "worker_sec_group" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags {
-    Name = "${var.cluster_name}_worker_sg"
-    KubernetesCluster = "${var.cluster_name}"
+    Name = "${var.tectonic_cluster_name}_worker_sg"
+    KubernetesCluster = "${var.tectonic_cluster_name}"
   }
 
   ingress {
@@ -100,12 +100,12 @@ resource "aws_security_group" "worker_sec_group" {
 }
 
 resource "aws_iam_instance_profile" "worker_profile" {
-  name  = "${var.cluster_name}-worker-profile"
+  name  = "${var.tectonic_cluster_name}-worker-profile"
   roles = ["${aws_iam_role.worker_role.name}"]
 }
 
 resource "aws_iam_role" "worker_role" {
-  name = "${var.cluster_name}-worker-role"
+  name = "${var.tectonic_cluster_name}-worker-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -126,7 +126,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "worker_policy" {
-  name = "${var.cluster_name}_worker_policy"
+  name = "${var.tectonic_cluster_name}_worker_policy"
   role = "${aws_iam_role.worker_role.id}"
 
   policy = <<EOF

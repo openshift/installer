@@ -1,15 +1,15 @@
 resource "aws_route53_zone" "tectonic-int" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
-  name   = "${var.base_domain}"
+  name   = "${var.tectonic_base_domain}"
 }
 
 data "aws_route53_zone" "tectonic-ext" {
-  name = "${var.base_domain}"
+  name = "${var.tectonic_base_domain}"
 }
 
 resource "aws_route53_record" "api-internal" {
   zone_id = "${aws_route53_zone.tectonic-int.zone_id}"
-  name    = "${var.cluster_name}-k8s.${var.base_domain}"
+  name    = "${var.tectonic_cluster_name}-k8s.${var.tectonic_base_domain}"
   type    = "A"
 
   alias {
@@ -21,7 +21,7 @@ resource "aws_route53_record" "api-internal" {
 
 resource "aws_route53_record" "api-external" {
   zone_id = "${data.aws_route53_zone.tectonic-ext.zone_id}"
-  name    = "${var.cluster_name}-k8s.${var.base_domain}"
+  name    = "${var.tectonic_cluster_name}-k8s.${var.tectonic_base_domain}"
   type    = "A"
 
   alias {
@@ -33,7 +33,7 @@ resource "aws_route53_record" "api-external" {
 
 resource "aws_route53_record" "ingress-public" {
   zone_id = "${data.aws_route53_zone.tectonic-ext.zone_id}"
-  name    = "${var.cluster_name}.${var.base_domain}"
+  name    = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}"
   type    = "A"
 
   alias {
@@ -45,7 +45,7 @@ resource "aws_route53_record" "ingress-public" {
 
 resource "aws_route53_record" "ingress-private" {
   zone_id = "${aws_route53_zone.tectonic-int.zone_id}"
-  name    = "${var.cluster_name}.${var.base_domain}"
+  name    = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}"
   type    = "A"
 
   alias {

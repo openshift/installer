@@ -1,7 +1,7 @@
 resource "aws_autoscaling_group" "masters" {
-  name                 = "${var.cluster_name}-masters"
-  desired_capacity     = "${var.master_count}"
-  max_size             = "${var.master_count * 3}"
+  name                 = "${var.tectonic_cluster_name}-masters"
+  desired_capacity     = "${var.tectonic_master_count}"
+  max_size             = "${var.tectonic_master_count * 3}"
   min_size             = "1"
   launch_configuration = "${aws_launch_configuration.master_conf.id}"
   vpc_zone_identifier  = ["${aws_subnet.master_subnet.*.id}"]
@@ -10,13 +10,13 @@ resource "aws_autoscaling_group" "masters" {
 
   tag {
     key                 = "Name"
-    value               = "${var.cluster_name}-master"
+    value               = "${var.tectonic_cluster_name}-master"
     propagate_at_launch = true
   }
 
   tag {
     key                 = "KubernetesCluster"
-    value               = "${var.cluster_name}"
+    value               = "${var.tectonic_cluster_name}"
     propagate_at_launch = true
   }
 
@@ -26,9 +26,9 @@ resource "aws_autoscaling_group" "masters" {
 }
 
 resource "aws_launch_configuration" "master_conf" {
-  instance_type        = "${var.master_ec2_type}"
+  instance_type        = "${var.tectonic_aws_master_ec2_type}"
   image_id             = "${data.aws_ami.coreos_ami.image_id}"
-  name_prefix          = "${var.cluster_name}-master-"
+  name_prefix          = "${var.tectonic_cluster_name}-master-"
   key_name             = "${aws_key_pair.ssh-key.key_name}"
   security_groups      = ["${aws_security_group.master_sec_group.id}", "${aws_security_group.cluster_default.id}"]
   iam_instance_profile = "${aws_iam_instance_profile.master_profile.arn}"
@@ -43,8 +43,8 @@ resource "aws_security_group" "master_sec_group" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags {
-    Name = "${var.cluster_name}_master_sg"
-    KubernetesCluster = "${var.cluster_name}"
+    Name = "${var.tectonic_cluster_name}_master_sg"
+    KubernetesCluster = "${var.tectonic_cluster_name}"
   }
 
   ingress {
@@ -85,12 +85,12 @@ resource "aws_security_group" "master_sec_group" {
 }
 
 resource "aws_iam_instance_profile" "master_profile" {
-  name  = "${var.cluster_name}-master-profile"
+  name  = "${var.tectonic_cluster_name}-master-profile"
   roles = ["${aws_iam_role.master_role.name}"]
 }
 
 resource "aws_iam_role" "master_role" {
-  name = "${var.cluster_name}-master-role"
+  name = "${var.tectonic_cluster_name}-master-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -111,7 +111,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "master_policy" {
-  name = "${var.cluster_name}_master_policy"
+  name = "${var.tectonic_cluster_name}_master_policy"
   role = "${aws_iam_role.master_role.id}"
 
   policy = <<EOF

@@ -1,8 +1,8 @@
-variable "base_domain" {
+variable "tectonic_base_domain" {
   type = "string"
 }
 
-variable "cluster_name" {
+variable "tectonic_cluster_name" {
   type = "string"
 }
 
