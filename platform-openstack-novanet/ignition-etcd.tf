@@ -30,7 +30,7 @@ EOF
 }
 
 resource "ignition_config" "etcd" {
-  count    = "${var.etcd_count}"
+  count    = "${var.tectonic_etcd_count}"
 
   users = [
     "${ignition_user.core.id}",

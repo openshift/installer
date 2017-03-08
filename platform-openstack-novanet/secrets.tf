@@ -3,7 +3,7 @@ resource "tls_private_key" "core" {
 }
 
 resource "openstack_compute_keypair_v2" "k8s_keypair" {
-  name       = "${var.cluster_name}_keypair"
+  name       = "${var.tectonic_cluster_name}_keypair"
   public_key = "${tls_private_key.core.public_key_openssh}"
 }
 
