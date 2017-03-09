@@ -5,9 +5,10 @@ resource "azurerm_network_interface" "etcd_nic" {
   resource_group_name       = "${var.tectonic_azure_resource_group_name}"
 
   ip_configuration {
-    name                          = "testconfiguration1"
-    subnet_id                     = "${azurerm_subnet.etcd_subnet.id}"
-    private_ip_address_allocation = "Dynamic"
+    name                                    = "tectonic_etcd_configuration"
+    subnet_id                               = "${azurerm_subnet.etcd_subnet.id}"
+    private_ip_address_allocation           = "Dynamic"
+    load_balancer_backend_address_pools_ids = ["${azurerm_lb_backend_address_pool.etcd-lb.id}"]
   }
 }
 
