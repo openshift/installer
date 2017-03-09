@@ -2,7 +2,7 @@
 # Add to availabilityset
 
 resource "azurerm_subnet" "tectonic_subnet" {
-  name                 = "${var.cluster_name}_master_subnet"
+  name                 = "${var.cluster_name}_worker_subnet"
   resource_group_name  = "${var.resource_group_name}"
   virtual_network_name = "${var.virtual_network}"
   address_prefix       = "10.0.3.0/24"
