@@ -11,16 +11,6 @@ resource "azurerm_subnet" "tectonic_subnet" {
   address_prefix       = "10.0.2.0/24"
 }
 
-resource "azurerm_public_ip" "tectonic_master_ip" {
-  name                         = "tectonic_master_ip"
-  location                     = "${var.location}"
-  resource_group_name          = "${var.resource_group_name}"
-  public_ip_address_allocation = "static"
-
-  tags {
-    environment = "staging"
-  }
-}
 
 # create network interface
 resource "azurerm_network_interface" "tectonic_nic" {
