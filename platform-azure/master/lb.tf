@@ -10,6 +10,12 @@ resource "azurerm_lb" "tectonic_api_lb" {
   }
 }
 
+resource "azurerm_lb_backend_address_pool" "k8-lb" {
+  name                = "k8-lb-pool"
+  resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
+  loadbalancer_id     = "${azurerm_lb.tectonic_api_lb.id}"
+}
+
 resource "azurerm_lb_rule" "k8-lb" {
   name                    = "k8-lb-rule-443-443"
   resource_group_name     = "${var.resource_group_name}"
@@ -57,5 +63,12 @@ resource "azurerm_lb_rule" "ssh-lb" {
   frontend_port                  = 22
   backend_port                   = 22
   frontend_ip_configuration_name = "default"
+}
 
+resource "azurerm_lb_probe" "ssh-lb" {
+  name                = "ssh-lb-22-up"
+  loadbalancer_id     = "${azurerm_lb.tectonic_api_lb.id}"
+  resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
+  protocol            = "tcp"
+  port                = 22
 }

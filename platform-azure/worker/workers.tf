@@ -1,14 +1,57 @@
-resource "openstack_compute_instance_v2" "worker_node" {
-  count     = "${var.tectonic_worker_count}"
-  name      = "${var.tectonic_cluster_name}_worker_node_${count.index}"
-  image_id  = "${var.tectonic_openstack_image_id}"
-  flavor_id = "${var.tectonic_openstack_flavor_id}"
-  key_pair  = "${openstack_compute_keypair_v2.k8s_keypair.name}"
+# TODO
+# Add to availabilityset
 
-  metadata {
-    role = "worker"
-  }
+# create network interface
+resource "azurerm_network_interface" "tectonic_agent_nic" {
+    name = "tectonic_agent_nic-${count.index}"
+    location = "${var.tectonic_azure_location}"
+    resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
 
-  user_data    = "${ignition_config.worker.*.rendered[count.index]}"
-  config_drive = false
+    ip_configuration {
+        name = "tectonic_configuration"
+        subnet_id = "${azurerm_subnet.tectonic_subnet.id}"
+        private_ip_address_allocation = "dynamic"
+        load_balancer_backend_address_pools_ids = ["${azurerm_lb_backend_address_pool.k8-lb.id}"]
+    }
+}
+
+resource "azurerm_virtual_machine" "tectonic_worker_vm" {
+    name = "tectonic_worker_vm-${count.index}"
+    location = "${var.tectonic_azure_location}"
+    resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
+    network_interface_ids = ["${azurerm_network_interface.tectonic_agent_nic.id}"]
+    vm_size = "${var.tectonic_azure_vm_size}"
+
+    storage_image_reference {
+        publisher = "CoreOS"
+        offer = "CoreOS"
+        sku = "Stable"
+        version = "latest"
+    }
+
+    storage_os_disk {
+        name = "${azurerm_virtual_machine.tectonic_worker_vm.name}-osdisk"
+        vhd_uri = "${azurerm_storage_account.tectonic_storage.primary_blob_endpoint}${azurerm_storage_container.tectonic_storage_container.name}/${azurerm_virtual_machine.tectonic_worker_vm.name}-osdisk.vhd"
+        caching = "ReadWrite"
+        create_option = "FromImage"
+    }
+
+    os_profile {
+        computer_name = "tectonic-worker-${count.index}"
+        admin_username = "core"
+        admin_password = ""
+        custom_data = "${base64encode("${ignition_config.worker.*.rendered[count.index]}")}"
+    }
+
+    os_profile_linux_config {
+        disable_password_authentication = true
+        ssh_keys {
+            path = "/home/core/.ssh/authorized_keys"
+            key_data = "${file(var.tectonic_ssh_key)}"
+        }
+    }
+
+    tags {
+        environment = "staging"
+    }
 }

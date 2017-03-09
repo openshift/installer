@@ -43,3 +43,14 @@ resource "azurerm_lb_backend_address_pool" "etcd-lb" {
   loadbalancer_id     = "${azurerm_lb.tectonic_etcd_lb.id}"
 }
 
+<<<<<<< HEAD
+=======
+resource "azurerm_dns_a_record" "tectonic-etcd" {
+  resource_group_name = "tectonic-dns-group"
+  zone_name           = "${var.tectonic_azure_dns_zone_name}"
+  name                = "etcd-${var.tectonic_cluster_name}"
+  ttl                 = "60"
+  depends_on          = ["azurerm_public_ip.etcd_publicip"]
+  records             = ["${azurerm_public_ip.etcd_publicip.ip_address}"]
+}
+>>>>>>> c2d1f9dbc764efc29330116a743161e4a5a7fb71
