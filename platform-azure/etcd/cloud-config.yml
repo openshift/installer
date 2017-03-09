@@ -1,0 +1,28 @@
+# #cloud-config
+
+# hostname: etcd-1
+
+# coreos:
+#   update:
+#     reboot-strategy: "etcd-lock"
+#   units:
+#   - name: "etcd2.service"
+#     enable: false
+#   - name: "etcd.service"
+#     enable: false
+#   - name: "etcd-member.service"
+#     enable: true
+#     command: "start"
+#     drop-ins:
+#     - name: "40-etcd-cluster.conf"
+#       content: |
+#         [Service]
+#         Environment="ETCD_IMAGE_TAG=v3.1.1"
+#         ExecStart=
+#         ExecStart=/usr/lib/coreos/etcd-wrapper \
+#         --name=etcd \
+#         --discovery-srv=${etcd_domain} \
+#         --advertise-client-urls=http://etcd-1:2379 \
+#         --initial-advertise-peer-urls=http://etcd-1:2380 \
+#         --listen-client-urls=http://0.0.0.0:2379 \
+#         --listen-peer-urls=http://$private_ipv4:2380

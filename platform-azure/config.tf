@@ -8,12 +8,13 @@ variable "tectonic_azure_vm_size" {
 // The image ID as given in `azure image list`.
 // Specifies the OS image of the VM.
 variable "tectonic_azure_image_reference" {
-  type    = "map"
+  type = "map"
+
   default = {
-     publisher = "CoreOS"
-     offer     = "CoreOS"
-     sku       = "Stable"
-     version   = "latest"
+    publisher = "CoreOS"
+    offer     = "CoreOS"
+    sku       = "Stable"
+    version   = "latest"
   }
 }
 
@@ -55,5 +56,9 @@ variable "tectonic_cluster_name" {
 }
 
 variable "tectonic_ssh_key" {
+  type = "string"
+}
+
+variable "tectonic_azure_location" {
   type = "string"
 }
