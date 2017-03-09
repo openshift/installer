@@ -13,19 +13,15 @@ resource "azurerm_resource_group" "tectonic_azure_cluster_resource_group" {
    name = "tectonic-cluster-${var.tectonic_cluster_name}-group"
 }
 
-resource "azurerm_resource_group" "tectonic_azure_dns_resource_group" {
-   name = "${var.tectonic_azure_dns_resource_group}"
-   location = "eastus"
-}
-
 //module "etcd" {
 //  source = "./etcd"
 //}
 
 module "master" {
   source = "./master"
+
   location = "${var.tectonic_azure_location}"
-  resource_group_name = "${azurerm_resource_group.tectonic_azure_dns_resource_group.name}"
+  resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
   image_reference = "${var.tectonic_azure_image_reference}"
   vm_size = "${var.tectonic_azure_vm_size}"
 
@@ -37,15 +33,17 @@ module "master" {
   ssh_key = "${var.tectonic_ssh_key}"
 }
 
-//resource "azurerm_dns_zone" "tectonic_azure_dns_zone" {
-//   name = "${var.tectonic_base_domain}"
-//   location = "${var.tectonic_region}"
-//}
+module "dns" {
+  source = "./dns"
 
-//module "dns" {
-//  master_ip_addresses  = "${module.master.ip_addresses}"
+  master_ip_addresses  = "${module.master.ip_address}"
+
+  base_domain = "${var.tectonic_base_domain}"
+  cluster_name = "${var.tectonic_cluster_name}"
+
+  location = "${var.tectonic_azure_location}"
+  resource_group_name = "${var.tectonic_azure_dns_resource_group}"
 
 // TODO etcd list
-// TODO master list
 // TODO worker list
-//}
+}
