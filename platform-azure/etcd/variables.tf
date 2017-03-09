@@ -37,3 +37,7 @@ variable "cluster_name" {
 variable "ssh_key" {
   type = "string"
 }
+
+variable "virtual_network" {
+  type = "string"
+}

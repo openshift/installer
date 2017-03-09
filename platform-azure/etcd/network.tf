@@ -7,7 +7,7 @@ resource "azurerm_network_interface" "etcd_nic" {
   ip_configuration {
     name                                    = "tectonic_etcd_configuration"
     subnet_id                               = "${azurerm_subnet.etcd_subnet.id}"
-    private_ip_address_allocation           = "Dynamic"
+    private_ip_address_allocation           = "dynamic"
     load_balancer_backend_address_pools_ids = ["${azurerm_lb_backend_address_pool.etcd-lb.id}"]
   }
 }
@@ -15,15 +15,8 @@ resource "azurerm_network_interface" "etcd_nic" {
 resource "azurerm_subnet" "etcd_subnet" {
   name                 = "${var.cluster_name}_etcd_subnet"
   resource_group_name  = "${var.resource_group_name}"
-  virtual_network_name = "${azurerm_virtual_network.etcd_vnet.name}"
-  address_prefix       = "10.0.2.0/24"
-}
-
-resource "azurerm_virtual_network" "etcd_vnet" {
-  name                = "${var.cluster_name}_etcd_vnet"
-  address_space       = ["10.0.0.0/16"]
-  location            = "${var.location}"
-  resource_group_name = "${var.resource_group_name}"
+  virtual_network_name = "${var.virtual_network}"
+  address_prefix       = "10.0.1.0/24"
 }
 
 resource "azurerm_network_security_group" "etcd_group" {

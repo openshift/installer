@@ -1,12 +1,12 @@
 resource "ignition_file" "worker_hostname" {
-  count      = "${var.tectonic_worker_count}"
+  count      = "${var.worker_count}"
   path       = "/etc/hostname"
   mode       = 0644
   uid        = 0
   filesystem = "root"
 
   content {
-    content = "${vartectonic_cluster_name}-worker-${count.index}"
+    content = "${var.cluster_name}-worker-${count.index}"
   }
 }
 
@@ -62,7 +62,7 @@ resource "ignition_file" "worker_resolv_conf" {
 
   content {
     content = <<EOF
-search ${var.tectonic_base_domain}
+search ${var.base_domain}
 nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
@@ -97,7 +97,7 @@ Environment="ETCD_IMAGE_TAG=v3.1.0"
 ExecStart=
 ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
       --listen-addr=127.0.0.1:2379 \
-      --endpoints=${aws_route53_record.etcd.fqdn}:2379
+      --endpoints=${var.cluster_name}-etcd.${var.base_domain}:2379
 EOF
   }
 }
@@ -118,7 +118,7 @@ Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
   --mount volume=var-lib-cni,target=/var/lib/cni \
   --volume var-log,kind=host,source=/var/log \
   --mount volume=var-log,target=/var/log"
-Environment="KUBELET_IMAGE_URL=quay.io/coreos/hyperkube" "KUBELET_IMAGE_TAG=${var.tectonic_kube_version}"
+Environment="KUBELET_IMAGE_URL=quay.io/coreos/hyperkube" "KUBELET_IMAGE_TAG=${var.kube_version}"
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
 ExecStartPre=/bin/mkdir -p /srv/kubernetes/manifests
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets
@@ -147,7 +147,7 @@ EOF
 }
 
 resource "ignition_config" "worker" {
-  count = "${var.tectonic_worker_count}"
+  count = "${var.worker_count}"
 
   users = [
     "${ignition_user.core.id}",
@@ -166,5 +166,13 @@ resource "ignition_config" "worker" {
     "${ignition_systemd_unit.worker_locksmithd.id}",
     "${ignition_systemd_unit.worker_etcd-member.id}",
     "${ignition_systemd_unit.worker_kubelet.id}",
+  ]
+}
+
+resource "ignition_user" "core" {
+  name = "core"
+
+  ssh_authorized_keys = [
+    "${file(var.ssh_key)}",
   ]
 }

@@ -14,7 +14,7 @@ resource "azurerm_public_ip" "etcd_publicip" {
   name                         = "${var.cluster_name}_etcd_publicip"
   location                     = "${var.location}"
   resource_group_name          = "${var.resource_group_name}"
-  public_ip_address_allocation = "dynamic"
+  public_ip_address_allocation = "static"
 }
 
 resource "azurerm_lb_rule" "etcd-lb" {
