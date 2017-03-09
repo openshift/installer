@@ -1,4 +1,4 @@
-variable "tectonic_azure_location" {
+variable "tectonic_azure_region" {
   type = "string"
 }
 

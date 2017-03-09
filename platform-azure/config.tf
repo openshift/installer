@@ -24,9 +24,8 @@ variable "tectonic_azure_image_reference" {
 }
 
 // The hyperkube "quay.io/coreos/hyperkube" image version.
-variable "tectonic_kube_version" {
+variable "tectonic_kubelet_version" {
   type = "string"
-  default = "v1.5.3_coreos.0"
 }
 
 // The amount of master nodes to be created.

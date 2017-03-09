@@ -16,7 +16,7 @@ resource "ignition_file" "master_kubelet_env" {
   filesystem = "root"
 
   content {
-    content = "KUBELET_IMAGE_URL=quay.io/coreos/hyperkube KUBELET_IMAGE_TAG=${var.tectonic_kube_version}"
+    content = "KUBELET_IMAGE_URL=quay.io/coreos/hyperkube KUBELET_IMAGE_TAG=${var.kubelet_version}"
   }
 }
 
@@ -83,7 +83,7 @@ resource "ignition_file" "master_resolv_conf" {
 
   content {
     content = <<EOF
-search ${var.tectonic_base_domain}
+search ${var.base_domain}
 nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
@@ -91,14 +91,14 @@ EOF
 }
 
 resource "ignition_file" "master_hostname" {
-  count      = "${var.tectonic_master_count}"
+  count      = "${var.count}"
   path       = "/etc/hostname"
   mode       = 0644
   uid        = 0
   filesystem = "root"
 
   content {
-    content = "${var.tectonic_cluster_name}-master-${count.index}"
+    content = "${var.cluster_name}-master-${count.index}"
   }
 }
 
@@ -167,7 +167,7 @@ Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
   --mount volume=var-lib-cni,target=/var/lib/cni \
   --volume var-log,kind=host,source=/var/log \
   --mount volume=var-log,target=/var/log"
-Environment="KUBELET_IMAGE_URL=quay.io/coreos/hyperkube" "KUBELET_IMAGE_TAG=${var.tectonic_kube_version}"
+Environment="KUBELET_IMAGE_URL=quay.io/coreos/hyperkube" "KUBELET_IMAGE_TAG=${var.kubelet_version}"
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
 ExecStartPre=/bin/mkdir -p /srv/kubernetes/manifests
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets
@@ -197,10 +197,10 @@ EOF
 }
 
 resource "ignition_config" "master" {
-  count = "${var.tectonic_master_count}"
+  count = "${var.count}"
 
   users = [
-    "${ignition_user.core.id}",
+    "${var.ignition_user_id}",
   ]
 
   files = [
