@@ -20,18 +20,21 @@ variable "tectonic_azure_image_reference" {
 // The hyperkube "quay.io/coreos/hyperkube" image version.
 variable "tectonic_kube_version" {
   type = "string"
+  default = "v1.5.3_coreos.0"
 }
 
 // The amount of master nodes to be created.
 // Example: `1`
 variable "tectonic_master_count" {
   type = "string"
+  default = "1"
 }
 
 // The amount of worker nodes to be created.
 // Example: `3`
 variable "tectonic_worker_count" {
   type = "string"
+  default = "1"
 }
 
 // The amount of etcd nodes to be created.
@@ -45,6 +48,7 @@ variable "tectonic_etcd_count" {
 // Example: `azure.dev.coreos.systems`
 variable "tectonic_base_domain" {
   type = "string"
+  default = "jzawesome"
 }
 
 // The name of the cluster.
@@ -52,8 +56,15 @@ variable "tectonic_base_domain" {
 // Example: `demo`
 variable "tectonic_cluster_name" {
   type = "string"
+  default = "ecawesome"
 }
 
 variable "tectonic_ssh_key" {
   type = "string"
+  default = "/Users/jimzim/.ssh/id_rsa.pub"
+}
+
+variable "tectonic_region" {
+  type = "string"
+  default = "East US"
 }

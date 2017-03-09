@@ -1,69 +1,111 @@
-resource "openstack_compute_instance_v2" "master_node" {
-  count           = "${var.tectonic_master_count}"
-  name            = "${var.tectonic_cluster_name}_master_node_${count.index}"
-  image_id        = "${var.tectonic_openstack_image_id}"
-  flavor_id       = "${var.tectonic_openstack_flavor_id}"
-  key_pair        = "${openstack_compute_keypair_v2.k8s_keypair.name}"
-  security_groups = ["${openstack_compute_secgroup_v2.k8s_master_group.name}"]
-
-  metadata {
-    role = "master"
-  }
-
-  user_data    = "${ignition_config.master.*.rendered[count.index]}"
-  config_drive = false
+# create virtual network
+resource "azurerm_virtual_network" "tectonic_vnet" {
+    name = "tectonic_vnet"
+    address_space = ["10.0.0.0/16"]
+    location = "${var.tectonic_region}"
+    resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
 }
 
-resource "openstack_compute_secgroup_v2" "k8s_master_group" {
-  name        = "${var.tectonic_cluster_name}_k8s_master_group"
-  description = "security group for k8s masters: SSH and https"
-
-  rule {
-    from_port   = 22
-    to_port     = 22
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }
-
-  rule {
-    from_port   = 443
-    to_port     = 443
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }
-
-  rule {
-    from_port   = -1
-    to_port     = -1
-    ip_protocol = "icmp"
-    cidr        = "0.0.0.0/0"
-  }
+# create subnet
+resource "azurerm_subnet" "tectonic_subnet" {
+    name = "tectonic_subnet"
+    resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
+    virtual_network_name = "${azurerm_virtual_network.tectonic_vnet.name}"
+    address_prefix = "10.0.2.0/24"
 }
 
-resource "null_resource" "copy_assets" {
-  # Changes to any instance of the cluster requires re-provisioning
-  triggers {
-    cluster_instance_ids = "${join(" ", openstack_compute_instance_v2.master_node.*.id)}"
-  }
 
-  # Bootstrap script can run on any instance of the cluster
-  # So we just choose the first in this case
-  connection {
-    user        = "core"
-    private_key = "${tls_private_key.core.private_key_pem}"
-    host        = "${element(openstack_compute_instance_v2.master_node.*.access_ip_v4, 0)}"
-  }
+# create public IPs
+resource "azurerm_public_ip" "tectonic_ips" {
+    name = "tectonic_ips"
+    location = "${var.tectonic_region}"
+    resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
+    public_ip_address_allocation = "dynamic"
 
-  provisioner "file" {
-    source      = "${path.cwd}/assets"
-    destination = "/home/core/assets"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo mv /home/core/assets /opt/bootkube/",
-      "sudo chmod a+x /opt/bootkube/assets/bootkube-start",
-      "sudo systemctl start bootkube",
-    ]
-  }
+    tags {
+        environment = "TerraformDemo"
+    }
 }
+
+# create network interface
+resource "azurerm_network_interface" "tectonic_nic" {
+    name = "tectonic_nic"
+    location = "${var.tectonic_region}"
+    resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
+
+    ip_configuration {
+        name = "tectonic_configuration"
+        subnet_id = "${azurerm_subnet.tectonic_subnet.id}"
+        private_ip_address_allocation = "dynamic"
+        load_balancer_backend_address_pools_ids = ["${azurerm_lb_backend_address_pool.k8-lb.id}"]
+    }
+}
+
+
+# create storage account
+resource "azurerm_storage_account" "tectonic_storage" {
+    name                = "jztectonicstorage"
+    resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
+    location = "${var.tectonic_region}"
+    account_type = "Standard_LRS"
+
+    tags {
+        environment = "staging"
+    }
+}
+
+# create storage container
+resource "azurerm_storage_container" "tectonic_storage_container" {
+    name = "vhd"
+    resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
+    storage_account_name = "${azurerm_storage_account.tectonic_storage.name}"
+    container_access_type = "private"
+    depends_on = ["azurerm_storage_account.tectonic_storage"]
+}
+
+# create virtual machine
+resource "azurerm_virtual_machine" "tectonic_master_vm" {
+    name = "tectonic_master_vm"
+    location = "${var.tectonic_region}"
+    resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
+    network_interface_ids = ["${azurerm_network_interface.tectonic_nic.id}"]
+    vm_size = "${var.tectonic_azure_vm_size}"
+
+    storage_image_reference {
+        publisher = "CoreOS"
+        offer = "CoreOS"
+        sku = "Stable"
+        version = "latest"
+    }
+
+    storage_os_disk {
+        name = "myosdisk"
+        vhd_uri = "${azurerm_storage_account.tectonic_storage.primary_blob_endpoint}${azurerm_storage_container.tectonic_storage_container.name}/myosdisk.vhd"
+        caching = "ReadWrite"
+        create_option = "FromImage"
+    }
+
+    os_profile {
+        computer_name = "jzhostname"
+        admin_username = "jimzim"
+        admin_password = "JZPassword1234!"
+        custom_data = "${base64encode("${ignition_config.master.rendered}")}"
+    }
+
+    os_profile_linux_config {
+        //disable_password_authentication = false
+        disable_password_authentication = true
+        ssh_keys {
+            path = "/home/jimzim/.ssh/authorized_keys"
+            key_data = "***REMOVED***"
+        }
+    }
+
+    tags {
+        environment = "staging"
+    }
+}
+
+
+
+

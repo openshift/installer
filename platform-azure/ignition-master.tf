@@ -98,7 +98,7 @@ resource "ignition_file" "master_hostname" {
   filesystem = "root"
 
   content {
-    content = "${vartectonic_cluster_name}-master-${count.index}"
+    content = "${var.tectonic_cluster_name}-master-${count.index}"
   }
 }
 
@@ -130,7 +130,7 @@ Environment="ETCD_IMAGE_TAG=v3.1.0"
 ExecStart=
 ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
       --listen-addr=127.0.0.1:2379 \
-      --endpoints=${aws_route53_record.etcd.fqdn}:2379
+      --endpoints=$${COREOS_AZURE_IPV4_DYNAMIC}:2379
 EOF
   }
 }
