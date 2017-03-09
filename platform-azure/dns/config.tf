@@ -23,6 +23,10 @@ variable "master_ip_addresses" {
   type = "list"
 }
 
+variable "console_ip_address" {
+  type = "string"
+}
+
 variable "etcd_ip_addresses" {
   type = "list"
 }
