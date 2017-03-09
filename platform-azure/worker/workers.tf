@@ -15,10 +15,9 @@ resource "azurerm_network_interface" "tectonic_agent_nic" {
   resource_group_name = "${var.resource_group_name}"
 
   ip_configuration {
-    name                                    = "tectonic_configuration"
-    subnet_id                               = "${azurerm_subnet.tectonic_subnet.id}"
-    private_ip_address_allocation           = "dynamic"
-    load_balancer_backend_address_pools_ids = ["${azurerm_lb_backend_address_pool.console-lb.id}"]
+    name                          = "tectonic_configuration"
+    subnet_id                     = "${azurerm_subnet.tectonic_subnet.id}"
+    private_ip_address_allocation = "dynamic"
   }
 }
 
