@@ -97,7 +97,7 @@ resource "azurerm_virtual_machine" "tectonic_master_vm" {
         disable_password_authentication = true
         ssh_keys {
             path = "/home/jimzim/.ssh/authorized_keys"
-            key_data = "***REMOVED***"
+            key_data = ""
         }
     }
 
