@@ -9,7 +9,7 @@ variable "tectonic_openstack_flavor_id" {
 // Specifies the OS image of the VM.
 variable "tectonic_openstack_image_id" {
   type    = "string"
-  default = "edd9e119-a2db-4ccd-a205-5290682254e9"
+  default = "acdcd535-5408-40f3-8e88-ad8ebb6507e6"
 }
 
 // The ID of the network to be used as the external internet gateway
