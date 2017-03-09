@@ -2,7 +2,7 @@
 // Specifies the size (CPU/Memory/Drive) of the VM.
 variable "tectonic_azure_vm_size" {
   type    = "string"
-  default = "Standard_D2_v2"
+  default = "Standard_DS2"
 }
 
 variable "tectonic_azure_dns_resource_group" {
@@ -60,8 +60,7 @@ variable "tectonic_base_domain" {
 // This will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.
 // Example: `demo`
 variable "tectonic_cluster_name" {
-  type    = "string"
-  default = "azure-demo"
+  type = "string"
 }
 
 variable "tectonic_ssh_key" {

@@ -30,7 +30,7 @@ resource "azurerm_storage_account" "tectonic_storage" {
   name                = "${random_id.tectonic_storage_name.hex}"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
-  account_type        = "Standard_LRS"
+  account_type        = "Premium_LRS"
 
   tags {
     environment = "staging"
