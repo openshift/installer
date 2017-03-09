@@ -65,8 +65,7 @@ variable "tectonic_cluster_name" {
 }
 
 variable "tectonic_ssh_key" {
-  type    = "string"
-  default = "/Users/alex/.ssh/id_rsa.pub" # Path to your local ssh key
+  type = "string"
 }
 
 variable "tectonic_azure_location" {
