@@ -14,7 +14,7 @@ resource "azurerm_public_ip" "etcd_publicip" {
   name                         = "${var.tectonic_cluster_name}_etcd_publicip"
   location                     = "${var.tectonic_azure_location}"
   resource_group_name          = "${var.tectonic_azure_resource_group_name}"
-  public_ip_address_allocation = "dynamic"
+  public_ip_address_allocation = "static"
 }
 
 resource "azurerm_lb_rule" "etcd-lb" {
@@ -44,7 +44,7 @@ resource "azurerm_lb_backend_address_pool" "etcd-lb" {
 }
 
 resource "azurerm_dns_a_record" "tectonic-etcd" {
-  resource_group_name = "${var.tectonic_azure_resource_group_name}"
+  resource_group_name = "tectonic-dns-group"
   zone_name           = "${var.tectonic_azure_dns_zone_name}"
   name                = "etcd-${var.tectonic_cluster_name}"
   ttl                 = "60"
