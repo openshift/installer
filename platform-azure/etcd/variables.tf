@@ -25,5 +25,6 @@ variable "tectonic_azure_vm_size" {
 
 variable "tectonic_azure_resource_group_name" {}
 
-# variable "tectonic_azure_dns_zone_name" {}
-
+variable "tectonic_azure_dns_zone_name" {
+  default = "azure.ifup.org"
+}

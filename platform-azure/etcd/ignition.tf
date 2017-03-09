@@ -7,22 +7,7 @@ resource "ignition_config" "etcd" {
     "${ignition_systemd_unit.etcd2.id}",
     "${ignition_systemd_unit.etcd.id}",
   ]
-
-  # files = [
-  #   "${ignition_file.node_hostname.*.id[count.index]}",
-  # ]
 }
-
-# resource "ignition_file" "node_hostname" {
-#   count      = "${var.tectonic_etcd_count}"
-#   path       = "/etc/hostname"
-#   mode       = 0644
-#   filesystem = "root"
-
-#   content {
-#     content = "etcd-${count.index}.${var.tectonic_base_domain}"
-#   }
-# }
 
 resource "ignition_systemd_unit" "locksmithd" {
   name   = "locksmithd.service"
