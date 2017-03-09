@@ -19,7 +19,7 @@ resource "azurerm_lb_rule" "console-lb-https" {
   protocol                       = "tcp"
   frontend_port                  = 443
   backend_port                   = 32000
-  frontend_ip_configuration_name = "default"
+  frontend_ip_configuration_name = "console"
 }
 
 resource "azurerm_lb_rule" "console-lb-identity" {
@@ -32,7 +32,7 @@ resource "azurerm_lb_rule" "console-lb-identity" {
   protocol                       = "tcp"
   frontend_port                  = 80
   backend_port                   = 32001
-  frontend_ip_configuration_name = "default"
+  frontend_ip_configuration_name = "console"
 }
 
 resource "azurerm_lb_probe" "console-lb" {

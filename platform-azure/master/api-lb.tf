@@ -19,7 +19,7 @@ resource "azurerm_lb_rule" "k8-lb" {
   protocol                       = "tcp"
   frontend_port                  = 443
   backend_port                   = 443
-  frontend_ip_configuration_name = "default"
+  frontend_ip_configuration_name = "api"
 
 }
 
@@ -47,7 +47,7 @@ resource "azurerm_lb_rule" "ssh-lb" {
   protocol                       = "tcp"
   frontend_port                  = 22
   backend_port                   = 22
-  frontend_ip_configuration_name = "default"
+  frontend_ip_configuration_name = "api"
 }
 
 resource "azurerm_lb_probe" "ssh-lb" {
