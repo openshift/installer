@@ -53,7 +53,6 @@ variable "tectonic_etcd_count" {
 // Example: `azure.dev.coreos.systems`
 variable "tectonic_base_domain" {
   type = "string"
-  default = "jzawesome"
 }
 
 // The name of the cluster.
@@ -61,12 +60,10 @@ variable "tectonic_base_domain" {
 // Example: `demo`
 variable "tectonic_cluster_name" {
   type = "string"
-  default = "ecawesome"
 }
 
 variable "tectonic_ssh_key" {
   type = "string"
-  default = "/Users/jimzim/.ssh/id_rsa.pub"
 }
 
 variable "tectonic_region" {

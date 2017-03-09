@@ -5,7 +5,7 @@ resource "azurerm_lb" "tectonic_api_lb" {
 
   frontend_ip_configuration {
     name                          = "default"
-    public_ip_address_id          = "${azurerm_public_ip.tectonic_ips.id}"
+    public_ip_address_id          = "${azurerm_public_ip.tectonic_master_ip.id}"
     private_ip_address_allocation = "dynamic"
   }
 }
@@ -29,7 +29,6 @@ resource "azurerm_lb_probe" "k8-lb" {
   loadbalancer_id     = "${azurerm_lb.tectonic_api_lb.id}"
   resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
   protocol            = "tcp"
-  request_path        = "/"
   port                = 443
 }
 
@@ -44,7 +43,6 @@ resource "azurerm_lb_probe" "ssh-lb" {
   loadbalancer_id     = "${azurerm_lb.tectonic_api_lb.id}"
   resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
   protocol            = "tcp"
-  request_path        = "/"
   port                = 22
 }
 

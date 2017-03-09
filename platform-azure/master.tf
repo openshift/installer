@@ -1,4 +1,3 @@
-# create virtual network
 resource "azurerm_virtual_network" "tectonic_vnet" {
     name = "tectonic_vnet"
     address_space = ["10.0.0.0/16"]
@@ -6,7 +5,6 @@ resource "azurerm_virtual_network" "tectonic_vnet" {
     resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
 }
 
-# create subnet
 resource "azurerm_subnet" "tectonic_subnet" {
     name = "tectonic_subnet"
     resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
@@ -14,10 +12,8 @@ resource "azurerm_subnet" "tectonic_subnet" {
     address_prefix = "10.0.2.0/24"
 }
 
-
-# create public IPs
-resource "azurerm_public_ip" "tectonic_ips" {
-    name = "tectonic_ips"
+resource "azurerm_public_ip" "tectonic_master_ip" {
+    name = "tectonic_master_ip"
     location = "${var.tectonic_region}"
     resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
     public_ip_address_allocation = "dynamic"
@@ -41,10 +37,12 @@ resource "azurerm_network_interface" "tectonic_nic" {
     }
 }
 
+resource "random_id" "tectonic_storage_name" {
+  byte_length = 4
+}
 
-# create storage account
 resource "azurerm_storage_account" "tectonic_storage" {
-    name                = "jztectonicstorage"
+    name                = "${random_id.tectonic_storage_name.hex}"
     resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
     location = "${var.tectonic_region}"
     account_type = "Standard_LRS"
@@ -54,7 +52,6 @@ resource "azurerm_storage_account" "tectonic_storage" {
     }
 }
 
-# create storage container
 resource "azurerm_storage_container" "tectonic_storage_container" {
     name = "vhd"
     resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
@@ -63,7 +60,6 @@ resource "azurerm_storage_container" "tectonic_storage_container" {
     depends_on = ["azurerm_storage_account.tectonic_storage"]
 }
 
-# create virtual machine
 resource "azurerm_virtual_machine" "tectonic_master_vm" {
     name = "tectonic_master_vm"
     location = "${var.tectonic_region}"
@@ -86,9 +82,9 @@ resource "azurerm_virtual_machine" "tectonic_master_vm" {
     }
 
     os_profile {
-        computer_name = "jzhostname"
-        admin_username = "jimzim"
-        admin_password = "JZPassword1234!"
+        computer_name = "tectonic-master-${count.index}"
+        admin_username = "core"
+        admin_password = ""
         custom_data = "${base64encode("${ignition_config.master.rendered}")}"
     }
 
@@ -96,8 +92,8 @@ resource "azurerm_virtual_machine" "tectonic_master_vm" {
         //disable_password_authentication = false
         disable_password_authentication = true
         ssh_keys {
-            path = "/home/jimzim/.ssh/authorized_keys"
-            key_data = "***REMOVED***"
+            path = "/home/core/.ssh/authorized_keys"
+            key_data = "${file(var.tectonic_ssh_key)}"
         }
     }
 
@@ -105,7 +101,3 @@ resource "azurerm_virtual_machine" "tectonic_master_vm" {
         environment = "staging"
     }
 }
-
-
-
-
