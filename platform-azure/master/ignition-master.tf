@@ -1,3 +1,11 @@
+resource "ignition_user" "core" {
+  name = "core"
+
+  ssh_authorized_keys = [
+    "${file(var.ssh_key)}",
+  ]
+}
+
 resource "ignition_file" "master_bootkube_dir" {
   path       = "/opt/bootkube/.empty"
   mode       = 0420
@@ -130,7 +138,7 @@ Environment="ETCD_IMAGE_TAG=v3.1.0"
 ExecStart=
 ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
       --listen-addr=127.0.0.1:2379 \
-      --endpoints=$${COREOS_AZURE_IPV4_DYNAMIC}:2379
+      --endpoints=${var.cluster_name}-etcd.${var.base_domain}:2379
 EOF
   }
 }
@@ -200,7 +208,7 @@ resource "ignition_config" "master" {
   count = "${var.count}"
 
   users = [
-    "${var.ignition_user_id}",
+    "${ignition_user.core.id}",
   ]
 
   files = [

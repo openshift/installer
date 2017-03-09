@@ -1,8 +1,8 @@
 resource "azurerm_network_interface" "etcd_nic" {
-  name                      = "${var.tectonic_cluster_name}_etcd_nic"
-  location                  = "${var.tectonic_azure_location}"
+  name                      = "${var.cluster_name}_etcd_nic"
+  location                  = "${var.location}"
   network_security_group_id = "${azurerm_network_security_group.etcd_group.id}"
-  resource_group_name       = "${var.tectonic_azure_resource_group_name}"
+  resource_group_name       = "${var.resource_group_name}"
 
   ip_configuration {
     name                          = "testconfiguration1"
@@ -12,23 +12,23 @@ resource "azurerm_network_interface" "etcd_nic" {
 }
 
 resource "azurerm_subnet" "etcd_subnet" {
-  name                 = "${var.tectonic_cluster_name}_etcd_subnet"
-  resource_group_name  = "${var.tectonic_azure_resource_group_name}"
+  name                 = "${var.cluster_name}_etcd_subnet"
+  resource_group_name  = "${var.resource_group_name}"
   virtual_network_name = "${azurerm_virtual_network.etcd_vnet.name}"
   address_prefix       = "10.0.2.0/24"
 }
 
 resource "azurerm_virtual_network" "etcd_vnet" {
-  name                = "${var.tectonic_cluster_name}_etcd_vnet"
+  name                = "${var.cluster_name}_etcd_vnet"
   address_space       = ["10.0.0.0/16"]
-  location            = "${var.tectonic_azure_location}"
-  resource_group_name = "${var.tectonic_azure_resource_group_name}"
+  location            = "${var.location}"
+  resource_group_name = "${var.resource_group_name}"
 }
 
 resource "azurerm_network_security_group" "etcd_group" {
-  name                = "${var.tectonic_cluster_name}_etcd_group"
-  location            = "${var.tectonic_azure_location}"
-  resource_group_name = "${var.tectonic_azure_resource_group_name}"
+  name                = "${var.cluster_name}_etcd_group"
+  location            = "${var.location}"
+  resource_group_name = "${var.resource_group_name}"
 
   security_rule {
     name                       = "rule1"

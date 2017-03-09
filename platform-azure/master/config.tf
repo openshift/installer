@@ -39,10 +39,6 @@ variable "cluster_name" {
   type = "string"
 }
 
-variable "ignition_user_id" {
-  type = "string"
-}
-
 variable "ssh_key" {
   type = "string"
 }

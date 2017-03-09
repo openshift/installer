@@ -22,3 +22,7 @@ variable "cluster_name" {
 variable "master_ip_addresses" {
   type = "list"
 }
+
+variable "etcd_ip_addresses" {
+  type = "list"
+}
