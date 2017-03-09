@@ -69,6 +69,7 @@ module "dns" {
   source = "./dns"
 
   master_ip_addresses = "${module.master.ip_address}"
+  console_ip_address = "${module.master.console_ip_address}"
   etcd_ip_addresses   = "${module.etcd.ip_address}"
 
   base_domain  = "${var.tectonic_base_domain}"
