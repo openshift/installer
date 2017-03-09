@@ -1,7 +1,14 @@
+# TODO:
+# Create global network tf file
+# Add azurerm_route_table
+# Add azurerm_network_security_group
+# Add azurerm_availability_set
+
+
 resource "azurerm_virtual_network" "tectonic_vnet" {
     name = "tectonic_vnet"
     address_space = ["10.0.0.0/16"]
-    location = "${var.tectonic_region}"
+    location = "${var.tectonic_azure_location}"
     resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
 }
 
@@ -14,19 +21,19 @@ resource "azurerm_subnet" "tectonic_subnet" {
 
 resource "azurerm_public_ip" "tectonic_master_ip" {
     name = "tectonic_master_ip"
-    location = "${var.tectonic_region}"
+    location = "${var.tectonic_azure_location}"
     resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
     public_ip_address_allocation = "dynamic"
 
     tags {
-        environment = "TerraformDemo"
+        environment = "staging"
     }
 }
 
 # create network interface
-resource "azurerm_network_interface" "tectonic_nic" {
-    name = "tectonic_nic"
-    location = "${var.tectonic_region}"
+resource "azurerm_network_interface" "tectonic_master_nic" {
+    name = "tectonic_master_nic"
+    location = "${var.tectonic_azure_location}"
     resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
 
     ip_configuration {
@@ -37,6 +44,7 @@ resource "azurerm_network_interface" "tectonic_nic" {
     }
 }
 
+# Generate unique storage name
 resource "random_id" "tectonic_storage_name" {
   byte_length = 4
 }
@@ -44,7 +52,7 @@ resource "random_id" "tectonic_storage_name" {
 resource "azurerm_storage_account" "tectonic_storage" {
     name                = "${random_id.tectonic_storage_name.hex}"
     resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
-    location = "${var.tectonic_region}"
+    location = "${var.tectonic_azure_location}"
     account_type = "Standard_LRS"
 
     tags {
@@ -62,9 +70,9 @@ resource "azurerm_storage_container" "tectonic_storage_container" {
 
 resource "azurerm_virtual_machine" "tectonic_master_vm" {
     name = "tectonic_master_vm"
-    location = "${var.tectonic_region}"
+    location = "${var.tectonic_azure_location}"
     resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
-    network_interface_ids = ["${azurerm_network_interface.tectonic_nic.id}"]
+    network_interface_ids = ["${azurerm_network_interface.tectonic_master_nic.id}"]
     vm_size = "${var.tectonic_azure_vm_size}"
 
     storage_image_reference {
@@ -75,7 +83,7 @@ resource "azurerm_virtual_machine" "tectonic_master_vm" {
     }
 
     storage_os_disk {
-        name = "myosdisk"
+        name = "master-osdisk"
         vhd_uri = "${azurerm_storage_account.tectonic_storage.primary_blob_endpoint}${azurerm_storage_container.tectonic_storage_container.name}/myosdisk.vhd"
         caching = "ReadWrite"
         create_option = "FromImage"
@@ -89,7 +97,6 @@ resource "azurerm_virtual_machine" "tectonic_master_vm" {
     }
 
     os_profile_linux_config {
-        //disable_password_authentication = false
         disable_password_authentication = true
         ssh_keys {
             path = "/home/core/.ssh/authorized_keys"
