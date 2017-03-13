@@ -29,10 +29,18 @@ apply: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
 	cd $(BUILD_DIR) && terraform apply --var-file=config.tfvars $(TOP_DIR)/platform-$(PLATFORM)
 
 # You need to have https://github.com/segmentio/terraform-docs installed
-Documentation/%.md: *.tf
-	echo '# Terraform variables' >$@
-	echo 'This document gives an overview of the variables used in the different platforms of the Tectonic SDK.' >>$@
+Documentation/variables/%.md: **/*.tf
+	echo '# Terraform variables: $*' >$@
+	echo 'The Tectonic SDK variables used for: $*.' >>$@
+	terraform-docs markdown ./$* >>$@
+
+# You need to have https://github.com/segmentio/terraform-docs installed
+Documentation/variables/config.md: *.tf
+	echo '# Common Tectonic Terraform variables' >$@
+	echo 'All the common Tectonic SDK variables used for *all* platforms.' >>$@
 	terraform-docs markdown . >>$@
+
+docs: Documentation/variables/config.md Documentation/variables/platform-aws.md Documentation/variables/platform-azure.md
 
 clean: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars
 	cd $(BUILD_DIR) && terraform destroy --var-file=config.tfvars $(TOP_DIR)/platform-$(PLATFORM)
