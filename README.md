@@ -1,12 +1,44 @@
-# Tectonic Platform SDK
+# Tectonic Installer Kit
 
-The Tectonic Platform SDK provides pre-built recipes to help users create the underlying compute infrastructure for a [Self-Hosted Kubernetes Cluster](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/self-hosted-kubernetes.md) ([vid](https://coreos.com/blog/self-hosted-kubernetes.html)) using [Hashicorp Terraform](https://terraform.io), [bootkube](https://github.com/kubernetes-incubator/bootkube), and supporting tooling.
+The Tectonic Installer Kit creates a Kubernetes cluster installed the "Tectonic Way". It provides good defaults but also enable install automation, and user customization.
 
-The goal is to provide well-tested defaults that can be customized for various environments and plugged into other systems.
+Goals of the project:
 
-The unique power of Self-Hosted Kubernetes is that it cleanly separates out the infrastructure from Kubernetes enabling this separation of concerns:
+- Installation of [Self-Hosted Kubernetes Cluster](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/self-hosted-kubernetes.md)
+- Secure by default (use TLS, RBAC by default, OIDC AuthN, etcd)
+- Automatable install process for scripts and CI/CD
+- Deploy Tectonic on any infrastructure (Amazon, Azure, OpenStack, GCP, etc)
+- Runs Tectonic on any OS (Container Linux, RHEL, CentOS, etc)
+- Customizable and modular (change DNS providers, security settings, etc)
+- HA by default (deploy all Kubernetes components HA, use etcd Operator)
 
-![](http://i.imgur.com/Gd9W7RR.gif)
+Checkout the [ROADMAP](ROADMAP.md) for details on where the project is headed.
+
+## Getting Started
+
+### Step 1: Sign-up for the Tectonic Free Tier
+
+Sign-up for the [Tectonic Free Tier](https://coreos.com/tectonic).
+
+*Note:* We will make this project flexible enough in the coming weeks to just install Kubernetes without the additional Tectonic Components. Please help make this happen or follow this issue.
+
+### Step 2: Download the Tectonic installer.
+
+```
+wget https://releases.tectonic.com/tectonic-X.Y.Z-tectonic.N.tar.gz
+tar xzvf tectonic-X.Y.Z-tectonic.N.tar.gz
+```
+
+### Step 2: Choose a Platform
+
+- [AWS Cloud Formation](https://coreos.com/tectonic/docs/latest/install/aws/) [**stable**][platform-lifecycle]
+- [Baremetal](https://coreos.com/tectonic/docs/latest/install/bare-metal/) [**stable**][platform-lifecycle]
+- [AWS via Terraform](aws/README.md) [**alpha**][platform-lifecycle]
+- [Azure via Terraform](azure/README.md) [**alpha**][platform-lifecycle]
+- [OpenStack via Terraform](openstack/README.md) [**alpha**][platform-lifecycle]
+- [VMware](vmware/README.md) [**alpha**][platform-lifecycle]
+
+# Old README stuff
 
 ## Getting Started
 
@@ -103,15 +135,4 @@ To clean up run `make destroy PLATFORM=aws-asg CLUSTER=<cluster-name>`
 
 To clean up run `make destroy PLATFORM=aws-noasg CLUSTER=<cluster-name>`
 
-## Roadmap
-
-This is an unprioritized list of future items the team would like to tackle:
-
-- Run [Kubernetes e2e tests](https://github.com/coreos-inc/tectonic-platform-sdk/issues/6) over repo automatically
-- Build a tool to walk the Terraform graph and warn if cluster won't comply with [Generic Platform](https://github.com/coreos-inc/tectonic-platform-sdk/blob/master/Documentation/generic-platform.md)
-- Additional platforms like Azure, VMware, Google Cloud, etc
-- Create a spec for generic and platform specific Terraform Variable files
-- Document how to customize each of the platforms
-- Create a tool to verify Terraform Variable files
-- Deploy with other self-hosted tools like kubeadm
-- Terraform plugin and integration with [matchbox](https://github.com/coreos/matchbox) for bare metal
+[platform-lifecycle]: Documentation/platform-lifecycle.md
