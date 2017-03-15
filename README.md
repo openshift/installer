@@ -31,12 +31,12 @@ tar xzvf tectonic-X.Y.Z-tectonic.N.tar.gz
 
 ### Step 2: Choose a Platform
 
-- [AWS Cloud Formation](https://coreos.com/tectonic/docs/latest/install/aws/) [**stable**][platform-lifecycle]
-- [Baremetal](https://coreos.com/tectonic/docs/latest/install/bare-metal/) [**stable**][platform-lifecycle]
-- [AWS via Terraform](aws/README.md) [**alpha**][platform-lifecycle]
-- [Azure via Terraform](azure/README.md) [**alpha**][platform-lifecycle]
-- [OpenStack via Terraform](openstack/README.md) [**alpha**][platform-lifecycle]
-- [VMware](vmware/README.md) [**alpha**][platform-lifecycle]
+- [AWS Cloud Formation](https://coreos.com/tectonic/docs/latest/install/aws/) [[**stable**][platform-lifecycle]]
+- [Baremetal](https://coreos.com/tectonic/docs/latest/install/bare-metal/) [[**stable**][platform-lifecycle]]
+- [AWS via Terraform](aws/README.md) [[**alpha**][platform-lifecycle]]
+- [Azure via Terraform](azure/README.md) [[**alpha**][platform-lifecycle]]
+- [OpenStack via Terraform](openstack/README.md) [[**alpha**][platform-lifecycle]]
+- [VMware](vmware/README.md) [[**alpha**][platform-lifecycle]]
 
 # Old README stuff
 
