@@ -1,6 +1,6 @@
 # Tectonic Installer Kit
 
-The Tectonic Installer Kit creates a Kubernetes cluster installed the "Tectonic Way". It provides good defaults but also enable install automation, and user customization.
+Tectonic is built on pure-upstream Kubernetes but has an opinion on the best way to install and run a Kubernetes cluster. This project helps you install a Kubernetes cluster the "Tectonic Way". It provides good defaults, enables install automation, and is customizable to meet your infrastructure needs.
 
 Goals of the project:
 
