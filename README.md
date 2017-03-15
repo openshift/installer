@@ -38,7 +38,7 @@ tar xzvf tectonic-X.Y.Z-tectonic.N.tar.gz
 - [OpenStack via Terraform](openstack/README.md) [[**alpha**][platform-lifecycle]]
 - [VMware](vmware/README.md) [[**alpha**][platform-lifecycle]]
 
-Note: This repo doesn't have all Tectonic Installer code imported at this time. This will happen over the coming weeks. This notice will be removed once the AWS and Baremetal graphical installer code has been imported.
+Note: This repo does not yet have all Tectonic Installer code imported. This will happen over the coming weeks as we are able to move some of the surrounding infrastructure public as well. This notice will be removed once the AWS and Baremetal graphical installer code has been imported.
 
 # Old README stuff
 
