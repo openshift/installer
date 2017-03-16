@@ -7,3 +7,4 @@ assets*.zip
 build/**
 config.tfvars
 generated/
+bin/
