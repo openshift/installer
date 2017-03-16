@@ -3,8 +3,10 @@
 CLUSTER ?= demo
 ASSETS ?= assets-$(CLUSTER).zip
 PLATFORM ?= aws-noasg
-TOP_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+TOP_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 BUILD_DIR = $(TOP_DIR)/build/$(CLUSTER)
+
+$(info $$BUILD_DIR is [${BUILD_DIR}])
 
 all: apply
 
@@ -20,13 +22,16 @@ $(BUILD_DIR)/assets: $(BUILD_DIR)/$(ASSETS)
 	$(TOP_DIR)/convert.sh assets $(PLATFORM) $(BUILD_DIR)/assets
 
 $(BUILD_DIR)/.terraform:
-	cd $(BUILD_DIR) && terraform get $(TOP_DIR)/platform-$(PLATFORM)
+	cd $(BUILD_DIR) && terraform get $(TOP_DIR)/modules/platforms/$(PLATFORM)
 
 plan: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
-	cd $(BUILD_DIR) && terraform plan --var-file=config.tfvars $(TOP_DIR)/platform-$(PLATFORM)
+	cd $(BUILD_DIR) && terraform plan --var-file=config.tfvars $(TOP_DIR)/modules/platforms/$(PLATFORM)
 
 apply: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
-	cd $(BUILD_DIR) && terraform apply --var-file=config.tfvars $(TOP_DIR)/platform-$(PLATFORM)
+	cd $(BUILD_DIR) && terraform apply --var-file=config.tfvars $(TOP_DIR)/modules/platforms/$(PLATFORM)
+
+destroy: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars
+	cd $(BUILD_DIR) && terraform destroy --var-file=config.tfvars $(TOP_DIR)/modules/platforms/$(PLATFORM)
 
 # You need to have https://github.com/segmentio/terraform-docs installed
 Documentation/variables/%.md: **/*.tf
@@ -42,6 +47,7 @@ Documentation/variables/config.md: *.tf
 
 docs: Documentation/variables/config.md Documentation/variables/platform-aws.md Documentation/variables/platform-azure.md
 
-clean: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars
-	cd $(BUILD_DIR) && terraform destroy --var-file=config.tfvars $(TOP_DIR)/platform-$(PLATFORM)
-	cd $(BUILD_DIR) && rm -r .terraform assets config.tfvars terraform.tfstate terraform.tfstate.backup
+clean:
+	cd $(BUILD_DIR) && \
+	rm -rf .terraform assets \
+	rm -f config.tfvars terraform.tfstate terraform.tfstate.backup

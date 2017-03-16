@@ -1,75 +1,38 @@
-resource "ignition_file" "worker_hostname" {
-  count      = "${var.tectonic_worker_count}"
+resource "ignition_file" "hostname" {
+  count      = "${var.count}"
   path       = "/etc/hostname"
   mode       = 0644
   uid        = 0
   filesystem = "root"
 
   content {
-    content = "${var.tectonic_cluster_name}-worker-${count.index}"
+    content = "${var.cluster_name}-worker-${count.index}"
   }
 }
 
-resource "ignition_file" "worker_kubeconfig" {
+resource "ignition_file" "kubeconfig" {
   path       = "/etc/kubernetes/kubeconfig"
   mode       = 0644
   uid        = 0
   filesystem = "root"
 
   content {
-    content = "${file("${path.cwd}/assets/auth/kubeconfig")}"
+    content = "${var.kubeconfig_content}"
   }
 }
 
-resource "ignition_file" "worker_ca_pem" {
-  path       = "/etc/kubernetes/ssl/ca.pem"
-  mode       = 0644
-  uid        = 0
-  filesystem = "root"
-
-  content {
-    content = "${file("${path.cwd}/assets/tls/ca.crt")}"
-  }
-}
-
-resource "ignition_file" "worker_client_pem" {
-  path       = "/etc/kubernetes/ssl/client.pem"
-  mode       = 0644
-  uid        = 0
-  filesystem = "root"
-
-  content {
-    content = "${file("${path.cwd}/assets/tls/kubelet.crt")}"
-  }
-}
-
-resource "ignition_file" "worker_client_key" {
-  path       = "/etc/kubernetes/ssl/client.pem"
-  mode       = 0644
-  uid        = 0
-  filesystem = "root"
-
-  content {
-    content = "${file("${path.cwd}/assets/tls/kubelet.key")}"
-  }
-}
-
-resource "ignition_file" "worker_resolv_conf" {
+resource "ignition_file" "resolv_conf" {
   path       = "/etc/resolv.conf"
   mode       = 0644
   uid        = 0
   filesystem = "root"
 
   content {
-    content = <<EOF
-search ${var.tectonic_base_domain}
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-EOF
+    content = "${var.resolv_conf_content}"
   }
 }
 
-resource "ignition_systemd_unit" "worker_locksmithd" {
+resource "ignition_systemd_unit" "locksmithd" {
   name   = "locksmithd.service"
   enable = false
 
@@ -84,7 +47,7 @@ EOF
   }
 }
 
-resource "ignition_systemd_unit" "worker_etcd-member" {
+resource "ignition_systemd_unit" "etcd-member" {
   name = "etcd-member.service"
 
   dropin {
@@ -97,12 +60,12 @@ Environment="ETCD_IMAGE_TAG=v3.1.0"
 ExecStart=
 ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
       --listen-addr=127.0.0.1:2379 \
-      --endpoints=${element(openstack_compute_instance_v2.etcd_node.*.access_ip_v4, 0)}:2379
+      --endpoints=${join(",", formatlist("%s:2379", var.etcd_fqdns))}
 EOF
   }
 }
 
-resource "ignition_systemd_unit" "worker_kubelet" {
+resource "ignition_systemd_unit" "kubelet" {
   name   = "kubelet.service"
   enable = true
 
@@ -118,7 +81,7 @@ Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
   --mount volume=var-lib-cni,target=/var/lib/cni \
   --volume var-log,kind=host,source=/var/log \
   --mount volume=var-log,target=/var/log"
-Environment="KUBELET_IMAGE_URL=quay.io/coreos/hyperkube" "KUBELET_IMAGE_TAG=${var.tectonic_kube_version}"
+Environment="KUBELET_IMAGE_URL=${var.kube_image_url}" "KUBELET_IMAGE_TAG=${var.kube_image_tag}"
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
 ExecStartPre=/bin/mkdir -p /srv/kubernetes/manifests
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets
@@ -146,25 +109,27 @@ WantedBy=multi-user.target
 EOF
 }
 
+resource "ignition_user" "core" {
+  name                = "core"
+  ssh_authorized_keys = ["${var.core_public_keys}"]
+}
+
 resource "ignition_config" "worker" {
-  count = "${var.tectonic_worker_count}"
+  count = "${var.count}"
 
   users = [
     "${ignition_user.core.id}",
   ]
 
   files = [
-    "${ignition_file.worker_hostname.*.id[count.index]}",
-    "${ignition_file.worker_kubeconfig.id}",
-    "${ignition_file.worker_resolv_conf.id}",
-    "${ignition_file.worker_ca_pem.id}",
-    "${ignition_file.worker_client_pem.id}",
-    "${ignition_file.worker_client_key.id}",
+    "${ignition_file.hostname.*.id[count.index]}",
+    "${ignition_file.kubeconfig.id}",
+    "${ignition_file.resolv_conf.id}",
   ]
 
   systemd = [
-    "${ignition_systemd_unit.worker_locksmithd.id}",
-    "${ignition_systemd_unit.worker_etcd-member.id}",
-    "${ignition_systemd_unit.worker_kubelet.id}",
+    "${ignition_systemd_unit.locksmithd.id}",
+    "${ignition_systemd_unit.etcd-member.id}",
+    "${ignition_systemd_unit.kubelet.id}",
   ]
 }

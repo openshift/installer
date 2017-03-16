@@ -37,7 +37,7 @@ assets <platform> <assets-dir>\Modify the given assets for the given platform.
 
 function tfvars {
     case "$1" in
-        openstack-*|aws-*)
+        openstack*|aws*)
             local cloud_formation="${2}"
             local tectonic_aws_az_count=$(jq '.Resources.AutoScaleController.Properties.AvailabilityZones|length' "${cloud_formation}")
             local tectonic_worker_count=$(jq -r .Resources.AutoScaleWorker.Properties.MinSize "${cloud_formation}")
@@ -53,20 +53,21 @@ function tfvars {
 
             cat <<EOF
 tectonic_aws_az_count = ${tectonic_aws_az_count}
-
 tectonic_worker_count = ${tectonic_worker_count}
-
 tectonic_master_count = ${tectonic_master_count}
-
 tectonic_aws_master_ec2_type = "${master_type}"
-
 tectonic_aws_worker_ec2_type = "${worker_type}"
-
 tectonic_base_domain = "${tectonic_base_domain}"
-
 tectonic_cluster_name = "${tectonic_cluster_name}"
-
 tectonic_kube_version = "${tectonic_kube_version}"
+tectonic_assets_dir = "$(dirname ${2})"
+tectonic_admin_email = ""
+tectonic_admin_password_hash = ""
+tectonic_ca_cert = ""
+tectonic_ca_key = ""
+tectonic_etcd_servers = [ "" ]
+tectonic_license = ""
+tectonic_pull_secret = ""
 EOF
             ;;
         azure)
@@ -79,13 +80,9 @@ EOF
             local tectonic_master_count=$(jq -r .Resources.AutoScaleController.Properties.MinSize "${cloud_formation}")
             cat <<EOF
 tectonic_worker_count = ${tectonic_worker_count}
-
 tectonic_master_count = ${tectonic_master_count}
-
 tectonic_base_domain = "${tectonic_base_domain}"
-
 tectonic_cluster_name = "${tectonic_cluster_name}"
-
 tectonic_kube_version = "${tectonic_kube_version}"
 EOF
             ;;
@@ -99,7 +96,7 @@ function assets {
     local assets="${2}"
 
     case "$1" in
-        openstack-*)
+        openstack*)
             local cloud_formation="${assets}/cloud-formation.json"
             local tectonic_domain=$(jq -r .Resources.TectonicDomain.Properties.Name "${cloud_formation}")
 

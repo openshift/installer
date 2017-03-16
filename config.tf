@@ -84,7 +84,7 @@ variable "tectonic_etcd_count" {
 }
 
 variable "tectonic_etcd_servers" {
-  description = "List of extenral etcd v3 servers to connect with (scheme://ip:port). Optionally use if providing external etcd."
+  description = "List of external etcd v3 servers to connect with (scheme://ip:port). Optionally use if providing external etcd."
   type        = "list"
 }
 
@@ -157,4 +157,9 @@ variable "tectonic_ca_key_alg" {
   type        = "string"
   description = "Algorithm used to generate tectonic_ca_key. Optional if tectonic_ca_cert is left blank."
   default     = "RSA"
+}
+
+variable "tectonic_assets_dir" {
+  type        = "string"
+  description = "The directory name of the unpacked tectonic assets."
 }
