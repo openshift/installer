@@ -1,0 +1,19 @@
+{
+  "apiVersion": "coreos.com/v1",
+  "kind": "AppVersion",
+  "metadata": {
+    "name": "kubernetes",
+    "namespace": "tectonic-system",
+    "labels": {
+      "managed-by-channel-operator": "true"
+    }
+  },
+  "spec": {
+    "desiredVersion": "${kubernetes_version}",
+    "paused": false
+  },
+  "status": {
+    "currentVersion": "${kubernetes_version}",
+    "paused": false
+  }
+}

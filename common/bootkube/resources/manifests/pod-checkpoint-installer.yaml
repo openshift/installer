@@ -1,0 +1,28 @@
+apiVersion: "extensions/v1beta1"
+kind: DaemonSet
+metadata:
+  name: checkpoint-installer
+  namespace: kube-system
+  labels:
+    k8s-app: pod-checkpoint-installer
+spec:
+  template:
+    metadata:
+      labels:
+        k8s-app: pod-checkpoint-installer
+    spec:
+      nodeSelector:
+        master: "true"
+      hostNetwork: true
+      containers:
+      - name: checkpoint-installer
+        image: ${pod_checkpointer_image}
+        command:
+        - /checkpoint-installer.sh
+        volumeMounts:
+        - mountPath: /etc/kubernetes/manifests
+          name: etc-k8s-manifests
+      volumes:
+      - name: etc-k8s-manifests
+        hostPath:
+          path: /etc/kubernetes/manifests

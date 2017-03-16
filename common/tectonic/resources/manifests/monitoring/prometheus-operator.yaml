@@ -1,0 +1,28 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: prometheus-operator
+  namespace: tectonic-system
+  labels:
+    operator: prometheus
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        operator: prometheus
+    spec:
+      serviceAccountName: prometheus-operator
+      containers:
+       - name: prometheus-operator
+         image: ${prometheus_operator_image}
+         args:
+         - "--config-reloader-image=${config_reload_image}"
+         resources:
+           requests:
+             cpu: 100m
+             memory: 50Mi
+           limits:
+             cpu: 200m
+             memory: 300Mi
+

@@ -1,0 +1,21 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: tectonic-ingress
+  namespace: tectonic-system
+  annotations:
+    ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  tls:
+    - secretName: tectonic-ingress-tls-secret
+  rules:
+  - http:
+      paths:
+      - path: /
+        backend:
+          serviceName: tectonic-console
+          servicePort: 80
+      - path: /identity
+        backend:
+          serviceName: tectonic-identity
+          servicePort: 5556

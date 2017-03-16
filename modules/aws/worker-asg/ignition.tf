@@ -1,29 +1,9 @@
-resource "ignition_config" "master" {
-  files = [
-    "${ignition_file.etcd-endpoints.id}",
-    "${ignition_file.kubeconfig.id}",
-    "${ignition_file.kubelet-env.id}",
-    "${ignition_file.opt-bootkube.id}",
-    "${ignition_file.ca-cert.id}",
-    "${ignition_file.client-cert.id}",
-    "${ignition_file.client-key.id}",
-  ]
-
-  systemd = [
-    "${ignition_systemd_unit.etcd-member.id}",
-    "${ignition_systemd_unit.docker.id}",
-    "${ignition_systemd_unit.locksmithd.id}",
-    "${ignition_systemd_unit.kubelet-master.id}",
-    "${ignition_systemd_unit.wait-for-dns.id}",
-    "${ignition_systemd_unit.bootkube.id}",
-  ]
-}
-
 resource "ignition_config" "worker" {
   files = [
-    "${ignition_file.etcd-endpoints.id}",
     "${ignition_file.kubeconfig.id}",
     "${ignition_file.kubelet-env.id}",
+    "${ignition_file.max-user-watches.id}",
+    "${ignition_file.etcd-endpoints.id}",
     "${ignition_file.ca-cert.id}",
     "${ignition_file.client-cert.id}",
     "${ignition_file.client-key.id}",
@@ -54,16 +34,27 @@ resource "ignition_systemd_unit" "locksmithd" {
   ]
 }
 
-resource "ignition_systemd_unit" "kubelet-master" {
-  name    = "kubelet.service"
-  enable  = true
-  content = "${file("${path.module}/resources/worker-kubelet.service")}"
+data "template_file" "kubelet-worker" {
+  template = "${file("${path.module}/resources/worker-kubelet.service")}"
+
+  vars {
+    cluster_dns = "${var.tectonic_kube_dns_service_ip}"
+  }
 }
 
 resource "ignition_systemd_unit" "kubelet-worker" {
   name    = "kubelet.service"
   enable  = true
-  content = "${file("${path.module}/resources/worker-kubelet.service")}"
+  content = "${data.template_file.kubelet-worker.rendered}"
+}
+
+data "template_file" "etcd-member" {
+  template = "${file("${path.module}/resources/etcd-member.service")}"
+
+  vars {
+    version   = "${var.tectonic_versions["etcd"]}"
+    endpoints = "${join(",",module.etcd.endpoints)}"
+  }
 }
 
 resource "ignition_systemd_unit" "bootkube" {
@@ -104,29 +95,10 @@ resource "ignition_systemd_unit" "etcd-member" {
 
   dropin = [
     {
-      name = "40-etcd-gateway.conf"
-
-      content = <<EOF
-[Service]
-Environment="ETCD_IMAGE_TAG=v3.1.0"
-EnvironmentFile=/etc/kubernetes/etcd-endpoints.env
-ExecStart=
-ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
-    --listen-addr=127.0.0.1:2379 \
-    --endpoints=$${TECTONIC_ETCD_ENDPOINTS}
-EOF
+      name    = "40-etcd-gateway.conf"
+      content = "${data.template_file.etcd-member.rendered}"
     },
   ]
-}
-
-resource "ignition_file" "etcd-endpoints" {
-  filesystem = "root"
-  path       = "/etc/kubernetes/etcd-endpoints.env"
-  mode       = "420"
-
-  content {
-    content = "TECTONIC_ETCD_ENDPOINTS=${join(",",formatlist("%s:2379",var.etcd_endpoints))}"
-  }
 }
 
 resource "ignition_file" "kubeconfig" {
@@ -135,24 +107,7 @@ resource "ignition_file" "kubeconfig" {
   mode       = "420"
 
   content {
-    content = <<EOF
-apiVersion: v1
-kind: Config
-clusters:
-- name: local
-  cluster:
-    server: https://${var.tectonic_cluster_name}-k8s.${var.tectonic_base_domain}:443
-    certificate-authority: /etc/kubernetes/ssl/ca.pem
-users:
-- name: kubelet
-  user:
-    client-certificate: /etc/kubernetes/ssl/client.pem
-    client-key: /etc/kubernetes/ssl/client-key.pem
-contexts:
-- context:
-    cluster: local
-    user: kubelet
-EOF
+    content = "${module.bootkube.kubeconfig}"
   }
 }
 
@@ -189,32 +144,17 @@ resource "ignition_file" "max-user-watches" {
   }
 }
 
-resource "ignition_file" "client-key" {
-  filesystem = "root"
-  path       = "/etc/kubernetes/ssl/client-key.pem"
-  mode       = "420"
+resource "ignition_systemd_unit" "tectonic" {
+  name   = "tectonic.service"
+  enable = true
 
-  content {
-    content = "${file("${path.cwd}/assets/tls/kubelet.key")}"
-  }
-}
-
-resource "ignition_file" "client-cert" {
-  filesystem = "root"
-  path       = "/etc/kubernetes/ssl/client.pem"
-  mode       = "420"
-
-  content {
-    content = "${file("${path.cwd}/assets/tls/kubelet.crt")}"
-  }
-}
-
-resource "ignition_file" "ca-cert" {
-  filesystem = "root"
-  path       = "/etc/kubernetes/ssl/ca.pem"
-  mode       = "420"
-
-  content {
-    content = "${file("${path.cwd}/assets/tls/ca.crt")}"
-  }
+  content = <<EOF
+[Unit]
+Description=Bootstrap a Tectonic cluster
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/tectonic
+ExecStart=/usr/bin/bash /opt/tectonic/bootkube.sh
+ExecStart=/usr/bin/bash /opt/tectonic/tectonic.sh kubeconfig tectonic
+EOF
 }

@@ -1,0 +1,69 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: tectonic-ingress-controller
+  labels:
+    app: tectonic-lb
+    component: ingress-controller
+    type: nginx
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: tectonic-lb
+        component: ingress-controller
+        type: nginx
+    spec:
+      containers:
+        - name: nginx-ingress-lb
+          image: ${ingress_controller_image}
+          args:
+          - /nginx-ingress-controller
+          - --nginx-configmap=$(POD_NAMESPACE)/tectonic-custom-error
+          - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
+          - --default-ssl-certificate=tectonic-system/tectonic-ingress-tls-secret
+          - --watch-namespace=tectonic-system
+          # use downward API
+          env:
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          ports:
+            - name: http
+              containerPort: 80
+            - name: https
+              containerPort: 443
+            - name: health
+              containerPort: 10254
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+          livenessProbe:
+            initialDelaySeconds: 10
+            timeoutSeconds: 1
+            httpGet:
+              path: /healthz
+              port: 10254
+              scheme: HTTP
+          volumeMounts:
+          - name: nginx-ingress-conf-template
+            mountPath: /etc/nginx/template
+            readOnly: true
+      volumes:
+      - name: nginx-ingress-conf-template
+        configMap:
+          name: tectonic-ingress-nginx-config
+          items:
+          - key: nginx.tmpl
+            path: nginx.tmpl
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 60

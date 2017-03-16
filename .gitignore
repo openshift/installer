@@ -6,3 +6,4 @@ assets*.zip
 **/ssh-key.pem
 build/**
 config.tfvars
+generated/

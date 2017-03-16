@@ -15,6 +15,7 @@ ExecStartPre=/bin/mkdir -p /srv/kubernetes/manifests
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d
 ExecStartPre=/bin/mkdir -p /var/lib/cni
+ExecStartPre=/usr/bin/bash -c "grep 'certificate-authority-data' /etc/kubernetes/kubeconfig | awk '{print $2}' | base64 -d > /etc/kubernetes/ca.crt"
 ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/run/kubelet-pod.uuid
 ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --kubeconfig=/etc/kubernetes/kubeconfig \
@@ -26,8 +27,10 @@ ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --pod-manifest-path=/etc/kubernetes/manifests \
   --allow-privileged \
   --minimum-container-ttl-duration=6m0s \
-  --cluster_dns=10.3.0.10 \
+  --cluster_dns=${cluster_dns} \
   --cluster_domain=cluster.local \
+  --client-ca-file=/etc/kubernetes/ca.crt \
+  --anonymous-auth=false \
   --cloud-provider=aws
 ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
 Restart=always

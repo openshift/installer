@@ -1,0 +1,10 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: tectonic-config
+  namespace: tectonic-system
+data:
+  clusterID: "${cluster_id}"
+  installerPlatform: "${platform}"
+  certificatesStrategy: "${certificates_strategy}"
+  tectonicUpdaterEnabled: "true"

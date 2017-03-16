@@ -19,25 +19,6 @@ resource "ignition_config" "master" {
   ]
 }
 
-resource "ignition_config" "worker" {
-  files = [
-    "${ignition_file.etcd-endpoints.id}",
-    "${ignition_file.kubeconfig.id}",
-    "${ignition_file.kubelet-env.id}",
-    "${ignition_file.ca-cert.id}",
-    "${ignition_file.client-cert.id}",
-    "${ignition_file.client-key.id}",
-  ]
-
-  systemd = [
-    "${ignition_systemd_unit.etcd-member.id}",
-    "${ignition_systemd_unit.docker.id}",
-    "${ignition_systemd_unit.locksmithd.id}",
-    "${ignition_systemd_unit.kubelet-worker.id}",
-    "${ignition_systemd_unit.wait-for-dns.id}",
-  ]
-}
-
 resource "ignition_systemd_unit" "docker" {
   name   = "docker.service"
   enable = true
@@ -55,12 +36,6 @@ resource "ignition_systemd_unit" "locksmithd" {
 }
 
 resource "ignition_systemd_unit" "kubelet-master" {
-  name    = "kubelet.service"
-  enable  = true
-  content = "${file("${path.module}/resources/master-kubelet.service")}"
-}
-
-resource "ignition_systemd_unit" "kubelet-worker" {
   name    = "kubelet.service"
   enable  = true
   content = "${file("${path.module}/resources/master-kubelet.service")}"
