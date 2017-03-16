@@ -50,7 +50,8 @@ function tfvars {
             local tectonic_cluster_name=$(echo "${tectonic_domain}" | cut -d '.' -f 1)
             local tectonic_base_domain=$(echo "${tectonic_domain}" | cut -d '.' -f 2-)
             local tectonic_kube_version=$(tectonic_kube_version "${cloud_formation}")
-
+            local tectonic_aws_ssh_key=$(jq -r .Resources.LaunchConfigurationController.Properties.KeyName "${cloud_formation}")
+            local tectonic_dns_name=$(jq -r .Resources.TectonicDomain.Properties.Name "${cloud_formation}" | cut -d '.' -f 1)
             cat <<EOF
 tectonic_aws_az_count = ${tectonic_aws_az_count}
 tectonic_worker_count = ${tectonic_worker_count}
@@ -68,6 +69,9 @@ tectonic_ca_key = ""
 tectonic_etcd_servers = [ "" ]
 tectonic_license = ""
 tectonic_pull_secret = ""
+tectonic_aws_ssh_key = "${tectonic_aws_ssh_key}"
+tectonic_cl_channel = "stable"
+tectonic_dns_name = "${tectonic_dns_name}"
 EOF
             ;;
         azure)

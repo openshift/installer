@@ -64,6 +64,8 @@ variable "tectonic_cluster_cidr" {
   default     = "10.2.0.0/16"
 }
 
+// The amount of master nodes to be created.
+// Example: `1`
 variable "tectonic_master_count" {
   type        = "string"
   description = "The number of master nodes to be created."
@@ -86,6 +88,13 @@ variable "tectonic_etcd_count" {
 variable "tectonic_etcd_servers" {
   description = "List of external etcd v3 servers to connect with (scheme://ip:port). Optionally use if providing external etcd."
   type        = "list"
+  default     = [""]
+}
+
+// The base DNS domain of the cluster.
+// Example: `openstack.dev.coreos.systems`
+variable "tectonic_base_domain" {
+  type = "string"
 }
 
 // Example: `demo`
@@ -138,11 +147,6 @@ variable "tectonic_ingress_type" {
   default     = "HostPort"
 }
 
-variable "tectonic_base_domain" {
-  type        = "string"
-  description = "Base address used to access the Tectonic Console, without protocol nor trailing forward slash"
-}
-
 variable "tectonic_ca_cert" {
   type        = "string"
   description = "PEM-encoded CA certificate, used to generate Tectonic Console's server certificate. Optional, if left blank, a CA certificate will be automatically generated."
@@ -162,4 +166,38 @@ variable "tectonic_ca_key_alg" {
 variable "tectonic_assets_dir" {
   type        = "string"
   description = "The directory name of the unpacked tectonic assets."
+}
+
+// Name of an EC2 ssh key to use
+// joe-sfo
+variable "tectonic_aws_ssh_key" {
+  type = "string"
+}
+
+variable "tectonic_dns_name" {
+  type = "string"
+}
+
+variable "tectonic_aws_master_ec2_type" {
+  type = "string"
+}
+
+variable "tectonic_aws_worker_ec2_type" {
+  type = "string"
+}
+
+variable "tectonic_aws_etcd_ec2_type" {
+  type = "string"
+}
+
+variable "tectonic_aws_vpc_cidr_block" {
+  type = "string"
+}
+
+variable "tectonic_aws_az_count" {
+  type = "string"
+}
+
+variable "tectonic_aws_external_vpc_id" {
+  type = "string"
 }
