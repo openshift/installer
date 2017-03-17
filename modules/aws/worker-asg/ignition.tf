@@ -3,10 +3,6 @@ resource "ignition_config" "worker" {
     "${ignition_file.kubeconfig.id}",
     "${ignition_file.kubelet-env.id}",
     "${ignition_file.max-user-watches.id}",
-    "${ignition_file.etcd-endpoints.id}",
-    "${ignition_file.ca-cert.id}",
-    "${ignition_file.client-cert.id}",
-    "${ignition_file.client-key.id}",
   ]
 
   systemd = [
@@ -14,7 +10,6 @@ resource "ignition_config" "worker" {
     "${ignition_systemd_unit.docker.id}",
     "${ignition_systemd_unit.locksmithd.id}",
     "${ignition_systemd_unit.kubelet-worker.id}",
-    "${ignition_systemd_unit.wait-for-dns.id}",
   ]
 }
 
@@ -53,40 +48,8 @@ data "template_file" "etcd-member" {
 
   vars {
     version   = "${var.tectonic_versions["etcd"]}"
-    endpoints = "${join(",",module.etcd.endpoints)}"
+    endpoints = "${join(",",var.etcd_endpoints)}"
   }
-}
-
-resource "ignition_systemd_unit" "bootkube" {
-  name   = "bootkube.service"
-  enable = true
-
-  content = <<EOF
-[Unit]
-Description=Bootstrap a Kubernetes control plane with a temp api-server
-[Service]
-Type=simple
-WorkingDirectory=/opt/bootkube
-ExecStart=/opt/bootkube/assets/bootkube-start
-EOF
-}
-
-resource "ignition_systemd_unit" "wait-for-dns" {
-  name   = "wait-for-dns.service"
-  enable = true
-
-  content = <<EOF
-[Unit]
-Description=Wait for DNS entries
-Wants=systemd-resolved.service
-Before=kubelet.service
-[Service]
-Type=oneshot
-RemainAfterExit=true
-ExecStart=/bin/sh -c 'while ! /usr/bin/grep '^[^#[:space:]]' /etc/resolv.conf \u003e /dev/null; do sleep 1; done'
-[Install]
-RequiredBy=kubelet.service
-EOF
 }
 
 resource "ignition_systemd_unit" "etcd-member" {
@@ -107,7 +70,7 @@ resource "ignition_file" "kubeconfig" {
   mode       = "420"
 
   content {
-    content = "${module.bootkube.kubeconfig}"
+    content = "${var.kubeconfig_content}"
   }
 }
 
@@ -118,19 +81,9 @@ resource "ignition_file" "kubelet-env" {
 
   content {
     content = <<EOF
-KUBELET_ACI=${var.kube_image_url}
-KUBELET_VERSION=${var.kube_image_tag}
+KUBELET_ACI="${var.kube_image_url}"
+KUBELET_VERSION="${var.kube_image_tag}"
 EOF
-  }
-}
-
-resource "ignition_file" "opt-bootkube" {
-  filesystem = "root"
-  path       = "/opt/bootkube/.empty"
-  mode       = "420"
-
-  content {
-    content = ""
   }
 }
 

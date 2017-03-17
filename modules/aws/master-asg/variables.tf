@@ -38,10 +38,24 @@ variable "extra_sg_ids" {
   type = "list"
 }
 
+// The hyperkube image url.
 variable "kube_image_url" {
   type = "string"
 }
 
+// The hyperkube image tag.
 variable "kube_image_tag" {
+  type = "string"
+}
+
+variable "tectonic_kube_dns_service_ip" {
+  type = "string"
+}
+
+variable "tectonic_versions" {
+  type = "map"
+}
+
+variable "kubeconfig_content" {
   type = "string"
 }

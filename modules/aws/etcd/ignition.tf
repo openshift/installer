@@ -47,7 +47,7 @@ resource "ignition_systemd_unit" "etcd3" {
 
       content = <<EOF
 [Service]
-Environment="ETCD_IMAGE_TAG=v3.1.2"
+Environment="ETCD_IMAGE_TAG=${var.etcd_version}"
 ExecStart=
 ExecStart=/usr/lib/coreos/etcd-wrapper \
   --name=etcd \

@@ -28,6 +28,7 @@ variable "tectonic_versions" {
   type        = "map"
 
   default = {
+    etcd       = "v3.1.2"
     prometheus = "v1.5.2"
     kubernetes = "1.5.3+tectonic.1"
     tectonic   = "1.5.3-tectonic.1"
@@ -161,11 +162,6 @@ variable "tectonic_ca_key_alg" {
   type        = "string"
   description = "Algorithm used to generate tectonic_ca_key. Optional if tectonic_ca_cert is left blank."
   default     = "RSA"
-}
-
-variable "tectonic_assets_dir" {
-  type        = "string"
-  description = "The directory name of the unpacked tectonic assets."
 }
 
 // Name of an EC2 ssh key to use

@@ -33,3 +33,7 @@ variable "etcd_subnets" {
 variable "external_endpoints" {
   type = "list"
 }
+
+variable "etcd_version" {
+  type = "string"
+}
