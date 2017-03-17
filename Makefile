@@ -22,16 +22,16 @@ $(BUILD_DIR)/assets: $(BUILD_DIR)/$(ASSETS)
 	$(TOP_DIR)/convert.sh assets $(PLATFORM) $(BUILD_DIR)/assets
 
 $(BUILD_DIR)/.terraform:
-	cd $(BUILD_DIR) && terraform get $(TOP_DIR)/modules/platforms/$(PLATFORM)
+	cd $(BUILD_DIR) && terraform get $(TOP_DIR)/platforms/$(PLATFORM)
 
 plan: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
-	cd $(BUILD_DIR) && terraform plan --var-file=config.tfvars $(TOP_DIR)/modules/platforms/$(PLATFORM)
+	cd $(BUILD_DIR) && terraform plan --var-file=config.tfvars $(TOP_DIR)/platforms/$(PLATFORM)
 
 apply: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
-	cd $(BUILD_DIR) && terraform apply --var-file=config.tfvars $(TOP_DIR)/modules/platforms/$(PLATFORM)
+	cd $(BUILD_DIR) && terraform apply --var-file=config.tfvars $(TOP_DIR)/platforms/$(PLATFORM)
 
 destroy: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars
-	cd $(BUILD_DIR) && terraform destroy --var-file=config.tfvars $(TOP_DIR)/modules/platforms/$(PLATFORM)
+	cd $(BUILD_DIR) && terraform destroy --var-file=config.tfvars $(TOP_DIR)/platforms/$(PLATFORM)
 
 # You need to have https://github.com/segmentio/terraform-docs installed
 Documentation/variables/%.md: **/*.tf

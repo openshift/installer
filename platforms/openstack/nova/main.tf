@@ -1,5 +1,5 @@
 module "bootkube" {
-  source         = "./../../../../common/bootkube"
+  source         = "../../../modules/bootkube"
   cloud_provider = ""
 
   kube_apiserver_url = "https://${var.tectonic_cluster_name}-k8s.${var.tectonic_base_domain}:443"
@@ -29,7 +29,7 @@ module "bootkube" {
 }
 
 module "tectonic" {
-  source   = "./../../../../common/tectonic"
+  source   = "../../../modules/tectonic"
   platform = "aws"
 
   domain             = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}:32000"
@@ -78,7 +78,7 @@ module "dns" {
 }
 
 module "etcd" {
-  source = "./../etcd"
+  source = "../../../modules/openstack/etcd"
 
   count            = "1"
   cluster_name     = "${var.tectonic_cluster_name}"
@@ -93,7 +93,7 @@ data "null_data_source" "local" {
 }
 
 module "nodes" {
-  source = "./../nodes"
+  source = "../../../modules/openstack/nodes"
 
   resolv_conf_content = <<EOF
 search ${var.tectonic_base_domain}
@@ -115,6 +115,6 @@ EOF
 }
 
 module "secrets" {
-  source       = "./../secrets"
+  source       = "../../../modules/openstack/secrets"
   cluster_name = "${var.tectonic_cluster_name}"
 }
