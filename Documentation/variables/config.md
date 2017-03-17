@@ -21,9 +21,9 @@ All the common Tectonic SDK variables used for *all* platforms.
 | tectonic_kube_apiserver_service_ip | Service IP used to reach kube-apiserver inside the cluster | `10.3.0.1` | no |
 | tectonic_kube_apiserver_url | URL used to reach kube-apiserver | `https://10.1.1.1:443` | no |
 | tectonic_kube_dns_service_ip | Service IP used to reach kube-dns | `10.3.0.10` | no |
-| tectonic_license |  | - | yes |
+| tectonic_license_path |  | - | yes |
 | tectonic_master_count | The number of master nodes to be created. | `1` | no |
-| tectonic_pull_secret |  | - | yes |
+| tectonic_pull_secret_path |  | - | yes |
 | tectonic_service_cidr | A CIDR notation IP range from which to assign service cluster IPs | `10.3.0.0/16` | no |
 | tectonic_update_app_id |  | `6bc7b986-4654-4a0f-94b3-84ce6feb1db4` | no |
 | tectonic_update_channel |  | `tectonic-1.5` | no |

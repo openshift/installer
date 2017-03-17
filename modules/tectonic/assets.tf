@@ -24,8 +24,8 @@ resource "template_folder" "tectonic" {
     kubernetes_version = "${var.versions["kubernetes"]}"
     tectonic_version = "${var.versions["tectonic"]}"
 
-    license = "${base64encode(var.license)}"
-    pull_secret = "${base64encode(var.pull_secret)}"
+    license = "${base64encode(file(var.license_path))}"
+    pull_secret = "${base64encode(file(var.pull_secret_path))}"
     ca_cert = "${base64encode(var.ca_cert)}"
 
     update_server = "${var.update_server}"
