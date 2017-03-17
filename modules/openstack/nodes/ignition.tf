@@ -8,7 +8,6 @@ resource "ignition_config" "master" {
   files = [
     "${ignition_file.kubeconfig.id}",
     "${ignition_file.kubelet-env.id}",
-    "${ignition_file.bootkube_dir.id}",
     "${ignition_file.max-user-watches.id}",
     "${ignition_file.resolv_conf.id}",
     "${ignition_file.hostname-master.*.id[count.index]}",
@@ -33,7 +32,6 @@ resource "ignition_config" "worker" {
   files = [
     "${ignition_file.kubeconfig.id}",
     "${ignition_file.kubelet-env.id}",
-    "${ignition_file.bootkube_dir.id}",
     "${ignition_file.max-user-watches.id}",
     "${ignition_file.resolv_conf.id}",
     "${ignition_file.hostname-worker.*.id[count.index]}",
@@ -45,17 +43,6 @@ resource "ignition_config" "worker" {
     "${ignition_systemd_unit.locksmithd.id}",
     "${ignition_systemd_unit.kubelet-worker.id}",
   ]
-}
-
-resource "ignition_file" "bootkube_dir" {
-  path       = "/opt/bootkube/.empty"
-  mode       = 0420
-  uid        = 0
-  filesystem = "root"
-
-  content {
-    content = ""
-  }
 }
 
 resource "ignition_file" "resolv_conf" {
