@@ -14,23 +14,25 @@ $(BUILD_DIR)/$(ASSETS):
 	@echo "Assets '$(ASSETS)' not found!\nPlace assets zip from installer in $(BUILD_DIR)\n"
 	exit 1
 
-$(BUILD_DIR)/config.tfvars: $(BUILD_DIR)/assets
-	$(TOP_DIR)/convert.sh tfvars $(PLATFORM) $(BUILD_DIR)/assets/cloud-formation.json > $(BUILD_DIR)/config.tfvars
+localconfig:
+	mkdir -p $(BUILD_DIR)
+	cp config.tfvars $(BUILD_DIR)/config.tfvars
 
-$(BUILD_DIR)/assets: $(BUILD_DIR)/$(ASSETS)
+installerconfig: $(BUILD_DIR)/$(ASSETS)
 	cd $(BUILD_DIR) && unzip $(ASSETS)
+	$(TOP_DIR)/convert.sh tfvars $(PLATFORM) $(BUILD_DIR)/assets/cloud-formation.json > $(BUILD_DIR)/config.tfvars
 	$(TOP_DIR)/convert.sh assets $(PLATFORM) $(BUILD_DIR)/assets
 
 $(BUILD_DIR)/.terraform:
 	cd $(BUILD_DIR) && terraform get $(TOP_DIR)/platforms/$(PLATFORM)
 
-plan: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
+plan: $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
 	cd $(BUILD_DIR) && terraform plan --var-file=config.tfvars $(TOP_DIR)/platforms/$(PLATFORM)
 
-apply: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
+apply: $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
 	cd $(BUILD_DIR) && terraform apply --var-file=config.tfvars $(TOP_DIR)/platforms/$(PLATFORM)
 
-destroy: $(BUILD_DIR)/assets $(BUILD_DIR)/config.tfvars
+destroy: $(BUILD_DIR)/config.tfvars
 	cd $(BUILD_DIR) && terraform destroy --var-file=config.tfvars $(TOP_DIR)/platforms/$(PLATFORM)
 
 # You need to have https://github.com/segmentio/terraform-docs installed
@@ -49,5 +51,5 @@ docs: Documentation/variables/config.md Documentation/variables/platform-aws.md 
 
 clean:
 	cd $(BUILD_DIR) && \
-	rm -rf .terraform assets \
-	rm -f config.tfvars terraform.tfstate terraform.tfstate.backup
+	rm -rf .terraform assets generated \
+	rm -f config.tfvars terraform.tfstate terraform.tfstate.backup assets*.zip id_rsa*
