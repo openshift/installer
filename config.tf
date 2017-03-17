@@ -109,11 +109,11 @@ variable "tectonic_cluster_name" {
   description = "The name of the cluster. This will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console."
 }
 
-variable "tectonic_pull_secret" {
+variable "tectonic_pull_secret_path" {
   type = "string"
 }
 
-variable "tectonic_license" {
+variable "tectonic_license_path" {
   type = "string"
 }
 

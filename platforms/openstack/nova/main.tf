@@ -39,8 +39,8 @@ module "tectonic" {
   container_images = "${var.tectonic_container_images}"
   versions         = "${var.tectonic_versions}"
 
-  license     = "${var.tectonic_license}"
-  pull_secret = "${var.tectonic_pull_secret}"
+  license_path     = "${var.tectonic_license_path}"
+  pull_secret_path = "${var.tectonic_pull_secret_path}"
 
   admin_email         = "${var.tectonic_admin_email}"
   admin_password_hash = "${var.tectonic_admin_password_hash}"

@@ -18,13 +18,13 @@ variable "ingress_kind" {
     type        = "string"
 }
 
-variable "license" {
-    description = "License issued to run Tectonic"
+variable "license_path" {
+    description = "Path to the license issued to run Tectonic"
     type        = "string"
 }
 
-variable "pull_secret" {
-    description = "Authentication secret to pull container images"
+variable "pull_secret_path" {
+    description = "Path to the authentication secret used to pull container images"
     type        = "string"
 }
 
