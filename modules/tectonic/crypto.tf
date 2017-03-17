@@ -24,7 +24,7 @@ resource "tls_cert_request" "ingress" {
   private_key_pem = "${tls_private_key.ingress.private_key_pem}"
 
   subject {
-    common_name = "${var.domain}"
+    common_name = "${element(split(":", var.base_address), 0)}"
   }
 }
 

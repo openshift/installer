@@ -48,8 +48,8 @@ variable "ca_key" {
     type        = "string"
 }
 
-variable "domain" {
-    description = "Base address used to access the Tectonic Console, without protocol nor trailing forward slash"
+variable "base_address" {
+    description = "Base address used to access the Tectonic Console, without protocol nor trailing forward slash (may contain a port)"
     type        = "string"
 }
 
