@@ -6,6 +6,11 @@ resource "template_folder" "bootkube" {
   vars {
     hyperkube_image = "${var.container_images["hyperkube"]}"
     pod_checkpointer_image = "${var.container_images["pod_checkpointer"]}"
+    kubedns_image         = "${var.container_images["kubedns"]}"
+    kubednsmasq_image     = "${var.container_images["kubednsmasq"]}"
+    dnsmasq_metrics_image = "${var.container_images["dnsmasq_metrics"]}"
+    exechealthz_image     = "${var.container_images["exechealthz"]}"
+    flannel_image         = "${var.container_images["flannel"]}"
 
     etcd_servers = "${join(",", var.etcd_servers)}"
     cloud_provider = "${var.cloud_provider}"

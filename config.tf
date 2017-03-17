@@ -20,6 +20,11 @@ variable "tectonic_container_images" {
     stats_extender            = "quay.io/coreos/tectonic-stats-extender:487b3da4e175da96dabfb44fba65cdb8b823db2e"
     error_server              = "quay.io/coreos/tectonic-error-server:1.0"
     ingress_controller        = "gcr.io/google_containers/nginx-ingress-controller:0.8.3"
+    kubedns                   = "gcr.io/google_containers/kubedns-amd64:1.9"
+    kubednsmasq               = "gcr.io/google_containers/kube-dnsmasq-amd64:1.4"
+    dnsmasq_metrics           = "gcr.io/google_containers/dnsmasq-metrics-amd64:1.0"
+    exechealthz               = "gcr.io/google_containers/exechealthz-amd64:1.2"
+    flannel                   = "quay.io/coreos/flannel:v0.7.0-amd64"
   }
 }
 
@@ -164,36 +169,6 @@ variable "tectonic_ca_key_alg" {
   default     = "RSA"
 }
 
-// Name of an EC2 ssh key to use
-// joe-sfo
-variable "tectonic_aws_ssh_key" {
-  type = "string"
-}
-
 variable "tectonic_dns_name" {
-  type = "string"
-}
-
-variable "tectonic_aws_master_ec2_type" {
-  type = "string"
-}
-
-variable "tectonic_aws_worker_ec2_type" {
-  type = "string"
-}
-
-variable "tectonic_aws_etcd_ec2_type" {
-  type = "string"
-}
-
-variable "tectonic_aws_vpc_cidr_block" {
-  type = "string"
-}
-
-variable "tectonic_aws_az_count" {
-  type = "string"
-}
-
-variable "tectonic_aws_external_vpc_id" {
   type = "string"
 }
