@@ -58,10 +58,14 @@ tectonic_worker_count = ${tectonic_worker_count}
 tectonic_master_count = ${tectonic_master_count}
 tectonic_aws_master_ec2_type = "${master_type}"
 tectonic_aws_worker_ec2_type = "${worker_type}"
+tectonic_aws_etcd_ec2_type = ""
+tectonic_aws_external_vpc_id = ""
+tectonic_aws_vpc_cidr_block = ""
 tectonic_base_domain = "${tectonic_base_domain}"
 tectonic_cluster_name = "${tectonic_cluster_name}"
 tectonic_kube_version = "${tectonic_kube_version}"
 tectonic_assets_dir = "$(dirname ${2})"
+
 tectonic_admin_email = ""
 tectonic_admin_password_hash = ""
 tectonic_ca_cert = ""
