@@ -19,7 +19,7 @@ resource "azurerm_virtual_network" "tectonic_vnet" {
 }
 
 module "etcd" {
-  source = "./etcd"
+  source = "../../modules/azure/etcd"
 
   location            = "${var.tectonic_azure_location}"
   resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
@@ -33,43 +33,45 @@ module "etcd" {
   virtual_network = "${azurerm_virtual_network.tectonic_vnet.name}"
 }
 
-module "master" {
-  source = "./master"
+module "masters" {
+  source = "../../modules/azure/master"
 
   location            = "${var.tectonic_azure_location}"
   resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
   image_reference     = "${var.tectonic_azure_image_reference}"
   vm_size             = "${var.tectonic_azure_vm_size}"
 
-  kubelet_version = "${var.tectonic_kube_version}"
   count           = "${var.tectonic_master_count}"
   base_domain     = "${var.tectonic_base_domain}"
   cluster_name    = "${var.tectonic_cluster_name}"
   ssh_key         = "${var.tectonic_ssh_key}"
   virtual_network = "${azurerm_virtual_network.tectonic_vnet.name}"
+  kube_image_url  = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
+  kube_image_tag  = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
 }
 
 module "workers" {
-  source = "./worker"
+  source = "../../modules/azure/worker"
 
   location            = "${var.tectonic_azure_location}"
   resource_group_name = "${azurerm_resource_group.tectonic_azure_cluster_resource_group.name}"
   image_reference     = "${var.tectonic_azure_image_reference}"
   vm_size             = "${var.tectonic_azure_vm_size}"
 
-  kube_version    = "${var.tectonic_kube_version}"
   worker_count    = "${var.tectonic_worker_count}"
   base_domain     = "${var.tectonic_base_domain}"
   cluster_name    = "${var.tectonic_cluster_name}"
   ssh_key         = "${var.tectonic_ssh_key}"
   virtual_network = "${azurerm_virtual_network.tectonic_vnet.name}"
+  kube_image_url  = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
+  kube_image_tag  = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
 }
 
 module "dns" {
-  source = "./dns"
+  source = "../../modules/azure/dns"
 
-  master_ip_addresses = "${module.master.ip_address}"
-  console_ip_address = "${module.master.console_ip_address}"
+  master_ip_addresses = "${module.masters.ip_address}"
+  console_ip_address  = "${module.masters.console_ip_address}"
   etcd_ip_addresses   = "${module.etcd.ip_address}"
 
   base_domain  = "${var.tectonic_base_domain}"

@@ -8,7 +8,7 @@ variable "resource_group_name" {
   type = "string"
 }
 
-// Image refernce to use for master instances
+// Image refernce to use for worker instances
 variable "image_reference" {
   type = "map"
 }
@@ -18,13 +18,8 @@ variable "vm_size" {
   type = "string"
 }
 
-// Kubelet version to run on the master.
-variable "kubelet_version" {
-  type = "string"
-}
-
-// Count of master nodes to be created.
-variable "count" {
+// Count of worker nodes to be created.
+variable "worker_count" {
   type = "string"
 }
 
@@ -44,5 +39,13 @@ variable "ssh_key" {
 }
 
 variable "virtual_network" {
+  type = "string"
+}
+
+variable "kube_image_url" {
+  type = "string"
+}
+
+variable "kube_image_tag" {
   type = "string"
 }
