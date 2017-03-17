@@ -32,7 +32,7 @@ module "tectonic" {
   source   = "../../modules/tectonic"
   platform = "aws"
 
-  domain             = "${module.dns.ingress_internal_fqdn}"
+  base_address       = "${module.dns.ingress_internal_fqdn}"
   kube_apiserver_url = "https://${module.dns.api_internal_fqdn}:443"
 
   # Platform-independent variables wiring, do not modify.

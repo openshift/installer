@@ -32,7 +32,7 @@ module "tectonic" {
   source   = "../../../modules/tectonic"
   platform = "aws"
 
-  domain             = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}:32000"
+  base_address       = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}:32000"
   kube_apiserver_url = "https://${var.tectonic_cluster_name}-k8s.${var.tectonic_base_domain}:443"
 
   # Platform-independent variables wiring, do not modify.

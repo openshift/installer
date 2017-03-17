@@ -36,10 +36,10 @@ resource "template_folder" "tectonic" {
     admin_email = "${var.admin_email}"
     admin_password_hash = "${var.admin_password_hash}"
 
-    console_base_address = "https://${var.domain}"
+    console_base_address = "https://${var.base_address}"
     console_client_id = "${var.console_client_id}"
     console_secret = "${random_id.console_secret.b64}"
-    console_callback = "https://${var.domain}/auth/callback"
+    console_callback = "https://${var.base_address}/auth/callback"
 
     ingress_kind = "${var.ingress_kind}"
     ingress_tls_cert = "${base64encode(tls_locally_signed_cert.ingress.cert_pem)}"
@@ -54,7 +54,7 @@ resource "template_folder" "tectonic" {
     kubectl_secret = "${random_id.kubectl_secret.b64}"
 
     kube_apiserver_url = "${var.kube_apiserver_url}"
-    oidc_issuer_url = "https://${var.domain}/identity"
+    oidc_issuer_url = "https://${var.base_address}/identity"
 
     cluster_id = "${uuid()}"
     platform = "${var.platform}"
