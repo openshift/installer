@@ -18,15 +18,15 @@ resource "azurerm_network_security_group" "cluster_default" {
 
   # Allow horizontal traffic in the vnet
   security_rule {
-    name                       = "cluster_default_ingress"
+    name                       = "cluster_default_internal"
     priority                   = 4050
     direction                  = "Inbound"
     access                     = "Allow"
     protocol                   = "*"
-    source_port_range          = "VirtualNetwork"
-    destination_port_range     = "VirtualNetwork"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "VirtualNetwork"
+    destination_address_prefix = "VirtualNetwork"
   }
 
   # Allow internet outbound for all machines

@@ -20,7 +20,6 @@ resource "azurerm_lb_rule" "k8-lb" {
   frontend_port                  = 443
   backend_port                   = 443
   frontend_ip_configuration_name = "api"
-
 }
 
 resource "azurerm_lb_probe" "k8-lb" {

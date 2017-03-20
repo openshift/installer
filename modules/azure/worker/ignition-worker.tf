@@ -1,14 +1,14 @@
-resource "ignition_file" "worker_hostname" {
-  count      = "${var.worker_count}"
-  path       = "/etc/hostname"
-  mode       = 0644
-  uid        = 0
-  filesystem = "root"
+# resource "ignition_file" "worker_hostname" {
+#   count      = "${var.worker_count}"
+#   path       = "/etc/hostname"
+#   mode       = 0644
+#   uid        = 0
+#   filesystem = "root"
 
-  content {
-    content = "${var.cluster_name}-worker-${count.index}"
-  }
-}
+#   content {
+#     content = "${var.cluster_name}-worker-${count.index}"
+#   }
+# }
 
 resource "ignition_file" "worker_kubeconfig" {
   path       = "/etc/kubernetes/kubeconfig"
@@ -17,40 +17,7 @@ resource "ignition_file" "worker_kubeconfig" {
   filesystem = "root"
 
   content {
-    content = "${file("${path.cwd}/assets/auth/kubeconfig")}"
-  }
-}
-
-resource "ignition_file" "worker_ca_pem" {
-  path       = "/etc/kubernetes/ssl/ca.pem"
-  mode       = 0644
-  uid        = 0
-  filesystem = "root"
-
-  content {
-    content = "${file("${path.cwd}/assets/tls/ca.crt")}"
-  }
-}
-
-resource "ignition_file" "worker_client_pem" {
-  path       = "/etc/kubernetes/ssl/client.pem"
-  mode       = 0644
-  uid        = 0
-  filesystem = "root"
-
-  content {
-    content = "${file("${path.cwd}/assets/tls/kubelet.crt")}"
-  }
-}
-
-resource "ignition_file" "worker_client_key" {
-  path       = "/etc/kubernetes/ssl/client.pem"
-  mode       = 0644
-  uid        = 0
-  filesystem = "root"
-
-  content {
-    content = "${file("${path.cwd}/assets/tls/kubelet.key")}"
+    content = "${var.kube_config}"
   }
 }
 
@@ -154,12 +121,10 @@ resource "ignition_config" "worker" {
   ]
 
   files = [
-    "${ignition_file.worker_hostname.*.id[count.index]}",
+    # "${ignition_file.worker_hostname.*.id[count.index]}",
     "${ignition_file.worker_kubeconfig.id}",
+
     "${ignition_file.worker_resolv_conf.id}",
-    "${ignition_file.worker_ca_pem.id}",
-    "${ignition_file.worker_client_pem.id}",
-    "${ignition_file.worker_client_key.id}",
   ]
 
   systemd = [
@@ -173,6 +138,6 @@ resource "ignition_user" "core" {
   name = "core"
 
   ssh_authorized_keys = [
-    "${file(var.ssh_key)}",
+    "${file(var.public_ssh_key)}",
   ]
 }

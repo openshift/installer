@@ -34,11 +34,15 @@ variable "cluster_name" {
   type = "string"
 }
 
-variable "ssh_key" {
+variable "public_ssh_key" {
   type = "string"
 }
 
 variable "virtual_network" {
+  type = "string"
+}
+
+variable "subnet" {
   type = "string"
 }
 
@@ -48,4 +52,9 @@ variable "kube_image_url" {
 
 variable "kube_image_tag" {
   type = "string"
+}
+
+variable "kube_config" {
+  type    = "string"
+  default = ""
 }

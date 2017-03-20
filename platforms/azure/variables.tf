@@ -32,3 +32,30 @@ variable "tectonic_ssh_key" {
   type    = "string"
   default = ""
 }
+
+// Name of an Azure ssh key to use
+// joe-sfo
+variable "tectonic_azure_ssh_key" {
+  type = "string"
+}
+
+variable "tectonic_azure_master_vm_size" {
+  type = "string"
+}
+
+variable "tectonic_azure_worker_vm_size" {
+  type = "string"
+}
+
+variable "tectonic_azure_etcd_vm_size" {
+  type = "string"
+}
+
+variable "tectonic_azure_vnet_cidr_block" {
+  type = "string"
+}
+
+variable "tectonic_azure_external_vnet_id" {
+  type    = "string"
+  default = ""
+}

@@ -1,5 +1,5 @@
 resource "ignition_config" "etcd" {
-  count = "${var.count}"
+  count = "${var.etcd_count}"
 
   systemd = [
     "${ignition_systemd_unit.locksmithd.id}",
@@ -22,7 +22,7 @@ resource "ignition_systemd_unit" "locksmithd" {
 }
 
 resource "ignition_systemd_unit" "etcd3" {
-  count  = "${var.count}"
+  count  = "${var.etcd_count}"
   name   = "etcd-member.service"
   enable = true
 

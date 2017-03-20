@@ -2,7 +2,7 @@ resource "ignition_user" "core" {
   name = "core"
 
   ssh_authorized_keys = [
-    "${file(var.ssh_key)}",
+    "${file(var.public_ssh_key)}",
   ]
 }
 
@@ -35,7 +35,7 @@ resource "ignition_file" "master_kubeconfig" {
   filesystem = "root"
 
   content {
-    content = "${file("${path.cwd}/assets/auth/kubeconfig")}"
+    content = "${var.kube_config}"
   }
 }
 
@@ -47,39 +47,6 @@ resource "ignition_file" "master_max_user_watches_conf" {
 
   content {
     content = "fs.inotify.max_user_watches=16184"
-  }
-}
-
-resource "ignition_file" "master_ca_pem" {
-  path       = "/etc/kubernetes/ssl/ca.pem"
-  mode       = 0644
-  uid        = 0
-  filesystem = "root"
-
-  content {
-    content = "${file("${path.cwd}/assets/tls/ca.crt")}"
-  }
-}
-
-resource "ignition_file" "master_client_pem" {
-  path       = "/etc/kubernetes/ssl/client.pem"
-  mode       = 0644
-  uid        = 0
-  filesystem = "root"
-
-  content {
-    content = "${file("${path.cwd}/assets/tls/kubelet.crt")}"
-  }
-}
-
-resource "ignition_file" "master_client_key" {
-  path       = "/etc/kubernetes/ssl/client.pem"
-  mode       = 0644
-  uid        = 0
-  filesystem = "root"
-
-  content {
-    content = "${file("${path.cwd}/assets/tls/kubelet.key")}"
   }
 }
 
@@ -99,7 +66,7 @@ EOF
 }
 
 resource "ignition_file" "master_hostname" {
-  count      = "${var.count}"
+  count      = "${var.master_count}"
   path       = "/etc/hostname"
   mode       = 0644
   uid        = 0
@@ -205,7 +172,7 @@ EOF
 }
 
 resource "ignition_config" "master" {
-  count = "${var.count}"
+  count = "${var.master_count}"
 
   users = [
     "${ignition_user.core.id}",
@@ -216,9 +183,6 @@ resource "ignition_config" "master" {
     "${ignition_file.master_kubelet_env.id}",
     "${ignition_file.master_kubeconfig.id}",
     "${ignition_file.master_max_user_watches_conf.id}",
-    "${ignition_file.master_ca_pem.id}",
-    "${ignition_file.master_client_pem.id}",
-    "${ignition_file.master_client_key.id}",
     "${ignition_file.master_resolv_conf.id}",
     "${ignition_file.master_hostname.*.id[count.index]}",
   ]
