@@ -12,11 +12,10 @@ resource "openstack_networking_network_v2" "network" {
 resource "openstack_networking_subnet_v2" "subnet" {
   name       = "${var.cluster_name}_subnet"
   network_id = "${openstack_networking_network_v2.network.id}"
-  cidr       = "192.168.1.0/24"
+  cidr       = "${var.subnet_cidr}"
   ip_version = 4
 
-  # TOOD make this configurable
-  dns_nameservers = ["8.8.8.8", "8.8.4.4"]
+  dns_nameservers = ["${var.dns_nameservers}"]
 }
 
 resource "openstack_networking_router_interface_v2" "interface" {
@@ -24,12 +23,54 @@ resource "openstack_networking_router_interface_v2" "interface" {
   subnet_id = "${openstack_networking_subnet_v2.subnet.id}"
 }
 
-resource "openstack_compute_floatingip_v2" "master" {
-  count = "${var.master_count}"
-  pool  = "public"
+# master
+
+resource "openstack_networking_port_v2" "master" {
+  count          = "${var.master_count}"
+  name           = "${var.cluster_name}_port_master_${count.index}"
+  network_id     = "${openstack_networking_network_v2.network.id}"
+  admin_state_up = "true"
+
+  fixed_ip {
+    subnet_id = "${openstack_networking_subnet_v2.subnet.id}"
+  }
+
+  allowed_address_pairs {
+    ip_address = "${var.service_cidr}"
+  }
+
+  allowed_address_pairs {
+    ip_address = "${var.cluster_cidr}"
+  }
 }
 
-resource "openstack_compute_floatingip_v2" "worker" {
+resource "openstack_networking_floatingip_v2" "master" {
+  count = "${var.master_count}"
+  pool  = "${var.floatingip_pool}"
+}
+
+# worker
+
+resource "openstack_networking_port_v2" "worker" {
+  count          = "${var.worker_count}"
+  name           = "${var.cluster_name}_port_worker_${count.index}"
+  network_id     = "${openstack_networking_network_v2.network.id}"
+  admin_state_up = "true"
+
+  fixed_ip {
+    subnet_id = "${openstack_networking_subnet_v2.subnet.id}"
+  }
+
+  allowed_address_pairs {
+    ip_address = "${var.service_cidr}"
+  }
+
+  allowed_address_pairs {
+    ip_address = "${var.cluster_cidr}"
+  }
+}
+
+resource "openstack_networking_floatingip_v2" "worker" {
   count = "${var.worker_count}"
-  pool  = "public"
+  pool  = "${var.floatingip_pool}"
 }

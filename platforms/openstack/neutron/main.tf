@@ -118,4 +118,6 @@ module "network" {
   worker_count        = "${var.tectonic_worker_count}"
   external_gateway_id = "${var.tectonic_openstack_external_gateway_id}"
   cluster_name        = "${var.tectonic_cluster_name}"
+  service_cidr        = "${var.tectonic_service_cidr}"
+  cluster_cidr        = "${var.tectonic_cluster_cidr}"
 }
