@@ -24,7 +24,7 @@ data:
         target_label: kubernetes_role
       - source_labels: [__address__]
         regex: '(.*):10250'
-        replacement: '${1}:10255'
+        replacement: '$${1}:10255'
         target_label: __address__
     - job_name: tectonic-system/k8s-apps-http/0
       kubernetes_sd_configs:
@@ -59,12 +59,12 @@ data:
       - action: labelmap
         regex: __meta_kubernetes_pod_label_(.+)
         replacement: pod_$1
-      - replacement: ${1}
+      - replacement: $${1}
         source_labels:
         - __meta_kubernetes_service_name
         target_label: job
       - regex: (.+)
-        replacement: ${1}
+        replacement: $${1}
         source_labels:
         - __meta_kubernetes_service_label_k8s_app
         target_label: job
