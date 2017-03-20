@@ -40,18 +40,22 @@ variable "tectonic_azure_ssh_key" {
 
 variable "tectonic_azure_master_vm_size" {
   type = "string"
+  default = "Standard_DS2"
 }
 
 variable "tectonic_azure_worker_vm_size" {
   type = "string"
+  default = "Standard_DS2"
 }
 
 variable "tectonic_azure_etcd_vm_size" {
   type = "string"
+  default = "Standard_DS2"
 }
 
 variable "tectonic_azure_vnet_cidr_block" {
   type = "string"
+  default = "10.0.0.0/16"
 }
 
 variable "tectonic_azure_external_vnet_id" {

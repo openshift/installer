@@ -156,11 +156,13 @@ variable "tectonic_ingress_type" {
 variable "tectonic_ca_cert" {
   type        = "string"
   description = "PEM-encoded CA certificate, used to generate Tectonic Console's server certificate. Optional, if left blank, a CA certificate will be automatically generated."
+  default = ""
 }
 
 variable "tectonic_ca_key" {
   type        = "string"
   description = "PEM-encoded CA key, used to generate Tectonic Console's server certificate. Optional if tectonic_ca_cert is left blank"
+  default = ""
 }
 
 variable "tectonic_ca_key_alg" {
