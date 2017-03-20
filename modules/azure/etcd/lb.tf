@@ -4,7 +4,8 @@ resource "azurerm_lb" "tectonic_etcd_lb" {
   resource_group_name = "${var.resource_group_name}"
 
   frontend_ip_configuration {
-    name                          = "default"
+    name = "default"
+
     public_ip_address_id          = "${azurerm_public_ip.etcd_publicip.id}"
     private_ip_address_allocation = "dynamic"
   }

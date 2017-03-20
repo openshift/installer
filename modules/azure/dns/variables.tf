@@ -1,7 +1,6 @@
 // Location is the Azure Location (East US, West US, etc)
 variable "location" {
-  type    = "string"
-  default = "East US"
+  type = "string"
 }
 
 variable "resource_group_name" {

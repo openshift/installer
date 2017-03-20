@@ -42,17 +42,17 @@ resource "azurerm_network_security_group" "etcd_group" {
     direction                  = "Inbound"
   }
 
-  # security_rule {
-  #   name                       = "all-in"
-  #   source_port_range          = "*"
-  #   destination_port_range     = "*"
-  #   protocol                   = "*"
-  #   destination_address_prefix = "0.0.0.0/0"
-  #   source_address_prefix      = "0.0.0.0/0"
-  #   access                     = "Allow"
-  #   priority                   = "103"
-  #   direction                  = "Inbound"
-  # }
+  security_rule {
+    name                       = "all-in"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    protocol                   = "*"
+    destination_address_prefix = "0.0.0.0/0"
+    source_address_prefix      = "0.0.0.0/0"
+    access                     = "Allow"
+    priority                   = "103"
+    direction                  = "Inbound"
+  }
 
   security_rule {
     name                       = "all-out"

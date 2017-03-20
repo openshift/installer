@@ -42,6 +42,7 @@ resource "azurerm_lb_rule" "ssh-lb" {
   loadbalancer_id         = "${azurerm_lb.tectonic_lb.id}"
   backend_address_pool_id = "${azurerm_lb_backend_address_pool.k8-lb.id}"
   probe_id                = "${azurerm_lb_probe.ssh-lb.id}"
+  load_distribution       = "SourceIP"
 
   protocol                       = "tcp"
   frontend_port                  = 22

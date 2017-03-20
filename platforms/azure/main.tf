@@ -8,7 +8,7 @@ provider "azurerm" {
 
 resource "azurerm_resource_group" "tectonic_cluster" {
   location = "${var.tectonic_azure_location}"
-  name     = "tectonic-cluster-${var.tectonic_cluster_name}-group-alt"
+  name     = "tectonic-cluster-${var.tectonic_cluster_name}"
 }
 
 module "vnet" {
@@ -28,7 +28,7 @@ module "etcd" {
   image_reference     = "${var.tectonic_azure_image_reference}"
   vm_size             = "${var.tectonic_azure_etcd_vm_size}"
 
-  etcd_count      = "${var.tectonic_master_count}"
+  etcd_count      = "${var.tectonic_etcd_count}"
   base_domain     = "${var.tectonic_base_domain}"
   cluster_name    = "${var.tectonic_cluster_name}"
   ssh_key         = "${var.tectonic_ssh_key}"
@@ -56,25 +56,25 @@ module "masters" {
   # kube_config     = "${module.bootkube.kubeconfig}"
 }
 
-# module "workers" {
-#   source = "../../modules/azure/worker"
+module "workers" {
+  source = "../../modules/azure/worker"
 
-#   location            = "${var.tectonic_azure_location}"
-#   resource_group_name = "${azurerm_resource_group.tectonic_cluster.name}"
-#   image_reference     = "${var.tectonic_azure_image_reference}"
-#   vm_size             = "${var.tectonic_azure_worker_vm_size}"
+  location            = "${var.tectonic_azure_location}"
+  resource_group_name = "${azurerm_resource_group.tectonic_cluster.name}"
+  image_reference     = "${var.tectonic_azure_image_reference}"
+  vm_size             = "${var.tectonic_azure_worker_vm_size}"
 
-#   worker_count    = "${var.tectonic_worker_count}"
-#   base_domain     = "${var.tectonic_base_domain}"
-#   cluster_name    = "${var.tectonic_cluster_name}"
-#   public_ssh_key  = "${var.tectonic_azure_ssh_key}"
-#   virtual_network = "${module.vnet.vnet_id}"
-#   subnet          = "${module.vnet.worker_subnet}"
-#   kube_image_url  = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
-#   kube_image_tag  = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
+  worker_count    = "${var.tectonic_worker_count}"
+  base_domain     = "${var.tectonic_base_domain}"
+  cluster_name    = "${var.tectonic_cluster_name}"
+  public_ssh_key  = "${var.tectonic_azure_ssh_key}"
+  virtual_network = "${module.vnet.vnet_id}"
+  subnet          = "${module.vnet.worker_subnet}"
+  kube_image_url  = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
+  kube_image_tag  = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
 
-#   # kube_config     = "${module.bootkube.kubeconfig}"
-# }
+  # kube_config     = "${module.bootkube.kubeconfig}"
+}
 
 module "dns" {
   source = "../../modules/azure/dns"

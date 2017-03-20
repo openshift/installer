@@ -24,8 +24,7 @@ variable "tectonic_azure_image_reference" {
 }
 
 variable "tectonic_azure_location" {
-  type    = "string"
-  default = "East US"
+  type = "string"
 }
 
 variable "tectonic_ssh_key" {

@@ -6,7 +6,7 @@ resource "random_id" "tectonic_storage_name" {
   byte_length = 4
 }
 
-resource "azurerm_storage_account" "tectonic_storage" {
+resource "azurerm_storage_account" "tectonic_worker" {
   name                = "${random_id.tectonic_storage_name.hex}"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
@@ -17,21 +17,21 @@ resource "azurerm_storage_account" "tectonic_storage" {
   }
 }
 
-resource "azurerm_storage_container" "tectonic_storage_container" {
+resource "azurerm_storage_container" "tectonic_worker" {
   name                  = "vhd"
   resource_group_name   = "${var.resource_group_name}"
-  storage_account_name  = "${azurerm_storage_account.tectonic_storage.name}"
+  storage_account_name  = "${azurerm_storage_account.tectonic_worker.name}"
   container_access_type = "private"
 }
 
-resource "azurerm_lb_backend_address_pool" "workers" {
-  name                = "workers-lb-pool"
-  resource_group_name = "${var.resource_group_name}"
-  loadbalancer_id     = "${azurerm_lb.tectonic_lb.id}"
-}
+# resource "azurerm_lb_backend_address_pool" "workers" {
+#   name                = "workers-lb-pool"
+#   resource_group_name = "${var.resource_group_name}"
+#   loadbalancer_id     = "${azurerm_lb.tectonic_lb.id}"
+# }
 
 resource "azurerm_virtual_machine_scale_set" "tectonic_workers" {
-  name                = "tectonic_worker_vm-${count.index}"
+  name                = "${var.cluster_name}-workers"
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
   upgrade_policy_mode = "Manual"
@@ -47,9 +47,10 @@ resource "azurerm_virtual_machine_scale_set" "tectonic_workers" {
     primary = true
 
     ip_configuration {
-      name                                   = "${var.cluster_name}-WorkerIPConfiguration"
-      subnet_id                              = "${var.subnet}"
-      load_balancer_backend_address_pool_ids = ["azurerm_lb_backend_address_pool.workers.id"]
+      name      = "${var.cluster_name}-WorkerIPConfiguration"
+      subnet_id = "${var.subnet}"
+
+      # load_balancer_backend_address_pool_ids = ["azurerm_lb_backend_address_pool.workers.id"]
     }
   }
 
@@ -62,10 +63,10 @@ resource "azurerm_virtual_machine_scale_set" "tectonic_workers" {
 
   storage_profile_os_disk {
     name           = "worker-osdisk"
-    vhd_containers = ["${azurerm_storage_account.tectonic_storage.primary_blob_endpoint}${azurerm_storage_container.tectonic_storage_container.name}"]
     caching        = "ReadWrite"
     create_option  = "FromImage"
     os_type        = "linux"
+    vhd_containers = ["${azurerm_storage_account.tectonic_worker.primary_blob_endpoint}${azurerm_storage_container.tectonic_worker.name}"]
   }
 
   os_profile {

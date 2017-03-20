@@ -5,12 +5,12 @@
 # Add azurerm_availability_set
 
 # Generate unique storage name
-resource "random_id" "tectonic_storage_name" {
+resource "random_id" "tectonic_master_storage_name" {
   byte_length = 4
 }
 
-resource "azurerm_storage_account" "tectonic_storage" {
-  name                = "${random_id.tectonic_storage_name.hex}"
+resource "azurerm_storage_account" "tectonic_master" {
+  name                = "${random_id.tectonic_master_storage_name.hex}"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
   account_type        = "Premium_LRS"
@@ -21,16 +21,15 @@ resource "azurerm_storage_account" "tectonic_storage" {
   }
 }
 
-resource "azurerm_storage_container" "tectonic_storage_container" {
-  name                  = "vhd"
+resource "azurerm_storage_container" "tectonic_master" {
+  name                  = "${var.cluster_name}-vhd-master"
   resource_group_name   = "${var.resource_group_name}"
-  storage_account_name  = "${azurerm_storage_account.tectonic_storage.name}"
+  storage_account_name  = "${azurerm_storage_account.tectonic_master.name}"
   container_access_type = "private"
-  depends_on            = ["azurerm_storage_account.tectonic_storage"]
 }
 
 resource "azurerm_virtual_machine_scale_set" "tectonic_masters" {
-  name                = "${var.cluster_name}-master-${count.index}"
+  name                = "${var.cluster_name}-masters"
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
   upgrade_policy_mode = "Manual"
@@ -61,10 +60,10 @@ resource "azurerm_virtual_machine_scale_set" "tectonic_masters" {
 
   storage_profile_os_disk {
     name           = "master-osdisk"
-    vhd_containers = ["${azurerm_storage_account.tectonic_storage.primary_blob_endpoint}${azurerm_storage_container.tectonic_storage_container.name}"]
     caching        = "ReadWrite"
     create_option  = "FromImage"
     os_type        = "linux"
+    vhd_containers = ["${azurerm_storage_account.tectonic_master.primary_blob_endpoint}${azurerm_storage_container.tectonic_master.name}"]
   }
 
   os_profile {
