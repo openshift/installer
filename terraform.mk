@@ -52,15 +52,15 @@ terraform: $(TERRAFORM_BUILD_DIR) $(TERRAFORM_BINS_DIR)
 	cd $(TERRAFORM_BINS_DIR) && zip -r terraform.zip */
 
 	echo -e "\n--> TerraForm built successfully for [$(TERRAFORM_GO_OS)] / [$(TERRAFORM_GOARCH)] in $(TERRAFORM_BINS_DIR)"
-	echo "--> To start using TerraForm for your platform, modify your PATH: export PATH=$$PATH:$(TERRAFORM_BINS_DIR))"
+	echo "--> To start using TerraForm for your platform, modify your PATH: export PATH=$(TERRAFORM_BINS_DIR):$$PATH"
 
 terraform-download: $(TERRAFORM_BINS_DIR)
 	curl -L `curl -s $(TERRAFORM_RELEASE_URL) | grep browser_download_url | head -n 1 | cut -d '"' -f 4` > $(TERRAFORM_BINS_DIR)/terraform.zip
 
-	cd $(TERRAFORM_BINS_DIR) && unzip -f terraform.zip
-	cp $(TERRAFORM_BUILD_DIR)/pkg/$(GOOS)_$(GOARCH)/terraform $(TERRAFORM_BINS_DIR)
+	cd $(TERRAFORM_BINS_DIR) && unzip -o terraform.zip
+	cp $(TERRAFORM_BINS_DIR)/$(GOOS)_$(GOARCH)/terraform $(TERRAFORM_BINS_DIR)
 
-	echo "--> To start using TerraForm for your platform, modify your PATH: export PATH=$$PATH:$(TERRAFORM_BINS_DIR))"
+	echo "--> To start using TerraForm for your platform, modify your PATH: export PATH=$(TERRAFORM_BINS_DIR):$$PATH"
 
 terraform-clean:
 	rm -rf $(TERRAFORM_BUILD_DIR) $(TERRAFORM_BINS_DIR)
