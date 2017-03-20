@@ -1,55 +1,49 @@
 resource "azurerm_network_interface" "etcd_nic" {
-  name                      = "${var.cluster_name}_etcd_nic"
+  count                     = "${var.etcd_count}"
+  name                      = "${var.cluster_name}-etcd-nic-${count.index}"
   location                  = "${var.location}"
   network_security_group_id = "${azurerm_network_security_group.etcd_group.id}"
   resource_group_name       = "${var.resource_group_name}"
 
   ip_configuration {
     name                                    = "tectonic_etcd_configuration"
-    subnet_id                               = "${azurerm_subnet.etcd_subnet.id}"
+    subnet_id                               = "${var.subnet}"
     private_ip_address_allocation           = "dynamic"
     load_balancer_backend_address_pools_ids = ["${azurerm_lb_backend_address_pool.etcd-lb.id}"]
   }
 }
 
-resource "azurerm_subnet" "etcd_subnet" {
-  name                 = "${var.cluster_name}_etcd_subnet"
-  resource_group_name  = "${var.resource_group_name}"
-  virtual_network_name = "${var.virtual_network}"
-  address_prefix       = "10.0.1.0/24"
-}
-
 resource "azurerm_network_security_group" "etcd_group" {
-  name                = "${var.cluster_name}_etcd_group"
+  name                = "${var.cluster_name}-etcd"
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
 
   security_rule {
-    name                       = "rule1"
-    source_port_range          = 22
+    name                       = "ssh"
+    source_port_range          = "*"
     destination_port_range     = 22
     protocol                   = "Tcp"
     destination_address_prefix = "0.0.0.0/0"
-    source_address_prefix      = "0.0.0.0/0"
+    source_address_prefix      = "VirtualNetwork"
     access                     = "Allow"
     priority                   = "100"
     direction                  = "Inbound"
   }
 
   security_rule {
-    name                       = "rule2"
-    source_port_range          = 2379
-    destination_port_range     = 2380
+    name                       = "etcd-client-perr"
+    source_port_range          = "*"
+    destination_port_range     = "2379-2380"
     protocol                   = "Tcp"
     destination_address_prefix = "0.0.0.0/0"
-    source_address_prefix      = "0.0.0.0/0"
+    source_address_prefix      = "VirtualNetwork"
     access                     = "Allow"
     priority                   = "101"
     direction                  = "Inbound"
   }
 
   security_rule {
-    name                       = "rule3"
+    name                       = "all-in"
     source_port_range          = "*"
     destination_port_range     = "*"
     protocol                   = "*"
@@ -61,7 +55,7 @@ resource "azurerm_network_security_group" "etcd_group" {
   }
 
   security_rule {
-    name                       = "rule4"
+    name                       = "all-out"
     source_port_range          = "*"
     destination_port_range     = "*"
     protocol                   = "*"

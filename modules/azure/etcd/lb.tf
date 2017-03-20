@@ -1,10 +1,11 @@
 resource "azurerm_lb" "tectonic_etcd_lb" {
-  name                = "etcd-lb"
+  name                = "${var.cluster_name}-etcd-lb"
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
 
   frontend_ip_configuration {
-    name                          = "default"
+    name = "default"
+
     public_ip_address_id          = "${azurerm_public_ip.etcd_publicip.id}"
     private_ip_address_allocation = "dynamic"
   }
@@ -18,7 +19,7 @@ resource "azurerm_public_ip" "etcd_publicip" {
 }
 
 resource "azurerm_lb_rule" "etcd-lb" {
-  name                           = "etcd-lb-rule-2379-2379"
+  name                           = "${var.cluster_name}-etcd-lb-rule-client"
   resource_group_name            = "${var.resource_group_name}"
   loadbalancer_id                = "${azurerm_lb.tectonic_etcd_lb.id}"
   backend_address_pool_id        = "${azurerm_lb_backend_address_pool.etcd-lb.id}"
@@ -30,7 +31,7 @@ resource "azurerm_lb_rule" "etcd-lb" {
 }
 
 resource "azurerm_lb_probe" "etcd-lb" {
-  name                = "etcd-lb-probe"
+  name                = "${var.cluster_name}-etcd-lb-probe"
   loadbalancer_id     = "${azurerm_lb.tectonic_etcd_lb.id}"
   resource_group_name = "${var.resource_group_name}"
   protocol            = "Tcp"
@@ -38,7 +39,7 @@ resource "azurerm_lb_probe" "etcd-lb" {
 }
 
 resource "azurerm_lb_backend_address_pool" "etcd-lb" {
-  name                = "etcd-lb-pool"
+  name                = "${var.cluster_name}-etcd-lb-pool"
   resource_group_name = "${var.resource_group_name}"
   loadbalancer_id     = "${azurerm_lb.tectonic_etcd_lb.id}"
 }

@@ -1,7 +1,6 @@
 // Location is the Azure Location (East US, West US, etc)
 variable "location" {
-  type    = "string"
-  default = "East US"
+  type = "string"
 }
 
 variable "resource_group_name" {
@@ -18,11 +17,6 @@ variable "vm_size" {
   type = "string"
 }
 
-// Count of master nodes to be created.
-variable "count" {
-  type = "string"
-}
-
 // The base DNS domain of the cluster.
 // Example: `azure.dev.coreos.systems`
 variable "base_domain" {
@@ -34,10 +28,43 @@ variable "cluster_name" {
   type = "string"
 }
 
-variable "ssh_key" {
+variable "public_ssh_key" {
   type = "string"
 }
 
 variable "virtual_network" {
+  type = "string"
+}
+
+variable "subnet" {
+  type = "string"
+}
+
+variable "kube_image_url" {
+  type = "string"
+}
+
+variable "kube_image_tag" {
+  type = "string"
+}
+
+variable "kubeconfig_content" {
+  type = "string"
+}
+
+// Count of master nodes to be created.
+variable "master_count" {
+  type = "string"
+}
+
+variable "etcd_endpoints" {
+  type = "list"
+}
+
+variable "tectonic_versions" {
+  type = "map"
+}
+
+variable "tectonic_kube_dns_service_ip" {
   type = "string"
 }

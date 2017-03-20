@@ -1,7 +1,6 @@
 // Location is the Azure Location (East US, West US, etc)
 variable "location" {
-  type    = "string"
-  default = "East US"
+  type = "string"
 }
 
 variable "resource_group_name" {
@@ -18,13 +17,8 @@ variable "vm_size" {
   type = "string"
 }
 
-// Kubelet version to run on the master.
-variable "kubelet_version" {
-  type = "string"
-}
-
-// Count of master nodes to be created.
-variable "count" {
+// Count of etcd nodes to be created.
+variable "etcd_count" {
   type = "string"
 }
 
@@ -44,5 +38,9 @@ variable "ssh_key" {
 }
 
 variable "virtual_network" {
+  type = "string"
+}
+
+variable "subnet" {
   type = "string"
 }

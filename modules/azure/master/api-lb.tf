@@ -20,7 +20,6 @@ resource "azurerm_lb_rule" "k8-lb" {
   frontend_port                  = 443
   backend_port                   = 443
   frontend_ip_configuration_name = "api"
-
 }
 
 resource "azurerm_lb_probe" "k8-lb" {
@@ -43,6 +42,7 @@ resource "azurerm_lb_rule" "ssh-lb" {
   loadbalancer_id         = "${azurerm_lb.tectonic_lb.id}"
   backend_address_pool_id = "${azurerm_lb_backend_address_pool.k8-lb.id}"
   probe_id                = "${azurerm_lb_probe.ssh-lb.id}"
+  load_distribution       = "SourceIP"
 
   protocol                       = "tcp"
   frontend_port                  = 22
