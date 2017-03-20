@@ -26,6 +26,7 @@ ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --exit-on-lock-contention \
   --pod-manifest-path=/etc/kubernetes/manifests \
   --allow-privileged \
+  --node-labels=node=true \
   --minimum-container-ttl-duration=6m0s \
   --cluster_dns=${cluster_dns} \
   --cluster_domain=cluster.local \
