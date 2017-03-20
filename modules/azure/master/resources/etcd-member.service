@@ -1,0 +1,6 @@
+[Service]
+Environment="ETCD_IMAGE_TAG=${version}"
+ExecStart=
+ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
+    --listen-addr=127.0.0.1:2379 \
+    --endpoints=${endpoints}

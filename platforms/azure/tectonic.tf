@@ -59,30 +59,30 @@ module "tectonic" {
   ingress_kind      = "NodePort"
 }
 
-# resource "null_resource" "tectonic" {
-#   depends_on = ["module.tectonic", "module.masters"]
+resource "null_resource" "tectonic" {
+  depends_on = ["module.tectonic", "module.masters"]
 
+  triggers {
+    api-endpoint = "${module.dns.api_external_fqdn}"
+  }
 
-#   connection {
-#     host  = "${module.dns.api_external_fqdn}"
-#     user  = "core"
-#     agent = true
-#   }
+  connection {
+    host  = "${module.dns.api_external_fqdn}"
+    user  = "core"
+    agent = true
+  }
 
+  provisioner "file" {
+    source      = "${path.cwd}/generated"
+    destination = "$HOME/tectonic"
+  }
 
-#   provisioner "file" {
-#     source      = "${path.cwd}/generated"
-#     destination = "$HOME/tectonic"
-#   }
-
-
-#   provisioner "remote-exec" {
-#     inline = [
-#       "sudo mkdir -p /opt",
-#       "sudo rm -rf /opt/tectonic",
-#       "sudo mv /home/core/tectonic /opt/",
-#       "sudo systemctl start tectonic",
-#     ]
-#   }
-# }
-
+  provisioner "remote-exec" {
+    inline = [
+      "sudo mkdir -p /opt",
+      "sudo rm -rf /opt/tectonic",
+      "sudo mv /home/core/tectonic /opt/",
+      "sudo systemctl start tectonic",
+    ]
+  }
+}
