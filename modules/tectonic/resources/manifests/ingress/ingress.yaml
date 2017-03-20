@@ -5,6 +5,7 @@ metadata:
   namespace: tectonic-system
   annotations:
     ingress.kubernetes.io/ssl-redirect: "true"
+    ingress.kubernetes.io/use-port-in-redirects: "true"
 spec:
   tls:
     - secretName: tectonic-ingress-tls-secret

@@ -6,10 +6,10 @@ variable "tectonic_container_images" {
     hyperkube                 = "quay.io/coreos/hyperkube:v1.5.4_coreos.0"
     pod_checkpointer          = "quay.io/coreos/pod-checkpointer:5b585a2d731173713fa6871c436f6c53fa17f754"
     bootkube                  = "quay.io/coreos/bootkube:v0.3.11"
-    console                   = "quay.io/coreos/tectonic-console:v1.0.3"
+    console                   = "quay.io/coreos/tectonic-console:v1.1.1"
     identity                  = "quay.io/coreos/dex:v2.2.4"
-    kube_version_operator     = "quay.io/coreos/kube-version-operator:79aa49c6b225f27e4479a502efeaae4195e1070e"
-    tectonic_channel_operator = "quay.io/coreos/tectonic-channel-operator:3d36eba4ecd9cbc50e1f3773d07e6bc358b00096"
+    kube_version_operator     = "quay.io/coreos/kube-version-operator:adb6183a1c5082dc42c4b8c01bb3c60daf4ccd44"
+    tectonic_channel_operator = "quay.io/coreos/tectonic-channel-operator:15c001bd7c008a04394390d08ac71046e723ac48"
     node_agent                = "quay.io/coreos/node-agent:96db3df24c2ddf0b82c38111c71179c5b10de0c9"
     prometheus_operator       = "quay.io/coreos/prometheus-operator:v0.6.0"
     node_exporter             = "quay.io/prometheus/node-exporter:v0.13.0"
@@ -19,11 +19,11 @@ variable "tectonic_container_images" {
     stats_emitter             = "quay.io/coreos/tectonic-stats:6e882361357fe4b773adbf279cddf48cb50164c1"
     stats_extender            = "quay.io/coreos/tectonic-stats-extender:487b3da4e175da96dabfb44fba65cdb8b823db2e"
     error_server              = "quay.io/coreos/tectonic-error-server:1.0"
-    ingress_controller        = "gcr.io/google_containers/nginx-ingress-controller:0.8.3"
+    ingress_controller        = "gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.2"
     kubedns                   = "gcr.io/google_containers/kubedns-amd64:1.9"
     kubednsmasq               = "gcr.io/google_containers/kube-dnsmasq-amd64:1.4"
     dnsmasq_metrics           = "gcr.io/google_containers/dnsmasq-metrics-amd64:1.0"
-    exechealthz               = "gcr.io/google_containers/exechealthz-amd64:1.2"
+    exechealthz              = "gcr.io/google_containers/exechealthz-amd64:1.2"
     flannel                   = "quay.io/coreos/flannel:v0.7.0-amd64"
   }
 }
@@ -35,8 +35,8 @@ variable "tectonic_versions" {
   default = {
     etcd       = "v3.1.2"
     prometheus = "v1.5.2"
-    kubernetes = "1.5.3+tectonic.1"
-    tectonic   = "1.5.3-tectonic.1"
+    kubernetes = "1.5.4+tectonic.1"
+    tectonic   = "1.5.4-tectonic.1"
   }
 }
 

@@ -104,9 +104,9 @@ create_resource yaml ingress/default-backend/deployment.yaml apis/extensions/v1b
 create_resource yaml ingress/ingress.yaml                    apis/extensions/v1beta1/namespaces/tectonic-system/ingresses
 
 if [ "${ingress_kind}" = "HostPort" ]; then
-  create_resource yaml ingress/hostport.yaml apis/extensions/v1beta1/namespaces/tectonic-system/daemonsets
+  create_resource yaml ingress/hostport/service.yaml    api/v1/namespaces/tectonic-system/services
+  create_resource yaml ingress/hostport/daemonset.yaml  apis/extensions/v1beta1/namespaces/tectonic-system/daemonsets
 elif [ "${ingress_kind}" = "NodePort" ]; then
-  create_resource yaml ingress/nodeport/configmap.yaml  api/v1/namespaces/tectonic-system/configmaps
   create_resource yaml ingress/nodeport/service.yaml    api/v1/namespaces/tectonic-system/services
   create_resource yaml ingress/nodeport/deployment.yaml apis/extensions/v1beta1/namespaces/tectonic-system/deployments
 else

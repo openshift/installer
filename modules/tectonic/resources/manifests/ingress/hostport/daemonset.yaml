@@ -38,7 +38,7 @@ spec:
           image: ${ingress_controller_image}
           args:
           - /nginx-ingress-controller
-          - --nginx-configmap=$(POD_NAMESPACE)/tectonic-custom-error
+          - --configmap=$(POD_NAMESPACE)/tectonic-custom-error
           - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
           - --default-ssl-certificate=tectonic-system/tectonic-ingress-tls-secret
           - --watch-namespace=tectonic-system

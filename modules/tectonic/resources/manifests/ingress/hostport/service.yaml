@@ -8,23 +8,16 @@ metadata:
     app: tectonic-lb
     component: ingress-controller
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: tectonic-lb
     component: ingress-controller
   ports:
-    - name: https
-      protocol: TCP
-      port: 443
-      targetPort: 443
-      nodePort: 32000
     - name: http
       protocol: TCP
       port: 80
       targetPort: 80
-      nodePort: 32001
-    - name: health
+    - name: https
       protocol: TCP
-      port: 10254
-      targetPort: 10254
-      nodePort: 32002
+      port: 443
+      targetPort: 443

@@ -8,6 +8,9 @@ metadata:
     managed-by-channel-operator: "true"
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: tectonic-channel-operator
   template:
     metadata:
       labels:

@@ -20,7 +20,7 @@ spec:
           image: ${ingress_controller_image}
           args:
           - /nginx-ingress-controller
-          - --nginx-configmap=$(POD_NAMESPACE)/tectonic-custom-error
+          - --configmap=$(POD_NAMESPACE)/tectonic-custom-error
           - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
           - --default-ssl-certificate=tectonic-system/tectonic-ingress-tls-secret
           - --watch-namespace=tectonic-system
@@ -53,17 +53,6 @@ spec:
               path: /healthz
               port: 10254
               scheme: HTTP
-          volumeMounts:
-          - name: nginx-ingress-conf-template
-            mountPath: /etc/nginx/template
-            readOnly: true
-      volumes:
-      - name: nginx-ingress-conf-template
-        configMap:
-          name: tectonic-ingress-nginx-config
-          items:
-          - key: nginx.tmpl
-            path: nginx.tmpl
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       terminationGracePeriodSeconds: 60
