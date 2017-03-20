@@ -32,7 +32,7 @@ module "masters" {
   tectonic_cluster_name        = "${var.tectonic_cluster_name}"
   tectonic_cl_channel          = "${var.tectonic_cl_channel}"
   tectonic_master_count        = "${var.tectonic_master_count}"
-  etcd_endpoints               = ["${module.etcd.endpoints}"]
+  etcd_endpoints               = ["${formatlist("%s:2379", module.etcd.endpoints)}"]
   tectonic_aws_master_ec2_type = "${var.tectonic_aws_master_ec2_type}"
   extra_sg_ids                 = ["${module.vpc.cluster_default_sg}"]
   kube_image_url               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
@@ -49,7 +49,7 @@ module "workers" {
   vpc_id                       = "${module.vpc.vpc_id}"
   tectonic_worker_count        = "${var.tectonic_worker_count}"
   ssh_key                      = "${var.tectonic_aws_ssh_key}"
-  etcd_endpoints               = "${module.etcd.endpoints}"
+  etcd_endpoints               = "${formatlist("%s:2379", module.etcd.endpoints)}"
   tectonic_base_domain         = "${var.tectonic_base_domain}"
   tectonic_cluster_name        = "${var.tectonic_cluster_name}"
   worker_subnet_ids            = ["${module.vpc.worker_subnet_ids}"]
