@@ -56,6 +56,7 @@ module "masters" {
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
   tectonic_versions            = "${var.tectonic_versions}"
   tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
+  cloud_provider               = ""
 }
 
 module "workers" {
@@ -78,6 +79,7 @@ module "workers" {
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
   tectonic_versions            = "${var.tectonic_versions}"
   tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
+  cloud_provider               = ""
 }
 
 module "dns" {

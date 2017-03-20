@@ -68,3 +68,8 @@ variable "tectonic_versions" {
 variable "tectonic_kube_dns_service_ip" {
   type = "string"
 }
+
+variable "cloud_provider" {
+  type    = "string"
+  default = "azure"
+}
