@@ -12,99 +12,70 @@ Goals of the project:
 - Customizable and modular (change DNS providers, security settings, etc)
 - HA by default (deploy all Kubernetes components HA, use etcd Operator)
 
+Note: This repo does not yet have all Tectonic Installer features imported. This will happen over the coming weeks as we are able to make some of the surrounding infrastructure public as well. This notice will be removed once the AWS and Baremetal graphical installer code has been fully integrated.
+
 Checkout the [ROADMAP](ROADMAP.md) for details on where the project is headed.
 
 ## Getting Started
 
-### Step 1: Sign-up for the Tectonic Free Tier
+To use the installer you can either use an official release (starting March 29, 2017), or hack on the scripts in this repo.
 
-Sign-up for the [Tectonic Free Tier](https://coreos.com/tectonic).
+### Official releases
 
-*Note:* We will make this project flexible enough in the coming weeks to just install Kubernetes without the additional Tectonic Components. Please help make this happen or follow this issue.
-
-### Step 2: Download the Tectonic installer.
-
-```
-wget https://releases.tectonic.com/tectonic-X.Y.Z-tectonic.N.tar.gz
-tar xzvf tectonic-X.Y.Z-tectonic.N.tar.gz
-```
-
-### Step 2: Choose a Platform
+See the official Tectonic documentation:
 
 - [AWS Cloud Formation](https://coreos.com/tectonic/docs/latest/install/aws/) [[**stable**][platform-lifecycle]]
 - [Baremetal](https://coreos.com/tectonic/docs/latest/install/bare-metal/) [[**stable**][platform-lifecycle]]
-- [AWS via Terraform](aws/README.md) [[**alpha**][platform-lifecycle]]
-- [Azure via Terraform](azure/README.md) [[**alpha**][platform-lifecycle]]
-- [OpenStack via Terraform](openstack/README.md) [[**alpha**][platform-lifecycle]]
-- [VMware](vmware/README.md) [[**alpha**][platform-lifecycle]]
 
-Note: This repo does not yet have all Tectonic Installer code imported. This will happen over the coming weeks as we are able to move some of the surrounding infrastructure public as well. This notice will be removed once the AWS and Baremetal graphical installer code has been imported.
+### Hacking
 
-# Old README stuff
+#### Choose your platform:
 
-## Getting Started
+See the platform specific documentation. Then see the *common usage* section below.
 
-At this time the Platform SDK relies on the Tectonic Installer to generate all of the Kubernetes assests, certificates, etc. If you don't have a Tectonic installer already [sign-up for one for the free tier](https://coreos.com/tectonic) first, then:
+- [AWS via Terraform](Documentation/platforms/aws/README.md) [[**alpha**][platform-lifecycle]]
+- [Azure via Terraform](Documentation/platforms/azure/README.md) [[**alpha**][platform-lifecycle]]
+- [OpenStack via Terraform](Documentation/platforms/openstack/README.md) [[**alpha**][platform-lifecycle]]
+- [VMware](Documentation/platforms/vmware/README.md) [[**alpha**][platform-lifecycle]]
 
-1. Use the Tectonic installer to configure an AWS cluster.
-2. Go through the process to create an AWS cluster, do not apply the configuration, but download the assets manually. This is an advanced option on the last screen
-3. Unzip the assets in this directory:
 
-```
-$ unzip ~/Downloads/<name>-assets.zip
-```
+#### Common Usage
 
-## Azure
+1. Download Terraform
 
-1. Setup your DNS zone in a resource group called `tectonic-dns-group` or specify a different resource group. We use a separate resource group assuming that you have a zone that you already want to use.
-1. Create a folder with the cluster's name under `./build` (e.g. `./build/<cluster-name>`)
-1. Copy the `assets-<cluster-name>.zip` to `./boot/<cluster-name>`
+This repo uses a custom build of Terraform which is pinned to a specific version and included required plugins. The easiest way to get the binary is:
 
 ```
-make PLATFORM=azure CLUSTER=eugene
+make terraform-download
 ```
 
-*Common Prerequsities*
+Follow the directions and update your PATH.
 
-1. Configure AWS credentials via environment variables.
-[See docs](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment)
-1. Configure a region by setting `AWS_REGION` environment variable
-1. Run through the official Tectonic intaller steps without clicking `Submit` on the last step. 
-Instead click on `Manual boot` below to download the assets zip file.
-1. Create a folder with the cluster's name under `./build` (e.g. `./build/<cluster-name>`)
-1. Copy the `assets-<cluster-name>.zip` to `./boot/<cluster-name>`
+2. Initiate Working Directory
 
-### Using Autoscaling groups
+This will create a new directory `build/<cluster-name>` which holds all module references, Terraform state files, and custom variable files.
 
-1. Ensure all *prerequsities* are met.
-1. From the root of the repo, run `make PLATFORM=aws-asg CLUSTER=<cluster-name>`
+```
+PLATFORM=aws CLUSTER=my-cluster make localconfig
+```
 
-To clean up run `make destroy PLATFORM=aws-asg CLUSTER=<cluster-name>`
+3. Customize
 
-## AWS
+Set variables in the `terraform.tfvars` file as needed, or you will be prompted. Available variables can be found in the `config.tf` and `variables.tf` files present in the `platforms/<PLATFORM>` directory.
 
-*Common Prerequsities*
+4. Terraform Lifecycle
 
-1. Configure AWS credentials via environment variables. 
-[See docs](http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment)
-1. Configure a region by setting `AWS_REGION` environment variable
-1. Run through the official Tectonic intaller steps without clicking `Submit` on the last step. 
-Instead click on `Manual boot` below to download the assets zip file.
-1. Create a folder with the cluster's name under `./build` (e.g. `./build/<cluster-name>`)
-1. Copy the `assets-<cluster-name>.zip` to `./boot/<cluster-name>`
+Plan, apply, and destroy are provided as Make targets to make working with the build directory and custom binary easier.
 
-### Using Autoscaling groups
+```
+PLATFORM=aws CLUSTER=my-cluster make plan
+```
 
-1. Ensure all *prerequsities* are met.
-1. From the root of the repo, run `make PLATFORM=aws-asg CLUSTER=<cluster-name>`
+```
+PLATFORM=aws CLUSTER=my-cluster make apply
+```
 
-To clean up run `make destroy PLATFORM=aws-asg CLUSTER=<cluster-name>`
+```
+PLATFORM=aws CLUSTER=my-cluster make destroy
+```
 
-### Without Autoscaling groups
-
-1. Ensure all *prerequsities* are met.
-1. From the root of the repo, run `make PLATFORM=aws-noasg CLUSTER=<cluster-name>`
-
-To clean up run `make destroy PLATFORM=aws-noasg CLUSTER=<cluster-name>`
-
-[platform-lifecycle]: Documentation/platform-lifecycle.md

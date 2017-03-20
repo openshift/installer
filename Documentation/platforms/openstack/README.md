@@ -1,4 +1,4 @@
-## OpenStack
+# OpenStack with Terraform
 
 Prerequsities:
 
@@ -34,7 +34,7 @@ tectonic_pull_secret = "..."
 
 Note: The `bcrypt-tool` is available at https://github.com/coreos/bcrypt-tool.
 
-### Flavors
+## Flavors
 
 The following example flavors are included:
 
@@ -47,7 +47,7 @@ Please refer to the variable [Documentation](../../Documentation/generic-platfor
 
 *Note:* If you are using Nova and experience networking issues between pods on different hosts, you might need to disable spoofing protection.
 
-### Installation
+## Installation
 
 Ensure all *prerequsities* are met.
 

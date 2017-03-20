@@ -1,10 +1,29 @@
-# Azure platform architecture notes
+# Azure with Terraform
+
+## Usage
+
+1. Ensure all [common prerequisites](../../../README.md#common-prerequisites) are met
+1. Setup your DNS zone in a resource group called `tectonic-dns-group` or specify a different resource group. We use a separate resource group assuming that you have a zone that you already want to use.
+1. Create a folder with the cluster's name under `./build` (e.g. `./build/<cluster-name>`)
+1. Copy the `assets-<cluster-name>.zip` to `./boot/<cluster-name>`
+
+```
+make PLATFORM=azure CLUSTER=eugene
+```
+
+*Common Prerequsities*
+
+TODO
+
+---
+
+## Azure platform architecture notes
 
 Generally, the Azure platform templates adhere to the standards defined in *conventions.md* and *generic-platform.md*.
 
 This document aims to document the implementation details specific to the Azure platform.
 
-## Example cluster configuration (tfvars file)
+### Example cluster configuration (tfvars file)
 
 Use this example to customize your cluster configuration. Save it as `terraform.tfvars` in the folder where your build state will reside.
 When you invoke `terraform apply <path/to/platforms/azure>` in this folder, the tfvars file will be automatically picked up.
@@ -49,12 +68,12 @@ tectonic_azure_worker_vm_size = "Standard_DS3"
 tectonic_azure_location = "northeurope"
 ```
 
-## Top-level templates
+### Top-level templates
 
 * The top-level templates that invoke the underlying component modules reside `./platforms/azure`
 * Point terraform to this location to start applying: `terraform apply ./platforms/azure`
 
-## Etcd nodes
+### Etcd nodes
 
 * Discovery is currently not implemented so DO NOT scale the etcd cluster to more than 1 node, for now.
 * Etcd cluster nodes are managed by the terraform module `modules/azure/etcd`
@@ -62,7 +81,7 @@ tectonic_azure_location = "northeurope"
 * A load-balancer fronts the etcd nodes to provide a simple discovery mechanism, via a VIP + DNS record.
 * Currently, the LB is configured with a public IP address. This is not optimal and it should be converted to an internal LB.
 
-## Master nodes
+### Master nodes
 
 * Master node VMs are managed by the templates in `modules/azure/master`
 * An Azure VM Scaling Set resource is used to spin-up multiple identical VM configured as master nodes.
@@ -72,7 +91,7 @@ tectonic_azure_location = "northeurope"
 * a `null_resource` terraform provisioner in the tectonic.tf top-level template will copy the assets and run bootkube automatically on one of the masters.
 * make sure the SSH key specifyied in the tfvars file is also added to the SSH agent on the machine running terraform. Without this, terraform is not able to SSH copy the assets and start bootkube. Also make sure that the SSH known_hosts file doesn't have old records of the API DNS name (fingerprints will not match).
 
-## Worker nodes
+### Worker nodes
 
 * Worker node VMs are managed by the templates in `modules/azure/worker`
 * An Azure VM Scaling Set resource is used to spin-up multiple identical VM configured as worker nodes.
