@@ -32,7 +32,7 @@ ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --cluster_domain=cluster.local \
   --client-ca-file=/etc/kubernetes/ca.crt \
   --anonymous-auth=false \
-  --cloud-provider=azure
+  --cloud-provider="${cloud_provider}"
 ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
 Restart=always
 RestartSec=10

@@ -46,7 +46,8 @@ data "template_file" "kubelet-master" {
   template = "${file("${path.module}/resources/master-kubelet.service")}"
 
   vars {
-    cluster_dns = "${var.tectonic_kube_dns_service_ip}"
+    cloud_provider = "${var.cloud_provider}"
+    cluster_dns    = "${var.tectonic_kube_dns_service_ip}"
   }
 }
 
