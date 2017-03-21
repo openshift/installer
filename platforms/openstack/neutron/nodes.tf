@@ -29,12 +29,18 @@ resource "openstack_compute_instance_v2" "master_node" {
   }
 
   network {
-    floating_ip = "${module.network.master_floating_ips[count.index]}"
-    uuid        = "${module.network.id}"
+    port = "${module.network.master_ports[count.index]}"
   }
 
   user_data    = "${module.nodes.master_user_data[count.index]}"
   config_drive = false
+}
+
+resource "openstack_compute_floatingip_associate_v2" "master" {
+  count = "${var.tectonic_master_count}"
+
+  floating_ip = "${module.network.master_floating_ips[count.index]}"
+  instance_id = "${openstack_compute_instance_v2.master_node.*.id[count.index]}"
 }
 
 resource "openstack_compute_instance_v2" "worker_node" {
@@ -48,19 +54,25 @@ resource "openstack_compute_instance_v2" "worker_node" {
   }
 
   network {
-    floating_ip = "${module.network.worker_floating_ips[count.index]}"
-    uuid        = "${module.network.id}"
+    port = "${module.network.worker_ports[count.index]}"
   }
 
   user_data    = "${module.nodes.worker_user_data[count.index]}"
   config_drive = false
 }
 
+resource "openstack_compute_floatingip_associate_v2" "worker" {
+  count = "${var.tectonic_master_count}"
+
+  floating_ip = "${module.network.worker_floating_ips[count.index]}"
+  instance_id = "${openstack_compute_instance_v2.worker_node.*.id[count.index]}"
+}
+
 resource "null_resource" "tectonic" {
   depends_on = ["module.tectonic"]
 
   connection {
-    host        = "${module.network.worker_floating_ips[0]}"
+    host        = "${module.network.master_floating_ips[0]}"
     private_key = "${module.secrets.core_private_key_pem}"
     user        = "core"
   }
