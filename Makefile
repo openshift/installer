@@ -1,5 +1,7 @@
 include terraform.mk
 
+TF_DOCS := $(shell which terraform-docs 2> /dev/null)
+
 CLUSTER ?= demo
 ASSETS ?= assets-$(CLUSTER).zip
 PLATFORM ?= aws-noasg
@@ -34,15 +36,19 @@ apply: $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
 destroy: $(BUILD_DIR)/config.tfvars
 	cd $(BUILD_DIR) && terraform destroy -var-file=config.tfvars $(TOP_DIR)/platforms/$(PLATFORM)
 
-Documentation/%.md: *.tf
-	if ! type "terraform-docs" &> /dev/null; then
-		@echo "terraform-docs is required (https://github.com/segmentio/terraform-docs)"
-		exit 1
-	fi
+terraform-check:
+    @terraform-docs >/dev/null 2>&1 || @echo "terraform-docs is required (https://github.com/segmentio/terraform-docs)"
 
-	echo '# Terraform variables' >$@
-	echo 'This document gives an overview of the variables used in the different platforms of the Tectonic SDK.' >>$@
-	terraform-docs markdown . >>$@
+Documentation/variables/%.md: *.tf
+ifndef TF_DOCS
+	$(error "terraform-docs is required (https://github.com/segmentio/terraform-docs)")
+endif
+
+	$(eval PLATFORM_DIR := $(subst platform,platforms,$(subst -,/,$*)))
+	@echo $(PLATFORM_DIR)
+	@echo '# Terraform variables' >$@
+	@echo 'This document gives an overview of the variables used in the different platforms of the Tectonic SDK.' >>$@
+	terraform-docs markdown $(PLATFORM_DIR)/variables.tf >>$@
 
 docs: Documentation/variables/config.md Documentation/variables/platform-aws.md Documentation/variables/platform-azure.md
 

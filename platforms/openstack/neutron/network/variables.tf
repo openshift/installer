@@ -24,8 +24,7 @@ variable "cluster_cidr" {
 }
 
 variable "floatingip_pool" {
-  type    = "string"
-  default = "public"
+  type = "string"
 }
 
 variable "subnet_cidr" {

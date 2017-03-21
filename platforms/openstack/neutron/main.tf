@@ -120,4 +120,5 @@ module "network" {
   cluster_name        = "${var.tectonic_cluster_name}"
   service_cidr        = "${var.tectonic_service_cidr}"
   cluster_cidr        = "${var.tectonic_cluster_cidr}"
+  floatingip_pool     = "${var.tectonic_openstack_floatingip_pool}"
 }

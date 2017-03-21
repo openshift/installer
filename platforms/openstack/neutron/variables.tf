@@ -18,3 +18,11 @@ variable "tectonic_openstack_external_gateway_id" {
   type    = "string"
   default = "6d6357ac-0f70-4afa-8bd7-c274cc4ea235"
 }
+
+// The name name of the floating IP pool
+// as given in `openstack floating ip list`.
+// This pool will be used to assign floating IPs to worker and master nodes.
+variable "tectonic_openstack_floatingip_pool" {
+  type    = "string"
+  default = "public"
+}

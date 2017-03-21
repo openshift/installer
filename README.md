@@ -81,36 +81,6 @@ Instead click on `Manual boot` below to download the assets zip file.
 
 To clean up run `make destroy PLATFORM=aws-asg CLUSTER=<cluster-name>`
 
-
-## OpenStack
-
-Prerequsities:
-
-1. The latest Container Linux Alpha (1339.0.0 or later) [uploaded into Glance](https://coreos.com/os/docs/latest/booting-on-openstack.html) and get the image ID
-1. Since openstack nova doesn't provide any DNS registration service, AWS Route53 is being used.
-Ensure you have a configured `aws` CLI installation.
-1. Ensure you have OpenStack credentials set up, i.e. the environment variables `OS_TENANT_NAME`, `OS_USERNAME`, `OS_PASSWORD`, `OS_AUTH_URL`, `OS_REGION_NAME` are set.
-1. Create a folder with the cluster's name under `./build` (e.g. `./build/<cluster-name>`)
-1. Copy the `assets-<cluster-name>.zip` to `./boot/<cluster-name>`
-
-### Nova network
-
-1. Ensure all *prerequsities* are met.
-1. From the root of the repo, run `make PLATFORM=openstack-novanet CLUSTER=<cluster-name>`
-
-To clean up run `make destroy PLATFORM=openstack-novanet CLUSTER=<cluster-name>`
-
-The tectonic cluster will be reachable under `https://<name>.<base_domain>:32000`.
-
-### Neutron network
-
-1. Ensure all *prerequsities* are met.
-1. From the root of the repo, run `make PLATFORM=openstack-neutron CLUSTER=<cluster-name>`
-
-To clean up run `make destroy PLATFORM=openstack-neutron CLUSTER=<cluster-name>`
-
-The tectonic cluster will be reachable under `https://<name>.<base_domain>:32000`.
-
 ## AWS
 
 *Common Prerequsities*
