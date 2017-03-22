@@ -1,40 +1,31 @@
 include terraform.mk
 
-TF_DOCS := $(shell which terraform-docs 2> /dev/null)
-
 CLUSTER ?= demo
-ASSETS ?= assets-$(CLUSTER).zip
-PLATFORM ?= aws-noasg
+PLATFORM ?= aws
 TOP_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 BUILD_DIR = $(TOP_DIR)/build/$(CLUSTER)
 
-$(info $$BUILD_DIR is [${BUILD_DIR}])
+TF_DOCS := $(shell which terraform-docs 2> /dev/null)
+
+$(info Using build directory [${BUILD_DIR}])
 
 all: apply
 
-$(BUILD_DIR)/$(ASSETS):
-	@echo "Assets '$(ASSETS)' not found!\nPlace assets zip from installer in $(BUILD_DIR)\n"
-
 localconfig:
 	mkdir -p $(BUILD_DIR)
-	cp config.tfvars $(BUILD_DIR)/config.tfvars
-
-installerconfig: $(BUILD_DIR)/$(ASSETS)
-	cd $(BUILD_DIR) && unzip $(ASSETS)
-	$(TOP_DIR)/convert.sh tfvars $(PLATFORM) $(BUILD_DIR)/assets/cloud-formation.json > $(BUILD_DIR)/config.tfvars
-	$(TOP_DIR)/convert.sh assets $(PLATFORM) $(BUILD_DIR)/assets
+	touch $(BUILD_DIR)/terraform.tfvars
 
 $(BUILD_DIR)/.terraform:
 	cd $(BUILD_DIR) && terraform get $(TOP_DIR)/platforms/$(PLATFORM)
 
-plan: $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
-	cd $(BUILD_DIR) && terraform plan -var-file=config.tfvars $(TOP_DIR)/platforms/$(PLATFORM)
+plan: $(BUILD_DIR)/.terraform
+	cd $(BUILD_DIR) && terraform plan $(TOP_DIR)/platforms/$(PLATFORM)
 
-apply: $(BUILD_DIR)/config.tfvars $(BUILD_DIR)/.terraform
-	cd $(BUILD_DIR) && terraform apply -var-file=config.tfvars $(TOP_DIR)/platforms/$(PLATFORM)
+apply: $(BUILD_DIR)/.terraform
+	cd $(BUILD_DIR) && terraform apply $(TOP_DIR)/platforms/$(PLATFORM)
 
-destroy: $(BUILD_DIR)/config.tfvars
-	cd $(BUILD_DIR) && terraform destroy -var-file=config.tfvars $(TOP_DIR)/platforms/$(PLATFORM)
+destroy:
+	cd $(BUILD_DIR) && terraform destroy $(TOP_DIR)/platforms/$(PLATFORM)
 
 terraform-check:
     @terraform-docs >/dev/null 2>&1 || @echo "terraform-docs is required (https://github.com/segmentio/terraform-docs)"
@@ -52,10 +43,7 @@ endif
 
 docs: Documentation/variables/config.md Documentation/variables/platform-aws.md Documentation/variables/platform-azure.md
 
-clean:
-	cd $(BUILD_DIR) && \
-	rm -rf .terraform assets generated \
-	rm -f config.tfvars terraform.tfstate terraform.tfstate.backup assets*.zip id_rsa*
-	make terraform-clean
+clean: destroy
+	rm -rf $(BUILD_DIR)
 
 .PHONY: make clean terraform terraform-dev
