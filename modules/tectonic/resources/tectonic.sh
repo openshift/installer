@@ -14,7 +14,7 @@ K8S_API=$(grep "server" $KUBECONFIG | cut -f 2- -d ":" | tr -d " ")
 K8S_API_CA=$(mktemp); grep "certificate-authority-data" $KUBECONFIG | cut -f 2- -d ":" | tr -d " " | base64 -d > $K8S_API_CA
 K8S_API_CERT=$(mktemp); grep "client-certificate-data" $KUBECONFIG | cut -f 2- -d ":" | tr -d " " | base64 -d > $K8S_API_CERT
 K8S_API_KEY=$(mktemp); grep "client-key-data" $KUBECONFIG | cut -f 2- -d ":" | tr -d " " | base64 -d > $K8S_API_KEY
-CURL="curl -sNL --cacert $K8S_API_CA --cert $K8S_API_CERT --key $K8S_API_KEY"
+CURL="curl -sSNL --cacert $K8S_API_CA --cert $K8S_API_CERT --key $K8S_API_KEY --retry-connrefused --retry 3 --retry-delay 2"
 trap "rm -f $K8S_API_CA $K8S_API_CERT $K8S_API_KEY" EXIT
 
 # Setup helper functions
@@ -45,7 +45,7 @@ until $CURL -f "$K8S_API/version" &> /dev/null; do
 done
 
 echo "Waiting for Kubernetes components..."
-while $CURL "$K8S_API/api/v1/namespaces/kube-system/pods" 2>/dev/null | grep Pending > /dev/null; do
+while $CURL "$K8S_API/api/v1/namespaces/kube-system/pods" 2>/dev/null | jq -r .items[].status.phase | grep -v '^Running$'; do
   sleep 5
 done
 sleep 10
