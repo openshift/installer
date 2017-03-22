@@ -79,3 +79,4 @@ PLATFORM=aws CLUSTER=my-cluster make apply
 PLATFORM=aws CLUSTER=my-cluster make destroy
 ```
 
+[platform-lifecycle]: Documentation/platform-lifecycle.md
