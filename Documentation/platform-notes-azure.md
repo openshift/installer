@@ -78,3 +78,7 @@ tectonic_azure_location = "northeurope"
 * An Azure VM Scaling Set resource is used to spin-up multiple identical VM configured as worker nodes.
 * Worker VMs all share the same identical Ignition config
 * Worker nodes are not fronted by any LB and don't have public IP addresses. They can be accessed through SSH from any of the master nodes.
+
+### Scaling worker nodes
+
+To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and invoke `terraform apply -target module.workers platforms/azure`.
