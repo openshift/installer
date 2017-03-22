@@ -1,5 +1,6 @@
 resource "aws_security_group" "etcd_sec_group" {
   vpc_id = "${var.vpc_id}"
+  count  = "${length(var.external_endpoints) == 0 ? 1 : 0}"
 
   tags {
     Name              = "${var.tectonic_cluster_name}_etcd_sg"

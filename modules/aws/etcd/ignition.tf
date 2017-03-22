@@ -1,5 +1,5 @@
 resource "ignition_config" "etcd" {
-  count = "${var.node_count}"
+  count = "${length(var.external_endpoints) == 0 ? var.node_count : 0}"
 
   systemd = [
     "${ignition_systemd_unit.locksmithd.id}",
@@ -14,7 +14,7 @@ resource "ignition_config" "etcd" {
 }
 
 resource "ignition_file" "node_hostname" {
-  count      = "${var.node_count}"
+  count      = "${length(var.external_endpoints) == 0 ? var.node_count : 0}"
   path       = "/etc/hostname"
   mode       = 0644
   filesystem = "root"
@@ -25,6 +25,8 @@ resource "ignition_file" "node_hostname" {
 }
 
 resource "ignition_systemd_unit" "locksmithd" {
+  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+
   name   = "locksmithd.service"
   enable = true
 
@@ -37,7 +39,8 @@ resource "ignition_systemd_unit" "locksmithd" {
 }
 
 resource "ignition_systemd_unit" "etcd3" {
-  count  = "${var.node_count}"
+  count = "${length(var.external_endpoints) == 0 ? var.node_count : 0}"
+
   name   = "etcd-member.service"
   enable = true
 
@@ -62,11 +65,15 @@ EOF
 }
 
 resource "ignition_systemd_unit" "etcd2" {
+  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+
   name   = "etcd2.service"
   enable = false
 }
 
 resource "ignition_systemd_unit" "etcd" {
+  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+
   name   = "etcd.service"
   enable = false
 }
