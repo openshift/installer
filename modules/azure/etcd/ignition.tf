@@ -62,13 +62,3 @@ EOF
     },
   ]
 }
-
-resource "ignition_systemd_unit" "etcd2" {
-  name   = "etcd2.service"
-  enable = false
-}
-
-resource "ignition_systemd_unit" "etcd" {
-  name   = "etcd.service"
-  enable = false
-}

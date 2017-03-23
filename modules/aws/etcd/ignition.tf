@@ -62,17 +62,3 @@ EOF
     },
   ]
 }
-
-resource "ignition_systemd_unit" "etcd2" {
-  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
-
-  name   = "etcd2.service"
-  enable = false
-}
-
-resource "ignition_systemd_unit" "etcd" {
-  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
-
-  name   = "etcd.service"
-  enable = false
-}
