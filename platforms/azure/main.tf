@@ -1,11 +1,3 @@
-# Configure the Microsoft Azure Provider
-provider "azurerm" {
-  subscription_id = "***REMOVED***"
-  client_id       = "***REMOVED***"
-  client_secret   = "***REMOVED***"
-  tenant_id       = "***REMOVED***"
-}
-
 resource "azurerm_resource_group" "tectonic_cluster" {
   location = "${var.tectonic_azure_location}"
   name     = "tectonic-cluster-${var.tectonic_cluster_name}"
