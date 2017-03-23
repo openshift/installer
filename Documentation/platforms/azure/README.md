@@ -64,7 +64,7 @@ Now we're ready to specify our cluster configuration.
 
 ## Customize the deployment
 
-Use this example to customize your cluster configuration. Save it as `terraform.tfvars` in the Azure platform folder. A few fields require special consideration:
+Use this example to customize your cluster configuration. A few fields require special consideration:
 
  - **tectonic_base_domain** - domain name that is set up with in a resource group, as described in the prerequisites.
  - **tectonic_pull_secret_path** - path on disk to your downloaded pull secret. You can find this on your [Account dashboard][account].
