@@ -6,7 +6,7 @@ Generally, the AWS platform templates adhere to the standards defined by the pro
 
 ## Prerequsities
 
- - **DNS** - Setup your DNS zone in a resource group called `tectonic-dns-group` or specify a different resource group using the `tectonic_azure_dns_resource_group` variable below. We use a separate resource group assuming that you have a zone that you already want to use.
+ - **DNS** - Ensure that the DNS zone is already created and available in route53 for the account. For example if the `tectonic_base_domain` is set to `kube.example.com` a route53 zone must exist for this domain and the AWS nameservers must be configured for the domain.
  - **Make** - This guide uses `make` to download a customized version of Terraform, which is pinned to a specific version and includes required plugins.
  - **Tectonic Account** - Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
 
