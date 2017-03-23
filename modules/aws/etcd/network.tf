@@ -3,8 +3,8 @@ resource "aws_security_group" "etcd_sec_group" {
   count  = "${length(var.external_endpoints) == 0 ? 1 : 0}"
 
   tags {
-    Name              = "${var.tectonic_cluster_name}_etcd_sg"
-    KubernetesCluster = "${var.tectonic_cluster_name}"
+    Name              = "${var.cluster_name}_etcd_sg"
+    KubernetesCluster = "${var.cluster_name}"
   }
 
   ingress {

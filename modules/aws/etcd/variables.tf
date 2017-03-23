@@ -1,16 +1,16 @@
-variable "tectonic_base_domain" {
+variable "base_domain" {
   type = "string"
 }
 
-variable "tectonic_cluster_name" {
+variable "cluster_name" {
   type = "string"
 }
 
-variable "tectonic_cl_channel" {
+variable "cl_channel" {
   type = "string"
 }
 
-variable "dns_zone" {
+variable "dns_zone_id" {
   type = "string"
 }
 
@@ -18,7 +18,7 @@ variable "az_count" {
   type = "string"
 }
 
-variable "node_count" {
+variable "instance_count" {
   default = "3"
 }
 
@@ -30,7 +30,7 @@ variable "ssh_key" {
   type = "string"
 }
 
-variable "etcd_subnets" {
+variable "subnets" {
   type = "list"
 }
 
@@ -38,6 +38,10 @@ variable "external_endpoints" {
   type = "list"
 }
 
-variable "etcd_version" {
+variable "container_image" {
+  type = "string"
+}
+
+variable "ec2_type" {
   type = "string"
 }

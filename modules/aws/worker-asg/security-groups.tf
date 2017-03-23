@@ -2,8 +2,8 @@ resource "aws_security_group" "worker_sec_group" {
   vpc_id = "${var.vpc_id}"
 
   tags {
-    Name              = "${var.tectonic_cluster_name}_worker_sg"
-    KubernetesCluster = "${var.tectonic_cluster_name}"
+    Name              = "${var.cluster_name}_worker_sg"
+    KubernetesCluster = "${var.cluster_name}"
   }
 
   ingress {

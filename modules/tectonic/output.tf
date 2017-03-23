@@ -16,21 +16,5 @@
 # combination of all the resources' IDs, it can't be guessed and can only be
 # interpolated once the assets have all been created.
 output "id" {
-  value = "${sha1("${template_folder.bootkube.id} ${localfile_file.kubeconfig.id} ${localfile_file.bootkube.id}")}"
-}
-
-output "kubeconfig" {
-  value = "${data.template_file.kubeconfig.rendered}"
-}
-
-output "ca_cert" {
-  value = "${var.ca_cert == "" ? tls_self_signed_cert.kube-ca.cert_pem : var.ca_cert}"
-}
-
-output "ca_key_alg" {
-  value = "${var.ca_cert == "" ? tls_self_signed_cert.kube-ca.key_algorithm : var.ca_key_alg}"
-}
-
-output "ca_key" {
-  value = "${var.ca_cert == "" ? tls_private_key.kube-ca.private_key_pem : var.ca_key}"
+  value = "${sha1("${template_folder.tectonic.id} ${localfile_file.tectonic.id}")}"
 }

@@ -6,31 +6,23 @@ variable "vpc_id" {
   type = "string"
 }
 
-variable "tectonic_base_domain" {
+variable "cl_channel" {
   type = "string"
 }
 
-variable "tectonic_cluster_name" {
+variable "cluster_name" {
   type = "string"
 }
 
-variable "tectonic_cl_channel" {
+variable "ec2_type" {
   type = "string"
 }
 
-variable "tectonic_aws_master_ec2_type" {
+variable "instance_count" {
   type = "string"
 }
 
-variable "tectonic_master_count" {
-  type = "string"
-}
-
-variable "etcd_endpoints" {
-  type = "list"
-}
-
-variable "master_subnet_ids" {
+variable "subnet_ids" {
   type = "list"
 }
 
@@ -38,24 +30,22 @@ variable "extra_sg_ids" {
   type = "list"
 }
 
-// The hyperkube image url.
-variable "kube_image_url" {
-  type = "string"
+variable "base_domain" {
+  type        = "string"
+  description = "Domain on which the ELB records will be created"
 }
 
-// The hyperkube image tag.
-variable "kube_image_tag" {
-  type = "string"
+variable "internal_zone_id" {
+  type        = "string"
+  description = "ID of the internal facing Route53 Hosted Zone on which the ELB records will be created"
 }
 
-variable "tectonic_kube_dns_service_ip" {
-  type = "string"
+variable "external_zone_id" {
+  type        = "string"
+  description = "ID of the public facing Route53 Hosted Zone on which the ELB records will be created"
 }
 
-variable "tectonic_versions" {
-  type = "map"
-}
-
-variable "kubeconfig_content" {
-  type = "string"
+variable "user_data" {
+  type        = "string"
+  description = "User-data content used to boot the instances"
 }

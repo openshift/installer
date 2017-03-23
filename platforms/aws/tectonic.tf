@@ -2,8 +2,8 @@ module "bootkube" {
   source         = "../../modules/bootkube"
   cloud_provider = "aws"
 
-  kube_apiserver_url = "https://${module.dns.api_internal_fqdn}:443"
-  oidc_issuer_url    = "https://${module.dns.ingress_internal_fqdn}/identity"
+  kube_apiserver_url = "https://${module.masters.api_internal_fqdn}:443"
+  oidc_issuer_url    = "https://${module.masters.ingress_internal_fqdn}/identity"
 
   # Platform-independent variables wiring, do not modify.
   container_images = "${var.tectonic_container_images}"
@@ -32,8 +32,8 @@ module "tectonic" {
   source   = "../../modules/tectonic"
   platform = "aws"
 
-  base_address       = "${module.dns.ingress_internal_fqdn}"
-  kube_apiserver_url = "https://${module.dns.api_internal_fqdn}:443"
+  base_address       = "${module.masters.ingress_internal_fqdn}"
+  kube_apiserver_url = "https://${module.masters.api_internal_fqdn}:443"
 
   # Platform-independent variables wiring, do not modify.
   container_images = "${var.tectonic_container_images}"
@@ -59,26 +59,19 @@ module "tectonic" {
   ingress_kind      = "NodePort"
 }
 
-resource "null_resource" "tectonic" {
-  depends_on = ["module.tectonic", "module.masters"]
+data "archive_file" "assets" {
+  type        = "zip"
+  source_dir  = "${path.cwd}/generated/"
 
-  connection {
-    host  = "${module.dns.api_external_fqdn}"
-    user  = "core"
-    agent = true
-  }
-
-  provisioner "file" {
-    source      = "${path.cwd}/generated"
-    destination = "$HOME/tectonic"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo mkdir -p /opt",
-      "sudo rm -rf /opt/tectonic",
-      "sudo mv /home/core/tectonic /opt/",
-      "sudo systemctl start tectonic",
-    ]
-  }
+  # Because the archive_file provider is a data source, depends_on can't be
+  # used to guarantee that the tectonic/bootkube modules have generated
+  # all the assets on disk before trying to archive them. Instead, we use their
+  # ID outputs, that are only computed once the assets have actually been
+  # written to disk. We re-hash the IDs to make the filename shorter, since
+  # there is no security nor collision risk anyways.
+  #
+  # Additionally, data sources do not support managing any lifecycle whatsoever,
+  # and therefore, the archive is never deleted. To avoid cluttering the module
+  # folder, we write it in the TerraForm managed hidden folder `.terraform`.
+  output_path = "${path.cwd}/.terraform/generated_${sha1("${module.tectonic.id} ${module.bootkube.id}")}.zip"
 }

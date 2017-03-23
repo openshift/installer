@@ -3,7 +3,7 @@ data "aws_ami" "coreos_ami" {
 
   filter {
     name   = "name"
-    values = ["CoreOS-${var.tectonic_cl_channel}-*"]
+    values = ["CoreOS-${var.cl_channel}-*"]
   }
 
   filter {
@@ -23,14 +23,13 @@ data "aws_ami" "coreos_ami" {
 }
 
 resource "aws_launch_configuration" "worker_conf" {
-  instance_type        = "${var.tectonic_aws_worker_ec2_type}"
+  instance_type        = "${var.ec2_type}"
   image_id             = "${data.aws_ami.coreos_ami.image_id}"
-  name_prefix          = "${var.tectonic_cluster_name}-worker-"
+  name_prefix          = "${var.cluster_name}-worker-"
   key_name             = "${var.ssh_key}"
   security_groups      = ["${concat(list(aws_security_group.worker_sec_group.id), var.extra_sg_ids)}"]
   iam_instance_profile = "${aws_iam_instance_profile.worker_profile.arn}"
-
-  user_data = "${ignition_config.worker.rendered}"
+  user_data            = "${var.user_data}"
 
   lifecycle {
     create_before_destroy = true
@@ -38,22 +37,22 @@ resource "aws_launch_configuration" "worker_conf" {
 }
 
 resource "aws_autoscaling_group" "workers" {
-  name                 = "${var.tectonic_cluster_name}-worker"
-  desired_capacity     = "${var.tectonic_worker_count}"
-  max_size             = "${var.tectonic_worker_count * 3}"
-  min_size             = "${var.tectonic_worker_count}"
+  name                 = "${var.cluster_name}-workers"
+  desired_capacity     = "${var.instance_count}"
+  max_size             = "${var.instance_count * 3}"
+  min_size             = "1"
   launch_configuration = "${aws_launch_configuration.worker_conf.id}"
-  vpc_zone_identifier  = ["${var.worker_subnet_ids}"]
+  vpc_zone_identifier  = ["${var.subnet_ids}"]
 
   tag {
     key                 = "Name"
-    value               = "${var.tectonic_cluster_name}-worker"
+    value               = "${var.cluster_name}-worker"
     propagate_at_launch = true
   }
 
   tag {
     key                 = "KubernetesCluster"
-    value               = "${var.tectonic_cluster_name}"
+    value               = "${var.cluster_name}"
     propagate_at_launch = true
   }
 
@@ -63,12 +62,12 @@ resource "aws_autoscaling_group" "workers" {
 }
 
 resource "aws_iam_instance_profile" "worker_profile" {
-  name  = "${var.tectonic_cluster_name}-worker-profile"
+  name  = "${var.cluster_name}-worker-profile"
   roles = ["${aws_iam_role.worker_role.name}"]
 }
 
 resource "aws_iam_role" "worker_role" {
-  name = "${var.tectonic_cluster_name}-worker-role"
+  name = "${var.cluster_name}-worker-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -89,7 +88,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "worker_policy" {
-  name = "${var.tectonic_cluster_name}_worker_policy"
+  name = "${var.cluster_name}_worker_policy"
   role = "${aws_iam_role.worker_role.id}"
 
   policy = <<EOF
@@ -115,6 +114,21 @@ resource "aws_iam_role_policy" "worker_policy" {
         "ecr:DescribeRepositories",
         "ecr:ListImages",
         "ecr:BatchGetImage"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    },
+    {
+      "Action" : [
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::*",
+      "Effect": "Allow"
+    },
+    {
+      "Action" : [
+        "autoscaling:DescribeAutoScalingGroups",
+        "autoscaling:DescribeAutoScalingInstances"
       ],
       "Resource": "*",
       "Effect": "Allow"

@@ -2,6 +2,8 @@
 Description=Kubelet via Hyperkube ACI
 
 [Service]
+Environment=KUBELET_ACI=${aci}
+Environment=KUBELET_VERSION=${version}
 Environment="RKT_OPTS=--uuid-file-save=/var/run/kubelet-pod.uuid \
   --volume=resolv,kind=host,source=/etc/resolv.conf \
   --mount volume=resolv,target=/etc/resolv.conf \
@@ -9,14 +11,14 @@ Environment="RKT_OPTS=--uuid-file-save=/var/run/kubelet-pod.uuid \
   --mount volume=var-lib-cni,target=/var/lib/cni \
   --volume var-log,kind=host,source=/var/log \
   --mount volume=var-log,target=/var/log"
-EnvironmentFile=/etc/kubernetes/kubelet.env
-ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
-ExecStartPre=/bin/mkdir -p /srv/kubernetes/manifests
-ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets
-ExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d
-ExecStartPre=/bin/mkdir -p /var/lib/cni
+
+ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests \
+  /srv/kubernetes/manifests /etc/kubernetes/checkpoint-secrets \
+  /etc/kubernetes/cni/net.d /var/lib/cni
+ExecStartPre=/usr/bin/bash -c "/opt/s3-puller.sh ${kubeconfig_s3_location} /etc/kubernetes/kubeconfig"
 ExecStartPre=/usr/bin/bash -c "grep 'certificate-authority-data' /etc/kubernetes/kubeconfig | awk '{print $2}' | base64 -d > /etc/kubernetes/ca.crt"
 ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/run/kubelet-pod.uuid
+
 ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --kubeconfig=/etc/kubernetes/kubeconfig \
   --require-kubeconfig \
@@ -26,14 +28,15 @@ ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --exit-on-lock-contention \
   --pod-manifest-path=/etc/kubernetes/manifests \
   --allow-privileged \
-  --node-labels=master=true \
+  --node-labels=${node_label} \
   --minimum-container-ttl-duration=6m0s \
-  --cluster_dns=${cluster_dns} \
+  --cluster_dns=${cluster_dns_ip} \
   --cluster_domain=cluster.local \
   --client-ca-file=/etc/kubernetes/ca.crt \
   --anonymous-auth=false \
   --cloud-provider=aws
 ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
+
 Restart=always
 RestartSec=10
 

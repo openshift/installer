@@ -23,8 +23,10 @@ variable "tectonic_container_images" {
     kubedns                   = "gcr.io/google_containers/kubedns-amd64:1.9"
     kubednsmasq               = "gcr.io/google_containers/kube-dnsmasq-amd64:1.4"
     dnsmasq_metrics           = "gcr.io/google_containers/dnsmasq-metrics-amd64:1.0"
-    exechealthz              = "gcr.io/google_containers/exechealthz-amd64:1.2"
+    exechealthz               = "gcr.io/google_containers/exechealthz-amd64:1.2"
     flannel                   = "quay.io/coreos/flannel:v0.7.0-amd64"
+    etcd                      = "quay.io/coreos/etcd:v3.1.2"
+    awscli                    = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
   }
 }
 

@@ -3,7 +3,7 @@ data "aws_ami" "coreos_ami" {
 
   filter {
     name   = "name"
-    values = ["CoreOS-${var.tectonic_cl_channel}-*"]
+    values = ["CoreOS-${var.cl_channel}-*"]
   }
 
   filter {
@@ -27,24 +27,24 @@ data "aws_vpc" "cluster_vpc" {
 }
 
 resource "aws_autoscaling_group" "masters" {
-  name                 = "${var.tectonic_cluster_name}-masters"
-  desired_capacity     = "${var.tectonic_master_count}"
-  max_size             = "${var.tectonic_master_count * 3}"
+  name                 = "${var.cluster_name}-masters"
+  desired_capacity     = "${var.instance_count}"
+  max_size             = "${var.instance_count * 3}"
   min_size             = "1"
   launch_configuration = "${aws_launch_configuration.master_conf.id}"
-  vpc_zone_identifier  = ["${var.master_subnet_ids}"]
+  vpc_zone_identifier  = ["${var.subnet_ids}"]
 
   load_balancers = ["${aws_elb.api-internal.id}", "${aws_elb.api-external.id}", "${aws_elb.console.id}"]
 
   tag {
     key                 = "Name"
-    value               = "${var.tectonic_cluster_name}-master"
+    value               = "${var.cluster_name}-master"
     propagate_at_launch = true
   }
 
   tag {
     key                 = "KubernetesCluster"
-    value               = "${var.tectonic_cluster_name}"
+    value               = "${var.cluster_name}"
     propagate_at_launch = true
   }
 
@@ -54,14 +54,14 @@ resource "aws_autoscaling_group" "masters" {
 }
 
 resource "aws_launch_configuration" "master_conf" {
-  instance_type               = "${var.tectonic_aws_master_ec2_type}"
+  instance_type               = "${var.ec2_type}"
   image_id                    = "${data.aws_ami.coreos_ami.image_id}"
-  name_prefix                 = "${var.tectonic_cluster_name}-master-"
+  name_prefix                 = "${var.cluster_name}-master-"
   key_name                    = "${var.ssh_key}"
   security_groups             = ["${concat(list(aws_security_group.master_sec_group.id), var.extra_sg_ids)}"]
   iam_instance_profile        = "${aws_iam_instance_profile.master_profile.arn}"
   associate_public_ip_address = true
-  user_data                   = "${ignition_config.master.rendered}"
+  user_data                   = "${var.user_data}"
 
   lifecycle {
     create_before_destroy = true
@@ -72,8 +72,8 @@ resource "aws_security_group" "master_sec_group" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags {
-    Name              = "${var.tectonic_cluster_name}_master_sg"
-    KubernetesCluster = "${var.tectonic_cluster_name}"
+    Name              = "${var.cluster_name}_master_sg"
+    KubernetesCluster = "${var.cluster_name}"
   }
 
   ingress {
@@ -114,12 +114,12 @@ resource "aws_security_group" "master_sec_group" {
 }
 
 resource "aws_iam_instance_profile" "master_profile" {
-  name  = "${var.tectonic_cluster_name}-master-profile"
+  name  = "${var.cluster_name}-master-profile"
   roles = ["${aws_iam_role.master_role.name}"]
 }
 
 resource "aws_iam_role" "master_role" {
-  name = "${var.tectonic_cluster_name}-master-role"
+  name = "${var.cluster_name}-master-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -140,7 +140,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "master_policy" {
-  name = "${var.tectonic_cluster_name}_master_policy"
+  name = "${var.cluster_name}_master_policy"
   role = "${aws_iam_role.master_role.id}"
 
   policy = <<EOF
@@ -166,6 +166,21 @@ resource "aws_iam_role_policy" "master_policy" {
         "ecr:DescribeRepositories",
         "ecr:ListImages",
         "ecr:BatchGetImage"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    },
+    {
+      "Action" : [
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::*",
+      "Effect": "Allow"
+    },
+    {
+      "Action" : [
+        "autoscaling:DescribeAutoScalingGroups",
+        "autoscaling:DescribeAutoScalingInstances"
       ],
       "Resource": "*",
       "Effect": "Allow"
