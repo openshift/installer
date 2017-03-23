@@ -1,5 +1,5 @@
 resource "azurerm_lb" "tectonic_lb" {
-  name                = "k8-lb"
+  name                = "api-lb"
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
 
