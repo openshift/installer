@@ -3,12 +3,12 @@ variable "tectonic_container_images" {
   type        = "map"
 
   default = {
-    hyperkube                 = "quay.io/coreos/hyperkube:v1.5.4_coreos.0"
+    hyperkube                 = "quay.io/coreos/hyperkube:v1.5.5_coreos.0"
     pod_checkpointer          = "quay.io/coreos/pod-checkpointer:5b585a2d731173713fa6871c436f6c53fa17f754"
-    bootkube                  = "quay.io/coreos/bootkube:v0.3.11"
+    bootkube                  = "quay.io/coreos/bootkube:v0.3.12"
     console                   = "quay.io/coreos/tectonic-console:v1.1.1"
     identity                  = "quay.io/coreos/dex:v2.2.4"
-    kube_version_operator     = "quay.io/coreos/kube-version-operator:adb6183a1c5082dc42c4b8c01bb3c60daf4ccd44"
+    kube_version_operator     = "quay.io/coreos/kube-version-operator:7da46d189c36092f43d07ca381a61897402fa13c"
     tectonic_channel_operator = "quay.io/coreos/tectonic-channel-operator:15c001bd7c008a04394390d08ac71046e723ac48"
     node_agent                = "quay.io/coreos/node-agent:96db3df24c2ddf0b82c38111c71179c5b10de0c9"
     prometheus_operator       = "quay.io/coreos/prometheus-operator:v0.6.0"
@@ -35,8 +35,8 @@ variable "tectonic_versions" {
   default = {
     etcd       = "v3.1.2"
     prometheus = "v1.5.2"
-    kubernetes = "1.5.4+tectonic.1"
-    tectonic   = "1.5.4-tectonic.1"
+    kubernetes = "1.5.5+tectonic.2"
+    tectonic   = "1.5.5-tectonic.2"
   }
 }
 
