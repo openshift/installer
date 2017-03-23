@@ -45,13 +45,19 @@ Get: file:///Users/tectonic-installer/modules/bootkube
 Get: file:///Users/tectonic-installer/modules/tectonic
 ```
 
-Last, configure your Azure credentials:
+Configure your Azure credentials:
 
 ```
 $ export ARM_SUBSCRIPTION_ID=
 $ export ARM_CLIENT_ID=
 $ export ARM_CLIENT_SECRET=
 $ export ARM_TENANT_ID=
+```
+
+Last, let's create a local build directory `build/<cluster-name>` which holds all module references, Terraform state files, and custom variable files:
+
+```
+$ PLATFORM=azure CLUSTER=my-cluster make localconfig
 ```
 
 Now we're ready to specify our cluster configuration.
@@ -67,7 +73,7 @@ Use this example to customize your cluster configuration. Save it as `terraform.
 
 Here's an example of the full file:
 
-**platforms/azure/terraform.tfvars**
+**build/<cluster>/terraform.tfvars**
 
 ```
 tectonic_worker_count = "4"
@@ -88,7 +94,7 @@ tectonic_license_path = "~/Downloads/tectonic-license.txt"
 
 tectonic_cl_channel = "stable"
 
-tectonic_admin_email = "alex.somesan@coreos.com"
+tectonic_admin_email = "first.last@example.com"
 
 tectonic_admin_password_hash = "<redacted - generate with bcrypt tool>"
 
@@ -114,20 +120,28 @@ tectonic_azure_location = "northeurope"
 Test out the plan before deploying everything:
 
 ```
-$ terraform plan -var-file=platforms/azure/terraform.tfvars platforms/azure/
+$ PLATFORM=azure CLUSTER=my-cluster make plan
 ```
 
 Next, deploy the cluster:
 
 ```
-$ terraform plan -var-file=platforms/azure/terraform.tfvars platforms/azure/
+$ PLATFORM=azure CLUSTER=my-cluster make apply
 ```
 
 This should run for a little bit, and when complete, your Tectonic cluster should be ready.
 
 If you encounter any issues, check the known issues and workarounds below.
 
+To delete your cluster, run:
+
+```
+$ PLATFORM=azure CLUSTER=my-cluster make destroy
+```
+
 ### Known issues and workarounds
+
+See the [troubleshooting][troubleshooting] document for work arounds for bugs that are being tracked.
 
 ## Scaling the cluster
 
@@ -172,3 +186,4 @@ To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and in
 [bcrypt]: https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0
 [plan-docs]: https://www.terraform.io/docs/commands/plan.html
 [copy-docs]: https://www.terraform.io/docs/commands/apply.html
+[troubleshooting]: ../troubleshooting.md
