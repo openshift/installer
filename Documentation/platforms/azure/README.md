@@ -88,9 +88,9 @@ tectonic_cluster_name = "mycluster"
 
 tectonic_dns_name = "mycluster"
 
-tectonic_pull_secret_path = "~/Downloads/config.json"
+tectonic_pull_secret_path = "/Users/coreos/Downloads/config.json"
 
-tectonic_license_path = "~/Downloads/tectonic-license.txt"
+tectonic_license_path = "/Users/coreos/Downloads/tectonic-license.txt"
 
 tectonic_cl_channel = "stable"
 
@@ -102,7 +102,7 @@ tectonic_ca_cert = "" # path on disk, keep empty to generate one
 
 tectonic_ca_key = "" # path on disk, keep empty to generate one
 
-tectonic_azure_ssh_key = "~/.ssh/id_rsa.pub"
+tectonic_azure_ssh_key = "/Users/coreos/.ssh/id_rsa.pub"
 
 tectonic_azure_vnet_cidr_block = "10.0.0.0/16"
 
