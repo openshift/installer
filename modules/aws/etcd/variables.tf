@@ -14,6 +14,10 @@ variable "dns_zone" {
   type = "string"
 }
 
+variable "az_count" {
+  type = "string"
+}
+
 variable "node_count" {
   default = "3"
 }
