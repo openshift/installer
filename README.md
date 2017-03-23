@@ -29,56 +29,52 @@ See the official Tectonic documentation:
 
 ### Hacking
 
-#### Choose your platform:
-
-See the platform specific documentation. Then see the *common usage* section below.
-
-- [AWS via Terraform](Documentation/platforms/aws/README.md) [[**alpha**][platform-lifecycle]]
-- [Azure via Terraform](Documentation/platforms/azure/README.md) [[**alpha**][platform-lifecycle]]
-- [OpenStack via Terraform](Documentation/platforms/openstack/README.md) [[**alpha**][platform-lifecycle]]
-- [VMware](Documentation/platforms/vmware/README.md) [[**alpha**][platform-lifecycle]]
-
-
 #### Common Usage
 
 At a high level, using the installer follows the workflow below. See each platform guide for specifics.
 
-1. Download Terraform
+**Download Terraform**
 
-This repo uses a custom build of Terraform which is pinned to a specific version and included required plugins. The easiest way to get the binary is:
+This repo a build of Terraform which includes required plugins and is pinned to a specific version. First, download the Terraform binaries:
 
 ```
 $ make terraform-download
 ```
 
-Follow the directions and update your PATH.
+**Choose your platform**
 
-2. Initiate Working Directory
+The example below will use `PLATFORM=azure` but you can set the value to something different. Also, as you configure the cluster refer to the linked documentation to find the configuration parameters.
+
+- `PLATFORM=aws` [AWS via Terraform](Documentation/platforms/aws/README.md) [[**alpha**][platform-lifecycle]]
+- `PLATFORM=azure` [Azure via Terraform](Documentation/platforms/azure/README.md) [[**alpha**][platform-lifecycle]]
+- `PLATFORM=openstack` [OpenStack via Terraform](Documentation/platforms/openstack/README.md) [[**alpha**][platform-lifecycle]]
+
+**Initiate the Cluster Configuration**
 
 This will create a new directory `build/<cluster-name>` which holds all module references, Terraform state files, and custom variable files.
 
 ```
-PLATFORM=aws CLUSTER=my-cluster make localconfig
+PLATFORM=azure CLUSTER=my-cluster make localconfig
 ```
 
-3. Customize
+**Configure Cluster**
 
 Set variables in the `terraform.tfvars` file as needed, or you will be prompted. Available variables can be found in the `config.tf` and `variables.tf` files present in the `platforms/<PLATFORM>` directory.
 
-4. Terraform Lifecycle
+**Terraform Lifecycle**
 
 Plan, apply, and destroy are provided as Make targets to make working with the build directory and custom binary easier.
 
 ```
-PLATFORM=aws CLUSTER=my-cluster make plan
+PLATFORM=azure CLUSTER=my-cluster make plan
 ```
 
 ```
-PLATFORM=aws CLUSTER=my-cluster make apply
+PLATFORM=azure CLUSTER=my-cluster make apply
 ```
 
 ```
-PLATFORM=aws CLUSTER=my-cluster make destroy
+PLATFORM=azure CLUSTER=my-cluster make destroy
 ```
 
 [platform-lifecycle]: Documentation/platform-lifecycle.md
