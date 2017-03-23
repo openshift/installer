@@ -48,7 +48,7 @@ $ export AWS_SECRET_ACCESS_KEY=
 Set your desired region:
 
 ```
-$ AWS_REGION=
+$ export AWS_REGION=
 ```
 
 Now we're ready to specify our cluster configuration.
