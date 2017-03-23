@@ -41,12 +41,14 @@ See the platform specific documentation. Then see the *common usage* section bel
 
 #### Common Usage
 
+At a high level, using the installer follows the workflow below. See each platform guide for specifics.
+
 1. Download Terraform
 
 This repo uses a custom build of Terraform which is pinned to a specific version and included required plugins. The easiest way to get the binary is:
 
 ```
-make terraform-download
+$ make terraform-download
 ```
 
 Follow the directions and update your PATH.
