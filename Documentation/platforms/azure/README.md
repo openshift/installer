@@ -6,7 +6,7 @@ Generally, the Azure platform templates adhere to the standards defined by the p
 
 ## Prerequsities
 
- - **DNS** - Setup your DNS zone in a resource group called `tectonic-dns-group` or specify a different resource group using the `tectonic_azure_dns_resource_group` variable below. We use a separate resource group assuming that you have a zone that you already want to use.
+ - **DNS** - Setup your DNS zone in a resource group called `tectonic-dns-group` or specify a different resource group using the `tectonic_azure_dns_resource_group` variable below. We use a separate resource group assuming that you have a zone that you already want to use. Follow the [docs to set one up][azure-dns].
  - **Make** - This guide uses `make` to download a customized version of Terraform, which is pinned to a specific version and includes required plugins.
  - **Tectonic Account** - Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
 
@@ -45,13 +45,28 @@ Get: file:///Users/tectonic-installer/modules/bootkube
 Get: file:///Users/tectonic-installer/modules/tectonic
 ```
 
-Configure your Azure credentials:
+Generate credentials using the Azure CLI. If you're not logged in, execute `az login` first. See the [docs][login] for more info.
 
 ```
-$ export ARM_SUBSCRIPTION_ID=
-$ export ARM_CLIENT_ID=
-$ export ARM_CLIENT_SECRET=
-$ export ARM_TENANT_ID=
+$ az ad sp create-for-rbac -n "http://tectonic" --role contributor
+Retrying role assignment creation: 1/24
+Retrying role assignment creation: 2/24
+{
+ "appId": "generated-app-id",
+ "displayName": "azure-cli-2017-01-01",
+ "name": "http://tectonic-coreos",
+ "password": "generated-pass",
+ "tenant": "generated-tenant"
+}
+```
+
+Export variables that correspond to the data that was just generated. The subscription is your Azure Subscription ID.
+
+```
+$ export ARM_SUBSCRIPTION_ID=abc-123-456
+$ export ARM_CLIENT_ID=generated-app-id
+$ export ARM_CLIENT_SECRET=generated-pass
+$ export ARM_TENANT_ID=generated-tenant
 ```
 
 Last, let's create a local build directory `build/<cluster-name>` which holds all module references, Terraform state files, and custom variable files:
@@ -185,3 +200,5 @@ To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and in
 [plan-docs]: https://www.terraform.io/docs/commands/plan.html
 [copy-docs]: https://www.terraform.io/docs/commands/apply.html
 [troubleshooting]: ../troubleshooting.md
+[login]: https://docs.microsoft.com/en-us/cli/azure/get-started-with-azure-cli
+[azure-dns]: https://docs.microsoft.com/en-us/azure/dns/dns-getstarted-portal
