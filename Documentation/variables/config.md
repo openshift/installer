@@ -16,7 +16,7 @@ All the common Tectonic SDK variables used for *all* platforms.
 | tectonic_cluster_name | The name of the cluster. This will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console. | - | yes |
 | tectonic_container_images | Container images to use | `<map>` | no |
 | tectonic_etcd_count | The number of etcd nodes to be created. | `1` | no |
-| tectonic_etcd_servers | List of extenral etcd v3 servers to connect with (scheme://ip:port). Optionally use if providing external etcd. | - | yes |
+| tectonic_etcd_servers | List of external etcd v3 servers to connect with (hostnames/IPs only). Optionally used if using an external etcd cluster. | - | yes |
 | tectonic_kube_apiserver_service_ip | Service IP used to reach kube-apiserver inside the cluster | `10.3.0.1` | no |
 | tectonic_kube_dns_service_ip | Service IP used to reach kube-dns | `10.3.0.10` | no |
 | tectonic_license_path |  | - | yes |

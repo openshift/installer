@@ -88,7 +88,7 @@ variable "tectonic_etcd_count" {
 }
 
 variable "tectonic_etcd_servers" {
-  description = "List of external etcd v3 servers to connect with (scheme://ip:port). Optionally use if providing external etcd."
+  description = "List of external etcd v3 servers to connect with (hostnames/IPs only). Optionally used if using an external etcd cluster."
   type        = "list"
   default     = [""]
 }
