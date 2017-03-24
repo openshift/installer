@@ -4,8 +4,6 @@ resource "ignition_config" "etcd" {
   systemd = [
     "${ignition_systemd_unit.locksmithd.id}",
     "${ignition_systemd_unit.etcd3.*.id[count.index]}",
-    "${ignition_systemd_unit.etcd2.id}",
-    "${ignition_systemd_unit.etcd.id}",
   ]
 
   users = [

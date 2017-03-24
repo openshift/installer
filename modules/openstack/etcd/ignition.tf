@@ -31,8 +31,6 @@ resource "ignition_config" "etcd" {
   ]
 
   systemd = [
-    "${ignition_systemd_unit.etcd2.id}",
-    "${ignition_systemd_unit.etcd.id}",
     "${ignition_systemd_unit.etcd_member.id}",
   ]
 }
