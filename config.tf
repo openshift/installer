@@ -149,12 +149,6 @@ variable "tectonic_admin_password_hash" {
   description = "bcrypt hash of admin password to use with Tectonic Console"
 }
 
-variable "tectonic_ingress_type" {
-  description = "Type of Ingress mapping to use (e.g. HostPort, NodePort)"
-  type        = "string"
-  default     = "HostPort"
-}
-
 variable "tectonic_ca_cert" {
   type        = "string"
   description = "PEM-encoded CA certificate, used to generate Tectonic Console's server certificate. Optional, if left blank, a CA certificate will be automatically generated."
