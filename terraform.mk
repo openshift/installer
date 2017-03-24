@@ -1,8 +1,8 @@
 TOP_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
 TERRAFORM_REPOSITORY=https://github.com/coreos/terraform.git
-TERRAFORM_RELEASE_URL=https://api.github.com/repos/coreos/terraform/releases/latest
 TERRAFORM_BRANCH=v0.8.8-coreos
+TERRAFORM_RELEASE_TARBALL_URL=https://github.com/coreos/terraform/releases/download/v0.8.8-coreos/terraform.zip
 TERRAFORM_BUILD_DIR=$(TOP_DIR)/build/terraform
 TERRAFORM_BINS_DIR=$(TOP_DIR)/bin/terraform
 TERRAFORM_GO_IMAGE=golang:1.8
@@ -57,7 +57,7 @@ terraform: $(TERRAFORM_BUILD_DIR) $(TERRAFORM_BINS_DIR)
 	echo -e "\n--> TerraForm built successfully for [$(TERRAFORM_GO_OS)] / [$(TERRAFORM_GOARCH)] in $(TERRAFORM_BINS_DIR)"
 
 terraform-download: $(TERRAFORM_BINS_DIR)
-	curl -L `curl -s $(TERRAFORM_RELEASE_URL) | grep browser_download_url | head -n 1 | cut -d '"' -f 4` > $(TERRAFORM_BINS_DIR)/terraform.zip
+	curl -L $(TERRAFORM_RELEASE_TARBALL_URL) > $(TERRAFORM_BINS_DIR)/terraform.zip
 	cd $(TERRAFORM_BINS_DIR) && unzip -o terraform.zip
 	cp $(TERRAFORM_BINS_DIR)/$(GOOS)_$(GOARCH)/terraform $(TERRAFORM_BINS_DIR)
 
