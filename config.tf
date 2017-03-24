@@ -42,12 +42,6 @@ variable "tectonic_versions" {
   }
 }
 
-variable "tectonic_kube_apiserver_url" {
-  type        = "string"
-  description = "URL used to reach kube-apiserver"
-  default     = "https://10.1.1.1:443"
-}
-
 variable "tectonic_kube_apiserver_service_ip" {
   type        = "string"
   description = "Service IP used to reach kube-apiserver inside the cluster"
