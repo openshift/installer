@@ -10,7 +10,7 @@ TERRAFORM_GO_OS=linux darwin windows
 TERRAFORM_GOARCH=386 amd64
 
 PATH  := $(TOP_DIR)/bin/terraform:$(PATH)
-SHELL := env PATH=$(PATH) /bin/bash
+SHELL := env PATH="${PATH}" /bin/bash
 $(info Using TerraForm binary [$(shell which terraform 2> /dev/null)])
 
 ifeq ($(OS), Windows_NT)
