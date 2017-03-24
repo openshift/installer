@@ -166,7 +166,3 @@ variable "tectonic_ca_key_alg" {
   description = "Algorithm used to generate tectonic_ca_key. Optional if tectonic_ca_cert is left blank."
   default     = "RSA"
 }
-
-variable "tectonic_dns_name" {
-  type = "string"
-}

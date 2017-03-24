@@ -86,8 +86,6 @@ tectonic_base_domain = "azure.example.com"
 
 tectonic_cluster_name = "mycluster"
 
-tectonic_dns_name = "mycluster"
-
 tectonic_pull_secret_path = "/Users/coreos/Downloads/config.json"
 
 tectonic_license_path = "/Users/coreos/Downloads/tectonic-license.txt"
