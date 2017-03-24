@@ -119,13 +119,13 @@ tectonic_azure_ssh_key = "/Users/coreos/.ssh/id_rsa.pub"
 
 tectonic_azure_vnet_cidr_block = "10.0.0.0/16"
 
-tectonic_azure_etcd_vm_size = "Standard_DS3"
+tectonic_azure_etcd_vm_size = "Standard_DS2"
 
-tectonic_azure_master_vm_size = "Standard_DS3"
+tectonic_azure_master_vm_size = "Standard_DS2"
 
-tectonic_azure_worker_vm_size = "Standard_DS3"
+tectonic_azure_worker_vm_size = "Standard_DS2"
 
-tectonic_azure_location = "northeurope"
+tectonic_azure_location = "eastus"
 ```
 
 ## Deploy the cluster
