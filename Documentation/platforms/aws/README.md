@@ -22,7 +22,7 @@ $ make terraform-download
 After downloading, you will need to source this new binary in your `$PATH`. This is important, especially if you have another verison of Terraform installed. Run this command to add it to your path:
 
 ```
-$ export PATH=/path/to/tectonic-installer/bin/terraform/terraform:$PATH
+$ export PATH=/path/to/tectonic-installer/bin/terraform:$PATH
 ```
 
 You can double check that you're using the binary that was just downloaded:
