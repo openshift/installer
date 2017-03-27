@@ -62,20 +62,19 @@ Now we're ready to specify our cluster configuration.
 
 ## Customize the deployment
 
-Use this example to customize your cluster configuration. A few fields require special consideration:
+Customizations to the base installation live in `platforms/aws/terraform.tfvars.example`. Create a build directory to hold your customizations and copy the example file into it:
+
+```
+$ mkdir -p build/<cluster-name>
+$ cp platforms/aws/terraform.tfvars.example build/<cluster-name>/terraform.tfvars
+```
+
+A few fields require special consideration:
 
  - **tectonic_base_domain** - domain name that is set up with in a resource group, as described in the prerequisites.
  - **tectonic_pull_secret_path** - path on disk to your downloaded pull secret. You can find this on your [Account dashboard][account].
  - **tectonic_license_path** - path on disk to your downloaded Tectonic license. You can find this on your [Account dashboard][account].
  - **tectonic_admin_password_hash** - generate a hash with the [bcrypt-hash tool][bcrypt] that will be used for your admin user.
-
-Here's an example of the full file:
-
-**build/<cluster>/terraform.tfvars**
-
-```
-TODO: insert me
-```
 
 ## Deploy the cluster
 
