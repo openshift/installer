@@ -16,6 +16,7 @@ variable "tectonic_aws_etcd_ec2_type" {
 
 variable "tectonic_aws_vpc_cidr_block" {
   type = "string"
+  default = "10.0.0.0/16"
 }
 
 variable "tectonic_aws_az_count" {
@@ -24,6 +25,7 @@ variable "tectonic_aws_az_count" {
 
 variable "tectonic_aws_external_vpc_id" {
   type = "string"
+  default = ""
 }
 
 variable "tectonic_aws_external_master_subnet_ids" {
