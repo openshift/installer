@@ -1,5 +1,5 @@
 output "vpc_id" {
-  value = "${length(var.external_vpc_id) > 0 ? var.external_vpc_id : aws_vpc.new_vpc.id}"
+  value = "${length(var.external_vpc_id) > 0 ? var.external_vpc_id : join(" ", aws_vpc.new_vpc.*.id)}"
 }
 
 output "cluster_default_sg" {

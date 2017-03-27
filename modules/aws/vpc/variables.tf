@@ -15,9 +15,9 @@ variable "external_vpc_id" {
 }
 
 variable "external_master_subnets" {
-  type    = "list"
+  type = "list"
 }
 
 variable "external_worker_subnets" {
-  type    = "list"
+  type = "list"
 }

@@ -25,3 +25,13 @@ variable "tectonic_aws_az_count" {
 variable "tectonic_aws_external_vpc_id" {
   type = "string"
 }
+
+variable "tectonic_aws_external_master_subnet_ids" {
+  type    = "list"
+  default = [""]
+}
+
+variable "tectonic_aws_external_worker_subnet_ids" {
+  type    = "list"
+  default = [""]
+}
