@@ -12,7 +12,14 @@ Generally, the Azure platform templates adhere to the standards defined by the p
 
 ## Getting Started
 
-First, download Terraform with via `make`. This will download the pinned Terraform binary and modules:
+First, clone the Tectonic Installer repository in a convenient location:
+
+```
+$ git clone https://github.com/coreos/tectonic-installer.git
+$ git checkout tags/v0.0.1
+```
+
+Download Terraform with via `make`. This will download the pinned Terraform binary and modules:
 
 ```
 $ cd tectonic-installer
