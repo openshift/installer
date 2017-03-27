@@ -1,0 +1,33 @@
+tectonic_base_domain = "foo.bar"
+tectonic_cluster_name = "foobar"
+
+tectonic_admin_email = "admin@example.com"
+tectonic_admin_password_hash = "$2a$12$k9wa31uE/4uD9aVtT/vNtOZwxXyEJ/9DwXXEYB/eUpb9fvEPsH/kO" # PASSWORD
+
+tectonic_master_count = 3
+tectonic_worker_count = 1
+tectonic_etcd_count = 1
+
+tectonic_cl_channel = "stable"
+
+tectonic_update_server = ""
+tectonic_update_channel = ""
+tectonic_update_app_id = ""
+
+tectonic_service_cidr = "10.3.0.0/24"
+tectonic_cluster_cidr = "10.2.0.0/16"
+tectonic_aws_vpc_cidr_block = "10.0.0.0/16"
+tectonic_kube_dns_service_ip = "10.3.0.10"
+tectonic_kube_apiserver_service_ip = "10.3.0.1"
+
+tectonic_ca_key_alg = "RSA"
+tectonic_ca_cert = ""
+tectonic_ca_key = ""
+
+tectonic_license_path = "./license"
+tectonic_pull_secret_path = "./pull_secret"
+
+tectonic_etcd_servers = []
+
+tectonic_openstack_flavor_id = "5cf64088-893b-46b5-9bb1-ee020277635d"
+tectonic_openstack_image_id = "acdcd535-5408-40f3-8e88-ad8ebb6507e6"
