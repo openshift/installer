@@ -26,7 +26,7 @@ resource "template_folder" "bootkube" {
     oidc_username_claim = "${var.oidc_username_claim}"
     oidc_groups_claim = "${var.oidc_groups_claim}"
 
-    ca_cert = "${base64encode(tls_self_signed_cert.kube-ca.cert_pem)}"
+    ca_cert = "${base64encode(var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube-ca.*.cert_pem) : var.ca_cert)}"
     apiserver_key = "${base64encode(tls_private_key.apiserver.private_key_pem)}"
     apiserver_cert = "${base64encode(tls_locally_signed_cert.apiserver.cert_pem)}"
     serviceaccount_pub = "${base64encode(tls_private_key.service-account.public_key_pem)}"
@@ -39,7 +39,7 @@ data "template_file" "kubeconfig" {
   template = "${file("${path.module}/resources/kubeconfig")}"
 
   vars {
-    ca_cert = "${base64encode(tls_self_signed_cert.kube-ca.cert_pem)}"
+    ca_cert = "${base64encode(var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube-ca.*.cert_pem) : var.ca_cert)}"
     kubelet_cert = "${base64encode(tls_locally_signed_cert.kubelet.cert_pem)}"
     kubelet_key = "${base64encode(tls_private_key.kubelet.private_key_pem)}"
     server = "${var.kube_apiserver_url}"
