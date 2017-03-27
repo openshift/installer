@@ -45,9 +45,9 @@ $ make terraform-download
 
 The example below will use `PLATFORM=azure` but you can set the value to something different. Also, as you configure the cluster refer to the linked documentation to find the configuration parameters.
 
-- `PLATFORM=aws` [AWS via Terraform](Documentation/install/aws.md) [[**alpha**][platform-lifecycle]]
-- `PLATFORM=azure` [Azure via Terraform](Documentation/install/azure.md) [[**alpha**][platform-lifecycle]]
-- `PLATFORM=openstack` [OpenStack via Terraform](Documentation/install/openstack.md) [[**alpha**][platform-lifecycle]]
+- `PLATFORM=aws` [AWS via Terraform](Documentation/install/aws/aws-terraform.md) [[**alpha**][platform-lifecycle]]
+- `PLATFORM=azure` [Azure via Terraform](Documentation/install/azure/azure-terraform.md) [[**alpha**][platform-lifecycle]]
+- `PLATFORM=openstack` [OpenStack via Terraform](Documentation/install/openstack/openstack-terraform.md) [[**alpha**][platform-lifecycle]]
 
 **Initiate the Cluster Configuration**
 
