@@ -27,11 +27,13 @@ tectonic_aws_vpc_cidr_block = "10.0.0.0/16"
 tectonic_kube_dns_service_ip = "10.3.0.10"
 tectonic_kube_apiserver_service_ip = "10.3.0.1"
 
-tectonic_ca_key_alg = "RSA"
-tectonic_ca_cert = ""
-tectonic_ca_key = ""
-
 tectonic_license_path = "./license"
 tectonic_pull_secret_path = "./pull_secret"
 
 tectonic_etcd_servers = []
+
+tectonic_ca_key_alg = "RSA"
+tectonic_ca_cert = <<EOD
+EOD
+tectonic_ca_key = <<EOD
+EOD
