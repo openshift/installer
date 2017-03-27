@@ -18,9 +18,18 @@ CURL="curl -sSNL --cacert $K8S_API_CA --cert $K8S_API_CERT --key $K8S_API_KEY --
 trap "rm -f $K8S_API_CA $K8S_API_CERT $K8S_API_KEY" EXIT
 
 # Setup helper functions
+
 function wait_for_tpr() {
   echo "Waiting for third-party resource definitions..."
-  until $CURL -f "$K8S_API/$1" &> /dev/null; do
+
+  while true; do
+    local got_name=$($CURL $K8S_API/apis/extensions/v1beta1/thirdpartyresources | jq -r $".items[].metadata | select(.name | contains(\"$1\")) | .name")
+    local status=$($CURL -o /dev/null --write-out '%{http_code}' $K8S_API/"$2")
+
+    if [ "$got_name" == "$1" ] && [ "$status" == "200" ]; then
+        break
+    fi
+
     sleep 5
   done
 }
@@ -94,7 +103,7 @@ create_resource yaml monitoring/prometheus-svc.yaml                           ap
 create_resource yaml monitoring/node-exporter-svc.yaml                        api/v1/namespaces/tectonic-system/services
 create_resource yaml monitoring/node-exporter-ds.yaml                         apis/extensions/v1beta1/namespaces/tectonic-system/daemonsets
 create_resource yaml monitoring/prometheus-operator.yaml                      apis/extensions/v1beta1/namespaces/tectonic-system/deployments
-wait_for_tpr apis/monitoring.coreos.com/v1alpha1/prometheuses
+wait_for_tpr prometheus.monitoring.coreos.com apis/monitoring.coreos.com/v1alpha1/namespaces/tectonic-system/prometheuses
 create_resource json monitoring/prometheus-k8s.json                           apis/monitoring.coreos.com/v1alpha1/namespaces/tectonic-system/prometheuses
 
 echo "Creating Ingress"
@@ -125,9 +134,9 @@ create_resource yaml updater/migration-status-kind.yaml                 apis/ext
 create_resource yaml updater/node-agent.yaml                            apis/extensions/v1beta1/namespaces/tectonic-system/daemonsets
 create_resource yaml updater/kube-version-operator.yaml                 apis/extensions/v1beta1/namespaces/tectonic-system/deployments
 create_resource yaml updater/tectonic-channel-operator.yaml             apis/extensions/v1beta1/namespaces/tectonic-system/deployments
-wait_for_tpr apis/coreos.com/v1/channeloperatorconfigs
+wait_for_tpr channel-operator-config.coreos.com apis/coreos.com/v1/namespaces/tectonic-system/channeloperatorconfigs
 create_resource json updater/tectonic-channel-operator-config.json      apis/coreos.com/v1/namespaces/tectonic-system/channeloperatorconfigs
-wait_for_tpr apis/coreos.com/v1/appversions
+wait_for_tpr app-version.coreos.com apis/coreos.com/v1/namespaces/tectonic-system/appversions
 create_resource json updater/app-version-tectonic-cluster.json          apis/coreos.com/v1/namespaces/tectonic-system/appversions
 create_resource json updater/app-version-kubernetes.json                apis/coreos.com/v1/namespaces/tectonic-system/appversions
 
