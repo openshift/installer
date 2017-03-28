@@ -16,14 +16,15 @@ First, clone the Tectonic Installer repository in a convenient location:
 
 ```
 $ git clone https://github.com/coreos/tectonic-installer.git
-$ git checkout tags/v0.0.1
+$ git checkout tags/tectonic-1.5.5-tectonic.3
 ```
 
-Download Terraform with via `make`. This will download the pinned Terraform binary and modules:
+Download the pinned Terraform binary and modules required for Tectonic:
 
 ```
-$ cd tectonic-installer
-$ make terraform-download
+$ wget https://releases.tectonic.com/tectonic-1.5.5-tectonic.3.tar.gz
+$ tar xzvf tectonic-1.5.5-tectonic.3.tar.gz
+$ cd tectonic/tectonic-installer
 ```
 
 After downloading, you will need to source this new binary in your `$PATH`. This is important, especially if you have another verison of Terraform installed. Run this command to add it to your path:
