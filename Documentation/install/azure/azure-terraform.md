@@ -86,11 +86,17 @@ Now we're ready to specify our cluster configuration.
 
 ## Customize the deployment
 
-Customizations to the base installation live in `platforms/azure/terraform.tfvars.example`. Create a build directory to hold your customizations and copy the example file into it:
+Customizations to the base installation live in `platforms/azure/terraform.tfvars.example`. Export a variable that will be your cluster identifier:
 
 ```
-$ mkdir -p build/<cluster-name>
-$ cp platforms/azure/terraform.tfvars.example build/<cluster-name>/terraform.tfvars
+$ export CLUSTER=my-cluster
+```
+
+Create a build directory to hold your customizations and copy the example file into it:
+
+```
+$ mkdir -p build/${CLUSTER}
+$ cp platforms/azure/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
 ```
 
  - **tectonic_base_domain** - domain name that is set up with in a resource group, as described in the prerequisites.
@@ -103,13 +109,13 @@ $ cp platforms/azure/terraform.tfvars.example build/<cluster-name>/terraform.tfv
 Test out the plan before deploying everything:
 
 ```
-$ PLATFORM=azure CLUSTER=my-cluster make plan
+$ terraform plan -vars-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 ```
 
 Next, deploy the cluster:
 
 ```
-$ PLATFORM=azure CLUSTER=my-cluster make apply
+$ terraform apply -vars-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 ```
 
 This should run for a little bit, and when complete, your Tectonic cluster should be ready.
@@ -119,7 +125,7 @@ If you encounter any issues, check the known issues and workarounds below.
 To delete your cluster, run:
 
 ```
-$ PLATFORM=azure CLUSTER=my-cluster make destroy
+$ terraform destroy -vars-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 ```
 
 ### Known issues and workarounds
@@ -128,7 +134,14 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 
 ## Scaling the cluster
 
-To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and invoke `terraform apply -target module.workers platforms/azure`.
+To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and run:
+
+```
+$ terraform apply $ terraform plan \
+  -vars-file=build/${CLUSTER}/terraform.tfvars \
+  -target module.workers \
+  platforms/azure
+```
 
 ## Under the hood
 

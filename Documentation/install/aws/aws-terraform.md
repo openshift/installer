@@ -62,11 +62,17 @@ Now we're ready to specify our cluster configuration.
 
 ## Customize the deployment
 
-Customizations to the base installation live in `platforms/aws/terraform.tfvars.example`. Create a build directory to hold your customizations and copy the example file into it:
+Customizations to the base installation live in `platforms/aws/terraform.tfvars.example`. Export a variable that will be your cluster identifier:
 
 ```
-$ mkdir -p build/<cluster-name>
-$ cp platforms/aws/terraform.tfvars.example build/<cluster-name>/terraform.tfvars
+$ export CLUSTER=my-cluster
+```
+
+Create a build directory to hold your customizations and copy the example file into it:
+
+```
+$ mkdir -p build/${CLUSTER}
+$ cp platforms/aws/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
 ```
 
 A few fields require special consideration:
@@ -81,13 +87,13 @@ A few fields require special consideration:
 Test out the plan before deploying everything:
 
 ```
-$ PLATFORM=aws CLUSTER=my-cluster make plan
+$ terraform plan -vars-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
 Next, deploy the cluster:
 
 ```
-$ PLATFORM=aws CLUSTER=my-cluster make apply
+$ terraform apply -vars-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
 This should run for a little bit, and when complete, your Tectonic cluster should be ready.
@@ -97,7 +103,7 @@ If you encounter any issues, check the known issues and workarounds below.
 To delete your cluster, run:
 
 ```
-$ PLATFORM=aws CLUSTER=my-cluster make destroy
+$ terraform destroy -vars-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
 ### Known issues and workarounds
