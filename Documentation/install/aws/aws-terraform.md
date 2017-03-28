@@ -45,7 +45,7 @@ Next, get the modules that Terraform will use to create the cluster resources:
 $ terraform get platforms/aws
 ```
 
-Configure your Azure credentials. See the [AWS docs][env] for details.
+Configure your AWS credentials. See the [AWS docs][env] for details.
 
 ```
 $ export AWS_ACCESS_KEY_ID=

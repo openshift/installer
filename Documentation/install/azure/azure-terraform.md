@@ -76,12 +76,6 @@ $ export ARM_CLIENT_SECRET=generated-pass
 $ export ARM_TENANT_ID=generated-tenant
 ```
 
-Last, let's create a local build directory `build/<cluster-name>` which holds all module references, Terraform state files, and custom variable files:
-
-```
-$ PLATFORM=azure CLUSTER=my-cluster make localconfig
-```
-
 Now we're ready to specify our cluster configuration.
 
 ## Customize the deployment
