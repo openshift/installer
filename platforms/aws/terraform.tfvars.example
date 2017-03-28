@@ -27,8 +27,8 @@ tectonic_aws_vpc_cidr_block = "10.0.0.0/16"
 tectonic_kube_dns_service_ip = "10.3.0.10"
 tectonic_kube_apiserver_service_ip = "10.3.0.1"
 
-tectonic_license_path = "./license"
-tectonic_pull_secret_path = "./pull_secret"
+tectonic_license_path = "/Users/coreos/Desktop/tectonic-license.txt"
+tectonic_pull_secret_path = "/Users/coreos/Desktop/config.json"
 
 tectonic_etcd_servers = []
 
