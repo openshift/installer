@@ -88,13 +88,13 @@ A few fields require special consideration:
 Test out the plan before deploying everything:
 
 ```
-$ terraform plan -vars-file=build/${CLUSTER}/terraform.tfvars platforms/aws
+$ terraform plan -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
 Next, deploy the cluster:
 
 ```
-$ terraform apply -vars-file=build/${CLUSTER}/terraform.tfvars platforms/aws
+$ terraform apply -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
 This should run for a little bit, and when complete, your Tectonic cluster should be ready.
@@ -104,7 +104,7 @@ If you encounter any issues, check the known issues and workarounds below.
 To delete your cluster, run:
 
 ```
-$ terraform destroy -vars-file=build/${CLUSTER}/terraform.tfvars platforms/aws
+$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
 ### Known issues and workarounds

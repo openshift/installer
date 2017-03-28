@@ -104,13 +104,13 @@ $ cp platforms/azure/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
 Test out the plan before deploying everything:
 
 ```
-$ terraform plan -vars-file=build/${CLUSTER}/terraform.tfvars platforms/azure
+$ terraform plan -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 ```
 
 Next, deploy the cluster:
 
 ```
-$ terraform apply -vars-file=build/${CLUSTER}/terraform.tfvars platforms/azure
+$ terraform apply -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 ```
 
 This should run for a little bit, and when complete, your Tectonic cluster should be ready.
@@ -120,7 +120,7 @@ If you encounter any issues, check the known issues and workarounds below.
 To delete your cluster, run:
 
 ```
-$ terraform destroy -vars-file=build/${CLUSTER}/terraform.tfvars platforms/azure
+$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 ```
 
 ### Known issues and workarounds
@@ -133,7 +133,7 @@ To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and ru
 
 ```
 $ terraform apply $ terraform plan \
-  -vars-file=build/${CLUSTER}/terraform.tfvars \
+  -var-file=build/${CLUSTER}/terraform.tfvars \
   -target module.workers \
   platforms/azure
 ```
