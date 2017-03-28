@@ -102,7 +102,9 @@ This should run for a little bit, and when complete, your Tectonic cluster shoul
 
 If you encounter any issues, check the known issues and workarounds below.
 
-To delete your cluster, run:
+### Delete the cluster
+
+Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing VPC and subnets, these items are not touched. To delete, run:
 
 ```
 $ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws

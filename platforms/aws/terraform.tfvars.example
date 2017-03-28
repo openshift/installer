@@ -10,12 +10,15 @@ tectonic_etcd_count = 3
 
 tectonic_cl_channel = "stable"
 
-tectonic_aws_az_count = 3
 tectonic_aws_ssh_key = "foobar"
 tectonic_aws_master_ec2_type = "t2.medium"
 tectonic_aws_worker_ec2_type = "t2.medium"
 tectonic_aws_etcd_ec2_type = "t2.medium"
-tectonic_aws_external_vpc_id = ""
+
+tectonic_aws_az_count = 3
+tectonic_aws_external_vpc_id = "vpc-123456"
+tectonic_aws_external_master_subnet_ids = ["subnet-111111", "subnet-222222", "subnet-333333"] # must match AZ count 
+tectonic_aws_external_worker_subnet_ids = ["subnet-111111", "subnet-222222", "subnet-333333"] # must match AZ count 
 
 tectonic_update_server = ""
 tectonic_update_channel = ""
