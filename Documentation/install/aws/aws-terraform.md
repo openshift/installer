@@ -82,6 +82,7 @@ A few fields require special consideration:
  - **tectonic_pull_secret_path** - path on disk to your downloaded pull secret. You can find this on your [Account dashboard][account].
  - **tectonic_license_path** - path on disk to your downloaded Tectonic license. You can find this on your [Account dashboard][account].
  - **tectonic_admin_password_hash** - generate a hash with the [bcrypt-hash tool][bcrypt] that will be used for your admin user.
+ - **tectonic_aws_external_vpc_id** - specify an existing VPC to use, or leave blank to create a new one
 
 ## Deploy the cluster
 
