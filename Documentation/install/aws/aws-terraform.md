@@ -4,6 +4,8 @@ Following this guide will deploy a Tectonic cluster within your AWS account.
 
 Generally, the AWS platform templates adhere to the standards defined by the project [conventions][conventions] and [generic platform requirements][generic]. This document aims to document the implementation details specific to the Azure platform.
 
+<p style="background:#d9edf7; padding: 10px;" class="text-info"><strong>Alpha:</strong> These modules and instructions are currently considered alpha. See the <a href="../../platform-lifecycle.md">platform life cycle</a> for more details.</p>
+
 ## Prerequsities
 
  - **DNS** - Ensure that the DNS zone is already created and available in route53 for the account. For example if the `tectonic_base_domain` is set to `kube.example.com` a route53 zone must exist for this domain and the AWS nameservers must be configured for the domain.
@@ -16,7 +18,6 @@ First, clone the Tectonic Installer repository in a convenient location:
 
 ```
 $ git clone https://github.com/coreos/tectonic-installer.git
-$ git checkout tags/tectonic-1.5.5-tectonic.3
 ```
 
 Download the pinned Terraform binary and modules required for Tectonic:

@@ -4,6 +4,8 @@ Following this guide will deploy a Tectonic cluster within your Azure account.
 
 Generally, the Azure platform templates adhere to the standards defined by the project [conventions][conventions] and [generic platform requirements][generic]. This document aims to document the implementation details specific to the Azure platform.
 
+<p style="background:#d9edf7; padding: 10px;" class="text-info"><strong>Alpha:</strong> These modules and instructions are currently considered alpha. See the <a href="../../platform-lifecycle.md">platform life cycle</a> for more details.</p>
+
 ## Prerequsities
 
  - **DNS** - Setup your DNS zone in a resource group called `tectonic-dns-group` or specify a different resource group using the `tectonic_azure_dns_resource_group` variable below. We use a separate resource group assuming that you have a zone that you already want to use. Follow the [docs to set one up][azure-dns].
@@ -16,7 +18,6 @@ First, clone the Tectonic Installer repository in a convenient location:
 
 ```
 $ git clone https://github.com/coreos/tectonic-installer.git
-$ git checkout tags/tectonic-1.5.5-tectonic.3
 ```
 
 Download the pinned Terraform binary and modules required for Tectonic:
