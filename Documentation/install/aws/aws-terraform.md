@@ -4,6 +4,8 @@ Following this guide will deploy a Tectonic cluster within your AWS account.
 
 Generally, the AWS platform templates adhere to the standards defined by the project [conventions][conventions] and [generic platform requirements][generic]. This document aims to document the implementation details specific to the Azure platform.
 
+<p style="background:#d9edf7; padding: 10px;" class="text-info"><strong>Alpha:</strong> These modules and instructions are currently considered alpha. See the <a href="../../platform-lifecycle.md">platform life cycle</a> for more details.</p>
+
 ## Prerequsities
 
  - **DNS** - Ensure that the DNS zone is already created and available in route53 for the account. For example if the `tectonic_base_domain` is set to `kube.example.com` a route53 zone must exist for this domain and the AWS nameservers must be configured for the domain.
@@ -12,11 +14,18 @@ Generally, the AWS platform templates adhere to the standards defined by the pro
 
 ## Getting Started
 
-First, download Terraform with via `make`. This will download the pinned Terraform binary and modules:
+First, clone the Tectonic Installer repository in a convenient location:
 
 ```
-$ cd tectonic-installer
-$ make terraform-download
+$ git clone https://github.com/coreos/tectonic-installer.git
+```
+
+Download the pinned Terraform binary and modules required for Tectonic:
+
+```
+$ wget https://releases.tectonic.com/tectonic-1.5.5-tectonic.3.tar.gz
+$ tar xzvf tectonic-1.5.5-tectonic.3.tar.gz
+$ cd tectonic/tectonic-installer
 ```
 
 After downloading, you will need to source this new binary in your `$PATH`. This is important, especially if you have another verison of Terraform installed. Run this command to add it to your path:
@@ -38,7 +47,7 @@ Next, get the modules that Terraform will use to create the cluster resources:
 $ terraform get platforms/aws
 ```
 
-Configure your Azure credentials. See the [AWS docs][env] for details.
+Configure your AWS credentials. See the [AWS docs][env] for details.
 
 ```
 $ export AWS_ACCESS_KEY_ID=
@@ -55,43 +64,45 @@ Now we're ready to specify our cluster configuration.
 
 ## Customize the deployment
 
-Use this example to customize your cluster configuration. A few fields require special consideration:
-
- - **tectonic_base_domain** - domain name that is set up with in a resource group, as described in the prerequisites.
- - **tectonic_pull_secret_path** - path on disk to your downloaded pull secret. You can find this on your [Account dashboard][account].
- - **tectonic_license_path** - path on disk to your downloaded Tectonic license. You can find this on your [Account dashboard][account].
- - **tectonic_admin_password_hash** - generate a hash with the [bcrypt-hash tool][bcrypt] that will be used for your admin user.
-
-Here's an example of the full file:
-
-**build/<cluster>/terraform.tfvars**
+Customizations to the base installation live in `platforms/aws/terraform.tfvars.example`. Export a variable that will be your cluster identifier:
 
 ```
-TODO: insert me
+$ export CLUSTER=my-cluster
 ```
+
+Create a build directory to hold your customizations and copy the example file into it:
+
+```
+$ mkdir -p build/${CLUSTER}
+$ cp platforms/aws/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
+```
+
+Edit the parameters with your AWS details, domain name, license, etc.
 
 ## Deploy the cluster
 
 Test out the plan before deploying everything:
 
 ```
-$ PLATFORM=aws CLUSTER=my-cluster make plan
+$ terraform plan -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
 Next, deploy the cluster:
 
 ```
-$ PLATFORM=aws CLUSTER=my-cluster make apply
+$ terraform apply -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
 This should run for a little bit, and when complete, your Tectonic cluster should be ready.
 
 If you encounter any issues, check the known issues and workarounds below.
 
-To delete your cluster, run:
+### Delete the cluster
+
+Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing VPC and subnets, these items are not touched. To delete, run:
 
 ```
-$ PLATFORM=aws CLUSTER=my-cluster make destroy
+$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
 ### Known issues and workarounds
@@ -103,4 +114,3 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 [env]: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment
 [register]: https://account.tectonic.com/signup/summary/tectonic-2016-12
 [account]: https://account.tectonic.com
-[bcrypt]: https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0

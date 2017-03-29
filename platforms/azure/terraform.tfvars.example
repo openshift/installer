@@ -1,6 +1,6 @@
 # Naming
 # domain name that is set in Route53, as described in the prerequisites.
-tectonic_base_domain = "aws.example.com"
+tectonic_base_domain = "azure.example.com"
 tectonic_cluster_name = "mycluster"
 
 # Login Details
@@ -16,18 +16,12 @@ tectonic_etcd_count = 3
 # Container Linux
 tectonic_cl_channel = "stable" # alpha, beta, stable
 
-# AWS Details
-tectonic_aws_ssh_key = "foobar"
-tectonic_aws_master_ec2_type = "t2.medium"
-tectonic_aws_worker_ec2_type = "t2.medium"
-tectonic_aws_etcd_ec2_type = "t2.medium"
-
-# VPC Details
-# specify an existing VPC to use, or leave blank to create a new one
-tectonic_aws_az_count = 3 # some AWS regions only have 2!
-tectonic_aws_external_vpc_id = "vpc-123456"
-tectonic_aws_external_master_subnet_ids = ["subnet-111111", "subnet-222222", "subnet-333333"] # must match AZ count 
-tectonic_aws_external_worker_subnet_ids = ["subnet-111111", "subnet-222222", "subnet-333333"] # must match AZ count 
+# Azure Details
+tectonic_azure_ssh_key = "/Users/coreos/.ssh/id_rsa.pub"
+tectonic_azure_etcd_vm_size = "Standard_DS2"
+tectonic_azure_master_vm_size = "Standard_DS2"
+tectonic_azure_worker_vm_size = "Standard_DS2"
+tectonic_azure_location = "eastus"
 
 # Update Details
 # leave blank for default values
@@ -36,11 +30,7 @@ tectonic_update_channel = ""
 tectonic_update_app_id = ""
 
 # Networking
-tectonic_service_cidr = "10.3.0.0/24"
-tectonic_cluster_cidr = "10.2.0.0/16"
-tectonic_aws_vpc_cidr_block = "10.0.0.0/16"
-tectonic_kube_dns_service_ip = "10.3.0.10"
-tectonic_kube_apiserver_service_ip = "10.3.0.1"
+tectonic_azure_vnet_cidr_block = "10.0.0.0/16"
 
 # Tectonic Details
 # path on disk to your Tectonic License and Pull Secret
@@ -56,3 +46,4 @@ tectonic_ca_cert = <<EOD
 EOD
 tectonic_ca_key = <<EOD
 EOD
+

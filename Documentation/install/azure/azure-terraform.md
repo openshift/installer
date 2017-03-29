@@ -4,6 +4,8 @@ Following this guide will deploy a Tectonic cluster within your Azure account.
 
 Generally, the Azure platform templates adhere to the standards defined by the project [conventions][conventions] and [generic platform requirements][generic]. This document aims to document the implementation details specific to the Azure platform.
 
+<p style="background:#d9edf7; padding: 10px;" class="text-info"><strong>Alpha:</strong> These modules and instructions are currently considered alpha. See the <a href="../../platform-lifecycle.md">platform life cycle</a> for more details.</p>
+
 ## Prerequsities
 
  - **DNS** - Setup your DNS zone in a resource group called `tectonic-dns-group` or specify a different resource group using the `tectonic_azure_dns_resource_group` variable below. We use a separate resource group assuming that you have a zone that you already want to use. Follow the [docs to set one up][azure-dns].
@@ -12,11 +14,18 @@ Generally, the Azure platform templates adhere to the standards defined by the p
 
 ## Getting Started
 
-First, download Terraform with via `make`. This will download the pinned Terraform binary and modules:
+First, clone the Tectonic Installer repository in a convenient location:
 
 ```
-$ cd tectonic-installer
-$ make terraform-download
+$ git clone https://github.com/coreos/tectonic-installer.git
+```
+
+Download the pinned Terraform binary and modules required for Tectonic:
+
+```
+$ wget https://releases.tectonic.com/tectonic-1.5.5-tectonic.3.tar.gz
+$ tar xzvf tectonic-1.5.5-tectonic.3.tar.gz
+$ cd tectonic/tectonic-installer
 ```
 
 After downloading, you will need to source this new binary in your `$PATH`. This is important, especially if you have another verison of Terraform installed. Run this command to add it to your path:
@@ -69,87 +78,49 @@ $ export ARM_CLIENT_SECRET=generated-pass
 $ export ARM_TENANT_ID=generated-tenant
 ```
 
-Last, let's create a local build directory `build/<cluster-name>` which holds all module references, Terraform state files, and custom variable files:
-
-```
-$ PLATFORM=azure CLUSTER=my-cluster make localconfig
-```
-
 Now we're ready to specify our cluster configuration.
 
 ## Customize the deployment
 
-Use this example to customize your cluster configuration. A few fields require special consideration:
-
- - **tectonic_base_domain** - domain name that is set up with in a resource group, as described in the prerequisites.
- - **tectonic_pull_secret_path** - path on disk to your downloaded pull secret. You can find this on your [Account dashboard][account].
- - **tectonic_license_path** - path on disk to your downloaded Tectonic license. You can find this on your [Account dashboard][account].
- - **tectonic_admin_password_hash** - generate a hash with the [bcrypt-hash tool][bcrypt] that will be used for your admin user.
-
-Here's an example of the full file:
-
-**build/<cluster>/terraform.tfvars**
+Customizations to the base installation live in `platforms/azure/terraform.tfvars.example`. Export a variable that will be your cluster identifier:
 
 ```
-tectonic_worker_count = "4"
-
-tectonic_master_count = "2"
-
-tectonic_etcd_count = "1"
-
-tectonic_base_domain = "azure.example.com"
-
-tectonic_cluster_name = "mycluster"
-
-tectonic_pull_secret_path = "/Users/coreos/Downloads/config.json"
-
-tectonic_license_path = "/Users/coreos/Downloads/tectonic-license.txt"
-
-tectonic_cl_channel = "stable"
-
-tectonic_admin_email = "first.last@example.com"
-
-tectonic_admin_password_hash = "<redacted - generate with bcrypt tool>"
-
-tectonic_ca_cert = "" # path on disk, keep empty to generate one
-
-tectonic_ca_key = "" # path on disk, keep empty to generate one
-
-tectonic_azure_ssh_key = "/Users/coreos/.ssh/id_rsa.pub"
-
-tectonic_azure_vnet_cidr_block = "10.0.0.0/16"
-
-tectonic_azure_etcd_vm_size = "Standard_DS2"
-
-tectonic_azure_master_vm_size = "Standard_DS2"
-
-tectonic_azure_worker_vm_size = "Standard_DS2"
-
-tectonic_azure_location = "eastus"
+$ export CLUSTER=my-cluster
 ```
+
+Create a build directory to hold your customizations and copy the example file into it:
+
+```
+$ mkdir -p build/${CLUSTER}
+$ cp platforms/azure/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
+```
+
+Edit the parameters with your Azure details, domain name, license, etc.
 
 ## Deploy the cluster
 
 Test out the plan before deploying everything:
 
 ```
-$ PLATFORM=azure CLUSTER=my-cluster make plan
+$ terraform plan -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 ```
 
 Next, deploy the cluster:
 
 ```
-$ PLATFORM=azure CLUSTER=my-cluster make apply
+$ terraform apply -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 ```
 
 This should run for a little bit, and when complete, your Tectonic cluster should be ready.
 
 If you encounter any issues, check the known issues and workarounds below.
 
-To delete your cluster, run:
+### Delete the cluster
+
+Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing resource group for DNS, this is not touched. To delete, run:
 
 ```
-$ PLATFORM=azure CLUSTER=my-cluster make destroy
+$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 ```
 
 ### Known issues and workarounds
@@ -158,7 +129,14 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 
 ## Scaling the cluster
 
-To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and invoke `terraform apply -target module.workers platforms/azure`.
+To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and run:
+
+```
+$ terraform apply $ terraform plan \
+  -var-file=build/${CLUSTER}/terraform.tfvars \
+  -target module.workers \
+  platforms/azure
+```
 
 ## Under the hood
 
