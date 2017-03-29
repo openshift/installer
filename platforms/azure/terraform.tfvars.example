@@ -1,35 +1,49 @@
-tectonic_worker_count = "4"
-
-tectonic_master_count = "2"
-
-tectonic_etcd_count = "1"
-
+# Naming
+# domain name that is set in Route53, as described in the prerequisites.
 tectonic_base_domain = "azure.example.com"
-
 tectonic_cluster_name = "mycluster"
 
-tectonic_pull_secret_path = "/Users/coreos/Downloads/config.json"
+# Login Details
+# generate a hash with the bcrypt-hash tool (https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0) that will be used for your admin user.
+tectonic_admin_email = "admin@example.com"
+tectonic_admin_password_hash = "$2a$12$k9wa31uE/4uD9aVtT/vNtOZwxXyEJ/9DwXXEYB/eUpb9fvEPsH/kO" # PASSWORD
 
-tectonic_license_path = "/Users/coreos/Downloads/tectonic-license.txt"
+# Machines
+tectonic_master_count = 3
+tectonic_worker_count = 1
+tectonic_etcd_count = 3
 
-tectonic_cl_channel = "stable"
+# Container Linux
+tectonic_cl_channel = "stable" # alpha, beta, stable
 
-tectonic_admin_email = "first.last@example.com"
-
-tectonic_admin_password_hash = "<redacted - generate with bcrypt tool>"
-
-tectonic_ca_cert = "" # path on disk, keep empty to generate one
-
-tectonic_ca_key = "" # path on disk, keep empty to generate one
-
+# Azure Details
 tectonic_azure_ssh_key = "/Users/coreos/.ssh/id_rsa.pub"
+tectonic_azure_etcd_vm_size = "Standard_DS2"
+tectonic_azure_master_vm_size = "Standard_DS2"
+tectonic_azure_worker_vm_size = "Standard_DS2"
+tectonic_azure_location = "eastus"
 
+# Update Details
+# leave blank for default values
+tectonic_update_server = ""
+tectonic_update_channel = ""
+tectonic_update_app_id = ""
+
+# Networking
 tectonic_azure_vnet_cidr_block = "10.0.0.0/16"
 
-tectonic_azure_etcd_vm_size = "Standard_DS2"
+# Tectonic Details
+# path on disk to your Tectonic License and Pull Secret
+# obtain these from your Tectonic Account: https://account.tectonic.com
+tectonic_license_path = "/Users/coreos/Desktop/tectonic-license.txt"
+tectonic_pull_secret_path = "/Users/coreos/Desktop/config.json"
+tectonic_etcd_servers = [] # array of etcd endpoints, keep blank to use created machines
 
-tectonic_azure_master_vm_size = "Standard_DS2"
+# Tectonic CA
+# Supply your own CA and cert, or leave blank to generate
+tectonic_ca_key_alg = "RSA"
+tectonic_ca_cert = <<EOD
+EOD
+tectonic_ca_key = <<EOD
+EOD
 
-tectonic_azure_worker_vm_size = "Standard_DS2"
-
-tectonic_azure_location = "eastus"

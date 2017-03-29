@@ -76,13 +76,7 @@ $ mkdir -p build/${CLUSTER}
 $ cp platforms/aws/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
 ```
 
-A few fields require special consideration:
-
- - **tectonic_base_domain** - domain name that is set in Route53, as described in the prerequisites.
- - **tectonic_pull_secret_path** - path on disk to your downloaded pull secret. You can find this on your [Account dashboard][account].
- - **tectonic_license_path** - path on disk to your downloaded Tectonic license. You can find this on your [Account dashboard][account].
- - **tectonic_admin_password_hash** - generate a hash with the [bcrypt-hash tool][bcrypt] that will be used for your admin user.
- - **tectonic_aws_external_vpc_id** - specify an existing VPC to use, or leave blank to create a new one
+Edit the parameters with your AWS details, domain name, license, etc.
 
 ## Deploy the cluster
 
@@ -119,4 +113,3 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 [env]: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment
 [register]: https://account.tectonic.com/signup/summary/tectonic-2016-12
 [account]: https://account.tectonic.com
-[bcrypt]: https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0

@@ -94,10 +94,7 @@ $ mkdir -p build/${CLUSTER}
 $ cp platforms/azure/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
 ```
 
- - **tectonic_base_domain** - domain name that is set up with in a resource group, as described in the prerequisites.
- - **tectonic_pull_secret_path** - path on disk to your downloaded pull secret. You can find this on your [Account dashboard][account].
- - **tectonic_license_path** - path on disk to your downloaded Tectonic license. You can find this on your [Account dashboard][account].
- - **tectonic_admin_password_hash** - generate a hash with the [bcrypt-hash tool][bcrypt] that will be used for your admin user.
+Edit the parameters with your Azure details, domain name, license, etc.
 
 ## Deploy the cluster
 
