@@ -114,6 +114,17 @@ This should run for a little bit, and when complete, your Tectonic cluster shoul
 
 If you encounter any issues, check the known issues and workarounds below.
 
+### Access the cluster
+
+The Tectonic Console should be up and running after the containers have downloaded. You can access it at the DNS name configured in your variables file.
+
+Inside of the `/generated` folder you should find any credentials, including the CA if generated, and a kubeconfig. You can use this to control the cluster with `kubectl`:
+
+```
+$ KUBECONFIG=generated/kubeconfig
+$ kubectl cluster-info
+```
+
 ### Delete the cluster
 
 Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing resource group for DNS, this is not touched. To delete, run:
