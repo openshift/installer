@@ -170,13 +170,13 @@ $ terraform apply $ terraform plan \
 * Worker VMs all share the same identical Ignition config
 * Worker nodes are not fronted by any LB and don't have public IP addresses. They can be accessed through SSH from any of the master nodes.
 
-[conventions]: ../conventions.md
-[generic]: ../generic-platform.md
+[conventions]: ../../conventions.md
+[generic]: ../../generic-platform.md
 [register]: https://account.tectonic.com/signup/summary/tectonic-2016-12
 [account]: https://account.tectonic.com
 [bcrypt]: https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0
 [plan-docs]: https://www.terraform.io/docs/commands/plan.html
 [copy-docs]: https://www.terraform.io/docs/commands/apply.html
-[troubleshooting]: ../troubleshooting.md
+[troubleshooting]: ../../troubleshooting.md
 [login]: https://docs.microsoft.com/en-us/cli/azure/get-started-with-azure-cli
 [azure-dns]: https://docs.microsoft.com/en-us/azure/dns/dns-getstarted-portal
