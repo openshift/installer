@@ -1,7 +1,7 @@
 data "aws_availability_zones" "azs" {}
 
 resource "aws_vpc" "new_vpc" {
-  count                = "${var.external_vpc_id == "" ? 0 : 1}"
+  count                = "${var.external_vpc_id == "" ? 1 : 0}"
   cidr_block           = "${var.cidr_block}"
   enable_dns_hostnames = true
   enable_dns_support   = true
