@@ -19,14 +19,14 @@ variable "ingress_kind" {
 }
 
 variable "license_path" {
-    description = "Path on disk to your Tectonic license. Obtain this from your Tectonic Account: https://account.tectonic.com."
+    description = "Path on disk to your Tectonic license. Obtain this from your Tectonic Account: https://account.coreos.com."
     type        = "string"
     default = "/Users/coreos/Desktop/tectonic-license.txt"
 }
 
 variable "pull_secret_path" {
     type        = "string"
-    description = "Path on disk to your Tectonic pull secret. Obtain this from your Tectonic Account: https://account.tectonic.com."
+    description = "Path on disk to your Tectonic pull secret. Obtain this from your Tectonic Account: https://account.coreos.com."
     default = "/Users/coreos/Desktop/config.json"
 }
 
