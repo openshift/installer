@@ -119,9 +119,10 @@ $ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 
 See the [troubleshooting][troubleshooting] document for work arounds for bugs that are being tracked.
 
-[conventions]: ../conventions.md
-[generic]: ../generic-platform.md
+[conventions]: ../../conventions.md
+[generic]: ../../generic-platform.md
 [env]: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment
 [register]: https://account.tectonic.com/signup/summary/tectonic-2016-12
 [account]: https://account.tectonic.com
 [vars]: ../../variables/platform-aws.md
+[troubleshooting]: ../../troubleshooting.md
