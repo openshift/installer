@@ -94,7 +94,7 @@ $ mkdir -p build/${CLUSTER}
 $ cp platforms/azure/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
 ```
 
-Edit the parameters with your Azure details, domain name, license, etc. [View all of the AWS specific options][azure-vars] and [the common Tectonic variables][vars].
+Edit the parameters with your Azure details, domain name, license, etc. [View all of the Azure specific options][azure-vars] and [the common Tectonic variables][vars].
 
 ## Deploy the cluster
 
