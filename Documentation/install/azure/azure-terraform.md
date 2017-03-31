@@ -182,8 +182,8 @@ $ terraform apply $ terraform plan \
 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md
-[register]: https://account.tectonic.com/signup/summary/tectonic-2016-12
-[account]: https://account.tectonic.com
+[register]: https://account.coreos.com/signup/summary/tectonic-2016-12
+[account]: https://account.coreos.com
 [bcrypt]: https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0
 [plan-docs]: https://www.terraform.io/docs/commands/plan.html
 [copy-docs]: https://www.terraform.io/docs/commands/apply.html

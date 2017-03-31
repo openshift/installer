@@ -168,8 +168,8 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md
 [env]: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment
-[register]: https://account.tectonic.com/signup/summary/tectonic-2016-12
-[account]: https://account.tectonic.com
+[register]: https://account.coreos.com/signup/summary/tectonic-2016-12
+[account]: https://account.coreos.com
 [vars]: ../../variables/config.md
 [troubleshooting]: ../../troubleshooting.md
 [openstack-nova-vars]: ../../variables/platform-openstack-nova.md

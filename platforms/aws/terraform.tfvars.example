@@ -44,7 +44,7 @@ tectonic_kube_apiserver_service_ip = "10.3.0.1"
 
 # Tectonic Details
 # path on disk to your Tectonic License and Pull Secret
-# obtain these from your Tectonic Account: https://account.tectonic.com
+# obtain these from your Tectonic Account: https://account.coreos.com
 tectonic_license_path = "/Users/coreos/Desktop/tectonic-license.txt"
 tectonic_pull_secret_path = "/Users/coreos/Desktop/config.json"
 tectonic_etcd_servers = [] # array of etcd endpoints, keep blank to use created machines
