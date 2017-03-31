@@ -4,6 +4,11 @@ metadata:
   name: tectonic-identity
   namespace: tectonic-system
 data:
+  issuer: ${oidc_issuer_url}
+  consoleClientID: ${console_client_id}
+  consoleSecret: ${console_secret}
+  kubectlClientID: ${kubectl_client_id}
+  kubectlSecret: ${kubectl_secret}
   config.yaml: |
     issuer: ${oidc_issuer_url}
     storage:

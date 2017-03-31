@@ -34,11 +34,17 @@ spec:
         - name: BRIDGE_K8S_AUTH
           value: oidc
         - name: BRIDGE_K8S_PUBLIC_ENDPOINT
-          value: ${kube_apiserver_url}
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-config
+              key: kubeAPIServerURL
         - name: BRIDGE_LISTEN
           value: http://0.0.0.0:80
         - name: BRIDGE_BASE_ADDRESS
-          value: ${console_base_address}
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-config
+              key: consoleBaseAddress
         - name: BRIDGE_BASE_PATH
           value: /
         - name: BRIDGE_PUBLIC_DIR
@@ -46,17 +52,35 @@ spec:
         - name: BRIDGE_USER_AUTH
           value: oidc
         - name: BRIDGE_USER_AUTH_OIDC_ISSUER_URL
-          value: ${oidc_issuer_url}
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-identity
+              key: issuer
         - name: BRIDGE_USER_AUTH_OIDC_CLIENT_ID
-          value: ${console_client_id}
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-identity
+              key: consoleClientID
         - name: BRIDGE_USER_AUTH_OIDC_CLIENT_SECRET
-          value: ${console_secret}
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-identity
+              key: consoleSecret
         - name: BRIDGE_KUBECTL_CLIENT_ID
-          value: ${kubectl_client_id }
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-identity
+              key: kubectlClientID
         - name: BRIDGE_KUBECTL_CLIENT_SECRET
-          value: ${kubectl_secret}
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-identity
+              key: kubectlSecret
         - name: BRIDGE_TECTONIC_VERSION
-          value: ${tectonic_version}
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-config
+              key: tectonicVersion
         - name: BRIDGE_CA_FILE
           value: /etc/tectonic-ca-cert-secret/ca-cert
         - name: BRIDGE_LICENSE_FILE
