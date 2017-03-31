@@ -18,14 +18,13 @@ First, clone the Tectonic Installer repository in a convenient location:
 
 ```
 $ git clone https://github.com/coreos/tectonic-installer.git
+$ cd tectonic-installer
 ```
 
 Download the pinned Terraform binary and modules required for Tectonic:
 
 ```
-$ wget https://releases.tectonic.com/tectonic-1.5.5-tectonic.3.tar.gz
-$ tar xzvf tectonic-1.5.5-tectonic.3.tar.gz
-$ cd tectonic/tectonic-installer
+$ make terraform-download
 ```
 
 After downloading, you will need to source this new binary in your `$PATH`. This is important, especially if you have another verison of Terraform installed. Run this command to add it to your path:
@@ -77,7 +76,7 @@ $ mkdir -p build/${CLUSTER}
 $ cp platforms/aws/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
 ```
 
-Edit the parameters with your AWS details, domain name, license, etc.
+Edit the parameters with your AWS details, domain name, license, etc. [View all of the availabile options and their descriptions][vars].
 
 ## Deploy the cluster
 
@@ -97,6 +96,17 @@ This should run for a little bit, and when complete, your Tectonic cluster shoul
 
 If you encounter any issues, check the known issues and workarounds below.
 
+### Access the cluster
+
+The Tectonic Console should be up and running after the containers have downloaded. You can access it at the DNS name configured in your variables file.
+
+Inside of the `/generated` folder you should find any credentials, including the CA if generated, and a kubeconfig. You can use this to control the cluster with `kubectl`:
+
+```
+$ KUBECONFIG=generated/kubeconfig
+$ kubectl cluster-info
+```
+
 ### Delete the cluster
 
 Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing VPC and subnets, these items are not touched. To delete, run:
@@ -114,4 +124,5 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 [env]: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment
 [register]: https://account.tectonic.com/signup/summary/tectonic-2016-12
 [account]: https://account.tectonic.com
+[vars]: ../../variables/platform-aws.md
 [troubleshooting]: ../../troubleshooting.md

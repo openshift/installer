@@ -18,14 +18,13 @@ First, clone the Tectonic Installer repository in a convenient location:
 
 ```
 $ git clone https://github.com/coreos/tectonic-installer.git
+$ cd tectonic-installer
 ```
 
 Download the pinned Terraform binary and modules required for Tectonic:
 
 ```
-$ wget https://releases.tectonic.com/tectonic-1.5.5-tectonic.3.tar.gz
-$ tar xzvf tectonic-1.5.5-tectonic.3.tar.gz
-$ cd tectonic/tectonic-installer
+$ make terraform-download
 ```
 
 After downloading, you will need to source this new binary in your `$PATH`. This is important, especially if you have another verison of Terraform installed. Run this command to add it to your path:
@@ -95,7 +94,7 @@ $ mkdir -p build/${CLUSTER}
 $ cp platforms/azure/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
 ```
 
-Edit the parameters with your Azure details, domain name, license, etc.
+Edit the parameters with your Azure details, domain name, license, etc. [View all of the availabile options and their descriptions][vars].
 
 ## Deploy the cluster
 
@@ -114,6 +113,17 @@ $ terraform apply -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 This should run for a little bit, and when complete, your Tectonic cluster should be ready.
 
 If you encounter any issues, check the known issues and workarounds below.
+
+### Access the cluster
+
+The Tectonic Console should be up and running after the containers have downloaded. You can access it at the DNS name configured in your variables file.
+
+Inside of the `/generated` folder you should find any credentials, including the CA if generated, and a kubeconfig. You can use this to control the cluster with `kubectl`:
+
+```
+$ KUBECONFIG=generated/kubeconfig
+$ kubectl cluster-info
+```
 
 ### Delete the cluster
 
@@ -180,3 +190,4 @@ $ terraform apply $ terraform plan \
 [troubleshooting]: ../../troubleshooting.md
 [login]: https://docs.microsoft.com/en-us/cli/azure/get-started-with-azure-cli
 [azure-dns]: https://docs.microsoft.com/en-us/azure/dns/dns-getstarted-portal
+[vars]: ../../variables/platform-azure.md
