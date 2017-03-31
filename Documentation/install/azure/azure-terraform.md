@@ -94,7 +94,7 @@ $ mkdir -p build/${CLUSTER}
 $ cp platforms/azure/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
 ```
 
-Edit the parameters with your Azure details, domain name, license, etc.
+Edit the parameters with your Azure details, domain name, license, etc. [View all of the availabile options and their descriptions][vars].
 
 ## Deploy the cluster
 
@@ -190,3 +190,4 @@ $ terraform apply $ terraform plan \
 [troubleshooting]: ../troubleshooting.md
 [login]: https://docs.microsoft.com/en-us/cli/azure/get-started-with-azure-cli
 [azure-dns]: https://docs.microsoft.com/en-us/azure/dns/dns-getstarted-portal
+[vars]: ../../variables/platform-azure.md

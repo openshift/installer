@@ -76,7 +76,7 @@ $ mkdir -p build/${CLUSTER}
 $ cp platforms/aws/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
 ```
 
-Edit the parameters with your AWS details, domain name, license, etc.
+Edit the parameters with your AWS details, domain name, license, etc. [View all of the availabile options and their descriptions][vars].
 
 ## Deploy the cluster
 
@@ -124,3 +124,4 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 [env]: http://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-environment
 [register]: https://account.tectonic.com/signup/summary/tectonic-2016-12
 [account]: https://account.tectonic.com
+[vars]: ../../variables/platform-aws.md
