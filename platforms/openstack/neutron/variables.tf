@@ -26,3 +26,16 @@ variable "tectonic_openstack_floatingip_pool" {
   type    = "string"
   default = "public"
 }
+
+// The subnet CIDR for the master/worker/etcd compute nodes.
+// This CIDR will also be assigned to the created the OpenStack subnet resource.
+variable "tectonic_openstack_subnet_cidr" {
+  type    = "string"
+  default = "192.168.1.0/24"
+}
+
+// The DNS servers assigned to the generated OpenStack subnet resource.
+variable "tectonic_openstack_dns_nameservers" {
+  type    = "list"
+  default = ["8.8.8.8", "8.8.4.4"]
+}

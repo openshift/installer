@@ -1,24 +1,20 @@
-// The amount of etcd nodes to be created.
-// Example: `3`
-variable "count" {
+// The content of the /etc/resolv.conf file.
+variable resolv_conf_content {
   type = "string"
 }
 
-// The name of the cluster.
-// The etcd hostnames will be prefixed with this.
+variable "base_domain" {
+  type = "string"
+}
+
 variable "cluster_name" {
   type = "string"
 }
 
-// The public keys for the core user.
+variable "container_image" {
+  type = "string"
+}
+
 variable core_public_keys {
   type = "list"
-}
-
-output "user_data" {
-  value = ["${ignition_config.etcd.*.rendered}"]
-}
-
-output "secgroup_name" {
-  value = "${openstack_compute_secgroup_v2.etcd.name}"
 }
