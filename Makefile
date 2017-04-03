@@ -2,6 +2,7 @@ include terraform.mk
 
 CLUSTER ?= demo
 PLATFORM ?= aws
+TMPDIR ?= /tmp
 TOP_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 BUILD_DIR = $(TOP_DIR)/build/$(CLUSTER)
 
@@ -59,8 +60,8 @@ clean: destroy
 # This target is used by the GitHub PR checker to validate canonical syntax on all files.
 #
 structure-check:
-	terraform fmt -list -write=false . | tee $TMPDIR/tf_fmt_files
-	exit $(wc -l <$TMPDIR/tf_fmt_files)
+	terraform fmt -list -write=false . | tee $(TMPDIR)/tf_fmt_files
+	exit $(shell wc -l <$(TMPDIR)/tf_fmt_files)
 
 canonical-syntax:
 	terraform fmt -list .
