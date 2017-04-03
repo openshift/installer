@@ -56,4 +56,13 @@ docs: Documentation/variables/config.md Documentation/variables/aws.md Documenta
 clean: destroy
 	rm -rf $(BUILD_DIR)
 
-.PHONY: make clean terraform terraform-dev
+# This target is used by the GitHub PR checker to validate canonical syntax on all files.
+#
+structure-check:
+	terraform fmt -list -write=false . | tee $TMPDIR/tf_fmt_files
+	exit $(wc -l <$TMPDIR/tf_fmt_files)
+
+canonical-syntax:
+	terraform fmt -list .
+
+.PHONY: make clean terraform terraform-dev structure-check canonical-syntax
