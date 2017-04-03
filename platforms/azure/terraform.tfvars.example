@@ -1,5 +1,5 @@
 # Naming
-# domain name that is set in Route53, as described in the prerequisites.
+# domain name that is set in Azure DNS, as described in the prerequisites.
 tectonic_base_domain = "azure.example.com"
 tectonic_cluster_name = "mycluster"
 
