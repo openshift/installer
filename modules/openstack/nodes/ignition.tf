@@ -120,8 +120,8 @@ resource "ignition_file" "kubelet-env" {
 
   content {
     content = <<EOF
-KUBELET_ACI=${var.kube_image_url}
-KUBELET_VERSION="${var.kube_image_tag}"
+KUBELET_IMAGE_URL=${var.kube_image_url}
+KUBELET_IMAGE_TAG="${var.kube_image_tag}"
 EOF
   }
 }

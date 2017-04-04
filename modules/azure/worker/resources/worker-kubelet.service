@@ -2,7 +2,7 @@
 Description=Kubelet via Hyperkube ACI
 
 [Service]
-Environment="RKT_OPTS=--uuid-file-save=/var/run/kubelet-pod.uuid \
+Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
   --volume=resolv,kind=host,source=/etc/resolv.conf \
   --mount volume=resolv,target=/etc/resolv.conf \
   --volume var-lib-cni,kind=host,source=/var/lib/cni \
