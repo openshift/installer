@@ -41,7 +41,7 @@ spec:
           - --configmap=$(POD_NAMESPACE)/tectonic-custom-error
           - --default-backend-service=$(POD_NAMESPACE)/default-http-backend
           - --default-ssl-certificate=tectonic-system/tectonic-ingress-tls-secret
-          - --watch-namespace=tectonic-system
+          - --ingress-class=tectonic
           # use downward API
           env:
             - name: POD_NAME

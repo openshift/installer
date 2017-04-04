@@ -6,11 +6,15 @@ metadata:
   annotations:
     ingress.kubernetes.io/ssl-redirect: "true"
     ingress.kubernetes.io/use-port-in-redirects: "true"
+    kubernetes.io/ingress.class: "tectonic"
 spec:
   tls:
-    - secretName: tectonic-ingress-tls-secret
+  - hosts:
+    - ${console_base_address}
+    secretName: tectonic-ingress-tls-secret
   rules:
-  - http:
+  - host: ${console_base_address}
+    http:
       paths:
       - path: /
         backend:
