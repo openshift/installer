@@ -18,3 +18,7 @@
 output "id" {
   value = "${sha1("${template_folder.tectonic.id} ${localfile_file.tectonic.id}")}"
 }
+
+output "systemd_service" {
+  value = "${data.template_file.tectonic_service.rendered}"
+}

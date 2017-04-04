@@ -42,6 +42,8 @@ module "ignition-masters" {
   kubeconfig_s3_location = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
   assets_s3_location     = "${aws_s3_bucket_object.tectonic-assets.bucket}/${aws_s3_bucket_object.tectonic-assets.key}"
   container_images       = "${var.tectonic_container_images}"
+  bootkube_service       = "${module.bootkube.systemd_service}"
+  tectonic_service       = "${module.tectonic.systemd_service}"
 }
 
 module "masters" {
@@ -73,6 +75,8 @@ module "ignition-workers" {
   kubeconfig_s3_location = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
   assets_s3_location     = ""
   container_images       = "${var.tectonic_container_images}"
+  bootkube_service       = ""
+  tectonic_service       = ""
 }
 
 module "workers" {

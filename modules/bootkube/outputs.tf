@@ -34,3 +34,7 @@ output "ca_key_alg" {
 output "ca_key" {
   value = "${var.ca_cert == "" ? join(" ", tls_private_key.kube-ca.*.private_key_pem) : var.ca_key}"
 }
+
+output "systemd_service" {
+  value = "${data.template_file.bootkube_service.rendered}"
+}

@@ -49,8 +49,4 @@ fi
 unzip -o -d /opt/tectonic/ /opt/tectonic/tectonic.zip
 rm /opt/tectonic/tectonic.zip
 
-# Start bootkube.sh and tectonic.sh.
-/usr/bin/bash /opt/tectonic/bootkube.sh
-/usr/bin/bash /opt/tectonic/tectonic.sh kubeconfig tectonic
-
 exit 0

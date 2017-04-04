@@ -81,7 +81,7 @@ EOF
   core_public_keys = ["${module.secrets.core_public_key_openssh}"]
 }
 
-module "nodes" {
+module "master_nodes" {
   source = "../../../modules/openstack/nodes"
 
   resolv_conf_content = <<EOF
@@ -93,14 +93,40 @@ EOF
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
   etcd_fqdns                   = ["${openstack_compute_instance_v2.etcd_node.*.access_ip_v4}"]
   cluster_name                 = "${var.tectonic_cluster_name}"
-  master_count                 = "${var.tectonic_master_count}"
-  worker_count                 = "${var.tectonic_master_count}"
+  instance_count               = "${var.tectonic_master_count}"
   kube_image_url               = "${data.null_data_source.local.outputs.kube_image_url}"
   kube_image_tag               = "${data.null_data_source.local.outputs.kube_image_tag}"
   tectonic_versions            = "${var.tectonic_versions}"
   tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
+  core_public_keys             = ["${module.secrets.core_public_key_openssh}"]
+  bootkube_service             = "${module.bootkube.systemd_service}"
+  tectonic_service             = "${module.tectonic.systemd_service}"
+  hostname_infix               = "master"
+  node_labels                  = "master=true"
+}
 
-  core_public_keys = ["${module.secrets.core_public_key_openssh}"]
+module "worker_nodes" {
+  source = "../../../modules/openstack/nodes"
+
+  resolv_conf_content = <<EOF
+search ${var.tectonic_base_domain}
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+EOF
+
+  kubeconfig_content           = "${module.bootkube.kubeconfig}"
+  etcd_fqdns                   = ["${openstack_compute_instance_v2.etcd_node.*.access_ip_v4}"]
+  cluster_name                 = "${var.tectonic_cluster_name}"
+  instance_count               = "${var.tectonic_worker_count}"
+  kube_image_url               = "${data.null_data_source.local.outputs.kube_image_url}"
+  kube_image_tag               = "${data.null_data_source.local.outputs.kube_image_tag}"
+  tectonic_versions            = "${var.tectonic_versions}"
+  tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
+  core_public_keys             = ["${module.secrets.core_public_key_openssh}"]
+  bootkube_service             = ""
+  tectonic_service             = ""
+  hostname_infix               = "worker"
+  node_labels                  = "worker=true"
 }
 
 module "secrets" {

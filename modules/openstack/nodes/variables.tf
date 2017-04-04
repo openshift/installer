@@ -23,13 +23,9 @@ variable etcd_fqdns {
   type = "list"
 }
 
-// The amount of worker nodes to be created.
+// The amount of nodes to be created.
 // Example: `3`
-variable "master_count" {
-  type = "string"
-}
-
-variable "worker_count" {
+variable "instance_count" {
   type = "string"
 }
 
@@ -48,5 +44,21 @@ variable "tectonic_versions" {
 }
 
 variable "tectonic_kube_dns_service_ip" {
+  type = "string"
+}
+
+variable "node_labels" {
+  type = "string"
+}
+
+variable "hostname_infix" {
+  type = "string"
+}
+
+variable "bootkube_service" {
+  type = "string"
+}
+
+variable "tectonic_service" {
   type = "string"
 }

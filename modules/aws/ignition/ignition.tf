@@ -2,7 +2,7 @@ resource "ignition_config" "main" {
   files = [
     "${ignition_file.max-user-watches.id}",
     "${ignition_file.s3-puller.id}",
-    "${ignition_file.init-master.id}",
+    "${ignition_file.init-assets.id}",
   ]
 
   systemd = [
@@ -10,7 +10,9 @@ resource "ignition_config" "main" {
     "${ignition_systemd_unit.docker.id}",
     "${ignition_systemd_unit.locksmithd.id}",
     "${ignition_systemd_unit.kubelet.id}",
-    "${ignition_systemd_unit.init-master.id}",
+    "${ignition_systemd_unit.init-assets.id}",
+    "${ignition_systemd_unit.bootkube.id}",
+    "${ignition_systemd_unit.tectonic.id}",
   ]
 }
 
@@ -89,8 +91,8 @@ resource "ignition_file" "s3-puller" {
   }
 }
 
-data "template_file" "init-master" {
-  template = "${file("${path.module}/resources/init-master.sh")}"
+data "template_file" "init-assets" {
+  template = "${file("${path.module}/resources/init-assets.sh")}"
 
   vars {
     awscli_image       = "${var.container_images["awscli"]}"
@@ -98,19 +100,28 @@ data "template_file" "init-master" {
   }
 }
 
-resource "ignition_file" "init-master" {
+resource "ignition_file" "init-assets" {
   filesystem = "root"
-  path       = "/opt/tectonic/init-master.sh"
+  path       = "/opt/tectonic/init-assets.sh"
   mode       = "555"
 
   content {
-    content = "${data.template_file.init-master.rendered}"
+    content = "${data.template_file.init-assets.rendered}"
   }
 }
 
+resource "ignition_systemd_unit" "init-assets" {
+  name    = "init-assets.service"
+  enable  = "${var.assets_s3_location != "" ? true : false}"
+  content = "${file("${path.module}/resources/services/init-assets.service")}"
+}
 
-resource "ignition_systemd_unit" "init-master" {
-  name   = "init-master.service"
-  enable = "${var.assets_s3_location != "" ? true : false}"
-  content = "${file("${path.module}/resources/services/init-master.service")}"
+resource "ignition_systemd_unit" "bootkube" {
+  name    = "bootkube.service"
+  content = "${var.bootkube_service}"
+}
+
+resource "ignition_systemd_unit" "tectonic" {
+  name    = "tectonic.service"
+  content = "${var.tectonic_service}"
 }
