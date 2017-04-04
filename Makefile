@@ -59,9 +59,10 @@ clean: destroy
 
 # This target is used by the GitHub PR checker to validate canonical syntax on all files.
 #
-structure-check:
-	terraform fmt -list -write=false . | tee $(TMPDIR)/tf_fmt_files
-	exit $(shell wc -l <$(TMPDIR)/tf_fmt_files)
+structure-check: 
+	$(eval FMT_ERR := $(shell terraform fmt -list -write=false .))
+	@echo "wrong files:" $(FMT_ERR)
+	@test "$(FMT_ERR)" == ""
 
 canonical-syntax:
 	terraform fmt -list .

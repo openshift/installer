@@ -1,25 +1,19 @@
 FROM golang:alpine
 
-ENV TERRAFORM_VERSION=0.8.8
+ENV TERRAFORM_VERSION=0.8.8-coreos
 
-RUN apk add --update git bash
+RUN apk add --update git bash make
 
-ENV TF_DEV=true
+RUN go get github.com/coreos/bcrypt-tool
 
 WORKDIR $GOPATH/src/github.com/hashicorp/terraform
-RUN git clone https://github.com/hashicorp/terraform.git ./ && \
+RUN git clone https://github.com/coreos/terraform.git ./ && \
     git checkout v${TERRAFORM_VERSION} && \
-    /bin/bash scripts/build.sh
-
-COPY ./plugins $GOPATH/src/github.com/coreos-inc/tectonic-platform-sdk/plugins
-
-RUN go build -o $GOTPAH/bin/terraform-provider-localfile \
-  github.com/coreos-inc/tectonic-platform-sdk/plugins/bins/provider-localfile
-
-RUN go build -o $GOPATH/bin/terraform-provider-template \
-  github.com/coreos-inc/tectonic-platform-sdk/plugins/bins/provider-template
+    go run scripts/generate-plugins.go && \
+    XC_ARCH=amd64 XC_OS=linux ./scripts/build.sh
 
 VOLUME /terraform
 WORKDIR /terraform
 
-ENTRYPOINT ["terraform"]
+ENTRYPOINT ["/bin/bash", "-c"]
+CMD "bash"
