@@ -19,7 +19,8 @@ data:
     {
       "Network": "${cluster_cidr}",
       "Backend": {
-        "Type": "vxlan"
+        "Type": "vxlan",
+        "Port": 4789
       }
     }
 ---

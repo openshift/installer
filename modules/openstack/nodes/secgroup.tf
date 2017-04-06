@@ -22,4 +22,11 @@ resource "openstack_compute_secgroup_v2" "node" {
     ip_protocol = "icmp"
     cidr        = "0.0.0.0/0"
   }
+
+  rule {
+    from_port   = 4789
+    to_port     = 4789
+    ip_protocol = "udp"
+    cidr        = "0.0.0.0/0"
+  }
 }
