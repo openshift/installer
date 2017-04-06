@@ -12,7 +12,7 @@ WorkingDirectory=/opt/tectonic
 User=root
 Group=root
 
-ExecStart=/usr/bin/bash /opt/tectonic/tectonic.sh kubeconfig tectonic
+ExecStart=/usr/bin/bash /opt/tectonic/tectonic-rkt.sh
 ExecStartPost=/bin/touch /opt/tectonic/init_tectonic.done
 
 [Install]

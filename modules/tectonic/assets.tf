@@ -76,6 +76,20 @@ resource "localfile_file" "tectonic" {
   destination = "${path.cwd}/generated/tectonic.sh"
 }
 
+# tectonic.sh (resources/generated/tectonic-rkt.sh)
+data "template_file" "tectonic-rkt" {
+  template = "${file("${path.module}/resources/tectonic-rkt.sh")}"
+
+  vars {
+    hyperkube_image = "${var.container_images["hyperkube"]}"
+  }
+}
+
+resource "localfile_file" "tectonic-rkt" {
+  content     = "${data.template_file.tectonic-rkt.rendered}"
+  destination = "${path.cwd}/generated/tectonic-rkt.sh"
+}
+
 # tectonic.service (available as output variable)
 data "template_file" "tectonic_service" {
   template = "${file("${path.module}/resources/tectonic.service")}"

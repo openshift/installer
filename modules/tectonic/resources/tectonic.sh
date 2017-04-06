@@ -6,139 +6,164 @@ if [ "$#" -ne "2" ]; then
     exit 1
 fi
 
-KUBECONFIG=$1
-ASSETS_PATH=$2
+KUBECONFIG="$1"
+ASSETS_PATH="$2"
 
 # Setup API Authentication
-K8S_API=$(grep "server" $KUBECONFIG | cut -f 2- -d ":" | tr -d " ")
-K8S_API_CA=$(mktemp); grep "certificate-authority-data" $KUBECONFIG | cut -f 2- -d ":" | tr -d " " | base64 -d > $K8S_API_CA
-K8S_API_CERT=$(mktemp); grep "client-certificate-data" $KUBECONFIG | cut -f 2- -d ":" | tr -d " " | base64 -d > $K8S_API_CERT
-K8S_API_KEY=$(mktemp); grep "client-key-data" $KUBECONFIG | cut -f 2- -d ":" | tr -d " " | base64 -d > $K8S_API_KEY
-CURL="curl -sSNL --cacert $K8S_API_CA --cert $K8S_API_CERT --key $K8S_API_KEY --retry-connrefused --retry 3 --retry-delay 2"
-trap "rm -f $K8S_API_CA $K8S_API_CERT $K8S_API_KEY" EXIT
+KUBECTL="/kubectl --kubeconfig=$KUBECONFIG"
 
 # Setup helper functions
 
-function wait_for_tpr() {
-  echo "Waiting for third-party resource definitions..."
+function kubectl() {
+  local i=0
 
+  echo "Executing kubectl $@"
   while true; do
-    local got_name=$($CURL $K8S_API/apis/extensions/v1beta1/thirdpartyresources | jq -r $".items[].metadata | select(.name | contains(\"$1\")) | .name")
-    local status=$($CURL -o /dev/null --write-out '%{http_code}' $K8S_API/"$2")
+    (( i++ )) && (( i == 100 )) && echo "kubectl failed, giving up" && exit 1
 
-    if [ "$got_name" == "$1" ] && [ "$status" == "200" ]; then
-        break
+    set +e
+    out=$($KUBECTL "$@" 2>&1)
+    status=$?
+    set -e
+
+    if [[ "$out" == *"AlreadyExists"* ]]; then
+      echo "$out, skipping"
+      return
     fi
 
+    echo "$out"
+    if [ "$status" -eq 0 ]; then
+      return
+    fi
+
+    echo "kubectl failed, retrying in 5 seconds"
     sleep 5
   done
 }
 
-function create_resource() {
-  STATUS=$($CURL -o /dev/null --write-out '%{http_code}\n' -H "Content-Type: application/$1" -d"$(cat $ASSETS_PATH/$2)" "$K8S_API/$3")
-  if [ "$STATUS" != "200" ] && [ "$STATUS" != "201" ] && [ "$STATUS" != "409" ]; then
-    echo -e "Failed to create $2 (got $STATUS): " >&2
-    $CURL -H "Content-Type: application/$1" -d"$(cat $ASSETS_PATH/$2)" "$K8S_API/$3" >&2
-    exit 1
-  fi
+function wait_for_tpr() {
+  local i=0
+
+  echo "Waiting for TPR $2"
+  until $KUBECTL -n "$1" get thirdpartyresources "$2"; do
+    (( i++ )) && (( i == 100 )) && echo "TPR $2 not available, giving up" && exit 1
+
+    echo "TPR $2 not available yet, retrying in 5 seconds"
+    sleep 5
+  done
 }
 
-function delete_resource() {
-  $CURL -H "Content-Type: application/$1" -XDELETE "$K8S_API/$2" &> /dev/null
+function wait_for_pods() {
+  set +e
+  local i=0
+  echo "Waiting for pods in namespace $1"
+  while $KUBECTL -n "$1" get po -o custom-columns=STATUS:.status.phase,NAME:.metadata.name | tail -n +2 | grep -v '^Running'; do
+    (( i++ )) && (( i == 100 )) && echo "components not available, giving up" && exit 1
+    echo "Pods not available yet, waiting for 5 seconds"
+    sleep 5
+  done
+  set -e
 }
+
+# chdir into the assets path directory
+cd "$ASSETS_PATH/tectonic"
 
 # Wait for Kubernetes to be in a proper state
+i=0
 echo "Waiting for Kubernetes API..."
-until $CURL -f "$K8S_API/version" &> /dev/null; do
+until $KUBECTL cluster-info; do
+  (( i++ )) && (( i == 100 )) && echo "cluster not available, giving up" && exit 1
+  echo "Cluster not available yet, waiting for 5 seconds"
   sleep 5
 done
 
-echo "Waiting for Kubernetes components..."
-while $CURL "$K8S_API/api/v1/namespaces/kube-system/pods" 2>/dev/null | jq -r .items[].status.phase | grep -v '^Running$'; do
-  sleep 5
-done
-sleep 10
+# wait for Kubernetes pods
+wait_for_pods kube-system
 
 # Creating resources
 echo "Creating Tectonic Namespace"
-create_resource yaml namespace.yaml api/v1/namespaces
+kubectl create -f namespace.yaml
 
 echo "Creating Initial Roles"
-delete_resource yaml apis/rbac.authorization.k8s.io/v1alpha1/clusterroles/admin
-create_resource yaml rbac/role-admin.yaml        apis/rbac.authorization.k8s.io/v1alpha1/clusterroles
-create_resource yaml rbac/role-user.yaml         apis/rbac.authorization.k8s.io/v1alpha1/clusterroles
-create_resource yaml rbac/binding-admin.yaml     apis/rbac.authorization.k8s.io/v1alpha1/clusterrolebindings
-create_resource yaml rbac/binding-discovery.yaml apis/rbac.authorization.k8s.io/v1alpha1/clusterrolebindings
+kubectl delete -f rbac/role-admin.yaml
+
+kubectl create -f rbac/role-admin.yaml
+kubectl create -f rbac/role-user.yaml
+kubectl create -f rbac/binding-admin.yaml
+kubectl create -f rbac/binding-discovery.yaml
 
 echo "Creating Tectonic ConfigMaps"
-create_resource yaml config.yaml api/v1/namespaces/tectonic-system/configmaps
+kubectl create -f config.yaml
 
 echo "Creating Tectonic Secrets"
-create_resource json secrets/pull.json                 api/v1/namespaces/tectonic-system/secrets
-create_resource json secrets/license.json              api/v1/namespaces/tectonic-system/secrets
-create_resource yaml secrets/ingress-tls.yaml          api/v1/namespaces/tectonic-system/secrets
-create_resource yaml secrets/ca-cert.yaml              api/v1/namespaces/tectonic-system/secrets
-create_resource yaml secrets/identity-grpc-client.yaml api/v1/namespaces/tectonic-system/secrets
-create_resource yaml secrets/identity-grpc-server.yaml api/v1/namespaces/tectonic-system/secrets
+kubectl create -f secrets/pull.json
+kubectl create -f secrets/license.json
+kubectl create -f secrets/ingress-tls.yaml
+kubectl create -f secrets/ca-cert.yaml
+kubectl create -f secrets/identity-grpc-client.yaml
+kubectl create -f secrets/identity-grpc-server.yaml
 
 echo "Creating Tectonic Identity"
-create_resource yaml identity/configmap.yaml  api/v1/namespaces/tectonic-system/configmaps
-create_resource yaml identity/services.yaml   api/v1/namespaces/tectonic-system/services
-create_resource yaml identity/deployment.yaml apis/extensions/v1beta1/namespaces/tectonic-system/deployments
+kubectl create -f identity/configmap.yaml
+kubectl create -f identity/services.yaml
+kubectl create -f identity/deployment.yaml
 
 echo "Creating Tectonic Console"
-create_resource yaml console/service.yaml    api/v1/namespaces/tectonic-system/services
-create_resource yaml console/deployment.yaml apis/extensions/v1beta1/namespaces/tectonic-system/deployments
+kubectl create -f console/service.yaml
+kubectl create -f console/deployment.yaml
 
 echo "Creating Tectonic Monitoring"
-create_resource yaml monitoring/prometheus-operator-service-account.yaml      api/v1/namespaces/tectonic-system/serviceaccounts
-create_resource yaml monitoring/prometheus-operator-cluster-role.yaml         apis/rbac.authorization.k8s.io/v1alpha1/clusterroles
-create_resource yaml monitoring/prometheus-operator-cluster-role-binding.yaml apis/rbac.authorization.k8s.io/v1alpha1/clusterrolebindings
-create_resource yaml monitoring/prometheus-k8s-service-account.yaml           api/v1/namespaces/tectonic-system/serviceaccounts
-create_resource yaml monitoring/prometheus-k8s-cluster-role.yaml              apis/rbac.authorization.k8s.io/v1alpha1/clusterroles
-create_resource yaml monitoring/prometheus-k8s-cluster-role-binding.yaml      apis/rbac.authorization.k8s.io/v1alpha1/clusterrolebindings
-create_resource yaml monitoring/prometheus-k8s-config.yaml                    api/v1/namespaces/tectonic-system/configmaps
-create_resource yaml monitoring/prometheus-k8s-rules.yaml                     api/v1/namespaces/tectonic-system/configmaps
-create_resource yaml monitoring/prometheus-svc.yaml                           api/v1/namespaces/tectonic-system/services
-create_resource yaml monitoring/node-exporter-svc.yaml                        api/v1/namespaces/tectonic-system/services
-create_resource yaml monitoring/node-exporter-ds.yaml                         apis/extensions/v1beta1/namespaces/tectonic-system/daemonsets
-create_resource yaml monitoring/prometheus-operator.yaml                      apis/extensions/v1beta1/namespaces/tectonic-system/deployments
-wait_for_tpr prometheus.monitoring.coreos.com apis/monitoring.coreos.com/v1alpha1/namespaces/tectonic-system/prometheuses
-create_resource json monitoring/prometheus-k8s.json                           apis/monitoring.coreos.com/v1alpha1/namespaces/tectonic-system/prometheuses
+kubectl create -f monitoring/prometheus-operator-service-account.yaml
+kubectl create -f monitoring/prometheus-operator-cluster-role.yaml
+kubectl create -f monitoring/prometheus-operator-cluster-role-binding.yaml
+kubectl create -f monitoring/prometheus-k8s-service-account.yaml
+kubectl create -f monitoring/prometheus-k8s-cluster-role.yaml
+kubectl create -f monitoring/prometheus-k8s-cluster-role-binding.yaml
+kubectl create -f monitoring/prometheus-k8s-config.yaml
+kubectl create -f monitoring/prometheus-k8s-rules.yaml
+kubectl create -f monitoring/prometheus-svc.yaml
+kubectl create -f monitoring/node-exporter-svc.yaml
+kubectl create -f monitoring/node-exporter-ds.yaml
+kubectl create -f monitoring/prometheus-operator.yaml
+wait_for_tpr tectonic-system prometheus.monitoring.coreos.com
+kubectl create -f monitoring/prometheus-k8s.json
 
 echo "Creating Ingress"
-create_resource yaml ingress/default-backend/configmap.yaml  api/v1/namespaces/tectonic-system/configmaps
-create_resource yaml ingress/default-backend/service.yaml    api/v1/namespaces/tectonic-system/services
-create_resource yaml ingress/default-backend/deployment.yaml apis/extensions/v1beta1/namespaces/tectonic-system/deployments
-create_resource yaml ingress/ingress.yaml                    apis/extensions/v1beta1/namespaces/tectonic-system/ingresses
+kubectl create -f ingress/default-backend/configmap.yaml
+kubectl create -f ingress/default-backend/service.yaml
+kubectl create -f ingress/default-backend/deployment.yaml
+kubectl create -f ingress/ingress.yaml
 
 if [ "${ingress_kind}" = "HostPort" ]; then
-  create_resource yaml ingress/hostport/service.yaml    api/v1/namespaces/tectonic-system/services
-  create_resource yaml ingress/hostport/daemonset.yaml  apis/extensions/v1beta1/namespaces/tectonic-system/daemonsets
+  kubectl create -f ingress/hostport/service.yaml
+  kubectl create -f ingress/hostport/daemonset.yaml
 elif [ "${ingress_kind}" = "NodePort" ]; then
-  create_resource yaml ingress/nodeport/service.yaml    api/v1/namespaces/tectonic-system/services
-  create_resource yaml ingress/nodeport/deployment.yaml apis/extensions/v1beta1/namespaces/tectonic-system/deployments
+  kubectl create -f ingress/nodeport/service.yaml
+  kubectl create -f ingress/nodeport/deployment.yaml
 else
   echo "Unrecognized Ingress Kind: ${ingress_kind}"
 fi
 
 echo "Creating Heapster / Stats Emitter"
-create_resource yaml heapster/service.yaml    api/v1/namespaces/kube-system/services
-create_resource yaml heapster/deployment.yaml apis/extensions/v1beta1/namespaces/kube-system/deployments
-create_resource yaml stats-emitter.yaml       apis/extensions/v1beta1/namespaces/tectonic-system/deployments
+kubectl create -f heapster/service.yaml
+kubectl create -f heapster/deployment.yaml
+kubectl create -f stats-emitter.yaml
 
 echo "Creating Tectonic Updater"
-create_resource yaml updater/tectonic-channel-operator-kind.yaml        apis/extensions/v1beta1/thirdpartyresources
-create_resource yaml updater/app-version-kind.yaml                      apis/extensions/v1beta1/thirdpartyresources
-create_resource yaml updater/migration-status-kind.yaml                 apis/extensions/v1beta1/thirdpartyresources
-create_resource yaml updater/node-agent.yaml                            apis/extensions/v1beta1/namespaces/tectonic-system/daemonsets
-create_resource yaml updater/kube-version-operator.yaml                 apis/extensions/v1beta1/namespaces/tectonic-system/deployments
-create_resource yaml updater/tectonic-channel-operator.yaml             apis/extensions/v1beta1/namespaces/tectonic-system/deployments
-wait_for_tpr channel-operator-config.coreos.com apis/coreos.com/v1/namespaces/tectonic-system/channeloperatorconfigs
-create_resource json updater/tectonic-channel-operator-config.json      apis/coreos.com/v1/namespaces/tectonic-system/channeloperatorconfigs
-wait_for_tpr app-version.coreos.com apis/coreos.com/v1/namespaces/tectonic-system/appversions
-create_resource json updater/app-version-tectonic-cluster.json          apis/coreos.com/v1/namespaces/tectonic-system/appversions
-create_resource json updater/app-version-kubernetes.json                apis/coreos.com/v1/namespaces/tectonic-system/appversions
+kubectl create -f updater/tectonic-channel-operator-kind.yaml
+kubectl create -f updater/app-version-kind.yaml
+kubectl create -f updater/migration-status-kind.yaml
+kubectl create -f updater/node-agent.yaml
+kubectl create -f updater/kube-version-operator.yaml
+kubectl create -f updater/tectonic-channel-operator.yaml
+wait_for_tpr tectonic-system channel-operator-config.coreos.com
+kubectl create -f updater/tectonic-channel-operator-config.json
+wait_for_tpr tectonic-system app-version.coreos.com
+kubectl create -f updater/app-version-tectonic-cluster.json
+kubectl create -f updater/app-version-kubernetes.json
+
+# wait for Tectonic pods
+wait_for_pods tectonic-system
 
 echo "Tectonic installation is done"
 exit 0

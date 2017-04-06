@@ -2,6 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   name: tectonic-ingress-controller
+  namespace: tectonic-system
   labels:
     app: tectonic-lb
     component: ingress-controller
