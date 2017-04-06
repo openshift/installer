@@ -20,6 +20,26 @@ resource "aws_route53_record" "tectonic-console" {
   records = ["${openstack_networking_floatingip_v2.worker.*.address}"]
 }
 
+# master/worker
+
+resource "aws_route53_record" "master_nodes" {
+  count   = "${var.tectonic_master_count}"
+  zone_id = "${data.aws_route53_zone.tectonic.zone_id}"
+  name    = "${var.tectonic_cluster_name}-master-${count.index}"
+  type    = "A"
+  ttl     = "60"
+  records = ["${element(openstack_networking_port_v2.master.*.fixed_ip.0.ip_address, count.index)}"]
+}
+
+resource "aws_route53_record" "worker_nodes" {
+  count   = "${var.tectonic_worker_count}"
+  zone_id = "${data.aws_route53_zone.tectonic.zone_id}"
+  name    = "${var.tectonic_cluster_name}-worker-${count.index}"
+  type    = "A"
+  ttl     = "60"
+  records = ["${element(openstack_networking_port_v2.worker.*.fixed_ip.0.ip_address, count.index)}"]
+}
+
 # etcd
 
 resource "aws_route53_record" "etcd_srv_discover" {
