@@ -2,9 +2,9 @@
 Description=Kubelet via Hyperkube ACI
 
 [Service]
-Environment=KUBELET_ACI=${aci}
-Environment=KUBELET_VERSION=${version}
-Environment="RKT_OPTS=--uuid-file-save=/var/run/kubelet-pod.uuid \
+Environment=KUBELET_IMAGE_URL=${aci}
+Environment=KUBELET_IMAGE_TAG=${version}
+Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
   --volume=resolv,kind=host,source=/etc/resolv.conf \
   --mount volume=resolv,target=/etc/resolv.conf \
   --volume var-lib-cni,kind=host,source=/var/lib/cni \
