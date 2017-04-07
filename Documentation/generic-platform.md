@@ -33,8 +33,8 @@ Master nodes run most, if not all, control plane components including the API se
   - MUST have any necessary API access for k8s cloud plugin functionality (i.e. AWS node IAM Role) 
 
 - **Cloud-init/Ignition:**
-  - MUST run the kubelet with label node-role.kubernetes.io/master=true 
-  - MAY run the kubelet with label with label node-role.kubernetes.io/node=true 
+  - MUST run the kubelet with label node-role.kubernetes.io/master 
+  - MAY run the kubelet with label with label node-role.kubernetes.io/node 
 
 
 ### Infra Nodes (Optional) or Load Balancers

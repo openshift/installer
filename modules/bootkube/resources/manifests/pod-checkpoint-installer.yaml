@@ -12,7 +12,7 @@ spec:
         k8s-app: pod-checkpoint-installer
     spec:
       nodeSelector:
-        master: "true"
+        node-role.kubernetes.io/master: ""
       hostNetwork: true
       containers:
       - name: checkpoint-installer

@@ -49,6 +49,7 @@ module "masters" {
   tectonic_versions            = "${var.tectonic_versions}"
   tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
   cloud_provider               = ""
+  kubelet_node_label           = "node-role.kubernetes.io/master"
 }
 
 module "workers" {
@@ -72,6 +73,7 @@ module "workers" {
   tectonic_versions            = "${var.tectonic_versions}"
   tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
   cloud_provider               = ""
+  kubelet_node_label           = "node-role.kubernetes.io/node"
 }
 
 module "dns" {

@@ -14,7 +14,7 @@ spec:
         checkpointer.alpha.coreos.com/checkpoint: "true"
     spec:
       nodeSelector:
-        master: "true"
+        node-role.kubernetes.io/master: ""
       hostNetwork: true
       containers:
       - name: kube-apiserver

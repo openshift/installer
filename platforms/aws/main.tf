@@ -36,7 +36,7 @@ module "etcd" {
 module "ignition-masters" {
   source = "../../modules/aws/ignition"
 
-  kubelet_node_label        = "master=true"
+  kubelet_node_label        = "node-role.kubernetes.io/master"
   kube_dns_service_ip       = "${var.tectonic_kube_dns_service_ip}"
   etcd_endpoints            = ["${module.etcd.endpoints}"]
   kubeconfig_s3_location    = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
@@ -70,7 +70,7 @@ module "masters" {
 module "ignition-workers" {
   source = "../../modules/aws/ignition"
 
-  kubelet_node_label     = ""
+  kubelet_node_label     = "node-role.kubernetes.io/node"
   kube_dns_service_ip    = "${var.tectonic_kube_dns_service_ip}"
   etcd_endpoints         = ["${module.etcd.endpoints}"]
   kubeconfig_s3_location = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"

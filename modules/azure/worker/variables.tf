@@ -74,3 +74,7 @@ variable "cloud_provider" {
   type    = "string"
   default = "azure"
 }
+
+variable "kubelet_node_label" {
+  type = "string"
+}

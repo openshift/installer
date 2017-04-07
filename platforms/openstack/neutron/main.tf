@@ -102,7 +102,7 @@ EOF
   bootkube_service             = "${module.bootkube.systemd_service}"
   tectonic_service             = "${module.tectonic.systemd_service}"
   hostname_infix               = "master"
-  node_labels                  = "master=true"
+  node_labels                  = "node-role.kubernetes.io/master"
 }
 
 module "worker_nodes" {
@@ -126,7 +126,7 @@ EOF
   bootkube_service             = ""
   tectonic_service             = ""
   hostname_infix               = "worker"
-  node_labels                  = "worker=true"
+  node_labels                  = "node-role.kubernetes.io/node"
 }
 
 module "secrets" {

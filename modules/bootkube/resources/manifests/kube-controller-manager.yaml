@@ -13,7 +13,7 @@ spec:
         k8s-app: kube-controller-manager
     spec:
       nodeSelector:
-        master: "true"
+        node-role.kubernetes.io/master: ""
       containers:
       - name: kube-controller-manager
         image: ${hyperkube_image}
