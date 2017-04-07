@@ -123,5 +123,6 @@ resource "ignition_systemd_unit" "bootkube" {
 
 resource "ignition_systemd_unit" "tectonic" {
   name    = "tectonic.service"
+  enable  = "${var.tectonic_service_disabled == 0 ? true : false}"
   content = "${var.tectonic_service}"
 }

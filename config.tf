@@ -148,17 +148,22 @@ variable "tectonic_admin_password_hash" {
 variable "tectonic_ca_cert" {
   type        = "string"
   description = "PEM-encoded CA certificate, used to generate Tectonic Console's server certificate. Optional, if left blank, a CA certificate will be automatically generated."
-  default = ""
+  default     = ""
 }
 
 variable "tectonic_ca_key" {
   type        = "string"
   description = "PEM-encoded CA key, used to generate Tectonic Console's server certificate. Optional if tectonic_ca_cert is left blank"
-  default = ""
+  default     = ""
 }
 
 variable "tectonic_ca_key_alg" {
   type        = "string"
   description = "Algorithm used to generate tectonic_ca_key. Optional if tectonic_ca_cert is left blank."
   default     = "RSA"
+}
+
+variable "tectonic_vanilla_k8s" {
+  description = "If set to true, a vanilla Kubernetes cluster will be deployed, omitting the tectonic assets."
+  default     = false
 }

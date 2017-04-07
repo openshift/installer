@@ -36,14 +36,15 @@ module "etcd" {
 module "ignition-masters" {
   source = "../../modules/aws/ignition"
 
-  kubelet_node_label     = "master=true"
-  kube_dns_service_ip    = "${var.tectonic_kube_dns_service_ip}"
-  etcd_endpoints         = ["${module.etcd.endpoints}"]
-  kubeconfig_s3_location = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
-  assets_s3_location     = "${aws_s3_bucket_object.tectonic-assets.bucket}/${aws_s3_bucket_object.tectonic-assets.key}"
-  container_images       = "${var.tectonic_container_images}"
-  bootkube_service       = "${module.bootkube.systemd_service}"
-  tectonic_service       = "${module.tectonic.systemd_service}"
+  kubelet_node_label        = "master=true"
+  kube_dns_service_ip       = "${var.tectonic_kube_dns_service_ip}"
+  etcd_endpoints            = ["${module.etcd.endpoints}"]
+  kubeconfig_s3_location    = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
+  assets_s3_location        = "${aws_s3_bucket_object.tectonic-assets.bucket}/${aws_s3_bucket_object.tectonic-assets.key}"
+  container_images          = "${var.tectonic_container_images}"
+  bootkube_service          = "${module.bootkube.systemd_service}"
+  tectonic_service          = "${module.tectonic.systemd_service}"
+  tectonic_service_disabled = "${var.tectonic_vanilla_k8s}"
 }
 
 module "masters" {
