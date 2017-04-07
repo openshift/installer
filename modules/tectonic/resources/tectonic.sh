@@ -156,11 +156,13 @@ kubectl create -f updater/migration-status-kind.yaml
 kubectl create -f updater/node-agent.yaml
 kubectl create -f updater/kube-version-operator.yaml
 kubectl create -f updater/tectonic-channel-operator.yaml
+kubectl create -f updater/tectonic-prometheus-operator.yaml
 wait_for_tpr tectonic-system channel-operator-config.coreos.com
 kubectl create -f updater/tectonic-channel-operator-config.json
 wait_for_tpr tectonic-system app-version.coreos.com
 kubectl create -f updater/app-version-tectonic-cluster.json
 kubectl create -f updater/app-version-kubernetes.json
+kubectl create -f updater/app-version-tectonic-monitoring.json
 
 # wait for Tectonic pods
 wait_for_pods tectonic-system

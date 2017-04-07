@@ -1,0 +1,19 @@
+{
+  "apiVersion": "coreos.com/v1",
+  "kind": "AppVersion",
+  "metadata": {
+    "namespace": "tectonic-system",
+    "name": "tectonic-monitoring",
+    "labels": {
+      "managed-by-channel-operator": "true"
+    }
+  },
+  "spec": {
+    "desiredVersion": "${monitoring_version}",
+    "paused": false
+  },
+  "status": {
+    "currentVersion": "${monitoring_version}",
+    "paused": false
+  }
+}

@@ -1,0 +1,34 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    k8s-app: tectonic-prometheus-operator
+  name: tectonic-prometheus-operator
+  namespace: tectonic-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: tectonic-prometheus-operator
+  template:
+    metadata:
+      labels:
+        k8s-app: tectonic-prometheus-operator
+    spec:
+      containers:
+      - image: ${tectonic_prometheus_operator_image}
+        name: tectonic-prometheus-operator
+        args:
+        - "-logtostderr=true"
+        - "-v=4"
+        resources:
+          limits:
+            cpu: 20m
+            memory: 50Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      imagePullSecrets:
+      - name: coreos-pull-secret
