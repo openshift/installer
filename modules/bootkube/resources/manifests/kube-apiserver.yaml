@@ -36,7 +36,6 @@ spec:
         - --allow-privileged=true
         - --service-cluster-ip-range=${service_cidr}
         - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,ResourceQuota
-        - --runtime-config=api/all=true
         - --tls-cert-file=/etc/kubernetes/secrets/apiserver.crt
         - --tls-private-key-file=/etc/kubernetes/secrets/apiserver.key
         - --kubelet-client-certificate=/etc/kubernetes/secrets/apiserver.crt
