@@ -34,7 +34,7 @@ resource "aws_autoscaling_group" "masters" {
   launch_configuration = "${aws_launch_configuration.master_conf.id}"
   vpc_zone_identifier  = ["${var.subnet_ids}"]
 
-  load_balancers = ["${aws_elb.api-internal.id}", "${aws_elb.api-external.id}", "${aws_elb.console.id}"]
+  load_balancers = ["${aws_elb.api-internal.id}", "${join("",aws_elb.api-external.*.id)}", "${aws_elb.console.id}"]
 
   tag {
     key                 = "Name"
@@ -60,7 +60,7 @@ resource "aws_launch_configuration" "master_conf" {
   key_name                    = "${var.ssh_key}"
   security_groups             = ["${concat(list(aws_security_group.master_sec_group.id), var.extra_sg_ids)}"]
   iam_instance_profile        = "${aws_iam_instance_profile.master_profile.arn}"
-  associate_public_ip_address = true
+  associate_public_ip_address = "${var.public_vpc}"
   user_data                   = "${var.user_data}"
 
   lifecycle {

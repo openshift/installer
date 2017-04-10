@@ -49,3 +49,8 @@ variable "user_data" {
   type        = "string"
   description = "User-data content used to boot the instances"
 }
+
+variable "public_vpc" {
+  description = "If set to true, public facing ingress resource are created."
+  default     = true
+}

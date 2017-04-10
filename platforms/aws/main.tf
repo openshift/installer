@@ -63,8 +63,9 @@ module "masters" {
   user_data  = "${module.ignition-masters.ignition}"
 
   internal_zone_id = "${aws_route53_zone.tectonic-int.zone_id}"
-  external_zone_id = "${data.aws_route53_zone.tectonic-ext.zone_id}"
+  external_zone_id = "${join("", data.aws_route53_zone.tectonic-ext.*.zone_id)}"
   base_domain      = "${var.tectonic_base_domain}"
+  public_vpc       = "${var.tectonic_aws_external_vpc_public}"
 }
 
 module "ignition-workers" {

@@ -45,6 +45,7 @@ resource "aws_route53_record" "api-internal" {
 }
 
 resource "aws_elb" "api-external" {
+  count           = "${var.public_vpc}"
   name            = "${var.cluster_name}-api-external"
   subnets         = ["${var.subnet_ids}"]
   internal        = false
@@ -79,6 +80,7 @@ resource "aws_elb" "api-external" {
 }
 
 resource "aws_route53_record" "api-external" {
+  count   = "${var.public_vpc}"
   zone_id = "${var.external_zone_id}"
   name    = "${var.cluster_name}-k8s.${var.base_domain}"
   type    = "A"
@@ -93,7 +95,7 @@ resource "aws_route53_record" "api-external" {
 resource "aws_elb" "console" {
   name            = "${var.cluster_name}-console"
   subnets         = ["${var.subnet_ids}"]
-  internal        = false
+  internal        = "${var.public_vpc ? false : true}"
   security_groups = ["${aws_security_group.master_sec_group.id}"]
 
   listener {
@@ -125,6 +127,7 @@ resource "aws_elb" "console" {
 }
 
 resource "aws_route53_record" "ingress-public" {
+  count   = "${var.public_vpc}"
   zone_id = "${var.external_zone_id}"
   name    = "${var.cluster_name}.${var.base_domain}"
   type    = "A"
