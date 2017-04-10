@@ -1,7 +1,6 @@
 [Unit]
 Description=Download Tectonic Assets
 ConditionPathExists=!/opt/tectonic/init_assets.done
-RequiredBy=bootkube.service
 Before=bootkube.service
 
 [Service]
@@ -17,3 +16,4 @@ ExecStartPost=/bin/touch /opt/tectonic/init_assets.done
 
 [Install]
 WantedBy=multi-user.target
+RequiredBy=bootkube.service
