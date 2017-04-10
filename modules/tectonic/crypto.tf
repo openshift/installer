@@ -16,11 +16,11 @@ resource "random_id" "console_secret" {
 
 resource "tls_private_key" "ingress" {
   algorithm = "RSA"
-  rsa_bits = "2048"
+  rsa_bits  = "2048"
 }
 
 resource "tls_cert_request" "ingress" {
-  key_algorithm = "${tls_private_key.ingress.algorithm}"
+  key_algorithm   = "${tls_private_key.ingress.algorithm}"
   private_key_pem = "${tls_private_key.ingress.private_key_pem}"
 
   subject {
@@ -31,11 +31,12 @@ resource "tls_cert_request" "ingress" {
 resource "tls_locally_signed_cert" "ingress" {
   cert_request_pem = "${tls_cert_request.ingress.cert_request_pem}"
 
-  ca_key_algorithm = "${var.ca_key_alg}"
+  ca_key_algorithm   = "${var.ca_key_alg}"
   ca_private_key_pem = "${var.ca_key}"
-  ca_cert_pem = "${var.ca_cert}"
+  ca_cert_pem        = "${var.ca_cert}"
 
   validity_period_hours = 8760
+
   allowed_uses = [
     "key_encipherment",
     "digital_signature",
@@ -48,11 +49,11 @@ resource "tls_locally_signed_cert" "ingress" {
 
 resource "tls_private_key" "identity-server" {
   algorithm = "RSA"
-  rsa_bits = "2048"
+  rsa_bits  = "2048"
 }
 
 resource "tls_cert_request" "identity-server" {
-  key_algorithm = "${tls_private_key.identity-server.algorithm}"
+  key_algorithm   = "${tls_private_key.identity-server.algorithm}"
   private_key_pem = "${tls_private_key.identity-server.private_key_pem}"
 
   subject {
@@ -63,11 +64,12 @@ resource "tls_cert_request" "identity-server" {
 resource "tls_locally_signed_cert" "identity-server" {
   cert_request_pem = "${tls_cert_request.identity-server.cert_request_pem}"
 
-  ca_key_algorithm = "${var.ca_key_alg}"
+  ca_key_algorithm   = "${var.ca_key_alg}"
   ca_private_key_pem = "${var.ca_key}"
-  ca_cert_pem = "${var.ca_cert}"
+  ca_cert_pem        = "${var.ca_cert}"
 
   validity_period_hours = 8760
+
   allowed_uses = [
     "server_auth",
   ]
@@ -75,11 +77,11 @@ resource "tls_locally_signed_cert" "identity-server" {
 
 resource "tls_private_key" "identity-client" {
   algorithm = "RSA"
-  rsa_bits = "2048"
+  rsa_bits  = "2048"
 }
 
 resource "tls_cert_request" "identity-client" {
-  key_algorithm = "${tls_private_key.identity-client.algorithm}"
+  key_algorithm   = "${tls_private_key.identity-client.algorithm}"
   private_key_pem = "${tls_private_key.identity-client.private_key_pem}"
 
   subject {
@@ -90,11 +92,12 @@ resource "tls_cert_request" "identity-client" {
 resource "tls_locally_signed_cert" "identity-client" {
   cert_request_pem = "${tls_cert_request.identity-client.cert_request_pem}"
 
-  ca_key_algorithm = "${var.ca_key_alg}"
+  ca_key_algorithm   = "${var.ca_key_alg}"
   ca_private_key_pem = "${var.ca_key}"
-  ca_cert_pem = "${var.ca_cert}"
+  ca_cert_pem        = "${var.ca_cert}"
 
   validity_period_hours = 8760
+
   allowed_uses = [
     "client_auth",
   ]

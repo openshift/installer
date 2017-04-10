@@ -1,6 +1,6 @@
 resource "azurerm_dns_a_record" "etcd" {
   resource_group_name = "${var.resource_group_name}"
-  zone_name = "${azurerm_dns_zone.tectonic_azure_dns_zone.name}"
+  zone_name           = "${azurerm_dns_zone.tectonic_azure_dns_zone.name}"
 
   name    = "${var.cluster_name}-etcd"
   ttl     = "60"

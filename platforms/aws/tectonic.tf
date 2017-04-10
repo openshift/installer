@@ -60,8 +60,8 @@ module "tectonic" {
 }
 
 data "archive_file" "assets" {
-  type        = "zip"
-  source_dir  = "${path.cwd}/generated/"
+  type       = "zip"
+  source_dir = "${path.cwd}/generated/"
 
   # Because the archive_file provider is a data source, depends_on can't be
   # used to guarantee that the tectonic/bootkube modules have generated

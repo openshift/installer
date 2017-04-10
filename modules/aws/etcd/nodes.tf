@@ -23,8 +23,8 @@ data "aws_ami" "coreos_ami" {
 }
 
 resource "aws_instance" "etcd_node" {
-  count                  = "${length(var.external_endpoints) == 0 ? var.instance_count : 0}"
-  ami                    = "${data.aws_ami.coreos_ami.image_id}"
+  count = "${length(var.external_endpoints) == 0 ? var.instance_count : 0}"
+  ami   = "${data.aws_ami.coreos_ami.image_id}"
 
   instance_type          = "${var.ec2_type}"
   subnet_id              = "${var.subnets[count.index % var.az_count]}"
