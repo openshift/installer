@@ -1,19 +1,19 @@
-resource "ignition_config" "etcd" {
+data "ignition_config" "etcd" {
   users = [
-    "${ignition_user.core.id}",
+    "${data.ignition_user.core.id}",
   ]
 
   files = [
-    "${ignition_file.resolv_conf.id}",
+    "${data.ignition_file.resolv_conf.id}",
   ]
 
   systemd = [
-    "${ignition_systemd_unit.locksmithd.id}",
-    "${ignition_systemd_unit.etcd3.id}",
+    "${data.ignition_systemd_unit.locksmithd.id}",
+    "${data.ignition_systemd_unit.etcd3.id}",
   ]
 }
 
-resource "ignition_file" "resolv_conf" {
+data "ignition_file" "resolv_conf" {
   path       = "/etc/resolv.conf"
   mode       = 0644
   uid        = 0
@@ -24,7 +24,7 @@ resource "ignition_file" "resolv_conf" {
   }
 }
 
-resource "ignition_systemd_unit" "etcd3" {
+data "ignition_systemd_unit" "etcd3" {
   name   = "etcd-member.service"
   enable = true
 
@@ -48,7 +48,7 @@ EOF
   ]
 }
 
-resource "ignition_systemd_unit" "locksmithd" {
+data "ignition_systemd_unit" "locksmithd" {
   name   = "locksmithd.service"
   enable = true
 
@@ -60,7 +60,7 @@ resource "ignition_systemd_unit" "locksmithd" {
   ]
 }
 
-resource "ignition_user" "core" {
+data "ignition_user" "core" {
   name                = "core"
   ssh_authorized_keys = ["${var.core_public_keys}"]
 }
