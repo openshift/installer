@@ -36,6 +36,7 @@ variable "tectonic_aws_az_count" {
 variable "tectonic_aws_external_vpc_id" {
   type        = "string"
   description = "ID of an existing VPC to launch nodes into. Example: vpc-123456. Leave blank to create a new VPC."
+  default     = ""
 }
 
 variable "tectonic_aws_external_vpc_public" {
