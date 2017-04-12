@@ -26,7 +26,7 @@ apply: $(BUILD_DIR)/.terraform
 	cd $(BUILD_DIR) && terraform apply $(TOP_DIR)/platforms/$(PLATFORM)
 
 destroy:
-	cd $(BUILD_DIR) && terraform destroy $(TOP_DIR)/platforms/$(PLATFORM)
+	cd $(BUILD_DIR) && terraform destroy -force $(TOP_DIR)/platforms/$(PLATFORM)
 
 terraform-check:
 	@terraform-docs >/dev/null 2>&1 || @echo "terraform-docs is required (https://github.com/segmentio/terraform-docs)"
