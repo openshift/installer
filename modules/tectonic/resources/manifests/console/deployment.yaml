@@ -85,6 +85,15 @@ spec:
           value: /etc/tectonic-ca-cert-secret/ca-cert
         - name: BRIDGE_LICENSE_FILE
           value: /etc/tectonic/licenses/license
+        - name: BRIDGE_DEX_CLIENT_CERT_FILE
+          value: /etc/tectonic-identity-grpc-client-secret/tls-cert
+        - name: BRIDGE_DEX_CLIENT_KEY_FILE
+          value: /etc/tectonic-identity-grpc-client-secret/tls-key
+        - name: BRIDGE_DEX_API_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-config
+              key: dexAPIHost
         image: ${console_image}
         imagePullPolicy: IfNotPresent
         livenessProbe:

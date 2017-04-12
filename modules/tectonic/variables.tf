@@ -96,3 +96,9 @@ variable "kube_apiserver_url" {
   description = "URL used to reach kube-apiserver. Leave blank for defaults."
   type        = "string"
 }
+
+variable "identity_api_service" {
+  description = "service used to reach the identity apiserver."
+  type        = "string"
+  default     = "tectonic-identity-api.tectonic-system.svc.cluster.local"
+}

@@ -11,3 +11,4 @@ data:
   consoleBaseAddress: "https://${console_base_address}"
   kubeAPIServerURL: "${kube_apiserver_url}"
   tectonicVersion: "${tectonic_version}"
+  dexAPIHost: "${identity_api_service}:5557"
