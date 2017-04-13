@@ -8,4 +8,4 @@
   --net=host \
   --dns=host \
   --working-dir=/assets/tectonic \
-  --exec=/bin/bash -- /assets/tectonic.sh /assets/kubeconfig /assets
+  --exec=/bin/bash -- /assets/tectonic.sh /assets/kubeconfig /assets ${experimental}

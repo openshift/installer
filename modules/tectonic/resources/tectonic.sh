@@ -1,13 +1,14 @@
 #!/bin/bash
 set -e
 
-if [ "$#" -ne "2" ]; then
-    echo "Usage: $0 kubeconfig assets_path"
+if [ "$#" -ne "3" ]; then
+    echo "Usage: $0 kubeconfig assets_path experimental"
     exit 1
 fi
 
 KUBECONFIG="$1"
 ASSETS_PATH="$2"
+EXPERIMENTAL="$3"
 
 # Setup API Authentication
 KUBECTL="/kubectl --kubeconfig=$KUBECONFIG"
@@ -149,20 +150,22 @@ kubectl create -f heapster/service.yaml
 kubectl create -f heapster/deployment.yaml
 kubectl create -f stats-emitter.yaml
 
+if [ "$EXPERIMENTAL" = "true" ]; then
 echo "Creating Tectonic Updater"
-kubectl create -f updater/tectonic-channel-operator-kind.yaml
-kubectl create -f updater/app-version-kind.yaml
-kubectl create -f updater/migration-status-kind.yaml
-kubectl create -f updater/node-agent.yaml
-kubectl create -f updater/kube-version-operator.yaml
-kubectl create -f updater/tectonic-channel-operator.yaml
-kubectl create -f updater/tectonic-prometheus-operator.yaml
-wait_for_tpr tectonic-system channel-operator-config.coreos.com
-kubectl create -f updater/tectonic-channel-operator-config.json
-wait_for_tpr tectonic-system app-version.coreos.com
-kubectl create -f updater/app-version-tectonic-cluster.json
-kubectl create -f updater/app-version-kubernetes.json
-kubectl create -f updater/app-version-tectonic-monitoring.json
+  kubectl create -f updater/tectonic-channel-operator-kind.yaml
+  kubectl create -f updater/app-version-kind.yaml
+  kubectl create -f updater/migration-status-kind.yaml
+  kubectl create -f updater/node-agent.yaml
+  kubectl create -f updater/kube-version-operator.yaml
+  kubectl create -f updater/tectonic-channel-operator.yaml
+  kubectl create -f updater/tectonic-prometheus-operator.yaml
+  wait_for_tpr tectonic-system channel-operator-config.coreos.com
+  kubectl create -f updater/tectonic-channel-operator-config.json
+  wait_for_tpr tectonic-system app-version.coreos.com
+  kubectl create -f updater/app-version-tectonic-cluster.json
+  kubectl create -f updater/app-version-kubernetes.json
+  kubectl create -f updater/app-version-tectonic-monitoring.json
+fi
 
 # wait for Tectonic pods
 wait_for_pods tectonic-system

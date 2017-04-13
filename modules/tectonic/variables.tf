@@ -102,3 +102,8 @@ variable "identity_api_service" {
   type        = "string"
   default     = "tectonic-identity-api.tectonic-system.svc.cluster.local"
 }
+
+variable "experimental" {
+  description = "If set to true, experimental Tectonic assets are being deployed."
+  default     = false
+}

@@ -5,25 +5,25 @@ resource "template_folder" "tectonic" {
   output_path = "${path.cwd}/generated/tectonic"
 
   vars {
-    console_image                      = "${var.container_images["console"]}"
-    identity_image                     = "${var.container_images["identity"]}"
-    kube_version_operator_image        = "${var.container_images["kube_version_operator"]}"
-    tectonic_channel_operator_image    = "${var.container_images["tectonic_channel_operator"]}"
-    node_agent_image                   = "${var.container_images["node_agent"]}"
-    prometheus_operator_image          = "${var.container_images["prometheus_operator"]}"
-    tectonic_prometheus_operator_image = "${var.container_images["tectonic_prometheus_operator"]}"
-    node_exporter_image                = "${var.container_images["node_exporter"]}"
-    config_reload_image                = "${var.container_images["config_reload"]}"
-    heapster_image                     = "${var.container_images["heapster"]}"
     addon_resizer_image                = "${var.container_images["addon_resizer"]}"
+    config_reload_image                = "${var.container_images["config_reload"]}"
+    console_image                      = "${var.container_images["console"]}"
+    error_server_image                 = "${var.container_images["error_server"]}"
+    heapster_image                     = "${var.container_images["heapster"]}"
+    identity_image                     = "${var.container_images["identity"]}"
+    ingress_controller_image           = "${var.container_images["ingress_controller"]}"
+    kube_version_operator_image        = "${var.container_images["kube_version_operator"]}"
+    node_agent_image                   = "${var.container_images["node_agent"]}"
+    node_exporter_image                = "${var.container_images["node_exporter"]}"
+    prometheus_operator_image          = "${var.container_images["prometheus_operator"]}"
     stats_emitter_image                = "${var.container_images["stats_emitter"]}"
     stats_extender_image               = "${var.container_images["stats_extender"]}"
-    error_server_image                 = "${var.container_images["error_server"]}"
-    ingress_controller_image           = "${var.container_images["ingress_controller"]}"
+    tectonic_channel_operator_image    = "${var.container_images["tectonic_channel_operator"]}"
+    tectonic_prometheus_operator_image = "${var.container_images["tectonic_prometheus_operator"]}"
 
-    prometheus_version = "${var.versions["prometheus"]}"
-    monitoring_version = "${var.versions["monitoring"]}"
     kubernetes_version = "${var.versions["kubernetes"]}"
+    monitoring_version = "${var.versions["monitoring"]}"
+    prometheus_version = "${var.versions["prometheus"]}"
     tectonic_version   = "${var.versions["tectonic"]}"
 
     license     = "${base64encode(file(var.license_path))}"
@@ -58,10 +58,11 @@ resource "template_folder" "tectonic" {
     kube_apiserver_url = "${var.kube_apiserver_url}"
     oidc_issuer_url    = "https://${var.base_address}/identity"
 
-    cluster_id            = "${uuid()}"
-    platform              = "${var.platform}"
-    certificates_strategy = "${var.ca_generated == "true" ? "installerGeneratedCA" : "userProvidedCA"}"
-    identity_api_service  = "${var.identity_api_service}"
+    cluster_id               = "${uuid()}"
+    platform                 = "${var.platform}"
+    certificates_strategy    = "${var.ca_generated == "true" ? "installerGeneratedCA" : "userProvidedCA"}"
+    identity_api_service     = "${var.identity_api_service}"
+    tectonic_updater_enabled = "${var.experimental ? "true" : "false"}"
   }
 }
 
@@ -85,6 +86,7 @@ data "template_file" "tectonic-rkt" {
 
   vars {
     hyperkube_image = "${var.container_images["hyperkube"]}"
+    experimental    = "${var.experimental ? "true" : "false"}"
   }
 }
 

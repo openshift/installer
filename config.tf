@@ -172,3 +172,8 @@ variable "tectonic_vanilla_k8s" {
   description = "If set to true, a vanilla Kubernetes cluster will be deployed, omitting the tectonic assets."
   default     = false
 }
+
+variable "tectonic_experimental" {
+  description = "If set to true, experimental Tectonic assets are being deployed."
+  default     = false
+}

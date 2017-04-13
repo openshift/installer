@@ -57,6 +57,7 @@ module "tectonic" {
   console_client_id = "tectonic-console"
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "HostPort"
+  experimental      = "${var.tectonic_experimental}"
 }
 
 module "etcd" {
