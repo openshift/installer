@@ -1,6 +1,6 @@
 FROM golang:alpine
 
-ENV TERRAFORM_VERSION=0.8.8-coreos
+ENV TERRAFORM_VERSION=0.8.8-coreos.1
 
 RUN apk add --update git bash make
 
