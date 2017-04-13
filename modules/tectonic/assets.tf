@@ -61,6 +61,7 @@ resource "template_folder" "tectonic" {
     cluster_id            = "${uuid()}"
     platform              = "${var.platform}"
     certificates_strategy = "${var.ca_generated == "true" ? "installerGeneratedCA" : "userProvidedCA"}"
+    identity_api_service  = "${var.identity_api_service}"
   }
 }
 
