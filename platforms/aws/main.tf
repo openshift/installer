@@ -10,6 +10,7 @@ module "vpc" {
   external_vpc_id         = "${var.tectonic_aws_external_vpc_id}"
   external_master_subnets = ["${compact(var.tectonic_aws_external_master_subnet_ids)}"]
   external_worker_subnets = ["${compact(var.tectonic_aws_external_worker_subnet_ids)}"]
+  extra_tags              = "${var.tectonic_aws_extra_tags}"
 }
 
 module "etcd" {
@@ -31,6 +32,7 @@ module "etcd" {
   cluster_name = "${var.tectonic_cluster_name}"
 
   external_endpoints = ["${compact(var.tectonic_etcd_servers)}"]
+  extra_tags         = "${var.tectonic_aws_extra_tags}"
 }
 
 module "ignition-masters" {
@@ -62,10 +64,12 @@ module "masters" {
   cl_channel = "${var.tectonic_cl_channel}"
   user_data  = "${module.ignition-masters.ignition}"
 
-  internal_zone_id = "${aws_route53_zone.tectonic-int.zone_id}"
-  external_zone_id = "${join("", data.aws_route53_zone.tectonic-ext.*.zone_id)}"
-  base_domain      = "${var.tectonic_base_domain}"
-  public_vpc       = "${var.tectonic_aws_external_vpc_public}"
+  internal_zone_id             = "${aws_route53_zone.tectonic-int.zone_id}"
+  external_zone_id             = "${join("", data.aws_route53_zone.tectonic-ext.*.zone_id)}"
+  base_domain                  = "${var.tectonic_base_domain}"
+  public_vpc                   = "${var.tectonic_aws_external_vpc_public}"
+  extra_tags                   = "${var.tectonic_aws_extra_tags}"
+  autoscaling_group_extra_tags = "${var.tectonic_autoscaling_group_extra_tags}"
 }
 
 module "ignition-workers" {
@@ -92,7 +96,9 @@ module "workers" {
   subnet_ids   = ["${module.vpc.worker_subnet_ids}"]
   extra_sg_ids = ["${module.vpc.cluster_default_sg}"]
 
-  ssh_key    = "${var.tectonic_aws_ssh_key}"
-  cl_channel = "${var.tectonic_cl_channel}"
-  user_data  = "${module.ignition-workers.ignition}"
+  ssh_key                      = "${var.tectonic_aws_ssh_key}"
+  cl_channel                   = "${var.tectonic_cl_channel}"
+  user_data                    = "${module.ignition-workers.ignition}"
+  extra_tags                   = "${var.tectonic_aws_extra_tags}"
+  autoscaling_group_extra_tags = "${var.tectonic_autoscaling_group_extra_tags}"
 }

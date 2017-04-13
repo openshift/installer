@@ -7,10 +7,10 @@ resource "aws_route_table" "default" {
   count  = "${var.external_vpc_id == "" ? 1 : 0}"
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
-  tags {
-    Name              = "public"
-    KubernetesCluster = "${var.cluster_name}"
-  }
+  tags = "${merge(map(
+      "Name", "public",
+      "KubernetesCluster", "${var.cluster_name}"
+    ), var.extra_tags)}"
 }
 
 resource "aws_main_route_table_association" "main_vpc_routes" {
@@ -32,11 +32,10 @@ resource "aws_subnet" "master_subnet" {
   vpc_id            = "${data.aws_vpc.cluster_vpc.id}"
   availability_zone = "${data.aws_availability_zones.azs.names[count.index]}"
 
-  tags {
-    Name                     = "master-${data.aws_availability_zones.azs.names[count.index]}"
-    KubernetesCluster        = "${var.cluster_name}"
-    "kubernetes.io/role/elb" = ""
-  }
+  tags = "${merge(map(
+      "Name", "master-${data.aws_availability_zones.azs.names[count.index]}",
+      "KubernetesCluster", "${var.cluster_name}"
+    ), var.extra_tags)}"
 }
 
 resource "aws_route_table_association" "route_net" {

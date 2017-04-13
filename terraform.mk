@@ -1,8 +1,8 @@
 TOP_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
 TERRAFORM_REPOSITORY=https://github.com/coreos/terraform.git
-TERRAFORM_BRANCH=v0.8.8-coreos
-TERRAFORM_RELEASE_TARBALL_URL=https://github.com/coreos/terraform/releases/download/v0.8.8-coreos/terraform.zip
+TERRAFORM_BRANCH=v0.8.8-coreos.1
+TERRAFORM_RELEASE_TARBALL_URL=https://github.com/coreos/terraform/releases/download/v0.8.8-coreos.1/terraform.zip
 TERRAFORM_BUILD_DIR=$(TOP_DIR)/build/terraform
 TERRAFORM_BINS_DIR=$(TOP_DIR)/bin/terraform
 TERRAFORM_GO_IMAGE=golang:1.8

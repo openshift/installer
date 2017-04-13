@@ -21,3 +21,9 @@ variable "external_master_subnets" {
 variable "external_worker_subnets" {
   type = "list"
 }
+
+variable "extra_tags" {
+  description = "Extra AWS tags to be applied to created resources."
+  type        = "map"
+  default     = {}
+}

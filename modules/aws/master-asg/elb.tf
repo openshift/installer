@@ -26,10 +26,10 @@ resource "aws_elb" "api-internal" {
     interval            = 5
   }
 
-  tags {
-    Name              = "${var.cluster_name}-api-internal"
-    KubernetesCluster = "${var.cluster_name}"
-  }
+  tags = "${merge(map(
+      "Name", "${var.cluster_name}-api-internal",
+      "KubernetesCluster", "${var.cluster_name}"
+    ), var.extra_tags)}"
 }
 
 resource "aws_route53_record" "api-internal" {
@@ -73,10 +73,10 @@ resource "aws_elb" "api-external" {
     interval            = 5
   }
 
-  tags {
-    Name              = "${var.cluster_name}-api-external"
-    KubernetesCluster = "${var.cluster_name}"
-  }
+  tags = "${merge(map(
+      "Name", "${var.cluster_name}-api-external",
+      "KubernetesCluster", "${var.cluster_name}"
+    ), var.extra_tags)}"
 }
 
 resource "aws_route53_record" "api-external" {
@@ -120,10 +120,10 @@ resource "aws_elb" "console" {
     interval            = 5
   }
 
-  tags {
-    Name              = "${var.cluster_name}-console"
-    KubernetesCluster = "${var.cluster_name}"
-  }
+  tags = "${merge(map(
+      "Name", "${var.cluster_name}-console",
+      "KubernetesCluster", "${var.cluster_name}"
+    ), var.extra_tags)}"
 }
 
 resource "aws_route53_record" "ingress-public" {

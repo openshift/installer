@@ -48,6 +48,8 @@ resource "aws_autoscaling_group" "masters" {
     propagate_at_launch = true
   }
 
+  tags = ["${var.autoscaling_group_extra_tags}"]
+
   lifecycle {
     create_before_destroy = true
   }
@@ -71,10 +73,10 @@ resource "aws_launch_configuration" "master_conf" {
 resource "aws_security_group" "master_sec_group" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
-  tags {
-    Name              = "${var.cluster_name}_master_sg"
-    KubernetesCluster = "${var.cluster_name}"
-  }
+  tags = "${merge(map(
+      "Name", "${var.cluster_name}_master_sg",
+      "KubernetesCluster", "${var.cluster_name}"
+    ), var.extra_tags)}"
 
   ingress {
     protocol  = -1

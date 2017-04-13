@@ -45,3 +45,9 @@ variable "container_image" {
 variable "ec2_type" {
   type = "string"
 }
+
+variable "extra_tags" {
+  description = "Extra AWS tags to be applied to created resources."
+  type        = "map"
+  default     = {}
+}

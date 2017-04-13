@@ -1,10 +1,10 @@
 resource "aws_security_group" "worker_sec_group" {
   vpc_id = "${var.vpc_id}"
 
-  tags {
-    Name              = "${var.cluster_name}_worker_sg"
-    KubernetesCluster = "${var.cluster_name}"
-  }
+  tags = "${merge(map(
+      "Name", "${var.cluster_name}_worker_sg",
+      "KubernetesCluster", "${var.cluster_name}"
+    ), var.extra_tags)}"
 
   ingress {
     protocol  = -1

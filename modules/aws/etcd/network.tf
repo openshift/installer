@@ -2,10 +2,10 @@ resource "aws_security_group" "etcd_sec_group" {
   vpc_id = "${var.vpc_id}"
   count  = "${length(var.external_endpoints) == 0 ? 1 : 0}"
 
-  tags {
-    Name              = "${var.cluster_name}_etcd_sg"
-    KubernetesCluster = "${var.cluster_name}"
-  }
+  tags = "${merge(map(
+      "Name", "${var.cluster_name}_etcd_sg",
+      "KubernetesCluster", "${var.cluster_name}"
+    ), var.extra_tags)}"
 
   ingress {
     protocol  = -1

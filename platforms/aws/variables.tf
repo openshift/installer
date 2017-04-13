@@ -55,3 +55,15 @@ variable "tectonic_aws_external_worker_subnet_ids" {
   description = "List of subnet IDs within an existing VPC to deploy worker nodes into. Required to use an existing VPC and the list must match the AZ count. Example: [\"subnet-111111\", \"subnet-222222\", \"subnet-333333\"]"
   default     = [""]
 }
+
+variable "tectonic_aws_extra_tags" {
+  description = "Extra AWS tags to be applied to created resources."
+  type        = "map"
+  default     = {}
+}
+
+variable "tectonic_autoscaling_group_extra_tags" {
+  description = "Extra AWS tags to be applied to created autoscaling group resources."
+  type        = "list"
+  default     = []
+}

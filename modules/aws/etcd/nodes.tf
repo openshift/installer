@@ -32,8 +32,8 @@ resource "aws_instance" "etcd_node" {
   user_data              = "${ignition_config.etcd.*.rendered[count.index]}"
   vpc_security_group_ids = ["${aws_security_group.etcd_sec_group.id}"]
 
-  tags {
-    Name              = "${var.cluster_name}-etcd-${count.index}"
-    KubernetesCluster = "${var.cluster_name}"
-  }
+  tags = "${merge(map(
+      "Name", "${var.cluster_name}-etcd-${count.index}",
+      "KubernetesCluster", "${var.cluster_name}"
+    ), var.extra_tags)}"
 }

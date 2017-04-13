@@ -15,4 +15,9 @@ resource "aws_security_group" "cluster_default" {
     self        = true
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = "${merge(map(
+    "Name","${var.cluster_name}-sg-cluster_default",
+    "KubernetesCluster", "${var.cluster_name}"
+  ), var.extra_tags)}"
 }

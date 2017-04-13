@@ -6,10 +6,10 @@ resource "aws_vpc" "new_vpc" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
-  tags {
-    Name              = "${var.cluster_name}"
-    KubernetesCluster = "${var.cluster_name}"
-  }
+  tags = "${merge(map(
+      "Name", "${var.cluster_name}",
+      "KubernetesCluster", "${var.cluster_name}"
+    ), var.extra_tags)}"
 }
 
 data "aws_vpc" "cluster_vpc" {

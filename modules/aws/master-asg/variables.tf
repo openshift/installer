@@ -54,3 +54,15 @@ variable "public_vpc" {
   description = "If set to true, public facing ingress resource are created."
   default     = true
 }
+
+variable "extra_tags" {
+  description = "Extra AWS tags to be applied to created resources."
+  type        = "map"
+  default     = {}
+}
+
+variable "autoscaling_group_extra_tags" {
+  description = "Extra AWS tags to be applied to created autoscaling group resources."
+  type        = "list"
+  default     = []
+}

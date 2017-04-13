@@ -2,10 +2,10 @@ resource "aws_route_table" "private_routes" {
   count  = "${var.external_vpc_id == "" ? var.az_count : 0}"
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
-  tags {
-    Name              = "private-${data.aws_availability_zones.azs.names[count.index]}"
-    KubernetesCluster = "${var.cluster_name}"
-  }
+  tags = "${merge(map(
+      "Name", "private-${data.aws_availability_zones.azs.names[count.index]}",
+      "KubernetesCluster", "${var.cluster_name}"
+    ), var.extra_tags)}"
 }
 
 resource "aws_route" "to_nat_gw" {
@@ -22,11 +22,11 @@ resource "aws_subnet" "worker_subnet" {
   vpc_id            = "${data.aws_vpc.cluster_vpc.id}"
   availability_zone = "${data.aws_availability_zones.azs.names[count.index]}"
 
-  tags {
-    Name                              = "worker-${data.aws_availability_zones.azs.names[count.index]}"
-    KubernetesCluster                 = "${var.cluster_name}"
-    "kubernetes.io/role/internal-elb" = ""
-  }
+  tags = "${merge(map(
+      "Name", "worker-${data.aws_availability_zones.azs.names[count.index]}",
+      "KubernetesCluster", "${var.cluster_name}",
+      "kubernetes.io/role/internal-elb", ""
+    ), var.extra_tags)}"
 }
 
 resource "aws_route_table_association" "worker_routing" {
