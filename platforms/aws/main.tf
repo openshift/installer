@@ -70,6 +70,7 @@ module "masters" {
   public_vpc                   = "${var.tectonic_aws_external_vpc_public}"
   extra_tags                   = "${var.tectonic_aws_extra_tags}"
   autoscaling_group_extra_tags = "${var.tectonic_autoscaling_group_extra_tags}"
+  custom_dns_name              = "${var.tectonic_dns_name}"
 }
 
 module "ignition-workers" {

@@ -67,3 +67,9 @@ variable "tectonic_autoscaling_group_extra_tags" {
   type        = "list"
   default     = []
 }
+
+variable "tectonic_dns_name" {
+  type        = "string"
+  default     = ""
+  description = "DNS prefix used to construct the console and API server endpoints."
+}
