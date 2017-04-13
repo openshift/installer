@@ -6,4 +6,5 @@ resource "azurerm_dns_a_record" "worker_nodes" {
   name    = "${var.tectonic_cluster_name}-worker-${count.index}"
   ttl     = "59"
   records = ["${azurerm_public_ip.worker_node.ip_address[count.index]}"]
+  count   = "${var.create_dns_zone == "true" ? 1 : 0}"
 }

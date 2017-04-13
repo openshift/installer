@@ -5,4 +5,6 @@ resource "azurerm_dns_a_record" "etcd" {
   name    = "${var.cluster_name}-etcd"
   ttl     = "60"
   records = ["${var.etcd_ip_addresses}"]
+
+  count = "${var.create_dns_zone == "true" ? 1 : 0}"
 }
