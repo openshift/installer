@@ -126,4 +126,4 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 [account]: https://account.coreos.com
 [vars]: ../../variables/config.md
 [troubleshooting]: ../../troubleshooting.md
-[aws-vars]: ../../variables/platform-aws.md
+[aws-vars]: ../../variables/aws.md
