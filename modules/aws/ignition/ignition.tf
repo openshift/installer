@@ -10,6 +10,7 @@ data "ignition_config" "main" {
     "${data.ignition_systemd_unit.docker.id}",
     "${data.ignition_systemd_unit.locksmithd.id}",
     "${data.ignition_systemd_unit.kubelet.id}",
+    "${data.ignition_systemd_unit.kubelet-env.id}",
     "${data.ignition_systemd_unit.init-assets.id}",
     "${data.ignition_systemd_unit.bootkube.id}",
     "${data.ignition_systemd_unit.tectonic.id}",
@@ -43,8 +44,6 @@ data "template_file" "kubelet" {
   template = "${file("${path.module}/resources/services/kubelet.service")}"
 
   vars {
-    aci                    = "${element(split(":", var.container_images["hyperkube"]), 0)}"
-    version                = "${element(split(":", var.container_images["hyperkube"]), 1)}"
     cluster_dns_ip         = "${var.kube_dns_service_ip}"
     node_label             = "${var.kubelet_node_label}"
     node_taints_param      = "${var.kubelet_node_taints != "" ? "--register-with-taints=${var.kubelet_node_taints}" : ""}"
@@ -56,6 +55,23 @@ data "ignition_systemd_unit" "kubelet" {
   name    = "kubelet.service"
   enable  = true
   content = "${data.template_file.kubelet.rendered}"
+}
+
+data "template_file" "kubelet-env" {
+  template = "${file("${path.module}/resources/services/kubelet-env.service")}"
+
+  vars {
+    kube_version_image_url = "${element(split(":", var.container_images["kube_version"]), 0)}"
+    kube_version_image_tag = "${element(split(":", var.container_images["kube_version"]), 1)}"
+    kubelet_image_url      = "${element(split(":", var.container_images["hyperkube"]), 0)}"
+    kubeconfig_s3_location = "${var.kubeconfig_s3_location}"
+  }
+}
+
+data "ignition_systemd_unit" "kubelet-env" {
+  name    = "kubelet-env.service"
+  enable  = true
+  content = "${data.template_file.kubelet-env.rendered}"
 }
 
 data "template_file" "etcd-member" {
@@ -105,6 +121,8 @@ data "template_file" "init-assets" {
   vars {
     awscli_image       = "${var.container_images["awscli"]}"
     assets_s3_location = "${var.assets_s3_location}"
+    kubelet_image_url  = "${element(split(":", var.container_images["hyperkube"]), 0)}"
+    kubelet_image_tag  = "${element(split(":", var.container_images["hyperkube"]), 1)}"
   }
 }
 
