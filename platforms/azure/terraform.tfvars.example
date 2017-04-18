@@ -3,7 +3,7 @@
 tectonic_base_domain = "azure.example.com"
 tectonic_cluster_name = "mycluster"
 # If want Azure to automatically set up FQDN, set tectonic_create_dns_zone to false
-# tectonic_create_dns_zone = "false"
+# tectonic_azure_create_dns_zone = "false"
 
 # Login Details
 # generate a hash with the bcrypt-hash tool (https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0) that will be used for your admin user.

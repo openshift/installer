@@ -163,11 +163,6 @@ variable "tectonic_ca_key_alg" {
   default     = "RSA"
 }
 
-variable "tectonic_create_dns_zone" {
-  description = "If set to true, create an Azure DNS zone"
-  default     = "true"
-}
-
 variable "tectonic_vanilla_k8s" {
   description = "If set to true, a vanilla Kubernetes cluster will be deployed, omitting the tectonic assets."
   default     = false

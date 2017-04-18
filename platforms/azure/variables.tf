@@ -60,3 +60,8 @@ variable "tectonic_azure_external_vnet_id" {
   description = "ID of an existing Virtual Network to launch nodes into. Example: VNet1. Leave blank to create a new Virtual Network."
   default     = ""
 }
+
+variable "tectonic_azure_create_dns_zone" {
+  description = "If set to true, create an Azure DNS zone"
+  default     = "true"
+}
