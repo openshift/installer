@@ -11,6 +11,7 @@ resource "ignition_config" "master" {
     "${ignition_systemd_unit.locksmithd.id}",
     "${ignition_systemd_unit.kubelet-master.id}",
     "${ignition_systemd_unit.tectonic.id}",
+    "${ignition_systemd_unit.bootkube.id}",
   ]
 
   users = [
@@ -112,17 +113,13 @@ resource "ignition_file" "max-user-watches" {
   }
 }
 
-resource "ignition_systemd_unit" "tectonic" {
-  name   = "tectonic.service"
-  enable = true
+resource "ignition_systemd_unit" "bootkube" {
+  name    = "bootkube.service"
+  content = "${var.bootkube_service}"
+}
 
-  content = <<EOF
-[Unit]
-Description=Bootstrap a Tectonic cluster
-[Service]
-Type=oneshot
-WorkingDirectory=/opt/tectonic
-ExecStart=/usr/bin/bash /opt/tectonic/bootkube.sh
-ExecStart=/usr/bin/bash /opt/tectonic/tectonic.sh kubeconfig tectonic
-EOF
+resource "ignition_systemd_unit" "tectonic" {
+  name    = "tectonic.service"
+  enable  = "${var.tectonic_service_disabled == 0 ? true : false}"
+  content = "${var.tectonic_service}"
 }

@@ -50,6 +50,9 @@ module "masters" {
   tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
   cloud_provider               = ""
   kubelet_node_label           = "node-role.kubernetes.io/master"
+  bootkube_service             = "${module.bootkube.systemd_service}"
+  tectonic_service             = "${module.tectonic.systemd_service}"
+  tectonic_service_disabled    = "${var.tectonic_vanilla_k8s}"
 }
 
 module "workers" {
