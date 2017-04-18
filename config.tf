@@ -85,8 +85,8 @@ variable "tectonic_worker_count" {
 // Example: `1`
 variable "tectonic_etcd_count" {
   type        = "string"
-  default     = "1"
-  description = "The number of etcd nodes to be created."
+  default     = "-1"
+  description = "The number of etcd nodes to be created. If not set, the count of etcd nodes will be determined automatically (currently only supported on AWS)."
 }
 
 variable "tectonic_etcd_servers" {

@@ -16,7 +16,7 @@ module "vpc" {
 module "etcd" {
   source = "../../modules/aws/etcd"
 
-  instance_count = "${var.tectonic_aws_az_count == 5 ? 5 : 3}"
+  instance_count = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : var.tectonic_aws_az_count == 5 ? 5 : 3}"
   az_count       = "${var.tectonic_aws_az_count}"
   ec2_type       = "${var.tectonic_aws_etcd_ec2_type}"
 
