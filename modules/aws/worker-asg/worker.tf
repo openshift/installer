@@ -34,6 +34,12 @@ resource "aws_launch_configuration" "worker_conf" {
   lifecycle {
     create_before_destroy = true
   }
+
+  root_block_device {
+    volume_type = "${var.root_volume_type}"
+    volume_size = "${var.root_volume_size}"
+    iops        = "${var.root_volume_iops}"
+  }
 }
 
 resource "aws_autoscaling_group" "workers" {

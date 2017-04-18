@@ -33,6 +33,10 @@ module "etcd" {
 
   external_endpoints = ["${compact(var.tectonic_etcd_servers)}"]
   extra_tags         = "${var.tectonic_aws_extra_tags}"
+
+  root_volume_type = "${var.tectonic_aws_etcd_root_volume_type}"
+  root_volume_size = "${var.tectonic_aws_etcd_root_volume_size}"
+  root_volume_iops = "${var.tectonic_aws_etcd_root_volume_iops}"
 }
 
 module "ignition-masters" {
@@ -71,6 +75,10 @@ module "masters" {
   extra_tags                   = "${var.tectonic_aws_extra_tags}"
   autoscaling_group_extra_tags = "${var.tectonic_autoscaling_group_extra_tags}"
   custom_dns_name              = "${var.tectonic_dns_name}"
+
+  root_volume_type = "${var.tectonic_aws_master_root_volume_type}"
+  root_volume_size = "${var.tectonic_aws_master_root_volume_size}"
+  root_volume_iops = "${var.tectonic_aws_master_root_volume_iops}"
 }
 
 module "ignition-workers" {
@@ -102,4 +110,8 @@ module "workers" {
   user_data                    = "${module.ignition-workers.ignition}"
   extra_tags                   = "${var.tectonic_aws_extra_tags}"
   autoscaling_group_extra_tags = "${var.tectonic_autoscaling_group_extra_tags}"
+
+  root_volume_type = "${var.tectonic_aws_master_root_volume_type}"
+  root_volume_size = "${var.tectonic_aws_master_root_volume_size}"
+  root_volume_iops = "${var.tectonic_aws_master_root_volume_iops}"
 }

@@ -72,3 +72,18 @@ variable "custom_dns_name" {
   default     = ""
   description = "DNS prefix used to construct the console and API server endpoints."
 }
+
+variable "root_volume_type" {
+  type        = "string"
+  description = "The type of volume for the root block device."
+}
+
+variable "root_volume_size" {
+  type        = "string"
+  description = "The size of the volume in gigabytes for the root block device."
+}
+
+variable "root_volume_iops" {
+  type        = "string"
+  description = "The amount of provisioned IOPS for the root block device."
+}
