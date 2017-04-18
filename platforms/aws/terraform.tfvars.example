@@ -23,11 +23,12 @@ tectonic_aws_worker_ec2_type = "t2.medium"
 tectonic_aws_etcd_ec2_type = "t2.medium"
 
 # VPC Details
-# specify an existing VPC to use, or leave blank to create a new one
-tectonic_aws_az_count = 3 # some AWS regions only have 2!
-tectonic_aws_external_vpc_id = "vpc-123456"
-tectonic_aws_external_master_subnet_ids = ["subnet-111111", "subnet-222222", "subnet-333333"] # must match AZ count 
-tectonic_aws_external_worker_subnet_ids = ["subnet-111111", "subnet-222222", "subnet-333333"] # must match AZ count 
+# Uncomment to use an existing VPC to use, or leave as is to create a new one
+# 
+# tectonic_aws_az_count = 3 # some AWS regions only have 2!
+# tectonic_aws_external_vpc_id = "vpc-123456"
+# tectonic_aws_external_master_subnet_ids = ["subnet-111111", "subnet-222222", "subnet-333333"] # must match AZ count 
+# tectonic_aws_external_worker_subnet_ids = ["subnet-111111", "subnet-222222", "subnet-333333"] # must match AZ count 
 
 # Update Details
 # leave blank for default values
