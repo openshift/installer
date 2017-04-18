@@ -58,9 +58,9 @@ resource "template_folder" "tectonic" {
     kube_apiserver_url = "${var.kube_apiserver_url}"
     oidc_issuer_url    = "https://${var.base_address}/identity"
 
-    cluster_id               = "${uuid()}"
-    platform                 = "${var.platform}"
-    certificates_strategy    = "${var.ca_generated == "true" ? "installerGeneratedCA" : "userProvidedCA"}"
+    cluster_id            = "${sha256("${var.kube_apiserver_url}-${var.platform}")}"
+    platform              = "${var.platform}"
+    certificates_strategy = "${var.ca_generated == "true" ? "installerGeneratedCA" : "userProvidedCA"}"
     identity_api_service     = "${var.identity_api_service}"
     tectonic_updater_enabled = "${var.experimental ? "true" : "false"}"
   }
