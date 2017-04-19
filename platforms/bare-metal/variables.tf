@@ -43,6 +43,36 @@ variable "tectonic_ingress_domain" {
   description = "The domain name which resolves to Tectonic Ingress (i.e. worker node(s))"
 }
 
+variable "tectonic_controller_names" {
+  type = "list"
+  description = "Ordered list of controller names (e.g. node1)"
+}
+
+variable "tectonic_controller_domains" {
+  type = "list"
+  description = "Ordered list of controller domain names (e.g. node1.example.com)"
+}
+
+variable "tectonic_controller_macs" {
+  type = "list"
+  description = "Ordered list of controller MAC addresses for matching machines"
+}
+
+variable "tectonic_worker_names" {
+  type = "list"
+  description = "Ordered list of worker names (e.g. node2,node3)"
+}
+
+variable "tectonic_worker_domains" {
+  type = "list"
+  description = "Ordered list of worker domain names (e.g. node2.example.com,node3.example.com)"
+}
+
+variable "tectonic_worker_macs" {
+  type = "list"
+  description = "Ordered list of worker MAC addresses for matching machines"
+}
+
 variable "tectonic_ssh_authorized_key" {
   type = "string"
   description = "SSH public key to use as an authorized key"
