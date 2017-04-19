@@ -51,6 +51,10 @@ variable "node_labels" {
   type = "string"
 }
 
+variable "node_taints" {
+  type = "string"
+}
+
 variable "hostname_infix" {
   type = "string"
 }

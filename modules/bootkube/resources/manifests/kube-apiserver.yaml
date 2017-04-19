@@ -4,18 +4,18 @@ metadata:
   name: kube-apiserver
   namespace: kube-system
   labels:
-    k8s-app: kube-apiserver
+    tier: control-plane
+    component: kube-apiserver
 spec:
   template:
     metadata:
       labels:
-        k8s-app: kube-apiserver
+        tier: control-plane
+        component: kube-apiserver
       annotations:
         checkpointer.alpha.coreos.com/checkpoint: "true"
+        scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
-      nodeSelector:
-        node-role.kubernetes.io/master: ""
-      hostNetwork: true
       containers:
       - name: kube-apiserver
         image: ${hyperkube_image}
@@ -35,7 +35,7 @@ spec:
         - --storage-backend=etcd3
         - --allow-privileged=true
         - --service-cluster-ip-range=${service_cidr}
-        - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,ResourceQuota
+        - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
         - --tls-cert-file=/etc/kubernetes/secrets/apiserver.crt
         - --tls-private-key-file=/etc/kubernetes/secrets/apiserver.key
         - --kubelet-client-certificate=/etc/kubernetes/secrets/apiserver.crt
@@ -43,7 +43,6 @@ spec:
         - --service-account-key-file=/etc/kubernetes/secrets/service-account.pub
         - --client-ca-file=/etc/kubernetes/secrets/ca.crt
         - --authorization-mode=RBAC
-        - --runtime-config=rbac.authorization.k8s.io/v1alpha1
         - --anonymous-auth=${anonymous_auth}
         - --oidc-issuer-url=${oidc_issuer_url}
         - --oidc-client-id=${oidc_client_id}
@@ -66,6 +65,15 @@ spec:
         - mountPath: /var/lock
           name: var-lock
           readOnly: false
+      hostNetwork: true
+      tolerations:
+      - key: "CriticalAddonsOnly"
+        operator: "Exists"
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
       volumes:
       - name: ssl-certs-host
         hostPath:

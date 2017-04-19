@@ -40,6 +40,7 @@ data "template_file" "kubelet" {
     version                = "${element(split(":", var.container_images["hyperkube"]), 1)}"
     cluster_dns_ip         = "${var.kube_dns_service_ip}"
     node_label             = "${var.kubelet_node_label}"
+    node_taints_param      = "${var.kubelet_node_taints != "" ? "--register-with-taints=${var.kubelet_node_taints}" : ""}"
     kubeconfig_s3_location = "${var.kubeconfig_s3_location}"
   }
 }

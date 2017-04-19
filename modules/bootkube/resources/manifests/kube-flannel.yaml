@@ -39,7 +39,6 @@ spec:
         tier: node
         app: flannel
     spec:
-      hostNetwork: true
       containers:
       - name: kube-flannel
         image: ${flannel_image}
@@ -74,6 +73,11 @@ spec:
           mountPath: /etc/cni/net.d
         - name: flannel-cfg
           mountPath: /etc/kube-flannel/
+      hostNetwork: true
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
       volumes:
         - name: run
           hostPath:

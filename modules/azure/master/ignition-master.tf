@@ -47,9 +47,10 @@ data "template_file" "kubelet-master" {
   template = "${file("${path.module}/resources/master-kubelet.service")}"
 
   vars {
-    node_label     = "${var.kubelet_node_label}"
-    cloud_provider = "${var.cloud_provider}"
-    cluster_dns    = "${var.tectonic_kube_dns_service_ip}"
+    node_label        = "${var.kubelet_node_label}"
+    node_taints_param = "${var.kubelet_node_taints != "" ? "--register-with-taints=${var.kubelet_node_taints}" : ""}"
+    cloud_provider    = "${var.cloud_provider}"
+    cluster_dns       = "${var.tectonic_kube_dns_service_ip}"
   }
 }
 

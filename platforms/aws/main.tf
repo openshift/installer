@@ -44,6 +44,7 @@ module "ignition-masters" {
   source = "../../modules/aws/ignition"
 
   kubelet_node_label        = "node-role.kubernetes.io/master"
+  kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
   kube_dns_service_ip       = "${var.tectonic_kube_dns_service_ip}"
   etcd_endpoints            = ["${module.etcd.endpoints}"]
   kubeconfig_s3_location    = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
@@ -88,6 +89,7 @@ module "ignition-workers" {
   source = "../../modules/aws/ignition"
 
   kubelet_node_label     = "node-role.kubernetes.io/node"
+  kubelet_node_taints    = ""
   kube_dns_service_ip    = "${var.tectonic_kube_dns_service_ip}"
   etcd_endpoints         = ["${module.etcd.endpoints}"]
   kubeconfig_s3_location = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"

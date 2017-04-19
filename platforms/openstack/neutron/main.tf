@@ -104,6 +104,7 @@ EOF
   tectonic_service             = "${module.tectonic.systemd_service}"
   hostname_infix               = "master"
   node_labels                  = "node-role.kubernetes.io/master"
+  node_taints                  = "node-role.kubernetes.io/master=:NoSchedule"
 }
 
 module "worker_nodes" {
@@ -128,6 +129,7 @@ EOF
   tectonic_service             = ""
   hostname_infix               = "worker"
   node_labels                  = "node-role.kubernetes.io/node"
+  node_taints                  = ""
 }
 
 module "secrets" {

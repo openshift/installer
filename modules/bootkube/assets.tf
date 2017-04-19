@@ -8,8 +8,7 @@ resource "template_folder" "bootkube" {
     pod_checkpointer_image = "${var.container_images["pod_checkpointer"]}"
     kubedns_image          = "${var.container_images["kubedns"]}"
     kubednsmasq_image      = "${var.container_images["kubednsmasq"]}"
-    dnsmasq_metrics_image  = "${var.container_images["dnsmasq_metrics"]}"
-    exechealthz_image      = "${var.container_images["exechealthz"]}"
+    kubedns_sidecar_image  = "${var.container_images["kubedns_sidecar"]}"
     flannel_image          = "${var.container_images["flannel"]}"
 
     etcd_servers   = "${join(",", var.etcd_servers)}"
@@ -31,6 +30,22 @@ resource "template_folder" "bootkube" {
     apiserver_cert     = "${base64encode(tls_locally_signed_cert.apiserver.cert_pem)}"
     serviceaccount_pub = "${base64encode(tls_private_key.service-account.public_key_pem)}"
     serviceaccount_key = "${base64encode(tls_private_key.service-account.private_key_pem)}"
+  }
+}
+
+# Self-hosted bootstrapping manifests (resources/generated/manifests-bootstrap/)
+resource "template_folder" "bootkube-bootstrap" {
+  input_path = "${path.module}/resources/bootstrap-manifests"
+  output_path = "${path.cwd}/generated/bootstrap-manifests"
+
+  vars {
+    hyperkube_image = "${var.container_images["hyperkube"]}"
+
+    etcd_servers = "${join(",", var.etcd_servers)}"
+
+    advertise_address = "${var.advertise_address}"
+    cluster_cidr      = "${var.cluster_cidr}"
+    service_cidr      = "${var.service_cidr}"
   }
 }
 
@@ -57,7 +72,6 @@ data "template_file" "bootkube" {
 
   vars {
     bootkube_image = "${var.container_images["bootkube"]}"
-    etcd_server    = "${element(var.etcd_servers, 0)}"
   }
 }
 

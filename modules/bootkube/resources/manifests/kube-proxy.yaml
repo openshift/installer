@@ -4,14 +4,17 @@ metadata:
   name: kube-proxy
   namespace: kube-system
   labels:
-    k8s-app: kube-proxy
+    tier: node
+    component: kube-proxy
 spec:
   template:
     metadata:
       labels:
-        k8s-app: kube-proxy
+        tier: node
+        component: kube-proxy
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
-      hostNetwork: true
       containers:
       - name: kube-proxy
         image: ${hyperkube_image}
@@ -36,6 +39,13 @@ spec:
         - name: etc-kubernetes
           mountPath: /etc/kubernetes
           readOnly: true
+      hostNetwork: true
+      tolerations:
+      - key: "CriticalAddonsOnly"
+        operator: "Exists"
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
       volumes:
       - hostPath:
           path: /usr/share/ca-certificates
