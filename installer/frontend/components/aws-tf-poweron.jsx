@@ -50,7 +50,7 @@ class AWS_TF_PowerOn extends React.Component {
   }
 
   componentDidUpdate () {
-    if (this.shouldScroll) {
+    if (this.shouldScroll && this.outputNode) {
       this.outputNode.scrollTop = this.outputNode.scrollHeight - this.outputNode.clientHeight;
     }
   }
