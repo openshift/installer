@@ -26,8 +26,9 @@ variable "subnet_ids" {
   type = "list"
 }
 
-variable "extra_sg_ids" {
-  type = "list"
+variable "sg_ids" {
+  type        = "list"
+  description = "The security group IDs to be applied."
 }
 
 variable "user_data" {

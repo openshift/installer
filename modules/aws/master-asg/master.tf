@@ -22,10 +22,6 @@ data "aws_ami" "coreos_ami" {
   }
 }
 
-data "aws_vpc" "cluster_vpc" {
-  id = "${var.vpc_id}"
-}
-
 resource "aws_autoscaling_group" "masters" {
   name                 = "${var.cluster_name}-masters"
   desired_capacity     = "${var.instance_count}"
@@ -60,7 +56,7 @@ resource "aws_launch_configuration" "master_conf" {
   image_id                    = "${data.aws_ami.coreos_ami.image_id}"
   name_prefix                 = "${var.cluster_name}-master-"
   key_name                    = "${var.ssh_key}"
-  security_groups             = ["${concat(list(aws_security_group.master_sec_group.id), var.extra_sg_ids)}"]
+  security_groups             = ["${var.master_sg_ids}"]
   iam_instance_profile        = "${aws_iam_instance_profile.master_profile.arn}"
   associate_public_ip_address = "${var.public_vpc}"
   user_data                   = "${var.user_data}"
@@ -73,51 +69,6 @@ resource "aws_launch_configuration" "master_conf" {
     volume_type = "${var.root_volume_type}"
     volume_size = "${var.root_volume_size}"
     iops        = "${var.root_volume_iops}"
-  }
-}
-
-resource "aws_security_group" "master_sec_group" {
-  vpc_id = "${data.aws_vpc.cluster_vpc.id}"
-
-  tags = "${merge(map(
-      "Name", "${var.cluster_name}_master_sg",
-      "KubernetesCluster", "${var.cluster_name}"
-    ), var.extra_tags)}"
-
-  ingress {
-    protocol  = -1
-    self      = true
-    from_port = 0
-    to_port   = 0
-  }
-
-  ingress {
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    from_port   = 22
-    to_port     = 22
-  }
-
-  ingress {
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    from_port   = 443
-    to_port     = 443
-  }
-
-  ingress {
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-    from_port   = 10255
-    to_port     = 10255
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    self        = true
-    cidr_blocks = ["0.0.0.0/0"]
   }
 }
 

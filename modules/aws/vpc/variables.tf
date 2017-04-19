@@ -27,3 +27,8 @@ variable "extra_tags" {
   type        = "map"
   default     = {}
 }
+
+variable "enable_etcd_sg" {
+  description = "If set to true, security groups for etcd nodes are being created"
+  default     = true
+}

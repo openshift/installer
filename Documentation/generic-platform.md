@@ -19,7 +19,7 @@ Master nodes run most, if not all, control plane components including the API se
 - **Network:**
    - Ingress 
       - MUST allow tcp port 22 [ssh] from user network 
-      - MUST allow port 8472 (UDP) from masters & workers for flannel 
+      - MUST allow port 4789 (UDP) from masters & workers for flannel
       - MUST allow 32000-32002 from all for: Tectonic ingress (if using node ports for ingress like on AWS, otherwise use host ports on workers) 
       - SHOULD allow port 9100 from masters & workers for: Prometheus Node Exporter metrics 
       - MAY have tcp/udp port 30000-32767 [node port range open] 
@@ -60,7 +60,7 @@ Worked nodes run all of the user applications. The only component they must run 
     - **Ingress**
         - MUST allow all ports open to master nodes (TODO: be more specific) 
         - MUST have 30000 to 32767 host port range access open 
-        - MUST allow port 8472 (UDP) from masters & workers for: VXLAN (flannel) 
+        - MUST allow port 4789 (UDP) from masters & workers for: VXLAN (flannel) 
         - SHOULD allow port 10250 from masters for k8s features: port-forward, exec, proxy 
         - SHOULD allow port 9100 from masters & workers for: Prometheus Node Exporter metrics 
         - SHOULD allow port 4194 from masters for: Heapster connections to CAdvisor 

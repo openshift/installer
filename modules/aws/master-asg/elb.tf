@@ -2,19 +2,12 @@ resource "aws_elb" "api-internal" {
   name            = "${var.cluster_name}-api-internal"
   subnets         = ["${var.subnet_ids}"]
   internal        = true
-  security_groups = ["${aws_security_group.master_sec_group.id}"]
+  security_groups = ["${var.api_sg_ids}"]
 
   listener {
     instance_port     = 443
     instance_protocol = "tcp"
     lb_port           = 443
-    lb_protocol       = "tcp"
-  }
-
-  listener {
-    instance_port     = 10255
-    instance_protocol = "tcp"
-    lb_port           = 10255
     lb_protocol       = "tcp"
   }
 
@@ -49,7 +42,7 @@ resource "aws_elb" "api-external" {
   name            = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-api-external"
   subnets         = ["${var.subnet_ids}"]
   internal        = false
-  security_groups = ["${aws_security_group.master_sec_group.id}"]
+  security_groups = ["${var.api_sg_ids}"]
 
   listener {
     instance_port     = 22
@@ -96,7 +89,7 @@ resource "aws_elb" "console" {
   name            = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-console"
   subnets         = ["${var.subnet_ids}"]
   internal        = "${var.public_vpc ? false : true}"
-  security_groups = ["${aws_security_group.master_sec_group.id}"]
+  security_groups = ["${var.console_sg_ids}"]
 
   listener {
     instance_port     = 32001

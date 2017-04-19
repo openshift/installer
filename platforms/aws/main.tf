@@ -11,6 +11,7 @@ module "vpc" {
   external_master_subnets = ["${compact(var.tectonic_aws_external_master_subnet_ids)}"]
   external_worker_subnets = ["${compact(var.tectonic_aws_external_worker_subnet_ids)}"]
   extra_tags              = "${var.tectonic_aws_extra_tags}"
+  enable_etcd_sg          = "${length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
 }
 
 module "etcd" {
@@ -19,12 +20,12 @@ module "etcd" {
   instance_count = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : var.tectonic_aws_az_count == 5 ? 5 : 3}"
   az_count       = "${var.tectonic_aws_az_count}"
   ec2_type       = "${var.tectonic_aws_etcd_ec2_type}"
+  sg_ids         = ["${module.vpc.etcd_sg_id}"]
 
   ssh_key         = "${var.tectonic_aws_ssh_key}"
   cl_channel      = "${var.tectonic_cl_channel}"
   container_image = "${var.tectonic_container_images["etcd"]}"
 
-  vpc_id  = "${module.vpc.vpc_id}"
   subnets = ["${module.vpc.worker_subnet_ids}"]
 
   dns_zone_id  = "${aws_route53_zone.tectonic-int.zone_id}"
@@ -60,9 +61,11 @@ module "masters" {
   ec2_type       = "${var.tectonic_aws_master_ec2_type}"
   cluster_name   = "${var.tectonic_cluster_name}"
 
-  vpc_id       = "${module.vpc.vpc_id}"
-  subnet_ids   = ["${module.vpc.master_subnet_ids}"]
-  extra_sg_ids = ["${module.vpc.cluster_default_sg}"]
+  subnet_ids = ["${module.vpc.master_subnet_ids}"]
+
+  master_sg_ids  = ["${module.vpc.master_sg_id}"]
+  api_sg_ids     = ["${module.vpc.api_sg_id}"]
+  console_sg_ids = ["${module.vpc.console_sg_id}"]
 
   ssh_key    = "${var.tectonic_aws_ssh_key}"
   cl_channel = "${var.tectonic_cl_channel}"
@@ -101,9 +104,9 @@ module "workers" {
   ec2_type       = "${var.tectonic_aws_worker_ec2_type}"
   cluster_name   = "${var.tectonic_cluster_name}"
 
-  vpc_id       = "${module.vpc.vpc_id}"
-  subnet_ids   = ["${module.vpc.worker_subnet_ids}"]
-  extra_sg_ids = ["${module.vpc.cluster_default_sg}"]
+  vpc_id     = "${module.vpc.vpc_id}"
+  subnet_ids = ["${module.vpc.worker_subnet_ids}"]
+  sg_ids     = ["${module.vpc.worker_sg_id}"]
 
   ssh_key                      = "${var.tectonic_aws_ssh_key}"
   cl_channel                   = "${var.tectonic_cl_channel}"

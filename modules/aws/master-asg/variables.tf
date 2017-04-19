@@ -2,10 +2,6 @@ variable "ssh_key" {
   type = "string"
 }
 
-variable "vpc_id" {
-  type = "string"
-}
-
 variable "cl_channel" {
   type = "string"
 }
@@ -26,8 +22,19 @@ variable "subnet_ids" {
   type = "list"
 }
 
-variable "extra_sg_ids" {
-  type = "list"
+variable "master_sg_ids" {
+  type        = "list"
+  description = "The security group IDs to be applied to the master nodes."
+}
+
+variable "api_sg_ids" {
+  type        = "list"
+  description = "The security group IDs to be applied to the public facing ELB."
+}
+
+variable "console_sg_ids" {
+  type        = "list"
+  description = "The security group IDs to be applied to the console ELB."
 }
 
 variable "base_domain" {
@@ -51,7 +58,7 @@ variable "user_data" {
 }
 
 variable "public_vpc" {
-  description = "If set to true, public facing ingress resource are created."
+  description = "If set to true, public facing ingress resources are created."
   default     = true
 }
 

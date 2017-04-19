@@ -22,10 +22,6 @@ variable "instance_count" {
   default = "3"
 }
 
-variable "vpc_id" {
-  type = "string"
-}
-
 variable "ssh_key" {
   type = "string"
 }
@@ -65,4 +61,9 @@ variable "root_volume_size" {
 variable "root_volume_iops" {
   type        = "string"
   description = "The amount of provisioned IOPS for the root block device."
+}
+
+variable "sg_ids" {
+  type        = "list"
+  description = "The security group IDs to be applied."
 }

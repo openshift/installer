@@ -27,7 +27,7 @@ resource "aws_launch_configuration" "worker_conf" {
   image_id             = "${data.aws_ami.coreos_ami.image_id}"
   name_prefix          = "${var.cluster_name}-worker-"
   key_name             = "${var.ssh_key}"
-  security_groups      = ["${concat(list(aws_security_group.worker_sec_group.id), var.extra_sg_ids)}"]
+  security_groups      = ["${var.sg_ids}"]
   iam_instance_profile = "${aws_iam_instance_profile.worker_profile.arn}"
   user_data            = "${var.user_data}"
 
