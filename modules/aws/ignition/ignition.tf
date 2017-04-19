@@ -23,7 +23,7 @@ resource "ignition_systemd_unit" "docker" {
   dropin = [
     {
       name    = "10-dockeropts.conf"
-      content = "[Service]\nEnvironment=DOCKER_OPTS=--log-opt max-size=50m --log-opt max-file=3\n"
+      content = "[Service]\nEnvironment=\"DOCKER_OPTS=--log-opt max-size=50m --log-opt max-file=3\"\n"
     },
   ]
 }

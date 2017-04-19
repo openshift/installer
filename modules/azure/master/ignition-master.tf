@@ -30,6 +30,13 @@ resource "ignition_user" "core" {
 resource "ignition_systemd_unit" "docker" {
   name   = "docker.service"
   enable = true
+
+  dropin = [
+    {
+      name    = "10-dockeropts.conf"
+      content = "[Service]\nEnvironment=\"DOCKER_OPTS=--log-opt max-size=50m --log-opt max-file=3\"\n"
+    },
+  ]
 }
 
 resource "ignition_systemd_unit" "locksmithd" {
