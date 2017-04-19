@@ -28,6 +28,11 @@ variable "tectonic_coreos_version" {
   description = "CoreOS kernel/initrd version to PXE boot. Must be present in matchbox assets."
 }
 
+variable "tectonic_coreos_channel" {
+  type = "string"
+  description = "CoreOS channel corresponding to the tectonic_coreos_version"
+}
+
 variable "tectonic_k8s_domain" {
   type = "string"
   description = "The domain name which resolves to controller node(s)"
@@ -36,4 +41,9 @@ variable "tectonic_k8s_domain" {
 variable "tectonic_ingress_domain" {
   type = "string"
   description = "The domain name which resolves to Tectonic Ingress (i.e. worker node(s))"
+}
+
+variable "tectonic_ssh_authorized_key" {
+  type = "string"
+  description = "SSH public key to use as an authorized key"
 }
