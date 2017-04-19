@@ -88,7 +88,7 @@ variable "tectonic_aws_etcd_root_volume_size" {
 
 variable "tectonic_aws_etcd_root_volume_iops" {
   type        = "string"
-  default     = "0"
+  default     = "100"
   description = "The amount of provisioned IOPS for the root block device of etcd nodes."
 }
 
@@ -106,7 +106,7 @@ variable "tectonic_aws_master_root_volume_size" {
 
 variable "tectonic_aws_master_root_volume_iops" {
   type        = "string"
-  default     = "0"
+  default     = "100"
   description = "The amount of provisioned IOPS for the root block device of master nodes."
 }
 
@@ -124,6 +124,6 @@ variable "tectonic_aws_worker_root_volume_size" {
 
 variable "tectonic_aws_worker_root_volume_iops" {
   type        = "string"
-  default     = "0"
+  default     = "100"
   description = "The amount of provisioned IOPS for the root block device of worker nodes."
 }
