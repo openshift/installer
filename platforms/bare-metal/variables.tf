@@ -27,3 +27,13 @@ variable "coreos_version" {
   type = "string"
   description = "CoreOS kernel/initrd version to PXE boot. Must be present in matchbox assets."
 }
+
+variable "tectonic_k8s_domain" {
+  type = "string"
+  description = "The domain name which resolves to controller node(s)"
+}
+
+variable "tectonic_ingress_domain" {
+  type = "string"
+  description = "The domain name which resolves to Tectonic Ingress (i.e. worker node(s))"
+}
