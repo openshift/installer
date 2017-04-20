@@ -20,7 +20,6 @@ spec:
         version: v1.3.0-beta.0
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ''
-        scheduler.alpha.kubernetes.io/tolerations: '[{"key":"CriticalAddonsOnly", "operator":"Exists"}]'
     spec:
       containers:
         - name: heapster
@@ -64,3 +63,6 @@ spec:
             requests:
               cpu: 50m
               memory: 90Mi
+      tolerations:
+      - key: CriticalAddonsOnly
+        operator: Exists
