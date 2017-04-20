@@ -1,3 +1,7 @@
+terraform {
+  required_version = "= 0.8.8"
+}
+
 variable "tectonic_container_images" {
   description = "Container images to use"
   type        = "map"
