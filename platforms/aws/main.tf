@@ -3,7 +3,6 @@ data "aws_availability_zones" "azs" {}
 module "vpc" {
   source = "../../modules/aws/vpc"
 
-  az_count     = "${var.tectonic_aws_az_count}"
   cidr_block   = "${var.tectonic_aws_vpc_cidr_block}"
   cluster_name = "${var.tectonic_cluster_name}"
 
@@ -12,13 +11,46 @@ module "vpc" {
   external_worker_subnets = ["${compact(var.tectonic_aws_external_worker_subnet_ids)}"]
   extra_tags              = "${var.tectonic_aws_extra_tags}"
   enable_etcd_sg          = "${length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
+
+  # VPC layout settings.
+  #
+  # The following parameters control the layout of the VPC accross availability zones.
+  # Two modes are available:
+  # A. Explicitly configure a list of AZs + associated subnet CIDRs
+  # B. Let the module calculate subnets accross a set number of AZs
+  #
+  # To enable mode A, make sure "tectonic_aws_az_count" variable IS NOT SET to any value 
+  # and instead configure a set of AZs + CIDRs for masters and workers using the
+  # "tectonic_aws_master_custom_subnets" and "tectonic_aws_worker_custom_subnets" variables.
+  #
+  # To enable mode B, make sure that "tectonic_aws_master_custom_subnets" and "tectonic_aws_worker_custom_subnets" 
+  # ARE NOT SET. Instead, set the desired number of VPC AZs using "tectonic_aws_az_count" variable.
+
+  # These counts could be deducted by length(keys(var.tectonic_aws_master_custom_subnets)) 
+  # but there is a restriction on passing computed values as counts. This approach works around that.
+  master_az_count = "${var.tectonic_aws_az_count == "" ? "${length(keys(var.tectonic_aws_master_custom_subnets))}" : var.tectonic_aws_az_count}"
+  worker_az_count = "${var.tectonic_aws_az_count == "" ? "${length(keys(var.tectonic_aws_worker_custom_subnets))}" : var.tectonic_aws_az_count}"
+  # The appending of the "padding" element is required as workaround since the function
+  # element() won't work on empty lists. See https://github.com/hashicorp/terraform/issues/11210
+  master_subnets = "${concat(values(var.tectonic_aws_master_custom_subnets),list("padding"))}"
+  worker_subnets = "${concat(values(var.tectonic_aws_worker_custom_subnets),list("padding"))}"
+  # The split() / join() trick works around the limitation of tenrary operator expressions 
+  # only being able to return strings.
+  master_azs = ["${ split("|", "${length(keys(var.tectonic_aws_master_custom_subnets))}" > 0 ?
+    join("|", keys(var.tectonic_aws_master_custom_subnets)) :
+    join("|", data.aws_availability_zones.azs.names)
+  )}"]
+  worker_azs = ["${ split("|", "${length(keys(var.tectonic_aws_worker_custom_subnets))}" > 0 ?
+    join("|", keys(var.tectonic_aws_worker_custom_subnets)) :
+    join("|", data.aws_availability_zones.azs.names)
+  )}"]
 }
 
 module "etcd" {
   source = "../../modules/aws/etcd"
 
   instance_count = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : var.tectonic_aws_az_count == 5 ? 5 : 3}"
-  az_count       = "${var.tectonic_aws_az_count}"
+  az_count       = "${length(data.aws_availability_zones.azs.names)}"
   ec2_type       = "${var.tectonic_aws_etcd_ec2_type}"
   sg_ids         = ["${module.vpc.etcd_sg_id}"]
 
