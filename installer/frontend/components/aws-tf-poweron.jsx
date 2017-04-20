@@ -100,15 +100,30 @@ class AWS_TF_PowerOn extends React.Component {
             <ul className="wiz-launch-progress">
               <WaitingLi done={statusMsg === 'success'} error={error}>
                 Terraform {action} {statusMsg}
-                <button className="btn btn-link pull-right" onClick={() => saveAs(outputBlob, `tectonic-${clusterName}.log`)}>
-                  <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
-                </button>
-                <button className="btn btn-link pull-right" onClick={() => this.setState({showLogs: !showLogs})}>
-                  { showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
-                             : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
-                </button>
-                { showLogs &&
-                  <pre ref={node => this.outputNode = node} className="terminal">{output}</pre>
+                {output && <div className="pull-right">
+                  <a className="spacer-right" onClick={() => this.setState({showLogs: !showLogs})}>
+                    { showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
+                               : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
+                  </a>
+                  <a onClick={() => saveAs(outputBlob, `tectonic-${clusterName}.log`)}>
+                    <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
+                  </a>
+                </div>}
+                { showLogs && output &&
+                  <div className="log-pane" ref={node => this.outputNode = node}>
+                    <div className="log-pane__header">
+                      <div className="log-pane__header__message">Terraform logs</div>
+                    </div>
+                    <div className="log-pane__body">
+                      <div className="log-area">
+                        <div className="log-scroll-pane">
+                          <div className="log-contents">
+                            <div className="log-contents__block">{output}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 }
               </WaitingLi>
               { consoleSubsteps }
