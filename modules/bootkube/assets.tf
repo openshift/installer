@@ -34,9 +34,9 @@ resource "template_dir" "bootkube" {
 }
 
 # Self-hosted bootstrapping manifests (resources/generated/manifests-bootstrap/)
-resource "template_folder" "bootkube-bootstrap" {
-  input_path  = "${path.module}/resources/bootstrap-manifests"
-  output_path = "${path.cwd}/generated/bootstrap-manifests"
+resource "template_dir" "bootkube-bootstrap" {
+  source_dir      = "${path.module}/resources/bootstrap-manifests"
+  destination_dir = "${path.cwd}/generated/bootstrap-manifests"
 
   vars {
     hyperkube_image = "${var.container_images["hyperkube"]}"
