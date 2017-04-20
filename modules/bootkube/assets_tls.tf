@@ -41,12 +41,12 @@ resource "tls_self_signed_cert" "kube-ca" {
 }
 
 resource "local_file" "kube-ca-key" {
-  content     = "${var.ca_cert == "" ? join(" ", tls_private_key.kube-ca.*.private_key_pem) : var.ca_key}"
+  content  = "${var.ca_cert == "" ? join(" ", tls_private_key.kube-ca.*.private_key_pem) : var.ca_key}"
   filename = "${path.cwd}/generated/tls/ca.key"
 }
 
 resource "local_file" "kube-ca-crt" {
-  content     = "${var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube-ca.*.cert_pem) : var.ca_cert}"
+  content  = "${var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube-ca.*.cert_pem) : var.ca_cert}"
   filename = "${path.cwd}/generated/tls/ca.crt"
 }
 
@@ -96,12 +96,12 @@ resource "tls_locally_signed_cert" "apiserver" {
 }
 
 resource "local_file" "apiserver-key" {
-  content     = "${tls_private_key.apiserver.private_key_pem}"
+  content  = "${tls_private_key.apiserver.private_key_pem}"
   filename = "${path.cwd}/generated/tls/apiserver.key"
 }
 
 resource "local_file" "apiserver-crt" {
-  content     = "${tls_locally_signed_cert.apiserver.cert_pem}"
+  content  = "${tls_locally_signed_cert.apiserver.cert_pem}"
   filename = "${path.cwd}/generated/tls/apiserver.crt"
 }
 
@@ -112,12 +112,12 @@ resource "tls_private_key" "service-account" {
 }
 
 resource "local_file" "service-account-key" {
-  content     = "${tls_private_key.service-account.private_key_pem}"
+  content  = "${tls_private_key.service-account.private_key_pem}"
   filename = "${path.cwd}/generated/tls/service-account.key"
 }
 
 resource "local_file" "service-account-crt" {
-  content     = "${tls_private_key.service-account.public_key_pem}"
+  content  = "${tls_private_key.service-account.public_key_pem}"
   filename = "${path.cwd}/generated/tls/service-account.pub"
 }
 
@@ -155,11 +155,11 @@ resource "tls_locally_signed_cert" "kubelet" {
 }
 
 resource "local_file" "kubelet-key" {
-  content     = "${tls_private_key.kubelet.private_key_pem}"
+  content  = "${tls_private_key.kubelet.private_key_pem}"
   filename = "${path.cwd}/generated/tls/kubelet.key"
 }
 
 resource "local_file" "kubelet-crt" {
-  content     = "${tls_locally_signed_cert.kubelet.cert_pem}"
+  content  = "${tls_locally_signed_cert.kubelet.cert_pem}"
   filename = "${path.cwd}/generated/tls/kubelet.crt"
 }
