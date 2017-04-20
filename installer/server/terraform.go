@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -348,8 +347,8 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 	}
 	ex.AddFile("license.txt", []byte(input.License))
 	ex.AddFile("pull_secret.json", []byte(input.PullSecret))
-	input.Variables["tectonic_license_path"] = filepath.Join(ex.WorkingDirectory(), "license.txt")
-	input.Variables["tectonic_pull_secret_path"] = filepath.Join(ex.WorkingDirectory(), "pull_secret.json")
+	input.Variables["tectonic_license_path"] = "./license.txt"
+	input.Variables["tectonic_pull_secret_path"] = "./pull_secret.json"
 	serviceCidr := input.Variables["tectonic_service_cidr"].(string)
 
 	ip, ok := input.Variables["tectonic_kube_apiserver_service_ip"].(string)
