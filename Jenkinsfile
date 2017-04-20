@@ -141,8 +141,9 @@ pipeline {
 
             make apply
             '''
+            }
           }
-        }
+        )
       }
     }
   }
