@@ -7,7 +7,7 @@ Generally, the OpenStack platform templates adhere to the standards defined by t
 ## Prerequsities
 
  - **CoreOS Container Linux** - The latest Container Linux Beta (1353.2.0 or later) [uploaded into Glance](https://coreos.com/os/docs/latest/booting-on-openstack.html) and its OpenStack image ID.
- - **Make** - This guide uses `make` to download a customized version of Terraform, which is pinned to a specific version and includes required plugins.
+ - **Make** - This guide uses `make` to build the Tectonic Installer.
  - **Tectonic Account** - Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
 
 ## Getting Started

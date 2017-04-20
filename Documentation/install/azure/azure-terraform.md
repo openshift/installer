@@ -9,7 +9,7 @@ Generally, the Azure platform templates adhere to the standards defined by the p
 ## Prerequsities
 
  - **DNS** - Setup your DNS zone in a resource group called `tectonic-dns-group` or specify a different resource group using the `tectonic_azure_dns_resource_group` variable below. We use a separate resource group assuming that you have a zone that you already want to use. Follow the [docs to set one up][azure-dns].
- - **Make** - This guide uses `make` to download a customized version of Terraform, which is pinned to a specific version and includes required plugins.
+ - **Make** - This guide uses `make` to build the Tectonic Installer.
  - **Tectonic Account** - Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
 
 ## Getting Started
