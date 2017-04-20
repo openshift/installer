@@ -359,8 +359,6 @@ export const toAWS_TF = (cc, FORMS) => {
     },
     variables: {
       tectonic_admin_email: cc[ADMIN_EMAIL],
-      tectonic_aws_master_az_count: controllerSubnets.length,
-      tectonic_aws_worker_az_count: workerSubnets.length,
       tectonic_aws_etcd_ec2_type: etcds[INSTANCE_TYPE],
       tectonic_aws_etcd_root_volume_iops: etcds[STORAGE_TYPE] === 'io1' ? etcds[STORAGE_IOPS] : undefined,
       tectonic_aws_etcd_root_volume_size: etcds[STORAGE_SIZE_IN_GIB],
@@ -399,7 +397,8 @@ export const toAWS_TF = (cc, FORMS) => {
   }
   if (cc[AWS_CREATE_VPC] === 'VPC_CREATE') {
     ret.variables.tectonic_aws_vpc_cidr_block = cc[AWS_VPC_CIDR];
-    // TODO: controllerSubnets & workerSubnets
+    ret.variables.tectonic_aws_master_custom_subnets = controllerSubnets;
+    ret.variables.tectonic_aws_worker_custom_subnets = workerSubnets;
   } else {
     ret.variables.tectonic_aws_external_vpc_id = cc[AWS_VPC_ID];
     ret.variables.tectonic_aws_external_master_subnet_ids = controllerSubnets;
