@@ -15,7 +15,7 @@ pipeline {
     stage('Release') {
       agent none
       environment {
-        GO_PROJECT = '/go/src/github.com/coreos-inc/tectonic'
+        GO_PROJECT = '/go/src/github.com/coreos/tectonic-installer'
       }
       steps {
         script {
@@ -44,7 +44,7 @@ pipeline {
                   variable: 'GITHUB_CREDENTIALS'
                 ]]) {
                   container('webapp-agent') {
-                    checkout([$class: 'GitSCM', branches: [[name: "refs/tags/${params.releaseTag}"]], userRemoteConfigs: [[credentialsId: 'github-coreosbot', url: 'https://github.com/coreos-inc/tectonic.git']]])
+                    checkout([$class: 'GitSCM', branches: [[name: "refs/tags/${params.releaseTag}"]], userRemoteConfigs: [[credentialsId: 'github-coreosbot', url: 'https://github.com/coreos/tectonic-installer.git']]])
                     sh "mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT"
                     sh "go get github.com/golang/lint/golint"
                     sh """#!/bin/bash -ex
@@ -67,4 +67,3 @@ pipeline {
     }
   }
 }
-
