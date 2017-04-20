@@ -1,7 +1,7 @@
 # Self-hosted manifests (resources/generated/manifests/)
-resource "template_folder" "bootkube" {
-  input_path  = "${path.module}/resources/manifests"
-  output_path = "${path.cwd}/generated/manifests"
+resource "template_dir" "bootkube" {
+  source_dir      = "${path.module}/resources/manifests"
+  destination_dir = "${path.cwd}/generated/manifests"
 
   vars {
     hyperkube_image        = "${var.container_images["hyperkube"]}"
@@ -61,9 +61,9 @@ data "template_file" "kubeconfig" {
   }
 }
 
-resource "localfile_file" "kubeconfig" {
+resource "local_file" "kubeconfig" {
   content     = "${data.template_file.kubeconfig.rendered}"
-  destination = "${path.cwd}/generated/kubeconfig"
+  filename = "${path.cwd}/generated/kubeconfig"
 }
 
 # bootkube.sh (resources/generated/bootkube.sh)
@@ -75,9 +75,9 @@ data "template_file" "bootkube" {
   }
 }
 
-resource "localfile_file" "bootkube" {
+resource "local_file" "bootkube" {
   content     = "${data.template_file.bootkube.rendered}"
-  destination = "${path.cwd}/generated/bootkube.sh"
+  filename = "${path.cwd}/generated/bootkube.sh"
 }
 
 # bootkube.service (available as output variable)

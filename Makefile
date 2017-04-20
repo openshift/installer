@@ -1,5 +1,3 @@
-include terraform.mk
-
 CLUSTER ?= demo
 PLATFORM ?= aws
 TMPDIR ?= /tmp

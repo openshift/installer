@@ -1,5 +1,5 @@
-assets
-assets*.zip
+./assets
+./assets*.zip
 **/id_rsa*
 **/terraform.tfstate*
 .terraform

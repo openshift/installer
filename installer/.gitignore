@@ -1,0 +1,10 @@
+*.aci
+assets/frontend/scripts/
+bin/
+binassets/assets.go
+dev/scripts/
+frontend/node_modules/
+tools/
+matchbox
+tests/scripts/aws/output/
+scripts/cluster/output/

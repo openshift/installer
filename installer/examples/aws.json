@@ -1,0 +1,72 @@
+{
+  "clusterKind": "tectonic-aws",
+  "dryRun": false,
+  "cluster": {
+    "accessKeyID": "awsAccessKeyId",
+    "secretAccessKey": "awsSecretAccessKey",
+    "cloudForm": {
+      "clusterName": "test",
+      "controllerCount": 1,
+      "controllerDomain": "test-k8s.example.com",
+      "controllerInstanceType": "t2.large",
+      "controllerRootVolumeSize": 33,
+      "controllerRootVolumeType": "gp2",
+      "controllerSubnets": [
+        {
+          "availabilityZone": "us-west-1a",
+          "instanceCIDR": "10.0.0.0/19"
+        },
+        {
+          "availabilityZone": "us-west-1c",
+          "instanceCIDR": "10.0.32.0/19"
+        }
+      ],
+      "externalETCDClient": "",
+      "elbScheme": "internet-facing",
+      "hostedZoneID": "asfd",
+      "keyName": "some-ssh-key",
+      "kmsKeyARN": "arn:aws:kms:us-west-1:477645798544:key/thekey",
+      "region": "us-west-1",
+      "tectonicDomain": "test.example.com",
+      "vpcCIDR": "10.0.0.0/16",
+      "podCIDR": "10.2.0.0/16",
+      "serviceCIDR": "10.3.0.0/24",
+      "etcdCount": 3,
+      "etcdInstanceType": "t2.large",
+      "etcdRootVolumeSize": 300,
+      "etcdRootVolumeType": "gp2",
+      "tags": [
+        {
+          "key": "test_tag",
+          "value": "testing"
+        }
+      ],
+      "workerCount": 3,
+      "workerInstanceType": "t2.medium",
+      "workerRootVolumeIOPS": 1500,
+      "workerRootVolumeSize": 1000,
+      "workerRootVolumeType": "io1",
+      "workerSubnets": [
+        {
+          "availabilityZone": "us-west-1a",
+          "instanceCIDR": "10.0.64.0/19"
+        },
+        {
+          "availabilityZone": "us-west-1c",
+          "instanceCIDR": "10.0.96.0/19"
+        }
+      ],
+      "channel": "stable"
+    },
+    "tectonic": {
+      "ingressKind": "NodePort",
+      "identityAdminUser": "admin@example.com",
+      "identityAdminPassword": "UEFTU1dPUkQ=",
+      "license": "<TECTONIC_LICENSE>",
+      "dockercfg": "<TECTONIC_PULL_SECRET>",
+      "updater": {
+        "enabled": true
+      }
+    }
+  }
+}

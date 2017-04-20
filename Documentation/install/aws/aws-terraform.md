@@ -21,23 +21,18 @@ $ git clone https://github.com/coreos/tectonic-installer.git
 $ cd tectonic-installer
 ```
 
-Download the pinned Terraform binary and modules required for Tectonic:
+Build the Tectonic Installer:
 
 ```
-$ make terraform-download
+$ (cd installer && make build)
 ```
 
-After downloading, you will need to source this new binary in your `$PATH`. This is important, especially if you have another verison of Terraform installed. Run this command to add it to your path:
+Initialize the TerraForm configuration with Installer's location and export the path to that configuration:
 
 ```
-$ export PATH=`pwd`/bin/terraform:$PATH
-```
-
-You can double check that you're using the binary that was just downloaded:
-
-```
-$ which terraform
-/Users/coreos/tectonic-installer/bin/terraform/terraform
+$ INSTALLER_PATH=$(pwd)/installer/bin/linux/installer # Edit the platform name.
+$ sed "s|<PATH_TO_INSTALLER>|$INSTALLER_PATH|g" terraformrc.example > .terraformrc
+$ export TERRAFORM_CONFIG=$(pwd)/.terraformrc
 ```
 
 Next, get the modules that Terraform will use to create the cluster resources:

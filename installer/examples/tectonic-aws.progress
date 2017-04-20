@@ -1,0 +1,59 @@
+{
+  "clusterConfig": {
+    "platformType": "aws",
+    "aws_kms": "arn:aws:kms:us-west-1:477645798544:key/thekey",
+    "aws_ssh": "some-ssh-key", 
+    "aws_etcds-numberOfInstances": 3,
+    "aws_etcds-instanceType": "t2.large",
+    "aws_etcds-storageSizeInGiB": 300,
+    "aws_controllers-numberOfInstances": 1,
+    "aws_controllers-instanceType": "t2.large",
+    "aws_controllers-storageSizeInGiB": 33,
+    "awsControllerSubnets": {
+      "us-west-1a": "10.0.0.0/19",
+      "us-west-1c": "10.0.32.0/19"
+    },
+    "awsWorkerSubnets": {
+      "us-west-1a": "10.0.64.0/19",
+      "us-west-1c": "10.0.96.0/19"
+    },
+    "aws_workers-numberOfInstances": 3,
+    "aws_workers-instanceType": "t2.medium",
+    "aws_workers-storageSizeInGiB": 1000,
+    "aws_workers-storageType": "io1",
+    "aws_workers-storageIOPS": 1500,
+    "podCIDR": "10.2.0.0/16",
+    "serviceCIDR": "10.3.0.0/24",
+    "extra": {
+        "awsHostedZoneId": {
+            "zoneToName": {
+                "asfd": "example.com"    
+            }
+        }
+    },
+    "awsHostedZoneId": "asfd",
+    "awsRegion": "us-west-1",
+    "awsAccessKeyId": "awsAccessKeyId",
+    "awsSecretAccessKey": "awsSecretAccessKey",
+    "awsSessionToken": "awsSessionToken",
+    "sts_enabled": false,
+    "caType": "self-signed",
+    "clusterName": "test",
+    "clusterSubdomain": "test",
+    "channelToUse": "stable",
+    "externalETCDClient": "",
+    "externalETCDEnabled": false,
+    "updater_enabled": true,
+    "tectonicLicense": "<TECTONIC_LICENSE>",
+    "pullSecret": "<TECTONIC_PULL_SECRET>",
+    "adminEmail": "admin@example.com",
+    "adminPassword": "PASSWORD",
+    "awsTags": [
+      {
+        "key": "test_tag",
+        "value": "testing"
+      }
+    ],
+    "updater": {}
+  }
+}

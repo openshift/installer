@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="/frontend/lib/mochi/mochi.css">
+    <link rel="stylesheet" href="/frontend/lib/font-awesome/css/font-awesome.css">
+    <link rel="stylesheet" href="/frontend/css/styles.css">
+    <link rel="shortcut icon" href="/frontend/lib/mochi/img/favicon/tectonic/favicon-96x96.png">
+    <title>Tectonic Installer</title>
+    <script type="text/javascript">
+      window.config = {{ .Config }}
+    </script>
+  </head>
+  <body class="theme-tectonic-light application-root">
+    <div id="tectonic-modal"></div>
+    <nav class="wiz-nav">
+      <a class="cos-navbar__logo-link"
+         href="/"><img class="cos-navbar__logo" alt="Tectonic Logo" src="/frontend/lib/mochi/img/logo/tectonic/tectonic-logo.svg"></a>
+      <span class="wiz-nav__questions"
+            >Questions? <a href="https://tectonic.com/docs/" target="_blank">Read the Tectonic docs</a>.</span>
+    </nav>
+    <div id="application"></div>
+    <script src="/frontend/scripts/app-bundle.js"></script>
+  </body>
+</html>

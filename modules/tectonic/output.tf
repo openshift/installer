@@ -11,12 +11,12 @@
 # be used as part of the output filename, in order to enforce the creation of
 # the archive after the assets have been properly generated.
 #
-# Both localfile and template_folder providers compute their IDs by hashing
+# Both localfile and template_dir providers compute their IDs by hashing
 # the content of the resources on disk. Because this output is computed from the
 # combination of all the resources' IDs, it can't be guessed and can only be
 # interpolated once the assets have all been created.
 output "id" {
-  value = "${sha1("${template_folder.tectonic.id} ${localfile_file.tectonic.id}")}"
+  value = "${sha1("${template_dir.tectonic.id} ${local_file.tectonic.id}")}"
 }
 
 output "systemd_service" {

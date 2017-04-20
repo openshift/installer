@@ -1,8 +1,7 @@
 # Kubernetes Manifests (resources/generated/manifests/)
-## github.com/coreos-inc/tectonic/commit/0b48144d5332201cf461a309d501b33a00a26f75
-resource "template_folder" "tectonic" {
-  input_path  = "${path.module}/resources/manifests"
-  output_path = "${path.cwd}/generated/tectonic"
+resource "template_dir" "tectonic" {
+  source_dir      = "${path.module}/resources/manifests"
+  destination_dir = "${path.cwd}/generated/tectonic"
 
   vars {
     addon_resizer_image                = "${var.container_images["addon_resizer"]}"
@@ -75,9 +74,9 @@ data "template_file" "tectonic" {
   }
 }
 
-resource "localfile_file" "tectonic" {
+resource "local_file" "tectonic" {
   content     = "${data.template_file.tectonic.rendered}"
-  destination = "${path.cwd}/generated/tectonic.sh"
+  filename = "${path.cwd}/generated/tectonic.sh"
 }
 
 # tectonic.sh (resources/generated/tectonic-rkt.sh)
@@ -90,9 +89,9 @@ data "template_file" "tectonic-rkt" {
   }
 }
 
-resource "localfile_file" "tectonic-rkt" {
+resource "local_file" "tectonic-rkt" {
   content     = "${data.template_file.tectonic-rkt.rendered}"
-  destination = "${path.cwd}/generated/tectonic-rkt.sh"
+  filename = "${path.cwd}/generated/tectonic-rkt.sh"
 }
 
 # tectonic.service (available as output variable)
