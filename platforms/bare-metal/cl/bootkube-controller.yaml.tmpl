@@ -77,7 +77,7 @@ systemd:
           --pod-manifest-path=/etc/kubernetes/manifests \
           --allow-privileged \
           --hostname-override={{.domain_name}} \
-          --node-labels=master=true \
+          --node-labels=node-role.kubernetes.io/master \
           --cluster_dns={{.k8s_dns_service_ip}} \
           --cluster_domain=cluster.local
         ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
@@ -88,28 +88,36 @@ systemd:
     - name: bootkube.service
       contents: |
         [Unit]
-        Description=Bootstrap a Kubernetes control plane with a temp api-server
+        Description=Bootstrap a Kubernetes cluster
+        ConditionPathExists=!/opt/tectonic/init_bootkube.done
         [Service]
-        Type=simple
-        WorkingDirectory=/opt/bootkube
-        ExecStart=/opt/bootkube/bootkube-start
+        Type=oneshot
+        RemainAfterExit=true
+        WorkingDirectory=/opt/tectonic
+        User=root
+        Group=root
+        ExecStart=/usr/bin/bash /opt/tectonic/bootkube.sh
+        ExecStartPost=/bin/touch /opt/tectonic/init_bootkube.done
+        [Install]
+        WantedBy=multi-user.target
+    - name: tectonic.service
+      contents: |
+        [Unit]
+        Description=Bootstrap a Tectonic cluster
+        ConditionPathExists=!/opt/tectonic/init_tectonic.done
+        Requires=bootkube.service
+        After=bootkube.service
+        [Service]
+        Type=oneshot
+        RemainAfterExit=true
+        WorkingDirectory=/opt/tectonic
+        User=root
+        Group=root
+        ExecStart=/usr/bin/bash /opt/tectonic/tectonic-rkt.sh
+        ExecStartPost=/bin/touch /opt/tectonic/init_tectonic.done
+        [Install]
+        WantedBy=multi-user.target
 storage:
-  {{ if index . "pxe" }}
-  disks:
-    - device: /dev/sda
-      wipe_table: true
-      partitions:
-        - label: ROOT
-  filesystems:
-    - name: root
-      mount:
-        device: "/dev/sda1"
-        format: "ext4"
-        create:
-          force: true
-          options:
-            - "-LROOT"
-  {{end}}
   files:
     - path: /etc/kubernetes/kubelet.env
       filesystem: root
@@ -129,32 +137,6 @@ storage:
       contents:
         inline: |
           fs.inotify.max_user_watches=16184
-    - path: /opt/bootkube/bootkube-start
-      filesystem: root
-      mode: 0544
-      user:
-        id: 500
-      group:
-        id: 500
-      contents:
-        inline: |
-          #!/bin/bash
-          # Wrapper for bootkube start
-          set -e
-          mkdir -p /tmp/bootkube
-          BOOTKUBE_ACI="${BOOTKUBE_ACI:-quay.io/coreos/bootkube}"
-          BOOTKUBE_VERSION="${BOOTKUBE_VERSION:-v0.4.0}"
-          BOOTKUBE_ASSETS="${BOOTKUBE_ASSETS:-/opt/bootkube/assets}"
-          exec /usr/bin/rkt run \
-            --trust-keys-from-https \
-            --volume assets,kind=host,source=$BOOTKUBE_ASSETS \
-            --mount volume=assets,target=/assets \
-            --volume bootstrap,kind=host,source=/etc/kubernetes/manifests \
-            --mount volume=bootstrap,target=/etc/kubernetes/manifests \
-            --volume temp,kind=host,source=/tmp/bootkube \
-            --mount volume=temp,target=/tmp/bootkube \
-            $RKT_OPTS \
-            ${BOOTKUBE_ACI}:${BOOTKUBE_VERSION} --net=host --exec=/bootkube -- start --asset-dir=/assets "$@"
 passwd:
   users:
     - name: core
