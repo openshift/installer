@@ -6,5 +6,8 @@
 **/ssh-key.pem
 build/**
 config.tfvars
+terraform.tfvars
+pull-secret.json
+tectonic-license.txt
 generated/
 bin/
