@@ -35,7 +35,7 @@ resource "template_dir" "bootkube" {
 
 # Self-hosted bootstrapping manifests (resources/generated/manifests-bootstrap/)
 resource "template_folder" "bootkube-bootstrap" {
-  input_path = "${path.module}/resources/bootstrap-manifests"
+  input_path  = "${path.module}/resources/bootstrap-manifests"
   output_path = "${path.cwd}/generated/bootstrap-manifests"
 
   vars {
@@ -62,7 +62,7 @@ data "template_file" "kubeconfig" {
 }
 
 resource "local_file" "kubeconfig" {
-  content     = "${data.template_file.kubeconfig.rendered}"
+  content  = "${data.template_file.kubeconfig.rendered}"
   filename = "${path.cwd}/generated/kubeconfig"
 }
 
@@ -76,7 +76,7 @@ data "template_file" "bootkube" {
 }
 
 resource "local_file" "bootkube" {
-  content     = "${data.template_file.bootkube.rendered}"
+  content  = "${data.template_file.bootkube.rendered}"
   filename = "${path.cwd}/generated/bootkube.sh"
 }
 
