@@ -7,9 +7,9 @@ import (
 
 // KnownPlatforms is the list of supported platforms.
 var KnownPlatforms = []string{
+	"aws-tf",
 	"aws",
 	"bare-metal",
-	"aws-tf",
 	"azure",
 	"openstack",
 }
