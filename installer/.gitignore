@@ -1,9 +1,7 @@
 *.aci
-assets/frontend/scripts/
-bin/
-binassets/assets.go
-frontend/node_modules/
-tools/
-matchbox
-tests/scripts/aws/output/
-scripts/cluster/output/
+/assets/frontend/scripts/
+/bin/
+/binassets/assets.go
+/frontend/node_modules/
+/matchbox
+/tests/scripts/aws/output/
