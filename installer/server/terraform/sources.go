@@ -12,6 +12,13 @@ import (
 )
 
 // sources lists the files/directories that compose the TerraForm sources.
+//
+// The separator enables us to make the distinction between finding a directory
+// and a file.
+//
+// NOTE: Any changes to this list must be reflected in the release script.
+// TODO: Ideally, we would have only one source of truth. We could maybe use
+// a LDFLAG to fill this for example.
 var sources = []string{
 	"modules" + string(filepath.Separator),
 	"platforms" + string(filepath.Separator),
