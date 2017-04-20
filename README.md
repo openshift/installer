@@ -33,13 +33,9 @@ See the official Tectonic documentation:
 
 At a high level, using the installer follows the workflow below. See each platform guide for specifics.
 
-**Download Terraform**
+**Install Terraform**
 
-This repo a build of Terraform which includes required plugins and is pinned to a specific version. First, download the Terraform binaries:
-
-```
-$ make terraform-download
-```
+This project is built on Terraform and requires version 0.8.8. Download and install an [official Terraform binary](https://releases.hashicorp.com/terraform/0.8.8/) for your OS or use your favorite package manager.
 
 **Choose your platform**
 
