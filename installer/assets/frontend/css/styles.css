@@ -607,10 +607,45 @@ hr.spacer {
   vertical-align: -2px;
 }
 
-pre.terminal {
-  max-height: 400px;
-  max-width: 600px;
-  overflow-x: hidden;
-  overflow-y: scroll;
-  white-space: pre-wrap;
+.log-pane {
+  color: #fff;
+  padding: 10px 0 10px 20px;
 }
+
+.log-pane__header {
+  background-color: #555;
+  padding: 8px 10px 5px 10px;
+  font-size: 13px;
+}
+
+.log-container-selector__text {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+
+.log-area {
+  box-shadow: inset 0px 3px 5px 0px rgba(0,0,0,0.75);
+  font-size: 13px;
+  background-color: #333;
+  position: relative;
+}
+
+.log-scroll-pane {
+  overflow: auto;
+  padding-top: 10px;
+}
+
+.log-contents {
+  max-height: 500px;
+}
+
+.log-contents__block {
+  padding: 0px 10px 10px;
+  white-space: pre;
+  width: 0;
+}
+
+.spacer-right {
+  padding-right: 15px;
+}
+
