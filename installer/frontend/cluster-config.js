@@ -359,11 +359,21 @@ export const toAWS_TF = (cc, FORMS) => {
     },
     variables: {
       tectonic_admin_email: cc[ADMIN_EMAIL],
-      tectonic_aws_az_count: Math.min(controllerSubnets.length, workerSubnets.length),
+      tectonic_aws_master_az_count: controllerSubnets.length,
+      tectonic_aws_worker_az_count: workerSubnets.length,
       tectonic_aws_etcd_ec2_type: etcds[INSTANCE_TYPE],
+      tectonic_aws_etcd_root_volume_iops: etcds[STORAGE_TYPE] === 'io1' ? etcds[STORAGE_IOPS] : undefined,
+      tectonic_aws_etcd_root_volume_size: etcds[STORAGE_SIZE_IN_GIB],
+      tectonic_aws_etcd_root_volume_type: etcds[STORAGE_TYPE],
       tectonic_aws_master_ec2_type: controllers[INSTANCE_TYPE],
-      tectonic_aws_ssh_key: cc[AWS_SSH],
+      tectonic_aws_master_root_volume_iops: controllers[STORAGE_TYPE] === 'io1' ? controllers[STORAGE_IOPS] : undefined,
+      tectonic_aws_master_root_volume_size: controllers[STORAGE_SIZE_IN_GIB],
+      tectonic_aws_master_root_volume_type: controllers[STORAGE_TYPE],
       tectonic_aws_worker_ec2_type: workers[INSTANCE_TYPE],
+      tectonic_aws_worker_root_volume_iops: workers[STORAGE_TYPE] === 'io1' ? controllers[STORAGE_IOPS] : undefined,
+      tectonic_aws_worker_root_volume_size: workers[STORAGE_SIZE_IN_GIB],
+      tectonic_aws_worker_root_volume_type: workers[STORAGE_TYPE],
+      tectonic_aws_ssh_key: cc[AWS_SSH],
       tectonic_base_domain: getZoneDomain(cc),
       tectonic_cl_channel: cc[CHANNEL_TO_USE],
       tectonic_cluster_cidr: cc[POD_CIDR],
@@ -374,6 +384,7 @@ export const toAWS_TF = (cc, FORMS) => {
       tectonic_master_count: controllers[NUMBER_OF_INSTANCES],
       tectonic_service_cidr: cc[SERVICE_CIDR],
       tectonic_worker_count: workers[NUMBER_OF_INSTANCES],
+      // TODO: shouldn't hostedZoneID be specified somewhere?
       tectonic_dns_name: cc[CLUSTER_SUBDOMAIN],
     },
   };
@@ -387,10 +398,12 @@ export const toAWS_TF = (cc, FORMS) => {
   }
   if (cc[AWS_CREATE_VPC] === 'VPC_CREATE') {
     ret.variables.tectonic_aws_vpc_cidr_block = cc[AWS_VPC_CIDR];
+    // TODO: controllerSubnets & workerSubnets
   } else {
     ret.variables.tectonic_aws_external_vpc_id = cc[AWS_VPC_ID];
     ret.variables.tectonic_aws_external_master_subnet_ids = controllerSubnets;
     ret.variables.tectonic_aws_external_worker_subnet_ids = workerSubnets;
+    ret.variables.tectonic_aws_external_vpc_public = cc[AWS_CREATE_VPC] !== 'VPC_PRIVATE';
   }
   if (cc[UPDATER_ENABLED]) {
     ret.variables.tectonic_update_server = cc[UPDATER].server;
@@ -404,20 +417,4 @@ export const toAWS_TF = (cc, FORMS) => {
   }
 
   return ret;
-
-  //   elbScheme: cc[AWS_CREATE_VPC] === 'VPC_PRIVATE' ? "internal" : "internet-facing",
-  //   hostedZoneID: hostedZoneID,
-  //   etcdRootVolumeSize: etcds[STORAGE_SIZE_IN_GIB],
-  //   etcdRootVolumeType: etcds[STORAGE_TYPE],
-  //   etcdRootVolumeIOPS: etcds[STORAGE_TYPE] === 'io1' ? etcds[STORAGE_IOPS] : undefined,
-  //   controllerRootVolumeSize: controllers[STORAGE_SIZE_IN_GIB],
-  //   controllerRootVolumeType: controllers[STORAGE_TYPE],
-  //   controllerRootVolumeIOPS: controllers[STORAGE_TYPE] === 'io1' ? controllers[STORAGE_IOPS] : undefined,
-  //   workerRootVolumeSize: workers[STORAGE_SIZE_IN_GIB],
-  //   workerRootVolumeType: workers[STORAGE_TYPE],
-  //   workerRootVolumeIOPS: workers[STORAGE_TYPE] === 'io1' ? workers[STORAGE_IOPS] : undefined,
-  // },
-  // tectonic: {
-  //   ingressKind: 'NodePort',
-  // },
 };
