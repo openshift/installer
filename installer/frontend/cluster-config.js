@@ -175,7 +175,7 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [UPDATER]: {
     server: 'https://tectonic.update.core-os.net',
     channel: 'tectonic-1.5',
-    appID: '',
+    appID: '6bc7b986-4654-4a0f-94b3-84ce6feb1db4',
   },
   [UPDATER_ENABLED]: false,
   [POD_CIDR]: "10.2.0.0/16",
@@ -386,6 +386,7 @@ export const toAWS_TF = (cc, FORMS) => {
       tectonic_worker_count: workers[NUMBER_OF_INSTANCES],
       // TODO: shouldn't hostedZoneID be specified somewhere?
       tectonic_dns_name: cc[CLUSTER_SUBDOMAIN],
+      tectonic_experimental: cc[UPDATER_ENABLED],
     },
   };
 
@@ -404,11 +405,6 @@ export const toAWS_TF = (cc, FORMS) => {
     ret.variables.tectonic_aws_external_master_subnet_ids = controllerSubnets;
     ret.variables.tectonic_aws_external_worker_subnet_ids = workerSubnets;
     ret.variables.tectonic_aws_external_vpc_public = cc[AWS_CREATE_VPC] !== 'VPC_PRIVATE';
-  }
-  if (cc[UPDATER_ENABLED]) {
-    ret.variables.tectonic_update_server = cc[UPDATER].server;
-    ret.variables.tectonic_update_channel = cc[UPDATER].channel;
-    ret.variables.tectonic_update_app_id = cc[UPDATER].appID;
   }
   if (cc[CA_TYPE] === 'owned') {
     ret.variables.tectonic_ca_cert = cc[CA_CERTIFICATE];
