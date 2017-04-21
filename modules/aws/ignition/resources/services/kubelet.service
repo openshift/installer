@@ -31,8 +31,8 @@ ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --node-labels=${node_label} \
   ${node_taints_param} \
   --minimum-container-ttl-duration=6m0s \
-  --cluster_dns=${cluster_dns_ip} \
-  --cluster_domain=cluster.local \
+  --cluster-dns=${cluster_dns_ip} \
+  --cluster-domain=cluster.local \
   --client-ca-file=/etc/kubernetes/ca.crt \
   --anonymous-auth=false \
   --cloud-provider=aws
