@@ -3,28 +3,35 @@ PLATFORM ?= aws
 TMPDIR ?= /tmp
 TOP_DIR := $(patsubst %/,%,$(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 BUILD_DIR = $(TOP_DIR)/build/$(CLUSTER)
-
+INSTALLER_BIN = $(TOP_DIR)/installer/bin/$(shell uname | tr '[:upper:]' '[:lower:]')/installer
 TF_DOCS := $(shell which terraform-docs 2> /dev/null)
+TF_CMD = TERRAFORM_CONFIG=$(TOP_DIR)/.terraformrc terraform
 
 $(info Using build directory [${BUILD_DIR}])
 
 all: apply
+
+$(INSTALLER_BIN):
+	make build -C $(TOP_DIR)/installer
+
+installer-env: $(INSTALLER_BIN) terraformrc.example	
+	sed "s|<PATH_TO_INSTALLER>|$(INSTALLER_BIN)|g" terraformrc.example > .terraformrc
 
 localconfig:
 	mkdir -p $(BUILD_DIR)
 	touch $(BUILD_DIR)/terraform.tfvars
 
 $(BUILD_DIR)/.terraform:
-	cd $(BUILD_DIR) && terraform get $(TOP_DIR)/platforms/$(PLATFORM)
+	cd $(BUILD_DIR) && $(TF_CMD) get $(TOP_DIR)/platforms/$(PLATFORM)
 
-plan: $(BUILD_DIR)/.terraform
-	cd $(BUILD_DIR) && terraform plan $(TOP_DIR)/platforms/$(PLATFORM)
+plan: installer-env $(BUILD_DIR)/.terraform
+	cd $(BUILD_DIR) && $(TF_CMD) plan $(TOP_DIR)/platforms/$(PLATFORM)
 
-apply: $(BUILD_DIR)/.terraform
-	cd $(BUILD_DIR) && terraform apply $(TOP_DIR)/platforms/$(PLATFORM)
+apply: installer-env $(BUILD_DIR)/.terraform
+	cd $(BUILD_DIR) && $(TF_CMD) apply $(TOP_DIR)/platforms/$(PLATFORM)
 
-destroy:
-	cd $(BUILD_DIR) && terraform destroy -force $(TOP_DIR)/platforms/$(PLATFORM)
+destroy: installer-env
+	cd $(BUILD_DIR) && $(TF_CMD) destroy -force $(TOP_DIR)/platforms/$(PLATFORM)
 
 terraform-check:
 	@terraform-docs >/dev/null 2>&1 || @echo "terraform-docs is required (https://github.com/segmentio/terraform-docs)"
