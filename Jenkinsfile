@@ -85,7 +85,8 @@ pipeline {
             make plan
 
             # always cleanup cluster
-            function shutdown() {
+            shutdown()
+            {
               make destroy
             }
             trap shutdown EXIT
