@@ -7,6 +7,7 @@ import { savable } from '../reducer';
 import * as trail from '../trail';
 
 import { Loader } from './loader';
+import { ResetButton } from './reset-button';
 import { restoreModal } from './restore';
 import { WithTooltip } from './tooltip';
 import { PLATFORM_TYPE } from '../cluster-config';
@@ -63,13 +64,7 @@ const Pager = ({showPrev, showNext, disableNext, loadingNext, navigatePrevious, 
                 >Previous Step</button>
       }
       { resetBtn && <div className="wiz-form__actions__prev">
-
-        <button onClick={() => {
-          // eslint-disable-next-line no-alert
-          (window.config.devMode || window.confirm('Do you really want to start over?')) && window.reset();
-        }} className="btn btn-link">
-           Start Over
-        </button>
+        <ResetButton />
       </div>
       }
       {
