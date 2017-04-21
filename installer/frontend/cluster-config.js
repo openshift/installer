@@ -321,6 +321,12 @@ export const toAWS = (cc, FORMS) => {
   return ret;
 };
 
+const toSubnetObj = (subnets, key) => _(subnets)
+  .keyBy(o => o.availabilityZone)
+  .mapValues(v => v[key])
+  .value();
+
+
 export const toAWS_TF = (cc, FORMS) => {
   const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
   const etcds = FORMS[AWS_ETCDS].getData(cc);
@@ -331,11 +337,23 @@ export const toAWS_TF = (cc, FORMS) => {
   let workerSubnets;
 
   if (cc[AWS_CREATE_VPC] === 'VPC_CREATE') {
-    controllerSubnets = toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
-    workerSubnets = toVPCSubnet(region, cc[AWS_WORKER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
+    controllerSubnets = toSubnetObj(
+      toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]),
+      'instanceCIDR'
+    );
+    workerSubnets = toSubnetObj(
+      toVPCSubnet(region, cc[AWS_WORKER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]),
+      'instanceCIDR'
+    );
   } else {
-    controllerSubnets = toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
-    workerSubnets = toVPCSubnet(region, cc[AWS_WORKER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
+    controllerSubnets = toSubnetObj(
+      toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]),
+      'id'
+    );
+    workerSubnets = toSubnetObj(
+      toVPCSubnet(region, cc[AWS_WORKER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]),
+      'id'
+    );
   }
 
   const extraTags = {};
@@ -359,8 +377,6 @@ export const toAWS_TF = (cc, FORMS) => {
     },
     variables: {
       tectonic_admin_email: cc[ADMIN_EMAIL],
-      tectonic_aws_master_az_count: controllerSubnets.length,
-      tectonic_aws_worker_az_count: workerSubnets.length,
       tectonic_aws_etcd_ec2_type: etcds[INSTANCE_TYPE],
       tectonic_aws_etcd_root_volume_iops: etcds[STORAGE_TYPE] === 'io1' ? etcds[STORAGE_IOPS] : undefined,
       tectonic_aws_etcd_root_volume_size: etcds[STORAGE_SIZE_IN_GIB],
@@ -399,7 +415,8 @@ export const toAWS_TF = (cc, FORMS) => {
   }
   if (cc[AWS_CREATE_VPC] === 'VPC_CREATE') {
     ret.variables.tectonic_aws_vpc_cidr_block = cc[AWS_VPC_CIDR];
-    // TODO: controllerSubnets & workerSubnets
+    ret.variables.tectonic_aws_master_custom_subnets = controllerSubnets;
+    ret.variables.tectonic_aws_worker_custom_subnets = workerSubnets;
   } else {
     ret.variables.tectonic_aws_external_vpc_id = cc[AWS_VPC_ID];
     ret.variables.tectonic_aws_external_master_subnet_ids = controllerSubnets;
