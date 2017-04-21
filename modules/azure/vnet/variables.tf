@@ -33,3 +33,8 @@ variable "vnet_cidr_block" {
 variable "location" {
   type = "string"
 }
+
+variable "external_vnet_name" {
+  type    = "string"
+  default = ""
+}

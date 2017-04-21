@@ -61,6 +61,18 @@ variable "tectonic_azure_external_vnet_id" {
   default     = ""
 }
 
+variable "tectonic_azure_external_rsg_name" {
+  type        = "string"
+  default     = ""
+  description = "Pre-existing resource group to use as parent for cluster resources."
+}
+
+variable "tectonic_azure_external_vnet_name" {
+  type        = "string"
+  default     = ""
+  description = "Pre-existing virtual network to create cluster into."
+}
+
 variable "tectonic_azure_create_dns_zone" {
   description = "If set to true, create an Azure DNS zone"
   default     = "true"

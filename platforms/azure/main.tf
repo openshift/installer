@@ -1,22 +1,26 @@
-resource "azurerm_resource_group" "tectonic_cluster" {
-  location = "${var.tectonic_azure_location}"
-  name     = "tectonic-cluster-${var.tectonic_cluster_name}"
+module "resource_group" {
+  source = "../../modules/azure/resource-group"
+
+  external_rsg_name       = "${var.tectonic_azure_external_rsg_name}"
+  tectonic_azure_location = "${var.tectonic_azure_location}"
+  tectonic_cluster_name   = "${var.tectonic_cluster_name}"
 }
 
 module "vnet" {
   source = "../../modules/azure/vnet"
 
   location              = "${var.tectonic_azure_location}"
-  resource_group_name   = "${azurerm_resource_group.tectonic_cluster.name}"
+  resource_group_name   = "${module.resource_group.name}"
   tectonic_cluster_name = "${var.tectonic_cluster_name}"
   vnet_cidr_block       = "${var.tectonic_azure_vnet_cidr_block}"
+  external_vnet_name    = "${var.tectonic_azure_external_vnet_name}"
 }
 
 module "etcd" {
   source = "../../modules/azure/etcd"
 
   location            = "${var.tectonic_azure_location}"
-  resource_group_name = "${azurerm_resource_group.tectonic_cluster.name}"
+  resource_group_name = "${module.resource_group.name}"
   image_reference     = "${var.tectonic_azure_image_reference}"
   vm_size             = "${var.tectonic_azure_etcd_vm_size}"
 
@@ -32,7 +36,7 @@ module "masters" {
   source = "../../modules/azure/master"
 
   location            = "${var.tectonic_azure_location}"
-  resource_group_name = "${azurerm_resource_group.tectonic_cluster.name}"
+  resource_group_name = "${module.resource_group.name}"
   image_reference     = "${var.tectonic_azure_image_reference}"
   vm_size             = "${var.tectonic_azure_master_vm_size}"
 
@@ -60,7 +64,7 @@ module "workers" {
   source = "../../modules/azure/worker"
 
   location            = "${var.tectonic_azure_location}"
-  resource_group_name = "${azurerm_resource_group.tectonic_cluster.name}"
+  resource_group_name = "${module.resource_group.name}"
   image_reference     = "${var.tectonic_azure_image_reference}"
   vm_size             = "${var.tectonic_azure_worker_vm_size}"
 

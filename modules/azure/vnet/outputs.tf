@@ -1,5 +1,5 @@
 output "vnet_id" {
-  value = "${length(var.tectonic_azure_external_vnet_id) > 0 ? var.tectonic_azure_external_vnet_id : azurerm_virtual_network.tectonic_vnet.id}"
+  value = "${var.external_vnet_name == "" ? join("",azurerm_virtual_network.tectonic_vnet.*.name) : var.external_vnet_name }"
 }
 
 # We have to do this join() & split() 'trick' because null_data_source and 
