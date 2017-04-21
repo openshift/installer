@@ -67,7 +67,7 @@ clean: destroy
 structure-check: 
 	$(eval FMT_ERR := $(shell terraform fmt -list -write=false .))
 	@echo "wrong files:" $(FMT_ERR)
-	@test "$(FMT_ERR)" == ""
+	@test "$(FMT_ERR)" = ""
 
 canonical-syntax:
 	terraform fmt -list .

@@ -6,7 +6,7 @@
 pipeline {
   agent {
     docker {
-      image 'quay.io/coreos/tectonic-terraform:v0.8.8-coreos.1'
+      image 'quay.io/coreos/tectonic-builder:v1.5'
       label 'worker'
     }
   }
@@ -19,41 +19,32 @@ pipeline {
   stages {
     stage('TerraForm: Syntax Check') {
       steps {
-        sh 'make structure-check'
+        sh """#!/bin/bash -ex
+        make structure-check
+        """
       }
     }
 
     stage('Installer: Build & Test') {
-      agent {
-        docker {
-          image 'quay.io/coreos/tectonic-builder:v1.4'
-        }
-      }
       environment {
         GO_PROJECT = '/go/src/github.com/coreos/tectonic-installer/tectonic'
       }
       steps {
-        script {
-            checkout scm
-            sh "mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT"
-            sh "go get github.com/golang/lint/golint"
-            sh """#!/bin/bash -ex
-            go version
-            cd $GO_PROJECT/installer
-            make tools
-            make build
-            make test
-            """
-            stash name: 'installer', includes: 'installer/bin/linux/installer'
-            stash name: 'sanity', includes: 'installer/bin/sanity'
-          }
+        checkout scm
+        sh "mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT"
+        sh "go get github.com/golang/lint/golint"
+        sh """#!/bin/bash -ex
+        go version
+        cd $GO_PROJECT/installer
+        make tools
+        make build
+        make test
+        """
+        stash name: 'installer', includes: 'installer/bin/linux/installer'
+        stash name: 'sanity', includes: 'installer/bin/sanity'
         }
       }
       stage("Smoke Tests") {
-      environment {
-        TECTONIC_LICENSE     = credentials('TECTONIC_LICENSE')
-        TECTONIC_PULL_SECRET = credentials('TECTONIC_PULL_SECRET')
-      }
       steps {
         parallel (
           "TerraForm: AWS": {
