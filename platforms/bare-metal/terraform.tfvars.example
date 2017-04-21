@@ -94,21 +94,21 @@ kA==
 EOF
 
 tectonic_cluster_name = "demo"
-tectonic_coreos_channel = "stable"
-tectonic_coreos_version = "1235.9.0"
+tectonic_cl_channel = "stable"
+tectonic_metal_cl_version = "1298.7.0"
 
 # Bare-Metal nodes
-tectonic_controller_names = ["node1"]
-tectonic_controller_domains = ["node1.example.com"]
-tectonic_controller_macs = ["52:54:00:a1:9c:ae"]
+tectonic_metal_controller_names = ["node1"]
+tectonic_metal_controller_domains = ["node1.example.com"]
+tectonic_metal_controller_macs = ["52:54:00:a1:9c:ae"]
 
-tectonic_worker_names = ["node2", "node3"]
-tectonic_worker_domains = ["node2.example.com", "node3.example.com"]
-tectonic_worker_macs = ["52:54:00:b2:2f:86", "52:54:00:c3:61:77"]
+tectonic_metal_worker_names = ["node2", "node3"]
+tectonic_metal_worker_domains = ["node2.example.com", "node3.example.com"]
+tectonic_metal_worker_macs = ["52:54:00:b2:2f:86", "52:54:00:c3:61:77"]
 
 # DNS
-tectonic_k8s_domain = "cluster.example.com"
-tectonic_ingress_domain = "tectonic.example.com"
+tectonic_metal_controller_domain = "cluster.example.com"
+tectonic_metal_ingress_domain = "tectonic.example.com"
 
 tectonic_ssh_authorized_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCt3BebCHqnSsgpLjo4kVvyfY/z2BS8t27r/7du+O2pb4xYkr7n+KFpbOz523vMTpQ+o1jY4u4TgexglyT9nqasWgLOvo1qjD1agHme8LlTPQSk07rXqOB85Uq5p7ig2zoOejF6qXhcc3n1c7+HkxHrgpBENjLVHOBpzPBIAHkAGaZcl07OCqbsG5yxqEmSGiAlh/IiUVOZgdDMaGjCRFy0wk0mQaGD66DmnFc1H5CzcPjsxr0qO65e7lTGsE930KkO1Vc+RHCVwvhdXs+c2NhJ2/3740Kpes9n1/YullaWZUzlCPDXtRuy6JRbFbvy39JUgHWGWzB3d+3f8oJ/N4qZ cardno:000603633110"
 
@@ -139,3 +139,6 @@ EOD
 
 # Common variables are not actually cross-platform
 tectonic_base_domain = "unused"
+tectonic_master_count = 0
+tectonic_worker_count = 0
+tectonic_etcd_count = 0

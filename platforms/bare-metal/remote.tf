@@ -1,9 +1,9 @@
 resource "null_resource" "kubeconfig" {
-  count = "${length(var.tectonic_controller_domains) + length(var.tectonic_worker_domains)}"
+  count = "${length(var.tectonic_metal_controller_domains) + length(var.tectonic_metal_worker_domains)}"
 
   connection {
     type = "ssh"
-    host = "${element(concat(var.tectonic_controller_domains, var.tectonic_worker_domains), count.index)}"
+    host = "${element(concat(var.tectonic_metal_controller_domains, var.tectonic_metal_worker_domains), count.index)}"
     user = "core"
   }
 
@@ -28,7 +28,7 @@ resource "null_resource" "bootstrap" {
 
   connection {
     type = "ssh"
-    host = "${element(var.tectonic_controller_domains, 0)}"
+    host = "${element(var.tectonic_metal_controller_domains, 0)}"
     user = "core"
   }
 

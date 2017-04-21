@@ -23,52 +23,47 @@ variable "tectonic_matchbox_ca" {
   description = "Matchbox CA certificate to trust"
 }
 
-variable "tectonic_coreos_version" {
+variable "tectonic_metal_cl_version" {
   type        = "string"
-  description = "CoreOS kernel/initrd version to PXE boot. Must be present in matchbox assets."
+  description = "CoreOS kernel/initrd version to PXE boot. Must be present in matchbox assets and correspond to the tectonic_cl_channel"
 }
 
-variable "tectonic_coreos_channel" {
-  type        = "string"
-  description = "CoreOS channel corresponding to the tectonic_coreos_version"
-}
-
-variable "tectonic_k8s_domain" {
+variable "tectonic_metal_controller_domain" {
   type        = "string"
   description = "The domain name which resolves to controller node(s)"
 }
 
-variable "tectonic_ingress_domain" {
+variable "tectonic_metal_ingress_domain" {
   type        = "string"
   description = "The domain name which resolves to Tectonic Ingress (i.e. worker node(s))"
 }
 
-variable "tectonic_controller_names" {
+variable "tectonic_metal_controller_names" {
   type        = "list"
   description = "Ordered list of controller names (e.g. node1)"
 }
 
-variable "tectonic_controller_domains" {
+variable "tectonic_metal_controller_domains" {
   type        = "list"
   description = "Ordered list of controller domain names (e.g. node1.example.com)"
 }
 
-variable "tectonic_controller_macs" {
+variable "tectonic_metal_controller_macs" {
   type        = "list"
   description = "Ordered list of controller MAC addresses for matching machines"
 }
 
-variable "tectonic_worker_names" {
+variable "tectonic_metal_worker_names" {
   type        = "list"
   description = "Ordered list of worker names (e.g. node2,node3)"
 }
 
-variable "tectonic_worker_domains" {
+variable "tectonic_metal_worker_domains" {
   type        = "list"
   description = "Ordered list of worker domain names (e.g. node2.example.com,node3.example.com)"
 }
 
-variable "tectonic_worker_macs" {
+variable "tectonic_metal_worker_macs" {
   type        = "list"
   description = "Ordered list of worker MAC addresses for matching machines"
 }
