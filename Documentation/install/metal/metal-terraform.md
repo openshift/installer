@@ -2,7 +2,7 @@
 
 Following this guide will deploy a Tectonic cluster on virtual or physical hardware.
 
-<p style="background:#d9edf7; padding: 10px;" class="text-info"><strong>Pre-Alpha:</strong>These instructions are currently considered pre-alpha. See the <a href="../../platform-lifecycle.md">platform life cycle</a> for more details.</p>
+<p style="background:#d9edf7; padding: 10px;" class="text-info"><strong>Alpha:</strong>These instructions are currently considered alpha. See the <a href="../../platform-lifecycle.md">platform life cycle</a> for more details.</p>
 
 ## Prerequsities
 
@@ -47,7 +47,7 @@ Create a build directory to hold your customizations and copy the example file i
 ```
 $ export CLUSTER=my-cluster
 $ mkdir -p build/${CLUSTER}
-$ cp platforms/bare-metal/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
+$ cp platforms/metal/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
 ```
 
 Customizations should be made to `build/${CLUSTER}/terraform.tfvars`. Edit the following variables to correspond to your matchbox installation:
@@ -65,13 +65,13 @@ Edit additional variables to specify DNS records, list machines, and set a passw
 Test out the plan before deploying everything:
 
 ```
-$ terraform plan -var-file=build/${CLUSTER}/terraform.tfvars platforms/bare-metal
+$ terraform plan -var-file=build/${CLUSTER}/terraform.tfvars platforms/metal
 ```
 
 Next, deploy the cluster:
 
 ```
-$ terraform apply -var-file=build/${CLUSTER}/terraform.tfvars platforms/bare-metal
+$ terraform apply -var-file=build/${CLUSTER}/terraform.tfvars platforms/metal
 ```
 
 This will write machine profiles and matcher groups to the matchbox service.
@@ -108,7 +108,7 @@ $ kubectl cluster-info
 Delete your cluster to delete the matchbox profiles and matcher groups. Deletion will not modify or power off your machines.
 
 ```
-$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/bare-metal
+$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/metal
 ```
 
 ### Known issues and workarounds
