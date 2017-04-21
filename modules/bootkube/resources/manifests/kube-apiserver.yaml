@@ -31,6 +31,9 @@ spec:
         - --insecure-port=8080
         - --advertise-address=${advertise_address}
         - --etcd-servers=${etcd_servers}
+        ${etcd_ca_flag}
+        ${etcd_cert_flag}
+        ${etcd_key_flag}
         - --etcd-quorum-read=true
         - --storage-backend=etcd3
         - --allow-privileged=true

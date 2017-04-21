@@ -33,6 +33,11 @@ variable "etcd_endpoints" {
   description = "List of etcd endpoints"
 }
 
+variable "etcd_gateway_enabled" {
+  description = "Specifies whether the etcd gateway should be enabled or not."
+  default     = true
+}
+
 variable "bootkube_service" {
   type        = "string"
   description = "The content of the bootkube systemd service unit"

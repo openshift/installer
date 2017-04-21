@@ -69,7 +69,7 @@ data "template_file" "etcd-member" {
 
 resource "ignition_systemd_unit" "etcd-member" {
   name   = "etcd-member.service"
-  enable = true
+  enable = "${var.etcd_gateway_enabled == 1 ? true : false}"
 
   dropin = [
     {

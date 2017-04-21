@@ -98,6 +98,24 @@ variable "tectonic_etcd_servers" {
   default     = [""]
 }
 
+variable "tectonic_etcd_ca_cert_path" {
+  description = "The path to the etcd CA certificate for TLS communication with etcd (optional)."
+  type        = "string"
+  default     = ""
+}
+
+variable "tectonic_etcd_client_cert_path" {
+  description = "The path to the etcd client certificate for TLS communication with etcd (optional)."
+  type        = "string"
+  default     = ""
+}
+
+variable "tectonic_etcd_client_key_path" {
+  description = "The path to the etcd client key for TLS communication with etcd (optional)."
+  type        = "string"
+  default     = ""
+}
+
 // The base DNS domain of the cluster.
 // Example: `openstack.dev.coreos.systems`
 variable "tectonic_base_domain" {

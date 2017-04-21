@@ -20,6 +20,9 @@ spec:
     - --bind-address=0.0.0.0
     - --client-ca-file=/etc/kubernetes/secrets/ca.crt
     - --etcd-servers=${etcd_servers}
+    ${etcd_ca_flag}
+    ${etcd_cert_flag}
+    ${etcd_key_flag}
     - --insecure-port=8080
     - --advertise-address=${advertise_address}
     - --kubelet-client-certificate=/etc/kubernetes/secrets/apiserver.crt

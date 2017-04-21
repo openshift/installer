@@ -38,3 +38,7 @@ output "ca_key" {
 output "systemd_service" {
   value = "${data.template_file.bootkube_service.rendered}"
 }
+
+output "etcd_gateway_enabled" {
+  value = "${data.null_data_source.etcd.outputs.no_certs}"
+}
