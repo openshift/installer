@@ -1,6 +1,5 @@
 resource "null_resource" "kubeconfig" {
   count = "${length(var.tectonic_controller_domains) + length(var.tectonic_worker_domains)}"
-  depends_on = ["module.tectonic"]
 
   connection {
     type = "ssh"
@@ -9,7 +8,7 @@ resource "null_resource" "kubeconfig" {
   }
 
   provisioner "file" {
-    source = "${path.cwd}/generated/kubeconfig"
+    content     = "${module.bootkube.kubeconfig}"
     destination = "$HOME/kubeconfig"
   }
 
@@ -21,7 +20,11 @@ resource "null_resource" "kubeconfig" {
 }
 
 resource "null_resource" "bootstrap" {
-  depends_on = ["module.tectonic"]
+  # Without depends_on, this remote-exec may start before the kubeconfig copy.
+  # Terraform only does one task at a time, so it would try to bootstrap
+  # Kubernetes and Tectonic while no Kubelets are running. Ensure all nodes
+  # receive a kubeconfig before proceeding with bootkube and tectonic.
+  depends_on = ["null_resource.kubeconfig"]
 
   connection {
     type = "ssh"
@@ -30,7 +33,7 @@ resource "null_resource" "bootstrap" {
   }
 
   provisioner "file" {
-    source = "${path.cwd}/generated"
+    source      = "${path.cwd}/generated"
     destination = "$HOME/tectonic"
   }
 

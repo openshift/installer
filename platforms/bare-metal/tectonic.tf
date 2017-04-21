@@ -4,8 +4,9 @@ module "bootkube" {
 
   # Address of kube-apiserver
   kube_apiserver_url = "https://${var.tectonic_k8s_domain}:443"
+
   # Address of Identity service
-  oidc_issuer_url    = "https://${var.tectonic_ingress_domain}/identity"
+  oidc_issuer_url = "https://${var.tectonic_ingress_domain}/identity"
 
   # platform-independent defaults
   container_images = "${var.tectonic_container_images}"
@@ -36,8 +37,9 @@ module "tectonic" {
 
   # Address of kube-apiserver
   kube_apiserver_url = "https://${var.tectonic_k8s_domain}:443"
+
   # Address of the Tectonic console (without protocol)
-  base_address       = "${var.tectonic_ingress_domain}"
+  base_address = "${var.tectonic_ingress_domain}"
 
   container_images = "${var.tectonic_container_images}"
   versions         = "${var.tectonic_versions}"
