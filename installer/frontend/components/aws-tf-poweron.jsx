@@ -6,6 +6,7 @@ import { saveAs } from 'file-saver';
 import { Alert } from './alert';
 import { WaitingLi } from './ui';
 import { AWS_DomainValidation } from './aws-domain-validation';
+import { ResetButton } from './reset-button';
 import { CLUSTER_NAME } from '../cluster-config';
 import { TFDestroy } from '../aws-actions';
 import { observeClusterStatus } from '../server';
@@ -160,6 +161,7 @@ class AWS_TF_PowerOn extends React.Component {
               <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
             </button>
           </a>
+          <ResetButton />
         </div>
       </div>
       }
