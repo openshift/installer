@@ -321,6 +321,12 @@ export const toAWS = (cc, FORMS) => {
   return ret;
 };
 
+const toSubnetObj = (subnets, key) => _(subnets)
+  .keyBy(o => o.availabilityZone)
+  .mapValues(v => v[key])
+  .value();
+
+
 export const toAWS_TF = (cc, FORMS) => {
   const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
   const etcds = FORMS[AWS_ETCDS].getData(cc);
@@ -331,11 +337,23 @@ export const toAWS_TF = (cc, FORMS) => {
   let workerSubnets;
 
   if (cc[AWS_CREATE_VPC] === 'VPC_CREATE') {
-    controllerSubnets = toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
-    workerSubnets = toVPCSubnet(region, cc[AWS_WORKER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
+    controllerSubnets = toSubnetObj(
+      toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]),
+      'instanceCIDR'
+    );
+    workerSubnets = toSubnetObj(
+      toVPCSubnet(region, cc[AWS_WORKER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]),
+      'instanceCIDR'
+    );
   } else {
-    controllerSubnets = toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
-    workerSubnets = toVPCSubnet(region, cc[AWS_WORKER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
+    controllerSubnets = toSubnetObj(
+      toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]),
+      'id'
+    );
+    workerSubnets = toSubnetObj(
+      toVPCSubnet(region, cc[AWS_WORKER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]),
+      'id'
+    );
   }
 
   const extraTags = {};
