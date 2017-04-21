@@ -111,13 +111,13 @@ class AWS_TF_PowerOn extends React.Component {
                   </a>
                 </div>}
                 { showLogs && output &&
-                  <div className="log-pane" ref={node => this.outputNode = node}>
+                  <div className="log-pane">
                     <div className="log-pane__header">
                       <div className="log-pane__header__message">Terraform logs</div>
                     </div>
                     <div className="log-pane__body">
                       <div className="log-area">
-                        <div className="log-scroll-pane">
+                        <div className="log-scroll-pane" ref={node => this.outputNode = node}>
                           <div className="log-contents">
                             <div className="log-contents__block">{output}</div>
                           </div>
