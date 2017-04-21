@@ -6,7 +6,7 @@
 pipeline {
   agent {
     docker {
-      image 'quay.io/coreos/tectonic-builder:v1.5'
+      image 'quay.io/coreos/tectonic-builder:v1.6'
       label 'worker'
     }
   }
@@ -27,7 +27,7 @@ pipeline {
 
     stage('Installer: Build & Test') {
       environment {
-        GO_PROJECT = '/go/src/github.com/coreos/tectonic-installer/tectonic'
+        GO_PROJECT = '/go/src/github.com/coreos/tectonic-installer'
       }
       steps {
         checkout scm
