@@ -1,7 +1,7 @@
-tectonic_matchbox_http_endpoint = "http://matchbox.example.com:8080"
-tectonic_matchbox_rpc_endpoint = "matchbox.example.com:8081"
+tectonic_metal_matchbox_http_endpoint = "http://matchbox.example.com:8080"
+tectonic_metal_matchbox_rpc_endpoint = "matchbox.example.com:8081"
 
-tectonic_matchbox_client_cert = <<EOF
+tectonic_metal_matchbox_client_cert = <<EOF
 -----BEGIN CERTIFICATE-----
 MIIEYDCCAkigAwIBAgICEAEwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UEAwwHZmFr
 ZS1jYTAeFw0xNzAyMDEyMjEzMjVaFw0xODAyMDEyMjEzMjVaMBYxFDASBgNVBAMM
@@ -30,7 +30,7 @@ jyXQv9IZPMTwOndF6AVLH7l1F0E=
 -----END CERTIFICATE-----
 EOF
 
-tectonic_matchbox_client_key = <<EOF
+tectonic_metal_matchbox_client_key = <<EOF
 -----BEGIN RSA PRIVATE KEY-----
 MIIEpQIBAAKCAQEAr8S7x/tAS6W+aRW3X833OvNfxXjUJAiRkUV85Raln7tqVcTG
 /9iyRhWgNpUn/WU1/3qVobto4ZCURIwoQh0kWk8io1lafZJ+S6Znm3+0TKo7u6QM
@@ -60,7 +60,7 @@ Pikk0rvNVB/vrPeVjAdGY9TJC/vpz3om92DRDmUifu8rCFxIHE0GrQ0=
 -----END RSA PRIVATE KEY-----
 EOF
 
-tectonic_matchbox_ca = <<EOF
+tectonic_metal_matchbox_ca = <<EOF
 -----BEGIN CERTIFICATE-----
 MIIFDTCCAvWgAwIBAgIJAIuXq10k2OFlMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNV
 BAMMB2Zha2UtY2EwHhcNMTcwMjAxMjIxMzI0WhcNMjcwMTMwMjIxMzI0WjASMRAw
