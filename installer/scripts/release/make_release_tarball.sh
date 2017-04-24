@@ -2,9 +2,7 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$DIR/common.env.sh"
-source "$DIR/../awsutil.sh"
-
-check_aws_creds
+TERRAFORM_SOURCES="${REPOSITORY_ROOT}/modules ${REPOSITORY_ROOT}/platforms ${REPOSITORY_ROOT}/config.tf"
 
 echo "Retrieving matchbox release"
 "$DIR/get_matchbox_release.sh"
@@ -12,8 +10,10 @@ echo "Retrieving matchbox release"
 echo "Retrieving TerraForm resources"
 "$DIR/get_terraform_bins.sh"
 
-echo "Retrieving Tectonic Installer binaries"
-"$DIR/get_installer_bins.sh"
+echo "Copying Tectonic Installer binaries"
+cp "$ROOT/bin/windows/installer.exe" "$INSTALLER_RELEASE_DIR/windows/installer.exe"
+cp "$ROOT/bin/darwin/installer"      "$INSTALLER_RELEASE_DIR/darwin/installer"
+cp "$ROOT/bin/linux/installer"       "$INSTALLER_RELEASE_DIR/linux/installer"
 
 echo "Adding TerraForm sources"
 cp -r $TERRAFORM_SOURCES "$TECTONIC_RELEASE_TOP_DIR"
