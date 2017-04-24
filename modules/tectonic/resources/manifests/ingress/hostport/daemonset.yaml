@@ -61,6 +61,8 @@ spec:
               port: 10254
               scheme: HTTP
       hostNetwork: true
+      nodeSelector:
+        node-role.kubernetes.io/node: ""
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       terminationGracePeriodSeconds: 60

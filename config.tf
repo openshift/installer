@@ -145,7 +145,6 @@ variable "tectonic_license_path" {
 variable "tectonic_cl_channel" {
   type    = "string"
   default = "stable"
-
   description = <<EOF
 The Container Linux update channel.
 Examples: `stable`, `beta`, `alpha`

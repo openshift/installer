@@ -26,7 +26,7 @@ To use the installer you can either use an official release (starting March 29, 
 See the official Tectonic documentation:
 
 - [AWS Cloud Formation](https://coreos.com/tectonic/docs/latest/install/aws/) [[**stable**][platform-lifecycle]]
-- [Baremetal](https://coreos.com/tectonic/docs/latest/install/bare-metal/) [[**stable**][platform-lifecycle]]
+- [Bare-Metal](https://coreos.com/tectonic/docs/latest/install/bare-metal/) [[**stable**][platform-lifecycle]]
 
 ### Hacking
 
@@ -44,6 +44,7 @@ The example below will use `PLATFORM=azure` but you can set the value to somethi
 
 - `PLATFORM=aws` [AWS via Terraform](Documentation/install/aws/aws-terraform.md) [[**alpha**][platform-lifecycle]]
 - `PLATFORM=azure` [Azure via Terraform](Documentation/install/azure/azure-terraform.md) [[**alpha**][platform-lifecycle]]
+- `PLATFORM=metal` [Bare-Metal via Terraform](Documentation/install/metal/metal-terraform.md) [[**alpha**][platform-lifecycle]]
 - `PLATFORM=openstack` [OpenStack via Terraform](Documentation/install/openstack/openstack-terraform.md) [[**alpha**][platform-lifecycle]]
 
 **Initiate the Cluster Configuration**
