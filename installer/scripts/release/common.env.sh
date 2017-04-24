@@ -2,6 +2,7 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT="$DIR/../.."
+REPOSITORY_ROOT="$ROOT/.."
 WORKSPACE_DIR="$ROOT/.workspace"
 TMP_DIR="$WORKSPACE_DIR/tmpdir"
 
@@ -20,3 +21,8 @@ MATCHBOX_RELEASE_VERSION=v0.5.0
 MATCHBOX_RELEASE_URL="https://github.com/coreos/matchbox/releases/download/${MATCHBOX_RELEASE_VERSION}/matchbox-${MATCHBOX_RELEASE_VERSION}-linux-amd64.tar.gz"
 MATCHBOX_ARCHIVE_TOP_DIR="matchbox-${MATCHBOX_RELEASE_VERSION}-linux-amd64"
 
+TERRAFORM_BIN_TMP_DIR="$TMP_DIR/terraform-bin"
+TERRAFORM_BIN_VERSION=0.8.8
+TERRAFORM_BIN_URL='https://releases.hashicorp.com/terraform/${TERRAFORM_BIN_VERSION}/terraform_${TERRAFORM_BIN_VERSION}_${os}_amd64.zip'
+
+TERRAFORM_SOURCES="${REPOSITORY_ROOT}/modules ${REPOSITORY_ROOT}/platforms ${REPOSITORY_ROOT}/config.tf"
