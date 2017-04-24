@@ -36,6 +36,14 @@ destroy: installer-env
 terraform-check:
 	@terraform-docs >/dev/null 2>&1 || @echo "terraform-docs is required (https://github.com/segmentio/terraform-docs)"
 
+.PHONY: docs
+docs: \
+	Documentation/variables/config.md \
+	Documentation/variables/aws.md \
+	Documentation/variables/azure.md \
+	Documentation/variables/openstack-nova.md \
+	Documentation/variables/openstack-neutron.md
+
 Documentation/variables/config.md: config.tf
 ifndef TF_DOCS
 	$(error "terraform-docs is required (https://github.com/segmentio/terraform-docs)")

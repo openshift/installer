@@ -1,3 +1,12 @@
+variable "tectonic_config_version" {
+  description = <<EOF
+This declares the version of the global configuration variables.
+It has no impact on generated assets but declares the version contract of the configuration.
+EOF
+
+  default = "1.0"
+}
+
 terraform {
   required_version = "= 0.8.8"
 }
@@ -71,8 +80,6 @@ variable "tectonic_cluster_cidr" {
   default     = "10.2.0.0/16"
 }
 
-// The amount of master nodes to be created.
-// Example: `1`
 variable "tectonic_master_count" {
   type        = "string"
   description = "The number of master nodes to be created."
@@ -85,7 +92,6 @@ variable "tectonic_worker_count" {
   default     = "3"
 }
 
-// Example: `1`
 variable "tectonic_etcd_count" {
   type        = "string"
   default     = "-1"
@@ -116,44 +122,52 @@ variable "tectonic_etcd_client_key_path" {
   default     = ""
 }
 
-// The base DNS domain of the cluster.
-// Example: `openstack.dev.coreos.systems`
 variable "tectonic_base_domain" {
-  type = "string"
+  type        = "string"
+  description = "The base DNS domain of the cluster. Example: `openstack.dev.coreos.systems`."
 }
 
-// Example: `demo`
 variable "tectonic_cluster_name" {
   type        = "string"
   description = "The name of the cluster. This will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console."
 }
 
 variable "tectonic_pull_secret_path" {
-  type = "string"
+  type        = "string"
+  description = "The path the pull secret file in JSON format."
 }
 
 variable "tectonic_license_path" {
-  type = "string"
+  type        = "string"
+  description = "The path to the tectonic licence file."
 }
 
 variable "tectonic_cl_channel" {
   type    = "string"
   default = "stable"
+
+  description = <<EOF
+The Container Linux update channel.
+Examples: `stable`, `beta`, `alpha`
+EOF
 }
 
 variable "tectonic_update_server" {
-  type    = "string"
-  default = "https://public.update.core-os.net"
+  type        = "string"
+  default     = "https://public.update.core-os.net"
+  description = "The URL of the Tectonic Omaha update server"
 }
 
 variable "tectonic_update_channel" {
-  type    = "string"
-  default = "tectonic-1.5"
+  type        = "string"
+  default     = "tectonic-1.5"
+  description = "The Tectonic Omaha update channel"
 }
 
 variable "tectonic_update_app_id" {
-  type    = "string"
-  default = "6bc7b986-4654-4a0f-94b3-84ce6feb1db4"
+  type        = "string"
+  default     = "6bc7b986-4654-4a0f-94b3-84ce6feb1db4"
+  description = "The Tectonic Omaha update App ID"
 }
 
 variable "tectonic_admin_email" {

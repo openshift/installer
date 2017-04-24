@@ -8,4 +8,5 @@ This document gives an overview of the variables used in the different platforms
 |------|-------------|:-----:|:-----:|
 | tectonic_openstack_flavor_id | The flavor ID as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM. | - | yes |
 | tectonic_openstack_image_id | The image ID as given in `openstack image list`. Specifies the OS image of the VM. | - | yes |
+| tectonic_openstack_nova_config_version | This declares the version of the OpenStack Nova configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | `1.0` | no |
 

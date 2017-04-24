@@ -7,9 +7,10 @@ This document gives an overview of the variables used in the different platforms
 | Name | Description | Default | Required |
 |------|-------------|:-----:|:-----:|
 | tectonic_openstack_dns_nameservers | The DNS servers assigned to the generated OpenStack subnet resource. | `<list>` | no |
-| tectonic_openstack_external_gateway_id | The ID of the network to be used as the external internet gateway as given in `openstack network list`. | `6d6357ac-0f70-4afa-8bd7-c274cc4ea235` | no |
-| tectonic_openstack_flavor_id | The flavor ID as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM. | `5cf64088-893b-46b5-9bb1-ee020277635d` | no |
+| tectonic_openstack_external_gateway_id | The ID of the network to be used as the external internet gateway as given in `openstack network list`. | - | yes |
+| tectonic_openstack_flavor_id | The flavor ID as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM. | - | yes |
 | tectonic_openstack_floatingip_pool | The name name of the floating IP pool as given in `openstack floating ip list`. This pool will be used to assign floating IPs to worker and master nodes. | `public` | no |
-| tectonic_openstack_image_id | The image ID as given in `openstack image list`. Specifies the OS image of the VM. | `acdcd535-5408-40f3-8e88-ad8ebb6507e6` | no |
+| tectonic_openstack_image_id | The image ID as given in `openstack image list`. Specifies the OS image of the VM. | - | yes |
+| tectonic_openstack_neutron_config_version | This declares the version of the OpenStack Neutron configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | `1.0` | no |
 | tectonic_openstack_subnet_cidr | The subnet CIDR for the master/worker/etcd compute nodes. This CIDR will also be assigned to the created the OpenStack subnet resource. | `192.168.1.0/24` | no |
 

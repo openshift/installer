@@ -1,3 +1,12 @@
+variable "tectonic_azure_config_version" {
+  description = <<EOF
+This declares the version of the Azure configuration variables.
+It has no impact on generated assets but declares the version contract of the configuration.
+EOF
+
+  default = "1.0"
+}
+
 variable "tectonic_azure_dns_resource_group" {
   type    = "string"
   default = "tectonic-dns-group"
