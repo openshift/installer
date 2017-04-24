@@ -331,15 +331,18 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 	// Create a new Executor.
 	ex, err := terraform.NewExecutor()
 	if err != nil {
-		return nil, ctxh.NewAppError(err, "could not create TerraForm executor", http.StatusInternalServerError)
+		return nil, ctxh.NewAppError(err, fmt.Sprintf("Could not create TerraForm executor: %v", err.Error()), http.StatusInternalServerError)
 	}
 
 	// Write the License and Pull Secret to disk, and wire these files in the
 	// variables.
-	if input.License == "" || input.PullSecret == "" {
-		return nil, ctxh.NewAppError(err, "could not find license / pull secret", http.StatusBadRequest)
+	if input.License == "" {
+		return nil, ctxh.NewAppError(err, "Tectonic license not provided", http.StatusBadRequest)
 	}
 	ex.AddFile("license.txt", []byte(input.License))
+	if input.PullSecret == "" {
+		return nil, ctxh.NewAppError(err, "Tectonic pull secret not provided", http.StatusBadRequest)
+	}
 	ex.AddFile("pull_secret.json", []byte(input.PullSecret))
 	input.Variables["tectonic_license_path"] = "./license.txt"
 	input.Variables["tectonic_pull_secret_path"] = "./pull_secret.json"
@@ -349,7 +352,7 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 	if !ok || len(ip) == 0 {
 		input.Variables["tectonic_kube_apiserver_service_ip"], err = defaults.APIServiceIP(serviceCidr)
 		if err != nil {
-			return nil, ctxh.NewAppError(err, "could not calculate service IP", http.StatusInternalServerError)
+			return nil, ctxh.NewAppError(err, fmt.Sprintf("Error calculating service IP: %v", err.Error()), http.StatusInternalServerError)
 		}
 	}
 
@@ -357,14 +360,14 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 	if !ok || len(ip) == 0 {
 		input.Variables["tectonic_kube_dns_service_ip"], err = defaults.DNSServiceIP(serviceCidr)
 		if err != nil {
-			return nil, ctxh.NewAppError(err, "could not calculate DNS IP", http.StatusInternalServerError)
+			return nil, ctxh.NewAppError(err, fmt.Sprintf("Error calculating DNS IP: %v", err.Error()), http.StatusInternalServerError)
 		}
 	}
 
 	if len(input.AdminPassword) > 0 {
 		passwordHash, err := bcrypt.GenerateFromPassword(input.AdminPassword, bcryptCost)
 		if err != nil {
-			return nil, ctxh.NewAppError(err, "bcrypt failed", http.StatusBadRequest)
+			return nil, ctxh.NewAppError(err, fmt.Sprintf("Error bcrypt()ing admin password: %v", err.Error()), http.StatusBadRequest)
 		}
 		input.Variables["tectonic_admin_password_hash"] = passwordHash
 	}
@@ -373,10 +376,10 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 	if variables, err := json.Marshal(input.Variables); err == nil {
 		ex.AddVariables(variables)
 	} else {
-		return nil, ctxh.NewAppError(err, "could not marshal TerraForm variables", http.StatusBadRequest)
+		return nil, ctxh.NewAppError(err, fmt.Sprintf("Could not marshal TerraForm variables: %v", err.Error()), http.StatusBadRequest)
 	}
 	if err := ex.AddCredentials(&input.Credentials); err != nil {
-		return nil, ctxh.NewAppError(err, "could not validate TerraForm credentials", http.StatusBadRequest)
+		return nil, ctxh.NewAppError(err, fmt.Sprintf("Could not validate TerraForm credentials: %v", err.Error()), http.StatusBadRequest)
 	}
 
 	return ex, nil
