@@ -1,7 +1,6 @@
 package server
 
 import (
-	"archive/zip"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -13,7 +12,6 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/dghubble/sessions"
-	"github.com/jhoonb/archivex"
 
 	"github.com/coreos/tectonic-installer/installer/server/asset"
 	"github.com/coreos/tectonic-installer/installer/server/ctxh"
@@ -275,11 +273,7 @@ func terraformAssetsHandler(sessionProvider sessions.Store) ctxh.ContextHandler 
 
 		// Stream the assets as a ZIP.
 		w.Header().Set("Content-Type", "application/zip")
-
-		z := &archivex.ZipFile{Writer: zip.NewWriter(w)}
-		defer z.Writer.Close()
-
-		if err := z.AddAll(ex.WorkingDirectory(), true); err != nil {
+		if err := ex.Zip(w, true); err != nil {
 			return ctxh.NewAppError(err, "could not archive assets", http.StatusInternalServerError)
 		}
 		return nil

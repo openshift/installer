@@ -225,8 +225,6 @@ import:
   version: 8fef92e41e22a70e700a96b29f066cda30ea24ef
 - package: github.com/mitchellh/mapstructure
   version: 281073eb9eb092240d33ef253c404f1cca550309
-- package: github.com/jhoonb/archivex
-  version: b669bdadd30ace382d6e082dfcc8e33b926db1a1
 - package: github.com/coreos/terraform-provider-matchbox 
   version: dd045535c826b7e2e0daeddc6b8d4b2cc81f9dd0
   subpackages:

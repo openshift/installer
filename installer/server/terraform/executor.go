@@ -1,7 +1,9 @@
 package terraform
 
 import (
+	"archive/zip"
 	"bufio"
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +14,7 @@ import (
 	"runtime"
 	"strings"
 
+	log "github.com/Sirupsen/logrus"
 	"github.com/hashicorp/terraform/terraform"
 	"github.com/kardianos/osext"
 	"github.com/shirou/gopsutil/process"
@@ -279,11 +282,127 @@ func (ex *Executor) State() *terraform.State {
 	return s
 }
 
+// Zip streams the working directory as a ZIP file to the given io.writer.
+func (ex *Executor) Zip(w io.Writer, withTopFolder bool) error {
+	// Determine the working directory, free of symlinks.
+	wd, err := filepath.EvalSymlinks(ex.WorkingDirectory())
+	if err != nil {
+		return nil
+	}
+
+	// Create a ZIP Writer around the given io.Writer.
+	z := zip.NewWriter(w)
+	defer z.Close()
+
+	f := func(path, relPath string, fi os.FileInfo) error {
+		// Build a ZIP header based on the given os.FileInfo.
+		header, err := zip.FileInfoHeader(fi)
+		if err != nil {
+			return err
+		}
+		header.Name = relPath
+
+		var content io.Reader
+		switch {
+		case fi.Mode().IsDir():
+			header.Name += string(filepath.Separator)
+		case fi.Mode().IsRegular():
+			header.Method = zip.Deflate
+
+			content, err = os.Open(path)
+			if err != nil {
+				return err
+			}
+			defer content.(*os.File).Close()
+		case fi.Mode()&os.ModeSymlink != 0:
+			linRelPath, err := os.Readlink(path)
+			if err != nil {
+				return err
+			}
+			linPath, err := filepath.EvalSymlinks(path)
+			if err != nil {
+				return err
+			}
+			linPathDir := linPath
+			if lfi, err := os.Stat(linPath); err == nil && lfi.Mode().IsRegular() {
+				linPathDir, _ = filepath.Split(linPath)
+			}
+			if !strings.HasPrefix(linPathDir, wd) {
+				// By default, standard ZIP implementations would copy the file's
+				// content rather than preserving the link, unless explicitly specified.
+				// However, in the TerraForm's use case, we prefer to preserve the link
+				// as long as its target is inside the archive. If it is not the case,
+				// then we skip that entry entirely. We could fallback to copying its
+				// content by it is not justified today and would become a security
+				// issue if the installer were to be hosted as any files could be read.
+				log.Warningf("zip: symlink %q points to %q, which is outside of the archive's root, skipping.", path, linPath)
+				return nil
+			}
+			content = bytes.NewBuffer([]byte(linRelPath))
+		default:
+			log.Warningf("zip: file %q is of type %v, which is unsupported, skipping.", path, fi.Mode())
+		}
+
+		// Create the ZIP header in the archive, and its associated content if
+		// applicable.
+		writer, err := z.CreateHeader(header)
+		if err != nil {
+			return err
+		}
+		if content != nil {
+			if _, err := io.Copy(writer, content); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	if err := recursiveFileWalk(wd, wd, withTopFolder, f); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Cleanup removes resources that were allocated by the Executor.
 func (ex *Executor) Cleanup() {
 	if ex.executionPath != "" {
 		os.RemoveAll(ex.executionPath)
 	}
+}
+
+type recursiveFileWalkFunc func(path, relPath string, fi os.FileInfo) error
+
+func recursiveFileWalk(dir, root string, withTopFolder bool, f recursiveFileWalkFunc) error {
+	entries, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		// Get the entry path and its relative path to root.
+		entryPath := filepath.Join(dir, entry.Name())
+		entryRelPath, err := filepath.Rel(root, entryPath)
+		if err != nil {
+			return err
+		}
+		if withTopFolder {
+			rootDirS := strings.Split(root, string(os.PathSeparator))
+			entryRelPath = filepath.Join(rootDirS[len(rootDirS)-1], entryRelPath)
+		}
+
+		// Execute the function we were instructed to run.
+		f(entryPath, entryRelPath, entry)
+
+		if entry.IsDir() {
+			// That's a folder, recurse into it.
+			if err := recursiveFileWalk(entryPath, root, withTopFolder, f); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 // tfBinatyPath searches for a TerraForm binary on disk:

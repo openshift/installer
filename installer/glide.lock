@@ -274,8 +274,6 @@ imports:
   version: d1caa6c97c9fc1cc9e83bbe34d0603f9ff0ce8bd
 - name: github.com/jen20/awspolicyequivalence
   version: ed4c14ea400d756059e9312e409477a9ebf448f4
-- name: github.com/jhoonb/archivex
-  version: b669bdadd30ace382d6e082dfcc8e33b926db1a1
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jteeuwen/go-bindata
