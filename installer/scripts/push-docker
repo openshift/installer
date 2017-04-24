@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-set -e
-
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-GIT_SHA=$("$DIR/../../git-version")
-QUAY_REPO=quay.io/coreos/tectonic-installer
-
-docker push $QUAY_REPO:$GIT_SHA

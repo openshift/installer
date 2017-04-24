@@ -6,139 +6,21 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
-	"strconv"
-	"strings"
 	"time"
-
+	
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/context"
 
 	"github.com/dghubble/sessions"
 
-	"github.com/coreos/tectonic-installer/installer/server/asset"
+	"path/filepath"
+	"time"
+
 	"github.com/coreos/tectonic-installer/installer/server/ctxh"
 	"github.com/coreos/tectonic-installer/installer/server/defaults"
 	"github.com/coreos/tectonic-installer/installer/server/terraform"
 	"github.com/kardianos/osext"
 )
-
-func newAWSTerraformVars(c *TectonicAWSCluster) ([]asset.Asset, error) {
-	passwordHash, err := bcrypt.GenerateFromPassword(c.Tectonic.IdentityAdminPassword, bcryptCost)
-	if err != nil {
-		return nil, fmt.Errorf("bcrypt failed: %v", err)
-	}
-
-	etcdServers := []string{}
-	etcdCount := c.CloudForm.ETCDCount
-	if c.CloudForm.ExternalETCDClient != "" {
-		etcdServers = append(etcdServers, strings.Split(c.CloudForm.ExternalETCDClient, ":")[0])
-		etcdCount = 0
-	}
-
-	availabilityZones := make(map[string]struct{})
-	for _, az := range c.CloudForm.ControllerSubnets {
-		availabilityZones[az.AvailabilityZone] = struct{}{}
-	}
-	for _, az := range c.CloudForm.WorkerSubnets {
-		availabilityZones[az.AvailabilityZone] = struct{}{}
-	}
-
-	controllerSubnetIDs := []string{}
-	workerSubnetIDs := []string{}
-	if c.CloudForm.VPCID != "" {
-		for _, subnet := range c.CloudForm.ControllerSubnets {
-			controllerSubnetIDs = append(controllerSubnetIDs, subnet.ID)
-		}
-		for _, subnet := range c.CloudForm.WorkerSubnets {
-			workerSubnetIDs = append(workerSubnetIDs, subnet.ID)
-		}
-	}
-
-	variables := map[string]interface{}{
-		"tectonic_cluster_name": c.CloudForm.ClusterName,
-		"tectonic_base_domain":  c.CloudForm.HostedZoneName,
-
-		"tectonic_license_path":     "./license",
-		"tectonic_pull_secret_path": "./pull_secret",
-
-		"tectonic_admin_email":         c.Tectonic.IdentityAdminUser,
-		"tectonic_admin_password_hash": string(passwordHash),
-
-		"tectonic_ca_cert":    c.CACertificate,
-		"tectonic_ca_key":     c.CAPrivateKey,
-		"tectonic_ca_key_alg": "RSA",
-
-		"tectonic_cl_channel":   c.CloudForm.Channel,
-		"tectonic_cluster_cidr": c.CloudForm.PodCIDR,
-		"tectonic_service_cidr": c.CloudForm.ServiceCIDR,
-
-		"tectonic_etcd_count":   etcdCount,
-		"tectonic_etcd_servers": etcdServers,
-
-		"tectonic_update_app_id":  c.Tectonic.Updater.AppID,
-		"tectonic_update_channel": c.Tectonic.Updater.Channel,
-		"tectonic_update_server":  c.Tectonic.Updater.Server,
-
-		"tectonic_master_count": c.CloudForm.ControllerCount,
-		"tectonic_worker_count": c.CloudForm.WorkerCount,
-
-		"tectonic_kube_apiserver_service_ip": c.CloudForm.APIServiceIP.String(),
-		"tectonic_kube_dns_service_ip":       c.CloudForm.DNSServiceIP.String(),
-
-		"tectonic_aws_external_vpc_id":            c.CloudForm.VPCID,
-		"tectonic_aws_external_master_subnet_ids": controllerSubnetIDs,
-		"tectonic_aws_external_worker_subnet_ids": workerSubnetIDs,
-		"tectonic_aws_vpc_cidr_block":             c.CloudForm.VPCCIDR,
-		"tectonic_aws_az_count":                   len(availabilityZones),
-		"tectonic_aws_master_ec2_type":            c.CloudForm.ControllerInstanceType,
-		"tectonic_aws_worker_ec2_type":            c.CloudForm.WorkerInstanceType,
-		"tectonic_aws_etcd_ec2_type":              c.CloudForm.ETCDInstanceType,
-		"tectonic_aws_ssh_key":                    c.CloudForm.KeyName,
-	}
-
-	tfVars, err := mapVarsToTFVars(variables)
-	if err != nil {
-		return []asset.Asset{}, err
-	}
-
-	return []asset.Asset{
-		asset.New("terraform/terraform.tfvars", []byte(tfVars)),
-		asset.New("terraform/license", []byte(c.Tectonic.License)),
-		asset.New("terraform/pull_secret", []byte(c.Tectonic.Dockercfg)),
-	}, nil
-}
-
-func mapVarsToTFVars(variables map[string]interface{}) (string, error) {
-	tfVars := ""
-
-	for key, value := range variables {
-		var stringValue string
-
-		switch value := value.(type) {
-		case string:
-			trimmedValue := strings.Trim(value, "\n")
-			if !strings.Contains(trimmedValue, "\n") {
-				stringValue = fmt.Sprintf("\"%s\"", trimmedValue)
-			} else {
-				stringValue = fmt.Sprintf("<<EOD\n%s\nEOD", trimmedValue)
-			}
-		case []string:
-			qValue := make([]string, len(value))
-			for i := 0; i < len(value); i++ {
-				qValue[i] = fmt.Sprintf("\"%s\"", strings.Trim(value[i], "\n"))
-			}
-			stringValue = fmt.Sprintf("[%s]", strings.Join(qValue, ", "))
-		case int:
-			stringValue = strconv.Itoa(value)
-		default:
-			return "", fmt.Errorf("unsupported type %T (%s) for TFVars\n", value, key)
-		}
-
-		tfVars = fmt.Sprintf("%s%s = %s\n", tfVars, key, stringValue)
-	}
-
-	return tfVars, nil
-}
 
 // TerraformApplyHandlerInput describes the input expected by the
 // terraformApplyHandler HTTP Handler.

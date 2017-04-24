@@ -8,7 +8,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/route53"
 )
 
 // getAvailabilityZones lists zones in the region set in the client
@@ -187,18 +186,4 @@ func getVPCSubnetsByIDs(sess *session.Session, subnetIDs []*string) ([]VPCSubnet
 		})
 	}
 	return subnets, nil
-}
-
-// getHostedZoneName returns the domain name of a route53 hosted zone specified
-// by its ID, without the final period.
-func getHostedZoneName(sess *session.Session, hostedZoneID string) (string, error) {
-	hostedZone, err := route53.New(sess).GetHostedZone(
-		&route53.GetHostedZoneInput{
-			Id: aws.String(hostedZoneID),
-		},
-	)
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSuffix(aws.StringValue(hostedZone.HostedZone.Name), "."), nil
 }

@@ -1,28 +1,22 @@
 package server
 
 import (
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"net"
 	"net/http"
-	"regexp"
 	"sort"
 	"strings"
 	"sync"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/kms"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53domains"
 	"golang.org/x/net/context"
 
-	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/coreos/tectonic-installer/installer/server/aws/cloudforms"
 	"github.com/coreos/tectonic-installer/installer/server/ctxh"
 )
@@ -46,16 +40,6 @@ func (slice ListItems) Less(i, j int) bool {
 func (slice ListItems) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
-
-type awsCredentials struct {
-	AccessKeyID     string `json:"accessKeyId"`
-	SecretAccessKey string `json:"secretAccessKey"`
-	SessionToken    string `json:"sessionToken"`
-	Region          string `json:"region"`
-}
-
-// Characters that aren't allowed in AWS KMS aliases
-var coerceKMSAlias = regexp.MustCompile("[^a-zA-Z0-9/_-]+")
 
 // toAwsAppError returns an AWS-specific error along with AWS's error message
 func toAwsAppError(err error) *ctxh.AppError {
@@ -293,131 +277,6 @@ func awsDescribeRegionsHandler() ctxh.ContextHandler {
 	return requireHTTPMethod("POST", ctxh.ContextHandlerFuncWithError(fn))
 }
 
-func formatKeyLabel(alias string, keyID string) string {
-	alias = strings.TrimPrefix(alias, "alias/")
-	if alias == "" {
-		return keyID
-	}
-	return fmt.Sprintf("%s - %s", alias, keyID)
-}
-
-// awsCreateKMSHandler creates a new KMS key.
-func awsCreateKMSHandler() ctxh.ContextHandler {
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) *ctxh.AppError {
-		sess, err := awsSessionFromRequest(req)
-		if err != nil {
-			return ctxh.NewAppError(err, "could not create AWS session", http.StatusInternalServerError)
-		}
-		kmsSvc := kms.New(sess)
-
-		// Create a new key.
-		keyOutput, err := kmsSvc.CreateKey(&kms.CreateKeyInput{
-			Description: aws.String("Tectonic installer"),
-		})
-		if err != nil {
-			return toAwsAppError(err)
-		}
-
-		// Generate intelligible name for the key.
-		// The name's format is <username>-tectonic/<random-number>.
-		// The random-number is used so multiple keys can be created by the same
-		// user.
-		num, err := rand.Int(rand.Reader, new(big.Int).SetInt64(10000))
-		if err != nil {
-			return ctxh.NewAppError(err, "could not create bigInt", http.StatusInternalServerError)
-		}
-		username, err := awsGetUsername(sess)
-		if err != nil {
-			return ctxh.NewAppError(err, "could not retrieve username", http.StatusInternalServerError)
-		}
-		username = coerceKMSAlias.ReplaceAllString(username, "")
-		alias := fmt.Sprintf("%v-tectonic/%v", username, num)
-
-		// Create an alias for the key using the name we just generated.
-		_, err = kmsSvc.CreateAlias(&kms.CreateAliasInput{
-			AliasName:   aws.String("alias/" + alias),
-			TargetKeyId: keyOutput.KeyMetadata.KeyId,
-		})
-		if err != nil {
-			// Failed to create the alias, print the error and set the alias name to
-			// an empty string so it doesn't appear in the key label.
-			log.Errorf("failed to create alias: %v", err)
-			alias = ""
-		}
-
-		writeJSONData(w, listItem{
-			Label: formatKeyLabel(alias, *keyOutput.KeyMetadata.KeyId),
-			Value: *keyOutput.KeyMetadata.Arn,
-		})
-		return nil
-	}
-	return requireHTTPMethod("POST", ctxh.ContextHandlerFuncWithError(fn))
-}
-
-// awsGetKMSHandler responds with the list of AWS KMS keys.
-func awsGetKMSHandler() ctxh.ContextHandler {
-	toLabel := func(aliases []*kms.AliasListEntry, keyID string) string {
-		for _, alias := range aliases {
-			if alias.TargetKeyId == nil {
-				continue
-			}
-			if *alias.TargetKeyId == keyID {
-				return formatKeyLabel(*alias.AliasName, keyID)
-			}
-		}
-		return keyID
-	}
-
-	fn := func(ctx context.Context, w http.ResponseWriter, req *http.Request) *ctxh.AppError {
-		sess, err := awsSessionFromRequest(req)
-		if err != nil {
-			return ctxh.NewAppError(err, "could not create AWS session", http.StatusInternalServerError)
-		}
-
-		kmsSvc := kms.New(sess)
-
-		output := struct {
-			keys       *kms.ListKeysOutput
-			aliases    *kms.ListAliasesOutput
-			keysErr    error
-			aliasesErr error
-		}{}
-
-		var wg sync.WaitGroup
-		wg.Add(2)
-		go func() {
-			defer wg.Done()
-			output.keys, output.keysErr = kmsSvc.ListKeys(&kms.ListKeysInput{})
-		}()
-		go func() {
-			defer wg.Done()
-			output.aliases, output.aliasesErr = kmsSvc.ListAliases(&kms.ListAliasesInput{})
-		}()
-
-		// Wait for health checks to get responses or timeout
-		wg.Wait()
-
-		if output.aliasesErr != nil {
-			return toAwsAppError(output.aliasesErr)
-		}
-		if output.keysErr != nil {
-			return toAwsAppError(output.keysErr)
-		}
-
-		keys := make(ListItems, len(output.keys.Keys))
-		for i, key := range output.keys.Keys {
-			keys[i] = listItem{
-				Label: toLabel(output.aliases.Aliases, aws.StringValue(key.KeyId)),
-				Value: aws.StringValue(key.KeyArn),
-			}
-		}
-		sort.Sort(keys)
-		writeJSONData(w, keys)
-		return nil
-	}
-	return requireHTTPMethod("POST", ctxh.ContextHandlerFuncWithError(fn))
-}
-
 // awsGetVPCsHandler responds with the list of AWS VPC instances. An AWS
 // Session is read from the context.
 func awsGetVPCsHandler() ctxh.ContextHandler {
@@ -597,28 +456,4 @@ func awsSessionFromRequest(req *http.Request) (*session.Session, error) {
 	SessionToken := req.Header.Get("Tectonic-SessionToken")
 	Region := req.Header.Get("Tectonic-Region")
 	return getAWSSession(AccessKeyID, SecretAccessKey, SessionToken, Region)
-}
-
-// awsGetUsername returns the username of the session.
-func awsGetUsername(session *session.Session) (string, error) {
-	// Regardless of the credentials used by the session being a static
-	// AccessKeyID / SecretAccessKey or a temporary set using an STS Token,
-	// GetCallerIdentity always works, requires no permission and returns the ARN.
-	//
-	// The last part of the ARN contains the username, the role session name
-	// when STS is used, or the role name when STS is used and there was no role
-	// session name provided.
-	stsOutput, err := sts.New(session).GetCallerIdentity(&sts.GetCallerIdentityInput{})
-	if err != nil {
-		// Typically happens if the credentials are expired.
-		return "", err
-	}
-
-	arnS := strings.Split(*stsOutput.Arn, "/")
-	if len(arnS) == 0 {
-		// Should never happen, the ARN should always contain at least one '/'.
-		return "", fmt.Errorf("misformated ARN: %q", *stsOutput.Arn)
-	}
-
-	return arnS[len(arnS)-1], nil
 }

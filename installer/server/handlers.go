@@ -3,10 +3,8 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"sync"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/dghubble/sessions"
 	"golang.org/x/net/context"
 
 	"github.com/coreos/tectonic-installer/installer/server/ctxh"
@@ -34,27 +32,4 @@ func requireHTTPMethod(method string, next ctxh.ContextHandler) ctxh.ContextHand
 		return nil
 	}
 	return ctxh.ContextHandlerFuncWithError(fn)
-}
-
-// syncHandler synchronizes request handling and calls the next handler. Only
-// one request may be processed by the handler chain at a time.
-func syncHandler(next http.Handler) http.Handler {
-	mu := &sync.Mutex{}
-	fn := func(w http.ResponseWriter, req *http.Request) {
-		mu.Lock()
-		if next != nil {
-			next.ServeHTTP(w, req)
-		}
-		mu.Unlock()
-	}
-	return http.HandlerFunc(fn)
-}
-
-// doneHandler removes (expires) the session cookie, if present.
-func doneHandler(sessionProvider sessions.Store) http.Handler {
-	fn := func(w http.ResponseWriter, req *http.Request) {
-		sessionProvider.Destroy(w, installerSessionName)
-		fmt.Fprintf(w, "ok")
-	}
-	return http.HandlerFunc(fn)
 }
