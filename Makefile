@@ -30,7 +30,7 @@ plan: installer-env $(BUILD_DIR)/.terraform
 apply: installer-env $(BUILD_DIR)/.terraform
 	cd $(BUILD_DIR) && $(TF_CMD) apply $(TOP_DIR)/platforms/$(PLATFORM)
 
-destroy: installer-env
+destroy: installer-env ${BUILD_DIR}/.terraform
 	cd $(BUILD_DIR) && $(TF_CMD) destroy -force $(TOP_DIR)/platforms/$(PLATFORM)
 
 terraform-check:
