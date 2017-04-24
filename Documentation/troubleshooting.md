@@ -1,4 +1,4 @@
-# Troubleshooting known issues and workarounds
+# Troubleshooting Tectonic Installer
 
 ## Re-applying over a partially failed run
 
