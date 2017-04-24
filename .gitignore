@@ -11,3 +11,4 @@ pull-secret.json
 tectonic-license.txt
 generated/
 bin/
+.terraformrc
