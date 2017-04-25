@@ -58,7 +58,7 @@ pipeline {
                              file(credentialsId: 'tectonic-pull', variable: 'TF_VAR_tectonic_license_path'),
                              [
                                $class: 'UsernamePasswordMultiBinding',
-                               credentialsId: 'tectonic-aws-creds',
+                               credentialsId: 'tectonic-aws',
                                usernameVariable: 'AWS_ACCESS_KEY_ID',
                                passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                              ]
