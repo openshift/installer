@@ -38,7 +38,7 @@ variable "tectonic_container_images" {
     kubednsmasq                  = "gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.1"
     kubedns_sidecar              = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.1"
     flannel                      = "quay.io/coreos/flannel:v0.7.1-amd64"
-    etcd                         = "quay.io/coreos/etcd:v3.1.5"
+    etcd                         = "quay.io/coreos/etcd:v3.1.6"
     awscli                       = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
   }
 }
@@ -48,7 +48,7 @@ variable "tectonic_versions" {
   type        = "map"
 
   default = {
-    etcd       = "v3.1.5"
+    etcd       = "v3.1.6"
     prometheus = "v1.5.2"
     monitoring = "1.0.0"
     kubernetes = "1.6.2+tectonic.0"
