@@ -84,19 +84,18 @@ pipeline {
 
             make plan
 
-            # always cleanup cluster
-            shutdown()
-            {
-              make destroy
-            }
-            trap shutdown EXIT
-
             make apply
             '''
             }
           }
         )
       }
+    }
+  }
+
+  post {
+    always {
+      sh 'make destroy'
     }
   }
 }
