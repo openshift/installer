@@ -28,7 +28,10 @@ module "bootkube" {
   oidc_groups_claim   = "groups"
   oidc_client_id      = "tectonic-kubectl"
 
-  etcd_servers = ["http://127.0.0.1:2379"]
+  etcd_endpoints   = ["127.0.0.1:2379"]
+  etcd_ca_cert     = ""
+  etcd_client_cert = ""
+  etcd_client_key  = ""
 }
 
 module "tectonic" {
