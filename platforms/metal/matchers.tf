@@ -35,6 +35,11 @@ resource "matchbox_group" "controller" {
     etcd_initial_cluster = "${join(",", formatlist("%s=http://%s:2380", var.tectonic_metal_controller_names, var.tectonic_metal_controller_domains))}"
     k8s_dns_service_ip   = "${var.tectonic_kube_dns_service_ip}"
     ssh_authorized_key   = "${var.tectonic_ssh_authorized_key}"
+
+    # extra data
+    etcd_image_tag    = "${var.tectonic_versions["etcd"]}"
+    kubelet_image_url = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
+    kubelet_image_tag = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
   }
 }
 
@@ -53,5 +58,10 @@ resource "matchbox_group" "worker" {
     etcd_endpoints     = "${join(",", formatlist("%s:2379", var.tectonic_metal_controller_domains))}"
     k8s_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
+
+    # extra data
+    etcd_image_tag    = "${var.tectonic_versions["etcd"]}"
+    kubelet_image_url = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
+    kubelet_image_tag = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
   }
 }
