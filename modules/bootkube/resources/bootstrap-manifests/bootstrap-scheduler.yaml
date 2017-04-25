@@ -4,12 +4,20 @@ metadata:
   name: bootstrap-kube-scheduler
   namespace: kube-system
 spec:
+  hostNetwork: true
   containers:
   - name: kube-scheduler
     image: ${hyperkube_image}
     command:
     - ./hyperkube
     - scheduler
+    - --kubeconfig=/etc/kubernets/kubeconfig
     - --leader-elect=true
-    - --master=http://127.0.0.1:8080
-  hostNetwork: true
+    volumeMounts:
+    - name: kubernetes
+      mountPath: /etc/kubernetes
+      readOnly: true
+  volumes:
+  - name: kubernetes
+    hostPath:
+      path: /etc/kubernetes
