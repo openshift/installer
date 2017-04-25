@@ -11,13 +11,13 @@ spec:
     command:
     - ./hyperkube
     - scheduler
-    - --kubeconfig=/etc/kubernets/kubeconfig
+    - --kubeconfig=/etc/kubernetes/kubeconfig
     - --leader-elect=true
     volumeMounts:
-    - name: kubernetes
+    - name: etc-kubernetes
       mountPath: /etc/kubernetes
       readOnly: true
   volumes:
-  - name: kubernetes
+  - name: etc-kubernetes
     hostPath:
       path: /etc/kubernetes

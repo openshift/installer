@@ -15,26 +15,20 @@ spec:
     - --configure-cloud-routes=false
     - --leader-elect=true
     - --kubeconfig=/etc/kubernetes/kubeconfig
-    - --root-ca-file=/etc/kubernetes/secrets/ca.crt
-    - --service-account-private-key-file=/etc/kubernetes/secrets/service-account.key
+    - --root-ca-file=/etc/kubernetes/bootstrap-secrets/ca.crt
+    - --service-account-private-key-file=/etc/kubernetes/bootstrap-secrets/service-account.key
     volumeMounts:
-    - name: secrets
-      mountPath: /etc/kubernetes/secrets
-      readOnly: true
-    - name: kubeconfig
-      mountPath: /etc/kubernetes/kubeconfig
+    - name: etc-kubernetes
+      mountPath: /etc/kubernetes
       readOnly: true
     - name: ssl-host
       mountPath: /etc/ssl/certs
       readOnly: true
   hostNetwork: true
   volumes:
-  - name: secrets
+  - name: etc-kubernetes
     hostPath:
-      path: /tmp/bootkube/secrets
-  - name: kubeconfig
-    hostPath:
-      path: /etc/kubernetes/kubeconfig
+      path: /etc/kubernetes
   - name: ssl-host
     hostPath:
       path: /usr/share/ca-certificates

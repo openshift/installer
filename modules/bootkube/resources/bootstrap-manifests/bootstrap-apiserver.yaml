@@ -48,7 +48,7 @@ spec:
   volumes:
   - name: secrets
     hostPath:
-      path: /tmp/bootkube/secrets
+      path: /etc/kubernetes/bootstrap-secrets
   - name: ssl-certs-host
     hostPath:
       path: /usr/share/ca-certificates
