@@ -48,6 +48,9 @@ pipeline {
         }
       }
       stage("Smoke Tests") {
+      environment {
+        CLUSTER="tf-${PLATFORM}-${BRANCH_NAME}-${BUILD_ID}"
+      }
       steps {
         parallel (
           "TerraForm: AWS": {
@@ -65,7 +68,6 @@ pipeline {
             sh '''
             # Set required configuration
             export PLATFORM=aws
-            export CLUSTER="tf-${PLATFORM}-${BRANCH_NAME}-${BUILD_ID}"
 
             # s3 buckets require lowercase names
             export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
