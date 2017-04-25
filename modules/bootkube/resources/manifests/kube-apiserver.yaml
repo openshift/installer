@@ -53,11 +53,6 @@ spec:
         - --oidc-groups-claim=${oidc_groups_claim}
         - --oidc-ca-file=/etc/kubernetes/secrets/ca.crt
         - --cloud-provider=${cloud_provider}
-        env:
-        - name: POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
         volumeMounts:
         - mountPath: /etc/ssl/certs
           name: ssl-certs-host
