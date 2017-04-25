@@ -7,7 +7,7 @@ systemd:
         - name: 40-etcd-cluster.conf
           contents: |
             [Service]
-            Environment="ETCD_IMAGE_TAG=v3.1.0"
+            Environment="ETCD_IMAGE_TAG={{.etcd_image_tag}}"
             ExecStart=
             ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
               --listen-addr=127.0.0.1:2379 \
@@ -47,7 +47,7 @@ systemd:
         [Unit]
         Description=Kubelet via Hyperkube ACI
         [Service]
-        Environment="RKT_OPTS=--uuid-file-save=/var/run/kubelet-pod.uuid \
+        Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
           --volume=resolv,kind=host,source=/etc/resolv.conf \
           --mount volume=resolv,target=/etc/resolv.conf \
           --volume var-lib-cni,kind=host,source=/var/lib/cni \
@@ -84,30 +84,14 @@ systemd:
         WantedBy=multi-user.target
 
 storage:
-  {{ if index . "pxe" }}
-  disks:
-    - device: /dev/sda
-      wipe_table: true
-      partitions:
-        - label: ROOT
-  filesystems:
-    - name: root
-      mount:
-        device: "/dev/sda1"
-        format: "ext4"
-        create:
-          force: true
-          options:
-            - "-LROOT"
-  {{end}}
   files:
     - path: /etc/kubernetes/kubelet.env
       filesystem: root
       mode: 0644
       contents:
         inline: |
-          KUBELET_ACI=quay.io/coreos/hyperkube
-          KUBELET_VERSION=v1.6.1_coreos.0
+          KUBELET_IMAGE_URL={{.kubelet_image_url}}
+          KUBELET_IMAGE_TAG={{.kubelet_image_tag}}
     - path: /etc/hostname
       filesystem: root
       mode: 0644
