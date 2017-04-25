@@ -26,6 +26,7 @@ resource "template_dir" "bootkube" {
     kubedns_sidecar_image  = "${var.container_images["kubedns_sidecar"]}"
     flannel_image          = "${var.container_images["flannel"]}"
     etcd_operator_image    = "${var.container_images["etcd_operator"]}"
+    kenc_image             = "${var.container_images["kenc"]}"
 
     etcd_servers    = "${var.experimental_self_hosted_etcd ? format("http://%s:2379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? "http://127.0.0.1:2379" : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
     etcd_ca_flag    = "${data.null_data_source.etcd.outputs.ca_flag}"
@@ -65,6 +66,7 @@ resource "template_dir" "bootkube-bootstrap" {
 
   vars {
     hyperkube_image = "${var.container_images["hyperkube"]}"
+    etcd_image      = "${var.container_images["etcd"]}"
 
     etcd_servers   = "${var.experimental_self_hosted_etcd ? format("http://%s:2379,http://127.0.0.1:12379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? "http://127.0.0.1:2379" : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
     etcd_ca_flag   = "${data.null_data_source.etcd.outputs.ca_flag}"
