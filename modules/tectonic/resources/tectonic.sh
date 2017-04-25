@@ -170,6 +170,9 @@ echo "Creating Tectonic Updater"
   kubectl create -f updater/app-version-tectonic-monitoring.yaml
 fi
 
+echo "Creating Container Linux Updater"
+kubectl create -f container-linux-updater/deployment.yaml
+
 # wait for Tectonic pods
 wait_for_pods tectonic-system
 
