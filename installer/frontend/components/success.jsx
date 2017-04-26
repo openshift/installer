@@ -46,9 +46,9 @@ export const Success = connect(stateToProps)(
     <div className="col-xs-12">
       <h4>Install kubectl</h4>
       <p>
-        You can interact with nodes and deploy your Kubernetes-aware applications with kubectl. See the <a href="https://kubernetes.io/docs/user-guide/prereqs/" target="_blank">upstream kubectl documentation</a> for more details.
+        You can interact with nodes and deploy your Kubernetes-aware applications with kubectl. See the <a href="https://kubernetes.io/docs/tasks/kubectl/install/" target="_blank">upstream kubectl documentation</a> for more details.
       </p>
-      <a href="https://kubernetes.io/docs/user-guide/prereqs/" target="_blank"><button className="btn btn-default" style={{marginTop: 20}}>Configure kubectl&nbsp;&nbsp;<i className="fa fa-external-link"></i></button></a>
+      <a href="https://kubernetes.io/docs/tasks/kubectl/install/" target="_blank"><button className="btn btn-default" style={{marginTop: 20}}>Configure kubectl&nbsp;&nbsp;<i className="fa fa-external-link"></i></button></a>
     </div>
   </div>
   <hr className="spacer" />
