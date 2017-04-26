@@ -20,9 +20,9 @@ tectonic_cl_channel = "stable" # alpha, beta, stable
 
 # Azure Details
 tectonic_azure_ssh_key = "/Users/coreos/.ssh/id_rsa.pub"
-tectonic_azure_etcd_vm_size = "Standard_DS2_v2"
-tectonic_azure_master_vm_size = "Standard_DS2_v2"
-tectonic_azure_worker_vm_size = "Standard_DS2_v2"
+tectonic_azure_etcd_vm_size = "Standard_DS2_v2_v2"
+tectonic_azure_master_vm_size = "Standard_DS2_v2_v2"
+tectonic_azure_worker_vm_size = "Standard_DS2_v2_v2"
 tectonic_azure_location = "eastus"
 
 # Update Details
