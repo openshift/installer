@@ -30,6 +30,10 @@ spec:
           mountPath: /etc/kubernetes
       imagePullSecrets:
       - name: coreos-pull-secret
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
       volumes:
       - name: etc-kubernetes
         hostPath:
