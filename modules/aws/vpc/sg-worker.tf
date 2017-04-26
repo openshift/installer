@@ -157,6 +157,7 @@ resource "aws_security_group_rule" "worker_ingress_kubelet_secure_from_master" {
   to_port   = 10255
 }
 
+# TODO(squat): remove this once we pin etcd pods to masters
 resource "aws_security_group_rule" "worker_ingress_etcd" {
   type              = "ingress"
   security_group_id = "${aws_security_group.worker.id}"
@@ -167,6 +168,7 @@ resource "aws_security_group_rule" "worker_ingress_etcd" {
   self      = true
 }
 
+# TODO(squat): remove this once we pin etcd pods to masters
 resource "aws_security_group_rule" "worker_ingress_etcd_from_master" {
   type                     = "ingress"
   security_group_id        = "${aws_security_group.worker.id}"

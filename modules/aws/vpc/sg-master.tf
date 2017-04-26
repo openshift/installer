@@ -167,6 +167,7 @@ resource "aws_security_group_rule" "master_ingress_etcd" {
   self      = true
 }
 
+# TODO(squat): remove this once we pin etcd pods to masters
 resource "aws_security_group_rule" "master_ingress_etcd_from_worker" {
   type                     = "ingress"
   security_group_id        = "${aws_security_group.master.id}"
@@ -187,6 +188,7 @@ resource "aws_security_group_rule" "master_ingress_bootstrap_etcd" {
   self      = true
 }
 
+# TODO(squat): remove this once we pin etcd pods to masters
 resource "aws_security_group_rule" "master_ingress_bootstrap_etcd_from_worker" {
   type                     = "ingress"
   security_group_id        = "${aws_security_group.master.id}"
