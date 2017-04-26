@@ -63,6 +63,7 @@ resource "aws_launch_configuration" "master_conf" {
 
   lifecycle {
     create_before_destroy = true
+    ignore_changes        = ["image_id"]
   }
 
   root_block_device {
