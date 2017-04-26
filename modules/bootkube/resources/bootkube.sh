@@ -6,8 +6,6 @@
   --mount volume=assets,target=/assets \
   --volume etc-kubernetes,kind=host,source=/etc/kubernetes \
   --mount volume=etc-kubernetes,target=/etc/kubernetes \
-  --volume tmp,kind=host,source=/tmp \
-  --mount volume=tmp,target=/tmp \
   ${bootkube_image} \
   --net=host \
   --dns=host \

@@ -93,7 +93,7 @@ resource "local_file" "etcd_client_key" {
   filename = "${path.cwd}/generated/tls/etcd-client.key"
 }
 
-# kubeconfig (resources/generated/kubeconfig)
+# kubeconfig (resources/generated/auth/kubeconfig)
 data "template_file" "kubeconfig" {
   template = "${file("${path.module}/resources/kubeconfig")}"
 
@@ -107,7 +107,7 @@ data "template_file" "kubeconfig" {
 
 resource "local_file" "kubeconfig" {
   content  = "${data.template_file.kubeconfig.rendered}"
-  filename = "${path.cwd}/generated/kubeconfig"
+  filename = "${path.cwd}/generated/auth/kubeconfig"
 }
 
 # bootkube.sh (resources/generated/bootkube.sh)

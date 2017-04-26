@@ -14,21 +14,21 @@ spec:
     - --cluster-cidr=${cluster_cidr}
     - --configure-cloud-routes=false
     - --leader-elect=true
-    - --master=http://127.0.0.1:8080
-    - --root-ca-file=/etc/kubernetes/secrets/ca.crt
-    - --service-account-private-key-file=/etc/kubernetes/secrets/service-account.key
+    - --kubeconfig=/etc/kubernetes/kubeconfig
+    - --root-ca-file=/etc/kubernetes/bootstrap-secrets/ca.crt
+    - --service-account-private-key-file=/etc/kubernetes/bootstrap-secrets/service-account.key
     volumeMounts:
-    - name: secrets
-      mountPath: /etc/kubernetes/secrets
+    - name: etc-kubernetes
+      mountPath: /etc/kubernetes
       readOnly: true
     - name: ssl-host
       mountPath: /etc/ssl/certs
       readOnly: true
   hostNetwork: true
   volumes:
-  - name: secrets
+  - name: etc-kubernetes
     hostPath:
-      path: /tmp/bootkube/secrets
+      path: /etc/kubernetes
   - name: ssl-host
     hostPath:
       path: /usr/share/ca-certificates

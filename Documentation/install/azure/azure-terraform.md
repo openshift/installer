@@ -116,7 +116,7 @@ The Tectonic Console should be up and running after the containers have download
 Inside of the `/generated` folder you should find any credentials, including the CA if generated, and a kubeconfig. You can use this to control the cluster with `kubectl`:
 
 ```
-$ KUBECONFIG=generated/kubeconfig
+$ KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
 

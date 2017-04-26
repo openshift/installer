@@ -28,7 +28,7 @@ spec:
         - apiserver
         - --bind-address=0.0.0.0
         - --secure-port=443
-        - --insecure-port=8080
+        - --insecure-port=0
         - --advertise-address=${advertise_address}
         - --etcd-servers=${etcd_servers}
         ${etcd_ca_flag}
@@ -39,6 +39,7 @@ spec:
         - --allow-privileged=true
         - --service-cluster-ip-range=${service_cidr}
         - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
+        - --tls-ca-file=/etc/kubernetes/secrets/ca.crt
         - --tls-cert-file=/etc/kubernetes/secrets/apiserver.crt
         - --tls-private-key-file=/etc/kubernetes/secrets/apiserver.key
         - --kubelet-client-certificate=/etc/kubernetes/secrets/apiserver.crt
@@ -53,11 +54,6 @@ spec:
         - --oidc-groups-claim=${oidc_groups_claim}
         - --oidc-ca-file=/etc/kubernetes/secrets/ca.crt
         - --cloud-provider=${cloud_provider}
-        env:
-        - name: POD_IP
-          valueFrom:
-            fieldRef:
-              fieldPath: status.podIP
         volumeMounts:
         - mountPath: /etc/ssl/certs
           name: ssl-certs-host

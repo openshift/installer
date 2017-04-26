@@ -23,7 +23,7 @@ spec:
     ${etcd_ca_flag}
     ${etcd_cert_flag}
     ${etcd_key_flag}
-    - --insecure-port=8080
+    - --insecure-port=0
     - --advertise-address=${advertise_address}
     - --kubelet-client-certificate=/etc/kubernetes/secrets/apiserver.crt
     - --kubelet-client-key=/etc/kubernetes/secrets/apiserver.key
@@ -31,6 +31,7 @@ spec:
     - --service-account-key-file=/etc/kubernetes/secrets/service-account.pub
     - --service-cluster-ip-range=${service_cidr}
     - --storage-backend=etcd3
+    - --tls-ca-file=/etc/kubernetes/secrets/ca.crt
     - --tls-cert-file=/etc/kubernetes/secrets/apiserver.crt
     - --tls-private-key-file=/etc/kubernetes/secrets/apiserver.key
     volumeMounts:
@@ -47,7 +48,7 @@ spec:
   volumes:
   - name: secrets
     hostPath:
-      path: /tmp/bootkube/secrets
+      path: /etc/kubernetes/bootstrap-secrets
   - name: ssl-certs-host
     hostPath:
       path: /usr/share/ca-certificates
