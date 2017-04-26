@@ -33,6 +33,9 @@ resource "aws_instance" "etcd_node" {
   vpc_security_group_ids = ["${var.sg_ids}"]
 
   lifecycle {
+    # Ignore changes in the AMI which force recreation of the resource. This
+    # avoids accidental deletion of nodes whenever a new CoreOS Release comes
+    # out.
     ignore_changes = ["ami"]
   }
 
