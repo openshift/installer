@@ -39,6 +39,7 @@ variable "tectonic_container_images" {
     kubedns_sidecar              = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.1"
     flannel                      = "quay.io/coreos/flannel:v0.7.1-amd64"
     etcd                         = "quay.io/coreos/etcd:v3.1.6"
+    etcd_operator                = "quay.io/coreos/etcd-operator:v0.2.5"
     awscli                       = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
   }
 }
@@ -60,6 +61,12 @@ variable "tectonic_kube_apiserver_service_ip" {
   type        = "string"
   description = "Service IP used to reach kube-apiserver inside the cluster"
   default     = "10.3.0.1"
+}
+
+variable "tectonic_kube_etcd_service_ip" {
+  type        = "string"
+  description = "Service IP used to reach self-hosted etcd"
+  default     = "10.3.0.15"
 }
 
 variable "tectonic_kube_dns_service_ip" {

@@ -40,5 +40,5 @@ output "systemd_service" {
 }
 
 output "etcd_gateway_enabled" {
-  value = "${data.null_data_source.etcd.outputs.no_certs}"
+  value = "${!var.experimental_self_hosted_etcd && data.null_data_source.etcd.outputs.no_certs}"
 }

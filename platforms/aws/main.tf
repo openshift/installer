@@ -10,7 +10,7 @@ module "vpc" {
   external_master_subnets = ["${compact(var.tectonic_aws_external_master_subnet_ids)}"]
   external_worker_subnets = ["${compact(var.tectonic_aws_external_worker_subnet_ids)}"]
   extra_tags              = "${var.tectonic_aws_extra_tags}"
-  enable_etcd_sg          = "${length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
+  enable_etcd_sg          = "${!var.tectonic_experimental && length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
 
   # VPC layout settings.
   #
@@ -70,6 +70,8 @@ module "etcd" {
   root_volume_type = "${var.tectonic_aws_etcd_root_volume_type}"
   root_volume_size = "${var.tectonic_aws_etcd_root_volume_size}"
   root_volume_iops = "${var.tectonic_aws_etcd_root_volume_iops}"
+
+  experimental_self_hosted_etcd = "${var.tectonic_experimental}"
 }
 
 module "ignition-masters" {

@@ -68,3 +68,9 @@ variable "sg_ids" {
   type        = "list"
   description = "The security group IDs to be applied."
 }
+
+variable "experimental_self_hosted_etcd" {
+  description = "Self hosted etcd mode. Includes starting the initial etcd member by bootkube"
+  type        = "string"
+  default     = "false"
+}

@@ -157,6 +157,46 @@ resource "aws_security_group_rule" "master_ingress_kubelet_secure_from_worker" {
   to_port   = 10255
 }
 
+resource "aws_security_group_rule" "master_ingress_etcd" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.master.id}"
+
+  protocol  = "tcp"
+  from_port = 2379
+  to_port   = 2380
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_etcd_from_worker" {
+  type                     = "ingress"
+  security_group_id        = "${aws_security_group.master.id}"
+  source_security_group_id = "${aws_security_group.worker.id}"
+
+  protocol  = "tcp"
+  from_port = 2379
+  to_port   = 2380
+}
+
+resource "aws_security_group_rule" "master_ingress_bootstrap_etcd" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.master.id}"
+
+  protocol  = "tcp"
+  from_port = 12379
+  to_port   = 12380
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_bootstrap_etcd_from_worker" {
+  type                     = "ingress"
+  security_group_id        = "${aws_security_group.master.id}"
+  source_security_group_id = "${aws_security_group.worker.id}"
+
+  protocol  = "tcp"
+  from_port = 12379
+  to_port   = 12380
+}
+
 resource "aws_security_group_rule" "master_ingress_services" {
   type              = "ingress"
   security_group_id = "${aws_security_group.master.id}"

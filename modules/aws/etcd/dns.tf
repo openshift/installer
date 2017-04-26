@@ -1,5 +1,5 @@
 resource "aws_route53_record" "etcd_srv_discover" {
-  count   = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+  count   = "${!var.experimental_self_hosted_etcd && length(var.external_endpoints) == 0 ? 1 : 0}"
   name    = "_etcd-server._tcp"
   type    = "SRV"
   zone_id = "${var.dns_zone_id}"
@@ -8,7 +8,7 @@ resource "aws_route53_record" "etcd_srv_discover" {
 }
 
 resource "aws_route53_record" "etcd_srv_client" {
-  count   = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+  count   = "${!var.experimental_self_hosted_etcd && length(var.external_endpoints) == 0 ? 1 : 0}"
   name    = "_etcd-client._tcp"
   type    = "SRV"
   zone_id = "${var.dns_zone_id}"
@@ -17,7 +17,7 @@ resource "aws_route53_record" "etcd_srv_client" {
 }
 
 resource "aws_route53_record" "etc_a_nodes" {
-  count   = "${length(var.external_endpoints) == 0 ? var.instance_count : 0}"
+  count   = "${!var.experimental_self_hosted_etcd && length(var.external_endpoints) == 0 ? var.instance_count : 0}"
   type    = "A"
   ttl     = "60"
   zone_id = "${var.dns_zone_id}"
