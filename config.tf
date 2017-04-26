@@ -24,8 +24,8 @@ variable "tectonic_container_images" {
     kube_version_operator        = "quay.io/coreos/kube-version-operator:7da46d189c36092f43d07ca381a61897402fa13c"
     tectonic_channel_operator    = "quay.io/coreos/tectonic-channel-operator:15c001bd7c008a04394390d08ac71046e723ac48"
     node_agent                   = "quay.io/coreos/node-agent:53f6c8dcc7657b49d1468f7e24933d3897ae8ea7"
-    prometheus_operator          = "quay.io/coreos/prometheus-operator:v0.6.0"
-    tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.0.0"
+    prometheus_operator          = "quay.io/coreos/prometheus-operator:v0.8.2"
+    tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.1.0"
     node_exporter                = "quay.io/prometheus/node-exporter:v0.13.0"
     config_reload                = "quay.io/coreos/configmap-reload:v0.0.1"
     heapster                     = "gcr.io/google_containers/heapster:v1.3.0"
@@ -49,8 +49,8 @@ variable "tectonic_versions" {
 
   default = {
     etcd       = "v3.1.6"
-    prometheus = "v1.5.2"
-    monitoring = "1.0.0"
+    prometheus = "v1.6.1"
+    monitoring = "1.1.0"
     kubernetes = "1.6.2+tectonic.0"
     tectonic   = "1.6.2-tectonic.0"
   }

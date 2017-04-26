@@ -15,4 +15,3 @@ spec:
     protocol: TCP
   selector:
     app: node-exporter
-
