@@ -1,7 +1,7 @@
 #!/bin/bash
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source ${DIR}/../scripts/awsutil.sh
+source ${DIR}/../awsutil.sh
 
 # A script that uploads the payload.json to aws s3 bucket, and
 # create a new package on the core update server.
