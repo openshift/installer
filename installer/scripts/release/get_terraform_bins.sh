@@ -8,8 +8,8 @@ mkdir -p "${TMP_DIR}" "${TERRAFORM_BIN_TMP_DIR}"
 set -x
 
 for os in "linux" "darwin" "windows"; do
-    curl -L $(eval echo ${TERRAFORM_BIN_URL}) -o ${TERRAFORM_BIN_TMP_DIR}/terraform_${os}.zip
-    mkdir -p ${INSTALLER_RELEASE_DIR}/${os}/
-    unzip -o ${TERRAFORM_BIN_TMP_DIR}/terraform_${os}.zip -d ${INSTALLER_RELEASE_DIR}/${os}/
+    curl -L "${TERRAFORM_BIN_BASE_URL}_${os}_amd64.zip" -o "${TERRAFORM_BIN_TMP_DIR}/terraform_${os}.zip"
+    mkdir -p "${INSTALLER_RELEASE_DIR}/${os}/"
+    unzip -o "${TERRAFORM_BIN_TMP_DIR}/terraform_${os}.zip" -d "${INSTALLER_RELEASE_DIR}/${os}/"
     chmod +x ${INSTALLER_RELEASE_DIR}/${os}/terraform*
 done
