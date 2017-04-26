@@ -2,9 +2,10 @@ resource "null_resource" "kubeconfig" {
   count = "${length(var.tectonic_metal_controller_domains) + length(var.tectonic_metal_worker_domains)}"
 
   connection {
-    type = "ssh"
-    host = "${element(concat(var.tectonic_metal_controller_domains, var.tectonic_metal_worker_domains), count.index)}"
-    user = "core"
+    type    = "ssh"
+    host    = "${element(concat(var.tectonic_metal_controller_domains, var.tectonic_metal_worker_domains), count.index)}"
+    user    = "core"
+    timeout = "60m"
   }
 
   provisioner "file" {
@@ -27,9 +28,10 @@ resource "null_resource" "bootstrap" {
   depends_on = ["null_resource.kubeconfig"]
 
   connection {
-    type = "ssh"
-    host = "${element(var.tectonic_metal_controller_domains, 0)}"
-    user = "core"
+    type    = "ssh"
+    host    = "${element(var.tectonic_metal_controller_domains, 0)}"
+    user    = "core"
+    timeout = "60m"
   }
 
   provisioner "file" {
