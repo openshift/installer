@@ -147,6 +147,7 @@ type TerraformApplyHandlerInput struct {
 	License       string                 `json:"license"`
 	PullSecret    string                 `json:"pullSecret"`
 	DryRun        bool                   `json:"dryRun"`
+	Retry         bool                   `json:"retry"`
 }
 
 func terraformApplyHandler(sessionProvider sessions.Store) ctxh.ContextHandler {
@@ -162,8 +163,15 @@ func terraformApplyHandler(sessionProvider sessions.Store) ctxh.ContextHandler {
 		}
 		defer req.Body.Close()
 
-		// Create a new TerraForm Executor with the TF variables.
-		ex, errCtx := newExecutorFromApplyHandlerInput(&input)
+		var ex *terraform.Executor
+		var errCtx *ctxh.AppError
+		if input.Retry {
+			// Restore the execution environment from the session.
+			_, ex, _, errCtx = restoreExecutionFromSession(req, sessionProvider, &input.Credentials)
+		} else {
+			// Create a new TerraForm Executor with the TF variables.
+			ex, errCtx = newExecutorFromApplyHandlerInput(&input)
+		}
 		if errCtx != nil {
 			return errCtx
 		}
