@@ -6,3 +6,4 @@ metadata:
 data:
   custom-http-errors: "400,401,403,404,500,503,504"
   server-name-hash-bucket-size: "1024"
+  use-http2: "false"

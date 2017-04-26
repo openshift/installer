@@ -4,3 +4,4 @@ metadata:
   name: tectonic-custom-error
 data:
   custom-http-errors: "400,401,403,404,500,503,504"
+  use-http2: "false"
