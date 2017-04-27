@@ -40,5 +40,14 @@ output "systemd_service" {
 }
 
 output "etcd_gateway_enabled" {
-  value = "${!var.experimental_self_hosted_etcd && data.null_data_source.etcd.outputs.no_certs}"
+  value = "${!var.experimental_enabled && data.null_data_source.etcd.outputs.no_certs}"
+}
+
+output "content_hash" {
+  value = "${sha1("${template_dir.bootkube-bootstrap.id} ${template_dir.bootkube.id} ${join(" ",local_file.etcd-operator.*.id,local_file.etcd-service.*.id,local_file.bootstrap-etcd.*.id)}")}"
+
+  description = <<EOF
+This output can be used in datasources like archive_file as part of a hashed filename on generated assets.
+This is necessary, because datasources do not have a `depends_on` directive.
+EOF
 }

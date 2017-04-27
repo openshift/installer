@@ -40,8 +40,8 @@ variable "etcd_service_ip" {
   type        = "string"
 }
 
-variable "experimental_self_hosted_etcd" {
-  description = "Self hosted etcd mode. Includes starting the initial etcd member by bootkube"
+variable "experimental_enabled" {
+  description = "If set to true, provision experimental assets, like self-hosted etcd."
   default     = false
 }
 

@@ -49,7 +49,7 @@ module "vpc" {
 module "etcd" {
   source = "../../modules/aws/etcd"
 
-  instance_count = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : var.tectonic_aws_az_count == 5 ? 5 : 3}"
+  instance_count = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : var.tectonic_aws_az_count == 5 ? 5 : 3}"
   az_count       = "${length(data.aws_availability_zones.azs.names)}"
   ec2_type       = "${var.tectonic_aws_etcd_ec2_type}"
   sg_ids         = ["${module.vpc.etcd_sg_id}"]
@@ -71,7 +71,7 @@ module "etcd" {
   root_volume_size = "${var.tectonic_aws_etcd_root_volume_size}"
   root_volume_iops = "${var.tectonic_aws_etcd_root_volume_iops}"
 
-  experimental_self_hosted_etcd = "${var.tectonic_experimental}"
+  dns_enabled = "${!var.tectonic_experimental && length(compact(var.tectonic_etcd_servers)) == 0}"
 }
 
 module "ignition-masters" {

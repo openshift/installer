@@ -25,12 +25,12 @@ module "bootkube" {
   oidc_groups_claim   = "groups"
   oidc_client_id      = "tectonic-kubectl"
 
-  etcd_endpoints                = ["${module.etcd.endpoints}"]
-  etcd_ca_cert                  = "${var.tectonic_etcd_ca_cert_path}"
-  etcd_client_cert              = "${var.tectonic_etcd_client_cert_path}"
-  etcd_client_key               = "${var.tectonic_etcd_client_key_path}"
-  etcd_service_ip               = "${var.tectonic_kube_etcd_service_ip}"
-  experimental_self_hosted_etcd = "${var.tectonic_experimental}"
+  etcd_endpoints       = ["${module.etcd.endpoints}"]
+  etcd_ca_cert         = "${var.tectonic_etcd_ca_cert_path}"
+  etcd_client_cert     = "${var.tectonic_etcd_client_cert_path}"
+  etcd_client_key      = "${var.tectonic_etcd_client_key_path}"
+  etcd_service_ip      = "${var.tectonic_kube_etcd_service_ip}"
+  experimental_enabled = "${var.tectonic_experimental}"
 }
 
 module "tectonic" {
@@ -73,11 +73,11 @@ data "archive_file" "assets" {
   # used to guarantee that the tectonic/bootkube modules have generated
   # all the assets on disk before trying to archive them. Instead, we use their
   # ID outputs, that are only computed once the assets have actually been
-  # written to disk. We re-hash the IDs to make the filename shorter, since
-  # there is no security nor collision risk anyways.
+  # written to disk. We re-hash the IDs (or dedicated module outputs, like module.bootkube.content_hash)
+  # to make the filename shorter, since there is no security nor collision risk anyways.
   #
   # Additionally, data sources do not support managing any lifecycle whatsoever,
   # and therefore, the archive is never deleted. To avoid cluttering the module
   # folder, we write it in the TerraForm managed hidden folder `.terraform`.
-  output_path = "${path.cwd}/.terraform/generated_${sha1("${module.tectonic.id} ${module.bootkube.id}")}.zip"
+  output_path = "${path.cwd}/.terraform/generated_${sha1("${module.tectonic.id} ${module.bootkube.content_hash}")}.zip"
 }

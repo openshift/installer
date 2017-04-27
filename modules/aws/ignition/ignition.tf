@@ -34,7 +34,7 @@ data "ignition_systemd_unit" "locksmithd" {
   dropin = [
     {
       name    = "40-etcd-lock.conf"
-      content = "[Service]\nEnvironment=REBOOT_STRATEGY=${var.locksmithd_disabled == 0 ? "etcd-lock" : "off"}\n"
+      content = "[Service]\nEnvironment=REBOOT_STRATEGY=${var.locksmithd_disabled ? "off" : "etcd-lock"}\n"
     },
   ]
 }
@@ -69,7 +69,7 @@ data "template_file" "etcd-member" {
 
 data "ignition_systemd_unit" "etcd-member" {
   name   = "etcd-member.service"
-  enable = "${var.etcd_gateway_enabled == 1 ? true : false}"
+  enable = "${var.etcd_gateway_enabled}"
 
   dropin = [
     {

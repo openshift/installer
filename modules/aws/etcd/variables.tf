@@ -69,8 +69,8 @@ variable "sg_ids" {
   description = "The security group IDs to be applied."
 }
 
-variable "experimental_self_hosted_etcd" {
-  description = "Self hosted etcd mode. Includes starting the initial etcd member by bootkube"
+variable "dns_enabled" {
+  description = "If set to true, DNS records for etcd nodes will be created."
   type        = "string"
   default     = "false"
 }

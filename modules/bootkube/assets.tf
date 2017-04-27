@@ -28,7 +28,7 @@ resource "template_dir" "bootkube" {
     etcd_operator_image    = "${var.container_images["etcd_operator"]}"
     kenc_image             = "${var.container_images["kenc"]}"
 
-    etcd_servers    = "${var.experimental_self_hosted_etcd ? format("http://%s:2379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? "http://127.0.0.1:2379" : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
+    etcd_servers    = "${var.experimental_enabled ? format("http://%s:2379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? "http://127.0.0.1:2379" : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
     etcd_ca_flag    = "${data.null_data_source.etcd.outputs.ca_flag}"
     etcd_cert_flag  = "${data.null_data_source.etcd.outputs.cert_flag}"
     etcd_key_flag   = "${data.null_data_source.etcd.outputs.key_flag}"
@@ -68,7 +68,7 @@ resource "template_dir" "bootkube-bootstrap" {
     hyperkube_image = "${var.container_images["hyperkube"]}"
     etcd_image      = "${var.container_images["etcd"]}"
 
-    etcd_servers   = "${var.experimental_self_hosted_etcd ? format("http://%s:2379,http://127.0.0.1:12379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? "http://127.0.0.1:2379" : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
+    etcd_servers   = "${var.experimental_enabled ? format("http://%s:2379,http://127.0.0.1:12379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? "http://127.0.0.1:2379" : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
     etcd_ca_flag   = "${data.null_data_source.etcd.outputs.ca_flag}"
     etcd_cert_flag = "${data.null_data_source.etcd.outputs.cert_flag}"
     etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"
@@ -79,6 +79,56 @@ resource "template_dir" "bootkube-bootstrap" {
   }
 }
 
+# Self-hosted experimental etcd
+data "template_file" "etcd-operator" {
+  template = "${file("${path.module}/resources/experimental/manifests/etcd-operator.yaml")}"
+
+  vars {
+    etcd_operator_image = "${var.container_images["etcd_operator"]}"
+  }
+}
+
+resource "local_file" "etcd-operator" {
+  count      = "${var.experimental_enabled ? 1 : 0}"
+  depends_on = ["template_dir.bootkube"]
+
+  content  = "${data.template_file.etcd-operator.rendered}"
+  filename = "${path.cwd}/generated/manifests/etcd-operator.yaml"
+}
+
+data "template_file" "etcd-service" {
+  template = "${file("${path.module}/resources/experimental/manifests/etcd-service.yaml")}"
+
+  vars {
+    etcd_service_ip = "${var.etcd_service_ip}"
+  }
+}
+
+resource "local_file" "etcd-service" {
+  count      = "${var.experimental_enabled ? 1 : 0}"
+  depends_on = ["template_dir.bootkube"]
+
+  content  = "${data.template_file.etcd-service.rendered}"
+  filename = "${path.cwd}/generated/manifests/etcd-service.yaml"
+}
+
+data "template_file" "bootstrap-etcd" {
+  template = "${file("${path.module}/resources/experimental/bootstrap-manifests/bootstrap-etcd.yaml")}"
+
+  vars {
+    etcd_image = "${var.container_images["etcd"]}"
+  }
+}
+
+resource "local_file" "bootstrap-etcd" {
+  count      = "${var.experimental_enabled ? 1 : 0}"
+  depends_on = ["template_dir.bootkube-bootstrap"]
+
+  content  = "${data.template_file.bootstrap-etcd.rendered}"
+  filename = "${path.cwd}/generated/bootstrap-manifests/bootstrap-etcd.yaml"
+}
+
+# etcd certs
 resource "local_file" "etcd_ca_crt" {
   count    = "${var.etcd_ca_cert == "" ? 0 : 1}"
   content  = "${file(var.etcd_ca_cert)}"
