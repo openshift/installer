@@ -4,23 +4,15 @@ import (
 	"bytes"
 	gtemplate "text/template"
 
-	"github.com/coreos/tectonic-installer/installer/server/terraform/plugins/aws"
-	"github.com/coreos/tectonic-installer/installer/server/terraform/plugins/local"
-	"github.com/coreos/tectonic-installer/installer/server/terraform/plugins/template"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/coreos/terraform-provider-matchbox/matchbox"
 	"github.com/hashicorp/terraform/plugin"
 	"github.com/kardianos/osext"
+
+	"github.com/coreos/tectonic-installer/installer/server/terraform/plugins/aws"
 )
 
 var plugins = map[string]*plugin.ServeOpts{
-	// https://github.com/hashicorp/terraform/pull/12757 (bf8d932)
-	"local": {ProviderFunc: local.Provider},
-
-	// https://github.com/hashicorp/terraform/pull/13652 (7a6759e)
-	"template": {ProviderFunc: template.Provider},
-
 	// https://github.com/hashicorp/terraform/pull/13574 (82bda74)
 	"aws": {ProviderFunc: aws.Provider},
 

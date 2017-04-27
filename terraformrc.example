@@ -1,6 +1,4 @@
 providers {
-    local    = "<PATH_TO_INSTALLER>-TFSPACE-local"
-    template = "<PATH_TO_INSTALLER>-TFSPACE-template"
     aws      = "<PATH_TO_INSTALLER>-TFSPACE-aws"
     matchbox = "<PATH_TO_INSTALLER>-TFSPACE-matchbox"
 }
