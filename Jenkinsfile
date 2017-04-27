@@ -92,7 +92,7 @@ pipeline {
 
             make apply
 
-            export TEST_KUBECONFIG=${WORKSPACE}/build/${CLUSTER}/generated/kubeconfig
+            export TEST_KUBECONFIG=${WORKSPACE}/build/${CLUSTER}/generated/auth/kubeconfig
             export NODE_COUNT=7 # TODO(DG): should be calculated automatically
             installer/bin/sanity
             '''
