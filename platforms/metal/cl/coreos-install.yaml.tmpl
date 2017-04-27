@@ -26,6 +26,11 @@ storage:
           systemctl reboot
 passwd:
   users:
-    - name: core
+    # intentionally not creating 'core' user so terraform does not SSH during install
+    - name: debug
+      create:
+        groups:
+          - sudo
+          - docker
       ssh_authorized_keys:
         - {{.ssh_authorized_key}}
