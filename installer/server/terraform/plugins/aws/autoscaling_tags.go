@@ -140,7 +140,11 @@ func diffAutoscalingTags(oldTags, newTags []*autoscaling.Tag, resourceID string)
 func autoscalingTagsFromList(vs []interface{}, resourceID string) []*autoscaling.Tag {
 	result := make([]*autoscaling.Tag, 0, len(vs))
 	for _, tag := range vs {
-		attr := tag.(map[string]interface{})
+		attr, ok := tag.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
 		if t := autoscalingTagFromMap(attr, resourceID); t != nil {
 			result = append(result, t)
 		}
@@ -152,7 +156,11 @@ func autoscalingTagsFromList(vs []interface{}, resourceID string) []*autoscaling
 func autoscalingTagsFromMap(m map[string]interface{}, resourceID string) []*autoscaling.Tag {
 	result := make([]*autoscaling.Tag, 0, len(m))
 	for _, v := range m {
-		attr := v.(map[string]interface{})
+		attr, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
 		t := autoscalingTagFromMap(attr, resourceID)
 		if t != nil {
 			result = append(result, t)
@@ -163,6 +171,18 @@ func autoscalingTagsFromMap(m map[string]interface{}, resourceID string) []*auto
 }
 
 func autoscalingTagFromMap(attr map[string]interface{}, resourceID string) *autoscaling.Tag {
+	if _, ok := attr["key"]; !ok {
+		return nil
+	}
+
+	if _, ok := attr["value"]; !ok {
+		return nil
+	}
+
+	if _, ok := attr["propagate_at_launch"]; !ok {
+		return nil
+	}
+
 	var propagate_at_launch bool
 
 	if v, ok := attr["propagate_at_launch"].(bool); ok {

@@ -1,8 +1,9 @@
 package aws
 
 import (
-	"fmt"
 	"testing"
+
+	"fmt"
 
 	"github.com/hashicorp/terraform/helper/acctest"
 	"github.com/hashicorp/terraform/helper/resource"
@@ -29,17 +30,18 @@ func TestAccAWSInstanceDataSource_basic(t *testing.T) {
 }
 
 func TestAccAWSInstanceDataSource_tags(t *testing.T) {
+	rInt := acctest.RandInt()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccInstanceDataSourceConfig_Tags,
+				Config: testAccInstanceDataSourceConfig_Tags(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.aws_instance.web-instance", "ami", "ami-4fccb37f"),
 					resource.TestCheckResourceAttr(
-						"data.aws_instance.web-instance", "tags.#", "1"),
+						"data.aws_instance.web-instance", "tags.#", "2"),
 					resource.TestCheckResourceAttr(
 						"data.aws_instance.web-instance", "instance_type", "m1.small"),
 				),
@@ -218,12 +220,13 @@ func TestAccAWSInstanceDataSource_VPC(t *testing.T) {
 }
 
 func TestAccAWSInstanceDataSource_SecurityGroups(t *testing.T) {
+	rInt := acctest.RandInt()
 	resource.Test(t, resource.TestCase{
 		PreCheck:  func() { testAccPreCheck(t) },
 		Providers: testAccProviders,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccInstanceDataSourceConfig_SecurityGroups,
+				Config: testAccInstanceDataSourceConfig_SecurityGroups(rInt),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr(
 						"data.aws_instance.foo", "ami", "ami-408c7f28"),
@@ -283,22 +286,26 @@ data "aws_instance" "web-instance" {
 `
 
 // Use the tags attribute to filter
-const testAccInstanceDataSourceConfig_Tags = `
+func testAccInstanceDataSourceConfig_Tags(rInt int) string {
+	return fmt.Sprintf(`
 resource "aws_instance" "web" {
 	# us-west-2
   ami = "ami-4fccb37f"
   instance_type = "m1.small"
   tags {
     Name = "HelloWorld"
+    TestSeed = "%d"
   }
 }
 
 data "aws_instance" "web-instance" {
   instance_tags {
     Name = "${aws_instance.web.tags["Name"]}"
+    TestSeed = "%d"
   }
 }
-`
+`, rInt, rInt)
+}
 
 // filter on tag, populate more attributes
 const testAccInstanceDataSourceConfig_AzUserData = `
@@ -328,7 +335,6 @@ resource "aws_instance" "foo" {
 	root_block_device {
 		volume_type = "gp2"
 		volume_size = 11
-		iops = 330
 	}
 }
 
@@ -467,13 +473,14 @@ data "aws_instance" "foo" {
 }
 `
 
-const testAccInstanceDataSourceConfig_SecurityGroups = `
+func testAccInstanceDataSourceConfig_SecurityGroups(rInt int) string {
+	return fmt.Sprintf(`
 provider "aws" {
 	region = "us-east-1"
 }
 
 resource "aws_security_group" "tf_test_foo" {
-	name = "tf_test_foo"
+	name = "tf_test_foo-%d"
 	description = "foo"
 
 	ingress {
@@ -494,7 +501,8 @@ resource "aws_instance" "foo" {
 data "aws_instance" "foo" {
   instance_id = "${aws_instance.foo.id}"
 }
-`
+`, rInt)
+}
 
 const testAccInstanceDataSourceConfig_VPCSecurityGroups = `
 resource "aws_internet_gateway" "gw" {

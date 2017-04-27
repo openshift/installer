@@ -21,7 +21,7 @@ var plugins = map[string]*plugin.ServeOpts{
 	// https://github.com/hashicorp/terraform/pull/13652 (7a6759e)
 	"template": {ProviderFunc: template.Provider},
 
-	// https://github.com/hashicorp/terraform/pull/13574 (9245819)
+	// https://github.com/hashicorp/terraform/pull/13574 (82bda74)
 	"aws": {ProviderFunc: aws.Provider},
 
 	// https://github.com/coreos/terraform-provider-matchbox (glide)

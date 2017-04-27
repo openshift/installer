@@ -1,7 +1,10 @@
 package aws
 
 import (
+	"bytes"
+	"encoding/json"
 	"log"
+	"net/url"
 	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -41,4 +44,34 @@ func suppressAwsDbEngineVersionDiffs(k, old, new string, d *schema.ResourceData)
 
 	// Throw a diff by default
 	return false
+}
+
+func suppressEquivalentJsonDiffs(k, old, new string, d *schema.ResourceData) bool {
+	ob := bytes.NewBufferString("")
+	if err := json.Compact(ob, []byte(old)); err != nil {
+		return false
+	}
+
+	nb := bytes.NewBufferString("")
+	if err := json.Compact(nb, []byte(new)); err != nil {
+		return false
+	}
+
+	return jsonBytesEqual(ob.Bytes(), nb.Bytes())
+}
+
+func suppressOpenIdURL(k, old, new string, d *schema.ResourceData) bool {
+	oldUrl, err := url.Parse(old)
+	if err != nil {
+		return false
+	}
+
+	newUrl, err := url.Parse(new)
+	if err != nil {
+		return false
+	}
+
+	oldUrl.Scheme = "https"
+
+	return oldUrl.String() == newUrl.String()
 }
