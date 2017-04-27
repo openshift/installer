@@ -18,7 +18,7 @@ Master nodes run most, if not all, control plane components including the API se
 - **Count:** At least one dedicated master node for etcd and Kubernetes components, 3 or 5 nodes for HA 
 - **Network:**
    - Ingress 
-      - MUST allow tcp port 22 [ssh] from user network 
+      - MUST allow tcp port 22 (ssh) from user network 
       - MUST allow port 4789 (UDP) from masters & workers for flannel
       - MUST allow 32000-32002 from all for: Tectonic ingress (if using node ports for ingress like on AWS, otherwise use host ports on workers) 
       - SHOULD allow port 9100 from masters & workers for: Prometheus Node Exporter metrics 
@@ -44,7 +44,7 @@ Infra nodes are special nodes that must be deployed when a load balancer isn't a
 - **Count:** 0 or more 
 - **Network:**
   - **Ingress**
-     - MUST have tcp port 443 [ingress controller for Tectonic Console and Dex] 
+     - MUST have tcp port 443 (Ingress controller for Tectonic Console and Dex)
    - **Egress**
      - MUST have 443 to download gcr, quay, and docker hub images 
 - **Cloud-init/Ignition:**

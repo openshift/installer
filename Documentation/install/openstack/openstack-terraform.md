@@ -167,5 +167,5 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 [account]: https://account.coreos.com
 [vars]: ../../variables/config.md
 [troubleshooting]: ../../troubleshooting.md
-[openstack-nova-vars]: ../../variables/platform-openstack-nova.md
-[openstack-neutron-vars]: ../../variables/platform-openstack-neutron.md
+[openstack-nova-vars]: ../../variables/openstack-nova.md
+[openstack-neutron-vars]: ../../variables/openstack-neutron.md
