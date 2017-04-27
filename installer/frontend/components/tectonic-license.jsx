@@ -3,8 +3,6 @@ import jwt_decode from 'jwt-decode';
 
 import { validate } from '../validate';
 import { FileArea, Connect } from './ui';
-import { ENTITLEMENTS } from '../cluster-config';
-import { configActionTypes } from '../actions';
 import { PULL_SECRET, TECTONIC_LICENSE, LICENSING } from '../cluster-config';
 import { Field, Form } from '../form';
 
@@ -21,7 +19,6 @@ const PULL_SECRET_PLACEHOLDER = `{
   }
 }...`;
 
-const { SET } = configActionTypes;
 const TectonicLicenseField = new Field(TECTONIC_LICENSE, {
   default: '',
   validator: token => {

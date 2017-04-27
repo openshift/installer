@@ -25,11 +25,14 @@ resource "template_dir" "bootkube" {
     kubednsmasq_image      = "${var.container_images["kubednsmasq"]}"
     kubedns_sidecar_image  = "${var.container_images["kubedns_sidecar"]}"
     flannel_image          = "${var.container_images["flannel"]}"
+    etcd_operator_image    = "${var.container_images["etcd_operator"]}"
+    kenc_image             = "${var.container_images["kenc"]}"
 
-    etcd_servers   = "${data.null_data_source.etcd.outputs.no_certs ? "http://127.0.0.1:2379" : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
-    etcd_ca_flag   = "${data.null_data_source.etcd.outputs.ca_flag}"
-    etcd_cert_flag = "${data.null_data_source.etcd.outputs.cert_flag}"
-    etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"
+    etcd_servers    = "${var.experimental_self_hosted_etcd ? format("http://%s:2379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? "http://127.0.0.1:2379" : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
+    etcd_ca_flag    = "${data.null_data_source.etcd.outputs.ca_flag}"
+    etcd_cert_flag  = "${data.null_data_source.etcd.outputs.cert_flag}"
+    etcd_key_flag   = "${data.null_data_source.etcd.outputs.key_flag}"
+    etcd_service_ip = "${var.etcd_service_ip}"
 
     cloud_provider = "${var.cloud_provider}"
 
@@ -63,8 +66,9 @@ resource "template_dir" "bootkube-bootstrap" {
 
   vars {
     hyperkube_image = "${var.container_images["hyperkube"]}"
+    etcd_image      = "${var.container_images["etcd"]}"
 
-    etcd_servers   = "${data.null_data_source.etcd.outputs.no_certs ? "http://127.0.0.1:2379" : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
+    etcd_servers   = "${var.experimental_self_hosted_etcd ? format("http://%s:2379,http://127.0.0.1:12379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? "http://127.0.0.1:2379" : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
     etcd_ca_flag   = "${data.null_data_source.etcd.outputs.ca_flag}"
     etcd_cert_flag = "${data.null_data_source.etcd.outputs.cert_flag}"
     etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"

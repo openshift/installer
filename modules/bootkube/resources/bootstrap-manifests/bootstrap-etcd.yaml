@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: bootstrap-etcd
+  namespace: kube-system
+  labels:
+    k8s-app: boot-etcd
+spec:
+  containers:
+  - name: etcd
+    image: ${etcd_image}
+    command:
+    - /usr/local/bin/etcd
+    - --name=boot-etcd
+    - --listen-client-urls=http://0.0.0.0:12379
+    - --listen-peer-urls=http://0.0.0.0:12380
+    - --advertise-client-urls=http://$(MY_POD_IP):12379
+    - --initial-advertise-peer-urls=http://$(MY_POD_IP):12380
+    - --initial-cluster=boot-etcd=http://$(MY_POD_IP):12380
+    - --initial-cluster-token=bootkube
+    - --initial-cluster-state=new
+    - --data-dir=/var/etcd/data
+    env:
+      - name: MY_POD_IP
+        valueFrom:
+          fieldRef:
+            fieldPath: status.podIP
+  hostNetwork: true
+  restartPolicy: Never

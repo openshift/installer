@@ -28,6 +28,8 @@ Master nodes run most, if not all, control plane components including the API se
     - Egress 
       - MUST have 443 to download gcr, quay, and docker hub images 
       - MAY have 2379 to external etcd cluster 
+      - MAY allow 2379-2380 for self-hosted etcd pods if using experimental etcd operator
+      - MAY allow 12379-12380 for temporary etcd pod if using experimental etcd operator
 
 - **Access Control**
   - MUST have any necessary API access for k8s cloud plugin functionality (i.e. AWS node IAM Role) 
@@ -64,6 +66,7 @@ Worked nodes run all of the user applications. The only component they must run 
         - SHOULD allow port 10250 from masters for k8s features: port-forward, exec, proxy 
         - SHOULD allow port 9100 from masters & workers for: Prometheus Node Exporter metrics 
         - SHOULD allow port 4194 from masters for: Heapster connections to CAdvisor 
+        - MAY allow 2379-2380 for self-hosted etcd pods if using experimental etcd operator
 
     - **Egress**
         - MUST have 443 to download gcr, quay, and docker hub images 

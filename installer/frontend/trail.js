@@ -235,7 +235,6 @@ export const sections = new Map([
     certificateAuthorityPage,
     awsSubmitKeysPage,
     awsDefineNodesPage,
-    etcdPage,
     awsVPCPage,
     usersPage,
     submitDefinitionPage,

@@ -9,7 +9,8 @@ import {
 } from '../cluster-config';
 import { validate } from '../validate';
 import { Connect, Input, RadioBoolean } from './ui';
-import { DefineNode, makeNodeForm } from './aws-define-nodes';
+import { DefineNode } from './aws-define-nodes';
+import { makeNodeForm } from './make-node-form';
 import { Field, Form } from '../form';
 import { AWS, AWS_TF } from '../platforms';
 
