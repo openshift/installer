@@ -1,5 +1,5 @@
-hash: 0d423412b4a64dea5ff21ebfe611d15c9f642d97e8018d07648db6f3ddf1152b
-updated: 2017-03-21T20:47:27.135665149-07:00
+hash: 0b8b2c901e28e6114b992ea80ce96fc97b7b772f882eb6ea4ee733caa465c82c
+updated: 2017-04-27T13:29:24.81679641-07:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -56,7 +56,7 @@ imports:
 - name: github.com/go-openapi/swag
   version: 1d0bd113de87027671077d3c71eb3ac5d7dbba72
 - name: github.com/gogo/protobuf
-  version: e18d7aa8f8c624c915db340349aad4c49b10d173
+  version: c0656edd0d9eab7c66d1eb0c568f9039345796f7
   subpackages:
   - proto
   - sortkeys
@@ -214,7 +214,6 @@ imports:
   - pkg/conversion/queryparams
   - pkg/fields
   - pkg/genericapiserver/openapi/common
-  - pkg/kubelet/types
   - pkg/labels
   - pkg/runtime
   - pkg/runtime/serializer
