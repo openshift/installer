@@ -1,5 +1,5 @@
-hash: 0b5e1ee5c4c2ed0f8c26f0c3a7663bf6f7cdcbaea7225a505240718fb3c2396b
-updated: 2017-04-19T15:41:38.436545146-07:00
+hash: 3d541a8ee07140ac74d67cd49410345dd3c52434cb3c152e17c9391ddf71e921
+updated: 2017-04-26T17:47:45.123449687-07:00
 imports:
 - name: github.com/ajeddeloh/yaml
   version: 1072abfea31191db507785e2e0c1b8d1440d35a5
@@ -10,7 +10,7 @@ imports:
   subpackages:
   - cidr
 - name: github.com/aws/aws-sdk-go
-  version: b2852089fcfd0794d25d57f193e15121ab8a6d9e
+  version: 4bbd6fa3fdede4c68e941248f974b8951c17de89
   subpackages:
   - aws
   - aws/awserr
@@ -39,7 +39,6 @@ imports:
   - private/protocol/restxml
   - private/protocol/xml/xmlutil
   - private/signer/v2
-  - private/waiter
   - service/acm
   - service/apigateway
   - service/applicationautoscaling
@@ -54,6 +53,7 @@ imports:
   - service/codecommit
   - service/codedeploy
   - service/codepipeline
+  - service/cognitoidentity
   - service/configservice
   - service/databasemigrationservice
   - service/directoryservice
@@ -142,7 +142,7 @@ imports:
   - httputil
   - timeutil
 - name: github.com/coreos/terraform-provider-matchbox
-  version: dd045535c826b7e2e0daeddc6b8d4b2cc81f9dd0
+  version: 4c66aa75b60489a4220730d70b0446e25b0c9a0a
   subpackages:
   - matchbox
 - name: github.com/coreos/yaml
@@ -241,7 +241,7 @@ imports:
 - name: github.com/hashicorp/logutils
   version: 0dc08b1671f34c4250ce212759ebd880f743d883
 - name: github.com/hashicorp/terraform
-  version: 403a86dc557fae52f8e39676b11e1e4356b7d1a2
+  version: 277bbf65d1141207dbb30485bf124b1dba08f80f
   subpackages:
   - builtin/providers/template
   - builtin/providers/tls
@@ -261,11 +261,12 @@ imports:
   - helper/resource
   - helper/schema
   - helper/shadow
+  - helper/structure
   - helper/validation
   - plugin
   - terraform
 - name: github.com/hashicorp/vault
-  version: 33d2f6fafed24d25e26bed89d6ca160344671300
+  version: 15842ec2809798baa7cd99a825b9b837dc37b742
   subpackages:
   - helper/compressutil
   - helper/jsonutil
@@ -308,6 +309,8 @@ imports:
   version: f81071c9d77b7931f78c90b416a074ecdc50e959
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
+- name: github.com/mitchellh/hashstructure
+  version: ab25296c0f51f1022f01cd99dfb45f1775de8799
 - name: github.com/mitchellh/mapstructure
   version: 281073eb9eb092240d33ef253c404f1cca550309
 - name: github.com/mitchellh/reflectwalk
@@ -467,6 +470,8 @@ testImports:
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
+- name: github.com/satori/uuid
+  version: 5bf94b69c6b68ee1b541973bb8e1144db23a194b
 - name: github.com/spf13/pflag
   version: 7f60f83a2c81bc3c3c0d5297f61ddfa68da9d3b7
 - name: golang.org/x/oauth2

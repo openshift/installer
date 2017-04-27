@@ -25,6 +25,9 @@ const (
 	DiffDestroyCreate
 )
 
+// multiVal matches the index key to a flatmapped set, list or map
+var multiVal = regexp.MustCompile(`\.(#|%)$`)
+
 // Diff trackes the changes that are necessary to apply a configuration
 // to an existing infrastructure.
 type Diff struct {
@@ -364,6 +367,12 @@ type InstanceDiff struct {
 	Destroy        bool
 	DestroyDeposed bool
 	DestroyTainted bool
+
+	// Meta is a simple K/V map that is stored in a diff and persisted to
+	// plans but otherwise is completely ignored by Terraform core. It is
+	// mean to be used for additional data a resource may want to pass through.
+	// The value here must only contain Go primitives and collections.
+	Meta map[string]interface{}
 }
 
 func (d *InstanceDiff) Lock()   { d.mu.Lock() }
@@ -802,7 +811,6 @@ func (d *InstanceDiff) Same(d2 *InstanceDiff) (bool, string) {
 		}
 
 		// search for the suffix of the base of a [computed] map, list or set.
-		multiVal := regexp.MustCompile(`\.(#|~#|%)$`)
 		match := multiVal.FindStringSubmatch(k)
 
 		if diffOld.NewComputed && len(match) == 2 {

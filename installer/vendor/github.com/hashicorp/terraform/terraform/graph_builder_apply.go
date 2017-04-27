@@ -102,13 +102,8 @@ func (b *ApplyGraphBuilder) Steps() []GraphTransformer {
 		),
 
 		// Provisioner-related transformations
-		GraphTransformIf(
-			func() bool { return !b.Destroy },
-			GraphTransformMulti(
-				&MissingProvisionerTransformer{Provisioners: b.Provisioners},
-				&ProvisionerTransformer{},
-			),
-		),
+		&MissingProvisionerTransformer{Provisioners: b.Provisioners},
+		&ProvisionerTransformer{},
 
 		// Add root variables
 		&RootVariableTransformer{Module: b.Module},
@@ -127,6 +122,10 @@ func (b *ApplyGraphBuilder) Steps() []GraphTransformer {
 
 		// Target
 		&TargetsTransformer{Targets: b.Targets},
+
+		// Close opened plugin connections
+		&CloseProviderTransformer{},
+		&CloseProvisionerTransformer{},
 
 		// Single root
 		&RootTransformer{},
