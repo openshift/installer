@@ -6,7 +6,7 @@
 pipeline {
   agent {
     docker {
-      image 'quay.io/coreos/tectonic-builder:v1.6'
+      image 'quay.io/coreos/tectonic-builder:v1.7'
       label 'worker'
     }
   }
