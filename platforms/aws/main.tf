@@ -153,7 +153,7 @@ module "workers" {
   extra_tags                   = "${var.tectonic_aws_extra_tags}"
   autoscaling_group_extra_tags = "${var.tectonic_autoscaling_group_extra_tags}"
 
-  root_volume_type = "${var.tectonic_aws_master_root_volume_type}"
-  root_volume_size = "${var.tectonic_aws_master_root_volume_size}"
-  root_volume_iops = "${var.tectonic_aws_master_root_volume_iops}"
+  root_volume_type = "${var.tectonic_aws_worker_root_volume_type}"
+  root_volume_size = "${var.tectonic_aws_worker_root_volume_size}"
+  root_volume_iops = "${var.tectonic_aws_worker_root_volume_iops}"
 }
