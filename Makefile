@@ -41,6 +41,7 @@ docs: \
 	Documentation/variables/config.md \
 	Documentation/variables/aws.md \
 	Documentation/variables/azure.md \
+	Documentation/variables/metal.md \
 	Documentation/variables/openstack-nova.md \
 	Documentation/variables/openstack-neutron.md
 

@@ -243,7 +243,7 @@ A bare-metal Tectonic cluster requires PXE infrastructure, which we'll setup nex
 
 ### Set up DHCP, TFTP, and DNS services
 
-Set up DHCP, TFTP, and DNS services with your network administrator. Review [network setup](network-setup.md) to find the right approach for your PXE environment. At a high level, your goals are to:
+Set up DHCP, TFTP, and DNS services with your network administrator. Review [network setup](https://coreos.com/matchbox/docs/latest/network-setup.html) to find the right approach for your PXE environment. At a high level, your goals are to:
 
 * Chainload PXE firmwares to iPXE
 * Point iPXE client machines to the `matchbox` iPXE HTTP endpoint (e.g. `http://matchbox.example.com:8080/boot.ipxe`)
