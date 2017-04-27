@@ -54,7 +54,7 @@ Development workflows only
 *Packaging*
 
 - Assets are packaged into the official Tectonic Installer tarball with every Tectonic release.
-- [optoinal] Installer UI is built to guide user through the configuration process.
+- (Optional) Installer UI is built to guide user through the configuration process.
 
 *User Flow*
 
@@ -72,9 +72,9 @@ Development workflows only
 
 *Packaging*
 
-- [optional] GUI Installer reads Terraform assets
-- [optional] GUI Installer backend runs equivalent of `terraform apply` on behalf of the user via Go client libraries
-- [optional] GUI shows status info and links to Console once complete
+- (Optional) GUI Installer reads Terraform assets
+- (Optional) GUI Installer backend runs equivalent of `terraform apply` on behalf of the user via Go client libraries
+- (Optional) GUI shows status info and links to Console once complete
 
 *User Flow*
 

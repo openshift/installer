@@ -186,4 +186,4 @@ $ terraform apply $ terraform plan \
 [login]: https://docs.microsoft.com/en-us/cli/azure/get-started-with-azure-cli
 [azure-dns]: https://docs.microsoft.com/en-us/azure/dns/dns-getstarted-portal
 [vars]: ../../variables/config.md
-[azure-vars]: ../../variables/platform-azure.md
+[azure-vars]: ../../variables/azure.md
