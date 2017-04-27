@@ -60,6 +60,7 @@ variable "root_volume_size" {
 
 variable "root_volume_iops" {
   type        = "string"
+  default     = "100"
   description = "The amount of provisioned IOPS for the root block device."
 }
 
