@@ -53,6 +53,46 @@ func TestAccAWSDBInstance_basic(t *testing.T) {
 	})
 }
 
+func TestAccAWSDBInstance_namePrefix(t *testing.T) {
+	var v rds.DBInstance
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckAWSDBInstanceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAWSDBInstanceConfig_namePrefix,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAWSDBInstanceExists("aws_db_instance.test", &v),
+					testAccCheckAWSDBInstanceAttributes(&v),
+					resource.TestMatchResourceAttr(
+						"aws_db_instance.test", "identifier", regexp.MustCompile("^tf-test-")),
+				),
+			},
+		},
+	})
+}
+
+func TestAccAWSDBInstance_generatedName(t *testing.T) {
+	var v rds.DBInstance
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckAWSDBInstanceDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAWSDBInstanceConfig_generatedName,
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAWSDBInstanceExists("aws_db_instance.test", &v),
+					testAccCheckAWSDBInstanceAttributes(&v),
+				),
+			},
+		},
+	})
+}
+
 func TestAccAWSDBInstance_kmsKey(t *testing.T) {
 	var v rds.DBInstance
 	keyRegex := regexp.MustCompile("^arn:aws:kms:")
@@ -92,7 +132,7 @@ func TestAccAWSDBInstance_subnetGroup(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSDBInstanceExists("aws_db_instance.bar", &v),
 					resource.TestCheckResourceAttr(
-						"aws_db_instance.bar", "db_subnet_group_name", "foo"),
+						"aws_db_instance.bar", "db_subnet_group_name", "foo-"+rName),
 				),
 			},
 			{
@@ -100,7 +140,7 @@ func TestAccAWSDBInstance_subnetGroup(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckAWSDBInstanceExists("aws_db_instance.bar", &v),
 					resource.TestCheckResourceAttr(
-						"aws_db_instance.bar", "db_subnet_group_name", "bar"),
+						"aws_db_instance.bar", "db_subnet_group_name", "bar-"+rName),
 				),
 			},
 		},
@@ -150,15 +190,13 @@ func TestAccAWSDBInstanceReplica(t *testing.T) {
 	})
 }
 
-func TestAccAWSDBInstanceSnapshot(t *testing.T) {
+func TestAccAWSDBInstanceNoSnapshot(t *testing.T) {
 	var snap rds.DBInstance
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:  func() { testAccPreCheck(t) },
-		Providers: testAccProviders,
-		// testAccCheckAWSDBInstanceSnapshot verifies a database snapshot is
-		// created, and subequently deletes it
-		CheckDestroy: testAccCheckAWSDBInstanceSnapshot,
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckAWSDBInstanceNoSnapshot,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSnapshotInstanceConfig(),
@@ -170,18 +208,21 @@ func TestAccAWSDBInstanceSnapshot(t *testing.T) {
 	})
 }
 
-func TestAccAWSDBInstanceNoSnapshot(t *testing.T) {
-	var nosnap rds.DBInstance
+func TestAccAWSDBInstanceSnapshot(t *testing.T) {
+	var snap rds.DBInstance
+	rInt := acctest.RandInt()
 
 	resource.Test(t, resource.TestCase{
-		PreCheck:     func() { testAccPreCheck(t) },
-		Providers:    testAccProviders,
-		CheckDestroy: testAccCheckAWSDBInstanceNoSnapshot,
+		PreCheck:  func() { testAccPreCheck(t) },
+		Providers: testAccProviders,
+		// testAccCheckAWSDBInstanceSnapshot verifies a database snapshot is
+		// created, and subequently deletes it
+		CheckDestroy: testAccCheckAWSDBInstanceSnapshot(rInt),
 		Steps: []resource.TestStep{
 			{
-				Config: testAccNoSnapshotInstanceConfig(),
+				Config: testAccSnapshotInstanceConfigWithSnapshot(rInt),
 				Check: resource.ComposeTestCheckFunc(
-					testAccCheckAWSDBInstanceExists("aws_db_instance.no_snapshot", &nosnap),
+					testAccCheckAWSDBInstanceExists("aws_db_instance.snapshot", &snap),
 				),
 			},
 		},
@@ -434,87 +475,90 @@ func testAccCheckAWSDBInstanceReplicaAttributes(source, replica *rds.DBInstance)
 	}
 }
 
-func testAccCheckAWSDBInstanceSnapshot(s *terraform.State) error {
-	conn := testAccProvider.Meta().(*AWSClient).rdsconn
-
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "aws_db_instance" {
-			continue
-		}
-
-		var err error
-		resp, err := conn.DescribeDBInstances(
-			&rds.DescribeDBInstancesInput{
-				DBInstanceIdentifier: aws.String(rs.Primary.ID),
-			})
-
-		if err != nil {
-			newerr, _ := err.(awserr.Error)
-			if newerr.Code() != "DBInstanceNotFound" {
-				return err
+func testAccCheckAWSDBInstanceSnapshot(rInt int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "aws_db_instance" {
+				continue
 			}
 
-		} else {
-			if len(resp.DBInstances) != 0 &&
-				*resp.DBInstances[0].DBInstanceIdentifier == rs.Primary.ID {
-				return fmt.Errorf("DB Instance still exists")
-			}
-		}
+			awsClient := testAccProvider.Meta().(*AWSClient)
+			conn := awsClient.rdsconn
 
-		log.Printf("[INFO] Trying to locate the DBInstance Final Snapshot")
-		snapshot_identifier := "foobarbaz-test-terraform-final-snapshot-1"
-		_, snapErr := conn.DescribeDBSnapshots(
-			&rds.DescribeDBSnapshotsInput{
-				DBSnapshotIdentifier: aws.String(snapshot_identifier),
-			})
-
-		if snapErr != nil {
-			newerr, _ := snapErr.(awserr.Error)
-			if newerr.Code() == "DBSnapshotNotFound" {
-				return fmt.Errorf("Snapshot %s not found", snapshot_identifier)
-			}
-		} else { // snapshot was found,
-			// verify we have the tags copied to the snapshot
-			instanceARN, err := buildRDSARN(snapshot_identifier, testAccProvider.Meta().(*AWSClient).partition, testAccProvider.Meta().(*AWSClient).accountid, testAccProvider.Meta().(*AWSClient).region)
-			// tags have a different ARN, just swapping :db: for :snapshot:
-			tagsARN := strings.Replace(instanceARN, ":db:", ":snapshot:", 1)
-			if err != nil {
-				return fmt.Errorf("Error building ARN for tags check with ARN (%s): %s", tagsARN, err)
-			}
-			resp, err := conn.ListTagsForResource(&rds.ListTagsForResourceInput{
-				ResourceName: aws.String(tagsARN),
-			})
-			if err != nil {
-				return fmt.Errorf("Error retrieving tags for ARN (%s): %s", tagsARN, err)
-			}
-
-			if resp.TagList == nil || len(resp.TagList) == 0 {
-				return fmt.Errorf("Tag list is nil or zero: %s", resp.TagList)
-			}
-
-			var found bool
-			for _, t := range resp.TagList {
-				if *t.Key == "Name" && *t.Value == "tf-tags-db" {
-					found = true
-				}
-			}
-			if !found {
-				return fmt.Errorf("Expected to find tag Name (%s), but wasn't found. Tags: %s", "tf-tags-db", resp.TagList)
-			}
-			// end tag search
-
-			log.Printf("[INFO] Deleting the Snapshot %s", snapshot_identifier)
-			_, snapDeleteErr := conn.DeleteDBSnapshot(
-				&rds.DeleteDBSnapshotInput{
+			var err error
+			log.Printf("[INFO] Trying to locate the DBInstance Final Snapshot")
+			snapshot_identifier := fmt.Sprintf("foobarbaz-test-terraform-final-snapshot-%d", rInt)
+			_, snapErr := conn.DescribeDBSnapshots(
+				&rds.DescribeDBSnapshotsInput{
 					DBSnapshotIdentifier: aws.String(snapshot_identifier),
 				})
-			if snapDeleteErr != nil {
-				return err
-			}
-		} // end snapshot was found
-	}
 
-	return nil
+			if snapErr != nil {
+				newerr, _ := snapErr.(awserr.Error)
+				if newerr.Code() == "DBSnapshotNotFound" {
+					return fmt.Errorf("Snapshot %s not found", snapshot_identifier)
+				}
+			} else { // snapshot was found,
+				// verify we have the tags copied to the snapshot
+				instanceARN, err := buildRDSARN(snapshot_identifier, testAccProvider.Meta().(*AWSClient).partition, testAccProvider.Meta().(*AWSClient).accountid, testAccProvider.Meta().(*AWSClient).region)
+				// tags have a different ARN, just swapping :db: for :snapshot:
+				tagsARN := strings.Replace(instanceARN, ":db:", ":snapshot:", 1)
+				if err != nil {
+					return fmt.Errorf("Error building ARN for tags check with ARN (%s): %s", tagsARN, err)
+				}
+				resp, err := conn.ListTagsForResource(&rds.ListTagsForResourceInput{
+					ResourceName: aws.String(tagsARN),
+				})
+				if err != nil {
+					return fmt.Errorf("Error retrieving tags for ARN (%s): %s", tagsARN, err)
+				}
+
+				if resp.TagList == nil || len(resp.TagList) == 0 {
+					return fmt.Errorf("Tag list is nil or zero: %s", resp.TagList)
+				}
+
+				var found bool
+				for _, t := range resp.TagList {
+					if *t.Key == "Name" && *t.Value == "tf-tags-db" {
+						found = true
+					}
+				}
+				if !found {
+					return fmt.Errorf("Expected to find tag Name (%s), but wasn't found. Tags: %s", "tf-tags-db", resp.TagList)
+				}
+				// end tag search
+
+				log.Printf("[INFO] Deleting the Snapshot %s", snapshot_identifier)
+				_, snapDeleteErr := conn.DeleteDBSnapshot(
+					&rds.DeleteDBSnapshotInput{
+						DBSnapshotIdentifier: aws.String(snapshot_identifier),
+					})
+				if snapDeleteErr != nil {
+					return err
+				}
+			} // end snapshot was found
+
+			resp, err := conn.DescribeDBInstances(
+				&rds.DescribeDBInstancesInput{
+					DBInstanceIdentifier: aws.String(rs.Primary.ID),
+				})
+
+			if err != nil {
+				newerr, _ := err.(awserr.Error)
+				if newerr.Code() != "DBInstanceNotFound" {
+					return err
+				}
+
+			} else {
+				if len(resp.DBInstances) != 0 &&
+					*resp.DBInstances[0].DBInstanceIdentifier == rs.Primary.ID {
+					return fmt.Errorf("DB Instance still exists")
+				}
+			}
+		}
+
+		return nil
+	}
 }
 
 func testAccCheckAWSDBInstanceNoSnapshot(s *terraform.State) error {
@@ -609,14 +653,50 @@ resource "aws_db_instance" "bar" {
 	username = "foo"
 
 
-	# Maintenance Window is stored in lower case in the API, though not strictly 
-	# documented. Terraform will downcase this to match (as opposed to throw a 
+	# Maintenance Window is stored in lower case in the API, though not strictly
+	# documented. Terraform will downcase this to match (as opposed to throw a
 	# validation error).
 	maintenance_window = "Fri:09:00-Fri:09:30"
+	skip_final_snapshot = true
 
 	backup_retention_period = 0
 
 	parameter_group_name = "default.mysql5.6"
+
+	timeouts {
+		create = "30m"
+	}
+}`
+
+const testAccAWSDBInstanceConfig_namePrefix = `
+resource "aws_db_instance" "test" {
+	allocated_storage = 10
+	engine = "MySQL"
+	identifier_prefix = "tf-test-"
+	instance_class = "db.t1.micro"
+	password = "password"
+	username = "root"
+	publicly_accessible = true
+	skip_final_snapshot = true
+
+	timeouts {
+		create = "30m"
+	}
+}`
+
+const testAccAWSDBInstanceConfig_generatedName = `
+resource "aws_db_instance" "test" {
+	allocated_storage = 10
+	engine = "MySQL"
+	instance_class = "db.t1.micro"
+	password = "password"
+	username = "root"
+	publicly_accessible = true
+	skip_final_snapshot = true
+
+	timeouts {
+		create = "30m"
+	}
 }`
 
 var testAccAWSDBInstanceConfigKmsKeyId = `
@@ -660,6 +740,8 @@ resource "aws_db_instance" "bar" {
 	storage_encrypted = true
 	kms_key_id = "${aws_kms_key.foo.arn}"
 
+	skip_final_snapshot = true
+
 	parameter_group_name = "default.mysql5.6"
 }
 `
@@ -684,6 +766,7 @@ resource "aws_db_instance" "bar" {
 	username = "foo"
 
 	backup_retention_period = 0
+	skip_final_snapshot = true
 
 	parameter_group_name = "default.mysql5.6"
 	option_group_name = "${aws_db_option_group.bar.name}"
@@ -704,10 +787,11 @@ func testAccReplicaInstanceConfig(val int) string {
 		username = "foo"
 
 		backup_retention_period = 1
+		skip_final_snapshot = true
 
 		parameter_group_name = "default.mysql5.6"
 	}
-	
+
 	resource "aws_db_instance" "replica" {
 		identifier = "tf-replica-db-%d"
 		backup_retention_period = 0
@@ -718,6 +802,7 @@ func testAccReplicaInstanceConfig(val int) string {
 		instance_class = "${aws_db_instance.bar.instance_class}"
 		password = "${aws_db_instance.bar.password}"
 		username = "${aws_db_instance.bar.username}"
+		skip_final_snapshot = true
 		tags {
 			Name = "tf-replica-db"
 		}
@@ -731,7 +816,7 @@ provider "aws" {
   region = "us-east-1"
 }
 resource "aws_db_instance" "snapshot" {
-	identifier = "tf-snapshot-%d"
+	identifier = "tf-test-%d"
 
 	allocated_storage = 5
 	engine = "mysql"
@@ -747,22 +832,18 @@ resource "aws_db_instance" "snapshot" {
 
 	parameter_group_name = "default.mysql5.6"
 
-	skip_final_snapshot = false
-	copy_tags_to_snapshot = true
+	skip_final_snapshot = true
 	final_snapshot_identifier = "foobarbaz-test-terraform-final-snapshot-1"
-	tags {
-		Name = "tf-tags-db"
-	}
 }`, acctest.RandInt())
 }
 
-func testAccNoSnapshotInstanceConfig() string {
+func testAccSnapshotInstanceConfigWithSnapshot(rInt int) string {
 	return fmt.Sprintf(`
 provider "aws" {
   region = "us-east-1"
 }
-resource "aws_db_instance" "no_snapshot" {
-	identifier = "tf-test-%s"
+resource "aws_db_instance" "snapshot" {
+	identifier = "tf-snapshot-%d"
 
 	allocated_storage = 5
 	engine = "mysql"
@@ -772,15 +853,18 @@ resource "aws_db_instance" "no_snapshot" {
 	password = "barbarbarbar"
 	publicly_accessible = true
 	username = "foo"
-    security_group_names = ["default"]
+    	security_group_names = ["default"]
 	backup_retention_period = 1
 
 	parameter_group_name = "default.mysql5.6"
 
-	skip_final_snapshot = true
-	final_snapshot_identifier = "foobarbaz-test-terraform-final-snapshot-2"
+	copy_tags_to_snapshot = true
+	final_snapshot_identifier = "foobarbaz-test-terraform-final-snapshot-%d"
+	tags {
+		Name = "tf-tags-db"
+	}
 }
-`, acctest.RandString(5))
+`, rInt, rInt)
 }
 
 func testAccSnapshotInstanceConfig_enhancedMonitoring(rName string) string {
@@ -847,6 +931,7 @@ resource "aws_db_instance" "bar" {
   username             = "foo"
   password             = "barbarbar"
   parameter_group_name = "default.mysql5.6"
+  skip_final_snapshot = true
 
   apply_immediately = true
 
@@ -869,6 +954,7 @@ resource "aws_db_instance" "bar" {
   parameter_group_name = "default.mysql5.6"
   port = 3306
   allocated_storage = 10
+  skip_final_snapshot = true
 
   apply_immediately = true
 }`, rName)
@@ -887,6 +973,7 @@ resource "aws_db_instance" "bar" {
   parameter_group_name = "default.mysql5.6"
   port = 3305
   allocated_storage = 10
+  skip_final_snapshot = true
 
   apply_immediately = true
 }`, rName)
@@ -917,7 +1004,7 @@ resource "aws_subnet" "bar" {
 }
 
 resource "aws_db_subnet_group" "foo" {
-	name = "foo"
+	name = "foo-%s"
 	subnet_ids = ["${aws_subnet.foo.id}", "${aws_subnet.bar.id}"]
 	tags {
 		Name = "tf-dbsubnet-group-test"
@@ -936,9 +1023,11 @@ resource "aws_db_instance" "bar" {
   db_subnet_group_name = "${aws_db_subnet_group.foo.name}"
   port = 3305
   allocated_storage = 10
+  skip_final_snapshot = true
 
+	backup_retention_period = 0
   apply_immediately = true
-}`, rName)
+}`, rName, rName)
 }
 
 func testAccAWSDBInstanceConfigWithSubnetGroupUpdated(rName string) string {
@@ -971,7 +1060,7 @@ resource "aws_subnet" "bar" {
 
 resource "aws_subnet" "test" {
 	cidr_block = "10.10.3.0/24"
-	availability_zone = "us-west-2c"
+	availability_zone = "us-west-2b"
 	vpc_id = "${aws_vpc.bar.id}"
 	tags {
 		Name = "tf-dbsubnet-test-3"
@@ -988,7 +1077,7 @@ resource "aws_subnet" "another_test" {
 }
 
 resource "aws_db_subnet_group" "foo" {
-	name = "foo"
+	name = "foo-%s"
 	subnet_ids = ["${aws_subnet.foo.id}", "${aws_subnet.bar.id}"]
 	tags {
 		Name = "tf-dbsubnet-group-test"
@@ -996,7 +1085,7 @@ resource "aws_db_subnet_group" "foo" {
 }
 
 resource "aws_db_subnet_group" "bar" {
-	name = "bar"
+	name = "bar-%s"
 	subnet_ids = ["${aws_subnet.test.id}", "${aws_subnet.another_test.id}"]
 	tags {
 		Name = "tf-dbsubnet-group-test-updated"
@@ -1015,9 +1104,12 @@ resource "aws_db_instance" "bar" {
   db_subnet_group_name = "${aws_db_subnet_group.bar.name}"
   port = 3305
   allocated_storage = 10
+  skip_final_snapshot = true
+
+	backup_retention_period = 0
 
   apply_immediately = true
-}`, rName)
+}`, rName, rName, rName)
 }
 
 const testAccAWSDBMSSQL_timezone = `
@@ -1063,6 +1155,7 @@ resource "aws_db_instance" "mssql" {
   password                = "somecrazypassword"
   engine                  = "sqlserver-ex"
   backup_retention_period = 0
+  skip_final_snapshot = true
 
   #publicly_accessible = true
 
@@ -1130,6 +1223,7 @@ resource "aws_db_instance" "mssql" {
   password                = "somecrazypassword"
   engine                  = "sqlserver-ex"
   backup_retention_period = 0
+  skip_final_snapshot = true
 
   #publicly_accessible = true
 
@@ -1165,6 +1259,7 @@ resource "aws_db_instance" "bar" {
 	name = "baz"
 	password = "barbarbarbar"
 	username = "foo"
+	skip_final_snapshot = true
 }
 `, acctest.RandInt())
 

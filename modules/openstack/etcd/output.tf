@@ -1,5 +1,5 @@
 output "user_data" {
-  value = ["${ignition_config.etcd.*.rendered}"]
+  value = ["${data.ignition_config.etcd.*.rendered}"]
 }
 
 output "secgroup_name" {

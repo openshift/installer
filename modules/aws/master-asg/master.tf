@@ -74,8 +74,8 @@ resource "aws_launch_configuration" "master_conf" {
 }
 
 resource "aws_iam_instance_profile" "master_profile" {
-  name  = "${var.cluster_name}-master-profile"
-  roles = ["${aws_iam_role.master_role.name}"]
+  name = "${var.cluster_name}-master-profile"
+  role = "${aws_iam_role.master_role.name}"
 }
 
 resource "aws_iam_role" "master_role" {

@@ -70,8 +70,8 @@ resource "aws_autoscaling_group" "workers" {
 }
 
 resource "aws_iam_instance_profile" "worker_profile" {
-  name  = "${var.cluster_name}-worker-profile"
-  roles = ["${aws_iam_role.worker_role.name}"]
+  name = "${var.cluster_name}-worker-profile"
+  role = "${aws_iam_role.worker_role.name}"
 }
 
 resource "aws_iam_role" "worker_role" {

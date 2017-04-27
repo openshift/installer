@@ -2,8 +2,10 @@ package aws
 
 import (
 	"fmt"
+	"log"
 	"math/rand"
 	"regexp"
+	"strings"
 	"testing"
 	"time"
 
@@ -70,6 +72,26 @@ func TestAccAWSRedshiftCluster_basic(t *testing.T) {
 						"aws_redshift_cluster.default", "cluster_type", "single-node"),
 					resource.TestCheckResourceAttr(
 						"aws_redshift_cluster.default", "publicly_accessible", "true"),
+				),
+			},
+		},
+	})
+}
+
+func TestAccAWSRedshiftCluster_withFinalSnapshot(t *testing.T) {
+	var v redshift.Cluster
+
+	rInt := acctest.RandInt()
+
+	resource.Test(t, resource.TestCase{
+		PreCheck:     func() { testAccPreCheck(t) },
+		Providers:    testAccProviders,
+		CheckDestroy: testAccCheckAWSRedshiftClusterSnapshot(rInt),
+		Steps: []resource.TestStep{
+			{
+				Config: testAccAWSRedshiftClusterConfigWithFinalSnapshot(rInt),
+				Check: resource.ComposeTestCheckFunc(
+					testAccCheckAWSRedshiftClusterExists("aws_redshift_cluster.default", &v),
 				),
 			},
 		},
@@ -332,6 +354,62 @@ func testAccCheckAWSRedshiftClusterDestroy(s *terraform.State) error {
 	return nil
 }
 
+func testAccCheckAWSRedshiftClusterSnapshot(rInt int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		for _, rs := range s.RootModule().Resources {
+			if rs.Type != "aws_redshift_cluster" {
+				continue
+			}
+
+			var err error
+
+			// Try and delete the snapshot before we check for the cluster not found
+			conn := testAccProvider.Meta().(*AWSClient).redshiftconn
+
+			snapshot_identifier := fmt.Sprintf("tf-acctest-snapshot-%d", rInt)
+			arn, err := buildRedshiftARN(snapshot_identifier, testAccProvider.Meta().(*AWSClient).partition, testAccProvider.Meta().(*AWSClient).accountid, testAccProvider.Meta().(*AWSClient).region)
+			tagsARN := strings.Replace(arn, ":cluster:", ":snapshot:", 1)
+			if err != nil {
+				return fmt.Errorf("Error building ARN for tags check with ARN (%s): %s", tagsARN, err)
+			}
+
+			log.Printf("[INFO] Deleting the Snapshot %s", snapshot_identifier)
+			_, snapDeleteErr := conn.DeleteClusterSnapshot(
+				&redshift.DeleteClusterSnapshotInput{
+					SnapshotIdentifier: aws.String(snapshot_identifier),
+				})
+			if snapDeleteErr != nil {
+				return err
+			}
+
+			//lastly check that the Cluster is missing
+			resp, err := conn.DescribeClusters(
+				&redshift.DescribeClustersInput{
+					ClusterIdentifier: aws.String(rs.Primary.ID),
+				})
+
+			if err == nil {
+				if len(resp.Clusters) != 0 &&
+					*resp.Clusters[0].ClusterIdentifier == rs.Primary.ID {
+					return fmt.Errorf("Redshift Cluster %s still exists", rs.Primary.ID)
+				}
+			}
+
+			// Return nil if the cluster is already destroyed
+			if awsErr, ok := err.(awserr.Error); ok {
+				if awsErr.Code() == "ClusterNotFound" {
+					return nil
+				}
+
+				return err
+			}
+
+		}
+
+		return nil
+	}
+}
+
 func testAccCheckAWSRedshiftClusterExists(n string, v *redshift.Cluster) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -514,6 +592,7 @@ resource "aws_redshift_cluster" "default" {
   automated_snapshot_retention_period = 0
   allow_version_upgrade = false
   number_of_nodes = 2
+  skip_final_snapshot = true
 }
 `
 
@@ -527,7 +606,24 @@ resource "aws_redshift_cluster" "default" {
   node_type = "dc1.large"
   automated_snapshot_retention_period = 0
   allow_version_upgrade = false
+  skip_final_snapshot = true
 }`
+
+func testAccAWSRedshiftClusterConfigWithFinalSnapshot(rInt int) string {
+	return fmt.Sprintf(`
+resource "aws_redshift_cluster" "default" {
+  cluster_identifier = "tf-redshift-cluster-%d"
+  availability_zone = "us-west-2a"
+  database_name = "mydb"
+  master_username = "foo_test"
+  master_password = "Mustbe8characters"
+  node_type = "dc1.large"
+  automated_snapshot_retention_period = 0
+  allow_version_upgrade = false
+  skip_final_snapshot = false
+  final_snapshot_identifier = "tf-acctest-snapshot-%d"
+}`, rInt, rInt)
+}
 
 var testAccAWSRedshiftClusterConfig_kmsKey = `
 resource "aws_kms_key" "foo" {
@@ -562,6 +658,7 @@ resource "aws_redshift_cluster" "default" {
   allow_version_upgrade = false
   kms_key_id = "${aws_kms_key.foo.arn}"
   encrypted = true
+  skip_final_snapshot = true
 }`
 
 var testAccAWSRedshiftClusterConfig_enhancedVpcRoutingEnabled = `
@@ -575,6 +672,7 @@ resource "aws_redshift_cluster" "default" {
   automated_snapshot_retention_period = 0
   allow_version_upgrade = false
   enhanced_vpc_routing = true
+  skip_final_snapshot = true
 }
 `
 
@@ -589,6 +687,7 @@ resource "aws_redshift_cluster" "default" {
   automated_snapshot_retention_period = 0
   allow_version_upgrade = false
   enhanced_vpc_routing = false
+  skip_final_snapshot = true
 }
 `
 
@@ -604,6 +703,7 @@ func testAccAWSRedshiftClusterConfig_loggingDisabled(rInt int) string {
 		automated_snapshot_retention_period = 0
 		allow_version_upgrade = false
 		enable_logging = false
+		skip_final_snapshot = true
 	}`, rInt)
 }
 
@@ -639,6 +739,7 @@ func testAccAWSRedshiftClusterConfig_loggingEnabled(rInt int) string {
 EOF
  }
 
+
  resource "aws_redshift_cluster" "default" {
 	 cluster_identifier = "tf-redshift-cluster-%d"
 	 availability_zone = "us-west-2a"
@@ -650,6 +751,7 @@ EOF
 	 allow_version_upgrade = false
 	 enable_logging = true
 	 bucket_name = "${aws_s3_bucket.bucket.bucket}"
+	 skip_final_snapshot = true
  }`, rInt, rInt, rInt, rInt)
 }
 
@@ -663,6 +765,7 @@ resource "aws_redshift_cluster" "default" {
   node_type = "dc1.large"
   automated_snapshot_retention_period = 7
   allow_version_upgrade = false
+  skip_final_snapshot = true
   tags {
     environment = "Production"
     cluster = "reader"
@@ -680,6 +783,7 @@ resource "aws_redshift_cluster" "default" {
   node_type = "dc1.large"
   automated_snapshot_retention_period = 7
   allow_version_upgrade = false
+  skip_final_snapshot = true
   tags {
     environment = "Production"
   }
@@ -736,6 +840,7 @@ func testAccAWSRedshiftClusterConfig_notPubliclyAccessible(rInt int) string {
 		allow_version_upgrade = false
 		cluster_subnet_group_name = "${aws_redshift_subnet_group.foo.name}"
 		publicly_accessible = false
+		skip_final_snapshot = true
 	}`, rInt, rInt)
 }
 
@@ -790,6 +895,7 @@ func testAccAWSRedshiftClusterConfig_updatePubliclyAccessible(rInt int) string {
 		allow_version_upgrade = false
 		cluster_subnet_group_name = "${aws_redshift_subnet_group.foo.name}"
 		publicly_accessible = true
+		skip_final_snapshot = true
 	}`, rInt, rInt)
 }
 
@@ -816,6 +922,7 @@ resource "aws_redshift_cluster" "default" {
    automated_snapshot_retention_period = 0
    allow_version_upgrade = false
    iam_roles = ["${aws_iam_role.ec2-role.arn}", "${aws_iam_role.lambda-role.arn}"]
+   skip_final_snapshot = true
 }`
 
 var testAccAWSRedshiftClusterConfig_updateIamRoles = `
@@ -841,4 +948,5 @@ resource "aws_iam_role" "ec2-role" {
    automated_snapshot_retention_period = 0
    allow_version_upgrade = false
    iam_roles = ["${aws_iam_role.ec2-role.arn}"]
+   skip_final_snapshot = true
  }`

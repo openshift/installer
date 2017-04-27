@@ -1,7 +1,7 @@
 package: github.com/coreos/tectonic-installer/installer
 import:
 - package: github.com/aws/aws-sdk-go
-  version: v1.6.25
+  version: v1.8.13
   subpackages:
   - aws
   - aws/credentials
@@ -204,7 +204,7 @@ import:
   - parser
   - scanner
 - package: github.com/hashicorp/terraform
-  version: 403a86dc557fae52f8e39676b11e1e4356b7d1a2
+  version: 277bbf65d1141207dbb30485bf124b1dba08f80f
   subpackages:
   - config
   - config/module
@@ -226,6 +226,6 @@ import:
 - package: github.com/mitchellh/mapstructure
   version: 281073eb9eb092240d33ef253c404f1cca550309
 - package: github.com/coreos/terraform-provider-matchbox 
-  version: dd045535c826b7e2e0daeddc6b8d4b2cc81f9dd0
+  version: 4c66aa75b60489a4220730d70b0446e25b0c9a0a
   subpackages:
   - matchbox

@@ -31,7 +31,7 @@ resource "azurerm_virtual_machine" "etcd_node" {
     computer_name  = "etcd"
     admin_username = "core"
     admin_password = "Microsoft123!"
-    custom_data    = "${base64encode("${ignition_config.etcd.*.rendered[count.index]}")}"
+    custom_data    = "${base64encode("${data.ignition_config.etcd.*.rendered[count.index]}")}"
   }
 
   os_profile_linux_config {

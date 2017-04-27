@@ -36,7 +36,7 @@ At a high level, using the installer follows the workflow below. See each platfo
 
 **Install Terraform**
 
-This project is built on Terraform and requires version 0.8.8. Download and install an [official Terraform binary](https://releases.hashicorp.com/terraform/0.8.8/) for your OS or use your favorite package manager.
+This project is built on Terraform and requires version 0.9.4. Download and install an [official Terraform binary](https://releases.hashicorp.com/terraform/0.8.8/) for your OS or use your favorite package manager.
 
 **Choose your platform**
 
