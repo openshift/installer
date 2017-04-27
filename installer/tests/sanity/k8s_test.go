@@ -54,10 +54,32 @@ func newClient(t *testing.T) *kubernetes.Clientset {
 }
 
 func TestCluster(t *testing.T) {
+	// verify that api server is up in 10 min
+	t.Run("APIAvailable", testAPIAvailable)
+
+	// run tests
 	t.Run("AllNodesRunning", testAllNodesRunning)
 	t.Run("AllPodsRunning", testAllPodsRunning)
 	t.Run("GetLogs", testLogs)
 	t.Run("KillAPIServer", testKillAPIServer)
+}
+
+func testAPIAvailable(t *testing.T) {
+	// chan signaled when API server found
+	done := waitForAPIServer(t)
+
+	// timeout searching for server
+	wait := 5 * time.Minute
+	t.Logf("Waiting %v for API server to become available", wait)
+
+	timeout := time.After(wait)
+	select {
+	case <-timeout:
+		t.Fatalf("Could not connect to API server in %v, FAILING!", wait)
+	case <-done:
+		// success
+		return
+	}
 }
 
 func testAllPodsRunning(t *testing.T) {
@@ -236,6 +258,25 @@ func testKillAPIServer(t *testing.T) {
 
 		time.Sleep(10 * time.Second)
 	}
+}
+
+func waitForAPIServer(t *testing.T) <-chan struct{} {
+	done := make(chan struct{}, 1)
+	go func() {
+		var client *kubernetes.Clientset
+		for {
+			client = newClient(t)
+			_, err := client.ServerVersion()
+			if err == nil {
+				done <- struct{}{}
+				return
+			}
+			wait := 10 * time.Second
+			t.Logf("Waiting %v after failed attempt to connect to API server. Error was: %v", wait, err)
+			time.Sleep(wait)
+		}
+	}()
+	return done
 }
 
 func getAPIServers(client *kubernetes.Clientset) (*v1.PodList, error) {
