@@ -42,8 +42,6 @@
     "tectonic_dns_name": "test",
     "tectonic_etcd_count": 3,
     "tectonic_experimental": true,
-    "tectonic_kube_etcd_service_ip": "",
-    "tectonic_kube_self_hosted_etcd": false,
     "tectonic_master_count": 1,
     "tectonic_service_cidr": "10.3.0.0/24",
     "tectonic_worker_count": 3

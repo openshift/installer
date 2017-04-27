@@ -377,10 +377,6 @@ export const toAWS_TF = (cc, FORMS) => {
     },
     variables: {
       tectonic_admin_email: cc[ADMIN_EMAIL],
-      tectonic_aws_etcd_ec2_type: etcds[INSTANCE_TYPE],
-      tectonic_aws_etcd_root_volume_iops: etcds[STORAGE_TYPE] === 'io1' ? etcds[STORAGE_IOPS] : undefined,
-      tectonic_aws_etcd_root_volume_size: etcds[STORAGE_SIZE_IN_GIB],
-      tectonic_aws_etcd_root_volume_type: etcds[STORAGE_TYPE],
       tectonic_aws_master_ec2_type: controllers[INSTANCE_TYPE],
       tectonic_aws_master_root_volume_iops: controllers[STORAGE_TYPE] === 'io1' ? controllers[STORAGE_IOPS] : undefined,
       tectonic_aws_master_root_volume_size: controllers[STORAGE_SIZE_IN_GIB],
@@ -394,9 +390,6 @@ export const toAWS_TF = (cc, FORMS) => {
       tectonic_cl_channel: cc[CHANNEL_TO_USE],
       tectonic_cluster_cidr: cc[POD_CIDR],
       tectonic_cluster_name: cc[CLUSTER_NAME],
-      tectonic_etcd_count: etcds[NUMBER_OF_INSTANCES],
-      tectonic_kube_etcd_service_ip: cc[EXTERNAL_ETCD_ENABLED] ? cc[EXTERNAL_ETCD_CLIENT] : '',
-      tectonic_kube_self_hosted_etcd: cc[EXTERNAL_ETCD_ENABLED],
       tectonic_master_count: controllers[NUMBER_OF_INSTANCES],
       tectonic_service_cidr: cc[SERVICE_CIDR],
       tectonic_worker_count: workers[NUMBER_OF_INSTANCES],
@@ -405,6 +398,16 @@ export const toAWS_TF = (cc, FORMS) => {
       tectonic_experimental: cc[UPDATER_ENABLED],
     },
   };
+
+  if (cc[EXTERNAL_ETCD_ENABLED]) {
+    ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT]];
+  } else {
+    ret.variables.tectonic_aws_etcd_ec2_type = etcds[INSTANCE_TYPE];
+    ret.variables.tectonic_aws_etcd_root_volume_iops = etcds[STORAGE_TYPE] === 'io1' ? etcds[STORAGE_IOPS] : undefined;
+    ret.variables.tectonic_aws_etcd_root_volume_size = etcds[STORAGE_SIZE_IN_GIB];
+    ret.variables.tectonic_aws_etcd_root_volume_type = etcds[STORAGE_TYPE];
+    ret.variables.tectonic_etcd_count = etcds[NUMBER_OF_INSTANCES];
+  }
 
   if (_.size(extraTags) > 0) {
     ret.variables.tectonic_aws_extra_tags = extraTags;
