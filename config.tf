@@ -162,7 +162,7 @@ EOF
 
 variable "tectonic_update_server" {
   type        = "string"
-  default     = "https://public.update.core-os.net"
+  default     = "https://tectonic.update.core-os.net"
   description = "The URL of the Tectonic Omaha update server"
 }
 
