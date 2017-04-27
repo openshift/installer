@@ -8,8 +8,9 @@ import { Alert } from './alert';
 import { WaitingLi } from './ui';
 import { AWS_DomainValidation } from './aws-domain-validation';
 import { ResetButton } from './reset-button';
-import { CLUSTER_NAME } from '../cluster-config';
 import { TFDestroy } from '../aws-actions';
+import { CLUSTER_NAME, PLATFORM_TYPE } from '../cluster-config';
+import { AWS_TF } from '../platforms';
 import { commitToServer, observeClusterStatus } from '../server';
 
 const stateToProps = ({cluster, clusterConfig}) => {
@@ -20,6 +21,7 @@ const stateToProps = ({cluster, clusterConfig}) => {
     error: status.error,
     output: status.output,
     outputBlob: new Blob([status.output], {type: 'text/plain'}),
+    platformType: clusterConfig[PLATFORM_TYPE],
     statusMsg: status.status ? status.status.toLowerCase() : '',
     tectonicConsole: status.tectonicConsole || {},
   };
@@ -30,12 +32,13 @@ const dispatchToProps = dispatch => ({
   TFRetry: () => dispatch(commitToServer(false, true)),
 });
 
-export const AWS_TF_PowerOn = connect(stateToProps, dispatchToProps)(
-class AWS_TF_PowerOn extends React.Component {
+export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
+class TF_PowerOn extends React.Component {
   constructor (props) {
     super(props);
     this.state = {showLogs: null};
   }
+
   componentDidMount () {
     if (this.outputNode) {
       this.outputNode.scrollTop = this.outputNode.scrollHeight - this.outputNode.clientHeight;
@@ -73,7 +76,7 @@ class AWS_TF_PowerOn extends React.Component {
   }
 
   render () {
-    const {action, clusterName, error, output, outputBlob, statusMsg, tectonicConsole} = this.props;
+    const {action, clusterName, error, output, outputBlob, platformType, statusMsg, tectonicConsole} = this.props;
     const state = this.state;
     const showLogs = state.showLogs === null ? statusMsg !== 'success' : state.showLogs;
     const terraformRunning = statusMsg === 'running';
@@ -82,7 +85,9 @@ class AWS_TF_PowerOn extends React.Component {
     if (action === 'apply') {
       let msg = `Resolving ${tectonicConsole.instance}`;
       const dnsReady = (tectonicConsole.message || '').search('no such host') === -1;
-      consoleSubsteps.push(<AWS_DomainValidation key="domain" />);
+      if (platformType === AWS_TF) {
+        consoleSubsteps.push(<AWS_DomainValidation key="domain" />);
+      }
       consoleSubsteps.push(
         <WaitingLi done={dnsReady} key="dns" substep={true}>
           <span title={msg}>{msg}</span>
@@ -185,7 +190,7 @@ class AWS_TF_PowerOn extends React.Component {
 // horrible hack to prevent a flapping cluster from redirecting user from connect page back to poweron page
 let ready = false;
 
-AWS_TF_PowerOn.canNavigateForward = ({cluster}) => {
+TF_PowerOn.canNavigateForward = ({cluster}) => {
   ready = ready || (_.get(cluster, 'status.tectonicConsole.ready') === true
     && _.get(cluster, 'status.status') !== 'running');
   return ready;

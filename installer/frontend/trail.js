@@ -11,6 +11,7 @@ import { DryRun } from './components/dry-run';
 import { Etcd } from './components/etcd';
 import { SubmitDefinition } from './components/submit-definition';
 import { Success } from './components/success';
+import { TF_PowerOn } from './components/tf-poweron';
 import { Users } from './components/users';
 
 import { BM_ClusterInfo } from './components/bm-cluster-info';
@@ -31,12 +32,11 @@ import { AWS_PowerOn } from './components/aws-poweron';
 import { AWS_SubmitKeys } from './components/aws-submit-keys';
 import { AWS_VPC } from './components/aws-vpc';
 
-import { AWS_TF_PowerOn } from './components/aws-tf-poweron';
-
 import {
   AWS,
   AWS_TF,
   BARE_METAL,
+  BARE_METAL_TF,
   isSupported,
 } from './platforms';
 
@@ -80,6 +80,12 @@ const successPage = {
   title: 'Installation Complete',
   hidePager: true,
   hideSave: true,
+};
+
+const TFPowerOnPage = {
+  path: '/boot/tf/poweron',
+  component: TF_PowerOn,
+  title: 'Start Installation',
 };
 
 const usersPage = {
@@ -194,12 +200,6 @@ const awsVPCPage = {
   title: 'Networking',
 };
 
-const awsTFPowerOnPage = {
-  path: '/boot/aws-tf/poweron',
-  component: AWS_TF_PowerOn,
-  title: 'Start Installation',
-};
-
 // This component is never visible!
 const loadingPage = {
   path: '/',
@@ -244,12 +244,16 @@ export const sections = new Map([
     bmConnectPage,
     successPage,
   ]],
+  ['bootBaremetalTF', [
+    TFPowerOnPage,
+    successPage,
+  ]],
   ['bootAWS', [
     awsPowerOnPage,
     successPage,
   ]],
   ['bootAWSTF', [
-    awsTFPowerOnPage,
+    TFPowerOnPage,
     successPage,
   ]],
   ['bootDryRun', [
@@ -365,6 +369,11 @@ const platformToSection = {
     choose: new Trail([sections.choose, sections.defineBaremetal]),
     define: new Trail([sections.defineBaremetal], [submitDefinitionPage]),
     boot: new Trail([sections.bootBaremetal], null, {canReset: true}),
+  },
+  [BARE_METAL_TF]: {
+    choose: new Trail([sections.choose, sections.defineBaremetal]),
+    define: new Trail([sections.defineBaremetal], [submitDefinitionPage]),
+    boot: new Trail([sections.bootBaremetalTF]),
   },
 };
 

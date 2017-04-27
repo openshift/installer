@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { BARE_METAL } from './platforms';
+import { BARE_METAL, BARE_METAL_TF } from './platforms';
 import { keyToAlg } from './utils';
 
 let defaultPlatformType = '';
@@ -101,7 +101,7 @@ export const toVPCSubnet = (region, subnets, deselected) => {
 };
 
 const getZoneDomain = (cc) => {
-  if (cc[PLATFORM_TYPE] === BARE_METAL) {
+  if (_.includes([BARE_METAL, BARE_METAL_TF], cc[PLATFORM_TYPE])) {
     throw new Error("Can't get base domain for bare metal!");
   }
   // TODO: if we ever change toExtraData()'s key, this breaks
@@ -109,14 +109,14 @@ const getZoneDomain = (cc) => {
 };
 
 export const getControllerDomain = (cc) => {
-  if (cc[PLATFORM_TYPE] === BARE_METAL) {
+  if (_.includes([BARE_METAL, BARE_METAL_TF], cc[PLATFORM_TYPE])) {
     return cc[CONTROLLER_DOMAIN];
   }
   return `${cc[CLUSTER_SUBDOMAIN]}-k8s.${getZoneDomain(cc)}`;
 };
 
 export const getTectonicDomain = (cc) => {
-  if (cc[PLATFORM_TYPE] === BARE_METAL) {
+  if (_.includes([BARE_METAL, BARE_METAL_TF], cc[PLATFORM_TYPE])) {
     return cc[BM_TECTONIC_DOMAIN];
   }
   const tectonicDomain = cc[CLUSTER_SUBDOMAIN] + (cc[CLUSTER_SUBDOMAIN].endsWith('.') ? '' : '.') + getZoneDomain(cc);
@@ -428,6 +428,57 @@ export const toAWS_TF = (cc, FORMS) => {
     ret.variables.tectonic_aws_external_worker_subnet_ids = workerSubnets;
     ret.variables.tectonic_aws_external_vpc_public = cc[AWS_CREATE_VPC] !== 'VPC_PRIVATE';
   }
+  if (cc[CA_TYPE] === 'owned') {
+    ret.variables.tectonic_ca_cert = cc[CA_CERTIFICATE];
+    ret.variables.tectonic_ca_key = cc[CA_PRIVATE_KEY];
+    ret.variables.tectonic_ca_key_alg = keyToAlg(cc[CA_PRIVATE_KEY]);
+  }
+
+  return ret;
+};
+
+export const toBaremetal_TF = (cc) => {
+  const ret = {
+    clusterKind: 'tectonic-metal',
+    dryRun: cc[DRY_RUN],
+    platform: 'metal',
+    license: cc[TECTONIC_LICENSE],
+    pullSecret: cc[PULL_SECRET],
+    adminPassword: window.btoa(cc[ADMIN_PASSWORD]),
+    variables: {
+      tectonic_metal_matchbox_http_endpoint: cc[BM_MATCHBOX_HTTP],
+      tectonic_metal_matchbox_rpc_endpoint: cc[BM_MATCHBOX_RPC],
+      tectonic_cluster_name: cc[CLUSTER_NAME],
+      tectonic_cl_channel: cc[CHANNEL_TO_USE],
+      tectonic_admin_email: cc[ADMIN_EMAIL],
+      tectonic_metal_cl_version: cc[BM_OS_TO_USE],
+      tectonic_metal_controller_names: cc[BM_MASTERS].map(({name}) => name),
+      tectonic_metal_controller_macs: cc[BM_MASTERS].map(({mac}) => mac),
+      tectonic_metal_controller_domains: ["node1.example.com"],
+
+      tectonic_metal_worker_names: cc[BM_WORKERS].map(({name}) => name),
+      tectonic_metal_worker_macs: cc[BM_WORKERS].map(({mac}) => mac),
+      tectonic_metal_worker_domains: ["node2.example.com", "node3.example.com"],
+
+      tectonic_base_domain: getTectonicDomain(cc),
+      tectonic_metal_controller_domain: getControllerDomain(cc),
+      tectonic_metal_ingress_domain: getTectonicDomain(cc),
+      tectonic_ssh_authorized_key: cc[SSH_AUTHORIZED_KEYS].map(k => k.key).filter(k => k && k.length).join('\n'),
+
+      tectonic_metal_matchbox_ca: cc[BM_MATCHBOX_CA],
+      tectonic_metal_matchbox_client_cert: cc[BM_MATCHBOX_CLIENT_CERT],
+      tectonic_metal_matchbox_client_key: cc[BM_MATCHBOX_CLIENT_KEY],
+
+      tectonic_cluster_cidr: cc[POD_CIDR],
+      tectonic_kube_etcd_service_ip: cc[EXTERNAL_ETCD_ENABLED] ? cc[EXTERNAL_ETCD_CLIENT] : '',
+      tectonic_kube_self_hosted_etcd: cc[EXTERNAL_ETCD_ENABLED],
+      etcd_servers: [],
+      tectonic_service_cidr: cc[SERVICE_CIDR],
+      tectonic_dns_name: cc[CLUSTER_SUBDOMAIN],
+      tectonic_experimental: cc[UPDATER_ENABLED],
+    },
+  };
+
   if (cc[CA_TYPE] === 'owned') {
     ret.variables.tectonic_ca_cert = cc[CA_CERTIFICATE];
     ret.variables.tectonic_ca_key = cc[CA_PRIVATE_KEY];
