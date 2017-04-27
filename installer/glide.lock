@@ -1,5 +1,5 @@
-hash: 3d541a8ee07140ac74d67cd49410345dd3c52434cb3c152e17c9391ddf71e921
-updated: 2017-04-26T17:47:45.123449687-07:00
+hash: 4c0a3047ff1b7b04c6c6a385336ae34abb5e7e89735124e41e1124288e5c0fd9
+updated: 2017-04-27T11:36:35.291529392-07:00
 imports:
 - name: github.com/ajeddeloh/yaml
   version: 1072abfea31191db507785e2e0c1b8d1440d35a5
@@ -399,120 +399,6 @@ imports:
   version: 296c7f1463ec9b712176dc804dea0173d06dc728
 - name: gopkg.in/yaml.v2
   version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
-- name: k8s.io/kubernetes
-  version: ae4550cc9c89a593bcda6678df201db1b208133b
-  subpackages:
-  - pkg/api/meta/metatypes
-  - pkg/api/unversioned
-  - pkg/apis/abac
-  - pkg/apis/abac/latest
-  - pkg/apis/abac/v0
-  - pkg/apis/abac/v1beta1
-  - pkg/conversion
-  - pkg/conversion/queryparams
-  - pkg/labels
-  - pkg/runtime
-  - pkg/runtime/serializer
-  - pkg/runtime/serializer/json
-  - pkg/runtime/serializer/protobuf
-  - pkg/runtime/serializer/recognizer
-  - pkg/runtime/serializer/versioning
-  - pkg/types
-  - pkg/util/errors
-  - pkg/util/framer
-  - pkg/util/json
-  - pkg/util/sets
-  - pkg/util/validation
-  - pkg/util/yaml
-  - third_party/forked/reflect
-testImports:
-- name: github.com/blang/semver
-  version: 31b736133b98f26d5e078ec9eb591666edfd091f
-- name: github.com/coreos/go-oidc
-  version: 5cf2aa52da8c574d3aa4458f471ad6ae2240fe6b
-  subpackages:
-  - http
-  - jose
-  - key
-  - oauth2
-  - oidc
-- name: github.com/docker/distribution
-  version: cd27f179f2c10c5d300e6d09025b538c475b0d51
-  subpackages:
-  - digest
-  - reference
-- name: github.com/emicklei/go-restful
-  version: 7c47e2558a0bbbaba9ecab06bc6681e73028a28a
-  subpackages:
-  - log
-  - swagger
-- name: github.com/go-openapi/jsonpointer
-  version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
-- name: github.com/go-openapi/jsonreference
-  version: 13c6e3589ad90f49bd3e3bbe2c2cb3d7a4142272
-- name: github.com/go-openapi/spec
-  version: 6aced65f8501fe1217321abf0749d354824ba2ff
-- name: github.com/go-openapi/swag
-  version: 1d0bd113de87027671077d3c71eb3ac5d7dbba72
-- name: github.com/howeyc/gopass
-  version: 3ca23474a7c7203e0a0a070fd33508f6efdb9b3d
-- name: github.com/imdario/mergo
-  version: 6633656539c1639d9d78127b7d47c622b5d7b6dc
-- name: github.com/jonboulle/clockwork
-  version: 3f831b65b61282ba6bece21b91beea2edc4c887a
-- name: github.com/mailru/easyjson
-  version: d5b7844b561a7bc640052f1b935f7b800330d7e0
-  subpackages:
-  - buffer
-  - jlexer
-  - jwriter
-- name: github.com/PuerkitoBio/purell
-  version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
-- name: github.com/PuerkitoBio/urlesc
-  version: 5bd2802263f21d8788851d5305584c82a5c75d7e
-- name: github.com/satori/uuid
-  version: 5bf94b69c6b68ee1b541973bb8e1144db23a194b
-- name: github.com/spf13/pflag
-  version: 7f60f83a2c81bc3c3c0d5297f61ddfa68da9d3b7
-- name: golang.org/x/oauth2
-  version: b5adcc2dcdf009d0391547edc6ecbaff889f5bb9
-  subpackages:
-  - google
-  - internal
-  - jws
-  - jwt
-- name: golang.org/x/text
-  version: 2910a502d2bf9e43193af9d68ca516529614eed3
-  subpackages:
-  - cases
-  - internal/tag
-  - language
-  - runes
-  - secure/bidirule
-  - secure/precis
-  - transform
-  - unicode/bidi
-  - unicode/norm
-  - width
-- name: google.golang.org/appengine
-  version: 4f7eeb5305a4ba1966344836ba4af9996b7b4e05
-  subpackages:
-  - internal
-  - internal/app_identity
-  - internal/base
-  - internal/datastore
-  - internal/log
-  - internal/modules
-  - internal/remote_api
-  - internal/urlfetch
-  - urlfetch
-- name: google.golang.org/cloud
-  version: eb47ba841d53d93506cfbfbc03927daf9cc48f88
-  subpackages:
-  - compute/metadata
-  - internal
-- name: gopkg.in/inf.v0
-  version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: k8s.io/client-go
   version: d81cb85237595f720d83eda492bae8f6162fc5c0
   subpackages:
@@ -627,3 +513,117 @@ testImports:
   - tools/clientcmd/api/v1
   - tools/metrics
   - transport
+- name: k8s.io/kubernetes
+  version: ae4550cc9c89a593bcda6678df201db1b208133b
+  subpackages:
+  - pkg/api/meta/metatypes
+  - pkg/api/unversioned
+  - pkg/apis/abac
+  - pkg/apis/abac/latest
+  - pkg/apis/abac/v0
+  - pkg/apis/abac/v1beta1
+  - pkg/conversion
+  - pkg/conversion/queryparams
+  - pkg/labels
+  - pkg/runtime
+  - pkg/runtime/serializer
+  - pkg/runtime/serializer/json
+  - pkg/runtime/serializer/protobuf
+  - pkg/runtime/serializer/recognizer
+  - pkg/runtime/serializer/versioning
+  - pkg/types
+  - pkg/util/errors
+  - pkg/util/framer
+  - pkg/util/json
+  - pkg/util/sets
+  - pkg/util/validation
+  - pkg/util/yaml
+  - third_party/forked/reflect
+testImports:
+- name: github.com/blang/semver
+  version: 31b736133b98f26d5e078ec9eb591666edfd091f
+- name: github.com/coreos/go-oidc
+  version: 5cf2aa52da8c574d3aa4458f471ad6ae2240fe6b
+  subpackages:
+  - http
+  - jose
+  - key
+  - oauth2
+  - oidc
+- name: github.com/docker/distribution
+  version: cd27f179f2c10c5d300e6d09025b538c475b0d51
+  subpackages:
+  - digest
+  - reference
+- name: github.com/emicklei/go-restful
+  version: 7c47e2558a0bbbaba9ecab06bc6681e73028a28a
+  subpackages:
+  - log
+  - swagger
+- name: github.com/go-openapi/jsonpointer
+  version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
+- name: github.com/go-openapi/jsonreference
+  version: 13c6e3589ad90f49bd3e3bbe2c2cb3d7a4142272
+- name: github.com/go-openapi/spec
+  version: 6aced65f8501fe1217321abf0749d354824ba2ff
+- name: github.com/go-openapi/swag
+  version: 1d0bd113de87027671077d3c71eb3ac5d7dbba72
+- name: github.com/howeyc/gopass
+  version: 3ca23474a7c7203e0a0a070fd33508f6efdb9b3d
+- name: github.com/imdario/mergo
+  version: 6633656539c1639d9d78127b7d47c622b5d7b6dc
+- name: github.com/jonboulle/clockwork
+  version: 3f831b65b61282ba6bece21b91beea2edc4c887a
+- name: github.com/mailru/easyjson
+  version: d5b7844b561a7bc640052f1b935f7b800330d7e0
+  subpackages:
+  - buffer
+  - jlexer
+  - jwriter
+- name: github.com/PuerkitoBio/purell
+  version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
+- name: github.com/PuerkitoBio/urlesc
+  version: 5bd2802263f21d8788851d5305584c82a5c75d7e
+- name: github.com/satori/uuid
+  version: 5bf94b69c6b68ee1b541973bb8e1144db23a194b
+- name: github.com/spf13/pflag
+  version: 7f60f83a2c81bc3c3c0d5297f61ddfa68da9d3b7
+- name: golang.org/x/oauth2
+  version: b5adcc2dcdf009d0391547edc6ecbaff889f5bb9
+  subpackages:
+  - google
+  - internal
+  - jws
+  - jwt
+- name: golang.org/x/text
+  version: 2910a502d2bf9e43193af9d68ca516529614eed3
+  subpackages:
+  - cases
+  - internal/tag
+  - language
+  - runes
+  - secure/bidirule
+  - secure/precis
+  - transform
+  - unicode/bidi
+  - unicode/norm
+  - width
+- name: google.golang.org/appengine
+  version: 4f7eeb5305a4ba1966344836ba4af9996b7b4e05
+  subpackages:
+  - internal
+  - internal/app_identity
+  - internal/base
+  - internal/datastore
+  - internal/log
+  - internal/modules
+  - internal/remote_api
+  - internal/urlfetch
+  - urlfetch
+- name: google.golang.org/cloud
+  version: eb47ba841d53d93506cfbfbc03927daf9cc48f88
+  subpackages:
+  - compute/metadata
+  - internal
+- name: gopkg.in/inf.v0
+  version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
