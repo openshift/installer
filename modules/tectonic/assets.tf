@@ -1,3 +1,8 @@
+# Unique Cluster ID (uuid)
+resource "random_id" "cluster_id" {
+  byte_length = 16
+}
+
 # Kubernetes Manifests (resources/generated/manifests/)
 resource "template_dir" "tectonic" {
   source_dir      = "${path.module}/resources/manifests"
@@ -57,7 +62,9 @@ resource "template_dir" "tectonic" {
     kube_apiserver_url = "${var.kube_apiserver_url}"
     oidc_issuer_url    = "https://${var.base_address}/identity"
 
-    cluster_id               = "${sha256("${var.kube_apiserver_url}-${var.platform}")}"
+    # TODO: We could also patch https://www.terraform.io/docs/providers/random/ to add an UUID resource.
+    cluster_id = "${format("%s-%s-%s-%s-%s", substr(random_id.cluster_id.hex, 0, 8), substr(random_id.cluster_id.hex, 8, 4), substr(random_id.cluster_id.hex, 12, 4), substr(random_id.cluster_id.hex, 16, 4), substr(random_id.cluster_id.hex, 20, 12))}"
+
     platform                 = "${var.platform}"
     certificates_strategy    = "${var.ca_generated == "true" ? "installerGeneratedCA" : "userProvidedCA"}"
     identity_api_service     = "${var.identity_api_service}"
