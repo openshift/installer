@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { getTectonicDomain, toAWS, toAWS_TF, toBaremetal, DRY_RUN, PLATFORM_TYPE } from './cluster-config';
+import { getTectonicDomain, toAWS, toAWS_TF, toBaremetal, DRY_RUN, PLATFORM_TYPE, RETRY } from './cluster-config';
 import { clusterReadyActionTypes, configActions, loadFactsActionTypes, serverActionTypes, FORMS } from './actions';
 import { savable } from './reducer';
 import {
@@ -81,9 +81,12 @@ const platformToFunc = {
   },
 };
 
+let observeInterval;
+
 // An action creator that builds a server message, calls fetch on that message, fires the appropriate actions
-export const commitToServer = (dryRun=false) => (dispatch, getState) => {
+export const commitToServer = (dryRun=false, retry=false) => (dispatch, getState) => {
   setIn(DRY_RUN, dryRun, dispatch);
+  setIn(RETRY, retry, dispatch);
 
   const {COMMIT_REQUESTED, COMMIT_FAILED, COMMIT_SUCCESSFUL, COMMIT_SENT} = serverActionTypes;
 
@@ -107,13 +110,14 @@ export const commitToServer = (dryRun=false) => (dispatch, getState) => {
     response => response.ok ?
       response.blob().then(payload => {
         observeClusterStatus(dispatch, getState);
-        setInterval(() => observeClusterStatus(dispatch, getState), 10000);
+        if (!observeInterval) {
+          observeInterval = setInterval(() => observeClusterStatus(dispatch, getState), 10000);
+        }
         return dispatch({payload, type: COMMIT_SUCCESSFUL});
       }) :
       response.text().then(payload => dispatch({payload, type: COMMIT_FAILED}))
   , payload => dispatch({payload, type: COMMIT_FAILED}))
   .catch(err => console.error(err));
-
 
   return dispatch({
     type: COMMIT_SENT,

@@ -75,6 +75,7 @@ export const STORAGE_SIZE_IN_GIB = 'storageSizeInGiB';
 export const STORAGE_TYPE = 'storageType';
 export const STORAGE_IOPS = 'storageIOPS';
 
+export const RETRY = 'retry';
 
 // FORMS:
 export const AWS_ETCDS = 'aws_etcds';
@@ -164,6 +165,7 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [ENTITLEMENTS]: {},
   [PLATFORM_TYPE]: defaultPlatformType,
   [PULL_SECRET]: '',
+  [RETRY]: false, // whether we're retrying a terraform apply
   [SSH_AUTHORIZED_KEYS]: [
     {
       id: 'initial-key',

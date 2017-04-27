@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import classNames from 'classnames';
 import React from 'react';
 import { connect } from 'react-redux';
 import { saveAs } from 'file-saver';
@@ -9,7 +10,7 @@ import { AWS_DomainValidation } from './aws-domain-validation';
 import { ResetButton } from './reset-button';
 import { CLUSTER_NAME } from '../cluster-config';
 import { TFDestroy } from '../aws-actions';
-import { observeClusterStatus } from '../server';
+import { commitToServer, observeClusterStatus } from '../server';
 
 const stateToProps = ({cluster, clusterConfig}) => {
   const status = cluster.status || {};
@@ -26,6 +27,7 @@ const stateToProps = ({cluster, clusterConfig}) => {
 
 const dispatchToProps = dispatch => ({
   TFDestroy: () => dispatch(TFDestroy()).then(() => dispatch(observeClusterStatus)),
+  TFRetry: () => dispatch(commitToServer(false, true)),
 });
 
 export const AWS_TF_PowerOn = connect(stateToProps, dispatchToProps)(
@@ -56,10 +58,17 @@ class AWS_TF_PowerOn extends React.Component {
     }
   }
 
+  retry () {
+    // eslint-disable-next-line no-alert
+    if (window.config.devMode || window.confirm('Are you sure you want to re-run terraform apply?')) {
+      this.props.TFRetry();
+    }
+  }
+
   destroy () {
     // eslint-disable-next-line no-alert
     if (window.config.devMode || window.confirm('Are you sure you want to destroy your cluster?')) {
-      this.props.TFDestroy().catch(destroyError => this.setState({destroyError}));
+      this.props.TFDestroy().catch(tfError => this.setState({tfError}));
     }
   }
 
@@ -67,6 +76,7 @@ class AWS_TF_PowerOn extends React.Component {
     const {action, clusterName, error, output, outputBlob, statusMsg, tectonicConsole} = this.props;
     const state = this.state;
     const showLogs = state.showLogs === null ? statusMsg !== 'success' : state.showLogs;
+    const terraformRunning = statusMsg === 'running';
 
     const consoleSubsteps = [];
     if (action === 'apply') {
@@ -133,16 +143,21 @@ class AWS_TF_PowerOn extends React.Component {
         </div>
       </div>
       <div className="row">
-        <div className="col-xs-12">
-          <button className="btn btn-default pull-right" onClick={() => this.destroy()}>
-            <i className="fa fa-exclamation-triangle"></i>&nbsp;&nbsp;Destroy cluster
+        <div className="col-xs-6">
+          <button className={classNames("btn btn-default", {disabled: terraformRunning})} onClick={() => this.retry()}>
+            <i className="fa fa-exclamation-triangle"></i>&nbsp;&nbsp;Retry Terraform apply
+          </button>
+        </div>
+        <div className="col-xs-6">
+          <button className={classNames("btn btn-default pull-right", {disabled: terraformRunning})} onClick={() => this.destroy()}>
+            <i className="fa fa-trash"></i>&nbsp;&nbsp;Destroy cluster
           </button>
         </div>
       </div>
-      { state.destroyError &&
+      { state.tfError &&
         <div className="row">
           <div className="col-xs-12">
-           <Alert severity="error">{state.destroyError}</Alert>
+           <Alert severity="error">{state.tfError}</Alert>
           </div>
         </div>
       }
@@ -153,18 +168,16 @@ class AWS_TF_PowerOn extends React.Component {
         <br />
         </div>
       </div>
-      { statusMsg !== 'running' &&
       <div className="row">
         <div className="col-xs-12">
           <a href="/terraform/assets" download>
-            <button className="btn btn-primary wiz-giant-button pull-right">
+            <button className={classNames("btn btn-primary wiz-giant-button pull-right", {disabled: terraformRunning})}>
               <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
             </button>
           </a>
           <ResetButton />
         </div>
       </div>
-      }
     </div>;
   }
 });
