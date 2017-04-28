@@ -24,6 +24,10 @@ textarea {
   max-width: none;
 }
 
+::placeholder {
+  color: #aaa;
+}
+
 /* Override */
 body.theme-tectonic-light .btn-primary.disabled,
 body.theme-tectonic-light .btn-primary.disabled:hover,
