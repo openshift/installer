@@ -56,9 +56,11 @@ func newClient(t *testing.T) *kubernetes.Clientset {
 func TestCluster(t *testing.T) {
 	// verify that api server is up in 10 min
 	t.Run("APIAvailable", testAPIAvailable)
+	t.Log("API server is available.")
 
-	// run tests
+	// wait for all nodes to become available
 	t.Run("AllNodesRunning", testAllNodesRunning)
+
 	t.Run("AllPodsRunning", testAllPodsRunning)
 	t.Run("GetLogs", testLogs)
 	t.Run("KillAPIServer", testKillAPIServer)
@@ -115,42 +117,64 @@ func testAllPodsRunning(t *testing.T) {
 func testLogs(t *testing.T) {
 	c := newClient(t)
 
-	const (
-		tectonicNamespace = "tectonic-system"
-		tectonicIdentity  = "tectonic-identity"
-	)
+	wait := 3 * time.Minute
+	timeout := time.After(wait)
 
-	pods, err := c.Core().Pods(tectonicNamespace).List(v1.ListOptions{})
+	namespace := "tectonic-system"
+	podPrefix := "tectonic-identity"
+
+	done := make(chan struct{})
+	go func() {
+		for {
+			if err := validatePodLogging(c, namespace, podPrefix); err == nil {
+				done <- struct{}{}
+				return
+			}
+			time.Sleep(3 * time.Second)
+		}
+	}()
+
+	select {
+	case <-timeout:
+		t.Fatalf("Failed to gather logs for %s/%s* in %v", namespace, podPrefix, wait)
+	case <-done:
+		return
+	}
+}
+
+// validatePodLogging verifies that logs can be retrieved for a container in Pod.
+func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) error {
+	pods, err := c.Core().Pods(namespace).List(v1.ListOptions{})
 	if err != nil {
-		t.Fatalf("could not list pods: %v", err)
+		return fmt.Errorf("could not list pods: %v", err)
 	}
 
 	for _, p := range pods.Items {
-		if !strings.HasPrefix(p.Name, tectonicIdentity) {
+		if !strings.HasPrefix(p.Name, podPrefix) {
 			continue
 		}
 		if len(p.Spec.Containers) == 0 {
-			t.Fatalf("tectonic identity pod has no containers")
+			return fmt.Errorf("tectonic identity pod has no containers")
 		}
 
 		opt := v1.PodLogOptions{
 			Container: p.Spec.Containers[0].Name,
 		}
 
-		result := c.Core().Pods(tectonicNamespace).GetLogs(p.Name, &opt).Do()
+		result := c.Core().Pods(namespace).GetLogs(p.Name, &opt).Do()
 		if err := result.Error(); err != nil {
-			t.Fatalf("failed to get pod logs: %v", err)
+			return fmt.Errorf("failed to get pod logs: %v", err)
 		}
 
 		var statusCode int
 		result.StatusCode(&statusCode)
 		if statusCode/100 != 2 {
-			t.Fatalf("expected 200 from log response, got %d", statusCode)
+			return fmt.Errorf("expected 200 from log response, got %d", statusCode)
 		}
-		return
+		return nil
 	}
 
-	t.Errorf("failed to find tectonic-identity pod")
+	return fmt.Errorf("failed to find tectonic-identity pod")
 }
 
 func testAllNodesRunning(t *testing.T) {
@@ -161,7 +185,7 @@ func testAllNodesRunning(t *testing.T) {
 		t.Fatalf("failed to get number of expected nodes from envvar %s: %v", nodeCountVar, err)
 	}
 
-	timer := newTimer(5 * time.Minute)
+	timer := newTimer(10 * time.Minute)
 	for {
 		if timer.timedOut() {
 			t.Fatalf("timed out waiting for nodes to be ready.")
@@ -190,7 +214,7 @@ func testAllNodesRunning(t *testing.T) {
 			t.Logf("expected %d nodes got %d", expNodeCount, got)
 		}
 
-		time.Sleep(3 * time.Second)
+		time.Sleep(10 * time.Second)
 	}
 }
 
@@ -281,7 +305,7 @@ func waitForAPIServer(t *testing.T) <-chan struct{} {
 
 func getAPIServers(client *kubernetes.Clientset) (*v1.PodList, error) {
 	const (
-		apiServerSelector   = "k8s-app=kube-apiserver"
+		apiServerSelector   = "component=kube-apiserver"
 		kubeSystemNamespace = "kube-system"
 	)
 	pods, err := client.Core().Pods(kubeSystemNamespace).List(v1.ListOptions{LabelSelector: apiServerSelector})
