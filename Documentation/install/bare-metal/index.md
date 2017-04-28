@@ -243,7 +243,7 @@ A bare-metal Tectonic cluster requires PXE infrastructure, which we'll setup nex
 
 ### Set up DHCP, TFTP, and DNS services
 
-Set up DHCP, TFTP, and DNS services with your network administrator. Review [network setup](https://coreos.com/matchbox/docs/latest/network-setup.html) to find the right approach for your PXE environment. At a high level, your goals are to:
+Set up DHCP, TFTP, and DNS services with your network administrator. Review [network setup][matchbox-net-setup] to find the right approach for your PXE environment. At a high level, your goals are to:
 
 * Chainload PXE firmwares to iPXE
 * Point iPXE client machines to the `matchbox` iPXE HTTP endpoint (e.g. `http://matchbox.example.com:8080/boot.ipxe`)
@@ -331,5 +331,6 @@ After the installer is complete, you'll have a Tectonic cluster and be able to a
 [matchbox-config]: https://coreos.com/matchbox/docs/latest/config.html
 [matchbox-dnsmasq]: https://github.com/coreos/matchbox/tree/master/contrib/dnsmasq
 [matchbox]: https://coreos.com/matchbox
+[matchbox-net-setup]: https://github.com/coreos/matchbox/blob/master/Documentation/network-setup.md
 [tectonic-installer]: https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html
 [trouble-domainchange]: troubleshooting.md#domain-name-cant-be-changed
