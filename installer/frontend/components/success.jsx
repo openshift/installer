@@ -48,7 +48,7 @@ export const Success = connect(stateToProps)(
       <p>
         You can interact with nodes and deploy your Kubernetes-aware applications with kubectl. See the <a href="https://kubernetes.io/docs/tasks/kubectl/install/" target="_blank">upstream kubectl documentation</a> for more details.
       </p>
-      <a href="https://kubernetes.io/docs/tasks/kubectl/install/" target="_blank"><button className="btn btn-default" style={{marginTop: 20}}>Configure kubectl&nbsp;&nbsp;<i className="fa fa-external-link"></i></button></a>
+      <a href="https://coreos.com/tectonic/docs/latest/tutorials/first-app.html#configuring-credentials" target="_blank"><button className="btn btn-default" style={{marginTop: 20}}>Configure kubectl&nbsp;&nbsp;<i className="fa fa-external-link"></i></button></a>
     </div>
   </div>
   <hr className="spacer" />
@@ -59,7 +59,7 @@ export const Success = connect(stateToProps)(
       <p>
         Once you have kubectl set up, learn how to deploy your first app!
       </p>
-      <a href="https://coreos.com/tectonic/docs/latest/usage/first-app.html" target="_blank"><button className="btn btn-default" style={{marginTop: 20}}>Deploy Application&nbsp;&nbsp;<i className="fa fa-external-link"></i></button></a>
+      <a href="https://coreos.com/tectonic/docs/latest/tutorials/first-app.html#deploying-a-simple-application" target="_blank"><button className="btn btn-default" style={{marginTop: 20}}>Deploy Application&nbsp;&nbsp;<i className="fa fa-external-link"></i></button></a>
     </div>
   </div>
   <hr className="spacer" />
