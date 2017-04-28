@@ -117,19 +117,20 @@ func testAllPodsRunning(t *testing.T) {
 func testLogs(t *testing.T) {
 	c := newClient(t)
 
-	wait := 3 * time.Minute
-	timeout := time.After(wait)
-
 	namespace := "tectonic-system"
 	podPrefix := "tectonic-identity"
 
+	wait := 3 * time.Minute
+	timeout := time.After(wait)
 	done := make(chan struct{})
 	go func() {
 		for {
-			if err := validatePodLogging(c, namespace, podPrefix); err == nil {
+			err := validatePodLogging(c, namespace, podPrefix)
+			if err == nil {
 				done <- struct{}{}
 				return
 			}
+			t.Log("Failed to get Pod logs with error: ", err)
 			time.Sleep(3 * time.Second)
 		}
 	}()
@@ -149,7 +150,13 @@ func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) er
 		return fmt.Errorf("could not list pods: %v", err)
 	}
 
+	var names string
 	for _, p := range pods.Items {
+		if len(names) != 0 {
+			names += ", "
+		}
+		names += p.Name
+
 		if !strings.HasPrefix(p.Name, podPrefix) {
 			continue
 		}
@@ -174,7 +181,7 @@ func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) er
 		return nil
 	}
 
-	return fmt.Errorf("failed to find tectonic-identity pod")
+	return fmt.Errorf("failed to find tectonic-identity pod (found pods in %s: %s)", namespace, names)
 }
 
 func testAllNodesRunning(t *testing.T) {
