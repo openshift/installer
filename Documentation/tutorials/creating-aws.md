@@ -10,14 +10,14 @@ In this tutorial you will:
 
 ## Creating and configuring your AWS account
 
-Let's create your AWS account. To begin:
+To create your AWS account:
 
-1. Go to https://aws.amazon.com and click ‘Create a Free Account’.
+1. Go to https://aws.amazon.com and click *Create a Free Account*.
 2. Enter your payment information using a valid credit card.
 3. Complete the identity verification process by answering Amazon’s phone call and entering the PIN show in your browser.
 4. Select the support plan that will best serve your business needs.
 
-After successfully creating your new AWS account, sign in to the AWS console.
+After successfully creating the account, sign in to the AWS console.
 
 ## Configuring AWS Route 53
 
@@ -45,7 +45,7 @@ Please note that it may take anywhere from minutes to hours for the changes to t
 
 To verify which nameservers are associated with your domain, use a tool like Dig or nslookup. If no nameservers are returned when you look up your domain, changes may still be pending. Here's an example command:
 
-```
+```bash
 $ dig -t ns [example.com]
 ```
 
@@ -85,6 +85,7 @@ Create a new Access key ID and Secret access key pair from the AWS console.
 Both the Access Key ID and its corresponding Secret Access Key are used during the Tectonic installation process.
 
 [**NEXT:** Downloading and installing Tectonic on AWS][installing-tectonic]
+
 
 [installing-tectonic]: installing-tectonic.md
 [aws-r53-doc]: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/creating-migrating.html

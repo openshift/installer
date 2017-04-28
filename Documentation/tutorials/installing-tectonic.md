@@ -39,48 +39,38 @@ Tectonic will create a new AWS Virtual Private Cloud (VPC), or you can select an
 
 Having completed the AWS installation requirements, you are now ready to download and run the Tectonic Installer.
 
-Make sure a current version of either the Google Chrome or Mozilla Firefox web browser is set as the default browser on the workstation where the installer will run.
+Make sure a current version of either the Google Chrome or Mozilla Firefox browser is set as the default on the workstation where the installer will run.
 
-Download and run the Tectonic installer by opening a new terminal, and running the following commands:
-
-Pull down the tarball with:
+1. Download and run the Tectonic installer by opening a new terminal, and running the following command:
 ```
-$ curl -O https://releases.tectonic.com/tectonic-1.5.6-tectonic.1.tar.gz
+$ curl -O https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz
 ```
 
-Extract the tarball with:
-```
-<<<<<<< c06638378d3b1d6054f11bef2c8516cf54a25507
-tar xzvf tectonic-1.5.6-tectonic.1.tar.gz
-=======
-$ tar xzvf tectonic-1.5.5-tectonic.3.tar.gz
->>>>>>> docs:tutorials update
-```
+2. Double click the tarball to extract it, then navigate to the tectonic/tectonic-installer folder.
+3. Double click the folder for your operating system.
+4. Double click the installer to launch it.
 
-Change to the previously untarred directory with:
-```
-$ cd tectonic/tectonic-installer
-```
+A browser window will open the Tectonic Installer to walk you through the setup process and provision your cluster.
 
-Run the Tectonic Installer:
-```
-$ ./$PLATFORM/installer
+If you prefer to work within the terminal, extract and launch the Installer using:
+```bash
+tar xzvf tectonic-1.6.2-tectonic.1.tar.gz # to extract the tarball
+$ cd tectonic/tectonic-installer # to change to the previously untarred directory
+$ ./$PLATFORM/installer # to run the Tectonic Installer
 ```
 Where `$PLATFORM` is one of: `linux`, `darwin` or `windows`.
-
-A browser window will open to begin the GUI installation process.
 
 Use the `./$PLATFORM/installer` command to relaunch the Installer at any time. When launched, you will be given the option to *Start Over*, or to *Continue* where you left off.
 
 ![Installer Pop-up](https://coreos.com/tectonic/docs/latest/img/installer-aws.png)
 
-Use the Tectonic Installer wizard to provision your cluster. (This should take about 10-15 minutes. If you encounter any errors, please see the [AWS: Troubleshooting Installation][aws-troubleshooting] guide.)
+Setup should take about 10-15 minutes. If you encounter any errors, please see the [AWS: Troubleshooting Installation][aws-troubleshooting] guide.
 
-Once complete, access the Tectonic Console through a browser window.
+Once installation is complete, access the Tectonic Console through a browser window.
 
 ## Creating a new Kubernetes cluster
 
-With Tectonic Installer running locally, deploy the Tectonic Kubernetes distribution on a new cluster.
+Step through the Tectonic Installer to deploy the Tectonic Kubernetes distribution on a new cluster.
 
 ### Choose Cluster Type
 
@@ -110,13 +100,11 @@ Your Access Key ID is available from the AWS console. Your Secret Access Key is 
 
 Next, define the following attributes for your cluster:
 
-* *CloudFormation Stack Name:* Name your cluster. This name will appear in the Tectonic Console.
+* *Name:* Name your cluster. This name will appear in the Tectonic Console.
 * *Container Linux Update Channel:* Select the channel for your update mechanism for Container Linux (Stable, Beta or Alpha).
 * *Experimental Features:* Check this box to enable operators to perform automatic updates.
 * *CoreOS License and Pull Secret:* Copy and paste your Universal Software License, and your dockercfg pull secret from your Tectonic account page. (https://account.tectonic.com)
-* *CloudFormation Tags:* Enter any key-value pairs you wish to add to the Cluster as CloudFormation tags.
-* *DNS:* Select a pre-configured Route 53 hosted zone, and enter a subdomain.
-* *Internal Cluster:* Select this checkbox to make this cluster’s EC2 instances and Elastic Load Balancers internal only.
+* *Tags:* Enter any key-value pairs you wish to add to the Cluster as tags.
 
 **Certificate Authority**
 
@@ -126,13 +114,27 @@ Provide a CA certificate and key in PEM format if you are managing your own PKI.
 
 **Submit Keys**
 
-Select your SSH Key from the pulldown list, and click *Generate a New Key* to create a KMS key pair.
+Select your SSH Key from the pulldown list.
 
 Be certain to select the SSH key you submitted while setting up your AWS EC2 Network and Security keys.
 
+**Define Nodes**
+
+Enter Node parameters specific to your cluster.
+
+**Networking**
+
+Define your networking parameters:
+
+* Select a Route 53 hosted zone domain for your cluster, and enter a subdomain.
+* Select your VPC type.
+* Click *Show Advanced Settings* if you wish to check or change your CIDR ranges.
+
 **Console Login**
 
-Enter the credentials that will be used to log in to Tectonic Console.
+Enter the email address and password that will be used to log in to Tectonic Console.
+
+**Submit**
 
 Click *Submit* to submit your assets and create your Kubernetes cluster. (Cluster creation may take up to 20 minutes.)
 
@@ -142,22 +144,17 @@ If you hit permissions errors during the creation process it is likely that your
 
 The final step in creating your Kubernetes cluster is to boot your cluster.
 
-**Start Kubernetes**
+**Start Installation**
 
-The Start Kubernetes screen displays cluster creation in process.
+The Start Installation screen displays cluster creation in process.
 
-When Starting AWS CloudFormation and Starting Kubelet are complete, download the created assets, then open a new terminal window to send the final setup commands to your cluster node.
+* Terraform apply
+* Resolving subdomain DNS
+* Starting Tectonic console
 
-1. Click *Download Assets* to save your cluster assets locally.
-2. Open a terminal to run the commands shown on the installer's penultimate screen.
-3. Run
-   `ssh -i <path/keyfilename> <core@IP-ADDRESS> sudo systemctl start bootkube`
-   Where `<path/keyfilename>` is the local path to your SSH key, and `<core@IP-ADDRESS>` is the IP address specified in the Tectonic Installer.
-4. Then run
-   `ssh <core@IP-ADDRESS> journalctl -u bootkube -f`
-   Using the same `<core@IP-ADDRESS>` listed on your screen.
+When Terraform apply and Resolving subdomain DNS are complete, click *Download Assets* to save your cluster assets locally. (These assets will be required if you wish to destroy your cluster in the future.)
 
-When Kubernetes is fully launched, click *Next Step* to continue.
+When Starting Tectonic Console is complete, click *Next Step* to continue.
 
 Use the email address and password you used to create your Tectonic account to log in to the Console.
 
