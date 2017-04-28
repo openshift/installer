@@ -12,7 +12,7 @@ resource "aws_route" "to_nat_gw" {
   count                  = "${var.external_vpc_id == "" ? var.worker_az_count : 0}"
   route_table_id         = "${aws_route_table.private_routes.*.id[count.index]}"
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = "${aws_nat_gateway.nat_gw.*.id[count.index]}"
+  nat_gateway_id         = "${element(aws_nat_gateway.nat_gw.*.id, count.index)}"
   depends_on             = ["aws_route_table.private_routes"]
 }
 
