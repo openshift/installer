@@ -65,6 +65,11 @@ echo "Uploading payload to \"${PAYLOAD_URL}\", version: \"${VERSION}\""
 
 aws_upload_file ${payload} ${DESTINATION} ${BUCKET} application/json
 
+# TODO(marineam): require signature once it is no longer optional in TCO
+if [[ -f ${payload}.sig ]]; then
+    aws_upload_file ${payload}.sig ${DESTINATION}.sig ${BUCKET} application/pgp-signature
+fi
+
 SERVER=${SERVER:-"https://tectonic.update.core-os.net"}
 APPID=${APPID:-"6bc7b986-4654-4a0f-94b3-84ce6feb1db4"}
 
