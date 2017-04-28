@@ -1,12 +1,13 @@
 import _ from 'lodash';
 
-import { getTectonicDomain, toAWS, toAWS_TF, toBaremetal, DRY_RUN, PLATFORM_TYPE, RETRY } from './cluster-config';
+import { getTectonicDomain, toAWS, toAWS_TF, toBaremetal, toBaremetal_TF, DRY_RUN, PLATFORM_TYPE, RETRY } from './cluster-config';
 import { clusterReadyActionTypes, configActions, loadFactsActionTypes, serverActionTypes, FORMS } from './actions';
 import { savable } from './reducer';
 import {
   AWS,
   AWS_TF,
   BARE_METAL,
+  BARE_METAL_TF,
   isTerraform,
 } from './platforms';
 
@@ -78,6 +79,11 @@ const platformToFunc = {
     f: toBaremetal,
     path: '/cluster/create',
     statusPath: '/cluster/status',
+  },
+  [BARE_METAL_TF]: {
+    f: toBaremetal_TF,
+    path: '/terraform/apply',
+    statusPath: '/terraform/status',
   },
 };
 

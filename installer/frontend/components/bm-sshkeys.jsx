@@ -2,8 +2,9 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { configActionTypes, sequenceActionTypes } from '../actions';
+import { BARE_METAL_TF } from '../platforms';
 import { validate } from '../validate';
-import { SSH_AUTHORIZED_KEYS } from '../cluster-config';
+import { PLATFORM_TYPE, SSH_AUTHORIZED_KEYS } from '../cluster-config';
 
 import { FileArea } from './ui';
 
@@ -16,9 +17,16 @@ you@example.com
 
 export const BM_SSHKeys = connect(
   ({clusterConfig, sequence}) => {
+    let keys = clusterConfig[SSH_AUTHORIZED_KEYS];
+    const platformType = clusterConfig[PLATFORM_TYPE];
+    if (keys.length > 1 && platformType === BARE_METAL_TF) {
+      // BARE_METAL_TF only supports 1 ssh key :(
+      keys = clusterConfig[SSH_AUTHORIZED_KEYS][0];
+    }
     return {
-      keys: clusterConfig[SSH_AUTHORIZED_KEYS],
-      sequence: sequence,
+      keys,
+      platformType,
+      sequence,
     };
   },
   (dispatch) => {
@@ -56,7 +64,7 @@ export const BM_SSHKeys = connect(
       },
     };
   }
-)(({addKey, handleKey, removeKey, keys, sequence}) => {
+)(({addKey, handleKey, removeKey, keys, platformType, sequence}) => {
   const fields = keys.map(({key, id}, i) => {
     return (
       <div className="row form-group" key={id}>
@@ -80,9 +88,12 @@ export const BM_SSHKeys = connect(
                 placeholder={keyPlaceholder}
                 autoFocus={i > 0} />
             {
-              i + 1 === keys.length &&
-              <p><a onClick={() => addKey(keys.length, sequence)}
-                 ><span className="fa fa-plus"></span> Add another public key</a></p>
+              i + 1 === keys.length && platformType !== BARE_METAL_TF &&
+              <p>
+                <a onClick={() => addKey(keys.length, sequence)}>
+                  <span className="fa fa-plus"></span> Add another public key
+                </a>
+              </p>
             }
           </div>
         </div>
@@ -100,6 +111,7 @@ export const BM_SSHKeys = connect(
     </div>
   );
 });
+
 BM_SSHKeys.canNavigateForward = ({clusterConfig}) => {
   const ks = clusterConfig[SSH_AUTHORIZED_KEYS].map(k => k.key);
   return ks.length && ks.every(v => !validate.SSHKey(v));

@@ -35,7 +35,7 @@
       "tectonicDomain": "test.example.com",
       "vpcID": "someVPCID",
       "podCIDR": "10.2.0.0/16",
-      "serviceCIDR": "10.3.0.0/24",
+      "serviceCIDR": "10.3.0.0/16",
       "etcdCount": 3,
       "etcdInstanceType": "t2.large",
       "etcdRootVolumeSize": 300,

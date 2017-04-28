@@ -30,12 +30,14 @@ const TFPostJSON = url => (body={}, creds={}, platform='aws') => {
     method: 'POST',
   };
   body.platform = platform;
-  body.credentials = {
-    AWSAccessKeyID: creds.AccessKeyID,
-    AWSSecretAccessKey: creds.SecretAccessKey,
-    AWSSessionToken: creds.SessionToken,
-    AWSRegion: creds.Region,
-  };
+  if (platform === 'aws') {
+    body.credentials = {
+      AWSAccessKeyID: creds.AccessKeyID,
+      AWSSecretAccessKey: creds.SecretAccessKey,
+      AWSSessionToken: creds.SessionToken,
+      AWSRegion: creds.Region,
+    };
+  }
   opts.body = JSON.stringify(body);
   return fetch(url, opts).then(response => response.ok ?
     response.text() :

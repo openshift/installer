@@ -11,8 +11,10 @@ import {
   AWS_SESSION_TOKEN,
   AWS_WORKER_SUBNET_IDS,
   AWS_WORKER_SUBNETS,
+  PLATFORM_TYPE,
   STS_ENABLED,
 } from './cluster-config';
+import { BARE_METAL_TF } from './platforms';
 import { TectonicGA } from './tectonic-ga';
 
 const { batchSetIn } = configActions;
@@ -38,8 +40,11 @@ const createAction = (name, fn, shouldReject=false) => (body, creds, isNow) => (
     },
   });
 
-  // TODO: pass in platform
-  return fn(body, creds)
+  let platform;
+  if (clusterConfig[PLATFORM_TYPE] === BARE_METAL_TF) {
+    platform = 'metal';
+  }
+  return fn(body, creds, platform)
     .then(value => {
       if (isNow && !isNow()) {
         return;

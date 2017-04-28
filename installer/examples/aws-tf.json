@@ -43,7 +43,7 @@
     "tectonic_etcd_count": 3,
     "tectonic_experimental": true,
     "tectonic_master_count": 1,
-    "tectonic_service_cidr": "10.3.0.0/24",
+    "tectonic_service_cidr": "10.3.0.0/16",
     "tectonic_worker_count": 3
   }
 }
