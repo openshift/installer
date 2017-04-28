@@ -6,141 +6,154 @@ Tectonic Identity is an authentication service for both Tectonic Console and `ku
 
 This document describes managing users and access control in Tectonic and Kubernetes using LDAP.
 
-## Identity LDAP configuration
+## Configuring Tectonic Identity for LDAP authentication
 
-Integrating Tectonic Identity with LDAP is configured through the Tectonic console. In order to integrate with LDAP, you'll need the following:
+Tectonic Identity is configured through the Tectonic Console to allow for LDAP user authentication. In order to integrate with an LDAP server, you'll need the following:
 
 * Your LDAP server host name and port
 * An LDAP service account capable of querying for users and groups
 * An LDAP base distinguished name (dn) representing where to start the search from for users and groups
-* The attributes used to describe users and groups (e.g. mail, username, etc)
+* The attributes used to describe users and groups. For example, mail, username, and so on
 * (Optional) The root CA if certificate CA verification is desired
 
-Follow these steps in the Tectonic UI to enable LDAP in your cluster:
+Follow these steps in Tectonic Console to enable LDAP authentication in your cluster:
 
-First navigate to *Cluster Settings* under *Administration*.
+1. In Tectonic Console, navigate to *Cluster Settings* under *Administration*.
+2. Click the *LDAP* link and add your LDAP host.
+3. Specify whether your LDAP host uses SSL; if so, specify whether the certificate should be verified against a trusted root CA and click *Continue*.
+4. Add an LDAP service account capable of querying for groups and users.
 
-Next click the *LDAP* link and add your LDAP host. Specify whether your LDAP host uses SSL; if so, specify whether the certificate should be verified against a trusted root CA and click *Continue*. Add an LDAP service account capable of querying for groups and users and click *Continue*.
-
-<div class="row">
-  <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
-    <a href="../img/ldap-query-user.png" class="co-m-screenshot">
-      <img src="../img/ldap-query-user.png" class="img-responsive">
-    </a>
+    <div class="row">
+      <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
+        <a href="../img/ldap-query-user.png" class="co-m-screenshot">
+          <img src="../img/ldap-query-user.png" class="img-responsive">
+        </a>
+      </div>
+    </div>
+5. Click *Continue*.
+6. Configure the user search criteria by adding the following fields:
+  <div class="row">
+    <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
+      <a href="../img/user-search.png" class="co-m-screenshot">
+        <img src="../img/user-search.png">
+      </a>
+    </div>
   </div>
-</div>
 
-Configure the user search criteria by adding the following fields:
+  * **Base DN**: The root LDAP directory to begin the user search from.
+  * **Filter**: Filter(s) applied to every user search to limit the results. For example, when a user search executes, object results could be limited to those with an `objectClass` of [person][person-ldap-rfc].
+  * **Username**: The field used when searching for users. This is the field users will use to login. For example, a  commonName (assuming its unique) or a mail (email) address.
+  * **Attribute**: The field mapping to a user's [uid][uid-ldap-rfc].
+  * **Email Attribute**: The field mapping to a user's email address.
+  * **Name Attribute**: The field mapping to a user's display name.
 
-* **Base DN**: The root LDAP directory to begin the user search from.
-* **Filter**: Filter(s) applied to every user search to limit the results. For example, when a user search executes, object results could be limited to those with an `objectClass` of [person][person-ldap-rfc].
-* **Username**: The field used when searching for users. This is the field users will use to login. For example, a  commonName (assuming its unique) or a mail (email) address.
-* **Attribute**: The field mapping to a user's [uid][uid-ldap-rfc].
-* **Email Attribute**: The field mapping to a user's email address.
-* **Name Attribute**: The field mapping to a user's display name.
+  The example configuration above translates to the following diagram:
 
-<div class="row">
-  <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
-    <a href="../img/user-search.png" class="co-m-screenshot">
-      <img src="../img/user-search.png">
-    </a>
+  <div class="row">
+    <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
+      <a href="../img/ldap-server-user-search-diagram.png" class="co-m-screenshot">
+        <img src="../img/ldap-server-user-search-diagram.png">
+      </a>
+    </div>
   </div>
-</div>
 
-The example configuration above translates to the following diagram:
+7. Continue to the group search configuration; add the following fields:
 
-<div class="row">
-  <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
-    <a href="../img/ldap-server-user-search-diagram.png" class="co-m-screenshot">
-      <img src="../img/ldap-server-user-search-diagram.png">
-    </a>
+  * **Base DN**: The root LDAP directory to begin the group search from.
+  * **Filter**: Filter(s) applied to every group search to limit the results. For example, when a group search executes, object results could be limited to those with an `objectClass` of [groupOfNames][groupOfNames-ldap-rfc].
+  * **User Attribute**: The user field that a group uses to identify a user is part of a group. For example, groups that specify each member as `member: cn=john,dc=example,dc=org` in the LDAP directory, are using the [Distinguished Name (DN)][dn-ldap-rfc] attribute.
+  * **Member Attribute**: The [member][member-ldap-rfc] field associating a user, using the User Attribute mentioned above, with the group.
+  * **Name Attribute**: The field mapping to a group's display name.
+
+  <div class="row">
+    <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
+      <a href="../img/group-search.png" class="co-m-screenshot">
+        <img src="../img/group-search.png">
+      </a>
+    </div>
   </div>
-</div>
 
-Continue to the group search configuration; add the following fields:
+  The example configuration above translates to the following diagram:
 
-* **Base DN**: The root LDAP directory to begin the group search from.
-* **Filter**: Filter(s) applied to every group search to limit the results. For example, when a group search executes, object results could be limited to those with an `objectClass` of [groupOfNames][groupOfNames-ldap-rfc].
-* **User Attribute**: The user field that a group uses to identify a user is part of a group. For example, groups that specify each member as `member: cn=john,dc=example,dc=org` in the LDAP directory, are using the [Distinguished Name (DN)][dn-ldap-rfc] attribute.
-* **Member Attribute**: The [member][member-ldap-rfc] field associating a user, using the User Attribute mentioned above, with the group.
-* **Name Attribute**: The field mapping to a group's display name.
-
-<div class="row">
-  <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
-    <a href="../img/group-search.png" class="co-m-screenshot">
-      <img src="../img/group-search.png">
-    </a>
+  <div class="row">
+    <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
+      <a href="../img/ldap-server-group-search-diagram.png" class="co-m-screenshot">
+        <img src="../img/ldap-server-group-search-diagram.png">
+      </a>
+    </div>
   </div>
-</div>
 
-The example configuration above translates to the following diagram:
+8. Input a valid user and click *Test Configuration* to verify that users and groups are correctly configured.
+If the query does not return expected results, see the [Troubleshooting](#troubleshooting) section.
 
-<div class="row">
-  <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
-    <a href="../img/ldap-server-group-search-diagram.png" class="co-m-screenshot">
-      <img src="../img/ldap-server-group-search-diagram.png">
-    </a>
-  </div>
-</div>
+  The following is a sample LDAP directory used in the test steps.
 
-Input a valid user and click *Test Configuration* to verify that users and groups are correctly configured. *If the query does not return expected results, see the [Troubleshooting](#troubleshooting) section, below.*
+  ```
+  # john, example.org
+  dn: cn=john,dc=example,dc=org
+  objectClass: person
+  objectClass: inetOrgPerson
+  uid: john.doe
+  mail: john.doe@example.org
+  cn: john
+  sn: doe
+  userPassword:: e1NTSEF9dkltSFZkNTgzN3JBaVdEZ2xyVXFyeE9nM1FETHBkM04=
 
-The following is a sample LDAP directory used in the test steps.
+  # jane, example.org
+  dn: cn=jane,dc=example,dc=org
+  objectClass: person
+  objectClass: inetOrgPerson
+  uid: jane.doe
+  mail: jane.doe@example.org
+  cn: jane
+  sn: doe
+  userPassword:: e1NTSEF9dkltSFZkNTgzN3JBaVdEZ2xyVXFyeE9nM1FETHBkM04=
 
-```
-# john, example.org
-dn: cn=john,dc=example,dc=org
-objectClass: person
-objectClass: inetOrgPerson
-uid: john.doe
-mail: john.doe@example.org
-cn: john
-sn: doe
-userPassword:: e1NTSEF9dkltSFZkNTgzN3JBaVdEZ2xyVXFyeE9nM1FETHBkM04=
+  # tstgrp, groups, example.org
+  dn: cn=tstgrp,ou=groups,dc=example,dc=org
+  objectClass: top
+  objectClass: groupOfNames
+  member: cn=john,dc=example,dc=org
+  cn: tstgrp
+  ```
 
-# jane, example.org
-dn: cn=jane,dc=example,dc=org
-objectClass: person
-objectClass: inetOrgPerson
-uid: jane.doe
-mail: jane.doe@example.org
-cn: jane
-sn: doe
-userPassword:: e1NTSEF9dkltSFZkNTgzN3JBaVdEZ2xyVXFyeE9nM1FETHBkM04=
+  In this example the user `john.doe`'s `dn` is in `tstgrp`, but `jane.doe` is in no groups. You can query for these users in the *Test Configuration* page to verify this.
 
-# tstgrp, groups, example.org
-dn: cn=tstgrp,ou=groups,dc=example,dc=org
-objectClass: top
-objectClass: groupOfNames
-member: cn=john,dc=example,dc=org
-cn: tstgrp
-```
+9. From the *Test Configuration* page, click *Continue* to see instructions on updating the given Tectonic Identity.
+10. Click *My Account*.
+11. From the *Profile* page, download the new configuration file.
 
-In this example the user `john.doe`'s `dn` is in `tstgrp`, but `jane.doe` is in no groups. You can query for these users in the *Test Configuration* page to verify this.
-
-From the *Test Configuration* page, click *Continue* to see instructions on updating the given Tectonic Identity. Click *My Account*. From the *Profile* page, download the new and existing configuration file. Keep a backup of the existing config in case something goes wrong during the update.
+ Keep a backup of the existing config in case something goes wrong during the update.
 
 ### Applying a new Tectonic Identity configuration
 
-To apply a new Tectonic Identity configuration to your Kubernetes cluster use `kubectl apply`:
+To apply a new Tectonic Identity configuration to your Kubernetes cluster:
 
-```bash
-$ kubectl apply -f ~/Downloads/new-tectonic-config.yaml
+1. On your terminal, run `kubectl apply`:
 
-configmap "tectonic-identity" configured
-```
+  ```bash
+  $ kubectl apply -f ~/Downloads/new-tectonic-config.yaml
+  ```
+  If successful the following message is displayed:
 
-Restart the Tectonic Identity pods for the changes to take effect. The following command triggers a rolling update and attaches the current date as an annotation. Verify the pods are patched.
+  ```
+  configmap "tectonic-identity" configured
+  ```
 
-```bash
-$ kubectl patch deployment tectonic-identity \
-    --patch "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"date\":\"`date +'%s'`\"}}}}}" \
-    --namespace tectonic-system
+2. Restart the Tectonic Identity pods for the changes to take effect. Run the following command to trigger a rolling update and attach the current date as an annotation.
 
-"tectonic-identity" patched
-```
+  ```bash
+  $ kubectl patch deployment tectonic-identity \
+      --patch "{\"spec\":{\"template\":{\"metadata\":{\"annotations\":{\"date\":\"`date +'%s'`\"}}}}}" \
+      --namespace tectonic-system
+  ```
+If successful the following message is displayed:
 
-You can now log out of Tectonic Console and log back in using LDAP.
+  ```
+  "tectonic-identity" patched
+  ```
+
+3. Log out of Tectonic Console and log in again by using the LDAP authentication credentials.
 
 > In order for an LDAP user to have any access to Kubernetes resources, both from the console and kubectl, you must setup role bindings. See [Configuring Access](#configuring-access) for more details.
 
@@ -159,72 +172,76 @@ To use `kubectl` as an LDAP user:
 
 Until otherwise modified, you can still use your static account for further administrative setup.
 
-## Configuring access
+## Configuring RBAC
 
-Access configuration requires understanding Kubernetes Roles, RoleBindings, ClusterRoles, and ClusterRoleBindings. LDAP-based users do not alter this model. LDAP usernames and groups can be used with Kubernetes bindings; visit [the Kubernetes authorization docs][k8s-auth] to learn how to setup these configurations.
+Access configuration requires understanding Kubernetes Roles, RoleBindings, ClusterRoles, and ClusterRoleBindings. LDAP-based users do not alter this model. LDAP usernames and groups can be used with Kubernetes bindings; visit [the Kubernetes authorization docs][k8s-auth] to learn how to set up these configurations.
 
-### Basic access example
+### An example configuration
 
 The following shows an example of granting user `john.doe@example.org` basic access to the cluster.
 
-Add a role named `support-readonly` that can run commands get, logs, list, and watch for namespaces and pods:
+1. Add a role named `support-readonly` that can run commands get, logs, list, and watch for namespaces and pods:
 
-```yaml
-apiVersion: rbac.authorization.k8s.io/v1alpha1
-kind: ClusterRole
-metadata:
-  name: support-readonly
-rules:
-- apiGroups:
-  - ""
-  attributeRestrictions: null
-  resources:
-  - namespaces
-  - namespaces/finalize
-  - namespaces/status
-  - pods
-  verbs:
-  - get
-  - logs
-  - list
-  - watch
-```
-
-Bind the role to `john.doe`'s group `tstgrp`:
-
-```yaml
-kind: ClusterRoleBinding
-apiVersion: rbac.authorization.k8s.io/v1alpha1
-metadata:
-  name: support-reader
-  namespace: kube-system
-subjects:
-  - kind: Group
-    name: tstgrp
-roleRef:
+  ```yaml
+  apiVersion: rbac.authorization.k8s.io/v1alpha1
   kind: ClusterRole
-  name: support-readonly
-  apiGroup: rbac.authorization.k8s.io
-```
+  metadata:
+    name: support-readonly
+  rules:
+  - apiGroups:
+    - ""
+    attributeRestrictions: null
+    resources:
+    - namespaces
+    - namespaces/finalize
+    - namespaces/status
+    - pods
+    verbs:
+    - get
+    - logs
+    - list
+    - watch
+  ```
 
-Tectonic Console and `kubectl` now reflect the updated role and binding:
+2. Bind the role to `john.doe`'s group `tstgrp`:
 
-<div class="row">
-  <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
-    <a href="../img/ui-permission-granted.png" class="co-m-screenshot">
-      <img src="../img/ui-permission-granted.png">
-    </a>
+  ```yaml
+  kind: ClusterRoleBinding
+  apiVersion: rbac.authorization.k8s.io/v1alpha1
+  metadata:
+    name: support-reader
+    namespace: kube-system
+  subjects:
+    - kind: Group
+      name: tstgrp
+  roleRef:
+    kind: ClusterRole
+    name: support-readonly
+    apiGroup: rbac.authorization.k8s.io
+  ```
+
+  Tectonic Console and `kubectl` now reflect the updated role and binding:
+
+  <div class="row">
+    <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
+      <a href="../img/ui-permission-granted.png" class="co-m-screenshot">
+        <img src="../img/ui-permission-granted.png">
+      </a>
+    </div>
   </div>
-</div>
 
-```bash
-$ kubectl --kubeconfig=johnDoeConfig --namespace=tectonic-system get pods
+3. Verify all pods are up and running:
 
-NAME                                         READY     STATUS    RESTARTS   AGE
-default-http-backend-4080621718-f3gql        1/1       Running   0          2h
-kube-version-operator-2694564828-crpz4       1/1       Running   0          2h
-...
-```
+  ```bash
+  $ kubectl --kubeconfig=johnDoeConfig --namespace=tectonic-system get pods
+
+  NAME                                         READY     STATUS    RESTARTS   AGE
+  default-http-backend-4080621718-f3gql        1/1       Running   0          2h
+  kube-version-operator-2694564828-crpz4       1/1       Running   0          2h
+  ...
+  ```
+
+### Unauthorized access
 
 An attempt to access a resource or perform a command to which a user does not have access will be rejected by the API server:
 
