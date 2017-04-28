@@ -35,7 +35,8 @@ deployments=(
   "tectonic-prometheus-operator.yaml"
 )
 appversions=(
-  "app-version-kubernetes.json"
+  "app-version-kubernetes.yaml"
+  "app-version-tectonic-monitoring.yaml"
 )
 
 echo "Creating update payload..." >&2
@@ -43,12 +44,12 @@ echo "Using deployments: [${deployments[*]}]" >&2
 echo "Using app versions: [${appversions[*]}]" >&2
 
 # Get the update payload version.
-VERSION=$(cat ${ASSETS_DIR}/app-version-tectonic-cluster.json | jq .status.currentVersion)
+VERSION=$(yaml2json < ${ASSETS_DIR}/app-version-tectonic-cluster.yaml | jq .status.currentVersion)
 
 # Get the deployments.
 for f in ${deployments[*]}; do
   tmpfile=$(mktemp /tmp/deployment.XXXXXX)
-  cat ${ASSETS_DIR}/${f} | yaml2json > ${tmpfile}
+  yaml2json < ${ASSETS_DIR}/${f} > ${tmpfile}
   tmpfiles+=(${tmpfile})
 done
 
@@ -62,8 +63,8 @@ unset tmpfiles
 # Get the desired versions.
 for f in ${appversions[*]}; do
   tmpfile=$(mktemp /tmp/desiredVersion.XXXXXX)
-  name=$(jq .metadata.name ${ASSETS_DIR}/${f})
-  desiredVersion=$(jq .status.currentVersion ${ASSETS_DIR}/${f})
+  name=$(yaml2json < ${ASSETS_DIR}/${f} | jq .metadata.name)
+  desiredVersion=$(yaml2json < ${ASSETS_DIR}/${f} | jq .status.currentVersion)
   cat <<EOF > ${tmpfile}
 {
   "name": ${name},
