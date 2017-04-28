@@ -1,7 +1,6 @@
 #!/bin/bash
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ROOT="$DIR/.."
 
 # A script that make an Core Update channel to point to a target package.
 # updateservicectl(https://github.com/coreos/updateservicectl) is required.
@@ -11,7 +10,7 @@ function print_usage() {
   echo "Usage:"
   echo "export COREUPDATE_USR=<user@coreos.com>"
   echo "export COREUPDATE_KEY=<coreupdate_key>"
-  echo "$0 [tectonic-1.5|tectonic-1.5-staging]"
+  echo "$0 [tectonic-1.6|tectonic-1.6-staging]"
   exit 1
 }
 

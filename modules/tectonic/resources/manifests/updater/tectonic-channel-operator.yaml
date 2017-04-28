@@ -26,9 +26,17 @@ spec:
               configMapKeyRef:
                 name: tectonic-config
                 key: clusterID
+        resources:
+          limits:
+            cpu: 20m
+            memory: 50Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
         volumeMounts:
         - name: certs
           mountPath: /etc/ssl/certs
+      restartPolicy: Always
       imagePullSecrets:
       - name: coreos-pull-secret
       volumes:
