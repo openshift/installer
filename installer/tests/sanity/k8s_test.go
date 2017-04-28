@@ -161,10 +161,10 @@ func testAllNodesRunning(t *testing.T) {
 		t.Fatalf("failed to get number of expected nodes from envvar %s: %v", nodeCountVar, err)
 	}
 
-	timer := newTimer(3 * time.Minute)
+	timer := newTimer(5 * time.Minute)
 	for {
 		if timer.timedOut() {
-			t.Fatalf("timed out waiting for pods to be ready.")
+			t.Fatalf("timed out waiting for nodes to be ready.")
 		}
 
 		nodes, err := c.Core().Nodes().List(v1.ListOptions{})
