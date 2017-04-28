@@ -37,8 +37,7 @@ pipeline {
         go version
         cd $GO_PROJECT/installer
 
-        echo "Sanity testing temporarily disabled" && mkdir bin && touch bin/sanity
-
+        make clean
         make tools
         make build
         make test
