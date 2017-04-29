@@ -223,7 +223,10 @@ func terraformStatusHandler(sessionProvider sessions.Store) ctxh.ContextHandler 
 		// Restore the execution environment from the session.
 		session, ex, exID, errCtx := restoreExecutionFromSession(req, sessionProvider, nil)
 		if errCtx != nil {
-			return errCtx
+			// Error directly (rather than NewAppError, which logs) since the
+			// frontend periodically calls this endpoint to advance screens
+			http.Error(w, fmt.Sprintf("Could not find session data: %v", errCtx), http.StatusNotFound)
+			return nil
 		}
 
 		// Retrieve the status and output.
@@ -398,15 +401,15 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 func restoreExecutionFromSession(req *http.Request, sessionProvider sessions.Store, credentials *terraform.Credentials) (*sessions.Session, *terraform.Executor, int, *ctxh.AppError) {
 	session, err := sessionProvider.Get(req, installerSessionName)
 	if err != nil {
-		return nil, nil, -1, ctxh.NewAppError(err, "could not find execution data, apply first", http.StatusNotFound)
+		return nil, nil, -1, ctxh.NewAppError(err, "Could not find session data. Run terraform apply first.", http.StatusNotFound)
 	}
 	executionPath, ok := session.Values["terraform_path"]
 	if !ok {
-		return nil, nil, -1, ctxh.NewAppError(err, "could not find execution data, apply first", http.StatusNotFound)
+		return nil, nil, -1, ctxh.NewAppError(err, "Could not find terraform_path in session. Run terraform apply first.", http.StatusNotFound)
 	}
 	executionID, ok := session.Values["terraform_id"]
 	if !ok {
-		return nil, nil, -1, ctxh.NewAppError(err, "could not find execution data, apply first", http.StatusNotFound)
+		return nil, nil, -1, ctxh.NewAppError(err, "Could not find terraform_id in session. Run terraform apply first.", http.StatusNotFound)
 	}
 	ex, err := terraform.NewExecutorFromPath(executionPath.(string))
 	if err != nil {
