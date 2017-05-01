@@ -144,7 +144,7 @@ func testLogs(t *testing.T) {
 
 // validatePodLogging verifies that logs can be retrieved for a container in Pod.
 func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) error {
-	pods, err := c.Core().Pods(namespace).List(v1.ListOptions{})
+	pods, err := c.Pods(namespace).List(v1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("could not list pods: %v", err)
 	}
