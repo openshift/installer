@@ -1,6 +1,6 @@
 # Install Tectonic on AWS with Terraform
 
-Following this guide will deploy a Tectonic cluster within your AWS account.
+Following this guide will deploy a Tectonic cluster within your AWS account. This document is primarily meant for users to bring up the tectonic installer manually. To install Tectonic on AWS with a graphical installer refer [this][aws-gui].
 
 Generally, the AWS platform templates adhere to the standards defined by the project [conventions][conventions] and [generic platform requirements][generic]. This document aims to document the implementation details specific to the AWS platform.
 
@@ -9,8 +9,9 @@ Generally, the AWS platform templates adhere to the standards defined by the pro
 ## Prerequsities
 
  - **DNS** - Ensure that the DNS zone is already created and available in route53 for the account. For example if the `tectonic_base_domain` is set to `kube.example.com` a route53 zone must exist for this domain and the AWS nameservers must be configured for the domain.
- - **Make** - This guide uses `make` to build the Tectonic Installer.
+ - **Make, go, yarn** - This guide uses `make`, `go` and `yarn` to build the Tectonic Installer.
  - **Tectonic Account** - Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
+ - **Terraform** - Install [Terraform][terraform] v0.8.8 on your system.
 
 ## Getting Started
 
@@ -122,3 +123,5 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 [vars]: ../../variables/config.md
 [troubleshooting]: ../../troubleshooting.md
 [aws-vars]: ../../variables/aws.md
+[aws-gui]: https://coreos.com/tectonic/docs/latest/install/aws/index.html
+[terraform]: https://www.terraform.io/downloads.html
