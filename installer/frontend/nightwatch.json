@@ -1,0 +1,35 @@
+{
+  "src_folders": [
+    "ui-tests/tests"
+  ],
+  "page_objects_path": "ui-tests/pages",
+  "output_folder": "ui-tests/reports",
+  "selenium": {
+    "start_process": true,
+    "host": "127.0.0.1",
+    "port": 4444,
+    "server_path": "./node_modules/selenium-server/lib/runner/selenium-server-standalone-3.1.0.jar",
+    "cli_args": {
+      "webdriver.chrome.driver": "./node_modules/chromedriver/bin/chromedriver"
+    }
+  },
+  "test_settings": {
+    "default": {
+      "launch_url": "http://127.0.0.1:8080",
+      "selenium_host": "127.0.0.1",
+      "selenium_port": 4444,
+      "silent": true,
+      "screenshots": {
+        "enabled": true,
+        "path": "ui-tests/screenshots",
+        "on_failure": true,
+        "on_error": true
+      },
+      "desiredCapabilities": {
+        "browserName": "chrome",
+        "javascriptEnabled": true,
+        "acceptSslCerts": true
+      }
+    }
+  }
+}
