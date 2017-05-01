@@ -80,7 +80,7 @@ func TestExecutorSimple(t *testing.T) {
 	// Wait for its termination.
 	select {
 	case <-done:
-	case <-time.After(1 * time.Second):
+	case <-time.After(10 * time.Second):
 		assert.FailNow(t, "TerraForm apply timed out")
 	}
 
