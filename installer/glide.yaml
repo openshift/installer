@@ -1,0 +1,385 @@
+package: github.com/coreos/tectonic-installer/installer
+import:
+- package: github.com/aws/aws-sdk-go
+  version: v1.8.13
+  subpackages:
+  - aws
+  - aws/credentials
+  - aws/session
+  - service/ec2
+- package: github.com/go-ini/ini
+  version: 6e4869b434bd001f6983749881c7ead3545887d8
+- package: github.com/jmespath/go-jmespath
+  version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
+- package: github.com/cloudfoundry-incubator/candiedyaml
+  version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
+- package: github.com/coreos/matchbox
+  version: 43ce5c1d91b688ce863495bf2c2b7816568fdb2a
+  subpackages:
+  - matchbox/client
+  - matchbox/rpc/rpcpb
+  - matchbox/server/serverpb
+  - matchbox/storage/storagepb
+- package: gopkg.in/square/go-jose.v2
+  version: 296c7f1463ec9b712176dc804dea0173d06dc728
+- package: github.com/kubernetes-incubator/bootkube
+  version: v0.3.13
+- package: github.com/coreos/pkg
+  version: 160ae6282d8c48a33d8c150e4e4817fdef8a5cde
+  subpackages:
+  - flagutil
+- package: github.com/coreos/go-semver
+  version: 8ab6407b697782a06568d4b7f1db25550ec2e4c6
+  subpackages:
+  - semver
+- package: github.com/davecgh/go-spew
+  version: 5215b55f46b2b919f50a1df0eaa5886afe4e3b3d
+  subpackages:
+  - spew
+- package: github.com/golang/lint
+  version: c7bacac2b21ca01afa1dee0acf64df3ce047c28f
+  subpackages:
+  - golint
+- package: github.com/golang/protobuf
+  version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
+  subpackages:
+  - proto
+  - protoc-gen-go
+- package: github.com/go-yaml/yaml
+  version: a83829b6f1293c91addabc89d0571c246397bbf4
+- package: github.com/ghodss/yaml
+  version: e8e0db9016175449df0e9c4b6e6995a9433a395c
+- package: github.com/jteeuwen/go-bindata
+  version: a0ff2567cfb70903282db057e799fd826784d41d
+  subpackages:
+  - go-bindata # Must specify here or glide-vc will remove it.
+- package: github.com/pmezard/go-difflib
+  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  subpackages:
+  - difflib
+- package: github.com/Sirupsen/logrus
+  version: 081307d9bc1364753142d5962fc1d795c742baaf
+- package: github.com/stretchr/testify
+  version: 8d64eb7173c7753d6419fd4a9caf057398611364
+  subpackages:
+  - assert
+- package: github.com/toqueteos/webbrowser
+  version: v1.0
+- package: github.com/pborman/uuid
+  version: v1.0
+- package: golang.org/x/net
+  version: fb93926129b8ec0056f2f458b1f519654814edf0
+  subpackages:
+  - context
+  - http2
+  - internal/timeseries
+  - trace
+  - http2/hpack
+- package: golang.org/x/sys
+  version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
+- package: golang.org/x/tools
+  version: 9e7459099f9afd6a15464d69d93c6eed49bb545d
+  subpackages:
+  - go/gcimporter15
+- package: google.golang.org/grpc
+  version: 1.2.1
+  subpackages:
+  - codes
+  - credentials
+  - grpclog
+  - internal
+  - keepalive
+  - metadata
+  - naming
+  - peer
+  - stats
+  - tap
+  - transport
+- package: github.com/coreos/coreos-cloudinit
+  version: 36c4b72b9fb389688f5ba34038478f8d918bb8d3
+  subpackages:
+    - config/validate
+- package: github.com/coreos/yaml
+  version: 6b16a5714269b2f70720a45406b1babd947a17ef
+- package: github.com/dghubble/sessions
+  version: 26dc61fdb7361714ff41a80a2ad18cbdf8ba1956
+- package: github.com/gorilla/securecookie
+  version: fa5329f913702981df43dcb2a380bac429c810b5
+- package: k8s.io/kubernetes
+  version: v1.3.6
+  subpackages:
+  - pkg/api/meta/metatypes
+  - pkg/api/unversioned
+  - pkg/apis/abac
+  - pkg/apis/abac/latest
+  - pkg/apis/abac/v0
+  - pkg/apis/abac/v1beta1
+  - pkg/conversion
+  - pkg/conversion/queryparams
+  - pkg/labels
+  - pkg/runtime
+  - pkg/runtime/serializer
+  - pkg/runtime/serializer/json
+  - pkg/runtime/serializer/protobuf
+  - pkg/runtime/serializer/recognizer
+  - pkg/runtime/serializer/versioning
+  - pkg/types
+  - pkg/util/errors
+  - pkg/util/framer
+  - pkg/util/json
+  - pkg/util/sets
+  - pkg/util/validation
+  - pkg/util/yaml
+  - third_party/forked/reflect
+- package: k8s.io/client-go
+  version: d81cb85237595f720d83eda492bae8f6162fc5c0
+  subpackages:
+  - discovery
+  - kubernetes
+  - kubernetes/typed/apps/v1beta1
+  - kubernetes/typed/authentication/v1beta1
+  - kubernetes/typed/authorization/v1beta1
+  - kubernetes/typed/autoscaling/v1
+  - kubernetes/typed/batch/v1
+  - kubernetes/typed/batch/v2alpha1
+  - kubernetes/typed/certificates/v1alpha1
+  - kubernetes/typed/core/v1
+  - kubernetes/typed/extensions/v1beta1
+  - kubernetes/typed/policy/v1beta1
+  - kubernetes/typed/rbac/v1alpha1
+  - kubernetes/typed/storage/v1beta1
+  - pkg/api
+  - pkg/api/errors
+  - pkg/api/install
+  - pkg/api/meta
+  - pkg/api/meta/metatypes
+  - pkg/api/resource
+  - pkg/api/unversioned
+  - pkg/api/v1
+  - pkg/api/validation/path
+  - pkg/apimachinery
+  - pkg/apimachinery/announced
+  - pkg/apimachinery/registered
+  - pkg/apis/apps
+  - pkg/apis/apps/install
+  - pkg/apis/apps/v1beta1
+  - pkg/apis/authentication
+  - pkg/apis/authentication/install
+  - pkg/apis/authentication/v1beta1
+  - pkg/apis/authorization
+  - pkg/apis/authorization/install
+  - pkg/apis/authorization/v1beta1
+  - pkg/apis/autoscaling
+  - pkg/apis/autoscaling/install
+  - pkg/apis/autoscaling/v1
+  - pkg/apis/batch
+  - pkg/apis/batch/install
+  - pkg/apis/batch/v1
+  - pkg/apis/batch/v2alpha1
+  - pkg/apis/certificates
+  - pkg/apis/certificates/install
+  - pkg/apis/certificates/v1alpha1
+  - pkg/apis/extensions
+  - pkg/apis/extensions/install
+  - pkg/apis/extensions/v1beta1
+  - pkg/apis/policy
+  - pkg/apis/policy/install
+  - pkg/apis/policy/v1beta1
+  - pkg/apis/rbac
+  - pkg/apis/rbac/install
+  - pkg/apis/rbac/v1alpha1
+  - pkg/apis/storage
+  - pkg/apis/storage/install
+  - pkg/apis/storage/v1beta1
+  - pkg/auth/user
+  - pkg/conversion
+  - pkg/conversion/queryparams
+  - pkg/fields
+  - pkg/genericapiserver/openapi/common
+  - pkg/labels
+  - pkg/runtime
+  - pkg/runtime/serializer
+  - pkg/runtime/serializer/json
+  - pkg/runtime/serializer/protobuf
+  - pkg/runtime/serializer/recognizer
+  - pkg/runtime/serializer/streaming
+  - pkg/runtime/serializer/versioning
+  - pkg/selection
+  - pkg/third_party/forked/golang/reflect
+  - pkg/third_party/forked/golang/template
+  - pkg/types
+  - pkg/util
+  - pkg/util/cert
+  - pkg/util/clock
+  - pkg/util/errors
+  - pkg/util/flowcontrol
+  - pkg/util/framer
+  - pkg/util/homedir
+  - pkg/util/integer
+  - pkg/util/intstr
+  - pkg/util/json
+  - pkg/util/jsonpath
+  - pkg/util/labels
+  - pkg/util/net
+  - pkg/util/parsers
+  - pkg/util/rand
+  - pkg/util/ratelimit
+  - pkg/util/runtime
+  - pkg/util/sets
+  - pkg/util/uuid
+  - pkg/util/validation
+  - pkg/util/validation/field
+  - pkg/util/wait
+  - pkg/util/yaml
+  - pkg/version
+  - pkg/watch
+  - pkg/watch/versioned
+  - plugin/pkg/client/auth
+  - plugin/pkg/client/auth/gcp
+  - plugin/pkg/client/auth/oidc
+  - rest
+  - tools/auth
+  - tools/clientcmd
+  - tools/clientcmd/api
+  - tools/clientcmd/api/latest
+  - tools/clientcmd/api/v1
+  - tools/metrics
+  - transport
+- package: github.com/apparentlymart/go-cidr
+  version: a3ebdb999b831ecb6ab8a226e31b07b2b9061c47
+  subpackages:
+  - cidr
+- package: github.com/shirou/gopsutil
+  version: a00fdd2cc01be18fd06ed33a33d7ea758b6e2328
+  subpackages:
+  - cpu
+  - host
+  - internal/common
+  - mem
+  - net
+  - process
+- package: gopkg.in/yaml.v2
+  version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
+- package: github.com/golang/glog
+  version: 44145f04b68cf362d9c4df2182967c2275eaefed
+- package: github.com/google/gofuzz
+  version: bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5
+- package: github.com/gogo/protobuf
+  version: 82d16f734d6d871204a3feb1a73cb220cc92574c
+  subpackages:
+  - gogoproto
+  - plugin/defaultcheck
+  - plugin/description
+  - plugin/embedcheck
+  - plugin/enumstringer
+  - plugin/equal
+  - plugin/face
+  - plugin/gostring
+  - plugin/grpc
+  - plugin/marshalto
+  - plugin/oneofcheck
+  - plugin/populate
+  - plugin/size
+  - plugin/stringer
+  - plugin/testgen
+  - plugin/union
+  - plugin/unmarshal
+  - proto
+  - protoc-gen-gogo/descriptor
+  - protoc-gen-gogo/generator
+  - protoc-gen-gogo/plugin
+  - sortkeys
+  - vanity
+  - vanity/command
+- package: github.com/ugorji/go
+  version: f4485b318aadd133842532f841dc205a8e339d74
+  subpackages:
+  - codec
+  - codec/codecgen
+- package: github.com/StackExchange/wmi
+  version: 9f32b5905fd6ce7384093f9d048437e79f7b4d85
+
+# config-transpiler converts configs to Ignition
+- package: github.com/coreos/container-linux-config-transpiler
+  version: dd0df6d1bf49c82c904c4825c7412507bef2d8b4
+- package: github.com/ajeddeloh/yaml
+  version: 1072abfea31191db507785e2e0c1b8d1440d35a5
+- package: github.com/alecthomas/units
+  version: 6b4e7dc5e3143b85ea77909c72caf89416fc2915
+- package: github.com/coreos/ignition
+  version: d75d0aa3bf307f0954ce4ea8cac56dacec8d16ce
+  subpackages:
+  - config
+- package: github.com/vincent-petithory/dataurl
+  version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
+
+# used to encrypt passwords for dex 
+- package: golang.org/x/crypto
+  version: d172538b2cfce0c13cee31e647d0367aa8cd2486
+  subpackages:
+  - bcrypt
+# vpc availability subnet splitting math
+- package: github.com/coreos/ipnets
+  version: 02aaf3c1ee2483ada21d643ce1c94708c8d1c7d0
+- package: github.com/coreos/go-systemd
+  version: 43e4800a6165b4e02bb2a36673c54b230d6f7b26
+  subpackages:
+  - journal
+  - unit
+
+# used by terraform
+- package: github.com/hashicorp/hil
+  version: 5b8d13c8c5c2753e109fab25392a1dbfa2db93d2
+  subpackages:
+  - ast
+  - parser
+  - scanner
+- package: github.com/hashicorp/terraform
+  version: 277bbf65d1141207dbb30485bf124b1dba08f80f
+  subpackages:
+  - config
+  - config/module
+  - dag
+  - flatmap
+  - helper/config
+  - helper/experiment
+  - helper/hashcode
+  - helper/hilmapstructure
+  - helper/logging
+  - helper/pathorcontents
+  - helper/resource
+  - helper/schema
+  - helper/shadow
+  - plugin
+  - terraform
+- package: github.com/kardianos/osext
+  version: 8fef92e41e22a70e700a96b29f066cda30ea24ef
+- package: github.com/mitchellh/mapstructure
+  version: 281073eb9eb092240d33ef253c404f1cca550309
+- package: github.com/coreos/terraform-provider-matchbox 
+  version: 4c66aa75b60489a4220730d70b0446e25b0c9a0a
+  subpackages:
+  - matchbox
+- package: github.com/hashicorp/vault
+  version: 15842ec2809798baa7cd99a825b9b837dc37b742
+  subpackages:
+  - helper/compressutil
+  - helper/jsonutil
+  - helper/pgpkeys
+- package: github.com/hashicorp/go-getter
+  version: 615ccd8621bdb3837e18be586ce15655ef52b185
+  subpackages:
+  - helper/url
+- package: github.com/hashicorp/go-plugin
+  version: f72692aebca2008343a9deb06ddb4b17f7051c15
+- package: github.com/hashicorp/hcl
+  version: 630949a3c5fa3c613328e1b8256052cbc2327c9b
+  subpackages:
+  - hcl/ast
+  - hcl/parser
+  - hcl/scanner
+  - hcl/strconv
+  - hcl/token
+  - json/parser
+  - json/scanner
+  - json/token

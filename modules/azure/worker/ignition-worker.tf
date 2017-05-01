@@ -1,28 +1,35 @@
-resource "ignition_config" "worker" {
+data "ignition_config" "worker" {
   files = [
-    "${ignition_file.kubeconfig.id}",
-    "${ignition_file.kubelet-env.id}",
-    "${ignition_file.max-user-watches.id}",
+    "${data.ignition_file.kubeconfig.id}",
+    "${data.ignition_file.kubelet-env.id}",
+    "${data.ignition_file.max-user-watches.id}",
   ]
 
   systemd = [
-    "${ignition_systemd_unit.etcd-member.id}",
-    "${ignition_systemd_unit.docker.id}",
-    "${ignition_systemd_unit.locksmithd.id}",
-    "${ignition_systemd_unit.kubelet-worker.id}",
+    "${data.ignition_systemd_unit.etcd-member.id}",
+    "${data.ignition_systemd_unit.docker.id}",
+    "${data.ignition_systemd_unit.locksmithd.id}",
+    "${data.ignition_systemd_unit.kubelet-worker.id}",
   ]
 
   users = [
-    "${ignition_user.core.id}",
+    "${data.ignition_user.core.id}",
   ]
 }
 
-resource "ignition_systemd_unit" "docker" {
+data "ignition_systemd_unit" "docker" {
   name   = "docker.service"
   enable = true
+
+  dropin = [
+    {
+      name    = "10-dockeropts.conf"
+      content = "[Service]\nEnvironment=\"DOCKER_OPTS=--log-opt max-size=50m --log-opt max-file=3\"\n"
+    },
+  ]
 }
 
-resource "ignition_systemd_unit" "locksmithd" {
+data "ignition_systemd_unit" "locksmithd" {
   name = "locksmithd.service"
 
   dropin = [
@@ -43,7 +50,7 @@ data "template_file" "kubelet-worker" {
   }
 }
 
-resource "ignition_systemd_unit" "kubelet-worker" {
+data "ignition_systemd_unit" "kubelet-worker" {
   name    = "kubelet.service"
   enable  = true
   content = "${data.template_file.kubelet-worker.rendered}"
@@ -58,7 +65,7 @@ data "template_file" "etcd-member" {
   }
 }
 
-resource "ignition_systemd_unit" "etcd-member" {
+data "ignition_systemd_unit" "etcd-member" {
   name   = "etcd-member.service"
   enable = true
 
@@ -70,7 +77,7 @@ resource "ignition_systemd_unit" "etcd-member" {
   ]
 }
 
-resource "ignition_file" "kubeconfig" {
+data "ignition_file" "kubeconfig" {
   filesystem = "root"
   path       = "/etc/kubernetes/kubeconfig"
   mode       = "420"
@@ -80,7 +87,7 @@ resource "ignition_file" "kubeconfig" {
   }
 }
 
-resource "ignition_file" "kubelet-env" {
+data "ignition_file" "kubelet-env" {
   filesystem = "root"
   path       = "/etc/kubernetes/kubelet.env"
   mode       = "420"
@@ -93,7 +100,7 @@ EOF
   }
 }
 
-resource "ignition_file" "max-user-watches" {
+data "ignition_file" "max-user-watches" {
   filesystem = "root"
   path       = "/etc/sysctl.d/max-user-watches.conf"
   mode       = "420"
@@ -103,7 +110,7 @@ resource "ignition_file" "max-user-watches" {
   }
 }
 
-resource "ignition_systemd_unit" "tectonic" {
+data "ignition_systemd_unit" "tectonic" {
   name   = "tectonic.service"
   enable = true
 
@@ -118,7 +125,7 @@ ExecStart=/usr/bin/bash /opt/tectonic/tectonic.sh kubeconfig tectonic
 EOF
 }
 
-resource "ignition_user" "core" {
+data "ignition_user" "core" {
   name = "core"
 
   ssh_authorized_keys = [

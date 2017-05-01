@@ -1,0 +1,4 @@
+providers {
+    aws      = "<PATH_TO_INSTALLER>-TFSPACE-aws"
+    matchbox = "<PATH_TO_INSTALLER>-TFSPACE-matchbox"
+}

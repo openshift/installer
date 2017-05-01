@@ -1,0 +1,110 @@
+---
+systemd:
+  units:
+    - name: etcd-member.service
+      enable: true
+      dropins:
+        - name: 40-etcd-cluster.conf
+          contents: |
+            [Service]
+            Environment="ETCD_IMAGE_TAG={{.etcd_image_tag}}"
+            ExecStart=
+            ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
+              --listen-addr=127.0.0.1:2379 \
+              --endpoints={{.etcd_endpoints}}
+    - name: docker.service
+      enable: true
+    - name: locksmithd.service
+      dropins:
+        - name: 40-etcd-lock.conf
+          contents: |
+            [Service]
+            Environment="REBOOT_STRATEGY=etcd-lock"
+    - name: kubelet.path
+      enable: true
+      contents: |
+        [Unit]
+        Description=Watch for kubeconfig
+        [Path]
+        PathExists=/etc/kubernetes/kubeconfig
+        [Install]
+        WantedBy=multi-user.target
+    - name: wait-for-dns.service
+      enable: true
+      contents: |
+        [Unit]
+        Description=Wait for DNS entries
+        Wants=systemd-resolved.service
+        Before=kubelet.service
+        [Service]
+        Type=oneshot
+        RemainAfterExit=true
+        ExecStart=/bin/sh -c 'while ! /usr/bin/grep '^[^#[:space:]]' /etc/resolv.conf > /dev/null; do sleep 1; done'
+        [Install]
+        RequiredBy=kubelet.service
+    - name: kubelet.service
+      contents: |
+        [Unit]
+        Description=Kubelet via Hyperkube ACI
+        [Service]
+        Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
+          --volume=resolv,kind=host,source=/etc/resolv.conf \
+          --mount volume=resolv,target=/etc/resolv.conf \
+          --volume var-lib-cni,kind=host,source=/var/lib/cni \
+          --mount volume=var-lib-cni,target=/var/lib/cni \
+          --volume var-log,kind=host,source=/var/log \
+          --mount volume=var-log,target=/var/log"
+        EnvironmentFile=/etc/kubernetes/kubelet.env
+        ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
+        ExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d
+        ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets
+        ExecStartPre=/bin/mkdir -p /etc/kubernetes/inactive-manifests
+        ExecStartPre=/bin/mkdir -p /var/lib/cni
+        ExecStartPre=/usr/bin/bash -c "grep 'certificate-authority-data' /etc/kubernetes/kubeconfig | awk '{print $2}' | base64 -d > /etc/kubernetes/ca.crt"
+        ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/run/kubelet-pod.uuid
+        ExecStart=/usr/lib/coreos/kubelet-wrapper \
+          --kubeconfig=/etc/kubernetes/kubeconfig \
+          --require-kubeconfig \
+          --client-ca-file=/etc/kubernetes/ca.crt \
+          --anonymous-auth=false \
+          --cni-conf-dir=/etc/kubernetes/cni/net.d \
+          --network-plugin=cni \
+          --lock-file=/var/run/lock/kubelet.lock \
+          --exit-on-lock-contention \
+          --pod-manifest-path=/etc/kubernetes/manifests \
+          --allow-privileged \
+          --hostname-override={{.domain_name}} \
+          --node-labels=node-role.kubernetes.io/node \
+          --cluster_dns={{.k8s_dns_service_ip}} \
+          --cluster_domain=cluster.local
+        ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
+        Restart=always
+        RestartSec=5
+        [Install]
+        WantedBy=multi-user.target
+
+storage:
+  files:
+    - path: /etc/kubernetes/kubelet.env
+      filesystem: root
+      mode: 0644
+      contents:
+        inline: |
+          KUBELET_IMAGE_URL={{.kubelet_image_url}}
+          KUBELET_IMAGE_TAG={{.kubelet_image_tag}}
+    - path: /etc/hostname
+      filesystem: root
+      mode: 0644
+      contents:
+        inline:
+          {{.domain_name}}
+    - path: /etc/sysctl.d/max-user-watches.conf
+      filesystem: root
+      contents:
+        inline: |
+          fs.inotify.max_user_watches=16184
+passwd:
+  users:
+    - name: core
+      ssh_authorized_keys:
+        - {{.ssh_authorized_key}}

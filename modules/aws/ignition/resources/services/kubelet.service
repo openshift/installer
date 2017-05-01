@@ -2,8 +2,7 @@
 Description=Kubelet via Hyperkube ACI
 
 [Service]
-Environment=KUBELET_IMAGE_URL=${aci}
-Environment=KUBELET_IMAGE_TAG=${version}
+EnvironmentFile=/etc/kubernetes/kubelet.env
 Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
   --volume=resolv,kind=host,source=/etc/resolv.conf \
   --mount volume=resolv,target=/etc/resolv.conf \
@@ -29,9 +28,10 @@ ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --pod-manifest-path=/etc/kubernetes/manifests \
   --allow-privileged \
   --node-labels=${node_label} \
+  ${node_taints_param} \
   --minimum-container-ttl-duration=6m0s \
-  --cluster_dns=${cluster_dns_ip} \
-  --cluster_domain=cluster.local \
+  --cluster-dns=${cluster_dns_ip} \
+  --cluster-domain=cluster.local \
   --client-ca-file=/etc/kubernetes/ca.crt \
   --anonymous-auth=false \
   --cloud-provider=aws

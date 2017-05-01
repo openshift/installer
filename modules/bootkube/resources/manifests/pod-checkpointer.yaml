@@ -1,0 +1,60 @@
+apiVersion: "extensions/v1beta1"
+kind: DaemonSet
+metadata:
+  name: pod-checkpointer
+  namespace: kube-system
+  labels:
+    tier: control-plane
+    component: pod-checkpointer
+spec:
+  template:
+    metadata:
+      labels:
+        tier: control-plane
+        component: pod-checkpointer
+      annotations:
+        checkpointer.alpha.coreos.com/checkpoint: "true"
+    spec:
+      containers:
+      - name: checkpoint
+        image: ${pod_checkpointer_image}
+        command:
+        - /checkpoint
+        - --v=4
+        - --lock-file=/var/run/lock/pod-checkpointer.lock
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        - name: POD_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        imagePullPolicy: Always
+        volumeMounts:
+        - mountPath: /etc/kubernetes
+          name: etc-kubernetes
+        - mountPath: /var/run
+          name: var-run
+      hostNetwork: true
+      tolerations:
+      - key: "CriticalAddonsOnly"
+        operator: "Exists"
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      restartPolicy: Always
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      volumes:
+      - name: etc-kubernetes
+        hostPath:
+          path: /etc/kubernetes
+      - name: var-run
+        hostPath:
+          path: /var/run

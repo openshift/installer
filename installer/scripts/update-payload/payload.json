@@ -1,0 +1,118 @@
+{
+  "version": "1.5.6-tectonic.1",
+  "deployments": [
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "k8s-app": "tectonic-channel-operator",
+          "managed-by-channel-operator": "true"
+        },
+        "name": "tectonic-channel-operator",
+        "namespace": "tectonic-system"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "k8s-app": "tectonic-channel-operator"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "k8s-app": "tectonic-channel-operator",
+              "tectonic-app-version-name": "tectonic-cluster"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "CLUSTER_ID",
+                    "valueFrom": {
+                      "configMapKeyRef": {
+                        "key": "clusterID",
+                        "name": "tectonic-config"
+                      }
+                    }
+                  }
+                ],
+                "image": "quay.io/coreos/tectonic-channel-operator:c0287c3ca5960d5f557f98ed86b3f64260d95e7c",
+                "name": "tectonic-channel-operator",
+                "volumeMounts": [
+                  {
+                    "mountPath": "/etc/ssl/certs",
+                    "name": "certs"
+                  }
+                ]
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "coreos-pull-secret"
+              }
+            ],
+            "volumes": [
+              {
+                "hostPath": {
+                  "path": "/usr/share/ca-certificates"
+                },
+                "name": "certs"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "k8s-app": "kube-version-operator",
+          "managed-by-channel-operator": "true"
+        },
+        "name": "kube-version-operator",
+        "namespace": "tectonic-system"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "k8s-app": "kube-version-operator"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "k8s-app": "kube-version-operator",
+              "tectonic-app-version-name": "kubernetes"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "quay.io/coreos/kube-version-operator:32d089ced0064ccdc2b46691d90041c3b3a5b4f7",
+                "name": "kube-version-operator"
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "coreos-pull-secret"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "desiredVersions": [
+    {
+      "name": "kubernetes",
+      "version": "1.5.6+tectonic.1"
+    }
+  ]
+}

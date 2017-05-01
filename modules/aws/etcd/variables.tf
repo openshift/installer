@@ -60,10 +60,17 @@ variable "root_volume_size" {
 
 variable "root_volume_iops" {
   type        = "string"
+  default     = "100"
   description = "The amount of provisioned IOPS for the root block device."
 }
 
 variable "sg_ids" {
   type        = "list"
   description = "The security group IDs to be applied."
+}
+
+variable "dns_enabled" {
+  description = "If set to true, DNS records for etcd nodes will be created."
+  type        = "string"
+  default     = "false"
 }

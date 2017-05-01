@@ -1,5 +1,5 @@
 output "user_data" {
-  value = ["${ignition_config.node.*.rendered}"]
+  value = ["${data.ignition_config.node.*.rendered}"]
 }
 
 output "secgroup_name" {

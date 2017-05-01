@@ -4,16 +4,34 @@ metadata:
   name: kube-controller-manager
   namespace: kube-system
   labels:
-    k8s-app: kube-controller-manager
+    tier: control-plane
+    component: kube-controller-manager
 spec:
   replicas: 2
   template:
     metadata:
       labels:
-        k8s-app: kube-controller-manager
+        tier: control-plane
+        component: kube-controller-manager
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
-      nodeSelector:
-        node-role.kubernetes.io/master: ""
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: tier
+                  operator: In
+                  values:
+                  - control-plane
+                - key: component
+                  operator: In
+                  values:
+                  - kube-contoller-manager
+              topologyKey: kubernetes.io/hostname
       containers:
       - name: kube-controller-manager
         image: ${hyperkube_image}
@@ -27,6 +45,12 @@ spec:
         - --service-account-private-key-file=/etc/kubernetes/secrets/service-account.key
         - --leader-elect=true
         - --cloud-provider=${cloud_provider}
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 10252  # Note: Using default port. Update if --port option is set differently.
+          initialDelaySeconds: 15
+          timeoutSeconds: 15
         volumeMounts:
         - name: secrets
           mountPath: /etc/kubernetes/secrets
@@ -34,6 +58,14 @@ spec:
         - name: ssl-host
           mountPath: /etc/ssl/certs
           readOnly: true
+      tolerations:
+      - key: "CriticalAddonsOnly"
+        operator: "Exists"
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
       volumes:
       - name: secrets
         secret:

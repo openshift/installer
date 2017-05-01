@@ -1,0 +1,25 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: Prometheus
+metadata:
+  name: k8s
+  namespace: tectonic-system
+  labels:
+    prometheus: k8s
+spec:
+  replicas: 1
+  version: ${prometheus_version}
+  serviceAccountName: prometheus-k8s
+  serviceMonitorSelector:
+    matchExpression:
+    - {key: k8s-apps, operator: Exists}
+  ruleSelector:
+    matchLabels:
+      role: prometheus-rulefiles
+      prometheus: k8s
+  resources:
+    limits:
+      cpu: 400m
+      memory: 2000Mi
+    requests:
+      cpu: 200m
+      memory: 1500Mi

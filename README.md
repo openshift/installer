@@ -1,4 +1,5 @@
 # Tectonic Installer
+[![Build Status](https://jenkins-tectonic-installer-public.prod.coreos.systems/buildStatus/icon?job=coreos%20-%20tectonic-installer/tectonic-installer/master)](https://jenkins-tectonic-installer-public.prod.coreos.systems/job/coreos%20-%20tectonic-installer/job/tectonic-installer/job/master)
 
 Tectonic is built on pure-upstream Kubernetes but has an opinion on the best way to install and run a Kubernetes cluster. This project helps you install a Kubernetes cluster the "Tectonic Way". It provides good defaults, enables install automation, and is customizable to meet your infrastructure needs.
 
@@ -18,14 +19,16 @@ Checkout the [ROADMAP](ROADMAP.md) for details on where the project is headed.
 
 ## Getting Started
 
-To use the installer you can either use an official release (starting March 29, 2017), or hack on the scripts in this repo.
+**To use a tested release** on an supported platform, follow the links below.
+
+**To hack or modify** the templates or add a new platform, use the scripts in this repo to boot and tear down clusters.
 
 ### Official releases
 
 See the official Tectonic documentation:
 
 - [AWS Cloud Formation](https://coreos.com/tectonic/docs/latest/install/aws/) [[**stable**][platform-lifecycle]]
-- [Baremetal](https://coreos.com/tectonic/docs/latest/install/bare-metal/) [[**stable**][platform-lifecycle]]
+- [Bare-Metal](https://coreos.com/tectonic/docs/latest/install/bare-metal/) [[**stable**][platform-lifecycle]]
 
 ### Hacking
 
@@ -33,13 +36,9 @@ See the official Tectonic documentation:
 
 At a high level, using the installer follows the workflow below. See each platform guide for specifics.
 
-**Download Terraform**
+**Install Terraform**
 
-This repo a build of Terraform which includes required plugins and is pinned to a specific version. First, download the Terraform binaries:
-
-```
-$ make terraform-download
-```
+This project is built on Terraform and requires version 0.9.4. Download and install an [official Terraform binary](https://releases.hashicorp.com/terraform/0.9.4/) for your OS or use your favorite package manager.
 
 **Choose your platform**
 
@@ -47,6 +46,7 @@ The example below will use `PLATFORM=azure` but you can set the value to somethi
 
 - `PLATFORM=aws` [AWS via Terraform](Documentation/install/aws/aws-terraform.md) [[**alpha**][platform-lifecycle]]
 - `PLATFORM=azure` [Azure via Terraform](Documentation/install/azure/azure-terraform.md) [[**alpha**][platform-lifecycle]]
+- `PLATFORM=metal` [Bare-Metal via Terraform](Documentation/install/bare-metal/metal-terraform.md) [[**alpha**][platform-lifecycle]]
 - `PLATFORM=openstack` [OpenStack via Terraform](Documentation/install/openstack/openstack-terraform.md) [[**alpha**][platform-lifecycle]]
 
 **Initiate the Cluster Configuration**

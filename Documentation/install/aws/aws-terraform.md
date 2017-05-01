@@ -9,7 +9,7 @@ Generally, the AWS platform templates adhere to the standards defined by the pro
 ## Prerequsities
 
  - **DNS** - Ensure that the DNS zone is already created and available in route53 for the account. For example if the `tectonic_base_domain` is set to `kube.example.com` a route53 zone must exist for this domain and the AWS nameservers must be configured for the domain.
- - **Make** - This guide uses `make` to download a customized version of Terraform, which is pinned to a specific version and includes required plugins.
+ - **Make** - This guide uses `make` to build the Tectonic Installer.
  - **Tectonic Account** - Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
 
 ## Getting Started
@@ -21,23 +21,18 @@ $ git clone https://github.com/coreos/tectonic-installer.git
 $ cd tectonic-installer
 ```
 
-Download the pinned Terraform binary and modules required for Tectonic:
+Build the Tectonic Installer:
 
 ```
-$ make terraform-download
+$ (cd installer && make build)
 ```
 
-After downloading, you will need to source this new binary in your `$PATH`. This is important, especially if you have another verison of Terraform installed. Run this command to add it to your path:
+Initialize the TerraForm configuration with Installer's location and export the path to that configuration:
 
 ```
-$ export PATH=`pwd`/bin/terraform:$PATH
-```
-
-You can double check that you're using the binary that was just downloaded:
-
-```
-$ which terraform
-/Users/coreos/tectonic-installer/bin/terraform/terraform
+$ INSTALLER_PATH=$(pwd)/installer/bin/linux/installer # Edit the platform name.
+$ sed "s|<PATH_TO_INSTALLER>|$INSTALLER_PATH|g" terraformrc.example > .terraformrc
+$ export TERRAFORM_CONFIG=$(pwd)/.terraformrc
 ```
 
 Next, get the modules that Terraform will use to create the cluster resources:
@@ -103,7 +98,7 @@ The Tectonic Console should be up and running after the containers have download
 Inside of the `/generated` folder you should find any credentials, including the CA if generated, and a kubeconfig. You can use this to control the cluster with `kubectl`:
 
 ```
-$ export KUBECONFIG=generated/kubeconfig
+$ export KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
 

@@ -63,6 +63,11 @@ resource "aws_launch_configuration" "master_conf" {
 
   lifecycle {
     create_before_destroy = true
+
+    # Ignore changes in the AMI which force recreation of the resource. This
+    # avoids accidental deletion of nodes whenever a new CoreOS Release comes
+    # out.
+    ignore_changes = ["image_id"]
   }
 
   root_block_device {
@@ -73,8 +78,8 @@ resource "aws_launch_configuration" "master_conf" {
 }
 
 resource "aws_iam_instance_profile" "master_profile" {
-  name  = "${var.cluster_name}-master-profile"
-  roles = ["${aws_iam_role.master_role.name}"]
+  name = "${var.cluster_name}-master-profile"
+  role = "${aws_iam_role.master_role.name}"
 }
 
 resource "aws_iam_role" "master_role" {

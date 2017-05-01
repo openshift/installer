@@ -1,17 +1,17 @@
-resource "ignition_config" "etcd" {
+data "ignition_config" "etcd" {
   count = "${var.etcd_count}"
 
   systemd = [
-    "${ignition_systemd_unit.locksmithd.id}",
-    "${ignition_systemd_unit.etcd3.*.id[count.index]}",
+    "${data.ignition_systemd_unit.locksmithd.id}",
+    "${data.ignition_systemd_unit.etcd3.*.id[count.index]}",
   ]
 
   users = [
-    "${ignition_user.core.id}",
+    "${data.ignition_user.core.id}",
   ]
 }
 
-resource "ignition_user" "core" {
+data "ignition_user" "core" {
   name = "core"
 
   ssh_authorized_keys = [
@@ -19,7 +19,7 @@ resource "ignition_user" "core" {
   ]
 }
 
-resource "ignition_systemd_unit" "locksmithd" {
+data "ignition_systemd_unit" "locksmithd" {
   name   = "locksmithd.service"
   enable = true
 
@@ -31,7 +31,7 @@ resource "ignition_systemd_unit" "locksmithd" {
   ]
 }
 
-resource "ignition_systemd_unit" "etcd3" {
+data "ignition_systemd_unit" "etcd3" {
   count  = "${var.etcd_count}"
   name   = "etcd-member.service"
   enable = true

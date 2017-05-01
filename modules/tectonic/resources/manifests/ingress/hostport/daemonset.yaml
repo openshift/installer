@@ -14,25 +14,14 @@ spec:
         app: tectonic-lb
         component: ingress-controller
         type: nginx
-      annotations:
-          scheduler.alpha.kubernetes.io/affinity: >
-            {
-              "nodeAffinity": {
-                "requiredDuringSchedulingIgnoredDuringExecution": {
-                  "nodeSelectorTerms": [
-                    {
-                      "matchExpressions": [
-                        {
-                          "key": "master",
-                          "operator": "DoesNotExist"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              }
-            }
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: DoesNotExist
       containers:
         - name: nginx-ingress-lb
           image: ${ingress_controller_image}
@@ -72,6 +61,8 @@ spec:
               port: 10254
               scheme: HTTP
       hostNetwork: true
+      nodeSelector:
+        node-role.kubernetes.io/node: ""
       dnsPolicy: ClusterFirst
       restartPolicy: Always
       terminationGracePeriodSeconds: 60

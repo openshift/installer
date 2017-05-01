@@ -1,3 +1,12 @@
+variable "tectonic_azure_config_version" {
+  description = <<EOF
+This declares the version of the Azure configuration variables.
+It has no impact on generated assets but declares the version contract of the configuration.
+EOF
+
+  default = "1.0"
+}
+
 variable "tectonic_azure_dns_resource_group" {
   type    = "string"
   default = "tectonic-dns-group"
@@ -59,6 +68,18 @@ variable "tectonic_azure_external_vnet_id" {
   type        = "string"
   description = "ID of an existing Virtual Network to launch nodes into. Example: VNet1. Leave blank to create a new Virtual Network."
   default     = ""
+}
+
+variable "tectonic_azure_external_rsg_name" {
+  type        = "string"
+  default     = ""
+  description = "Pre-existing resource group to use as parent for cluster resources."
+}
+
+variable "tectonic_azure_external_vnet_name" {
+  type        = "string"
+  default     = ""
+  description = "Pre-existing virtual network to create cluster into."
 }
 
 variable "tectonic_azure_create_dns_zone" {

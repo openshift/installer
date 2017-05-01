@@ -73,7 +73,7 @@ resource "azurerm_virtual_machine_scale_set" "tectonic_workers" {
     computer_name_prefix = "tectonic-worker-"
     admin_username       = "core"
     admin_password       = ""
-    custom_data          = "${base64encode("${ignition_config.worker.rendered}")}"
+    custom_data          = "${base64encode("${data.ignition_config.worker.rendered}")}"
   }
 
   os_profile_linux_config {

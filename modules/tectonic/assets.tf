@@ -1,8 +1,12 @@
+# Unique Cluster ID (uuid)
+resource "random_id" "cluster_id" {
+  byte_length = 16
+}
+
 # Kubernetes Manifests (resources/generated/manifests/)
-## github.com/coreos-inc/tectonic/commit/0b48144d5332201cf461a309d501b33a00a26f75
-resource "template_folder" "tectonic" {
-  input_path  = "${path.module}/resources/manifests"
-  output_path = "${path.cwd}/generated/tectonic"
+resource "template_dir" "tectonic" {
+  source_dir      = "${path.module}/resources/manifests"
+  destination_dir = "${path.cwd}/generated/tectonic"
 
   vars {
     addon_resizer_image                = "${var.container_images["addon_resizer"]}"
@@ -58,9 +62,11 @@ resource "template_folder" "tectonic" {
     kube_apiserver_url = "${var.kube_apiserver_url}"
     oidc_issuer_url    = "https://${var.base_address}/identity"
 
-    cluster_id            = "${sha256("${var.kube_apiserver_url}-${var.platform}")}"
-    platform              = "${var.platform}"
-    certificates_strategy = "${var.ca_generated == "true" ? "installerGeneratedCA" : "userProvidedCA"}"
+    # TODO: We could also patch https://www.terraform.io/docs/providers/random/ to add an UUID resource.
+    cluster_id = "${format("%s-%s-%s-%s-%s", substr(random_id.cluster_id.hex, 0, 8), substr(random_id.cluster_id.hex, 8, 4), substr(random_id.cluster_id.hex, 12, 4), substr(random_id.cluster_id.hex, 16, 4), substr(random_id.cluster_id.hex, 20, 12))}"
+
+    platform                 = "${var.platform}"
+    certificates_strategy    = "${var.ca_generated == "true" ? "installerGeneratedCA" : "userProvidedCA"}"
     identity_api_service     = "${var.identity_api_service}"
     tectonic_updater_enabled = "${var.experimental ? "true" : "false"}"
   }
@@ -75,9 +81,9 @@ data "template_file" "tectonic" {
   }
 }
 
-resource "localfile_file" "tectonic" {
-  content     = "${data.template_file.tectonic.rendered}"
-  destination = "${path.cwd}/generated/tectonic.sh"
+resource "local_file" "tectonic" {
+  content  = "${data.template_file.tectonic.rendered}"
+  filename = "${path.cwd}/generated/tectonic.sh"
 }
 
 # tectonic.sh (resources/generated/tectonic-rkt.sh)
@@ -90,9 +96,9 @@ data "template_file" "tectonic-rkt" {
   }
 }
 
-resource "localfile_file" "tectonic-rkt" {
-  content     = "${data.template_file.tectonic-rkt.rendered}"
-  destination = "${path.cwd}/generated/tectonic-rkt.sh"
+resource "local_file" "tectonic-rkt" {
+  content  = "${data.template_file.tectonic-rkt.rendered}"
+  filename = "${path.cwd}/generated/tectonic-rkt.sh"
 }
 
 # tectonic.service (available as output variable)

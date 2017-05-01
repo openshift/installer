@@ -1,0 +1,7 @@
+/.workspace/
+/assets/frontend/scripts/
+/bin/
+/binassets/assets.go
+/frontend/node_modules/
+/matchbox/
+/tests/scripts/aws/output/

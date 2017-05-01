@@ -1,0 +1,58 @@
+{
+  "name": "tectonic-installer",
+  "version": "0.0.0",
+  "description": "Tectonic Installer application",
+  "main": "app.jsx",
+  "author": "CoreOS",
+  "private": true,
+  "engines": {
+    "node": ">=6.x",
+    "yarn": ">=0.20.x"
+  },
+  "scripts": {
+    "lint": "./node_modules/.bin/eslint --ext .js,.jsx .",
+    "build": "mkdir -p ../assets/frontend/scripts && ./node_modules/.bin/browserify --extension=.jsx app.jsx -o ../assets/frontend/scripts/app-bundle.js -t [ babelify ]",
+    "dev": "mkdir -p ../assets/frontend/scripts && ./node_modules/.bin/watchify --extension=.jsx app.jsx --verbose -d -o ../assets/frontend/scripts/app-bundle.js -t [ babelify ]",
+    "postinstall": "./check-versions.js",
+    "test": "./node_modules/.bin/jest"
+  },
+  "jest": {
+    "automock": false,
+    "moduleFileExtensions": [
+      "js",
+      "jsx"
+    ]
+  },
+  "dependencies": {
+    "babyparse": "0.4.x",
+    "classnames": "2.2.x",
+    "file-saver": "1.3.x",
+    "immutable": "3.8.x",
+    "js-cookie": "2.1.x",
+    "jwt-decode": "2.1.x",
+    "lodash": "4.x",
+    "react": "15.3.x",
+    "react-dom": "15.3.x",
+    "react-modal": "1.4.x",
+    "react-redux": "4.4.x",
+    "react-router": "2.4.x",
+    "redux": "3.5.x",
+    "redux-thunk": "2.1.x",
+    "whatwg-fetch": "1.0.x"
+  },
+  "devDependencies": {
+    "babel-jest": "18.x",
+    "babel-plugin-syntax-async-functions": "6.x",
+    "babel-plugin-transform-regenerator": "6.x",
+    "babel-polyfill": "6.x",
+    "babel-preset-es2015": "6.6.x",
+    "babel-preset-react": "6.5.x",
+    "babelify": "7.3.x",
+    "browserify": "13.0.x",
+    "eslint": "2.x",
+    "eslint-plugin-react": "5.x",
+    "jest-cli": "18.x",
+    "semver": "5.x",
+    "watchify": "3.x"
+  }
+}

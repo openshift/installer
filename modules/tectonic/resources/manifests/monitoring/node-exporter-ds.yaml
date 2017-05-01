@@ -36,6 +36,10 @@ spec:
         - name: sys
           readOnly: true
           mountPath: /host/sys
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
       volumes:
       - name: proc
         hostPath:
@@ -43,4 +47,3 @@ spec:
       - name: sys
         hostPath:
           path: /sys
-

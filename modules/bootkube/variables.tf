@@ -18,9 +18,31 @@ variable "kube_dns_service_ip" {
   type        = "string"
 }
 
-variable "etcd_servers" {
-  description = "List of etcd servers to connect with (scheme://ip:port)"
+variable "etcd_endpoints" {
+  description = "List of etcd endpoints to connect with (hostnames/IPs only)"
   type        = "list"
+}
+
+variable "etcd_ca_cert" {
+  type = "string"
+}
+
+variable "etcd_client_cert" {
+  type = "string"
+}
+
+variable "etcd_client_key" {
+  type = "string"
+}
+
+variable "etcd_service_ip" {
+  description = "Service IP used to reach etcd"
+  type        = "string"
+}
+
+variable "experimental_enabled" {
+  description = "If set to true, provision experimental assets, like self-hosted etcd."
+  default     = false
 }
 
 variable "cloud_provider" {

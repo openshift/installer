@@ -7,4 +7,5 @@ spec:
   minAvailable: 1
   selector:
     matchLabels:
-      k8s-app: kube-scheduler
+      tier: control-plane
+      component: kube-scheduler

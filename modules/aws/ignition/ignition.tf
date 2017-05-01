@@ -1,33 +1,41 @@
-resource "ignition_config" "main" {
+data "ignition_config" "main" {
   files = [
-    "${ignition_file.max-user-watches.id}",
-    "${ignition_file.s3-puller.id}",
-    "${ignition_file.init-assets.id}",
+    "${data.ignition_file.max-user-watches.id}",
+    "${data.ignition_file.s3-puller.id}",
+    "${data.ignition_file.init-assets.id}",
   ]
 
   systemd = [
-    "${ignition_systemd_unit.etcd-member.id}",
-    "${ignition_systemd_unit.docker.id}",
-    "${ignition_systemd_unit.locksmithd.id}",
-    "${ignition_systemd_unit.kubelet.id}",
-    "${ignition_systemd_unit.init-assets.id}",
-    "${ignition_systemd_unit.bootkube.id}",
-    "${ignition_systemd_unit.tectonic.id}",
+    "${data.ignition_systemd_unit.etcd-member.id}",
+    "${data.ignition_systemd_unit.docker.id}",
+    "${data.ignition_systemd_unit.locksmithd.id}",
+    "${data.ignition_systemd_unit.kubelet.id}",
+    "${data.ignition_systemd_unit.kubelet-env.id}",
+    "${data.ignition_systemd_unit.init-assets.id}",
+    "${data.ignition_systemd_unit.bootkube.id}",
+    "${data.ignition_systemd_unit.tectonic.id}",
   ]
 }
 
-resource "ignition_systemd_unit" "docker" {
+data "ignition_systemd_unit" "docker" {
   name   = "docker.service"
   enable = true
+
+  dropin = [
+    {
+      name    = "10-dockeropts.conf"
+      content = "[Service]\nEnvironment=\"DOCKER_OPTS=--log-opt max-size=50m --log-opt max-file=3\"\n"
+    },
+  ]
 }
 
-resource "ignition_systemd_unit" "locksmithd" {
+data "ignition_systemd_unit" "locksmithd" {
   name = "locksmithd.service"
 
   dropin = [
     {
       name    = "40-etcd-lock.conf"
-      content = "[Service]\nEnvironment=REBOOT_STRATEGY=etcd-lock\n"
+      content = "[Service]\nEnvironment=REBOOT_STRATEGY=${var.locksmithd_disabled ? "off" : "etcd-lock"}\n"
     },
   ]
 }
@@ -36,18 +44,34 @@ data "template_file" "kubelet" {
   template = "${file("${path.module}/resources/services/kubelet.service")}"
 
   vars {
-    aci                    = "${element(split(":", var.container_images["hyperkube"]), 0)}"
-    version                = "${element(split(":", var.container_images["hyperkube"]), 1)}"
     cluster_dns_ip         = "${var.kube_dns_service_ip}"
     node_label             = "${var.kubelet_node_label}"
+    node_taints_param      = "${var.kubelet_node_taints != "" ? "--register-with-taints=${var.kubelet_node_taints}" : ""}"
     kubeconfig_s3_location = "${var.kubeconfig_s3_location}"
   }
 }
 
-resource "ignition_systemd_unit" "kubelet" {
+data "ignition_systemd_unit" "kubelet" {
   name    = "kubelet.service"
   enable  = true
   content = "${data.template_file.kubelet.rendered}"
+}
+
+data "template_file" "kubelet-env" {
+  template = "${file("${path.module}/resources/services/kubelet-env.service")}"
+
+  vars {
+    kube_version_image_url = "${element(split(":", var.container_images["kube_version"]), 0)}"
+    kube_version_image_tag = "${element(split(":", var.container_images["kube_version"]), 1)}"
+    kubelet_image_url      = "${element(split(":", var.container_images["hyperkube"]), 0)}"
+    kubeconfig_s3_location = "${var.kubeconfig_s3_location}"
+  }
+}
+
+data "ignition_systemd_unit" "kubelet-env" {
+  name    = "kubelet-env.service"
+  enable  = true
+  content = "${data.template_file.kubelet-env.rendered}"
 }
 
 data "template_file" "etcd-member" {
@@ -59,9 +83,9 @@ data "template_file" "etcd-member" {
   }
 }
 
-resource "ignition_systemd_unit" "etcd-member" {
+data "ignition_systemd_unit" "etcd-member" {
   name   = "etcd-member.service"
-  enable = true
+  enable = "${var.etcd_gateway_enabled}"
 
   dropin = [
     {
@@ -71,7 +95,7 @@ resource "ignition_systemd_unit" "etcd-member" {
   ]
 }
 
-resource "ignition_file" "max-user-watches" {
+data "ignition_file" "max-user-watches" {
   filesystem = "root"
   path       = "/etc/sysctl.d/max-user-watches.conf"
   mode       = "420"
@@ -81,7 +105,7 @@ resource "ignition_file" "max-user-watches" {
   }
 }
 
-resource "ignition_file" "s3-puller" {
+data "ignition_file" "s3-puller" {
   filesystem = "root"
   path       = "/opt/s3-puller.sh"
   mode       = "555"
@@ -97,10 +121,12 @@ data "template_file" "init-assets" {
   vars {
     awscli_image       = "${var.container_images["awscli"]}"
     assets_s3_location = "${var.assets_s3_location}"
+    kubelet_image_url  = "${element(split(":", var.container_images["hyperkube"]), 0)}"
+    kubelet_image_tag  = "${element(split(":", var.container_images["hyperkube"]), 1)}"
   }
 }
 
-resource "ignition_file" "init-assets" {
+data "ignition_file" "init-assets" {
   filesystem = "root"
   path       = "/opt/tectonic/init-assets.sh"
   mode       = "555"
@@ -110,18 +136,18 @@ resource "ignition_file" "init-assets" {
   }
 }
 
-resource "ignition_systemd_unit" "init-assets" {
+data "ignition_systemd_unit" "init-assets" {
   name    = "init-assets.service"
   enable  = "${var.assets_s3_location != "" ? true : false}"
   content = "${file("${path.module}/resources/services/init-assets.service")}"
 }
 
-resource "ignition_systemd_unit" "bootkube" {
+data "ignition_systemd_unit" "bootkube" {
   name    = "bootkube.service"
   content = "${var.bootkube_service}"
 }
 
-resource "ignition_systemd_unit" "tectonic" {
+data "ignition_systemd_unit" "tectonic" {
   name    = "tectonic.service"
   enable  = "${var.tectonic_service_disabled == 0 ? true : false}"
   content = "${var.tectonic_service}"

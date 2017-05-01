@@ -17,7 +17,7 @@ resource "null_resource" "export" {
   }
 }
 
-resource "ignition_user" "core" {
+data "ignition_user" "core" {
   name = "core"
 
   ssh_authorized_keys = [

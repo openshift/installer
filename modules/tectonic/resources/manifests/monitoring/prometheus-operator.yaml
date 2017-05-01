@@ -17,6 +17,7 @@ spec:
        - name: prometheus-operator
          image: ${prometheus_operator_image}
          args:
+         - "--kubelet-object=kube-system/kubelet"
          - "--config-reloader-image=${config_reload_image}"
          resources:
            requests:
@@ -25,4 +26,3 @@ spec:
            limits:
              cpu: 200m
              memory: 300Mi
-

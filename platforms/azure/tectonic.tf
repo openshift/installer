@@ -25,7 +25,10 @@ module "bootkube" {
   oidc_groups_claim   = "groups"
   oidc_client_id      = "tectonic-kubectl"
 
-  etcd_servers = ["http://127.0.0.1:2379"]
+  etcd_endpoints   = ["${module.etcd.ip_address}"]
+  etcd_ca_cert     = "${var.tectonic_etcd_ca_cert_path}"
+  etcd_client_cert = "${var.tectonic_etcd_client_cert_path}"
+  etcd_client_key  = "${var.tectonic_etcd_client_key_path}"
 }
 
 module "tectonic" {
@@ -39,8 +42,8 @@ module "tectonic" {
   container_images = "${var.tectonic_container_images}"
   versions         = "${var.tectonic_versions}"
 
-  license_path     = "${var.tectonic_license_path}"
-  pull_secret_path = "${var.tectonic_pull_secret_path}"
+  license_path     = "${pathexpand(var.tectonic_license_path)}"
+  pull_secret_path = "${pathexpand(var.tectonic_pull_secret_path)}"
 
   admin_email         = "${var.tectonic_admin_email}"
   admin_password_hash = "${var.tectonic_admin_password_hash}"

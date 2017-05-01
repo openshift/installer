@@ -3,6 +3,9 @@ kind: ConfigMap
 metadata:
   name: prometheus-k8s-rules
   namespace: tectonic-system
+  labels:
+    role: prometheus-rulefiles
+    prometheus: k8s
 data:
   recording.rules: |+
     pod_name:container_memory_usage_bytes:sum = sum by(pod_name) (
@@ -32,4 +35,3 @@ data:
     instance:node_network_transmit_bytes:rate:sum = sum by(instance) (
       rate(node_network_transmit_bytes[1m])
     )
-

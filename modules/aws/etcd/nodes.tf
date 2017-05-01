@@ -29,8 +29,15 @@ resource "aws_instance" "etcd_node" {
   instance_type          = "${var.ec2_type}"
   subnet_id              = "${var.subnets[count.index % var.az_count]}"
   key_name               = "${var.ssh_key}"
-  user_data              = "${ignition_config.etcd.*.rendered[count.index]}"
+  user_data              = "${data.ignition_config.etcd.*.rendered[count.index]}"
   vpc_security_group_ids = ["${var.sg_ids}"]
+
+  lifecycle {
+    # Ignore changes in the AMI which force recreation of the resource. This
+    # avoids accidental deletion of nodes whenever a new CoreOS Release comes
+    # out.
+    ignore_changes = ["ami"]
+  }
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-etcd-${count.index}",
