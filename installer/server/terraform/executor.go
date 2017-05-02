@@ -80,32 +80,13 @@ type Executor struct {
 }
 
 // NewExecutor initializes a new Executor.
-func NewExecutor() (*Executor, error) {
-	// Create a temporary folder in which the new Executor can run.
-	executionPath, err := ioutil.TempDir(os.TempDir(), "tectonic")
-	if err != nil {
-		return nil, err
-	}
-
-	// Create an executor in that path.
-	ex, err := NewExecutorFromPath(executionPath)
-	if err != nil {
-		os.RemoveAll(executionPath)
-		return nil, err
-	}
-
-	return ex, err
-}
-
-// NewExecutorFromPath creates an Executor from an existing path.
-func NewExecutorFromPath(executionPath string) (*Executor, error) {
-	var err error
-
+func NewExecutor(executionPath string) (*Executor, error) {
 	ex := new(Executor)
 	ex.executionPath = executionPath
 
-	// Create the folder in which the logs will be stored, if not existing.
-	os.Mkdir(filepath.Join(ex.executionPath, logsFolderName), 0770)
+	// Create the folder in which the executor, and its logs will be stored,
+	// if not existing.
+	os.MkdirAll(filepath.Join(ex.executionPath, logsFolderName), 0770)
 
 	// Create a Executor CLI configuration file, that contains the list of
 	// vendored providers/provisioners.

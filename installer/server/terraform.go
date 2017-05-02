@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"golang.org/x/crypto/bcrypt"
 	"golang.org/x/net/context"
@@ -17,6 +19,7 @@ import (
 	"github.com/coreos/tectonic-installer/installer/server/ctxh"
 	"github.com/coreos/tectonic-installer/installer/server/defaults"
 	"github.com/coreos/tectonic-installer/installer/server/terraform"
+	"github.com/kardianos/osext"
 )
 
 func newAWSTerraformVars(c *TectonicAWSCluster) ([]asset.Asset, error) {
@@ -339,8 +342,20 @@ func terraformDestroyHandler(sessionProvider sessions.Store) ctxh.ContextHandler
 // newExecutorFromApplyHandlerInput creates a new Executor based on the given
 // TerraformApplyHandlerInput.
 func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terraform.Executor, *ctxh.AppError) {
+	// Construct the path where the Executor should run based on the the cluster
+	// name and current's binary path.
+	binaryPath, err := osext.ExecutableFolder()
+	if err != nil {
+		return nil, ctxh.NewAppError(err, fmt.Sprintf("Could not determine executable's folder: %v", err.Error()), http.StatusInternalServerError)
+	}
+	clusterName := input.Variables["tectonic_cluster_name"].(string)
+	if len(clusterName) == 0 {
+		return nil, ctxh.NewAppError(err, "Tectonic cluster name not provided", http.StatusBadRequest)
+	}
+	exPath := filepath.Join(binaryPath, "clusters", clusterName+time.Now().Format("_2006-01-02_15-04-05"))
+
 	// Create a new Executor.
-	ex, err := terraform.NewExecutor()
+	ex, err := terraform.NewExecutor(exPath)
 	if err != nil {
 		return nil, ctxh.NewAppError(err, fmt.Sprintf("Could not create TerraForm executor: %v", err.Error()), http.StatusInternalServerError)
 	}
@@ -411,7 +426,7 @@ func restoreExecutionFromSession(req *http.Request, sessionProvider sessions.Sto
 	if !ok {
 		return nil, nil, -1, ctxh.NewAppError(err, "Could not find terraform_id in session. Run terraform apply first.", http.StatusNotFound)
 	}
-	ex, err := terraform.NewExecutorFromPath(executionPath.(string))
+	ex, err := terraform.NewExecutor(executionPath.(string))
 	if err != nil {
 		return nil, nil, -1, ctxh.NewAppError(err, "could not create TerraForm executor", http.StatusInternalServerError)
 	}
