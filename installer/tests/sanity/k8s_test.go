@@ -85,7 +85,7 @@ func testAPIAvailable(t *testing.T) {
 func testAllPodsRunning(t *testing.T) {
 	c := newClient(t)
 
-	timer := newTimer(3 * time.Minute)
+	timer := newTimer(10 * time.Minute)
 
 	for {
 		if timer.timedOut() {
@@ -277,7 +277,7 @@ func testKillAPIServer(t *testing.T) {
 		return false
 	}
 
-	timer := newTimer(3 * time.Minute)
+	timer := newTimer(6 * time.Minute)
 	for {
 		if timer.timedOut() {
 			t.Fatalf("timed out waiting for pods to be ready.")
