@@ -92,9 +92,11 @@ Use the `SECRET_ACCESS_KEY`, `ACCESS_KEY_ID`, and `SESSION_TOKEN` to authenticat
 
 The final step of the Tectonic install requires an SSH key and access to standard utilities like `ssh` and `scp`. Setting up a new key on AWS should take less than 5 minutes.
 
+Tectonic uses AWS S3 to store all credentials, using server-side AES encryption for storage, and TLS encryption for upload/download. Any pod run in the system can query the AWS metadata, get node AWS credentials, and pull down cluster credentials from AWS S3. CoreOS plans to address this issue in a later release.
+
 First, create a key.
 
-1. Open a new terminal. Check if you already have a key by running `ls ~/.ssh/`. If you've previously created a key, you may see a file like `id_rsa.pub`. If you'd like to use this key, you may skip to the "upload the key to AWS" steps.
+1. Open a new terminal. Check if you already have a key by running `ls ~/.ssh/`. If you've previously created a key, you may see a file like `id_rsa.pub`. If you'd like to use this key, skip to *upload the key to AWS* below.
 2. Type `ssh-keygen --help` to validate you have the openssh utilities installed. If you cannot find the binaries on your system, please consult your distro's documentation.
 3. Type `ssh-keygen -t rsa -b 4096 -C "aws tectonic for alice@example.com"`. The content after `-C` is a comment. Replace alice@example.com with an appropriate AWS email or IAM account.
 4. Follow the prompts on screen to finish creating your keypair. If you chose the default file name and location, your key should be in `$HOME/.ssh/id_rsa.pub`. Otherwise, the key-pair is in your current directory.
