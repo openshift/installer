@@ -13,8 +13,6 @@ Goals of the project:
 - Customizable and modular (change DNS providers, security settings, etc)
 - HA by default (deploy all Kubernetes components HA, use etcd Operator)
 
-Note: This repo does not yet have all Tectonic Installer features imported. This will happen over the coming weeks as we are able to make some of the surrounding infrastructure public as well. This notice will be removed once the AWS and Baremetal graphical installer code has been fully integrated.
-
 Checkout the [ROADMAP](ROADMAP.md) for details on where the project is headed.
 
 ## Getting Started
@@ -60,6 +58,7 @@ PLATFORM=azure CLUSTER=my-cluster make localconfig
 **Configure Cluster**
 
 Set variables in the `terraform.tfvars` file as needed, or you will be prompted. Available variables can be found in the `config.tf` and `variables.tf` files present in the `platforms/<PLATFORM>` directory.
+Examples for each platform can be found in [the examples directory](examples/).
 
 **Terraform Lifecycle**
 
