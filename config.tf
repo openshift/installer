@@ -51,7 +51,7 @@ variable "tectonic_versions" {
   type        = "map"
 
   default = {
-    etcd       = "v3.1.6"
+    etcd       = "3.1.6"
     prometheus = "v1.6.1"
     monitoring = "1.1.0"
     kubernetes = "1.6.2+tectonic.0"
