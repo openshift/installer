@@ -1,0 +1,112 @@
+
+// e-mail address used to login to Tectonic
+tectonic_admin_email = ""
+
+// bcrypt hash of admin password to use with Tectonic Console
+tectonic_admin_password_hash = ""
+
+// 
+tectonic_azure_dns_resource_group = "tectonic-dns-group"
+
+// Instance size for the etcd node(s). Example: Standard_DS2.
+tectonic_azure_etcd_vm_size = "Standard_DS2"
+
+// Pre-existing resource group to use as parent for cluster resources.
+tectonic_azure_external_rsg_name = ""
+
+// ID of an existing Virtual Network to launch nodes into. Example: VNet1. Leave blank to create a new Virtual Network.
+tectonic_azure_external_vnet_id = ""
+
+// Pre-existing virtual network to create cluster into.
+tectonic_azure_external_vnet_name = ""
+
+// 
+tectonic_azure_image_reference = ""
+
+// 
+tectonic_azure_location = ""
+
+// Instance size for the master node(s). Example: Standard_DS2.
+tectonic_azure_master_vm_size = "Standard_DS2"
+
+// 
+tectonic_azure_ssh_key = ""
+
+// Block of IP addresses used by the Resource Group. This should not overlap with any other networks, such as a private datacenter connected via ExpressRoute.
+tectonic_azure_vnet_cidr_block = "10.0.0.0/16"
+
+// Instance size for the worker node(s). Example: Standard_DS2.
+tectonic_azure_worker_vm_size = "Standard_DS2"
+
+// The base DNS domain of the cluster. Example: `openstack.dev.coreos.systems`.
+tectonic_base_domain = ""
+
+// (optional) PEM-encoded CA certificate, used to generate Tectonic Console's server certificate. Optional, if left blank, a CA certificate will be automatically generated.
+// tectonic_ca_cert = ""
+
+// (optional) PEM-encoded CA key, used to generate Tectonic Console's server certificate. Optional if tectonic_ca_cert is left blank
+// tectonic_ca_key = ""
+
+// Algorithm used to generate tectonic_ca_key. Optional if tectonic_ca_cert is left blank.
+tectonic_ca_key_alg = "RSA"
+
+// The Container Linux update channel.
+// Examples: `stable`, `beta`, `alpha`
+tectonic_cl_channel = "stable"
+
+// A CIDR notation IP range from which to assign pod IPs
+tectonic_cluster_cidr = "10.2.0.0/16"
+
+// The name of the cluster. This will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.
+tectonic_cluster_name = ""
+
+// (optional) The path to the etcd CA certificate for TLS communication with etcd.
+// tectonic_etcd_ca_cert_path = ""
+
+// (optional) The path to the etcd client certificate for TLS communication with etcd.
+// tectonic_etcd_client_cert_path = ""
+
+// (optional) The path to the etcd client key for TLS communication with etcd.
+// tectonic_etcd_client_key_path = ""
+
+// The number of etcd nodes to be created.
+// If set to zero, the count of etcd nodes will be determined automatically (currently only supported on AWS).
+tectonic_etcd_count = "0"
+
+// (optional) List of external etcd v3 servers to connect with (hostnames/IPs only).
+// Needs to be set if using an external etcd cluster.
+// Example: `["etcd1", "etcd2", "etcd3"]`
+// tectonic_etcd_servers = ""
+
+// If set to true, experimental Tectonic assets are being deployed.
+tectonic_experimental = false
+
+// Service IP used to reach kube-apiserver inside the cluster
+tectonic_kube_apiserver_service_ip = "10.3.0.1"
+
+// Service IP used to reach kube-dns
+tectonic_kube_dns_service_ip = "10.3.0.10"
+
+// Service IP used to reach self-hosted etcd
+tectonic_kube_etcd_service_ip = "10.3.0.15"
+
+// The path to the tectonic licence file.
+tectonic_license_path = ""
+
+// The number of master nodes to be created.
+tectonic_master_count = "1"
+
+// The path the pull secret file in JSON format.
+tectonic_pull_secret_path = ""
+
+// A CIDR notation IP range from which to assign service cluster IPs
+tectonic_service_cidr = "10.3.0.0/16"
+
+// 
+tectonic_ssh_key = ""
+
+// If set to true, a vanilla Kubernetes cluster will be deployed, omitting the tectonic assets.
+tectonic_vanilla_k8s = false
+
+// The number of worker nodes to be created.
+tectonic_worker_count = "3"

@@ -4,21 +4,22 @@ This document gives an overview of the variables used in the different platforms
 
 ## Inputs
 
-| Name | Description | Type | Default | Required |
-|------|-------------|:----:|:-----:|:-----:|
-| tectonic_metal_cl_version | CoreOS kernel/initrd version to PXE boot. Must be present in matchbox assets and correspond to the tectonic_cl_channel | string | - | yes |
-| tectonic_metal_controller_domain | The domain name which resolves to controller node(s) | string | - | yes |
-| tectonic_metal_controller_domains | Ordered list of controller domain names (e.g. node1.example.com) | list | - | yes |
-| tectonic_metal_controller_macs | Ordered list of controller MAC addresses for matching machines | list | - | yes |
-| tectonic_metal_controller_names | Ordered list of controller names (e.g. node1) | list | - | yes |
-| tectonic_metal_ingress_domain | The domain name which resolves to Tectonic Ingress (i.e. worker node(s)) | string | - | yes |
-| tectonic_metal_matchbox_ca | Matchbox CA certificate to trust | string | - | yes |
-| tectonic_metal_matchbox_client_cert | Matchbox client TLS certificate | string | - | yes |
-| tectonic_metal_matchbox_client_key | Matchbox client TLS key | string | - | yes |
-| tectonic_metal_matchbox_http_endpoint | Matchbox HTTP read-only endpoint (e.g. http://matchbox.example.com:8080) | string | - | yes |
-| tectonic_metal_matchbox_rpc_endpoint | Matchbox gRPC API endpoint (e.g. matchbox.example.com:8081) | string | - | yes |
-| tectonic_metal_worker_domains | Ordered list of worker domain names (e.g. node2.example.com,node3.example.com) | list | - | yes |
-| tectonic_metal_worker_macs | Ordered list of worker MAC addresses for matching machines | list | - | yes |
-| tectonic_metal_worker_names | Ordered list of worker names (e.g. node2,node3) | list | - | yes |
-| tectonic_ssh_authorized_key | SSH public key to use as an authorized key | string | - | yes |
+| Name | Description | Type | Default |
+|------|-------------|:----:|:-----:|
+| tectonic_metal_cl_version | CoreOS kernel/initrd version to PXE boot. Must be present in matchbox assets and correspond to the tectonic_cl_channel. Example: `1298.7.0` | string | - |
+| tectonic_metal_config_version | (internal) This declares the version of the Matchbox configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
+| tectonic_metal_controller_domain | The domain name which resolves to controller node(s) | string | - |
+| tectonic_metal_controller_domains | Ordered list of controller domain names. Example: `["node2.example.com", "node3.example.com"]` | list | - |
+| tectonic_metal_controller_macs | Ordered list of controller MAC addresses for matching machines. Example: `["52:54:00:a1:9c:ae"]` | list | - |
+| tectonic_metal_controller_names | Ordered list of controller names. Example: `["node1"]` | list | - |
+| tectonic_metal_ingress_domain | The domain name which resolves to Tectonic Ingress (i.e. worker node(s)) | string | - |
+| tectonic_metal_matchbox_ca | Matchbox CA certificate to trust | string | - |
+| tectonic_metal_matchbox_client_cert | Matchbox client TLS certificate | string | - |
+| tectonic_metal_matchbox_client_key | Matchbox client TLS key | string | - |
+| tectonic_metal_matchbox_http_endpoint | Matchbox HTTP read-only endpoint (e.g. http://matchbox.example.com:8080) | string | - |
+| tectonic_metal_matchbox_rpc_endpoint | Matchbox gRPC API endpoint (e.g. matchbox.example.com:8081) | string | - |
+| tectonic_metal_worker_domains | Ordered list of worker domain names. Example: `["node2.example.com", "node3.example.com"]` | list | - |
+| tectonic_metal_worker_macs | Ordered list of worker MAC addresses for matching machines. Example: `["52:54:00:b2:2f:86", "52:54:00:c3:61:77"]` | list | - |
+| tectonic_metal_worker_names | Ordered list of worker names. Example: `["node2", "node3"]` | list | - |
+| tectonic_ssh_authorized_key | SSH public key to use as an authorized key. Example: `"ssh-rsa AAAB3N..."` | string | - |
 

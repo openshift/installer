@@ -1,6 +1,6 @@
 variable "tectonic_config_version" {
   description = <<EOF
-This declares the version of the global configuration variables.
+(internal) This declares the version of the global configuration variables.
 It has no impact on generated assets but declares the version contract of the configuration.
 EOF
 
@@ -12,7 +12,7 @@ terraform {
 }
 
 variable "tectonic_container_images" {
-  description = "Container images to use"
+  description = "(internal) Container images to use"
   type        = "map"
 
   default = {
@@ -47,7 +47,7 @@ variable "tectonic_container_images" {
 }
 
 variable "tectonic_versions" {
-  description = "Versions of the components to use"
+  description = "(internal) Versions of the components to use"
   type        = "map"
 
   default = {
@@ -102,31 +102,40 @@ variable "tectonic_worker_count" {
 }
 
 variable "tectonic_etcd_count" {
-  type        = "string"
-  default     = "-1"
-  description = "The number of etcd nodes to be created. If not set, the count of etcd nodes will be determined automatically (currently only supported on AWS)."
+  type    = "string"
+  default = "0"
+
+  description = <<EOF
+The number of etcd nodes to be created.
+If set to zero, the count of etcd nodes will be determined automatically (currently only supported on AWS).
+EOF
 }
 
 variable "tectonic_etcd_servers" {
-  description = "List of external etcd v3 servers to connect with (hostnames/IPs only). Optionally used if using an external etcd cluster."
-  type        = "list"
-  default     = [""]
+  description = <<EOF
+(optional) List of external etcd v3 servers to connect with (hostnames/IPs only).
+Needs to be set if using an external etcd cluster.
+Example: `["etcd1", "etcd2", "etcd3"]`
+EOF
+
+  type    = "list"
+  default = [""]
 }
 
 variable "tectonic_etcd_ca_cert_path" {
-  description = "The path to the etcd CA certificate for TLS communication with etcd (optional)."
+  description = "(optional) The path to the etcd CA certificate for TLS communication with etcd."
   type        = "string"
   default     = ""
 }
 
 variable "tectonic_etcd_client_cert_path" {
-  description = "The path to the etcd client certificate for TLS communication with etcd (optional)."
+  description = "(optional) The path to the etcd client certificate for TLS communication with etcd."
   type        = "string"
   default     = ""
 }
 
 variable "tectonic_etcd_client_key_path" {
-  description = "The path to the etcd client key for TLS communication with etcd (optional)."
+  description = "(optional) The path to the etcd client key for TLS communication with etcd."
   type        = "string"
   default     = ""
 }
@@ -164,19 +173,19 @@ EOF
 variable "tectonic_update_server" {
   type        = "string"
   default     = "https://tectonic.update.core-os.net"
-  description = "The URL of the Tectonic Omaha update server"
+  description = "(internal) The URL of the Tectonic Omaha update server"
 }
 
 variable "tectonic_update_channel" {
   type        = "string"
   default     = "tectonic-1.5"
-  description = "The Tectonic Omaha update channel"
+  description = "(internal) The Tectonic Omaha update channel"
 }
 
 variable "tectonic_update_app_id" {
   type        = "string"
   default     = "6bc7b986-4654-4a0f-94b3-84ce6feb1db4"
-  description = "The Tectonic Omaha update App ID"
+  description = "(internal) The Tectonic Omaha update App ID"
 }
 
 variable "tectonic_admin_email" {
@@ -191,13 +200,13 @@ variable "tectonic_admin_password_hash" {
 
 variable "tectonic_ca_cert" {
   type        = "string"
-  description = "PEM-encoded CA certificate, used to generate Tectonic Console's server certificate. Optional, if left blank, a CA certificate will be automatically generated."
+  description = "(optional) PEM-encoded CA certificate, used to generate Tectonic Console's server certificate. Optional, if left blank, a CA certificate will be automatically generated."
   default     = ""
 }
 
 variable "tectonic_ca_key" {
   type        = "string"
-  description = "PEM-encoded CA key, used to generate Tectonic Console's server certificate. Optional if tectonic_ca_cert is left blank"
+  description = "(optional) PEM-encoded CA key, used to generate Tectonic Console's server certificate. Optional if tectonic_ca_cert is left blank"
   default     = ""
 }
 

@@ -1,6 +1,6 @@
 variable "tectonic_azure_config_version" {
   description = <<EOF
-This declares the version of the Azure configuration variables.
+(internal) This declares the version of the Azure configuration variables.
 It has no impact on generated assets but declares the version contract of the configuration.
 EOF
 
