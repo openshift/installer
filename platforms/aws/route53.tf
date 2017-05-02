@@ -6,4 +6,9 @@ data "aws_route53_zone" "tectonic-ext" {
 resource "aws_route53_zone" "tectonic-int" {
   vpc_id = "${module.vpc.vpc_id}"
   name   = "${var.tectonic_base_domain}"
+
+  tags = "${merge(map(
+      "Name", "${var.tectonic_cluster_name}_tectonic_int_zone",
+      "KubernetesCluster", "${var.tectonic_cluster_name}"
+    ), var.tectonic_aws_extra_tags)}"
 }
