@@ -80,7 +80,10 @@ Create a build directory to hold your customizations and copy the example file i
 
 ```
 $ mkdir -p build/${CLUSTER}
-$ cp platforms/openstack/<flavor>/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
+# for Neutron:
+$ cp examples/terraform.tfvars.openstack-neutron build/${CLUSTER}/terraform.tfvars
+# for Nova:
+$ cp examples/terraform.tfvars.openstack-nova build/${CLUSTER}/terraform.tfvars
 ```
 
 Edit the parameters with your OpenStack details. View all of the [OpenStack Nova][openstack-nova-vars] and [OpenStack Neutron][openstack-neutron-vars] specific options and [the common Tectonic variables][vars].

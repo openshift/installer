@@ -69,7 +69,7 @@ Create a build directory to hold your customizations and copy the example file i
 
 ```
 $ mkdir -p build/${CLUSTER}
-$ cp platforms/aws/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
+$ cp examples/terraform.tfvars.aws build/${CLUSTER}/terraform.tfvars
 ```
 
 Edit the parameters with your AWS details, domain name, license, etc. [View all of the AWS specific options][aws-vars] and [the common Tectonic variables][vars].
