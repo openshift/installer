@@ -74,6 +74,7 @@ resource "template_dir" "bootkube-bootstrap" {
     etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"
 
     advertise_address = "${var.advertise_address}"
+    cloud_provider    = "${var.cloud_provider}"
     cluster_cidr      = "${var.cluster_cidr}"
     service_cidr      = "${var.service_cidr}"
   }
