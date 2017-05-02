@@ -8,29 +8,27 @@ Generally, the AWS platform templates adhere to the standards defined by the pro
 
 ## Prerequsities
 
- - **DNS** - Ensure that the DNS zone is already created and available in route53 for the account. For example if the `tectonic_base_domain` is set to `kube.example.com` a route53 zone must exist for this domain and the AWS nameservers must be configured for the domain.
- - **Make, go, yarn** - This guide uses `make`, `go` and `yarn` to build the Tectonic Installer.
- - **Tectonic Account** - Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
- - **Terraform** - Install [Terraform][terraform] v0.8.8 on your system.
+* **DNS**: Ensure that the DNS zone is already created and available in Route 53 for the account. For example if the `tectonic_base_domain` is set to `kube.example.com` a Route 53 zone must exist for this domain and the AWS nameservers must be configured for the domain.
+* **Tectonic Account**: Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
+* **Make, go, yarn**: This guide uses `make`, `go` and `yarn` to build the Tectonic Installer.
+* **Terraform**: Install [Terraform][terraform] v0.8.8 on your system.
 
 ## Getting Started
 
-First, clone the Tectonic Installer repository in a convenient location:
+### Download and extract Tectonic Installer
 
-```
-$ git clone https://github.com/coreos/tectonic-installer.git
-$ cd tectonic-installer
-```
+Open a new terminal, and run the following commands to download and extract Tectonic Installer.
 
-Build the Tectonic Installer:
-
-```
-$ (cd installer && make build)
+```bash
+$ curl -O https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz # download
+tar xzvf tectonic-1.6.2-tectonic.1.tar.gz # extract the tarball
 ```
 
-Initialize the TerraForm configuration with Installer's location and export the path to that configuration:
+### Initialize and configure Terraform
 
-```
+Initialize the Terraform configuration with Installer's location and export the path to that configuration:
+
+```bash
 $ INSTALLER_PATH=$(pwd)/installer/bin/linux/installer # Edit the platform name.
 $ sed "s|<PATH_TO_INSTALLER>|$INSTALLER_PATH|g" terraformrc.example > .terraformrc
 $ export TERRAFORM_CONFIG=$(pwd)/.terraformrc
@@ -38,36 +36,36 @@ $ export TERRAFORM_CONFIG=$(pwd)/.terraformrc
 
 Next, get the modules that Terraform will use to create the cluster resources:
 
-```
+```bash
 $ terraform get platforms/aws
 ```
 
 Configure your AWS credentials. See the [AWS docs][env] for details.
 
-```
+```bash
 $ export AWS_ACCESS_KEY_ID=
 $ export AWS_SECRET_ACCESS_KEY=
 ```
 
 Set your desired region:
 
-```
+```bash
 $ export AWS_REGION=
 ```
 
-Now we're ready to specify our cluster configuration.
+Next, specify the cluster configuration.
 
 ## Customize the deployment
 
 Customizations to the base installation live in `platforms/aws/terraform.tfvars.example`. Export a variable that will be your cluster identifier:
 
-```
+```bash
 $ export CLUSTER=my-cluster
 ```
 
 Create a build directory to hold your customizations and copy the example file into it:
 
-```
+```bash
 $ mkdir -p build/${CLUSTER}
 $ cp examples/terraform.tfvars.aws build/${CLUSTER}/terraform.tfvars
 ```
@@ -78,19 +76,17 @@ Edit the parameters with your AWS details, domain name, license, etc. [View all 
 
 Test out the plan before deploying everything:
 
-```
+```bash
 $ terraform plan -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
 Next, deploy the cluster:
 
-```
+```bash
 $ terraform apply -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
 This should run for a little bit, and when complete, your Tectonic cluster should be ready.
-
-If you encounter any issues, check the known issues and workarounds below.
 
 ### Access the cluster
 
@@ -98,7 +94,7 @@ The Tectonic Console should be up and running after the containers have download
 
 Inside of the `/generated` folder you should find any credentials, including the CA if generated, and a kubeconfig. You can use this to control the cluster with `kubectl`:
 
-```
+```bash
 $ export KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
@@ -107,13 +103,13 @@ $ kubectl cluster-info
 
 Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing VPC and subnets, these items are not touched. To delete, run:
 
-```
+```bash
 $ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
 ### Known issues and workarounds
 
-See the [troubleshooting][troubleshooting] document for work arounds for bugs that are being tracked.
+See the [troubleshooting][troubleshooting] document for workarounds for bugs that are being tracked.
 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md
