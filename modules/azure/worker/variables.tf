@@ -58,14 +58,6 @@ variable "kubeconfig_content" {
   default = ""
 }
 
-variable "tectonic_versions" {
-  type = "map"
-}
-
-variable "etcd_endpoints" {
-  type = "list"
-}
-
 variable "tectonic_kube_dns_service_ip" {
   type = "string"
 }

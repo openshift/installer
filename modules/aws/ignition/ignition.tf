@@ -6,7 +6,6 @@ data "ignition_config" "main" {
   ]
 
   systemd = [
-    "${data.ignition_systemd_unit.etcd-member.id}",
     "${data.ignition_systemd_unit.docker.id}",
     "${data.ignition_systemd_unit.locksmithd.id}",
     "${data.ignition_systemd_unit.kubelet.id}",
@@ -66,27 +65,6 @@ data "ignition_systemd_unit" "kubelet-env" {
   name    = "kubelet-env.service"
   enable  = true
   content = "${data.template_file.kubelet-env.rendered}"
-}
-
-data "template_file" "etcd-member" {
-  template = "${file("${path.module}/resources/services/etcd-member.service")}"
-
-  vars {
-    image     = "${var.container_images["etcd"]}"
-    endpoints = "${join(",", formatlist("%s:2379", var.etcd_endpoints))}"
-  }
-}
-
-data "ignition_systemd_unit" "etcd-member" {
-  name   = "etcd-member.service"
-  enable = "${var.etcd_gateway_enabled}"
-
-  dropin = [
-    {
-      name    = "40-etcd-gateway.conf"
-      content = "${data.template_file.etcd-member.rendered}"
-    },
-  ]
 }
 
 data "ignition_file" "max-user-watches" {

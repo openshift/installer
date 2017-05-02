@@ -95,12 +95,10 @@ nameserver 8.8.4.4
 EOF
 
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
-  etcd_fqdns                   = ["${openstack_compute_instance_v2.etcd_node.*.access_ip_v4}"]
   cluster_name                 = "${var.tectonic_cluster_name}"
   instance_count               = "${var.tectonic_master_count}"
   kube_image_url               = "${data.null_data_source.local.outputs.kube_image_url}"
   kube_image_tag               = "${data.null_data_source.local.outputs.kube_image_tag}"
-  tectonic_versions            = "${var.tectonic_versions}"
   tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
   core_public_keys             = ["${module.secrets.core_public_key_openssh}"]
   bootkube_service             = "${module.bootkube.systemd_service}"
@@ -119,12 +117,10 @@ nameserver 8.8.4.4
 EOF
 
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
-  etcd_fqdns                   = ["${openstack_compute_instance_v2.etcd_node.*.access_ip_v4}"]
   cluster_name                 = "${var.tectonic_cluster_name}"
   instance_count               = "${var.tectonic_worker_count}"
   kube_image_url               = "${data.null_data_source.local.outputs.kube_image_url}"
   kube_image_tag               = "${data.null_data_source.local.outputs.kube_image_tag}"
-  tectonic_versions            = "${var.tectonic_versions}"
   tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
   core_public_keys             = ["${module.secrets.core_public_key_openssh}"]
   bootkube_service             = ""

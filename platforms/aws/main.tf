@@ -80,15 +80,12 @@ module "ignition-masters" {
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
   kube_dns_service_ip       = "${var.tectonic_kube_dns_service_ip}"
-  etcd_endpoints            = ["${module.etcd.endpoints}"]
-  etcd_gateway_enabled      = "${module.bootkube.etcd_gateway_enabled}"
   kubeconfig_s3_location    = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
   assets_s3_location        = "${aws_s3_bucket_object.tectonic-assets.bucket}/${aws_s3_bucket_object.tectonic-assets.key}"
   container_images          = "${var.tectonic_container_images}"
   bootkube_service          = "${module.bootkube.systemd_service}"
   tectonic_service          = "${module.tectonic.systemd_service}"
   tectonic_service_disabled = "${var.tectonic_vanilla_k8s}"
-  locksmithd_disabled       = "${var.tectonic_experimental}"
 }
 
 module "masters" {
@@ -127,13 +124,11 @@ module "ignition-workers" {
   kubelet_node_label     = "node-role.kubernetes.io/node"
   kubelet_node_taints    = ""
   kube_dns_service_ip    = "${var.tectonic_kube_dns_service_ip}"
-  etcd_endpoints         = ["${module.etcd.endpoints}"]
   kubeconfig_s3_location = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
   assets_s3_location     = ""
   container_images       = "${var.tectonic_container_images}"
   bootkube_service       = ""
   tectonic_service       = ""
-  locksmithd_disabled    = "${var.tectonic_experimental}"
 }
 
 module "workers" {

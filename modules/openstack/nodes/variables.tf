@@ -18,11 +18,6 @@ variable resolv_conf_content {
   type = "string"
 }
 
-// The fqdns of the etcd endpoints.
-variable etcd_fqdns {
-  type = "list"
-}
-
 // The amount of nodes to be created.
 // Example: `3`
 variable "instance_count" {
@@ -37,10 +32,6 @@ variable "core_public_keys" {
 // The master hostnames will be prefixed with this.
 variable "cluster_name" {
   type = "string"
-}
-
-variable "tectonic_versions" {
-  type = "map"
 }
 
 variable "tectonic_kube_dns_service_ip" {
