@@ -10,7 +10,7 @@ Generally, the AWS platform templates adhere to the standards defined by the pro
 
 * **DNS**: Ensure that the DNS zone is already created and available in Route 53 for the account. For example if the `tectonic_base_domain` is set to `kube.example.com` a Route 53 zone must exist for this domain and the AWS nameservers must be configured for the domain.
 * **Tectonic Account**: Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
-* **Make, go, yarn**: This guide uses `make`, `go` and `yarn` to build the Tectonic Installer.
+* **Make, go, yarn**: This guide uses `make`, `go1.8` and `yarn` to build the Tectonic Installer.
 * **Terraform**: Install [Terraform][terraform] v0.8.8 on your system.
 
 ## Getting Started
