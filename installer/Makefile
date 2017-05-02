@@ -58,8 +58,8 @@ release: release-bins
 .PHONY: release-bins
 release-bins: \
 	bin/linux/installer \
-	bin/darwin/installer \
-	bin/windows/installer.exe
+	bin/darwin/installer
+	# bin/windows/installer.exe TODO re-add me when windows works again
 
 .PHONY: vendor
 vendor: glide.yaml
