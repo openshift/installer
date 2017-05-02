@@ -41,13 +41,7 @@ data "ignition_systemd_unit" "docker" {
 
 data "ignition_systemd_unit" "locksmithd" {
   name = "locksmithd.service"
-
-  dropin = [
-    {
-      name    = "40-etcd-lock.conf"
-      content = "[Service]\nEnvironment=REBOOT_STRATEGY=etcd-lock\n"
-    },
-  ]
+  mask = true
 }
 
 data "template_file" "kubelet-master" {

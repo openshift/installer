@@ -100,6 +100,20 @@ export const toVPCSubnet = (region, subnets, deselected) => {
   return vpcSubnets;
 };
 
+export const toVPCSubnetID = (region, subnets, deselected) => {
+  const vpcSubnets = [];
+  _.each(subnets, (v, availabilityZone) => {
+    if (!availabilityZone.startsWith(region) || deselected && deselected[availabilityZone]) {
+      return;
+    }
+    if (!v) {
+      return;
+    }
+    vpcSubnets.push(v);
+  });
+  return vpcSubnets;
+};
+
 const getZoneDomain = (cc) => {
   if (_.includes([BARE_METAL, BARE_METAL_TF], cc[PLATFORM_TYPE])) {
     throw new Error("Can't get base domain for bare metal!");
@@ -348,14 +362,8 @@ export const toAWS_TF = (cc, FORMS) => {
       'instanceCIDR'
     );
   } else {
-    controllerSubnets = toSubnetObj(
-      toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]),
-      'id'
-    );
-    workerSubnets = toSubnetObj(
-      toVPCSubnet(region, cc[AWS_WORKER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]),
-      'id'
-    );
+    controllerSubnets = toVPCSubnetID(region, cc[AWS_CONTROLLER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
+    workerSubnets = toVPCSubnetID(region, cc[AWS_WORKER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
   }
 
   const extraTags = {};

@@ -15,11 +15,7 @@ systemd:
     - name: docker.service
       enable: true
     - name: locksmithd.service
-      dropins:
-        - name: 40-etcd-lock.conf
-          contents: |
-            [Service]
-            Environment="REBOOT_STRATEGY=etcd-lock"
+      mask: true
     - name: kubelet.path
       enable: true
       contents: |

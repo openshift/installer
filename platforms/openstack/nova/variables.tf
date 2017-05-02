@@ -1,6 +1,6 @@
 variable "tectonic_openstack_nova_config_version" {
   description = <<EOF
-This declares the version of the OpenStack Nova configuration variables.
+(internal) This declares the version of the OpenStack Nova configuration variables.
 It has no impact on generated assets but declares the version contract of the configuration.
 EOF
 

@@ -4,35 +4,36 @@ This document gives an overview of the variables used in the different platforms
 
 ## Inputs
 
-| Name | Description | Type | Default | Required |
-|------|-------------|:----:|:-----:|:-----:|
-| tectonic_admin_email | e-mail address used to login to Tectonic | string | - | yes |
-| tectonic_admin_password_hash | bcrypt hash of admin password to use with Tectonic Console | string | - | yes |
-| tectonic_base_domain | The base DNS domain of the cluster. Example: `openstack.dev.coreos.systems`. | string | - | yes |
-| tectonic_ca_cert | PEM-encoded CA certificate, used to generate Tectonic Console's server certificate. Optional, if left blank, a CA certificate will be automatically generated. | string | `` | no |
-| tectonic_ca_key | PEM-encoded CA key, used to generate Tectonic Console's server certificate. Optional if tectonic_ca_cert is left blank | string | `` | no |
-| tectonic_ca_key_alg | Algorithm used to generate tectonic_ca_key. Optional if tectonic_ca_cert is left blank. | string | `RSA` | no |
-| tectonic_cl_channel | The Container Linux update channel. Examples: `stable`, `beta`, `alpha` | string | `stable` | no |
-| tectonic_cluster_cidr | A CIDR notation IP range from which to assign pod IPs | string | `10.2.0.0/16` | no |
-| tectonic_cluster_name | The name of the cluster. This will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console. | string | - | yes |
-| tectonic_config_version | This declares the version of the global configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` | no |
-| tectonic_container_images | Container images to use | map | `<map>` | no |
-| tectonic_etcd_ca_cert_path | The path to the etcd CA certificate for TLS communication with etcd (optional). | string | `` | no |
-| tectonic_etcd_client_cert_path | The path to the etcd client certificate for TLS communication with etcd (optional). | string | `` | no |
-| tectonic_etcd_client_key_path | The path to the etcd client key for TLS communication with etcd (optional). | string | `` | no |
-| tectonic_etcd_count | The number of etcd nodes to be created. If not set, the count of etcd nodes will be determined automatically (currently only supported on AWS). | string | `-1` | no |
-| tectonic_etcd_servers | List of external etcd v3 servers to connect with (hostnames/IPs only). Optionally used if using an external etcd cluster. | list | `<list>` | no |
-| tectonic_experimental | If set to true, experimental Tectonic assets are being deployed. | string | `false` | no |
-| tectonic_kube_apiserver_service_ip | Service IP used to reach kube-apiserver inside the cluster | string | `10.3.0.1` | no |
-| tectonic_kube_dns_service_ip | Service IP used to reach kube-dns | string | `10.3.0.10` | no |
-| tectonic_license_path | The path to the tectonic licence file. | string | - | yes |
-| tectonic_master_count | The number of master nodes to be created. | string | `1` | no |
-| tectonic_pull_secret_path | The path the pull secret file in JSON format. | string | - | yes |
-| tectonic_service_cidr | A CIDR notation IP range from which to assign service cluster IPs | string | `10.3.0.0/16` | no |
-| tectonic_update_app_id | The Tectonic Omaha update App ID | string | `6bc7b986-4654-4a0f-94b3-84ce6feb1db4` | no |
-| tectonic_update_channel | The Tectonic Omaha update channel | string | `tectonic-1.5` | no |
-| tectonic_update_server | The URL of the Tectonic Omaha update server | string | `https://public.update.core-os.net` | no |
-| tectonic_vanilla_k8s | If set to true, a vanilla Kubernetes cluster will be deployed, omitting the tectonic assets. | string | `false` | no |
-| tectonic_versions | Versions of the components to use | map | `<map>` | no |
-| tectonic_worker_count | The number of worker nodes to be created. | string | `3` | no |
+| Name | Description | Type | Default |
+|------|-------------|:----:|:-----:|
+| tectonic_admin_email | e-mail address used to login to Tectonic | string | - |
+| tectonic_admin_password_hash | bcrypt hash of admin password to use with Tectonic Console | string | - |
+| tectonic_base_domain | The base DNS domain of the cluster. Example: `openstack.dev.coreos.systems`. | string | - |
+| tectonic_ca_cert | (optional) PEM-encoded CA certificate, used to generate Tectonic Console's server certificate. Optional, if left blank, a CA certificate will be automatically generated. | string | `` |
+| tectonic_ca_key | (optional) PEM-encoded CA key, used to generate Tectonic Console's server certificate. Optional if tectonic_ca_cert is left blank | string | `` |
+| tectonic_ca_key_alg | Algorithm used to generate tectonic_ca_key. Optional if tectonic_ca_cert is left blank. | string | `RSA` |
+| tectonic_cl_channel | The Container Linux update channel. Examples: `stable`, `beta`, `alpha` | string | `stable` |
+| tectonic_cluster_cidr | A CIDR notation IP range from which to assign pod IPs | string | `10.2.0.0/16` |
+| tectonic_cluster_name | The name of the cluster. This will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console. | string | - |
+| tectonic_config_version | (internal) This declares the version of the global configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
+| tectonic_container_images | (internal) Container images to use | map | `<map>` |
+| tectonic_etcd_ca_cert_path | (optional) The path to the etcd CA certificate for TLS communication with etcd. | string | `` |
+| tectonic_etcd_client_cert_path | (optional) The path to the etcd client certificate for TLS communication with etcd. | string | `` |
+| tectonic_etcd_client_key_path | (optional) The path to the etcd client key for TLS communication with etcd. | string | `` |
+| tectonic_etcd_count | The number of etcd nodes to be created. If set to zero, the count of etcd nodes will be determined automatically (currently only supported on AWS). | string | `0` |
+| tectonic_etcd_servers | (optional) List of external etcd v3 servers to connect with (hostnames/IPs only). Needs to be set if using an external etcd cluster. Example: `["etcd1", "etcd2", "etcd3"]` | list | `<list>` |
+| tectonic_experimental | If set to true, experimental Tectonic assets are being deployed. | string | `false` |
+| tectonic_kube_apiserver_service_ip | Service IP used to reach kube-apiserver inside the cluster | string | `10.3.0.1` |
+| tectonic_kube_dns_service_ip | Service IP used to reach kube-dns | string | `10.3.0.10` |
+| tectonic_kube_etcd_service_ip | Service IP used to reach self-hosted etcd | string | `10.3.0.15` |
+| tectonic_license_path | The path to the tectonic licence file. | string | - |
+| tectonic_master_count | The number of master nodes to be created. | string | `1` |
+| tectonic_pull_secret_path | The path the pull secret file in JSON format. | string | - |
+| tectonic_service_cidr | A CIDR notation IP range from which to assign service cluster IPs | string | `10.3.0.0/16` |
+| tectonic_update_app_id | (internal) The Tectonic Omaha update App ID | string | `6bc7b986-4654-4a0f-94b3-84ce6feb1db4` |
+| tectonic_update_channel | (internal) The Tectonic Omaha update channel | string | `tectonic-1.5` |
+| tectonic_update_server | (internal) The URL of the Tectonic Omaha update server | string | `https://tectonic.update.core-os.net` |
+| tectonic_vanilla_k8s | If set to true, a vanilla Kubernetes cluster will be deployed, omitting the tectonic assets. | string | `false` |
+| tectonic_versions | (internal) Versions of the components to use | map | `<map>` |
+| tectonic_worker_count | The number of worker nodes to be created. | string | `3` |
 

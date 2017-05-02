@@ -4,13 +4,13 @@ This document gives an overview of the variables used in the different platforms
 
 ## Inputs
 
-| Name | Description | Default | Required |
-|------|-------------|:-----:|:-----:|
-| tectonic_openstack_dns_nameservers | The DNS servers assigned to the generated OpenStack subnet resource. | `<list>` | no |
-| tectonic_openstack_external_gateway_id | The ID of the network to be used as the external internet gateway as given in `openstack network list`. | - | yes |
-| tectonic_openstack_flavor_id | The flavor ID as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM. | - | yes |
-| tectonic_openstack_floatingip_pool | The name name of the floating IP pool as given in `openstack floating ip list`. This pool will be used to assign floating IPs to worker and master nodes. | `public` | no |
-| tectonic_openstack_image_id | The image ID as given in `openstack image list`. Specifies the OS image of the VM. | - | yes |
-| tectonic_openstack_neutron_config_version | This declares the version of the OpenStack Neutron configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | `1.0` | no |
-| tectonic_openstack_subnet_cidr | The subnet CIDR for the master/worker/etcd compute nodes. This CIDR will also be assigned to the created the OpenStack subnet resource. | `192.168.1.0/24` | no |
+| Name | Description | Type | Default |
+|------|-------------|:----:|:-----:|
+| tectonic_openstack_dns_nameservers | The DNS servers assigned to the generated OpenStack subnet resource. | list | `<list>` |
+| tectonic_openstack_external_gateway_id | The ID of the network to be used as the external internet gateway as given in `openstack network list`. | string | - |
+| tectonic_openstack_flavor_id | The flavor ID as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM. | string | - |
+| tectonic_openstack_floatingip_pool | The name name of the floating IP pool as given in `openstack floating ip list`. This pool will be used to assign floating IPs to worker and master nodes. | string | `public` |
+| tectonic_openstack_image_id | The image ID as given in `openstack image list`. Specifies the OS image of the VM. | string | - |
+| tectonic_openstack_neutron_config_version | (internal) This declares the version of the OpenStack Neutron configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
+| tectonic_openstack_subnet_cidr | The subnet CIDR for the master/worker/etcd compute nodes. This CIDR will also be assigned to the created the OpenStack subnet resource. | string | `192.168.1.0/24` |
 

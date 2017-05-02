@@ -47,7 +47,7 @@ Create a build directory to hold your customizations and copy the example file i
 ```
 $ export CLUSTER=my-cluster
 $ mkdir -p build/${CLUSTER}
-$ cp platforms/metal/terraform.tfvars.example build/${CLUSTER}/terraform.tfvars
+$ cp examples/terraform.tfvars.metal build/${CLUSTER}/terraform.tfvars
 ```
 
 Customizations should be made to `build/${CLUSTER}/terraform.tfvars`. Edit the following variables to correspond to your matchbox installation:
