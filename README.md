@@ -76,4 +76,27 @@ PLATFORM=azure CLUSTER=my-cluster make apply
 PLATFORM=azure CLUSTER=my-cluster make destroy
 ```
 
+#### Tests
+
+Tests are run for all approved pull requests via Jenkins. See the [Jenkinsfile](./Jenkinsfile) for details.
+
+Tests can be run locally by:
+
+
+**AWS**
+
+```
+export PLATFORM="aws"
+export AWS_REGION="us-east-1"
+export TF_VAR_tectonic_cluster_name=my-smoke-test
+export TF_VAR_tectonic_license_path=/path/to/license.txt
+export TF_VAR_tectonic_pull_secret_path=/path/to/pull-secret.json
+
+make localconfig
+ln -sf ../../test/aws.tfvars build/${TF_VAR_tectonic_cluster_name}/terraform.tfvars
+make plan
+make apply
+make destroy
+```
+
 [platform-lifecycle]: Documentation/platform-lifecycle.md
