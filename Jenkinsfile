@@ -94,7 +94,7 @@ pipeline {
 
             export TEST_KUBECONFIG=${WORKSPACE}/build/${CLUSTER}/generated/auth/kubeconfig
             export NODE_COUNT=7 # TODO(DG): should be calculated automatically
-            installer/bin/sanity
+            installer/bin/sanity -test.v -test.parallel=1
             '''
             }
           }
