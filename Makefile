@@ -90,8 +90,7 @@ clean: destroy
 #
 structure-check: 
 	$(eval FMT_ERR := $(shell terraform fmt -list -write=false .))
-	@echo "wrong files:" $(FMT_ERR)
-	@test "$(FMT_ERR)" = ""
+	@if [ "$(FMT_ERR)" != "" ]; then echo "misformatted files (run 'terraform fmt .' to fix):" $(FMT_ERR); exit 1; fi
 
 canonical-syntax:
 	terraform fmt -list .
