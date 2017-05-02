@@ -57,14 +57,6 @@ variable "master_count" {
   type = "string"
 }
 
-variable "etcd_endpoints" {
-  type = "list"
-}
-
-variable "tectonic_versions" {
-  type = "map"
-}
-
 variable "tectonic_kube_dns_service_ip" {
   type = "string"
 }

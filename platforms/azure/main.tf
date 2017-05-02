@@ -48,9 +48,7 @@ module "masters" {
   subnet                       = "${module.vnet.master_subnet}"
   kube_image_url               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
   kube_image_tag               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
-  etcd_endpoints               = ["${module.etcd.ip_address}"]
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
-  tectonic_versions            = "${var.tectonic_versions}"
   tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
   cloud_provider               = ""
   kubelet_node_label           = "node-role.kubernetes.io/master"
@@ -76,9 +74,7 @@ module "workers" {
   subnet                       = "${module.vnet.worker_subnet}"
   kube_image_url               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
   kube_image_tag               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
-  etcd_endpoints               = ["${module.etcd.ip_address}"]
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
-  tectonic_versions            = "${var.tectonic_versions}"
   tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
   cloud_provider               = ""
   kubelet_node_label           = "node-role.kubernetes.io/node"

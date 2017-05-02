@@ -39,10 +39,6 @@ output "systemd_service" {
   value = "${data.template_file.bootkube_service.rendered}"
 }
 
-output "etcd_gateway_enabled" {
-  value = "${!var.experimental_enabled && data.null_data_source.etcd.outputs.no_certs}"
-}
-
 output "content_hash" {
   value = "${sha1("${template_dir.bootkube-bootstrap.id} ${template_dir.bootkube.id} ${join(" ",local_file.etcd-operator.*.id,local_file.etcd-service.*.id,local_file.bootstrap-etcd.*.id)}")}"
 
