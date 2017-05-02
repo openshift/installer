@@ -9,8 +9,6 @@ import (
 var KnownPlatforms = []string{
 	"aws-tf",
 	"bare-metal-tf",
-	"aws",
-	"bare-metal",
 	"azure",
 	"openstack",
 }
