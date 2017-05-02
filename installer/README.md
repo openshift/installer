@@ -42,20 +42,6 @@ Run the binary for your platform (linux, darwin).
 
 Visit [http://127.0.0.1:4444](http://127.0.0.1:4444).
 
-### Container Image
-
-```
-make docker-image
-```
-
-Run the Docker image.
-
-```
-sudo docker run -p 4444:4444 coreos/tectonic-installer -address=0.0.0.0:4444
-```
-
-Visit [http://127.0.0.1:4444](http://127.0.0.1:4444).
-
 ## Managing Dependencies
 
 ### Frontend
@@ -91,13 +77,10 @@ To add a new dependency:
 
 - Edit the `glide.yaml` file to add your dependency.
 - Ensure you add a `version` field for the sha or tag you want to pin to.
-- Run glide to update the vendor source directory (with --strip-vendor)
-
-To run glide, use the following commands.
+- Revendor the dependencies:
 
 ```
-cd $GOPATH/src/github.com/coreos/tectonic-installer/installer
-glide update --strip-vendor --skip-test
+make vendor
 ```
 
 If it worked correctly it should:
@@ -111,5 +94,5 @@ For the sake of your fellow reviewers, commit vendored code changes as a separat
 Should you need to regenerate or repair the vendored code en-mass from their source repositories, you can run:
 
 ```
-glide install --strip-vendor --skip-test
+make vendor
 ```

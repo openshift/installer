@@ -5,8 +5,6 @@ OS=$(shell uname | tr A-Z a-z)
 LD_FLAGS="-w -X github.com/coreos/tectonic-installer/installer/server/version.Version=$(VERSION)"
 
 REPO=github.com/coreos/tectonic-installer/installer
-IMAGE_REPO=coreos-inc/installer
-QUAY_REPO=quay.io/coreos-inc/installer
 
 .PHONY: all
 all: build
@@ -42,11 +40,6 @@ smoke-aws: bin/sanity
 .PHONY: smoke-bare-metal
 smoke-bare-metal: bin/sanity
 	@./tests/scripts/bare-metal/up-down.sh
-
-.PHONY: docker-image
-docker-image: bin/linux/installer
-	@sudo docker build --rm=true -t $(IMAGE_REPO):$(VERSION) .
-	@sudo docker tag $(IMAGE_REPO):$(VERSION) $(IMAGE_REPO):latest
 
 .PHONY: release
 release: release-bins
