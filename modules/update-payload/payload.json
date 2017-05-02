@@ -1,5 +1,5 @@
 {
-  "version": "1.5.6-tectonic.1",
+  "version": "1.6.2-tectonic.0",
   "deployments": [
     {
       "apiVersion": "extensions/v1beta1",
@@ -40,8 +40,18 @@
                     }
                   }
                 ],
-                "image": "quay.io/coreos/tectonic-channel-operator:c0287c3ca5960d5f557f98ed86b3f64260d95e7c",
+                "image": "quay.io/coreos/tectonic-channel-operator:15c001bd7c008a04394390d08ac71046e723ac48",
                 "name": "tectonic-channel-operator",
+                "resources": {
+                  "limits": {
+                    "cpu": "20m",
+                    "memory": "50Mi"
+                  },
+                  "requests": {
+                    "cpu": "20m",
+                    "memory": "50Mi"
+                  }
+                },
                 "volumeMounts": [
                   {
                     "mountPath": "/etc/ssl/certs",
@@ -55,6 +65,7 @@
                 "name": "coreos-pull-secret"
               }
             ],
+            "restartPolicy": "Always",
             "volumes": [
               {
                 "hostPath": {
@@ -95,7 +106,7 @@
           "spec": {
             "containers": [
               {
-                "image": "quay.io/coreos/kube-version-operator:32d089ced0064ccdc2b46691d90041c3b3a5b4f7",
+                "image": "quay.io/coreos/kube-version-operator:7da46d189c36092f43d07ca381a61897402fa13c",
                 "name": "kube-version-operator"
               }
             ],
@@ -107,12 +118,73 @@
           }
         }
       }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "k8s-app": "tectonic-prometheus-operator",
+          "managed-by-channel-operator": "true"
+        },
+        "name": "tectonic-prometheus-operator",
+        "namespace": "tectonic-system"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "k8s-app": "tectonic-prometheus-operator"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "k8s-app": "tectonic-prometheus-operator",
+              "tectonic-app-version-name": "tectonic-monitoring"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "args": [
+                  "-logtostderr=true",
+                  "-v=4"
+                ],
+                "image": "quay.io/coreos/tectonic-prometheus-operator:v1.1.0",
+                "name": "tectonic-prometheus-operator",
+                "resources": {
+                  "limits": {
+                    "cpu": "20m",
+                    "memory": "50Mi"
+                  },
+                  "requests": {
+                    "cpu": "20m",
+                    "memory": "50Mi"
+                  }
+                }
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "coreos-pull-secret"
+              }
+            ],
+            "restartPolicy": "Always",
+            "terminationGracePeriodSeconds": 30
+          }
+        }
+      }
     }
   ],
   "desiredVersions": [
     {
       "name": "kubernetes",
-      "version": "1.5.6+tectonic.1"
+      "version": "1.6.2+tectonic.0"
+    },
+    {
+      "name": "tectonic-monitoring",
+      "version": "1.1.0"
     }
   ]
 }

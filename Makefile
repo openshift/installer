@@ -37,6 +37,9 @@ destroy: installer-env ${BUILD_DIR}/.terraform
 terraform-check:
 	@terraform-docs >/dev/null 2>&1 || @echo "terraform-docs is required (https://github.com/segmentio/terraform-docs)"
 
+payload:
+	@${TOP_DIR}/modules/update-payload/make-update-payload.sh > /dev/null
+
 docs: \
 	Documentation/variables/config.md \
 	Documentation/variables/aws.md \

@@ -4,11 +4,6 @@
 # It's using the manifests in the candidate assets dir.
 # yaml2json(https://github.com/bronze1man/yaml2json) and jq are required.
 
-if [[ $# != 1 ]]; then
-    echo "Usage: $0 [ASSETS_DIR]" >&2
-    exit 1
-fi
-
 which yaml2json > /dev/null
 if [[ $? != 0 ]]; then
     echo "Require yaml2json (https://github.com/bronze1man/yaml2json)" >&2
@@ -23,29 +18,38 @@ fi
 
 set -e
 
-ASSETS_DIR=${1}
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+echo "Invoking terraform to populate the templates..." >&2
+pushd ${DIR}
+while true; do echo "place_holder_for_terraform_input"; done | terraform apply ./
+popd
+
+ASSETS_DIR=${DIR}/generated
 
 # TODO(yifan): Maybe put these files into separate dirs for each channel
 # in the future.
 deployments=(
-  "tectonic-channel-operator-deployment.yaml"
-  "kube-version-operator-deployment.yaml"
+  "tectonic-channel-operator.yaml"
+  "kube-version-operator.yaml"
+  "tectonic-prometheus-operator.yaml"
 )
 appversions=(
-  "app-version-kubernetes.json"
+  "app-version-kubernetes.yaml"
+  "app-version-tectonic-monitoring.yaml"
 )
 
 echo "Creating update payload..." >&2
-echo "Using deployments: ${deployments[*]}" >&2
-echo "Using app versions: ${appversions[*]}" >&2
+echo "Using deployments: [${deployments[*]}]" >&2
+echo "Using app versions: [${appversions[*]}]" >&2
 
 # Get the update payload version.
-VERSION=$(cat ${ASSETS_DIR}/app-version-tectonic-cluster.json | jq .status.currentVersion)
+VERSION=$(yaml2json < ${ASSETS_DIR}/app-version-tectonic-cluster.yaml | jq .status.currentVersion)
 
 # Get the deployments.
 for f in ${deployments[*]}; do
   tmpfile=$(mktemp /tmp/deployment.XXXXXX)
-  cat ${ASSETS_DIR}/${f} | yaml2json > ${tmpfile}
+  yaml2json < ${ASSETS_DIR}/${f} > ${tmpfile}
   tmpfiles+=(${tmpfile})
 done
 
@@ -59,8 +63,8 @@ unset tmpfiles
 # Get the desired versions.
 for f in ${appversions[*]}; do
   tmpfile=$(mktemp /tmp/desiredVersion.XXXXXX)
-  name=$(jq .metadata.name ${ASSETS_DIR}/${f})
-  desiredVersion=$(jq .status.currentVersion ${ASSETS_DIR}/${f})
+  name=$(yaml2json < ${ASSETS_DIR}/${f} | jq .metadata.name)
+  desiredVersion=$(yaml2json < ${ASSETS_DIR}/${f} | jq .status.currentVersion)
   cat <<EOF > ${tmpfile}
 {
   "name": ${name},
@@ -76,10 +80,12 @@ if [[ ${#tmpfiles[*]} > 0 ]]; then
 fi
 
 # Create the final payload.
-cat <<EOF | jq . 
+cat <<EOF | jq . > ${DIR}/payload.json
 {
   "version": ${VERSION},
   "deployments": ${DEPLOYMENTS},
   "desiredVersions": ${DESIRED_VERSIONS}
 }
 EOF
+
+echo "Payload generated at [${DIR}/payload.json]" >&2
