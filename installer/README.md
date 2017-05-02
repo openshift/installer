@@ -8,7 +8,6 @@ Read on if you'd like to build and run the installer yourself.
 
 ## Usage
 
-
 ### Notable Flags and Environment Variables
 
 | flag                   | env variable                    | example              |
@@ -27,6 +26,8 @@ Read on if you'd like to build and run the installer yourself.
 Get a [license](https://account.coreos.com) and follow the guides to create Tectonic clusters end to end.
 
 ### Build / Run
+
+All commands mentioned here must be run from the same working directory as this README file, `./installer/` from the root of this repo.
 
 Build the static binary.
 
