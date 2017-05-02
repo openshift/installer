@@ -36,7 +36,7 @@ spec:
       containers:
       - name: tectonic-identity
         imagePullPolicy: IfNotPresent
-        image: quay.io/coreos/dex:v2.3.0
+        image: quay.io/coreos/dex:v2.4.1
         command: ["/usr/local/bin/dex", "serve", "/etc/dex/config.yaml"]
         volumeMounts:
         - name: config
