@@ -5,14 +5,14 @@ metadata:
   namespace: kube-system
   labels:
     tier: control-plane
-    component: kube-controller-manager
+    k8s-app: kube-controller-manager
 spec:
   replicas: 2
   template:
     metadata:
       labels:
         tier: control-plane
-        component: kube-controller-manager
+        k8s-app: kube-controller-manager
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
@@ -27,7 +27,7 @@ spec:
                   operator: In
                   values:
                   - control-plane
-                - key: component
+                - key: k8s-app
                   operator: In
                   values:
                   - kube-contoller-manager
