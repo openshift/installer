@@ -1,0 +1,19 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: ServiceMonitor
+metadata:
+  name: fluentd
+  namespace: logging
+  labels:
+    app: fluentd
+spec:
+  jobLabel: app
+  selector:
+    matchExpressions:
+    - {key: app, operator: In, values: [fluentd, fluentd-aggregator]}
+  namespaceSelector:
+    any: false
+    matchNames:
+    - logging
+  endpoints:
+  - port: prometheus-metrics
+    interval: 15s
