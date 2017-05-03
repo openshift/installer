@@ -233,6 +233,7 @@ export const toAWS_TF = (cc, FORMS) => {
       AWSRegion: cc[AWS_REGION],
     },
     variables: {
+      tectonic_aws_region: cc[AWS_REGION],
       tectonic_admin_email: cc[ADMIN_EMAIL],
       tectonic_aws_master_ec2_type: controllers[INSTANCE_TYPE],
       tectonic_aws_master_root_volume_iops: controllers[STORAGE_TYPE] === 'io1' ? controllers[STORAGE_IOPS] : undefined,
