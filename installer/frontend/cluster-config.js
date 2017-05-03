@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import { BARE_METAL, BARE_METAL_TF } from './platforms';
+import { BARE_METAL_TF } from './platforms';
 import { keyToAlg } from './utils';
 
 let defaultPlatformType = '';
@@ -18,7 +18,6 @@ export const AWS_CONTROLLER_SUBNET_IDS = 'awsControllerSubnetIds';
 export const DESELECTED_FIELDS = 'deselectedFields';
 export const AWS_DOMAIN = 'awsDomain';
 export const AWS_HOSTED_ZONE_ID = 'awsHostedZoneId';
-export const AWS_KMS = 'aws_kms';
 export const AWS_REGION = 'awsRegion';
 export const AWS_SECRET_ACCESS_KEY = 'awsSecretAccessKey';
 export const AWS_SESSION_TOKEN = 'awsSessionToken';
@@ -86,7 +85,7 @@ export const AWS_WORKERS = 'aws_workers';
 export const LICENSING = 'licensing';
 
 export const toVPCSubnet = (region, subnets, deselected) => {
-  const vpcSubnets = [];
+  const vpcSubnets = {};
   _.each(subnets, (v, availabilityZone) => {
     if (!availabilityZone.startsWith(region) || deselected && deselected[availabilityZone]) {
       return;
@@ -94,8 +93,7 @@ export const toVPCSubnet = (region, subnets, deselected) => {
     if (!v) {
       return;
     }
-    const key = v.startsWith('subnet-') ? 'id' : 'instanceCIDR';
-    vpcSubnets.push({availabilityZone, [key]: v});
+    vpcSubnets[availabilityZone] = v;
   });
   return vpcSubnets;
 };
@@ -115,7 +113,7 @@ export const toVPCSubnetID = (region, subnets, deselected) => {
 };
 
 const getZoneDomain = (cc) => {
-  if (_.includes([BARE_METAL, BARE_METAL_TF], cc[PLATFORM_TYPE])) {
+  if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     throw new Error("Can't get base domain for bare metal!");
   }
   // TODO: if we ever change toExtraData()'s key, this breaks
@@ -123,14 +121,14 @@ const getZoneDomain = (cc) => {
 };
 
 export const getControllerDomain = (cc) => {
-  if (_.includes([BARE_METAL, BARE_METAL_TF], cc[PLATFORM_TYPE])) {
+  if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     return cc[CONTROLLER_DOMAIN];
   }
   return `${cc[CLUSTER_SUBDOMAIN]}-k8s.${getZoneDomain(cc)}`;
 };
 
 export const getTectonicDomain = (cc) => {
-  if (_.includes([BARE_METAL, BARE_METAL_TF], cc[PLATFORM_TYPE])) {
+  if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     return cc[BM_TECTONIC_DOMAIN];
   }
   const tectonicDomain = cc[CLUSTER_SUBDOMAIN] + (cc[CLUSTER_SUBDOMAIN].endsWith('.') ? '' : '.') + getZoneDomain(cc);
@@ -147,7 +145,6 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [ADMIN_EMAIL]: '',
   [ADMIN_PASSWORD]: '',
   [AWS_ACCESS_KEY_ID]: '',
-  [AWS_KMS]: '',
   [AWS_REGION]: '',
   [AWS_SECRET_ACCESS_KEY]: '',
   [AWS_SESSION_TOKEN]: '',
@@ -198,150 +195,6 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [SERVICE_CIDR]: "10.3.0.0/16",
 };
 
-export const toBaremetal = cc => {
-  // TODO: (ggreer) send CLUSTER_NAME to backend in bare metal
-  const ret = {
-    clusterKind: 'tectonic-metal',
-    dryRun: cc[DRY_RUN],
-    cluster: {
-      matchboxCA: cc[BM_MATCHBOX_CA],
-      matchboxClientCert: cc[BM_MATCHBOX_CLIENT_CERT],
-      matchboxClientKey: cc[BM_MATCHBOX_CLIENT_KEY],
-      matchboxRPC: cc[BM_MATCHBOX_RPC],
-      matchboxHTTP: cc[BM_MATCHBOX_HTTP],
-      channel: cc[CHANNEL_TO_USE] || 'UNKNOWN',
-      externalETCDClient: cc[EXTERNAL_ETCD_ENABLED] ? cc[EXTERNAL_ETCD_CLIENT] : '',
-      version: cc[BM_OS_TO_USE],
-      controllerDomain: getControllerDomain(cc),
-      tectonicDomain: getTectonicDomain(cc),
-      controllers: cc[BM_MASTERS].map(({mac, name}) => {
-        return {mac, name};
-      }),
-      workers: cc[BM_WORKERS].map(({mac, name}) => {
-        return {mac, name};
-      }),
-      sshAuthorizedKeys: cc[SSH_AUTHORIZED_KEYS].map(k => k.key).filter(k => k && k.length),
-      podCIDR: cc[POD_CIDR],
-      serviceCIDR: cc[SERVICE_CIDR],
-      tectonic: {
-        license: cc[TECTONIC_LICENSE],
-        dockercfg: cc[PULL_SECRET],
-        ingressKind: 'HostPort',
-        identityAdminUser: cc[ADMIN_EMAIL],
-        identityAdminPassword: window.btoa(cc[ADMIN_PASSWORD]),
-        updater: {
-          enabled: cc[UPDATER_ENABLED],
-          server: cc[UPDATER].server,
-          channel: cc[UPDATER].channel,
-          appID: cc[UPDATER].appID,
-        },
-      },
-    },
-  };
-
-  if (cc[CA_TYPE] === 'owned') {
-    ret.cluster.caCertificate = cc[CA_CERTIFICATE];
-    ret.cluster.caPrivateKey = cc[CA_PRIVATE_KEY];
-  }
-
-  return ret;
-};
-
-export const toAWS = (cc, FORMS) => {
-  const controllerDomain = getControllerDomain(cc);
-  const tectonicDomain = getTectonicDomain(cc);
-  const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
-  const etcds = FORMS[AWS_ETCDS].getData(cc);
-  const workers = FORMS[AWS_WORKERS].getData(cc);
-
-  const region = cc[AWS_REGION];
-  let controllerSubnets;
-  let workerSubnets;
-
-  if (cc[AWS_CREATE_VPC] === 'VPC_CREATE') {
-    controllerSubnets = toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
-    workerSubnets = toVPCSubnet(region, cc[AWS_WORKER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
-  } else {
-    controllerSubnets = toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
-    workerSubnets = toVPCSubnet(region, cc[AWS_WORKER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
-  }
-
-  const ret = {
-    clusterKind: 'tectonic-aws',
-    dryRun: cc[DRY_RUN],
-    cluster: {
-      accessKeyID: cc[AWS_ACCESS_KEY_ID],
-      secretAccessKey: cc[AWS_SECRET_ACCESS_KEY],
-      cloudForm: {
-        channel: cc[CHANNEL_TO_USE],
-        clusterName: cc[CLUSTER_NAME],
-        elbScheme: cc[AWS_CREATE_VPC] === 'VPC_PRIVATE' ? "internal" : "internet-facing",
-        controllerDomain: controllerDomain,
-        externalETCDClient: cc[EXTERNAL_ETCD_ENABLED] ? cc[EXTERNAL_ETCD_CLIENT] : '',
-        tectonicDomain: tectonicDomain,
-        region: cc[AWS_REGION],
-        hostedZoneID: cc[AWS_HOSTED_ZONE_ID],
-        kmsKeyARN: cc[AWS_KMS],
-        keyName: cc[AWS_SSH],
-        etcdCount: etcds[NUMBER_OF_INSTANCES],
-        etcdInstanceType: etcds[INSTANCE_TYPE],
-        etcdRootVolumeSize: etcds[STORAGE_SIZE_IN_GIB],
-        etcdRootVolumeType: etcds[STORAGE_TYPE],
-        etcdRootVolumeIOPS: etcds[STORAGE_TYPE] === 'io1' ? etcds[STORAGE_IOPS] : undefined,
-        controllerCount: controllers[NUMBER_OF_INSTANCES],
-        controllerInstanceType: controllers[INSTANCE_TYPE],
-        controllerRootVolumeSize: controllers[STORAGE_SIZE_IN_GIB],
-        controllerRootVolumeType: controllers[STORAGE_TYPE],
-        controllerRootVolumeIOPS: controllers[STORAGE_TYPE] === 'io1' ? controllers[STORAGE_IOPS] : undefined,
-        workerCount: workers[NUMBER_OF_INSTANCES],
-        workerInstanceType: workers[INSTANCE_TYPE],
-        workerRootVolumeSize: workers[STORAGE_SIZE_IN_GIB],
-        workerRootVolumeType: workers[STORAGE_TYPE],
-        workerRootVolumeIOPS: workers[STORAGE_TYPE] === 'io1' ? workers[STORAGE_IOPS] : undefined,
-        podCIDR: cc[POD_CIDR],
-        serviceCIDR: cc[SERVICE_CIDR],
-        tags: _.filter(cc[AWS_TAGS], ({key, value}) => key && value), // don't send empty tags
-        controllerSubnets,
-        workerSubnets,
-      },
-      tectonic: {
-        license: cc[TECTONIC_LICENSE],
-        dockercfg: cc[PULL_SECRET],
-        ingressKind: 'NodePort',
-        identityAdminUser: cc[ADMIN_EMAIL],
-        identityAdminPassword: window.btoa(cc[ADMIN_PASSWORD]),
-        updater: {
-          enabled: cc[UPDATER_ENABLED],
-          server: cc[UPDATER].server,
-          channel: cc[UPDATER].channel,
-          appID: cc[UPDATER].appID,
-        },
-      },
-    },
-  };
-  const { cluster } = ret;
-
-  if (cc[STS_ENABLED]) {
-    cluster.sessionToken = cc[AWS_SESSION_TOKEN];
-  }
-  if (cc[AWS_CREATE_VPC] === 'VPC_CREATE') {
-    cluster.cloudForm.vpcCIDR = cc[AWS_VPC_CIDR];
-  } else {
-    cluster.cloudForm.vpcID = cc[AWS_VPC_ID];
-  }
-
-  if (cc[CA_TYPE] === 'owned') {
-    cluster.caCertificate = cc[CA_CERTIFICATE];
-    cluster.caPrivateKey = cc[CA_PRIVATE_KEY];
-  }
-  return ret;
-};
-
-const toSubnetObj = (subnets, key) => _(subnets)
-  .keyBy(o => o.availabilityZone)
-  .mapValues(v => v[key])
-  .value();
-
 
 export const toAWS_TF = (cc, FORMS) => {
   const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
@@ -353,14 +206,8 @@ export const toAWS_TF = (cc, FORMS) => {
   let workerSubnets;
 
   if (cc[AWS_CREATE_VPC] === 'VPC_CREATE') {
-    controllerSubnets = toSubnetObj(
-      toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]),
-      'instanceCIDR'
-    );
-    workerSubnets = toSubnetObj(
-      toVPCSubnet(region, cc[AWS_WORKER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]),
-      'instanceCIDR'
-    );
+    controllerSubnets = toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
+    workerSubnets = toVPCSubnet(region, cc[AWS_WORKER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
   } else {
     controllerSubnets = toVPCSubnetID(region, cc[AWS_CONTROLLER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
     workerSubnets = toVPCSubnetID(region, cc[AWS_WORKER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
@@ -471,7 +318,7 @@ export const toBaremetal_TF = (cc) => {
       tectonic_metal_matchbox_ca: cc[BM_MATCHBOX_CA],
       tectonic_metal_matchbox_client_cert: cc[BM_MATCHBOX_CLIENT_CERT],
       tectonic_metal_matchbox_client_key: cc[BM_MATCHBOX_CLIENT_KEY],
-      tectonic_ssh_authorized_key: cc[SSH_AUTHORIZED_KEYS].map(k => k.key).filter(k => k && k.length).join('\n'),
+      tectonic_ssh_authorized_key: cc[SSH_AUTHORIZED_KEYS].map(k => k.key).filter(k => k && k.length)[0],
       tectonic_cluster_cidr: cc[POD_CIDR],
       tectonic_service_cidr: cc[SERVICE_CIDR],
       tectonic_dns_name: cc[CLUSTER_SUBDOMAIN],

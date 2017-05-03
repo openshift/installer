@@ -60,7 +60,7 @@
       }
     ],
     "workersCount": 2,
-    "platformType": "bare-metal",
+    "platformType": "bare-metal-tf",
     "controllerDomain": "cluster.example.com",
     "tectonicDomain": "tectonic.example.com",
     "tectonicLicense": "<TECTONIC_LICENSE>",

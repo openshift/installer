@@ -93,8 +93,6 @@ const createAction = (name, fn, shouldReject=false) => (body, creds, isNow) => (
 
 export const getVpcs = createAction('availableVpcs', awsApis.getVpcs);
 export const getVpcSubnets = createAction('availableVpcSubnets', awsApis.getVpcSubnets);
-export const getKms = createAction('availableKms', awsApis.getKms);
-export const createKms = createAction('createdKms', awsApis.createKms);
 export const getSsh = createAction('availableSsh', awsApis.getSsh);
 export const getRegions = createAction('availableRegions', awsApis.getRegions, true);
 export const getZones = createAction('availableR53Zones', awsApis.getZones, true);
