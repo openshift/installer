@@ -1,3 +1,7 @@
+provider "aws" {
+  region = "${var.tectonic_aws_region}"
+}
+
 data "aws_availability_zones" "azs" {}
 
 module "vpc" {
