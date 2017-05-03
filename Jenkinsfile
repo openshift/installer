@@ -69,9 +69,6 @@ pipeline {
             # s3 buckets require lowercase names
             export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
 
-            # AWS specific configuration
-            export AWS_REGION="us-west-2"
-
             # make core utils accessible to make
             export PATH=/bin:${PATH}
 
