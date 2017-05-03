@@ -4,6 +4,10 @@ metadata:
   name: node-exporter
   namespace: tectonic-system
 spec:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
       name: node-exporter
