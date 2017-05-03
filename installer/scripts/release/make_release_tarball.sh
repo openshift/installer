@@ -2,7 +2,6 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$DIR/common.env.sh"
-TERRAFORM_SOURCES="${REPOSITORY_ROOT}/modules ${REPOSITORY_ROOT}/platforms ${REPOSITORY_ROOT}/config.tf"
 
 echo "Retrieving matchbox release"
 "$DIR/get_matchbox_release.sh"
