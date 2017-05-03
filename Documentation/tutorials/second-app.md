@@ -31,7 +31,7 @@ spec:
   template:
     metadata:
       labels:
-        app: redis
+        k8s-app: redis
         role: master
         tier: backend
     spec:
@@ -55,7 +55,7 @@ metadata:
   name: redis-master
   namespace: default
   labels:
-    app: redis
+    k8s-app: redis
     tier: backend
     role: master
 spec:
@@ -63,7 +63,7 @@ spec:
   - port: 6379
     targetPort: 6379
   selector:
-    app: redis
+    k8s-app: redis
     tier: backend
     role: master
 ```
@@ -81,7 +81,7 @@ spec:
   template:
     metadata:
       labels:
-        app: redis
+        k8s-app: redis
         role: slave
         tier: backend
     spec:
@@ -109,14 +109,14 @@ metadata:
   name: redis-slave
   namespace: default
   labels:
-    app: redis
+    k8s-app: redis
     tier: backend
     role: slave
 spec:
   ports:
   - port: 6379
   selector:
-    app: redis
+    k8s-app: redis
     tier: backend
     role: slave
 ```
@@ -134,7 +134,7 @@ spec:
   template:
     metadata:
       labels:
-        app: guestbook
+        k8s-app: guestbook
         tier: frontend
     spec:
       containers:
@@ -160,14 +160,14 @@ metadata:
   name: frontend
   namespace: default
   labels:
-    app: guestbook
+    k8s-app: guestbook
     tier: frontend
 spec:
   type: LoadBalancer
   ports:
   - port: 80
   selector:
-    app: guestbook
+    k8s-app: guestbook
     tier: frontend
 ```
 
@@ -183,7 +183,7 @@ service "redis-slave" created
 deployment "redis-slave" created
 $ kubectl get deploy/frontend svc/frontend -o wide
 NAME           CLUSTER-IP   EXTERNAL-IP                                                             PORT(S)        AGE       SELECTOR
-svc/frontend   10.3.0.175   aaebd8247ef2311e6a045021d1620193-54019671.us-west-2.elb.amazonaws.com   80:31020/TCP   1m        app=guestbook,tier=frontend
+svc/frontend   10.3.0.175   aaebd8247ef2311e6a045021d1620193-54019671.us-west-2.elb.amazonaws.com   80:31020/TCP   1m        k8s-app=guestbook,tier=frontend
 
 NAME              DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
 deploy/frontend   3         3         3            3           1m

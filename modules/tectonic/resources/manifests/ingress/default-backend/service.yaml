@@ -4,7 +4,7 @@ metadata:
   name: default-http-backend
   namespace: tectonic-system
   labels:
-   app: default-http-backend
+   k8s-app: default-http-backend
 spec:
   ports:
   - port: 80
@@ -12,4 +12,4 @@ spec:
     protocol: TCP
     name: http
   selector:
-   app: default-http-backend
+   k8s-app: default-http-backend

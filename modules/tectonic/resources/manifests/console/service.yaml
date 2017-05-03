@@ -4,11 +4,11 @@ metadata:
   name: tectonic-console
   namespace: tectonic-system
   labels:
-    app: tectonic-console
+    k8s-app: tectonic-console
     component: ui
 spec:
   selector:
-    app: tectonic-console
+    k8s-app: tectonic-console
     component: ui
   type: NodePort
   ports:

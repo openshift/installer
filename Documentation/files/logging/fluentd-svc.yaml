@@ -4,12 +4,12 @@ metadata:
   name: fluentd
   namespace: logging
   labels:
-    app: fluentd
+    k8s-app: fluentd
 spec:
   type: ClusterIP
   clusterIP: None
   selector:
-    app: fluentd
+    k8s-app: fluentd
   ports:
   # Exposes Prometheus metrics
   - name: prometheus-metrics

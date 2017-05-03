@@ -5,7 +5,7 @@ metadata:
   namespace: kube-system
   labels:
     tier: node
-    app: flannel
+    k8s-app: flannel
 data:
   cni-conf.json: |
     {
@@ -31,7 +31,7 @@ metadata:
   namespace: kube-system
   labels:
     tier: node
-    app: flannel
+    k8s-app: flannel
 spec:
   updateStrategy:
     rollingUpdate:
@@ -41,7 +41,7 @@ spec:
     metadata:
       labels:
         tier: node
-        app: flannel
+        k8s-app: flannel
     spec:
       containers:
       - name: kube-flannel

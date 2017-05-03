@@ -85,13 +85,13 @@ metadata:
   name: simple-deployment
   namespace: default
   labels:
-    app: simple
+    k8s-app: simple
 spec:
   replicas: 3
   template:
     metadata:
       labels:
-        app: simple
+        k8s-app: simple
     spec:
       containers:
         - name: nginx
@@ -113,7 +113,7 @@ metadata:
   namespace: default
 spec:
   selector:
-    app: simple
+    k8s-app: simple
   ports:
   - protocol: TCP
     port: 80

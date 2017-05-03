@@ -4,7 +4,7 @@ metadata:
   name: tectonic-stats-emitter
   namespace: tectonic-system
   labels:
-    app: tectonic-stats-emitter
+    k8s-app: tectonic-stats-emitter
     component: stats-emitter
 spec:
   replicas: 1
@@ -12,7 +12,7 @@ spec:
     metadata:
       name: tectonic-stats-emitter
       labels:
-        app: tectonic-stats-emitter
+        k8s-app: tectonic-stats-emitter
         component: stats-emitter
       annotations:
         # TODO(squat): add backoff to stats-emitter so we don't need init pod.

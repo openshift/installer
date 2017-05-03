@@ -2,7 +2,7 @@ apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
   labels:
-    app: tectonic-console
+    k8s-app: tectonic-console
     component: ui
   name: tectonic-console
   namespace: tectonic-system
@@ -10,7 +10,7 @@ spec:
   replicas: 2
   selector:
     matchLabels:
-      app: tectonic-console
+      k8s-app: tectonic-console
       component: ui
   strategy:
     rollingUpdate:
@@ -21,7 +21,7 @@ spec:
     metadata:
       creationTimestamp: null
       labels:
-        app: tectonic-console
+        k8s-app: tectonic-console
         component: ui
       name: tectonic-console
     spec:

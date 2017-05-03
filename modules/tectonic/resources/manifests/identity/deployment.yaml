@@ -4,7 +4,7 @@ metadata:
   name: tectonic-identity
   namespace: tectonic-system
   labels:
-    app: tectonic-identity
+    k8s-app: tectonic-identity
     component: identity
 spec:
   replicas: 1
@@ -20,7 +20,7 @@ spec:
     metadata:
       name: tectonic-identity
       labels:
-        app: tectonic-identity
+        k8s-app: tectonic-identity
         component: identity
     spec:
       volumes:

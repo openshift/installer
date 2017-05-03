@@ -4,7 +4,7 @@ metadata:
   name: fluentd-aggregator
   namespace: logging
   labels:
-    app: fluentd-aggregator
+    k8s-app: fluentd-aggregator
     component: log-aggregator
 spec:
   replicas: 2
@@ -18,7 +18,7 @@ spec:
   template:
     metadata:
       labels:
-        app: fluentd-aggregator
+        k8s-app: fluentd-aggregator
     spec:
       containers:
       - name: fluentd-aggregator
