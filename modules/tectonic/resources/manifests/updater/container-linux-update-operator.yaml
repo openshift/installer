@@ -1,21 +1,25 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  labels:
-    app: container-linux-update-operator
   name: container-linux-update-operator
   namespace: tectonic-system
+  labels:
+    k8s-app: container-linux-update-operator
+    managed-by-channel-operator: "true"
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: container-linux-update-operator
   template:
     metadata:
       labels:
-        app: container-linux-update-operator
+        k8s-app: container-linux-update-operator
       name: container-linux-update-operator
     spec:
       containers:
       - name: update-operator
-        image: quay.io/coreos/container-linux-update-operator:v0.2.0
+        image: ${container_linux_update_operator_image}
         command:
         - "/bin/update-operator"
         env:

@@ -172,7 +172,7 @@ echo "Creating Tectonic Updater"
 fi
 
 echo "Creating Container Linux Updater"
-kubectl create -f container-linux-updater/deployment.yaml
+kubectl create -f updater/container-linux-updater-operator.yaml
 
 # wait for Tectonic pods
 wait_for_pods tectonic-system
