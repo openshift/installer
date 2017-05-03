@@ -28,6 +28,7 @@
       "subnet-19ef2650",
       "subnet-36d7e26e"
     ],
+    "tectonic_aws_region": "us-west-1",
     "tectonic_aws_extra_tags": {
       "test_tag": "testing"
     },
