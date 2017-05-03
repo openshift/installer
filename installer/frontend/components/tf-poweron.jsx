@@ -47,12 +47,7 @@ class TF_PowerOn extends React.Component {
 
   componentWillUpdate ({output}) {
     const node = this.outputNode;
-    if (this.state.showLogs || this.state.showLogs === null) {
-      this.shouldScroll = true;
-      return;
-    }
-
-    if (!node || output === this.props.output) {
+    if (!node || output === this.props.output || this.state.showLogs === false) {
       this.shouldScroll = false;
       return;
     }
@@ -62,7 +57,7 @@ class TF_PowerOn extends React.Component {
 
   componentDidUpdate () {
     if (this.shouldScroll && this.outputNode) {
-      this.outputNode.scrollTop = this.outputNode.scrollHeight - this.outputNode.clientHeight;
+      this.outputNode.scrollTop = this.outputNode.scrollHeight;
     }
   }
 
