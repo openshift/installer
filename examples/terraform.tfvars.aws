@@ -78,6 +78,11 @@ tectonic_aws_ssh_key = ""
 // This should not overlap with any other networks, such as a private datacenter connected via Direct Connect.
 tectonic_aws_vpc_cidr_block = "10.0.0.0/16"
 
+// (optional) This configures worker availability zones and their corresponding subnet CIDRs directly.
+// Example: `{ eu-west-1a = "10.0.64.0/20", eu-west-1b = "10.0.80.0/20" }`
+// Note that `tectonic_aws_az_count` must be unset if this is specified.
+// tectonic_aws_worker_custom_subnets = ""
+
 // Instance size for the worker node(s). Example: `t2.medium`.
 tectonic_aws_worker_ec2_type = "t2.medium"
 

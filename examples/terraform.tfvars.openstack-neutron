@@ -63,6 +63,9 @@ tectonic_license_path = ""
 // The number of master nodes to be created.
 tectonic_master_count = "1"
 
+// The DNS servers assigned to the generated OpenStack subnet resource.
+tectonic_openstack_dns_nameservers = ""
+
 // The ID of the network to be used as the external internet gateway as given in `openstack network list`.
 tectonic_openstack_external_gateway_id = ""
 

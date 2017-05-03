@@ -111,6 +111,9 @@ tectonic_pull_secret_path = ""
 // A CIDR notation IP range from which to assign service cluster IPs
 tectonic_service_cidr = "10.3.0.0/16"
 
+// SSH public key to use as an authorized key. Example: `"ssh-rsa AAAB3N..."`
+tectonic_ssh_authorized_key = ""
+
 // If set to true, a vanilla Kubernetes cluster will be deployed, omitting the tectonic assets.
 tectonic_vanilla_k8s = false
 
