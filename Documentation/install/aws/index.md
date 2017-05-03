@@ -18,13 +18,13 @@ Download the [Tectonic installer][latest-tectonic-release].
 ```bash
 wget https://releases.tectonic.com/tectonic-1.5.6-tectonic.1.tar.gz
 tar xzvf tectonic-1.5.6-tectonic.1.tar.gz
-cd tectonic/tectonic-installer
+cd tectonic
 ```
 
 Run the Tectonic Installer.
 
 ```bash
-./$PLATFORM/installer
+./tectonic-installer/$PLATFORM/installer
 ```
 
 Where $PLATFORM is one of: `linux`, `darwin` or `windows`.
