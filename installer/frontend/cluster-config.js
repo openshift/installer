@@ -259,7 +259,7 @@ export const toAWS_TF = (cc, FORMS) => {
 
   if (cc[EXTERNAL_ETCD_ENABLED]) {
     ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT]];
-  } else {
+  } else if (!cc[UPDATER_ENABLED]) {
     ret.variables.tectonic_aws_etcd_ec2_type = etcds[INSTANCE_TYPE];
     ret.variables.tectonic_aws_etcd_root_volume_iops = etcds[STORAGE_TYPE] === 'io1' ? etcds[STORAGE_IOPS] : undefined;
     ret.variables.tectonic_aws_etcd_root_volume_size = etcds[STORAGE_SIZE_IN_GIB];
