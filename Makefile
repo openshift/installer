@@ -15,12 +15,11 @@ all: apply
 $(INSTALLER_BIN):
 	make build -C $(TOP_DIR)/installer
 
-installer-env: $(INSTALLER_BIN) terraformrc.example	
+installer-env: $(INSTALLER_BIN) terraformrc.example
 	sed "s|<PATH_TO_INSTALLER>|$(INSTALLER_BIN)|g" terraformrc.example > .terraformrc
 
 localconfig:
 	mkdir -p $(BUILD_DIR)
-	touch $(BUILD_DIR)/terraform.tfvars
 
 $(BUILD_DIR)/.terraform:
 	cd $(BUILD_DIR) && $(TF_CMD) get $(TOP_DIR)/platforms/$(PLATFORM)
@@ -69,7 +68,6 @@ endif
 	@echo 'This document gives an overview of the variables used in the different platforms of the Tectonic SDK.' >> $@
 	terraform-docs --no-required markdown platforms/$(PLATFORM_DIR)/variables.tf >> $@
 
-.PHONY: examples
 examples: \
 	examples/terraform.tfvars.aws \
 	examples/terraform.tfvars.azure \
@@ -88,14 +86,15 @@ endif
 
 clean: destroy
 	rm -rf $(BUILD_DIR)
+	make clean -C $(TOP_DIR)/installer
 
 # This target is used by the GitHub PR checker to validate canonical syntax on all files.
 #
-structure-check: 
+structure-check:
 	$(eval FMT_ERR := $(shell terraform fmt -list -write=false .))
 	@if [ "$(FMT_ERR)" != "" ]; then echo "misformatted files (run 'terraform fmt .' to fix):" $(FMT_ERR); exit 1; fi
 
 canonical-syntax:
 	terraform fmt -list .
 
-.PHONY: make clean terraform terraform-dev structure-check canonical-syntax
+.PHONY: make clean terraform terraform-dev structure-check canonical-syntax examples
