@@ -24,7 +24,7 @@ Each platform entrypoint should be laid out under the `platforms` top-level dire
 Each platform should at minimum contain the following files:
 - `config.tf`: A symlink to the main config.tf file in the repo root.
 - `variables.tf`: Platform specific variable declararions. All should be namespaced as `tectonic_<PLATFORM_NAME>_<VAR_NAME>`
-- `terraform.tfvars.example`: An example file demonstrating how users can configure the variables for provisioning. Users must customize this file.
+- `terraform.tfvars.example`: An example file contained in the root of the repo which demonstrates how users can configure the variables for provisioning. Users must customize this file.
 - `README.md`: All platform related documentation to quickly get started and references to other docs.
 - `main.tf`: The main entrypoint. This should configure all modules and pass along common variables. Users may customize this file as needed.
 - `output.tf`: Contains all output variable declarations. These contain any generated output useful to users.

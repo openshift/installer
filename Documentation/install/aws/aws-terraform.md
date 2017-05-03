@@ -57,7 +57,7 @@ Next, specify the cluster configuration.
 
 ## Customize the deployment
 
-Customizations to the base installation live in `platforms/aws/terraform.tfvars.example`. Export a variable that will be your cluster identifier:
+Customizations to the base installation live in `examples/terraform.tfvars.aws`. Export a variable that will be your cluster identifier:
 
 ```bash
 $ export CLUSTER=my-cluster
