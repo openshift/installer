@@ -145,7 +145,7 @@ const getAMIs = (dispatch) => {
 // One-time fetch of facts from server. Abstracts getAMIs.
 // Guaranteed not to reject.
 export const loadFacts = (dispatch) => {
-  if (_.includes(window.config.platforms, 'aws')) {
+  if (_.includes(window.config.platforms, AWS_TF)) {
     return getAMIs(dispatch);
   }
   dispatch({type: loadFactsActionTypes.LOADED, payload: {}});
