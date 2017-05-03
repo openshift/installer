@@ -4,20 +4,17 @@ import { connect } from 'react-redux';
 
 import { commitToServer } from '../server';
 import { commitPhases } from '../actions';
-import { PLATFORM_TYPE } from '../cluster-config';
-import { AWS, BARE_METAL, isTerraform } from '../platforms';
 
 export const SubmitDefinition = connect(
   state => ({
     phase: state.commitState.phase,
     response: state.commitState.response,
     ready: state.cluster.ready,
-    platformType: state.clusterConfig[PLATFORM_TYPE],
   }),
   dispatch => ({
     onFinish: (dryRun=false) => dispatch(commitToServer(dryRun)),
   })
-)(({phase, platformType, response, ready, onFinish, navigatePrevious, navigateNext}) => {
+)(({phase, response, ready, onFinish, navigatePrevious, navigateNext}) => {
   let feature =
     <div className="wiz-giant-button-container">
       <button className="btn btn-primary wiz-giant-button"
@@ -65,15 +62,7 @@ export const SubmitDefinition = connect(
     hidden: phase !== commitPhases.FAILED,
   });
 
-  let msg;
-  if (isTerraform(platformType)) {
-    msg = <span>Congratulations! Your cluster has been defined and will be submitted to Terraform.</span>;
-  } else if (platformType === AWS) {
-    msg = <span>Congratulations! Your cluster has been defined and will be submitted to AWS.</span>;
-  } else if (platformType === BARE_METAL) {
-    msg = <span>Now that you've defined your cluster, it will be submitted to your <a href="https://github.com/coreos/matchbox/blob/master/Documentation/matchbox.md"
-             target="_blank">matchbox</a> service.</span>;
-  }
+  const msg = <span>Congratulations! Your cluster has been defined and will be submitted to Terraform.</span>;
 
   return (
     <div>
