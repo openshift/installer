@@ -640,7 +640,7 @@ hr.spacer {
 }
 
 .log-contents {
-  max-height: 500px;
+  height: 400px;
 }
 
 .log-contents__block {
