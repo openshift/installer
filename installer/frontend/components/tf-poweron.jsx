@@ -41,18 +41,23 @@ class TF_PowerOn extends React.Component {
 
   componentDidMount () {
     if (this.outputNode) {
-      this.outputNode.scrollTop = this.outputNode.scrollHeight - this.outputNode.clientHeight;
+      this.outputNode.scrollTop = this.outputNode.scrollHeight;
     }
   }
 
   componentWillUpdate ({output}) {
-    const node = this.outputNode;
-    if (!node || output === this.props.output || this.state.showLogs === false) {
+    if (output === this.props.output || this.state.showLogs === false) {
       this.shouldScroll = false;
       return;
     }
 
-    this.shouldScroll = node.scrollHeight - node.clientHeight <= node.scrollTop + 10;
+    const node = this.outputNode;
+    if (!node) {
+      // outputNode will exist once componentDidUpdate fires. Scroll to the bottom at that time.
+      this.shouldScroll = true;
+      return;
+    }
+    this.shouldScroll = node.scrollHeight - node.clientHeight <= node.scrollTop + 20;
   }
 
   componentDidUpdate () {
@@ -150,9 +155,7 @@ class TF_PowerOn extends React.Component {
                     <div className="log-pane__body">
                       <div className="log-area">
                         <div className="log-scroll-pane" ref={node => this.outputNode = node}>
-                          <div className="log-contents">
-                            <div className="log-contents__block">{output}</div>
-                          </div>
+                          <div className="log-contents">{output}</div>
                         </div>
                       </div>
                     </div>
@@ -164,6 +167,7 @@ class TF_PowerOn extends React.Component {
           </div>
         </div>
       </div>
+      <br />
       <div className="row">
         <div className="col-xs-6">
           <button className={classNames("btn btn-default", {disabled: terraformRunning})} onClick={() => this.retry()}>
@@ -183,7 +187,6 @@ class TF_PowerOn extends React.Component {
           </div>
         </div>
       }
-      <hr />
       <div className="row">
         <div className="col-xs-12">
         { error && <Alert severity="error">{error.toString()}</Alert> }
