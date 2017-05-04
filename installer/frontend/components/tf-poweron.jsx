@@ -10,7 +10,7 @@ import { AWS_DomainValidation } from './aws-domain-validation';
 import { ResetButton } from './reset-button';
 import { TFDestroy } from '../aws-actions';
 import { CLUSTER_NAME, PLATFORM_TYPE } from '../cluster-config';
-import { AWS_TF } from '../platforms';
+import { AWS_TF, BARE_METAL_TF } from '../platforms';
 import { commitToServer, observeClusterStatus } from '../server';
 
 const stateToProps = ({cluster, clusterConfig}) => {
@@ -100,15 +100,32 @@ class TF_PowerOn extends React.Component {
         </WaitingLi>
       );
     }
+    let platformMsg = <p>
+        Kubernetes is starting up. We're commiting your cluster details.
+        Grab some tea and sit tight. This process can take up to 20 minutes.
+        Status updates will appear below.
+      </p>;
+    if (platformType === BARE_METAL_TF) {
+      platformMsg = <div>
+        <div className="wiz-herotext">
+          <i className="fa fa-power-off wiz-herotext-icon"></i> Power on the nodes
+        </div>
+        <div className="form-group">
+          After powering up, your nodes will provision themselves automatically.
+          This process can take up to 30 minutes, while the following happens.
+        </div>
+        <div className="form-group">
+          <ul>
+            <li>Container Linux is downloaded and installed to disk (about 200 MB)</li>
+            <li>Cluster software is downloaded (about 500 MB)</li>
+            <li>One or two reboots may occur</li>
+            </ul>
+          </div>
+      </div>;
+    }
 
     return <div>
-      <div className="row">
-        <div className="col-xs-12">
-          Kubernetes is starting up. We're commiting your cluster details.
-          Grab some tea and sit tight. This process can take up to 20 minutes.
-          Status updates will appear below.
-        </div>
-      </div>
+      { platformMsg }
       <hr />
       <div className="row">
         <div className="col-xs-12">
