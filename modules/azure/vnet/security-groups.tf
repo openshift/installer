@@ -43,6 +43,6 @@ resource "azurerm_network_security_group" "cluster_default" {
   }
 
   tags {
-    KubernetesCluster = "${var.tectonic_cluster_name}"
+    "kubernetes.io/cluster/${var.tectonic_cluster_name}" = "owned"
   }
 }

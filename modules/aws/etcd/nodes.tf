@@ -41,7 +41,7 @@ resource "aws_instance" "etcd_node" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-etcd-${count.index}",
-      "KubernetesCluster", "${var.cluster_name}"
+      "kubernetes.io/cluster/${var.cluster_name}", "owned"
     ), var.extra_tags)}"
 
   root_block_device {

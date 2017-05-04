@@ -6,7 +6,7 @@ resource "azurerm_virtual_network" "tectonic_vnet" {
   location            = "${var.location}"
 
   tags {
-    KubernetesCluster = "${var.tectonic_cluster_name}"
+    "kubernetes.io/cluster/${var.tectonic_cluster_name}" = "owned"
   }
 }
 

@@ -4,7 +4,7 @@ resource "aws_route_table" "private_routes" {
 
   tags = "${merge(map(
       "Name", "private-${data.aws_availability_zones.azs.names[count.index]}",
-      "KubernetesCluster", "${var.cluster_name}"
+      "kubernetes.io/cluster/${var.cluster_name}", "shared"
     ), var.extra_tags)}"
 }
 
@@ -32,7 +32,7 @@ resource "aws_subnet" "worker_subnet" {
       "Name", "worker-${ "${length(var.worker_azs)}" > 0 ? 
     "${var.worker_azs[count.index]}" : 
     "${data.aws_availability_zones.azs.names[count.index]}" }",
-      "KubernetesCluster", "${var.cluster_name}",
+      "kubernetes.io/cluster/${var.cluster_name}", "shared",
       "kubernetes.io/role/internal-elb", ""
     ), var.extra_tags)}"
 }

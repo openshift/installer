@@ -21,7 +21,7 @@ resource "aws_elb" "api-internal" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-api-internal",
-      "KubernetesCluster", "${var.cluster_name}"
+      "kubernetes.io/cluster/${var.cluster_name}", "owned"
     ), var.extra_tags)}"
 }
 
@@ -68,7 +68,7 @@ resource "aws_elb" "api-external" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-api-external",
-      "KubernetesCluster", "${var.cluster_name}"
+      "kubernetes.io/cluster/${var.cluster_name}", "owned"
     ), var.extra_tags)}"
 }
 
@@ -115,7 +115,7 @@ resource "aws_elb" "console" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-console",
-      "KubernetesCluster", "${var.cluster_name}"
+      "kubernetes.io/cluster/${var.cluster_name}", "owned"
     ), var.extra_tags)}"
 }
 
