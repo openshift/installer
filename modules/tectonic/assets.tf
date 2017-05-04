@@ -29,6 +29,9 @@ resource "template_dir" "tectonic" {
     monitoring_version = "${var.versions["monitoring"]}"
     prometheus_version = "${var.versions["prometheus"]}"
     tectonic_version   = "${var.versions["tectonic"]}"
+    etcd_version       = "${var.versions["etcd"]}"
+
+    etcd_cluster_size = "${var.master_count > 2 ? 3 : 1}"
 
     license     = "${base64encode(file(var.license_path))}"
     pull_secret = "${base64encode(file(var.pull_secret_path))}"

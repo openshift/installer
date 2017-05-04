@@ -107,3 +107,8 @@ variable "experimental" {
   description = "If set to true, experimental Tectonic assets are being deployed."
   default     = false
 }
+
+variable "master_count" {
+  description = "The amount of master nodes present in the cluster."
+  type        = "string"
+}
