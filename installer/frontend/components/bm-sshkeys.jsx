@@ -24,8 +24,8 @@ const sshKeyForm = new Form(BM_SSH_KEY, [
 export const BM_SSHKeys = () => <div>
   <div className="form-group">
     Access to the nodes is intended for use by admins.
-    End users can run applications using the API, CLI and Tectonic
-    Console and typically don’t need SSH access.
+    End users can run applications using the API, CLI, and Tectonic
+    Console. They typically don’t need SSH access.
   </div>
   <Alert severity="info">
     The public key below will be added to all machines in this cluster.
