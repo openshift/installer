@@ -56,7 +56,7 @@ export const DRY_RUN = 'dryRun';
 export const ENTITLEMENTS = 'entitlements';
 export const PLATFORM_TYPE = 'platformType';
 export const PULL_SECRET = 'pullSecret';
-export const SSH_AUTHORIZED_KEYS = 'sshAuthorizedKeys';
+export const SSH_AUTHORIZED_KEY = 'sshAuthorizedKey';
 export const STS_ENABLED = 'sts_enabled';
 export const TECTONIC_LICENSE = 'tectonicLicense';
 export const UPDATER = 'updater';
@@ -82,6 +82,7 @@ export const AWS_VPC_FORM = 'aws_vpc';
 export const AWS_CONTROLLERS = 'aws_controllers';
 export const AWS_CLUSTER_INFO = 'aws_clusterInfo';
 export const AWS_WORKERS = 'aws_workers';
+export const BM_SSH_KEY = 'bm_sshKey';
 export const LICENSING = 'licensing';
 
 export const toVPCSubnet = (region, subnets, deselected) => {
@@ -177,12 +178,6 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [PLATFORM_TYPE]: defaultPlatformType,
   [PULL_SECRET]: '',
   [RETRY]: false, // whether we're retrying a terraform apply
-  [SSH_AUTHORIZED_KEYS]: [
-    {
-      id: 'initial-key',
-      value: '',
-    },
-  ],
   [STS_ENABLED]: false,
   [TECTONIC_LICENSE]: '',
   [UPDATER]: {
@@ -293,7 +288,9 @@ export const toAWS_TF = (cc, FORMS) => {
   return ret;
 };
 
-export const toBaremetal_TF = (cc) => {
+export const toBaremetal_TF = (cc, FORMS) => {
+  const sshKey = FORMS[BM_SSH_KEY].getData(cc);
+
   const ret = {
     clusterKind: 'tectonic-metal',
     dryRun: cc[DRY_RUN],
@@ -319,7 +316,7 @@ export const toBaremetal_TF = (cc) => {
       tectonic_metal_matchbox_ca: cc[BM_MATCHBOX_CA],
       tectonic_metal_matchbox_client_cert: cc[BM_MATCHBOX_CLIENT_CERT],
       tectonic_metal_matchbox_client_key: cc[BM_MATCHBOX_CLIENT_KEY],
-      tectonic_ssh_authorized_key: cc[SSH_AUTHORIZED_KEYS].map(k => k.key).filter(k => k && k.length)[0],
+      tectonic_ssh_authorized_key: sshKey[SSH_AUTHORIZED_KEY],
       tectonic_cluster_cidr: cc[POD_CIDR],
       tectonic_service_cidr: cc[SERVICE_CIDR],
       tectonic_dns_name: cc[CLUSTER_SUBDOMAIN],
