@@ -24,7 +24,7 @@ A minimum of 3 machines are required to run Tectonic.
 
 **Provisioner node**
 
-A provisioner node runs the matchbox network boot and provisioning service, along with PXE services if you don't already run them elsewhere. You may use Container Linux or any Linux distribution for this node. It provisions nodes, but does not join Tectonic clusters.
+A provisioner node runs the matchbox network boot and provisioning service, along with PXE services if you don't already run them elsewhere. These are long running infrastructure services. You may use Container Linux or any Linux distribution for this node. It provisions nodes, but does not join Tectonic clusters.
 
 A Tectonic cluster consists of two types of nodes:
 
@@ -44,170 +44,42 @@ This guide requires familiarity with PXE booting, the ability to configure netwo
 
 ### matchbox
 
-`matchbox` is a service for network booting and provisioning bare-metal nodes into CoreOS Container Linux clusters. `matchbox` should be installed on a provisioner node to serve configs during boot.
+Matchbox is an open-source service for on-premise environments that matches bare-metal machines to profiles in order to PXE boot Container Linux clusters and automate cluster provisioning. Matchbox provides an authenticated API for clients like Tectonic Installer and Terraform. Profiles will define the kernel, initrd, iPXE config, and Container Linux config each node should use.
 
-The commands to set up `matchbox` should be performed on the provisioner node.
-
-For more information about `matchbox`, reference the [`matchbox` documentation][matchbox].
-
-### Download latest release
-
-Download the [latest Tectonic release][latest-tectonic-release] to the provisioner node and extract it.
+Download a Matchbox v0.6+ [release](https://github.com/coreos/matchbox/releases).
 
 ```sh
-wget https://releases.tectonic.com/tectonic-1.5.6-tectonic.1.tar.gz
-tar xzvf tectonic-1.5.6-tectonic.1.tar.gz
-cd tectonic/matchbox
+$ wget https://github.com/coreos/matchbox/releases/download/v0.6.0/matchbox-v0.6.0-linux-amd64.tar.gz
+$ wget https://github.com/coreos/matchbox/releases/download/v0.6.0/matchbox-v0.6.0-linux-amd64.tar.gz.asc
 ```
 
-### Install
-
-Install `matchbox` on the provisioner node. You need only choose one of the following options.
-
-#### CoreOS Container Linux
-
-On a CoreOS Container Linux provisioner, run `matchbox` with the provided systemd unit.
+Untar the release.
 
 ```sh
-$ sudo cp contrib/systemd/matchbox-for-tectonic.service /etc/systemd/system/matchbox.service
+$ tar xzvf matchbox-v0.6.0-linux-amd64.tar.gz
+$ cd matchbox-v0.6.0-linux-amd64
 ```
 
-#### Generic Linux
+[Install Matchbox](https://github.com/coreos/matchbox/blob/master/Documentation/deployment.md) on a server or Kubernetes cluster that your bare-metal machines can reach using the guides:
 
-Pre-built binaries are available for generic Linux distributions. Copy the `matchbox` static binary to an appropriate location on the provisioner node.
+* Installing on [CoreOS](https://github.com/coreos/matchbox/blob/master/Documentation/deployment.md#coreos)
+* Installing on [RPM-based](https://github.com/coreos/matchbox/blob/master/Documentation/deployment.md#rpm-based-distro) distros
+* Installing on generic [Linux](https://github.com/coreos/matchbox/blob/master/Documentation/deployment.md#generic-linux)
+* Installing on [Kubernetes](https://github.com/coreos/matchbox/blob/master/Documentation/deployment.md#kubernetes)
+* Running with [rkt](https://github.com/coreos/matchbox/blob/master/Documentation/deployment.md#rkt) or [docker](https://github.com/coreos/matchbox/blob/master/Documentation/deployment.md#docker)
 
-```sh
-$ cd tectonic/matchbox
-$ sudo cp matchbox /usr/local/bin
-$ sudo chmod +x /usr/local/bin/matchbox
-```
+Be sure to enable the gRPC API and use the TLS generation script to create server and client certificates. This can be done following the "Customization" and "Generate TLS" sections. Save the `ca.crt`, `client.crt`, and `client.key` on your local machine (e.g. `~/.matchbox`).
 
-##### Set Up User/Group
-
-The `matchbox` service should be run by a non-root user with access to the `matchbox` data directory (`/var/lib/matchbox`). Create a `matchbox` user and group.
-
-```sh
-$ sudo useradd -U matchbox
-$ sudo mkdir -p /var/lib/matchbox/assets
-$ sudo chown -R matchbox:matchbox /var/lib/matchbox
-```
-
-##### Create systemd service
-
-Copy the provided `matchbox` systemd unit file.
-
-```sh
-$ sudo cp contrib/systemd/matchbox-local.service /etc/systemd/system/matchbox.service
-```
-
-#### RPM-based distribution
-
-On an RPM-based provisioner, install the `matchbox` RPM from the Copr [repository][copr-repo] using `dnf`.
-
-```sh
-dnf copr enable @CoreOS/matchbox
-dnf install matchbox
-```
-
-### Customization
-
-Customize `matchbox` by editing the systemd unit or adding a systemd dropin. Find the complete set of `matchbox` flags and environment variables at [config][matchbox-config].
-
-    sudo systemctl edit matchbox
-
-By default, the read-only HTTP machine endpoint will be exposed on port **8080**. Enable the gRPC API to allow clients with a TLS client certificate to change machine configs. The Tectonic [Installer][tectonic-installer] uses this API.
-
-```ini
-# /etc/systemd/system/matchbox.service.d/override.conf
-[Service]
-Environment="MATCHBOX_ADDRESS=0.0.0.0:8080"
-Environment="MATCHBOX_RPC_ADDRESS=0.0.0.0:8081"
-Environment="MATCHBOX_LOG_LEVEL=debug"
-```
-
-Customize `matchbox` to suit your preferences.
-
-### Firewall
-
-Allow your port choices on the provisioner's firewall so the clients can access the service. Here are the commands for those using `firewalld`:
-
-```sh
-$ sudo firewall-cmd --zone=MYZONE --add-port=8080/tcp --permanent
-$ sudo firewall-cmd --zone=MYZONE --add-port=8081/tcp --permanent
-```
-
-### Generate TLS credentials
-
-The `matchbox` API allows client apps such as the Tectonic Installer to manage how machines are provisioned. TLS credentials are needed for client authentication and to establish a secure communication channel.
-
-If your organization manages public key infrastructure and a certificate authority, create a server certificate and key for the `matchbox` service and a client certificate and key.
-
-Otherwise, generate a self-signed `ca.crt`, a server certificate  (`server.crt`, `server.key`), and client credentials (`client.crt`, `client.key`) with the `scripts/tls/cert-gen` script. Export the DNS name or IP (discouraged) of the provisioner node.
-
-```sh
-$ cd scripts/tls
-# DNS or IP Subject Alt Names where matchbox can be reached
-$ export SAN=DNS.1:matchbox.example.com,IP.1:192.168.1.42
-$ ./cert-gen
-```
-
-Place the TLS credentials in the default location:
-
-```sh
-$ sudo mkdir -p /etc/matchbox
-$ sudo cp ca.crt server.crt server.key /etc/matchbox/
-```
-
-The `client.crt`, `client.key`, and `ca.crt` generated here will be used later to authenticate Tectonic Installer with Matchbox. Tectonic installer will go on to create a second set of certificates for use in the cluster. These two distinct sets of certificates have different purposes.
-
-### Start matchbox
-
-Start the `matchbox` service and enable it if you'd like it to start on every boot.
-
-```sh
-$ sudo systemctl daemon-reload
-$ sudo systemctl start matchbox
-$ sudo systemctl enable matchbox
-```
-
-### Verify
-
-Verify the matchbox service is running and can be reached by nodes (those being provisioned). It is recommended that you define a DNS name for this purpose (see [Networking](#3-networking)).
-
-```sh
-$ systemctl status matchbox
-$ dig matchbox.example.com
-```
-
-Verify you receive a response from the HTTP and API endpoints.
-
-```sh
-$ curl http://matchbox.example.com:8080
-matchbox
-
-$ cd tectonic/matchbox
-$ openssl s_client -connect matchbox.example.com:8081 -CAfile /etc/matchbox/ca.crt -cert scripts/tls/client.crt -key scripts/tls/client.key
-CONNECTED(00000003)
-depth=1 CN = fake-ca
-verify return:1
-depth=0 CN = fake-server
-verify return:1
----
-Certificate chain
- 0 s:/CN=fake-server
-   i:/CN=fake-ca
----
-....
-```
+[Verify](https://github.com/coreos/matchbox/blob/master/Documentation/deployment.md#verify) the Matchbox service is running.
 
 ### Download CoreOS Container Linux
 
-`matchbox` can serve CoreOS Container Linux images to reduce bandwidth usage and increase the speed of CoreOS Container Linux PXE boots and installs to disk. Tectonic Installer will use this feature.
+Matchbox can serve CoreOS Container Linux images to reduce bandwidth usage and increase the speed of CoreOS Container Linux PXE boots and installs to disk. Tectonic Installer detects the highest version number available in the Matchbox cache.
 
 Download a recent CoreOS Container Linux stable [release][coreos-release] with signatures.
 
 ```sh
-$ ./scripts/get-coreos stable 1298.5.0 .     # note the "." 3rd argument
+$ ./scripts/get-coreos stable 1353.7.0 .     # note the "." 3rd argument
 ```
 
 Move the images to `/var/lib/matchbox/assets`,
@@ -220,7 +92,7 @@ $ sudo cp -r coreos /var/lib/matchbox/assets
 $ tree /var/lib/matchbox/assets
 /var/lib/matchbox/assets/
 ├── coreos
-│   └── 1235.6.0
+│   └── 1353.7.0
 │       ├── CoreOS_Image_Signing_Key.asc
 │       ├── coreos_production_image.bin.bz2
 │       ├── coreos_production_image.bin.bz2.sig
@@ -241,14 +113,27 @@ $ curl http://matchbox.example.com:8080/assets/coreos/SOME-VERSION/
 
 A bare-metal Tectonic cluster requires PXE infrastructure, which we'll setup next.
 
-### Set up DHCP, TFTP, and DNS services
+### PXE-enabled Network
 
-Set up DHCP, TFTP, and DNS services with your network administrator. Review [network setup][matchbox-net-setup] to find the right approach for your PXE environment. At a high level, your goals are to:
+Tectonic works with many on-premise network setups. Matchbox does not seek to be the DHCP server, TFTP server, or DNS server for the network. Instead, it serves iPXE scripts as the entrypoint for provisioning network booted machines. At a high level, the goals are:
 
 * Chainload PXE firmwares to iPXE
-* Point iPXE client machines to the `matchbox` iPXE HTTP endpoint (e.g. `http://matchbox.example.com:8080/boot.ipxe`)
+* Point iPXE client machines to the Matchbox iPXE endpoint (e.g. `http://matchbox.example.com:8080/boot.ipxe`)
 
-CoreOS provides a [dnsmasq][matchbox-dnsmasq] container, if you wish to use rkt or Docker.
+In the simplest case, an iPXE-enabled network can chain to Matchbox,
+
+```
+# /var/www/html/ipxe/default.ipxe
+chain http://matchbox.foo:8080/boot.ipxe
+```
+
+Read [network-setup](https://github.com/coreos/matchbox/blob/master/Documentation/network-setup.md) for the complete range of options. Network admins have a great amount of flexibility:
+
+* May keep using existing DHCP, TFTP, and DNS services
+* May configure subnets, architectures, or specific machines to delegate to matchbox
+* May place matchbox behind a menu entry (timeout and default to matchbox)
+
+If you've never set up a PXE-enabled network before, check out the [quay.io/coreos/dnsmasq](https://quay.io/repository/coreos/dnsmasq) container image [copy-paste examples](https://github.com/coreos/matchbox/blob/master/Documentation/network-setup.md#coreosdnsmasq) and see the section about [proxy-DHCP](https://github.com/coreos/matchbox/blob/master/Documentation/network-setup.md#proxy-dhcp).
 
 ### DNS
 
@@ -272,44 +157,32 @@ Providing a single entry for Tectonic DNS implies the console will be inaccessib
 
 <h2 id="4-tectonic-installer"> 4. Tectonic Installer </h2>
 
-The Tectonic Installer is a graphical application run on your laptop to create Tectonic clusters. It authenticates to `matchbox` via its API.
+Make sure a current version of either the Google Chrome or Mozilla Firefox web browser is set as the default browser on the workstation where Installer will run.
 
-### Requirements
-
-Your laptop running the Tectonic installer app must be able to access your `matchbox` instance. You will need the `client.crt` and `client.key` credentials created when setting up `matchbox` to complete the flow, as well as the `ca.crt`.
-
-The commands to run the Tectonic Installer should be performed on your laptop.
-
-### Download latest release
-
-Download the [latest Tectonic release][latest-tectonic-release] to your laptop and and extract it.
+Download the [Tectonic Installer][latest-tectonic-release].
 
 ```sh
 wget https://releases.tectonic.com/tectonic-1.5.6-tectonic.1.tar.gz
 tar xzvf tectonic-1.5.6-tectonic.1.tar.gz
-cd tectonic
+cd tectonic/tectonic-installer
 ```
 
-### Run Tectonic Installer
-
-Make sure a current version of either the Google Chrome or Mozilla Firefox web browser is set as the default browser on the workstation where Installer will run.
-
-Run the Tectonic Installer that matches your platform (`linux`, `darwin`, `windows`):
+Run the Tectonic Installer that matches your platform (`linux`, `darwin`):
 
 ```sh
-$ ./tectonic-installer/linux/installer
+./$PLATFORM/installer
 ```
+
+A browser window should open to begin the GUI installation process. When prompted for Matchbox credentials, insert the `client.crt`, `client.key`, and `ca.crt` created previously. You will need to enter machine MAC addresses, domain names, and your SSH public key as well.
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
     <img src="../../img/installer-start.png">
-    <div class="co-m-screenshot-caption">Starting the Tectonic Installer for bare metal</div>
+    <div class="co-m-screenshot-caption">Starting the Tectonic Installer for bare-metal</div>
   </div>
 </div>
 
-A tab should open in your browser. Follow the instructions to enter information needed for provisioning. You will need to enter machine MAC addresses, domain names, and your SSH public key.
-
-Then, you'll be prompted to power on your machines via IPMI or by pressing the power button and guided through the rest of the bring-up. If needed, you can use the generated [assets][assets-zip] bundle kubeconfig to troubleshoot.
+Once Terraform apply starts, power on your machines via IPMI or by pressing the power button.
 
 <h2 id="5-tectonic-console"> 5. Tectonic Console </h2>
 
