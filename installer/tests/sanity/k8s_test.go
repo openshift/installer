@@ -312,7 +312,7 @@ func waitForAPIServer(t *testing.T) <-chan struct{} {
 
 func getAPIServers(client *kubernetes.Clientset) (*v1.PodList, error) {
 	const (
-		apiServerSelector   = "component=kube-apiserver"
+		apiServerSelector   = "k8s-app=kube-apiserver"
 		kubeSystemNamespace = "kube-system"
 	)
 	pods, err := client.Core().Pods(kubeSystemNamespace).List(v1.ListOptions{LabelSelector: apiServerSelector})
