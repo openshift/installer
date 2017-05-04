@@ -13,6 +13,7 @@ const (
 	ServiceCIDR = "10.3.0.0/24"
 	apiOffset   = 1
 	dnsOffset   = 10
+	etcdOffset  = 15
 )
 
 // APIServiceIP picks a default IP from the given service CIDR range.
@@ -23,6 +24,11 @@ func APIServiceIP(serviceCIDR string) (net.IP, error) {
 // DNSServiceIP picks a default IP from the given service CIDR range.
 func DNSServiceIP(serviceCIDR string) (net.IP, error) {
 	return offsetServiceIP(serviceCIDR, dnsOffset)
+}
+
+// EtcdServiceIP picks a default IP from the given service CIDR range.
+func EtcdServiceIP(serviceCIDR string) (net.IP, error) {
+	return offsetServiceIP(serviceCIDR, etcdOffset)
 }
 
 func offsetServiceIP(serviceCIDR string, offset int) (net.IP, error) {

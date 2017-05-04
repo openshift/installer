@@ -390,6 +390,14 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 		}
 	}
 
+	ip, ok = input.Variables["tectonic_kube_etcd_service_ip"].(string)
+	if !ok || len(ip) == 0 {
+		input.Variables["tectonic_kube_etcd_service_ip"], err = defaults.EtcdServiceIP(serviceCidr)
+		if err != nil {
+			return nil, ctxh.NewAppError(err, fmt.Sprintf("Error calculating etcd service IP: %v", err.Error()), http.StatusInternalServerError)
+		}
+	}
+
 	if len(input.AdminPassword) > 0 {
 		passwordHash, err := bcrypt.GenerateFromPassword(input.AdminPassword, bcryptCost)
 		if err != nil {
