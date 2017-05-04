@@ -5,7 +5,7 @@ metadata:
   namespace: kube-system
   labels:
     tier: control-plane
-    component: kube-apiserver
+    k8s-app: kube-apiserver
 spec:
   updateStrategy:
     rollingUpdate:
@@ -15,7 +15,7 @@ spec:
     metadata:
       labels:
         tier: control-plane
-        component: kube-apiserver
+        k8s-app: kube-apiserver
       annotations:
         checkpointer.alpha.coreos.com/checkpoint: "true"
         scheduler.alpha.kubernetes.io/critical-pod: ""

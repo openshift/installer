@@ -138,7 +138,7 @@ metadata:
   namespace: kube-system
   labels:
     tier: node
-    app: flannel
+    k8s-app: flannel
 data:
   cni-conf.json: |
     {

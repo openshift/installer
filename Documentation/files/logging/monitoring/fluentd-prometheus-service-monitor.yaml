@@ -4,12 +4,12 @@ metadata:
   name: fluentd
   namespace: logging
   labels:
-    app: fluentd
+    k8s-app: fluentd
 spec:
   jobLabel: app
   selector:
     matchExpressions:
-    - {key: app, operator: In, values: [fluentd, fluentd-aggregator]}
+    - {key: k8s-app, operator: In, values: [fluentd, fluentd-aggregator]}
   namespaceSelector:
     any: false
     matchNames:

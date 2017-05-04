@@ -4,7 +4,7 @@ metadata:
   name: fluentd-config
   namespace: logging
   labels:
-    app: fluentd
+    k8s-app: fluentd
 data:
   fluentd.conf: |
     # Use the config specified by the FLUENTD_CONFIG environment variable, or

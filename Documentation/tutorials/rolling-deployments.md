@@ -38,7 +38,7 @@ kind: Deployment
 metadata:
   name: simple-deployment
   labels:
-    app: simple
+    k8s-app: simple
 spec:
   replicas: 3
   revisionHistoryLimit: 2
@@ -50,7 +50,7 @@ spec:
   template:
     metadata:
       labels:
-        app: simple
+        k8s-app: simple
     spec:
       containers:
         - name: nginx
@@ -107,7 +107,7 @@ kind: Deployment
 metadata:
   name: simple-deployment
   labels:
-    app: simple
+    k8s-app: simple
 spec:
   replicas: 3
   revisionHistoryLimit: 2
@@ -119,7 +119,7 @@ spec:
   template:
     metadata:
       labels:
-        app: simple
+        k8s-app: simple
     spec:
       containers:
         - name: nginx

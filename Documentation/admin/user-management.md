@@ -213,7 +213,7 @@ spec:
   template:
     metadata:
       labels:
-        app: nginx
+        k8s-app: nginx
     spec:
       containers:
       - name: nginx

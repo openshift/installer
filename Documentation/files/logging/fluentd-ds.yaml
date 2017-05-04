@@ -4,7 +4,7 @@ metadata:
   name: fluentd
   namespace: logging
   labels:
-    app: fluentd
+    k8s-app: fluentd
     component: logging-agent
 spec:
   minReadySeconds: 10
@@ -15,7 +15,7 @@ spec:
   template:
     metadata:
       labels:
-        app: fluentd
+        k8s-app: fluentd
     spec:
       containers:
       - name: fluentd

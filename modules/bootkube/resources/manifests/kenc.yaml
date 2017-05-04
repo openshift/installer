@@ -5,13 +5,13 @@ metadata:
   namespace: kube-system
   labels:
     tier: control-plane
-    component: kube-etcd-network-checkpointer
+    k8s-app: kube-etcd-network-checkpointer
 spec:
   template:
     metadata:
       labels:
         tier: control-plane
-        component: kube-etcd-network-checkpointer
+        k8s-app: kube-etcd-network-checkpointer
       annotations:
         checkpointer.alpha.coreos.com/checkpoint: "true"
     spec:
