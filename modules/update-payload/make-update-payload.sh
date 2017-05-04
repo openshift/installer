@@ -33,6 +33,7 @@ deployments=(
   "tectonic-channel-operator.yaml"
   "kube-version-operator.yaml"
   "tectonic-prometheus-operator.yaml"
+  "container-linux-update-operator.yaml"
 )
 appversions=(
   "app-version-kubernetes.yaml"
