@@ -7,6 +7,10 @@ metadata:
     tier: control-plane
     component: kube-apiserver
 spec:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
       labels:
