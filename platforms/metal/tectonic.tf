@@ -67,6 +67,7 @@ module "tectonic" {
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "HostPort"
   experimental      = "${var.tectonic_experimental}"
+  master_count      = "${length(var.tectonic_metal_controller_names)}"
 }
 
 data "archive_file" "assets" {
