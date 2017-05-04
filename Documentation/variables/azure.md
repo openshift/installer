@@ -9,7 +9,7 @@ This document gives an overview of the variables used in the different platforms
 | tectonic_azure_config_version | (internal) This declares the version of the Azure configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
 | tectonic_azure_create_dns_zone | If set to true, create an Azure DNS zone | string | `true` |
 | tectonic_azure_dns_resource_group |  | string | `tectonic-dns-group` |
-| tectonic_azure_etcd_vm_size | Instance size for the etcd node(s). Example: Standard_DS2. | string | `Standard_DS2_v2` |
+| tectonic_azure_etcd_vm_size | Instance size for the etcd node(s). Example: Standard_DS2_v2. | string | `Standard_DS2_v2` |
 | tectonic_azure_external_rsg_name | Pre-existing resource group to use as parent for cluster resources. | string | `` |
 | tectonic_azure_external_vnet_id | ID of an existing Virtual Network to launch nodes into. Example: VNet1. Leave blank to create a new Virtual Network. | string | `` |
 | tectonic_azure_external_vnet_name | Pre-existing virtual network to create cluster into. | string | `` |
