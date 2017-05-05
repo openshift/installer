@@ -101,8 +101,10 @@ pipeline {
     always {
       // Destroy all clusters within workspace
       checkout scm
+      unstash 'installer'
       sh '''
-        for CLUSTER in ${WORKSPACE}/build; do
+        for c in ${WORKSPACE}/build/*; do
+          export CLUSTER=$(basename ${c})
           echo "Destroying ${CLUSTER}..."
           make destroy || true
         done
