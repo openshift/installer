@@ -9,7 +9,7 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 
-	"github.com/coreos/tectonic-installer/installer/binassets"
+	"github.com/coreos/tectonic-installer/installer/assets"
 )
 
 func serveIndex(platforms []string, devMode bool) http.Handler {
@@ -24,8 +24,8 @@ func serveIndex(platforms []string, devMode bool) http.Handler {
 		log.Errorf("Error marshalling config JSON: %v", err)
 	}
 
-	indexTmpl := mustTemplateAsset("frontend/index.html.tmpl")
-	b, err := renderTemplate(indexTmpl, struct {
+	indexTmpl := assets.MustTemplateAsset("frontend/index.html.tmpl")
+	b, err := assets.RenderTemplate(indexTmpl, struct {
 		Config string
 	}{
 		string(jsonData),
@@ -49,7 +49,7 @@ func serveIndex(platforms []string, devMode bool) http.Handler {
 func servePublicAsset(w http.ResponseWriter, r *http.Request) {
 	path := r.URL.Path
 	assetName := "frontend/" + path
-	asset, err := binassets.Asset(assetName)
+	asset, err := assets.Asset(assetName)
 	log.Infof("Serving asset %s", assetName)
 	if err != nil {
 		http.Error(w, "no such asset", http.StatusNotFound)

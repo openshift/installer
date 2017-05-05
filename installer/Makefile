@@ -24,8 +24,8 @@ bin/%/installer: $(GO_FILES) binassets/assets.go
 backend: binassets/assets.go
 	GOOS=$(OS) go build -o bin/$(OS)/installer -ldflags $(LD_FLAGS) $(REPO)/cmd/installer
 
-binassets/assets.go: frontend bin/go-bindata $(shell find assets -type f)
-	./bin/go-bindata -pkg binassets -o binassets/assets.go -prefix assets assets/...
+assets/bindata.go: bin/go-bindata
+	@./bin/go-bindata -pkg assets -o assets/bindata.go -ignore=bindata.go -ignore=doc.go -ignore=assets.go -prefix assets assets/...
 
 .PHONY: frontend
 frontend:
@@ -81,6 +81,6 @@ bin/sanity:
 clean:
 	$(MAKE) -C frontend clean
 	rm -rf bin/
-	rm -f binassets/assets.go
+	rm -f assets/bindata.go
 	rm -rf assets/frontend/scripts
 	rm -rf .workspace/
