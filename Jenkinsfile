@@ -79,14 +79,6 @@ pipeline {
             ln -sf ${WORKSPACE}/test/aws.tfvars ${WORKSPACE}/build/${CLUSTER}/terraform.tfvars
 
             make plan
-
-            # always cleanup cluster
-            shutdown()
-            {
-              make destroy
-            }
-            trap shutdown EXIT
-
             make apply
 
             # TODO: replace in Go
@@ -107,6 +99,16 @@ pipeline {
   }
   post {
     always {
+      // Destroy all clusters within workspace
+      checkout scm
+      sh '''
+        for CLUSTER in ${WORKSPACE}/build; do
+          echo "Destroying ${CLUSTER}..."
+          make destroy || true
+        done
+      '''
+
+      // Cleanup workspace
       deleteDir()
     }
   }
