@@ -1,9 +1,11 @@
+import _ from 'lodash';
 import Baby from 'babyparse';
 import classNames from 'classnames';
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { configActionTypes, csvActionTypes } from '../actions';
+import { Alert } from './alert';
+import { configActionTypes } from '../actions';
 import { validate } from '../validate';
 import { readFile } from '../readfile';
 import {
@@ -13,7 +15,13 @@ import {
   BM_WORKERS_COUNT,
 } from '../cluster-config';
 
-import { Input, markIDDirty } from './ui';
+import { WithClusterConfig, NumberInput, Input } from './ui';
+
+const TOO_MANY_MASTERS = 9;
+const TOO_MANY_WORKERS = 1000;
+
+const validateMasters = v => validate.int({min: 1, max: TOO_MANY_MASTERS})(v) || validate.isOdd(v);
+const validateWorkers = validate.int({min: 1, max: TOO_MANY_WORKERS});
 
 const countBy = (collection, f) => {
   const ret = new Map();
@@ -31,126 +39,108 @@ const countBy = (collection, f) => {
 const macFieldID = (label, index) => `nodetable:${label}:${index}:mac`;
 const nameFieldID = (label, index) => `nodetable:${label}:${index}:name`;
 
-const BulkUpload = connect(
-  ({csvs}) => {
-    return {csvs};
-  },
-  (dispatch) => {
-    return {
-      updateCSV: (file, name, contents, columns) => {
-        dispatch({
-          type: csvActionTypes.SET,
-          payload: {
-            subject: file,
-            value: {name, contents, columns},
-          },
-        });
-      },
-      read: (file, blob) => {
-        readFile(blob)
-        .then(result => {
-          const contents = Baby.parse(result);
-          dispatch({
-            type: csvActionTypes.SET,
-            payload: {
-              subject: file,
-              value: {
-                name: blob.name,
-                contents: contents,
-                columns: {mac: 0, name: 1},
-              },
-            },
-          });
-        })
-        .catch((msg) => {
-          console.error(msg);
-        });
-      },
-      dirtyAllFields: (label, nodes) => {
-        nodes.map((_,i) => {
-          const macID = macFieldID(label, i);
-          const nameID = nameFieldID(label, i);
-          markIDDirty(dispatch, macID);
-          markIDDirty(dispatch, nameID);
-        });
-      },
-      cancel: (file) => {
-        dispatch({
-          type: csvActionTypes.DELETE,
-          payload: {
-            subject: file,
-          },
-        });
-      },
+// TODO (ggreer) make a real modal with real modal classes
+class BulkUpload extends React.Component {
+  constructor (props) {
+    super(props);
+    this.state = {
+      name: null,
+      macCol: 0,
+      nameCol: 1,
+      csv: null,
     };
   }
-)(({file, csvs, cancel, close, dirtyAllFields, label, read, updateCSV, updateNodes}) => {
-  const csv = csvs[file];
 
-  const onUpload = (e) => {
+  handleUpload (e) {
     const blob = e.target.files.item(0);
-    read(file, blob);
-  };
+    readFile(blob)
+    .then(result => {
+      const csv = Baby.parse(result, {delimiter: ','});
+      this.setState({
+        name: blob.name,
+        macCol: 0,
+        nameCol: 1,
+        csv,
+      });
+    })
+    .catch((msg) => {
+      console.error(msg);
+    });
+  }
 
-  const onCancel = () => {
-    cancel(file);
-    close();
-  };
+  handleSelectMACColumn (e) {
+    this.setState({
+      macCol: parseInt(e.target.value, 10),
+    });
+  }
 
-  const onChangeFile = () => {
-    cancel(file);
-  };
+  handleSelectNameColumn (e) {
+    this.setState({
+      nameCol: parseInt(e.target.value, 10),
+    });
+  }
 
-  const onDone = () => {
-    const rows = csv.contents.data.slice(1).filter(row => {
+  cancel () {
+    this.props.close();
+  }
+
+  handleDone () {
+    const {nameCol, macCol, csv} = this.state;
+    const rows = csv.data.slice(1).filter(row => {
       // BabyParse will append a single [""] row to a well-formed CSV,
       // the following happens to fix that, and forgive other
       // possible CSV weirdnesses.
-      return row.length > Math.max(csv.columns.name, csv.columns.mac);
+      return row.length > Math.max(nameCol, macCol);
     });
     const nodes = rows.map(row => {
       return {
-        name: row[csv.columns.name],
-        mac: row[csv.columns.mac],
+        name: row[nameCol],
+        mac: row[macCol],
       };
     });
-    updateNodes(nodes, nodes.length);
-    dirtyAllFields(label, nodes);
-    cancel(file);
-    close();
-  };
+    this.props.updateNodes(nodes, nodes.length);
+    this.props.close();
+  }
 
-  const onSelectMACColumn = (e) => {
-    const cols = Object.assign({}, csv.columns, {
-      mac: parseInt(e.target.value, 10),
-    });
-    updateCSV(file, csv.name, csv.contents, cols);
-  };
 
-  const onSelectNameColumn = (e) => {
-    const cols = Object.assign({}, csv.columns, {
-      name: parseInt(e.target.value, 10),
-    });
-    updateCSV(file, csv.name, csv.contents, cols);
-  };
+  render () {
+    const { csv, name, nameCol, macCol } = this.state;
 
-  let body;
-  if (csv) {
-    const options = csv.contents.data[0].map((txt, ix) => {
-      return <option value={ix} key={`${ix}:${txt}`}>{txt}</option>;
-    });
+    let body;
+    if (!csv) {
+      body = <div>
+        <div>
+          Select a CSV file to populate the node addresses
+        </div>
+        <div className="wiz-minimodal__body">
+          <input type="file" onChange={e => this.handleUpload(e)} />
+          <div className="wiz-upload-csv-settings">
+            <p>After uploading, you can select which columns correspond to the required data.</p>
+          </div>
+        </div>
+      </div>;
+    } else if (csv.errors.length) {
+      body = <Alert severity="error">
+        Error parsing CSV:
+        <ul>
+          {csv.errors.map((e, i) => <li key={i}>{e.message} on line {e.row}.</li>)}
+        </ul>
+      </Alert>;
+    } else {
+      const options = csv.data[0].map((txt, ix) => {
+        return <option value={ix} key={`${ix}:${txt}`}>{txt}</option>;
+      });
 
-    body = (
-      <div>
+      body = <div>
         <div className="row">
           <div className="col-xs-3">
             <label>CSV File</label>
           </div>
           <div className="col-xs-6">
-            {csv.name}
+            {name}
           </div>
           <div className="col-xs-3">
-            <a onClick={onChangeFile}>change file</a>
+            <a onClick={() => this.cancel()}>change file</a>
           </div>
         </div>
         <div className="wiz-minimodal__body">
@@ -162,8 +152,8 @@ const BulkUpload = connect(
               </div>
               <div className="col-xs-6">
                 <select id="mac-column"
-                        onChange={onSelectMACColumn}
-                        defaultValue={csv.columns.mac}>
+                        onChange={e => this.handleSelectMACColumn(e)}
+                        defaultValue={macCol}>
                   {options}
                 </select>
               </div>
@@ -174,46 +164,30 @@ const BulkUpload = connect(
               </div>
               <div className="col-xs-6">
                 <select id="name-column"
-                        onChange={onSelectNameColumn}
-                        defaultValue={csv.columns.name}>
+                        onChange={e => this.handleSelectNameColumn(e)}
+                        defaultValue={nameCol}>
                   {options}
                 </select>
               </div>
             </div>
           </div>
         </div>
-      </div>
-    );
-  } else {
-    body = (
-      <div>
-        <div>
-          Select a CSV file to populate the node addresses
-        </div>
-        <div className="wiz-minimodal__body">
-          <input type="file" onChange={onUpload} />
-          <div className="wiz-upload-csv-settings">
-            <p>After uploading, you can select which columns correspond to the required data.</p>
-          </div>
+      </div>;
+    }
+
+    const doneClasses = classNames('btn btn-primary', {disabled: !csv});
+
+    return (
+      <div className="wiz-minimodal">
+        {body}
+        <div className="wiz-minimodal__actions">
+          <button type="button" className={doneClasses} onClick={e => this.handleDone(e)}>Done</button>
+          <button className="btn btn-link" onClick={() => this.cancel()}>Cancel</button>
         </div>
       </div>
     );
   }
-
-  const doneClasses = classNames('btn btn-primary', {
-    disabled: !csv,
-  });
-
-  return (
-    <div className="wiz-minimodal">
-      {body}
-      <div className="wiz-minimodal__actions">
-        <button type="button" className={doneClasses} onClick={onDone}>Done</button>
-        <button className="btn btn-link" onClick={onCancel}>Cancel</button>
-      </div>
-    </div>
-  );
-});
+}
 
 // Table of input fields for manual entry of node information
 const NodeTable = ({count, theseNodes, allNodes, label, updateNodes}) => {
@@ -290,10 +264,7 @@ class NodeForm extends React.Component {
 
   render() {
     if (this.state.bulkUpload) {
-      return (
-        <BulkUpload close={() => this.setState({bulkUpload: false})}
-                    {...this.props} />
-      );
+      return <BulkUpload close={() => this.setState({bulkUpload: false})} updateNodes={this.props.updateNodes} />;
     }
 
     return (
@@ -330,8 +301,34 @@ export const BM_Controllers = connect(
     };
   }
 )(({count, theseNodes, allNodes, updateNodes}) => {
+  if (count > TOO_MANY_MASTERS) {
+    count = TOO_MANY_MASTERS;
+  }
+  if (count < 1 || !_.isInteger(count)) {
+    count = 1;
+  }
   return (
     <div>
+      <div className="form-group">
+        Master nodes run essential cluster services and don't run end-user apps.
+      </div>
+      <div className="form-group">
+        <div className="row">
+          <div className="col-xs-3">
+            <label htmlFor={BM_MASTERS_COUNT}>Masters</label>
+          </div>
+          <div className="col-xs-9">
+            <WithClusterConfig field={BM_MASTERS_COUNT} validator={validateMasters}>
+              <NumberInput
+                id={BM_MASTERS_COUNT}
+                className="wiz-super-short-input"
+                min="1"
+                max={TOO_MANY_MASTERS} />
+            </WithClusterConfig>
+            <p className="text-muted">An odd number of masters is required.</p>
+          </div>
+        </div>
+      </div>
       <div className="form-group">
         Enter the MAC addresses of the nodes you'd like to use as masters,
         and the host names you'll use to refer to them.
@@ -348,6 +345,9 @@ export const BM_Controllers = connect(
   );
 });
 BM_Controllers.canNavigateForward = ({clusterConfig}) => {
+  if (validateMasters(clusterConfig[BM_MASTERS_COUNT])) {
+    return false;
+  }
   const masters = clusterConfig[BM_MASTERS];
   const mastersOkSet = masters.filter((m) => {
     return m && !validate.MAC(m.mac) && !validate.host(m.name);
@@ -402,6 +402,27 @@ export const BM_Workers = connect(
   return (
     <div>
       <div className="form-group">
+        Worker nodes run your end-user's apps. The cluster software automatically shares load
+        between these nodes.
+      </div>
+      <div className="form-group">
+        <div className="row">
+          <div className="col-xs-3">
+            <label htmlFor={BM_WORKERS_COUNT}>Workers</label>
+          </div>
+          <div className="col-xs-9">
+            <WithClusterConfig field={BM_WORKERS_COUNT} validator={validateWorkers}>
+              <NumberInput
+                id={BM_WORKERS_COUNT}
+                className="wiz-super-short-input"
+                min="1"
+                max={TOO_MANY_WORKERS} />
+            </WithClusterConfig>
+            <p className="text-muted">Workers can be added and removed at any time.</p>
+          </div>
+        </div>
+      </div>
+      <div className="form-group">
         Enter the MAC addresses of the nodes you'd like to use as workers,
         and the host names you'll use to refer to them.
       </div>
@@ -417,6 +438,9 @@ export const BM_Workers = connect(
   );
 });
 BM_Workers.canNavigateForward = ({clusterConfig}) => {
+  if (validateWorkers(clusterConfig[BM_WORKERS_COUNT])) {
+    return false;
+  }
   const workers = clusterConfig[BM_WORKERS];
   const workersOk = workers.filter((m) => {
     return m && !validate.MAC(m.mac) && !validate.host(m.name);
