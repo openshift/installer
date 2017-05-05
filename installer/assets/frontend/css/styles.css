@@ -310,6 +310,8 @@ input[type="text"].wiz-node-field {
 .wiz-wizard__nav__link:hover,
 .wiz-wizard__nav__link:focus {
   color: inherit;
+  text-align: left;
+  width: 100%;
 }
 
 .wiz-wizard__nav__link:focus {
