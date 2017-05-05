@@ -69,4 +69,4 @@ For those new to Tectonic and Kubernetes, the [usage guide][usage] contains tuto
 [install-aws-requirements-evpc]: requirements.md#using-an-existing-vpc
 [usage]: ../../tutorials/index.md
 [latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.5.7-tectonic.1.tar.gz
-[install-aws-troubleshooting]: troubleshooting.md
+[install-aws-troubleshooting]: ../../troubleshooting/faq.md

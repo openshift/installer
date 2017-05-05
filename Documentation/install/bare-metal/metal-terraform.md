@@ -12,31 +12,37 @@ Following this guide will deploy a Tectonic cluster on virtual or physical hardw
 * DNS records for the Kubernetes controller(s) and Tectonic Ingress worker(s). See [DNS](https://coreos.com/tectonic/docs/latest/install/bare-metal#networking).
 * Machines with BIOS options set to boot from disk normally, but PXE prior to installation.
 * Machines with known MAC addresses and stable domain names.
-* make,go,npm - This guide uses `make`, `go1.8`, and `npm` to build the Tectonic Installer.
 * Tectonic Account - Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
+* `ipmitool` or `virt-install` will be used to actually boot the machines.
 
 ## Getting Started
 
-First, clone the Tectonic Installer repository in a convenient location:
+### Download and extract Tectonic Installer
 
-```
-$ git clone https://github.com/coreos/tectonic-installer.git
-$ cd tectonic-installer
-```
+Open a new terminal, and run the following commands to download and extract Tectonic Installer.
 
-Build the Tectonic Installer:
-
-```
-$ (cd installer && make build)
+```bash
+$ curl -O https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz # download
+$ tar xzvf tectonic-1.6.2-tectonic.1.tar.gz # extract the tarball
+$ cd tectonic
 ```
 
-Initialize the Terraform configuration with Installer's location and export the path to that configuration:
+### Initialize and configure Terraform
 
+Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `darwin`, `linux`, or `windows`.
+
+```bash
+$ export INSTALLER_PATH=$(pwd)/tectonic-installer/darwin/installer # Edit the platform name.
+$ export PATH=$PATH:$(pwd)/tectonic-installer/darwin # Put the `terraform` binary in our PATH
 ```
-$ INSTALLER_PATH=$(pwd)/installer/bin/linux/installer # Edit the platform name.
+
+Make a copy of the Terraform configuration file for our system. Do not share this configuration file as it is specific to your machine.
+
+```bash
 $ sed "s|<PATH_TO_INSTALLER>|$INSTALLER_PATH|g" terraformrc.example > .terraformrc
 $ export TERRAFORM_CONFIG=$(pwd)/.terraformrc
 ```
+
 
 Now we're ready to specify our cluster configuration.
 
@@ -120,4 +126,4 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 [register]: https://account.coreos.com/signup/summary/tectonic-2016-12
 [account]: https://account.coreos.com
 [vars]: ../../variables/config.md
-[troubleshooting]: ../../troubleshooting.md
+[troubleshooting]: ../../troubleshooting/faq.md

@@ -1,17 +1,13 @@
 # Install Tectonic on AWS with Terraform
 
-Following this guide will deploy a Tectonic cluster within your AWS account. This document is primarily meant for users to bring up the tectonic installer manually. To install Tectonic on AWS with a graphical installer refer [this][aws-gui].
+Use this guide to manually install a Tectonic cluster on an AWS account. To install Tectonic on AWS with a graphical installer instead, refer to the [AWS graphical installer documentation][aws-gui].
 
 Generally, the AWS platform templates adhere to the standards defined by the project [conventions][conventions] and [generic platform requirements][generic]. This document aims to document the implementation details specific to the AWS platform.
-
-<p style="background:#d9edf7; padding: 10px;" class="text-info"><strong>Alpha:</strong> These modules and instructions are currently considered alpha. See the <a href="../../platform-lifecycle.md">platform life cycle</a> for more details.</p>
 
 ## Prerequsities
 
 * **DNS**: Ensure that the DNS zone is already created and available in Route 53 for the account. For example if the `tectonic_base_domain` is set to `kube.example.com` a Route 53 zone must exist for this domain and the AWS nameservers must be configured for the domain.
 * **Tectonic Account**: Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
-* **Make, go, yarn**: This guide uses `make`, `go1.8` and `yarn` to build the Tectonic Installer.
-* **Terraform**: Install [Terraform][terraform] v0.8.8 on your system.
 
 ## Getting Started
 
@@ -21,15 +17,22 @@ Open a new terminal, and run the following commands to download and extract Tect
 
 ```bash
 $ curl -O https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz # download
-tar xzvf tectonic-1.6.2-tectonic.1.tar.gz # extract the tarball
+$ tar xzvf tectonic-1.6.2-tectonic.1.tar.gz # extract the tarball
+$ cd tectonic
 ```
 
 ### Initialize and configure Terraform
 
-Initialize the Terraform configuration with Installer's location and export the path to that configuration:
+Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `darwin`, `linux`, or `windows`. We also need to add the `terraform` binary to our `PATH`.
 
 ```bash
-$ INSTALLER_PATH=$(pwd)/installer/bin/linux/installer # Edit the platform name.
+$ export INSTALLER_PATH=$(pwd)/tectonic-installer/darwin/installer # Edit the platform name.
+$ export PATH=$PATH:$(pwd)/tectonic-installer/darwin # Put the `terraform` binary in our PATH
+```
+
+Make a copy of the Terraform configuration file for the system. Do not share this configuration file as it is specific to the machine.
+
+```bash
 $ sed "s|<PATH_TO_INSTALLER>|$INSTALLER_PATH|g" terraformrc.example > .terraformrc
 $ export TERRAFORM_CONFIG=$(pwd)/.terraformrc
 ```
@@ -92,7 +95,7 @@ This should run for a little bit, and when complete, your Tectonic cluster shoul
 
 The Tectonic Console should be up and running after the containers have downloaded. You can access it at the DNS name configured in your variables file.
 
-Inside of the `/generated` folder you should find any credentials, including the CA if generated, and a kubeconfig. You can use this to control the cluster with `kubectl`:
+Inside of the `/generated` folder you should find any credentials, including the CA if generated, and a `kubeconfig`. You can use this to control the cluster with `kubectl`:
 
 ```bash
 $ export KUBECONFIG=generated/auth/kubeconfig
@@ -117,7 +120,7 @@ See the [troubleshooting][troubleshooting] document for workarounds for bugs tha
 [register]: https://account.coreos.com/signup/summary/tectonic-2016-12
 [account]: https://account.coreos.com
 [vars]: ../../variables/config.md
-[troubleshooting]: ../../troubleshooting.md
+[troubleshooting]: ../../troubleshooting/faq.md
 [aws-vars]: ../../variables/aws.md
 [aws-gui]: https://coreos.com/tectonic/docs/latest/install/aws/index.html
 [terraform]: https://www.terraform.io/downloads.html
