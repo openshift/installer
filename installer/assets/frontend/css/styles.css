@@ -605,6 +605,12 @@ hr.spacer {
   margin-bottom: 30px;
 }
 
+span.spacer {
+  border-left: 1px solid #ddd;
+  margin: 0 15px;
+  height: 100%;
+}
+
 .deselect {
   display: inline-block;
   margin-right: 5px;
@@ -645,8 +651,3 @@ hr.spacer {
   white-space: pre;
   width: 0;
 }
-
-.spacer-right {
-  padding-right: 15px;
-}
-
