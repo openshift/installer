@@ -99,17 +99,29 @@ pipeline {
   }
   post {
     always {
-      // Destroy all clusters within workspace
       checkout scm
-      unstash 'installer'
-      sh '''
-        for c in ${WORKSPACE}/build/*; do
-          export CLUSTER=$(basename ${c})
-          echo "Destroying ${CLUSTER}..."
-          make destroy || true
-        done
-      '''
 
+      withCredentials([file(credentialsId: 'tectonic-license', variable: 'TF_VAR_tectonic_pull_secret_path'),
+                       file(credentialsId: 'tectonic-pull', variable: 'TF_VAR_tectonic_license_path'),
+                       [
+                         $class: 'UsernamePasswordMultiBinding',
+                         credentialsId: 'tectonic-aws',
+                         usernameVariable: 'AWS_ACCESS_KEY_ID',
+                         passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                       ]
+                       ]) {
+        // Destroy all clusters within workspace
+        unstash 'installer'
+        sh '''
+          for c in ${WORKSPACE}/build/*; do
+            export CLUSTER=$(basename ${c})
+            export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
+
+            echo "Destroying ${CLUSTER}..."
+            make destroy || true
+          done
+        '''
+      }
       // Cleanup workspace
       deleteDir()
     }
