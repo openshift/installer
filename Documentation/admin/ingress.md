@@ -85,13 +85,13 @@ metadata:
   name: production-ingress
   namespace: production
   labels:
-    app: ingress
+    k8s-app: ingress
 spec:
   replicas: 2
   template:
     metadata:
       labels:
-        app: ingress
+        k8s-app: ingress
     spec:
       containers:
         - name: nginx-ingress-lb

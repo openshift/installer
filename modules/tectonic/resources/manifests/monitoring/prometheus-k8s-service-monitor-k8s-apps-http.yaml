@@ -4,7 +4,7 @@ metadata:
   name: k8s-apps-http
   namespace: tectonic-system
   labels:
-    k8s-apps: http
+    k8s-app: http
 spec:
   jobLabel: k8s-app
   selector:

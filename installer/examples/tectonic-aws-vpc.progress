@@ -1,7 +1,6 @@
 {
   "clusterConfig": {
-    "platformType": "aws",
-    "aws_kms": "arn:aws:kms:us-west-1:477645798544:key/thekey",
+    "platformType": "aws-tf",
     "aws_ssh": "some-ssh-key", 
     "aws_etcds-numberOfInstances": 3,
     "aws_etcds-instanceType": "t2.large",
@@ -45,7 +44,7 @@
     "channelToUse": "stable",
     "externalETCDClient": "",
     "externalETCDEnabled": false,
-    "updater_enabled": true,
+    "updater_enabled": false,
     "tectonicLicense": "<TECTONIC_LICENSE>",
     "pullSecret": "<TECTONIC_PULL_SECRET>",
     "adminEmail": "admin@example.com",

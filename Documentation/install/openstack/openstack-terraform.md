@@ -70,7 +70,7 @@ $ export OS_REGION_NAME=
 
 ## Customize the deployment
 
-Customizations to the base installation live in `platforms/openstack/<flavor>/terraform.tfvars.example`. Export a variable that will be your cluster identifier:
+Customizations to the base installation live in `examples/terraform.tfvars.<flavor>`. Export a variable that will be your cluster identifier:
 
 ```
 $ export CLUSTER=my-cluster
@@ -138,7 +138,7 @@ metadata:
   namespace: kube-system
   labels:
     tier: node
-    app: flannel
+    k8s-app: flannel
 data:
   cni-conf.json: |
     {

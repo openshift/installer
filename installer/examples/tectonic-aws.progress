@@ -1,7 +1,6 @@
 {
   "clusterConfig": {
-    "platformType": "aws",
-    "aws_kms": "arn:aws:kms:us-west-1:477645798544:key/thekey",
+    "platformType": "aws-tf",
     "aws_ssh": "some-ssh-key", 
     "aws_etcds-numberOfInstances": 3,
     "aws_etcds-instanceType": "t2.large",
@@ -23,7 +22,7 @@
     "aws_workers-storageType": "io1",
     "aws_workers-storageIOPS": 1500,
     "podCIDR": "10.2.0.0/16",
-    "serviceCIDR": "10.3.0.0/24",
+    "serviceCIDR": "10.3.0.0/16",
     "extra": {
         "awsHostedZoneId": {
             "zoneToName": {
@@ -53,7 +52,6 @@
         "key": "test_tag",
         "value": "testing"
       }
-    ],
-    "updater": {}
+    ]
   }
 }

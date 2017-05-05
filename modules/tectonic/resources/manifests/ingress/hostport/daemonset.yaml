@@ -4,14 +4,18 @@ metadata:
   name: tectonic-ingress-controller
   namespace: tectonic-system
   labels:
-    app: tectonic-lb
+    k8s-app: tectonic-lb
     component: ingress-controller
     type: nginx
 spec:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
       labels:
-        app: tectonic-lb
+        k8s-app: tectonic-lb
         component: ingress-controller
         type: nginx
     spec:

@@ -9,7 +9,7 @@ resource "aws_route_table" "default" {
 
   tags = "${merge(map(
       "Name", "public",
-      "KubernetesCluster", "${var.cluster_name}"
+      "kubernetes.io/cluster/${var.cluster_name}", "shared"
     ), var.extra_tags)}"
 }
 
@@ -42,7 +42,7 @@ resource "aws_subnet" "master_subnet" {
       "Name", "master-${ "${length(var.master_azs)}" > 0 ? 
      "${var.master_azs[count.index]}" : 
      "${data.aws_availability_zones.azs.names[count.index]}" }",
-      "KubernetesCluster", "${var.cluster_name}"
+      "kubernetes.io/cluster/${var.cluster_name}", "shared"
     ), var.extra_tags)}"
 }
 
@@ -61,4 +61,7 @@ resource "aws_nat_gateway" "nat_gw" {
   count         = "${var.external_vpc_id == "" ? min(var.master_az_count, var.worker_az_count) : 0}"
   allocation_id = "${aws_eip.nat_eip.*.id[count.index]}"
   subnet_id     = "${aws_subnet.master_subnet.*.id[count.index]}"
+
+  # TODO (sym3tri): Trying to prevent test flakes related to the `allocation_id` line above. May not be required.
+  depends_on = ["aws_eip.nat_eip"]
 }

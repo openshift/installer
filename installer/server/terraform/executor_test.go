@@ -52,8 +52,14 @@ func TestMain(m *testing.M) {
 // worked (State/Status), and then create a new executor at the path of the
 // existing one and verify the state is shared.
 func TestExecutorSimple(t *testing.T) {
+	tmpDir, err := ioutil.TempDir("", "tectonic")
+	if err != nil {
+		t.Logf("Failed to create temporary directory: %s", err)
+		t.FailNow()
+	}
+
 	// Create an executor.
-	ex, err := NewExecutor()
+	ex, err := NewExecutor(tmpDir)
 	if err == ErrBinaryNotFound {
 		t.Skip("TerraForm not found, skipping")
 		return
@@ -98,7 +104,7 @@ func TestExecutorSimple(t *testing.T) {
 	assert.NotZero(t, len(outputBytes))
 
 	// Creates a new executor at the same existing one.
-	ex2, err := NewExecutorFromPath(ex.WorkingDirectory())
+	ex2, err := NewExecutor(ex.WorkingDirectory())
 	assert.Nil(t, err)
 	assert.NotNil(t, ex2)
 
@@ -111,8 +117,14 @@ func TestExecutorSimple(t *testing.T) {
 // TestExecutorMissingVar executes TerraForm apply with missing variables and
 // ensures it failed.
 func TestExecutorMissingVar(t *testing.T) {
+	tmpDir, err := ioutil.TempDir("", "tectonic")
+	if err != nil {
+		t.Logf("Failed to create temporary directory: %s", err)
+		t.FailNow()
+	}
+
 	// Create an executor.
-	ex, err := NewExecutor()
+	ex, err := NewExecutor(tmpDir)
 	if err == ErrBinaryNotFound {
 		t.Skip("TerraForm not found, skipping")
 		return
@@ -135,7 +147,7 @@ func TestExecutorMissingVar(t *testing.T) {
 	// Wait for its termination.
 	select {
 	case <-done:
-	case <-time.After(1 * time.Second):
+	case <-time.After(10 * time.Second):
 		assert.FailNow(t, "TerraForm apply timed out")
 	}
 

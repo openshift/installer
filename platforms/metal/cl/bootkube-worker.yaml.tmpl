@@ -1,17 +1,6 @@
 ---
 systemd:
   units:
-    - name: etcd-member.service
-      enable: true
-      dropins:
-        - name: 40-etcd-cluster.conf
-          contents: |
-            [Service]
-            Environment="ETCD_IMAGE_TAG={{.etcd_image_tag}}"
-            ExecStart=
-            ExecStart=/usr/lib/coreos/etcd-wrapper gateway start \
-              --listen-addr=127.0.0.1:2379 \
-              --endpoints={{.etcd_endpoints}}
     - name: docker.service
       enable: true
     - name: locksmithd.service
@@ -38,11 +27,26 @@ systemd:
         ExecStart=/bin/sh -c 'while ! /usr/bin/grep '^[^#[:space:]]' /etc/resolv.conf > /dev/null; do sleep 1; done'
         [Install]
         RequiredBy=kubelet.service
+    - name: kubelet-env.service
+      enable: true
+      contents: |
+        [Unit]
+        Description=Determine the Kubelet Image Version
+        ConditionPathExists=!/etc/kubernetes/kubelet.env
+        [Service]
+        ExecStartPre=/bin/mkdir -p /etc/kubernetes
+        ExecStartPre=/usr/bin/bash -c "docker run --rm -v /etc/kubernetes/kubeconfig:/kubeconfig {{.kube_version_image}} --kubeconfig=/kubeconfig > /etc/kubernetes/kube.version"
+        ExecStart=/usr/bin/bash -c "echo KUBELET_IMAGE_URL={{.kubelet_image_url}} > /etc/kubernetes/kubelet.env; echo KUBELET_IMAGE_TAG=$(tr '+' '_' < /etc/kubernetes/kube.version) >> /etc/kubernetes/kubelet.env; rm /etc/kubernetes/kube.version"
+        Restart=on-failure
+        RestartSec=10
+        [Install]
+        WantedBy=multi-user.target
     - name: kubelet.service
       contents: |
         [Unit]
         Description=Kubelet via Hyperkube ACI
         [Service]
+        EnvironmentFile=/etc/kubernetes/kubelet.env
         Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
           --volume=resolv,kind=host,source=/etc/resolv.conf \
           --mount volume=resolv,target=/etc/resolv.conf \
@@ -50,7 +54,6 @@ systemd:
           --mount volume=var-lib-cni,target=/var/lib/cni \
           --volume var-log,kind=host,source=/var/log \
           --mount volume=var-log,target=/var/log"
-        EnvironmentFile=/etc/kubernetes/kubelet.env
         ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
         ExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d
         ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets
@@ -81,13 +84,12 @@ systemd:
 
 storage:
   files:
-    - path: /etc/kubernetes/kubelet.env
+    - path: /etc/kubernetes/.empty
       filesystem: root
       mode: 0644
       contents:
         inline: |
-          KUBELET_IMAGE_URL={{.kubelet_image_url}}
-          KUBELET_IMAGE_TAG={{.kubelet_image_tag}}
+          empty
     - path: /etc/hostname
       filesystem: root
       mode: 0644

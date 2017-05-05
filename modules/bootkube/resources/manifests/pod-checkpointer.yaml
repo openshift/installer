@@ -5,13 +5,17 @@ metadata:
   namespace: kube-system
   labels:
     tier: control-plane
-    component: pod-checkpointer
+    k8s-app: pod-checkpointer
 spec:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
       labels:
         tier: control-plane
-        component: pod-checkpointer
+        k8s-app: pod-checkpointer
       annotations:
         checkpointer.alpha.coreos.com/checkpoint: "true"
     spec:

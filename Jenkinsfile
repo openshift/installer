@@ -69,9 +69,6 @@ pipeline {
             # s3 buckets require lowercase names
             export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
 
-            # AWS specific configuration
-            export AWS_REGION="us-west-2"
-
             # make core utils accessible to make
             export PATH=/bin:${PATH}
 
@@ -82,20 +79,51 @@ pipeline {
             ln -sf ${WORKSPACE}/test/aws.tfvars ${WORKSPACE}/build/${CLUSTER}/terraform.tfvars
 
             make plan
-
-            # always cleanup cluster
-            shutdown()
-            {
-              make destroy
-            }
-            trap shutdown EXIT
-
             make apply
+
+            # TODO: replace in Go
+            CONFIG=${WORKSPACE}/build/${CLUSTER}/terraform.tfvars
+            MASTER_COUNT=$(grep tectonic_master_count ${CONFIG} | awk -F "=" '{gsub(/"/, "", $2); print $2}')
+            WORKER_COUNT=$(grep tectonic_worker_count ${CONFIG} | awk -F "=" '{gsub(/"/, "", $2); print $2}')
+
+            export NODE_COUNT=$(( ${MASTER_COUNT} + ${WORKER_COUNT} ))
+
+            export TEST_KUBECONFIG=${WORKSPACE}/build/${CLUSTER}/generated/auth/kubeconfig
+            installer/bin/sanity -test.v -test.parallel=1
             '''
             }
           }
         )
       }
+    }
+  }
+  post {
+    always {
+      checkout scm
+
+      withCredentials([file(credentialsId: 'tectonic-license', variable: 'TF_VAR_tectonic_pull_secret_path'),
+                       file(credentialsId: 'tectonic-pull', variable: 'TF_VAR_tectonic_license_path'),
+                       [
+                         $class: 'UsernamePasswordMultiBinding',
+                         credentialsId: 'tectonic-aws',
+                         usernameVariable: 'AWS_ACCESS_KEY_ID',
+                         passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                       ]
+                       ]) {
+        // Destroy all clusters within workspace
+        unstash 'installer'
+        sh '''
+          for c in ${WORKSPACE}/build/*; do
+            export CLUSTER=$(basename ${c})
+            export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
+
+            echo "Destroying ${CLUSTER}..."
+            make destroy || true
+          done
+        '''
+      }
+      // Cleanup workspace
+      deleteDir()
     }
   }
 }

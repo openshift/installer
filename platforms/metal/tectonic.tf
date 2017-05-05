@@ -29,7 +29,7 @@ module "bootkube" {
   oidc_groups_claim   = "groups"
   oidc_client_id      = "tectonic-kubectl"
 
-  etcd_endpoints   = ["127.0.0.1:2379"]
+  etcd_endpoints   = ["127.0.0.1"]
   etcd_ca_cert     = ""
   etcd_client_cert = ""
   etcd_client_key  = ""
@@ -67,6 +67,7 @@ module "tectonic" {
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "HostPort"
   experimental      = "${var.tectonic_experimental}"
+  master_count      = "${length(var.tectonic_metal_controller_names)}"
 }
 
 data "archive_file" "assets" {

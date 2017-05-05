@@ -19,7 +19,7 @@ kind: Deployment
 metadata:
   name: cookies
   labels:
-    app: simple
+    k8s-app: simple
 spec:
   replicas: 3
   strategy:
@@ -30,7 +30,7 @@ spec:
   template:
     metadata:
       labels:
-        app: cookies
+        k8s-app: cookies
     spec:
       containers:
         - name: cookies-container

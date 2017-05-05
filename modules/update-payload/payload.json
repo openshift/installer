@@ -1,0 +1,239 @@
+{
+  "version": "1.6.2-tectonic.0",
+  "deployments": [
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "k8s-app": "tectonic-channel-operator",
+          "managed-by-channel-operator": "true"
+        },
+        "name": "tectonic-channel-operator",
+        "namespace": "tectonic-system"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "k8s-app": "tectonic-channel-operator"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "k8s-app": "tectonic-channel-operator",
+              "tectonic-app-version-name": "tectonic-cluster"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "CLUSTER_ID",
+                    "valueFrom": {
+                      "configMapKeyRef": {
+                        "key": "clusterID",
+                        "name": "tectonic-config"
+                      }
+                    }
+                  }
+                ],
+                "image": "quay.io/coreos/tectonic-channel-operator:15c001bd7c008a04394390d08ac71046e723ac48",
+                "name": "tectonic-channel-operator",
+                "resources": {
+                  "limits": {
+                    "cpu": "20m",
+                    "memory": "50Mi"
+                  },
+                  "requests": {
+                    "cpu": "20m",
+                    "memory": "50Mi"
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "mountPath": "/etc/ssl/certs",
+                    "name": "certs"
+                  }
+                ]
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "coreos-pull-secret"
+              }
+            ],
+            "restartPolicy": "Always",
+            "volumes": [
+              {
+                "hostPath": {
+                  "path": "/usr/share/ca-certificates"
+                },
+                "name": "certs"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "k8s-app": "kube-version-operator",
+          "managed-by-channel-operator": "true"
+        },
+        "name": "kube-version-operator",
+        "namespace": "tectonic-system"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "k8s-app": "kube-version-operator"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "k8s-app": "kube-version-operator",
+              "tectonic-app-version-name": "kubernetes"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "image": "quay.io/coreos/kube-version-operator:7da46d189c36092f43d07ca381a61897402fa13c",
+                "name": "kube-version-operator"
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "coreos-pull-secret"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "k8s-app": "tectonic-prometheus-operator",
+          "managed-by-channel-operator": "true"
+        },
+        "name": "tectonic-prometheus-operator",
+        "namespace": "tectonic-system"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "k8s-app": "tectonic-prometheus-operator"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "k8s-app": "tectonic-prometheus-operator",
+              "tectonic-app-version-name": "tectonic-monitoring"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "args": [
+                  "-logtostderr=true",
+                  "-v=4"
+                ],
+                "image": "quay.io/coreos/tectonic-prometheus-operator:v1.1.0",
+                "name": "tectonic-prometheus-operator",
+                "resources": {
+                  "limits": {
+                    "cpu": "20m",
+                    "memory": "50Mi"
+                  },
+                  "requests": {
+                    "cpu": "20m",
+                    "memory": "50Mi"
+                  }
+                }
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "coreos-pull-secret"
+              }
+            ],
+            "restartPolicy": "Always",
+            "terminationGracePeriodSeconds": 30
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "k8s-app": "container-linux-update-operator",
+          "managed-by-channel-operator": "true"
+        },
+        "name": "container-linux-update-operator",
+        "namespace": "tectonic-system"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "k8s-app": "container-linux-update-operator"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "k8s-app": "container-linux-update-operator"
+            },
+            "name": "container-linux-update-operator"
+          },
+          "spec": {
+            "containers": [
+              {
+                "command": [
+                  "/bin/update-operator"
+                ],
+                "env": [
+                  {
+                    "name": "POD_NAMESPACE",
+                    "valueFrom": {
+                      "fieldRef": {
+                        "fieldPath": "metadata.namespace"
+                      }
+                    }
+                  }
+                ],
+                "image": "quay.io/coreos/container-linux-update-operator:v0.2.0",
+                "name": "update-operator"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "desiredVersions": [
+    {
+      "name": "kubernetes",
+      "version": "1.6.2+tectonic.0"
+    },
+    {
+      "name": "tectonic-monitoring",
+      "version": "1.1.0"
+    }
+  ]
+}

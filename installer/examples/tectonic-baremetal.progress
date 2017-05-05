@@ -23,32 +23,7 @@
     "osToUse": "1235.9.0",
     "podCIDR": "10.2.0.0/16",
     "serviceCIDR": "10.3.0.0/24",
-    "sshAuthorizedKeys": [
-      {
-        "id": "initial-key",
-        "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCt3BebCHqnSsgpLjo4kVvyfY/z2BS8t27r/7du+O2pb4xYkr7n+KFpbOz523vMTpQ+o1jY4u4TgexglyT9nqasWgLOvo1qjD1agHme8LlTPQSk07rXqOB85Uq5p7ig2zoOejF6qXhcc3n1c7+HkxHrgpBENjLVHOBpzPBIAHkAGaZcl07OCqbsG5yxqEmSGiAlh/IiUVOZgdDMaGjCRFy0wk0mQaGD66DmnFc1H5CzcPjsxr0qO65e7lTGsE930KkO1Vc+RHCVwvhdXs+c2NhJ2/3740Kpes9n1/YullaWZUzlCPDXtRuy6JRbFbvy39JUgHWGWzB3d+3f8oJ/N4qZ cardno:000603633110"
-      },
-      {
-        "id": "ssh-key-0",
-        "key": "ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBCsNcSZ4/U5fxyPs67kP994oLEnP3dUpLC5+M508wCvxb0OvlKDWdqQYuu2mi2S1Xdg0arLkJHS0hnVaFqHWVA8="
-      },
-      {
-        "id": "ssh-key-1",
-        "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDe1O2SEdDL/7+pUaD2rFLQbsXHR7KI/xzi3RwHKmJfw/1GEZRCkVYZYZboxZjcPcxpzUAJdJKNu/WJRBokDkzTIWpw8WhuKiAHYIST1+Rq/mmItaLTJzJXmfa2osYs/XClXvfxPsV0bEZallh9DUGkGML/VZS2yRBVyfs1w4mAoN3+5nIWtna2vyIHVAQgNZ+wX2qDfn2IuB6Y+Mu4P3AMnliV3HBszCrHzPRF7Je5vJdTGKMNKehOrX3Dk8nc4PN1iotcbTAbnKlWG0QTQhKTV4X9Xn1kpbgPDehuB13Qkhf4cbtgr51G8CqztBmJqMZliMEnD0fpdTCvaL0vX4z7"
-      },
-      {
-        "id": "ssh-key-3",
-        "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDpg/35ns1VcKlpOIUVmBwYcNEPXr1eWD+Tcmzk97s5gQc+VUsd4+s6KYTGtaSJBMNJf1CIfsJJtiPInihSoVnek3a9hzONA+wf0lqacUU/gsb3e6p6uVIO+FisgmF4KbZr47cfJqvip291t9kc/9oVsYhmdJ6A/t8xbQ9hoa63IVEN+nR8At0InE0kXmfGqhnI2vQsi9uG7aacUm4UQiYnujLO1YM2Z/uVZURNmLmIgm96jSPow3IEafi6opuSncyQK33nhyPtgdLjrbQUJyUrS8PNgiJ+GeQrdc5c967eYrJ1fs+19Xtdfa9p+/aeNcgWshk9O0IsKiA2viRClprRTo6hMoBwPE9wdpD/63oQ4k+eE3h0K8UHBK7kV2eO2XBRr0oGkJ5YJmYeY2Ko+cL8382qRePdXm9Vi1Ig15WRfIYMTUCBslvo1AEwr+XHgIGVosgzJnUnvklzHNNUksRS9AEkEX8B5n/lkAFHIosIq1N78f9z40GcH3gqSmNdx+1Kvh8Sj5kM6z9T2W2plBabb0b65BwadAP6rvEaUD7AygmbuUSiwdijMonYd8dqqUeJkq4w4e+p/2uBIz6dBwZM5KE71qjDezZEfRel+DVsvjtGUg2T35DbycqRGDOHUyT7XPT8jaLuf71sVuaLmcbEK8KJdqqhtxdD0S8RfoBTBQ=="
-      },
-      {
-        "id": "ssh-key-4",
-        "key": "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAgEAo/JkbGO6R7g1ZxARi0xWVM7FOfN02snRAcIO6vT9M7xMUkWVLgD+hM/o91lk+UFiYdql0CATobpFWncRL36KaUqsbw9/1BlI40wg296XHXSSnxhxZ4L7ytf6G1tyN319HXlI2kh9vAf/fy++yDvkH8dI3k1oLoW+mZPET6Pff04/6AXXrRlS5mhmGv9irGwiDHtVKpj6lU8DN/UtOrv1tiQ0pgwEJq05fLGoQfgPNaBCnW2z4Ubpn2gyMcMBMpSwo4hCqJePd349e4bLmFcT+gXYg7Mnup1DoTDlowFFN56wpxQbdp96IxWzU+jYPaIAuRo+BJzCyOS8qBv0Z4RZrgop0qp2JYiVwmViO6TZhIDz6loQJXUOIleQmNgTbiZx8Bwv5GY2jMYoVwlBp7yy5bRjxfbFsJ0vU7TVzNAG7oEJy/74HmHmWzRQlSlQjesr8gRbm9zgR8wqc/L107UOWFg7Cgh8ZNjKuADbXqYuda1Y9m2upcfS26UPz5l5PW5uFRMHZSi8pb1XV6/0Z8H8vwsh37Ur6aLi/5jruRmKhdlsNrB1IiDicBsPW3yg7HHSIdPU4oBNPC77yDCT3l4CKr4el81RrZt7FbJPfY+Ig9Q5O+05f6I8+ZOlJGyZ/Qfyl2aVm1HnlJKuBqPxeic8tMng/9B5N7uZL6Y3k5jFU8c= quentin.machu@coreos.com"
-      },
-      {
-        "id": "ssh-key-5",
-        "key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDPQFdwVLr+alsWIgYRz9OdqDhnx9jjuFbkdSdpqq4gd9uZApYlivMDD4UgjFazQpezx8DiNhu9ym7i6LgAcdwi+10hE4L9yoJv9uBgbBxOAd65znqLqF91NtV4mlKP5YfJtR7Ehs+pTB+IIC+o5veDbPn+BYgDMJ2x7Osbn1/gFSDken/yoOFbYbRMGMfVEQYjJzC4r/qCKH0bl/xuVNLxf9FkWSTCcQFKGOndwuGITDkshD4r2Kk8gUddXPxoahBv33/2QH0CY5zbKYjhgN6I6WtwO+O1uJwtNeV1AGhYjurdd60qggNwx+W7623uK3nIXvJd3hzDO8u5oa53/tIL fake-test-key"
-      }
-    ],
+    "sshAuthorizedKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCt3BebCHqnSsgpLjo4kVvyfY/z2BS8t27r/7du+O2pb4xYkr7n+KFpbOz523vMTpQ+o1jY4u4TgexglyT9nqasWgLOvo1qjD1agHme8LlTPQSk07rXqOB85Uq5p7ig2zoOejF6qXhcc3n1c7+HkxHrgpBENjLVHOBpzPBIAHkAGaZcl07OCqbsG5yxqEmSGiAlh/IiUVOZgdDMaGjCRFy0wk0mQaGD66DmnFc1H5CzcPjsxr0qO65e7lTGsE930KkO1Vc+RHCVwvhdXs+c2NhJ2/3740Kpes9n1/YullaWZUzlCPDXtRuy6JRbFbvy39JUgHWGWzB3d+3f8oJ/N4qZ cardno:000603633110",
     "workers": [
       {
         "mac": "52:54:00:b2:2f:86",
@@ -60,7 +35,7 @@
       }
     ],
     "workersCount": 2,
-    "platformType": "bare-metal",
+    "platformType": "bare-metal-tf",
     "controllerDomain": "cluster.example.com",
     "tectonicDomain": "tectonic.example.com",
     "tectonicLicense": "<TECTONIC_LICENSE>",

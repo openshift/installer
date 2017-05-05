@@ -8,4 +8,4 @@ spec:
   selector:
     matchLabels:
       tier: control-plane
-      component: kube-scheduler
+      k8s-app: kube-scheduler

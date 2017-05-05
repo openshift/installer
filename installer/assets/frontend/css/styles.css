@@ -637,13 +637,10 @@ hr.spacer {
 .log-scroll-pane {
   overflow: auto;
   padding-top: 10px;
+  height: 400px;
 }
 
 .log-contents {
-  max-height: 500px;
-}
-
-.log-contents__block {
   padding: 0px 10px 10px;
   white-space: pre;
   width: 0;

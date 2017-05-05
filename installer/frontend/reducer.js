@@ -1,6 +1,6 @@
 import _ from 'lodash';
 import { combineReducers } from 'redux';
-import { fromJS, List } from 'immutable';
+import { fromJS } from 'immutable';
 
 import {
   BM_MASTERS,
@@ -8,7 +8,6 @@ import {
   BM_WORKERS,
   BM_WORKERS_COUNT,
   DEFAULT_CLUSTER_CONFIG,
-  SSH_AUTHORIZED_KEYS,
 } from './cluster-config';
 
 import {
@@ -186,20 +185,6 @@ const reducersTogether = combineReducers({
       return Object.assign({}, state, {
         [BM_WORKERS_COUNT]: action.payload.count,
         [BM_WORKERS]: action.payload.nodes,
-      });
-    case configActionTypes.SET_SSH_AUTHORIZED_KEYS: {
-      const keyList = List(state[SSH_AUTHORIZED_KEYS]);
-      const newList = keyList.set(action.payload.index, action.payload.value).toJS();
-      if (newList.some(k => !k)) {
-        throw Error(`attempt to set a falsy key with ${action.payload} (possibly a bad index)`);
-      }
-      return Object.assign({}, state, {
-        [SSH_AUTHORIZED_KEYS]: newList,
-      });
-    }
-    case configActionTypes.REMOVE_SSH_AUTHORIZED_KEYS:
-      return Object.assign({}, state, {
-        [SSH_AUTHORIZED_KEYS]: List(state[SSH_AUTHORIZED_KEYS]).delete(action.payload).toJS(),
       });
 
     default:

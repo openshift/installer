@@ -1,0 +1,8 @@
+apiVersion: "etcd.coreos.com/v1beta1"
+kind: "Cluster"
+metadata:
+  name: "kube-etcd"
+  namespace: kube-system
+spec:
+  size: ${etcd_cluster_size}
+  version: "${etcd_version}"

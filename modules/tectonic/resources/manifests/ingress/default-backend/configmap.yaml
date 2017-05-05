@@ -4,6 +4,6 @@ metadata:
   name: tectonic-custom-error
   namespace: tectonic-system
 data:
-  custom-http-errors: "400,401,403,404,500,503,504"
+  custom-http-errors: "404,500,503,504"
   server-name-hash-bucket-size: "1024"
   use-http2: "false"

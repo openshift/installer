@@ -28,7 +28,15 @@ resource "template_dir" "bootkube" {
     etcd_operator_image    = "${var.container_images["etcd_operator"]}"
     kenc_image             = "${var.container_images["kenc"]}"
 
-    etcd_servers    = "${var.experimental_enabled ? format("http://%s:2379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? "http://127.0.0.1:2379" : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
+    # Choose the etcd endpoints to use.
+    # 1. If experimental mode is enabled (self-hosted etcd), then use
+    # var.etcd_service_ip.
+    # 2. Else if no etcd TLS certificates are provided, i.e. we bootstrap etcd
+    # nodes ourselves (using http), then use insecure http var.etcd_endpoints.
+    # 3. Else (if etcd TLS certific are provided), then use the secure https
+    # var.etcd_endpoints.
+    etcd_servers = "${var.experimental_enabled ? format("http://%s:2379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? join(",", formatlist("http://%s:2379", var.etcd_endpoints)) : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
+
     etcd_ca_flag    = "${data.null_data_source.etcd.outputs.ca_flag}"
     etcd_cert_flag  = "${data.null_data_source.etcd.outputs.cert_flag}"
     etcd_key_flag   = "${data.null_data_source.etcd.outputs.key_flag}"
@@ -68,7 +76,7 @@ resource "template_dir" "bootkube-bootstrap" {
     hyperkube_image = "${var.container_images["hyperkube"]}"
     etcd_image      = "${var.container_images["etcd"]}"
 
-    etcd_servers   = "${var.experimental_enabled ? format("http://%s:2379,http://127.0.0.1:12379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? "http://127.0.0.1:2379" : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
+    etcd_servers   = "${var.experimental_enabled ? format("http://%s:2379,http://127.0.0.1:12379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? join(",", formatlist("http://%s:2379", var.etcd_endpoints)) : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
     etcd_ca_flag   = "${data.null_data_source.etcd.outputs.ca_flag}"
     etcd_cert_flag = "${data.null_data_source.etcd.outputs.cert_flag}"
     etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"

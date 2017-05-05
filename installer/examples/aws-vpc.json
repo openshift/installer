@@ -1,81 +1,54 @@
 {
-  "clusterKind": "tectonic-aws",
+  "adminPassword": "UEFTU1dPUkQ=",
+  "clusterKind": "tectonic-aws-tf",
+  "credentials": {
+    "AWSAccessKeyID": "awsAccessKeyId",
+    "AWSRegion": "us-west-1",
+    "AWSSecretAccessKey": "awsSecretAccessKey",
+    "AWSSessionToken": "awsSessionToken"
+  },
   "dryRun": false,
-  "cluster": {
-    "accessKeyID": "awsAccessKeyId",
-    "secretAccessKey": "awsSecretAccessKey",
-    "sessionToken": "awsSessionToken",
-    "cloudForm": {
-      "clusterName": "test",
-      "controllerCount": 1,
-      "controllerDomain": "test-k8s.example.com",
-      "controllerInstanceType": "t2.large",
-      "controllerRootVolumeSize": 33,
-      "controllerRootVolumeType": "gp2",
-      "controllerSubnets": [
-        {
-          "availabilityZone": "us-west-1a",
-          "id": "subnet-9a7dcafd"
-        },
-        {
-          "availabilityZone": "us-west-1b",
-          "id": "subnet-43ef260a"
-        },
-        {
-          "availabilityZone": "us-west-1c",
-          "id": "subnet-1ad7e242"
-        }
-      ],
-      "externalETCDClient": "",
-      "elbScheme": "internet-facing",
-      "hostedZoneID": "asfd",
-      "keyName": "some-ssh-key",
-      "kmsKeyARN": "arn:aws:kms:us-west-1:477645798544:key/thekey",
-      "region": "us-west-1",
-      "tectonicDomain": "test.example.com",
-      "vpcID": "someVPCID",
-      "podCIDR": "10.2.0.0/16",
-      "serviceCIDR": "10.3.0.0/16",
-      "etcdCount": 3,
-      "etcdInstanceType": "t2.large",
-      "etcdRootVolumeSize": 300,
-      "etcdRootVolumeType": "gp2",
-      "tags": [
-        {
-          "key": "test_tag",
-          "value": "testing"
-        }
-      ],
-      "workerCount": 3,
-      "workerInstanceType": "t2.medium",
-      "workerRootVolumeIOPS": 1500,
-      "workerRootVolumeSize": 1000,
-      "workerRootVolumeType": "io1",
-      "workerSubnets": [
-        {
-          "availabilityZone": "us-west-1a",
-          "id": "subnet-277ccb40"
-        },
-        {
-          "availabilityZone": "us-west-1b",
-          "id": "subnet-19ef2650"
-        },
-        {
-          "availabilityZone": "us-west-1c",
-          "id": "subnet-36d7e26e"
-        }
-      ],
-      "channel": "stable"
+  "license": "<TECTONIC_LICENSE>",
+  "platform": "aws",
+  "pullSecret": "<TECTONIC_PULL_SECRET>",
+  "variables": {
+    "tectonic_admin_email": "admin@example.com",
+    "tectonic_aws_etcd_ec2_type": "t2.large",
+    "tectonic_aws_etcd_root_volume_size": 300,
+    "tectonic_aws_etcd_root_volume_type": "gp2",
+    "tectonic_aws_external_master_subnet_ids": [
+      "subnet-9a7dcafd",
+      "subnet-43ef260a",
+      "subnet-1ad7e242"
+    ],
+    "tectonic_aws_external_vpc_id": "someVPCID",
+    "tectonic_aws_external_vpc_public": true,
+    "tectonic_aws_external_worker_subnet_ids": [
+      "subnet-277ccb40",
+      "subnet-19ef2650",
+      "subnet-36d7e26e"
+    ],
+    "tectonic_aws_region": "us-west-1",
+    "tectonic_aws_extra_tags": {
+      "test_tag": "testing"
     },
-    "tectonic": {
-      "ingressKind": "NodePort",
-      "identityAdminUser": "admin@example.com",
-      "identityAdminPassword": "UEFTU1dPUkQ=",
-      "license": "<TECTONIC_LICENSE>",
-      "dockercfg": "<TECTONIC_PULL_SECRET>",
-      "updater": {
-        "enabled": true
-      }
-    }
+    "tectonic_aws_master_ec2_type": "t2.large",
+    "tectonic_aws_master_root_volume_size": 33,
+    "tectonic_aws_master_root_volume_type": "gp2",
+    "tectonic_aws_ssh_key": "some-ssh-key",
+    "tectonic_aws_worker_ec2_type": "t2.medium",
+    "tectonic_aws_worker_root_volume_iops": 1000,
+    "tectonic_aws_worker_root_volume_size": 1000,
+    "tectonic_aws_worker_root_volume_type": "io1",
+    "tectonic_base_domain": "example.com",
+    "tectonic_cl_channel": "stable",
+    "tectonic_cluster_cidr": "10.2.0.0/16",
+    "tectonic_cluster_name": "test",
+    "tectonic_dns_name": "test",
+    "tectonic_etcd_count": 3,
+    "tectonic_experimental": false,
+    "tectonic_master_count": 1,
+    "tectonic_service_cidr": "10.3.0.0/16",
+    "tectonic_worker_count": 3
   }
 }

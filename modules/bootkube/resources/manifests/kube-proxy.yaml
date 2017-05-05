@@ -5,13 +5,17 @@ metadata:
   namespace: kube-system
   labels:
     tier: node
-    component: kube-proxy
+    k8s-app: kube-proxy
 spec:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
   template:
     metadata:
       labels:
         tier: node
-        component: kube-proxy
+        k8s-app: kube-proxy
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:

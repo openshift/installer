@@ -3,7 +3,7 @@ resource "aws_security_group" "worker" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}_worker_sg",
-      "KubernetesCluster", "${var.cluster_name}"
+      "kubernetes.io/cluster/${var.cluster_name}", "owned"
     ), var.extra_tags)}"
 }
 

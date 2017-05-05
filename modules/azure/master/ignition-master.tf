@@ -6,7 +6,6 @@ data "ignition_config" "master" {
   ]
 
   systemd = [
-    "${data.ignition_systemd_unit.etcd-member.id}",
     "${data.ignition_systemd_unit.docker.id}",
     "${data.ignition_systemd_unit.locksmithd.id}",
     "${data.ignition_systemd_unit.kubelet-master.id}",
@@ -59,27 +58,6 @@ data "ignition_systemd_unit" "kubelet-master" {
   name    = "kubelet.service"
   enable  = true
   content = "${data.template_file.kubelet-master.rendered}"
-}
-
-data "template_file" "etcd-member" {
-  template = "${file("${path.module}/resources/etcd-member.service")}"
-
-  vars {
-    version   = "${var.tectonic_versions["etcd"]}"
-    endpoints = "${join(",",formatlist("%s:2379",var.etcd_endpoints))}"
-  }
-}
-
-data "ignition_systemd_unit" "etcd-member" {
-  name   = "etcd-member.service"
-  enable = true
-
-  dropin = [
-    {
-      name    = "40-etcd-gateway.conf"
-      content = "${data.template_file.etcd-member.rendered}"
-    },
-  ]
 }
 
 data "ignition_file" "kubeconfig" {

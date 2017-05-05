@@ -11,6 +11,7 @@ import '../components/aws-cluster-info';
 import '../components/aws-define-nodes';
 import '../components/aws-vpc';
 import '../components/etcd';
+import '../components/bm-sshkeys';
 
 const structureOnly = (obj) => {
   const toString = Object.prototype.toString;
@@ -47,11 +48,6 @@ const tests = [
     description: 'works with aws (existing subnets)',
     jsonPath: 'aws-vpc.json',
     progressPath: 'tectonic-aws-vpc.progress',
-  },
-  {
-    description: 'works with tf-aws',
-    jsonPath: 'aws-tf.json',
-    progressPath: 'tectonic-aws-tf.progress',
   },
 ];
 

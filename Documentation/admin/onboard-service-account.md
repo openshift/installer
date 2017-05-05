@@ -47,7 +47,7 @@ If multiple pods running in the same namespace require different levels of acces
       template:
         metadata:
           labels:
-            app: nginx
+            k8s-app: nginx
         spec:
           containers:
           - name: nginx

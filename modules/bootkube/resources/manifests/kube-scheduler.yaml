@@ -5,7 +5,7 @@ metadata:
   namespace: kube-system
   labels:
     tier: control-plane
-    component: kube-scheduler
+    k8s-app: kube-scheduler
   annotations:
     scheduler.alpha.kubernetes.io/critical-pod: ""
 spec:
@@ -14,7 +14,7 @@ spec:
     metadata:
       labels:
         tier: control-plane
-        component: kube-scheduler
+        k8s-app: kube-scheduler
     spec:
       affinity:
         podAntiAffinity:
@@ -27,7 +27,7 @@ spec:
                   operator: In
                   values:
                   - control-plane
-                - key: component
+                - key: k8s-app
                   operator: In
                   values:
                   - kube-scheduler

@@ -196,3 +196,9 @@ Example: `{ eu-west-1a = "10.0.64.0/20", eu-west-1b = "10.0.80.0/20" }`
 Note that `tectonic_aws_az_count` must be unset if this is specified.
 EOF
 }
+
+variable "tectonic_aws_region" {
+  type        = "string"
+  default     = "eu-west-1"
+  description = "The target AWS region for the cluster."
+}

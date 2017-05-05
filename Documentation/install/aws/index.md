@@ -16,15 +16,15 @@ Make sure a current version of either the Google Chrome or Mozilla Firefox web b
 Download the [Tectonic installer][latest-tectonic-release].
 
 ```bash
-wget https://releases.tectonic.com/tectonic-1.5.6-tectonic.1.tar.gz
-tar xzvf tectonic-1.5.6-tectonic.1.tar.gz
-cd tectonic/tectonic-installer
+wget https://releases.tectonic.com/tectonic-1.5.7-tectonic.1.tar.gz
+tar xzvf tectonic-1.5.7-tectonic.1.tar.gz
+cd tectonic
 ```
 
 Run the Tectonic Installer.
 
 ```bash
-./$PLATFORM/installer
+./tectonic-installer/$PLATFORM/installer
 ```
 
 Where $PLATFORM is one of: `linux`, `darwin` or `windows`.
@@ -68,5 +68,5 @@ For those new to Tectonic and Kubernetes, the [usage guide][usage] contains tuto
 [install-aws-requirements-creds]: requirements.md#privileges
 [install-aws-requirements-evpc]: requirements.md#using-an-existing-vpc
 [usage]: ../../tutorials/index.md
-[latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.5.6-tectonic.1.tar.gz
+[latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.5.7-tectonic.1.tar.gz
 [install-aws-troubleshooting]: troubleshooting.md

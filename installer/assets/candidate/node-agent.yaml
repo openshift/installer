@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: node-agent
-        image: quay.io/coreos/node-agent:96db3df24c2ddf0b82c38111c71179c5b10de0c9
+        image: quay.io/coreos/node-agent:787844277099e8c10d617c3c807244fc9f873e46
         securityContext:
           privileged: true
         env:

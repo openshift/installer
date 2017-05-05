@@ -12,7 +12,7 @@ Following this guide will deploy a Tectonic cluster on virtual or physical hardw
 * DNS records for the Kubernetes controller(s) and Tectonic Ingress worker(s). See [DNS](https://coreos.com/tectonic/docs/latest/install/bare-metal#networking).
 * Machines with BIOS options set to boot from disk normally, but PXE prior to installation.
 * Machines with known MAC addresses and stable domain names.
-* make,go,npm - This guide uses `make`, `go`, and `npm` to build the Tectonic Installer.
+* make,go,npm - This guide uses `make`, `go1.8`, and `npm` to build the Tectonic Installer.
 * Tectonic Account - Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
 
 ## Getting Started

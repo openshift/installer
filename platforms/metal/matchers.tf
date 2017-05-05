@@ -55,13 +55,12 @@ resource "matchbox_group" "worker" {
 
   metadata {
     domain_name        = "${element(var.tectonic_metal_worker_domains, count.index)}"
-    etcd_endpoints     = "${join(",", formatlist("%s:2379", var.tectonic_metal_controller_domains))}"
     k8s_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
 
     # extra data
-    etcd_image_tag    = "${var.tectonic_versions["etcd"]}"
-    kubelet_image_url = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
-    kubelet_image_tag = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
+    kubelet_image_url  = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
+    kubelet_image_tag  = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
+    kube_version_image = "${var.tectonic_container_images["kube_version"]}"
   }
 }

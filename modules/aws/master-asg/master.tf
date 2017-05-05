@@ -39,8 +39,8 @@ resource "aws_autoscaling_group" "masters" {
   }
 
   tag {
-    key                 = "KubernetesCluster"
-    value               = "${var.cluster_name}"
+    key                 = "kubernetes.io/cluster/${var.cluster_name}"
+    value               = "owned"
     propagate_at_launch = true
   }
 

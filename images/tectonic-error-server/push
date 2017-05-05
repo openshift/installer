@@ -1,0 +1,7 @@
+#!/bin/bash
+
+REGISTRY="quay.io/coreos/tectonic-error-server"
+TAG=$1
+
+docker build -t ${REGISTRY}:${TAG} .
+docker push ${REGISTRY}:${TAG}

@@ -4,11 +4,11 @@ metadata:
   name: tectonic-identity
   namespace: tectonic-system
   labels:
-    app: tectonic-identity
+    k8s-app: tectonic-identity
     component: identity
 spec:
   selector:
-    app: tectonic-identity
+    k8s-app: tectonic-identity
     component: identity
   ports:
   - name: worker
@@ -22,7 +22,7 @@ metadata:
   namespace: tectonic-system
 spec:
   selector:
-    app: tectonic-identity
+    k8s-app: tectonic-identity
     component: identity
   ports:
   - name: api

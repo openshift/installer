@@ -163,15 +163,16 @@ echo "Creating Tectonic Updater"
   kubectl create -f updater/tectonic-channel-operator.yaml
   kubectl create -f updater/tectonic-prometheus-operator.yaml
   wait_for_tpr tectonic-system channel-operator-config.coreos.com
-  kubectl create -f updater/tectonic-channel-operator-config.json
+  kubectl create -f updater/tectonic-channel-operator-config.yaml
   wait_for_tpr tectonic-system app-version.coreos.com
-  kubectl create -f updater/app-version-tectonic-cluster.json
-  kubectl create -f updater/app-version-kubernetes.json
+  kubectl create -f updater/app-version-tectonic-cluster.yaml
+  kubectl create -f updater/app-version-kubernetes.yaml
   kubectl create -f updater/app-version-tectonic-monitoring.yaml
+  kubectl apply -f etcd/cluster-config.yaml
 fi
 
 echo "Creating Container Linux Updater"
-kubectl create -f container-linux-updater/deployment.yaml
+kubectl create -f updater/container-linux-updater-operator.yaml
 
 # wait for Tectonic pods
 wait_for_pods tectonic-system

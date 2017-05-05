@@ -1,12 +1,10 @@
 import _ from 'lodash';
 
-import { getTectonicDomain, toAWS, toAWS_TF, toBaremetal, toBaremetal_TF, DRY_RUN, PLATFORM_TYPE, RETRY } from './cluster-config';
+import { getTectonicDomain, toAWS_TF, toBaremetal_TF, DRY_RUN, PLATFORM_TYPE, RETRY } from './cluster-config';
 import { clusterReadyActionTypes, configActions, loadFactsActionTypes, serverActionTypes, FORMS } from './actions';
 import { savable } from './reducer';
 import {
-  AWS,
   AWS_TF,
-  BARE_METAL,
   BARE_METAL_TF,
   isTerraform,
 } from './platforms';
@@ -65,20 +63,10 @@ export const observeClusterStatus = (dispatch, getState) => {
 };
 
 const platformToFunc = {
-  [AWS]: {
-    f: toAWS,
-    path: '/cluster/create',
-    statusPath: '/cluster/status',
-  },
   [AWS_TF]: {
     f: toAWS_TF,
     path: '/terraform/apply',
     statusPath: '/terraform/status',
-  },
-  [BARE_METAL]: {
-    f: toBaremetal,
-    path: '/cluster/create',
-    statusPath: '/cluster/status',
   },
   [BARE_METAL_TF]: {
     f: toBaremetal_TF,
@@ -157,7 +145,7 @@ const getAMIs = (dispatch) => {
 // One-time fetch of facts from server. Abstracts getAMIs.
 // Guaranteed not to reject.
 export const loadFacts = (dispatch) => {
-  if (_.includes(window.config.platforms, 'aws')) {
+  if (_.includes(window.config.platforms, AWS_TF)) {
     return getAMIs(dispatch);
   }
   dispatch({type: loadFactsActionTypes.LOADED, payload: {}});

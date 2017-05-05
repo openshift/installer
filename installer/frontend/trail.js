@@ -15,27 +15,22 @@ import { TF_PowerOn } from './components/tf-poweron';
 import { Users } from './components/users';
 
 import { BM_ClusterInfo } from './components/bm-cluster-info';
-import { BM_Connect } from './components/bm-connect';
 import { BM_Controllers, BM_Workers } from './components/bm-nodeforms';
 import { BM_Credentials } from './components/bm-credentials';
 import { BM_Hostname } from './components/bm-hostname';
 import { BM_Matchbox } from './components/bm-matchbox';
 import { BM_NetworkConfig } from './components/bm-network-config';
-import { BM_PowerOn } from './components/bm-poweron';
 import { BM_Size } from './components/bm-size';
 import { BM_SSHKeys } from './components/bm-sshkeys';
 
 import { AWS_CloudCredentials } from './components/aws-cloud-credentials';
 import { AWS_ClusterInfo } from './components/aws-cluster-info';
 import { AWS_DefineNodes } from './components/aws-define-nodes';
-import { AWS_PowerOn } from './components/aws-poweron';
 import { AWS_SubmitKeys } from './components/aws-submit-keys';
 import { AWS_VPC } from './components/aws-vpc';
 
 import {
-  AWS,
   AWS_TF,
-  BARE_METAL,
   BARE_METAL_TF,
   isSupported,
 } from './platforms';
@@ -102,12 +97,6 @@ const bmClusterInfoPage = {
   title: 'Cluster Info',
 };
 
-const bmConnectPage = {
-  path: '/boot/connect',
-  component: BM_Connect,
-  title: 'Connect Nodes',
-};
-
 const bmControllersPage = {
   path: '/define/controllers',
   component: BM_Controllers,
@@ -136,12 +125,6 @@ const bmNetworkConfigPage = {
   path: '/define/network-config',
   component: BM_NetworkConfig,
   title: 'Network Configuration',
-};
-
-const bmPowerOnPage = {
-  path: '/boot/poweron',
-  component: BM_PowerOn,
-  title: 'Power On',
 };
 
 const bmSizePage = {
@@ -186,12 +169,6 @@ const awsSubmitKeysPage = {
   path: '/define/aws/keys',
   component: AWS_SubmitKeys,
   title: 'Submit Keys',
-};
-
-const awsPowerOnPage = {
-  path: '/boot/aws/poweron',
-  component: AWS_PowerOn,
-  title: 'Start Installation',
 };
 
 const awsVPCPage = {
@@ -239,17 +216,8 @@ export const sections = new Map([
     usersPage,
     submitDefinitionPage,
   ]],
-  ['bootBaremetal', [
-    bmPowerOnPage,
-    bmConnectPage,
-    successPage,
-  ]],
   ['bootBaremetalTF', [
     TFPowerOnPage,
-    successPage,
-  ]],
-  ['bootAWS', [
-    awsPowerOnPage,
     successPage,
   ]],
   ['bootAWSTF', [
@@ -355,20 +323,10 @@ export class Trail {
 const doingStuff = ImmutableSet([commitPhases.REQUESTED, commitPhases.WAITING]);
 
 const platformToSection = {
-  [AWS]: {
-    choose: new Trail([sections.choose, sections.defineAWS]),
-    define: new Trail([sections.defineAWS, [submitDefinitionPage]]),
-    boot: new Trail([sections.bootAWS], null, {canReset: true}),
-  },
   [AWS_TF]: {
     choose: new Trail([sections.choose, sections.defineAWS]),
     define: new Trail([sections.defineAWS], [submitDefinitionPage]),
     boot: new Trail([sections.bootAWSTF]),
-  },
-  [BARE_METAL]: {
-    choose: new Trail([sections.choose, sections.defineBaremetal]),
-    define: new Trail([sections.defineBaremetal], [submitDefinitionPage]),
-    boot: new Trail([sections.bootBaremetal], null, {canReset: true}),
   },
   [BARE_METAL_TF]: {
     choose: new Trail([sections.choose, sections.defineBaremetal]),

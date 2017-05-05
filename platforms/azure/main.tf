@@ -48,9 +48,7 @@ module "masters" {
   subnet                       = "${module.vnet.master_subnet}"
   kube_image_url               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
   kube_image_tag               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
-  etcd_endpoints               = ["${module.etcd.ip_address}"]
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
-  tectonic_versions            = "${var.tectonic_versions}"
   tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
   cloud_provider               = ""
   kubelet_node_label           = "node-role.kubernetes.io/master"
@@ -76,9 +74,7 @@ module "workers" {
   subnet                       = "${module.vnet.worker_subnet}"
   kube_image_url               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
   kube_image_tag               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
-  etcd_endpoints               = ["${module.etcd.ip_address}"]
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
-  tectonic_versions            = "${var.tectonic_versions}"
   tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
   cloud_provider               = ""
   kubelet_node_label           = "node-role.kubernetes.io/node"
@@ -97,7 +93,7 @@ module "dns" {
   location            = "${var.tectonic_azure_location}"
   resource_group_name = "${var.tectonic_azure_dns_resource_group}"
 
-  create_dns_zone = "${var.tectonic_azure_create_dns_zone}"
+  use_custom_fqdn = "${var.tectonic_azure_use_custom_fqdn}"
 
   // TODO etcd list
   // TODO worker list

@@ -5,12 +5,12 @@ metadata:
   name: tectonic-lb
   namespace: tectonic-system
   labels:
-    app: tectonic-lb
+    k8s-app: tectonic-lb
     component: ingress-controller
 spec:
   type: ClusterIP
   selector:
-    app: tectonic-lb
+    k8s-app: tectonic-lb
     component: ingress-controller
   ports:
     - name: http
