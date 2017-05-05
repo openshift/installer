@@ -29,14 +29,12 @@ type AWSCredentials struct {
 	AWSAccessKeyID     string `json:"AWSAccessKeyID"`
 	AWSSecretAccessKey string `json:"AWSSecretAccessKey"`
 	AWSSessionToken    string `json:"AWSSessionToken"`
-	AWSRegion          string `json:"AWSRegion"`
 }
 
 // Validate verifies that the given credentials are valid.
 func (a *AWSCredentials) Validate() error {
-	if a.AWSAccessKeyID == "" || a.AWSSecretAccessKey == "" || a.AWSRegion == "" {
-		return errors.New("AWSAccessKeyID, AWSSecretAccessKey, AWSRegion must be" +
-			"specified.")
+	if a.AWSAccessKeyID == "" || a.AWSSecretAccessKey == "" {
+		return errors.New("AWSAccessKeyID & AWSSecretAccessKey must be specified.")
 	}
 	return nil
 }
@@ -48,7 +46,6 @@ func (a *AWSCredentials) ToEnvironment() map[string]string {
 		"AWS_ACCESS_KEY_ID":     a.AWSAccessKeyID,
 		"AWS_SECRET_ACCESS_KEY": a.AWSSecretAccessKey,
 		"AWS_SESSION_TOKEN":     a.AWSSessionToken,
-		"AWS_REGION":            a.AWSRegion,
 	}
 }
 
