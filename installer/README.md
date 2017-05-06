@@ -25,6 +25,13 @@ Read on if you'd like to build and run the installer yourself.
 
 Get a [license](https://account.coreos.com) and follow the guides to create Tectonic clusters end to end.
 
+## Build prerequisites
+
+- [Go 1.8](https://golang.org/doc/install)
+- [Nodejs >=6.x](https://nodejs.org/en/download/)
+- [Yarn >=0.20.x](https://yarnpkg.com/lang/en/docs/install/)
+- The tectonic-installer repo must be located at `$GOPATH/src/github.com/coreos/tectonic-installer`
+
 ### Build / Run
 
 All commands mentioned here must be run from the same working directory as this README file, `./installer/` from the root of this repo.
