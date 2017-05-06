@@ -149,7 +149,7 @@ class TF_PowerOn extends React.Component {
             <ul className="wiz-launch-progress">
               <WaitingLi done={statusMsg === 'success'} error={error}>
                 Terraform {action} {statusMsg}
-                {output && <div className="pull-right">
+                {output && <div className="pull-right" style={{fontSize: "13px"}}>
                   <a onClick={() => this.setState({showLogs: !showLogs})}>
                     { showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
                                : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
