@@ -11,8 +11,8 @@ resource "matchbox_group" "coreos-install" {
   metadata {
     coreos_channel     = "${var.tectonic_cl_channel}"
     coreos_version     = "${var.tectonic_metal_cl_version}"
-    ignition_endpoint  = "${var.tectonic_metal_matchbox_http_endpoint}/ignition"
-    baseurl            = "${var.tectonic_metal_matchbox_http_endpoint}/assets/coreos"
+    ignition_endpoint  = "${var.tectonic_metal_matchbox_http_url}/ignition"
+    baseurl            = "${var.tectonic_metal_matchbox_http_url}/assets/coreos"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
   }
 }

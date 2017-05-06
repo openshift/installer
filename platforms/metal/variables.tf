@@ -7,9 +7,9 @@ EOF
   default = "1.0"
 }
 
-variable "tectonic_metal_matchbox_http_endpoint" {
+variable "tectonic_metal_matchbox_http_url" {
   type        = "string"
-  description = "Matchbox HTTP read-only endpoint (e.g. http://matchbox.example.com:8080)"
+  description = "Matchbox HTTP read-only URL (e.g. http://matchbox.example.com:8080)"
 }
 
 variable "tectonic_metal_matchbox_rpc_endpoint" {

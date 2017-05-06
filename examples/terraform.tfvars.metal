@@ -91,7 +91,7 @@ tectonic_metal_matchbox_client_cert = ""
 tectonic_metal_matchbox_client_key = ""
 
 // Matchbox HTTP read-only endpoint (e.g. http://matchbox.example.com:8080)
-tectonic_metal_matchbox_http_endpoint = ""
+tectonic_metal_matchbox_http_url = ""
 
 // Matchbox gRPC API endpoint (e.g. matchbox.example.com:8081)
 tectonic_metal_matchbox_rpc_endpoint = ""

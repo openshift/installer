@@ -314,7 +314,7 @@ export const toBaremetal_TF = (cc) => {
       tectonic_metal_worker_domains: cc[BM_WORKERS].map(({name}) => name),
       tectonic_metal_worker_names: cc[BM_WORKERS].map(({name}) => name.split('.')[0]),
       tectonic_metal_worker_macs: cc[BM_WORKERS].map(({mac}) => mac),
-      tectonic_metal_matchbox_http_endpoint: `http://${cc[BM_MATCHBOX_HTTP]}`,
+      tectonic_metal_matchbox_http_url: `http://${cc[BM_MATCHBOX_HTTP]}`,
       tectonic_metal_matchbox_rpc_endpoint: cc[BM_MATCHBOX_RPC],
       tectonic_metal_matchbox_ca: cc[BM_MATCHBOX_CA],
       tectonic_metal_matchbox_client_cert: cc[BM_MATCHBOX_CLIENT_CERT],
