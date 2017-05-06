@@ -14,6 +14,7 @@ Following this guide will deploy a Tectonic cluster on virtual or physical hardw
 * Machines with known MAC addresses and stable domain names.
 * Tectonic Account - Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
 * `ipmitool` or `virt-install` will be used to actually boot the machines.
+* A SSH keypair whose private key is present in your system's ssh-agent.
 
 ## Getting Started
 
