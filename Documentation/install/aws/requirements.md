@@ -17,7 +17,6 @@ The AWS credentials you provide require access to the following AWS services:
 
 * Route 53
 * EC2
-* CloudFormation
 * ELB
 * S3
 * Security Groups
@@ -152,7 +151,6 @@ Public subnets have a default route to the Internet Gateway and should auto-assi
 
 
 [aws-cli-doc]: http://docs.aws.amazon.com/cli/latest/userguide/installing.html
-[aws-dependson-doc]: https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-attribute-dependson.html
 [aws-r53-doc]: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/creating-migrating.html
 [aws-ssh-key-doc]: http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/get-set-up-for-amazon-ec2.html
 [aws-trust-policy]: ../../files/aws-sts-trust-policy.json

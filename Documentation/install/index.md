@@ -12,8 +12,8 @@ To get started as quickly as possible, use one of the platform guides below to i
 
 #### Platform guides
 
-* [AWS Install Guide][install-aws] - Install a scalable cluster using CloudFormation
-* [Bare-metal Install Guide][install-bare-metal] - Deploy Kubernetes onto your physical infrastructure
+* [AWS Install Guide][install-aws]: Install a scalable cluster using Tectonic Installer
+* [Bare-metal Install Guide][install-bare-metal]: Deploy Kubernetes onto your physical infrastructure
 
 
 [install-aws]: aws/index.md
