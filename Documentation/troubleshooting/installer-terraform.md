@@ -53,3 +53,21 @@ These errors indicate that you are not using the customized Terraform binary bun
 $ which terraform
 /Users/coreos/tectonic-installer/bin/terraform/terraform
 ```
+
+## Invalid or unknown key: tags
+
+```
+$ terraform plan -var-file=terraform.tfvars platforms/aws
+2 error(s) occurred:
+
+* module.masters.aws_autoscaling_group.masters: : invalid or unknown key: tags
+* module.workers.aws_autoscaling_group.workers: : invalid or unknown key: tags
+```
+
+This error indicates that the `.terraformrc` is not being used. Be sure you have exported your config environment variable:
+
+```
+export TERRAFORM_CONFIG=$(pwd)/.terraformrc
+```
+
+Afterwards, you should be able to execute the desired action.
