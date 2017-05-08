@@ -23,18 +23,18 @@ Following this guide will deploy a Tectonic cluster on virtual or physical hardw
 Open a new terminal, and run the following commands to download and extract Tectonic Installer.
 
 ```bash
-$ curl -O https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz # download
-$ tar xzvf tectonic-1.6.2-tectonic.1.tar.gz # extract the tarball
+$ curl -O https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz
+$ tar xzvf tectonic-1.6.2-tectonic.1.tar.gz
 $ cd tectonic
 ```
 
 ### Initialize and configure Terraform
 
-Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `darwin`, `linux`, or `windows`.
+Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `linux`, `darwin`, or `windows`.
 
 ```bash
-$ export INSTALLER_PATH=$(pwd)/tectonic-installer/darwin/installer # Edit the platform name.
-$ export PATH=$PATH:$(pwd)/tectonic-installer/darwin # Put the `terraform` binary in our PATH
+$ export INSTALLER_PATH=$(pwd)/tectonic-installer/linux/installer
+$ export PATH=$PATH:$(pwd)/tectonic-installer/linux
 ```
 
 Make a copy of the Terraform configuration file for our system. Do not share this configuration file as it is specific to your machine.
@@ -43,7 +43,6 @@ Make a copy of the Terraform configuration file for our system. Do not share thi
 $ sed "s|<PATH_TO_INSTALLER>|$INSTALLER_PATH|g" terraformrc.example > .terraformrc
 $ export TERRAFORM_CONFIG=$(pwd)/.terraformrc
 ```
-
 
 Now we're ready to specify our cluster configuration.
 
@@ -59,13 +58,20 @@ $ cp examples/terraform.tfvars.metal build/${CLUSTER}/terraform.tfvars
 
 Customizations should be made to `build/${CLUSTER}/terraform.tfvars`. Edit the following variables to correspond to your matchbox installation:
 
-* `tectonic_matchbox_http_endpoint`
+* `tectonic_matchbox_http_url`
 * `tectonic_matchbox_rpc_endpoint`
 * `tectonic_matchbox_client_cert`
 * `tectonic_matchbox_client_key`
 * `tectonic_matchboc_ca`
 
-Edit additional variables to specify DNS records, list machines, and set a password and SSH key.
+Edit additional variables to specify DNS records, list machines, and set a SSH key and Tectonic Console email and password.
+
+Several variables are currently required, but their values are not used.
+
+* `tectonic_are_domain`
+* `tectonic_master_count`
+* `tectonic_worker_count`
+* `tectonic_etcd_count`
 
 ## Deploy the cluster
 
@@ -93,11 +99,9 @@ ipmitool -H node1.example.com -U USER -P PASS chassis bootdev pxe
 ipmitool -H node1.example.com -U USER -P PASS power on
 ```
 
-Terraform will try to copy credentials to the nodes and run some commands. This can fail until the disk installation and reboot has completed.
+Terraform will wait for the disk installation and reboot to complete and then be able to copy credentials to the nodes to bootstrap the cluster. You may see `null_resource.kubeconfig.X: Still creating...` during this time.
 
-Run `terraform apply` until all tasks complete. Your Tectonic cluster should be ready.
-
-If you encounter any issues, check the known issues and workarounds below.
+Run `terraform apply` until all tasks complete. Your Tectonic cluster should be ready. If you encounter any issues, check the known issues and workarounds below.
 
 ### Access the cluster
 
