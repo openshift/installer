@@ -212,6 +212,8 @@ export const FileArea = connect(
     .then(() => {
       markDirtyUpload(id);
     });
+    // Reset value so that onChange fires if you pick the same file again.
+    e.target.value = null;
   };
 
   return (
