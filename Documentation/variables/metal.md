@@ -16,7 +16,7 @@ This document gives an overview of the variables used in the different platforms
 | tectonic_metal_matchbox_ca | Matchbox CA certificate to trust | string | - |
 | tectonic_metal_matchbox_client_cert | Matchbox client TLS certificate | string | - |
 | tectonic_metal_matchbox_client_key | Matchbox client TLS key | string | - |
-| tectonic_metal_matchbox_http_endpoint | Matchbox HTTP read-only endpoint (e.g. http://matchbox.example.com:8080) | string | - |
+| tectonic_metal_matchbox_http_url | Matchbox HTTP read-only URL (e.g. http://matchbox.example.com:8080) | string | - |
 | tectonic_metal_matchbox_rpc_endpoint | Matchbox gRPC API endpoint (e.g. matchbox.example.com:8081) | string | - |
 | tectonic_metal_worker_domains | Ordered list of worker domain names. Example: `["node2.example.com", "node3.example.com"]` | list | - |
 | tectonic_metal_worker_macs | Ordered list of worker MAC addresses for matching machines. Example: `["52:54:00:b2:2f:86", "52:54:00:c3:61:77"]` | list | - |
