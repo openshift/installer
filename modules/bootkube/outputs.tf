@@ -16,7 +16,7 @@
 # combination of all the resources' IDs, it can't be guessed and can only be
 # interpolated once the assets have all been created.
 output "id" {
-  value = "${sha1("${template_dir.bootkube.id} ${local_file.kubeconfig.id} ${local_file.bootkube.id}")}"
+  value = "${sha1("${template_dir.bootkube-bootstrap.id} ${local_file.kubeconfig.id} ${local_file.bootkube.id} ${template_dir.bootkube.id} ${join(" ",local_file.etcd-operator.*.id,local_file.etcd-service.*.id,local_file.bootstrap-etcd.*.id)}")}"
 }
 
 output "kubeconfig" {
@@ -37,13 +37,4 @@ output "ca_key" {
 
 output "systemd_service" {
   value = "${data.template_file.bootkube_service.rendered}"
-}
-
-output "content_hash" {
-  value = "${sha1("${template_dir.bootkube-bootstrap.id} ${template_dir.bootkube.id} ${join(" ",local_file.etcd-operator.*.id,local_file.etcd-service.*.id,local_file.bootstrap-etcd.*.id)}")}"
-
-  description = <<EOF
-This output can be used in datasources like archive_file as part of a hashed filename on generated assets.
-This is necessary, because datasources do not have a `depends_on` directive.
-EOF
 }
