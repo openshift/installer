@@ -59,8 +59,8 @@ func TestCluster(t *testing.T) {
 
 	// wait for all nodes to become available
 	t.Run("AllNodesRunning", testAllNodesRunning)
-	t.Run("AllPodsRunning", testAllPodsRunning)
 	t.Run("GetLogs", testLogs)
+	t.Run("AllPodsRunning", testAllPodsRunning)
 	t.Run("KillAPIServer", testKillAPIServer)
 }
 
@@ -113,8 +113,6 @@ func testAllPodsRunning(t *testing.T) {
 }
 
 func testLogs(t *testing.T) {
-	// TODO: Diagnose why this fails.
-	t.SkipNow()
 	c := newClient(t)
 
 	namespace := "tectonic-system"
