@@ -40,6 +40,7 @@ import {
   AWS_VPC_FORM,
   AWS_WORKER_SUBNET_IDS,
   AWS_WORKER_SUBNETS,
+  CLUSTER_NAME,
   CLUSTER_SUBDOMAIN,
   DESELECTED_FIELDS,
   POD_CIDR,
@@ -180,6 +181,8 @@ const stateToProps = ({aws, clusterConfig}) => {
     awsCreateVpc: clusterConfig[AWS_CREATE_VPC] === 'VPC_CREATE',
     awsVpcId: clusterConfig[AWS_VPC_ID],
     awsVpcCIDR: clusterConfig[AWS_VPC_CIDR],
+    clusterName: clusterConfig[CLUSTER_NAME],
+    clusterSubdomain: clusterConfig[CLUSTER_SUBDOMAIN],
     internalCluster: clusterConfig[AWS_CREATE_VPC] === 'VPC_PRIVATE',
     podCIDR: clusterConfig[POD_CIDR],
     serviceCIDR: clusterConfig[SERVICE_CIDR],
@@ -196,6 +199,7 @@ const dispatchToProps = dispatch => ({
     setIn(AWS_WORKER_SUBNET_IDS, {}, dispatch);
   },
   getDefaultSubnets: () => dispatch(awsActions.getDefaultSubnets()),
+  setSubdomain: subdomain => setIn(CLUSTER_SUBDOMAIN, subdomain, dispatch),
 });
 
 export const AWS_VPC = connect(stateToProps, dispatchToProps)(
@@ -235,6 +239,14 @@ class AWS_VPCComponent extends React.Component {
         return Promise.reject(json.message);
       }
     });
+  }
+
+  componentWillMount () {
+    // Hack. If no subdomain set, default to clustername
+    const { clusterSubdomain, setSubdomain, clusterName } = this.props;
+    if (!clusterSubdomain) {
+      setSubdomain(clusterName);
+    }
   }
 
   componentDidMount () {
