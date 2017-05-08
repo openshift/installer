@@ -12,7 +12,7 @@ spec:
     metadata:
       name: node-exporter
       labels:
-        k8s-app: node-exporter
+        app: node-exporter
     spec:
       hostNetwork: true
       hostPID: true
