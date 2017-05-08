@@ -31,7 +31,7 @@ This document gives an overview of the variables used in the different platforms
 | tectonic_pull_secret_path | The path the pull secret file in JSON format. | string | - |
 | tectonic_service_cidr | A CIDR notation IP range from which to assign service cluster IPs | string | `10.3.0.0/16` |
 | tectonic_update_app_id | (internal) The Tectonic Omaha update App ID | string | `6bc7b986-4654-4a0f-94b3-84ce6feb1db4` |
-| tectonic_update_channel | (internal) The Tectonic Omaha update channel | string | `tectonic-1.5` |
+| tectonic_update_channel | (internal) The Tectonic Omaha update channel | string | `tectonic-1.6` |
 | tectonic_update_server | (internal) The URL of the Tectonic Omaha update server | string | `https://tectonic.update.core-os.net` |
 | tectonic_vanilla_k8s | If set to true, a vanilla Kubernetes cluster will be deployed, omitting the tectonic assets. | string | `false` |
 | tectonic_versions | (internal) Versions of the components to use | map | `<map>` |

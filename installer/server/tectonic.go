@@ -161,7 +161,7 @@ var (
 	// Default TectonicUpdaterConfig values
 	defaultUpdaterConfig = TectonicUpdaterConfig{
 		Server:  "https://tectonic.update.core-os.net",
-		Channel: "tectonic-1.5",
+		Channel: "tectonic-1.6",
 		AppID:   "6bc7b986-4654-4a0f-94b3-84ce6feb1db4",
 	}
 )

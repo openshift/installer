@@ -29,7 +29,7 @@ export UPDATER_ENABLED=${UPDATER_ENABLED:-true}
 export UPDATER_SERVER=${UPDATER_SERVER:-"https://tectonic.update.core-os.net"}
 
 # UPDATER_CHANNEL is the update channel to pull from.
-export UPDATER_CHANNEL=${UPDATER_CHANNEL:-"tectonic-1.5"}
+export UPDATER_CHANNEL=${UPDATER_CHANNEL:-"tectonic-1.6"}
 
 # UPDATER_APPID is the app ID of Tectonic in the coreupdate server.
 export UPDATER_APPID=${UPDATER_APPID:-"6bc7b986-4654-4a0f-94b3-84ce6feb1db4"}

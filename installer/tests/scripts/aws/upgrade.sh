@@ -125,8 +125,8 @@ function bringup_cluster() {
   source "${ROOT}/tests/scripts/aws/default.env.sh"
 
   echo "Publishing payload to staging channel"
-  ${ROOT}/scripts/update-payload/publish-payload.sh "tectonic-1.5-staging"
-  echo "Payload successfully published to tectonic-1.5-staging channel"
+  ${ROOT}/scripts/update-payload/publish-payload.sh "tectonic-1.6-staging"
+  echo "Payload successfully published to tectonic-1.6-staging channel"
 
   echo "wait for machines to come up"
   sleep 200

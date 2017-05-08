@@ -182,7 +182,7 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [TECTONIC_LICENSE]: '',
   [UPDATER]: {
     server: 'https://tectonic.update.core-os.net',
-    channel: 'tectonic-1.5',
+    channel: 'tectonic-1.6',
     appID: '6bc7b986-4654-4a0f-94b3-84ce6feb1db4',
   },
   [UPDATER_ENABLED]: false,
