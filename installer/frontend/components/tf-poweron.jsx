@@ -88,7 +88,7 @@ class TF_PowerOn extends React.Component {
 
     const consoleSubsteps = [];
     if (action === 'apply') {
-      let msg = `Resolving ${tectonicConsole.instance}`;
+      let msg = <span>Resolving <a href={`https://${tectonicConsole.instance}`} target="_blank">{tectonicConsole.instance}</a></span>;
       const dnsReady = (tectonicConsole.message || '').search('no such host') === -1;
       if (platformType === AWS_TF) {
         consoleSubsteps.push(<AWS_DomainValidation key="domain" />);
@@ -129,6 +129,17 @@ class TF_PowerOn extends React.Component {
       </div>;
     }
 
+    const tfButtons = <div className="row">
+      <div className="col-xs-12">
+        <button className={classNames("btn btn-default", {disabled: terraformRunning})} onClick={() => this.destroy()}>
+          <i className="fa fa-trash"></i>&nbsp;&nbsp;Destroy cluster
+        </button>&nbsp;&nbsp;&nbsp;&nbsp;
+        <button className={classNames("btn btn-default", {disabled: terraformRunning})} onClick={() => this.retry()}>
+          <i className="fa fa-exclamation-triangle"></i>&nbsp;&nbsp;Retry Terraform apply
+        </button>
+      </div>
+    </div>;
+
     return <div>
       { platformMsg }
       <hr />
@@ -138,11 +149,12 @@ class TF_PowerOn extends React.Component {
             <ul className="wiz-launch-progress">
               <WaitingLi done={statusMsg === 'success'} error={error}>
                 Terraform {action} {statusMsg}
-                {output && <div className="pull-right">
-                  <a className="spacer-right" onClick={() => this.setState({showLogs: !showLogs})}>
+                {output && <div className="pull-right" style={{fontSize: "13px"}}>
+                  <a onClick={() => this.setState({showLogs: !showLogs})}>
                     { showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
                                : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
                   </a>
+                  <span className="spacer"></span>
                   <a onClick={() => saveAs(outputBlob, `tectonic-${clusterName}.log`)}>
                     <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
                   </a>
@@ -167,19 +179,6 @@ class TF_PowerOn extends React.Component {
           </div>
         </div>
       </div>
-      <br />
-      <div className="row">
-        <div className="col-xs-6">
-          <button className={classNames("btn btn-default", {disabled: terraformRunning})} onClick={() => this.retry()}>
-            <i className="fa fa-exclamation-triangle"></i>&nbsp;&nbsp;Retry Terraform apply
-          </button>
-        </div>
-        <div className="col-xs-6">
-          <button className={classNames("btn btn-default pull-right", {disabled: terraformRunning})} onClick={() => this.destroy()}>
-            <i className="fa fa-trash"></i>&nbsp;&nbsp;Destroy cluster
-          </button>
-        </div>
-      </div>
       { state.tfError &&
         <div className="row">
           <div className="col-xs-12">
@@ -190,9 +189,29 @@ class TF_PowerOn extends React.Component {
       <div className="row">
         <div className="col-xs-12">
         { error && <Alert severity="error">{error.toString()}</Alert> }
-        <br />
         </div>
       </div>
+      { !terraformRunning && error &&
+        <Alert severity="error" noIcon>
+          <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
+          <ol>
+            <li>Save your logs for debugging purposes.</li>
+            <li>Destroy your cluster to clear anything that may have been created.</li>
+            <li>Reapply Terraform.</li>
+          </ol>
+          {tfButtons}
+        </Alert>
+      }
+      { !terraformRunning && !error &&
+        <Alert severity="info" noIcon>
+          <b>{_.startCase(action)} Succeeded</b>.
+          <p>
+            If you've changed your mind, you can {action === 'apply' ? 'destroy' : 'reapply'} your cluster.
+          </p>
+          {tfButtons}
+        </Alert>
+      }
+      <br />
       <div className="row">
         <div className="col-xs-12">
           <a href="/terraform/assets" download>
