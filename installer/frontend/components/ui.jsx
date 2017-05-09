@@ -295,47 +295,63 @@ const dispatchToProps = (dispatch, {field}) => ({
   appendField: () => dispatch(configActions.appendField(field)),
 });
 
-export const Connect = connect(stateToProps, dispatchToProps)(
-({ field, value, setField, invalid, children, isDirty,
-   makeDirty, makeClean, extraData, refreshExtraData, inFly, removeField,
-   appendField,
-}) => {
-  const child = React.Children.only(children);
-  const id = child.props.id || field;
+class Connect_ extends React.Component {
+  handleValue (v) {
+    const { children, field, setField } = this.props;
+    const child = React.Children.only(children);
 
-  const props = {
-    extraData,
-    id,
-    inFly,
-    invalid,
-    isDirty,
-    makeClean,
-    makeDirty,
-    refreshExtraData,
-    removeField,
-    appendField,
-    onValue: v => {
-      setField(field, v);
-      if (child.props.onValue) {
-        child.props.onValue(v);
-      }
-    },
-  };
+    setField(field, v);
+    if (child.props.onValue) {
+      child.props.onValue(v);
+    }
+  }
+  componentDidMount () {
+    const { getDefault } = this.props;
 
-  switch (child.type) {
-  case Radio:
-    props.checked = child.props.value === value;
-    break;
-  case Select:
-    props.value = value || '';
-    break;
-  default:
-    props.value = value;
-    break;
+    if (_.isFunction(getDefault)) {
+      this.handleValue(getDefault());
+    }
   }
 
-  return React.cloneElement(child, props);
-});
+  render () {
+    const { field, value, invalid, children, isDirty, makeDirty, makeClean,
+      extraData, refreshExtraData, inFly, removeField, appendField,
+    } = this.props;
+
+    const child = React.Children.only(children);
+    const id = child.props.id || field;
+
+    const props = {
+      extraData,
+      id,
+      inFly,
+      invalid,
+      isDirty,
+      makeClean,
+      makeDirty,
+      refreshExtraData,
+      removeField,
+      appendField,
+      onValue: v => this.handleValue(v),
+    };
+
+    switch (child.type) {
+    case Radio:
+      props.checked = child.props.value === value;
+      break;
+    case Select:
+      props.value = value || '';
+      break;
+    default:
+      props.value = value;
+      break;
+    }
+
+    return React.cloneElement(child, props);
+  }
+}
+
+export const Connect = connect(stateToProps, dispatchToProps)(Connect_);
 
 // <WithClusterConfig field="banana" validator={isBanana}>
 //     <Input id="jones" placeholder="Enter your banana" />

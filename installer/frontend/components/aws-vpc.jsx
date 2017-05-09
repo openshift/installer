@@ -241,14 +241,6 @@ class AWS_VPCComponent extends React.Component {
     });
   }
 
-  componentWillMount () {
-    // Hack. If no subdomain set, default to clustername
-    const { clusterSubdomain, setSubdomain, clusterName } = this.props;
-    if (!clusterSubdomain) {
-      setSubdomain(clusterName);
-    }
-  }
-
   componentDidMount () {
     if (_.size(this.props.awsControllerSubnets) && _.size(this.props.awsWorkerSubnets)) {
       return;
@@ -257,7 +249,7 @@ class AWS_VPCComponent extends React.Component {
   }
 
   render () {
-    const { availableVpcs, awsCreateVpc, availableVpcSubnets, awsVpcId, internalCluster, advanced } = this.props;
+    const { availableVpcs, awsCreateVpc, availableVpcSubnets, awsVpcId, clusterName, clusterSubdomain, internalCluster, advanced } = this.props;
 
     let controllerSubnets;
     let workerSubnets;
@@ -321,7 +313,7 @@ class AWS_VPCComponent extends React.Component {
         <div className="col-xs-9">
           <div className="row">
             <div className="col-xs-4" style={{paddingRight: 0}}>
-              <Connect field={CLUSTER_SUBDOMAIN}>
+              <Connect field={CLUSTER_SUBDOMAIN} getDefault={() => clusterSubdomain || clusterName}>
                 <Input placeholder="subdomain" />
               </Connect>
             </div>
