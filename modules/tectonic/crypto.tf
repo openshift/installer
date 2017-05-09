@@ -26,6 +26,12 @@ resource "tls_cert_request" "ingress" {
   subject {
     common_name = "${element(split(":", var.base_address), 0)}"
   }
+
+  # subject commonName is deprecated per RFC2818 in favor of
+  # subjectAltName
+  dns_names = [
+    "${element(split(":", var.base_address), 0)}",
+  ]
 }
 
 resource "tls_locally_signed_cert" "ingress" {
