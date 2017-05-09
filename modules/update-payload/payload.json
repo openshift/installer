@@ -1,5 +1,5 @@
 {
-  "version": "1.6.2-tectonic.0",
+  "version": "1.6.2-tectonic.1",
   "deployments": [
     {
       "apiVersion": "extensions/v1beta1",
@@ -40,7 +40,7 @@
                     }
                   }
                 ],
-                "image": "quay.io/coreos/tectonic-channel-operator:15c001bd7c008a04394390d08ac71046e723ac48",
+                "image": "quay.io/coreos/tectonic-channel-operator:0.3.2",
                 "name": "tectonic-channel-operator",
                 "resources": {
                   "limits": {
@@ -106,7 +106,7 @@
           "spec": {
             "containers": [
               {
-                "image": "quay.io/coreos/kube-version-operator:7da46d189c36092f43d07ca381a61897402fa13c",
+                "image": "quay.io/coreos/kube-version-operator:v1.6.2",
                 "name": "kube-version-operator"
               }
             ],
@@ -229,7 +229,7 @@
   "desiredVersions": [
     {
       "name": "kubernetes",
-      "version": "1.6.2+tectonic.0"
+      "version": "1.6.2+tectonic.1"
     },
     {
       "name": "tectonic-monitoring",
