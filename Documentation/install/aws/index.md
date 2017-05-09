@@ -29,12 +29,12 @@ Run the Tectonic Installer.
 
 Where $PLATFORM is one of: `linux`, `darwin` or `windows`.
 
-A browser window should open to begin the GUI installation process.
+A browser window will open to begin the GUI installation process.
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
     <img src="../../img/installer-aws.png">
-    <div class="co-m-screenshot-caption">Entering AWS credentials in the Tectonic Installer</div>
+    <div class="co-m-screenshot-caption">Selecting a platform in Tectonic Installer</div>
   </div>
 </div>
 
@@ -44,7 +44,7 @@ Be sure to read the [installation requirements][install-aws-requirements], which
 
 Follow the on-screen instructions to provision your cluster. This process should take about 10-15 minutes.
 
-Once complete you should be able to access your Tectonic Console.
+Once complete you will be able to access your Tectonic Console.
 
 If you encounter any errors check the [troubleshooting][install-aws-troubleshooting] documentation.
 
@@ -52,8 +52,8 @@ If you encounter any errors check the [troubleshooting][install-aws-troubleshoot
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
-    <img src="../../img/prometheus-monitoring.png">
-    <div class="co-m-screenshot-caption">Viewing a node in the Tectonic Console</div>
+    <img src="../../img/walkthrough/nginx-deploy-pods.png">
+    <div class="co-m-screenshot-caption">Viewing deployment pods in Tectonic Console</div>
   </div>
 </div>
 
