@@ -4,7 +4,7 @@ metadata:
   name: kubelet
   namespace: tectonic-system
   labels:
-    k8s-app: http
+    k8s-apps: http
 spec:
   jobLabel: k8s-app
   endpoints:
