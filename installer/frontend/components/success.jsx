@@ -4,11 +4,7 @@ import { connect } from 'react-redux';
 import { AWS_HOSTED_ZONE_ID, CLUSTER_SUBDOMAIN } from '../cluster-config';
 import { TectonicGA } from '../tectonic-ga';
 
-const handleAllDone = () => {
-  TectonicGA.sendEvent('Installer Button', 'click', 'User clicks over to the console');
-  fetch('/cluster/done', {method: 'POST', credentials: 'same-origin'})
-  .catch(() => {}); // We don't really care if this completes - we're done here!
-};
+const handleAllDone = () => TectonicGA.sendEvent('Installer Button', 'click', 'User clicks over to the console');
 
 const stateToProps = ({cluster, clusterConfig}) => {
   let tectonicConsole = _.get(cluster, ['status', 'tectonicConsole', 'instance']);

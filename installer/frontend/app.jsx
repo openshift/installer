@@ -28,7 +28,9 @@ window.reset = () => {
   Cookie.remove('tectonic-installer');
   window.removeEventListener('beforeunload', saveState);
   sessionStorage.clear();
-  window.location = '/';
+  fetch('/cluster/done', {method: 'POST', credentials: 'same-origin'})
+    .catch(() => undefined)  // We don't really care if this completes - we're done here!
+    .then(() => window.location = '/');
 };
 
 const fixLocation = () => {
