@@ -12,8 +12,9 @@ These downloaded assets are also necessary to destroy existing clusters, once th
 
 First, use Tectonic Installer to generate and download cluster assets.
 
-* Walk through the Installer in your browser, entering credentials and cluster information as usual.
-* On the *Start Installation* screen, click *Download assets* to download the Terraform files to your local machine.
+* Walk through the Installer in your browser, entering credentials and cluster information as prompted.
+* On the *Submit* screen, click *Manually boot*, rather than *Submit*, to exit out of the cluster submission process.
+* On the *Download Assets* screen that opens, click *Download assets* to download the Terraform files to your local machine.
 
 ## Initialize Terraform
 
@@ -30,7 +31,7 @@ $ ls
 config.tf        license.txt      logs             modules          platforms        pull_secret.json terraform.tfvars
 ```
 
-Then, edit `terraform.tfvars` to customize your deployment. For example, to create two matching clusters in two different regions, edit one node's `tectonic_aws_region` value to set it to a different region, edit the subnets to reflect the new region, then edit the `tectonic_worker_count` value appropriately.
+Then, edit `terraform.tfvars` to customize your deployment.
 
 ## Deploy the cluster
 
@@ -44,6 +45,14 @@ $ terraform apply -var-file=terraform.tfvars platforms/aws
 If you're having problems at this step, make sure you've [configured Terraform][initialize-tf] correctly. If you continue to have problems, check out the [Troubleshooting Tectonic Installer FAQ][faq].
 
 When complete, your Tectonic cluster will be ready for access.
+
+## Use assets.zip to create multiple deployments
+
+If you wish to use downloaded assets to deploy multiple clusters, first make a copy of the directory for each planned instance. Then edit each directory's `terraform.tfvars`, and deploy individually.
+
+For example, to create two matching clusters in two different regions, first create two copies of the assets folder. Edit `terraform.tfvars` in one directory to change one node's `tectonic_aws_region` value to a different region, and edit the subnets to reflect the new region. Leave the second directory's `terraform.tfvars` file in its default state.
+
+Then, run `terraform plan` and `terraform apply` on each `terraform.tfvars` file in turn to deploy your Tectonic clusters.
 
 ## Access the cluster
 
