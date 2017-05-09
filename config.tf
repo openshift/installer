@@ -61,45 +61,67 @@ variable "tectonic_versions" {
 }
 
 variable "tectonic_kube_apiserver_service_ip" {
-  type        = "string"
-  description = "Service IP used to reach kube-apiserver inside the cluster"
-  default     = "10.3.0.1"
+  type    = "string"
+  default = "10.3.0.1"
+
+  description = <<EOF
+The Kubernetes service IP used to reach kube-apiserver inside the cluster
+as returned by `kubectl -n default get service kubernetes`.
+EOF
 }
 
 variable "tectonic_kube_etcd_service_ip" {
-  type        = "string"
-  description = "Service IP used to reach self-hosted etcd"
-  default     = "10.3.0.15"
+  type    = "string"
+  default = "10.3.0.15"
+
+  description = <<EOF
+The Kubernetes service IP used to reach self-hosted etcd inside the cluster
+as returned by `kubectl -n kube-system get service etcd-service`.
+EOF
 }
 
 variable "tectonic_kube_dns_service_ip" {
-  type        = "string"
-  description = "Service IP used to reach kube-dns"
-  default     = "10.3.0.10"
+  type    = "string"
+  default = "10.3.0.10"
+
+  description = <<EOF
+The Kubernetes service IP used to reach kube-dns inside the cluster
+as returned by `kubectl -n kube-system get service kube-dns`.
+EOF
 }
 
 variable "tectonic_service_cidr" {
-  description = "A CIDR notation IP range from which to assign service cluster IPs"
-  type        = "string"
-  default     = "10.3.0.0/16"
+  type    = "string"
+  default = "10.3.0.0/16"
+
+  description = "This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation."
 }
 
 variable "tectonic_cluster_cidr" {
-  description = "A CIDR notation IP range from which to assign pod IPs"
-  type        = "string"
-  default     = "10.2.0.0/16"
+  type    = "string"
+  default = "10.2.0.0/16"
+
+  description = "This declares the IP range to assign Kubernetes pod IPs in CIDR notation."
 }
 
 variable "tectonic_master_count" {
-  type        = "string"
-  description = "The number of master nodes to be created."
-  default     = "1"
+  type    = "string"
+  default = "1"
+
+  description = <<EOF
+The number of master nodes to be created.
+This applies only to cloud platforms.
+EOF
 }
 
 variable "tectonic_worker_count" {
-  type        = "string"
-  description = "The number of worker nodes to be created."
-  default     = "3"
+  type    = "string"
+  default = "3"
+
+  description = <<EOF
+The number of worker nodes to be created.
+This applies only to cloud platforms.
+EOF
 }
 
 variable "tectonic_etcd_count" {
@@ -108,7 +130,9 @@ variable "tectonic_etcd_count" {
 
   description = <<EOF
 The number of etcd nodes to be created.
-If set to zero, the count of etcd nodes will be determined automatically (currently only supported on AWS).
+If set to zero, the count of etcd nodes will be determined automatically.
+
+Note: This is currently only supported on AWS.
 EOF
 }
 
@@ -116,6 +140,7 @@ variable "tectonic_etcd_servers" {
   description = <<EOF
 (optional) List of external etcd v3 servers to connect with (hostnames/IPs only).
 Needs to be set if using an external etcd cluster.
+
 Example: `["etcd1", "etcd2", "etcd3"]`
 EOF
 
@@ -124,41 +149,83 @@ EOF
 }
 
 variable "tectonic_etcd_ca_cert_path" {
-  description = "(optional) The path to the etcd CA certificate for TLS communication with etcd."
-  type        = "string"
-  default     = ""
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) The path of the file containing the CA certificate for TLS communication with etcd.
+
+Note: This works only when used in conjunction with an external etcd cluster.
+If set, the variables `tectonic_etcd_servers`, `tectonic_etcd_client_cert_path`, and `tectonic_etcd_client_key_path` must also be set.
+EOF
 }
 
 variable "tectonic_etcd_client_cert_path" {
-  description = "(optional) The path to the etcd client certificate for TLS communication with etcd."
-  type        = "string"
-  default     = ""
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) The path of the file containing the client certificate for TLS communication with etcd.
+
+Note: This works only when used in conjunction with an external etcd cluster.
+If set, the variables `tectonic_etcd_servers`, `tectonic_etcd_ca_cert_path`, and `tectonic_etcd_client_key_path` must also be set.
+EOF
 }
 
 variable "tectonic_etcd_client_key_path" {
-  description = "(optional) The path to the etcd client key for TLS communication with etcd."
-  type        = "string"
-  default     = ""
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) The path of the file containing the client key for TLS communication with etcd.
+
+Note: This works only when used in conjunction with an external etcd cluster.
+If set, the variables `tectonic_etcd_servers`, `tectonic_etcd_ca_cert_path`, and `tectonic_etcd_client_cert_path` must also be set.
+EOF
 }
 
 variable "tectonic_base_domain" {
-  type        = "string"
-  description = "The base DNS domain of the cluster. Example: `openstack.dev.coreos.systems`."
+  type = "string"
+
+  description = <<EOF
+The base DNS domain of the cluster.
+
+Example: `openstack.dev.coreos.systems`.
+
+Note: This field MUST be set manually prior to creating the cluster.
+This applies only to cloud platforms.
+EOF
 }
 
 variable "tectonic_cluster_name" {
-  type        = "string"
-  description = "The name of the cluster. This will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console."
+  type = "string"
+
+  description = <<EOF
+The name of the cluster.
+If used in a cloud-environment, this will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.
+
+Note: This field MUST be set manually prior to creating the cluster.
+EOF
 }
 
 variable "tectonic_pull_secret_path" {
-  type        = "string"
-  description = "The path the pull secret file in JSON format."
+  type = "string"
+
+  description = <<EOF
+The path the pull secret file in JSON format.
+
+Note: This field MUST be set manually prior to creating the cluster.
+EOF
 }
 
 variable "tectonic_license_path" {
-  type        = "string"
-  description = "The path to the tectonic licence file."
+  type = "string"
+
+  description = <<EOF
+The path to the tectonic licence file.
+
+Note: This field MUST be set manually prior to creating the cluster.
+EOF
 }
 
 variable "tectonic_cl_channel" {
@@ -167,6 +234,7 @@ variable "tectonic_cl_channel" {
 
   description = <<EOF
 The Container Linux update channel.
+
 Examples: `stable`, `beta`, `alpha`
 EOF
 }
@@ -190,39 +258,69 @@ variable "tectonic_update_app_id" {
 }
 
 variable "tectonic_admin_email" {
-  type        = "string"
-  description = "e-mail address used to login to Tectonic"
+  type = "string"
+
+  description = <<EOF
+The e-mail address used to login as the admin user to the Tectonic Console.
+
+Note: This field MUST be set manually prior to creating the cluster.
+EOF
 }
 
 variable "tectonic_admin_password_hash" {
-  type        = "string"
-  description = "bcrypt hash of admin password to use with Tectonic Console"
+  type = "string"
+
+  description = <<EOF
+The bcrypt hash of admin user password to login to the Tectonic Console.
+Use the bcrypt-hash tool (https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0) to generate it.
+
+Note: This field MUST be set manually prior to creating the cluster.
+EOF
 }
 
 variable "tectonic_ca_cert" {
-  type        = "string"
-  description = "(optional) PEM-encoded CA certificate, used to generate Tectonic Console's server certificate. Optional, if left blank, a CA certificate will be automatically generated."
-  default     = ""
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) The content of the PEM-encoded CA certificate, used to generate Tectonic Console's server certificate.
+If left blank, a CA certificate will be automatically generated.
+EOF
 }
 
 variable "tectonic_ca_key" {
-  type        = "string"
-  description = "(optional) PEM-encoded CA key, used to generate Tectonic Console's server certificate. Optional if tectonic_ca_cert is left blank"
-  default     = ""
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) The content of the PEM-encoded CA key, used to generate Tectonic Console's server certificate.
+This field is mandatory if `tectonic_ca_cert` is set.
+EOF
 }
 
 variable "tectonic_ca_key_alg" {
-  type        = "string"
-  description = "Algorithm used to generate tectonic_ca_key. Optional if tectonic_ca_cert is left blank."
-  default     = "RSA"
+  type    = "string"
+  default = "RSA"
+
+  description = <<EOF
+(optional) The algorithm used to generate tectonic_ca_key.
+The default value is currently recommend.
+This field is mandatory if `tectonic_ca_cert` is set.
+EOF
 }
 
 variable "tectonic_vanilla_k8s" {
-  description = "If set to true, a vanilla Kubernetes cluster will be deployed, omitting the tectonic assets."
-  default     = false
+  default = false
+
+  description = <<EOF
+If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
+EOF
 }
 
 variable "tectonic_experimental" {
-  description = "If set to true, experimental Tectonic assets are being deployed."
-  default     = false
+  default = false
+
+  description = <<EOF
+If set to true, experimental Tectonic assets are being deployed.
+EOF
 }

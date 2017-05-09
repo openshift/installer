@@ -1,121 +1,219 @@
 
-// e-mail address used to login to Tectonic
+// The e-mail address used to login as the admin user to the Tectonic Console.
+// 
+// Note: This field MUST be set manually prior to creating the cluster.
 tectonic_admin_email = ""
 
-// bcrypt hash of admin password to use with Tectonic Console
+// The bcrypt hash of admin user password to login to the Tectonic Console.
+// Use the bcrypt-hash tool (https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0) to generate it.
+// 
+// Note: This field MUST be set manually prior to creating the cluster.
 tectonic_admin_password_hash = ""
 
-// The base DNS domain of the cluster. Example: `openstack.dev.coreos.systems`.
+// The base DNS domain of the cluster.
+// 
+// Example: `openstack.dev.coreos.systems`.
+// 
+// Note: This field MUST be set manually prior to creating the cluster.
+// This applies only to cloud platforms.
 tectonic_base_domain = ""
 
-// (optional) PEM-encoded CA certificate, used to generate Tectonic Console's server certificate. Optional, if left blank, a CA certificate will be automatically generated.
+// (optional) The content of the PEM-encoded CA certificate, used to generate Tectonic Console's server certificate.
+// If left blank, a CA certificate will be automatically generated.
 // tectonic_ca_cert = ""
 
-// (optional) PEM-encoded CA key, used to generate Tectonic Console's server certificate. Optional if tectonic_ca_cert is left blank
+// (optional) The content of the PEM-encoded CA key, used to generate Tectonic Console's server certificate.
+// This field is mandatory if `tectonic_ca_cert` is set.
 // tectonic_ca_key = ""
 
-// Algorithm used to generate tectonic_ca_key. Optional if tectonic_ca_cert is left blank.
-tectonic_ca_key_alg = "RSA"
+// (optional) The algorithm used to generate tectonic_ca_key.
+// The default value is currently recommend.
+// This field is mandatory if `tectonic_ca_cert` is set.
+// tectonic_ca_key_alg = "RSA"
 
 // The Container Linux update channel.
+// 
 // Examples: `stable`, `beta`, `alpha`
 tectonic_cl_channel = "stable"
 
-// A CIDR notation IP range from which to assign pod IPs
+// This declares the IP range to assign Kubernetes pod IPs in CIDR notation.
 tectonic_cluster_cidr = "10.2.0.0/16"
 
-// The name of the cluster. This will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.
+// The name of the cluster.
+// If used in a cloud-environment, this will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.
+// 
+// Note: This field MUST be set manually prior to creating the cluster.
 tectonic_cluster_name = ""
 
-// (optional) The path to the etcd CA certificate for TLS communication with etcd.
+// (optional) The path of the file containing the CA certificate for TLS communication with etcd.
+// 
+// Note: This works only when used in conjunction with an external etcd cluster.
+// If set, the variables `tectonic_etcd_servers`, `tectonic_etcd_client_cert_path`, and `tectonic_etcd_client_key_path` must also be set.
 // tectonic_etcd_ca_cert_path = ""
 
-// (optional) The path to the etcd client certificate for TLS communication with etcd.
+// (optional) The path of the file containing the client certificate for TLS communication with etcd.
+// 
+// Note: This works only when used in conjunction with an external etcd cluster.
+// If set, the variables `tectonic_etcd_servers`, `tectonic_etcd_ca_cert_path`, and `tectonic_etcd_client_key_path` must also be set.
 // tectonic_etcd_client_cert_path = ""
 
-// (optional) The path to the etcd client key for TLS communication with etcd.
+// (optional) The path of the file containing the client key for TLS communication with etcd.
+// 
+// Note: This works only when used in conjunction with an external etcd cluster.
+// If set, the variables `tectonic_etcd_servers`, `tectonic_etcd_ca_cert_path`, and `tectonic_etcd_client_cert_path` must also be set.
 // tectonic_etcd_client_key_path = ""
 
 // The number of etcd nodes to be created.
-// If set to zero, the count of etcd nodes will be determined automatically (currently only supported on AWS).
+// If set to zero, the count of etcd nodes will be determined automatically.
+// 
+// Note: This is currently only supported on AWS.
 tectonic_etcd_count = "0"
 
 // (optional) List of external etcd v3 servers to connect with (hostnames/IPs only).
 // Needs to be set if using an external etcd cluster.
+// 
 // Example: `["etcd1", "etcd2", "etcd3"]`
 // tectonic_etcd_servers = ""
 
 // If set to true, experimental Tectonic assets are being deployed.
 tectonic_experimental = false
 
-// Service IP used to reach kube-apiserver inside the cluster
+// The Kubernetes service IP used to reach kube-apiserver inside the cluster
+// as returned by `kubectl -n default get service kubernetes`.
 tectonic_kube_apiserver_service_ip = "10.3.0.1"
 
-// Service IP used to reach kube-dns
+// The Kubernetes service IP used to reach kube-dns inside the cluster
+// as returned by `kubectl -n kube-system get service kube-dns`.
 tectonic_kube_dns_service_ip = "10.3.0.10"
 
-// Service IP used to reach self-hosted etcd
+// The Kubernetes service IP used to reach self-hosted etcd inside the cluster
+// as returned by `kubectl -n kube-system get service etcd-service`.
 tectonic_kube_etcd_service_ip = "10.3.0.15"
 
 // The path to the tectonic licence file.
+// 
+// Note: This field MUST be set manually prior to creating the cluster.
 tectonic_license_path = ""
 
 // The number of master nodes to be created.
+// This applies only to cloud platforms.
 tectonic_master_count = "1"
 
-// CoreOS kernel/initrd version to PXE boot. Must be present in matchbox assets and correspond to the tectonic_cl_channel. Example: `1298.7.0`
+// CoreOS kernel/initrd version to PXE boot.
+// Must be present in Matchbox assets and correspond to `tectonic_cl_channel`.
+// 
+// Example: `1298.7.0`
 tectonic_metal_cl_version = ""
 
 // The domain name which resolves to controller node(s)
+// 
+// Example: `cluster.example.com`
 tectonic_metal_controller_domain = ""
 
-// Ordered list of controller domain names. Example: `["node2.example.com", "node3.example.com"]`
+// Ordered list of controller domain names.
+// 
+// Example: `["node2.example.com", "node3.example.com"]`
 tectonic_metal_controller_domains = ""
 
-// Ordered list of controller MAC addresses for matching machines. Example: `["52:54:00:a1:9c:ae"]`
+// Ordered list of controller MAC addresses for matching machines.
+// 
+// Example: `["52:54:00:a1:9c:ae"]`
 tectonic_metal_controller_macs = ""
 
-// Ordered list of controller names. Example: `["node1"]`
+// Ordered list of controller names.
+// 
+// Example: `["node1"]`
 tectonic_metal_controller_names = ""
 
 // The domain name which resolves to Tectonic Ingress (i.e. worker node(s))
+// 
+// Example: `tectonic.example.com`
 tectonic_metal_ingress_domain = ""
 
-// Matchbox CA certificate to trust
+// The content of the Matchbox CA certificate to trust.
+// 
+// Example:
+// ```
+// <<EOD
+// -----BEGIN CERTIFICATE-----
+// MIIFDTCCAvWgAwIBAgIJAIuXq10k2OFlMA0GCSqGSIb3DQEBCwUAMBIxEDAOBgNV
+// ...
+// Od27a+1We/P5ey7WRlwCfuEcFV7nYS/qMykYdQ9fxHSPgTPlrGrSwKstaaIIqOkE
+// kA==
+// -----END CERTIFICATE-----
+// EOD
+// ```
 tectonic_metal_matchbox_ca = ""
 
-// Matchbox client TLS certificate
+// The content of the Matchbox client TLS certificate.
+// 
+// Example:
+// ```
+// <<EOD
+// -----BEGIN CERTIFICATE-----
+// MIIEYDCCAkigAwIBAgICEAEwDQYJKoZIhvcNAQELBQAwEjEQMA4GA1UEAwwHZmFr
+// ...
+// jyXQv9IZPMTwOndF6AVLH7l1F0E=
+// -----END CERTIFICATE-----
+// EOD
+// ```
 tectonic_metal_matchbox_client_cert = ""
 
-// Matchbox client TLS key
+// The content of the Matchbox client TLS key.
+// 
+// Example:
+// ```
+// <<EOD
+// -----BEGIN RSA PRIVATE KEY-----
+// MIIEpQIBAAKCAQEAr8S7x/tAS6W+aRW3X833OvNfxXjUJAiRkUV85Raln7tqVcTG
+// ...
+// Pikk0rvNVB/vrPeVjAdGY9TJC/vpz3om92DRDmUifu8rCFxIHE0GrQ0=
+// -----END RSA PRIVATE KEY-----
+// EOD
+// ```
 tectonic_metal_matchbox_client_key = ""
 
-// Matchbox HTTP read-only endpoint (e.g. http://matchbox.example.com:8080)
+// Matchbox HTTP read-only URL.
+// 
+// Example: `e.g. http://matchbox.example.com:8080`
 tectonic_metal_matchbox_http_url = ""
 
-// Matchbox gRPC API endpoint (e.g. matchbox.example.com:8081)
+// The Matchbox gRPC API endpoint.
+// 
+// Example: `matchbox.example.com:8081`
 tectonic_metal_matchbox_rpc_endpoint = ""
 
-// Ordered list of worker domain names. Example: `["node2.example.com", "node3.example.com"]`
+// Ordered list of worker domain names.
+// 
+// Example: `["node2.example.com", "node3.example.com"]`
 tectonic_metal_worker_domains = ""
 
-// Ordered list of worker MAC addresses for matching machines. Example: `["52:54:00:b2:2f:86", "52:54:00:c3:61:77"]`
+// Ordered list of worker MAC addresses for matching machines.
+// 
+// Example: `["52:54:00:b2:2f:86", "52:54:00:c3:61:77"]`
 tectonic_metal_worker_macs = ""
 
-// Ordered list of worker names. Example: `["node2", "node3"]`
+// Ordered list of worker names.
+// 
+// Example: `["node2", "node3"]`
 tectonic_metal_worker_names = ""
 
 // The path the pull secret file in JSON format.
+// 
+// Note: This field MUST be set manually prior to creating the cluster.
 tectonic_pull_secret_path = ""
 
-// A CIDR notation IP range from which to assign service cluster IPs
+// This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation.
 tectonic_service_cidr = "10.3.0.0/16"
 
-// SSH public key to use as an authorized key. Example: `"ssh-rsa AAAB3N..."`
+// SSH public key to use as an authorized key.
+// 
+// Example: `ssh-rsa AAAB3N...`
 tectonic_ssh_authorized_key = ""
 
-// If set to true, a vanilla Kubernetes cluster will be deployed, omitting the tectonic assets.
+// If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
 tectonic_vanilla_k8s = false
 
 // The number of worker nodes to be created.
+// This applies only to cloud platforms.
 tectonic_worker_count = "3"

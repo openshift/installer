@@ -49,7 +49,10 @@ Number of Availability Zones your EC2 instances will be deployed across.
 This should be less than or equal to the total number available in the region. 
 Be aware that some regions only have 2.
 If set worker and master subnet CIDRs are calculated automatically.
-Note that this must be unset if availability zones CIDRs are configured explicitely using `tectonic_aws_master_custom_subnets` and `tectonic_aws_worker_custom_subnets`.
+
+Note:
+This field MUST be set manually prior to creating the cluster.
+It MUST NOT be set if availability zones CIDRs are configured using `tectonic_aws_master_custom_subnets` and `tectonic_aws_worker_custom_subnets`.
 EOF
 }
 
@@ -59,6 +62,7 @@ variable "tectonic_aws_external_vpc_id" {
   description = <<EOF
 (optional) ID of an existing VPC to launch nodes into.
 If unset a new VPC is created.
+
 Example: `vpc-123456`
 EOF
 
@@ -80,6 +84,7 @@ variable "tectonic_aws_external_master_subnet_ids" {
   description = <<EOF
 (optional) List of subnet IDs within an existing VPC to deploy master nodes into.
 Required to use an existing VPC and the list must match the AZ count.
+
 Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
 EOF
 
@@ -92,6 +97,7 @@ variable "tectonic_aws_external_worker_subnet_ids" {
   description = <<EOF
 (optional) List of subnet IDs within an existing VPC to deploy worker nodes into.
 Required to use an existing VPC and the list must match the AZ count.
+
 Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
 EOF
 
@@ -111,6 +117,7 @@ variable "tectonic_autoscaling_group_extra_tags" {
   description = <<EOF
 (optional) Extra AWS tags to be applied to created autoscaling group resources.
 This is a list of maps having the keys `key`, `value` and `propagate_at_launch`.
+
 Example: `[ { key = "foo", value = "bar", propagate_at_launch = true } ]`
 EOF
 }
@@ -181,7 +188,10 @@ variable "tectonic_aws_master_custom_subnets" {
 
   description = <<EOF
 (optional) This configures master availability zones and their corresponding subnet CIDRs directly.
-Example: `{ eu-west-1a = "10.0.0.0/20", eu-west-1b = "10.0.16.0/20" }`
+
+Example:
+`{ eu-west-1a = "10.0.0.0/20", eu-west-1b = "10.0.16.0/20" }`
+
 Note that `tectonic_aws_az_count` must be unset if this is specified.
 EOF
 }
@@ -192,7 +202,9 @@ variable "tectonic_aws_worker_custom_subnets" {
 
   description = <<EOF
 (optional) This configures worker availability zones and their corresponding subnet CIDRs directly.
+
 Example: `{ eu-west-1a = "10.0.64.0/20", eu-west-1b = "10.0.80.0/20" }`
+
 Note that `tectonic_aws_az_count` must be unset if this is specified.
 EOF
 }
