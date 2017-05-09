@@ -3,7 +3,7 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$DIR/common.env.sh"
 
-GITHUB_API_URL="https://api.github.com/repos/coreos-inc/tectonic/releases"
+GITHUB_API_URL="https://api.github.com/repos/coreos/tectonic-installer/releases"
 
 echo "Creating new release on GitHub"
 curl \
