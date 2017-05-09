@@ -2,7 +2,7 @@
 systemd:
   units:
     - name: etcd-member.service
-      enable: true
+      enable: {{.etcd_enabled}}
       dropins:
         - name: 40-etcd-cluster.conf
           contents: |
