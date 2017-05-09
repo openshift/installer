@@ -86,3 +86,29 @@ variable "tectonic_azure_use_custom_fqdn" {
   description = "If set to true, assemble the FQDN from the configuration. Otherwise, use the FQDN set up by Azure."
   default     = "true"
 }
+
+variable "tectonic_azure_external_master_subnet_id" {
+  type = "string"
+
+  description = <<EOF
+(optional) Subnet ID within an existing VNet to deploy master nodes into.
+Required to use an existing VNet.
+
+Example: the subnet ID starts with `"/subscriptions/{subscriptionId}"` or `"/providers/{resourceProviderNamespace}"`.
+EOF
+
+  default = ""
+}
+
+variable "tectonic_azure_external_worker_subnet_id" {
+  type = "string"
+
+  description = <<EOF
+(optional) Subnet ID within an existing VNet to deploy worker nodes into.
+Required to use an existing VNet.
+
+Example: the subnet ID starts with `"/subscriptions/{subscriptionId}"` or `"/providers/{resourceProviderNamespace}"`.
+EOF
+
+  default = ""
+}

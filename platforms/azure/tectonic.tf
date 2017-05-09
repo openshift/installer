@@ -62,6 +62,7 @@ module "tectonic" {
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "NodePort"
   experimental      = "${var.tectonic_experimental}"
+  master_count      = "${var.tectonic_master_count}"
 }
 
 resource "null_resource" "tectonic" {

@@ -12,16 +12,6 @@ variable "tectonic_cluster_name" {
   type = "string"
 }
 
-variable "tectonic_azure_external_vnet_master_subnets" {
-  type    = "list"
-  default = []
-}
-
-variable "tectonic_azure_external_vnet_worker_subnets" {
-  type    = "list"
-  default = []
-}
-
 variable "resource_group_name" {
   type = "string"
 }
@@ -35,6 +25,16 @@ variable "location" {
 }
 
 variable "external_vnet_name" {
+  type    = "string"
+  default = ""
+}
+
+variable "external_master_subnet_id" {
+  type    = "string"
+  default = ""
+}
+
+variable "external_worker_subnet_id" {
   type    = "string"
   default = ""
 }
