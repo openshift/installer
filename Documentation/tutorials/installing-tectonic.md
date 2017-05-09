@@ -90,7 +90,7 @@ To allow Tectonic to communicate with your AWS account, provide your AWS credent
 
 Select Use a normal access key, or Use a temporary session token. 	
 
-* *Normal access key:* Copy and paste the Access Key ID and Secret Access Keys created earlier in the AWS setup process.
+* *Use a normal access key:* Copy and paste the Access Key ID and Secret Access Keys created earlier in the AWS setup process.
 * *Use a temporary session token:* CoreOS recommends that you use a temporary session token to generate temporary credentials, and protect the integrity of your main AWS credentials. Enter the Access Key Id and Secret Access Keys created during the AWS setup process.
 * *Region:* Enter the EC2 region selected during your AWS setup.
 
@@ -138,6 +138,8 @@ Enter the email address and password that will be used to log in to Tectonic Con
 
 Click *Submit* to submit your assets and create your Kubernetes cluster. (Cluster creation may take up to 20 minutes.)
 
+Click *Advanced mode: Manually boot* to validate configuration, generate assets, but not create the cluster.
+
 If you hit permissions errors during the creation process it is likely that your IAM account does not have sufficient privileges. Review the privileges section of our AWS: Installation Requirements to get your IAM account configured correctly.
 
 ### Boot Cluster
@@ -154,9 +156,15 @@ The Start Installation screen displays cluster creation in process.
 
 When Terraform apply and Resolving subdomain DNS are complete, click *Download Assets* to save your cluster assets locally. (These assets will be required if you wish to destroy your cluster in the future.)
 
+Click *Show* or *Save log* to view or save the log generated during Terraform apply.
+
 When Starting Tectonic Console is complete, click *Next Step* to continue.
 
-Use the email address and password you used to create your Tectonic account to log in to the Console.
+**Installation Complete**
+
+Click *Go to my Tectonic Console* to open the console and begin using Tectonic. Use the email address and password you used to create your Tectonic account to log in to the Console.
+
+Click *Configure kubectl* or *Deploy Application* to open CoreOS tutorials for these subjects.
 
 [**NEXT:** Deploying an application on Tectonic][first-app]
 
