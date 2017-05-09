@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+# USAGE:
+#  export GITHUB_CREDENTIALS=username:personal-access-token
+#  export TECTONIC_RELEASE_TARBALL_URL=url-of-tarball
+#  export VERSION=w.x.y-tectonic.z
+
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$DIR/common.env.sh"
 
