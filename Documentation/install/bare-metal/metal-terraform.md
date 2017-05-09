@@ -2,8 +2,6 @@
 
 Following this guide will deploy a Tectonic cluster on virtual or physical hardware.
 
-<p style="background:#d9edf7; padding: 10px;" class="text-info"><strong>Alpha:</strong>These instructions are currently considered alpha. See the <a href="../../platform-lifecycle.md">platform life cycle</a> for more details.</p>
-
 ## Prerequsities
 
 * Matchbox [v0.6.0](https://github.com/coreos/matchbox/releases) installation with the gRPC API enabled. See [installation](https://coreos.com/matchbox/docs/latest/deployment.html).
