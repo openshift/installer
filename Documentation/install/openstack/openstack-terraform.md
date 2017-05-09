@@ -4,6 +4,8 @@ Following this guide will deploy a Tectonic cluster within your OpenStack accoun
 
 Generally, the OpenStack platform templates adhere to the standards defined by the project [conventions][conventions] and [generic platform requirements][generic]. This document aims to document the implementation details specific to the OpenStack platform.
 
+<p style="background:#d9edf7; padding: 10px;" class="text-info"><strong>Alpha:</strong> These modules and instructions are currently considered alpha. See the <a href="../../platform-lifecycle.md">platform life cycle</a> for more details.</p>
+
 ## Prerequsities
 
  - **CoreOS Container Linux** - The latest Container Linux Beta (1353.2.0 or later) [uploaded into Glance](https://coreos.com/os/docs/latest/booting-on-openstack.html) and its OpenStack image ID.
@@ -32,8 +34,8 @@ $ cd tectonic
 Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `darwin`, `linux`, or `windows`.
 
 ```bash
-$ export INSTALLER_PATH=$(pwd)/tectonic-installer/darwin/installer # Edit the platform name.
-$ export PATH=$PATH:$(pwd)/tectonic-installer/darwin # Put the `terraform` binary in our PATH
+$ export INSTALLER_PATH=$(pwd)/tectonic-installer/linux/installer # Edit the platform name.
+$ export PATH=$PATH:$(pwd)/tectonic-installer/linux # Put the `terraform` binary in our PATH
 ```
 
 Make a copy of the Terraform configuration file for our system. Do not share this configuration file as it is specific to your machine.
@@ -49,7 +51,7 @@ Next, get the modules that Terraform will use to create the cluster resources:
 $ terraform get platforms/openstack/<flavor>
 ```
 
-Configure your AWS credentials for setting up Route53 DNS record entries. See the [AWS docs][env] for details.
+Configure your AWS credentials for setting up Route 53 DNS record entries. See the [AWS docs][env] for details.
 
 ```
 $ export AWS_ACCESS_KEY_ID=
