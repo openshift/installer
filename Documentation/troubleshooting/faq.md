@@ -4,7 +4,7 @@
 
 The version number of a Tectonic release is a string in the format `W.X.Y-tectonic.z`, where `W.X.Y` stands for the Kubernetes version included with the release, and `z` is an incrementing number, starting at 1, for successive Tectonic releases including that Kubernetes version. When the version number of the included Kubernetes release changes, the incrementing value `z` resets to 1.
 
-For example, if the Kubernetes version is 1.5.7, the first Tectonic production release including it is labeled `1.5.7-tectonic.1`. A second release including the same 1.5.7 version of Kubernetes would be `1.5.7-tectonic.2`. When the version number of the included Kubernetes advances to 1.5.7, the associated Tectonic version number would be `1.5.7-tectonic.1`.
+For example, if the Kubernetes version is 1.6.2, the first Tectonic production release including it is labeled `1.6.2-tectonic.1`. A second release including the same 1.6.2 version of Kubernetes would be `1.6.2-tectonic.2`. When the version number of the included Kubernetes advances to 1.6.2, the associated Tectonic version number would be `1.6.2-tectonic.1`.
 
 ## License and pull-secret formats
 

@@ -32,7 +32,7 @@ It is possible to recover a Kubernetes cluster from the failure of certain contr
 				      - ./hyperkube
 				      - scheduler
 				      - --leader-elect=true
-				      image: quay.io/coreos/hyperkube:v1.5.4_coreos.0
+				      image: quay.io/coreos/hyperkube:v1.6.2_coreos.0
 				      imagePullPolicy: IfNotPresent
 				      name: kube-scheduler-rescue
 				      resources: {}
@@ -57,7 +57,7 @@ It is possible to recover a Kubernetes cluster from the failure of certain contr
 			      - ./hyperkube
 			      - scheduler
 			      - --leader-elect=true
-			      image: quay.io/coreos/hyperkube:v1.5.3_coreos.0
+			      image: quay.io/coreos/hyperkube:v1.6.2_coreos.0
 			      imagePullPolicy: IfNotPresent
 			      name: kube-scheduler
 
@@ -79,7 +79,7 @@ It is possible to recover a Kubernetes cluster from the failure of certain contr
 			    - ./hyperkube
 			    - scheduler
 			    - --leader-elect=true
-			    image: quay.io/coreos/hyperkube:v1.5.3_coreos.0
+			    image: quay.io/coreos/hyperkube:v1.6.2_coreos.0
 			    imagePullPolicy: IfNotPresent
 			    name: kube-scheduler
 
@@ -121,7 +121,7 @@ It is possible to recover a Kubernetes cluster from the failure of certain contr
 		         - ./hyperkube
 		         - controller-manager
 		         - --leader-elect=true
-		         image: quay.io/coreos/hyperkube:v1.5.3_coreos.0
+		         image: quay.io/coreos/hyperkube:v1.6.2_coreos.0
 		         imagePullPolicy: IfNotPresent
 		         name: kube-controller-manager
 
@@ -142,7 +142,7 @@ It is possible to recover a Kubernetes cluster from the failure of certain contr
 			    - ./hyperkube
 			    - controller-manager
 			    - --leader-elect=true
-			    image: quay.io/coreos/hyperkube:v1.5.3_coreos.0
+			    image: quay.io/coreos/hyperkube:v1.6.2_coreos.0
 			    imagePullPolicy: IfNotPresent
 			    name: kube-controller-manager
 

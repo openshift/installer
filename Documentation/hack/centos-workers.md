@@ -6,7 +6,7 @@ This is unofficial. The author does not update, maintain, or support this setup.
 
 ## CoreOS Tectonic
 
-Provision a Tectonic `1.5.7-tectonic.1` bare-metal cluster (Container Linux, 1 controller, 2 workers) in the usual way with [matchbox](https://github.com/coreos/matchbox) and the Tectonic [Installer](https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html).
+Provision a Tectonic `1.6.2-tectonic.1` bare-metal cluster (Container Linux, 1 controller, 2 workers) in the usual way with [matchbox](https://github.com/coreos/matchbox) and the Tectonic [Installer](https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html).
 
 Locally, you may PXE boot QEMU/KVM nodes via Tectonic and matchbox on the `metal0` bridge.
 
@@ -125,7 +125,7 @@ Add a `/etc/kubernetes/kubelet.env` file.
     sudo mkdir -p /etc/kubernetes
     sudo bash -c 'cat > /etc/kubernetes/kubelet.env << EOF
 KUBELET_ACI=quay.io/coreos/hyperkube
-KUBELET_VERSION=v1.5.6_coreos.0
+KUBELET_VERSION=v1.6.2_coreos.0
 EOF'
 ```
 
