@@ -13,8 +13,7 @@ These downloaded assets are also necessary to destroy existing clusters, once th
 First, use Tectonic Installer to generate and download cluster assets.
 
 * Walk through the Installer in your browser, entering credentials and cluster information as usual.
-* On the *Start Installation* screen **do not start the installation**
-* Instead, click the *Download assets* link. This downlods the Terraform files into a file called `assets.zip`.
+* On the *Start Installation* screen, click *Download assets* to download the Terraform files to your local machine.
 
 ## Initialize Terraform
 
@@ -22,24 +21,22 @@ Follow the instructions to [initialize and configure Terraform][initialize-tf].
 
 ## Use assets.zip to customize your deployment
 
-In the `tectonic` installer assets directory you configured in the previous step, do the following:
+In the `tectonic` installer assets directory you configured in the previous step, unzip the `assets.zip` archive and navigate to the folder created.
 
-Unzip the `assets.zip` archive and navigate to the folder created by unzip.
-
-```sh
+```bash
 $ unzip assets.zip # creates `my-cluster_2017_05_15-13-31`
 $ cd my-cluster_2017_05_15-13-31
 $ ls
 config.tf        license.txt      logs             modules          platforms        pull_secret.json terraform.tfvars
 ```
 
-You may edit the file `terraform.tfvars` before moving on to change things like worker count, region, ssh key, and more.
+Then, edit `terraform.tfvars` to customize your deployment. For example, to create two matching clusters in two different regions, edit one node's `tectonic_aws_region` value to set it to a different region, then edit the `tectonic_worker_count` value appropriately.
 
 ## Deploy the cluster
 
 Once customized, use `terraform plan` to test your deployment, then `terraform apply` to deploy your cluster.
 
-```
+```bash
 $ terraform plan -var-file=terraform.tfvars platforms/aws
 $ terraform apply -var-file=terraform.tfvars platforms/aws
 ```
@@ -54,7 +51,7 @@ Tectonic Console will be running after the containers have downloaded. Access Co
 
 Inside of the `generated/` folder you should find any credentials, including the CA if generated, and a kubeconfig. You can use this to control the cluster with kubectl:
 
-```
+```bash
 $ export KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
