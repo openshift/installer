@@ -18,7 +18,7 @@ const stateToProps = ({cluster, clusterConfig}) => {
   return {
     action: status.action,
     clusterName: clusterConfig[CLUSTER_NAME],
-    error: status.error,
+    tfError: status.error,
     output: status.output,
     outputBlob: new Blob([status.output], {type: 'text/plain'}),
     platformType: clusterConfig[PLATFORM_TYPE],
@@ -76,12 +76,12 @@ class TF_PowerOn extends React.Component {
   destroy () {
     // eslint-disable-next-line no-alert
     if (window.config.devMode || window.confirm('Are you sure you want to destroy your cluster?')) {
-      this.props.TFDestroy().catch(tfError => this.setState({tfError}));
+      this.props.TFDestroy().catch(xhrError => this.setState({xhrError}));
     }
   }
 
   render () {
-    const {action, clusterName, error, output, outputBlob, platformType, statusMsg, tectonicConsole} = this.props;
+    const {action, clusterName, tfError, output, outputBlob, platformType, statusMsg, tectonicConsole} = this.props;
     const state = this.state;
     const showLogs = state.showLogs === null ? statusMsg !== 'success' : state.showLogs;
     const terraformRunning = statusMsg === 'running';
@@ -147,7 +147,7 @@ class TF_PowerOn extends React.Component {
         <div className="col-xs-12">
           <div className="wiz-launch__progress">
             <ul className="wiz-launch-progress">
-              <WaitingLi done={statusMsg === 'success'} error={error}>
+              <WaitingLi done={statusMsg === 'success'} error={tfError}>
                 Terraform {action} {statusMsg}
                 {output && <div className="pull-right" style={{fontSize: "13px"}}>
                   <a onClick={() => this.setState({showLogs: !showLogs})}>
@@ -174,43 +174,41 @@ class TF_PowerOn extends React.Component {
                   </div>
                 }
               </WaitingLi>
+              <li style={{paddingLeft: 20, listStyle: 'none'}}>
+              { state.xhrError &&
+                <div className="row">
+                  <div className="col-xs-12">
+                   <Alert severity="error">{state.xhrError}</Alert>
+                  </div>
+                </div>
+              }
+              { tfError && <Alert severity="error">{tfError.toString()}</Alert> }
+              { !terraformRunning && tfError &&
+                <Alert severity="error" noIcon>
+                  <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
+                  <ol>
+                    <li>Save your logs for debugging purposes.</li>
+                    <li>Destroy your cluster to clear anything that may have been created.</li>
+                    <li>Reapply Terraform.</li>
+                  </ol>
+                  {tfButtons}
+                </Alert>
+              }
+              { !terraformRunning && !tfError &&
+                <Alert severity="info" noIcon>
+                  <b>{_.startCase(action)} Succeeded</b>.
+                  <p>
+                    If you've changed your mind, you can {action === 'apply' ? 'destroy' : 'reapply'} your cluster.
+                  </p>
+                  {tfButtons}
+                </Alert>
+              }
+              </li>
               { consoleSubsteps }
             </ul>
           </div>
         </div>
       </div>
-      { state.tfError &&
-        <div className="row">
-          <div className="col-xs-12">
-           <Alert severity="error">{state.tfError}</Alert>
-          </div>
-        </div>
-      }
-      <div className="row">
-        <div className="col-xs-12">
-        { error && <Alert severity="error">{error.toString()}</Alert> }
-        </div>
-      </div>
-      { !terraformRunning && error &&
-        <Alert severity="error" noIcon>
-          <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
-          <ol>
-            <li>Save your logs for debugging purposes.</li>
-            <li>Destroy your cluster to clear anything that may have been created.</li>
-            <li>Reapply Terraform.</li>
-          </ol>
-          {tfButtons}
-        </Alert>
-      }
-      { !terraformRunning && !error &&
-        <Alert severity="info" noIcon>
-          <b>{_.startCase(action)} Succeeded</b>.
-          <p>
-            If you've changed your mind, you can {action === 'apply' ? 'destroy' : 'reapply'} your cluster.
-          </p>
-          {tfButtons}
-        </Alert>
-      }
       <br />
       <div className="row">
         <div className="col-xs-12">
