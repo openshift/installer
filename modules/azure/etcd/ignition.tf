@@ -15,7 +15,7 @@ data "ignition_user" "core" {
   name = "core"
 
   ssh_authorized_keys = [
-    "${file(var.ssh_key)}",
+    "${file(var.public_ssh_key)}",
   ]
 }
 

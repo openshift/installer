@@ -30,12 +30,17 @@ resource "azurerm_virtual_machine" "etcd_node" {
   os_profile {
     computer_name  = "etcd"
     admin_username = "core"
-    admin_password = "Microsoft123!"
+    admin_password = ""
     custom_data    = "${base64encode("${data.ignition_config.etcd.*.rendered[count.index]}")}"
   }
 
   os_profile_linux_config {
-    disable_password_authentication = false
+    disable_password_authentication = true
+
+    ssh_keys {
+      path     = "/home/core/.ssh/authorized_keys"
+      key_data = "${file(var.public_ssh_key)}"
+    }
   }
 }
 

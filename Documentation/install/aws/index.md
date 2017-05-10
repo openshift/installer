@@ -44,7 +44,9 @@ Be sure to read the [installation requirements][install-aws-requirements], which
 
 Follow the on-screen instructions to provision your cluster. This process should take about 10-15 minutes.
 
-Once complete you will be able to access your Tectonic Console.
+When prompted, click *Download assets* to save all assets generated during the Tectonic Installer process. These assets include configuration files that will allow you to repeat your cluster set up manually, and the [terraform.tfstate][tf-state] file, which is required to delete your cluster, when desired.
+
+Once complete click *Go to my Tectonic Console* to launch the Console, and begin interacting with your cluster.
 
 If you encounter any errors check the [troubleshooting][install-aws-troubleshooting] documentation.
 
@@ -59,7 +61,7 @@ If you encounter any errors check the [troubleshooting][install-aws-troubleshoot
 
 Now you are ready to access Tectonic Console, configure `kubectl`, and deploy your first application to the cluster. A `kubeconfig` with the appropriate configuration for `kubectl` is available for download in the Tectonic Console.
 
-For those new to Tectonic and Kubernetes, the [usage guide][usage] contains tutorials and guides demonstrating how to get started.
+For those new to Tectonic and Kubernetes, the [Tectonic Tutorials][tutorials] provide walk through instructions on getting started.
 
 
 [aws-r53-doc]: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/creating-migrating.html
@@ -67,6 +69,7 @@ For those new to Tectonic and Kubernetes, the [usage guide][usage] contains tuto
 [install-aws-requirements]: requirements.md
 [install-aws-requirements-creds]: requirements.md#privileges
 [install-aws-requirements-evpc]: requirements.md#using-an-existing-vpc
-[usage]: ../../tutorials/index.md
-[latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz
+[tutorials]: ../../tutorials/index.md
+[latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.5.7-tectonic.1.tar.gz
 [install-aws-troubleshooting]: ../../troubleshooting/faq.md
+[tf-state]: https://www.terraform.io/docs/state/

@@ -94,7 +94,8 @@ func testAllPodsRunning(t *testing.T) {
 
 		pods, err := c.Core().Pods("").List(v1.ListOptions{})
 		if err != nil {
-			t.Fatalf("could not list pods: %v", err)
+			t.Logf("could not list pods: %v", err)
+			pods = &v1.PodList{}
 		}
 
 		allReady := len(pods.Items) != 0
