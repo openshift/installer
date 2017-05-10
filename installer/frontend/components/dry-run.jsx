@@ -7,7 +7,7 @@ export const DryRun = () => <div className="row">
     <div className="form-group">
       Your cluster assets have been created. You can download these assets and customize underlying infrastructure as needed.
       Note: changes to Kubernetes manifests or Tectonic components run in the cluster are not supported.
-      &nbsp;<a href="https://coreos.com/tectonic/docs/latest/install/aws/manual-boot"
+      &nbsp;<a href="https://coreos.com/tectonic/docs/latest/install/aws/manual-boot.html"
         onClick={TectonicGA.sendDocsEvent} target="_blank">
         Read more here.&nbsp;&nbsp;<i className="fa fa-external-link" />
       </a>
