@@ -10,9 +10,9 @@ make test > /dev/null
 popd > /dev/null
 
 # Back end and build tests
-PKGS=$(go list ./... | grep -v /vendor | grep -v /tests | grep -v /server/terraform/plugins/aws)
-FORMATTABLE=$(find . -type f -name '*.go' -not -path './vendor/*' -not -path './binassets/*' -not -path './tests/vendor/*' -not -path ' | grep -v ./server/terraform/plugins/aws')
-LINT_EXCLUDE='(/vendor|binassets|aws)'
+PKGS=$(go list ./... | grep -v /vendor | grep -v /tests | grep -v /pkg/terraform/plugins/aws)
+FORMATTABLE=$(find . -type f -name '*.go' -not -path './vendor/*' -not -path './assets/*' -not -path './tests/vendor/*' -not -path ' | grep -v ./pkg/terraform/plugins/aws')
+LINT_EXCLUDE='(/vendor|assets|aws)'
 LINTABLE=$(go list ./... | grep -v -E $LINT_EXCLUDE)
 
 for p in $PKGS; do

@@ -1,4 +1,4 @@
-package cloudforms
+package aws
 
 import (
 	"testing"

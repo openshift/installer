@@ -1,4 +1,4 @@
-package defaults
+package tectonic
 
 import (
 	"fmt"
@@ -9,11 +9,9 @@ import (
 // Some values must match upstream bootkube.
 // https://github.com/kubernetes-incubator/bootkube/blob/master/cmd/bootkube/render.go
 const (
-	PodCIDR     = "10.2.0.0/16"
-	ServiceCIDR = "10.3.0.0/24"
-	apiOffset   = 1
-	dnsOffset   = 10
-	etcdOffset  = 15
+	apiOffset  = 1
+	dnsOffset  = 10
+	etcdOffset = 15
 )
 
 // APIServiceIP picks a default IP from the given service CIDR range.

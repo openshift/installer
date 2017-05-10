@@ -1,4 +1,4 @@
-package server
+package tectonic
 
 import (
 	"crypto/tls"
@@ -35,14 +35,17 @@ var defaultStatusClient = &http.Client{
 	},
 }
 
-// TectonicConsoleHealth returns the ServiceStatus of the Tectonic Console.
-func TectonicConsoleHealth(client *http.Client, endpoint string) ServiceStatus {
+// ConsoleHealth returns the ServiceStatus of the Tectonic Console.
+func ConsoleHealth(client *http.Client, endpoint string) ServiceStatus {
 	status := ServiceStatus{
 		Instance: endpoint,
 		Ready:    false,
 	}
 
 	// Tectonic Console health endpoint must return {"status": "ok"}
+	if client == nil {
+		client = defaultStatusClient
+	}
 	resp, err := client.Get(fmt.Sprintf("https://%s/health", endpoint))
 	if err != nil {
 		status.Message = err.Error()

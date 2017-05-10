@@ -1,4 +1,4 @@
-package cloudforms
+package aws
 
 import (
 	"errors"
@@ -116,7 +116,7 @@ func CheckSubnetsAgainstExistingVPC(sess *session.Session, existingVPCID string,
 		return err
 	}
 
-	err = PopulateCIDRs(sess, existingVPCID, controllerSubnets, workerSubnets)
+	err = populateCIDRs(sess, existingVPCID, controllerSubnets, workerSubnets)
 	if err != nil {
 		return err
 	}
@@ -206,6 +206,39 @@ func validateSubnetsAgainstExistingVPC(existingVPCBlock string, existingPublicSu
 	return nil
 }
 
+// populateCIDRs shoves some CIDRs into subnets when we know the IDs
+func populateCIDRs(sess *session.Session, existingVPCID string, publicSubnets, privateSubnets []VPCSubnet) error {
+	existingPublicSubnets, existingPrivateSubnets, err := GetVPCSubnets(sess, existingVPCID)
+	if err != nil {
+		return err
+	}
+
+	existingSubnets := append(existingPublicSubnets, existingPrivateSubnets...)
+	for i, subnet := range publicSubnets {
+		if subnet.ID == "" || subnet.InstanceCIDR != "" {
+			continue
+		}
+		for _, existing := range existingSubnets {
+			if subnet.ID == existing.ID {
+				publicSubnets[i].InstanceCIDR = existing.InstanceCIDR
+				break
+			}
+		}
+	}
+	for i, subnet := range privateSubnets {
+		if subnet.ID == "" || subnet.InstanceCIDR != "" {
+			continue
+		}
+		for _, existing := range existingSubnets {
+			if subnet.ID == existing.ID {
+				privateSubnets[i].InstanceCIDR = existing.InstanceCIDR
+				break
+			}
+		}
+	}
+	return nil
+}
+
 // vpcSubnetsToIPNets returns a slice of *net.IPNet containing the given
 // VPCSubnets.
 func vpcSubnetsToIPNets(subnets []VPCSubnet) ([]*net.IPNet, error) {
@@ -218,6 +251,11 @@ func vpcSubnetsToIPNets(subnets []VPCSubnet) ([]*net.IPNet, error) {
 		subnetCIDRs = append(subnetCIDRs, subnetCIDR)
 	}
 	return subnetCIDRs, nil
+}
+
+// Does the address space of these networks "a" and "b" overlap?
+func cidrOverlap(a, b *net.IPNet) bool {
+	return a.Contains(b.IP) || b.Contains(a.IP)
 }
 
 // containsIPNets returns an error if the IPNets are outside of the

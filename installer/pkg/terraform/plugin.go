@@ -9,7 +9,7 @@ import (
 	"github.com/hashicorp/terraform/plugin"
 	"github.com/kardianos/osext"
 
-	"github.com/coreos/tectonic-installer/installer/server/terraform/plugins/aws"
+	"github.com/coreos/tectonic-installer/installer/pkg/terraform/plugins/aws"
 )
 
 var plugins = map[string]*plugin.ServeOpts{

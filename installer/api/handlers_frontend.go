@@ -1,4 +1,4 @@
-package server
+package api
 
 import (
 	"bytes"
@@ -11,6 +11,19 @@ import (
 
 	"github.com/coreos/tectonic-installer/installer/assets"
 )
+
+func frontendHandler(assetDir string, platforms []string, devMode bool) http.Handler {
+	mux := http.NewServeMux()
+	assetHandler := http.HandlerFunc(servePublicAsset)
+	if assetDir != "" {
+		assetHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			serveAssetFromDir(assetDir, w, r)
+		})
+	}
+	mux.Handle("/frontend/", http.StripPrefix("/frontend/", assetHandler))
+	mux.Handle("/", serveIndex(platforms, devMode))
+	return mux
+}
 
 func serveIndex(platforms []string, devMode bool) http.Handler {
 	obj := struct {
@@ -64,17 +77,4 @@ func serveAssetFromDir(assetDir string, w http.ResponseWriter, r *http.Request) 
 	servePath := path.Join(assetDir, r.URL.Path)
 	log.Infof("Serving LOCAL FILE %s\n", servePath)
 	http.ServeFile(w, r, servePath)
-}
-
-func frontendHandler(assetDir string, platforms []string, devMode bool) http.Handler {
-	mux := http.NewServeMux()
-	assetHandler := http.HandlerFunc(servePublicAsset)
-	if assetDir != "" {
-		assetHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			serveAssetFromDir(assetDir, w, r)
-		})
-	}
-	mux.Handle("/frontend/", http.StripPrefix("/frontend/", assetHandler))
-	mux.Handle("/", serveIndex(platforms, devMode))
-	return mux
 }

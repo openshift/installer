@@ -7,8 +7,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/kardianos/osext"
 	"strings"
+
+	"github.com/kardianos/osext"
 )
 
 // sources lists the files/directories that compose the TerraForm sources.

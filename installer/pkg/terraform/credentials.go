@@ -34,7 +34,7 @@ type AWSCredentials struct {
 // Validate verifies that the given credentials are valid.
 func (a *AWSCredentials) Validate() error {
 	if a.AWSAccessKeyID == "" || a.AWSSecretAccessKey == "" {
-		return errors.New("AWSAccessKeyID & AWSSecretAccessKey must be specified.")
+		return errors.New("AWSAccessKeyID & AWSSecretAccessKey must be specified")
 	}
 	return nil
 }
