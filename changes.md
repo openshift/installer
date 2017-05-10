@@ -2,6 +2,8 @@
 
 ## Tectonic 1.6.2-tectonic.1 (2017-04-10)
 
+Tectonic now uses Terraform for cluster installation. This supports greater customization of environments, enables scripted installs and generally makes it easier to manage the lifecycle of multiple clusters.
+
 * Switches provisioning methods on AWS & Bare-Metal to Terraform exclusively.
 * Adds support for customizing the Tectonic infrastructure via Terraform.
 * Introduces experimental support for self-hosted etcd using its operator, and associated UI.
@@ -16,6 +18,8 @@
 * Removes final manual installation step of copying over assets folder.
 
 ## Console
+
+Role-based Access Control screens have been redesigned to make it easier to securely grant access to your clusters.
 
 * Updates to Console v1.5.2.
 * Adds binding name column to Role Bindings list pages
