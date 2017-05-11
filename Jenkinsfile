@@ -78,8 +78,10 @@ pipeline {
             # Use smoke test configuration for deployment
             ln -sf ${WORKSPACE}/test/aws.tfvars ${WORKSPACE}/build/${CLUSTER}/terraform.tfvars
 
-            make plan
-            make apply
+            alias filter=${WORKSPACE}/installer/scripts/filter.sh
+
+            make plan | filter
+            make apply | filter
 
             # TODO: replace in Go
             CONFIG=${WORKSPACE}/build/${CLUSTER}/terraform.tfvars
