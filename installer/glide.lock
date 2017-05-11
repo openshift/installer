@@ -1,5 +1,5 @@
 hash: 4c0a3047ff1b7b04c6c6a385336ae34abb5e7e89735124e41e1124288e5c0fd9
-updated: 2017-04-27T11:36:35.291529392-07:00
+updated: 2017-05-10T18:18:42.348543842-07:00
 imports:
 - name: github.com/ajeddeloh/yaml
   version: 1072abfea31191db507785e2e0c1b8d1440d35a5
@@ -99,14 +99,9 @@ imports:
   version: 99c3df83b51532e3615f851d8c2dbb638f5313bf
 - name: github.com/coreos/container-linux-config-transpiler
   version: dd0df6d1bf49c82c904c4825c7412507bef2d8b4
-  subpackages:
-  - config
-  - config/templating
-  - config/types
 - name: github.com/coreos/coreos-cloudinit
   version: 36c4b72b9fb389688f5ba34038478f8d918bb8d3
   subpackages:
-  - config
   - config/validate
 - name: github.com/coreos/go-semver
   version: 8ab6407b697782a06568d4b7f1db25550ec2e4c6
@@ -121,9 +116,6 @@ imports:
   version: d75d0aa3bf307f0954ce4ea8cac56dacec8d16ce
   subpackages:
   - config
-  - config/v2_0/types
-  - config/validate
-  - config/validate/report
 - name: github.com/coreos/ipnets
   version: 02aaf3c1ee2483ada21d643ce1c94708c8d1c7d0
 - name: github.com/coreos/matchbox
@@ -136,7 +128,6 @@ imports:
 - name: github.com/coreos/pkg
   version: 160ae6282d8c48a33d8c150e4e4817fdef8a5cde
   subpackages:
-  - capnslog
   - flagutil
   - health
   - httputil
@@ -284,7 +275,7 @@ imports:
 - name: github.com/kardianos/osext
   version: 8fef92e41e22a70e700a96b29f066cda30ea24ef
 - name: github.com/keybase/go-crypto
-  version: 0ee3e17034decab4941145296c0b0f4def213a7b
+  version: 13107bbcdf2f5e2862f7b1b005335f8afca30a24
   subpackages:
   - brainpool
   - cast5
@@ -301,10 +292,6 @@ imports:
   - rsa
 - name: github.com/kubernetes-incubator/bootkube
   version: 05b41cccd0c846819680f0b7a9ca244a479e6ffc
-  subpackages:
-  - pkg/asset
-  - pkg/asset/internal
-  - pkg/tlsutil
 - name: github.com/mitchellh/copystructure
   version: f81071c9d77b7931f78c90b416a074ecdc50e959
 - name: github.com/mitchellh/go-homedir
@@ -540,10 +527,15 @@ imports:
   - pkg/util/yaml
   - third_party/forked/reflect
 testImports:
+- name: cloud.google.com/go
+  version: 3b1ae45394a234c385be014e9a488f2bb6eef821
+  subpackages:
+  - compute/metadata
+  - internal
 - name: github.com/blang/semver
   version: 31b736133b98f26d5e078ec9eb591666edfd091f
 - name: github.com/coreos/go-oidc
-  version: 5cf2aa52da8c574d3aa4458f471ad6ae2240fe6b
+  version: 5644a2f50e2d2d5ba0b474bc5bc55fea1925936d
   subpackages:
   - http
   - jose
@@ -556,7 +548,7 @@ testImports:
   - digest
   - reference
 - name: github.com/emicklei/go-restful
-  version: 7c47e2558a0bbbaba9ecab06bc6681e73028a28a
+  version: 89ef8af493ab468a45a42bb0d89a06fccdd2fb22
   subpackages:
   - log
   - swagger
@@ -573,7 +565,7 @@ testImports:
 - name: github.com/imdario/mergo
   version: 6633656539c1639d9d78127b7d47c622b5d7b6dc
 - name: github.com/jonboulle/clockwork
-  version: 3f831b65b61282ba6bece21b91beea2edc4c887a
+  version: 72f9bd7c4e0c2a40055ab3d0f09654f730cce982
 - name: github.com/mailru/easyjson
   version: d5b7844b561a7bc640052f1b935f7b800330d7e0
   subpackages:
@@ -589,7 +581,7 @@ testImports:
 - name: github.com/spf13/pflag
   version: 7f60f83a2c81bc3c3c0d5297f61ddfa68da9d3b7
 - name: golang.org/x/oauth2
-  version: b5adcc2dcdf009d0391547edc6ecbaff889f5bb9
+  version: 3c3a985cb79f52a3190fbc056984415ca6763d01
   subpackages:
   - google
   - internal
@@ -620,10 +612,5 @@ testImports:
   - internal/remote_api
   - internal/urlfetch
   - urlfetch
-- name: google.golang.org/cloud
-  version: eb47ba841d53d93506cfbfbc03927daf9cc48f88
-  subpackages:
-  - compute/metadata
-  - internal
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
