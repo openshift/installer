@@ -15,22 +15,12 @@ kubectl --namespace=kube-system get deployment kube-scheduler -o yaml
 
 Then, extract the pod `spec` by running the following command:
 ```bash
-label=kube-scheduler ; namespace=kube-system ; kubectl get deploy --namespace=$namespace -l k8s-app=${label} -o json --export | \
- jq --arg namespace $namespace --arg name ${label}-rescue --arg node $(kubectl get node -l master -o jsonpath='{.items[0].metadata.name}') '.items[0].spec.template | \
- .kind = "Pod" | \
- .apiVersion = "v1" | \
- del(.metadata, .spec.nodeSelector) | \
- .metadata.namespace = $namespace | \
- .metadata.name = $name | \
- .spec.containers[0].name = $name | \
- .spec.nodeName = $node | \
- .spec.serviceAccount = "default" | \
- .spec.serviceAccountName = "default" ' | kubectl convert -f-
+label=kube-scheduler ; namespace=kube-system ; kubectl get deploy --namespace=$namespace -l k8s-app=${label} -o json --export | jq --arg namespace $namespace --arg name ${label}-rescue --arg node $(kubectl get node -l master -o jsonpath='{.items[0].metadata.name}') '.items[0].spec.template | .kind = "Pod" | .apiVersion = "v1" | del(.metadata, .spec.nodeSelector) | .metadata.namespace = $namespace | .metadata.name = $name | .spec.containers[0].name = $name | .spec.nodeName = $node | .spec.serviceAccount = "default" | .spec.serviceAccountName = "default" ' | kubectl convert -f-
 ```
 
 (Or, manually copy the`spec` section under `template`.)
 
-Executing this command creates the following rescue pod:
+Executing this command creates the following rescue pod, which is used as a temporary instance of the scheduler:
 ```yaml
 apiVersion: v1
 items:
@@ -81,6 +71,8 @@ Then, get the name of the master node:
 ```bash
 kubectl get nodes -l master=true
 ```
+
+If using AWS EC2, your master node name will be returned with the format: `ip-12-34-56-78.us-west-2.compute.internal`. Use this value as the master `nodeName` when creating your temporary controller manager pod, as described below.
 Wrap the `spec` in a pod header and specify the name of the master node in `nodeName`:
 
 ```yaml
@@ -89,7 +81,7 @@ kind: Pod
 metadata:
   name: kube-scheduler-rescue
 spec:
-  nodeName: <name-of-the-tectonic-master-node>
+  nodeName: <master-node-name-returned-above>
   containers:
     - command:
     - ./hyperkube
@@ -104,7 +96,7 @@ Use kubectl create to inject the pod into the cluster:
 ```bash
 kubectl create -f recovery-pod.yaml
 ```
-This pod acts as a rescue `kube-scheduler`, and  temporarily performs all the operations of a scheduler.
+This pod acts as a rescue `kube-scheduler`, and temporarily performs all the operations of a scheduler.
 
 When your rescue scheduler has successfully created a new kube-scheduler, delete the recovery pod.
 ```bash
@@ -132,12 +124,7 @@ kubectl --namespace=kube-system get deployment kube-controller-manager -o yaml
 Extract the pod `spec` by running the following command:
 
 ```bash
-kubectl --namespace=kube-system get deployment kube-controller-manager -ojson | \
- jq '.spec.template.apiVersion = "v1" | \
- .spec.template.kind = "Pod" | \
- .spec.template.metadata = {"namespace": .metadata.namespace} | \
- .spec.template.metadata.name = .metadata.name + "-recovery" | \
- .spec.template'
+kubectl --namespace=kube-system get deployment kube-controller-manager -ojson | jq '.spec.template.apiVersion = "v1" | .spec.template.kind = "Pod" | .spec.template.metadata = {"namespace": .metadata.namespace} | .spec.template.metadata.name = .metadata.name + "-recovery" | .spec.template'
 ```
 
 Then, create an example `spec`, `recovery-pod.yaml`:
@@ -158,6 +145,9 @@ Get the name of the master node:
 ```bash
 kubectl get nodes -l master=true
 ```
+
+If using AWS EC2, your master node name will be returned with the format: `ip-12-34-56-78.us-west-2.compute.internal`. Use this value as the master `nodeName` when creating your temporary controller manager pod, as described below.
+
 Then, wrap the pod `spec` in a pod header and specify the name of the master node in `nodeName`:
 
 ```yaml
@@ -166,7 +156,7 @@ kind: Pod
 metadata:
   name: recovery-controller
 spec:
-  nodeName: <name-of-the-tectonic-master-node>
+  nodeName: <master-node-name-returned-above>
   containers:
     - command:
     - ./hyperkube
