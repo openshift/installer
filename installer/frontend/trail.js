@@ -20,7 +20,6 @@ import { BM_Credentials } from './components/bm-credentials';
 import { BM_Hostname } from './components/bm-hostname';
 import { BM_Matchbox } from './components/bm-matchbox';
 import { BM_NetworkConfig } from './components/bm-network-config';
-import { BM_Size } from './components/bm-size';
 import { BM_SSHKeys } from './components/bm-sshkeys';
 
 import { AWS_CloudCredentials } from './components/aws-cloud-credentials';
@@ -127,16 +126,10 @@ const bmNetworkConfigPage = {
   title: 'Network Configuration',
 };
 
-const bmSizePage = {
-  path: '/define/size',
-  component: BM_Size,
-  title: 'Cluster Size',
-};
-
 const bmSshKeysPage = {
   path: '/define/ssh-keys',
   component: BM_SSHKeys,
-  title: 'Submit Keys',
+  title: 'SSH Key',
 };
 
 const bmWorkersPage = {
@@ -198,7 +191,6 @@ export const sections = new Map([
     bmMatchboxPage,
     bmCredentialsPage,
     bmNetworkConfigPage,
-    bmSizePage,
     bmControllersPage,
     bmWorkersPage,
     etcdPage,

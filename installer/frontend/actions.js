@@ -13,21 +13,13 @@ export const configActionTypes = {
   BATCH_SET_IN: 'CONFIG_ACTION_BATCH_SET_IN',
   MERGE: 'CONFIG_ACTION_MERGE',
   SET_MASTERS_LIST: 'SET_MASTERS_LIST',
-  SET_MASTERS_COUNT: 'SET_MASTERS_COUNT',
-  SET_SECRET_TOKEN: 'SET_SECRET_TOKEN',
   SET_WORKERS_LIST: 'SET_WORKERS_LIST',
-  SET_WORKERS_COUNT: 'SET_WORKERS_COUNT',
 };
 
 export const clusterReadyActionTypes = {
   ERROR: 'clusterReadyActionTypes.ERROR',
   STATUS: 'clusterReadyActionTypes.CLUSTER_STATUS',
   NOT_READY: 'clusterReadyActionTypes.NOT_READY',
-};
-
-export const csvActionTypes = {
-  SET: 'CSV_SET',
-  DELETE: 'CSV_DELETE',
 };
 
 export const dirtyActionTypes = {

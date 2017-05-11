@@ -288,28 +288,6 @@ const reducersTogether = combineReducers({
     }
   },
 
-  // Uploaded CSV data. Should not be saved or restored.
-  csvs: (state, action) => {
-    if (!state) {
-      return {};
-    }
-
-    switch (action.type) {
-    case csvActionTypes.SET:
-      return Object.assign({}, state, {
-        [action.payload.subject]: action.payload.value,
-      });
-    case csvActionTypes.DELETE:
-      {
-        const newState = Object.assign({}, state);
-        delete newState[action.payload.subject];
-        return newState;
-      }
-    default:
-      return state;
-    }
-  },
-
   // Stores the "dirtiness" of UI fields. Should be saved and restored
   dirty: (state, action) => {
     // this isArray check is just to prevent errors with old progress files & dev mode
