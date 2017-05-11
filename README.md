@@ -25,8 +25,10 @@ Checkout the [ROADMAP](ROADMAP.md) for details on where the project is headed.
 
 See the official Tectonic documentation:
 
-- [AWS Cloud Formation](https://coreos.com/tectonic/docs/latest/install/aws/) [[**stable**][platform-lifecycle]]
-- [Bare-Metal](https://coreos.com/tectonic/docs/latest/install/bare-metal/) [[**stable**][platform-lifecycle]]
+- [AWS using a GUI](https://coreos.com/tectonic/docs/latest/install/aws/) [[**stable**][platform-lifecycle]]
+- [AWS using Terraform CLI](https://coreos.com/tectonic/docs/latest/install/aws/aws-terraform.html) [[**stable**][platform-lifecycle]]
+- [Bare metal using a GUI](https://coreos.com/tectonic/docs/latest/install/bare-metal/) [[**stable**][platform-lifecycle]]
+- [Bare metal using Terraform CLI](https://coreos.com/tectonic/docs/latest/install/bare-metal/metal-terraform.html) [[**stable**][platform-lifecycle]]
 
 ### Hacking
 
@@ -42,9 +44,7 @@ This project is built on Terraform and requires version 0.9.4. Download and inst
 
 The example below will use `PLATFORM=azure` but you can set the value to something different. Also, as you configure the cluster refer to the linked documentation to find the configuration parameters.
 
-- `PLATFORM=aws` [AWS via Terraform](Documentation/install/aws/aws-terraform.md) [[**alpha**][platform-lifecycle]]
 - `PLATFORM=azure` [Azure via Terraform](Documentation/install/azure/azure-terraform.md) [[**alpha**][platform-lifecycle]]
-- `PLATFORM=metal` [Bare-Metal via Terraform](Documentation/install/bare-metal/metal-terraform.md) [[**alpha**][platform-lifecycle]]
 - `PLATFORM=openstack` [OpenStack via Terraform](Documentation/install/openstack/openstack-terraform.md) [[**alpha**][platform-lifecycle]]
 
 **Initiate the Cluster Configuration**
