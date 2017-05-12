@@ -54,6 +54,10 @@ release: release-bins
 	./scripts/release/upload_release_tarball.sh
 	./scripts/release/make_github_release.sh
 
+.PHONY: license-parse
+license-parse:
+	./scripts/license-gen/collect_project_licenses.sh
+
 .PHONY: release-bins
 release-bins: \
 	bin/linux/installer \

@@ -16,6 +16,9 @@ FROM golang:1.8-wheezy
 RUN go get -u github.com/golang/lint/golint
 RUN go get github.com/jstemmer/go-junit-report
 
+### License parser
+RUN go get github.com/estroz/license-bill-of-materials
+
 ### Install Terraform, NodeJS and Yarn
 ENV TERRAFORM_VERSION="0.8.8"
 ENV NODE_VERSION="v6.10.0"

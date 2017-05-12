@@ -1,0 +1,32 @@
+# OS/Platform Team
+git@github.com:coreos-inc/container-linux-update-operator.git
+git@github.com:coreos/matchbox.git
+# Kube Lifecycle Team
+git@github.com:kubernetes-incubator/bootkube.git
+git@github.com:coreos-inc/operator-client.git
+git@github.com:coreos-inc/tectonic-channel-operator.git
+git@github.com:coreos-inc/kube-version-operator.git
+git@github.com:coreos/kubernetes.git
+# Tectonic Team
+git@github.com:coreos/tectonic-installer.git
+git@github.com:coreos-inc/bridge.git
+git@github.com:coreos-inc/spartakus.git
+git@github.com:coreos/dex.git
+# etcd Team
+git@github.com:coreos-inc/tectonic-etcd-operator.git
+git@github.com:coreos/etcd-operator.git
+git@github.com:coreos/kenc.git
+# Monitoring Team
+git@github.com:coreos/prometheus-operator.git
+git@github.com:coreos-inc/tectonic-prometheus-operator.git
+git@github.com:prometheus/prometheus.git
+# No main.go file: git@github.com:prometheus/node_exporter.git
+git@github.com:prometheus/alertmanager.git
+# Kubernetes + Addons
+git@github.com:kubernetes/kubernetes.git
+# No main.go file: git@github.com:kubernetes/heapster.git
+git@github.com:kubernetes/contrib.git
+git@github.com:kubernetes/ingress.git
+git@github.com:kubernetes/dns.git
+# Other
+git@github.com:coreos/flannel.git
