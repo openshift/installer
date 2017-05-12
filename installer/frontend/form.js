@@ -95,7 +95,8 @@ class Node {
       batchSetIn(dispatch, batches);
     }
 
-    if (!this.isValid(getState().clusterConfig, true)) {
+    const newError = this.isValid(getState().clusterConfig, true);
+    if (!_.isEmpty(newError)) {
       batchSetIn(dispatch, batches);
       return false;
     }
@@ -124,7 +125,7 @@ class Node {
 
     const asyncErrorPath = toAsyncError(id);
 
-    if (asyncError) {
+    if (!_.isEmpty(asyncError)) {
       if (!_.isString(asyncError)) {
         console.warn(`asyncError is not a string!?:\n${JSON.stringify(asyncError)}`);
         if (asyncError.type && asyncError.payload) {
@@ -307,8 +308,8 @@ export class Form extends Node {
 
 const toValidator = (fields, listValidator) => (value, clusterConfig, oldValue, extraData) => {
   const errs = listValidator ? listValidator(value, clusterConfig, oldValue, extraData) : [];
-  if (errs && !_.isArray(errs)) {
-    throw new Error(`FieldLists validator must return an Array, not:\n${errs}`);
+  if (errs && !_.isObject(errs)) {
+    throw new Error(`FieldLists validator must return an Array-like Object, not:\n${errs}`);
   }
   _.each(value, (child, i) => {
     errs[i] = errs[i] || {};
@@ -326,7 +327,7 @@ const toValidator = (fields, listValidator) => (value, clusterConfig, oldValue, 
     });
   });
 
-  return _.every(errs, err => _.isEmpty(err)) ? undefined : errs;
+  return _.every(errs, err => _.isEmpty(err)) ? {} : errs;
 };
 
 const toDefaultOpts = opts => {
@@ -377,6 +378,20 @@ export class FieldList extends Field {
 
   get addOnClick () {
     return () => dispatch_(configActions.appendField(this.id));
+  }
+
+  get NonFieldErrors () {
+    if (this.errorComponent_) {
+      return this.errorComponent_;
+    }
+
+    const id = this.id;
+
+    this.errorComponent_ = connect(
+      ({clusterConfig}) => ({error: _.get(clusterConfig, toError(id), {})}),
+    )(({error}) => React.createElement(ErrorComponent, {error: error[-1]}));
+
+    return this.errorComponent_;
   }
 
   append (dispatch, getState) {
