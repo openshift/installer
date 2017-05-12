@@ -45,17 +45,17 @@ $ kubectl create ns logging
 Then setup all the service account and roles that Fluentd needs to query Kubernetes for metadata about the containers logs it's watching:
 
 ```
-$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/fluentd-service-account.yaml
-$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/fluentd-role.yaml
-$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/fluentd-role-binding.yaml
+$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/logging/fluentd-service-account.yaml
+$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/logging/fluentd-role.yaml
+$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/logging/fluentd-role-binding.yaml
 ```
 
 Next deploy Fluentd:
 
 ```
-$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/fluentd-configmap.yaml
-$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/fluentd-svc.yaml
-$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/fluentd-ds.yaml
+$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/logging/fluentd-configmap.yaml
+$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/logging/fluentd-svc.yaml
+$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/logging/fluentd-ds.yaml
 ```
 
 Finally, watch for the pods to become ready:
@@ -74,10 +74,10 @@ Tectonic includes the [promtheus-operator][prometheus-operator] in installations
 If you wish to enable Prometheus monitoring of your Fluentd pods, run the following commands:
 
 ```
-$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/monitoring/prometheus-fluentd-role-binding.yaml
-$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/monitoring/prometheus-fluentd-service-account.yaml
-$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/monitoring/prometheus-fluentd.yaml
-$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/monitoring/fluentd-prometheus-service-monitor.yaml
+$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/logging/monitoring/prometheus-fluentd-role-binding.yaml
+$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/logging/monitoring/prometheus-fluentd-service-account.yaml
+$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/logging/monitoring/prometheus-fluentd.yaml
+$ kubectl create -f https://coreos.com/tectonic/docs/latest/files/logging/monitoring/fluentd-prometheus-service-monitor.yaml
 ```
 
 ## Customization
