@@ -42,6 +42,12 @@ $ sed "s|<PATH_TO_INSTALLER>|$INSTALLER_PATH|g" terraformrc.example > .terraform
 $ export TERRAFORM_CONFIG=$(pwd)/.terraformrc
 ```
 
+Next, get the modules that Terraform will use to create the cluster resources:
+
+```bash
+$ terraform get ./platforms/metal
+```
+
 Now we're ready to specify our cluster configuration.
 
 ## Customize the deployment
