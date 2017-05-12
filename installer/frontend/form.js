@@ -326,7 +326,7 @@ const toValidator = (fields, listValidator) => (value, clusterConfig, oldValue, 
     });
   });
 
-  return _.every(errs, err => _.isEmpty(err)) ? [] : errs;
+  return _.every(errs, err => _.isEmpty(err)) ? undefined : errs;
 };
 
 const toDefaultOpts = opts => {
@@ -339,6 +339,22 @@ const toDefaultOpts = opts => {
   return Object.assign({}, opts, {default: [default_], validator: toValidator(opts.fields, opts.validator)});
 };
 
+const InnerFieldList_ = ({value, removeField, children, fields, id}) => {
+  const onlyChild = React.Children.only(children);
+  const newChildren = _.map(value, (unused, i) => {
+    const row = {};
+    _.keys(fields).forEach(k => row[k] = `${id}.${i}.${k}`);
+    const childProps = { row, i, key: i, remove: () => removeField(id, i) };
+    return React.cloneElement(onlyChild, childProps);
+  });
+  return React.createElement('div', {}, newChildren);
+};
+
+const ConnectedFieldList_ = connect(
+  ({clusterConfig}, {id}) => ({value: clusterConfig[id]}),
+  (dispatch) => ({removeField: (id, i) => dispatch(configActions.removeField(id, i))})
+)(InnerFieldList_);
+
 export class FieldList extends Field {
   constructor(id, opts={}) {
     super(id, toDefaultOpts(opts));
@@ -346,29 +362,17 @@ export class FieldList extends Field {
   }
 
   get Map () {
+    if (this.OuterListComponent_) {
+      return this.OuterListComponent_;
+    }
     const id = this.id;
     const fields = this.fields;
 
-    return function OuterListComponent (props) {
-
-      function InnerFieldList ({value, removeField}) {
-        const onlyChild = React.Children.only(props.children);
-        const children = _.map(value, (unused, i) => {
-          const row = {};
-          _.keys(fields).forEach(k => row[k] = `${id}.${i}.${k}`);
-          const childProps = { row, i, key: i, remove: () => removeField(i) };
-          return React.cloneElement(onlyChild, childProps);
-        });
-        return React.createElement('div', {}, children);
-      }
-
-      const ConnectedFieldList = connect(
-        ({clusterConfig}) => ({value: clusterConfig[id]}),
-        (dispatch) => ({removeField: i => dispatch(configActions.removeField(id, i))})
-      )(InnerFieldList);
-
-      return React.createElement(ConnectedFieldList);
+    this.OuterListComponent_ = function Outer ({children}) {
+      return React.createElement(ConnectedFieldList_, {id, children, fields});
     };
+
+    return this.OuterListComponent_;
   }
 
   get addOnClick () {
