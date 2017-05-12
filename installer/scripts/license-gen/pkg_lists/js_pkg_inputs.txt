@@ -1,0 +1,3 @@
+# Tectonic frontend
+github.com/coreos/tectonic-installer/installer/frontend
+github.com/coreos-inc/bridge/frontend
