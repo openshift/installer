@@ -32,13 +32,23 @@ See the official Tectonic documentation:
 
 ### Hacking
 
+In order to successfully build this project, you must first of all place it according to the Go workspace convention, i.e. at `$GOPATH/src/github.com/coreos/tectonic-installer`. If you don't set `$GOPATH`, it should by default be at `$HOME/go`.
+
+#### Requirements
+
+To build Tectonic Installer, you will need to install the following requirements:
+
+##### Terraform
+
+This project is built on [Terraform](http://terraform.io) and requires version 0.9.4. Download and install an [official Terraform binary](https://releases.hashicorp.com/terraform/0.9.4/) for your OS or use your favorite package manager.
+
+##### Yarn
+
+You need the [Yarn](https://yarnpkg.com) JavaScript package manager. If you're on OS X, you can install it via Homebrew: `brew install yarn`.
+
 #### Common Usage
 
 At a high level, using the installer follows the workflow below. See each platform guide for specifics.
-
-**Install Terraform**
-
-This project is built on Terraform and requires version 0.9.4. Download and install an [official Terraform binary](https://releases.hashicorp.com/terraform/0.9.4/) for your OS or use your favorite package manager.
 
 **Choose your platform**
 
