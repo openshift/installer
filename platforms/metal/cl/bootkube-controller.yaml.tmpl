@@ -96,6 +96,7 @@ systemd:
         ExecStartPost=/bin/touch /opt/tectonic/init_bootkube.done
         [Install]
         WantedBy=multi-user.target
+{{ if eq .exclude_tectonic "0" }}
     - name: tectonic.service
       contents: |
         [Unit]
@@ -113,6 +114,7 @@ systemd:
         ExecStartPost=/bin/touch /opt/tectonic/init_tectonic.done
         [Install]
         WantedBy=multi-user.target
+{{end}}
 storage:
   files:
     - path: /etc/kubernetes/kubelet.env
