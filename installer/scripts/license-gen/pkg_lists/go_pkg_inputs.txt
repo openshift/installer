@@ -3,7 +3,7 @@ git@github.com:coreos-inc/container-linux-update-operator.git
 git@github.com:coreos/matchbox.git
 # Kube Lifecycle Team
 git@github.com:kubernetes-incubator/bootkube.git
-git@github.com:coreos-inc/operator-client.git
+# No main.go or LICENSE files: git@github.com:coreos-inc/operator-client.git
 git@github.com:coreos-inc/tectonic-channel-operator.git
 git@github.com:coreos-inc/kube-version-operator.git
 git@github.com:coreos/kubernetes.git
