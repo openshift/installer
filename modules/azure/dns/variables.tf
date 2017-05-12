@@ -31,6 +31,5 @@ variable "etcd_ip_addresses" {
 }
 
 variable "use_custom_fqdn" {
-  type    = "string"
-  default = "false"
+  default = true
 }

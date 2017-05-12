@@ -6,7 +6,7 @@ resource "azurerm_dns_a_record" "tectonic-api" {
   ttl     = "60"
   records = ["${var.master_ip_addresses}"]
 
-  count = "${var.use_custom_fqdn == "true" ? 1 : 0}"
+  count = "${var.use_custom_fqdn ? 1 : 0}"
 }
 
 resource "azurerm_dns_a_record" "tectonic-console" {
@@ -17,7 +17,7 @@ resource "azurerm_dns_a_record" "tectonic-console" {
   ttl     = "60"
   records = ["${var.console_ip_address}"]
 
-  count = "${var.use_custom_fqdn == "true" ? 1 : 0}"
+  count = "${var.use_custom_fqdn ? 1 : 0}"
 }
 
 resource "azurerm_dns_a_record" "master_nodes" {
@@ -28,5 +28,5 @@ resource "azurerm_dns_a_record" "master_nodes" {
   ttl     = "59"
   records = ["${var.master_ip_addresses}"]
 
-  count = "${var.use_custom_fqdn == "true" ? 1 : 0}"
+  count = "${var.use_custom_fqdn ? 1 : 0}"
 }

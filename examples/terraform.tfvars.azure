@@ -50,7 +50,7 @@ tectonic_azure_master_vm_size = "Standard_DS2_v2"
 tectonic_azure_ssh_key = ""
 
 // If set to true, assemble the FQDN from the configuration. Otherwise, use the FQDN set up by Azure.
-tectonic_azure_use_custom_fqdn = "true"
+tectonic_azure_use_custom_fqdn = true
 
 // Block of IP addresses used by the Resource Group. This should not overlap with any other networks, such as a private datacenter connected via ExpressRoute.
 tectonic_azure_vnet_cidr_block = "10.0.0.0/16"
