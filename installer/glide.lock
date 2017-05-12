@@ -1,5 +1,5 @@
-hash: 4c0a3047ff1b7b04c6c6a385336ae34abb5e7e89735124e41e1124288e5c0fd9
-updated: 2017-05-10T18:18:42.348543842-07:00
+hash: fa4ce61de4f1d341d916532bec759a7b7e77b9d793f8eb9b26665d156109c85f
+updated: 2017-05-12T13:32:15.225510604-07:00
 imports:
 - name: github.com/ajeddeloh/yaml
   version: 1072abfea31191db507785e2e0c1b8d1440d35a5
@@ -297,11 +297,11 @@ imports:
 - name: github.com/mitchellh/go-homedir
   version: b8bc1bf767474819792c23f32d8286a45736f1c6
 - name: github.com/mitchellh/hashstructure
-  version: ab25296c0f51f1022f01cd99dfb45f1775de8799
+  version: 9204ce590301a868e3e86938bc12eadd416b211e
 - name: github.com/mitchellh/mapstructure
   version: 281073eb9eb092240d33ef253c404f1cca550309
 - name: github.com/mitchellh/reflectwalk
-  version: 417edcfd99a4d472c262e58f22b4bfe97580f03e
+  version: 8d802ff4ae93611b807597f639c19f76074df5c6
 - name: github.com/pborman/uuid
   version: a97ce2ca70fa5a848076093f05e639a89ca34d06
 - name: github.com/pmezard/go-difflib
@@ -339,13 +339,9 @@ imports:
 - name: github.com/vincent-petithory/dataurl
   version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
 - name: golang.org/x/crypto
-  version: d172538b2cfce0c13cee31e647d0367aa8cd2486
+  version: 5dc8cb4b8a8eb076cbb5a06bc3b8682c15bdbbd3
   subpackages:
-  - bcrypt
-  - blowfish
   - curve25519
-  - ed25519
-  - ed25519/internal/edwards25519
   - ssh
   - ssh/terminal
 - name: golang.org/x/net

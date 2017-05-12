@@ -313,11 +313,6 @@ import:
 - package: github.com/vincent-petithory/dataurl
   version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
 
-# used to encrypt passwords for dex 
-- package: golang.org/x/crypto
-  version: d172538b2cfce0c13cee31e647d0367aa8cd2486
-  subpackages:
-  - bcrypt
 # vpc availability subnet splitting math
 - package: github.com/coreos/ipnets
   version: 02aaf3c1ee2483ada21d643ce1c94708c8d1c7d0
