@@ -75,7 +75,7 @@ func New(config *Config) (http.Handler, error) {
 	// handlers_terraform.go
 	mux.Handle("/terraform/apply", httpHandler("POST", ctx, terraformApplyHandler))
 	mux.Handle("/terraform/status", httpHandler("POST", ctx, terraformStatusHandler))
-	mux.Handle("/terraform/assets", httpHandler("POST", ctx, terraformAssetsHandler))
+	mux.Handle("/terraform/assets", httpHandler("GET", ctx, terraformAssetsHandler))
 	mux.Handle("/terraform/destroy", httpHandler("POST", ctx, terraformDestroyHandler))
 
 	// handlers_containerlinux.go
