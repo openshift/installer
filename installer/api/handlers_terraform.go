@@ -8,8 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
-
 	"github.com/dghubble/sessions"
 	"github.com/kardianos/osext"
 
@@ -257,14 +255,6 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 		if err != nil {
 			return nil, newInternalServerError("Error calculating etcd service IP: %s", err)
 		}
-	}
-
-	if len(input.AdminPassword) > 0 {
-		passwordHash, err := bcrypt.GenerateFromPassword(input.AdminPassword, bcryptCost)
-		if err != nil {
-			return nil, newBadRequestError("Error bcrypt()ing admin password: %s", err)
-		}
-		input.Variables["tectonic_admin_password_hash"] = passwordHash
 	}
 
 	// Add variables and the required environment variables.
