@@ -78,7 +78,7 @@ describe('progress file example', () => {
       }));
 
       // TODO: wait for this action to finish & then check expected state
-      commitToServer(false)(dispatch, () => restored);
+      commitToServer(false, false, {salt: '$2a$12$96LR7NxL/T7LaijR0fxl3.'})(dispatch, () => restored);
 
       expect(fetch.mock.calls.length).toBe(1);
       const body = JSON.parse(fetch.mock.calls[0][1].body);
