@@ -1,7 +1,10 @@
 import _ from 'lodash';
+import bcrypt from 'bcryptjs';
 
 import { BARE_METAL_TF } from './platforms';
 import { keyToAlg } from './utils';
+
+const bcryptCost = 12;
 
 let defaultPlatformType = '';
 try {
@@ -191,7 +194,7 @@ export const DEFAULT_CLUSTER_CONFIG = {
 };
 
 
-export const toAWS_TF = (cc, FORMS) => {
+export const toAWS_TF = (cc, FORMS, opts={}) => {
   const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
   const etcds = FORMS[AWS_ETCDS].getData(cc);
   const workers = FORMS[AWS_WORKERS].getData(cc);
@@ -221,13 +224,13 @@ export const toAWS_TF = (cc, FORMS) => {
     platform: "aws",
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
-    adminPassword: window.btoa(cc[ADMIN_PASSWORD]),
     credentials: {
       AWSAccessKeyID: cc[AWS_ACCESS_KEY_ID],
       AWSSecretAccessKey: cc[AWS_SECRET_ACCESS_KEY],
-      AWSRegion: cc[AWS_REGION],
     },
     variables: {
+      // eslint-disable-next-line no-sync
+      tectonic_admin_password_hash: bcrypt.hashSync(cc[ADMIN_PASSWORD], opts.salt || bcrypt.genSaltSync(bcryptCost)),
       tectonic_aws_region: cc[AWS_REGION],
       tectonic_admin_email: cc[ADMIN_EMAIL],
       tectonic_aws_master_ec2_type: controllers[INSTANCE_TYPE],
@@ -288,7 +291,7 @@ export const toAWS_TF = (cc, FORMS) => {
   return ret;
 };
 
-export const toBaremetal_TF = (cc, FORMS) => {
+export const toBaremetal_TF = (cc, FORMS, opts={}) => {
   const sshKey = FORMS[BM_SSH_KEY].getData(cc);
 
   const ret = {
@@ -297,8 +300,9 @@ export const toBaremetal_TF = (cc, FORMS) => {
     platform: 'metal',
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
-    adminPassword: window.btoa(cc[ADMIN_PASSWORD]),
     variables: {
+      // eslint-disable-next-line no-sync
+      tectonic_admin_password_hash: bcrypt.hashSync(cc[ADMIN_PASSWORD], opts.salt || bcrypt.genSaltSync(bcryptCost)),
       tectonic_cluster_name: cc[CLUSTER_NAME],
       tectonic_cl_channel: cc[CHANNEL_TO_USE],
       tectonic_admin_email: cc[ADMIN_EMAIL],
