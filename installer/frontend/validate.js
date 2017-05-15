@@ -173,31 +173,6 @@ export const validate = {
     return;
   },
 
-  k8sName: (s) => {
-    if (s.length === 0 || s.length > 253) {
-      return 'Value must be between 1 and 253 characters';
-    }
-
-    if (s.toLowerCase() !== s) {
-      return 'Value must be lower case.';
-    }
-
-    // TODO: (ggreer) this falsely accepts "blah.-blah"
-    // lower case alphanumeric characters, -, and ., with alpha beginning and end
-    if (!/^([a-z0-9][a-z0-9.-]*)?[a-z0-9]$/.test(s)) {
-      return 'Value must be alphanumeric [a-z0-9.-], beginning & ending with alphanumeric. Please refer to http://kubernetes.io/docs/user-guide/identifiers/.';
-    }
-
-    for (let t of s.split('.')) {
-      // each segment no more than 63 characters
-      if (t.length > 63) {
-        return 'No segment between dots can be more than 63 characters.';
-      }
-    }
-
-    return;
-  },
-
   schema: (schema) => {
     return (value) => {
       for (let k of Object.keys(schema)) {
