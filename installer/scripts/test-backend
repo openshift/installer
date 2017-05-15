@@ -1,0 +1,15 @@
+#!/bin/bash -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT="$DIR/.."
+pushd "$ROOT" > /dev/null
+
+# Back end and build tests
+PKGS=$(go list ./... | grep -v /vendor | grep -v /tests | grep -v /pkg/terraform/plugins/aws)
+
+for p in $PKGS; do
+    go test "$p" -cover
+    go vet "$p"
+done
+
+popd > /dev/null

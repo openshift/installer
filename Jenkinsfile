@@ -70,6 +70,7 @@ pipeline {
         make clean
         make tools
         make build
+        make lint
         make test
         """
         stash name: 'installer', includes: 'installer/bin/linux/installer'
