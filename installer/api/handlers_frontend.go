@@ -75,6 +75,6 @@ func servePublicAsset(w http.ResponseWriter, r *http.Request) {
 
 func serveAssetFromDir(assetDir string, w http.ResponseWriter, r *http.Request) {
 	servePath := path.Join(assetDir, r.URL.Path)
-	log.Infof("Serving LOCAL FILE %s\n", servePath)
+	log.Infof("Serving LOCAL FILE %s", servePath)
 	http.ServeFile(w, r, servePath)
 }
