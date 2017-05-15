@@ -59,7 +59,7 @@ try {
   console.error('Error restoring state from sessionStorage:', e);
 }
 
-store.dispatch(validateAllFields(store.getState().clusterConfig, () => {
+store.dispatch(validateAllFields(() => {
   TectonicGA.initialize();
 
   try {

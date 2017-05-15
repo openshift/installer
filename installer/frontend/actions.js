@@ -118,11 +118,10 @@ export const configActions = {
   },
 };
 
-export const validateAllFields = (originalClusterConfig, cb) => async (dispatch, getState) => {
-  // Just shake the array really hard until all the nodes fall out...
+export const validateAllFields = cb => async (dispatch, getState) => {
+  const initialCC = getState().clusterConfig;
   const unvisitedFields = new Set(_.values(FIELDS));
   const visitedNames = new Set();
-
   const isNow = () => true;
 
   const visit = async field => {
@@ -137,9 +136,10 @@ export const validateAllFields = (originalClusterConfig, cb) => async (dispatch,
 
     // TODO: (kans) this is bad
     await field.getExtraStuff(dispatch, clusterConfig, FIELDS, isNow);
-    await field.validate(dispatch, getState, originalClusterConfig, isNow);
+    await field.validate(dispatch, getState, initialCC, isNow);
   };
 
+  // Just shake the array really hard until all the nodes fall out...
   while (unvisitedFields.size > 0) {
     const toVisit = [];
 
