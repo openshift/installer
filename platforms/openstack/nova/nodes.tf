@@ -5,6 +5,10 @@ resource "openstack_compute_instance_v2" "master_node" {
   flavor_id       = "${var.tectonic_openstack_flavor_id}"
   security_groups = ["${module.master_nodes.secgroup_name}"]
 
+  network {
+    name = "${var.tectonic_openstack_network_name}"
+  }
+
   metadata {
     role = "master"
   }
@@ -20,6 +24,10 @@ resource "openstack_compute_instance_v2" "worker_node" {
   flavor_id       = "${var.tectonic_openstack_flavor_id}"
   security_groups = ["${module.worker_nodes.secgroup_name}"]
 
+  network {
+    name = "${var.tectonic_openstack_network_name}"
+  }
+
   metadata {
     role = "worker"
   }
@@ -34,6 +42,10 @@ resource "openstack_compute_instance_v2" "etcd_node" {
   image_id        = "${var.tectonic_openstack_image_id}"
   flavor_id       = "${var.tectonic_openstack_flavor_id}"
   security_groups = ["${module.etcd.secgroup_name}"]
+
+  network {
+    name = "${var.tectonic_openstack_network_name}"
+  }
 
   metadata {
     role = "etcd"

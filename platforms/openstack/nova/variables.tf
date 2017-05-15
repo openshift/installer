@@ -24,3 +24,13 @@ The image ID as given in `openstack image list`.
 Specifies the OS image of the VM.
 EOF
 }
+
+variable "tectonic_openstack_network_name" {
+  type = "string"
+
+  description = <<EOF
+The name of the network to connect to OpenStack compute instances.
+EOF
+
+  default = "public"
+}
