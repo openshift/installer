@@ -40,11 +40,9 @@ export const BM_MATCHBOX_CLIENT_KEY = 'matchboxClientKey';
 export const BM_MATCHBOX_HTTP = 'matchboxHTTP';
 export const BM_MATCHBOX_RPC = 'matchboxRPC';
 export const BM_MASTERS = 'masters';
-export const BM_MASTERS_COUNT = 'mastersCount';
 export const BM_OS_TO_USE = 'osToUse';
 export const BM_TECTONIC_DOMAIN = 'tectonicDomain';
 export const BM_WORKERS = 'workers';
-export const BM_WORKERS_COUNT = 'workersCount';
 
 export const CA_CERTIFICATE = 'caCertificate';
 export const CA_PRIVATE_KEY = 'caPrivateKey';
@@ -165,12 +163,8 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [BM_MATCHBOX_CLIENT_KEY]: '',
   [BM_MATCHBOX_HTTP]: '',
   [BM_MATCHBOX_RPC]: '',
-  [BM_MASTERS]: [],
-  [BM_MASTERS_COUNT]: 1,
   [BM_OS_TO_USE]: '',
   [BM_TECTONIC_DOMAIN]: '',
-  [BM_WORKERS]: [],
-  [BM_WORKERS_COUNT]: 1,
   [CA_CERTIFICATE]: '',
   [CA_PRIVATE_KEY]: '',
   [CA_TYPE]: 'self-signed',
@@ -293,6 +287,8 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
 
 export const toBaremetal_TF = (cc, FORMS, opts={}) => {
   const sshKey = FORMS[BM_SSH_KEY].getData(cc);
+  const masters = cc[BM_MASTERS];
+  const workers = cc[BM_WORKERS];
 
   const ret = {
     clusterKind: 'tectonic-metal',
@@ -309,12 +305,12 @@ export const toBaremetal_TF = (cc, FORMS, opts={}) => {
       tectonic_metal_cl_version: cc[BM_OS_TO_USE],
       tectonic_metal_ingress_domain: getTectonicDomain(cc),
       tectonic_metal_controller_domain: getControllerDomain(cc),
-      tectonic_metal_controller_domains: cc[BM_MASTERS].map(({name}) => name),
-      tectonic_metal_controller_names: cc[BM_MASTERS].map(({name}) => name.split('.')[0]),
-      tectonic_metal_controller_macs: cc[BM_MASTERS].map(({mac}) => mac),
-      tectonic_metal_worker_domains: cc[BM_WORKERS].map(({name}) => name),
-      tectonic_metal_worker_names: cc[BM_WORKERS].map(({name}) => name.split('.')[0]),
-      tectonic_metal_worker_macs: cc[BM_WORKERS].map(({mac}) => mac),
+      tectonic_metal_controller_domains: masters.map(({host}) => host),
+      tectonic_metal_controller_names: masters.map(({host}) => host.split('.')[0]),
+      tectonic_metal_controller_macs: masters.map(({mac}) => mac),
+      tectonic_metal_worker_domains: workers.map(({host}) => host),
+      tectonic_metal_worker_names: workers.map(({host}) => host.split('.')[0]),
+      tectonic_metal_worker_macs: workers.map(({mac}) => mac),
       tectonic_metal_matchbox_http_url: `http://${cc[BM_MATCHBOX_HTTP]}`,
       tectonic_metal_matchbox_rpc_endpoint: cc[BM_MATCHBOX_RPC],
       tectonic_metal_matchbox_ca: cc[BM_MATCHBOX_CA],

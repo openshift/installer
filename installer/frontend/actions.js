@@ -12,8 +12,6 @@ export const configActionTypes = {
   SET_IN: 'CONFIG_ACTION_SET_IN',
   BATCH_SET_IN: 'CONFIG_ACTION_BATCH_SET_IN',
   MERGE: 'CONFIG_ACTION_MERGE',
-  SET_MASTERS_LIST: 'SET_MASTERS_LIST',
-  SET_WORKERS_LIST: 'SET_WORKERS_LIST',
 };
 
 export const clusterReadyActionTypes = {

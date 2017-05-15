@@ -12,6 +12,7 @@ import '../components/aws-define-nodes';
 import '../components/aws-vpc';
 import '../components/etcd';
 import '../components/bm-sshkeys';
+import '../components/bm-nodeforms';
 
 const structureOnly = (obj) => {
   const toString = Object.prototype.toString;
