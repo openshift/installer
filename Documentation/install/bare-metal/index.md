@@ -167,7 +167,7 @@ tar xzvf tectonic-1.6.2-tectonic.1.tar.gz
 cd tectonic/tectonic-installer
 ```
 
-Run the Tectonic Installer that matches your platform (`linux`, `darwin`):
+Run the Tectonic Installer that matches your platform (`linux` or `darwin`):
 
 ```sh
 ./$PLATFORM/installer
