@@ -276,6 +276,26 @@ export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirt
   );
 };
 
+export const Selector = props => {
+  const options = _.get(props, 'extraData.options', [])
+    .map(({value, label}) => <option value={value} key={value}>{label}</option>);
+
+  if (props.disabledValue) {
+    options.splice(0, 0, <option disabled={true} key="disabled">{props.disabledValue}</option>);
+  }
+
+  const iClassNames = classNames('fa', 'fa-refresh', {
+    'fa-spin': props.inFly,
+  });
+
+  return <div className="async-select">
+    <Select className="async-select--select" {...props}>{options}</Select>
+    {props.refreshBtn && <button className="btn btn-default" onClick={props.refreshExtraData} title="Refresh">
+      <i className={iClassNames}></i>
+    </button>}
+  </div>;
+};
+
 const stateToProps = ({clusterConfig, dirty}, {field}) => ({
   value: _.get(clusterConfig, field),
   invalid: _.get(clusterConfig, toError(field))

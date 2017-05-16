@@ -1,7 +1,6 @@
 import _ from 'lodash';
 import React from 'react';
 import { connect } from 'react-redux';
-import classNames from 'classnames';
 
 import { compose, validate } from '../validate';
 import * as awsActions from '../aws-actions';
@@ -14,6 +13,7 @@ import {
   WithClusterConfig,
   Connect,
   Input,
+  Selector,
   ToggleButton,
 } from './ui';
 import { Alert } from './alert';
@@ -138,26 +138,6 @@ const SubnetSelect = ({field, name, subnets, asyncValidator, disabled, fieldName
 //     </WithClusterConfig>
 //   </div>
 // </div>;
-
-const Selector = props => {
-  const options = _.get(props, 'extraData.options', [])
-    .map(({value, label}) => <option value={value} key={value}>{label}</option>);
-
-  if (props.disabledValue) {
-    options.splice(0, 0, <option disabled={true} key="disabled">{props.disabledValue}</option>);
-  }
-
-  const iClassNames = classNames('fa', 'fa-refresh', {
-    'fa-spin': props.inFly,
-  });
-
-  return <div className="async-select">
-    <Select className="async-select--select" {...props}>{options}</Select>
-    {props.refreshBtn && <button className="btn btn-default" onClick={props.refreshExtraData} title="Refresh">
-      <i className={iClassNames}></i>
-    </button>}
-  </div>;
-};
 
 const stateToProps = ({aws, clusterConfig}) => {
   // populate subnet selection with all available azs ... many to many :(
