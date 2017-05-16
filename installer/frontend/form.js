@@ -82,7 +82,7 @@ class Node {
     }
 
     const syncError = this.validator(value, clusterConfig, oldValue, extraData);
-    if (syncError) {
+    if (!_.isEmpty(syncError)) {
       console.info("sync error", this.name, syncError);
       batches.push([syncErrorPath, syncError]);
       batchSetIn(dispatch, batches);
@@ -90,13 +90,13 @@ class Node {
     }
 
     const oldError = _.get(oldCC, syncErrorPath);
-    if (oldError) {
+    if (!_.isEmpty(oldError)) {
       batches.push([syncErrorPath, undefined]);
       batchSetIn(dispatch, batches);
     }
 
-    const newError = this.isValid(getState().clusterConfig, true);
-    if (!_.isEmpty(newError)) {
+    const isValid = this.isValid(getState().clusterConfig, true);
+    if (!isValid) {
       batchSetIn(dispatch, batches);
       return false;
     }
