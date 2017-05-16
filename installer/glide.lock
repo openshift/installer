@@ -1,5 +1,5 @@
-hash: fa4ce61de4f1d341d916532bec759a7b7e77b9d793f8eb9b26665d156109c85f
-updated: 2017-05-12T13:32:15.225510604-07:00
+hash: 30221ed8dda5459151ca5e548474e4f92096ff926dd498c47b63cae372716927
+updated: 2017-05-16T13:31:15.722129599-07:00
 imports:
 - name: github.com/ajeddeloh/yaml
   version: 1072abfea31191db507785e2e0c1b8d1440d35a5
@@ -133,7 +133,7 @@ imports:
   - httputil
   - timeutil
 - name: github.com/coreos/terraform-provider-matchbox
-  version: 4c66aa75b60489a4220730d70b0446e25b0c9a0a
+  version: 016482b8add5122d41cce5e05d4f1730c5a9ff77
   subpackages:
   - matchbox
 - name: github.com/coreos/yaml

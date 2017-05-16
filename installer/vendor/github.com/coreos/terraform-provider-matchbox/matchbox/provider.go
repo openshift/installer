@@ -1,6 +1,8 @@
 package matchbox
 
 import (
+	"fmt"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/terraform"
 )
@@ -39,13 +41,18 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	ca := d.Get("ca").(string)
 	clientCert := d.Get("client_cert").(string)
 	clientKey := d.Get("client_key").(string)
+	endpoint := d.Get("endpoint").(string)
 
 	config := &Config{
-		Endpoint:   d.Get("endpoint").(string),
+		Endpoint:   endpoint,
 		ClientCert: []byte(clientCert),
 		ClientKey:  []byte(clientKey),
 		CA:         []byte(ca),
 	}
 
-	return NewMatchboxClient(config)
+	client, err := NewMatchboxClient(config)
+	if err != nil {
+		return client, fmt.Errorf("failed to create Matchbox client or connect to %s: %v", endpoint, err)
+	}
+	return client, err
 }
