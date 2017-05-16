@@ -83,6 +83,7 @@ export const AWS_VPC_FORM = 'aws_vpc';
 export const AWS_CONTROLLERS = 'aws_controllers';
 export const AWS_CLUSTER_INFO = 'aws_clusterInfo';
 export const AWS_WORKERS = 'aws_workers';
+export const AWS_REGION_FORM = 'aws_regionForm';
 export const BM_SSH_KEY = 'bm_sshKey';
 export const LICENSING = 'licensing';
 

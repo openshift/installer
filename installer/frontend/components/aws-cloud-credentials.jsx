@@ -18,6 +18,7 @@ import {
   AWS_CONTROLLER_SUBNET_IDS,
   AWS_WORKER_SUBNET_IDS,
   AWS_REGION,
+  AWS_REGION_FORM,
   AWS_SECRET_ACCESS_KEY,
   AWS_SESSION_TOKEN,
   STS_ENABLED,
@@ -70,7 +71,7 @@ const awsCredsForm = new Form(AWS_CREDS, [
   },
 });
 
-const selectRegionForm = new Form('SelectRegionForm', [
+const selectRegionForm = new Form(AWS_REGION_FORM, [
   awsCredsForm,
   new Field(AWS_REGION, {
     default: '',

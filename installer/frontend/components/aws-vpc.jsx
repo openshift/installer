@@ -34,6 +34,7 @@ import {
   AWS_CREATE_VPC,
   AWS_HOSTED_ZONE_ID,
   AWS_REGION,
+  AWS_REGION_FORM,
   AWS_SUBNETS,
   AWS_VPC_CIDR,
   AWS_VPC_ID,
@@ -61,7 +62,7 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
   }),
   new Field(AWS_HOSTED_ZONE_ID, {
     default: '',
-    dependencies: [AWS_REGION],
+    dependencies: [AWS_REGION_FORM],
     validator: (value, clusterConfig, oldValue, extraData) => {
       const empty = validate.nonEmpty(value);
       if (empty) {

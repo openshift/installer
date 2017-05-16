@@ -109,12 +109,7 @@ export const configActions = {
       throw new Error(`${name} has no field`);
     }
 
-    const deps = FIELD_TO_DEPS[name];
-    if (_.size(deps) === 0) {
-      console.debug("no deps for", name);
-    }
-
-    field.update(dispatch, inputValue, getState, deps, FIELDS, split);
+    field.update(dispatch, inputValue, getState, FIELDS, FIELD_TO_DEPS, split);
   },
 };
 
