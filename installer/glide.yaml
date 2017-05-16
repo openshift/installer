@@ -352,7 +352,7 @@ import:
 - package: github.com/mitchellh/mapstructure
   version: 281073eb9eb092240d33ef253c404f1cca550309
 - package: github.com/coreos/terraform-provider-matchbox 
-  version: 4c66aa75b60489a4220730d70b0446e25b0c9a0a
+  version: v0.1.2
   subpackages:
   - matchbox
 - package: github.com/hashicorp/vault
@@ -361,6 +361,12 @@ import:
   - helper/compressutil
   - helper/jsonutil
   - helper/pgpkeys
+- package: golang.org/x/crypto
+  version: 5dc8cb4b8a8eb076cbb5a06bc3b8682c15bdbbd3
+  subpackages:
+  - curve25519
+  - ssh
+  - ssh/terminal
 - package: github.com/hashicorp/go-getter
   version: 615ccd8621bdb3837e18be586ce15655ef52b185
   subpackages:
