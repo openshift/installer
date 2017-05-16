@@ -17,7 +17,7 @@ resource "aws_route53_record" "etcd_srv_client" {
 }
 
 resource "aws_route53_record" "etc_a_nodes" {
-  count   = "${var.dns_enabled ? 1 : 0}"
+  count   = "${var.dns_enabled ? var.instance_count : 0}"
   type    = "A"
   ttl     = "60"
   zone_id = "${var.dns_zone_id}"
