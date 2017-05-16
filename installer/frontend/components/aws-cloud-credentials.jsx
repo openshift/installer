@@ -56,7 +56,7 @@ const awsCredsForm = new Form(AWS_CREDS, [
     ignoreWhen: cc => !cc[STS_ENABLED],
   }),
 ], {
-  asyncValidator: (dispatch, getState, data) => {
+  asyncValidator: (dispatch, getState, data, ignored, isNow) => {
     const creds = {
       AccessKeyID: data[AWS_ACCESS_KEY_ID],
       SecretAccessKey: data[AWS_SECRET_ACCESS_KEY],
@@ -65,7 +65,8 @@ const awsCredsForm = new Form(AWS_CREDS, [
       Region: data[AWS_REGION] || 'us-east-1',
     };
 
-    return dispatch(getRegions(null, creds)).then(() => {});
+    // This returns the list of regions, which we don't want to show as an error message.
+    return dispatch(getRegions(null, creds, isNow)).then(() => {});
   },
 });
 
