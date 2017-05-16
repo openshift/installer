@@ -102,7 +102,7 @@ resource "local_file" "etcd-operator" {
   depends_on = ["template_dir.bootkube"]
 
   content  = "${data.template_file.etcd-operator.rendered}"
-  filename = "${path.cwd}/generated/manifests/etcd-operator.yaml"
+  filename = "${path.cwd}/generated/experimental/etcd-operator.yaml"
 }
 
 data "template_file" "etcd-service" {
@@ -118,7 +118,7 @@ resource "local_file" "etcd-service" {
   depends_on = ["template_dir.bootkube"]
 
   content  = "${data.template_file.etcd-service.rendered}"
-  filename = "${path.cwd}/generated/manifests/etcd-service.yaml"
+  filename = "${path.cwd}/generated/experimental/etcd-service.yaml"
 }
 
 data "template_file" "bootstrap-etcd" {
@@ -134,7 +134,7 @@ resource "local_file" "bootstrap-etcd" {
   depends_on = ["template_dir.bootkube-bootstrap"]
 
   content  = "${data.template_file.bootstrap-etcd.rendered}"
-  filename = "${path.cwd}/generated/bootstrap-manifests/bootstrap-etcd.yaml"
+  filename = "${path.cwd}/generated/bootstrap-experimental/bootstrap-etcd.yaml"
 }
 
 # etcd certs
