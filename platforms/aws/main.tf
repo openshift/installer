@@ -23,17 +23,16 @@ module "vpc" {
   # A. Explicitly configure a list of AZs + associated subnet CIDRs
   # B. Let the module calculate subnets accross a set number of AZs
   #
-  # To enable mode A, make sure "tectonic_aws_az_count" variable IS NOT SET to any value 
-  # and instead configure a set of AZs + CIDRs for masters and workers using the
+  # To enable mode A, configure a set of AZs + CIDRs for masters and workers using the
   # "tectonic_aws_master_custom_subnets" and "tectonic_aws_worker_custom_subnets" variables.
   #
   # To enable mode B, make sure that "tectonic_aws_master_custom_subnets" and "tectonic_aws_worker_custom_subnets" 
-  # ARE NOT SET. Instead, set the desired number of VPC AZs using "tectonic_aws_az_count" variable.
+  # ARE NOT SET.
 
   # These counts could be deducted by length(keys(var.tectonic_aws_master_custom_subnets)) 
   # but there is a restriction on passing computed values as counts. This approach works around that.
-  master_az_count = "${var.tectonic_aws_az_count == "" ? "${length(keys(var.tectonic_aws_master_custom_subnets))}" : var.tectonic_aws_az_count}"
-  worker_az_count = "${var.tectonic_aws_az_count == "" ? "${length(keys(var.tectonic_aws_worker_custom_subnets))}" : var.tectonic_aws_az_count}"
+  master_az_count = "${length(keys(var.tectonic_aws_master_custom_subnets)) > 0 ? "${length(keys(var.tectonic_aws_master_custom_subnets))}" : "${length(data.aws_availability_zones.azs.names)}"}"
+  worker_az_count = "${length(keys(var.tectonic_aws_worker_custom_subnets)) > 0 ? "${length(keys(var.tectonic_aws_worker_custom_subnets))}" : "${length(data.aws_availability_zones.azs.names)}"}"
   # The appending of the "padding" element is required as workaround since the function
   # element() won't work on empty lists. See https://github.com/hashicorp/terraform/issues/11210
   master_subnets = "${concat(values(var.tectonic_aws_master_custom_subnets),list("padding"))}"
@@ -53,7 +52,7 @@ module "vpc" {
 module "etcd" {
   source = "../../modules/aws/etcd"
 
-  instance_count = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : var.tectonic_aws_az_count == 5 ? 5 : 3}"
+  instance_count = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
   az_count       = "${length(data.aws_availability_zones.azs.names)}"
   ec2_type       = "${var.tectonic_aws_etcd_ec2_type}"
   sg_ids         = ["${module.vpc.etcd_sg_id}"]

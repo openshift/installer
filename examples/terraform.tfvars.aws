@@ -16,16 +16,6 @@ tectonic_admin_password_hash = ""
 // Example: `[ { key = "foo", value = "bar", propagate_at_launch = true } ]`
 // tectonic_autoscaling_group_extra_tags = ""
 
-// Number of Availability Zones your EC2 instances will be deployed across.
-// This should be less than or equal to the total number available in the region. 
-// Be aware that some regions only have 2.
-// If set worker and master subnet CIDRs are calculated automatically.
-// 
-// Note:
-// This field MUST be set manually prior to creating the cluster.
-// It MUST NOT be set if availability zones CIDRs are configured using `tectonic_aws_master_custom_subnets` and `tectonic_aws_worker_custom_subnets`.
-tectonic_aws_az_count = ""
-
 // Instance size for the etcd node(s). Example: `t2.medium`.
 tectonic_aws_etcd_ec2_type = "t2.medium"
 
@@ -67,8 +57,6 @@ tectonic_aws_external_vpc_public = true
 // 
 // Example:
 // `{ eu-west-1a = "10.0.0.0/20", eu-west-1b = "10.0.16.0/20" }`
-// 
-// Note that `tectonic_aws_az_count` must be unset if this is specified.
 // tectonic_aws_master_custom_subnets = ""
 
 // Instance size for the master node(s). Example: `t2.medium`.
@@ -96,8 +84,6 @@ tectonic_aws_vpc_cidr_block = "10.0.0.0/16"
 // (optional) This configures worker availability zones and their corresponding subnet CIDRs directly.
 // 
 // Example: `{ eu-west-1a = "10.0.64.0/20", eu-west-1b = "10.0.80.0/20" }`
-// 
-// Note that `tectonic_aws_az_count` must be unset if this is specified.
 // tectonic_aws_worker_custom_subnets = ""
 
 // Instance size for the worker node(s). Example: `t2.medium`.

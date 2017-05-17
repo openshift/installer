@@ -107,10 +107,8 @@ tectonic_openstack_flavor_id = ""
 // Specifies the OS image of the VM.
 tectonic_openstack_image_id = ""
 
-// (optional) The network name as given in `openstack network list`.
-// Specifies the name of the network to use for compute instances.
-// If not provided, defaults to "public"
-// tectonic_openstack_network_name = "public"
+// The name of the network to connect to OpenStack compute instances.
+tectonic_openstack_network_name = "public"
 
 // The path the pull secret file in JSON format.
 // 

@@ -40,22 +40,6 @@ This should not overlap with any other networks, such as a private datacenter co
 EOF
 }
 
-variable "tectonic_aws_az_count" {
-  type    = "string"
-  default = ""
-
-  description = <<EOF
-Number of Availability Zones your EC2 instances will be deployed across.
-This should be less than or equal to the total number available in the region. 
-Be aware that some regions only have 2.
-If set worker and master subnet CIDRs are calculated automatically.
-
-Note:
-This field MUST be set manually prior to creating the cluster.
-It MUST NOT be set if availability zones CIDRs are configured using `tectonic_aws_master_custom_subnets` and `tectonic_aws_worker_custom_subnets`.
-EOF
-}
-
 variable "tectonic_aws_external_vpc_id" {
   type = "string"
 
@@ -191,8 +175,6 @@ variable "tectonic_aws_master_custom_subnets" {
 
 Example:
 `{ eu-west-1a = "10.0.0.0/20", eu-west-1b = "10.0.16.0/20" }`
-
-Note that `tectonic_aws_az_count` must be unset if this is specified.
 EOF
 }
 
@@ -204,8 +186,6 @@ variable "tectonic_aws_worker_custom_subnets" {
 (optional) This configures worker availability zones and their corresponding subnet CIDRs directly.
 
 Example: `{ eu-west-1a = "10.0.64.0/20", eu-west-1b = "10.0.80.0/20" }`
-
-Note that `tectonic_aws_az_count` must be unset if this is specified.
 EOF
 }
 
