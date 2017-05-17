@@ -232,7 +232,7 @@ export const FileArea = connect(
 // <Select id:REQUIRED value onValue>
 //   <option....>
 // </Select>
-export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirty, availableValues, className, disabled}) => {
+export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirty, availableValues, className, disabled, style}) => {
   const optionElems = [];
   if (availableValues) {
     let options = availableValues.value;
@@ -259,7 +259,7 @@ export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirt
   }
 
   return (
-    <div className={className}>
+    <div className={className} style={style}>
       <select id={id} value={value} disabled={disabled} onChange={e => {
         makeDirty();
         onValue(e.target.value);
@@ -277,19 +277,28 @@ export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirt
 };
 
 export const Selector = props => {
-  const options = _.get(props, 'extraData.options', [])
-    .map(({value, label}) => <option value={value} key={value}>{label}</option>);
+  const value = props.value;
+  const options = _.get(props, 'extraData.options', []);
 
-  if (props.disabledValue) {
-    options.splice(0, 0, <option disabled={true} key="disabled">{props.disabledValue}</option>);
+  if (value && !options.map(r => r.value).includes(value)) {
+    options.splice(0, 0, {value, label: value});
   }
 
+  const optionsElems = options.map(o => <option value={o.value} key={o.value}>{o.label}</option>);
+  if (props.disabledValue) {
+    optionsElems.splice(0, 0, <option disabled={true} key="disabled">{props.disabledValue}</option>);
+  }
+
+  const style = Object.assign({}, props.style || {});
+  if (!props.refreshBtn) {
+    style.marginRight = 0;
+  }
   const iClassNames = classNames('fa', 'fa-refresh', {
     'fa-spin': props.inFly,
   });
 
   return <div className="async-select">
-    <Select className="async-select--select" {...props}>{options}</Select>
+    <Select className="async-select--select" {...props} style={style}>{optionsElems}</Select>
     {props.refreshBtn && <button className="btn btn-default" onClick={props.refreshExtraData} title="Refresh">
       <i className={iClassNames}></i>
     </button>}
@@ -360,6 +369,7 @@ class Connect_ extends React.Component {
       props.checked = child.props.value === value;
       break;
     case Select:
+    case Selector:
       props.value = value || '';
       break;
     default:
