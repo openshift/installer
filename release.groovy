@@ -9,6 +9,7 @@ pipeline {
 
   parameters {
     string(name: 'releaseTag')
+    boolean(name: 'pre-release')
   }
   
   stages { 
@@ -24,7 +25,7 @@ pipeline {
             containers: [
               containerTemplate(
                 name: 'webapp-agent',
-                image: 'quay.io/coreos/tectonic-builder:v1.4',
+                image: 'quay.io/coreos/tectonic-builder:v1.7',
                 ttyEnabled: true,
                 command: 'cat',
               )
@@ -51,6 +52,7 @@ pipeline {
                     export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
                     export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
                     export GITHUB_CREDENTIALS=$GITHUB_CREDENTIALS
+                    export PRE_RELEASE=${params.pre-release}
                     go version
                     cd $GO_PROJECT/installer
                     make build
