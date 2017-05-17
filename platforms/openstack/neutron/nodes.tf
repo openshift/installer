@@ -66,7 +66,7 @@ resource "openstack_compute_instance_v2" "worker_node" {
 }
 
 resource "openstack_compute_floatingip_associate_v2" "worker" {
-  count = "${var.tectonic_master_count}"
+  count = "${var.tectonic_worker_count}"
 
   floating_ip = "${openstack_networking_floatingip_v2.worker.*.address[count.index]}"
   instance_id = "${openstack_compute_instance_v2.worker_node.*.id[count.index]}"
