@@ -161,7 +161,7 @@ const awsDefineNodesPage = {
 const awsSubmitKeysPage = {
   path: '/define/aws/keys',
   component: AWS_SubmitKeys,
-  title: 'Submit Keys',
+  title: 'SSH Key',
 };
 
 const awsVPCPage = {

@@ -28,12 +28,12 @@ const awsSshForm = new Form('AWSSSHForm', [
 export const AWS_SubmitKeys = () => <div>
   <div className="row form-group">
     <div className="col-xs-12">
-      Keys are used for encryption and connection. <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#ssh-key" target="_blank">Generate new keys</a> if you don't have any existing ones.
+      <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#ssh-key" target="_blank">Generate a new key</a> if you don't have an existing one in this region.
     </div>
   </div>
   <div className="row form-group">
     <div className="col-xs-12">
-      <h4>SSH Keys</h4>
+      <h4>SSH Key</h4>
       <Connect field={AWS_SSH}>
         <Selector refreshBtn={true} disabledValue="Please select SSH Key Pair" />
       </Connect>
