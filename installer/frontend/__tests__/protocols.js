@@ -59,7 +59,18 @@ beforeEach(() => {
   dispatch = jest.fn();
 });
 
-const readExample = example => JSON.parse(fs.readFileSync(path.resolve(__dirname, `examples/${example}`), 'utf8'));
+
+const readExample = example => {
+  let json;
+  try {
+    json = JSON.parse(fs.readFileSync(path.resolve(__dirname, `examples/${example}`), 'utf8'));
+  } catch (e) {
+    console.warn(`${example} is not json`);
+    throw e;
+  }
+  return json;
+};
+
 
 /* eslint-disable max-nested-callbacks */
 describe('progress file example', () => {

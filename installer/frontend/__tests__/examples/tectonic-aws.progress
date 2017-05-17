@@ -1,7 +1,7 @@
 {
   "clusterConfig": {
     "platformType": "aws-tf",
-    "aws_ssh": "some-ssh-key", 
+    "aws_ssh": "some-ssh-key",
     "aws_etcds-numberOfInstances": 3,
     "aws_etcds-instanceType": "t2.large",
     "aws_etcds-storageSizeInGiB": 300,
@@ -26,7 +26,7 @@
     "extra": {
         "awsHostedZoneId": {
             "zoneToName": {
-                "asfd": "example.com"    
+                "asfd": "example.com"
             }
         }
     },
@@ -47,6 +47,7 @@
     "pullSecret": "<TECTONIC_PULL_SECRET>",
     "adminEmail": "admin@example.com",
     "adminPassword": "PASSWORD",
+    "awsSplitDNS": "off",
     "awsTags": [
       {
         "key": "test_tag",
