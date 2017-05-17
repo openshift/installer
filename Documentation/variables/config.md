@@ -26,9 +26,9 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_kube_apiserver_service_ip | The Kubernetes service IP used to reach kube-apiserver inside the cluster as returned by `kubectl -n default get service kubernetes`. | string | `10.3.0.1` |
 | tectonic_kube_dns_service_ip | The Kubernetes service IP used to reach kube-dns inside the cluster as returned by `kubectl -n kube-system get service kube-dns`. | string | `10.3.0.10` |
 | tectonic_kube_etcd_service_ip | The Kubernetes service IP used to reach self-hosted etcd inside the cluster as returned by `kubectl -n kube-system get service etcd-service`. | string | `10.3.0.15` |
-| tectonic_license_path | The path to the tectonic licence file.<br><br>Note: This field MUST be set manually prior to creating the cluster. | string | - |
+| tectonic_license_path | The path to the tectonic licence file.<br><br>Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`. | string | `` |
 | tectonic_master_count | The number of master nodes to be created. This applies only to cloud platforms. | string | `1` |
-| tectonic_pull_secret_path | The path the pull secret file in JSON format.<br><br>Note: This field MUST be set manually prior to creating the cluster. | string | - |
+| tectonic_pull_secret_path | The path the pull secret file in JSON format.<br><br>Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`. | string | `` |
 | tectonic_service_cidr | This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. | string | `10.3.0.0/16` |
 | tectonic_update_app_id | (internal) The Tectonic Omaha update App ID | string | `6bc7b986-4654-4a0f-94b3-84ce6feb1db4` |
 | tectonic_update_channel | (internal) The Tectonic Omaha update channel | string | `tectonic-1.6` |

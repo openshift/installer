@@ -210,22 +210,24 @@ EOF
 }
 
 variable "tectonic_pull_secret_path" {
-  type = "string"
+  type    = "string"
+  default = ""
 
   description = <<EOF
 The path the pull secret file in JSON format.
 
-Note: This field MUST be set manually prior to creating the cluster.
+Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 EOF
 }
 
 variable "tectonic_license_path" {
-  type = "string"
+  type    = "string"
+  default = ""
 
   description = <<EOF
 The path to the tectonic licence file.
 
-Note: This field MUST be set manually prior to creating the cluster.
+Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 EOF
 }
 

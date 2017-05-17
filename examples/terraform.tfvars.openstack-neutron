@@ -93,7 +93,7 @@ tectonic_kube_etcd_service_ip = "10.3.0.15"
 
 // The path to the tectonic licence file.
 // 
-// Note: This field MUST be set manually prior to creating the cluster.
+// Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 tectonic_license_path = ""
 
 // The number of master nodes to be created.
@@ -123,7 +123,7 @@ tectonic_openstack_subnet_cidr = "192.168.1.0/24"
 
 // The path the pull secret file in JSON format.
 // 
-// Note: This field MUST be set manually prior to creating the cluster.
+// Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 tectonic_pull_secret_path = ""
 
 // This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation.
