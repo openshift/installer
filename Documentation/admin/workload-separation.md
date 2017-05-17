@@ -44,6 +44,7 @@ plane's components, as of Tectonic 1.6.2.
 |            heapster            | ReplicaSet |          1         |    any    |      N/A      | N/A                |
 |       All other workloads      |     Any    |          ?         |   worker  |       ?       | ?                  |
 
+_n: number of qualified nodes_
 _*: managed by an operator_
 
 [doc-taints]: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#taints-and-tolerations-beta-feature
