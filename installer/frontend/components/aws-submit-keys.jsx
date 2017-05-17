@@ -6,20 +6,20 @@ import { Connect, Selector } from './ui';
 import { Field, Form } from '../form';
 
 import * as awsActions from '../aws-actions';
-import { AWS_SSH } from '../cluster-config';
+import { AWS_SSH, AWS_REGION_FORM } from '../cluster-config';
 
 const awsSshForm = new Form('AWSSSHForm', [
   new Field(AWS_SSH, {
     default: '',
     validator: validate.nonEmpty,
-    dependencies: ['AWSCreds'],
+    dependencies: [AWS_REGION_FORM],
     getExtraStuff: (dispatch, isNow) => dispatch(awsActions.getSsh(null, null, isNow)).then(options => ({options})),
   })], {
     validator: (data, cc) => {
       const key = data[AWS_SSH];
       const options = _.get(cc, ['extra', AWS_SSH, 'options']);
       if (options && key && !_.some(options, o => o.value === key)) {
-        return 'wrong';
+        return `SSH key ${key} does not exist in this region.`;
       }
     },
   }

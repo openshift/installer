@@ -92,6 +92,7 @@ const selectRegionForm = new Form(AWS_REGION_FORM, [
       [AWS_WORKER_SUBNET_IDS, {}],
     ]);
 
+    // TODO: (ggreer) move this to getextradata in another form
     return dispatch(getDefaultSubnets(null, null, isNow));
   },
 });
