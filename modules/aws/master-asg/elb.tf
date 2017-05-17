@@ -4,6 +4,8 @@ resource "aws_elb" "api-internal" {
   internal        = true
   security_groups = ["${var.api_sg_ids}"]
 
+  idle_timeout = 3600
+
   listener {
     instance_port     = 443
     instance_protocol = "tcp"
@@ -43,6 +45,8 @@ resource "aws_elb" "api-external" {
   subnets         = ["${var.subnet_ids}"]
   internal        = false
   security_groups = ["${var.api_sg_ids}"]
+
+  idle_timeout = 3600
 
   listener {
     instance_port     = 22
@@ -90,6 +94,8 @@ resource "aws_elb" "console" {
   subnets         = ["${var.subnet_ids}"]
   internal        = "${var.public_vpc ? false : true}"
   security_groups = ["${var.console_sg_ids}"]
+
+  idle_timeout = 3600
 
   listener {
     instance_port     = 32001
