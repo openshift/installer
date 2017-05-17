@@ -205,6 +205,7 @@ The name of the cluster.
 If used in a cloud-environment, this will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.
 
 Note: This field MUST be set manually prior to creating the cluster.
+Warning: Special characters in the name like '.' may cause errors on OpenStack platforms due to resource name constraints.
 EOF
 }
 
