@@ -5,14 +5,13 @@ resource "openstack_compute_instance_v2" "etcd_node" {
   name            = "${var.tectonic_cluster_name}_etcd_node_${count.index}"
   image_id        = "${var.tectonic_openstack_image_id}"
   flavor_id       = "${var.tectonic_openstack_flavor_id}"
-  security_groups = ["${module.etcd.secgroup_name}"]
 
   metadata {
     role = "etcd"
   }
 
   network {
-    uuid = "${openstack_networking_network_v2.network.id}"
+    port = "${openstack_networking_port_v2.etcd.*.id[count.index]}"
   }
 
   user_data    = "${module.etcd.user_data[count.index]}"
@@ -26,7 +25,6 @@ resource "openstack_compute_instance_v2" "master_node" {
   name            = "${var.tectonic_cluster_name}_master_node_${count.index}"
   image_id        = "${var.tectonic_openstack_image_id}"
   flavor_id       = "${var.tectonic_openstack_flavor_id}"
-  security_groups = ["${module.master_nodes.secgroup_name}"]
 
   metadata {
     role = "master"
@@ -54,7 +52,6 @@ resource "openstack_compute_instance_v2" "worker_node" {
   name            = "${var.tectonic_cluster_name}_worker_node_${count.index}"
   image_id        = "${var.tectonic_openstack_image_id}"
   flavor_id       = "${var.tectonic_openstack_flavor_id}"
-  security_groups = ["${module.worker_nodes.secgroup_name}"]
 
   metadata {
     role = "worker"
