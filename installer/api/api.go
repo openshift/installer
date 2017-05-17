@@ -41,6 +41,17 @@ type Context struct {
 	Config   *Config
 }
 
+// logRequests logs HTTP requests and calls the next handler.
+func logRequests(next http.Handler) http.Handler {
+	fn := func(w http.ResponseWriter, req *http.Request) {
+		log.Debugf("HTTP %s %v", req.Method, req.URL)
+		if next != nil {
+			next.ServeHTTP(w, req)
+		}
+	}
+	return http.HandlerFunc(fn)
+}
+
 // New initializes and returns a API server.
 // TODO: Most methods should be GET, not POST!
 func New(config *Config) (http.Handler, error) {
@@ -60,27 +71,27 @@ func New(config *Config) (http.Handler, error) {
 	mux := http.NewServeMux()
 
 	// handlers_frontend.go
-	mux.Handle("/", frontendHandler(config.AssetDir, config.Platforms, config.DevMode))
+	mux.Handle("/", logRequests(frontendHandler(config.AssetDir, config.Platforms, config.DevMode)))
 
 	// handlers_aws.go
-	mux.Handle("/aws/regions", httpHandler("POST", ctx, awsDescribeRegionsHandler))
-	mux.Handle("/aws/default-subnets", httpHandler("POST", ctx, awsDefaultSubnetsHandler))
-	mux.Handle("/aws/subnets/validate", httpHandler("POST", ctx, awsValidateSubnetsHandler))
-	mux.Handle("/aws/vpcs", httpHandler("POST", ctx, awsGetVPCsHandler))
-	mux.Handle("/aws/vpcs/subnets", httpHandler("POST", ctx, awsGetVPCsSubnetsHandler))
-	mux.Handle("/aws/ssh-key-pairs", httpHandler("POST", ctx, awsGetKeyPairsHandler))
-	mux.Handle("/aws/zones", httpHandler("POST", ctx, awsGetZonesHandler))
-	mux.Handle("/aws/domain", httpHandler("POST", ctx, awsGetDomainInfoHandler))
+	mux.Handle("/aws/regions", logRequests(httpHandler("POST", ctx, awsDescribeRegionsHandler)))
+	mux.Handle("/aws/default-subnets", logRequests(httpHandler("POST", ctx, awsDefaultSubnetsHandler)))
+	mux.Handle("/aws/subnets/validate", logRequests(httpHandler("POST", ctx, awsValidateSubnetsHandler)))
+	mux.Handle("/aws/vpcs", logRequests(httpHandler("POST", ctx, awsGetVPCsHandler)))
+	mux.Handle("/aws/vpcs/subnets", logRequests(httpHandler("POST", ctx, awsGetVPCsSubnetsHandler)))
+	mux.Handle("/aws/ssh-key-pairs", logRequests(httpHandler("POST", ctx, awsGetKeyPairsHandler)))
+	mux.Handle("/aws/zones", logRequests(httpHandler("POST", ctx, awsGetZonesHandler)))
+	mux.Handle("/aws/domain", logRequests(httpHandler("POST", ctx, awsGetDomainInfoHandler)))
 
 	// handlers_terraform.go
-	mux.Handle("/terraform/apply", httpHandler("POST", ctx, terraformApplyHandler))
-	mux.Handle("/terraform/status", httpHandler("POST", ctx, terraformStatusHandler))
-	mux.Handle("/terraform/assets", httpHandler("GET", ctx, terraformAssetsHandler))
-	mux.Handle("/terraform/destroy", httpHandler("POST", ctx, terraformDestroyHandler))
+	mux.Handle("/terraform/apply", logRequests(httpHandler("POST", ctx, terraformApplyHandler)))
+	mux.Handle("/terraform/status", logRequests(httpHandler("POST", ctx, terraformStatusHandler)))
+	mux.Handle("/terraform/assets", logRequests(httpHandler("GET", ctx, terraformAssetsHandler)))
+	mux.Handle("/terraform/destroy", logRequests(httpHandler("POST", ctx, terraformDestroyHandler)))
 
 	// handlers_containerlinux.go
-	mux.Handle("/containerlinux/images/matchbox", httpHandler("GET", ctx, listMatchboxImagesHandler))
-	mux.Handle("/containerlinux/images/amis", httpHandler("GET", ctx, listAMIImagesHandler))
+	mux.Handle("/containerlinux/images/matchbox", logRequests(httpHandler("GET", ctx, listMatchboxImagesHandler)))
+	mux.Handle("/containerlinux/images/amis", logRequests(httpHandler("GET", ctx, listAMIImagesHandler)))
 
 	return mux, nil
 }
