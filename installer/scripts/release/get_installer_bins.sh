@@ -22,6 +22,6 @@ function get_bin() {
     chmod +x "$3"
 }
 
-# get_bin "$TECTONIC_BINARY_BUCKET" "build-artifacts/installer/$VERSION/bin/windows/installer.exe" "$INSTALLER_RELEASE_DIR/windows/installer.exe"
+#get_bin "$TECTONIC_BINARY_BUCKET" "build-artifacts/installer/$VERSION/bin/windows/installer.exe" "$INSTALLER_RELEASE_DIR/windows/installer.exe"
 get_bin "$TECTONIC_BINARY_BUCKET" "build-artifacts/installer/$VERSION/bin/darwin/installer"      "$INSTALLER_RELEASE_DIR/darwin/installer"
 get_bin "$TECTONIC_BINARY_BUCKET" "build-artifacts/installer/$VERSION/bin/linux/installer"       "$INSTALLER_RELEASE_DIR/linux/installer"
