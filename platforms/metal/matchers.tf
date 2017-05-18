@@ -30,13 +30,24 @@ resource "matchbox_group" "controller" {
   }
 
   metadata {
-    domain_name          = "${element(var.tectonic_metal_controller_domains, count.index)}"
-    etcd_enabled         = "${var.tectonic_experimental ? "false" : "true"}"
-    etcd_name            = "${element(var.tectonic_metal_controller_names, count.index)}"
-    etcd_initial_cluster = "${join(",", formatlist("%s=http://%s:2380", var.tectonic_metal_controller_names, var.tectonic_metal_controller_domains))}"
-    k8s_dns_service_ip   = "${module.bootkube.kube_dns_service_ip}"
-    ssh_authorized_key   = "${var.tectonic_ssh_authorized_key}"
-    exclude_tectonic     = "${var.tectonic_vanilla_k8s}"
+    domain_name        = "${element(var.tectonic_metal_controller_domains, count.index)}"
+    k8s_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
+    ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
+    exclude_tectonic   = "${var.tectonic_vanilla_k8s}"
+
+    etcd_enabled = "${var.tectonic_experimental ? "false" : "true"}"
+
+    etcd_initial_cluster = "${
+      join(",", formatlist(
+        var.tectonic_etcd_tls_enabled ? "%s=https://%s:2380" : "%s=http://%s:2380",
+        var.tectonic_metal_controller_names,
+        var.tectonic_metal_controller_domains
+      ))
+    }"
+
+    etcd_name        = "${element(var.tectonic_metal_controller_names, count.index)}"
+    etcd_scheme      = "${var.tectonic_etcd_tls_enabled ? "https" : "http"}"
+    etcd_tls_enabled = "${var.tectonic_etcd_tls_enabled}"
 
     # extra data
     etcd_image_tag    = "v${var.tectonic_versions["etcd"]}"

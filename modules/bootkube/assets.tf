@@ -1,18 +1,3 @@
-data "null_data_source" "etcd" {
-  inputs = {
-    ca_flag   = "${var.etcd_ca_cert != "" ? "- --etcd-cafile=/etc/kubernetes/secrets/etcd-ca.crt" : "# no etcd-ca.crt given" }"
-    cert_flag = "${var.etcd_client_cert != "" ? "- --etcd-certfile=/etc/kubernetes/secrets/etcd-client.crt" : "# no etcd-client.crt given" }"
-    key_flag  = "${var.etcd_client_key != "" ? "- --etcd-keyfile=/etc/kubernetes/secrets/etcd-client.key" : "# no etcd-client.key given" }"
-
-    # The file() interpolation function expects an existing file to be present, even if used inside a ternary operator branch.
-    ca_path   = "${var.etcd_ca_cert != "" ? var.etcd_ca_cert : "/dev/null" }"
-    cert_path = "${var.etcd_client_cert != "" ? var.etcd_client_cert : "/dev/null" }"
-    key_path  = "${var.etcd_client_key != "" ? var.etcd_client_key : "/dev/null" }"
-
-    no_certs = "${var.etcd_ca_cert == "" && var.etcd_client_cert == "" && var.etcd_client_key == "" ? 1 : 0}"
-  }
-}
-
 resource "template_dir" "experimental" {
   count           = "${var.experimental_enabled ? 1 : 0}"
   source_dir      = "${path.module}/resources/experimental/manifests"
@@ -71,14 +56,10 @@ resource "template_dir" "bootkube" {
     etcd_servers = "${
       var.experimental_enabled 
         ? format("http://%s:2379", cidrhost(var.service_cidr, 15))
-        : data.null_data_source.etcd.outputs.no_certs
+        : data.template_file.etcd_ca_cert_pem.rendered == ""
           ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
           : join(",", formatlist("https://%s:2379", var.etcd_endpoints))
       }"
-
-    etcd_ca_flag   = "${data.null_data_source.etcd.outputs.ca_flag}"
-    etcd_cert_flag = "${data.null_data_source.etcd.outputs.cert_flag}"
-    etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"
 
     etcd_service_ip           = "${cidrhost(var.service_cidr, 15)}"
     bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 20)}"
@@ -102,9 +83,19 @@ resource "template_dir" "bootkube" {
     serviceaccount_pub = "${base64encode(tls_private_key.service-account.public_key_pem)}"
     serviceaccount_key = "${base64encode(tls_private_key.service-account.private_key_pem)}"
 
-    etcd_ca_cert     = "${base64encode(file(data.null_data_source.etcd.outputs.ca_path))}"
-    etcd_client_cert = "${base64encode(file(data.null_data_source.etcd.outputs.cert_path))}"
-    etcd_client_key  = "${base64encode(file(data.null_data_source.etcd.outputs.key_path))}"
+    etcd_ca_flag   = "${data.template_file.etcd_ca_cert_pem.rendered != "" ? "- --etcd-cafile=/etc/kubernetes/secrets/etcd-ca.crt" : "# no etcd-ca.crt given" }"
+    etcd_cert_flag = "${var.etcd_client_cert != "" ? "- --etcd-certfile=/etc/kubernetes/secrets/etcd-client.crt" : "# no etcd-client.crt given" }"
+    etcd_key_flag  = "${var.etcd_client_key != "" ? "- --etcd-keyfile=/etc/kubernetes/secrets/etcd-client.key" : "# no etcd-client.key given" }"
+
+    etcd_ca_cert = "${base64encode(data.template_file.etcd_ca_cert_pem.rendered)}"
+
+    etcd_client_cert = "${base64encode(file(
+      var.etcd_client_cert != "" ? var.etcd_client_cert : "/dev/null"
+    ))}"
+
+    etcd_client_key = "${base64encode(file(
+      var.etcd_client_key != "" ? var.etcd_client_key : "/dev/null"
+    ))}"
   }
 }
 
@@ -120,39 +111,20 @@ resource "template_dir" "bootkube-bootstrap" {
     etcd_servers = "${
       var.experimental_enabled 
         ? format("http://%s:2379,http://127.0.0.1:12379", cidrhost(var.service_cidr, 15))
-        : data.null_data_source.etcd.outputs.no_certs
+        : data.template_file.etcd_ca_cert_pem.rendered == ""
           ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
           : join(",", formatlist("https://%s:2379", var.etcd_endpoints))
       }"
 
-    etcd_ca_flag   = "${data.null_data_source.etcd.outputs.ca_flag}"
-    etcd_cert_flag = "${data.null_data_source.etcd.outputs.cert_flag}"
-    etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"
+    etcd_ca_flag   = "${data.template_file.etcd_ca_cert_pem.rendered != "" ? "- --etcd-cafile=/etc/kubernetes/secrets/etcd-ca.crt" : "# no etcd-ca.crt given" }"
+    etcd_cert_flag = "${var.etcd_client_cert != "" ? "- --etcd-certfile=/etc/kubernetes/secrets/etcd-client.crt" : "# no etcd-client.crt given" }"
+    etcd_key_flag  = "${var.etcd_client_key != "" ? "- --etcd-keyfile=/etc/kubernetes/secrets/etcd-client.key" : "# no etcd-client.key given" }"
 
     advertise_address = "${var.advertise_address}"
     cloud_provider    = "${var.cloud_provider}"
     cluster_cidr      = "${var.cluster_cidr}"
     service_cidr      = "${var.service_cidr}"
   }
-}
-
-# etcd certs
-resource "local_file" "etcd_ca_crt" {
-  count    = "${var.etcd_ca_cert == "" ? 0 : 1}"
-  content  = "${file(var.etcd_ca_cert)}"
-  filename = "./generated/tls/etcd-ca.crt"
-}
-
-resource "local_file" "etcd_client_crt" {
-  count    = "${var.etcd_client_cert == "" ? 0 : 1}"
-  content  = "${file(var.etcd_client_cert)}"
-  filename = "./generated/tls/etcd-client.crt"
-}
-
-resource "local_file" "etcd_client_key" {
-  count    = "${var.etcd_client_key == "" ? 0 : 1}"
-  content  = "${file(var.etcd_client_key)}"
-  filename = "./generated/tls/etcd-client.key"
 }
 
 # kubeconfig (resources/generated/auth/kubeconfig)
@@ -189,4 +161,30 @@ resource "local_file" "bootkube-sh" {
 # bootkube.service (available as output variable)
 data "template_file" "bootkube_service" {
   template = "${file("${path.module}/resources/bootkube.service")}"
+}
+
+# etcd assets
+data "template_file" "etcd_ca_cert_pem" {
+  template = "${!var.experimental_enabled && var.etcd_tls_enabled
+    ? join("", tls_self_signed_cert.etcd-ca.*.cert_pem)
+    : file(var.etcd_ca_cert)
+  }"
+}
+
+resource "local_file" "etcd_ca_crt" {
+  count    = "${!var.experimental_enabled && var.etcd_tls_enabled ? 1 : 0}"
+  content  = "${data.template_file.etcd_ca_cert_pem.rendered}"
+  filename = "./generated/tls/etcd-ca.crt"
+}
+
+resource "local_file" "etcd_client_crt" {
+  count    = "${var.etcd_client_cert == "" ? 0 : 1}"
+  content  = "${file(var.etcd_client_cert)}"
+  filename = "./generated/tls/etcd-client.crt"
+}
+
+resource "local_file" "etcd_client_key" {
+  count    = "${var.etcd_client_key == "" ? 0 : 1}"
+  content  = "${file(var.etcd_client_key)}"
+  filename = "./generated/tls/etcd-client.key"
 }

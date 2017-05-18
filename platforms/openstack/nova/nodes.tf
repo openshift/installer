@@ -57,7 +57,7 @@ resource "openstack_compute_instance_v2" "etcd_node" {
 }
 
 resource "null_resource" "tectonic" {
-  depends_on = ["module.tectonic"]
+  depends_on = ["module.bootkube", "module.tectonic"]
 
   connection {
     host        = "${openstack_compute_instance_v2.master_node.*.access_ip_v4[0]}"

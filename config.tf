@@ -123,9 +123,19 @@ EOF
   default = [""]
 }
 
+variable "tectonic_etcd_tls_enabled" {
+  default = false
+
+  description = <<EOF
+(optional) If set to `true`, TLS secure communication for etcd will be used.
+
+Note: This is variable has no effect if `tectonic_experimental` is set to `true`.
+EOF
+}
+
 variable "tectonic_etcd_ca_cert_path" {
   type    = "string"
-  default = ""
+  default = "/dev/null"
 
   description = <<EOF
 (optional) The path of the file containing the CA certificate for TLS communication with etcd.

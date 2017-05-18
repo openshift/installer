@@ -13,6 +13,14 @@ variable "kube_apiserver_url" {
   type        = "string"
 }
 
+variable "etcd_tls_enabled" {
+  default = false
+}
+
+variable "etcd_cert_dns_names" {
+  type = "list"
+}
+
 variable "etcd_endpoints" {
   description = "List of etcd endpoints to connect with (hostnames/IPs only)"
   type        = "list"

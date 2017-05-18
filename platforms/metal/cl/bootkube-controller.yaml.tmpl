@@ -9,12 +9,21 @@ systemd:
             [Service]
             Environment="ETCD_IMAGE_TAG={{.etcd_image_tag}}"
             Environment="ETCD_NAME={{.etcd_name}}"
-            Environment="ETCD_ADVERTISE_CLIENT_URLS=http://{{.domain_name}}:2379"
-            Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS=http://{{.domain_name}}:2380"
-            Environment="ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379"
-            Environment="ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380"
+            Environment="ETCD_ADVERTISE_CLIENT_URLS={{.etcd_scheme}}://{{.domain_name}}:2379"
+            Environment="ETCD_INITIAL_ADVERTISE_PEER_URLS={{.etcd_scheme}}://{{.domain_name}}:2380"
+            Environment="ETCD_LISTEN_CLIENT_URLS={{.etcd_scheme}}://0.0.0.0:2379"
+            Environment="ETCD_LISTEN_PEER_URLS={{.etcd_scheme}}://0.0.0.0:2380"
             Environment="ETCD_INITIAL_CLUSTER={{.etcd_initial_cluster}}"
             Environment="ETCD_STRICT_RECONFIG_CHECK=true"
+{{ if eq .etcd_tls_enabled "1" }}
+            Environment="ETCD_SSL_DIR=/etc/ssl/etcd"
+            Environment="ETCD_CERT_FILE=/etc/ssl/certs/client.crt"
+            Environment="ETCD_KEY_FILE=/etc/ssl/certs/client.key"
+            Environment="ETCD_PEER_CERT_FILE=/etc/ssl/certs/peer.crt"
+            Environment="ETCD_PEER_KEY_FILE=/etc/ssl/certs/peer.key"
+            Environment="ETCD_PEER_TRUSTED_CA_FILE=/etc/ssl/certs/ca.crt"
+            Environment="ETCD_PEER_CLIENT_CERT_AUTH=true"
+{{ end }}
     - name: docker.service
       enable: true
     - name: locksmithd.service
