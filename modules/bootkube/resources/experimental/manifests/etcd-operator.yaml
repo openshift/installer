@@ -24,6 +24,8 @@ spec:
                   fieldPath: metadata.name
           image: ${etcd_operator_image}
           name: etcd-operator
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
       tolerations:
       - key: node-role.kubernetes.io/master
         operator: Exists
