@@ -2,7 +2,8 @@ tectonic_worker_count = "4"
 
 tectonic_master_count = "3"
 
-tectonic_etcd_count = "3"
+# Disabled because this breaks tf destroy right now
+# tectonic_etcd_count = "3"
 
 tectonic_etcd_servers = [""]
 
