@@ -12,7 +12,8 @@ find=$(shell [ -d $(1) ] && find $(1) -type f $(2) | sed 's/ /\\ /g')
 GO_FILES=$(call find,.,-name '*.go')
 
 .PHONY: all
-all: build
+all:
+	@$(MAKE) build -r
 
 .PHONY: build
 build: bin/$(OS)/installer
