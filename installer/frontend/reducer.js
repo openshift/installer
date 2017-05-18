@@ -158,7 +158,15 @@ const reducersTogether = combineReducers({
       // TODO: (kans) delete all the other stuff too
       const invalidArray = ['error'].concat(array);
       const asyncArray = ['error_async'].concat(array);
-      return fromJS(state).deleteIn(array).deleteIn(invalidArray).deleteIn(asyncArray).toJS();
+      const arrays = [array, asyncArray, invalidArray];
+      return fromJS(state).withMutations(map => {
+        arrays.forEach(a => {
+          if (map.getIn(a)) {
+            map = map.deleteIn(a);
+          }
+          return map;
+        });
+      }).toJS();
     }
     default:
       return state;

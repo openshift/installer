@@ -81,6 +81,7 @@ class Node {
       batches.push([inFlyPath, false]);
     }
 
+    console.debug("validating", this.name);
     const syncError = this.validator(value, clusterConfig, oldValue, extraData);
     if (!_.isEmpty(syncError)) {
       console.info("sync error", this.name, syncError);
@@ -164,6 +165,30 @@ class Node {
   }
 }
 
+async function promisify (dispatch, getState, oldCC, isNow, deps, FIELDS) {
+  const { clusterConfig } = getState();
+
+  // TODO: (kans) earlier return [] if not now?
+  const promises = deps.map(field => {
+    const { id } = field;
+    field.ignoreWhen(dispatch, clusterConfig);
+    return field.getExtraStuff(dispatch, clusterConfig, FIELDS, isNow)
+      .then(() => field.validate(dispatch, getState, oldCC, isNow))
+      .then(res => {
+        if (!res) {
+          console.debug(`${id} is invalid`);
+        } else {
+          console.debug(`${id} is valid`);
+        }
+        return res && id;
+      }).catch(err => {
+        console.error(err);
+      });
+  });
+
+  return await Promise.all(promises).then(p => p.filter(id => id));
+}
+
 export class Field extends Node {
   constructor(id, opts={}) {
     super(id, opts);
@@ -181,7 +206,7 @@ export class Field extends Node {
     return clusterConfig[this.id];
   }
 
-  async update (dispatch, value, getState, deps, FIELDS, split) {
+  async update (dispatch, value, getState, FIELDS, FIELD_TO_DEPS, split) {
     const oldCC = getState().clusterConfig;
 
     ++ this.clock_;
@@ -192,10 +217,11 @@ export class Field extends Node {
     if (split && split.length) {
       id = `${id}.${split.join('.')}`;
     }
+
+    console.info("updating", this.name);
     // TODO: (kans) - We need to lock the entire validation chain, not just validate proper
     setIn(id, value, dispatch);
 
-    console.info("validating", this.name);
     const isValid = await this.validate(dispatch, getState, oldCC, isNow);
 
     if (!isValid) {
@@ -208,11 +234,26 @@ export class Field extends Node {
       return;
     }
 
-    for (let dep of deps) {
-      const { clusterConfig } = getState();
-      dep.ignoreWhen(dispatch, clusterConfig);
-      await dep.getExtraStuff(dispatch, clusterConfig, FIELDS, isNow);
-      await dep.validate(dispatch, getState, oldCC, isNow);
+    const visited = new Set();
+    const toVisit = [FIELD_TO_DEPS[this.id]];
+
+    if (!toVisit[0].length) {
+      console.debug("no deps for", this.name);
+      return;
+    }
+
+    while (toVisit.length) {
+      const deps = toVisit.splice(0, 1)[0];
+      // TODO: check for relationship between deps
+      const nextDepIDs = await promisify(dispatch, getState, oldCC, isNow, deps, FIELDS);
+      nextDepIDs.forEach(depID => {
+        const nextDeps = _.filter(FIELD_TO_DEPS[depID], d => !visited.has(d.id));
+        if (!nextDeps.length) {
+          return;
+        }
+        nextDeps.forEach(d => visited.add(d.id));
+        toVisit.push(nextDeps);
+      });
     }
 
     console.info("finish validating", this.name);
