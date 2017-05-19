@@ -20,6 +20,7 @@ resource "template_dir" "tectonic" {
     kube_version_operator_image           = "${var.container_images["kube_version_operator"]}"
     node_agent_image                      = "${var.container_images["node_agent"]}"
     node_exporter_image                   = "${var.container_images["node_exporter"]}"
+    kube_state_metrics_image              = "${var.container_images["kube_state_metrics"]}"
     prometheus_operator_image             = "${var.container_images["prometheus_operator"]}"
     stats_emitter_image                   = "${var.container_images["stats_emitter"]}"
     stats_extender_image                  = "${var.container_images["stats_extender"]}"

@@ -1,18 +1,18 @@
 apiVersion: monitoring.coreos.com/v1alpha1
 kind: ServiceMonitor
 metadata:
-  name: k8s-apps-http
+  name: prometheus
   namespace: tectonic-system
   labels:
-    k8s-apps: http
+    k8s-app: prometheus
 spec:
-  jobLabel: k8s-app
   selector:
-    matchExpressions:
-    - {key: k8s-app, operator: Exists}
+    matchLabels:
+      k8s-app: prometheus
+      prometheus: k8s
   namespaceSelector:
     matchNames:
     - tectonic-system
   endpoints:
-  - port: http-metrics
-    interval: 15s
+  - port: web
+    interval: 30s
