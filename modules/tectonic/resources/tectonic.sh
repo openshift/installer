@@ -131,7 +131,6 @@ kubectl create -f monitoring/node-exporter-ds.yaml
 kubectl create -f monitoring/node-exporter-svc.yaml
 kubectl create -f monitoring/prometheus-k8s-cluster-role-binding.yaml
 kubectl create -f monitoring/prometheus-k8s-cluster-role.yaml
-kubectl create -f monitoring/prometheus-k8s-config.yaml
 kubectl create -f monitoring/prometheus-k8s-rules.yaml
 kubectl create -f monitoring/prometheus-k8s-service-account.yaml
 kubectl create -f monitoring/prometheus-k8s-service-monitor-apiserver.yaml
