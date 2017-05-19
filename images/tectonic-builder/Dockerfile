@@ -20,7 +20,7 @@ RUN go get github.com/jstemmer/go-junit-report
 RUN go get github.com/estroz/license-bill-of-materials
 
 ### Install Terraform, NodeJS and Yarn
-ENV TERRAFORM_VERSION="0.8.8"
+ENV TERRAFORM_VERSION="v0.9.6-fcdf494"
 ENV NODE_VERSION="v6.10.0"
 ENV YARN_VERSION="v0.21.3"
 # yarn needs a home writable by any user running the container
@@ -37,7 +37,10 @@ RUN apt-get update \
     apt-get install --no-install-recommends -y -q -t wheezy-backports jq
 
 # install terraform
-RUN curl https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
+# RUN curl https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
+RUN curl -L -o /tmp/terraform.zip https://github.com/coreos/terraform/releases/download/${TERRAFORM_VERSION}/terraform_linux_amd64.zip && \
+    unzip -o /tmp/terraform.zip -d /usr/local/bin/ && \
+    chmod +x /usr/local/bin/terraform
 
 RUN cd /tmp && \
     wget --quiet -O /tmp/node.tar.gz http://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-linux-x64.tar.gz && \

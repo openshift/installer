@@ -330,7 +330,7 @@ import:
   - parser
   - scanner
 - package: github.com/hashicorp/terraform
-  version: 277bbf65d1141207dbb30485bf124b1dba08f80f
+  version: fcdf494cffc06aac027f6cf904647051ab6d5015
   subpackages:
   - config
   - config/module

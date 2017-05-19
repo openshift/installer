@@ -40,7 +40,7 @@ To build Tectonic Installer, you will need to install the following requirements
 
 ##### Terraform
 
-This project is built on [Terraform](http://terraform.io) and requires version 0.9.4. Download and install an [official Terraform binary](https://releases.hashicorp.com/terraform/0.9.4/) for your OS or use your favorite package manager.
+This project is built on [Terraform](http://terraform.io) and requires version 0.9.6. Download and install an [official Terraform binary](https://www.terraform.io/downloads.html) for your OS, use your favorite package manager or our [fork](https://github.com/coreos/terraform/releases) to find pre-releases.
 
 ##### Yarn
 

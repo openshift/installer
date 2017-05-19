@@ -53,7 +53,6 @@ module "etcd" {
   source = "../../modules/aws/etcd"
 
   instance_count = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
-  az_count       = "${length(data.aws_availability_zones.azs.names)}"
   ec2_type       = "${var.tectonic_aws_etcd_ec2_type}"
   sg_ids         = ["${module.vpc.etcd_sg_id}"]
 

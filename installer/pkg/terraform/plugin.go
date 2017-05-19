@@ -8,14 +8,9 @@ import (
 	"github.com/coreos/terraform-provider-matchbox/matchbox"
 	"github.com/hashicorp/terraform/plugin"
 	"github.com/kardianos/osext"
-
-	"github.com/coreos/tectonic-installer/installer/pkg/terraform/plugins/aws"
 )
 
 var plugins = map[string]*plugin.ServeOpts{
-	// https://github.com/hashicorp/terraform/pull/13574 (82bda74)
-	"aws": {ProviderFunc: aws.Provider},
-
 	// https://github.com/coreos/terraform-provider-matchbox (glide)
 	"matchbox": {ProviderFunc: matchbox.Provider},
 }

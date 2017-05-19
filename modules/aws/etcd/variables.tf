@@ -14,10 +14,6 @@ variable "dns_zone_id" {
   type = "string"
 }
 
-variable "az_count" {
-  type = "string"
-}
-
 variable "instance_count" {
   default = "3"
 }
