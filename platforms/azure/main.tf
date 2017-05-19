@@ -51,7 +51,7 @@ module "masters" {
   kube_image_url               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
   kube_image_tag               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
-  tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
+  tectonic_kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
   cloud_provider               = ""
   kubelet_node_label           = "node-role.kubernetes.io/master"
   kubelet_node_taints          = "node-role.kubernetes.io/master=:NoSchedule"
@@ -79,7 +79,7 @@ module "workers" {
   kube_image_url               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
   kube_image_tag               = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
-  tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
+  tectonic_kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
   cloud_provider               = ""
   kubelet_node_label           = "node-role.kubernetes.io/node"
 }

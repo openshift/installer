@@ -23,9 +23,6 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_etcd_count | The number of etcd nodes to be created. If set to zero, the count of etcd nodes will be determined automatically.<br><br>Note: This is currently only supported on AWS. | string | `0` |
 | tectonic_etcd_servers | (optional) List of external etcd v3 servers to connect with (hostnames/IPs only). Needs to be set if using an external etcd cluster.<br><br>Example: `["etcd1", "etcd2", "etcd3"]` | list | `<list>` |
 | tectonic_experimental | If set to true, experimental Tectonic assets are being deployed. | string | `false` |
-| tectonic_kube_apiserver_service_ip | The Kubernetes service IP used to reach kube-apiserver inside the cluster as returned by `kubectl -n default get service kubernetes`. | string | `10.3.0.1` |
-| tectonic_kube_dns_service_ip | The Kubernetes service IP used to reach kube-dns inside the cluster as returned by `kubectl -n kube-system get service kube-dns`. | string | `10.3.0.10` |
-| tectonic_kube_etcd_service_ip | The Kubernetes service IP used to reach self-hosted etcd inside the cluster as returned by `kubectl -n kube-system get service etcd-service`. | string | `10.3.0.15` |
 | tectonic_license_path | The path to the tectonic licence file.<br><br>Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`. | string | `` |
 | tectonic_master_count | The number of master nodes to be created. This applies only to cloud platforms. | string | `1` |
 | tectonic_pull_secret_path | The path the pull secret file in JSON format.<br><br>Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`. | string | `` |

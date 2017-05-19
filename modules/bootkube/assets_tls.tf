@@ -74,7 +74,7 @@ resource "tls_cert_request" "apiserver" {
   ]
 
   ip_addresses = [
-    "${var.kube_apiserver_service_ip}",
+    "${cidrhost(var.service_cidr, 1)}",
   ]
 }
 

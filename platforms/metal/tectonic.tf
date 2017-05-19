@@ -18,10 +18,6 @@ module "bootkube" {
   service_cidr = "${var.tectonic_service_cidr}"
   cluster_cidr = "${var.tectonic_cluster_cidr}"
 
-  kube_apiserver_service_ip = "${var.tectonic_kube_apiserver_service_ip}"
-  kube_dns_service_ip       = "${var.tectonic_kube_dns_service_ip}"
-  etcd_service_ip           = "${var.tectonic_kube_etcd_service_ip}"
-
   advertise_address = "0.0.0.0"
   anonymous_auth    = "false"
 
@@ -33,7 +29,6 @@ module "bootkube" {
   etcd_ca_cert         = "${var.tectonic_etcd_ca_cert_path}"
   etcd_client_cert     = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key      = "${var.tectonic_etcd_client_key_path}"
-  etcd_service_ip      = "${var.tectonic_kube_etcd_service_ip}"
   experimental_enabled = "${var.tectonic_experimental}"
 }
 

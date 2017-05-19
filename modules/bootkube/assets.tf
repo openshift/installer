@@ -35,18 +35,25 @@ resource "template_dir" "bootkube" {
     # nodes ourselves (using http), then use insecure http var.etcd_endpoints.
     # 3. Else (if etcd TLS certific are provided), then use the secure https
     # var.etcd_endpoints.
-    etcd_servers = "${var.experimental_enabled ? format("http://%s:2379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? join(",", formatlist("http://%s:2379", var.etcd_endpoints)) : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
+    etcd_servers = "${
+      var.experimental_enabled 
+        ? format("http://%s:2379", cidrhost(var.service_cidr, 15))
+        : data.null_data_source.etcd.outputs.no_certs
+          ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
+          : join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+      }"
 
-    etcd_ca_flag    = "${data.null_data_source.etcd.outputs.ca_flag}"
-    etcd_cert_flag  = "${data.null_data_source.etcd.outputs.cert_flag}"
-    etcd_key_flag   = "${data.null_data_source.etcd.outputs.key_flag}"
-    etcd_service_ip = "${var.etcd_service_ip}"
+    etcd_ca_flag   = "${data.null_data_source.etcd.outputs.ca_flag}"
+    etcd_cert_flag = "${data.null_data_source.etcd.outputs.cert_flag}"
+    etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"
+
+    etcd_service_ip = "${cidrhost(var.service_cidr, 15)}"
 
     cloud_provider = "${var.cloud_provider}"
 
     cluster_cidr        = "${var.cluster_cidr}"
     service_cidr        = "${var.service_cidr}"
-    kube_dns_service_ip = "${var.kube_dns_service_ip}"
+    kube_dns_service_ip = "${cidrhost(var.service_cidr, 10)}"
     advertise_address   = "${var.advertise_address}"
 
     anonymous_auth      = "${var.anonymous_auth}"
@@ -76,7 +83,14 @@ resource "template_dir" "bootkube-bootstrap" {
     hyperkube_image = "${var.container_images["hyperkube"]}"
     etcd_image      = "${var.container_images["etcd"]}"
 
-    etcd_servers   = "${var.experimental_enabled ? format("http://%s:2379,http://127.0.0.1:12379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? join(",", formatlist("http://%s:2379", var.etcd_endpoints)) : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
+    etcd_servers = "${
+      var.experimental_enabled 
+        ? format("http://%s:2379,http://127.0.0.1:12379", cidrhost(var.service_cidr, 15))
+        : data.null_data_source.etcd.outputs.no_certs
+          ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
+          : join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+      }"
+
     etcd_ca_flag   = "${data.null_data_source.etcd.outputs.ca_flag}"
     etcd_cert_flag = "${data.null_data_source.etcd.outputs.cert_flag}"
     etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"
@@ -109,7 +123,7 @@ data "template_file" "etcd-service" {
   template = "${file("${path.module}/resources/experimental/manifests/etcd-service.yaml")}"
 
   vars {
-    etcd_service_ip = "${var.etcd_service_ip}"
+    etcd_service_ip = "${cidrhost(var.service_cidr, 15)}"
   }
 }
 

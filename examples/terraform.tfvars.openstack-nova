@@ -79,18 +79,6 @@ tectonic_etcd_count = "0"
 // If set to true, experimental Tectonic assets are being deployed.
 tectonic_experimental = false
 
-// The Kubernetes service IP used to reach kube-apiserver inside the cluster
-// as returned by `kubectl -n default get service kubernetes`.
-tectonic_kube_apiserver_service_ip = "10.3.0.1"
-
-// The Kubernetes service IP used to reach kube-dns inside the cluster
-// as returned by `kubectl -n kube-system get service kube-dns`.
-tectonic_kube_dns_service_ip = "10.3.0.10"
-
-// The Kubernetes service IP used to reach self-hosted etcd inside the cluster
-// as returned by `kubectl -n kube-system get service etcd-service`.
-tectonic_kube_etcd_service_ip = "10.3.0.15"
-
 // The path to the tectonic licence file.
 // 
 // Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.

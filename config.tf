@@ -60,36 +60,6 @@ variable "tectonic_versions" {
   }
 }
 
-variable "tectonic_kube_apiserver_service_ip" {
-  type    = "string"
-  default = "10.3.0.1"
-
-  description = <<EOF
-The Kubernetes service IP used to reach kube-apiserver inside the cluster
-as returned by `kubectl -n default get service kubernetes`.
-EOF
-}
-
-variable "tectonic_kube_etcd_service_ip" {
-  type    = "string"
-  default = "10.3.0.15"
-
-  description = <<EOF
-The Kubernetes service IP used to reach self-hosted etcd inside the cluster
-as returned by `kubectl -n kube-system get service etcd-service`.
-EOF
-}
-
-variable "tectonic_kube_dns_service_ip" {
-  type    = "string"
-  default = "10.3.0.10"
-
-  description = <<EOF
-The Kubernetes service IP used to reach kube-dns inside the cluster
-as returned by `kubectl -n kube-system get service kube-dns`.
-EOF
-}
-
 variable "tectonic_service_cidr" {
   type    = "string"
   default = "10.3.0.0/16"

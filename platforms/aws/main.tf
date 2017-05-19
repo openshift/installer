@@ -82,7 +82,7 @@ module "ignition-masters" {
 
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
-  kube_dns_service_ip       = "${var.tectonic_kube_dns_service_ip}"
+  kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
   kubeconfig_s3_location    = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
   assets_s3_location        = "${aws_s3_bucket_object.tectonic-assets.bucket}/${aws_s3_bucket_object.tectonic-assets.key}"
   container_images          = "${var.tectonic_container_images}"
@@ -126,7 +126,7 @@ module "ignition-workers" {
 
   kubelet_node_label     = "node-role.kubernetes.io/node"
   kubelet_node_taints    = ""
-  kube_dns_service_ip    = "${var.tectonic_kube_dns_service_ip}"
+  kube_dns_service_ip    = "${module.bootkube.kube_dns_service_ip}"
   kubeconfig_s3_location = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
   assets_s3_location     = ""
   container_images       = "${var.tectonic_container_images}"

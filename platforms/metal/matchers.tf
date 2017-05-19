@@ -34,7 +34,7 @@ resource "matchbox_group" "controller" {
     etcd_enabled         = "${var.tectonic_experimental ? "false" : "true"}"
     etcd_name            = "${element(var.tectonic_metal_controller_names, count.index)}"
     etcd_initial_cluster = "${join(",", formatlist("%s=http://%s:2380", var.tectonic_metal_controller_names, var.tectonic_metal_controller_domains))}"
-    k8s_dns_service_ip   = "${var.tectonic_kube_dns_service_ip}"
+    k8s_dns_service_ip   = "${module.bootkube.kube_dns_service_ip}"
     ssh_authorized_key   = "${var.tectonic_ssh_authorized_key}"
     exclude_tectonic     = "${var.tectonic_vanilla_k8s}"
 
@@ -57,7 +57,7 @@ resource "matchbox_group" "worker" {
 
   metadata {
     domain_name        = "${element(var.tectonic_metal_worker_domains, count.index)}"
-    k8s_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
+    k8s_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
 
     # extra data

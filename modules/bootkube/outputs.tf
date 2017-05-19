@@ -38,3 +38,7 @@ output "ca_key" {
 output "systemd_service" {
   value = "${data.template_file.bootkube_service.rendered}"
 }
+
+output "kube_dns_service_ip" {
+  value = "${cidrhost(var.service_cidr, 10)}"
+}
