@@ -239,3 +239,15 @@ variable "tectonic_aws_region" {
   default     = "eu-west-1"
   description = "The target AWS region for the cluster."
 }
+
+variable "tectonic_aws_master_iam_role" {
+  type        = "string"
+  default     = ""
+  description = "IAM role to use for the instance profiles of master nodes."
+}
+
+variable "tectonic_aws_worker_iam_role" {
+  type        = "string"
+  default     = ""
+  description = "IAM role to use for the instance profiles of worker nodes."
+}

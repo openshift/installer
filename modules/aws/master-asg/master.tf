@@ -84,12 +84,22 @@ resource "aws_launch_configuration" "master_conf" {
 
 resource "aws_iam_instance_profile" "master_profile" {
   name = "${var.cluster_name}-master-profile"
-  role = "${aws_iam_role.master_role.name}"
+
+  role = "${var.master_iam_role == "" ? 
+    join("|", aws_iam_role.master_role.*.name) : 
+    join("|", data.aws_iam_role.master_role.*.role_name)
+  }"
+}
+
+data "aws_iam_role" "master_role" {
+  count     = "${var.master_iam_role == "" ? 0 : 1}"
+  role_name = "${var.master_iam_role}"
 }
 
 resource "aws_iam_role" "master_role" {
-  name = "${var.cluster_name}-master-role"
-  path = "/"
+  count = "${var.master_iam_role == "" ? 1 : 0}"
+  name  = "${var.cluster_name}-master-role"
+  path  = "/"
 
   assume_role_policy = <<EOF
 {
@@ -109,8 +119,9 @@ EOF
 }
 
 resource "aws_iam_role_policy" "master_policy" {
-  name = "${var.cluster_name}_master_policy"
-  role = "${aws_iam_role.master_role.id}"
+  count = "${var.master_iam_role == "" ? 1 : 0}"
+  name  = "${var.cluster_name}_master_policy"
+  role  = "${aws_iam_role.master_role.id}"
 
   policy = <<EOF
 {

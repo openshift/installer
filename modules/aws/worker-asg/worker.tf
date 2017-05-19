@@ -81,12 +81,22 @@ resource "aws_autoscaling_group" "workers" {
 
 resource "aws_iam_instance_profile" "worker_profile" {
   name = "${var.cluster_name}-worker-profile"
-  role = "${aws_iam_role.worker_role.name}"
+
+  role = "${var.worker_iam_role == "" ? 
+    join("|", aws_iam_role.worker_role.*.name) : 
+    join("|", data.aws_iam_role.worker_role.*.role_name)
+  }"
+}
+
+data "aws_iam_role" "worker_role" {
+  count     = "${var.worker_iam_role == "" ? 0 : 1}"
+  role_name = "${var.worker_iam_role}"
 }
 
 resource "aws_iam_role" "worker_role" {
-  name = "${var.cluster_name}-worker-role"
-  path = "/"
+  count = "${var.worker_iam_role == "" ? 1 : 0}"
+  name  = "${var.cluster_name}-worker-role"
+  path  = "/"
 
   assume_role_policy = <<EOF
 {
@@ -106,8 +116,9 @@ EOF
 }
 
 resource "aws_iam_role_policy" "worker_policy" {
-  name = "${var.cluster_name}_worker_policy"
-  role = "${aws_iam_role.worker_role.id}"
+  count = "${var.worker_iam_role == "" ? 1 : 0}"
+  name  = "${var.cluster_name}_worker_policy"
+  role  = "${aws_iam_role.worker_role.id}"
 
   policy = <<EOF
 {

@@ -99,3 +99,9 @@ variable "root_volume_iops" {
   default     = "100"
   description = "The amount of provisioned IOPS for the root block device."
 }
+
+variable "master_iam_role" {
+  type        = "string"
+  default     = ""
+  description = "IAM role to use for the instance profiles of master nodes."
+}
