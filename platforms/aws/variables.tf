@@ -62,6 +62,18 @@ If set to false, a "private" cluster will be created with an internal ELB only.
 EOF
 }
 
+variable "tectonic_aws_external_private_zone" {
+  default = ""
+
+  description = <<EOF
+(optional) If set, the given Route53 zone ID will be used as the internal (private) zone.
+This zone will be used to create etcd DNS records as well as internal API and internal Ingress records.
+If set, no additional private zone will be created.
+
+Example: `"Z1ILINNUJGTAO1"`
+EOF
+}
+
 variable "tectonic_aws_external_master_subnet_ids" {
   type = "list"
 

@@ -63,7 +63,7 @@ module "etcd" {
 
   subnets = ["${module.vpc.worker_subnet_ids}"]
 
-  dns_zone_id  = "${aws_route53_zone.tectonic-int.zone_id}"
+  dns_zone_id  = "${var.tectonic_aws_external_private_zone == "" ? join("", aws_route53_zone.tectonic-int.*.zone_id) : var.tectonic_aws_external_private_zone}"
   base_domain  = "${var.tectonic_base_domain}"
   cluster_name = "${var.tectonic_cluster_name}"
 
@@ -108,7 +108,7 @@ module "masters" {
   cl_channel = "${var.tectonic_cl_channel}"
   user_data  = "${module.ignition-masters.ignition}"
 
-  internal_zone_id             = "${aws_route53_zone.tectonic-int.zone_id}"
+  internal_zone_id             = "${var.tectonic_aws_external_private_zone == "" ? join("", aws_route53_zone.tectonic-int.*.zone_id) : var.tectonic_aws_external_private_zone}"
   external_zone_id             = "${join("", data.aws_route53_zone.tectonic-ext.*.zone_id)}"
   base_domain                  = "${var.tectonic_base_domain}"
   public_vpc                   = "${var.tectonic_aws_external_vpc_public}"
