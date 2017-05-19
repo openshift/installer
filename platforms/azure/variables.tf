@@ -16,9 +16,11 @@ variable "tectonic_azure_dns_resource_group" {
 // Specifies the OS image of the VM.
 variable "tectonic_azure_image_reference" {
   type = "map"
+
   description = <<EOF
 (optional) Specifies an image map with the following keys: `publisher`, `offer`, `sku`, `version` 
 EOF
+
   default = {
     publisher = "CoreOS"
     offer     = "CoreOS"
