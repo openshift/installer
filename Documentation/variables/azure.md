@@ -14,7 +14,7 @@ This document gives an overview of variables used in the Azure platform of the T
 | tectonic_azure_external_vnet_id | ID of an existing Virtual Network to launch nodes into. Example: VNet1. Leave blank to create a new Virtual Network. | string | `` |
 | tectonic_azure_external_vnet_name | Pre-existing virtual network to create cluster into. | string | `` |
 | tectonic_azure_external_worker_subnet_id | (optional) Subnet ID within an existing VNet to deploy worker nodes into. Required to use an existing VNet.<br><br>Example: the subnet ID starts with `"/subscriptions/{subscriptionId}"` or `"/providers/{resourceProviderNamespace}"`. | string | `` |
-| tectonic_azure_image_reference | The image ID as given in `azure image list`. Specifies the OS image of the VM. | map | `<map>` |
+| tectonic_azure_image_reference | (optional) Specifies an image map with the following keys: `publisher`, `offer`, `sku`, `version` | map | `<map>` |
 | tectonic_azure_location |  | string | - |
 | tectonic_azure_master_vm_size | Instance size for the master node(s). Example: Standard_DS2_v2. | string | `Standard_DS2_v2` |
 | tectonic_azure_ssh_key | Name of an Azure ssh key to use joe-sfo | string | - |

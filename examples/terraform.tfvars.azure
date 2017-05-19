@@ -37,8 +37,8 @@ tectonic_azure_external_vnet_name = ""
 // Example: the subnet ID starts with `"/subscriptions/{subscriptionId}"` or `"/providers/{resourceProviderNamespace}"`.
 // tectonic_azure_external_worker_subnet_id = ""
 
-// 
-tectonic_azure_image_reference = ""
+// (optional) Specifies an image map with the following keys: `publisher`, `offer`, `sku`, `version`
+// tectonic_azure_image_reference = ""
 
 // 
 tectonic_azure_location = ""
