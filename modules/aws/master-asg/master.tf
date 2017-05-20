@@ -141,7 +141,8 @@ resource "aws_iam_role_policy" "master_policy" {
     },
     {
       "Action" : [
-        "s3:GetObject"
+        "s3:GetObject",
+        "s3:HeadObject"
       ],
       "Resource": "arn:aws:s3:::*",
       "Effect": "Allow"
