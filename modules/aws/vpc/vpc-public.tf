@@ -8,7 +8,7 @@ resource "aws_route_table" "default" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
-      "Name", "public",
+      "Name", "${var.cluster_name}-public",
       "kubernetes.io/cluster/${var.cluster_name}", "shared",
       "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
@@ -40,7 +40,7 @@ resource "aws_subnet" "master_subnet" {
   availability_zone = "${var.master_azs[count.index]}"
 
   tags = "${merge(map(
-      "Name", "master-${ "${length(var.master_azs)}" > 0 ? 
+      "Name", "${var.cluster_name}-master-${ "${length(var.master_azs)}" > 0 ?
      "${var.master_azs[count.index]}" : 
      "${data.aws_availability_zones.azs.names[count.index]}" }",
       "kubernetes.io/cluster/${var.cluster_name}", "shared",
