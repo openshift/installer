@@ -19,6 +19,11 @@ tectonic_admin_password_hash = ""
 // Instance size for the etcd node(s). Example: `t2.medium`.
 tectonic_aws_etcd_ec2_type = "t2.medium"
 
+// (optional) List of additional security group IDs for etcd nodes.
+// 
+// Example: `["sg-51530134", "sg-b253d7cc"]`
+// tectonic_aws_etcd_extra_sg_ids = ""
+
 // The amount of provisioned IOPS for the root block device of etcd nodes.
 tectonic_aws_etcd_root_volume_iops = "100"
 
@@ -69,6 +74,11 @@ tectonic_aws_external_vpc_public = true
 // Instance size for the master node(s). Example: `t2.medium`.
 tectonic_aws_master_ec2_type = "t2.medium"
 
+// (optional) List of additional security group IDs for master nodes.
+// 
+// Example: `["sg-51530134", "sg-b253d7cc"]`
+// tectonic_aws_master_extra_sg_ids = ""
+
 // The amount of provisioned IOPS for the root block device of master nodes.
 tectonic_aws_master_root_volume_iops = "100"
 
@@ -95,6 +105,11 @@ tectonic_aws_vpc_cidr_block = "10.0.0.0/16"
 
 // Instance size for the worker node(s). Example: `t2.medium`.
 tectonic_aws_worker_ec2_type = "t2.medium"
+
+// (optional) List of additional security group IDs for worker nodes.
+// 
+// Example: `["sg-51530134", "sg-b253d7cc"]`
+// tectonic_aws_worker_extra_sg_ids = ""
 
 // The amount of provisioned IOPS for the root block device of worker nodes.
 tectonic_aws_worker_root_volume_iops = "100"

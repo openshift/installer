@@ -30,6 +30,39 @@ variable "tectonic_aws_etcd_ec2_type" {
   default     = "t2.medium"
 }
 
+variable "tectonic_aws_etcd_extra_sg_ids" {
+  description = <<EOF
+(optional) List of additional security group IDs for etcd nodes.
+
+Example: `["sg-51530134", "sg-b253d7cc"]`
+EOF
+
+  type    = "list"
+  default = []
+}
+
+variable "tectonic_aws_master_extra_sg_ids" {
+  description = <<EOF
+(optional) List of additional security group IDs for master nodes.
+
+Example: `["sg-51530134", "sg-b253d7cc"]`
+EOF
+
+  type    = "list"
+  default = []
+}
+
+variable "tectonic_aws_worker_extra_sg_ids" {
+  description = <<EOF
+(optional) List of additional security group IDs for worker nodes.
+
+Example: `["sg-51530134", "sg-b253d7cc"]`
+EOF
+
+  type    = "list"
+  default = []
+}
+
 variable "tectonic_aws_vpc_cidr_block" {
   type    = "string"
   default = "10.0.0.0/16"

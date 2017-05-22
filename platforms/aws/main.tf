@@ -55,7 +55,7 @@ module "etcd" {
 
   instance_count = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
   ec2_type       = "${var.tectonic_aws_etcd_ec2_type}"
-  sg_ids         = ["${module.vpc.etcd_sg_id}"]
+  sg_ids         = "${concat(var.tectonic_aws_etcd_extra_sg_ids, list(module.vpc.etcd_sg_id))}"
 
   ssh_key         = "${var.tectonic_aws_ssh_key}"
   cl_channel      = "${var.tectonic_cl_channel}"
@@ -102,7 +102,7 @@ module "masters" {
 
   subnet_ids = ["${module.vpc.master_subnet_ids}"]
 
-  master_sg_ids  = ["${module.vpc.master_sg_id}"]
+  master_sg_ids  = "${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"
   api_sg_ids     = ["${module.vpc.api_sg_id}"]
   console_sg_ids = ["${module.vpc.console_sg_id}"]
 
@@ -147,7 +147,7 @@ module "workers" {
 
   vpc_id     = "${module.vpc.vpc_id}"
   subnet_ids = ["${module.vpc.worker_subnet_ids}"]
-  sg_ids     = ["${module.vpc.worker_sg_id}"]
+  sg_ids     = "${concat(var.tectonic_aws_worker_extra_sg_ids, list(module.vpc.worker_sg_id))}"
 
   ssh_key                      = "${var.tectonic_aws_ssh_key}"
   cl_channel                   = "${var.tectonic_cl_channel}"
