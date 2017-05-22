@@ -4,6 +4,7 @@ Following this guide will deploy a Tectonic cluster on virtual or physical hardw
 
 ## Prerequsities
 
+* Terraform v0.9.6. Tectonic Installer includes (and requires) this version of Terraform. Other versions are not guaranteed to work with this Installer.
 * Matchbox [v0.6.0](https://github.com/coreos/matchbox/releases) installation with the gRPC API enabled. See [installation](https://coreos.com/matchbox/docs/latest/deployment.html).
 * Matchbox TLS client credentials
 * PXE network boot environment with DHCP, TFTP, and DNS services. See [network-setup](https://coreos.com/matchbox/docs/latest/network-setup.html).
@@ -28,7 +29,7 @@ $ cd tectonic
 
 ### Initialize and configure Terraform
 
-Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `linux`, `darwin`, or `windows`.
+Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `linux`, `darwin`, or `windows`. Then add the `terraform` binary to your `PATH`.
 
 ```bash
 $ export INSTALLER_PATH=$(pwd)/tectonic-installer/linux/installer

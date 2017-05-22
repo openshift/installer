@@ -6,8 +6,9 @@ Generally, the AWS platform templates adhere to the standards defined by the pro
 
 ## Prerequsities
 
+* **Terraform**: Tectonic Installer includes (and requires) Terraform v0.9.6. Other versions of Terraform are not guaranteed to work with this Installer.
 * **DNS**: Ensure that the DNS zone is already created and available in Route 53 for the account. For example if the `tectonic_base_domain` is set to `kube.example.com` a Route 53 zone must exist for this domain and the AWS nameservers must be configured for the domain.
-* **Tectonic Account**: Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
+* **Tectonic Account**: Register for a [Tectonic Account][register], which is free for up to 10 nodes. You must provide the cluster license and pull secret during installation.
 
 ## Getting Started
 
@@ -23,11 +24,11 @@ $ cd tectonic
 
 ### Initialize and configure Terraform
 
-Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `darwin`, `linux`, or `windows`. We also need to add the `terraform` binary to our `PATH`.
+Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `darwin`, `linux`, or `windows`. Then add the `terraform` binary to your `PATH`.
 
 ```bash
 $ export INSTALLER_PATH=$(pwd)/tectonic-installer/darwin/installer # Edit the platform name.
-$ export PATH=$PATH:$(pwd)/tectonic-installer/darwin # Put the `terraform` binary in our PATH
+$ export PATH=$PATH:$(pwd)/tectonic-installer/darwin # Put the `terraform` binary in the PATH
 ```
 
 Make a copy of the Terraform configuration file for the system. Do not share this configuration file as it is specific to the machine.
