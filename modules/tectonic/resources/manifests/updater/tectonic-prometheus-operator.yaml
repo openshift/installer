@@ -31,6 +31,9 @@ spec:
             cpu: 20m
             memory: 50Mi
       restartPolicy: Always
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
       terminationGracePeriodSeconds: 30
       imagePullSecrets:
       - name: coreos-pull-secret

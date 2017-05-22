@@ -66,3 +66,6 @@ spec:
       # private registry.
       imagePullSecrets:
       - name: coreos-pull-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
