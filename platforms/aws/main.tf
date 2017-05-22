@@ -13,6 +13,7 @@ module "vpc" {
   external_vpc_id         = "${var.tectonic_aws_external_vpc_id}"
   external_master_subnets = ["${compact(var.tectonic_aws_external_master_subnet_ids)}"]
   external_worker_subnets = ["${compact(var.tectonic_aws_external_worker_subnet_ids)}"]
+  cluster_id              = "${module.tectonic.cluster_id}"
   extra_tags              = "${var.tectonic_aws_extra_tags}"
   enable_etcd_sg          = "${!var.tectonic_experimental && length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
 
@@ -67,6 +68,7 @@ module "etcd" {
   cluster_name = "${var.tectonic_cluster_name}"
 
   external_endpoints = ["${compact(var.tectonic_etcd_servers)}"]
+  cluster_id         = "${module.tectonic.cluster_id}"
   extra_tags         = "${var.tectonic_aws_extra_tags}"
 
   root_volume_type = "${var.tectonic_aws_etcd_root_volume_type}"
@@ -112,6 +114,7 @@ module "masters" {
   external_zone_id             = "${join("", data.aws_route53_zone.tectonic-ext.*.zone_id)}"
   base_domain                  = "${var.tectonic_base_domain}"
   public_vpc                   = "${var.tectonic_aws_external_vpc_public}"
+  cluster_id                   = "${module.tectonic.cluster_id}"
   extra_tags                   = "${var.tectonic_aws_extra_tags}"
   autoscaling_group_extra_tags = "${var.tectonic_autoscaling_group_extra_tags}"
   custom_dns_name              = "${var.tectonic_dns_name}"
@@ -149,6 +152,7 @@ module "workers" {
   ssh_key                      = "${var.tectonic_aws_ssh_key}"
   cl_channel                   = "${var.tectonic_cl_channel}"
   user_data                    = "${module.ignition-workers.ignition}"
+  cluster_id                   = "${module.tectonic.cluster_id}"
   extra_tags                   = "${var.tectonic_aws_extra_tags}"
   autoscaling_group_extra_tags = "${var.tectonic_autoscaling_group_extra_tags}"
 

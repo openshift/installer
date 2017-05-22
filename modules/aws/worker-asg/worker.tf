@@ -66,6 +66,11 @@ resource "aws_autoscaling_group" "workers" {
       value               = "owned"
       propagate_at_launch = true
     },
+    {
+      key                 = "tectonicClusterID"
+      value               = "${var.cluster_id}"
+      propagate_at_launch = true
+    },
     "${var.autoscaling_group_extra_tags}",
   ]
 
