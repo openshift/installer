@@ -654,3 +654,8 @@ span.spacer {
   white-space: pre;
   width: 0;
 }
+
+.checkbox-helper-text {
+  padding-left: 19px;
+  margin-top: 0;
+}
