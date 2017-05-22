@@ -90,5 +90,5 @@ variable "tectonic_service_disabled" {
 }
 
 variable "use_custom_fqdn" {
-  default = true
+  default = false
 }

@@ -6,5 +6,5 @@ resource "azurerm_dns_a_record" "etcd" {
   ttl     = "60"
   records = ["${var.etcd_ip_addresses}"]
 
-  count = "${var.use_custom_fqdn ? 1 : 0}"
+  count = "${var.create_dns_zone ? 1 : 0}"
 }

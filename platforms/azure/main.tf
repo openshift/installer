@@ -97,7 +97,7 @@ module "dns" {
   location            = "${var.tectonic_azure_location}"
   resource_group_name = "${var.tectonic_azure_dns_resource_group}"
 
-  use_custom_fqdn = "${var.tectonic_azure_use_custom_fqdn}"
+  create_dns_zone = "${var.tectonic_azure_create_dns_zone}"
 
   // TODO etcd list
   // TODO worker list
