@@ -8,7 +8,7 @@ Generally, the OpenStack platform templates adhere to the standards defined by t
 
 ## Prerequsities
 
-* **Terraform**: Tectonic Installer includes (and requires) Terraform v0.9.6. Other versions of Terraform are not guaranteed to work with this Installer.
+* **Terraform**: Tectonic Installer includes and requires a specific version of Terraform. This is included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
 * **CoreOS Container Linux**: The latest Container Linux Beta (1353.2.0 or later) [uploaded into Glance](https://coreos.com/os/docs/latest/booting-on-openstack.html) and its OpenStack image ID.
 * **Tectonic Account**: Register for a [Tectonic Account][register], which is free for up to 10 nodes. You must provide the cluster license and pull secret during installation.
 
@@ -179,3 +179,4 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 [troubleshooting]: ../../troubleshooting/faq.md
 [openstack-nova-vars]: ../../variables/openstack-nova.md
 [openstack-neutron-vars]: ../../variables/openstack-neutron.md
+[release-notes]: https://coreos.com/tectonic/releases/

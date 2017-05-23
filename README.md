@@ -36,7 +36,9 @@ At a high level, using the installer follows the workflow below. See each platfo
 
 **Install Terraform**
 
-This project is built on Terraform and requires version 0.9.4. Download and install an [official Terraform binary](https://releases.hashicorp.com/terraform/0.9.4/) for your OS or use your favorite package manager.
+Tectonic Installer includes and requires a specific version of Terraform. This is included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
+
+Download and install the included Terraform binary for your OS or use your favorite package manager.
 
 **Choose your platform**
 
@@ -100,3 +102,4 @@ make destroy
 ```
 
 [platform-lifecycle]: Documentation/platform-lifecycle.md
+[release-notes]: https://coreos.com/tectonic/releases/
