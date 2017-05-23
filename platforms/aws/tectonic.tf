@@ -7,6 +7,7 @@ module "bootkube" {
 
   # Platform-independent variables wiring, do not modify.
   container_images = "${var.tectonic_container_images}"
+  versions         = "${var.tectonic_versions}"
 
   ca_cert    = "${var.tectonic_ca_cert}"
   ca_key     = "${var.tectonic_ca_key}"

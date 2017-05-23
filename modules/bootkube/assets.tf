@@ -13,6 +13,40 @@ data "null_data_source" "etcd" {
   }
 }
 
+resource "template_dir" "experimental" {
+  count           = "${var.experimental_enabled ? 1 : 0}"
+  source_dir      = "${path.module}/resources/experimental/manifests"
+  destination_dir = "${path.cwd}/generated/experimental"
+
+  vars {
+    etcd_operator_image = "${var.container_images["etcd_operator"]}"
+    etcd_service_ip     = "${cidrhost(var.service_cidr, 15)}"
+  }
+}
+
+resource "template_dir" "bootstrap-experimental" {
+  count           = "${var.experimental_enabled ? 1 : 0}"
+  source_dir      = "${path.module}/resources/experimental/bootstrap-manifests"
+  destination_dir = "${path.cwd}/generated/bootstrap-experimental"
+
+  vars {
+    etcd_image                = "${var.container_images["etcd"]}"
+    etcd_version              = "${var.versions["etcd"]}"
+    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 200)}"
+  }
+}
+
+resource "template_dir" "etcd-experimental" {
+  count           = "${var.experimental_enabled ? 1 : 0}"
+  source_dir      = "${path.module}/resources/experimental/etcd"
+  destination_dir = "${path.cwd}/generated/etcd"
+
+  vars {
+    etcd_version              = "${var.versions["etcd"]}"
+    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 200)}"
+  }
+}
+
 # Self-hosted manifests (resources/generated/manifests/)
 resource "template_dir" "bootkube" {
   source_dir      = "${path.module}/resources/manifests"
@@ -47,7 +81,8 @@ resource "template_dir" "bootkube" {
     etcd_cert_flag = "${data.null_data_source.etcd.outputs.cert_flag}"
     etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"
 
-    etcd_service_ip = "${cidrhost(var.service_cidr, 15)}"
+    etcd_service_ip           = "${cidrhost(var.service_cidr, 15)}"
+    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 200)}"
 
     cloud_provider = "${var.cloud_provider}"
 
@@ -102,55 +137,6 @@ resource "template_dir" "bootkube-bootstrap" {
   }
 }
 
-# Self-hosted experimental etcd
-data "template_file" "etcd-operator" {
-  template = "${file("${path.module}/resources/experimental/manifests/etcd-operator.yaml")}"
-
-  vars {
-    etcd_operator_image = "${var.container_images["etcd_operator"]}"
-  }
-}
-
-resource "local_file" "etcd-operator" {
-  count      = "${var.experimental_enabled ? 1 : 0}"
-  depends_on = ["template_dir.bootkube"]
-
-  content  = "${data.template_file.etcd-operator.rendered}"
-  filename = "${path.cwd}/generated/experimental/etcd-operator.yaml"
-}
-
-data "template_file" "etcd-service" {
-  template = "${file("${path.module}/resources/experimental/manifests/etcd-service.yaml")}"
-
-  vars {
-    etcd_service_ip = "${cidrhost(var.service_cidr, 15)}"
-  }
-}
-
-resource "local_file" "etcd-service" {
-  count      = "${var.experimental_enabled ? 1 : 0}"
-  depends_on = ["template_dir.bootkube"]
-
-  content  = "${data.template_file.etcd-service.rendered}"
-  filename = "${path.cwd}/generated/experimental/etcd-service.yaml"
-}
-
-data "template_file" "bootstrap-etcd" {
-  template = "${file("${path.module}/resources/experimental/bootstrap-manifests/bootstrap-etcd.yaml")}"
-
-  vars {
-    etcd_image = "${var.container_images["etcd"]}"
-  }
-}
-
-resource "local_file" "bootstrap-etcd" {
-  count      = "${var.experimental_enabled ? 1 : 0}"
-  depends_on = ["template_dir.bootkube-bootstrap"]
-
-  content  = "${data.template_file.bootstrap-etcd.rendered}"
-  filename = "${path.cwd}/generated/bootstrap-experimental/bootstrap-etcd.yaml"
-}
-
 # etcd certs
 resource "local_file" "etcd_ca_crt" {
   count    = "${var.etcd_ca_cert == "" ? 0 : 1}"
@@ -188,7 +174,7 @@ resource "local_file" "kubeconfig" {
 }
 
 # bootkube.sh (resources/generated/bootkube.sh)
-data "template_file" "bootkube" {
+data "template_file" "bootkube-sh" {
   template = "${file("${path.module}/resources/bootkube.sh")}"
 
   vars {
@@ -196,8 +182,8 @@ data "template_file" "bootkube" {
   }
 }
 
-resource "local_file" "bootkube" {
-  content  = "${data.template_file.bootkube.rendered}"
+resource "local_file" "bootkube-sh" {
+  content  = "${data.template_file.bootkube-sh.rendered}"
   filename = "${path.cwd}/generated/bootkube.sh"
 }
 

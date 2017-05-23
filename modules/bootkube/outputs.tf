@@ -16,7 +16,16 @@
 # combination of all the resources' IDs, it can't be guessed and can only be
 # interpolated once the assets have all been created.
 output "id" {
-  value = "${sha1("${template_dir.bootkube-bootstrap.id} ${local_file.kubeconfig.id} ${local_file.bootkube.id} ${template_dir.bootkube.id} ${join(" ",local_file.etcd-operator.*.id,local_file.etcd-service.*.id,local_file.bootstrap-etcd.*.id)}")}"
+  value = "${sha1("
+  ${local_file.kubeconfig.id}
+  ${local_file.bootkube-sh.id}
+  ${template_dir.bootkube.id} ${template_dir.bootkube-bootstrap.id}
+  ${join(" ",
+    template_dir.experimental.*.id,
+    template_dir.bootstrap-experimental.*.id,
+    template_dir.etcd-experimental.*.id,
+    )}
+  ")}"
 }
 
 output "kubeconfig" {

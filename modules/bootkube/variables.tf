@@ -3,6 +3,11 @@ variable "container_images" {
   type        = "map"
 }
 
+variable "versions" {
+  description = "Container versions to use"
+  type        = "map"
+}
+
 variable "kube_apiserver_url" {
   description = "URL used to reach kube-apiserver"
   type        = "string"
