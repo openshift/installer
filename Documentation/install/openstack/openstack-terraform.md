@@ -112,7 +112,7 @@ This should run for a little bit, and when complete, your Tectonic cluster shoul
 
 If you encounter any issues, check the known issues and workarounds below.
 
-### Access the cluster
+## Access the cluster
 
 The Tectonic Console should be up and running after the containers have downloaded. You can access it at the DNS name configured in your variables file.
 
@@ -123,7 +123,18 @@ $ KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
 
-### Delete the cluster
+## Scale the cluster
+
+To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and run:
+
+```
+$ terraform apply $ terraform plan \
+  -var-file=build/${CLUSTER}/terraform.tfvars \
+  -target module.workers \
+  platforms/openstack/<flavor>
+```
+
+## Delete the cluster
 
 Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing VPC and subnets, these items are not touched. To delete, run:
 
@@ -167,7 +178,7 @@ data:
 
 Setting the IANA standard port `4789` can help debugging when using `tcpdump -vv -i eth0` on the worker/master nodes as encapsulated VXLAN packets will be shown.
 
-See the [troubleshooting][troubleshooting] document for work arounds for bugs that are being tracked.
+See the [troubleshooting][troubleshooting] document for workarounds for bugs that are being tracked.
 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md

@@ -114,7 +114,7 @@ This should run for a little bit, and when complete, your Tectonic cluster shoul
 
 If you encounter any issues, check the known issues and workarounds below.
 
-### Access the cluster
+## Access the cluster
 
 The Tectonic Console should be up and running after the containers have downloaded. You can access it at the DNS name configured in your variables file.
 
@@ -125,19 +125,7 @@ $ KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
 
-### Delete the cluster
-
-Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing resource group for DNS, this is not touched. To delete, run:
-
-```
-$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
-```
-
-### Known issues and workarounds
-
-See the [installer troubleshooting][troubleshooting] document for known problem points and work arounds.
-
-## Scaling the cluster
+## Scale the cluster
 
 To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and run:
 
@@ -146,6 +134,14 @@ $ terraform apply $ terraform plan \
   -var-file=build/${CLUSTER}/terraform.tfvars \
   -target module.workers \
   platforms/azure
+```
+
+## Delete the cluster
+
+Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing resource group for DNS, this is not touched. To delete, run:
+
+```
+$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 ```
 
 ## Under the hood
@@ -171,7 +167,7 @@ $ terraform apply $ terraform plan \
 * Master nodes are fronted by one load-balancer for the API one for the Ingress controller.
 * The API LB is configured with SourceIP session stickiness, to ensure that TCP (including SSH) sessions from the same client land reliably on the same master node. This allows for provisioning the assets and starting bootkube reliably via SSH.
 * a `null_resource` terraform provisioner in the tectonic.tf top-level template will copy the assets and run bootkube automatically on one of the masters.
-* make sure the SSH key specifyied in the tfvars file is also added to the SSH agent on the machine running terraform. Without this, terraform is not able to SSH copy the assets and start bootkube. Also make sure that the SSH known_hosts file doesn't have old records of the API DNS name (fingerprints will not match).
+* make sure the SSH key specified in the tfvars file is also added to the SSH agent on the machine running terraform. Without this, terraform is not able to SSH copy the assets and start bootkube. Also make sure that the SSH known_hosts file doesn't have old records of the API DNS name (fingerprints will not match).
 
 ### Worker nodes
 
@@ -179,6 +175,11 @@ $ terraform apply $ terraform plan \
 * An Azure VM Scaling Set resource is used to spin-up multiple identical VM configured as worker nodes.
 * Worker VMs all share the same identical Ignition config
 * Worker nodes are not fronted by any LB and don't have public IP addresses. They can be accessed through SSH from any of the master nodes.
+
+## Known issues and workarounds
+
+See the [installer troubleshooting][troubleshooting] document for known problem points and workarounds.
+
 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md

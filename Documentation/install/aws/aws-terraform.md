@@ -91,7 +91,7 @@ $ terraform apply -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 
 This should run for a little bit, and when complete, your Tectonic cluster should be ready.
 
-### Access the cluster
+## Access the cluster
 
 The Tectonic Console should be up and running after the containers have downloaded. You can access it at the DNS name configured in your variables file.
 
@@ -102,7 +102,18 @@ $ export KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
 
-### Delete the cluster
+## Scale the cluster
+
+To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and run:
+
+```
+$ terraform apply $ terraform plan \
+  -var-file=build/${CLUSTER}/terraform.tfvars \
+  -target module.workers \
+  platforms/aws
+```
+
+## Delete the cluster
 
 Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing VPC and subnets, these items are not touched. To delete, run:
 
@@ -110,9 +121,10 @@ Deleting your cluster will remove only the infrastructure elements created by Te
 $ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 ```
 
-### Known issues and workarounds
+## Known issues and workarounds
 
 See the [troubleshooting][troubleshooting] document for workarounds for bugs that are being tracked.
+
 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md
