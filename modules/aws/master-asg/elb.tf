@@ -4,6 +4,8 @@ resource "aws_elb" "api-internal" {
   internal        = true
   security_groups = ["${var.api_sg_ids}"]
 
+  idle_timeout = 3600
+
   listener {
     instance_port     = 443
     instance_protocol = "tcp"
@@ -21,7 +23,8 @@ resource "aws_elb" "api-internal" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-api-internal",
-      "kubernetes.io/cluster/${var.cluster_name}", "owned"
+      "kubernetes.io/cluster/${var.cluster_name}", "owned",
+      "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
@@ -43,6 +46,8 @@ resource "aws_elb" "api-external" {
   subnets         = ["${var.subnet_ids}"]
   internal        = false
   security_groups = ["${var.api_sg_ids}"]
+
+  idle_timeout = 3600
 
   listener {
     instance_port     = 22
@@ -68,7 +73,8 @@ resource "aws_elb" "api-external" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-api-external",
-      "kubernetes.io/cluster/${var.cluster_name}", "owned"
+      "kubernetes.io/cluster/${var.cluster_name}", "owned",
+      "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
@@ -90,6 +96,8 @@ resource "aws_elb" "console" {
   subnets         = ["${var.subnet_ids}"]
   internal        = "${var.public_vpc ? false : true}"
   security_groups = ["${var.console_sg_ids}"]
+
+  idle_timeout = 3600
 
   listener {
     instance_port     = 32001
@@ -115,7 +123,8 @@ resource "aws_elb" "console" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-console",
-      "kubernetes.io/cluster/${var.cluster_name}", "owned"
+      "kubernetes.io/cluster/${var.cluster_name}", "owned",
+      "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 

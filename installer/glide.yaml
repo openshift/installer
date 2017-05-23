@@ -313,11 +313,6 @@ import:
 - package: github.com/vincent-petithory/dataurl
   version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
 
-# used to encrypt passwords for dex 
-- package: golang.org/x/crypto
-  version: d172538b2cfce0c13cee31e647d0367aa8cd2486
-  subpackages:
-  - bcrypt
 # vpc availability subnet splitting math
 - package: github.com/coreos/ipnets
   version: 02aaf3c1ee2483ada21d643ce1c94708c8d1c7d0
@@ -335,7 +330,7 @@ import:
   - parser
   - scanner
 - package: github.com/hashicorp/terraform
-  version: 277bbf65d1141207dbb30485bf124b1dba08f80f
+  version: fcdf494cffc06aac027f6cf904647051ab6d5015
   subpackages:
   - config
   - config/module
@@ -357,7 +352,7 @@ import:
 - package: github.com/mitchellh/mapstructure
   version: 281073eb9eb092240d33ef253c404f1cca550309
 - package: github.com/coreos/terraform-provider-matchbox 
-  version: 4c66aa75b60489a4220730d70b0446e25b0c9a0a
+  version: v0.1.2
   subpackages:
   - matchbox
 - package: github.com/hashicorp/vault
@@ -366,6 +361,12 @@ import:
   - helper/compressutil
   - helper/jsonutil
   - helper/pgpkeys
+- package: golang.org/x/crypto
+  version: 5dc8cb4b8a8eb076cbb5a06bc3b8682c15bdbbd3
+  subpackages:
+  - curve25519
+  - ssh
+  - ssh/terminal
 - package: github.com/hashicorp/go-getter
   version: 615ccd8621bdb3837e18be586ce15655ef52b185
   subpackages:

@@ -3,18 +3,13 @@ variable "container_images" {
   type        = "map"
 }
 
+variable "versions" {
+  description = "Container versions to use"
+  type        = "map"
+}
+
 variable "kube_apiserver_url" {
   description = "URL used to reach kube-apiserver"
-  type        = "string"
-}
-
-variable "kube_apiserver_service_ip" {
-  description = "Service IP used to reach kube-apiserver inside the cluster"
-  type        = "string"
-}
-
-variable "kube_dns_service_ip" {
-  description = "Service IP used to reach kube-dns"
   type        = "string"
 }
 
@@ -33,11 +28,6 @@ variable "etcd_client_cert" {
 
 variable "etcd_client_key" {
   type = "string"
-}
-
-variable "etcd_service_ip" {
-  description = "Service IP used to reach etcd"
-  type        = "string"
 }
 
 variable "experimental_enabled" {

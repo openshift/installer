@@ -6,7 +6,7 @@
 pipeline {
   agent {
     docker {
-      image 'quay.io/coreos/tectonic-builder:v1.7'
+      image 'quay.io/coreos/tectonic-builder:v1.8'
       label 'worker'
     }
   }
@@ -78,8 +78,10 @@ pipeline {
             # Use smoke test configuration for deployment
             ln -sf ${WORKSPACE}/test/aws.tfvars ${WORKSPACE}/build/${CLUSTER}/terraform.tfvars
 
-            make plan
-            make apply
+            alias filter=${WORKSPACE}/installer/scripts/filter.sh
+
+            make plan | filter
+            make apply | filter
 
             # TODO: replace in Go
             CONFIG=${WORKSPACE}/build/${CLUSTER}/terraform.tfvars
@@ -110,7 +112,10 @@ pipeline {
                          passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                        ]
                        ]) {
-        // Destroy all clusters within workspace
+        /* Destroy all clusters within workspace
+         * Try 3 times before failing because tf destroy is flaky.
+         * "||" is bash for "do the next thing only if the first thing failed"
+         */
         unstash 'installer'
         sh '''
           for c in ${WORKSPACE}/build/*; do
@@ -118,7 +123,7 @@ pipeline {
             export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
 
             echo "Destroying ${CLUSTER}..."
-            make destroy || true
+            make destroy || make destroy || make destroy
           done
         '''
       }

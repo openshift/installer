@@ -14,7 +14,7 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_ca_key_alg | (optional) The algorithm used to generate tectonic_ca_key. The default value is currently recommend. This field is mandatory if `tectonic_ca_cert` is set. | string | `RSA` |
 | tectonic_cl_channel | The Container Linux update channel.<br><br>Examples: `stable`, `beta`, `alpha` | string | `stable` |
 | tectonic_cluster_cidr | This declares the IP range to assign Kubernetes pod IPs in CIDR notation. | string | `10.2.0.0/16` |
-| tectonic_cluster_name | The name of the cluster. If used in a cloud-environment, this will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.<br><br>Note: This field MUST be set manually prior to creating the cluster. | string | - |
+| tectonic_cluster_name | The name of the cluster. If used in a cloud-environment, this will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.<br><br>Note: This field MUST be set manually prior to creating the cluster. Warning: Special characters in the name like '.' may cause errors on OpenStack platforms due to resource name constraints. | string | - |
 | tectonic_config_version | (internal) This declares the version of the global configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
 | tectonic_container_images | (internal) Container images to use | map | `<map>` |
 | tectonic_etcd_ca_cert_path | (optional) The path of the file containing the CA certificate for TLS communication with etcd.<br><br>Note: This works only when used in conjunction with an external etcd cluster. If set, the variables `tectonic_etcd_servers`, `tectonic_etcd_client_cert_path`, and `tectonic_etcd_client_key_path` must also be set. | string | `` |
@@ -23,12 +23,9 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_etcd_count | The number of etcd nodes to be created. If set to zero, the count of etcd nodes will be determined automatically.<br><br>Note: This is currently only supported on AWS. | string | `0` |
 | tectonic_etcd_servers | (optional) List of external etcd v3 servers to connect with (hostnames/IPs only). Needs to be set if using an external etcd cluster.<br><br>Example: `["etcd1", "etcd2", "etcd3"]` | list | `<list>` |
 | tectonic_experimental | If set to true, experimental Tectonic assets are being deployed. | string | `false` |
-| tectonic_kube_apiserver_service_ip | The Kubernetes service IP used to reach kube-apiserver inside the cluster as returned by `kubectl -n default get service kubernetes`. | string | `10.3.0.1` |
-| tectonic_kube_dns_service_ip | The Kubernetes service IP used to reach kube-dns inside the cluster as returned by `kubectl -n kube-system get service kube-dns`. | string | `10.3.0.10` |
-| tectonic_kube_etcd_service_ip | The Kubernetes service IP used to reach self-hosted etcd inside the cluster as returned by `kubectl -n kube-system get service etcd-service`. | string | `10.3.0.15` |
-| tectonic_license_path | The path to the tectonic licence file.<br><br>Note: This field MUST be set manually prior to creating the cluster. | string | - |
+| tectonic_license_path | The path to the tectonic licence file.<br><br>Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`. | string | `` |
 | tectonic_master_count | The number of master nodes to be created. This applies only to cloud platforms. | string | `1` |
-| tectonic_pull_secret_path | The path the pull secret file in JSON format.<br><br>Note: This field MUST be set manually prior to creating the cluster. | string | - |
+| tectonic_pull_secret_path | The path the pull secret file in JSON format.<br><br>Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`. | string | `` |
 | tectonic_service_cidr | This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. | string | `10.3.0.0/16` |
 | tectonic_update_app_id | (internal) The Tectonic Omaha update App ID | string | `6bc7b986-4654-4a0f-94b3-84ce6feb1db4` |
 | tectonic_update_channel | (internal) The Tectonic Omaha update channel | string | `tectonic-1.6` |

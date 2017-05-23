@@ -2,44 +2,37 @@ import _ from 'lodash';
 import Baby from 'babyparse';
 import classNames from 'classnames';
 import React from 'react';
+
 import { connect } from 'react-redux';
 
+import { configActions } from '../actions';
 import { Alert } from './alert';
-import { configActionTypes } from '../actions';
 import { validate } from '../validate';
 import { readFile } from '../readfile';
+import { FieldList, Form } from '../form';
+
 import {
   BM_MASTERS,
-  BM_MASTERS_COUNT,
   BM_WORKERS,
-  BM_WORKERS_COUNT,
 } from '../cluster-config';
 
-import { WithClusterConfig, NumberInput, Input } from './ui';
+import {
+  Input,
+  Connect,
+  markIDDirty,
+} from './ui';
 
-const TOO_MANY_MASTERS = 9;
-const TOO_MANY_WORKERS = 1000;
-
-const validateMasters = v => validate.int({min: 1, max: TOO_MANY_MASTERS})(v) || validate.isOdd(v);
-const validateWorkers = validate.int({min: 1, max: TOO_MANY_WORKERS});
-
-const countBy = (collection, f) => {
-  const ret = new Map();
-  collection.forEach(obj => {
-    const k = f(obj);
-    const v = ret.get(k) || 0;
-    ret.set(k, v + 1);
-  });
-
-  return ret;
-};
-
-// label is "Master" or "Worker"
-// index is index of the node
-const macFieldID = (label, index) => `nodetable:${label}:${index}:mac`;
-const nameFieldID = (label, index) => `nodetable:${label}:${index}:name`;
-
-// TODO (ggreer) make a real modal with real modal classes
+const BulkUpload = connect(null, dispatch => ({
+  updateNodes: (fieldID, payload) => {
+    dispatch(configActions.updateField(fieldID, payload));
+    _.each(payload, (row, i) => {
+      _.each(row, (ignore, key) => {
+        markIDDirty(dispatch, [fieldID, i, key].join("."));
+      });
+    });
+    dispatch(configActions.updateField(fieldID, payload));
+  },
+}))(
 class BulkUpload extends React.Component {
   constructor (props) {
     super(props);
@@ -92,13 +85,12 @@ class BulkUpload extends React.Component {
       // possible CSV weirdnesses.
       return row.length > Math.max(nameCol, macCol);
     });
-    const nodes = rows.map(row => {
-      return {
-        name: row[nameCol],
-        mac: row[macCol],
-      };
-    });
-    this.props.updateNodes(nodes, nodes.length);
+    const nodes = rows.map(row => ({
+      host: row[nameCol],
+      mac: row[macCol],
+    }));
+
+    this.props.updateNodes(this.props.fieldID, nodes);
     this.props.close();
   }
 
@@ -187,288 +179,140 @@ class BulkUpload extends React.Component {
       </div>
     );
   }
-}
+});
 
-// Table of input fields for manual entry of node information
-const NodeTable = ({count, theseNodes, allNodes, label, updateNodes}) => {
-  const updatedNodes = theseNodes.slice();
-  const nodeElems = [];
-  for (let i = 0; i < count; i++) {
-    const node = theseNodes[i] || {mac: '', name: ''};
-    const macOnInput = (mac) => {
-      const newNode = Object.assign({}, node, {mac});
-      updatedNodes[i] = newNode;
-      updateNodes(updatedNodes, count);
-    };
-    const nameOnInput = (name) => {
-      const newNode = Object.assign({}, node, {name});
-      updatedNodes[i] = newNode;
-      updateNodes(updatedNodes, count);
-    };
-    const startprops = i > 0 ? {} : {autoFocus: true};
+const generateField = (id, name, maxNodes) => new FieldList(id, {
+  fields: {
+    mac: {
+      default: '',
+      validator: validate.MAC,
+    },
+    host: {
+      default: '',
+      validator: validate.host,
+    },
+  },
+  validator: nodes => {
+    // return [];
+    const macs = _.map(nodes, t => t.mac);
+    const errors = {};
+    let i = 1;
+    for (let name1 of macs) {
+      for (let name2 of macs.slice(i)) {
+        if (name1 === name2) {
+          errors[i] = {mac: 'MACs must be unique'};
+        }
+        i += 1;
+      }
+    }
 
-    const duplicateMACs = allNodes.filter(n => n.mac && n.mac === node.mac);
-    const duplicateNames = allNodes.filter(n => n.name && n.name === node.name);
+    _.each(nodes, (node, index) => {
+      if (node.mac ? !node.host : node.mac) {
+        errors[index] = errors[index] || {};
+        errors[index].host = 'Both fields are required';
+      }
+    });
 
-    nodeElems.push(
-      <div className="row wiz-minitable__row" key={i}>
-        <div className="col-xs-3">
-          <span className="wiz-minitable__label">{label} {i + 1}:</span>
-        </div>
-        <div className="col-xs-4">
-          <Input
-              id={macFieldID(label, i)}
-              className="wiz-node-field"
-              forceDirty={duplicateMACs.length > 1}
-              invalid={duplicateMACs.length > 1 ?
-                       'This MAC address is already in use by another node' :
-                       validate.MAC(node.mac)}
-              value={node.mac}
-              placeholder="MAC address"
-              onValue={macOnInput}
-              {...startprops} />
-        </div>
-        <div className="col-xs-4">
-          <Input
-              id={nameFieldID(label, i)}
-              className="wiz-node-field"
-              forceDirty={duplicateNames.length > 1}
-              invalid={duplicateNames.length > 1 ?
-                       'This name is already in use by another node' :
-                       validate.host(node.name)}
-              value={node.name}
-              placeholder="node.domain.com"
-              onValue={nameOnInput} />
-        </div>
-      </div>
-    );
-  }
+    if (macs.length === 0) {
+      errors[-1] = `At least 1 ${name} is required.`;
+    }
 
-  return (
-    <div>
-      <div className="row wiz-minitable__header">
-        <div className="col-xs-3">Profile Name</div>
-        <div className="col-xs-4">MAC Address</div>
-        <div className="col-xs-4">Domain Name</div>
-      </div>
-      {nodeElems}
+    if (macs.length > maxNodes) {
+      errors[-1] = `No more than ${maxNodes} ${name}s are allowed.`;
+    }
+    return errors;
+  },
+});
+
+const NodeRow = ({ row, remove }) =>
+  <div className="row" style={{padding: '0 0 20px 0'}}>
+    <div className="col-xs-5" style={{paddingRight: 0}}>
+      <Connect field={row.mac}>
+        <Input placeholder="MAC address" blurry />
+      </Connect>
     </div>
-  );
-};
+
+    <div className="col-xs-6" style={{paddingRight: 0}}>
+      <Connect field={row.host}>
+        <Input placeholder="node.domain.com" blurry />
+      </Connect>
+    </div>
+
+    <div className="col-xs-1">
+      <i className="fa fa-minus-circle list-add-or-subtract pull-right" onClick={remove}></i>
+    </div>
+  </div>;
 
 class NodeForm extends React.Component {
-  constructor() {
-    super();
-    this.state = {bulkUpload: false};
-  }
-
   render() {
-    if (this.state.bulkUpload) {
-      return <BulkUpload close={() => this.setState({bulkUpload: false})} updateNodes={this.props.updateNodes} />;
+    const { field } = this.props;
+    if (this.state && this.state.bulkUpload) {
+      // TODO (ggreer) make a real modal with real modal classes
+      return <BulkUpload close={() => this.setState({bulkUpload: false})} fieldID={field.id} />;
     }
 
-    return (
-      <div>
-        <div className="form-group">
-          <a onClick={() => this.setState({bulkUpload: true})}>
-          <span className="fa fa-upload"></span> Bulk Upload Addresses</a>
-        </div>
-        <NodeTable {...this.props} />
+    const { docs, name } = this.props;
+    return <div>
+      <div className="form-group">
+        <a onClick={() => this.setState({bulkUpload: true})}>
+        <span className="fa fa-upload"></span> Bulk Upload Addresses</a>
       </div>
-    );
+      <div>
+        <div>
+          {docs}
+
+          Enter the MAC addresses of the nodes you'd like to use as masters,
+          and the host names you'll use to refer to them.
+        </div>
+        <div className="">
+          <div className="row">
+            <div className="col-xs-5">
+              <label className="text-muted cos-thin-label">{name}s</label>
+            </div>
+            <div className="col-xs-6">
+              <label className="text-muted cos-thin-label">Hosts</label>
+            </div>
+          </div>
+
+          <field.Map>
+            <NodeRow />
+          </field.Map>
+
+          <div className="row">
+            <div className="col-xs-3">
+              <span className="wiz-link" onClick={field.addOnClick}>
+                <i className="fa fa-plus-circle list-add wiz-link"></i>&nbsp; Add More
+              </span>
+            </div>
+          </div>
+
+          <div className="row">
+            <div className="col-xs-12" style={{margin: "10px 0"}}>
+              <field.NonFieldErrors />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>;
   }
 }
 
-const CONTROLLERS_FILE = 'CONTROLLERS_FILE';
+const mastersFields = generateField(BM_MASTERS, "Master", 9);
+export const mastersForm = new Form('MASTERSFORM', [mastersFields]);
 
-export const BM_Controllers = connect(
-  ({clusterConfig}) => {
-    const masters = clusterConfig[BM_MASTERS];
-    return {
-      theseNodes: masters,
-      allNodes: masters.concat(clusterConfig[BM_WORKERS]),
-      count: parseInt(clusterConfig[BM_MASTERS_COUNT], 10),
-    };
-  },
-  (dispatch) => {
-    return {
-      updateNodes: (nodes, count) => {
-        dispatch({
-          type: configActionTypes.SET_MASTERS_LIST,
-          payload: {nodes, count},
-        });
-      },
-    };
-  }
-)(({count, theseNodes, allNodes, updateNodes}) => {
-  if (count > TOO_MANY_MASTERS) {
-    count = TOO_MANY_MASTERS;
-  }
-  if (count < 1 || !_.isInteger(count)) {
-    count = 1;
-  }
-  return (
-    <div>
-      <div className="form-group">
-        Master nodes run essential cluster services and don't run end-user apps.
-      </div>
-      <div className="form-group">
-        <div className="row">
-          <div className="col-xs-3">
-            <label htmlFor={BM_MASTERS_COUNT}>Masters</label>
-          </div>
-          <div className="col-xs-9">
-            <WithClusterConfig field={BM_MASTERS_COUNT} validator={validateMasters}>
-              <NumberInput
-                id={BM_MASTERS_COUNT}
-                className="wiz-super-short-input"
-                min="1"
-                max={TOO_MANY_MASTERS} />
-            </WithClusterConfig>
-            <p className="text-muted">An odd number of masters is required.</p>
-          </div>
-        </div>
-      </div>
-      <div className="form-group">
-        Enter the MAC addresses of the nodes you'd like to use as masters,
-        and the host names you'll use to refer to them.
-      </div>
-      <div className="form-group">
-        <NodeForm count={count}
-                  theseNodes={theseNodes}
-                  allNodes={allNodes}
-                  label="Master"
-                  file={CONTROLLERS_FILE}
-                  updateNodes={updateNodes} />
-      </div>
-    </div>
-  );
-});
-BM_Controllers.canNavigateForward = ({clusterConfig}) => {
-  if (validateMasters(clusterConfig[BM_MASTERS_COUNT])) {
-    return false;
-  }
-  const masters = clusterConfig[BM_MASTERS];
-  const mastersOkSet = masters.filter((m) => {
-    return m && !validate.MAC(m.mac) && !validate.host(m.name);
-  });
+export const BM_Controllers = () => <NodeForm
+  name="Master"
+  docs={`Master nodes run essential cluster services and don't run end-user apps.`}
+  field={mastersFields} />;
 
-  if (mastersOkSet.length < parseInt(clusterConfig[BM_MASTERS_COUNT], 10)) {
-    return false;
-  }
+BM_Controllers.canNavigateForward = mastersForm.canNavigateForward;
 
-  // In order to prevent weird lockouts and invalidation at a distance,
-  // the deduplicate validation for controllers and workers isn't
-  // symmetric. In particular, the Controllers form is valid if it
-  // contains duplicates of Worker but not if the masters group has
-  // duplicates within itself.
-  const nameCounts = countBy(masters, n => n.name);
-  const macCounts = countBy(masters, n => n.mac);
-  for (let i = 0; i < masters.length; i++) {
-    const masterI = masters[i];
-    if (nameCounts.get(masterI.name) > 1) {
-      return false;
-    }
-    if (macCounts.get(masterI.mac) > 1) {
-      return false;
-    }
-  }
+const workerFields = generateField(BM_WORKERS, "Worker", 1000);
+export const workersForm = new Form('WORKERS_FORM', [workerFields]);
+export const BM_Workers = () => <NodeForm
+  name="Worker"
+  docs={`Worker nodes run end-user's apps. The cluster software automatically shares load
+      between these nodes.`}
+  field={workerFields} />;
 
-  return true;
-};
-
-const WORKERS_FILE = 'WORKERS_FILE';
-
-export const BM_Workers = connect(
-  ({clusterConfig}) => {
-    const workers = clusterConfig[BM_WORKERS];
-    return {
-      theseNodes: workers,
-      allNodes: workers.concat(clusterConfig[BM_MASTERS]),
-      count: parseInt(clusterConfig[BM_WORKERS_COUNT], 10),
-    };
-  },
-  (dispatch) => {
-    return {
-      updateNodes: (nodes, count) => {
-        dispatch({
-          type: configActionTypes.SET_WORKERS_LIST,
-          payload: {nodes, count},
-        });
-      },
-    };
-  }
-)(({count, theseNodes, allNodes, updateNodes}) => {
-  return (
-    <div>
-      <div className="form-group">
-        Worker nodes run your end-user's apps. The cluster software automatically shares load
-        between these nodes.
-      </div>
-      <div className="form-group">
-        <div className="row">
-          <div className="col-xs-3">
-            <label htmlFor={BM_WORKERS_COUNT}>Workers</label>
-          </div>
-          <div className="col-xs-9">
-            <WithClusterConfig field={BM_WORKERS_COUNT} validator={validateWorkers}>
-              <NumberInput
-                id={BM_WORKERS_COUNT}
-                className="wiz-super-short-input"
-                min="1"
-                max={TOO_MANY_WORKERS} />
-            </WithClusterConfig>
-            <p className="text-muted">Workers can be added and removed at any time.</p>
-          </div>
-        </div>
-      </div>
-      <div className="form-group">
-        Enter the MAC addresses of the nodes you'd like to use as workers,
-        and the host names you'll use to refer to them.
-      </div>
-      <div className="form-group">
-        <NodeForm count={count}
-                  theseNodes={theseNodes}
-                  allNodes={allNodes}
-                  label="Worker"
-                  file={WORKERS_FILE}
-                  updateNodes={updateNodes} />
-      </div>
-    </div>
-  );
-});
-BM_Workers.canNavigateForward = ({clusterConfig}) => {
-  if (validateWorkers(clusterConfig[BM_WORKERS_COUNT])) {
-    return false;
-  }
-  const workers = clusterConfig[BM_WORKERS];
-  const workersOk = workers.filter((m) => {
-    return m && !validate.MAC(m.mac) && !validate.host(m.name);
-  });
-
-  let workersExpected = parseInt(clusterConfig[BM_WORKERS_COUNT], 10);
-  if (isNaN(workersExpected)) {
-    workersExpected = 3;
-  }
-
-  if (workersOk.length < workersExpected) {
-    return false;
-  }
-
-  // The worker form is invalid if workers have the same mac or name
-  // as other workers, or if they have the same mac or name as
-  // controller nodes.
-  const allNodes = workers.concat(clusterConfig[BM_MASTERS]);
-  const nameCounts = countBy(allNodes, n => n.name);
-  const macCounts = countBy(allNodes, n => n.mac);
-  for (let i = 0; i < workers.length; i++) {
-    if (nameCounts.get(workers[i].name) > 1) {
-      return false;
-    }
-    if (macCounts.get(workers[i].mac) > 1) {
-      return false;
-    }
-  }
-
-  return true;
-};
+BM_Workers.canNavigateForward = workersForm.canNavigateForward;

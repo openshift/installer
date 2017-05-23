@@ -4,13 +4,16 @@ metadata:
   name: prometheus
   namespace: tectonic-system
   labels:
+    k8s-app: prometheus
+    prometheus: k8s
     name: prometheus
 spec:
-  selector:
-    prometheus: k8s
   type: ClusterIP
+  selector:
+    app: prometheus
+    prometheus: k8s
   ports:
-  - name: prometheus
+  - name: web
     port: 9090
     targetPort: 9090
     protocol: TCP

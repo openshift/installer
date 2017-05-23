@@ -1,7 +1,10 @@
 import _ from 'lodash';
+import bcrypt from 'bcryptjs';
 
 import { BARE_METAL_TF } from './platforms';
 import { keyToAlg } from './utils';
+
+const bcryptCost = 12;
 
 let defaultPlatformType = '';
 try {
@@ -37,11 +40,9 @@ export const BM_MATCHBOX_CLIENT_KEY = 'matchboxClientKey';
 export const BM_MATCHBOX_HTTP = 'matchboxHTTP';
 export const BM_MATCHBOX_RPC = 'matchboxRPC';
 export const BM_MASTERS = 'masters';
-export const BM_MASTERS_COUNT = 'mastersCount';
 export const BM_OS_TO_USE = 'osToUse';
 export const BM_TECTONIC_DOMAIN = 'tectonicDomain';
 export const BM_WORKERS = 'workers';
-export const BM_WORKERS_COUNT = 'workersCount';
 
 export const CA_CERTIFICATE = 'caCertificate';
 export const CA_PRIVATE_KEY = 'caPrivateKey';
@@ -82,6 +83,7 @@ export const AWS_VPC_FORM = 'aws_vpc';
 export const AWS_CONTROLLERS = 'aws_controllers';
 export const AWS_CLUSTER_INFO = 'aws_clusterInfo';
 export const AWS_WORKERS = 'aws_workers';
+export const AWS_REGION_FORM = 'aws_regionForm';
 export const BM_SSH_KEY = 'bm_sshKey';
 export const LICENSING = 'licensing';
 
@@ -162,12 +164,8 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [BM_MATCHBOX_CLIENT_KEY]: '',
   [BM_MATCHBOX_HTTP]: '',
   [BM_MATCHBOX_RPC]: '',
-  [BM_MASTERS]: [],
-  [BM_MASTERS_COUNT]: 1,
   [BM_OS_TO_USE]: '',
   [BM_TECTONIC_DOMAIN]: '',
-  [BM_WORKERS]: [],
-  [BM_WORKERS_COUNT]: 1,
   [CA_CERTIFICATE]: '',
   [CA_PRIVATE_KEY]: '',
   [CA_TYPE]: 'self-signed',
@@ -191,7 +189,7 @@ export const DEFAULT_CLUSTER_CONFIG = {
 };
 
 
-export const toAWS_TF = (cc, FORMS) => {
+export const toAWS_TF = (cc, FORMS, opts={}) => {
   const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
   const etcds = FORMS[AWS_ETCDS].getData(cc);
   const workers = FORMS[AWS_WORKERS].getData(cc);
@@ -221,13 +219,13 @@ export const toAWS_TF = (cc, FORMS) => {
     platform: "aws",
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
-    adminPassword: window.btoa(cc[ADMIN_PASSWORD]),
     credentials: {
       AWSAccessKeyID: cc[AWS_ACCESS_KEY_ID],
       AWSSecretAccessKey: cc[AWS_SECRET_ACCESS_KEY],
-      AWSRegion: cc[AWS_REGION],
     },
     variables: {
+      // eslint-disable-next-line no-sync
+      tectonic_admin_password_hash: bcrypt.hashSync(cc[ADMIN_PASSWORD], opts.salt || bcrypt.genSaltSync(bcryptCost)),
       tectonic_aws_region: cc[AWS_REGION],
       tectonic_admin_email: cc[ADMIN_EMAIL],
       tectonic_aws_master_ec2_type: controllers[INSTANCE_TYPE],
@@ -288,8 +286,10 @@ export const toAWS_TF = (cc, FORMS) => {
   return ret;
 };
 
-export const toBaremetal_TF = (cc, FORMS) => {
+export const toBaremetal_TF = (cc, FORMS, opts={}) => {
   const sshKey = FORMS[BM_SSH_KEY].getData(cc);
+  const masters = cc[BM_MASTERS];
+  const workers = cc[BM_WORKERS];
 
   const ret = {
     clusterKind: 'tectonic-metal',
@@ -297,20 +297,21 @@ export const toBaremetal_TF = (cc, FORMS) => {
     platform: 'metal',
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
-    adminPassword: window.btoa(cc[ADMIN_PASSWORD]),
     variables: {
+      // eslint-disable-next-line no-sync
+      tectonic_admin_password_hash: bcrypt.hashSync(cc[ADMIN_PASSWORD], opts.salt || bcrypt.genSaltSync(bcryptCost)),
       tectonic_cluster_name: cc[CLUSTER_NAME],
       tectonic_cl_channel: cc[CHANNEL_TO_USE],
       tectonic_admin_email: cc[ADMIN_EMAIL],
       tectonic_metal_cl_version: cc[BM_OS_TO_USE],
       tectonic_metal_ingress_domain: getTectonicDomain(cc),
       tectonic_metal_controller_domain: getControllerDomain(cc),
-      tectonic_metal_controller_domains: cc[BM_MASTERS].map(({name}) => name),
-      tectonic_metal_controller_names: cc[BM_MASTERS].map(({name}) => name.split('.')[0]),
-      tectonic_metal_controller_macs: cc[BM_MASTERS].map(({mac}) => mac),
-      tectonic_metal_worker_domains: cc[BM_WORKERS].map(({name}) => name),
-      tectonic_metal_worker_names: cc[BM_WORKERS].map(({name}) => name.split('.')[0]),
-      tectonic_metal_worker_macs: cc[BM_WORKERS].map(({mac}) => mac),
+      tectonic_metal_controller_domains: masters.map(({host}) => host),
+      tectonic_metal_controller_names: masters.map(({host}) => host.split('.')[0]),
+      tectonic_metal_controller_macs: masters.map(({mac}) => mac),
+      tectonic_metal_worker_domains: workers.map(({host}) => host),
+      tectonic_metal_worker_names: workers.map(({host}) => host.split('.')[0]),
+      tectonic_metal_worker_macs: workers.map(({mac}) => mac),
       tectonic_metal_matchbox_http_url: `http://${cc[BM_MATCHBOX_HTTP]}`,
       tectonic_metal_matchbox_rpc_endpoint: cc[BM_MATCHBOX_RPC],
       tectonic_metal_matchbox_ca: cc[BM_MATCHBOX_CA],

@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "babyparse": "0.4.x",
+    "bcryptjs": "2.x",
     "classnames": "2.2.x",
     "file-saver": "1.3.x",
     "immutable": "3.8.x",

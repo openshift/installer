@@ -4,7 +4,6 @@ metadata:
   name: node-exporter
   namespace: tectonic-system
   labels:
-    app: node-exporter
     k8s-app: node-exporter
 spec:
   type: ClusterIP
@@ -14,4 +13,4 @@ spec:
     port: 9100
     protocol: TCP
   selector:
-    app: node-exporter
+    k8s-app: node-exporter

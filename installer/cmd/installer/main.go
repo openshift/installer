@@ -12,10 +12,12 @@ import (
 	"github.com/coreos/pkg/flagutil"
 	"github.com/toqueteos/webbrowser"
 
-	installer "github.com/coreos/tectonic-installer/installer/server"
-	"github.com/coreos/tectonic-installer/installer/server/terraform"
-	"github.com/coreos/tectonic-installer/installer/server/version"
+	"github.com/coreos/tectonic-installer/installer/api"
+	"github.com/coreos/tectonic-installer/installer/pkg/terraform"
 )
+
+// Version is provided by compile time -ldflags.
+var Version = "was not built properly"
 
 func main() {
 	// TerraForm entrypoint.
@@ -27,7 +29,7 @@ func main() {
 	flags := struct {
 		address             string
 		logLevel            string
-		platforms           installer.PlatformsValue
+		platforms           platformsValue
 		cookieSigningSecret string
 		disableSecureCookie bool
 		openBrowser         bool
@@ -52,7 +54,7 @@ func main() {
 	flag.BoolVar(&flags.version, "version", false, "print version and exit")
 	flag.BoolVar(&flags.help, "help", false, "print usage and exit")
 
-	flags.platforms = installer.PlatformsValue{Names: installer.KnownPlatforms}
+	flags.platforms = platformsValue{names: knownPlatforms}
 	flag.Var(&flags.platforms, "platforms", "comma separated list of platforms to support")
 
 	// parse command-line and environment variable arguments
@@ -68,7 +70,7 @@ func main() {
 	}
 
 	if flags.version {
-		fmt.Println(version.Version)
+		fmt.Println(Version)
 		return
 	}
 
@@ -80,10 +82,10 @@ func main() {
 	log.SetLevel(lvl)
 
 	// HTTP server
-	server, err := installer.NewServer(&installer.Config{
+	server, err := api.New(&api.Config{
 		AssetDir:            flags.assetDir,
 		DevMode:             flags.devMode,
-		Platforms:           flags.platforms.Names,
+		Platforms:           flags.platforms.names,
 		CookieSigningSecret: flags.cookieSigningSecret,
 		DisableSecureCookie: flags.disableSecureCookie,
 	})

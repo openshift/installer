@@ -29,15 +29,19 @@ const createAction = (name, fn, shouldReject=false) => (body, creds, isNow) => (
     Region: clusterConfig[AWS_REGION],
   }, creds);
 
+  const obj = {
+    inFly: true,
+  };
+
+  // Don't unset values and errors if we can track causality
+  if (!isNow) {
+    obj.value = [];
+    obj.error = null;
+  }
+
   dispatch({
     type: awsActionTypes.SET,
-    payload: {
-      [name]: {
-        inFly: true,
-        value: [],
-        error: null,
-      },
-    },
+    payload: {[name]: obj},
   });
 
   let platform;
@@ -63,6 +67,7 @@ const createAction = (name, fn, shouldReject=false) => (body, creds, isNow) => (
     })
     .catch(error => {
       if (isNow && !isNow()) {
+        console.log("not now. returning", error);
         return;
       }
 
@@ -93,7 +98,7 @@ const createAction = (name, fn, shouldReject=false) => (body, creds, isNow) => (
 
 export const getVpcs = createAction('availableVpcs', awsApis.getVpcs);
 export const getVpcSubnets = createAction('availableVpcSubnets', awsApis.getVpcSubnets);
-export const getSsh = createAction('availableSsh', awsApis.getSsh);
+export const getSsh = createAction('availableSsh', awsApis.getSsh, true);
 export const getRegions = createAction('availableRegions', awsApis.getRegions, true);
 export const getZones = createAction('availableR53Zones', awsApis.getZones, true);
 export const getDomainInfo = createAction('domainInfo', awsApis.getDomainInfo);

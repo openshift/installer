@@ -12,6 +12,8 @@ import '../components/aws-define-nodes';
 import '../components/aws-vpc';
 import '../components/etcd';
 import '../components/bm-sshkeys';
+import '../components/bm-nodeforms';
+import '../components/bm-hostname';
 
 const structureOnly = (obj) => {
   const toString = Object.prototype.toString;
@@ -57,7 +59,7 @@ beforeEach(() => {
   dispatch = jest.fn();
 });
 
-const readExample = example => JSON.parse(fs.readFileSync(path.resolve(__dirname, `../../examples/${example}`), 'utf8'));
+const readExample = example => JSON.parse(fs.readFileSync(path.resolve(__dirname, `examples/${example}`), 'utf8'));
 
 /* eslint-disable max-nested-callbacks */
 describe('progress file example', () => {
@@ -78,7 +80,7 @@ describe('progress file example', () => {
       }));
 
       // TODO: wait for this action to finish & then check expected state
-      commitToServer(false)(dispatch, () => restored);
+      commitToServer(false, false, {salt: '$2a$12$96LR7NxL/T7LaijR0fxl3.'})(dispatch, () => restored);
 
       expect(fetch.mock.calls.length).toBe(1);
       const body = JSON.parse(fetch.mock.calls[0][1].body);

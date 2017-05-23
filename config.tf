@@ -8,7 +8,7 @@ EOF
 }
 
 terraform {
-  required_version = ">= 0.9.4"
+  required_version = ">= 0.9.6"
 }
 
 variable "tectonic_container_images" {
@@ -16,18 +16,19 @@ variable "tectonic_container_images" {
   type        = "map"
 
   default = {
-    hyperkube                       = "quay.io/coreos/hyperkube:v1.6.2_coreos.0"
+    hyperkube                       = "quay.io/coreos/hyperkube:v1.6.4_coreos.0"
     pod_checkpointer                = "quay.io/coreos/pod-checkpointer:2cad4cac4186611a79de1969e3ea4924f02f459e"
-    bootkube                        = "quay.io/coreos/bootkube:v0.4.2"
+    bootkube                        = "quay.io/coreos/bootkube:v0.4.4"
     console                         = "quay.io/coreos/tectonic-console:v1.5.6"
     identity                        = "quay.io/coreos/dex:v2.4.1"
     container_linux_update_operator = "quay.io/coreos/container-linux-update-operator:v0.2.0"
     kube_version_operator           = "quay.io/coreos/kube-version-operator:v1.6.2"
     tectonic_channel_operator       = "quay.io/coreos/tectonic-channel-operator:0.3.2"
     node_agent                      = "quay.io/coreos/node-agent:787844277099e8c10d617c3c807244fc9f873e46"
-    prometheus_operator             = "quay.io/coreos/prometheus-operator:v0.8.2"
-    tectonic_prometheus_operator    = "quay.io/coreos/tectonic-prometheus-operator:v1.1.0"
-    node_exporter                   = "quay.io/prometheus/node-exporter:v0.13.0"
+    prometheus_operator             = "quay.io/coreos/prometheus-operator:v0.9.1"
+    tectonic_prometheus_operator    = "quay.io/coreos/tectonic-prometheus-operator:v1.2.0"
+    node_exporter                   = "quay.io/prometheus/node-exporter:v0.14.0"
+    kube_state_metrics              = "quay.io/coreos/kube-state-metrics:v0.5.0"
     config_reload                   = "quay.io/coreos/configmap-reload:v0.0.1"
     heapster                        = "gcr.io/google_containers/heapster:v1.3.0"
     addon_resizer                   = "gcr.io/google_containers/addon-resizer:1.7"
@@ -53,41 +54,11 @@ variable "tectonic_versions" {
 
   default = {
     etcd       = "3.1.6"
-    prometheus = "v1.6.1"
-    monitoring = "1.1.0"
+    prometheus = "v1.6.3"
+    monitoring = "1.2.0"
     kubernetes = "1.6.2+tectonic.1"
     tectonic   = "1.6.2-tectonic.1"
   }
-}
-
-variable "tectonic_kube_apiserver_service_ip" {
-  type    = "string"
-  default = "10.3.0.1"
-
-  description = <<EOF
-The Kubernetes service IP used to reach kube-apiserver inside the cluster
-as returned by `kubectl -n default get service kubernetes`.
-EOF
-}
-
-variable "tectonic_kube_etcd_service_ip" {
-  type    = "string"
-  default = "10.3.0.15"
-
-  description = <<EOF
-The Kubernetes service IP used to reach self-hosted etcd inside the cluster
-as returned by `kubectl -n kube-system get service etcd-service`.
-EOF
-}
-
-variable "tectonic_kube_dns_service_ip" {
-  type    = "string"
-  default = "10.3.0.10"
-
-  description = <<EOF
-The Kubernetes service IP used to reach kube-dns inside the cluster
-as returned by `kubectl -n kube-system get service kube-dns`.
-EOF
 }
 
 variable "tectonic_service_cidr" {
@@ -205,26 +176,29 @@ The name of the cluster.
 If used in a cloud-environment, this will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.
 
 Note: This field MUST be set manually prior to creating the cluster.
+Warning: Special characters in the name like '.' may cause errors on OpenStack platforms due to resource name constraints.
 EOF
 }
 
 variable "tectonic_pull_secret_path" {
-  type = "string"
+  type    = "string"
+  default = ""
 
   description = <<EOF
 The path the pull secret file in JSON format.
 
-Note: This field MUST be set manually prior to creating the cluster.
+Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 EOF
 }
 
 variable "tectonic_license_path" {
-  type = "string"
+  type    = "string"
+  default = ""
 
   description = <<EOF
 The path to the tectonic licence file.
 
-Note: This field MUST be set manually prior to creating the cluster.
+Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 EOF
 }
 

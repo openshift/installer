@@ -4,12 +4,14 @@ metadata:
   name: prometheus-operator
   namespace: tectonic-system
   labels:
+    k8s-app: prometheus-operator
     operator: prometheus
 spec:
   replicas: 1
   template:
     metadata:
       labels:
+        k8s-app: prometheus-operator
         operator: prometheus
     spec:
       serviceAccountName: prometheus-operator
@@ -17,7 +19,7 @@ spec:
        - name: prometheus-operator
          image: ${prometheus_operator_image}
          args:
-         - "--kubelet-object=kube-system/kubelet"
+         - "--kubelet-service=kube-system/kubelet"
          - "--config-reloader-image=${config_reload_image}"
          resources:
            requests:

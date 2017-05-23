@@ -1,10 +1,16 @@
 import React from 'react';
 
-import { validate } from '../validate';
-import { Input, WithClusterConfig } from './ui';
+import { Input, Connect } from './ui';
 import { TectonicLicense, licenseForm } from './tectonic-license';
 import { ExperimentalFeatures } from './experimental-features';
 import { CLUSTER_NAME } from '../cluster-config';
+import { Form } from '../form';
+import fields from '../fields';
+
+const clusterInfoForm = new Form("BM_ClusterInfo", [
+  licenseForm,
+  fields[CLUSTER_NAME],
+]);
 
 export const BM_ClusterInfo = () => {
   return (
@@ -14,12 +20,9 @@ export const BM_ClusterInfo = () => {
           <label htmlFor={CLUSTER_NAME}>Cluster Name</label>
         </div>
         <div className="col-xs-9">
-          <WithClusterConfig field={CLUSTER_NAME} validator={validate.k8sName}>
-            <Input
-                id={CLUSTER_NAME}
-                placeholder="production"
-                autoFocus="true" />
-          </WithClusterConfig>
+          <Connect field={CLUSTER_NAME}>
+            <Input placeholder="production" autoFocus="true" />
+          </Connect>
           <p className="text-muted">Give this cluster a name that will help you identify it.</p>
         </div>
       </div>
@@ -29,7 +32,5 @@ export const BM_ClusterInfo = () => {
     </div>
   );
 };
-BM_ClusterInfo.canNavigateForward = ({clusterConfig}) => {
-  return !validate.k8sName(clusterConfig[CLUSTER_NAME]) &&
-    licenseForm.isValid(clusterConfig);
-};
+
+BM_ClusterInfo.canNavigateForward = clusterInfoForm.canNavigateForward;

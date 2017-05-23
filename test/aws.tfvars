@@ -20,8 +20,6 @@ tectonic_ca_key = ""
 
 tectonic_aws_ssh_key = "tectonic-jenkins"
 
-tectonic_aws_az_count = 3
-
 tectonic_aws_master_ec2_type = "m4.large"
 
 tectonic_aws_worker_ec2_type = "m4.large"

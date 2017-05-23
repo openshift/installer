@@ -12,14 +12,13 @@ import { CLUSTER_NAME } from '../cluster-config';
 
 const UPLOAD_ERROR_NAME = 'UPLOAD_ERROR_NAME';
 
-const handleUpload = (blob, cb) => (dispatch, getState) => {
+const handleUpload = (blob, cb) => dispatch => {
   TectonicGA.sendEvent('Installer Button', 'click', 'User uploads progress file');
 
   if (!blob) {
     return;
   }
 
-  const originalState = getState().clusterConfig;
   readFile(blob)
     .then(result => {
       try {
@@ -35,7 +34,8 @@ const handleUpload = (blob, cb) => (dispatch, getState) => {
             error: null,
           },
         });
-        dispatch(validateAllFields(originalState, cb));
+        // the restored state may contain errors, so we don't want to use an old version.
+        dispatch(validateAllFields(cb));
       } catch(e) {
         dispatch({
           type: eventErrorsActionTypes.ERROR,

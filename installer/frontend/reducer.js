@@ -3,10 +3,6 @@ import { combineReducers } from 'redux';
 import { fromJS } from 'immutable';
 
 import {
-  BM_MASTERS,
-  BM_MASTERS_COUNT,
-  BM_WORKERS,
-  BM_WORKERS_COUNT,
   DEFAULT_CLUSTER_CONFIG,
 } from './cluster-config';
 
@@ -14,7 +10,6 @@ import {
   awsActionTypes,
   clusterReadyActionTypes,
   configActionTypes,
-  csvActionTypes,
   dirtyActionTypes,
   eventErrorsActionTypes,
   loadFactsActionTypes,
@@ -145,16 +140,6 @@ const reducersTogether = combineReducers({
       return object.toJS();
     }
     case configActionTypes.SET_IN:
-      // XXXX: (ggreer) hack for bare metal flow to work.
-      // Real fix is to kill size.jsx & use append/removeAt in nodeForms.
-      if (action.payload.path === BM_MASTERS_COUNT) {
-        state[BM_MASTERS] = state[BM_MASTERS].slice(0, _.toNumber(action.payload.value));
-        delete state.error[BM_MASTERS];
-      }
-      if (action.payload.path === BM_WORKERS_COUNT) {
-        state[BM_WORKERS] = state[BM_WORKERS].slice(0, _.toNumber(action.payload.value));
-        delete state.error[BM_WORKERS];
-      }
       return setIn(state, action.payload.path, action.payload.value);
 
     case configActionTypes.MERGE:
@@ -173,20 +158,16 @@ const reducersTogether = combineReducers({
       // TODO: (kans) delete all the other stuff too
       const invalidArray = ['error'].concat(array);
       const asyncArray = ['error_async'].concat(array);
-      return fromJS(state).deleteIn(array).deleteIn(invalidArray).deleteIn(asyncArray).toJS();
+      const arrays = [array, asyncArray, invalidArray];
+      return fromJS(state).withMutations(map => {
+        arrays.forEach(a => {
+          if (map.getIn(a)) {
+            map = map.deleteIn(a);
+          }
+          return map;
+        });
+      }).toJS();
     }
-
-    case configActionTypes.SET_MASTERS_LIST:
-      return Object.assign({}, state, {
-        [BM_MASTERS_COUNT]: action.payload.count,
-        [BM_MASTERS]: action.payload.nodes,
-      });
-    case configActionTypes.SET_WORKERS_LIST:
-      return Object.assign({}, state, {
-        [BM_WORKERS_COUNT]: action.payload.count,
-        [BM_WORKERS]: action.payload.nodes,
-      });
-
     default:
       return state;
     }

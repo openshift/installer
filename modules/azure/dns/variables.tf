@@ -30,7 +30,6 @@ variable "etcd_ip_addresses" {
   type = "list"
 }
 
-variable "use_custom_fqdn" {
-  type    = "string"
-  default = "false"
+variable "create_dns_zone" {
+  default = true
 }

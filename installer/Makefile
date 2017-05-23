@@ -2,11 +2,11 @@ export CGO_ENABLED:=0
 export VERSION=$(shell ../git-version)
 
 OS=$(shell uname | tr A-Z a-z)
-LD_FLAGS="-w -X github.com/coreos/tectonic-installer/installer/server/version.Version=$(VERSION)"
+LD_FLAGS="-w -X github.com/coreos/tectonic-installer/installer/cmd/installer.Version=$(VERSION)"
 
 REPO=github.com/coreos/tectonic-installer/installer
 
-GO_FILES=$(shell find server -type f -name '*.go')
+GO_FILES=$(shell find . -type f -name '*.go')
 
 .PHONY: all
 all: build
@@ -14,18 +14,18 @@ all: build
 .PHONY: build
 build: bin/$(OS)/installer
 
-bin/windows/installer.exe: $(GO_FILES) binassets/assets.go
+bin/windows/installer.exe: $(GO_FILES) assets/bindata.go
 	GOOS=windows go build -o bin/windows/installer.exe -ldflags $(LD_FLAGS) $(REPO)/cmd/installer
 
-bin/%/installer: $(GO_FILES) binassets/assets.go
+bin/%/installer: $(GO_FILES) assets/bindata.go
 	GOOS=$* go build -o bin/$*/installer -ldflags $(LD_FLAGS) $(REPO)/cmd/installer
 
 .PHONY: backend
-backend: binassets/assets.go
+backend: assets/bindata.go
 	GOOS=$(OS) go build -o bin/$(OS)/installer -ldflags $(LD_FLAGS) $(REPO)/cmd/installer
 
-binassets/assets.go: frontend bin/go-bindata $(shell find assets -type f)
-	./bin/go-bindata -pkg binassets -o binassets/assets.go -prefix assets assets/...
+assets/bindata.go: frontend bin/go-bindata $(shell find assets -type f | grep -v .go)
+	./bin/go-bindata -pkg assets -o assets/bindata.go -ignore=bindata.go -ignore=doc.go -ignore=assets.go -prefix assets assets/...
 
 .PHONY: frontend
 frontend:
@@ -54,6 +54,10 @@ release: release-bins
 	./scripts/release/upload_release_tarball.sh
 	./scripts/release/make_github_release.sh
 
+.PHONY: license-parse
+license-parse:
+	./scripts/license-gen/collect_project_licenses.sh
+
 .PHONY: release-bins
 release-bins: \
 	bin/linux/installer \
@@ -81,6 +85,6 @@ bin/sanity:
 clean:
 	$(MAKE) -C frontend clean
 	rm -rf bin/
-	rm -f binassets/assets.go
+	rm -f assets/bindata.go
 	rm -rf assets/frontend/scripts
 	rm -rf .workspace/

@@ -7,6 +7,7 @@ module "bootkube" {
 
   # Platform-independent variables wiring, do not modify.
   container_images = "${var.tectonic_container_images}"
+  versions         = "${var.tectonic_versions}"
 
   ca_cert    = "${var.tectonic_ca_cert}"
   ca_key     = "${var.tectonic_ca_key}"
@@ -14,9 +15,6 @@ module "bootkube" {
 
   service_cidr = "${var.tectonic_service_cidr}"
   cluster_cidr = "${var.tectonic_cluster_cidr}"
-
-  kube_apiserver_service_ip = "${var.tectonic_kube_apiserver_service_ip}"
-  kube_dns_service_ip       = "${var.tectonic_kube_dns_service_ip}"
 
   advertise_address = "0.0.0.0"
   anonymous_auth    = "false"
@@ -42,8 +40,8 @@ module "tectonic" {
   container_images = "${var.tectonic_container_images}"
   versions         = "${var.tectonic_versions}"
 
-  license_path     = "${pathexpand(var.tectonic_license_path)}"
-  pull_secret_path = "${pathexpand(var.tectonic_pull_secret_path)}"
+  license_path     = "${var.tectonic_vanilla_k8s ? "/dev/null" : pathexpand(var.tectonic_license_path)}"
+  pull_secret_path = "${var.tectonic_vanilla_k8s ? "/dev/null" : pathexpand(var.tectonic_pull_secret_path)}"
 
   admin_email         = "${var.tectonic_admin_email}"
   admin_password_hash = "${var.tectonic_admin_password_hash}"
@@ -61,6 +59,8 @@ module "tectonic" {
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "HostPort"
   experimental      = "${var.tectonic_experimental}"
+
+  master_count = "${var.tectonic_master_count}"
 }
 
 module "etcd" {
@@ -99,7 +99,7 @@ EOF
   instance_count               = "${var.tectonic_master_count}"
   kube_image_url               = "${data.null_data_source.local.outputs.kube_image_url}"
   kube_image_tag               = "${data.null_data_source.local.outputs.kube_image_tag}"
-  tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
+  tectonic_kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
   core_public_keys             = ["${module.secrets.core_public_key_openssh}"]
   bootkube_service             = "${module.bootkube.systemd_service}"
   tectonic_service             = "${module.tectonic.systemd_service}"
@@ -122,7 +122,7 @@ EOF
   instance_count               = "${var.tectonic_worker_count}"
   kube_image_url               = "${data.null_data_source.local.outputs.kube_image_url}"
   kube_image_tag               = "${data.null_data_source.local.outputs.kube_image_tag}"
-  tectonic_kube_dns_service_ip = "${var.tectonic_kube_dns_service_ip}"
+  tectonic_kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
   core_public_keys             = ["${module.secrets.core_public_key_openssh}"]
   bootkube_service             = ""
   tectonic_service             = ""

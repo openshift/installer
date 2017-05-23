@@ -35,7 +35,7 @@ const validators = {
 
   AWSTagUniqueKeys: tags => {
     const keys = _.map(tags, t => t.key);
-    const errors = [];
+    const errors = {};
     let i = 1;
     for (let name1 of keys) {
       for (let name2 of keys.slice(i)) {

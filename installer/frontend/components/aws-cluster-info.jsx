@@ -6,37 +6,17 @@ import { TectonicLicense, licenseForm } from './tectonic-license';
 import { ExperimentalFeatures } from './experimental-features';
 import { AWS_Tags, tagsFields } from './aws-tags';
 import { Alert } from './alert';
-import { Field, Form } from '../form';
-
-import {
-  AWS_CLUSTER_INFO,
-  CHANNEL_TO_USE,
-  CLUSTER_NAME,
-} from '../cluster-config';
+import { Form, Field } from '../form';
+import fields from '../fields';
+import { AWS_CLUSTER_INFO, CHANNEL_TO_USE, CLUSTER_NAME } from '../cluster-config';
 
 const clusterInfoForm = new Form(AWS_CLUSTER_INFO, [
   licenseForm,
   tagsFields,
+  fields[CLUSTER_NAME],
   new Field(CHANNEL_TO_USE, {
     default: 'stable',
     validator: v => ['stable', 'beta', 'alpha'].includes(v) ? '' : 'unknown channel',
-  }),
-  new Field(CLUSTER_NAME, {
-    default: '',
-    validator: (s='') => {
-      // http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-parameters.html
-      // http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-loadbalancer.html#cfn-elasticloadbalancingv2-loadbalancer-name
-      if (s.length === 0 || s.length > 28) {
-        return 'Value must be between 1 and 28 characters';
-      }
-
-      if (!/^[a-zA-Z][-a-zA-Z0-9]*$/.test(s)) {
-        return 'Value must be a valid AWS Stack Name: [a-zA-Z][-a-zA-Z0-9]*';
-      }
-      if (s.endsWith('-')) {
-        return 'Value must not end with -';
-      }
-    },
   }),
 ]);
 
@@ -46,7 +26,7 @@ const ChannelWarning = connect(({clusterConfig}) => ({channel: clusterConfig[CHA
   </Alert>)
 );
 
-const TagsWithPlaceholder = connect(({clusterConfig}) => ({clusterName: clusterConfig[CLUSTER_NAME] || 'myclustername'}))(({clusterName}) => <AWS_Tags placeholder={`e.g. ${clusterName}`}/>);
+const TagsWithPlaceholder = connect(({clusterConfig}) => ({clusterName: clusterConfig[CLUSTER_NAME] || 'myclustername'}))(({clusterName}) => <AWS_Tags placeholder={`e.g. ${clusterName}`} />);
 
 export const AWS_ClusterInfo = () => <div>
   <div className="row form-group">
