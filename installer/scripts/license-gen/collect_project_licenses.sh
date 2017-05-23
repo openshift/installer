@@ -26,29 +26,30 @@
 
 set -eu
 
+# Set relative environment
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-FINAL_LICENSE_DIR="$DIR"/licenses
-FINAL_LICENSE_FILE="$FINAL_LICENSE_DIR"/all_licenses.json
+ROOT="$DIR/../../.."
+FINAL_LICENSE_FILE="$ROOT"/bill-of-materials.json
+echo "[]" > "$FINAL_LICENSE_FILE"
+
 # Temporary data locations
 TMP_DIR=$(mktemp -d -p /tmp)
-
-if [ ! -d "$FINAL_LICENSE_DIR" ]; then mkdir -p "$FINAL_LICENSE_DIR"; fi
-echo "[]" > "$FINAL_LICENSE_FILE"
+TMP_LICENSE_DIR="$TMP_DIR"/licenses
+mkdir -p "$TMP_LICENSE_DIR"
+tmp_shared_file=$(mktemp -p "$TMP_DIR")
 
 # Package input files
 go_pkg_inputs="$DIR"/pkg_lists/go_pkg_inputs.txt
 js_pkg_inputs="$DIR"/pkg_lists/js_pkg_inputs.txt
-tmp_shared_file=$(mktemp -p "$TMP_DIR")
 
 # Temporarily create a new GOPATH
 old_gopath="$GOPATH"
 new_gopath="$TMP_DIR"/tmp_gopath
 export GOPATH="$new_gopath"
-mkdir -p "$GOPATH"/{src,bin,pkg}
+mkdir -p "$GOPATH"/src
 
 # Clean up transient files and unset vars
 clean_up() {
-  rm -f "$tmp_shared_file"
   rm -rf "$TMP_DIR"
   export GOPATH="$old_gopath"
   exit
@@ -64,7 +65,6 @@ parse_js_licenses() {
   # Create JSON objects using string concatenation
   # TODO: remove duplicates (?)
   tmp_json_arr=$(mktemp -p "$TMP_DIR")
-  trap "rm -f $tmp_json_arr; exit" SIGHUP SIGINT SIGTERM EXIT
   # For every package.json found, parse out repository and license info.
   # jq runs through a package.json to find the 'repository' (or a 'url' child
   # if present) key, and check if a 'licenses' key exists:
@@ -136,7 +136,7 @@ while read -r url; do
 
   # Create an organization_repo_license.json file
   subd_path="${org_dir##*/}_${repo}"
-  go_pkg_json_file="${FINAL_LICENSE_DIR}/${subd_path}_license.json"
+  go_pkg_json_file="${TMP_LICENSE_DIR}/${subd_path}_license.json"
   go_pkg_rel_path="$(echo "$org_dir" | sed 's|.*\/src\/\(.*\)|\1|g')/${repo}"
   # Construct full paths to each main.go parent dir, starting after src/
   dep_loc_set=$(sed 's|^\(.*\)$|'"${go_pkg_rel_path}"'\/\1|g' "$tmp_shared_file" | tr '\n' ' ')
@@ -161,7 +161,7 @@ while read -r loc; do
 
   # Retrieve each dependency of the current package
   subd_path=$(echo "${loc#*/}" | sed 's@\/@_@g')
-  js_pkg_json_file="${FINAL_LICENSE_DIR}/${subd_path}_license.json"
+  js_pkg_json_file="${TMP_LICENSE_DIR}/${subd_path}_license.json"
   # Install all non-dev deps. Exit if any errors occur while installing
 
   # Install non-dev node dependencies
@@ -183,15 +183,19 @@ popd > /dev/null
 while read -r file; do
   # Concatenate all JSON arrays in a license file (might be 2-3 from
   # license-bill-of-materials output)
-  json_license=$(cat "$file" | jq '.[]' | jq -s '.')
+  json_license=$(cat "$file" | jq '.[]' | jq -s 'map(if (.error)? then empty else . end)')
 
   # Concatenate with final array
   cat "$FINAL_LICENSE_FILE" | jq ".+${json_license}" > "$tmp_shared_file"
   cat "$tmp_shared_file" > "$FINAL_LICENSE_FILE"
-done < <(find "$FINAL_LICENSE_DIR" -name '*_license.json')
+done < <(find "$TMP_LICENSE_DIR" -name '*_license.json')
+
+# Remove duplicates and sort all objects by 'project' key, to avoid too many
+# commit line changes
+cat "$FINAL_LICENSE_FILE" | jq 'unique | sort_by(.project)' > "$tmp_shared_file"
+cat "$tmp_shared_file" > "$FINAL_LICENSE_FILE"
 
 # TODO: JSON output to Tectonic frontend (REST?)
-echo "License JSON files:  $FINAL_LICENSE_DIR"
-echo "Aggregated licenses: $FINAL_LICENSE_FILE"
+echo "Aggregated licenses: $(readlink -f $FINAL_LICENSE_FILE)"
 
 clean_up
