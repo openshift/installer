@@ -2,7 +2,7 @@ import _ from 'lodash';
 import bcrypt from 'bcryptjs';
 
 import { BARE_METAL_TF } from './platforms';
-import { keyToAlg } from './utils';
+import { keyToAlg, toExtraData } from './utils';
 
 const bcryptCost = 12;
 
@@ -21,6 +21,7 @@ export const AWS_CONTROLLER_SUBNET_IDS = 'awsControllerSubnetIds';
 export const DESELECTED_FIELDS = 'deselectedFields';
 export const AWS_DOMAIN = 'awsDomain';
 export const AWS_HOSTED_ZONE_ID = 'awsHostedZoneId';
+export const AWS_SPLIT_DNS = 'awsSplitDNS';
 export const AWS_REGION = 'awsRegion';
 export const AWS_SECRET_ACCESS_KEY = 'awsSecretAccessKey';
 export const AWS_SESSION_TOKEN = 'awsSessionToken';
@@ -86,6 +87,14 @@ export const AWS_WORKERS = 'aws_workers';
 export const AWS_REGION_FORM = 'aws_regionForm';
 export const BM_SSH_KEY = 'bm_sshKey';
 export const LICENSING = 'licensing';
+
+
+export const SPLIT_DNS_ON = "on";
+export const SPLIT_DNS_OFF = "off";
+export const SPLIT_DNS_OPTIONS = {
+  [SPLIT_DNS_ON]: "Use both a public and private zone (default).",
+  [SPLIT_DNS_OFF]: "Only use a public zone.",
+};
 
 export const toVPCSubnet = (region, subnets, deselected) => {
   const vpcSubnets = {};
@@ -277,12 +286,17 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
     ret.variables.tectonic_aws_external_worker_subnet_ids = workerSubnets;
     ret.variables.tectonic_aws_external_vpc_public = cc[AWS_CREATE_VPC] !== 'VPC_PRIVATE';
   }
+
+  const privateZone = _.get(cc, toExtraData(AWS_HOSTED_ZONE_ID) + '.privateZones.' + cc[AWS_HOSTED_ZONE_ID]);
+  if (!privateZone && cc[AWS_SPLIT_DNS] === SPLIT_DNS_OFF) {
+    ret.variables.tectonic_aws_external_private_zone = cc[AWS_HOSTED_ZONE_ID];
+  }
+
   if (cc[CA_TYPE] === 'owned') {
     ret.variables.tectonic_ca_cert = cc[CA_CERTIFICATE];
     ret.variables.tectonic_ca_key = cc[CA_PRIVATE_KEY];
     ret.variables.tectonic_ca_key_alg = keyToAlg(cc[CA_PRIVATE_KEY]);
   }
-
   return ret;
 };
 

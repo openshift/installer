@@ -40,6 +40,7 @@
     "tectonic_experimental": true,
     "tectonic_master_count": 1,
     "tectonic_service_cidr": "10.3.0.0/16",
-    "tectonic_worker_count": 3
+    "tectonic_worker_count": 3,
+    "tectonic_aws_external_private_zone": "asfd"
   }
 }
