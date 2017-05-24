@@ -1,10 +1,14 @@
-# On-boarding a team to a Tectonic cluster
+# Adding a team to a Tectonic cluster
 
 A group can be assigned to a cluster or a specific namespace within a cluster. Use the *Role Binding* option in the Tectonic cluster to do so.
 
 ##  Prerequisites and guidelines
 
-Before proceeding, ensure that the prerequisites given in the [LDAP user management][ldap-user-management] are met.
+Before proceeding, ensure that the prerequisites given in the respective Identity Provider (IdP) section are met. Depending on the IdP used in the deployment, see either of the following:
+
+* [Static user management][user-management]
+* [LDAP user management][ldap-user-management]
+* [SAML user management][saml-user-management]
 
 ## Setting up a namespace administrator
 
@@ -45,4 +49,9 @@ Individual users can be part of multiple groups. The individual LDAP users or gr
 
 ## Managing removed LDAP users and groups
 
-When removed from LDAP, users and groups are cached. <expand>
+When removed from LDAP, users and groups are cached.
+
+[user-management]: user-management.md
+[ldap-user-management]: ldap-user-management.md
+[saml-user-management]: saml-user-management.md
+[identity-management]: identity-management.md

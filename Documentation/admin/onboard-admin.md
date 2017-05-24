@@ -1,10 +1,14 @@
-# On-boarding an administrator to a Tectonic cluster
+# Adding an administrator to a Tectonic cluster
 
 An administrator can be assigned to a cluster or a specific namespace within a cluster. Use the *Role Binding* option in the Tectonic cluster to do so.
 
 ##  Prerequisites and guidelines
 
-Before proceeding, ensure that the prerequisites given in the [LDAP user management][ldap-user-management] are met.
+Before proceeding, ensure that the prerequisites given in the respective Identity Provider (IdP) section are met. Depending on the IdP used in the deployment, see one of the following:
+
+* [Static user management][user-management]
+* [LDAP user management][ldap-user-management]
+* [SAML user management][saml-user-management]
 
 ## Granting access rights
 
@@ -21,7 +25,6 @@ Use the default role, *cluster-admin*, for cluster administration operation. Bin
 5. Select a Role Name.
    See [Default Roles in Tectonic][identity-management].
 6. Select an appropriate subject from subject kind.
-   See [subjects][subjects].
 7. Specify a name to help identify the subject.
 8. Click *Create Binding*.
 
@@ -35,3 +38,8 @@ Use the default role, *cluster-admin*, for cluster administration operation. Bin
 4. Select the desired subject kind.
 7. Specify a name to identify subject.
 8. Click *Create Binding*.
+
+[user-management]: user-management.md
+[ldap-user-management]: ldap-user-management.md
+[saml-user-management]: saml-user-management.md
+[identity-management]: identity-management.md
