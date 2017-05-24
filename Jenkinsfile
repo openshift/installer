@@ -73,12 +73,11 @@ pipeline {
             export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
 
             # randomly select region
-            REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2)
-
-            i=$(( $RANDOM % ${#REGIONS[@]} ))
+            REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2 ap-southeast-1)
+            i=$(( ${CHANGE_ID} % ${#REGIONS[@]} ))
             export TF_VAR_tectonic_aws_region="${REGIONS[$i]}"
+            export AWS_REGION="${REGIONS[$i]}"
             echo "selected region: ${TF_VAR_tectonic_aws_region}"
-
             # make core utils accessible to make
             export PATH=/bin:${PATH}
 
@@ -127,14 +126,26 @@ pipeline {
          * "||" is bash for "do the next thing only if the first thing failed"
          */
         unstash 'installer'
-        sh '''
-          for c in ${WORKSPACE}/build/*; do
-            export CLUSTER=$(basename ${c})
-            export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
+        sh '''#!/bin/bash -ex
+          set -o pipefail
+          shopt -s expand_aliases
 
-            echo "Destroying ${CLUSTER}..."
-            make destroy || make destroy || make destroy
-          done
+          # Set required configuration
+          export PLATFORM=aws
+          export CLUSTER="tf-${PLATFORM}-${BRANCH_NAME}-${BUILD_ID}"
+
+          # s3 buckets require lowercase names
+          export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
+
+          # randomly select region
+          REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2 ap-southeast-1)
+          i=$(( ${CHANGE_ID} % ${#REGIONS[@]} ))
+          export TF_VAR_tectonic_aws_region="${REGIONS[$i]}"
+          export AWS_REGION="${REGIONS[$i]}"
+          echo "selected region: ${TF_VAR_tectonic_aws_region}"
+
+          echo "Destroying ${CLUSTER}..."
+          make destroy || make destroy || make destroy
         '''
       }
       // Cleanup workspace
