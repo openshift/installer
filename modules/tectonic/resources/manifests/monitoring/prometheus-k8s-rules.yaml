@@ -14,6 +14,9 @@ data:
     pod_name:container_spec_cpu_shares:sum = sum by(pod_name) (
       container_spec_cpu_shares{container_name!="POD",pod_name!=""}
     )
+    pod_name:container_cpu_usage:sum = sum by(pod_name) (
+      rate (container_cpu_usage_seconds_total{container_name!="POD",pod_name!=""}[5m])
+    )
     pod_name:container_fs_usage_bytes:sum = sum by(pod_name) (
       container_fs_usage_bytes{container_name!="POD",pod_name!=""}
     )
@@ -22,6 +25,9 @@ data:
     )
     namespace:container_spec_cpu_shares:sum = sum by(namespace) (
       container_spec_cpu_shares{container_name!=""}
+    )
+    namespace:container_cpu_usage:sum = sum by(namespace) (
+      rate (container_cpu_usage_seconds_total{container_name!="POD"}[5m])
     )
     instance:node_cpu:rate:sum = sum by(instance) (
       rate(node_cpu{mode!="idle",mode!="iowait",mode!~"guest.*"}[1m])
