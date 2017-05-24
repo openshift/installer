@@ -99,7 +99,7 @@ module "masters" {
   instance_count  = "${var.tectonic_master_count}"
   ec2_type        = "${var.tectonic_aws_master_ec2_type}"
   cluster_name    = "${var.tectonic_cluster_name}"
-  master_iam_role = "${var.tectonic_aws_master_iam_role}"
+  master_iam_role = "${var.tectonic_aws_master_iam_role_name}"
 
   subnet_ids = ["${module.vpc.master_subnet_ids}"]
 
@@ -145,7 +145,7 @@ module "workers" {
   instance_count  = "${var.tectonic_worker_count}"
   ec2_type        = "${var.tectonic_aws_worker_ec2_type}"
   cluster_name    = "${var.tectonic_cluster_name}"
-  worker_iam_role = "${var.tectonic_aws_worker_iam_role}"
+  worker_iam_role = "${var.tectonic_aws_worker_iam_role_name}"
 
   vpc_id     = "${module.vpc.vpc_id}"
   subnet_ids = ["${module.vpc.worker_subnet_ids}"]
