@@ -46,7 +46,7 @@ define terraform-docs
 endef
 
 define terraform-examples
-	$(if $(TF_EXAMPLES),,$(error "terraform-examples revision >= 83d7ad6 is required (https://github.com/segmentio/terraform-docs)"))
+	$(if $(TF_EXAMPLES),,$(error "terraform-examples revision >= 83d7ad6 is required (https://github.com/s-urbaniak/terraform-examples)"))
 	terraform-examples $2 $3 $4 $5 > $1
 endef
 

@@ -25,6 +25,36 @@ pipeline {
       }
     }
 
+    stage('Generate docs') {
+      steps {
+        sh """#!/bin/bash -ex
+
+        # Prevent "fatal: You don't exist. Go away!" git error
+        git config --global user.name "jenkins tectonic installer"
+        git config --global user.email "jenkins-tectonic-installer@coreos.com"
+        go get github.com/segmentio/terraform-docs
+
+        make docs
+        git diff --exit-code
+        """
+      }
+    }
+
+    stage('Generate examples') {
+      steps {
+        sh """#!/bin/bash -ex
+
+        # Prevent "fatal: You don't exist. Go away!" git error
+        git config --global user.name "jenkins tectonic installer"
+        git config --global user.email "jenkins-tectonic-installer@coreos.com"
+        go get github.com/s-urbaniak/terraform-examples
+
+        make examples
+        git diff --exit-code
+        """
+      }
+    }
+
     stage('Installer: Build & Test') {
       environment {
         GO_PROJECT = '/go/src/github.com/coreos/tectonic-installer'
