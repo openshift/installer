@@ -13,6 +13,7 @@ resource "aws_route53_record" "tectonic-api" {
 }
 
 resource "aws_route53_record" "tectonic-console" {
+  count   = "${var.tectonic_vanilla_k8s ? 0 : 1}"
   zone_id = "${data.aws_route53_zone.tectonic.zone_id}"
   name    = "${var.tectonic_cluster_name}"
   type    = "A"
