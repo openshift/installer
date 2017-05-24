@@ -58,7 +58,7 @@ tar xzvf tectonic-1.6.2-tectonic.1.tar.gz # to extract the tarball
 $ cd tectonic/tectonic-installer # to change to the previously untarred directory
 $ ./$PLATFORM/installer # to run the Tectonic Installer
 ```
-Where `$PLATFORM` is one of: `linux`, `darwin` or `windows`.
+Where `$PLATFORM` is `linux` or `darwin`.
 
 Use the `./$PLATFORM/installer` command to relaunch the Installer at any time. When launched, you will be given the option to *Start Over*, or to *Continue* where you left off.
 

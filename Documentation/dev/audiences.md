@@ -6,7 +6,7 @@ The Tectonic installer has two main use-cases and audiences – end-users that w
 
 The primary audience of this installer is end-users that want to deploy one or more clusters on supported platforms. The ideal UX is to download a release of the installer that requires minimal configuration of the user's machine, including dependencies.
 
-Freeing these users from installing many dependencies can isolate them from differences between platforms (Windows, macOS, Linux). This also reduces the documentation burden.
+Freeing these users from installing many dependencies can isolate them from differences between platforms (macOS or Linux). This also reduces the documentation burden.
 
 We should strive to _never require_ end-users to use or install `make`, `npm`, etc to install a cluster.
 

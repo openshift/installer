@@ -31,7 +31,7 @@ $ cd tectonic
 
 ### Initialize and configure Terraform
 
-Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `darwin`, `linux`, or `windows`.
+Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should be `darwin` or `linux`.
 
 ```bash
 $ export INSTALLER_PATH=$(pwd)/tectonic-installer/linux/installer # Edit the platform name.
@@ -167,7 +167,7 @@ data:
 
 Setting the IANA standard port `4789` can help debugging when using `tcpdump -vv -i eth0` on the worker/master nodes as encapsulated VXLAN packets will be shown.
 
-See the [troubleshooting][troubleshooting] document for work arounds for bugs that are being tracked.
+See the [troubleshooting][troubleshooting] document for workarounds for bugs that are being tracked.
 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md

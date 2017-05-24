@@ -93,7 +93,7 @@ The Tectonic Installer app runs on a user's laptop as a GUI for creating new clu
 
 User machines:
 
-* Run a Linux, Darwin, or Windows binary Installer app
+* Run a Linux or Darwin binary Installer app
 * Can resolve the matchbox read-write API (e.g. `matchbox.example.com`)
 * Use matchbox TLS client credentials (generated via docs)
 * Can resolve cluster nodes to provisioning progress (e.g. `node3.example.com`)

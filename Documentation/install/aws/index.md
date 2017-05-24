@@ -27,7 +27,7 @@ Run the Tectonic Installer.
 ./tectonic-installer/$PLATFORM/installer
 ```
 
-Where $PLATFORM is one of: `linux`, `darwin` or `windows`.
+Where $PLATFORM is `linux` or `darwin`.
 
 A browser window will open to begin the GUI installation process.
 

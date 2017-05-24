@@ -28,7 +28,7 @@ $ cd tectonic
 
 ### Initialize and configure Terraform
 
-Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `linux`, `darwin`, or `windows`.
+Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should be `linux` or `darwin`.
 
 ```bash
 $ export INSTALLER_PATH=$(pwd)/tectonic-installer/linux/installer
@@ -128,7 +128,7 @@ $ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/metal
 
 ### Known issues and workarounds
 
-See the [troubleshooting][troubleshooting] document for work arounds for bugs that are being tracked.
+See the [troubleshooting][troubleshooting] document for workarounds for bugs that are being tracked.
 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md
