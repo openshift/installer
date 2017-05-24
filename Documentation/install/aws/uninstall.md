@@ -22,7 +22,7 @@ $ export AWS_SECRET_ACCESS_KEY=<SECRETACCESSKEY>
 Next, navigate to the cluster state directory written to the extracted `tectonic` directory during the install process. Cluster state directories are stored beneath the same parent directory as the `installer` and `terraform` binaries, in a child directory called `clusters`. Each state directory beneath `clusters` is named by a cluster's name suffixed with the date and time of the install.
 
 ```bash
-# Replace <os> with one of darwin, linux, or windows
+# Replace <os> with darwin or linux
 # Replace <CLUSTERNAME> with a string like mytectonic_2017-05-03_11-41-02
 $ cd tectonic/tectonic-installer/<os>/clusters/<CLUSTERNAME>
 $ export PATH=$(pwd)/../..:$PATH	# Add Installer's terraform binary to PATH

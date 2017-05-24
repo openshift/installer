@@ -4,10 +4,11 @@ User management in Tectonic is performed in two stages. The first stage involves
 
 ## Tectonic Identity
 
- Tectonic Identity is an authentication service for both Tectonic Console and `kubectl` and allows these components to talk to the API server on an end user's behalf. Users are either defined in the Tectonic `ConfigMap` or  integrated by using an external LDAP server.  For more information see:
+ Tectonic Identity is an authentication service for both Tectonic Console and `kubectl` and allows these components to talk to the API server on an end user's behalf. Users are either defined in the Tectonic `ConfigMap` or  integrated by using an external Identity Provider (IdP).  For more information see:
 
 * [Static user management][user-management]
 * [LDAP user management][ldap-user-management]
+* [SAML user management][saml-user-management]
 
 ### Tectonic authentication through Dex
 
@@ -37,7 +38,7 @@ For Dex, kubectl is a public client. All kubectl instances share a `client_id` a
 
 Tectonic Console communicates with both Dex and the API server. Therefore, Tectonic Console is considered to be an admin client for Dex. However to be trusted by both Kubernetes and Dex, ID Tokens are issued to both Console and kubectl. When a user logs in to a Tectonic Console, Dex creates an ID Token for both Console and kubectl allowing Console to both authenticate with Kubernetes and the Dex APIs.
 
-## Role Based Access Control in Tectonic
+## RBAC in Tectonic
 
 Authorization in  Tectonic is controlled by a set of permissions called Roles. Role Bindings grant the permissions associated with a Role to a subject. Subject is defined as a type of account used to access the Tectonic clusters.
 
@@ -73,6 +74,7 @@ The default Cluster-wide roles in tectonic are:
 
 
 [user-management]: user-management.md
-[ldap-user-management]:ldap-user-management.md
-[dex]:https://github.com/coreos/dex
+[ldap-user-management]: ldap-user-management.md
+[saml-user-management]: saml-user-management.md
+[dex]: https://github.com/coreos/dex
 [third-party]: https://github.com/coreos/dex/blob/master/Documentation/storage.md#Kubernetes-third-party-resources

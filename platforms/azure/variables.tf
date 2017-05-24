@@ -17,6 +17,10 @@ variable "tectonic_azure_dns_resource_group" {
 variable "tectonic_azure_image_reference" {
   type = "map"
 
+  description = <<EOF
+(optional) Specifies an image map with the following keys: `publisher`, `offer`, `sku`, `version` 
+EOF
+
   default = {
     publisher = "CoreOS"
     offer     = "CoreOS"
@@ -82,9 +86,14 @@ variable "tectonic_azure_external_vnet_name" {
   description = "Pre-existing virtual network to create cluster into."
 }
 
+variable "tectonic_azure_create_dns_zone" {
+  description = "If set to true, create an Azure DNS zone"
+  default     = true
+}
+
 variable "tectonic_azure_use_custom_fqdn" {
-  description = "If set to true, assemble the FQDN from the configuration. Otherwise, use the FQDN set up by Azure."
-  default     = "true"
+  description = "(optional) If set to true, assemble the FQDN from the configuration. Otherwise, use the FQDN set up by Azure."
+  default     = false
 }
 
 variable "tectonic_azure_external_master_subnet_id" {

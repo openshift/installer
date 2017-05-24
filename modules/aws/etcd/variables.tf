@@ -2,6 +2,10 @@ variable "base_domain" {
   type = "string"
 }
 
+variable "cluster_id" {
+  type = "string"
+}
+
 variable "cluster_name" {
   type = "string"
 }
@@ -11,10 +15,6 @@ variable "cl_channel" {
 }
 
 variable "dns_zone_id" {
-  type = "string"
-}
-
-variable "az_count" {
   type = "string"
 }
 

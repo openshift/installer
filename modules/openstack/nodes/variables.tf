@@ -57,3 +57,7 @@ variable "bootkube_service" {
 variable "tectonic_service" {
   type = "string"
 }
+
+variable "tectonic_experimental" {
+  default = false
+}

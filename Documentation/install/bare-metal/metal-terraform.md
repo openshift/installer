@@ -28,7 +28,7 @@ $ cd tectonic
 
 ### Initialize and configure Terraform
 
-Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `linux`, `darwin`, or `windows`.
+Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should be `linux` or `darwin`.
 
 ```bash
 $ export INSTALLER_PATH=$(pwd)/tectonic-installer/linux/installer
@@ -40,6 +40,12 @@ Make a copy of the Terraform configuration file for our system. Do not share thi
 ```bash
 $ sed "s|<PATH_TO_INSTALLER>|$INSTALLER_PATH|g" terraformrc.example > .terraformrc
 $ export TERRAFORM_CONFIG=$(pwd)/.terraformrc
+```
+
+Next, get the modules that Terraform will use to create the cluster resources:
+
+```bash
+$ terraform get ./platforms/metal
 ```
 
 Now we're ready to specify our cluster configuration.

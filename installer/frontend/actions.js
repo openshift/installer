@@ -12,8 +12,6 @@ export const configActionTypes = {
   SET_IN: 'CONFIG_ACTION_SET_IN',
   BATCH_SET_IN: 'CONFIG_ACTION_BATCH_SET_IN',
   MERGE: 'CONFIG_ACTION_MERGE',
-  SET_MASTERS_LIST: 'SET_MASTERS_LIST',
-  SET_WORKERS_LIST: 'SET_WORKERS_LIST',
 };
 
 export const clusterReadyActionTypes = {
@@ -111,20 +109,14 @@ export const configActions = {
       throw new Error(`${name} has no field`);
     }
 
-    const deps = FIELD_TO_DEPS[name];
-    if (_.size(deps) === 0) {
-      console.debug("no deps for", name);
-    }
-
-    field.update(dispatch, inputValue, getState, deps, FIELDS, split);
+    field.update(dispatch, inputValue, getState, FIELDS, FIELD_TO_DEPS, split);
   },
 };
 
-export const validateAllFields = (originalClusterConfig, cb) => async (dispatch, getState) => {
-  // Just shake the array really hard until all the nodes fall out...
+export const validateAllFields = cb => async (dispatch, getState) => {
+  const initialCC = getState().clusterConfig;
   const unvisitedFields = new Set(_.values(FIELDS));
   const visitedNames = new Set();
-
   const isNow = () => true;
 
   const visit = async field => {
@@ -139,9 +131,10 @@ export const validateAllFields = (originalClusterConfig, cb) => async (dispatch,
 
     // TODO: (kans) this is bad
     await field.getExtraStuff(dispatch, clusterConfig, FIELDS, isNow);
-    await field.validate(dispatch, getState, originalClusterConfig, isNow);
+    await field.validate(dispatch, getState, initialCC, isNow);
   };
 
+  // Just shake the array really hard until all the nodes fall out...
   while (unvisitedFields.size > 0) {
     const toVisit = [];
 

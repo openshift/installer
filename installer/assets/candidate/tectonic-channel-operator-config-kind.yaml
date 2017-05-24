@@ -1,7 +1,0 @@
-apiVersion: "extensions/v1beta1"
-kind: "ThirdPartyResource"
-metadata:
-  name: "channel-operator-config.coreos.com"
-description: "Tectonic Channel Operator Config"
-versions:
-  - name: "v1"

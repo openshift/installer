@@ -3,6 +3,7 @@ data "ignition_config" "main" {
     "${data.ignition_file.max-user-watches.id}",
     "${data.ignition_file.s3-puller.id}",
     "${data.ignition_file.init-assets.id}",
+    "${data.ignition_file.detect-master.id}",
   ]
 
   systemd = [
@@ -87,10 +88,21 @@ data "ignition_file" "s3-puller" {
   }
 }
 
+data "ignition_file" "detect-master" {
+  filesystem = "root"
+  path       = "/opt/detect-master.sh"
+  mode       = "555"
+
+  content {
+    content = "${file("${path.module}/resources/detect-master.sh")}"
+  }
+}
+
 data "template_file" "init-assets" {
   template = "${file("${path.module}/resources/init-assets.sh")}"
 
   vars {
+    cluster_name       = "${var.cluster_name}"
     awscli_image       = "${var.container_images["awscli"]}"
     assets_s3_location = "${var.assets_s3_location}"
     kubelet_image_url  = "${element(split(":", var.container_images["hyperkube"]), 0)}"

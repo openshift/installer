@@ -3,7 +3,8 @@ resource "aws_security_group" "api" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}_api_sg",
-      "kubernetes.io/cluster/${var.cluster_name}", "owned"
+      "kubernetes.io/cluster/${var.cluster_name}", "owned",
+      "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 
   egress {
@@ -27,7 +28,8 @@ resource "aws_security_group" "console" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}_console_sg",
-      "kubernetes.io/cluster/${var.cluster_name}", "owned"
+      "kubernetes.io/cluster/${var.cluster_name}", "owned",
+      "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 
   egress {

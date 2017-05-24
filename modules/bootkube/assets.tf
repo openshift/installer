@@ -13,6 +13,40 @@ data "null_data_source" "etcd" {
   }
 }
 
+resource "template_dir" "experimental" {
+  count           = "${var.experimental_enabled ? 1 : 0}"
+  source_dir      = "${path.module}/resources/experimental/manifests"
+  destination_dir = "${path.cwd}/generated/experimental"
+
+  vars {
+    etcd_operator_image = "${var.container_images["etcd_operator"]}"
+    etcd_service_ip     = "${cidrhost(var.service_cidr, 15)}"
+  }
+}
+
+resource "template_dir" "bootstrap-experimental" {
+  count           = "${var.experimental_enabled ? 1 : 0}"
+  source_dir      = "${path.module}/resources/experimental/bootstrap-manifests"
+  destination_dir = "${path.cwd}/generated/bootstrap-experimental"
+
+  vars {
+    etcd_image                = "${var.container_images["etcd"]}"
+    etcd_version              = "${var.versions["etcd"]}"
+    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 200)}"
+  }
+}
+
+resource "template_dir" "etcd-experimental" {
+  count           = "${var.experimental_enabled ? 1 : 0}"
+  source_dir      = "${path.module}/resources/experimental/etcd"
+  destination_dir = "${path.cwd}/generated/etcd"
+
+  vars {
+    etcd_version              = "${var.versions["etcd"]}"
+    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 200)}"
+  }
+}
+
 # Self-hosted manifests (resources/generated/manifests/)
 resource "template_dir" "bootkube" {
   source_dir      = "${path.module}/resources/manifests"
@@ -35,18 +69,26 @@ resource "template_dir" "bootkube" {
     # nodes ourselves (using http), then use insecure http var.etcd_endpoints.
     # 3. Else (if etcd TLS certific are provided), then use the secure https
     # var.etcd_endpoints.
-    etcd_servers = "${var.experimental_enabled ? format("http://%s:2379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? join(",", formatlist("http://%s:2379", var.etcd_endpoints)) : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
+    etcd_servers = "${
+      var.experimental_enabled 
+        ? format("http://%s:2379", cidrhost(var.service_cidr, 15))
+        : data.null_data_source.etcd.outputs.no_certs
+          ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
+          : join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+      }"
 
-    etcd_ca_flag    = "${data.null_data_source.etcd.outputs.ca_flag}"
-    etcd_cert_flag  = "${data.null_data_source.etcd.outputs.cert_flag}"
-    etcd_key_flag   = "${data.null_data_source.etcd.outputs.key_flag}"
-    etcd_service_ip = "${var.etcd_service_ip}"
+    etcd_ca_flag   = "${data.null_data_source.etcd.outputs.ca_flag}"
+    etcd_cert_flag = "${data.null_data_source.etcd.outputs.cert_flag}"
+    etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"
+
+    etcd_service_ip           = "${cidrhost(var.service_cidr, 15)}"
+    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 200)}"
 
     cloud_provider = "${var.cloud_provider}"
 
     cluster_cidr        = "${var.cluster_cidr}"
     service_cidr        = "${var.service_cidr}"
-    kube_dns_service_ip = "${var.kube_dns_service_ip}"
+    kube_dns_service_ip = "${cidrhost(var.service_cidr, 10)}"
     advertise_address   = "${var.advertise_address}"
 
     anonymous_auth      = "${var.anonymous_auth}"
@@ -76,7 +118,14 @@ resource "template_dir" "bootkube-bootstrap" {
     hyperkube_image = "${var.container_images["hyperkube"]}"
     etcd_image      = "${var.container_images["etcd"]}"
 
-    etcd_servers   = "${var.experimental_enabled ? format("http://%s:2379,http://127.0.0.1:12379", var.etcd_service_ip) : data.null_data_source.etcd.outputs.no_certs ? join(",", formatlist("http://%s:2379", var.etcd_endpoints)) : join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
+    etcd_servers = "${
+      var.experimental_enabled 
+        ? format("http://%s:2379,http://127.0.0.1:12379", cidrhost(var.service_cidr, 15))
+        : data.null_data_source.etcd.outputs.no_certs
+          ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
+          : join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+      }"
+
     etcd_ca_flag   = "${data.null_data_source.etcd.outputs.ca_flag}"
     etcd_cert_flag = "${data.null_data_source.etcd.outputs.cert_flag}"
     etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"
@@ -86,55 +135,6 @@ resource "template_dir" "bootkube-bootstrap" {
     cluster_cidr      = "${var.cluster_cidr}"
     service_cidr      = "${var.service_cidr}"
   }
-}
-
-# Self-hosted experimental etcd
-data "template_file" "etcd-operator" {
-  template = "${file("${path.module}/resources/experimental/manifests/etcd-operator.yaml")}"
-
-  vars {
-    etcd_operator_image = "${var.container_images["etcd_operator"]}"
-  }
-}
-
-resource "local_file" "etcd-operator" {
-  count      = "${var.experimental_enabled ? 1 : 0}"
-  depends_on = ["template_dir.bootkube"]
-
-  content  = "${data.template_file.etcd-operator.rendered}"
-  filename = "${path.cwd}/generated/manifests/etcd-operator.yaml"
-}
-
-data "template_file" "etcd-service" {
-  template = "${file("${path.module}/resources/experimental/manifests/etcd-service.yaml")}"
-
-  vars {
-    etcd_service_ip = "${var.etcd_service_ip}"
-  }
-}
-
-resource "local_file" "etcd-service" {
-  count      = "${var.experimental_enabled ? 1 : 0}"
-  depends_on = ["template_dir.bootkube"]
-
-  content  = "${data.template_file.etcd-service.rendered}"
-  filename = "${path.cwd}/generated/manifests/etcd-service.yaml"
-}
-
-data "template_file" "bootstrap-etcd" {
-  template = "${file("${path.module}/resources/experimental/bootstrap-manifests/bootstrap-etcd.yaml")}"
-
-  vars {
-    etcd_image = "${var.container_images["etcd"]}"
-  }
-}
-
-resource "local_file" "bootstrap-etcd" {
-  count      = "${var.experimental_enabled ? 1 : 0}"
-  depends_on = ["template_dir.bootkube-bootstrap"]
-
-  content  = "${data.template_file.bootstrap-etcd.rendered}"
-  filename = "${path.cwd}/generated/bootstrap-manifests/bootstrap-etcd.yaml"
 }
 
 # etcd certs
@@ -174,7 +174,7 @@ resource "local_file" "kubeconfig" {
 }
 
 # bootkube.sh (resources/generated/bootkube.sh)
-data "template_file" "bootkube" {
+data "template_file" "bootkube-sh" {
   template = "${file("${path.module}/resources/bootkube.sh")}"
 
   vars {
@@ -182,8 +182,8 @@ data "template_file" "bootkube" {
   }
 }
 
-resource "local_file" "bootkube" {
-  content  = "${data.template_file.bootkube.rendered}"
+resource "local_file" "bootkube-sh" {
+  content  = "${data.template_file.bootkube-sh.rendered}"
   filename = "${path.cwd}/generated/bootkube.sh"
 }
 

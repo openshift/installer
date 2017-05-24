@@ -28,7 +28,7 @@ Then, download the `kubectl-config` and `kubectl` files.
 
 1. Click *Generate Configuration* to open the *Download kubectl Configuration* window, and follow the instructions provided.
 2. Click *Download Configuration* to download your `kubectl-config` file.
-3. Click *Mac*, *Linux*, or *Windows* to download the `kubectl` binary for your operating system. 
+3. Click *Mac* or *Linux* to download the `kubectl` binary for your operating system. 
 
 Click *I’m Done* to exit the download window, and return to the console.
 

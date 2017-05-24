@@ -1,10 +1,14 @@
-# On-boarding a user to a Tectonic cluster
+# Adding a user to a Tectonic cluster
 
 An individual user can be assigned to a cluster or a specific namespace within a cluster. Use the *Role Binding* option in the Tectonic cluster to do so.
 
 ##  Prerequisites and guidelines
 
-Before proceeding, ensure that the prerequisites given in the [LDAP user management][ldap-user-management] are met.
+Before proceeding, ensure that the prerequisites given in the respective Identity Provider (IdP) section are met. Depending on the IdP used in the deployment, see one of the following:
+
+* [Static user management][user-management]
+* [LDAP user management][ldap-user-management]
+* [SAML user management][saml-user-management]
 
 ## Granting access rights to a user
 
@@ -32,3 +36,8 @@ Access rights are granted to a user by using roles. In order to grant permission
 4. Select *User* from subject kind.
 7. Specify a name to identify subject.
 8. Click *Create Binding*.
+
+[user-management]: user-management.md
+[ldap-user-management]: ldap-user-management.md
+[saml-user-management]: saml-user-management.md
+[identity-management]: identity-management.md

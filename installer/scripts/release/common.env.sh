@@ -22,6 +22,7 @@ MATCHBOX_RELEASE_URL="https://github.com/coreos/matchbox/releases/download/${MAT
 MATCHBOX_ARCHIVE_TOP_DIR="matchbox-${MATCHBOX_RELEASE_VERSION}-linux-amd64"
 
 TERRAFORM_BIN_TMP_DIR="$TMP_DIR/terraform-bin"
-TERRAFORM_BIN_VERSION=0.9.4
-TERRAFORM_BIN_BASE_URL="https://releases.hashicorp.com/terraform/${TERRAFORM_BIN_VERSION}/terraform_${TERRAFORM_BIN_VERSION}"
+TERRAFORM_BIN_VERSION=v0.9.6-fcdf494
+#TERRAFORM_BIN_BASE_URL="https://releases.hashicorp.com/terraform/${TERRAFORM_BIN_VERSION}/terraform_${TERRAFORM_BIN_VERSION}"
+TERRAFORM_BIN_BASE_URL="https://github.com/coreos/terraform/releases/download/${TERRAFORM_BIN_VERSION}/terraform"
 TERRAFORM_SOURCES="${REPOSITORY_ROOT}/modules ${REPOSITORY_ROOT}/platforms ${REPOSITORY_ROOT}/config.tf ${REPOSITORY_ROOT}/terraformrc.example ${REPOSITORY_ROOT}/examples"

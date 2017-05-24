@@ -9,7 +9,8 @@ resource "aws_route_table" "default" {
 
   tags = "${merge(map(
       "Name", "public",
-      "kubernetes.io/cluster/${var.cluster_name}", "shared"
+      "kubernetes.io/cluster/${var.cluster_name}", "shared",
+      "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
@@ -42,7 +43,8 @@ resource "aws_subnet" "master_subnet" {
       "Name", "master-${ "${length(var.master_azs)}" > 0 ? 
      "${var.master_azs[count.index]}" : 
      "${data.aws_availability_zones.azs.names[count.index]}" }",
-      "kubernetes.io/cluster/${var.cluster_name}", "shared"
+      "kubernetes.io/cluster/${var.cluster_name}", "shared",
+      "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 

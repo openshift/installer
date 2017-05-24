@@ -27,7 +27,7 @@ resource "aws_instance" "etcd_node" {
   ami   = "${data.aws_ami.coreos_ami.image_id}"
 
   instance_type          = "${var.ec2_type}"
-  subnet_id              = "${var.subnets[count.index % var.az_count]}"
+  subnet_id              = "${element(var.subnets, count.index)}"
   key_name               = "${var.ssh_key}"
   user_data              = "${data.ignition_config.etcd.*.rendered[count.index]}"
   vpc_security_group_ids = ["${var.sg_ids}"]
@@ -40,8 +40,9 @@ resource "aws_instance" "etcd_node" {
   }
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}-etcd-${count.index}",
-      "kubernetes.io/cluster/${var.cluster_name}", "owned"
+      "Name", "${var.cluster_name}-${count.index}-etcd",
+      "kubernetes.io/cluster/${var.cluster_name}", "owned",
+      "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 
   root_block_device {

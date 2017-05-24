@@ -1,0 +1,26 @@
+{
+  "apiVersion": "v1",
+  "kind": "Service",
+  "metadata": {
+    "name": "bootstrap-etcd-service",
+    "namespace": "kube-system"
+  },
+  "spec": {
+    "selector": {
+      "k8s-app": "boot-etcd"
+    },
+    "clusterIP": "${bootstrap_etcd_service_ip}",
+    "ports": [
+      {
+        "name": "client",
+        "port": 12379,
+        "protocol": "TCP"
+      },
+      {
+        "name": "peers",
+        "port": 12380,
+        "protocol": "TCP"
+      }
+    ]
+  }
+}

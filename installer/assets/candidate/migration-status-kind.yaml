@@ -1,7 +1,0 @@
-apiVersion: "extensions/v1beta1"
-kind: "ThirdPartyResource"
-metadata:
-  name: "migration-status.coreos.com"
-description: "Resource to track migrations that have ran for a particular version."
-versions:
-- name: "v1"

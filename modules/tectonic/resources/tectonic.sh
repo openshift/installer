@@ -114,23 +114,32 @@ kubectl create -f console/service.yaml
 kubectl create -f console/deployment.yaml
 
 echo "Creating Tectonic Monitoring"
-kubectl create -f monitoring/prometheus-operator-service-account.yaml
-kubectl create -f monitoring/prometheus-operator-cluster-role.yaml
 kubectl create -f monitoring/prometheus-operator-cluster-role-binding.yaml
-kubectl create -f monitoring/prometheus-k8s-service-account.yaml
-kubectl create -f monitoring/prometheus-k8s-cluster-role.yaml
-kubectl create -f monitoring/prometheus-k8s-cluster-role-binding.yaml
-kubectl create -f monitoring/prometheus-k8s-config.yaml
-kubectl create -f monitoring/prometheus-k8s-rules.yaml
-kubectl create -f monitoring/prometheus-svc.yaml
-kubectl create -f monitoring/node-exporter-svc.yaml
-kubectl create -f monitoring/node-exporter-ds.yaml
+kubectl create -f monitoring/prometheus-operator-cluster-role.yaml
+kubectl create -f monitoring/prometheus-operator-service-account.yaml
 kubectl create -f monitoring/prometheus-operator.yaml
+
 wait_for_tpr tectonic-system prometheus.monitoring.coreos.com
 wait_for_tpr tectonic-system service-monitor.monitoring.coreos.com
-kubectl create -f monitoring/prometheus-k8s.yaml
-kubectl create -f monitoring/prometheus-k8s-service-monitor-k8s-apps-http.yaml
+
+kubectl create -f monitoring/kube-state-metrics-cluster-role-binding.yaml
+kubectl create -f monitoring/kube-state-metrics-cluster-role.yaml
+kubectl create -f monitoring/kube-state-metrics-deployment.yaml
+kubectl create -f monitoring/kube-state-metrics-service-account.yaml
+kubectl create -f monitoring/kube-state-metrics-service.yaml
+kubectl create -f monitoring/node-exporter-ds.yaml
+kubectl create -f monitoring/node-exporter-svc.yaml
+kubectl create -f monitoring/prometheus-k8s-cluster-role-binding.yaml
+kubectl create -f monitoring/prometheus-k8s-cluster-role.yaml
+kubectl create -f monitoring/prometheus-k8s-rules.yaml
+kubectl create -f monitoring/prometheus-k8s-service-account.yaml
+kubectl create -f monitoring/prometheus-k8s-service-monitor-apiserver.yaml
+kubectl create -f monitoring/prometheus-k8s-service-monitor-kube-state-metrics.yaml
 kubectl create -f monitoring/prometheus-k8s-service-monitor-kubelet.yaml
+kubectl create -f monitoring/prometheus-k8s-service-monitor-node-exporter.yaml
+kubectl create -f monitoring/prometheus-k8s-service-monitor-prometheus.yaml
+kubectl create -f monitoring/prometheus-k8s.yaml
+kubectl create -f monitoring/prometheus-svc.yaml
 
 echo "Creating Ingress"
 kubectl create -f ingress/default-backend/configmap.yaml

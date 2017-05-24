@@ -174,7 +174,13 @@ Until otherwise modified, you can still use your static account for further admi
 
 ## Configuring RBAC
 
-Access configuration requires understanding Kubernetes Roles, RoleBindings, ClusterRoles, and ClusterRoleBindings. LDAP-based users do not alter this model. LDAP usernames and groups can be used with Kubernetes bindings; visit [the Kubernetes authorization docs][k8s-auth] to learn how to set up these configurations.
+Access configuration requires understanding Kubernetes Roles, RoleBindings, ClusterRoles, and ClusterRoleBindings. LDAP-based users do not alter this model. LDAP usernames and groups can be used with Kubernetes bindings; visit  the following to learn how to set up these configurations:
+
+* [Adding a user][onboard-user]
+* [Adding an administrator][onboard-admin]
+* [Adding a team][onboard-team]
+* [Adding a service account][onboard-service-account]
+* [Kubernetes authorization documentation][k8s-auth]
 
 ### An example configuration
 
@@ -327,7 +333,10 @@ $ kubectl --namespace=tectonic-system logs -f tectonic-console-3824021701-50j0x
 
 In the above example, two issues are visible. First, `jane2.doe@example.org` was not found in the LDAP directory. Second, a group search is attempting to check if the member field contains `john.doe@example.org`. However, the original example and LDAP server output, shown earlier in this document, qualify members based on `DN` rather than `mail`.
 
-
+[onboard-user]: onboard-user.md
+[onboard-admin]: onboard-admin.md
+[onboard-team]: onboard-team.md
+[onboard-service-account]: onboard-service-account.md
 [person-ldap-rfc]: https://tools.ietf.org/html/rfc4519#section-3.12
 [uid-ldap-rfc]: https://tools.ietf.org/html/rfc4519#section-2.39
 [groupOfNames-ldap-rfc]: https://tools.ietf.org/html/rfc4519#section-3.5

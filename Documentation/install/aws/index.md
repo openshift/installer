@@ -27,7 +27,7 @@ Run the Tectonic Installer.
 ./tectonic-installer/$PLATFORM/installer
 ```
 
-Where $PLATFORM is one of: `linux`, `darwin` or `windows`.
+Where $PLATFORM is `linux` or `darwin`.
 
 A browser window will open to begin the GUI installation process.
 
@@ -70,6 +70,6 @@ For those new to Tectonic and Kubernetes, the [Tectonic Tutorials][tutorials] pr
 [install-aws-requirements-creds]: requirements.md#privileges
 [install-aws-requirements-evpc]: requirements.md#using-an-existing-vpc
 [tutorials]: ../../tutorials/index.md
-[latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.5.7-tectonic.1.tar.gz
+[latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz
 [install-aws-troubleshooting]: ../../troubleshooting/faq.md
 [tf-state]: https://www.terraform.io/docs/state/

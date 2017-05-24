@@ -21,16 +21,16 @@ installer-env: $(INSTALLER_BIN) terraformrc.example
 localconfig:
 	mkdir -p $(BUILD_DIR)
 
-$(BUILD_DIR)/.terraform:
+terraform-get:
 	cd $(BUILD_DIR) && $(TF_CMD) get $(TOP_DIR)/platforms/$(PLATFORM)
 
-plan: installer-env $(BUILD_DIR)/.terraform
+plan: installer-env terraform-get
 	cd $(BUILD_DIR) && $(TF_CMD) plan $(TOP_DIR)/platforms/$(PLATFORM)
 
-apply: installer-env $(BUILD_DIR)/.terraform
+apply: installer-env terraform-get
 	cd $(BUILD_DIR) && $(TF_CMD) apply $(TOP_DIR)/platforms/$(PLATFORM)
 
-destroy: installer-env ${BUILD_DIR}/.terraform
+destroy: installer-env terraform-get
 	cd $(BUILD_DIR) && $(TF_CMD) destroy -force $(TOP_DIR)/platforms/$(PLATFORM)
 
 payload:
@@ -46,7 +46,7 @@ define terraform-docs
 endef
 
 define terraform-examples
-	$(if $(TF_EXAMPLES),,$(error "terraform-examples revision >= 83d7ad6 is required (https://github.com/segmentio/terraform-docs)"))
+	$(if $(TF_EXAMPLES),,$(error "terraform-examples revision >= 83d7ad6 is required (https://github.com/s-urbaniak/terraform-examples)"))
 	terraform-examples $2 $3 $4 $5 > $1
 endef
 
@@ -113,4 +113,4 @@ structure-check:
 canonical-syntax:
 	terraform fmt -list .
 
-.PHONY: make clean terraform terraform-dev structure-check canonical-syntax docs examples
+.PHONY: make clean terraform terraform-dev structure-check canonical-syntax docs examples terraform-get
