@@ -61,7 +61,10 @@ pipeline {
                              ]) {
             unstash 'installer'
             unstash 'sanity'
-            sh '''
+            sh '''#!/bin/bash -ex
+            set -o pipefail
+            shopt -s expand_aliases
+
             # Set required configuration
             export PLATFORM=aws
             export CLUSTER="tf-${PLATFORM}-${BRANCH_NAME}-${BUILD_ID}"
