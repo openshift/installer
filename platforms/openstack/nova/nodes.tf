@@ -1,9 +1,13 @@
 resource "openstack_compute_instance_v2" "master_node" {
-  count           = "${var.tectonic_master_count}"
-  name            = "${var.tectonic_cluster_name}_master_node_${count.index}"
-  image_id        = "${var.tectonic_openstack_image_id}"
-  flavor_id       = "${var.tectonic_openstack_flavor_id}"
-  security_groups = ["${module.master_nodes.secgroup_name}"]
+  count     = "${var.tectonic_master_count}"
+  name      = "${var.tectonic_cluster_name}_master_node_${count.index}"
+  image_id  = "${var.tectonic_openstack_image_id}"
+  flavor_id = "${var.tectonic_openstack_flavor_id}"
+
+  security_groups = [
+    "${module.master_nodes.secgroup_master_name}",
+    "${module.master_nodes.secgroup_self_hosted_etcd_name}",
+  ]
 
   network {
     name = "${var.tectonic_openstack_network_name}"
@@ -22,7 +26,7 @@ resource "openstack_compute_instance_v2" "worker_node" {
   name            = "${var.tectonic_cluster_name}_worker_node_${count.index}"
   image_id        = "${var.tectonic_openstack_image_id}"
   flavor_id       = "${var.tectonic_openstack_flavor_id}"
-  security_groups = ["${module.worker_nodes.secgroup_name}"]
+  security_groups = ["${module.worker_nodes.secgroup_node_name}"]
 
   network {
     name = "${var.tectonic_openstack_network_name}"
@@ -37,7 +41,7 @@ resource "openstack_compute_instance_v2" "worker_node" {
 }
 
 resource "openstack_compute_instance_v2" "etcd_node" {
-  count           = "${var.tectonic_etcd_count}"
+  count           = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count}"
   name            = "${var.tectonic_cluster_name}_etcd_node_${count.index}"
   image_id        = "${var.tectonic_openstack_image_id}"
   flavor_id       = "${var.tectonic_openstack_flavor_id}"

@@ -1,4 +1,6 @@
 data "ignition_config" "etcd" {
+  count = "${var.tectonic_experimental ? 0 : 1}"
+
   users = [
     "${data.ignition_user.core.id}",
   ]

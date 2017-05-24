@@ -18,3 +18,7 @@ variable "container_image" {
 variable core_public_keys {
   type = "list"
 }
+
+variable "tectonic_experimental" {
+  default = false
+}

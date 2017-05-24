@@ -1,6 +1,7 @@
 resource "openstack_compute_secgroup_v2" "etcd" {
   name        = "${var.cluster_name}_etcd_group"
   description = "security group for etcd: SSH and etcd client / cluster"
+  count       = "${var.tectonic_experimental ? 0 : 1}"
 
   rule {
     from_port   = 22
