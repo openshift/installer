@@ -104,6 +104,7 @@ pipeline {
 
             # randomly select region
             REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2 ap-southeast-1)
+            export CHANGE_ID=${CHANGE_ID:-${BUILD_ID}}
             i=$(( ${CHANGE_ID} % ${#REGIONS[@]} ))
             export TF_VAR_tectonic_aws_region="${REGIONS[$i]}"
             export AWS_REGION="${REGIONS[$i]}"
@@ -169,6 +170,7 @@ pipeline {
 
           # randomly select region
           REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2 ap-southeast-1)
+          export CHANGE_ID=${CHANGE_ID:-${BUILD_ID}}
           i=$(( ${CHANGE_ID} % ${#REGIONS[@]} ))
           export TF_VAR_tectonic_aws_region="${REGIONS[$i]}"
           export AWS_REGION="${REGIONS[$i]}"
