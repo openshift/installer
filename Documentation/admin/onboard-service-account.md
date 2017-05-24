@@ -1,4 +1,4 @@
-# On-boarding a service account to Tectonic cluster
+# Adding a service account to Tectonic cluster
 
 ## About service accounts
 
@@ -84,3 +84,5 @@ Use the Tectonic console to provide access rights to a service account.
 6. Select *Service Acccount* from subject kind.
 7. Specify a a name to identify subject.
 8. Click *Create Binding*.
+
+[identity-management]: identity-management.md
