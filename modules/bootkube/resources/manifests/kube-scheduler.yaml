@@ -45,11 +45,14 @@ spec:
             port: 10251  # Note: Using default port. Update if --port option is set differently.
           initialDelaySeconds: 15
           timeoutSeconds: 15
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
       tolerations:
       - key: "CriticalAddonsOnly"
         operator: "Exists"
       - key: "node-role.kubernetes.io/master"
         operator: "Exists"
         effect: "NoSchedule"
-      nodeSelector:
-        node-role.kubernetes.io/master: ""

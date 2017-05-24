@@ -58,14 +58,17 @@ spec:
         - name: ssl-host
           mountPath: /etc/ssl/certs
           readOnly: true
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
       tolerations:
       - key: "CriticalAddonsOnly"
         operator: "Exists"
       - key: "node-role.kubernetes.io/master"
         operator: "Exists"
         effect: "NoSchedule"
-      nodeSelector:
-        node-role.kubernetes.io/master: ""
       volumes:
       - name: secrets
         secret:

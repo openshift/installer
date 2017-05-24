@@ -39,6 +39,9 @@ spec:
       restartPolicy: Always
       imagePullSecrets:
       - name: coreos-pull-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
       volumes:
       - name: certs
         hostPath:

@@ -22,3 +22,6 @@ spec:
         image: ${kube_version_operator_image}
       imagePullSecrets:
       - name: coreos-pull-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
