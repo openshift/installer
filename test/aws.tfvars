@@ -29,5 +29,3 @@ tectonic_aws_etcd_ec2_type = "m4.large"
 tectonic_aws_vpc_cidr_block = "10.0.0.0/16"
 
 tectonic_aws_external_vpc_id = ""
-
-tectonic_aws_region = "us-west-2"
