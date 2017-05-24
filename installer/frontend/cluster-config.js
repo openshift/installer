@@ -92,8 +92,8 @@ export const LICENSING = 'licensing';
 export const SPLIT_DNS_ON = "on";
 export const SPLIT_DNS_OFF = "off";
 export const SPLIT_DNS_OPTIONS = {
-  [SPLIT_DNS_ON]: "Use both a public and private zone (default).",
-  [SPLIT_DNS_OFF]: "Only use a public zone.",
+  [SPLIT_DNS_ON]: "Create an additional Route 53 private zone (default).",
+  [SPLIT_DNS_OFF]: "Do not create a private zone.",
 };
 
 export const toVPCSubnet = (region, subnets, deselected) => {
