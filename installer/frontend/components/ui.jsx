@@ -286,7 +286,7 @@ export const Selector = props => {
 
   const optionsElems = options.map(o => <option value={o.value} key={o.value}>{o.label}</option>);
   if (props.disabledValue) {
-    optionsElems.splice(0, 0, <option disabled={true} key="disabled">{props.disabledValue}</option>);
+    optionsElems.splice(0, 0, <option disabled={true} key="disabled" value="">{props.disabledValue}</option>);
   }
 
   const style = Object.assign({}, props.style || {});
