@@ -91,48 +91,22 @@ pipeline {
                              ]) {
             unstash 'installer'
             unstash 'sanity'
-            sh '''#!/bin/bash -ex
-            set -o pipefail
-            shopt -s expand_aliases
-
-            # Set required configuration
-            export PLATFORM=aws
-            export CLUSTER="tf-${PLATFORM}-${BRANCH_NAME}-${BUILD_ID}"
-
-            # s3 buckets require lowercase names
-            export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
-
-            # randomly select region
-            REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2)
-            export CHANGE_ID=${CHANGE_ID:-${BUILD_ID}}
-            i=$(( ${CHANGE_ID} % ${#REGIONS[@]} ))
-            export TF_VAR_tectonic_aws_region="${REGIONS[$i]}"
-            export AWS_REGION="${REGIONS[$i]}"
-            echo "selected region: ${TF_VAR_tectonic_aws_region}"
-            # make core utils accessible to make
-            export PATH=/bin:${PATH}
-
-            # Create local config
-            make localconfig
-
-            # Use smoke test configuration for deployment
-            ln -sf ${WORKSPACE}/test/aws.tfvars ${WORKSPACE}/build/${CLUSTER}/terraform.tfvars
-
-            alias filter=${WORKSPACE}/installer/scripts/filter.sh
-
-            make plan | filter
-            make apply | filter
-
-            # TODO: replace in Go
-            CONFIG=${WORKSPACE}/build/${CLUSTER}/terraform.tfvars
-            MASTER_COUNT=$(grep tectonic_master_count ${CONFIG} | awk -F "=" '{gsub(/"/, "", $2); print $2}')
-            WORKER_COUNT=$(grep tectonic_worker_count ${CONFIG} | awk -F "=" '{gsub(/"/, "", $2); print $2}')
-
-            export NODE_COUNT=$(( ${MASTER_COUNT} + ${WORKER_COUNT} ))
-
-            export TEST_KUBECONFIG=${WORKSPACE}/build/${CLUSTER}/generated/auth/kubeconfig
-            installer/bin/sanity -test.v -test.parallel=1
-            '''
+            sh '${WORKSPACE}/test/scripts/aws.sh aws.tfvars'
+            }
+          },
+          "TerraForm: AWS-experimental": {
+            withCredentials([file(credentialsId: 'tectonic-pull', variable: 'TF_VAR_tectonic_pull_secret_path'),
+                             file(credentialsId: 'tectonic-license', variable: 'TF_VAR_tectonic_license_path'),
+                             [
+                               $class: 'UsernamePasswordMultiBinding',
+                               credentialsId: 'tectonic-aws',
+                               usernameVariable: 'AWS_ACCESS_KEY_ID',
+                               passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+                             ]
+                             ]) {
+            unstash 'installer'
+            unstash 'sanity'
+            sh 'ONLY_PLAN=true ${WORKSPACE}/test/scripts/aws.sh aws-exp.tfvars'
             }
           }
         )
@@ -152,33 +126,8 @@ pipeline {
                          passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                        ]
                        ]) {
-        /* Destroy all clusters within workspace
-         * Try 3 times before failing because tf destroy is flaky.
-         * "||" is bash for "do the next thing only if the first thing failed"
-         */
         unstash 'installer'
-        sh '''#!/bin/bash -ex
-          set -o pipefail
-          shopt -s expand_aliases
-
-          # Set required configuration
-          export PLATFORM=aws
-          export CLUSTER="tf-${PLATFORM}-${BRANCH_NAME}-${BUILD_ID}"
-
-          # s3 buckets require lowercase names
-          export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
-
-          # randomly select region
-          REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2)
-          export CHANGE_ID=${CHANGE_ID:-${BUILD_ID}}
-          i=$(( ${CHANGE_ID} % ${#REGIONS[@]} ))
-          export TF_VAR_tectonic_aws_region="${REGIONS[$i]}"
-          export AWS_REGION="${REGIONS[$i]}"
-          echo "selected region: ${TF_VAR_tectonic_aws_region}"
-
-          echo "Destroying ${CLUSTER}..."
-          make destroy || make destroy || make destroy
-        '''
+        sh '${WORKSPACE}/test/scripts/aws-destroy.sh aws.tfvars'
       }
       // Cleanup workspace
       deleteDir()
