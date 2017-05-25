@@ -102,7 +102,7 @@ func testListDir(t *testing.T, path string) []string {
 
 		// If it is a dir, add trailing sep
 		if info.IsDir() {
-			sub += string(os.PathSeparator)
+			sub += "/"
 		}
 
 		result = append(result, sub)

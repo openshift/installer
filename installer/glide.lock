@@ -1,5 +1,5 @@
-hash: 4379752c258fbaffb6f03df08432258f9d0f17649d0ff1c1f97f77dced177b0e
-updated: 2017-05-18T18:09:12.569439326-07:00
+hash: 824a8e6015cfff30a7724b19c155e3fe673c840cc9e00a6891940cc8e549879b
+updated: 2017-05-25T14:23:54.885271584-07:00
 imports:
 - name: github.com/ajeddeloh/yaml
   version: 1072abfea31191db507785e2e0c1b8d1440d35a5
@@ -35,62 +35,13 @@ imports:
   - private/protocol/query
   - private/protocol/query/queryutil
   - private/protocol/rest
-  - private/protocol/restjson
   - private/protocol/restxml
   - private/protocol/xml/xmlutil
-  - private/signer/v2
-  - service/acm
-  - service/apigateway
-  - service/applicationautoscaling
-  - service/autoscaling
-  - service/cloudformation
-  - service/cloudfront
-  - service/cloudtrail
-  - service/cloudwatch
-  - service/cloudwatchevents
-  - service/cloudwatchlogs
-  - service/codebuild
-  - service/codecommit
-  - service/codedeploy
-  - service/codepipeline
-  - service/cognitoidentity
-  - service/configservice
-  - service/databasemigrationservice
-  - service/directoryservice
-  - service/dynamodb
   - service/ec2
-  - service/ecr
-  - service/ecs
-  - service/efs
-  - service/elasticache
-  - service/elasticbeanstalk
-  - service/elasticsearchservice
-  - service/elastictranscoder
-  - service/elb
-  - service/elbv2
-  - service/emr
-  - service/firehose
-  - service/glacier
-  - service/iam
-  - service/inspector
-  - service/kinesis
-  - service/kms
-  - service/lambda
-  - service/lightsail
-  - service/opsworks
-  - service/rds
-  - service/redshift
   - service/route53
   - service/route53domains
   - service/s3
-  - service/ses
-  - service/sfn
-  - service/simpledb
-  - service/sns
-  - service/sqs
-  - service/ssm
   - service/sts
-  - service/waf
 - name: github.com/bgentry/go-netrc
   version: 9fd32a8b3d3d3f9d43c341bfe098430e07609480
   subpackages:
@@ -198,10 +149,8 @@ imports:
   version: fa5329f913702981df43dcb2a380bac429c810b5
 - name: github.com/hashicorp/errwrap
   version: 7554cd9344cec97297fa6649b055a8c98c2a1e55
-- name: github.com/hashicorp/go-cleanhttp
-  version: 3573b8b52aa7b37b9358d966a898feb387f62437
 - name: github.com/hashicorp/go-getter
-  version: 615ccd8621bdb3837e18be586ce15655ef52b185
+  version: c3d66e76678dce180a7b452653472f949aedfbcd
   subpackages:
   - helper/url
 - name: github.com/hashicorp/go-multierror
@@ -213,7 +162,7 @@ imports:
 - name: github.com/hashicorp/go-version
   version: 03c5bf6be031b6dd45afec16b1cf94fc8938bc77
 - name: github.com/hashicorp/hcl
-  version: 630949a3c5fa3c613328e1b8256052cbc2327c9b
+  version: a4b07c25de5ff55ad3b8936cea69a79a3d95a855
   subpackages:
   - hcl/ast
   - hcl/parser
@@ -224,48 +173,37 @@ imports:
   - json/scanner
   - json/token
 - name: github.com/hashicorp/hil
-  version: 5b8d13c8c5c2753e109fab25392a1dbfa2db93d2
+  version: fac2259da677551de1fb92b844c4d020a38d8468
   subpackages:
   - ast
   - parser
   - scanner
-- name: github.com/hashicorp/logutils
-  version: 0dc08b1671f34c4250ce212759ebd880f743d883
 - name: github.com/hashicorp/terraform
-  version: fcdf494cffc06aac027f6cf904647051ab6d5015
+  version: 85e0979c6af6a15345c9131e4478ba712bb3c21d
   subpackages:
-  - builtin/providers/template
-  - builtin/providers/tls
   - config
   - config/module
   - dag
   - flatmap
-  - helper/acctest
   - helper/config
-  - helper/encryption
   - helper/experiment
   - helper/hashcode
   - helper/hilmapstructure
   - helper/logging
-  - helper/mutexkv
   - helper/pathorcontents
   - helper/resource
   - helper/schema
   - helper/shadow
-  - helper/structure
-  - helper/validation
   - plugin
   - terraform
 - name: github.com/hashicorp/vault
-  version: 15842ec2809798baa7cd99a825b9b837dc37b742
+  version: 9a60bf2a50e4dd1ba4b929a3ccf8072435cbdd0a
   subpackages:
   - helper/compressutil
   - helper/jsonutil
   - helper/pgpkeys
 - name: github.com/hashicorp/yamux
   version: d1caa6c97c9fc1cc9e83bbe34d0603f9ff0ce8bd
-- name: github.com/jen20/awspolicyequivalence
-  version: ed4c14ea400d756059e9312e409477a9ebf448f4
 - name: github.com/jmespath/go-jmespath
   version: bd40a432e4c76585ef6b72d3fd96fb9b6dc7b68d
 - name: github.com/jteeuwen/go-bindata
@@ -274,22 +212,6 @@ imports:
   - go-bindata
 - name: github.com/kardianos/osext
   version: 8fef92e41e22a70e700a96b29f066cda30ea24ef
-- name: github.com/keybase/go-crypto
-  version: 13107bbcdf2f5e2862f7b1b005335f8afca30a24
-  subpackages:
-  - brainpool
-  - cast5
-  - curve25519
-  - ed25519
-  - ed25519/internal/edwards25519
-  - openpgp
-  - openpgp/armor
-  - openpgp/ecdh
-  - openpgp/elgamal
-  - openpgp/errors
-  - openpgp/packet
-  - openpgp/s2k
-  - rsa
 - name: github.com/kubernetes-incubator/bootkube
   version: 05b41cccd0c846819680f0b7a9ca244a479e6ffc
 - name: github.com/mitchellh/copystructure
@@ -572,8 +494,6 @@ testImports:
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
-- name: github.com/satori/uuid
-  version: 5bf94b69c6b68ee1b541973bb8e1144db23a194b
 - name: github.com/spf13/pflag
   version: 7f60f83a2c81bc3c3c0d5297f61ddfa68da9d3b7
 - name: golang.org/x/oauth2
