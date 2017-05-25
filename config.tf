@@ -41,7 +41,7 @@ variable "tectonic_container_images" {
     kubedns_sidecar                 = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.1"
     flannel                         = "quay.io/coreos/flannel:v0.7.1-amd64"
     etcd                            = "quay.io/coreos/etcd:v3.1.6"
-    etcd_operator                   = "quay.io/coreos/etcd-operator:v0.2.5"
+    etcd_operator                   = "quay.io/coreos/etcd-operator:v0.3.0"
     kenc                            = "quay.io/coreos/kenc:48b6feceeee56c657ea9263f47b6ea091e8d3035"
     awscli                          = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
     kube_version                    = "quay.io/coreos/kube-version:0.1.0"
