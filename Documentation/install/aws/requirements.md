@@ -87,6 +87,20 @@ $ aws sts assume-role --role-arn=<TECTONIC_INSTALLER_ROLE_ARN> --role-session-na
 
 Use the `SECRET_ACCESS_KEY`, `ACCESS_KEY_ID`, and `SESSION_TOKEN` to authenticate in the installer.
 
+If building the Tectonic cluster using the CLI directly, then you can configure `terraform` to perform the STS `assume-role` operation automatically on every run. It will automatically retrieve and use the temporary credentials every time so you don't have to refresh them manually when they expire.
+
+To enable Terraform to perform the `assume-role` operation edit the file `platforms/aws/main.tf` and change the `provider "aws" { ... }` block to include the following configuration:
+```hcl
+provider "aws" {
+  region = "${var.tectonic_aws_region}"
+  assume_role {
+    role_arn = "<tectonic-installer-ROLE-ARN>"
+    session_name = "terraform"
+  }
+}
+```
+You can then run Terraform using an unpriviledged user that only has permissions to assume the `tectonic-installer` role.
+
 ## SSH key
 
 The final step of the Tectonic install requires an SSH key and access to standard utilities like `ssh` and `scp`. Setting up a new key on AWS should take less than 5 minutes.
