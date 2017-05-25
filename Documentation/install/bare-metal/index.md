@@ -49,15 +49,15 @@ Matchbox is an open-source service for on-premise environments that matches bare
 Download a Matchbox v0.6+ [release](https://github.com/coreos/matchbox/releases).
 
 ```sh
-$ wget https://github.com/coreos/matchbox/releases/download/v0.6.0/matchbox-v0.6.0-linux-amd64.tar.gz
-$ wget https://github.com/coreos/matchbox/releases/download/v0.6.0/matchbox-v0.6.0-linux-amd64.tar.gz.asc
+$ wget https://github.com/coreos/matchbox/releases/download/v0.6.1/matchbox-v0.6.1-linux-amd64.tar.gz
+$ wget https://github.com/coreos/matchbox/releases/download/v0.6.1/matchbox-v0.6.1-linux-amd64.tar.gz.asc
 ```
 
 Untar the release.
 
 ```sh
-$ tar xzvf matchbox-v0.6.0-linux-amd64.tar.gz
-$ cd matchbox-v0.6.0-linux-amd64
+$ tar xzvf matchbox-v0.6.1-linux-amd64.tar.gz
+$ cd matchbox-v0.6.1-linux-amd64
 ```
 
 [Install Matchbox](https://github.com/coreos/matchbox/blob/master/Documentation/deployment.md) on a server or Kubernetes cluster that your bare-metal machines can reach using the guides:
