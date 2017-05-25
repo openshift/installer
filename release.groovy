@@ -52,7 +52,7 @@ pipeline {
                     export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
                     export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
                     export GITHUB_CREDENTIALS=$GITHUB_CREDENTIALS
-                    export PRE_RELEASE=${params.preRrelease}
+                    export PRE_RELEASE=${params.preRelease}
                     go version
                     cd $GO_PROJECT/installer
                     make build
