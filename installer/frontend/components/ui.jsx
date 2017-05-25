@@ -681,3 +681,25 @@ export class AsyncSelect extends React.Component {
     );
   }
 }
+
+class InnerFieldList_ extends React.Component {
+  render() {
+    const {value, removeField, children, fields, id} = this.props;
+    const onlyChild = React.Children.only(children);
+    const newChildren = _.map(value, (unused, i) => {
+      const row = {};
+      _.keys(fields).forEach(k => row[k] = `${id}.${i}.${k}`);
+      const childProps = { row, i, key: i, remove: () => removeField(id, i) };
+      if (i === value.length - 1) {
+        childProps.autoFocus = true;
+      }
+      return React.cloneElement(onlyChild, childProps);
+    });
+    return <div>{newChildren}</div>;
+  }
+}
+
+export const ConnectedFieldList = connect(
+  ({clusterConfig}, {id}) => ({value: clusterConfig[id]}),
+  (dispatch) => ({removeField: (id, i) => dispatch(configActions.removeField(id, i))})
+)((props) => <InnerFieldList_ {...props} />);
