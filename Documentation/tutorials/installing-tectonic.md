@@ -43,7 +43,7 @@ Make sure a current version of either the Google Chrome or Mozilla Firefox brows
 
 1. Download and run the Tectonic installer by opening a new terminal, and running the following command:
 ```
-$ curl -O https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz
+$ curl -O https://releases.tectonic.com/tectonic-1.6.4-tectonic.1.tar.gz
 ```
 
 2. Double click the tarball to extract it, then navigate to the tectonic/tectonic-installer folder.
@@ -54,7 +54,7 @@ A browser window will open the Tectonic Installer to walk you through the setup 
 
 If you prefer to work within the terminal, extract and launch the Installer using:
 ```bash
-tar xzvf tectonic-1.6.2-tectonic.1.tar.gz # to extract the tarball
+tar xzvf tectonic-1.6.4-tectonic.1.tar.gz # to extract the tarball
 $ cd tectonic/tectonic-installer # to change to the previously untarred directory
 $ ./$PLATFORM/installer # to run the Tectonic Installer
 ```
