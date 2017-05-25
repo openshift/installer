@@ -13,7 +13,7 @@ const awsSshForm = new Form('AWSSSHForm', [
     default: '',
     validator: validate.nonEmpty,
     dependencies: [AWS_REGION_FORM],
-    getExtraStuff: (dispatch, isNow) => dispatch(awsActions.getSsh(null, null, isNow)).then(options => ({options})),
+    getExtraStuff: (dispatch, isNow) => dispatch(awsActions.getSsh(null, null, isNow)).then(options => ({options: _.sortBy(options, 'label')})),
   })], {
     validator: (data, cc) => {
       const key = data[AWS_SSH];
