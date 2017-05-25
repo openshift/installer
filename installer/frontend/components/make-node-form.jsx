@@ -25,7 +25,7 @@ export const makeNodeForm = (name, instanceValidator=validate.int({min: 1, max: 
   const fields = [
     new Field(toKey(name, NUMBER_OF_INSTANCES), {
       validator: instanceValidator,
-      default: 1,
+      default: 3,
       name: NUMBER_OF_INSTANCES,
     }),
     new Field(toKey(name, INSTANCE_TYPE), {
