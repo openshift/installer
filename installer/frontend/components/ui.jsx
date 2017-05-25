@@ -11,6 +11,7 @@ import { toError, toAsyncError, toExtraData, toInFly, toExtraDataInFly, toExtraD
 import { configActionTypes, dirtyActionTypes, configActions } from '../actions';
 import { DESELECTED_FIELDS } from '../cluster-config.js';
 
+import { Alert } from './alert';
 
 // Use this function to dirty a field due to
 // non-user interaction (like uploading a config file)
@@ -68,7 +69,7 @@ const FIELD_PROPS = ImmutableSet([
   'width',
 ]);
 
-export const ErrorComponent = props => props.error ? <div className="wiz-error-message">{props.error}</div> : <span/>;
+export const ErrorComponent = props => props.error ? <Alert severity='error'>{props.error}</Alert> : <span/>;
 
 const Field = connect(
   (state, {id}) => ({isDirty: _.get(state.dirty, id)}),
