@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { dispatch as dispatch_ } from './store';
 import { configActions, registerForm } from './actions';
 import { toError, toIgnore, toAsyncError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from './utils';
-import { ErrorComponent } from './components/ui';
+import { ErrorComponent, ConnectedFieldList } from './components/ui';
 import { TectonicGA } from './tectonic-ga';
 
 const { setIn, batchSetIn, append, removeAt } = configActions;
@@ -381,22 +381,6 @@ const toDefaultOpts = opts => {
   return Object.assign({}, opts, {default: [default_], validator: toValidator(opts.fields, opts.validator)});
 };
 
-const InnerFieldList_ = ({value, removeField, children, fields, id}) => {
-  const onlyChild = React.Children.only(children);
-  const newChildren = _.map(value, (unused, i) => {
-    const row = {};
-    _.keys(fields).forEach(k => row[k] = `${id}.${i}.${k}`);
-    const childProps = { row, i, key: i, remove: () => removeField(id, i) };
-    return React.cloneElement(onlyChild, childProps);
-  });
-  return React.createElement('div', {}, newChildren);
-};
-
-const ConnectedFieldList_ = connect(
-  ({clusterConfig}, {id}) => ({value: clusterConfig[id]}),
-  (dispatch) => ({removeField: (id, i) => dispatch(configActions.removeField(id, i))})
-)(InnerFieldList_);
-
 export class FieldList extends Field {
   constructor(id, opts={}) {
     super(id, toDefaultOpts(opts));
@@ -411,7 +395,7 @@ export class FieldList extends Field {
     const fields = this.fields;
 
     this.OuterListComponent_ = function Outer ({children}) {
-      return React.createElement(ConnectedFieldList_, {id, children, fields});
+      return React.createElement(ConnectedFieldList, {id, children, fields});
     };
 
     return this.OuterListComponent_;
