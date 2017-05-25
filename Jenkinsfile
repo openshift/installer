@@ -103,7 +103,7 @@ pipeline {
             export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
 
             # randomly select region
-            REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2 ap-southeast-1)
+            REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2)
             export CHANGE_ID=${CHANGE_ID:-${BUILD_ID}}
             i=$(( ${CHANGE_ID} % ${#REGIONS[@]} ))
             export TF_VAR_tectonic_aws_region="${REGIONS[$i]}"
@@ -169,7 +169,7 @@ pipeline {
           export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
 
           # randomly select region
-          REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2 ap-southeast-1)
+          REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2)
           export CHANGE_ID=${CHANGE_ID:-${BUILD_ID}}
           i=$(( ${CHANGE_ID} % ${#REGIONS[@]} ))
           export TF_VAR_tectonic_aws_region="${REGIONS[$i]}"
