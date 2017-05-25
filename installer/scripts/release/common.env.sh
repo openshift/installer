@@ -15,10 +15,9 @@ export TECTONIC_RELEASE_DIR="$WORKSPACE_DIR/$VERSION"
 export TECTONIC_RELEASE_TOP_DIR="$TECTONIC_RELEASE_DIR/tectonic"
 export INSTALLER_RELEASE_DIR="$TECTONIC_RELEASE_TOP_DIR/tectonic-installer"
 
-export TERRAFORM_BIN_TMP_DIR="$TMP_DIR/terraform-bin"
-TERRAFORM_BIN_VERSION=v0.9.6-fcdf494
-#TERRAFORM_BIN_BASE_URL="https://releases.hashicorp.com/terraform/${TERRAFORM_BIN_VERSION}/terraform_${TERRAFORM_BIN_VERSION}"
-export TERRAFORM_BIN_BASE_URL="https://github.com/coreos/terraform/releases/download/${TERRAFORM_BIN_VERSION}/terraform"
+TERRAFORM_BIN_TMP_DIR="$TMP_DIR/terraform-bin"
+TERRAFORM_BIN_VERSION=0.9.6
+TERRAFORM_BIN_BASE_URL="https://releases.hashicorp.com/terraform/${TERRAFORM_BIN_VERSION}/terraform_${TERRAFORM_BIN_VERSION}"
 export TERRAFORM_SOURCES=(
   "${REPOSITORY_ROOT}/modules"
   "${REPOSITORY_ROOT}/platforms"
