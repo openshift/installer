@@ -11,7 +11,7 @@ source "$DIR/common.env.sh"
 
 GITHUB_API_URL="https://api.github.com/repos/coreos/tectonic-installer/releases"
 
-echo "Creating new release on GitHub"
+echo "Creating new release on GitHub ${#GITHUB_CREDENTIALS} \n\n {\"tag_name\":\"$VERSION\",\"prerelease\":$PRE_RELEASE,\"body\":\"Release tarball is available at $TECTONIC_RELEASE_TARBALL_URL.\"}"
 curl \
     --fail \
     -u "$GITHUB_CREDENTIALS" \
