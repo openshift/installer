@@ -8,9 +8,10 @@ Generally, the Azure platform templates adhere to the standards defined by the p
 
 ## Prerequsities
 
- - **DNS** - Setup your DNS zone in a resource group called `tectonic-dns-group` or specify a different resource group using the `tectonic_azure_dns_resource_group` variable below. We use a separate resource group assuming that you have a zone that you already want to use. Follow the [docs to set one up][azure-dns].
- - **Tectonic Account** - Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
- - **Azure CLI** - The Azure Command line interface is required to generate Azure credentials.
+* **Terraform**: Tectonic Installer includes and requires a specific version of Terraform. This is included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
+* **DNS**: Set up your DNS zone in a resource group called `tectonic-dns-group` or specify a different resource group using the `tectonic_azure_dns_resource_group` variable below. We use a separate resource group assuming that you have a zone that you already want to use. Follow the [docs to set one up][azure-dns].
+* **Tectonic Account**: Register for a [Tectonic Account][register], which is free for up to 10 nodes. You must provide the cluster license and pull secret during installation.
+* **Azure CLI**: The Azure Command line interface is required to generate Azure credentials.
 
 ## Getting Started
 
@@ -192,3 +193,4 @@ $ terraform apply $ terraform plan \
 [azure-dns]: https://docs.microsoft.com/en-us/azure/dns/dns-getstarted-portal
 [vars]: ../../variables/config.md
 [azure-vars]: ../../variables/azure.md
+[release-notes]: https://coreos.com/tectonic/releases/

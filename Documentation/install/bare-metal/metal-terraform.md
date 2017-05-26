@@ -4,7 +4,8 @@ Following this guide will deploy a Tectonic cluster on virtual or physical hardw
 
 ## Prerequsities
 
-* Matchbox [v0.6+](https://github.com/coreos/matchbox/releases) installation with the gRPC API enabled. See [installation](https://coreos.com/matchbox/docs/latest/deployment.html).
+* Terraform: Tectonic Installer includes and requires a specific version of Terraform. This is included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
+* [Matchbox v0.6+](https://github.com/coreos/matchbox/releases) installation with the gRPC API enabled. See [installation](https://coreos.com/matchbox/docs/latest/deployment.html).
 * Matchbox TLS client credentials
 * PXE network boot environment with DHCP, TFTP, and DNS services. See [network-setup](https://coreos.com/matchbox/docs/latest/network-setup.html).
 * DNS records for the Kubernetes controller(s) and Tectonic Ingress worker(s). See [DNS](https://coreos.com/tectonic/docs/latest/install/bare-metal#networking).
@@ -136,3 +137,4 @@ See the [troubleshooting][troubleshooting] document for workarounds for bugs tha
 [account]: https://account.coreos.com
 [vars]: ../../variables/config.md
 [troubleshooting]: ../../troubleshooting/faq.md
+[release-notes]: https://coreos.com/tectonic/releases/
