@@ -3,9 +3,6 @@
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$DIR/common.env.sh"
 
-echo "Retrieving matchbox release"
-"$DIR/get_matchbox_release.sh"
-
 echo "Retrieving TerraForm resources"
 "$DIR/get_terraform_bins.sh"
 
