@@ -118,24 +118,9 @@ $ export KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
 
-## Scale the cluster
+## Work with the cluster
 
-To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and run:
-
-```
-$ terraform apply $ terraform plan \
-  -var-file=build/${CLUSTER}/terraform.tfvars \
-  -target module.workers \
-  platforms/metal
-```
-
-## Delete the cluster
-
-Delete your cluster to delete the matchbox profiles and matcher groups. Deletion will not modify or power off your machines.
-
-```
-$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/metal
-```
+For more information on working with installed clusters, see [Scaling Tectonic bare metal clusters][scale-metal], and [Uninstalling Tectonic][uninstall].
 
 ## Known issues and workarounds
 
@@ -148,3 +133,5 @@ See the [troubleshooting][troubleshooting] document for workarounds for bugs tha
 [account]: https://account.coreos.com
 [vars]: ../../variables/config.md
 [troubleshooting]: ../../troubleshooting/faq.md
+[uninstall]: uninstall.md
+[scale-metal]: ../../admin/bare-metal-scale.md
