@@ -45,10 +45,16 @@ lint: build bin/golint
 	./scripts/lint-backend
 	cd frontend && yarn run lint
 
-.PHONY: test
-test: build bin/golint
+.PHONY: test-backend
+test-backend: build
 	./scripts/test-backend
+
+.PHONY: test-frontend
+test-frontend:
 	cd frontend && yarn test
+
+.PHONY: test
+test: test-backend test-frontend
 
 .PHONY: smoke-aws
 smoke-aws: bin/sanity
