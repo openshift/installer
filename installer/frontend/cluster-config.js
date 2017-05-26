@@ -65,6 +65,7 @@ export const UPDATER = 'updater';
 export const UPDATER_ENABLED = 'updater_enabled';
 export const ADMIN_EMAIL = 'adminEmail';
 export const ADMIN_PASSWORD = 'adminPassword';
+export const ADMIN_PASSWORD2 = 'adminPassword2';
 
 // Networking
 export const POD_CIDR = 'podCIDR';
@@ -86,6 +87,7 @@ export const AWS_CLUSTER_INFO = 'aws_clusterInfo';
 export const AWS_WORKERS = 'aws_workers';
 export const AWS_REGION_FORM = 'aws_regionForm';
 export const BM_SSH_KEY = 'bm_sshKey';
+export const CREDS = 'creds';
 export const LICENSING = 'licensing';
 
 
