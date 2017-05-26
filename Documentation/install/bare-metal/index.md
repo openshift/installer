@@ -173,12 +173,12 @@ Run the Tectonic Installer that matches your platform (`linux` or `darwin`):
 ./$PLATFORM/installer
 ```
 
-A browser window should open to begin the GUI installation process. When prompted for Matchbox credentials, insert the `client.crt`, `client.key`, and `ca.crt` created previously. You will need to enter machine MAC addresses, domain names, and your SSH public key as well.
+A browser window will open to begin the GUI installation process. When prompted for Matchbox credentials, insert the `client.crt`, `client.key`, and `ca.crt` created previously. You will need to enter machine MAC addresses, domain names, and your SSH public key as well.
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
     <img src="../../img/installer-bare-metal.png">
-    <div class="co-m-screenshot-caption">Starting the Tectonic Installer for bare metal</div>
+    <div class="co-m-screenshot-caption">Selecting a platform in Tectonic Installer</div>
   </div>
 </div>
 
@@ -190,8 +190,8 @@ After the installer is complete, you'll have a Tectonic cluster and be able to a
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
-    <img src="../../img/prometheus-monitoring.png">
-    <div class="co-m-screenshot-caption">Viewing a node in the Tectonic Console</div>
+    <img src="../../img/walkthrough/nginx-deploy-pods.png">
+    <div class="co-m-screenshot-caption">Viewing pods in the Tectonic Console</div>
   </div>
 </div>
 
