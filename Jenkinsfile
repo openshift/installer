@@ -12,8 +12,13 @@ pipeline {
   }
 
   options {
-    timeout(time:35, unit:'MINUTES')
+    timeout(time:45, unit:'MINUTES')
     buildDiscarder(logRotator(numToKeepStr:'20'))
+  }
+
+  environment {
+    GO_PROJECT = '/go/src/github.com/coreos/tectonic-installer'
+    MAKEFLAGS = '-j4'
   }
 
   stages {
@@ -56,9 +61,6 @@ pipeline {
     }
 
     stage('Installer: Build & Test') {
-      environment {
-        GO_PROJECT = '/go/src/github.com/coreos/tectonic-installer'
-      }
       steps {
         checkout scm
         sh "mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT"
@@ -90,9 +92,11 @@ pipeline {
                                passwordVariable: 'AWS_SECRET_ACCESS_KEY'
                              ]
                              ]) {
-            unstash 'installer'
-            unstash 'sanity'
-            sh '${WORKSPACE}/test/scripts/aws.sh aws.tfvars'
+              unstash 'installer'
+              unstash 'sanity'
+              timeout(30) {
+                sh '${WORKSPACE}/test/scripts/aws.sh aws.tfvars'
+              }
             }
           },
           "TerraForm: AWS-experimental": {
@@ -128,7 +132,9 @@ pipeline {
                        ]
                        ]) {
         unstash 'installer'
-        sh '${WORKSPACE}/test/scripts/aws-destroy.sh aws.tfvars'
+        timeout(10) {
+          sh '${WORKSPACE}/test/scripts/aws-destroy.sh aws.tfvars'
+        }
       }
       // Cleanup workspace
       deleteDir()
