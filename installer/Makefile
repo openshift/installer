@@ -6,10 +6,14 @@ LD_FLAGS="-w -X github.com/coreos/tectonic-installer/installer/cmd/installer.Ver
 
 REPO=github.com/coreos/tectonic-installer/installer
 
-GO_FILES=$(shell find . -type f -name '*.go')
+# Wrapper around find. Works with filenamess containing spaces.
+find=$(shell [ -d $(1) ] && find $(1) -type f $(2) | sed 's/ /\\ /g')
+
+GO_FILES=$(call find,.,-name '*.go')
 
 .PHONY: all
-all: build
+all:
+	@$(MAKE) build -r
 
 .PHONY: build
 build: bin/$(OS)/installer
@@ -24,16 +28,27 @@ bin/%/installer: $(GO_FILES) assets/bindata.go
 backend: assets/bindata.go
 	GOOS=$(OS) go build -o bin/$(OS)/installer -ldflags $(LD_FLAGS) $(REPO)/cmd/installer
 
-assets/bindata.go: frontend bin/go-bindata $(shell find assets -type f | grep -v .go)
+.PHONY: frontend
+frontend: assets/frontend/scripts/app-bundle.js
+
+assets/bindata.go: assets/frontend/scripts/app-bundle.js bin/go-bindata $(shell find assets -type f | grep -v .go)
 	./bin/go-bindata -pkg assets -o assets/bindata.go -ignore=bindata.go -ignore=doc.go -ignore=assets.go -prefix assets assets/...
 
-.PHONY: frontend
-frontend:
-	$(MAKE) -C frontend
+assets/frontend/scripts/app-bundle.js: frontend/node_modules frontend/*.jsx frontend/*.js $(call find,frontend/components,-name '*.jsx') $(call find,frontend/node_modules)
+	cd frontend && yarn run build
+
+frontend/node_modules: frontend/package.json frontend/yarn.lock
+	cd frontend && yarn install --quiet > /dev/null
+
+.PHONY: lint
+lint: build bin/golint
+	./scripts/lint-backend
+	cd frontend && yarn run lint
 
 .PHONY: test
 test: build bin/golint
-	./scripts/test
+	./scripts/test-backend
+	cd frontend && yarn test
 
 .PHONY: smoke-aws
 smoke-aws: bin/sanity
@@ -83,8 +98,9 @@ bin/sanity:
 
 .PHONY: clean
 clean:
-	$(MAKE) -C frontend clean
-	rm -rf bin/
 	rm -f assets/bindata.go
-	rm -rf assets/frontend/scripts
-	rm -rf .workspace/
+	rm -f assets/frontend/scripts/app-bundle.js
+	rm -fr .workspace/
+	rm -fr assets/frontend/scripts
+	rm -fr bin/
+	rm -fr frontend/node_modules

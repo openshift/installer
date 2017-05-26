@@ -49,15 +49,15 @@ Matchbox is an open-source service for on-premise environments that matches bare
 Download a Matchbox v0.6+ [release](https://github.com/coreos/matchbox/releases).
 
 ```sh
-$ wget https://github.com/coreos/matchbox/releases/download/v0.6.0/matchbox-v0.6.0-linux-amd64.tar.gz
-$ wget https://github.com/coreos/matchbox/releases/download/v0.6.0/matchbox-v0.6.0-linux-amd64.tar.gz.asc
+$ wget https://github.com/coreos/matchbox/releases/download/v0.6.1/matchbox-v0.6.1-linux-amd64.tar.gz
+$ wget https://github.com/coreos/matchbox/releases/download/v0.6.1/matchbox-v0.6.1-linux-amd64.tar.gz.asc
 ```
 
 Untar the release.
 
 ```sh
-$ tar xzvf matchbox-v0.6.0-linux-amd64.tar.gz
-$ cd matchbox-v0.6.0-linux-amd64
+$ tar xzvf matchbox-v0.6.1-linux-amd64.tar.gz
+$ cd matchbox-v0.6.1-linux-amd64
 ```
 
 [Install Matchbox](https://github.com/coreos/matchbox/blob/master/Documentation/deployment.md) on a server or Kubernetes cluster that your bare-metal machines can reach using the guides:
@@ -162,8 +162,8 @@ Make sure a current version of either the Google Chrome or Mozilla Firefox web b
 Download the [Tectonic Installer][latest-tectonic-release].
 
 ```sh
-wget https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz
-tar xzvf tectonic-1.6.2-tectonic.1.tar.gz
+wget https://releases.tectonic.com/tectonic-1.6.4-tectonic.1.tar.gz
+tar xzvf tectonic-1.6.4-tectonic.1.tar.gz
 cd tectonic/tectonic-installer
 ```
 
@@ -173,12 +173,12 @@ Run the Tectonic Installer that matches your platform (`linux` or `darwin`):
 ./$PLATFORM/installer
 ```
 
-A browser window should open to begin the GUI installation process. When prompted for Matchbox credentials, insert the `client.crt`, `client.key`, and `ca.crt` created previously. You will need to enter machine MAC addresses, domain names, and your SSH public key as well.
+A browser window will open to begin the GUI installation process. When prompted for Matchbox credentials, insert the `client.crt`, `client.key`, and `ca.crt` created previously. You will need to enter machine MAC addresses, domain names, and your SSH public key as well.
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
     <img src="../../img/installer-bare-metal.png">
-    <div class="co-m-screenshot-caption">Starting the Tectonic Installer for bare metal</div>
+    <div class="co-m-screenshot-caption">Selecting a platform in Tectonic Installer</div>
   </div>
 </div>
 
@@ -190,8 +190,8 @@ After the installer is complete, you'll have a Tectonic cluster and be able to a
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
-    <img src="../../img/prometheus-monitoring.png">
-    <div class="co-m-screenshot-caption">Viewing a node in the Tectonic Console</div>
+    <img src="../../img/walkthrough/nginx-deploy-pods.png">
+    <div class="co-m-screenshot-caption">Viewing pods in the Tectonic Console</div>
   </div>
 </div>
 
@@ -200,7 +200,7 @@ After the installer is complete, you'll have a Tectonic cluster and be able to a
 [copr-repo]: https://copr.fedorainfracloud.org/coprs/g/CoreOS/matchbox/
 [coreos-release]: https://coreos.com/releases/
 [daemonset]: http://kubernetes.io/docs/admin/daemons/
-[latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz
+[latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.6.4-tectonic.1.tar.gz
 [matchbox-config]: https://coreos.com/matchbox/docs/latest/config.html
 [matchbox-dnsmasq]: https://github.com/coreos/matchbox/tree/master/contrib/dnsmasq
 [matchbox]: https://coreos.com/matchbox

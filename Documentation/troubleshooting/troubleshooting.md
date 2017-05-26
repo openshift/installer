@@ -1,68 +1,16 @@
 # Troubleshooting Tectonic
 
-## Troubleshooting worker nodes using SSH
+This directory contains documents about troubleshooting Tectonic clusters.
 
-Tectonic worker nodes are not assigned a public IP address, only the controller node. To debug a worker node, SSH to it through a controller (bastion host) or use a VPN connected to the internal network.
-
-To do so, perform the following:
-
-### Set up SSH agent forwarding
-
-Once a passphrase of the local ssh key is added to `ssh-agent`, you will not be prompted for the credentials the next time connecting to nodes via SSH or SCP. The following instructions outline adding a passphrase to the `ssh-agent` on the system.
-
-  1. At the terminal, enter:
-
-  `$ eval ssh-agent`
-
-  2. Run the following:
-
-  `$ ssh-add`
-
-  The `ssh-add` command prompts for a private key passphrase and adds it to the list maintained by `ssh-agent`.
-
-  3. Enter your private key passphrase.
-
-  4. Before logging out, run the following:
-
-  `$ kill $SSH_AGENT_PID`
-
-  To automatically run this command when logging out, place it in the `.logout` file if you are using csh or tcsh. Place the command in the `.bash_logout` file if you are using bash.
-
-### Get the IP address of the worker nodes
-
-Run the following command:
-
-`$ kubectl get nodes -o wide`
-
-A table of nodes and their IP addresses is displayed:
-
-```bash
-NAME                                       STATUS    AGE      EXTERNAL-IP
-ip-192-0-2-18.us-west-2.compute.internal   Ready     3d       <none>
-ip-192-0-2-10.us-west-2.compute.internal   Ready     3d       203.0.113.3
-ip-192-0-2-12.us-west-2.compute.internal   Ready     3d       <none>
-```
-
-### Connect to a controller node
-
-SSH to a controller node with its `EXTERNAL-IP`, providing the `-A` flag to forward the local `ssh-agent`. Add the `-i` option giving the location of the ssh key known to Tectonic:
-
-```bash
-$ ssh -A core@203.0.113.3 -i /path/to/tectonic/cluster/ssh/key
-```
-
-### Connect to a worker node
-
-The worker node is accessible from the controller because both machines are on the same private network, but the controller is the only public entry point into the cluster. From a controller, reach worker nodes on their internal cluster IP addresses. This address is encoded in the node's host name by convention. In this example, the worker node `ip-192-0-2-18.us-west-2.compute.internal` listed by `kubectl get nodes -o wide` has the internal IP 192.0.2.18.
-
-Having connected to a controller, ssh from there to the target worker node's internal IP:
-
-```bash
-# From master node
-$ ssh core@192.0.2.18
-```
-
-View logs on the worker node by using `journalctl -xe` or similar tools. [Reading the system log][journalctl] has more information.
+* [Troubleshooting Tectonic Installer][installer-terraform] describes troubleshooting the installation process itself, including reapplying after a partially completed run, and errors related to missing Terraform modules and failed `tectonic.service` unit.
+* [Troubleshooting worker nodes using SSH][worker-nodes] describes how to SSH into a controller or worker node to troubleshoot at the host level.
+* [Disaster recovery of Scheduler and Controller Manager pods][controller-recovery] describes how to recover a Kubernetes cluster from the failure of certain control plane components.
+* [Etcd snapshot troubleshooting][etcd-backup-restore] explains how to spin up a local Kubernetes API server from a backup of another cluster's etcd state for troubleshooting.
+* The [Tectonic FAQ][faq] answers some common questions about Tectonic versioning, licensing, and other general matters.
 
 
-[journalctl]: https://github.com/coreos/docs/blob/master/os/reading-the-system-log.md
+[controller-recovery]: controller-recovery.md
+[etcd-backup-restore]: workstation-etcd-api-server-restore
+[faq]: faq.md
+[installer-terraform]: installer-terraform.md
+[worker-nodes]: worker-nodes.md

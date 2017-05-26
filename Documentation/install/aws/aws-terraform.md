@@ -6,8 +6,9 @@ Generally, the AWS platform templates adhere to the standards defined by the pro
 
 ## Prerequsities
 
+* **Terraform**: Tectonic Installer includes and requires a specific version of Terraform. This is included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
 * **DNS**: Ensure that the DNS zone is already created and available in Route 53 for the account. For example if the `tectonic_base_domain` is set to `kube.example.com` a Route 53 zone must exist for this domain and the AWS nameservers must be configured for the domain.
-* **Tectonic Account**: Register for a [Tectonic Account][register], which is free for up to 10 nodes. You will need to provide the cluster license and pull secret below.
+* **Tectonic Account**: Register for a [Tectonic Account][register], which is free for up to 10 nodes. You must provide the cluster license and pull secret during installation.
 
 ## Getting Started
 
@@ -16,8 +17,8 @@ Generally, the AWS platform templates adhere to the standards defined by the pro
 Open a new terminal, and run the following commands to download and extract Tectonic Installer.
 
 ```bash
-$ curl -O https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz # download
-$ tar xzvf tectonic-1.6.2-tectonic.1.tar.gz # extract the tarball
+$ curl -O https://releases.tectonic.com/tectonic-1.6.4-tectonic.1.tar.gz # download
+$ tar xzvf tectonic-1.6.4-tectonic.1.tar.gz # extract the tarball
 $ cd tectonic
 ```
 
@@ -27,7 +28,7 @@ Start by setting the `INSTALLER_PATH` to the location of your platform's Tectoni
 
 ```bash
 $ export INSTALLER_PATH=$(pwd)/tectonic-installer/darwin/installer # Edit the platform name.
-$ export PATH=$PATH:$(pwd)/tectonic-installer/darwin # Put the `terraform` binary in our PATH
+$ export PATH=$PATH:$(pwd)/tectonic-installer/darwin # Put the `terraform` binary in the PATH
 ```
 
 Make a copy of the Terraform configuration file for the system. Do not share this configuration file as it is specific to the machine.
@@ -123,3 +124,4 @@ See the [troubleshooting][troubleshooting] document for workarounds for bugs tha
 [terraform]: https://www.terraform.io/downloads.html
 [uninstall]: uninstall.md
 [scale-aws]: ../../admin/aws-scale.md
+[release-notes]: https://coreos.com/tectonic/releases/

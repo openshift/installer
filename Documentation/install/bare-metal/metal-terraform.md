@@ -4,7 +4,8 @@ Following this guide will deploy a Tectonic cluster on virtual or physical hardw
 
 ## Prerequsities
 
-* Matchbox [v0.6.0](https://github.com/coreos/matchbox/releases) installation with the gRPC API enabled. See [installation](https://coreos.com/matchbox/docs/latest/deployment.html).
+* Terraform: Tectonic Installer includes and requires a specific version of Terraform. This is included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
+* [Matchbox v0.6+](https://github.com/coreos/matchbox/releases) installation with the gRPC API enabled. See [installation](https://coreos.com/matchbox/docs/latest/deployment.html).
 * Matchbox TLS client credentials
 * PXE network boot environment with DHCP, TFTP, and DNS services. See [network-setup](https://coreos.com/matchbox/docs/latest/network-setup.html).
 * DNS records for the Kubernetes controller(s) and Tectonic Ingress worker(s). See [DNS](https://coreos.com/tectonic/docs/latest/install/bare-metal#networking).
@@ -21,8 +22,8 @@ Following this guide will deploy a Tectonic cluster on virtual or physical hardw
 Open a new terminal, and run the following commands to download and extract Tectonic Installer.
 
 ```bash
-$ curl -O https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz
-$ tar xzvf tectonic-1.6.2-tectonic.1.tar.gz
+$ curl -O https://releases.tectonic.com/tectonic-1.6.4-tectonic.1.tar.gz
+$ tar xzvf tectonic-1.6.4-tectonic.1.tar.gz
 $ cd tectonic
 ```
 
@@ -135,3 +136,4 @@ See the [troubleshooting][troubleshooting] document for workarounds for bugs tha
 [troubleshooting]: ../../troubleshooting/faq.md
 [uninstall]: uninstall.md
 [scale-metal]: ../../admin/bare-metal-scale.md
+[release-notes]: https://coreos.com/tectonic/releases/

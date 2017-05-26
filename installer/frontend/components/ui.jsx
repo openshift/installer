@@ -11,6 +11,7 @@ import { toError, toAsyncError, toExtraData, toInFly, toExtraDataInFly, toExtraD
 import { configActionTypes, dirtyActionTypes, configActions } from '../actions';
 import { DESELECTED_FIELDS } from '../cluster-config.js';
 
+import { Alert } from './alert';
 
 // Use this function to dirty a field due to
 // non-user interaction (like uploading a config file)
@@ -68,7 +69,7 @@ const FIELD_PROPS = ImmutableSet([
   'width',
 ]);
 
-export const ErrorComponent = props => props.error ? <div className="wiz-error-message">{props.error}</div> : <span/>;
+export const ErrorComponent = props => props.error ? <Alert severity='error'>{props.error}</Alert> : <span/>;
 
 const Field = connect(
   (state, {id}) => ({isDirty: _.get(state.dirty, id)}),
@@ -286,7 +287,7 @@ export const Selector = props => {
 
   const optionsElems = options.map(o => <option value={o.value} key={o.value}>{o.label}</option>);
   if (props.disabledValue) {
-    optionsElems.splice(0, 0, <option disabled={true} key="disabled">{props.disabledValue}</option>);
+    optionsElems.splice(0, 0, <option disabled={true} key="disabled" value="">{props.disabledValue}</option>);
   }
 
   const style = Object.assign({}, props.style || {});
@@ -681,3 +682,25 @@ export class AsyncSelect extends React.Component {
     );
   }
 }
+
+class InnerFieldList_ extends React.Component {
+  render() {
+    const {value, removeField, children, fields, id} = this.props;
+    const onlyChild = React.Children.only(children);
+    const newChildren = _.map(value, (unused, i) => {
+      const row = {};
+      _.keys(fields).forEach(k => row[k] = `${id}.${i}.${k}`);
+      const childProps = { row, i, key: i, remove: () => removeField(id, i) };
+      if (i === value.length - 1) {
+        childProps.autoFocus = true;
+      }
+      return React.cloneElement(onlyChild, childProps);
+    });
+    return <div>{newChildren}</div>;
+  }
+}
+
+export const ConnectedFieldList = connect(
+  ({clusterConfig}, {id}) => ({value: clusterConfig[id]}),
+  (dispatch) => ({removeField: (id, i) => dispatch(configActions.removeField(id, i))})
+)((props) => <InnerFieldList_ {...props} />);

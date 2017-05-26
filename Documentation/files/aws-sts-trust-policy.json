@@ -4,7 +4,7 @@
     {
       "Effect": "Allow",
       "Principal": {
-        "Service": "ec2.amazonaws.com"
+        "AWS": "arn:aws:iam::<TRUSTED-ACCOUNT-ID>:user/<TRUSTED-IAM-USER-NAME>"
       },
       "Action": "sts:AssumeRole"
     }

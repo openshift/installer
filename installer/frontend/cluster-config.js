@@ -65,6 +65,7 @@ export const UPDATER = 'updater';
 export const UPDATER_ENABLED = 'updater_enabled';
 export const ADMIN_EMAIL = 'adminEmail';
 export const ADMIN_PASSWORD = 'adminPassword';
+export const ADMIN_PASSWORD2 = 'adminPassword2';
 
 // Networking
 export const POD_CIDR = 'podCIDR';
@@ -86,14 +87,15 @@ export const AWS_CLUSTER_INFO = 'aws_clusterInfo';
 export const AWS_WORKERS = 'aws_workers';
 export const AWS_REGION_FORM = 'aws_regionForm';
 export const BM_SSH_KEY = 'bm_sshKey';
+export const CREDS = 'creds';
 export const LICENSING = 'licensing';
 
 
 export const SPLIT_DNS_ON = "on";
 export const SPLIT_DNS_OFF = "off";
 export const SPLIT_DNS_OPTIONS = {
-  [SPLIT_DNS_ON]: "Use both a public and private zone (default).",
-  [SPLIT_DNS_OFF]: "Only use a public zone.",
+  [SPLIT_DNS_ON]: "Create an additional Route 53 private zone (default).",
+  [SPLIT_DNS_OFF]: "Do not create a private zone.",
 };
 
 export const toVPCSubnet = (region, subnets, deselected) => {

@@ -1,4 +1,4 @@
-# Tectonic with CentOS 7 Worker 
+# Tectonic with CentOS 7 Worker
 
 ## Disclaimer
 
@@ -6,7 +6,7 @@ This is unofficial. The author does not update, maintain, or support this setup.
 
 ## CoreOS Tectonic
 
-Provision a Tectonic `1.6.2-tectonic.1` bare-metal cluster (Container Linux, 1 controller, 2 workers) in the usual way with [matchbox](https://github.com/coreos/matchbox) and the Tectonic [Installer](https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html).
+Provision a Tectonic `1.6.4-tectonic.1` bare-metal cluster (Container Linux, 1 controller, 2 workers) in the usual way with [matchbox](https://github.com/coreos/matchbox) and the Tectonic [Installer](https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html).
 
 Locally, you may PXE boot QEMU/KVM nodes via Tectonic and matchbox on the `metal0` bridge.
 
@@ -200,4 +200,3 @@ https://storage.googleapis.com/dghubble/tectonic-worker.png
 * CentOS doesn't support Ignition so you'll need to provision with some other system
 * Raise max user watches to 16184 to match Container Linux workers
 * Adjust Kubelet `--cluster_dns` flag if using custom service CIDR
-

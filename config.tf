@@ -17,9 +17,9 @@ variable "tectonic_container_images" {
 
   default = {
     hyperkube                       = "quay.io/coreos/hyperkube:v1.6.4_coreos.0"
-    pod_checkpointer                = "quay.io/coreos/pod-checkpointer:7da334a1d768c346798601eb8387f266d15cf330"
+    pod_checkpointer                = "quay.io/coreos/pod-checkpointer:2cad4cac4186611a79de1969e3ea4924f02f459e"
     bootkube                        = "quay.io/coreos/bootkube:v0.4.4"
-    console                         = "quay.io/coreos/tectonic-console:v1.6.1"
+    console                         = "quay.io/coreos/tectonic-console:v1.6.3"
     identity                        = "quay.io/coreos/dex:v2.4.1"
     container_linux_update_operator = "quay.io/coreos/container-linux-update-operator:v0.2.0"
     kube_version_operator           = "quay.io/coreos/kube-version-operator:v1.6.2"
@@ -41,7 +41,7 @@ variable "tectonic_container_images" {
     kubedns_sidecar                 = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.1"
     flannel                         = "quay.io/coreos/flannel:v0.7.1-amd64"
     etcd                            = "quay.io/coreos/etcd:v3.1.6"
-    etcd_operator                   = "quay.io/coreos/etcd-operator:v0.2.5"
+    etcd_operator                   = "quay.io/coreos/etcd-operator:v0.3.0"
     kenc                            = "quay.io/coreos/kenc:48b6feceeee56c657ea9263f47b6ea091e8d3035"
     awscli                          = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
     kube_version                    = "quay.io/coreos/kube-version:0.1.0"
@@ -56,8 +56,8 @@ variable "tectonic_versions" {
     etcd       = "3.1.6"
     prometheus = "v1.6.3"
     monitoring = "1.2.0"
-    kubernetes = "1.6.2+tectonic.1"
-    tectonic   = "1.6.2-tectonic.1"
+    kubernetes = "1.6.4+tectonic.1"
+    tectonic   = "1.6.4-tectonic.1"
   }
 }
 
@@ -65,7 +65,7 @@ variable "tectonic_service_cidr" {
   type    = "string"
   default = "10.3.0.0/16"
 
-  description = "This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation."
+  description = "This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. The maximum size of this IP range is /12"
 }
 
 variable "tectonic_cluster_cidr" {

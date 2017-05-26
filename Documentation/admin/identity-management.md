@@ -51,12 +51,32 @@ There are three types of subjects in Tectonic:
 There are two types of roles in Tectonic:
 
 * Roles: Scope of Roles is restricted to a namespace
-* Cluster Roles: Cluster Roles are restricted to a physical cluster
+* Cluster Roles: Cluster Roles are restricted to a cluster
 
 Access is granted to a role based on how it's bound. For the same purpose, Tectonic has two types of role binding:
 
  * Namespace Role Binding: Defines permission at namespace level for users or a group of users
  * Cluster-wide Role Binding: Defines permission at cluster level for users or a group of users
+
+ A Role Binding can reference both Role and Cluster Role to grant permissions to resources defined in the respective roles. This allows administrators to define a set of common roles for the entire cluster, then reuse them within multiple namespaces. For example, the `view` Cluster Role referred to in the following Role Binding grants read-only permission to `jane@coreos.com` but the user cannot not change objects in the `kube-system` namespace.
+
+ ```yaml
+ # This role binding allows "view" to view resources in the "kube-system" namespace.
+kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: view-only
+  namespace: kube-system # This only grants permissions within the "kube-system" namespace.
+subjects:
+- kind: User
+  name: jane@coreos.com
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: ClusterRole
+  name: view
+  apiGroup: rbac.authorization.k8s.io
+
+  ```
 
 ### Default Roles in Tectonic
 
@@ -68,9 +88,9 @@ The default Cluster-wide roles in tectonic are:
 | ------------- |:-------------|
 | cluster-admin | Full control over all the objects in a cluster.|
 | admin         | Full control over all objects in a namespace. Bind this role into a namespace to give administrative control to a user or group.|
-| user          | Access to all common objects, either within a namespace or cluster-wide, but is prevented from changing the RBAC policies. |
-| readonly      | Read only view for all objects. Can be used cluster-wide, or just within a specific namespace.|
-| ingress-controller |Designed to be used by an ingress controller to configure routing.|
+| edit          | Access to all common objects, either within a namespace or cluster-wide, but is prevented from changing the RBAC policies. |
+| user          | Access to all common objects, either within a namespace or cluster-wide. |
+| view      | Read only view for all objects. Can be used cluster-wide, or just within a specific namespace.|
 
 
 [user-management]: user-management.md
