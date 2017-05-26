@@ -56,8 +56,8 @@ variable "tectonic_versions" {
     etcd       = "3.1.6"
     prometheus = "v1.6.3"
     monitoring = "1.2.0"
-    kubernetes = "1.6.2+tectonic.1"
-    tectonic   = "1.6.2-tectonic.1"
+    kubernetes = "1.6.4+tectonic.1"
+    tectonic   = "1.6.4-tectonic.1"
   }
 }
 
