@@ -357,19 +357,13 @@ class AWS_VPCComponent extends React.Component {
       </div>
       { !privateZone &&
         <div className="row form-group">
-          <div className="col-xs-3">
-            <label>
-              Split DNS
-            </label>
-          </div>
-          <div className="col-xs-9">
+          <div className="col-xs-offset-3 col-xs-9">
             <Connect field={AWS_SPLIT_DNS}>
               <Select>
                 {_.map(SPLIT_DNS_OPTIONS, ((k, v) => <option value={v} key={k}>{k}</option>))}
               </Select>
             </Connect>
             <p className="text-muted wiz-help-text">
-              By default, a private zone is used for internal traffic.
               See AWS <a href="http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html"
                 target="_blank">Split-View DNS documentation&nbsp;<i className="fa fa-external-link" /></a>
             </p>

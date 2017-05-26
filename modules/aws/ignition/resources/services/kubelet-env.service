@@ -6,7 +6,7 @@ ConditionPathExists=!/etc/kubernetes/kubelet.env
 
 ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes
 ExecStartPre=/usr/bin/bash -c "/opt/s3-puller.sh ${kubeconfig_s3_location} /etc/kubernetes/kubeconfig"
-ExecStartPre=/usr/bin/bash -c "docker run --rm -v /etc/kubernetes/kubeconfig:/kubeconfig ${kube_version_image_url}:${kube_version_image_tag} --kubeconfig=/kubeconfig > /etc/kubernetes/kube.version"
+ExecStartPre=/usr/bin/bash -c "docker run --rm -v /etc/kubernetes:/etc/kubernetes ${kube_version_image_url}:${kube_version_image_tag} --kubeconfig=/etc/kubernetes/kubeconfig > /etc/kubernetes/kube.version"
 ExecStart=/usr/bin/bash -c "echo KUBELET_IMAGE_URL=${kubelet_image_url} > /etc/kubernetes/kubelet.env; echo KUBELET_IMAGE_TAG=$(tr '+' '_' < /etc/kubernetes/kube.version) >> /etc/kubernetes/kubelet.env; rm /etc/kubernetes/kube.version"
 Restart=on-failure
 RestartSec=10

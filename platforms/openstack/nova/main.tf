@@ -23,6 +23,8 @@ module "bootkube" {
   oidc_groups_claim   = "groups"
   oidc_client_id      = "tectonic-kubectl"
 
+  experimental_enabled = "${var.tectonic_experimental}"
+
   etcd_endpoints   = ["${openstack_compute_instance_v2.etcd_node.*.access_ip_v4}"]
   etcd_ca_cert     = "${var.tectonic_etcd_ca_cert_path}"
   etcd_client_cert = "${var.tectonic_etcd_client_cert_path}"
@@ -79,10 +81,11 @@ nameserver 8.8.8.8
 nameserver 8.8.4.4
 EOF
 
-  base_domain      = "${var.tectonic_base_domain}"
-  cluster_name     = "${var.tectonic_cluster_name}"
-  container_image  = "${var.tectonic_container_images["etcd"]}"
-  core_public_keys = ["${module.secrets.core_public_key_openssh}"]
+  base_domain           = "${var.tectonic_base_domain}"
+  cluster_name          = "${var.tectonic_cluster_name}"
+  container_image       = "${var.tectonic_container_images["etcd"]}"
+  core_public_keys      = ["${module.secrets.core_public_key_openssh}"]
+  tectonic_experimental = "${var.tectonic_experimental}"
 }
 
 module "master_nodes" {
@@ -103,6 +106,7 @@ EOF
   core_public_keys             = ["${module.secrets.core_public_key_openssh}"]
   bootkube_service             = "${module.bootkube.systemd_service}"
   tectonic_service             = "${module.tectonic.systemd_service}"
+  tectonic_experimental        = "${var.tectonic_experimental}"
   hostname_infix               = "master"
   node_labels                  = "node-role.kubernetes.io/master"
   node_taints                  = "node-role.kubernetes.io/master=:NoSchedule"

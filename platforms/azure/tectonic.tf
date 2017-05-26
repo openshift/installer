@@ -76,7 +76,7 @@ resource "null_resource" "tectonic" {
   }
 
   provisioner "file" {
-    source      = "${path.cwd}/generated"
+    source      = "./generated"
     destination = "$HOME/tectonic"
   }
 

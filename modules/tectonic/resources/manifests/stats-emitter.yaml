@@ -133,3 +133,6 @@ spec:
         emptyDir: {}
       imagePullSecrets:
       - name: coreos-pull-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534

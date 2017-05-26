@@ -16,18 +16,19 @@ data "null_data_source" "etcd" {
 resource "template_dir" "experimental" {
   count           = "${var.experimental_enabled ? 1 : 0}"
   source_dir      = "${path.module}/resources/experimental/manifests"
-  destination_dir = "${path.cwd}/generated/experimental"
+  destination_dir = "./generated/experimental"
 
   vars {
     etcd_operator_image = "${var.container_images["etcd_operator"]}"
     etcd_service_ip     = "${cidrhost(var.service_cidr, 15)}"
+    kenc_image          = "${var.container_images["kenc"]}"
   }
 }
 
 resource "template_dir" "bootstrap-experimental" {
   count           = "${var.experimental_enabled ? 1 : 0}"
   source_dir      = "${path.module}/resources/experimental/bootstrap-manifests"
-  destination_dir = "${path.cwd}/generated/bootstrap-experimental"
+  destination_dir = "./generated/bootstrap-experimental"
 
   vars {
     etcd_image                = "${var.container_images["etcd"]}"
@@ -39,7 +40,7 @@ resource "template_dir" "bootstrap-experimental" {
 resource "template_dir" "etcd-experimental" {
   count           = "${var.experimental_enabled ? 1 : 0}"
   source_dir      = "${path.module}/resources/experimental/etcd"
-  destination_dir = "${path.cwd}/generated/etcd"
+  destination_dir = "./generated/etcd"
 
   vars {
     etcd_version              = "${var.versions["etcd"]}"
@@ -50,7 +51,7 @@ resource "template_dir" "etcd-experimental" {
 # Self-hosted manifests (resources/generated/manifests/)
 resource "template_dir" "bootkube" {
   source_dir      = "${path.module}/resources/manifests"
-  destination_dir = "${path.cwd}/generated/manifests"
+  destination_dir = "./generated/manifests"
 
   vars {
     hyperkube_image        = "${var.container_images["hyperkube"]}"
@@ -59,8 +60,6 @@ resource "template_dir" "bootkube" {
     kubednsmasq_image      = "${var.container_images["kubednsmasq"]}"
     kubedns_sidecar_image  = "${var.container_images["kubedns_sidecar"]}"
     flannel_image          = "${var.container_images["flannel"]}"
-    etcd_operator_image    = "${var.container_images["etcd_operator"]}"
-    kenc_image             = "${var.container_images["kenc"]}"
 
     # Choose the etcd endpoints to use.
     # 1. If experimental mode is enabled (self-hosted etcd), then use
@@ -112,7 +111,7 @@ resource "template_dir" "bootkube" {
 # Self-hosted bootstrapping manifests (resources/generated/manifests-bootstrap/)
 resource "template_dir" "bootkube-bootstrap" {
   source_dir      = "${path.module}/resources/bootstrap-manifests"
-  destination_dir = "${path.cwd}/generated/bootstrap-manifests"
+  destination_dir = "./generated/bootstrap-manifests"
 
   vars {
     hyperkube_image = "${var.container_images["hyperkube"]}"
@@ -141,19 +140,19 @@ resource "template_dir" "bootkube-bootstrap" {
 resource "local_file" "etcd_ca_crt" {
   count    = "${var.etcd_ca_cert == "" ? 0 : 1}"
   content  = "${file(var.etcd_ca_cert)}"
-  filename = "${path.cwd}/generated/tls/etcd-ca.crt"
+  filename = "./generated/tls/etcd-ca.crt"
 }
 
 resource "local_file" "etcd_client_crt" {
   count    = "${var.etcd_client_cert == "" ? 0 : 1}"
   content  = "${file(var.etcd_client_cert)}"
-  filename = "${path.cwd}/generated/tls/etcd-client.crt"
+  filename = "./generated/tls/etcd-client.crt"
 }
 
 resource "local_file" "etcd_client_key" {
   count    = "${var.etcd_client_key == "" ? 0 : 1}"
   content  = "${file(var.etcd_client_key)}"
-  filename = "${path.cwd}/generated/tls/etcd-client.key"
+  filename = "./generated/tls/etcd-client.key"
 }
 
 # kubeconfig (resources/generated/auth/kubeconfig)
@@ -170,7 +169,7 @@ data "template_file" "kubeconfig" {
 
 resource "local_file" "kubeconfig" {
   content  = "${data.template_file.kubeconfig.rendered}"
-  filename = "${path.cwd}/generated/auth/kubeconfig"
+  filename = "./generated/auth/kubeconfig"
 }
 
 # bootkube.sh (resources/generated/bootkube.sh)
@@ -184,7 +183,7 @@ data "template_file" "bootkube-sh" {
 
 resource "local_file" "bootkube-sh" {
   content  = "${data.template_file.bootkube-sh.rendered}"
-  filename = "${path.cwd}/generated/bootkube.sh"
+  filename = "./generated/bootkube.sh"
 }
 
 # bootkube.service (available as output variable)

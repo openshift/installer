@@ -1,10 +1,6 @@
-tectonic_worker_count = "4"
+tectonic_worker_count = "2"
 
-tectonic_master_count = "3"
-
-tectonic_etcd_count = "3"
-
-tectonic_etcd_servers = [""]
+tectonic_master_count = "1"
 
 tectonic_base_domain = "tectonic.dev.coreos.systems"
 
@@ -29,3 +25,5 @@ tectonic_aws_etcd_ec2_type = "m4.large"
 tectonic_aws_vpc_cidr_block = "10.0.0.0/16"
 
 tectonic_aws_external_vpc_id = ""
+
+tectonic_experimental = true

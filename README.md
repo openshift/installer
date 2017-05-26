@@ -1,5 +1,5 @@
 # Tectonic Installer
-[![Build Status](https://jenkins-tectonic-installer-public.prod.coreos.systems/buildStatus/icon?job=coreos%20-%20tectonic-installer/tectonic-installer/master)](https://jenkins-tectonic-installer-public.prod.coreos.systems/job/coreos%20-%20tectonic-installer/job/tectonic-installer/job/master)
+![Build Status](https://jenkins-tectonic-installer-public.prod.coreos.systems/buildStatus/icon?job=coreos%20-%20tectonic-installer/tectonic-installer/master)
 
 Tectonic is built on pure-upstream Kubernetes but has an opinion on the best way to install and run a Kubernetes cluster. This project helps you install a Kubernetes cluster the "Tectonic Way". It provides good defaults, enables install automation, and is customizable to meet your infrastructure needs.
 
