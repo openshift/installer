@@ -68,9 +68,9 @@ The default Cluster-wide roles in tectonic are:
 | ------------- |:-------------|
 | cluster-admin | Full control over all the objects in a cluster.|
 | admin         | Full control over all objects in a namespace. Bind this role into a namespace to give administrative control to a user or group.|
-| user          | Access to all common objects, either within a namespace or cluster-wide, but is prevented from changing the RBAC policies. |
-| readonly      | Read only view for all objects. Can be used cluster-wide, or just within a specific namespace.|
-| ingress-controller |Designed to be used by an ingress controller to configure routing.|
+| edit          | Access to all common objects, either within a namespace or cluster-wide, but is prevented from changing the RBAC policies. |
+| user          | Access to all common objects, either within a namespace or cluster-wide. |
+| view      | Read only view for all objects. Can be used cluster-wide, or just within a specific namespace.|
 
 
 [user-management]: user-management.md
