@@ -11,7 +11,7 @@ const credsForm = new Form(CREDS, [
   new Field(ADMIN_PASSWORD2, {default: '', validator: validate.nonEmpty}),
 ], {
   validator: (data, cc) => {
-    if (cc[ADMIN_PASSWORD] !== cc[ADMIN_PASSWORD2]) {
+    if (cc[ADMIN_PASSWORD] && cc[ADMIN_PASSWORD2] && cc[ADMIN_PASSWORD] !== cc[ADMIN_PASSWORD2]) {
       return 'Passwords do not match.';
     }
   },
