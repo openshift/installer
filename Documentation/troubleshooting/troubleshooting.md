@@ -10,7 +10,7 @@ This directory contains documents about troubleshooting Tectonic clusters.
 
 
 [controller-recovery]: controller-recovery.md
-[etcd-backup-restore]: workstation-etcd-api-server-restore
+[etcd-backup-restore]: workstation-etcd-api-server-restore.md
 [faq]: faq.md
 [installer-terraform]: installer-terraform.md
 [worker-nodes]: worker-nodes.md
