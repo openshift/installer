@@ -1,4 +1,4 @@
-export CGO_ENABLED:=0
+export CGO_ENABLED=0
 export VERSION=$(shell ../git-version)
 
 OS=$(shell uname | tr A-Z a-z)
@@ -88,7 +88,7 @@ vendor: glide.yaml
 tools: bin/go-bindata bin/sanity bin/golint
 
 bin/golint:
-	CGO_ENABLED=0 go build -o bin/golint $(REPO)/vendor/github.com/golang/lint/golint
+	go build -o bin/golint $(REPO)/vendor/github.com/golang/lint/golint
 
 bin/go-bindata:
 	go build -o bin/go-bindata $(REPO)/vendor/github.com/jteeuwen/go-bindata/go-bindata
