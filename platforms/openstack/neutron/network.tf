@@ -43,7 +43,7 @@ resource "openstack_networking_port_v2" "master" {
   count              = "${var.tectonic_master_count}"
   name               = "${var.tectonic_cluster_name}_port_master_${count.index}"
   network_id         = "${openstack_networking_network_v2.network.id}"
-  security_group_ids = ["${module.master_nodes.secgroup_id}"]
+  security_group_ids = ["${module.master_nodes.secgroup_master_id}"]
   admin_state_up     = "true"
 
   fixed_ip {
@@ -70,7 +70,7 @@ resource "openstack_networking_port_v2" "worker" {
   count              = "${var.tectonic_worker_count}"
   name               = "${var.tectonic_cluster_name}_port_worker_${count.index}"
   network_id         = "${openstack_networking_network_v2.network.id}"
-  security_group_ids = ["${module.worker_nodes.secgroup_id}"]
+  security_group_ids = ["${module.worker_nodes.secgroup_node_id}"]
   admin_state_up     = "true"
 
   fixed_ip {
