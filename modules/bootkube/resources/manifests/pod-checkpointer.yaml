@@ -20,7 +20,7 @@ spec:
         checkpointer.alpha.coreos.com/checkpoint: "true"
     spec:
       containers:
-      - name: checkpoint
+      - name: pod-checkpointer
         image: ${pod_checkpointer_image}
         command:
         - /checkpoint
