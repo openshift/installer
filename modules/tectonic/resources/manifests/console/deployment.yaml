@@ -39,7 +39,7 @@ spec:
               name: tectonic-config
               key: kubeAPIServerURL
         - name: BRIDGE_LISTEN
-          value: http://0.0.0.0:80
+          value: http://0.0.0.0:8080
         - name: BRIDGE_BASE_ADDRESS
           valueFrom:
             configMapKeyRef:
@@ -100,7 +100,7 @@ spec:
           failureThreshold: 3
           httpGet:
             path: /health
-            port: 80
+            port: 8080
             scheme: HTTP
           initialDelaySeconds: 30
           periodSeconds: 10
@@ -108,7 +108,7 @@ spec:
           timeoutSeconds: 1
         name: tectonic-console
         ports:
-        - containerPort: 80
+        - containerPort: 8080
           protocol: TCP
         resources:
           limits:
@@ -138,7 +138,9 @@ spec:
       imagePullSecrets:
       - name: coreos-pull-secret
       restartPolicy: Always
-      securityContext: {}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
       terminationGracePeriodSeconds: 30
       volumes:
       - name: tectonic-ca-cert-secret
