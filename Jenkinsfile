@@ -96,7 +96,9 @@ pipeline {
               unstash 'installer'
               unstash 'sanity'
               timeout(30) {
-                sh '${WORKSPACE}/test/scripts/aws.sh aws.tfvars'
+                sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws.tfvars'
+                sh '${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws.tfvars'
+                sh '${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws.tfvars'
               }
             }
           },
@@ -112,7 +114,7 @@ pipeline {
                              ]) {
             unstash 'installer'
             unstash 'sanity'
-            sh 'ONLY_PLAN=true ${WORKSPACE}/test/scripts/aws.sh aws-exp.tfvars'
+            sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-exp.tfvars'
             }
           }
         )
@@ -134,7 +136,7 @@ pipeline {
                        ]) {
         unstash 'installer'
         timeout(10) {
-          sh '${WORKSPACE}/test/scripts/aws-destroy.sh aws.tfvars'
+          sh '${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars'
         }
       }
       // Cleanup workspace
