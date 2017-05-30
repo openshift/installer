@@ -108,7 +108,7 @@ Terraform will wait for the disk installation and reboot to complete and then be
 
 Run `terraform apply` until all tasks complete. Your Tectonic cluster should be ready. If you encounter any issues, check the known issues and workarounds below.
 
-### Access the cluster
+## Access the cluster
 
 The Tectonic Console should be up and running after the containers have downloaded. You can access it at the DNS name configured in your variables file.
 
@@ -119,17 +119,14 @@ $ export KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
 
-### Delete the cluster
+## Work with the cluster
 
-Delete your cluster to delete the matchbox profiles and matcher groups. Deletion will not modify or power off your machines.
+For more information on working with installed clusters, see [Scaling Tectonic bare metal clusters][scale-metal], and [Uninstalling Tectonic][uninstall].
 
-```
-$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/metal
-```
-
-### Known issues and workarounds
+## Known issues and workarounds
 
 See the [troubleshooting][troubleshooting] document for workarounds for bugs that are being tracked.
+
 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md
@@ -137,4 +134,6 @@ See the [troubleshooting][troubleshooting] document for workarounds for bugs tha
 [account]: https://account.coreos.com
 [vars]: ../../variables/config.md
 [troubleshooting]: ../../troubleshooting/faq.md
+[uninstall]: uninstall.md
+[scale-metal]: ../../admin/bare-metal-scale.md
 [release-notes]: https://coreos.com/tectonic/releases/

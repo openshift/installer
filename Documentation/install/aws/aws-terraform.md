@@ -92,7 +92,7 @@ $ terraform apply -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
 
 This should run for a little bit, and when complete, your Tectonic cluster should be ready.
 
-### Access the cluster
+## Access the cluster
 
 The Tectonic Console should be up and running after the containers have downloaded. You can access it at the DNS name configured in your variables file.
 
@@ -103,17 +103,14 @@ $ export KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
 
-### Delete the cluster
+## Work with the cluster
 
-Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing VPC and subnets, these items are not touched. To delete, run:
+For more information on working with installed clusters, see [Scaling Tectonic AWS clusters][scale-aws], and [Uninstalling Tectonic][uninstall].
 
-```bash
-$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/aws
-```
-
-### Known issues and workarounds
+## Known issues and workarounds
 
 See the [troubleshooting][troubleshooting] document for workarounds for bugs that are being tracked.
+
 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md
@@ -125,4 +122,6 @@ See the [troubleshooting][troubleshooting] document for workarounds for bugs tha
 [aws-vars]: ../../variables/aws.md
 [aws-gui]: https://coreos.com/tectonic/docs/latest/install/aws/index.html
 [terraform]: https://www.terraform.io/downloads.html
+[uninstall]: uninstall.md
+[scale-aws]: ../../admin/aws-scale.md
 [release-notes]: https://coreos.com/tectonic/releases/

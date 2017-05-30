@@ -115,7 +115,7 @@ This should run for a little bit, and when complete, your Tectonic cluster shoul
 
 If you encounter any issues, check the known issues and workarounds below.
 
-### Access the cluster
+## Access the cluster
 
 The Tectonic Console should be up and running after the containers have downloaded. You can access it at the DNS name configured in your variables file.
 
@@ -126,19 +126,7 @@ $ KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
 
-### Delete the cluster
-
-Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing resource group for DNS, this is not touched. To delete, run:
-
-```
-$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
-```
-
-### Known issues and workarounds
-
-See the [installer troubleshooting][troubleshooting] document for known problem points and workarounds.
-
-## Scaling the cluster
+## Scale the cluster
 
 To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and run:
 
@@ -147,6 +135,14 @@ $ terraform apply $ terraform plan \
   -var-file=build/${CLUSTER}/terraform.tfvars \
   -target module.workers \
   platforms/azure
+```
+
+## Delete the cluster
+
+Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing resource group for DNS, this is not touched. To delete, run:
+
+```
+$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 ```
 
 ## Under the hood
@@ -180,6 +176,11 @@ $ terraform apply $ terraform plan \
 * An Azure VM Scaling Set resource is used to spin-up multiple identical VM configured as worker nodes.
 * Worker VMs all share the same identical Ignition config
 * Worker nodes are not fronted by any LB and don't have public IP addresses. They can be accessed through SSH from any of the master nodes.
+
+## Known issues and workarounds
+
+See the [installer troubleshooting][troubleshooting] document for known problem points and workarounds.
+
 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md
