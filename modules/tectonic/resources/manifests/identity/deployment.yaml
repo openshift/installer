@@ -7,7 +7,7 @@ metadata:
     k8s-app: tectonic-identity
     component: identity
 spec:
-  replicas: 1
+  replicas: 2
   # New identity pods must be healthy for 30 seconds
   # before they're marked as ready.
   minReadySeconds: 30
@@ -54,7 +54,7 @@ spec:
             path: /identity/healthz
             port: 5556
           initialDelaySeconds: 5
-          timeoutSeconds: 1
+          timeoutSeconds: 10
         resources:
           requests:
             cpu: 100m
