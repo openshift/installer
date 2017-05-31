@@ -1,5 +1,5 @@
 resource "aws_elb" "api-internal" {
-  name            = "${var.cluster_name}-api-internal"
+  name            = "${var.cluster_name}-int"
   subnets         = ["${var.subnet_ids}"]
   internal        = true
   security_groups = ["${var.api_sg_ids}"]
@@ -42,7 +42,7 @@ resource "aws_route53_record" "api-internal" {
 
 resource "aws_elb" "api-external" {
   count           = "${var.public_vpc}"
-  name            = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-api-external"
+  name            = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-ext"
   subnets         = ["${var.subnet_ids}"]
   internal        = false
   security_groups = ["${var.api_sg_ids}"]
@@ -92,7 +92,7 @@ resource "aws_route53_record" "api-external" {
 }
 
 resource "aws_elb" "console" {
-  name            = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-console"
+  name            = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-con"
   subnets         = ["${var.subnet_ids}"]
   internal        = "${var.public_vpc ? false : true}"
   security_groups = ["${var.console_sg_ids}"]
