@@ -71,7 +71,7 @@ data "ignition_systemd_unit" "kubelet-env" {
 data "ignition_file" "max-user-watches" {
   filesystem = "root"
   path       = "/etc/sysctl.d/max-user-watches.conf"
-  mode       = "420"
+  mode       = 0644
 
   content {
     content = "fs.inotify.max_user_watches=16184"
@@ -81,7 +81,7 @@ data "ignition_file" "max-user-watches" {
 data "ignition_file" "s3-puller" {
   filesystem = "root"
   path       = "/opt/s3-puller.sh"
-  mode       = "555"
+  mode       = 0755
 
   content {
     content = "${file("${path.module}/resources/s3-puller.sh")}"
@@ -91,7 +91,7 @@ data "ignition_file" "s3-puller" {
 data "ignition_file" "detect-master" {
   filesystem = "root"
   path       = "/opt/detect-master.sh"
-  mode       = "555"
+  mode       = 0755
 
   content {
     content = "${file("${path.module}/resources/detect-master.sh")}"
@@ -113,7 +113,7 @@ data "template_file" "init-assets" {
 data "ignition_file" "init-assets" {
   filesystem = "root"
   path       = "/opt/tectonic/init-assets.sh"
-  mode       = "555"
+  mode       = 0755
 
   content {
     content = "${data.template_file.init-assets.rendered}"
