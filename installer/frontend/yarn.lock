@@ -370,6 +370,10 @@ babel-plugin-check-es2015-constants@^6.3.13:
   dependencies:
     babel-runtime "^6.22.0"
 
+babel-plugin-git-version@coreos/babel-plugin-git-version-build:
+  version "0.2.1"
+  resolved "https://codeload.github.com/coreos/babel-plugin-git-version-build/tar.gz/a27bb92daada7449b8d88f79d402f082e653c83b"
+
 babel-plugin-istanbul@^3.0.0:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/babel-plugin-istanbul/-/babel-plugin-istanbul-3.1.2.tgz#11d5abde18425ec24b5d648c7e0b5d25cd354a22"

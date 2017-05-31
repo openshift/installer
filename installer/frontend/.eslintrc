@@ -55,5 +55,10 @@
   },
   "plugins": [
     "react"
-  ]
+  ],
+  "globals": {
+    "GIT_COMMIT": false,
+    "GIT_TAG": false,
+    "GIT_LATEST_TAG": false,
+  }
 }
