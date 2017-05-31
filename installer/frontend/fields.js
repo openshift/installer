@@ -13,8 +13,8 @@ FIELDS[CLUSTER_NAME] = new Field(CLUSTER_NAME, {
     case AWS_TF:
       // http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-parameters.html
       // http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-elasticloadbalancingv2-loadbalancer.html#cfn-elasticloadbalancingv2-loadbalancer-name
-      if (s.length === 0 || s.length > 19) {
-        return 'Value must be between 1 and 19 characters';
+      if (s.length === 0 || s.length > 28) {
+        return 'Value must be between 1 and 28 characters';
       }
       if (s.toLowerCase() !== s) {
         return 'Value must be lower case.';

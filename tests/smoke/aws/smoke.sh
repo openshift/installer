@@ -17,7 +17,7 @@ common() {
     
     # Set required configuration
     CLUSTER="$TEST_NAME-$BRANCH_NAME-$BUILD_ID"
-    MAX_LENGTH=19
+    MAX_LENGTH=28
     
     LENGTH=${#CLUSTER}
     if [ "$LENGTH" -gt "$MAX_LENGTH" ]
