@@ -75,6 +75,10 @@ docs:
 			'This document gives an overview of variables used in the bare metal platform of the Tectonic SDK.', \
 			platforms/metal/variables.tf)
 
+	$(call terraform-docs, Documentation/variables/vmware.md, \
+			'This document gives an overview of variables used in the VMware platform of the Tectonic SDK.', \
+			platforms/vmware/variables.tf)
+
 examples:
 	$(call terraform-examples, examples/terraform.tfvars.aws, \
 			config.tf, \
@@ -99,6 +103,11 @@ examples:
 			examples/terraform.tfvars.metal, \
 			config.tf, \
 			platforms/metal/variables.tf)
+
+	$(call terraform-examples, \
+			examples/terraform.tfvars.vmware, \
+			config.tf, \
+			platforms/vmware/variables.tf)
 
 clean: destroy
 	rm -rf $(BUILD_DIR)
