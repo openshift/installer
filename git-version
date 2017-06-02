@@ -3,16 +3,13 @@
 set -e
 
 # pull the current git commit hash
-COMMIT=$(git rev-parse HEAD)
+VERSION=$(git rev-parse HEAD)
 
-# check if the current commit has a matching tag
-TAG=$(git describe --exact-match --abbrev=0 --tags ${COMMIT} 2> /dev/null || true)
-
-# use the matching tag as the version, if available
+# check if the current commit has a matching tag,
+# and prepend the matching tag to the version, if available.
+TAG=$(git describe --exact-match --abbrev=0 --tags ${VERSION} 2> /dev/null || true)
 if [ -z "$TAG" ]; then
-	VERSION=$COMMIT
-else
-	VERSION=$TAG
+	VERSION=$TAG_$VERSION
 fi
 
 # check for changed files (not untracked files)
