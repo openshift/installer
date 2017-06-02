@@ -10,6 +10,7 @@ REPO=github.com/coreos/tectonic-installer/installer
 find=$(shell [ -d $(1) ] && find $(1) -type f $(2) | sed 's/ /\\ /g')
 
 GO_FILES=$(call find,.,-name '*.go')
+SHELL_FILES=$(call find,scripts,-name '*.sh')
 
 .PHONY: all
 all:
@@ -55,6 +56,10 @@ test-frontend:
 
 .PHONY: test
 test: test-backend test-frontend
+
+.PHONY: shellcheck
+shellcheck: $(SHELL_FILES)
+	shellcheck $(SHELL_FILES)
 
 .PHONY: smoke-aws
 smoke-aws: bin/sanity
