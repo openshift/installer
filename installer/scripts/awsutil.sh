@@ -21,7 +21,7 @@ function aws_upload_file {
 
   signature="$(echo -en ${stringToSign} | openssl sha1 -hmac "${AWS_SECRET_ACCESS_KEY}" -binary | base64)"
 
-  url="http://${bucket}.s3.amazonaws.com/${dest}"
+  url="https://${bucket}.s3.amazonaws.com/${dest}"
 
   echo "uploading $file to $resource"
   curl \
@@ -50,7 +50,7 @@ function aws_download_file {
 
   signature="$(echo -en ${stringToSign} | openssl sha1 -hmac "${AWS_SECRET_ACCESS_KEY}" -binary | base64)"
 
-  url="http://${bucket}.s3.amazonaws.com/${file}"
+  url="https://${bucket}.s3.amazonaws.com/${file}"
 
   echo "downloading $url to $dest"
   curl \
