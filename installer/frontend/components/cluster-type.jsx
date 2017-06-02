@@ -2,10 +2,11 @@ import _ from 'lodash';
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { PLATFORM_TYPE } from '../cluster-config';
-import { Select, WithClusterConfig } from './ui';
+import { validate } from '../validate';
+import { Connect, Select } from './ui';
+import { Field, Form } from '../form';
+import { PLATFORM_TYPE, PLATFORM_FORM } from '../cluster-config';
 import { TectonicGA } from '../tectonic-ga';
-
 import {
   DOCS,
   PLATFORM_NAMES,
@@ -14,34 +15,59 @@ import {
   OptGroups,
 } from '../platforms';
 
-const SelectPlatform = props => {
-  const options = [];
-  _.each(OptGroups, optgroup => {
-    const [name, ...group] = optgroup;
-    const platforms = _.filter(group, p => SELECTED_PLATFORMS.includes(p));
-    if (platforms.length) {
-      options.push(<optgroup label={name} key={name}>{
-        platforms.map(p => <option value={p} key={p}>{PLATFORM_NAMES[p]}</option>)
-      }
-      </optgroup>);
-    }
-  });
-  return <Select id={PLATFORM_TYPE} {...props}
-    onValue={(value) => {TectonicGA.sendEvent('Platform Changed', 'user input', value); props.onValue(value);}}>
-    {options}
-  </Select>;
-};
+let defaultPlatformType = '';
+try {
+  defaultPlatformType = window.config.platforms[0];
+} catch (unused) {
+  // So tests pass
+}
 
-export const ClusterType = connect(
-  ({clusterConfig}) => {
-    const platform = clusterConfig[PLATFORM_TYPE];
-    return {
-      platform,
-      platformName: PLATFORM_NAMES[platform],
-      supportedPlatform: isSupported(platform),
-    };
-  },
-)(({platform, platformName, supportedPlatform}) => <div>
+const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PLATFORM_TYPE]}))(
+({error, platform}) => {
+  const platformName = PLATFORM_NAMES[platform];
+  if (error) {
+    return <p>
+      Use the documentation and the Terraform CLI to install a cluster with specific infrastructure use-cases.
+      This method is designed for automation and doesn't use the graphical insaller.
+      <br />
+      <a href={DOCS[platform]} target="_blank">
+        <button className="btn btn-primary" style={{marginTop: 8}}>{platformName && platformName.split("(Alpha)")[0]} Docs&nbsp;&nbsp;<i className="fa fa-external-link" /></button>
+      </a>
+    </p>;
+  }
+  return <p className="text-muted">
+    Use the graphical installer to input cluster details, this is best for demos and your first Tectonic cluster.
+    &nbsp;&nbsp;<a href={DOCS[platform]} target="_blank" >{platformName} documentation&nbsp;&nbsp;<i className="fa fa-external-link" /></a>
+  </p>;
+});
+
+const platformForm = new Form(PLATFORM_FORM, [
+  new Field(PLATFORM_TYPE, {
+    default: defaultPlatformType,
+    validator: validate.nonEmpty,
+  })], {
+    validator: (data, cc) => {
+      const platform = cc[PLATFORM_TYPE];
+      if (!isSupported(platform)) {
+        return `${PLATFORM_NAMES[platform]} not supported for GUI`;
+      }
+    },
+  }
+);
+
+const platformOptions = [];
+_.each(OptGroups, optgroup => {
+  const [name, ...group] = optgroup;
+  const platforms = _.filter(group, p => SELECTED_PLATFORMS.includes(p));
+  if (platforms.length) {
+    platformOptions.push(<optgroup label={name} key={name}>{
+      platforms.map(p => <option value={p} key={p}>{PLATFORM_NAMES[p]}</option>)
+    }
+    </optgroup>);
+  }
+});
+
+export const ClusterType = () => <div>
   <div className="row form-group">
     <div className="col-xs-12">
       Select an installation path from the options below.
@@ -55,26 +81,12 @@ export const ClusterType = connect(
       </label>
     </div>
     <div className="col-xs-9">
-      <WithClusterConfig field={PLATFORM_TYPE}>
-        <SelectPlatform />
-      </WithClusterConfig>
-      { supportedPlatform && <p className="text-muted">
-        Use the graphical installer to input cluster details, this is best for demos and your first Tectonic cluster.
-        &nbsp;&nbsp;<a href={DOCS[platform]} target="_blank" >{platformName} documentation&nbsp;&nbsp;<i className="fa fa-external-link" /></a>
-      </p>
-      }
-      { !supportedPlatform && <div>
-        <p>
-          Use the documentation and the Terraform CLI to install a cluster with specific infrastructure use-cases.
-          This method is designed for automation and doesn't use the graphical insaller.
-        </p>
-        <p>
-          <a href={DOCS[platform]} target="_blank">
-            <button className="btn btn-primary">{platformName && platformName.split("(Alpha)")[0]} Docs&nbsp;&nbsp;<i className="fa fa-external-link" /></button>
-          </a>
-        </p>
-      </div>
-      }
+      <Connect field={PLATFORM_TYPE}>
+        <Select onValue={(value) => {TectonicGA.sendEvent('Platform Changed', 'user input', value);}}>
+         {platformOptions}
+        </Select>
+      </Connect>
+      <platformForm.Errors ErrorComponent={ErrorComponent} />
     </div>
   </div>
   <div className="row">
@@ -84,6 +96,6 @@ export const ClusterType = connect(
        </p>
     </div>
   </div>
-</div>);
+</div>;
 
-ClusterType.canNavigateForward = ({clusterConfig}) => isSupported(clusterConfig[PLATFORM_TYPE]);
+ClusterType.canNavigateForward = platformForm.canNavigateForward;

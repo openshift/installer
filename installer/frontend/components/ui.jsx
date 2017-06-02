@@ -69,7 +69,16 @@ const FIELD_PROPS = ImmutableSet([
   'width',
 ]);
 
-export const ErrorComponent = props => props.error ? <Alert severity='error'>{props.error}</Alert> : <span/>;
+export const ErrorComponent = props => {
+  const error = props.error;
+  if (props.ErrorComponent) {
+    return <props.ErrorComponent error={error} />;
+  }
+  if (error) {
+    return <Alert severity='error'>{error}</Alert>;
+  }
+  return <span />;
+};
 
 const Field = connect(
   (state, {id}) => ({isDirty: _.get(state.dirty, id)}),
