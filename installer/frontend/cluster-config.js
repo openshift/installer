@@ -83,6 +83,7 @@ export const BM_SSH_KEY = 'bm_sshKey';
 export const CREDS = 'creds';
 export const LICENSING = 'licensing';
 export const PLATFORM_FORM = 'platform';
+export const EXPERIMENTAL_FEATURES = 'experimentalFeatures';
 
 
 export const SPLIT_DNS_ON = "on";
@@ -187,7 +188,6 @@ export const DEFAULT_CLUSTER_CONFIG = {
     channel: 'tectonic-1.6',
     appID: '6bc7b986-4654-4a0f-94b3-84ce6feb1db4',
   },
-  [UPDATER_ENABLED]: false,
   [POD_CIDR]: "10.2.0.0/16",
   [SERVICE_CIDR]: "10.3.0.0/16",
 };
