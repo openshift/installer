@@ -43,7 +43,7 @@ RUN curl -L -o /tmp/terraform.zip https://github.com/coreos/terraform/releases/d
     chmod +x /usr/local/bin/terraform
 
 RUN cd /tmp && \
-    wget --quiet -O /tmp/node.tar.gz http://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-linux-x64.tar.gz && \
+    wget --quiet -O /tmp/node.tar.gz https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-linux-x64.tar.gz && \
     tar xf node.tar.gz && \
     rm -f /tmp/node.tar.gz && \
     cd node-* && \
