@@ -10,7 +10,7 @@
 # docker push quay.io/coreos/tectonic-builder:<next-semver>
 ###
 
-FROM golang:1.8-wheezy
+FROM golang:1.8-stretch
 
 ### For golang testing stuff
 RUN go get -u github.com/golang/lint/golint
@@ -28,13 +28,9 @@ ENV HOME /opt/home
 RUN mkdir -p ${HOME}
 RUN chmod 777 -R ${HOME}
 
-# Needed to get jq in wheezy
-RUN echo "deb http://ftp.debian.org/debian wheezy-backports main" > /etc/apt/sources.list.d/backports.list
-
 RUN apt-get update \
     && apt-get install --no-install-recommends -y -q \
-    build-essential sudo curl wget git autoconf automake unzip libtool && \
-    apt-get install --no-install-recommends -y -q -t wheezy-backports jq
+    build-essential sudo curl wget git autoconf automake unzip libtool jq shellcheck
 
 # install terraform
 # RUN curl https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
