@@ -2,7 +2,9 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ROOT="$DIR/../../.."
+# shellcheck disable=SC1090
 source "$DIR/../awsutil.sh"
+# shellcheck disable=SC1090
 source "$DIR/common.env.sh"
 
 check_aws_creds

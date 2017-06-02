@@ -1,7 +1,9 @@
 #!/bin/bash -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# shellcheck disable=SC1090
 source "$DIR/common.env.sh"
+# shellcheck disable=SC1090
 source "$DIR/../awsutil.sh"
 
 # if $VERSION is not set, then we should not continue
@@ -17,7 +19,7 @@ check_aws_creds
 
 # get_bin <bucket> <remote> <dest>
 function get_bin() {
-    mkdir -p `dirname $3`
+    mkdir -p "$(dirname "$3")"
     aws_download_file "$2" "$3" "$1" "application/octet-stream"
     chmod +x "$3"
 }
