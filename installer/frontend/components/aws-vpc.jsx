@@ -334,7 +334,7 @@ class AWS_VPCComponent extends React.Component {
       <hr/>
 
       <p className="text-muted">
-        Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <a target="_blank" href="http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html">Working with Hosted Zones</a>.
+        Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <a target="_blank" href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html">Working with Hosted Zones</a>.
       </p>
       <div className="row form-group">
         <div className="col-xs-3">
@@ -364,7 +364,7 @@ class AWS_VPCComponent extends React.Component {
               </Select>
             </Connect>
             <p className="text-muted wiz-help-text">
-              See AWS <a href="http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html"
+              See AWS <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html"
                 target="_blank">Split-View DNS documentation&nbsp;<i className="fa fa-external-link" /></a>
             </p>
           </div>
