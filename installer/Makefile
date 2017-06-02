@@ -42,7 +42,7 @@ frontend/node_modules: frontend/package.json frontend/yarn.lock
 	cd frontend && yarn install --quiet > /dev/null
 
 .PHONY: lint
-lint: build bin/golint
+lint: build bin/golint shellcheck
 	./scripts/lint-backend
 	cd frontend && yarn run lint
 
