@@ -3,7 +3,7 @@ resource "aws_route_table" "private_routes" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
-      "Name", "private-${data.aws_availability_zones.azs.names[count.index]}",
+      "Name", "${var.cluster_name}-private-${data.aws_availability_zones.azs.names[count.index]}",
       "kubernetes.io/cluster/${var.cluster_name}", "shared",
       "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
@@ -30,7 +30,7 @@ resource "aws_subnet" "worker_subnet" {
   availability_zone = "${var.worker_azs[count.index]}"
 
   tags = "${merge(map(
-      "Name", "worker-${ "${length(var.worker_azs)}" > 0 ? 
+      "Name", "${var.cluster_name}-worker-${ "${length(var.worker_azs)}" > 0 ?
     "${var.worker_azs[count.index]}" : 
     "${data.aws_availability_zones.azs.names[count.index]}" }",
       "kubernetes.io/cluster/${var.cluster_name}", "shared",
