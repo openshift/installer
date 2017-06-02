@@ -14,6 +14,7 @@ import '../components/etcd';
 import '../components/bm-sshkeys';
 import '../components/bm-nodeforms';
 import '../components/bm-hostname';
+import '../components/cluster-type';
 
 const structureOnly = (obj) => {
   const toString = Object.prototype.toString;

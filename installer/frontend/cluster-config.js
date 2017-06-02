@@ -6,13 +6,6 @@ import { keyToAlg, toExtraData } from './utils';
 
 const bcryptCost = 12;
 
-let defaultPlatformType = '';
-try {
-  defaultPlatformType = window.config.platforms[0];
-} catch (unused) {
-  // So tests pass
-}
-
 // TODO: (ggreer) clean up key names. Warning: Doing this will break progress files.
 export const AWS_ACCESS_KEY_ID = 'awsAccessKeyId';
 export const AWS_SUBNETS = 'awsSubnets';
@@ -89,6 +82,7 @@ export const AWS_REGION_FORM = 'aws_regionForm';
 export const BM_SSH_KEY = 'bm_sshKey';
 export const CREDS = 'creds';
 export const LICENSING = 'licensing';
+export const PLATFORM_FORM = 'platform';
 
 
 export const SPLIT_DNS_ON = "on";
@@ -184,7 +178,6 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [CONTROLLER_DOMAIN]: '',
   [DRY_RUN]: false,
   [ENTITLEMENTS]: {},
-  [PLATFORM_TYPE]: defaultPlatformType,
   [PULL_SECRET]: '',
   [RETRY]: false, // whether we're retrying a terraform apply
   [STS_ENABLED]: false,
