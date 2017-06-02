@@ -115,6 +115,10 @@ class extends React.Component {
     if (nextPage === currentPage) {
       return;
     }
+
+    if (state) {
+      TectonicGA.sendEvent(state.clusterConfig[PLATFORM_TYPE], 'click', 'next on');
+    }
     router.push(nextPage.path);
   }
 
