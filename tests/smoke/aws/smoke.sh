@@ -1,16 +1,30 @@
 #!/bin/bash -ex
 set -o pipefail
 shopt -s expand_aliases
-
-DIR="$( cd "$( dirname "$0" )" && pwd )"
-# make core utils accessible to make
-export PATH=/bin:$PATH
- # Alias filter for convenience
+# Alias filter for convenience
 # shellcheck disable=SC2139
 alias filter="$WORKSPACE"/installer/scripts/filter.sh
-export PLATFORM=aws
+
+assume_role() {
+    # Don't print out the credentials.
+    set +x
+    ROLE_NAME=$1
+    # Get the actual role ARN. This allows us to invoke the script with friendly arguments.
+    # shellcheck disable=SC2155
+    ROLE_ARN="$(aws iam get-role --role-name="$ROLE_NAME" | jq -r '.Role.Arn')"
+    # shellcheck disable=SC2155
+    CREDENTIALS="$(aws sts assume-role --role-arn="$ROLE_ARN" --role-session-name=tectonic-installer | jq '.Credentials')"
+    echo "AWS_ACCESS_KEY_ID=$(echo "$CREDENTIALS" | jq -r '.AccessKeyId'); export AWS_ACCESS_KEY"
+    echo "AWS_SECRET_ACCESS_KEY=$(echo "$CREDENTIALS" | jq -r '.SecretAccessKey'); export AWS_SECRET_ACCESS_KEY"
+    echo "AWS_SESSION_TOKEN=$(echo "$CREDENTIALS" | jq -r '.SessionToken'); export AWS_SESSION_TOKEN"
+}
 
 common() {
+    DIR="$( cd "$( dirname "$0" )" && pwd )"
+    # make core utils accessible to make
+    export PATH=/bin:$PATH
+    export PLATFORM=aws
+
     # Set the specified vars file
     TF_VARS_FILE=$1
     TEST_NAME=$(basename "$TF_VARS_FILE" | cut -d "." -f 1)
@@ -53,7 +67,6 @@ common() {
 
 create() {
     common "$1"
-    make plan | filter
     make apply | filter
 }
 
@@ -80,33 +93,41 @@ test_cluster() {
 }
 
 usage() {
+    # It's annoying to print the debug statement and the output from printf
     set +x
     printf "%s is a tool for running Tectonic smoke tests on AWS.\n\n" "$(basename "$0")"
     printf "Usage:\n\n \t %s command [arguments]\n\n" "$(basename "$0")"
     printf "The commands are:\n\n"
-    printf "\t create <tfvars>  \tcreate a Tectonic cluster parameterized by <tfvars>\n"
-    printf "\t destroy <tfvars> \tdestroy the Tectonic cluster parameterized by <tfvars>\n"
-    printf "\t plan <tfvars>    \tplan a Tectonic cluster parameterized by <tfvars>\n"
-    printf "\t test <tfvars>    \ttest a Tectonic cluster parameterized by <tfvars>\n"
+    printf "\t assume-role <role-name> \tassume the role specified by <role-name>\n"
+    printf "\t create <tfvars>         \tcreate a Tectonic cluster parameterized by <tfvars>\n"
+    printf "\t destroy <tfvars>        \tdestroy the Tectonic cluster parameterized by <tfvars>\n"
+    printf "\t plan <tfvars>           \tplan a Tectonic cluster parameterized by <tfvars>\n"
+    printf "\t test <tfvars>           \ttest a Tectonic cluster parameterized by <tfvars>\n"
     printf "\n"
 }
 
-COMMAND=$1
-if [ $# -eq 0 ]; then
-    usage
-    exit 1
-fi
+main () {
+    COMMAND=$1
+    if [ $# -eq 0 ]; then
+        usage
+        exit 1
+    fi
+    
+    shift
+    case $COMMAND in
+        assume-role)
+            assume_role "$@";;
+        create)
+            create "$@";;
+        destroy)
+            destroy "$@";;
+        plan)
+            plan "$@";;
+        test)
+            test_cluster "$@";;
+        *)
+            usage;;
+    esac
+}
 
-shift
-case $COMMAND in
-    create)
-        create "$@";;
-    destroy)
-        destroy "$@";;
-    plan)
-        plan "$@";;
-    test)
-        test_cluster "$@";;
-    *)
-        usage;;
-esac
+main "$@"
