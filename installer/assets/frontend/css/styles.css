@@ -10,6 +10,7 @@ html {
 
 body {
   background-color: transparent;
+  box-sizing: border-box;
 }
 
 /* Override */
@@ -659,3 +660,174 @@ span.spacer {
   padding-left: 19px;
   margin-top: 0;
 }
+
+.tectonic {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.tectonic-installer {
+  flex: 1;
+}
+
+.tectonic-footer {
+  color: #d9d9d9;
+  font-size: 14px;
+  height: 40px;
+  text-align: center;
+}
+
+.tectonic-footer > a {
+  color: #52A3D9;
+}
+
+
+.tectonic-footer > a:hover {
+  color: #52A3D9;
+}
+
+/**  NavBar from mochi.css **/
+.co-navbar {
+  box-shadow: 0 2px 2px rgba(0, 0, 0, 0.2);
+  background-color: #fff;
+  margin: 0;
+  padding: 0 10px;
+  position: relative;
+  min-height: 51px;
+}
+
+.co-navbar__header {
+  display: block;
+  float: left;
+}
+
+.co-navbar-nav > li  {
+  color: #182c3c;
+  line-height: 16px;
+  position: relative;
+  display: inline-block;
+  padding: 15px;
+}
+
+.co-navbar-nav > li > a {
+  background-color: #fff;
+  color: #182c3c;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.co-navbar-nav > li > a:hover, .co-navbar-nav > li > a:focus {
+  text-decoration: none;
+  background-color: #fff;
+}
+
+.co-navbar-nav > li > span {
+  font-size: 14px;
+}
+
+.co-navbar--right {
+  float: right;
+}
+
+.co-navbar__logo-link {
+  padding: 10px 15px;
+  display: inline-block; }
+
+.co-navbar__logo {
+  display: inline-block;
+  max-height: 25px; }
+
+.co-navbar-nav {
+  display: block;
+  float: left;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.co-navbar-nav-item__version {
+  font-size: 12px;
+  padding-right: 20px;
+}
+
+.co-navbar-nav-item__version--new {
+  background-color: rgba(47, 201, 142, 0.1);
+  color: #2fc98e;
+  border-radius: 3px;
+  font-weight: 400;
+  padding: 8px;
+}
+
+.co-navbar-nav-item__version--new > a {
+  color: #2fc98e;
+  text-decoration: underline;
+}
+/** NavBar **/
+
+/** Dropdown **/
+.dropdown {
+  position: relative;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 1000;
+  float: left;
+  min-width: 160px;
+  padding: 5px 0;
+  margin: 10px 0 0;
+  font-size: 14px;
+  list-style: none;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border: 1px solid rgba(0,0,0,0.15);
+  border-radius: 4px;
+  -webkit-box-shadow: 0 6px 12px rgba(0,0,0,0.175);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.175);
+  background-clip: padding-box;
+}
+
+.tectonic-dropdown-menu {
+  min-width: 220px;
+}
+
+.tectonic-dropdown-menu-title {
+  color: #182c3c;
+  font-weight: 600;
+  font-size: 16px;
+}
+
+.tectonic-dropdown-menu-title:hover {
+  background-color: #fff;
+  text-decoration: none;
+}
+
+.tectonic-dropdown-menu-title > a:hover {
+  background-color: #fff;
+}
+
+.tectonic-dropdown-menu-item {
+  list-style: none;
+  line-height: 30px;
+}
+
+.tectonic-dropdown-menu-item__link {
+  background-color: #fff;
+  color: #182c3c;
+  font-weight: 500;
+  font-size: 16px;
+  padding-left: 20px;
+  padding-right: 20px;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.tectonic-dropdown-menu-item__link:hover {
+  background-color: #f0f8ff;
+  text-decoration: none;
+}
+/** Dropdown **/

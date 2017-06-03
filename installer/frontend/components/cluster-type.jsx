@@ -89,13 +89,6 @@ export const ClusterType = () => <div>
       <platformForm.Errors ErrorComponent={ErrorComponent} />
     </div>
   </div>
-  <div className="row">
-    <div className="col-xs-12">
-      <p className="text-muted" style={{marginTop: 60}}>
-        CoreOS collects data about your Tectonic cluster for billing purposes. See the <a href="https://coreos.com/data-policy/tectonic" onClick={TectonicGA.sendDocsEvent} target="_blank">data policy</a> for details.
-       </p>
-    </div>
-  </div>
 </div>;
 
 ClusterType.canNavigateForward = platformForm.canNavigateForward;

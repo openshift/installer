@@ -24,6 +24,7 @@
     ]
   },
   "dependencies": {
+    "babel-plugin-git-version": "coreos/babel-plugin-git-version-build",
     "babyparse": "0.4.x",
     "bcryptjs": "2.x",
     "classnames": "2.2.x",

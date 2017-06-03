@@ -713,3 +713,73 @@ export const ConnectedFieldList = connect(
   ({clusterConfig}, {id}) => ({value: clusterConfig[id]}),
   (dispatch) => ({removeField: (id, i) => dispatch(configActions.removeField(id, i))})
 )((props) => <InnerFieldList_ {...props} />);
+
+
+export class DropdownMixin extends React.PureComponent {
+  constructor(props) {
+    super(props);
+    this.listener = this._onWindowClick.bind(this);
+    this.state = {active: !!props.active};
+    this.toggle = this.toggle.bind(this);
+    this.hide = this.hide.bind(this);
+  }
+
+  _onWindowClick ( event ) {
+    if (!this.state.active ) {
+      return;
+    }
+    const {dropdownElement} = this.refs;
+
+    if( event.target === dropdownElement || dropdownElement.contains(event.target)) {
+      return;
+    }
+    this.hide();
+  }
+
+  componentDidMount () {
+    window.addEventListener('click', this.listener);
+  }
+
+  componentWillUnmount () {
+    window.removeEventListener('click', this.listener);
+  }
+
+  onClick_ (key, e) {
+    e.stopPropagation();
+    this.setState({active: false});
+  }
+
+  toggle (e) {
+    e && e.stopPropagation();
+    this.setState({active: !this.state.active});
+  }
+
+  hide (e) {
+    e && e.stopPropagation();
+    this.setState({active: false});
+  }
+}
+
+export class Dropdown extends DropdownMixin {
+  render() {
+    const {active} = this.state;
+    const {items, header} = this.props;
+
+    const children = _.map(items, (href, key) => {
+      return <li className="tectonic-dropdown-menu-item" key={key}>
+        <a className="tectonic-dropdown-menu-item__link" href={href} key={key} target="_blank">
+          {key}
+        </a>
+      </li>;
+    });
+
+    return (
+      <div ref="dropdownElement">
+        <div className="dropdown" onClick={this.toggle}>
+          <a className="tectonic-dropdown-menu-title">{header}&nbsp;&nbsp;<i className="fa fa-angle-down" aria-hidden="true"></i></a>
+          <ul className="dropdown-menu tectonic-dropdown-menu" style={{display: active ? 'block' : 'none'}}>{children}</ul>
+        </div>
+      </div>
+    );
+  }
+}
