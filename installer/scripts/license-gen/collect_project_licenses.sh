@@ -74,7 +74,7 @@ parse_js_licenses() {
   # and create objects for each; else create a single object with license.
   # Finally, append each new object to the final array.
   while read -r dep; do
-    obj=$(cat "$dep" | jq '{
+    obj=$(jq '{
       project: (.repository | (.url)?//.),
       licenses:
         (if (.licenses)? then
@@ -89,8 +89,8 @@ parse_js_licenses() {
             [{type: ., confidence: 1}]
           end
         end)
-    }')
-    cat "$dst" | jq ".+[${obj}]" > "$tmp_json_arr"
+    }' < "$dep")
+    jq ".+[${obj}]" > "$tmp_json_arr" < "$dst"
     cat "$tmp_json_arr" > "$dst"
   done < "$src"
 }
@@ -123,7 +123,9 @@ while read -r url; do
 
   # Make organization dir from SSH repo URL
   # Ex. git@github.com:org/repo.git -> $GOPATH/src/github.com/org
+  # shellcheck disable=SC2001
   org_dir=$(echo "$url" | sed 's|.*@\(.*\):\(.*\)\/.*|'"$GOPATH"'\/src\/\1\/\2|g')
+  # shellcheck disable=SC2001
   repo=$(echo "$url" | sed 's|.*\/\(.*\)\..*|\1|g')
   if [ ! -d "$org_dir" ]; then mkdir -p "$org_dir"; fi
   cd "$org_dir"
@@ -137,6 +139,7 @@ while read -r url; do
   # Create an organization_repo_license.json file
   subd_path="${org_dir##*/}_${repo}"
   go_pkg_json_file="${TMP_LICENSE_DIR}/${subd_path}_license.json"
+  # shellcheck disable=SC2001
   go_pkg_rel_path="$(echo "$org_dir" | sed 's|.*\/src\/\(.*\)|\1|g')/${repo}"
   # Construct full paths to each main.go parent dir, starting after src/
   dep_loc_set=$(sed 's|^\(.*\)$|'"${go_pkg_rel_path}"'\/\1|g' "$tmp_shared_file" | tr '\n' ' ')
@@ -148,6 +151,7 @@ while read -r url; do
   # more dependencies' license cannot be found, even if other dependencies
   # in the same package/repo have licenses. Unset 'e' to prevent exit
   set +e
+  # shellcheck disable=SC2086
   "${old_gopath}"/bin/license-bill-of-materials $dep_loc_set > "$go_pkg_json_file"
   set -e
 done < "$go_pkg_inputs"
@@ -160,6 +164,7 @@ while read -r loc; do
   if grep '^\s*#.*' <<< "$loc" > /dev/null; then continue; fi
 
   # Retrieve each dependency of the current package
+  # shellcheck disable=SC2001
   subd_path=$(echo "${loc#*/}" | sed 's@\/@_@g')
   js_pkg_json_file="${TMP_LICENSE_DIR}/${subd_path}_license.json"
   # Install all non-dev deps. Exit if any errors occur while installing
@@ -183,19 +188,19 @@ popd > /dev/null
 while read -r file; do
   # Concatenate all JSON arrays in a license file (might be 2-3 from
   # license-bill-of-materials output)
-  json_license=$(cat "$file" | jq '.[]' | jq -s 'map(if (.error)? then empty else . end)')
+  json_license=$(jq '.[]' | jq -s 'map(if (.error)? then empty else . end)' < "$file")
 
   # Concatenate with final array
-  cat "$FINAL_LICENSE_FILE" | jq ".+${json_license}" > "$tmp_shared_file"
+  jq ".+${json_license}" > "$tmp_shared_file" < "$FINAL_LICENSE_FILE"
   cat "$tmp_shared_file" > "$FINAL_LICENSE_FILE"
 done < <(find "$TMP_LICENSE_DIR" -name '*_license.json')
 
 # Remove duplicates and sort all objects by 'project' key, to avoid too many
 # commit line changes
-cat "$FINAL_LICENSE_FILE" | jq 'unique | sort_by(.project)' > "$tmp_shared_file"
+jq 'unique | sort_by(.project)' > "$tmp_shared_file" < "$FINAL_LICENSE_FILE"
 cat "$tmp_shared_file" > "$FINAL_LICENSE_FILE"
 
 # TODO: JSON output to Tectonic frontend (REST?)
-echo "Aggregated licenses: $(readlink -f $FINAL_LICENSE_FILE)"
+echo "Aggregated licenses: $(readlink -f "$FINAL_LICENSE_FILE")"
 
 clean_up

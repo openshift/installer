@@ -34,6 +34,7 @@ aws ec2 describe-subnets | jq ".Subnets[] .SubnetId" | xargs -L 1 aws ec2 delete
 
 echo "Deleting all route tables (except the main ones)"
 #aws ec2 describe-route-tables | jq '.RouteTables[] | select(.Routes?[] | select(.DestinationCidrBlock == "0.0.0.0/0")) | .RouteTableId' | xargs -L 1 aws ec2 delete-route --destination-cidr-block 0.0.0.0/0 --route-table-id # First, delete the default route, as they might be pointed at a non-existing gateway.
+# shellcheck disable=SC2016
 aws ec2 describe-route-tables --query 'RouteTables[?Associations[0].Main != `true`]' | jq ".[] .RouteTableId" | xargs -L 1 aws ec2 delete-route-table --route-table-id
 
 echo Deleting security groups

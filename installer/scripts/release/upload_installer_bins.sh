@@ -1,7 +1,9 @@
 #!/bin/bash -e
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# shellcheck disable=SC1090
 source "$DIR/common.env.sh"
+# shellcheck disable=SC1090
 source "$DIR/../awsutil.sh"
 GIT_SHA=$("$ROOT/../git-version")
 

@@ -16,10 +16,10 @@ function aws_upload_file {
   contentType=$4
 
   resource="/${bucket}/${dest}"
-  dateValue=`date -u +"%a, %d %b %Y %H:%M:%S GMT"`
+  dateValue=$(date -u +"%a, %d %b %Y %H:%M:%S GMT")
   stringToSign="PUT\n\n${contentType}\n${dateValue}\n${resource}"
 
-  signature="$(echo -en ${stringToSign} | openssl sha1 -hmac "${AWS_SECRET_ACCESS_KEY}" -binary | base64)"
+  signature="$(echo -en "${stringToSign}" | openssl sha1 -hmac "${AWS_SECRET_ACCESS_KEY}" -binary | base64)"
 
   url="https://${bucket}.s3.amazonaws.com/${dest}"
 
@@ -31,7 +31,7 @@ function aws_upload_file {
       -H "Date: ${dateValue}" \
       -H "Content-type: ${contentType}" \
       -H "Authorization: AWS ${AWS_ACCESS_KEY_ID}:${signature}" \
-      ${url}
+      "${url}"
 
   echo "uploaded $file to $resource"
 }
@@ -45,10 +45,10 @@ function aws_download_file {
   contentType=$4
 
   resource="/${bucket}/${file}"
-  dateValue=`date -u +"%a, %d %b %Y %H:%M:%S GMT"`
+  dateValue=$(date -u +"%a, %d %b %Y %H:%M:%S GMT")
   stringToSign="GET\n\n${contentType}\n${dateValue}\n${resource}"
 
-  signature="$(echo -en ${stringToSign} | openssl sha1 -hmac "${AWS_SECRET_ACCESS_KEY}" -binary | base64)"
+  signature="$(echo -en "${stringToSign}" | openssl sha1 -hmac "${AWS_SECRET_ACCESS_KEY}" -binary | base64)"
 
   url="https://${bucket}.s3.amazonaws.com/${file}"
 
@@ -59,7 +59,7 @@ function aws_download_file {
       -H "Date: ${dateValue}" \
       -H "Content-type: ${contentType}" \
       -H "Authorization: AWS ${AWS_ACCESS_KEY_ID}:${signature}" \
-      ${url} -o ${dest}
+      "${url}" -o "${dest}"
 
   echo "downloaded $url to $dest"
 }
