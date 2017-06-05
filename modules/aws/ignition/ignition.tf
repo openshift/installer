@@ -78,13 +78,21 @@ data "ignition_file" "max-user-watches" {
   }
 }
 
+data "template_file" "s3-puller" {
+  template = "${file("${path.module}/resources/s3-puller.sh")}"
+
+  vars {
+    awscli_image = "${var.container_images["awscli"]}"
+  }
+}
+
 data "ignition_file" "s3-puller" {
   filesystem = "root"
   path       = "/opt/s3-puller.sh"
   mode       = 0755
 
   content {
-    content = "${file("${path.module}/resources/s3-puller.sh")}"
+    content = "${data.template_file.s3-puller.rendered}"
   }
 }
 
