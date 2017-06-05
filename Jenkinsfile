@@ -29,6 +29,7 @@ pipeline {
   }
 
   environment {
+    TECTONIC_INSTALLER_ROLE= 'tectonic-installer'
     GO_PROJECT = '/go/src/github.com/coreos/tectonic-installer'
     MAKEFLAGS = '-j4'
   }
@@ -100,11 +101,13 @@ pipeline {
             unstash 'sanity'
             withCredentials(creds) {
               timeout(30) {
+                sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
                 sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws.tfvars'
                 sh '${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws.tfvars'
                 sh '${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws.tfvars'
               }
               timeout(10) {
+                sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
                 sh '${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars'
               }
             }
@@ -114,6 +117,7 @@ pipeline {
             unstash 'sanity'
             withCredentials(creds) {
               timeout(5) {
+                sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
                 sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-exp.tfvars'
               }
             }
@@ -125,6 +129,7 @@ pipeline {
           unstash 'installer'
           withCredentials(creds) {
             timeout(10) {
+              sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
               sh '${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars'
             }
           }
