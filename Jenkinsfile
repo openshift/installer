@@ -17,7 +17,7 @@ def creds = [
 pipeline {
   agent {
     docker {
-      image 'quay.io/coreos/tectonic-builder:v1.10'
+      image 'quay.io/coreos/tectonic-builder:v1.11'
       label 'worker'
     }
   }
