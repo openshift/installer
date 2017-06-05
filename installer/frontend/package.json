@@ -40,6 +40,7 @@
     "react-router": "2.4.x",
     "redux": "3.5.x",
     "redux-thunk": "2.1.x",
+    "semver": "5.x",
     "whatwg-fetch": "1.0.x"
   },
   "devDependencies": {
@@ -54,7 +55,6 @@
     "eslint": "2.x",
     "eslint-plugin-react": "5.x",
     "jest-cli": "18.x",
-    "semver": "5.x",
     "watchify": "3.x"
   }
 }
