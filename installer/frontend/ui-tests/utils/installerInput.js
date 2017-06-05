@@ -58,7 +58,7 @@ const adminPassword = () => {
 };
 const createCoreosCredentials = (Path, env_var) => {
   //eslint-disable-next-line no-sync
-      fs.writeFileSync(Path, env_var);
+  fs.writeFileSync(Path, env_var);
 };
 
 module.exports = {readAwsTestDataJson,buildExpectedJson,clusterTagKey,sshKeys,clusterSubdomainName,clusterBaseDomainName,adminEmail,adminPassword,createCoreosCredentials };
