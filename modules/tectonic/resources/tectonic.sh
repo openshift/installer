@@ -18,7 +18,7 @@ KUBECTL="/kubectl --kubeconfig=$KUBECONFIG"
 function kubectl() {
   local i=0
 
-  echo "Executing kubectl $@"
+  echo "Executing kubectl" "$@"
   while true; do
     (( i++ )) && (( i == 100 )) && echo "kubectl failed, giving up" && exit 1
 
@@ -47,9 +47,8 @@ function wait_for_tpr() {
 
   echo "Waiting for TPR $2"
   until $KUBECTL -n "$1" get thirdpartyresources "$2"; do
-    (( i++ )) && (( i == 100 )) && echo "TPR $2 not available, giving up" && exit 1
-
-    echo "TPR $2 not available yet, retrying in 5 seconds"
+    (( i++ ))
+    echo "TPR $2 not available yet, retrying in 5 seconds ($i)"
     sleep 5
   done
 }
@@ -59,8 +58,8 @@ function wait_for_pods() {
   local i=0
   echo "Waiting for pods in namespace $1"
   while $KUBECTL -n "$1" get po -o custom-columns=STATUS:.status.phase,NAME:.metadata.name | tail -n +2 | grep -v '^Running'; do
-    (( i++ )) && (( i == 100 )) && echo "components not available, giving up" && exit 1
-    echo "Pods not available yet, waiting for 5 seconds"
+    (( i++ ))
+    echo "Pods not available yet, waiting for 5 seconds ($i)"
     sleep 5
   done
   set -e
@@ -73,8 +72,8 @@ cd "$ASSETS_PATH/tectonic"
 i=0
 echo "Waiting for Kubernetes API..."
 until $KUBECTL cluster-info; do
-  (( i++ )) && (( i == 100 )) && echo "cluster not available, giving up" && exit 1
-  echo "Cluster not available yet, waiting for 5 seconds"
+  (( i++ ))
+  echo "Cluster not available yet, waiting for 5 seconds ($i)"
   sleep 5
 done
 
