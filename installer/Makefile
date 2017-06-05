@@ -109,15 +109,15 @@ bin/sanity:
 	go test tests/sanity/k8s_test.go -c -o bin/sanity
 
 .PHONY: launch_installer
-launch_installer: build
+launch-installer: build
 	{ bin/$(OS)/installer $(INSTALLER_OPTS) & echo $$! > "frontend/ui-tests/reports/installer.pid";}
 
 .PHONY: launch_installer_guitests
-launch_installer_guitests: launch_installer
+launch-installer-guitests: launch-installer
 	cd frontend && yarn run installer-tests
 
 .PHONY: gui_tests_cleanup
-gui_tests_cleanup:
+gui-tests-cleanup:
 	kill `cat frontend/ui-tests/reports/installer.pid`
 	rm frontend/ui-tests/reports/installer.pid
 
