@@ -30,7 +30,7 @@ RUN chmod 777 -R ${HOME}
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y -q \
-    build-essential sudo curl wget git autoconf automake unzip libtool jq shellcheck
+    build-essential sudo curl wget git autoconf automake unzip libtool jq shellcheck awscli
 
 # install terraform
 RUN curl https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
