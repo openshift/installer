@@ -33,7 +33,7 @@ resource "template_dir" "bootstrap-experimental" {
   vars {
     etcd_image                = "${var.container_images["etcd"]}"
     etcd_version              = "${var.versions["etcd"]}"
-    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 200)}"
+    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 20)}"
   }
 }
 
@@ -44,7 +44,7 @@ resource "template_dir" "etcd-experimental" {
 
   vars {
     etcd_version              = "${var.versions["etcd"]}"
-    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 200)}"
+    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 20)}"
   }
 }
 
@@ -81,7 +81,7 @@ resource "template_dir" "bootkube" {
     etcd_key_flag  = "${data.null_data_source.etcd.outputs.key_flag}"
 
     etcd_service_ip           = "${cidrhost(var.service_cidr, 15)}"
-    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 200)}"
+    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 20)}"
 
     cloud_provider = "${var.cloud_provider}"
 
