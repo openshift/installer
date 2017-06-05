@@ -4,7 +4,6 @@ export VERSION=$(shell ../git-version)
 OS=$(shell uname | tr A-Z a-z)
 LD_FLAGS="-w -X github.com/coreos/tectonic-installer/installer/cmd/installer.Version=$(VERSION)"
 INSTALLER_OPTS = -address=127.0.0.1:8080 -open-browser=false -log-level=debug -dev=true
-CURRENT_DIR = $(shell pwd)
 
 REPO=github.com/coreos/tectonic-installer/installer
 
@@ -109,22 +108,18 @@ bin/go-bindata:
 bin/sanity:
 	go test tests/sanity/k8s_test.go -c -o bin/sanity
 
-
-# TODO : To add other dependencies
 .PHONY: launch_installer
 launch_installer: build
-		cd bin/$(OS) && { ./installer $(INSTALLER_OPTS) & echo $$! > "$(CURRENT_DIR)/frontend/ui-tests/reports/installer.pid";}
+	{ bin/$(OS)/installer $(INSTALLER_OPTS) & echo $$! > "frontend/ui-tests/reports/installer.pid";}
 
 .PHONY: launch_installer_guitests
 launch_installer_guitests: launch_installer
-		cd $(CURRENT_DIR)/frontend && yarn install
-		cd $(CURRENT_DIR)/frontend && yarn run installer-tests
+	cd frontend && yarn run installer-tests
 
 .PHONY: gui_tests_cleanup
 gui_tests_cleanup:
-		kill `cat $(CURRENT_DIR)/frontend/ui-tests/reports/installer.pid`
-		rm ${CURRENT_DIR}/frontend/ui-tests/reports/installer.pid
-		pskill -f chromedriver
+	kill `cat frontend/ui-tests/reports/installer.pid`
+	rm frontend/ui-tests/reports/installer.pid
 
 .PHONY: clean
 clean:
