@@ -1,9 +1,16 @@
 import React from 'react';
+import semver from 'semver';
+
 import { Dropdown } from './ui';
 
 export class Header extends React.Component {
   render() {
-    const hasNewVersion = GIT_TAG !== GIT_LATEST_TAG;
+    let hasNewVersion = false;
+    try {
+      hasNewVersion = semver.lt(GIT_TAG, GIT_LATEST_TAG);
+    } catch (unused) {
+      // unused
+    }
     const productDdItems = {
       'Tectonic - Kubernetes': 'https://coreos.com/tectonic/',
       'Quay - Registry': 'https://coreos.com/quay-enterprise',
@@ -59,4 +66,3 @@ export class Header extends React.Component {
     </div>;
   }
 }
-
