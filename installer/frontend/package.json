@@ -53,15 +53,15 @@
     "babel-preset-react": "6.5.x",
     "babelify": "7.3.x",
     "browserify": "13.0.x",
-    "chromedriver": "2.27.2",
-    "deep-diff": "0.3.8",
+    "chromedriver": "2.x",
+    "deep-diff": "0.3.x",
     "eslint": "2.x",
     "eslint-plugin-react": "5.x",
     "jest-cli": "18.x",
-    "jszip": "3.1.3",
-    "nightwatch": "0.9.14",
-    "request": "2.81.0",
-    "selenium-server": "3.1.0",
+    "jszip": "3.x",
+    "nightwatch": "0.9.x",
+    "request": "2.x",
+    "selenium-server": "3.1.x",
     "watchify": "3.x"
   }
 }
