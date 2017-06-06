@@ -8,4 +8,3 @@
 *.pid
 /frontend/ui-tests/reports/
 /frontend/ui-tests/screenshots/
-*.log

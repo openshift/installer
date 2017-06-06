@@ -110,6 +110,7 @@ bin/sanity:
 
 .PHONY: launch-installer
 launch-installer: build
+	mkdir -p frontend/ui-tests/reports/
 	./bin/$(OS)/installer $(INSTALLER_OPTS) & echo $$! > frontend/ui-tests/reports/installer.pid
 
 .PHONY: launch-installer-guitests
@@ -119,7 +120,7 @@ launch-installer-guitests: launch-installer
 .PHONY: gui-tests-cleanup
 gui-tests-cleanup:
 	kill `cat frontend/ui-tests/reports/installer.pid`
-	rm frontend/ui-tests/reports/installer.pid
+	rm -fr frontend/ui-tests/reports/
 	killall chromedriver
 
 .PHONY: clean
