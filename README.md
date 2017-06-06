@@ -32,36 +32,46 @@ See the official Tectonic documentation:
 
 ### Hacking
 
-In order to successfully build this project, you must first of all place it according to the Go workspace convention, i.e. at `$GOPATH/src/github.com/coreos/tectonic-installer`. If you don't set `$GOPATH`, it should by default be at `$HOME/go`.
+These instructions can be used for the official stable platforms listed above, and for the following alpha/beta platforms:
 
-#### Requirements
+- [Azure via Terraform](Documentation/install/azure/azure-terraform.md) [[**alpha**][platform-lifecycle]]
+- [OpenStack via Terraform](Documentation/install/openstack/openstack-terraform.md) [[**alpha**][platform-lifecycle]]
+- [VMware via Terraform](Documentation/install/vmware/vmware-terraform.md) [[**alpha**][platform-lifecycle]]
 
-To build Tectonic Installer, you will need to install the following requirements:
+**Go and Source**
 
-##### Terraform
+[Install Go](https://golang.org/doc/install) if not already installed.
 
-Tectonic Installer includes and requires a specific version of [Terraform](https://terraform.io). See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
+Then get the Tectonic Installer source code:
 
-Download and install the [official Terraform binary](https://www.terraform.io/downloads.html) for your OS, use your favorite package manager, or use the one binary that is included in the Tectonic Installer's release tarball.
+```
+go get github.com/coreos/tectonic-installer
+cd $(go env GOPATH)/src/github.com/coreos/tectonic-installer<Paste>
+```
 
-##### Yarn
+**Terraform**
 
-You need the [Yarn](https://yarnpkg.com) JavaScript package manager. If you're on OS X, you can install it via Homebrew: `brew install yarn`.
+The Tectonic Installer releases include a build of [Terraform](https://terraform.io). See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
+
+The [latest Terraform binary](https://www.terraform.io/downloads.html) may not always work as Tectonic Installer, which sometimes relies on bug fixes or features not yet available in the official Terraform release.
+
+**Yarn (optional)**
+
+The [Yarn](https://yarnpkg.com) JavaScript package manager is required for building the frontend code. On OS X, install via Homebrew: `brew install yarn`.
 
 #### Common Usage
 
-At a high level, using the installer follows the workflow below. See each platform guide for specifics.
-
 **Choose your platform**
 
-The example below will use `PLATFORM=azure` but you can set the value to something different. Also, as you configure the cluster refer to the linked documentation to find the configuration parameters.
+First, set the `PLATFORM=` environment variable. This example will use `PLATFORM=azure`.
 
 - `PLATFORM=azure` [Azure via Terraform](Documentation/install/azure/azure-terraform.md) [[**alpha**][platform-lifecycle]]
 - `PLATFORM=openstack` [OpenStack via Terraform](Documentation/install/openstack/openstack-terraform.md) [[**alpha**][platform-lifecycle]]
+- `PLATFORM=vmware` [VMware via Terraform](Documentation/install/vmware/vmware-terraform.md) [[**alpha**][platform-lifecycle]]
 
 **Initiate the Cluster Configuration**
 
-This will create a new directory `build/<cluster-name>` which holds all module references, Terraform state files, and custom variable files.
+Using make create a new directory `build/<cluster-name>` to hold all module references, Terraform state files, and custom variable files.
 
 ```
 PLATFORM=azure CLUSTER=my-cluster make localconfig
@@ -69,12 +79,13 @@ PLATFORM=azure CLUSTER=my-cluster make localconfig
 
 **Configure Cluster**
 
-Set variables in the `terraform.tfvars` file as needed, or you will be prompted. Available variables can be found in the `config.tf` and `variables.tf` files present in the `platforms/<PLATFORM>` directory.
+Set variables in the `build/<cluster-name>/terraform.tfvars` file as needed. Available variables are found in the `platforms/<PLATFORM>/config.tf` and `platforms/<PLATFORM>/variables.tf` files.
+
 Examples for each platform can be found in [the examples directory](examples/).
 
 **Terraform Lifecycle**
 
-Plan, apply, and destroy are provided as Make targets to make working with the build directory and custom binary easier.
+Plan, apply, and destroy are provided as `make` targets to ease the build directory and custom binary complexity.
 
 ```
 PLATFORM=azure CLUSTER=my-cluster make plan
