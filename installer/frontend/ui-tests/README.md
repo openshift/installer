@@ -2,13 +2,13 @@
 
 ### Set the following environment variables :
 
-`export AWS_ACCESS_KEY_ID = <awsAccessKey> `
+`export AWS_ACCESS_KEY_ID = <awsAccessKey>`
 
-`export AWS_SECRET_ACCESS_KEY = <awsSecretKey> `
+`export AWS_SECRET_ACCESS_KEY = <awsSecretKey>`
 
-`export TECTONIC_LICENSE = <coreOSLicense> `
+`export TECTONIC_LICENSE = <coreOSLicense>`
 
-`export PULL_SECRET = <pullSecret> `
+`export PULL_SECRET = <pullSecret>`
 
 ### Here is the list of the make targets to build and test the tectonic installer:
 
@@ -21,55 +21,77 @@
 `make gui-tests-cleanup` : removes all test artifacts
 
 
-#### To execute the tests on browser, `package.json` should include:
+## Running tests
 
+### Chromedriver
+
+`nightwatch.json` should include:
+
+```json
+{
+  "selenium": {
+    "start_process": false
+  },
+  "test_settings": {
+    "default": {
+      "selenium_port": 9515,
+      "selenium_host": "localhost",
+      "default_path_prefix": "",
+      "desiredCapabilities": {
+        "browserName": "chrome",
+        "chromeOptions": {
+          "args": [
+            "--disable-gpu",
+            "--no-sandbox"
+          ]
+        }
+      },
+      "launch_url": "http://localhost:4444"
+    }
+  }
+}
 ```
-   "selenium":{
-      "start_process":true,
-      "host":"127.0.0.1",
-      "port":4444,
-      "server_path":"./bin/selenium-server-standalone-3.3.1.jar",
-      "cli_args":{
-         "webdriver.chrome.driver":"./bin/chromedriver"
-      }
-   },
-   "test_settings":{
-      "default":{
-         "launch_url":"127.0.0.1:8080",
-         "selenium_host":"127.0.0.1",
-         "selenium_port":4444,
-         "desiredCapabilities":{
-            "browserName":"chrome",
-            "javascriptEnabled":true,
-            "acceptSslCerts":true
-         }
-      }
-   }
 
+To execute the tests in headless mode (no GUI shown), you'll need Google Chrome v60 or later. [Download Google Chrome Canary](https://www.google.com/chrome/browser/canary.html). Add `"--headless"` to chromeOptions's args. You may also need to specify the path to Chrome. e.g.:
+
+```json
+"chromeOptions": {
+  "args": [
+    "--disable-gpu",
+    "--no-sandbox",
+    "--headless"
+  ],
+  "binary": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
+}
 ```
 
-#### To execute the tests in headless mode: [Download Google Chrome Canary](https://www.google.com/chrome/browser/canary.html)  and `package.json` should include:
 
-```
-   "selenium":{
-      "start_process":false
-   },
-   "test_settings":{
-      "default":{
-         "launch_url":"127.0.0.1:8080",
-         "selenium_host":"127.0.0.1",
-         "selenium_port":9515,
-         "desiredCapabilities":{
-            "browserName":"chrome",
-            "chromeOptions":{
-               "args":[
-                  "--headless",
-                  "--disable-gpu",
-                  "--no-sandbox"
-               ],
-               "binary":"/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
-            }
-         }
+### Selenium
+
+Selenium requires Java. To execute the tests on browser using Selenium, `nightwatch.json` should include:
+
+```json
+{
+  "selenium":{
+    "start_process":true,
+    "host":"127.0.0.1",
+    "port":4445,
+    "server_path":"./bin/selenium-server-standalone-3.3.1.jar",
+    "cli_args":{
+       "webdriver.chrome.driver":"./bin/chromedriver"
+    }
+  },
+  "test_settings":{
+    "default":{
+      "launch_url": "http://localhost:4444"
+      "selenium_host":"127.0.0.1",
+      "selenium_port":4445,
+      "desiredCapabilities":{
+        "browserName":"chrome",
+        "javascriptEnabled":true,
+        "acceptSslCerts":true
       }
-   }
+    }
+  }
+}
 ```

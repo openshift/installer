@@ -19,11 +19,10 @@
           "args": [
             "--disable-gpu",
             "--no-sandbox"
-          ],
-          "binary": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
+          ]
         }
       },
-      "launch_url": "http://localhost:8080"
+      "launch_url": "http://localhost:4444"
     }
   }
 }
