@@ -2,11 +2,11 @@
 
 ### Set the following environment variables :
 
-`export AWS_ACCESS_KEY = <awsAccessKey> `
+`export AWS_ACCESS_KEY_ID = <awsAccessKey> `
 
-`export AWS_SECRET_KEY = <awsSecretKey> `
+`export AWS_SECRET_ACCESS_KEY = <awsSecretKey> `
 
-`export CORE_OS_LICENSE = <coreOSLicense> `
+`export TECTONIC_LICENSE = <coreOSLicense> `
 
 `export PULL_SECRET = <pullSecret> `
 
@@ -14,13 +14,11 @@
 
 `make build` : builds the tectonic installer component
 
-`make launch_installer` : launches the tectonic installer gui
+`make launch-installer` : launches the tectonic installer gui
 
-`make launch_installer_guitests` : runs the tectonic installer gui tests
+`make launch-installer-guitests` : runs the tectonic installer gui tests
 
-`make gui_tests_cleanup` : removes all test artifacts
-
-`make all` : executes all the above make targets
+`make gui-tests-cleanup` : removes all test artifacts
 
 
 #### To execute the tests on browser, `package.json` should include:
