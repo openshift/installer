@@ -82,7 +82,7 @@ data "ignition_systemd_unit" "kubelet-env" {
 data "ignition_file" "max-user-watches" {
   filesystem = "root"
   path       = "/etc/sysctl.d/max-user-watches.conf"
-  mode       = "420"
+  mode       = "0644"
 
   content {
     content = "fs.inotify.max_user_watches=16184"
@@ -146,7 +146,7 @@ data "ignition_file" "node_hostname" {
 data "ignition_file" "kubelet-env" {
   filesystem = "root"
   path       = "/etc/kubernetes/kubelet.env"
-  mode       = "420"
+  mode       = "0644"
 
   content {
     content = <<EOF
