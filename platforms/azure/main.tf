@@ -21,10 +21,11 @@ module "vnet" {
 module "etcd" {
   source = "../../modules/azure/etcd"
 
-  location            = "${var.tectonic_azure_location}"
-  resource_group_name = "${module.resource_group.name}"
-  image_reference     = "${var.tectonic_azure_image_reference}"
-  vm_size             = "${var.tectonic_azure_etcd_vm_size}"
+  location             = "${var.tectonic_azure_location}"
+  resource_group_name  = "${module.resource_group.name}"
+  image_reference      = "${var.tectonic_azure_image_reference}"
+  vm_size              = "${var.tectonic_azure_etcd_vm_size}"
+  storage_account_type = "${var.tectonic_azure_etcd_storage_account_type}"
 
   etcd_count      = "${var.tectonic_etcd_count}"
   base_domain     = "${var.tectonic_base_domain}"
@@ -37,10 +38,11 @@ module "etcd" {
 module "masters" {
   source = "../../modules/azure/master"
 
-  location            = "${var.tectonic_azure_location}"
-  resource_group_name = "${module.resource_group.name}"
-  image_reference     = "${var.tectonic_azure_image_reference}"
-  vm_size             = "${var.tectonic_azure_master_vm_size}"
+  location             = "${var.tectonic_azure_location}"
+  resource_group_name  = "${module.resource_group.name}"
+  image_reference      = "${var.tectonic_azure_image_reference}"
+  vm_size              = "${var.tectonic_azure_master_vm_size}"
+  storage_account_type = "${var.tectonic_azure_master_storage_account_type}"
 
   master_count                 = "${var.tectonic_master_count}"
   base_domain                  = "${var.tectonic_base_domain}"
@@ -65,10 +67,11 @@ module "masters" {
 module "workers" {
   source = "../../modules/azure/worker"
 
-  location            = "${var.tectonic_azure_location}"
-  resource_group_name = "${module.resource_group.name}"
-  image_reference     = "${var.tectonic_azure_image_reference}"
-  vm_size             = "${var.tectonic_azure_worker_vm_size}"
+  location             = "${var.tectonic_azure_location}"
+  resource_group_name  = "${module.resource_group.name}"
+  image_reference      = "${var.tectonic_azure_image_reference}"
+  vm_size              = "${var.tectonic_azure_worker_vm_size}"
+  storage_account_type = "${var.tectonic_azure_worker_storage_account_type}"
 
   worker_count                 = "${var.tectonic_worker_count}"
   base_domain                  = "${var.tectonic_base_domain}"

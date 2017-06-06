@@ -52,7 +52,7 @@ resource "azurerm_storage_account" "etcd_storage" {
   name                = "${random_id.storage.hex}"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
-  account_type        = "Premium_LRS"
+  account_type        = "${var.storage_account_type}"
 }
 
 resource "azurerm_storage_container" "etcd_storage_container" {

@@ -17,6 +17,11 @@ variable "vm_size" {
   type = "string"
 }
 
+// Storage account type
+variable "storage_account_type" {
+  type = "string"
+}
+
 // The base DNS domain of the cluster.
 // Example: `azure.dev.coreos.systems`
 variable "base_domain" {

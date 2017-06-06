@@ -62,6 +62,24 @@ variable "tectonic_azure_etcd_vm_size" {
   default     = "Standard_DS2_v2"
 }
 
+variable "tectonic_azure_master_storage_account_type" {
+  type        = "string"
+  description = "Storage account type for the master node(s). Example: Premium_LRS."
+  default     = "Premium_LRS"
+}
+
+variable "tectonic_azure_worker_storage_account_type" {
+  type        = "string"
+  description = "Storage account type for the worker node(s). Example: Premium_LRS."
+  default     = "Premium_LRS"
+}
+
+variable "tectonic_azure_etcd_storage_account_type" {
+  type        = "string"
+  description = "Storage account type for the etcd node(s). Example: Premium_LRS."
+  default     = "Premium_LRS"
+}
+
 variable "tectonic_azure_vnet_cidr_block" {
   type        = "string"
   default     = "10.0.0.0/16"

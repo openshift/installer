@@ -17,6 +17,11 @@ variable "vm_size" {
   type = "string"
 }
 
+// Storage account type
+variable "storage_account_type" {
+  type = "string"
+}
+
 // Count of worker nodes to be created.
 variable "worker_count" {
   type = "string"
