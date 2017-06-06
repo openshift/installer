@@ -10,7 +10,7 @@ data "ignition_config" "etcd" {
   ]
 
   systemd = [
-    "${data.ignition_systemd_unit.locksmithd.id}",
+    "${data.ignition_systemd_unit.locksmithd.*.id[count.index]}",
     "${data.ignition_systemd_unit.etcd3.*.id[count.index]}",
     "${data.ignition_systemd_unit.vmtoolsd_member.id}",
   ]
@@ -26,7 +26,7 @@ data "ignition_user" "core" {
 }
 
 data "ignition_systemd_unit" "locksmithd" {
-  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+  count = "${length(var.external_endpoints) == 0 ? var.instance_count : 0}"
 
   name   = "locksmithd.service"
   enable = true
@@ -35,6 +35,16 @@ data "ignition_systemd_unit" "locksmithd" {
     {
       name    = "40-etcd-lock.conf"
       content = "[Service]\nEnvironment=REBOOT_STRATEGY=etcd-lock\n"
+      name    = "40-etcd-lock.conf"
+
+      content = <<EOF
+[Service] 
+Environment=REBOOT_STRATEGY=etcd-lock 
+Environment=LOCKSMITHD_ETCD_CAFILE=/etc/ssl/etcd/ca.crt
+Environment=LOCKSMITHD_ETCD_KEYFILE=/etc/ssl/etcd/client.key
+Environment=LOCKSMITHD_ETCD_CERTFILE=/etc/ssl/etcd/client.crt
+Environment=LOCKSMITHD_ENDPOINT=https://${var.hostname["${count.index}"]}.${var.base_domain}:2379
+EOF
     },
   ]
 }
@@ -59,17 +69,24 @@ data "ignition_systemd_unit" "etcd3" {
       name = "40-etcd-cluster.conf"
 
       content = <<EOF
-      [Service]
-      Environment="ETCD_IMAGE=docker://${var.container_image}"
-      Environment="RKT_RUN_ARGS=--uuid-file-save=/var/lib/coreos/etcd-member-wrapper.uuid --insecure-options=all"
-      ExecStart=
-      ExecStart=/usr/lib/coreos/etcd-wrapper \
-        --name=${var.hostname["${count.index}"]} \
-        --advertise-client-urls=http://${var.hostname["${count.index}"]}.${var.base_domain}:2379 \
-        --initial-advertise-peer-urls=http://${var.hostname["${count.index}"]}.${var.base_domain}:2380 \
-        --listen-client-urls=http://0.0.0.0:2379 \
-        --listen-peer-urls=http://0.0.0.0:2380 \
-        --initial-cluster="${join("," , data.template_file.etcd-cluster.*.rendered)}" 
+[Service]
+Environment="ETCD_IMAGE=${var.container_image}"
+Environment="RKT_RUN_ARGS=--volume etcd-ssl,kind=host,source=/etc/ssl/etcd \
+  --mount volume=etcd-ssl,target=/etc/ssl/etcd"
+ExecStart=
+ExecStart=/usr/lib/coreos/etcd-wrapper \
+--name=${var.hostname["${count.index}"]} \
+--initial-cluster="${join("," , data.template_file.etcd-cluster.*.rendered)}" \
+--advertise-client-urls=https://${var.hostname["${count.index}"]}.${var.base_domain}:2379 \
+--cert-file=/etc/ssl/etcd/client.crt \
+--key-file=/etc/ssl/etcd/client.key \
+--peer-cert-file=/etc/ssl/etcd/peer.crt \
+--peer-key-file=/etc/ssl/etcd/peer.key \
+--peer-trusted-ca-file=/etc/ssl/etcd/ca.crt \
+--peer-client-cert-auth=true \
+--initial-advertise-peer-urls=https://${var.hostname["${count.index}"]}.${var.base_domain}:2380 \
+--listen-client-urls=https://0.0.0.0:2379 \
+--listen-peer-urls=https://0.0.0.0:2380 
 EOF
     },
   ]
