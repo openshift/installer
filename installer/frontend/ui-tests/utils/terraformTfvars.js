@@ -1,8 +1,8 @@
 const request = require('request');
-const JSZip = require("jszip");
+const JSZip = require('jszip');
 const deep = require('deep-diff').diff;
 
-const getAssets = (launchUrl,cookie, callback) => {
+const getAssets = (launchUrl, cookie, callback) => {
   const options = {
     url: launchUrl + '/terraform/assets',
     method: 'GET',
@@ -12,13 +12,16 @@ const getAssets = (launchUrl,cookie, callback) => {
     },
   };
   request(options, (err, res, body) => {
-    if (err || res.statusCode !== 200 || res.headers['content-type'] !== 'application/zip') {
-      return callback(err || {
+    if (err) {
+      return callback(err, res);
+    }
+    if (res.statusCode !== 200 || res.headers['content-type'] !== 'application/zip') {
+      return callback({
         statusCode: res.statusCode,
         contentType: res.headers['content-type'],
-      }, null);
+      }, res);
     }
-    callback(null, res, body);
+    return callback(null, res, body);
   });
 };
 
@@ -36,9 +39,14 @@ const getTerraformTfvars = (response, callback) => {
 
 const returnRequiredTerraformTfvars = (terraformTfvars) => {
   const json = JSON.parse(terraformTfvars);
-  const extraTfvars = ['tectonic_admin_password_hash', 'tectonic_license_path', 'tectonic_pull_secret_path', 'tectonic_kube_apiserver_service_ip',
-    'tectonic_kube_dns_service_ip', 'tectonic_kube_etcd_service_ip', 'tectonic_aws_etcd_ec2_type',
-    'tectonic_aws_etcd_root_volume_size', 'tectonic_aws_etcd_root_volume_type', 'tectonic_etcd_count'];
+  const extraTfvars = [
+    'tectonic_admin_password_hash',
+    'tectonic_license_path',
+    'tectonic_pull_secret_path',
+    'tectonic_kube_apiserver_service_ip',
+    'tectonic_kube_dns_service_ip',
+    'tectonic_kube_etcd_service_ip',
+  ];
   extraTfvars.forEach(key => {
     delete json[key];
   });
@@ -46,9 +54,12 @@ const returnRequiredTerraformTfvars = (terraformTfvars) => {
 };
 
 const returnTerraformTfvars = (launchUrl, cookie, callback) => {
-  getAssets(launchUrl,cookie, (err, res, terraformAssestsResponse) => {
-    if (err !== null || res.statusCode !== 200 || res.headers['content-type'] !== 'application/zip' ) {
-      return callback(new Error("Terraform get assets api call failed"),null);
+  getAssets(launchUrl, cookie, (err, res, terraformAssestsResponse) => {
+    if (err) {
+      return callback(err);
+    }
+    if (res.statusCode !== 200 || res.headers['content-type'] !== 'application/zip' ) {
+      return callback("Terraform get assets api call failed", res);
     }
     getTerraformTfvars(terraformAssestsResponse, (terraformTfvars) => {
       const actualJson = returnRequiredTerraformTfvars(terraformTfvars);
@@ -57,10 +68,10 @@ const returnTerraformTfvars = (launchUrl, cookie, callback) => {
   });
 };
 
-const compareJson = (actualJson,expectedJson) => {
+const compareJson = (actualJson, expectedJson) => {
   let msg = '';
   const diff = deep(actualJson,expectedJson);
-  if (typeof diff !== 'undefined'){
+  if (typeof diff !== 'undefined') {
     diff.forEach(key => {
       msg = msg + "\n" + "TerraformTfvar:" + key.path + " ||"+" actualValue:" + key.lhs + " ||"
       +" expectedValue:"+ key.rhs;
@@ -69,4 +80,10 @@ const compareJson = (actualJson,expectedJson) => {
   }
   return msg;
 };
-module.exports = { getAssets, getTerraformTfvars, returnRequiredTerraformTfvars, returnTerraformTfvars , compareJson };
+
+module.exports = {
+  getAssets,
+  returnRequiredTerraformTfvars,
+  returnTerraformTfvars,
+  compareJson,
+};

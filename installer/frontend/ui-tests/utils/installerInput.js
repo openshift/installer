@@ -2,8 +2,8 @@ const fs = require('fs');
 const path = require('path');
 
 const readAwsTestDataJson = () => {
-  const fileName = path.join(__dirname, '../','../', '__tests__', 'examples', 'aws.json');
-    //eslint-disable-next-line no-sync
+  const fileName = path.join(__dirname, '..', '..', '__tests__', 'examples', 'aws.json');
+  //eslint-disable-next-line no-sync
   const awsTestDatajson = JSON.parse(fs.readFileSync(fileName, 'utf8'));
   return awsTestDatajson.variables;
 };
@@ -13,7 +13,6 @@ const cluster = name => {
 };
 
 /** Returns expected json. This json is used to prep the data required for the test */
-
 const buildExpectedJson = (opt) => {
   const options = {} || opt;
   const json = readAwsTestDataJson();
@@ -61,4 +60,13 @@ const createCoreosCredentials = (Path, env_var) => {
   fs.writeFileSync(Path, env_var);
 };
 
-module.exports = {readAwsTestDataJson,buildExpectedJson,clusterTagKey,sshKeys,clusterSubdomainName,clusterBaseDomainName,adminEmail,adminPassword,createCoreosCredentials };
+module.exports = {
+  buildExpectedJson,
+  clusterTagKey,
+  sshKeys,
+  clusterSubdomainName,
+  clusterBaseDomainName,
+  adminEmail,
+  adminPassword,
+  createCoreosCredentials,
+};

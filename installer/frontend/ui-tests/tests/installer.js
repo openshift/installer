@@ -2,8 +2,7 @@ const installerInput = require('../utils/installerInput');
 const tfvarsUtil = require('../utils/terraformTfvars');
 
 module.exports = {
-
-  after(client) {
+  after (client) {
     client.end();
   },
 
@@ -33,24 +32,21 @@ module.exports = {
     certificateAuthorityPage.click('@nextStep');
 
     keysPage.selectSshKeys();
-    nodesPage.waitForElementVisible('@nextStep', 10000)
-      .click('@nextStep');
+    nodesPage.waitForElementVisible('@nextStep', 10000).click('@nextStep');
     networkingPage.provideNetworkingDetails();
     consoleLoginPage.enterLoginCredentails();
     submitPage.click('@manuallyBoot').click('@manuallyBoot');
     client.pause(10000);
-    client.getCookie('tectonic-installer', (result) => {
-      tfvarsUtil.returnTerraformTfvars(client.launch_url, result.value,
-         (err,actualJson) => {
-           if(err){
-             client.assert.fail(err);// Test fails but doesnt exist
-           } else {
-             const msg = tfvarsUtil.compareJson(actualJson,expectedJson);
-             if(msg !== ''){
-               client.assert.fail(msg);
-             }
-           }
-         });
+    client.getCookie('tectonic-installer', result => {
+      tfvarsUtil.returnTerraformTfvars(client.launch_url, result.value, (err, actualJson) => {
+        if (err) {
+          return client.assert.fail(err);
+        }
+        const msg = tfvarsUtil.compareJson(actualJson, expectedJson);
+        if (msg) {
+          return client.assert.fail(msg);
+        }
+      });
     });
   },
 };
