@@ -23,10 +23,11 @@ module "bootkube" {
   oidc_groups_claim   = "groups"
   oidc_client_id      = "tectonic-kubectl"
 
-  etcd_endpoints   = ["${openstack_compute_instance_v2.etcd_node.*.access_ip_v4}"]
-  etcd_ca_cert     = "${var.tectonic_etcd_ca_cert_path}"
-  etcd_client_cert = "${var.tectonic_etcd_client_cert_path}"
-  etcd_client_key  = "${var.tectonic_etcd_client_key_path}"
+  etcd_endpoints       = ["${aws_route53_record.etc_a_nodes.*.fqdn}"]
+  etcd_ca_cert         = "${var.tectonic_etcd_ca_cert_path}"
+  etcd_client_cert     = "${var.tectonic_etcd_client_cert_path}"
+  etcd_client_key      = "${var.tectonic_etcd_client_key_path}"
+  experimental_enabled = "${var.tectonic_experimental}"
 }
 
 module "tectonic" {
@@ -59,8 +60,7 @@ module "tectonic" {
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "HostPort"
   experimental      = "${var.tectonic_experimental}"
-
-  master_count = "${var.tectonic_master_count}"
+  master_count      = "${var.tectonic_master_count}"
 }
 
 module "etcd" {

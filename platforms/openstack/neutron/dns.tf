@@ -29,7 +29,7 @@ resource "aws_route53_record" "master_nodes" {
   name    = "${var.tectonic_cluster_name}-master-${count.index}"
   type    = "A"
   ttl     = "60"
-  records = ["${element(openstack_networking_port_v2.master.*.fixed_ip.0.ip_address, count.index)}"]
+  records = ["${element(openstack_networking_port_v2.master.*.all_fixed_ips[0], count.index)}"]
 }
 
 resource "aws_route53_record" "worker_nodes" {
@@ -38,7 +38,7 @@ resource "aws_route53_record" "worker_nodes" {
   name    = "${var.tectonic_cluster_name}-worker-${count.index}"
   type    = "A"
   ttl     = "60"
-  records = ["${element(openstack_networking_port_v2.worker.*.fixed_ip.0.ip_address, count.index)}"]
+  records = ["${element(openstack_networking_port_v2.worker.*.all_fixed_ips[0], count.index)}"]
 }
 
 # etcd
@@ -64,6 +64,6 @@ resource "aws_route53_record" "etc_a_nodes" {
   type    = "A"
   ttl     = "60"
   name    = "${var.tectonic_cluster_name}-etcd-${count.index}"
-  records = ["${openstack_compute_instance_v2.etcd_node.*.access_ip_v4[count.index]}"]
+  records = ["${element(openstack_networking_port_v2.etcd.*.all_fixed_ips[0], count.index)}"]
   zone_id = "${data.aws_route53_zone.tectonic.zone_id}"
 }
