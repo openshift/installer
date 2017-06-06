@@ -19,6 +19,19 @@ assume_role() {
     echo "AWS_SESSION_TOKEN=$(echo "$CREDENTIALS" | jq -r '.SessionToken'); export AWS_SESSION_TOKEN"
 }
 
+set_role() {
+    ROLE_NAME=$1
+    ROLE_POLICY=$2
+    TRUST_POLICY=$3
+    # If the role exists, then update the trust policy. Otherwise, create a new role.
+    if aws iam get-role --role-name="$ROLE_NAME" > /dev/null 2>&1 ; then
+        aws iam update-assume-role-policy --role-name="$ROLE_NAME" --policy-document=file://"$TRUST_POLICY"
+    else
+        aws iam create-role --role-name="$ROLE_NAME" --assume-role-policy-document=file://"$TRUST_POLICY"
+    fi
+    aws iam put-role-policy --role-name="$ROLE_NAME" --policy-name="$ROLE_NAME" --policy-document=file://"$ROLE_POLICY"
+}
+
 common() {
     DIR="$( cd "$( dirname "$0" )" && pwd )"
     # make core utils accessible to make
@@ -98,11 +111,13 @@ usage() {
     printf "%s is a tool for running Tectonic smoke tests on AWS.\n\n" "$(basename "$0")"
     printf "Usage:\n\n \t %s command [arguments]\n\n" "$(basename "$0")"
     printf "The commands are:\n\n"
-    printf "\t assume-role <role-name> \tassume the role specified by <role-name>\n"
-    printf "\t create <tfvars>         \tcreate a Tectonic cluster parameterized by <tfvars>\n"
-    printf "\t destroy <tfvars>        \tdestroy the Tectonic cluster parameterized by <tfvars>\n"
-    printf "\t plan <tfvars>           \tplan a Tectonic cluster parameterized by <tfvars>\n"
-    printf "\t test <tfvars>           \ttest a Tectonic cluster parameterized by <tfvars>\n"
+    printf "\t assume-role <role-name>                      assume the role specified by <role-name>\n"
+    printf "\t create <tfvars>                              create a Tectonic cluster parameterized by <tfvars>\n"
+    printf "\t destroy <tfvars>                             destroy the Tectonic cluster parameterized by <tfvars>\n"
+    printf "\t plan <tfvars>                                plan a Tectonic cluster parameterized by <tfvars>\n"
+    printf "\t set-role <role-name> <policy> <trust-policy> create or update the <role-name> role with policy at file\n"
+    printf "\t                                              path <policy> and trust policy at file path <trust-policy>\n"
+    printf "\t test <tfvars>                                test a Tectonic cluster parameterized by <tfvars>\n"
     printf "\n"
 }
 
@@ -123,6 +138,8 @@ main () {
             destroy "$@";;
         plan)
             plan "$@";;
+        set-role)
+            set_role "$@";;
         test)
             test_cluster "$@";;
         *)
