@@ -127,6 +127,16 @@ pipeline {
                 sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-exp.tfvars'
               }
             }
+          },
+          "TerraForm: AWS-custom-ca": {
+            unstash 'installer'
+            unstash 'sanity'
+            withCredentials(creds) {
+              timeout(5) {
+                sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
+                sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-ca.tfvars'
+              }
+            }
           }
         )
       }
