@@ -298,3 +298,16 @@ variable "tectonic_experimental" {
 If set to true, experimental Tectonic assets are being deployed.
 EOF
 }
+
+# TODO: Backport usage to other platforms
+variable "tectonic_use_jumpbox" {
+  type = "string"
+
+  description = <<EOF
+(optional) Specifies whether a jumpbox should be created to manage cluster nodes.
+DISCLAIMER: This is currently experimental and can only be configured for Azure.
+DO NOT USE.
+EOF
+
+  default = "false"
+}

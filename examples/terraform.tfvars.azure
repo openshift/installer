@@ -16,6 +16,9 @@ tectonic_azure_create_dns_zone = true
 // 
 tectonic_azure_dns_resource_group = "tectonic-dns-group"
 
+// Specifies if SSH access should be allowed from external networks
+tectonic_azure_enable_ssh_external = "false"
+
 // Storage account type for the etcd node(s). Example: Premium_LRS.
 tectonic_azure_etcd_storage_account_type = "Premium_LRS"
 
@@ -27,6 +30,28 @@ tectonic_azure_etcd_vm_size = "Standard_DS2_v2"
 // 
 // Example: the subnet ID starts with `"/subscriptions/{subscriptionId}"` or `"/providers/{resourceProviderNamespace}"`.
 // tectonic_azure_external_master_subnet_id = ""
+
+// (optional) The name of the external Network Security Group used for the
+// Tectonic Console and Kubernetes API Server. This depends on
+// `tectonic_azure_external_resource_group` to also be specified.
+// tectonic_azure_external_nsg_api = ""
+
+// (optional) The name of the external Network Security Group used for etcd. This
+// depends on `tectonic_azure_external_resource_group` to also be specified.
+// tectonic_azure_external_nsg_etcd = ""
+
+// (optional) The name of the external Network Security Group used for masters. This
+// depends on `tectonic_azure_external_resource_group` to also be specified.
+// tectonic_azure_external_nsg_master = ""
+
+// (optional) The name of the external Network Security Group used for workers. This
+// depends on `tectonic_azure_external_resource_group` to also be specified.
+// tectonic_azure_external_nsg_worker = ""
+
+// (optional) The name of the resource group of the external Network Security
+// Group used. This is required if specifying `tectonic_external_nsg_etcd`,
+// `tectonic_external_nsg_master`, and/or `tectonic_external_nsg_worker`,
+// tectonic_azure_external_resource_group = ""
 
 // Pre-existing resource group to use as parent for cluster resources.
 tectonic_azure_external_rsg_name = ""
@@ -57,6 +82,16 @@ tectonic_azure_master_vm_size = "Standard_DS2_v2"
 
 // 
 tectonic_azure_ssh_key = ""
+
+// (optional) Network (external) to allow SSH access from. Maps to `source_address_prefix` in Azure.
+// Defaults to `VirtualNetwork`. Can be external to Azure environment.
+// Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
+// tectonic_azure_ssh_network_external = "VirtualNetwork"
+
+// Network (internal) to allow SSH access from. Maps to `source_address_prefix` in Azure.
+// Defaults to `VirtualNetwork`. Should be internal to Azure environment.
+// Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
+tectonic_azure_ssh_network_internal = "VirtualNetwork"
 
 // (optional) If set to true, assemble the FQDN from the configuration. Otherwise, use the FQDN set up by Azure.
 // tectonic_azure_use_custom_fqdn = false
@@ -156,8 +191,10 @@ tectonic_pull_secret_path = ""
 // This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. The maximum size of this IP range is /12
 tectonic_service_cidr = "10.3.0.0/16"
 
-// 
-tectonic_ssh_key = ""
+// (optional) Specifies whether a jumpbox should be created to manage cluster nodes.
+// DISCLAIMER: This is currently experimental and can only be configured for Azure.
+// DO NOT USE.
+// tectonic_use_jumpbox = "false"
 
 // If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
 tectonic_vanilla_k8s = false

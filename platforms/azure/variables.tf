@@ -7,6 +7,37 @@ EOF
   default = "1.0"
 }
 
+# TODO: Add descriptions for SSH vars
+variable "tectonic_azure_enable_ssh_external" {
+  type        = "string"
+  description = "Specifies if SSH access should be allowed from external networks"
+  default     = "false"
+}
+
+variable "tectonic_azure_ssh_network_internal" {
+  type = "string"
+
+  description = <<EOF
+Network (internal) to allow SSH access from. Maps to `source_address_prefix` in Azure.
+Defaults to `VirtualNetwork`. Should be internal to Azure environment.
+Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
+EOF
+
+  default = "VirtualNetwork"
+}
+
+variable "tectonic_azure_ssh_network_external" {
+  type = "string"
+
+  description = <<EOF
+(optional) Network (external) to allow SSH access from. Maps to `source_address_prefix` in Azure.
+Defaults to `VirtualNetwork`. Can be external to Azure environment.
+Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
+EOF
+
+  default = "VirtualNetwork"
+}
+
 variable "tectonic_azure_dns_resource_group" {
   type    = "string"
   default = "tectonic-dns-group"
@@ -18,7 +49,7 @@ variable "tectonic_azure_image_reference" {
   type = "map"
 
   description = <<EOF
-(optional) Specifies an image map with the following keys: `publisher`, `offer`, `sku`, `version` 
+(optional) Specifies an image map with the following keys: `publisher`, `offer`, `sku`, `version`
 EOF
 
   default = {
@@ -31,11 +62,6 @@ EOF
 
 variable "tectonic_azure_location" {
   type = "string"
-}
-
-variable "tectonic_ssh_key" {
-  type    = "string"
-  default = ""
 }
 
 // Name of an Azure ssh key to use
@@ -135,6 +161,63 @@ variable "tectonic_azure_external_worker_subnet_id" {
 Required to use an existing VNet.
 
 Example: the subnet ID starts with `"/subscriptions/{subscriptionId}"` or `"/providers/{resourceProviderNamespace}"`.
+EOF
+
+  default = ""
+}
+
+variable "tectonic_azure_external_resource_group" {
+  type = "string"
+
+  description = <<EOF
+(optional) The name of the resource group of the external Network Security
+Group used. This is required if specifying `tectonic_external_nsg_etcd`,
+`tectonic_external_nsg_master`, and/or `tectonic_external_nsg_worker`,
+EOF
+
+  default = ""
+}
+
+variable "tectonic_azure_external_nsg_etcd" {
+  type = "string"
+
+  description = <<EOF
+(optional) The name of the external Network Security Group used for etcd. This
+depends on `tectonic_azure_external_resource_group` to also be specified.
+EOF
+
+  default = ""
+}
+
+variable "tectonic_azure_external_nsg_api" {
+  type = "string"
+
+  description = <<EOF
+(optional) The name of the external Network Security Group used for the
+Tectonic Console and Kubernetes API Server. This depends on
+`tectonic_azure_external_resource_group` to also be specified.
+EOF
+
+  default = ""
+}
+
+variable "tectonic_azure_external_nsg_master" {
+  type = "string"
+
+  description = <<EOF
+(optional) The name of the external Network Security Group used for masters. This
+depends on `tectonic_azure_external_resource_group` to also be specified.
+EOF
+
+  default = ""
+}
+
+variable "tectonic_azure_external_nsg_worker" {
+  type = "string"
+
+  description = <<EOF
+(optional) The name of the external Network Security Group used for workers. This
+depends on `tectonic_azure_external_resource_group` to also be specified.
 EOF
 
   default = ""

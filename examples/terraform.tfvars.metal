@@ -200,6 +200,11 @@ tectonic_service_cidr = "10.3.0.0/16"
 // Example: `ssh-rsa AAAB3N...`
 tectonic_ssh_authorized_key = ""
 
+// (optional) Specifies whether a jumpbox should be created to manage cluster nodes.
+// DISCLAIMER: This is currently experimental and can only be configured for Azure.
+// DO NOT USE.
+// tectonic_use_jumpbox = "false"
+
 // If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
 tectonic_vanilla_k8s = false
 
