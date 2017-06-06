@@ -1,6 +1,8 @@
 #!/bin/bash -ex
 set -o pipefail
 shopt -s expand_aliases
+DIR="$(cd "$(dirname "$0")" && pwd)"
+WORKSPACE=${WORKSPACE:-"$(cd "$DIR"/../../.. && pwd)"}
 # Alias filter for convenience
 # shellcheck disable=SC2139
 alias filter="$WORKSPACE"/installer/scripts/filter.sh
@@ -33,7 +35,6 @@ set_role() {
 }
 
 common() {
-    DIR="$( cd "$( dirname "$0" )" && pwd )"
     # make core utils accessible to make
     export PATH=/bin:$PATH
     export PLATFORM=aws
@@ -147,4 +148,6 @@ main () {
     esac
 }
 
+pushd "$WORKSPACE" > /dev/null
 main "$@"
+popd > /dev/null
