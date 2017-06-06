@@ -16,10 +16,7 @@ def creds = [
 
 pipeline {
   agent {
-    docker {
-      image 'quay.io/coreos/tectonic-builder:v1.12'
-      label 'worker'
-    }
+    label 'worker'
   }
 
   options {
@@ -36,14 +33,24 @@ pipeline {
 
   stages {
     stage('TerraForm: Syntax Check') {
+      agent {
+        docker {
+          image 'quay.io/coreos/tectonic-builder:v1.12'
+        }
+      }
       steps {
         sh """#!/bin/bash -ex
-        make structure-check
+          make structure-check
         """
       }
     }
 
     stage('Generate docs') {
+      agent {
+        docker {
+          image 'golang:1.8'
+        }
+      }
       steps {
         sh """#!/bin/bash -ex
 
@@ -59,6 +66,11 @@ pipeline {
     }
 
     stage('Generate examples') {
+      agent {
+        docker {
+          image 'golang:1.8'
+        }
+      }
       steps {
         sh """#!/bin/bash -ex
 
@@ -74,6 +86,11 @@ pipeline {
     }
 
     stage('Installer: Build & Test') {
+      agent {
+        docker {
+          image 'quay.io/coreos/tectonic-builder:v1.12'
+        }
+      }
       steps {
         checkout scm
         sh "mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT"
@@ -100,6 +117,11 @@ pipeline {
     }
 
     stage("Smoke Tests") {
+      agent {
+        docker {
+          image 'quay.io/coreos/tectonic-builder:v1.12'
+        }
+      }
       steps {
         parallel (
           "TerraForm: AWS": {
@@ -142,7 +164,32 @@ pipeline {
         }
       }
     }
+
+    stage('Build docker image')  {
+      when {
+        branch 'master'
+      }
+      steps {
+        unstash 'installer'
+        unstash 'sanity'
+        withCredentials([
+            usernamePassword(
+              credentialsId: 'quay-robot',
+              passwordVariable: 'QUAY_ROBOT_SECRET',
+              usernameVariable: 'QUAY_ROBOT_USERNAME'
+            )
+          ]) {
+          sh """
+            docker build -t quay.io/coreos/tectonic-installer:master -f images/tectonic-installer/Dockerfile .
+            docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
+            docker push quay.io/coreos/tectonic-installer:master
+            docker logout quay.io
+          """
+        }
+      }
+    }
   }
+
   post {
     always {
       // Cleanup workspace
