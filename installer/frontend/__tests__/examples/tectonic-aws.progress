@@ -2,10 +2,10 @@
   "clusterConfig": {
     "platformType": "aws-tf",
     "aws_ssh": "jenkins",
-    "aws_etcds-numberOfInstances": 1,
+    "aws_etcds-numberOfInstances": 3,
     "aws_etcds-instanceType": "t2.medium",
-    "aws_etcds-storageSizeInGiB": 300,
-    "aws_controllers-numberOfInstances": 1,
+    "aws_etcds-storageSizeInGiB": 30,
+    "aws_controllers-numberOfInstances": 3,
     "aws_controllers-instanceType": "t2.medium",
     "aws_controllers-storageSizeInGiB": 30,
     "awsControllerSubnets": {
@@ -16,7 +16,7 @@
       "us-west-1a": "10.0.64.0/19",
       "us-west-1c": "10.0.96.0/19"
     },
-    "aws_workers-numberOfInstances": 1,
+    "aws_workers-numberOfInstances": 3,
     "aws_workers-instanceType": "t2.medium",
     "aws_workers-storageSizeInGiB": 30,
     "aws_workers-storageType": "gp2",
