@@ -52,6 +52,12 @@ variable "tectonic_vmware_ssh_authorized_key" {
   description = "SSH public key to use as an authorized key. Example: `\"ssh-rsa AAAB3N...\"`"
 }
 
+variable "tectonic_vmware_ssh_private_key_path" {
+  type        = "string"
+  description = "SSH private key file corresponding to tectonic_vmware_ssh_authorized_key. If not provided, SSH agent will be used."
+  default     = ""
+}
+
 variable "tectonic_vmware_node_dns" {
   type        = "string"
   description = "DNS Server to be useddd by Virtual Machine(s)"

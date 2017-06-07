@@ -24,8 +24,9 @@ resource "vsphere_virtual_machine" "node" {
   }
 
   connection {
-    type = "ssh"
-    user = "core"
+    type        = "ssh"
+    user        = "core"
+    private_key = "${file(var.tectonic_vmware_ssh_private_key_path != "" ? pathexpand(var.tectonic_vmware_ssh_private_key_path) : "/dev/null")}"
   }
 
   provisioner "file" {
