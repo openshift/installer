@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { validate } from '../validate';
+import { compose, validate } from '../validate';
 import { configActions } from '../actions';
 import { Input, Password, Select, RadioBoolean, Connect } from './ui';
 import { Alert } from './alert';
@@ -48,8 +48,22 @@ const AWS_CREDS = 'AWSCreds';
 
 const awsCredsForm = new Form(AWS_CREDS, [
   new Field(STS_ENABLED, {default: false}),
-  new Field(AWS_ACCESS_KEY_ID, {default: '', validator: validate.nonEmpty}),
-  new Field(AWS_SECRET_ACCESS_KEY, {default: '', validator: validate.nonEmpty}),
+  new Field(AWS_ACCESS_KEY_ID, {
+    default: '',
+    validator: compose(validate.nonEmpty, (v) => {
+      if (v.length < 20) {
+        return 'AWS key IDs are at least 20 characters.';
+      }
+    }),
+  }),
+  new Field(AWS_SECRET_ACCESS_KEY, {
+    default: '',
+    validator: compose(validate.nonEmpty, (v) => {
+      if (v.length < 40) {
+        return 'AWS secrets are at least 40 characters.';
+      }
+    }),
+  }),
   new Field(AWS_SESSION_TOKEN, {
     default: '',
     validator: validate.nonEmpty,
