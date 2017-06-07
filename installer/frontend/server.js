@@ -20,6 +20,10 @@ const fetchJSON = (url, opts, ...args) => {
       return response.json();
     }
 
+    if (opts.retries > 0) {
+      opts.retries--;
+      return fetchJSON(url, opts, ...args);
+    }
     return response.text().then(Promise.reject);
   });
 };
@@ -123,7 +127,7 @@ export const commitToServer = (dryRun=false, retry=false, opts={}) => (dispatch,
 // One-time fetch of AMIs from server, followed by firing appropriate actions
 // Guaranteed not to reject.
 const getAMIs = (dispatch) => {
-  return fetchJSON(`/containerlinux/images/amis`)
+  return fetchJSON(`/containerlinux/images/amis`, { retries: 5 })
     .then(m => {
       const awsRegions = m.map(({name}) => {
         return {label: name, value: name};
