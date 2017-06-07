@@ -71,6 +71,7 @@ function wait_for_pods() {
 cd "$ASSETS_PATH/tectonic"
 
 # Wait for Kubernetes to be in a proper state
+set +e
 i=0
 echo "Waiting for Kubernetes API..."
 until $KUBECTL cluster-info; do
@@ -78,6 +79,7 @@ until $KUBECTL cluster-info; do
   echo "Cluster not available yet, waiting for 5 seconds ($i)"
   sleep 5
 done
+set -e
 
 # wait for Kubernetes pods
 wait_for_pods kube-system
