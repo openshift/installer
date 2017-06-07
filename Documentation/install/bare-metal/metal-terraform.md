@@ -2,7 +2,7 @@
 
 Following this guide will deploy a Tectonic cluster on virtual or physical hardware.
 
-## Prerequsities
+## Prerequisites
 
 * Terraform: Tectonic Installer includes and requires a specific version of Terraform. This is included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
 * [Matchbox v0.6+](https://github.com/coreos/matchbox/releases) installation with the gRPC API enabled. See [installation](https://coreos.com/matchbox/docs/latest/deployment.html).
