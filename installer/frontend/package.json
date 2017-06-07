@@ -14,7 +14,8 @@
     "build": "mkdir -p ../assets/frontend/scripts && ./node_modules/.bin/browserify --extension=.jsx app.jsx -o ../assets/frontend/scripts/app-bundle.js -t [ babelify ]",
     "dev": "mkdir -p ../assets/frontend/scripts && ./node_modules/.bin/watchify --extension=.jsx app.jsx --verbose -d -o ../assets/frontend/scripts/app-bundle.js -t [ babelify ]",
     "postinstall": "./check-versions.js",
-    "test": "./node_modules/.bin/jest"
+    "test": "./node_modules/.bin/jest",
+    "installer-tests": "./node_modules/.bin/nightwatch"
   },
   "jest": {
     "automock": false,
@@ -52,9 +53,15 @@
     "babel-preset-react": "6.5.x",
     "babelify": "7.3.x",
     "browserify": "13.0.x",
+    "chromedriver": "2.x",
+    "deep-diff": "0.3.x",
     "eslint": "2.x",
     "eslint-plugin-react": "5.x",
     "jest-cli": "18.x",
+    "jszip": "3.x",
+    "nightwatch": "0.9.x",
+    "request": "2.x",
+    "selenium-server": "3.1.x",
     "watchify": "3.x"
   }
 }

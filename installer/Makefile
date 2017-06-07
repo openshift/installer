@@ -3,6 +3,7 @@ export VERSION=$(shell ../git-version)
 
 OS=$(shell uname | tr A-Z a-z)
 LD_FLAGS="-w -X github.com/coreos/tectonic-installer/installer/cmd/installer.Version=$(VERSION)"
+INSTALLER_OPTS=--address=127.0.0.1:4444 --open-browser=false --log-level=debug --dev
 
 REPO=github.com/coreos/tectonic-installer/installer
 
@@ -106,6 +107,21 @@ bin/go-bindata:
 
 bin/sanity:
 	go test tests/sanity/k8s_test.go -c -o bin/sanity
+
+.PHONY: launch-installer
+launch-installer: build
+	mkdir -p frontend/ui-tests/reports/
+	./bin/$(OS)/installer $(INSTALLER_OPTS) & echo $$! > frontend/ui-tests/reports/installer.pid
+
+.PHONY: launch-installer-guitests
+launch-installer-guitests: launch-installer
+	cd frontend && yarn run installer-tests
+
+.PHONY: gui-tests-cleanup
+gui-tests-cleanup:
+	kill `cat frontend/ui-tests/reports/installer.pid`
+	rm -fr frontend/ui-tests/reports/
+	killall chromedriver
 
 .PHONY: clean
 clean:
