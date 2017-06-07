@@ -1,5 +1,5 @@
-#!/bin/bash -ex
-set -o pipefail
+#!/bin/bash
+set -ex -o pipefail
 shopt -s expand_aliases
 DIR="$(cd "$(dirname "$0")" && pwd)"
 WORKSPACE=${WORKSPACE:-"$(cd "$DIR"/../../.. && pwd)"}
@@ -16,9 +16,10 @@ assume_role() {
     ROLE_ARN="$(aws iam get-role --role-name="$ROLE_NAME" | jq -r '.Role.Arn')"
     # shellcheck disable=SC2155
     CREDENTIALS="$(aws sts assume-role --role-arn="$ROLE_ARN" --role-session-name=tectonic-installer | jq '.Credentials')"
-    echo "AWS_ACCESS_KEY_ID=$(echo "$CREDENTIALS" | jq -r '.AccessKeyId'); export AWS_ACCESS_KEY"
-    echo "AWS_SECRET_ACCESS_KEY=$(echo "$CREDENTIALS" | jq -r '.SecretAccessKey'); export AWS_SECRET_ACCESS_KEY"
-    echo "AWS_SESSION_TOKEN=$(echo "$CREDENTIALS" | jq -r '.SessionToken'); export AWS_SESSION_TOKEN"
+    export AWS_ACCESS_KEY_ID=$(echo "$CREDENTIALS" | jq -r '.AccessKeyId')
+    export AWS_SECRET_ACCESS_KEY=$(echo "$CREDENTIALS" | jq -r '.SecretAccessKey')
+    export AWS_SESSION_TOKEN=$(echo "$CREDENTIALS" | jq -r '.SessionToken')
+    set -x
 }
 
 set_role() {

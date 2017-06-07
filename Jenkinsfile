@@ -82,11 +82,13 @@ pipeline {
                   unstash 'installer'
                   unstash 'sanity'
                   timeout(30) {
-                    sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
-                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws.tfvars'
-                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws.tfvars'
-                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws.tfvars'
-                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars'
+                    sh """#!/bin/bash -ex
+                    . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws.tfvars
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws.tfvars
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws.tfvars
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars
+                    """
                   }
                 }
               }
@@ -99,8 +101,10 @@ pipeline {
                   checkout scm
                   unstash 'installer'
                   timeout(5) {
-                    sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
-                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-exp.tfvars'
+                    sh """#!/bin/bash -ex
+                    . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-exp.tfvars
+                    """
                   }
                 }
               }
@@ -113,8 +117,10 @@ pipeline {
                   checkout scm
                   unstash 'installer'
                   timeout(5) {
-                    sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
-                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-ca.tfvars'
+                    sh """#!/bin/bash -ex
+                    . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-ca.tfvars
+                    """
                   }
                 }
               }
@@ -127,7 +133,9 @@ pipeline {
               unstash 'sanity'
               withCredentials(creds) {
                 timeout(30) {
-                  sh '${WORKSPACE}/tests/smoke/bare-metal/smoke.sh vars/metal.tfvars'
+                  sh """#!/bin/bash -ex
+                  ${WORKSPACE}/tests/smoke/bare-metal/smoke.sh vars/metal.tfvars
+                  """
                 }
               }
             }
@@ -141,10 +149,12 @@ pipeline {
               withDockerContainer(builder_image) {
                 checkout scm
                 unstash 'installer'
-                sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
                 retry(3) {
                   timeout(15) {
-                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars'
+                    sh """#!/bin/bash -ex
+                    . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars
+                    """
                   }
                 }
               }
