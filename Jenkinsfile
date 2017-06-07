@@ -32,59 +32,6 @@ pipeline {
   }
 
   stages {
-    stage('TerraForm: Syntax Check') {
-      agent {
-        docker {
-          image 'quay.io/coreos/tectonic-builder:v1.12'
-        }
-      }
-      steps {
-        sh """#!/bin/bash -ex
-          make structure-check
-        """
-      }
-    }
-
-    stage('Generate docs') {
-      agent {
-        docker {
-          image 'golang:1.8'
-        }
-      }
-      steps {
-        sh """#!/bin/bash -ex
-
-        # Prevent fatal: You don't exist. Go away! git error
-        git config --global user.name 'jenkins tectonic installer'
-        git config --global user.email 'jenkins-tectonic-installer@coreos.com'
-        go get github.com/segmentio/terraform-docs
-
-        make docs
-        git diff --exit-code
-        """
-      }
-    }
-
-    stage('Generate examples') {
-      agent {
-        docker {
-          image 'golang:1.8'
-        }
-      }
-      steps {
-        sh """#!/bin/bash -ex
-
-        # Prevent fatal: You don't exist. Go away! git error
-        git config --global user.name 'jenkins tectonic installer'
-        git config --global user.email 'jenkins-tectonic-installer@coreos.com'
-        go get github.com/s-urbaniak/terraform-examples
-
-        make examples
-        git diff --exit-code
-        """
-      }
-    }
-
     stage('Installer: Build & Test') {
       agent {
         docker {
@@ -97,8 +44,15 @@ pipeline {
         sh "go get github.com/golang/lint/golint"
         sh """#!/bin/bash -ex
         go version
-        cd $GO_PROJECT/installer
 
+        # TODO: Remove me.
+        go get github.com/segmentio/terraform-docs
+        go get github.com/s-urbaniak/terraform-examples
+
+        cd $GO_PROJECT/
+        make structure-check
+
+        cd $GO_PROJECT/installer
         make clean
         make tools
         make build
