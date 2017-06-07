@@ -62,13 +62,9 @@ test: test-backend test-frontend
 shellcheck: $(SHELL_FILES)
 	shellcheck $(SHELL_FILES)
 
-.PHONY: smoke-aws
-smoke-aws: bin/sanity
-	../tests/scripts/aws/up-down.sh
-
-.PHONY: smoke-bare-metal
-smoke-bare-metal: bin/sanity
-	./tests/scripts/bare-metal/up-down.sh
+.PHONY: dirtycheck
+dirtycheck:
+	@if git status --short | grep 'yarn.lock' > /dev/null; then echo "outdated yarn.lock (commit it to fix)"; exit 1; fi
 
 .PHONY: dist
 dist: release-bins

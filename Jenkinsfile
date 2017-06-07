@@ -14,149 +14,118 @@ def creds = [
   ]
 ]
 
-pipeline {
-  agent {
-    label 'worker'
-  }
+def quay_creds = [
+  usernamePassword(
+    credentialsId: 'quay-robot',
+    passwordVariable: 'QUAY_ROBOT_SECRET',
+    usernameVariable: 'QUAY_ROBOT_USERNAME'
+  )
+]
 
+def builder_image = 'quay.io/coreos/tectonic-builder:v1.12'
+
+pipeline {
+  agent none
   options {
     timeout(time:60, unit:'MINUTES')
     timestamps()
     buildDiscarder(logRotator(numToKeepStr:'20'))
   }
 
-  environment {
-    TECTONIC_INSTALLER_ROLE= 'tectonic-installer'
-    GO_PROJECT = '/go/src/github.com/coreos/tectonic-installer'
-    MAKEFLAGS = '-j4'
-  }
-
   stages {
-    stage('TerraForm: Syntax Check') {
-      agent {
-        docker {
-          image 'quay.io/coreos/tectonic-builder:v1.12'
-        }
+    stage('Build & Test') {
+      environment {
+        GO_PROJECT = '/go/src/github.com/coreos/tectonic-installer'
+        MAKEFLAGS = '-j4'
       }
       steps {
-        sh """#!/bin/bash -ex
-          make structure-check
-        """
-      }
-    }
+        node('worker && ec2') {
+          withDockerContainer(builder_image) {
+            checkout scm
+            sh """#!/bin/bash -ex
+            mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT
 
-    stage('Generate docs') {
-      agent {
-        docker {
-          image 'golang:1.8'
+            # TODO: Remove me.
+            go get github.com/segmentio/terraform-docs
+            go get github.com/s-urbaniak/terraform-examples
+
+            cd $GO_PROJECT/
+            make structure-check
+
+            cd $GO_PROJECT/installer
+            make clean
+            make tools
+            make build
+
+            make dirtycheck
+            make lint
+            make test
+            """
+            stash name: 'installer', includes: 'installer/bin/linux/installer'
+            stash name: 'sanity', includes: 'installer/bin/sanity'
+          }
         }
-      }
-      steps {
-        sh """#!/bin/bash -ex
-
-        # Prevent fatal: You don't exist. Go away! git error
-        git config --global user.name 'jenkins tectonic installer'
-        git config --global user.email 'jenkins-tectonic-installer@coreos.com'
-        go get github.com/segmentio/terraform-docs
-
-        make docs
-        git diff --exit-code
-        """
-      }
-    }
-
-    stage('Generate examples') {
-      agent {
-        docker {
-          image 'golang:1.8'
-        }
-      }
-      steps {
-        sh """#!/bin/bash -ex
-
-        # Prevent fatal: You don't exist. Go away! git error
-        git config --global user.name 'jenkins tectonic installer'
-        git config --global user.email 'jenkins-tectonic-installer@coreos.com'
-        go get github.com/s-urbaniak/terraform-examples
-
-        make examples
-        git diff --exit-code
-        """
-      }
-    }
-
-    stage('Installer: Build & Test') {
-      agent {
-        docker {
-          image 'quay.io/coreos/tectonic-builder:v1.12'
-        }
-      }
-      steps {
-        checkout scm
-        sh "mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT"
-        sh "go get github.com/golang/lint/golint"
-        sh """#!/bin/bash -ex
-        go version
-        cd $GO_PROJECT/installer
-
-        make clean
-        make tools
-        make build
-        # make build ran yarn install. check if yarn.lock is modified
-        if git status --short | grep 'yarn.lock' > /dev/null
-        then
-          echo 'Someone forgot to commit yarn.lock!'
-          exit 1
-        fi
-        make lint
-        make test
-        """
-        stash name: 'installer', includes: 'installer/bin/linux/installer'
-        stash name: 'sanity', includes: 'installer/bin/sanity'
       }
     }
 
     stage("Smoke Tests") {
-      agent {
-        docker {
-          image 'quay.io/coreos/tectonic-builder:v1.12'
-        }
-      }
       steps {
         parallel (
           "TerraForm: AWS": {
-            unstash 'installer'
-            unstash 'sanity'
-            withCredentials(creds) {
-              timeout(30) {
-                sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
-                sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws.tfvars'
-                sh '${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws.tfvars'
-                sh '${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws.tfvars'
-              }
-              timeout(10) {
-                sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
-                sh '${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars'
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(builder_image) {
+                  checkout scm
+                  unstash 'installer'
+                  unstash 'sanity'
+                  timeout(30) {
+                    sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
+                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws.tfvars'
+                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws.tfvars'
+                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws.tfvars'
+                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars'
+                  }
+                }
               }
             }
           },
-          "TerraForm: AWS-experimental": {
-            unstash 'installer'
-            unstash 'sanity'
-            withCredentials(creds) {
-              timeout(5) {
-                sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
-                sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-exp.tfvars'
+          "TerraForm: AWS (Experimental)": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(builder_image) {
+                  checkout scm
+                  unstash 'installer'
+                  timeout(5) {
+                    sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
+                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-exp.tfvars'
+                  }
+                }
               }
             }
           },
           "TerraForm: AWS-custom-ca": {
-            unstash 'installer'
-            unstash 'sanity'
-            withCredentials(creds) {
-              timeout(5) {
-                sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
-                sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-ca.tfvars'
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(builder_image) {
+                  checkout scm
+                  unstash 'installer'
+                  timeout(5) {
+                    sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
+                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-ca.tfvars'
+                  }
+                }
+              }
+            }
+          },
+          "Terraform: Bare Metal": {
+            node('worker && bare-metal') {
+              checkout scm
+              unstash 'installer'
+              unstash 'sanity'
+              withCredentials(creds) {
+                timeout(30) {
+                  sh '${WORKSPACE}/tests/smoke/bare-metal/smoke.sh vars/metal.tfvars'
+                }
               }
             }
           }
@@ -164,11 +133,18 @@ pipeline {
       }
       post {
         failure {
-          unstash 'installer'
-          withCredentials(creds) {
-            timeout(10) {
-              sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
-              sh '${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars'
+          node('worker && ec2') {
+            withCredentials(creds) {
+              withDockerContainer(builder_image) {
+                checkout scm
+                unstash 'installer'
+                sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
+                retry(3) {
+                  timeout(15) {
+                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars'
+                  }
+                }
+              }
             }
           }
         }
@@ -180,30 +156,19 @@ pipeline {
         branch 'master'
       }
       steps {
-        unstash 'installer'
-        unstash 'sanity'
-        withCredentials([
-            usernamePassword(
-              credentialsId: 'quay-robot',
-              passwordVariable: 'QUAY_ROBOT_SECRET',
-              usernameVariable: 'QUAY_ROBOT_USERNAME'
-            )
-          ]) {
-          sh """
-            docker build -t quay.io/coreos/tectonic-installer:master -f images/tectonic-installer/Dockerfile .
-            docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
-            docker push quay.io/coreos/tectonic-installer:master
-            docker logout quay.io
-          """
+        node('worker && ec2') {
+          withCredentials(quay_creds) {
+            checkout scm
+            unstash 'installer'
+            sh """
+              docker build -t quay.io/coreos/tectonic-installer:master -f images/tectonic-installer/Dockerfile .
+              docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
+              docker push quay.io/coreos/tectonic-installer:master
+              docker logout quay.io
+            """
+          }
         }
       }
-    }
-  }
-
-  post {
-    always {
-      // Cleanup workspace
-      deleteDir()
     }
   }
 }

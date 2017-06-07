@@ -120,7 +120,7 @@ structure-check:
 	$(eval FMT_ERR := $(shell terraform fmt -list -write=false .))
 	@if [ "$(FMT_ERR)" != "" ]; then echo "misformatted files (run 'terraform fmt .' to fix):" $(FMT_ERR); exit 1; fi
 
-canonical-syntax:
-	terraform fmt -list .
+	@if make docs && ! git diff --exit-code; then echo "outdated docs (run 'make docs' to fix)"; exit 1; fi
+	@if make examples && ! git diff --exit-code; then echo "outdated examples (run 'make examples' to fix)"; exit 1; fi
 
-.PHONY: make clean terraform terraform-dev structure-check canonical-syntax docs examples terraform-get
+.PHONY: make clean terraform terraform-dev structure-check docs examples terraform-get
