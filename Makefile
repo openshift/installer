@@ -20,6 +20,7 @@ installer-env: $(INSTALLER_BIN) terraformrc.example
 
 localconfig:
 	mkdir -p $(BUILD_DIR)
+	cp examples/*$(subst /,-,$(PLATFORM)) $(BUILD_DIR)/terraform.tfvars
 
 terraform-get:
 	cd $(BUILD_DIR) && $(TF_CMD) get $(TOP_DIR)/platforms/$(PLATFORM)

@@ -76,7 +76,7 @@ common() {
     # Create local config
     make localconfig
     # Use smoke test configuration for deployment
-    ln -sf "$DIR/$TF_VARS_FILE" "$WORKSPACE/build/$CLUSTER/terraform.tfvars"
+    cp "$DIR/$TF_VARS_FILE" "$WORKSPACE/build/$CLUSTER/terraform.tfvars"
 }
 
 create() {
