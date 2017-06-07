@@ -56,12 +56,8 @@ pipeline {
         make clean
         make tools
         make build
-        # make build ran yarn install. check if yarn.lock is modified
-        if git status --short | grep 'yarn.lock' > /dev/null
-        then
-          echo 'Someone forgot to commit yarn.lock!'
-          exit 1
-        fi
+        
+        make dirtycheck
         make lint
         make test
         """
