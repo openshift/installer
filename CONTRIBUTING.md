@@ -9,6 +9,8 @@ resources to make it easier to get your contribution accepted.
 
 Tectonic Installer provides specific guidelines for the modification of included Terraform modules. For more information, please see [Modifying Tectonic Installer][modify-installer].
 
+For more information on Terraform, please see the [Terraform Documentation][tf-doc].
+
 # Certificate of Origin
 
 By contributing to this project you agree to the Developer Certificate of
@@ -46,9 +48,13 @@ Thanks for your contributions!
 
 ## Coding Style
 
-CoreOS projects written in Go follow a set of style guidelines that we've documented
-[here](https://github.com/coreos/docs/tree/master/golang). Please follow them when
+CoreOS projects written in Go follow a set of style guidelines that we've documented in
+[Go at CoreOS][coreos-golang]. Please follow them when
 working on your contributions.
+
+Tectonic Installer includes syntax checks on the Terraform templates which will fail the PR checker for non-standard formatted code.
+
+Use `make structure-check` to identify files that don't meet the canonical format and style. Then, use `terraform fmt` to align the template syntax, if necessary.
 
 ## Format of the Commit Message
 
@@ -59,7 +65,7 @@ the body of the commit should describe the why.
 ```
 scripts: add the test-cluster command
 
-this uses tmux to setup a test cluster that you can easily kill and
+this uses tmux to set up a test cluster that you can easily kill and
 start for debugging.
 
 Fixes #38
@@ -82,3 +88,5 @@ git tools.
 
 
 [modify-installer]: Documentation/contrib/modify-installer.md
+[tf-doc]: https://www.terraform.io/docs/index.html
+[coreos-golang]: https://github.com/coreos/docs/tree/master/golang
