@@ -35,7 +35,7 @@ const clusterTagKey = () => {
 };
 const sshKeys = () => {
   const json = buildExpectedJson();
-  json.tectonic_aws_ssh_key = 'jenkins';
+  json.tectonic_aws_ssh_key = 'tectonic-jenkins';
   return json.tectonic_aws_ssh_key;
 };
 const clusterSubdomainName = () => {

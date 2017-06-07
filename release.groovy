@@ -1,7 +1,7 @@
 // Update https://jenkins-tectonic.prod.coreos.systems/job/tectonic-release
 pipeline {
   agent none
-  
+
   options {
     timeout(time:25, unit:'MINUTES')
     buildDiscarder(logRotator(numToKeepStr:'20'))
@@ -11,8 +11,8 @@ pipeline {
     string(name: 'releaseTag')
     string(name: 'preRelease')
   }
-  
-  stages { 
+
+  stages {
     stage('Release') {
       agent none
       environment {
@@ -25,7 +25,7 @@ pipeline {
             containers: [
               containerTemplate(
                 name: 'webapp-agent',
-                image: 'quay.io/coreos/tectonic-builder:v1.12',
+                image: 'quay.io/coreos/tectonic-builder:v1.13',
                 ttyEnabled: true,
                 command: 'cat',
               )
