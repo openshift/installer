@@ -43,6 +43,7 @@ function kubectl() {
 }
 
 function wait_for_tpr() {
+  set +e
   local i=0
 
   echo "Waiting for TPR $2"
@@ -51,6 +52,7 @@ function wait_for_tpr() {
     echo "TPR $2 not available yet, retrying in 5 seconds ($i)"
     sleep 5
   done
+  set -e
 }
 
 function wait_for_pods() {
