@@ -103,6 +103,20 @@ pipeline {
               }
             }
           },
+          "TerraForm: AWS-custom-ca": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(builder_image) {
+                  checkout scm
+                  unstash 'installer'
+                  timeout(5) {
+                    sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
+                    sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-ca.tfvars'
+                  }
+                }
+              }
+            }
+          },
           "Terraform: Bare Metal": {
             node('worker && bare-metal') {
               checkout scm
@@ -112,16 +126,6 @@ pipeline {
                 timeout(30) {
                   sh '${WORKSPACE}/tests/smoke/bare-metal/smoke.sh vars/metal.tfvars'
                 }
-              }
-            }
-          },
-          "TerraForm: AWS-custom-ca": {
-            unstash 'installer'
-            unstash 'sanity'
-            withCredentials(creds) {
-              timeout(5) {
-                sh 'set +x -e && eval "$(${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE")"'
-                sh '${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-ca.tfvars'
               }
             }
           }
