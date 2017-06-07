@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	containerLinuxListTimeout = 5 * time.Second
+	containerLinuxListTimeout = 10 * time.Second
 )
 
 var containerLinuxMinVersion = semver.New("1010.1.0")
