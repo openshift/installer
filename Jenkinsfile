@@ -69,6 +69,9 @@ pipeline {
     }
 
     stage("Smoke Tests") {
+      environment {
+        TECTONIC_INSTALLER_ROLE = 'tectonic-installer'
+      }
       steps {
         parallel (
           "TerraForm: AWS": {
