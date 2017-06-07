@@ -62,13 +62,6 @@ test: test-backend test-frontend
 shellcheck: $(SHELL_FILES)
 	shellcheck $(SHELL_FILES)
 
-.PHONY: smoke-aws
-smoke-aws: bin/sanity
-	../tests/scripts/aws/up-down.sh
-
-.PHONY: smoke-bare-metal
-smoke-bare-metal: bin/sanity
-	./tests/scripts/bare-metal/up-down.sh
 
 .PHONY: dist
 dist: release-bins
