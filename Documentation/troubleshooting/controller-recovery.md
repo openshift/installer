@@ -35,7 +35,7 @@ items:
       - ./hyperkube
       - scheduler
       - --leader-elect=true
-      image: quay.io/coreos/hyperkube:v1.6.2_coreos.0
+      image: quay.io/coreos/hyperkube:v1.6.4_coreos.0
       imagePullPolicy: IfNotPresent
       name: kube-scheduler-rescue
       resources: {}
@@ -61,7 +61,7 @@ spec:
     - ./hyperkube
     - scheduler
     - --leader-elect=true
-    image: quay.io/coreos/hyperkube:v1.6.2_coreos.0
+    image: quay.io/coreos/hyperkube:v1.6.4_coreos.0
     imagePullPolicy: IfNotPresent
     name: kube-scheduler
 ```
@@ -86,7 +86,7 @@ spec:
     - ./hyperkube
     - scheduler
     - --leader-elect=true
-  image: quay.io/coreos/hyperkube:v1.6.2_coreos.0
+  image: quay.io/coreos/hyperkube:v1.6.4_coreos.0
   imagePullPolicy: IfNotPresent
   name: kube-scheduler
 ```
@@ -133,7 +133,7 @@ spec:
     - ./hyperkube
     - controller-manager
     - --leader-elect=true
-    image: quay.io/coreos/hyperkube:v1.6.2_coreos.0
+    image: quay.io/coreos/hyperkube:v1.6.4_coreos.0
     imagePullPolicy: IfNotPresent
     name: kube-controller-manager
 ```
@@ -159,7 +159,7 @@ spec:
     - ./hyperkube
     - controller-manager
     - --leader-elect=true
-  image: quay.io/coreos/hyperkube:v1.6.2_coreos.0
+  image: quay.io/coreos/hyperkube:v1.6.4_coreos.0
   imagePullPolicy: IfNotPresent
   name: kube-controller-manager
 ```
