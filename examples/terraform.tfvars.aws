@@ -79,6 +79,14 @@ tectonic_aws_master_ec2_type = "t2.medium"
 // Example: `["sg-51530134", "sg-b253d7cc"]`
 // tectonic_aws_master_extra_sg_ids = ""
 
+// (optional) Name of IAM role to use for the instance profiles of master nodes.
+// The name is also the last part of a role's ARN.
+// 
+// Example:
+//  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
+//  * Role Name = tectonic-installer
+// tectonic_aws_master_iam_role_name = ""
+
 // The amount of provisioned IOPS for the root block device of master nodes.
 tectonic_aws_master_root_volume_iops = "100"
 
@@ -110,6 +118,14 @@ tectonic_aws_worker_ec2_type = "t2.medium"
 // 
 // Example: `["sg-51530134", "sg-b253d7cc"]`
 // tectonic_aws_worker_extra_sg_ids = ""
+
+// (optional) Name of IAM role to use for the instance profiles of worker nodes.
+// The name is also the last part of a role's ARN.
+// 
+// Example:
+//  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
+//  * Role Name = tectonic-installer
+// tectonic_aws_worker_iam_role_name = ""
 
 // The amount of provisioned IOPS for the root block device of worker nodes.
 tectonic_aws_worker_root_volume_iops = "100"
