@@ -29,7 +29,7 @@ export ROLE_NAME=tectonic-installer
 *Note*: the same command can be used to update the policies associated with an existing role.
 Now that the role exists, assume the role:
 ```sh
-eval "$(./smoke.sh assume-role "$ROLE_NAME")"
+source ./smoke.sh assume-role "$ROLE_NAME"
 ```
 
 ## Create and Test Cluster
