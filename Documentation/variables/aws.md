@@ -22,6 +22,7 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_master_custom_subnets | (optional) This configures master availability zones and their corresponding subnet CIDRs directly.<br><br>Example: `{ eu-west-1a = "10.0.0.0/20", eu-west-1b = "10.0.16.0/20" }` | map | `<map>` |
 | tectonic_aws_master_ec2_type | Instance size for the master node(s). Example: `t2.medium`. | string | `t2.medium` |
 | tectonic_aws_master_extra_sg_ids | (optional) List of additional security group IDs for master nodes.<br><br>Example: `["sg-51530134", "sg-b253d7cc"]` | list | `<list>` |
+| tectonic_aws_master_iam_role_name | (optional) Name of IAM role to use for the instance profiles of master nodes. The name is also the last part of a role's ARN.<br><br>Example:  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer  * Role Name = tectonic-installer | string | `` |
 | tectonic_aws_master_root_volume_iops | The amount of provisioned IOPS for the root block device of master nodes. | string | `100` |
 | tectonic_aws_master_root_volume_size | The size of the volume in gigabytes for the root block device of master nodes. | string | `30` |
 | tectonic_aws_master_root_volume_type | The type of volume for the root block device of master nodes. | string | `gp2` |
@@ -31,6 +32,7 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_worker_custom_subnets | (optional) This configures worker availability zones and their corresponding subnet CIDRs directly.<br><br>Example: `{ eu-west-1a = "10.0.64.0/20", eu-west-1b = "10.0.80.0/20" }` | map | `<map>` |
 | tectonic_aws_worker_ec2_type | Instance size for the worker node(s). Example: `t2.medium`. | string | `t2.medium` |
 | tectonic_aws_worker_extra_sg_ids | (optional) List of additional security group IDs for worker nodes.<br><br>Example: `["sg-51530134", "sg-b253d7cc"]` | list | `<list>` |
+| tectonic_aws_worker_iam_role_name | (optional) Name of IAM role to use for the instance profiles of worker nodes. The name is also the last part of a role's ARN.<br><br>Example:  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer  * Role Name = tectonic-installer | string | `` |
 | tectonic_aws_worker_root_volume_iops | The amount of provisioned IOPS for the root block device of worker nodes. | string | `100` |
 | tectonic_aws_worker_root_volume_size | The size of the volume in gigabytes for the root block device of worker nodes. | string | `30` |
 | tectonic_aws_worker_root_volume_type | The type of volume for the root block device of worker nodes. | string | `gp2` |

@@ -239,3 +239,31 @@ variable "tectonic_aws_region" {
   default     = "eu-west-1"
   description = "The target AWS region for the cluster."
 }
+
+variable "tectonic_aws_master_iam_role_name" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) Name of IAM role to use for the instance profiles of master nodes.
+The name is also the last part of a role's ARN.
+
+Example:
+ * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
+ * Role Name = tectonic-installer
+EOF
+}
+
+variable "tectonic_aws_worker_iam_role_name" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) Name of IAM role to use for the instance profiles of worker nodes.
+The name is also the last part of a role's ARN.
+
+Example:
+ * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
+ * Role Name = tectonic-installer
+EOF
+}
