@@ -102,7 +102,7 @@ pipeline {
               }
             }
           },
-          "SmokeTest TerraForm: AWS (Experimental)": {
+          "SmokeTest TerraForm: AWS (experimental)": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(builder_image) {
@@ -118,7 +118,7 @@ pipeline {
               }
             }
           },
-          "SmokeTest TerraForm: AWS (custom-ca)": {
+          "SmokeTest TerraForm: AWS (custom ca)": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(builder_image) {
@@ -128,6 +128,27 @@ pipeline {
                     sh """#!/bin/bash -ex
                     . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
                     ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-ca.tfvars
+                    """
+                  }
+                }
+              }
+            }
+          },
+          "SmokeTest TerraForm: AWS (private vpc)": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(image: builder_image, args: '--device=/dev/net/tun --cap-add=NET_ADMIN') {
+                  checkout scm
+                  unstash 'installer'
+                  unstash 'sanity'
+                  timeout(40) {
+                    sh """#!/bin/bash -ex
+                    . ${WORKSPACE}/tests/smoke/aws/smoke.sh create-vpc
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-vpc.tfvars
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws-vpc.tfvars
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws-vpc.tfvars
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
                     """
                   }
                 }
@@ -160,12 +181,12 @@ pipeline {
                   make launch-installer-guitests
                   make gui-tests-cleanup
                   """
-               }
-             }
-           }
-         }
-       )
-     }
+                }
+              }
+            }
+          }
+        )
+      }
       post {
         failure {
           node('worker && ec2') {
@@ -176,8 +197,15 @@ pipeline {
                 retry(3) {
                   timeout(15) {
                     sh """#!/bin/bash -ex
-                    . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
                     ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars
+                    """
+                  }
+                }
+                retry(3) {
+                  timeout(20) {
+                    sh """#!/bin/bash -ex
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
                     """
                   }
                 }

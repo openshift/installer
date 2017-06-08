@@ -1,8 +1,12 @@
 #!/bin/bash
-set -ex -o pipefail
+set -exuo pipefail
 shopt -s expand_aliases
-DIR="$(cd "$(dirname "$0")" && pwd)"
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# Allow smoke.sh to work off jenkins.
 WORKSPACE=${WORKSPACE:-"$(cd "$DIR"/../../.. && pwd)"}
+BUILD_ID=${BUILD_ID:-1}
+BRANCH_NAME=${BRANCH_NAME:-$(git rev-parse --abbrev-ref HEAD)}
+
 # Alias filter for convenience
 # shellcheck disable=SC2139
 alias filter="$WORKSPACE"/installer/scripts/filter.sh
@@ -35,6 +39,15 @@ set_role() {
     aws iam put-role-policy --role-name="$ROLE_NAME" --policy-name="$ROLE_NAME" --policy-document=file://"$ROLE_POLICY"
 }
 
+random_region() {
+    # randomly select region
+    REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2)
+    export CHANGE_ID=${CHANGE_ID:-${BUILD_ID}}
+    i=$(( CHANGE_ID % ${#REGIONS[@]} ))
+    export TF_VAR_tectonic_aws_region="${REGIONS[$i]}"
+    export AWS_REGION="${REGIONS[$i]}"
+}
+
 common() {
     # make core utils accessible to make
     export PATH=/bin:$PATH
@@ -61,16 +74,11 @@ common() {
         echo "Cluster name too short. Appended to $CLUSTER"
     fi
     
+    random_region
     CLUSTER=$(echo "${CLUSTER}" | awk '{print tolower($0)}')
     export CLUSTER
     export TF_VAR_tectonic_cluster_name=$CLUSTER
     
-    # randomly select region
-    REGIONS=(us-east-1 us-east-2 us-west-1 us-west-2)
-    export CHANGE_ID=${CHANGE_ID:-${BUILD_ID}}
-    i=$(( CHANGE_ID % ${#REGIONS[@]} ))
-    export TF_VAR_tectonic_aws_region="${REGIONS[$i]}"
-    export AWS_REGION="${REGIONS[$i]}"
     echo "selected region: $TF_VAR_tectonic_aws_region"
     echo "cluster name: $CLUSTER"
 
@@ -83,6 +91,72 @@ common() {
 create() {
     common "$1"
     make apply | filter
+}
+
+common_vpc() {
+    random_region
+    export TF_VAR_vpc_aws_region="$TF_VAR_tectonic_aws_region"
+    # shellcheck disable=SC2155
+    export TF_VAR_vpc_name="$(echo "vpc-$BRANCH_NAME-$BUILD_ID" | awk '{print tolower($0)}')"
+}
+
+create_vpc() {
+    common_vpc
+    pushd "$WORKSPACE/contrib/internal-cluster"
+    set +x
+    # shellcheck disable=SC2155
+    export TF_VAR_ovpn_password="$(tr -cd '[:alnum:]' < /dev/urandom | head -c 32 ; echo)"
+    set -x
+    # Create the vpc.
+    terraform apply
+    # Get the VPN details.
+    # shellcheck disable=SC2155
+    local vpn_url="$(terraform output -json | jq -r '.ovpn_url.value')"
+    until curl -k -L --silent "$vpn_url" > /dev/null; do
+        echo "waiting for vpn access server to become available"
+        sleep 5
+    done
+    set +x
+    curl -k -L -u "openvpn:$TF_VAR_ovpn_password" --silent --fail "$(terraform output -json | jq -r '.ovpn_url.value')"/rest/GetUserlogin > vpn.conf
+    printf "openvpn\n%s\n" "$TF_VAR_ovpn_password" > vpn_credentials
+    set -x
+    sed -i 's/auth-user-pass/auth-user-pass vpn_credentials/g' vpn.conf
+    # Start the VPN.
+    openvpn --config vpn.conf --daemon
+    until ping -c 1 8.8.8.8 > /dev/null; do
+        echo "waiting for vpn connection to become available"
+        sleep 5
+    done
+    # Use AWS VPC DNS rather than host's.
+    # shellcheck disable=SC2155
+    local vpc_dns="$(terraform output -json | jq -r '.vpc_dns.value')"
+    cp /etc/resolv.conf /etc/resolv.conf.bak
+    echo "nameserver $vpc_dns" > /etc/resolv.conf
+    echo "nameserver 8.8.8.8"  >> /etc/resolv.conf
+    # Export all of the VPC details.
+    # shellcheck disable=SC2155,SC2183,SC2046
+    {
+        export TF_VAR_tectonic_aws_external_private_zone="$(terraform output -json | jq -r '.private_zone_id.value')"
+        export TF_VAR_tectonic_aws_external_vpc_id="$(terraform output -json | jq -r '.vpc_id.value')"
+        export TF_VAR_tectonic_aws_external_master_subnet_ids="$(printf "[%s, %s]" $(terraform output -json | jq '.subnets.value[0,1]'))"
+        export TF_VAR_tectonic_aws_external_worker_subnet_ids="$(printf "[%s, %s]" $(terraform output -json | jq '.subnets.value[2,3]'))"
+        export TF_VAR_tectonic_base_domain="$(terraform output -json | jq -r '.base_domain.value')"
+    }
+    popd
+}
+
+destroy_vpc() {
+    common_vpc
+    # Restore host DNS settings.
+    [ -f /etc/resolv.conf.bak ] && cat /etc/resolv.conf.bak > /etc/resolv.conf && rm /etc/resolv.conf.bak
+    pushd "$WORKSPACE/contrib/internal-cluster"
+    pkill openvpn || true
+    until ping -c 1 8.8.8.8 > /dev/null; do
+        echo "waiting for network to become available"
+        sleep 5
+    done
+    terraform destroy --force
+    popd
 }
 
 destroy() {
@@ -136,8 +210,12 @@ main () {
             assume_role "$@";;
         create)
             create "$@";;
+        create-vpc)
+            create_vpc "$@";;
         destroy)
             destroy "$@";;
+        destroy-vpc)
+            destroy_vpc "$@";;
         plan)
             plan "$@";;
         set-role)
