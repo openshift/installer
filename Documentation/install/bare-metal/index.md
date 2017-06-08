@@ -176,12 +176,12 @@ Run the Tectonic Installer that matches your platform (`linux` or `darwin`):
 ```
 
 A browser window will open to begin the GUI installation process, which will require the following information:
-* Tectonic DNS: A domain name for the installation, which must exist before launching Tectonic Installer.
+* DNS: Domain names assigned for the master and worker nodes, which must exist before launching Tectonic Installer.
 * CoreOS License and Pull Secret: Available from account.coreos.com when logged in to the CoreOS account associated with this installation.
 * Matchbox endpoints: The HTTPS and API addresses for your matchbox endpoints.
 * Matchbox credentials: The `client.crt`, `client.key`, and `ca.crt` generated when installing Matchbox.
 * Machine MAC addresses: The MAC address for the machines on which the cluster will be built. The MAC address plus the DNS tell Matchbox (the provisioner node) what image to serve the machines (worker and master nodes).
-* SSH public key: The public key for the machine on which Tectonic is installed.
+* SSH public key: The public key for the machine on which Tectonic Installer is running.
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
