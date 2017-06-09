@@ -47,7 +47,7 @@ module "etcd" {
 }
 
 module "masters" {
-  source = "../../modules/azure/master"
+  source = "../../modules/azure/master-as"
 
   location             = "${var.tectonic_azure_location}"
   resource_group_name  = "${module.resource_group.name}"
@@ -76,7 +76,7 @@ module "masters" {
 }
 
 module "workers" {
-  source = "../../modules/azure/worker"
+  source = "../../modules/azure/worker-as"
 
   location             = "${var.tectonic_azure_location}"
   resource_group_name  = "${module.resource_group.name}"
