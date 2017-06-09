@@ -16,9 +16,6 @@ tectonic_azure_create_dns_zone = true
 // 
 tectonic_azure_dns_resource_group = "tectonic-dns-group"
 
-// Specifies if SSH access should be allowed from external networks
-tectonic_azure_enable_ssh_external = "false"
-
 // Storage account type for the etcd node(s). Example: Premium_LRS.
 tectonic_azure_etcd_storage_account_type = "Premium_LRS"
 
@@ -84,9 +81,9 @@ tectonic_azure_master_vm_size = "Standard_DS2_v2"
 tectonic_azure_ssh_key = ""
 
 // (optional) Network (external) to allow SSH access from. Maps to `source_address_prefix` in Azure.
-// Defaults to `VirtualNetwork`. Can be external to Azure environment.
+// Defaults to `*`. Can be external to Azure environment.
 // Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
-// tectonic_azure_ssh_network_external = "VirtualNetwork"
+// tectonic_azure_ssh_network_external = "*"
 
 // Network (internal) to allow SSH access from. Maps to `source_address_prefix` in Azure.
 // Defaults to `VirtualNetwork`. Should be internal to Azure environment.
@@ -190,11 +187,6 @@ tectonic_pull_secret_path = ""
 
 // This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. The maximum size of this IP range is /12
 tectonic_service_cidr = "10.3.0.0/16"
-
-// (optional) Specifies whether a jumpbox should be created to manage cluster nodes.
-// DISCLAIMER: This is currently experimental and can only be configured for Azure.
-// DO NOT USE.
-// tectonic_use_jumpbox = "false"
 
 // If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
 tectonic_vanilla_k8s = false

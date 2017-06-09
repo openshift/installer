@@ -113,7 +113,7 @@ resource "azurerm_network_security_rule" "etcd_ingress_client_master" {
   destination_port_range = "2379"
 
   # TODO: Need to allow traffic from master
-  source_address_prefix       = "${var.vnet_cidr_block}"
+  source_address_prefix       = "*"
   destination_address_prefix  = "*"
   resource_group_name         = "${var.external_resource_group == "" ? var.resource_group_name : var.external_resource_group}"
   network_security_group_name = "${azurerm_network_security_group.etcd.name}"
