@@ -23,16 +23,16 @@ localconfig:
 	cp examples/*$(subst /,-,$(PLATFORM)) $(BUILD_DIR)/terraform.tfvars
 
 terraform-get:
-	cd $(BUILD_DIR) && $(TF_CMD) get $(TOP_DIR)/platforms/$(PLATFORM)
+	cd $(BUILD_DIR) && $(TF_CMD) get $(TF_GET_OPTIONS) $(TOP_DIR)/platforms/$(PLATFORM)
 
 plan: installer-env terraform-get
-	cd $(BUILD_DIR) && $(TF_CMD) plan $(TOP_DIR)/platforms/$(PLATFORM)
+	cd $(BUILD_DIR) && $(TF_CMD) plan $(TF_PLAN_OPTIONS) $(TOP_DIR)/platforms/$(PLATFORM)
 
 apply: installer-env terraform-get
-	cd $(BUILD_DIR) && $(TF_CMD) apply $(TOP_DIR)/platforms/$(PLATFORM)
+	cd $(BUILD_DIR) && $(TF_CMD) apply $(TF_APPLY_OPTIONS) $(TOP_DIR)/platforms/$(PLATFORM)
 
 destroy: installer-env terraform-get
-	cd $(BUILD_DIR) && $(TF_CMD) destroy -force $(TOP_DIR)/platforms/$(PLATFORM)
+	cd $(BUILD_DIR) && $(TF_CMD) destroy $(TF_DESTROY_OPTIONS) -force $(TOP_DIR)/platforms/$(PLATFORM)
 
 payload:
 	@${TOP_DIR}/modules/update-payload/make-update-payload.sh > /dev/null
