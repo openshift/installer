@@ -1,13 +1,13 @@
 # Install Tectonic on VMware with Terraform
 
-Following this guide will deploy a Tectonic cluster within your VMware vSphere infrastructure .
+Following this guide will deploy a Tectonic cluster within a VMware vSphere infrastructure .
 
 Generally, the VMware platform templates adhere to the standards defined by the project [conventions][conventions] and [generic platform requirements][generic]. This document aims to document the implementation details specific to the VMware platform.
 
 ## Prerequsities
 
 1. Download the latest Container Linux Stable OVA from; https://coreos.com/os/docs/latest/booting-on-vmware.html.
-1. Import `coreos_production_vmware_ova.ova` into vCenter. For the most part all settings can be kept as is, however in "Customize template" you *must* change "DHCP Support for Interface 0" to **"no"**. See [1802](https://github.com/coreos/bugs/issues/1802)
+1. Import `coreos_production_vmware_ova.ova` into vCenter. For the most part all settings can be kept as is, however in "Customize template", "DHCP Support for Interface 0" *must* be changed to **"no"**. See [1802](https://github.com/coreos/bugs/issues/1802)
 1. Resize the Virtual Machine Disk size to 30 GB or larger
 1. Convert the Container Linux image into a Virtual Machine template.
 1. Pre-Allocated IP addresses for the cluster and pre-create DNS records
@@ -39,23 +39,23 @@ Below steps need to be executed on machine that has network connectivity to VMwa
 
 First, [download][downloadterraform] and install Terraform. 
 
-After downloading, you will need to source this new binary in your `$PATH`. Run this command to add it to your path:
+After downloading, source this new binary in the `$PATH` of the machine. Run this command to add it to path:
 
 ```
-$ export PATH=$/path/to/terraform:$PATH
+$ export PATH=/path/to/terraform:$PATH
 ```
 
 Now we're ready to specify our cluster configuration.
 
 ## Customize the deployment
 
-Customizations to the base installation live in `examples/terraform.tfvars.<flavor>`. Export a variable that will be your cluster identifier:
+Customizations to the base installation live in `examples/terraform.tfvars.<flavor>`. Export a variable that will be the cluster identifier:
 
 ```
 $ export CLUSTER=my-cluster
 ```
 
-Create a build directory to hold your customizations and copy the example file into it:
+Create a build directory to hold customizations and copy the example file into it:
 
 ```
 $ mkdir -p build/${CLUSTER}
@@ -63,7 +63,7 @@ $ cp examples/terraform.tfvars.vmware build/${CLUSTER}/terraform.tfvars
 $ cd build/${CLUSTER}/
 ```
 
-Edit the parameters with your VMware infrastructure details. View all of the [VMware][vmware] specific options and [the common Tectonic variables][vars].
+Edit the parameters with details of the VMware infrastructure. View all of the [VMware][vmware] specific options and [the common Tectonic variables][vars].
 
 ## Deploy the cluster
 
@@ -79,7 +79,7 @@ Test out the plan before deploying everything:
 $ terraform plan ../../platforms/vmware
 ```
 
-You will be prompted for vSphere credentials:
+Terraform will prompt for vSphere credentials:
 
 ```
 provider.vsphere.password
@@ -99,13 +99,58 @@ Next, deploy the cluster:
 $ terraform apply ../../platforms/vmware
 ```
 
-This should run for a little bit, and when complete, your Tectonic cluster should be ready on: https://$tectonic_cluster_name.$tectonic_base_domain. You can use the `kubeconfig` file in build/<cluster>/generated folder.
+Wait for `terraform apply` until all tasks complete. Tectonic cluster should be ready upon completion of apply command. If any issues arrise please check the known issues and workarounds below.
 
-If you encounter any issues, please file an issue with the repository.
+## Access the cluster
+
+The Tectonic Console should be up and running after the containers have downloaded. Console can be access by the DNS name configured as `tectonic_vmware_ingress_domain` in the `terraform.tfvars` variables file.
+
+Credentials and secrets for Tectonic can be found in `/generated` folder including the CA if generated, and a kubeconfig. Use the kubeconfig file to control the cluster with `kubectl`:
+
+```
+$ export KUBECONFIG=generated/auth/kubeconfig
+$ kubectl cluster-info
+```
+
+## Working with the cluster
+
+### Scaling Tectonic VMware clusters
+
+This document describes how to add cluster nodes to Tectonic clusters on VMware.
+
+#### Scaling worker nodes
+
+To scale worker nodes, adjust `tectonic_worker_count`, `tectonic_vmware_worker_hostnames` and `tectonic_vmware_worker_ip` variables in `terraform.tfvars` and run:
+
+```
+$ terraform plan \
+  ../../platforms/vmware
+$ terraform apply \
+  ../../platforms/vmware
+```
+Shortly after running `terraform apply` new worker machines will appear on Tectonic console. This change may take several minutes.
+
+#### Scaling controller nodes
+
+To scale worker nodes, adjust `tectonic_master_count`, `tectonic_vmware_master_hostnames` and `tectonic_vmware_master_ip` variables in `terraform.tfvars` and run:
+
+```
+$ terraform plan \
+  ../../platforms/vmware
+$ terraform apply \
+  ../../platforms/vmware
+```
+Shortly after running `terraform apply` master machines will appear on Tectonic console. This change may take several minutes.  
+
+Make sure to add the new Controller nodes' IP addresses in DNS for `tectonic_vmware_controller_domain` variable or update the Load balancer to include new Controller nodes.
+
+## Known issues and workarounds
+
+See the [troubleshooting][troubleshooting] document for workarounds for bugs that are being tracked
 
 ## Delete the cluster
 
-To delete your cluster, run:
+To delete Tectonic cluster, run:
 
 ```
 $ terraform destroy ../../platforms/vmware
@@ -118,3 +163,4 @@ $ terraform destroy ../../platforms/vmware
 [downloadterraform]: https://www.terraform.io/downloads.html
 [vmware]: ../../variables/vmware.md
 [vars]: ../../variables/config.md
+[troubleshooting]: ../../troubleshooting/faq.md
