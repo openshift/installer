@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 )
@@ -36,7 +37,7 @@ func testAllPodsRunning(t *testing.T) {
 
 func allPodsRunning(t *testing.T) error {
 	c := newClient(t)
-	pods, err := c.Core().Pods("").List(v1.ListOptions{})
+	pods, err := c.Core().Pods("").List(meta_v1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("could not list pods: %v", err)
 	}
@@ -57,7 +58,7 @@ func allPodsRunning(t *testing.T) error {
 func allNodesRunning(expected int) func(t *testing.T) error {
 	return func(t *testing.T) error {
 		c := newClient(t)
-		nodes, err := c.Core().Nodes().List(v1.ListOptions{})
+		nodes, err := c.Core().Nodes().List(meta_v1.ListOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to list nodes: %v", err)
 		}
@@ -117,7 +118,7 @@ func testGetIdentityLogs(t *testing.T) {
 // validatePodLogging verifies that logs can be retrieved for a container in Pod.
 func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) ([]byte, error) {
 	var logs []byte
-	pods, err := c.Pods(namespace).List(v1.ListOptions{})
+	pods, err := c.Pods(namespace).List(meta_v1.ListOptions{})
 	if err != nil {
 		return logs, fmt.Errorf("could not list pods: %v", err)
 	}
@@ -223,7 +224,7 @@ func getAPIServers(client *kubernetes.Clientset) (*v1.PodList, error) {
 		apiServerSelector   = "k8s-app=kube-apiserver"
 		kubeSystemNamespace = "kube-system"
 	)
-	pods, err := client.Core().Pods(kubeSystemNamespace).List(v1.ListOptions{LabelSelector: apiServerSelector})
+	pods, err := client.Core().Pods(kubeSystemNamespace).List(meta_v1.ListOptions{LabelSelector: apiServerSelector})
 	if err != nil {
 		return nil, err
 	}
