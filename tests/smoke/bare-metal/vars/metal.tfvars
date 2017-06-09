@@ -136,3 +136,6 @@ tectonic_base_domain = "unused"
 tectonic_master_count = 1
 tectonic_worker_count = 2
 tectonic_etcd_count = 0
+
+# Enable TLS for etcd
+tectonic_etcd_tls_enabled = true
