@@ -1,9 +1,78 @@
 import React from 'react';
-
+import semver from 'semver';
 import { Dropdown } from './ui';
 
+
+const fetchLatestRelease = () => {
+  return fetch('/releases/latest',
+    { method: 'GET' }).then((response) => {
+      if (response.ok) {
+        return response.text();
+      }
+      return response.text().then(err => Promise.reject(err));
+    });
+};
+
+const parseLatestVersion = (html) => {
+  const parser = new DOMParser();
+  const htmlDoc = parser.parseFromString(html, "text/html");
+  return htmlDoc.getElementsByClassName('latestReleaseTag')[0].textContent.trim();
+};
+
+const hasNewVersion = (latestRelease) => {
+  if (semver.major(latestRelease) > semver.major(GIT_TAG)) {
+    return true;
+  }
+
+  if (semver.minor(latestRelease) > semver.minor(GIT_TAG)) {
+    return true;
+  }
+
+  if (semver.patch(latestRelease) > semver.patch(GIT_TAG)) {
+    return true;
+  }
+
+
+  const latestReleasePr = semver.prerelease(latestRelease);
+  const gitTagPr = semver.prerelease(GIT_TAG);
+
+  //No rc string in the latest release
+  if (latestReleasePr.length < gitTagPr.length) {
+    return true;
+  }
+
+  //compares rc-x string
+  if (latestReleasePr[1] > gitTagPr[1]) {
+    return true;
+  }
+
+  //rc version
+  if (latestReleasePr[2] > gitTagPr[2]) {
+    return true;
+  }
+
+  return false;
+};
+
 export class Header extends React.Component {
+  constructor (props) {
+    super(props);
+    this.state = { latestRelease: null };
+  }
+
+  componentDidMount() {
+    fetchLatestRelease().then((release) => {
+      this.setState({ latestRelease: parseLatestVersion(release) });
+    }).catch((err) => {
+      console.error('Error retrieving latest version of tectonic ', err.message);
+      this.setState({ latestRelease: null });
+    });
+
+  }
+
   render() {
+    const latestRelease = this.state.latestRelease || null;
+
     const productDdItems = {
       'Tectonic - Kubernetes': 'https://coreos.com/tectonic/',
       'Quay - Registry': 'https://coreos.com/quay-enterprise',
@@ -45,6 +114,11 @@ export class Header extends React.Component {
         </ul>
         <div className="co-navbar--right">
           <ul className="co-navbar-nav">
+            {latestRelease && hasNewVersion(latestRelease) && <li className="co-navbar-nav-item__version">
+              <span className="co-navbar-nav-item__version--new">
+                New installer version: <a href="https://coreos.com/tectonic/releases/" target="_blank">Release notes {latestRelease}</a>
+              </span>
+            </li>}
             <li className="co-navbar-nav-item__version">
               <span>Version: {GIT_TAG}</span>
             </li>
