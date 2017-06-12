@@ -1,27 +1,36 @@
+const _ = require('lodash');
+
 const installerInput = require('../utils/installerInput');
 const tfvarsUtil = require('../utils/terraformTfvars');
 
-const logger = logs => logs.forEach(log => {
-  const { message, level } = log;
-  switch (level) {
-  case `DEBUG`:
-    console.log("browser:", level, message);
-    break;
-  case `SEVERE`:
-    console.warn("browser:", level, message);
-    break;
-  case `INFO`:
-  default:
-    console.info("browser:", level, message);
-  }
-});
+const logger = logs => {
+  console.log('==== BEGIN BROWSER LOGS ====');
+  _.each(logs, log => {
+    const { level, message } = log;
+    const messageStr = _.isArray(message) ? message.join(" ") : message;
+
+    switch (level) {
+    case `DEBUG`:
+      console.log(level, messageStr);
+      break;
+    case `SEVERE`:
+      console.warn(level, messageStr);
+      break;
+    case `INFO`:
+    default:
+      console.info(level, messageStr);
+    }
+  });
+  console.log('==== END BROWSER LOGS ====');
+};
 
 module.exports = {
   after (client) {
+    client.getLog('browser', logger);
     client.end();
   },
 
-  'Tectonic Installer Aws Test': (client) => {
+  'Tectonic Installer AWS Test': (client) => {
     const expectedJson = installerInput.buildExpectedJson();
     const platformPage = client.page.platformPage();
     const awsCredentialsPage = client.page.awsCredentialsPage();
@@ -34,24 +43,19 @@ module.exports = {
     const submitPage = client.page.submitPage();
 
     platformPage.navigate(client.launch_url).selectPlatform();
-    client.getLog('browser', logger);
-
     awsCredentialsPage.enterAwsCredentials()
       .waitForElementPresent(awsCredentialsPage.el('@region', expectedJson.tectonic_aws_region), 60000)
       .click(awsCredentialsPage.el('@region', expectedJson.tectonic_aws_region))
       .nextStep();
-    client.getLog('browser', logger);
 
     clusterInfoPage.enterClusterInfo(expectedJson.tectonic_cluster_name);
     certificateAuthorityPage.click('@nextStep');
-    client.getLog('browser', logger);
 
     keysPage.selectSshKeys();
     nodesPage.waitForElementVisible('@nextStep', 10000).click('@nextStep');
     networkingPage.provideNetworkingDetails();
     consoleLoginPage.enterLoginCredentails();
     submitPage.click('@manuallyBoot').click('@manuallyBoot');
-    client.getLog('browser', logger);
     client.pause(10000);
     client.getCookie('tectonic-installer', result => {
       tfvarsUtil.returnTerraformTfvars(client.launch_url, result.value, (err, actualJson) => {
