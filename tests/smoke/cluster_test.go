@@ -36,7 +36,7 @@ func testAllPodsRunning(t *testing.T) {
 }
 
 func allPodsRunning(t *testing.T) error {
-	c := newClient(t)
+	c, _ := newClient(t)
 	pods, err := c.Core().Pods("").List(meta_v1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("could not list pods: %v", err)
@@ -57,7 +57,7 @@ func allPodsRunning(t *testing.T) error {
 
 func allNodesRunning(expected int) func(t *testing.T) error {
 	return func(t *testing.T) error {
-		c := newClient(t)
+		c, _ := newClient(t)
 		nodes, err := c.Core().Nodes().List(meta_v1.ListOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to list nodes: %v", err)
@@ -96,7 +96,7 @@ func testAllNodesRunning(t *testing.T) {
 }
 
 func getIdentityLogs(t *testing.T) error {
-	c := newClient(t)
+	c, _ := newClient(t)
 	namespace := "tectonic-system"
 	podPrefix := "tectonic-identity"
 	_, err := validatePodLogging(c, namespace, podPrefix)
@@ -162,7 +162,7 @@ func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) ([
 }
 
 func testKillAPIServer(t *testing.T) {
-	c := newClient(t)
+	c, _ := newClient(t)
 	pods, err := getAPIServers(c)
 	if err != nil {
 		t.Fatalf("Failed to get API server pod: %v", err)

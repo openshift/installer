@@ -21,7 +21,7 @@ func testAPIAvailable(t *testing.T) {
 }
 
 func apiAvailable(t *testing.T) error {
-	client := newClient(t)
+	client, _ := newClient(t)
 	_, err := client.ServerVersion()
 	if err != nil {
 		return fmt.Errorf("failed to connect to API server: %v", err)
