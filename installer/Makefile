@@ -105,19 +105,20 @@ bin/sanity:
 	go test tests/sanity/k8s_test.go -c -o bin/sanity
 
 .PHONY: launch-installer
-launch-installer: build
+launch-installer:
 	mkdir -p frontend/ui-tests/reports/
 	./bin/$(OS)/installer $(INSTALLER_OPTS) & echo $$! > frontend/ui-tests/reports/installer.pid
 
 .PHONY: launch-installer-guitests
 launch-installer-guitests: launch-installer
-	cd frontend && yarn run installer-tests
+	Xvfb -ac :99 -screen 0 1280x1024x16 & echo $$! > frontend/ui-tests/reports/xvfb.pid
+	cd frontend && DISPLAY=:99 yarn run installer-tests
 
 .PHONY: gui-tests-cleanup
 gui-tests-cleanup:
 	kill `cat frontend/ui-tests/reports/installer.pid`
+	kill `cat frontend/ui-tests/reports/xvfb.pid`
 	rm -fr frontend/ui-tests/reports/
-	killall chromedriver
 
 .PHONY: clean
 clean:

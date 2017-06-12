@@ -22,7 +22,7 @@ def quay_creds = [
   )
 ]
 
-def builder_image = 'quay.io/coreos/tectonic-builder:v1.12'
+def builder_image = 'quay.io/coreos/tectonic-builder:v1.13'
 
 pipeline {
   agent none
@@ -62,19 +62,20 @@ pipeline {
             make test
             """
             stash name: 'installer', includes: 'installer/bin/linux/installer'
+            stash name: 'node_modules', includes: 'installer/frontend/node_modules/**'
             stash name: 'sanity', includes: 'installer/bin/sanity'
           }
         }
       }
     }
 
-    stage("Smoke Tests") {
+    stage("Tests") {
       environment {
         TECTONIC_INSTALLER_ROLE = 'tectonic-installer'
       }
       steps {
         parallel (
-          "TerraForm: AWS": {
+          "SmokeTest TerraForm: AWS": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(builder_image) {
@@ -94,7 +95,7 @@ pipeline {
               }
             }
           },
-          "TerraForm: AWS (Experimental)": {
+          "SmokeTest TerraForm: AWS (Experimental)": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(builder_image) {
@@ -110,7 +111,7 @@ pipeline {
               }
             }
           },
-          "TerraForm: AWS-custom-ca": {
+          "SmokeTest TerraForm: AWS (custom-ca)": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(builder_image) {
@@ -126,7 +127,7 @@ pipeline {
               }
             }
           },
-          "Terraform: Bare Metal": {
+          "SmokeTest Terraform: Bare Metal": {
             node('worker && bare-metal') {
               checkout scm
               unstash 'installer'
@@ -139,9 +140,25 @@ pipeline {
                 }
               }
             }
-          }
-        )
-      }
+          },
+          "IntegrationTest Installer Gui": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(builder_image) {
+                  checkout scm
+                  unstash 'installer'
+                  unstash 'node_modules'
+                  sh """#!/bin/bash -ex
+                  cd installer
+                  make launch-installer-guitests
+                  make gui-tests-cleanup
+                  """
+               }
+             }
+           }
+         }
+       )
+     }
       post {
         failure {
           node('worker && ec2') {

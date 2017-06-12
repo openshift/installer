@@ -1,7 +1,7 @@
 {
   "clusterConfig": {
     "platformType": "aws-tf",
-    "aws_ssh": "jenkins",
+    "aws_ssh": "tectonic-jenkins",
     "aws_etcds-numberOfInstances": 3,
     "aws_etcds-instanceType": "t2.medium",
     "aws_etcds-storageSizeInGiB": 30,

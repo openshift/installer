@@ -1,13 +1,19 @@
+const fs = require('fs');
 const installerInput = require('../utils/installerInput');
 const coreOSLicensePath = require('path').resolve(__dirname, '..') +
   '/tectonic-license.txt';
 const configPath = require('path').resolve(__dirname, '..') + '/config.json';
+  //eslint-disable-next-line no-sync
+const tectonic_license = fs.readFileSync(process.env.TF_VAR_tectonic_license_path, 'utf8');
+  //eslint-disable-next-line no-sync
+const pull_secret = fs.readFileSync(process.env.TF_VAR_tectonic_pull_secret_path, 'utf8');
+
 
 const clusterInfoPageCommands = {
   enterClusterInfo(clusterName) {
 
-    installerInput.createCoreosCredentials(coreOSLicensePath, process.env.TECTONIC_LICENSE);
-    installerInput.createCoreosCredentials(configPath, process.env.PULL_SECRET);
+    installerInput.createCoreosCredentials(coreOSLicensePath, tectonic_license);
+    installerInput.createCoreosCredentials(configPath, pull_secret);
     return this
       .setValue('@name', clusterName)
       .setValue('@coreOSLicenseUpload', coreOSLicensePath)
