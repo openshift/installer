@@ -35,10 +35,10 @@ resource "openstack_compute_secgroup_v2" "master" {
     cidr        = "0.0.0.0/0"
   }
 
-  // flannel overlay vxlan
+  // flannel
   rule {
-    from_port   = 8472
-    to_port     = 8472
+    from_port   = 4789
+    to_port     = 4789
     ip_protocol = "udp"
     cidr        = "0.0.0.0/0"
   }
@@ -101,14 +101,6 @@ resource "openstack_compute_secgroup_v2" "node" {
   rule {
     from_port   = 4789
     to_port     = 4789
-    ip_protocol = "udp"
-    cidr        = "0.0.0.0/0"
-  }
-
-  // flannel overlay vxlan
-  rule {
-    from_port   = 8472
-    to_port     = 8472
     ip_protocol = "udp"
     cidr        = "0.0.0.0/0"
   }
