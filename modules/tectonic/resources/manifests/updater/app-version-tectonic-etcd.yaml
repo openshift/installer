@@ -1,0 +1,13 @@
+apiVersion: coreos.com/v1
+kind: AppVersion
+metadata:
+  name: tectonic-etcd
+  namespace: tectonic-system
+  labels:
+    managed-by-channel-operator: "true"
+spec:
+  desiredVersion: ${tectonic_etcd_operator_version}
+  paused: false
+status:
+  currentVersion: ${tectonic_etcd_operator_version}
+  paused: false

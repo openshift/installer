@@ -29,13 +29,15 @@ resource "template_dir" "tectonic" {
     stats_extender_image                  = "${var.container_images["stats_extender"]}"
     tectonic_channel_operator_image       = "${var.container_images["tectonic_channel_operator"]}"
     tectonic_prometheus_operator_image    = "${var.container_images["tectonic_prometheus_operator"]}"
+    tectonic_etcd_operator_image          = "${var.container_images["tectonic_etcd_operator"]}"
 
-    kubernetes_version   = "${var.versions["kubernetes"]}"
-    monitoring_version   = "${var.versions["monitoring"]}"
-    prometheus_version   = "${var.versions["prometheus"]}"
-    alertmanager_version = "${var.versions["alertmanager"]}"
-    tectonic_version     = "${var.versions["tectonic"]}"
-    etcd_version         = "${var.versions["etcd"]}"
+    kubernetes_version             = "${var.versions["kubernetes"]}"
+    monitoring_version             = "${var.versions["monitoring"]}"
+    prometheus_version             = "${var.versions["prometheus"]}"
+    alertmanager_version           = "${var.versions["alertmanager"]}"
+    tectonic_version               = "${var.versions["tectonic"]}"
+    etcd_version                   = "${var.versions["etcd"]}"
+    tectonic_etcd_operator_version = "${var.versions["tectonic_etcd_operator"]}"
 
     etcd_cluster_size = "${var.master_count > 2 ? 3 : 1}"
 

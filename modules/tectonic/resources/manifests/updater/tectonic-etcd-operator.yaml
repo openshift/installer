@@ -1,0 +1,36 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: tectonic-etcd-operator
+  namespace: tectonic-system
+  labels:
+    k8s-app: tectonic-etcd-operator
+    managed-by-channel-operator: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: tectonic-etcd-operator
+  template:
+    metadata:
+      labels:
+        k8s-app: tectonic-etcd-operator
+        tectonic-app-version-name: tectonic-etcd
+    spec:
+      containers:
+      - image: ${tectonic_etcd_operator_image}
+        name: tectonic-etcd-operator
+        command: ["/usr/local/bin/tectonic-etcd-operator"]
+        resources:
+          limits:
+            cpu: 100m
+            memory: 128Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
+      restartPolicy: Always
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      imagePullSecrets:
+      - name: coreos-pull-secret
