@@ -15,6 +15,9 @@
       "default_path_prefix": "",
       "desiredCapabilities": {
         "browserName": "chrome",
+        "loggingPrefs": {
+          "browser": "ALL"
+        },
         "chromeOptions": {
           "args": [
             "--disable-gpu",
