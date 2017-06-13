@@ -75,7 +75,7 @@ resource "azurerm_virtual_machine" "tectonic_master" {
     admin_username = "core"
     admin_password = ""
 
-    custom_data = "${base64encode("${data.ignition_config.master.*.rendered[count.index]}")}"
+    custom_data = "${base64encode("${data.ignition_config.master.rendered}")}"
   }
 
   os_profile_linux_config {
