@@ -22,7 +22,8 @@
         "chromeOptions": {
           "args": [
             "--disable-gpu",
-            "--no-sandbox"
+            "--no-sandbox",
+            "--headless"
           ]
         }
       },
