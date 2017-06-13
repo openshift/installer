@@ -17,7 +17,7 @@ const send = (obj) => {
     }
   }
   catch(err) {
-    console.error('Failed to send GA event ', err.message);
+    console.error(`Failed to send GA event: ${err.message}`);
   }
 };
 
