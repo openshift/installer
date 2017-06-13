@@ -135,3 +135,9 @@ module "secrets" {
   source       = "../../../modules/openstack/secrets"
   cluster_name = "${var.tectonic_cluster_name}"
 }
+
+module "secgroups" {
+  source                = "../../../modules/openstack/secgroups"
+  cluster_name          = "${var.tectonic_cluster_name}"
+  tectonic_experimental = "${var.tectonic_experimental}"
+}

@@ -1,23 +1,6 @@
 resource "openstack_compute_secgroup_v2" "master" {
-  name        = "${var.cluster_name}_${var.hostname_infix}"
+  name        = "${var.cluster_name}_master"
   description = "security group for k8s masters"
-  count       = "${var.hostname_infix == "master" ? 1 : 0}"
-
-  // icmp
-  rule {
-    from_port   = -1
-    to_port     = -1
-    ip_protocol = "icmp"
-    cidr        = "0.0.0.0/0"
-  }
-
-  // SSH
-  rule {
-    from_port   = 22
-    to_port     = 22
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }
 
   // k8s API
   rule {
@@ -61,25 +44,8 @@ resource "openstack_compute_secgroup_v2" "master" {
 }
 
 resource "openstack_compute_secgroup_v2" "node" {
-  name        = "${var.cluster_name}_${var.hostname_infix}"
+  name        = "${var.cluster_name}_worker"
   description = "security group for k8s nodes"
-  count       = "${var.hostname_infix == "worker" ? 1 : 0}"
-
-  // ICMP
-  rule {
-    from_port   = -1
-    to_port     = -1
-    ip_protocol = "icmp"
-    cidr        = "0.0.0.0/0"
-  }
-
-  // SSH
-  rule {
-    from_port   = 22
-    to_port     = 22
-    ip_protocol = "tcp"
-    cidr        = "0.0.0.0/0"
-  }
 
   // k8s API
   rule {
@@ -123,10 +89,8 @@ resource "openstack_compute_secgroup_v2" "node" {
 }
 
 resource "openstack_compute_secgroup_v2" "self_hosted_etcd" {
-  name        = "${var.cluster_name}_${var.hostname_infix}_self_hosted_etcd"
+  name        = "${var.cluster_name}_master_self_hosted_etcd"
   description = "security group for self hosted etcd"
-
-  count = "${var.tectonic_experimental ? 1 : 0}"
 
   // etcd
   rule {
@@ -141,6 +105,37 @@ resource "openstack_compute_secgroup_v2" "self_hosted_etcd" {
     from_port   = 12379
     to_port     = 12380
     ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+}
+
+resource "openstack_compute_secgroup_v2" "etcd" {
+  name        = "${var.cluster_name}_etcd_group"
+  description = "security group for etcd"
+
+  rule {
+    from_port   = 2379
+    to_port     = 2380
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+}
+
+resource "openstack_compute_secgroup_v2" "default" {
+  name        = "${var.cluster_name}_default"
+  description = "security group defaults: SSH and ping"
+
+  rule {
+    from_port   = 22
+    to_port     = 22
+    ip_protocol = "tcp"
+    cidr        = "0.0.0.0/0"
+  }
+
+  rule {
+    from_port   = -1
+    to_port     = -1
+    ip_protocol = "icmp"
     cidr        = "0.0.0.0/0"
   }
 }
