@@ -88,8 +88,15 @@ pipeline {
                     ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws.tfvars
                     ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws.tfvars
                     ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws.tfvars
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars
                     """
+                  }
+                  retry(3) {
+                    timeout(15) {
+                      sh """#!/bin/bash -ex
+                      . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
+                      ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars
+                      """
+                    }
                   }
                 }
               }
