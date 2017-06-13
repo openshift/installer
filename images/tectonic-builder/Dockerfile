@@ -54,14 +54,14 @@ RUN cd /tmp && \
     ln -s /usr/local/yarn/bin/yarn /usr/local/bin/yarn
 
 
-### install chrome & xvfb to run the installer-gui tests.
-
+# install chrome for installer gui tests
+# using chrome beta because v60 or higher is needed for headless mode
 RUN wget --quiet -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add - && \
     sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y -q \
-    google-chrome-stable xvfb xauth ca-certificates x11vnc fluxbox xvt
+    google-chrome-beta ca-certificates
 
 # cleanup
 RUN rm -rf /tmp/node-v*

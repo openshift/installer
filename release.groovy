@@ -25,7 +25,7 @@ pipeline {
             containers: [
               containerTemplate(
                 name: 'webapp-agent',
-                image: 'quay.io/coreos/tectonic-builder:v1.13',
+                image: 'quay.io/coreos/tectonic-builder:v1.16',
                 ttyEnabled: true,
                 command: 'cat',
               )
