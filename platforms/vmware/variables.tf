@@ -120,6 +120,11 @@ variable "tectonic_vmware_etcd_gateway" {
   description = "Default Gateway IP address for etcd nodes(s)"
 }
 
+variable "tectonic_vmware_etcd_lun" {
+  type        = "string"
+  description = "The storage LUN used by etcd"
+}
+
 // ## Masters
 
 variable "tectonic_vmware_master_vcpu" {
@@ -163,6 +168,11 @@ variable "tectonic_vmware_master_gateway" {
   description = "Default Gateway IP address for Master nodes(s)"
 }
 
+variable "tectonic_vmware_master_lun" {
+  type        = "string"
+  description = "The storage LUN used by master nodes"
+}
+
 // ## Workers
 
 variable "tectonic_vmware_worker_vcpu" {
@@ -204,4 +214,9 @@ EOF
 variable "tectonic_vmware_worker_gateway" {
   type        = "string"
   description = "Default Gateway IP address for Master nodes(s)"
+}
+
+variable "tectonic_vmware_worker_lun" {
+  type        = "string"
+  description = "The storage LUN used by worker nodes"
 }

@@ -116,6 +116,9 @@ tectonic_vmware_controller_domain = ""
 // Virtual DataCenter to deploy VMs
 tectonic_vmware_datacenter = ""
 
+// Storage LUN for etcd
+tectonic_vmware_etcd_lun = ""
+
 // Datastore to deploy Tectonic
 tectonic_vmware_datastore = ""
 
@@ -179,6 +182,9 @@ tectonic_vmware_network = ""
 // DNS Server to be useddd by Virtual Machine(s)
 tectonic_vmware_node_dns = ""
 
+// Storage LUN for master node(s)
+tectonic_vmware_master_lun = ""
+
 // vCenter Server IP/FQDN
 tectonic_vmware_server = ""
 
@@ -223,3 +229,6 @@ tectonic_vmware_worker_vcpu = "1"
 // The number of worker nodes to be created.
 // This applies only to cloud platforms.
 tectonic_worker_count = "3"
+
+// Storage LUN for worker node(s)
+tectonic_vmware_worker_lun = ""

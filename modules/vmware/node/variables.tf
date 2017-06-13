@@ -97,6 +97,10 @@ variable vm_disk_datastore {
   description = "Datastore to create ETCD VM in "
 }
 
+variable vm_lun {
+  description = "The datastore LUN"
+}
+
 variable vm_disk_template {
   type        = "string"
   description = "Disk template to use for cloning ETCD VM CoreOS Container Linux"
