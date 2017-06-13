@@ -1,7 +1,7 @@
 const platformPageCommands = {
   selectPlatform() {
     return this
-      .waitForElementVisible('body', 100000)
+      .waitForElementVisible('select#platformType', 100000)
       .click('@awsPlatform')
       .click('@nextStep');
   },
