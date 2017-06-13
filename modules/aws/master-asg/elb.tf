@@ -4,7 +4,9 @@ resource "aws_elb" "api-internal" {
   internal        = true
   security_groups = ["${var.api_sg_ids}"]
 
-  idle_timeout = 3600
+  idle_timeout                = 3600
+  connection_draining         = true
+  connection_draining_timeout = 300
 
   listener {
     instance_port     = 443
@@ -47,7 +49,9 @@ resource "aws_elb" "api-external" {
   internal        = false
   security_groups = ["${var.api_sg_ids}"]
 
-  idle_timeout = 3600
+  idle_timeout                = 3600
+  connection_draining         = true
+  connection_draining_timeout = 300
 
   listener {
     instance_port     = 22
