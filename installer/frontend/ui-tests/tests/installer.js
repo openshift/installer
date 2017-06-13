@@ -1,16 +1,37 @@
+const _ = require('lodash');
+
 const installerInput = require('../utils/installerInput');
 const tfvarsUtil = require('../utils/terraformTfvars');
 
+const logger = logs => {
+  console.log('==== BEGIN BROWSER LOGS ====');
+  _.each(logs, log => {
+    const { level, message } = log;
+    const messageStr = _.isArray(message) ? message.join(" ") : message;
+
+    switch (level) {
+    case `DEBUG`:
+      console.log(level, messageStr);
+      break;
+    case `SEVERE`:
+      console.warn(level, messageStr);
+      break;
+    case `INFO`:
+    default:
+      console.info(level, messageStr);
+    }
+  });
+  console.log('==== END BROWSER LOGS ====');
+};
+
 module.exports = {
   after (client) {
+    client.getLog('browser', logger);
     client.end();
   },
 
-  'Tectonic Installer Aws Test': (client) => {
-    const options = {
-      "tectonic_aws_region": "us-west-1",
-    };
-    const expectedJson = installerInput.buildExpectedJson(options);
+  'Tectonic Installer AWS Test': (client) => {
+    const expectedJson = installerInput.buildExpectedJson();
     const platformPage = client.page.platformPage();
     const awsCredentialsPage = client.page.awsCredentialsPage();
     const clusterInfoPage = client.page.clusterInfoPage();
@@ -21,8 +42,7 @@ module.exports = {
     const consoleLoginPage = client.page.consoleLoginPage();
     const submitPage = client.page.submitPage();
 
-    platformPage.navigate(client.launch_url)
-      .selectPlatform();
+    platformPage.navigate(client.launch_url).selectPlatform();
     awsCredentialsPage.enterAwsCredentials()
       .waitForElementPresent(awsCredentialsPage.el('@region', expectedJson.tectonic_aws_region), 60000)
       .click(awsCredentialsPage.el('@region', expectedJson.tectonic_aws_region))
