@@ -44,6 +44,11 @@ variable "etcd_cidr" {
   default = ""
 }
 
+variable "etcd_count" {
+  type    = "string"
+  default = ""
+}
+
 variable "master_cidr" {
   type    = "string"
   default = ""

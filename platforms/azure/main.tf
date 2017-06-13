@@ -14,6 +14,7 @@ module "vnet" {
   tectonic_cluster_name = "${var.tectonic_cluster_name}"
   vnet_cidr_block       = "${var.tectonic_azure_vnet_cidr_block}"
 
+  etcd_count                = "${var.tectonic_etcd_count}"
   etcd_cidr                 = "${module.vnet.etcd_cidr}"
   master_cidr               = "${module.vnet.master_cidr}"
   worker_cidr               = "${module.vnet.worker_cidr}"
@@ -38,12 +39,14 @@ module "etcd" {
   vm_size              = "${var.tectonic_azure_etcd_vm_size}"
   storage_account_type = "${var.tectonic_azure_etcd_storage_account_type}"
 
-  etcd_count      = "${var.tectonic_etcd_count}"
-  base_domain     = "${var.tectonic_base_domain}"
-  cluster_name    = "${var.tectonic_cluster_name}"
-  public_ssh_key  = "${var.tectonic_azure_ssh_key}"
-  virtual_network = "${module.vnet.vnet_id}"
-  subnet          = "${module.vnet.master_subnet}"
+  etcd_count            = "${var.tectonic_etcd_count}"
+  base_domain           = "${var.tectonic_base_domain}"
+  cluster_name          = "${var.tectonic_cluster_name}"
+  public_ssh_key        = "${var.tectonic_azure_ssh_key}"
+  virtual_network       = "${module.vnet.vnet_id}"
+  subnet                = "${module.vnet.master_subnet}"
+  endpoints             = "${module.vnet.etcd_private_ips}"
+  network_interface_ids = "${module.vnet.etcd_network_interface_ids}"
 }
 
 module "masters" {
@@ -103,7 +106,7 @@ module "dns" {
 
   master_ip_addresses = "${module.masters.ip_address}"
   console_ip_address  = "${module.masters.console_ip_address}"
-  etcd_ip_addresses   = "${module.etcd.ip_address}"
+  etcd_ip_addresses   = ["${module.vnet.etcd_public_ip}"]
 
   base_domain  = "${var.tectonic_base_domain}"
   cluster_name = "${var.tectonic_cluster_name}"

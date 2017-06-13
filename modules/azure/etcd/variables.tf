@@ -49,3 +49,11 @@ variable "virtual_network" {
 variable "subnet" {
   type = "string"
 }
+
+variable "network_interface_ids" {
+  type = "list"
+}
+
+variable "endpoints" {
+  type = "list"
+}
