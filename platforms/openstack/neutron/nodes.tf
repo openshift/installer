@@ -1,7 +1,7 @@
 # etcd
 
 resource "openstack_compute_instance_v2" "etcd_node" {
-  count     = "${var.tectonic_etcd_count}"
+  count     = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count}"
   name      = "${var.tectonic_cluster_name}_etcd_node_${count.index}"
   image_id  = "${var.tectonic_openstack_image_id}"
   flavor_id = "${var.tectonic_openstack_flavor_id}"
