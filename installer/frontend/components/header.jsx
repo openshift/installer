@@ -1,16 +1,9 @@
 import React from 'react';
-import semver from 'semver';
 
 import { Dropdown } from './ui';
 
 export class Header extends React.Component {
   render() {
-    let hasNewVersion = false;
-    try {
-      hasNewVersion = semver.lt(GIT_TAG, GIT_LATEST_TAG);
-    } catch (unused) {
-      // unused
-    }
     const productDdItems = {
       'Tectonic - Kubernetes': 'https://coreos.com/tectonic/',
       'Quay - Registry': 'https://coreos.com/quay-enterprise',
@@ -52,11 +45,6 @@ export class Header extends React.Component {
         </ul>
         <div className="co-navbar--right">
           <ul className="co-navbar-nav">
-            {hasNewVersion && <li className="co-navbar-nav-item__version">
-              <span className="co-navbar-nav-item__version--new">
-                New installer version: <a href="https://coreos.com/tectonic/releases/" target="_blank">Release notes {GIT_LATEST_TAG}</a>
-              </span>
-            </li>}
             <li className="co-navbar-nav-item__version">
               <span>Version: {GIT_TAG}</span>
             </li>
