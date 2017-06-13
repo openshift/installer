@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: Alertmanager
+metadata:
+  name: main
+  namespace: tectonic-system
+  labels:
+    k8s-app: alertmanager
+    alertmanager: main
+spec:
+  replicas: 2
+  baseImage: ${element(split(":",alertmanager_image),0)}
+  version: ${alertmanager_version}
+  resources:
+    requests:
+      memory: 40Mi

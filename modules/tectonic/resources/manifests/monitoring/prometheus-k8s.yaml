@@ -8,6 +8,7 @@ metadata:
     prometheus: k8s
 spec:
   replicas: 1
+  baseImage: ${element(split(":",prometheus_image),0)}
   version: ${prometheus_version}
   serviceAccountName: prometheus-k8s
   serviceMonitorSelector:
@@ -17,10 +18,15 @@ spec:
     matchLabels:
       role: prometheus-rulefiles
       prometheus: k8s
+  alerting:
+    alertmanagers:
+    - namespace: tectonic-system
+      name: alertmanager-main
+      port: web
   resources:
     limits:
       cpu: 400m
       memory: 2000Mi
     requests:
-      cpu: 200m
-      memory: 1500Mi
+      cpu: 100m
+      memory: 500Mi
