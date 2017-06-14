@@ -81,7 +81,7 @@ $ TERRAFORM_CONFIG=$(pwd)/.terraformrc terraform destroy --force
 
 
 [assets-anchor]: #download-cluster-assets
-[aws-install]: https://coreos.com/tectonic/docs/latest/install/aws/index.html#step-2-install
-[bm-install]: https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html
+[aws-install]: aws/index.md#step-2-install
+[bm-install]: bare-metal/index.md
 [dce-win]: https://store.docker.com/editions/community/docker-ce-desktop-windows
-[tut-firstapp]: https://coreos.com/tectonic/docs/latest/tutorials/first-app.html
+[tut-firstapp]: ../tutorials/first-app.md
