@@ -18,6 +18,7 @@ data "ignition_config" "node" {
     "${data.ignition_systemd_unit.kubelet-env.id}",
     "${data.ignition_systemd_unit.bootkube.id}",
     "${data.ignition_systemd_unit.tectonic.id}",
+    "${data.ignition_systemd_unit.vmtoolsd_member.id}",
   ]
 
   networkd = [
