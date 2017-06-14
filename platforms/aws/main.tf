@@ -38,7 +38,7 @@ module "vpc" {
   # element() won't work on empty lists. See https://github.com/hashicorp/terraform/issues/11210
   master_subnets = "${concat(values(var.tectonic_aws_master_custom_subnets),list("padding"))}"
   worker_subnets = "${concat(values(var.tectonic_aws_worker_custom_subnets),list("padding"))}"
-  # The split() / join() trick works around the limitation of tenrary operator expressions 
+  # The split() / join() trick works around the limitation of ternary operator expressions 
   # only being able to return strings.
   master_azs = ["${ split("|", "${length(keys(var.tectonic_aws_master_custom_subnets))}" > 0 ?
     join("|", keys(var.tectonic_aws_master_custom_subnets)) :
