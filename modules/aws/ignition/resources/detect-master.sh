@@ -23,7 +23,7 @@ while true; do
   sleep 15
 done
 
-API_HEALTHY=$(aws elb describe-instance-health --region="$REGION" --load-balancer-name "$CLUSTER_NAME-api-internal" | jq -r '[ .InstanceStates[] | select(.State | contains("InService")) ] | length > 1')
+API_HEALTHY=$(aws elb describe-instance-health --region="$REGION" --load-balancer-name "$CLUSTER_NAME-int" | jq -r '[ .InstanceStates[] | select(.State | contains("InService")) ] | length > 1')
 
 if [ "$API_HEALTHY" == "true" ]; then
     echo "Healthy API instances found, cluster is already installed."
