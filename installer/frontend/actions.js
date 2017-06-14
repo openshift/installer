@@ -100,7 +100,7 @@ export const configActions = {
     if (!field) {
       throw new Error(`${fieldName} has no field`);
     }
-    field.getExtraStuff(dispatch, getState().clusterConfig, FIELDS, () => true);
+    field.getExtraStuff(dispatch, getState().clusterConfig, FIELDS, 0);
   },
   updateField: (fieldName, inputValue) => (dispatch, getState) => {
     const [name, ...split] = fieldName.split('.');
@@ -117,7 +117,6 @@ export const validateAllFields = cb => async (dispatch, getState) => {
   const initialCC = getState().clusterConfig;
   const unvisitedFields = new Set(_.values(FIELDS));
   const visitedNames = new Set();
-  const isNow = () => true;
 
   const visit = async field => {
     const { id } = field;
@@ -130,8 +129,8 @@ export const validateAllFields = cb => async (dispatch, getState) => {
     field.ignoreWhen(dispatch, clusterConfig);
 
     // TODO: (kans) this is bad
-    await field.getExtraStuff(dispatch, clusterConfig, FIELDS, isNow);
-    await field.validate(dispatch, getState, initialCC, isNow);
+    await field.getExtraStuff(dispatch, clusterConfig, FIELDS, 0);
+    await field.validate(dispatch, getState, initialCC, 0);
   };
 
   // Just shake the array really hard until all the nodes fall out...
