@@ -67,7 +67,7 @@ const createAction = (name, fn, shouldReject=false) => (body, creds, isNow) => (
     })
     .catch(error => {
       if (isNow && !isNow()) {
-        console.log("not now. returning", error);
+        console.log(`not now. returning ${error}`);
         return;
       }
 

@@ -30,7 +30,8 @@ RUN chmod 777 -R ${HOME}
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y -q \
-    build-essential sudo curl wget git autoconf automake unzip libtool jq shellcheck awscli gnupg1 openvpn
+    build-essential sudo curl wget git autoconf automake unzip libtool jq shellcheck awscli gnupg1 \
+    openvpn xvfb xauth
 
 # install terraform
 RUN curl https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
@@ -54,14 +55,14 @@ RUN cd /tmp && \
     ln -s /usr/local/yarn/bin/yarn /usr/local/bin/yarn
 
 
-### install chrome & xvfb to run the installer-gui tests.
-
+# install chrome for installer gui tests
+# using chrome beta because v60 or higher is needed for headless mode
 RUN wget --quiet -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add - && \
     sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y -q \
-    google-chrome-stable xvfb xauth ca-certificates x11vnc fluxbox xvt
+    google-chrome-beta ca-certificates
 
 # cleanup
 RUN rm -rf /tmp/node-v*

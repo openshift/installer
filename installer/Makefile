@@ -111,13 +111,11 @@ launch-installer:
 
 .PHONY: launch-installer-guitests
 launch-installer-guitests: launch-installer
-	Xvfb -ac :99 -screen 0 1280x1024x16 & echo $$! > frontend/ui-tests/reports/xvfb.pid
-	cd frontend && DISPLAY=:99 yarn run installer-tests
+	cd frontend && xvfb-run -a yarn run installer-tests
 
 .PHONY: gui-tests-cleanup
 gui-tests-cleanup:
 	kill `cat frontend/ui-tests/reports/installer.pid`
-	kill `cat frontend/ui-tests/reports/xvfb.pid`
 	rm -fr frontend/ui-tests/reports/
 
 .PHONY: clean

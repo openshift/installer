@@ -96,10 +96,10 @@ class Node {
       batches.push([inFlyPath, false]);
     }
 
-    console.debug("validating", this.name);
+    console.debug(`validating ${this.name}`);
     const syncError = this.validator(value, clusterConfig, oldValue, extraData);
     if (!_.isEmpty(syncError)) {
-      console.info("sync error", this.name, syncError);
+      console.info(`sync error ${this.name}: ${JSON.stringify(syncError)}`);
       batches.push([syncErrorPath, syncError]);
       batchSetIn(dispatch, batches);
       return false;
@@ -154,6 +154,7 @@ class Node {
           asyncError = asyncError.toString ? asyncError.toString() : JSON.stringify(asyncError);
         }
       }
+      console.log(`asyncError for ${this.name}: ${asyncError}`);
       batches.push([asyncErrorPath, asyncError]);
       batchSetIn(dispatch, batches);
       return false;
@@ -173,7 +174,7 @@ class Node {
       return false;
     }
     const value = !!this.ignoreWhen_(clusterConfig);
-    console.debug('ignoring', this.id, value);
+    console.debug(`ignoring ${this.id} value ${value}`);
     setIn(toIgnore(this.id), value, dispatch);
     return value;
   }
@@ -234,7 +235,7 @@ export class Field extends Node {
       id = `${id}.${split.join('.')}`;
     }
 
-    console.info("updating", this.name);
+    console.info(`updating ${this.name}`);
     // TODO: (kans) - We need to lock the entire validation chain, not just validate proper
     setIn(id, value, dispatch);
 
@@ -254,7 +255,7 @@ export class Field extends Node {
     const toVisit = [FIELD_TO_DEPS[this.id]];
 
     if (!toVisit[0].length) {
-      console.debug("no deps for", this.name);
+      console.debug(`no deps for ${this.name}`);
       return;
     }
 
@@ -272,7 +273,7 @@ export class Field extends Node {
       });
     }
 
-    console.info("finish validating", this.name, isValid);
+    console.info(`finish validating ${this.name} ${isValid}`);
   }
 
   validationData_ (clusterConfig, syncOnly) {
