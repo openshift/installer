@@ -10,3 +10,4 @@ tectonic-license.txt
 terraform.tfstate*
 terraform.tfvars
 build/
+bin/

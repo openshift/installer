@@ -3,7 +3,7 @@
 This directory contains all smoke and integration tests for Tectonic. Each subdirectory is further partitioned into directories for particular platforms as necessary. This directory should conform to the following directory hierarchy:
 
 ```
-tests
+tests/
 ├── gui            # Integration tests for the installer user interface
 ├── integration    # Integration tests for Tectonic
 └── smoke          # Smoke tests for all platforms

@@ -1,4 +1,4 @@
-package sanity
+package smoke
 
 import (
 	"fmt"

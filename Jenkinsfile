@@ -51,6 +51,7 @@ pipeline {
 
             cd $GO_PROJECT/
             make structure-check
+            make bin/smoke
 
             cd $GO_PROJECT/installer
             make clean
@@ -63,7 +64,7 @@ pipeline {
             """
             stash name: 'installer', includes: 'installer/bin/linux/installer'
             stash name: 'node_modules', includes: 'installer/frontend/node_modules/**'
-            stash name: 'sanity', includes: 'installer/bin/sanity'
+            stash name: 'smoke', includes: 'bin/smoke'
           }
         }
       }
@@ -81,7 +82,7 @@ pipeline {
                 withDockerContainer(builder_image) {
                   checkout scm
                   unstash 'installer'
-                  unstash 'sanity'
+                  unstash 'smoke'
                   timeout(30) {
                     sh """#!/bin/bash -ex
                     . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
@@ -140,7 +141,7 @@ pipeline {
                 withDockerContainer(image: builder_image, args: '--device=/dev/net/tun --cap-add=NET_ADMIN') {
                   checkout scm
                   unstash 'installer'
-                  unstash 'sanity'
+                  unstash 'smoke'
                   timeout(40) {
                     sh """#!/bin/bash -ex
                     . ${WORKSPACE}/tests/smoke/aws/smoke.sh create-vpc
@@ -159,7 +160,7 @@ pipeline {
             node('worker && bare-metal') {
               checkout scm
               unstash 'installer'
-              unstash 'sanity'
+              unstash 'smoke'
               withCredentials(creds) {
                 timeout(30) {
                   sh """#!/bin/bash -ex
