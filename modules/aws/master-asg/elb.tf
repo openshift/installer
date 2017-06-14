@@ -24,7 +24,7 @@ resource "aws_elb" "api-internal" {
   }
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}-api-internal",
+      "Name", "${var.cluster_name}-int",
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
       "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
