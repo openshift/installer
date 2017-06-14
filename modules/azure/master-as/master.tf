@@ -54,6 +54,7 @@ resource "azurerm_virtual_machine" "tectonic_master" {
   resource_group_name   = "${var.resource_group_name}"
   network_interface_ids = ["${element(azurerm_network_interface.tectonic_master.*.id, count.index)}"]
   vm_size               = "${var.vm_size}"
+  availability_set_id   = "${azurerm_availability_set.tectonic_masters.id}"
 
   storage_image_reference {
     publisher = "CoreOS"
