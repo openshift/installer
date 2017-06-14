@@ -111,7 +111,7 @@ launch-installer:
 
 .PHONY: launch-installer-guitests
 launch-installer-guitests: launch-installer
-	cd frontend && yarn run installer-tests
+	cd frontend && xvfb-run -a yarn run installer-tests
 
 .PHONY: gui-tests-cleanup
 gui-tests-cleanup:
