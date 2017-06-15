@@ -23,13 +23,28 @@ resource "openstack_networking_router_interface_v2" "interface" {
   subnet_id = "${openstack_networking_subnet_v2.subnet.id}"
 }
 
+# etcd
+
+resource "openstack_networking_port_v2" "etcd" {
+  count              = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count}"
+  name               = "${var.tectonic_cluster_name}_port_etcd_${count.index}"
+  network_id         = "${openstack_networking_network_v2.network.id}"
+  security_group_ids = ["${module.secgroups.secgroup_etcd_ids}"]
+  admin_state_up     = "true"
+
+  fixed_ip {
+    subnet_id = "${openstack_networking_subnet_v2.subnet.id}"
+  }
+}
+
 # master
 
 resource "openstack_networking_port_v2" "master" {
-  count          = "${var.tectonic_master_count}"
-  name           = "${var.tectonic_cluster_name}_port_master_${count.index}"
-  network_id     = "${openstack_networking_network_v2.network.id}"
-  admin_state_up = "true"
+  count              = "${var.tectonic_master_count}"
+  name               = "${var.tectonic_cluster_name}_port_master_${count.index}"
+  network_id         = "${openstack_networking_network_v2.network.id}"
+  security_group_ids = ["${module.secgroups.secgroup_master_ids}"]
+  admin_state_up     = "true"
 
   fixed_ip {
     subnet_id = "${openstack_networking_subnet_v2.subnet.id}"
@@ -52,10 +67,11 @@ resource "openstack_networking_floatingip_v2" "master" {
 # worker
 
 resource "openstack_networking_port_v2" "worker" {
-  count          = "${var.tectonic_worker_count}"
-  name           = "${var.tectonic_cluster_name}_port_worker_${count.index}"
-  network_id     = "${openstack_networking_network_v2.network.id}"
-  admin_state_up = "true"
+  count              = "${var.tectonic_worker_count}"
+  name               = "${var.tectonic_cluster_name}_port_worker_${count.index}"
+  network_id         = "${openstack_networking_network_v2.network.id}"
+  security_group_ids = ["${module.secgroups.secgroup_node_ids}"]
+  admin_state_up     = "true"
 
   fixed_ip {
     subnet_id = "${openstack_networking_subnet_v2.subnet.id}"

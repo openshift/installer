@@ -8,8 +8,9 @@ resource "aws_route_table" "default" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
-      "Name", "public",
-      "kubernetes.io/cluster/${var.cluster_name}", "shared"
+      "Name", "${var.cluster_name}-public",
+      "kubernetes.io/cluster/${var.cluster_name}", "shared",
+      "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
@@ -39,10 +40,11 @@ resource "aws_subnet" "master_subnet" {
   availability_zone = "${var.master_azs[count.index]}"
 
   tags = "${merge(map(
-      "Name", "master-${ "${length(var.master_azs)}" > 0 ? 
+      "Name", "${var.cluster_name}-master-${ "${length(var.master_azs)}" > 0 ?
      "${var.master_azs[count.index]}" : 
      "${data.aws_availability_zones.azs.names[count.index]}" }",
-      "kubernetes.io/cluster/${var.cluster_name}", "shared"
+      "kubernetes.io/cluster/${var.cluster_name}", "shared",
+      "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
@@ -55,13 +57,15 @@ resource "aws_route_table_association" "route_net" {
 resource "aws_eip" "nat_eip" {
   count = "${var.external_vpc_id == "" ? min(var.master_az_count, var.worker_az_count) : 0}"
   vpc   = true
+
+  # Terraform does not declare an explicit dependency towards the internet gateway.
+  # this can cause the internet gateway to be deleted/detached before the EIPs.
+  # https://github.com/coreos/tectonic-installer/issues/1017#issuecomment-307780549
+  depends_on = ["aws_internet_gateway.igw"]
 }
 
 resource "aws_nat_gateway" "nat_gw" {
   count         = "${var.external_vpc_id == "" ? min(var.master_az_count, var.worker_az_count) : 0}"
   allocation_id = "${aws_eip.nat_eip.*.id[count.index]}"
   subnet_id     = "${aws_subnet.master_subnet.*.id[count.index]}"
-
-  # TODO (sym3tri): Trying to prevent test flakes related to the `allocation_id` line above. May not be required.
-  depends_on = ["aws_eip.nat_eip"]
 }

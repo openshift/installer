@@ -20,18 +20,19 @@ installer-env: $(INSTALLER_BIN) terraformrc.example
 
 localconfig:
 	mkdir -p $(BUILD_DIR)
+	cp examples/*$(subst /,-,$(PLATFORM)) $(BUILD_DIR)/terraform.tfvars
 
-$(BUILD_DIR)/.terraform:
-	cd $(BUILD_DIR) && $(TF_CMD) get $(TOP_DIR)/platforms/$(PLATFORM)
+terraform-get:
+	cd $(BUILD_DIR) && $(TF_CMD) get $(TF_GET_OPTIONS) $(TOP_DIR)/platforms/$(PLATFORM)
 
-plan: installer-env $(BUILD_DIR)/.terraform
-	cd $(BUILD_DIR) && $(TF_CMD) plan $(TOP_DIR)/platforms/$(PLATFORM)
+plan: installer-env terraform-get
+	cd $(BUILD_DIR) && $(TF_CMD) plan $(TF_PLAN_OPTIONS) $(TOP_DIR)/platforms/$(PLATFORM)
 
-apply: installer-env $(BUILD_DIR)/.terraform
-	cd $(BUILD_DIR) && $(TF_CMD) apply $(TOP_DIR)/platforms/$(PLATFORM)
+apply: installer-env terraform-get
+	cd $(BUILD_DIR) && $(TF_CMD) apply $(TF_APPLY_OPTIONS) $(TOP_DIR)/platforms/$(PLATFORM)
 
-destroy: installer-env ${BUILD_DIR}/.terraform
-	cd $(BUILD_DIR) && $(TF_CMD) destroy -force $(TOP_DIR)/platforms/$(PLATFORM)
+destroy: installer-env terraform-get
+	cd $(BUILD_DIR) && $(TF_CMD) destroy $(TF_DESTROY_OPTIONS) -force $(TOP_DIR)/platforms/$(PLATFORM)
 
 payload:
 	@${TOP_DIR}/modules/update-payload/make-update-payload.sh > /dev/null
@@ -46,7 +47,7 @@ define terraform-docs
 endef
 
 define terraform-examples
-	$(if $(TF_EXAMPLES),,$(error "terraform-examples revision >= 83d7ad6 is required (https://github.com/segmentio/terraform-docs)"))
+	$(if $(TF_EXAMPLES),,$(error "terraform-examples revision >= 83d7ad6 is required (https://github.com/s-urbaniak/terraform-examples)"))
 	terraform-examples $2 $3 $4 $5 > $1
 endef
 
@@ -75,6 +76,10 @@ docs:
 			'This document gives an overview of variables used in the bare metal platform of the Tectonic SDK.', \
 			platforms/metal/variables.tf)
 
+	$(call terraform-docs, Documentation/variables/vmware.md, \
+			'This document gives an overview of variables used in the VMware platform of the Tectonic SDK.', \
+			platforms/vmware/variables.tf)
+
 examples:
 	$(call terraform-examples, examples/terraform.tfvars.aws, \
 			config.tf, \
@@ -100,6 +105,11 @@ examples:
 			config.tf, \
 			platforms/metal/variables.tf)
 
+	$(call terraform-examples, \
+			examples/terraform.tfvars.vmware, \
+			config.tf, \
+			platforms/vmware/variables.tf)
+
 clean: destroy
 	rm -rf $(BUILD_DIR)
 	make clean -C $(TOP_DIR)/installer
@@ -110,7 +120,7 @@ structure-check:
 	$(eval FMT_ERR := $(shell terraform fmt -list -write=false .))
 	@if [ "$(FMT_ERR)" != "" ]; then echo "misformatted files (run 'terraform fmt .' to fix):" $(FMT_ERR); exit 1; fi
 
-canonical-syntax:
-	terraform fmt -list .
+	@if make docs && ! git diff --exit-code; then echo "outdated docs (run 'make docs' to fix)"; exit 1; fi
+	@if make examples && ! git diff --exit-code; then echo "outdated examples (run 'make examples' to fix)"; exit 1; fi
 
-.PHONY: make clean terraform terraform-dev structure-check canonical-syntax docs examples
+.PHONY: make clean terraform terraform-dev structure-check docs examples terraform-get

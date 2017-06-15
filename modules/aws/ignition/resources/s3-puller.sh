@@ -7,12 +7,15 @@ fi
 
 /usr/bin/sudo /usr/bin/rkt run \
     --net=host --dns=host \
-    --trust-keys-from-https quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600 \
+    --trust-keys-from-https ${awscli_image} \
     --volume=tmp,kind=host,source=/tmp --mount=volume=tmp,target=/tmp \
     --set-env="LOCATION=$1" \
     --exec=/bin/bash -- -c '
         REGION=$(wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone | sed s'/[a-zA-Z]$//')
-        /usr/bin/aws --region=${REGION} s3 cp s3://${LOCATION} /tmp/${LOCATION//\//+}
+        until /usr/bin/aws --region=$${REGION} s3 cp s3://$${LOCATION} /tmp/$${LOCATION//\//+}; do
+          echo "Could not pull from S3, retrying in 5 seconds"
+          sleep 5
+        done
     '
 
-/usr/bin/sudo mv /tmp/${1//\//+} $2
+/usr/bin/sudo mv /tmp/$${1//\//+} $2

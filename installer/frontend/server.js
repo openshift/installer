@@ -20,6 +20,10 @@ const fetchJSON = (url, opts, ...args) => {
       return response.json();
     }
 
+    if (opts.retries > 0) {
+      opts.retries--;
+      return fetchJSON(url, opts, ...args);
+    }
     return response.text().then(Promise.reject);
   });
 };
@@ -78,7 +82,7 @@ const platformToFunc = {
 let observeInterval;
 
 // An action creator that builds a server message, calls fetch on that message, fires the appropriate actions
-export const commitToServer = (dryRun=false, retry=false) => (dispatch, getState) => {
+export const commitToServer = (dryRun=false, retry=false, opts={}) => (dispatch, getState) => {
   setIn(DRY_RUN, dryRun, dispatch);
   setIn(RETRY, retry, dispatch);
 
@@ -94,7 +98,7 @@ export const commitToServer = (dryRun=false, retry=false) => (dispatch, getState
     throw Error(`unknown platform type "${request.platformType}"`);
   }
 
-  const body = obj.f(request, FORMS);
+  const body = obj.f(request, FORMS, opts);
   fetch(obj.path, {
     credentials: 'same-origin',
     method: 'POST',
@@ -119,14 +123,13 @@ export const commitToServer = (dryRun=false, retry=false) => (dispatch, getState
   });
 };
 
-const AMI_URL = 'https://stable.release.core-os.net/amd64-usr/current/coreos_production_ami_all.json';
 
 // One-time fetch of AMIs from server, followed by firing appropriate actions
 // Guaranteed not to reject.
 const getAMIs = (dispatch) => {
-  return fetchJSON(`/proxy?target=${ encodeURIComponent(AMI_URL) }`)
+  return fetchJSON(`/containerlinux/images/amis`, { retries: 5 })
     .then(m => {
-      const awsRegions = m.amis.map(({name}) => {
+      const awsRegions = m.map(({name}) => {
         return {label: name, value: name};
       });
       dispatch({

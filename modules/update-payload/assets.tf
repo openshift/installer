@@ -1,7 +1,7 @@
 # Kubernetes Deployments and AppVersions TPR used in the payload
 resource "template_dir" "upload_payload" {
   source_dir      = "../tectonic/resources/manifests/updater/"
-  destination_dir = "${path.cwd}/generated"
+  destination_dir = "./generated"
 
   vars {
     # Used variables for generating the payload,

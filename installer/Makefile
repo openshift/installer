@@ -1,47 +1,70 @@
-export CGO_ENABLED:=0
+export CGO_ENABLED=0
 export VERSION=$(shell ../git-version)
 
 OS=$(shell uname | tr A-Z a-z)
-LD_FLAGS="-w -X github.com/coreos/tectonic-installer/installer/server/version.Version=$(VERSION)"
+LD_FLAGS="-w -X github.com/coreos/tectonic-installer/installer/cmd/installer.Version=$(VERSION)"
+INSTALLER_OPTS=--address=127.0.0.1:4444 --open-browser=false --log-level=debug --dev
 
 REPO=github.com/coreos/tectonic-installer/installer
 
-GO_FILES=$(shell find server -type f -name '*.go')
+# Wrapper around find. Works with filenamess containing spaces.
+find=$(shell [ -d $(1) ] && find $(1) -type f $(2) | sed 's/ /\\ /g')
+
+GO_FILES=$(call find,.,-name '*.go')
+SHELL_FILES=$(call find,scripts,-name '*.sh')
 
 .PHONY: all
-all: build
+all:
+	@$(MAKE) build -r
 
 .PHONY: build
 build: bin/$(OS)/installer
 
-bin/windows/installer.exe: $(GO_FILES) binassets/assets.go
+bin/windows/installer.exe: $(GO_FILES) assets/bindata.go
 	GOOS=windows go build -o bin/windows/installer.exe -ldflags $(LD_FLAGS) $(REPO)/cmd/installer
 
-bin/%/installer: $(GO_FILES) binassets/assets.go
+bin/%/installer: $(GO_FILES) assets/bindata.go
 	GOOS=$* go build -o bin/$*/installer -ldflags $(LD_FLAGS) $(REPO)/cmd/installer
 
 .PHONY: backend
-backend: binassets/assets.go
+backend: assets/bindata.go
 	GOOS=$(OS) go build -o bin/$(OS)/installer -ldflags $(LD_FLAGS) $(REPO)/cmd/installer
 
-binassets/assets.go: frontend bin/go-bindata $(shell find assets -type f)
-	./bin/go-bindata -pkg binassets -o binassets/assets.go -prefix assets assets/...
-
 .PHONY: frontend
-frontend:
-	$(MAKE) -C frontend
+frontend: assets/frontend/scripts/app-bundle.js
+
+assets/bindata.go: assets/frontend/scripts/app-bundle.js bin/go-bindata $(shell find assets -type f | grep -v .go)
+	./bin/go-bindata -pkg assets -o assets/bindata.go -ignore=bindata.go -ignore=doc.go -ignore=assets.go -prefix assets assets/...
+
+assets/frontend/scripts/app-bundle.js: frontend/node_modules frontend/*.jsx frontend/*.js $(call find,frontend/components,-name '*.jsx') $(call find,frontend/node_modules)
+	cd frontend && yarn run build
+
+frontend/node_modules: frontend/package.json frontend/yarn.lock
+	cd frontend && yarn install --quiet > /dev/null
+
+.PHONY: lint
+lint: build bin/golint shellcheck
+	./scripts/lint-backend
+	cd frontend && yarn run lint
+
+.PHONY: test-backend
+test-backend: build
+	./scripts/test-backend
+
+.PHONY: test-frontend
+test-frontend:
+	cd frontend && yarn test
 
 .PHONY: test
-test: build bin/golint
-	./scripts/test
+test: test-backend test-frontend
 
-.PHONY: smoke-aws
-smoke-aws: bin/sanity
-	../tests/scripts/aws/up-down.sh
+.PHONY: shellcheck
+shellcheck: $(SHELL_FILES)
+	shellcheck $(SHELL_FILES)
 
-.PHONY: smoke-bare-metal
-smoke-bare-metal: bin/sanity
-	./tests/scripts/bare-metal/up-down.sh
+.PHONY: dirtycheck
+dirtycheck:
+	@if git status --short | grep 'yarn.lock' > /dev/null; then echo "outdated yarn.lock (commit it to fix)"; exit 1; fi
 
 .PHONY: dist
 dist: release-bins
@@ -53,6 +76,10 @@ release: release-bins
 	./scripts/release/make_release_tarball.sh
 	./scripts/release/upload_release_tarball.sh
 	./scripts/release/make_github_release.sh
+
+.PHONY: license-parse
+license-parse:
+	./scripts/license-gen/collect_project_licenses.sh
 
 .PHONY: release-bins
 release-bins: \
@@ -69,7 +96,7 @@ vendor: glide.yaml
 tools: bin/go-bindata bin/sanity bin/golint
 
 bin/golint:
-	CGO_ENABLED=0 go build -o bin/golint $(REPO)/vendor/github.com/golang/lint/golint
+	go build -o bin/golint $(REPO)/vendor/github.com/golang/lint/golint
 
 bin/go-bindata:
 	go build -o bin/go-bindata $(REPO)/vendor/github.com/jteeuwen/go-bindata/go-bindata
@@ -77,10 +104,25 @@ bin/go-bindata:
 bin/sanity:
 	go test tests/sanity/k8s_test.go -c -o bin/sanity
 
+.PHONY: launch-installer
+launch-installer:
+	mkdir -p frontend/ui-tests/reports/
+	./bin/$(OS)/installer $(INSTALLER_OPTS) & echo $$! > frontend/ui-tests/reports/installer.pid
+
+.PHONY: launch-installer-guitests
+launch-installer-guitests: launch-installer
+	cd frontend && xvfb-run -a yarn run installer-tests
+
+.PHONY: gui-tests-cleanup
+gui-tests-cleanup:
+	kill `cat frontend/ui-tests/reports/installer.pid`
+	rm -fr frontend/ui-tests/reports/
+
 .PHONY: clean
 clean:
-	$(MAKE) -C frontend clean
-	rm -rf bin/
-	rm -f binassets/assets.go
-	rm -rf assets/frontend/scripts
-	rm -rf .workspace/
+	rm -f assets/bindata.go
+	rm -f assets/frontend/scripts/app-bundle.js
+	rm -fr .workspace/
+	rm -fr assets/frontend/scripts
+	rm -fr bin/
+	rm -fr frontend/node_modules

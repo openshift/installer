@@ -17,6 +17,11 @@ variable "vm_size" {
   type = "string"
 }
 
+// Storage account type
+variable "storage_account_type" {
+  type = "string"
+}
+
 // Count of etcd nodes to be created.
 variable "etcd_count" {
   type = "string"
@@ -43,4 +48,12 @@ variable "virtual_network" {
 
 variable "subnet" {
   type = "string"
+}
+
+variable "network_interface_ids" {
+  type = "list"
+}
+
+variable "endpoints" {
+  type = "list"
 }

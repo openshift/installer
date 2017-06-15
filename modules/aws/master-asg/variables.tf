@@ -6,6 +6,10 @@ variable "cl_channel" {
   type = "string"
 }
 
+variable "cluster_id" {
+  type = "string"
+}
+
 variable "cluster_name" {
   type = "string"
 }
@@ -94,4 +98,10 @@ variable "root_volume_iops" {
   type        = "string"
   default     = "100"
   description = "The amount of provisioned IOPS for the root block device."
+}
+
+variable "master_iam_role" {
+  type        = "string"
+  default     = ""
+  description = "IAM role to use for the instance profiles of master nodes."
 }

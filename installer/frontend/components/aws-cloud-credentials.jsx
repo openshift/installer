@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { validate } from '../validate';
+import { compose, validate } from '../validate';
 import { configActions } from '../actions';
 import { Input, Password, Select, RadioBoolean, Connect } from './ui';
 import { Alert } from './alert';
@@ -18,6 +18,7 @@ import {
   AWS_CONTROLLER_SUBNET_IDS,
   AWS_WORKER_SUBNET_IDS,
   AWS_REGION,
+  AWS_REGION_FORM,
   AWS_SECRET_ACCESS_KEY,
   AWS_SESSION_TOKEN,
   STS_ENABLED,
@@ -47,8 +48,22 @@ const AWS_CREDS = 'AWSCreds';
 
 const awsCredsForm = new Form(AWS_CREDS, [
   new Field(STS_ENABLED, {default: false}),
-  new Field(AWS_ACCESS_KEY_ID, {default: '', validator: validate.nonEmpty}),
-  new Field(AWS_SECRET_ACCESS_KEY, {default: '', validator: validate.nonEmpty}),
+  new Field(AWS_ACCESS_KEY_ID, {
+    default: '',
+    validator: compose(validate.nonEmpty, (v) => {
+      if (v.length < 20) {
+        return 'AWS key IDs are at least 20 characters.';
+      }
+    }),
+  }),
+  new Field(AWS_SECRET_ACCESS_KEY, {
+    default: '',
+    validator: compose(validate.nonEmpty, (v) => {
+      if (v.length < 40) {
+        return 'AWS secrets are at least 40 characters.';
+      }
+    }),
+  }),
   new Field(AWS_SESSION_TOKEN, {
     default: '',
     validator: validate.nonEmpty,
@@ -56,7 +71,7 @@ const awsCredsForm = new Form(AWS_CREDS, [
     ignoreWhen: cc => !cc[STS_ENABLED],
   }),
 ], {
-  asyncValidator: (dispatch, getState, data) => {
+  asyncValidator: (dispatch, getState, data, ignored, isNow) => {
     const creds = {
       AccessKeyID: data[AWS_ACCESS_KEY_ID],
       SecretAccessKey: data[AWS_SECRET_ACCESS_KEY],
@@ -65,11 +80,12 @@ const awsCredsForm = new Form(AWS_CREDS, [
       Region: data[AWS_REGION] || 'us-east-1',
     };
 
-    return dispatch(getRegions(null, creds)).then(() => {});
+    // This returns the list of regions, which we don't want to show as an error message.
+    return dispatch(getRegions(null, creds, isNow)).then(() => {});
   },
 });
 
-const selectRegionForm = new Form('SelectRegionForm', [
+const selectRegionForm = new Form(AWS_REGION_FORM, [
   awsCredsForm,
   new Field(AWS_REGION, {
     default: '',
@@ -90,6 +106,7 @@ const selectRegionForm = new Form('SelectRegionForm', [
       [AWS_WORKER_SUBNET_IDS, {}],
     ]);
 
+    // TODO: (ggreer) move this to getextradata in another form
     return dispatch(getDefaultSubnets(null, null, isNow));
   },
 });

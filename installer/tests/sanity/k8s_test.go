@@ -69,7 +69,7 @@ func testAPIAvailable(t *testing.T) {
 	done := waitForAPIServer(t)
 
 	// timeout searching for server
-	wait := 10 * time.Minute
+	wait := 15 * time.Minute
 	t.Logf("Waiting %v for API server to become available", wait)
 
 	timeout := time.After(wait)

@@ -6,7 +6,7 @@ resource "random_id" "cluster_id" {
 # Kubernetes Manifests (resources/generated/manifests/)
 resource "template_dir" "tectonic" {
   source_dir      = "${path.module}/resources/manifests"
-  destination_dir = "${path.cwd}/generated/tectonic"
+  destination_dir = "./generated/tectonic"
 
   vars {
     addon_resizer_image                   = "${var.container_images["addon_resizer"]}"
@@ -20,17 +20,22 @@ resource "template_dir" "tectonic" {
     kube_version_operator_image           = "${var.container_images["kube_version_operator"]}"
     node_agent_image                      = "${var.container_images["node_agent"]}"
     node_exporter_image                   = "${var.container_images["node_exporter"]}"
+    kube_state_metrics_image              = "${var.container_images["kube_state_metrics"]}"
     prometheus_operator_image             = "${var.container_images["prometheus_operator"]}"
+    prometheus_image                      = "${var.container_images["prometheus"]}"
+    prometheus_config_reload_image        = "${var.container_images["prometheus_config_reload"]}"
+    alertmanager_image                    = "${var.container_images["alertmanager"]}"
     stats_emitter_image                   = "${var.container_images["stats_emitter"]}"
     stats_extender_image                  = "${var.container_images["stats_extender"]}"
     tectonic_channel_operator_image       = "${var.container_images["tectonic_channel_operator"]}"
     tectonic_prometheus_operator_image    = "${var.container_images["tectonic_prometheus_operator"]}"
 
-    kubernetes_version = "${var.versions["kubernetes"]}"
-    monitoring_version = "${var.versions["monitoring"]}"
-    prometheus_version = "${var.versions["prometheus"]}"
-    tectonic_version   = "${var.versions["tectonic"]}"
-    etcd_version       = "${var.versions["etcd"]}"
+    kubernetes_version   = "${var.versions["kubernetes"]}"
+    monitoring_version   = "${var.versions["monitoring"]}"
+    prometheus_version   = "${var.versions["prometheus"]}"
+    alertmanager_version = "${var.versions["alertmanager"]}"
+    tectonic_version     = "${var.versions["tectonic"]}"
+    etcd_version         = "${var.versions["etcd"]}"
 
     etcd_cluster_size = "${var.master_count > 2 ? 3 : 1}"
 
@@ -87,7 +92,7 @@ data "template_file" "tectonic" {
 
 resource "local_file" "tectonic" {
   content  = "${data.template_file.tectonic.rendered}"
-  filename = "${path.cwd}/generated/tectonic.sh"
+  filename = "./generated/tectonic.sh"
 }
 
 # tectonic.sh (resources/generated/tectonic-rkt.sh)
@@ -102,7 +107,7 @@ data "template_file" "tectonic-rkt" {
 
 resource "local_file" "tectonic-rkt" {
   content  = "${data.template_file.tectonic-rkt.rendered}"
-  filename = "${path.cwd}/generated/tectonic-rkt.sh"
+  filename = "./generated/tectonic-rkt.sh"
 }
 
 # tectonic.service (available as output variable)

@@ -1,0 +1,25 @@
+#!/bin/bash -e
+
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT="$DIR/.."
+pushd "$ROOT" > /dev/null
+
+FORMATTABLE=$(find . -type f -name '*.go' -not -path './vendor/*' -not -path './assets/*' -not -path './tests/vendor/*' -not -path ' | grep -v ./pkg/terraform/plugins/aws')
+LINT_EXCLUDE='(/vendor|assets|aws)'
+LINTABLE=$(go list ./... | grep -v -E $LINT_EXCLUDE)
+
+for f in $FORMATTABLE; do
+    fmtRes=$(gofmt -l "$f")
+    if [ -n "${fmtRes}" ]; then
+      echo -e "gofmt checking failed:\n${fmtRes}"
+      exit 2
+    fi
+done
+
+lintRes=$(echo "$LINTABLE" | xargs -n 1 bin/golint)
+if [ -n "${lintRes}" ]; then
+  echo -e "golint checking failed:\n${lintRes}"
+  exit 2
+fi
+
+popd > /dev/null

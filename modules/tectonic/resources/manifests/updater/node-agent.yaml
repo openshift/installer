@@ -28,8 +28,8 @@ spec:
         volumeMounts:
         - name: systemd
           mountPath: /etc/systemd/system
-        - name: dbus
-          mountPath: /var/run/dbus
+        - name: var-run
+          mountPath: /var/run
         - name: etc-kubernetes
           mountPath: /etc/kubernetes
       imagePullSecrets:
@@ -45,6 +45,6 @@ spec:
       - name: systemd
         hostPath:
           path: /etc/systemd/system
-      - name: dbus
+      - name: var-run
         hostPath:
-          path: /var/run/dbus
+          path: /var/run

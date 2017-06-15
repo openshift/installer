@@ -2,7 +2,7 @@
 
 /usr/bin/rkt run \
   --trust-keys-from-https \
-  --volume assets,kind=host,source=$(pwd) \
+  --volume assets,kind=host,source="$(pwd)" \
   --mount volume=assets,target=/assets \
   ${hyperkube_image} \
   --net=host \

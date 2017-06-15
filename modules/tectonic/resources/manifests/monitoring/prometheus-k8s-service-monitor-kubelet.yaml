@@ -4,12 +4,13 @@ metadata:
   name: kubelet
   namespace: tectonic-system
   labels:
-    k8s-apps: http
+    k8s-app: kubelet
 spec:
   jobLabel: k8s-app
   endpoints:
   - port: http-metrics
-    interval: 15s
+    interval: 30s
+    honorLabels: true
   selector:
     matchLabels:
       k8s-app: kubelet

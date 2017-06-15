@@ -1,7 +1,7 @@
 // Update https://jenkins-tectonic.prod.coreos.systems/job/tectonic-release
 pipeline {
   agent none
-  
+
   options {
     timeout(time:25, unit:'MINUTES')
     buildDiscarder(logRotator(numToKeepStr:'20'))
@@ -9,9 +9,10 @@ pipeline {
 
   parameters {
     string(name: 'releaseTag')
+    string(name: 'preRelease')
   }
-  
-  stages { 
+
+  stages {
     stage('Release') {
       agent none
       environment {
@@ -24,7 +25,7 @@ pipeline {
             containers: [
               containerTemplate(
                 name: 'webapp-agent',
-                image: 'quay.io/coreos/tectonic-builder:v1.4',
+                image: 'quay.io/coreos/tectonic-builder:v1.18',
                 ttyEnabled: true,
                 command: 'cat',
               )
@@ -51,6 +52,7 @@ pipeline {
                     export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
                     export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
                     export GITHUB_CREDENTIALS=$GITHUB_CREDENTIALS
+                    export PRE_RELEASE=${params.preRelease}
                     go version
                     cd $GO_PROJECT/installer
                     make build

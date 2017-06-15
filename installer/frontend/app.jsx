@@ -56,10 +56,10 @@ try {
   });
   console.debug('Restored state from sessionStorage.');
 } catch (e) {
-  console.error('Error restoring state from sessionStorage:', e);
+  console.error(`Error restoring state from sessionStorage: ${e.message || e.toString()}`);
 }
 
-store.dispatch(validateAllFields(store.getState().clusterConfig, () => {
+store.dispatch(validateAllFields(() => {
   TectonicGA.initialize();
 
   try {
@@ -71,7 +71,7 @@ store.dispatch(validateAllFields(store.getState().clusterConfig, () => {
       fixLocation();
     });
   } catch (e) {
-    console.error('Error restoring state from sessionStorage:', e);
+    console.error(`Error restoring state from sessionStorage: ${e.message || e.toString()}`);
   }
 
   // Because route.onEnter doesn't monitor the state, there is a race condition where

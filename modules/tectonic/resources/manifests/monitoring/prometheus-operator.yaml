@@ -4,12 +4,14 @@ metadata:
   name: prometheus-operator
   namespace: tectonic-system
   labels:
+    k8s-app: prometheus-operator
     operator: prometheus
 spec:
   replicas: 1
   template:
     metadata:
       labels:
+        k8s-app: prometheus-operator
         operator: prometheus
     spec:
       serviceAccountName: prometheus-operator
@@ -17,8 +19,9 @@ spec:
        - name: prometheus-operator
          image: ${prometheus_operator_image}
          args:
-         - "--kubelet-object=kube-system/kubelet"
+         - "--kubelet-service=kube-system/kubelet"
          - "--config-reloader-image=${config_reload_image}"
+         - "--prometheus-config-reloader=${prometheus_config_reload_image}"
          resources:
            requests:
              cpu: 100m
@@ -26,3 +29,6 @@ spec:
            limits:
              cpu: 200m
              memory: 300Mi
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534

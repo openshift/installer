@@ -20,5 +20,12 @@ spec:
       containers:
       - name: kube-version-operator
         image: ${kube_version_operator_image}
+        command:
+        - /kube-version-operator
+        - --cache-images=true
+        - --version-mapping=/upgrade-spec.json
       imagePullSecrets:
       - name: coreos-pull-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534

@@ -71,7 +71,7 @@ export const SubmitDefinition = connect(
         <span> After submission, the definition cannot be updated. Go <a onClick={!inProgress && navigatePrevious} className={inProgress && 'disabled'}>back</a> to update or make changes.</span>
       </p>
       <p>
-        You'll be able to download your assets zip file after the definition is submitted. These assets will be used in step 3.
+        You'll be able to download your assets zip file after the definition is submitted.
       </p>
       <br />
       {feature}

@@ -1,8 +1,9 @@
 {
   "env": {
     "es6": true,
-    "browser": true
-  },
+    "browser": true,
+    "node": true
+ },
   "extends": ["eslint:recommended", "plugin:react/recommended"],
   "parserOptions": {
     "sourceType": "module",
@@ -55,5 +56,10 @@
   },
   "plugins": [
     "react"
-  ]
+  ],
+  "globals": {
+    "GIT_COMMIT": false,
+    "GIT_TAG": false,
+    "GIT_RELEASE_TAG": false,
+  }
 }

@@ -313,11 +313,6 @@ import:
 - package: github.com/vincent-petithory/dataurl
   version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
 
-# used to encrypt passwords for dex 
-- package: golang.org/x/crypto
-  version: d172538b2cfce0c13cee31e647d0367aa8cd2486
-  subpackages:
-  - bcrypt
 # vpc availability subnet splitting math
 - package: github.com/coreos/ipnets
   version: 02aaf3c1ee2483ada21d643ce1c94708c8d1c7d0
@@ -329,13 +324,13 @@ import:
 
 # used by terraform
 - package: github.com/hashicorp/hil
-  version: 5b8d13c8c5c2753e109fab25392a1dbfa2db93d2
+  version: fac2259da677551de1fb92b844c4d020a38d8468
   subpackages:
   - ast
   - parser
   - scanner
 - package: github.com/hashicorp/terraform
-  version: 277bbf65d1141207dbb30485bf124b1dba08f80f
+  version: 85e0979c6af6a15345c9131e4478ba712bb3c21d
   subpackages:
   - config
   - config/module
@@ -357,23 +352,29 @@ import:
 - package: github.com/mitchellh/mapstructure
   version: 281073eb9eb092240d33ef253c404f1cca550309
 - package: github.com/coreos/terraform-provider-matchbox 
-  version: 4c66aa75b60489a4220730d70b0446e25b0c9a0a
+  version: v0.1.2
   subpackages:
   - matchbox
 - package: github.com/hashicorp/vault
-  version: 15842ec2809798baa7cd99a825b9b837dc37b742
+  version: 9a60bf2a50e4dd1ba4b929a3ccf8072435cbdd0a
   subpackages:
   - helper/compressutil
   - helper/jsonutil
   - helper/pgpkeys
+- package: golang.org/x/crypto
+  version: 5dc8cb4b8a8eb076cbb5a06bc3b8682c15bdbbd3
+  subpackages:
+  - curve25519
+  - ssh
+  - ssh/terminal
 - package: github.com/hashicorp/go-getter
-  version: 615ccd8621bdb3837e18be586ce15655ef52b185
+  version: c3d66e76678dce180a7b452653472f949aedfbcd
   subpackages:
   - helper/url
 - package: github.com/hashicorp/go-plugin
   version: f72692aebca2008343a9deb06ddb4b17f7051c15
 - package: github.com/hashicorp/hcl
-  version: 630949a3c5fa3c613328e1b8256052cbc2327c9b
+  version: a4b07c25de5ff55ad3b8936cea69a79a3d95a855
   subpackages:
   - hcl/ast
   - hcl/parser

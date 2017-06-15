@@ -1,86 +1,189 @@
-# On-boarding a service account to Tectonic cluster
+# Adding a service account to Tectonic cluster
 
 ## About service accounts
 
-Service accounts are API credentials stored in the Kubernetes API and mounted into pods at well known paths, giving the pod an identity which can be access controlled. Pods use service accounts to authenticate against Kubernetes API from within the cluster. If an app uses kubectl or the official Kubernetes Go client within a pod to talk to the API, these credentials are loaded automatically.
+Service accounts are API credentials stored in Kubernetes APIs and mounted onto pods as files, providing access-controlled identity to the services running on pods.  In effect, any process running inside a pod uses service account to authenticate itself to Kubernetes APIs from within a cluster. For example, when an ingress controller running in cluster needs to read ingress resources, it loads service account secrets mounted into the pod at known locations to authenticate with the API server. The apps running on the clusters use the service accounts secrets as a bearer token. Kubernetes automatically creates a `default` service account with relatively limited access in every namespace. If pods don't explicitly request a service account, they are assigned to this `default` one. However, creating an additional service account is permitted.
 
-Since RBAC denies all requests unless explicitly allowed, service accounts, and the pods that use them, must be granted access through RBAC rules.
-Kubernetes automatically creates a "default" service account in every namespace. If pods don't explicitly request a service account, they're assigned to this "default" one.
+Every service account has an associated username that can be granted RBAC roles, just like a regular user has. Service accounts are tied to namespaces and therefore their username is derived from its namespace and name: `system:serviceaccount:<namespace>:<name>`. Because RBAC denies all requests unless explicitly allowed, service accounts, and the pods that use them, must be granted access through RBAC rules.
 
-A service account, `default`, by default is created by Tectonic. However, creating an additional service account is permitted.
+## Creating a service account
 
-## Creating an additional service accounts
+To create a service account use `kubectl create` command or Tectonic Console.
 
-To create an additional service account, for example, an ingress role, either create a yaml file as follows or use the Tectonic console to create one. Given is an example service account for ingress.
+## Granting access rights to service account
 
-### Using an YAML file
+Access rights are granted to a service account associated with a role by using a Role Binding. Do either of the following in Tectonic Console:
 
-1. Define the role, `ingress.yaml`, which gives administrative privileges to the service account within the default namespace:
+* Use the *Role Bindings* option under *Administration*.  Create a *Role Binding*, then select a default Role. For example: `admin`.
+* Use the *Roles* option under *Administration*. Create a new role by using the YAML editor. Then use the *Role Bindings* option to create a type of Role Binding and bind to the new role.
 
+### Using Tectonic Console
 
-      apiVersion: rbac.authorization.k8s.io/v1alpha1
-      kind: ClusterRoleBinding
-      metadata:
-        name: public-ingress
-      roleRef:
-        apiGroup: rbac.authorization.k8s.io
-        kind: ClusterRole
-        name: admin
-      subjects:
-      - kind: ServiceAccount
-        name: default
-        namespace: public
+#### Granting a Cluster-wide role to service account
 
-2. Run the following:
+Grant access rights to a service account by associating an appropriate Cluster Role with a Cluster Role Binding. Cluster Role Binding grants permissions to service accounts in all namespaces across the entire cluster. `namespace` is omitted from the configuration because Cluster Roles are not namespaced.
 
-  `kubectl create serviceaccount `ingress.yaml`
-   serviceaccount "ingress" created
+1. Log in to Tectonic Console.
+2. Navigate to *Role Bindings* under *Administration*.
+3. Click *Create Binding*.
+   The *Create Role Binding* page is displayed.
+4. Click *Cluster-wide Role Binding (ClusterRoleBinding)*.
+5. Specify a name to identify the Cluster-wide Role Binding.
+6. Select a Role Name from the drop-down.
 
-If multiple pods running in the same namespace require different levels of access, create a unique service account for each. The newly created service account can be mounted onto the pod by specifying the service account name in the pod spec.
+   If you have navigated from the *Roles* page, the name of the selected Role will be displayed. For information on Roles, see [Default Roles in Tectonic][identity-management].
+7. Select an appropriate subject from subject kind.
+8. Select a namespace for the subject.
+9. Specify a name to help identify the subject.
+10. Click *Create Binding*.
 
-    apiVersion: extensions/v1beta1
-    kind: Deployment
+<div class="row">
+  <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
+    <a href="../img/cluster-service-account.png" class="co-m-screenshot">
+      <img src="../img/cluster-service-account.png">
+    </a>
+  </div>
+</div>
+
+In this example, a Cluster Role Binding, `example-etcd-operator` is created for the `etcd-operator` role. This role has access to non-namespaced third party resources. To verify, go to the *Roles* page, click `etcd-operator`, then select *Role Bindings*. If creating this Cluster Role Binding is successful, `example-etcd-operator` will be listed under the Role Bindings associated with the `etcd-operator` role.
+
+#### Granting a namespace role to service account
+
+To assign a namespace service account, use one of the default Cluster or Namespace Roles, or create a new role for the selected Namespace. Bind the role to an appropriate Role Binding.
+
+While a Cluster Role can be bound down the hierarchy to a Namespace Role Binding, a Namespace Role can't be promoted up the hierarchy to be bound to a Cluster Role Binding.
+
+1. Log in to Tectonic Console.
+2. Navigate to *Role Bindings* under *Administration*.
+3. Click *Create Binding*.
+   The *Create Role Binding* page is displayed.
+4. Click *Namespace Role Binding (RoleBinding)*.
+5. Specify a name to identify the Role Binding.
+6. Select a namespace from the drop-down.
+7. Select a Role Name from the drop-down.
+
+   If you have navigated from the *Roles* page, name of the selected Role will be displayed, as given in the image below.
+   For information on Roles, see [Default Roles in Tectonic][identity-management].
+8. Select an appropriate subject from subject kind.
+9. Select a namespace for the subject.
+10. Specify a name to help identify the subject.
+11. Click *Create Binding*.
+
+<div class="row">
+  <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
+    <a href="../img/namespace-service-account.png" class="co-m-screenshot">
+      <img src="../img/namespace-service-account.png">
+    </a>
+  </div>
+</div>
+
+In this example, a Namespace Role Binding, `default-ingress-rolebinding` is created for the `ingress-service-account` role that has read access over the ingress resources in the `default` namespace. To verify, go to the *Roles* page, click `pod-reader`, then select *Role Bindings*. If creating this Role Binding is successful, `default-ingress-rolebinding` will be listed under the Role Bindings associated with the `ingress-service-account` role.
+
+### Using kubectl
+
+In this example, a Cluster Role Binding, `etcd-rolebinding` is created for the `etcd-operator` role  by using `kubectl` command. This role will have read access over the ingress resources in the `tectonic-system` namespace.
+
+1. Define a Role, `etcd-operator.yaml`:
+
+    ```YAML
+    apiVersion: rbac.authorization.k8s.io/v1beta1
+    kind: ClusterRole
     metadata:
-      name: nginx-deployment
-    spec:
-      replicas: 3
-      template:
-        metadata:
-          labels:
-            k8s-app: nginx
-        spec:
-          containers:
-          - name: nginx
-            image: nginx:1.7.9
-          serviceAccountName: ingress # Specify the custom service account
+      name: etcd-operator
+    rules:
+    - apiGroups:
+      - etcd.coreos.com
+      resources:
+      - clusters
+      verbs:
+      - "*"
+    - apiGroups:
+      - extensions
+      resources:
+      - thirdpartyresources
+      verbs:
+      - "*"
+    - apiGroups:
+      - storage.k8s.io
+      resources:
+      - storageclasses
+      verbs:
+      - "*"
+    - apiGroups:
+      - ""
+      resources:
+      - pods
+      - services
+      - endpoints
+      - persistentvolumeclaims
+      - events
+      verbs:
+      - "*"
+    - apiGroups:
+      - apps
+      resources:
+      - deployments
+      verbs:
+      - "*"
+    ```
+2. Define a Cluster Role Binding, `etcdoperator.yaml`, which gives administrative privileges to the service account within the `tectonic-system` namespace:
 
-### Using the Tectonic console
+     ``` yaml
+     apiVersion: rbac.authorization.k8s.io/v1beta1
+     kind: ClusterRoleBinding
+     metadata:
+       name: example-etcd-operator
+     roleRef:
+       apiGroup: rbac.authorization.k8s.io
+       kind: ClusterRole
+       name: admin
+     subjects:
+     - kind: ServiceAccount
+       name: example etcd operator
+       namespace: tectonic-system
+      ```
+3. Run the following command:
 
-## Granting access rights to service accounts
+    `kubectl create -f serviceaccount etcdoperator.yaml`
 
-Use the Tectonic console to provide access rights to a service account.
+   If creating the service account is successful, the following message is displayed:
 
-### Namespace
+    `serviceaccount "example-etcd-operator" created`
 
-1. Log in to the Tectonic UI
-2. Navigate to *Role Bindings* under *Administration*.
-3. Click *Namespace Role Binding*.
-4. Select a desired namespace from the drop-down.
-5. Select a Role Name.
-   See [Default Roles in Tectonic][identity-management].
-6. Select *Service Account* from subject kind.
-7. Specify a a name to identify subject.
-8. Click *Create Binding*.
+4. Verify once again by fetching the service accounts:
 
+    `kubectl get serviceaccounts`
 
-### Cluster-wide
+    Locate `example-etcd-operator` in the list of service accounts:
 
-1. Log in to the Tectonic UI
-2. Navigate to *Role Bindings* under *Administration*.
-3. Click *Cluster-wide Role Binding*.
-4. Select a desired namespace from the drop-down.
-5. Select a Role Name.
-   See [Default Roles in Tectonic][identity-management].
-6. Select *Service Acccount* from subject kind.
-7. Specify a a name to identify subject.
-8. Click *Create Binding*.
+  ```
+     NAME                     SECRETS    AGE
+     default                     1          1d
+     example-etcd-operator       1          5m
+     .....
+   ```
+
+It's recommended to give each application its own service account and not rely on the default service account. The newly created service account can be mounted onto the pod by specifying the service account name in the pod spec. For example:
+
+```yaml
+ apiVersion: extensions/v1beta1
+ kind: Deployment
+ metadata:
+   name: nginx-deployment
+ spec:
+   replicas: 3
+   template:
+     metadata:
+       labels:
+         k8s-app: nginx
+     spec:
+       containers:
+       - name: nginx
+         image: nginx:1.7.9
+       serviceAccountName: public-ingress # note down the name of the service account for future reference
+```
+
+[user-management]: user-management.md
+[ldap-user-management]: ldap-user-management.md
+[saml-user-management]: saml-user-management.md
+[identity-management]: identity-management.md#default-roles-in-tectonic

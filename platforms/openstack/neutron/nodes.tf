@@ -1,18 +1,17 @@
 # etcd
 
 resource "openstack_compute_instance_v2" "etcd_node" {
-  count           = "${var.tectonic_etcd_count}"
-  name            = "${var.tectonic_cluster_name}_etcd_node_${count.index}"
-  image_id        = "${var.tectonic_openstack_image_id}"
-  flavor_id       = "${var.tectonic_openstack_flavor_id}"
-  security_groups = ["${module.etcd.secgroup_name}"]
+  count     = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count}"
+  name      = "${var.tectonic_cluster_name}_etcd_node_${count.index}"
+  image_id  = "${var.tectonic_openstack_image_id}"
+  flavor_id = "${var.tectonic_openstack_flavor_id}"
 
   metadata {
     role = "etcd"
   }
 
   network {
-    uuid = "${openstack_networking_network_v2.network.id}"
+    port = "${openstack_networking_port_v2.etcd.*.id[count.index]}"
   }
 
   user_data    = "${module.etcd.user_data[count.index]}"
@@ -22,11 +21,10 @@ resource "openstack_compute_instance_v2" "etcd_node" {
 # master
 
 resource "openstack_compute_instance_v2" "master_node" {
-  count           = "${var.tectonic_master_count}"
-  name            = "${var.tectonic_cluster_name}_master_node_${count.index}"
-  image_id        = "${var.tectonic_openstack_image_id}"
-  flavor_id       = "${var.tectonic_openstack_flavor_id}"
-  security_groups = ["${module.master_nodes.secgroup_name}"]
+  count     = "${var.tectonic_master_count}"
+  name      = "${var.tectonic_cluster_name}-master-${count.index}"
+  image_id  = "${var.tectonic_openstack_image_id}"
+  flavor_id = "${var.tectonic_openstack_flavor_id}"
 
   metadata {
     role = "master"
@@ -50,11 +48,10 @@ resource "openstack_compute_floatingip_associate_v2" "master" {
 # worker
 
 resource "openstack_compute_instance_v2" "worker_node" {
-  count           = "${var.tectonic_worker_count}"
-  name            = "${var.tectonic_cluster_name}_worker_node_${count.index}"
-  image_id        = "${var.tectonic_openstack_image_id}"
-  flavor_id       = "${var.tectonic_openstack_flavor_id}"
-  security_groups = ["${module.worker_nodes.secgroup_name}"]
+  count     = "${var.tectonic_worker_count}"
+  name      = "${var.tectonic_cluster_name}-worker-${count.index}"
+  image_id  = "${var.tectonic_openstack_image_id}"
+  flavor_id = "${var.tectonic_openstack_flavor_id}"
 
   metadata {
     role = "worker"
@@ -69,7 +66,7 @@ resource "openstack_compute_instance_v2" "worker_node" {
 }
 
 resource "openstack_compute_floatingip_associate_v2" "worker" {
-  count = "${var.tectonic_master_count}"
+  count = "${var.tectonic_worker_count}"
 
   floating_ip = "${openstack_networking_floatingip_v2.worker.*.address[count.index]}"
   instance_id = "${openstack_compute_instance_v2.worker_node.*.id[count.index]}"
@@ -94,7 +91,7 @@ resource "null_resource" "tectonic" {
   }
 
   provisioner "file" {
-    source      = "${path.cwd}/generated"
+    source      = "./generated"
     destination = "$HOME/tectonic"
   }
 
@@ -103,7 +100,7 @@ resource "null_resource" "tectonic" {
       "sudo mkdir -p /opt",
       "sudo rm -rf /opt/tectonic",
       "sudo mv /home/core/tectonic /opt/",
-      "sudo systemctl start tectonic",
+      "sudo systemctl start ${var.tectonic_vanilla_k8s ? "bootkube.service" : "tectonic.service"}",
     ]
   }
 }

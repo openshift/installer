@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	defaultTimeout = 30 * time.Second
+	defaultTimeout = 25 * time.Second
 )
 
 // Config configures a matchbox client.

@@ -35,7 +35,7 @@ const validators = {
 
   AWSTagUniqueKeys: tags => {
     const keys = _.map(tags, t => t.key);
-    const errors = [];
+    const errors = {};
     let i = 1;
     for (let name1 of keys) {
       for (let name2 of keys.slice(i)) {
@@ -69,44 +69,52 @@ export const tagsFields = new FieldList(AWS_TAGS, {
   validator: validators.AWSTagUniqueKeys,
 });
 
-const Tag = ({row, remove, placeholder}) =>
-  <div className="row" style={{padding: '0 0 20px 0'}}>
-    <div className="col-xs-5" style={{paddingRight: 0}}>
-      <Connect field={row.key}>
-        <Input placeholder="e.g. Name" blurry />
-      </Connect>
-    </div>
-    <div className="col-xs-6" style={{paddingRight: 0}}>
-      <Connect field={row.value}>
-        <Input placeholder={placeholder} blurry />
-      </Connect>
-    </div>
-    <div className="col-xs-1">
-      <i className="fa fa-minus-circle list-add-or-subtract pull-right" onClick={remove}></i>
-    </div>
-  </div>;
+const Tag = ({row, remove, placeholder, autoFocus, showAutofocus}) => <div className="row" style={{padding: '0 0 20px 0'}}>
+  <div className="col-xs-5" style={{paddingRight: 0}}>
+    <Connect field={row.key}>
+      <Input placeholder="e.g. Name" blurry autoFocus={showAutofocus && !!autoFocus}/>
+    </Connect>
+  </div>
+  <div className="col-xs-6" style={{paddingRight: 0}}>
+    <Connect field={row.value}>
+      <Input placeholder={placeholder} blurry />
+    </Connect>
+  </div>
+  <div className="col-xs-1">
+    <i className="fa fa-minus-circle list-add-or-subtract pull-right" onClick={remove}></i>
+  </div>
+</div>;
 
-export const AWS_Tags = props => {
-  return <div>
-    <div className="row">
-      <div className="col-xs-5">
-        <label className="text-muted cos-thin-label">KEY</label>
-      </div>
-      <div className="col-xs-6">
-        <label className="text-muted cos-thin-label">VALUE</label>
-      </div>
-    </div>
+export class AWS_Tags extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      showAutofocus: false,
+    };
+  }
 
-    <tagsFields.Map>
-      <Tag {...props} />
-    </tagsFields.Map>
-
-    <div className="row">
-      <div className="col-xs-3">
-        <span className="wiz-link" onClick={tagsFields.addOnClick}>
-          <i className="fa fa-plus-circle list-add wiz-link"></i>&nbsp; Add More
-        </span>
+  render() {
+    return <div>
+      <div className="row">
+        <div className="col-xs-5">
+          <label className="text-muted cos-thin-label">KEY</label>
+        </div>
+        <div className="col-xs-6">
+          <label className="text-muted cos-thin-label">VALUE</label>
+        </div>
       </div>
-    </div>
-  </div>;
-};
+
+      <tagsFields.Map>
+        <Tag {...this.props} showAutofocus={this.state.showAutofocus}/>
+      </tagsFields.Map>
+
+      <div className="row">
+        <div className="col-xs-3">
+          <span className="wiz-link" onClick={() => {this.setState({ showAutofocus: true }); tagsFields.addOnClick();}}>
+            <i className="fa fa-plus-circle list-add wiz-link"></i>&nbsp; Add More
+          </span>
+        </div>
+      </div>
+    </div>;
+  }
+}

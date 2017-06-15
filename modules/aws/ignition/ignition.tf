@@ -3,6 +3,7 @@ data "ignition_config" "main" {
     "${data.ignition_file.max-user-watches.id}",
     "${data.ignition_file.s3-puller.id}",
     "${data.ignition_file.init-assets.id}",
+    "${data.ignition_file.detect-master.id}",
   ]
 
   systemd = [
@@ -70,20 +71,38 @@ data "ignition_systemd_unit" "kubelet-env" {
 data "ignition_file" "max-user-watches" {
   filesystem = "root"
   path       = "/etc/sysctl.d/max-user-watches.conf"
-  mode       = "420"
+  mode       = 0644
 
   content {
     content = "fs.inotify.max_user_watches=16184"
   }
 }
 
+data "template_file" "s3-puller" {
+  template = "${file("${path.module}/resources/s3-puller.sh")}"
+
+  vars {
+    awscli_image = "${var.container_images["awscli"]}"
+  }
+}
+
 data "ignition_file" "s3-puller" {
   filesystem = "root"
   path       = "/opt/s3-puller.sh"
-  mode       = "555"
+  mode       = 0755
 
   content {
-    content = "${file("${path.module}/resources/s3-puller.sh")}"
+    content = "${data.template_file.s3-puller.rendered}"
+  }
+}
+
+data "ignition_file" "detect-master" {
+  filesystem = "root"
+  path       = "/opt/detect-master.sh"
+  mode       = 0755
+
+  content {
+    content = "${file("${path.module}/resources/detect-master.sh")}"
   }
 }
 
@@ -91,6 +110,7 @@ data "template_file" "init-assets" {
   template = "${file("${path.module}/resources/init-assets.sh")}"
 
   vars {
+    cluster_name       = "${var.cluster_name}"
     awscli_image       = "${var.container_images["awscli"]}"
     assets_s3_location = "${var.assets_s3_location}"
     kubelet_image_url  = "${element(split(":", var.container_images["hyperkube"]), 0)}"
@@ -101,7 +121,7 @@ data "template_file" "init-assets" {
 data "ignition_file" "init-assets" {
   filesystem = "root"
   path       = "/opt/tectonic/init-assets.sh"
-  mode       = "555"
+  mode       = 0755
 
   content {
     content = "${data.template_file.init-assets.rendered}"

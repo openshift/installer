@@ -1,0 +1,33 @@
+{
+  "globals_path": "ui-tests/globals.js",
+  "src_folders": [
+    "ui-tests/tests"
+  ],
+  "page_objects_path": "ui-tests/pages",
+  "output_folder": "ui-tests/reports",
+  "selenium": {
+    "start_process": false
+  },
+  "test_settings": {
+    "default": {
+      "selenium_port": 9515,
+      "selenium_host": "localhost",
+      "default_path_prefix": "",
+      "end_session_on_fail": false,
+      "desiredCapabilities": {
+        "browserName": "chrome",
+        "loggingPrefs": {
+          "browser": "ALL"
+        },
+        "chromeOptions": {
+          "args": [
+            "--disable-gpu",
+            "--no-sandbox",
+            "--headless"
+          ]
+        }
+      },
+      "launch_url": "http://localhost:4444"
+    }
+  }
+}

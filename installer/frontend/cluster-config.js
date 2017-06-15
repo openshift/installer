@@ -1,14 +1,10 @@
 import _ from 'lodash';
+import bcrypt from 'bcryptjs';
 
 import { BARE_METAL_TF } from './platforms';
-import { keyToAlg } from './utils';
+import { keyToAlg, toExtraData } from './utils';
 
-let defaultPlatformType = '';
-try {
-  defaultPlatformType = window.config.platforms[0];
-} catch (unused) {
-  // So tests pass
-}
+const bcryptCost = 12;
 
 // TODO: (ggreer) clean up key names. Warning: Doing this will break progress files.
 export const AWS_ACCESS_KEY_ID = 'awsAccessKeyId';
@@ -18,6 +14,7 @@ export const AWS_CONTROLLER_SUBNET_IDS = 'awsControllerSubnetIds';
 export const DESELECTED_FIELDS = 'deselectedFields';
 export const AWS_DOMAIN = 'awsDomain';
 export const AWS_HOSTED_ZONE_ID = 'awsHostedZoneId';
+export const AWS_SPLIT_DNS = 'awsSplitDNS';
 export const AWS_REGION = 'awsRegion';
 export const AWS_SECRET_ACCESS_KEY = 'awsSecretAccessKey';
 export const AWS_SESSION_TOKEN = 'awsSessionToken';
@@ -37,11 +34,9 @@ export const BM_MATCHBOX_CLIENT_KEY = 'matchboxClientKey';
 export const BM_MATCHBOX_HTTP = 'matchboxHTTP';
 export const BM_MATCHBOX_RPC = 'matchboxRPC';
 export const BM_MASTERS = 'masters';
-export const BM_MASTERS_COUNT = 'mastersCount';
 export const BM_OS_TO_USE = 'osToUse';
 export const BM_TECTONIC_DOMAIN = 'tectonicDomain';
 export const BM_WORKERS = 'workers';
-export const BM_WORKERS_COUNT = 'workersCount';
 
 export const CA_CERTIFICATE = 'caCertificate';
 export const CA_PRIVATE_KEY = 'caPrivateKey';
@@ -63,6 +58,7 @@ export const UPDATER = 'updater';
 export const UPDATER_ENABLED = 'updater_enabled';
 export const ADMIN_EMAIL = 'adminEmail';
 export const ADMIN_PASSWORD = 'adminPassword';
+export const ADMIN_PASSWORD2 = 'adminPassword2';
 
 // Networking
 export const POD_CIDR = 'podCIDR';
@@ -82,8 +78,20 @@ export const AWS_VPC_FORM = 'aws_vpc';
 export const AWS_CONTROLLERS = 'aws_controllers';
 export const AWS_CLUSTER_INFO = 'aws_clusterInfo';
 export const AWS_WORKERS = 'aws_workers';
+export const AWS_REGION_FORM = 'aws_regionForm';
 export const BM_SSH_KEY = 'bm_sshKey';
+export const CREDS = 'creds';
 export const LICENSING = 'licensing';
+export const PLATFORM_FORM = 'platform';
+export const EXPERIMENTAL_FEATURES = 'experimentalFeatures';
+
+
+export const SPLIT_DNS_ON = "on";
+export const SPLIT_DNS_OFF = "off";
+export const SPLIT_DNS_OPTIONS = {
+  [SPLIT_DNS_ON]: "Create an additional Route 53 private zone (default).",
+  [SPLIT_DNS_OFF]: "Do not create a private zone.",
+};
 
 export const toVPCSubnet = (region, subnets, deselected) => {
   const vpcSubnets = {};
@@ -162,12 +170,8 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [BM_MATCHBOX_CLIENT_KEY]: '',
   [BM_MATCHBOX_HTTP]: '',
   [BM_MATCHBOX_RPC]: '',
-  [BM_MASTERS]: [],
-  [BM_MASTERS_COUNT]: 1,
   [BM_OS_TO_USE]: '',
   [BM_TECTONIC_DOMAIN]: '',
-  [BM_WORKERS]: [],
-  [BM_WORKERS_COUNT]: 1,
   [CA_CERTIFICATE]: '',
   [CA_PRIVATE_KEY]: '',
   [CA_TYPE]: 'self-signed',
@@ -175,7 +179,6 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [CONTROLLER_DOMAIN]: '',
   [DRY_RUN]: false,
   [ENTITLEMENTS]: {},
-  [PLATFORM_TYPE]: defaultPlatformType,
   [PULL_SECRET]: '',
   [RETRY]: false, // whether we're retrying a terraform apply
   [STS_ENABLED]: false,
@@ -185,13 +188,12 @@ export const DEFAULT_CLUSTER_CONFIG = {
     channel: 'tectonic-1.6',
     appID: '6bc7b986-4654-4a0f-94b3-84ce6feb1db4',
   },
-  [UPDATER_ENABLED]: false,
   [POD_CIDR]: "10.2.0.0/16",
   [SERVICE_CIDR]: "10.3.0.0/16",
 };
 
 
-export const toAWS_TF = (cc, FORMS) => {
+export const toAWS_TF = (cc, FORMS, opts={}) => {
   const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
   const etcds = FORMS[AWS_ETCDS].getData(cc);
   const workers = FORMS[AWS_WORKERS].getData(cc);
@@ -221,13 +223,13 @@ export const toAWS_TF = (cc, FORMS) => {
     platform: "aws",
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
-    adminPassword: window.btoa(cc[ADMIN_PASSWORD]),
     credentials: {
       AWSAccessKeyID: cc[AWS_ACCESS_KEY_ID],
       AWSSecretAccessKey: cc[AWS_SECRET_ACCESS_KEY],
-      AWSRegion: cc[AWS_REGION],
     },
     variables: {
+      // eslint-disable-next-line no-sync
+      tectonic_admin_password_hash: bcrypt.hashSync(cc[ADMIN_PASSWORD], opts.salt || bcrypt.genSaltSync(bcryptCost)),
       tectonic_aws_region: cc[AWS_REGION],
       tectonic_admin_email: cc[ADMIN_EMAIL],
       tectonic_aws_master_ec2_type: controllers[INSTANCE_TYPE],
@@ -279,17 +281,24 @@ export const toAWS_TF = (cc, FORMS) => {
     ret.variables.tectonic_aws_external_worker_subnet_ids = workerSubnets;
     ret.variables.tectonic_aws_external_vpc_public = cc[AWS_CREATE_VPC] !== 'VPC_PRIVATE';
   }
+
+  const privateZone = _.get(cc, toExtraData(AWS_HOSTED_ZONE_ID) + '.privateZones.' + cc[AWS_HOSTED_ZONE_ID]);
+  if (!privateZone && cc[AWS_SPLIT_DNS] === SPLIT_DNS_OFF) {
+    ret.variables.tectonic_aws_external_private_zone = cc[AWS_HOSTED_ZONE_ID];
+  }
+
   if (cc[CA_TYPE] === 'owned') {
     ret.variables.tectonic_ca_cert = cc[CA_CERTIFICATE];
     ret.variables.tectonic_ca_key = cc[CA_PRIVATE_KEY];
     ret.variables.tectonic_ca_key_alg = keyToAlg(cc[CA_PRIVATE_KEY]);
   }
-
   return ret;
 };
 
-export const toBaremetal_TF = (cc, FORMS) => {
+export const toBaremetal_TF = (cc, FORMS, opts={}) => {
   const sshKey = FORMS[BM_SSH_KEY].getData(cc);
+  const masters = cc[BM_MASTERS];
+  const workers = cc[BM_WORKERS];
 
   const ret = {
     clusterKind: 'tectonic-metal',
@@ -297,20 +306,21 @@ export const toBaremetal_TF = (cc, FORMS) => {
     platform: 'metal',
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
-    adminPassword: window.btoa(cc[ADMIN_PASSWORD]),
     variables: {
+      // eslint-disable-next-line no-sync
+      tectonic_admin_password_hash: bcrypt.hashSync(cc[ADMIN_PASSWORD], opts.salt || bcrypt.genSaltSync(bcryptCost)),
       tectonic_cluster_name: cc[CLUSTER_NAME],
       tectonic_cl_channel: cc[CHANNEL_TO_USE],
       tectonic_admin_email: cc[ADMIN_EMAIL],
       tectonic_metal_cl_version: cc[BM_OS_TO_USE],
       tectonic_metal_ingress_domain: getTectonicDomain(cc),
       tectonic_metal_controller_domain: getControllerDomain(cc),
-      tectonic_metal_controller_domains: cc[BM_MASTERS].map(({name}) => name),
-      tectonic_metal_controller_names: cc[BM_MASTERS].map(({name}) => name.split('.')[0]),
-      tectonic_metal_controller_macs: cc[BM_MASTERS].map(({mac}) => mac),
-      tectonic_metal_worker_domains: cc[BM_WORKERS].map(({name}) => name),
-      tectonic_metal_worker_names: cc[BM_WORKERS].map(({name}) => name.split('.')[0]),
-      tectonic_metal_worker_macs: cc[BM_WORKERS].map(({mac}) => mac),
+      tectonic_metal_controller_domains: masters.map(({host}) => host),
+      tectonic_metal_controller_names: masters.map(({host}) => host.split('.')[0]),
+      tectonic_metal_controller_macs: masters.map(({mac}) => mac),
+      tectonic_metal_worker_domains: workers.map(({host}) => host),
+      tectonic_metal_worker_names: workers.map(({host}) => host.split('.')[0]),
+      tectonic_metal_worker_macs: workers.map(({mac}) => mac),
       tectonic_metal_matchbox_http_url: `http://${cc[BM_MATCHBOX_HTTP]}`,
       tectonic_metal_matchbox_rpc_endpoint: cc[BM_MATCHBOX_RPC],
       tectonic_metal_matchbox_ca: cc[BM_MATCHBOX_CA],

@@ -1,5 +1,5 @@
 {
-  "version": "1.6.2-tectonic.1",
+  "version": "1.6.4-tectonic.1",
   "deployments": [
     {
       "apiVersion": "extensions/v1beta1",
@@ -40,7 +40,7 @@
                     }
                   }
                 ],
-                "image": "quay.io/coreos/tectonic-channel-operator:0.3.2",
+                "image": "quay.io/coreos/tectonic-channel-operator:0.3.4",
                 "name": "tectonic-channel-operator",
                 "resources": {
                   "limits": {
@@ -66,6 +66,10 @@
               }
             ],
             "restartPolicy": "Always",
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65534
+            },
             "volumes": [
               {
                 "hostPath": {
@@ -106,7 +110,12 @@
           "spec": {
             "containers": [
               {
-                "image": "quay.io/coreos/kube-version-operator:v1.6.2",
+                "command": [
+                  "/kube-version-operator",
+                  "--cache-images=false",
+                  "--version-mapping=/upgrade-spec.json"
+                ],
+                "image": "quay.io/coreos/kube-version-operator:v1.6.4-kvo.3",
                 "name": "kube-version-operator"
               }
             ],
@@ -114,7 +123,11 @@
               {
                 "name": "coreos-pull-secret"
               }
-            ]
+            ],
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65534
+            }
           }
         }
       }
@@ -151,7 +164,7 @@
                   "-logtostderr=true",
                   "-v=4"
                 ],
-                "image": "quay.io/coreos/tectonic-prometheus-operator:v1.1.0",
+                "image": "quay.io/coreos/tectonic-prometheus-operator:v1.2.0",
                 "name": "tectonic-prometheus-operator",
                 "resources": {
                   "limits": {
@@ -171,6 +184,10 @@
               }
             ],
             "restartPolicy": "Always",
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65534
+            },
             "terminationGracePeriodSeconds": 30
           }
         }
@@ -229,11 +246,11 @@
   "desiredVersions": [
     {
       "name": "kubernetes",
-      "version": "1.6.2+tectonic.1"
+      "version": "1.6.4+tectonic.1"
     },
     {
       "name": "tectonic-monitoring",
-      "version": "1.1.0"
+      "version": "1.2.0"
     }
   ]
 }

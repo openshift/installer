@@ -22,3 +22,14 @@ output "id" {
 output "systemd_service" {
   value = "${data.template_file.tectonic_service.rendered}"
 }
+
+output "cluster_id" {
+  value = "${format(
+    "%s-%s-%s-%s-%s",
+    substr(random_id.cluster_id.hex, 0, 8),
+    substr(random_id.cluster_id.hex, 8, 4),
+    substr(random_id.cluster_id.hex, 12, 4),
+    substr(random_id.cluster_id.hex, 16, 4),
+    substr(random_id.cluster_id.hex, 20, 12)
+  )}"
+}

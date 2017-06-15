@@ -1,7 +1,10 @@
 /.workspace/
 /assets/frontend/scripts/
 /bin/
-/binassets/assets.go
+/assets/bindata.go
 /frontend/node_modules/
 /matchbox/
 /tests/scripts/aws/output/
+*.pid
+/frontend/ui-tests/reports/
+/frontend/ui-tests/screenshots/

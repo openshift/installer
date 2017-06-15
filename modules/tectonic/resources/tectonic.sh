@@ -18,7 +18,7 @@ KUBECTL="/kubectl --kubeconfig=$KUBECONFIG"
 function kubectl() {
   local i=0
 
-  echo "Executing kubectl $@"
+  echo "Executing kubectl" "$@"
   while true; do
     (( i++ )) && (( i == 100 )) && echo "kubectl failed, giving up" && exit 1
 
@@ -43,15 +43,16 @@ function kubectl() {
 }
 
 function wait_for_tpr() {
+  set +e
   local i=0
 
   echo "Waiting for TPR $2"
   until $KUBECTL -n "$1" get thirdpartyresources "$2"; do
-    (( i++ )) && (( i == 100 )) && echo "TPR $2 not available, giving up" && exit 1
-
-    echo "TPR $2 not available yet, retrying in 5 seconds"
+    (( i++ ))
+    echo "TPR $2 not available yet, retrying in 5 seconds ($i)"
     sleep 5
   done
+  set -e
 }
 
 function wait_for_pods() {
@@ -59,8 +60,8 @@ function wait_for_pods() {
   local i=0
   echo "Waiting for pods in namespace $1"
   while $KUBECTL -n "$1" get po -o custom-columns=STATUS:.status.phase,NAME:.metadata.name | tail -n +2 | grep -v '^Running'; do
-    (( i++ )) && (( i == 100 )) && echo "components not available, giving up" && exit 1
-    echo "Pods not available yet, waiting for 5 seconds"
+    (( i++ ))
+    echo "Pods not available yet, waiting for 5 seconds ($i)"
     sleep 5
   done
   set -e
@@ -70,13 +71,15 @@ function wait_for_pods() {
 cd "$ASSETS_PATH/tectonic"
 
 # Wait for Kubernetes to be in a proper state
+set +e
 i=0
 echo "Waiting for Kubernetes API..."
 until $KUBECTL cluster-info; do
-  (( i++ )) && (( i == 100 )) && echo "cluster not available, giving up" && exit 1
-  echo "Cluster not available yet, waiting for 5 seconds"
+  (( i++ ))
+  echo "Cluster not available yet, waiting for 5 seconds ($i)"
   sleep 5
 done
+set -e
 
 # wait for Kubernetes pods
 wait_for_pods kube-system
@@ -114,23 +117,42 @@ kubectl create -f console/service.yaml
 kubectl create -f console/deployment.yaml
 
 echo "Creating Tectonic Monitoring"
-kubectl create -f monitoring/prometheus-operator-service-account.yaml
-kubectl create -f monitoring/prometheus-operator-cluster-role.yaml
 kubectl create -f monitoring/prometheus-operator-cluster-role-binding.yaml
-kubectl create -f monitoring/prometheus-k8s-service-account.yaml
-kubectl create -f monitoring/prometheus-k8s-cluster-role.yaml
-kubectl create -f monitoring/prometheus-k8s-cluster-role-binding.yaml
-kubectl create -f monitoring/prometheus-k8s-config.yaml
-kubectl create -f monitoring/prometheus-k8s-rules.yaml
-kubectl create -f monitoring/prometheus-svc.yaml
-kubectl create -f monitoring/node-exporter-svc.yaml
-kubectl create -f monitoring/node-exporter-ds.yaml
+kubectl create -f monitoring/prometheus-operator-cluster-role.yaml
+kubectl create -f monitoring/prometheus-operator-service-account.yaml
 kubectl create -f monitoring/prometheus-operator.yaml
+
 wait_for_tpr tectonic-system prometheus.monitoring.coreos.com
+wait_for_tpr tectonic-system alertmanager.monitoring.coreos.com
 wait_for_tpr tectonic-system service-monitor.monitoring.coreos.com
-kubectl create -f monitoring/prometheus-k8s.yaml
-kubectl create -f monitoring/prometheus-k8s-service-monitor-k8s-apps-http.yaml
+
+kubectl create -f monitoring/alertmanager-config.yaml
+kubectl create -f monitoring/alertmanager-service.yaml
+kubectl create -f monitoring/alertmanager.yaml
+kubectl create -f monitoring/kube-controller-manager-svc.yaml
+kubectl create -f monitoring/kube-scheduler-svc.yaml
+kubectl create -f monitoring/kube-state-metrics-cluster-role-binding.yaml
+kubectl create -f monitoring/kube-state-metrics-cluster-role.yaml
+kubectl create -f monitoring/kube-state-metrics-deployment.yaml
+kubectl create -f monitoring/kube-state-metrics-service-account.yaml
+kubectl create -f monitoring/kube-state-metrics-service.yaml
+kubectl create -f monitoring/node-exporter-ds.yaml
+kubectl create -f monitoring/node-exporter-svc.yaml
+kubectl create -f monitoring/prometheus-k8s-cluster-role-binding.yaml
+kubectl create -f monitoring/prometheus-k8s-cluster-role.yaml
+kubectl create -f monitoring/prometheus-k8s-rules.yaml
+kubectl create -f monitoring/prometheus-k8s-service-account.yaml
+kubectl create -f monitoring/prometheus-k8s-service-monitor-alertmanager.yaml
+kubectl create -f monitoring/prometheus-k8s-service-monitor-apiserver.yaml
+kubectl create -f monitoring/prometheus-k8s-service-monitor-kube-controller-manager.yaml
+kubectl create -f monitoring/prometheus-k8s-service-monitor-kube-scheduler.yaml
+kubectl create -f monitoring/prometheus-k8s-service-monitor-kube-state-metrics.yaml
 kubectl create -f monitoring/prometheus-k8s-service-monitor-kubelet.yaml
+kubectl create -f monitoring/prometheus-k8s-service-monitor-node-exporter.yaml
+kubectl create -f monitoring/prometheus-k8s-service-monitor-prometheus.yaml
+kubectl create -f monitoring/prometheus-k8s.yaml
+kubectl create -f monitoring/prometheus-svc.yaml
+
 
 echo "Creating Ingress"
 kubectl create -f ingress/default-backend/configmap.yaml

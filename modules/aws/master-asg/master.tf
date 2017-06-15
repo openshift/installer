@@ -32,19 +32,24 @@ resource "aws_autoscaling_group" "masters" {
 
   load_balancers = ["${aws_elb.api-internal.id}", "${join("",aws_elb.api-external.*.id)}", "${aws_elb.console.id}"]
 
-  tag {
-    key                 = "Name"
-    value               = "${var.cluster_name}-master"
-    propagate_at_launch = true
-  }
-
-  tag {
-    key                 = "kubernetes.io/cluster/${var.cluster_name}"
-    value               = "owned"
-    propagate_at_launch = true
-  }
-
-  tags = ["${var.autoscaling_group_extra_tags}"]
+  tags = [
+    {
+      key                 = "Name"
+      value               = "${var.cluster_name}-master"
+      propagate_at_launch = true
+    },
+    {
+      key                 = "kubernetes.io/cluster/${var.cluster_name}"
+      value               = "owned"
+      propagate_at_launch = true
+    },
+    {
+      key                 = "tectonicClusterID"
+      value               = "${var.cluster_id}"
+      propagate_at_launch = true
+    },
+    "${var.autoscaling_group_extra_tags}",
+  ]
 
   lifecycle {
     create_before_destroy = true
@@ -73,18 +78,28 @@ resource "aws_launch_configuration" "master_conf" {
   root_block_device {
     volume_type = "${var.root_volume_type}"
     volume_size = "${var.root_volume_size}"
-    iops        = "${var.root_volume_iops}"
+    iops        = "${var.root_volume_type == "io1" ? var.root_volume_iops : 0}"
   }
 }
 
 resource "aws_iam_instance_profile" "master_profile" {
   name = "${var.cluster_name}-master-profile"
-  role = "${aws_iam_role.master_role.name}"
+
+  role = "${var.master_iam_role == "" ? 
+    join("|", aws_iam_role.master_role.*.name) : 
+    join("|", data.aws_iam_role.master_role.*.role_name)
+  }"
+}
+
+data "aws_iam_role" "master_role" {
+  count     = "${var.master_iam_role == "" ? 0 : 1}"
+  role_name = "${var.master_iam_role}"
 }
 
 resource "aws_iam_role" "master_role" {
-  name = "${var.cluster_name}-master-role"
-  path = "/"
+  count = "${var.master_iam_role == "" ? 1 : 0}"
+  name  = "${var.cluster_name}-master-role"
+  path  = "/"
 
   assume_role_policy = <<EOF
 {
@@ -104,8 +119,9 @@ EOF
 }
 
 resource "aws_iam_role_policy" "master_policy" {
-  name = "${var.cluster_name}_master_policy"
-  role = "${aws_iam_role.master_role.id}"
+  count = "${var.master_iam_role == "" ? 1 : 0}"
+  name  = "${var.cluster_name}_master_policy"
+  role  = "${aws_iam_role.master_role.id}"
 
   policy = <<EOF
 {
@@ -136,7 +152,9 @@ resource "aws_iam_role_policy" "master_policy" {
     },
     {
       "Action" : [
-        "s3:GetObject"
+        "s3:GetObject",
+        "s3:HeadObject",
+        "s3:ListBucket"
       ],
       "Resource": "arn:aws:s3:::*",
       "Effect": "Allow"

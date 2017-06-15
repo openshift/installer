@@ -7,8 +7,9 @@ resource "aws_vpc" "new_vpc" {
   enable_dns_support   = true
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}",
-      "kubernetes.io/cluster/${var.cluster_name}", "shared"
+      "Name", "${var.cluster_name}-vpc",
+      "kubernetes.io/cluster/${var.cluster_name}", "shared",
+      "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 

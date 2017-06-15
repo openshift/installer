@@ -4,22 +4,29 @@ metadata:
   name: k8s
   namespace: tectonic-system
   labels:
+    k8s-app: prometheus
     prometheus: k8s
 spec:
   replicas: 1
+  baseImage: ${element(split(":",prometheus_image),0)}
   version: ${prometheus_version}
   serviceAccountName: prometheus-k8s
   serviceMonitorSelector:
     matchExpression:
-    - {key: k8s-apps, operator: Exists}
+    - {key: k8s-app, operator: Exists}
   ruleSelector:
     matchLabels:
       role: prometheus-rulefiles
       prometheus: k8s
+  alerting:
+    alertmanagers:
+    - namespace: tectonic-system
+      name: alertmanager-main
+      port: web
   resources:
     limits:
       cpu: 400m
       memory: 2000Mi
     requests:
-      cpu: 200m
-      memory: 1500Mi
+      cpu: 100m
+      memory: 500Mi

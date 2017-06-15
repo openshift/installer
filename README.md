@@ -1,5 +1,5 @@
 # Tectonic Installer
-[![Build Status](https://jenkins-tectonic-installer-public.prod.coreos.systems/buildStatus/icon?job=coreos%20-%20tectonic-installer/tectonic-installer/master)](https://jenkins-tectonic-installer-public.prod.coreos.systems/job/coreos%20-%20tectonic-installer/job/tectonic-installer/job/master)
+![Build Status](https://jenkins-tectonic-installer-public.prod.coreos.systems/buildStatus/icon?job=coreos%20-%20tectonic-installer/tectonic-installer/master)
 
 Tectonic is built on pure-upstream Kubernetes but has an opinion on the best way to install and run a Kubernetes cluster. This project helps you install a Kubernetes cluster the "Tectonic Way". It provides good defaults, enables install automation, and is customizable to meet your infrastructure needs.
 
@@ -25,31 +25,53 @@ Checkout the [ROADMAP](ROADMAP.md) for details on where the project is headed.
 
 See the official Tectonic documentation:
 
-- [AWS Cloud Formation](https://coreos.com/tectonic/docs/latest/install/aws/) [[**stable**][platform-lifecycle]]
-- [Bare-Metal](https://coreos.com/tectonic/docs/latest/install/bare-metal/) [[**stable**][platform-lifecycle]]
+- [AWS using a GUI](https://coreos.com/tectonic/docs/latest/install/aws/) [[**stable**][platform-lifecycle]]
+- [AWS using Terraform CLI](https://coreos.com/tectonic/docs/latest/install/aws/aws-terraform.html) [[**stable**][platform-lifecycle]]
+- [Bare metal using a GUI](https://coreos.com/tectonic/docs/latest/install/bare-metal/) [[**stable**][platform-lifecycle]]
+- [Bare metal using Terraform CLI](https://coreos.com/tectonic/docs/latest/install/bare-metal/metal-terraform.html) [[**stable**][platform-lifecycle]]
 
 ### Hacking
 
+These instructions can be used for the official stable platforms listed above, and for the following alpha/beta platforms:
+
+- [Azure via Terraform](Documentation/install/azure/azure-terraform.md) [[**alpha**][platform-lifecycle]]
+- [OpenStack via Terraform](Documentation/install/openstack/openstack-terraform.md) [[**alpha**][platform-lifecycle]]
+- [VMware via Terraform](Documentation/install/vmware/vmware-terraform.md) [[**alpha**][platform-lifecycle]]
+
+**Go and Source**
+
+[Install Go](https://golang.org/doc/install) if not already installed.
+
+Then get the Tectonic Installer source code:
+
+```
+go get github.com/coreos/tectonic-installer
+cd $(go env GOPATH)/src/github.com/coreos/tectonic-installer<Paste>
+```
+
+**Terraform**
+
+The Tectonic Installer releases include a build of [Terraform](https://terraform.io). See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
+
+The [latest Terraform binary](https://www.terraform.io/downloads.html) may not always work as Tectonic Installer, which sometimes relies on bug fixes or features not yet available in the official Terraform release.
+
+**Yarn (optional)**
+
+The [Yarn](https://yarnpkg.com) JavaScript package manager is required for building the frontend code. On OS X, install via Homebrew: `brew install yarn`.
+
 #### Common Usage
-
-At a high level, using the installer follows the workflow below. See each platform guide for specifics.
-
-**Install Terraform**
-
-This project is built on Terraform and requires version 0.9.4. Download and install an [official Terraform binary](https://releases.hashicorp.com/terraform/0.9.4/) for your OS or use your favorite package manager.
 
 **Choose your platform**
 
-The example below will use `PLATFORM=azure` but you can set the value to something different. Also, as you configure the cluster refer to the linked documentation to find the configuration parameters.
+First, set the `PLATFORM=` environment variable. This example will use `PLATFORM=azure`.
 
-- `PLATFORM=aws` [AWS via Terraform](Documentation/install/aws/aws-terraform.md) [[**alpha**][platform-lifecycle]]
 - `PLATFORM=azure` [Azure via Terraform](Documentation/install/azure/azure-terraform.md) [[**alpha**][platform-lifecycle]]
-- `PLATFORM=metal` [Bare-Metal via Terraform](Documentation/install/bare-metal/metal-terraform.md) [[**alpha**][platform-lifecycle]]
 - `PLATFORM=openstack` [OpenStack via Terraform](Documentation/install/openstack/openstack-terraform.md) [[**alpha**][platform-lifecycle]]
+- `PLATFORM=vmware` [VMware via Terraform](Documentation/install/vmware/vmware-terraform.md) [[**alpha**][platform-lifecycle]]
 
 **Initiate the Cluster Configuration**
 
-This will create a new directory `build/<cluster-name>` which holds all module references, Terraform state files, and custom variable files.
+Using make create a new directory `build/<cluster-name>` to hold all module references, Terraform state files, and custom variable files.
 
 ```
 PLATFORM=azure CLUSTER=my-cluster make localconfig
@@ -57,12 +79,13 @@ PLATFORM=azure CLUSTER=my-cluster make localconfig
 
 **Configure Cluster**
 
-Set variables in the `terraform.tfvars` file as needed, or you will be prompted. Available variables can be found in the `config.tf` and `variables.tf` files present in the `platforms/<PLATFORM>` directory.
+Set variables in the `build/<cluster-name>/terraform.tfvars` file as needed. Available variables are found in the `platforms/<PLATFORM>/config.tf` and `platforms/<PLATFORM>/variables.tf` files.
+
 Examples for each platform can be found in [the examples directory](examples/).
 
 **Terraform Lifecycle**
 
-Plan, apply, and destroy are provided as Make targets to make working with the build directory and custom binary easier.
+Plan, apply, and destroy are provided as `make` targets to ease the build directory and custom binary complexity.
 
 ```
 PLATFORM=azure CLUSTER=my-cluster make plan
@@ -100,3 +123,4 @@ make destroy
 ```
 
 [platform-lifecycle]: Documentation/platform-lifecycle.md
+[release-notes]: https://coreos.com/tectonic/releases/

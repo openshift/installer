@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tectonic-monitoring
+  namespace: tectonic-system
+data:
+  alertmanager.rules: |+
+    prometheusOperator:
+      baseImage: ${element(split(":",prometheus_operator_image),0)}
+      prometheusConfigReloaderBaseImage: ${element(split(":",prometheus_config_reload_image),0)}
+      configReloaderBaseImage: ${element(split(":",config_reload_image),0)}
+    prometheusK8s:
+      baseImage: ${element(split(":",prometheus_image),0)}
+    alertmanagerMain:
+      baseImage: ${element(split(":",alertmanager_image),0)}

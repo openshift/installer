@@ -94,13 +94,13 @@ class TF_PowerOn extends React.Component {
         consoleSubsteps.push(<AWS_DomainValidation key="domain" />);
       }
       consoleSubsteps.push(
-        <WaitingLi done={dnsReady} key="dns" substep={true}>
+        <WaitingLi done={dnsReady} key="dns">
           <span title={msg}>{msg}</span>
         </WaitingLi>
       );
       msg = `Starting Tectonic console`;
       consoleSubsteps.push(
-        <WaitingLi done={tectonicConsole.ready} key="consoleReady" substep={true}>
+        <WaitingLi done={tectonicConsole.ready} key="consoleReady">
           <span title={msg}>{msg}</span>
         </WaitingLi>
       );

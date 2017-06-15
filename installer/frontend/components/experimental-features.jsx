@@ -1,29 +1,29 @@
 import React from 'react';
-import { connect } from 'react-redux';
-import { CheckBox, WithClusterConfig } from './ui';
 
-import { UPDATER_ENABLED } from '../cluster-config';
-import { Alert } from './alert';
-import { TectonicGA } from '../tectonic-ga';
+import { CheckBox, Connect } from './ui';
+import { Field, Form } from '../form';
 
-export const ExperimentalFeatures = connect(
-  state => ({updater: state.clusterConfig[UPDATER_ENABLED]})
-)(props => <div className="row form-group">
+import { EXPERIMENTAL_FEATURES, UPDATER_ENABLED } from '../cluster-config';
+
+const experimentalFeaturesForm = new Form(EXPERIMENTAL_FEATURES, [
+  new Field(UPDATER_ENABLED, {
+    default: false,
+  }),
+]);
+
+export const ExperimentalFeatures = () => <div className="row form-group">
   <div className="col-xs-3">
-    <label htmlFor="tectonicOperator">Experimental Features</label>
+    <label htmlFor={UPDATER_ENABLED}>Automated Updates</label>
   </div>
   <div className="col-xs-9">
-    <WithClusterConfig field={UPDATER_ENABLED}>
-      <CheckBox id="tectonicOperator" suffix={
-        <label htmlFor="tectonicOperator" className="text-muted wiz-help-text">
-          Install experimental <a href="https://coreos.com/blog/introducing-operators.html" onClick={TectonicGA.sendDocsEvent} target="_blank">Tectonic Operators</a>.
+    <Connect field={UPDATER_ENABLED}>
+      <CheckBox suffix={
+        <label htmlFor={UPDATER_ENABLED}>
+          Enable one-click updates for Tectonic, etcd, Prometheus.
         </label>
       } />
-    </WithClusterConfig>
-    { props.updater &&
-      <Alert noIcon>
-        Only use on clusters that can be easily replaced.
-      </Alert>
-    }
+    </Connect>
+    <p className="text-muted checkbox-helper-text">Only use with non-production clusters.</p>
+    <experimentalFeaturesForm.Errors />
   </div>
-</div>);
+</div>;

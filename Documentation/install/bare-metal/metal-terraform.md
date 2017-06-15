@@ -2,9 +2,10 @@
 
 Following this guide will deploy a Tectonic cluster on virtual or physical hardware.
 
-## Prerequsities
+## Prerequisites
 
-* Matchbox [v0.6.0](https://github.com/coreos/matchbox/releases) installation with the gRPC API enabled. See [installation](https://coreos.com/matchbox/docs/latest/deployment.html).
+* Terraform: Tectonic Installer includes and requires a specific version of Terraform. This is included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
+* [Matchbox v0.6+](https://github.com/coreos/matchbox/releases) installation with the gRPC API enabled. See [installation](https://coreos.com/matchbox/docs/latest/deployment.html).
 * Matchbox TLS client credentials
 * PXE network boot environment with DHCP, TFTP, and DNS services. See [network-setup](https://coreos.com/matchbox/docs/latest/network-setup.html).
 * DNS records for the Kubernetes controller(s) and Tectonic Ingress worker(s). See [DNS](https://coreos.com/tectonic/docs/latest/install/bare-metal#networking).
@@ -21,14 +22,14 @@ Following this guide will deploy a Tectonic cluster on virtual or physical hardw
 Open a new terminal, and run the following commands to download and extract Tectonic Installer.
 
 ```bash
-$ curl -O https://releases.tectonic.com/tectonic-1.6.2-tectonic.1.tar.gz
-$ tar xzvf tectonic-1.6.2-tectonic.1.tar.gz
+$ curl -O https://releases.tectonic.com/tectonic-1.6.4-tectonic.1.tar.gz
+$ tar xzvf tectonic-1.6.4-tectonic.1.tar.gz
 $ cd tectonic
 ```
 
 ### Initialize and configure Terraform
 
-Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should either be `linux`, `darwin`, or `windows`.
+Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should be `linux` or `darwin`.
 
 ```bash
 $ export INSTALLER_PATH=$(pwd)/tectonic-installer/linux/installer
@@ -40,6 +41,12 @@ Make a copy of the Terraform configuration file for our system. Do not share thi
 ```bash
 $ sed "s|<PATH_TO_INSTALLER>|$INSTALLER_PATH|g" terraformrc.example > .terraformrc
 $ export TERRAFORM_CONFIG=$(pwd)/.terraformrc
+```
+
+Next, get the modules that Terraform will use to create the cluster resources:
+
+```bash
+$ terraform get ./platforms/metal
 ```
 
 Now we're ready to specify our cluster configuration.
@@ -101,7 +108,7 @@ Terraform will wait for the disk installation and reboot to complete and then be
 
 Run `terraform apply` until all tasks complete. Your Tectonic cluster should be ready. If you encounter any issues, check the known issues and workarounds below.
 
-### Access the cluster
+## Access the cluster
 
 The Tectonic Console should be up and running after the containers have downloaded. You can access it at the DNS name configured in your variables file.
 
@@ -112,17 +119,14 @@ $ export KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
 
-### Delete the cluster
+## Work with the cluster
 
-Delete your cluster to delete the matchbox profiles and matcher groups. Deletion will not modify or power off your machines.
+For more information on working with installed clusters, see [Scaling Tectonic bare metal clusters][scale-metal], and [Uninstalling Tectonic][uninstall].
 
-```
-$ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/metal
-```
+## Known issues and workarounds
 
-### Known issues and workarounds
+See the [troubleshooting][troubleshooting] document for workarounds for bugs that are being tracked.
 
-See the [troubleshooting][troubleshooting] document for work arounds for bugs that are being tracked.
 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md
@@ -130,3 +134,6 @@ See the [troubleshooting][troubleshooting] document for work arounds for bugs th
 [account]: https://account.coreos.com
 [vars]: ../../variables/config.md
 [troubleshooting]: ../../troubleshooting/faq.md
+[uninstall]: uninstall.md
+[scale-metal]: ../../admin/bare-metal-scale.md
+[release-notes]: https://coreos.com/tectonic/releases/
