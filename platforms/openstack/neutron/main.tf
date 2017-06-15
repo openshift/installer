@@ -106,6 +106,7 @@ EOF
   hostname_infix               = "master"
   node_labels                  = "node-role.kubernetes.io/master"
   node_taints                  = "node-role.kubernetes.io/master=:NoSchedule"
+  tectonic_experimental        = "${var.tectonic_experimental}"
 }
 
 module "worker_nodes" {
