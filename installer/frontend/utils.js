@@ -1,4 +1,5 @@
 import _ from 'lodash';
+import semver from 'semver';
 
 // Compares two version strings, of the form \d+(.\d+)*
 // Suitable for use with Array.sort()
@@ -61,3 +62,7 @@ export const toInFly = toPath('inFly');
 export const toExtraData = toPath('extra');
 export const toExtraDataError = toPath('extraError');
 export const toExtraDataInFly = toPath('extraInFly');
+
+export const isReleaseVersion = () => {
+  return GIT_RELEASE_TAG === 'unknown' ? false : semver.valid(GIT_RELEASE_TAG) && !GIT_RELEASE_TAG.includes('-rc.');
+};

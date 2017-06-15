@@ -60,6 +60,6 @@
   "globals": {
     "GIT_COMMIT": false,
     "GIT_TAG": false,
-    "GIT_LATEST_TAG": false,
+    "GIT_RELEASE_TAG": false,
   }
 }

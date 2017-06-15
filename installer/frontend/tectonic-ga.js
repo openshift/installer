@@ -1,5 +1,7 @@
+import { isReleaseVersion } from './utils';
+
 const send = (obj) => {
-  if (window.config.devMode) {
+  if (!isReleaseVersion()) {
     return;
   }
 
@@ -36,11 +38,6 @@ export const TectonicGA = {
 
     ga('create', 'UA-42684979-10', 'none', 'TectonicInstaller');
     ga('create', 'UA-42684979-6', 'none', 'CoreOS');
-
-    if (window.config.devMode) {
-      ga('TectonicInstaller.set', 'sendHitTask', null);
-      ga('CoreOS.set', 'sendHitTask', null);
-    }
   },
 
   sendPageView: (page) => {
