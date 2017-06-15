@@ -106,6 +106,7 @@ create_vpc() {
     set +x
     # shellcheck disable=SC2155
     export TF_VAR_ovpn_password="$(tr -cd '[:alnum:]' < /dev/urandom | head -c 32 ; echo)"
+    export TF_VAR_base_domain="tectonic.dev.coreos.systems"
     set -x
     # Create the vpc.
     terraform apply
@@ -140,7 +141,6 @@ create_vpc() {
         export TF_VAR_tectonic_aws_external_vpc_id="$(terraform output -json | jq -r '.vpc_id.value')"
         export TF_VAR_tectonic_aws_external_master_subnet_ids="$(printf "[%s, %s]" $(terraform output -json | jq '.subnets.value[0,1]'))"
         export TF_VAR_tectonic_aws_external_worker_subnet_ids="$(printf "[%s, %s]" $(terraform output -json | jq '.subnets.value[2,3]'))"
-        export TF_VAR_tectonic_base_domain="$(terraform output -json | jq -r '.base_domain.value')"
     }
     popd
 }
