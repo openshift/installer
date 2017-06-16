@@ -15,7 +15,7 @@ kubectl --namespace=kube-system get deployment kube-scheduler -o yaml
 
 Then, extract the pod `spec` by running the following command:
 
-`label=kube-scheduler ; namespace=kube-system ; kubectl get deploy --namespace=$namespace -l k8s-app=${label} -o json --export | jq --arg namespace $namespace --arg name ${label}-rescue --arg node $(kubectl get node -l master -o jsonpath='{.items[0].metadata.name}') '.items[0].spec.template | .kind = "Pod" | .apiVersion = "v1" | del(.metadata, .spec.nodeSelector) | .metadata.namespace = $namespace | .metadata.name = $name | .spec.containers[0].name = $name | .spec.nodeName = $node | .spec.serviceAccount = "default" | .spec.serviceAccountName = "default" ' | kubectl convert -f-`
+`label=kube-scheduler ; namespace=kube-system ; kubectl get deploy --namespace=$namespace -l k8s-app=${label} -o json --export | jq --arg namespace $namespace --arg name ${label}-rescue --arg node $(kubectl get node -l node-role.kubernetes.io/master -o jsonpath='{.items[0].metadata.name}') '.items[0].spec.template | .kind = "Pod" | .apiVersion = "v1" | del(.metadata, .spec.nodeSelector) | .metadata.namespace = $namespace | .metadata.name = $name | .spec.containers[0].name = $name | .spec.nodeName = $node | .spec.serviceAccount = "default" | .spec.serviceAccountName = "default" ' | kubectl convert -f-`
 
 (Or, manually copy the`spec` section under `template`.)
 
@@ -68,7 +68,7 @@ spec:
 
 Then, get the name of the master node:
 ```bash
-kubectl get nodes -l master=true
+kubectl get nodes -l node-role.kubernetes.io/master
 ```
 
 If using AWS EC2, your master node name will be returned with the format: `ip-12-34-56-78.us-west-2.compute.internal`. Use this value as the master `nodeName` when creating your temporary scheduler pod, as described below.
@@ -140,7 +140,7 @@ spec:
 Get the name of the master node:
 
 ```bash
-kubectl get nodes -l master=true
+kubectl get nodes -l node-role.kubernetes.io/master
 ```
 
 If using AWS EC2, your master node name will be returned with the format: `ip-12-34-56-78.us-west-2.compute.internal`. Use this value as the master `nodeName` when creating your temporary controller manager pod, as described below.
