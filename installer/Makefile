@@ -93,16 +93,13 @@ vendor: glide.yaml
 	glide-vc --use-lock-file --no-tests --only-code
 
 .PHONY: tools
-tools: bin/go-bindata bin/sanity bin/golint
+tools: bin/go-bindata bin/golint
 
 bin/golint:
 	go build -o bin/golint $(REPO)/vendor/github.com/golang/lint/golint
 
 bin/go-bindata:
 	go build -o bin/go-bindata $(REPO)/vendor/github.com/jteeuwen/go-bindata/go-bindata
-
-bin/sanity:
-	go test tests/sanity/k8s_test.go -c -o bin/sanity
 
 .PHONY: launch-installer
 launch-installer:

@@ -78,7 +78,7 @@ main() {
   echo "Waiting for Kubernetes/Tectonic cluster to be up and running:"
   cluster_up
 
-  echo "Running Go sanity tests"
+  echo "Running Go smoke tests"
   test_cluster
 
   echo "SUCCESS: Tectonic bare-metal cluster came up!"
@@ -254,7 +254,7 @@ test_cluster() {
   MASTER_COUNT=$(grep tectonic_master_count "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}')
   WORKER_COUNT=$(grep tectonic_worker_count "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}')
   export NODE_COUNT=$(( MASTER_COUNT + WORKER_COUNT ))
-  installer/bin/sanity -test.v -test.parallel=1
+  bin/smoke -test.v -test.parallel=1
 }
 
 main "$@"

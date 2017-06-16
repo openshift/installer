@@ -123,4 +123,11 @@ structure-check:
 	@if make docs && ! git diff --exit-code; then echo "outdated docs (run 'make docs' to fix)"; exit 1; fi
 	@if make examples && ! git diff --exit-code; then echo "outdated examples (run 'make examples' to fix)"; exit 1; fi
 
+bin/smoke:
+	@CGO_ENABLED=0 go test tests/smoke/k8s_test.go -c -o bin/smoke
+
+vendor-smoke: $(TOP_DIR)/tests/smoke/glide.yaml
+	@cd $(TOP_DIR)/tests/smoke && glide up -v
+	@cd $(TOP_DIR)/tests/smoke && glide-vc --use-lock-file --no-tests --only-code
+
 .PHONY: make clean terraform terraform-dev structure-check docs examples terraform-get
