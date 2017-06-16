@@ -180,7 +180,7 @@ You can also deploy an application using the Tectonic Console by navigating to t
 This example will use the simple app deployed above. To create an identical app using the Tectonic Console, first delete the existing app using `kubectl delete`.
 
 ```sh
-$ kubectl delete deploy/simple-service svc/simple-service
+$ kubectl delete deploy/simple-deployment svc/simple-service
 deployment "simple-deployment" deleted
 service "simple-service" deleted
 ```
