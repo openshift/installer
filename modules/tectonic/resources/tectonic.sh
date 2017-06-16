@@ -154,7 +154,6 @@ kubectl create -f monitoring/prometheus-k8s-service-monitor-prometheus.yaml
 kubectl create -f monitoring/prometheus-k8s-service-monitor-prometheus-operator.yaml
 kubectl create -f monitoring/prometheus-k8s.yaml
 kubectl create -f monitoring/prometheus-svc.yaml
-kubectl create -f monitoring/tectonic-monitoring-config.yaml
 
 echo "Creating Ingress"
 kubectl create -f ingress/default-backend/configmap.yaml
@@ -185,6 +184,7 @@ echo "Creating Tectonic Updater"
   kubectl create -f updater/node-agent.yaml
   kubectl create -f updater/kube-version-operator.yaml
   kubectl create -f updater/tectonic-channel-operator.yaml
+  kubectl create -f updater/tectonic-monitoring-config.yaml
   kubectl create -f updater/tectonic-prometheus-operator.yaml
   wait_for_tpr tectonic-system channel-operator-config.coreos.com
   kubectl create -f updater/tectonic-channel-operator-config.yaml
