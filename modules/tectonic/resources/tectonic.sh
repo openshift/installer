@@ -152,7 +152,7 @@ kubectl create -f monitoring/prometheus-k8s-service-monitor-node-exporter.yaml
 kubectl create -f monitoring/prometheus-k8s-service-monitor-prometheus.yaml
 kubectl create -f monitoring/prometheus-k8s.yaml
 kubectl create -f monitoring/prometheus-svc.yaml
-
+kubectl create -f monitoring/tectonic-monitoring-config.yaml
 
 echo "Creating Ingress"
 kubectl create -f ingress/default-backend/configmap.yaml
