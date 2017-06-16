@@ -90,3 +90,8 @@ resource "openstack_networking_floatingip_v2" "worker" {
   count = "${var.tectonic_worker_count}"
   pool  = "${var.tectonic_openstack_floatingip_pool}"
 }
+
+resource "openstack_networking_floatingip_v2" "loadbalancer" {
+  pool    = "${var.tectonic_openstack_floatingip_pool}"
+  port_id = "${openstack_lb_loadbalancer_v2.master_lb.vip_port_id}"
+}

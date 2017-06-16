@@ -188,7 +188,7 @@ module "dns" {
 
   admin_email = "${var.tectonic_admin_email}"
 
-  api_ips          = "${openstack_networking_floatingip_v2.master.*.address}"
+  api_ips          = "${openstack_networking_floatingip_v2.loadbalancer.*.address}"
   etcd_count       = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count}"
   etcd_ips         = "${openstack_networking_port_v2.etcd.*.all_fixed_ips}"
   etcd_tls_enabled = "${var.tectonic_etcd_tls_enabled}"
