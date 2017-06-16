@@ -120,6 +120,7 @@ echo "Creating Tectonic Monitoring"
 kubectl create -f monitoring/prometheus-operator-cluster-role-binding.yaml
 kubectl create -f monitoring/prometheus-operator-cluster-role.yaml
 kubectl create -f monitoring/prometheus-operator-service-account.yaml
+kubectl create -f monitoring/prometheus-operator-svc.yaml
 kubectl create -f monitoring/prometheus-operator.yaml
 
 wait_for_tpr tectonic-system prometheus.monitoring.coreos.com
@@ -150,6 +151,7 @@ kubectl create -f monitoring/prometheus-k8s-service-monitor-kube-state-metrics.y
 kubectl create -f monitoring/prometheus-k8s-service-monitor-kubelet.yaml
 kubectl create -f monitoring/prometheus-k8s-service-monitor-node-exporter.yaml
 kubectl create -f monitoring/prometheus-k8s-service-monitor-prometheus.yaml
+kubectl create -f monitoring/prometheus-k8s-service-monitor-prometheus-operator.yaml
 kubectl create -f monitoring/prometheus-k8s.yaml
 kubectl create -f monitoring/prometheus-svc.yaml
 kubectl create -f monitoring/tectonic-monitoring-config.yaml
