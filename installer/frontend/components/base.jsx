@@ -20,7 +20,7 @@ const downloadState = (state) => {
   const saved = JSON.stringify(toSave, null, 2);
   const stateBlob = new Blob([saved], {type: 'application/json'});
   saveAs(stateBlob, 'tectonic.progress');
-  TectonicGA.sendEvent('Installer Link', 'click', 'User downloads progress file');
+  TectonicGA.sendEvent('Installer Link', 'click', 'User downloads progress file', state.clusterConfig[PLATFORM_TYPE]);
 };
 
 const NavSection = connect(state => ({state}))(
@@ -111,7 +111,7 @@ class extends React.Component {
     const {router} = this.context;
 
     if (currentPage.path === '/define/cluster-type' && nextPage !== currentPage && state) {
-      TectonicGA.sendEvent('Platform Selected', 'user input', state.clusterConfig[PLATFORM_TYPE]);
+      TectonicGA.sendEvent('Platform Selected', 'user input', state.clusterConfig[PLATFORM_TYPE], state.clusterConfig[PLATFORM_TYPE]);
     }
 
     if (nextPage === currentPage) {
@@ -119,7 +119,7 @@ class extends React.Component {
     }
 
     if (state) {
-      TectonicGA.sendEvent(state.clusterConfig[PLATFORM_TYPE], 'click', 'next on');
+      TectonicGA.sendEvent('Page Navigation Next', 'click', 'next on', state.clusterConfig[PLATFORM_TYPE]);
     }
     router.push(nextPage.path);
   }
