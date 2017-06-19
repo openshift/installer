@@ -16,9 +16,6 @@ import (
 	"github.com/coreos/tectonic-installer/installer/pkg/terraform"
 )
 
-// Version is provided by compile time -ldflags.
-var Version = "was not built properly"
-
 func main() {
 	// TerraForm entrypoint.
 	if os.Getenv("TF_PLUGIN_MAGIC_COOKIE") != "" {
@@ -33,7 +30,7 @@ func main() {
 		cookieSigningSecret string
 		disableSecureCookie bool
 		openBrowser         bool
-		help, version       bool
+		help                bool
 		// development features
 		assetDir string
 		devMode  bool
@@ -51,7 +48,6 @@ func main() {
 	flag.StringVar(&flags.assetDir, "asset-dir", "", "serve web assets from this directory rather than from internal storage")
 	flag.BoolVar(&flags.devMode, "dev", false, "tell the front end that we're running in development mode")
 	// Subcommands
-	flag.BoolVar(&flags.version, "version", false, "print version and exit")
 	flag.BoolVar(&flags.help, "help", false, "print usage and exit")
 
 	flags.platforms = platformsValue{names: knownPlatforms}
@@ -66,11 +62,6 @@ func main() {
 	if flags.help {
 		fmt.Printf("%s: Tectonic Installer\n", os.Args[0])
 		flag.PrintDefaults()
-		return
-	}
-
-	if flags.version {
-		fmt.Println(Version)
 		return
 	}
 
