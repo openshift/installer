@@ -122,7 +122,8 @@ variable "tectonic_vmware_etcd_gateway" {
 
 variable "tectonic_vmware_etcd_lun" {
   type        = "string"
-  description = "The storage LUN used by etcd"
+  default     = ""
+  description = "The storage LUN used by etcd nodes"
 }
 
 // ## Masters
@@ -170,6 +171,7 @@ variable "tectonic_vmware_master_gateway" {
 
 variable "tectonic_vmware_master_lun" {
   type        = "string"
+  default     = ""
   description = "The storage LUN used by master nodes"
 }
 
@@ -218,5 +220,6 @@ variable "tectonic_vmware_worker_gateway" {
 
 variable "tectonic_vmware_worker_lun" {
   type        = "string"
+  default     = ""
   description = "The storage LUN used by worker nodes"
 }

@@ -13,7 +13,7 @@ resource "vsphere_virtual_machine" "etcd_node" {
   }
 
   disk {
-    datastore = "${var.vm_disk_datastore}/${var.vm_lun[count.index]}"
+    datastore = "${var.vm_disk_datastore}/${var.vm_disk_lun[count.index]}"
     template  = "${var.vm_disk_template_folder}/${var.vm_disk_template}"
     type      = "thin"
   }

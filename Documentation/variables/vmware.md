@@ -13,6 +13,7 @@ This document gives an overview of variables used in the VMware platform of the 
 | tectonic_vmware_etcd_gateway | Default Gateway IP address for etcd nodes(s) | string | - |
 | tectonic_vmware_etcd_hostnames | Terraform map of etcd node(s) Hostnames, Example:    tectonic_vmware_etcd_hostnames = {   "0" = "mycluster-etcd-0"   "1" = "mycluster-etcd-1"   "2" = "mycluster-etcd-2" } | map | - |
 | tectonic_vmware_etcd_ip | Terraform map of etcd node(s) IP Addresses, Example:    tectonic_vmware_etcd_ip = {   "0" = "192.168.246.10/24"   "1" = "192.168.246.11/24"   "2" = "192.168.246.12/24" } | map | - |
+| tectonic_vmware_etcd_lun | The storage LUN used by etcd nodes | string | `` |
 | tectonic_vmware_etcd_memory | etcd node(s) VM Memory Size in MB | string | `4096` |
 | tectonic_vmware_etcd_vcpu | etcd node(s) VM vCPU count | string | `1` |
 | tectonic_vmware_folder | vSphere Folder to create and add the Tectonic nodes | string | - |

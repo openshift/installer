@@ -116,9 +116,6 @@ tectonic_vmware_controller_domain = ""
 // Virtual DataCenter to deploy VMs
 tectonic_vmware_datacenter = ""
 
-// Storage LUN for etcd
-tectonic_vmware_etcd_lun = ""
-
 // Datastore to deploy Tectonic
 tectonic_vmware_datastore = ""
 
@@ -140,6 +137,9 @@ tectonic_vmware_etcd_hostnames = ""
 //   "2" = "192.168.246.12/24"
 // }
 tectonic_vmware_etcd_ip = ""
+
+// The storage LUN used by etcd nodes
+tectonic_vmware_etcd_lun = ""
 
 // etcd node(s) VM Memory Size in MB
 tectonic_vmware_etcd_memory = "4096"
@@ -170,6 +170,9 @@ tectonic_vmware_master_hostnames = ""
 // }
 tectonic_vmware_master_ip = ""
 
+// The storage LUN used by master nodes
+tectonic_vmware_master_lun = ""
+
 // Master node(s) Memory Size in MB
 tectonic_vmware_master_memory = "4096"
 
@@ -181,9 +184,6 @@ tectonic_vmware_network = ""
 
 // DNS Server to be useddd by Virtual Machine(s)
 tectonic_vmware_node_dns = ""
-
-// Storage LUN for master node(s)
-tectonic_vmware_master_lun = ""
 
 // vCenter Server IP/FQDN
 tectonic_vmware_server = ""
@@ -220,6 +220,9 @@ tectonic_vmware_worker_hostnames = ""
 // }
 tectonic_vmware_worker_ip = ""
 
+// The storage LUN used by worker nodes
+tectonic_vmware_worker_lun = ""
+
 // Worker node(s) Memory Size in MB
 tectonic_vmware_worker_memory = "4096"
 
@@ -229,6 +232,3 @@ tectonic_vmware_worker_vcpu = "1"
 // The number of worker nodes to be created.
 // This applies only to cloud platforms.
 tectonic_worker_count = "3"
-
-// Storage LUN for worker node(s)
-tectonic_vmware_worker_lun = ""

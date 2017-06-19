@@ -60,7 +60,7 @@ variable vm_disk_datastore {
   description = "Datastore to create ETCD VM in "
 }
 
-variable vm_lun {
+variable vm_disk_lun {
   description = "The datastore LUN"
 }
 
