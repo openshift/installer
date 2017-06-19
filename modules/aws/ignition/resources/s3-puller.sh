@@ -5,6 +5,7 @@ if [ "$#" -ne "2" ]; then
     exit 1
 fi
 
+# shellcheck disable=SC2086,SC2154
 /usr/bin/sudo /usr/bin/rkt run \
     --net=host --dns=host \
     --trust-keys-from-https ${awscli_image} \
@@ -18,4 +19,5 @@ fi
         done
     '
 
+# shellcheck disable=SC1001,SC1083,SC2086
 /usr/bin/sudo mv /tmp/$${1//\//+} $2

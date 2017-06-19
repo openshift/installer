@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2002,SC2015,SC2086,SC2091
 set -exuo pipefail
 shopt -s expand_aliases
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
@@ -20,9 +21,12 @@ assume_role() {
     ROLE_ARN="$(aws iam get-role --role-name="$ROLE_NAME" | jq -r '.Role.Arn')"
     # shellcheck disable=SC2155
     CREDENTIALS="$(aws sts assume-role --role-arn="$ROLE_ARN" --role-session-name=tectonic-installer | jq '.Credentials')"
-    export AWS_ACCESS_KEY_ID=$(echo "$CREDENTIALS" | jq -r '.AccessKeyId')
-    export AWS_SECRET_ACCESS_KEY=$(echo "$CREDENTIALS" | jq -r '.SecretAccessKey')
-    export AWS_SESSION_TOKEN=$(echo "$CREDENTIALS" | jq -r '.SessionToken')
+    export AWS_ACCESS_KEY_ID
+    AWS_ACCESS_KEY_ID=$(echo "$CREDENTIALS" | jq -r '.AccessKeyId')
+    export AWS_SECRET_ACCESS_KEY
+    AWS_SECRET_ACCESS_KEY=$(echo "$CREDENTIALS" | jq -r '.SecretAccessKey')
+    export AWS_SESSION_TOKEN
+    AWS_SESSION_TOKEN=$(echo "$CREDENTIALS" | jq -r '.SessionToken')
     set -x
 }
 
@@ -68,6 +72,7 @@ common() {
         echo "Cluster name too long. Truncated to $CLUSTER"
     elif [ "$LENGTH" -lt "$MAX_LENGTH" ]
     then
+        # shellcheck disable=SC2034
         APPEND=$(( MAX_LENGTH - LENGTH ))
         APPEND_STR="012345678901234567890123456789"
         CLUSTER="$CLUSTER${APPEND_STR:0:APPEND}"

@@ -11,7 +11,10 @@ REPO=github.com/coreos/tectonic-installer/installer
 find=$(shell [ -d $(1) ] && find $(1) -type f $(2) | sed 's/ /\\ /g')
 
 GO_FILES=$(call find,.,-name '*.go')
-SHELL_FILES=$(call find,scripts,-name '*.sh')
+SHELL_FILES_SCRIPTS=$(call find,scripts,-name '*.sh')
+SHELL_FILES_MODULES=$(call find,../modules,-name '*.sh')
+SHELL_FILES_TESTS=$(call find,../tests,-name '*.sh')
+SHELL_FILES=$(SHELL_FILES_SCRIPTS) $(SHELL_FILES_MODULES) $(SHELL_FILES_TESTS)
 
 .PHONY: all
 all:

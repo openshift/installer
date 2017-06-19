@@ -1,7 +1,8 @@
 #!/bin/bash
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-source ${DIR}/awsutil.sh
+# shellcheck disable=SC1090
+source "${DIR}/awsutil.sh"
 
 # A script that uploads the payload.json to aws s3 bucket, and
 # create a new package on the core update server.
@@ -33,7 +34,8 @@ fi
 
 which updateservicectl > /dev/null
 if [[ $? == 0 ]]; then
-    export UPDATESERVICECTL=$(which updateservicectl)
+    export UPDATESERVICECTL
+    UPDATESERVICECTL=$(which updateservicectl)
 fi
 
 if [[ ${UPDATESERVICECTL} == "" ]]; then
@@ -52,6 +54,7 @@ for f in "${payload}" "${payload}.sig"; do
     fi
 done
 
+# shellcheck disable=SC2002,SC2086
 VERSION=${VERSION:-$(cat ${payload} | jq -r .version)}
 
 if [[ ${VERSION} == "" ]]; then
@@ -65,7 +68,9 @@ PAYLOAD_URL="https://s3-us-west-2.amazonaws.com/${BUCKET}/${DESTINATION}"
 
 echo "Uploading payload to \"${PAYLOAD_URL}\", version: \"${VERSION}\""
 
+# shellcheck disable=SC2086,SC2154
 aws_upload_file ${payload} ${DESTINATION} ${BUCKET} application/json
+# shellcheck disable=SC2086,SC2154
 aws_upload_file ${payload}.sig ${DESTINATION}.sig ${BUCKET} application/pgp-signature
 
 SERVER=${SERVER:-"https://tectonic.update.core-os.net"}
@@ -75,6 +80,7 @@ echo "Payload successfully uploaded"
 
 echo "Creating package ${VERSION} on Core Update server ${SERVER} for ${APPID}"
 
+# shellcheck disable=SC2086,SC2154
 ${UPDATESERVICECTL} --server ${SERVER} \
                     --key ${COREUPDATE_KEY} \
                     --user ${COREUPDATE_USR} \
