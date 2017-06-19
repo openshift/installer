@@ -8,9 +8,14 @@ resource "template_dir" "upload_payload" {
     # just to make terraform happy.
     update_server = ""
 
-    update_channel   = ""
-    update_app_id    = ""
-    node_agent_image = ""
+    update_channel                 = ""
+    update_app_id                  = ""
+    node_agent_image               = ""
+    prometheus_operator_image      = ""
+    prometheus_config_reload_image = ""
+    config_reload_image            = ""
+    prometheus_image               = ""
+    alertmanager_image             = ""
 
     # Actual variables we care about when generating the payload.
     container_linux_update_operator_image = "${var.tectonic_container_images["container_linux_update_operator"]}"
