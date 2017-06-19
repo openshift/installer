@@ -91,7 +91,7 @@ const createAction = (name, fn, shouldReject=false) => (body, creds, isNow) => (
       if (message === 'Failed to fetch') {
         message += ` ${name}`;
       }
-      TectonicGA.sendEvent('Async Error', 'user input', message);
+      TectonicGA.sendEvent('Async Error', 'user input', message, 'aws-tf');
       return Promise.reject(message);
     });
 };

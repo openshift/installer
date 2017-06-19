@@ -44,8 +44,13 @@ export const TectonicGA = {
     send({ type: 'pageview', page});
   },
 
-  sendEvent: (category, action, label, value) => {
-    send({ type: 'event', category, action, label, value});
+  sendEvent: (category, action, label, value = "") => {
+    send({
+      type: 'event',
+      category, action,
+      label,
+      value: `${value} ${GIT_TAG}`,
+    });
   },
 
   sendDocsEvent: () => {
