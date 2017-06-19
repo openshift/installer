@@ -96,6 +96,8 @@ resource "template_dir" "bootkube" {
     etcd_client_key = "${base64encode(file(
       var.etcd_client_key != "" ? var.etcd_client_key : "/dev/null"
     ))}"
+
+    tectonic_version = "${var.versions["tectonic"]}"
   }
 }
 
