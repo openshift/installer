@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2002,SC2015,SC2086,SC2091
 # This scripts brings up a bare-metal Tectonic cluster using VMs and
 # containerized matchbox/dnsmasq servers.
 #
@@ -56,11 +57,11 @@ main() {
   trap kill_terraform_and_cleanup EXIT
 
   echo "Setting up configuration and environment"
-  configure $1
+  configure "$1"
   setup
 
   echo "Starting matchbox"
-  (cd ${ROOT}/matchbox && sudo -S -E ./scripts/devnet create)
+  (cd "${ROOT}"/matchbox && sudo -S -E ./scripts/devnet create)
   echo "Waiting for matchbox..."
   until $(curl --silent --fail -k http://matchbox.example.com:8080 > /dev/null); do
     echo "Waiting for matchbox..."
@@ -68,12 +69,12 @@ main() {
   done
 
   echo "Starting Terraform"
-  (cd ${ROOT} && make apply || kill $$) & # Self-destruct and trigger trap on failure
+  (cd "${ROOT}" && make apply || kill $$) & # Self-destruct and trigger trap on failure
   TERRAFORM_PID=$!
   sleep 15
 
   echo "Starting QEMU/KVM nodes"
-  (cd ${ROOT}/matchbox && sudo -E ./scripts/libvirt create)
+  (cd "${ROOT}"/matchbox && sudo -E ./scripts/libvirt create)
 
   echo "Waiting for Kubernetes/Tectonic cluster to be up and running:"
   cluster_up
@@ -112,7 +113,7 @@ setup() {
   fi
 
   echo "Configuring ssh-agent"
-  eval `ssh-agent -s`
+  eval "$(ssh-agent -s)"
   chmod 600 ${ROOT}/matchbox/tests/smoke/fake_rsa
   ssh-add ${ROOT}/matchbox/tests/smoke/fake_rsa
 
@@ -142,7 +143,8 @@ EOF'
 configure() {
   export PLATFORM=metal
   export CLUSTER="tf-${PLATFORM}-${BRANCH_NAME}-${BUILD_ID}"
-  export TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
+  export TF_VAR_tectonic_cluster_name
+  TF_VAR_tectonic_cluster_name=$(echo ${CLUSTER} | awk '{print tolower($0)}')
 
   CONFIG=${DIR}/$1
   make localconfig
@@ -160,12 +162,15 @@ cleanup() {
   # Kill any remaining VMs.
   (cd ${ROOT}/matchbox && sudo ./scripts/libvirt destroy)
 
+  # shellcheck disable=SC2006
   # Reset rkt pods and CNI entirely, to avoid IP conflict due to leakage bug.
   for p in `sudo rkt list | tail -n +2 | awk '{print $1}'`; do sudo rkt stop --force $p; done
   sudo rkt gc --grace-period=0s
 
+  # shellcheck disable=SC2006
   for ns in `ip netns l | grep -o -E '^[[:alnum:]]+'`; do sudo ip netns del $ns; done
   sudo ip l del metal0
+  # shellcheck disable=SC2006
   for veth in `ip l show | grep -oE 'veth[^@]+'`; do sudo ip l del $veth; done
 
   sudo rm -Rf /var/lib/cni/networks/*
@@ -191,7 +196,7 @@ kill_terraform_and_cleanup() {
 }
 
 kubelet_up() {
-  curl --silent --fail -m 1 http://$1:10255/healthz > /dev/null
+  curl --silent --fail -m 1 "http://$1:10255/healthz" > /dev/null
 }
 
 cluster_up() {
@@ -237,16 +242,19 @@ k8s() {
 
 # ready nodes returns the number of Ready Kubernetes nodes
 readyNodes() {
+  # shellcheck disable=SC2126
   k8s get nodes -o template --template='{{range .items}}{{range .status.conditions}}{{if eq .type "Ready"}}{{.}}{{end}}{{end}}{{end}}' | grep -o -E True | wc -l
 }
 
 # ready pods returns the number of Running pods
 readyPods() {
+  # shellcheck disable=SC2126
   k8s get pods --all-namespaces -o template --template='{{range .items}}{{range .status.conditions}}{{if eq .type "Ready"}}{{.}}{{end}}{{end}}{{end}}' | grep -o -E True | wc -l
 }
 
 # podCount returns the number of pods
 podCount() {
+  # shellcheck disable=SC2126
   k8s get pods --all-namespaces -o template --template='{{range .items}}{{range .status.conditions}}{{if eq .type "Ready"}}{{.}}{{end}}{{end}}{{end}}' | grep -o -E status | wc -l
 }
 

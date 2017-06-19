@@ -22,7 +22,8 @@ fi
 
 which updateservicectl > /dev/null
 if [[ $? == 0 ]]; then
-    export UPDATESERVICECTL=$(which updateservicectl)
+    export UPDATESERVICECTL
+    UPDATESERVICECTL=$(which updateservicectl)
 fi
 
 if [[ ${UPDATESERVICECTL} == "" ]]; then
@@ -34,12 +35,12 @@ set -e
 
 payload=${DIR}/payload.json
 
-if [ ! -f ${payload} ]; then
+if [ ! -f "${payload}" ]; then
     echo "Expecting payload.json in the current directory"
     exit 1
 fi
 
-VERSION=${VERSION:-$(cat ${payload} | jq -r .version)}
+VERSION=${VERSION:-$(jq -r .version < "${payload}")}
 CHANNEL=$1
 
 echo "Publishing new payload ${VERSION} to channel ${CHANNEL}"
@@ -47,10 +48,10 @@ echo "Publishing new payload ${VERSION} to channel ${CHANNEL}"
 SERVER=${SERVER:-"https://tectonic.update.core-os.net"}
 APPID=${APPID:-"6bc7b986-4654-4a0f-94b3-84ce6feb1db4"}
 
-${UPDATESERVICECTL} --server ${SERVER} \
-                    --key ${COREUPDATE_KEY} \
-                    --user ${COREUPDATE_USR} \
+${UPDATESERVICECTL} --server "${SERVER}" \
+                    --key "${COREUPDATE_KEY}" \
+                    --user "${COREUPDATE_USR}" \
                     channel update \
-                    --channel ${CHANNEL} \
-                    --app-id ${APPID} \
-                    --version ${VERSION}
+                    --channel "${CHANNEL}" \
+                    --app-id "${APPID}" \
+                    --version "${VERSION}"

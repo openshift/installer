@@ -161,6 +161,7 @@ kubectl create -f ingress/default-backend/service.yaml
 kubectl create -f ingress/default-backend/deployment.yaml
 kubectl create -f ingress/ingress.yaml
 
+# shellcheck disable=SC2154
 if [ "${ingress_kind}" = "HostPort" ]; then
   kubectl create -f ingress/hostport/service.yaml
   kubectl create -f ingress/hostport/daemonset.yaml

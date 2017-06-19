@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# shellcheck disable=SC2086,SC2154
 /usr/bin/rkt run \
   --trust-keys-from-https \
   --volume assets,kind=host,source="$(pwd)" \
