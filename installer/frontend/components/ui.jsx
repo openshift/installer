@@ -749,8 +749,7 @@ export class DropdownMixin extends React.PureComponent {
     this.setState({active: false});
   }
 
-  toggle (e) {
-    e && e.stopPropagation();
+  toggle () {
     this.setState({active: !this.state.active});
   }
 
