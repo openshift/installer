@@ -25,9 +25,13 @@ variable "tectonic_aws_worker_ec2_type" {
 }
 
 variable "tectonic_aws_etcd_ec2_type" {
-  type        = "string"
-  description = "Instance size for the etcd node(s). Example: `t2.medium`."
-  default     = "t2.medium"
+  type = "string"
+
+  description = <<EOF
+  Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware] (https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
+  EOF
+
+  default = "t2.medium"
 }
 
 variable "tectonic_aws_etcd_extra_sg_ids" {
