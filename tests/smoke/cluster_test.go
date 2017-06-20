@@ -98,7 +98,7 @@ func getIdentityLogs(t *testing.T) error {
 	c := newClient(t)
 	namespace := "tectonic-system"
 	podPrefix := "tectonic-identity"
-	err := validatePodLogging(c, namespace, podPrefix)
+	_, err := validatePodLogging(c, namespace, podPrefix)
 	if err != nil {
 		return fmt.Errorf("failed to gather logs for %s/%s, %v", namespace, podPrefix, err)
 	}
@@ -115,10 +115,11 @@ func testGetIdentityLogs(t *testing.T) {
 }
 
 // validatePodLogging verifies that logs can be retrieved for a container in Pod.
-func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) error {
+func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) ([]byte, error) {
+	var logs []byte
 	pods, err := c.Pods(namespace).List(v1.ListOptions{})
 	if err != nil {
-		return fmt.Errorf("could not list pods: %v", err)
+		return logs, fmt.Errorf("could not list pods: %v", err)
 	}
 
 	var names string
@@ -132,7 +133,7 @@ func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) er
 			continue
 		}
 		if len(p.Spec.Containers) == 0 {
-			return fmt.Errorf("tectonic identity pod has no containers")
+			return logs, fmt.Errorf("%s pod has no containers", p.Name)
 		}
 
 		opt := v1.PodLogOptions{
@@ -141,18 +142,22 @@ func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) er
 
 		result := c.Core().Pods(namespace).GetLogs(p.Name, &opt).Do()
 		if err := result.Error(); err != nil {
-			return fmt.Errorf("failed to get pod logs: %v", err)
+			return logs, fmt.Errorf("failed to get pod logs: %v", err)
 		}
 
 		var statusCode int
 		result.StatusCode(&statusCode)
 		if statusCode/100 != 2 {
-			return fmt.Errorf("expected 200 from log response, got %d", statusCode)
+			return logs, fmt.Errorf("expected 200 from log response, got %d", statusCode)
 		}
-		return nil
+		logs, err := result.Raw()
+		if err != nil {
+			return logs, fmt.Errorf("failed to read logs: %v", err)
+		}
+		return logs, nil
 	}
 
-	return fmt.Errorf("failed to find tectonic-identity pod (found pods in %s: %s)", namespace, names)
+	return logs, fmt.Errorf("failed to find pods with prefix %q (found pods in %s: %s)", podPrefix, namespace, names)
 }
 
 func testKillAPIServer(t *testing.T) {
