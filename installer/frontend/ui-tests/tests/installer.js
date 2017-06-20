@@ -24,6 +24,8 @@ const logger = logs => {
   console.log('==== END BROWSER LOGS ====');
 };
 
+const REQUIRED_ENV_VARS = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "TF_VAR_tectonic_license_path", "TF_VAR_tectonic_pull_secret_path"];
+
 module.exports = {
   after (client) {
     client.getLog('browser', logger);
@@ -31,6 +33,12 @@ module.exports = {
   },
 
   'Tectonic Installer AWS Test': (client) => {
+    const missing = _.filter(REQUIRED_ENV_VARS, ev => !process.env[ev]);
+    if (missing.length) {
+      console.error(`Missing environment variables: ${missing.join(', ')}.\n`);
+      process.exit(1);
+    }
+
     const expectedJson = installerInput.buildExpectedJson();
     const platformPage = client.page.platformPage();
     const awsCredentialsPage = client.page.awsCredentialsPage();
