@@ -6,3 +6,8 @@ metadata:
 spec:
   size: ${etcd_cluster_size}
   version: "${etcd_version}"
+  pod:
+    resources:
+      requests:
+        cpu: 500m
+        memory: 300Mi
