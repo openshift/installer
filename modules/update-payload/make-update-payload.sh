@@ -33,11 +33,13 @@ deployments=(
   "tectonic-channel-operator.yaml"
   "kube-version-operator.yaml"
   "tectonic-prometheus-operator.yaml"
+  "tectonic-etcd-operator.yaml"
   "container-linux-update-operator.yaml"
 )
 appversions=(
   "app-version-kubernetes.yaml"
   "app-version-tectonic-monitoring.yaml"
+  "app-version-tectonic-etcd.yaml"
 )
 
 echo "Creating update payload..." >&2
