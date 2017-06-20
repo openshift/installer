@@ -177,22 +177,23 @@ kubectl create -f heapster/service.yaml
 kubectl create -f heapster/deployment.yaml
 kubectl create -f stats-emitter.yaml
 
+echo "Creating Operators"
+kubectl create -f updater/tectonic-channel-operator-kind.yaml
+kubectl create -f updater/app-version-kind.yaml
+kubectl create -f updater/migration-status-kind.yaml
+kubectl create -f updater/node-agent.yaml
+kubectl create -f updater/kube-version-operator.yaml
+kubectl create -f updater/tectonic-channel-operator.yaml
+kubectl create -f updater/tectonic-monitoring-config.yaml
+kubectl create -f updater/tectonic-prometheus-operator.yaml
+wait_for_tpr tectonic-system channel-operator-config.coreos.com
+kubectl create -f updater/tectonic-channel-operator-config.yaml
+wait_for_tpr tectonic-system app-version.coreos.com
+kubectl create -f updater/app-version-tectonic-cluster.yaml
+kubectl create -f updater/app-version-kubernetes.yaml
+kubectl create -f updater/app-version-tectonic-monitoring.yaml
+
 if [ "$EXPERIMENTAL" = "true" ]; then
-echo "Creating Tectonic Updater"
-  kubectl create -f updater/tectonic-channel-operator-kind.yaml
-  kubectl create -f updater/app-version-kind.yaml
-  kubectl create -f updater/migration-status-kind.yaml
-  kubectl create -f updater/node-agent.yaml
-  kubectl create -f updater/kube-version-operator.yaml
-  kubectl create -f updater/tectonic-channel-operator.yaml
-  kubectl create -f updater/tectonic-monitoring-config.yaml
-  kubectl create -f updater/tectonic-prometheus-operator.yaml
-  wait_for_tpr tectonic-system channel-operator-config.coreos.com
-  kubectl create -f updater/tectonic-channel-operator-config.yaml
-  wait_for_tpr tectonic-system app-version.coreos.com
-  kubectl create -f updater/app-version-tectonic-cluster.yaml
-  kubectl create -f updater/app-version-kubernetes.yaml
-  kubectl create -f updater/app-version-tectonic-monitoring.yaml
   kubectl apply -f etcd/cluster-config.yaml
 fi
 
