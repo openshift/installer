@@ -183,7 +183,7 @@ test_cluster() {
     WORKER_COUNT=$(grep tectonic_worker_count "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}')
     export NODE_COUNT=$(( MASTER_COUNT + WORKER_COUNT ))
     export TEST_KUBECONFIG=$WORKSPACE/build/$CLUSTER/generated/auth/kubeconfig
-    bin/smoke -test.v -test.parallel=1
+    bin/smoke -test.v -test.parallel=1 --cluster
 }
 
 usage() {
