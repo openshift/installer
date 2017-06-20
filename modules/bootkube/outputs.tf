@@ -22,6 +22,10 @@ output "id" {
   ${template_dir.bootkube.id} ${template_dir.bootkube-bootstrap.id}
   ${join(" ",
     local_file.etcd_ca_crt.*.id,
+    local_file.etcd_client_crt.*.id,
+    local_file.etcd_client_key.*.id,
+    local_file.etcd_peer_crt.*.id,
+    local_file.etcd_peer_key.*.id,
     template_dir.experimental.*.id,
     template_dir.bootstrap-experimental.*.id,
     template_dir.etcd-experimental.*.id,

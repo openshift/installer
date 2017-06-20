@@ -1,12 +1,12 @@
 resource "tls_private_key" "etcd-ca" {
-  count = "${!var.experimental_enabled && var.etcd_tls_enabled ? 1 : 0}"
+  count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
 resource "tls_self_signed_cert" "etcd-ca" {
-  count = "${!var.experimental_enabled && var.etcd_tls_enabled ? 1 : 0}"
+  count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
   key_algorithm   = "${tls_private_key.etcd-ca.algorithm}"
   private_key_pem = "${tls_private_key.etcd-ca.private_key_pem}"
@@ -27,14 +27,14 @@ resource "tls_self_signed_cert" "etcd-ca" {
 }
 
 resource "tls_private_key" "etcd_client" {
-  count = "${!var.experimental_enabled && var.etcd_tls_enabled ? 1 : 0}"
+  count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
 resource "tls_cert_request" "etcd_client" {
-  count = "${!var.experimental_enabled && var.etcd_tls_enabled ? 1 : 0}"
+  count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
   key_algorithm   = "${tls_private_key.etcd_client.algorithm}"
   private_key_pem = "${tls_private_key.etcd_client.private_key_pem}"
@@ -44,11 +44,23 @@ resource "tls_cert_request" "etcd_client" {
     organization = "etcd"
   }
 
-  dns_names = ["${var.etcd_cert_dns_names}"]
+  dns_names = "${concat(
+    var.etcd_cert_dns_names,
+    list(
+      "localhost",
+      "*.kube-etcd.kube-system.svc.cluster.local",
+      "kube-etcd-client.kube-system.svc.cluster.local",
+    ))}"
+
+  ip_addresses = [
+    "127.0.0.1",
+    "${cidrhost(var.service_cidr, 15)}",
+    "${cidrhost(var.service_cidr, 20)}",
+  ]
 }
 
 resource "tls_locally_signed_cert" "etcd_client" {
-  count = "${!var.experimental_enabled && var.etcd_tls_enabled ? 1 : 0}"
+  count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
   cert_request_pem = "${tls_cert_request.etcd_client.cert_request_pem}"
 
@@ -67,14 +79,14 @@ resource "tls_locally_signed_cert" "etcd_client" {
 }
 
 resource "tls_private_key" "etcd_peer" {
-  count = "${!var.experimental_enabled && var.etcd_tls_enabled ? 1 : 0}"
+  count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
 resource "tls_cert_request" "etcd_peer" {
-  count = "${!var.experimental_enabled && var.etcd_tls_enabled ? 1 : 0}"
+  count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
   key_algorithm   = "${tls_private_key.etcd_peer.algorithm}"
   private_key_pem = "${tls_private_key.etcd_peer.private_key_pem}"
@@ -84,11 +96,20 @@ resource "tls_cert_request" "etcd_peer" {
     organization = "etcd"
   }
 
-  dns_names = ["${var.etcd_cert_dns_names}"]
+  dns_names = "${concat(
+    var.etcd_cert_dns_names,
+    list(
+      "*.kube-etcd.kube-system.svc.cluster.local",
+      "kube-etcd-client.kube-system.svc.cluster.local",
+    ))}"
+
+  ip_addresses = [
+    "${cidrhost(var.service_cidr, 20)}",
+  ]
 }
 
 resource "tls_locally_signed_cert" "etcd_peer" {
-  count = "${!var.experimental_enabled && var.etcd_tls_enabled ? 1 : 0}"
+  count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
   cert_request_pem = "${tls_cert_request.etcd_peer.cert_request_pem}"
 
