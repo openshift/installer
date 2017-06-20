@@ -13,7 +13,7 @@ import { Connect, Input, Radio } from './ui';
 import { DefineNode } from './aws-define-nodes';
 import { makeNodeForm } from './make-node-form';
 import { Field, Form } from '../form';
-import { AWS, AWS_TF } from '../platforms';
+import { AWS_TF, BARE_METAL_TF } from '../platforms';
 
 const EtcdForm = 'EtcdForm';
 const one2Nine = validate.int({min: 1, max: 9});
@@ -34,11 +34,20 @@ const fields = [
   }),
 ];
 
-const form = new Form(EtcdForm, fields);
+const form = new Form(EtcdForm, fields, {
+  validator: (value, clusterConfig) => {
+    if (clusterConfig[PLATFORM_TYPE] === BARE_METAL_TF && value === ETCD_OPTIONS.PROVISIONED) {
+      return 'Please select an option.';
+    }
+    if (!(value in ETCD_OPTIONS)) {
+      return 'Please select an option.';
+    }
+  },
+});
 
 export const Etcd = connect(({clusterConfig}) => ({
   etcdOption: clusterConfig[ETCD_OPTION],
-  isAWS: clusterConfig[PLATFORM_TYPE] === AWS || clusterConfig[PLATFORM_TYPE] === AWS_TF,
+  isAWS: clusterConfig[PLATFORM_TYPE] === AWS_TF,
 }))(
 class ExternalETCD extends React.Component {
   render () {
@@ -60,7 +69,7 @@ class ExternalETCD extends React.Component {
                     <Connect field={ETCD_OPTION}>
                       <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.SELF_HOSTED} />
                     </Connect>
-                    Self-hosted etcd (experimental)
+                    Create self-hosted etcd cluster (alpha)
                   </label>&nbsp;(default)
                   <p className="text-muted wiz-help-text">The installer will automatically launch and configure etcd inside your Tectonic cluster.</p>
                 </div>
