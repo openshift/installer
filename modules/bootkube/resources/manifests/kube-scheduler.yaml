@@ -9,7 +9,7 @@ metadata:
   annotations:
     scheduler.alpha.kubernetes.io/critical-pod: ""
 spec:
-  replicas: 2
+  replicas: ${master_count}
   template:
     metadata:
       labels:

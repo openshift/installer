@@ -40,6 +40,8 @@ module "bootkube" {
   ]
 
   experimental_enabled = "${var.tectonic_experimental}"
+
+  master_count = "${var.tectonic_master_count}"
 }
 
 module "tectonic" {

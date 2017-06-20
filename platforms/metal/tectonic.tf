@@ -39,6 +39,8 @@ module "bootkube" {
   etcd_cert_dns_names = ["${var.tectonic_metal_controller_domains}"]
 
   experimental_enabled = "${var.tectonic_experimental}"
+
+  master_count = "${length(var.tectonic_metal_controller_names)}"
 }
 
 module "tectonic" {

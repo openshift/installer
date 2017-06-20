@@ -32,6 +32,8 @@ module "bootkube" {
   etcd_client_key  = "${var.tectonic_etcd_client_key_path}"
 
   experimental_enabled = "${var.tectonic_experimental}"
+
+  master_count = "${var.tectonic_master_count}"
 }
 
 module "tectonic" {

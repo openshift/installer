@@ -98,6 +98,8 @@ resource "template_dir" "bootkube" {
     ))}"
 
     tectonic_version = "${var.versions["tectonic"]}"
+
+    master_count = "${var.master_count}"
   }
 }
 

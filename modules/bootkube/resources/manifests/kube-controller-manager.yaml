@@ -7,7 +7,7 @@ metadata:
     tier: control-plane
     k8s-app: kube-controller-manager
 spec:
-  replicas: 2
+  replicas: ${master_count}
   template:
     metadata:
       labels:
