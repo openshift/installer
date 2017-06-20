@@ -1,6 +1,6 @@
 # Troubleshooting worker nodes using SSH
 
-Tectonic worker nodes are not assigned a public IP address, only the controller node. To debug a worker node, SSH to it through a controller (bastion host) or use a VPN connected to the internal network.
+Tectonic worker nodes are not assigned a public IP address, only the master node. To debug a worker node, SSH to it through a master (bastion host) or use a VPN connected to the internal network.
 
 To do so, perform the following:
 
@@ -41,9 +41,9 @@ ip-192-0-2-10.us-west-2.compute.internal   Ready     3d       203.0.113.3
 ip-192-0-2-12.us-west-2.compute.internal   Ready     3d       <none>
 ```
 
-## Connect to a controller node
+## Connect to a master node
 
-SSH to a controller node with its `EXTERNAL-IP`, providing the `-A` flag to forward the local `ssh-agent`. Add the `-i` option giving the location of the ssh key known to Tectonic:
+SSH to a master node with its `EXTERNAL-IP`, providing the `-A` flag to forward the local `ssh-agent`. Add the `-i` option giving the location of the ssh key known to Tectonic:
 
 ```bash
 $ ssh -A core@203.0.113.3 -i /path/to/tectonic/cluster/ssh/key
@@ -51,9 +51,9 @@ $ ssh -A core@203.0.113.3 -i /path/to/tectonic/cluster/ssh/key
 
 ## Connect to a worker node
 
-The worker node is accessible from the controller because both machines are on the same private network, but the controller is the only public entry point into the cluster. From a controller, reach worker nodes on their internal cluster IP addresses. This address is encoded in the node's host name by convention. In this example, the worker node `ip-192-0-2-18.us-west-2.compute.internal` listed by `kubectl get nodes -o wide` has the internal IP 192.0.2.18.
+The worker node is accessible from the master because both machines are on the same private network, but the master is the only public entry point into the cluster. From a master, reach worker nodes on their internal cluster IP addresses. This address is encoded in the node's host name by convention. In this example, the worker node `ip-192-0-2-18.us-west-2.compute.internal` listed by `kubectl get nodes -o wide` has the internal IP 192.0.2.18.
 
-Having connected to a controller, ssh from there to the target worker node's internal IP:
+Having connected to a master, ssh from there to the target worker node's internal IP:
 
 ```bash
 # From master node
@@ -62,5 +62,17 @@ $ ssh core@192.0.2.18
 
 View logs on the worker node by using `journalctl -xe` or similar tools. [Reading the system log][journalctl] has more information.
 
+To examine the kubelet logs, execute:
+```sh
+# From worker node
+$ journalctl -u kubelet
+```
+
+To examine the status and logs of potentially failed containers, execute:
+```sh
+$ docker ps -a | grep -v pause 
+...
+$ docker logs ...
+```
 
 [journalctl]: https://github.com/coreos/docs/blob/master/os/reading-the-system-log.md

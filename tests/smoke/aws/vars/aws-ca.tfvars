@@ -18,8 +18,6 @@ tectonic_ca_cert = "../../examples/fake-creds/ca.crt"
 
 tectonic_ca_key = "../../examples/fake-creds/ca.key"
 
-tectonic_aws_ssh_key = "jenkins"
-
 tectonic_aws_master_ec2_type = "m4.large"
 
 tectonic_aws_worker_ec2_type = "m4.large"
