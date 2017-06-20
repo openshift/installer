@@ -1,8 +1,7 @@
 export CGO_ENABLED=0
-export VERSION=$(shell ../git-version)
 
 OS=$(shell uname | tr A-Z a-z)
-LD_FLAGS="-w -X github.com/coreos/tectonic-installer/installer/cmd/installer.Version=$(VERSION)"
+LD_FLAGS="-w"
 INSTALLER_OPTS=--address=127.0.0.1:4444 --open-browser=false --log-level=debug --dev
 
 REPO=github.com/coreos/tectonic-installer/installer
