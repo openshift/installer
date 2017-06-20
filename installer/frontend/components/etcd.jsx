@@ -81,9 +81,9 @@ class ExternalETCD extends React.Component {
                   <Connect field={ETCD_OPTION}>
                     <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.PROVISIONED} />
                   </Connect>
-                  Boot AWS etcd nodes
+                  Provision AWS etcd cluster
                 </label>
-                <p className="text-muted wiz-help-text">Your Tectonic cluster will be configured to to use an external etcd, which you specify.</p>
+                <p className="text-muted wiz-help-text">Create EC2 instances to run an etcd cluster.</p>
               </div> }
             </div>
           </div>
