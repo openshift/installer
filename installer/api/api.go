@@ -93,6 +93,8 @@ func New(config *Config) (http.Handler, error) {
 	mux.Handle("/containerlinux/images/matchbox", logRequests(httpHandler("GET", ctx, listMatchboxImagesHandler)))
 	mux.Handle("/containerlinux/images/amis", logRequests(httpHandler("GET", ctx, listAMIImagesHandler)))
 
+	//handlers_latest_release.go
+	mux.Handle("/releases/latest", logRequests(httpHandler("GET", ctx, latestReleaseHandler)))
 	return mux, nil
 }
 
