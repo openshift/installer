@@ -46,7 +46,9 @@ export const CLUSTER_NAME = 'clusterName';
 export const CLUSTER_SUBDOMAIN = 'clusterSubdomain';
 export const CONTROLLER_DOMAIN = 'controllerDomain';
 export const EXTERNAL_ETCD_CLIENT = 'externalETCDClient';
-export const EXTERNAL_ETCD_ENABLED = 'externalETCDEnabled';
+
+export const ETCD_OPTION = 'etcdOption';
+
 export const DRY_RUN = 'dryRun';
 export const ENTITLEMENTS = 'entitlements';
 export const PLATFORM_TYPE = 'platformType';
@@ -55,7 +57,6 @@ export const SSH_AUTHORIZED_KEY = 'sshAuthorizedKey';
 export const STS_ENABLED = 'sts_enabled';
 export const TECTONIC_LICENSE = 'tectonicLicense';
 export const UPDATER = 'updater';
-export const UPDATER_ENABLED = 'updater_enabled';
 export const ADMIN_EMAIL = 'adminEmail';
 export const ADMIN_PASSWORD = 'adminPassword';
 export const ADMIN_PASSWORD2 = 'adminPassword2';
@@ -92,6 +93,11 @@ export const SPLIT_DNS_OPTIONS = {
   [SPLIT_DNS_ON]: "Create an additional Route 53 private zone (default).",
   [SPLIT_DNS_OFF]: "Do not create a private zone.",
 };
+
+const SELF_HOSTED = "selfHosted";
+const EXTERNAL = "external";
+const PROVISIONED = "provisioned";
+export const ETCD_OPTIONS = { SELF_HOSTED, EXTERNAL, PROVISIONED };
 
 export const toVPCSubnet = (region, subnets, deselected) => {
   const vpcSubnets = {};
@@ -250,13 +256,13 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
       tectonic_worker_count: workers[NUMBER_OF_INSTANCES],
       // TODO: shouldn't hostedZoneID be specified somewhere?
       tectonic_dns_name: cc[CLUSTER_SUBDOMAIN],
-      tectonic_experimental: cc[UPDATER_ENABLED],
+      tectonic_experimental: cc[ETCD_OPTION] === SELF_HOSTED,
     },
   };
 
-  if (cc[EXTERNAL_ETCD_ENABLED]) {
+  if (cc[ETCD_OPTION] === EXTERNAL) {
     ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT]];
-  } else if (!cc[UPDATER_ENABLED]) {
+  } else if (cc[ETCD_OPTION] === PROVISIONED) {
     ret.variables.tectonic_aws_etcd_ec2_type = etcds[INSTANCE_TYPE];
     ret.variables.tectonic_aws_etcd_root_volume_iops = etcds[STORAGE_TYPE] === 'io1' ? etcds[STORAGE_IOPS] : undefined;
     ret.variables.tectonic_aws_etcd_root_volume_size = etcds[STORAGE_SIZE_IN_GIB];
@@ -330,12 +336,12 @@ export const toBaremetal_TF = (cc, FORMS, opts={}) => {
       tectonic_cluster_cidr: cc[POD_CIDR],
       tectonic_service_cidr: cc[SERVICE_CIDR],
       tectonic_dns_name: cc[CLUSTER_SUBDOMAIN],
-      tectonic_experimental: cc[UPDATER_ENABLED],
+      tectonic_experimental: cc[ETCD_OPTION] === SELF_HOSTED,
       tectonic_base_domain: 'unused',
     },
   };
 
-  if (cc[EXTERNAL_ETCD_ENABLED]) {
+  if (cc[ETCD_OPTION] === EXTERNAL) {
     ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT]];
   }
 

@@ -4,11 +4,12 @@ import { connect } from 'react-redux';
 import {
   AWS_ETCDS,
   EXTERNAL_ETCD_CLIENT,
-  EXTERNAL_ETCD_ENABLED,
+  ETCD_OPTION,
+  ETCD_OPTIONS,
   PLATFORM_TYPE,
 } from '../cluster-config';
 import { validate } from '../validate';
-import { Connect, Input, RadioBoolean } from './ui';
+import { Connect, Input, Radio } from './ui';
 import { DefineNode } from './aws-define-nodes';
 import { makeNodeForm } from './make-node-form';
 import { Field, Form } from '../form';
@@ -18,30 +19,31 @@ const EtcdForm = 'EtcdForm';
 const one2Nine = validate.int({min: 1, max: 9});
 
 const fields = [
-  new Field(EXTERNAL_ETCD_ENABLED, {
-    default: false,
+  new Field(ETCD_OPTION, {
+    default: ETCD_OPTIONS.SELF_HOSTED,
   }),
   makeNodeForm(AWS_ETCDS, value => one2Nine(value) || validate.isOdd(value), {
-    dependencies: [EXTERNAL_ETCD_ENABLED],
-    ignoreWhen: cc => cc[EXTERNAL_ETCD_ENABLED],
+    dependencies: [ETCD_OPTION],
+    ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.PROVISIONED,
   }),
   new Field(EXTERNAL_ETCD_CLIENT, {
     default: '',
     validator: validate.hostPort,
-    dependencies: [EXTERNAL_ETCD_ENABLED],
-    ignoreWhen: cc => !cc[EXTERNAL_ETCD_ENABLED],
+    dependencies: [ETCD_OPTION],
+    ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.EXTERNAL,
   }),
 ];
 
 const form = new Form(EtcdForm, fields);
 
 export const Etcd = connect(({clusterConfig}) => ({
-  externalETCDEnabled: clusterConfig[EXTERNAL_ETCD_ENABLED],
+  etcdOption: clusterConfig[ETCD_OPTION],
   isAWS: clusterConfig[PLATFORM_TYPE] === AWS || clusterConfig[PLATFORM_TYPE] === AWS_TF,
 }))(
 class ExternalETCD extends React.Component {
   render () {
-    const {externalETCDEnabled, isAWS} = this.props;
+    const {etcdOption, isAWS} = this.props;
+
     return (
         <div>
           <div className="row form-group">
@@ -55,10 +57,10 @@ class ExternalETCD extends React.Component {
               <div className="wiz-radio-group">
                 <div className="radio wiz-radio-group__radio">
                   <label>
-                    <Connect field={EXTERNAL_ETCD_ENABLED}>
-                      <RadioBoolean inverted={true} name="externalETCDEnabled" />
+                    <Connect field={ETCD_OPTION}>
+                      <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.SELF_HOSTED} />
                     </Connect>
-                    Launch etcd for me
+                    Self-hosted etcd (experimental)
                   </label>&nbsp;(default)
                   <p className="text-muted wiz-help-text">The installer will automatically launch and configure etcd inside your Tectonic cluster.</p>
                 </div>
@@ -66,19 +68,28 @@ class ExternalETCD extends React.Component {
               <div className="wiz-radio-group">
                 <div className="radio wiz-radio-group__radio">
                   <label>
-                    <Connect field={EXTERNAL_ETCD_ENABLED}>
-                      <RadioBoolean name="externalETCDEnabled" />
+                    <Connect field={ETCD_OPTION}>
+                      <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.EXTERNAL} />
                     </Connect>
                     I have my own v3 etcd cluster
                   </label>
                   <p className="text-muted wiz-help-text">Your Tectonic cluster will be configured to to use an external etcd, which you specify.</p>
                 </div>
               </div>
+              { isAWS && <div className="radio wiz-radio-group__radio">
+                <label>
+                  <Connect field={ETCD_OPTION}>
+                    <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.PROVISIONED} />
+                  </Connect>
+                  Boot AWS etcd nodes
+                </label>
+                <p className="text-muted wiz-help-text">Your Tectonic cluster will be configured to to use an external etcd, which you specify.</p>
+              </div> }
             </div>
           </div>
-          { (isAWS || externalETCDEnabled) && <hr /> }
+          { (etcdOption !== ETCD_OPTIONS.SELF_HOSTED) && <hr /> }
           {
-            externalETCDEnabled &&
+            etcdOption === ETCD_OPTIONS.EXTERNAL &&
             <div className="form-group">
               <div className="row">
                 <div className="col-xs-3">
@@ -98,7 +109,7 @@ class ExternalETCD extends React.Component {
             </div>
           }
           {
-            !externalETCDEnabled && isAWS &&
+            etcdOption === ETCD_OPTIONS.PROVISIONED &&
               <div className="row form-group col-xs-12">
                 <DefineNode type={AWS_ETCDS} name="etcd" withoutTitle={true} max={9} />
               </div>
