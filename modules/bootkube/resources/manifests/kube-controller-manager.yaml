@@ -7,31 +7,25 @@ metadata:
     tier: control-plane
     k8s-app: kube-controller-manager
 spec:
-  replicas: 2
+  replicas: ${master_count}
   template:
     metadata:
       labels:
         tier: control-plane
         k8s-app: kube-controller-manager
+        pod-anti-affinity: kube-controller-manager-${tectonic_version}
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
       affinity:
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: tier
-                  operator: In
-                  values:
-                  - control-plane
-                - key: k8s-app
-                  operator: In
-                  values:
-                  - kube-contoller-manager
-              topologyKey: kubernetes.io/hostname
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                pod-anti-affinity: kube-controller-manager-${tectonic_version}
+            namespaces:
+              - kube-system
+            topologyKey: kubernetes.io/hostname
       containers:
       - name: kube-controller-manager
         image: ${hyperkube_image}

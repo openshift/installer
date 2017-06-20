@@ -9,29 +9,23 @@ metadata:
   annotations:
     scheduler.alpha.kubernetes.io/critical-pod: ""
 spec:
-  replicas: 2
+  replicas: ${master_count}
   template:
     metadata:
       labels:
         tier: control-plane
         k8s-app: kube-scheduler
+        pod-anti-affinity: kube-scheduler-${tectonic_version}
     spec:
       affinity:
         podAntiAffinity:
-          preferredDuringSchedulingIgnoredDuringExecution:
-          - weight: 100
-            podAffinityTerm:
-              labelSelector:
-                matchExpressions:
-                - key: tier
-                  operator: In
-                  values:
-                  - control-plane
-                - key: k8s-app
-                  operator: In
-                  values:
-                  - kube-scheduler
-              topologyKey: kubernetes.io/hostname
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                pod-anti-affinity: kube-scheduler-${tectonic_version}
+            namespaces:
+              - kube-system
+            topologyKey: kubernetes.io/hostname
       containers:
       - name: kube-scheduler
         image: ${hyperkube_image}

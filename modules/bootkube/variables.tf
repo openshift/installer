@@ -102,3 +102,8 @@ variable "oidc_groups_claim" {
   description = "The OpenID claim to use for specifying user groups (string or array of strings)"
   type        = "string"
 }
+
+variable "master_count" {
+  description = "The number of the master nodes"
+  type        = "string"
+}
