@@ -86,18 +86,34 @@ pipeline {
                   timeout(30) {
                     sh """#!/bin/bash -ex
                     . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws.tfvars
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws.tfvars
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws.tfvars
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-tls.tfvars
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws-tls.tfvars
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws-tls.tfvars
                     """
                   }
                   retry(3) {
                     timeout(15) {
                       sh """#!/bin/bash -ex
                       . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
-                      ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars
+                      ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-tls.tfvars
                       """
                     }
+                  }
+                }
+              }
+            }
+          },
+          "SmokeTest TerraForm: AWS (non-TLS)": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(builder_image) {
+                  checkout scm
+                  unstash 'installer'
+                  timeout(5) {
+                    sh """#!/bin/bash -ex
+                    . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
+                    ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws.tfvars
+                    """
                   }
                 }
               }

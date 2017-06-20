@@ -76,6 +76,7 @@ resource "openstack_compute_floatingip_associate_v2" "worker" {
 
 resource "null_resource" "tectonic" {
   depends_on = [
+    "module.bootkube",
     "module.tectonic",
     "openstack_compute_instance_v2.master_node",
     "openstack_networking_port_v2.master",

@@ -50,7 +50,7 @@ tectonic_cluster_name = ""
 // 
 // Note: This works only when used in conjunction with an external etcd cluster.
 // If set, the variables `tectonic_etcd_servers`, `tectonic_etcd_client_cert_path`, and `tectonic_etcd_client_key_path` must also be set.
-// tectonic_etcd_ca_cert_path = ""
+// tectonic_etcd_ca_cert_path = "/dev/null"
 
 // (optional) The path of the file containing the client certificate for TLS communication with etcd.
 // 
@@ -75,6 +75,11 @@ tectonic_etcd_count = "0"
 // 
 // Example: `["etcd1", "etcd2", "etcd3"]`
 // tectonic_etcd_servers = ""
+
+// (optional) If set to `true`, TLS secure communication for etcd will be used.
+// 
+// Note: This is variable has no effect if `tectonic_experimental` is set to `true`.
+// tectonic_etcd_tls_enabled = true
 
 // If set to true, experimental Tectonic assets are being deployed.
 tectonic_experimental = false
