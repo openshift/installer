@@ -171,7 +171,7 @@ tectonic_etcd_count = "0"
 // (optional) If set to `true`, TLS secure communication for etcd will be used.
 // 
 // Note: This is variable has no effect if `tectonic_experimental` is set to `true`.
-// tectonic_etcd_tls_enabled = false
+// tectonic_etcd_tls_enabled = true
 
 // If set to true, experimental Tectonic assets are being deployed.
 tectonic_experimental = false

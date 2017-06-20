@@ -124,7 +124,7 @@ EOF
 }
 
 variable "tectonic_etcd_tls_enabled" {
-  default = false
+  default = true
 
   description = <<EOF
 (optional) If set to `true`, TLS secure communication for etcd will be used.
