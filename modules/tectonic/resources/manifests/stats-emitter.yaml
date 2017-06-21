@@ -14,65 +14,42 @@ spec:
       labels:
         k8s-app: tectonic-stats-emitter
         component: stats-emitter
-      annotations:
-        # TODO(squat): add backoff to stats-emitter so we don't need init pod.
-        pod.beta.kubernetes.io/init-containers: '[
-  {
-    "name": "tectonic-stats-extender-init",
-    "image": "${stats_extender_image}",
-    "imagePullPolicy": "IfNotPresent",
-    "command": [
-      "/extender",
-      "--period=0s",
-      "--license=/etc/tectonic/licenses/license",
-      "--output=/etc/tectonic/stats/extensions",
-      "--extension=installerPlatform:$(INSTALLER_PLATFORM)",
-      "--extension=tectonicUpdaterEnabled:$(TECTONIC_UPDATER_ENABLED)",
-      "--extension=certificatesStrategy:$(CERTIFICATES_STRATEGY)"
-    ],
-    "env": [
-      {
-        "name": "INSTALLER_PLATFORM",
-        "valueFrom": {
-          "configMapKeyRef": {
-            "key": "installerPlatform",
-            "name": "tectonic-config"
-          }
-        }
-      },
-      {
-        "name": "CERTIFICATES_STRATEGY",
-        "valueFrom": {
-          "configMapKeyRef": {
-            "key": "certificatesStrategy",
-            "name": "tectonic-config"
-          }
-        }
-      },
-      {
-        "name": "TECTONIC_UPDATER_ENABLED",
-        "valueFrom": {
-          "configMapKeyRef": {
-            "key": "tectonicUpdaterEnabled",
-            "name": "tectonic-config"
-          }
-        }
-      }
-    ],
-    "volumeMounts": [
-      {
-        "name": "tectonic-license-secret",
-        "mountPath": "/etc/tectonic/licenses",
-        "readOnly": true
-      },
-      {
-        "name": "tectonic-stats",
-        "mountPath": "/etc/tectonic/stats"
-      }
-    ]
-  }
-]'
     spec:
+      initContainers:
+      # TODO(squat): add backoff to stats-emitter so we don't need init pod.
+      - name: tectonic-stats-extender-init
+        image: ${stats_extender_image}
+        imagePullPolicy: IfNotPresent
+        command:
+        - /extender
+        - --period=0s
+        - --license=/etc/tectonic/licenses/license
+        - --output=/etc/tectonic/stats/extensions
+        - --extension=installerPlatform:$(INSTALLER_PLATFORM)
+        - --extension=tectonicUpdaterEnabled:$(TECTONIC_UPDATER_ENABLED)
+        - --extension=certificatesStrategy:$(CERTIFICATES_STRATEGY)
+        env:
+        - name: INSTALLER_PLATFORM
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-config
+              key: installerPlatform
+        - name: CERTIFICATES_STRATEGY
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-config
+              key: certificatesStrategy
+        - name: TECTONIC_UPDATER_ENABLED
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-config
+              key: tectonicUpdaterEnabled
+        volumeMounts:
+        - name: tectonic-license-secret
+          mountPath: /etc/tectonic/licenses
+          readOnly: true
+        - name: tectonic-stats
+          mountPath: /etc/tectonic/stats
       containers:
       - name: tectonic-stats-emitter
         imagePullPolicy: IfNotPresent
