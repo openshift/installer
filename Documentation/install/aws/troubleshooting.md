@@ -8,9 +8,9 @@ An issue arises when a domain's Address record (A record) resolution is attempte
 
 The domain configured for Route 53 name service and the domain names selected for Tectonic and Controller DNS names during install cannot be easily changed later. If a cluster's domain name must change, set up a new cluster with the new domain name and migrate cluster work to it.
 
-## VPC peering not supported
+## VPC peering
 
-A VPC containing a Tectonic cluster should not be [peered](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-peering.html) with other VPCs due to the [potential for IP routing conflicts](http://ben.straub.cc/2015/08/19/kubernetes-aws-vpc-peering/).
+Pod, Service, and Instance CIDRs may overlap with ranges of [peered VPCs](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-peering.html), but only if the `pcx` interface is *not* in the route table attached to the Kubernetes subnets. Be certain to configure these CIDRs appropriately.
 
 ## Community Support Forum
 
