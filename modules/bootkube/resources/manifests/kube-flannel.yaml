@@ -92,3 +92,10 @@ spec:
         - name: flannel-cfg
           configMap:
             name: kube-flannel-cfg
+        - name: host-cni-bin
+          hostPath:
+            path: /opt/cni/bin
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate

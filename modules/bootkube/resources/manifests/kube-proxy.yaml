@@ -57,3 +57,7 @@ spec:
       - name: etc-kubernetes
         hostPath:
           path: /etc/kubernetes
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
