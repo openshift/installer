@@ -22,3 +22,4 @@ spec:
     - --data-dir=/var/etcd/data
   hostNetwork: true
   restartPolicy: Never
+  dnsPolicy: ClusterFirstWithHostNet
