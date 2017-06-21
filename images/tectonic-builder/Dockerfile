@@ -17,7 +17,7 @@ RUN go get -u github.com/golang/lint/golint
 RUN go get github.com/jstemmer/go-junit-report
 
 ### License parser
-RUN go get github.com/estroz/license-bill-of-materials
+RUN go get github.com/coreos/license-bill-of-materials
 
 ### Install Terraform, NodeJS and Yarn
 ENV TERRAFORM_VERSION="0.9.6"
@@ -28,14 +28,15 @@ ENV HOME /opt/home
 RUN mkdir -p ${HOME}
 RUN chmod 777 -R ${HOME}
 
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y -q \
+RUN apt-get update && \
+    apt-get install --no-install-recommends -y -q \
     build-essential sudo curl wget git autoconf automake unzip libtool jq shellcheck awscli gnupg1 \
     openvpn xvfb xauth
 
-# install terraform
+# Install Terraform
 RUN curl https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
 
+# Install NodeJS
 RUN cd /tmp && \
     wget --quiet -O /tmp/node.tar.gz https://nodejs.org/dist/${NODE_VERSION}/node-${NODE_VERSION}-linux-x64.tar.gz && \
     tar xf node.tar.gz && \
@@ -47,6 +48,7 @@ RUN cd /tmp && \
 # so any container user can install global node modules if needed
 RUN chmod 777 /usr/local/lib/node_modules
 
+# Install Yarn
 RUN cd /tmp && \
     wget --quiet -O /tmp/yarn.tar.gz https://github.com/yarnpkg/yarn/releases/download/${YARN_VERSION}/yarn-${YARN_VERSION}.tar.gz && \
     tar xf yarn.tar.gz && \
@@ -54,14 +56,12 @@ RUN cd /tmp && \
     mv /tmp/dist /usr/local/yarn && \
     ln -s /usr/local/yarn/bin/yarn /usr/local/bin/yarn
 
-
-# install chrome for installer gui tests
-# using chrome beta because v60 or higher is needed for headless mode
-RUN wget --quiet -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add - && \
-    sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y -q \
+# Install Chrome for installer gui tests
+# Use Chrome beta because v60 or higher is needed for headless mode
+RUN wget --quiet -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - && \
+    sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list' && \
+    apt-get update && \
+    apt-get install --no-install-recommends -y -q \
     google-chrome-beta ca-certificates
 
 # cleanup
