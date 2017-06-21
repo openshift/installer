@@ -24,6 +24,9 @@ spec:
         - mountPath: /etc/kubernetes/selfhosted-etcd
           name: checkpoint-dir
           readOnly: false
+        - mountPath: /var/etcd
+          name: etcd-dir
+          readOnly: false
         - mountPath: /var/lock
           name: var-lock
           readOnly: false
@@ -43,6 +46,9 @@ spec:
       - name: checkpoint-dir
         hostPath:
           path: /etc/kubernetes/checkpoint-iptables
+      - name: etcd-dir
+        hostPath:
+          path: /var/etcd
       - name: var-lock
         hostPath:
           path: /var/lock
