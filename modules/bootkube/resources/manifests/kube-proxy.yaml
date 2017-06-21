@@ -23,7 +23,7 @@ spec:
       - name: kube-proxy
         image: ${hyperkube_image}
         command:
-        - /hyperkube
+        - ./hyperkube
         - proxy
         - --kubeconfig=/etc/kubernetes/kubeconfig
         - --proxy-mode=iptables
