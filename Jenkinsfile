@@ -79,7 +79,7 @@ pipeline {
           "SmokeTest TerraForm: AWS": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(builder_image) {
+                withDockerContainer(args: '-v /etc/passwd:/etc/passwd:ro', image: builder_image) {
                   checkout scm
                   unstash 'installer'
                   unstash 'smoke'
@@ -90,6 +90,17 @@ pipeline {
                     ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws-tls.tfvars
                     ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws-tls.tfvars
                     """
+                  }
+                  catchError {
+                    timeout (5) {
+                      sshagent(['aws-smoke-test-ssh-key']) {
+                        sh """#!/bin/bash
+                        # Running without -ex because we don't care if this fails
+                        . ${WORKSPACE}/tests/smoke/aws/smoke.sh common vars/aws-tls.tfvars
+                        ${WORKSPACE}/tests/smoke/aws/cluster-foreach.sh ${WORKSPACE}/tests/smoke/forensics.sh
+                        """
+                      }
+                    }
                   }
                   retry(3) {
                     timeout(15) {

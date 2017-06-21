@@ -211,6 +211,8 @@ main () {
     
     shift
     case $COMMAND in
+        common)
+            common "$@";;
         assume-role)
             assume_role "$@";;
         create)
