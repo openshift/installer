@@ -12,7 +12,7 @@
     "tectonic_cluster_cidr": "10.2.0.0/16",
     "tectonic_cluster_name": "my-cluster",
     "tectonic_dns_name": "",
-    "tectonic_experimental": true,
+    "tectonic_experimental": false,
     "tectonic_metal_cl_version": "1235.9.0",
     "tectonic_metal_controller_domain": "cluster.example.com",
     "tectonic_metal_controller_domains": [

@@ -60,10 +60,12 @@ module.exports = {
     certificateAuthorityPage.click('@nextStep');
 
     keysPage.selectSshKeys();
-    nodesPage.waitForElementVisible('@nextStep', 10000).click('@nextStep');
+    nodesPage.click('@etcdOption')
+      .waitForElementVisible('@nextStep', 10000)
+      .click('@nextStep');
     networkingPage.provideNetworkingDetails();
     consoleLoginPage.enterLoginCredentails();
-    submitPage.click('@manuallyBoot').click('@manuallyBoot');
+    submitPage.click('@manuallyBoot');
     client.pause(10000);
     client.getCookie('tectonic-installer', result => {
       tfvarsUtil.returnTerraformTfvars(client.launch_url, result.value, (err, actualJson) => {

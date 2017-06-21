@@ -4,6 +4,9 @@ const path = require('path');
 const awsJsonPath = path.join(__dirname, '..', '..', '__tests__', 'examples', 'aws.json');
 // eslint-disable-next-line no-sync
 const awsTestDatajson = JSON.parse(fs.readFileSync(awsJsonPath, 'utf8'));
+const awsProgressPath = path.join(__dirname, '..', '..', '__tests__', 'examples', 'tectonic-aws.progress');
+// eslint-disable-next-line no-sync
+const awsProgressData = JSON.parse(fs.readFileSync(awsProgressPath, 'utf8'));
 
 /** Returns expected json. This json is used to prep the data required for the test */
 const buildExpectedJson = () => {
@@ -27,6 +30,10 @@ const sshKeys = () => {
   const json = buildExpectedJson();
   json.tectonic_aws_ssh_key = 'tectonic-jenkins';
   return json.tectonic_aws_ssh_key;
+};
+
+const etcdOption = () => {
+  return awsProgressData.clusterConfig.etcdOption;
 };
 
 const clusterSubdomainName = () => {
@@ -58,4 +65,5 @@ module.exports = {
   clusterBaseDomainName,
   adminEmail,
   adminPassword,
+  etcdOption,
 };
