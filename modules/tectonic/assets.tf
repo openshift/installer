@@ -37,7 +37,7 @@ resource "template_dir" "tectonic" {
     alertmanager_version           = "${var.versions["alertmanager"]}"
     tectonic_version               = "${var.versions["tectonic"]}"
     etcd_version                   = "${var.versions["etcd"]}"
-    tectonic_etcd_operator_version = "${var.versions["tectonic_etcd_operator"]}"
+    tectonic_etcd_operator_version = "${element(split(":", var.container_images["tectonic_etcd_operator"]), 1)}"
 
     etcd_cluster_size = "${var.master_count > 2 ? 3 : 1}"
 

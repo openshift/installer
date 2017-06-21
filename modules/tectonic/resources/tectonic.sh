@@ -186,17 +186,18 @@ kubectl create -f updater/kube-version-operator.yaml
 kubectl create -f updater/tectonic-channel-operator.yaml
 kubectl create -f updater/tectonic-monitoring-config.yaml
 kubectl create -f updater/tectonic-prometheus-operator.yaml
-kubectl create -f updater/tectonic-etcd-operator.yaml
 wait_for_tpr tectonic-system channel-operator-config.coreos.com
 kubectl create -f updater/tectonic-channel-operator-config.yaml
 wait_for_tpr tectonic-system app-version.coreos.com
 kubectl create -f updater/app-version-tectonic-cluster.yaml
 kubectl create -f updater/app-version-kubernetes.yaml
 kubectl create -f updater/app-version-tectonic-monitoring.yaml
-kubectl create -f updater/app-version-tectonic-etcd.yaml
 
 if [ "$EXPERIMENTAL" = "true" ]; then
+  echo "Creating Experimental resources"
   kubectl apply -f etcd/cluster-config.yaml
+  kubectl create -f etcd/app-version-tectonic-etcd.yaml
+  kubectl create -f etcd/tectonic-etcd-operator.yaml
 fi
 
 echo "Creating Container Linux Updater"
