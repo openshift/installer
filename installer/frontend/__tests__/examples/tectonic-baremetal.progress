@@ -11,7 +11,6 @@
     "caPrivateKey": "",
     "clusterName": "my-cluster",
     "externalETCDClient": "",
-    "externalETCDEnabled": false,
     "masters": [
       {
         "mac": "52:54:00:a1:9c:ae",
