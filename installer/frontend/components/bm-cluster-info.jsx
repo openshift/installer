@@ -26,9 +26,8 @@ export const BM_ClusterInfo = () => {
           <p className="text-muted">Give this cluster a name that will help you identify it.</p>
         </div>
       </div>
-      <TectonicLicense />
-      <br />
       <ExperimentalFeatures />
+      <TectonicLicense />
     </div>
   );
 };
