@@ -8,7 +8,7 @@ def creds = [
   file(credentialsId: 'tectonic-license', variable: 'TF_VAR_tectonic_license_path'),
   file(credentialsId: 'tectonic-pull', variable: 'TF_VAR_tectonic_pull_secret_path'), [
     $class: 'UsernamePasswordMultiBinding',
-    credentialsId: 'tectonic-aws',
+    credentialsId: 'jenkins-tectonic-installer',
     usernameVariable: 'AWS_ACCESS_KEY_ID',
     passwordVariable: 'AWS_SECRET_ACCESS_KEY'
   ]
