@@ -60,11 +60,11 @@ common() {
     # Set the specified vars file
     TF_VARS_FILE=$1
     TEST_NAME=$(basename "$TF_VARS_FILE" | cut -d "." -f 1)
-    
+
     # Set required configuration
     CLUSTER="$TEST_NAME-$BRANCH_NAME-$BUILD_ID"
     MAX_LENGTH=28
-    
+
     LENGTH=${#CLUSTER}
     if [ "$LENGTH" -gt "$MAX_LENGTH" ]
     then
@@ -78,12 +78,12 @@ common() {
         CLUSTER="$CLUSTER${APPEND_STR:0:APPEND}"
         echo "Cluster name too short. Appended to $CLUSTER"
     fi
-    
+
     random_region
     CLUSTER=$(echo "${CLUSTER}" | awk '{print tolower($0)}')
     export CLUSTER
     export TF_VAR_tectonic_cluster_name=$CLUSTER
-    
+
     echo "selected region: $TF_VAR_tectonic_aws_region"
     echo "cluster name: $CLUSTER"
 
@@ -150,6 +150,34 @@ create_vpc() {
     popd
 }
 
+grafiti_clean() {
+  common "$1"
+
+  GRAFITI_VERSION="9f58d4a"
+
+  TMP_GRAFITI_CONFIG_DIR="${WORKSPACE}/tmg_grafiti_config"
+  TMP_CONFIG_FILE=$(mktemp -d -p "$TMP_GRAFITI_CONFIG_DIR")
+  cat <<EOF > $TMP_CONFIG_FILE
+[grafiti]
+region = "$AWS_REGION"
+EOF
+
+  TMP_TAG_FILE=$(mktemp -d -p "$TMP_GRAFITI_CONFIG_DIR")
+  cat <<EOF > $TMP_TAG_FILE
+{"TagFilters": [{"Key": "tectonicClusterID","Values": ["$CLUSTER"]}]}
+EOF
+
+  echo "Cleaning up ${CLUSTER}..."
+  docker run --rm --name "cluster-cleaner-${CLUSTER}" \
+    -v "$TMP_GRAFITI_CONFIG_DIR":/tmp/config:z \
+    -e CONFIG_FILE="/tmp/config/$(basename "$TMP_CONFIG_FILE")" \
+    -e TAG_FILE="/tmp/config/$(basename "$TMP_TAG_FILE")" \
+    quay.io/coreos/grafiti:"$GRAFITI_VERSION" \
+    ash -c "grafiti --ignore-errors --config \"\$CONFIG_FILE\" delete --silent --all-deps --delete-file \"\$TAG_FILE\""
+
+  rm -rf "$TMP_GRAFITI_CONFIG_DIR"
+}
+
 destroy_vpc() {
     common_vpc
     # Restore host DNS settings.
@@ -208,7 +236,7 @@ main () {
         usage
         exit 1
     fi
-    
+
     shift
     case $COMMAND in
         assume-role)
@@ -221,6 +249,8 @@ main () {
             destroy "$@";;
         destroy-vpc)
             destroy_vpc "$@";;
+        grafiti-clean)
+            grafiti_clean "$@";;
         plan)
             plan "$@";;
         set-role)
