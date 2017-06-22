@@ -205,6 +205,9 @@ tectonic_service_cidr = "10.3.0.0/16"
 // Example: `ssh-rsa AAAB3N...`
 tectonic_ssh_authorized_key = ""
 
+// The Tectonic statistics collection URL to which to report.
+tectonic_stats_url = "https://stats-collector.tectonic.com"
+
 // If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
 tectonic_vanilla_k8s = false
 

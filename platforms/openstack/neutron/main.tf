@@ -75,6 +75,7 @@ module "tectonic" {
   ingress_kind      = "HostPort"
   experimental      = "${var.tectonic_experimental}"
   master_count      = "${var.tectonic_master_count}"
+  stats_url         = "${var.tectonic_stats_url}"
 }
 
 module "etcd" {

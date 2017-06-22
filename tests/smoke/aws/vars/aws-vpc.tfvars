@@ -31,3 +31,5 @@ tectonic_aws_vpc_cidr_block = "10.0.0.0/16"
 tectonic_aws_external_vpc_public = false
 
 tectonic_aws_az_count = "2"
+
+tectonic_stats_url = "https://stats-collector-staging.tectonic.com"

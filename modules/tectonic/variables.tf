@@ -112,3 +112,8 @@ variable "master_count" {
   description = "The amount of master nodes present in the cluster."
   type        = "string"
 }
+
+variable "stats_url" {
+  description = "The statistics collection URL to which to report."
+  type        = "string"
+}

@@ -58,7 +58,7 @@ spec:
           - /spartakus
           - volunteer
           - --cluster-id=$(CLUSTER_ID)
-          - --database=https://stats-collector.tectonic.com
+          - --database=${stats_url}
           - --extensions=/etc/tectonic/stats/extensions
         env:
         - name: CLUSTER_ID

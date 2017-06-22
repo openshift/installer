@@ -28,6 +28,7 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_master_count | The number of master nodes to be created. This applies only to cloud platforms. | string | `1` |
 | tectonic_pull_secret_path | The path the pull secret file in JSON format.<br><br>Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`. | string | `` |
 | tectonic_service_cidr | This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. The maximum size of this IP range is /12 | string | `10.3.0.0/16` |
+| tectonic_stats_url | The Tectonic statistics collection URL to which to report. | string | `https://stats-collector.tectonic.com` |
 | tectonic_update_app_id | (internal) The Tectonic Omaha update App ID | string | `6bc7b986-4654-4a0f-94b3-84ce6feb1db4` |
 | tectonic_update_channel | (internal) The Tectonic Omaha update channel | string | `tectonic-1.6` |
 | tectonic_update_server | (internal) The URL of the Tectonic Omaha update server | string | `https://tectonic.update.core-os.net` |
