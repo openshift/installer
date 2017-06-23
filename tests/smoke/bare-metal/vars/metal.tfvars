@@ -139,3 +139,5 @@ tectonic_etcd_count = 0
 
 # Enable TLS for etcd
 tectonic_etcd_tls_enabled = true
+
+tectonic_stats_url = "https://stats-collector-staging.tectonic.com"

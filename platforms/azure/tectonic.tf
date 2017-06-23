@@ -62,6 +62,7 @@ module "tectonic" {
   ingress_kind      = "NodePort"
   experimental      = "${var.tectonic_experimental}"
   master_count      = "${var.tectonic_master_count}"
+  stats_url         = "${var.tectonic_stats_url}"
 }
 
 resource "null_resource" "tectonic" {
