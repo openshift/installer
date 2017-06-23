@@ -48,6 +48,6 @@ resource "aws_instance" "etcd_node" {
   root_block_device {
     volume_type = "${var.root_volume_type}"
     volume_size = "${var.root_volume_size}"
-    iops        = "${var.root_volume_type == "io1" ? var.root_volume_iops : 0}"
+    iops        = "${var.root_volume_type == "io1" ? var.root_volume_iops : 100}"
   }
 }
