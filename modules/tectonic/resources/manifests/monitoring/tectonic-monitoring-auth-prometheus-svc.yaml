@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tectonic-monitoring-auth-prometheus
+  namespace: tectonic-system
+  labels:
+    k8s-app: tectonic-monitoring-auth-prometheus
+spec:
+  type: ClusterIP
+  selector:
+    k8s-app: tectonic-monitoring-auth-prometheus
+  ports:
+  - name: http
+    port: 4180
+    targetPort: http

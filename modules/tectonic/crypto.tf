@@ -12,6 +12,10 @@ resource "random_id" "console_secret" {
   byte_length = 16
 }
 
+resource "random_id" "tectonic_monitoring_auth_cookie_secret" {
+  byte_length = 16
+}
+
 # Ingress' server certificate
 
 resource "tls_private_key" "ingress" {

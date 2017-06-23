@@ -10,6 +10,7 @@ spec:
   replicas: 1
   baseImage: ${element(split(":",prometheus_image),0)}
   version: ${prometheus_version}
+  externalUrl: ${prometheus_external_url}
   serviceAccountName: prometheus-k8s
   serviceMonitorSelector:
     matchExpression:

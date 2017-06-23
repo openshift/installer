@@ -4,7 +4,7 @@ metadata:
   name: tectonic-monitoring
   namespace: tectonic-system
 data:
-  alertmanager.rules: |+
+  config.yaml: |+
     prometheusOperator:
       baseImage: ${element(split(":",prometheus_operator_image),0)}
       prometheusConfigReloaderBaseImage: ${element(split(":",prometheus_config_reload_image),0)}
@@ -13,3 +13,5 @@ data:
       baseImage: ${element(split(":",prometheus_image),0)}
     alertmanagerMain:
       baseImage: ${element(split(":",alertmanager_image),0)}
+    ingress:
+      baseAddress: ${console_base_address}

@@ -10,6 +10,7 @@ spec:
   replicas: 2
   baseImage: ${element(split(":",alertmanager_image),0)}
   version: ${alertmanager_version}
+  externalUrl: ${prometheus_external_url}
   resources:
     requests:
       memory: 40Mi

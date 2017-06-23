@@ -31,6 +31,8 @@ data:
     - id: ${console_client_id}
       redirectURIs:
       - '${console_callback}'
+      - '${prometheus_callback}'
+      - '${alertmanager_callback}'
       name: 'Tectonic Console'
       secret: ${console_secret}
     - id: ${kubectl_client_id}

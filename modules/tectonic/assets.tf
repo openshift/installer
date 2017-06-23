@@ -22,6 +22,7 @@ resource "template_dir" "tectonic" {
     node_exporter_image                   = "${var.container_images["node_exporter"]}"
     kube_state_metrics_image              = "${var.container_images["kube_state_metrics"]}"
     prometheus_operator_image             = "${var.container_images["prometheus_operator"]}"
+    tectonic_monitoring_auth_image        = "${var.container_images["tectonic_monitoring_auth"]}"
     prometheus_image                      = "${var.container_images["prometheus"]}"
     prometheus_config_reload_image        = "${var.container_images["prometheus_config_reload"]}"
     alertmanager_image                    = "${var.container_images["alertmanager"]}"
@@ -57,6 +58,13 @@ resource "template_dir" "tectonic" {
     console_client_id    = "${var.console_client_id}"
     console_secret       = "${random_id.console_secret.b64}"
     console_callback     = "https://${var.base_address}/auth/callback"
+
+    tectonic_monitoring_auth_cookie_secret = "${base64encode(random_id.tectonic_monitoring_auth_cookie_secret.b64)}"
+
+    alertmanager_external_url = "https://${var.base_address}/alertmanager"
+    alertmanager_callback     = "https://${var.base_address}/alertmanager/auth/callback"
+    prometheus_external_url   = "https://${var.base_address}/prometheus"
+    prometheus_callback       = "https://${var.base_address}/prometheus/auth/callback"
 
     ingress_kind     = "${var.ingress_kind}"
     ingress_tls_cert = "${base64encode(tls_locally_signed_cert.ingress.cert_pem)}"
