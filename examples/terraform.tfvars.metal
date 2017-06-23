@@ -76,11 +76,9 @@ tectonic_etcd_count = "0"
 // Example: `["etcd1", "etcd2", "etcd3"]`
 // tectonic_etcd_servers = ""
 
-// (optional) If set to `true`, TLS secure communication for self-provisioned etcd.
-// If `tectonic_experimental` is set to `true` this variable has no effect,
-// because the experimental self-hosted etcd always uses TLS.
+// (optional) If set to `true`, TLS secure communication for self-provisioned etcd. will be used.
 // 
-// Note: This is variable has no effect if `tectonic_experimental` is set to `true`.
+// Note: If `tectonic_experimental` is set to `true` this variable has no effect, because the experimental self-hosted etcd always uses TLS.
 // tectonic_etcd_tls_enabled = true
 
 // If set to true, experimental Tectonic assets are being deployed.

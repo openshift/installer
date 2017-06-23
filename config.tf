@@ -130,9 +130,9 @@ variable "tectonic_etcd_tls_enabled" {
   default = true
 
   description = <<EOF
-(optional) If set to `true`, TLS secure communication for etcd will be used.
+(optional) If set to `true`, TLS secure communication for self-provisioned etcd. will be used.
 
-Note: This is variable has no effect if `tectonic_experimental` is set to `true`.
+Note: If `tectonic_experimental` is set to `true` this variable has no effect, because the experimental self-hosted etcd always uses TLS.
 EOF
 }
 
