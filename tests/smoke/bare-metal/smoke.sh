@@ -262,7 +262,7 @@ test_cluster() {
   MASTER_COUNT=$(grep tectonic_master_count "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}')
   WORKER_COUNT=$(grep tectonic_worker_count "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}')
   export NODE_COUNT=$(( MASTER_COUNT + WORKER_COUNT ))
-  bin/smoke -test.v -test.parallel=1
+  bin/smoke -test.v -test.parallel=1 --cluster
 }
 
 main "$@"
