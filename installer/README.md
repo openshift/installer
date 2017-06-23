@@ -28,8 +28,8 @@ Get a [license](https://account.coreos.com) and follow the guides to create Tect
 ## Build prerequisites
 
 - [Go 1.8](https://golang.org/doc/install)
-- [Nodejs >=6.x](https://nodejs.org/en/download/)
-- [Yarn >=0.20.x](https://yarnpkg.com/lang/en/docs/install/)
+- [Nodejs >=8.x](https://nodejs.org/en/download/)
+- [Yarn >=0.24.x](https://yarnpkg.com/lang/en/docs/install/)
 - The tectonic-installer repo must be located at `$GOPATH/src/github.com/coreos/tectonic-installer`
 
 ### Build / Run

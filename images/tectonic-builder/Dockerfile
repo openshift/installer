@@ -21,8 +21,8 @@ RUN go get github.com/coreos/license-bill-of-materials
 
 ### Install Terraform, NodeJS and Yarn
 ENV TERRAFORM_VERSION="0.9.6"
-ENV NODE_VERSION="v6.10.0"
-ENV YARN_VERSION="v0.21.3"
+ENV NODE_VERSION="v8.1.2"
+ENV YARN_VERSION="v0.24.6"
 # yarn needs a home writable by any user running the container
 ENV HOME /opt/home
 RUN mkdir -p ${HOME}
