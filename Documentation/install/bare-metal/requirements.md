@@ -18,22 +18,16 @@ Ensure DHCP, TFTP and DNS services are available on your network. CoreOS provide
 
 Familiarize yourself with PXE booting. Cluster nodes should PXE boot from the network and delegate to the `matchbox` service which serves configs to provision clusters. At a high level, you must:
 
-* Chainload PXE firmwares to iPXE
-* Point iPXE client machines to the `matchbox` iPXE HTTP endpoint (e.g. `http://matchbox.example.com:8080/boot.ipxe`)
+* Chainload PXE firmwares to iPXE.
+* Point iPXE client machines to the `matchbox` iPXE HTTP endpoint (e.g. `http://matchbox.example.com:8080/boot.ipxe`).
 
 ### DNS
 
 For best results, assign DNS names to each node. The following three records are required for Tectonic Installer:
 
-* A DNS name which resolves to the provisioner (e.g. `matchbox.example.com`)
-* A DNS name which resolves to any controller node (e.g. `k8s.example.com`)
-* A DNS name which resolves to any worker nodes (e.g. `tectonic.example.com`)
-
-### Machines
-
-* Know the MAC address and stable DNS name for each cluster node.
-* Configure cluster nodes to favor booting from disk. Be able to use IPMI to request a PXE boot.
-* Add a DNS name (and static IP) so that cluster nodes have stable names which can be used during cluster configuration (e.g. `node3.example.com`)
+* A DNS name which resolves to the provisioner (e.g. `matchbox.example.com`).
+* A DNS name which resolves to any controller node (e.g. `k8s.example.com`).
+* A DNS name which resolves to any worker nodes (e.g. `tectonic.example.com`).
 
 ### Egress whitelist
 
@@ -41,7 +35,11 @@ Cluster nodes must be able to pull docker images from [quay.io][quay.io] and gcr
 
 ## Machines
 
-A minimum of 3 machines are required to run Tectonic.
+A minimum of 3 machines are required to run Tectonic. To configure machines:
+
+* Know the MAC address and stable DNS name for each cluster node.
+* Configure cluster nodes to favor booting from disk. Be able to use IPMI to request a PXE boot.
+* Add a DNS name (and static IP) so that cluster nodes have stable names which can be used during cluster configuration (e.g. `node3.example.com`)
 
 ### Cluster nodes
 
