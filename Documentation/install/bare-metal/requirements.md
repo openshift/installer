@@ -1,12 +1,12 @@
-# Bare-Metal: Installation requirements
+# Bare Metal Installation requirements
 
 The Tectonic Installer creates bare-metal Tectonic clusters within networks with PXE infrastructure and the `matchbox` service.
 
-For more information about `matchbox`, reference the [`matchbox` documentation][matchbox].
+For more information about `matchbox`, refer to the [`matchbox` documentation][matchbox].
 
 ## Network
 
-Bare-metal Tectonic clusters are provisioned in a PXE network environment. Cluster nodes will PXE boot from the `matchbox` service running on a provisioner node. Familiarity with your network topology is required.
+Bare metal Tectonic clusters are provisioned in a PXE network environment. Cluster nodes will PXE boot from the `matchbox` service running on a provisioner node. Familiarity with your network topology is required.
 
 Tectonic bare metal clusters store credentials in `user-data`, and etcd peer to peer communication is not currently encrypted with TLS. To restrict access to sensitive information, provision bare metal machines within a trusted network and ensure that a firewall exists between cluster controllers and the public internet.
 
@@ -16,43 +16,39 @@ Ensure DHCP, TFTP and DNS services are available on your network. CoreOS provide
 
 ### PXE
 
-Familiarize yourself with PXE booting. Cluster nodes should PXE boot from the network and delegate to the `matchbox` service which serves configs to provision clusters. At a high level, you will need to:
+Familiarize yourself with PXE booting. Cluster nodes should PXE boot from the network and delegate to the `matchbox` service which serves configs to provision clusters. At a high level, you must:
 
-* Chainload PXE firmwares to iPXE
-* Point iPXE client machines to the `matchbox` iPXE HTTP endpoint (e.g. `http://matchbox.example.com:8080/boot.ipxe`)
+* Chainload PXE firmwares to iPXE.
+* Point iPXE client machines to the `matchbox` iPXE HTTP endpoint (e.g. `http://matchbox.example.com:8080/boot.ipxe`).
 
 ### DNS
 
-The installer will prompt for "Controller" and "Tectonic" DNS names. For the controller DNS name, add a record which resolves to the node you plan to use as a controller.
+For best results, assign DNS names to each node. The following three records are required for Tectonic Installer:
 
-By default, Tectonic Ingress runs as a [Kubernetes Daemon Set][daemonset] across workers. For the Tectonic DNS name, add a record which resolves to any node(s) you plan to use as workers.
-
-* Add a DNS name which resolves to the provisioner (e.g. `matchbox.example.com`)
-* Add a DNS name which resolves to any controller node (e.g. `k8s.example.com`)
-* Add a DNS name which resolves to any worker nodes (e.g. `tectonic.example.com`)
-
-### Machines
-
-* Know the MAC address and stable DNS name for each cluster node
-* Configure cluster nodes to favor booting from disk. Be able to use IPMI to request a PXE boot.
-* Add a DNS name (and static IP) so that cluster nodes have stable names which can be used during cluster configuration (e.g. `node3.example.com`)
+* A DNS name which resolves to the provisioner (e.g. `matchbox.example.com`).
+* A DNS name which resolves to any controller node (e.g. `k8s.example.com`).
+* A DNS name which resolves to any worker nodes (e.g. `tectonic.example.com`).
 
 ### Egress whitelist
 
-Cluster nodes will need to be able to pull docker images from [quay.io][quay.io] and gcr.io. Be sure to whitelist these domains.
+Cluster nodes must be able to pull docker images from [quay.io][quay.io] and gcr.io. Be sure to whitelist these domains. If you must whitelist by IP, run `dig quay.io` to list associated IP addresses.
 
 ## Machines
 
-A minimum of 3 machines are required to run Tectonic.
+A minimum of 3 machines are required to run Tectonic. To configure machines:
+
+* Know the MAC address and stable DNS name for each cluster node.
+* Configure cluster nodes to favor booting from disk. Be able to use IPMI to request a PXE boot.
+* Add a DNS name (and static IP) so that cluster nodes have stable names which can be used during cluster configuration (e.g. `node3.example.com`)
 
 ### Cluster nodes
 
 Tectonic clusters consist of two types of nodes:
 
-* Controller Nodes - Controller nodes run `etcd` and the control plane of the cluster.
-* Worker Nodes - Worker nodes run your applications. New worker nodes will join the cluster by talking to controller nodes for admission.
+* Controller Nodes: Controller nodes run `etcd` and the control plane of the cluster.
+* Worker Nodes: Worker nodes run your applications. New worker nodes will join the cluster by talking to controller nodes for admission.
 
-Each node should meet the following tech-specs.
+Each node should meet the following technical specs:
 
 | Requirement | Value                        |
 |-------------|------------------------------|
@@ -73,9 +69,9 @@ Client machines:
 * Pull images from Quay.io
 * Expose ports 8080, 443, 2379, and 2380 for etcd and Kubernetes services
 
-### Provisioner Node
+### Provisioner node
 
-A provisioner node (or Kubernetes cluster) runs the `matchbox` network boot and provisioning service, along with PXE services if you don't already run them elsewhere. You may use CoreOS or any Linux distribution for this node. It serves provisioning configs to nodes, but does not join Tectonic clusters.
+A provisioner node (or Kubernetes cluster) runs the `matchbox` network boot and provisioning service, along with PXE services if you don't already run them elsewhere. You may use CoreOS Container Linux or any Linux distribution for this node. It serves provisioning configs to nodes, but does not join Tectonic clusters.
 
 The provisioner must:
 
