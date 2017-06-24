@@ -62,3 +62,7 @@ spec:
       - name: var-run
         hostPath:
           path: /var/run
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate

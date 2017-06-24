@@ -21,7 +21,16 @@
       ]
     },
     "selfHosted": {
-      "bootMemberClientEndpoint": "http://${bootstrap_etcd_service_ip}:12379"
+      "bootMemberClientEndpoint": "https://${bootstrap_etcd_service_ip}:12379"
+    },
+    "TLS": {
+      "static": {
+        "member": {
+          "peerSecret": "etcd-member-peer-tls",
+          "clientSecret": "etcd-member-client-tls"
+        },
+        "operatorSecret": "etcd-operator-client-tls"
+      }
     }
   }
 }

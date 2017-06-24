@@ -16,14 +16,14 @@ variable "tectonic_container_images" {
   type        = "map"
 
   default = {
-    hyperkube                       = "quay.io/coreos/hyperkube:v1.6.4_coreos.0"
+    hyperkube                       = "quay.io/coreos/hyperkube:v1.6.6_coreos.1"
     pod_checkpointer                = "quay.io/coreos/pod-checkpointer:4e7a7dab10bc4d895b66c21656291c6e0b017248"
-    bootkube                        = "quay.io/coreos/bootkube:v0.4.4"
+    bootkube                        = "quay.io/coreos/bootkube:v0.4.5"
     console                         = "quay.io/coreos/tectonic-console:v1.7.0"
     identity                        = "quay.io/coreos/dex:v2.4.1"
     container_linux_update_operator = "quay.io/coreos/container-linux-update-operator:v0.2.1"
     kube_version_operator           = "quay.io/coreos/kube-version-operator:v1.6.4-kvo.3"
-    tectonic_channel_operator       = "quay.io/coreos/tectonic-channel-operator:0.3.4"
+    tectonic_channel_operator       = "quay.io/coreos/tectonic-channel-operator:0.3.5"
     node_agent                      = "quay.io/coreos/node-agent:787844277099e8c10d617c3c807244fc9f873e46"
     prometheus_operator             = "quay.io/coreos/prometheus-operator:v0.10.2"
     tectonic_monitoring_auth        = "quay.io/coreos/tectonic-monitoring-auth:v0.0.1"
@@ -39,14 +39,15 @@ variable "tectonic_container_images" {
     stats_emitter                   = "quay.io/coreos/tectonic-stats:6e882361357fe4b773adbf279cddf48cb50164c1"
     stats_extender                  = "quay.io/coreos/tectonic-stats-extender:487b3da4e175da96dabfb44fba65cdb8b823db2e"
     error_server                    = "quay.io/coreos/tectonic-error-server:1.0"
-    ingress_controller              = "gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.3"
-    kubedns                         = "gcr.io/google_containers/k8s-dns-kube-dns-amd64:1.14.1"
-    kubednsmasq                     = "gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.1"
-    kubedns_sidecar                 = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.1"
+    ingress_controller              = "gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.8"
+    kubedns                         = "gcr.io/google_containers/k8s-dns-kube-dns-amd64:1.14.2"
+    kubednsmasq                     = "gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.2"
+    kubedns_sidecar                 = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.2"
     flannel                         = "quay.io/coreos/flannel:v0.7.1-amd64"
-    etcd                            = "quay.io/coreos/etcd:v3.1.6"
-    etcd_operator                   = "quay.io/coreos/etcd-operator:v0.3.2"
-    kenc                            = "quay.io/coreos/kenc:48b6feceeee56c657ea9263f47b6ea091e8d3035"
+    flannel_cni                     = "quay.io/coreos/flannel-cni:0.1.0"
+    etcd                            = "quay.io/coreos/etcd:v3.1.8"
+    etcd_operator                   = "quay.io/coreos/etcd-operator:v0.3.3"
+    kenc                            = "quay.io/coreos/kenc:8f6e2e885f790030fbbb0496ea2a2d8830e58b8f"
     awscli                          = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
     kube_version                    = "quay.io/coreos/kube-version:0.1.0"
     tectonic_etcd_operator          = "quay.io/coreos/tectonic-etcd-operator:v0.0.1"
@@ -58,12 +59,12 @@ variable "tectonic_versions" {
   type        = "map"
 
   default = {
-    etcd         = "3.1.7"
+    etcd         = "3.1.8"
     prometheus   = "v1.7.1"
     alertmanager = "v0.7.1"
     monitoring   = "1.3.0"
-    kubernetes   = "1.6.4+tectonic.1"
-    tectonic     = "1.6.4-tectonic.1"
+    kubernetes   = "1.6.6+tectonic.1"
+    tectonic     = "1.6.6-tectonic.1"
   }
 }
 
@@ -129,9 +130,9 @@ variable "tectonic_etcd_tls_enabled" {
   default = true
 
   description = <<EOF
-(optional) If set to `true`, TLS secure communication for etcd will be used.
+(optional) If set to `true`, TLS secure communication for self-provisioned etcd. will be used.
 
-Note: This is variable has no effect if `tectonic_experimental` is set to `true`.
+Note: If `tectonic_experimental` is set to `true` this variable has no effect, because the experimental self-hosted etcd always uses TLS.
 EOF
 }
 
@@ -149,7 +150,7 @@ EOF
 
 variable "tectonic_etcd_client_cert_path" {
   type    = "string"
-  default = ""
+  default = "/dev/null"
 
   description = <<EOF
 (optional) The path of the file containing the client certificate for TLS communication with etcd.
@@ -161,7 +162,7 @@ EOF
 
 variable "tectonic_etcd_client_key_path" {
   type    = "string"
-  default = ""
+  default = "/dev/null"
 
   description = <<EOF
 (optional) The path of the file containing the client key for TLS communication with etcd.

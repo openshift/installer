@@ -12,13 +12,31 @@ spec:
     command:
     - /usr/local/bin/etcd
     - --name=boot-etcd
-    - --listen-client-urls=http://0.0.0.0:12379
-    - --listen-peer-urls=http://0.0.0.0:12380
-    - --advertise-client-urls=http://${bootstrap_etcd_service_ip}:12379
-    - --initial-advertise-peer-urls=http://${bootstrap_etcd_service_ip}:12380
-    - --initial-cluster=boot-etcd=http://${bootstrap_etcd_service_ip}:12380
+    - --listen-client-urls=https://0.0.0.0:12379
+    - --listen-peer-urls=https://0.0.0.0:12380
+    - --advertise-client-urls=https://${bootstrap_etcd_service_ip}:12379
+    - --initial-advertise-peer-urls=https://${bootstrap_etcd_service_ip}:12380
+    - --initial-cluster=boot-etcd=https://${bootstrap_etcd_service_ip}:12380
     - --initial-cluster-token=bootkube
     - --initial-cluster-state=new
     - --data-dir=/var/etcd/data
+    - --peer-client-cert-auth=true
+    - --peer-trusted-ca-file=/etc/kubernetes/secrets/operator/etcd-ca-crt.pem
+    - --peer-cert-file=/etc/kubernetes/secrets/peer/etcd-peer.crt
+    - --peer-key-file=/etc/kubernetes/secrets/peer/etcd-peer.key
+    - --client-cert-auth=true
+    - --trusted-ca-file=/etc/kubernetes/secrets/operator/etcd-ca-crt.pem
+    - --cert-file=/etc/kubernetes/secrets/operator/etcd-crt.pem
+    - --key-file=/etc/kubernetes/secrets/operator/etcd-key.pem
+    volumeMounts:
+    - mountPath: /etc/kubernetes/secrets
+      name: secrets
+      readOnly: true
   hostNetwork: true
+  dnsPolicy: ClusterFirstWithHostNet
   restartPolicy: Never
+  dnsPolicy: ClusterFirstWithHostNet
+  volumes:
+  - name: secrets
+    hostPath:
+      path: /etc/kubernetes/bootstrap-secrets

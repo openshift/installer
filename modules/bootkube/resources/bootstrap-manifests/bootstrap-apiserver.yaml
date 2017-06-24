@@ -54,3 +54,7 @@ spec:
   - name: var-lock
     hostPath:
       path: /var/lock
+  updateStrategy:
+    rollingUpdate:
+    maxUnavailable: 1
+    type: RollingUpdate

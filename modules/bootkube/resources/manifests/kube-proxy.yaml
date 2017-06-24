@@ -23,7 +23,7 @@ spec:
       - name: kube-proxy
         image: ${hyperkube_image}
         command:
-        - /hyperkube
+        - ./hyperkube
         - proxy
         - --kubeconfig=/etc/kubernetes/kubeconfig
         - --proxy-mode=iptables
@@ -57,3 +57,7 @@ spec:
       - name: etc-kubernetes
         hostPath:
           path: /etc/kubernetes
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
