@@ -57,7 +57,7 @@
     "deep-diff": "0.3.x",
     "eslint": "2.x",
     "eslint-plugin-react": "5.x",
-    "jest-cli": "18.x",
+    "jest-cli": "20.x",
     "jszip": "3.x",
     "nightwatch": "0.9.x",
     "request": "2.x",
