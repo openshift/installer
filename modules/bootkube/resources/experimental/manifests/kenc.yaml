@@ -54,5 +54,5 @@ spec:
           path: /var/lock
   updateStrategy:
     rollingUpdate:
-    maxUnavailable: 1
+      maxUnavailable: 1
     type: RollingUpdate
