@@ -94,13 +94,6 @@ func terraformApplyHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 }
 
 func terraformStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Context) error {
-	// Read the input from the request's body.
-	input := struct {
-		TectonicDomain string `json:"tectonicDomain"`
-	}{}
-	if err := json.NewDecoder(req.Body).Decode(&input); err != nil {
-		return newBadRequestError("Could not unmarshal input: %s", err)
-	}
 	defer req.Body.Close()
 
 	// Restore the execution environment from the session.
@@ -122,15 +115,13 @@ func terraformStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Conte
 
 	// Return results.
 	response := struct {
-		Status          string                 `json:"status"`
-		Output          string                 `json:"output,omitempty"`
-		Error           string                 `json:"error,omitempty"`
-		Action          string                 `json:"action"`
-		TectonicConsole tectonic.ServiceStatus `json:"tectonicConsole"`
+		Status string `json:"status"`
+		Output string `json:"output,omitempty"`
+		Error  string `json:"error,omitempty"`
+		Action string `json:"action"`
 	}{
-		Status:          string(status),
-		Output:          string(outputBytes),
-		TectonicConsole: tectonic.ConsoleHealth(nil, input.TectonicDomain),
+		Status: string(status),
+		Output: string(outputBytes),
 	}
 	action := session.Values["action"]
 	if action != nil {
