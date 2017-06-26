@@ -12,6 +12,7 @@ export const configActionTypes = {
   SET_IN: 'CONFIG_ACTION_SET_IN',
   BATCH_SET_IN: 'CONFIG_ACTION_BATCH_SET_IN',
   MERGE: 'CONFIG_ACTION_MERGE',
+  RESET: 'CONFIG_ACTION_RESET',
 };
 
 export const clusterReadyActionTypes = {
@@ -68,6 +69,7 @@ export const commitPhases = {
 const FIELDS = {};
 const FIELD_TO_DEPS = {};
 const FIELD_TO_FORM = {};
+export const FORMS = {};
 
 // TODO (ggreer) standardize on order of params. is dispatch first or last?
 export const configActions = {
@@ -109,8 +111,18 @@ export const configActions = {
       throw new Error(`${name} has no field`);
     }
 
-    field.update(dispatch, inputValue, getState, FIELDS, FIELD_TO_DEPS, split);
+    return field.update(dispatch, inputValue, getState, FIELDS, FIELD_TO_DEPS, split);
   },
+};
+
+export const __deleteEverything__ = () => {
+  [FIELDS, FIELD_TO_DEPS, FIELD_TO_FORM, FORMS, DEFAULT_CLUSTER_CONFIG]
+    .forEach(o => _.keys(o).forEach(k => delete o[k]));
+
+  ["error", "error_async", "ignore", "inFly", "extra"]
+    .forEach(k => DEFAULT_CLUSTER_CONFIG[k] = {});
+
+  return {type: configActionTypes.RESET};
 };
 
 export const validateAllFields = cb => async (dispatch, getState) => {
@@ -127,7 +139,6 @@ export const validateAllFields = cb => async (dispatch, getState) => {
     const { clusterConfig } = getState();
     // we must update ignores before validation... because validation depends on it
     field.ignoreWhen(dispatch, clusterConfig);
-
     // TODO: (kans) this is bad
     await field.getExtraStuff(dispatch, clusterConfig, FIELDS, 0);
     await field.validate(dispatch, getState, initialCC, 0);
@@ -163,11 +174,9 @@ const addDep = (field, dep) => {
     FIELD_TO_DEPS[dep] = [field];
     return;
   }
-
   FIELD_TO_DEPS[dep].push(field);
 };
 
-export const FORMS = {};
 export const registerForm = (form, fields) => {
   const formName = form.id;
 
