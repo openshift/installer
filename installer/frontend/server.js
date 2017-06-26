@@ -34,7 +34,7 @@ export const observeClusterStatus = (dispatch, getState) => {
 
   const opts = {
     credentials: 'same-origin',
-    body: JSON.stringify({tectonicDomain}),
+    body: '',
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -57,7 +57,45 @@ export const observeClusterStatus = (dispatch, getState) => {
     }
     return dispatch({type: ERROR, payload});
   })
-  .catch(err => console.error(err) || err);
+    .catch(err => console.error(err) || err);
+};
+
+export const observeTectonicStatus = (dispatch, getState) => {
+  const cc = getState().clusterConfig;
+  const tectonicDomain = getTectonicDomain(cc);
+  const platform = _.get(cc, PLATFORM_TYPE);
+
+  if (!isTerraform(platform)) {
+    // TODO: Find out what to do in this case
+    return;
+  }
+  const url = '/tectonic/status';
+  const opts = {
+    credentials: 'same-origin',
+    body: JSON.stringify({tectonicDomain}),
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+  };
+
+  return fetch(url, opts).then(response => {
+    if (response.status === 404) {
+      dispatch({type: NOT_READY});
+      return;
+    }
+    if (response.ok) {
+      return response.json().then(payload => dispatch({type: STATUS, payload}));
+    }
+    return response.text().then(payload => dispatch({type: ERROR, payload}));
+  }, payload => {
+    if (payload instanceof TypeError) {
+      payload = `${payload.message}. Is the installer running?`;
+    }
+    return dispatch({type: ERROR, payload});
+  })
+    .catch(err => console.error(err) || err);
 };
 
 const platformToFunc = {
@@ -73,7 +111,7 @@ const platformToFunc = {
   },
 };
 
-let observeInterval;
+let observeIntervals = [];
 
 // An action creator that builds a server message, calls fetch on that message, fires the appropriate actions
 export const commitToServer = (dryRun=false, retry=false, opts={}) => (dispatch, getState) => {
@@ -98,18 +136,20 @@ export const commitToServer = (dryRun=false, retry=false, opts={}) => (dispatch,
     method: 'POST',
     body: JSON.stringify(body),
   })
-  .then(
-    response => response.ok ?
-      response.blob().then(payload => {
-        observeClusterStatus(dispatch, getState);
-        if (!observeInterval) {
-          observeInterval = setInterval(() => observeClusterStatus(dispatch, getState), 10000);
-        }
-        return dispatch({payload, type: COMMIT_SUCCESSFUL});
-      }) :
-      response.text().then(payload => dispatch({payload, type: COMMIT_FAILED}))
-  , payload => dispatch({payload, type: COMMIT_FAILED}))
-  .catch(err => console.error(err));
+    .then(
+      response => response.ok ?
+        response.blob().then(payload => {
+          observeClusterStatus(dispatch, getState);
+          observeTectonicStatus(dispatch, getState);
+          if (!observeIntervals || observeIntervals.length === 0) {
+            observeIntervals.push(setInterval(() => observeClusterStatus(dispatch, getState), 10000));
+            observeIntervals.push(setInterval(() => observeTectonicStatus(dispatch, getState), 10000));
+          }
+          return dispatch({payload, type: COMMIT_SUCCESSFUL});
+        }) :
+        response.text().then(payload => dispatch({payload, type: COMMIT_FAILED}))
+      , payload => dispatch({payload, type: COMMIT_FAILED}))
+    .catch(err => console.error(err));
 
   return dispatch({
     type: COMMIT_SENT,
