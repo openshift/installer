@@ -122,6 +122,8 @@ const reducersTogether = combineReducers({
     }
 
     switch (action.type) {
+    case configActionTypes.RESET:
+      return {};
     case configActionTypes.SET:
       Object.keys(action.payload).forEach(k => {
         if (!DEFAULT_CLUSTER_CONFIG.hasOwnProperty(k)) {
