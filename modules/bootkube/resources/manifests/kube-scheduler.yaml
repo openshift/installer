@@ -6,8 +6,6 @@ metadata:
   labels:
     tier: control-plane
     k8s-app: kube-scheduler
-  annotations:
-    scheduler.alpha.kubernetes.io/critical-pod: ""
 spec:
   replicas: ${master_count}
   template:
@@ -16,6 +14,8 @@ spec:
         tier: control-plane
         k8s-app: kube-scheduler
         pod-anti-affinity: kube-scheduler-${tectonic_version}
+      annotations:
+        scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
       affinity:
         podAntiAffinity:
