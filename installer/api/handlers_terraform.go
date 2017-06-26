@@ -258,7 +258,7 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 	}
 
 	// Add variables and the required environment variables.
-	if variables, err := json.Marshal(input.Variables); err == nil {
+	if variables, err := json.MarshalIndent(input.Variables, "", "  "); err == nil {
 		ex.AddVariables(variables)
 	} else {
 		return nil, newBadRequestError("Could not marshal TerraForm variables: %s", err)
