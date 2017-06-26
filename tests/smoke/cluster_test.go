@@ -106,8 +106,8 @@ func getIdentityLogs(t *testing.T) error {
 }
 
 func testGetIdentityLogs(t *testing.T) {
-	max := 3 * time.Minute
-	err := retry(getIdentityLogs, t, 3*time.Second, max)
+	max := 10 * time.Minute
+	err := retry(getIdentityLogs, t, 15*time.Second, max)
 	if err != nil {
 		t.Fatalf("Failed to gather identity logs in %v.", max)
 	}
