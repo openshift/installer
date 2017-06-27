@@ -7,6 +7,15 @@ EOF
   default = "1.0"
 }
 
+variable "tectonic_image_re" {
+  description = <<EOF
+(internal) Regular expression used to extract repo and tag components
+EOF
+
+  type    = "string"
+  default = "/^([^/]+/[^/]+/[^/]+):(.*)$/"
+}
+
 terraform {
   required_version = ">= 0.9.6"
 }

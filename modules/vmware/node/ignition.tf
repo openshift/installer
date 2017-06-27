@@ -68,9 +68,9 @@ data "template_file" "kubelet-env" {
   template = "${file("${path.module}/resources/services/kubelet-env.service")}"
 
   vars {
-    kube_version_image_url = "${element(split(":", var.container_images["kube_version"]), 0)}"
-    kube_version_image_tag = "${element(split(":", var.container_images["kube_version"]), 1)}"
-    kubelet_image_url      = "${element(split(":", var.container_images["hyperkube"]), 0)}"
+    kube_version_image_url = "${replace(var.container_images["kube_version"],var.image_re,"$1")}"
+    kube_version_image_tag = "${replace(var.container_images["kube_version"],var.image_re,"$2")}"
+    kubelet_image_url      = "${replace(var.container_images["hyperkube"],var.image_re,"$1")}"
   }
 }
 

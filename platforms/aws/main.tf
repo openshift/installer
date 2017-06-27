@@ -98,6 +98,7 @@ module "ignition-masters" {
   tectonic_service          = "${module.tectonic.systemd_service}"
   tectonic_service_disabled = "${var.tectonic_vanilla_k8s}"
   cluster_name              = "${var.tectonic_cluster_name}"
+  image_re                  = "${var.tectonic_image_re}"
 }
 
 module "masters" {
@@ -144,6 +145,7 @@ module "ignition-workers" {
   bootkube_service       = ""
   tectonic_service       = ""
   cluster_name           = ""
+  image_re               = "${var.tectonic_image_re}"
 }
 
 module "workers" {

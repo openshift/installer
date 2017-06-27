@@ -55,9 +55,9 @@ data "template_file" "kubelet-env" {
   template = "${file("${path.module}/resources/services/kubelet-env.service")}"
 
   vars {
-    kube_version_image_url = "${element(split(":", var.container_images["kube_version"]), 0)}"
-    kube_version_image_tag = "${element(split(":", var.container_images["kube_version"]), 1)}"
-    kubelet_image_url      = "${element(split(":", var.container_images["hyperkube"]), 0)}"
+    kube_version_image_url = "${replace(var.container_images["kube_version"],var.image_re,"$1")}"
+    kube_version_image_tag = "${replace(var.container_images["kube_version"],var.image_re,"$2")}"
+    kubelet_image_url      = "${replace(var.container_images["hyperkube"],var.image_re,"$1")}"
     kubeconfig_s3_location = "${var.kubeconfig_s3_location}"
   }
 }
@@ -113,8 +113,8 @@ data "template_file" "init-assets" {
     cluster_name       = "${var.cluster_name}"
     awscli_image       = "${var.container_images["awscli"]}"
     assets_s3_location = "${var.assets_s3_location}"
-    kubelet_image_url  = "${element(split(":", var.container_images["hyperkube"]), 0)}"
-    kubelet_image_tag  = "${element(split(":", var.container_images["hyperkube"]), 1)}"
+    kubelet_image_url  = "${replace(var.container_images["hyperkube"],var.image_re,"$1")}"
+    kubelet_image_tag  = "${replace(var.container_images["hyperkube"],var.image_re,"$2")}"
   }
 }
 

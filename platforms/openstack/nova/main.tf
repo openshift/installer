@@ -81,8 +81,8 @@ module "tectonic" {
 
 data "null_data_source" "local" {
   inputs = {
-    kube_image_url = "${element(split(":", var.tectonic_container_images["hyperkube"]), 0)}"
-    kube_image_tag = "${element(split(":", var.tectonic_container_images["hyperkube"]), 1)}"
+    kube_image_url = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$1")}"
+    kube_image_tag = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$2")}"
   }
 }
 

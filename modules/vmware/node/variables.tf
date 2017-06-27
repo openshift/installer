@@ -124,3 +124,11 @@ variable "kubeconfig" {
   type        = "string"
   description = "Contents of Kubeconfig"
 }
+
+variable "image_re" {
+  description = <<EOF
+(internal) Regular expression used to extract repo and tag components from image strings
+EOF
+
+  type = "string"
+}
