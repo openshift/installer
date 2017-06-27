@@ -27,7 +27,7 @@ def builder_image = 'quay.io/coreos/tectonic-builder:v1.22'
 pipeline {
   agent none
   options {
-    timeout(time:60, unit:'MINUTES')
+    timeout(time:70, unit:'MINUTES')
     timestamps()
     buildDiscarder(logRotator(numToKeepStr:'100'))
   }
@@ -83,7 +83,7 @@ pipeline {
                   checkout scm
                   unstash 'installer'
                   unstash 'smoke'
-                  timeout(30) {
+                  timeout(35) {
                     sh """#!/bin/bash -ex
                     . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
                     ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-tls.tfvars
@@ -169,7 +169,7 @@ pipeline {
                   checkout scm
                   unstash 'installer'
                   unstash 'smoke'
-                  timeout(40) {
+                  timeout(45) {
                     sh """#!/bin/bash -ex
                     . ${WORKSPACE}/tests/smoke/aws/smoke.sh create-vpc
                     ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-vpc.tfvars
@@ -189,7 +189,7 @@ pipeline {
               unstash 'installer'
               unstash 'smoke'
               withCredentials(creds) {
-                timeout(30) {
+                timeout(35) {
                   sh """#!/bin/bash -ex
                   ${WORKSPACE}/tests/smoke/bare-metal/smoke.sh vars/metal.tfvars
                   """
