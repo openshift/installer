@@ -309,7 +309,7 @@
     },
     {
       "name": "tectonic-etcd",
-      "version": "v0.0.1"
+      "version": "0.0.1"
     },
     {
       "name": "tectonic-monitoring",
