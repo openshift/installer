@@ -1,8 +1,6 @@
 #!/bin/bash
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-# shellcheck disable=SC1090
-source "${DIR}/awsutil.sh"
 
 # A script that uploads the payload.json to aws s3 bucket, and
 # create a new package on the core update server.
@@ -68,10 +66,8 @@ PAYLOAD_URL="https://s3-us-west-2.amazonaws.com/${BUCKET}/${DESTINATION}"
 
 echo "Uploading payload to \"${PAYLOAD_URL}\", version: \"${VERSION}\""
 
-# shellcheck disable=SC2086,SC2154
-aws_upload_file ${payload} ${DESTINATION} ${BUCKET} application/json
-# shellcheck disable=SC2086,SC2154
-aws_upload_file ${payload}.sig ${DESTINATION}.sig ${BUCKET} application/pgp-signature
+aws s3 cp "${payload}" "s3://${BUCKET}/${DESTINATION}"
+aws s3 cp "${payload}.sig" "s3://${BUCKET}/${DESTINATION}.sig"
 
 SERVER=${SERVER:-"https://tectonic.update.core-os.net"}
 APPID=${APPID:-"6bc7b986-4654-4a0f-94b3-84ce6feb1db4"}
