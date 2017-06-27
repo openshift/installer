@@ -1,16 +1,22 @@
 # Installing Tectonic workers on Red Hat Enterprise Linux
 
-The flexibility and ease of adding drivers to Red Hat Enterprise Linux allows Kubernetes worker components to be deployed with specialized workloads and hardware. This guide describes using Tectonic Installer to launch these components on a RHEL environment.
+Tectonic Installer creates two types of nodes when deploying a Kubernetes cluster: worker nodes (which execute containers), and master nodes (which handle cluster management tasks, and include the API server).
+
+In large scale clusters, worker nodes may hold containers running several different types of applications. The flexibility and ease of adding drivers to Red Hat Enterprise Linux allows Kubernetes worker components to be deployed with specialized workloads and hardware.
+
+If you have not yet created a cluster, use [CoreOS Container Linux][container-linux] as the operating system for the deployment. Then, use Tectonic Installer to deploy a cluster on [bare metal][bare-install] (or [AWS][aws-install]). When defining nodes for the cluster, set the worker node count to 0.
+
+Once the cluster is deployed, follow this guide to use Tectonic Installer to launch worker nodes on a RHEL environment.
 
 ## Architecture
 
-### Deployment Ideology
+### Deployment
 
 Deployment of Tectonic workers atop Red Hat Enterprise Linux is modeled after the traditional methods of installing software on RHEL. It is expected that users will be familiar with the Red Hat package management system, RPM, as well as its common transport mechanism, YUM/DNF.
 
-Like other Red Hat infrastructure deployments, technical steps may be performed according to user preference. This deployment may be manually executed (as described in this guide), orchestrated through Kickstart/Anaconda, or using other orchestration/configuration management systems like Ansible.
+Installation may be performed using any standard Red Hat infrastructure deployment techniques, including Kickstart/Anaconda, or other orchestration/configuration management systems like Ansible. This guide describes manual execution.
 
-### Execution Ideology
+### Execution
 
 While the *installation* of the Tectonic worker components is designed to fit within a traditional Red Hat focused environment, the *execution* of the binaries are intended to mirror that of CoreOS Container Linux. As such, a utility called `kubelet-wrapper` will spin up a copy of `hyperkube` inside `rkt`. This containerized Kubernetes binary reads its configuration from a combination of configuration files managed by both the administrator and by CoreOS. CoreOS managed files are deployed either in RPM files or via Tectonic operators. When files are deployed via RPM, local overrides are possible (but discouraged). For files deployed via the Tectonic operators, the entire lifecycle is expected to be managed by the Tectonic platform.
 
@@ -24,13 +30,13 @@ Deploy RHEL. Any standard deployment technique may be used, including an optical
 
 ### Enable "extras" repo
 
-Once basic installation of a host is complete, ensure that the additional Red Hat Enterprise Linux repository `extras` is included. For users of `subscription-manager` this can completed with the command:
+Once basic installation of a host is complete, ensure that the additional Red Hat Enterprise Linux repository `extras` is included. Use `subscription-manager` to include the repo:
 
 ```
 $ subscription-manager repos --enable=rhel-7-server-extras-rpms
 ```
 
-For users not leveraging subscription-manager, ensure that the correct URL for the mirror of extras that is to be used is placed in the corresponding file in `/etc/yum.repos.d` and set to `enabled`.
+If `subscription-manager` is not in use, ensure that the correct URL for the mirror of extras that is to be used is placed in the corresponding file in `/etc/yum.repos.d` and set to `enabled`.
 
 ### Install the `tectonic-release` RPM
 
@@ -132,7 +138,7 @@ It will take a number of minutes for the worker to retrieve the relevant assets 
 $ journalctl -u kubelet.service
 ```
 
-NOTE: PolicyKit requires the user to be in a relevant group with access to the journal. By default, Red Hat provides the groups `adm` and `systemd-journal` for this purpose. The command may also be run as the root user.
+Note: PolicyKit requires the user to be in a relevant group with access to the journal. By default, Red Hat provides the groups `adm` and `systemd-journal` for this purpose. The command may also be run as the root user.
 
 To ensure the service starts on each boot run the command:
 
@@ -142,15 +148,16 @@ $ systemctl enable kubelet.service
 
 ### SELinux
 
-A policy allowing the Tectonic Worker has not yet been completed, therefore users must run SELinux in Permissive mode. The ability to run in Enforcing mode may be completed in the future.
+To allow the Tectonic worker, run SELinux in Permissive mode. Running in Enforcing mode will block permissions for worker nodes.
 
-
-## Troubleshooting
 
 [rhel-install]: https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Installation_Guide/index.html
 [tectonic-installer]: https://github.com/coreos/tectonic-installer
 [jq-util]: https://stedolan.github.io/jq/
 [flannel-repo]: https://github.com/coreos/flannel
 [k8s-networking]: https://coreos.com/kubernetes/docs/latest/kubernetes-networking.html
+[container-linux]: https://coreos.com/os/docs/latest
+[aws-install]: https://coreos.com/tectonic/docs/latest/tutorials/installing-tectonic.html
+[bare-install]: https://github.com/coreos/tectonic-installer/blob/master/Documentation/install/bare-metal/metal-terraform.md
 <!-- vim: ts=2 sw=2 tw=80 expandtab:
 -->
