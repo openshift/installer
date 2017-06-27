@@ -1,92 +1,187 @@
-## Platform Stability
+## Platform Stability Lifecycle
 
-Each platform is marked as either pre-alpha, alpha, beta, or stable. This document outlines the rough criteria for each.
+Each platform is marked as either Pre-Alpha, Alpha, Beta, or Stable. This document outlines the rough criteria for each.
+Each lifecycle phase is cumulative and assumes all previous phase criteria are included.
+
 
 ### Pre-Alpha
 
-*Requirements*
+Initial platform assets are added to this repository and are undergoing active development.
 
-- Initial static Terraform assets are added to this repo and underging active development
-- No installer integration
+*Feature Requirements*
+
+- None
+
+*Intended Usage*
+
+- Developer workflows
+
+*Suitable Environments*
+
+- Developer sandbox
+
+*Testing*
+
+- Manual developer testing
 
 *Packaging*
 
 - None
 
-*User Flow*
+*Support*
 
-Development workflows only
+- None
+
+*Updates Supported*
+
+- No
+
+*Docs*
+
+- None
+
 
 ### Alpha
 
-- Manually tested and can reliably produce minimally functioning clusters
-  - Kuberntes API works
-  - Authenticated Tectonic Console works
+Can reliably produce minimally functioning clusters with manual testing.
+
+*Feature Requirements*
+
+- Kubernetes API works
+- Authenticated Tectonic Console works
+- All Kubernetes and Tectonic components function consistently
+
+*Intended Usage*
+
+- Developer workflows
+
+*Suitable Environments*
+
+- Developer sandbox
+- Testing in select environments
+
+*Testing*
+
+- Smoke tests pass for one common configuration for all supported releases
+- Smoke tests are integrated into testing framework and _can be_ run on pull requests
 
 *Packaging*
 
-- Assets are packaged into the official Tectonic Installer tarball with every Tectonic release.
+- None
 
-*User Flow*
+*Support*
 
-1. Manually create `terraform.tfvars` file
-1. Use static Terraform assets contained in installer tarball
-1. Manually run Terraform
+- Informal
+
+*Updates Supported*
+
+- No
+
+*Docs*
+
+- Basic developer usage documentation
+  - README
+  - General usage
+  - Platform caveats
+- Variable documentation is auto-generated
+- Example tfvars file is auto-generated
 
 
 ### Beta
 
-*Requirements*
+*Feature Requirements*
 
-- Best practices for platform implemented
-  - Network security
-  - Automated testing results are published
-  - DNS & Load Balancing
+- Best practices implemented for platform:
+  - Network Security
+  - DNS
+  - Load Balancing
   - Generates HA / Multi-AZ infrastructure
-- Automated testing results are published
-  - Kubernetes e2e and conformance tests pass
-  - Tectonic smoke tests work
-- Cloud Provider enabled for the platform
-- Tectonic automated updates work
-- README documents all customizations
-- Two documented platform users
+- Cloud Provider enabled for the platform (if applicable)
+
+*Intended Usage*
+
+- Developer workflows
+- CLI-based install from official release package
+
+*Suitable Environments*
+
+- Developer sandboxes
+- Development environments
+- Pre-production
+
+*Testing*
+
+- Smoke, Kubernetes conformance, and Tectonic integration tests are automated to run nightly on master for 3 most common configurations (using appropriate cloud-provider if applicable)
+- Smoke, Kubernetes conformance, and Tectonic integration tests pass for 3 most common configurations for all supported releases (using appropriate cloud-provider if applicable)
 
 *Packaging*
 
-- Assets are packaged into the official Tectonic Installer tarball with every Tectonic release.
-- (Optional) Installer UI is built to guide user through the configuration process.
+- Assets are packaged into each official Tectonic Installer release
 
-*User Flow*
+*Support*
 
-1. Use GUI installer to generate `terraform.tfvars` file, or manually create it.
-1. Use static Terraform assets contained in installer tarball
-1. Manually run terraform
+- Formal for paying customers
+- Informal for non-paying customers
+
+*Updates Supported*
+
+- Best effort
+
+*Docs*
+
+- User-facing documentation is committed, and covers all topics:
+  - installation requirements
+  - installation
+  - troubleshooting
+  - un-installation
+  - all available customizations
 
 
 ### Stable
 
+
 *Requirements*
 
-- Automated tests pass for all supported releases
-- Tectonic Installer UI for platform (optional)
+- Adheres 100% to the [generic platform specification](generic-platform.md)
+- All manifests are vetted and certified to not significantly diverge from other stable platform manifests, so much that cluster updates are not compromised
+- All code follows style and testing guidelines
+- (Optional) Tectonic Installer UI built for platform
+
+*Intended Usage*
+
+- Developer workflows
+- CLI-based install from official release package
+- Integration into CI systems
+- (Optional) GUI-based install from official release package
+
+*Suitable Environments*
+
+- Developer sandboxes
+- Development environments
+- Pre-production
+- Production
+
+*Testing*
+
+- Cluster upgrade tests pass for all supported releases
 
 *Packaging*
 
-- (Optional) GUI Installer reads Terraform assets
-- (Optional) GUI Installer backend runs equivalent of `terraform apply` on behalf of the user via Go client libraries
-- (Optional) GUI shows status info and links to Console once complete
+- Assets are packaged into each official Tectonic Installer release
+- (Optional) GUI Installer performs complete installation flow
+- (Optional) GUI Installer is certified by CoreOS UX Team
 
-*User Flow*
+*Support*
 
-GUI Only
+- Formal for paying customers
+- Informal for non-paying customers
 
-1. Use GUI installer configure cluster
-1. Click to provision cluster
-1. GUI shows status info
-1. Click to go directly to  Tectonic Console
+*Updates Supported*
 
-Non-GUI
+- Yes
 
-1. Manually create `terraform.tfvars` file
-1. Use static Terraform assets contained in installer tarball
-1. Manually run Terraform
+*Docs*
+
+- Documentation is certified by CoreOS Documentation team
+- Documentation is published on coreos.com
+
