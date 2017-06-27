@@ -27,6 +27,7 @@ ENV SHELLCHECK_VERSION="v0.4.6"
 ENV TERRAFORM_VERSION="v0.9.11-coreos.2"
 ENV NODE_VERSION="v8.1.2"
 ENV YARN_VERSION="v0.24.6"
+ENV MATCHBOXVERSION="v0.6.1"
 # yarn needs a home writable by any user running the container
 ENV HOME /opt/home
 RUN mkdir -p ${HOME}
@@ -73,6 +74,13 @@ RUN wget --quiet -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | ap
     apt-get update && \
     apt-get install --no-install-recommends -y -q \
     google-chrome-beta ca-certificates
+
+# matchbox for baremetal installer gui tests
+RUN cd /tmp && \
+    wget --quiet -O /tmp/matchbox.tar.gz https://github.com/coreos/matchbox/releases/download/${MATCHBOXVERSION}/matchbox-${MATCHBOXVERSION}-linux-amd64.tar.gz && \
+    tar xzvf /tmp/matchbox.tar.gz && \
+    rm -f /tmp/matchbox.tar.gz && \
+    cp matchbox-*/matchbox /usr/local/bin
 
 # cleanup
 RUN rm -rf /tmp/node-v*

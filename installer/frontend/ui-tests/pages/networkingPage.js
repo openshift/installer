@@ -11,9 +11,6 @@ module.exports = {
   url: '',
   commands: [networkingPageCommands],
   elements: {
-    clusterSubdomainName: {
-      selector: 'input[id=clusterSubdomain]',
-    },
     domain: {
       selector: 'option[value=Z1ILIMNSJGTMO2]',
     },

@@ -3,7 +3,9 @@ export CGO_ENABLED=0
 OS=$(shell uname | tr A-Z a-z)
 LD_FLAGS="-w"
 INSTALLER_OPTS=--address=127.0.0.1:4444 --open-browser=false --log-level=debug --dev
-
+TLS_CERTS=../tests/smoke/bare-metal/fake-creds
+MATCHBOX_OPTS=-data-path=/tmp/images -assets-path=/tmp/assets -cert-file=$(TLS_CERTS)/server.crt -key-file=$(TLS_CERTS)/server.key -ca-file=$(TLS_CERTS)/ca.crt
+COREOS_VERSION=1353.8.0
 REPO=github.com/coreos/tectonic-installer/installer
 
 # Wrapper around find. Works with filenamess containing spaces.
@@ -108,14 +110,31 @@ launch-installer:
 	mkdir -p frontend/ui-tests/reports/
 	./bin/$(OS)/installer $(INSTALLER_OPTS) & echo $$! > frontend/ui-tests/reports/installer.pid
 
-.PHONY: launch-installer-guitests
-launch-installer-guitests: launch-installer
-	cd frontend && xvfb-run -a yarn run installer-tests
+.PHONY: launch-matchbox
+launch-matchbox:
+	chmod +x frontend/ui-tests/utils/addMatchboxHosts.sh  && ./frontend/ui-tests/utils/addMatchboxHosts.sh > /dev/null
+	mkdir -p /tmp/images /tmp/assets/coreos/$(COREOS_VERSION)
+	/usr/local/bin/matchbox $(MATCHBOX_OPTS) & echo $$! > frontend/ui-tests/reports/matchbox.pid
 
-.PHONY: gui-tests-cleanup
-gui-tests-cleanup:
+.PHONY: launch-aws-installer-guitests
+launch-aws-installer-guitests: launch-installer
+	cd frontend && xvfb-run -a yarn run aws-installer-tests
+
+.PHONY: launch-baremetal-installer-guitests
+launch-baremetal-installer-guitests: launch-installer launch-matchbox
+	cd frontend && xvfb-run -a yarn baremetal-installer-tests
+
+.PHONY: gui-aws-tests-cleanup
+gui-aws-tests-cleanup:
 	kill `cat frontend/ui-tests/reports/installer.pid`
 	rm -fr frontend/ui-tests/reports/
+
+.PHONY: gui-baremetal-tests-cleanup
+gui-baremetal-tests-cleanup:
+		kill `cat frontend/ui-tests/reports/installer.pid`
+		kill `cat frontend/ui-tests/reports/matchbox.pid`
+		rm -fr frontend/ui-tests/reports/
+		rm -fr /tmp/images /tmp/assets/coreos/$(COREOS_VERSION)
 
 .PHONY: clean
 clean:

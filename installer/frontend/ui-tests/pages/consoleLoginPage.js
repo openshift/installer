@@ -1,14 +1,9 @@
-const installerInput = require('../utils/installerInput');
-const adminEmail = installerInput.adminEmail();
-const adminPassword = installerInput.adminPassword();
-
-
 const consoleLoginPageCommands = {
-  enterLoginCredentails() {
+  enterLoginCredentails(adminEmail) {
     return this
       .setValue('@email', adminEmail)
-      .setValue('@password', adminPassword)
-      .setValue('@confirmPassword',adminPassword)
+      .setValue('@password', "password")
+      .setValue('@confirmPassword',"password")
       .click('@nextStep');
   },
 };

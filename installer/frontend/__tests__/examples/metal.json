@@ -13,7 +13,7 @@
     "tectonic_cluster_name": "my-cluster",
     "tectonic_dns_name": "",
     "tectonic_experimental": false,
-    "tectonic_metal_cl_version": "1235.9.0",
+    "tectonic_metal_cl_version": "1353.8.0",
     "tectonic_metal_controller_domain": "cluster.example.com",
     "tectonic_metal_controller_domains": [
       "node1.example.com"
@@ -42,7 +42,7 @@
       "node2",
       "node3"
     ],
-    "tectonic_service_cidr": "10.3.0.0/24",
+    "tectonic_service_cidr": "10.3.0.0/16",
     "tectonic_ssh_authorized_key": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCt3BebCHqnSsgpLjo4kVvyfY/z2BS8t27r/7du+O2pb4xYkr7n+KFpbOz523vMTpQ+o1jY4u4TgexglyT9nqasWgLOvo1qjD1agHme8LlTPQSk07rXqOB85Uq5p7ig2zoOejF6qXhcc3n1c7+HkxHrgpBENjLVHOBpzPBIAHkAGaZcl07OCqbsG5yxqEmSGiAlh/IiUVOZgdDMaGjCRFy0wk0mQaGD66DmnFc1H5CzcPjsxr0qO65e7lTGsE930KkO1Vc+RHCVwvhdXs+c2NhJ2/3740Kpes9n1/YullaWZUzlCPDXtRuy6JRbFbvy39JUgHWGWzB3d+3f8oJ/N4qZ cardno:000603633110"
   }
 }
