@@ -24,14 +24,12 @@ if [[ ${AWS_ACCESS_KEY_ID} == "" || ${AWS_SECRET_ACCESS_KEY} == "" || ${COREUPDA
     print_usage
 fi
 
-which jq > /dev/null
-if [[ $? != 0 ]]; then
+if ! which jq > /dev/null; then
     echo "Require jq"
     exit 1
 fi
 
-which updateservicectl > /dev/null
-if [[ $? == 0 ]]; then
+if which updateservicectl > /dev/null; then
     export UPDATESERVICECTL
     UPDATESERVICECTL=$(which updateservicectl)
 fi

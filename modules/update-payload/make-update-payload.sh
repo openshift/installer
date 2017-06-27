@@ -4,14 +4,12 @@
 # It's using the manifests in the candidate assets dir.
 # yaml2json(https://github.com/bronze1man/yaml2json) and jq are required.
 
-which yaml2json > /dev/null
-if [[ $? != 0 ]]; then
+if ! which yaml2json > /dev/null; then
     echo "Require yaml2json (https://github.com/bronze1man/yaml2json)" >&2
     exit 1
 fi
 
-which jq > /dev/null
-if [[ $? != 0 ]]; then
+if ! which jq > /dev/null; then
     echo "Require jq" >&2
     exit 1
 fi

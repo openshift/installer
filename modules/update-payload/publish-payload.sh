@@ -20,8 +20,7 @@ if [[ ${COREUPDATE_USR} == ""  || ${COREUPDATE_KEY} == "" || $# != 1 ]]; then
     print_usage
 fi
 
-which updateservicectl > /dev/null
-if [[ $? == 0 ]]; then
+if which updateservicectl > /dev/null; then
     export UPDATESERVICECTL
     UPDATESERVICECTL=$(which updateservicectl)
 fi
