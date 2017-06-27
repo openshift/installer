@@ -100,7 +100,7 @@ class TF_PowerOn extends React.Component {
       );
       msg = `Starting Tectonic console`;
       consoleSubsteps.push(
-        <WaitingLi done={tectonicConsole.ready} cancel={tfError} key="consoleReady">
+        <WaitingLi done={tectonicConsole.ready && !tfError} error={tfError} key="consoleReady">
           <span title={msg}>{msg}</span>
         </WaitingLi>
       );
