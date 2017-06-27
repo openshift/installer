@@ -3,6 +3,7 @@ set -x
 set -e
 
 fail () {
+  # shellcheck disable=SC2181
   if [ $? -ne 0 ]
   then
     echo "$0 failed but exiting 0 because we don't want to fail tests"
