@@ -42,7 +42,7 @@ test('tests two Fields', done => {
     default: 'c',
     dependencies: [aName],
     validator: (value, cc) => {
-      expect(cc.aField).toEqual('b');
+      expect(cc[aName]).toEqual('b');
       done();
     },
   });
@@ -51,4 +51,22 @@ test('tests two Fields', done => {
 
   store.dispatch({type: configActionTypes.SET, payload: DEFAULT_CLUSTER_CONFIG});
   store.dispatch(configActions.updateField(aName, 'b'));
+});
+
+test('tests form validator is called', done => {
+  expect.assertions(3);
+
+  const fieldName = 'aField';
+
+  new Form('aForm', [new Field(fieldName, {default: 'a'})], {
+    validator: (value, cc, oldValue) => {
+      expect(value[fieldName]).toEqual('b');
+      expect(cc[fieldName]).toEqual('b');
+      expect(oldValue[fieldName]).toEqual('a');
+      done();
+    },
+  });
+
+  store.dispatch({type: configActionTypes.SET, payload: DEFAULT_CLUSTER_CONFIG});
+  store.dispatch(configActions.updateField(fieldName, 'b'));
 });
