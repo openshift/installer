@@ -54,6 +54,9 @@ const awsCredsForm = new Form(AWS_CREDS, [
       if (v.length < 20) {
         return 'AWS key IDs are at least 20 characters.';
       }
+      if (v.trim() !== v) {
+        return 'AWS key IDs cannot start or end with whitespace.';
+      }
     }),
   }),
   new Field(AWS_SECRET_ACCESS_KEY, {
@@ -61,6 +64,9 @@ const awsCredsForm = new Form(AWS_CREDS, [
     validator: compose(validate.nonEmpty, (v) => {
       if (v.length < 40) {
         return 'AWS secrets are at least 40 characters.';
+      }
+      if (v.trim() !== v) {
+        return 'AWS secrets cannot start or end with whitespace.';
       }
     }),
   }),
