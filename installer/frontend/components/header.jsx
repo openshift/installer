@@ -20,18 +20,23 @@ const parseLatestVersion = (html) => {
 };
 
 const hasNewVersion = (latestRelease) => {
-  if (semver.major(latestRelease) > semver.major(GIT_TAG)) {
-    return true;
+  const lrMajor = semver.major(latestRelease);
+  const gtMajor = semver.major(GIT_TAG);
+  if (lrMajor !== gtMajor) {
+    return lrMajor > gtMajor;
   }
 
-  if (semver.minor(latestRelease) > semver.minor(GIT_TAG)) {
-    return true;
+  const lrMinor = semver.minor(latestRelease);
+  const gtMinor = semver.minor(GIT_TAG);
+  if (lrMinor !== gtMinor) {
+    return lrMinor > gtMinor;
   }
 
-  if (semver.patch(latestRelease) > semver.patch(GIT_TAG)) {
-    return true;
+  const lrPatch = semver.patch(latestRelease);
+  const gtPatch = semver.patch(GIT_TAG);
+  if (lrPatch !== gtPatch) {
+    return lrPatch > gtPatch;
   }
-
 
   const latestReleasePr = semver.prerelease(latestRelease);
   const gitTagPr = semver.prerelease(GIT_TAG);
@@ -42,13 +47,13 @@ const hasNewVersion = (latestRelease) => {
   }
 
   //compares rc-x string
-  if (latestReleasePr[1] > gitTagPr[1]) {
-    return true;
+  if (latestReleasePr[1] !== gitTagPr[1]) {
+    return latestReleasePr[1] > gitTagPr[1];
   }
 
   //rc version
-  if (latestReleasePr[2] > gitTagPr[2]) {
-    return true;
+  if (latestReleasePr[2] !== gitTagPr[2]) {
+    return latestReleasePr[2] > gitTagPr[2];
   }
 
   return false;
