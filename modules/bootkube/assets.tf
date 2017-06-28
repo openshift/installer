@@ -100,6 +100,8 @@ resource "template_dir" "bootkube" {
     tectonic_version = "${var.versions["tectonic"]}"
 
     master_count = "${var.master_count}"
+    node_monitor_grace_period = "${var.node_monitor_grace_period}"
+    pod_eviction_timeout      = "${var.pod_eviction_timeout}"
   }
 }
 
