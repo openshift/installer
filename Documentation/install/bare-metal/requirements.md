@@ -1,8 +1,22 @@
 # Bare Metal Installation requirements
 
-The Tectonic Installer creates bare-metal Tectonic clusters within networks with PXE infrastructure and the `matchbox` service.
+The Tectonic Installer creates bare metal Tectonic clusters within networks with PXE infrastructure and the `matchbox` service.
 
 For more information about `matchbox`, refer to the [`matchbox` documentation][matchbox].
+
+## Tectonic Installer
+
+The Tectonic Installer app runs on a user's laptop as a GUI for creating new clusters and pushing the right configs to `matchbox`.
+
+User machines must:
+
+* Run a Linux or Darwin binary Installer app
+* Resolve the matchbox read-write API (e.g. `matchbox.example.com`)
+* Use matchbox TLS client credentials (generated via docs)
+* Resolve cluster nodes to provisioning progress (e.g. `node3.example.com`)
+* Have a Tectonic software license and Docker pull secret from `tectonic.com`
+* Be able to SSH to one of the controller nodes (currently required to finish bootstrapping)
+* Have an SSH keypair whose private key is present in the system's ssh-agent
 
 ## Network
 
@@ -32,6 +46,12 @@ For best results, assign DNS names to each node. The following three records are
 ### Egress whitelist
 
 Cluster nodes must be able to pull docker images from [quay.io][quay.io] and gcr.io. Be sure to whitelist these domains. If you must whitelist by IP, run `dig quay.io` to list associated IP addresses.
+
+### ssh-agent
+
+Tectonic installer will add the installer machine's public SSH key to all machines in the cluster. The key must be on the installing machine's [ssh-agent][ssh-agent], and it is used to configure nodes.
+
+Check if a key already exists in the ssh-agent using `ssh-add -l`. If a key must be added to the agent, use `ssh-add Path/ToYour/KeyFile`. Note that on OSX it may be necessary to re-add keys from your keyring to the agent on each login.
 
 ## Machines
 
@@ -83,22 +103,10 @@ The provisioner must:
 * Generate TLS server credentials (along with client credentials)
 * Serve CoreOS PXE and install images
 
-## Tectonic Installer
-
-The Tectonic Installer app runs on a user's laptop as a GUI for creating new clusters and pushing the right configs to `matchbox`.
-
-User machines:
-
-* Run a Linux or Darwin binary Installer app
-* Can resolve the matchbox read-write API (e.g. `matchbox.example.com`)
-* Use matchbox TLS client credentials (generated via docs)
-* Can resolve cluster nodes to provisioning progress (e.g. `node3.example.com`)
-* Can SSH to one of the controller nodes (currently required to finish bootstrapping)
-* Have a Tectonic software license and Docker pull secret from `tectonic.com`
-
 
 [daemonset]: https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/
 [reprovision]: uninstall.md
 [matchbox-dnsmasq]: https://github.com/coreos/matchbox/tree/master/contrib/dnsmasq
 [matchbox]: https://coreos.com/matchbox
 [quay.io]: https://quay.io
+[ssh-agent]: https://www.freebsd.org/cgi/man.cgi?query=ssh-agent&sektion=1
