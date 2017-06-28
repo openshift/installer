@@ -4,9 +4,9 @@ Tectonic Installer creates two types of nodes when deploying a Kubernetes cluste
 
 In large scale clusters, worker nodes may hold containers running several different types of applications. The flexibility and ease of adding drivers to Red Hat Enterprise Linux allows Kubernetes worker components to be deployed with specialized workloads and hardware.
 
-If you have not yet created a cluster, use [CoreOS Container Linux][container-linux] as the operating system for the deployment. Then, use Tectonic Installer to deploy a cluster on [bare metal][bare-install] (or [AWS][aws-install]). When defining nodes for the cluster, set the worker node count to 0.
+If you have not yet created a cluster, use Tectonic Installer to deploy on [bare metal][bare-install] (or [AWS][aws-install]). The Installer will use Container Linux for the master nodes, and you may configure additional Container Linux worker nodes.
 
-Once the cluster is deployed, follow this guide to use Tectonic Installer to launch worker nodes on a RHEL environment.
+Once the cluster is deployed, follow this guide to configure and join additional worker nodes running Red Hat Enterprise Linux.
 
 ## Architecture
 
@@ -20,7 +20,7 @@ Installation may be performed using any standard Red Hat infrastructure deployme
 
 While the *installation* of the Tectonic worker components is designed to fit within a traditional Red Hat focused environment, the *execution* of the binaries are intended to mirror that of CoreOS Container Linux. As such, a utility called `kubelet-wrapper` will spin up a copy of `hyperkube` inside `rkt`. This containerized Kubernetes binary reads its configuration from a combination of configuration files managed by both the administrator and by CoreOS. CoreOS managed files are deployed either in RPM files or via Tectonic operators. When files are deployed via RPM, local overrides are possible (but discouraged). For files deployed via the Tectonic operators, the entire lifecycle is expected to be managed by the Tectonic platform.
 
-## Technical Steps
+## Process
 
 Deploy a Tectonic worker atop Red Hat Enterprise Linux using the process outlined below.
 
@@ -149,6 +149,10 @@ $ systemctl enable kubelet.service
 ### SELinux
 
 To allow the Tectonic worker, run SELinux in Permissive mode. Running in Enforcing mode will block permissions for worker nodes.
+
+### Verify deployment
+
+Once complete, use Tectonic Console to view the new worker nodes, and confirm that they're ready to start running your containers.
 
 
 [rhel-install]: https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Installation_Guide/index.html
