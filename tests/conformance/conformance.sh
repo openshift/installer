@@ -98,7 +98,8 @@ function wait_for_pods() {
     done
 }
 
-docker run --env-file ./env.list -i -v $"{WORKSPACE}":"${PROJECT}" "${MNT_SECRETS}" -w "${PROJECT}" "${TECTONIC_BUILDER}" /bin/bash <<EOF
+# shellcheck disable=SC2086
+docker run --env-file ./env.list -i -v $"{WORKSPACE}":"${PROJECT}" ${MNT_SECRETS} -w "${PROJECT}" "${TECTONIC_BUILDER}" /bin/bash <<EOF
   
 mkdir -p ${PROJECT}/build/${CLUSTER}/
 ln -sf ${PROJECT}/tests/smoke/aws/vars/aws.tfvars ${PROJECT}/build/${CLUSTER}/terraform.tfvars
