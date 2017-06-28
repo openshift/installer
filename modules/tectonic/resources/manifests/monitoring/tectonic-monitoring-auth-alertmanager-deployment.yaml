@@ -73,3 +73,13 @@ spec:
             port: 4180
           initialDelaySeconds: 5
           periodSeconds: 5
+        resources:
+          requests:
+            cpu: 5m
+            memory: 10Mi
+          limits:
+            cpu: 10m
+            memory: 20Mi
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
