@@ -25,34 +25,28 @@ popd
 
 ASSETS_DIR=${DIR}/generated
 
-# TODO(yifan): Maybe put these files into separate dirs for each channel
-# in the future.
-deployments=(
-  "tectonic-channel-operator.yaml"
-  "kube-version-operator.yaml"
-  "tectonic-prometheus-operator.yaml"
-  "tectonic-etcd-operator.yaml"
-  "container-linux-update-operator.yaml"
-)
-appversions=(
-  "app-version-kubernetes.yaml"
-  "app-version-tectonic-monitoring.yaml"
-  "app-version-tectonic-etcd.yaml"
-)
-
 echo "Creating update payload..." >&2
-echo "Using deployments: [${deployments[*]}]" >&2
-echo "Using app versions: [${appversions[*]}]" >&2
+echo "Using deployments:" >&2
+for f in ${ASSETS_DIR}/operators/*.yaml; do
+  basename "${f}" >&2
+done
+
+echo "Using app versions:" >&2
+for f in ${ASSETS_DIR}/app_versions/*.yaml; do
+  basename "${f}" >&2
+done
 
 # Get the update payload version.
 # shellcheck disable=SC2086
-VERSION=$(yaml2json < ${ASSETS_DIR}/app-version-tectonic-cluster.yaml | jq .status.currentVersion)
+VERSION=$(yaml2json < ${ASSETS_DIR}/app_versions/app-version-tectonic-cluster.yaml | jq .status.currentVersion)
+# Don't include the meta app-version for sub-component's desired version.
+rm "${ASSETS_DIR}/app_versions/app-version-tectonic-cluster.yaml"
 
 # Get the deployments.
-for f in ${deployments[*]}; do
+for f in ${ASSETS_DIR}/operators/*.yaml; do
   tmpfile=$(mktemp /tmp/deployment.XXXXXX)
   # shellcheck disable=SC2086
-  yaml2json < ${ASSETS_DIR}/${f} > ${tmpfile}
+  yaml2json < ${f} > ${tmpfile}
   tmpfiles+=(${tmpfile})
 done
 
@@ -68,12 +62,12 @@ fi
 unset tmpfiles
 
 # Get the desired versions.
-for f in ${appversions[*]}; do
+for f in ${ASSETS_DIR}/app_versions/*.yaml; do
   tmpfile=$(mktemp /tmp/desiredVersion.XXXXXX)
   # shellcheck disable=SC2086
-  name=$(yaml2json < ${ASSETS_DIR}/${f} | jq .metadata.name)
+  name=$(yaml2json < ${f} | jq .metadata.name)
   # shellcheck disable=SC2086
-  desiredVersion=$(yaml2json < ${ASSETS_DIR}/${f} | jq .status.currentVersion)
+  desiredVersion=$(yaml2json < ${f} | jq .status.currentVersion)
   # shellcheck disable=SC2086
   cat <<EOF > ${tmpfile}
 {
