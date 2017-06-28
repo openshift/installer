@@ -27,7 +27,8 @@ EOF
 MNT_SECRETS="-v ${TF_VAR_tectonic_license_path}:${TF_VAR_tectonic_license_path} -v ${TF_VAR_tectonic_pull_secret_path}:${TF_VAR_tectonic_pull_secret_path}"
 
 function cleanup() {
-    docker run --env-file ./env.list -i -v "${WORKSPACE}":"${PROJECT}" "${MNT_SECRETS}" "${TECTONIC_BUILDER}" /bin/bash <<EOF
+    # shellcheck disable=SC2086
+    docker run --env-file ./env.list -i -v ${WORKSPACE}:${PROJECT} ${MNT_SECRETS} ${TECTONIC_BUILDER} /bin/bash <<EOF
 cd ${PROJECT}
 make destroy
 EOF
