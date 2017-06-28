@@ -3,11 +3,15 @@
 // monkey patch node's console :-/
 console.debug = console.debug || console.info;
 
+import _ from 'lodash';
 import { __deleteEverything__, configActions, configActionTypes } from '../actions';
 import { Field, Form } from '../form';
 import { store } from '../store';
 import { DEFAULT_CLUSTER_CONFIG } from '../cluster-config';
+import { toError } from '../utils';
+// toIgnore, toAsyncError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError
 
+const getCC = (path, f) => _.get(store.getState().clusterConfig, f ? f(path) : path);
 
 beforeEach(() => store.dispatch(__deleteEverything__()));
 
@@ -32,7 +36,7 @@ test('updates a Field', done => {
   done();
 });
 
-test('tests two Fields', done => {
+test('test field dependency validator is called', done => {
   expect.assertions(1);
 
   const aName = 'aField';
@@ -69,4 +73,28 @@ test('tests form validator is called', done => {
 
   store.dispatch({type: configActionTypes.SET, payload: DEFAULT_CLUSTER_CONFIG});
   store.dispatch(configActions.updateField(fieldName, 'b'));
+});
+
+test('tests sync invalidation', done => {
+  expect.assertions(3);
+
+  const invalid = 'is invalid';
+  const fieldName = 'aField';
+  const field = new Field(fieldName, {
+    default: 'a',
+    validator: value => value === 'b' && invalid,
+  });
+
+  new Form('aForm', [field]);
+
+  store.dispatch({type: configActionTypes.SET, payload: DEFAULT_CLUSTER_CONFIG});
+  expect(getCC(fieldName, toError)).toEqual(undefined);
+
+  store.dispatch(configActions.updateField(fieldName, 'b'));
+  expect(getCC(fieldName, toError)).toEqual(invalid);
+
+  store.dispatch(configActions.updateField(fieldName, 'a'));
+  expect(getCC(fieldName, toError)).toEqual(undefined);
+
+  done();
 });
