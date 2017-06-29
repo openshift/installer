@@ -8,10 +8,15 @@ import { __deleteEverything__, configActions, configActionTypes } from '../actio
 import { Field, Form } from '../form';
 import { store } from '../store';
 import { DEFAULT_CLUSTER_CONFIG } from '../cluster-config';
-import { toError } from '../utils';
-// toIgnore, toAsyncError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError
+import { toError, toAsyncError } from '../utils';
+// TODO: (kans) test these things
+// toIgnore, , toExtraData, toInFly, toExtraDataInFly, toExtraDataError
 
 const getCC = (path, f) => _.get(store.getState().clusterConfig, f ? f(path) : path);
+const expectCC = (path, f, value) => expect(getCC(path, f)).toEqual(value);
+const resetCC = () => store.dispatch({
+  type: configActionTypes.SET, payload: DEFAULT_CLUSTER_CONFIG,
+});
 
 beforeEach(() => store.dispatch(__deleteEverything__()));
 
@@ -28,7 +33,7 @@ test('updates a Field', done => {
   });
 
   new Form('aForm', [aField]);
-  store.dispatch({type: configActionTypes.SET, payload: DEFAULT_CLUSTER_CONFIG});
+  resetCC();
 
   expect(store.getState().clusterConfig[name]).toEqual('a');
   store.dispatch(configActions.updateField(name, 'b'));
@@ -36,7 +41,7 @@ test('updates a Field', done => {
   done();
 });
 
-test('test field dependency validator is called', done => {
+test('field dependency validator is called', done => {
   expect.assertions(1);
 
   const aName = 'aField';
@@ -53,11 +58,11 @@ test('test field dependency validator is called', done => {
 
   new Form('aForm', [aField, bField]);
 
-  store.dispatch({type: configActionTypes.SET, payload: DEFAULT_CLUSTER_CONFIG});
+  resetCC();
   store.dispatch(configActions.updateField(aName, 'b'));
 });
 
-test('tests form validator is called', done => {
+test('form validator is called', done => {
   expect.assertions(3);
 
   const fieldName = 'aField';
@@ -71,11 +76,11 @@ test('tests form validator is called', done => {
     },
   });
 
-  store.dispatch({type: configActionTypes.SET, payload: DEFAULT_CLUSTER_CONFIG});
+  resetCC();
   store.dispatch(configActions.updateField(fieldName, 'b'));
 });
 
-test('tests sync invalidation', done => {
+test('sync invalidation', done => {
   expect.assertions(3);
 
   const invalid = 'is invalid';
@@ -87,7 +92,7 @@ test('tests sync invalidation', done => {
 
   new Form('aForm', [field]);
 
-  store.dispatch({type: configActionTypes.SET, payload: DEFAULT_CLUSTER_CONFIG});
+  resetCC();
   expect(getCC(fieldName, toError)).toEqual(undefined);
 
   store.dispatch(configActions.updateField(fieldName, 'b'));
@@ -95,6 +100,34 @@ test('tests sync invalidation', done => {
 
   store.dispatch(configActions.updateField(fieldName, 'a'));
   expect(getCC(fieldName, toError)).toEqual(undefined);
+
+  done();
+});
+
+
+test('async invalidation', async done => {
+  expect.assertions(5);
+
+  const invalid = 'is invalid';
+  const fieldName = 'aField';
+
+  const field = new Field(fieldName, {
+    default: 'a',
+    asyncValidator: (dispatch, getState, value, oldValue, isNow) => {
+      expect(isNow()).toEqual(true);
+      return value === 'b' && invalid;
+    },
+  });
+
+  new Form('aForm', [field]);
+
+  expectCC(fieldName, toAsyncError, undefined);
+
+  await store.dispatch(configActions.updateField(fieldName, 'b'));
+  expectCC(fieldName, toAsyncError, invalid);
+
+  await store.dispatch(configActions.updateField(fieldName, 'a'));
+  expectCC(fieldName, toAsyncError, undefined);
 
   done();
 });
