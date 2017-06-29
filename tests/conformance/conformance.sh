@@ -67,12 +67,11 @@ function kubectl() {
 }
  
 function wait_for_pods() {
+    set +e
     echo "Waiting for pods in namespace $1"
     while true; do
   
-        set +e
         out=$($KUBECTL -n "$1" get po -o custom-columns=STATUS:.status.phase,NAME:.metadata.name)
-        set -e
         status=$?
         echo "$out"
   
@@ -97,6 +96,7 @@ function wait_for_pods() {
         echo "Pods not available yet, waiting for 5 seconds"
         sleep 5
     done
+    set -e
 }
 
 # shellcheck disable=SC2086
