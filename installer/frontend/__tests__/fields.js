@@ -12,15 +12,21 @@ import { toError, toAsyncError } from '../utils';
 // TODO: (kans) test these things
 // toIgnore, , toExtraData, toInFly, toExtraDataInFly, toExtraDataError
 
-const getCC = (path, f) => _.get(store.getState().clusterConfig, f ? f(path) : path);
-const expectCC = (path, f, value) => expect(getCC(path, f)).toEqual(value);
+const expectCC = (path, expected, f) => {
+  const value = _.get(store.getState().clusterConfig, f ? f(path) : path);
+  expect(value).toEqual(expected);
+};
+
 const resetCC = () => store.dispatch({
   type: configActionTypes.SET, payload: DEFAULT_CLUSTER_CONFIG,
 });
 
+const updateField = (field, value) => store.dispatch(configActions.updateField(field, value));
+
+
 beforeEach(() => store.dispatch(__deleteEverything__()));
 
-test('updates a Field', done => {
+test('updates a Field', () => {
   expect.assertions(4);
 
   const name = 'aField';
@@ -35,10 +41,9 @@ test('updates a Field', done => {
   new Form('aForm', [aField]);
   resetCC();
 
-  expect(store.getState().clusterConfig[name]).toEqual('a');
-  store.dispatch(configActions.updateField(name, 'b'));
-  expect(store.getState().clusterConfig[name]).toEqual('b');
-  done();
+  expectCC(name, 'a');
+  updateField(name, 'b');
+  expectCC(name, 'b');
 });
 
 test('field dependency validator is called', done => {
@@ -59,7 +64,7 @@ test('field dependency validator is called', done => {
   new Form('aForm', [aField, bField]);
 
   resetCC();
-  store.dispatch(configActions.updateField(aName, 'b'));
+  updateField(aName, 'b');
 });
 
 test('form validator is called', done => {
@@ -69,18 +74,18 @@ test('form validator is called', done => {
 
   new Form('aForm', [new Field(fieldName, {default: 'a'})], {
     validator: (value, cc, oldValue) => {
+      expectCC(fieldName, 'b');
       expect(value[fieldName]).toEqual('b');
-      expect(cc[fieldName]).toEqual('b');
       expect(oldValue[fieldName]).toEqual('a');
       done();
     },
   });
 
   resetCC();
-  store.dispatch(configActions.updateField(fieldName, 'b'));
+  updateField(fieldName, 'b');
 });
 
-test('sync invalidation', done => {
+test('sync invalidation', () => {
   expect.assertions(3);
 
   const invalid = 'is invalid';
@@ -93,15 +98,13 @@ test('sync invalidation', done => {
   new Form('aForm', [field]);
 
   resetCC();
-  expect(getCC(fieldName, toError)).toEqual(undefined);
+  expectCC(fieldName, undefined, toError);
 
-  store.dispatch(configActions.updateField(fieldName, 'b'));
-  expect(getCC(fieldName, toError)).toEqual(invalid);
+  updateField(fieldName, 'b');
+  expectCC(fieldName, invalid, toError);
 
-  store.dispatch(configActions.updateField(fieldName, 'a'));
-  expect(getCC(fieldName, toError)).toEqual(undefined);
-
-  done();
+  updateField(fieldName, 'a');
+  expectCC(fieldName, undefined, toError);
 });
 
 
@@ -121,13 +124,13 @@ test('async invalidation', async done => {
 
   new Form('aForm', [field]);
 
-  expectCC(fieldName, toAsyncError, undefined);
+  expectCC(fieldName, undefined, toAsyncError);
 
-  await store.dispatch(configActions.updateField(fieldName, 'b'));
-  expectCC(fieldName, toAsyncError, invalid);
+  await updateField(fieldName, 'b');
+  expectCC(fieldName, invalid, toAsyncError);
 
-  await store.dispatch(configActions.updateField(fieldName, 'a'));
-  expectCC(fieldName, toAsyncError, undefined);
+  await updateField(fieldName, 'a');
+  expectCC(fieldName, undefined, toAsyncError);
 
   done();
 });
