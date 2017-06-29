@@ -218,24 +218,27 @@ pipeline {
       post {
         failure {
           node('worker && ec2') {
-            withCredentials(creds) {
+            withCredentials([creds, quay_creds]) {
               withDockerContainer(builder_image) {
                 checkout scm
                 unstash 'installer'
-                retry(3) {
-                  timeout(15) {
-                    sh """#!/bin/bash -ex
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars
-                    """
-                  }
+                timeout(15) {
+                  sh """#!/bin/bash -x
+                  ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars
+                  """
                 }
-                retry(3) {
-                  timeout(20) {
-                    sh """#!/bin/bash -ex
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
-                    """
-                  }
+                timeout(20) {
+                  sh """#!/bin/bash -x
+                  ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
+                  ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
+                  """
+                }
+                timeout(10) {
+                  sh """#!/bin/bash -x
+                  docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
+                  ${WORKSPACE}/tests/smoke/aws/smoke.sh grafiti-clean vars/aws.tfvars
+                  ${WORKSPACE}/tests/smoke/aws/smoke.sh grafiti-clean vars/aws-vpc.tfvars
+                  """
                 }
               }
             }
