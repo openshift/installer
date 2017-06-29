@@ -1,5 +1,15 @@
 {
   "presets": ["es2015", "react"],
-  "plugins": ["syntax-async-functions","transform-regenerator","git-version"]
+  "plugins": [
+    "syntax-async-functions",
+    "transform-regenerator",
+    [
+      "git-version",
+      {
+        "showDirty": true,
+        "commitLength": 7
+      }
+    ]
+  ]
 }
 

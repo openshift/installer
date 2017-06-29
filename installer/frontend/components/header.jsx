@@ -125,7 +125,7 @@ export class Header extends React.Component {
               </span>
             </li>}
             <li className="co-navbar-nav-item__version">
-              <span>Version: {GIT_TAG}</span>
+              <span>Version: {GIT_TAG} ({GIT_COMMIT})</span>
             </li>
           </ul>
         </div>
