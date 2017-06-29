@@ -13,9 +13,8 @@ Generally, the OpenStack platform templates adhere to the standards defined by t
 * **Tectonic Account**: Register for a [Tectonic Account][register], which is free for up to 10 nodes. You must provide the cluster license and pull secret during installation.
 
 ## Getting Started
-OpenStack is a highly customizable environment where different components can be enabled/disabled. This installation includes the following two flavors:
+OpenStack is a highly customizable environment where different components can be enabled/disabled. The installer currently supports only one flavor:
 
-- `nova`: Only Nova computing nodes are being created for etcd, master and worker nodes, assuming the nodes get public IPs assigned.
 - `neutron`: A private Neutron network is being created with master/worker nodes exposed via floating IPs connected to an etcd instance via an internal network.
 
 Replace `<flavor>` with either option in the following commands. Now we're ready to specify our cluster configuration.
@@ -87,13 +86,10 @@ Create a build directory to hold your customizations and copy the example file i
 
 ```
 $ mkdir -p build/${CLUSTER}
-# for Neutron:
 $ cp examples/terraform.tfvars.openstack-neutron build/${CLUSTER}/terraform.tfvars
-# for Nova:
-$ cp examples/terraform.tfvars.openstack-nova build/${CLUSTER}/terraform.tfvars
 ```
 
-Edit the parameters with your OpenStack details. View all of the [OpenStack Nova][openstack-nova-vars] and [OpenStack Neutron][openstack-neutron-vars] specific options and [the common Tectonic variables][vars].
+Edit the parameters with your OpenStack details. View all of the [OpenStack Neutron][openstack-neutron-vars] specific options and [the common Tectonic variables][vars].
 
 ## Deploy the cluster
 
@@ -188,6 +184,5 @@ See the [troubleshooting][troubleshooting] document for workarounds for bugs tha
 [account]: https://account.coreos.com
 [vars]: ../../variables/config.md
 [troubleshooting]: ../../troubleshooting/faq.md
-[openstack-nova-vars]: ../../variables/openstack-nova.md
 [openstack-neutron-vars]: ../../variables/openstack-neutron.md
 [release-notes]: https://coreos.com/tectonic/releases/

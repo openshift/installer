@@ -64,10 +64,6 @@ docs:
 			'This document gives an overview of variables used in the Azure platform of the Tectonic SDK.', \
 			platforms/azure/variables.tf)
 
-	$(call terraform-docs, Documentation/variables/openstack-nova.md, \
-			'This document gives an overview of variables used in the Openstack/Nova platform of the Tectonic SDK.', \
-			platforms/openstack/nova/variables.tf)
-
 	$(call terraform-docs, Documentation/variables/openstack-neutron.md, \
 			'This document gives an overview of variables used in the Openstack/Neutron platform of the Tectonic SDK.', \
 			platforms/openstack/neutron/variables.tf)
@@ -89,11 +85,6 @@ examples:
 			examples/terraform.tfvars.azure, \
 			config.tf, \
 			platforms/azure/variables.tf)
-
-	$(call terraform-examples, \
-			examples/terraform.tfvars.openstack-nova, \
-			config.tf, \
-			platforms/openstack/nova/variables.tf)
 
 	$(call terraform-examples, \
 			examples/terraform.tfvars.openstack-neutron, \
