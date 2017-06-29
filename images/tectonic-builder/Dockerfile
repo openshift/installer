@@ -21,7 +21,7 @@ RUN go get github.com/coreos/license-bill-of-materials
 
 ### Install Shellcheck, Terraform, NodeJS and Yarn
 ENV SHELLCHECK_VERSION="v0.4.6"
-ENV TERRAFORM_VERSION="0.9.6"
+ENV TERRAFORM_VERSION="v0.9.11-coreos.2"
 ENV NODE_VERSION="v8.1.2"
 ENV YARN_VERSION="v0.24.6"
 # yarn needs a home writable by any user running the container
@@ -35,7 +35,7 @@ RUN apt-get update && \
     openvpn xvfb xauth
 
 # Install Terraform
-RUN curl https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
+RUN curl -L https://github.com/coreos/terraform/releases/download/${TERRAFORM_VERSION}/linux_amd64.zip | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
 
 # Install NodeJS
 RUN cd /tmp && \
