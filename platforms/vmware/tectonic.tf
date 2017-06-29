@@ -30,6 +30,12 @@ module "bootkube" {
   etcd_ca_cert     = "${var.tectonic_etcd_ca_cert_path}"
   etcd_client_cert = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key  = "${var.tectonic_etcd_client_key_path}"
+  etcd_tls_enabled = "${var.tectonic_etcd_tls_enabled}"
+
+  etcd_cert_dns_names = ["${formatlist("%s.%s",
+        values(var.tectonic_vmware_etcd_hostnames),
+        var.tectonic_base_domain
+  )}"]
 
   experimental_enabled = "${var.tectonic_experimental}"
 
