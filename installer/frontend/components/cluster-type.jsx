@@ -37,7 +37,7 @@ const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PL
   }
   return <p className="text-muted">
     Use the graphical installer to input cluster details, this is best for demos and your first Tectonic cluster.
-    &nbsp;&nbsp;<a href={DOCS[platform]} target="_blank" >{platformName} documentation&nbsp;&nbsp;<i className="fa fa-external-link" /></a>
+    &nbsp;&nbsp;<a href={DOCS[platform]} target="_blank">{platformName} documentation&nbsp;&nbsp;<i className="fa fa-external-link" /></a>
   </p>;
 });
 

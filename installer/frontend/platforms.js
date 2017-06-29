@@ -29,7 +29,7 @@ export const SELECTED_PLATFORMS = (window.config ? window.config.platforms : [])
 
 export const DOCS = {
   [BARE_METAL_TF]: 'https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html',
-  [AWS_TF]: 'https://coreos.com/tectonic/docs/latest/install/aws/aws-terraform.html',
+  [AWS_TF]: 'https://coreos.com/tectonic/docs/latest/install/aws/index.html',
   [AZURE]: 'https://coreos.com/tectonic/docs/latest/install/azure/azure-terraform.html',
   [OPENSTACK]: 'https://coreos.com/tectonic/docs/latest/install/openstack/openstack-terraform.html',
 };
