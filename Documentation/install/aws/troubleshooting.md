@@ -1,5 +1,9 @@
 # Troubleshooting Tectonic Installer on AWS
 
+## Tectonic Installer stalls if the AWS security token expires
+
+Tectonic installation on AWS fails if the AWS Security Token Service (STS) token expires before installation is complete. AWS imposes a hard 1 hour limit on the token. If your token expires during an installation, refresh the credentials, and destroy the partially created cluster on AWS. Before starting again, refresh the token, then reinstall the cluster using the same tfvars or installer settings as the original install.
+
 ## Route 53 DNS resolution
 
 An issue arises when a domain's Address record (A record) resolution is attempted before Route 53 publishes the cluster's A record and the NXDOMAIN response is cached in the NCACHE (RFC2308). This negative response may be cached for up to the number of seconds set in the domain's SOA record's TTL. Resolution fails until the negative caching TTL expires. These TTLs are typically large enough to disrupt the installation. The current workaround is to ensure your TTLs are set to a low interval, or to wait for them to expire, then proceed with the installation.
