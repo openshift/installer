@@ -13,7 +13,7 @@ import { navActionTypes, restoreActionTypes, validateAllFields } from './actions
 import { trail, getAllRoutes } from './trail';
 import { TectonicGA } from './tectonic-ga';
 import { savable } from './reducer';
-import { loadFacts, observeClusterStatus, observeTectonicStatus } from './server';
+import { loadFacts, observeClusterStatus } from './server';
 import { store, dispatch } from './store';
 import { Base } from './components/base';
 import { clusterReadyActionTypes } from './actions';
@@ -76,20 +76,6 @@ store.dispatch(validateAllFields(() => {
         if (res && res.type === clusterReadyActionTypes.STATUS) {
           setInterval(() => {
             observeClusterStatus(dispatch, store.getState);
-          }, 10000);
-        }
-        fixLocation();
-      });
-  } catch (e) {
-    console.error(`Error restoring state from sessionStorage: ${e.message || e.toString()}`);
-  }
-
-  try {
-    observeTectonicStatus(dispatch, store.getState)
-      .then(res => {
-        if (res && res.type === clusterReadyActionTypes.STATUS) {
-          setInterval(() => {
-            observeTectonicStatus(dispatch, store.getState);
           }, 10000);
         }
         fixLocation();

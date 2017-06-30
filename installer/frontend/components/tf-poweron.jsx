@@ -16,13 +16,14 @@ import { commitToServer, observeClusterStatus } from '../server';
 const stateToProps = ({cluster, clusterConfig}) => {
   const status = cluster.status || {};
   return {
-    action: status.action,
+    terraform: status.terraform || {},
+    // action: status.action,
     clusterName: clusterConfig[CLUSTER_NAME],
-    tfError: status.error,
-    output: status.output,
-    outputBlob: new Blob([status.output], {type: 'text/plain'}),
+    // tfError: status.error,
+    // output: status.output,
+    // outputBlob: new Blob([status.output], {type: 'text/plain'}),
     platformType: clusterConfig[PLATFORM_TYPE],
-    statusMsg: status.status ? status.status.toLowerCase() : '',
+    // statusMsg: status.status ? status.status.toLowerCase() : '',
     tectonic: status.tectonic || {},
   };
 };
@@ -82,7 +83,8 @@ class TF_PowerOn extends React.Component {
   }
 
   render () {
-    const {action, clusterName, tfError, output, outputBlob, platformType, statusMsg, tectonic} = this.props;
+    const {clusterName, platformType, terraform, tectonic} = this.props;
+    const {action, tfError, output, outputBlob, statusMsg} = terraform;
     const state = this.state;
     const showLogs = state.showLogs === null ? statusMsg !== 'success' : state.showLogs;
     const terraformRunning = statusMsg === 'running';

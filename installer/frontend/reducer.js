@@ -258,7 +258,7 @@ const reducersTogether = combineReducers({
       return Object.assign({}, state, {
         loaded: true,
         ready: true,
-        status: Object.assign({}, state.status, action.payload),
+        status: action.payload,
         error: null,
       });
     case clusterReadyActionTypes.ERROR:
