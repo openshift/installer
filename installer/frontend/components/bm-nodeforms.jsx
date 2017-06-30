@@ -258,12 +258,7 @@ class NodeForm extends React.Component {
         <span className="fa fa-upload"></span> Bulk Upload Addresses</a>
       </div>
       <div>
-        <div>
-          {docs}
-
-          Enter the MAC addresses of the nodes you'd like to use as masters,
-          and the host names you'll use to refer to them.
-        </div>
+        {docs}
         <div className="">
           <div className="row">
             <div className="col-xs-5">
@@ -302,7 +297,9 @@ export const mastersForm = new Form('MASTERSFORM', [mastersFields]);
 
 export const BM_Controllers = () => <NodeForm
   name="Master"
-  docs={`Master nodes run essential cluster services and don't run end-user apps.`}
+  docs={`Master nodes run essential cluster services and don't run end-user apps. Enter
+      the MAC addresses of the nodes you'd like to use as masters, and the host names
+      you'll use to refer to them.`}
   field={mastersFields} />;
 
 BM_Controllers.canNavigateForward = mastersForm.canNavigateForward;
@@ -312,7 +309,8 @@ export const workersForm = new Form('WORKERS_FORM', [workerFields]);
 export const BM_Workers = () => <NodeForm
   name="Worker"
   docs={`Worker nodes run end-user's apps. The cluster software automatically shares load
-      between these nodes.`}
+      between these nodes. Enter the MAC addresses of the nodes you'd like to use as
+      workers, and the host names you'll use to refer to them.`}
   field={workerFields} />;
 
 BM_Workers.canNavigateForward = workersForm.canNavigateForward;
