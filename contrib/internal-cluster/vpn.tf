@@ -1,3 +1,28 @@
+# For details see https://docs.openvpn.net/how-to-tutorialsguides/virtual-platforms/amazon-ec2-appliance-ami-quick-start-guide
+data "aws_ami" "openvpn_ami" {
+  most_recent = true
+
+  filter {
+    name   = "name"
+    values = ["OpenVPN Access Server*"]
+  }
+
+  filter {
+    name   = "architecture"
+    values = ["x86_64"]
+  }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  filter {
+    name   = "owner-id"
+    values = ["573553919781"]
+  }
+}
+
 resource "aws_vpn_gateway" "vpg" {
   vpc_id = "${aws_vpc.vpc.id}"
 
@@ -12,7 +37,7 @@ resource "aws_vpn_gateway" "vpg" {
 resource "aws_instance" "ovpn" {
   # 1st available AZ
   availability_zone      = "${data.aws_availability_zones.available.names[0]}"
-  ami                    = "${lookup(var.ovpn_ami_ids, var.vpc_aws_region)}"
+  ami                    = "${data.aws_ami.openvpn_ami.image_id}"
   instance_type          = "t2.micro"
   subnet_id              = "${aws_subnet.pub_subnet_generic.id}"
   vpc_security_group_ids = ["${aws_security_group.vpn_sg.id}"]
