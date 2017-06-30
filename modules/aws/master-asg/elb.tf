@@ -54,13 +54,6 @@ resource "aws_elb" "api-external" {
   connection_draining_timeout = 300
 
   listener {
-    instance_port     = 22
-    instance_protocol = "tcp"
-    lb_port           = 22
-    lb_protocol       = "tcp"
-  }
-
-  listener {
     instance_port     = 443
     instance_protocol = "tcp"
     lb_port           = 443
