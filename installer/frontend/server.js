@@ -31,7 +31,6 @@ const {NOT_READY, STATUS, ERROR} = clusterReadyActionTypes;
 export const observeClusterStatus = (dispatch, getState) => {
   const cc = getState().clusterConfig;
   const tectonicDomain = getTectonicDomain(cc);
-
   const opts = {
     credentials: 'same-origin',
     body: JSON.stringify({tectonicDomain}),

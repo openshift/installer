@@ -177,9 +177,7 @@ type TerraformStatus struct {
 func terraformStatus(session *sessions.Session, ex *terraform.Executor, exID int) (TerraformStatus, error) {
 	// Retrieve Terraform's status and output.
 	status, err := ex.Status(exID)
-	if err != nil {
-		return TerraformStatus{}, err
-	} else if status == terraform.ExecutionStatusUnknown {
+	if status == terraform.ExecutionStatusUnknown {
 		return TerraformStatus{}, newBadRequestError("Could not retrieve TerraForm execution's status: %s", err)
 	}
 	output, _ := ex.Output(exID)
@@ -230,7 +228,7 @@ func tectonicStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 	}
 	response.Terraform = tf
 
-	if tf.Action != "delete" {
+	if tf.Action != "destroy" {
 		tec, err := tectonicStatus(ex, input)
 		if err != nil {
 			return newInternalServerError("Could not retrieve Tectonic status: %s", err)

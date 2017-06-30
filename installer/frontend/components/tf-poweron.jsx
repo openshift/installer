@@ -14,16 +14,17 @@ import { AWS_TF, BARE_METAL_TF } from '../platforms';
 import { commitToServer, observeClusterStatus } from '../server';
 
 const stateToProps = ({cluster, clusterConfig}) => {
-  const status = cluster.status || {};
+  const status = cluster.status || {terraform: {}};
   return {
-    terraform: status.terraform || {},
-    // action: status.action,
+    terraform: {
+      action: status.terraform.action,
+      tfError: status.terraform.error,
+      output: status.terraform.output,
+      outputBlob: new Blob([status.terraform.output], {type: 'text/plain'}),
+      statusMsg: status.terraform.status ? status.terraform.status.toLowerCase() : '',
+    },
     clusterName: clusterConfig[CLUSTER_NAME],
-    // tfError: status.error,
-    // output: status.output,
-    // outputBlob: new Blob([status.output], {type: 'text/plain'}),
     platformType: clusterConfig[PLATFORM_TYPE],
-    // statusMsg: status.status ? status.status.toLowerCase() : '',
     tectonic: status.tectonic || {},
   };
 };
@@ -77,7 +78,6 @@ class TF_PowerOn extends React.Component {
   destroy () {
     // eslint-disable-next-line no-alert
     if (window.config.devMode || window.confirm('Are you sure you want to destroy your cluster?')) {
-      clearInterval(window.observeInternals.tec);
       this.props.TFDestroy().catch(xhrError => this.setState({xhrError}));
     }
   }
