@@ -111,7 +111,7 @@ const platformToFunc = {
   },
 };
 
-let observeIntervals = [];
+let observeIntervals = {};
 
 // An action creator that builds a server message, calls fetch on that message, fires the appropriate actions
 export const commitToServer = (dryRun=false, retry=false, opts={}) => (dispatch, getState) => {
@@ -141,10 +141,14 @@ export const commitToServer = (dryRun=false, retry=false, opts={}) => (dispatch,
         response.blob().then(payload => {
           observeClusterStatus(dispatch, getState);
           observeTectonicStatus(dispatch, getState);
-          if (!observeIntervals || observeIntervals.length === 0) {
-            observeIntervals.push(setInterval(() => observeClusterStatus(dispatch, getState), 10000));
-            observeIntervals.push(setInterval(() => observeTectonicStatus(dispatch, getState), 10000));
+          if (!observeIntervals || !observeIntervals.tf) {
+            observeIntervals.tf = setInterval(() => observeClusterStatus(dispatch, getState), 10000);
           }
+
+          if (!observeIntervals || !observeIntervals.tec) {
+            observeIntervals.tec = setInterval(() => observeTectonicStatus(dispatch, getState), 10000);
+          }
+          window.observeInternals = observeIntervals;
           return dispatch({payload, type: COMMIT_SUCCESSFUL});
         }) :
         response.text().then(payload => dispatch({payload, type: COMMIT_FAILED}))

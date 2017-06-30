@@ -23,7 +23,7 @@ const stateToProps = ({cluster, clusterConfig}) => {
     outputBlob: new Blob([status.output], {type: 'text/plain'}),
     platformType: clusterConfig[PLATFORM_TYPE],
     statusMsg: status.status ? status.status.toLowerCase() : '',
-    tectonicConsole: status.tectonicConsole || {},
+    tectonic: status.tectonic || {},
   };
 };
 
@@ -76,34 +76,58 @@ class TF_PowerOn extends React.Component {
   destroy () {
     // eslint-disable-next-line no-alert
     if (window.config.devMode || window.confirm('Are you sure you want to destroy your cluster?')) {
+      clearInterval(window.observeInternals.tec);
       this.props.TFDestroy().catch(xhrError => this.setState({xhrError}));
     }
   }
 
   render () {
-    const {action, clusterName, tfError, output, outputBlob, platformType, statusMsg, tectonicConsole} = this.props;
+    const {action, clusterName, tfError, output, outputBlob, platformType, statusMsg, tectonic} = this.props;
     const state = this.state;
     const showLogs = state.showLogs === null ? statusMsg !== 'success' : state.showLogs;
     const terraformRunning = statusMsg === 'running';
 
     const consoleSubsteps = [];
-    if (action === 'apply') {
-      let msg = <span>Resolving <a href={`https://${tectonicConsole.instance}`} target="_blank">{tectonicConsole.instance}</a></span>;
-      const dnsReady = (tectonicConsole.message || '').search('no such host') === -1;
+
+    if (action === 'apply' && tectonic.console) {
+      let msg = <span>Resolving <a href={`https://${tectonic.console.instance}`} target="_blank">{tectonic.console.instance}</a></span>;
+      const dnsReady = (tectonic.console.message || '').search('no such host') === -1;
       if (platformType === AWS_TF) {
         consoleSubsteps.push(<AWS_DomainValidation key="domain" />);
       }
+
       consoleSubsteps.push(
-        <WaitingLi done={dnsReady} cancel={tfError} key="dns">
+        <WaitingLi done={dnsReady} key='dnsReady'>
           <span title={msg}>{msg}</span>
         </WaitingLi>
       );
-      msg = `Starting Tectonic console`;
-      consoleSubsteps.push(
-        <WaitingLi done={tectonicConsole.ready && !tfError} error={tfError} key="consoleReady">
-          <span title={msg}>{msg}</span>
-        </WaitingLi>
-      );
+
+      const components = [
+        {key: 'kubernetes', name: 'Kubernetes'},
+        {key: 'identity', name: 'Tectonic Identity'},
+        {key: 'ingress', name: 'Tectonic Ingress Controller'},
+        {key: 'console', name: 'Tectonic Console'},
+        {key: 'tectonic', name: 'other Tectonic services'},
+      ];
+
+      if (tectonic.hasetcd) {
+        components.splice(1, 0, {key: 'etcd', name: 'Etcd'});
+      }
+
+      for (let c of components) {
+        msg = `Starting ${c.name}`;
+        let ready = false;
+        if (c.key === 'console') {
+          ready = tectonic[c.key].ready;
+        } else {
+          ready = tectonic[c.key].success;
+        }
+        consoleSubsteps.push(
+          <WaitingLi done={ready} error={tectonic[c.key].failed} key={c.key + 'Ready'}>
+            <span title={msg}>{msg}</span>
+          </WaitingLi>
+        );
+      }
     }
     let platformMsg = <p>
       Kubernetes is starting up. We're committing your cluster details.
@@ -229,7 +253,7 @@ class TF_PowerOn extends React.Component {
 let ready = false;
 
 TF_PowerOn.canNavigateForward = ({cluster}) => {
-  ready = ready || (_.get(cluster, 'status.tectonicConsole.ready') === true
+  ready = ready || (_.get(cluster, 'status.tectonic.console.ready') === true
     && _.get(cluster, 'status.status') !== 'running');
   return ready;
 };
