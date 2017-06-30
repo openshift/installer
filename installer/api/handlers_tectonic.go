@@ -230,11 +230,13 @@ func tectonicStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 	}
 	response.Terraform = tf
 
-	tec, err := tectonicStatus(ex, input)
-	if err != nil {
-		return newInternalServerError("Could not retrieve Tectonic status: %s", err)
+	if tf.Action != "delete" {
+		tec, err := tectonicStatus(ex, input)
+		if err != nil {
+			return newInternalServerError("Could not retrieve Tectonic status: %s", err)
+		}
+		response.Tectonic = tec
 	}
-	response.Tectonic = tec
 
 	return writeJSONResponse(w, req, http.StatusOK, response)
 }
