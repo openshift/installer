@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { saveAs } from 'file-saver';
 
 import { Alert } from './alert';
-import { WaitingLi } from './ui';
+import { WaitingLi, LoadingLi } from './ui';
 import { AWS_DomainValidation } from './aws-domain-validation';
 import { ResetButton } from './reset-button';
 import { TFDestroy } from '../aws-actions';
@@ -116,20 +116,42 @@ class TF_PowerOn extends React.Component {
         components.splice(1, 0, {key: 'etcd', name: 'Etcd'});
       }
 
+      let allDone = true, anyFailed = false;
+
       for (let c of components) {
-        msg = `Starting ${c.name}`;
-        let ready = false;
-        if (c.key === 'console') {
-          ready = tectonic[c.key].ready;
-        } else {
-          ready = tectonic[c.key].success;
-        }
-        consoleSubsteps.push(
-          <WaitingLi done={ready} error={tectonic[c.key].failed} key={c.key + 'Ready'}>
-            <span title={msg}>{msg}</span>
-          </WaitingLi>
-        );
+        anyFailed = anyFailed || tectonic[c.key].failed;
+        allDone = !anyFailed && allDone &&
+          (c.key === 'console' ? tectonic[c.key].ready : tectonic[c.key].success);
       }
+
+      let tectonicSubsteps = [];
+
+      if (anyFailed || !allDone) {
+        for (let c of components) {
+          msg = `Starting ${c.name}`;
+          let ready = false;
+          if (c.key === 'console') {
+            ready = tectonic[c.key].ready;
+          } else {
+            ready = tectonic[c.key].success;
+          }
+          tectonicSubsteps.push(
+            <LoadingLi done={ready} error={tectonic[c.key].failed} key={c.key + 'Ready'}>
+              <span title={msg}>{msg}</span>
+            </LoadingLi>
+          );
+        }
+      }
+
+      msg = 'Starting Tectonic';
+      consoleSubsteps.push(
+        <WaitingLi done={allDone} error={anyFailed} key="tectonicReady">
+          <span title={msg}>{msg}</span><br />
+          <ul>
+            {tectonicSubsteps}
+          </ul>
+        </WaitingLi>
+      );
     }
     let platformMsg = <p>
       Kubernetes is starting up. We're committing your cluster details.
