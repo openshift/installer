@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"path/filepath"
 
@@ -16,6 +17,7 @@ import (
 
 	"github.com/coreos/tectonic-installer/installer/pkg/tectonic"
 	"github.com/coreos/tectonic-installer/installer/pkg/terraform"
+	"github.com/dghubble/sessions"
 )
 
 // Status represents the individual state of a single service
@@ -33,10 +35,6 @@ type Services struct {
 	Ingress    Status                 `json:"ingress"`
 	Console    tectonic.ServiceStatus `json:"console"`
 	Tectonic   Status                 `json:"tectonic"` // All other Tectonic services
-}
-
-type response struct {
-	Tectonic Services `json:"tectonic"`
 }
 
 func isEtcdHosted(ex terraform.Executor) (bool, error) {
@@ -81,25 +79,11 @@ func getStatus(p v1.PodPhase) Status {
 	return Status{Failed: false, Success: false}
 }
 
-func tectonicStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Context) error {
-	// Read the input from the request's body.
-	input := struct {
-		TectonicDomain string `json:"tectonicDomain"`
-	}{}
-	if err := json.NewDecoder(req.Body).Decode(&input); err != nil {
-		return newBadRequestError("Could not unmarshal input: %s", err)
-	}
-	defer req.Body.Close()
+type Input struct {
+	TectonicDomain string `json:"tectonicDomain"`
+}
 
-	// Determine whether there is an execution environment already in the session
-	_, ex, _, errCtx := restoreExecutionFromSession(req, ctx.Sessions, nil)
-	if errCtx != nil {
-		// Error directly (rather than NewAppError, which logs) since the
-		// frontend periodically calls this endpoint to advance screens
-		http.Error(w, fmt.Sprintf("Could not find session data: %v", errCtx), http.StatusNotFound)
-		return nil
-	}
-
+func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 	services := Services{
 		Kubernetes: Status{Success: false, Failed: false},
 		Etcd:       Status{Success: false, Failed: false},
@@ -113,23 +97,19 @@ func tectonicStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 	if err != nil {
 		// This is probably because the kubeconfig hasn't been generated yet; assume services haven't started
 		// TODO: Better error handling to make sure it's not a different issue
-		return writeJSONResponse(w, req, http.StatusOK, response{
-			Tectonic: services,
-		})
+		return services, nil
 	}
 
 	pods, err := client.CoreV1().Pods("").List(v1.ListOptions{})
 	if err != nil {
 		// APIServer probably hasn't started yet; assume services haven't started
 		// TODO: Better error handling to make sure it's not a different issue
-		return writeJSONResponse(w, req, http.StatusOK, response{
-			Tectonic: services,
-		})
+		return services, nil
 	}
 
 	etcd, err := isEtcdHosted(*ex)
 	if err != nil {
-		return newInternalServerError("Error reading TF Vars: %s", err)
+		return services, newInternalServerError("Error reading TF Vars: %s", err)
 	}
 
 	services.HasEtcd = etcd
@@ -184,7 +164,77 @@ func tectonicStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 		}
 	}
 
-	return writeJSONResponse(w, req, http.StatusOK, response{
-		Tectonic: services,
-	})
+	return services, nil
+}
+
+type TerraformStatus struct {
+	Status string `json:"status"`
+	Output string `json:"output,omitempty"`
+	Error  string `json:"error,omitempty"`
+	Action string `json:"action"`
+}
+
+func terraformStatus(session *sessions.Session, ex *terraform.Executor, exID int) (TerraformStatus, error) {
+	// Retrieve Terraform's status and output.
+	status, err := ex.Status(exID)
+	if err != nil {
+		return TerraformStatus{}, err
+	} else if status == terraform.ExecutionStatusUnknown {
+		return TerraformStatus{}, newBadRequestError("Could not retrieve TerraForm execution's status: %s", err)
+	}
+	output, _ := ex.Output(exID)
+	outputBytes, _ := ioutil.ReadAll(output)
+
+	// Return results.
+	response := TerraformStatus{
+		Status: string(status),
+		Output: string(outputBytes),
+	}
+	action := session.Values["action"]
+	if action != nil {
+		response.Action = action.(string)
+	}
+	if err != nil {
+		response.Error = err.Error()
+	}
+
+	return response, nil
+}
+
+type Response struct {
+	Terraform TerraformStatus `json:"terraform"`
+	Tectonic  Services        `json:"tectonic"`
+}
+
+func tectonicStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Context) error {
+	input := Input{}
+	// Read the input from the request's body.
+	if err := json.NewDecoder(req.Body).Decode(&input); err != nil {
+		return newBadRequestError("Could not unmarshal input: %s", err)
+	}
+
+	// Restore the execution environment from the session.
+	session, ex, exID, errCtx := restoreExecutionFromSession(req, ctx.Sessions, nil)
+	if errCtx != nil {
+		// Error directly (rather than NewAppError, which logs) since the
+		// frontend periodically calls this endpoint to advance screens
+		http.Error(w, fmt.Sprintf("Could not find session data: %v", errCtx), http.StatusNotFound)
+		return nil
+	}
+
+	response := Response{}
+
+	tf, err := terraformStatus(session, ex, exID)
+	if err != nil {
+		return newInternalServerError("Could not retrieve Terraform status: %s", err)
+	}
+	response.Terraform = tf
+
+	tec, err := tectonicStatus(ex, input)
+	if err != nil {
+		return newInternalServerError("Could not retrieve Tectonic status: %s", err)
+	}
+	response.Tectonic = tec
+
+	return writeJSONResponse(w, req, http.StatusOK, response)
 }
