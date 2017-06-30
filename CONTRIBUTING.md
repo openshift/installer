@@ -46,6 +46,14 @@ This is a rough outline of what a contributor's workflow looks like:
 - Make sure your commit messages are in the proper format (see below).
 - Push your changes to a topic branch in your fork of the repository.
 - Make sure the tests pass, and add any new tests as appropriate.
+  - Please run the following commands, at a minimum, before submitting your
+  pull request:
+```shell
+$ terraform fmt .
+$ make examples
+$ make docs
+$ make structure-check
+```
 - Submit a pull request to the original repository.
 
 Thanks for your contributions!
