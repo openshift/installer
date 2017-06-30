@@ -106,7 +106,7 @@ class TF_PowerOn extends React.Component {
       );
     }
     let platformMsg = <p>
-        Kubernetes is starting up. We're commiting your cluster details.
+        Kubernetes is starting up. We're committing your cluster details.
         Grab some tea and sit tight. This process can take up to 20 minutes.
         Status updates will appear below.
       </p>;
