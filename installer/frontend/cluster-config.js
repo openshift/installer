@@ -41,7 +41,6 @@ export const BM_WORKERS = 'workers';
 export const CA_CERTIFICATE = 'caCertificate';
 export const CA_PRIVATE_KEY = 'caPrivateKey';
 export const CA_TYPE = 'caType';
-export const CHANNEL_TO_USE = 'channelToUse';
 export const CLUSTER_NAME = 'clusterName';
 export const CLUSTER_SUBDOMAIN = 'clusterSubdomain';
 export const CONTROLLER_DOMAIN = 'controllerDomain';
@@ -249,7 +248,6 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
       tectonic_aws_worker_root_volume_type: workers[STORAGE_TYPE],
       tectonic_aws_ssh_key: cc[AWS_SSH],
       tectonic_base_domain: getZoneDomain(cc),
-      tectonic_cl_channel: cc[CHANNEL_TO_USE],
       tectonic_cluster_cidr: cc[POD_CIDR],
       tectonic_cluster_name: cc[CLUSTER_NAME],
       tectonic_master_count: controllers[NUMBER_OF_INSTANCES],
@@ -318,7 +316,6 @@ export const toBaremetal_TF = (cc, FORMS, opts={}) => {
       // eslint-disable-next-line no-sync
       tectonic_admin_password_hash: bcrypt.hashSync(cc[ADMIN_PASSWORD], opts.salt || bcrypt.genSaltSync(bcryptCost)),
       tectonic_cluster_name: cc[CLUSTER_NAME],
-      tectonic_cl_channel: cc[CHANNEL_TO_USE],
       tectonic_admin_email: cc[ADMIN_EMAIL],
       tectonic_metal_cl_version: cc[BM_OS_TO_USE],
       tectonic_metal_ingress_domain: getTectonicDomain(cc),
