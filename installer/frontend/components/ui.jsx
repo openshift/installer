@@ -597,7 +597,7 @@ export const PrivateKeyArea = (props) => {
   return <FileArea {...areaProps} />;
 };
 
-export const WaitingLi = ({done, error, children, substep}) => {
+export const WaitingLi = ({done, error, cancel, children, substep}) => {
   const progressClasses = classNames({
     'wiz-launch-progress__step': !substep,
     'wiz-launch-progress__substep': substep,
@@ -608,7 +608,8 @@ export const WaitingLi = ({done, error, children, substep}) => {
   const iconClasses = classNames('fa', 'fa-fw', {
     'fa-exclamation-circle': error,
     'fa-check-circle': done && !error,
-    'fa-spin fa-circle-o-notch': !done && !error,
+    'fa-ban': !done && !error && cancel,
+    'fa-spin fa-circle-o-notch': !done && !error && !cancel,
   });
 
   return <li className={progressClasses}>
