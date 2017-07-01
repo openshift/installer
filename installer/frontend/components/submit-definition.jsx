@@ -71,7 +71,7 @@ export const SubmitDefinition = connect(
         <span> After submission, the definition cannot be updated. Go <a onClick={!inProgress && navigatePrevious} className={inProgress && 'disabled'}>back</a> to update or make changes.</span>
       </p>
       <p>
-        You'll be able to download your assets zip file after the definition is submitted.
+        You'll be able to download your <a href="https://coreos.com/tectonic/docs/latest/admin/assets-zip.html" target="_blank">assets zip file</a> after the definition is submitted.
       </p>
       <br />
       {feature}
