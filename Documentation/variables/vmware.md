@@ -26,7 +26,7 @@ This document gives an overview of variables used in the VMware platform of the 
 | tectonic_vmware_node_dns | DNS Server to be useddd by Virtual Machine(s) | string | - |
 | tectonic_vmware_server | vCenter Server IP/FQDN | string | - |
 | tectonic_vmware_ssh_authorized_key | SSH public key to use as an authorized key. Example: `"ssh-rsa AAAB3N..."` | string | - |
-| tectonic_vmware_ssh_private_key_path | SSH private key file corresponding to tectonic_vmware_ssh_authorized_key. If not provided, SSH agent will be used. | string | `` |
+| tectonic_vmware_ssh_private_key_path | SSH private key file in .pem format corresponding to tectonic_vmware_ssh_authorized_key. If not provided, SSH agent will be used. | string | `` |
 | tectonic_vmware_sslselfsigned | Is the vCenter certificate Self-Signed? Example: `tectonic_vmware_sslselfsigned = "true"` | string | - |
 | tectonic_vmware_vm_template | Virtual Machine template of CoreOS Container Linux. | string | - |
 | tectonic_vmware_vm_template_folder | Folder for VM template of CoreOS Container Linux. | string | - |

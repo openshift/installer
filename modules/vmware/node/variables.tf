@@ -125,6 +125,12 @@ variable "kubeconfig" {
   description = "Contents of Kubeconfig"
 }
 
+variable "private_key" {
+  type        = "string"
+  description = "SSH private key file in .pem format corresponding to tectonic_vmware_ssh_authorized_key. If not provided, SSH agent will be used."
+  default     = ""
+}
+
 variable "image_re" {
   description = <<EOF
 (internal) Regular expression used to extract repo and tag components from image strings

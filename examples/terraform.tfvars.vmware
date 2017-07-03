@@ -185,7 +185,7 @@ tectonic_vmware_server = ""
 // SSH public key to use as an authorized key. Example: `"ssh-rsa AAAB3N..."`
 tectonic_vmware_ssh_authorized_key = ""
 
-// SSH private key file corresponding to tectonic_vmware_ssh_authorized_key. If not provided, SSH agent will be used.
+// SSH private key file in .pem format corresponding to tectonic_vmware_ssh_authorized_key. If not provided, SSH agent will be used.
 tectonic_vmware_ssh_private_key_path = ""
 
 // Is the vCenter certificate Self-Signed? Example: `tectonic_vmware_sslselfsigned = "true"`

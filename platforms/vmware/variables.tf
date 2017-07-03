@@ -54,7 +54,7 @@ variable "tectonic_vmware_ssh_authorized_key" {
 
 variable "tectonic_vmware_ssh_private_key_path" {
   type        = "string"
-  description = "SSH private key file corresponding to tectonic_vmware_ssh_authorized_key. If not provided, SSH agent will be used."
+  description = "SSH private key file in .pem format corresponding to tectonic_vmware_ssh_authorized_key. If not provided, SSH agent will be used."
   default     = ""
 }
 
