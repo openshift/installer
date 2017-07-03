@@ -17,8 +17,8 @@ systemd:
             Environment="ETCD_STRICT_RECONFIG_CHECK=true"
 {{ if eq .etcd_tls_enabled "1" }}
             Environment="ETCD_SSL_DIR=/etc/ssl/etcd"
-            Environment="ETCD_CERT_FILE=/etc/ssl/certs/client.crt"
-            Environment="ETCD_KEY_FILE=/etc/ssl/certs/client.key"
+            Environment="ETCD_CERT_FILE=/etc/ssl/certs/server.crt"
+            Environment="ETCD_KEY_FILE=/etc/ssl/certs/server.key"
             Environment="ETCD_PEER_CERT_FILE=/etc/ssl/certs/peer.crt"
             Environment="ETCD_PEER_KEY_FILE=/etc/ssl/certs/peer.key"
             Environment="ETCD_PEER_TRUSTED_CA_FILE=/etc/ssl/certs/ca.crt"

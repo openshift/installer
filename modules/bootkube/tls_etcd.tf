@@ -1,3 +1,5 @@
+// root CA
+
 resource "tls_private_key" "etcd-ca" {
   count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
@@ -26,18 +28,21 @@ resource "tls_self_signed_cert" "etcd-ca" {
   ]
 }
 
-resource "tls_private_key" "etcd_client" {
+// (etcd) server keys
+// These are used for etcd-to-etcd member communcation
+
+resource "tls_private_key" "etcd_server" {
   count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
-resource "tls_cert_request" "etcd_client" {
+resource "tls_cert_request" "etcd_server" {
   count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
-  key_algorithm   = "${tls_private_key.etcd_client.algorithm}"
-  private_key_pem = "${tls_private_key.etcd_client.private_key_pem}"
+  key_algorithm   = "${tls_private_key.etcd_server.algorithm}"
+  private_key_pem = "${tls_private_key.etcd_server.private_key_pem}"
 
   subject {
     common_name  = "etcd"
@@ -59,6 +64,45 @@ resource "tls_cert_request" "etcd_client" {
   ]
 }
 
+resource "tls_locally_signed_cert" "etcd_server" {
+  count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
+
+  cert_request_pem = "${tls_cert_request.etcd_server.cert_request_pem}"
+
+  ca_key_algorithm   = "${join(" ", tls_self_signed_cert.etcd-ca.*.key_algorithm)}"
+  ca_private_key_pem = "${join(" ", tls_private_key.etcd-ca.*.private_key_pem)}"
+  ca_cert_pem        = "${join(" ", tls_self_signed_cert.etcd-ca.*.cert_pem)}"
+
+  validity_period_hours = 8760
+
+  allowed_uses = [
+    "key_encipherment",
+    "server_auth",
+  ]
+}
+
+// client keys
+// These are used for "api server"-to-etcd and "etcd operator"-to-etcd client communication
+
+resource "tls_private_key" "etcd_client" {
+  count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
+
+  algorithm = "RSA"
+  rsa_bits  = "2048"
+}
+
+resource "tls_cert_request" "etcd_client" {
+  count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
+
+  key_algorithm   = "${tls_private_key.etcd_client.algorithm}"
+  private_key_pem = "${tls_private_key.etcd_client.private_key_pem}"
+
+  subject {
+    common_name  = "etcd"
+    organization = "etcd"
+  }
+}
+
 resource "tls_locally_signed_cert" "etcd_client" {
   count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
@@ -72,11 +116,12 @@ resource "tls_locally_signed_cert" "etcd_client" {
 
   allowed_uses = [
     "key_encipherment",
-    "digital_signature",
-    "server_auth",
     "client_auth",
   ]
 }
+
+// peer keys
+// These are used for etcd-to-etcd member communcation
 
 resource "tls_private_key" "etcd_peer" {
   count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
@@ -104,6 +149,7 @@ resource "tls_cert_request" "etcd_peer" {
     ))}"
 
   ip_addresses = [
+    "${cidrhost(var.service_cidr, 15)}",
     "${cidrhost(var.service_cidr, 20)}",
   ]
 }
@@ -121,7 +167,6 @@ resource "tls_locally_signed_cert" "etcd_peer" {
 
   allowed_uses = [
     "key_encipherment",
-    "digital_signature",
     "server_auth",
     "client_auth",
   ]

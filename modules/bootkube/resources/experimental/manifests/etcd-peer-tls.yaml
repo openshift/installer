@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: etcd-peer-tls
+  namespace: kube-system
+type: Opaque
+data:
+  peer-ca.crt: ${etcd_ca_cert}
+  peer.crt: ${etcd_peer_cert}
+  peer.key: ${etcd_peer_key}

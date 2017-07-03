@@ -35,11 +35,11 @@ variable "tls_ca_crt_pem" {
   default = ""
 }
 
-variable "tls_client_key_pem" {
+variable "tls_server_key_pem" {
   default = ""
 }
 
-variable "tls_client_crt_pem" {
+variable "tls_server_crt_pem" {
   default = ""
 }
 
