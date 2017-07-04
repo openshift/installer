@@ -57,11 +57,32 @@ function wait_for_tpr() {
 
 function wait_for_pods() {
   set +e
-  local i=0
   echo "Waiting for pods in namespace $1"
-  while $KUBECTL -n "$1" get po -o custom-columns=STATUS:.status.phase,NAME:.metadata.name | tail -n +2 | grep -v '^Running'; do
-    (( i++ ))
-    echo "Pods not available yet, waiting for 5 seconds ($i)"
+  while true; do
+  
+    out=$($KUBECTL -n "$1" get po -o custom-columns=STATUS:.status.phase,NAME:.metadata.name)
+    status=$?
+    echo "$out"
+  
+    if [ "$status" -ne "0" ]; then
+      echo "kubectl command failed, retrying in 5 seconds"
+      sleep 5
+      continue
+    fi
+  
+    # make sure kubectl does not return "no resources found"
+    if [ "$(echo "$out" | tail -n +2 | grep -c '^')" -eq 0 ]; then
+      echo "no resources were found, retrying in 5 seconds"
+      sleep 5
+      continue
+    fi
+  
+    stat=$(echo "$out"| tail -n +2 | grep -v '^Running')
+    if [[ "$stat" == "" ]]; then
+      return
+    fi
+  
+    echo "Pods not available yet, waiting for 5 seconds"
     sleep 5
   done
   set -e
