@@ -83,7 +83,7 @@
                   "--cache-images=true",
                   "--version-mapping=/upgrade-spec.json"
                 ],
-                "image": "quay.io/coreos/kube-version-operator:v1.6.4-kvo.3",
+                "image": "quay.io/coreos/kube-version-operator:v1.6.6",
                 "name": "kube-version-operator"
               }
             ],
@@ -139,7 +139,7 @@
                     }
                   }
                 ],
-                "image": "quay.io/coreos/tectonic-channel-operator:0.3.5",
+                "image": "quay.io/coreos/tectonic-channel-operator:0.3.6",
                 "name": "tectonic-channel-operator",
                 "resources": {
                   "limits": {

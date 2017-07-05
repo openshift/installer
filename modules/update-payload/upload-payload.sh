@@ -39,6 +39,8 @@ if [[ ${UPDATESERVICECTL} == "" ]]; then
     exit 1
 fi
 
+AWSCLI=${AWSCLI:-"aws"}
+
 set -e
 
 payload=${DIR}/payload.json
@@ -64,8 +66,8 @@ PAYLOAD_URL="https://s3-us-west-2.amazonaws.com/${BUCKET}/${DESTINATION}"
 
 echo "Uploading payload to \"${PAYLOAD_URL}\", version: \"${VERSION}\""
 
-aws s3 cp "${payload}" "s3://${BUCKET}/${DESTINATION}"
-aws s3 cp "${payload}.sig" "s3://${BUCKET}/${DESTINATION}.sig"
+${AWSCLI} s3 cp "${payload}" "s3://${BUCKET}/${DESTINATION}"
+${AWSCLI} s3 cp "${payload}.sig" "s3://${BUCKET}/${DESTINATION}.sig"
 
 SERVER=${SERVER:-"https://tectonic.update.core-os.net"}
 APPID=${APPID:-"6bc7b986-4654-4a0f-94b3-84ce6feb1db4"}
