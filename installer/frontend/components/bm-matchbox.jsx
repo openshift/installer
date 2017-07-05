@@ -121,7 +121,7 @@ class Matchbox extends React.Component {
       <div className="col-sm-12">
         <div className="form-group">Matchbox will provision nodes during network boot. Enter the matchbox endpoints.</div>
         <div className="form-group">To find your matchbox endpoints, follow the instructions in the {' '}
-          <a href="https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html" onClick={TectonicGA.sendDocsEvent} target="_blank">
+          <a href="https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html" onClick={() => TectonicGA.sendDocsEvent('bare-metal-tf')} target="_blank">
             Tectonic Deploy Documentation
           </a>.
         </div>

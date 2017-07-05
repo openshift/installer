@@ -7,6 +7,7 @@ import { configActions, registerForm } from './actions';
 import { toError, toIgnore, toAsyncError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from './utils';
 import { ErrorComponent, ConnectedFieldList } from './components/ui';
 import { TectonicGA } from './tectonic-ga';
+import { PLATFORM_TYPE } from './cluster-config';
 
 const { setIn, batchSetIn, append, removeAt } = configActions;
 const nop = () => undefined;
@@ -244,7 +245,7 @@ export class Field extends Node {
     if (!isValid) {
       const dirty = getState().dirty;
       if (dirty[this.name]) {
-        TectonicGA.sendEvent('Validation Error', 'user input', this.name);
+        TectonicGA.sendEvent('Validation Error', 'user input', this.name, oldCC[PLATFORM_TYPE]);
       }
 
       console.debug(`${this.name} is invalid`);

@@ -311,7 +311,7 @@ class AWS_VPCComponent extends React.Component {
                 Use an existing VPC (Public)
               </label>
               <p className="text-muted wiz-help-text">
-                Useful for installing beside existing resources. Your VPC must be <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={TectonicGA.sendDocsEvent} target="_blank">set up correctly</a>.
+                Useful for installing beside existing resources. Your VPC must be <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} target="_blank">set up correctly</a>.
               </p>
             </div>
           </div>
@@ -324,7 +324,7 @@ class AWS_VPCComponent extends React.Component {
                 Use an existing VPC (Private)
               </label>
               <p className="text-muted wiz-help-text">
-                Useful for installing beside existing resources. Your VPC must be <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={TectonicGA.sendDocsEvent} target="_blank">set up correctly</a>.
+                Useful for installing beside existing resources. Your VPC must be <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} target="_blank">set up correctly</a>.
               </p>
             </div>
           </div>
