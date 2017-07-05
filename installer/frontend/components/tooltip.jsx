@@ -1,7 +1,5 @@
 import React from 'react';
 
-import _ from 'lodash';
-
 export const Tooltip = ({children}) => <span className="tooltip">{children}</span>;
 
 /**
@@ -31,17 +29,14 @@ export const Tooltip = ({children}) => <span className="tooltip">{children}</spa
 export const WithTooltip = props => {
   const {children, shouldShow = true, generateText} = props;
   const text = generateText ? generateText(props) : props.text;
-  const onlyChild = React.Children.only(children);
-  const nextProps = _.assign({}, _.omit(props, 'children', 'shouldShow', 'generateText', 'text'), onlyChild.props);
-  const newChild = React.cloneElement(onlyChild, nextProps);
 
   // If there is no text, then assume the tooltip is already nested.
   const tooltip = typeof text === 'string' && shouldShow && <Tooltip>{text}</Tooltip>;
 
-  // Use a wrapping div so that the tooltip will work even if the child
-  // element's pointer-events property is "none".
+  // Use a wrapping div so that the tooltip will work even if a child element's
+  // pointer-events property is "none".
   return <div className="withtooltip" style={{display: 'inline-block'}}>
-    {newChild}
+    {children}
     {tooltip}
   </div>;
 };
