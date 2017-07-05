@@ -79,7 +79,7 @@ export const TectonicLicense = () =>
         <Connect field={PULL_SECRET}>
           <FileArea id={PULL_SECRET} placeholder={PULL_SECRET_PLACEHOLDER} uploadButtonLabel='Upload "config.json"'/>
         </Connect>
-        <p className="text-muted">Input "Pull Secret" <a href="https://account.coreos.com" target="_blank">account.coreos.com</a>.</p>
+        <p className="text-muted">Input "Pull Secret" from <a href="https://account.coreos.com" target="_blank">account.coreos.com</a>.</p>
       </div>
     </div>
 
