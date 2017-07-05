@@ -77,7 +77,7 @@ const Pager = ({showPrev, showNext, disableNext, loadingNext, navigatePrevious, 
                       className={nextLinkClasses}>
                 {loadingNext &&
                  <span><i className="fa fa-spin fa-circle-o-notch"></i>{' '}</span>}
-                 Next Step
+                Next Step
               </button>
             </WithTooltip>
           </div>
