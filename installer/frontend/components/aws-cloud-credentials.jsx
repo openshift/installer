@@ -176,7 +176,7 @@ export const AWS_CloudCredentials = connect(stateToProps)(
     <div className="row form-group">
       <div className="col-xs-12">
         Enter your Amazon Web Services (AWS) credentials to create and configure the required resources.
-        It is strongly suggested that you create a <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#privileges" onClick={TectonicGA.sendDocsEvent} target="_blank">limited access role</a> for Tectonic's communication with your cloud provider.
+        It is strongly suggested that you create a <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#privileges" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} target="_blank">limited access role</a> for Tectonic's communication with your cloud provider.
       </div>
     </div>
 

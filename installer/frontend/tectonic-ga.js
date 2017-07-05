@@ -44,21 +44,20 @@ export const TectonicGA = {
     send({ type: 'pageview', page});
   },
 
-  sendEvent: (category, action, label, value = "") => {
+  sendEvent: (category, action, label = "", platform = "") => {
     send({
       type: 'event',
       category, action,
-      label,
-      value: `${value} ${GIT_TAG}`,
+      label: `${platform}-${GIT_TAG} ${label}`,
     });
   },
 
-  sendDocsEvent: () => {
+  sendDocsEvent: (platform = "") => {
     send({
       type: 'event',
       category: 'Installer Docs Link',
       action: 'click',
-      label: 'User clicks on documentation link',
+      label: `${platform}-${GIT_TAG} User clicks on documentation link`,
     });
   },
 };
