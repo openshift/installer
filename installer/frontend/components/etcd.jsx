@@ -87,7 +87,7 @@ export const Etcd = connect(({clusterConfig}) => ({
             </Connect>
             I have my own v3 etcd cluster
           </label>
-          <p className="text-muted wiz-help-text">Your Tectonic cluster will be configured to to use an external etcd, which you specify.</p>
+          <p className="text-muted wiz-help-text">Your Tectonic cluster will be configured to use an external etcd, which you specify.</p>
         </div>
       </div>
       <form.Errors />

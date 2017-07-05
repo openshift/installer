@@ -308,7 +308,7 @@ const workerFields = generateField(BM_WORKERS, "Worker", 1000);
 export const workersForm = new Form('WORKERS_FORM', [workerFields]);
 export const BM_Workers = () => <NodeForm
   name="Worker"
-  docs={`Worker nodes run end-user's apps. The cluster software automatically shares load
+  docs={`Worker nodes run end-user apps. The cluster software automatically shares load
       between these nodes. Enter the MAC addresses of the nodes you'd like to use as
       workers, and the host names you'll use to refer to them.`}
   field={workerFields} />;
