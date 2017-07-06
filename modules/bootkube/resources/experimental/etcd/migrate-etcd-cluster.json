@@ -26,10 +26,10 @@
     "TLS": {
       "static": {
         "member": {
-          "peerSecret": "etcd-member-peer-tls",
-          "clientSecret": "etcd-member-client-tls"
+          "peerSecret": "etcd-peer-tls",
+          "serverSecret": "etcd-server-tls"
         },
-        "operatorSecret": "etcd-operator-client-tls"
+        "operatorSecret": "etcd-client-tls"
       }
     }
   }

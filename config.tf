@@ -27,7 +27,7 @@ variable "tectonic_container_images" {
   default = {
     hyperkube                       = "quay.io/coreos/hyperkube:v1.6.6_coreos.1"
     pod_checkpointer                = "quay.io/coreos/pod-checkpointer:4e7a7dab10bc4d895b66c21656291c6e0b017248"
-    bootkube                        = "quay.io/coreos/bootkube:v0.4.5"
+    bootkube                        = "quay.io/coreos/bootkube:v0.5.0"
     console                         = "quay.io/coreos/tectonic-console:v1.7.4"
     identity                        = "quay.io/coreos/dex:v2.4.1"
     container_linux_update_operator = "quay.io/coreos/container-linux-update-operator:v0.2.1"
@@ -55,7 +55,7 @@ variable "tectonic_container_images" {
     flannel                         = "quay.io/coreos/flannel:v0.7.1-amd64"
     flannel_cni                     = "quay.io/coreos/flannel-cni:0.1.0"
     etcd                            = "quay.io/coreos/etcd:v3.1.8"
-    etcd_operator                   = "quay.io/coreos/etcd-operator:v0.3.3"
+    etcd_operator                   = "quay.io/coreos/etcd-operator:v0.4.0"
     kenc                            = "quay.io/coreos/kenc:8f6e2e885f790030fbbb0496ea2a2d8830e58b8f"
     awscli                          = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
     kube_version                    = "quay.io/coreos/kube-version:0.1.0"

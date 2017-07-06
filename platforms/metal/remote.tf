@@ -14,13 +14,13 @@ resource "null_resource" "etcd_secrets" {
   }
 
   provisioner "file" {
-    content     = "${module.bootkube.etcd_client_crt_pem}"
-    destination = "$HOME/etcd_client.crt"
+    content     = "${module.bootkube.etcd_server_crt_pem}"
+    destination = "$HOME/etcd_server.crt"
   }
 
   provisioner "file" {
-    content     = "${module.bootkube.etcd_client_key_pem}"
-    destination = "$HOME/etcd_client.key"
+    content     = "${module.bootkube.etcd_server_key_pem}"
+    destination = "$HOME/etcd_server.key"
   }
 
   provisioner "file" {
@@ -37,8 +37,8 @@ resource "null_resource" "etcd_secrets" {
     inline = [
       "sudo mkdir -p /etc/ssl/etcd",
       "sudo mv /home/core/etcd_ca.crt /etc/ssl/etcd/ca.crt",
-      "sudo mv /home/core/etcd_client.crt /etc/ssl/etcd/client.crt",
-      "sudo mv /home/core/etcd_client.key /etc/ssl/etcd/client.key",
+      "sudo mv /home/core/etcd_server.crt /etc/ssl/etcd/server.crt",
+      "sudo mv /home/core/etcd_server.key /etc/ssl/etcd/server.key",
       "sudo mv /home/core/etcd_peer.crt /etc/ssl/etcd/peer.crt",
       "sudo mv /home/core/etcd_peer.key /etc/ssl/etcd/peer.key",
       "sudo chown etcd:etcd /etc/ssl/etcd/*",
