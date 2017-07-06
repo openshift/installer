@@ -28,13 +28,19 @@ The smoke tests assume a running Tectonic cluster, so before running any tests:
 The smoke tests require two parameters: the file path of the cluster kubeconfig and the number of nodes in the cluster.
 Export the following variables to parameterize the smoke tests:
 
-```
+```sh
 export TEST_KUBECONFIG=/path/to/kubeconfig
 export NODE_COUNT=3
 ```
 
-Tests can then be run using the `go test` tool:
+Compile the smoke test binary from the root directory of the project:
 
+```sh
+make bin/smoke
 ```
-go test -v github.com/coreos/tectonic-installer/installer/tests/sanity
+
+The tests can then be run by invoking the `smoke` binary in the `bin` directory. This binary accepts `--cluster` and `--qa` flags to specify which tests suites should be run, e.g.:
+
+```sh
+bin/smoke --cluster --qa
 ```
