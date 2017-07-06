@@ -10,7 +10,10 @@ import { store } from '../store';
 import { DEFAULT_CLUSTER_CONFIG } from '../cluster-config';
 import { toError, toAsyncError } from '../utils';
 // TODO: (kans) test these things
-// toIgnore, , toExtraData, toInFly, toExtraDataInFly, toExtraDataError
+// toExtraData, toInFly, toExtraDataInFly, toExtraDataError
+
+const invalid = 'is invalid';
+const fieldName = 'aField';
 
 const expectCC = (path, expected, f) => {
   const value = _.get(store.getState().clusterConfig, f ? f(path) : path);
@@ -70,8 +73,6 @@ test('field dependency validator is called', done => {
 test('form validator is called', done => {
   expect.assertions(3);
 
-  const fieldName = 'aField';
-
   new Form('aForm', [new Field(fieldName, {default: 'a'})], {
     validator: (value, cc, oldValue) => {
       expectCC(fieldName, 'b');
@@ -88,8 +89,6 @@ test('form validator is called', done => {
 test('sync invalidation', () => {
   expect.assertions(3);
 
-  const invalid = 'is invalid';
-  const fieldName = 'aField';
   const field = new Field(fieldName, {
     default: 'a',
     validator: value => value === 'b' && invalid,
@@ -107,12 +106,8 @@ test('sync invalidation', () => {
   expectCC(fieldName, undefined, toError);
 });
 
-
 test('async invalidation', async done => {
   expect.assertions(5);
-
-  const invalid = 'is invalid';
-  const fieldName = 'aField';
 
   const field = new Field(fieldName, {
     default: 'a',
