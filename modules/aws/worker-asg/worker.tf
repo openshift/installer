@@ -82,8 +82,8 @@ resource "aws_autoscaling_group" "workers" {
 resource "aws_iam_instance_profile" "worker_profile" {
   name = "${var.cluster_name}-worker-profile"
 
-  role = "${var.worker_iam_role == "" ? 
-    join("|", aws_iam_role.worker_role.*.name) : 
+  role = "${var.worker_iam_role == "" ?
+    join("|", aws_iam_role.worker_role.*.name) :
     join("|", data.aws_iam_role.worker_role.*.role_name)
   }"
 }

@@ -85,8 +85,8 @@ resource "aws_launch_configuration" "master_conf" {
 resource "aws_iam_instance_profile" "master_profile" {
   name = "${var.cluster_name}-master-profile"
 
-  role = "${var.master_iam_role == "" ? 
-    join("|", aws_iam_role.master_role.*.name) : 
+  role = "${var.master_iam_role == "" ?
+    join("|", aws_iam_role.master_role.*.name) :
     join("|", data.aws_iam_role.master_role.*.role_name)
   }"
 }
