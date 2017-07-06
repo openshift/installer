@@ -50,4 +50,10 @@ resource "aws_instance" "etcd_node" {
     volume_size = "${var.root_volume_size}"
     iops        = "${var.root_volume_type == "io1" ? var.root_volume_iops : 100}"
   }
+
+  volume_tags = "${merge(map(
+    "Name", "${var.cluster_name}-etcd-${count.index}-vol",
+    "kubernetes.io/cluster/${var.cluster_name}", "owned",
+    "tectonicClusterID", "${var.cluster_id}"
+  ), var.extra_tags)}"
 }
