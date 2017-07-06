@@ -736,7 +736,9 @@ span.spacer {
 
 .co-navbar__logo {
   display: inline-block;
-  max-height: 25px; }
+  max-height: 25px;
+  width: 100px;
+}
 
 .co-navbar-nav {
   display: block;
