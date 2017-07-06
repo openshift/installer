@@ -12,7 +12,7 @@ import {
   PLATFORM_NAMES,
   SELECTED_PLATFORMS,
   isSupported,
-  OptGroups,
+  optGroups,
 } from '../platforms';
 
 let defaultPlatformType = '';
@@ -56,7 +56,7 @@ const platformForm = new Form(PLATFORM_FORM, [
 );
 
 const platformOptions = [];
-_.each(OptGroups, optgroup => {
+_.each(optGroups, optgroup => {
   const [name, ...group] = optgroup;
   const platforms = _.filter(group, p => SELECTED_PLATFORMS.includes(p));
   if (platforms.length) {
