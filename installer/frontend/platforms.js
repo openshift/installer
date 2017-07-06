@@ -12,8 +12,6 @@ export const PLATFORM_NAMES = {
   [OPENSTACK]: 'Openstack',
 };
 
-export const isTerraform = p => [AWS_TF, AZURE, BARE_METAL_TF, OPENSTACK].includes(p);
-
 export const optGroups = [
   ['Graphical Installer (default)', AWS_TF, BARE_METAL_TF],
   ['Advanced Installer', AZURE, OPENSTACK],

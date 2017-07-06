@@ -1,13 +1,9 @@
 import _ from 'lodash';
 
-import { getTectonicDomain, toAWS_TF, toBaremetal_TF, DRY_RUN, PLATFORM_TYPE, RETRY } from './cluster-config';
+import { getTectonicDomain, toAWS_TF, toBaremetal_TF, DRY_RUN, RETRY } from './cluster-config';
 import { clusterReadyActionTypes, configActions, loadFactsActionTypes, serverActionTypes, FORMS } from './actions';
 import { savable } from './reducer';
-import {
-  AWS_TF,
-  BARE_METAL_TF,
-  isTerraform,
-} from './platforms';
+import { AWS_TF, BARE_METAL_TF } from './platforms';
 
 const { setIn } = configActions;
 
@@ -35,9 +31,7 @@ const {NOT_READY, STATUS, ERROR} = clusterReadyActionTypes;
 export const observeClusterStatus = (dispatch, getState) => {
   const cc = getState().clusterConfig;
   const tectonicDomain = getTectonicDomain(cc);
-  const platform = _.get(cc, PLATFORM_TYPE);
 
-  const url = isTerraform(platform) ? '/terraform/status' : '/cluster/status';
   const opts = {
     credentials: 'same-origin',
     body: JSON.stringify({tectonicDomain}),
@@ -48,7 +42,7 @@ export const observeClusterStatus = (dispatch, getState) => {
     },
   };
 
-  return fetch(url, opts).then(response => {
+  return fetch('/terraform/status', opts).then(response => {
     if (response.status === 404) {
       dispatch({type: NOT_READY});
       return;
