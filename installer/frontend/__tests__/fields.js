@@ -8,9 +8,9 @@ import { __deleteEverything__, configActions, configActionTypes } from '../actio
 import { Field, Form } from '../form';
 import { store } from '../store';
 import { DEFAULT_CLUSTER_CONFIG } from '../cluster-config';
-import { toError, toAsyncError, toIgnore } from '../utils';
+import { toError, toAsyncError, toIgnore, toInFly } from '../utils';
 // TODO: (kans) test these things
-// toExtraData, toInFly, toExtraDataInFly, toExtraDataError
+// toExtraData, toExtraDataInFly, toExtraDataError
 
 const invalid = 'is invalid';
 const fieldName = 'aField';
@@ -206,5 +206,24 @@ test('ignores', async done => {
   expect(field2.isValid(cc)).toEqual(true);
   expect(form.isValid(cc)).toEqual(true);
 
+  done();
+});
+
+test('inFly', async done => {
+  expect.assertions(3);
+
+  const field = new Field(fieldName, {
+    default: 'a',
+    asyncValidator: () => new Promise(accept => {
+      expectCC(fieldName, true, toInFly);
+      accept();
+      expectCC(fieldName, false, toInFly);
+    }),
+  });
+
+  new Form('aForm', [field]);
+
+  expectCC(fieldName, undefined, toInFly);
+  await updateField(fieldName, 'b');
   done();
 });
