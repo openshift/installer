@@ -14,6 +14,13 @@
     "tectonic_aws_extra_tags": {
       "test_tag": "testing"
     },
+    "tectonic_autoscaling_group_extra_tags": [
+      {
+        "key": "test_tag",
+        "value": "testing",
+        "propagate_at_launch": true
+      }
+    ],
     "tectonic_aws_master_custom_subnets": {
       "us-west-1a": "10.0.0.0/19",
       "us-west-1c": "10.0.32.0/19"
