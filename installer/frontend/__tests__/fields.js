@@ -8,12 +8,19 @@ import { __deleteEverything__, configActions, configActionTypes } from '../actio
 import { Field, Form } from '../form';
 import { store } from '../store';
 import { DEFAULT_CLUSTER_CONFIG } from '../cluster-config';
-import { toError, toAsyncError, toIgnore, toInFly } from '../utils';
-// TODO: (kans) test these things
-// toExtraData, toExtraDataInFly, toExtraDataError
+import {
+  toError,
+  toAsyncError,
+  toIgnore,
+  toInFly,
+  toExtraData,
+  toExtraDataInFly,
+  toExtraDataError,
+ } from '../utils';
 
 const invalid = 'is invalid';
 const fieldName = 'aField';
+const fieldName2 = 'bField';
 
 const expectCC = (path, expected, f) => {
   const value = _.get(store.getState().clusterConfig, f ? f(path) : path);
@@ -183,8 +190,6 @@ test('ignores', async done => {
   expect.assertions(6);
 
   const field1 = new Field(fieldName, { default: 'a'});
-
-  const fieldName2 = 'bField';
   const field2 = new Field(fieldName2, {
     default: 'a',
     validator: () => invalid,
@@ -225,5 +230,74 @@ test('inFly', async done => {
 
   expectCC(fieldName, undefined, toInFly);
   await updateField(fieldName, 'b');
+  done();
+});
+
+test('toExtraData', async done => {
+  expect.assertions(3);
+
+  const stuff = 'stuff';
+  const field1 = new Field(fieldName, {default: 'a'});
+  const field2 = new Field(fieldName2, {
+    default: 'a',
+    dependencies: [fieldName],
+    getExtraStuff: () => Promise.resolve(stuff),
+  });
+
+  new Form('aForm', [field1, field2]);
+
+  expectCC(fieldName2, undefined, toExtraData);
+
+  // toExtraData is only triggered on deps and should probably be combined ...
+  // with asyncValidator (which can accept/reject)
+  await updateField(fieldName2, 'b');
+  expectCC(fieldName2, undefined, toExtraData);
+
+  await updateField(fieldName, 'b');
+  expectCC(fieldName2, stuff, toExtraData);
+
+  done();
+});
+
+test('toExtraDataInFly', async done => {
+  expect.assertions(3);
+
+  const field1 = new Field(fieldName, {default: 'a'});
+  const field2 = new Field(fieldName2, {
+    default: 'a',
+    dependencies: [fieldName],
+    getExtraStuff: () => new Promise(accept => {
+      expectCC(fieldName2, true, toExtraDataInFly);
+      accept();
+      expectCC(fieldName2, false, toExtraDataInFly);
+    }),
+  });
+
+  new Form('aForm', [field1, field2]);
+
+  expectCC(fieldName2, undefined, toExtraDataInFly);
+  await updateField(fieldName, 'b');
+
+  done();
+});
+
+test('toExtraDataError', async done => {
+  expect.assertions(2);
+
+  const error = 'error';
+  const field1 = new Field(fieldName, {default: 'a'});
+  const field2 = new Field(fieldName2, {
+    default: 'a',
+    dependencies: [fieldName],
+    getExtraStuff: () => Promise.reject(error),
+  });
+
+  new Form('aForm', [field1, field2]);
+
+  expectCC(fieldName2, undefined, toExtraDataError);
+
+  await updateField(fieldName, 'b');
+
+  expectCC(fieldName2, error, toExtraDataError);
   done();
 });
