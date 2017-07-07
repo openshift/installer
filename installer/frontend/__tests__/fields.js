@@ -8,9 +8,12 @@ import { __deleteEverything__, configActions, configActionTypes } from '../actio
 import { Field, Form } from '../form';
 import { store } from '../store';
 import { DEFAULT_CLUSTER_CONFIG } from '../cluster-config';
-import { toError, toAsyncError } from '../utils';
+import { toError, toAsyncError, toIgnore } from '../utils';
 // TODO: (kans) test these things
-// toIgnore, , toExtraData, toInFly, toExtraDataInFly, toExtraDataError
+// toExtraData, toInFly, toExtraDataInFly, toExtraDataError
+
+const invalid = 'is invalid';
+const fieldName = 'aField';
 
 const expectCC = (path, expected, f) => {
   const value = _.get(store.getState().clusterConfig, f ? f(path) : path);
@@ -70,8 +73,6 @@ test('field dependency validator is called', done => {
 test('form validator is called', done => {
   expect.assertions(3);
 
-  const fieldName = 'aField';
-
   new Form('aForm', [new Field(fieldName, {default: 'a'})], {
     validator: (value, cc, oldValue) => {
       expectCC(fieldName, 'b');
@@ -88,8 +89,6 @@ test('form validator is called', done => {
 test('sync invalidation', () => {
   expect.assertions(3);
 
-  const invalid = 'is invalid';
-  const fieldName = 'aField';
   const field = new Field(fieldName, {
     default: 'a',
     validator: value => value === 'b' && invalid,
@@ -107,12 +106,8 @@ test('sync invalidation', () => {
   expectCC(fieldName, undefined, toError);
 });
 
-
 test('async invalidation', async done => {
   expect.assertions(5);
-
-  const invalid = 'is invalid';
-  const fieldName = 'aField';
 
   const field = new Field(fieldName, {
     default: 'a',
@@ -131,6 +126,85 @@ test('async invalidation', async done => {
 
   await updateField(fieldName, 'a');
   expectCC(fieldName, undefined, toAsyncError);
+
+  done();
+});
+
+test('async (promise) invalidation', async done => {
+  expect.assertions(3);
+
+  const field = new Field(fieldName, {
+    default: 'a',
+    asyncValidator: (dispatch, getState, value) => new Promise((resolve, reject) =>
+      value === 'b'
+        ? process.nextTick(() => reject(invalid))
+        : process.nextTick(resolve)
+    ),
+  });
+
+  new Form('aForm', [field]);
+
+  expectCC(fieldName, undefined, toAsyncError);
+  await updateField(fieldName, 'b');
+
+  expectCC(fieldName, invalid, toAsyncError);
+
+  await updateField(fieldName, 'c');
+  expectCC(fieldName, undefined, toAsyncError);
+
+  done();
+});
+
+test('sync/async invalidation', async done => {
+  expect.assertions(5);
+
+  const field = new Field(fieldName, {
+    default: 'a',
+    validator: value => value === 'b' && invalid,
+    asyncValidator: (dispatch, getState, value) => value === 'c' && invalid,
+  });
+
+  new Form('aForm', [field]);
+
+  expectCC(fieldName, undefined, toError);
+
+  await updateField(fieldName, 'b');
+  expectCC(fieldName, invalid, toError);
+  expectCC(fieldName, undefined, toAsyncError);
+
+  await updateField(fieldName, 'c');
+  expectCC(fieldName, invalid, toAsyncError);
+  expectCC(fieldName, undefined, toError);
+
+  done();
+});
+
+test('ignores', async done => {
+  expect.assertions(6);
+
+  const field1 = new Field(fieldName, { default: 'a'});
+
+  const fieldName2 = 'bField';
+  const field2 = new Field(fieldName2, {
+    default: 'a',
+    validator: () => invalid,
+    dependencies: [fieldName],
+    ignoreWhen: cc => cc[fieldName] === 'b',
+  });
+
+  const form = new Form('aForm', [field1, field2]);
+
+  await updateField(fieldName2, 'b');
+  expectCC(fieldName2, undefined, toIgnore);
+  expect(form.isValid(store.getState().clusterConfig)).toEqual(false);
+  await updateField(fieldName, 'b');
+
+  expectCC(fieldName2, true, toIgnore);
+  expectCC(fieldName2, invalid, toError);
+
+  const cc = store.getState().clusterConfig;
+  expect(field2.isValid(cc)).toEqual(true);
+  expect(form.isValid(cc)).toEqual(true);
 
   done();
 });
