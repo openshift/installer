@@ -169,10 +169,14 @@ tar xzvf tectonic-1.6.4-tectonic.1.tar.gz
 cd tectonic/tectonic-installer
 ```
 
-Run the Tectonic Installer that matches your platform (`linux` or `darwin`):
+Run the Tectonic Installer for your platform:
 
-```sh
-./$PLATFORM/installer
+```bash
+# macOS users
+$ ./tectonic-installer/darwin/installer
+
+# Linux users
+$ ./tectonic-installer/linux/installer
 ```
 
 A browser window will open to begin the GUI installation process, which will require the following information:
