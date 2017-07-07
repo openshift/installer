@@ -66,7 +66,7 @@ export const AWS_ClusterInfo = () => <div>
 
   <div className="row form-group">
     <div className="col-xs-3">
-      <label htmlFor="tags">Tags</label>
+      <label htmlFor="tags">AWS Tags</label>
     </div>
     <div className="col-xs-9">
       <TagsWithPlaceholder />
