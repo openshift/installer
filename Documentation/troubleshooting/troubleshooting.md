@@ -147,7 +147,7 @@ $ curl -I https://east-coast-api.example.com:443
 
 ### Troubleshooting Tectonic Ingress
 
-Tectonic Ingress routes traffic to your containers from outside the cluster.  It also routes traffic to Tectonic components hosted on the cluster. If DNS passed validation in [Troubleshooting connectivity to cluster] above, the Ingress address is available, and delivering traffic to the cluster.
+Tectonic Ingress routes traffic to your containers from outside the cluster.  It also routes traffic to Tectonic components hosted on the cluster. If DNS passed validation in [Troubleshooting connectivity to cluster][troubleshoot-connectivity] above, the Ingress address is available, and delivering traffic to the cluster.
 
 When Ingress is not working you will not be able to use the Console, so we will rely on other tools. First, check the response from the Ingress address in a browser or `curl`:
 
