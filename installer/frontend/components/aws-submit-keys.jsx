@@ -1,12 +1,13 @@
 import _ from 'lodash';
 import React from 'react';
+import { connect } from 'react-redux';
 
 import { validate } from '../validate';
 import { Connect, Selector } from './ui';
 import { Field, Form } from '../form';
 
 import * as awsActions from '../aws-actions';
-import { AWS_SSH, AWS_REGION_FORM } from '../cluster-config';
+import { AWS_SSH, AWS_REGION_FORM, AWS_REGION } from '../cluster-config';
 
 const awsSshForm = new Form('AWSSSHForm', [
   new Field(AWS_SSH, {
@@ -25,6 +26,12 @@ const awsSshForm = new Form('AWSSSHForm', [
   }
 );
 
+const Title = connect(
+  ({clusterConfig}) => ({region: clusterConfig[AWS_REGION]})
+)(
+  ({region}) => <h4>SSH Keys in {region}</h4>
+);
+
 export const AWS_SubmitKeys = () => <div>
   <div className="row form-group">
     <div className="col-xs-12">
@@ -33,9 +40,9 @@ export const AWS_SubmitKeys = () => <div>
   </div>
   <div className="row form-group">
     <div className="col-xs-12">
-      <h4>SSH Key</h4>
+      <Title />
       <Connect field={AWS_SSH}>
-        <Selector refreshBtn={true} disabledValue="Please select SSH Key Pair" />
+        <Selector refreshBtn={true} disabledValue="Please select a SSH Key Pair from this region." />
       </Connect>
       <awsSshForm.Errors />
     </div>
