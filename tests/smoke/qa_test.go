@@ -12,7 +12,7 @@ func testQA(t *testing.T) {
 }
 
 func getStatsEmitterLogs(t *testing.T) error {
-	c := newClient(t)
+	c, _ := newClient(t)
 	expected := "report successfully sent"
 	namespace := "tectonic-system"
 	podPrefix := "tectonic-stats-emitter"

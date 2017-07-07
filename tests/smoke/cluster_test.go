@@ -4,18 +4,58 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/tools/clientcmd"
+	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
+	"k8s.io/kubernetes/pkg/kubectl/resource"
+	"path/filepath"
 )
 
 const (
 	// nodeCountVar is the environment variable to check for Node count.
 	nodeCountVar = "NODE_COUNT"
+
+	// manifestPathsEnv is the environment variable that define the paths to the manifests which are deployed on the cluster.
+	manifestPathsEnv = "MANIFEST_PATHS"
+
+	// manifestExperimentalEnv is the environment variable that determines
+	manifestExperimentalEnv = "MANIFEST_EXPERIMENTAL"
+)
+
+var (
+	// defaultIgnoredManifests represents the manifests that are ignored by
+	// testAllResourcesCreated by default.
+	defaultIgnoredManifests = []string{"bootstrap"}
+
+	// experimentalManifests represents the manifests that are ignored by
+	// testAllResourcesCreated when manifestExperimentalEnv isn't set to 'true'.
+	experimentalManifests = []string{
+		// Generated all the time but only deployed when experimental is enabled.
+		"tectonic/updater/cluster-config.yaml",
+		"tectonic/updater/app_versions/app-version-tectonic-etcd.yaml",
+		"tectonic/updater/operators/tectonic-etcd-operator.yaml",
+	}
+
+	// equivalentKindRemapping is used by resourceIdentifier to map different
+	// Kubernetes object kinds, that can be considered equivalent when checking
+	// resource existence, with the same identifier.
+	equivalentKindRemapping = map[string]string{
+		"extensions/v1beta1:DaemonSet":  "extensions/v1beta1:DeploymentOrDaemonSet",
+		"extensions/v1beta1:Deployment": "extensions/v1beta1:DeploymentOrDaemonSet",
+	}
+
+	// decodeErrorRegexp defines the format of the error returned by Kubernetes' resource mapper.
+	decodeErrorRegexp = regexp.MustCompile(`unable to (?P<Type>decode|recognize) "(?P<Manifest>.*)": (?P<Message>.*)`)
 )
 
 func testCluster(t *testing.T) {
@@ -24,6 +64,7 @@ func testCluster(t *testing.T) {
 	t.Run("GetIdentityLogs", testGetIdentityLogs)
 	t.Run("AllPodsRunning", testAllPodsRunning)
 	t.Run("KillAPIServer", testKillAPIServer)
+	t.Run("AllResourcesCreated", testAllResourcesCreated)
 }
 
 func testAllPodsRunning(t *testing.T) {
@@ -35,8 +76,8 @@ func testAllPodsRunning(t *testing.T) {
 }
 
 func allPodsRunning(t *testing.T) error {
-	c := newClient(t)
-	pods, err := c.Core().Pods("").List(v1.ListOptions{})
+	c, _ := newClient(t)
+	pods, err := c.Core().Pods("").List(meta_v1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("could not list pods: %v", err)
 	}
@@ -56,8 +97,8 @@ func allPodsRunning(t *testing.T) error {
 
 func allNodesRunning(expected int) func(t *testing.T) error {
 	return func(t *testing.T) error {
-		c := newClient(t)
-		nodes, err := c.Core().Nodes().List(v1.ListOptions{})
+		c, _ := newClient(t)
+		nodes, err := c.Core().Nodes().List(meta_v1.ListOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to list nodes: %v", err)
 		}
@@ -95,7 +136,7 @@ func testAllNodesRunning(t *testing.T) {
 }
 
 func getIdentityLogs(t *testing.T) error {
-	c := newClient(t)
+	c, _ := newClient(t)
 	namespace := "tectonic-system"
 	podPrefix := "tectonic-identity"
 	_, err := validatePodLogging(c, namespace, podPrefix)
@@ -117,7 +158,7 @@ func testGetIdentityLogs(t *testing.T) {
 // validatePodLogging verifies that logs can be retrieved for a container in Pod.
 func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) ([]byte, error) {
 	var logs []byte
-	pods, err := c.Pods(namespace).List(v1.ListOptions{})
+	pods, err := c.Pods(namespace).List(meta_v1.ListOptions{})
 	if err != nil {
 		return logs, fmt.Errorf("could not list pods: %v", err)
 	}
@@ -161,7 +202,7 @@ func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) ([
 }
 
 func testKillAPIServer(t *testing.T) {
-	c := newClient(t)
+	c, _ := newClient(t)
 	pods, err := getAPIServers(c)
 	if err != nil {
 		t.Fatalf("Failed to get API server pod: %v", err)
@@ -218,12 +259,102 @@ func testKillAPIServer(t *testing.T) {
 	t.Log("API server pods successfully came back up.")
 }
 
+// allResourcesCreated reads all the manifests recursively from the given paths (except the ones that are explictely
+// ignored), and ensures that all the associated resources have been properly created.
+func allResourcesCreated(manifestsPaths, ignoredManifests []string) func(t *testing.T) error {
+	return func(t *testing.T) error {
+		t.Logf("looking for resources defined by the provided manifests...")
+
+		_, cc := newClient(t)
+		failed := false
+
+		// Walk recursively through the provided folders to find manifests, decode them and
+		// ensure they exist on the cluster.
+		resourcesToManifests := make(map[string][]string)
+		resourcesCreated := make(map[string]bool)
+		errs := walkPathForObjects(cc, manifestsPaths, func(info *resource.Info, walkErr error) error {
+			if walkErr != nil {
+				return walkErr
+			}
+
+			resourceIdentifier := resourceIdentifier(info)
+			manifest := stripPathPrefixes(info.Source, manifestsPaths)
+
+			if containsAnyOfStrings(ignoredManifests, manifest) {
+				// The manifest is ignored.
+				return nil
+			}
+
+			resourcesToManifests[resourceIdentifier] = append(resourcesToManifests[resourceIdentifier], manifest)
+			resourcesCreated[resourceIdentifier] = resourcesCreated[resourceIdentifier] || (info.Get() == nil)
+			if resourcesCreated[resourceIdentifier] {
+				t.Logf("OK : %s - %v", resourceIdentifier, manifest)
+			}
+
+			return nil
+		})
+
+		// Each resource that is not present on the server, but declared by one or
+		// multiple manifests is treated as a failure.
+		//
+		// TODO: This might be ineffective if resources are clearly different types
+		// and purpose (i.e. DaemonSet / ConfigMap) are named the same. To work around
+		// this, we could have a mapping of types we consider to be similar. For now,
+		// this does not seem to be an issue and the effort is not justified.
+		for resourceIdentifier, resourceCreated := range resourcesCreated {
+			if !resourceCreated {
+				t.Logf("MISSING : %s - %v", resourceIdentifier, resourcesToManifests[resourceIdentifier])
+				failed = true
+			}
+		}
+
+		// Each manifests that failed to get decoded (e.g. unknown type) is treated as
+		// a failure. This typically means that the TPR kind, or the operator that is
+		// responsible for creating the TPR kind, does not exist.
+		for _, err := range errs {
+			if containsAnyOfStrings(ignoredManifests, err.Error()) {
+				// The manifest is ignored.
+				continue
+			}
+			t.Log(err)
+			failed = true
+		}
+
+		if failed {
+			return errors.New("all defined resources were not present")
+		}
+
+		t.Logf("all resources defined by the provided manifests are present")
+		return nil
+	}
+}
+
+func testAllResourcesCreated(t *testing.T) {
+	// Read configuration from environment.
+	manifestPaths := os.Getenv(manifestPathsEnv)
+	manifestsPathsSp := strings.Split(manifestPaths, ",")
+	if len(manifestsPathsSp) == 0 {
+		t.Skipf("no manifest paths in environment variable %s, skipping", manifestPathsEnv)
+	}
+
+	ignoredManifests := defaultIgnoredManifests
+	if manifestExperimental := os.Getenv(manifestExperimentalEnv); manifestExperimental != "true" {
+		ignoredManifests = append(ignoredManifests, experimentalManifests...)
+	}
+
+	max := 10 * time.Minute
+	err := retry(allResourcesCreated(manifestsPathsSp, ignoredManifests), t, 30*time.Second, max)
+	if err != nil {
+		t.Fatalf("timed out waiting for all manifests to be created after %v", max)
+	}
+}
+
 func getAPIServers(client *kubernetes.Clientset) (*v1.PodList, error) {
 	const (
 		apiServerSelector   = "k8s-app=kube-apiserver"
 		kubeSystemNamespace = "kube-system"
 	)
-	pods, err := client.Core().Pods(kubeSystemNamespace).List(v1.ListOptions{LabelSelector: apiServerSelector})
+	pods, err := client.Core().Pods(kubeSystemNamespace).List(meta_v1.ListOptions{LabelSelector: apiServerSelector})
 	if err != nil {
 		return nil, err
 	}
@@ -252,4 +383,98 @@ func nodeReady(node v1.Node) (ok bool) {
 		}
 	}
 	return false
+}
+
+// walkPathForObjects is a helper that calls the given resource.VisitorFunc function for each decoded Kubernetes
+// manifest present in the given paths. Any decoding or parsing errors are aggregated.
+func walkPathForObjects(cfg clientcmd.ClientConfig, paths []string, fn resource.VisitorFunc) (errs []error) {
+	f := cmdutil.NewFactory(cfg)
+
+	schema, err := f.Validator(false, "")
+	if err != nil {
+		return []error{err}
+	}
+
+	mapper, typer, err := f.UnstructuredObject()
+	if err != nil {
+		return []error{err}
+	}
+
+	// As of 1.7, we need to replace the typer with: f.CategoryExpander()
+	result := resource.NewBuilder(mapper, typer, resource.ClientMapperFunc(f.UnstructuredClientForMapping), unstructured.UnstructuredJSONScheme).
+		ContinueOnError().
+		Schema(schema).
+		FilenameParam(false, &resource.FilenameOptions{Recursive: true, Filenames: paths}).
+		Flatten().
+		Do()
+
+	err = result.Err()
+	if err != nil && !strings.HasPrefix(err.Error(), "you must provide one or more resources") {
+		return []error{err}
+	}
+
+	if err := result.Visit(fn); err != nil {
+		for _, err := range err.(utilerrors.Aggregate).Errors() {
+			if manifest, message, ok := parseMapperDecodingError(err.Error()); ok {
+				errs = append(errs, fmt.Errorf("manifest %q not recognized: %s (this is likely due to a missing TPR kind / Operator)", stripPathPrefixes(manifest, paths), message))
+			} else {
+				errs = append(errs, fmt.Errorf("failed to parse manifest: %s (syntax?)", err))
+			}
+		}
+	}
+	return errs
+}
+
+// parseMapperDecodingError extracts information from a Kubernetes' mapper
+// error.
+func parseMapperDecodingError(err string) (manifest, message string, ok bool) {
+	tokens := decodeErrorRegexp.FindStringSubmatch(err)
+	if tokens == nil {
+		return "", "", false
+	}
+
+	for i, name := range decodeErrorRegexp.SubexpNames() {
+		if name == "Manifest" {
+			manifest = tokens[i]
+		} else if name == "Message" {
+			message = tokens[i]
+		}
+	}
+
+	return manifest, message, true
+}
+
+// stripPathPrefixes attempts to remove a prefix from the given path
+// using the provided lists of potential prefixes. If none of the provided
+// prefixes matched, the original path is returned.
+func stripPathPrefixes(path string, prefixes []string) string {
+	for _, prefix := range prefixes {
+		if rel, err := filepath.Rel(prefix, path); err == nil {
+			return rel
+		}
+	}
+	return path
+}
+
+// containsAnyOfStrings returns whether one of the needles is
+// contained within the haystack.
+func containsAnyOfStrings(needles []string, haystack string) bool {
+	for _, needle := range needles {
+		if strings.Contains(haystack, needle) {
+			return true
+		}
+	}
+	return false
+}
+
+// resourcesIdentifier returns a string that can be used to identify and map
+// a Kubernetes resource easily. Some object kinds are treated equivalently
+// (see equivalentKindRemapping) in order to ease executing presence tests.
+func resourceIdentifier(info *resource.Info) string {
+	kindObject := info.VersionedObject.GetObjectKind().GroupVersionKind()
+	kind := fmt.Sprintf("%s/%s:%s", kindObject.Group, kindObject.Version, kindObject.Kind)
+	if equivalentKind, ok := equivalentKindRemapping[kind]; ok {
+		kind = equivalentKind
+	}
+	return fmt.Sprintf("[Kind: %s | Namespace: %s | Name: %s]", kind, info.Namespace, info.Name)
 }
