@@ -22,8 +22,8 @@ Master nodes run most, if not all, control plane components including the API se
       - MUST allow port 4789 (UDP) from masters & workers for flannel
       - MUST allow 32000-32002 from all for: Tectonic ingress (if using node ports for ingress like on AWS, otherwise use host ports on workers) 
       - SHOULD allow port 9100 from masters & workers for: Prometheus Node Exporter metrics 
-      - MAY have tcp/udp port 30000-32767 [node port range open] 
-      - MAY have tcp port 2379 [etcd client API when not using external etcd] 
+      - MAY have tcp/udp port 30000-32767 (node port range open)  
+      - MAY have tcp port 2379 (etcd client API when not using external etcd) 
       - MAY allow port 10255 from all for: read-only kubelet status & LB health checks for k8s API 
     - Egress 
       - MUST have 443 to download gcr, quay, and docker hub images 

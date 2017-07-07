@@ -138,11 +138,11 @@ In addition to rebooting the control plane, this will also destroy and recreate 
 [pod-checkpointer]: https://github.com/kubernetes-incubator/bootkube/blob/master/cmd/checkpoint/README.md
 [bootkube-test-recovery]: https://github.com/kubernetes-incubator/bootkube/blob/master/hack/multi-node/bootkube-test-recovery
 [bootkube-test-recovery-self-hosted-etcd]: https://github.com/kubernetes-incubator/bootkube/blob/master/hack/multi-node/bootkube-test-recovery-self-hosted-etcd
-[checkpoint]: bootkube_recovery_tool.md/#key-concepts
-[self-hosted]: bootkube_recovery_tool.md/#key-concepts
-[parent-pod]: bootkube_recovery_tool.md/#key-concepts
-[external-etcd]: bootkube_recovery_tool.md/#key-concepts
-[provisioned-etcd]: bootkube_recovery_tool.md/#key-concepts
+[checkpoint]: #key-concepts
+[self-hosted]: #key-concepts
+[parent-pod]: #key-concepts
+[external-etcd]: #key-concepts
+[provisioned-etcd]: #key-concepts
 [disaster-recovery-etcd]: https://coreos.com/etcd/docs/latest/op-guide/recovery.html
 [self-hosted-kubernetes]: https://github.com/kubernetes/community/blob/master/contributors/design-proposals/self-hosted-kubernetes.md#what-is-self-hosted
 [controller-recovery]: https://coreos.com/tectonic/docs/latest/troubleshooting/controller-recovery.html
