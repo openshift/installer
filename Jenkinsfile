@@ -83,7 +83,7 @@ pipeline {
                   checkout scm
                   unstash 'installer'
                   unstash 'smoke'
-                  timeout(35) {
+                  timeout(45) {
                     sh """#!/bin/bash -ex
                     . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
                     ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-tls.tfvars
