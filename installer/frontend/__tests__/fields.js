@@ -21,6 +21,7 @@ import {
 const invalid = 'is invalid';
 const fieldName = 'aField';
 const fieldName2 = 'bField';
+const fieldName3 = 'cField';
 
 const expectCC = (path, expected, f) => {
   const value = _.get(store.getState().clusterConfig, f ? f(path) : path);
@@ -300,4 +301,52 @@ test('toExtraDataError', async done => {
 
   expectCC(fieldName2, error, toExtraDataError);
   done();
+});
+
+test('forms as dependencies', async done => {
+  expect.assertions(4);
+
+  const field = new Field(fieldName, {
+    default: 'a',
+    validator: value => value === 'b' && 'error',
+  });
+
+  const form1 = new Form('aForm', [field]);
+  const form2 = new Form('bForm', [form1]);
+
+  resetCC();
+
+  let clusterConfig = store.getState().clusterConfig;
+
+  expect(form2.isValid(clusterConfig)).toEqual(true);
+  expect(form1.isValid(clusterConfig)).toEqual(true);
+
+  await updateField(fieldName, 'b');
+
+  clusterConfig = store.getState().clusterConfig;
+  expect(form2.isValid(clusterConfig)).toEqual(false);
+  expect(form1.isValid(clusterConfig)).toEqual(false);
+
+  done();
+});
+
+test('deep dependency chains', async done => {
+  expect.assertions(2);
+
+  const defaultValue = 'value';
+  const field1 = new Field(fieldName, {default: 'a'});
+  const field2 = new Field(fieldName2, {default: 'a', dependencies: [fieldName]});
+  const field3 = new Field(fieldName3, {default: defaultValue, dependencies: [fieldName2],
+    asyncValidator: (dispatch, getState, value) => new Promise(accept => {
+      expectCC(fieldName, 'b');
+      expect(value).toEqual(defaultValue);
+      accept();
+      done();
+    }),
+  });
+
+  new Form('aForm', [field1, field2, field3]);
+  resetCC();
+
+  await updateField(fieldName, 'b');
 });
