@@ -25,7 +25,7 @@ variable "tectonic_container_images" {
   type        = "map"
 
   default = {
-    hyperkube                       = "quay.io/coreos/hyperkube:v1.6.6_coreos.1"
+    hyperkube                       = "quay.io/coreos/hyperkube:v1.6.7_coreos.0"
     pod_checkpointer                = "quay.io/coreos/pod-checkpointer:4e7a7dab10bc4d895b66c21656291c6e0b017248"
     bootkube                        = "quay.io/coreos/bootkube:v0.5.0"
     console                         = "quay.io/coreos/tectonic-console:v1.7.4"
