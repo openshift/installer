@@ -1,6 +1,12 @@
 resource "aws_internet_gateway" "igw" {
   count  = "${var.external_vpc_id == "" ? 1 : 0}"
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
+
+  tags = "${merge(map(
+      "Name", "${var.cluster_name}-igw",
+      "kubernetes.io/cluster/${var.cluster_name}", "shared",
+      "tectonicClusterID", "${var.cluster_id}"
+    ), var.extra_tags)}"
 }
 
 resource "aws_route_table" "default" {
@@ -41,7 +47,7 @@ resource "aws_subnet" "master_subnet" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-master-${ "${length(var.master_azs)}" > 0 ?
-     "${var.master_azs[count.index]}" : 
+     "${var.master_azs[count.index]}" :
      "${data.aws_availability_zones.azs.names[count.index]}" }",
       "kubernetes.io/cluster/${var.cluster_name}", "shared",
       "tectonicClusterID", "${var.cluster_id}"
