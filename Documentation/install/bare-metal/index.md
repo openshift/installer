@@ -81,7 +81,7 @@ Matchbox can serve CoreOS Container Linux images to reduce bandwidth usage and i
 Download a recent CoreOS Container Linux stable [release][coreos-release] with signatures.
 
 ```sh
-$ ./scripts/get-coreos stable 1353.7.0 .     # note the "." 3rd argument
+$ ./scripts/get-coreos stable 1353.8.0 .     # note the "." 3rd argument
 ```
 
 Move the images to `/var/lib/matchbox/assets`,
@@ -94,7 +94,7 @@ $ sudo cp -r coreos /var/lib/matchbox/assets
 $ tree /var/lib/matchbox/assets
 /var/lib/matchbox/assets/
 ├── coreos
-│   └── 1353.7.0
+│   └── 1353.8.0
 │       ├── CoreOS_Image_Signing_Key.asc
 │       ├── coreos_production_image.bin.bz2
 │       ├── coreos_production_image.bin.bz2.sig
