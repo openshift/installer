@@ -7,19 +7,47 @@ EOF
   default = "1.0"
 }
 
+variable "tectonic_openstack_flavor_name" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+The flavor name as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM.
+
+Note: Set either tectonic_openstack_flavor_name or tectonic_openstack_flavor_id.
+EOF
+}
+
 variable "tectonic_openstack_flavor_id" {
-  type = "string"
+  type    = "string"
+  default = ""
 
   description = <<EOF
 The flavor ID as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM.
+
+Note: Set either tectonic_openstack_flavor_name or tectonic_openstack_flavor_id.
+EOF
+}
+
+variable "tectonic_openstack_image_name" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+The image ID as given in `openstack image list`. Specifies the OS image of the VM.
+
+Note: Set either tectonic_openstack_image_name or tectonic_openstack_image_id.
 EOF
 }
 
 variable "tectonic_openstack_image_id" {
-  type = "string"
+  type    = "string"
+  default = ""
 
   description = <<EOF
 The image ID as given in `openstack image list`. Specifies the OS image of the VM.
+
+Note: Set either tectonic_openstack_image_name or tectonic_openstack_image_id.
 EOF
 }
 

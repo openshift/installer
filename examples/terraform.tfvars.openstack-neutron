@@ -100,7 +100,14 @@ tectonic_openstack_dns_nameservers = ""
 tectonic_openstack_external_gateway_id = ""
 
 // The flavor ID as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM.
+// 
+// Note: Set either tectonic_openstack_flavor_name or tectonic_openstack_flavor_id.
 tectonic_openstack_flavor_id = ""
+
+// The flavor name as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM.
+// 
+// Note: Set either tectonic_openstack_flavor_name or tectonic_openstack_flavor_id.
+tectonic_openstack_flavor_name = ""
 
 // The name name of the floating IP pool
 // as given in `openstack floating ip list`.
@@ -108,7 +115,14 @@ tectonic_openstack_flavor_id = ""
 tectonic_openstack_floatingip_pool = "public"
 
 // The image ID as given in `openstack image list`. Specifies the OS image of the VM.
+// 
+// Note: Set either tectonic_openstack_image_name or tectonic_openstack_image_id.
 tectonic_openstack_image_id = ""
+
+// The image ID as given in `openstack image list`. Specifies the OS image of the VM.
+// 
+// Note: Set either tectonic_openstack_image_name or tectonic_openstack_image_id.
+tectonic_openstack_image_name = ""
 
 // The subnet CIDR for the master/worker/etcd compute nodes.
 // This CIDR will also be assigned to the created the OpenStack subnet resource.

@@ -1,10 +1,14 @@
 # etcd
 
 resource "openstack_compute_instance_v2" "etcd_node" {
-  count     = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count}"
-  name      = "${var.tectonic_cluster_name}_etcd_node_${count.index}"
-  image_id  = "${var.tectonic_openstack_image_id}"
-  flavor_id = "${var.tectonic_openstack_flavor_id}"
+  count = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count}"
+  name  = "${var.tectonic_cluster_name}_etcd_node_${count.index}"
+
+  image_name = "${var.tectonic_openstack_image_name}"
+  image_id   = "${var.tectonic_openstack_image_id}"
+
+  flavor_name = "${var.tectonic_openstack_flavor_name}"
+  flavor_id   = "${var.tectonic_openstack_flavor_id}"
 
   metadata {
     role = "etcd"
@@ -21,10 +25,14 @@ resource "openstack_compute_instance_v2" "etcd_node" {
 # master
 
 resource "openstack_compute_instance_v2" "master_node" {
-  count     = "${var.tectonic_master_count}"
-  name      = "${var.tectonic_cluster_name}-master-${count.index}"
-  image_id  = "${var.tectonic_openstack_image_id}"
-  flavor_id = "${var.tectonic_openstack_flavor_id}"
+  count = "${var.tectonic_master_count}"
+  name  = "${var.tectonic_cluster_name}-master-${count.index}"
+
+  image_name = "${var.tectonic_openstack_image_name}"
+  image_id   = "${var.tectonic_openstack_image_id}"
+
+  flavor_name = "${var.tectonic_openstack_flavor_name}"
+  flavor_id   = "${var.tectonic_openstack_flavor_id}"
 
   metadata {
     role = "master"
@@ -48,10 +56,14 @@ resource "openstack_compute_floatingip_associate_v2" "master" {
 # worker
 
 resource "openstack_compute_instance_v2" "worker_node" {
-  count     = "${var.tectonic_worker_count}"
-  name      = "${var.tectonic_cluster_name}-worker-${count.index}"
-  image_id  = "${var.tectonic_openstack_image_id}"
-  flavor_id = "${var.tectonic_openstack_flavor_id}"
+  count = "${var.tectonic_worker_count}"
+  name  = "${var.tectonic_cluster_name}-worker-${count.index}"
+
+  image_name = "${var.tectonic_openstack_image_name}"
+  image_id   = "${var.tectonic_openstack_image_id}"
+
+  flavor_name = "${var.tectonic_openstack_flavor_name}"
+  flavor_id   = "${var.tectonic_openstack_flavor_id}"
 
   metadata {
     role = "worker"
