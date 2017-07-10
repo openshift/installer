@@ -49,7 +49,7 @@ import {
   SERVICE_CIDR,
   toVPCSubnetID,
   SPLIT_DNS_ON,
-  SPLIT_DNS_OPTIONS,
+  // SPLIT_DNS_OPTIONS,
 } from '../cluster-config';
 
 const vpcInfoForm = new Form(AWS_VPC_FORM, [
@@ -235,7 +235,7 @@ class AWS_VPCComponent extends React.Component {
   }
 
   render () {
-    const { availableVpcs, awsCreateVpc, availableVpcSubnets, awsVpcId, clusterName, clusterSubdomain, internalCluster, advanced, privateZone } = this.props;
+    const { availableVpcs, awsCreateVpc, availableVpcSubnets, awsVpcId, clusterName, clusterSubdomain, internalCluster, advanced } = this.props;
 
     let controllerSubnets;
     let workerSubnets;
@@ -355,7 +355,7 @@ class AWS_VPCComponent extends React.Component {
           </div>
         </div>
       </div>
-      { !privateZone &&
+      {/* privateZone &&
         <div className="row form-group">
           <div className="col-xs-offset-3 col-xs-9">
             <Connect field={AWS_SPLIT_DNS}>
@@ -369,7 +369,7 @@ class AWS_VPCComponent extends React.Component {
             </p>
           </div>
         </div>
-      }
+      */}
 
       <vpcInfoForm.Errors/>
       <AWS_DomainValidation />
