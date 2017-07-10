@@ -38,10 +38,7 @@ resource "aws_security_group" "etcd" {
     to_port   = 2379
     self      = true
 
-    security_groups = [
-      "${aws_security_group.master.id}",
-      "${aws_security_group.worker.id}",
-    ]
+    security_groups = ["${aws_security_group.master.id}"]
   }
 
   ingress {
