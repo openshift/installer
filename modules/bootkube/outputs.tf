@@ -17,6 +17,7 @@
 # interpolated once the assets have all been created.
 output "id" {
   value = "${sha1("
+  ${data.archive_file.etcd_tls_zip.id}
   ${local_file.kubeconfig.id}
   ${local_file.bootkube-sh.id}
   ${template_dir.bootkube.id} ${template_dir.bootkube-bootstrap.id}
@@ -33,6 +34,10 @@ output "id" {
     template_dir.etcd-experimental.*.id,
     )}
   ")}"
+}
+
+output "etcd_tls_zip" {
+  value = "${data.archive_file.etcd_tls_zip.id != "" ? file("./.terraform/etcd_tls.zip") : ""}"
 }
 
 output "kubeconfig" {
