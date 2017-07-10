@@ -217,11 +217,9 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
   }
 
   const extraTags = {};
-  const extraAutoScalingTags = [];
   _.each(cc[AWS_TAGS], ({key, value}) => {
     if(key && value) {
       extraTags[key] = value;
-      extraAutoScalingTags.push({key, value, propagate_at_launch: true});
     }
   });
 
@@ -274,10 +272,6 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
 
   if (_.size(extraTags) > 0) {
     ret.variables.tectonic_aws_extra_tags = extraTags;
-  }
-
-  if (_.size(extraAutoScalingTags) > 0) {
-    ret.variables.tectonic_autoscaling_group_extra_tags = extraAutoScalingTags;
   }
 
   if (cc[STS_ENABLED]) {

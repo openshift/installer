@@ -31,13 +31,6 @@
     "tectonic_aws_extra_tags": {
       "test_tag": "testing"
     },
-    "tectonic_autoscaling_group_extra_tags": [
-      {
-        "key": "test_tag",
-        "value": "testing",
-        "propagate_at_launch": true
-      }
-    ],
     "tectonic_aws_master_ec2_type": "t2.large",
     "tectonic_aws_master_root_volume_size": 33,
     "tectonic_aws_master_root_volume_type": "gp2",
