@@ -79,22 +79,6 @@ variable "tls_enabled" {
   default = false
 }
 
-variable "tls_ca_crt_pem" {
-  default = ""
-}
-
-variable "tls_server_key_pem" {
-  default = ""
-}
-
-variable "tls_server_crt_pem" {
-  default = ""
-}
-
-variable "tls_peer_key_pem" {
-  default = ""
-}
-
-variable "tls_peer_crt_pem" {
-  default = ""
+variable "tls_zip" {
+  type = "string"
 }

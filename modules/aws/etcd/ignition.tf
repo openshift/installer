@@ -4,15 +4,12 @@ data "ignition_config" "etcd" {
   systemd = [
     "${data.ignition_systemd_unit.locksmithd.*.id[count.index]}",
     "${data.ignition_systemd_unit.etcd3.*.id[count.index]}",
+    "${data.ignition_systemd_unit.etcd_unzip_tls.id}",
   ]
 
   files = [
     "${data.ignition_file.node_hostname.*.id[count.index]}",
-    "${data.ignition_file.etcd_ca.id}",
-    "${data.ignition_file.etcd_server_crt.id}",
-    "${data.ignition_file.etcd_server_key.id}",
-    "${data.ignition_file.etcd_peer_crt.id}",
-    "${data.ignition_file.etcd_peer_key.id}",
+    "${data.ignition_file.etcd_tls_zip.id}",
   ]
 }
 
@@ -27,64 +24,37 @@ data "ignition_file" "node_hostname" {
   }
 }
 
-data "ignition_file" "etcd_ca" {
-  path       = "/etc/ssl/etcd/ca.crt"
-  mode       = 0644
-  uid        = 232
-  gid        = 232
+data "ignition_file" "etcd_tls_zip" {
+  path       = "/etc/ssl/etcd/tls.zip"
+  mode       = 0400
+  uid        = 0
+  gid        = 0
   filesystem = "root"
 
   content {
-    content = "${var.tls_ca_crt_pem}"
+    mime    = "application/octet-stream"
+    content = "${var.tls_zip}"
   }
 }
 
-data "ignition_file" "etcd_server_key" {
-  path       = "/etc/ssl/etcd/server.key"
-  mode       = 0400
-  uid        = 232
-  gid        = 232
-  filesystem = "root"
+data "ignition_systemd_unit" "etcd_unzip_tls" {
+  name   = "etcd-unzip-tls.service"
+  enable = true
 
-  content {
-    content = "${var.tls_server_key_pem}"
-  }
-}
-
-data "ignition_file" "etcd_server_crt" {
-  path       = "/etc/ssl/etcd/server.crt"
-  mode       = 0400
-  uid        = 232
-  gid        = 232
-  filesystem = "root"
-
-  content {
-    content = "${var.tls_server_crt_pem}"
-  }
-}
-
-data "ignition_file" "etcd_peer_key" {
-  path       = "/etc/ssl/etcd/peer.key"
-  mode       = 0400
-  uid        = 232
-  gid        = 232
-  filesystem = "root"
-
-  content {
-    content = "${var.tls_peer_key_pem}"
-  }
-}
-
-data "ignition_file" "etcd_peer_crt" {
-  path       = "/etc/ssl/etcd/peer.crt"
-  mode       = 0400
-  uid        = 232
-  gid        = 232
-  filesystem = "root"
-
-  content {
-    content = "${var.tls_peer_crt_pem}"
-  }
+  content = <<EOF
+[Unit]
+ConditionPathExists=!/etc/ssl/etcd/ca.crt
+[Service]
+Type=oneshot
+WorkingDirectory=/etc/ssl/etcd
+ExecStart=/usr/bin/bash -c 'unzip /etc/ssl/etcd/tls.zip && \
+chown etcd:etcd /etc/ssl/etcd/peer.* && \
+chown etcd:etcd /etc/ssl/etcd/server.* && \
+chmod 0400 /etc/ssl/etcd/peer.* /etc/ssl/etcd/server.* /etc/ssl/etcd/client.*'
+[Install]
+WantedBy=multi-user.target
+RequiredBy=etcd-member.service locksmithd.service
+EOF
 }
 
 data "ignition_systemd_unit" "locksmithd" {

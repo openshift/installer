@@ -15,7 +15,7 @@ variable "container_image" {
   type = "string"
 }
 
-variable core_public_keys {
+variable "core_public_keys" {
   type = "list"
 }
 
@@ -40,6 +40,14 @@ variable "tls_server_key_pem" {
 }
 
 variable "tls_server_crt_pem" {
+  default = ""
+}
+
+variable "tls_client_key_pem" {
+  default = ""
+}
+
+variable "tls_client_crt_pem" {
   default = ""
 }
 

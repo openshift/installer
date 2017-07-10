@@ -78,11 +78,7 @@ module "etcd" {
   dns_enabled = "${!var.tectonic_experimental && length(compact(var.tectonic_etcd_servers)) == 0}"
   tls_enabled = "${var.tectonic_etcd_tls_enabled}"
 
-  tls_ca_crt_pem     = "${module.bootkube.etcd_ca_crt_pem}"
-  tls_server_crt_pem = "${module.bootkube.etcd_server_crt_pem}"
-  tls_server_key_pem = "${module.bootkube.etcd_server_key_pem}"
-  tls_peer_crt_pem   = "${module.bootkube.etcd_peer_crt_pem}"
-  tls_peer_key_pem   = "${module.bootkube.etcd_peer_key_pem}"
+  tls_zip = "${module.bootkube.etcd_tls_zip}"
 }
 
 module "ignition-masters" {
