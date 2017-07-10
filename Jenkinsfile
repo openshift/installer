@@ -22,7 +22,7 @@ def quay_creds = [
   )
 ]
 
-def builder_image = 'quay.io/coreos/tectonic-builder:v1.25'
+def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.25'
 
 pipeline {
   agent none
@@ -30,6 +30,13 @@ pipeline {
     timeout(time:70, unit:'MINUTES')
     timestamps()
     buildDiscarder(logRotator(numToKeepStr:'100'))
+  }
+  parameters {
+    string(
+      name: 'builder_image',
+      defaultValue: default_builder_image,
+      description: 'tectonic-builder docker image to use for builds'
+    )
   }
 
   stages {
@@ -40,7 +47,7 @@ pipeline {
       }
       steps {
         node('worker && ec2') {
-          withDockerContainer(builder_image) {
+          withDockerContainer(params.builder_image) {
             checkout scm
             sh """#!/bin/bash -ex
             mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT
@@ -79,7 +86,7 @@ pipeline {
           "SmokeTest TerraForm: AWS": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(args: '-v /etc/passwd:/etc/passwd:ro', image: builder_image) {
+                withDockerContainer(args: '-v /etc/passwd:/etc/passwd:ro', image: params.builder_image) {
                   checkout scm
                   unstash 'installer'
                   unstash 'smoke'
@@ -117,7 +124,7 @@ pipeline {
           "SmokeTest TerraForm: AWS (non-TLS)": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(builder_image) {
+                withDockerContainer(params.builder_image) {
                   checkout scm
                   unstash 'installer'
                   timeout(5) {
@@ -133,7 +140,7 @@ pipeline {
           "SmokeTest TerraForm: AWS (experimental)": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(builder_image) {
+                withDockerContainer(params.builder_image) {
                   checkout scm
                   unstash 'installer'
                   timeout(5) {
@@ -149,7 +156,7 @@ pipeline {
           "SmokeTest TerraForm: AWS (custom ca)": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(builder_image) {
+                withDockerContainer(params.builder_image) {
                   checkout scm
                   unstash 'installer'
                   timeout(5) {
@@ -165,7 +172,7 @@ pipeline {
           "SmokeTest TerraForm: AWS (private vpc)": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(image: builder_image, args: '--device=/dev/net/tun --cap-add=NET_ADMIN') {
+                withDockerContainer(image: params.builder_image, args: '--device=/dev/net/tun --cap-add=NET_ADMIN') {
                   checkout scm
                   unstash 'installer'
                   unstash 'smoke'
@@ -200,7 +207,7 @@ pipeline {
           "IntegrationTest Installer Gui": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(builder_image) {
+                withDockerContainer(params.builder_image) {
                   checkout scm
                   unstash 'installer'
                   unstash 'node_modules'
@@ -219,7 +226,7 @@ pipeline {
         failure {
           node('worker && ec2') {
             withCredentials([creds, quay_creds]) {
-              withDockerContainer(builder_image) {
+              withDockerContainer(params.builder_image) {
                 checkout scm
                 unstash 'installer'
                 timeout(15) {
