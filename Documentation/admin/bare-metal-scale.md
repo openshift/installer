@@ -11,11 +11,17 @@ $ terraform plan \
   -var-file=build/${CLUSTER}/terraform.tfvars \
   -target module.workers \
   platforms/metal
+```
+
+Once you are ready to make the changes live, use `apply`:
+
+```
 $ terraform apply \
   -var-file=build/${CLUSTER}/terraform.tfvars \
   -target module.workers \
   platforms/metal
 ```
+
 After running `terraform apply`, [power on][power-on] the machines to PXE boot the new nodes and access the cluster.
 
 ## Scaling controller nodes
