@@ -193,18 +193,17 @@ const generateField = (id, name, maxNodes) => new FieldList(id, {
     },
   },
   validator: nodes => {
-    // return [];
-    const macs = _.map(nodes, t => t.mac);
+    const macs = _.map(nodes, 'mac');
     const errors = {};
-    let i = 1;
-    for (let name1 of macs) {
-      for (let name2 of macs.slice(i)) {
-        if (name1 === name2) {
-          errors[i] = {mac: 'MACs must be unique'};
-        }
-        i += 1;
+
+    _.each(macs, (v, i) => {
+      const j = _.indexOf(macs, v, i + 1);
+      if (j !== -1) {
+        const msg = 'MACs must be unique';
+        _.set(errors, [i, 'mac'], msg);
+        _.set(errors, [j, 'mac'], msg);
       }
-    }
+    });
 
     _.each(nodes, (node, index) => {
       if (node.mac ? !node.host : node.mac) {
