@@ -52,7 +52,7 @@ hello     hello.example.com   172.18.0.22,172.18.0.23   80        1h
 
 Next, test that traffic to `hello.example.com` reaches the cluster's Ingress Controllers.
     
-On Tectonic bare-metal, add a DNS record on your network which resolves `hello.example.com` to any worker node(s), similar to how the Tectonic DNS entry was setup while going through the installer. In a pinch, you could test this by adding an `/etc/host` entry
+On Tectonic bare-metal, add a DNS record on your network which resolves `hello.example.com` to any worker node(s), similar to how the Tectonic DNS entry was setup while going through the installer. In a pinch, you could test this by adding an `/etc/hosts` entry
 
 ```
 workerIP hello.example.com
