@@ -7,8 +7,8 @@ resource "openstack_compute_instance_v2" "etcd_node" {
   image_name = "${var.tectonic_openstack_image_name}"
   image_id   = "${var.tectonic_openstack_image_id}"
 
-  flavor_name = "${var.tectonic_openstack_flavor_name}"
-  flavor_id   = "${var.tectonic_openstack_flavor_id}"
+  flavor_name = "${var.tectonic_openstack_etcd_flavor_name}"
+  flavor_id   = "${var.tectonic_openstack_etcd_flavor_id}"
 
   metadata {
     role = "etcd"
@@ -31,8 +31,8 @@ resource "openstack_compute_instance_v2" "master_node" {
   image_name = "${var.tectonic_openstack_image_name}"
   image_id   = "${var.tectonic_openstack_image_id}"
 
-  flavor_name = "${var.tectonic_openstack_flavor_name}"
-  flavor_id   = "${var.tectonic_openstack_flavor_id}"
+  flavor_name = "${var.tectonic_openstack_master_flavor_name}"
+  flavor_id   = "${var.tectonic_openstack_master_flavor_id}"
 
   metadata {
     role = "master"
@@ -62,8 +62,8 @@ resource "openstack_compute_instance_v2" "worker_node" {
   image_name = "${var.tectonic_openstack_image_name}"
   image_id   = "${var.tectonic_openstack_image_id}"
 
-  flavor_name = "${var.tectonic_openstack_flavor_name}"
-  flavor_id   = "${var.tectonic_openstack_flavor_id}"
+  flavor_name = "${var.tectonic_openstack_worker_flavor_name}"
+  flavor_id   = "${var.tectonic_openstack_worker_flavor_id}"
 
   metadata {
     role = "worker"
