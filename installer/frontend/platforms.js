@@ -13,7 +13,7 @@ export const PLATFORM_NAMES = {
   [AZURE]: 'Microsoft Azure',
   [BARE_METAL]: 'Bare Metal',
   [BARE_METAL_TF]: 'Bare Metal',
-  [OPENSTACK]: 'Openstack',
+  [OPENSTACK]: 'OpenStack',
 };
 
 export const optGroups = [
