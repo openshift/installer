@@ -185,31 +185,42 @@ const generateField = (id, name, maxNodes) => new FieldList(id, {
   fields: {
     mac: {
       default: '',
+      dependencies: [BM_MASTERS],
       validator: validate.MAC,
     },
     host: {
       default: '',
+      dependencies: [BM_MASTERS],
       validator: validate.host,
     },
   },
-  validator: nodes => {
+  validator: (nodes, cc) => {
     const macs = _.map(nodes, 'mac');
+    const masters = id === BM_WORKERS ? _.map(cc[BM_MASTERS]) : [];
     const errors = {};
 
-    _.each(macs, (v, i) => {
-      const j = _.indexOf(macs, v, i + 1);
-      if (j !== -1) {
-        const msg = 'MACs must be unique';
-        _.set(errors, [i, 'mac'], msg);
-        _.set(errors, [j, 'mac'], msg);
+    _.each(nodes, (node, i) => {
+      const REQUIRED_MSG = 'Both fields are required';
+      if (!node.mac) {
+        _.set(errors, [i, 'mac'], REQUIRED_MSG);
       }
-    });
+      if (!node.host) {
+        _.set(errors, [i, 'host'], REQUIRED_MSG);
+      }
 
-    _.each(nodes, (node, index) => {
-      if (node.mac ? !node.host : node.mac) {
-        errors[index] = errors[index] || {};
-        errors[index].host = 'Both fields are required';
-      }
+      const validateUnique = (field, haystack, msg) => {
+        const matchIndex = _.indexOf(_.map(haystack, field), node[field]);
+        if (matchIndex !== -1) {
+          _.set(errors, [i, field], msg);
+        }
+      };
+
+      validateUnique('mac', masters, 'Cannot match a master MAC address');
+      validateUnique('host', masters, 'Cannot match a master hostname');
+
+      const otherNodes = nodes.filter(n => n !== node);
+      validateUnique('mac', otherNodes, 'MACs must be unique');
+      validateUnique('host', otherNodes, 'Hostnames must be unique');
     });
 
     if (macs.length === 0) {

@@ -50,9 +50,14 @@ export const validate = {
   },
 
   MAC: (s='') => {
+    if (!s.length) {
+      return;
+    }
+
     if (s.trim() !== s) {
       return 'Leading/trailing whitespace not allowed.';
     }
+
     // We want to accept everything that golang net.ParseMAC will
     // see https://golang.org/src/net/mac.go?s=1054:1106#L28
     const error = 'Invalid MAC address.';
