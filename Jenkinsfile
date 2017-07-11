@@ -22,7 +22,7 @@ def quay_creds = [
   )
 ]
 
-def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.25'
+def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.31'
 
 pipeline {
   agent none
@@ -172,7 +172,7 @@ pipeline {
           "SmokeTest TerraForm: AWS (private vpc)": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(image: params.builder_image, args: '--device=/dev/net/tun --cap-add=NET_ADMIN') {
+                withDockerContainer(image: params.builder_image, args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root') {
                   checkout scm
                   unstash 'installer'
                   unstash 'smoke'
