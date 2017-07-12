@@ -37,6 +37,8 @@ module "bootkube" {
         var.tectonic_base_domain
   )}"]
 
+  etcd_tls_enabled = "${var.tectonic_etcd_tls_enabled}"
+
   experimental_enabled = "${var.tectonic_experimental}"
 
   master_count = "${var.tectonic_master_count}"

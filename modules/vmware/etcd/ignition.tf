@@ -7,12 +7,6 @@ data "ignition_config" "etcd" {
 
   files = [
     "${data.ignition_file.node_hostname.*.id[count.index]}",
-  ]
-
-  systemd = [
-    "${data.ignition_systemd_unit.locksmithd.*.id[count.index]}",
-    "${data.ignition_systemd_unit.etcd3.*.id[count.index]}",
-    "${data.ignition_systemd_unit.vmtoolsd_member.id}",
     "${data.ignition_file.etcd_ca.id}",
     "${data.ignition_file.etcd_server_crt.id}",
     "${data.ignition_file.etcd_server_key.id}",
@@ -20,6 +14,11 @@ data "ignition_config" "etcd" {
     "${data.ignition_file.etcd_client_key.id}",
     "${data.ignition_file.etcd_peer_crt.id}",
     "${data.ignition_file.etcd_peer_key.id}",
+  ]
+
+  systemd = [
+    "${data.ignition_systemd_unit.locksmithd.*.id[count.index]}",
+    "${data.ignition_systemd_unit.etcd3.*.id[count.index]}",
   ]
 
   networkd = [
