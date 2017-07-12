@@ -30,7 +30,8 @@
             "containers": [
               {
                 "command": [
-                  "/bin/update-operator"
+                  "/bin/update-operator",
+                  "--manage-agent=true"
                 ],
                 "env": [
                   {
