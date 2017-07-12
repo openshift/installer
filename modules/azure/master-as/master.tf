@@ -1,16 +1,10 @@
-# TODO:
-# Create global network tf file
-# Add azurerm_route_table
-# Add azurerm_network_security_group
-# Add azurerm_availability_set
-
 # Generate unique storage name
 resource "random_id" "tectonic_master_storage_name" {
   byte_length = 4
 }
 
 resource "azurerm_storage_account" "tectonic_master" {
-  name                = "${random_id.tectonic_master_storage_name.hex}"
+  name                = "master${random_id.tectonic_master_storage_name.hex}"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
   account_type        = "${var.storage_account_type}"
@@ -33,34 +27,20 @@ resource "azurerm_availability_set" "tectonic_masters" {
   resource_group_name = "${var.resource_group_name}"
 }
 
-resource "azurerm_network_interface" "tectonic_master" {
-  count               = "${var.master_count}"
-  name                = "${var.cluster_name}-master${count.index}"
-  location            = "${var.location}"
-  resource_group_name = "${var.resource_group_name}"
-
-  ip_configuration {
-    private_ip_address_allocation           = "dynamic"
-    name                                    = "${var.cluster_name}-MasterIPConfiguration"
-    subnet_id                               = "${var.subnet}"
-    load_balancer_backend_address_pools_ids = ["${azurerm_lb_backend_address_pool.api-lb.id}"]
-  }
-}
-
 resource "azurerm_virtual_machine" "tectonic_master" {
   count                 = "${var.master_count}"
   name                  = "${var.cluster_name}-master${count.index}"
   location              = "${var.location}"
   resource_group_name   = "${var.resource_group_name}"
-  network_interface_ids = ["${element(azurerm_network_interface.tectonic_master.*.id, count.index)}"]
+  network_interface_ids = ["${var.network_interface_ids[count.index]}"]
   vm_size               = "${var.vm_size}"
   availability_set_id   = "${azurerm_availability_set.tectonic_masters.id}"
 
   storage_image_reference {
     publisher = "CoreOS"
     offer     = "CoreOS"
-    sku       = "Stable"
-    version   = "latest"
+    sku       = "${var.cl_channel}"
+    version   = "${var.versions["container_linux"]}"
   }
 
   storage_os_disk {
@@ -72,7 +52,7 @@ resource "azurerm_virtual_machine" "tectonic_master" {
   }
 
   os_profile {
-    computer_name  = "${var.cluster_name}-master${count.index}"
+    computer_name  = "${var.cluster_name}-master-${count.index}"
     admin_username = "core"
     admin_password = ""
 

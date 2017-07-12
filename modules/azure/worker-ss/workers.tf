@@ -7,7 +7,7 @@ resource "random_id" "tectonic_storage_name" {
 }
 
 resource "azurerm_storage_account" "tectonic_worker" {
-  name                = "${random_id.tectonic_storage_name.hex}"
+  name                = "worker${var.cluster_name}-${random_id.tectonic_storage_name.hex}"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
   account_type        = "${var.storage_account_type}"
@@ -58,7 +58,7 @@ resource "azurerm_virtual_machine_scale_set" "tectonic_workers" {
     publisher = "CoreOS"
     offer     = "CoreOS"
     sku       = "Stable"
-    version   = "latest"
+    version   = "${var.versions["container_linux"]}"
   }
 
   storage_profile_os_disk {

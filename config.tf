@@ -68,13 +68,14 @@ variable "tectonic_versions" {
   type        = "map"
 
   default = {
-    etcd          = "3.1.8"
-    prometheus    = "v1.7.1"
-    alertmanager  = "v0.7.1"
-    monitoring    = "1.3.0"
-    kubernetes    = "1.6.7+tectonic.1"
-    tectonic      = "1.6.7-tectonic.1"
-    tectonic-etcd = "0.0.1"
+    container_linux = "1353.8.0"
+    etcd            = "3.1.8"
+    prometheus      = "v1.7.1"
+    alertmanager    = "v0.7.1"
+    monitoring      = "1.3.0"
+    kubernetes      = "1.6.6+tectonic.1"
+    tectonic        = "1.6.6-tectonic.1"
+    tectonic-etcd   = "0.0.1"
   }
 }
 
@@ -330,4 +331,48 @@ variable "tectonic_stats_url" {
   type        = "string"
   default     = "https://stats-collector.tectonic.com"
   description = "The Tectonic statistics collection URL to which to report."
+}
+
+variable "tectonic_ddns_server" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) This only applies if you use the modules/dns/ddns module.
+
+Specifies the RFC2136 Dynamic DNS server IP/host to register IP addresses to.
+EOF
+}
+
+variable "tectonic_ddns_key_name" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) This only applies if you use the modules/dns/ddns module.
+
+Specifies the RFC2136 Dynamic DNS server key name.
+EOF
+}
+
+variable "tectonic_ddns_key_algorithm" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) This only applies if you use the modules/dns/ddns module.
+
+Specifies the RFC2136 Dynamic DNS server key algorithm.
+EOF
+}
+
+variable "tectonic_ddns_key_secret" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) This only applies if you use the modules/dns/ddns module.
+
+Specifies the RFC2136 Dynamic DNS server key secret.
+EOF
 }

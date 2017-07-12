@@ -4,7 +4,7 @@ resource "random_id" "tectonic_storage_name" {
 }
 
 resource "azurerm_storage_account" "tectonic_worker" {
-  name                = "${random_id.tectonic_storage_name.hex}"
+  name                = "worker${random_id.tectonic_storage_name.hex}"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
   account_type        = "${var.storage_account_type}"
@@ -21,31 +21,10 @@ resource "azurerm_storage_container" "tectonic_worker" {
   container_access_type = "private"
 }
 
-# resource "azurerm_lb_backend_address_pool" "workers" {
-#   name                = "workers-lb-pool"
-#   resource_group_name = "${var.resource_group_name}"
-#   loadbalancer_id     = "${azurerm_lb.tectonic_lb.id}"
-# }
-
 resource "azurerm_availability_set" "tectonic_workers" {
   name                = "${var.cluster_name}-workers"
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
-}
-
-resource "azurerm_network_interface" "tectonic_worker" {
-  count               = "${var.worker_count}"
-  name                = "${var.cluster_name}-worker${count.index}"
-  location            = "${var.location}"
-  resource_group_name = "${var.resource_group_name}"
-
-  ip_configuration {
-    private_ip_address_allocation = "dynamic"
-    name                          = "${var.cluster_name}-WorkerIPConfiguration"
-    subnet_id                     = "${var.subnet}"
-
-    # load_balancer_backend_address_pools_ids = ["${azurerm_lb_backend_address_pool.workers.id}"]
-  }
 }
 
 resource "azurerm_virtual_machine" "tectonic_worker" {
@@ -53,17 +32,21 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
   name                  = "${var.cluster_name}-worker${count.index}"
   location              = "${var.location}"
   resource_group_name   = "${var.resource_group_name}"
-  network_interface_ids = ["${element(azurerm_network_interface.tectonic_worker.*.id, count.index)}"]
+  network_interface_ids = ["${var.network_interface_ids[count.index]}"]
   vm_size               = "${var.vm_size}"
   availability_set_id   = "${azurerm_availability_set.tectonic_workers.id}"
+
+  # boot_diagnostics {
+  #   enabled     = true
+  #   storage_uri = "${azurerm_storage_account.tectonic_worker.primary_blob_endpoint}"
+  # }
 
   storage_image_reference {
     publisher = "CoreOS"
     offer     = "CoreOS"
-    sku       = "Stable"
-    version   = "latest"
+    sku       = "${var.cl_channel}"
+    version   = "${var.versions["container_linux"]}"
   }
-
   storage_os_disk {
     name          = "worker-osdisk"
     caching       = "ReadWrite"
@@ -71,14 +54,12 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
     os_type       = "linux"
     vhd_uri       = "${azurerm_storage_account.tectonic_worker.primary_blob_endpoint}${azurerm_storage_container.tectonic_worker.name}/${var.cluster_name}-worker${count.index}.vhd"
   }
-
   os_profile {
-    computer_name  = "${var.cluster_name}-worker${count.index}"
+    computer_name  = "${var.cluster_name}-worker-${count.index}"
     admin_username = "core"
     admin_password = ""
     custom_data    = "${base64encode("${data.ignition_config.worker.rendered}")}"
   }
-
   os_profile_linux_config {
     disable_password_authentication = true
 
@@ -87,7 +68,6 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
       key_data = "${file(var.public_ssh_key)}"
     }
   }
-
   tags {
     environment = "staging"
   }

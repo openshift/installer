@@ -7,11 +7,6 @@ variable "resource_group_name" {
   type = "string"
 }
 
-// Image refernce to use for master instances
-variable "image_reference" {
-  type = "map"
-}
-
 // VM Size name
 variable "vm_size" {
   type = "string"
@@ -92,8 +87,4 @@ variable "tectonic_service" {
 variable "tectonic_service_disabled" {
   description = "Specifies whether the tectonic installer systemd unit will be disabled. If true, no tectonic assets will be deployed"
   default     = false
-}
-
-variable "use_custom_fqdn" {
-  default = false
 }

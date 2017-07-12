@@ -1,22 +1,22 @@
-variable "external_rsg_name" {
+variable "external_rsg_id" {
   default = ""
   type    = "string"
 }
 
-variable "tectonic_azure_location" {
+variable "azure_location" {
   type = "string"
 }
 
-variable "tectonic_cluster_name" {
+variable "cluster_name" {
   type = "string"
 }
 
 resource "azurerm_resource_group" "tectonic_cluster" {
-  count    = "${var.external_rsg_name == "" ? 1 : 0}"
-  location = "${var.tectonic_azure_location}"
-  name     = "tectonic-cluster-${var.tectonic_cluster_name}"
+  count    = "${var.external_rsg_id == "" ? 1 : 0}"
+  location = "${var.azure_location}"
+  name     = "tectonic-cluster-${var.cluster_name}"
 }
 
 output "name" {
-  value = "${var.external_rsg_name == "" ? join("", azurerm_resource_group.tectonic_cluster.*.name) : var.external_rsg_name }"
+  value = "${var.external_rsg_id == "" ? join("", azurerm_resource_group.tectonic_cluster.*.name) : element(split("/", var.external_rsg_id), 4) }"
 }
