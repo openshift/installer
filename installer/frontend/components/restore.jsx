@@ -4,6 +4,7 @@ import Modal from 'react-modal';
 import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 
+import { navigateNext } from '../app';
 import { store } from '../store';
 import { eventErrorsActionTypes, restoreActionTypes, validateAllFields } from '../actions';
 import { readFile } from '../readfile';
@@ -80,6 +81,9 @@ const Modal_ = connect(stateToProps, dispatchToProps)(class Modal_Inner extends 
 
   close () {
     setTimeout(() => ReactDom.unmountComponentAtNode(document.getElementById('tectonic-modal')), 0);
+    if (this.state.done) {
+      navigateNext();
+    }
   }
 
   isDone () {

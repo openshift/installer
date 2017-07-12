@@ -33,6 +33,14 @@ window.reset = () => {
     .then(() => window.location = '/');
 };
 
+export const navigateNext = () => {
+  const state = store.getState();
+  const t = trail(state);
+  const currentPage = t.pageByPath.get(state.path);
+  const nextPage = t.nextFrom(currentPage);
+  browserHistory.push(nextPage.path);
+};
+
 const fixLocation = () => {
   const state = store.getState();
   const t = trail(state);
