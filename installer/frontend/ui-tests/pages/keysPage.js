@@ -1,6 +1,5 @@
-const installerInput = require('../utils/installerInput');
-
-const sshKey = installerInput.sshKeys();
+const installerInput = require('../utils/awsInstallerInput');
+const inputJson = installerInput.buildExpectedJson();
 
 const keysPageCommands = {
   selectSshKeys() {
@@ -18,7 +17,7 @@ module.exports = {
   commands: [keysPageCommands],
   elements: {
     sshKeys: {
-      selector: 'option[value=' + sshKey + ']',
+      selector: 'option[value=' + inputJson.tectonic_aws_ssh_key + ']',
     },
     nextStep: {
       selector:'//*[text()[contains(.,"Next Step")]]',

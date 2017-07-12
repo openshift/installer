@@ -7,7 +7,7 @@ export PLATFORM=aws
 export CLUSTER="tf-${PLATFORM}-${BUILD_ID}"
 export TF_VAR_tectonic_pull_secret_path=${TF_VAR_tectonic_pull_secret_path}
 export TF_VAR_tectonic_license_path=${TF_VAR_tectonic_license_path}
-export TECTONIC_BUILDER=quay.io/coreos/tectonic-builder:v1.31
+export TECTONIC_BUILDER=quay.io/coreos/tectonic-builder:v1.32
 export KUBE_CONFORMANCE=quay.io/coreos/kube-conformance:v1.6.6_coreos.0
 
 # Create an env var file
@@ -50,49 +50,49 @@ function kubectl() {
         out=$($KUBECTL "$@" 2>&1)
         status=$?
         set -e
-  
+
         if [[ "$out" == *"AlreadyExists"* ]]; then
             echo "$out, skipping"
             return
         fi
-  
+
         echo "$out"
         if [ "$status" -eq 0 ]; then
             return
         fi
-  
+
         echo "kubectl failed, retrying in 5 seconds"
         sleep 5
     done
 }
- 
+
 function wait_for_pods() {
     set +e
     echo "Waiting for pods in namespace $1"
     while true; do
-  
+
         out=$($KUBECTL -n "$1" get po -o custom-columns=STATUS:.status.phase,NAME:.metadata.name)
         status=$?
         echo "$out"
-  
+
         if [ "$status" -ne "0" ]; then
            echo "kubectl command failed, retrying in 5 seconds"
            sleep 5
            continue
         fi
-  
+
         # make sure kubectl does not return "no resources found"
         if [ "$(echo "$out" | tail -n +2 | grep -c '^')" -eq 0 ]; then
            echo "no nodes were found, retrying in 5 seconds"
            sleep 5
            continue
         fi
-  
+
         stat=$( echo "$out"| tail -n +2 | grep -v '^Running')
         if [[ "$stat" == "" ]]; then
             return
         fi
-  
+
         echo "Pods not available yet, waiting for 5 seconds"
         sleep 5
     done
@@ -101,22 +101,22 @@ function wait_for_pods() {
 
 # shellcheck disable=SC2086
 docker run --env-file ./env.list -i -v ${WORKSPACE}:${PROJECT} ${MNT_SECRETS} -w ${PROJECT} ${TECTONIC_BUILDER} /bin/bash <<EOF
-  
+
 mkdir -p ${PROJECT}/build/${CLUSTER}/
 ln -sf ${PROJECT}/tests/smoke/aws/vars/aws.tfvars ${PROJECT}/build/${CLUSTER}/terraform.tfvars
-  
+
 make plan
 make apply
 EOF
-  
+
 export KUBECONFIG=${WORKSPACE}/build/${CLUSTER}/generated/auth/kubeconfig
-  
+
 wait_for_pods kube-system
 echo "API Server UP!"
-  
+
 kubectl get pods --all-namespaces
 kubectl get nodes
-  
+
 # shellcheck disable=SC2086
 docker pull ${KUBE_CONFORMANCE}
 # shellcheck disable=SC2086

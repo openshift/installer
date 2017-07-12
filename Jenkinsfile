@@ -41,7 +41,7 @@ def quay_creds = [
   )
 ]
 
-def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.31'
+def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.32'
 
 pipeline {
   agent none
@@ -446,7 +446,7 @@ pipeline {
               }
             }
           },
-          "IntegrationTest Installer Gui": {
+          "IntegrationTest AWS Installer Gui": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(params.builder_image) {
@@ -455,8 +455,24 @@ pipeline {
                   unstash 'node_modules'
                   sh """#!/bin/bash -ex
                   cd installer
-                  make launch-installer-guitests
-                  make gui-tests-cleanup
+                  make launch-aws-installer-guitests
+                  make gui-aws-tests-cleanup
+                  """
+                }
+              }
+            }
+          },
+          "IntegrationTest Baremetal Installer Gui": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(image: params.builder_image, args: '-u root') {
+                  checkout scm
+                  unstash 'installer'
+                  unstash 'node_modules'
+                  sh """#!/bin/bash -ex
+                  cd installer
+                  make launch-baremetal-installer-guitests
+                  make gui-baremetal-tests-cleanup
                   """
                 }
               }

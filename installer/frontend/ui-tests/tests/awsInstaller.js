@@ -1,34 +1,14 @@
 const _ = require('lodash');
 
-const installerInput = require('../utils/installerInput');
+const log = require('../utils/log');
+const installerInput = require('../utils/awsInstallerInput');
 const tfvarsUtil = require('../utils/terraformTfvars');
-
-const logger = logs => {
-  console.log('==== BEGIN BROWSER LOGS ====');
-  _.each(logs, log => {
-    const { level, message } = log;
-    const messageStr = _.isArray(message) ? message.join(" ") : message;
-
-    switch (level) {
-    case `DEBUG`:
-      console.log(level, messageStr);
-      break;
-    case `SEVERE`:
-      console.warn(level, messageStr);
-      break;
-    case `INFO`:
-    default:
-      console.info(level, messageStr);
-    }
-  });
-  console.log('==== END BROWSER LOGS ====');
-};
 
 const REQUIRED_ENV_VARS = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "TF_VAR_tectonic_license_path", "TF_VAR_tectonic_pull_secret_path"];
 
 module.exports = {
   after (client) {
-    client.getLog('browser', logger);
+    client.getLog('browser', log.logger);
     client.end();
   },
 
@@ -40,6 +20,8 @@ module.exports = {
     }
 
     const expectedJson = installerInput.buildExpectedJson();
+    expectedJson.tectonic_cluster_name = `awstest-${new Date().getTime().toString()}`;
+    expectedJson.tectonic_dns_name = expectedJson.tectonic_cluster_name;
     const platformPage = client.page.platformPage();
     const awsCredentialsPage = client.page.awsCredentialsPage();
     const clusterInfoPage = client.page.clusterInfoPage();
@@ -64,7 +46,7 @@ module.exports = {
       .waitForElementVisible('@nextStep', 10000)
       .click('@nextStep');
     networkingPage.provideNetworkingDetails();
-    consoleLoginPage.enterLoginCredentails();
+    consoleLoginPage.enterLoginCredentails(expectedJson.tectonic_admin_email);
     submitPage.click('@manuallyBoot');
     client.pause(10000);
     client.getCookie('tectonic-installer', result => {
