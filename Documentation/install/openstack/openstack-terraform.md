@@ -24,8 +24,8 @@ Replace `<flavor>` with either option in the following commands. Now we're ready
 Open a new terminal, and run the following commands to download and extract Tectonic Installer.
 
 ```bash
-$ curl -O https://releases.tectonic.com/tectonic-1.6.4-tectonic.1.tar.gz # download
-$ tar xzvf tectonic-1.6.4-tectonic.1.tar.gz # extract the tarball
+$ curl -O https://releases.tectonic.com/tectonic-1.6.7-tectonic.1.tar.gz # download
+$ tar xzvf tectonic-1.6.7-tectonic.1.tar.gz # extract the tarball
 $ cd tectonic
 ```
 
