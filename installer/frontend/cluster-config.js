@@ -290,7 +290,7 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
 
   const privateZone = _.get(cc, toExtraData(AWS_HOSTED_ZONE_ID) + '.privateZones.' + cc[AWS_HOSTED_ZONE_ID]);
   if (!privateZone && cc[AWS_SPLIT_DNS] === SPLIT_DNS_OFF) {
-    ret.variables.tectonic_aws_external_private_zone = cc[AWS_HOSTED_ZONE_ID];
+    // ret.variables.tectonic_aws_external_private_zone = cc[AWS_HOSTED_ZONE_ID];
   }
 
   if (cc[CA_TYPE] === 'owned') {
