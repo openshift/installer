@@ -169,11 +169,21 @@ tar xzvf tectonic-1.6.7-tectonic.1.tar.gz
 cd tectonic/tectonic-installer
 ```
 
-Run the Tectonic Installer that matches your platform (`linux` or `darwin`):
+Run the Tectonic Installer for your platform:
 
-```sh
-./$PLATFORM/installer
+For macOS users:
+
+```bash
+$ ./tectonic-installer/darwin/installer
 ```
+
+For Linux users:
+
+```
+$ ./tectonic-installer/linux/installer
+```
+
+For Windows users, [see this guide][install-windows].
 
 A browser window will open to begin the GUI installation process, which will require the following information:
 * DNS: Domain names assigned for the master and worker nodes, which must exist before launching Tectonic Installer.
@@ -226,3 +236,4 @@ After the installer is complete, you'll have a Tectonic cluster and be able to a
 [dnsmasq]: https://quay.io/repository/coreos/dnsmasq
 [copy-paste-examples]: https://github.com/coreos/matchbox/blob/master/Documentation/network-setup.md#coreosdnsmasq
 [proxy-dhcp]: https://github.com/coreos/matchbox/blob/master/Documentation/network-setup.md#proxy-dhcp
+[install-windows]: ../installer-windows.md
