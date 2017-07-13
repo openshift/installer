@@ -132,5 +132,3 @@ bin/smoke: $(SMOKE_SOURCES)
 vendor-smoke: $(TOP_DIR)/tests/smoke/glide.yaml
 	@cd $(TOP_DIR)/tests/smoke && glide up -v
 	@cd $(TOP_DIR)/tests/smoke && glide-vc --use-lock-file --no-tests --only-code
-
-.PHONY: make terraform terraform-dev
