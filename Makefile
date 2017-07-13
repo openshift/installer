@@ -10,6 +10,7 @@ TF_CMD = TERRAFORM_CONFIG=$(TOP_DIR)/.terraformrc terraform
 
 $(info Using build directory [${BUILD_DIR}])
 
+.PHONY: all
 all: apply
 
 $(INSTALLER_BIN):
@@ -18,6 +19,7 @@ $(INSTALLER_BIN):
 installer-env: $(INSTALLER_BIN) terraformrc.example
 	sed "s|<PATH_TO_INSTALLER>|$(INSTALLER_BIN)|g" terraformrc.example > .terraformrc
 
+.PHONY: localconfig
 localconfig:
 	mkdir -p $(BUILD_DIR)
 	cp examples/*$(subst /,-,$(PLATFORM)) $(BUILD_DIR)/terraform.tfvars
@@ -32,15 +34,19 @@ endif
 terraform-get: terraform-init
 	cd $(BUILD_DIR) && $(TF_CMD) get $(TF_GET_OPTIONS) $(TOP_DIR)/platforms/$(PLATFORM)
 
+.PHONY: plan
 plan: installer-env terraform-get
 	cd $(BUILD_DIR) && $(TF_CMD) plan $(TF_PLAN_OPTIONS) $(TOP_DIR)/platforms/$(PLATFORM)
 
+.PHONY: apply
 apply: installer-env terraform-get
 	cd $(BUILD_DIR) && $(TF_CMD) apply $(TF_APPLY_OPTIONS) $(TOP_DIR)/platforms/$(PLATFORM)
 
+.PHONY: destroy
 destroy: installer-env terraform-get
 	cd $(BUILD_DIR) && $(TF_CMD) destroy $(TF_DESTROY_OPTIONS) -force $(TOP_DIR)/platforms/$(PLATFORM)
 
+.PHONY: payload
 payload:
 	@${TOP_DIR}/modules/update-payload/make-update-payload.sh > /dev/null
 
@@ -126,9 +132,11 @@ structure-check:
 	@if make examples && ! git diff --exit-code; then echo "outdated examples (run 'make examples' to fix)"; exit 1; fi
 
 SMOKE_SOURCES := $(shell find $(TOP_DIR)/tests/smoke -name '*.go')
+.PHONY: bin/smoke
 bin/smoke: $(SMOKE_SOURCES)
 	@CGO_ENABLED=0 go test ./tests/smoke/ -c -o bin/smoke
 
+.PHONY: vendor-smoke
 vendor-smoke: $(TOP_DIR)/tests/smoke/glide.yaml
 	@cd $(TOP_DIR)/tests/smoke && glide up -v
 	@cd $(TOP_DIR)/tests/smoke && glide-vc --use-lock-file --no-tests --only-code
