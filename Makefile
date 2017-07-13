@@ -22,11 +22,13 @@ localconfig:
 	mkdir -p $(BUILD_DIR)
 	cp examples/*$(subst /,-,$(PLATFORM)) $(BUILD_DIR)/terraform.tfvars
 
+.PHONY: terraform-init
 terraform-init:
 ifneq ($(shell $(TF_CMD) version | grep -E "Terraform v0\.1[0-9]\.[0-9]+"), )
 	cd $(BUILD_DIR) && $(TF_CMD) init $(TF_INIT_OPTIONS) $(TOP_DIR)/platforms/$(PLATFORM)
 endif
 
+.PHONY: terraform-get
 terraform-get: terraform-init
 	cd $(BUILD_DIR) && $(TF_CMD) get $(TF_GET_OPTIONS) $(TOP_DIR)/platforms/$(PLATFORM)
 
@@ -56,6 +58,7 @@ define terraform-examples
 	terraform-examples $2 $3 $4 $5 > $1
 endef
 
+.PHONY: docs
 docs:
 	$(call terraform-docs, Documentation/variables/config.md, \
 			'This document gives an overview of variables used in all platforms of the Tectonic SDK.', \
@@ -81,6 +84,7 @@ docs:
 			'This document gives an overview of variables used in the VMware platform of the Tectonic SDK.', \
 			platforms/vmware/variables.tf)
 
+.PHONY: examples
 examples:
 	$(call terraform-examples, examples/terraform.tfvars.aws, \
 			config.tf, \
@@ -106,12 +110,14 @@ examples:
 			config.tf, \
 			platforms/vmware/variables.tf)
 
+.PHONY: clean
 clean: destroy
 	rm -rf $(BUILD_DIR)
 	make clean -C $(TOP_DIR)/installer
 
 # This target is used by the GitHub PR checker to validate canonical syntax on all files.
 #
+.PHONY: structure-check
 structure-check:
 	$(eval FMT_ERR := $(shell terraform fmt -list -write=false .))
 	@if [ "$(FMT_ERR)" != "" ]; then echo "misformatted files (run 'terraform fmt .' to fix):" $(FMT_ERR); exit 1; fi
@@ -127,4 +133,4 @@ vendor-smoke: $(TOP_DIR)/tests/smoke/glide.yaml
 	@cd $(TOP_DIR)/tests/smoke && glide up -v
 	@cd $(TOP_DIR)/tests/smoke && glide-vc --use-lock-file --no-tests --only-code
 
-.PHONY: make clean terraform terraform-dev structure-check docs examples terraform-get terraform-init
+.PHONY: make terraform terraform-dev
