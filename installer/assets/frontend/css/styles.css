@@ -544,6 +544,10 @@ input.wiz-super-short-input {
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
 }
 
+.tectonic-modal:focus {
+  outline: none;
+}
+
 .tectonic-modal-overlay {
   background-color: rgba(0, 0, 0, 0.5);
   position: fixed;
