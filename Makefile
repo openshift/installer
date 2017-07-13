@@ -14,7 +14,7 @@ $(info Using build directory [${BUILD_DIR}])
 all: apply
 
 $(INSTALLER_BIN):
-	make build -C $(TOP_DIR)/installer
+	$(MAKE) build -C $(TOP_DIR)/installer
 
 installer-env: $(INSTALLER_BIN) terraformrc.example
 	sed "s|<PATH_TO_INSTALLER>|$(INSTALLER_BIN)|g" terraformrc.example > .terraformrc
@@ -119,7 +119,7 @@ examples:
 .PHONY: clean
 clean: destroy
 	rm -rf $(BUILD_DIR)
-	make clean -C $(TOP_DIR)/installer
+	$(MAKE) clean -C $(TOP_DIR)/installer
 
 # This target is used by the GitHub PR checker to validate canonical syntax on all files.
 #
@@ -128,8 +128,8 @@ structure-check:
 	$(eval FMT_ERR := $(shell terraform fmt -list -write=false .))
 	@if [ "$(FMT_ERR)" != "" ]; then echo "misformatted files (run 'terraform fmt .' to fix):" $(FMT_ERR); exit 1; fi
 
-	@if make docs && ! git diff --exit-code; then echo "outdated docs (run 'make docs' to fix)"; exit 1; fi
-	@if make examples && ! git diff --exit-code; then echo "outdated examples (run 'make examples' to fix)"; exit 1; fi
+	@if $(MAKE) docs && ! git diff --exit-code; then echo "outdated docs (run 'make docs' to fix)"; exit 1; fi
+	@if $(MAKE) examples && ! git diff --exit-code; then echo "outdated examples (run 'make examples' to fix)"; exit 1; fi
 
 SMOKE_SOURCES := $(shell find $(TOP_DIR)/tests/smoke -name '*.go')
 .PHONY: bin/smoke
