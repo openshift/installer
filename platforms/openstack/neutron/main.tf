@@ -134,6 +134,7 @@ EOF
   node_labels                  = "node-role.kubernetes.io/master"
   node_taints                  = "node-role.kubernetes.io/master=:NoSchedule"
   tectonic_experimental        = "${var.tectonic_experimental}"
+  tectonic_service_disabled    = "${var.tectonic_vanilla_k8s}"
 }
 
 module "worker_nodes" {
@@ -157,6 +158,7 @@ EOF
   hostname_infix               = "worker"
   node_labels                  = "node-role.kubernetes.io/node"
   node_taints                  = ""
+  tectonic_service_disabled    = "${var.tectonic_vanilla_k8s}"
 }
 
 module "secrets" {
