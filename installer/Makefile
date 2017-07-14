@@ -4,7 +4,9 @@ OS=$(shell uname | tr A-Z a-z)
 LD_FLAGS="-w"
 INSTALLER_OPTS=--address=127.0.0.1:4444 --open-browser=false --log-level=debug --dev
 TLS_CERTS=../tests/smoke/bare-metal/fake-creds
-MATCHBOX_OPTS=-data-path=/tmp/images -assets-path=/tmp/assets -cert-file=$(TLS_CERTS)/server.crt -key-file=$(TLS_CERTS)/server.key -ca-file=$(TLS_CERTS)/ca.crt
+MATCHBOX_ASSETS_PATH=/tmp/assets
+MATCHBOX_IMAGES_PATH=/tmp/images
+MATCHBOX_OPTS=-data-path=$(MATCHBOX_IMAGES_PATH) -assets-path=$(MATCHBOX_ASSETS_PATH) -cert-file=$(TLS_CERTS)/server.crt -key-file=$(TLS_CERTS)/server.key -ca-file=$(TLS_CERTS)/ca.crt
 COREOS_VERSION=1353.8.0
 REPO=github.com/coreos/tectonic-installer/installer
 
@@ -107,14 +109,13 @@ bin/go-bindata:
 
 .PHONY: launch-installer
 launch-installer:
-	mkdir -p frontend/ui-tests/reports/
-	./bin/$(OS)/installer $(INSTALLER_OPTS) & echo $$! > frontend/ui-tests/reports/installer.pid
+	./bin/$(OS)/installer $(INSTALLER_OPTS) & echo $$! > /tmp/installer.pid
 
 .PHONY: launch-matchbox
 launch-matchbox:
-	chmod +x frontend/ui-tests/utils/addMatchboxHosts.sh  && ./frontend/ui-tests/utils/addMatchboxHosts.sh > /dev/null
-	mkdir -p /tmp/images /tmp/assets/coreos/$(COREOS_VERSION)
-	/usr/local/bin/matchbox $(MATCHBOX_OPTS) & echo $$! > frontend/ui-tests/reports/matchbox.pid
+	./scripts/add_matchbox_hosts.sh
+	mkdir -p $(MATCHBOX_IMAGES_PATH) $(MATCHBOX_ASSETS_PATH)/coreos/$(COREOS_VERSION)
+	/usr/local/bin/matchbox $(MATCHBOX_OPTS) & echo $$! > /tmp/matchbox.pid
 
 .PHONY: launch-aws-installer-guitests
 launch-aws-installer-guitests: launch-installer
@@ -122,19 +123,19 @@ launch-aws-installer-guitests: launch-installer
 
 .PHONY: launch-baremetal-installer-guitests
 launch-baremetal-installer-guitests: launch-installer launch-matchbox
-	cd frontend && xvfb-run -a yarn baremetal-installer-tests
+	cd frontend && xvfb-run -a yarn run baremetal-installer-tests
+
+.PHONY: gui-tests-cleanup
+gui-tests-cleanup:
+	kill `cat /tmp/installer.pid`
 
 .PHONY: gui-aws-tests-cleanup
-gui-aws-tests-cleanup:
-	kill `cat frontend/ui-tests/reports/installer.pid`
-	rm -fr frontend/ui-tests/reports/
+gui-aws-tests-cleanup: gui-tests-cleanup
 
 .PHONY: gui-baremetal-tests-cleanup
-gui-baremetal-tests-cleanup:
-		kill `cat frontend/ui-tests/reports/installer.pid`
-		kill `cat frontend/ui-tests/reports/matchbox.pid`
-		rm -fr frontend/ui-tests/reports/
-		rm -fr /tmp/images /tmp/assets/coreos/$(COREOS_VERSION)
+gui-baremetal-tests-cleanup: gui-tests-cleanup
+	kill `cat /tmp/matchbox.pid`
+	rm -fr $(MATCHBOX_IMAGES_PATH) $(MATCHBOX_ASSETS_PATH)/coreos/$(COREOS_VERSION)
 
 .PHONY: clean
 clean:

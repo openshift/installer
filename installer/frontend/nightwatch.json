@@ -4,7 +4,6 @@
     "ui-tests/tests"
   ],
   "page_objects_path": "ui-tests/pages",
-  "output_folder": "ui-tests/reports",
   "selenium": {
     "start_process": false
   },
