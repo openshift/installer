@@ -22,7 +22,7 @@ User machines must:
 
 Bare metal Tectonic clusters are provisioned in a PXE network environment. Cluster nodes will PXE boot from the `matchbox` service running on a provisioner node. Familiarity with your network topology is required.
 
-Tectonic bare metal clusters store credentials in `user-data`, and etcd peer to peer communication is not currently encrypted with TLS. To restrict access to sensitive information, provision bare metal machines within a trusted network and ensure that a firewall exists between cluster controllers and the public internet.
+Tectonic bare metal clusters store credentials in `user-data`. To restrict access to sensitive information, provision bare metal machines within a trusted network and ensure that a firewall exists between cluster controllers and the public internet.
 
 ### Services
 
