@@ -92,7 +92,7 @@ class TF_PowerOn extends React.Component {
     const consoleSubsteps = [];
 
     if (action === 'apply' && tectonic.console) {
-      let msg = <span>Resolving <a href={`https://${tectonic.console.instance}`} target="_blank">{tectonic.console.instance}</a></span>;
+      let msg = <span>Resolving <a href={`https://${tectonic.dnsName}`} target="_blank">{tectonic.dnsName}</a></span>;
       const dnsReady = (tectonic.console.message || '').search('no such host') === -1;
       if (platformType === AWS_TF) {
         consoleSubsteps.push(<AWS_DomainValidation key="domain" />);
@@ -117,7 +117,7 @@ class TF_PowerOn extends React.Component {
       }
 
       const anyFailed = _.some(services, s => tectonic[s.key].failed);
-      const allDone = _.all(services, s => tectonic[s.key].success || tectonic[s.key].ready);
+      const allDone = _.all(services, s => tectonic[s.key].success);
 
       let tectonicSubsteps = [];
 

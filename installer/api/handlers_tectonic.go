@@ -31,13 +31,14 @@ type Status struct {
 
 // Services represents whether several Tectonic components have yet booted (or failed)
 type Services struct {
-	Kubernetes       Status                 `json:"kubernetes"`
-	IsEtcdSelfHosted bool                   `json:"isEtcdSelfHosted"`
-	Etcd             Status                 `json:"etcd"`
-	Identity         Status                 `json:"identity"`
-	Ingress          Status                 `json:"ingress"`
-	Console          tectonic.ServiceStatus `json:"console"`
-	Tectonic         Status                 `json:"tectonic"` // All other Tectonic services
+	Kubernetes       Status `json:"kubernetes"`
+	IsEtcdSelfHosted bool   `json:"isEtcdSelfHosted"`
+	Etcd             Status `json:"etcd"`
+	Identity         Status `json:"identity"`
+	Ingress          Status `json:"ingress"`
+	Console          Status `json:"console"`
+	Tectonic         Status `json:"tectonic"` // All other Tectonic services
+	DnsName          string `json:"dnsName"`  // Stores the instance of the Tectonic Console
 }
 
 // isEtcdSelfHosted determines if the etcd service will be hosted on the cluster
@@ -109,7 +110,7 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 		Etcd:       Status{Success: false, Failed: false},
 		Identity:   Status{Success: false, Failed: false},
 		Ingress:    Status{Success: false, Failed: false},
-		Console:    tectonic.ConsoleHealth(nil, input.TectonicDomain),
+		Console:    Status{Success: false, Failed: false},
 		Tectonic:   Status{Success: false, Failed: false},
 	}
 
@@ -133,6 +134,13 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 	if err != nil {
 		return services, newInternalServerError("Failed to determine if etcd is self-hosted: %s", err)
 	}
+
+	console := tectonic.ConsoleHealth(nil, input.TectonicDomain)
+
+	services.DnsName = console.Instance
+
+	services.Console.Success = console.Ready
+	// TODO: Determine Tectonic Console failure state
 
 	services.IsEtcdSelfHosted = etcd
 
@@ -206,8 +214,14 @@ func terraformStatus(session *sessions.Session, ex *terraform.Executor, exID int
 	if status == terraform.ExecutionStatusUnknown {
 		return TerraformStatus{}, newBadRequestError("Could not retrieve TerraForm execution's status: %s", err)
 	}
-	output, _ := ex.Output(exID)
-	outputBytes, _ := ioutil.ReadAll(output)
+	output, err := ex.Output(exID)
+	if err != nil {
+		return TerraformStatus{}, newInternalServerError("Could not retrieve Terraform output: %s", err)
+	}
+	outputBytes, err := ioutil.ReadAll(output)
+	if err != nil {
+		return TerraformStatus{}, newInternalServerError("Could not read Terraform output: %s", err)
+	}
 
 	// Return results.
 	response := TerraformStatus{
