@@ -15,12 +15,15 @@ import (
 
 	"errors"
 
+	"os"
+
 	"github.com/coreos/tectonic-installer/installer/pkg/tectonic"
 	"github.com/coreos/tectonic-installer/installer/pkg/terraform"
 	"github.com/dghubble/sessions"
+	"github.com/hashicorp/terraform/helper/resource"
 )
 
-// Status represents the individual state of a single service
+// Status represents the individual state of a single Kubernetes service
 type Status struct {
 	Success bool `json:"success"`
 	Failed  bool `json:"failed"`
@@ -28,16 +31,18 @@ type Status struct {
 
 // Services represents whether several Tectonic components have yet booted (or failed)
 type Services struct {
-	Kubernetes Status                 `json:"kubernetes"`
-	HasEtcd    bool                   `json:"hasetcd"`
-	Etcd       Status                 `json:"etcd"`
-	Identity   Status                 `json:"identity"`
-	Ingress    Status                 `json:"ingress"`
-	Console    tectonic.ServiceStatus `json:"console"`
-	Tectonic   Status                 `json:"tectonic"` // All other Tectonic services
+	Kubernetes       Status                 `json:"kubernetes"`
+	IsEtcdSelfHosted bool                   `json:"isEtcdSelfHosted"`
+	Etcd             Status                 `json:"etcd"`
+	Identity         Status                 `json:"identity"`
+	Ingress          Status                 `json:"ingress"`
+	Console          tectonic.ServiceStatus `json:"console"`
+	Tectonic         Status                 `json:"tectonic"` // All other Tectonic services
 }
 
-func isEtcdHosted(ex terraform.Executor) (bool, error) {
+// isEtcdSelfHosted determines if the etcd service will be hosted on the cluster
+// being terraformed; if it is, its status will be tracked like the other services
+func isEtcdSelfHosted(ex terraform.Executor) (bool, error) {
 	data, err := ex.LoadVars()
 	if err != nil {
 		return false, err
@@ -53,8 +58,18 @@ func isEtcdHosted(ex terraform.Executor) (bool, error) {
 	return etcd, nil
 }
 
+// kubeconfigLocation is the location of the kubeconfig file, relative to the
+// current working directory
+const kubeconfigLocation = "generated/auth/kubeconfig"
+
+// newK8sClient uses the generated kubeconfig file, if it exists, to create an
+// API client that can be used for checking pod statuses
 func newK8sClient(ex terraform.Executor) (*kubernetes.Clientset, error) {
-	kCfgPath := filepath.Join(ex.WorkingDirectory(), "generated/auth/kubeconfig")
+	kCfgPath := filepath.Join(ex.WorkingDirectory(), kubeconfigLocation)
+
+	if _, err := os.Stat(kCfgPath); err != nil {
+		return nil, err
+	}
 
 	rules := &clientcmd.ClientConfigLoadingRules{ExplicitPath: kCfgPath}
 	cfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, &clientcmd.ConfigOverrides{})
@@ -70,6 +85,8 @@ func newK8sClient(ex terraform.Executor) (*kubernetes.Clientset, error) {
 	return cs, nil
 }
 
+// getStatus is a simple helper function to convert a Kubernetes pod phase to
+// a Status object as defined above
 func getStatus(p v1.PodPhase) Status {
 	if p == v1.PodRunning {
 		return Status{Failed: false, Success: true}
@@ -79,10 +96,13 @@ func getStatus(p v1.PodPhase) Status {
 	return Status{Failed: false, Success: false}
 }
 
+// Input represents the request body passed to the status endpoint.
 type Input struct {
 	TectonicDomain string `json:"tectonicDomain"`
 }
 
+// tectonicStatus returns the current status (starting, running, or failed) of
+// the tectonic cluster services (etcd, Tectonic Identity, Tectonic Console), etc.
 func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 	services := Services{
 		Kubernetes: Status{Success: false, Failed: false},
@@ -95,30 +115,32 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 
 	client, err := newK8sClient(*ex)
 	if err != nil {
-		// This is probably because the kubeconfig hasn't been generated yet; assume services haven't started
-		// TODO: Better error handling to make sure it's not a different issue
-		return services, nil
+		if _, ok := err.(os.PathError); ok {
+			// This is because the kubeconfig hasn't been generated yet; assume services haven't started
+			return services, nil
+		} else {
+			return nil, err
+		}
 	}
 
 	pods, err := client.CoreV1().Pods("").List(v1.ListOptions{})
 	if err != nil {
 		// APIServer probably hasn't started yet; assume services haven't started
-		// TODO: Better error handling to make sure it's not a different issue
-		return services, nil
+		return services, newNotFoundError("API server has not started")
 	}
 
-	etcd, err := isEtcdHosted(*ex)
+	etcd, err := isEtcdSelfHosted(*ex)
 	if err != nil {
-		return services, newInternalServerError("Error reading TF Vars: %s", err)
+		return services, newInternalServerError("Failed to determine if etcd is self-hosted: %s", err)
 	}
 
-	services.HasEtcd = etcd
+	services.IsEtcdSelfHosted = etcd
 
 	services.Kubernetes.Success = true
 	services.Tectonic.Success = true
 
-	var kubeServs []v1.Pod
-	var tectServs []v1.Pod
+	var kubePods []v1.Pod
+	var tectPods []v1.Pod
 
 	for _, p := range pods.Items {
 		name := p.ObjectMeta.Name
@@ -129,17 +151,19 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 			services.Ingress = getStatus(p.Status.Phase)
 		case etcd && strings.Contains(name, "kube-etcd"):
 			services.Etcd = getStatus(p.Status.Phase)
-		case strings.Contains(name, "kube-"):
-			kubeServs = append(kubeServs, p)
 		default:
-			tectServs = append(tectServs, p)
+			if p.ObjectMeta.Namespace == "kube-system" {
+				kubePods = append(kubePods, p)
+			} else if p.ObjectMeta.Namespace == "tectonic-system" {
+				tectPods = append(tectPods, p)
+			}
 		}
 	}
 
-	if len(kubeServs) == 0 {
+	if len(kubePods) == 0 {
 		services.Kubernetes = Status{Success: false, Failed: false}
 	} else {
-		for _, p := range kubeServs {
+		for _, p := range kubePods {
 			if p.Status.Phase == v1.PodFailed || services.Kubernetes.Failed {
 				services.Kubernetes = Status{Failed: true, Success: false}
 			} else if p.Status.Phase == v1.PodRunning && services.Kubernetes.Success {
@@ -150,10 +174,10 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 		}
 	}
 
-	if len(tectServs) == 0 {
+	if len(tectPods) == 0 {
 		services.Tectonic = Status{Success: false, Failed: false}
 	} else {
-		for _, p := range tectServs {
+		for _, p := range tectPods {
 			if p.Status.Phase == v1.PodFailed || services.Tectonic.Failed {
 				services.Tectonic = Status{Failed: true, Success: false}
 			} else if p.Status.Phase == v1.PodRunning && services.Tectonic.Success {
@@ -167,6 +191,7 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 	return services, nil
 }
 
+// TerraformStatus represents the current status of the Terraform run.
 type TerraformStatus struct {
 	Status string `json:"status"`
 	Output string `json:"output,omitempty"`
@@ -174,6 +199,7 @@ type TerraformStatus struct {
 	Action string `json:"action"`
 }
 
+// terraformStatus returns the current status of the terraform run, if it has begun
 func terraformStatus(session *sessions.Session, ex *terraform.Executor, exID int) (TerraformStatus, error) {
 	// Retrieve Terraform's status and output.
 	status, err := ex.Status(exID)
@@ -199,11 +225,15 @@ func terraformStatus(session *sessions.Session, ex *terraform.Executor, exID int
 	return response, nil
 }
 
+// Response combines the terraform and tectonic statuses into one object
 type Response struct {
 	Terraform TerraformStatus `json:"terraform"`
 	Tectonic  Services        `json:"tectonic"`
 }
 
+// tectonicStatusHandler retrieves the terraform and tectonic statuses, then
+// combines them into one response and returns it. If the terraform apply has
+// not yet begun, it will return a 404.
 func tectonicStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Context) error {
 	input := Input{}
 	// Read the input from the request's body.
@@ -231,7 +261,9 @@ func tectonicStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 	if tf.Action != "destroy" {
 		tec, err := tectonicStatus(ex, input)
 		if err != nil {
-			return newInternalServerError("Could not retrieve Tectonic status: %s", err)
+			if _, ok := err.(resource.NotFoundError); !ok {
+				return newInternalServerError("Could not retrieve Tectonic status: %s", err)
+			}
 		}
 		response.Tectonic = tec
 	}
