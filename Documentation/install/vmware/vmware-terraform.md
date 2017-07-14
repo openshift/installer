@@ -7,7 +7,7 @@ Generally, the VMware platform templates adhere to the standards defined by the 
 ## Prerequsities
 
 1. Download the latest Container Linux Stable OVA from; https://coreos.com/os/docs/latest/booting-on-vmware.html.
-1. Import `coreos_production_vmware_ova.ova` into vCenter. For the most part all settings can be kept as is, however in "Customize template", "DHCP Support for Interface 0" *must* be changed to **"no"**. See [1802](https://github.com/coreos/bugs/issues/1802)
+1. Import `coreos_production_vmware_ova.ova` into vCenter. Generally, all settings can be kept as is. Consider "thin" provisioning and naming the template with CoreOS Container Linux Version.
 1. Resize the Virtual Machine Disk size to 30 GB or larger
 1. Convert the Container Linux image into a Virtual Machine template.
 1. Pre-Allocated IP addresses for the cluster and pre-create DNS records

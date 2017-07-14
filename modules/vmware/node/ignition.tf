@@ -18,7 +18,6 @@ data "ignition_config" "node" {
     "${data.ignition_systemd_unit.kubelet-env.id}",
     "${data.ignition_systemd_unit.bootkube.id}",
     "${data.ignition_systemd_unit.tectonic.id}",
-    "${data.ignition_systemd_unit.vmtoolsd_member.id}",
   ]
 
   networkd = [
@@ -100,22 +99,6 @@ data "ignition_systemd_unit" "tectonic" {
   name    = "tectonic.service"
   enable  = "${var.tectonic_service_disabled == 0 ? true : false}"
   content = "${var.tectonic_service}"
-}
-
-data "ignition_systemd_unit" "vmtoolsd_member" {
-  name   = "vmtoolsd.service"
-  enable = true
-
-  content = <<EOF
-  [Unit]
-  Description=VMware Tools Agent
-  Documentation=http://open-vm-tools.sourceforge.net/
-  ConditionVirtualization=vmware
-  [Service]
-  ExecStartPre=/usr/bin/ln -sfT /usr/share/oem/vmware-tools /etc/vmware-tools
-  ExecStart=/usr/share/oem/bin/vmtoolsd
-  TimeoutStopSec=5
-EOF
 }
 
 data "ignition_networkd_unit" "vmnetwork" {

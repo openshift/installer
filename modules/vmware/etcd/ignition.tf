@@ -208,19 +208,3 @@ data "ignition_networkd_unit" "vmnetwork" {
   Domains=${var.base_domain}
 EOF
 }
-
-data "ignition_systemd_unit" "vmtoolsd_member" {
-  name   = "vmtoolsd.service"
-  enable = true
-
-  content = <<EOF
-  [Unit]
-  Description=VMware Tools Agent
-  Documentation=http://open-vm-tools.sourceforge.net/
-  ConditionVirtualization=vmware
-  [Service]
-  ExecStartPre=/usr/bin/ln -sfT /usr/share/oem/vmware-tools /etc/vmware-tools
-  ExecStart=/usr/share/oem/bin/vmtoolsd
-  TimeoutStopSec=5
-EOF
-}
