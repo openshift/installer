@@ -27,6 +27,7 @@ ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --pod-manifest-path=/etc/kubernetes/manifests \
   --allow-privileged \
   --node-labels=${node_label} \
+  ${cni_bin_dir_flag} \
   --minimum-container-ttl-duration=6m0s \
   --cluster_dns=${cluster_dns} \
   --cluster_domain=cluster.local \

@@ -44,6 +44,7 @@ module "masters" {
 
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
+  kubelet_cni_bin_dir       = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
   kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
   container_images          = "${var.tectonic_container_images}"
   bootkube_service          = "${module.bootkube.systemd_service}"

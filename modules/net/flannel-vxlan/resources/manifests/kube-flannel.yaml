@@ -100,7 +100,7 @@ spec:
             name: kube-flannel-cfg
         - name: host-cni-bin
           hostPath:
-            path: /opt/cni/bin
+            path: ${host_cni_bin}
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 1

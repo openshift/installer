@@ -57,6 +57,8 @@ variable "tectonic_container_images" {
     etcd                            = "quay.io/coreos/etcd:v3.1.8"
     etcd_operator                   = "quay.io/coreos/etcd-operator:v0.4.0"
     kenc                            = "quay.io/coreos/kenc:8f6e2e885f790030fbbb0496ea2a2d8830e58b8f"
+    calico                          = "quay.io/calico/node:v1.3.0"
+    calico_cni                      = "quay.io/calico/cni:v1.9.1-4-g23fcd5f"
     awscli                          = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
     kube_version                    = "quay.io/coreos/kube-version:0.1.0"
     tectonic_etcd_operator          = "quay.io/coreos/tectonic-etcd-operator:v0.0.1"
@@ -374,5 +376,15 @@ variable "tectonic_ddns_key_secret" {
 (optional) This only applies if you use the modules/dns/ddns module.
 
 Specifies the RFC2136 Dynamic DNS server key secret.
+EOF
+}
+
+variable "tectonic_calico_network_policy" {
+  default = false
+
+  description = <<EOF
+[ALPHA] If set to true, calico network policy support will be deployed.
+WARNING: Enabling an alpha feature means that future updates may become unsupported.
+This should only be enabled on clusters that are meant to be short-lived to begin validating the alpha feature.
 EOF
 }

@@ -74,6 +74,10 @@ variable "kubelet_node_taints" {
   type = "string"
 }
 
+variable "kubelet_cni_bin_dir" {
+  type = "string"
+}
+
 variable "bootkube_service" {
   type        = "string"
   description = "The content of the bootkube systemd service unit"

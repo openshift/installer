@@ -32,6 +32,7 @@ resource "matchbox_group" "controller" {
   metadata {
     domain_name        = "${element(var.tectonic_metal_controller_domains, count.index)}"
     k8s_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
+    cni_bin_dir_flag   = "${var.tectonic_calico_network_policy ? "--cni-bin-dir=/var/lib/cni/bin" : "" }"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
     exclude_tectonic   = "${var.tectonic_vanilla_k8s}"
 
@@ -69,6 +70,7 @@ resource "matchbox_group" "worker" {
   metadata {
     domain_name        = "${element(var.tectonic_metal_worker_domains, count.index)}"
     k8s_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
+    cni_bin_dir_flag   = "${var.tectonic_calico_network_policy ? "--cni-bin-dir=/var/lib/cni/bin" : "" }"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
 
     # extra data

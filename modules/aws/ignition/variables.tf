@@ -28,6 +28,10 @@ variable "kubelet_node_taints" {
   description = "Taints that Kubelet will apply on the node"
 }
 
+variable "kubelet_cni_bin_dir" {
+  type = "string"
+}
+
 variable "bootkube_service" {
   type        = "string"
   description = "The content of the bootkube systemd service unit"

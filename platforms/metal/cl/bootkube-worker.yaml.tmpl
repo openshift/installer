@@ -73,6 +73,7 @@ systemd:
           --allow-privileged \
           --hostname-override={{.domain_name}} \
           --node-labels=node-role.kubernetes.io/node \
+          {{.cni_bin_dir_flag}} \
           --cluster_dns={{.k8s_dns_service_ip}} \
           --cluster_domain=cluster.local
         ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid

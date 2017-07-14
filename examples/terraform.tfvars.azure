@@ -144,6 +144,11 @@ tectonic_base_domain = ""
 // This field is mandatory if `tectonic_ca_cert` is set.
 // tectonic_ca_key_alg = "RSA"
 
+// [ALPHA] If set to true, calico network policy support will be deployed.
+// WARNING: Enabling an alpha feature means that future updates may become unsupported.
+// This should only be enabled on clusters that are meant to be short-lived to begin validating the alpha feature.
+tectonic_calico_network_policy = false
+
 // The Container Linux update channel.
 // 
 // Examples: `stable`, `beta`, `alpha`

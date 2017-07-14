@@ -29,6 +29,7 @@ ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --allow-privileged \
   --node-labels=${node_label} \
   ${node_taints_param} \
+  ${cni_bin_dir_flag} \
   --minimum-container-ttl-duration=6m0s \
   --cluster-dns=${cluster_dns_ip} \
   --cluster-domain=cluster.local \

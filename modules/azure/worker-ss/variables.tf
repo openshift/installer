@@ -70,3 +70,7 @@ variable "cloud_provider" {
 variable "kubelet_node_label" {
   type = "string"
 }
+
+variable "kubelet_cni_bin_dir" {
+  type = "string"
+}

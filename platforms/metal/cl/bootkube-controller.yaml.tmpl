@@ -83,6 +83,7 @@ systemd:
           --allow-privileged \
           --hostname-override={{.domain_name}} \
           --node-labels=node-role.kubernetes.io/master \
+          {{.cni_bin_dir_flag}} \
           --register-with-taints=node-role.kubernetes.io/master=:NoSchedule \
           --cluster_dns={{.k8s_dns_service_ip}} \
           --cluster_domain=cluster.local
