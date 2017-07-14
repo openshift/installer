@@ -74,7 +74,9 @@ resource "template_dir" "bootkube" {
     etcd_service_ip           = "${cidrhost(var.service_cidr, 15)}"
     bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 20)}"
 
-    cloud_provider = "${var.cloud_provider}"
+    cloud_provider             = "${var.cloud_provider}"
+    cloud_provider_config      = "${var.cloud_provider_config}"
+    cloud_provider_config_flag = "${var.cloud_provider_config != "" ? "- --cloud-config=/etc/kubernetes/cloud/config" : "# no cloud provider config given"}"
 
     cluster_cidr        = "${var.cluster_cidr}"
     service_cidr        = "${var.service_cidr}"
@@ -130,8 +132,11 @@ resource "template_dir" "bootkube-bootstrap" {
     etcd_cert_flag = "${data.template_file.etcd_client_crt.rendered != "" ? "- --etcd-certfile=/etc/kubernetes/secrets/etcd-client.crt" : "# no etcd-client.crt given" }"
     etcd_key_flag  = "${data.template_file.etcd_client_key.rendered != "" ? "- --etcd-keyfile=/etc/kubernetes/secrets/etcd-client.key" : "# no etcd-client.key given" }"
 
+    cloud_provider             = "${var.cloud_provider}"
+    cloud_provider_config      = "${var.cloud_provider_config}"
+    cloud_provider_config_flag = "${var.cloud_provider_config != "" ? "- --cloud-config=/etc/kubernetes/cloud/config" : "# no cloud provider config given"}"
+
     advertise_address = "${var.advertise_address}"
-    cloud_provider    = "${var.cloud_provider}"
     cluster_cidr      = "${var.cluster_cidr}"
     service_cidr      = "${var.service_cidr}"
   }

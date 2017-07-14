@@ -6,6 +6,8 @@ This document gives an overview of variables used in the Azure platform of the T
 
 | Name | Description | Type | Default |
 |------|-------------|:----:|:-----:|
+| tectonic_azure_client_secret | The client secret to use. | string | - |
+| tectonic_azure_cloud_environment | (optional) Azure cloud environment to use. See https://github.com/Azure/go-autorest/blob/ec5f4903f77ed9927ac95b19ab8e44ada64c1356/autorest/azure/environments.go#L13 for available environments. | string | `AZUREPUBLICCLOUD` |
 | tectonic_azure_config_version | (internal) This declares the version of the Azure configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.1` |
 | tectonic_azure_etcd_storage_account_type | (optional) Storage account type for the etcd node(s). Example: Premium_LRS. Using Premium storage is constrained by the of instance specified in 'tectonic_azure_etcd_vm_size'. See https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage#supported-vms | string | `Premium_LRS` |
 | tectonic_azure_etcd_vm_size | (optional) Instance size for the etcd node(s). Example: Standard_DS2_v2. | string | `Standard_DS2_v2` |

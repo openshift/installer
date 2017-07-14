@@ -29,7 +29,7 @@ resource "azurerm_availability_set" "tectonic_masters" {
 
 resource "azurerm_virtual_machine" "tectonic_master" {
   count                 = "${var.master_count}"
-  name                  = "${var.cluster_name}-master${count.index}"
+  name                  = "${var.cluster_name}-master-${count.index}"
   location              = "${var.location}"
   resource_group_name   = "${var.resource_group_name}"
   network_interface_ids = ["${var.network_interface_ids[count.index]}"]
@@ -48,7 +48,7 @@ resource "azurerm_virtual_machine" "tectonic_master" {
     caching       = "ReadWrite"
     create_option = "FromImage"
     os_type       = "linux"
-    vhd_uri       = "${azurerm_storage_account.tectonic_master.primary_blob_endpoint}${azurerm_storage_container.tectonic_master.name}/${var.cluster_name}-master${count.index}.vhd"
+    vhd_uri       = "${azurerm_storage_account.tectonic_master.primary_blob_endpoint}${azurerm_storage_container.tectonic_master.name}/${count.index}.vhd"
   }
 
   os_profile {

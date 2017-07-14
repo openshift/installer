@@ -29,7 +29,7 @@ resource "azurerm_availability_set" "tectonic_workers" {
 
 resource "azurerm_virtual_machine" "tectonic_worker" {
   count                 = "${var.worker_count}"
-  name                  = "${var.cluster_name}-worker${count.index}"
+  name                  = "${var.cluster_name}-worker-${count.index}"
   location              = "${var.location}"
   resource_group_name   = "${var.resource_group_name}"
   network_interface_ids = ["${var.network_interface_ids[count.index]}"]
@@ -52,7 +52,7 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
     caching       = "ReadWrite"
     create_option = "FromImage"
     os_type       = "linux"
-    vhd_uri       = "${azurerm_storage_account.tectonic_worker.primary_blob_endpoint}${azurerm_storage_container.tectonic_worker.name}/${var.cluster_name}-worker${count.index}.vhd"
+    vhd_uri       = "${azurerm_storage_account.tectonic_worker.primary_blob_endpoint}${azurerm_storage_container.tectonic_worker.name}/${count.index}.vhd"
   }
   os_profile {
     computer_name  = "${var.cluster_name}-worker-${count.index}"
@@ -70,5 +70,8 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
   }
   tags {
     environment = "staging"
+  }
+  lifecycle {
+    ignore_changes = ["storage_data_disk"]
   }
 }

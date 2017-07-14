@@ -3,6 +3,7 @@ data "ignition_config" "worker" {
     "${data.ignition_file.kubeconfig.id}",
     "${data.ignition_file.kubelet-env.id}",
     "${data.ignition_file.max-user-watches.id}",
+    "${data.ignition_file.cloud-provider-config.id}",
   ]
 
   systemd = [

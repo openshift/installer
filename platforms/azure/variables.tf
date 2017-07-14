@@ -233,3 +233,21 @@ EOF
 
   default = ""
 }
+
+variable "tectonic_azure_cloud_environment" {
+  type = "string"
+
+  description = <<EOF
+(optional) Azure cloud environment to use. See
+https://github.com/Azure/go-autorest/blob/ec5f4903f77ed9927ac95b19ab8e44ada64c1356/autorest/azure/environments.go#L13
+for available environments.
+EOF
+
+  default = "AZUREPUBLICCLOUD"
+}
+
+variable "tectonic_azure_client_secret" {
+  type = "string"
+
+  description = "The client secret to use."
+}

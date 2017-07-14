@@ -13,6 +13,7 @@ spec:
     - --allocate-node-cidrs=true
     - --cluster-cidr=${cluster_cidr}
     - --cloud-provider=${cloud_provider}
+    ${cloud_provider_config_flag}
     - --configure-cloud-routes=false
     - --leader-elect=true
     - --kubeconfig=/etc/kubernetes/kubeconfig

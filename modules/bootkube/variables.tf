@@ -48,6 +48,12 @@ variable "cloud_provider" {
   type        = "string"
 }
 
+variable "cloud_provider_config" {
+  description = "Content of cloud provider config"
+  type        = "string"
+  default     = ""
+}
+
 variable "service_cidr" {
   description = "A CIDR notation IP range from which to assign service cluster IPs"
   type        = "string"

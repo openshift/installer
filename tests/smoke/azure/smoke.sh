@@ -58,6 +58,9 @@ common() {
     export TF_VAR_tectonic_azure_ssh_key
     TF_VAR_tectonic_azure_ssh_key=$(realpath "$HOME/.ssh/id_rsa.pub")
 
+    export TF_VAR_tectonic_azure_client_secret
+    TF_VAR_tectonic_azure_client_secret="${ARM_CLIENT_SECRET}"
+
     # Create local config
     make localconfig
     # Use smoke test configuration for deployment

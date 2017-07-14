@@ -1,6 +1,6 @@
 resource "azurerm_network_interface" "tectonic_worker" {
   count               = "${var.worker_count}"
-  name                = "${var.cluster_name}-worker${count.index}"
+  name                = "${var.cluster_name}-worker-${count.index}"
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
 
