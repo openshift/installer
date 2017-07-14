@@ -211,18 +211,37 @@ pipeline {
                   checkout scm
                   unstash 'installer'
                   unstash 'smoke'
-                  timeout(45) {
-                    sh """#!/bin/bash -ex
-                    . ${WORKSPACE}/tests/smoke/aws/smoke.sh create-vpc
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-vpc.tfvars
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws-vpc.tfvars
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws-vpc.tfvars
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
-                    # As /build is created by root, make sure to remove it again
-                    # so non-root can create it later.
-                    rm -r ${WORKSPACE}/build
-                    """
+                  script {
+                    try {
+                      timeout(45) {
+                        sh """#!/bin/bash -ex
+                        . ${WORKSPACE}/tests/smoke/aws/smoke.sh create-vpc
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-vpc.tfvars
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws-vpc.tfvars
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws-vpc.tfvars
+
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
+                        """
+                      }
+                    }
+                    catch (error) {
+                        throw error
+                    }
+                    finally {
+                      retry(3) {
+                        timeout(15) {
+                          sh """#!/bin/bash -x
+                            ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
+                            ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
+
+                            # As /build is created by root, make sure to remove it again
+                            # so non-root can create it later.
+                            rm -r ${WORKSPACE}/build
+                          """
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -243,6 +262,8 @@ pipeline {
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh plan vars/basic.tfvars
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh create vars/basic.tfvars
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh test vars/basic.tfvars
+
+                          ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/basic.tfvars
                         """
                         }
                       }
@@ -252,9 +273,9 @@ pipeline {
                       finally {
                         retry(3) {
                           timeout(15) {
-                              sh """#!/bin/bash -ex
+                            sh """#!/bin/bash -x
                               ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/basic.tfvars
-                              """
+                            """
                           }
                         }
                       }
@@ -279,6 +300,8 @@ pipeline {
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh plan vars/exper.tfvars
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh create vars/exper.tfvars
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh test vars/exper.tfvars
+
+                          ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/exper.tfvars
                         """
                         }
                       }
@@ -288,7 +311,7 @@ pipeline {
                       finally {
                         retry(3) {
                           timeout(15) {
-                              sh """#!/bin/bash -ex
+                              sh """#!/bin/bash -x
                               ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/exper.tfvars
                               """
                           }
@@ -318,6 +341,8 @@ pipeline {
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh plan vars/dns.tfvars
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh create vars/dns.tfvars
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh test vars/dns.tfvars
+
+                          ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/dns.tfvars
                         """
                         }
                       }
@@ -327,7 +352,7 @@ pipeline {
                       finally {
                         retry(3) {
                           timeout(15) {
-                              sh """#!/bin/bash -ex
+                              sh """#!/bin/bash -x
                               ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/dns.tfvars
                               """
                           }
@@ -355,6 +380,8 @@ pipeline {
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh plan vars/extern.tfvars
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh create vars/extern.tfvars
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh test vars/extern.tfvars
+
+                          ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/extern.tfvars
                         """
                         }
                       }
@@ -364,7 +391,7 @@ pipeline {
                       finally {
                         retry(3) {
                           timeout(15) {
-                              sh """#!/bin/bash -ex
+                              sh """#!/bin/bash -x
                               ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/extern.tfvars
                               """
                           }
@@ -391,6 +418,8 @@ pipeline {
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh plan vars/extern-exper.tfvars
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh create vars/extern-exper.tfvars
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh test vars/extern-exper.tfvars
+
+                          ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/extern-exper.tfvars
                         """
                         }
                       }
@@ -400,7 +429,7 @@ pipeline {
                       finally {
                         retry(3) {
                           timeout(15) {
-                              sh """#!/bin/bash -ex
+                              sh """#!/bin/bash -x
                               ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/extern-exper.tfvars
                               """
                           }
@@ -427,6 +456,8 @@ pipeline {
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh plan vars/example.tfvars
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh create vars/example.tfvars
                           ${WORKSPACE}/tests/smoke/azure/smoke.sh test vars/example.tfvars
+
+                          ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/example.tfvars
                         """
                         }
                       }
@@ -436,7 +467,7 @@ pipeline {
                       finally {
                         retry(3) {
                           timeout(15) {
-                              sh """#!/bin/bash -ex
+                              sh """#!/bin/bash -x
                               ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/example.tfvars
                               """
                           }
@@ -485,11 +516,23 @@ pipeline {
                   checkout scm
                   unstash 'installer'
                   unstash 'node_modules'
-                  sh """#!/bin/bash -ex
-                  cd installer
-                  make launch-baremetal-installer-guitests
-                  make gui-baremetal-tests-cleanup
-                  """
+                  script {
+                    try {
+                      sh """#!/bin/bash -ex
+                      cd installer
+                      make launch-baremetal-installer-guitests
+                      """
+                    }
+                    catch (error) {
+                      throw error
+                    }
+                    finally {
+                      sh """#!/bin/bash -x
+                      cd installer
+                      make gui-baremetal-tests-cleanup
+                      """
+                    }
+                  }
                 }
               }
             }
