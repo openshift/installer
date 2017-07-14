@@ -104,7 +104,7 @@ class TF_PowerOn extends React.Component {
         </WaitingLi>
       );
 
-      const components = [
+      const services = [
         {key: 'kubernetes', name: 'Kubernetes'},
         {key: 'identity', name: 'Tectonic Identity'},
         {key: 'ingress', name: 'Tectonic Ingress Controller'},
@@ -112,22 +112,17 @@ class TF_PowerOn extends React.Component {
         {key: 'tectonic', name: 'other Tectonic services'},
       ];
 
-      if (tectonic.hasetcd) {
-        components.splice(1, 0, {key: 'etcd', name: 'Etcd'});
+      if (tectonic.isetcdselfhosted) {
+        services.splice(1, 0, {key: 'etcd', name: 'Etcd'});
       }
 
-      let allDone = true, anyFailed = false;
-
-      for (let c of components) {
-        anyFailed = anyFailed || tectonic[c.key].failed;
-        allDone = !anyFailed && allDone &&
-          (c.key === 'console' ? tectonic[c.key].ready : tectonic[c.key].success);
-      }
+      const anyFailed = _.some(services, s => tectonic[s.key].failed);
+      const allDone = _.all(services, s => tectonic[s.key].success || tectonic[s.key].ready);
 
       let tectonicSubsteps = [];
 
       if (anyFailed || !allDone) {
-        for (let c of components) {
+        for (let c of services) {
           msg = `Starting ${c.name}`;
           let ready = false;
           if (c.key === 'console') {
