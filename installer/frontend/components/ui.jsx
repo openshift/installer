@@ -676,8 +676,7 @@ export class AsyncSelect extends React.Component {
             {disabledValue && <option value="" disabled>{disabledValue}</option>}
             {optionElems}
           </select>
-          {
-            onRefresh &&
+          { onRefresh &&
             <button className="btn btn-default" disabled={availableValues.inFly} onClick={onRefresh} title="Refresh">
               <i className={iClassNames}></i>
             </button>

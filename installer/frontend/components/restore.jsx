@@ -102,9 +102,9 @@ const Modal_ = connect(stateToProps, dispatchToProps)(class Modal_Inner extends 
           <h2 className="modal-title">Restore progress</h2>
         </div>
         <div className="modal-body" style={{minHeight: 100}}>
-           <input id="upload-state" type="file" onChange={e => this.props.handleUpload(e.target.files[0], this.isDone.bind(this))} />
-           { uploadError && <p className="wiz-error-message">{uploadError}</p>}
-           { this.state.done && <p className="alert alert-info">Restored state for {clusterName} cluster.</p>}
+          <input id="upload-state" type="file" onChange={e => this.props.handleUpload(e.target.files[0], this.isDone.bind(this))} />
+          { uploadError && <p className="wiz-error-message">{uploadError}</p>}
+          { this.state.done && <p className="alert alert-info">Restored state for {clusterName} cluster.</p>}
         </div>
         <div className="modal-footer tectonic-modal-footer">
           <button className="btn btn-default" onClick={this.close.bind(this)}>Close</button>

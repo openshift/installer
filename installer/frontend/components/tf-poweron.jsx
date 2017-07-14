@@ -106,10 +106,10 @@ class TF_PowerOn extends React.Component {
       );
     }
     let platformMsg = <p>
-        Kubernetes is starting up. We're committing your cluster details.
-        Grab some tea and sit tight. This process can take up to 20 minutes.
-        Status updates will appear below.
-      </p>;
+      Kubernetes is starting up. We're committing your cluster details.
+      Grab some tea and sit tight. This process can take up to 20 minutes.
+      Status updates will appear below.
+    </p>;
     if (platformType === BARE_METAL_TF) {
       platformMsg = <div>
         <div className="wiz-herotext">
@@ -124,8 +124,8 @@ class TF_PowerOn extends React.Component {
             <li>Container Linux is downloaded and installed to disk (about 200 MB)</li>
             <li>Cluster software is downloaded (about 500 MB)</li>
             <li>One or two reboots may occur</li>
-            </ul>
-          </div>
+          </ul>
+        </div>
       </div>;
     }
 
@@ -179,7 +179,7 @@ class TF_PowerOn extends React.Component {
               { state.xhrError &&
                 <div className="row">
                   <div className="col-xs-12">
-                   <Alert severity="error">{state.xhrError}</Alert>
+                    <Alert severity="error">{state.xhrError}</Alert>
                   </div>
                 </div>
               }

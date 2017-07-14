@@ -15,8 +15,9 @@ const hostNamesForm = new Form('BM_Hostname', [
 
 export const BM_Hostname = () =>
   <div>
-    <div className="form-group">Enter a DNS name which resolves to any master node.
-      This is the name we'll use when configuring components.</div>
+    <div className="form-group">
+      Enter a DNS name which resolves to any master node. This is the name we'll use when configuring components.
+    </div>
     <div className="row form-group">
       <div className="col-xs-3">
         <label htmlFor={CONTROLLER_DOMAIN}>Master DNS</label>

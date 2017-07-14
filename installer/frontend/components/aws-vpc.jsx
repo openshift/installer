@@ -375,8 +375,7 @@ class AWS_VPCComponent extends React.Component {
       <AWS_DomainValidation />
       <hr />
 
-      { awsCreateVpc &&
-      <Connect field={AWS_ADVANCED_NETWORKING}>
+      { awsCreateVpc && <Connect field={AWS_ADVANCED_NETWORKING}>
         <ToggleButton className="btn btn-default">Advanced Settings</ToggleButton>
       </Connect>
       }
@@ -434,16 +433,14 @@ class AWS_VPCComponent extends React.Component {
         }
 
         { (controllerSubnets || workerSubnets) && <hr /> }
-        { controllerSubnets &&
-        <div className="row form-group">
+        { controllerSubnets && <div className="row form-group">
           <div className="col-xs-12">
             <h4>Masters</h4>
             { controllerSubnets }
           </div>
         </div>
         }
-        { workerSubnets &&
-        <div className="row form-group">
+        { workerSubnets && <div className="row form-group">
           <div className="col-xs-12">
             <h4>Workers</h4>
             { workerSubnets }

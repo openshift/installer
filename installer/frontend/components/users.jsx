@@ -18,40 +18,40 @@ const credsForm = new Form(CREDS, [
 });
 
 export const Users = () => <div>
-      <div className="form-group">
-        These credentials will be used to log in to your Tectonic Console. Additional identity services and user management can be configured in the console.
-      </div>
-      <div className="row form-group">
-        <div className="col-sm-4">
-          <label htmlFor={ADMIN_EMAIL}>Email Address</label>
-        </div>
-        <div className="col-sm-8">
-          <Connect field={ADMIN_EMAIL} validator={validate.email}>
-            <Input placeholder="admin@example.com" />
-          </Connect>
-        </div>
-      </div>
-      <div className="row form-group">
-        <div className="col-sm-4">
-          <label htmlFor={ADMIN_PASSWORD}>Password</label>
-        </div>
-        <div className="col-sm-8">
-          <Connect field={ADMIN_PASSWORD} validator={validate.nonEmpty}>
-            <Password />
-          </Connect>
-        </div>
-      </div>
-      <div className="row form-group">
-        <div className="col-sm-4">
-          <label htmlFor={ADMIN_PASSWORD2}>Confirm Password</label>
-        </div>
-        <div className="col-sm-8">
-          <Connect field={ADMIN_PASSWORD2} validator={validate.nonEmpty}>
-            <Password />
-          </Connect>
-        </div>
-      </div>
-      <credsForm.Errors />
-    </div>;
+  <div className="form-group">
+    These credentials will be used to log in to your Tectonic Console. Additional identity services and user management can be configured in the console.
+  </div>
+  <div className="row form-group">
+    <div className="col-sm-4">
+      <label htmlFor={ADMIN_EMAIL}>Email Address</label>
+    </div>
+    <div className="col-sm-8">
+      <Connect field={ADMIN_EMAIL} validator={validate.email}>
+        <Input placeholder="admin@example.com" />
+      </Connect>
+    </div>
+  </div>
+  <div className="row form-group">
+    <div className="col-sm-4">
+      <label htmlFor={ADMIN_PASSWORD}>Password</label>
+    </div>
+    <div className="col-sm-8">
+      <Connect field={ADMIN_PASSWORD} validator={validate.nonEmpty}>
+        <Password />
+      </Connect>
+    </div>
+  </div>
+  <div className="row form-group">
+    <div className="col-sm-4">
+      <label htmlFor={ADMIN_PASSWORD2}>Confirm Password</label>
+    </div>
+    <div className="col-sm-8">
+      <Connect field={ADMIN_PASSWORD2} validator={validate.nonEmpty}>
+        <Password />
+      </Connect>
+    </div>
+  </div>
+  <credsForm.Errors />
+</div>;
 
 Users.canNavigateForward = credsForm.canNavigateForward;
