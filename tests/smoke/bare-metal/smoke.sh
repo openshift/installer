@@ -66,6 +66,16 @@ main() {
   until $(curl --silent --fail -k http://matchbox.example.com:8080 > /dev/null); do
     echo "Waiting for matchbox..."
     sleep 5
+
+    if sudo -E systemctl is-failed dev-matchbox; then
+      sudo -E journalctl -u dev-matchbox
+      exit 1
+    fi
+
+    if sudo -E systemctl is-failed dev-dnsmasq; then
+      sudo -E journalctl -u dev-dnsmasq
+      exit 1
+    fi
   done
 
   echo "Starting Terraform"
