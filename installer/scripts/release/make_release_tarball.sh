@@ -5,7 +5,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 source "$DIR/common.env.sh"
 
 echo "Retrieving TerraForm resources"
-"$DIR/get_terraform_bins.sh"
+"$DIR/get_terraform_resources.sh"
 
 echo "Copying Tectonic Installer binaries"
 #cp "$ROOT/bin/windows/installer.exe" "$INSTALLER_RELEASE_DIR/windows/installer.exe"
