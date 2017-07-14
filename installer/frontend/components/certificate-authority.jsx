@@ -62,8 +62,7 @@ export const CertificateAuthority = connect(
             </div>
             <div className="wiz-radio-group__body">
               {
-                caType === 'owned' &&
-                <div>
+                caType === 'owned' && <div>
                   <div className="row form-group">
                     <div className="col-xs-12">
                       <WithClusterConfig field={CA_CERTIFICATE}>

@@ -39,17 +39,18 @@
     "no-throw-literal": [2],
     "no-trailing-spaces": [2],
     "no-underscore-dangle": [0],
+    "no-unused-vars": [2, {"argsIgnorePattern": "^_"}],
     "no-use-before-define": [1],
     "no-useless-call": [2],
-    "no-unused-vars": [2, {"argsIgnorePattern": "^_"}],
     "no-void": [2],
     "no-with": [2],
     "radix": [2],
+    "react/jsx-indent": [2, 2],
+    "react/prop-types": [0],
     "semi": [2, "always"],
     "space-infix-ops": [0], // To allow for fn(arg=val) with no spaces around the "="
     "strict": [2, "global"],
-    "vars-on-top": [2],
-    "react/prop-types": [0]
+    "vars-on-top": [2]
   },
   "settings": {
     "ecmascript": 6

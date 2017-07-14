@@ -82,7 +82,7 @@ export const DefineNode = ({name, type, disabled, withoutTitle, max}) =>
     <Row htmlFor={`${name}--storage-size`} label="Storage Size">
       <Connect field={toKey(type, STORAGE_SIZE_IN_GIB)}>
         <NumberInput id={`${name}--storage-size`} className="wiz-super-short-input" suffix="GiB" />
-        </Connect>
+      </Connect>
     </Row>
     <Row htmlFor={`${name}--storage-type`} label="Storage Type">
       <Connect field={toKey(type, STORAGE_TYPE)}>

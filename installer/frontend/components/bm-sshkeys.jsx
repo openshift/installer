@@ -38,7 +38,7 @@ export const BM_SSHKeys = () => <div>
     <div className="col-xs-9">
       <div className="wiz-ssh-key-container">
         <Connect field={SSH_AUTHORIZED_KEY}>
-        <FileArea
+          <FileArea
             className="wiz-ssh-key-container__input"
             placeholder={keyPlaceholder}
             autoFocus />

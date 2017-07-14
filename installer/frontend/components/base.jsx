@@ -61,7 +61,7 @@ const Pager = ({showPrev, showNext, disableNext, loadingNext, navigatePrevious, 
     <div className="wiz-form__actions">
       {
         showPrev &&
-        <button onClick={navigatePrevious}
+          <button onClick={navigatePrevious}
                 className="btn btn-default wiz-form__actions__prev"
                 >Previous Step</button>
       }
@@ -75,8 +75,7 @@ const Pager = ({showPrev, showNext, disableNext, loadingNext, navigatePrevious, 
             <WithTooltip text="All fields are required unless specified." shouldShow={disableNext}>
               <button onClick={navigateNext}
                       className={nextLinkClasses}>
-                {loadingNext &&
-                 <span><i className="fa fa-spin fa-circle-o-notch"></i>{' '}</span>}
+                {loadingNext && <span><i className="fa fa-spin fa-circle-o-notch"></i>{' '}</span>}
                 Next Step
               </button>
             </WithTooltip>
@@ -186,9 +185,9 @@ class extends React.Component {
                   </span>
                 }
                 {currentPage.hideSave ||
-                 <span className="wiz-form__header__control">
-                   <a onClick={() => downloadState(state)}><i className="fa fa-download"></i>&nbsp;&nbsp;Save progress</a>
-                 </span>
+                  <span className="wiz-form__header__control">
+                    <a onClick={() => downloadState(state)}><i className="fa fa-download"></i>&nbsp;&nbsp;Save progress</a>
+                  </span>
                 }
               </div>
               <div className="wiz-wizard__content__body">
@@ -196,7 +195,7 @@ class extends React.Component {
               </div>
               {
                 currentPage.hidePager ||
-                <Pager
+                  <Pager
                     showPrev={!!prevPage}
                     showNext={!!nextPage}
                     disableNext={!canNavigateForward(state)}

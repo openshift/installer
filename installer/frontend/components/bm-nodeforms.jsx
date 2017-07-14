@@ -255,7 +255,8 @@ class NodeForm extends React.Component {
     return <div>
       <div className="form-group">
         <a onClick={() => this.setState({bulkUpload: true})}>
-        <span className="fa fa-upload"></span> Bulk Upload Addresses</a>
+          <span className="fa fa-upload"></span> Bulk Upload Addresses
+        </a>
       </div>
       <div>
         {docs}
