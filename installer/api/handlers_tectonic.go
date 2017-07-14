@@ -20,7 +20,6 @@ import (
 	"github.com/coreos/tectonic-installer/installer/pkg/tectonic"
 	"github.com/coreos/tectonic-installer/installer/pkg/terraform"
 	"github.com/dghubble/sessions"
-	"github.com/hashicorp/terraform/helper/resource"
 )
 
 // Status represents the individual state of a single Kubernetes service
@@ -116,18 +115,18 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 
 	client, err := newK8sClient(*ex)
 	if err != nil {
-		if _, ok := err.(os.PathError); ok {
+		if _, ok := err.(*os.PathError); ok {
 			// This is because the kubeconfig hasn't been generated yet; assume services haven't started
 			return services, nil
 		} else {
-			return nil, err
+			return services, err
 		}
 	}
 
 	pods, err := client.CoreV1().Pods("").List(v1.ListOptions{})
 	if err != nil {
 		// APIServer probably hasn't started yet; assume services haven't started
-		return services, newNotFoundError("API server has not started")
+		return services, errors.New("API server has not started")
 	}
 
 	etcd, err := isEtcdSelfHosted(*ex)
@@ -275,7 +274,7 @@ func tectonicStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 	if tf.Action != "destroy" {
 		tec, err := tectonicStatus(ex, input)
 		if err != nil {
-			if _, ok := err.(resource.NotFoundError); !ok {
+			if err.Error() != "API server has not started" {
 				return newInternalServerError("Could not retrieve Tectonic status: %s", err)
 			}
 		}
