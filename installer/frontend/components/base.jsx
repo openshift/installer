@@ -1,10 +1,14 @@
+import _ from 'lodash';
 import classNames from 'classnames';
 import React from 'react';
 import { saveAs } from 'file-saver';
 import { connect } from 'react-redux';
+import { Route, Switch } from 'react-router-dom';
 
+import { navChange } from '../actions';
+import { withNav } from '../nav';
 import { savable } from '../reducer';
-import * as trail from '../trail';
+import { sections as trailSections, trail } from '../trail';
 
 import { Loader } from './loader';
 import { ResetButton } from './reset-button';
@@ -52,7 +56,8 @@ const NavSection = connect(state => ({state}))(
   }
 );
 
-const Pager = ({showPrev, showNext, disableNext, loadingNext, navigatePrevious, navigateNext, resetBtn}) => {
+const Pager = withNav(
+({navNext, navPrevious, showPrev, showNext, disableNext, loadingNext, resetBtn}) => {
   const nextLinkClasses = classNames('btn', 'btn-primary', {
     disabled: disableNext || loadingNext,
   });
@@ -60,10 +65,9 @@ const Pager = ({showPrev, showNext, disableNext, loadingNext, navigatePrevious, 
   return (
     <div className="wiz-form__actions">
       {
-        showPrev &&
-          <button onClick={navigatePrevious}
-                className="btn btn-default wiz-form__actions__prev"
-                >Previous Step</button>
+        showPrev && <button onClick={navPrevious} className="btn btn-default wiz-form__actions__prev">
+          Previous Step
+        </button>
       }
       { resetBtn && <div className="wiz-form__actions__prev">
         <ResetButton />
@@ -73,8 +77,7 @@ const Pager = ({showPrev, showNext, disableNext, loadingNext, navigatePrevious, 
         showNext &&
           <div className="wiz-form__actions__next">
             <WithTooltip text="All fields are required unless specified." shouldShow={disableNext}>
-              <button onClick={navigateNext}
-                      className={nextLinkClasses}>
+              <button onClick={navNext} className={nextLinkClasses}>
                 {loadingNext && <span><i className="fa fa-spin fa-circle-o-notch"></i>{' '}</span>}
                 Next Step
               </button>
@@ -83,10 +86,10 @@ const Pager = ({showPrev, showNext, disableNext, loadingNext, navigatePrevious, 
       }
     </div>
   );
-};
+});
 
 const stateToProps = (state) => {
-  const t = trail.trail(state);
+  const t = trail(state);
   const currentPage = t.pageByPath.get(state.path);
   return {
     currentPage,
@@ -98,17 +101,13 @@ const stateToProps = (state) => {
   };
 };
 
-const Wizard = connect(stateToProps)(
+// No components have the same path, so this is safe.
+// If a user guesses an invalid URL, they could get in a weird state. Oh well.
+const routes = _.uniq(_.flatMap(trailSections));
+
+const Wizard = withNav(connect(stateToProps, {navChange})(
 class extends React.Component {
-  static get contextTypes() {
-    return {
-      router: React.PropTypes.object.isRequired,
-    };
-  }
-
   navigate (currentPage, nextPage, state) {
-    const {router} = this.context;
-
     if (currentPage.path === '/define/cluster-type' && nextPage !== currentPage && state) {
       TectonicGA.sendEvent('Platform Selected', 'user input', state.clusterConfig[PLATFORM_TYPE], state.clusterConfig[PLATFORM_TYPE]);
     }
@@ -120,7 +119,7 @@ class extends React.Component {
     if (state) {
       TectonicGA.sendEvent('Page Navigation Next', 'click', 'next on', state.clusterConfig[PLATFORM_TYPE]);
     }
-    router.push(nextPage.path);
+    this.props.navChange(nextPage.path);
   }
 
   componentDidMount() {
@@ -135,15 +134,9 @@ class extends React.Component {
   }
 
   render() {
-    const {children, t, currentPage, prevPage, nextPage, state} = this.props;
+    const {t, currentPage, navNext, prevPage, nextPage, state, title} = this.props;
 
-    const navigatePrevious = () => this.navigate(currentPage, prevPage, state);
-    const navigateNext = () => this.navigate(currentPage, nextPage, state);
     const nav = page => this.navigate(currentPage, page);
-
-    const kids = React.Children.map(children, el => {
-      return React.cloneElement(el, {navigatePrevious, navigateNext});
-    });
 
     const canNavigateForward = currentPage.component.canNavigateForward || (() => true);
     return (
@@ -155,33 +148,33 @@ class extends React.Component {
               <NavSection
                   title="1. Choose Cluster Type"
                   navTrail={t}
-                  sections={[trail.sections.choose]}
+                  sections={[trailSections.choose]}
                   currentPage={currentPage}
                   handlePage={nav} />
               <NavSection
                   title="2. Define Cluster"
                   navTrail={t}
-                  sections={[trail.sections.defineBaremetal, trail.sections.defineAWS]}
+                  sections={[trailSections.defineBaremetal, trailSections.defineAWS]}
                   currentPage={currentPage}
                   handlePage={nav} />
               <NavSection
                   title="3. Boot Cluster"
                   navTrail={t}
                   sections={[
-                    trail.sections.bootBaremetal,
-                    trail.sections.bootAWS,
-                    trail.sections.bootAWSTF,
-                    trail.sections.bootDryRun,
+                    trailSections.bootBaremetal,
+                    trailSections.bootAWS,
+                    trailSections.bootAWSTF,
+                    trailSections.bootDryRun,
                   ]}
                   currentPage={currentPage}
                   handlePage={nav} />
             </div>
             <div className="wiz-wizard__content wiz-wizard__cell">
               <div className="wiz-form__header">
-                <span className="wiz-form__header__title">{this.props.title}</span>
+                <span className="wiz-form__header__title">{title}</span>
                 {currentPage.showRestore &&
                   <span className="wiz-form__header__control">
-                    <a onClick={restoreModal}><i className="fa fa-upload"></i>&nbsp;&nbsp;Restore progress</a>
+                    <a onClick={() => restoreModal(navNext)}><i className="fa fa-upload"></i>&nbsp;&nbsp;Restore progress</a>
                   </span>
                 }
                 {currentPage.hideSave ||
@@ -191,7 +184,9 @@ class extends React.Component {
                 }
               </div>
               <div className="wiz-wizard__content__body">
-                {kids}
+                <Switch>
+                  {routes.map(r => <Route exact key={r.path} path={r.path} render={() => <r.component />} />)}
+                </Switch>
               </div>
               {
                 currentPage.hidePager ||
@@ -199,9 +194,7 @@ class extends React.Component {
                     showPrev={!!prevPage}
                     showNext={!!nextPage}
                     disableNext={!canNavigateForward(state)}
-                    navigatePrevious={navigatePrevious}
-                    resetBtn={t.canReset}
-                    navigateNext={navigateNext} />
+                    resetBtn={t.canReset} />
               }
             </div>
           </div>
@@ -210,7 +203,7 @@ class extends React.Component {
       </div>
     );
   }
-});
+}));
 
 export const Base = connect(
   ({cluster, serverFacts}) => {
@@ -222,9 +215,9 @@ export const Base = connect(
   undefined, // mapDispatchToProps
   undefined, // mergeProps
   {pure: false} // base isn't pure because Wizard isn't pure
-)(({loaded, failed, children}) => {
+)(({loaded, failed}) => {
   if (loaded && !failed) {
-    return <Wizard>{children}</Wizard>;
+    return <Wizard />;
   }
 
   if (loaded) {

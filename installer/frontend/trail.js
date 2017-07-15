@@ -352,7 +352,3 @@ export const trail = ({cluster, clusterConfig, commitState}) => {
 
   return platformToSection[platform].choose;
 };
-
-// No components have the same path, so this is safe.
-// If a user guesses an invalid URL, they could get in a weird state. Oh well.
-export const getAllRoutes = () => _.uniq(_.flatMap(sections));

@@ -1,10 +1,8 @@
 import React from 'react';
 import ReactDom from 'react-dom';
 import Modal from 'react-modal';
-import { bindActionCreators } from 'redux';
 import { connect } from 'react-redux';
 
-import { navigateNext } from '../app';
 import { store } from '../store';
 import { eventErrorsActionTypes, restoreActionTypes, validateAllFields } from '../actions';
 import { readFile } from '../readfile';
@@ -62,9 +60,8 @@ const handleUpload = (blob, cb) => dispatch => {
 
 const stateToProps = ({eventErrors, clusterConfig}) => ({uploadError: eventErrors[UPLOAD_ERROR_NAME], clusterName: clusterConfig[CLUSTER_NAME]});
 
-const dispatchToProps = dispatch => bindActionCreators({handleUpload}, dispatch);
-
-const Modal_ = connect(stateToProps, dispatchToProps)(class Modal_Inner extends React.Component {
+const Modal_ = connect(stateToProps, {handleUpload})(
+class Modal_Inner extends React.Component {
   constructor(props) {
     super(props);
     this.state = {done: false, inProgress: false};
@@ -89,8 +86,8 @@ const Modal_ = connect(stateToProps, dispatchToProps)(class Modal_Inner extends 
 
   close () {
     setTimeout(() => ReactDom.unmountComponentAtNode(document.getElementById('tectonic-modal')), 0);
-    if (this.state.done) {
-      navigateNext();
+    if (this.state.done && this.props.cb) {
+      this.props.cb();
     }
   }
 
@@ -124,4 +121,4 @@ const Modal_ = connect(stateToProps, dispatchToProps)(class Modal_Inner extends 
   }
 });
 
-export const restoreModal = () => ReactDom.render(<Modal_ store={store} />, document.getElementById('tectonic-modal'));
+export const restoreModal = (cb) => ReactDom.render(<Modal_ cb={cb} store={store} />, document.getElementById('tectonic-modal'));
