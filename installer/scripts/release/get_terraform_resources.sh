@@ -15,3 +15,5 @@ for os in "linux" "darwin"; do
     unzip -o "${TERRAFORM_BIN_TMP_DIR}/terraform_${os}.zip" -d "${INSTALLER_RELEASE_DIR}/${os}/"
     chmod +x "${INSTALLER_RELEASE_DIR}/${os}"/terraform*
 done
+
+curl --fail --silent -L "${TERRAFORM_LICENSE_URL}" -o "${TECTONIC_RELEASE_TOP_DIR}"/TERRAFORM_LICENSE
