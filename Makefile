@@ -6,7 +6,8 @@ BUILD_DIR = $(TOP_DIR)/build/$(CLUSTER)
 INSTALLER_BIN = $(TOP_DIR)/installer/bin/$(shell uname | tr '[:upper:]' '[:lower:]')/installer
 TF_DOCS := $(shell which terraform-docs 2> /dev/null)
 TF_EXAMPLES := $(shell which terraform-examples 2> /dev/null)
-TF_CMD = TERRAFORM_CONFIG=$(TOP_DIR)/.terraformrc terraform
+TF_RC := $(TOP_DIR)/.terraformrc
+TF_CMD = TERRAFORM_CONFIG=$(TF_RC) terraform
 
 $(info Using build directory [${BUILD_DIR}])
 
@@ -17,7 +18,7 @@ $(INSTALLER_BIN):
 	$(MAKE) build -C $(TOP_DIR)/installer
 
 installer-env: $(INSTALLER_BIN) terraformrc.example
-	sed "s|<PATH_TO_INSTALLER>|$(INSTALLER_BIN)|g" terraformrc.example > .terraformrc
+	sed "s|<PATH_TO_INSTALLER>|$(INSTALLER_BIN)|g" terraformrc.example > $(TF_RC)
 
 .PHONY: localconfig
 localconfig:
@@ -120,6 +121,7 @@ examples:
 clean: destroy
 	rm -rf $(BUILD_DIR)
 	$(MAKE) clean -C $(TOP_DIR)/installer
+	rm -f $(TF_RC)
 
 # This target is used by the GitHub PR checker to validate canonical syntax on all files.
 #
