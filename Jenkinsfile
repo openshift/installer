@@ -231,7 +231,7 @@ pipeline {
           "SmokeTest: Azure": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(builder_image) {
+                withDockerContainer(params.builder_image) {
                   sshagent(['azure-smoke-ssh-key-kind-ssh']) {
                     checkout scm
                     unstash 'installer'
@@ -267,7 +267,7 @@ pipeline {
           "SmokeTest: Azure (Experimental)": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(builder_image) {
+                withDockerContainer(params.builder_image) {
                   sshagent(['azure-smoke-ssh-key-kind-ssh']) {
                     checkout scm
                     unstash 'installer'
@@ -306,7 +306,7 @@ pipeline {
           "SmokeTest: Azure (existing DNS)": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(builder_image) {
+                withDockerContainer(params.builder_image) {
                   sshagent(['azure-smoke-ssh-key-kind-ssh']) {
                     checkout scm
                     unstash 'installer'
@@ -343,7 +343,7 @@ pipeline {
           "SmokeTest: Azure (external network)": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(builder_image) {
+                withDockerContainer(params.builder_image) {
                   sshagent(['azure-smoke-ssh-key-kind-ssh']) {
                     checkout scm
                     unstash 'installer'
@@ -379,7 +379,7 @@ pipeline {
           "SmokeTest: Azure (external network, experimental)": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(builder_image) {
+                withDockerContainer(params.builder_image) {
                   sshagent(['azure-smoke-ssh-key-kind-ssh']) {
                     checkout scm
                     unstash 'installer'
@@ -415,7 +415,7 @@ pipeline {
           "SmokeTest: Azure (example file)": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(builder_image) {
+                withDockerContainer(params.builder_image) {
                   sshagent(['azure-smoke-ssh-key-kind-ssh']) {
                     checkout scm
                     unstash 'installer'
