@@ -99,7 +99,8 @@ const Modal_ = connect(stateToProps, dispatchToProps)(class Modal_Inner extends 
     return (
       <Modal isOpen={true} className="tectonic-modal" overlayClassName="tectonic-modal-overlay" shouldCloseOnOverlayClick={false}>
         <div className="modal-header">
-          <h2 className="modal-title">Restore progress</h2>
+          <h2 className="modal-title">Restore Progress</h2>
+          <p>Pre-fill all of the inputs based on a "progress file", which can be downloaded at the end of the installer. Note that future compatibility is not guaranteed.</p>
         </div>
         <div className="modal-body" style={{minHeight: 100}}>
           <input id="upload-state" type="file" onChange={e => this.props.handleUpload(e.target.files[0], this.isDone.bind(this))} />
