@@ -100,7 +100,7 @@ EOF
 
 resource "aws_instance" "etcd_node" {
   count = "${length(var.external_endpoints) == 0 ? var.instance_count : 0}"
-  ami   = "${data.aws_ami.coreos_ami.image_id}"
+  ami   = "${coalesce(var.ec2_ami, data.aws_ami.coreos_ami.image_id)}"
 
   iam_instance_profile   = "${aws_iam_instance_profile.etcd.name}"
   instance_type          = "${var.ec2_type}"

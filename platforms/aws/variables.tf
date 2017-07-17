@@ -43,6 +43,12 @@ variable "tectonic_aws_etcd_ec2_type" {
   default = "t2.medium"
 }
 
+variable "tectonic_aws_ec2_ami_override" {
+  type        = "string"
+  description = "(optional) AMI override for all nodes. Example: `ami-foobar123`."
+  default     = ""
+}
+
 variable "tectonic_aws_etcd_extra_sg_ids" {
   description = <<EOF
 (optional) List of additional security group IDs for etcd nodes.

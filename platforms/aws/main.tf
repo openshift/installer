@@ -64,7 +64,7 @@ module "vpc" {
 
 module "etcd" {
   source = "../../modules/aws/etcd"
-
+  
   base_domain                = "${var.tectonic_base_domain}"
   cluster_id                 = "${module.tectonic.cluster_id}"
   cluster_name               = "${var.tectonic_cluster_name}"
@@ -88,6 +88,7 @@ module "etcd" {
   subnets                    = "${module.vpc.worker_subnet_ids}"
   tls_enabled                = "${var.tectonic_etcd_tls_enabled}"
   etcd_iam_role              = "${var.tectonic_aws_etcd_iam_role_name}"
+  ec2_ami                 = "${var.tectonic_aws_ec2_ami_override}"
 }
 
 module "ignition_masters" {
@@ -171,6 +172,7 @@ module "masters" {
   s3_bucket                            = "${aws_s3_bucket.tectonic.bucket}"
   ssh_key                              = "${var.tectonic_aws_ssh_key}"
   subnet_ids                           = "${module.vpc.master_subnet_ids}"
+  ec2_ami                              = "${var.tectonic_aws_ec2_ami_override}"
 }
 
 module "ignition_workers" {
@@ -229,6 +231,7 @@ module "workers" {
   subnet_ids                           = "${module.vpc.worker_subnet_ids}"
   vpc_id                               = "${module.vpc.vpc_id}"
   worker_iam_role                      = "${var.tectonic_aws_worker_iam_role_name}"
+  ec2_ami                              = "${var.tectonic_aws_ec2_ami_override}"
 }
 
 module "dns" {
