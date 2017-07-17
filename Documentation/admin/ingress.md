@@ -95,7 +95,7 @@ spec:
     spec:
       containers:
         - name: nginx-ingress-lb
-          image: gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.1
+          image: gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.11
           args:
           - /nginx-ingress-controller
           - --default-backend-service=$(POD_NAMESPACE)/default-http-backend

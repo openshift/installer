@@ -48,7 +48,7 @@ variable "tectonic_container_images" {
     stats_emitter                   = "quay.io/coreos/tectonic-stats:6e882361357fe4b773adbf279cddf48cb50164c1"
     stats_extender                  = "quay.io/coreos/tectonic-stats-extender:487b3da4e175da96dabfb44fba65cdb8b823db2e"
     error_server                    = "quay.io/coreos/tectonic-error-server:1.0"
-    ingress_controller              = "gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.8"
+    ingress_controller              = "gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.11"
     kubedns                         = "gcr.io/google_containers/k8s-dns-kube-dns-amd64:1.14.4"
     kubednsmasq                     = "gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.4"
     kubedns_sidecar                 = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.4"
