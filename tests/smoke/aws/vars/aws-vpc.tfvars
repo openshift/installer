@@ -10,10 +10,6 @@ tectonic_base_domain = "tectonic.dev.coreos.systems"
 
 tectonic_cl_channel = "stable"
 
-tectonic_admin_email = "example@coreos.com"
-
-tectonic_admin_password_hash = "$2a$12$T8hTe.NlOPDP0SS3DxNeDuVhHSFbdGXZEhGps/W.BG4QC7.1/nDaG"
-
 tectonic_ca_cert = ""
 
 tectonic_ca_key = ""
