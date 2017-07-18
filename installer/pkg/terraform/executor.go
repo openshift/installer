@@ -96,7 +96,7 @@ func NewExecutor(executionPath string) (*Executor, error) {
 	}
 
 	ex.configPath = filepath.Join(ex.WorkingDirectory(), configFileName)
-	if err := ioutil.WriteFile(ex.configPath, []byte(config), 0660); err != nil {
+	if err = ioutil.WriteFile(ex.configPath, []byte(config), 0660); err != nil {
 		return nil, err
 	}
 
@@ -271,6 +271,12 @@ func (ex *Executor) State() *terraform.State {
 	return s
 }
 
+// Ignore certain relative paths in the Terraform data dir. Paths must start at
+// the top dir
+var pathsToIgnore = map[string]struct{}{
+	logsFolderName: {},
+}
+
 // Zip streams the working directory as a ZIP file to the given io.writer.
 func (ex *Executor) Zip(w io.Writer, withTopFolder bool) error {
 	// Determine the working directory, free of symlinks.
@@ -284,6 +290,11 @@ func (ex *Executor) Zip(w io.Writer, withTopFolder bool) error {
 	defer z.Close()
 
 	f := func(path, relPath string, fi os.FileInfo) error {
+		bd := filepath.Base(relPath)
+		if _, ok := pathsToIgnore[bd]; ok {
+			return errors.New(fmt.Sprintln("Skipping dir", bd))
+		}
+
 		// Build a ZIP header based on the given os.FileInfo.
 		header, err := zip.FileInfoHeader(fi)
 		if err != nil {
@@ -380,8 +391,11 @@ func recursiveFileWalk(dir, root string, withTopFolder bool, f recursiveFileWalk
 			entryRelPath = filepath.Join(rootDirS[len(rootDirS)-1], entryRelPath)
 		}
 
-		// Execute the function we were instructed to run.
-		f(entryPath, entryRelPath, entry)
+		// Execute the function we were instructed to run. Continue onto the next
+		// entry if error is returned.
+		if err := f(entryPath, entryRelPath, entry); err != nil {
+			continue
+		}
 
 		if entry.IsDir() {
 			// That's a folder, recurse into it.
