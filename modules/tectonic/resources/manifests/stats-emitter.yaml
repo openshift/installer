@@ -28,6 +28,7 @@ spec:
         - --extension=installerPlatform:$(INSTALLER_PLATFORM)
         - --extension=tectonicUpdaterEnabled:$(TECTONIC_UPDATER_ENABLED)
         - --extension=certificatesStrategy:$(CERTIFICATES_STRATEGY)
+        - --extension=initialTectonicVersion:$(INITIAL_TECTONIC_VERSION)
         env:
         - name: INSTALLER_PLATFORM
           valueFrom:
@@ -44,6 +45,11 @@ spec:
             configMapKeyRef:
               name: tectonic-config
               key: tectonicUpdaterEnabled
+        - name: INITIAL_TECTONIC_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-config
+              key: tectonicVersion
         volumeMounts:
         - name: tectonic-license-secret
           mountPath: /etc/tectonic/licenses
@@ -80,6 +86,7 @@ spec:
           - --extension=installerPlatform:$(INSTALLER_PLATFORM)
           - --extension=tectonicUpdaterEnabled:$(TECTONIC_UPDATER_ENABLED)
           - --extension=certificatesStrategy:$(CERTIFICATES_STRATEGY)
+          - --extension=initialTectonicVersion:$(INITIAL_TECTONIC_VERSION)
         env:
         - name: INSTALLER_PLATFORM
           valueFrom:
@@ -96,6 +103,11 @@ spec:
             configMapKeyRef:
               name: tectonic-config
               key: tectonicUpdaterEnabled
+        - name: INITIAL_TECTONIC_VERSION
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-config
+              key: tectonicVersion
         volumeMounts:
         - mountPath: /etc/tectonic/licenses
           name: tectonic-license-secret
