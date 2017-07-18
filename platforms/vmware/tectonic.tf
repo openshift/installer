@@ -26,7 +26,7 @@ module "bootkube" {
   oidc_groups_claim   = "groups"
   oidc_client_id      = "tectonic-kubectl"
 
-  etcd_endpoints   = ["${module.etcd.endpoints}"]
+  etcd_endpoints   = "${formatlist("%s.%s", values(var.tectonic_vmware_etcd_hostnames), var.tectonic_base_domain)}"
   etcd_ca_cert     = "${var.tectonic_etcd_ca_cert_path}"
   etcd_client_cert = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key  = "${var.tectonic_etcd_client_key_path}"
