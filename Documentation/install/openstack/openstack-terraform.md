@@ -122,14 +122,27 @@ $ kubectl cluster-info
 
 ## Scale the cluster
 
-To scale worker nodes, adjust `tectonic_worker_count` in `terraform.vars` and run:
+To scale worker nodes, adjust `tectonic_worker_count` in `terraform.tfvars`.
+
+Use the `plan` command to check your syntax: 
 
 ```
-$ terraform apply $ terraform plan \
+$ terraform plan \
   -var-file=build/${CLUSTER}/terraform.tfvars \
   -target module.workers \
   platforms/openstack/<flavor>
 ```
+
+Once you are ready to make the changes live, use `apply`:
+
+```
+$ terraform apply \
+  -var-file=build/${CLUSTER}/terraform.tfvars \
+  -target module.workers \
+  platforms/openstack/<flavor>
+```
+
+The new nodes should automatically show up in the Tectonic Console shortly after they boot.
 
 ## Delete the cluster
 
