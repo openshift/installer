@@ -10,6 +10,7 @@ import { eventErrorsActionTypes, restoreActionTypes, validateAllFields } from '.
 import { readFile } from '../readfile';
 import { TectonicGA } from '../tectonic-ga';
 import { CLUSTER_NAME } from '../cluster-config';
+import { LoaderInline } from './loader';
 
 const UPLOAD_ERROR_NAME = 'UPLOAD_ERROR_NAME';
 
@@ -66,7 +67,7 @@ const dispatchToProps = dispatch => bindActionCreators({handleUpload}, dispatch)
 const Modal_ = connect(stateToProps, dispatchToProps)(class Modal_Inner extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {done: false};
+    this.state = {done: false, inProgress: false};
     this.onKeyDown = event => event.keyCode === 27 && this.close();
   }
 
@@ -77,6 +78,13 @@ const Modal_ = connect(stateToProps, dispatchToProps)(class Modal_Inner extends 
   componentWillUnmount() {
     this.unmounted = true;
     window.removeEventListener("keydown", this.onKeyDown);
+  }
+
+  handleUpload (e) {
+    if (e.target.files.length) {
+      this.setState({done: false, inProgress: true});
+      this.props.handleUpload(e.target.files[0], this.isDone.bind(this));
+    }
   }
 
   close () {
@@ -90,7 +98,7 @@ const Modal_ = connect(stateToProps, dispatchToProps)(class Modal_Inner extends 
     if (this.unmounted) {
       return;
     }
-    this.setState({done: true});
+    this.setState({done: true, inProgress: false});
   }
 
   render () {
@@ -103,8 +111,9 @@ const Modal_ = connect(stateToProps, dispatchToProps)(class Modal_Inner extends 
           <p>Pre-fill all of the inputs based on a "progress file", which can be downloaded at the end of the installer. Note that future compatibility is not guaranteed.</p>
         </div>
         <div className="modal-body" style={{minHeight: 100}}>
-          <input id="upload-state" type="file" onChange={e => this.props.handleUpload(e.target.files[0], this.isDone.bind(this))} />
+          <input id="upload-state" type="file" onChange={this.handleUpload.bind(this)} />
           { uploadError && <p className="wiz-error-message">{uploadError}</p>}
+          { !uploadError && this.state.inProgress && <span><LoaderInline /> Restoring...</span>}
           { this.state.done && <p className="alert alert-info">Restored state for {clusterName} cluster.</p>}
         </div>
         <div className="modal-footer tectonic-modal-footer">

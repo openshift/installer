@@ -13,3 +13,9 @@ export const Loader = () => {
     </div>
   );
 };
+
+export const LoaderInline = () => <div className="cos-loader-inline">
+  <div className="cos-loader-dot__one"></div>
+  <div className="cos-loader-dot__two"></div>
+  <div className="cos-loader-dot__three"></div>
+</div>;

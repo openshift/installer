@@ -3,6 +3,11 @@
   position: relative;
 }
 
+.cos-loader-inline {
+  display: inline-block;
+  margin: 8px 2px 8px 0;
+}
+
 html {
   background-color: #2276ad;
   background: url('../lib/mochi/img/bg/cells.png') left top repeat, linear-gradient(30deg, #2276ad, #144768) no-repeat left top fixed;
