@@ -23,7 +23,7 @@ module "bootkube" {
   oidc_groups_claim   = "groups"
   oidc_client_id      = "tectonic-kubectl"
 
-  etcd_endpoints   = ["${aws_route53_record.etc_a_nodes.*.fqdn}"]
+  etcd_endpoints   = "${openstack_networking_port_v2.etcd.*.all_fixed_ips}"
   etcd_ca_cert     = "${var.tectonic_etcd_ca_cert_path}"
   etcd_client_cert = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key  = "${var.tectonic_etcd_client_key_path}"

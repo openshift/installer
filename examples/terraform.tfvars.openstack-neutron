@@ -1,5 +1,7 @@
 
-// The e-mail address used to login as the admin user to the Tectonic Console.
+// The e-mail address used to:
+// 1. login as the admin user to the Tectonic Console.
+// 2. generate DNS zones for some providers.
 // 
 // Note: This field MUST be set manually prior to creating the cluster.
 tectonic_admin_email = ""
@@ -10,7 +12,8 @@ tectonic_admin_email = ""
 // Note: This field MUST be set manually prior to creating the cluster.
 tectonic_admin_password_hash = ""
 
-// The base DNS domain of the cluster.
+// The base DNS domain of the cluster. It must NOT contain a trailing period. Some
+// DNS providers will automatically add this if necessary.
 // 
 // Example: `openstack.dev.coreos.systems`.
 // 

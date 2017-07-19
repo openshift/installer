@@ -6,9 +6,9 @@ This document gives an overview of variables used in all platforms of the Tecton
 
 | Name | Description | Type | Default |
 |------|-------------|:----:|:-----:|
-| tectonic_admin_email | The e-mail address used to login as the admin user to the Tectonic Console.<br><br>Note: This field MUST be set manually prior to creating the cluster. | string | - |
+| tectonic_admin_email | The e-mail address used to: 1. login as the admin user to the Tectonic Console. 2. generate DNS zones for some providers.<br><br>Note: This field MUST be set manually prior to creating the cluster. | string | - |
 | tectonic_admin_password_hash | The bcrypt hash of admin user password to login to the Tectonic Console. Use the bcrypt-hash tool (https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0) to generate it.<br><br>Note: This field MUST be set manually prior to creating the cluster. | string | - |
-| tectonic_base_domain | The base DNS domain of the cluster.<br><br>Example: `openstack.dev.coreos.systems`.<br><br>Note: This field MUST be set manually prior to creating the cluster. This applies only to cloud platforms. | string | - |
+| tectonic_base_domain | The base DNS domain of the cluster. It must NOT contain a trailing period. Some DNS providers will automatically add this if necessary.<br><br>Example: `openstack.dev.coreos.systems`.<br><br>Note: This field MUST be set manually prior to creating the cluster. This applies only to cloud platforms. | string | - |
 | tectonic_ca_cert | (optional) The content of the PEM-encoded CA certificate, used to generate Tectonic Console's server certificate. If left blank, a CA certificate will be automatically generated. | string | `` |
 | tectonic_ca_key | (optional) The content of the PEM-encoded CA key, used to generate Tectonic Console's server certificate. This field is mandatory if `tectonic_ca_cert` is set. | string | `` |
 | tectonic_ca_key_alg | (optional) The algorithm used to generate tectonic_ca_key. The default value is currently recommend. This field is mandatory if `tectonic_ca_cert` is set. | string | `RSA` |

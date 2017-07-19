@@ -189,7 +189,8 @@ variable "tectonic_base_domain" {
   type = "string"
 
   description = <<EOF
-The base DNS domain of the cluster.
+The base DNS domain of the cluster. It must NOT contain a trailing period. Some
+DNS providers will automatically add this if necessary.
 
 Example: `openstack.dev.coreos.systems`.
 
@@ -265,7 +266,9 @@ variable "tectonic_admin_email" {
   type = "string"
 
   description = <<EOF
-The e-mail address used to login as the admin user to the Tectonic Console.
+The e-mail address used to:
+1. login as the admin user to the Tectonic Console.
+2. generate DNS zones for some providers.
 
 Note: This field MUST be set manually prior to creating the cluster.
 EOF

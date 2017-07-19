@@ -122,8 +122,6 @@ resource "null_resource" "tectonic" {
     "openstack_compute_instance_v2.master_node",
     "openstack_networking_port_v2.master",
     "openstack_networking_floatingip_v2.master",
-    "aws_route53_record.worker_nodes",
-    "aws_route53_record.master_nodes",
   ]
 
   connection {
