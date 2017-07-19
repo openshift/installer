@@ -16,7 +16,11 @@ spec:
     metadata: 
       labels: 
         k8s-app: etcd-operator
-    spec: 
+    spec:
+      volumes:
+      - name: debug-volume
+        hostPath:
+          path: /var/tmp
       containers: 
         - env: 
             - name: MY_POD_NAMESPACE
@@ -31,6 +35,12 @@ spec:
               value: /tmp
           image: ${etcd_operator_image}
           name: etcd-operator
+          command:
+          - /usr/local/bin/etcd-operator
+          - --debug-logfile-path=/var/tmp/etcd-operator/debug/debug.log
+          volumeMounts:
+          - mountPath: /var/tmp/etcd-operator/debug
+            name: debug-volume
       nodeSelector:
         node-role.kubernetes.io/master: ""
       securityContext:
