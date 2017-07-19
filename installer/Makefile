@@ -145,3 +145,4 @@ clean:
 	rm -fr assets/frontend/scripts
 	rm -fr bin/
 	rm -fr frontend/node_modules
+	rm -fr frontend/tests_output
