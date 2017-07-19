@@ -20,6 +20,7 @@ spec:
     - --cloud-provider=${cloud_provider}
     ${cloud_provider_config_flag}
     - --etcd-servers=${etcd_servers}
+    - --etcd-quorum-read=true
     ${etcd_ca_flag}
     ${etcd_cert_flag}
     ${etcd_key_flag}
