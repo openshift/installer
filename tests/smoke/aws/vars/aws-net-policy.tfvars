@@ -20,8 +20,6 @@ tectonic_aws_vpc_cidr_block = "10.0.0.0/16"
 
 tectonic_aws_external_vpc_id = ""
 
-tectonic_experimental = true
-
 tectonic_stats_url = "https://stats-collector-staging.tectonic.com"
 
 tectonic_calico_network_policy = true

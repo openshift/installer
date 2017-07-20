@@ -1,5 +1,5 @@
 hash: 2e44a283fca6638b67e7ceac2d7493013262d7ba3c42bd716a31de66685c2285
-updated: 2017-06-16T15:11:54.798909556-07:00
+updated: 2017-07-14T14:15:54.121108205-07:00
 imports:
 - name: k8s.io/client-go
   version: 3627aeb7d4f6ade38f995d2c923e459146493c7e
@@ -234,6 +234,10 @@ testImports:
   - key
   - oauth2
   - oidc
+- name: github.com/coreos/ktestutil
+  version: 1c5a59f93ffab7cf69fde8b805fee942fd467cdc
+  subpackages:
+  - testworkload
 - name: github.com/coreos/pkg
   version: fa29b1d70f0beaddd4c7021607cc3c3be8ce94b8
   subpackages:
@@ -451,7 +455,7 @@ testImports:
   - third_party/forked/golang/json
   - third_party/forked/golang/reflect
 - name: k8s.io/apiserver
-  version: 2e70bac0745c7f8e506f7f3e432d040c55d5718a
+  version: 087d1a2efeb6296f04bb0f54e7af9890052aa6d7
   subpackages:
   - pkg/authentication/authenticator
   - pkg/authentication/serviceaccount

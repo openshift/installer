@@ -10,15 +10,22 @@ import (
 	"testing"
 	"time"
 
+	"path/filepath"
+
+	"github.com/coreos/ktestutil/testworkload"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/pkg/api/v1"
+	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/tools/clientcmd"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
-	"path/filepath"
 )
 
 const (
@@ -30,6 +37,9 @@ const (
 
 	// manifestExperimentalEnv is the environment variable that determines
 	manifestExperimentalEnv = "MANIFEST_EXPERIMENTAL"
+
+	// calicoNetworkPolicyEnv is the environment variable that determines if calico is running.
+	calicoNetworkPolicyEnv = "CALICO_NETWORK_POLICY"
 )
 
 var (
@@ -65,6 +75,10 @@ func testCluster(t *testing.T) {
 	t.Run("AllPodsRunning", testAllPodsRunning)
 	t.Run("KillAPIServer", testKillAPIServer)
 	t.Run("AllResourcesCreated", testAllResourcesCreated)
+
+	if calicoNetworkPolicy := os.Getenv(calicoNetworkPolicyEnv); calicoNetworkPolicy == "true" {
+		t.Run("NetworkPolicy", testNetworkPolicy)
+	}
 }
 
 func testAllPodsRunning(t *testing.T) {
@@ -346,6 +360,173 @@ func testAllResourcesCreated(t *testing.T) {
 	err := retry(allResourcesCreated(manifestsPathsSp, ignoredManifests), t, 30*time.Second, max)
 	if err != nil {
 		t.Fatalf("timed out waiting for all manifests to be created after %v", max)
+	}
+}
+
+// testNetworkPolicy permforms 3 tests:
+// * first ping test to check if network is setup correctly and reachable.
+// * second ping test after setting `default-deny` policy on `network-policy-test` namespace
+//   to ensure nothing can talk to each other.
+// * third ping test after setting `access-nginx` policy to ensure now nginx workload is reachable.
+func testNetworkPolicy(t *testing.T) {
+	var (
+		namespace = "network-policy-test"
+		nginx     *testworkload.Nginx
+		client    kubernetes.Interface
+	)
+	client, _ = newClient(t)
+	_, err := client.CoreV1().Namespaces().Create(&v1.Namespace{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: namespace,
+		},
+	})
+	if apierrors.IsAlreadyExists(err) {
+		t.Logf("ns already exists")
+	} else if err != nil {
+		t.Fatalf("failed to create namespace with name %v", namespace)
+	}
+
+	if err := wait.Poll(10*time.Second, 2*time.Minute, func() (bool, error) {
+		var err error
+		if nginx, err = testworkload.NewNginx(client, namespace, testworkload.WithNginxPingJobLabels(map[string]string{"allow": "access"})); err != nil {
+			t.Logf("failed to create test nginx: %v", err)
+			return false, nil
+		}
+		return true, nil
+	}); err != nil {
+		t.Fatalf("failed to create an testworkload: %v", err)
+	}
+	defer nginx.Delete()
+
+	if err := wait.Poll(10*time.Second, 2*time.Minute, func() (bool, error) {
+		if err := nginx.IsReachable(); err != nil {
+			t.Logf("error not reachable %s: %v", nginx.Name, err)
+			return false, nil
+		}
+		return true, nil
+	}); err != nil {
+		t.Fatalf("network not set up correctly: %v", err)
+	}
+
+	t.Run("DefaultDeny", func(t *testing.T) { testDefaultDenyNetworkPolicy(t, client, namespace, nginx) })
+	t.Run("NetworkPolicy", func(t *testing.T) { testAllowNetworkPolicy(t, client, namespace, nginx) })
+}
+
+func testDefaultDenyNetworkPolicy(t *testing.T, client kubernetes.Interface, namespace string, nginx *testworkload.Nginx) {
+	var defaultDenyNetworkPolicy = []byte(`kind: NetworkPolicy
+apiVersion: extensions/v1beta1
+metadata:
+  name: default-deny
+spec:
+  podSelector:
+`)
+
+	npi, _, err := api.Codecs.UniversalDecoder().Decode(defaultDenyNetworkPolicy, nil, &v1beta1.NetworkPolicy{})
+	if err != nil {
+		t.Fatalf("unable to decode network policy manifest: %v", err)
+	}
+	np, ok := npi.(*v1beta1.NetworkPolicy)
+	if !ok {
+		t.Fatalf("expected manifest to decode into *api.networkpolicy, got %T", npi)
+	}
+
+	httpRestClient := client.ExtensionsV1beta1().RESTClient()
+	uri := fmt.Sprintf("/apis/%s/%s/namespaces/%s/%s",
+		strings.ToLower("extensions"),
+		strings.ToLower("v1beta1"),
+		strings.ToLower(namespace),
+		strings.ToLower("NetworkPolicies"))
+
+	result := httpRestClient.Post().RequestURI(uri).Body(np).Do()
+	if result.Error() != nil {
+		t.Fatal(result.Error())
+	}
+	defer func() {
+		uri = fmt.Sprintf("/apis/%s/%s/namespaces/%s/%s/%s",
+			strings.ToLower("extensions"),
+			strings.ToLower("v1beta1"),
+			strings.ToLower(namespace),
+			strings.ToLower("NetworkPolicies"),
+			strings.ToLower(np.ObjectMeta.Name))
+
+		result = httpRestClient.Delete().RequestURI(uri).Do()
+		if result.Error() != nil {
+			t.Fatal(result.Error())
+		}
+
+	}()
+
+	if err := wait.Poll(10*time.Second, 2*time.Minute, func() (bool, error) {
+		if err := nginx.IsUnReachable(); err != nil {
+			t.Logf("error still reachable %s: %v", nginx.Name, err)
+			return false, nil
+		}
+		return true, nil
+	}); err != nil {
+		t.Fatalf("default deny failed: %v", err)
+	}
+}
+
+func testAllowNetworkPolicy(t *testing.T, client kubernetes.Interface, namespace string, nginx *testworkload.Nginx) {
+	var netPolicyTpl = []byte(`kind: NetworkPolicy
+apiVersion: extensions/v1beta1
+metadata:
+  name: access-nginx
+spec:
+  podSelector:
+    matchLabels:
+      app: %s
+  ingress:
+    - from:
+      - podSelector:
+          matchLabels:
+            allow: access
+`)
+
+	netPolicy := fmt.Sprintf(string(netPolicyTpl), nginx.Name)
+	npi, _, err := api.Codecs.UniversalDecoder().Decode([]byte(netPolicy), nil, &v1beta1.NetworkPolicy{})
+	if err != nil {
+		t.Fatalf("unable to decode network policy manifest: %v", err)
+	}
+	np, ok := npi.(*v1beta1.NetworkPolicy)
+	if !ok {
+		t.Fatalf("expected manifest to decode into *api.networkpolicy, got %T", npi)
+	}
+
+	httpRestClient := client.ExtensionsV1beta1().RESTClient()
+	uri := fmt.Sprintf("/apis/%s/%s/namespaces/%s/%s",
+		strings.ToLower("extensions"),
+		strings.ToLower("v1beta1"),
+		strings.ToLower(namespace),
+		strings.ToLower("NetworkPolicies"))
+
+	result := httpRestClient.Post().RequestURI(uri).Body(np).Do()
+	if result.Error() != nil {
+		t.Fatal(result.Error())
+	}
+	defer func() {
+		uri = fmt.Sprintf("/apis/%s/%s/namespaces/%s/%s/%s",
+			strings.ToLower("extensions"),
+			strings.ToLower("v1beta1"),
+			strings.ToLower(namespace),
+			strings.ToLower("NetworkPolicies"),
+			strings.ToLower(np.ObjectMeta.Name))
+
+		result = httpRestClient.Delete().RequestURI(uri).Do()
+		if result.Error() != nil {
+			t.Fatal(result.Error())
+		}
+
+	}()
+
+	if err := wait.Poll(10*time.Second, 2*time.Minute, func() (bool, error) {
+		if err := nginx.IsReachable(); err != nil {
+			t.Logf("error not reachable %s: %v", nginx.Name, err)
+			return false, nil
+		}
+		return true, nil
+	}); err != nil {
+		t.Fatalf("allow nginx network policy failed: %v", err)
 	}
 }
 
