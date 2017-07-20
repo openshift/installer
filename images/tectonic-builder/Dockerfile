@@ -19,6 +19,13 @@ RUN go get github.com/jstemmer/go-junit-report
 ### License parser
 RUN go get github.com/coreos/license-bill-of-materials
 
+### 'grafiti' for cluster cleanup
+ENV GRAFITI_VERSION "v0.1.1"
+RUN git clone -q https://github.com/coreos/grafiti.git ${GOPATH}/src/github.com/coreos/grafiti \
+    && cd ${GOPATH}/src/github.com/coreos/grafiti \
+    && git checkout -q tags/${GRAFITI_VERSION} \
+    && make install
+
 # /go needs to be writable by jenkins user like it is in the upstream golang image
 RUN chmod 777 -R /go
 
