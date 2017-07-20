@@ -25,8 +25,8 @@ variable "tectonic_container_images" {
   type        = "map"
 
   default = {
-    hyperkube                       = "quay.io/coreos/hyperkube:v1.6.7_coreos.0"
-    pod_checkpointer                = "quay.io/coreos/pod-checkpointer:4e7a7dab10bc4d895b66c21656291c6e0b017248"
+    hyperkube                       = "quay.io/coreos/hyperkube:v1.7.1_coreos.0"
+    pod_checkpointer                = "quay.io/coreos/pod-checkpointer:980d1b4b4b8374240c240fb0f85e3a8d9c51663c"
     bootkube                        = "quay.io/coreos/bootkube:v0.5.0"
     console                         = "quay.io/coreos/tectonic-console:v1.7.4"
     identity                        = "quay.io/coreos/dex:v2.5.0"
@@ -42,9 +42,9 @@ variable "tectonic_container_images" {
     node_exporter                   = "quay.io/prometheus/node-exporter:v0.14.0"
     kube_state_metrics              = "quay.io/coreos/kube-state-metrics:v0.5.0"
     config_reload                   = "quay.io/coreos/configmap-reload:v0.0.1"
-    prometheus_config_reload        = "quay.io/coreos/prometheus-config-reloader:v0.0.1"
-    heapster                        = "gcr.io/google_containers/heapster:v1.3.0"
-    addon_resizer                   = "gcr.io/google_containers/addon-resizer:1.7"
+    prometheus_config_reload        = "quay.io/coreos/prometheus-config-reloader:v0.0.2"
+    heapster                        = "gcr.io/google_containers/heapster:v1.4.0"
+    addon_resizer                   = "gcr.io/google_containers/addon-resizer:2.0"
     stats_emitter                   = "quay.io/coreos/tectonic-stats:6e882361357fe4b773adbf279cddf48cb50164c1"
     stats_extender                  = "quay.io/coreos/tectonic-stats-extender:487b3da4e175da96dabfb44fba65cdb8b823db2e"
     error_server                    = "quay.io/coreos/tectonic-error-server:1.0"
@@ -52,16 +52,16 @@ variable "tectonic_container_images" {
     kubedns                         = "gcr.io/google_containers/k8s-dns-kube-dns-amd64:1.14.4"
     kubednsmasq                     = "gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.4"
     kubedns_sidecar                 = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.4"
-    flannel                         = "quay.io/coreos/flannel:v0.7.1-amd64"
+    flannel                         = "quay.io/coreos/flannel:v0.8.0-amd64"
     flannel_cni                     = "quay.io/coreos/flannel-cni:0.1.0"
     etcd                            = "quay.io/coreos/etcd:v3.1.8"
     etcd_operator                   = "quay.io/coreos/etcd-operator:v0.4.2"
     kenc                            = "quay.io/coreos/kenc:8f6e2e885f790030fbbb0496ea2a2d8830e58b8f"
-    calico                          = "quay.io/calico/node:v1.3.0"
-    calico_cni                      = "quay.io/calico/cni:v1.9.1-4-g23fcd5f"
     awscli                          = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
     kube_version                    = "quay.io/coreos/kube-version:0.1.0"
     tectonic_etcd_operator          = "quay.io/coreos/tectonic-etcd-operator:v0.0.1"
+    calico                          = "quay.io/calico/node:v1.3.0"
+    calico_cni                      = "quay.io/calico/cni:v1.9.1-4-g23fcd5f"
   }
 }
 
@@ -75,8 +75,8 @@ variable "tectonic_versions" {
     prometheus      = "v1.7.1"
     alertmanager    = "v0.7.1"
     monitoring      = "1.3.0"
-    kubernetes      = "1.6.7+tectonic.1"
-    tectonic        = "1.6.7-tectonic.1"
+    kubernetes      = "1.7.1+tectonic.1"
+    tectonic        = "1.7.1-tectonic.1"
     tectonic-etcd   = "0.0.1"
   }
 }
