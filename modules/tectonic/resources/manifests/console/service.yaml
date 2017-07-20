@@ -10,7 +10,6 @@ spec:
   selector:
     k8s-app: tectonic-console
     component: ui
-  type: NodePort
   ports:
   - name: tectonic-console
     protocol: TCP
