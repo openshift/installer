@@ -163,6 +163,8 @@ Public subnets have a default route to the Internet Gateway and should auto-assi
 
 *DHCP Options Set* attached to the VPC must have an AWS [private domain name][aws-vpc-dns-hostnames]. In us-east-1 region, an AWS private domain name is ec2.internal whereas other regions use region.compute.internal.
 
+When using an existing VPC, tag AWS VPC subnets with the `kubernetes.io/cluster/my-cluster-name = shared` tag. `shared` is used to tag resources shared between multiple clusters, which should not be destroyed if any individual cluster is destroyed. If this tag is not specified, AWS ELB integration with Tectonic may not be able to use VPC subnets.
+
 
 [aws-cli-doc]: http://docs.aws.amazon.com/cli/latest/userguide/installing.html
 [aws-r53-doc]: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/creating-migrating.html
