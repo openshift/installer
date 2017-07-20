@@ -2,6 +2,8 @@ module "bootkube" {
   source         = "../../../modules/bootkube"
   cloud_provider = ""
 
+  cluster_name = "${var.tectonic_cluster_name}"
+
   kube_apiserver_url = "https://${var.tectonic_cluster_name}-k8s.${var.tectonic_base_domain}:443"
   oidc_issuer_url    = "https://${var.tectonic_cluster_name}.${var.tectonic_base_domain}/identity"
 
@@ -47,6 +49,8 @@ module "bootkube" {
 module "tectonic" {
   source   = "../../../modules/tectonic"
   platform = "aws"
+
+  cluster_name = "${var.tectonic_cluster_name}"
 
   base_address       = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}"
   kube_apiserver_url = "https://${var.tectonic_cluster_name}-k8s.${var.tectonic_base_domain}:443"

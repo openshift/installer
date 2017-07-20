@@ -2,6 +2,8 @@ module "bootkube" {
   source         = "../../modules/bootkube"
   cloud_provider = ""
 
+  cluster_name = "${var.tectonic_cluster_name}"
+
   # Address of kube-apiserver
   kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:443"
 
@@ -46,6 +48,8 @@ module "bootkube" {
 module "tectonic" {
   source   = "../../modules/tectonic"
   platform = ""
+
+  cluster_name = "${var.tectonic_cluster_name}"
 
   # Address of kube-apiserver
   kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:443"

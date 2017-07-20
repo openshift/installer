@@ -64,7 +64,7 @@ resource "template_dir" "bootkube" {
     # 3. Else (if etcd TLS certific are provided), then use the secure https
     # var.etcd_endpoints.
     etcd_servers = "${
-      var.experimental_enabled 
+      var.experimental_enabled
         ? format("https://%s:2379", cidrhost(var.service_cidr, 15))
         : data.template_file.etcd_ca_cert_pem.rendered == ""
           ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
@@ -121,7 +121,7 @@ resource "template_dir" "bootkube-bootstrap" {
     etcd_image      = "${var.container_images["etcd"]}"
 
     etcd_servers = "${
-      var.experimental_enabled 
+      var.experimental_enabled
         ? format("https://%s:2379,https://127.0.0.1:12379", cidrhost(var.service_cidr, 15))
         : data.template_file.etcd_ca_cert_pem.rendered == ""
           ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
@@ -151,6 +151,7 @@ data "template_file" "kubeconfig" {
     kubelet_cert = "${base64encode(tls_locally_signed_cert.kubelet.cert_pem)}"
     kubelet_key  = "${base64encode(tls_private_key.kubelet.private_key_pem)}"
     server       = "${var.kube_apiserver_url}"
+    cluster_name = "${var.cluster_name}"
   }
 }
 

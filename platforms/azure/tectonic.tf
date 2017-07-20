@@ -4,6 +4,8 @@ module "bootkube" {
   cloud_provider        = "azure"
   cloud_provider_config = "${jsonencode(data.null_data_source.cloud-provider.inputs)}"
 
+  cluster_name = "${var.tectonic_cluster_name}"
+
   kube_apiserver_url = "https://${module.vnet.api_external_fqdn}:443"
   oidc_issuer_url    = "https://${module.vnet.ingress_internal_fqdn}/identity"
 
@@ -40,6 +42,8 @@ module "bootkube" {
 module "tectonic" {
   source   = "../../modules/tectonic"
   platform = "azure"
+
+  cluster_name = "${var.tectonic_cluster_name}"
 
   base_address       = "${module.vnet.ingress_internal_fqdn}"
   kube_apiserver_url = "https://${module.vnet.api_external_fqdn}:443"
