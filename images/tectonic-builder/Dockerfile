@@ -4,10 +4,16 @@
 # Node install inspired by: https://github.com/dockerfile/nodejs/blob/master/Dockerfile
 #
 # Update the builder image manually by running:
+# (See README.md/##Upstream-and-CoreOS-Terraform)
 #
-# docker build -f builder/Dockerfile .
-# docker tag <resulting-image-id> quay.io/coreos/tectonic-builder:<next-semver>
+# docker build -t quay.io/coreos/tectonic-builder:<next-semver> -f images/builder/Dockerfile .
 # docker push quay.io/coreos/tectonic-builder:<next-semver>
+#
+# docker build \
+# --build-arg TERRAFORM_URL=<upstream terraform download url> \
+# -t quay.io/coreos/tectonic-builder:<next-semver>-upstream-terraform \
+# -f images/builder/Dockerfile .
+# docker push quay.io/coreos/tectonic-builder:<next-semver>-upstream-terraform
 ###
 
 FROM golang:1.8.3-stretch
@@ -46,7 +52,10 @@ RUN apt-get update && \
     openvpn xvfb xauth
 
 # Install Terraform
-RUN curl -L https://github.com/coreos/terraform/releases/download/${TERRAFORM_VERSION}/linux_amd64.zip | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
+# TERRAFORM_URL enables us to build the upstream-terraform Tectonic builder
+# image (See README.md/##Upstream-and-CoreOS-Terraform)
+ARG TERRAFORM_URL=https://github.com/coreos/terraform/releases/download/${TERRAFORM_VERSION}/linux_amd64.zip
+RUN curl -L ${TERRAFORM_URL} | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
 
 # Install NodeJS
 RUN cd /tmp && \

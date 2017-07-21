@@ -43,7 +43,7 @@ def quay_creds = [
   )
 ]
 
-def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.35'
+def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.36'
 def tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v2.0'
 
 pipeline {
