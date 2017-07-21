@@ -87,10 +87,15 @@ common() {
     echo "selected region: $TF_VAR_tectonic_aws_region"
     echo "cluster name: $CLUSTER"
 
-    # Create local config
-    make localconfig
-    # Use smoke test configuration for deployment
-    cp "$DIR/$TF_VARS_FILE" "$WORKSPACE/build/$CLUSTER/terraform.tfvars"
+    export CONFIG="${WORKSPACE}/build/${CLUSTER}/terraform.tfvars"
+    if [ ! -f "$CONFIG" ]; then
+      # Create local config
+      make localconfig
+      # Use smoke test configuration for deployment
+      cp "$DIR/$TF_VARS_FILE" "$CONFIG"
+      # Store AWS region in tfvars file
+      echo -e "tectonic_aws_region = \"$TF_VAR_tectonic_aws_region\"" >> "$CONFIG"
+    fi
 }
 
 create() {
@@ -151,31 +156,34 @@ create_vpc() {
 }
 
 grafiti_clean() {
-  common "$1"
+    common "$1"
 
-  GRAFITI_VERSION="9f58d4a"
+    # Parse AWS_REGION from a tfvars file
+    # shellcheck disable=SC2155
+    export AWS_REGION="$(grep -oP 'tectonic_aws_region\s*=\s*"\K([^"]+)' "$CONFIG")"
 
-  TMP_GRAFITI_CONFIG_DIR="${WORKSPACE}/tmg_grafiti_config"
-  TMP_CONFIG_FILE=$(mktemp -d -p "$TMP_GRAFITI_CONFIG_DIR")
-  cat <<EOF > $TMP_CONFIG_FILE
-[grafiti]
-region = "$AWS_REGION"
-EOF
+    # Get CLUSTER_ID from `terraform apply` output. Because 'tectonicClusterID'
+    # is created during a 'terraform apply' step, which might fail before a state
+    # file is generated, we must collect and parse log output
+    if [ ! -f "${WORKSPACE}/terraform.log" ]; then
+        echo "Cannot find terraform log file"
+        exit
+    fi
+    CLUSTER_ID="$(grep -m 1 -oP 'tags.tectonicClusterID:\s*""[^"]*"\K([^"]+)' "${WORKSPACE}/terraform.log")"
 
-  TMP_TAG_FILE=$(mktemp -d -p "$TMP_GRAFITI_CONFIG_DIR")
-  cat <<EOF > $TMP_TAG_FILE
-{"TagFilters": [{"Key": "tectonicClusterID","Values": ["$CLUSTER"]}]}
-EOF
+    GRAFITI_TMP_DIR="$(mktemp -d -p $WORKSPACE)"
 
-  echo "Cleaning up ${CLUSTER}..."
-  docker run --rm --name "cluster-cleaner-${CLUSTER}" \
-    -v "$TMP_GRAFITI_CONFIG_DIR":/tmp/config:z \
-    -e CONFIG_FILE="/tmp/config/$(basename "$TMP_CONFIG_FILE")" \
-    -e TAG_FILE="/tmp/config/$(basename "$TMP_TAG_FILE")" \
-    quay.io/coreos/grafiti:"$GRAFITI_VERSION" \
-    ash -c "grafiti --ignore-errors --config \"\$CONFIG_FILE\" delete --silent --all-deps --delete-file \"\$TAG_FILE\""
+    GRAFITI_CONFIG_FILE="${GRAFITI_TMP_DIR}/config.toml"
+    echo "maxNumRequestRetries = 11" > "$GRAFITI_CONFIG_FILE"
 
-  rm -rf "$TMP_GRAFITI_CONFIG_DIR"
+    GRAFITI_TAG_FILE="${GRAFITI_TMP_DIR}/tag.json"
+    echo -e "{\"TagFilters\":[{\"Key\":\"tectonicClusterID\",\"Values\":[\"$CLUSTER_ID\"]}]}"  > "$GRAFITI_TAG_FILE"
+
+    echo "Cleaning up \"${CLUSTER_ID}\"..."
+
+    grafiti --config "$GRAFITI_CONFIG_FILE" --ignore-errors delete --silent --all-deps --delete-file "$GRAFITI_TAG_FILE"
+
+    rm -rf "$GRAFITI_TMP_DIR"
 }
 
 destroy_vpc() {
@@ -206,7 +214,6 @@ plan() {
 test_cluster() {
     common "$1"
     # TODO: replace in Go
-    CONFIG=$WORKSPACE/build/$CLUSTER/terraform.tfvars
     MASTER_COUNT=$(grep tectonic_master_count "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}')
     WORKER_COUNT=$(grep tectonic_worker_count "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}')
     export NODE_COUNT=$(( MASTER_COUNT + WORKER_COUNT ))

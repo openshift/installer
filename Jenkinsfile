@@ -99,6 +99,7 @@ pipeline {
     stage("Tests") {
       environment {
         TECTONIC_INSTALLER_ROLE = 'tectonic-installer'
+        GRAFITI_DELETER_ROLE = 'grafiti-deleter'
       }
       steps {
         parallel (
@@ -109,31 +110,36 @@ pipeline {
                   checkout scm
                   unstash 'installer'
                   unstash 'smoke'
-                  timeout(45) {
-                    sh """#!/bin/bash -ex
-                    . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-tls.tfvars
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws-tls.tfvars
-                    ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws-tls.tfvars
-                    """
-                  }
-                  catchError {
-                    timeout (5) {
-                      sshagent(['aws-smoke-test-ssh-key']) {
-                        sh """#!/bin/bash
-                        # Running without -ex because we don't care if this fails
-                        . ${WORKSPACE}/tests/smoke/aws/smoke.sh common vars/aws-tls.tfvars
-                        ${WORKSPACE}/tests/smoke/aws/cluster-foreach.sh ${WORKSPACE}/tests/smoke/forensics.sh
+                  script {
+                    try {
+                      timeout(45) {
+                        sh """#!/bin/bash -ex
+                        . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-tls.tfvars
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws-tls.tfvars | tee ${WORKSPACE}/terraform.log
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws-tls.tfvars
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-tls.tfvars
                         """
                       }
-                    }
-                  }
-                  retry(3) {
-                    timeout(15) {
-                      sh """#!/bin/bash -ex
-                      . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
-                      ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-tls.tfvars
-                      """
+                    } catch (err) {
+                      timeout (5) {
+                        sshagent(['aws-smoke-test-ssh-key']) {
+                          sh """#!/bin/bash
+                          # Running without -ex because we don't care if this fails
+                          . ${WORKSPACE}/tests/smoke/aws/smoke.sh common vars/aws-tls.tfvars
+                          ${WORKSPACE}/tests/smoke/aws/cluster-foreach.sh ${WORKSPACE}/tests/smoke/forensics.sh
+                          """
+                        }
+                      }
+                      timeout(5) {
+                        sh """#!/bin/bash -x
+                        . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$GRAFITI_DELETER_ROLE"
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh grafiti-clean vars/aws-tls.tfvars
+                        """
+                      }
+
+                      // Stage should fail
+                      throw err
                     }
                   }
                 }
@@ -239,30 +245,34 @@ pipeline {
                         sh """#!/bin/bash -ex
                         . ${WORKSPACE}/tests/smoke/aws/smoke.sh create-vpc
                         ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-vpc.tfvars
-                        ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws-vpc.tfvars
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws-vpc.tfvars | tee ${WORKSPACE}/terraform.log
                         ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws-vpc.tfvars
-
                         ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
                         ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
                         """
                       }
-                    }
-                    catch (error) {
-                        throw error
-                    }
-                    finally {
-                      retry(3) {
-                        timeout(15) {
-                          sh """#!/bin/bash -x
-                            ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
-                            ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
-
-                            # As /build is created by root, make sure to remove it again
-                            # so non-root can create it later.
-                            rm -r ${WORKSPACE}/build
-                          """
-                        }
+                    } catch (err) {
+                      timeout(15) {
+                        sh """#!/bin/bash -x
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
+                        """
                       }
+                      timeout(5) {
+                        sh """#!/bin/bash -x
+                        . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$GRAFITI_DELETER_ROLE"
+                        ${WORKSPACE}/tests/smoke/aws/smoke.sh grafiti-clean vars/aws-vpc.tfvars
+                        """
+                      }
+
+                      // Stage should fail
+                      throw err
+                    } finally {
+                      sh """#!/bin/bash -ex
+                      # As /build is created by root, make sure to remove it again
+                      # so non-root can create it later.
+                      rm -r ${WORKSPACE}/build
+                      """
                     }
                   }
                 }
@@ -560,36 +570,6 @@ pipeline {
             }
           }
         )
-      }
-      post {
-        failure {
-          node('worker && ec2') {
-            withCredentials([creds, quay_creds]) {
-              withDockerContainer(params.builder_image) {
-                checkout scm
-                unstash 'installer'
-                timeout(15) {
-                  sh """#!/bin/bash -x
-                  ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws.tfvars
-                  """
-                }
-                timeout(20) {
-                  sh """#!/bin/bash -x
-                  ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
-                  ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
-                  """
-                }
-                timeout(10) {
-                  sh """#!/bin/bash -x
-                  docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
-                  ${WORKSPACE}/tests/smoke/aws/smoke.sh grafiti-clean vars/aws.tfvars
-                  ${WORKSPACE}/tests/smoke/aws/smoke.sh grafiti-clean vars/aws-vpc.tfvars
-                  """
-                }
-              }
-            }
-          }
-        }
       }
     }
 
