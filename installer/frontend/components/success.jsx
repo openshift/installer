@@ -18,7 +18,7 @@ const stateToProps = ({cluster, clusterConfig}) => {
 };
 
 export const Success = connect(stateToProps)(
-({navigatePrevious, tectonicConsole, platformType}) => <div>
+({tectonicConsole, platformType}) => <div>
   <div className="row">
     <div className="col-xs-12">
       <p>All set! Now you can access the Tectonic Console. Once there, you’ll be able to configure kubectl, and deploy your first application to the cluster.</p>
@@ -72,9 +72,6 @@ export const Success = connect(stateToProps)(
       <a href="https://coreos.com/tectonic/docs/latest/tutorials/first-app.html#deploying-a-simple-application" target="_blank"><button className="btn btn-default" style={{marginTop: 20}}>Deploy Application&nbsp;&nbsp;<i className="fa fa-external-link"></i></button></a>
     </div>
   </div>
-  <hr className="spacer" />
-
-  <button onClick={navigatePrevious} className="btn btn-link">Back</button> <button onClick={window.reset} className="btn btn-link pull-right">Start Over</button>
 </div>);
 
 Success.canNavigateForward = () => false;
