@@ -63,6 +63,4 @@ export const Success = connect(stateToProps)(
   <button onClick={navigatePrevious} className="btn btn-link">Back</button> <button onClick={window.reset} className="btn btn-link pull-right">Start Over</button>
 </div>);
 
-Success.canNavigateForward = ({allDone}) => {
-  return allDone;
-};
+Success.canNavigateForward = () => false;
