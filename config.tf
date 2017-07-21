@@ -28,7 +28,7 @@ variable "tectonic_container_images" {
     hyperkube                       = "quay.io/coreos/hyperkube:v1.7.1_coreos.0"
     pod_checkpointer                = "quay.io/coreos/pod-checkpointer:980d1b4b4b8374240c240fb0f85e3a8d9c51663c"
     bootkube                        = "quay.io/coreos/bootkube:v0.5.0"
-    console                         = "quay.io/coreos/tectonic-console:v1.7.4"
+    console                         = "quay.io/coreos/tectonic-console:v1.8.0"
     identity                        = "quay.io/coreos/dex:v2.5.0"
     container_linux_update_operator = "quay.io/coreos/container-linux-update-operator:v0.2.2"
     kube_version_operator           = "quay.io/coreos/kube-version-operator:v1.6.7"
