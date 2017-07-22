@@ -25,7 +25,7 @@ import:
 - package: github.com/kubernetes-incubator/bootkube
   version: v0.3.13
 - package: github.com/coreos/pkg
-  version: 160ae6282d8c48a33d8c150e4e4817fdef8a5cde
+  version: fa29b1d70f0beaddd4c7021607cc3c3be8ce94b8
   subpackages:
   - flagutil
 - package: github.com/coreos/go-semver
@@ -41,20 +41,20 @@ import:
   subpackages:
   - golint
 - package: github.com/golang/protobuf
-  version: 2bba0603135d7d7f5cb73b2125beeda19c09f4ef
+  version: 8616e8ee5e20a1704615e6c8d7afcdac06087a67
   subpackages:
   - proto
   - protoc-gen-go
 - package: github.com/go-yaml/yaml
   version: a83829b6f1293c91addabc89d0571c246397bbf4
 - package: github.com/ghodss/yaml
-  version: e8e0db9016175449df0e9c4b6e6995a9433a395c
+  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - package: github.com/jteeuwen/go-bindata
   version: a0ff2567cfb70903282db057e799fd826784d41d
   subpackages:
   - go-bindata # Must specify here or glide-vc will remove it.
 - package: github.com/pmezard/go-difflib
-  version: 792786c7400a136282c1664665ae0a8db921c6c2
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
 - package: github.com/Sirupsen/logrus
@@ -66,9 +66,9 @@ import:
 - package: github.com/toqueteos/webbrowser
   version: v1.0
 - package: github.com/pborman/uuid
-  version: v1.0
+  version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
 - package: golang.org/x/net
-  version: fb93926129b8ec0056f2f458b1f519654814edf0
+  version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
   subpackages:
   - context
   - http2
@@ -265,7 +265,7 @@ import:
 - package: github.com/google/gofuzz
   version: bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5
 - package: github.com/gogo/protobuf
-  version: 82d16f734d6d871204a3feb1a73cb220cc92574c
+  version: e18d7aa8f8c624c915db340349aad4c49b10d173
   subpackages:
   - gogoproto
   - plugin/defaultcheck
@@ -292,7 +292,7 @@ import:
   - vanity
   - vanity/command
 - package: github.com/ugorji/go
-  version: f4485b318aadd133842532f841dc205a8e339d74
+  version: f1f1a805ed361a0e078bb537e4ea78cd37dcf065
   subpackages:
   - codec
   - codec/codecgen
