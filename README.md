@@ -111,7 +111,7 @@ Tests can be run locally by:
 ```
 export PLATFORM="aws"
 export AWS_REGION="us-east-1"
-export TF_VAR_tectonic_cluster_name=my-smoke-test
+export {TF_VAR_tectonic_cluster_name,CLUSTER}=my-smoke-test
 export TF_VAR_tectonic_license_path=/path/to/license.txt
 export TF_VAR_tectonic_pull_secret_path=/path/to/pull-secret.json
 
