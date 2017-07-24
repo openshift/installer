@@ -8,7 +8,7 @@ metadata:
     prometheus: k8s
 spec:
   replicas: 1
-  baseImage: ${element(split(":",prometheus_image),0)}
+  baseImage: ${replace(prometheus_image,image_re,"$1")}
   version: ${prometheus_version}
   externalUrl: ${prometheus_external_url}
   serviceAccountName: prometheus-k8s

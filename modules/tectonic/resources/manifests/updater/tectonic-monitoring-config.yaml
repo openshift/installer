@@ -6,12 +6,12 @@ metadata:
 data:
   config.yaml: |+
     prometheusOperator:
-      baseImage: ${element(split(":",prometheus_operator_image),0)}
-      prometheusConfigReloaderBaseImage: ${element(split(":",prometheus_config_reload_image),0)}
-      configReloaderBaseImage: ${element(split(":",config_reload_image),0)}
+      baseImage: ${replace(prometheus_operator_image,image_re,"$1")}
+      prometheusConfigReloaderBaseImage: ${replace(prometheus_config_reload_image,image_re,"$1")}
+      configReloaderBaseImage: ${replace(config_reload_image,image_re,"$1")}
     prometheusK8s:
-      baseImage: ${element(split(":",prometheus_image),0)}
+      baseImage: ${replace(prometheus_image,image_re,"$1")}
     alertmanagerMain:
-      baseImage: ${element(split(":",alertmanager_image),0)}
+      baseImage: ${replace(alertmanager_image,image_re,"$1")}
     ingress:
       baseAddress: ${console_base_address}
