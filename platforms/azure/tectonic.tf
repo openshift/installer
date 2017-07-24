@@ -6,6 +6,8 @@ module "bootkube" {
 
   cluster_name = "${var.tectonic_cluster_name}"
 
+  cluster_name = "${var.tectonic_cluster_name}"
+
   kube_apiserver_url = "https://${module.vnet.api_external_fqdn}:443"
   oidc_issuer_url    = "https://${module.vnet.ingress_internal_fqdn}/identity"
 
