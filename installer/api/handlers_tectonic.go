@@ -39,7 +39,7 @@ type Services struct {
 	Ingress          Status `json:"ingress"`
 	Console          Status `json:"console"`
 	TectonicSystem   Status `json:"tectonicSystem"` // All other services in tectonic-system namespace
-	DnsName          string `json:"dnsName"`        // Stores the instance of the Tectonic Console
+	DNSName          string `json:"dnsName"`        // Stores the instance of the Tectonic Console
 }
 
 // isEtcdSelfHosted determines if the etcd service will be hosted on the cluster
@@ -67,13 +67,13 @@ const kubeconfigLocation = "generated/auth/kubeconfig"
 // newK8sClient uses the generated kubeconfig file, if it exists, to create an
 // API client that can be used for checking pod statuses
 func newK8sClient(ex terraform.Executor) (*kubernetes.Clientset, error) {
-	kCfgPath := filepath.Join(ex.WorkingDirectory(), kubeconfigLocation)
+	cfgPath := filepath.Join(ex.WorkingDirectory(), kubeconfigLocation)
 
-	if _, err := os.Stat(kCfgPath); err != nil {
+	if _, err := os.Stat(cfgPath); err != nil {
 		return nil, err
 	}
 
-	rules := &clientcmd.ClientConfigLoadingRules{ExplicitPath: kCfgPath}
+	rules := &clientcmd.ClientConfigLoadingRules{ExplicitPath: cfgPath}
 	cfg := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, &clientcmd.ConfigOverrides{})
 	restConfig, err := cfg.ClientConfig()
 	if err != nil {
@@ -157,7 +157,7 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 		Ingress:        Status{Success: false, Failed: false},
 		Console:        Status{Success: false, Failed: false},
 		TectonicSystem: Status{Success: false, Failed: false},
-		DnsName:        input.TectonicDomain,
+		DNSName:        input.TectonicDomain,
 	}
 
 	client, err := newK8sClient(*ex)
@@ -165,9 +165,8 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 		if _, ok := err.(*os.PathError); ok {
 			// This is because the kubeconfig hasn't been generated yet; assume services haven't started
 			return services, nil
-		} else {
-			return services, err
 		}
+		return services, err
 	}
 
 	pods, err := client.CoreV1().Pods("").List(v1.ListOptions{})
