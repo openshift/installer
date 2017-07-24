@@ -152,6 +152,11 @@ The following table includes the high level networking features required to inst
 * Subnets for Controllers and Workers must be able to route requests to each other and must have an associated route table that specifies a default gateway.
 * The route tables should be explicitly attached to their subnets.
 * You must have VPN access to the subnet as it is does not offer an inbound connection to the Internet.
+* Tectonic installer must be able to:
+   * resolve DNS records in Route53 hosted zone used by installer
+   * establish a TCP connection with the Tectonic Ingress ELB
+
+__If you are experiencing issues with an install involving VPC-internal components, you may find the [troubleshooting section][aws-internal-troubleshooting] useful.__
 
 ### Using an existing VPC
 
@@ -174,3 +179,4 @@ When using an existing VPC, tag AWS VPC subnets with the `kubernetes.io/cluster/
 [install-aws]: index.md
 [tectonic-installer-aws-policy]: ../../files/aws-policy.json
 [aws-vpc-dns-hostnames]: http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-dns.html#vpc-dns-hostnames
+[aws-internal-troubleshooting]: ./troubleshooting.md#internal-vpc-elb-andor-hosted-zone
