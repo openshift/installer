@@ -92,84 +92,45 @@ class TF_PowerOn extends React.Component {
     const consoleSubsteps = [];
 
     if (action === 'apply' && tectonic.console) {
-      let msg = <span>Resolving <a href={`https://${tectonic.dnsName}`} target="_blank">{tectonic.dnsName}</a></span>;
-      const dnsReady = (tectonic.console.message || '').search('no such host') === -1;
       if (platformType === AWS_TF) {
         consoleSubsteps.push(<AWS_DomainValidation key="domain" />);
       }
 
+      const dnsReady = tectonic.console.success || (tectonic.console.message && tectonic.console.message.search('no such host') === -1);
       consoleSubsteps.push(
         <WaitingLi done={dnsReady} key='dnsReady'>
-          <span title={msg}>{msg}</span>
+          Resolving <a href={`https://${tectonic.dnsName}`} target="_blank">{tectonic.dnsName}</a>
         </WaitingLi>
       );
 
       const services = [
+        {key: 'etcd', name: 'Etcd'},
         {key: 'kubernetes', name: 'Kubernetes'},
         {key: 'identity', name: 'Tectonic Identity'},
         {key: 'ingress', name: 'Tectonic Ingress Controller'},
         {key: 'console', name: 'Tectonic Console'},
-        {key: 'tectonic', name: 'other Tectonic services'},
+        {key: 'tectonicSystem', name: 'other Tectonic services'},
       ];
 
-      if (tectonic.isetcdselfhosted) {
-        services.splice(1, 0, {key: 'etcd', name: 'Etcd'});
+      if (tectonic.isEtcdSelfHosted) {
+        services.shift(0);
       }
 
       const anyFailed = _.some(services, s => tectonic[s.key].failed);
-      const allDone = _.all(services, s => tectonic[s.key].success);
+      const allDone = _.every(services, s => tectonic[s.key].success);
 
-      let tectonicSubsteps = [];
+      const tectonicSubsteps = (allDone && !anyFailed) ? [] :
+        _.map(services, service => <LoadingLi done={tectonic[service.key].success} error={tectonic[service.key].failed} key={service.key}>
+          Starting {service.name}
+        </LoadingLi>);
 
-      if (anyFailed || !allDone) {
-        for (let c of services) {
-          msg = `Starting ${c.name}`;
-          let ready = false;
-          if (c.key === 'console') {
-            ready = tectonic[c.key].ready;
-          } else {
-            ready = tectonic[c.key].success;
-          }
-          tectonicSubsteps.push(
-            <LoadingLi done={ready} error={tectonic[c.key].failed} key={c.key + 'Ready'}>
-              <span title={msg}>{msg}</span>
-            </LoadingLi>
-          );
-        }
-      }
-
-      msg = 'Starting Tectonic';
       consoleSubsteps.push(
         <WaitingLi done={allDone} error={anyFailed} key="tectonicReady">
-          <span title={msg}>{msg}</span><br />
-          <ul>
-            {tectonicSubsteps}
-          </ul>
+          Starting Tectonic
+          <br />
+          <ul>{ tectonicSubsteps }</ul>
         </WaitingLi>
       );
-    }
-    let platformMsg = <p>
-      Kubernetes is starting up. We're committing your cluster details.
-      Grab some tea and sit tight. This process can take up to 20 minutes.
-      Status updates will appear below.
-    </p>;
-    if (platformType === BARE_METAL_TF) {
-      platformMsg = <div>
-        <div className="wiz-herotext">
-          <i className="fa fa-power-off wiz-herotext-icon"></i> Power on the nodes
-        </div>
-        <div className="form-group">
-          After powering up, your nodes will provision themselves automatically.
-          This process can take up to 30 minutes, while the following happens.
-        </div>
-        <div className="form-group">
-          <ul>
-            <li>Container Linux is downloaded and installed to disk (about 200 MB)</li>
-            <li>Cluster software is downloaded (about 500 MB)</li>
-            <li>One or two reboots may occur</li>
-          </ul>
-        </div>
-      </div>;
     }
 
     const tfButtonClasses = classNames("btn btn-flat", {disabled: terraformRunning, 'btn-warning': tfError, 'btn-info': !tfError});
@@ -185,7 +146,31 @@ class TF_PowerOn extends React.Component {
     </div>;
 
     return <div>
-      { platformMsg }
+      { platformType !== BARE_METAL_TF &&
+        <p>
+          Kubernetes is starting up. We're committing your cluster details.
+          Grab some tea and sit tight. This process can take up to 20 minutes.
+          Status updates will appear below.
+        </p>
+      }
+      { platformType === BARE_METAL_TF &&
+        <div>
+          <div className="wiz-herotext">
+            <i className="fa fa-power-off wiz-herotext-icon"></i> Power on the nodes
+          </div>
+          <div className="form-group">
+            After powering up, your nodes will provision themselves automatically.
+            This process can take up to 30 minutes, while the following happens.
+          </div>
+          <div className="form-group">
+            <ul>
+              <li>Container Linux is downloaded and installed to disk (about 200 MB)</li>
+              <li>Cluster software is downloaded (about 500 MB)</li>
+              <li>One or two reboots may occur</li>
+            </ul>
+          </div>
+        </div>
+      }
       <hr />
       <div className="row">
         <div className="col-xs-12">
@@ -269,10 +254,14 @@ class TF_PowerOn extends React.Component {
 });
 
 // horrible hack to prevent a flapping cluster from redirecting user from connect page back to poweron page
+// we never reset this value...
 let ready = false;
 
 TF_PowerOn.canNavigateForward = ({cluster}) => {
-  ready = ready || (_.get(cluster, 'status.tectonic.console.ready') === true
+  ready = ready || (
+    _.get(cluster, 'status.tectonic.console.success') === true
+    && _.get(cluster, 'status.tectonic.tectonicSystem.success') === true
     && _.get(cluster, 'status.status') !== 'running');
+
   return ready;
 };

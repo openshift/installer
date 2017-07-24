@@ -1,11 +1,13 @@
 package api
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
@@ -17,15 +19,15 @@ import (
 
 	"os"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/tectonic"
 	"github.com/coreos/tectonic-installer/installer/pkg/terraform"
 	"github.com/dghubble/sessions"
 )
 
 // Status represents the individual state of a single Kubernetes service
 type Status struct {
-	Success bool `json:"success"`
-	Failed  bool `json:"failed"`
+	Success bool   `json:"success"`
+	Failed  bool   `json:"failed"`
+	Message string `json:"message"`
 }
 
 // Services represents whether several Tectonic components have yet booted (or failed)
@@ -36,8 +38,8 @@ type Services struct {
 	Identity         Status `json:"identity"`
 	Ingress          Status `json:"ingress"`
 	Console          Status `json:"console"`
-	Tectonic         Status `json:"tectonic"` // All other Tectonic services
-	DnsName          string `json:"dnsName"`  // Stores the instance of the Tectonic Console
+	TectonicSystem   Status `json:"tectonicSystem"` // All other services in tectonic-system namespace
+	DnsName          string `json:"dnsName"`        // Stores the instance of the Tectonic Console
 }
 
 // isEtcdSelfHosted determines if the etcd service will be hosted on the cluster
@@ -101,16 +103,61 @@ type Input struct {
 	TectonicDomain string `json:"tectonicDomain"`
 }
 
+// ConsoleHealth returns the Status of the Tectonic Console.
+func consoleHealth(endpoint string) Status {
+	// TODO: Determine Tectonic Console failure state
+	status := Status{
+		Success: false,
+		Failed:  false,
+		Message: "",
+	}
+
+	// defaultStatusClient respects proxies, sets reasonable timeouts, and allows
+	// checking the status of services running with self-signed certificates.
+	client := http.Client{
+		Timeout: time.Duration(10 * time.Second),
+		Transport: &http.Transport{
+			Proxy:                 http.ProxyFromEnvironment,
+			TLSClientConfig:       &tls.Config{InsecureSkipVerify: true},
+			TLSHandshakeTimeout:   10 * time.Second,
+			ExpectContinueTimeout: 1 * time.Second,
+		},
+	}
+
+	resp, err := client.Get(fmt.Sprintf("https://%s/health", endpoint))
+	if err != nil {
+		status.Message = err.Error()
+		return status
+	}
+	defer resp.Body.Close()
+
+	type health struct {
+		Status string `json:"status"`
+	}
+	h := new(health)
+	err = json.NewDecoder(resp.Body).Decode(h)
+	if err != nil {
+		status.Message = err.Error()
+		return status
+	}
+
+	if h.Status == "ok" {
+		status.Success = true
+	}
+	return status
+}
+
 // tectonicStatus returns the current status (starting, running, or failed) of
 // the tectonic cluster services (etcd, Tectonic Identity, Tectonic Console), etc.
 func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 	services := Services{
-		Kubernetes: Status{Success: false, Failed: false},
-		Etcd:       Status{Success: false, Failed: false},
-		Identity:   Status{Success: false, Failed: false},
-		Ingress:    Status{Success: false, Failed: false},
-		Console:    Status{Success: false, Failed: false},
-		Tectonic:   Status{Success: false, Failed: false},
+		Kubernetes:     Status{Success: false, Failed: false},
+		Etcd:           Status{Success: false, Failed: false},
+		Identity:       Status{Success: false, Failed: false},
+		Ingress:        Status{Success: false, Failed: false},
+		Console:        Status{Success: false, Failed: false},
+		TectonicSystem: Status{Success: false, Failed: false},
+		DnsName:        input.TectonicDomain,
 	}
 
 	client, err := newK8sClient(*ex)
@@ -134,17 +181,10 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 		return services, newInternalServerError("Failed to determine if etcd is self-hosted: %s", err)
 	}
 
-	console := tectonic.ConsoleHealth(nil, input.TectonicDomain)
-
-	services.DnsName = console.Instance
-
-	services.Console.Success = console.Ready
-	// TODO: Determine Tectonic Console failure state
-
+	services.Console = consoleHealth(input.TectonicDomain)
 	services.IsEtcdSelfHosted = etcd
-
 	services.Kubernetes.Success = true
-	services.Tectonic.Success = true
+	services.TectonicSystem.Success = true
 
 	var kubePods []v1.Pod
 	var tectPods []v1.Pod
@@ -182,15 +222,15 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 	}
 
 	if len(tectPods) == 0 {
-		services.Tectonic = Status{Success: false, Failed: false}
+		services.TectonicSystem = Status{Success: false, Failed: false}
 	} else {
 		for _, p := range tectPods {
-			if p.Status.Phase == v1.PodFailed || services.Tectonic.Failed {
-				services.Tectonic = Status{Failed: true, Success: false}
-			} else if p.Status.Phase == v1.PodRunning && services.Tectonic.Success {
-				services.Tectonic = Status{Failed: false, Success: true}
+			if p.Status.Phase == v1.PodFailed || services.TectonicSystem.Failed {
+				services.TectonicSystem = Status{Failed: true, Success: false}
+			} else if p.Status.Phase == v1.PodRunning && services.TectonicSystem.Success {
+				services.TectonicSystem = Status{Failed: false, Success: true}
 			} else {
-				services.Tectonic = Status{Failed: false, Success: false}
+				services.TectonicSystem = Status{Failed: false, Success: false}
 			}
 		}
 	}
@@ -209,9 +249,9 @@ type TerraformStatus struct {
 // terraformStatus returns the current status of the terraform run, if it has begun
 func terraformStatus(session *sessions.Session, ex *terraform.Executor, exID int) (TerraformStatus, error) {
 	// Retrieve Terraform's status and output.
-	status, err := ex.Status(exID)
+	status, statusErr := ex.Status(exID)
 	if status == terraform.ExecutionStatusUnknown {
-		return TerraformStatus{}, newBadRequestError("Could not retrieve TerraForm execution's status: %s", err)
+		return TerraformStatus{}, newBadRequestError("Could not retrieve TerraForm execution's status: %s", statusErr)
 	}
 	output, err := ex.Output(exID)
 	if err != nil {
@@ -231,8 +271,8 @@ func terraformStatus(session *sessions.Session, ex *terraform.Executor, exID int
 	if action != nil {
 		response.Action = action.(string)
 	}
-	if err != nil {
-		response.Error = err.Error()
+	if statusErr != nil {
+		response.Error = statusErr.Error()
 	}
 
 	return response, nil

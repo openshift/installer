@@ -72,7 +72,7 @@ const platformToFunc = {
   },
 };
 
-let observeIntervals;
+let observeInterval;
 
 // An action creator that builds a server message, calls fetch on that message, fires the appropriate actions
 export const commitToServer = (dryRun=false, retry=false, opts={}) => (dispatch, getState) => {
@@ -101,8 +101,8 @@ export const commitToServer = (dryRun=false, retry=false, opts={}) => (dispatch,
       response => response.ok ?
         response.blob().then(payload => {
           observeClusterStatus(dispatch, getState);
-          if (!observeIntervals) {
-            observeIntervals = setInterval(() => observeClusterStatus(dispatch, getState), 10000);
+          if (!observeInterval) {
+            observeInterval = setInterval(() => observeClusterStatus(dispatch, getState), 10000);
           }
           return dispatch({payload, type: COMMIT_SUCCESSFUL});
         }) :

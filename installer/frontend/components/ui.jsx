@@ -627,7 +627,7 @@ export const LoadingLi = ({done, error, children, substep}) => {
   });
   return <li className={progressClasses}>
     {children}
-  </li>
+  </li>;
 };
 
 export class AsyncSelect extends React.Component {
