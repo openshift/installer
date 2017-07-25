@@ -128,7 +128,7 @@ class TF_PowerOn extends React.Component {
         <WaitingLi done={allDone} error={anyFailed} key="tectonicReady">
           Starting Tectonic
           <br />
-          <ul>{ tectonicSubsteps }</ul>
+          <ul className="service-launch-progress__steps">{ tectonicSubsteps }</ul>
         </WaitingLi>
       );
     }

@@ -617,10 +617,8 @@ export const WaitingLi = ({done, error, cancel, children, substep}) => {
   </li>;
 };
 
-export const LoadingLi = ({done, error, children, substep}) => {
-  const progressClasses = classNames({
-    'service-launch-progress__step': !substep,
-    'service-launch-progress__substep': substep,
+export const LoadingLi = ({done, error, children}) => {
+  const progressClasses = classNames('service-launch-progress__step', {
     'service-error-fg': error,
     'service-success-fg': done && !error,
     'service-running-fg': !done && !error,
