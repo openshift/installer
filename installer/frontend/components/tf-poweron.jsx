@@ -48,7 +48,11 @@ class TF_PowerOn extends React.Component {
   }
 
   componentWillUpdate ({terraform}) {
-    if (_.get(terraform, 'output') === _.get(this.props, 'terraform.output') || this.state.showLogs === false) {
+    const output = _.get(terraform, 'output', '');
+    const oldOutput = _.get(this.props, 'terraform.output', '');
+    // Output can be 10MB, so compare lengths first. Don't trust the JS engine to be smart.
+    const sameOutput = output.length === oldOutput.length && output === oldOutput;
+    if (sameOutput || this.state.showLogs === false) {
       this.shouldScroll = false;
       return;
     }
@@ -96,7 +100,7 @@ class TF_PowerOn extends React.Component {
         consoleSubsteps.push(<AWS_DomainValidation key="domain" />);
       }
 
-      const dnsReady = tectonic.console.success || (tectonic.console.message && tectonic.console.message.search('no such host') === -1);
+      const dnsReady = tectonic.console.success || ((tectonic.console.message || '').search('no such host') === -1);
       consoleSubsteps.push(
         <WaitingLi done={dnsReady} key='dnsReady'>
           Resolving <a href={`https://${tectonic.dnsName}`} target="_blank">{tectonic.dnsName}</a>
