@@ -47,8 +47,8 @@ class TF_PowerOn extends React.Component {
     }
   }
 
-  componentWillUpdate ({output}) {
-    if (output === this.props.output || this.state.showLogs === false) {
+  componentWillUpdate ({terraform}) {
+    if (_.get(terraform, 'output') === _.get(this.props, 'terraform.output') || this.state.showLogs === false) {
       this.shouldScroll = false;
       return;
     }
