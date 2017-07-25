@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { saveAs } from 'file-saver';
 
 import { Alert } from './alert';
-import { WaitingLi, LoadingLi } from './ui';
+import { WaitingLi } from './ui';
 import { AWS_DomainValidation } from './aws-domain-validation';
 import { ResetButton } from './reset-button';
 import { TFDestroy } from '../aws-actions';
@@ -124,9 +124,9 @@ class TF_PowerOn extends React.Component {
       const allDone = _.every(services, s => tectonic[s.key].success);
 
       const tectonicSubsteps = (allDone && !anyFailed) ? [] :
-        _.map(services, service => <LoadingLi done={tectonic[service.key].success} error={tectonic[service.key].failed} key={service.key}>
+        _.map(services, service => <WaitingLi done={tectonic[service.key].success} error={tectonic[service.key].failed} key={service.key} substep={true}>
           Starting {service.name}
-        </LoadingLi>);
+        </WaitingLi>);
 
       consoleSubsteps.push(
         <WaitingLi done={allDone} error={anyFailed} key="tectonicReady">

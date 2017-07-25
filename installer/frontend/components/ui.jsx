@@ -617,17 +617,6 @@ export const WaitingLi = ({done, error, cancel, children, substep}) => {
   </li>;
 };
 
-export const LoadingLi = ({done, error, children}) => {
-  const progressClasses = classNames('service-launch-progress__step', {
-    'service-error-fg': error,
-    'service-success-fg': done && !error,
-    'service-running-fg': !done && !error,
-  });
-  return <li className={progressClasses}>
-    {children}
-  </li>;
-};
-
 export class AsyncSelect extends React.Component {
   componentDidMount () {
     const { onChange, onRefresh, value } = this.props;

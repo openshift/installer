@@ -165,12 +165,6 @@ ul.service-launch-progress__steps {
   margin: 10px 0 0 15px;
 }
 
-li.service-launch-progress__step {
-  list-style: none;
-  margin: 0 0 8px 15px;
-  padding: 0;
-}
-
 .wiz-minitable__header {
   border-bottom: 1px solid #ebebeb;
   text-transform: uppercase;
