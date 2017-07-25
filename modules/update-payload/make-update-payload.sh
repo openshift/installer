@@ -87,26 +87,13 @@ if [[ ${#tmpfiles[*]} > 0 ]]; then
     rm ${tmpfiles[*]}
 fi
 
-echo "Is this payload enforced? (y/N)" >&2
-
-read -r payload_enforced
-
-PAYLOAD_ENFORCED=false
-if [[ ${payload_enforced} == "y" ]]; then
-    echo "Payload will be enforced!" >&2
-    PAYLOAD_ENFORCED=true
-else
-    echo "Payload will NOT be enforced" >&2
-fi
-
 # Create the final payload.
 # shellcheck disable=SC2086
 cat <<EOF | jq . > ${DIR}/payload.json
 {
   "version": ${VERSION},
   "deployments": ${DEPLOYMENTS},
-  "desiredVersions": ${DESIRED_VERSIONS},
-  "enforced": ${PAYLOAD_ENFORCED}
+  "desiredVersions": ${DESIRED_VERSIONS}
 }
 EOF
 
