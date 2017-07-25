@@ -15,17 +15,17 @@ import { commitToServer, observeClusterStatus } from '../server';
 
 const stateToProps = ({cluster, clusterConfig}) => {
   const status = cluster.status || {terraform: {}};
+  const { terraform, tectonic } = status;
   return {
     terraform: {
-      action: status.terraform.action,
-      tfError: status.terraform.error,
-      output: status.terraform.output,
-      outputBlob: new Blob([status.terraform.output], {type: 'text/plain'}),
-      statusMsg: status.terraform.status ? status.terraform.status.toLowerCase() : '',
+      action: terraform.action,
+      tfError: terraform.error,
+      output: terraform.output,
+      statusMsg: terraform.status ? terraform.status.toLowerCase() : '',
     },
     clusterName: clusterConfig[CLUSTER_NAME],
     platformType: clusterConfig[PLATFORM_TYPE],
-    tectonic: status.tectonic || {},
+    tectonic: tectonic || {},
   };
 };
 
@@ -84,7 +84,7 @@ class TF_PowerOn extends React.Component {
 
   render () {
     const {clusterName, platformType, terraform, tectonic} = this.props;
-    const {action, tfError, output, outputBlob, statusMsg} = terraform;
+    const {action, tfError, output, statusMsg} = terraform;
     const state = this.state;
     const showLogs = state.showLogs === null ? statusMsg !== 'success' : state.showLogs;
     const terraformRunning = statusMsg === 'running';
@@ -184,7 +184,7 @@ class TF_PowerOn extends React.Component {
                                : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
                   </a>
                   <span className="spacer"></span>
-                  <a onClick={() => saveAs(outputBlob, `tectonic-${clusterName}.log`)}>
+                  <a onClick={() => saveAs(new Blob([output], {type: 'text/plain'}), `tectonic-${clusterName}.log`)}>
                     <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
                   </a>
                 </div>}
