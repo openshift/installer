@@ -101,7 +101,7 @@ variable "tectonic_azure_vnet_cidr_block" {
 
   description = <<EOF
 (optional) Range of IP addresses assigned to the Virtual Network in which the cluster nodes run.
-This should not overlap with any other networks, such as the Kubernetes cluster (pod) range, 
+This should not overlap with any other networks, such as the Kubernetes cluster (pod) range,
 service range or a private datacenter connected via ExpressRoute."
 EOF
 }
@@ -224,7 +224,8 @@ EOF
 variable "tectonic_azure_external_dns_zone_id" {
   description = <<EOF
 (optional) The ID of the external Azure DNS zone used for nodes & endpoints FQDNs.
-Required when 'tectonic_base_domain' is set. This be an existing pre-registerd Azure DNS zone.
+Required when 'tectonic_base_domain' is set.
+This must be a pre-existing, properly configured Azure DNS zone that the Azure service principal running the Tectonic installer has permission to perform operations on.
 
 Note this is the complete ID as returned in the "id" field by the Azure client, not just the name of the resource.
 

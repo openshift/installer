@@ -196,6 +196,11 @@ Example: `openstack.dev.coreos.systems`.
 
 Note: This field MUST be set manually prior to creating the cluster.
 This applies only to cloud platforms.
+
+[Azure-specific NOTE]
+To use Azure-provided DNS, `tectonic_base_domain` should be set to `""`
+If using DNS records, ensure that `tectonic_base_domain` is set to a properly configured external DNS zone.
+Instructions for configuring delegated domains for Azure DNS can be found here: https://docs.microsoft.com/en-us/azure/dns/dns-delegate-domain-azure-dns
 EOF
 }
 

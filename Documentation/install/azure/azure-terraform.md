@@ -8,10 +8,61 @@ Generally, the Azure platform templates adhere to the standards defined by the p
 
 ## Prerequsities
 
-* **Terraform**: Tectonic Installer includes and requires a specific version of Terraform. This is included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
-* **DNS**: Set up your DNS zone in a resource group called `tectonic-dns-group` or specify a different resource group using the `tectonic_azure_dns_resource_group` variable below. We use a separate resource group assuming that you have a zone that you already want to use. Follow the [docs to set one up][azure-dns].
-* **Tectonic Account**: Register for a [Tectonic Account][register], which is free for up to 10 nodes. You must provide the cluster license and pull secret during installation.
-* **Azure CLI**: The Azure Command line interface is required to generate Azure credentials.
+### Go
+
+Ensure [Go][install-go] is installed.
+
+### Terraform
+
+Tectonic Installer includes and requires a specific version of Terraform. This is included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
+
+### DNS
+
+A few means of providing DNS for your Tectonic installation are supported:
+
+#### Azure-provided DNS
+
+This is Azure's default DNS implementation. For more information, see the [Azure DNS overview][azure-dns].
+
+To use Azure-provided DNS, `tectonic_base_domain` must be set to `""`(empty string).
+
+#### DNS delegation and custom zones via Azure DNS
+
+To configure a custom domain and the associated records in an Azure DNS zone (e.g., `${cluster_name}.foo.bar`):
+
+* The custom domain must be specified using `tectonic_base_domain`
+* The domain must be publically discoverable. The Tectonic installer uses the created record to access the cluster and complete configuration. See the Microsoft Azure documentation for instructions on how to [delegate a domain to Azure DNS][domain-delegation].
+* An Azure DNS zone which matches `tectonic_base_domain` must be created prior to running the installer. The full resource ID of the DNS zone must then be referenced in `tectonic_azure_external_dns_zone_id`
+
+### Tectonic Account
+
+Register for a [Tectonic Account][register], which is free for up to 10 nodes. You must provide the cluster license and pull secret during installation.
+
+### Azure CLI
+
+The [Azure CLI][azure-cli] is required to generate Azure credentials.
+
+### ssh-agent
+
+Ensure `ssh-agent` is running:
+```
+$ eval $(ssh-agent)
+```
+
+Add the SSH key that will be used for the Tectonic installation to `ssh-agent`:
+```
+$ ssh-add <path-to-ssh-key>
+```
+
+Verify that the SSH key identity is available to the ssh-agent:
+```
+$ ssh-add -L
+```
+
+Reference the absolute path of the **_public_** component of the SSH key in `tectonic_azure_ssh_key`.
+
+Without this, terraform is not able to SSH copy the assets and start bootkube.
+Also make sure that the SSH known_hosts file doesn't have old records of the API DNS name (fingerprints will not match).
 
 ## Getting Started
 
@@ -128,10 +179,9 @@ $ kubectl cluster-info
 
 ## Scale the cluster
 
-
 To scale worker nodes, adjust `tectonic_worker_count` in `terraform.tfvars`.
 
-Use the `plan` command to check your syntax: 
+Use the `plan` command to check your syntax:
 
 ```
 $ terraform plan \
@@ -168,28 +218,23 @@ $ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 
 ### Etcd nodes
 
-* Discovery is currently not implemented so DO NOT scale the etcd cluster to more than 1 node, for now.
 * Etcd cluster nodes are managed by the terraform module `modules/azure/etcd`
-* Node VMs are created as stand-alone instances (as opposed to VM scale sets). This is mostly historical and could change.
+* Node VMs are created as an Availability Set (stand-alone instances, deployed across multiple fault domains)
 * A load-balancer fronts the etcd nodes to provide a simple discovery mechanism, via a VIP + DNS record.
-* Currently, the LB is configured with a public IP address. This is not optimal and it should be converted to an internal LB.
+* Currently, the LB is configured with a public IP address. Future work is planned to convert this to an internal LB.
 
 ### Master nodes
 
-* Master node VMs are managed by the templates in `modules/azure/master`
-* An Azure VM Scaling Set resource is used to spin-up multiple identical VM configured as master nodes.
-* Master VMs all share the same identical Ignition config
-* Master nodes are fronted by one load-balancer for the API one for the Ingress controller.
+* Master node VMs are managed by the templates in `modules/azure/master-as`
+* Node VMs are created as an Availability Set (stand-alone instances, deployed across multiple fault domains)
+* Master nodes are fronted by one load balancer for the API and one for the Ingress controller.
 * The API LB is configured with SourceIP session stickiness, to ensure that TCP (including SSH) sessions from the same client land reliably on the same master node. This allows for provisioning the assets and starting bootkube reliably via SSH.
-* a `null_resource` terraform provisioner in the tectonic.tf top-level template will copy the assets and run bootkube automatically on one of the masters.
-* make sure the SSH key specified in the tfvars file is also added to the SSH agent on the machine running terraform. Without this, terraform is not able to SSH copy the assets and start bootkube. Also make sure that the SSH known_hosts file doesn't have old records of the API DNS name (fingerprints will not match).
 
 ### Worker nodes
 
-* Worker node VMs are managed by the templates in `modules/azure/worker`
-* An Azure VM Scaling Set resource is used to spin-up multiple identical VM configured as worker nodes.
-* Worker VMs all share the same identical Ignition config
-* Worker nodes are not fronted by any LB and don't have public IP addresses. They can be accessed through SSH from any of the master nodes.
+* Worker node VMs are managed by the templates in `modules/azure/worker-as`
+* Node VMs are created as an Availability Set (stand-alone instances, deployed across multiple fault domains)
+* Worker nodes are not fronted by an LB and don't have public IP addresses. They can be accessed through SSH from any of the master nodes.
 
 ## Known issues and workarounds
 
@@ -205,7 +250,10 @@ See the [installer troubleshooting][troubleshooting] document for known problem 
 [copy-docs]: https://www.terraform.io/docs/commands/apply.html
 [troubleshooting]: ../../troubleshooting/installer-terraform.md
 [login]: https://docs.microsoft.com/en-us/cli/azure/get-started-with-azure-cli
-[azure-dns]: https://docs.microsoft.com/en-us/azure/dns/dns-getstarted-portal
+[azure-dns]: https://docs.microsoft.com/en-us/azure/dns/dns-overview
 [vars]: ../../variables/config.md
 [azure-vars]: ../../variables/azure.md
 [release-notes]: https://coreos.com/tectonic/releases/
+[install-go]: https://golang.org/doc/install
+[domain-delegation]: https://docs.microsoft.com/en-us/azure/dns/dns-delegate-domain-azure-dns
+[azure-cli]: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli

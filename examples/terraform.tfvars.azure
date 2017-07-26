@@ -29,7 +29,8 @@ tectonic_azure_client_secret = ""
 // tectonic_azure_etcd_vm_size = "Standard_DS2_v2"
 
 // (optional) The ID of the external Azure DNS zone used for nodes & endpoints FQDNs.
-// Required when 'tectonic_base_domain' is set. This be an existing pre-registerd Azure DNS zone.
+// Required when 'tectonic_base_domain' is set.
+// This must be a pre-existing, properly configured Azure DNS zone that the Azure service principal running the Tectonic installer has permission to perform operations on.
 // 
 // Note this is the complete ID as returned in the "id" field by the Azure client, not just the name of the resource.
 // 
@@ -121,7 +122,7 @@ tectonic_azure_ssh_key = ""
 // tectonic_azure_ssh_network_internal = "VirtualNetwork"
 
 // (optional) Range of IP addresses assigned to the Virtual Network in which the cluster nodes run.
-// This should not overlap with any other networks, such as the Kubernetes cluster (pod) range, 
+// This should not overlap with any other networks, such as the Kubernetes cluster (pod) range,
 // service range or a private datacenter connected via ExpressRoute."
 // tectonic_azure_vnet_cidr_block = "10.0.0.0/16"
 
@@ -140,6 +141,11 @@ tectonic_azure_ssh_key = ""
 // 
 // Note: This field MUST be set manually prior to creating the cluster.
 // This applies only to cloud platforms.
+// 
+// [Azure-specific NOTE]
+// To use Azure-provided DNS, `tectonic_base_domain` should be set to `""`
+// If using DNS records, ensure that `tectonic_base_domain` is set to a properly configured external DNS zone.
+// Instructions for configuring delegated domains for Azure DNS can be found here: https://docs.microsoft.com/en-us/azure/dns/dns-delegate-domain-azure-dns
 tectonic_base_domain = ""
 
 // (optional) The content of the PEM-encoded CA certificate, used to generate Tectonic Console's server certificate.

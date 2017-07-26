@@ -61,25 +61,17 @@ output "worker_private_ip_addresses" {
 }
 
 output "api_ip_addresses" {
-  value = ["${azurerm_public_ip.tectonic_api_ip.ip_address}"]
+  value = ["${azurerm_public_ip.api_ip.ip_address}"]
 }
 
 output "console_ip_addresses" {
-  value = ["${azurerm_public_ip.tectonic_console_ip.ip_address}"]
+  value = ["${azurerm_public_ip.console_ip.ip_address}"]
 }
 
-output "ingress_external_fqdn" {
-  value = "${var.base_domain == "" ? azurerm_public_ip.tectonic_console_ip.fqdn : "${var.cluster_name}.${var.base_domain}"}"
+output "ingress_fqdn" {
+  value = "${var.base_domain == "" ? azurerm_public_ip.console_ip.fqdn : "${var.cluster_name}.${var.base_domain}"}"
 }
 
-output "ingress_internal_fqdn" {
-  value = "${var.base_domain == "" ? azurerm_public_ip.tectonic_console_ip.fqdn : "${var.cluster_name}.${var.base_domain}"}"
-}
-
-output "api_external_fqdn" {
-  value = "${var.base_domain == "" ? azurerm_public_ip.tectonic_api_ip.fqdn : "${var.cluster_name}-api.${var.base_domain}"}"
-}
-
-output "api_internal_fqdn" {
-  value = "${azurerm_public_ip.tectonic_api_ip.fqdn}"
+output "api_fqdn" {
+  value = "${azurerm_public_ip.api_ip.fqdn}"
 }

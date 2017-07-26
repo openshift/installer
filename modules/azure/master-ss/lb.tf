@@ -5,13 +5,13 @@ resource "azurerm_lb" "tectonic_lb" {
 
   frontend_ip_configuration {
     name                          = "api"
-    public_ip_address_id          = "${azurerm_public_ip.tectonic_api_ip.id}"
+    public_ip_address_id          = "${azurerm_public_ip.api_ip.id}"
     private_ip_address_allocation = "dynamic"
   }
 
   frontend_ip_configuration {
     name                          = "console"
-    public_ip_address_id          = "${azurerm_public_ip.tectonic_console_ip.id}"
+    public_ip_address_id          = "${azurerm_public_ip.console_ip.id}"
     private_ip_address_allocation = "dynamic"
   }
 }
