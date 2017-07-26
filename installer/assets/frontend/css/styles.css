@@ -143,12 +143,17 @@ input[type="text"].wiz-node-field {
   width: 150px;
 }
 
-.wiz-launch-progress,
-.wiz-launch-progress__substep {
+.wiz-launch-progress {
   list-style: none;
   margin: 0;
   padding: 0;
   font-size: 16px;
+}
+
+.wiz-launch-progress__substep {
+  list-style: none;
+  margin: 0 0 10px 0;
+  font-size: 14px;
 }
 
 .wiz-launch-progress__step {
@@ -405,15 +410,15 @@ input.wiz-super-short-input {
   color: #777;
 }
 
-.service-success-fg {
+.wiz-success-fg.wiz-launch-progress__substep {
   color: #333333;
 }
 
-.service-error-fg {
+.wiz-error-fg.wiz-launch-progress__substep {
   color: #D64456;
 }
 
-.service-running-fg {
+.wiz-running-fg.wiz-launch-progress__substep {
   color: #999999;
 }
 
