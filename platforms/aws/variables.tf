@@ -121,7 +121,7 @@ Required to use an existing VPC and the list must match the AZ count.
 Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
 EOF
 
-  default = [""]
+  default = []
 }
 
 variable "tectonic_aws_external_worker_subnet_ids" {
@@ -134,7 +134,7 @@ Required to use an existing VPC and the list must match the AZ count.
 Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
 EOF
 
-  default = [""]
+  default = []
 }
 
 variable "tectonic_aws_extra_tags" {

@@ -136,7 +136,7 @@ Example: `["etcd1", "etcd2", "etcd3"]`
 EOF
 
   type    = "list"
-  default = [""]
+  default = []
 }
 
 variable "tectonic_etcd_tls_enabled" {

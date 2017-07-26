@@ -11,8 +11,8 @@ module "vpc" {
   cluster_name = "${var.tectonic_cluster_name}"
 
   external_vpc_id         = "${var.tectonic_aws_external_vpc_id}"
-  external_master_subnets = ["${compact(var.tectonic_aws_external_master_subnet_ids)}"]
-  external_worker_subnets = ["${compact(var.tectonic_aws_external_worker_subnet_ids)}"]
+  external_master_subnets = "${compact(var.tectonic_aws_external_master_subnet_ids)}"
+  external_worker_subnets = "${compact(var.tectonic_aws_external_worker_subnet_ids)}"
   cluster_id              = "${module.tectonic.cluster_id}"
   extra_tags              = "${var.tectonic_aws_extra_tags}"
   enable_etcd_sg          = "${!var.tectonic_experimental && length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
@@ -40,14 +40,14 @@ module "vpc" {
   worker_subnets = "${concat(values(var.tectonic_aws_worker_custom_subnets),list("padding"))}"
   # The split() / join() trick works around the limitation of ternary operator expressions 
   # only being able to return strings.
-  master_azs = ["${ split("|", "${length(keys(var.tectonic_aws_master_custom_subnets))}" > 0 ?
+  master_azs = "${ split("|", "${length(keys(var.tectonic_aws_master_custom_subnets))}" > 0 ?
     join("|", keys(var.tectonic_aws_master_custom_subnets)) :
     join("|", data.aws_availability_zones.azs.names)
-  )}"]
-  worker_azs = ["${ split("|", "${length(keys(var.tectonic_aws_worker_custom_subnets))}" > 0 ?
+  )}"
+  worker_azs = "${ split("|", "${length(keys(var.tectonic_aws_worker_custom_subnets))}" > 0 ?
     join("|", keys(var.tectonic_aws_worker_custom_subnets)) :
     join("|", data.aws_availability_zones.azs.names)
-  )}"]
+  )}"
 }
 
 module "etcd" {
@@ -61,13 +61,13 @@ module "etcd" {
   cl_channel      = "${var.tectonic_cl_channel}"
   container_image = "${var.tectonic_container_images["etcd"]}"
 
-  subnets = ["${module.vpc.worker_subnet_ids}"]
+  subnets = "${module.vpc.worker_subnet_ids}"
 
   dns_zone_id  = "${var.tectonic_aws_external_private_zone == "" ? join("", aws_route53_zone.tectonic-int.*.zone_id) : var.tectonic_aws_external_private_zone}"
   base_domain  = "${var.tectonic_base_domain}"
   cluster_name = "${var.tectonic_cluster_name}"
 
-  external_endpoints = ["${compact(var.tectonic_etcd_servers)}"]
+  external_endpoints = "${compact(var.tectonic_etcd_servers)}"
   cluster_id         = "${module.tectonic.cluster_id}"
   extra_tags         = "${var.tectonic_aws_extra_tags}"
 
@@ -106,7 +106,7 @@ module "masters" {
   cluster_name    = "${var.tectonic_cluster_name}"
   master_iam_role = "${var.tectonic_aws_master_iam_role_name}"
 
-  subnet_ids = ["${module.vpc.master_subnet_ids}"]
+  subnet_ids = "${module.vpc.master_subnet_ids}"
 
   master_sg_ids  = "${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"
   api_sg_ids     = ["${module.vpc.api_sg_id}"]
@@ -155,7 +155,7 @@ module "workers" {
   worker_iam_role = "${var.tectonic_aws_worker_iam_role_name}"
 
   vpc_id     = "${module.vpc.vpc_id}"
-  subnet_ids = ["${module.vpc.worker_subnet_ids}"]
+  subnet_ids = "${module.vpc.worker_subnet_ids}"
   sg_ids     = "${concat(var.tectonic_aws_worker_extra_sg_ids, list(module.vpc.worker_sg_id))}"
 
   ssh_key                      = "${var.tectonic_aws_ssh_key}"
