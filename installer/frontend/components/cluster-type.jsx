@@ -8,19 +8,13 @@ import { Field, Form } from '../form';
 import { PLATFORM_TYPE, PLATFORM_FORM } from '../cluster-config';
 import { TectonicGA } from '../tectonic-ga';
 import {
+  AWS_TF,
   DOCS,
   PLATFORM_NAMES,
   SELECTED_PLATFORMS,
   isSupported,
   optGroups,
 } from '../platforms';
-
-let defaultPlatformType = '';
-try {
-  defaultPlatformType = window.config.platforms[0];
-} catch (unused) {
-  // So tests pass
-}
 
 const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PLATFORM_TYPE]}))(
 ({error, platform}) => {
@@ -43,7 +37,7 @@ const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PL
 
 const platformForm = new Form(PLATFORM_FORM, [
   new Field(PLATFORM_TYPE, {
-    default: defaultPlatformType,
+    default: AWS_TF,
     validator: validate.nonEmpty,
   })], {
     validator: (data, cc) => {
