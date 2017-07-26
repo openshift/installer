@@ -41,7 +41,7 @@ export const observeClusterStatus = (dispatch, getState) => {
     },
   };
 
-  return fetch('/terraform/status', opts).then(response => {
+  return fetch('/tectonic/status', opts).then(response => {
     if (response.status === 404) {
       dispatch({type: NOT_READY});
       return;
@@ -62,13 +62,9 @@ export const observeClusterStatus = (dispatch, getState) => {
 const platformToFunc = {
   [AWS_TF]: {
     f: toAWS_TF,
-    path: '/terraform/apply',
-    statusPath: '/terraform/status',
   },
   [BARE_METAL_TF]: {
     f: toBaremetal_TF,
-    path: '/terraform/apply',
-    statusPath: '/terraform/status',
   },
 };
 
@@ -92,7 +88,7 @@ export const commitToServer = (dryRun=false, retry=false, opts={}) => (dispatch,
   }
 
   const body = obj.f(request, FORMS, opts);
-  fetch(obj.path, {
+  fetch('/terraform/apply', {
     credentials: 'same-origin',
     method: 'POST',
     body: JSON.stringify(body),
