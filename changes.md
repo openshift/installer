@@ -1,10 +1,15 @@
 # Tectonic Changelog
 
-## Current
+## Tectonic 1.7.1-tectonic.1 (2017-08-07)
+
+* Updates to Kubernetes v1.7.1.
+* Support for Azure is Beta.
 
 ### Console
 
+* The Tectonic update channel can now be selected (1.6, 1.7-preproduction, 1.7-production)
 * Kubectl-config cluster name is set to the Tectonic cluster name, defaulting to "tectonic" for backwards-compatibility
+* Prometheus and Calico Network Policy configuration pages are available
 
 ### Tectonic Installer
 
