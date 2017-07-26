@@ -76,6 +76,17 @@ echo "Payload successfully uploaded"
 
 echo "Creating package ${VERSION} on Core Update server ${SERVER} for ${APPID}"
 
+set +e
+
+# Overwrite the current package.
+# shellcheck disable=SC2086,SC2154
+${UPDATESERVICECTL} --server ${SERVER} \
+                    --key ${COREUPDATE_KEY} \
+                    --user ${COREUPDATE_USR} \
+                    package delete \
+                    --app-id ${APPID} \
+                    --version ${VERSION} >/dev/null 2>&1
+
 # shellcheck disable=SC2086,SC2154
 ${UPDATESERVICECTL} --server ${SERVER} \
                     --key ${COREUPDATE_KEY} \
