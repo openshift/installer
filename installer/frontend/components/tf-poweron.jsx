@@ -9,7 +9,7 @@ import { WaitingLi } from './ui';
 import { AWS_DomainValidation } from './aws-domain-validation';
 import { ResetButton } from './reset-button';
 import { TFDestroy } from '../aws-actions';
-import { CLUSTER_NAME, PLATFORM_TYPE } from '../cluster-config';
+import { CLUSTER_NAME, PLATFORM_TYPE, getTectonicDomain } from '../cluster-config';
 import { AWS_TF, BARE_METAL_TF } from '../platforms';
 import { commitToServer, observeClusterStatus } from '../server';
 
@@ -26,6 +26,7 @@ const stateToProps = ({cluster, clusterConfig}) => {
     clusterName: clusterConfig[CLUSTER_NAME],
     platformType: clusterConfig[PLATFORM_TYPE],
     tectonic: tectonic || {},
+    tectonicDomain: getTectonicDomain(clusterConfig),
   };
 };
 
@@ -87,7 +88,7 @@ class TF_PowerOn extends React.Component {
   }
 
   render () {
-    const {clusterName, platformType, terraform, tectonic} = this.props;
+    const {clusterName, platformType, terraform, tectonic, tectonicDomain} = this.props;
     const {action, tfError, output, statusMsg} = terraform;
     const state = this.state;
     const showLogs = state.showLogs === null ? statusMsg !== 'success' : state.showLogs;
@@ -102,8 +103,8 @@ class TF_PowerOn extends React.Component {
 
       const dnsReady = tectonic.console.success || ((tectonic.console.message || '').search('no such host') === -1);
       consoleSubsteps.push(
-        <WaitingLi done={dnsReady} key='dnsReady'>
-          Resolving <a href={`https://${tectonic.dnsName}`} target="_blank">{tectonic.dnsName}</a>
+        <WaitingLi done={dnsReady && !terraformRunning} key='dnsReady'>
+          Resolving <a href={`https://${tectonicDomain}`} target="_blank">{tectonicDomain}</a>
         </WaitingLi>
       );
 
@@ -116,17 +117,19 @@ class TF_PowerOn extends React.Component {
         {key: 'tectonicSystem', name: 'other Tectonic services'},
       ];
 
-      if (tectonic.isEtcdSelfHosted) {
+      if (!tectonic.isEtcdSelfHosted) {
         services.shift(0);
       }
 
       const anyFailed = _.some(services, s => tectonic[s.key].failed);
       const allDone = _.every(services, s => tectonic[s.key].success);
 
-      const tectonicSubsteps = (allDone && !anyFailed) ? [] :
-        _.map(services, service => <WaitingLi done={tectonic[service.key].success} error={tectonic[service.key].failed} key={service.key} substep={true}>
+      let tectonicSubsteps = null;
+      if ((!allDone || anyFailed) && !terraformRunning) {
+        tectonicSubsteps = _.map(services, service => <WaitingLi done={tectonic[service.key].success} error={tectonic[service.key].failed} key={service.key} substep={true}>
           Starting {service.name}
         </WaitingLi>);
+      }
 
       consoleSubsteps.push(
         <WaitingLi done={allDone} error={anyFailed} key="tectonicReady">

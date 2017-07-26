@@ -39,7 +39,6 @@ type Services struct {
 	Ingress          Status `json:"ingress"`
 	Console          Status `json:"console"`
 	TectonicSystem   Status `json:"tectonicSystem"` // All other services in tectonic-system namespace
-	DNSName          string `json:"dnsName"`        // Stores the instance of the Tectonic Console
 }
 
 // isEtcdSelfHosted determines if the etcd service will be hosted on the cluster
@@ -87,15 +86,29 @@ func newK8sClient(ex terraform.Executor) (*kubernetes.Clientset, error) {
 	return cs, nil
 }
 
-// getStatus is a simple helper function to convert a Kubernetes pod phase to
+// setStatus is a simple helper function to convert a Kubernetes pod phase to
 // a Status object as defined above
-func getStatus(p v1.PodPhase) Status {
-	if p == v1.PodRunning {
-		return Status{Failed: false, Success: true}
-	} else if p == v1.PodFailed {
-		return Status{Failed: true, Success: false}
+func statusFromPods(pods []v1.Pod) Status {
+	status := Status{Failed: false, Success: true}
+
+	if len(pods) == 0 {
+		status.Success = false
+		return status
 	}
-	return Status{Failed: false, Success: false}
+
+	for _, p := range pods {
+		if p.Status.Phase == v1.PodFailed {
+			status.Failed = true
+			status.Success = false
+			return status
+		}
+
+		if p.Status.Phase != v1.PodRunning {
+			status.Success = false
+		}
+	}
+
+	return status
 }
 
 // Input represents the request body passed to the status endpoint.
@@ -157,15 +170,16 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 		Ingress:        Status{Success: false, Failed: false},
 		Console:        Status{Success: false, Failed: false},
 		TectonicSystem: Status{Success: false, Failed: false},
-		DNSName:        input.TectonicDomain,
 	}
 
 	client, err := newK8sClient(*ex)
 	if err != nil {
 		if _, ok := err.(*os.PathError); ok {
 			// This is because the kubeconfig hasn't been generated yet; assume services haven't started
+			services.Kubernetes.Message = err.Error()
 			return services, nil
 		}
+		services.Kubernetes.Message = err.Error()
 		return services, err
 	}
 
@@ -177,62 +191,42 @@ func tectonicStatus(ex *terraform.Executor, input Input) (Services, error) {
 
 	etcd, err := isEtcdSelfHosted(*ex)
 	if err != nil {
+		services.Etcd.Message = err.Error()
 		return services, newInternalServerError("Failed to determine if etcd is self-hosted: %s", err)
 	}
 
-	services.Console = consoleHealth(input.TectonicDomain)
 	services.IsEtcdSelfHosted = etcd
-	services.Kubernetes.Success = true
-	services.TectonicSystem.Success = true
 
 	var kubePods []v1.Pod
 	var tectPods []v1.Pod
+	var identiPods []v1.Pod
+	var ingressPods []v1.Pod
+	var etcdPods []v1.Pod
 
 	for _, p := range pods.Items {
 		name := p.ObjectMeta.Name
+		namespace := p.ObjectMeta.Namespace
 		switch {
 		case strings.Contains(name, "tectonic-identity"):
-			services.Identity = getStatus(p.Status.Phase)
+			identiPods = append(identiPods, p)
 		case strings.Contains(name, "tectonic-ingress-controller"):
-			services.Ingress = getStatus(p.Status.Phase)
+			ingressPods = append(ingressPods, p)
 		case etcd && strings.Contains(name, "kube-etcd"):
-			services.Etcd = getStatus(p.Status.Phase)
-		default:
-			if p.ObjectMeta.Namespace == "kube-system" {
-				kubePods = append(kubePods, p)
-			} else if p.ObjectMeta.Namespace == "tectonic-system" {
-				tectPods = append(tectPods, p)
-			}
+			etcdPods = append(etcdPods, p)
+		case namespace == "kube-system":
+			kubePods = append(kubePods, p)
+		case namespace == "tectonic-system":
+			tectPods = append(tectPods, p)
 		}
 	}
 
-	if len(kubePods) == 0 {
-		services.Kubernetes = Status{Success: false, Failed: false}
-	} else {
-		for _, p := range kubePods {
-			if p.Status.Phase == v1.PodFailed || services.Kubernetes.Failed {
-				services.Kubernetes = Status{Failed: true, Success: false}
-			} else if p.Status.Phase == v1.PodRunning && services.Kubernetes.Success {
-				services.Kubernetes = Status{Failed: false, Success: true}
-			} else {
-				services.Kubernetes = Status{Failed: false, Success: false}
-			}
-		}
-	}
+	services.Kubernetes = statusFromPods(kubePods)
+	services.TectonicSystem = statusFromPods(tectPods)
+	services.Etcd = statusFromPods(etcdPods)
+	services.Identity = statusFromPods(identiPods)
+	services.Ingress = statusFromPods(ingressPods)
 
-	if len(tectPods) == 0 {
-		services.TectonicSystem = Status{Success: false, Failed: false}
-	} else {
-		for _, p := range tectPods {
-			if p.Status.Phase == v1.PodFailed || services.TectonicSystem.Failed {
-				services.TectonicSystem = Status{Failed: true, Success: false}
-			} else if p.Status.Phase == v1.PodRunning && services.TectonicSystem.Success {
-				services.TectonicSystem = Status{Failed: false, Success: true}
-			} else {
-				services.TectonicSystem = Status{Failed: false, Success: false}
-			}
-		}
-	}
+	services.Console = consoleHealth(input.TectonicDomain)
 
 	return services, nil
 }
