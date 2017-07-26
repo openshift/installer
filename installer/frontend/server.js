@@ -31,7 +31,6 @@ const {NOT_READY, STATUS, ERROR} = clusterReadyActionTypes;
 export const observeClusterStatus = (dispatch, getState) => {
   const cc = getState().clusterConfig;
   const tectonicDomain = getTectonicDomain(cc);
-
   const opts = {
     credentials: 'same-origin',
     body: JSON.stringify({tectonicDomain}),
@@ -42,7 +41,7 @@ export const observeClusterStatus = (dispatch, getState) => {
     },
   };
 
-  return fetch('/terraform/status', opts).then(response => {
+  return fetch('/tectonic/status', opts).then(response => {
     if (response.status === 404) {
       dispatch({type: NOT_READY});
       return;
@@ -57,19 +56,15 @@ export const observeClusterStatus = (dispatch, getState) => {
     }
     return dispatch({type: ERROR, payload});
   })
-  .catch(err => console.error(err) || err);
+    .catch(err => console.error(err) || err);
 };
 
 const platformToFunc = {
   [AWS_TF]: {
     f: toAWS_TF,
-    path: '/terraform/apply',
-    statusPath: '/terraform/status',
   },
   [BARE_METAL_TF]: {
     f: toBaremetal_TF,
-    path: '/terraform/apply',
-    statusPath: '/terraform/status',
   },
 };
 
@@ -93,23 +88,23 @@ export const commitToServer = (dryRun=false, retry=false, opts={}) => (dispatch,
   }
 
   const body = obj.f(request, FORMS, opts);
-  fetch(obj.path, {
+  fetch('/terraform/apply', {
     credentials: 'same-origin',
     method: 'POST',
     body: JSON.stringify(body),
   })
-  .then(
-    response => response.ok ?
-      response.blob().then(payload => {
-        observeClusterStatus(dispatch, getState);
-        if (!observeInterval) {
-          observeInterval = setInterval(() => observeClusterStatus(dispatch, getState), 10000);
-        }
-        return dispatch({payload, type: COMMIT_SUCCESSFUL});
-      }) :
-      response.text().then(payload => dispatch({payload, type: COMMIT_FAILED}))
-  , payload => dispatch({payload, type: COMMIT_FAILED}))
-  .catch(err => console.error(err));
+    .then(
+      response => response.ok ?
+        response.blob().then(payload => {
+          observeClusterStatus(dispatch, getState);
+          if (!observeInterval) {
+            observeInterval = setInterval(() => observeClusterStatus(dispatch, getState), 10000);
+          }
+          return dispatch({payload, type: COMMIT_SUCCESSFUL});
+        }) :
+        response.text().then(payload => dispatch({payload, type: COMMIT_FAILED}))
+      , payload => dispatch({payload, type: COMMIT_FAILED}))
+    .catch(err => console.error(err));
 
   return dispatch({
     type: COMMIT_SENT,

@@ -143,12 +143,17 @@ input[type="text"].wiz-node-field {
   width: 150px;
 }
 
-.wiz-launch-progress,
-.wiz-launch-progress__substep {
+.wiz-launch-progress {
   list-style: none;
   margin: 0;
   padding: 0;
   font-size: 16px;
+}
+
+.wiz-launch-progress__substep {
+  list-style: none;
+  margin: 0 0 10px 0;
+  font-size: 14px;
 }
 
 .wiz-launch-progress__step {
@@ -159,6 +164,10 @@ input[type="text"].wiz-node-field {
 
 .wiz-launch-progress__step:last-child {
   margin: 0;
+}
+
+ul.service-launch-progress__steps {
+  margin: 10px 0 0 15px;
 }
 
 .wiz-minitable__header {
@@ -399,6 +408,18 @@ input.wiz-super-short-input {
 
 .wiz-running-fg {
   color: #777;
+}
+
+.wiz-success-fg.wiz-launch-progress__substep {
+  color: #333333;
+}
+
+.wiz-error-fg.wiz-launch-progress__substep {
+  color: #D64456;
+}
+
+.wiz-running-fg.wiz-launch-progress__substep {
+  color: #999999;
 }
 
 .wiz-ssh-key-container {

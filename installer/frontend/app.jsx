@@ -29,7 +29,7 @@ window.reset = () => {
   window.removeEventListener('beforeunload', saveState);
   sessionStorage.clear();
   fetch('/cluster/done', {method: 'POST', credentials: 'same-origin'})
-    .catch(() => undefined)  // We don't really care if this completes - we're done here!
+    .catch(() => undefined) // We don't really care if this completes - we're done here!
     .then(() => window.location = '/');
 };
 

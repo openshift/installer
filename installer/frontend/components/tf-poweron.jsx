@@ -9,21 +9,24 @@ import { WaitingLi } from './ui';
 import { AWS_DomainValidation } from './aws-domain-validation';
 import { ResetButton } from './reset-button';
 import { TFDestroy } from '../aws-actions';
-import { CLUSTER_NAME, PLATFORM_TYPE } from '../cluster-config';
+import { CLUSTER_NAME, PLATFORM_TYPE, getTectonicDomain } from '../cluster-config';
 import { AWS_TF, BARE_METAL_TF } from '../platforms';
 import { commitToServer, observeClusterStatus } from '../server';
 
 const stateToProps = ({cluster, clusterConfig}) => {
-  const status = cluster.status || {};
+  const status = cluster.status || {terraform: {}};
+  const { terraform, tectonic } = status;
   return {
-    action: status.action,
+    terraform: {
+      action: terraform.action,
+      tfError: terraform.error,
+      output: terraform.output,
+      statusMsg: terraform.status ? terraform.status.toLowerCase() : '',
+    },
     clusterName: clusterConfig[CLUSTER_NAME],
-    tfError: status.error,
-    output: status.output,
-    outputBlob: new Blob([status.output], {type: 'text/plain'}),
     platformType: clusterConfig[PLATFORM_TYPE],
-    statusMsg: status.status ? status.status.toLowerCase() : '',
-    tectonicConsole: status.tectonicConsole || {},
+    tectonic: tectonic || {},
+    tectonicDomain: getTectonicDomain(clusterConfig),
   };
 };
 
@@ -45,8 +48,12 @@ class TF_PowerOn extends React.Component {
     }
   }
 
-  componentWillUpdate ({output}) {
-    if (output === this.props.output || this.state.showLogs === false) {
+  componentWillUpdate ({terraform}) {
+    const output = _.get(terraform, 'output', '');
+    const oldOutput = _.get(this.props, 'terraform.output', '');
+    // Output can be 10MB, so compare lengths first. Don't trust the JS engine to be smart.
+    const sameOutput = output.length === oldOutput.length && output === oldOutput;
+    if (sameOutput || this.state.showLogs === false) {
       this.shouldScroll = false;
       return;
     }
@@ -81,52 +88,56 @@ class TF_PowerOn extends React.Component {
   }
 
   render () {
-    const {action, clusterName, tfError, output, outputBlob, platformType, statusMsg, tectonicConsole} = this.props;
+    const {clusterName, platformType, terraform, tectonic, tectonicDomain} = this.props;
+    const {action, tfError, output, statusMsg} = terraform;
     const state = this.state;
     const showLogs = state.showLogs === null ? statusMsg !== 'success' : state.showLogs;
     const terraformRunning = statusMsg === 'running';
 
     const consoleSubsteps = [];
-    if (action === 'apply') {
-      let msg = <span>Resolving <a href={`https://${tectonicConsole.instance}`} target="_blank">{tectonicConsole.instance}</a></span>;
-      const dnsReady = (tectonicConsole.message || '').search('no such host') === -1;
+
+    if (action === 'apply' && tectonic.console) {
       if (platformType === AWS_TF) {
         consoleSubsteps.push(<AWS_DomainValidation key="domain" />);
       }
+
+      const dnsReady = tectonic.console.success || ((tectonic.console.message || '').search('no such host') === -1);
       consoleSubsteps.push(
-        <WaitingLi done={dnsReady} cancel={tfError} key="dns">
-          <span title={msg}>{msg}</span>
+        <WaitingLi done={dnsReady && !terraformRunning} key='dnsReady'>
+          Resolving <a href={`https://${tectonicDomain}`} target="_blank">{tectonicDomain}</a>
         </WaitingLi>
       );
-      msg = `Starting Tectonic console`;
+
+      const services = [
+        {key: 'etcd', name: 'Etcd'},
+        {key: 'kubernetes', name: 'Kubernetes'},
+        {key: 'identity', name: 'Tectonic Identity'},
+        {key: 'ingress', name: 'Tectonic Ingress Controller'},
+        {key: 'console', name: 'Tectonic Console'},
+        {key: 'tectonicSystem', name: 'other Tectonic services'},
+      ];
+
+      if (!tectonic.isEtcdSelfHosted) {
+        services.shift(0);
+      }
+
+      const anyFailed = _.some(services, s => tectonic[s.key].failed);
+      const allDone = _.every(services, s => tectonic[s.key].success);
+
+      let tectonicSubsteps = null;
+      if ((!allDone || anyFailed) && !terraformRunning) {
+        tectonicSubsteps = _.map(services, service => <WaitingLi done={tectonic[service.key].success} error={tectonic[service.key].failed} key={service.key} substep={true}>
+          Starting {service.name}
+        </WaitingLi>);
+      }
+
       consoleSubsteps.push(
-        <WaitingLi done={tectonicConsole.ready} cancel={tfError} key="consoleReady">
-          <span title={msg}>{msg}</span>
+        <WaitingLi done={allDone} error={anyFailed} key="tectonicReady">
+          Starting Tectonic
+          <br />
+          <ul className="service-launch-progress__steps">{ tectonicSubsteps }</ul>
         </WaitingLi>
       );
-    }
-    let platformMsg = <p>
-      Kubernetes is starting up. We're committing your cluster details.
-      Grab some tea and sit tight. This process can take up to 20 minutes.
-      Status updates will appear below.
-    </p>;
-    if (platformType === BARE_METAL_TF) {
-      platformMsg = <div>
-        <div className="wiz-herotext">
-          <i className="fa fa-power-off wiz-herotext-icon"></i> Power on the nodes
-        </div>
-        <div className="form-group">
-          After powering up, your nodes will provision themselves automatically.
-          This process can take up to 30 minutes, while the following happens.
-        </div>
-        <div className="form-group">
-          <ul>
-            <li>Container Linux is downloaded and installed to disk (about 200 MB)</li>
-            <li>Cluster software is downloaded (about 500 MB)</li>
-            <li>One or two reboots may occur</li>
-          </ul>
-        </div>
-      </div>;
     }
 
     const tfButtonClasses = classNames("btn btn-flat", {disabled: terraformRunning, 'btn-warning': tfError, 'btn-info': !tfError});
@@ -142,7 +153,31 @@ class TF_PowerOn extends React.Component {
     </div>;
 
     return <div>
-      { platformMsg }
+      { platformType !== BARE_METAL_TF &&
+        <p>
+          Kubernetes is starting up. We're committing your cluster details.
+          Grab some tea and sit tight. This process can take up to 20 minutes.
+          Status updates will appear below.
+        </p>
+      }
+      { platformType === BARE_METAL_TF &&
+        <div>
+          <div className="wiz-herotext">
+            <i className="fa fa-power-off wiz-herotext-icon"></i> Power on the nodes
+          </div>
+          <div className="form-group">
+            After powering up, your nodes will provision themselves automatically.
+            This process can take up to 30 minutes, while the following happens.
+          </div>
+          <div className="form-group">
+            <ul>
+              <li>Container Linux is downloaded and installed to disk (about 200 MB)</li>
+              <li>Cluster software is downloaded (about 500 MB)</li>
+              <li>One or two reboots may occur</li>
+            </ul>
+          </div>
+        </div>
+      }
       <hr />
       <div className="row">
         <div className="col-xs-12">
@@ -156,7 +191,7 @@ class TF_PowerOn extends React.Component {
                                : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
                   </a>
                   <span className="spacer"></span>
-                  <a onClick={() => saveAs(outputBlob, `tectonic-${clusterName}.log`)}>
+                  <a onClick={() => saveAs(new Blob([output], {type: 'text/plain'}), `tectonic-${clusterName}.log`)}>
                     <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
                   </a>
                 </div>}
@@ -226,10 +261,14 @@ class TF_PowerOn extends React.Component {
 });
 
 // horrible hack to prevent a flapping cluster from redirecting user from connect page back to poweron page
+// we never reset this value...
 let ready = false;
 
 TF_PowerOn.canNavigateForward = ({cluster}) => {
-  ready = ready || (_.get(cluster, 'status.tectonicConsole.ready') === true
+  ready = ready || (
+    _.get(cluster, 'status.tectonic.console.success') === true
+    && _.get(cluster, 'status.tectonic.tectonicSystem.success') === true
     && _.get(cluster, 'status.status') !== 'running');
+
   return ready;
 };

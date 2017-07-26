@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -91,56 +90,6 @@ func terraformApplyHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 	}
 
 	return nil
-}
-
-func terraformStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Context) error {
-	// Read the input from the request's body.
-	input := struct {
-		TectonicDomain string `json:"tectonicDomain"`
-	}{}
-	if err := json.NewDecoder(req.Body).Decode(&input); err != nil {
-		return newBadRequestError("Could not unmarshal input: %s", err)
-	}
-	defer req.Body.Close()
-
-	// Restore the execution environment from the session.
-	session, ex, exID, errCtx := restoreExecutionFromSession(req, ctx.Sessions, nil)
-	if errCtx != nil {
-		// Error directly (rather than NewAppError, which logs) since the
-		// frontend periodically calls this endpoint to advance screens
-		http.Error(w, fmt.Sprintf("Could not find session data: %v", errCtx), http.StatusNotFound)
-		return nil
-	}
-
-	// Retrieve Terraform's status and output.
-	status, err := ex.Status(exID)
-	if status == terraform.ExecutionStatusUnknown {
-		return newBadRequestError("Could not retrieve TerraForm execution's status: %s", err)
-	}
-	output, _ := ex.Output(exID)
-	outputBytes, _ := ioutil.ReadAll(output)
-
-	// Return results.
-	response := struct {
-		Status          string                 `json:"status"`
-		Output          string                 `json:"output,omitempty"`
-		Error           string                 `json:"error,omitempty"`
-		Action          string                 `json:"action"`
-		TectonicConsole tectonic.ServiceStatus `json:"tectonicConsole"`
-	}{
-		Status:          string(status),
-		Output:          string(outputBytes),
-		TectonicConsole: tectonic.ConsoleHealth(nil, input.TectonicDomain),
-	}
-	action := session.Values["action"]
-	if action != nil {
-		response.Action = action.(string)
-	}
-	if err != nil {
-		response.Error = err.Error()
-	}
-
-	return writeJSONResponse(w, req, http.StatusOK, response)
 }
 
 func terraformAssetsHandler(w http.ResponseWriter, req *http.Request, ctx *Context) error {
