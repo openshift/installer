@@ -13,7 +13,13 @@ import (
 
 const (
 	// kubeconfigEnv is the environment variable that is checked for a the kubeconfig path to be loaded.
-	kubeconfigEnv = "TEST_KUBECONFIG"
+	kubeconfigEnv = "SMOKE_KUBECONFIG"
+	// apiServerSelector is the pod label selector for the apiserver.
+	apiServerSelector = "k8s-app=kube-apiserver"
+	// kubeSystemNamespace is the namespace for k8s.
+	kubeSystemNamespace = "kube-system"
+	// tectonicSystemNamespace is the namespace for Tectonic.
+	tectonicSystemNamespace = "tectonic-system"
 )
 
 var (

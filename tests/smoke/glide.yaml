@@ -1,8 +1,20 @@
-package: "github.com/coreos/tectonic-installer/installer/tests"
+package: "github.com/coreos/tectonic-installer/tests/smoke"
 import:
 - package: k8s.io/client-go
-  version: 3627aeb7d4f6ade38f995d2c923e459146493c7e
+  version: v3.0.0
+  subpackages:
+  - pkg/api/v1
 - package: k8s.io/kubernetes
-  version: d6f433224538d4f9ca2f7ae19b252e6fcb66a3ae
+  version: v1.6.7
 - package: github.com/coreos/ktestutil
   version: 1c5a59f93ffab7cf69fde8b805fee942fd467cdc 
+- package: google.golang.org/api
+  version: 295e4bb0ade057ae2cfb9876ab0b54635dbfcea4
+- package: cloud.google.com/go
+  version: v0.10.0
+- package: google.golang.org/grpc
+  version: v1.5.0
+- package: golang.org/x/net
+  version: ab5485076ff3407ad2d02db054635913f017b0ed
+- package: golang.org/x/text
+  version: 836efe42bb4aa16aaa17b9c155d8813d336ed720

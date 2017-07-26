@@ -1,8 +1,84 @@
-hash: 2e44a283fca6638b67e7ceac2d7493013262d7ba3c42bd716a31de66685c2285
-updated: 2017-07-14T14:15:54.121108205-07:00
+hash: 08741d4cbc1c9fa33acb25b0d1575d81e2a70ed02828595829c9a59074ba07b8
+updated: 2017-07-25T15:27:58.891981712-07:00
 imports:
+- name: cloud.google.com/go
+  version: a5913b3f7deecba45e98ff33cefbac4fd204ddd7
+  subpackages:
+  - bigquery
+  - civil
+  - compute/metadata
+  - internal
+  - internal/atomiccache
+  - internal/fields
+  - internal/optional
+  - internal/version
+- name: github.com/coreos/ktestutil
+  version: 1c5a59f93ffab7cf69fde8b805fee942fd467cdc
+  subpackages:
+  - testworkload
+- name: golang.org/x/net
+  version: ab5485076ff3407ad2d02db054635913f017b0ed
+  subpackages:
+  - context
+  - context/ctxhttp
+  - http2
+  - http2/hpack
+  - idna
+  - internal/timeseries
+  - lex/httplex
+  - trace
+- name: golang.org/x/text
+  version: 836efe42bb4aa16aaa17b9c155d8813d336ed720
+  subpackages:
+  - cases
+  - encoding
+  - encoding/internal
+  - encoding/internal/identifier
+  - encoding/unicode
+  - internal
+  - internal/tag
+  - internal/utf8internal
+  - language
+  - runes
+  - secure/bidirule
+  - secure/precis
+  - transform
+  - unicode/bidi
+  - unicode/norm
+  - width
+- name: google.golang.org/api
+  version: 295e4bb0ade057ae2cfb9876ab0b54635dbfcea4
+  subpackages:
+  - bigquery/v2
+  - gensupport
+  - googleapi
+  - googleapi/internal/uritemplates
+  - googleapi/transport
+  - internal
+  - iterator
+  - option
+  - transport
+  - transport/grpc
+  - transport/http
+- name: google.golang.org/grpc
+  version: 172ccacff3cfbddedcf1ba5ea06cda943bc976c1
+  subpackages:
+  - codes
+  - credentials
+  - credentials/oauth
+  - grpclb/grpc_lb_v1
+  - grpclog
+  - internal
+  - keepalive
+  - metadata
+  - naming
+  - peer
+  - stats
+  - status
+  - tap
+  - transport
 - name: k8s.io/client-go
-  version: 3627aeb7d4f6ade38f995d2c923e459146493c7e
+  version: 21300e3e11c918b8e6a70fb7293b310683d6c046
   subpackages:
   - discovery
   - dynamic
@@ -93,7 +169,7 @@ imports:
   - util/integer
   - util/jsonpath
 - name: k8s.io/kubernetes
-  version: d6f433224538d4f9ca2f7ae19b252e6fcb66a3ae
+  version: 095136c3078ccf887b9034b7ce598a0a1faff769
   subpackages:
   - federation/apis/federation
   - federation/apis/federation/install
@@ -221,11 +297,6 @@ imports:
   - pkg/util/slice
   - pkg/version
 testImports:
-- name: cloud.google.com/go
-  version: 3b1ae45394a234c385be014e9a488f2bb6eef821
-  subpackages:
-  - compute/metadata
-  - internal
 - name: github.com/coreos/go-oidc
   version: be73733bb8cc830d0205609b95d125215f8e9c70
   subpackages:
@@ -234,10 +305,6 @@ testImports:
   - key
   - oauth2
   - oidc
-- name: github.com/coreos/ktestutil
-  version: 1c5a59f93ffab7cf69fde8b805fee942fd467cdc
-  subpackages:
-  - testworkload
 - name: github.com/coreos/pkg
   version: fa29b1d70f0beaddd4c7021607cc3c3be8ce94b8
   subpackages:
@@ -313,8 +380,11 @@ testImports:
   version: 8616e8ee5e20a1704615e6c8d7afcdac06087a67
   subpackages:
   - proto
+  - ptypes/any
 - name: github.com/google/gofuzz
   version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
+- name: github.com/googleapis/gax-go
+  version: 84ed26760e7f6f80887a2fbfb50db3cc415d2cea
 - name: github.com/howeyc/gopass
   version: 3ca23474a7c7203e0a0a070fd33508f6efdb9b3d
 - name: github.com/imdario/mergo
@@ -351,15 +421,6 @@ testImports:
   version: d172538b2cfce0c13cee31e647d0367aa8cd2486
   subpackages:
   - ssh/terminal
-- name: golang.org/x/net
-  version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
-  subpackages:
-  - context
-  - context/ctxhttp
-  - http2
-  - http2/hpack
-  - idna
-  - lex/httplex
 - name: golang.org/x/oauth2
   version: 3c3a985cb79f52a3190fbc056984415ca6763d01
   subpackages:
@@ -371,24 +432,6 @@ testImports:
   version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
   subpackages:
   - unix
-- name: golang.org/x/text
-  version: 2910a502d2bf9e43193af9d68ca516529614eed3
-  subpackages:
-  - cases
-  - encoding
-  - encoding/internal
-  - encoding/internal/identifier
-  - encoding/unicode
-  - internal/tag
-  - internal/utf8internal
-  - language
-  - runes
-  - secure/bidirule
-  - secure/precis
-  - transform
-  - unicode/bidi
-  - unicode/norm
-  - width
 - name: google.golang.org/appengine
   version: 4f7eeb5305a4ba1966344836ba4af9996b7b4e05
   subpackages:
@@ -399,14 +442,20 @@ testImports:
   - internal/log
   - internal/modules
   - internal/remote_api
+  - internal/socket
   - internal/urlfetch
+  - socket
   - urlfetch
+- name: google.golang.org/genproto
+  version: b0a3dcfcd1a9bd48e63634bd8802960804cf8315
+  subpackages:
+  - googleapis/rpc/status
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/yaml.v2
   version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
 - name: k8s.io/apimachinery
-  version: 75b8dd260ef0469d96d578705a87cffd0e09dab8
+  version: 85ace5365f33b16fc735c866a12e3c765b9700f2
   subpackages:
   - pkg/api/equality
   - pkg/api/errors
@@ -455,7 +504,7 @@ testImports:
   - third_party/forked/golang/json
   - third_party/forked/golang/reflect
 - name: k8s.io/apiserver
-  version: 087d1a2efeb6296f04bb0f54e7af9890052aa6d7
+  version: d7bba18199202b51f78c048c2a8404772007f0df
   subpackages:
   - pkg/authentication/authenticator
   - pkg/authentication/serviceaccount
