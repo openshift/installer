@@ -14,7 +14,7 @@ resource "openstack_networking_secgroup_rule_v2" "cAdvisor" {
   port_range_min    = 4194
   port_range_max    = 4194
   protocol          = "tcp"
-  remote_ip_prefix  = "0.0.0.0/0"
+  remote_ip_prefix  = "${var.cluster_cidr}"
   security_group_id = "${var.secgroup_id}"
 }
 
@@ -24,7 +24,7 @@ resource "openstack_networking_secgroup_rule_v2" "flannel" {
   port_range_min    = 4789
   port_range_max    = 4789
   protocol          = "udp"
-  remote_ip_prefix  = "0.0.0.0/0"
+  remote_ip_prefix  = "${var.cluster_cidr}"
   security_group_id = "${var.secgroup_id}"
 }
 
