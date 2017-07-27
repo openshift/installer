@@ -24,11 +24,9 @@ For a more complete list of hardware and networking requirements, please see the
 
 A minimum of 3 machines are required to run Tectonic.
 
-**Provisioner node** runs the matchbox network boot and provisioning service, along with PXE services (if not running elsewhere). You may use Container Linux or any Linux distribution for this node. It provisions nodes, but does not join Tectonic clusters.
-
-**Controller nodes** run `etcd` and the control plane of the Tectonic cluster.
-
-**Worker nodes** run your applications in Tectonic clusters. New worker nodes join the cluster by talking to controller nodes for admission.
+ * **Provisioner node** runs the matchbox network boot and provisioning service, along with PXE services (if not running elsewhere). You may use Container Linux or any Linux distribution for this node. It provisions nodes, but does not join Tectonic clusters.
+ * **Controller nodes** run `etcd` and the control plane of the Tectonic cluster.
+ * **Worker nodes** run your applications in Tectonic clusters. New worker nodes join the cluster by talking to controller nodes for admission.
 
 For more information, see [Bare metal installation requirements][requirements.md].
 
@@ -36,11 +34,9 @@ For more information, see [Bare metal installation requirements][requirements.md
 
 This guide requires familiarity with PXE booting, the ability to configure network services, and to add DNS names. Networking requirements include:
 
-**matchbox** installation with gRPC API enabled and TLS client credentials.
-
-**CoreOS Container Linux** images installed and available in the Matchbox cache.
-
-**PXE enabled network** boot environment with DHCP, TFTP, and DNS services.
+ * **matchbox** installation with gRPC API enabled and TLS client credentials.
+ * **CoreOS Container Linux** images installed and available in the Matchbox cache.
+ * **PXE enabled network** boot environment with DHCP, TFTP, and DNS services.
 
 Installation and setup of these three items is detailed below.
 
@@ -109,7 +105,7 @@ $ tree /var/lib/matchbox/assets
 and verify the images are accessible.
 
 ```
-$ curl http://matchbox.example.com:8080/assets/coreos/SOME-VERSION/
+$ curl http://matchbox.example.com:8080/assets/coreos/1353.8.0/
 <pre>...
 ```
 
