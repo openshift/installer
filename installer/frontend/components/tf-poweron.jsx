@@ -265,10 +265,14 @@ class TF_PowerOn extends React.Component {
 let ready = false;
 
 TF_PowerOn.canNavigateForward = ({cluster}) => {
+  const {tectonic, terraform} = _.get(cluster, 'status') || {};
+  if (_.get(terraform, 'action') === 'destroy') {
+    return false;
+  }
   ready = ready || (
-    _.get(cluster, 'status.tectonic.console.success') === true
-    && _.get(cluster, 'status.tectonic.tectonicSystem.success') === true
-    && _.get(cluster, 'status.status') !== 'running');
+    _.get(tectonic, 'console.success') === true
+    && _.get(tectonic, 'tectonicSystem.success') === true
+    && _.toLower(_.get(terraform, 'status')) !== 'running');
 
   return ready;
 };
