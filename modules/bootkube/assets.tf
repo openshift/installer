@@ -197,24 +197,24 @@ data "template_file" "etcd_client_crt" {
 data "template_file" "etcd_client_key" {
   template = "${var.experimental_enabled || var.etcd_tls_enabled
     ? join("", tls_private_key.etcd_client.*.private_key_pem)
-    : file(var.etcd_client_cert)
+    : file(var.etcd_client_key)
   }"
 }
 
 resource "local_file" "etcd_ca_crt" {
-  count    = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
+  count    = "${var.experimental_enabled || var.etcd_tls_enabled || var.etcd_ca_cert != "/dev/null" ? 1 : 0}"
   content  = "${data.template_file.etcd_ca_cert_pem.rendered}"
   filename = "./generated/tls/etcd-client-ca.crt"
 }
 
 resource "local_file" "etcd_client_crt" {
-  count    = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
+  count    = "${var.experimental_enabled || var.etcd_tls_enabled || var.etcd_client_cert != "/dev/null" ? 1 : 0}"
   content  = "${data.template_file.etcd_client_crt.rendered}"
   filename = "./generated/tls/etcd-client.crt"
 }
 
 resource "local_file" "etcd_client_key" {
-  count    = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
+  count    = "${var.experimental_enabled || var.etcd_tls_enabled || var.etcd_client_key != "/dev/null" ? 1 : 0}"
   content  = "${data.template_file.etcd_client_key.rendered}"
   filename = "./generated/tls/etcd-client.key"
 }
