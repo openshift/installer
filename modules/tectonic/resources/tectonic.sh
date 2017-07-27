@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 set -e
 
 if [ "$#" -ne "3" ]; then
@@ -15,19 +15,20 @@ KUBECTL="/kubectl --kubeconfig=$KUBECONFIG"
 
 # Setup helper functions
 
-function kubectl() {
-  local i=0
+kubectl() {
+  i=0
 
   echo "Executing kubectl" "$@"
   while true; do
-    (( i++ )) && (( i == 100 )) && echo "kubectl failed, giving up" && exit 1
+    i=$((i+1))
+    [ $i -eq 100 ] && echo "kubectl failed, giving up" && exit 1
 
     set +e
     out=$($KUBECTL "$@" 2>&1)
     status=$?
     set -e
 
-    if [[ "$out" == *"AlreadyExists"* ]]; then
+    if echo "$out" | grep -q "AlreadyExists"; then
       echo "$out, skipping"
       return
     fi
@@ -42,20 +43,20 @@ function kubectl() {
   done
 }
 
-function wait_for_tpr() {
+wait_for_tpr() {
   set +e
-  local i=0
+  i=0
 
   echo "Waiting for TPR $2"
   until $KUBECTL -n "$1" get thirdpartyresources "$2"; do
-    (( i++ ))
+    i=$((i+1))
     echo "TPR $2 not available yet, retrying in 5 seconds ($i)"
     sleep 5
   done
   set -e
 }
 
-function wait_for_pods() {
+wait_for_pods() {
   set +e
   echo "Waiting for pods in namespace $1"
   while true; do
@@ -78,7 +79,7 @@ function wait_for_pods() {
     fi
   
     stat=$(echo "$out"| tail -n +2 | grep -v '^Running')
-    if [[ "$stat" == "" ]]; then
+    if [ -z "$stat" ]; then
       return
     fi
   
@@ -96,7 +97,7 @@ set +e
 i=0
 echo "Waiting for Kubernetes API..."
 until $KUBECTL cluster-info; do
-  (( i++ ))
+  i=$((i+1))
   echo "Cluster not available yet, waiting for 5 seconds ($i)"
   sleep 5
 done
