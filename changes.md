@@ -1,8 +1,6 @@
 # Tectonic Changelog
 
-## Tectonic 1.7.1-tectonic.1 (2017-08-07)
-
-* Updates to Kubernetes v1.7.1.
+## Current
 
 ### Console
 
@@ -12,10 +10,6 @@
 
 * Internet gateways and etcd node root volumes are tagged with default and user-supplied tags
 * The bootkube kubeconfigs' cluster name is set to the Tectonic cluster name
-
-## Tectonic 1.6.7-tectonic.2 (2017-07-28)
-
-* Allow updates to the Tectonic v1.7.x releases.
 
 ## Tectonic 1.6.7-tectonic.1 (2017-07-11)
 
