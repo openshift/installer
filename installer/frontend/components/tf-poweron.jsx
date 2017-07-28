@@ -181,68 +181,66 @@ class TF_PowerOn extends React.Component {
       <hr />
       <div className="row">
         <div className="col-xs-12">
-          <div className="wiz-launch__progress">
-            <ul className="wiz-launch-progress">
-              <WaitingLi done={statusMsg === 'success'} error={tfError}>
-                Terraform {action} {statusMsg}
-                {output && <div className="pull-right" style={{fontSize: "13px"}}>
-                  <a onClick={() => this.setState({showLogs: !showLogs})}>
-                    { showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
-                               : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
-                  </a>
-                  <span className="spacer"></span>
-                  <a onClick={() => saveAs(new Blob([output], {type: 'text/plain'}), `tectonic-${clusterName}.log`)}>
-                    <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
-                  </a>
-                </div>}
-                { showLogs && output &&
-                  <div className="log-pane">
-                    <div className="log-pane__header">
-                      <div className="log-pane__header__message">Terraform logs</div>
-                    </div>
-                    <div className="log-pane__body">
-                      <div className="log-area">
-                        <div className="log-scroll-pane" ref={node => this.outputNode = node}>
-                          <div className="log-contents">{output}</div>
-                        </div>
+          <ul className="wiz-launch-progress">
+            <WaitingLi done={statusMsg === 'success'} error={tfError}>
+              Terraform {action} {statusMsg}
+              {output && <div className="pull-right" style={{fontSize: "13px"}}>
+                <a onClick={() => this.setState({showLogs: !showLogs})}>
+                  { showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
+                              : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
+                </a>
+                <span className="spacer"></span>
+                <a onClick={() => saveAs(new Blob([output], {type: 'text/plain'}), `tectonic-${clusterName}.log`)}>
+                  <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
+                </a>
+              </div>}
+              { showLogs && output &&
+                <div className="log-pane">
+                  <div className="log-pane__header">
+                    <div className="log-pane__header__message">Terraform logs</div>
+                  </div>
+                  <div className="log-pane__body">
+                    <div className="log-area">
+                      <div className="log-scroll-pane" ref={node => this.outputNode = node}>
+                        <div className="log-contents">{output}</div>
                       </div>
                     </div>
                   </div>
-                }
-              </WaitingLi>
-              <li style={{paddingLeft: 20, listStyle: 'none'}}>
-              { state.xhrError &&
-                <div className="row">
-                  <div className="col-xs-12">
-                    <Alert severity="error">{state.xhrError}</Alert>
-                  </div>
                 </div>
               }
-              { tfError && <Alert severity="error">{tfError.toString()}</Alert> }
-              { !terraformRunning && tfError &&
-                <Alert severity="error" noIcon>
-                  <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
-                  <ol style={{ paddingLeft: 30, paddingTop: 10, paddingBottom: 10 }}>
-                    <li>Save your logs for debugging purposes.</li>
-                    <li>Destroy your cluster to clear anything that may have been created.</li>
-                    <li>Reapply Terraform.</li>
-                  </ol>
-                  {tfButtons}
-                </Alert>
-              }
-              { !terraformRunning && !tfError &&
-                <Alert severity="info" noIcon>
-                  <b>{_.startCase(action)} Succeeded</b>.
-                  <p>
-                    If you've changed your mind, you can {action === 'apply' ? 'destroy' : 'reapply'} your cluster.
-                  </p>
-                  {tfButtons}
-                </Alert>
-              }
-              </li>
-              { consoleSubsteps }
-            </ul>
-          </div>
+            </WaitingLi>
+            <li style={{paddingLeft: 20, listStyle: 'none'}}>
+            { state.xhrError &&
+              <div className="row">
+                <div className="col-xs-12">
+                  <Alert severity="error">{state.xhrError}</Alert>
+                </div>
+              </div>
+            }
+            { tfError && <Alert severity="error">{tfError.toString()}</Alert> }
+            { !terraformRunning && tfError &&
+              <Alert severity="error" noIcon>
+                <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
+                <ol style={{ paddingLeft: 30, paddingTop: 10, paddingBottom: 10 }}>
+                  <li>Save your logs for debugging purposes.</li>
+                  <li>Destroy your cluster to clear anything that may have been created.</li>
+                  <li>Reapply Terraform.</li>
+                </ol>
+                {tfButtons}
+              </Alert>
+            }
+            { !terraformRunning && !tfError &&
+              <Alert severity="info" noIcon>
+                <b>{_.startCase(action)} Succeeded</b>.
+                <p>
+                  If you've changed your mind, you can {action === 'apply' ? 'destroy' : 'reapply'} your cluster.
+                </p>
+                {tfButtons}
+              </Alert>
+            }
+            </li>
+            { consoleSubsteps }
+          </ul>
         </div>
       </div>
       <br />
