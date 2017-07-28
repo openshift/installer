@@ -7,14 +7,18 @@
 
 ### Console
 
-* The Tectonic update channel can now be selected (1.6, 1.7-preproduction, 1.7-production)
-* Kubectl-config cluster name is set to the Tectonic cluster name, defaulting to "tectonic" for backwards-compatibility
-* Prometheus and Calico Network Policy configuration pages are available
+* Multiple update channels can be selected. See instructions below for additional details about updating from 1.6.x to 1.7.1.
+  * 1.7-preproduction is available for testing and all non-production environments
+  * 1.7-production should be used for all production environments
+* Downloadable kubeconfigs now set the context name to the cluster name provided during installation, defaulting to "tectonic" for backwards-compatibility
+* Added ability to view and configure Prometheus clusters run by the Prometheus operator
+* Added ability to view Prometheus AlertManager configuration
 
 ### Tectonic Installer
 
+* Container download and start up progress is output when booting a cluster
 * Internet gateways and etcd node root volumes are tagged with default and user-supplied tags
-* The bootkube kubeconfigs' cluster name is set to the Tectonic cluster name
+* The bootkube kubeconfigs' cluster name is set to the Tectonic cluster name provided during installation
 
 ## Tectonic 1.6.7-tectonic.1 (2017-07-11)
 
