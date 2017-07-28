@@ -1,9 +1,9 @@
 # Tectonic Changelog
 
-## Tectonic 1.7.1-tectonic.1 (2017-08-07)
+## Tectonic 1.7.1-tectonic.1 (2017-08-09)
 
 * Updates to Kubernetes v1.7.1.
-* Support for Azure is Beta.
+* Support for Azure is Stable.
 
 ### Console
 
@@ -22,9 +22,9 @@
 
 ### Upgrade Notes - Requires 1.6.7-tectonic.2
 
-In order to upgrade to Tectonic 1.7.1-tectonic.1, you must first update to `1.6.7-tectonic.2`, which unlocks this ability. Once running this version, change the update channel to `1.7-preproduction` or `1.7-production` and click "Check for update". Update packages will be released to these channels in a rolling fashion and it is normal for an update to be available on one channel but not the other.
+To upgrade to Tectonic 1.7.1-tectonic.1, you must first update to `1.6.7-tectonic.2`. Once running `1.6.7-tectonic.2`, change the update channel to `1.7-preproduction` or `1.7-production` and click "Check for update". Update packages will be released to these channels in a rolling fashion, and will often be available on one channel but not the other.
 
-If you encounter an error, ensure that you are running `1.6.7-tectonic.2`. [Read more](need-link).
+If you encounter an error, confirm that you are running `1.6.7-tectonic.2` before reading the [troubleshooting guide](https://github.com/coreos/tectonic-installer/blob/master/Documentation/troubleshooting/tectonic-upgrade.md#upgrading-to-171-tectonic1).
 
 ## Tectonic 1.6.7-tectonic.1 (2017-07-11)
 
