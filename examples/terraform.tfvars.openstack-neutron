@@ -35,7 +35,7 @@ tectonic_base_domain = ""
 // tectonic_ca_key = ""
 
 // (optional) The algorithm used to generate tectonic_ca_key.
-// The default value is currently recommend.
+// The default value is currently recommended.
 // This field is mandatory if `tectonic_ca_cert` is set.
 // tectonic_ca_key_alg = "RSA"
 
