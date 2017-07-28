@@ -36,12 +36,6 @@ Once basic installation of a host is complete, ensure that the additional Red Ha
 $ subscription-manager repos --enable=rhel-7-server-extras-rpms
 ```
 
-This can also be accomplished with yum-config-manager:
-
-```
-$ yum-config-manager --enable rhel-7-server-extras-rpms
-```
-
 If `subscription-manager` is not in use, ensure that the correct URL for the mirror of extras that is to be used is placed in the corresponding file in `/etc/yum.repos.d` and set to `enabled`.
 
 
@@ -129,9 +123,9 @@ $ firewall-cmd --add-port 4789/udp --permanent
 
 Note: These settings may not be all inclusive and will not represent relative node ports or other communications which may need to be performed. For more information consult the [Kubernetes Networking][k8s-networking] documentation.
 
-### SELinux
+### Set SELinux to Permissive mode
 
-To allow the Tectonic worker, run SELinux in Permissive mode. Running in Enforcing mode will block permissions for worker nodes.
+It is required to run SELinux in Permissive mode. Running in Enforcing mode will block permissions for worker nodes.
 
 ```
 setenforce 0
