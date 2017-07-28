@@ -20,6 +20,12 @@
 * Internet gateways and etcd node root volumes are tagged with default and user-supplied tags
 * The bootkube kubeconfigs' cluster name is set to the Tectonic cluster name provided during installation
 
+### Upgrade Notes - Requires 1.6.7-tectonic.1
+
+In order to upgrade to Tectonic 1.7.1-tectonic.1, you must first update to `1.6.7-tectonic.2`, which unlocks this ability. Once running this version, change the update channel to `1.7-preproduction` or `1.7-production` and click "Check for update". Update packages will be released to these channels in a rolling fashion and it is normal for an update to be available on one channel but not the other.
+
+If you encounter an error, ensure that you are running `1.6.7-tectonic.2`. [Read more](need-link).
+
 ## Tectonic 1.6.7-tectonic.1 (2017-07-11)
 
 * Updates to Kubernetes v1.6.7.
