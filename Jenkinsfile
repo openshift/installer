@@ -77,6 +77,7 @@ pipeline {
               # TODO: Remove me.
               go get github.com/segmentio/terraform-docs
               go get github.com/s-urbaniak/terraform-examples
+              go get github.com/bronze1man/yaml2json
 
               cd $GO_PROJECT/
               make structure-check
