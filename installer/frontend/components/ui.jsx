@@ -613,7 +613,7 @@ export const WaitingLi = ({done, error, cancel, children, substep}) => {
   });
 
   return <li className={progressClasses}>
-    {!substep && <i className={iconClasses}></i>}&nbsp;{children}
+    {!substep && <i className={iconClasses} style={{margin: '0 3px 0 -3px'}}></i>}{children}
   </li>;
 };
 

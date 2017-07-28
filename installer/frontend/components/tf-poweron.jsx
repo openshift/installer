@@ -209,35 +209,35 @@ class TF_PowerOn extends React.Component {
                 </div>
               }
             </WaitingLi>
-            <li style={{paddingLeft: 20, listStyle: 'none'}}>
-            { state.xhrError &&
-              <div className="row">
-                <div className="col-xs-12">
-                  <Alert severity="error">{state.xhrError}</Alert>
+            <li style={{paddingLeft: 22, listStyle: 'none'}}>
+              { state.xhrError &&
+                <div className="row">
+                  <div className="col-xs-12">
+                    <Alert severity="error">{state.xhrError}</Alert>
+                  </div>
                 </div>
-              </div>
-            }
-            { tfError && <Alert severity="error">{tfError.toString()}</Alert> }
-            { !terraformRunning && tfError &&
-              <Alert severity="error" noIcon>
-                <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
-                <ol style={{ paddingLeft: 30, paddingTop: 10, paddingBottom: 10 }}>
-                  <li>Save your logs for debugging purposes.</li>
-                  <li>Destroy your cluster to clear anything that may have been created.</li>
-                  <li>Reapply Terraform.</li>
-                </ol>
-                {tfButtons}
-              </Alert>
-            }
-            { !terraformRunning && !tfError &&
-              <Alert severity="info" noIcon>
-                <b>{_.startCase(action)} Succeeded</b>.
-                <p>
-                  If you've changed your mind, you can {action === 'apply' ? 'destroy' : 'reapply'} your cluster.
-                </p>
-                {tfButtons}
-              </Alert>
-            }
+              }
+              { tfError && <Alert severity="error">{tfError.toString()}</Alert> }
+              { !terraformRunning && tfError &&
+                <Alert severity="error" noIcon>
+                  <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
+                  <ol style={{ paddingLeft: 30, paddingTop: 10, paddingBottom: 10 }}>
+                    <li>Save your logs for debugging purposes.</li>
+                    <li>Destroy your cluster to clear anything that may have been created.</li>
+                    <li>Reapply Terraform.</li>
+                  </ol>
+                  {tfButtons}
+                </Alert>
+              }
+              { !terraformRunning && !tfError &&
+                <Alert severity="info" noIcon>
+                  <b>{_.startCase(action)} Succeeded</b>.
+                  <p>
+                    If you've changed your mind, you can {action === 'apply' ? 'destroy' : 'reapply'} your cluster.
+                  </p>
+                  {tfButtons}
+                </Alert>
+              }
             </li>
             { consoleSubsteps }
           </ul>
