@@ -166,6 +166,19 @@ input[type="text"].wiz-node-field {
   margin: 0;
 }
 
+.wiz-launch-progress__bar {
+  background-color: #e5e5e5;
+  border-radius: 2px;
+  height: 4px;
+  margin: 10px 0px 15px 22px;
+}
+
+.wiz-launch-progress__bar-inner {
+  background-color: #2fc98e;
+  border-radius: 2px;
+  height: 4px;
+}
+
 ul.service-launch-progress__steps {
   margin: 10px 0 0 15px;
 }
