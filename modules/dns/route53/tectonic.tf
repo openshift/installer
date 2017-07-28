@@ -3,7 +3,7 @@ resource "aws_route53_zone" "tectonic" {
   name  = "${var.base_domain}"
 }
 
-resource "aws_route53_record" "tectonic-api" {
+resource "aws_route53_record" "tectonic_api" {
   count   = "1"
   zone_id = "${aws_route53_zone.tectonic.zone_id}"
   name    = "${var.cluster_name}-k8s"
@@ -12,7 +12,7 @@ resource "aws_route53_record" "tectonic-api" {
   records = ["${var.master_ips}"]
 }
 
-resource "aws_route53_record" "tectonic-console" {
+resource "aws_route53_record" "tectonic_console" {
   count   = "1"
   zone_id = "${aws_route53_zone.tectonic.zone_id}"
   name    = "${var.cluster_name}"

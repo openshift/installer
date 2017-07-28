@@ -1,17 +1,17 @@
 data "ignition_config" "main" {
   files = [
-    "${data.ignition_file.max-user-watches.id}",
-    "${data.ignition_file.s3-puller.id}",
-    "${data.ignition_file.init-assets.id}",
-    "${data.ignition_file.detect-master.id}",
+    "${data.ignition_file.max_user_watches.id}",
+    "${data.ignition_file.s3_puller.id}",
+    "${data.ignition_file.init_assets.id}",
+    "${data.ignition_file.detect_master.id}",
   ]
 
   systemd = [
     "${data.ignition_systemd_unit.docker.id}",
     "${data.ignition_systemd_unit.locksmithd.id}",
     "${data.ignition_systemd_unit.kubelet.id}",
-    "${data.ignition_systemd_unit.kubelet-env.id}",
-    "${data.ignition_systemd_unit.init-assets.id}",
+    "${data.ignition_systemd_unit.kubelet_env.id}",
+    "${data.ignition_systemd_unit.init_assets.id}",
     "${data.ignition_systemd_unit.bootkube.id}",
     "${data.ignition_systemd_unit.tectonic.id}",
   ]
@@ -52,7 +52,7 @@ data "ignition_systemd_unit" "kubelet" {
   content = "${data.template_file.kubelet.rendered}"
 }
 
-data "template_file" "kubelet-env" {
+data "template_file" "kubelet_env" {
   template = "${file("${path.module}/resources/services/kubelet-env.service")}"
 
   vars {
@@ -63,13 +63,13 @@ data "template_file" "kubelet-env" {
   }
 }
 
-data "ignition_systemd_unit" "kubelet-env" {
+data "ignition_systemd_unit" "kubelet_env" {
   name    = "kubelet-env.service"
   enable  = true
-  content = "${data.template_file.kubelet-env.rendered}"
+  content = "${data.template_file.kubelet_env.rendered}"
 }
 
-data "ignition_file" "max-user-watches" {
+data "ignition_file" "max_user_watches" {
   filesystem = "root"
   path       = "/etc/sysctl.d/max-user-watches.conf"
   mode       = 0644
@@ -79,7 +79,7 @@ data "ignition_file" "max-user-watches" {
   }
 }
 
-data "template_file" "s3-puller" {
+data "template_file" "s3_puller" {
   template = "${file("${path.module}/resources/s3-puller.sh")}"
 
   vars {
@@ -87,17 +87,17 @@ data "template_file" "s3-puller" {
   }
 }
 
-data "ignition_file" "s3-puller" {
+data "ignition_file" "s3_puller" {
   filesystem = "root"
   path       = "/opt/s3-puller.sh"
   mode       = 0755
 
   content {
-    content = "${data.template_file.s3-puller.rendered}"
+    content = "${data.template_file.s3_puller.rendered}"
   }
 }
 
-data "ignition_file" "detect-master" {
+data "ignition_file" "detect_master" {
   filesystem = "root"
   path       = "/opt/detect-master.sh"
   mode       = 0755
@@ -107,7 +107,7 @@ data "ignition_file" "detect-master" {
   }
 }
 
-data "template_file" "init-assets" {
+data "template_file" "init_assets" {
   template = "${file("${path.module}/resources/init-assets.sh")}"
 
   vars {
@@ -119,17 +119,17 @@ data "template_file" "init-assets" {
   }
 }
 
-data "ignition_file" "init-assets" {
+data "ignition_file" "init_assets" {
   filesystem = "root"
   path       = "/opt/tectonic/init-assets.sh"
   mode       = 0755
 
   content {
-    content = "${data.template_file.init-assets.rendered}"
+    content = "${data.template_file.init_assets.rendered}"
   }
 }
 
-data "ignition_systemd_unit" "init-assets" {
+data "ignition_systemd_unit" "init_assets" {
   name    = "init-assets.service"
   enable  = "${var.assets_s3_location != "" ? true : false}"
   content = "${file("${path.module}/resources/services/init-assets.service")}"

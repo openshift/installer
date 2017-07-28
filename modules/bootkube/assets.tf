@@ -21,7 +21,7 @@ resource "template_dir" "experimental" {
   }
 }
 
-resource "template_dir" "bootstrap-experimental" {
+resource "template_dir" "bootstrap_experimental" {
   count           = "${var.experimental_enabled ? 1 : 0}"
   source_dir      = "${path.module}/resources/experimental/bootstrap-manifests"
   destination_dir = "./generated/bootstrap-experimental"
@@ -33,7 +33,7 @@ resource "template_dir" "bootstrap-experimental" {
   }
 }
 
-resource "template_dir" "etcd-experimental" {
+resource "template_dir" "etcd_experimental" {
   count           = "${var.experimental_enabled ? 1 : 0}"
   source_dir      = "${path.module}/resources/experimental/etcd"
   destination_dir = "./generated/etcd"
@@ -89,11 +89,11 @@ resource "template_dir" "bootkube" {
     oidc_username_claim = "${var.oidc_username_claim}"
     oidc_groups_claim   = "${var.oidc_groups_claim}"
 
-    ca_cert            = "${base64encode(var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube-ca.*.cert_pem) : var.ca_cert)}"
+    ca_cert            = "${base64encode(var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube_ca.*.cert_pem) : var.ca_cert)}"
     apiserver_key      = "${base64encode(tls_private_key.apiserver.private_key_pem)}"
     apiserver_cert     = "${base64encode(tls_locally_signed_cert.apiserver.cert_pem)}"
-    serviceaccount_pub = "${base64encode(tls_private_key.service-account.public_key_pem)}"
-    serviceaccount_key = "${base64encode(tls_private_key.service-account.private_key_pem)}"
+    serviceaccount_pub = "${base64encode(tls_private_key.service_account.public_key_pem)}"
+    serviceaccount_key = "${base64encode(tls_private_key.service_account.private_key_pem)}"
 
     etcd_ca_flag   = "${data.template_file.etcd_ca_cert_pem.rendered != "" ? "- --etcd-cafile=/etc/kubernetes/secrets/etcd-client-ca.crt" : "# no etcd-client-ca.crt given" }"
     etcd_cert_flag = "${data.template_file.etcd_client_crt.rendered != "" ? "- --etcd-certfile=/etc/kubernetes/secrets/etcd-client.crt" : "# no etcd-client.crt given" }"
@@ -112,7 +112,7 @@ resource "template_dir" "bootkube" {
 }
 
 # Self-hosted bootstrapping manifests (resources/generated/manifests-bootstrap/)
-resource "template_dir" "bootkube-bootstrap" {
+resource "template_dir" "bootkube_bootstrap" {
   source_dir      = "${path.module}/resources/bootstrap-manifests"
   destination_dir = "./generated/bootstrap-manifests"
 
@@ -147,7 +147,7 @@ data "template_file" "kubeconfig" {
   template = "${file("${path.module}/resources/kubeconfig")}"
 
   vars {
-    ca_cert      = "${base64encode(var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube-ca.*.cert_pem) : var.ca_cert)}"
+    ca_cert      = "${base64encode(var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube_ca.*.cert_pem) : var.ca_cert)}"
     kubelet_cert = "${base64encode(tls_locally_signed_cert.kubelet.cert_pem)}"
     kubelet_key  = "${base64encode(tls_private_key.kubelet.private_key_pem)}"
     server       = "${var.kube_apiserver_url}"
@@ -161,7 +161,7 @@ resource "local_file" "kubeconfig" {
 }
 
 # bootkube.sh (resources/generated/bootkube.sh)
-data "template_file" "bootkube-sh" {
+data "template_file" "bootkube_sh" {
   template = "${file("${path.module}/resources/bootkube.sh")}"
 
   vars {
@@ -169,8 +169,8 @@ data "template_file" "bootkube-sh" {
   }
 }
 
-resource "local_file" "bootkube-sh" {
-  content  = "${data.template_file.bootkube-sh.rendered}"
+resource "local_file" "bootkube_sh" {
+  content  = "${data.template_file.bootkube_sh.rendered}"
   filename = "./generated/bootkube.sh"
 }
 
@@ -182,7 +182,7 @@ data "template_file" "bootkube_service" {
 # etcd assets
 data "template_file" "etcd_ca_cert_pem" {
   template = "${var.experimental_enabled || var.etcd_tls_enabled
-    ? join("", tls_self_signed_cert.etcd-ca.*.cert_pem)
+    ? join("", tls_self_signed_cert.etcd_ca.*.cert_pem)
     : file(var.etcd_ca_cert)
   }"
 }

@@ -1,4 +1,4 @@
-resource "aws_elb" "api-internal" {
+resource "aws_elb" "api_internal" {
   name            = "${var.cluster_name}-int"
   subnets         = ["${var.subnet_ids}"]
   internal        = true
@@ -30,19 +30,19 @@ resource "aws_elb" "api-internal" {
     ), var.extra_tags)}"
 }
 
-resource "aws_route53_record" "api-internal" {
+resource "aws_route53_record" "api_internal" {
   zone_id = "${var.internal_zone_id}"
   name    = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-api.${var.base_domain}"
   type    = "A"
 
   alias {
-    name                   = "${aws_elb.api-internal.dns_name}"
-    zone_id                = "${aws_elb.api-internal.zone_id}"
+    name                   = "${aws_elb.api_internal.dns_name}"
+    zone_id                = "${aws_elb.api_internal.zone_id}"
     evaluate_target_health = true
   }
 }
 
-resource "aws_elb" "api-external" {
+resource "aws_elb" "api_external" {
   count           = "${var.public_vpc}"
   name            = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-ext"
   subnets         = ["${var.subnet_ids}"]
@@ -75,15 +75,15 @@ resource "aws_elb" "api-external" {
     ), var.extra_tags)}"
 }
 
-resource "aws_route53_record" "api-external" {
+resource "aws_route53_record" "api_external" {
   count   = "${var.public_vpc}"
   zone_id = "${var.external_zone_id}"
   name    = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-api.${var.base_domain}"
   type    = "A"
 
   alias {
-    name                   = "${aws_elb.api-external.dns_name}"
-    zone_id                = "${aws_elb.api-external.zone_id}"
+    name                   = "${aws_elb.api_external.dns_name}"
+    zone_id                = "${aws_elb.api_external.zone_id}"
     evaluate_target_health = true
   }
 }
@@ -125,7 +125,7 @@ resource "aws_elb" "console" {
     ), var.extra_tags)}"
 }
 
-resource "aws_route53_record" "ingress-public" {
+resource "aws_route53_record" "ingress_public" {
   count   = "${var.public_vpc}"
   zone_id = "${var.external_zone_id}"
   name    = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}.${var.base_domain}"
@@ -138,7 +138,7 @@ resource "aws_route53_record" "ingress-public" {
   }
 }
 
-resource "aws_route53_record" "ingress-private" {
+resource "aws_route53_record" "ingress_private" {
   zone_id = "${var.internal_zone_id}"
   name    = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}.${var.base_domain}"
   type    = "A"

@@ -63,7 +63,7 @@ module "etcd" {
 
   subnets = "${module.vpc.worker_subnet_ids}"
 
-  dns_zone_id  = "${var.tectonic_aws_external_private_zone == "" ? join("", aws_route53_zone.tectonic-int.*.zone_id) : var.tectonic_aws_external_private_zone}"
+  dns_zone_id  = "${var.tectonic_aws_external_private_zone == "" ? join("", aws_route53_zone.tectonic_int.*.zone_id) : var.tectonic_aws_external_private_zone}"
   base_domain  = "${var.tectonic_base_domain}"
   cluster_name = "${var.tectonic_cluster_name}"
 
@@ -81,7 +81,7 @@ module "etcd" {
   tls_zip = "${module.bootkube.etcd_tls_zip}"
 }
 
-module "ignition-masters" {
+module "ignition_masters" {
   source = "../../modules/aws/ignition"
 
   kubelet_node_label        = "node-role.kubernetes.io/master"
@@ -89,7 +89,7 @@ module "ignition-masters" {
   kubelet_cni_bin_dir       = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
   kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
   kubeconfig_s3_location    = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
-  assets_s3_location        = "${aws_s3_bucket_object.tectonic-assets.bucket}/${aws_s3_bucket_object.tectonic-assets.key}"
+  assets_s3_location        = "${aws_s3_bucket_object.tectonic_assets.bucket}/${aws_s3_bucket_object.tectonic_assets.key}"
   container_images          = "${var.tectonic_container_images}"
   bootkube_service          = "${module.bootkube.systemd_service}"
   tectonic_service          = "${module.tectonic.systemd_service}"
@@ -114,10 +114,10 @@ module "masters" {
 
   ssh_key    = "${var.tectonic_aws_ssh_key}"
   cl_channel = "${var.tectonic_cl_channel}"
-  user_data  = "${module.ignition-masters.ignition}"
+  user_data  = "${module.ignition_masters.ignition}"
 
-  internal_zone_id             = "${var.tectonic_aws_external_private_zone == "" ? join("", aws_route53_zone.tectonic-int.*.zone_id) : var.tectonic_aws_external_private_zone}"
-  external_zone_id             = "${join("", data.aws_route53_zone.tectonic-ext.*.zone_id)}"
+  internal_zone_id             = "${var.tectonic_aws_external_private_zone == "" ? join("", aws_route53_zone.tectonic_int.*.zone_id) : var.tectonic_aws_external_private_zone}"
+  external_zone_id             = "${join("", data.aws_route53_zone.tectonic_ext.*.zone_id)}"
   base_domain                  = "${var.tectonic_base_domain}"
   public_vpc                   = "${var.tectonic_aws_external_vpc_public}"
   cluster_id                   = "${module.tectonic.cluster_id}"
@@ -130,7 +130,7 @@ module "masters" {
   root_volume_iops = "${var.tectonic_aws_master_root_volume_iops}"
 }
 
-module "ignition-workers" {
+module "ignition_workers" {
   source = "../../modules/aws/ignition"
 
   kubelet_node_label     = "node-role.kubernetes.io/node"
@@ -160,7 +160,7 @@ module "workers" {
 
   ssh_key                      = "${var.tectonic_aws_ssh_key}"
   cl_channel                   = "${var.tectonic_cl_channel}"
-  user_data                    = "${module.ignition-workers.ignition}"
+  user_data                    = "${module.ignition_workers.ignition}"
   cluster_id                   = "${module.tectonic.cluster_id}"
   extra_tags                   = "${var.tectonic_aws_extra_tags}"
   autoscaling_group_extra_tags = "${var.tectonic_autoscaling_group_extra_tags}"

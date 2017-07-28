@@ -30,7 +30,7 @@ resource "aws_autoscaling_group" "masters" {
   launch_configuration = "${aws_launch_configuration.master_conf.id}"
   vpc_zone_identifier  = ["${var.subnet_ids}"]
 
-  load_balancers = ["${compact(concat(list(aws_elb.api-internal.id), list(aws_elb.console.id), aws_elb.api-external.*.id))}"]
+  load_balancers = ["${compact(concat(list(aws_elb.api_internal.id), list(aws_elb.console.id), aws_elb.api_external.*.id))}"]
 
   tags = [
     {

@@ -18,7 +18,7 @@ resource "aws_s3_bucket" "tectonic" {
 }
 
 # Bootkube / Tectonic assets
-resource "aws_s3_bucket_object" "tectonic-assets" {
+resource "aws_s3_bucket_object" "tectonic_assets" {
   bucket = "${aws_s3_bucket.tectonic.bucket}"
   key    = "assets.zip"
   source = "${data.archive_file.assets.output_path}"
