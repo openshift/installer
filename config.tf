@@ -316,7 +316,7 @@ variable "tectonic_ca_key_alg" {
 
   description = <<EOF
 (optional) The algorithm used to generate tectonic_ca_key.
-The default value is currently recommend.
+The default value is currently recommended.
 This field is mandatory if `tectonic_ca_cert` is set.
 EOF
 }
