@@ -13,6 +13,7 @@
     }
   },
   "rules": {
+    "brace-style": [2],
     "comma-dangle": [2 , "always-multiline"],
     "consistent-this": [1, "self"],
     "curly": [2],

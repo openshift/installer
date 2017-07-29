@@ -17,8 +17,7 @@ const send = (obj) => {
         ga('CoreOS.send', 'event', category, action, label, value);
       }
     }
-  }
-  catch(err) {
+  } catch(err) {
     console.error(`Failed to send GA event: ${err.message}`);
   }
 };

@@ -110,7 +110,10 @@ export class AWS_Tags extends React.Component {
 
       <div className="row">
         <div className="col-xs-3">
-          <span className="wiz-link" onClick={() => {this.setState({ showAutofocus: true }); tagsFields.addOnClick();}}>
+          <span className="wiz-link" onClick={() => {
+            this.setState({ showAutofocus: true });
+            tagsFields.addOnClick();
+          }}>
             <i className="fa fa-plus-circle list-add wiz-link"></i>&nbsp; Add More
           </span>
         </div>
