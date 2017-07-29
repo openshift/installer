@@ -39,7 +39,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
 class TF_PowerOn extends React.Component {
   constructor (props) {
     super(props);
-    this.state = {showLogs: null};
+    this.state = {showLogs: null, xhrError: null};
   }
 
   componentDidMount () {
