@@ -75,7 +75,7 @@ export const ErrorComponent = props => {
     return <props.ErrorComponent error={error} />;
   }
   if (error) {
-    return <Alert severity='error'>{error}</Alert>;
+    return <Alert severity="error">{error}</Alert>;
   }
   return <span />;
 };

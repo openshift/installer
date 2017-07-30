@@ -103,7 +103,7 @@ class TF_PowerOn extends React.Component {
 
       const dnsReady = tectonic.console.success || ((tectonic.console.message || '').search('no such host') === -1);
       consoleSubsteps.push(
-        <WaitingLi done={dnsReady && !terraformRunning} key='dnsReady'>
+        <WaitingLi done={dnsReady && !terraformRunning} key="dnsReady">
           Resolving <a href={`https://${tectonicDomain}`} target="_blank">{tectonicDomain}</a>
         </WaitingLi>
       );
