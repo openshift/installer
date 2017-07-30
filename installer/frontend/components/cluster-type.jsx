@@ -76,7 +76,7 @@ export const ClusterType = () => <div>
     </div>
     <div className="col-xs-9">
       <Connect field={PLATFORM_TYPE}>
-        <Select onValue={(value) => {TectonicGA.sendEvent('Platform Changed', 'user input', value, value);}}>
+        <Select onValue={(value) => TectonicGA.sendEvent('Platform Changed', 'user input', value, value)}>
           {platformOptions}
         </Select>
       </Connect>
