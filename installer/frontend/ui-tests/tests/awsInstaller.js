@@ -4,7 +4,7 @@ const log = require('../utils/log');
 const installerInput = require('../utils/awsInstallerInput');
 const tfvarsUtil = require('../utils/terraformTfvars');
 
-const REQUIRED_ENV_VARS = ["AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "TF_VAR_tectonic_license_path", "TF_VAR_tectonic_pull_secret_path"];
+const REQUIRED_ENV_VARS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
 
 module.exports = {
   after (client) {

@@ -46,6 +46,7 @@
     "no-useless-call": [2],
     "no-void": [2],
     "no-with": [2],
+    "quotes": [2, "single", {"avoidEscape": true}],
     "radix": [2],
     "react/jsx-indent": [2, 2],
     "react/prop-types": [0],

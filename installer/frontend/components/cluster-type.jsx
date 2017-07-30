@@ -25,7 +25,7 @@ const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PL
       This method is designed for automation and doesn't use the graphical installer.
       <br />
       <a href={DOCS[platform]} target="_blank">
-        <button className="btn btn-primary" style={{marginTop: 8}}>{platformName && platformName.split("(Alpha)")[0]} Docs&nbsp;&nbsp;<i className="fa fa-external-link" /></button>
+        <button className="btn btn-primary" style={{marginTop: 8}}>{platformName && platformName.split('(Alpha)')[0]} Docs&nbsp;&nbsp;<i className="fa fa-external-link" /></button>
       </a>
     </p>;
   }

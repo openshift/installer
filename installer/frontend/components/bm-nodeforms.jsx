@@ -27,7 +27,7 @@ const BulkUpload = connect(null, dispatch => ({
     dispatch(configActions.updateField(fieldID, payload));
     _.each(payload, (row, i) => {
       _.each(row, (ignore, key) => {
-        markIDDirty(dispatch, [fieldID, i, key].join("."));
+        markIDDirty(dispatch, [fieldID, i, key].join('.'));
       });
     });
     dispatch(configActions.updateField(fieldID, payload));
@@ -293,7 +293,7 @@ class NodeForm extends React.Component {
           </div>
 
           <div className="row">
-            <div className="col-xs-12" style={{margin: "10px 0"}}>
+            <div className="col-xs-12" style={{margin: '10px 0'}}>
               <field.NonFieldErrors />
             </div>
           </div>
@@ -303,7 +303,7 @@ class NodeForm extends React.Component {
   }
 }
 
-const mastersFields = generateField(BM_MASTERS, "Master", 9);
+const mastersFields = generateField(BM_MASTERS, 'Master', 9);
 export const mastersForm = new Form('MASTERSFORM', [mastersFields]);
 
 export const BM_Controllers = () => <NodeForm
@@ -315,7 +315,7 @@ export const BM_Controllers = () => <NodeForm
 
 BM_Controllers.canNavigateForward = mastersForm.canNavigateForward;
 
-const workerFields = generateField(BM_WORKERS, "Worker", 1000);
+const workerFields = generateField(BM_WORKERS, 'Worker', 1000);
 export const workersForm = new Form('WORKERS_FORM', [workerFields]);
 export const BM_Workers = () => <NodeForm
   name="Worker"

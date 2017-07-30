@@ -8,7 +8,7 @@ const getAssets = (launchUrl, cookie, callback) => {
     method: 'GET',
     encoding: null,
     headers: {
-      'Cookie': "tectonic-installer=" + cookie,
+      'Cookie': 'tectonic-installer=' + cookie,
     },
   };
   request(options, (err, res, body) => {
@@ -33,7 +33,7 @@ const getTerraformTfvars = (response, callback) => {
         fileName = key;
       }
     });
-    zip.file(fileName).async("string").then(callback);
+    zip.file(fileName).async('string').then(callback);
   });
 };
 
@@ -59,7 +59,7 @@ const returnTerraformTfvars = (launchUrl, cookie, callback) => {
       return callback(err);
     }
     if (res.statusCode !== 200 || res.headers['content-type'] !== 'application/zip' ) {
-      return callback("Terraform get assets api call failed", res);
+      return callback('Terraform get assets api call failed', res);
     }
     getTerraformTfvars(terraformAssestsResponse, (terraformTfvars) => {
       const actualJson = returnRequiredTerraformTfvars(terraformTfvars);
@@ -73,10 +73,10 @@ const compareJson = (actualJson, expectedJson) => {
   const diff = deep(actualJson,expectedJson);
   if (typeof diff !== 'undefined') {
     diff.forEach(key => {
-      msg = msg + "\n" + "TerraformTfvar:" + key.path + " ||"+" actualValue:" + key.lhs + " ||"
-      +" expectedValue:"+ key.rhs;
+      msg = msg + '\n' + 'TerraformTfvar:' + key.path + ' ||'+' actualValue:' + key.lhs + ' ||'
+      +' expectedValue:'+ key.rhs;
     });
-    msg = msg + "\nThe above Json attributes are not matching.";
+    msg = msg + '\nThe above Json attributes are not matching.';
   }
   return msg;
 };

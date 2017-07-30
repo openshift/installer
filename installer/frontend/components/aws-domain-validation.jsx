@@ -69,10 +69,10 @@ class DomainInfo extends React.Component {
           Public NS records for {domain} do not match Route 53. You should update your domain registrar's NS records to match.
           <br /><br />
           Public:
-          <pre style={preStyle}>{publicNS.join("\n")}</pre>
+          <pre style={preStyle}>{publicNS.join('\n')}</pre>
           <br />
           Route 53:
-          <pre style={preStyle}>{awsNS.join("\n")}</pre>
+          <pre style={preStyle}>{awsNS.join('\n')}</pre>
         </Alert>);
       }
     }

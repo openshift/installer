@@ -15,7 +15,7 @@ const fetchLatestRelease = () => {
 
 const parseLatestVersion = (html) => {
   const parser = new DOMParser();
-  const htmlDoc = parser.parseFromString(html, "text/html");
+  const htmlDoc = parser.parseFromString(html, 'text/html');
   return htmlDoc.getElementsByClassName('latestReleaseTag')[0].textContent.trim();
 };
 

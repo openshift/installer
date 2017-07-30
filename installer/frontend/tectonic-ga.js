@@ -43,7 +43,7 @@ export const TectonicGA = {
     send({ type: 'pageview', page});
   },
 
-  sendEvent: (category, action, label = "", platform = "") => {
+  sendEvent: (category, action, label = '', platform = '') => {
     send({
       type: 'event',
       category, action,
@@ -51,7 +51,7 @@ export const TectonicGA = {
     });
   },
 
-  sendDocsEvent: (platform = "") => {
+  sendDocsEvent: (platform = '') => {
     send({
       type: 'event',
       category: 'Installer Docs Link',

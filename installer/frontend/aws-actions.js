@@ -108,7 +108,7 @@ export const TFDestroy = createAction('destroy', awsApis.TFDestroy, true);
 const getDefaultSubnets_ = createAction('subnets', awsApis.getDefaultSubnets);
 
 export const getDefaultSubnets = (body, creds, isNow) => (dispatch, getState) =>
-  getDefaultSubnets_({vpcCIDR: "10.0.0.0/16"}, creds)(dispatch, getState)
+  getDefaultSubnets_({vpcCIDR: '10.0.0.0/16'}, creds)(dispatch, getState)
   .then(subnets => {
     if (isNow && !isNow()) {
       return;

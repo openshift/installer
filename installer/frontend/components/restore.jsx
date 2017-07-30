@@ -72,12 +72,12 @@ const Modal_ = connect(stateToProps, dispatchToProps)(class Modal_Inner extends 
   }
 
   componentDidMount() {
-    window.addEventListener("keydown", this.onKeyDown, true);
+    window.addEventListener('keydown', this.onKeyDown, true);
   }
 
   componentWillUnmount() {
     this.unmounted = true;
-    window.removeEventListener("keydown", this.onKeyDown);
+    window.removeEventListener('keydown', this.onKeyDown);
   }
 
   handleUpload (e) {

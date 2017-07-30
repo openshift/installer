@@ -4,16 +4,16 @@ const logger = logs => {
   console.log('==== BEGIN BROWSER LOGS ====');
   _.each(logs, log => {
     const { level, message } = log;
-    const messageStr = _.isArray(message) ? message.join(" ") : message;
+    const messageStr = _.isArray(message) ? message.join(' ') : message;
 
     switch (level) {
-    case `DEBUG`:
+    case 'DEBUG':
       console.log(level, messageStr);
       break;
-    case `SEVERE`:
+    case 'SEVERE':
       console.warn(level, messageStr);
       break;
-    case `INFO`:
+    case 'INFO':
     default:
       console.info(level, messageStr);
     }
