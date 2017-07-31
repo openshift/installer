@@ -229,6 +229,7 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
     platform: "aws",
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
+    retry: cc[RETRY],
     credentials: {
       AWSAccessKeyID: cc[AWS_ACCESS_KEY_ID],
       AWSSecretAccessKey: cc[AWS_SECRET_ACCESS_KEY],
@@ -312,6 +313,7 @@ export const toBaremetal_TF = (cc, FORMS, opts={}) => {
     platform: 'metal',
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
+    retry: cc[RETRY],
     variables: {
       // eslint-disable-next-line no-sync
       tectonic_admin_password_hash: bcrypt.hashSync(cc[ADMIN_PASSWORD], opts.salt || bcrypt.genSaltSync(bcryptCost)),
