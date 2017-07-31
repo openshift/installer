@@ -2,7 +2,7 @@ module "bootkube" {
   source = "../../modules/bootkube"
 
   cloud_provider        = "azure"
-  cloud_provider_config = "${jsonencode(data.null_data_source.cloud-provider.inputs)}"
+  cloud_provider_config = "${jsonencode(data.null_data_source.cloud_provider.inputs)}"
 
   cluster_name = "${var.tectonic_cluster_name}"
 

@@ -68,7 +68,7 @@ module "etcd" {
 }
 
 # Workaround for https://github.com/hashicorp/terraform/issues/4084
-data "null_data_source" "cloud-provider" {
+data "null_data_source" "cloud_provider" {
   inputs = {
     "cloud"                      = "${var.tectonic_azure_cloud_environment}"
     "tenantId"                   = "${data.azurerm_client_config.current.tenant_id}"
@@ -103,7 +103,7 @@ module "masters" {
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
   tectonic_kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
   cloud_provider               = "azure"
-  cloud_provider_config        = "${jsonencode(data.null_data_source.cloud-provider.inputs)}"
+  cloud_provider_config        = "${jsonencode(data.null_data_source.cloud_provider.inputs)}"
   kubelet_node_label           = "node-role.kubernetes.io/master"
   kubelet_node_taints          = "node-role.kubernetes.io/master=:NoSchedule"
   kubelet_cni_bin_dir          = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
@@ -132,7 +132,7 @@ module "workers" {
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
   tectonic_kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
   cloud_provider               = "azure"
-  cloud_provider_config        = "${jsonencode(data.null_data_source.cloud-provider.inputs)}"
+  cloud_provider_config        = "${jsonencode(data.null_data_source.cloud_provider.inputs)}"
   kubelet_node_label           = "node-role.kubernetes.io/node"
   kubelet_cni_bin_dir          = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
   versions                     = "${var.tectonic_versions}"

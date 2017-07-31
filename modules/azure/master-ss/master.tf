@@ -46,7 +46,7 @@ resource "azurerm_virtual_machine_scale_set" "tectonic_masters" {
     ip_configuration {
       name                                   = "${var.cluster_name}-MasterIPConfiguration"
       subnet_id                              = "${var.subnet}"
-      load_balancer_backend_address_pool_ids = ["${azurerm_lb_backend_address_pool.api-lb.id}"]
+      load_balancer_backend_address_pool_ids = ["${azurerm_lb_backend_address_pool.api_lb.id}"]
     }
   }
 
