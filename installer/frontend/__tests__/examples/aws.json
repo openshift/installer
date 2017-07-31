@@ -3,6 +3,7 @@
   "license": "<TECTONIC_LICENSE>",
   "platform": "aws",
   "pullSecret": "<TECTONIC_PULL_SECRET>",
+  "retry": false,
   "clusterKind": "tectonic-aws-tf",
   "credentials": {
     "AWSAccessKeyID": "awsAccessKeyId",
