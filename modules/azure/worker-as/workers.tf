@@ -1,31 +1,8 @@
-# Generate unique storage name
-resource "random_id" "tectonic_storage_name" {
-  byte_length = 4
-}
-
-resource "azurerm_storage_account" "tectonic_worker" {
-  name                = "worker${random_id.tectonic_storage_name.hex}"
-  resource_group_name = "${var.resource_group_name}"
-  location            = "${var.location}"
-  account_type        = "${var.storage_account_type}"
-
-  tags = "${merge(map(
-    "Name", "worker${random_id.tectonic_storage_name.hex}",
-    "tectonicClusterID", "${var.cluster_id}"),
-    var.extra_tags)}"
-}
-
-resource "azurerm_storage_container" "tectonic_worker" {
-  name                  = "vhd"
-  resource_group_name   = "${var.resource_group_name}"
-  storage_account_name  = "${azurerm_storage_account.tectonic_worker.name}"
-  container_access_type = "private"
-}
-
 resource "azurerm_availability_set" "tectonic_workers" {
   name                = "${var.cluster_name}-workers"
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
+  managed             = true
 
   tags = "${merge(map(
     "Name", "${var.cluster_name}-workers",
@@ -54,11 +31,11 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
     version   = "${var.versions["container_linux"]}"
   }
   storage_os_disk {
-    name          = "worker-osdisk"
-    caching       = "ReadWrite"
-    create_option = "FromImage"
-    os_type       = "linux"
-    vhd_uri       = "${azurerm_storage_account.tectonic_worker.primary_blob_endpoint}${azurerm_storage_container.tectonic_worker.name}/${count.index}.vhd"
+    name              = "worker-${count.index}-os-${var.storage_id}"
+    managed_disk_type = "Premium_LRS"
+    create_option     = "FromImage"
+    caching           = "ReadWrite"
+    os_type           = "linux"
   }
   os_profile {
     computer_name  = "${var.cluster_name}-worker-${count.index}"
@@ -74,10 +51,12 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
       key_data = "${file(var.public_ssh_key)}"
     }
   }
+
   tags = "${merge(map(
     "Name", "${var.cluster_name}-worker-${count.index}",
     "tectonicClusterID", "${var.cluster_id}"),
     var.extra_tags)}"
+
   lifecycle {
     ignore_changes = ["storage_data_disk"]
   }

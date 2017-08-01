@@ -3,6 +3,11 @@ resource "random_id" "cluster_id" {
   byte_length = 16
 }
 
+# Storage ID
+resource "random_id" "storage_id" {
+  byte_length = 2
+}
+
 # Kubernetes Manifests (resources/generated/manifests/)
 resource "template_dir" "tectonic" {
   source_dir      = "${path.module}/resources/manifests"

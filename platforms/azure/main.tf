@@ -52,6 +52,7 @@ module "etcd" {
   resource_group_name  = "${module.resource_group.name}"
   vm_size              = "${var.tectonic_azure_etcd_vm_size}"
   storage_account_type = "${var.tectonic_azure_etcd_storage_account_type}"
+  storage_id           = "${module.tectonic.storage_id}"
   container_image      = "${var.tectonic_container_images["etcd"]}"
 
   etcd_count            = "${var.tectonic_experimental ? 0 : max(var.tectonic_etcd_count, 1)}"
@@ -99,6 +100,7 @@ module "masters" {
   resource_group_name  = "${module.resource_group.name}"
   vm_size              = "${var.tectonic_azure_master_vm_size}"
   storage_account_type = "${var.tectonic_azure_master_storage_account_type}"
+  storage_id           = "${module.tectonic.storage_id}"
 
   master_count                 = "${var.tectonic_master_count}"
   base_domain                  = "${var.tectonic_base_domain}"
@@ -132,6 +134,7 @@ module "workers" {
   resource_group_name  = "${module.resource_group.name}"
   vm_size              = "${var.tectonic_azure_worker_vm_size}"
   storage_account_type = "${var.tectonic_azure_worker_storage_account_type}"
+  storage_id           = "${module.tectonic.storage_id}"
 
   worker_count                 = "${var.tectonic_worker_count}"
   cluster_name                 = "${var.tectonic_cluster_name}"

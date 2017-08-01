@@ -21,6 +21,10 @@ variable "storage_account_type" {
   type = "string"
 }
 
+variable "storage_id" {
+  type = "string"
+}
+
 // Count of worker nodes to be created.
 variable "worker_count" {
   type = "string"

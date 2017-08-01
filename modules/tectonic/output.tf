@@ -33,3 +33,7 @@ output "cluster_id" {
     substr(random_id.cluster_id.hex, 20, 12)
   )}"
 }
+
+output "storage_id" {
+  value = "${random_id.storage_id.hex}"
+}
