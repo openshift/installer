@@ -61,8 +61,9 @@ if [[ ${VERSION} == "" ]]; then
 fi
 
 DESTINATION=${DESTINATION:-"${VERSION}.json"}
-BUCKET=${BUCKET:-"tectonic-update-payload"}
-PAYLOAD_URL="https://s3-us-west-2.amazonaws.com/${BUCKET}/${DESTINATION}"
+BUCKET=${BUCKET:-"tectonic-update-payload-prod"}
+S3_PREFIX=${S3_PREFIX:-"https://s3-us-west-1.amazonaws.com"}
+PAYLOAD_URL="${S3_PREFIX}/${BUCKET}/${DESTINATION}"
 
 echo "Uploading payload to \"${PAYLOAD_URL}\", version: \"${VERSION}\""
 
