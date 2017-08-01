@@ -14,4 +14,9 @@ resource "azurerm_lb" "tectonic_lb" {
     public_ip_address_id          = "${azurerm_public_ip.console_ip.id}"
     private_ip_address_allocation = "dynamic"
   }
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}-api-lb",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }

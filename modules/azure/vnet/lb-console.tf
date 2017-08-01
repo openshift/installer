@@ -5,9 +5,10 @@ resource "azurerm_public_ip" "console_ip" {
   public_ip_address_allocation = "static"
   domain_name_label            = "${var.cluster_name}"
 
-  tags {
-    environment = "staging"
-  }
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
 resource "azurerm_lb_rule" "console-lb-https" {

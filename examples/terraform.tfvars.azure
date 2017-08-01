@@ -97,6 +97,10 @@ tectonic_azure_client_secret = ""
 // Example: "/subscriptions/b520eabf-d6c0-4757-8a5e-0fa7d2fe12b5/resourceGroups/my-k8s-cluster/providers/Microsoft.Network/virtualNetworks/test-pre-vnet/subnets/my-k8s-subnet
 // tectonic_azure_external_worker_subnet_id = ""
 
+// (optional) A map of extra Azure tags to be applied to created resources.
+// [CAVEAT] Tags MUST NOT contain reserved characters '<,>,%,&,\,?,/' or control characters.
+// tectonic_azure_extra_tags = ""
+
 // An Azure location where the cluster will be built.
 tectonic_azure_location = ""
 

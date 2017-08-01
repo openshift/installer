@@ -252,3 +252,14 @@ variable "tectonic_azure_client_secret" {
 
   description = "The client secret to use."
 }
+
+variable "tectonic_azure_extra_tags" {
+  type = "map"
+
+  description = <<EOF
+(optional) A map of extra Azure tags to be applied to created resources.
+[CAVEAT] Tags MUST NOT contain reserved characters '<,>,%,&,\,?,/' or control characters.
+EOF
+
+  default = {}
+}

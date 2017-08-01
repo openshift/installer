@@ -7,6 +7,10 @@ variable "resource_group_name" {
   type = "string"
 }
 
+variable "cluster_id" {
+  type = "string"
+}
+
 // VM Size name
 variable "vm_size" {
   type = "string"
@@ -106,4 +110,8 @@ variable "versions" {
 
 variable "cl_channel" {
   type = "string"
+}
+
+variable "extra_tags" {
+  type = "map"
 }

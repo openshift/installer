@@ -7,6 +7,11 @@ resource "azurerm_dns_a_record" "tectonic-api" {
   name    = "${var.cluster_name}-api"
   ttl     = "60"
   records = ["${var.api_ip_addresses}"]
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
 resource "azurerm_dns_a_record" "tectonic-console" {
@@ -18,6 +23,11 @@ resource "azurerm_dns_a_record" "tectonic-console" {
   name    = "${var.cluster_name}"
   ttl     = "60"
   records = ["${var.console_ip_addresses}"]
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
 resource "azurerm_dns_a_record" "tectonic-etcd" {
@@ -29,6 +39,11 @@ resource "azurerm_dns_a_record" "tectonic-etcd" {
   name    = "${var.cluster_name}-etcd-${count.index}"
   ttl     = "60"
   records = ["${var.etcd_ip_addresses[count.index]}"]
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
 resource "azurerm_dns_a_record" "tectonic-master" {
@@ -40,6 +55,11 @@ resource "azurerm_dns_a_record" "tectonic-master" {
   name    = "${var.cluster_name}-master-${count.index}"
   ttl     = "60"
   records = ["${var.master_ip_addresses[count.index]}"]
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
 resource "azurerm_dns_a_record" "tectonic-worker" {
@@ -51,4 +71,9 @@ resource "azurerm_dns_a_record" "tectonic-worker" {
   name    = "${var.cluster_name}-worker-${count.index}"
   ttl     = "60"
   records = ["${var.worker_ip_addresses[count.index]}"]
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }

@@ -5,9 +5,10 @@ resource "azurerm_public_ip" "api_ip" {
   public_ip_address_allocation = "static"
   domain_name_label            = "${var.cluster_name}-api"
 
-  tags {
-    environment = "staging"
-  }
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}-api",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
 resource "azurerm_lb_rule" "api-lb" {

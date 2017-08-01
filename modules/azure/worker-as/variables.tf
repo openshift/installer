@@ -7,6 +7,10 @@ variable "resource_group_name" {
   type = "string"
 }
 
+variable "cluster_id" {
+  type = "string"
+}
+
 // VM Size name
 variable "vm_size" {
   type = "string"
@@ -82,4 +86,8 @@ variable "cl_channel" {
 
 variable "kubelet_cni_bin_dir" {
   type = "string"
+}
+
+variable "extra_tags" {
+  type = "map"
 }

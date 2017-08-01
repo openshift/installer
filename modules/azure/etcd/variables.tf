@@ -7,6 +7,10 @@ variable "resource_group_name" {
   type = "string"
 }
 
+variable "cluster_id" {
+  type = "string"
+}
+
 // VM Size name
 variable "vm_size" {
   type = "string"
@@ -90,4 +94,8 @@ variable "tls_peer_crt_pem" {
 
 variable "container_image" {
   type = "string"
+}
+
+variable "extra_tags" {
+  type = "map"
 }

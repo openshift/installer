@@ -9,9 +9,10 @@ resource "azurerm_storage_account" "tectonic_master" {
   location            = "${var.location}"
   account_type        = "${var.storage_account_type}"
 
-  tags {
-    environment = "staging"
-  }
+  tags = "${merge(map(
+    "Name", "master${random_id.tectonic_master_storage_name.hex}",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
 resource "azurerm_storage_container" "tectonic_master" {
@@ -25,6 +26,11 @@ resource "azurerm_availability_set" "tectonic_masters" {
   name                = "${var.cluster_name}-masters"
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}-masters",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
 resource "azurerm_virtual_machine" "tectonic_master" {
@@ -68,7 +74,8 @@ resource "azurerm_virtual_machine" "tectonic_master" {
     }
   }
 
-  tags {
-    environment = "staging"
-  }
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}-master-${count.index}",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }

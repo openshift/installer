@@ -3,6 +3,11 @@ resource "azurerm_availability_set" "etcd" {
   name                = "${var.cluster_name}-etcd"
   location            = "${var.location}"
   resource_group_name = "${var.resource_group_name}"
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}-etcd",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
 resource "azurerm_virtual_machine" "etcd_node" {
@@ -43,6 +48,11 @@ resource "azurerm_virtual_machine" "etcd_node" {
       key_data = "${file(var.public_ssh_key)}"
     }
   }
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}-etcd-${count.index}",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
 resource "random_id" "storage" {
@@ -55,6 +65,11 @@ resource "azurerm_storage_account" "etcd_storage" {
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
   account_type        = "${var.storage_account_type}"
+
+  tags = "${merge(map(
+    "Name", "etcd${random_id.storage.hex}",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
 resource "azurerm_storage_container" "etcd_storage_container" {
