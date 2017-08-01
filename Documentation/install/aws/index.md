@@ -16,8 +16,8 @@ Make sure a current version of either the Google Chrome or Mozilla Firefox web b
 Download the [Tectonic installer][latest-tectonic-release].
 
 ```bash
-wget https://releases.tectonic.com/tectonic-1.6.7-tectonic.1.tar.gz
-tar xzvf tectonic-1.6.7-tectonic.1.tar.gz
+wget https://releases.tectonic.com/tectonic-1.6.7-tectonic.2.tar.gz
+tar xzvf tectonic-1.6.7-tectonic.2.tar.gz
 cd tectonic
 ```
 
@@ -78,7 +78,7 @@ For those new to Tectonic and Kubernetes, the [Tectonic Tutorials][tutorials] pr
 [install-aws-requirements-creds]: requirements.md#privileges
 [install-aws-requirements-evpc]: requirements.md#using-an-existing-vpc
 [tutorials]: ../../tutorials/index.md
-[latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.6.7-tectonic.1.tar.gz
+[latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.6.7-tectonic.2.tar.gz
 [install-aws-troubleshooting]: ../../troubleshooting/faq.md
 [tf-state]: https://www.terraform.io/docs/state/
 [install-windows]: ../installer-windows.md

@@ -22,8 +22,8 @@ Following this guide will deploy a Tectonic cluster on virtual or physical hardw
 Open a new terminal, and run the following commands to download and extract Tectonic Installer.
 
 ```bash
-$ curl -O https://releases.tectonic.com/tectonic-1.6.7-tectonic.1.tar.gz
-$ tar xzvf tectonic-1.6.7-tectonic.1.tar.gz
+$ curl -O https://releases.tectonic.com/tectonic-1.6.7-tectonic.2.tar.gz
+$ tar xzvf tectonic-1.6.7-tectonic.2.tar.gz
 $ cd tectonic
 ```
 
