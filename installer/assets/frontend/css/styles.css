@@ -411,12 +411,20 @@ input.wiz-super-short-input {
   width: 72px;
 }
 
+.wiz-pending-fg {
+  color: #999;
+}
+
 .wiz-success-fg {
   color: #2FC98E;
 }
 
 .wiz-error-fg {
   color: #D64456;
+}
+
+.wiz-cancel-fg {
+  color: #999;
 }
 
 .wiz-running-fg {

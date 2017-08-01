@@ -156,7 +156,7 @@ class TF_PowerOn extends React.Component {
 
       const dnsReady = tectonic.console.success || ((tectonic.console.message || '').search('no such host') === -1);
       consoleSubsteps.push(
-        <WaitingLi done={dnsReady && !terraformRunning} key="dnsReady">
+        <WaitingLi pending={terraformRunning} done={dnsReady && !terraformRunning} cancel={tfError} key="dnsReady">
           Resolving <a href={`https://${tectonicDomain}`} target="_blank">{tectonicDomain}</a>
         </WaitingLi>
       );
@@ -174,7 +174,7 @@ class TF_PowerOn extends React.Component {
       }
 
       consoleSubsteps.push(
-        <WaitingLi done={allDone} error={anyFailed} key="tectonicReady">
+        <WaitingLi pending={terraformRunning} done={allDone} error={anyFailed} cancel={tfError} key="tectonicReady">
           Starting Tectonic
           { tectonicRunning && <ProgressBar progress={state.tectonicProgress} /> }
           <ul className="service-launch-progress__steps">{ tectonicSubsteps }</ul>
