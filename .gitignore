@@ -11,3 +11,4 @@ terraform.tfstate*
 terraform.tfvars
 build/
 bin/
+modules/update-payload/generated/
