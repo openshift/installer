@@ -17,8 +17,8 @@ Generally, the AWS platform templates adhere to the standards defined by the pro
 Open a new terminal, and run the following commands to download and extract Tectonic Installer.
 
 ```bash
-$ curl -O https://releases.tectonic.com/tectonic-1.6.7-tectonic.1.tar.gz # download
-$ tar xzvf tectonic-1.6.7-tectonic.1.tar.gz # extract the tarball
+$ curl -O https://releases.tectonic.com/tectonic-1.6.7-tectonic.2.tar.gz # download
+$ tar xzvf tectonic-1.6.7-tectonic.2.tar.gz # extract the tarball
 $ cd tectonic
 ```
 
