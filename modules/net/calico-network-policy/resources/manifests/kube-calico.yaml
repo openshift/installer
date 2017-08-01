@@ -228,6 +228,9 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
+            # Set list of cni binaries that flannel-cni installs and calico should skip.
+            - name: SKIP_CNI_BINARIES
+              value: "bridge,cnitool,dhcp,flannel,host-local,ipvlan,loopback,macvlan,noop,portmap,ptp,tuning"
           volumeMounts:
             - mountPath: /host/opt/cni/bin
               name: host-cni-bin
