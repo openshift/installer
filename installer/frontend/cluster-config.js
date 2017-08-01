@@ -87,16 +87,16 @@ export const PLATFORM_FORM = 'platform';
 export const EXPERIMENTAL_FEATURES = 'experimentalFeatures';
 
 
-export const SPLIT_DNS_ON = "on";
-export const SPLIT_DNS_OFF = "off";
+export const SPLIT_DNS_ON = 'on';
+export const SPLIT_DNS_OFF = 'off';
 export const SPLIT_DNS_OPTIONS = {
-  [SPLIT_DNS_ON]: "Create an additional Route 53 private zone (default).",
-  [SPLIT_DNS_OFF]: "Do not create a private zone.",
+  [SPLIT_DNS_ON]: 'Create an additional Route 53 private zone (default).',
+  [SPLIT_DNS_OFF]: 'Do not create a private zone.',
 };
 
-const SELF_HOSTED = "selfHosted";
-const EXTERNAL = "external";
-const PROVISIONED = "provisioned";
+const SELF_HOSTED = 'selfHosted';
+const EXTERNAL = 'external';
+const PROVISIONED = 'provisioned';
 export const ETCD_OPTIONS = { SELF_HOSTED, EXTERNAL, PROVISIONED };
 
 export const toVPCSubnet = (region, subnets, deselected) => {
@@ -194,8 +194,8 @@ export const DEFAULT_CLUSTER_CONFIG = {
     channel: 'tectonic-1.6',
     appID: '6bc7b986-4654-4a0f-94b3-84ce6feb1db4',
   },
-  [POD_CIDR]: "10.2.0.0/16",
-  [SERVICE_CIDR]: "10.3.0.0/16",
+  [POD_CIDR]: '10.2.0.0/16',
+  [SERVICE_CIDR]: '10.3.0.0/16',
 };
 
 
@@ -226,7 +226,7 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
   const ret = {
     clusterKind: 'tectonic-aws-tf',
     dryRun: cc[DRY_RUN],
-    platform: "aws",
+    platform: 'aws',
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
     retry: cc[RETRY],

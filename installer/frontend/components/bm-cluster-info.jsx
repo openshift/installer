@@ -7,7 +7,7 @@ import { CLUSTER_NAME } from '../cluster-config';
 import { Form } from '../form';
 import fields from '../fields';
 
-const clusterInfoForm = new Form("BM_ClusterInfo", [
+const clusterInfoForm = new Form('BM_ClusterInfo', [
   licenseForm,
   fields[CLUSTER_NAME],
 ]);

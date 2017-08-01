@@ -19,7 +19,7 @@ let clock_ = 0;
 class Node {
   constructor (id, opts) {
     if (!id) {
-      throw new Error("I need a id");
+      throw new Error('I need an id');
     }
     this.clock_ = 0;
     this.id = id;
@@ -149,7 +149,7 @@ class Node {
       if (!_.isString(asyncError)) {
         console.warn(`asyncError is not a string!?:\n${JSON.stringify(asyncError)}`);
         if (asyncError.type && asyncError.payload) {
-          console.warn(`Did you accidentally return a dispatch?`);
+          console.warn('Did you accidentally return a dispatch?');
           asyncError = null;
         } else {
           asyncError = asyncError.toString ? asyncError.toString() : JSON.stringify(asyncError);

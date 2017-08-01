@@ -39,7 +39,7 @@ const NavSection = connect(state => ({state}))(
             });
             return (
               <li className={classes} key={page.path}>
-                <button className='wiz-wizard__nav__link btn btn-link btn-link-ordinary'
+                <button className="wiz-wizard__nav__link btn btn-link btn-link-ordinary"
                         onClick={() => handlePage(page)}
                         disabled={!navTrail.navigable(page) || !navTrail.canNavigateForward(currentPage, page, state)}
                 >{page.title}</button>

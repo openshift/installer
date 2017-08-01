@@ -75,7 +75,7 @@ export const ErrorComponent = props => {
     return <props.ErrorComponent error={error} />;
   }
   if (error) {
-    return <Alert severity='error'>{error}</Alert>;
+    return <Alert severity="error">{error}</Alert>;
   }
   return <span />;
 };
@@ -191,7 +191,7 @@ export const Radio = props => {
 export const CheckBox = makeBooleanField('checkbox');
 export const ToggleButton = props => <button className={props.className} style={props.style} onClick={() => props.onValue(!props.value)}>
   {props.value ? 'Hide' : 'Show'}&nbsp;{props.children}
-  <i style={{marginLeft: 7}} className={classNames("fa", {"fa-chevron-up": props.value, "fa-chevron-down": !props.value})}></i>
+  <i style={{marginLeft: 7}} className={classNames('fa', {'fa-chevron-up': props.value, 'fa-chevron-down': !props.value})}></i>
 </button>;
 
 // A textarea/file-upload combo

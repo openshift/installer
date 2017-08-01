@@ -103,7 +103,7 @@ class TF_PowerOn extends React.Component {
 
       const dnsReady = tectonic.console.success || ((tectonic.console.message || '').search('no such host') === -1);
       consoleSubsteps.push(
-        <WaitingLi done={dnsReady && !terraformRunning} key='dnsReady'>
+        <WaitingLi done={dnsReady && !terraformRunning} key="dnsReady">
           Resolving <a href={`https://${tectonicDomain}`} target="_blank">{tectonicDomain}</a>
         </WaitingLi>
       );
@@ -140,7 +140,7 @@ class TF_PowerOn extends React.Component {
       );
     }
 
-    const tfButtonClasses = classNames("btn btn-flat", {disabled: terraformRunning, 'btn-warning': tfError, 'btn-info': !tfError});
+    const tfButtonClasses = classNames('btn btn-flat', {disabled: terraformRunning, 'btn-warning': tfError, 'btn-info': !tfError});
     const tfButtons = <div className="row">
       <div className="col-xs-12">
         <button className={tfButtonClasses} onClick={() => this.destroy()}>
@@ -184,7 +184,7 @@ class TF_PowerOn extends React.Component {
           <ul className="wiz-launch-progress">
             <WaitingLi done={statusMsg === 'success'} error={tfError}>
               Terraform {action} {statusMsg}
-              {output && <div className="pull-right" style={{fontSize: "13px"}}>
+              {output && <div className="pull-right" style={{fontSize: '13px'}}>
                 <a onClick={() => this.setState({showLogs: !showLogs})}>
                   { showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
                               : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
@@ -247,7 +247,7 @@ class TF_PowerOn extends React.Component {
       <div className="row">
         <div className="col-xs-12">
           <a href="/terraform/assets" download>
-            <button className={classNames("btn btn-primary wiz-giant-button pull-right", {disabled: terraformRunning})}>
+            <button className={classNames('btn btn-primary wiz-giant-button pull-right', {disabled: terraformRunning})}>
               <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
             </button>
           </a>
