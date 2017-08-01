@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { saveAs } from 'file-saver';
 
 import { Alert } from './alert';
-import { WaitingLi } from './ui';
+import { DropdownInline, WaitingLi } from './ui';
 import { AWS_DomainValidation } from './aws-domain-validation';
 import { ResetButton } from './reset-button';
 import { TFDestroy } from '../aws-actions';
@@ -146,6 +146,7 @@ class TF_PowerOn extends React.Component {
     const showLogs = state.showLogs === null ? statusMsg !== 'success' : state.showLogs;
     const isApply = action === 'apply';
     const terraformRunning = statusMsg === 'running';
+    const isApplied = isApply && !terraformRunning && !tfError;
 
     const consoleSubsteps = [];
 
@@ -194,6 +195,8 @@ class TF_PowerOn extends React.Component {
       </div>
     </div>;
 
+    const saveLog = () => saveAs(new Blob([output], {type: 'text/plain'}), `tectonic-${clusterName}.log`);
+
     return <div>
       { !isBareMetal &&
         <p>
@@ -226,18 +229,20 @@ class TF_PowerOn extends React.Component {
           <ul className="wiz-launch-progress">
             <WaitingLi done={statusMsg === 'success'} error={tfError}>
               Terraform {action} {statusMsg}
-              {output && <div className="pull-right" style={{fontSize: '13px'}}>
-                <a onClick={() => this.setState({showLogs: !showLogs})}>
-                  { showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
-                             : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
-                </a>
-                <span className="spacer"></span>
-                <a onClick={() => saveAs(new Blob([output], {type: 'text/plain'}), `tectonic-${clusterName}.log`)}>
-                  <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
-                </a>
-              </div>}
+              { output && !isApplied &&
+                <div className="pull-right" style={{fontSize: '13px'}}>
+                  <a onClick={() => this.setState({showLogs: !showLogs})}>
+                    { showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
+                               : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
+                  </a>
+                  <span className="spacer"></span>
+                  <a onClick={saveLog}>
+                    <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
+                  </a>
+                </div>
+              }
               { isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} /> }
-              { showLogs && output &&
+              { showLogs && output && !isApplied &&
                 <div className="log-pane">
                   <div className="log-pane__header">
                     <div className="log-pane__header__message">Terraform logs</div>
@@ -272,14 +277,27 @@ class TF_PowerOn extends React.Component {
                   {tfButtons}
                 </Alert>
               }
-              { !terraformRunning && !tfError &&
+              { !terraformRunning && !tfError && !isApplied &&
                 <Alert severity="info" noIcon>
-                  <b>{_.startCase(action)} Succeeded</b>.
+                  <b>Destroy Succeeded</b>.
                   <p>
-                    If you've changed your mind, you can {isApply ? 'destroy' : 'reapply'} your cluster.
+                    If you've changed your mind, you can reapply your cluster.
                   </p>
                   {tfButtons}
                 </Alert>
+              }
+              { isApplied &&
+                <div className="wiz-launch-progress__help">
+                  You can save Terraform logs, or destroy your cluster if you change your mind:&nbsp;
+                  <DropdownInline
+                    header="Terraform Actions"
+                    items={[
+                      ['Destroy Cluster', () => this.destroy()],
+                      ['Retry Terraform Apply', () => this.retry()],
+                      ['Save Terraform Log', saveLog],
+                    ]}
+                  />
+                </div>
               }
             </li>
             { consoleSubsteps }
