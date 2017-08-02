@@ -96,7 +96,7 @@ EOF
   base_domain           = "${var.tectonic_base_domain}"
   cluster_name          = "${var.tectonic_cluster_name}"
   container_image       = "${var.tectonic_container_images["etcd"]}"
-  core_public_keys      = ["${module.secrets.core_public_key_openssh}"]
+  core_public_keys      = "${module.secrets.core_public_key_openssh}"
   tectonic_experimental = "${var.tectonic_experimental}"
   tls_enabled           = "${var.tectonic_etcd_tls_enabled}"
 
@@ -133,7 +133,7 @@ EOF
   kube_image_url               = "${data.null_data_source.local.outputs.kube_image_url}"
   kube_image_tag               = "${data.null_data_source.local.outputs.kube_image_tag}"
   tectonic_kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
-  core_public_keys             = ["${module.secrets.core_public_key_openssh}"]
+  core_public_keys             = "${module.secrets.core_public_key_openssh}"
   bootkube_service             = "${module.bootkube.systemd_service}"
   tectonic_service             = "${module.tectonic.systemd_service}"
   hostname_infix               = "master"
@@ -159,7 +159,7 @@ EOF
   kube_image_url               = "${data.null_data_source.local.outputs.kube_image_url}"
   kube_image_tag               = "${data.null_data_source.local.outputs.kube_image_tag}"
   tectonic_kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
-  core_public_keys             = ["${module.secrets.core_public_key_openssh}"]
+  core_public_keys             = "${module.secrets.core_public_key_openssh}"
   bootkube_service             = ""
   tectonic_service             = ""
   hostname_infix               = "worker"
