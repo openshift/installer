@@ -49,7 +49,7 @@ function sign_with_testkey() {
   echo "Signing with test key"
 
   GNUPGHOME=$(mktemp -d)
-  trap "rm -rf '${GNUPGHOME}'" EXIT
+  trap 'rm -rf ${GNUPGHOME}' EXIT
   export GNUPGHOME
 
   ${gpg} --quiet --import <<<"${TEST_GPG_KEY}"
