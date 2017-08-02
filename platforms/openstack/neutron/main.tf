@@ -180,7 +180,7 @@ module "secgroups" {
   tectonic_experimental = "${var.tectonic_experimental}"
 }
 
-module "flannel-vxlan" {
+module "flannel_vxlan" {
   source = "../../../modules/net/flannel-vxlan"
 
   flannel_image     = "${var.tectonic_container_images["flannel"]}"
@@ -190,7 +190,7 @@ module "flannel-vxlan" {
   bootkube_id = "${module.bootkube.id}"
 }
 
-module "calico-network-policy" {
+module "calico_network_policy" {
   source = "../../../modules/net/calico-network-policy"
 
   kube_apiserver_url = "https://${var.tectonic_cluster_name}-k8s.${var.tectonic_base_domain}:443"
