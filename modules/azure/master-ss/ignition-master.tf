@@ -1,14 +1,14 @@
 data "ignition_config" "master" {
   files = [
     "${data.ignition_file.kubeconfig.id}",
-    "${data.ignition_file.kubelet-env.id}",
-    "${data.ignition_file.max-user-watches.id}",
+    "${data.ignition_file.kubelet_env.id}",
+    "${data.ignition_file.max_user_watches.id}",
   ]
 
   systemd = [
     "${data.ignition_systemd_unit.docker.id}",
     "${data.ignition_systemd_unit.locksmithd.id}",
-    "${data.ignition_systemd_unit.kubelet-master.id}",
+    "${data.ignition_systemd_unit.kubelet_master.id}",
     "${data.ignition_systemd_unit.tectonic.id}",
     "${data.ignition_systemd_unit.bootkube.id}",
   ]
@@ -55,7 +55,7 @@ data "template_file" "kubelet-master" {
   }
 }
 
-data "ignition_systemd_unit" "kubelet-master" {
+data "ignition_systemd_unit" "kubelet_master" {
   name    = "kubelet.service"
   enable  = true
   content = "${data.template_file.kubelet-master.rendered}"
@@ -71,7 +71,7 @@ data "ignition_file" "kubeconfig" {
   }
 }
 
-data "ignition_file" "kubelet-env" {
+data "ignition_file" "kubelet_env" {
   filesystem = "root"
   path       = "/etc/kubernetes/kubelet.env"
   mode       = 0644
@@ -84,7 +84,7 @@ EOF
   }
 }
 
-data "ignition_file" "max-user-watches" {
+data "ignition_file" "max_user_watches" {
   filesystem = "root"
   path       = "/etc/sysctl.d/max-user-watches.conf"
   mode       = 0644
