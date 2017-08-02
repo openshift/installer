@@ -17,7 +17,7 @@ variable "vm_size" {
 }
 
 // Storage account type
-variable "storage_account_type" {
+variable "storage_type" {
   type = "string"
 }
 

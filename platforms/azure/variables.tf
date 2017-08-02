@@ -59,7 +59,7 @@ variable "tectonic_azure_etcd_vm_size" {
   default     = "Standard_DS2_v2"
 }
 
-variable "tectonic_azure_master_storage_account_type" {
+variable "tectonic_azure_master_storage_type" {
   type = "string"
 
   description = <<EOF
@@ -71,7 +71,7 @@ EOF
   default = "Premium_LRS"
 }
 
-variable "tectonic_azure_worker_storage_account_type" {
+variable "tectonic_azure_worker_storage_type" {
   type = "string"
 
   description = <<EOF
@@ -83,7 +83,7 @@ EOF
   default = "Premium_LRS"
 }
 
-variable "tectonic_azure_etcd_storage_account_type" {
+variable "tectonic_azure_etcd_storage_type" {
   type = "string"
 
   description = <<EOF

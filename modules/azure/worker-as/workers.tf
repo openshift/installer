@@ -32,7 +32,7 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
   }
   storage_os_disk {
     name              = "worker-${count.index}-os-${var.storage_id}"
-    managed_disk_type = "Premium_LRS"
+    managed_disk_type = "${var.storage_type}"
     create_option     = "FromImage"
     caching           = "ReadWrite"
     os_type           = "linux"
@@ -51,12 +51,10 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
       key_data = "${file(var.public_ssh_key)}"
     }
   }
-
   tags = "${merge(map(
     "Name", "${var.cluster_name}-worker-${count.index}",
     "tectonicClusterID", "${var.cluster_id}"),
     var.extra_tags)}"
-
   lifecycle {
     ignore_changes = ["storage_data_disk"]
   }

@@ -10,7 +10,7 @@ resource "azurerm_storage_account" "tectonic_worker" {
   name                = "worker-${var.cluster_name}-${random_id.tectonic_storage_name.hex}"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
-  account_type        = "${var.storage_account_type}"
+  account_type        = "${var.storage_type}"
 
   tags {
     environment = "staging"

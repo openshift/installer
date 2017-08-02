@@ -48,12 +48,12 @@ module "vnet" {
 module "etcd" {
   source = "../../modules/azure/etcd"
 
-  location             = "${var.tectonic_azure_location}"
-  resource_group_name  = "${module.resource_group.name}"
-  vm_size              = "${var.tectonic_azure_etcd_vm_size}"
-  storage_account_type = "${var.tectonic_azure_etcd_storage_account_type}"
-  storage_id           = "${module.resource_group.storage_id}"
-  container_image      = "${var.tectonic_container_images["etcd"]}"
+  location            = "${var.tectonic_azure_location}"
+  resource_group_name = "${module.resource_group.name}"
+  vm_size             = "${var.tectonic_azure_etcd_vm_size}"
+  storage_type        = "${var.tectonic_azure_etcd_storage_type}"
+  storage_id          = "${module.resource_group.storage_id}"
+  container_image     = "${var.tectonic_container_images["etcd"]}"
 
   etcd_count            = "${var.tectonic_experimental ? 0 : max(var.tectonic_etcd_count, 1)}"
   base_domain           = "${var.tectonic_base_domain}"
@@ -96,11 +96,11 @@ data "null_data_source" "cloud-provider" {
 module "masters" {
   source = "../../modules/azure/master-as"
 
-  location             = "${var.tectonic_azure_location}"
-  resource_group_name  = "${module.resource_group.name}"
-  vm_size              = "${var.tectonic_azure_master_vm_size}"
-  storage_account_type = "${var.tectonic_azure_master_storage_account_type}"
-  storage_id           = "${module.resource_group.storage_id}"
+  location            = "${var.tectonic_azure_location}"
+  resource_group_name = "${module.resource_group.name}"
+  vm_size             = "${var.tectonic_azure_master_vm_size}"
+  storage_type        = "${var.tectonic_azure_master_storage_type}"
+  storage_id          = "${module.resource_group.storage_id}"
 
   master_count                 = "${var.tectonic_master_count}"
   base_domain                  = "${var.tectonic_base_domain}"
@@ -130,11 +130,11 @@ module "masters" {
 module "workers" {
   source = "../../modules/azure/worker-as"
 
-  location             = "${var.tectonic_azure_location}"
-  resource_group_name  = "${module.resource_group.name}"
-  vm_size              = "${var.tectonic_azure_worker_vm_size}"
-  storage_account_type = "${var.tectonic_azure_worker_storage_account_type}"
-  storage_id           = "${module.resource_group.storage_id}"
+  location            = "${var.tectonic_azure_location}"
+  resource_group_name = "${module.resource_group.name}"
+  vm_size             = "${var.tectonic_azure_worker_vm_size}"
+  storage_type        = "${var.tectonic_azure_worker_storage_type}"
+  storage_id          = "${module.resource_group.storage_id}"
 
   worker_count                 = "${var.tectonic_worker_count}"
   cluster_name                 = "${var.tectonic_cluster_name}"

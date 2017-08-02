@@ -28,7 +28,7 @@ resource "azurerm_virtual_machine" "tectonic_master" {
 
   storage_os_disk {
     name              = "master-${count.index}-os-${var.storage_id}"
-    managed_disk_type = "Premium_LRS"
+    managed_disk_type = "${var.storage_type}"
     create_option     = "FromImage"
     caching           = "ReadWrite"
     os_type           = "linux"

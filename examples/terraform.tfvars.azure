@@ -23,7 +23,7 @@ tectonic_azure_client_secret = ""
 // (optional) Storage account type for the etcd node(s). Example: Premium_LRS.
 // Using Premium storage is constrained by the of instance specified in 'tectonic_azure_etcd_vm_size'.
 // See https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage#supported-vms
-// tectonic_azure_etcd_storage_account_type = "Premium_LRS"
+// tectonic_azure_etcd_storage_type = "Premium_LRS"
 
 // (optional) Instance size for the etcd node(s). Example: Standard_DS2_v2.
 // tectonic_azure_etcd_vm_size = "Standard_DS2_v2"
@@ -107,7 +107,7 @@ tectonic_azure_location = ""
 // (optional) Storage account type for the master node(s). Example: Premium_LRS.
 // Using Premium storage is constrained by the of instance specified in 'tectonic_azure_master_vm_size'.
 // See https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage#supported-vms
-// tectonic_azure_master_storage_account_type = "Premium_LRS"
+// tectonic_azure_master_storage_type = "Premium_LRS"
 
 // (optional) Instance size for the master node(s). Example: Standard_DS2_v2.
 // tectonic_azure_master_vm_size = "Standard_DS2_v2"
@@ -133,7 +133,7 @@ tectonic_azure_ssh_key = ""
 // (optional) Storage account type for the worker node(s). Example: Premium_LRS.
 // Using Premium storage is constrained by the of instance specified in 'tectonic_azure_worker_vm_size'.
 // See https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage#supported-vms
-// tectonic_azure_worker_storage_account_type = "Premium_LRS"
+// tectonic_azure_worker_storage_type = "Premium_LRS"
 
 // (optional) Instance size for the worker node(s). Example: Standard_DS2_v2.
 // tectonic_azure_worker_vm_size = "Standard_DS2_v2"
