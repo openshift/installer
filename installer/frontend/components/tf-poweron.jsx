@@ -13,6 +13,20 @@ import { CLUSTER_NAME, PLATFORM_TYPE, getTectonicDomain } from '../cluster-confi
 import { AWS_TF, BARE_METAL_TF } from '../platforms';
 import { commitToServer, observeClusterStatus } from '../server';
 
+const ProgressBar = ({progress}) => <div className="wiz-launch-progress__bar">
+  <div className="wiz-launch-progress__bar-inner" style={{width: `${progress * 100}%`}}></div>
+</div>;
+
+const estimateTerraformProgress = terraform => {
+  const {output = ''} = terraform;
+  const done = (output.match(/: Creation complete/g) || []).length;
+
+  // Approximate number of AWS resources we expect Terraform to create
+  const total = 145;
+
+  return done / total;
+};
+
 const stateToProps = ({cluster, clusterConfig}) => {
   const status = cluster.status || {terraform: {}};
   const { terraform, tectonic } = status;
@@ -24,7 +38,8 @@ const stateToProps = ({cluster, clusterConfig}) => {
       statusMsg: terraform.status ? terraform.status.toLowerCase() : '',
     },
     clusterName: clusterConfig[CLUSTER_NAME],
-    platformType: clusterConfig[PLATFORM_TYPE],
+    isAWS: clusterConfig[PLATFORM_TYPE] === AWS_TF,
+    isBareMetal: clusterConfig[PLATFORM_TYPE] === BARE_METAL_TF,
     tectonic: tectonic || {},
     tectonicDomain: getTectonicDomain(clusterConfig),
   };
@@ -39,7 +54,20 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
 class TF_PowerOn extends React.Component {
   constructor (props) {
     super(props);
-    this.state = {showLogs: null};
+    this.state = {
+      services: [],
+      showLogs: null,
+      tectonicProgress: 0,
+      terraformProgress: 0,
+      xhrError: null,
+    };
+  }
+
+  isOutputSame (terraform) {
+    const oldOutput = _.get(this.props, 'terraform.output', '');
+    const newOutput = _.get(terraform, 'output', '');
+    // Output can be 10MB, so compare lengths first. Don't trust the JS engine to be smart.
+    return newOutput.length === oldOutput.length && newOutput === oldOutput;
   }
 
   componentDidMount () {
@@ -48,12 +76,36 @@ class TF_PowerOn extends React.Component {
     }
   }
 
+  componentWillReceiveProps ({tectonic, terraform}) {
+    if (terraform.action === 'apply') {
+      const services = (tectonic.isEtcdSelfHosted ? [{key: 'etcd', name: 'Etcd'}] : []).concat([
+        {key: 'kubernetes', name: 'Kubernetes'},
+        {key: 'identity', name: 'Tectonic Identity'},
+        {key: 'ingress', name: 'Tectonic Ingress Controller'},
+        {key: 'console', name: 'Tectonic Console'},
+        {key: 'tectonicSystem', name: 'other Tectonic services'},
+      ]);
+      this.setState({services});
+
+      const tectonicSucceeded = services.filter(s => _.get(tectonic[s.key], 'success')).length;
+      const tectonicProgress = tectonicSucceeded / services.length;
+
+      // Don't let progress bars go backwards (e.g. if a service flips back to incomplete)
+      if (tectonicProgress > this.state.tectonicProgress) {
+        this.setState({tectonicProgress});
+      }
+
+      if (this.props.isAWS && (this.state.terraformProgress === 0 || !this.isOutputSame(terraform))) {
+        const terraformProgress = estimateTerraformProgress(terraform);
+        if (terraformProgress > this.state.terraformProgress) {
+          this.setState({terraformProgress});
+        }
+      }
+    }
+  }
+
   componentWillUpdate ({terraform}) {
-    const output = _.get(terraform, 'output', '');
-    const oldOutput = _.get(this.props, 'terraform.output', '');
-    // Output can be 10MB, so compare lengths first. Don't trust the JS engine to be smart.
-    const sameOutput = output.length === oldOutput.length && output === oldOutput;
-    if (sameOutput || this.state.showLogs === false) {
+    if (this.isOutputSame(terraform) || this.state.showLogs === false) {
       this.shouldScroll = false;
       return;
     }
@@ -88,53 +140,43 @@ class TF_PowerOn extends React.Component {
   }
 
   render () {
-    const {clusterName, platformType, terraform, tectonic, tectonicDomain} = this.props;
+    const {clusterName, isAWS, isBareMetal, terraform, tectonic, tectonicDomain} = this.props;
     const {action, tfError, output, statusMsg} = terraform;
     const state = this.state;
     const showLogs = state.showLogs === null ? statusMsg !== 'success' : state.showLogs;
+    const isApply = action === 'apply';
     const terraformRunning = statusMsg === 'running';
 
     const consoleSubsteps = [];
 
-    if (action === 'apply' && tectonic.console) {
-      if (platformType === AWS_TF) {
+    if (isApply && tectonic.console) {
+      if (isAWS) {
         consoleSubsteps.push(<AWS_DomainValidation key="domain" />);
       }
 
       const dnsReady = tectonic.console.success || ((tectonic.console.message || '').search('no such host') === -1);
       consoleSubsteps.push(
-        <WaitingLi done={dnsReady && !terraformRunning} key="dnsReady">
+        <WaitingLi pending={terraformRunning} done={dnsReady && !terraformRunning} cancel={tfError} key="dnsReady">
           Resolving <a href={`https://${tectonicDomain}`} target="_blank">{tectonicDomain}</a>
         </WaitingLi>
       );
 
-      const services = [
-        {key: 'etcd', name: 'Etcd'},
-        {key: 'kubernetes', name: 'Kubernetes'},
-        {key: 'identity', name: 'Tectonic Identity'},
-        {key: 'ingress', name: 'Tectonic Ingress Controller'},
-        {key: 'console', name: 'Tectonic Console'},
-        {key: 'tectonicSystem', name: 'other Tectonic services'},
-      ];
-
-      if (!tectonic.isEtcdSelfHosted) {
-        services.shift(0);
-      }
-
-      const anyFailed = _.some(services, s => tectonic[s.key].failed);
-      const allDone = _.every(services, s => tectonic[s.key].success);
+      const anyFailed = _.some(state.services, s => tectonic[s.key].failed);
+      const allDone = _.every(state.services, s => tectonic[s.key].success);
 
       let tectonicSubsteps = null;
-      if ((!allDone || anyFailed) && !terraformRunning) {
-        tectonicSubsteps = _.map(services, service => <WaitingLi done={tectonic[service.key].success} error={tectonic[service.key].failed} key={service.key} substep={true}>
+      const tectonicRunning = (!allDone || anyFailed) && !terraformRunning;
+
+      if (tectonicRunning) {
+        tectonicSubsteps = _.map(state.services, service => <WaitingLi done={tectonic[service.key].success} error={tectonic[service.key].failed} key={service.key} substep={true}>
           Starting {service.name}
         </WaitingLi>);
       }
 
       consoleSubsteps.push(
-        <WaitingLi done={allDone} error={anyFailed} key="tectonicReady">
+        <WaitingLi pending={terraformRunning} done={allDone} error={anyFailed} cancel={tfError} key="tectonicReady">
           Starting Tectonic
-          <br />
+          { tectonicRunning && <ProgressBar progress={state.tectonicProgress} /> }
           <ul className="service-launch-progress__steps">{ tectonicSubsteps }</ul>
         </WaitingLi>
       );
@@ -153,14 +195,14 @@ class TF_PowerOn extends React.Component {
     </div>;
 
     return <div>
-      { platformType !== BARE_METAL_TF &&
+      { !isBareMetal &&
         <p>
           Kubernetes is starting up. We're committing your cluster details.
           Grab some tea and sit tight. This process can take up to 20 minutes.
           Status updates will appear below.
         </p>
       }
-      { platformType === BARE_METAL_TF &&
+      { isBareMetal &&
         <div>
           <div className="wiz-herotext">
             <i className="fa fa-power-off wiz-herotext-icon"></i> Power on the nodes
@@ -187,13 +229,14 @@ class TF_PowerOn extends React.Component {
               {output && <div className="pull-right" style={{fontSize: '13px'}}>
                 <a onClick={() => this.setState({showLogs: !showLogs})}>
                   { showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
-                              : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
+                             : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
                 </a>
                 <span className="spacer"></span>
                 <a onClick={() => saveAs(new Blob([output], {type: 'text/plain'}), `tectonic-${clusterName}.log`)}>
                   <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
                 </a>
               </div>}
+              { isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} /> }
               { showLogs && output &&
                 <div className="log-pane">
                   <div className="log-pane__header">
@@ -209,35 +252,35 @@ class TF_PowerOn extends React.Component {
                 </div>
               }
             </WaitingLi>
-            <li style={{paddingLeft: 20, listStyle: 'none'}}>
-            { state.xhrError &&
-              <div className="row">
-                <div className="col-xs-12">
-                  <Alert severity="error">{state.xhrError}</Alert>
+            <li style={{paddingLeft: 22, listStyle: 'none'}}>
+              { state.xhrError &&
+                <div className="row">
+                  <div className="col-xs-12">
+                    <Alert severity="error">{state.xhrError}</Alert>
+                  </div>
                 </div>
-              </div>
-            }
-            { tfError && <Alert severity="error">{tfError.toString()}</Alert> }
-            { !terraformRunning && tfError &&
-              <Alert severity="error" noIcon>
-                <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
-                <ol style={{ paddingLeft: 30, paddingTop: 10, paddingBottom: 10 }}>
-                  <li>Save your logs for debugging purposes.</li>
-                  <li>Destroy your cluster to clear anything that may have been created.</li>
-                  <li>Reapply Terraform.</li>
-                </ol>
-                {tfButtons}
-              </Alert>
-            }
-            { !terraformRunning && !tfError &&
-              <Alert severity="info" noIcon>
-                <b>{_.startCase(action)} Succeeded</b>.
-                <p>
-                  If you've changed your mind, you can {action === 'apply' ? 'destroy' : 'reapply'} your cluster.
-                </p>
-                {tfButtons}
-              </Alert>
-            }
+              }
+              { tfError && <Alert severity="error">{tfError.toString()}</Alert> }
+              { !terraformRunning && tfError &&
+                <Alert severity="error" noIcon>
+                  <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
+                  <ol style={{ paddingLeft: 30, paddingTop: 10, paddingBottom: 10 }}>
+                    <li>Save your logs for debugging purposes.</li>
+                    <li>Destroy your cluster to clear anything that may have been created.</li>
+                    <li>Reapply Terraform.</li>
+                  </ol>
+                  {tfButtons}
+                </Alert>
+              }
+              { !terraformRunning && !tfError &&
+                <Alert severity="info" noIcon>
+                  <b>{_.startCase(action)} Succeeded</b>.
+                  <p>
+                    If you've changed your mind, you can {isApply ? 'destroy' : 'reapply'} your cluster.
+                  </p>
+                  {tfButtons}
+                </Alert>
+              }
             </li>
             { consoleSubsteps }
           </ul>
