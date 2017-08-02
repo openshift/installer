@@ -44,6 +44,7 @@ def quay_creds = [
 ]
 
 def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.35'
+def tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v2.0'
 
 pipeline {
   agent none
@@ -97,6 +98,13 @@ pipeline {
               stash name: 'smoke', includes: 'bin/smoke'
             }
           }
+          withDockerContainer(tectonic_smoke_test_env_image) {
+            checkout scm
+            sh"""#!/bin/bash -ex
+              cd tests/rspec
+              bundler exec rubocop --cache false tests/rspec
+            """
+          }
         }
       }
     }
@@ -108,6 +116,23 @@ pipeline {
       }
       steps {
         parallel (
+          "SmokeTest AWS RSpec": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                checkout scm
+                unstash 'installer'
+                unstash 'smoke'
+                withDockerContainer(tectonic_smoke_test_env_image) {
+                  checkout scm
+                  unstash 'installer'
+                    sh """#!/bin/bash -ex
+                      cd tests/rspec
+                      bundler exec rspec
+                    """
+                }
+              }
+            }
+          },
           "SmokeTest TerraForm: AWS": {
             node('worker && ec2') {
               withCredentials(creds) {
