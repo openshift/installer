@@ -138,6 +138,7 @@ class TF_PowerOn extends React.Component {
   retry () {
     // eslint-disable-next-line no-alert
     if (window.config.devMode || window.confirm('Are you sure you want to re-run terraform apply?')) {
+      this.setState({terraformProgress: 0});
       this.props.TFRetry();
     }
   }
