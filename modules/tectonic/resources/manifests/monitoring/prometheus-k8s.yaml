@@ -13,7 +13,7 @@ spec:
   externalUrl: ${prometheus_external_url}
   serviceAccountName: prometheus-k8s
   serviceMonitorSelector:
-    matchExpression:
+    matchExpressions:
     - {key: k8s-app, operator: Exists}
   ruleSelector:
     matchLabels:
