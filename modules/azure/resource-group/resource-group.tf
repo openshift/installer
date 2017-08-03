@@ -15,6 +15,11 @@ variable "cluster_id" {
   type = "string"
 }
 
+# Storage ID
+resource "random_id" "storage_id" {
+  byte_length = 2
+}
+
 variable "extra_tags" {
   type = "map"
 }
@@ -32,4 +37,8 @@ resource "azurerm_resource_group" "tectonic_cluster" {
 
 output "name" {
   value = "${var.external_rsg_id == "" ? join("", azurerm_resource_group.tectonic_cluster.*.name) : element(split("/", var.external_rsg_id), 4) }"
+}
+
+output "storage_id" {
+  value = "${random_id.storage_id.hex}"
 }

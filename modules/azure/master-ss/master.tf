@@ -13,7 +13,7 @@ resource "azurerm_storage_account" "tectonic_master" {
   name                = "master-${random_id.tectonic_master_storage_name.hex}"
   resource_group_name = "${var.resource_group_name}"
   location            = "${var.location}"
-  account_type        = "${var.storage_account_type}"
+  account_type        = "${var.storage_type}"
 
   tags {
     environment = "staging"
