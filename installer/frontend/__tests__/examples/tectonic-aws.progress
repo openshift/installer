@@ -36,7 +36,6 @@
     "caType": "self-signed",
     "clusterName": "test",
     "clusterSubdomain": "test",
-    "channelToUse": "stable",
     "externalETCDClient": "",
     "etcdOption": "selfHosted",
     "tectonicLicense": "<TECTONIC_LICENSE>",
