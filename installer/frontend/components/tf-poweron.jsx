@@ -183,7 +183,7 @@ class TF_PowerOn extends React.Component {
       );
     }
 
-    const tfButtonClasses = classNames('btn btn-flat', {disabled: terraformRunning, 'btn-warning': tfError, 'btn-info': !tfError});
+    const tfButtonClasses = `btn btn-flat ${tfError ? 'btn-warning' : 'btn-info'}`;
     const tfButtons = <div className="row">
       <div className="col-xs-12">
         <button className={tfButtonClasses} onClick={() => this.destroy()}>
