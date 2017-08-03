@@ -25,11 +25,6 @@ variable "tectonic_vmware_folder" {
   description = "vSphere Folder to create and add the Tectonic nodes"
 }
 
-variable "tectonic_vmware_datastore" {
-  type        = "string"
-  description = "Datastore to deploy Tectonic"
-}
-
 variable "tectonic_vmware_network" {
   type        = "string"
   description = "Portgroup to attach the cluster nodes"
@@ -120,6 +115,12 @@ variable "tectonic_vmware_etcd_gateway" {
   description = "Default Gateway IP address for etcd nodes(s)"
 }
 
+variable "tectonic_vmware_etcd_datastore" {
+  type        = "string"
+  default     = ""
+  description = "The storage LUN used by etcd nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore."
+}
+
 // ## Masters
 
 variable "tectonic_vmware_master_vcpu" {
@@ -163,6 +164,12 @@ variable "tectonic_vmware_master_gateway" {
   description = "Default Gateway IP address for Master nodes(s)"
 }
 
+variable "tectonic_vmware_master_datastore" {
+  type        = "string"
+  default     = ""
+  description = "The storage LUN used by master nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore."
+}
+
 // ## Workers
 
 variable "tectonic_vmware_worker_vcpu" {
@@ -204,4 +211,10 @@ EOF
 variable "tectonic_vmware_worker_gateway" {
   type        = "string"
   description = "Default Gateway IP address for Master nodes(s)"
+}
+
+variable "tectonic_vmware_worker_datastore" {
+  type        = "string"
+  default     = ""
+  description = "The storage LUN used by worker nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore."
 }

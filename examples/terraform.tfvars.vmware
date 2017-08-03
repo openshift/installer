@@ -149,8 +149,8 @@ tectonic_vmware_controller_domain = ""
 // Virtual DataCenter to deploy VMs
 tectonic_vmware_datacenter = ""
 
-// Datastore to deploy Tectonic
-tectonic_vmware_datastore = ""
+// The storage LUN used by etcd nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
+tectonic_vmware_etcd_datastore = ""
 
 // Default Gateway IP address for etcd nodes(s)
 tectonic_vmware_etcd_gateway = ""
@@ -182,6 +182,9 @@ tectonic_vmware_folder = ""
 
 // The domain name which resolves to Tectonic Ingress (i.e. worker node(s))
 tectonic_vmware_ingress_domain = ""
+
+// The storage LUN used by master nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
+tectonic_vmware_master_datastore = ""
 
 // Default Gateway IP address for Master nodes(s)
 tectonic_vmware_master_gateway = ""
@@ -229,6 +232,9 @@ tectonic_vmware_vm_template = ""
 
 // Folder for VM template of CoreOS Container Linux.
 tectonic_vmware_vm_template_folder = ""
+
+// The storage LUN used by worker nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
+tectonic_vmware_worker_datastore = ""
 
 // Default Gateway IP address for Master nodes(s)
 tectonic_vmware_worker_gateway = ""
