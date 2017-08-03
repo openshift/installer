@@ -184,15 +184,13 @@ class TF_PowerOn extends React.Component {
     }
 
     const tfButtonClasses = `btn btn-flat ${tfError ? 'btn-warning' : 'btn-info'}`;
-    const tfButtons = <div className="row">
-      <div className="col-xs-12">
-        <button className={tfButtonClasses} onClick={() => this.destroy()}>
-          <i className="fa fa-trash"></i>&nbsp;&nbsp;Destroy Cluster
-        </button>&nbsp;&nbsp;&nbsp;&nbsp;
-        <button className={tfButtonClasses} onClick={() => this.retry()}>
-          <i className="fa fa-exclamation-triangle"></i>&nbsp;&nbsp;Retry Terraform Apply
-        </button>
-      </div>
+    const tfButtons = <div>
+      <button className={tfButtonClasses} onClick={() => this.destroy()}>
+        <i className="fa fa-trash"></i>&nbsp;&nbsp;Destroy Cluster
+      </button>&nbsp;&nbsp;&nbsp;&nbsp;
+      <button className={tfButtonClasses} onClick={() => this.retry()}>
+        <i className="fa fa-exclamation-triangle"></i>&nbsp;&nbsp;Retry Terraform Apply
+      </button>
     </div>;
 
     const saveLog = () => saveAs(new Blob([output], {type: 'text/plain'}), `tectonic-${clusterName}.log`);
@@ -258,13 +256,7 @@ class TF_PowerOn extends React.Component {
               }
             </WaitingLi>
             <li style={{paddingLeft: 22, listStyle: 'none'}}>
-              { state.xhrError &&
-                <div className="row">
-                  <div className="col-xs-12">
-                    <Alert severity="error">{state.xhrError}</Alert>
-                  </div>
-                </div>
-              }
+              { state.xhrError && <Alert severity="error">{state.xhrError}</Alert> }
               { tfError && <Alert severity="error">{tfError.toString()}</Alert> }
               { !terraformRunning && tfError &&
                 <Alert severity="error" noIcon>
