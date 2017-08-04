@@ -1,6 +1,6 @@
 # Getting started with your CoreOS account
 
-First, sign up for a CoreOS account from [coreos.com](https://coreos.com/) or [tectonic.com](https://coreos.com/tectonic). Then, check your inbox for an email from CoreOS Support, and click *Verify Email*.
+First, sign up for a CoreOS account from [coreos.com](https://coreos.com/). Then, check your inbox for an email from CoreOS Support, and click *Verify Email*.
 
 Log in to complete registration and access the Account Overview page.
 
