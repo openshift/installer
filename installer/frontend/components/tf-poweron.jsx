@@ -125,6 +125,13 @@ class TF_PowerOn extends React.Component {
     }
   }
 
+  startOver () {
+    // eslint-disable-next-line no-alert
+    if (window.config.devMode || window.confirm('Do you really want to start over?')) {
+      window.reset();
+    }
+  }
+
   retry () {
     // eslint-disable-next-line no-alert
     if (window.config.devMode || window.confirm('Are you sure you want to re-run terraform apply?')) {
@@ -184,15 +191,14 @@ class TF_PowerOn extends React.Component {
       );
     }
 
-    const tfButtonClasses = `btn btn-flat ${tfError ? 'btn-warning' : 'btn-info'}`;
-    const tfButtons = <div>
-      <button className={tfButtonClasses} onClick={() => this.destroy()}>
-        <i className="fa fa-trash"></i>&nbsp;&nbsp;Destroy Cluster
-      </button>&nbsp;&nbsp;&nbsp;&nbsp;
-      <button className={tfButtonClasses} onClick={() => this.retry()}>
-        <i className="fa fa-exclamation-triangle"></i>&nbsp;&nbsp;Retry Terraform Apply
-      </button>
-    </div>;
+    const btn = (title, onClick) => <button
+      className={`btn btn-flat ${tfError ? 'btn-warning' : 'btn-info'}`}
+      onClick={onClick}
+      style={{marginRight: 15}}
+    >{title}</button>;
+    const btnDestroy = btn('Destroy Cluster', () => this.destroy());
+    const btnRetry = btn('Retry Terraform Apply', () => this.retry());
+    const btnStartOver = btn('Start Over', () => this.startOver());
 
     const saveLog = () => saveAs(new Blob([output], {type: 'text/plain'}), `tectonic-${clusterName}.log`);
 
@@ -267,16 +273,14 @@ class TF_PowerOn extends React.Component {
                     <li>Destroy your cluster to clear anything that may have been created.</li>
                     <li>Reapply Terraform.</li>
                   </ol>
-                  {tfButtons}
+                  {btnDestroy}{btnRetry}
                 </Alert>
               }
               { isDestroySuccess &&
-                <Alert severity="info" noIcon>
-                  <b>Destroy Succeeded</b>.
-                  <p>
-                    If you've changed your mind, you can reapply your cluster.
-                  </p>
-                  {tfButtons}
+                <Alert noIcon>
+                  <b style={{fontWeight: '600'}}>Destroy Succeeded</b>
+                  <p>To continue, make a fresh start with Tectonic Installer, or simply close the browser tab to quit.</p>
+                  {btnStartOver}{btnRetry}
                 </Alert>
               }
               { isApplied &&

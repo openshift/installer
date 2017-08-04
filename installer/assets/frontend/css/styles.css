@@ -465,9 +465,16 @@ input.wiz-super-short-input {
   text-decoration: underline;
 }
 .alert-info {
-  background-color: rgba(82, 163, 217, 0.05);
-  border: 1px solid #52A3D9;
-  color: #52A3D9;
+  background-color: #e9f6ff;
+  color: #154a6d;
+}
+.alert-info .btn-info {
+  border-color: #419eda;
+  color: #419eda;
+}
+.alert-info .btn-info:active, .alert-info .btn-info:focus, .alert-info .btn-info:hover {
+  background-color: #419eda;
+  color: #fff;
 }
 .alert-error {
   background-color: #FDF4F5;
