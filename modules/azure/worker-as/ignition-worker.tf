@@ -10,6 +10,7 @@ data "ignition_config" "worker" {
     "${data.ignition_systemd_unit.docker.id}",
     "${data.ignition_systemd_unit.locksmithd.id}",
     "${data.ignition_systemd_unit.kubelet-worker.id}",
+    "${module.net_ignition.tx-off_id}",
   ]
 
   users = [
@@ -115,4 +116,8 @@ data "ignition_user" "core" {
   ssh_authorized_keys = [
     "${file(var.public_ssh_key)}",
   ]
+}
+
+module "net_ignition" {
+  source = "../../net/ignition"
 }

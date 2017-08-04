@@ -12,6 +12,7 @@ data "ignition_config" "master" {
     "${data.ignition_systemd_unit.kubelet_master.id}",
     "${data.ignition_systemd_unit.tectonic.id}",
     "${data.ignition_systemd_unit.bootkube.id}",
+    "${module.net_ignition.tx-off_id}",
   ]
 
   users = [
@@ -114,4 +115,8 @@ data "ignition_systemd_unit" "tectonic" {
   name    = "tectonic.service"
   enable  = "${var.tectonic_service_disabled == 0 ? true : false}"
   content = "${var.tectonic_service}"
+}
+
+module "net_ignition" {
+  source = "../../net/ignition"
 }
