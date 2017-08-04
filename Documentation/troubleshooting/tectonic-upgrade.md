@@ -12,13 +12,13 @@ If Tectonic Console was used to switch to the `Tectonic-1.7-preproduction` or `T
 
 ### Updating to 1.7 before updating to v1.6.7_tectonic.2.
 
-If Tectonic has been updated to 1.7.1-tectonic.1 before updating to 1.6.7_tectonic.2, reset the TPR to clear the update error.
-
-You will receive the error:
+Updating Tectonic to 1.7.1-tectonic.1 before updating to 1.6.7_tectonic.2 will issue the following error:
 
 ```
 Updates are not possible : Upgrade is not supported: minor version upgrade is not supported, desired: "1.7.2-tectonic.1", current: "1.6.7-tectonic.1"
 ```
+
+To clear the error and proceed with the update, reset the TPR.
 
 First, use `kubectl replace` to reset to the desired version:
 
