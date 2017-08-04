@@ -4,9 +4,8 @@ resource "template_dir" "experimental" {
   destination_dir = "./generated/experimental"
 
   vars {
-    etcd_operator_image = "${var.container_images["etcd_operator"]}"
-    etcd_service_ip     = "${cidrhost(var.service_cidr, 15)}"
-    kenc_image          = "${var.container_images["kenc"]}"
+    etcd_service_ip = "${cidrhost(var.service_cidr, 15)}"
+    kenc_image      = "${var.container_images["kenc"]}"
 
     etcd_ca_cert = "${base64encode(data.template_file.etcd_ca_cert_pem.rendered)}"
 
@@ -55,6 +54,10 @@ resource "template_dir" "bootkube" {
     kubedns_image          = "${var.container_images["kubedns"]}"
     kubednsmasq_image      = "${var.container_images["kubednsmasq"]}"
     kubedns_sidecar_image  = "${var.container_images["kubedns_sidecar"]}"
+
+    // The etcd operator should always be deployed, even if k8s etcd is *not*
+    // self-hosted. This was cluster users can still manage hosted clusters.
+    etcd_operator_image = "${var.container_images["etcd_operator"]}"
 
     # Choose the etcd endpoints to use.
     # 1. If experimental mode is enabled (self-hosted etcd), then use
