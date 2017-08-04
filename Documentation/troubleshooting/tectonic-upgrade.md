@@ -18,14 +18,14 @@ Updating Tectonic to 1.7.1-tectonic.1 before updating to 1.6.7_tectonic.2 will i
 Updates are not possible : Upgrade is not supported: minor version upgrade is not supported, desired: "1.7.2-tectonic.1", current: "1.6.7-tectonic.1"
 ```
 
-To clear the error and proceed with the update, reset the TPR.
+To clear the error and proceed with the update, reset the ThirdPartyResource which stores update status.
 
 First, use `kubectl replace` to reset to the desired version:
 
 ```
 cat<<EOF | kubectl replace -f -
 apiVersion: coreos.com/v1
-kind: AppVersion or t
+kind: AppVersion
 metadata:
 name: tectonic-cluster
 namespace: tectonic-system
