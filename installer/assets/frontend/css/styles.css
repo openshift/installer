@@ -487,22 +487,6 @@ input.wiz-super-short-input {
   margin: 20px 0 0 20px;
 }
 
-/* Use with "btn btn-block btn-link" */
-.wiz-button--upload,
-.wiz-button--download {
-  padding: 15px;
-  border: 1px solid #DDDDDD;
-  border-radius: 2px;
-  font-size: 18px;
-}
-
-.wiz-button--upload:hover,
-.wiz-button--upload:focus,
-.wiz-button--download:hover,
-.wiz-button--download:focus {
-  text-decoration: none;
-}
-
 .wiz-invalid.wiz-dirty {
   border-color: #f04c5c !important;
   border-bottom-left-radius: 0px !important;
