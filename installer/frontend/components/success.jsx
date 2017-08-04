@@ -21,9 +21,8 @@ export const Success = connect(stateToProps)(
 ({navigatePrevious, tectonicConsole, platformType}) => <div>
   <div className="row">
     <div className="col-xs-12">
-      <p>
-        All set! Now you can access your Tectonic Console, configure kubectl, and deploy your first application to your cluster.
-      </p>
+      <p>All set! Now you can access the Tectonic Console. Once there, you’ll be able to configure kubectl, and deploy your first application to the cluster.</p>
+      <p>The Tectonic Console gives you an easy-to-navigate view of your cluster.</p>
     </div>
   </div>
 
@@ -36,6 +35,21 @@ export const Success = connect(stateToProps)(
       </a>
     </div>
   </div>
+
+  <hr className="spacer" />
+
+  <div className="row">
+    <div className="col-xs-12">
+      <h4>Cluster assets are important, save them now!</h4>
+      <p>Download and keep your cluster assets in a safe place. These are needed to destroy, replicate or quickly reinstall.</p>
+      <a href="/terraform/assets" download>
+        <button className="btn btn-default" style={{marginTop: 20}}>
+          <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
+        </button>
+      </a>
+    </div>
+  </div>
+
   <hr className="spacer" />
 
   <div className="row">
