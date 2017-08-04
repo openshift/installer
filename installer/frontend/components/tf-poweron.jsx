@@ -147,6 +147,7 @@ class TF_PowerOn extends React.Component {
     const isApply = action === 'apply';
     const terraformRunning = statusMsg === 'running';
     const isApplied = isApply && !terraformRunning && !tfError;
+    const isDestroySuccess = !terraformRunning && !tfError && !isApplied;
 
     const consoleSubsteps = [];
 
@@ -269,7 +270,7 @@ class TF_PowerOn extends React.Component {
                   {tfButtons}
                 </Alert>
               }
-              { !terraformRunning && !tfError && !isApplied &&
+              { isDestroySuccess &&
                 <Alert severity="info" noIcon>
                   <b>Destroy Succeeded</b>.
                   <p>
@@ -297,16 +298,18 @@ class TF_PowerOn extends React.Component {
         </div>
       </div>
       <br />
-      <div className="row">
-        <div className="col-xs-12">
-          <a href="/terraform/assets" download>
-            <button className={classNames('btn btn-primary wiz-giant-button pull-right', {disabled: terraformRunning})}>
-              <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
-            </button>
-          </a>
-          <ResetButton />
+      { !isDestroySuccess &&
+        <div className="row">
+          <div className="col-xs-12">
+            <a href="/terraform/assets" download>
+              <button className={classNames('btn btn-primary wiz-giant-button pull-right', {disabled: terraformRunning})}>
+                <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
+              </button>
+            </a>
+            <ResetButton />
+          </div>
         </div>
-      </div>
+      }
     </div>;
   }
 });
