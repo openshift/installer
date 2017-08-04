@@ -36,7 +36,7 @@ resource "matchbox_group" "controller" {
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
     exclude_tectonic   = "${var.tectonic_vanilla_k8s}"
 
-    etcd_enabled = "${var.tectonic_experimental ? "false" : "true"}"
+    etcd_enabled = "${var.tectonic_experimental ? "false" : length(compact(var.tectonic_etcd_servers)) != 0 ? false : "true"}"
 
     etcd_initial_cluster = "${
       join(",", formatlist(
