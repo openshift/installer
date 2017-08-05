@@ -246,6 +246,8 @@ class TF_PowerOn extends React.Component {
                   </a>
                 </div>
               }
+            </WaitingLi>
+            <div style={{marginLeft: 22}}>
               { isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} /> }
               { showLogs && output && !isApplied &&
                 <div className="log-pane">
@@ -261,8 +263,6 @@ class TF_PowerOn extends React.Component {
                   </div>
                 </div>
               }
-            </WaitingLi>
-            <li style={{paddingLeft: 22, listStyle: 'none'}}>
               { state.xhrError && <Alert severity="error">{state.xhrError}</Alert> }
               { tfError && <Alert severity="error">{tfError.toString()}</Alert> }
               { !terraformRunning && tfError &&
@@ -296,7 +296,7 @@ class TF_PowerOn extends React.Component {
                   />
                 </div>
               }
-            </li>
+            </div>
             { consoleSubsteps }
           </ul>
         </div>
