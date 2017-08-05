@@ -1,17 +1,25 @@
 {
   "env": {
-    "es6": true,
     "browser": true,
+    "es6": true,
     "node": true
  },
   "extends": ["eslint:recommended", "plugin:react/recommended"],
+  "globals": {
+    "GIT_COMMIT": false,
+    "GIT_RELEASE_TAG": false,
+    "GIT_TAG": false,
+  },
   "parserOptions": {
-    "sourceType": "module",
-    "ecmaVersion": 2017,
     "ecmaFeatures": {
       "jsx": true
-    }
+    },
+    "ecmaVersion": 2017,
+    "sourceType": "module",
   },
+  "plugins": [
+    "react"
+  ],
   "rules": {
     "brace-style": [2],
     "comma-dangle": [2 , "always-multiline"],
@@ -57,13 +65,5 @@
   },
   "settings": {
     "ecmascript": 6
-  },
-  "plugins": [
-    "react"
-  ],
-  "globals": {
-    "GIT_COMMIT": false,
-    "GIT_TAG": false,
-    "GIT_RELEASE_TAG": false,
   }
 }
