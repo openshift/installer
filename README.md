@@ -17,7 +17,7 @@ Checkout the [ROADMAP](ROADMAP.md) for details on where the project is headed.
 
 ## Getting Started
 
-**To use a tested release** on an supported platform, follow the links below.
+**To use a tested release** on a supported platform, follow the links below.
 
 **To hack or modify** the templates or add a new platform, use the scripts in this repo to boot and tear down clusters.
 
