@@ -1,6 +1,7 @@
 require 'smoke_test'
 require 'cluster'
 require 'aws'
+require 'forensic'
 
 RSpec.shared_examples 'withCluster' do |tf_vars_path|
   before(:all) do
@@ -9,8 +10,12 @@ RSpec.shared_examples 'withCluster' do |tf_vars_path|
     prefix = File.basename(tf_vars_path).split('.').first
     raise 'could not extract prefix from tfvars file name' if prefix == ''
 
-    @cluster = Cluster.new(prefix, tf_vars_path)
+    @cluster = Cluster.new(prefix, tf_vars_path, 'aws')
     @cluster.start
+  end
+
+  after(:each) do |example|
+    Forensic.run(@cluster) if example.exception
   end
 
   after(:all) do
