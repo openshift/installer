@@ -8,7 +8,6 @@ data:
   clusterName: "${cluster_name}"
   installerPlatform: "${platform}"
   certificatesStrategy: "${certificates_strategy}"
-  tectonicUpdaterEnabled: "${tectonic_updater_enabled}"
   consoleBaseAddress: "https://${console_base_address}"
   kubeAPIServerURL: "${kube_apiserver_url}"
   tectonicVersion: "${tectonic_version}"
