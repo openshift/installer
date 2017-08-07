@@ -38,6 +38,7 @@ $ subscription-manager repos --enable=rhel-7-server-extras-rpms
 
 If `subscription-manager` is not in use, ensure that the correct URL for the mirror of extras that is to be used is placed in the corresponding file in `/etc/yum.repos.d` and set to `enabled`.
 
+
 ### Install the `tectonic-release` RPM
 
 The `tectonic-release` RPM includes the repo definition for the Tectonic software as well as relevant signing keys. The GPG signing key fingerprint for CoreOS shipped RPMs is:
@@ -101,12 +102,10 @@ To use the `kubeconfig` from the assets bundle, extract the bundle to disk and t
 
 A cluster-wide DNS service will be deployed as part of the Tectonic system. To allow the kubelet to discover the location of other pods and services, inform the system of the DNS service address.
 
-The DNS service address can be manually extracted from the file `terraform.tfvars` located in the installer assets directory. It is located under the key `tectonic_kube_dns_service_ip`.
-
-Because the file `terraform.tfvars` is intended for machine consumption, it is often easier to retrieve this value using the utility [jq][jq-util]. If available, this can be done with the command:
+The DNS service address can be manually extracted from the file `terraform.tfstate` located in the installer assets directory. It is located under the key `kube_dns_service_ip`.
 
 ```
-$ jq .tectonic_kube_dns_service_ip terraform.tfvars
+$ grep dns_service terraform.tfstate
 ```
 
 Once this value has been retrieved it will be placed in the user managed file `/etc/sysconfig/tectonic-worker` on the host in the field `KUBERNETES_DNS_SERVICE_IP=`.
@@ -123,6 +122,14 @@ $ firewall-cmd --add-port 4789/udp --permanent
 ```
 
 Note: These settings may not be all inclusive and will not represent relative node ports or other communications which may need to be performed. For more information consult the [Kubernetes Networking][k8s-networking] documentation.
+
+### Set SELinux to Permissive mode
+
+It is required to run SELinux in Permissive mode. Running in Enforcing mode will block permissions for worker nodes.
+
+```
+setenforce 0
+```
 
 ### Enable and start the service
 
@@ -146,10 +153,6 @@ To ensure the service starts on each boot run the command:
 $ systemctl enable kubelet.service
 ```
 
-### SELinux
-
-To allow the Tectonic worker, run SELinux in Permissive mode. Running in Enforcing mode will block permissions for worker nodes.
-
 ### Verify deployment
 
 Once complete, use Tectonic Console to view the new worker nodes, and confirm that they're ready to start running your containers.
@@ -157,7 +160,6 @@ Once complete, use Tectonic Console to view the new worker nodes, and confirm th
 
 [rhel-install]: https://access.redhat.com/documentation/en-US/Red_Hat_Enterprise_Linux/7/html/Installation_Guide/index.html
 [tectonic-installer]: https://github.com/coreos/tectonic-installer
-[jq-util]: https://stedolan.github.io/jq/
 [flannel-repo]: https://github.com/coreos/flannel
 [k8s-networking]: https://coreos.com/kubernetes/docs/latest/kubernetes-networking.html
 [container-linux]: https://coreos.com/os/docs/latest
