@@ -33,7 +33,7 @@ variable "tectonic_container_images" {
     calico_cni                      = "quay.io/calico/cni:v1.9.1-4-g23fcd5f"
     config_reload                   = "quay.io/coreos/configmap-reload:v0.0.1"
     container_linux_update_operator = "quay.io/coreos/container-linux-update-operator:v0.2.2"
-    console                         = "quay.io/coreos/tectonic-console:v1.8.5"
+    console                         = "quay.io/coreos/tectonic-console:v1.8.6"
     error_server                    = "quay.io/coreos/tectonic-error-server:1.0"
     etcd                            = "quay.io/coreos/etcd:v3.1.8"
     etcd_operator                   = "quay.io/coreos/etcd-operator:v0.4.2"
