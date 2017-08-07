@@ -6,6 +6,9 @@ REPOSITORY_ROOT="$ROOT/.."
 WORKSPACE_DIR="$ROOT/.workspace"
 TMP_DIR="$WORKSPACE_DIR/tmpdir"
 
+VERSION=$("$REPOSITORY_ROOT/git-version")
+export VERSION
+
 export TECTONIC_RELEASE_BUCKET=releases.tectonic.com
 export TECTONIC_BINARY_BUCKET=tectonic-release
 export TECTONIC_RELEASE="tectonic-$VERSION"
