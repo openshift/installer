@@ -18,8 +18,16 @@ If you don't set the `TERRAFORM_UPSTREAM_URL` it will build the image using the 
 
 ## Tectonic Installer Nightly Trigger
 
-This file creates a Jenkins job called `tectonic-installer-nightly-trigger` to run the tests against the `Tectonic Installer` in the `master` branch.
+This file creates a Jenkins job called `tectonic-installer-nightly-trigger` under `triggers` folder to run the tests against the `Tectonic Installer` in the `master` branch.
 This job will run everyday around 3AM UTC time.
+
+Parameters:
+
+* No input parameters are required.
+
+## Tectonic Installer Public PR Trigger
+
+This file creates a Jenkins job called `tectonic-installer-pr-trigger` under `triggers` folder to run the tests against the `Tectonic Installer` using the PR branch.
 
 Parameters:
 
