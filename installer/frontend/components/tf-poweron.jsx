@@ -13,8 +13,8 @@ import { CLUSTER_NAME, PLATFORM_TYPE, getTectonicDomain } from '../cluster-confi
 import { AWS_TF, BARE_METAL_TF } from '../platforms';
 import { commitToServer, observeClusterStatus } from '../server';
 
-const ProgressBar = ({progress}) => <div className="wiz-launch-progress__bar">
-  <div className="wiz-launch-progress__bar-inner" style={{width: `${progress * 100}%`}}></div>
+const ProgressBar = ({progress, isStalled}) => <div className="progress-bar-wrap">
+  <div className={`progress-bar progress-bar--${isStalled ? 'active' : 'stalled'}`} style={{width: `${progress * 100}%`}}></div>
 </div>;
 
 // Estimate the Terraform action progress based on the log output. The intention is to replace this in the future with
@@ -260,7 +260,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                 }
               </WaitingLi>
               <div style={{marginLeft: 22}}>
-                { isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} /> }
+                { isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} isStalled={isTFRunning} /> }
                 { showLogs && output && !isApplySuccess &&
                 <div className="log-pane">
                   <div className="log-pane__header">
