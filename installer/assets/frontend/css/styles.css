@@ -153,7 +153,7 @@ input[type="text"].wiz-node-field {
 .wiz-launch-progress__help {
   color: #999;
   font-size: 11px;
-  margin: -5px 0 10px 0;
+  margin: 5px 0 10px 0;
 }
 
 .wiz-launch-progress__substep {
@@ -176,7 +176,7 @@ input[type="text"].wiz-node-field {
   background-color: #e5e5e5;
   border-radius: 2px;
   height: 4px;
-  margin: 10px 0px 15px 22px;
+  margin: 10px 0px 15px 0;
 }
 
 .wiz-launch-progress__bar-inner {
@@ -465,9 +465,16 @@ input.wiz-super-short-input {
   text-decoration: underline;
 }
 .alert-info {
-  background-color: rgba(82, 163, 217, 0.05);
-  border: 1px solid #52A3D9;
-  color: #52A3D9;
+  background-color: #e9f6ff;
+  color: #154a6d;
+}
+.alert-info .btn-info {
+  border-color: #419eda;
+  color: #419eda;
+}
+.alert-info .btn-info:active, .alert-info .btn-info:focus, .alert-info .btn-info:hover {
+  background-color: #419eda;
+  color: #fff;
 }
 .alert-error {
   background-color: #FDF4F5;
@@ -485,22 +492,6 @@ input.wiz-super-short-input {
 
 .wiz-radio-group__body {
   margin: 20px 0 0 20px;
-}
-
-/* Use with "btn btn-block btn-link" */
-.wiz-button--upload,
-.wiz-button--download {
-  padding: 15px;
-  border: 1px solid #DDDDDD;
-  border-radius: 2px;
-  font-size: 18px;
-}
-
-.wiz-button--upload:hover,
-.wiz-button--upload:focus,
-.wiz-button--download:hover,
-.wiz-button--download:focus {
-  text-decoration: none;
 }
 
 .wiz-invalid.wiz-dirty {
@@ -680,7 +671,7 @@ span.spacer {
 
 .log-pane {
   color: #fff;
-  padding: 10px 0 10px 22px;
+  padding: 10px 0 10px 0;
 }
 
 .log-pane__header {

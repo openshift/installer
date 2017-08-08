@@ -125,6 +125,13 @@ class TF_PowerOn extends React.Component {
     }
   }
 
+  startOver () {
+    // eslint-disable-next-line no-alert
+    if (window.config.devMode || window.confirm('Do you really want to start over?')) {
+      window.reset();
+    }
+  }
+
   retry () {
     // eslint-disable-next-line no-alert
     if (window.config.devMode || window.confirm('Are you sure you want to re-run terraform apply?')) {
@@ -145,8 +152,10 @@ class TF_PowerOn extends React.Component {
     const state = this.state;
     const showLogs = state.showLogs === null ? statusMsg !== 'success' : state.showLogs;
     const isApply = action === 'apply';
-    const terraformRunning = statusMsg === 'running';
-    const isApplied = isApply && !terraformRunning && !tfError;
+    const isTFRunning = statusMsg === 'running';
+    const isTFSuccess = !isTFRunning && !tfError;
+    const isApplySuccess = isApply && isTFSuccess;
+    const isDestroySuccess = action === 'destroy' && isTFSuccess;
 
     const consoleSubsteps = [];
 
@@ -157,7 +166,7 @@ class TF_PowerOn extends React.Component {
 
       const dnsReady = tectonic.console.success || ((tectonic.console.message || '').search('no such host') === -1);
       consoleSubsteps.push(
-        <WaitingLi pending={terraformRunning} done={dnsReady && !terraformRunning} cancel={tfError} key="dnsReady">
+        <WaitingLi pending={isTFRunning} done={dnsReady && !isTFRunning} cancel={tfError} key="dnsReady">
           Resolving <a href={`https://${tectonicDomain}`} target="_blank">{tectonicDomain}</a>
         </WaitingLi>
       );
@@ -166,7 +175,7 @@ class TF_PowerOn extends React.Component {
       const allDone = _.every(state.services, s => tectonic[s.key].success);
 
       let tectonicSubsteps = null;
-      const tectonicRunning = (!allDone || anyFailed) && !terraformRunning;
+      const tectonicRunning = (!allDone || anyFailed) && !isTFRunning;
 
       if (tectonicRunning) {
         tectonicSubsteps = _.map(state.services, service => <WaitingLi done={tectonic[service.key].success} error={tectonic[service.key].failed} key={service.key} substep={true}>
@@ -175,7 +184,7 @@ class TF_PowerOn extends React.Component {
       }
 
       consoleSubsteps.push(
-        <WaitingLi pending={terraformRunning} done={allDone} error={anyFailed} cancel={tfError} key="tectonicReady">
+        <WaitingLi pending={isTFRunning} done={allDone} error={anyFailed} cancel={tfError} key="tectonicReady">
           Starting Tectonic
           { tectonicRunning && <ProgressBar progress={state.tectonicProgress} /> }
           <ul className="service-launch-progress__steps">{ tectonicSubsteps }</ul>
@@ -183,17 +192,14 @@ class TF_PowerOn extends React.Component {
       );
     }
 
-    const tfButtonClasses = classNames('btn btn-flat', {disabled: terraformRunning, 'btn-warning': tfError, 'btn-info': !tfError});
-    const tfButtons = <div className="row">
-      <div className="col-xs-12">
-        <button className={tfButtonClasses} onClick={() => this.destroy()}>
-          <i className="fa fa-trash"></i>&nbsp;&nbsp;Destroy Cluster
-        </button>&nbsp;&nbsp;&nbsp;&nbsp;
-        <button className={tfButtonClasses} onClick={() => this.retry()}>
-          <i className="fa fa-exclamation-triangle"></i>&nbsp;&nbsp;Retry Terraform Apply
-        </button>
-      </div>
-    </div>;
+    const btn = (title, onClick) => <button
+      className={`btn btn-flat ${tfError ? 'btn-warning' : 'btn-info'}`}
+      onClick={onClick}
+      style={{marginRight: 15}}
+    >{title}</button>;
+    const btnDestroy = btn('Destroy Cluster', () => this.destroy());
+    const btnRetry = btn('Retry Terraform Apply', () => this.retry());
+    const btnStartOver = btn('Start Over', () => this.startOver());
 
     const saveLog = () => saveAs(new Blob([output], {type: 'text/plain'}), `tectonic-${clusterName}.log`);
 
@@ -229,7 +235,7 @@ class TF_PowerOn extends React.Component {
           <ul className="wiz-launch-progress">
             <WaitingLi done={statusMsg === 'success'} error={tfError}>
               Terraform {action} {statusMsg}
-              { output && !isApplied &&
+              { output && !isApplySuccess &&
                 <div className="pull-right" style={{fontSize: '13px'}}>
                   <a onClick={() => this.setState({showLogs: !showLogs})}>
                     { showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
@@ -241,8 +247,10 @@ class TF_PowerOn extends React.Component {
                   </a>
                 </div>
               }
+            </WaitingLi>
+            <div style={{marginLeft: 22}}>
               { isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} /> }
-              { showLogs && output && !isApplied &&
+              { showLogs && output && !isApplySuccess &&
                 <div className="log-pane">
                   <div className="log-pane__header">
                     <div className="log-pane__header__message">Terraform logs</div>
@@ -256,17 +264,9 @@ class TF_PowerOn extends React.Component {
                   </div>
                 </div>
               }
-            </WaitingLi>
-            <li style={{paddingLeft: 22, listStyle: 'none'}}>
-              { state.xhrError &&
-                <div className="row">
-                  <div className="col-xs-12">
-                    <Alert severity="error">{state.xhrError}</Alert>
-                  </div>
-                </div>
-              }
+              { state.xhrError && <Alert severity="error">{state.xhrError}</Alert> }
               { tfError && <Alert severity="error">{tfError.toString()}</Alert> }
-              { !terraformRunning && tfError &&
+              { tfError && !isTFRunning &&
                 <Alert severity="error" noIcon>
                   <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
                   <ol style={{ paddingLeft: 30, paddingTop: 10, paddingBottom: 10 }}>
@@ -274,19 +274,17 @@ class TF_PowerOn extends React.Component {
                     <li>Destroy your cluster to clear anything that may have been created.</li>
                     <li>Reapply Terraform.</li>
                   </ol>
-                  {tfButtons}
+                  {btnDestroy}{btnRetry}
                 </Alert>
               }
-              { !terraformRunning && !tfError && !isApplied &&
-                <Alert severity="info" noIcon>
-                  <b>Destroy Succeeded</b>.
-                  <p>
-                    If you've changed your mind, you can reapply your cluster.
-                  </p>
-                  {tfButtons}
+              { isDestroySuccess &&
+                <Alert noIcon>
+                  <b style={{fontWeight: '600'}}>Destroy Succeeded</b>
+                  <p>To continue, make a fresh start with Tectonic Installer, or simply close the browser tab to quit.</p>
+                  {btnStartOver}{btnRetry}
                 </Alert>
               }
-              { isApplied &&
+              { isApplySuccess &&
                 <div className="wiz-launch-progress__help">
                   You can save Terraform logs, or destroy your cluster if you change your mind:&nbsp;
                   <DropdownInline
@@ -299,22 +297,24 @@ class TF_PowerOn extends React.Component {
                   />
                 </div>
               }
-            </li>
+            </div>
             { consoleSubsteps }
           </ul>
         </div>
       </div>
       <br />
-      <div className="row">
-        <div className="col-xs-12">
-          <a href="/terraform/assets" download>
-            <button className={classNames('btn btn-primary wiz-giant-button pull-right', {disabled: terraformRunning})}>
-              <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
-            </button>
-          </a>
-          <ResetButton />
+      { !isDestroySuccess &&
+        <div className="row">
+          <div className="col-xs-12">
+            <a href="/terraform/assets" download>
+              <button className={classNames('btn btn-primary wiz-giant-button pull-right', {disabled: isTFRunning})}>
+                <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
+              </button>
+            </a>
+            <ResetButton />
+          </div>
         </div>
-      </div>
+      }
     </div>;
   }
 });
