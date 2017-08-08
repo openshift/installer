@@ -258,7 +258,7 @@ variable "tectonic_azure_extra_tags" {
 
   description = <<EOF
 (optional) A map of extra Azure tags to be applied to created resources.
-[CAVEAT] Tags MUST NOT contain reserved characters '<,>,%,&,\,?,/' or control characters.
+NOTE: Tags MUST NOT contain reserved characters '<,>,%,&,\,?,/' or control characters.
 EOF
 
   default = {}
