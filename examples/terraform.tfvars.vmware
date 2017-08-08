@@ -212,7 +212,7 @@ tectonic_vmware_master_vcpu = "1"
 // Portgroup to attach the cluster nodes
 tectonic_vmware_network = ""
 
-// DNS Server to be useddd by Virtual Machine(s)
+// DNS Server to be useddd by Virtual Machine(s). Multiple DNS servers can be seperated by whitespace. Example: `"192.168.1.1 192.168.2.1"`
 tectonic_vmware_node_dns = ""
 
 // vCenter Server IP/FQDN
