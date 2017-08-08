@@ -57,3 +57,4 @@ Parameters:
 * `DATE_VALUE_OVERRIDE`: Optional. YYYY-MM-DD formatted tag value of resources to delete.
 * `GRAFITI_IMAGE`: Grafiti docker image to use in the job.
 * `SCRIPT_DIR`: Folder which contains the grafiti scripts in the tectonic-installer repository.
+IPT_DIR`: Folder which contains the grafiti scripts in the tectonic-installer repository.
