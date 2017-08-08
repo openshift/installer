@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { saveAs } from 'file-saver';
 
 import { Alert } from './alert';
-import { DropdownInline, WaitingLi } from './ui';
+import { DropdownInline } from './ui';
 import { AWS_DomainValidation } from './aws-domain-validation';
 import { ResetButton } from './reset-button';
 import { TFDestroy } from '../aws-actions';
@@ -35,6 +35,28 @@ const estimateTerraformProgress = terraform => {
 
   // We have some output, but are not finished, so don't show the progress as either completely empty or full
   return _.clamp(done.length / total, 0.01, 0.99);
+};
+
+const Step = ({pending, done, error, cancel, children, substep}) => {
+  const progressClasses = classNames('wiz-launch-progress__step', {
+    'wiz-launch-progress__step--substep': substep,
+    'wiz-pending-fg': pending,
+    'wiz-error-fg': error,
+    'wiz-success-fg': done && !error,
+    'wiz-cancel-fg': !done && !error && cancel,
+    'wiz-running-fg': !done && !error && !cancel && !pending,
+  });
+  const iconClasses = classNames('fa', 'fa-fw', {
+    'fa-circle-o': pending,
+    'fa-exclamation-circle': error,
+    'fa-check-circle': done && !error,
+    'fa-ban': !done && !error && cancel,
+    'fa-spin fa-circle-o-notch': !done && !error && !cancel && !pending,
+  });
+
+  return <div className={progressClasses}>
+    {!substep && <i className={iconClasses} style={{margin: '0 3px 0 -3px'}}></i>}{children}
+  </div>;
 };
 
 const stateToProps = ({cluster, clusterConfig}) => {
@@ -185,9 +207,9 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
 
         const dnsReady = tectonic.console.success || ((tectonic.console.message || '').search('no such host') === -1);
         consoleSubsteps.push(
-          <WaitingLi pending={isTFRunning} done={dnsReady && !isTFRunning} cancel={tfError} key="dnsReady">
-          Resolving <a href={`https://${tectonicDomain}`} target="_blank">{tectonicDomain}</a>
-          </WaitingLi>
+          <Step pending={isTFRunning} done={dnsReady && !isTFRunning} cancel={tfError} key="dnsReady">
+            Resolving <a href={`https://${tectonicDomain}`} target="_blank">{tectonicDomain}</a>
+          </Step>
         );
 
         const anyFailed = _.some(state.services, s => tectonic[s.key].failed);
@@ -197,17 +219,17 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
         const tectonicRunning = (!allDone || anyFailed) && !isTFRunning;
 
         if (tectonicRunning) {
-          tectonicSubsteps = _.map(state.services, service => <WaitingLi done={tectonic[service.key].success} error={tectonic[service.key].failed} key={service.key} substep={true}>
-          Starting {service.name}
-          </WaitingLi>);
+          tectonicSubsteps = _.map(state.services, service => <Step done={tectonic[service.key].success} error={tectonic[service.key].failed} key={service.key} substep={true}>
+            Starting {service.name}
+          </Step>);
         }
 
         consoleSubsteps.push(
-          <WaitingLi pending={isTFRunning} done={allDone} error={anyFailed} cancel={tfError} key="tectonicReady">
-          Starting Tectonic
+          <Step pending={isTFRunning} done={allDone} error={anyFailed} cancel={tfError} key="tectonicReady">
+            Starting Tectonic
             {tectonicRunning && <ProgressBar progress={state.tectonicProgress} />}
-            <ul className="service-launch-progress__steps">{tectonicSubsteps}</ul>
-          </WaitingLi>
+            <div style={{marginLeft: 22}}>{tectonicSubsteps}</div>
+          </Step>
         );
       }
 
@@ -252,7 +274,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
         <div className="row">
           <div className="col-xs-12">
             <ul className="wiz-launch-progress">
-              <WaitingLi done={statusMsg === 'success'} error={tfError}>
+              <Step done={statusMsg === 'success'} error={tfError}>
               Terraform {action} {statusMsg}
                 {output && !isApplySuccess &&
                   <div className="pull-right" style={{fontSize: '13px'}}>
@@ -266,7 +288,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                     </a>
                   </div>
                 }
-              </WaitingLi>
+              </Step>
               <div style={{marginLeft: 22}}>
                 {isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} isActive={isTFRunning} />}
                 {showLogs && output && !isApplySuccess &&
