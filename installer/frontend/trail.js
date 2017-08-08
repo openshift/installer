@@ -352,15 +352,3 @@ export const trail = ({cluster, clusterConfig, commitState}) => {
 
   return platformToSection[platform].choose;
 };
-
-export const getAllRoutes = () => {
-  // No components have the same path, so this is safe.
-  // If a user guesses an invalid URL, they could get in a weird state. Oh well.
-  let routes = [];
-  _.each(sections, v => {
-    _.each(v, o => {
-      routes.push(o);
-    });
-  });
-  return routes;
-};

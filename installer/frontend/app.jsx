@@ -6,17 +6,20 @@ import _ from 'lodash';
 import React from 'react';
 import ReactDom from 'react-dom';
 import { Provider } from 'react-redux';
-import { browserHistory, Router } from 'react-router';
+import { Router } from 'react-router-dom';
+import createHistory from 'history/createBrowserHistory';
 import Cookie from 'js-cookie';
 
-import { navActionTypes, restoreActionTypes, validateAllFields } from './actions';
-import { trail, getAllRoutes } from './trail';
+import { navChange, restoreActionTypes, validateAllFields } from './actions';
+import { trail } from './trail';
 import { TectonicGA } from './tectonic-ga';
 import { savable } from './reducer';
 import { loadFacts, observeClusterStatus } from './server';
 import { store, dispatch } from './store';
 import { Base } from './components/base';
 import { clusterReadyActionTypes } from './actions';
+
+const history = createHistory();
 
 const saveState = () => {
   const state = store.getState();
@@ -33,20 +36,17 @@ window.reset = () => {
     .then(() => window.location = '/');
 };
 
-export const navigateNext = () => {
-  const state = store.getState();
-  const t = trail(state);
-  const currentPage = t.pageByPath.get(state.path);
-  const nextPage = t.nextFrom(currentPage);
-  browserHistory.push(nextPage.path);
-};
+const setLocation = path => store.dispatch(navChange(path));
 
 const fixLocation = () => {
   const state = store.getState();
   const t = trail(state);
   const fixed = t.fixPath(state.path, state);
   if (fixed !== state.path) {
-    browserHistory.push(fixed);
+    setLocation(fixed);
+  }
+  if (fixed !== window.location.pathname) {
+    history.push(fixed);
   }
 };
 
@@ -89,27 +89,28 @@ store.dispatch(validateAllFields(() => {
   //   - mass hysteria
   //
   // As a result, we shuffle the state before the router sees it.
-  browserHistory.listen(location => {
-    store.dispatch({
-      type: navActionTypes.LOCATION_CHANGE,
-      payload: location,
-    });
-    TectonicGA.sendPageView(location.pathname);
+  history.listen(({pathname, state}) => {
+    // Process next step / previous step navigation trigger if present
+    if (state && (state.next || state.previous)) {
+      const storeState = store.getState();
+      const t = trail(storeState);
+      const currentPage = t.pageByPath.get(storeState.path);
+      const nextPage = state.next ? t.nextFrom(currentPage) : t.previousFrom(currentPage);
+      setLocation(_.get(nextPage, 'path'));
+      return;
+    }
+
+    setLocation(pathname);
+    TectonicGA.sendPageView(pathname);
   });
 
   store.subscribe(fixLocation);
 
-  // Set up routing
-
-  const routes = {
-    path: '/',
-    component: Base,
-    childRoutes: getAllRoutes(),
-  };
-
   ReactDom.render(
     <Provider store={store}>
-      <Router history={browserHistory} routes={routes} />
+      <Router history={history}>
+        <Base />
+      </Router>
     </Provider>,
     document.getElementById('application')
   );

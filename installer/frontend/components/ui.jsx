@@ -4,6 +4,7 @@ import { Set as ImmutableSet } from 'immutable';
 import React from 'react';
 import { connect } from 'react-redux';
 
+import { withNav } from '../nav';
 import { validate } from '../validate';
 import { readFile } from '../readfile';
 import { toError, toAsyncError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from '../utils';
@@ -80,7 +81,7 @@ export const ErrorComponent = props => {
   return <span />;
 };
 
-const Field = connect(
+const Field = withNav(connect(
   (state, {id}) => ({isDirty: _.get(state.dirty, id)}),
   dispatch => ({
     markDirty: id => markIDDirty(dispatch, id),
@@ -109,6 +110,13 @@ const Field = connect(
       elementProps[k] = props[k];
     });
 
+    const onEnterKeyNavigateNext = e => {
+      if (e.keyCode === 13) {
+        e.preventDefault();
+        props.navNext();
+      }
+    };
+
     const nextProps = Object.assign({
       className: fieldClasses,
       value: props.value || '',
@@ -127,6 +135,7 @@ const Field = connect(
           props.markDirty(props.id);
         }
       },
+      onKeyDown: ['number', 'password', 'text'].includes(props.type) ? onEnterKeyNavigateNext : undefined,
     }, elementProps);
 
     return (
@@ -144,7 +153,7 @@ const Field = connect(
       </div>
     );
   }
-});
+}));
 
 const makeBooleanField = type => {
   return function booleanField(props) {

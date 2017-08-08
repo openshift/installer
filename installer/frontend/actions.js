@@ -39,6 +39,8 @@ export const navActionTypes = {
   LOCATION_CHANGE: 'NAV_ACTION_LOCATION_CHANGE',
 };
 
+export const navChange = pathname => ({type: navActionTypes.LOCATION_CHANGE, payload: {pathname}});
+
 export const restoreActionTypes = {
   RESTORE_STATE: 'RESTORE_RESTORE_STATE',
 };
