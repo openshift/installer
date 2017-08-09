@@ -83,27 +83,27 @@ variable vmware_cluster {
 
 variable vm_vcpu {
   type        = "string"
-  description = "ETCD VMs vCPU count"
+  description = "VMs vCPU count"
 }
 
 variable vm_memory {
   type        = "string"
-  description = "ETCD VMs Memory size in MB"
+  description = "VMs Memory size in MB"
 }
 
 variable vm_network_label {
   type        = "string"
-  description = "ETCD VMs PortGroup"
+  description = "VMs PortGroup"
 }
 
 variable vm_disk_datastore {
   type        = "string"
-  description = "Datastore to create ETCD VM in "
+  description = "Datastore to create VM(s) in "
 }
 
 variable vm_disk_template {
   type        = "string"
-  description = "Disk template to use for cloning ETCD VM CoreOS Container Linux"
+  description = "Disk template to use for cloning CoreOS Container Linux"
 }
 
 variable vm_disk_template_folder {
