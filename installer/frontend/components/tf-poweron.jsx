@@ -17,14 +17,24 @@ const ProgressBar = ({progress}) => <div className="wiz-launch-progress__bar">
   <div className="wiz-launch-progress__bar-inner" style={{width: `${progress * 100}%`}}></div>
 </div>;
 
+// Estimate the Terraform action progress based on the log output. The intention is to replace this in the future with
+// progress information provided by the backend.
 const estimateTerraformProgress = terraform => {
   const {output = ''} = terraform;
-  const done = (output.match(/: Creation complete/g) || []).length;
+  if (output === '') {
+    return 0;
+  }
+
+  let done = output.match(/.*: Creation complete/g) || [];
+
+  // Ignore resources from the bootkube, flannel-vxlan and tectonic modules because they all complete very quickly
+  done = done.filter(c => !/module\.(bootkube|flannel-vxlan|tectonic)/.test(c));
 
   // Approximate number of AWS resources we expect Terraform to create
-  const total = 145;
+  const total = 82;
 
-  return done / total;
+  // We have some output, but are not finished, so don't show the progress as either completely empty or full
+  return _.clamp(done.length / total, 0.01, 0.99);
 };
 
 const stateToProps = ({cluster, clusterConfig}) => {
@@ -135,6 +145,7 @@ class TF_PowerOn extends React.Component {
   retry () {
     // eslint-disable-next-line no-alert
     if (window.config.devMode || window.confirm('Are you sure you want to re-run terraform apply?')) {
+      this.setState({terraformProgress: 0});
       this.props.TFRetry();
     }
   }
