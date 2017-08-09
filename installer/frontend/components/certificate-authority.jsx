@@ -67,9 +67,9 @@ export const CertificateAuthority = connect(
                     <div className="col-xs-12">
                       <WithClusterConfig field={CA_CERTIFICATE}>
                         <CertArea
-                            id={CA_CERTIFICATE}
-                            autoFocus="true"
-                            uploadButtonLabel="Upload CA Certificate" />
+                          id={CA_CERTIFICATE}
+                          autoFocus="true"
+                          uploadButtonLabel="Upload CA Certificate" />
                       </WithClusterConfig>
                     </div>
                   </div>
@@ -78,8 +78,8 @@ export const CertificateAuthority = connect(
                     <div className="col-xs-12">
                       <WithClusterConfig field={CA_PRIVATE_KEY}>
                         <PrivateKeyArea
-                            id={CA_PRIVATE_KEY}
-                            uploadButtonLabel="Upload CA Private Key" />
+                          id={CA_PRIVATE_KEY}
+                          uploadButtonLabel="Upload CA Private Key" />
                       </WithClusterConfig>
                     </div>
                   </div>

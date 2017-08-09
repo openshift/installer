@@ -62,7 +62,7 @@ export const validate = {
     // see https://golang.org/src/net/mac.go?s=1054:1106#L28
     const error = 'Invalid MAC address.';
 
-    if (s.match(/^([a-fA-F0-9]{2}\:)+([a-fA-F0-9]{2})$/)) {
+    if (s.match(/^([a-fA-F0-9]{2}:)+([a-fA-F0-9]{2})$/)) {
       if (s.length === '01:23:45:67:89:ab'.length ||
         s.length === '01:23:45:67:89:ab:cd:ef'.length ||
         s.length === '01:23:45:67:89:ab:cd:ef:00:00:01:23:45:67:89:ab:cd:ef:00:00'.length) {
@@ -72,7 +72,7 @@ export const validate = {
       return error;
     }
 
-    if (s.match(/^([a-fA-F0-9]{2}\-)+([a-fA-F0-9]{2})$/)) {
+    if (s.match(/^([a-fA-F0-9]{2}-)+([a-fA-F0-9]{2})$/)) {
       if (s.length === '01-23-45-67-89-ab'.length ||
         s.length === '01-23-45-67-89-ab-cd-ef'.length ||
         s.length === '01-23-45-67-89-ab-cd-ef-00-00-01-23-45-67-89-ab-cd-ef-00-00'.length) {
@@ -160,7 +160,7 @@ export const validate = {
       return err;
     }
     // Don't let users hang themselves
-    if (s.match(/\-{5}BEGIN [\w-]+ PRIVATE KEY\-{5}/)) {
+    if (s.match(/-{5}BEGIN [\w-]+ PRIVATE KEY-{5}/)) {
       return 'Private key detected! Please paste your public key.';
     }
     const [pubKey, ...extraKeys] = _.trimEnd(s).split('\n');

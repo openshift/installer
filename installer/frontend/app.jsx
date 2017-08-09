@@ -68,12 +68,12 @@ store.dispatch(validateAllFields(() => {
 
   try {
     observeClusterStatus(dispatch, store.getState)
-    .then(res => {
-      if (res && res.type === clusterReadyActionTypes.STATUS) {
-        setInterval(() => observeClusterStatus(dispatch, store.getState), 10000);
-      }
-      fixLocation();
-    });
+      .then(res => {
+        if (res && res.type === clusterReadyActionTypes.STATUS) {
+          setInterval(() => observeClusterStatus(dispatch, store.getState), 10000);
+        }
+        fixLocation();
+      });
   } catch (e) {
     console.error(`Error restoring state from sessionStorage: ${e.message || e.toString()}`);
   }

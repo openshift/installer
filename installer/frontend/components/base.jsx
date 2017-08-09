@@ -44,8 +44,8 @@ const NavSection = connect(state => ({state}))(
             return (
               <li className={classes} key={page.path}>
                 <button className="wiz-wizard__nav__link btn btn-link btn-link-ordinary"
-                        onClick={() => handlePage(page)}
-                        disabled={!navTrail.navigable(page) || !navTrail.canNavigateForward(currentPage, page, state)}
+                  onClick={() => handlePage(page)}
+                  disabled={!navTrail.navigable(page) || !navTrail.canNavigateForward(currentPage, page, state)}
                 >{page.title}</button>
               </li>
             );
@@ -57,24 +57,24 @@ const NavSection = connect(state => ({state}))(
 );
 
 const Pager = withNav(
-({navNext, navPrevious, showPrev, showNext, disableNext, loadingNext, resetBtn}) => {
-  const nextLinkClasses = classNames('btn', 'btn-primary', {
-    disabled: disableNext || loadingNext,
-  });
+  ({navNext, navPrevious, showPrev, showNext, disableNext, loadingNext, resetBtn}) => {
+    const nextLinkClasses = classNames('btn', 'btn-primary', {
+      disabled: disableNext || loadingNext,
+    });
 
-  return (
-    <div className="wiz-form__actions">
-      {
-        showPrev && <button onClick={navPrevious} className="btn btn-default wiz-form__actions__prev">
+    return (
+      <div className="wiz-form__actions">
+        {
+          showPrev && <button onClick={navPrevious} className="btn btn-default wiz-form__actions__prev">
           Previous Step
-        </button>
-      }
-      { resetBtn && <div className="wiz-form__actions__prev">
-        <ResetButton />
-      </div>
-      }
-      {
-        showNext &&
+          </button>
+        }
+        { resetBtn && <div className="wiz-form__actions__prev">
+          <ResetButton />
+        </div>
+        }
+        {
+          showNext &&
           <div className="wiz-form__actions__next">
             <WithTooltip text="All fields are required unless specified." shouldShow={disableNext}>
               <button onClick={navNext} className={nextLinkClasses}>
@@ -83,10 +83,10 @@ const Pager = withNav(
               </button>
             </WithTooltip>
           </div>
-      }
-    </div>
-  );
-});
+        }
+      </div>
+    );
+  });
 
 const stateToProps = (state, {history}) => {
   const t = trail(state);
@@ -104,64 +104,64 @@ const stateToProps = (state, {history}) => {
 const routes = _.uniq(_.flatMap(trailSections));
 
 const Wizard = withNav(withRouter(connect(stateToProps)(
-class extends React.Component {
-  navigate (currentPage, nextPage, state) {
-    if (currentPage.path === '/define/cluster-type' && nextPage !== currentPage && state) {
-      TectonicGA.sendEvent('Platform Selected', 'user input', state.clusterConfig[PLATFORM_TYPE], state.clusterConfig[PLATFORM_TYPE]);
+  class extends React.Component {
+    navigate (currentPage, nextPage, state) {
+      if (currentPage.path === '/define/cluster-type' && nextPage !== currentPage && state) {
+        TectonicGA.sendEvent('Platform Selected', 'user input', state.clusterConfig[PLATFORM_TYPE], state.clusterConfig[PLATFORM_TYPE]);
+      }
+
+      if (nextPage === currentPage) {
+        return;
+      }
+
+      if (state) {
+        TectonicGA.sendEvent('Page Navigation Next', 'click', 'next on', state.clusterConfig[PLATFORM_TYPE]);
+      }
+      this.props.history.push(nextPage.path);
     }
 
-    if (nextPage === currentPage) {
-      return;
+    componentDidMount() {
+      document.title = `Tectonic - ${this.props.title}`;
     }
 
-    if (state) {
-      TectonicGA.sendEvent('Page Navigation Next', 'click', 'next on', state.clusterConfig[PLATFORM_TYPE]);
-    }
-    this.props.history.push(nextPage.path);
-  }
-
-  componentDidMount() {
-    document.title = `Tectonic - ${this.props.title}`;
-  }
-
-  componentWillReceiveProps (nextProps) {
-    if (!nextProps.currentPage) {
-      fixLocation();
-    }
-    if (nextProps.title === this.props.title) {
-      return;
-    }
-    document.title = `Tectonic - ${nextProps.title}`;
-  }
-
-  render() {
-    const {t, currentPage, navNext, state, title} = this.props;
-    if (!currentPage) {
-      return null;
+    componentWillReceiveProps (nextProps) {
+      if (!nextProps.currentPage) {
+        fixLocation();
+      }
+      if (nextProps.title === this.props.title) {
+        return;
+      }
+      document.title = `Tectonic - ${nextProps.title}`;
     }
 
-    const nav = page => this.navigate(currentPage, page);
+    render() {
+      const {t, currentPage, navNext, state, title} = this.props;
+      if (!currentPage) {
+        return null;
+      }
 
-    const canNavigateForward = currentPage.component.canNavigateForward || (() => true);
-    return (
-      <div className="tectonic">
-        <Header />
-        <div className="tectonic-installer">
-          <div className="wiz-wizard">
-            <div className="wiz-wizard__cell wiz-wizard__nav">
-              <NavSection
+      const nav = page => this.navigate(currentPage, page);
+
+      const canNavigateForward = currentPage.component.canNavigateForward || (() => true);
+      return (
+        <div className="tectonic">
+          <Header />
+          <div className="tectonic-installer">
+            <div className="wiz-wizard">
+              <div className="wiz-wizard__cell wiz-wizard__nav">
+                <NavSection
                   title="1. Choose Cluster Type"
                   navTrail={t}
                   sections={[trailSections.choose]}
                   currentPage={currentPage}
                   handlePage={nav} />
-              <NavSection
+                <NavSection
                   title="2. Define Cluster"
                   navTrail={t}
                   sections={[trailSections.defineBaremetal, trailSections.defineAWS]}
                   currentPage={currentPage}
                   handlePage={nav} />
-              <NavSection
+                <NavSection
                   title="3. Boot Cluster"
                   navTrail={t}
                   sections={[
@@ -172,42 +172,42 @@ class extends React.Component {
                   ]}
                   currentPage={currentPage}
                   handlePage={nav} />
-            </div>
-            <div className="wiz-wizard__content wiz-wizard__cell">
-              <div className="wiz-form__header">
-                <span className="wiz-form__header__title">{title}</span>
-                {currentPage.showRestore &&
+              </div>
+              <div className="wiz-wizard__content wiz-wizard__cell">
+                <div className="wiz-form__header">
+                  <span className="wiz-form__header__title">{title}</span>
+                  {currentPage.showRestore &&
                   <span className="wiz-form__header__control">
                     <a onClick={() => restoreModal(navNext)}><i className="fa fa-upload"></i>&nbsp;&nbsp;Restore progress</a>
                   </span>
-                }
-                {currentPage.hideSave ||
+                  }
+                  {currentPage.hideSave ||
                   <span className="wiz-form__header__control">
                     <a onClick={() => downloadState(state)}><i className="fa fa-download"></i>&nbsp;&nbsp;Save progress</a>
                   </span>
-                }
-              </div>
-              <div className="wiz-wizard__content__body">
-                <Switch>
-                  {routes.map(r => <Route exact key={r.path} path={r.path} render={() => <r.component />} />)}
-                </Switch>
-              </div>
-              {
-                currentPage.hidePager ||
+                  }
+                </div>
+                <div className="wiz-wizard__content__body">
+                  <Switch>
+                    {routes.map(r => <Route exact key={r.path} path={r.path} render={() => <r.component />} />)}
+                  </Switch>
+                </div>
+                {
+                  currentPage.hidePager ||
                   <Pager
                     showPrev={!!t.previousFrom(currentPage)}
                     showNext={!!t.nextFrom(currentPage)}
                     disableNext={!canNavigateForward(state)}
                     resetBtn={t.canReset} />
-              }
+                }
+              </div>
             </div>
           </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
-    );
-  }
-})));
+      );
+    }
+  })));
 
 export const Base = connect(
   ({cluster, serverFacts}) => {
