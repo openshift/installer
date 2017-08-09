@@ -6,6 +6,8 @@
  },
   "extends": [
     "eslint:recommended",
+    "plugin:import/errors",
+    "plugin:import/warnings",
     "plugin:react/recommended",
   ],
   "globals": {
@@ -77,6 +79,7 @@
     "wrap-iife": [2, "inside"],
   },
   "settings": {
-    "ecmascript": 6,
+    "import/extensions": [".js", ".jsx"],
+    "import/resolver": {"node": {"extensions": [".js", ".jsx"]}},
   },
 }
