@@ -50,7 +50,7 @@ variable "tectonic_container_images" {
     kube_state_metrics              = "quay.io/coreos/kube-state-metrics:v0.5.0"
     kube_version                    = "quay.io/coreos/kube-version:0.1.0"
     kube_version_operator           = "quay.io/coreos/kube-version-operator:v1.7.1-kvo.5"
-    node_agent                      = "quay.io/coreos/node-agent:61288ac4d06d304e6947c22cfec4caf1a10ddaa1"
+    node_agent                      = "quay.io/coreos/node-agent:c021a4959943b63c463410a038efe344939d5455"
     node_exporter                   = "quay.io/prometheus/node-exporter:v0.14.0"
     pod_checkpointer                = "quay.io/coreos/pod-checkpointer:980d1b4b4b8374240c240fb0f85e3a8d9c51663c"
     prometheus                      = "quay.io/prometheus/prometheus:v1.7.1"
