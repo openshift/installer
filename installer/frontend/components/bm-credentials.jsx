@@ -20,7 +20,7 @@ export const BM_Credentials = () => {
         <div className="col-xs-9">
           <WithClusterConfig field={BM_MATCHBOX_CA}>
             <CertArea id={BM_MATCHBOX_CA}
-                      autoFocus="true" />
+              autoFocus="true" />
           </WithClusterConfig>
         </div>
       </div>

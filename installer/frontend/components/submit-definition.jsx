@@ -19,7 +19,7 @@ export const SubmitDefinition = withNav(connect(
   let feature =
     <div className="wiz-giant-button-container">
       <button className="btn btn-primary wiz-giant-button"
-              onClick={() => onFinish(false)}>
+        onClick={() => onFinish(false)}>
         Submit
       </button>
     </div>;

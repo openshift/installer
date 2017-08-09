@@ -16,7 +16,7 @@ import {
   toExtraData,
   toExtraDataInFly,
   toExtraDataError,
- } from '../utils';
+} from '../utils';
 
 const invalid = 'is invalid';
 const fieldName = 'aField';

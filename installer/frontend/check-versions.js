@@ -11,7 +11,7 @@ if (!semver.satisfies(process.version, engines.node)) {
 
 // Yarn puts its version info in npm_config_user_agent env var O_o
 const userAgent = process.env.npm_config_user_agent;
-const result = /^yarn\/([\w\.]+)/.exec(userAgent);
+const result = /^yarn\/([\w.]+)/.exec(userAgent);
 if (!result) {
   console.error(`Unknown yarn user agent: ${userAgent}`);
 }

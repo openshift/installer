@@ -6,11 +6,11 @@ import { Dropdown } from './ui';
 const fetchLatestRelease = () => {
   return fetch('/releases/latest',
     { method: 'GET' }).then((response) => {
-      if (response.ok) {
-        return response.text();
-      }
-      return response.text().then(err => Promise.reject(err));
-    });
+    if (response.ok) {
+      return response.text();
+    }
+    return response.text().then(err => Promise.reject(err));
+  });
 };
 
 const parseLatestVersion = (html) => {

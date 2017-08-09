@@ -222,15 +222,15 @@ export const FileArea = connect(
   const {id, onValue, markDirtyUpload, uploadButtonLabel} = props;
   const handleUpload = (e) => {
     readFile(e.target.files.item(0))
-    .then((value) => {
-      onValue(value);
-    })
-    .catch((msg) => {
-      console.error(msg);
-    })
-    .then(() => {
-      markDirtyUpload(id);
-    });
+      .then((value) => {
+        onValue(value);
+      })
+      .catch((msg) => {
+        console.error(msg);
+      })
+      .then(() => {
+        markDirtyUpload(id);
+      });
     // Reset value so that onChange fires if you pick the same file again.
     e.target.value = null;
   };
@@ -240,8 +240,8 @@ export const FileArea = connect(
       <label className="btn btn-sm btn-link">
         <span className="fa fa-upload"></span>&nbsp;&nbsp;{uploadButtonLabel || 'Upload'} {' '}
         <input style={{display: 'none'}}
-               type="file"
-               onChange={handleUpload} />
+          type="file"
+          onChange={handleUpload} />
       </label>
       <Field {...props} />
     </div>
@@ -493,13 +493,13 @@ export const WithClusterConfig = connect(
     }
     this.safeSetState({inFly: true});
     asyncValidator(value)
-    .then(() => {
-      this.safeSetState({asyncInvalid: undefined}, () => this.setValidation());
-    })
-    .catch(err => {
-      this.safeSetState({asyncInvalid: err}, () => this.setValidation());
-    })
-    .then(() => this.safeSetState({inFly: false}));
+      .then(() => {
+        this.safeSetState({asyncInvalid: undefined}, () => this.setValidation());
+      })
+      .catch(err => {
+        this.safeSetState({asyncInvalid: err}, () => this.setValidation());
+      })
+      .then(() => this.safeSetState({inFly: false}));
   }
 
   componentWillReceiveProps (nextProps) {
@@ -676,15 +676,15 @@ export class AsyncSelect extends React.Component {
         <div className={classNames('async-select', props.className)} style={props.style}>
           {props.children}
           <select style={style}
-              id={id}
-              className="async-select--select"
-              value={value}
-              disabled={availableValues.inFly}
-              onChange={e => {
-                const v = e.target.value;
-                props.onValue && props.onValue(v);
-                onChange && onChange(v);
-              }}>
+            id={id}
+            className="async-select--select"
+            value={value}
+            disabled={availableValues.inFly}
+            onChange={e => {
+              const v = e.target.value;
+              props.onValue && props.onValue(v);
+              onChange && onChange(v);
+            }}>
             {disabledValue && <option value="" disabled>{disabledValue}</option>}
             {optionElems}
           </select>
