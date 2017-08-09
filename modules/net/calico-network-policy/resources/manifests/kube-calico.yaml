@@ -1,6 +1,6 @@
 # Calico Kubernetes Datastore Hosted Install
 # Calico policy-only with user-supplied networking
-# http://docs.projectcalico.org/v2.2/getting-started/kubernetes/installation/hosted/kubernetes-datastore/
+# http://docs.projectcalico.org/v2.4/getting-started/kubernetes/installation/hosted/kubernetes-datastore/
 #
 # This ConfigMap is used to configure a self-hosted Calico installation.
 apiVersion: v1
@@ -10,7 +10,7 @@ metadata:
   namespace: kube-system
 data:
   # The CNI network configuration to install on each node.
-  # http://docs.projectcalico.org/v2.2/reference/cni-plugin/configuration
+  # http://docs.projectcalico.org/v2.4/reference/cni-plugin/configuration
   # https://github.com/containernetworking/cni/blob/master/SPEC.md#network-configuration
   # depends on flannel to perform networking
   cni_network_config: |-
@@ -86,6 +86,7 @@ rules:
   - apiGroups: ["projectcalico.org"]
     resources:
       - globalconfigs
+      - globalbgpconfigs
     verbs:
       - create
       - get
@@ -94,10 +95,15 @@ rules:
       - watch
   - apiGroups: ["projectcalico.org"]
     resources:
+      - globalbgppeers
+    verbs:
+      - get
+      - list
+  - apiGroups: ["projectcalico.org"]
+    resources:
       - ippools
     verbs:
       - create
-      - delete
       - get
       - list
       - update
@@ -174,6 +180,9 @@ spec:
             # Don't enable BGP.
             - name: CALICO_NETWORKING_BACKEND
               value: "none"
+            # Cluster type to identify the deployment type
+            - name: CLUSTER_TYPE
+              value: "tectonic,canal"
             # Disable file logging so `kubectl logs` works.
             - name: CALICO_DISABLE_FILE_LOGGING
               value: "true"
@@ -192,6 +201,8 @@ spec:
             # Enable IPIP
             - name: CALICO_IPV4POOL_IPIP
               value: "always"
+            - name: FELIX_HEALTHENABLED
+              value: "true"
             # Set based on the k8s node name.
             - name: NODENAME
               valueFrom:
@@ -205,6 +216,18 @@ spec:
           resources:
             requests:
               cpu: 250m
+          livenessProbe:
+            httpGet:
+              path: /liveness
+              port: 9099
+            periodSeconds: 10
+            initialDelaySeconds: 10
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /readiness
+              port: 9099
+            periodSeconds: 10
           volumeMounts:
             - mountPath: /var/run/calico
               name: var-run-calico
