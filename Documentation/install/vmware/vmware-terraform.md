@@ -60,7 +60,7 @@ Also make sure that the SSH known_hosts file doesn't have old records of the API
 
 ## Getting Started
 
-Below steps need to be executed on machine that has network connectivity to VMware vCenter API and SSH access to Tectonic Master Server(s).
+The following steps must be executed on a machine that has network connectivity to VMware vCenter API and SSH access to Tectonic Master Server(s).
 
 ### Download and extract Tectonic Installer
 
@@ -181,7 +181,7 @@ To delete Tectonic cluster, run:
 $ terraform destroy ../../platforms/vmware
 ```
 
-[register]: https://account.coreos.com/signup/summary/tectonic-2016-12
+[register]: https://account.coreos.com
 [baremetaldns]: https://coreos.com/tectonic/docs/latest/install/bare-metal/#dns 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md
