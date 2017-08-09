@@ -13,7 +13,7 @@ variable "tectonic_azure_ssh_network_internal" {
   description = <<EOF
 (optional) Network (internal) to allow SSH access from. Maps to `source_address_prefix` in Azure.
 Defaults to `VirtualNetwork`. Should be internal to Azure environment.
-Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
+Allowed values: [network CIDR (i.e., 10.0.0.0/16) \| `VirtualNetwork` \| `Internet` \| `*` ]
 EOF
 
   default = "VirtualNetwork"
@@ -25,7 +25,7 @@ variable "tectonic_azure_ssh_network_external" {
   description = <<EOF
 (optional) Network (external) to allow SSH access from. Maps to `source_address_prefix` in Azure.
 Defaults to `*`. Can be external to Azure environment.
-Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
+Allowed values: [network CIDR (i.e., 10.0.0.0/16) \| `VirtualNetwork` \| `Internet` \| `*` ]
 EOF
 
   default = "*"

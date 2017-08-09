@@ -117,12 +117,12 @@ tectonic_azure_ssh_key = ""
 
 // (optional) Network (external) to allow SSH access from. Maps to `source_address_prefix` in Azure.
 // Defaults to `*`. Can be external to Azure environment.
-// Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
+// Allowed values: [network CIDR (i.e., 10.0.0.0/16) \| `VirtualNetwork` \| `Internet` \| `*` ]
 // tectonic_azure_ssh_network_external = "*"
 
 // (optional) Network (internal) to allow SSH access from. Maps to `source_address_prefix` in Azure.
 // Defaults to `VirtualNetwork`. Should be internal to Azure environment.
-// Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
+// Allowed values: [network CIDR (i.e., 10.0.0.0/16) \| `VirtualNetwork` \| `Internet` \| `*` ]
 // tectonic_azure_ssh_network_internal = "VirtualNetwork"
 
 // (optional) Range of IP addresses assigned to the Virtual Network in which the cluster nodes run.
