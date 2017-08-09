@@ -2,6 +2,7 @@ data "ignition_config" "master" {
   files = [
     "${data.ignition_file.kubeconfig.id}",
     "${data.ignition_file.kubelet_env.id}",
+    "${module.azure_udev-rules.udev-rules_id}",
     "${data.ignition_file.max_user_watches.id}",
     "${data.ignition_file.cloud_provider_config.id}",
   ]
@@ -119,4 +120,8 @@ data "ignition_systemd_unit" "tectonic" {
 
 module "net_ignition" {
   source = "../../net/ignition"
+}
+
+module "azure_udev-rules" {
+  source = "../udev-rules"
 }
