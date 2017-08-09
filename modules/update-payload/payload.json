@@ -87,58 +87,6 @@
       "kind": "Deployment",
       "metadata": {
         "labels": {
-          "k8s-app": "container-linux-update-operator",
-          "managed-by-channel-operator": "true"
-        },
-        "name": "container-linux-update-operator",
-        "namespace": "tectonic-system"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "k8s-app": "container-linux-update-operator"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "k8s-app": "container-linux-update-operator"
-            },
-            "name": "container-linux-update-operator"
-          },
-          "spec": {
-            "containers": [
-              {
-                "command": [
-                  "/bin/update-operator",
-                  "--manage-agent=true",
-                  "-agent-image-repo",
-                  "quay.io/coreos/container-linux-update-operator"
-                ],
-                "env": [
-                  {
-                    "name": "POD_NAMESPACE",
-                    "valueFrom": {
-                      "fieldRef": {
-                        "fieldPath": "metadata.namespace"
-                      }
-                    }
-                  }
-                ],
-                "image": "quay.io/coreos/container-linux-update-operator:v0.2.2",
-                "name": "update-operator"
-              }
-            ]
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
           "k8s-app": "kube-version-operator",
           "managed-by-channel-operator": "true"
         },
@@ -180,6 +128,62 @@
               "runAsNonRoot": true,
               "runAsUser": 65534
             }
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "apps/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
+          "k8s-app": "tectonic-cluo-operator",
+          "managed-by-channel-operator": "true"
+        },
+        "name": "tectonic-cluo-operator",
+        "namespace": "tectonic-system"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "k8s-app": "tectonic-cluo-operator"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "k8s-app": "tectonic-cluo-operator"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "command": [
+                  "/tectonic-x-operator",
+                  "--operator-name=tectonic-cluo-operator",
+                  "--appversion-name=tectonic-cluo-operator"
+                ],
+                "image": "quay.io/coreos/tectonic-cluo-operator:v0.1.1",
+                "name": "tectonic-cluo-operator",
+                "resources": {
+                  "limits": {
+                    "cpu": "20m",
+                    "memory": "50Mi"
+                  },
+                  "requests": {
+                    "cpu": "20m",
+                    "memory": "50Mi"
+                  }
+                }
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "coreos-pull-secret"
+              }
+            ],
+            "restartPolicy": "Always"
           }
         }
       }
@@ -315,6 +319,16 @@
         "namespace": "tectonic-system"
       },
       "version": "1.7.3+tectonic.1"
+    },
+    {
+      "metadata": {
+        "labels": {
+          "managed-by-channel-operator": "true"
+        },
+        "name": "tectonic-cluo-operator",
+        "namespace": "tectonic-system"
+      },
+      "version": "0.1.1"
     },
     {
       "metadata": {
