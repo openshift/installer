@@ -3,9 +3,9 @@ import classNames from 'classnames';
 import React from 'react';
 import { saveAs } from 'file-saver';
 import { connect } from 'react-redux';
-import { Route, Switch } from 'react-router-dom';
+import { Route, Switch, withRouter } from 'react-router-dom';
 
-import { navChange } from '../actions';
+import { fixLocation } from '../app';
 import { withNav } from '../nav';
 import { savable } from '../reducer';
 import { sections as trailSections, trail } from '../trail';
@@ -88,16 +88,14 @@ const Pager = withNav(
   );
 });
 
-const stateToProps = (state) => {
+const stateToProps = (state, {history}) => {
   const t = trail(state);
-  const currentPage = t.pageByPath.get(state.path);
+  const currentPage = t.pageByPath.get(history.location.pathname);
   return {
     currentPage,
-    nextPage: t.nextFrom(currentPage),
-    prevPage: t.previousFrom(currentPage),
     state,
     t,
-    title: `${currentPage.title}${window.config.devMode ? ' (dev)' : ''}`,
+    title: `${_.get(currentPage, 'title')}${window.config.devMode ? ' (dev)' : ''}`,
   };
 };
 
@@ -105,7 +103,7 @@ const stateToProps = (state) => {
 // If a user guesses an invalid URL, they could get in a weird state. Oh well.
 const routes = _.uniq(_.flatMap(trailSections));
 
-const Wizard = withNav(connect(stateToProps, {navChange})(
+const Wizard = withNav(withRouter(connect(stateToProps)(
 class extends React.Component {
   navigate (currentPage, nextPage, state) {
     if (currentPage.path === '/define/cluster-type' && nextPage !== currentPage && state) {
@@ -119,7 +117,7 @@ class extends React.Component {
     if (state) {
       TectonicGA.sendEvent('Page Navigation Next', 'click', 'next on', state.clusterConfig[PLATFORM_TYPE]);
     }
-    this.props.navChange(nextPage.path);
+    this.props.history.push(nextPage.path);
   }
 
   componentDidMount() {
@@ -127,6 +125,9 @@ class extends React.Component {
   }
 
   componentWillReceiveProps (nextProps) {
+    if (!nextProps.currentPage) {
+      fixLocation();
+    }
     if (nextProps.title === this.props.title) {
       return;
     }
@@ -134,7 +135,10 @@ class extends React.Component {
   }
 
   render() {
-    const {t, currentPage, navNext, prevPage, nextPage, state, title} = this.props;
+    const {t, currentPage, navNext, state, title} = this.props;
+    if (!currentPage) {
+      return null;
+    }
 
     const nav = page => this.navigate(currentPage, page);
 
@@ -191,8 +195,8 @@ class extends React.Component {
               {
                 currentPage.hidePager ||
                   <Pager
-                    showPrev={!!prevPage}
-                    showNext={!!nextPage}
+                    showPrev={!!t.previousFrom(currentPage)}
+                    showNext={!!t.nextFrom(currentPage)}
                     disableNext={!canNavigateForward(state)}
                     resetBtn={t.canReset} />
               }
@@ -203,7 +207,7 @@ class extends React.Component {
       </div>
     );
   }
-}));
+})));
 
 export const Base = connect(
   ({cluster, serverFacts}) => {

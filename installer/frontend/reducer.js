@@ -13,7 +13,6 @@ import {
   dirtyActionTypes,
   eventErrorsActionTypes,
   loadFactsActionTypes,
-  navActionTypes,
   restoreActionTypes,
   serverActionTypes,
   sequenceActionTypes,
@@ -216,21 +215,6 @@ const reducersTogether = combineReducers({
         error: action.payload,
         awsRegions: null,
       };
-    default:
-      return state;
-    }
-  },
-
-  // The current location as reported by react-router
-  // Should not be saved or restored.
-  path: (state, action) => {
-    if (state === undefined) {
-      return window.location.pathname;
-    }
-
-    switch (action.type) {
-    case navActionTypes.LOCATION_CHANGE:
-      return action.payload.pathname;
     default:
       return state;
     }
