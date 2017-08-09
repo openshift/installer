@@ -5,6 +5,8 @@ folder("triggers")
 job("triggers/tectonic-installer-pr-trigger") {
   description('Tectonic Installer PR Trigger. Changes here will be reverted automatically.')
 
+  concurrentBuild()
+
   logRotator(30, 100)
   label("master")
 
