@@ -22,7 +22,7 @@ module.exports = {
       selector: 'input[id=adminPassword2]',
     },
     nextStep: {
-      selector:'//*[text()[contains(.,"Next Step")]]',
+      selector: '//*[text()[contains(.,"Next Step")]]',
       locateStrategy: 'xpath',
     },
   },

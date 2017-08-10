@@ -21,11 +21,11 @@ module.exports = {
       selector: 'input[id=matchboxRPC]',
     },
     nextStepp: {
-      selector:'//*[text()[contains(.,"Next Step")]]',
+      selector: '//*[text()[contains(.,"Next Step")]]',
       locateStrategy: 'xpath',
     },
     nextStep: {
-      selector:'//*[@class="withtooltip"]/button[not(contains(@class, "btn-primary disabled"))]',
+      selector: '//*[@class="withtooltip"]/button[not(contains(@class, "btn-primary disabled"))]',
       locateStrategy: 'xpath',
     },
   },

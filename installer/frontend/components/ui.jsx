@@ -329,7 +329,7 @@ const stateToProps = ({clusterConfig, dirty}, {field}) => ({
   invalid: _.get(clusterConfig, toError(field))
     || _.get(clusterConfig, toAsyncError(field))
     || _.get(clusterConfig, toExtraDataError(field)),
-  isDirty:  _.get(dirty, field),
+  isDirty: _.get(dirty, field),
   extraData: _.get(clusterConfig, toExtraData(field)),
   inFly: _.get(clusterConfig, toInFly(field)) || _.get(clusterConfig, toExtraDataInFly(field)),
 });

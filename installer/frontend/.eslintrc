@@ -38,6 +38,7 @@
     "import/no-unresolved": 2,
     "indent": [2, 2],
     "jsx-quotes": 2,
+    "key-spacing": 2,
     "linebreak-style": [2, "unix"],
     "max-nested-callbacks": [1, 3],
     "no-alert": 1,
