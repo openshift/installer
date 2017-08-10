@@ -51,9 +51,6 @@ const awsCredsForm = new Form(AWS_CREDS, [
   new Field(AWS_ACCESS_KEY_ID, {
     default: '',
     validator: compose(validate.nonEmpty, (v) => {
-      if (!v.startsWith('AK')) {
-        return 'AWS access key IDs always begin with \'AK\'.';
-      }
       if (v.indexOf('@') >= 0) {
         return 'AWS access key IDs are not email addresses.';
       }
