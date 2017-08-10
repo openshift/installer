@@ -36,7 +36,7 @@ const handleUpload = (blob, cb) => dispatch => {
         });
         // the restored state may contain errors, so we don't want to use an old version.
         dispatch(validateAllFields(cb));
-      } catch(e) {
+      } catch (e) {
         dispatch({
           type: eventErrorsActionTypes.ERROR,
           payload: {

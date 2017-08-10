@@ -103,7 +103,7 @@ window.onerror = (message, source, lineno, colno, optError = {}) => {
   try {
     const e = `${message} ${source} ${lineno} ${colno}`;
     TectonicGA.sendError(e, optError.stack);
-  } catch(err) {
+  } catch (err) {
     try {
       // eslint-disable-next-line no-console
       console.error(err);

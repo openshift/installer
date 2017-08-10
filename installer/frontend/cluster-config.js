@@ -217,7 +217,7 @@ export const toAWS_TF = (cc, FORMS, opts = {}) => {
 
   const extraTags = {};
   _.each(cc[AWS_TAGS], ({key, value}) => {
-    if(key && value) {
+    if (key && value) {
       extraTags[key] = value;
     }
   });
