@@ -232,7 +232,7 @@ sections.forEach((v, k) => {
 //    - moving from one page to some previous pages
 //    - presenting a (possibly disabled) list of all pages
 export class Trail {
-  constructor(trailSections, whitelist, opts={}) {
+  constructor(trailSections, whitelist, opts = {}) {
     this.canReset = opts.canReset;
     this.sections = trailSections;
     const sectionPages = this.sections.reduce((ls, l) => ls.concat(l), []);

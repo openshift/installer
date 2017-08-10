@@ -10,14 +10,13 @@ import { Router } from 'react-router-dom';
 import createHistory from 'history/createBrowserHistory';
 import Cookie from 'js-cookie';
 
-import { restoreActionTypes, validateAllFields } from './actions';
+import { clusterReadyActionTypes, restoreActionTypes, validateAllFields } from './actions';
 import { trail } from './trail';
 import { TectonicGA } from './tectonic-ga';
 import { savable } from './reducer';
 import { loadFacts, observeClusterStatus } from './server';
 import { store, dispatch } from './store';
 import { Base } from './components/base';
-import { clusterReadyActionTypes } from './actions';
 
 const history = createHistory();
 
@@ -100,7 +99,7 @@ store.dispatch(validateAllFields(() => {
   );
 }));
 
-window.onerror = (message, source, lineno, colno, optError={}) => {
+window.onerror = (message, source, lineno, colno, optError = {}) => {
   try {
     const e = `${message} ${source} ${lineno} ${colno}`;
     TectonicGA.sendError(e, optError.stack);

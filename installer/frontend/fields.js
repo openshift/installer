@@ -8,7 +8,7 @@ export default FIELDS;
 
 FIELDS[CLUSTER_NAME] = new Field(CLUSTER_NAME, {
   default: '',
-  validator: (s='', CC) => {
+  validator: (s = '', CC) => {
     switch (CC[PLATFORM_TYPE]) {
     case AWS_TF:
       // http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-parameters.html

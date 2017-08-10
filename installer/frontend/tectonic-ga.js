@@ -44,7 +44,7 @@ export const TectonicGA = {
     send({ type: 'pageview', page});
   },
 
-  sendError: (message, stack='') => {
+  sendError: (message, stack = '') => {
     send({
       type: 'event',
       category: 'installerError',

@@ -13,7 +13,7 @@ export const SubmitDefinition = withNav(connect(
     ready: state.cluster.ready,
   }),
   dispatch => ({
-    onFinish: (dryRun=false) => dispatch(commitToServer(dryRun)),
+    onFinish: (dryRun = false) => dispatch(commitToServer(dryRun)),
   })
 )(({navNext, navPrevious, phase, response, ready, onFinish}) => {
   let feature =
