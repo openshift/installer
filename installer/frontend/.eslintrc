@@ -73,7 +73,7 @@
     "react/prop-types": 0,
     "react/self-closing-comp": [2, {"component": true, "html": false}],
     "semi": 2,
-    "space-infix-ops": 0, // To allow for fn(arg=val) with no spaces around the "="
+    "space-infix-ops": 2,
     "strict": [2, "global"],
     "vars-on-top": 2,
     "wrap-iife": [2, "inside"],

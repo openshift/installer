@@ -314,7 +314,7 @@ const reducersTogether = combineReducers({
   },
 });
 
-function filterClusterConfig(cc={}) {
+function filterClusterConfig(cc = {}) {
   Object.keys(cc).forEach(k => {
     if (!DEFAULT_CLUSTER_CONFIG.hasOwnProperty(k)) {
       console.error(`Removed clusterConfig.${k} because it's not in defaults.`);

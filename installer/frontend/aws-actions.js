@@ -19,7 +19,7 @@ import { TectonicGA } from './tectonic-ga';
 
 const { batchSetIn } = configActions;
 
-const createAction = (name, fn, shouldReject=false) => (body, creds, isNow) => (dispatch, getState) => {
+const createAction = (name, fn, shouldReject = false) => (body, creds, isNow) => (dispatch, getState) => {
   const { clusterConfig } = getState();
 
   creds = Object.assign({

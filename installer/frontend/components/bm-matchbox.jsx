@@ -102,7 +102,7 @@ export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
       clearTimeout(this.timeout);
     }
 
-    onBootCfg (v, ms=1400) {
+    onBootCfg (v, ms = 1400) {
       this.props.handleHTTP(v);
       if (this.timeout) {
         clearTimeout(this.timeout);

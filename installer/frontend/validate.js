@@ -49,7 +49,7 @@ export const validate = {
     return 'Invalid email address.';
   },
 
-  MAC: (s='') => {
+  MAC: (s = '') => {
     if (!s.length) {
       return;
     }
@@ -126,7 +126,7 @@ export const validate = {
     return 'Invalid format. You must provide a domain name or IP address.';
   },
 
-  port: (s='') => {
+  port: (s = '') => {
     const errMsg = 'Invalid port value. You must provide a valid port number.';
     if (!s.match(/^[0-9]+$/)) {
       return errMsg;

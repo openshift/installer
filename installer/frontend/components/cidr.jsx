@@ -12,7 +12,7 @@ const generateTooltipText = ({value}) => {
   const [, bits] = value.split('/');
   // javascript's bit shifting only works on signed 32bit ints so <<31
   // would be negative :(
-  const addresses = Math.pow(2, 32-parseInt(bits, 10));
+  const addresses = Math.pow(2, 32 - parseInt(bits, 10));
   return `${addresses} IP address${addresses === 1 ? '' : 'es'}`;
 };
 

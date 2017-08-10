@@ -99,7 +99,7 @@ store.dispatch(validateAllFields(() => {
   );
 }));
 
-window.onerror = (message, source, lineno, colno, optError={}) => {
+window.onerror = (message, source, lineno, colno, optError = {}) => {
   try {
     const e = `${message} ${source} ${lineno} ${colno}`;
     TectonicGA.sendError(e, optError.stack);
