@@ -311,7 +311,9 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
                 Use an existing VPC (Public)
                 </label>
                 <p className="text-muted wiz-help-text">
-                Useful for installing beside existing resources. Your VPC must be <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} target="_blank">set up correctly</a>.
+                  {/* eslint-disable react/jsx-no-target-blank */}
+                  Useful for installing beside existing resources. Your VPC must be <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} rel="noopener" target="_blank">set up correctly</a>.
+                  {/* eslint-enable react/jsx-no-target-blank */}
                 </p>
               </div>
             </div>
@@ -324,7 +326,9 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
                 Use an existing VPC (Private)
                 </label>
                 <p className="text-muted wiz-help-text">
-                Useful for installing beside existing resources. Your VPC must be <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} target="_blank">set up correctly</a>.
+                  {/* eslint-disable react/jsx-no-target-blank */}
+                  Useful for installing beside existing resources. Your VPC must be <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} rel="noopener" target="_blank">set up correctly</a>.
+                  {/* eslint-enable react/jsx-no-target-blank */}
                 </p>
               </div>
             </div>
@@ -334,7 +338,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
         <hr />
 
         <p className="text-muted">
-        Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <a target="_blank" href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html">Working with Hosted Zones</a>.
+        Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <a target="_blank" href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html" rel="noopener noreferrer">Working with Hosted Zones</a>.
         </p>
         <div className="row form-group">
           <div className="col-xs-3">
@@ -364,8 +368,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
                 </Select>
               </Connect>
               <p className="text-muted wiz-help-text">
-                See AWS <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html"
-                  target="_blank">Split-View DNS documentation&nbsp;<i className="fa fa-external-link" /></a>
+                See AWS <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html" rel="noopener noreferrer" target="_blank">Split-View DNS documentation&nbsp;<i className="fa fa-external-link" /></a>
               </p>
             </div>
           </div>
@@ -395,7 +398,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
               </Alert>
               <div className="row form-group">
                 <div className="col-xs-12">
-                  Specify a range of IPv4 addresses for the VPC in the form of a <a href="https://tools.ietf.org/html/rfc4632" target="_blank">CIDR block</a>. Safe defaults have been chosen for you.
+                  Specify a range of IPv4 addresses for the VPC in the form of a <a href="https://tools.ietf.org/html/rfc4632" rel="noopener noreferrer" target="_blank">CIDR block</a>. Safe defaults have been chosen for you.
                 </div>
               </div>
               <CIDR name="CIDR block" field={AWS_VPC_CIDR} placeholder="10.0.0.0/16" />

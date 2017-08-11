@@ -73,7 +73,6 @@
     "react/jsx-equals-spacing": 2,
     "react/jsx-indent": [2, 2],
     "react/jsx-no-duplicate-props": 2,
-    "react/jsx-no-target-blank": 0,
     "react/jsx-tag-spacing": 2,
     "react/jsx-uses-react": 2,
     "react/jsx-uses-vars": 2,
