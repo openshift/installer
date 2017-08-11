@@ -1,8 +1,8 @@
 # Tectonic Ingress
 
-Tectonic AWS and bare-metal clusters include an Ingress Controller to expose the Tectonic Console and Tectonic Identity services. Ingress controllers watch the Kubernetes API for Ingress resources and update their configuration to expose Kubernetes services. When service traffic is routed through Ingress controllers, services of type LoadBalancer, NodePort, and HostPort are not required. Ingress resources can have rules which match hostnames, match paths, and perform TLS termination.
+Tectonic AWS and bare metal clusters include an Ingress Controller to expose the Tectonic Console and Tectonic Identity services. Ingress controllers watch the Kubernetes API for Ingress resources and update their configuration to expose Kubernetes services. When service traffic is routed through Ingress controllers, services of type LoadBalancer, NodePort, and HostPort are not required. Ingress resources can have rules which match hostnames, match paths, and perform TLS termination.
 
-* On Tectonic bare-metal, Ingress controllers are run as a daemonset on host ports across worker nodes by default.
+* On Tectonic bare metal, Ingress controllers are run as a daemonset on host ports across worker nodes by default.
 * On Tectonic AWS, Ingress controllers are run as a deployment with node ports behind an AWS ELB by default.
 
 ## Using Tectonic Ingress
@@ -29,13 +29,13 @@ spec:
               servicePort: 80
 ```
 
-You can view Ingress resources in the Tectonic Console:
+View Ingress resources in the Tectonic Console:
 
 <div class="row">
   <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-12 col-xs-offset-1">
     <a href="../img/tectonic-ingress.png" class="co-m-screenshot">
       <img src="../img/tectonic-ingress.png">
-      <div class="co-m-screenshot-caption">Viewing Ingress Rules in the Tectonic Console</div> 
+      <div class="co-m-screenshot-caption">Viewing Ingress Rules in the Tectonic Console</div>
     </a>
   </div>
 </div>
@@ -51,8 +51,8 @@ hello     hello.example.com   172.18.0.22,172.18.0.23   80        1h
 ### Test your rules
 
 Next, test that traffic to `hello.example.com` reaches the cluster's Ingress Controllers.
-    
-On Tectonic bare-metal, add a DNS record on your network which resolves `hello.example.com` to any worker node(s), similar to how the Tectonic DNS entry was setup while going through the installer. In a pinch, you could test this by adding an `/etc/hosts` entry
+
+On Tectonic bare metal, add a DNS record on your network which resolves `hello.example.com` to any worker node(s), similar to how the Tectonic DNS entry was set up using Tectonic Installer. (To test, add an `/etc/hosts` entry.)
 
 ```
 workerIP hello.example.com
@@ -63,14 +63,14 @@ For Tectonic AWS, add a DNS CNAME record `hello.example.com` to your Tectonic EL
 Visit the example application `http://hello.example.com`. Learn more about [Ingress][ingress-userguide] and add TLS termination for HTTPS apps.
 
 ## Running your own Ingress
- 
+
 Using Tectonic's built-in Ingress Controller works well for everyday HTTP workloads. However, you may run an application that requires more customized logic. For example, complex header manipulation as the routing rules are applied.
 
 ### Running an ingress controller
 
-There are several different Ingress Controllers that you can run. [Nginx and haproxy][controller-deployments] are the most popular. Familiarize yourself with their documentation for how to deploy them. Typically this is done as a Deployment/DaemonSet and a corresponding Service.
+There are several different Ingress Controllers available. [Nginx and haproxy][controller-deployments] are the most popular. Ingress controllers are usually deployed as a Deployment/DaemonSet and a corresponding Service. For more information, see the selected Controller's documentation.
 
-Aside from the normal Ingress Controller options, pay attention to the following:
+When selecting Ingress Controller options, be certain to consider the following flags:
 
 **Class** - The flag `--ingress-class=my-custom-ingress` allows for rules to target this ingress controller.
 **Namespace** - The flag `--watch-namespace=example` will ensure that only a specific namespace is watched for ingress rules. This can prevent others from using your Ingress Controller.
@@ -148,7 +148,8 @@ metadata:
     kubernetes.io/ingress.class: "my-custom-ingress"
 ```
 
-After your Ingress Controller is running and your rules have been defined, you should be able to send traffic to your Service and have it routed appropriately.
+When rules are defined and the Ingress Controller is running, traffic to your Service will be routed appropriately.
+
 
 [ingress-userguide]: https://kubernetes.io/docs/user-guide/ingress/
 [service-accounts]: onboard-service-account.md
