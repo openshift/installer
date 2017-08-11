@@ -740,9 +740,8 @@ export class DropdownMixin extends React.PureComponent {
     if (!this.state.active ) {
       return;
     }
-    const {dropdownElement} = this.refs;
 
-    if (event.target === dropdownElement || dropdownElement.contains(event.target)) {
+    if (event.target === this.dropdownElement || this.dropdownElement.contains(event.target)) {
       return;
     }
     this.hide();
@@ -785,7 +784,7 @@ export class Dropdown extends DropdownMixin {
     });
 
     return (
-      <div ref="dropdownElement">
+      <div ref={el => this.dropdownElement = el}>
         <div className="dropdown" onClick={this.toggle}>
           <a className="tectonic-dropdown-menu-title">{header}&nbsp;&nbsp;<i className="fa fa-angle-down" aria-hidden="true"></i></a>
           <ul className="dropdown-menu tectonic-dropdown-menu" style={{display: active ? 'block' : 'none'}}>{children}</ul>
@@ -801,7 +800,7 @@ export class DropdownInline extends DropdownMixin {
     const {items, header} = this.props;
 
     return (
-      <div ref="dropdownElement" className="dropdown" onClick={this.toggle} style={{display: 'inline-block'}}>
+      <div ref={el => this.dropdownElement = el} className="dropdown" onClick={this.toggle} style={{display: 'inline-block'}}>
         <a>{header}&nbsp;&nbsp;<i className="fa fa-caret-down"></i></a>
         <ul className="dropdown-menu--dark" style={{display: active ? 'block' : 'none'}}>
           {items.map(([title, cb], i) => <li className="dropdown-menu--dark__item" key={i} onClick={cb}>{title}</li>)}
