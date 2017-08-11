@@ -122,7 +122,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
 
       const node = this.outputNode;
       if (!node) {
-      // outputNode will exist once componentDidUpdate fires. Scroll to the bottom at that time.
+        // outputNode will exist once componentDidUpdate fires. Scroll to the bottom at that time.
         this.shouldScroll = true;
         return;
       }
@@ -136,7 +136,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
     }
 
     startOver () {
-    // eslint-disable-next-line no-alert
+      // eslint-disable-next-line no-alert
       if (window.config.devMode || window.confirm('Do you really want to start over?')) {
         window.reset();
       }
@@ -151,7 +151,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
     }
 
     destroy () {
-    // eslint-disable-next-line no-alert
+      // eslint-disable-next-line no-alert
       if (window.config.devMode || window.confirm('Are you sure you want to destroy your cluster?')) {
         this.props.TFDestroy().catch(xhrError => this.setState({xhrError}));
       }

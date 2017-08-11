@@ -198,7 +198,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
         privateSubnets = toVPCSubnetID(region, this.props.awsWorkerSubnets);
       } else {
         if (!awsVpcId) {
-        // User hasn't selected a VPC yet. Don't try to validate.
+          // User hasn't selected a VPC yet. Don't try to validate.
           return Promise.resolve();
         }
         controllerSubnets = toVPCSubnetID(region, this.props.awsControllerSubnetIds);
