@@ -61,7 +61,7 @@ export const Etcd = connect(({clusterConfig}) => ({
           <div className="radio wiz-radio-group__radio">
             <label>
               <Connect field={ETCD_OPTION}>
-                <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.PROVISIONED} id={ETCD_OPTIONS.PROVISIONED}/>
+                <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.PROVISIONED} id={ETCD_OPTIONS.PROVISIONED} />
               </Connect>
               { isAWS && <span>Provision AWS etcd cluster</span> }
               { !isAWS && <span>Provision etcd cluster directly on controller nodes</span> }
@@ -106,7 +106,7 @@ export const Etcd = connect(({clusterConfig}) => ({
               autoFocus
               className="wiz-inline-field wiz-inline-field--protocol"
               prefix={<span className="input__prefix--protocol">http://</span>}
-              placeholder="etcd.example.com:2379"/>
+              placeholder="etcd.example.com:2379" />
           </Connect>
           <p className="text-muted">Hostname and port of etcd client endpoint</p>
         </div>

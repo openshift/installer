@@ -113,7 +113,7 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
 
 const SubnetSelect = ({field, name, subnets, asyncValidator, disabled, fieldName}) => <div className="row form-group">
   <div className="col-xs-3">
-    <Deselect field={fieldName}/>
+    <Deselect field={fieldName} />
     <label htmlFor={`${DESELECTED_FIELDS}.${fieldName}`}>{name}</label>
   </div>
   <div className="col-xs-6">
@@ -331,7 +331,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
           </div>
         </div>
 
-        <hr/>
+        <hr />
 
         <p className="text-muted">
         Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <a target="_blank" href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html">Working with Hosted Zones</a>.
@@ -371,7 +371,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
         </div>
       */}
 
-        <vpcInfoForm.Errors/>
+        <vpcInfoForm.Errors />
         <AWS_DomainValidation />
         <hr />
 
@@ -386,10 +386,10 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
 
           { awsCreateVpc &&
           <div>
-            <br/>
+            <br />
             <Alert>
               The installer will create your EC2 instances within the following CIDR ranges.
-              <br/><br/>
+              <br /><br />
               Safe defaults have been chosen for you.
               If you make changes, the ranges must not overlap and subnets must be within the VPC CIDR.
             </Alert>

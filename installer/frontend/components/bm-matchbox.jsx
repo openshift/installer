@@ -156,7 +156,7 @@ export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
                   <Input id={BM_MATCHBOX_RPC}
                     className="wiz-inline-field wiz-inline-field--protocol"
                     prefix={<span className="input__prefix--protocol">https://</span>}
-                    placeholder="matchbox.example.com:8081"/>
+                    placeholder="matchbox.example.com:8081" />
                 </WithClusterConfig>
                 <p className="text-muted">Hostname and port of matchbox API endpoint</p>
               </div>

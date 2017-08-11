@@ -565,7 +565,7 @@ export const Deselect = connect(
     },
   })
 )(({field, isDeselected, setField}) => <span className="deselect">
-  <CheckBox id={field} value={!isDeselected} onValue={v => setField(field, !v)}/>
+  <CheckBox id={field} value={!isDeselected} onValue={v => setField(field, !v)} />
 </span>);
 
 export const DeselectField = connect(stateToIsDeselected)(({children, isDeselected}) => React.cloneElement(React.Children.only(children), {disabled: isDeselected, selectable: true}));

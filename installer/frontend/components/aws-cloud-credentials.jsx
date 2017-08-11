@@ -167,7 +167,7 @@ const awsCreds = <div>
     </div>
     <div className="col-xs-8">
       <Connect field={AWS_SECRET_ACCESS_KEY}>
-        <Password id="secretAccessKey"/>
+        <Password id="secretAccessKey" />
       </Connect>
     </div>
   </div>
