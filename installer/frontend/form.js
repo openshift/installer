@@ -413,7 +413,7 @@ export class FieldList extends Field {
     const fields = this.fields;
 
     this.OuterListComponent_ = function Outer ({children}) {
-      return React.createElement(ConnectedFieldList, {id, children, fields});
+      return React.createElement(ConnectedFieldList, {id, fields}, children);
     };
 
     return this.OuterListComponent_;
