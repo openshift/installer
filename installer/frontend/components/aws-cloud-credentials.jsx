@@ -167,7 +167,7 @@ const awsCreds = <div>
     </div>
     <div className="col-xs-8">
       <Connect field={AWS_SECRET_ACCESS_KEY}>
-        <Password id="secretAccessKey"/>
+        <Password id="secretAccessKey" />
       </Connect>
     </div>
   </div>
@@ -198,7 +198,7 @@ export const AWS_CloudCredentials = connect(stateToProps)(
               </p>
             </div>
             <div className="wiz-radio-group__body">
-              { !stsEnabled && awsCreds }
+              {!stsEnabled && awsCreds}
             </div>
           </div>
           <div className="wiz-radio-group">
@@ -211,8 +211,8 @@ export const AWS_CloudCredentials = connect(stateToProps)(
               </label>
             </div>
             <div className="wiz-radio-group__body">
-              { stsEnabled && <div>
-                { awsCreds }
+              {stsEnabled && <div>
+                {awsCreds}
                 <div className="row form-group">
                   <div className="col-xs-4">
                     <label htmlFor={AWS_SESSION_TOKEN}>Session Token</label>

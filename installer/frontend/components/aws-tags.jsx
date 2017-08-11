@@ -37,8 +37,8 @@ const validators = {
     const keys = _.map(tags, t => t.key);
     const errors = {};
     let i = 1;
-    for (let name1 of keys) {
-      for (let name2 of keys.slice(i)) {
+    for (const name1 of keys) {
+      for (const name2 of keys.slice(i)) {
         if (name1 === name2) {
           errors[i] = {key: 'Tag keys must be unique'};
         }
@@ -72,7 +72,7 @@ export const tagsFields = new FieldList(AWS_TAGS, {
 const Tag = ({row, remove, placeholder, autoFocus, showAutofocus}) => <div className="row" style={{padding: '0 0 20px 0'}}>
   <div className="col-xs-5" style={{paddingRight: 0}}>
     <Connect field={row.key}>
-      <Input placeholder="e.g. Name" blurry autoFocus={showAutofocus && !!autoFocus}/>
+      <Input placeholder="e.g. Name" blurry autoFocus={showAutofocus && !!autoFocus} />
     </Connect>
   </div>
   <div className="col-xs-6" style={{paddingRight: 0}}>
@@ -105,7 +105,7 @@ export class AWS_Tags extends React.Component {
       </div>
 
       <tagsFields.Map>
-        <Tag {...this.props} showAutofocus={this.state.showAutofocus}/>
+        <Tag {...this.props} showAutofocus={this.state.showAutofocus} />
       </tagsFields.Map>
 
       <div className="row">

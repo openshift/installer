@@ -57,7 +57,7 @@ const reducersTogether = combineReducers({
       };
     }
 
-    switch(action.type) {
+    switch (action.type) {
     case serverActionTypes.COMMIT_REQUESTED:
       return {
         phase: commitPhases.REQUESTED,

@@ -61,14 +61,14 @@ export const Etcd = connect(({clusterConfig}) => ({
           <div className="radio wiz-radio-group__radio">
             <label>
               <Connect field={ETCD_OPTION}>
-                <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.PROVISIONED} id={ETCD_OPTIONS.PROVISIONED}/>
+                <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.PROVISIONED} id={ETCD_OPTIONS.PROVISIONED} />
               </Connect>
-              { isAWS && <span>Provision AWS etcd cluster</span> }
-              { !isAWS && <span>Provision etcd cluster directly on controller nodes</span> }
+              {isAWS && <span>Provision AWS etcd cluster</span>}
+              {!isAWS && <span>Provision etcd cluster directly on controller nodes</span>}
             </label>&nbsp;(default)
             <p className="text-muted wiz-help-text">
-              { isAWS && <span>Create EC2 instances to run an etcd cluster.</span> }
-              { !isAWS && <span>Run etcd directly on controller nodes.</span> }
+              {isAWS && <span>Create EC2 instances to run an etcd cluster.</span>}
+              {!isAWS && <span>Run etcd directly on controller nodes.</span>}
             </p>
           </div>
           <div className="radio wiz-radio-group__radio">
@@ -93,8 +93,8 @@ export const Etcd = connect(({clusterConfig}) => ({
         <form.Errors />
       </div>
     </div>
-    { etcdOption === ETCD_OPTIONS.EXTERNAL && <hr /> }
-    { etcdOption === ETCD_OPTIONS.EXTERNAL &&
+    {etcdOption === ETCD_OPTIONS.EXTERNAL && <hr />}
+    {etcdOption === ETCD_OPTIONS.EXTERNAL &&
     <div className="form-group">
       <div className="row">
         <div className="col-xs-3">
@@ -106,15 +106,15 @@ export const Etcd = connect(({clusterConfig}) => ({
               autoFocus
               className="wiz-inline-field wiz-inline-field--protocol"
               prefix={<span className="input__prefix--protocol">http://</span>}
-              placeholder="etcd.example.com:2379"/>
+              placeholder="etcd.example.com:2379" />
           </Connect>
           <p className="text-muted">Hostname and port of etcd client endpoint</p>
         </div>
       </div>
     </div>
     }
-    { isAWS && etcdOption === ETCD_OPTIONS.PROVISIONED && <hr /> }
-    { isAWS && etcdOption === ETCD_OPTIONS.PROVISIONED &&
+    {isAWS && etcdOption === ETCD_OPTIONS.PROVISIONED && <hr />}
+    {isAWS && etcdOption === ETCD_OPTIONS.PROVISIONED &&
     <div className="row form-group col-xs-12">
       <DefineNode type={AWS_ETCDS} name="etcd" withoutTitle={true} max={9} />
     </div>

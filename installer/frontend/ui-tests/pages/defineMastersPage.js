@@ -21,7 +21,7 @@ module.exports = {
       selector: 'input[id="masters.0.host"]',
     },
     nextStep: {
-      selector:'//*[text()[contains(.,"Next Step")]]',
+      selector: '//*[text()[contains(.,"Next Step")]]',
       locateStrategy: 'xpath',
     },
   },

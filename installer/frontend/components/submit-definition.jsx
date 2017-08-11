@@ -68,7 +68,7 @@ export const SubmitDefinition = withNav(connect(
   return (
     <div>
       <p>
-        { msg }
+        {msg}
         <span> After submission, the definition cannot be updated. Go <a onClick={!inProgress && navPrevious} className={inProgress && 'disabled'}>back</a> to update or make changes.</span>
       </p>
       <p>

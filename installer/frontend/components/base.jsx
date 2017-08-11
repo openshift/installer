@@ -69,7 +69,7 @@ const Pager = withNav(
           Previous Step
           </button>
         }
-        { resetBtn && <div className="wiz-form__actions__prev">
+        {resetBtn && <div className="wiz-form__actions__prev">
           <ResetButton />
         </div>
         }

@@ -44,7 +44,7 @@ module.exports = {
       locateStrategy: 'xpath',
     },
     nextStep: {
-      selector:'//*[@class="withtooltip"]/button[not(contains(@class, "btn-primary disabled"))]',
+      selector: '//*[@class="withtooltip"]/button[not(contains(@class, "btn-primary disabled"))]',
       locateStrategy: 'xpath',
     },
   },

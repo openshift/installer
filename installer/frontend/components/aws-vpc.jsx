@@ -113,7 +113,7 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
 
 const SubnetSelect = ({field, name, subnets, asyncValidator, disabled, fieldName}) => <div className="row form-group">
   <div className="col-xs-3">
-    <Deselect field={fieldName}/>
+    <Deselect field={fieldName} />
     <label htmlFor={`${DESELECTED_FIELDS}.${fieldName}`}>{name}</label>
   </div>
   <div className="col-xs-6">
@@ -198,7 +198,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
         privateSubnets = toVPCSubnetID(region, this.props.awsWorkerSubnets);
       } else {
         if (!awsVpcId) {
-        // User hasn't selected a VPC yet. Don't try to validate.
+          // User hasn't selected a VPC yet. Don't try to validate.
           return Promise.resolve();
         }
         controllerSubnets = toVPCSubnetID(region, this.props.awsControllerSubnetIds);
@@ -331,7 +331,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
           </div>
         </div>
 
-        <hr/>
+        <hr />
 
         <p className="text-muted">
         Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <a target="_blank" href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html">Working with Hosted Zones</a>.
@@ -371,11 +371,11 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
         </div>
       */}
 
-        <vpcInfoForm.Errors/>
+        <vpcInfoForm.Errors />
         <AWS_DomainValidation />
         <hr />
 
-        { awsCreateVpc && <Connect field={AWS_ADVANCED_NETWORKING}>
+        {awsCreateVpc && <Connect field={AWS_ADVANCED_NETWORKING}>
           <ToggleButton className="btn btn-default">Advanced Settings</ToggleButton>
         </Connect>
         }
@@ -384,12 +384,12 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
           You must be on a VPN with access to the target VPC. The cluster will have no public endpoints.
           </Alert>}
 
-          { awsCreateVpc &&
+          {awsCreateVpc &&
           <div>
-            <br/>
+            <br />
             <Alert>
               The installer will create your EC2 instances within the following CIDR ranges.
-              <br/><br/>
+              <br /><br />
               Safe defaults have been chosen for you.
               If you make changes, the ranges must not overlap and subnets must be within the VPC CIDR.
             </Alert>
@@ -401,7 +401,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
             <CIDR name="CIDR block" field={AWS_VPC_CIDR} placeholder="10.0.0.0/16" />
           </div>
           }
-          { !awsCreateVpc &&
+          {!awsCreateVpc &&
           <div className="row">
             <div className="col-xs-3">
               <label htmlFor="r53Zone">VPC</label>
@@ -432,18 +432,18 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
           </div>
           }
 
-          { (controllerSubnets || workerSubnets) && <hr /> }
-          { controllerSubnets && <div className="row form-group">
+          {(controllerSubnets || workerSubnets) && <hr />}
+          {controllerSubnets && <div className="row form-group">
             <div className="col-xs-12">
               <h4>Masters</h4>
-              { controllerSubnets }
+              {controllerSubnets}
             </div>
           </div>
           }
-          { workerSubnets && <div className="row form-group">
+          {workerSubnets && <div className="row form-group">
             <div className="col-xs-12">
               <h4>Workers</h4>
-              { workerSubnets }
+              {workerSubnets}
             </div>
           </div>
           }

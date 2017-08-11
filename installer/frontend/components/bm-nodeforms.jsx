@@ -80,9 +80,9 @@ const BulkUpload = connect(null, dispatch => ({
     handleDone () {
       const {nameCol, macCol, csv} = this.state;
       const rows = csv.data.slice(1).filter(row => {
-      // BabyParse will append a single [""] row to a well-formed CSV,
-      // the following happens to fix that, and forgive other
-      // possible CSV weirdnesses.
+        // BabyParse will append a single [""] row to a well-formed CSV,
+        // the following happens to fix that, and forgive other
+        // possible CSV weirdnesses.
         return row.length > Math.max(nameCol, macCol);
       });
       const nodes = rows.map(row => ({

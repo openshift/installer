@@ -286,7 +286,7 @@ export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirt
         {children}
         {optionElems}
       </select>
-      { invalid && isDirty &&
+      {invalid && isDirty &&
         <div className="wiz-error-message">
           {invalid}
         </div>
@@ -329,7 +329,7 @@ const stateToProps = ({clusterConfig, dirty}, {field}) => ({
   invalid: _.get(clusterConfig, toError(field))
     || _.get(clusterConfig, toAsyncError(field))
     || _.get(clusterConfig, toExtraDataError(field)),
-  isDirty:  _.get(dirty, field),
+  isDirty: _.get(dirty, field),
   extraData: _.get(clusterConfig, toExtraData(field)),
   inFly: _.get(clusterConfig, toInFly(field)) || _.get(clusterConfig, toExtraDataInFly(field)),
 });
@@ -565,7 +565,7 @@ export const Deselect = connect(
     },
   })
 )(({field, isDeselected, setField}) => <span className="deselect">
-  <CheckBox id={field} value={!isDeselected} onValue={v => setField(field, !v)}/>
+  <CheckBox id={field} value={!isDeselected} onValue={v => setField(field, !v)} />
 </span>);
 
 export const DeselectField = connect(stateToIsDeselected)(({children, isDeselected}) => React.cloneElement(React.Children.only(children), {disabled: isDeselected, selectable: true}));
@@ -688,13 +688,13 @@ export class AsyncSelect extends React.Component {
             {disabledValue && <option value="" disabled>{disabledValue}</option>}
             {optionElems}
           </select>
-          { onRefresh &&
+          {onRefresh &&
             <button className="btn btn-default" disabled={availableValues.inFly} onClick={onRefresh} title="Refresh">
               <i className={iClassNames}></i>
             </button>
           }
         </div>
-        { props.invalid &&
+        {props.invalid &&
           <div className="wiz-error-message">
             {props.invalid}
           </div>
@@ -740,9 +740,8 @@ export class DropdownMixin extends React.PureComponent {
     if (!this.state.active ) {
       return;
     }
-    const {dropdownElement} = this.refs;
 
-    if (event.target === dropdownElement || dropdownElement.contains(event.target)) {
+    if (event.target === this.dropdownElement || this.dropdownElement.contains(event.target)) {
       return;
     }
     this.hide();
@@ -785,7 +784,7 @@ export class Dropdown extends DropdownMixin {
     });
 
     return (
-      <div ref="dropdownElement">
+      <div ref={el => this.dropdownElement = el}>
         <div className="dropdown" onClick={this.toggle}>
           <a className="tectonic-dropdown-menu-title">{header}&nbsp;&nbsp;<i className="fa fa-angle-down" aria-hidden="true"></i></a>
           <ul className="dropdown-menu tectonic-dropdown-menu" style={{display: active ? 'block' : 'none'}}>{children}</ul>
@@ -801,7 +800,7 @@ export class DropdownInline extends DropdownMixin {
     const {items, header} = this.props;
 
     return (
-      <div ref="dropdownElement" className="dropdown" onClick={this.toggle} style={{display: 'inline-block'}}>
+      <div ref={el => this.dropdownElement = el} className="dropdown" onClick={this.toggle} style={{display: 'inline-block'}}>
         <a>{header}&nbsp;&nbsp;<i className="fa fa-caret-down"></i></a>
         <ul className="dropdown-menu--dark" style={{display: active ? 'block' : 'none'}}>
           {items.map(([title, cb], i) => <li className="dropdown-menu--dark__item" key={i} onClick={cb}>{title}</li>)}
