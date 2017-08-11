@@ -48,7 +48,7 @@ const Errors = connect(
 
 export const DefineNode = ({name, type, disabled, withoutTitle, max}) =>
   <div>
-    { !withoutTitle &&
+    {!withoutTitle &&
       <div>
         <h3>{name}</h3>
         <br />

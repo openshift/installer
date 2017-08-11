@@ -20,7 +20,7 @@ export const CIDR = ({field, name, disabled, placeholder, autoFocus, validator, 
   fieldName = fieldName || field;
   return <div className="row form-group">
     <div className="col-xs-3">
-      { selectable && <Deselect field={fieldName} /> }
+      {selectable && <Deselect field={fieldName} />}
       <label htmlFor={(selectable ? `${DESELECTED_FIELDS}.` : '') + fieldName}>{name}</label>
     </div>
     <div className="col-xs-5 withtooltip">

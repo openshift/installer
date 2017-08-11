@@ -286,7 +286,7 @@ export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirt
         {children}
         {optionElems}
       </select>
-      { invalid && isDirty &&
+      {invalid && isDirty &&
         <div className="wiz-error-message">
           {invalid}
         </div>
@@ -688,13 +688,13 @@ export class AsyncSelect extends React.Component {
             {disabledValue && <option value="" disabled>{disabledValue}</option>}
             {optionElems}
           </select>
-          { onRefresh &&
+          {onRefresh &&
             <button className="btn btn-default" disabled={availableValues.inFly} onClick={onRefresh} title="Refresh">
               <i className={iClassNames}></i>
             </button>
           }
         </div>
-        { props.invalid &&
+        {props.invalid &&
           <div className="wiz-error-message">
             {props.invalid}
           </div>

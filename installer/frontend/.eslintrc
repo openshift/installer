@@ -68,7 +68,7 @@
     "no-with": 2,
     "quotes": [2, "single", {"avoidEscape": true}],
     "radix": 2,
-    "react/jsx-curly-spacing": 2,
+    "react/jsx-curly-spacing": [2, {"children": true}],
     "react/jsx-equals-spacing": 2,
     "react/jsx-indent": [2, 2],
     "react/jsx-no-duplicate-props": 2,

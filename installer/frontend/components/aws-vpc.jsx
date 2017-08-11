@@ -375,7 +375,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
         <AWS_DomainValidation />
         <hr />
 
-        { awsCreateVpc && <Connect field={AWS_ADVANCED_NETWORKING}>
+        {awsCreateVpc && <Connect field={AWS_ADVANCED_NETWORKING}>
           <ToggleButton className="btn btn-default">Advanced Settings</ToggleButton>
         </Connect>
         }
@@ -384,7 +384,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
           You must be on a VPN with access to the target VPC. The cluster will have no public endpoints.
           </Alert>}
 
-          { awsCreateVpc &&
+          {awsCreateVpc &&
           <div>
             <br />
             <Alert>
@@ -401,7 +401,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
             <CIDR name="CIDR block" field={AWS_VPC_CIDR} placeholder="10.0.0.0/16" />
           </div>
           }
-          { !awsCreateVpc &&
+          {!awsCreateVpc &&
           <div className="row">
             <div className="col-xs-3">
               <label htmlFor="r53Zone">VPC</label>
@@ -432,18 +432,18 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
           </div>
           }
 
-          { (controllerSubnets || workerSubnets) && <hr /> }
-          { controllerSubnets && <div className="row form-group">
+          {(controllerSubnets || workerSubnets) && <hr />}
+          {controllerSubnets && <div className="row form-group">
             <div className="col-xs-12">
               <h4>Masters</h4>
-              { controllerSubnets }
+              {controllerSubnets}
             </div>
           </div>
           }
-          { workerSubnets && <div className="row form-group">
+          {workerSubnets && <div className="row form-group">
             <div className="col-xs-12">
               <h4>Workers</h4>
-              { workerSubnets }
+              {workerSubnets}
             </div>
           </div>
           }

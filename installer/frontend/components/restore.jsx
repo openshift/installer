@@ -109,9 +109,9 @@ const Modal_ = connect(stateToProps, {handleUpload})(
           </div>
           <div className="modal-body" style={{minHeight: 100}}>
             <input id="upload-state" type="file" onChange={this.handleUpload.bind(this)} />
-            { uploadError && <p className="wiz-error-message">{uploadError}</p>}
-            { !uploadError && this.state.inProgress && <span><LoaderInline /> Restoring...</span>}
-            { this.state.done && <p className="alert alert-info">Restored state for {clusterName} cluster.</p>}
+            {uploadError && <p className="wiz-error-message">{uploadError}</p>}
+            {!uploadError && this.state.inProgress && <span><LoaderInline /> Restoring...</span>}
+            {this.state.done && <p className="alert alert-info">Restored state for {clusterName} cluster.</p>}
           </div>
           <div className="modal-footer tectonic-modal-footer">
             <button className="btn btn-default" onClick={this.close.bind(this)}>Close</button>

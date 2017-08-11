@@ -197,8 +197,8 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
         consoleSubsteps.push(
           <WaitingLi pending={isTFRunning} done={allDone} error={anyFailed} cancel={tfError} key="tectonicReady">
           Starting Tectonic
-            { tectonicRunning && <ProgressBar progress={state.tectonicProgress} /> }
-            <ul className="service-launch-progress__steps">{ tectonicSubsteps }</ul>
+            {tectonicRunning && <ProgressBar progress={state.tectonicProgress} />}
+            <ul className="service-launch-progress__steps">{tectonicSubsteps}</ul>
           </WaitingLi>
         );
       }
@@ -215,14 +215,14 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
       const saveLog = () => saveAs(new Blob([output], {type: 'text/plain'}), `tectonic-${clusterName}.log`);
 
       return <div>
-        { !isBareMetal &&
+        {!isBareMetal &&
         <p>
           Kubernetes is starting up. We're committing your cluster details.
           Grab some tea and sit tight. This process can take up to 20 minutes.
           Status updates will appear below.
         </p>
         }
-        { isBareMetal &&
+        {isBareMetal &&
         <div>
           <div className="wiz-herotext">
             <i className="fa fa-power-off wiz-herotext-icon"></i> Power on the nodes
@@ -246,11 +246,11 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
             <ul className="wiz-launch-progress">
               <WaitingLi done={statusMsg === 'success'} error={tfError}>
               Terraform {action} {statusMsg}
-                { output && !isApplySuccess &&
+                {output && !isApplySuccess &&
                 <div className="pull-right" style={{fontSize: '13px'}}>
                   <a onClick={() => this.setState({showLogs: !showLogs})}>
-                    { showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
-                      : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span> }
+                    {showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
+                      : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span>}
                   </a>
                   <span className="spacer"></span>
                   <a onClick={saveLog}>
@@ -260,8 +260,8 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                 }
               </WaitingLi>
               <div style={{marginLeft: 22}}>
-                { isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} isStalled={isTFRunning} /> }
-                { showLogs && output && !isApplySuccess &&
+                {isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} isStalled={isTFRunning} />}
+                {showLogs && output && !isApplySuccess &&
                 <div className="log-pane">
                   <div className="log-pane__header">
                     <div className="log-pane__header__message">Terraform logs</div>
@@ -275,9 +275,9 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                   </div>
                 </div>
                 }
-                { state.xhrError && <Alert severity="error">{state.xhrError}</Alert> }
-                { tfError && <Alert severity="error">{tfError.toString()}</Alert> }
-                { tfError && !isTFRunning &&
+                {state.xhrError && <Alert severity="error">{state.xhrError}</Alert>}
+                {tfError && <Alert severity="error">{tfError.toString()}</Alert>}
+                {tfError && !isTFRunning &&
                 <Alert severity="error" noIcon>
                   <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
                   <ol style={{ paddingLeft: 30, paddingTop: 10, paddingBottom: 10 }}>
@@ -288,14 +288,14 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                   {btnDestroy}{btnRetry}
                 </Alert>
                 }
-                { isDestroySuccess &&
+                {isDestroySuccess &&
                 <Alert noIcon>
                   <b style={{fontWeight: '600'}}>Destroy Succeeded</b>
                   <p>To continue, make a fresh start with Tectonic Installer, or simply close the browser tab to quit.</p>
                   {btnStartOver}{btnRetry}
                 </Alert>
                 }
-                { isApplySuccess &&
+                {isApplySuccess &&
                 <div className="wiz-launch-progress__help">
                   You can save Terraform logs, or destroy your cluster if you change your mind:&nbsp;
                   <DropdownInline
@@ -309,12 +309,12 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                 </div>
                 }
               </div>
-              { consoleSubsteps }
+              {consoleSubsteps}
             </ul>
           </div>
         </div>
         <br />
-        { !isDestroySuccess &&
+        {!isDestroySuccess &&
         <div className="row">
           <div className="col-xs-12">
             <a href="/terraform/assets" download>
