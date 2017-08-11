@@ -123,7 +123,7 @@ variable "tectonic_etcd_count" {
 The number of etcd nodes to be created.
 If set to zero, the count of etcd nodes will be determined automatically.
 
-Note: This is currently only supported on AWS.
+Note: This is not supported on bare metal.
 EOF
 }
 
