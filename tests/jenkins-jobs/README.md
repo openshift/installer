@@ -32,3 +32,14 @@ This file creates a Jenkins job called `tectonic-installer-pr-trigger` under `tr
 Parameters:
 
 * No input parameters are required.
+
+## Tectonic Installer Upstream Terraform Trigger
+
+This file creates a Jenkins job called `upstream-terraform-trigger` under `triggers` folder to run the tests against the `Tectonic Installer` in the `master` branch using the `upstream Terraform`
+This job will run everyday.
+
+To change the default `builder_image` please update the code in the `tectonic_installer_upstream_terraform_trigger.groovy` file and submit a PR.
+
+Parameters:
+
+* `builder_image`: Tectonic-builder docker image with the upstream Terraform
