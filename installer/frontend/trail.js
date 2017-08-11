@@ -328,7 +328,7 @@ const platformToSection = {
 };
 
 export const trail = ({cluster, clusterConfig, commitState}) => {
-  let platform = clusterConfig[PLATFORM_TYPE];
+  const platform = clusterConfig[PLATFORM_TYPE];
   const { ready } = cluster;
 
   if (platform === '') {

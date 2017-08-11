@@ -180,8 +180,8 @@ export const validate = {
 
   schema: (schema) => {
     return (value) => {
-      for (let k of Object.keys(schema)) {
-        let validity = schema[k](value[k]);
+      for (const k of Object.keys(schema)) {
+        const validity = schema[k](value[k]);
         if (validity) {
           return validity;
         }
@@ -248,7 +248,7 @@ export const validate = {
   },
 
   AWSsubnetCIDR: value => {
-    let err = validate.CIDR(value);
+    const err = validate.CIDR(value);
     if (err) {
       return err;
     }

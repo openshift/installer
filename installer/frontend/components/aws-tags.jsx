@@ -37,8 +37,8 @@ const validators = {
     const keys = _.map(tags, t => t.key);
     const errors = {};
     let i = 1;
-    for (let name1 of keys) {
-      for (let name2 of keys.slice(i)) {
+    for (const name1 of keys) {
+      for (const name2 of keys.slice(i)) {
         if (name1 === name2) {
           errors[i] = {key: 'Tag keys must be unique'};
         }

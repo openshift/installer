@@ -41,7 +41,7 @@ FIELDS[CLUSTER_NAME] = new Field(CLUSTER_NAME, {
         return 'Value must be alphanumeric [a-z0-9.-], beginning & ending with alphanumeric. Please refer to http://kubernetes.io/docs/user-guide/identifiers/.';
       }
 
-      for (let t of s.split('.')) {
+      for (const t of s.split('.')) {
         // each segment no more than 63 characters
         if (t.length > 63) {
           return 'No segment between dots can be more than 63 characters.';
