@@ -59,6 +59,11 @@ pipeline {
       defaultValue: default_builder_image,
       description: 'tectonic-builder docker image to use for builds'
     )
+    booleanParam(
+      name: 'run_smoke_tests',
+      defaultValue: true,
+      description: ''
+    )
   }
 
   stages {
@@ -110,7 +115,12 @@ pipeline {
       }
     }
 
-    stage("Tests") {
+    stage("Smoke Tests") {
+      when {
+        expression {
+          return params.run_smoke_tests
+        }
+      }
       environment {
         TECTONIC_INSTALLER_ROLE = 'tectonic-installer'
         GRAFITI_DELETER_ROLE = 'grafiti-deleter'
