@@ -26,6 +26,7 @@
     "react",
   ],
   "rules": {
+    "arrow-spacing": 2,
     "brace-style": 2,
     "comma-dangle": [2 , "always-multiline"],
     "consistent-this": [1, "that"],
@@ -60,9 +61,10 @@
     "no-underscore-dangle": 0,
     "no-unused-vars": 2,
     "no-use-before-define": 1,
-    "no-var": 2,
     "no-useless-call": 2,
+    "no-var": 2,
     "no-void": 2,
+    "no-whitespace-before-property": 2,
     "no-with": 2,
     "quotes": [2, "single", {"avoidEscape": true}],
     "radix": 2,
@@ -78,6 +80,7 @@
     "semi": 2,
     "space-infix-ops": 2,
     "strict": [2, "never"],
+    "template-curly-spacing": 2,
     "wrap-iife": [2, "inside"],
   },
   "settings": {
