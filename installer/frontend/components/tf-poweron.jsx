@@ -48,9 +48,8 @@ const Step = ({pending, done, error, cancel, children, substep}) => {
   });
   const iconClasses = classNames('fa', 'fa-fw', {
     'fa-circle-o': pending,
-    'fa-exclamation-circle': error,
     'fa-check-circle': done && !error,
-    'fa-ban': !done && !error && cancel,
+    'fa-ban': error || (cancel && !done),
     'fa-spin fa-circle-o-notch': !done && !error && !cancel && !pending,
   });
 
