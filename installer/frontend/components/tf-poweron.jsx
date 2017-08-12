@@ -86,7 +86,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
       }
     }
 
-    componentWillReceiveProps ({tectonic, terraform}) {
+    updateStatus ({tectonic, terraform}) {
       if (terraform.action === 'apply') {
         const services = (tectonic.isEtcdSelfHosted ? [{key: 'etcd', name: 'Etcd'}] : []).concat([
           {key: 'kubernetes', name: 'Kubernetes'},
@@ -112,6 +112,14 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
           }
         }
       }
+    }
+
+    componentWillMount () {
+      this.updateStatus(this.props);
+    }
+
+    componentWillReceiveProps (nextProps) {
+      this.updateStatus(nextProps);
     }
 
     componentWillUpdate ({terraform}) {
