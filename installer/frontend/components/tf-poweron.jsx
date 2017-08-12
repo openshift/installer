@@ -216,29 +216,29 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
 
       return <div>
         {!isBareMetal &&
-        <p>
-          Kubernetes is starting up. We're committing your cluster details.
-          Grab some tea and sit tight. This process can take up to 20 minutes.
-          Status updates will appear below.
-        </p>
+          <p>
+            Kubernetes is starting up. We're committing your cluster details.
+            Grab some tea and sit tight. This process can take up to 20 minutes.
+            Status updates will appear below.
+          </p>
         }
         {isBareMetal &&
-        <div>
-          <div className="wiz-herotext">
-            <i className="fa fa-power-off wiz-herotext-icon"></i> Power on the nodes
+          <div>
+            <div className="wiz-herotext">
+              <i className="fa fa-power-off wiz-herotext-icon"></i> Power on the nodes
+            </div>
+            <div className="form-group">
+              After powering up, your nodes will provision themselves automatically.
+              This process can take up to 30 minutes, while the following happens.
+            </div>
+            <div className="form-group">
+              <ul>
+                <li>Container Linux is downloaded and installed to disk (about 200 MB)</li>
+                <li>Cluster software is downloaded (about 500 MB)</li>
+                <li>One or two reboots may occur</li>
+              </ul>
+            </div>
           </div>
-          <div className="form-group">
-            After powering up, your nodes will provision themselves automatically.
-            This process can take up to 30 minutes, while the following happens.
-          </div>
-          <div className="form-group">
-            <ul>
-              <li>Container Linux is downloaded and installed to disk (about 200 MB)</li>
-              <li>Cluster software is downloaded (about 500 MB)</li>
-              <li>One or two reboots may occur</li>
-            </ul>
-          </div>
-        </div>
         }
         <hr />
         <div className="row">
@@ -247,66 +247,66 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
               <WaitingLi done={statusMsg === 'success'} error={tfError}>
               Terraform {action} {statusMsg}
                 {output && !isApplySuccess &&
-                <div className="pull-right" style={{fontSize: '13px'}}>
-                  <a onClick={() => this.setState({showLogs: !showLogs})}>
-                    {showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
-                      : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span>}
-                  </a>
-                  <span className="spacer"></span>
-                  <a onClick={saveLog}>
-                    <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
-                  </a>
-                </div>
+                  <div className="pull-right" style={{fontSize: '13px'}}>
+                    <a onClick={() => this.setState({showLogs: !showLogs})}>
+                      {showLogs ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
+                        : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span>}
+                    </a>
+                    <span className="spacer"></span>
+                    <a onClick={saveLog}>
+                      <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
+                    </a>
+                  </div>
                 }
               </WaitingLi>
               <div style={{marginLeft: 22}}>
                 {isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} isStalled={isTFRunning} />}
                 {showLogs && output && !isApplySuccess &&
-                <div className="log-pane">
-                  <div className="log-pane__header">
-                    <div className="log-pane__header__message">Terraform logs</div>
-                  </div>
-                  <div className="log-pane__body">
-                    <div className="log-area">
-                      <div className="log-scroll-pane" ref={node => this.outputNode = node}>
-                        <div className="log-contents">{output}</div>
+                  <div className="log-pane">
+                    <div className="log-pane__header">
+                      <div className="log-pane__header__message">Terraform logs</div>
+                    </div>
+                    <div className="log-pane__body">
+                      <div className="log-area">
+                        <div className="log-scroll-pane" ref={node => this.outputNode = node}>
+                          <div className="log-contents">{output}</div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
                 }
                 {state.xhrError && <Alert severity="error">{state.xhrError}</Alert>}
                 {tfError && <Alert severity="error">{tfError.toString()}</Alert>}
                 {tfError && !isTFRunning &&
-                <Alert severity="error" noIcon>
-                  <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
-                  <ol style={{ paddingLeft: 30, paddingTop: 10, paddingBottom: 10 }}>
-                    <li>Save your logs for debugging purposes.</li>
-                    <li>Destroy your cluster to clear anything that may have been created.</li>
-                    <li>Reapply Terraform.</li>
-                  </ol>
-                  {btnDestroy}{btnRetry}
-                </Alert>
+                  <Alert severity="error" noIcon>
+                    <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
+                    <ol style={{ paddingLeft: 30, paddingTop: 10, paddingBottom: 10 }}>
+                      <li>Save your logs for debugging purposes.</li>
+                      <li>Destroy your cluster to clear anything that may have been created.</li>
+                      <li>Reapply Terraform.</li>
+                    </ol>
+                    {btnDestroy}{btnRetry}
+                  </Alert>
                 }
                 {isDestroySuccess &&
-                <Alert noIcon>
-                  <b style={{fontWeight: '600'}}>Destroy Succeeded</b>
-                  <p>To continue, make a fresh start with Tectonic Installer, or simply close the browser tab to quit.</p>
-                  {btnStartOver}{btnRetry}
-                </Alert>
+                  <Alert noIcon>
+                    <b style={{fontWeight: '600'}}>Destroy Succeeded</b>
+                    <p>To continue, make a fresh start with Tectonic Installer, or simply close the browser tab to quit.</p>
+                    {btnStartOver}{btnRetry}
+                  </Alert>
                 }
                 {isApplySuccess &&
-                <div className="wiz-launch-progress__help">
-                  You can save Terraform logs, or destroy your cluster if you change your mind:&nbsp;
-                  <DropdownInline
-                    header="Terraform Actions"
-                    items={[
-                      ['Destroy Cluster', () => this.destroy()],
-                      ['Retry Terraform Apply', () => this.retry()],
-                      ['Save Terraform Log', saveLog],
-                    ]}
-                  />
-                </div>
+                  <div className="wiz-launch-progress__help">
+                    You can save Terraform logs, or destroy your cluster if you change your mind:&nbsp;
+                    <DropdownInline
+                      header="Terraform Actions"
+                      items={[
+                        ['Destroy Cluster', () => this.destroy()],
+                        ['Retry Terraform Apply', () => this.retry()],
+                        ['Save Terraform Log', saveLog],
+                      ]}
+                    />
+                  </div>
                 }
               </div>
               {consoleSubsteps}
@@ -315,16 +315,16 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
         </div>
         <br />
         {!isDestroySuccess &&
-        <div className="row">
-          <div className="col-xs-12">
-            <a href="/terraform/assets" download>
-              <button className={classNames('btn btn-primary wiz-giant-button pull-right', {disabled: isTFRunning})}>
-                <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
-              </button>
-            </a>
-            <ResetButton />
+          <div className="row">
+            <div className="col-xs-12">
+              <a href="/terraform/assets" download>
+                <button className={classNames('btn btn-primary wiz-giant-button pull-right', {disabled: isTFRunning})}>
+                  <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
+                </button>
+              </a>
+              <ResetButton />
+            </div>
           </div>
-        </div>
         }
       </div>;
     }

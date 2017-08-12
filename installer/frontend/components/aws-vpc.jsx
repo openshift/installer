@@ -356,20 +356,20 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
           </div>
         </div>
         {/* privateZone &&
-        <div className="row form-group">
-          <div className="col-xs-offset-3 col-xs-9">
-            <Connect field={AWS_SPLIT_DNS}>
-              <Select>
-                {_.map(SPLIT_DNS_OPTIONS, ((k, v) => <option value={v} key={k}>{k}</option>))}
-              </Select>
-            </Connect>
-            <p className="text-muted wiz-help-text">
-              See AWS <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html"
-                target="_blank">Split-View DNS documentation&nbsp;<i className="fa fa-external-link" /></a>
-            </p>
+          <div className="row form-group">
+            <div className="col-xs-offset-3 col-xs-9">
+              <Connect field={AWS_SPLIT_DNS}>
+                <Select>
+                  {_.map(SPLIT_DNS_OPTIONS, ((k, v) => <option value={v} key={k}>{k}</option>))}
+                </Select>
+              </Connect>
+              <p className="text-muted wiz-help-text">
+                See AWS <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html"
+                  target="_blank">Split-View DNS documentation&nbsp;<i className="fa fa-external-link" /></a>
+              </p>
+            </div>
           </div>
-        </div>
-      */}
+        */}
 
         <vpcInfoForm.Errors />
         <AWS_DomainValidation />
@@ -385,51 +385,51 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
           </Alert>}
 
           {awsCreateVpc &&
-          <div>
-            <br />
-            <Alert>
-              The installer will create your EC2 instances within the following CIDR ranges.
-              <br /><br />
-              Safe defaults have been chosen for you.
-              If you make changes, the ranges must not overlap and subnets must be within the VPC CIDR.
-            </Alert>
-            <div className="row form-group">
-              <div className="col-xs-12">
-                Specify a range of IPv4 addresses for the VPC in the form of a <a href="https://tools.ietf.org/html/rfc4632" target="_blank">CIDR block</a>. Safe defaults have been chosen for you.
+            <div>
+              <br />
+              <Alert>
+                The installer will create your EC2 instances within the following CIDR ranges.
+                <br /><br />
+                Safe defaults have been chosen for you.
+                If you make changes, the ranges must not overlap and subnets must be within the VPC CIDR.
+              </Alert>
+              <div className="row form-group">
+                <div className="col-xs-12">
+                  Specify a range of IPv4 addresses for the VPC in the form of a <a href="https://tools.ietf.org/html/rfc4632" target="_blank">CIDR block</a>. Safe defaults have been chosen for you.
+                </div>
               </div>
+              <CIDR name="CIDR block" field={AWS_VPC_CIDR} placeholder="10.0.0.0/16" />
             </div>
-            <CIDR name="CIDR block" field={AWS_VPC_CIDR} placeholder="10.0.0.0/16" />
-          </div>
           }
           {!awsCreateVpc &&
-          <div className="row">
-            <div className="col-xs-3">
-              <label htmlFor="r53Zone">VPC</label>
-            </div>
-            <div className="col-xs-9">
-              <div className="radio wiz-radio-group__radio">
-                <WithClusterConfig field={AWS_VPC_ID} asyncValidator={() => this.validateVPC()}>
-                  <AsyncSelect
-                    id={AWS_VPC_ID}
-                    availableValues={availableVpcs}
-                    disabledValue="Please select a VPC"
-                    onRefresh={() => {
-                      this.props.getVpcs();
-                      if (awsVpcId) {
-                        this.props.getVpcSubnets(awsVpcId);
-                      }
-                    }}
-                    onChange={vpcID => {
-                      if (vpcID !== awsVpcId) {
-                        this.props.reset();
-                      }
-                      this.props.getVpcSubnets(vpcID);
-                    }}
-                  />
-                </WithClusterConfig>
+            <div className="row">
+              <div className="col-xs-3">
+                <label htmlFor="r53Zone">VPC</label>
+              </div>
+              <div className="col-xs-9">
+                <div className="radio wiz-radio-group__radio">
+                  <WithClusterConfig field={AWS_VPC_ID} asyncValidator={() => this.validateVPC()}>
+                    <AsyncSelect
+                      id={AWS_VPC_ID}
+                      availableValues={availableVpcs}
+                      disabledValue="Please select a VPC"
+                      onRefresh={() => {
+                        this.props.getVpcs();
+                        if (awsVpcId) {
+                          this.props.getVpcSubnets(awsVpcId);
+                        }
+                      }}
+                      onChange={vpcID => {
+                        if (vpcID !== awsVpcId) {
+                          this.props.reset();
+                        }
+                        this.props.getVpcSubnets(vpcID);
+                      }}
+                    />
+                  </WithClusterConfig>
+                </div>
               </div>
             </div>
-          </div>
           }
 
           {(controllerSubnets || workerSubnets) && <hr />}
