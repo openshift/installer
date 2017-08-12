@@ -28,7 +28,7 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
     publisher = "CoreOS"
     offer     = "CoreOS"
     sku       = "${var.cl_channel}"
-    version   = "${var.versions["container_linux"]}"
+    version   = "latest"
   }
   storage_os_disk {
     name              = "worker-${count.index}-os-${var.storage_id}"
