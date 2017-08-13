@@ -259,7 +259,7 @@ func awsGetZonesHandler(w http.ResponseWriter, req *http.Request, _ *Context) er
 		return nil
 	}
 
-	allZones := make([]*route53.HostedZone, 0)
+	var allZones []*route53.HostedZone
 	var marker string
 
 	for marker != "complete" {
