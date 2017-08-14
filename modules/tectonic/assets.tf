@@ -22,6 +22,7 @@ resource "template_dir" "tectonic" {
     node_exporter_image                   = "${var.container_images["node_exporter"]}"
     kube_state_metrics_image              = "${var.container_images["kube_state_metrics"]}"
     prometheus_operator_image             = "${var.container_images["prometheus_operator"]}"
+    etcd_operator_image                   = "${var.container_images["etcd_operator"]}"
     tectonic_monitoring_auth_image        = "${var.container_images["tectonic_monitoring_auth"]}"
     prometheus_image                      = "${var.container_images["prometheus"]}"
     prometheus_config_reload_image        = "${var.container_images["prometheus_config_reload"]}"

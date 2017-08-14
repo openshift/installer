@@ -201,6 +201,10 @@ kubectl create -f monitoring/tectonic-monitoring-auth-prometheus-deployment.yaml
 kubectl create -f monitoring/tectonic-monitoring-auth-prometheus-svc.yaml
 kubectl create -f monitoring/tectonic-monitoring-ingress.yaml
 
+echo "Creating Etcd Operator"
+# Operator in the tectonic-system namespace used for etcd as a service
+kubectl create -f etcd/etcd-operator.yaml
+
 echo "Creating Heapster / Stats Emitter"
 kubectl create -f heapster/service.yaml
 kubectl create -f heapster/deployment.yaml
