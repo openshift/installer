@@ -52,7 +52,7 @@ def description = build.buildVariableResolver.resolve('TAG_CLEAN')
 currentBuild.setDescription(description)
   """)
 
-    def cmd = """#!/bin/bash -e
+    def cmd = """#!/bin/bash -ex
 export DATE_OVERRIDE_FLAG=""
 if [ -n "\$DATE_OVERRIDE" ]; then
   export DATE_OVERRIDE_FLAG="--date-override \$DATE_OVERRIDE"
@@ -60,7 +60,7 @@ fi
 
 if [ "\$TAG_CLEAN" == "tag-aws" ]; then
   # Tag all Route53 hosted zones
-  \$SCRIPT_DIR/maintenance/tag-route53-hosted-zones.sh \$DATE_OVERRIDE_FLAG
+  \$SCRIPT_DIR/maintenance/tag-route53-hosted-zones.sh --force \$DATE_OVERRIDE_FLAG
 fi
 
 regions=( "us-east-2" "us-east-1" "us-west-1" "us-west-2" "ca-central-1"
@@ -71,11 +71,11 @@ if [ -n "\$AWS_REGION" ]; then
   regions=( "\$AWS_REGION" )
 fi
 
-for region in "\$regions[@]"; do
+for region in "\${regions[@]}"; do
   \$SCRIPT_DIR/maintenance/\$TAG_CLEAN.sh \\
     --grafiti-version "\$GRAFITI_VERSION" \\
     --aws-region "\$region" \\
-    --workspace "\$WORKSPACE" \\
+    --workspace-dir "\$WORKSPACE" \\
     --force \\
     \$DATE_OVERRIDE_FLAG
 done
