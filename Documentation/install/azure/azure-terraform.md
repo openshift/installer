@@ -1,22 +1,18 @@
 # Install Tectonic on Azure with Terraform
 
-Following this guide will deploy a Tectonic cluster within your Azure account.
+This guide deploys a Tectonic cluster on an Azure account.
 
-Generally, the Azure platform templates adhere to the standards defined by the project [conventions][conventions] and [generic platform requirements][generic]. This document aims to document the implementation details specific to the Azure platform.
+The Azure platform templates generally adhere to the standards defined by the project [conventions][conventions] and [generic platform requirements][generic]. This document aims to clarify the implementation details specific to the Azure platform.
 
-## Prerequsities
-
-### Go
-
-Ensure [Go][install-go] is installed.
+## Prerequisites
 
 ### Terraform
 
-Tectonic Installer includes and requires a specific version of Terraform. This is included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
+Tectonic Installer includes the required version of Terraform. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
 
 ### DNS
 
-A few means of providing DNS for your Tectonic installation are supported:
+Two methods of providing DNS for the Tectonic installation are supported:
 
 #### Azure-provided DNS
 
@@ -29,12 +25,12 @@ To use Azure-provided DNS, `tectonic_base_domain` must be set to `""`(empty stri
 To configure a custom domain and the associated records in an Azure DNS zone (e.g., `${cluster_name}.foo.bar`):
 
 * The custom domain must be specified using `tectonic_base_domain`
-* The domain must be publically discoverable. The Tectonic installer uses the created record to access the cluster and complete configuration. See the Microsoft Azure documentation for instructions on how to [delegate a domain to Azure DNS][domain-delegation].
-* An Azure DNS zone which matches `tectonic_base_domain` must be created prior to running the installer. The full resource ID of the DNS zone must then be referenced in `tectonic_azure_external_dns_zone_id`
+* The domain must be publicly discoverable. The Tectonic installer uses the created record to access the cluster and complete configuration. See the Microsoft Azure documentation for instructions on how to [delegate a domain to Azure DNS][domain-delegation].
+* An Azure DNS zone matching the chosen `tectonic_base_domain` must be created prior to running the installer. The full resource ID of the DNS zone must then be referenced in `tectonic_azure_external_dns_zone_id`
 
 ### Tectonic Account
 
-Register for a [Tectonic Account][register], which is free for up to 10 nodes. You must provide the cluster license and pull secret during installation.
+Register for a [Tectonic Account][register], free for up to 10 nodes. The cluster license and pull secret are required during installation.
 
 ### Azure CLI
 
@@ -49,7 +45,7 @@ $ eval $(ssh-agent)
 
 Add the SSH key that will be used for the Tectonic installation to `ssh-agent`:
 ```
-$ ssh-add <path-to-ssh-key>
+$ ssh-add <path-to-ssh-private-key>
 ```
 
 Verify that the SSH key identity is available to the ssh-agent:
@@ -60,13 +56,13 @@ $ ssh-add -L
 Reference the absolute path of the **_public_** component of the SSH key in `tectonic_azure_ssh_key`.
 
 Without this, terraform is not able to SSH copy the assets and start bootkube.
-Also make sure that the SSH known_hosts file doesn't have old records of the API DNS name (fingerprints will not match).
+Also ensure the SSH known_hosts file doesn't have old records for the API DNS name, because key fingerprints will not match.
 
 ## Getting Started
 
 ### Download and extract Tectonic Installer
 
-Open a new terminal, and run the following commands to download and extract Tectonic Installer.
+Open a new terminal and run the following commands to download and extract Tectonic Installer:
 
 ```bash
 $ curl -O https://releases.tectonic.com/tectonic-1.7.1-tectonic.1.tar.gz # download
@@ -76,34 +72,40 @@ $ cd tectonic
 
 ### Initialize and configure Terraform
 
-Start by setting the `INSTALLER_PATH` to the location of your platform's Tectonic installer. The platform should be `darwin` or `linux`.
+#### Set INSTALLER_PATH
+
+Start by setting `INSTALLER_PATH` to the location of the installation host's Tectonic installer platform. The platform should be one of `darwin` or `linux`.
 
 ```bash
 $ export INSTALLER_PATH=$(pwd)/tectonic-installer/darwin/installer # Edit the platform name.
-$ export PATH=$PATH:$(pwd)/tectonic-installer/darwin # Put the `terraform` binary in our PATH
+$ export PATH=$PATH:$(pwd)/tectonic-installer/darwin # Put the `terraform` binary on PATH
 ```
 
-Make a copy of the Terraform configuration file for our system. Do not share this configuration file as it is specific to your machine.
+#### Copy and configure .terraformrc
+
+Make a copy of the Terraform configuration file. Do not share this configuration file as it is specific to the install host.
 
 ```bash
 $ sed "s|<PATH_TO_INSTALLER>|$INSTALLER_PATH|g" terraformrc.example > .terraformrc
 $ export TERRAFORM_CONFIG=$(pwd)/.terraformrc
 ```
 
-Next, get the modules that Terraform will use to create the cluster resources:
+#### Get Terraform's Azure modules
+
+Next, get the modules for the Azure platform that Terraform will use to create cluster resources:
 
 ```
 $ terraform get platforms/azure
 Get: file:///Users/tectonic-installer/modules/azure/vnet
 Get: file:///Users/tectonic-installer/modules/azure/etcd
-Get: file:///Users/tectonic-installer/modules/azure/master
-Get: file:///Users/tectonic-installer/modules/azure/worker
-Get: file:///Users/tectonic-installer/modules/azure/dns
-Get: file:///Users/tectonic-installer/modules/bootkube
-Get: file:///Users/tectonic-installer/modules/tectonic
+...
 ```
 
-Generate credentials using the Azure CLI. If you're not logged in, execute `az login` first. See the [docs][login] for more info.
+### Generate credentials with Azure CLI
+
+Execute `az login` to obtain an authentication token. See the [Azure CLI docs][login] for more information. Once logged in, note the `id` field of the output from the `az login` command. This is a simple way to retrieve the Subscription ID for the Azure account.
+
+Next, add a new role assignment for the Installer to use:
 
 ```
 $ az ad sp create-for-rbac -n "http://tectonic" --role contributor
@@ -118,37 +120,55 @@ Retrying role assignment creation: 2/24
 }
 ```
 
-Export variables that correspond to the data that was just generated. The subscription is your Azure Subscription ID.
+Export the following environment variables with values obtained from the output of the role assignment. As noted above, `ARM_SUBSCRIPTION_ID` is the `id` of the Azure account returned by `az login`.
 
 ```
+# id field in az login output
 $ export ARM_SUBSCRIPTION_ID=abc-123-456
+# appID field in az ad output
 $ export ARM_CLIENT_ID=generated-app-id
+# password field in az ad output
 $ export ARM_CLIENT_SECRET=generated-pass
+# tenant field in az ad output
 $ export ARM_TENANT_ID=generated-tenant
 ```
 
-Now we're ready to specify our cluster configuration.
+With the environment set, it's time to specify the deployment details for the cluster.
 
 ## Customize the deployment
 
-Customizations to the base installation live in `examples/terraform.tfvars.azure`. Export a variable that will be your cluster identifier:
+Possible customizations to the base installation are listed in `examples/terraform.tfvars.azure`. Choose a cluster name to identify the cluster. Export an environment variable with the chosen cluster name. In this example, `my-cluster` is used.
 
 ```
 $ export CLUSTER=my-cluster
 ```
 
-Create a build directory to hold your customizations and copy the example file into it:
+Create a build directory for the new cluster and copy the example file into it:
 
 ```
 $ mkdir -p build/${CLUSTER}
 $ cp examples/terraform.tfvars.azure build/${CLUSTER}/terraform.tfvars
 ```
 
-Edit the parameters with your Azure details, domain name, license, etc. [View all of the Azure specific options][azure-vars] and [the common Tectonic variables][vars].
+Edit the parameters in `build/$CLUSTER/terraform.tfvars` with the deployment's Azure details, domain name, license, and pull secret. [View all of the Azure specific options][azure-vars] and [the common Tectonic variables][vars].
+
+### Key values for basic Azure deployment
+
+These are the basic values that must be adjusted for each Tectonic deployment on Azure. See the details of each value in the `terraform.tfvars` file.
+
+* `tectonic_admin_email` - For the initial Console login
+* `tectonic_admin_password_hash` - Bcrypted value
+* `tectonic_azure_client_secret` - As in `ARM_CLIENT_SECRET` above
+* `tectonic_azure_ssh_key` - Full path the the public key part of the key added to `ssh-agent` above
+* `tectonic_base_domain` - The DNS domain or subdomain delegated to an Azure DNS zone above
+* `tectonic_azure_external_dns_zone_id` - Get with `az network dns zone list`
+* `tectonic_cluster_name` - Usually matches `$CLUSTER` as set above
+* `tectonic_license_path` - Full path to `tectonic-license.txt` file downloaded from Tectonic account
+* `tectonic_pull_secret_path` - Full path to `config.json` container pull secret file downloaded from Tectonic account
 
 ## Deploy the cluster
 
-Test out the plan before deploying everything:
+Check the plan before deploying:
 
 ```
 $ terraform plan -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
@@ -160,26 +180,26 @@ Next, deploy the cluster:
 $ terraform apply -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 ```
 
-This should run for a little bit, and when complete, your Tectonic cluster should be ready.
-
-If you encounter any issues, check the known issues and workarounds below.
+This should run for a short time.
 
 ## Access the cluster
 
-The Tectonic Console should be up and running after the containers have downloaded. You can access it at the DNS name configured in your variables file.
+When `terraform apply` is complete, the Tectonic console will be available at `https://my-cluster.example.com`, as configured in the cluster build's variables file.
 
-Inside of the `/generated` folder you should find any credentials, including the CA if generated, and a kubeconfig. You can use this to control the cluster with `kubectl`:
+### CLI cluster operations with kubectl
+
+Cluster credentials, including any generated CA, are written beneath the `generated/` directory. These credentials allow connections to the cluster with `kubectl`:
 
 ```
-$ KUBECONFIG=generated/auth/kubeconfig
+$ export KUBECONFIG=generated/auth/kubeconfig
 $ kubectl cluster-info
 ```
 
-## Scale the cluster
+## Scale an existing cluster on Azure
 
-To scale worker nodes, adjust `tectonic_worker_count` in `terraform.tfvars`.
+To scale worker nodes, adjust `tectonic_worker_count` in the cluster build's `terraform.tfvars` file.
 
-Use the `plan` command to check your syntax:
+Use the `terraform plan` subcommand to check configuration syntax:
 
 ```
 $ terraform plan \
@@ -188,7 +208,7 @@ $ terraform plan \
   platforms/azure
 ```
 
-Once you are ready to make the changes live, use `apply`:
+Use the `apply` subcommand to deploy the new configuration:
 
 ```
 $ terraform apply \
@@ -201,7 +221,9 @@ The new nodes should automatically show up in the Tectonic Console shortly after
 
 ## Delete the cluster
 
-Deleting your cluster will remove only the infrastructure elements created by Terraform. If you selected an existing resource group for DNS, this is not touched. To delete, run:
+Deleting a cluster will remove only the infrastructure elements created by Terraform. For example, an existing DNS resource group is not removed.
+
+To delete the Azure cluster specified in `build/$CLUSTER/terraform.tfvars`, run the following `terraform destroy` command:
 
 ```
 $ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
@@ -239,19 +261,18 @@ $ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/azure
 See the [installer troubleshooting][troubleshooting] document for known problem points and workarounds.
 
 
-[conventions]: ../../conventions.md
-[generic]: ../../generic-platform.md
-[register]: https://account.coreos.com/signup/summary/tectonic-2016-12
-[account]: https://account.coreos.com
-[bcrypt]: https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0
-[plan-docs]: https://www.terraform.io/docs/commands/plan.html
-[copy-docs]: https://www.terraform.io/docs/commands/apply.html
-[troubleshooting]: ../../troubleshooting/installer-terraform.md
-[login]: https://docs.microsoft.com/en-us/cli/azure/get-started-with-azure-cli
-[azure-dns]: https://docs.microsoft.com/en-us/azure/dns/dns-overview
-[vars]: ../../variables/config.md
-[azure-vars]: ../../variables/azure.md
-[release-notes]: https://coreos.com/tectonic/releases/
-[install-go]: https://golang.org/doc/install
-[domain-delegation]: https://docs.microsoft.com/en-us/azure/dns/dns-delegate-domain-azure-dns
 [azure-cli]: https://docs.microsoft.com/en-us/cli/azure/install-azure-cli
+[azure-dns]: https://docs.microsoft.com/en-us/azure/dns/dns-overview
+[azure-vars]: ../../variables/azure.md
+[bcrypt]: https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0
+[conventions]: ../../conventions.md
+[copy-docs]: https://www.terraform.io/docs/commands/apply.html
+[domain-delegation]: https://docs.microsoft.com/en-us/azure/dns/dns-delegate-domain-azure-dns
+[generic]: ../../generic-platform.md
+[install-go]: https://golang.org/doc/install
+[login]: https://docs.microsoft.com/en-us/cli/azure/get-started-with-azure-cli
+[plan-docs]: https://www.terraform.io/docs/commands/plan.html
+[register]: https://account.coreos.com/signup/summary/tectonic-2016-12
+[release-notes]: https://coreos.com/tectonic/releases/
+[troubleshooting]: ../../troubleshooting/installer-terraform.md
+[vars]: ../../variables/config.md
