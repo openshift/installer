@@ -9,9 +9,9 @@ class Cluster
   MAX_NAME_LENGTH = 28
   RANDOM_HASH_LENGTH = 5
 
-  attr_reader :tfvars_file, :kubeconfig, :manifest_path, :platform
+  attr_reader :tfvars_file, :kubeconfig, :manifest_path
 
-  def initialize(prefix, tfvars_file_path, platform)
+  def initialize(prefix, tfvars_file_path)
     # Enable local testers to specify a static cluster name
     # S3 buckets can only handle lower case names
     @name = (ENV['CLUSTER'] || generate_name(prefix)).downcase
@@ -21,8 +21,6 @@ class Cluster
     @manifest_path = `echo $(realpath ../../build)/#{@name}/generated`
                      .delete("\n")
     @kubeconfig = manifest_path + '/auth/kubeconfig'
-
-    @platform = platform
   end
 
   def start
@@ -47,8 +45,7 @@ class Cluster
   def env_variables
     {
       'CLUSTER' => @name,
-      'TF_VAR_tectonic_cluster_name' => @name,
-      'PLATFORM' => @platform
+      'TF_VAR_tectonic_cluster_name' => @name
     }
   end
 
@@ -96,7 +93,7 @@ class Cluster
       begin
         KubeCTL.run(@kubeconfig, 'cluster-info')
         return
-      rescue KubectlCmdError
+      rescue KubeCTL::KubeCTLCmdError
         sleep 10
       end
     end
