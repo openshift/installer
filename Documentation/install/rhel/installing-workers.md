@@ -39,7 +39,7 @@ $ subscription-manager repos --enable=rhel-7-server-extras-rpms
 If `subscription-manager` is not in use, ensure that the correct URL for the mirror of extras that is to be used is placed in the corresponding file in `/etc/yum.repos.d` and set to `enabled`.
 
 
-### Install the `tectonic-release` RPM
+### Install the tectonic-release RPM
 
 The `tectonic-release` RPM includes the repo definition for the Tectonic software as well as relevant signing keys. The GPG signing key fingerprint for CoreOS shipped RPMs is:
 
@@ -81,7 +81,7 @@ After verifying the signature, install the `tectonic-release` RPM:
 $ yum localinstall tectonic-release-1.6.2-4.el7.noarch.rpm
 ```
 
-### Install the `tectonic-worker` RPM
+### Install the tectonic-worker RPM
 
 After the `tectonic-release` RPM is installed, complete the installation of the `tectonic-worker` RPM:
 
@@ -92,7 +92,7 @@ $ yum install tectonic-worker
 This will download the relevant dependencies and then prompt to validate the
 GPG key installed by the `tectonic-release` RPM.
 
-### Copy the `kubeconfig` file from the Tectonic Installer to the host
+### Copy the kubeconfig file from the Tectonic Installer to the host
 
 The [Tectonic installer][tectonic-installer] generates a `kubeconfig` file which is used by all Tectonic workers to authenticate to the API server. Because this file is identical on all hosts, it can be retrieved from an existing worker, a node in the control plane, or from the assets bundle created by the installer.
 
