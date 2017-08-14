@@ -6,7 +6,7 @@ Use this guide to deploy a Tectonic cluster on virtual or physical hardware usin
 
 For a complete list of requirements, see [Bare Metal Installation requirements][bare-requirements].
 
-* [Tectonic Account][register].
+* [Tectonic Account][account].
 * The Terraform version included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
 * [Matchbox v0.6+][matchbox-latest] installation with TLS client credentials and the gRPC API enabled.
 * [PXE network boot environment][network-setup] with DHCP, TFTP, and DNS services.
@@ -126,7 +126,6 @@ For more information on working with installed clusters, see [Scaling Tectonic b
 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md
-[register]: https://account.coreos.com/signup/summary/tectonic-2016-12
 [account]: https://account.coreos.com
 [vars]: ../../variables/config.md
 [troubleshooting]: ../../troubleshooting/faq.md
@@ -136,3 +135,4 @@ For more information on working with installed clusters, see [Scaling Tectonic b
 [ssh-agent]: requirements.md#ssh-agent
 [bare-requirements]: requirements.md
 [network-setup]: https://coreos.com/matchbox/docs/latest/network-setup.html
+[matchbox]: https://coreos.com/matchbox/docs/latest/
