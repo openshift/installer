@@ -2,7 +2,7 @@
 
 folder("triggers")
 
-job("triggers/tectonic-installer-pr-trigger") {
+job("triggers/tectonic-installer-pr-trigger-no-smoke") {
   description('Tectonic Installer PR Trigger. Changes here will be reverted automatically.')
 
   concurrentBuild()
@@ -40,8 +40,8 @@ job("triggers/tectonic-installer-pr-trigger") {
       msgFailure("")
       commitStatusContext("Jenkins-Tectonic-Installer")
       buildDescTemplate("#\$pullId: \$abbrTitle")
-      blackListLabels("")
-      whiteListLabels("run-smoke-tests")
+      blackListLabels("run-smoke-tests")
+      whiteListLabels("")
       includedRegions("")
       excludedRegions("")
     }
@@ -49,7 +49,11 @@ job("triggers/tectonic-installer-pr-trigger") {
 
   steps {
     downstreamParameterized {
-      trigger('tectonic-installer/PR-\${ghprbPullId}')
+      trigger('tectonic-installer/PR-\${ghprbPullId}') {
+        parameters {
+          booleanParam('run_smoke_tests', false)
+        }
+      }
     }
   }
 
@@ -57,7 +61,7 @@ job("triggers/tectonic-installer-pr-trigger") {
     wsCleanup()
     slackNotifier {
       authTokenCredentialId('tectonic-slack-token')
-      customMessage("Tectonic Installer PR Trigger")
+      customMessage("Tectonic Installer PR Trigger No Smoke Tests")
       includeCustomMessage(true)
       notifyBackToNormal(true)
       notifyFailure(true)
