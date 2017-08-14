@@ -15,6 +15,8 @@ job("maintenance/tag_clean_aws_resources_grafiti") {
       stringParam('SCRIPT_DIR', 'installer/scripts', 'Folder which contains the scripts to run grafiti.')
   }
 
+  label('worker&&ec2')
+
   scm {
     git {
       remote {
