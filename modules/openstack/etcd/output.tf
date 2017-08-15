@@ -1,3 +1,3 @@
 output "user_data" {
-  value = ["${data.ignition_config.etcd.*.rendered}"]
+  value = "${data.ignition_config.etcd.*.rendered}"
 }
