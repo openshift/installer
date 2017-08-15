@@ -3,7 +3,7 @@ require 'ssh'
 # Forensic contains helper functions to run the cluster forensic scripts
 module Forensic
   def self.run(cluster)
-    return if cluster.platform != 'aws'
+    return if cluster.class.name != 'AWSCluster'
     check_prerequisites
 
     env_variables = cluster.env_variables
