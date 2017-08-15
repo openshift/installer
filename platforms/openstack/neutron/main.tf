@@ -25,7 +25,7 @@ module "bootkube" {
   oidc_groups_claim   = "groups"
   oidc_client_id      = "tectonic-kubectl"
 
-  etcd_endpoints   = "${openstack_networking_port_v2.etcd.*.all_fixed_ips}"
+  etcd_endpoints   = "${module.dns.etcd_a_nodes}"
   etcd_ca_cert     = "${var.tectonic_etcd_ca_cert_path}"
   etcd_client_cert = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key  = "${var.tectonic_etcd_client_key_path}"
@@ -178,6 +178,27 @@ module "secgroups" {
   source                = "../../../modules/openstack/secgroups"
   cluster_name          = "${var.tectonic_cluster_name}"
   tectonic_experimental = "${var.tectonic_experimental}"
+}
+
+module "dns" {
+  source = "../../../modules/dns/designate"
+
+  cluster_name = "${var.tectonic_cluster_name}"
+  base_domain  = "${var.tectonic_base_domain}"
+
+  admin_email = "${var.tectonic_admin_email}"
+
+  api_ips          = "${openstack_networking_floatingip_v2.master.*.address}"
+  etcd_count       = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count}"
+  etcd_ips         = "${openstack_networking_port_v2.etcd.*.all_fixed_ips}"
+  etcd_tls_enabled = "${var.tectonic_etcd_tls_enabled}"
+  master_count     = "${var.tectonic_master_count}"
+  master_ips       = "${openstack_networking_port_v2.master.*.all_fixed_ips}"
+  worker_count     = "${var.tectonic_worker_count}"
+  worker_ips       = "${openstack_networking_port_v2.worker.*.all_fixed_ips}"
+
+  tectonic_experimental = "${var.tectonic_experimental}"
+  tectonic_vanilla_k8s  = "${var.tectonic_vanilla_k8s}"
 }
 
 module "flannel_vxlan" {
