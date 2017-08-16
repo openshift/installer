@@ -20,7 +20,6 @@ spec:
         tectonic-operators.coreos.com/managed-by: kube-version-operator
       annotations:
         checkpointer.alpha.coreos.com/checkpoint: "true"
-        scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
       containers:
       - name: kube-apiserver
@@ -81,8 +80,6 @@ spec:
           readOnly: false
       hostNetwork: true
       tolerations:
-      - key: "CriticalAddonsOnly"
-        operator: "Exists"
       - key: "node-role.kubernetes.io/master"
         operator: "Exists"
         effect: "NoSchedule"
