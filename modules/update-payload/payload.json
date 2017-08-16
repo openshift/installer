@@ -136,6 +136,9 @@
       "apiVersion": "apps/v1beta1",
       "kind": "Deployment",
       "metadata": {
+        "annotations": {
+          "tectonic-operators.coreos.com/upgrade-behaviour": "CreateOrUpgrade"
+        },
         "labels": {
           "k8s-app": "tectonic-cluo-operator",
           "managed-by-channel-operator": "true"
@@ -322,6 +325,9 @@
     },
     {
       "metadata": {
+        "annotations": {
+          "tectonic-operators.coreos.com/upgrade-behaviour": "CreateOrUpgrade"
+        },
         "labels": {
           "managed-by-channel-operator": "true"
         },

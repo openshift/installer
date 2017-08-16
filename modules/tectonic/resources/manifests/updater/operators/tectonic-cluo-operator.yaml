@@ -6,6 +6,8 @@ metadata:
   labels:
     k8s-app: tectonic-cluo-operator
     managed-by-channel-operator: "true"
+  annotations:
+    tectonic-operators.coreos.com/upgrade-behaviour: 'CreateOrUpgrade'
 spec:
   replicas: 1
   selector:

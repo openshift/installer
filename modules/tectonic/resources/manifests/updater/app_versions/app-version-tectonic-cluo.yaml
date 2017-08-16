@@ -5,6 +5,8 @@ metadata:
   namespace: tectonic-system
   labels:
     managed-by-channel-operator: "true"
+  annotations:
+    tectonic-operators.coreos.com/upgrade-behaviour: 'CreateOrUpgrade'
 spec:
   desiredVersion: ${tectonic_cluo_operator_version}
   paused: false
