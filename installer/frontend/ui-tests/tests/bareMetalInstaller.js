@@ -2,6 +2,8 @@ const log = require('../utils/log');
 const installerInput = require('../utils/bareMetalInstallerInput');
 const tfvarsUtil = require('../utils/terraformTfvars');
 
+const REQUIRED_ENV_VARS = ['TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
+
 module.exports = {
   after (client) {
     client.getLog('browser', log.logger);
@@ -9,6 +11,12 @@ module.exports = {
   },
 
   'Tectonic Installer BareMetal Test': (client) => {
+    const missing = REQUIRED_ENV_VARS.filter(ev => !process.env[ev]);
+    if (missing.length) {
+      console.error(`Missing environment variables: ${missing.join(', ')}.\n`);
+      process.exit(1);
+    }
+
     const expectedJson = installerInput.buildExpectedJson();
     const platformPage = client.page.platformPage();
     const clusterInfoPage = client.page.clusterInfoPage();
