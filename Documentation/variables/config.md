@@ -36,7 +36,7 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_service_cidr | This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. The maximum size of this IP range is /12 | string | `10.3.0.0/16` |
 | tectonic_stats_url | The Tectonic statistics collection URL to which to report. | string | `https://stats-collector.tectonic.com` |
 | tectonic_update_app_id | (internal) The Tectonic Omaha update App ID | string | `6bc7b986-4654-4a0f-94b3-84ce6feb1db4` |
-| tectonic_update_channel | (internal) The Tectonic Omaha update channel | string | `tectonic-1.6` |
+| tectonic_update_channel | (internal) The Tectonic Omaha update channel | string | `tectonic-1.7-production` |
 | tectonic_update_server | (internal) The URL of the Tectonic Omaha update server | string | `https://tectonic.update.core-os.net` |
 | tectonic_vanilla_k8s | If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets. | string | `false` |
 | tectonic_versions | (internal) Versions of the components to use | map | `<map>` |
