@@ -10,6 +10,9 @@ const handleAllDone = (platformType) => TectonicGA.sendEvent('Installer Button',
 const stateToProps = ({cluster, clusterConfig}) => {
   let tectonicConsole = _.get(cluster, ['status', 'tectonicConsole', 'instance']);
   if (!tectonicConsole) {
+    tectonicConsole = clusterConfig.tectonicDomain;
+  }
+  if (!tectonicConsole) {
     // TODO: (kans) add this to the terraform status response
     const hostedZoneID = clusterConfig[AWS_HOSTED_ZONE_ID];
     const domain = _.get(clusterConfig, ['extra', AWS_HOSTED_ZONE_ID, 'zoneToName', hostedZoneID]);
