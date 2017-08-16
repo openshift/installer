@@ -98,7 +98,7 @@ tectonic_azure_client_secret = ""
 // tectonic_azure_external_worker_subnet_id = ""
 
 // (optional) A map of extra Azure tags to be applied to created resources.
-// [CAVEAT] Tags MUST NOT contain reserved characters '<,>,%,&,\,?,/' or control characters.
+// NOTE: Tags MUST NOT contain reserved characters '<,>,%,&,\,?,/' or control characters.
 // tectonic_azure_extra_tags = ""
 
 // An Azure location where the cluster will be built.

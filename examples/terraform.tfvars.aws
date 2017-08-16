@@ -18,7 +18,7 @@ tectonic_admin_password_hash = ""
 // Example: `[ { key = "foo", value = "bar", propagate_at_launch = true } ]`
 // tectonic_autoscaling_group_extra_tags = ""
 
-// Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware] (https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
+// Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
 tectonic_aws_etcd_ec2_type = "t2.medium"
 
 // (optional) List of additional security group IDs for etcd nodes.
