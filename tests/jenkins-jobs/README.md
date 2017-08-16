@@ -33,6 +33,14 @@ Parameters:
 
 * No input parameters are required.
 
+## Tectonic Installer MultiBranch Job
+
+This file (`tectonic_installer_multibranch_job.groovy`) creates a Jenkins job called `tectonic-installer` this is the job which the tests will run.
+
+Parameters:
+
+* No input parameters are required.
+
 ## Tectonic Installer Upstream Terraform Trigger
 
 This file creates a Jenkins job called `upstream-terraform-trigger` under `triggers` folder to run the tests against the `Tectonic Installer` in the `master` branch using the `upstream Terraform`
