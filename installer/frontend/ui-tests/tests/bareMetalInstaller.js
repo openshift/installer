@@ -30,7 +30,7 @@ module.exports = {
     certificateAuthorityPage.click('@nextStep');
     matchboxAddressPage.enterMatchBoxEndPoints();
     matchboxCredentialsPage.enterMatchBoxCredentials();
-    networkConfigurationPage.click('@nextStep');
+    networkConfigurationPage.enterCIDRs();
     defineMastersPage.enterMastersDnsNames();
     defineWorkersPage.enterWorkersDnsNames();
     etcdConnectionPage.click('@nextStep');
