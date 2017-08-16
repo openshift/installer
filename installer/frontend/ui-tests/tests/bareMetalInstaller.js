@@ -26,7 +26,7 @@ module.exports = {
     const matchboxCredentialsPage = client.page.matchboxCredentialsPage();
     const defineMastersPage = client.page.defineMastersPage();
     const defineWorkersPage = client.page.defineWorkersPage();
-    const etcdConnectionPage = client.page.networkConfigurationPage();
+    const etcdConnectionPage = client.page.etcdConnectionPage();
     const networkConfigurationPage = client.page.networkConfigurationPage();
     const sshKeysPage = client.page.sshKeysPage();
     const consoleLoginPage = client.page.consoleLoginPage();
@@ -38,7 +38,7 @@ module.exports = {
     certificateAuthorityPage.click('@nextStep');
     matchboxAddressPage.enterMatchBoxEndPoints();
     matchboxCredentialsPage.enterMatchBoxCredentials();
-    networkConfigurationPage.click('@nextStep');
+    networkConfigurationPage.enterCIDRs();
     defineMastersPage.enterMastersDnsNames();
     defineWorkersPage.enterWorkersDnsNames();
     etcdConnectionPage.click('@nextStep');
