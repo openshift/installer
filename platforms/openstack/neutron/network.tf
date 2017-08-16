@@ -15,7 +15,7 @@ resource "openstack_networking_subnet_v2" "subnet" {
   cidr       = "${var.tectonic_openstack_subnet_cidr}"
   ip_version = 4
 
-  dns_nameservers = ["${var.tectonic_openstack_dns_nameservers}"]
+  dns_nameservers = "${var.tectonic_openstack_dns_nameservers}"
 }
 
 resource "openstack_networking_router_interface_v2" "interface" {
@@ -29,7 +29,7 @@ resource "openstack_networking_port_v2" "etcd" {
   count              = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count}"
   name               = "${var.tectonic_cluster_name}_port_etcd_${count.index}"
   network_id         = "${openstack_networking_network_v2.network.id}"
-  security_group_ids = ["${module.secgroups.secgroup_etcd_ids}"]
+  security_group_ids = "${module.secgroups.secgroup_etcd_ids}"
   admin_state_up     = "true"
 
   fixed_ip {
@@ -89,4 +89,9 @@ resource "openstack_networking_port_v2" "worker" {
 resource "openstack_networking_floatingip_v2" "worker" {
   count = "${var.tectonic_worker_count}"
   pool  = "${var.tectonic_openstack_floatingip_pool}"
+}
+
+resource "openstack_networking_floatingip_v2" "loadbalancer" {
+  pool    = "${var.tectonic_openstack_floatingip_pool}"
+  port_id = "${openstack_lb_loadbalancer_v2.master_lb.vip_port_id}"
 }

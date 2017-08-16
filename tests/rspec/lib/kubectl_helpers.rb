@@ -6,7 +6,7 @@ require 'English'
 module KubeCTL
   def self.run(kubeconfig, args)
     out = `KUBECONFIG=#{kubeconfig} kubectl #{args}`
-    raise KubectlCmdError if $CHILD_STATUS.exitstatus != 0
+    raise KubeCTLCmdError if $CHILD_STATUS.exitstatus != 0
     out
   end
 
@@ -15,8 +15,8 @@ module KubeCTL
     JSON.parse(out)
   end
 
-  # KubectlCmdError is raised whenever the shell command 'kubectl' fails
-  class KubectlCmdError < StandardError
+  # KubeCTLCmdError is raised whenever the shell command 'kubectl' fails
+  class KubeCTLCmdError < StandardError
     def initialize(msg = 'failed to call kubectl')
       super
     end

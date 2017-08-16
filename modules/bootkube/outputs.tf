@@ -1,5 +1,5 @@
 # This output is meant to be used to inject a dependency on the generated
-# assets. As of TerraForm v0.9, it is difficult to make a module depend on
+# assets. As of Terraform v0.9, it is difficult to make a module depend on
 # another module (no depends_on, no triggers), or to make a data source
 # depend on a module (no depends_on, no triggers, generally no dummy variable).
 #

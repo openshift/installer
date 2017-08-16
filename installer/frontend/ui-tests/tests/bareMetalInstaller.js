@@ -2,6 +2,8 @@ const log = require('../utils/log');
 const installerInput = require('../utils/bareMetalInstallerInput');
 const tfvarsUtil = require('../utils/terraformTfvars');
 
+const REQUIRED_ENV_VARS = ['TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
+
 module.exports = {
   after (client) {
     client.getLog('browser', log.logger);
@@ -9,6 +11,12 @@ module.exports = {
   },
 
   'Tectonic Installer BareMetal Test': (client) => {
+    const missing = REQUIRED_ENV_VARS.filter(ev => !process.env[ev]);
+    if (missing.length) {
+      console.error(`Missing environment variables: ${missing.join(', ')}.\n`);
+      process.exit(1);
+    }
+
     const expectedJson = installerInput.buildExpectedJson();
     const platformPage = client.page.platformPage();
     const clusterInfoPage = client.page.clusterInfoPage();
@@ -18,7 +26,7 @@ module.exports = {
     const matchboxCredentialsPage = client.page.matchboxCredentialsPage();
     const defineMastersPage = client.page.defineMastersPage();
     const defineWorkersPage = client.page.defineWorkersPage();
-    const etcdConnectionPage = client.page.networkConfigurationPage();
+    const etcdConnectionPage = client.page.etcdConnectionPage();
     const networkConfigurationPage = client.page.networkConfigurationPage();
     const sshKeysPage = client.page.sshKeysPage();
     const consoleLoginPage = client.page.consoleLoginPage();
@@ -30,7 +38,7 @@ module.exports = {
     certificateAuthorityPage.click('@nextStep');
     matchboxAddressPage.enterMatchBoxEndPoints();
     matchboxCredentialsPage.enterMatchBoxCredentials();
-    networkConfigurationPage.click('@nextStep');
+    networkConfigurationPage.enterCIDRs();
     defineMastersPage.enterMastersDnsNames();
     defineWorkersPage.enterWorkersDnsNames();
     etcdConnectionPage.click('@nextStep');

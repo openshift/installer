@@ -49,7 +49,7 @@ export const validate = {
     return 'Invalid email address.';
   },
 
-  MAC: (s='') => {
+  MAC: (s = '') => {
     if (!s.length) {
       return;
     }
@@ -62,7 +62,7 @@ export const validate = {
     // see https://golang.org/src/net/mac.go?s=1054:1106#L28
     const error = 'Invalid MAC address.';
 
-    if (s.match(/^([a-fA-F0-9]{2}\:)+([a-fA-F0-9]{2})$/)) {
+    if (s.match(/^([a-fA-F0-9]{2}:)+([a-fA-F0-9]{2})$/)) {
       if (s.length === '01:23:45:67:89:ab'.length ||
         s.length === '01:23:45:67:89:ab:cd:ef'.length ||
         s.length === '01:23:45:67:89:ab:cd:ef:00:00:01:23:45:67:89:ab:cd:ef:00:00'.length) {
@@ -72,7 +72,7 @@ export const validate = {
       return error;
     }
 
-    if (s.match(/^([a-fA-F0-9]{2}\-)+([a-fA-F0-9]{2})$/)) {
+    if (s.match(/^([a-fA-F0-9]{2}-)+([a-fA-F0-9]{2})$/)) {
       if (s.length === '01-23-45-67-89-ab'.length ||
         s.length === '01-23-45-67-89-ab-cd-ef'.length ||
         s.length === '01-23-45-67-89-ab-cd-ef-00-00-01-23-45-67-89-ab-cd-ef-00-00'.length) {
@@ -126,7 +126,7 @@ export const validate = {
     return 'Invalid format. You must provide a domain name or IP address.';
   },
 
-  port: (s='') => {
+  port: (s = '') => {
     const errMsg = 'Invalid port value. You must provide a valid port number.';
     if (!s.match(/^[0-9]+$/)) {
       return errMsg;
@@ -160,7 +160,7 @@ export const validate = {
       return err;
     }
     // Don't let users hang themselves
-    if (s.match(/\-{5}BEGIN [\w-]+ PRIVATE KEY\-{5}/)) {
+    if (s.match(/-{5}BEGIN [\w-]+ PRIVATE KEY-{5}/)) {
       return 'Private key detected! Please paste your public key.';
     }
     const [pubKey, ...extraKeys] = _.trimEnd(s).split('\n');
@@ -180,8 +180,8 @@ export const validate = {
 
   schema: (schema) => {
     return (value) => {
-      for (let k of Object.keys(schema)) {
-        let validity = schema[k](value[k]);
+      for (const k of Object.keys(schema)) {
+        const validity = schema[k](value[k]);
         if (validity) {
           return validity;
         }
@@ -248,7 +248,7 @@ export const validate = {
   },
 
   AWSsubnetCIDR: value => {
-    let err = validate.CIDR(value);
+    const err = validate.CIDR(value);
     if (err) {
       return err;
     }

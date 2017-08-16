@@ -31,7 +31,7 @@ module.exports = {
       selector: 'option[value="bare-metal-tf"]',
     },
     nextStep: {
-      selector:'//*[text()[contains(.,"Next Step")]]',
+      selector: '//*[text()[contains(.,"Next Step")]]',
       locateStrategy: 'xpath',
     },
   },

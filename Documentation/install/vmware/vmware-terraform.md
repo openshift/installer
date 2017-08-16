@@ -130,9 +130,9 @@ $ terraform apply \
 ```
 Shortly after running `terraform apply` new worker machines will appear on Tectonic console. This change may take several minutes.
 
-#### Scaling controller nodes
+#### Scaling master nodes
 
-To scale worker nodes, adjust `tectonic_master_count`, `tectonic_vmware_master_hostnames` and `tectonic_vmware_master_ip` variables in `terraform.tfvars` and run:
+To scale master nodes, adjust `tectonic_master_count`, `tectonic_vmware_master_hostnames` and `tectonic_vmware_master_ip` variables in `terraform.tfvars` and run:
 
 ```
 $ terraform plan \

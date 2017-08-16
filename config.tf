@@ -33,14 +33,14 @@ variable "tectonic_container_images" {
     calico_cni                      = "quay.io/calico/cni:v1.9.1-4-g23fcd5f"
     config_reload                   = "quay.io/coreos/configmap-reload:v0.0.1"
     container_linux_update_operator = "quay.io/coreos/container-linux-update-operator:v0.2.2"
-    console                         = "quay.io/coreos/tectonic-console:v1.8.4"
+    console                         = "quay.io/coreos/tectonic-console:v1.8.6"
     error_server                    = "quay.io/coreos/tectonic-error-server:1.0"
     etcd                            = "quay.io/coreos/etcd:v3.1.8"
     etcd_operator                   = "quay.io/coreos/etcd-operator:v0.4.2"
     flannel                         = "quay.io/coreos/flannel:v0.8.0-amd64"
     flannel_cni                     = "quay.io/coreos/flannel-cni:0.1.0"
     heapster                        = "gcr.io/google_containers/heapster:v1.4.0"
-    hyperkube                       = "quay.io/coreos/hyperkube:v1.7.1_coreos.0"
+    hyperkube                       = "quay.io/coreos/hyperkube:v1.7.2_coreos.0"
     identity                        = "quay.io/coreos/dex:v2.5.0"
     ingress_controller              = "gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.11"
     kenc                            = "quay.io/coreos/kenc:0.0.2"
@@ -49,8 +49,8 @@ variable "tectonic_container_images" {
     kubedns_sidecar                 = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.4"
     kube_state_metrics              = "quay.io/coreos/kube-state-metrics:v0.5.0"
     kube_version                    = "quay.io/coreos/kube-version:0.1.0"
-    kube_version_operator           = "quay.io/coreos/kube-version-operator:v1.7.1-kvo.2"
-    node_agent                      = "quay.io/coreos/node-agent:61288ac4d06d304e6947c22cfec4caf1a10ddaa1"
+    kube_version_operator           = "quay.io/coreos/kube-version-operator:v1.7.1-kvo.6"
+    node_agent                      = "quay.io/coreos/node-agent:c021a4959943b63c463410a038efe344939d5455"
     node_exporter                   = "quay.io/prometheus/node-exporter:v0.14.0"
     pod_checkpointer                = "quay.io/coreos/pod-checkpointer:980d1b4b4b8374240c240fb0f85e3a8d9c51663c"
     prometheus                      = "quay.io/prometheus/prometheus:v1.7.1"
@@ -58,10 +58,10 @@ variable "tectonic_container_images" {
     prometheus_operator             = "quay.io/coreos/prometheus-operator:v0.11.0"
     stats_emitter                   = "quay.io/coreos/tectonic-stats:6e882361357fe4b773adbf279cddf48cb50164c1"
     stats_extender                  = "quay.io/coreos/tectonic-stats-extender:487b3da4e175da96dabfb44fba65cdb8b823db2e"
-    tectonic_channel_operator       = "quay.io/coreos/tectonic-channel-operator:0.4.0"
+    tectonic_channel_operator       = "quay.io/coreos/tectonic-channel-operator:0.4.1"
     tectonic_etcd_operator          = "quay.io/coreos/tectonic-etcd-operator:v0.0.1"
     tectonic_monitoring_auth        = "quay.io/coreos/tectonic-monitoring-auth:v0.0.1"
-    tectonic_prometheus_operator    = "quay.io/coreos/tectonic-prometheus-operator:v1.4.0"
+    tectonic_prometheus_operator    = "quay.io/coreos/tectonic-prometheus-operator:v1.4.1"
   }
 }
 
@@ -70,14 +70,13 @@ variable "tectonic_versions" {
   type        = "map"
 
   default = {
-    alertmanager    = "v0.7.1"
-    container_linux = "1353.8.0"
-    etcd            = "3.1.8"
-    kubernetes      = "1.7.1+tectonic.1"
-    monitoring      = "1.4.0"
-    prometheus      = "v1.7.1"
-    tectonic        = "1.7.1-tectonic.1"
-    tectonic-etcd   = "0.0.1"
+    alertmanager  = "v0.7.1"
+    etcd          = "3.1.8"
+    kubernetes    = "1.7.1+tectonic.1"
+    monitoring    = "1.4.1"
+    prometheus    = "v1.7.1"
+    tectonic      = "1.7.1-tectonic.1"
+    tectonic-etcd = "0.0.1"
   }
 }
 
@@ -123,7 +122,7 @@ variable "tectonic_etcd_count" {
 The number of etcd nodes to be created.
 If set to zero, the count of etcd nodes will be determined automatically.
 
-Note: This is currently only supported on AWS.
+Note: This is not supported on bare metal.
 EOF
 }
 

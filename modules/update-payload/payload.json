@@ -6,6 +6,87 @@
       "kind": "Deployment",
       "metadata": {
         "labels": {
+          "k8s-app": "tectonic-channel-operator",
+          "managed-by-channel-operator": "true"
+        },
+        "name": "tectonic-channel-operator",
+        "namespace": "tectonic-system"
+      },
+      "spec": {
+        "replicas": 1,
+        "selector": {
+          "matchLabels": {
+            "k8s-app": "tectonic-channel-operator"
+          }
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "k8s-app": "tectonic-channel-operator",
+              "tectonic-app-version-name": "tectonic-cluster"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "env": [
+                  {
+                    "name": "CLUSTER_ID",
+                    "valueFrom": {
+                      "configMapKeyRef": {
+                        "key": "clusterID",
+                        "name": "tectonic-config"
+                      }
+                    }
+                  }
+                ],
+                "image": "quay.io/coreos/tectonic-channel-operator:0.4.1",
+                "name": "tectonic-channel-operator",
+                "resources": {
+                  "limits": {
+                    "cpu": "20m",
+                    "memory": "50Mi"
+                  },
+                  "requests": {
+                    "cpu": "20m",
+                    "memory": "50Mi"
+                  }
+                },
+                "volumeMounts": [
+                  {
+                    "mountPath": "/etc/ssl/certs",
+                    "name": "certs"
+                  }
+                ]
+              }
+            ],
+            "imagePullSecrets": [
+              {
+                "name": "coreos-pull-secret"
+              }
+            ],
+            "restartPolicy": "Always",
+            "securityContext": {
+              "runAsNonRoot": true,
+              "runAsUser": 65534
+            },
+            "volumes": [
+              {
+                "hostPath": {
+                  "path": "/usr/share/ca-certificates"
+                },
+                "name": "certs"
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "apiVersion": "extensions/v1beta1",
+      "kind": "Deployment",
+      "metadata": {
+        "labels": {
           "k8s-app": "container-linux-update-operator",
           "managed-by-channel-operator": "true"
         },
@@ -86,7 +167,7 @@
                   "--cache-images=true",
                   "--version-mapping=/upgrade-spec.json"
                 ],
-                "image": "quay.io/coreos/kube-version-operator:v1.7.1-kvo.2",
+                "image": "quay.io/coreos/kube-version-operator:v1.7.1-kvo.6",
                 "name": "kube-version-operator"
               }
             ],
@@ -99,87 +180,6 @@
               "runAsNonRoot": true,
               "runAsUser": 65534
             }
-          }
-        }
-      }
-    },
-    {
-      "apiVersion": "extensions/v1beta1",
-      "kind": "Deployment",
-      "metadata": {
-        "labels": {
-          "k8s-app": "tectonic-channel-operator",
-          "managed-by-channel-operator": "true"
-        },
-        "name": "tectonic-channel-operator",
-        "namespace": "tectonic-system"
-      },
-      "spec": {
-        "replicas": 1,
-        "selector": {
-          "matchLabels": {
-            "k8s-app": "tectonic-channel-operator"
-          }
-        },
-        "template": {
-          "metadata": {
-            "labels": {
-              "k8s-app": "tectonic-channel-operator",
-              "tectonic-app-version-name": "tectonic-cluster"
-            }
-          },
-          "spec": {
-            "containers": [
-              {
-                "env": [
-                  {
-                    "name": "CLUSTER_ID",
-                    "valueFrom": {
-                      "configMapKeyRef": {
-                        "key": "clusterID",
-                        "name": "tectonic-config"
-                      }
-                    }
-                  }
-                ],
-                "image": "quay.io/coreos/tectonic-channel-operator:0.4.0",
-                "name": "tectonic-channel-operator",
-                "resources": {
-                  "limits": {
-                    "cpu": "20m",
-                    "memory": "50Mi"
-                  },
-                  "requests": {
-                    "cpu": "20m",
-                    "memory": "50Mi"
-                  }
-                },
-                "volumeMounts": [
-                  {
-                    "mountPath": "/etc/ssl/certs",
-                    "name": "certs"
-                  }
-                ]
-              }
-            ],
-            "imagePullSecrets": [
-              {
-                "name": "coreos-pull-secret"
-              }
-            ],
-            "restartPolicy": "Always",
-            "securityContext": {
-              "runAsNonRoot": true,
-              "runAsUser": 65534
-            },
-            "volumes": [
-              {
-                "hostPath": {
-                  "path": "/usr/share/ca-certificates"
-                },
-                "name": "certs"
-              }
-            ]
           }
         }
       }
@@ -275,7 +275,7 @@
                   "-logtostderr=true",
                   "-v=4"
                 ],
-                "image": "quay.io/coreos/tectonic-prometheus-operator:v1.4.0",
+                "image": "quay.io/coreos/tectonic-prometheus-operator:v1.4.1",
                 "name": "tectonic-prometheus-operator",
                 "resources": {
                   "limits": {
@@ -316,7 +316,7 @@
     },
     {
       "name": "tectonic-monitoring",
-      "version": "1.4.0"
+      "version": "1.4.1"
     }
   ]
 }

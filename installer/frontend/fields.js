@@ -8,7 +8,7 @@ export default FIELDS;
 
 FIELDS[CLUSTER_NAME] = new Field(CLUSTER_NAME, {
   default: '',
-  validator: (s='', CC) => {
+  validator: (s = '', CC) => {
     switch (CC[PLATFORM_TYPE]) {
     case AWS_TF:
       // http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-using-console-create-stack-parameters.html
@@ -41,7 +41,7 @@ FIELDS[CLUSTER_NAME] = new Field(CLUSTER_NAME, {
         return 'Value must be alphanumeric [a-z0-9.-], beginning & ending with alphanumeric. Please refer to http://kubernetes.io/docs/user-guide/identifiers/.';
       }
 
-      for (let t of s.split('.')) {
+      for (const t of s.split('.')) {
         // each segment no more than 63 characters
         if (t.length > 63) {
           return 'No segment between dots can be more than 63 characters.';

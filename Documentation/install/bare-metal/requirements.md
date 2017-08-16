@@ -2,7 +2,16 @@
 
 The Tectonic Installer creates bare metal Tectonic clusters within networks with PXE infrastructure and the `matchbox` service.
 
-For more information about `matchbox`, refer to the [`matchbox` documentation][matchbox].
+Installation requires the following items, which are discussed in more detail below:
+
+* [Tectonic Account][account]. Register for a Tectonic Account, which is free for up to 10 nodes. The cluster license and pull secret are required during installation of Tectonic.
+* Terraform. Tectonic Installer includes and requires a specific version of Terraform. This is included in the Tectonic Installer tarball. See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
+* [Matchbox v0.6+][matchbox-latest] installation with TLS client credentials and the gRPC API enabled. For more information, see the Matchbox [installation guide][matchbox-install].
+* PXE network boot environment with DHCP, TFTP, and DNS services. For more information, see [Network setup][network-setup].
+* DNS records for the Kubernetes controller(s) and Tectonic Ingress worker(s). See [DNS][dns].
+* Machines with BIOS options set to boot from disk normally, but PXE prior to installation. `ipmitool` or `virt-install` will be used to actually boot the machines.
+* Machines with known MAC addresses and stable domain names.
+* A SSH keypair whose private key is present in your system's [ssh-agent][ssh-agent].
 
 ## Tectonic Installer
 
@@ -104,9 +113,14 @@ The provisioner must:
 * Serve CoreOS PXE and install images
 
 
+[account]: https://account.coreos.com
 [daemonset]: https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/
 [reprovision]: uninstall.md
-[matchbox-dnsmasq]: https://github.com/coreos/matchbox/tree/master/contrib/dnsmasq
 [matchbox]: https://coreos.com/matchbox
+[matchbox-dnsmasq]: https://github.com/coreos/matchbox/tree/master/contrib/dnsmasq
+[matchbox-install]: https://coreos.com/matchbox/docs/latest/deployment.html
+[matchbox-latest]: https://github.com/coreos/matchbox/releases
 [quay.io]: https://quay.io
 [ssh-agent]: https://www.freebsd.org/cgi/man.cgi?query=ssh-agent&sektion=1
+[network-setup]: https://coreos.com/matchbox/docs/latest/network-setup.html
+[dns]: bare-metal#networking

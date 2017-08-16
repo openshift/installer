@@ -1,16 +1,18 @@
 require 'smoke_test'
-require 'cluster'
-require 'aws'
+require 'aws_cluster'
+require 'forensic'
 
 RSpec.shared_examples 'withCluster' do |tf_vars_path|
   before(:all) do
-    AWS.check_prerequisites
-
     prefix = File.basename(tf_vars_path).split('.').first
     raise 'could not extract prefix from tfvars file name' if prefix == ''
 
-    @cluster = Cluster.new(prefix, tf_vars_path)
+    @cluster = AWSCluster.new(prefix, tf_vars_path)
     @cluster.start
+  end
+
+  after(:each) do |example|
+    Forensic.run(@cluster) if example.exception
   end
 
   after(:all) do

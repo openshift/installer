@@ -150,6 +150,12 @@ input[type="text"].wiz-node-field {
   font-size: 16px;
 }
 
+.wiz-launch-progress__help {
+  color: #999;
+  font-size: 11px;
+  margin: 5px 0 10px 0;
+}
+
 .wiz-launch-progress__substep {
   list-style: none;
   margin: 0 0 10px 0;
@@ -398,12 +404,20 @@ input.wiz-super-short-input {
   width: 72px;
 }
 
+.wiz-pending-fg {
+  color: #999;
+}
+
 .wiz-success-fg {
   color: #2FC98E;
 }
 
 .wiz-error-fg {
   color: #D64456;
+}
+
+.wiz-cancel-fg {
+  color: #999;
 }
 
 .wiz-running-fg {
@@ -438,9 +452,16 @@ input.wiz-super-short-input {
   text-decoration: underline;
 }
 .alert-info {
-  background-color: rgba(82, 163, 217, 0.05);
-  border: 1px solid #52A3D9;
-  color: #52A3D9;
+  background-color: #e9f6ff;
+  color: #154a6d;
+}
+.alert-info .btn-info {
+  border-color: #419eda;
+  color: #419eda;
+}
+.alert-info .btn-info:active, .alert-info .btn-info:focus, .alert-info .btn-info:hover {
+  background-color: #419eda;
+  color: #fff;
 }
 .alert-error {
   background-color: #FDF4F5;
@@ -458,22 +479,6 @@ input.wiz-super-short-input {
 
 .wiz-radio-group__body {
   margin: 20px 0 0 20px;
-}
-
-/* Use with "btn btn-block btn-link" */
-.wiz-button--upload,
-.wiz-button--download {
-  padding: 15px;
-  border: 1px solid #DDDDDD;
-  border-radius: 2px;
-  font-size: 18px;
-}
-
-.wiz-button--upload:hover,
-.wiz-button--upload:focus,
-.wiz-button--download:hover,
-.wiz-button--download:focus {
-  text-decoration: none;
 }
 
 .wiz-invalid.wiz-dirty {
@@ -653,7 +658,7 @@ span.spacer {
 
 .log-pane {
   color: #fff;
-  padding: 10px 0 10px 20px;
+  padding: 10px 0 10px 0;
 }
 
 .log-pane__header {
@@ -715,6 +720,24 @@ span.spacer {
 
 .tectonic-footer > a:hover {
   color: #52A3D9;
+}
+
+.progress-bar, .progress-bar-wrap {
+  border-radius: 2px;
+  height: 4px;
+}
+
+.progress-bar-wrap {
+  background-color: #e5e5e5;
+  margin: 10px 0 15px 0;
+}
+
+.progress-bar--active {
+  background-color: #2fc98e;
+}
+
+.progress-bar--stalled {
+  background-color: #999;
 }
 
 /**  NavBar from mochi.css **/
@@ -820,6 +843,30 @@ span.spacer {
   -webkit-box-shadow: 0 6px 12px rgba(0,0,0,0.175);
   box-shadow: 0 6px 12px rgba(0,0,0,0.175);
   background-clip: padding-box;
+}
+
+
+.dropdown-menu--dark {
+  background-color: rgba(33, 33, 33, 0.85);
+  box-shadow: 0 3px 2px rgba(0, 0, 0, 0.25);
+  font-size: 14px;
+  margin-top: 5px;
+  min-width: 200px;
+  padding: 5px 0;
+  position: absolute;
+  right: 0;
+  z-index: 1000;
+}
+
+.dropdown-menu--dark__item {
+  color: #fff;
+  cursor: pointer;
+  list-style-type: none;
+  padding: 4px 15px;
+}
+
+.dropdown-menu--dark__item:hover {
+  background-color: rgba(33, 33, 33, 1);
 }
 
 .tectonic-dropdown-menu {

@@ -42,6 +42,13 @@ class Cluster
           'variables.'
   end
 
+  def env_variables
+    {
+      'CLUSTER' => @name,
+      'TF_VAR_tectonic_cluster_name' => @name
+    }
+  end
+
   private
 
   def license_and_pull_secret_defined?
@@ -49,13 +56,6 @@ class Cluster
     pull_secret_path = 'TF_VAR_tectonic_pull_secret_path'
 
     EnvVar.set?([license_path, pull_secret_path])
-  end
-
-  def env_variables
-    {
-      'CLUSTER' => @name,
-      'TF_VAR_tectonic_cluster_name' => @name
-    }
   end
 
   def prepare_assets
@@ -93,7 +93,7 @@ class Cluster
       begin
         KubeCTL.run(@kubeconfig, 'cluster-info')
         return
-      rescue KubectlCmdError
+      rescue KubeCTL::KubeCTLCmdError
         sleep 10
       end
     end

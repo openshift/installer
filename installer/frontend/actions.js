@@ -35,10 +35,6 @@ export const loadFactsActionTypes = {
   ERROR: 'LOAD_FACTS_ERROR',
 };
 
-export const navActionTypes = {
-  LOCATION_CHANGE: 'NAV_ACTION_LOCATION_CHANGE',
-};
-
 export const restoreActionTypes = {
   RESTORE_STATE: 'RESTORE_RESTORE_STATE',
 };
@@ -160,7 +156,7 @@ export const validateAllFields = cb => async (dispatch, getState) => {
       throw new Error(`unresolvable fields: ${unvisitedFields.toJSON().map(f => f.name).join(' ')}`);
     }
     // TODO: (kans) use promise.All here for speeds
-    for (let dep of toVisit) {
+    for (const dep of toVisit) {
       await visit(dep);
     }
   }

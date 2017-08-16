@@ -42,8 +42,20 @@ VERSION=$(yaml2json < ${ASSETS_DIR}/app_versions/app-version-tectonic-cluster.ya
 # Don't include the meta app-version for sub-component's desired version.
 rm "${ASSETS_DIR}/app_versions/app-version-tectonic-cluster.yaml"
 
+tco_deployment="tectonic-channel-operator.yaml"
+
+# Get the TCO deployment first.
+f="${ASSETS_DIR}/operators/${tco_deployment}"
+tmpfile=$(mktemp /tmp/deployment.XXXXXX)
+# shellcheck disable=SC2086
+yaml2json < ${f} > ${tmpfile}
+tmpfiles+=(${tmpfile})
+
 # Get the deployments.
 for f in ${ASSETS_DIR}/operators/*.yaml; do
+  if [[ $(basename "${f}") == "${tco_deployment}" ]];then
+      continue
+  fi
   tmpfile=$(mktemp /tmp/deployment.XXXXXX)
   # shellcheck disable=SC2086
   yaml2json < ${f} > ${tmpfile}
@@ -61,8 +73,29 @@ fi
 
 unset tmpfiles
 
+kubernetes_appversion="app-version-kubernetes.yaml"
+
+# Get the kubernetes desired versions first.
+f="${ASSETS_DIR}/app_versions/${kubernetes_appversion}"
+tmpfile=$(mktemp /tmp/desiredVersion.XXXXXX)
+# shellcheck disable=SC2086
+name=$(yaml2json < ${f} | jq .metadata.name)
+# shellcheck disable=SC2086
+desiredVersion=$(yaml2json < ${f} | jq .status.currentVersion)
+# shellcheck disable=SC2086
+cat <<EOF > ${tmpfile}
+{
+  "name": ${name},
+  "version": ${desiredVersion}
+}
+EOF
+tmpfiles+=(${tmpfile})
+
 # Get the desired versions.
 for f in ${ASSETS_DIR}/app_versions/*.yaml; do
+  if [[ $(basename "${f}") == "${kubernetes_appversion}" ]];then
+      continue
+  fi
   tmpfile=$(mktemp /tmp/desiredVersion.XXXXXX)
   # shellcheck disable=SC2086
   name=$(yaml2json < ${f} | jq .metadata.name)

@@ -6,7 +6,7 @@ This document gives an overview of variables used in the Openstack/Neutron platf
 
 | Name | Description | Type | Default |
 |------|-------------|:----:|:-----:|
-| tectonic_openstack_dns_nameservers | The DNS servers assigned to the generated OpenStack subnet resource. | list | `<list>` |
+| tectonic_openstack_dns_nameservers | The nameservers used by the nodes and the generated OpenStack subnet resource.<br><br>Example: `["8.8.8.8", "8.8.4.4"]` | list | `<list>` |
 | tectonic_openstack_etcd_flavor_id | (optional) The flavor id for etcd instances as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM.<br><br>Note: Set either tectonic_openstack_etcd_flavor_name or tectonic_openstack_etcd_flavor_id. Note: This value is ignored for self-hosted etcd. | string | `` |
 | tectonic_openstack_etcd_flavor_name | (optional) The flavor name for etcd instances as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM.<br><br>Note: Set either tectonic_openstack_etcd_flavor_name or tectonic_openstack_etcd_flavor_id. Note: This value is ignored for self-hosted etcd. | string | `` |
 | tectonic_openstack_external_gateway_id | The ID of the network to be used as the external internet gateway as given in `openstack network list`. | string | - |

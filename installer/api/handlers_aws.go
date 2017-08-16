@@ -229,20 +229,49 @@ func awsGetKeyPairsHandler(w http.ResponseWriter, req *http.Request, _ *Context)
 
 // awsGetZonesHandler returns the list of Route53 Hosted Zones.
 func awsGetZonesHandler(w http.ResponseWriter, req *http.Request, _ *Context) error {
-	awsSession, err := awsSessionFromRequest(req)
-	if err != nil {
-		return fromAWSErr(err)
-	}
-	route53svc := route53.New(awsSession)
 
-	resp, err := route53svc.ListHostedZones(&route53.ListHostedZonesInput{})
-	if err != nil {
-		return fromAWSErr(err)
+	addHostedZones := func(allZones *[]*route53.HostedZone, marker *string) error {
+
+		awsSession, err := awsSessionFromRequest(req)
+		if err != nil {
+			return err
+		}
+		route53svc := route53.New(awsSession)
+
+		requestInput := route53.ListHostedZonesInput{}
+		if *marker != "" {
+			requestInput = route53.ListHostedZonesInput{Marker: marker}
+		}
+
+		resp, err := route53svc.ListHostedZones(&requestInput)
+		if err != nil {
+			return err
+		}
+
+		*allZones = append(*allZones, resp.HostedZones...)
+
+		if *resp.IsTruncated == true {
+			*marker = *resp.NextMarker
+		} else {
+			*marker = "complete"
+		}
+
+		return nil
+	}
+
+	var allZones []*route53.HostedZone
+	var marker string
+
+	for marker != "complete" {
+		err := addHostedZones(&allZones, &marker)
+		if err != nil {
+			return fromAWSErr(err)
+		}
 	}
 
 	response := []labelValue{}
 
-	for _, key := range resp.HostedZones {
+	for _, key := range allZones {
 		// Strip trailing dot off domain names & add "(private)" to private zones
 		label := strings.TrimSuffix(aws.StringValue(key.Name), ".")
 		if aws.BoolValue(key.Config.PrivateZone) {

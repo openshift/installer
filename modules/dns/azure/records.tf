@@ -1,4 +1,4 @@
-resource "azurerm_dns_a_record" "tectonic-api" {
+resource "azurerm_dns_a_record" "tectonic_api" {
   count = "${var.base_domain != "" ? 1 : 0}"
 
   resource_group_name = "${replace(var.external_dns_zone_id, "${var.const_id_to_group_name_regex}", "$1")}"
@@ -14,7 +14,7 @@ resource "azurerm_dns_a_record" "tectonic-api" {
     var.extra_tags)}"
 }
 
-resource "azurerm_dns_a_record" "tectonic-console" {
+resource "azurerm_dns_a_record" "tectonic_console" {
   count = "${var.base_domain != "" ? 1 : 0}"
 
   resource_group_name = "${replace(var.external_dns_zone_id, "${var.const_id_to_group_name_regex}", "$1")}"
@@ -30,7 +30,7 @@ resource "azurerm_dns_a_record" "tectonic-console" {
     var.extra_tags)}"
 }
 
-resource "azurerm_dns_a_record" "tectonic-etcd" {
+resource "azurerm_dns_a_record" "tectonic_etcd" {
   count = "${var.base_domain != "" ? var.etcd_count : 0}"
 
   resource_group_name = "${replace(var.external_dns_zone_id, "${var.const_id_to_group_name_regex}", "$1")}"
@@ -46,7 +46,7 @@ resource "azurerm_dns_a_record" "tectonic-etcd" {
     var.extra_tags)}"
 }
 
-resource "azurerm_dns_a_record" "tectonic-master" {
+resource "azurerm_dns_a_record" "tectonic_master" {
   count = "${var.base_domain != "" ? var.master_count : 0}"
 
   resource_group_name = "${replace(var.external_dns_zone_id, "${var.const_id_to_group_name_regex}", "$1")}"
@@ -62,7 +62,7 @@ resource "azurerm_dns_a_record" "tectonic-master" {
     var.extra_tags)}"
 }
 
-resource "azurerm_dns_a_record" "tectonic-worker" {
+resource "azurerm_dns_a_record" "tectonic_worker" {
   count = "${var.base_domain != "" ? var.worker_count : 0}"
 
   resource_group_name = "${replace(var.external_dns_zone_id, "${var.const_id_to_group_name_regex}", "$1")}"

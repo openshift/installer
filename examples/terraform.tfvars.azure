@@ -23,7 +23,7 @@ tectonic_azure_client_secret = ""
 // (optional) Storage account type for the etcd node(s). Example: Premium_LRS.
 // Using Premium storage is constrained by the of instance specified in 'tectonic_azure_etcd_vm_size'.
 // See https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage#supported-vms
-// tectonic_azure_etcd_storage_account_type = "Premium_LRS"
+// tectonic_azure_etcd_storage_type = "Premium_LRS"
 
 // (optional) Instance size for the etcd node(s). Example: Standard_DS2_v2.
 // tectonic_azure_etcd_vm_size = "Standard_DS2_v2"
@@ -107,7 +107,7 @@ tectonic_azure_location = ""
 // (optional) Storage account type for the master node(s). Example: Premium_LRS.
 // Using Premium storage is constrained by the of instance specified in 'tectonic_azure_master_vm_size'.
 // See https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage#supported-vms
-// tectonic_azure_master_storage_account_type = "Premium_LRS"
+// tectonic_azure_master_storage_type = "Premium_LRS"
 
 // (optional) Instance size for the master node(s). Example: Standard_DS2_v2.
 // tectonic_azure_master_vm_size = "Standard_DS2_v2"
@@ -117,12 +117,12 @@ tectonic_azure_ssh_key = ""
 
 // (optional) Network (external) to allow SSH access from. Maps to `source_address_prefix` in Azure.
 // Defaults to `*`. Can be external to Azure environment.
-// Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
+// Allowed values: [network CIDR (i.e., 10.0.0.0/16) \| `VirtualNetwork` \| `Internet` \| `*` ]
 // tectonic_azure_ssh_network_external = "*"
 
 // (optional) Network (internal) to allow SSH access from. Maps to `source_address_prefix` in Azure.
 // Defaults to `VirtualNetwork`. Should be internal to Azure environment.
-// Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
+// Allowed values: [network CIDR (i.e., 10.0.0.0/16) \| `VirtualNetwork` \| `Internet` \| `*` ]
 // tectonic_azure_ssh_network_internal = "VirtualNetwork"
 
 // (optional) Range of IP addresses assigned to the Virtual Network in which the cluster nodes run.
@@ -133,7 +133,7 @@ tectonic_azure_ssh_key = ""
 // (optional) Storage account type for the worker node(s). Example: Premium_LRS.
 // Using Premium storage is constrained by the of instance specified in 'tectonic_azure_worker_vm_size'.
 // See https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage#supported-vms
-// tectonic_azure_worker_storage_account_type = "Premium_LRS"
+// tectonic_azure_worker_storage_type = "Premium_LRS"
 
 // (optional) Instance size for the worker node(s). Example: Standard_DS2_v2.
 // tectonic_azure_worker_vm_size = "Standard_DS2_v2"
@@ -226,7 +226,7 @@ tectonic_cluster_name = ""
 // The number of etcd nodes to be created.
 // If set to zero, the count of etcd nodes will be determined automatically.
 // 
-// Note: This is currently only supported on AWS.
+// Note: This is not supported on bare metal.
 tectonic_etcd_count = "0"
 
 // (optional) List of external etcd v3 servers to connect with (hostnames/IPs only).

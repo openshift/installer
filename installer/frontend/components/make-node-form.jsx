@@ -18,7 +18,7 @@ import { validate } from '../validate';
 
 const toKey = (name, field) => `${name}-${field}`;
 
-export const makeNodeForm = (name, instanceValidator=validate.int({min: 1, max: 999}), opts) => {
+export const makeNodeForm = (name, instanceValidator = validate.int({min: 1, max: 999}), opts) => {
   const storageType = toKey(name, STORAGE_TYPE);
 
   // all fields must have a unique name!

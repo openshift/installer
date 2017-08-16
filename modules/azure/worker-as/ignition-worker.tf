@@ -2,6 +2,7 @@ data "ignition_config" "worker" {
   files = [
     "${data.ignition_file.kubeconfig.id}",
     "${data.ignition_file.kubelet-env.id}",
+    "${module.azure_udev-rules.udev-rules_id}",
     "${data.ignition_file.max-user-watches.id}",
     "${data.ignition_file.cloud-provider-config.id}",
   ]
@@ -10,6 +11,7 @@ data "ignition_config" "worker" {
     "${data.ignition_systemd_unit.docker.id}",
     "${data.ignition_systemd_unit.locksmithd.id}",
     "${data.ignition_systemd_unit.kubelet-worker.id}",
+    "${module.net_ignition.tx-off_id}",
   ]
 
   users = [
@@ -58,6 +60,16 @@ data "ignition_file" "kubeconfig" {
 
   content {
     content = "${var.kubeconfig_content}"
+  }
+}
+
+data "ignition_file" "azure_udev_rules" {
+  filesystem = "root"
+  path       = "/etc/udev/rules.d/66-azure-storage.rules"
+  mode       = 0644
+
+  content {
+    content = "${file("${path.module}/resources/66-azure-storage.rules")}"
   }
 }
 
@@ -115,4 +127,12 @@ data "ignition_user" "core" {
   ssh_authorized_keys = [
     "${file(var.public_ssh_key)}",
   ]
+}
+
+module "net_ignition" {
+  source = "../../net/ignition"
+}
+
+module "azure_udev-rules" {
+  source = "../udev-rules"
 }

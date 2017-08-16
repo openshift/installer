@@ -71,7 +71,7 @@ const platformToFunc = {
 let observeInterval;
 
 // An action creator that builds a server message, calls fetch on that message, fires the appropriate actions
-export const commitToServer = (dryRun=false, retry=false, opts={}) => (dispatch, getState) => {
+export const commitToServer = (dryRun = false, retry = false, opts = {}) => (dispatch, getState) => {
   setIn(DRY_RUN, dryRun, dispatch);
   setIn(RETRY, retry, dispatch);
 

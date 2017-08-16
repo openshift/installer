@@ -73,8 +73,8 @@ const compareJson = (actualJson, expectedJson) => {
   const diff = deep(actualJson,expectedJson);
   if (typeof diff !== 'undefined') {
     diff.forEach(key => {
-      msg = msg + '\n' + 'TerraformTfvar:' + key.path + ' ||'+' actualValue:' + key.lhs + ' ||'
-      +' expectedValue:'+ key.rhs;
+      msg = msg + '\n' + 'TerraformTfvar:' + key.path + ' ||' + ' actualValue:' + key.lhs + ' ||'
+      + ' expectedValue:' + key.rhs;
     });
     msg = msg + '\nThe above Json attributes are not matching.';
   }

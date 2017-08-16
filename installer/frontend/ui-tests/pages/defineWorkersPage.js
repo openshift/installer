@@ -30,11 +30,11 @@ module.exports = {
       selector: 'input[id="workers.1.host"]',
     },
     addMore: {
-      selector:'//*[text()[contains(.,"Add More")]]',
+      selector: '//*[text()[contains(.,"Add More")]]',
       locateStrategy: 'xpath',
     },
     nextStep: {
-      selector:'//*[text()[contains(.,"Next Step")]]',
+      selector: '//*[text()[contains(.,"Next Step")]]',
       locateStrategy: 'xpath',
     },
   },

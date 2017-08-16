@@ -4,8 +4,8 @@ This guide walks through a bare metal installation of Tectonic utilizing PXE-bas
 
 | Step | Description |
 |------|-------------|
-| [1. Overview][step-1] | Review types of machines in the cluster<br/>Review networking requirements |
-| [2. Provisioning Infrastructure][step-2] | Download and install matchbox<br/>Generate TLS assets |
+| [1. Node and networking requirements][step-1] | Review types of machines in the cluster<br/>Review networking requirements |
+| [2. Provision Infrastructure][step-2] | Download and install matchbox<br/>Generate TLS assets |
 | [3. Configure Networking][step-3] | Set up DHCP, TFTP, and DNS services<br/>Configure DNS for the cluster |
 | [4. Tectonic Installer][step-4] | Install Kubernetes and Tectonic |
 | [5. Tectonic Console][step-5] | You're done! Your cluster is ready! |
@@ -18,33 +18,31 @@ This guide walks through a bare metal installation of Tectonic utilizing PXE-bas
 
 For a more complete list of hardware and networking requirements, please see the bare metal [requirements document][requirements].
 
-<h2 id="1-overview"> 1. Overview </h2>
+<h2 id="1-overview"> 1. Node and networking requirements </h2>
 
 ### Node types
 
 A minimum of 3 machines are required to run Tectonic.
 
-**Provisioner node**
+ * **Provisioner node** runs the matchbox network boot and provisioning service, along with PXE services (if not running elsewhere). You may use Container Linux or any Linux distribution for this node. It provisions nodes, but does not join Tectonic clusters.
+ * **Controller nodes** run `etcd` and the control plane of the Tectonic cluster.
+ * **Worker nodes** run your applications in Tectonic clusters. New worker nodes join the cluster by talking to controller nodes for admission.
 
-A provisioner node runs the matchbox network boot and provisioning service, along with PXE services if you don't already run them elsewhere. These are long running infrastructure services. You may use Container Linux or any Linux distribution for this node. It provisions nodes, but does not join Tectonic clusters.
-
-A Tectonic cluster consists of two types of nodes:
-
-**Controller nodes**
-
-Controller nodes run `etcd` and the control plane of the cluster.
-
-**Worker nodes**
-
-Worker nodes run your applications. New worker nodes will join the cluster by talking to controller nodes for admission.
+For more information, see [Bare metal installation requirements][requirements.md].
 
 ### Networking requirements
 
-This guide requires familiarity with PXE booting, the ability to configure network services, and to add DNS names. These are discussed in detail below.
+This guide requires familiarity with PXE booting, the ability to configure network services, and to add DNS names. Networking requirements include:
 
-<h2 id="2-provisioning-infrastructure"> 2. Provisioning Infrastructure </h2>
+ * **matchbox** installation with gRPC API enabled and TLS client credentials.
+ * **CoreOS Container Linux** images installed and available in the Matchbox cache.
+ * **PXE enabled network** boot environment with DHCP, TFTP, and DNS services.
 
-### matchbox
+Installation and setup of these three items is detailed below.
+
+<h2 id="2-provisioning-infrastructure"> 2. Provision Infrastructure </h2>
+
+### Download and configure matchbox
 
 Matchbox is an open source service for on-premise environments that matches bare metal machines to profiles in order to PXE boot Container Linux clusters and automate cluster provisioning. Matchbox provides an authenticated API for clients like Tectonic Installer and Terraform. Profiles will define the kernel, initrd, iPXE config, and Container Linux config each node should use.
 
@@ -107,15 +105,15 @@ $ tree /var/lib/matchbox/assets
 and verify the images are accessible.
 
 ```
-$ curl http://matchbox.example.com:8080/assets/coreos/SOME-VERSION/
+$ curl http://matchbox.example.com:8080/assets/coreos/1353.8.0/
 <pre>...
 ```
 
-<h2 id="3-networking"> 3. Networking </h2>
+<h2 id="3-networking"> 3. Configure Networking </h2>
 
-A bare metal Tectonic cluster requires PXE infrastructure, which we'll set up next.
+A bare metal Tectonic cluster requires PXE infrastructure.
 
-### PXE-enabled Network
+### PXE-enabled network
 
 Tectonic works with many on-premise network setups. Matchbox does not seek to be the DHCP server, TFTP server, or DNS server for the network. Instead, it serves iPXE scripts as the entrypoint for provisioning network booted machines. At a high level, the goals are to:
 
@@ -139,7 +137,7 @@ If you've never set up a PXE-enabled network before, check out the [quay.io/core
 
 ### DNS
 
-The Tectonic Installer will prompt for *Controller* and *Tectonic* DNS names.
+Tectonic Installer will prompt for *Controller* and *Tectonic* DNS names.
 
 #### Controller DNS
 
@@ -147,7 +145,7 @@ For the controller DNS name, add a record which resolves to the node you plan to
 
 #### Tectonic DNS
 
-By default, Tectonic Ingress runs as a [Kubernetes Daemon Set][daemonset] across all worker nodes. For the Tectonic DNS name, add a record resolving to any nodes you plan to use as workers. Tectonic console is accessible at this DNS name. Choosing a Tectonic DNS type depends on the available infrastructure. Provide either a single DNS entry, round-robin DNS records, or the name of a load balancer fronting the workers on ports 80 and 443.
+By default, Tectonic Ingress runs as a [Kubernetes Daemon Set][daemonset] across all worker nodes. For the Tectonic DNS name, add a record resolving to any nodes you plan to use as workers. Tectonic Console will be accessible at this DNS name. Choosing a Tectonic DNS type depends on the available infrastructure. Provide either a single DNS entry, round-robin DNS records, or the name of a load balancer fronting the workers on ports 80 and 443.
 
 For example:
 
@@ -161,11 +159,11 @@ Providing a single entry for Tectonic DNS implies the Console will be inaccessib
 
 Make sure a current version of either the Google Chrome or Mozilla Firefox web browser is set as the default browser on the workstation where Installer will run.
 
-Download the [Tectonic Installer][latest-tectonic-release].
+Download [Tectonic Installer][latest-tectonic-release].
 
 ```sh
-wget https://releases.tectonic.com/tectonic-1.6.7-tectonic.2.tar.gz
-tar xzvf tectonic-1.6.7-tectonic.2.tar.gz
+wget https://releases.tectonic.com/tectonic-1.7.1-tectonic.1.tar.gz
+tar xzvf tectonic-1.7.1-tectonic.1.tar.gz
 cd tectonic/tectonic-installer
 ```
 
@@ -204,12 +202,12 @@ Click *Submit* to launch Terraform apply, then power on your machines via IPMI o
 
 <h2 id="5-tectonic-console"> 5. Tectonic Console </h2>
 
-After the installer is complete, you'll have a Tectonic cluster and be able to access the Tectonic console. You are ready to deploy your first application on to the cluster!
+After the installer is complete, you'll have a Tectonic cluster and be able to access Tectonic Console. You are ready to deploy your first application on to the cluster!
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
     <img src="../../img/walkthrough/nginx-deploy-pods.png">
-    <div class="co-m-screenshot-caption">Viewing pods in the Tectonic Console</div>
+    <div class="co-m-screenshot-caption">Viewing pods in Tectonic Console</div>
   </div>
 </div>
 
@@ -219,7 +217,7 @@ After the installer is complete, you'll have a Tectonic cluster and be able to a
 [copr-repo]: https://copr.fedorainfracloud.org/coprs/g/CoreOS/matchbox/
 [coreos-release]: https://coreos.com/releases/
 [daemonset]: http://kubernetes.io/docs/admin/daemons/
-[latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.6.7-tectonic.2.tar.gz
+[latest-tectonic-release]: https://releases.tectonic.com/tectonic-1.7.1-tectonic.1.tar.gz
 [matchbox-config]: https://coreos.com/matchbox/docs/latest/config.html
 [matchbox-dnsmasq]: https://github.com/coreos/matchbox/tree/master/contrib/dnsmasq
 [matchbox]: https://coreos.com/matchbox

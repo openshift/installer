@@ -43,8 +43,8 @@ def quay_creds = [
   )
 ]
 
-def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.35'
-def tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v2.0'
+def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.36'
+def tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v3.0'
 
 pipeline {
   agent none
@@ -58,6 +58,11 @@ pipeline {
       name: 'builder_image',
       defaultValue: default_builder_image,
       description: 'tectonic-builder docker image to use for builds'
+    )
+    booleanParam(
+      name: 'run_smoke_tests',
+      defaultValue: true,
+      description: ''
     )
   }
 
@@ -78,6 +83,7 @@ pipeline {
               # TODO: Remove me.
               go get github.com/segmentio/terraform-docs
               go get github.com/s-urbaniak/terraform-examples
+              go get github.com/bronze1man/yaml2json
 
               cd $GO_PROJECT/
               make structure-check
@@ -109,7 +115,12 @@ pipeline {
       }
     }
 
-    stage("Tests") {
+    stage("Smoke Tests") {
+      when {
+        expression {
+          return params.run_smoke_tests
+        }
+      }
       environment {
         TECTONIC_INSTALLER_ROLE = 'tectonic-installer'
         GRAFITI_DELETER_ROLE = 'grafiti-deleter'
@@ -133,7 +144,7 @@ pipeline {
               }
             }
           },
-          "SmokeTest TerraForm: AWS": {
+          "SmokeTest Terraform: AWS": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(args: '-v /etc/passwd:/etc/passwd:ro', image: params.builder_image) {
@@ -179,7 +190,7 @@ pipeline {
               }
             }
           },
-          "SmokeTest TerraForm: AWS (non-TLS)": {
+          "SmokeTest Terraform: AWS (non-TLS)": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(params.builder_image) {
@@ -198,7 +209,7 @@ pipeline {
               }
             }
           },
-          "SmokeTest TerraForm: AWS (experimental)": {
+          "SmokeTest Terraform: AWS (experimental)": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(params.builder_image) {
@@ -217,7 +228,7 @@ pipeline {
               }
             }
           },
-          "SmokeTest TerraForm: AWS (network policy)": {
+          "SmokeTest Terraform: AWS (network policy)": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(params.builder_image) {
@@ -258,7 +269,7 @@ pipeline {
               }
             }
           },
-          "SmokeTest TerraForm: AWS (custom ca)": {
+          "SmokeTest Terraform: AWS (custom ca)": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(params.builder_image) {
@@ -277,7 +288,7 @@ pipeline {
               }
             }
           },
-          "SmokeTest TerraForm: AWS (private vpc)": {
+          "SmokeTest Terraform: AWS (private vpc)": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(image: params.builder_image, args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root') {

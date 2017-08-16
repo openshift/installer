@@ -8,7 +8,7 @@ data "ignition_config" "node" {
   files = [
     "${data.ignition_file.kubeconfig.id}",
     "${data.ignition_file.kubelet-env.id}",
-    "${data.ignition_file.max-user-watches.id}",
+    "${data.ignition_file.max_user_watches.id}",
     "${data.ignition_file.resolv_conf.id}",
     "${data.ignition_file.hostname.*.id[count.index]}",
   ]
@@ -107,7 +107,7 @@ EOF
   }
 }
 
-data "ignition_file" "max-user-watches" {
+data "ignition_file" "max_user_watches" {
   filesystem = "root"
   path       = "/etc/sysctl.d/max-user-watches.conf"
   mode       = 0644

@@ -5,3 +5,7 @@ variable "secgroup_id" {
 variable "self_hosted" {
   default = false
 }
+
+variable "cluster_cidr" {
+  type = "string"
+}
