@@ -1,5 +1,3 @@
-const _ = require('lodash');
-
 const log = require('../utils/log');
 const installerInput = require('../utils/awsInstallerInput');
 const tfvarsUtil = require('../utils/terraformTfvars');
@@ -13,7 +11,7 @@ module.exports = {
   },
 
   'Tectonic Installer AWS Test': (client) => {
-    const missing = _.filter(REQUIRED_ENV_VARS, ev => !process.env[ev]);
+    const missing = REQUIRED_ENV_VARS.filter(ev => !process.env[ev]);
     if (missing.length) {
       console.error(`Missing environment variables: ${missing.join(', ')}.\n`);
       process.exit(1);
