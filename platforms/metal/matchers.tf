@@ -1,8 +1,8 @@
 // Install CoreOS to disk
-resource "matchbox_group" "coreos-install" {
+resource "matchbox_group" "coreos_install" {
   count   = "${length(var.tectonic_metal_controller_names) + length(var.tectonic_metal_worker_names)}"
   name    = "${format("coreos-install-%s", element(concat(var.tectonic_metal_controller_names, var.tectonic_metal_worker_names), count.index))}"
-  profile = "${matchbox_profile.coreos-install.name}"
+  profile = "${matchbox_profile.coreos_install.name}"
 
   selector {
     mac = "${element(concat(var.tectonic_metal_controller_macs, var.tectonic_metal_worker_macs), count.index)}"
@@ -22,7 +22,7 @@ resource "matchbox_group" "coreos-install" {
 resource "matchbox_group" "controller" {
   count   = "${length(var.tectonic_metal_controller_names)}"
   name    = "${format("%s-%s", var.tectonic_cluster_name, element(var.tectonic_metal_controller_names, count.index))}"
-  profile = "${matchbox_profile.tectonic-controller.name}"
+  profile = "${matchbox_profile.tectonic_controller.name}"
 
   selector {
     mac = "${element(var.tectonic_metal_controller_macs, count.index)}"
@@ -36,7 +36,7 @@ resource "matchbox_group" "controller" {
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
     exclude_tectonic   = "${var.tectonic_vanilla_k8s}"
 
-    etcd_enabled = "${var.tectonic_experimental ? "false" : "true"}"
+    etcd_enabled = "${var.tectonic_experimental ? "false" : length(compact(var.tectonic_etcd_servers)) != 0 ? false : "true"}"
 
     etcd_initial_cluster = "${
       join(",", formatlist(
@@ -60,7 +60,7 @@ resource "matchbox_group" "controller" {
 resource "matchbox_group" "worker" {
   count   = "${length(var.tectonic_metal_worker_names)}"
   name    = "${format("%s-%s", var.tectonic_cluster_name, element(var.tectonic_metal_worker_names, count.index))}"
-  profile = "${matchbox_profile.tectonic-worker.name}"
+  profile = "${matchbox_profile.tectonic_worker.name}"
 
   selector {
     mac = "${element(var.tectonic_metal_worker_macs, count.index)}"

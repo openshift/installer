@@ -121,3 +121,11 @@ variable "stats_url" {
   description = "The statistics collection URL to which to report."
   type        = "string"
 }
+
+variable "image_re" {
+  description = <<EOF
+(internal) Regular expression used to extract repo and tag components from image strings
+EOF
+
+  type = "string"
+}

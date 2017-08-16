@@ -152,6 +152,11 @@ The following table includes the high level networking features required to inst
 * Subnets for Controllers and Workers must be able to route requests to each other and must have an associated route table that specifies a default gateway.
 * The route tables should be explicitly attached to their subnets.
 * You must have VPN access to the subnet as it is does not offer an inbound connection to the Internet.
+* Tectonic installer must be able to:
+   * resolve DNS records in Route53 hosted zone used by installer
+   * establish a TCP connection with the Tectonic Ingress ELB
+
+__If you are experiencing issues with an install involving VPC-internal components, you may find the [troubleshooting section][aws-internal-troubleshooting] useful.__
 
 ### Using an existing VPC
 
@@ -163,6 +168,8 @@ Public subnets have a default route to the Internet Gateway and should auto-assi
 
 *DHCP Options Set* attached to the VPC must have an AWS [private domain name][aws-vpc-dns-hostnames]. In us-east-1 region, an AWS private domain name is ec2.internal whereas other regions use region.compute.internal.
 
+When using an existing VPC, tag AWS VPC subnets with the `kubernetes.io/cluster/my-cluster-name = shared` tag. `shared` is used to tag resources shared between multiple clusters, which should not be destroyed if any individual cluster is destroyed. If this tag is not specified, AWS ELB integration with Tectonic may not be able to use VPC subnets.
+
 
 [aws-cli-doc]: http://docs.aws.amazon.com/cli/latest/userguide/installing.html
 [aws-r53-doc]: https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/creating-migrating.html
@@ -172,3 +179,4 @@ Public subnets have a default route to the Internet Gateway and should auto-assi
 [install-aws]: index.md
 [tectonic-installer-aws-policy]: ../../files/aws-policy.json
 [aws-vpc-dns-hostnames]: http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-dns.html#vpc-dns-hostnames
+[aws-internal-troubleshooting]: ./troubleshooting.md#internal-vpc-elb-andor-hosted-zone

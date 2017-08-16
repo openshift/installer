@@ -20,7 +20,7 @@ def creds = [
   ]
 ]
 
-def builder_image = 'quay.io/coreos/tectonic-builder:v1.35'
+def builder_image = 'quay.io/coreos/tectonic-builder:v1.36'
 
 pipeline {
   agent none

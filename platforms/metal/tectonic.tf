@@ -28,17 +28,17 @@ module "bootkube" {
   oidc_groups_claim   = "groups"
   oidc_client_id      = "tectonic-kubectl"
 
-  etcd_endpoints = ["${split(",",
+  etcd_endpoints = "${split(",",
     length(compact(var.tectonic_etcd_servers)) == 0
       ? join(",", var.tectonic_metal_controller_domains)
       : join(",", var.tectonic_etcd_servers)
-    )}"]
+    )}"
 
   etcd_ca_cert        = "${var.tectonic_etcd_ca_cert_path}"
   etcd_client_cert    = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key     = "${var.tectonic_etcd_client_key_path}"
   etcd_tls_enabled    = "${var.tectonic_etcd_tls_enabled}"
-  etcd_cert_dns_names = ["${var.tectonic_metal_controller_domains}"]
+  etcd_cert_dns_names = "${var.tectonic_metal_controller_domains}"
 
   experimental_enabled = "${var.tectonic_experimental}"
 
@@ -81,9 +81,11 @@ module "tectonic" {
   experimental      = "${var.tectonic_experimental}"
   master_count      = "${length(var.tectonic_metal_controller_names)}"
   stats_url         = "${var.tectonic_stats_url}"
+
+  image_re = "${var.tectonic_image_re}"
 }
 
-module "flannel-vxlan" {
+module "flannel_vxlan" {
   source = "../../modules/net/flannel-vxlan"
 
   flannel_image     = "${var.tectonic_container_images["flannel"]}"
@@ -93,7 +95,7 @@ module "flannel-vxlan" {
   bootkube_id = "${module.bootkube.id}"
 }
 
-module "calico-network-policy" {
+module "calico_network_policy" {
   source = "../../modules/net/calico-network-policy"
 
   kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:443"
@@ -118,6 +120,6 @@ data "archive_file" "assets" {
   #
   # Additionally, data sources do not support managing any lifecycle whatsoever,
   # and therefore, the archive is never deleted. To avoid cluttering the module
-  # folder, we write it in the TerraForm managed hidden folder `.terraform`.
-  output_path = "./.terraform/generated_${sha1("${module.tectonic.id} ${module.bootkube.id} ${module.flannel-vxlan.id} ${module.calico-network-policy.id}")}.zip"
+  # folder, we write it in the Terraform managed hidden folder `.terraform`.
+  output_path = "./.terraform/generated_${sha1("${module.tectonic.id} ${module.bootkube.id} ${module.flannel_vxlan.id} ${module.calico_network_policy.id}")}.zip"
 }

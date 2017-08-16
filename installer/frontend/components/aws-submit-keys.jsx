@@ -16,14 +16,14 @@ const awsSshForm = new Form('AWSSSHForm', [
     dependencies: [AWS_REGION_FORM],
     getExtraStuff: (dispatch, isNow) => dispatch(awsActions.getSsh(null, null, isNow)).then(options => ({options: _.sortBy(options, 'label')})),
   })], {
-    validator: (data, cc) => {
-      const key = data[AWS_SSH];
-      const options = _.get(cc, ['extra', AWS_SSH, 'options']);
-      if (options && key && !_.some(options, o => o.value === key)) {
-        return `SSH key ${key} does not exist in this region.`;
-      }
-    },
-  }
+  validator: (data, cc) => {
+    const key = data[AWS_SSH];
+    const options = _.get(cc, ['extra', AWS_SSH, 'options']);
+    if (options && key && !_.some(options, o => o.value === key)) {
+      return `SSH key ${key} does not exist in this region.`;
+    }
+  },
+}
 );
 
 const Title = connect(

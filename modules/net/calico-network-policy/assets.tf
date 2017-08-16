@@ -1,4 +1,4 @@
-data "template_file" "calico-network-policy" {
+data "template_file" "calico_network_policy" {
   template = "${file("${path.module}/resources/manifests/kube-calico.yaml")}"
 
   vars {
@@ -14,9 +14,9 @@ data "template_file" "calico-network-policy" {
   }
 }
 
-resource "local_file" "calico-network-policy" {
+resource "local_file" "calico_network_policy" {
   count = "${ var.enabled ? 1 : 0 }"
 
-  content  = "${data.template_file.calico-network-policy.rendered}"
+  content  = "${data.template_file.calico_network_policy.rendered}"
   filename = "./generated/manifests/kube-calico.yaml"
 }

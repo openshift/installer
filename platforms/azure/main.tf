@@ -11,6 +11,8 @@ module "resource_group" {
   external_rsg_id = "${var.tectonic_azure_external_resource_group}"
   azure_location  = "${var.tectonic_azure_location}"
   cluster_name    = "${var.tectonic_cluster_name}"
+  cluster_id      = "${module.tectonic.cluster_id}"
+  extra_tags      = "${var.tectonic_azure_extra_tags}"
 }
 
 module "vnet" {
@@ -19,6 +21,7 @@ module "vnet" {
   location            = "${var.tectonic_azure_location}"
   resource_group_name = "${module.resource_group.name}"
   cluster_name        = "${var.tectonic_cluster_name}"
+  cluster_id          = "${module.tectonic.cluster_id}"
   base_domain         = "${var.tectonic_base_domain}"
   vnet_cidr_block     = "${var.tectonic_azure_vnet_cidr_block}"
 
@@ -38,20 +41,24 @@ module "vnet" {
   external_nsg_api_id       = "${var.tectonic_azure_external_nsg_api_id}"
   external_nsg_master_id    = "${var.tectonic_azure_external_nsg_master_id}"
   external_nsg_worker_id    = "${var.tectonic_azure_external_nsg_worker_id}"
+
+  extra_tags = "${var.tectonic_azure_extra_tags}"
 }
 
 module "etcd" {
   source = "../../modules/azure/etcd"
 
-  location             = "${var.tectonic_azure_location}"
-  resource_group_name  = "${module.resource_group.name}"
-  vm_size              = "${var.tectonic_azure_etcd_vm_size}"
-  storage_account_type = "${var.tectonic_azure_etcd_storage_account_type}"
-  container_image      = "${var.tectonic_container_images["etcd"]}"
+  location            = "${var.tectonic_azure_location}"
+  resource_group_name = "${module.resource_group.name}"
+  vm_size             = "${var.tectonic_azure_etcd_vm_size}"
+  storage_type        = "${var.tectonic_azure_etcd_storage_type}"
+  storage_id          = "${module.resource_group.storage_id}"
+  container_image     = "${var.tectonic_container_images["etcd"]}"
 
   etcd_count            = "${var.tectonic_experimental ? 0 : max(var.tectonic_etcd_count, 1)}"
   base_domain           = "${var.tectonic_base_domain}"
   cluster_name          = "${var.tectonic_cluster_name}"
+  cluster_id            = "${module.tectonic.cluster_id}"
   public_ssh_key        = "${var.tectonic_azure_ssh_key}"
   network_interface_ids = "${module.vnet.etcd_network_interface_ids}"
   versions              = "${var.tectonic_versions}"
@@ -65,10 +72,12 @@ module "etcd" {
   tls_client_key_pem = "${module.bootkube.etcd_client_key_pem}"
   tls_peer_crt_pem   = "${module.bootkube.etcd_peer_crt_pem}"
   tls_peer_key_pem   = "${module.bootkube.etcd_peer_key_pem}"
+
+  extra_tags = "${var.tectonic_azure_extra_tags}"
 }
 
 # Workaround for https://github.com/hashicorp/terraform/issues/4084
-data "null_data_source" "cloud-provider" {
+data "null_data_source" "cloud_provider" {
   inputs = {
     "cloud"                      = "${var.tectonic_azure_cloud_environment}"
     "tenantId"                   = "${data.azurerm_client_config.current.tenant_id}"
@@ -87,14 +96,16 @@ data "null_data_source" "cloud-provider" {
 module "masters" {
   source = "../../modules/azure/master-as"
 
-  location             = "${var.tectonic_azure_location}"
-  resource_group_name  = "${module.resource_group.name}"
-  vm_size              = "${var.tectonic_azure_master_vm_size}"
-  storage_account_type = "${var.tectonic_azure_master_storage_account_type}"
+  location            = "${var.tectonic_azure_location}"
+  resource_group_name = "${module.resource_group.name}"
+  vm_size             = "${var.tectonic_azure_master_vm_size}"
+  storage_type        = "${var.tectonic_azure_master_storage_type}"
+  storage_id          = "${module.resource_group.storage_id}"
 
   master_count                 = "${var.tectonic_master_count}"
   base_domain                  = "${var.tectonic_base_domain}"
   cluster_name                 = "${var.tectonic_cluster_name}"
+  cluster_id                   = "${module.tectonic.cluster_id}"
   public_ssh_key               = "${var.tectonic_azure_ssh_key}"
   virtual_network              = "${module.vnet.vnet_id}"
   network_interface_ids        = "${module.vnet.master_network_interface_ids}"
@@ -103,7 +114,7 @@ module "masters" {
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
   tectonic_kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
   cloud_provider               = "azure"
-  cloud_provider_config        = "${jsonencode(data.null_data_source.cloud-provider.inputs)}"
+  cloud_provider_config        = "${jsonencode(data.null_data_source.cloud_provider.inputs)}"
   kubelet_node_label           = "node-role.kubernetes.io/master"
   kubelet_node_taints          = "node-role.kubernetes.io/master=:NoSchedule"
   kubelet_cni_bin_dir          = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
@@ -112,18 +123,22 @@ module "masters" {
   tectonic_service_disabled    = "${var.tectonic_vanilla_k8s}"
   versions                     = "${var.tectonic_versions}"
   cl_channel                   = "${var.tectonic_cl_channel}"
+
+  extra_tags = "${var.tectonic_azure_extra_tags}"
 }
 
 module "workers" {
   source = "../../modules/azure/worker-as"
 
-  location             = "${var.tectonic_azure_location}"
-  resource_group_name  = "${module.resource_group.name}"
-  vm_size              = "${var.tectonic_azure_worker_vm_size}"
-  storage_account_type = "${var.tectonic_azure_worker_storage_account_type}"
+  location            = "${var.tectonic_azure_location}"
+  resource_group_name = "${module.resource_group.name}"
+  vm_size             = "${var.tectonic_azure_worker_vm_size}"
+  storage_type        = "${var.tectonic_azure_worker_storage_type}"
+  storage_id          = "${module.resource_group.storage_id}"
 
   worker_count                 = "${var.tectonic_worker_count}"
   cluster_name                 = "${var.tectonic_cluster_name}"
+  cluster_id                   = "${module.tectonic.cluster_id}"
   public_ssh_key               = "${var.tectonic_azure_ssh_key}"
   virtual_network              = "${module.vnet.vnet_id}"
   network_interface_ids        = "${module.vnet.worker_network_interface_ids}"
@@ -132,11 +147,13 @@ module "workers" {
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
   tectonic_kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
   cloud_provider               = "azure"
-  cloud_provider_config        = "${jsonencode(data.null_data_source.cloud-provider.inputs)}"
+  cloud_provider_config        = "${jsonencode(data.null_data_source.cloud_provider.inputs)}"
   kubelet_node_label           = "node-role.kubernetes.io/node"
   kubelet_cni_bin_dir          = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
   versions                     = "${var.tectonic_versions}"
   cl_channel                   = "${var.tectonic_cl_channel}"
+
+  extra_tags = "${var.tectonic_azure_extra_tags}"
 }
 
 module "dns" {
@@ -154,7 +171,10 @@ module "dns" {
 
   base_domain  = "${var.tectonic_base_domain}"
   cluster_name = "${var.tectonic_cluster_name}"
+  cluster_id   = "${module.tectonic.cluster_id}"
 
   location             = "${var.tectonic_azure_location}"
   external_dns_zone_id = "${var.tectonic_azure_external_dns_zone_id}"
+
+  extra_tags = "${var.tectonic_azure_extra_tags}"
 }

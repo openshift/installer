@@ -3,9 +3,10 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os/exec"
 	"path/filepath"
+	"regexp"
 	"time"
 
 	"github.com/dghubble/sessions"
@@ -46,7 +47,7 @@ func terraformApplyHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 		// Restore the execution environment from the session.
 		_, ex, _, err = restoreExecutionFromSession(req, ctx.Sessions, &input.Credentials)
 	} else {
-		// Create a new TerraForm Executor with the TF variables.
+		// Create a new Terraform Executor with the TF variables.
 		ex, err = newExecutorFromApplyHandlerInput(&input)
 	}
 	if err != nil {
@@ -56,15 +57,26 @@ func terraformApplyHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 
 	// Copy the TF Templates to the Executor's working directory.
 	if err := terraform.RestoreSources(ex.WorkingDirectory()); err != nil {
-		return newInternalServerError("could not write TerraForm templates: %s", err)
+		return newInternalServerError("could not write Terraform templates: %s", err)
 	}
 
-	// Execute TerraForm get and wait for it to finish.
-	_, getDone, err := ex.Execute("get", "-no-color", tfMainDir)
+	// Choose to run 'get' or 'init' based on Terraform version.
+	sub10Rx := regexp.MustCompile("^Terraform v0\\.[0-9]\\.[0-9]+")
+	out, err := exec.Command("terraform", "version").Output()
 	if err != nil {
-		return newInternalServerError("Failed to run TerraForm (get): %s", err)
+		return newInternalServerError("Failed to determine Terraform version: %s", err)
 	}
-	<-getDone
+	prepCommand := "init"
+	if sub10Rx.Match(out) {
+		prepCommand = "get"
+	}
+
+	// Execute Terraform get or init and wait for it to finish.
+	_, prepDone, err := ex.Execute(prepCommand, "-no-color", tfMainDir)
+	if err != nil {
+		return newInternalServerError("Failed to run Terraform (%s): %s", prepCommand, err)
+	}
+	<-prepDone
 
 	// Store both the path to the Executor and the ID of the execution so that
 	// the status can be read later on.
@@ -81,7 +93,7 @@ func terraformApplyHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 		action = "apply"
 	}
 	if err != nil {
-		return newInternalServerError("Failed to run TerraForm (%s): %s", action, err)
+		return newInternalServerError("Failed to run Terraform (%s): %s", action, err)
 	}
 	session.Values["terraform_id"] = id
 	session.Values["action"] = action
@@ -91,56 +103,6 @@ func terraformApplyHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 	}
 
 	return nil
-}
-
-func terraformStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Context) error {
-	// Read the input from the request's body.
-	input := struct {
-		TectonicDomain string `json:"tectonicDomain"`
-	}{}
-	if err := json.NewDecoder(req.Body).Decode(&input); err != nil {
-		return newBadRequestError("Could not unmarshal input: %s", err)
-	}
-	defer req.Body.Close()
-
-	// Restore the execution environment from the session.
-	session, ex, exID, errCtx := restoreExecutionFromSession(req, ctx.Sessions, nil)
-	if errCtx != nil {
-		// Error directly (rather than NewAppError, which logs) since the
-		// frontend periodically calls this endpoint to advance screens
-		http.Error(w, fmt.Sprintf("Could not find session data: %v", errCtx), http.StatusNotFound)
-		return nil
-	}
-
-	// Retrieve Terraform's status and output.
-	status, err := ex.Status(exID)
-	if status == terraform.ExecutionStatusUnknown {
-		return newBadRequestError("Could not retrieve TerraForm execution's status: %s", err)
-	}
-	output, _ := ex.Output(exID)
-	outputBytes, _ := ioutil.ReadAll(output)
-
-	// Return results.
-	response := struct {
-		Status          string                 `json:"status"`
-		Output          string                 `json:"output,omitempty"`
-		Error           string                 `json:"error,omitempty"`
-		Action          string                 `json:"action"`
-		TectonicConsole tectonic.ServiceStatus `json:"tectonicConsole"`
-	}{
-		Status:          string(status),
-		Output:          string(outputBytes),
-		TectonicConsole: tectonic.ConsoleHealth(nil, input.TectonicDomain),
-	}
-	action := session.Values["action"]
-	if action != nil {
-		response.Action = action.(string)
-	}
-	if err != nil {
-		response.Error = err.Error()
-	}
-
-	return writeJSONResponse(w, req, http.StatusOK, response)
 }
 
 func terraformAssetsHandler(w http.ResponseWriter, req *http.Request, ctx *Context) error {
@@ -180,10 +142,10 @@ func terraformDestroyHandler(w http.ResponseWriter, req *http.Request, ctx *Cont
 	}
 	tfMainDir := fmt.Sprintf("%s/platforms/%s", ex.WorkingDirectory(), input.Platform)
 
-	// Execute TerraForm apply in the background.
+	// Execute Terraform apply in the background.
 	id, _, err := ex.Execute("destroy", "-force", "-no-color", tfMainDir)
 	if err != nil {
-		return newInternalServerError("Failed to run TerraForm (apply): %s", err)
+		return newInternalServerError("Failed to run Terraform (apply): %s", err)
 	}
 
 	// Store both the path to the Executor and the ID of the execution so that
@@ -216,7 +178,7 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 	// Create a new Executor.
 	ex, err := terraform.NewExecutor(exPath)
 	if err != nil {
-		return nil, newInternalServerError("Could not create TerraForm executor: %s", err)
+		return nil, newInternalServerError("Could not create Terraform executor: %s", err)
 	}
 
 	// Write the License and Pull Secret to disk, and wire these files in the
@@ -261,10 +223,10 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 	if variables, err := json.MarshalIndent(input.Variables, "", "  "); err == nil {
 		ex.AddVariables(variables)
 	} else {
-		return nil, newBadRequestError("Could not marshal TerraForm variables: %s", err)
+		return nil, newBadRequestError("Could not marshal Terraform variables: %s", err)
 	}
 	if err := ex.AddCredentials(&input.Credentials); err != nil {
-		return nil, newBadRequestError("Could not validate TerraForm credentials: %v", err)
+		return nil, newBadRequestError("Could not validate Terraform credentials: %v", err)
 	}
 
 	return ex, nil
@@ -287,10 +249,10 @@ func restoreExecutionFromSession(req *http.Request, sessionProvider sessions.Sto
 	}
 	ex, err := terraform.NewExecutor(executionPath.(string))
 	if err != nil {
-		return nil, nil, -1, newInternalServerError("Could not create TerraForm executor")
+		return nil, nil, -1, newInternalServerError("Could not create Terraform executor")
 	}
 	if err := ex.AddCredentials(credentials); err != nil {
-		return nil, nil, -1, newBadRequestError("Could not validate TerraForm credentials")
+		return nil, nil, -1, newBadRequestError("Could not validate Terraform credentials")
 	}
 	return session, ex, executionID.(int), nil
 }

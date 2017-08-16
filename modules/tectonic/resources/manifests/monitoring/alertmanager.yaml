@@ -8,7 +8,7 @@ metadata:
     alertmanager: main
 spec:
   replicas: 2
-  baseImage: ${element(split(":",alertmanager_image),0)}
+  baseImage: ${replace(alertmanager_image,image_re,"$1")}
   version: ${alertmanager_version}
   externalUrl: ${prometheus_external_url}
   resources:

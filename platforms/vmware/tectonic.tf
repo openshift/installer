@@ -83,6 +83,8 @@ module "tectonic" {
   experimental      = "${var.tectonic_experimental}"
   master_count      = "${var.tectonic_master_count}"
   stats_url         = "${var.tectonic_stats_url}"
+
+  image_re = "${var.tectonic_image_re}"
 }
 
 module "flannel-vxlan" {
@@ -120,6 +122,6 @@ data "archive_file" "assets" {
   #
   # Additionally, data sources do not support managing any lifecycle whatsoever,
   # and therefore, the archive is never deleted. To avoid cluttering the module
-  # folder, we write it in the TerraForm managed hidden folder `.terraform`.  
+  # folder, we write it in the Terraform managed hidden folder `.terraform`.  
   output_path = "./.terraform/generated_${sha1("${module.tectonic.id} ${module.bootkube.id} ${module.flannel-vxlan.id} ${module.calico-network-policy.id}")}.zip"
 }

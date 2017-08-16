@@ -76,6 +76,11 @@ spec:
             configMapKeyRef:
               name: tectonic-identity
               key: kubectlSecret
+        - name: BRIDGE_TECTONIC_CLUSTER_NAME
+          valueFrom:
+            configMapKeyRef:
+              name: tectonic-config
+              key: clusterName
         - name: BRIDGE_TECTONIC_VERSION
           valueFrom:
             configMapKeyRef:

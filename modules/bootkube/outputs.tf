@@ -1,5 +1,5 @@
 # This output is meant to be used to inject a dependency on the generated
-# assets. As of TerraForm v0.9, it is difficult to make a module depend on
+# assets. As of Terraform v0.9, it is difficult to make a module depend on
 # another module (no depends_on, no triggers), or to make a data source
 # depend on a module (no depends_on, no triggers, generally no dummy variable).
 #
@@ -19,8 +19,8 @@ output "id" {
   value = "${sha1("
   ${data.archive_file.etcd_tls_zip.id}
   ${local_file.kubeconfig.id}
-  ${local_file.bootkube-sh.id}
-  ${template_dir.bootkube.id} ${template_dir.bootkube-bootstrap.id}
+  ${local_file.bootkube_sh.id}
+  ${template_dir.bootkube.id} ${template_dir.bootkube_bootstrap.id}
   ${join(" ",
     local_file.etcd_ca_crt.*.id,
     local_file.etcd_server_crt.*.id,
@@ -30,8 +30,8 @@ output "id" {
     local_file.etcd_peer_crt.*.id,
     local_file.etcd_peer_key.*.id,
     template_dir.experimental.*.id,
-    template_dir.bootstrap-experimental.*.id,
-    template_dir.etcd-experimental.*.id,
+    template_dir.bootstrap_experimental.*.id,
+    template_dir.etcd_experimental.*.id,
     )}
   ")}"
 }
@@ -45,15 +45,15 @@ output "kubeconfig" {
 }
 
 output "ca_cert" {
-  value = "${var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube-ca.*.cert_pem) : var.ca_cert}"
+  value = "${var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube_ca.*.cert_pem) : var.ca_cert}"
 }
 
 output "ca_key_alg" {
-  value = "${var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube-ca.*.key_algorithm) : var.ca_key_alg}"
+  value = "${var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube_ca.*.key_algorithm) : var.ca_key_alg}"
 }
 
 output "ca_key" {
-  value = "${var.ca_cert == "" ? join(" ", tls_private_key.kube-ca.*.private_key_pem) : var.ca_key}"
+  value = "${var.ca_cert == "" ? join(" ", tls_private_key.kube_ca.*.private_key_pem) : var.ca_key}"
 }
 
 output "systemd_service" {
@@ -65,7 +65,7 @@ output "kube_dns_service_ip" {
 }
 
 output "etcd_ca_crt_pem" {
-  value = "${join("", tls_self_signed_cert.etcd-ca.*.cert_pem)}"
+  value = "${join("", tls_self_signed_cert.etcd_ca.*.cert_pem)}"
 }
 
 output "etcd_server_crt_pem" {

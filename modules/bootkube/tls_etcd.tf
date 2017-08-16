@@ -1,17 +1,17 @@
 // root CA
 
-resource "tls_private_key" "etcd-ca" {
+resource "tls_private_key" "etcd_ca" {
   count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
-resource "tls_self_signed_cert" "etcd-ca" {
+resource "tls_self_signed_cert" "etcd_ca" {
   count = "${var.experimental_enabled || var.etcd_tls_enabled ? 1 : 0}"
 
-  key_algorithm   = "${tls_private_key.etcd-ca.algorithm}"
-  private_key_pem = "${tls_private_key.etcd-ca.private_key_pem}"
+  key_algorithm   = "${tls_private_key.etcd_ca.algorithm}"
+  private_key_pem = "${tls_private_key.etcd_ca.private_key_pem}"
 
   subject {
     common_name  = "etcd-ca"
@@ -69,9 +69,9 @@ resource "tls_locally_signed_cert" "etcd_server" {
 
   cert_request_pem = "${tls_cert_request.etcd_server.cert_request_pem}"
 
-  ca_key_algorithm   = "${join(" ", tls_self_signed_cert.etcd-ca.*.key_algorithm)}"
-  ca_private_key_pem = "${join(" ", tls_private_key.etcd-ca.*.private_key_pem)}"
-  ca_cert_pem        = "${join(" ", tls_self_signed_cert.etcd-ca.*.cert_pem)}"
+  ca_key_algorithm   = "${join(" ", tls_self_signed_cert.etcd_ca.*.key_algorithm)}"
+  ca_private_key_pem = "${join(" ", tls_private_key.etcd_ca.*.private_key_pem)}"
+  ca_cert_pem        = "${join(" ", tls_self_signed_cert.etcd_ca.*.cert_pem)}"
 
   validity_period_hours = 8760
 
@@ -108,9 +108,9 @@ resource "tls_locally_signed_cert" "etcd_client" {
 
   cert_request_pem = "${tls_cert_request.etcd_client.cert_request_pem}"
 
-  ca_key_algorithm   = "${join(" ", tls_self_signed_cert.etcd-ca.*.key_algorithm)}"
-  ca_private_key_pem = "${join(" ", tls_private_key.etcd-ca.*.private_key_pem)}"
-  ca_cert_pem        = "${join(" ", tls_self_signed_cert.etcd-ca.*.cert_pem)}"
+  ca_key_algorithm   = "${join(" ", tls_self_signed_cert.etcd_ca.*.key_algorithm)}"
+  ca_private_key_pem = "${join(" ", tls_private_key.etcd_ca.*.private_key_pem)}"
+  ca_cert_pem        = "${join(" ", tls_self_signed_cert.etcd_ca.*.cert_pem)}"
 
   validity_period_hours = 8760
 
@@ -159,9 +159,9 @@ resource "tls_locally_signed_cert" "etcd_peer" {
 
   cert_request_pem = "${tls_cert_request.etcd_peer.cert_request_pem}"
 
-  ca_key_algorithm   = "${join(" ", tls_self_signed_cert.etcd-ca.*.key_algorithm)}"
-  ca_private_key_pem = "${join(" ", tls_private_key.etcd-ca.*.private_key_pem)}"
-  ca_cert_pem        = "${join(" ", tls_self_signed_cert.etcd-ca.*.cert_pem)}"
+  ca_key_algorithm   = "${join(" ", tls_self_signed_cert.etcd_ca.*.key_algorithm)}"
+  ca_private_key_pem = "${join(" ", tls_private_key.etcd_ca.*.private_key_pem)}"
+  ca_cert_pem        = "${join(" ", tls_self_signed_cert.etcd_ca.*.cert_pem)}"
 
   validity_period_hours = 8760
 

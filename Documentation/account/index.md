@@ -1,8 +1,8 @@
 # Getting started with your CoreOS account
 
-Once you sign up for a CoreOS account at either CoreOS.com or Tectonic.com, check your inbox and click the *Verify Email* link from Tectonic Support.
+First, sign up for a CoreOS account from [coreos.com](https://coreos.com/). Then, check your inbox for an email from CoreOS Support, and click *Verify Email*.
 
-The Overview for the account is displayed after logging in.
+Log in to complete registration and access the Account Overview page.
 
 <div class="row">
   <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
@@ -12,7 +12,7 @@ The Overview for the account is displayed after logging in.
   </div>
 </div>
 
-After signing up for one of the *Available Products* you will be redirected to your account overview where you will find a list of your subscriptions and your *Account Assets*.
+After signing up for one of the *Available Products* you will be redirected to the account Overview page with a list of subscriptions, and links to access your account's CoreOS License and Pull Secret.
 
 <div class="row">
   <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
@@ -24,7 +24,7 @@ After signing up for one of the *Available Products* you will be redirected to y
 
 ## Using your pull secret to download CoreOS software
 
-Below your *Universal Software License* is the *Pull Secret* and *Kubernetes Secret* for the account. This secret provides access to the container images for CoreOS products.
+The *CoreOS License* and *Pull Secret* are required to access container images for CoreOS products. Click the link to copy and paste below the Download buttons to open a window from which these may be copied into the appropriate fields during the Tectonic installation process.
 
 <div class="row">
   <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
@@ -34,25 +34,17 @@ Below your *Universal Software License* is the *Pull Secret* and *Kubernetes Sec
   </div>
 </div>
 
-The `config.json` file contains a pull secret granting access to CoreOS container registries.
+The License and Pull secret may also be entered manually. The `config.json` file contains a pull secret granting access to CoreOS container registries.
 
-Download `config.json` from the *Account Overview* screen and write it to the Docker configuration directory. On CoreOS Container Linux, copy the file to `/home/core/.docker/config.json`. On most other Linux distributions, copy the file to `/root/.docker/config.json` or the configured Docker configuration directory.
+Download `config.json` from the account *Overview* screen and write it to the Docker configuration directory. On CoreOS Container Linux, copy the file to `/home/core/.docker/config.json`. On most other Linux distributions, copy the file to `/root/.docker/config.json` or the configured Docker configuration directory.
 
 Docker will use the credentials in `config.json` when fetching Tectonic software.
 
-## Inviting other users to a CoreOS account
+## Adding users to a CoreOS account
 
-In order for other users to be able to deploy software from CoreOS using the account, they must first be invited to join the account. Users can be added and managed through the *Account* tab.
+Use the *Account* tab to invite new users to the account, and to manage existing user subscriptions. Users must be added to an account before they can deploy CoreOS software from the account.
 
-
-<div class="row">
-  <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
-    <a href="../img/coreos-account-account-tab.png" class="co-m-screenshot">
-      <img src="../img/coreos-account-account-tab.png" class="img-responsive">
-    </a>
-  </div>
-</div>
-
+To edit a user's details, click the sprocket to the left of their email address.
 
 <div class="row">
   <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
@@ -62,7 +54,7 @@ In order for other users to be able to deploy software from CoreOS using the acc
   </div>
 </div>
 
-Each user, their status and authorization are reflected on this page. To edit a user's details, click the sprocket to the left of their email address.
+To invite new users to the account, click *Invite New User*. Email invitations will be sent, from which new users may activate their account. **To accept the invitation, users must first create a CoreOS account by clicking the *Register* link at the bottom of the login box and completing email validation.**
 
 <div class="row">
   <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
@@ -72,15 +64,13 @@ Each user, their status and authorization are reflected on this page. To edit a 
   </div>
 </div>
 
-
-Invited users will receive an email like this one. **In order to accept the invitation, users must first create a CoreOS account by clicking the *Register* link at the bottom of the login box and completing email validation.**
-
-Once added, the user will see the organization name to the left of their account name at the top of their *Overview* page. Their status on the *Account* page will change from *Invited* to *Accepted*.
-
+Once added, users will see the organization name to the left of their account name at the top of their *Overview* page. Their status on the *Account* page will change from *Invited* to *Accepted*.
 
 ## Changing account context
 
-A user may be a member of several CoreOS accounts: For example, they may have a Quay Enterprise license through work and access to a trial Tectonic cluster through a personal account. In this case, it is necessary to switch account contexts to access each license separately.
+A user may be a member of several CoreOS accounts. For example, they may have a Quay Enterprise license through work and access to a trial Tectonic cluster through a personal account. In this case, users must switch account contexts to access each license separately.
+
+To switch contexts, click the email address in the upper right corner of the page, and select an account to load the *Overview* page for that context.
 
 <div class="row">
   <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
@@ -90,13 +80,11 @@ A user may be a member of several CoreOS accounts: For example, they may have a 
   </div>
 </div>
 
-Clicking the email on the upper right corner of the page will reveal a list of available account contexts for the user. Selecting a context will load a new *Account Overview* listing the products available to that account and its master license and pull secret.
-
 -----------------------------------------------------------------
 
 ## Managing billing
 
-Billing information can be accessed through the *Billing* tab.
+Use the *Billing* tab to view billing information, or to change the account's payment method or billing address.
 
 <div class="row">
   <div class="col-lg-10 col-lg-offset-1 col-md-10 col-md-offset-1 col-sm-10 col-sm-offset-1 col-xs-10 col-xs-offset-1">
@@ -105,5 +93,3 @@ Billing information can be accessed through the *Billing* tab.
     </a>
   </div>
 </div>
-
-Use this page to change an account's payment method and billing address.

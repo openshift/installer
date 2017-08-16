@@ -4,6 +4,11 @@ resource "azurerm_virtual_network" "tectonic_vnet" {
   resource_group_name = "${var.resource_group_name}"
   address_space       = ["${var.vnet_cidr_block}"]
   location            = "${var.location}"
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}_vnet",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
 resource "azurerm_subnet" "master_subnet" {

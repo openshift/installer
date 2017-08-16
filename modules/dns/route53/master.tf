@@ -1,6 +1,6 @@
 resource "aws_route53_record" "master_nodes" {
   count   = "${var.master_count}"
-  zone_id = "${aws_route53_zone.tectonic.zone_id}"
+  zone_id = "${data.aws_route53_zone.tectonic.zone_id}"
   name    = "${var.cluster_name}-master-${count.index}"
   type    = "A"
   ttl     = "60"

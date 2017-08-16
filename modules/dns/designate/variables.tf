@@ -14,6 +14,11 @@ variable "base_domain" {
   type        = "string"
 }
 
+variable "admin_email" {
+  description = "The admin email for the DNS zone"
+  type        = "string"
+}
+
 variable "master_count" {
   description = "The number of masters"
   type        = "string"
@@ -42,4 +47,25 @@ variable "master_ips" {
 variable "worker_ips" {
   description = "List of string IPs for workers"
   type        = "list"
+}
+
+variable "api_ips" {
+  description = "List of string IPs for k8s API"
+  type        = "list"
+}
+
+variable "tectonic_experimental" {
+  default = false
+
+  description = <<EOF
+If set to true, experimental Tectonic assets are being deployed.
+EOF
+}
+
+variable "tectonic_vanilla_k8s" {
+  default = false
+
+  description = <<EOF
+If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
+EOF
 }

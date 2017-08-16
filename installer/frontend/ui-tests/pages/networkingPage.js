@@ -15,7 +15,7 @@ module.exports = {
       selector: 'option[value=Z1ILIMNSJGTMO2]',
     },
     nextStep: {
-      selector:'//*[text()[contains(.,"Next Step")]]',
+      selector: '//*[text()[contains(.,"Next Step")]]',
       locateStrategy: 'xpath',
     },
   },

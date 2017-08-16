@@ -2,8 +2,8 @@ const consoleLoginPageCommands = {
   enterLoginCredentails(adminEmail) {
     return this
       .setValue('@email', adminEmail)
-      .setValue('@password', "password")
-      .setValue('@confirmPassword',"password")
+      .setValue('@password', 'password')
+      .setValue('@confirmPassword', 'password')
       .click('@nextStep');
   },
 };
@@ -22,7 +22,7 @@ module.exports = {
       selector: 'input[id=adminPassword2]',
     },
     nextStep: {
-      selector:'//*[text()[contains(.,"Next Step")]]',
+      selector: '//*[text()[contains(.,"Next Step")]]',
       locateStrategy: 'xpath',
     },
   },

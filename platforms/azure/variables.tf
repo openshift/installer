@@ -13,7 +13,7 @@ variable "tectonic_azure_ssh_network_internal" {
   description = <<EOF
 (optional) Network (internal) to allow SSH access from. Maps to `source_address_prefix` in Azure.
 Defaults to `VirtualNetwork`. Should be internal to Azure environment.
-Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
+Allowed values: [network CIDR (i.e., 10.0.0.0/16) \| `VirtualNetwork` \| `Internet` \| `*` ]
 EOF
 
   default = "VirtualNetwork"
@@ -25,7 +25,7 @@ variable "tectonic_azure_ssh_network_external" {
   description = <<EOF
 (optional) Network (external) to allow SSH access from. Maps to `source_address_prefix` in Azure.
 Defaults to `*`. Can be external to Azure environment.
-Allowed values: [network CIDR (i.e., 10.0.0.0/16) | `VirtualNetwork` | `Internet` | `*` ]
+Allowed values: [network CIDR (i.e., 10.0.0.0/16) \| `VirtualNetwork` \| `Internet` \| `*` ]
 EOF
 
   default = "*"
@@ -59,7 +59,7 @@ variable "tectonic_azure_etcd_vm_size" {
   default     = "Standard_DS2_v2"
 }
 
-variable "tectonic_azure_master_storage_account_type" {
+variable "tectonic_azure_master_storage_type" {
   type = "string"
 
   description = <<EOF
@@ -71,7 +71,7 @@ EOF
   default = "Premium_LRS"
 }
 
-variable "tectonic_azure_worker_storage_account_type" {
+variable "tectonic_azure_worker_storage_type" {
   type = "string"
 
   description = <<EOF
@@ -83,7 +83,7 @@ EOF
   default = "Premium_LRS"
 }
 
-variable "tectonic_azure_etcd_storage_account_type" {
+variable "tectonic_azure_etcd_storage_type" {
   type = "string"
 
   description = <<EOF
@@ -101,7 +101,7 @@ variable "tectonic_azure_vnet_cidr_block" {
 
   description = <<EOF
 (optional) Range of IP addresses assigned to the Virtual Network in which the cluster nodes run.
-This should not overlap with any other networks, such as the Kubernetes cluster (pod) range, 
+This should not overlap with any other networks, such as the Kubernetes cluster (pod) range,
 service range or a private datacenter connected via ExpressRoute."
 EOF
 }
@@ -224,7 +224,8 @@ EOF
 variable "tectonic_azure_external_dns_zone_id" {
   description = <<EOF
 (optional) The ID of the external Azure DNS zone used for nodes & endpoints FQDNs.
-Required when 'tectonic_base_domain' is set. This be an existing pre-registerd Azure DNS zone.
+Required when 'tectonic_base_domain' is set.
+This must be a pre-existing, properly configured Azure DNS zone that the Azure service principal running the Tectonic installer has permission to perform operations on.
 
 Note this is the complete ID as returned in the "id" field by the Azure client, not just the name of the resource.
 
@@ -250,4 +251,15 @@ variable "tectonic_azure_client_secret" {
   type = "string"
 
   description = "The client secret to use."
+}
+
+variable "tectonic_azure_extra_tags" {
+  type = "map"
+
+  description = <<EOF
+(optional) A map of extra Azure tags to be applied to created resources.
+[CAVEAT] Tags MUST NOT contain reserved characters '<,>,%,&,\,?,/' or control characters.
+EOF
+
+  default = {}
 }

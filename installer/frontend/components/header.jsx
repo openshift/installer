@@ -6,16 +6,16 @@ import { Dropdown } from './ui';
 const fetchLatestRelease = () => {
   return fetch('/releases/latest',
     { method: 'GET' }).then((response) => {
-      if (response.ok) {
-        return response.text();
-      }
-      return response.text().then(err => Promise.reject(err));
-    });
+    if (response.ok) {
+      return response.text();
+    }
+    return response.text().then(err => Promise.reject(err));
+  });
 };
 
 const parseLatestVersion = (html) => {
   const parser = new DOMParser();
-  const htmlDoc = parser.parseFromString(html, "text/html");
+  const htmlDoc = parser.parseFromString(html, 'text/html');
   return htmlDoc.getElementsByClassName('latestReleaseTag')[0].textContent.trim();
 };
 
@@ -108,10 +108,10 @@ export class Header extends React.Component {
       <div>
         <ul className="co-navbar-nav">
           <li>
-            <Dropdown items={productDdItems} header="Product"/>
+            <Dropdown items={productDdItems} header="Product" />
           </li>
           <li>
-            <Dropdown items={openSourceDdItems} header="Open Source"/>
+            <Dropdown items={openSourceDdItems} header="Open Source" />
           </li>
           <li className="tectonic-dropdown-menu-title">
             <a href="https://coreos.com/tectonic/docs/latest/" target="_blank" className="tectonic-dropdown-menu-title__link">Tectonic Docs</a>

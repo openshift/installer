@@ -19,7 +19,7 @@ let clock_ = 0;
 class Node {
   constructor (id, opts) {
     if (!id) {
-      throw new Error("I need a id");
+      throw new Error('I need an id');
     }
     this.clock_ = 0;
     this.id = id;
@@ -149,7 +149,7 @@ class Node {
       if (!_.isString(asyncError)) {
         console.warn(`asyncError is not a string!?:\n${JSON.stringify(asyncError)}`);
         if (asyncError.type && asyncError.payload) {
-          console.warn(`Did you accidentally return a dispatch?`);
+          console.warn('Did you accidentally return a dispatch?');
           asyncError = null;
         } else {
           asyncError = asyncError.toString ? asyncError.toString() : JSON.stringify(asyncError);
@@ -210,7 +210,7 @@ async function promisify (dispatch, getState, oldCC, now, deps, FIELDS) {
 }
 
 export class Field extends Node {
-  constructor(id, opts={}) {
+  constructor(id, opts = {}) {
     super(id, opts);
     if (!_.has(opts, 'default')) {
       throw new Error(`${id} needs a default`);
@@ -303,7 +303,7 @@ export class Field extends Node {
 }
 
 export class Form extends Node {
-  constructor(id, fields, opts={}) {
+  constructor(id, fields, opts = {}) {
     super(id, opts);
     this.isForm = true;
     this.fields = fields;
@@ -400,7 +400,7 @@ const toDefaultOpts = opts => {
 };
 
 export class FieldList extends Field {
-  constructor(id, opts={}) {
+  constructor(id, opts = {}) {
     super(id, toDefaultOpts(opts));
     this.fields = opts.fields;
   }
@@ -413,7 +413,7 @@ export class FieldList extends Field {
     const fields = this.fields;
 
     this.OuterListComponent_ = function Outer ({children}) {
-      return React.createElement(ConnectedFieldList, {id, children, fields});
+      return React.createElement(ConnectedFieldList, {id, fields}, children);
     };
 
     return this.OuterListComponent_;

@@ -232,7 +232,7 @@ sections.forEach((v, k) => {
 //    - moving from one page to some previous pages
 //    - presenting a (possibly disabled) list of all pages
 export class Trail {
-  constructor(trailSections, whitelist, opts={}) {
+  constructor(trailSections, whitelist, opts = {}) {
     this.canReset = opts.canReset;
     this.sections = trailSections;
     const sectionPages = this.sections.reduce((ls, l) => ls.concat(l), []);
@@ -299,7 +299,7 @@ export class Trail {
     return true;
   }
 
-   // Returns the previous page in the trail if that page exists
+  // Returns the previous page in the trail if that page exists
   previousFrom(page) {
     const myIx = this.ixByPage.get(page);
     return this._pages[myIx - 1];
@@ -328,7 +328,7 @@ const platformToSection = {
 };
 
 export const trail = ({cluster, clusterConfig, commitState}) => {
-  let platform = clusterConfig[PLATFORM_TYPE];
+  const platform = clusterConfig[PLATFORM_TYPE];
   const { ready } = cluster;
 
   if (platform === '') {
@@ -351,16 +351,4 @@ export const trail = ({cluster, clusterConfig, commitState}) => {
   }
 
   return platformToSection[platform].choose;
-};
-
-export const getAllRoutes = () => {
-  // No components have the same path, so this is safe.
-  // If a user guesses an invalid URL, they could get in a weird state. Oh well.
-  let routes = [];
-  _.each(sections, v => {
-    _.each(v, o => {
-      routes.push(o);
-    });
-  });
-  return routes;
 };

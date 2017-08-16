@@ -19,6 +19,11 @@ tectonic_admin_password_hash = ""
 // 
 // Note: This field MUST be set manually prior to creating the cluster.
 // This applies only to cloud platforms.
+// 
+// [Azure-specific NOTE]
+// To use Azure-provided DNS, `tectonic_base_domain` should be set to `""`
+// If using DNS records, ensure that `tectonic_base_domain` is set to a properly configured external DNS zone.
+// Instructions for configuring delegated domains for Azure DNS can be found here: https://docs.microsoft.com/en-us/azure/dns/dns-delegate-domain-azure-dns
 tectonic_base_domain = ""
 
 // (optional) The content of the PEM-encoded CA certificate, used to generate Tectonic Console's server certificate.
@@ -30,7 +35,7 @@ tectonic_base_domain = ""
 // tectonic_ca_key = ""
 
 // (optional) The algorithm used to generate tectonic_ca_key.
-// The default value is currently recommend.
+// The default value is currently recommended.
 // This field is mandatory if `tectonic_ca_cert` is set.
 // tectonic_ca_key_alg = "RSA"
 
@@ -95,7 +100,7 @@ tectonic_cluster_name = ""
 // The number of etcd nodes to be created.
 // If set to zero, the count of etcd nodes will be determined automatically.
 // 
-// Note: This is currently only supported on AWS.
+// Note: This is not supported on bare metal.
 tectonic_etcd_count = "0"
 
 // (optional) List of external etcd v3 servers to connect with (hostnames/IPs only).
@@ -121,7 +126,9 @@ tectonic_license_path = ""
 // This applies only to cloud platforms.
 tectonic_master_count = "1"
 
-// The DNS servers assigned to the generated OpenStack subnet resource.
+// The nameservers used by the nodes and the generated OpenStack subnet resource.
+// 
+// Example: `["8.8.8.8", "8.8.4.4"]`
 tectonic_openstack_dns_nameservers = ""
 
 // (optional) The flavor id for etcd instances as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM.

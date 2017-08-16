@@ -8,4 +8,4 @@
   ${hyperkube_image} \
   --net=host \
   --dns=host \
-  --exec=/bin/bash -- /assets/tectonic.sh /assets/auth/kubeconfig /assets ${experimental}
+  --exec=/bin/sh -- /assets/tectonic.sh /assets/auth/kubeconfig /assets ${experimental}

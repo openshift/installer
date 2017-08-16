@@ -25,7 +25,7 @@ module "bootkube" {
   oidc_groups_claim   = "groups"
   oidc_client_id      = "tectonic-kubectl"
 
-  etcd_endpoints   = "${openstack_networking_port_v2.etcd.*.all_fixed_ips}"
+  etcd_endpoints   = "${module.dns.etcd_a_nodes}"
   etcd_ca_cert     = "${var.tectonic_etcd_ca_cert_path}"
   etcd_client_cert = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key  = "${var.tectonic_etcd_client_key_path}"
@@ -80,6 +80,8 @@ module "tectonic" {
   experimental      = "${var.tectonic_experimental}"
   master_count      = "${var.tectonic_master_count}"
   stats_url         = "${var.tectonic_stats_url}"
+
+  image_re = "${var.tectonic_image_re}"
 }
 
 module "etcd" {
@@ -87,8 +89,7 @@ module "etcd" {
 
   resolv_conf_content = <<EOF
 search ${var.tectonic_base_domain}
-nameserver 8.8.8.8
-nameserver 8.8.4.4
+${join("\n", formatlist("nameserver %s", var.tectonic_openstack_dns_nameservers))}
 EOF
 
   base_domain           = "${var.tectonic_base_domain}"
@@ -121,8 +122,7 @@ module "master_nodes" {
 
   resolv_conf_content = <<EOF
 search ${var.tectonic_base_domain}
-nameserver 8.8.8.8
-nameserver 8.8.4.4
+${join("\n", formatlist("nameserver %s", var.tectonic_openstack_dns_nameservers))}
 EOF
 
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
@@ -147,8 +147,7 @@ module "worker_nodes" {
 
   resolv_conf_content = <<EOF
 search ${var.tectonic_base_domain}
-nameserver 8.8.8.8
-nameserver 8.8.4.4
+${join("\n", formatlist("nameserver %s", var.tectonic_openstack_dns_nameservers))}
 EOF
 
   kubeconfig_content           = "${module.bootkube.kubeconfig}"
@@ -175,10 +174,32 @@ module "secrets" {
 module "secgroups" {
   source                = "../../../modules/openstack/secgroups"
   cluster_name          = "${var.tectonic_cluster_name}"
+  cluster_cidr          = "${var.tectonic_openstack_subnet_cidr}"
   tectonic_experimental = "${var.tectonic_experimental}"
 }
 
-module "flannel-vxlan" {
+module "dns" {
+  source = "../../../modules/dns/designate"
+
+  cluster_name = "${var.tectonic_cluster_name}"
+  base_domain  = "${var.tectonic_base_domain}"
+
+  admin_email = "${var.tectonic_admin_email}"
+
+  api_ips          = "${openstack_networking_floatingip_v2.loadbalancer.*.address}"
+  etcd_count       = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count}"
+  etcd_ips         = "${openstack_networking_port_v2.etcd.*.all_fixed_ips}"
+  etcd_tls_enabled = "${var.tectonic_etcd_tls_enabled}"
+  master_count     = "${var.tectonic_master_count}"
+  master_ips       = "${openstack_networking_port_v2.master.*.all_fixed_ips}"
+  worker_count     = "${var.tectonic_worker_count}"
+  worker_ips       = "${openstack_networking_port_v2.worker.*.all_fixed_ips}"
+
+  tectonic_experimental = "${var.tectonic_experimental}"
+  tectonic_vanilla_k8s  = "${var.tectonic_vanilla_k8s}"
+}
+
+module "flannel_vxlan" {
   source = "../../../modules/net/flannel-vxlan"
 
   flannel_image     = "${var.tectonic_container_images["flannel"]}"
@@ -188,7 +209,7 @@ module "flannel-vxlan" {
   bootkube_id = "${module.bootkube.id}"
 }
 
-module "calico-network-policy" {
+module "calico_network_policy" {
   source = "../../../modules/net/calico-network-policy"
 
   kube_apiserver_url = "https://${var.tectonic_cluster_name}-k8s.${var.tectonic_base_domain}:443"

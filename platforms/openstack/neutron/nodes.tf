@@ -1,6 +1,7 @@
 # etcd
 
 resource "openstack_compute_servergroup_v2" "etcd_group" {
+  count    = "${var.tectonic_experimental ? 0 : 1}"
   name     = "${var.tectonic_cluster_name}-etcd-group"
   policies = ["anti-affinity"]
 }
@@ -117,11 +118,13 @@ resource "null_resource" "tectonic" {
   depends_on = [
     "module.bootkube",
     "module.tectonic",
-    "module.flannel-vxlan",
-    "module.calico-network-policy",
+    "module.dns",
+    "module.flannel_vxlan",
+    "module.calico_network_policy",
     "openstack_compute_instance_v2.master_node",
     "openstack_networking_port_v2.master",
     "openstack_networking_floatingip_v2.master",
+    "openstack_networking_floatingip_v2.loadbalancer",
   ]
 
   connection {

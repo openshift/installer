@@ -25,43 +25,43 @@ variable "tectonic_container_images" {
   type        = "map"
 
   default = {
-    hyperkube                       = "quay.io/coreos/hyperkube:v1.7.1_coreos.0"
-    pod_checkpointer                = "quay.io/coreos/pod-checkpointer:980d1b4b4b8374240c240fb0f85e3a8d9c51663c"
-    bootkube                        = "quay.io/coreos/bootkube:v0.5.0"
-    console                         = "quay.io/coreos/tectonic-console:v1.7.4"
-    identity                        = "quay.io/coreos/dex:v2.5.0"
-    container_linux_update_operator = "quay.io/coreos/container-linux-update-operator:v0.2.2"
-    kube_version_operator           = "quay.io/coreos/kube-version-operator:v1.6.7"
-    tectonic_channel_operator       = "quay.io/coreos/tectonic-channel-operator:0.3.6"
-    node_agent                      = "quay.io/coreos/node-agent:787844277099e8c10d617c3c807244fc9f873e46"
-    prometheus_operator             = "quay.io/coreos/prometheus-operator:v0.10.2"
-    tectonic_monitoring_auth        = "quay.io/coreos/tectonic-monitoring-auth:v0.0.1"
-    prometheus                      = "quay.io/prometheus/prometheus:v1.7.1"
-    alertmanager                    = "quay.io/prometheus/alertmanager:v0.7.1"
-    tectonic_prometheus_operator    = "quay.io/coreos/tectonic-prometheus-operator:v1.3.0"
-    node_exporter                   = "quay.io/prometheus/node-exporter:v0.14.0"
-    kube_state_metrics              = "quay.io/coreos/kube-state-metrics:v0.5.0"
-    config_reload                   = "quay.io/coreos/configmap-reload:v0.0.1"
-    prometheus_config_reload        = "quay.io/coreos/prometheus-config-reloader:v0.0.2"
-    heapster                        = "gcr.io/google_containers/heapster:v1.4.0"
     addon_resizer                   = "gcr.io/google_containers/addon-resizer:2.0"
-    stats_emitter                   = "quay.io/coreos/tectonic-stats:6e882361357fe4b773adbf279cddf48cb50164c1"
-    stats_extender                  = "quay.io/coreos/tectonic-stats-extender:487b3da4e175da96dabfb44fba65cdb8b823db2e"
+    alertmanager                    = "quay.io/prometheus/alertmanager:v0.7.1"
+    awscli                          = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
+    bootkube                        = "quay.io/coreos/bootkube:v0.5.0"
+    calico                          = "quay.io/calico/node:v1.3.0"
+    calico_cni                      = "quay.io/calico/cni:v1.9.1-4-g23fcd5f"
+    config_reload                   = "quay.io/coreos/configmap-reload:v0.0.1"
+    container_linux_update_operator = "quay.io/coreos/container-linux-update-operator:v0.2.2"
+    console                         = "quay.io/coreos/tectonic-console:v1.8.6"
     error_server                    = "quay.io/coreos/tectonic-error-server:1.0"
+    etcd                            = "quay.io/coreos/etcd:v3.1.8"
+    etcd_operator                   = "quay.io/coreos/etcd-operator:v0.4.2"
+    flannel                         = "quay.io/coreos/flannel:v0.8.0-amd64"
+    flannel_cni                     = "quay.io/coreos/flannel-cni:0.1.0"
+    heapster                        = "gcr.io/google_containers/heapster:v1.4.0"
+    hyperkube                       = "quay.io/coreos/hyperkube:v1.7.2_coreos.0"
+    identity                        = "quay.io/coreos/dex:v2.5.0"
     ingress_controller              = "gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.11"
+    kenc                            = "quay.io/coreos/kenc:0.0.2"
     kubedns                         = "gcr.io/google_containers/k8s-dns-kube-dns-amd64:1.14.4"
     kubednsmasq                     = "gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.4"
     kubedns_sidecar                 = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.4"
-    flannel                         = "quay.io/coreos/flannel:v0.8.0-amd64"
-    flannel_cni                     = "quay.io/coreos/flannel-cni:0.1.0"
-    etcd                            = "quay.io/coreos/etcd:v3.1.8"
-    etcd_operator                   = "quay.io/coreos/etcd-operator:v0.4.2"
-    kenc                            = "quay.io/coreos/kenc:8f6e2e885f790030fbbb0496ea2a2d8830e58b8f"
-    awscli                          = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
+    kube_state_metrics              = "quay.io/coreos/kube-state-metrics:v0.5.0"
     kube_version                    = "quay.io/coreos/kube-version:0.1.0"
+    kube_version_operator           = "quay.io/coreos/kube-version-operator:v1.7.1-kvo.6"
+    node_agent                      = "quay.io/coreos/node-agent:c021a4959943b63c463410a038efe344939d5455"
+    node_exporter                   = "quay.io/prometheus/node-exporter:v0.14.0"
+    pod_checkpointer                = "quay.io/coreos/pod-checkpointer:980d1b4b4b8374240c240fb0f85e3a8d9c51663c"
+    prometheus                      = "quay.io/prometheus/prometheus:v1.7.1"
+    prometheus_config_reload        = "quay.io/coreos/prometheus-config-reloader:v0.0.2"
+    prometheus_operator             = "quay.io/coreos/prometheus-operator:v0.11.0"
+    stats_emitter                   = "quay.io/coreos/tectonic-stats:6e882361357fe4b773adbf279cddf48cb50164c1"
+    stats_extender                  = "quay.io/coreos/tectonic-stats-extender:487b3da4e175da96dabfb44fba65cdb8b823db2e"
+    tectonic_channel_operator       = "quay.io/coreos/tectonic-channel-operator:0.4.1"
     tectonic_etcd_operator          = "quay.io/coreos/tectonic-etcd-operator:v0.0.1"
-    calico                          = "quay.io/calico/node:v1.3.0"
-    calico_cni                      = "quay.io/calico/cni:v1.9.1-4-g23fcd5f"
+    tectonic_monitoring_auth        = "quay.io/coreos/tectonic-monitoring-auth:v0.0.1"
+    tectonic_prometheus_operator    = "quay.io/coreos/tectonic-prometheus-operator:v1.4.1"
   }
 }
 
@@ -70,12 +70,12 @@ variable "tectonic_versions" {
   type        = "map"
 
   default = {
+    alertmanager    = "v0.7.1"
     container_linux = "1353.8.0"
     etcd            = "3.1.8"
-    prometheus      = "v1.7.1"
-    alertmanager    = "v0.7.1"
-    monitoring      = "1.3.0"
     kubernetes      = "1.7.1+tectonic.1"
+    monitoring      = "1.4.1"
+    prometheus      = "v1.7.1"
     tectonic        = "1.7.1-tectonic.1"
     tectonic-etcd   = "0.0.1"
   }
@@ -123,7 +123,7 @@ variable "tectonic_etcd_count" {
 The number of etcd nodes to be created.
 If set to zero, the count of etcd nodes will be determined automatically.
 
-Note: This is currently only supported on AWS.
+Note: This is not supported on bare metal.
 EOF
 }
 
@@ -136,7 +136,7 @@ Example: `["etcd1", "etcd2", "etcd3"]`
 EOF
 
   type    = "list"
-  default = [""]
+  default = []
 }
 
 variable "tectonic_etcd_tls_enabled" {
@@ -196,6 +196,11 @@ Example: `openstack.dev.coreos.systems`.
 
 Note: This field MUST be set manually prior to creating the cluster.
 This applies only to cloud platforms.
+
+[Azure-specific NOTE]
+To use Azure-provided DNS, `tectonic_base_domain` should be set to `""`
+If using DNS records, ensure that `tectonic_base_domain` is set to a properly configured external DNS zone.
+Instructions for configuring delegated domains for Azure DNS can be found here: https://docs.microsoft.com/en-us/azure/dns/dns-delegate-domain-azure-dns
 EOF
 }
 
@@ -311,7 +316,7 @@ variable "tectonic_ca_key_alg" {
 
   description = <<EOF
 (optional) The algorithm used to generate tectonic_ca_key.
-The default value is currently recommend.
+The default value is currently recommended.
 This field is mandatory if `tectonic_ca_cert` is set.
 EOF
 }

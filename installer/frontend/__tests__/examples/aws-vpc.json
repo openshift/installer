@@ -9,6 +9,7 @@
   "license": "<TECTONIC_LICENSE>",
   "platform": "aws",
   "pullSecret": "<TECTONIC_PULL_SECRET>",
+  "retry": false,
   "variables": {
     "tectonic_admin_email": "admin@example.com",
     "tectonic_admin_password_hash": "$2a$12$96LR7NxL/T7LaijR0fxl3.aVI8owkpq0B./ogZ8wNmzF1bGPEZPBK",
@@ -40,7 +41,6 @@
     "tectonic_aws_worker_root_volume_size": 1000,
     "tectonic_aws_worker_root_volume_type": "io1",
     "tectonic_base_domain": "example.com",
-    "tectonic_cl_channel": "stable",
     "tectonic_cluster_cidr": "10.2.0.0/16",
     "tectonic_cluster_name": "test",
     "tectonic_dns_name": "test",

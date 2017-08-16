@@ -29,17 +29,14 @@ import (
 )
 
 const (
-	// nodeCountVar is the environment variable to check for Node count.
-	nodeCountVar = "NODE_COUNT"
-
-	// manifestPathsEnv is the environment variable that define the paths to the manifests which are deployed on the cluster.
-	manifestPathsEnv = "MANIFEST_PATHS"
-
-	// manifestExperimentalEnv is the environment variable that determines
-	manifestExperimentalEnv = "MANIFEST_EXPERIMENTAL"
-
-	// calicoNetworkPolicyEnv is the environment variable that determines if calico is running.
-	calicoNetworkPolicyEnv = "CALICO_NETWORK_POLICY"
+	// calicoNetworkPolicyEnv is the environment variable that specifies if calico is running.
+	calicoNetworkPolicyEnv = "SMOKE_CALICO_NETWORK_POLICY"
+	// nodeCountEnv is the environment variable that specifies the node count.
+	nodeCountEnv = "SMOKE_NODE_COUNT"
+	// manifestPathsEnv is the environment variable that defines the paths to the manifests that are deployed on the cluster.
+	manifestPathsEnv = "SMOKE_MANIFEST_PATHS"
+	// manifestExperimentalEnv is the environment variable that specifies whether or not to test for experimental manifests.
+	manifestExperimentalEnv = "SMOKE_MANIFEST_EXPERIMENTAL"
 )
 
 var (
@@ -136,9 +133,9 @@ func allNodesRunning(expected int) func(t *testing.T) error {
 }
 
 func testAllNodesRunning(t *testing.T) {
-	nodeCount, err := strconv.Atoi(os.Getenv(nodeCountVar))
+	nodeCount, err := strconv.Atoi(os.Getenv(nodeCountEnv))
 	if err != nil {
-		t.Fatalf("failed to get number of expected nodes from envvar %s: %v", nodeCountVar, err)
+		t.Fatalf("failed to get number of expected nodes from environment variable %s: %v", nodeCountEnv, err)
 	}
 
 	max := 10 * time.Minute
@@ -151,11 +148,10 @@ func testAllNodesRunning(t *testing.T) {
 
 func getIdentityLogs(t *testing.T) error {
 	c, _ := newClient(t)
-	namespace := "tectonic-system"
 	podPrefix := "tectonic-identity"
-	_, err := validatePodLogging(c, namespace, podPrefix)
+	_, err := validatePodLogging(c, tectonicSystemNamespace, podPrefix)
 	if err != nil {
-		return fmt.Errorf("failed to gather logs for %s/%s, %v", namespace, podPrefix, err)
+		return fmt.Errorf("failed to gather logs for %s/%s, %v", tectonicSystemNamespace, podPrefix, err)
 	}
 	return nil
 }
@@ -531,10 +527,6 @@ spec:
 }
 
 func getAPIServers(client *kubernetes.Clientset) (*v1.PodList, error) {
-	const (
-		apiServerSelector   = "k8s-app=kube-apiserver"
-		kubeSystemNamespace = "kube-system"
-	)
 	pods, err := client.Core().Pods(kubeSystemNamespace).List(meta_v1.ListOptions{LabelSelector: apiServerSelector})
 	if err != nil {
 		return nil, err

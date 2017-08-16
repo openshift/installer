@@ -7,7 +7,6 @@ package uuid
 import (
 	"bytes"
 	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"io"
 	"strings"
@@ -55,8 +54,8 @@ func Parse(s string) UUID {
 	if s[8] != '-' || s[13] != '-' || s[18] != '-' || s[23] != '-' {
 		return nil
 	}
-	var uuid [16]byte
-	for i, x := range [16]int{
+	uuid := make([]byte, 16)
+	for i, x := range []int{
 		0, 2, 4, 6,
 		9, 11,
 		14, 16,
@@ -68,7 +67,7 @@ func Parse(s string) UUID {
 			uuid[i] = v
 		}
 	}
-	return uuid[:]
+	return uuid
 }
 
 // Equal returns true if uuid1 and uuid2 are equal.
@@ -79,36 +78,23 @@ func Equal(uuid1, uuid2 UUID) bool {
 // String returns the string form of uuid, xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 // , or "" if uuid is invalid.
 func (uuid UUID) String() string {
-	if len(uuid) != 16 {
+	if uuid == nil || len(uuid) != 16 {
 		return ""
 	}
-	var buf [36]byte
-	encodeHex(buf[:], uuid)
-	return string(buf[:])
+	b := []byte(uuid)
+	return fmt.Sprintf("%08x-%04x-%04x-%04x-%012x",
+		b[:4], b[4:6], b[6:8], b[8:10], b[10:])
 }
 
 // URN returns the RFC 2141 URN form of uuid,
 // urn:uuid:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx,  or "" if uuid is invalid.
 func (uuid UUID) URN() string {
-	if len(uuid) != 16 {
+	if uuid == nil || len(uuid) != 16 {
 		return ""
 	}
-	var buf [36 + 9]byte
-	copy(buf[:], "urn:uuid:")
-	encodeHex(buf[9:], uuid)
-	return string(buf[:])
-}
-
-func encodeHex(dst []byte, uuid UUID) {
-	hex.Encode(dst[:], uuid[:4])
-	dst[8] = '-'
-	hex.Encode(dst[9:13], uuid[4:6])
-	dst[13] = '-'
-	hex.Encode(dst[14:18], uuid[6:8])
-	dst[18] = '-'
-	hex.Encode(dst[19:23], uuid[8:10])
-	dst[23] = '-'
-	hex.Encode(dst[24:], uuid[10:])
+	b := []byte(uuid)
+	return fmt.Sprintf("urn:uuid:%08x-%04x-%04x-%04x-%012x",
+		b[:4], b[4:6], b[6:8], b[8:10], b[10:])
 }
 
 // Variant returns the variant encoded in uuid.  It returns Invalid if
@@ -127,9 +113,10 @@ func (uuid UUID) Variant() Variant {
 	default:
 		return Reserved
 	}
+	panic("unreachable")
 }
 
-// Version returns the version of uuid.  It returns false if uuid is not
+// Version returns the verison of uuid.  It returns false if uuid is not
 // valid.
 func (uuid UUID) Version() (Version, bool) {
 	if len(uuid) != 16 {

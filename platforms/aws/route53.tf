@@ -1,9 +1,9 @@
-data "aws_route53_zone" "tectonic-ext" {
+data "aws_route53_zone" "tectonic_ext" {
   count = "${var.tectonic_aws_external_vpc_public}"
   name  = "${var.tectonic_base_domain}"
 }
 
-resource "aws_route53_zone" "tectonic-int" {
+resource "aws_route53_zone" "tectonic_int" {
   count         = "${var.tectonic_aws_external_private_zone == "" ? 1 : 0}"
   vpc_id        = "${module.vpc.vpc_id}"
   name          = "${var.tectonic_base_domain}"

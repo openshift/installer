@@ -163,7 +163,7 @@ configure() {
   COREOS_CHANNEL=$(awk -F "=" '/^tectonic_cl_channel/ {gsub(/[ \t"]/, "", $2); print $2}' ${CONFIG})
   COREOS_VERSION=$(awk -F "=" '/^tectonic_metal_cl_version/ {gsub(/[ \t"]/, "", $2); print $2}' ${CONFIG})
 
-  export TEST_KUBECONFIG=${ROOT}/build/${CLUSTER}/generated/auth/kubeconfig
+  export SMOKE_KUBECONFIG=${ROOT}/build/${CLUSTER}/generated/auth/kubeconfig
 }
 
 cleanup() {
@@ -247,7 +247,7 @@ cluster_up() {
 }
 
 k8s() {
-  ${BIN_DIR}/kubectl --kubeconfig=${TEST_KUBECONFIG} "$@"
+  ${BIN_DIR}/kubectl --kubeconfig=${SMOKE_KUBECONFIG} "$@"
 }
 
 # ready nodes returns the number of Ready Kubernetes nodes
@@ -271,12 +271,12 @@ podCount() {
 test_cluster() {
   MASTER_COUNT=$(grep tectonic_master_count "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}')
   WORKER_COUNT=$(grep tectonic_worker_count "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}')
-  export NODE_COUNT=$(( MASTER_COUNT + WORKER_COUNT ))
-  export MANIFEST_PATHS=${ROOT}/build/${CLUSTER}/generated/
+  export SMOKE_NODE_COUNT=$(( MASTER_COUNT + WORKER_COUNT ))
+  export SMOKE_MANIFEST_PATHS=${ROOT}/build/${CLUSTER}/generated/
   # shellcheck disable=SC2155
-  export MANIFEST_EXPERIMENTAL=$(grep tectonic_experimental "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}' | tr -d ' ')
+  export SMOKE_MANIFEST_EXPERIMENTAL=$(grep tectonic_experimental "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}' | tr -d ' ')
   # shellcheck disable=SC2155
-  export CALICO_NETWORK_POLICY=$(grep tectonic_calico_network_policy "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}' | tr -d ' ')
+  export SMOKE_CALICO_NETWORK_POLICY=$(grep tectonic_calico_network_policy "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}' | tr -d ' ')
   bin/smoke -test.v -test.parallel=1 --cluster
 }
 

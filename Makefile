@@ -132,6 +132,7 @@ structure-check:
 
 	@if $(MAKE) docs && ! git diff --exit-code; then echo "outdated docs (run 'make docs' to fix)"; exit 1; fi
 	@if $(MAKE) examples && ! git diff --exit-code; then echo "outdated examples (run 'make examples' to fix)"; exit 1; fi
+	@if $(TOP_DIR)/modules/update-payload/make-update-payload.sh && ! git diff --exit-code; then echo "outdated payload (run '$(TOP_DIR)/modules/update-payload/make-update-payload.sh' to fix)"; exit 1; fi
 
 SMOKE_SOURCES := $(shell find $(TOP_DIR)/tests/smoke -name '*.go')
 .PHONY: bin/smoke

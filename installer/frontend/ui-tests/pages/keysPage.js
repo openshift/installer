@@ -20,7 +20,7 @@ module.exports = {
       selector: 'option[value=' + inputJson.tectonic_aws_ssh_key + ']',
     },
     nextStep: {
-      selector:'//*[text()[contains(.,"Next Step")]]',
+      selector: '//*[text()[contains(.,"Next Step")]]',
       locateStrategy: 'xpath',
     },
   },

@@ -41,7 +41,6 @@ export const BM_WORKERS = 'workers';
 export const CA_CERTIFICATE = 'caCertificate';
 export const CA_PRIVATE_KEY = 'caPrivateKey';
 export const CA_TYPE = 'caType';
-export const CHANNEL_TO_USE = 'channelToUse';
 export const CLUSTER_NAME = 'clusterName';
 export const CLUSTER_SUBDOMAIN = 'clusterSubdomain';
 export const CONTROLLER_DOMAIN = 'controllerDomain';
@@ -87,16 +86,16 @@ export const PLATFORM_FORM = 'platform';
 export const EXPERIMENTAL_FEATURES = 'experimentalFeatures';
 
 
-export const SPLIT_DNS_ON = "on";
-export const SPLIT_DNS_OFF = "off";
+export const SPLIT_DNS_ON = 'on';
+export const SPLIT_DNS_OFF = 'off';
 export const SPLIT_DNS_OPTIONS = {
-  [SPLIT_DNS_ON]: "Create an additional Route 53 private zone (default).",
-  [SPLIT_DNS_OFF]: "Do not create a private zone.",
+  [SPLIT_DNS_ON]: 'Create an additional Route 53 private zone (default).',
+  [SPLIT_DNS_OFF]: 'Do not create a private zone.',
 };
 
-const SELF_HOSTED = "selfHosted";
-const EXTERNAL = "external";
-const PROVISIONED = "provisioned";
+const SELF_HOSTED = 'selfHosted';
+const EXTERNAL = 'external';
+const PROVISIONED = 'provisioned';
 export const ETCD_OPTIONS = { SELF_HOSTED, EXTERNAL, PROVISIONED };
 
 export const toVPCSubnet = (region, subnets, deselected) => {
@@ -194,12 +193,12 @@ export const DEFAULT_CLUSTER_CONFIG = {
     channel: 'tectonic-1.6',
     appID: '6bc7b986-4654-4a0f-94b3-84ce6feb1db4',
   },
-  [POD_CIDR]: "10.2.0.0/16",
-  [SERVICE_CIDR]: "10.3.0.0/16",
+  [POD_CIDR]: '10.2.0.0/16',
+  [SERVICE_CIDR]: '10.3.0.0/16',
 };
 
 
-export const toAWS_TF = (cc, FORMS, opts={}) => {
+export const toAWS_TF = (cc, FORMS, opts = {}) => {
   const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
   const etcds = FORMS[AWS_ETCDS].getData(cc);
   const workers = FORMS[AWS_WORKERS].getData(cc);
@@ -218,7 +217,7 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
 
   const extraTags = {};
   _.each(cc[AWS_TAGS], ({key, value}) => {
-    if(key && value) {
+    if (key && value) {
       extraTags[key] = value;
     }
   });
@@ -226,9 +225,10 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
   const ret = {
     clusterKind: 'tectonic-aws-tf',
     dryRun: cc[DRY_RUN],
-    platform: "aws",
+    platform: 'aws',
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
+    retry: cc[RETRY],
     credentials: {
       AWSAccessKeyID: cc[AWS_ACCESS_KEY_ID],
       AWSSecretAccessKey: cc[AWS_SECRET_ACCESS_KEY],
@@ -248,7 +248,6 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
       tectonic_aws_worker_root_volume_type: workers[STORAGE_TYPE],
       tectonic_aws_ssh_key: cc[AWS_SSH],
       tectonic_base_domain: getZoneDomain(cc),
-      tectonic_cl_channel: cc[CHANNEL_TO_USE],
       tectonic_cluster_cidr: cc[POD_CIDR],
       tectonic_cluster_name: cc[CLUSTER_NAME],
       tectonic_master_count: controllers[NUMBER_OF_INSTANCES],
@@ -301,7 +300,7 @@ export const toAWS_TF = (cc, FORMS, opts={}) => {
   return ret;
 };
 
-export const toBaremetal_TF = (cc, FORMS, opts={}) => {
+export const toBaremetal_TF = (cc, FORMS, opts = {}) => {
   const sshKey = FORMS[BM_SSH_KEY].getData(cc);
   const masters = cc[BM_MASTERS];
   const workers = cc[BM_WORKERS];
@@ -312,11 +311,11 @@ export const toBaremetal_TF = (cc, FORMS, opts={}) => {
     platform: 'metal',
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
+    retry: cc[RETRY],
     variables: {
       // eslint-disable-next-line no-sync
       tectonic_admin_password_hash: bcrypt.hashSync(cc[ADMIN_PASSWORD], opts.salt || bcrypt.genSaltSync(bcryptCost)),
       tectonic_cluster_name: cc[CLUSTER_NAME],
-      tectonic_cl_channel: cc[CHANNEL_TO_USE],
       tectonic_admin_email: cc[ADMIN_EMAIL],
       tectonic_metal_cl_version: cc[BM_OS_TO_USE],
       tectonic_metal_ingress_domain: getTectonicDomain(cc),

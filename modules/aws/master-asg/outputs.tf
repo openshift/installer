@@ -1,15 +1,15 @@
 output "ingress_external_fqdn" {
-  value = "${aws_route53_record.ingress-public.name}"
+  value = "${aws_route53_record.ingress_public.name}"
 }
 
 output "ingress_internal_fqdn" {
-  value = "${aws_route53_record.ingress-private.name}"
+  value = "${aws_route53_record.ingress_private.name}"
 }
 
 output "api_external_fqdn" {
-  value = "${aws_route53_record.api-external.name}"
+  value = "${aws_route53_record.api_external.name}"
 }
 
 output "api_internal_fqdn" {
-  value = "${aws_route53_record.api-internal.name}"
+  value = "${aws_route53_record.api_internal.name}"
 }

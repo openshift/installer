@@ -1,21 +1,22 @@
-resource "azurerm_public_ip" "tectonic_api_ip" {
-  name                         = "${var.cluster_name}_tectonic_api_ip"
+resource "azurerm_public_ip" "api_ip" {
+  name                         = "${var.cluster_name}_api_ip"
   location                     = "${var.location}"
   resource_group_name          = "${var.resource_group_name}"
   public_ip_address_allocation = "static"
   domain_name_label            = "${var.cluster_name}-api"
 
-  tags {
-    environment = "staging"
-  }
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}-api",
+    "tectonicClusterID", "${var.cluster_id}"),
+    var.extra_tags)}"
 }
 
-resource "azurerm_lb_rule" "api-lb" {
+resource "azurerm_lb_rule" "api_lb" {
   name                    = "api-lb-rule-443-443"
   resource_group_name     = "${var.resource_group_name}"
   loadbalancer_id         = "${azurerm_lb.tectonic_lb.id}"
   backend_address_pool_id = "${azurerm_lb_backend_address_pool.api-lb.id}"
-  probe_id                = "${azurerm_lb_probe.api-lb.id}"
+  probe_id                = "${azurerm_lb_probe.api_lb.id}"
 
   protocol                       = "tcp"
   frontend_port                  = 443
@@ -23,7 +24,7 @@ resource "azurerm_lb_rule" "api-lb" {
   frontend_ip_configuration_name = "api"
 }
 
-resource "azurerm_lb_probe" "api-lb" {
+resource "azurerm_lb_probe" "api_lb" {
   name                = "api-lb-probe-443-up"
   loadbalancer_id     = "${azurerm_lb.tectonic_lb.id}"
   resource_group_name = "${var.resource_group_name}"
@@ -37,12 +38,12 @@ resource "azurerm_lb_backend_address_pool" "api-lb" {
   loadbalancer_id     = "${azurerm_lb.tectonic_lb.id}"
 }
 
-resource "azurerm_lb_rule" "ssh-lb" {
+resource "azurerm_lb_rule" "ssh_lb" {
   name                    = "ssh-lb"
   resource_group_name     = "${var.resource_group_name}"
   loadbalancer_id         = "${azurerm_lb.tectonic_lb.id}"
   backend_address_pool_id = "${azurerm_lb_backend_address_pool.api-lb.id}"
-  probe_id                = "${azurerm_lb_probe.ssh-lb.id}"
+  probe_id                = "${azurerm_lb_probe.ssh_lb.id}"
   load_distribution       = "SourceIP"
 
   protocol                       = "tcp"
@@ -51,7 +52,7 @@ resource "azurerm_lb_rule" "ssh-lb" {
   frontend_ip_configuration_name = "api"
 }
 
-resource "azurerm_lb_probe" "ssh-lb" {
+resource "azurerm_lb_probe" "ssh_lb" {
   name                = "ssh-lb-22-up"
   loadbalancer_id     = "${azurerm_lb.tectonic_lb.id}"
   resource_group_name = "${var.resource_group_name}"

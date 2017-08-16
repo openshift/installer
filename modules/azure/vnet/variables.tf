@@ -1,4 +1,4 @@
-// This var is for internal use only. 
+// This var is for internal use only.
 // It is to be considered a constant, because Terraform can't acutally define constants.
 variable "const_id_to_group_name_regex" {
   default     = "//subscriptions/[-\\w]+/resourceGroups/([-\\w]+)/providers/[.\\w]+/[.\\w]+/([.\\w-]+)/"
@@ -7,6 +7,10 @@ variable "const_id_to_group_name_regex" {
 }
 
 variable "cluster_name" {
+  type = "string"
+}
+
+variable "cluster_id" {
   type = "string"
 }
 
@@ -99,4 +103,8 @@ variable "master_count" {
 
 variable "worker_count" {
   type = "string"
+}
+
+variable "extra_tags" {
+  type = "map"
 }

@@ -27,7 +27,7 @@ module.exports = {
       locateStrategy: 'xpath',
     },
     nextStep: {
-      selector:'//*[text()[contains(.,"Next Step")]]',
+      selector: '//*[text()[contains(.,"Next Step")]]',
       locateStrategy: 'xpath',
     },
   },

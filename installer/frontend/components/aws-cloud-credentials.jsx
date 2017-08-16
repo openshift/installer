@@ -51,9 +51,6 @@ const awsCredsForm = new Form(AWS_CREDS, [
   new Field(AWS_ACCESS_KEY_ID, {
     default: '',
     validator: compose(validate.nonEmpty, (v) => {
-      if (!v.startsWith('AK')) {
-        return 'AWS access key IDs always begin with \'AK\'.';
-      }
       if (v.indexOf('@') >= 0) {
         return 'AWS access key IDs are not email addresses.';
       }
@@ -170,90 +167,90 @@ const awsCreds = <div>
     </div>
     <div className="col-xs-8">
       <Connect field={AWS_SECRET_ACCESS_KEY}>
-        <Password id="secretAccessKey"/>
+        <Password id="secretAccessKey" />
       </Connect>
     </div>
   </div>
 </div>;
 
 export const AWS_CloudCredentials = connect(stateToProps)(
-({regionSelections, stsEnabled}) =>
-  <div>
-    <div className="row form-group">
-      <div className="col-xs-12">
+  ({regionSelections, stsEnabled}) =>
+    <div>
+      <div className="row form-group">
+        <div className="col-xs-12">
         Enter your Amazon Web Services (AWS) credentials to create and configure the required resources.
         It is strongly suggested that you create a <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#privileges" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} target="_blank">limited access role</a> for Tectonic's communication with your cloud provider.
+        </div>
       </div>
-    </div>
 
-    <div className="row form-group">
-      <div className="col-xs-12">
-        <div className="wiz-radio-group">
-          <div className="radio wiz-radio-group__radio">
-            <label>
-              <Connect field={STS_ENABLED}>
-                <RadioBoolean inverted={true} name="stsEnabled" />
-              </Connect>
+      <div className="row form-group">
+        <div className="col-xs-12">
+          <div className="wiz-radio-group">
+            <div className="radio wiz-radio-group__radio">
+              <label>
+                <Connect field={STS_ENABLED}>
+                  <RadioBoolean inverted={true} name="stsEnabled" />
+                </Connect>
               Use a normal access key
-            </label>&nbsp;(default)
-            <p className="text-muted">
+              </label>&nbsp;(default)
+              <p className="text-muted">
               Go to the <a href="https://console.aws.amazon.com/iam/home#/users" target="_blank">AWS console user section</a>, select your user name, and the Security Credentials tab.
-            </p>
+              </p>
+            </div>
+            <div className="wiz-radio-group__body">
+              {!stsEnabled && awsCreds}
+            </div>
           </div>
-          <div className="wiz-radio-group__body">
-            { !stsEnabled && awsCreds }
-          </div>
-        </div>
-        <div className="wiz-radio-group">
-          <div className="radio wiz-radio-group__radio">
-            <label>
-              <Connect field={STS_ENABLED}>
-                <RadioBoolean name="stsEnabled" />
-              </Connect>
+          <div className="wiz-radio-group">
+            <div className="radio wiz-radio-group__radio">
+              <label>
+                <Connect field={STS_ENABLED}>
+                  <RadioBoolean name="stsEnabled" />
+                </Connect>
               Use a temporary session token
-            </label>
-          </div>
-          <div className="wiz-radio-group__body">
-            { stsEnabled && <div>
-              { awsCreds }
-              <div className="row form-group">
-                <div className="col-xs-4">
-                  <label htmlFor={AWS_SESSION_TOKEN}>Session Token</label>
+              </label>
+            </div>
+            <div className="wiz-radio-group__body">
+              {stsEnabled && <div>
+                {awsCreds}
+                <div className="row form-group">
+                  <div className="col-xs-4">
+                    <label htmlFor={AWS_SESSION_TOKEN}>Session Token</label>
+                  </div>
+                  <div className="col-xs-8">
+                    <Connect field={AWS_SESSION_TOKEN}>
+                      <Input id={AWS_SESSION_TOKEN} />
+                    </Connect>
+                  </div>
                 </div>
-                <div className="col-xs-8">
-                  <Connect field={AWS_SESSION_TOKEN}>
-                    <Input id={AWS_SESSION_TOKEN} />
-                  </Connect>
-                </div>
-              </div>
-              <Alert>
+                <Alert>
                 Temporary session tokens have a maximum lifetime of one hour. You must complete the Tectonic Installer before the token expires.
-              </Alert>
-            </div>}
+                </Alert>
+              </div>}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <hr />
-    <div className="row form-group">
-      <div className="col-xs-4">
-        <label htmlFor="awsRegion">Region</label>
+      <hr />
+      <div className="row form-group">
+        <div className="col-xs-4">
+          <label htmlFor="awsRegion">Region</label>
+        </div>
+        <div className="col-xs-8">
+          <Connect field={AWS_REGION}>
+            <Select id="awsRegion" availableValues={regionSelections} disabled={regionSelections.inFly}>
+              <option value="" disabled>Please select region</option>
+            </Select>
+          </Connect>
+        </div>
       </div>
-      <div className="col-xs-8">
-        <Connect field={AWS_REGION}>
-          <Select id="awsRegion" availableValues={regionSelections} disabled={regionSelections.inFly}>
-            <option value="" disabled>Please select region</option>
-          </Select>
-        </Connect>
-      </div>
-    </div>
 
-    <div className="row form-group">
-      <div className="col-xs-12">
-        <awsCredsForm.Errors />
+      <div className="row form-group">
+        <div className="col-xs-12">
+          <awsCredsForm.Errors />
+        </div>
       </div>
     </div>
-  </div>
 );
 
 AWS_CloudCredentials.canNavigateForward = selectRegionForm.canNavigateForward;

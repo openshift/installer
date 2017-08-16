@@ -24,7 +24,7 @@ const postJSON = url => (body, creds) => {
   );
 };
 
-const TFPostJSON = url => (body={}, creds={}, platform='aws') => {
+const TFPostJSON = url => (body = {}, creds = {}, platform = 'aws') => {
   const opts = {
     credentials: 'same-origin',
     method: 'POST',
