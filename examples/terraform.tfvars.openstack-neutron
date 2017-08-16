@@ -126,7 +126,9 @@ tectonic_license_path = ""
 // This applies only to cloud platforms.
 tectonic_master_count = "1"
 
-// The DNS servers assigned to the generated OpenStack subnet resource.
+// The nameservers used by the nodes and the generated OpenStack subnet resource.
+// 
+// Example: `["8.8.8.8", "8.8.4.4"]`
 tectonic_openstack_dns_nameservers = ""
 
 // (optional) The flavor id for etcd instances as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM.
