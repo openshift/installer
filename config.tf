@@ -70,14 +70,13 @@ variable "tectonic_versions" {
   type        = "map"
 
   default = {
-    alertmanager    = "v0.7.1"
-    container_linux = "1353.8.0"
-    etcd            = "3.1.8"
-    kubernetes      = "1.7.1+tectonic.1"
-    monitoring      = "1.4.1"
-    prometheus      = "v1.7.1"
-    tectonic        = "1.7.1-tectonic.1"
-    tectonic-etcd   = "0.0.1"
+    alertmanager  = "v0.7.1"
+    etcd          = "3.1.8"
+    kubernetes    = "1.7.1+tectonic.1"
+    monitoring    = "1.4.1"
+    prometheus    = "v1.7.1"
+    tectonic      = "1.7.1-tectonic.1"
+    tectonic-etcd = "0.0.1"
   }
 }
 
