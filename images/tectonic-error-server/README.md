@@ -10,7 +10,7 @@ The `X-Code` value in the header indicates the HTTP error code encountered by th
 
 ## Usage
 
-Run the `build-docker` script followed by the `push` script to build and push a docker image to the [coreos/tectonic-error-server] (https://quay.io/repository/coreos/tectonic-error-server) repo on quay.io. 
+Run the `build-docker` script followed by the `push` script to build and push a docker image to the [coreos/tectonic-error-server](https://quay.io/repository/coreos/tectonic-error-server) repo on quay.io.
 
 ```
 ./build-docker
