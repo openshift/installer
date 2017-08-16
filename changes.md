@@ -1,15 +1,30 @@
 # Tectonic Changelog
 
-## Current
+## Tectonic 1.7.1-tectonic.1 (2017-08-09)
+
+* Updates to Kubernetes v1.7.1.
+* Support for Azure is Stable.
 
 ### Console
 
-* Kubectl-config cluster name is set to the Tectonic cluster name, defaulting to "tectonic" for backwards-compatibility
+* Multiple update channels can be selected. See instructions below for additional details about updating from 1.6.x to 1.7.1.
+  * 1.7-preproduction is available for testing and all non-production environments
+  * 1.7-production should be used for all production environments
+* Downloadable kubeconfigs now set the context name to the cluster name provided during installation, defaulting to "tectonic" for backwards-compatibility
+* Added ability to view and configure Prometheus clusters run by the Prometheus operator
+* Added ability to view Prometheus AlertManager configuration
 
 ### Tectonic Installer
 
+* Container download and start up progress is output when booting a cluster
 * Internet gateways and etcd node root volumes are tagged with default and user-supplied tags
-* The bootkube kubeconfigs' cluster name is set to the Tectonic cluster name
+* The bootkube kubeconfigs' cluster name is set to the Tectonic cluster name provided during installation
+
+### Upgrade Notes - Requires 1.6.7-tectonic.2
+
+To upgrade to Tectonic 1.7.1-tectonic.1, you must first update to `1.6.7-tectonic.2`. Once running `1.6.7-tectonic.2`, change the update channel to `1.7-preproduction` or `1.7-production` and click "Check for update". Update packages will be released to these channels in a rolling fashion, and will often be available on one channel but not the other.
+
+If you encounter an error, confirm that you are running `1.6.7-tectonic.2` before reading the [troubleshooting guide](https://github.com/coreos/tectonic-installer/blob/master/Documentation/troubleshooting/tectonic-upgrade.md#upgrading-to-171-tectonic1).
 
 ## Tectonic 1.6.7-tectonic.2 (2017-07-28)
 
