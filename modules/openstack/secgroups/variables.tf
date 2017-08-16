@@ -5,3 +5,7 @@ variable "cluster_name" {
 variable "tectonic_experimental" {
   default = false
 }
+
+variable "cluster_cidr" {
+  type = "string"
+}

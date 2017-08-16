@@ -177,6 +177,7 @@ module "secrets" {
 module "secgroups" {
   source                = "../../../modules/openstack/secgroups"
   cluster_name          = "${var.tectonic_cluster_name}"
+  cluster_cidr          = "${var.tectonic_openstack_subnet_cidr}"
   tectonic_experimental = "${var.tectonic_experimental}"
 }
 
