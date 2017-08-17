@@ -25,6 +25,8 @@ output "secgroup_node_ids" {
   value = [
     "${openstack_networking_secgroup_v2.base.id}",
     "${openstack_networking_secgroup_v2.k8s.id}",
+    "${openstack_networking_secgroup_v2.k8s_nodes.id}",
+
   ]
 }
 
