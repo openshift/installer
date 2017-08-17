@@ -177,14 +177,14 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
                 <div className="wiz-form__header">
                   <span className="wiz-form__header__title">{title}</span>
                   {currentPage.showRestore &&
-                  <span className="wiz-form__header__control">
-                    <a onClick={() => restoreModal(navNext)}><i className="fa fa-upload"></i>&nbsp;&nbsp;Restore progress</a>
-                  </span>
+                    <span className="wiz-form__header__control">
+                      <a onClick={() => restoreModal(navNext)}><i className="fa fa-upload"></i>&nbsp;&nbsp;Restore progress</a>
+                    </span>
                   }
                   {currentPage.hideSave ||
-                  <span className="wiz-form__header__control">
-                    <a onClick={() => downloadState(state)}><i className="fa fa-download"></i>&nbsp;&nbsp;Save progress</a>
-                  </span>
+                    <span className="wiz-form__header__control">
+                      <a onClick={() => downloadState(state)}><i className="fa fa-download"></i>&nbsp;&nbsp;Save progress</a>
+                    </span>
                   }
                 </div>
                 <div className="wiz-wizard__content__body">

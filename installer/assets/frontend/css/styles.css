@@ -156,24 +156,13 @@ input[type="text"].wiz-node-field {
   margin: 5px 0 10px 0;
 }
 
-.wiz-launch-progress__substep {
-  list-style: none;
-  margin: 0 0 10px 0;
-  font-size: 14px;
-}
-
 .wiz-launch-progress__step {
-  list-style: none;
   margin: 0 0 10px 0;
   padding: 0;
 }
 
-.wiz-launch-progress__step:last-child {
-  margin: 0;
-}
-
-ul.service-launch-progress__steps {
-  margin: 10px 0 0 15px;
+.wiz-launch-progress__step--substep {
+  font-size: 14px;
 }
 
 .wiz-minitable__header {
@@ -396,6 +385,7 @@ ul.service-launch-progress__steps {
   -moz-user-select: all;
   -webkit-user-select: all;
 }
+
 .wiz-shell-example:hover {
   cursor: copy;
 }
@@ -424,16 +414,12 @@ input.wiz-super-short-input {
   color: #777;
 }
 
-.wiz-success-fg.wiz-launch-progress__substep {
-  color: #333333;
+.wiz-launch-progress__step--substep.wiz-success-fg {
+  color: #333;
 }
 
-.wiz-error-fg.wiz-launch-progress__substep {
-  color: #D64456;
-}
-
-.wiz-running-fg.wiz-launch-progress__substep {
-  color: #999999;
+.wiz-launch-progress__step--substep.wiz-running-fg {
+  color: #999;
 }
 
 .wiz-ssh-key-container {
@@ -448,21 +434,26 @@ input.wiz-super-short-input {
   padding: 10px;
   padding-bottom: 7px;
 }
+
 .alert a {
   text-decoration: underline;
 }
+
 .alert-info {
   background-color: #e9f6ff;
   color: #154a6d;
 }
+
 .alert-info .btn-info {
   border-color: #419eda;
   color: #419eda;
 }
+
 .alert-info .btn-info:active, .alert-info .btn-info:focus, .alert-info .btn-info:hover {
   background-color: #419eda;
   color: #fff;
 }
+
 .alert-error {
   background-color: #FDF4F5;
   border: 1px solid #DC415E;
@@ -717,7 +708,6 @@ span.spacer {
   color: #52A3D9;
 }
 
-
 .tectonic-footer > a:hover {
   color: #52A3D9;
 }
@@ -844,7 +834,6 @@ span.spacer {
   box-shadow: 0 6px 12px rgba(0,0,0,0.175);
   background-clip: padding-box;
 }
-
 
 .dropdown-menu--dark {
   background-color: rgba(33, 33, 33, 0.85);
