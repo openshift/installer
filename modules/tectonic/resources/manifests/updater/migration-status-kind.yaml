@@ -3,7 +3,7 @@ kind: "CustomResourceDefinition"
 metadata:
   name: "migrationstatuses.kvo.coreos.com"
 spec:
-  group: "tco.coreos.com"
+  group: "kvo.coreos.com"
   version: "v1"
   names:
     plural: "migrationstatuses"
