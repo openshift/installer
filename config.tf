@@ -61,7 +61,7 @@ variable "tectonic_container_images" {
     tectonic_etcd_operator       = "quay.io/coreos/tectonic-etcd-operator:v0.0.1"
     tectonic_monitoring_auth     = "quay.io/coreos/tectonic-monitoring-auth:v0.0.1"
     tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.4.1"
-    tectonic_cluo_operator       = "quay.io/coreos/tectonic-cluo-operator:v0.1.1"
+    tectonic_cluo_operator       = "quay.io/coreos/tectonic-cluo-operator:v0.1.3"
   }
 }
 
@@ -77,7 +77,7 @@ variable "tectonic_versions" {
     prometheus    = "v1.7.1"
     tectonic      = "1.7.3-tectonic.1"
     tectonic-etcd = "0.0.1"
-    cluo          = "0.1.1"
+    cluo          = "0.1.3"
   }
 }
 
