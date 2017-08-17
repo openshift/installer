@@ -6,16 +6,20 @@ import { Deselect, Input, WithClusterConfig } from './ui';
 import { validate } from '../validate';
 import { DESELECTED_FIELDS } from '../cluster-config.js';
 
+export const cidrSize = cidr => {
+  if (validate.CIDR(cidr)) {
+    return null;
+  }
+  const [, bits] = cidr.split('/');
+
+  // JavaScript's bit shifting only works on signed 32bit ints so <<31 would be negative :(
+  return Math.pow(2, 32 - parseInt(bits, 10));
+};
+
 const CIDRTooltip = connect(
   ({clusterConfig}, {field}) => ({clusterConfig: clusterConfig, value: _.get(clusterConfig, field)})
 )(({value}) => {
-  if (validate.CIDR(value)) {
-    return null;
-  }
-  const [, bits] = value.split('/');
-  // javascript's bit shifting only works on signed 32bit ints so <<31
-  // would be negative :(
-  const addresses = Math.pow(2, 32 - parseInt(bits, 10));
+  const addresses = cidrSize(value);
   return <div className="tooltip">{addresses} IP address{addresses > 1 && 'es'}</div>;
 });
 
