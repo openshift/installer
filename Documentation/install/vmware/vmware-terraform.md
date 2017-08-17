@@ -11,9 +11,8 @@ Generally, the VMware platform templates adhere to the standards defined by the 
 1. Resize the Virtual Machine Disk size to 30 GB or larger
 1. Convert the Container Linux image into a Virtual Machine template.
 1. Pre-Allocated IP addresses for the cluster and pre-create DNS records
-1. Register for Tectonic [Account][account]
 
-## DNS and IP address allocation
+### DNS and IP address allocation
 
 Prior to the start of setup create required DNS records. Below is a sample table of 3 etcd nodes, 2 master nodes and 2 worker nodes. 
 
@@ -33,19 +32,45 @@ Prior to the start of setup create required DNS records. Below is a sample table
 
 See [Tectonic on Baremetal DNS documentation][baremetaldns] for general DNS Requirements.
 
+### Tectonic Account
+
+Register for a [Tectonic Account][register], which is free for up to 10 nodes. You must provide the cluster license and pull secret during installation.
+
+### ssh-agent
+
+Ensure `ssh-agent` is running:
+```
+$ eval $(ssh-agent)
+```
+
+Add the SSH key that will be used for the Tectonic installation to `ssh-agent`:
+```
+$ ssh-add <path-to-ssh-key>
+```
+
+Verify that the SSH key identity is available to the ssh-agent:
+```
+$ ssh-add -L
+```
+
+Reference the absolute path of the **_public_** component of the SSH key in `tectonic_vmware_ssh_authorized_key`.
+
+Without this, terraform is not able to SSH copy the assets and start bootkube.
+Also make sure that the SSH known_hosts file doesn't have old records of the API DNS name (fingerprints will not match).
+
 ## Getting Started
 
-Below steps need to be executed on machine that has network connectivity to VMware vCenter API and SSH access to Tectonic Master Server(s).
+The following steps must be executed on a machine that has network connectivity to VMware vCenter API and SSH access to Tectonic Master Server(s).
 
-First, [download][downloadterraform] and install Terraform. 
+### Download and extract Tectonic Installer
 
-After downloading, source this new binary in the `$PATH` of the machine. Run this command to add it to path:
+Open a new terminal, and run the following commands to download and extract Tectonic Installer.
 
+```bash
+$ curl -O https://releases.tectonic.com/tectonic-1.7.1-tectonic.1.tar.gz # download
+$ tar xzvf tectonic-1.7.1-tectonic.1.tar.gz # extract the tarball
+$ cd tectonic
 ```
-$ export PATH=/path/to/terraform:$PATH
-```
-
-Now we're ready to specify our cluster configuration.
 
 ## Customize the deployment
 
@@ -156,7 +181,7 @@ To delete Tectonic cluster, run:
 $ terraform destroy ../../platforms/vmware
 ```
 
-[account]: https://account.coreos.com
+[register]: https://account.coreos.com
 [baremetaldns]: https://coreos.com/tectonic/docs/latest/install/bare-metal/#dns 
 [conventions]: ../../conventions.md
 [generic]: ../../generic-platform.md
