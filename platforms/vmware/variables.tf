@@ -55,7 +55,7 @@ variable "tectonic_vmware_ssh_private_key_path" {
 
 variable "tectonic_vmware_node_dns" {
   type        = "string"
-  description = "DNS Server to be useddd by Virtual Machine(s)"
+  description = "DNS Server to be used by Virtual Machine(s). Multiple DNS servers can be separated by whitespace. Example: `\"192.168.1.1 192.168.2.1\"`"
 }
 
 variable "tectonic_vmware_controller_domain" {

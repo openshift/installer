@@ -24,7 +24,7 @@ This document gives an overview of variables used in the VMware platform of the 
 | tectonic_vmware_master_memory | Master node(s) Memory Size in MB | string | `4096` |
 | tectonic_vmware_master_vcpu | Master node(s) vCPU count | string | `1` |
 | tectonic_vmware_network | Portgroup to attach the cluster nodes | string | - |
-| tectonic_vmware_node_dns | DNS Server to be useddd by Virtual Machine(s) | string | - |
+| tectonic_vmware_node_dns | DNS Server to be used by Virtual Machine(s). Multiple DNS servers can be separated by whitespace. Example: `"192.168.1.1 192.168.2.1"` | string | - |
 | tectonic_vmware_server | vCenter Server IP/FQDN | string | - |
 | tectonic_vmware_ssh_authorized_key | SSH public key to use as an authorized key. Example: `"ssh-rsa AAAB3N..."` | string | - |
 | tectonic_vmware_ssh_private_key_path | SSH private key file in .pem format corresponding to tectonic_vmware_ssh_authorized_key. If not provided, SSH agent will be used. | string | `` |
