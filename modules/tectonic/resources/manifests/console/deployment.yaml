@@ -25,6 +25,15 @@ spec:
         component: ui
       name: tectonic-console
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  k8s-app: tectonic-console
+              topologyKey: kubernetes.io/hostname
       containers:
       - command:
         - /opt/bridge/bin/bridge
@@ -163,3 +172,9 @@ spec:
       - name: tectonic-identity-grpc-client-secret
         secret:
           secretName: tectonic-identity-grpc-client-secret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"

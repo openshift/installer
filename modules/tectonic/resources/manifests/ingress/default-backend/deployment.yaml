@@ -10,7 +10,15 @@ spec:
       labels:
         k8s-app: default-http-backend
     spec:
-      terminationGracePeriodSeconds: 60
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  k8s-app: default-http-backend
+              topologyKey: kubernetes.io/hostname
       containers:
       - name: default-http-backend
         # Any image is permissable as long as:
@@ -35,3 +43,10 @@ spec:
             memory: 20Mi
       imagePullSecrets:
       - name: coreos-pull-secret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      terminationGracePeriodSeconds: 60
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"

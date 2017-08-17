@@ -23,16 +23,15 @@ spec:
         k8s-app: tectonic-identity
         component: identity
     spec:
-      volumes:
-      - name: config
-        configMap:
-          name: tectonic-identity
-          items:
-          - key: config.yaml
-            path: config.yaml
-      - name: tectonic-identity-grpc-server-secret
-        secret:
-          secretName: tectonic-identity-grpc-server-secret
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  k8s-app: tectonic-identity
+              topologyKey: kubernetes.io/hostname
       containers:
       - name: tectonic-identity
         imagePullPolicy: IfNotPresent
@@ -66,6 +65,22 @@ spec:
       # private registry.
       imagePullSecrets:
       - name: coreos-pull-secret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      volumes:
+      - name: config
+        configMap:
+          name: tectonic-identity
+          items:
+          - key: config.yaml
+            path: config.yaml
+      - name: tectonic-identity-grpc-server-secret
+        secret:
+          secretName: tectonic-identity-grpc-server-secret
