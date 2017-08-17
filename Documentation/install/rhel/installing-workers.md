@@ -48,29 +48,31 @@ The `tectonic-release` RPM includes the repo definition for the Tectonic softwar
 Download the RPM from the CoreOS `yum` repository:
 
 ```
-$ curl -LJO http://yum.prod.coreos.systems/repo/tectonic-rhel/el7/x86_64/Packages/tectonic-release-1.6.2-4.el7.noarch.rpm
+$ curl -LJO http://yum.prod.coreos.systems/repo/tectonic-rhel/el7/x86_64/Packages/tectonic-release-7-1.el7.noarch.rpm
 ```
 
 Verify the signature:
 
 ```
-$ rpm -qip tectonic-release-1.6.2-4.el7.noarch.rpm
+$ rpm -qip tectonic-release-7-1.el7.noarch.rpm
 Name        : tectonic-release
-Version     : 1.6.2
-Release     : 4.el7
+Version     : 7
+Release     : 1.el7
 Architecture: noarch
 Install Date: (not installed)
 Group       : System Environment/Base
-Size        : 22899
+Size        : 21966
 License     : ASL 2.0
-Signature   : RSA/SHA256, Fri 02 Jun 2017 01:01:53 PM PDT, Key ID cf866cfe16431e6a
-Source RPM  : tectonic-release-1.6.2-4.el7.src.rpm
-Build Date  : Fri 02 Jun 2017 01:01:04 PM PDT
+Signature   : RSA/SHA256, Wed 16 Aug 2017 12:33:05 PM PDT, Key ID cf866cfe16431e6a
+Source RPM  : tectonic-release-7-1.el7.src.rpm
+Build Date  : Wed 16 Aug 2017 11:45:18 AM PDT
 Build Host  : buildhost.tectonic.coreos.systems
 Relocations : (not relocatable)
 URL         : https://coreos.com/tectonic
 Summary     : Tectonic release files and repository configuration
-Description : Tectonic release files including the /etc/tectonic-version file, signing keys and RPM repository files.
+Description :
+Tectonic release files including the /etc/tectonic-version file, signing keys
+and RPM repository files.
 ```
 
 Confirm that the signature on the RPM matches the last 16 characters of the fingerprint ID above.
@@ -78,7 +80,7 @@ Confirm that the signature on the RPM matches the last 16 characters of the fing
 After verifying the signature, install the `tectonic-release` RPM:
 
 ```
-$ yum localinstall tectonic-release-1.6.2-4.el7.noarch.rpm
+$ yum localinstall tectonic-release-7-1.el7.noarch.rpm
 ```
 
 ### Install the tectonic-worker RPM
