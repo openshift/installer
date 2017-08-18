@@ -73,5 +73,5 @@ output "ingress_fqdn" {
 }
 
 output "api_fqdn" {
-  value = "${azurerm_public_ip.api_ip.fqdn}"
+  value = "${var.base_domain == "" ? azurerm_public_ip.api_ip.fqdn : "${var.cluster_name}-api.${var.base_domain}"}"
 }
