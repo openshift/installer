@@ -20,6 +20,18 @@ module "k8s" {
   cluster_cidr = "${var.cluster_cidr}"
 }
 
+resource "openstack_networking_secgroup_v2" "k8s_nodes" {
+  name                 = "${var.cluster_name}_k8s_nodes"
+  description          = "Ports needed by Kubernetes nodes"
+  delete_default_rules = true
+}
+
+module "k8s_nodes" {
+  source       = "rules/k8s_nodes"
+  secgroup_id  = "${openstack_networking_secgroup_v2.k8s_nodes.id}"
+  cluster_cidr = "${var.cluster_cidr}"
+}
+
 resource "openstack_networking_secgroup_v2" "etcd" {
   name                 = "${var.cluster_name}_etcd"
   description          = "Ports needed by etcd"
