@@ -282,7 +282,7 @@
                   "-logtostderr=true",
                   "-v=4"
                 ],
-                "image": "quay.io/coreos/tectonic-prometheus-operator:v1.4.1",
+                "image": "quay.io/coreos/tectonic-prometheus-operator:v1.5.0",
                 "name": "tectonic-prometheus-operator",
                 "resources": {
                   "limits": {
@@ -354,7 +354,7 @@
         "name": "tectonic-monitoring",
         "namespace": "tectonic-system"
       },
-      "version": "1.4.1"
+      "version": "1.5.0"
     }
   ]
 }
