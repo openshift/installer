@@ -12,12 +12,16 @@ spec:
     type: RollingUpdate
     rollingUpdate:
       maxUnavailable: 0
+  selector:
+    matchLabels:
+      tier: control-plane
+      k8s-app: kube-scheduler
   template:
     metadata:
       labels:
         tier: control-plane
         k8s-app: kube-scheduler
-        pod-anti-affinity: kube-scheduler-${tectonic_version}
+        pod-anti-affinity: kube-scheduler-${kubernetes_version}
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
@@ -26,7 +30,7 @@ spec:
           requiredDuringSchedulingIgnoredDuringExecution:
           - labelSelector:
               matchLabels:
-                pod-anti-affinity: kube-scheduler-${tectonic_version}
+                pod-anti-affinity: kube-scheduler-${kubernetes_version}
             namespaces:
               - kube-system
             topologyKey: kubernetes.io/hostname

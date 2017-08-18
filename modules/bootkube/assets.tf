@@ -103,7 +103,7 @@ resource "template_dir" "bootkube" {
     etcd_client_cert = "${base64encode(data.template_file.etcd_client_crt.rendered)}"
     etcd_client_key  = "${base64encode(data.template_file.etcd_client_key.rendered)}"
 
-    tectonic_version = "${var.versions["tectonic"]}"
+    kubernetes_version = "${replace(var.versions["kubernetes"], "+", "-")}"
 
     master_count              = "${var.master_count}"
     node_monitor_grace_period = "${var.node_monitor_grace_period}"
