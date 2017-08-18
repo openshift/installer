@@ -307,7 +307,13 @@
   ],
   "desiredVersions": [
     {
-      "name": "kubernetes",
+      "metadata": {
+        "labels": {
+          "managed-by-channel-operator": "true"
+        },
+        "name": "kubernetes",
+        "namespace": "tectonic-system"
+      },
       "version": "1.7.1+tectonic.1"
     },
     {
