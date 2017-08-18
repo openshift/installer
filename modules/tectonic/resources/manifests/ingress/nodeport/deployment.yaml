@@ -16,6 +16,15 @@ spec:
         component: ingress-controller
         type: nginx
     spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  k8s-app: tectonic-lb
+              topologyKey: kubernetes.io/hostname
       containers:
         - name: nginx-ingress-lb
           image: ${ingress_controller_image}
@@ -55,5 +64,11 @@ spec:
               port: 10254
               scheme: HTTP
       dnsPolicy: ClusterFirst
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
       restartPolicy: Always
       terminationGracePeriodSeconds: 60
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
