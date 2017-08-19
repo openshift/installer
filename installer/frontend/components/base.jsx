@@ -57,10 +57,8 @@ const NavSection = connect(state => ({state}))(
 );
 
 const Pager = withNav(
-  ({navNext, navPrevious, showPrev, showNext, disableNext, loadingNext, resetBtn}) => {
-    const nextLinkClasses = classNames('btn', 'btn-primary', {
-      disabled: disableNext || loadingNext,
-    });
+  ({navNext, navPrevious, showPrev, showNext, disableNext, resetBtn}) => {
+    const nextLinkClasses = classNames('btn', 'btn-primary', {disabled: disableNext});
 
     return (
       <div className="wiz-form__actions">
@@ -74,10 +72,7 @@ const Pager = withNav(
         }
         {showNext && <div className="wiz-form__actions__next">
           <WithTooltip text="All fields are required unless specified." shouldShow={disableNext}>
-            <button onClick={navNext} className={nextLinkClasses}>
-              {loadingNext && <span><i className="fa fa-spin fa-circle-o-notch"></i>{' '}</span>}
-              Next Step
-            </button>
+            <button onClick={navNext} className={nextLinkClasses}>Next Step</button>
           </WithTooltip>
         </div>
         }
