@@ -221,6 +221,15 @@ variable "tectonic_pull_secret_path" {
 
   description = <<EOF
 The path the pull secret file in JSON format.
+This is known to be a "Docker pull secret" as produced by the docker login [1] command.
+A sample JSON content is shown in [2].
+You can download the pull secret from your Account overview page at [3].
+
+[1] https://docs.docker.com/engine/reference/commandline/login/
+
+[2] https://coreos.com/os/docs/latest/registry-authentication.html#manual-registry-auth-setup
+
+[3] https://account.coreos.com/overview
 
 Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 EOF
@@ -232,6 +241,9 @@ variable "tectonic_license_path" {
 
   description = <<EOF
 The path to the tectonic licence file.
+You can download the Tectonic license file from your Account overview page at [1].
+
+[1] https://account.coreos.com/overview
 
 Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 EOF
