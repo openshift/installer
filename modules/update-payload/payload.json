@@ -1,5 +1,5 @@
 {
-  "version": "1.7.1-tectonic.1",
+  "version": "1.7.3-tectonic.1",
   "deployments": [
     {
       "apiVersion": "extensions/v1beta1",
@@ -314,7 +314,7 @@
         "name": "kubernetes",
         "namespace": "tectonic-system"
       },
-      "version": "1.7.1+tectonic.1"
+      "version": "1.7.3+tectonic.1"
     },
     {
       "metadata": {
