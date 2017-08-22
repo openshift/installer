@@ -1,14 +1,13 @@
-# Tectonic Installer GUI Tests:
+# Tectonic Installer GUI Tests
 
-### Set the following environment variables :
+### Set the following environment variables:
 
-`export AWS_ACCESS_KEY_ID = <awsAccessKey>`
-
-`export AWS_SECRET_ACCESS_KEY = <awsSecretKey>`
-
-`export TECTONIC_LICENSE = <coreOSLicense>`
-
-`export PULL_SECRET = <pullSecret>`
+```
+export AWS_ACCESS_KEY_ID = <awsAccessKey>
+export AWS_SECRET_ACCESS_KEY = <awsSecretKey>
+export TECTONIC_LICENSE = <coreOSLicense>
+export PULL_SECRET = <pullSecret>
+```
 
 ### Here is the list of the make targets to build and test the tectonic installer:
 
@@ -52,7 +51,7 @@
 }
 ```
 
-To execute the tests in headless mode (no GUI shown), you'll need Google Chrome v60 or later. [Download Google Chrome Canary](https://www.google.com/chrome/browser/canary.html). Add `"--headless"` to chromeOptions's args. You may also need to specify the path to Chrome. e.g.:
+To execute the tests in headless mode (no GUI shown), you'll need Google Chrome v60 or later. Add `"--headless"` to chromeOptions's args.
 
 ```json
 "chromeOptions": {
@@ -60,8 +59,7 @@ To execute the tests in headless mode (no GUI shown), you'll need Google Chrome 
     "--disable-gpu",
     "--no-sandbox",
     "--headless"
-  ],
-  "binary": "/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
+  ]
 }
 ```
 
