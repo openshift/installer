@@ -8,14 +8,7 @@ const awsCredentialsPageCommands = {
 
 module.exports = {
   url: '',
-  commands: [
-    awsCredentialsPageCommands, {
-      nextStep() {
-        return this
-          .click('@nextStep');
-      },
-    },
-  ],
+  commands: [awsCredentialsPageCommands],
   elements: {
     awsAccessKey: {
       selector: 'input[id=accessKeyId]',

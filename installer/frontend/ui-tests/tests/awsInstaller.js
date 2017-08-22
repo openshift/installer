@@ -36,7 +36,7 @@ module.exports = {
     awsCredentialsPage.enterAwsCredentials()
       .waitForElementPresent(regionOption, 60000)
       .click(regionOption)
-      .nextStep();
+      .click('@nextStep');
 
     clusterInfoPage.enterClusterInfo(expectedJson.tectonic_cluster_name);
     certificateAuthorityPage.click('@nextStep');
