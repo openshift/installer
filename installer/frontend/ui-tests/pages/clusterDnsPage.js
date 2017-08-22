@@ -15,10 +15,10 @@ module.exports = {
   commands: [clusterDnsPageCommands],
   elements: {
     controllerDomain: {
-      selector: 'input[id=controllerDomain]',
+      selector: 'input#controllerDomain',
     },
     tectonicDomain: {
-      selector: 'input[id=tectonicDomain]',
+      selector: 'input#tectonicDomain',
     },
     nextStep: {
       selector: '//*[text()[contains(.,"Next Step")]]',

@@ -15,10 +15,10 @@ module.exports = {
   commands: [awsCredentialsPageCommands],
   elements: {
     awsAccessKey: {
-      selector: 'input[id=accessKeyId]',
+      selector: 'input#accessKeyId',
     },
     secretAccesskey: {
-      selector: 'input[id=secretAccessKey]',
+      selector: 'input#secretAccessKey',
     },
     nextStep: {
       selector: '//*[text()[contains(.,"Next Step")]]',

@@ -27,7 +27,7 @@ module.exports = {
   commands: [clusterInfoPageCommands],
   elements: {
     name: {
-      selector: 'input[id=clusterName]',
+      selector: 'input#clusterName',
     },
     coreOSLicenseUpload: {
       selector: '//*[text()[contains(.,"tectonic-license.txt")]]/input[@type="file"]',

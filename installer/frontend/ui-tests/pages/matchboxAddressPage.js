@@ -15,10 +15,10 @@ module.exports = {
   commands: [matchboxPageCommands],
   elements: {
     matchboxHTTP: {
-      selector: 'input[id=matchboxHTTP]',
+      selector: 'input#matchboxHTTP',
     },
     matchboxRPC: {
-      selector: 'input[id=matchboxRPC]',
+      selector: 'input#matchboxRPC',
     },
     nextStepp: {
       selector: '//*[text()[contains(.,"Next Step")]]',

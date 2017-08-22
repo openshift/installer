@@ -13,13 +13,13 @@ module.exports = {
   commands: [consoleLoginPageCommands],
   elements: {
     email: {
-      selector: 'input[id=adminEmail]',
+      selector: 'input#adminEmail',
     },
     password: {
-      selector: 'input[id=adminPassword]',
+      selector: 'input#adminPassword',
     },
     confirmPassword: {
-      selector: 'input[id=adminPassword2]',
+      selector: 'input#adminPassword2',
     },
     nextStep: {
       selector: '//*[text()[contains(.,"Next Step")]]',
