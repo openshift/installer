@@ -31,9 +31,11 @@ module.exports = {
     const submitPage = client.page.submitPage();
 
     platformPage.navigate(client.launch_url).selectPlatform();
+
+    const regionOption = `select#awsRegion option[value=${expectedJson.tectonic_aws_region}]`;
     awsCredentialsPage.enterAwsCredentials()
-      .waitForElementPresent(awsCredentialsPage.el('@region', expectedJson.tectonic_aws_region), 60000)
-      .click(awsCredentialsPage.el('@region', expectedJson.tectonic_aws_region))
+      .waitForElementPresent(regionOption, 60000)
+      .click(regionOption)
       .nextStep();
 
     clusterInfoPage.enterClusterInfo(expectedJson.tectonic_cluster_name);

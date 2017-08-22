@@ -1,5 +1,3 @@
-const util = require('util');
-
 const awsCredentialsPageCommands = {
   enterAwsCredentials() {
     return this
@@ -12,11 +10,6 @@ module.exports = {
   url: '',
   commands: [
     awsCredentialsPageCommands, {
-      el: function(elementName, data) {
-        const element = this.elements[elementName.slice(1)];
-        return util.format(element.selector, data);
-      },
-    }, {
       nextStep() {
         return this
           .click('@nextStep');
@@ -30,7 +23,6 @@ module.exports = {
     secretAccesskey: {
       selector: 'input[id=secretAccessKey]',
     },
-    region: "option[value='%s']",
     nextStep: {
       selector: '//*[text()[contains(.,"Next Step")]]',
       locateStrategy: 'xpath',
