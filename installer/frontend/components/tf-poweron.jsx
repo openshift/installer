@@ -8,6 +8,7 @@ import { Alert } from './alert';
 import { DropdownInline } from './ui';
 import { AWS_DomainValidation } from './aws-domain-validation';
 import { ResetButton } from './reset-button';
+import { commitPhases } from '../actions';
 import { TFDestroy } from '../aws-actions';
 import { CLUSTER_NAME, PLATFORM_TYPE, getTectonicDomain } from '../cluster-config';
 import { AWS_TF, BARE_METAL_TF } from '../platforms';
@@ -58,7 +59,7 @@ const Step = ({pending, done, error, cancel, children, substep}) => {
   </div>;
 };
 
-const stateToProps = ({cluster, clusterConfig}) => {
+const stateToProps = ({cluster, clusterConfig, commitState}) => {
   const status = cluster.status || {terraform: {}};
   const { terraform, tectonic } = status;
   return {
@@ -69,6 +70,7 @@ const stateToProps = ({cluster, clusterConfig}) => {
       statusMsg: terraform.status ? terraform.status.toLowerCase() : '',
     },
     clusterName: clusterConfig[CLUSTER_NAME],
+    commitState,
     isAWS: clusterConfig[PLATFORM_TYPE] === AWS_TF,
     isBareMetal: clusterConfig[PLATFORM_TYPE] === BARE_METAL_TF,
     tectonic: tectonic || {},
@@ -187,7 +189,8 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
     }
 
     render () {
-      const {clusterName, isAWS, isBareMetal, terraform, tectonic, tectonicDomain} = this.props;
+      const {clusterName, commitState, isAWS, isBareMetal, terraform, tectonic, tectonicDomain} = this.props;
+      const commitPhase = _.get(commitState, 'phase');
       const {action, tfError, output, statusMsg} = terraform;
       const state = this.state;
       const showLogs = state.showLogs === null ? statusMsg !== 'success' : state.showLogs;
@@ -305,6 +308,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                   </div>
                 }
                 {state.xhrError && <Alert severity="error">{state.xhrError}</Alert>}
+                {commitPhase === commitPhases.FAILED && <Alert severity="error">{commitState.response}</Alert>}
                 {tfError && <Alert severity="error">{tfError.toString()}</Alert>}
                 {tfError && !isTFRunning &&
                   <Alert severity="error" noIcon>
