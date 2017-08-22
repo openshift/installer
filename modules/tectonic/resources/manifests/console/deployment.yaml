@@ -19,7 +19,6 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      creationTimestamp: null
       labels:
         k8s-app: tectonic-console
         component: ui
