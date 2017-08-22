@@ -32,7 +32,7 @@ module.exports = {
     const consoleLoginPage = client.page.consoleLoginPage();
     const submitPage = client.page.submitPage();
 
-    platformPage.navigate(client.launch_url).selectBareMetalPlatform();
+    platformPage.navigate(client.launch_url).selectPlatform('@bareMetalPlatform');
     clusterInfoPage.enterClusterInfo(expectedJson.tectonic_cluster_name = `baremetaltest-${new Date().getTime().toString()}`);
     clusterDnsPage.enterDnsNames();
     certificateAuthorityPage.click('@nextStep');

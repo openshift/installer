@@ -30,7 +30,7 @@ module.exports = {
     const consoleLoginPage = client.page.consoleLoginPage();
     const submitPage = client.page.submitPage();
 
-    platformPage.navigate(client.launch_url).selectPlatform();
+    platformPage.navigate(client.launch_url).selectPlatform('@awsPlatform');
     awsCredentialsPage.enterAwsCredentials(expectedJson.tectonic_aws_region);
     clusterInfoPage.enterClusterInfo(expectedJson.tectonic_cluster_name);
     certificateAuthorityPage.click('@nextStep');
