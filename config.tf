@@ -48,7 +48,7 @@ variable "tectonic_container_images" {
     kubedns_sidecar              = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.4"
     kube_state_metrics           = "quay.io/coreos/kube-state-metrics:v1.0.0"
     kube_version                 = "quay.io/coreos/kube-version:0.1.0"
-    kube_version_operator        = "quay.io/coreos/kube-version-operator:v1.7.1-kvo.6"
+    kube_version_operator        = "quay.io/coreos/kube-version-operator:v1.7.3-kvo.1"
     node_agent                   = "quay.io/coreos/node-agent:c021a4959943b63c463410a038efe344939d5455"
     node_exporter                = "quay.io/prometheus/node-exporter:v0.14.0"
     pod_checkpointer             = "quay.io/coreos/pod-checkpointer:3517908b1a1837e78cfd041a0e51e61c7835d85f"
