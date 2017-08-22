@@ -31,16 +31,9 @@ module.exports = {
     const submitPage = client.page.submitPage();
 
     platformPage.navigate(client.launch_url).selectPlatform();
-
-    const regionOption = `select#awsRegion option[value=${expectedJson.tectonic_aws_region}]`;
-    awsCredentialsPage.enterAwsCredentials()
-      .waitForElementPresent(regionOption, 60000)
-      .click(regionOption)
-      .click('@nextStep');
-
+    awsCredentialsPage.enterAwsCredentials(expectedJson.tectonic_aws_region);
     clusterInfoPage.enterClusterInfo(expectedJson.tectonic_cluster_name);
     certificateAuthorityPage.click('@nextStep');
-
     keysPage.selectSshKeys();
     nodesPage.click('@etcdOption')
       .waitForElementVisible('@nextStep', 10000)
