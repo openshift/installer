@@ -1,4 +1,5 @@
 {
+  "custom_commands_path": "ui-tests/commands/",
   "globals_path": "ui-tests/globals.js",
   "src_folders": [
     "ui-tests/tests"
