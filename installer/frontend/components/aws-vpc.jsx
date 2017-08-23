@@ -49,7 +49,7 @@ import {
   SERVICE_CIDR,
   toVPCSubnetID,
   SPLIT_DNS_ON,
-  // SPLIT_DNS_OPTIONS,
+  SPLIT_DNS_OPTIONS,
 } from '../cluster-config';
 
 const vpcInfoForm = new Form(AWS_VPC_FORM, [
@@ -355,7 +355,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
             </div>
           </div>
         </div>
-        {/* privateZone &&
+        {privateZone &&
           <div className="row form-group">
             <div className="col-xs-offset-3 col-xs-9">
               <Connect field={AWS_SPLIT_DNS}>
@@ -369,7 +369,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
               </p>
             </div>
           </div>
-        */}
+        }
 
         <vpcInfoForm.Errors />
         <AWS_DomainValidation />

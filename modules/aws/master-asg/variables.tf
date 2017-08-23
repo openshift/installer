@@ -100,8 +100,13 @@ variable "master_sg_ids" {
   description = "The security group IDs to be applied to the master nodes."
 }
 
-variable "public_vpc" {
-  description = "If set to true, public facing ingress resources are created."
+variable "private_endpoints" {
+  description = "If set to true, private-facing ingress resources are created."
+  default     = true
+}
+
+variable "public_endpoints" {
+  description = "If set to true, public-facing ingress resources are created."
   default     = true
 }
 

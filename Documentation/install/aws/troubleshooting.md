@@ -14,7 +14,7 @@ An issue arises when a domain's Address record (A record) resolution is attempte
 
 This can be applicable to a vareity of situations which restrict external access to your Tectonic cluster.
 
-* Internal ELB: `tectonic_aws_external_vpc_public = false`
+* Internal ELB: `tectonic_aws_public_endpoints = false`
 * Public Route53 zone is not delegated from a public hosted zone
 * Custom Security Groups or Subnet ACLs which restrict access from outside the VPC to ELB
 * Custom Route Tables which do not provide egress via Internet Gateway or NAT Gateway
@@ -43,7 +43,7 @@ Whether you are running the Tectonic Installer on a bastion host within the VPC 
 
    Things to check:
 
-     * Is `tectonic_aws_external_vpc_public = false`? This means that the ingress ELB is only accessible from within the VPC.
+     * Is `tectonic_aws_public_endpoints = false`? This means that the ingress ELB is only accessible from within the VPC.
 
        In this case, you'll either need to run the installer on an EC2 instance within the VPC or establish a VPN connection into the VPC.
 
