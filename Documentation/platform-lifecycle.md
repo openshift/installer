@@ -125,7 +125,7 @@ Can reliably produce minimally functioning clusters with manual testing.
 
 *Updates Supported*
 
-- Best effort
+- Yes
 
 *Docs*
 
