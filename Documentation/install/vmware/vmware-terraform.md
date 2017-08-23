@@ -9,6 +9,7 @@ Generally, the VMware platform templates adhere to the standards defined by the 
 1. Download the latest Container Linux Stable OVA from; https://coreos.com/os/docs/latest/booting-on-vmware.html.
 1. Import `coreos_production_vmware_ova.ova` into vCenter. Generally, all settings can be kept as is. Consider "thin" provisioning and naming the template with CoreOS Container Linux Version.
 1. Resize the Virtual Machine Disk size to 30 GB or larger
+1. In the Virtual Machine Configuration View select "vApp Options" tab and un-check "Enable vApp Options".
 1. Convert the Container Linux image into a Virtual Machine template.
 1. Pre-Allocated IP addresses for the cluster and pre-create DNS records
 
