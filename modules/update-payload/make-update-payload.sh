@@ -81,7 +81,7 @@ tmpfile=$(mktemp /tmp/desiredVersion.XXXXXX)
 # shellcheck disable=SC2086
 metadata=$(yaml2json < ${f} | jq .metadata)
 # shellcheck disable=SC2086
-desiredVersion=$(yaml2json < ${f} | jq .status.currentVersion)
+desiredVersion=$(yaml2json < ${f} | jq .spec.desiredVersion)
 # shellcheck disable=SC2086
 cat <<EOF > ${tmpfile}
 {
@@ -100,7 +100,7 @@ for f in ${ASSETS_DIR}/app_versions/*.yaml; do
   # shellcheck disable=SC2086
   metadata=$(yaml2json < ${f} | jq .metadata)
   # shellcheck disable=SC2086
-  desiredVersion=$(yaml2json < ${f} | jq .status.currentVersion)
+  desiredVersion=$(yaml2json < ${f} | jq .spec.desiredVersion)
   # shellcheck disable=SC2086
   cat <<EOF > ${tmpfile}
 {

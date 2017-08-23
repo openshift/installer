@@ -1,7 +1,10 @@
-apiVersion: "extensions/v1beta1"
-kind: "ThirdPartyResource"
+apiVersion: "apiextensions.k8s.io/v1beta1"
+kind: "CustomResourceDefinition"
 metadata:
-  name: "channel-operator-config.coreos.com"
-description: "Tectonic Channel Operator Config"
-versions:
-  - name: "v1"
+  name: "channeloperatorconfigs.tco.coreos.com"
+spec:
+  group: "tco.coreos.com"
+  version: "v1"
+  names:
+    plural: "channeloperatorconfigs"
+    kind: "ChannelOperatorConfig"

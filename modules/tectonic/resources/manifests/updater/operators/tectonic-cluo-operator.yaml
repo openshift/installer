@@ -1,0 +1,37 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: tectonic-cluo-operator
+  namespace: tectonic-system
+  labels:
+    k8s-app: tectonic-cluo-operator
+    managed-by-channel-operator: "true"
+  annotations:
+    tectonic-operators.coreos.com/upgrade-behaviour: 'CreateOrUpgrade'
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: tectonic-cluo-operator
+  template:
+    metadata:
+      labels:
+        k8s-app: tectonic-cluo-operator
+    spec:
+      containers:
+      - name: tectonic-cluo-operator
+        image: ${tectonic_cluo_operator_image}
+        command:
+        - /tectonic-x-operator
+        - --operator-name=tectonic-cluo-operator
+        - --appversion-name=tectonic-cluo-operator
+        resources:
+          limits:
+            cpu: 20m
+            memory: 50Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
+      restartPolicy: Always
+      imagePullSecrets:
+      - name: coreos-pull-secret

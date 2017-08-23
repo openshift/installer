@@ -43,6 +43,19 @@ kubectl() {
   done
 }
 
+wait_for_crd() {
+  set +e
+  i=0
+
+  echo "Waiting for CRD $2"
+  until $KUBECTL -n "$1" get customresourcedefinition "$2"; do
+    i=$((i+1))
+    echo "CRD $2 not available yet, retrying in 5 seconds ($i)"
+    sleep 5
+  done
+  set -e
+}
+
 wait_for_tpr() {
   set +e
   i=0
@@ -217,17 +230,19 @@ kubectl create -f updater/migration-status-kind.yaml
 kubectl create -f updater/node-agent.yaml
 kubectl create -f updater/tectonic-monitoring-config.yaml
 
-wait_for_tpr tectonic-system channel-operator-config.coreos.com
+wait_for_crd tectonic-system channeloperatorconfigs.tco.coreos.com
 kubectl create -f updater/tectonic-channel-operator-config.yaml
 
 kubectl create -f updater/operators/kube-version-operator.yaml
 kubectl create -f updater/operators/tectonic-channel-operator.yaml
 kubectl create -f updater/operators/tectonic-prometheus-operator.yaml
+kubectl create -f updater/operators/tectonic-cluo-operator.yaml
 
-wait_for_tpr tectonic-system app-version.coreos.com
+wait_for_crd tectonic-system appversions.tco.coreos.com
 kubectl create -f updater/app_versions/app-version-tectonic-cluster.yaml
 kubectl create -f updater/app_versions/app-version-kubernetes.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-monitoring.yaml
+kubectl create -f updater/app_versions/app-version-tectonic-cluo.yaml
 
 if [ "$EXPERIMENTAL" = "true" ]; then
   echo "Creating Experimental resources"
@@ -235,9 +250,6 @@ if [ "$EXPERIMENTAL" = "true" ]; then
   kubectl create -f updater/app_versions/app-version-tectonic-etcd.yaml
   kubectl create -f updater/operators/tectonic-etcd-operator.yaml
 fi
-
-echo "Creating Container Linux Updater"
-kubectl create -f updater/operators/container-linux-update-operator.yaml
 
 # wait for Tectonic pods
 wait_for_pods tectonic-system

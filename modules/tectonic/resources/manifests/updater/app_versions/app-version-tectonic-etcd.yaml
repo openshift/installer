@@ -1,4 +1,4 @@
-apiVersion: coreos.com/v1
+apiVersion: tco.coreos.com/v1
 kind: AppVersion
 metadata:
   name: tectonic-etcd
