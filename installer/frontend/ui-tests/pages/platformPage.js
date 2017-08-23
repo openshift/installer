@@ -1,10 +1,9 @@
 const platformPageCommands = {
-  selectPlatform(platformEl) {
+  test(platformEl) {
     this.waitForElementVisible('select#platformType', 100000)
       .expect.element(platformEl).to.be.present;
-    this.click(platformEl)
+    return this.click(platformEl)
       .expect.element(platformEl).to.be.selected;
-    return this.click('@nextStep');
   },
 };
 
@@ -17,10 +16,6 @@ module.exports = {
     },
     bareMetalPlatform: {
       selector: 'option[value="bare-metal-tf"]',
-    },
-    nextStep: {
-      selector: '//*[text()[contains(.,"Next Step")]]',
-      locateStrategy: 'xpath',
     },
   },
 };

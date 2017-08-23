@@ -1,12 +1,8 @@
-const installerInput = require('../utils/bareMetalInstallerInput');
-const inputJson = installerInput.buildExpectedJson();
-
 const defineMastersPageCommands = {
-  enterMastersDnsNames() {
+  test(json) {
     return this
-      .setValue('@masters0', inputJson.tectonic_metal_controller_macs[0])
-      .setValue('@hosts0', inputJson.tectonic_metal_controller_domains[0])
-      .click('@nextStep');
+      .setValue('@masters0', json.tectonic_metal_controller_macs[0])
+      .setValue('@hosts0', json.tectonic_metal_controller_domains[0]);
   },
 };
 
@@ -19,10 +15,6 @@ module.exports = {
     },
     hosts0: {
       selector: 'input[id="masters.0.host"]',
-    },
-    nextStep: {
-      selector: '//*[text()[contains(.,"Next Step")]]',
-      locateStrategy: 'xpath',
     },
   },
 };

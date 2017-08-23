@@ -1,20 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 
-const installerInput = require('../utils/bareMetalInstallerInput');
-const inputJson = installerInput.buildExpectedJson();
-
 const sshKeysPageCommands = {
-  enterPublicKey() {
+  test(json) {
     const parentDir = path.resolve(__dirname, '..');
     const sshKeysPath = path.join(parentDir, 'ssh-keys.txt');
 
     /* eslint-disable no-sync */
-    fs.writeFileSync(sshKeysPath, inputJson.tectonic_ssh_authorized_key);
+    fs.writeFileSync(sshKeysPath, json.tectonic_ssh_authorized_key);
 
-    return this
-      .setValue('@publicKey', sshKeysPath)
-      .click('@nextStep');
+    return this.setValue('@publicKey', sshKeysPath);
   },
 };
 
@@ -24,10 +19,6 @@ module.exports = {
   elements: {
     publicKey: {
       selector: '(//*[text()="Upload"]/input[@type="file"])',
-      locateStrategy: 'xpath',
-    },
-    nextStep: {
-      selector: '//*[text()[contains(.,"Next Step")]]',
       locateStrategy: 'xpath',
     },
   },
