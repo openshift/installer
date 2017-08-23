@@ -20,6 +20,8 @@ resource "azurerm_virtual_machine" "etcd_node" {
   vm_size               = "${var.vm_size}"
   availability_set_id   = "${azurerm_availability_set.etcd.id}"
 
+  delete_os_disk_on_termination = true
+
   storage_image_reference {
     publisher = "CoreOS"
     offer     = "CoreOS"
