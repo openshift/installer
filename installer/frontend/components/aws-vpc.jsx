@@ -172,7 +172,6 @@ const stateToProps = ({aws, clusterConfig}) => {
     podCIDR: clusterConfig[POD_CIDR],
     serviceCIDR: clusterConfig[SERVICE_CIDR],
     advanced: clusterConfig[AWS_ADVANCED_NETWORKING],
-    privateZone: _.get(clusterConfig, ['extra', AWS_HOSTED_ZONE_ID, 'privateZones', clusterConfig[AWS_HOSTED_ZONE_ID]]),
   };
 };
 
@@ -355,7 +354,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
             </div>
           </div>
         </div>
-        {privateZone &&
+        {!internalCluster &&
           <div className="row form-group">
             <div className="col-xs-offset-3 col-xs-9">
               <Connect field={AWS_SPLIT_DNS}>
