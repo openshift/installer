@@ -29,7 +29,7 @@ module.exports = {
   commands: [matchBoxCredentialsPageCommands],
   elements: {
     name: {
-      selector: 'input[id=clusterName]',
+      selector: 'input#clusterName',
     },
     caCertificate: {
       selector: '(//*[text()="Upload"]/input[@type="file"])[1]',

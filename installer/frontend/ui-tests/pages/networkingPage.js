@@ -7,12 +7,8 @@ const networkingPageCommands = {
       .waitForElementPresent('@domain', 10000)
       .click('@domain')
       .click('@advanced')
-      .clearValue('#podCIDR')
-      .setValue('#podCIDR', inputJson.tectonic_cluster_cidr)
-      .assert.value('#podCIDR', inputJson.tectonic_cluster_cidr)
-      .clearValue('#serviceCIDR')
-      .setValue('#serviceCIDR', inputJson.tectonic_service_cidr)
-      .assert.value('#serviceCIDR', inputJson.tectonic_service_cidr)
+      .setField('#podCIDR', inputJson.tectonic_cluster_cidr, true)
+      .setField('#serviceCIDR', inputJson.tectonic_service_cidr, true)
       .click('@nextStep');
   },
 };

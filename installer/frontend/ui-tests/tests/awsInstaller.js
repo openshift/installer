@@ -30,15 +30,10 @@ module.exports = {
     const consoleLoginPage = client.page.consoleLoginPage();
     const submitPage = client.page.submitPage();
 
-    platformPage.navigate(client.launch_url).selectPlatform();
-    awsCredentialsPage.enterAwsCredentials()
-      .waitForElementPresent(awsCredentialsPage.el('@region', expectedJson.tectonic_aws_region), 60000)
-      .click(awsCredentialsPage.el('@region', expectedJson.tectonic_aws_region))
-      .nextStep();
-
+    platformPage.navigate(client.launch_url).selectPlatform('@awsPlatform');
+    awsCredentialsPage.enterAwsCredentials(expectedJson.tectonic_aws_region);
     clusterInfoPage.enterClusterInfo(expectedJson.tectonic_cluster_name);
     certificateAuthorityPage.click('@nextStep');
-
     keysPage.selectSshKeys();
     nodesPage.click('@etcdOption')
       .waitForElementVisible('@nextStep', 10000)
