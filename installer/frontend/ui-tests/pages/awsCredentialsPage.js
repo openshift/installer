@@ -13,11 +13,7 @@ const awsCredentialsPageCommands = {
 module.exports = {
   commands: [awsCredentialsPageCommands],
   elements: {
-    awsAccessKey: {
-      selector: 'input#accessKeyId',
-    },
-    secretAccesskey: {
-      selector: 'input#secretAccessKey',
-    },
+    awsAccessKey: 'input#accessKeyId',
+    secretAccesskey: 'input#secretAccessKey',
   },
 };

@@ -10,14 +10,8 @@ const consoleLoginPageCommands = {
 module.exports = {
   commands: [consoleLoginPageCommands],
   elements: {
-    email: {
-      selector: 'input#adminEmail',
-    },
-    password: {
-      selector: 'input#adminPassword',
-    },
-    confirmPassword: {
-      selector: 'input#adminPassword2',
-    },
+    email: 'input#adminEmail',
+    password: 'input#adminPassword',
+    confirmPassword: 'input#adminPassword2',
   },
 };

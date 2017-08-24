@@ -9,11 +9,7 @@ const defineMastersPageCommands = {
 module.exports = {
   commands: [defineMastersPageCommands],
   elements: {
-    masters0: {
-      selector: 'input[id="masters.0.mac"]',
-    },
-    hosts0: {
-      selector: 'input[id="masters.0.host"]',
-    },
+    masters0: 'input[id="masters.0.mac"]',
+    hosts0: 'input[id="masters.0.host"]',
   },
 };

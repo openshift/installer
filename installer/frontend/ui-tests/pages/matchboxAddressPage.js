@@ -9,11 +9,7 @@ const matchboxPageCommands = {
 module.exports = {
   commands: [matchboxPageCommands],
   elements: {
-    matchboxHTTP: {
-      selector: 'input#matchboxHTTP',
-    },
-    matchboxRPC: {
-      selector: 'input#matchboxRPC',
-    },
+    matchboxHTTP: 'input#matchboxHTTP',
+    matchboxRPC: 'input#matchboxRPC',
   },
 };

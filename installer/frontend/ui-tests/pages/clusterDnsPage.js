@@ -9,11 +9,7 @@ const clusterDnsPageCommands = {
 module.exports = {
   commands: [clusterDnsPageCommands],
   elements: {
-    controllerDomain: {
-      selector: 'input#controllerDomain',
-    },
-    tectonicDomain: {
-      selector: 'input#tectonicDomain',
-    },
+    controllerDomain: 'input#controllerDomain',
+    tectonicDomain: 'input#tectonicDomain',
   },
 };

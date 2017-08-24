@@ -23,9 +23,7 @@ const matchBoxCredentialsPageCommands = {
 module.exports = {
   commands: [matchBoxCredentialsPageCommands],
   elements: {
-    name: {
-      selector: 'input#clusterName',
-    },
+    name: 'input#clusterName',
     caCertificate: {
       selector: '(//*[text()="Upload"]/input[@type="file"])[1]',
       locateStrategy: 'xpath',

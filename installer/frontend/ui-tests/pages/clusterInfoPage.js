@@ -24,9 +24,7 @@ const clusterInfoPageCommands = {
 module.exports = {
   commands: [clusterInfoPageCommands],
   elements: {
-    name: {
-      selector: 'input#clusterName',
-    },
+    name: 'input#clusterName',
     coreOSLicenseUpload: {
       selector: '//*[text()[contains(.,"tectonic-license.txt")]]/input[@type="file"]',
       locateStrategy: 'xpath',

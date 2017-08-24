@@ -16,8 +16,6 @@ module.exports = {
       selector: '//*[text()[contains(.,"Advanced Settings")]]',
       locateStrategy: 'xpath',
     },
-    domain: {
-      selector: 'option[value=Z1ILIMNSJGTMO2]',
-    },
+    domain: 'option[value=Z1ILIMNSJGTMO2]',
   },
 };

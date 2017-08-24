@@ -9,8 +9,6 @@ const nodesPageCommands = {
 module.exports = {
   commands: [nodesPageCommands],
   elements: {
-    etcdOption: {
-      selector: `#${installerInput.etcdOption()}`,
-    },
+    etcdOption: `#${installerInput.etcdOption()}`,
   },
 };

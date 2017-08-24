@@ -12,18 +12,10 @@ const defineWorkersPageCommands = {
 module.exports = {
   commands: [defineWorkersPageCommands],
   elements: {
-    workers0: {
-      selector: 'input[id="workers.0.mac"]',
-    },
-    hosts0: {
-      selector: 'input[id="workers.0.host"]',
-    },
-    workers1: {
-      selector: 'input[id="workers.1.mac"]',
-    },
-    hosts1: {
-      selector: 'input[id="workers.1.host"]',
-    },
+    workers0: 'input[id="workers.0.mac"]',
+    hosts0: 'input[id="workers.0.host"]',
+    workers1: 'input[id="workers.1.mac"]',
+    hosts1: 'input[id="workers.1.host"]',
     addMore: {
       selector: '//*[text()[contains(.,"Add More")]]',
       locateStrategy: 'xpath',
