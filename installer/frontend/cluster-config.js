@@ -145,8 +145,7 @@ export const getTectonicDomain = (cc) => {
   if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     return cc[BM_TECTONIC_DOMAIN];
   }
-  const tectonicDomain = cc[CLUSTER_SUBDOMAIN] + (cc[CLUSTER_SUBDOMAIN].endsWith('.') ? '' : '.') + getZoneDomain(cc);
-  return tectonicDomain;
+  return cc[CLUSTER_SUBDOMAIN] + (cc[CLUSTER_SUBDOMAIN].endsWith('.') ? '' : '.') + getZoneDomain(cc);
 };
 
 export const DEFAULT_CLUSTER_CONFIG = {
