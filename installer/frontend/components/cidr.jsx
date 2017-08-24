@@ -20,7 +20,7 @@ const CIDRTooltip = connect(
   ({clusterConfig}, {field}) => ({clusterConfig: clusterConfig, value: _.get(clusterConfig, field)})
 )(({value}) => {
   const addresses = cidrSize(value);
-  return <div className="tooltip">{addresses} IP address{addresses > 1 && 'es'}</div>;
+  return <div className="tooltip">{addresses.toLocaleString('en', {useGrouping: true})} IP address{addresses > 1 && 'es'}</div>;
 });
 
 export const CIDR = ({field, name, disabled, placeholder, autoFocus, validator, selectable, fieldName}) => {
