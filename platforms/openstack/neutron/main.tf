@@ -193,7 +193,7 @@ module "dns" {
   master_count     = "${var.tectonic_master_count}"
   master_ips       = "${openstack_networking_port_v2.master.*.all_fixed_ips}"
   worker_count     = "${var.tectonic_worker_count}"
-  worker_ips       = "${openstack_networking_port_v2.worker.*.all_fixed_ips}"
+  worker_ips       = "${openstack_networking_floatingip_v2.worker.*.address}"
 
   tectonic_experimental = "${var.tectonic_experimental}"
   tectonic_vanilla_k8s  = "${var.tectonic_vanilla_k8s}"
