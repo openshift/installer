@@ -10,7 +10,6 @@ const defineWorkersPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [defineWorkersPageCommands],
   elements: {
     workers0: {

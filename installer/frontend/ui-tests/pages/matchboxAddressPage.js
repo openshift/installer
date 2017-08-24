@@ -7,7 +7,6 @@ const matchboxPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [matchboxPageCommands],
   elements: {
     matchboxHTTP: {

@@ -11,7 +11,6 @@ const awsCredentialsPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [awsCredentialsPageCommands],
   elements: {
     awsAccessKey: {

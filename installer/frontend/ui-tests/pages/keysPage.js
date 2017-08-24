@@ -8,7 +8,6 @@ const keysPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [keysPageCommands],
   elements: {},
 };

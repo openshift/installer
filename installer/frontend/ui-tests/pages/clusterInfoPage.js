@@ -22,7 +22,6 @@ const clusterInfoPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [clusterInfoPageCommands],
   elements: {
     name: {

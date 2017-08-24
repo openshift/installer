@@ -7,7 +7,6 @@ const nodesPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [nodesPageCommands],
   elements: {
     etcdOption: {

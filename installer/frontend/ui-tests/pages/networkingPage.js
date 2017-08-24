@@ -10,7 +10,6 @@ const networkingPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [networkingPageCommands],
   elements: {
     advanced: {

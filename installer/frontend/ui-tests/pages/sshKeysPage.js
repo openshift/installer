@@ -14,7 +14,6 @@ const sshKeysPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [sshKeysPageCommands],
   elements: {
     publicKey: {

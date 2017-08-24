@@ -7,7 +7,6 @@ const networkConfigurationPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [networkConfigurationPageCommands],
   elements: {},
 };

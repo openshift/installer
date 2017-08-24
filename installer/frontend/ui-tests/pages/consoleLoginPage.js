@@ -8,7 +8,6 @@ const consoleLoginPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [consoleLoginPageCommands],
   elements: {
     email: {

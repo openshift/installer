@@ -7,7 +7,6 @@ const defineMastersPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [defineMastersPageCommands],
   elements: {
     masters0: {

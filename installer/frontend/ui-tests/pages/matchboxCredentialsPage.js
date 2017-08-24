@@ -21,7 +21,6 @@ const matchBoxCredentialsPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [matchBoxCredentialsPageCommands],
   elements: {
     name: {

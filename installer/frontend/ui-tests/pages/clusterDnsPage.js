@@ -7,7 +7,6 @@ const clusterDnsPageCommands = {
 };
 
 module.exports = {
-  url: '',
   commands: [clusterDnsPageCommands],
   elements: {
     controllerDomain: {
