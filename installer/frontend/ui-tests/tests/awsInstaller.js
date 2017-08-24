@@ -9,32 +9,36 @@ const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, json, ne
 const REQUIRED_ENV_VARS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
 
 module.exports = {
-  after (client) {
-    client.getLog('browser', log.logger);
-    client.end();
-  },
-
-  'Tectonic Installer AWS Test': (client) => {
+  before () {
     const missing = REQUIRED_ENV_VARS.filter(ev => !process.env[ev]);
     if (missing.length) {
       console.error(`Missing environment variables: ${missing.join(', ')}.\n`);
       process.exit(1);
     }
+  },
 
+  after (client) {
+    client.getLog('browser', log.logger);
+    client.end();
+  },
+
+  'AWS: Platform': client => {
     const platformPage = client.page.platformPage();
     platformPage.navigate(client.launch_url);
     platformPage.test('@awsPlatform');
     platformPage.expect.element(wizard.nextStep).to.not.have.attribute('class').which.contains('disabled');
     platformPage.click(wizard.nextStep);
+  },
 
-    testPage(client.page.awsCredentialsPage());
-    testPage(client.page.clusterInfoPage());
-    testPage(client.page.certificateAuthorityPage(), false);
-    testPage(client.page.keysPage());
-    testPage(client.page.nodesPage(), false);
-    testPage(client.page.networkingPage());
-    testPage(client.page.consoleLoginPage());
+  'AWS: AWS Credentials': ({page}) => testPage(page.awsCredentialsPage()),
+  'AWS: Cluster Info': ({page}) => testPage(page.clusterInfoPage()),
+  'AWS: Certificate Authority': ({page}) => testPage(page.certificateAuthorityPage(), false),
+  'AWS: SSH Key': ({page}) => testPage(page.keysPage()),
+  'AWS: Define Nodes': ({page}) => testPage(page.nodesPage(), false),
+  'AWS: Networking': ({page}) => testPage(page.networkingPage()),
+  'AWS: Console Login': ({page}) => testPage(page.consoleLoginPage()),
 
+  'AWS: Submit': client => {
     client.page.submitPage().click('@manuallyBoot');
     client.pause(10000);
     client.getCookie('tectonic-installer', result => {

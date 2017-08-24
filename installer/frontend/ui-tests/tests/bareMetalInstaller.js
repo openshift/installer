@@ -9,36 +9,40 @@ const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, json, ne
 const REQUIRED_ENV_VARS = ['TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
 
 module.exports = {
-  after (client) {
-    client.getLog('browser', log.logger);
-    client.end();
-  },
-
-  'Tectonic Installer BareMetal Test': (client) => {
+  before () {
     const missing = REQUIRED_ENV_VARS.filter(ev => !process.env[ev]);
     if (missing.length) {
       console.error(`Missing environment variables: ${missing.join(', ')}.\n`);
       process.exit(1);
     }
+  },
 
+  after (client) {
+    client.getLog('browser', log.logger);
+    client.end();
+  },
+
+  'BM: Platform': client => {
     const platformPage = client.page.platformPage();
     platformPage.navigate(client.launch_url);
     platformPage.test('@bareMetalPlatform');
     platformPage.expect.element(wizard.nextStep).to.not.have.attribute('class').which.contains('disabled');
     platformPage.click(wizard.nextStep);
+  },
 
-    testPage(client.page.clusterInfoPage());
-    testPage(client.page.clusterDnsPage());
-    testPage(client.page.certificateAuthorityPage(), false);
-    testPage(client.page.matchboxAddressPage());
-    testPage(client.page.matchboxCredentialsPage());
-    testPage(client.page.networkConfigurationPage(), false);
-    testPage(client.page.defineMastersPage());
-    testPage(client.page.defineWorkersPage());
-    testPage(client.page.etcdConnectionPage(), false);
-    testPage(client.page.sshKeysPage());
-    testPage(client.page.consoleLoginPage());
+  'BM: Cluster Info': ({page}) => testPage(page.clusterInfoPage()),
+  'BM: Cluster DNS': ({page}) => testPage(page.clusterDnsPage()),
+  'BM: Certificate Authority': ({page}) => testPage(page.certificateAuthorityPage(), false),
+  'BM: Matchbox Address': ({page}) => testPage(page.matchboxAddressPage()),
+  'BM: Matchbox Credentials': ({page}) => testPage(page.matchboxCredentialsPage()),
+  'BM: Network Configuration': ({page}) => testPage(page.networkConfigurationPage(), false),
+  'BM: Define Masters': ({page}) => testPage(page.defineMastersPage()),
+  'BM: Define Workers': ({page}) => testPage(page.defineWorkersPage()),
+  'BM: etcd Connection': ({page}) => testPage(page.etcdConnectionPage(), false),
+  'BM: SSH Key': ({page}) => testPage(page.sshKeysPage()),
+  'BM: Console Login': ({page}) => testPage(page.consoleLoginPage()),
 
+  'BM: Submit': client => {
     client.page.submitPage().click('@manuallyBoot');
     client.pause(10000);
     client.getCookie('tectonic-installer', result => {
