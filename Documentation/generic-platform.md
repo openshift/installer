@@ -2,7 +2,7 @@
 
 This document describes the generic compute, network, and storage needs of a Kubernetes self-hosted cluster. In particular the master, infra, and worker nodes.
 
-**Key User Question:** What is the minimum amount of compute/network architecture that is required to enable self-driving that a user cannot change?
+**Key User Question:** What is the minimum amount of compute/network architecture that is required to enable automated operations that a user cannot change?
 
 ## DNS Setup
 

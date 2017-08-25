@@ -1,6 +1,6 @@
 # Welcome to the Tectonic tutorials!
 
-Thank you for your interest in CoreOS Tectonic. We hope you’re excited to learn how Tectonic works and how this self-driving Kubernetes solution can improve your organization’s application infrastructure.
+Thank you for your interest in CoreOS Tectonic. We hope you’re excited to learn how Tectonic works and how enterprise-ready Kubernetes can improve your organization’s application infrastructure.
 
 To help you get up and running with Tectonic, we have designed these step-by-step tutorials. In them, we will walk you through:
 
