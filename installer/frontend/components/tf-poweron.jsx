@@ -7,7 +7,6 @@ import { saveAs } from 'file-saver';
 import { Alert } from './alert';
 import { DropdownInline } from './ui';
 import { AWS_DomainValidation } from './aws-domain-validation';
-import { ResetButton } from './reset-button';
 import { commitPhases } from '../actions';
 import { TFDestroy } from '../aws-actions';
 import { CLUSTER_NAME, PLATFORM_TYPE, getTectonicDomain } from '../cluster-config';
@@ -347,15 +346,14 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
           </div>
         </div>
         <br />
-        {!isDestroySuccess &&
+        {!isTFRunning && !isDestroySuccess &&
           <div className="row">
             <div className="col-xs-12">
               <a href="/terraform/assets" download>
-                <button className={classNames('btn btn-primary wiz-giant-button pull-right', {disabled: isTFRunning})}>
+                <button className={classNames('btn btn-primary wiz-giant-button')}>
                   <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
                 </button>
               </a>
-              <ResetButton />
             </div>
           </div>
         }
