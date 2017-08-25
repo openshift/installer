@@ -38,15 +38,16 @@ export const validate = {
     return 'Invalid private key. Check your key for copy/paste errors';
   },
 
-  email: (s) => {
-    // from: https://www.w3.org/TR/html5/forms.html#valid-e-mail-address
-    const EMAIL_RE = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
-
-    if (EMAIL_RE.test(s)) {
-      return;
+  email: (s = '') => {
+    const errMsg = validate.nonEmpty(s);
+    if (errMsg) {
+      return errMsg;
     }
-
-    return 'Invalid email address.';
+    const [name, domain] = s.split('@');
+    // No whitespace allowed
+    if (validate.nonEmpty(name) || /\s/g.test(name) || !domain || validate.domainName(domain)) {
+      return 'Invalid email address.';
+    }
   },
 
   MAC: (s = '') => {
