@@ -135,4 +135,5 @@ For more information on working with installed clusters, see [Scaling Tectonic b
 [ssh-agent]: requirements.md#ssh-agent
 [bare-requirements]: requirements.md
 [network-setup]: https://coreos.com/matchbox/docs/latest/network-setup.html
-[matchbox]: https://coreos.com/matchbox/docs/latest/
+[matchbox-latest]: https://coreos.com/matchbox/docs/latest/
+[dns]: index.md#dns

@@ -123,4 +123,4 @@ The provisioner must:
 [quay.io]: https://quay.io
 [ssh-agent]: https://www.freebsd.org/cgi/man.cgi?query=ssh-agent&sektion=1
 [network-setup]: https://coreos.com/matchbox/docs/latest/network-setup.html
-[dns]: bare-metal#networking
+[dns]: index.md#dns
