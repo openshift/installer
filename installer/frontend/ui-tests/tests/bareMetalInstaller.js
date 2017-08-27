@@ -1,57 +1,56 @@
 const log = require('../utils/log');
+const wizard = require('../utils/wizard');
 const installerInput = require('../utils/bareMetalInstallerInput');
 const tfvarsUtil = require('../utils/terraformTfvars');
+
+const json = installerInput.buildExpectedJson();
+const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, json, nextInitiallyDisabled);
 
 const REQUIRED_ENV_VARS = ['TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
 
 module.exports = {
-  after (client) {
-    client.getLog('browser', log.logger);
-    client.end();
-  },
-
-  'Tectonic Installer BareMetal Test': (client) => {
+  before () {
     const missing = REQUIRED_ENV_VARS.filter(ev => !process.env[ev]);
     if (missing.length) {
       console.error(`Missing environment variables: ${missing.join(', ')}.\n`);
       process.exit(1);
     }
+  },
 
-    const expectedJson = installerInput.buildExpectedJson();
+  after (client) {
+    client.getLog('browser', log.logger);
+    client.end();
+  },
+
+  'BM: Platform': client => {
     const platformPage = client.page.platformPage();
-    const clusterInfoPage = client.page.clusterInfoPage();
-    const clusterDnsPage = client.page.clusterDnsPage();
-    const certificateAuthorityPage = client.page.certificateAuthorityPage();
-    const matchboxAddressPage = client.page.matchboxAddressPage();
-    const matchboxCredentialsPage = client.page.matchboxCredentialsPage();
-    const defineMastersPage = client.page.defineMastersPage();
-    const defineWorkersPage = client.page.defineWorkersPage();
-    const etcdConnectionPage = client.page.etcdConnectionPage();
-    const networkConfigurationPage = client.page.networkConfigurationPage();
-    const sshKeysPage = client.page.sshKeysPage();
-    const consoleLoginPage = client.page.consoleLoginPage();
-    const submitPage = client.page.submitPage();
+    platformPage.navigate(client.launch_url);
+    platformPage.test('@bareMetalPlatform');
+    platformPage.expect.element(wizard.nextStep).to.not.have.attribute('class').which.contains('disabled');
+    platformPage.click(wizard.nextStep);
+  },
 
-    platformPage.navigate(client.launch_url).selectPlatform('@bareMetalPlatform');
-    clusterInfoPage.enterClusterInfo(expectedJson.tectonic_cluster_name = `baremetaltest-${new Date().getTime().toString()}`);
-    clusterDnsPage.enterDnsNames();
-    certificateAuthorityPage.click('@nextStep');
-    matchboxAddressPage.enterMatchBoxEndPoints();
-    matchboxCredentialsPage.enterMatchBoxCredentials();
-    networkConfigurationPage.enterCIDRs();
-    defineMastersPage.enterMastersDnsNames();
-    defineWorkersPage.enterWorkersDnsNames();
-    etcdConnectionPage.click('@nextStep');
-    sshKeysPage.enterPublicKey();
-    consoleLoginPage.enterLoginCredentails(expectedJson.tectonic_admin_email);
-    submitPage.click('@manuallyBoot');
+  'BM: Cluster Info': ({page}) => testPage(page.clusterInfoPage()),
+  'BM: Cluster DNS': ({page}) => testPage(page.clusterDnsPage()),
+  'BM: Certificate Authority': ({page}) => testPage(page.certificateAuthorityPage(), false),
+  'BM: Matchbox Address': ({page}) => testPage(page.matchboxAddressPage()),
+  'BM: Matchbox Credentials': ({page}) => testPage(page.matchboxCredentialsPage()),
+  'BM: Network Configuration': ({page}) => testPage(page.networkConfigurationPage(), false),
+  'BM: Define Masters': ({page}) => testPage(page.defineMastersPage()),
+  'BM: Define Workers': ({page}) => testPage(page.defineWorkersPage()),
+  'BM: etcd Connection': ({page}) => testPage(page.etcdConnectionPage(), false),
+  'BM: SSH Key': ({page}) => testPage(page.sshKeysPage()),
+  'BM: Console Login': ({page}) => testPage(page.consoleLoginPage()),
+
+  'BM: Submit': client => {
+    client.page.submitPage().click('@manuallyBoot');
     client.pause(10000);
     client.getCookie('tectonic-installer', result => {
       tfvarsUtil.returnTerraformTfvars(client.launch_url, result.value, (err, actualJson) => {
         if (err) {
           return client.assert.fail(err);
         }
-        const msg = tfvarsUtil.compareJson(actualJson, expectedJson);
+        const msg = tfvarsUtil.compareJson(actualJson, json);
         if (msg) {
           return client.assert.fail(msg);
         }

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const clusterInfoPageCommands = {
-  enterClusterInfo(clusterName) {
+  test(json) {
     const parentDir = path.resolve(__dirname, '..');
     const coreOSLicensePath = path.join(parentDir, 'tectonic-license.txt');
     const configPath = path.join(parentDir, 'config.json');
@@ -15,30 +15,22 @@ const clusterInfoPageCommands = {
     /* eslint-enable no-sync */
 
     return this
-      .setValue('@name', clusterName)
+      .setValue('@name', json.tectonic_cluster_name)
       .setValue('@coreOSLicenseUpload', coreOSLicensePath)
-      .setValue('@pullSecretUpload', configPath)
-      .click('@nextStep');
+      .setValue('@pullSecretUpload', configPath);
   },
 };
 
 module.exports = {
-  url: '',
   commands: [clusterInfoPageCommands],
   elements: {
-    name: {
-      selector: 'input#clusterName',
-    },
+    name: 'input#clusterName',
     coreOSLicenseUpload: {
       selector: '//*[text()[contains(.,"tectonic-license.txt")]]/input[@type="file"]',
       locateStrategy: 'xpath',
     },
     pullSecretUpload: {
       selector: '//*[text()[contains(.,"config.json")]]/input[@type="file"]',
-      locateStrategy: 'xpath',
-    },
-    nextStep: {
-      selector: '//*[text()[contains(.,"Next Step")]]',
       locateStrategy: 'xpath',
     },
   },

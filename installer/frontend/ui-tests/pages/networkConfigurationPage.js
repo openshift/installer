@@ -1,22 +1,12 @@
-const installerInput = require('../utils/bareMetalInstallerInput');
-const inputJson = installerInput.buildExpectedJson();
-
 const networkConfigurationPageCommands = {
-  enterCIDRs() {
+  enterCIDRs(json) {
     return this
-      .setField('#podCIDR', inputJson.tectonic_cluster_cidr, true)
-      .setField('#serviceCIDR', inputJson.tectonic_service_cidr, true)
-      .click('@nextStep');
+      .setField('#podCIDR', json.tectonic_cluster_cidr, true)
+      .setField('#serviceCIDR', json.tectonic_service_cidr, true);
   },
 };
 
 module.exports = {
-  url: '',
   commands: [networkConfigurationPageCommands],
-  elements: {
-    nextStep: {
-      selector: '//*[text()[contains(.,"Next Step")]]',
-      locateStrategy: 'xpath',
-    },
-  },
+  elements: {},
 };
