@@ -26,9 +26,11 @@ import (
 
 // Status represents the individual state of a single Kubernetes service
 type Status struct {
-	Success bool   `json:"success"`
-	Failed  bool   `json:"failed"`
-	Message string `json:"message"`
+	Success   bool   `json:"success"`
+	Failed    bool   `json:"failed"`
+	Namespace string `json:"namespace"`
+	Pod       string `json:"pod"`
+	Message   string `json:"message"`
 }
 
 // Services represents whether several Tectonic components have yet booted (or failed)
@@ -101,6 +103,8 @@ func statusFromPods(pods []v1.Pod) Status {
 		if p.Status.Phase == v1.PodFailed {
 			status.Failed = true
 			status.Success = false
+			status.Namespace = p.ObjectMeta.Namespace
+			status.Pod = p.ObjectMeta.Name
 			return status
 		}
 

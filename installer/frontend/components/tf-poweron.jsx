@@ -251,8 +251,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                   <p>To debug, save logs and download "kubeconfig" for troubleshooting:</p>
                   <code>
                     $ export KUBECONFIG=/path/to/kubeconfig{'\n'}
-                    $ kubectl --namespace=tectonic-system logs TECTONIC-IDENTITY-POD{'\n'}
-                    $ kubectl --namespace=tectonic-system logs TECTONIC-CONSOLE-POD
+                    {_(tectonic).filter('failed').map(({namespace, pod}) => `$ kubectl --namespace=${namespace} logs ${pod}\n`).value()}
                   </code>
                   <a href="/tectonic/kubeconfig" download>
                     <Btn isError={true} title="Download kubeconfig" />
