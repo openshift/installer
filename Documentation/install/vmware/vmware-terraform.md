@@ -68,8 +68,8 @@ The following steps must be executed on a machine that has network connectivity 
 Open a new terminal, and run the following commands to download and extract Tectonic Installer.
 
 ```bash
-$ curl -O https://releases.tectonic.com/tectonic-1.7.1-tectonic.1.tar.gz # download
-$ tar xzvf tectonic-1.7.1-tectonic.1.tar.gz # extract the tarball
+$ curl -O https://releases.tectonic.com/tectonic-1.7.1-tectonic.2.tar.gz # download
+$ tar xzvf tectonic-1.7.1-tectonic.2.tar.gz # extract the tarball
 $ cd tectonic
 ```
 
