@@ -293,81 +293,79 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
         }
         <hr />
         <div className="row">
-          <div className="col-xs-12">
-            <ul className="wiz-launch-progress">
-              <Step done={statusMsg === 'success'} error={tfError}>
-                {tfError
-                  ? <span><span className="wiz-running-fg">{tfTitle}:</span> [Failure] Terraform {action} failed</span>
-                  : tfTitle}
-                {output && !isApplySuccess &&
-                  <div className="pull-right" style={{fontSize: '13px'}}>
-                    <a onClick={() => this.setState({showLogs: !showLogs})}>
-                      {showLogs
-                        ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
-                        : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span>}
-                    </a>
-                    <span className="spacer"></span>
-                    <a onClick={saveLog}>
-                      <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
-                    </a>
+          <div className="col-xs-12 wiz-launch-progress">
+            <Step done={statusMsg === 'success'} error={tfError}>
+              {tfError
+                ? <span><span className="wiz-running-fg">{tfTitle}:</span> [Failure] Terraform {action} failed</span>
+                : tfTitle}
+              {output && !isApplySuccess &&
+                <div className="pull-right" style={{fontSize: '13px'}}>
+                  <a onClick={() => this.setState({showLogs: !showLogs})}>
+                    {showLogs
+                      ? <span><i className="fa fa-angle-up"></i>&nbsp;&nbsp;Hide logs</span>
+                      : <span><i className="fa fa-angle-down"></i>&nbsp;&nbsp;Show logs</span>}
+                  </a>
+                  <span className="spacer"></span>
+                  <a onClick={saveLog}>
+                    <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
+                  </a>
+                </div>
+              }
+            </Step>
+            <div style={{marginLeft: 22}}>
+              {isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} isActive={isTFRunning} />}
+              {showLogs && output && !isApplySuccess &&
+                <div className="log-pane">
+                  <div className="log-pane__header">
+                    <div className="log-pane__header__message">Terraform logs</div>
                   </div>
-                }
-              </Step>
-              <div style={{marginLeft: 22}}>
-                {isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} isActive={isTFRunning} />}
-                {showLogs && output && !isApplySuccess &&
-                  <div className="log-pane">
-                    <div className="log-pane__header">
-                      <div className="log-pane__header__message">Terraform logs</div>
-                    </div>
-                    <div className="log-pane__body">
-                      <div className="log-area">
-                        <div className="log-scroll-pane" ref={node => this.outputNode = node}>
-                          <div className="log-contents">{output}</div>
-                        </div>
+                  <div className="log-pane__body">
+                    <div className="log-area">
+                      <div className="log-scroll-pane" ref={node => this.outputNode = node}>
+                        <div className="log-contents">{output}</div>
                       </div>
                     </div>
                   </div>
-                }
-                {state.xhrError && <Alert severity="error">{state.xhrError}</Alert>}
-                {commitPhase === commitPhases.FAILED && <Alert severity="error">{commitState.response}</Alert>}
-                {tfError && <Alert severity="error">{tfError.toString()}</Alert>}
-                {tfError && !isTFRunning &&
-                  <Alert severity="error" noIcon>
-                    <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
-                    <ol style={{fontSize: 13, paddingLeft: 30, paddingTop: 10, paddingBottom: 10}}>
-                      <li><a onClick={saveLog}>Save Terraform log</a> and <a href="/terraform/assets" download>download assets</a> for debugging purposes.</li>
-                      <li>Destroy your cluster to clear anything that may have been created. Or,</li>
-                      <li>Reapply Terraform.</li>
-                    </ol>
-                    <Btn isError={true} onClick={this.destroy} title="Destroy Cluster and Start Over" />
-                    <Btn isError={true} onClick={this.retry} title="Retry Terraform Apply" />
-                  </Alert>
-                }
-                {isDestroySuccess &&
-                  <Alert noIcon>
-                    <b style={{fontWeight: '600'}}>Destroy Succeeded</b>
-                    <p>To continue, make a fresh start with Tectonic Installer, or simply close the browser tab to quit.</p>
-                    <Btn isError={false} onClick={this.startOver} title="Start Over" />
-                    <Btn isError={false} onClick={this.retry} title="Retry Terraform Apply" />
-                  </Alert>
-                }
-                {isApplySuccess &&
-                  <div className="wiz-launch-progress__help">
-                    You can save Terraform logs, or destroy your cluster if you change your mind:&nbsp;
-                    <DropdownInline
-                      header="Terraform Actions"
-                      items={[
-                        ['Destroy Cluster', this.destroy],
-                        ['Retry Terraform Apply', this.retry],
-                        ['Save Terraform Log', saveLog],
-                      ]}
-                    />
-                  </div>
-                }
-              </div>
-              {consoleSubsteps}
-            </ul>
+                </div>
+              }
+              {state.xhrError && <Alert severity="error">{state.xhrError}</Alert>}
+              {commitPhase === commitPhases.FAILED && <Alert severity="error">{commitState.response}</Alert>}
+              {tfError && <Alert severity="error">{tfError.toString()}</Alert>}
+              {tfError && !isTFRunning &&
+                <Alert severity="error" noIcon>
+                  <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
+                  <ol style={{fontSize: 13, paddingLeft: 30, paddingTop: 10, paddingBottom: 10}}>
+                    <li><a onClick={saveLog}>Save Terraform log</a> and <a href="/terraform/assets" download>download assets</a> for debugging purposes.</li>
+                    <li>Destroy your cluster to clear anything that may have been created. Or,</li>
+                    <li>Reapply Terraform.</li>
+                  </ol>
+                  <Btn isError={true} onClick={this.destroy} title="Destroy Cluster and Start Over" />
+                  <Btn isError={true} onClick={this.retry} title="Retry Terraform Apply" />
+                </Alert>
+              }
+              {isDestroySuccess &&
+                <Alert noIcon>
+                  <b style={{fontWeight: '600'}}>Destroy Succeeded</b>
+                  <p>To continue, make a fresh start with Tectonic Installer, or simply close the browser tab to quit.</p>
+                  <Btn isError={false} onClick={this.startOver} title="Start Over" />
+                  <Btn isError={false} onClick={this.retry} title="Retry Terraform Apply" />
+                </Alert>
+              }
+              {isApplySuccess &&
+                <div className="wiz-launch-progress__help">
+                  You can save Terraform logs, or destroy your cluster if you change your mind:&nbsp;
+                  <DropdownInline
+                    header="Terraform Actions"
+                    items={[
+                      ['Destroy Cluster', this.destroy],
+                      ['Retry Terraform Apply', this.retry],
+                      ['Save Terraform Log', saveLog],
+                    ]}
+                  />
+                </div>
+              }
+            </div>
+            {consoleSubsteps}
           </div>
         </div>
         <br />
