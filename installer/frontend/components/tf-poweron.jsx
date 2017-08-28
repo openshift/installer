@@ -254,6 +254,9 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                     $ kubectl --namespace=tectonic-system logs TECTONIC-IDENTITY-POD{'\n'}
                     $ kubectl --namespace=tectonic-system logs TECTONIC-CONSOLE-POD
                   </code>
+                  <a href="/tectonic/kubeconfig" download>
+                    <Btn isError={true} title="Download kubeconfig" />
+                  </a>
                   <p>To start over, destroy cluster to clear anything that may have been created.</p>
                   <Btn isError={true} onClick={this.destroy} title="Destroy Cluster and Start Over" />
                 </Alert>
