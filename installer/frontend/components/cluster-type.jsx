@@ -12,7 +12,7 @@ import {
   BARE_METAL_TF,
   DOCS,
   PLATFORM_NAMES,
-  SELECTED_PLATFORMS,
+  isEnabled,
   isSupported,
   optGroups,
 } from '../platforms';
@@ -56,7 +56,7 @@ const platformForm = new Form(PLATFORM_FORM, [
 const platformOptions = [];
 _.each(optGroups, optgroup => {
   const [name, ...group] = optgroup;
-  const platforms = _.filter(group, p => SELECTED_PLATFORMS.includes(p));
+  const platforms = _.filter(group, p => isEnabled(p));
   if (platforms.length) {
     platformOptions.push(<optgroup label={name} key={name}>{
       platforms.map(p => <option value={p} key={p}>{PLATFORM_NAMES[p]}</option>)
