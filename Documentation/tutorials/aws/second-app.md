@@ -230,11 +230,11 @@ Now that you have deployed an application on your Tectonic cluster you may find 
 * [Managing Namespaces in Tectonic][namespaces]
 * [Managing Pull Secrets in Tectonic][pull-secrets]
 
-[frontend]: ../img/walkthrough/frontend.png
+[frontend]: img/frontend.png
 [quay-io]: https://quay.io
 [QE]: https://coreos.com/quay-enterprise/
 [first-app]: first-app.md
-[namespaces]: manage-namespaces.md
-[pull-secrets]: manage-pull-secrets.md
+[namespaces]: ../../admin/manage-namespaces.md
+[pull-secrets]: ../../admin/manage-pull-secrets.md
 [guestbook-upstream]: https://github.com/kubernetes/kubernetes/tree/master/examples/guestbook#guestbook-example
 [rolling-deployments]: rolling-deployments.md
