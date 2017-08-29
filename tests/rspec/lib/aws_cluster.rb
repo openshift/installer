@@ -1,7 +1,14 @@
 require 'cluster'
+require 'aws_region'
 
 # AWSCluster represents a k8s cluster on AWS cloud provider
 class AWSCluster < Cluster
+  def initialize(prefix, tf_vars_path)
+    export_random_region_if_not_defined
+
+    super(prefix, tf_vars_path)
+  end
+
   def env_variables
     variables = super
     variables['PLATFORM'] = 'aws'
@@ -11,8 +18,13 @@ class AWSCluster < Cluster
   def check_prerequisites
     raise 'AWS credentials not defined' unless credentials_defined?
     raise 'TF_VAR_tectonic_aws_ssh_key is not defined' unless ssh_key_defined?
+    raise 'TF_VAR_tectonic_aws_region is not defined' unless region_defined?
 
     super
+  end
+
+  def region_defined?
+    EnvVar.set?(%w[TF_VAR_tectonic_aws_region])
   end
 
   def credentials_defined?

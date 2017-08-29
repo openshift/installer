@@ -6,7 +6,7 @@ COPY ./tests/rspec/Gemfile* /tmp/app/
 
 RUN apt-get update && \
     apt-get install --no-install-recommends -y -q \
-    curl make unzip jq awscli ssh && \
+    curl make unzip jq awscli ssh openvpn && \
     apt-get clean
 
 RUN cd /tmp/app && bundler install && rm -r /tmp/app

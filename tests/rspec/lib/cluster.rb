@@ -34,6 +34,7 @@ class Cluster
 
   def stop
     destroy
+    clean
   end
 
   def check_prerequisites
@@ -88,6 +89,11 @@ class Cluster
     raise 'Destroying cluster failed'
   end
 
+  def clean
+    succeeded = system(env_variables, 'make -C ../.. destroy')
+    raise 'could not clean build directory' unless succeeded
+  end
+
   def wait_til_ready
     90.times do
       begin
@@ -110,7 +116,7 @@ class Cluster
       name = "#{prefix}-#{branch_name}-#{build_id}"
     end
 
-    name = name[0..(MAX_NAME_LENGTH - RANDOM_HASH_LENGTH)]
+    name = name[0..(MAX_NAME_LENGTH - RANDOM_HASH_LENGTH - 1)]
     name += SecureRandom.hex[0...RANDOM_HASH_LENGTH]
     name
   end

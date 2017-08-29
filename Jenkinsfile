@@ -44,7 +44,7 @@ def quay_creds = [
 ]
 
 def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.36'
-def tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v3.0'
+def tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v4.0'
 
 pipeline {
   agent none
@@ -130,16 +130,36 @@ pipeline {
           "SmokeTest AWS RSpec": {
             node('worker && ec2') {
               withCredentials(creds) {
-                checkout scm
-                unstash 'installer'
-                unstash 'smoke'
                 withDockerContainer(tectonic_smoke_test_env_image) {
-                  checkout scm
-                  unstash 'installer'
+                  ansiColor('xterm') {
+                    checkout scm
+                    unstash 'installer'
+                    unstash 'smoke'
                     sh """#!/bin/bash -ex
                       cd tests/rspec
-                      bundler exec rspec
+                      bundler exec rspec spec/aws_spec.rb
                     """
+                  }
+                }
+              }
+            }
+          },
+          "SmokeTest AWS VPC RSpec": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(
+                    image: tectonic_smoke_test_env_image,
+                    args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root'
+                ) {
+                  ansiColor('xterm') {
+                    checkout scm
+                    unstash 'installer'
+                    unstash 'smoke'
+                    sh """#!/bin/bash -ex
+                      cd tests/rspec
+                      bundler exec rspec spec/aws_vpc_internal_spec.rb
+                    """
+                  }
                 }
               }
             }
@@ -281,56 +301,6 @@ pipeline {
                       . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
                       ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-ca.tfvars
                       """
-                    }
-                    deleteDir()
-                  }
-                }
-              }
-            }
-          },
-          "SmokeTest Terraform: AWS (private vpc)": {
-            node('worker && ec2') {
-              withCredentials(creds) {
-                withDockerContainer(image: params.builder_image, args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root') {
-                  ansiColor('xterm') {
-                    checkout scm
-                    unstash 'installer'
-                    unstash 'smoke'
-                    script {
-                      try {
-                        timeout(45) {
-                          sh """#!/bin/bash -ex
-                          . ${WORKSPACE}/tests/smoke/aws/smoke.sh create-vpc
-                          ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-vpc.tfvars
-                          ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws-vpc.tfvars | tee ${WORKSPACE}/terraform.log
-                          ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws-vpc.tfvars
-                          ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
-                          ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
-                          """
-                        }
-                      } catch (err) {
-                        timeout(15) {
-                          sh """#!/bin/bash -x
-                          ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-vpc.tfvars
-                          ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy-vpc
-                          """
-                        }
-                        timeout(5) {
-                          sh """#!/bin/bash -x
-                          . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$GRAFITI_DELETER_ROLE"
-                          ${WORKSPACE}/tests/smoke/aws/smoke.sh grafiti-clean vars/aws-vpc.tfvars
-                          """
-                        }
-
-                        // Stage should fail
-                        throw err
-                      } finally {
-                        sh """#!/bin/bash -ex
-                        # As /build is created by root, make sure to remove it again
-                        # so non-root can create it later.
-                        rm -r ${WORKSPACE}/build
-                        """
-                      }
                     }
                     deleteDir()
                   }
