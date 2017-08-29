@@ -1,62 +1,4 @@
-// Location is the Azure Location (East US, West US, etc)
-variable "location" {
-  type = "string"
-}
-
-variable "resource_group_name" {
-  type = "string"
-}
-
-variable "cluster_id" {
-  type = "string"
-}
-
-// VM Size name
-variable "vm_size" {
-  type = "string"
-}
-
-// Storage account type
-variable "storage_type" {
-  type = "string"
-}
-
-variable "storage_id" {
-  type = "string"
-}
-
-// Count of worker nodes to be created.
-variable "worker_count" {
-  type = "string"
-}
-
-// The name of the cluster.
-variable "cluster_name" {
-  type = "string"
-}
-
-variable "public_ssh_key" {
-  type = "string"
-}
-
-variable "virtual_network" {
-  type = "string"
-}
-
-variable "kube_image_url" {
-  type = "string"
-}
-
-variable "kube_image_tag" {
-  type = "string"
-}
-
-variable "kubeconfig_content" {
-  type    = "string"
-  default = ""
-}
-
-variable "tectonic_kube_dns_service_ip" {
+variable "cl_channel" {
   type = "string"
 }
 
@@ -70,8 +12,39 @@ variable "cloud_provider_config" {
   type        = "string"
 }
 
-variable "kubelet_node_label" {
+variable "cluster_id" {
   type = "string"
+}
+
+variable "cluster_name" {
+  type        = "string"
+  description = "The name of the cluster."
+}
+
+variable "extra_tags" {
+  type = "map"
+}
+
+variable "ign_azure_udev_rules_id" {
+  type = "string"
+}
+
+variable "ign_kubelet_env_id" {
+  type = "string"
+}
+
+variable "ign_tx_off_service_id" {
+  type = "string"
+}
+
+variable "kubeconfig_content" {
+  type    = "string"
+  default = ""
+}
+
+variable "location" {
+  type        = "string"
+  description = "Location is the Azure Location (East US, West US, etc)"
 }
 
 variable "network_interface_ids" {
@@ -79,19 +52,33 @@ variable "network_interface_ids" {
   description = "List of NICs to use for master VMs"
 }
 
-variable "versions" {
-  description = "(internal) Versions of the components to use"
-  type        = "map"
-}
-
-variable "cl_channel" {
+variable "public_ssh_key" {
   type = "string"
 }
 
-variable "kubelet_cni_bin_dir" {
+variable "resource_group_name" {
   type = "string"
 }
 
-variable "extra_tags" {
-  type = "map"
+variable "storage_id" {
+  type = "string"
+}
+
+variable "storage_type" {
+  type        = "string"
+  description = "Storage account type"
+}
+
+variable "tectonic_kube_dns_service_ip" {
+  type = "string"
+}
+
+variable "vm_size" {
+  type        = "string"
+  description = "VM Size name"
+}
+
+variable "worker_count" {
+  type        = "string"
+  description = "Count of worker nodes to be created."
 }
