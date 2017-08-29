@@ -151,6 +151,7 @@ On Windows, run:
 $env:KUBECONFIG = "$PWD\provisioning\etc\kubernetes\kubeconfig"
 ```
 
+[**NEXT:** Deploying an application on Tectonic][first-app]
 
 [vagrant]: https://www.vagrantup.com/downloads.html
 [virtualbox]: https://www.virtualbox.org/wiki/Downloads
