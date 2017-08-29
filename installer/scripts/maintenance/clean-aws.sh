@@ -163,6 +163,6 @@ docker run -t --rm --name grafiti-deleter \
 	-e CONFIG_FILE="/tmp/config/$(basename "$config_file")" \
 	-e TAG_FILE="/tmp/config/$(basename "$tag_file")" \
 	quay.io/coreos/grafiti:"${version}" \
-	ash -c "grafiti $dry_run --config \"\$CONFIG_FILE\" --ignore-errors delete --all-deps --delete-file \"\$TAG_FILE\""
+	bash -c "grafiti $dry_run --config \"\$CONFIG_FILE\" --ignore-errors delete --all-deps --delete-file \"\$TAG_FILE\""
 
 set +e
