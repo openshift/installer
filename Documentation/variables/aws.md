@@ -16,7 +16,6 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_external_master_subnet_ids | (optional) List of subnet IDs within an existing VPC to deploy master nodes into. Required to use an existing VPC and the list must match the AZ count.<br><br>Example: `["subnet-111111", "subnet-222222", "subnet-333333"]` | list | `<list>` |
 | tectonic_aws_external_private_zone | (optional) If set, the given Route53 zone ID will be used as the internal (private) zone. This zone will be used to create etcd DNS records as well as internal API and internal Ingress records. If set, no additional private zone will be created.<br><br>Example: `"Z1ILINNUJGTAO1"` | string | `` |
 | tectonic_aws_external_vpc_id | (optional) ID of an existing VPC to launch nodes into. If unset a new VPC is created.<br><br>Example: `vpc-123456` | string | `` |
-| tectonic_aws_external_vpc_public | If set to true, create public facing ingress resources (ELB, A-records). If set to false, a "private" cluster will be created with an internal ELB only. | string | `true` |
 | tectonic_aws_external_worker_subnet_ids | (optional) List of subnet IDs within an existing VPC to deploy worker nodes into. Required to use an existing VPC and the list must match the AZ count.<br><br>Example: `["subnet-111111", "subnet-222222", "subnet-333333"]` | list | `<list>` |
 | tectonic_aws_extra_tags | (optional) Extra AWS tags to be applied to created resources. | map | `<map>` |
 | tectonic_aws_master_custom_subnets | (optional) This configures master availability zones and their corresponding subnet CIDRs directly.<br><br>Example: `{ eu-west-1a = "10.0.0.0/20", eu-west-1b = "10.0.16.0/20" }` | map | `<map>` |
@@ -26,6 +25,8 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_master_root_volume_iops | The amount of provisioned IOPS for the root block device of master nodes. | string | `100` |
 | tectonic_aws_master_root_volume_size | The size of the volume in gigabytes for the root block device of master nodes. | string | `30` |
 | tectonic_aws_master_root_volume_type | The type of volume for the root block device of master nodes. | string | `gp2` |
+| tectonic_aws_private_endpoints | (optional) If set to true, create private-facing ingress resources (ELB, A-records). If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone. | string | `true` |
+| tectonic_aws_public_endpoints | (optional) If set to true, create public-facing ingress resources (ELB, A-records). If set to false, no public-facing ingress resources will be created. | string | `true` |
 | tectonic_aws_region | The target AWS region for the cluster. | string | `eu-west-1` |
 | tectonic_aws_ssh_key | Name of an SSH key located within the AWS region. Example: coreos-user. | string | - |
 | tectonic_aws_vpc_cidr_block | Block of IP addresses used by the VPC. This should not overlap with any other networks, such as a private datacenter connected via Direct Connect. | string | `10.0.0.0/16` |

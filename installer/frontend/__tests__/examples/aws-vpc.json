@@ -21,8 +21,8 @@
       "subnet-43ef260a",
       "subnet-1ad7e242"
     ],
+    "tectonic_aws_public_endpoints": true,
     "tectonic_aws_external_vpc_id": "someVPCID",
-    "tectonic_aws_external_vpc_public": true,
     "tectonic_aws_external_worker_subnet_ids": [
       "subnet-277ccb40",
       "subnet-19ef2650",

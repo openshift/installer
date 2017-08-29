@@ -63,7 +63,7 @@ module "etcd" {
 
   subnets = "${module.vpc.worker_subnet_ids}"
 
-  dns_zone_id  = "${var.tectonic_aws_external_private_zone == "" ? join("", aws_route53_zone.tectonic_int.*.zone_id) : var.tectonic_aws_external_private_zone}"
+  dns_zone_id  = "${var.tectonic_aws_private_endpoints ? data.null_data_source.zones.inputs["private"] : data.null_data_source.zones.inputs["public"]}"
   base_domain  = "${var.tectonic_base_domain}"
   cluster_name = "${var.tectonic_cluster_name}"
 
@@ -109,14 +109,15 @@ module "masters" {
   container_images             = "${var.tectonic_container_images}"
   custom_dns_name              = "${var.tectonic_dns_name}"
   ec2_type                     = "${var.tectonic_aws_master_ec2_type}"
-  external_zone_id             = "${join("", data.aws_route53_zone.tectonic_ext.*.zone_id)}"
+  external_zone_id             = "${data.null_data_source.zones.inputs["public"]}"
   extra_tags                   = "${var.tectonic_aws_extra_tags}"
   image_re                     = "${var.tectonic_image_re}"
   instance_count               = "${var.tectonic_master_count}"
-  internal_zone_id             = "${var.tectonic_aws_external_private_zone == "" ? join("", aws_route53_zone.tectonic_int.*.zone_id) : var.tectonic_aws_external_private_zone}"
+  internal_zone_id             = "${data.null_data_source.zones.inputs["private"]}"
   master_iam_role              = "${var.tectonic_aws_master_iam_role_name}"
   master_sg_ids                = "${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"
-  public_vpc                   = "${var.tectonic_aws_external_vpc_public}"
+  private_endpoints            = "${var.tectonic_aws_private_endpoints}"
+  public_endpoints             = "${var.tectonic_aws_public_endpoints}"
   root_volume_iops             = "${var.tectonic_aws_master_root_volume_iops}"
   root_volume_size             = "${var.tectonic_aws_master_root_volume_size}"
   root_volume_type             = "${var.tectonic_aws_master_root_volume_type}"
