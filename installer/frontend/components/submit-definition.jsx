@@ -72,7 +72,9 @@ export const SubmitDefinition = withNav(connect(
         <span> After submission, the definition cannot be updated. Go <a onClick={!inProgress && navPrevious} className={inProgress && 'disabled'}>back</a> to update or make changes.</span>
       </p>
       <p>
-        You'll be able to download your <a href="https://coreos.com/tectonic/docs/latest/admin/assets-zip.html" target="_blank">assets zip file</a> after the definition is submitted.
+        {/* eslint-disable react/jsx-no-target-blank */}
+        You'll be able to download your <a href="https://coreos.com/tectonic/docs/latest/admin/assets-zip.html" rel="noopener" target="_blank">assets zip file</a> after the definition is submitted.
+        {/* eslint-enable react/jsx-no-target-blank */}
       </p>
       <br />
       {feature}

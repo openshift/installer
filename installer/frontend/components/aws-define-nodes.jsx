@@ -76,7 +76,9 @@ export const DefineNode = ({name, type, disabled, withoutTitle, max}) =>
         </Select>
       </Connect>
       {type === 'aws_etcds' && <p className="text-muted wiz-help-text">
-        Read the <a href="https://coreos.com/etcd/docs/latest/op-guide/hardware.html" target="_blank">etcd recommended hardware</a> guide for best performance.
+        {/* eslint-disable react/jsx-no-target-blank */}
+        Read the <a href="https://coreos.com/etcd/docs/latest/op-guide/hardware.html" rel="noopener" target="_blank">etcd recommended hardware</a> guide for best performance.
+        {/* eslint-enable react/jsx-no-target-blank */}
       </p>}
     </Row>
     <Row htmlFor={`${name}--storage-size`} label="Storage Size">

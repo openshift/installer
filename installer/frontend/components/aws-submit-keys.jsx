@@ -35,7 +35,9 @@ const Title = connect(
 export const AWS_SubmitKeys = () => <div>
   <div className="row form-group">
     <div className="col-xs-12">
-      <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#ssh-key" target="_blank">Generate a new key</a> if you don't have an existing one in this region.
+      {/* eslint-disable react/jsx-no-target-blank */}
+      <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#ssh-key" rel="noopener" target="_blank">Generate a new key</a> if you don't have an existing one in this region.
+      {/* eslint-enable react/jsx-no-target-blank */}
     </div>
   </div>
   <div className="row form-group">

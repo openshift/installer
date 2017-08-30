@@ -754,7 +754,7 @@ export class Dropdown extends DropdownMixin {
 
     const children = _.map(items, (href, key) => {
       return <li className="tectonic-dropdown-menu-item" key={key}>
-        <a className="tectonic-dropdown-menu-item__link" href={href} key={key} target="_blank">
+        <a className="tectonic-dropdown-menu-item__link" href={href} key={key} rel="noopener" target="_blank">
           {key}
         </a>
       </li>;

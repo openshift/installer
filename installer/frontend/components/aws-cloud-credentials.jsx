@@ -178,8 +178,10 @@ export const AWS_CloudCredentials = connect(stateToProps)(
     <div>
       <div className="row form-group">
         <div className="col-xs-12">
-        Enter your Amazon Web Services (AWS) credentials to create and configure the required resources.
-        It is strongly suggested that you create a <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#privileges" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} target="_blank">limited access role</a> for Tectonic's communication with your cloud provider.
+          Enter your Amazon Web Services (AWS) credentials to create and configure the required resources.
+          {/* eslint-disable react/jsx-no-target-blank */}
+          It is strongly suggested that you create a <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#privileges" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} rel="noopener" target="_blank">limited access role</a> for Tectonic's communication with your cloud provider.
+          {/* eslint-enable react/jsx-no-target-blank */}
         </div>
       </div>
 
@@ -194,7 +196,7 @@ export const AWS_CloudCredentials = connect(stateToProps)(
               Use a normal access key
               </label>&nbsp;(default)
               <p className="text-muted">
-              Go to the <a href="https://console.aws.amazon.com/iam/home#/users" target="_blank">AWS console user section</a>, select your user name, and the Security Credentials tab.
+                Go to the <a href="https://console.aws.amazon.com/iam/home#/users" rel="noopener noreferrer" target="_blank">AWS console user section</a>, select your user name, and the Security Credentials tab.
               </p>
             </div>
             <div className="wiz-radio-group__body">
