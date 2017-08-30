@@ -3,12 +3,14 @@ import pluralize from 'pluralize';
 import React from 'react';
 import { connect } from 'react-redux';
 
-import { AWS_TF } from '../platforms';
+import { AWS_TF, BARE_METAL_TF } from '../platforms';
 import { Alert } from './alert';
 import { CIDR, cidrSize } from './cidr';
 import {
   AWS_CONTROLLERS,
   AWS_WORKERS,
+  BM_MASTERS,
+  BM_WORKERS,
   NUMBER_OF_INSTANCES,
   PLATFORM_TYPE,
   POD_CIDR,
@@ -16,21 +18,24 @@ import {
 } from '../cluster-config';
 
 const PodRangeWarning = connect(
-  ({clusterConfig}) => ({clusterConfig})
-)(({clusterConfig}) => {
-  const size = cidrSize(_.get(clusterConfig, POD_CIDR));
-
-  // Currently, we only expect to have the node count for AWS because of the wizard screen order
-  if (!size || clusterConfig[PLATFORM_TYPE] !== AWS_TF) {
+  ({clusterConfig: cc}) => {
+    let nodes;
+    if (cc[PLATFORM_TYPE] === AWS_TF) {
+      nodes = _.get(cc, `${AWS_CONTROLLERS}-${NUMBER_OF_INSTANCES}`, 0) + _.get(cc, `${AWS_WORKERS}-${NUMBER_OF_INSTANCES}`, 0);
+    }
+    if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
+      nodes = _.get(cc, `${BM_MASTERS}.length`, 0) + _.get(cc, `${BM_WORKERS}.length`, 0);
+    }
+    return {nodes, size: cidrSize(_.get(cc, POD_CIDR))};
+  }
+)(({nodes, size}) => {
+  if (nodes === undefined || size === undefined) {
     return null;
   }
 
   // Flannel assigns a minimum network size of /24 (256 IP addresses)
   const maxNodes = Math.floor(size / 256);
 
-  const controllers = _.get(clusterConfig, `${AWS_CONTROLLERS}-${NUMBER_OF_INSTANCES}`, 0);
-  const workers = _.get(clusterConfig, `${AWS_WORKERS}-${NUMBER_OF_INSTANCES}`, 0);
-  const nodes = controllers + workers;
   const utilization = nodes / maxNodes;
 
   if (utilization < 0.75) {
