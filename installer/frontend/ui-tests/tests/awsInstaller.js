@@ -39,8 +39,9 @@ module.exports = {
   'AWS: Console Login': ({page}) => testPage(page.consoleLoginPage()),
 
   'AWS: Submit': client => {
-    client.page.submitPage().click('@manuallyBoot');
-    client.pause(10000);
+    const submitPage = client.page.submitPage();
+    submitPage.click('@manuallyBoot');
+    submitPage.waitForElementPresent('a[href="/terraform/assets"]', 10000);
     client.getCookie('tectonic-installer', result => {
       tfvarsUtil.returnTerraformTfvars(client.launch_url, result.value, (err, actualJson) => {
         if (err) {

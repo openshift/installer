@@ -35,16 +35,17 @@ module.exports = {
   'BM: Certificate Authority': ({page}) => testPage(page.certificateAuthorityPage(), false),
   'BM: Matchbox Address': ({page}) => testPage(page.matchboxAddressPage()),
   'BM: Matchbox Credentials': ({page}) => testPage(page.matchboxCredentialsPage()),
-  'BM: Network Configuration': ({page}) => testPage(page.networkConfigurationPage(), false),
   'BM: Define Masters': ({page}) => testPage(page.defineMastersPage()),
   'BM: Define Workers': ({page}) => testPage(page.defineWorkersPage()),
+  'BM: Network Configuration': ({page}) => testPage(page.networkConfigurationPage(), false),
   'BM: etcd Connection': ({page}) => testPage(page.etcdConnectionPage(), false),
   'BM: SSH Key': ({page}) => testPage(page.sshKeysPage()),
   'BM: Console Login': ({page}) => testPage(page.consoleLoginPage()),
 
   'BM: Submit': client => {
-    client.page.submitPage().click('@manuallyBoot');
-    client.pause(10000);
+    const submitPage = client.page.submitPage();
+    submitPage.click('@manuallyBoot');
+    submitPage.waitForElementPresent('a[href="/terraform/assets"]', 10000);
     client.getCookie('tectonic-installer', result => {
       tfvarsUtil.returnTerraformTfvars(client.launch_url, result.value, (err, actualJson) => {
         if (err) {
