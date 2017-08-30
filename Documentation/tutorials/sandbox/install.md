@@ -13,9 +13,9 @@ Tectonic Sandbox is not meant for production use cases. It's designed to be a si
 * A current version of Google Chrome, Internet Explorer, or Mozilla Firefox installed and running.
 * 8 GB of RAM
 
-Ensure that the latest versions of Vagrant and VirtualBox are installed on your local machine.
 
-Download Tectonic Sandbox from https://releases.tectonic.com/sandbox/tectonic-sandbox-1.7.1-sb.2.zip.
+1. Ensure that the latest versions of Vagrant and VirtualBox are installed on your local machine.
+2. [Download Tectonic Sandbox][sandbox-download-form].
 
 ## Windows Installation
 
@@ -97,7 +97,7 @@ vagrant ssh w1
 netstat -nl | grep 443
 ```
 
-If this doesn’t work, please wait five minutes, then rerun the commands. It can take some time for Kubernetes to resolve the request. If the Console is still unavailable, file an issue in the [Tectonic Sandbox GitHub repo][sandbox-repo].
+If this doesn’t work, please wait five minutes, then rerun the commands. It can take some time for Kubernetes to resolve the request.
 
 Q: It’s been 20 minutes and my cluster still isn't coming up!
 
@@ -153,8 +153,8 @@ $env:KUBECONFIG = "$PWD\provisioning\etc\kubernetes\kubeconfig"
 
 [**NEXT:** Deploying an application on Tectonic][first-app]
 
+
 [vagrant]: https://www.vagrantup.com/downloads.html
 [virtualbox]: https://www.virtualbox.org/wiki/Downloads
-[sandbox-download]: https://releases.tectonic.com/sandbox/tectonic-sandbox-1.7.1-tectonic.2.zip
-[sandbox-repo]: https://github.com/coreos-inc/tectonic-sandbox
+[sandbox-download-form]: https://coreos.com/tectonic/sandbox/
 [first-app]: first-app.md
