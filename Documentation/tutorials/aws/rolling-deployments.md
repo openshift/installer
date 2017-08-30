@@ -86,7 +86,7 @@ Load the Service address to see the application:
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
-    <img src="../img/walkthrough/cookie-v1.png">
+    <img src="img/cookie-v1.png">
   </div>
 </div>
 
@@ -149,7 +149,7 @@ Before we execute the rolling update, open the deployment in the Tectonic Consol
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
-    <img src="../img/walkthrough/nginx-deploy-pods.png">
+    <img src="img/nginx-deploy-pods.png">
     <div class="co-m-screenshot-caption">Viewing the pods of your deployment</div>
   </div>
 </div>
@@ -165,7 +165,7 @@ In the Console, you should see newer pods appear, and the corresponding older po
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
-    <img src="../img/walkthrough/nginx-deploy-updating.png">
+    <img src="img/nginx-deploy-updating.png">
     <div class="co-m-screenshot-caption">Pods being created and terminated by Tectonic</div>
   </div>
 </div>
@@ -174,7 +174,7 @@ Reload the Cookie Shop page as the deployment updates to see the changes happen.
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
-    <img src="../img/walkthrough/cookie-v2.png">
+    <img src="img/cookie-v2.png">
   </div>
 </div>
 
@@ -196,7 +196,7 @@ After saving the file, your pods will execute a rolling update back to version 1
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
-    <img src="../img/walkthrough/nginx-deploy-yml.png">
+    <img src="img/nginx-deploy-yml.png">
     <div class="co-m-screenshot-caption">Using the YAML editor to edit the deployment</div>
   </div>
 </div>
@@ -204,7 +204,7 @@ After saving the file, your pods will execute a rolling update back to version 1
 
 [**NEXT:** Deleting an application on Tectonic][deleting-deployment]
 
-[yaml-edit-service]: ../img/walkthrough/yaml-edit-service.png
+[yaml-edit-service]: img/yaml-edit-service.png
 [first-app]: first-app.md#deploy-a-simple-app
 [k8s-deployments]: https://kubernetes.io/docs/user-guide/deployments/
 [k8s-rolling-updates]: https://kubernetes.io/docs/user-guide/rolling-updates/

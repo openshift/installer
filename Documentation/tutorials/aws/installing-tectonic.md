@@ -169,11 +169,11 @@ Click *Configure kubectl* or *Deploy Application* to open CoreOS tutorials for t
 [**NEXT:** Deploying an application on Tectonic][first-app]
 
 
-[install-req]: ../install/aws/requirements.md
-[ssh-key]: ../install/aws/requirements.md#ssh-key
-[vpc-req]: ../install/aws/requirements.md#using-an-existing-vpc
-[trouble-shoot]: ../install/aws/troubleshooting.md
-[privileges]: ../install/aws/requirements.md#privileges
+[install-req]: ../../install/aws/requirements.md
+[ssh-key]: ../../install/aws/requirements.md#ssh-key
+[vpc-req]: ../../install/aws/requirements.md#using-an-existing-vpc
+[trouble-shoot]: ../../install/aws/troubleshooting.md
+[privileges]: ../../install/aws/requirements.md#privileges
 [first-app]: first-app.md
 [creating-aws]: creating-aws.md
-[aws-troubleshooting]: ../install/aws/troubleshooting.md
+[aws-troubleshooting]: ../../install/aws/troubleshooting.md

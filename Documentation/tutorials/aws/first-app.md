@@ -28,7 +28,7 @@ Then, download the `kubectl-config` and `kubectl` files.
 
 1. Click *Generate Configuration* to open the *Download kubectl Configuration* window, and follow the instructions provided.
 2. Click *Download Configuration* to download your `kubectl-config` file.
-3. Click *Mac* or *Linux* to download the `kubectl` binary for your operating system. 
+3. Click *Mac* or *Linux* to download the `kubectl` binary for your operating system.
 
 Click *I’m Done* to exit the download window, and return to the console.
 
@@ -148,7 +148,7 @@ Check your setup by navigating to the URL listed. (It may take a few minutes for
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12">
-    <img src="../img/walkthrough/cookie-v1.png">
+    <img src="img/cookie-v1.png">
     <div class="co-m-screenshot-caption">Our simple Cookie Shop application up and running on Tectonic</div>
   </div>
 </div>
@@ -159,7 +159,7 @@ Go to *Routing > Services* to monitor the site’s services.
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
-    <img src="../img/walkthrough/nginx-service.png">
+    <img src="img/nginx-service.png">
     <div class="co-m-screenshot-caption">Viewing the Service in the Console</div>
   </div>
 </div>
@@ -168,7 +168,7 @@ Go to *Workloads > Deployments* and click on the deployment name to monitor the 
 
 <div class="row">
   <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1 col-sm-12 col-xs-12 co-m-screenshot">
-    <img src="../img/walkthrough/nginx-deployment.png">
+    <img src="img/nginx-deployment.png">
     <div class="co-m-screenshot-caption">Viewing the Deployment in the Console</div>
   </div>
 </div>
@@ -218,13 +218,12 @@ Substitute your custom image and version (known as a "tag") in the Deployment ab
 
 
 [QE]: https://coreos.com/quay-enterprise/
-[assets-zip]: ../admin/assets-zip.md
+[assets-zip]: ../../admin/assets-zip.md
 [aws-elb]: https://aws.amazon.com/elasticloadbalancing/
-[edit-service]: ../img/walkthrough/edit-service.png
+[edit-service]: img/edit-service.png
 [k8s-deployment]: https://kubernetes.io/docs/user-guide/deployments/
 [k8s-service]: https://kubernetes.io/docs/user-guide/services/
 [k8s-svc-lb]: https://kubernetes.io/docs/user-guide/load-balancer/
-[simple-app-a]: ../img/walkthrough/simple-app-a.png
 [quay-io]: https://quay.io
 [registry-auth]: https://coreos.com/os/docs/latest/registry-authentication.html
 [quay-repo]: https://quay.io/repository/coreos/example-app

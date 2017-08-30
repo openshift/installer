@@ -1,4 +1,4 @@
-# Welcome to the Tectonic on Azure tutorials
+# Welcome to the Tectonic on Azure tutorials!
 
 CoreOS Tectonic is enterprise-ready Kubernetes. These step-by-step tutorials show how to get started with Tectonic on Azure. They describe:
 
