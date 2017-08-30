@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import React from 'react';
 import ReactDom from 'react-dom';
 import Modal from 'react-modal';
@@ -5,6 +6,7 @@ import { connect } from 'react-redux';
 
 import { store } from '../store';
 import { eventErrorsActionTypes, restoreActionTypes, validateAllFields } from '../actions';
+import { isEnabled, isSupported } from '../platforms';
 import { readFile } from '../readfile';
 import { TectonicGA } from '../tectonic-ga';
 import { CLUSTER_NAME } from '../cluster-config';
@@ -19,46 +21,48 @@ const handleUpload = (blob, cb) => dispatch => {
     return;
   }
 
+  const uploadError = error => dispatch({
+    type: eventErrorsActionTypes.ERROR,
+    payload: {error, name: UPLOAD_ERROR_NAME},
+  });
+
   readFile(blob)
     .then(result => {
       try {
         const restoreState = JSON.parse(result);
+
+        const platform = _.get(restoreState, 'clusterConfig.platformType');
+        if (!isSupported(platform)) {
+          uploadError(`Platform ${platform} is not supported`);
+          return;
+        }
+        if (!isEnabled(platform)) {
+          uploadError(`Platform ${platform} is disabled`);
+          return;
+        }
+
         dispatch({
           type: restoreActionTypes.RESTORE_STATE,
           payload: restoreState,
         });
-        dispatch({
-          type: eventErrorsActionTypes.ERROR,
-          payload: {
-            name: UPLOAD_ERROR_NAME,
-            error: null,
-          },
-        });
-        // the restored state may contain errors, so we don't want to use an old version.
+        uploadError(null);
+
+        // The restored state may contain errors, so we don't want to use an old version.
         dispatch(validateAllFields(cb));
       } catch (e) {
-        dispatch({
-          type: eventErrorsActionTypes.ERROR,
-          payload: {
-            name: UPLOAD_ERROR_NAME,
-            error: "File doesn't seem to be a saved installer state",
-          },
-        });
+        uploadError("File doesn't seem to be a saved installer state");
       }
     })
     .catch(err => {
       console.error(err);
-      dispatch({
-        type: eventErrorsActionTypes.ERROR,
-        payload: {
-          name: UPLOAD_ERROR_NAME,
-          error: "Can't read installer state file",
-        },
-      });
+      uploadError("Can't read installer state file");
     });
 };
 
-const stateToProps = ({eventErrors, clusterConfig}) => ({uploadError: eventErrors[UPLOAD_ERROR_NAME], clusterName: clusterConfig[CLUSTER_NAME]});
+const stateToProps = ({eventErrors, clusterConfig}) => ({
+  clusterName: clusterConfig[CLUSTER_NAME],
+  uploadError: eventErrors[UPLOAD_ERROR_NAME],
+});
 
 const Modal_ = connect(stateToProps, {handleUpload})(
   class Modal_Inner extends React.Component {
@@ -80,7 +84,11 @@ const Modal_ = connect(stateToProps, {handleUpload})(
     handleUpload (e) {
       if (e.target.files.length) {
         this.setState({done: false, inProgress: true});
-        this.props.handleUpload(e.target.files[0], this.isDone.bind(this));
+        this.props.handleUpload(e.target.files[0], () => {
+          if (!this.unmounted) {
+            this.setState({done: true, inProgress: false});
+          }
+        });
       }
     }
 
@@ -89,13 +97,6 @@ const Modal_ = connect(stateToProps, {handleUpload})(
       if (this.state.done && this.props.cb) {
         this.props.cb();
       }
-    }
-
-    isDone () {
-      if (this.unmounted) {
-        return;
-      }
-      this.setState({done: true, inProgress: false});
     }
 
     render () {
