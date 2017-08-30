@@ -1,6 +1,6 @@
 const platformPageCommands = {
   test(platformEl) {
-    this.waitForElementVisible('select#platformType', 100000)
+    this.waitForElementVisible('select#platformType', 60000)
       .expect.element(platformEl).to.be.present;
     return this.click(platformEl)
       .expect.element(platformEl).to.be.selected;

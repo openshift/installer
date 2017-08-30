@@ -45,7 +45,7 @@ module.exports = {
   'BM: Submit': client => {
     const submitPage = client.page.submitPage();
     submitPage.click('@manuallyBoot');
-    submitPage.waitForElementPresent('a[href="/terraform/assets"]', 10000);
+    submitPage.waitForElementPresent('a[href="/terraform/assets"]');
     client.getCookie('tectonic-installer', result => {
       tfvarsUtil.returnTerraformTfvars(client.launch_url, result.value, (err, actualJson) => {
         if (err) {
