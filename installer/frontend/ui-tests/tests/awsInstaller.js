@@ -47,10 +47,7 @@ module.exports = {
         if (err) {
           return client.assert.fail(err);
         }
-        const msg = tfvarsUtil.compareJson(actualJson, json);
-        if (msg) {
-          return client.assert.fail(msg);
-        }
+        tfvarsUtil.assertDeepEqual(client, actualJson, json);
       });
     });
   },
