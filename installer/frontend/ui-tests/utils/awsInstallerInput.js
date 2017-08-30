@@ -13,6 +13,7 @@ const buildExpectedJson = () => {
   delete json.tectonic_admin_password_hash;
   delete json.tectonic_aws_extra_tags;
   delete json.tectonic_aws_external_private_zone;
+  delete json.tectonic_aws_private_endpoints;
 
   return json;
 };
