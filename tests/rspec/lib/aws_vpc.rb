@@ -92,6 +92,7 @@ class AWSVPC
     90.times do
       succeeded = system("curl -k -L --silent #{@vpn_url} > /dev/null")
       return if succeeded
+      sleep(0.5)
     end
     raise 'waiting for vpn access server timed out'
   end
