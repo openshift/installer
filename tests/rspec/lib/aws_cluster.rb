@@ -1,12 +1,15 @@
+# frozen_string_literal: true
+
 require 'cluster'
 require 'aws_region'
 
 # AWSCluster represents a k8s cluster on AWS cloud provider
-class AWSCluster < Cluster
-  def initialize(prefix, tf_vars_path)
+
+class AwsCluster < Cluster
+  def initialize(tfvars_file)
     export_random_region_if_not_defined
 
-    super(prefix, tf_vars_path)
+    super(tfvars_file)
   end
 
   def env_variables

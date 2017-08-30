@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'kubectl_helpers'
 require 'securerandom'
 require 'jenkins'
@@ -11,12 +13,12 @@ class Cluster
 
   attr_reader :tfvars_file, :kubeconfig, :manifest_path
 
-  def initialize(prefix, tfvars_file_path)
+  def initialize(tfvars_file)
+    @tfvars_file = tfvars_file
+
     # Enable local testers to specify a static cluster name
     # S3 buckets can only handle lower case names
-    @name = (ENV['CLUSTER'] || generate_name(prefix)).downcase
-
-    @tfvars_file = TFVarsFile.new(tfvars_file_path)
+    @name = (ENV['CLUSTER'] || generate_name(tfvars_file.prefix)).downcase
 
     @manifest_path = `echo $(realpath ../../build)/#{@name}/generated`
                      .delete("\n")
