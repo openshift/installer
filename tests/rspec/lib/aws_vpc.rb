@@ -74,8 +74,11 @@ class AWSVPC
 
   def destroy
     @vpn_connection.stop
+  rescue
+    raise 'could not disconnect from vpn'
+  ensure
     terraform_destroy
-    FileUtils.cp '/etc/resolv.conf.bak', '/etc/resolv.conf'
+    recover_etc_resolv
   end
 
   def terraform_destroy
@@ -102,6 +105,10 @@ class AWSVPC
     FileUtils.cp '/etc/resolv.conf', '/etc/resolv.conf.bak'
     IO.write('/etc/resolv.conf', "nameserver #{@vpc_dns}\nnameserver 8.8.8.8\n")
     system('cat /etc/resolv.conf')
+  end
+
+  def recover_etc_resolv
+    FileUtils.cp '/etc/resolv.conf.bak', '/etc/resolv.conf'
   end
 end
 
