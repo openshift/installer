@@ -198,7 +198,7 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
                     showPrev={!!t.previousFrom(currentPage)}
                     showNext={!!t.nextFrom(currentPage)}
                     disableNext={!canNavigateForward(state)}
-                    resetBtn={t.canReset} />
+                    resetBtn={currentPage.canReset} />
                 }
               </div>
             </div>
