@@ -11,6 +11,7 @@ data "ignition_config" "node" {
     "${var.ign_max_user_watches_id}",
     "${data.ignition_file.resolv_conf.id}",
     "${data.ignition_file.hostname.*.id[count.index]}",
+    "${data.ignition_file.sshd.id}",
   ]
 
   systemd = [
@@ -69,4 +70,20 @@ data "ignition_systemd_unit" "tectonic" {
   name    = "tectonic.service"
   enable  = "${var.tectonic_service_disabled == 0 ? true : false}"
   content = "${var.tectonic_service}"
+}
+
+data "ignition_file" "sshd" {
+  filesystem = "root"
+  path       = "/etc/ssh/sshd_config"
+  mode       = 0600
+
+  content {
+    content = <<EOF
+UsePrivilegeSeparation sandbox
+Subsystem sftp internal-sftp
+
+PermitRootLogin no
+AuthenticationMethods publickey
+EOF
+  }
 }
