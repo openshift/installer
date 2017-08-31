@@ -4,7 +4,6 @@ require 'cluster'
 require 'aws_region'
 
 # AWSCluster represents a k8s cluster on AWS cloud provider
-
 class AwsCluster < Cluster
   def initialize(tfvars_file)
     export_random_region_if_not_defined
