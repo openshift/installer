@@ -1,4 +1,10 @@
 # Tectonic Changelog
+* Kubernetes 1.7.3 support
+* All AWS hosted zones are now shown properly by the installer 
+* Console only lists the namespaces the user has access to
+* Console redirects to the desired page after login rather than the cluster status page
+* Console shows a Quick Start Guide for new users to Console
+* Console allows editing the YAML definition of Prometheus instances
 
 ## Tectonic 1.7.1-tectonic.1 (2017-08-09)
 
