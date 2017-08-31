@@ -287,7 +287,7 @@ The e-mail address used to:
 1. login as the admin user to the Tectonic Console.
 2. generate DNS zones for some providers.
 
-Note: This field MUST be set manually prior to creating the cluster.
+Note: This field MUST be in all lower-case e-mail address format and set manually prior to creating the cluster.
 EOF
 }
 
