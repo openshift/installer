@@ -8,8 +8,8 @@ VERSION=$(git rev-parse HEAD)
 # check if the current commit has a matching tag,
 # and prepend the matching tag to the version, if available.
 TAG=$(git describe --exact-match --abbrev=0 --tags ${VERSION} 2> /dev/null || true)
-if [ -z "$TAG" ]; then
-	VERSION=$TAG_$VERSION
+if [ ! -z "$TAG" ]; then
+	VERSION=${TAG}_${VERSION}
 fi
 
 # check for changed files (not untracked files)
