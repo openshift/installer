@@ -335,9 +335,14 @@ pipeline {
                         finally {
                           retry(3) {
                             timeout(15) {
-                              sh """#!/bin/bash -x
-                                ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/basic.tfvars
-                              """
+                              try {
+                                sh """#!/bin/bash -x
+                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/basic.tfvars
+                                """
+                              }
+                              catch (error) {
+                                notifySlack()
+                              }
                             }
                           }
                           deleteDir()
@@ -376,9 +381,14 @@ pipeline {
                         finally {
                           retry(3) {
                             timeout(15) {
+                              try {
                                 sh """#!/bin/bash -x
-                                ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/exper.tfvars
+                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/exper.tfvars
                                 """
+                              }
+                              catch (error) {
+                                notifySlack()
+                              }
                             }
                           }
                           deleteDir()
@@ -420,9 +430,14 @@ pipeline {
                         finally {
                           retry(3) {
                             timeout(15) {
+                              try {
                                 sh """#!/bin/bash -x
-                                ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/dns.tfvars
+                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/dns.tfvars
                                 """
+                              }
+                              catch (error) {
+                                notifySlack()
+                              }
                             }
                           }
                           deleteDir()
@@ -462,9 +477,14 @@ pipeline {
                         finally {
                           retry(3) {
                             timeout(15) {
+                              try {
                                 sh """#!/bin/bash -x
-                                ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/extern.tfvars
+                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/extern.tfvars
                                 """
+                              }
+                              catch (error) {
+                                notifySlack()
+                              }
                             }
                           }
                           deleteDir()
@@ -503,9 +523,14 @@ pipeline {
                         finally {
                           retry(3) {
                             timeout(15) {
+                              try {
                                 sh """#!/bin/bash -x
-                                ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/extern-exper.tfvars
+                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/extern-exper.tfvars
                                 """
+                              }
+                              catch (error) {
+                                notifySlack()
+                              }
                             }
                           }
                           deleteDir()
@@ -544,9 +569,14 @@ pipeline {
                         finally {
                           retry(3) {
                             timeout(15) {
+                              try {
                                 sh """#!/bin/bash -x
-                                ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/example.tfvars
+                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/example.tfvars
                                 """
+                              }
+                              catch (error) {
+                                notifySlack()
+                              }
                             }
                           }
                           deleteDir()
@@ -653,4 +683,17 @@ pipeline {
       }
     }
   }
+}
+
+def notifySlack() {
+    def link  = "<${env.RUN_DISPLAY_URL}|#${env.BUILD_NUMBER}>"
+    def msg = "Tectonic Installer failed to destroy azure resources (${link})"
+    slackSend(
+        channel: '#tectonic-installer-ci',
+        color: "warning",
+        message: msg,
+        teamDomain: 'coreos',
+        tokenCredentialId: 'tectonic-slack-token',
+        failOnError: true,
+    )
 }
