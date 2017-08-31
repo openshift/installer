@@ -4,13 +4,13 @@ require 'json'
 class AWSVPC
   attr_reader :vpn_url
   attr_reader :ovpn_password
-  attr_reader :vpn_conf
   attr_reader :name
   attr_reader :vpc_dns
   attr_reader :vpc_id
   attr_reader :private_zone_id
   attr_reader :master_subnet_ids
   attr_reader :worker_subnet_ids
+  attr_reader :vpn_connection
 
   def initialize(name)
     @name = name
@@ -88,7 +88,7 @@ class AWSVPC
       end
     end
 
-    raise 'could not destroy vpc with Terraform' unless succeeded
+    raise 'could not destroy vpc with Terraform'
   end
 
   def wait_for_vpn_access_server

@@ -2,11 +2,17 @@
 
 require 'cluster'
 require 'aws_region'
+require 'json'
+require 'jenkins'
+require 'grafiti'
+require 'env_var'
+require 'aws_iam'
 
 # AWSCluster represents a k8s cluster on AWS cloud provider
 class AwsCluster < Cluster
   def initialize(tfvars_file)
     export_random_region_if_not_defined
+    AWSIAM.assume_role if Jenkins.environment?
 
     super(tfvars_file)
   end
@@ -36,5 +42,10 @@ class AwsCluster < Cluster
 
   def ssh_key_defined?
     EnvVar.set?(%w[TF_VAR_tectonic_aws_ssh_key])
+  end
+
+  def recover_from_failed_destroy
+    Grafiti.new(@build_path, ENV['TF_VAR_tectonic_aws_region']).clean
+    super
   end
 end

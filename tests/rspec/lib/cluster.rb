@@ -11,7 +11,7 @@ class Cluster
   MAX_NAME_LENGTH = 28
   RANDOM_HASH_LENGTH = 5
 
-  attr_reader :tfvars_file, :kubeconfig, :manifest_path
+  attr_reader :tfvars_file, :kubeconfig, :manifest_path, :build_path
 
   def initialize(tfvars_file)
     @tfvars_file = tfvars_file
@@ -20,9 +20,9 @@ class Cluster
     # S3 buckets can only handle lower case names
     @name = (ENV['CLUSTER'] || generate_name(tfvars_file.prefix)).downcase
 
-    @manifest_path = `echo $(realpath ../../build)/#{@name}/generated`
-                     .delete("\n")
-    @kubeconfig = manifest_path + '/auth/kubeconfig'
+    @build_path = File.join(File.realpath('../../'), "build/#{@name}")
+    @manifest_path = File.join(@build_path, 'generated')
+    @kubeconfig = File.join(manifest_path, 'auth/kubeconfig')
   end
 
   def start
@@ -88,11 +88,14 @@ class Cluster
       return if system(env_variables, 'make -C ../.. destroy')
     end
 
+    recover_from_failed_destroy
     raise 'Destroying cluster failed'
   end
 
+  def recover_from_failed_destroy() end
+
   def clean
-    succeeded = system(env_variables, 'make -C ../.. destroy')
+    succeeded = system(env_variables, 'make -C ../.. clean')
     raise 'could not clean build directory' unless succeeded
   end
 
