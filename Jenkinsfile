@@ -108,7 +108,7 @@ pipeline {
             checkout scm
             sh"""#!/bin/bash -ex
               cd tests/rspec
-              bundler exec rubocop --cache false tests/rspec
+              bundler exec rubocop --cache false spec lib
             """
           }
         }
