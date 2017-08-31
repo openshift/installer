@@ -2,7 +2,7 @@
 
 require 'tfvars_file'
 
-TFVARS_FILE_PATH = '../smoke/aws/vars/aws.tfvars.json'
+TFVARS_FILE_PATH = '../smoke/aws/vars/aws.tfvars.json'.freeze
 
 describe TFVarsFile do
   subject { described_class.new(TFVARS_FILE_PATH) }
