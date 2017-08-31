@@ -60,6 +60,8 @@ systemd:
         [Unit]
         Description=Bootstrap a Kubernetes cluster
         ConditionPathExists=!/opt/tectonic/init_bootkube.done
+        Wants=kubelet.service
+        After=kubelet.service
         [Service]
         Type=oneshot
         RemainAfterExit=true
