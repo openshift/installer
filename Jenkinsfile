@@ -453,9 +453,6 @@ pipeline {
                               }
                               catch (error) {
                                 notifySlack()
-                                sh """#!/bin/bash -x
-                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy_azure_cli vars/extern.tfvars
-                                """
                               }
                             }
                           }
@@ -502,9 +499,6 @@ pipeline {
                               }
                               catch (error) {
                                 notifySlack()
-                                sh """#!/bin/bash -x
-                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy_azure_cli vars/extern-exper.tfvars
-                                """
                               }
                             }
                           }
