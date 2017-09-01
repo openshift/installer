@@ -1,8 +1,7 @@
 const networkingPageCommands = {
   test(json) {
     return this
-      .waitForElementPresent('@domain')
-      .click('@domain')
+      .selectOption('@domain')
       .click('@advanced')
       .setField('#podCIDR', json.tectonic_cluster_cidr)
       .setField('#serviceCIDR', json.tectonic_service_cidr);

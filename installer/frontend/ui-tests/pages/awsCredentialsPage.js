@@ -6,10 +6,7 @@ const awsCredentialsPageCommands = {
 
     if (process.env.AWS_SESSION_TOKEN) {
       this
-        .click('@sessionTokenTrue')
-        .expect.element('@sessionTokenTrue').to.be.selected;
-
-      this
+        .setField('@sessionTokenTrue')
         .setField('@awsAccessKey', process.env.AWS_ACCESS_KEY_ID)
         .setField('@secretAccesskey', process.env.AWS_SECRET_ACCESS_KEY)
         .setField('@sessionToken', process.env.AWS_SESSION_TOKEN);
@@ -18,11 +15,9 @@ const awsCredentialsPageCommands = {
         .setField('@awsAccessKey', process.env.AWS_ACCESS_KEY_ID)
         .setField('@secretAccesskey', process.env.AWS_SECRET_ACCESS_KEY);
     }
-    this
-      .waitForElementPresent(regionOption, 100000)
-      .click(regionOption)
-      .expect.element(regionOption).to.be.selected;
-    return this;
+
+    this.expect.element(regionOption).to.be.visible.before(60000);
+    return this.selectOption(regionOption);
   },
 };
 
