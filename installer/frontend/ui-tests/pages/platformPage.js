@@ -1,7 +1,6 @@
 const platformPageCommands = {
   test(platformEl) {
-    this.waitForElementVisible('select#platformType', 60000)
-      .expect.element(platformEl).to.be.present;
+    this.expect.element('select#platformType').to.be.visible.before(60000);
     return this.click(platformEl)
       .expect.element(platformEl).to.be.selected;
   },
