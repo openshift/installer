@@ -28,7 +28,7 @@ common() {
     # Set required configuration
     CLUSTER="$TEST_NAME-$BRANCH_NAME-$BUILD_ID"
     MAX_LENGTH=28
-    
+
     LENGTH=${#CLUSTER}
     if [ "$LENGTH" -gt "$MAX_LENGTH" ]
     then
@@ -45,11 +45,11 @@ common() {
         CLUSTER="$CLUSTER${APPEND_STR:0:APPEND}"
         echo "Cluster name too short. Appended to $CLUSTER"
     fi
-    
+
     CLUSTER=$(echo "${CLUSTER}" | awk '{print tolower($0)}')
     export CLUSTER
     export TF_VAR_tectonic_cluster_name=$CLUSTER
-    
+
     echo "cluster name: $CLUSTER"
 
     mkdir -p "$HOME/.ssh"
@@ -76,6 +76,17 @@ destroy() {
     common "$1"
     echo "Destroying ${CLUSTER}..."
     make destroy
+}
+
+destroy_azure_cli() {
+    common "$1"
+    echo "Destroying using Azure Cli - ${CLUSTER} ..."
+    azure telemetry --disable
+    azure login -u "${ARM_CLIENT_ID}" --service-principal --tenant "${ARM_TENANT_ID}" -p "${ARM_CLIENT_SECRET}"
+    azure group list
+    azure group delete -q -v -n "tectonic-cluster-${CLUSTER}"
+    azure group list
+    azure logout -u "${ARM_CLIENT_ID}"
 }
 
 plan() {
@@ -107,6 +118,7 @@ usage() {
     printf "The commands are:\n\n"
     printf "\t create <tfvars>                              create a Tectonic cluster parameterized by <tfvars>\n"
     printf "\t destroy <tfvars>                             destroy the Tectonic cluster parameterized by <tfvars>\n"
+    printf "\t destroy_azure_cli <tfvars>                   destroy the Tectonic cluster using azure cli command and the cluster name\n"
     printf "\t plan <tfvars>                                plan a Tectonic cluster parameterized by <tfvars>\n"
     printf "\t                                              path <policy> and trust policy at file path <trust-policy>\n"
     printf "\t test <tfvars>                                test a Tectonic cluster parameterized by <tfvars>\n"
@@ -119,13 +131,15 @@ main () {
         usage
         exit 1
     fi
-    
+
     shift
     case $COMMAND in
         create)
             create "$@";;
         destroy)
             destroy "$@";;
+        destroy_azure_cli)
+            destroy_azure_cli "$@";;
         plan)
             plan "$@";;
         test)

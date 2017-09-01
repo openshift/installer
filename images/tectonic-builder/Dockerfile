@@ -77,6 +77,9 @@ RUN cd /tmp && \
     mv /tmp/dist /usr/local/yarn && \
     ln -s /usr/local/yarn/bin/yarn /usr/local/bin/yarn
 
+# Install Azure-cli
+RUN yarn global add azure-cli
+
 # Install Shellcheck
 RUN cd /tmp && \
     wget --quiet https://storage.googleapis.com/shellcheck/shellcheck-${SHELLCHECK_VERSION}.linux.x86_64.tar.xz && \

@@ -43,7 +43,7 @@ def quay_creds = [
   )
 ]
 
-def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.36'
+def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.37'
 def tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v4.0'
 
 pipeline {
@@ -302,6 +302,9 @@ pipeline {
                               }
                               catch (error) {
                                 notifySlack()
+                                sh """#!/bin/bash -x
+                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy_azure_cli vars/basic.tfvars
+                                """
                               }
                             }
                           }
@@ -348,6 +351,9 @@ pipeline {
                               }
                               catch (error) {
                                 notifySlack()
+                                sh """#!/bin/bash -x
+                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy_azure_cli vars/exper.tfvars
+                                """
                               }
                             }
                           }
@@ -397,6 +403,9 @@ pipeline {
                               }
                               catch (error) {
                                 notifySlack()
+                                sh """#!/bin/bash -x
+                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy_azure_cli vars/dns.tfvars
+                                """
                               }
                             }
                           }
@@ -444,6 +453,9 @@ pipeline {
                               }
                               catch (error) {
                                 notifySlack()
+                                sh """#!/bin/bash -x
+                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy_azure_cli vars/extern.tfvars
+                                """
                               }
                             }
                           }
@@ -490,6 +502,9 @@ pipeline {
                               }
                               catch (error) {
                                 notifySlack()
+                                sh """#!/bin/bash -x
+                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy_azure_cli vars/extern-exper.tfvars
+                                """
                               }
                             }
                           }
@@ -536,6 +551,9 @@ pipeline {
                               }
                               catch (error) {
                                 notifySlack()
+                                sh """#!/bin/bash -x
+                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy_azure_cli vars/example.tfvars
+                                """
                               }
                             }
                           }
