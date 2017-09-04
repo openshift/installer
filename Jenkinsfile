@@ -190,25 +190,6 @@ pipeline {
               }
             }
           },
-          "SmokeTest Terraform: AWS (non-TLS)": {
-            node('worker && ec2') {
-              withCredentials(creds) {
-                withDockerContainer(params.builder_image) {
-                  ansiColor('xterm') {
-                    checkout scm
-                    unstash 'installer'
-                    timeout(5) {
-                      sh """#!/bin/bash -ex
-                      . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
-                      ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws.tfvars
-                      """
-                    }
-                    deleteDir()
-                  }
-                }
-              }
-            }
-          },
           "SmokeTest Terraform: AWS (experimental)": {
             node('worker && ec2') {
               withCredentials(creds) {
