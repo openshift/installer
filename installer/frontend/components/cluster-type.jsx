@@ -27,7 +27,7 @@ const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PL
         This method is designed for automation and doesn't use the graphical installer.
         <br />
         {/* eslint-disable react/jsx-no-target-blank */}
-        <a href={DOCS[platform]} target="_blank">
+        <a href={DOCS[platform]} rel="noopener" target="_blank">
           <button className="btn btn-primary" style={{marginTop: 8}}>{platformName && platformName.split('(Alpha)')[0]} Docs&nbsp;&nbsp;{icon}</button>
         </a>
         {/* eslint-enable react/jsx-no-target-blank */}
@@ -37,8 +37,8 @@ const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PL
     return <p className="text-muted">
       Use the graphical installer to input cluster details, this is best for demos and your first Tectonic cluster.
       &nbsp;&nbsp;{platform === BARE_METAL_TF
-        ? <span><br />{platformName} <a href="https://coreos.com/tectonic/docs/latest/install/bare-metal/requirements.html" target="_blank">requirements&nbsp;&nbsp;{icon}</a> and <a href={DOCS[platform]} target="_blank">install guide&nbsp;&nbsp;{icon}</a>.</span>
-        : <a href={DOCS[platform]} target="_blank">{platformName} documentation&nbsp;&nbsp;{icon}</a>}
+        ? <span><br />{platformName} <a href="https://coreos.com/tectonic/docs/latest/install/bare-metal/requirements.html" rel="noopener" target="_blank">requirements&nbsp;&nbsp;{icon}</a> and <a href={DOCS[platform]} rel="noopener" target="_blank">install guide&nbsp;&nbsp;{icon}</a>.</span>
+        : <a href={DOCS[platform]} rel="noopener" target="_blank">{platformName} documentation&nbsp;&nbsp;{icon}</a>}
     </p>;
     /* eslint-enable react/jsx-no-target-blank */
   });
