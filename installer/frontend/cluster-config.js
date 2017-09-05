@@ -2,7 +2,7 @@ import _ from 'lodash';
 import bcrypt from 'bcryptjs';
 
 import { BARE_METAL_TF } from './platforms';
-import { keyToAlg, toExtraData } from './utils';
+import { keyToAlg } from './utils';
 
 const bcryptCost = 12;
 
@@ -130,7 +130,6 @@ const getZoneDomain = (cc) => {
   if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     throw new Error("Can't get base domain for bare metal!");
   }
-  // TODO: if we ever change toExtraData()'s key, this breaks
   return _.get(cc, ['extra', AWS_HOSTED_ZONE_ID, 'zoneToName', cc[AWS_HOSTED_ZONE_ID]]);
 };
 
@@ -145,8 +144,7 @@ export const getTectonicDomain = (cc) => {
   if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     return cc[BM_TECTONIC_DOMAIN];
   }
-  const tectonicDomain = cc[CLUSTER_SUBDOMAIN] + (cc[CLUSTER_SUBDOMAIN].endsWith('.') ? '' : '.') + getZoneDomain(cc);
-  return tectonicDomain;
+  return cc[CLUSTER_SUBDOMAIN] + (cc[CLUSTER_SUBDOMAIN].endsWith('.') ? '' : '.') + getZoneDomain(cc);
 };
 
 export const DEFAULT_CLUSTER_CONFIG = {
@@ -284,12 +282,11 @@ export const toAWS_TF = (cc, FORMS, opts = {}) => {
     ret.variables.tectonic_aws_external_vpc_id = cc[AWS_VPC_ID];
     ret.variables.tectonic_aws_external_master_subnet_ids = controllerSubnets;
     ret.variables.tectonic_aws_external_worker_subnet_ids = workerSubnets;
-    ret.variables.tectonic_aws_external_vpc_public = cc[AWS_CREATE_VPC] !== 'VPC_PRIVATE';
+    ret.variables.tectonic_aws_public_endpoints = cc[AWS_CREATE_VPC] !== 'VPC_PRIVATE';
   }
 
-  const privateZone = _.get(cc, toExtraData(AWS_HOSTED_ZONE_ID) + '.privateZones.' + cc[AWS_HOSTED_ZONE_ID]);
-  if (!privateZone && cc[AWS_SPLIT_DNS] === SPLIT_DNS_OFF) {
-    // ret.variables.tectonic_aws_external_private_zone = cc[AWS_HOSTED_ZONE_ID];
+  if (cc[AWS_CREATE_VPC] !== 'VPC_PRIVATE' && cc[AWS_SPLIT_DNS] === SPLIT_DNS_OFF) {
+    ret.variables.tectonic_aws_private_endpoints = false;
   }
 
   if (cc[CA_TYPE] === 'owned') {

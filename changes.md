@@ -20,6 +20,18 @@
  - StatefulSet rolling updates must be executed manually. [More details](https://github.com/coreos/tectonic-docs/blob/master/Documentation/troubleshooting/tectonic-upgrade.md#upgrading-statefulsets).
  - Existing VPCs must be tagged manually for the AWS cloud provider to work correctly. [More details](https://github.com/coreos/tectonic-docs/blob/master/Documentation/install/aws/requirements.md#using-an-existing-vpc).
 
+## Tectonic 1.7.1-tectonic.2 (2017-08-17)
+
+* Makes the Container Linux instances on Azure start on the latest available version
+* Fixes the tooltip preventing editing of CIDR inputs in the Installer
+* Fixes a validation issue for STS tokens in the Installer
+* Constrains the updater to go through every available versions
+
+## Tectonic 1.6.8-tectonic.1 (2017-08-17)
+
+* Updates to Kubernetes v1.6.8
+* Constrains the updater to go through every available versions
+ 
 ## Tectonic 1.7.1-tectonic.1 (2017-08-09)
 
 * Updates to Kubernetes v1.7.1.

@@ -8,7 +8,7 @@ import { DESELECTED_FIELDS } from '../cluster-config.js';
 
 export const cidrSize = cidr => {
   if (validate.CIDR(cidr)) {
-    return null;
+    return undefined;
   }
   const [, bits] = cidr.split('/');
 
@@ -20,7 +20,10 @@ const CIDRTooltip = connect(
   ({clusterConfig}, {field}) => ({clusterConfig: clusterConfig, value: _.get(clusterConfig, field)})
 )(({value}) => {
   const addresses = cidrSize(value);
-  return <div className="tooltip">{addresses} IP address{addresses > 1 && 'es'}</div>;
+  if (!_.isInteger(addresses)) {
+    return null;
+  }
+  return <div className="tooltip">{addresses.toLocaleString('en', {useGrouping: true})} IP address{addresses > 1 && 'es'}</div>;
 });
 
 export const CIDR = ({field, name, disabled, placeholder, autoFocus, validator, selectable, fieldName}) => {

@@ -1,18 +1,16 @@
 {
+  "custom_commands_path": "ui-tests/commands/",
   "globals_path": "ui-tests/globals.js",
-  "src_folders": [
-    "ui-tests/tests"
-  ],
-  "page_objects_path": "ui-tests/pages",
+  "page_objects_path": "ui-tests/pages/",
   "selenium": {
     "start_process": false
   },
+  "src_folders": [
+    "ui-tests/tests/"
+  ],
   "test_settings": {
     "default": {
-      "selenium_port": 9515,
-      "selenium_host": "localhost",
       "default_path_prefix": "",
-      "end_session_on_fail": false,
       "desiredCapabilities": {
         "browserName": "chrome",
         "loggingPrefs": {
@@ -26,7 +24,10 @@
           ]
         }
       },
-      "launch_url": "http://localhost:4444"
+      "end_session_on_fail": false,
+      "launch_url": "http://localhost:4444",
+      "selenium_host": "localhost",
+      "selenium_port": 9515
     }
   }
 }

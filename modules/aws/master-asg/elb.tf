@@ -1,4 +1,5 @@
 resource "aws_elb" "api_internal" {
+  count           = "${var.private_endpoints}"
   name            = "${var.cluster_name}-int"
   subnets         = ["${var.subnet_ids}"]
   internal        = true
@@ -31,6 +32,7 @@ resource "aws_elb" "api_internal" {
 }
 
 resource "aws_route53_record" "api_internal" {
+  count   = "${var.private_endpoints}"
   zone_id = "${var.internal_zone_id}"
   name    = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-api.${var.base_domain}"
   type    = "A"
@@ -43,7 +45,7 @@ resource "aws_route53_record" "api_internal" {
 }
 
 resource "aws_elb" "api_external" {
-  count           = "${var.public_vpc}"
+  count           = "${var.public_endpoints}"
   name            = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-ext"
   subnets         = ["${var.subnet_ids}"]
   internal        = false
@@ -76,7 +78,7 @@ resource "aws_elb" "api_external" {
 }
 
 resource "aws_route53_record" "api_external" {
-  count   = "${var.public_vpc}"
+  count   = "${var.public_endpoints}"
   zone_id = "${var.external_zone_id}"
   name    = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-api.${var.base_domain}"
   type    = "A"
@@ -91,7 +93,7 @@ resource "aws_route53_record" "api_external" {
 resource "aws_elb" "console" {
   name            = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-con"
   subnets         = ["${var.subnet_ids}"]
-  internal        = "${var.public_vpc ? false : true}"
+  internal        = "${var.public_endpoints ? false : true}"
   security_groups = ["${var.console_sg_ids}"]
 
   idle_timeout = 3600
@@ -126,7 +128,7 @@ resource "aws_elb" "console" {
 }
 
 resource "aws_route53_record" "ingress_public" {
-  count   = "${var.public_vpc}"
+  count   = "${var.public_endpoints}"
   zone_id = "${var.external_zone_id}"
   name    = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}.${var.base_domain}"
   type    = "A"
@@ -139,6 +141,7 @@ resource "aws_route53_record" "ingress_public" {
 }
 
 resource "aws_route53_record" "ingress_private" {
+  count   = "${var.private_endpoints}"
   zone_id = "${var.internal_zone_id}"
   name    = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}.${var.base_domain}"
   type    = "A"

@@ -63,7 +63,7 @@ module "etcd" {
 
   subnets = "${module.vpc.worker_subnet_ids}"
 
-  dns_zone_id  = "${var.tectonic_aws_external_private_zone == "" ? join("", aws_route53_zone.tectonic_int.*.zone_id) : var.tectonic_aws_external_private_zone}"
+  dns_zone_id  = "${var.tectonic_aws_private_endpoints ? data.null_data_source.zones.inputs["private"] : data.null_data_source.zones.inputs["public"]}"
   base_domain  = "${var.tectonic_base_domain}"
   cluster_name = "${var.tectonic_cluster_name}"
 
@@ -82,90 +82,94 @@ module "etcd" {
 }
 
 module "ignition_masters" {
-  source = "../../modules/aws/ignition"
+  source = "../../modules/ignition"
 
-  kubelet_node_label        = "node-role.kubernetes.io/master"
-  kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
-  kubelet_cni_bin_dir       = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
-  kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
-  kubeconfig_s3_location    = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
-  assets_s3_location        = "${aws_s3_bucket_object.tectonic_assets.bucket}/${aws_s3_bucket_object.tectonic_assets.key}"
-  container_images          = "${var.tectonic_container_images}"
-  bootkube_service          = "${module.bootkube.systemd_service}"
-  tectonic_service          = "${module.tectonic.systemd_service}"
-  tectonic_service_disabled = "${var.tectonic_vanilla_k8s}"
-  cluster_name              = "${var.tectonic_cluster_name}"
-  image_re                  = "${var.tectonic_image_re}"
+  cloud_provider       = "aws"
+  container_images     = "${var.tectonic_container_images}"
+  image_re             = "${var.tectonic_image_re}"
+  kube_dns_service_ip  = "${module.bootkube.kube_dns_service_ip}"
+  kubeconfig_fetch_cmd = "/opt/s3-puller.sh ${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key} /etc/kubernetes/kubeconfig"
+  kubelet_cni_bin_dir  = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
+  kubelet_node_label   = "node-role.kubernetes.io/master"
+  kubelet_node_taints  = "node-role.kubernetes.io/master=:NoSchedule"
 }
 
 module "masters" {
   source = "../../modules/aws/master-asg"
 
-  instance_count  = "${var.tectonic_master_count}"
-  ec2_type        = "${var.tectonic_aws_master_ec2_type}"
-  cluster_name    = "${var.tectonic_cluster_name}"
-  master_iam_role = "${var.tectonic_aws_master_iam_role_name}"
-
-  subnet_ids = "${module.vpc.master_subnet_ids}"
-
-  master_sg_ids  = "${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"
-  api_sg_ids     = ["${module.vpc.api_sg_id}"]
-  console_sg_ids = ["${module.vpc.console_sg_id}"]
-
-  ssh_key    = "${var.tectonic_aws_ssh_key}"
-  cl_channel = "${var.tectonic_cl_channel}"
-  user_data  = "${module.ignition_masters.ignition}"
-
-  internal_zone_id             = "${var.tectonic_aws_external_private_zone == "" ? join("", aws_route53_zone.tectonic_int.*.zone_id) : var.tectonic_aws_external_private_zone}"
-  external_zone_id             = "${join("", data.aws_route53_zone.tectonic_ext.*.zone_id)}"
-  base_domain                  = "${var.tectonic_base_domain}"
-  public_vpc                   = "${var.tectonic_aws_external_vpc_public}"
-  cluster_id                   = "${module.tectonic.cluster_id}"
-  extra_tags                   = "${var.tectonic_aws_extra_tags}"
+  api_sg_ids                   = ["${module.vpc.api_sg_id}"]
+  assets_s3_location           = "${aws_s3_bucket_object.tectonic_assets.bucket}/${aws_s3_bucket_object.tectonic_assets.key}"
   autoscaling_group_extra_tags = "${var.tectonic_autoscaling_group_extra_tags}"
+  base_domain                  = "${var.tectonic_base_domain}"
+  bootkube_service             = "${module.bootkube.systemd_service}"
+  cl_channel                   = "${var.tectonic_cl_channel}"
+  cluster_id                   = "${module.tectonic.cluster_id}"
+  cluster_name                 = "${var.tectonic_cluster_name}"
+  console_sg_ids               = ["${module.vpc.console_sg_id}"]
+  container_images             = "${var.tectonic_container_images}"
   custom_dns_name              = "${var.tectonic_dns_name}"
+  ec2_type                     = "${var.tectonic_aws_master_ec2_type}"
+  external_zone_id             = "${data.null_data_source.zones.inputs["public"]}"
+  extra_tags                   = "${var.tectonic_aws_extra_tags}"
+  image_re                     = "${var.tectonic_image_re}"
+  instance_count               = "${var.tectonic_master_count}"
+  internal_zone_id             = "${data.null_data_source.zones.inputs["private"]}"
+  master_iam_role              = "${var.tectonic_aws_master_iam_role_name}"
+  master_sg_ids                = "${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"
+  private_endpoints            = "${var.tectonic_aws_private_endpoints}"
+  public_endpoints             = "${var.tectonic_aws_public_endpoints}"
+  root_volume_iops             = "${var.tectonic_aws_master_root_volume_iops}"
+  root_volume_size             = "${var.tectonic_aws_master_root_volume_size}"
+  root_volume_type             = "${var.tectonic_aws_master_root_volume_type}"
+  ssh_key                      = "${var.tectonic_aws_ssh_key}"
+  subnet_ids                   = "${module.vpc.master_subnet_ids}"
+  tectonic_service             = "${module.tectonic.systemd_service}"
+  tectonic_service_disabled    = "${var.tectonic_vanilla_k8s}"
 
-  root_volume_type = "${var.tectonic_aws_master_root_volume_type}"
-  root_volume_size = "${var.tectonic_aws_master_root_volume_size}"
-  root_volume_iops = "${var.tectonic_aws_master_root_volume_iops}"
+  ign_docker_dropin_id          = "${module.ignition_masters.docker_dropin_id}"
+  ign_kubelet_service_id        = "${module.ignition_masters.kubelet_service_id}"
+  ign_locksmithd_service_id     = "${module.ignition_masters.locksmithd_service_id}"
+  ign_max_user_watches_id       = "${module.ignition_masters.max_user_watches_id}"
+  ign_s3_kubelet_env_service_id = "${module.ignition_masters.kubelet_env_service_id}"
+  ign_s3_puller_id              = "${module.ignition_masters.s3_puller_id}"
 }
 
 module "ignition_workers" {
-  source = "../../modules/aws/ignition"
+  source = "../../modules/ignition"
 
-  kubelet_node_label     = "node-role.kubernetes.io/node"
-  kubelet_node_taints    = ""
-  kubelet_cni_bin_dir    = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
-  kube_dns_service_ip    = "${module.bootkube.kube_dns_service_ip}"
-  kubeconfig_s3_location = "${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key}"
-  assets_s3_location     = ""
-  container_images       = "${var.tectonic_container_images}"
-  bootkube_service       = ""
-  tectonic_service       = ""
-  cluster_name           = ""
-  image_re               = "${var.tectonic_image_re}"
+  cloud_provider       = "aws"
+  container_images     = "${var.tectonic_container_images}"
+  image_re             = "${var.tectonic_image_re}"
+  kube_dns_service_ip  = "${module.bootkube.kube_dns_service_ip}"
+  kubeconfig_fetch_cmd = "/opt/s3-puller.sh ${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key} /etc/kubernetes/kubeconfig"
+  kubelet_cni_bin_dir  = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
+  kubelet_node_label   = "node-role.kubernetes.io/node"
+  kubelet_node_taints  = ""
 }
 
 module "workers" {
   source = "../../modules/aws/worker-asg"
 
-  instance_count  = "${var.tectonic_worker_count}"
-  ec2_type        = "${var.tectonic_aws_worker_ec2_type}"
-  cluster_name    = "${var.tectonic_cluster_name}"
-  worker_iam_role = "${var.tectonic_aws_worker_iam_role_name}"
-
-  vpc_id     = "${module.vpc.vpc_id}"
-  subnet_ids = "${module.vpc.worker_subnet_ids}"
-  sg_ids     = "${concat(var.tectonic_aws_worker_extra_sg_ids, list(module.vpc.worker_sg_id))}"
-
-  ssh_key                      = "${var.tectonic_aws_ssh_key}"
-  cl_channel                   = "${var.tectonic_cl_channel}"
-  user_data                    = "${module.ignition_workers.ignition}"
-  cluster_id                   = "${module.tectonic.cluster_id}"
-  extra_tags                   = "${var.tectonic_aws_extra_tags}"
   autoscaling_group_extra_tags = "${var.tectonic_autoscaling_group_extra_tags}"
+  cl_channel                   = "${var.tectonic_cl_channel}"
+  cluster_id                   = "${module.tectonic.cluster_id}"
+  cluster_name                 = "${var.tectonic_cluster_name}"
+  ec2_type                     = "${var.tectonic_aws_worker_ec2_type}"
+  extra_tags                   = "${var.tectonic_aws_extra_tags}"
+  instance_count               = "${var.tectonic_worker_count}"
+  root_volume_iops             = "${var.tectonic_aws_worker_root_volume_iops}"
+  root_volume_size             = "${var.tectonic_aws_worker_root_volume_size}"
+  root_volume_type             = "${var.tectonic_aws_worker_root_volume_type}"
+  sg_ids                       = "${concat(var.tectonic_aws_worker_extra_sg_ids, list(module.vpc.worker_sg_id))}"
+  ssh_key                      = "${var.tectonic_aws_ssh_key}"
+  subnet_ids                   = "${module.vpc.worker_subnet_ids}"
+  vpc_id                       = "${module.vpc.vpc_id}"
+  worker_iam_role              = "${var.tectonic_aws_worker_iam_role_name}"
 
-  root_volume_type = "${var.tectonic_aws_worker_root_volume_type}"
-  root_volume_size = "${var.tectonic_aws_worker_root_volume_size}"
-  root_volume_iops = "${var.tectonic_aws_worker_root_volume_iops}"
+  ign_docker_dropin_id          = "${module.ignition_workers.docker_dropin_id}"
+  ign_kubelet_service_id        = "${module.ignition_workers.kubelet_service_id}"
+  ign_locksmithd_service_id     = "${module.ignition_masters.locksmithd_service_id}"
+  ign_max_user_watches_id       = "${module.ignition_workers.max_user_watches_id}"
+  ign_s3_kubelet_env_service_id = "${module.ignition_workers.kubelet_env_service_id}"
+  ign_s3_puller_id              = "${module.ignition_workers.s3_puller_id}"
 }

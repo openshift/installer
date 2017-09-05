@@ -90,12 +90,21 @@ EOF
   default = ""
 }
 
-variable "tectonic_aws_external_vpc_public" {
+variable "tectonic_aws_private_endpoints" {
   default = true
 
   description = <<EOF
-If set to true, create public facing ingress resources (ELB, A-records).
-If set to false, a "private" cluster will be created with an internal ELB only.
+(optional) If set to true, create private-facing ingress resources (ELB, A-records).
+If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone.
+EOF
+}
+
+variable "tectonic_aws_public_endpoints" {
+  default = true
+
+  description = <<EOF
+(optional) If set to true, create public-facing ingress resources (ELB, A-records).
+If set to false, no public-facing ingress resources will be created.
 EOF
 }
 

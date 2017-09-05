@@ -26,6 +26,9 @@ systemd:
 {{ end }}
     - name: docker.service
       enable: true
+      dropins:
+        - name: 10-dockeropts.conf
+          contents: {{.ign_docker_dropin_json}}
     - name: locksmithd.service
       mask: true
     - name: kubelet.path
@@ -51,52 +54,14 @@ systemd:
         [Install]
         RequiredBy=kubelet.service
     - name: kubelet.service
-      contents: |
-        [Unit]
-        Description=Kubelet via Hyperkube ACI
-        [Service]
-        Environment="RKT_RUN_ARGS=--uuid-file-save=/var/run/kubelet-pod.uuid \
-          --volume=resolv,kind=host,source=/etc/resolv.conf \
-          --mount volume=resolv,target=/etc/resolv.conf \
-          --volume var-lib-cni,kind=host,source=/var/lib/cni \
-          --mount volume=var-lib-cni,target=/var/lib/cni \
-          --volume var-log,kind=host,source=/var/log \
-          --mount volume=var-log,target=/var/log"
-        EnvironmentFile=/etc/kubernetes/kubelet.env
-        ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
-        ExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d
-        ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets
-        ExecStartPre=/bin/mkdir -p /etc/kubernetes/inactive-manifests
-        ExecStartPre=/bin/mkdir -p /var/lib/cni
-        ExecStartPre=/usr/bin/bash -c "grep 'certificate-authority-data' /etc/kubernetes/kubeconfig | awk '{print $2}' | base64 -d > /etc/kubernetes/ca.crt"
-        ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/run/kubelet-pod.uuid
-        ExecStart=/usr/lib/coreos/kubelet-wrapper \
-          --kubeconfig=/etc/kubernetes/kubeconfig \
-          --require-kubeconfig \
-          --client-ca-file=/etc/kubernetes/ca.crt \
-          --anonymous-auth=false \
-          --cni-conf-dir=/etc/kubernetes/cni/net.d \
-          --network-plugin=cni \
-          --lock-file=/var/run/lock/kubelet.lock \
-          --exit-on-lock-contention \
-          --pod-manifest-path=/etc/kubernetes/manifests \
-          --allow-privileged \
-          --hostname-override={{.domain_name}} \
-          --node-labels=node-role.kubernetes.io/master \
-          {{.cni_bin_dir_flag}} \
-          --register-with-taints=node-role.kubernetes.io/master=:NoSchedule \
-          --cluster_dns={{.k8s_dns_service_ip}} \
-          --cluster_domain=cluster.local
-        ExecStop=-/usr/bin/rkt stop --uuid-file=/var/run/kubelet-pod.uuid
-        Restart=always
-        RestartSec=10
-        [Install]
-        WantedBy=multi-user.target
+      contents: {{.ign_kubelet_service_json}}
     - name: bootkube.service
       contents: |
         [Unit]
         Description=Bootstrap a Kubernetes cluster
         ConditionPathExists=!/opt/tectonic/init_bootkube.done
+        Wants=kubelet.service
+        After=kubelet.service
         [Service]
         Type=oneshot
         RemainAfterExit=true
@@ -132,9 +97,7 @@ storage:
       filesystem: root
       mode: 0644
       contents:
-        inline: |
-          KUBELET_IMAGE_URL={{.kubelet_image_url}}
-          KUBELET_IMAGE_TAG={{.kubelet_image_tag}}
+        inline: {{.ign_kubelet_env_json}}
     - path: /etc/hostname
       filesystem: root
       mode: 0644
@@ -143,9 +106,9 @@ storage:
           {{.domain_name}}
     - path: /etc/sysctl.d/max-user-watches.conf
       filesystem: root
+      mode: 0644
       contents:
-        inline: |
-          fs.inotify.max_user_watches=16184
+        inline: {{.ign_max_user_watches_json}}
 passwd:
   users:
     - name: core

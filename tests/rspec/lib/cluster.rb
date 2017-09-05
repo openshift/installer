@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'kubectl_helpers'
 require 'securerandom'
 require 'jenkins'
@@ -9,18 +11,18 @@ class Cluster
   MAX_NAME_LENGTH = 28
   RANDOM_HASH_LENGTH = 5
 
-  attr_reader :tfvars_file, :kubeconfig, :manifest_path
+  attr_reader :tfvars_file, :kubeconfig, :manifest_path, :build_path
 
-  def initialize(prefix, tfvars_file_path)
+  def initialize(tfvars_file)
+    @tfvars_file = tfvars_file
+
     # Enable local testers to specify a static cluster name
     # S3 buckets can only handle lower case names
-    @name = (ENV['CLUSTER'] || generate_name(prefix)).downcase
+    @name = (ENV['CLUSTER'] || generate_name(tfvars_file.prefix)).downcase
 
-    @tfvars_file = TFVarsFile.new(tfvars_file_path)
-
-    @manifest_path = `echo $(realpath ../../build)/#{@name}/generated`
-                     .delete("\n")
-    @kubeconfig = manifest_path + '/auth/kubeconfig'
+    @build_path = File.join(File.realpath('../../'), "build/#{@name}")
+    @manifest_path = File.join(@build_path, 'generated')
+    @kubeconfig = File.join(manifest_path, 'auth/kubeconfig')
   end
 
   def start
@@ -34,6 +36,7 @@ class Cluster
 
   def stop
     destroy
+    clean
   end
 
   def check_prerequisites
@@ -85,7 +88,15 @@ class Cluster
       return if system(env_variables, 'make -C ../.. destroy')
     end
 
+    recover_from_failed_destroy
     raise 'Destroying cluster failed'
+  end
+
+  def recover_from_failed_destroy() end
+
+  def clean
+    succeeded = system(env_variables, 'make -C ../.. clean')
+    raise 'could not clean build directory' unless succeeded
   end
 
   def wait_til_ready
@@ -110,7 +121,7 @@ class Cluster
       name = "#{prefix}-#{branch_name}-#{build_id}"
     end
 
-    name = name[0..(MAX_NAME_LENGTH - RANDOM_HASH_LENGTH)]
+    name = name[0..(MAX_NAME_LENGTH - RANDOM_HASH_LENGTH - 1)]
     name += SecureRandom.hex[0...RANDOM_HASH_LENGTH]
     name
   end

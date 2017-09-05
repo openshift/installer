@@ -1,14 +1,10 @@
-const installerInput = require('../utils/awsInstallerInput');
+const nodesPageCommands = {
+  test() {
+    this.click('#selfHosted');
+  },
+};
 
 module.exports = {
-  url: '',
-  elements: {
-    etcdOption: {
-      selector: `#${installerInput.etcdOption()}`,
-    },
-    nextStep: {
-      selector: '//*[text()[contains(.,"Next Step")]]',
-      locateStrategy: 'xpath',
-    },
-  },
+  commands: [nodesPageCommands],
+  elements: {},
 };

@@ -114,14 +114,18 @@ export class Header extends React.Component {
             <Dropdown items={openSourceDdItems} header="Open Source" />
           </li>
           <li className="tectonic-dropdown-menu-title">
-            <a href="https://coreos.com/tectonic/docs/latest/" target="_blank" className="tectonic-dropdown-menu-title__link">Tectonic Docs</a>
+            {/* eslint-disable react/jsx-no-target-blank */}
+            <a href="https://coreos.com/tectonic/docs/latest/" rel="noopener" target="_blank" className="tectonic-dropdown-menu-title__link">Tectonic Docs</a>
+            {/* eslint-enable react/jsx-no-target-blank */}
           </li>
         </ul>
         <div className="co-navbar--right">
           <ul className="co-navbar-nav">
             {latestRelease && hasNewVersion(latestRelease) && <li className="co-navbar-nav-item__version">
               <span className="co-navbar-nav-item__version--new">
-                New installer version: <a href="https://coreos.com/tectonic/releases/" target="_blank">Release notes {latestRelease}</a>
+                {/* eslint-disable react/jsx-no-target-blank */}
+                New installer version: <a href="https://coreos.com/tectonic/releases/" rel="noopener" target="_blank">Release notes {latestRelease}</a>
+                {/* eslint-enable react/jsx-no-target-blank */}
               </span>
             </li>}
             <li className="co-navbar-nav-item__version">

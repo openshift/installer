@@ -64,25 +64,22 @@ const Pager = withNav(
 
     return (
       <div className="wiz-form__actions">
-        {
-          showPrev && <button onClick={navPrevious} className="btn btn-default wiz-form__actions__prev">
+        {showPrev && <button onClick={navPrevious} className="btn btn-default wiz-form__actions__prev">
           Previous Step
-          </button>
+        </button>
         }
         {resetBtn && <div className="wiz-form__actions__prev">
           <ResetButton />
         </div>
         }
-        {
-          showNext &&
-          <div className="wiz-form__actions__next">
-            <WithTooltip text="All fields are required unless specified." shouldShow={disableNext}>
-              <button onClick={navNext} className={nextLinkClasses}>
-                {loadingNext && <span><i className="fa fa-spin fa-circle-o-notch"></i>{' '}</span>}
-                Next Step
-              </button>
-            </WithTooltip>
-          </div>
+        {showNext && <div className="wiz-form__actions__next">
+          <WithTooltip text="All fields are required unless specified." shouldShow={disableNext}>
+            <button onClick={navNext} className={nextLinkClasses}>
+              {loadingNext && <span><i className="fa fa-spin fa-circle-o-notch"></i>{' '}</span>}
+              Next Step
+            </button>
+          </WithTooltip>
+        </div>
         }
       </div>
     );
@@ -192,13 +189,12 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
                     {routes.map(r => <Route exact key={r.path} path={r.path} render={() => <r.component />} />)}
                   </Switch>
                 </div>
-                {
-                  currentPage.hidePager ||
+                {currentPage.hidePager ||
                   <Pager
                     showPrev={!!t.previousFrom(currentPage)}
                     showNext={!!t.nextFrom(currentPage)}
                     disableNext={!canNavigateForward(state)}
-                    resetBtn={t.canReset} />
+                    resetBtn={currentPage.canReset} />
                 }
               </div>
             </div>
@@ -207,7 +203,8 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
         </div>
       );
     }
-  })));
+  }
+)));
 
 export const Base = connect(
   ({cluster, serverFacts}) => {

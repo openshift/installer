@@ -3,7 +3,7 @@
 // 1. login as the admin user to the Tectonic Console.
 // 2. generate DNS zones for some providers.
 // 
-// Note: This field MUST be set manually prior to creating the cluster.
+// Note: This field MUST be in all lower-case e-mail address format and set manually prior to creating the cluster.
 tectonic_admin_email = ""
 
 // The bcrypt hash of admin user password to login to the Tectonic Console.
@@ -54,10 +54,6 @@ tectonic_aws_etcd_root_volume_type = "gp2"
 // Example: `vpc-123456`
 // tectonic_aws_external_vpc_id = ""
 
-// If set to true, create public facing ingress resources (ELB, A-records).
-// If set to false, a "private" cluster will be created with an internal ELB only.
-tectonic_aws_external_vpc_public = true
-
 // (optional) List of subnet IDs within an existing VPC to deploy worker nodes into.
 // Required to use an existing VPC and the list must match the AZ count.
 // 
@@ -97,6 +93,14 @@ tectonic_aws_master_root_volume_size = "30"
 
 // The type of volume for the root block device of master nodes.
 tectonic_aws_master_root_volume_type = "gp2"
+
+// (optional) If set to true, create private-facing ingress resources (ELB, A-records).
+// If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone.
+// tectonic_aws_private_endpoints = true
+
+// (optional) If set to true, create public-facing ingress resources (ELB, A-records).
+// If set to false, no public-facing ingress resources will be created.
+// tectonic_aws_public_endpoints = true
 
 // The target AWS region for the cluster.
 tectonic_aws_region = "eu-west-1"

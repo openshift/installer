@@ -30,7 +30,7 @@ resource "aws_autoscaling_group" "masters" {
   launch_configuration = "${aws_launch_configuration.master_conf.id}"
   vpc_zone_identifier  = ["${var.subnet_ids}"]
 
-  load_balancers = ["${compact(concat(list(aws_elb.api_internal.id), list(aws_elb.console.id), aws_elb.api_external.*.id))}"]
+  load_balancers = ["${compact(concat(aws_elb.api_internal.*.id, list(aws_elb.console.id), aws_elb.api_external.*.id))}"]
 
   tags = [
     {
@@ -63,8 +63,8 @@ resource "aws_launch_configuration" "master_conf" {
   key_name                    = "${var.ssh_key}"
   security_groups             = ["${var.master_sg_ids}"]
   iam_instance_profile        = "${aws_iam_instance_profile.master_profile.arn}"
-  associate_public_ip_address = "${var.public_vpc}"
-  user_data                   = "${var.user_data}"
+  associate_public_ip_address = "${var.public_endpoints}"
+  user_data                   = "${data.ignition_config.main.rendered}"
 
   lifecycle {
     create_before_destroy = true

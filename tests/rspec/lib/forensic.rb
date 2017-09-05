@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'ssh'
 
 # Forensic contains helper functions to run the cluster forensic scripts

@@ -1,28 +1,15 @@
-const installerInput = require('../utils/bareMetalInstallerInput');
-const inputJson = installerInput.buildExpectedJson();
-
 const clusterDnsPageCommands = {
-  enterDnsNames() {
+  test(json) {
     return this
-      .setValue('@controllerDomain', inputJson.tectonic_metal_controller_domain)
-      .setValue('@tectonicDomain', inputJson.tectonic_metal_ingress_domain)
-      .click('@nextStep');
+      .setField('@controllerDomain', json.tectonic_metal_controller_domain)
+      .setField('@tectonicDomain', json.tectonic_metal_ingress_domain);
   },
 };
 
 module.exports = {
-  url: '',
   commands: [clusterDnsPageCommands],
   elements: {
-    controllerDomain: {
-      selector: 'input[id=controllerDomain]',
-    },
-    tectonicDomain: {
-      selector: 'input[id=tectonicDomain]',
-    },
-    nextStep: {
-      selector: '//*[text()[contains(.,"Next Step")]]',
-      locateStrategy: 'xpath',
-    },
+    controllerDomain: 'input#controllerDomain',
+    tectonicDomain: 'input#tectonicDomain',
   },
 };

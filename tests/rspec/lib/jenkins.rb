@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'env_var'
 
 # Jenkins contains helper functions to interact with Jenkins

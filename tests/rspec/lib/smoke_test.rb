@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # SmokeTest contains helper functions to operate the smoke tests written in
 # golang
 module SmokeTest

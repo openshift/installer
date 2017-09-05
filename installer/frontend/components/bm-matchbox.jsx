@@ -121,9 +121,11 @@ export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
         <div className="col-sm-12">
           <div className="form-group">Matchbox will provision nodes during network boot. Enter the matchbox endpoints.</div>
           <div className="form-group">To find your matchbox endpoints, follow the instructions in the {' '}
-            <a href="https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html" onClick={() => TectonicGA.sendDocsEvent('bare-metal-tf')} target="_blank">
-            Tectonic Deploy Documentation
+            {/* eslint-disable react/jsx-no-target-blank */}
+            <a href="https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html" onClick={() => TectonicGA.sendDocsEvent('bare-metal-tf')} rel="noopener" target="_blank">
+              Tectonic Deploy Documentation
             </a>.
+            {/* eslint-enable react/jsx-no-target-blank */}
           </div>
           <div className="form-group">
             <div className="row">

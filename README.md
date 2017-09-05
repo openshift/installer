@@ -4,15 +4,15 @@ Tectonic is built on pure-upstream Kubernetes but has an opinion on the best way
 
 Goals of the project:
 
-- Installation of [Self-Hosted Kubernetes Cluster](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/self-hosted-kubernetes.md)
-- Secure by default (use TLS, RBAC by default, OIDC AuthN, etcd)
+- Install [Self-Hosted Kubernetes Clusters](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/self-hosted-kubernetes.md)
+- Secure by default (uses TLS, RBAC by default, OIDC AuthN, etcd)
 - Automatable install process for scripts and CI/CD
-- Deploy Tectonic on any infrastructure (Amazon, Azure, OpenStack, GCP, etc)
-- Runs Tectonic on any OS (Container Linux, RHEL, CentOS, etc)
-- Customizable and modular (change DNS providers, security settings, etc)
-- HA by default (deploy all Kubernetes components HA, use etcd Operator)
+- Deploy on any infrastructure: Amazon AWS, Microsoft Azure, OpenStack, Google Cloud, bare metal
+- Run on any OS: Container Linux (the default), [RHEL](Documentation/install/rhel/installing-workers.md#installing-tectonic-workers-on-red-hat-enterprise-linux), Ubuntu, and others
+- Customizable and modular: Change DNS providers, security settings, authentication providers
+- Highly Available by default: Deploy all Kubernetes components HA, use etcd Operator
 
-Checkout the [ROADMAP](ROADMAP.md) for details on where the project is headed.
+Check the [ROADMAP](ROADMAP.md) for details on where the project is headed.
 
 ## Getting Started
 

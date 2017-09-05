@@ -4,8 +4,8 @@ module "bootkube" {
 
   cluster_name = "${var.tectonic_cluster_name}"
 
-  kube_apiserver_url = "https://${module.masters.api_internal_fqdn}:443"
-  oidc_issuer_url    = "https://${module.masters.ingress_internal_fqdn}/identity"
+  kube_apiserver_url = "https://${var.tectonic_aws_private_endpoints ? module.masters.api_internal_fqdn : module.masters.api_external_fqdn}:443"
+  oidc_issuer_url    = "https://${var.tectonic_aws_private_endpoints ? module.masters.ingress_internal_fqdn : module.masters.ingress_external_fqdn}/identity"
 
   # Platform-independent variables wiring, do not modify.
   container_images = "${var.tectonic_container_images}"
@@ -74,8 +74,8 @@ module "tectonic" {
 
   cluster_name = "${var.tectonic_cluster_name}"
 
-  base_address       = "${module.masters.ingress_internal_fqdn}"
-  kube_apiserver_url = "https://${module.masters.api_internal_fqdn}:443"
+  base_address       = "${var.tectonic_aws_private_endpoints ? module.masters.ingress_internal_fqdn : module.masters.ingress_external_fqdn}"
+  kube_apiserver_url = "https://${var.tectonic_aws_private_endpoints ? module.masters.api_internal_fqdn : module.masters.api_external_fqdn}:443"
 
   # Platform-independent variables wiring, do not modify.
   container_images = "${var.tectonic_container_images}"
@@ -119,7 +119,7 @@ module "flannel-vxlan" {
 module "calico-network-policy" {
   source = "../../modules/net/calico-network-policy"
 
-  kube_apiserver_url = "https://${module.masters.api_internal_fqdn}:443"
+  kube_apiserver_url = "https://${var.tectonic_aws_private_endpoints ? module.masters.api_internal_fqdn : module.masters.api_external_fqdn}:443"
   calico_image       = "${var.tectonic_container_images["calico"]}"
   calico_cni_image   = "${var.tectonic_container_images["calico_cni"]}"
   cluster_cidr       = "${var.tectonic_cluster_cidr}"

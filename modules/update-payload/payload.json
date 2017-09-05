@@ -40,7 +40,7 @@
                     }
                   }
                 ],
-                "image": "quay.io/coreos/tectonic-channel-operator:0.5.2",
+                "image": "quay.io/coreos/tectonic-channel-operator:0.5.3",
                 "name": "tectonic-channel-operator",
                 "resources": {
                   "limits": {
@@ -115,7 +115,7 @@
                   "--cache-images=true",
                   "--version-mapping=/upgrade-spec.json"
                 ],
-                "image": "quay.io/coreos/kube-version-operator:v1.7.3-kvo.2",
+                "image": "quay.io/coreos/kube-version-operator:v1.7.3-kvo.3",
                 "name": "kube-version-operator"
               }
             ],
@@ -282,7 +282,7 @@
                   "-logtostderr=true",
                   "-v=4"
                 ],
-                "image": "quay.io/coreos/tectonic-prometheus-operator:v1.5.1",
+                "image": "quay.io/coreos/tectonic-prometheus-operator:v1.5.2",
                 "name": "tectonic-prometheus-operator",
                 "resources": {
                   "limits": {
@@ -354,7 +354,7 @@
         "name": "tectonic-monitoring",
         "namespace": "tectonic-system"
       },
-      "version": "1.5.1"
+      "version": "1.5.2"
     }
   ]
 }

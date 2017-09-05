@@ -1,29 +1,17 @@
 const consoleLoginPageCommands = {
-  enterLoginCredentails(adminEmail) {
+  test(json) {
     return this
-      .setValue('@email', adminEmail)
-      .setValue('@password', 'password')
-      .setValue('@confirmPassword', 'password')
-      .click('@nextStep');
+      .setField('@email', json.tectonic_admin_email)
+      .setField('@password', 'password')
+      .setField('@confirmPassword', 'password');
   },
 };
 
 module.exports = {
-  url: '',
   commands: [consoleLoginPageCommands],
   elements: {
-    email: {
-      selector: 'input[id=adminEmail]',
-    },
-    password: {
-      selector: 'input[id=adminPassword]',
-    },
-    confirmPassword: {
-      selector: 'input[id=adminPassword2]',
-    },
-    nextStep: {
-      selector: '//*[text()[contains(.,"Next Step")]]',
-      locateStrategy: 'xpath',
-    },
+    email: 'input#adminEmail',
+    password: 'input#adminPassword',
+    confirmPassword: 'input#adminPassword2',
   },
 };

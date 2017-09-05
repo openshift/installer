@@ -1,39 +1,19 @@
-const util = require('util');
-
 const awsCredentialsPageCommands = {
-  enterAwsCredentials() {
+  test(json) {
+    const regionOption = `select#awsRegion option[value=${json.tectonic_aws_region}]`;
     return this
-      .setValue('@awsAccessKey', process.env.AWS_ACCESS_KEY_ID)
-      .setValue('@secretAccesskey', process.env.AWS_SECRET_ACCESS_KEY);
+      .setField('@awsAccessKey', process.env.AWS_ACCESS_KEY_ID)
+      .setField('@secretAccesskey', process.env.AWS_SECRET_ACCESS_KEY)
+      .waitForElementPresent(regionOption, 60000)
+      .click(regionOption)
+      .expect.element(regionOption).to.be.selected;
   },
 };
 
 module.exports = {
-  url: '',
-  commands: [
-    awsCredentialsPageCommands, {
-      el: function(elementName, data) {
-        const element = this.elements[elementName.slice(1)];
-        return util.format(element.selector, data);
-      },
-    }, {
-      nextStep() {
-        return this
-          .click('@nextStep');
-      },
-    },
-  ],
+  commands: [awsCredentialsPageCommands],
   elements: {
-    awsAccessKey: {
-      selector: 'input[id=accessKeyId]',
-    },
-    secretAccesskey: {
-      selector: 'input[id=secretAccessKey]',
-    },
-    region: "option[value='%s']",
-    nextStep: {
-      selector: '//*[text()[contains(.,"Next Step")]]',
-      locateStrategy: 'xpath',
-    },
+    awsAccessKey: 'input#accessKeyId',
+    secretAccesskey: 'input#secretAccessKey',
   },
 };

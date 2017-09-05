@@ -19,6 +19,17 @@ resource "matchbox_group" "coreos_install" {
 
 // DO NOT PLACE SECRETS IN USER-DATA
 
+module "ignition_masters" {
+  source = "../../modules/ignition"
+
+  container_images    = "${var.tectonic_container_images}"
+  image_re            = "${var.tectonic_image_re}"
+  kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
+  kubelet_cni_bin_dir = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
+  kubelet_node_label  = "node-role.kubernetes.io/master"
+  kubelet_node_taints = "node-role.kubernetes.io/master=:NoSchedule"
+}
+
 resource "matchbox_group" "controller" {
   count   = "${length(var.tectonic_metal_controller_names)}"
   name    = "${format("%s-%s", var.tectonic_cluster_name, element(var.tectonic_metal_controller_names, count.index))}"
@@ -31,8 +42,6 @@ resource "matchbox_group" "controller" {
 
   metadata {
     domain_name        = "${element(var.tectonic_metal_controller_domains, count.index)}"
-    k8s_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
-    cni_bin_dir_flag   = "${var.tectonic_calico_network_policy ? "--cni-bin-dir=/var/lib/cni/bin" : "" }"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
     exclude_tectonic   = "${var.tectonic_vanilla_k8s}"
 
@@ -54,7 +63,23 @@ resource "matchbox_group" "controller" {
     etcd_image_tag    = "v${var.tectonic_versions["etcd"]}"
     kubelet_image_url = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$1")}"
     kubelet_image_tag = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$2")}"
+
+    ign_docker_dropin_json    = "${jsonencode(module.ignition_masters.docker_dropin_rendered)}"
+    ign_kubelet_env_json      = "${jsonencode(module.ignition_masters.kubelet_env_rendered)}"
+    ign_kubelet_service_json  = "${jsonencode(module.ignition_masters.kubelet_service_rendered)}"
+    ign_max_user_watches_json = "${jsonencode(module.ignition_masters.max_user_watches_rendered)}"
   }
+}
+
+module "ignition_workers" {
+  source = "../../modules/ignition"
+
+  container_images    = "${var.tectonic_container_images}"
+  image_re            = "${var.tectonic_image_re}"
+  kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
+  kubelet_cni_bin_dir = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
+  kubelet_node_label  = "node-role.kubernetes.io/node"
+  kubelet_node_taints = ""
 }
 
 resource "matchbox_group" "worker" {
@@ -69,13 +94,16 @@ resource "matchbox_group" "worker" {
 
   metadata {
     domain_name        = "${element(var.tectonic_metal_worker_domains, count.index)}"
-    k8s_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
-    cni_bin_dir_flag   = "${var.tectonic_calico_network_policy ? "--cni-bin-dir=/var/lib/cni/bin" : "" }"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
 
     # extra data
     kubelet_image_url  = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$1")}"
     kubelet_image_tag  = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$2")}"
     kube_version_image = "${var.tectonic_container_images["kube_version"]}"
+
+    ign_docker_dropin_json       = "${jsonencode(module.ignition_workers.docker_dropin_rendered)}"
+    ign_kubelet_env_service_json = "${jsonencode(module.ignition_workers.kubelet_env_service_rendered)}"
+    ign_kubelet_service_json     = "${jsonencode(module.ignition_workers.kubelet_service_rendered)}"
+    ign_max_user_watches_json    = "${jsonencode(module.ignition_workers.max_user_watches_rendered)}"
   }
 }

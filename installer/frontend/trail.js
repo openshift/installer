@@ -53,6 +53,7 @@ const dryRunPage = {
   path: '/define/advanced',
   component: DryRun,
   title: 'Download Assets',
+  canReset: true,
 };
 
 const etcdPage = {
@@ -80,6 +81,7 @@ const TFPowerOnPage = {
   path: '/boot/tf/poweron',
   component: TF_PowerOn,
   title: 'Start Installation',
+  canReset: true,
 };
 
 const usersPage = {
@@ -190,9 +192,9 @@ export const sections = new Map([
     certificateAuthorityPage,
     bmMatchboxPage,
     bmCredentialsPage,
-    bmNetworkConfigPage,
     bmControllersPage,
     bmWorkersPage,
+    bmNetworkConfigPage,
     etcdPage,
     bmSshKeysPage,
     usersPage,
@@ -232,8 +234,7 @@ sections.forEach((v, k) => {
 //    - moving from one page to some previous pages
 //    - presenting a (possibly disabled) list of all pages
 export class Trail {
-  constructor(trailSections, whitelist, opts = {}) {
-    this.canReset = opts.canReset;
+  constructor(trailSections, whitelist) {
     this.sections = trailSections;
     const sectionPages = this.sections.reduce((ls, l) => ls.concat(l), []);
     sectionPages.forEach(p => {
@@ -342,7 +343,7 @@ export const trail = ({cluster, clusterConfig, commitState}) => {
   const submitted = ready || (phase === commitPhases.SUCCEEDED);
   if (submitted) {
     if (clusterConfig[DRY_RUN]) {
-      return new Trail([sections.bootDryRun], null, {canReset: true});
+      return new Trail([sections.bootDryRun]);
     }
     return platformToSection[platform].boot;
   }

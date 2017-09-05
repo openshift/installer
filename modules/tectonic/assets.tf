@@ -53,7 +53,7 @@ resource "template_dir" "tectonic" {
     update_app_id  = "${var.update_app_id}"
 
     admin_user_id       = "${random_id.admin_user_id.b64}"
-    admin_email         = "${var.admin_email}"
+    admin_email         = "${lower(var.admin_email)}"
     admin_password_hash = "${var.admin_password_hash}"
 
     console_base_address = "${var.base_address}"

@@ -27,7 +27,7 @@ export const Users = () => <div>
     </div>
     <div className="col-sm-8">
       <Connect field={ADMIN_EMAIL} validator={validate.email}>
-        <Input placeholder="admin@example.com" />
+        <Input type="email" placeholder="admin@example.com" />
       </Connect>
     </div>
   </div>

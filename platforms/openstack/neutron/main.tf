@@ -117,6 +117,17 @@ data "null_data_source" "local" {
   }
 }
 
+module "ignition_masters" {
+  source = "../../../modules/ignition"
+
+  container_images    = "${var.tectonic_container_images}"
+  image_re            = "${var.tectonic_image_re}"
+  kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
+  kubelet_cni_bin_dir = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
+  kubelet_node_label  = "node-role.kubernetes.io/master"
+  kubelet_node_taints = "node-role.kubernetes.io/master=:NoSchedule"
+}
+
 module "master_nodes" {
   source = "../../../modules/openstack/nodes"
 
@@ -125,21 +136,31 @@ search ${var.tectonic_base_domain}
 ${join("\n", formatlist("nameserver %s", var.tectonic_openstack_dns_nameservers))}
 EOF
 
-  kubeconfig_content           = "${module.bootkube.kubeconfig}"
-  cluster_name                 = "${var.tectonic_cluster_name}"
-  instance_count               = "${var.tectonic_master_count}"
-  kube_image_url               = "${data.null_data_source.local.outputs.kube_image_url}"
-  kube_image_tag               = "${data.null_data_source.local.outputs.kube_image_tag}"
-  tectonic_kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
-  core_public_keys             = ["${module.secrets.core_public_key_openssh}"]
-  bootkube_service             = "${module.bootkube.systemd_service}"
-  tectonic_service             = "${module.tectonic.systemd_service}"
-  hostname_infix               = "master"
-  node_labels                  = "node-role.kubernetes.io/master"
-  node_taints                  = "node-role.kubernetes.io/master=:NoSchedule"
-  kubelet_cni_bin_dir          = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
-  tectonic_experimental        = "${var.tectonic_experimental}"
-  tectonic_service_disabled    = "${var.tectonic_vanilla_k8s}"
+  bootkube_service          = "${module.bootkube.systemd_service}"
+  cluster_name              = "${var.tectonic_cluster_name}"
+  core_public_keys          = ["${module.secrets.core_public_key_openssh}"]
+  hostname_infix            = "master"
+  instance_count            = "${var.tectonic_master_count}"
+  kubeconfig_content        = "${module.bootkube.kubeconfig}"
+  tectonic_service          = "${module.tectonic.systemd_service}"
+  tectonic_service_disabled = "${var.tectonic_vanilla_k8s}"
+
+  ign_docker_dropin_id      = "${module.ignition_masters.docker_dropin_id}"
+  ign_kubelet_env_id        = "${module.ignition_masters.kubelet_env_id}"
+  ign_kubelet_service_id    = "${module.ignition_masters.kubelet_service_id}"
+  ign_locksmithd_service_id = "${module.ignition_masters.locksmithd_service_id}"
+  ign_max_user_watches_id   = "${module.ignition_masters.max_user_watches_id}"
+}
+
+module "ignition_workers" {
+  source = "../../../modules/ignition"
+
+  container_images    = "${var.tectonic_container_images}"
+  image_re            = "${var.tectonic_image_re}"
+  kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
+  kubelet_cni_bin_dir = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
+  kubelet_node_label  = "node-role.kubernetes.io/node"
+  kubelet_node_taints = ""
 }
 
 module "worker_nodes" {
@@ -150,20 +171,20 @@ search ${var.tectonic_base_domain}
 ${join("\n", formatlist("nameserver %s", var.tectonic_openstack_dns_nameservers))}
 EOF
 
-  kubeconfig_content           = "${module.bootkube.kubeconfig}"
-  cluster_name                 = "${var.tectonic_cluster_name}"
-  instance_count               = "${var.tectonic_worker_count}"
-  kube_image_url               = "${data.null_data_source.local.outputs.kube_image_url}"
-  kube_image_tag               = "${data.null_data_source.local.outputs.kube_image_tag}"
-  tectonic_kube_dns_service_ip = "${module.bootkube.kube_dns_service_ip}"
-  core_public_keys             = ["${module.secrets.core_public_key_openssh}"]
-  bootkube_service             = ""
-  tectonic_service             = ""
-  hostname_infix               = "worker"
-  node_labels                  = "node-role.kubernetes.io/node"
-  node_taints                  = ""
-  kubelet_cni_bin_dir          = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
-  tectonic_service_disabled    = "${var.tectonic_vanilla_k8s}"
+  bootkube_service          = ""
+  cluster_name              = "${var.tectonic_cluster_name}"
+  core_public_keys          = ["${module.secrets.core_public_key_openssh}"]
+  hostname_infix            = "worker"
+  instance_count            = "${var.tectonic_worker_count}"
+  kubeconfig_content        = "${module.bootkube.kubeconfig}"
+  tectonic_service          = ""
+  tectonic_service_disabled = "${var.tectonic_vanilla_k8s}"
+
+  ign_docker_dropin_id      = "${module.ignition_workers.docker_dropin_id}"
+  ign_kubelet_env_id        = "${module.ignition_masters.kubelet_env_id}"
+  ign_kubelet_service_id    = "${module.ignition_workers.kubelet_service_id}"
+  ign_locksmithd_service_id = "${module.ignition_workers.locksmithd_service_id}"
+  ign_max_user_watches_id   = "${module.ignition_workers.max_user_watches_id}"
 }
 
 module "secrets" {
@@ -193,7 +214,7 @@ module "dns" {
   master_count     = "${var.tectonic_master_count}"
   master_ips       = "${openstack_networking_port_v2.master.*.all_fixed_ips}"
   worker_count     = "${var.tectonic_worker_count}"
-  worker_ips       = "${openstack_networking_port_v2.worker.*.all_fixed_ips}"
+  worker_ips       = "${openstack_networking_floatingip_v2.worker.*.address}"
 
   tectonic_experimental = "${var.tectonic_experimental}"
   tectonic_vanilla_k8s  = "${var.tectonic_vanilla_k8s}"
