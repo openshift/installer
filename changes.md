@@ -18,7 +18,7 @@
 
 ### Known Issues
  - StatefulSet rolling updates must be executed manually. [More details]().
- - Existing VPCs must be tagged manually for the AWS cloud provider to work correctly. [More details]().
+ - Existing VPCs must be tagged manually for the AWS cloud provider to work correctly. [More details](https://github.com/coreos/tectonic-docs/blob/master/Documentation/install/aws/requirements.md#using-an-existing-vpc).
 
 ## Tectonic 1.7.1-tectonic.1 (2017-08-09)
 
