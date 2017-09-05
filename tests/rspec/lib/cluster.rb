@@ -23,13 +23,18 @@ class Cluster
     @build_path = File.join(File.realpath('../../'), "build/#{@name}")
     @manifest_path = File.join(@build_path, 'generated')
     @kubeconfig = File.join(manifest_path, 'auth/kubeconfig')
-  end
 
-  def start
     check_prerequisites
     localconfig
     prepare_assets
-    plan
+  end
+
+  def plan
+    succeeded = system(env_variables, 'make -C ../.. plan')
+    raise 'Planning cluster failed' unless succeeded
+  end
+
+  def start
     apply
     wait_til_ready
   end
@@ -71,11 +76,6 @@ class Cluster
   def localconfig
     succeeded = system(env_variables, 'make -C ../.. localconfig')
     raise 'Run localconfig failed' unless succeeded
-  end
-
-  def plan
-    succeeded = system(env_variables, 'make -C ../.. plan')
-    raise 'Planning cluster failed' unless succeeded
   end
 
   def apply
