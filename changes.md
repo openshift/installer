@@ -1,5 +1,25 @@
 # Tectonic Changelog
 
+## Tectonic 1.7.3-tectonic.1 (2017-09-05)
+
+### Core Components
+ - Updates to Kubernetes v1.7.3
+
+### Console
+ - New Quick Start Guide for new users to Console.
+ -  - Namespace selector shows only namespaces scoped to the user. Useful for using a restricted RBAC role.
+ - Console redirects to the desired page after login rather than the cluster status page.
+ - Improved ability to editing the YAML definition of Prometheus instances.
+ - Improved automated operations UI for updates in progress
+
+### Tectonic Installer
+ - AWS accounts with a large amount of hosted zones are now paginated properly
+ - UI enhancements around installation progress
+
+### Known Issues
+ - StatefulSet rolling updates must be executed manually. [More details](https://github.com/coreos/tectonic-docs/blob/master/Documentation/troubleshooting/tectonic-upgrade.md#upgrading-statefulsets).
+ - Existing VPCs must be tagged manually for the AWS cloud provider to work correctly. [More details](https://github.com/coreos/tectonic-docs/blob/master/Documentation/install/aws/requirements.md#using-an-existing-vpc).
+
 ## Tectonic 1.7.1-tectonic.2 (2017-08-17)
 
 * Makes the Container Linux instances on Azure start on the latest available version
