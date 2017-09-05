@@ -68,22 +68,17 @@ const returnTerraformTfvars = (launchUrl, cookie, callback) => {
   });
 };
 
-const compareJson = (actualJson, expectedJson) => {
-  let msg = '';
-  const diff = deep(actualJson,expectedJson);
-  if (typeof diff !== 'undefined') {
-    diff.forEach(key => {
-      msg = msg + '\n' + 'TerraformTfvar:' + key.path + ' ||' + ' actualValue:' + key.lhs + ' ||'
-      + ' expectedValue:' + key.rhs;
-    });
-    msg = msg + '\nThe above Json attributes are not matching.';
+const assertDeepEqual = (client, actual, expected) => {
+  const diff = deep(actual, expected);
+  if (diff !== undefined) {
+    client.assert.fail(
+      'The following terraform.tfvars attributes differ from their expected value: ' +
+      diff.map(({path, lhs, rhs}) => `${path} (expected: ${rhs}, got: ${lhs})`).join(', '),
+    );
   }
-  return msg;
 };
 
 module.exports = {
-  getAssets,
-  returnRequiredTerraformTfvars,
   returnTerraformTfvars,
-  compareJson,
+  assertDeepEqual,
 };

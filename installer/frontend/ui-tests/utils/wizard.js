@@ -24,7 +24,7 @@ const testPage = (page, json, nextInitiallyDisabled = true) => {
   if (page.test) {
     page.test(json);
   }
-  page.waitForElementNotPresent(`${nextStep}.disabled`, 10000);
+  page.waitForElementNotPresent(`${nextStep}.disabled`);
   page.expect.element(nextStep).to.have.attribute('class').which.not.contains('disabled');
   return page.click(nextStep);
 };

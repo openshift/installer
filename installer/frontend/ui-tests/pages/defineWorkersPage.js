@@ -1,11 +1,11 @@
 const defineWorkersPageCommands = {
   test(json) {
     return this
-      .setValue('@workers0', json.tectonic_metal_worker_macs[0])
-      .setValue('@hosts0', json.tectonic_metal_worker_domains[0])
+      .setField('@workers0', json.tectonic_metal_worker_macs[0])
+      .setField('@hosts0', json.tectonic_metal_worker_domains[0])
       .click('@addMore')
-      .setValue('@workers1', json.tectonic_metal_worker_macs[1])
-      .setValue('@hosts1', json.tectonic_metal_worker_domains[1]);
+      .setField('@workers1', json.tectonic_metal_worker_macs[1])
+      .setField('@hosts1', json.tectonic_metal_worker_domains[1]);
   },
 };
 
