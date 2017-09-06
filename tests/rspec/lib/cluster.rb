@@ -41,7 +41,7 @@ class Cluster
 
   def stop
     destroy
-    clean
+    clean if Jenkins.environment?
   end
 
   def check_prerequisites

@@ -149,7 +149,7 @@ smoke-test-env-docker-image:
 	docker build -t quay.io/coreos/tectonic-smoke-test-env -f images/tectonic-smoke-test-env/Dockerfile .
 
 .PHONY: tests/smoke
-tests/smoke: smoke-test-env-docker-image
+tests/smoke: installer-env smoke-test-env-docker-image
 	docker run \
 	--rm \
 	-it \
