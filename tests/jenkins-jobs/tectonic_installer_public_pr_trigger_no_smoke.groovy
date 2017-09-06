@@ -65,6 +65,7 @@ job("triggers/tectonic-installer-pr-trigger-no-smoke") {
       includeCustomMessage(true)
       notifyBackToNormal(true)
       notifyFailure(true)
+      notifyRepeatedFailure(true)
       room('#tectonic-installer-ci')
       teamDomain('coreos')
     }

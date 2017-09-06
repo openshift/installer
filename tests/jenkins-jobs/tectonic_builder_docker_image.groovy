@@ -65,6 +65,7 @@ job("builders/tectonic-builder-docker-image") {
       includeCustomMessage(true)
       notifyBackToNormal(true)
       notifyFailure(true)
+      notifyRepeatedFailure(true)
       room('#tectonic-installer-ci')
       teamDomain('coreos')
     }
