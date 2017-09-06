@@ -31,15 +31,6 @@ systemd:
           contents: {{.ign_docker_dropin_json}}
     - name: locksmithd.service
       mask: true
-    - name: kubelet.path
-      enable: true
-      contents: |
-        [Unit]
-        Description=Watch for kubeconfig
-        [Path]
-        PathExists=/etc/kubernetes/kubeconfig
-        [Install]
-        WantedBy=multi-user.target
     - name: wait-for-dns.service
       enable: true
       contents: |
@@ -54,6 +45,7 @@ systemd:
         [Install]
         RequiredBy=kubelet.service
     - name: kubelet.service
+      enable: true
       contents: {{.ign_kubelet_service_json}}
     - name: bootkube.service
       contents: |
