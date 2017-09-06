@@ -30,8 +30,8 @@ multibranchPipelineJob("tectonic-installer") {
   }
   orphanedItemStrategy {
     discardOldItems {
-      daysToKeep(5)
-      numToKeep(100)
+      daysToKeep(10)
+      numToKeep(1000)
     }
   }
   triggers {
