@@ -4,8 +4,8 @@ const networkingPageCommands = {
       .waitForElementPresent('@domain')
       .click('@domain')
       .click('@advanced')
-      .setField('#podCIDR', json.tectonic_cluster_cidr, true)
-      .setField('#serviceCIDR', json.tectonic_service_cidr, true);
+      .setField('#podCIDR', json.tectonic_cluster_cidr)
+      .setField('#serviceCIDR', json.tectonic_service_cidr);
   },
 };
 
