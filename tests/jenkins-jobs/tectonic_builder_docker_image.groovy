@@ -50,8 +50,8 @@ job("builders/tectonic-builder-docker-image") {
       echo "Just build the image"
     else
       echo "Pushing the Image to quay"
-      docker login quay.io -u ${QUAY_USERNAME} -p ${QUAY_PASSWD}
-      docker push ${TECTONIC_BUILDER_IMAGE}
+      docker login quay.io -u \${QUAY_USERNAME} -p \${QUAY_PASSWD}
+      docker push \${TECTONIC_BUILDER_IMAGE}
     fi
   """.stripIndent()
     shell(cmd)
