@@ -5,7 +5,7 @@ folder("triggers")
 job("triggers/upstream-terraform-trigger") {
   description('Tectonic Installer using Terraform Upstream. Changes here will be reverted automatically.')
 
-  logRotator(10, 10)
+  logRotator(10, 1000)
   wrappers {
     colorizeOutput()
     timestamps()

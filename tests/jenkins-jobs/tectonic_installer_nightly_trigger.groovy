@@ -3,7 +3,7 @@
 folder("triggers")
 
 job("triggers/tectonic-installer-nightly-trigger") {
-  logRotator(10, 10)
+  logRotator(10, 1000)
   description('Tectonic Installer nightly builds against master. Changes here will be reverted automatically.')
 
   wrappers {
