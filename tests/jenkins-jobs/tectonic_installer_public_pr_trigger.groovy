@@ -61,6 +61,7 @@ job("triggers/tectonic-installer-pr-trigger") {
       includeCustomMessage(true)
       notifyBackToNormal(true)
       notifyFailure(true)
+      notifyRepeatedFailure(true)
       room('#tectonic-installer-ci')
       teamDomain('coreos')
     }
