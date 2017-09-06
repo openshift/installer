@@ -191,9 +191,9 @@ export const AWS_CloudCredentials = connect(stateToProps)(
             <div className="radio wiz-radio-group__radio">
               <label>
                 <Connect field={STS_ENABLED}>
-                  <RadioBoolean inverted={true} name="stsEnabled" />
+                  <RadioBoolean inverted={true} name="stsEnabled" id="stsEnabledFalse" />
                 </Connect>
-              Use a normal access key
+                Use a normal access key
               </label>&nbsp;(default)
               <p className="text-muted">
                 Go to the <a href="https://console.aws.amazon.com/iam/home#/users" rel="noopener noreferrer" target="_blank">AWS console user section</a>, select your user name, and the Security Credentials tab.
@@ -207,9 +207,9 @@ export const AWS_CloudCredentials = connect(stateToProps)(
             <div className="radio wiz-radio-group__radio">
               <label>
                 <Connect field={STS_ENABLED}>
-                  <RadioBoolean name="stsEnabled" />
+                  <RadioBoolean name="stsEnabled" id="stsEnabledTrue" />
                 </Connect>
-              Use a temporary session token
+                Use a temporary session token
               </label>
             </div>
             <div className="wiz-radio-group__body">
