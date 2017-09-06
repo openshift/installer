@@ -162,8 +162,7 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
                   title="3. Boot Cluster"
                   navTrail={t}
                   sections={[
-                    trailSections.bootBaremetal,
-                    trailSections.bootAWS,
+                    trailSections.bootBaremetalTF,
                     trailSections.bootAWSTF,
                     trailSections.bootDryRun,
                   ]}
