@@ -14,7 +14,7 @@ RSpec.describe 'aws-vpc' do
 
   context 'with a cluster' do
     include_examples(
-      'withCluster',
+      'withRunningCluster',
       '../smoke/aws/vars/aws-vpc-internal.tfvars.json'
     )
   end

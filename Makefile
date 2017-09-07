@@ -143,3 +143,25 @@ bin/smoke: $(SMOKE_SOURCES)
 vendor-smoke: $(TOP_DIR)/tests/smoke/glide.yaml
 	@cd $(TOP_DIR)/tests/smoke && glide up -v
 	@cd $(TOP_DIR)/tests/smoke && glide-vc --use-lock-file --no-tests --only-code
+
+.PHONY: smoke-test-env-docker-image
+smoke-test-env-docker-image:
+	docker build -t quay.io/coreos/tectonic-smoke-test-env -f images/tectonic-smoke-test-env/Dockerfile .
+
+.PHONY: tests/smoke
+tests/smoke: installer-env smoke-test-env-docker-image
+	docker run \
+	--rm \
+	-it \
+	-v ${CURDIR}:${CURDIR} \
+	-w ${CURDIR}/tests/rspec \
+	-e  AWS_ACCESS_KEY_ID \
+	-e AWS_SECRET_ACCESS_KEY \
+	-e TF_VAR_tectonic_aws_ssh_key \
+	-e TF_VAR_tectonic_license_path \
+	-e TF_VAR_tectonic_pull_secret_path \
+	-e TF_VAR_base_domain \
+	-e TF_VAR_tectonic_admin_email \
+	-e TF_VAR_tectonic_admin_password_hash \
+	quay.io/coreos/tectonic-smoke-test-env \
+	/bin/bash -c "bundler exec rspec ${TEST}"

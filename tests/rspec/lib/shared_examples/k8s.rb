@@ -4,7 +4,7 @@ require 'smoke_test'
 require 'forensic'
 require 'cluster_factory'
 
-RSpec.shared_examples 'withCluster' do |tf_vars_path|
+RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
   before(:all) do
     @cluster = ClusterFactory.from_tf_vars(TFVarsFile.new(tf_vars_path))
     @cluster.start
@@ -20,5 +20,19 @@ RSpec.shared_examples 'withCluster' do |tf_vars_path|
 
   it 'succeeds with the golang test suit' do
     expect { SmokeTest.run(@cluster) }.to_not raise_error
+  end
+end
+
+RSpec.shared_examples 'withPlannedCluster' do |tf_vars_path|
+  before(:all) do
+    @cluster = ClusterFactory.from_tf_vars(TFVarsFile.new(tf_vars_path))
+  end
+
+  it 'terraform plan succeeds' do
+    @cluster.plan
+  end
+
+  after(:all) do
+    @cluster.stop
   end
 end

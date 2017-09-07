@@ -190,58 +190,41 @@ pipeline {
               }
             }
           },
-          "SmokeTest Terraform: AWS (non-TLS)": {
+          "SmokeTest AWS Exp RSpec": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(params.builder_image) {
-                  ansiColor('xterm') {
-                    checkout scm
-                    unstash 'installer'
-                    timeout(5) {
+                withDockerContainer(tectonic_smoke_test_env_image) {
+                  sshagent(['aws-smoke-test-ssh-key']) {
+                    ansiColor('xterm') {
+                      checkout scm
+                      unstash 'installer'
+                      unstash 'smoke'
                       sh """#!/bin/bash -ex
-                      . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
-                      ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws.tfvars
+                        cd tests/rspec
+                        bundler exec rspec spec/aws_exp_spec.rb
                       """
+                      deleteDir()
                     }
-                    deleteDir()
                   }
                 }
               }
             }
           },
-          "SmokeTest Terraform: AWS (experimental)": {
+          "SmokeTest AWS custom ca RSpec": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(params.builder_image) {
-                  ansiColor('xterm') {
-                    checkout scm
-                    unstash 'installer'
-                    timeout(5) {
+                withDockerContainer(tectonic_smoke_test_env_image) {
+                  sshagent(['aws-smoke-test-ssh-key']) {
+                    ansiColor('xterm') {
+                      checkout scm
+                      unstash 'installer'
+                      unstash 'smoke'
                       sh """#!/bin/bash -ex
-                      . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
-                      ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-exp.tfvars
+                        cd tests/rspec
+                        bundler exec rspec spec/aws_ca_spec.rb
                       """
+                      deleteDir()
                     }
-                    deleteDir()
-                  }
-                }
-              }
-            }
-          },
-          "SmokeTest Terraform: AWS (custom ca)": {
-            node('worker && ec2') {
-              withCredentials(creds) {
-                withDockerContainer(params.builder_image) {
-                  ansiColor('xterm') {
-                    checkout scm
-                    unstash 'installer'
-                    timeout(5) {
-                      sh """#!/bin/bash -ex
-                      . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
-                      ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-ca.tfvars
-                      """
-                    }
-                    deleteDir()
                   }
                 }
               }
