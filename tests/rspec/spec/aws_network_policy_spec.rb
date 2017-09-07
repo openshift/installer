@@ -4,7 +4,7 @@ require 'shared_examples/k8s'
 
 RSpec.describe 'aws-network-policy' do
   include_examples(
-    'withCluster',
+    'withRunningCluster',
     '../smoke/aws/vars/aws-net-policy.tfvars.json'
   )
 end
