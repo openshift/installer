@@ -11,8 +11,10 @@ require 'aws_iam'
 # AWSCluster represents a k8s cluster on AWS cloud provider
 class AwsCluster < Cluster
   def initialize(tfvars_file)
-    export_random_region_if_not_defined
-    AWSIAM.assume_role if Jenkins.environment?
+    if Jenkins.environment?
+      export_random_region_if_not_defined
+      AWSIAM.assume_role
+    end
 
     super(tfvars_file)
   end
