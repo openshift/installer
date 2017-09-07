@@ -88,10 +88,9 @@ resource "template_dir" "tectonic" {
     cluster_id   = "${format("%s-%s-%s-%s-%s", substr(random_id.cluster_id.hex, 0, 8), substr(random_id.cluster_id.hex, 8, 4), substr(random_id.cluster_id.hex, 12, 4), substr(random_id.cluster_id.hex, 16, 4), substr(random_id.cluster_id.hex, 20, 12))}"
     cluster_name = "${var.cluster_name}"
 
-    platform                 = "${var.platform}"
-    certificates_strategy    = "${var.ca_generated == "true" ? "installerGeneratedCA" : "userProvidedCA"}"
-    identity_api_service     = "${var.identity_api_service}"
-    tectonic_updater_enabled = "${var.experimental ? "true" : "false"}"
+    platform              = "${var.platform}"
+    certificates_strategy = "${var.ca_generated == "true" ? "installerGeneratedCA" : "userProvidedCA"}"
+    identity_api_service  = "${var.identity_api_service}"
 
     image_re = "${var.image_re}"
   }
