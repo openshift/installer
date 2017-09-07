@@ -12,9 +12,7 @@ export const SubmitDefinition = withNav(connect(
     response: state.commitState.response,
     ready: state.cluster.ready,
   }),
-  dispatch => ({
-    onFinish: (dryRun = false) => dispatch(commitToServer(dryRun)),
-  })
+  {onFinish: commitToServer}
 )(({navNext, navPrevious, phase, response, ready, onFinish}) => {
   let feature =
     <div className="wiz-giant-button-container">
