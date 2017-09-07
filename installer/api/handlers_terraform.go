@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"time"
@@ -17,7 +19,8 @@ import (
 )
 
 const (
-	bcryptCost = 12
+	bcryptCost        = 12
+	pluginsFolderName = "terraform.d/plugins"
 )
 
 // TerraformApplyHandlerInput describes the input expected by the
@@ -175,12 +178,27 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 	}
 	exPath := filepath.Join(binaryPath, "clusters", clusterName+time.Now().Format("_2006-01-02_15-04-05"))
 
+	// Publish custom providers to execution environment
+	clusterPluginDir := filepath.Join(exPath, pluginsFolderName)
+	err = os.MkdirAll(clusterPluginDir, os.ModeDir|0755)
+	if err != nil {
+		return nil, newInternalServerError("Could not create custom provider plugins location: %s", err)
+	}
+	customPlugins := []string{}
+	customPlugins, err = filepath.Glob(path.Join(binaryPath, "terraform-provider-*"))
+	if err != nil {
+		return nil, newInternalServerError("Could not locate custom provider plugins: %s", err)
+	}
+	for _, pluginBinPath := range customPlugins {
+		pluginBin := filepath.Base(pluginBinPath)
+		os.Symlink(pluginBinPath, filepath.Join(clusterPluginDir, pluginBin))
+	}
+
 	// Create a new Executor.
 	ex, err := terraform.NewExecutor(exPath)
 	if err != nil {
 		return nil, newInternalServerError("Could not create Terraform executor: %s", err)
 	}
-
 	// Write the License and Pull Secret to disk, and wire these files in the
 	// variables.
 	if input.License == "" {

@@ -1,3 +1,0 @@
-providers {
-    matchbox = "<PATH_TO_INSTALLER>-TFSPACE-matchbox"
-}

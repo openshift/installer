@@ -13,15 +13,9 @@ import (
 	"github.com/toqueteos/webbrowser"
 
 	"github.com/coreos/tectonic-installer/installer/api"
-	"github.com/coreos/tectonic-installer/installer/pkg/terraform"
 )
 
 func main() {
-	// TerraForm entrypoint.
-	if os.Getenv("TF_PLUGIN_MAGIC_COOKIE") != "" {
-		terraform.ServePlugin(os.Args[1])
-		return
-	}
 
 	flags := struct {
 		address             string

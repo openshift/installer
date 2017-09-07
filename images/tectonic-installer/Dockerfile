@@ -1,6 +1,6 @@
 FROM golang:1.8.3-stretch
 
-ENV TERRAFORM_VERSION="0.9.6"
+ENV TERRAFORM_VERSION="0.10.4"
 
 RUN apt-get update \
     && apt-get install --no-install-recommends -y -q \
@@ -16,5 +16,4 @@ ADD config.tf $PROJECT_DIR/
 ADD installer/bin/linux/installer $PROJECT_DIR/installer/bin/linux/
 ADD platforms $PROJECT_DIR/platforms
 ADD modules $PROJECT_DIR/modules
-ADD terraformrc.example $PROJECT_DIR/
 

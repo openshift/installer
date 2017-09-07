@@ -1,5 +1,5 @@
 hash: 0c380a25f159deff7d3bd4be5c511eb248c09f271cea1aaf6c1a485c8d745f74
-updated: 2017-07-21T17:12:46.876911766-07:00
+updated: 2017-08-16T20:00:11.480418788+02:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -235,8 +235,6 @@ imports:
   - helper/compressutil
   - helper/jsonutil
   - helper/pgpkeys
-- name: github.com/hashicorp/yamux
-  version: d1caa6c97c9fc1cc9e83bbe34d0603f9ff0ce8bd
 - name: github.com/howeyc/gopass
   version: 3ca23474a7c7203e0a0a070fd33508f6efdb9b3d
 - name: github.com/imdario/mergo

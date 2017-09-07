@@ -30,7 +30,7 @@ BIN_DIR="$ROOT/bin_test"
 
 MATCHBOX_VERSION=v0.6.1
 KUBECTL_VERSION=v1.6.4
-TERRAFORM_VERSION=0.9.6
+TERRAFORM_VERSION=0.10.4
 
 KUBECTL_URL="https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
 TERRAFORM_URL="https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"

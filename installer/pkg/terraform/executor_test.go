@@ -8,8 +8,6 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"os"
-
 	"github.com/stretchr/testify/assert"
 )
 
@@ -35,18 +33,6 @@ output "foobar" {
   value = "${data.template_file.foobar.rendered}"
 }
 `
-
-func TestMain(m *testing.M) {
-	// We need to hijack the testing execution when TerraForm calls back the
-	// binary to execute the plugins. Otherwise TerraForm calls back into the
-	// test suite and the RPC plugin handshake can't happen.
-	if os.Getenv("TF_PLUGIN_MAGIC_COOKIE") != "" {
-		ServePlugin(os.Args[1])
-		return
-	}
-
-	os.Exit(m.Run())
-}
 
 // TestExecutorSimple executes TerraForm apply with a custom plugin, verifies it
 // worked (State/Status), and then create a new executor at the path of the
@@ -78,8 +64,25 @@ func TestExecutorSimple(t *testing.T) {
 	mainTFPath := filepath.Join(ex.WorkingDirectory(), "main.tf")
 	assert.Nil(t, ioutil.WriteFile(mainTFPath, []byte(tfTemplate), 0666))
 
+	// Execute TerraForm init.
+	id, done, err := ex.Execute("init")
+	assert.Nil(t, err)
+	assert.NotZero(t, id)
+
+	// Wait for its termination.
+	select {
+	case <-done:
+	case <-time.After(30 * time.Second):
+		assert.FailNow(t, "TerraForm init timed out")
+	}
+
+	// Verify status, state and output.
+	status, err := ex.Status(id)
+	assert.Nil(t, err)
+	assert.Equal(t, ExecutionStatusSuccess, status)
+
 	// Execute TerraForm apply.
-	id, done, err := ex.Execute("apply")
+	id, done, err = ex.Execute("apply")
 	assert.Nil(t, err)
 	assert.NotZero(t, id)
 
@@ -91,7 +94,7 @@ func TestExecutorSimple(t *testing.T) {
 	}
 
 	// Verify status, state and output.
-	status, err := ex.Status(id)
+	status, err = ex.Status(id)
 	assert.Nil(t, err)
 	assert.Equal(t, ExecutionStatusSuccess, status)
 
