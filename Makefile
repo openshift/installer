@@ -141,7 +141,7 @@ structure-check:
 SMOKE_SOURCES := $(shell find $(TOP_DIR)/tests/smoke -name '*.go')
 .PHONY: bin/smoke
 bin/smoke: $(SMOKE_SOURCES)
-	@CGO_ENABLED=0 go test ./tests/smoke/ -c -o bin/smoke
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go test ./tests/smoke/ -c -o bin/smoke
 
 .PHONY: vendor-smoke
 vendor-smoke: $(TOP_DIR)/tests/smoke/glide.yaml
