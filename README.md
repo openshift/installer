@@ -123,6 +123,20 @@ They can be run on a PR by applying the *run-smoke-tests* GitHub label.
 Further details can be found in our [Jenkinsfile](./Jenkinsfile) which serves as
 the single source of truth.
 
+To run a smoke test locally you need to set the following environment variables:
+```
+CLUSTER
+AWS_ACCESS_KEY_ID
+AWS_SECRET_ACCESS_KEY
+TF_VAR_tectonic_aws_ssh_key
+TF_VAR_tectonic_license_path
+TF_VAR_tectonic_pull_secret_path
+TF_VAR_base_domain
+TF_VAR_tectonic_admin_email
+TF_VAR_tectonic_admin_password_hash
+```
+and run `make tests/smoke TEST=spec/aws_spec.rb`
+
 
 [platform-lifecycle]: Documentation/platform-lifecycle.md
 [release-notes]: https://coreos.com/tectonic/releases/
