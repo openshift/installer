@@ -5,12 +5,10 @@ require 'securerandom'
 require 'jenkins'
 require 'tfvars_file'
 require 'fileutils'
+require 'name_generator'
 
 # Cluster represents a k8s cluster
 class Cluster
-  MAX_NAME_LENGTH = 28
-  RANDOM_HASH_LENGTH = 5
-
   attr_reader :tfvars_file, :kubeconfig, :manifest_path, :build_path
 
   def initialize(tfvars_file)
@@ -18,7 +16,7 @@ class Cluster
 
     # Enable local testers to specify a static cluster name
     # S3 buckets can only handle lower case names
-    @name = (ENV['CLUSTER'] || generate_name(tfvars_file.prefix)).downcase
+    @name = NameGenerator.generate(tfvars_file.prefix)
 
     @build_path = File.join(File.realpath('../../'), "build/#{@name}")
     @manifest_path = File.join(@build_path, 'generated')
@@ -112,19 +110,5 @@ class Cluster
     end
 
     raise 'kubectl cluster-info never returned with successful error code'
-  end
-
-  def generate_name(prefix)
-    name = prefix
-
-    if Jenkins.environment?
-      build_id = ENV['BUILD_ID']
-      branch_name = ENV['BRANCH_NAME']
-      name = "#{prefix}-#{branch_name}-#{build_id}"
-    end
-
-    name = name[0..(MAX_NAME_LENGTH - RANDOM_HASH_LENGTH - 1)]
-    name += SecureRandom.hex[0...RANDOM_HASH_LENGTH]
-    name
   end
 end
