@@ -1,10 +1,17 @@
+const fs = require('fs');
+const path = require('path');
+
 const log = require('../utils/log');
 const wizard = require('../utils/wizard');
-const installerInput = require('../utils/bareMetalInstallerInput');
 const tfvarsUtil = require('../utils/terraformTfvars');
 
-const json = installerInput.buildExpectedJson();
-const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, json, nextInitiallyDisabled);
+// Expected Terraform tfvars file variables
+// TODO: Confusingly, this is also used as input to the tests
+const jsonPath = path.join(__dirname, '..', '..', '__tests__', 'examples', 'metal.json');
+// eslint-disable-next-line no-sync
+const json = JSON.parse(fs.readFileSync(jsonPath, 'utf8')).variables;
+
+const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, 'metal', json, nextInitiallyDisabled);
 
 const REQUIRED_ENV_VARS = ['TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
 
@@ -45,7 +52,7 @@ module.exports = {
   'BM: Submit': client => {
     const submitPage = client.page.submitPage();
     submitPage.click('@manuallyBoot');
-    submitPage.waitForElementPresent('a[href="/terraform/assets"]');
+    submitPage.expect.element('a[href="/terraform/assets"]').to.be.visible;
     client.getCookie('tectonic-installer', result => {
       tfvarsUtil.returnTerraformTfvars(client.launch_url, result.value, (err, actualJson) => {
         if (err) {

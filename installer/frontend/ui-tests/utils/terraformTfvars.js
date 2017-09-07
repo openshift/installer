@@ -40,7 +40,6 @@ const getTerraformTfvars = (response, callback) => {
 const returnRequiredTerraformTfvars = (terraformTfvars) => {
   const json = JSON.parse(terraformTfvars);
   const extraTfvars = [
-    'tectonic_admin_password_hash',
     'tectonic_license_path',
     'tectonic_pull_secret_path',
     'tectonic_kube_apiserver_service_ip',
@@ -69,6 +68,10 @@ const returnTerraformTfvars = (launchUrl, cookie, callback) => {
 };
 
 const assertDeepEqual = (client, actual, expected) => {
+  // The password hash will be different every time, so can't diff
+  delete actual.tectonic_admin_password_hash;
+  delete expected.tectonic_admin_password_hash;
+
   const diff = deep(actual, expected);
   if (diff !== undefined) {
     client.assert.fail(

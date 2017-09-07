@@ -1,9 +1,9 @@
 const nextStep = '.wiz-form__actions__next button.btn-primary';
 const prevStep = 'button.wiz-form__actions__prev';
 
-const testPage = (page, json, nextInitiallyDisabled = true) => {
+const testPage = (page, platform, json, nextInitiallyDisabled = true) => {
   page.expect.element(prevStep).to.be.visible;
-  page.expect.element(prevStep).to.not.have.attribute('class').which.contains('disabled');
+  page.expect.element(prevStep).to.have.attribute('class').which.not.contains('disabled');
 
   page.expect.element(nextStep).to.be.visible;
   if (nextInitiallyDisabled) {
@@ -22,9 +22,8 @@ const testPage = (page, json, nextInitiallyDisabled = true) => {
   }
 
   if (page.test) {
-    page.test(json);
+    page.test(json, platform);
   }
-  page.waitForElementNotPresent(`${nextStep}.disabled`);
   page.expect.element(nextStep).to.have.attribute('class').which.not.contains('disabled');
   return page.click(nextStep);
 };
