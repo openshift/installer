@@ -170,6 +170,26 @@ pipeline {
               }
             }
           },
+          "SmokeTest AWS Network Policy RSpec": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(tectonic_smoke_test_env_image) {
+                  sshagent(['aws-smoke-test-ssh-key']) {
+                    ansiColor('xterm') {
+                      checkout scm
+                      unstash 'installer'
+                      unstash 'smoke'
+                      sh """#!/bin/bash -ex
+                        cd tests/rspec
+                        bundler exec rspec spec/aws_network_policy_spec.rb
+                      """
+                      deleteDir()
+                    }
+                  }
+                }
+              }
+            }
+          },
           "SmokeTest Terraform: AWS (non-TLS)": {
             node('worker && ec2') {
               withCredentials(creds) {
@@ -201,47 +221,6 @@ pipeline {
                       . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
                       ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-exp.tfvars
                       """
-                    }
-                    deleteDir()
-                  }
-                }
-              }
-            }
-          },
-          "SmokeTest Terraform: AWS (network policy)": {
-            node('worker && ec2') {
-              withCredentials(creds) {
-                withDockerContainer(params.builder_image) {
-                  ansiColor('xterm') {
-                    checkout scm
-                    unstash 'installer'
-                    unstash 'smoke'
-                    timeout(45) {
-                      sh """#!/bin/bash -ex
-                      . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
-                      ${WORKSPACE}/tests/smoke/aws/smoke.sh plan vars/aws-net-policy.tfvars
-                      ${WORKSPACE}/tests/smoke/aws/smoke.sh create vars/aws-net-policy.tfvars
-                      ${WORKSPACE}/tests/smoke/aws/smoke.sh test vars/aws-net-policy.tfvars
-                      """
-                    }
-                    catchError {
-                      timeout (5) {
-                        sshagent(['aws-smoke-test-ssh-key']) {
-                          sh """#!/bin/bash
-                          # Running without -ex because we don't care if this fails
-                          . ${WORKSPACE}/tests/smoke/aws/smoke.sh common vars/aws-net-policy.tfvars
-                          ${WORKSPACE}/tests/smoke/aws/cluster-foreach.sh ${WORKSPACE}/tests/smoke/forensics.sh
-                          """
-                        }
-                      }
-                    }
-                    retry(3) {
-                      timeout(15) {
-                        sh """#!/bin/bash -ex
-                        . ${WORKSPACE}/tests/smoke/aws/smoke.sh assume-role "$TECTONIC_INSTALLER_ROLE"
-                        ${WORKSPACE}/tests/smoke/aws/smoke.sh destroy vars/aws-net-policy.tfvars
-                        """
-                      }
                     }
                     deleteDir()
                   }
