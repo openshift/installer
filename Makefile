@@ -141,7 +141,7 @@ structure-check:
 SMOKE_SOURCES := $(shell find $(TOP_DIR)/tests/smoke -name '*.go')
 .PHONY: bin/smoke
 bin/smoke: $(SMOKE_SOURCES)
-	@CGO_ENABLED=0 go test ./tests/smoke/ -c -o bin/smoke
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go test ./tests/smoke/ -c -o bin/smoke
 
 .PHONY: vendor-smoke
 vendor-smoke: $(TOP_DIR)/tests/smoke/glide.yaml
@@ -153,13 +153,14 @@ smoke-test-env-docker-image:
 	docker build -t quay.io/coreos/tectonic-smoke-test-env -f images/tectonic-smoke-test-env/Dockerfile .
 
 .PHONY: tests/smoke
-tests/smoke: installer-env smoke-test-env-docker-image
+tests/smoke: bin/smoke smoke-test-env-docker-image
 	docker run \
 	--rm \
 	-it \
 	-v ${CURDIR}:${CURDIR} \
 	-w ${CURDIR}/tests/rspec \
-	-e  AWS_ACCESS_KEY_ID \
+	-e CLUSTER \
+	-e AWS_ACCESS_KEY_ID \
 	-e AWS_SECRET_ACCESS_KEY \
 	-e TF_VAR_tectonic_aws_ssh_key \
 	-e TF_VAR_tectonic_license_path \
