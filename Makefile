@@ -162,6 +162,7 @@ tests/smoke: bin/smoke smoke-test-env-docker-image
 	-e CLUSTER \
 	-e AWS_ACCESS_KEY_ID \
 	-e AWS_SECRET_ACCESS_KEY \
+	-e TF_VAR_tectonic_aws_region \
 	-e TF_VAR_tectonic_aws_ssh_key \
 	-e TF_VAR_tectonic_license_path \
 	-e TF_VAR_tectonic_pull_secret_path \
