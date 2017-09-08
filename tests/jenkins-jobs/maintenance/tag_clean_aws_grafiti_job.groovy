@@ -42,7 +42,7 @@ job("maintenance/tag_clean_aws_resources_grafiti") {
   triggers {
     parameterizedCron {
       parameterizedSpecification("""H H/6 * * * % TAG_CLEAN=tag-aws
-H H/6 * * * % TAG_CLEAN=clean-aws
+H H/8 * * * % TAG_CLEAN=clean-aws
     """.stripIndent())
     }
   }
