@@ -3,6 +3,7 @@
 require 'smoke_test'
 require 'forensic'
 require 'cluster_factory'
+require 'operators'
 
 RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
   before(:all) do
@@ -16,6 +17,11 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
 
   after(:all) do
     @cluster.stop
+  end
+
+  it 'generates operator manifests' do
+    expect { Operators.manifests_generated?(@cluster.manifest_path) }
+      .to_not raise_error
   end
 
   it 'succeeds with the golang test suit' do
