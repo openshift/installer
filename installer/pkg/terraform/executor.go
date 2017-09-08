@@ -224,6 +224,28 @@ func (ex *Executor) Execute(args ...string) (int, chan struct{}, error) {
 	return cmd.Process.Pid, done, nil
 }
 
+// ExecuteSync Like Execute, but synchronous. TODO: clean up duplicate cmd setup code
+func (ex *Executor) ExecuteSync(args ...string) ([]byte, error) {
+	// Prepare TerraForm command by setting up the command, configuration,
+	// working directory (so the files such as terraform.tfstate are stored at
+	// the right place), extra environment variables and outputs.
+	cmd := exec.Command(ex.binaryPath, args...)
+	cmd.Env = append(cmd.Env, fmt.Sprintf("TERRAFORM_CONFIG=%s", ex.configPath))
+	// ssh changes its behavior based on these. pass them through so ssh-agent & stuff works
+	cmd.Env = append(cmd.Env, fmt.Sprintf("DISPLAY=%s", os.Getenv("DISPLAY")))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
+	for _, v := range os.Environ() {
+		if strings.HasPrefix(v, "SSH_") {
+			cmd.Env = append(cmd.Env, v)
+		}
+	}
+	for k, v := range ex.envVariables {
+		cmd.Env = append(cmd.Env, fmt.Sprintf("%s=%s", strings.ToUpper(k), v))
+	}
+	cmd.Dir = ex.executionPath
+	return cmd.Output()
+}
+
 // WorkingDirectory returns the directory in which TerraForm runs, which can be
 // useful for inspection or to retrieve any generated files.
 func (ex *Executor) WorkingDirectory() string {
