@@ -10,7 +10,7 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_config_version | (internal) This declares the version of the AWS configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
 | tectonic_aws_etcd_ec2_type | Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance | string | `t2.medium` |
 | tectonic_aws_etcd_extra_sg_ids | (optional) List of additional security group IDs for etcd nodes.<br><br>Example: `["sg-51530134", "sg-b253d7cc"]` | list | `<list>` |
-| tectonic_aws_etcd_root_volume_iops | The amount of provisioned IOPS for the root block device of etcd nodes. | string | `100` |
+| tectonic_aws_etcd_root_volume_iops | The amount of provisioned IOPS for the root block device of etcd nodes. Ignored if the volume type is not io1. | string | `100` |
 | tectonic_aws_etcd_root_volume_size | The size of the volume in gigabytes for the root block device of etcd nodes. | string | `30` |
 | tectonic_aws_etcd_root_volume_type | The type of volume for the root block device of etcd nodes. | string | `gp2` |
 | tectonic_aws_external_master_subnet_ids | (optional) List of subnet IDs within an existing VPC to deploy master nodes into. Required to use an existing VPC and the list must match the AZ count.<br><br>Example: `["subnet-111111", "subnet-222222", "subnet-333333"]` | list | `<list>` |
@@ -22,7 +22,7 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_master_ec2_type | Instance size for the master node(s). Example: `t2.medium`. | string | `t2.medium` |
 | tectonic_aws_master_extra_sg_ids | (optional) List of additional security group IDs for master nodes.<br><br>Example: `["sg-51530134", "sg-b253d7cc"]` | list | `<list>` |
 | tectonic_aws_master_iam_role_name | (optional) Name of IAM role to use for the instance profiles of master nodes. The name is also the last part of a role's ARN.<br><br>Example:  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer  * Role Name = tectonic-installer | string | `` |
-| tectonic_aws_master_root_volume_iops | The amount of provisioned IOPS for the root block device of master nodes. | string | `100` |
+| tectonic_aws_master_root_volume_iops | The amount of provisioned IOPS for the root block device of master nodes. Ignored if the volume type is not io1. | string | `100` |
 | tectonic_aws_master_root_volume_size | The size of the volume in gigabytes for the root block device of master nodes. | string | `30` |
 | tectonic_aws_master_root_volume_type | The type of volume for the root block device of master nodes. | string | `gp2` |
 | tectonic_aws_private_endpoints | (optional) If set to true, create private-facing ingress resources (ELB, A-records). If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone. | string | `true` |
@@ -34,7 +34,7 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_worker_ec2_type | Instance size for the worker node(s). Example: `t2.medium`. | string | `t2.medium` |
 | tectonic_aws_worker_extra_sg_ids | (optional) List of additional security group IDs for worker nodes.<br><br>Example: `["sg-51530134", "sg-b253d7cc"]` | list | `<list>` |
 | tectonic_aws_worker_iam_role_name | (optional) Name of IAM role to use for the instance profiles of worker nodes. The name is also the last part of a role's ARN.<br><br>Example:  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer  * Role Name = tectonic-installer | string | `` |
-| tectonic_aws_worker_root_volume_iops | The amount of provisioned IOPS for the root block device of worker nodes. | string | `100` |
+| tectonic_aws_worker_root_volume_iops | The amount of provisioned IOPS for the root block device of worker nodes. Ignored if the volume type is not io1. | string | `100` |
 | tectonic_aws_worker_root_volume_size | The size of the volume in gigabytes for the root block device of worker nodes. | string | `30` |
 | tectonic_aws_worker_root_volume_type | The type of volume for the root block device of worker nodes. | string | `gp2` |
 | tectonic_dns_name | (optional) DNS prefix used to construct the console and API server endpoints. | string | `` |

@@ -27,6 +27,7 @@ tectonic_aws_etcd_ec2_type = "t2.medium"
 // tectonic_aws_etcd_extra_sg_ids = ""
 
 // The amount of provisioned IOPS for the root block device of etcd nodes.
+// Ignored if the volume type is not io1.
 tectonic_aws_etcd_root_volume_iops = "100"
 
 // The size of the volume in gigabytes for the root block device of etcd nodes.
@@ -86,6 +87,7 @@ tectonic_aws_master_ec2_type = "t2.medium"
 // tectonic_aws_master_iam_role_name = ""
 
 // The amount of provisioned IOPS for the root block device of master nodes.
+// Ignored if the volume type is not io1.
 tectonic_aws_master_root_volume_iops = "100"
 
 // The size of the volume in gigabytes for the root block device of master nodes.
@@ -134,6 +136,7 @@ tectonic_aws_worker_ec2_type = "t2.medium"
 // tectonic_aws_worker_iam_role_name = ""
 
 // The amount of provisioned IOPS for the root block device of worker nodes.
+// Ignored if the volume type is not io1.
 tectonic_aws_worker_root_volume_iops = "100"
 
 // The size of the volume in gigabytes for the root block device of worker nodes.
