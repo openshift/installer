@@ -136,3 +136,18 @@ The nameservers used by the nodes and the generated OpenStack subnet resource.
 Example: `["8.8.8.8", "8.8.4.4"]`
 EOF
 }
+
+variable "tectonic_openstack_lb_provider" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+The name of a valid provider to provision the load balancer. This will depend on
+how your OpenStack environment is configured.
+
+Common options are: octavia, haproxy, f5, brocade, etc.
+
+Please look at the OpenStack documentation for more details:
+https://developer.openstack.org/api-ref/networking/v2/index.html?expanded=create-a-load-balancer-detail#lbaas-2-0-stable
+EOF
+}

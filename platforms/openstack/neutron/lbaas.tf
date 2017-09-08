@@ -1,6 +1,7 @@
 resource "openstack_lb_loadbalancer_v2" "master_lb" {
-  vip_subnet_id = "${openstack_networking_subnet_v2.subnet.id}"
-  name          = "${var.tectonic_cluster_name}_master"
+  vip_subnet_id         = "${openstack_networking_subnet_v2.subnet.id}"
+  name                  = "${var.tectonic_cluster_name}_master"
+  loadbalancer_provider = "${var.tectonic_openstack_lb_provider}"
 }
 
 resource "openstack_lb_pool_v2" "master_lb_pool" {

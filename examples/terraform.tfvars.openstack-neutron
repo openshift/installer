@@ -164,6 +164,15 @@ tectonic_openstack_image_id = ""
 // Note: Set either tectonic_openstack_image_name or tectonic_openstack_image_id.
 tectonic_openstack_image_name = ""
 
+// The name of a valid provider to provision the load balancer. This will depend on
+// how your OpenStack environment is configured.
+// 
+// Common options are: octavia, haproxy, f5, brocade, etc.
+// 
+// Please look at the OpenStack documentation for more details:
+// https://developer.openstack.org/api-ref/networking/v2/index.html?expanded=create-a-load-balancer-detail#lbaas-2-0-stable
+tectonic_openstack_lb_provider = ""
+
 // The flavor id for master instances as given in `openstack flavor list`. Specifies the size (CPU/Memory/Drive) of the VM.
 // 
 // Note: Set either tectonic_openstack_master_flavor_name or tectonic_openstack_master_flavor_id.
