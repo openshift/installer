@@ -8,6 +8,7 @@ module "vpc" {
   source = "../../modules/aws/vpc"
 
   cidr_block   = "${var.tectonic_aws_vpc_cidr_block}"
+  base_domain  = "${var.tectonic_base_domain}"
   cluster_name = "${var.tectonic_cluster_name}"
 
   external_vpc_id         = "${var.tectonic_aws_external_vpc_id}"
