@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # The AWSIAM contains helper functions to interact with AWS IAM
 module AWSIAM
   def self.assume_role

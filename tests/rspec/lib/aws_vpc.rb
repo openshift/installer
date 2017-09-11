@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'json'
 
 # AWSVPC represents an AWS virtual private cloud

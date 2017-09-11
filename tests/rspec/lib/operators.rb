@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Operators contains helper functions to test creation of the CoreOS operators
 module Operators
   OPERATOR_NAMES = [

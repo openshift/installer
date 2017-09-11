@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'jenkins'
 
 # NameGenerator contains helper functions to generate test resource names
