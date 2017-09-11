@@ -43,6 +43,18 @@ def quay_creds = [
   )
 ]
 
+
+def replace_hyperkube() {
+  sh """#!/bin/bash -ex
+echo "Replace HypeKube image"
+if [[ -n \"$HYPERKUBE\" ]]; then
+  sed -r 's/quay.io\\/coreos\\/hyperkube:v([0-9]+(\\.[0-9]+)?).*/quay.io\\/coreos\\/hyperkube:'$HYPERKUBE'\\"/' config.tf > config.new
+  mv -f config.new config.tf
+  echo "Replace HypeKube image"
+fi
+  """
+}
+
 def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.37'
 def tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v4.0'
 
@@ -58,6 +70,11 @@ pipeline {
       name: 'builder_image',
       defaultValue: default_builder_image,
       description: 'tectonic-builder docker image to use for builds'
+    )
+    string(
+      name: 'hyperkube_image',
+      defaultValue: '',
+      description: 'hyperkube image'
     )
     booleanParam(
       name: 'run_smoke_tests',
@@ -137,6 +154,7 @@ pipeline {
                       unstash 'installer'
                       unstash 'smoke'
                       sh """#!/bin/bash -ex
+
                         cd tests/rspec
                         bundler exec rspec spec/aws_spec.rb
                       """
