@@ -2,7 +2,7 @@
 
 folder("triggers")
 
-job("triggers/tectonic-installer-nightly-trigger") {
+job("triggers/tectonic-installer-hyperkube-trigger") {
   logRotator(10, 1000)
   description('Tectonic Installer using latest Hyperkube to builds against master. Changes here will be reverted automatically.')
 
