@@ -66,6 +66,8 @@ module "bootkube" {
   node_monitor_grace_period = "2m"
 
   pod_eviction_timeout = "220s"
+
+  cloud_config_path = ""
 }
 
 module "tectonic" {

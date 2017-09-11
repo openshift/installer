@@ -119,10 +119,6 @@ set -e
 # wait for Kubernetes pods
 wait_for_pods kube-system
 
-# Creating resources
-echo "Creating Tectonic Namespace"
-kubectl create -f namespace.yaml
-
 echo "Creating Initial Roles"
 kubectl delete -f rbac/role-admin.yaml
 

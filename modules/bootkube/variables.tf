@@ -129,3 +129,8 @@ variable "pod_eviction_timeout" {
   type        = "string"
   default     = "5m"
 }
+
+variable "cloud_config_path" {
+  description = "The path to the secret file that contains the cloud config contents. Either be empty ('') or ('/etc/kubernetes/cloud/config')."
+  type        = "string"
+}

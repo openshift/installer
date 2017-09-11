@@ -108,6 +108,9 @@ resource "template_dir" "bootkube" {
     master_count              = "${var.master_count}"
     node_monitor_grace_period = "${var.node_monitor_grace_period}"
     pod_eviction_timeout      = "${var.pod_eviction_timeout}"
+
+    cloud_provider_profile = "${var.cloud_provider != "" ? "${var.cloud_provider}" : "metal"}"
+    cloud_config_path      = "${var.cloud_config_path}"
   }
 }
 
