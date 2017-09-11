@@ -90,6 +90,7 @@ func New(config *Config) (http.Handler, error) {
 
 	// handlers_tectonic.go
 	mux.Handle("/tectonic/status", logRequests(httpHandler("POST", ctx, tectonicStatusHandler)))
+	mux.Handle("/tectonic/kubeconfig", logRequests(httpHandler("GET", ctx, tectonicKubeconfigHandler)))
 
 	// handlers_containerlinux.go
 	mux.Handle("/containerlinux/images/matchbox", logRequests(httpHandler("GET", ctx, listMatchboxImagesHandler)))

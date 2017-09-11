@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
@@ -25,9 +26,11 @@ import (
 
 // Status represents the individual state of a single Kubernetes service
 type Status struct {
-	Success bool   `json:"success"`
-	Failed  bool   `json:"failed"`
-	Message string `json:"message"`
+	Success   bool   `json:"success"`
+	Failed    bool   `json:"failed"`
+	Namespace string `json:"namespace"`
+	Pod       string `json:"pod"`
+	Message   string `json:"message"`
 }
 
 // Services represents whether several Tectonic components have yet booted (or failed)
@@ -100,6 +103,8 @@ func statusFromPods(pods []v1.Pod) Status {
 		if p.Status.Phase == v1.PodFailed {
 			status.Failed = true
 			status.Success = false
+			status.Namespace = p.ObjectMeta.Namespace
+			status.Pod = p.ObjectMeta.Name
 			return status
 		}
 
@@ -315,4 +320,25 @@ func tectonicStatusHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 	}
 
 	return writeJSONResponse(w, req, http.StatusOK, response)
+}
+
+// Download kubeconfig file, or return a 404 if it doesn't exist yet.
+func tectonicKubeconfigHandler(w http.ResponseWriter, req *http.Request, ctx *Context) error {
+	// Restore the execution environment from the session.
+	_, ex, _, err := restoreExecutionFromSession(req, ctx.Sessions, nil)
+	if err != nil {
+		return err
+	}
+
+	cfg, err := os.Open(filepath.Join(ex.WorkingDirectory(), kubeconfigLocation))
+	if err != nil {
+		http.Error(w, "Could not retrieve kubeconfig", http.StatusNotFound)
+		return nil
+	}
+	defer cfg.Close()
+
+	w.Header().Set("Content-Disposition", "attachment; filename=kubeconfig")
+	w.Header().Set("Content-Type", "text/plain")
+	io.Copy(w, cfg)
+	return nil
 }

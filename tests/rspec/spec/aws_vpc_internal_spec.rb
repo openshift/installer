@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'shared_examples/k8s'
 require 'aws_vpc'
 require 'aws_region'

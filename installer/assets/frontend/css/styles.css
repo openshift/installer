@@ -76,15 +76,19 @@ strong {
 }
 
 code {
-  background: rgba(0, 0, 0, 0.03);
+  background: #f5f5f5;
+  border: 1px solid rgba(0, 0, 0, 0.075);
   border-radius: 3px;
-  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.075);
-  color: rgba(0, 0, 0, 0.75);
+  color: #333;
   display: inline-block;
   font-family: "Source Code Pro", Menlo, monospace;
-  font-size: 85%;
+  font-size: 11px;
   font-weight: 400;
-  padding: 0px 4px;
+  line-height: 20px;
+  margin-bottom: 15px;
+  padding: 4px 8px;
+  white-space: pre-wrap;
+  width: 100%;
 }
 
 h4 {
@@ -144,9 +148,6 @@ input[type="text"].wiz-node-field {
 }
 
 .wiz-launch-progress {
-  list-style: none;
-  margin: 0;
-  padding: 0;
   font-size: 16px;
 }
 
@@ -456,7 +457,6 @@ input.wiz-super-short-input {
 
 .alert-error {
   background-color: #FDF4F5;
-  border: 1px solid #DC415E;
   color: #DC415E;
 }
 

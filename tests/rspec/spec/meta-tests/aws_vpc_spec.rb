@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'aws_vpc'
 require 'aws_iam'
 
