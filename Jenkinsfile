@@ -59,6 +59,11 @@ pipeline {
       defaultValue: default_builder_image,
       description: 'tectonic-builder docker image to use for builds'
     )
+    string(
+      name: 'hyperkube_image',
+      defaultValue: '',
+      description: 'Hyperkube image. Please define the param like: {hyperkube="<HYPERKUBE_IMAGE>"}'
+    )
     booleanParam(
       name: 'run_smoke_tests',
       defaultValue: true,
@@ -124,6 +129,7 @@ pipeline {
       environment {
         TECTONIC_INSTALLER_ROLE = 'tectonic-installer'
         GRAFITI_DELETER_ROLE = 'grafiti-deleter'
+        TF_VAR_tectonic_container_images = "${params.hyperkube_image}"
       }
       steps {
         parallel (
