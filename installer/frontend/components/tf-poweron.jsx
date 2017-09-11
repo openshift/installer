@@ -309,7 +309,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                   </a>
                   <span className="spacer"></span>
                   <a onClick={saveLog}>
-                    <i className="fa fa-download"></i>&nbsp;&nbsp;Save log
+                    <i className="fa fa-download"></i>&nbsp;&nbsp;Save logs
                   </a>
                 </div>
               }
@@ -337,7 +337,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                 <Alert severity="error" noIcon>
                   <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
                   <ol style={{fontSize: 13, paddingLeft: 30, paddingTop: 10, paddingBottom: 10}}>
-                    <li><a onClick={saveLog}>Save Terraform log</a> and <a href="/terraform/assets" download>download assets</a> for debugging purposes.</li>
+                    <li><a onClick={saveLog}>Save Terraform logs</a> and <a href="/terraform/assets" download>download assets</a> for debugging purposes.</li>
                     <li>Destroy your cluster to clear anything that may have been created. Or,</li>
                     <li>Reapply Terraform.</li>
                   </ol>
@@ -355,13 +355,13 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
               }
               {isApplySuccess &&
                 <div className="wiz-launch-progress__help">
-                  You can save Terraform logs, or destroy your cluster if you change your mind:&nbsp;
+                  You can save Terraform logs, or destroy your cluster if you changed your mind:&nbsp;
                   <DropdownInline
                     header="Terraform Actions"
                     items={[
                       ['Destroy Cluster', this.destroy],
                       ['Retry Terraform Apply', this.retry],
-                      ['Save Terraform Log', saveLog],
+                      ['Save Terraform Logs', saveLog],
                     ]}
                   />
                 </div>
