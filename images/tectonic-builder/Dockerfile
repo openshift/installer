@@ -16,7 +16,7 @@
 # docker push quay.io/coreos/tectonic-builder:<next-semver>-upstream-terraform
 ###
 
-FROM golang:1.8.3-stretch
+FROM golang:1.9-stretch
 
 ### For golang testing stuff
 RUN go get -u github.com/golang/lint/golint
