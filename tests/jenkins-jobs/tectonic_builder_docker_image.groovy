@@ -4,7 +4,7 @@ folder("builders")
 
 job("builders/tectonic-builder-docker-image") {
   logRotator(-1, 10)
-  description('Build quay.io/coreos/tectonic-builder Docker image. Changes here will be reverted automaticaly.')
+  description('Build quay.io/coreos/tectonic-builder Docker image. Changes here will be reverted automatically.')
 
   label 'worker&&ec2'
 
@@ -61,7 +61,7 @@ job("builders/tectonic-builder-docker-image") {
     wsCleanup()
     slackNotifier {
       authTokenCredentialId('tectonic-slack-token')
-      customMessage("Jenkins Builder: tectonic-builder")
+      customMessage("Jenkins Builder: tectonic-builder - tag: ${TECTONIC_BUILDER_TAG}")
       includeCustomMessage(true)
       notifyBackToNormal(true)
       notifyFailure(true)
