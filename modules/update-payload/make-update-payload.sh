@@ -20,6 +20,7 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 echo "Invoking terraform to populate the templates..." >&2
 pushd "${DIR}"
+terraform init .
 while true; do echo "place_holder_for_terraform_input"; done | terraform apply ./
 popd
 
