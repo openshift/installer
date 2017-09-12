@@ -18,6 +18,8 @@ multibranchPipelineJob("tectonic-installer") {
     }
   }
 
+// Post a message in this group https://groups.google.com/forum/#!topic/job-dsl-plugin/amHzGEanrco to see if there is another way to get the strategy
+// back again
   configure { project ->
     project / 'sources' / 'data' / 'jenkins.branch.BranchSource'/ strategy(class: 'jenkins.branch.DefaultBranchPropertyStrategy') {
       properties(class: 'java.util.Arrays$ArrayList') {
