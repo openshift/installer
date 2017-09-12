@@ -17,6 +17,17 @@ multibranchPipelineJob("tectonic-installer") {
       buildOriginPRMerge(true)
     }
   }
+
+  configure { project ->
+    project / 'sources' / 'data' / 'jenkins.branch.BranchSource'/ strategy(class: 'jenkins.branch.DefaultBranchPropertyStrategy') {
+      properties(class: 'java.util.Arrays$ArrayList') {
+        a(class: 'jenkins.branch.BranchProperty-array'){
+          'jenkins.branch.NoTriggerBranchProperty'()
+        }
+      }
+    }
+  }
+
   orphanedItemStrategy {
     discardOldItems {
       daysToKeep(10)
