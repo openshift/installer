@@ -1,6 +1,6 @@
 # Tectonic Changelog
 
-## Tectonic 1.7.3-tectonic.1 (2017-09-12)
+## Tectonic 1.7.3-tectonic.2 (2017-09-12)
 
 ### Tectonic Installer
 
