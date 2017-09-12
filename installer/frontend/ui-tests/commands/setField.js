@@ -2,8 +2,14 @@
 // value first (see github.com/nightwatchjs/nightwatch/issues/4).
 exports.command = function(selector, value) {
   this.expect.element(selector).to.be.visible;
-  this.clearValue(selector)
-    .setValue(selector, value)
-    .expect.element(selector).to.have.value.that.equals(value);
+
+  // Hack: Prefix the value with lots of backspace characters to clear any existing value first. We do this because
+  // Nightwatch's clearValue() function sometimes fails to actually clear the field.
+  // Also add a tab character to the end to cause the input to blur after setting its value. This is necessary for
+  // testing validation errors.
+  this.setValue(selector, `${'\b'.repeat(100)}${value}\t`);
+
+  this.expect.element(selector).to.have.value.that.equals(value);
+
   return this;
 };
