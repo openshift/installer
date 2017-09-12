@@ -32,7 +32,7 @@ module.exports = {
 
   'BM: Platform': client => {
     const platformPage = client.page.platformPage();
-    platformPage.test('@bareMetalPlatform');
+    platformPage.test('@metalGUI');
     platformPage.expect.element(wizard.nextStep).to.have.attribute('class').which.not.contains('disabled');
     platformPage.click(wizard.nextStep);
   },

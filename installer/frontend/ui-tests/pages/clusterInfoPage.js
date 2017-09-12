@@ -14,15 +14,31 @@ const clusterInfoPageCommands = {
     fs.writeFileSync(configPath, pull_secret);
     /* eslint-enable no-sync */
 
-    this
-      .setField('@name', json.tectonic_cluster_name)
-      .setValue('@coreOSLicenseUpload', coreOSLicensePath)
-      .setValue('@pullSecretUpload', configPath);
+    this.setField('@name', 'a%$#b');
+    if (platform === 'aws') {
+      this.expectValidationErrorContains('must be a valid AWS Stack Name');
+    }
+    if (platform === 'metal') {
+      this.expectValidationErrorContains('must be alphanumeric');
+    }
+
+    this.setField('@name', json.tectonic_cluster_name);
+    this.expectNoValidationError();
+
+    this.setValue('@coreOSLicenseUpload', coreOSLicensePath);
+    this.setValue('@pullSecretUpload', configPath);
+
     if (platform === 'aws') {
       this
-        .click('.list-add')
-        .setField('input[id="awsTags.1.key"]', 'test_tag')
-        .setField('input[id="awsTags.1.value"]', 'testing');
+        .setField('input[id="awsTags.0.key"]', '')
+        .setField('input[id="awsTags.0.value"]', 'testing')
+        .expectValidationErrorContains('Both fields are required')
+        .setField('input[id="awsTags.0.key"]', 'test_tag')
+        .setField('input[id="awsTags.0.value"]', '')
+        .expectValidationErrorContains('Both fields are required')
+        .setField('input[id="awsTags.0.key"]', 'test_tag')
+        .setField('input[id="awsTags.0.value"]', 'testing')
+        .expectNoValidationError();
     }
   },
 };

@@ -32,7 +32,7 @@ module.exports = {
 
   'AWS: Platform': client => {
     const platformPage = client.page.platformPage();
-    platformPage.test('@awsPlatform');
+    platformPage.test('@awsGUI');
     platformPage.expect.element(wizard.nextStep).to.have.attribute('class').which.not.contains('disabled');
     platformPage.click(wizard.nextStep);
   },
