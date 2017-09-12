@@ -17,8 +17,14 @@ const testPage = (page, platform, json, nextInitiallyDisabled = true) => {
   const nextNavLink = page.expect.element('.wiz-wizard__nav__step--active + .wiz-wizard__nav__step button');
   if (nextInitiallyDisabled) {
     nextNavLink.to.have.attribute('disabled');
+
+    // If the next button is disabled, all sidebar links for later screens should be disabled
+    page.expect.element('.wiz-wizard__nav__step--active ~ .wiz-wizard__nav__step button:not([disabled])').to.not.be.present;
   } else {
     nextNavLink.to.not.have.attribute('disabled');
+
+    // If the next button is enabled, the next sidebar link should be enabled too
+    page.expect.element('.wiz-wizard__nav__step--active + .wiz-wizard__nav__step button').to.not.have.attribute('disabled');
   }
 
   // Save progress link exists
