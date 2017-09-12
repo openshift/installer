@@ -12,7 +12,7 @@ job("triggers/tectonic-installer-hyperkube-trigger") {
   }
 
   parameters {
-    stringParam('hyperkube_image', '', "Please define the param like: {hyperkube=\"<HYPERKUBE_IMAGE>\"")
+    stringParam('hyperkube_image', '', "Please define the param like: {hyperkube=\"HYPERKUBE_IMAGE\"")
   }
 
   steps {
@@ -37,22 +37,12 @@ job("triggers/tectonic-installer-hyperkube-trigger") {
     wsCleanup()
     slackNotifier {
       authTokenCredentialId('tectonic-slack-token')
-      customMessage("Tectonic Installer Hyperkube Build - Master Branch")
+      customMessage("Tectonic Installer Hyperkube Build - Master Branch - Hyperkube: ${hyperkube_image}")
       includeCustomMessage(true)
       notifyBackToNormal(true)
       notifyFailure(true)
       notifyRepeatedFailure(true)
       room('#tectonic-installer-ci')
-      teamDomain('coreos')
-    }
-    slackNotifier {
-      authTokenCredentialId('tectonic-slack-token')
-      customMessage("Tectonic Installer Hyperkube Build - Master Branch")
-      includeCustomMessage(true)
-      notifyBackToNormal(true)
-      notifyFailure(true)
-      notifyRepeatedFailure(true)
-      room('#tectonic-installer')
       teamDomain('coreos')
     }
   }

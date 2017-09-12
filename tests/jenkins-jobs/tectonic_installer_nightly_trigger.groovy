@@ -34,22 +34,12 @@ job("triggers/tectonic-installer-nightly-trigger") {
     wsCleanup()
     slackNotifier {
       authTokenCredentialId('tectonic-slack-token')
-      customMessage("Tectonic Installer Nightly Build")
-      includeCustomMessage(true)
-      notifyBackToNormal(true)
-      notifyFailure(true)
-      notifyRepeatedFailure(true)
-      room('#tectonic-installer-ci')
-      teamDomain('coreos')
-    }
-    slackNotifier {
-      authTokenCredentialId('tectonic-slack-token')
       customMessage("Tectonic Installer Nightly Build - Master Branch")
       includeCustomMessage(true)
       notifyBackToNormal(true)
       notifyFailure(true)
       notifyRepeatedFailure(true)
-      room('#tectonic-installer')
+      room('#team-installer')
       teamDomain('coreos')
     }
   }
