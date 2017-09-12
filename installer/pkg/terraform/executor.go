@@ -138,7 +138,6 @@ func (ex *Executor) AddEnvironmentVariables(envVars map[string]string) {
 	for k, v := range envVars {
 		ex.envVariables[k] = v
 	}
-	ex.envVariables["HOME"] = os.Getenv("HOME")
 }
 
 // AddCredentials is a convenience function that converts the given Credentials
@@ -178,6 +177,7 @@ func (ex *Executor) Execute(args ...string) (int, chan struct{}, error) {
 	// ssh changes its behavior based on these. pass them through so ssh-agent & stuff works
 	cmd.Env = append(cmd.Env, fmt.Sprintf("DISPLAY=%s", os.Getenv("DISPLAY")))
 	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("HOME=%s", os.Getenv("HOME")))
 	for _, v := range os.Environ() {
 		if strings.HasPrefix(v, "SSH_") {
 			cmd.Env = append(cmd.Env, v)
