@@ -45,15 +45,5 @@ job("triggers/tectonic-installer-hyperkube-trigger") {
       room('#tectonic-installer-ci')
       teamDomain('coreos')
     }
-    slackNotifier {
-      authTokenCredentialId('tectonic-slack-token')
-      customMessage("Tectonic Installer Hyperkube Build - Master Branch - Hyperkube: ${hyperkube_image}")
-      includeCustomMessage(true)
-      notifyBackToNormal(true)
-      notifyFailure(true)
-      notifyRepeatedFailure(true)
-      room('#tectonic-installer')
-      teamDomain('coreos')
-    }
   }
 }
