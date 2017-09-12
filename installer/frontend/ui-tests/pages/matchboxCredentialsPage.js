@@ -13,7 +13,7 @@ const matchBoxCredentialsPageCommands = {
     fs.writeFileSync(clientCertPath, json.tectonic_metal_matchbox_client_cert);
     fs.writeFileSync(clientKeyPath, json.tectonic_metal_matchbox_client_key);
     /* eslint-enable no-sync */
-    return this
+    this
       .setValue('@caCertificate', caCertPath)
       .setValue('@clientCertificate', clientCertPath)
       .setValue('@clientKey', clientKeyPath);

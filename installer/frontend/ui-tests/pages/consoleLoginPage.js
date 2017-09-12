@@ -1,6 +1,6 @@
 const consoleLoginPageCommands = {
   test(json) {
-    return this
+    this
       .setField('@email', json.tectonic_admin_email)
       .setField('@password', 'password')
       .setField('@confirmPassword', 'password');

@@ -1,6 +1,6 @@
 const defineWorkersPageCommands = {
   test(json) {
-    return this
+    this
       .setField('@workers0', json.tectonic_metal_worker_macs[0])
       .setField('@hosts0', json.tectonic_metal_worker_domains[0])
       .click('@addMore')

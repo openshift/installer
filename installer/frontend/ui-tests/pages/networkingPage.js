@@ -1,6 +1,6 @@
 const networkingPageCommands = {
   test(json) {
-    return this
+    this
       .selectOption('#awsHostedZoneId option[value=Z1ILIMNSJGTMO2]')
       .selectOption('#awsSplitDNS option[value=off]')
       .click('@advanced')
