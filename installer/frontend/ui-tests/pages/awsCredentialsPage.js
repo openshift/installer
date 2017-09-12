@@ -17,7 +17,7 @@ const awsCredentialsPageCommands = {
     }
 
     this.expect.element(regionOption).to.be.visible.before(60000);
-    return this.selectOption(regionOption);
+    this.selectOption(regionOption);
   },
 };
 

@@ -24,7 +24,6 @@ const clusterInfoPageCommands = {
         .setField('input[id="awsTags.1.key"]', 'test_tag')
         .setField('input[id="awsTags.1.value"]', 'testing');
     }
-    return this;
   },
 };
 

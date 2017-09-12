@@ -9,7 +9,7 @@ const sshKeysPageCommands = {
     /* eslint-disable no-sync */
     fs.writeFileSync(sshKeysPath, json.tectonic_ssh_authorized_key);
 
-    return this.setValue('@publicKey', sshKeysPath);
+    this.setValue('@publicKey', sshKeysPath);
   },
 };
 

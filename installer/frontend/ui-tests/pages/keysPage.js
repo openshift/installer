@@ -1,6 +1,6 @@
 const keysPageCommands = {
   test(json) {
-    return this.selectOption(`option[value=${json.tectonic_aws_ssh_key}]`);
+    this.selectOption(`option[value=${json.tectonic_aws_ssh_key}]`);
   },
 };
 

@@ -16,12 +16,13 @@ const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, 'aws', j
 const REQUIRED_ENV_VARS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
 
 module.exports = {
-  before () {
+  before (client) {
     const missing = REQUIRED_ENV_VARS.filter(ev => !process.env[ev]);
     if (missing.length) {
       console.error(`Missing environment variables: ${missing.join(', ')}.\n`);
       process.exit(1);
     }
+    client.url(client.launch_url);
   },
 
   after (client) {
@@ -31,9 +32,8 @@ module.exports = {
 
   'AWS: Platform': client => {
     const platformPage = client.page.platformPage();
-    platformPage.navigate(client.launch_url);
     platformPage.test('@awsPlatform');
-    platformPage.expect.element(wizard.nextStep).to.not.have.attribute('class').which.contains('disabled');
+    platformPage.expect.element(wizard.nextStep).to.have.attribute('class').which.not.contains('disabled');
     platformPage.click(wizard.nextStep);
   },
 

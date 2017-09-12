@@ -1,6 +1,6 @@
 const defineMastersPageCommands = {
   test(json) {
-    return this
+    this
       .setField('@masters0', json.tectonic_metal_controller_macs[0])
       .setField('@hosts0', json.tectonic_metal_controller_domains[0]);
   },
