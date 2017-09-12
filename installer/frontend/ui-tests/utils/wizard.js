@@ -21,6 +21,9 @@ const testPage = (page, platform, json, nextInitiallyDisabled = true) => {
     nextNavLink.to.not.have.attribute('disabled');
   }
 
+  // Save progress link exists
+  page.expect.element('.wiz-form__header a').text.which.contains('Save progress');
+
   if (page.test) {
     page.test(json, platform);
   }
