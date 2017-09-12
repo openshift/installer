@@ -128,7 +128,10 @@ fi
 if [ -z "$tag_file" ]; then
   tag_file="$(mktemp -p "$tmp_dir")"
 
-  date_string="$(date "+%Y-%m-%d" -d "-1 day")\",\"$(date "+%Y-%-m-%-d" -d "-1 day")\",\"$(date +%Y-%m-%d)\",\"$(date +%Y-%-m-%-d)"
+  date_string="$(date "+%Y-%m-%d" -d "-1 day")\",\"$(date "+%Y-%-m-%-d" -d "-1 day")\",
+  \"$(date "+%m-%-d-%-Y" -d "-1 day")\",\"$(date "+%-m-%-d-%-Y" -d "-1 day")\",\"$(date "+%d-%m-%-Y" -d "-1 day")\",
+  \"$(date "+%d-%-m-%-Y" -d "-1 day")\",\"$(date +%m-%d-%Y)\",\"$(date +%d-%m-%Y)\",
+  \"$(date +%d-%-m-%Y)\",\"$(date +%Y-%m-%d)\",\"$(date +%Y-%-m-%-d)"
   if [ -n "$date_override" ]; then
   	date_string="$date_override"
   fi
