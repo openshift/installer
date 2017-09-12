@@ -230,7 +230,6 @@ func (ex *Executor) ExecuteSync(args ...string) ([]byte, error) {
 	// working directory (so the files such as terraform.tfstate are stored at
 	// the right place), extra environment variables and outputs.
 	cmd := exec.Command(ex.binaryPath, args...)
-	cmd.Env = append(cmd.Env, fmt.Sprintf("TERRAFORM_CONFIG=%s", ex.configPath))
 	// ssh changes its behavior based on these. pass them through so ssh-agent & stuff works
 	cmd.Env = append(cmd.Env, fmt.Sprintf("DISPLAY=%s", os.Getenv("DISPLAY")))
 	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH=%s", os.Getenv("PATH")))
