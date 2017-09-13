@@ -43,6 +43,8 @@ module "bootkube" {
   experimental_enabled = "${var.tectonic_experimental}"
 
   master_count = "${length(var.tectonic_metal_controller_names)}"
+
+  cloud_config_path = ""
 }
 
 module "tectonic" {
