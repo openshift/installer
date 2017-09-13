@@ -46,7 +46,6 @@
     "whatwg-fetch": "1.0.x"
   },
   "devDependencies": {
-    "babel-jest": "18.x",
     "babel-plugin-syntax-async-functions": "6.x",
     "babel-plugin-transform-regenerator": "6.x",
     "babel-polyfill": "6.x",
