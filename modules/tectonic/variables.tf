@@ -44,6 +44,16 @@ variable "ca_cert" {
   type        = "string"
 }
 
+variable "ca_key_alg" {
+  description = "Algorithm used to generate ca_key. Example: RSA."
+  type        = "string"
+}
+
+variable "ca_key" {
+  description = "Contents of a PEM-encoded CA key, used to generate Tectonic Console's server certificate. Leave blank to generate a new CA."
+  type        = "string"
+}
+
 variable "base_address" {
   description = "Base address used to access the Tectonic Console, without protocol nor trailing forward slash (may contain a port). Example: console.example.com:30000."
   type        = "string"
@@ -117,33 +127,5 @@ variable "image_re" {
 (internal) Regular expression used to extract repo and tag components from image strings
 EOF
 
-  type = "string"
-}
-
-variable "ingress_ca_cert_pem" {
-  type = "string"
-}
-
-variable "ingress_cert_pem" {
-  type = "string"
-}
-
-variable "ingress_key_pem" {
-  type = "string"
-}
-
-variable "identity_server_cert_pem" {
-  type = "string"
-}
-
-variable "identity_server_key_pem" {
-  type = "string"
-}
-
-variable "identity_client_cert_pem" {
-  type = "string"
-}
-
-variable "identity_client_key_pem" {
   type = "string"
 }
