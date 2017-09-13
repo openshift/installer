@@ -12,7 +12,6 @@ import { sections as trailSections, trail } from '../trail';
 
 import { Loader } from './loader';
 import { restoreModal } from './restore';
-import { WithTooltip } from './tooltip';
 import { PLATFORM_TYPE } from '../cluster-config';
 import { TectonicGA } from '../tectonic-ga';
 import { Header } from './header';
@@ -56,9 +55,10 @@ const NavSection = connect(state => ({state}))(
 );
 
 const NextButton = withNav(
-  ({disabled, navNext}) => <WithTooltip text="All fields are required unless specified." shouldShow={disabled}>
+  ({disabled, navNext}) => <div className="withtooltip">
     <button onClick={navNext} className={`btn btn-primary ${disabled ? 'disabled' : ''}`}>Next Step</button>
-  </WithTooltip>
+    {disabled && <div className="tooltip">All fields are required unless specified.</div>}
+  </div>
 );
 
 const PreviousButton = withNav(
