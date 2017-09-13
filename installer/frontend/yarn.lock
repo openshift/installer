@@ -4142,9 +4142,9 @@ sax@^1.2.1:
   version "1.2.4"
   resolved "https://registry.yarnpkg.com/sax/-/sax-1.2.4.tgz#2816234e2378bddc4e5354fab5caa895df7100d9"
 
-selenium-server@3.1.x:
-  version "3.1.0"
-  resolved "https://registry.yarnpkg.com/selenium-server/-/selenium-server-3.1.0.tgz#ace1579d69d91ccdf25b7710870b220876def1e8"
+selenium-server@3.5.x:
+  version "3.5.3"
+  resolved "https://registry.yarnpkg.com/selenium-server/-/selenium-server-3.5.3.tgz#278c0af61ac2961476a59c6ff951216d67f2095c"
 
 "semver@2 || 3 || 4 || 5", semver@5.x, semver@^5.3.0:
   version "5.4.1"
