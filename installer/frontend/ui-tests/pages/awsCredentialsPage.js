@@ -7,14 +7,18 @@ const awsCredentialsPageCommands = {
     if (process.env.AWS_SESSION_TOKEN) {
       this
         .setField('@sessionTokenTrue')
-        .setField('@awsAccessKey', process.env.AWS_ACCESS_KEY_ID)
-        .setField('@secretAccesskey', process.env.AWS_SECRET_ACCESS_KEY)
         .setField('@sessionToken', process.env.AWS_SESSION_TOKEN);
-    } else {
-      this
-        .setField('@awsAccessKey', process.env.AWS_ACCESS_KEY_ID)
-        .setField('@secretAccesskey', process.env.AWS_SECRET_ACCESS_KEY);
     }
+
+    this
+      .setField('@awsAccessKey', 'abc')
+      .expectValidationErrorContains('AWS key IDs are at least 20 characters')
+      .setField('@awsAccessKey', process.env.AWS_ACCESS_KEY_ID)
+      .expectNoValidationError()
+      .setField('@secretAccesskey', 'abc')
+      .expectValidationErrorContains('AWS secrets are at least 40 characters')
+      .setField('@secretAccesskey', process.env.AWS_SECRET_ACCESS_KEY)
+      .expectNoValidationError();
 
     this.expect.element(regionOption).to.be.visible.before(60000);
     this.selectOption(regionOption);
