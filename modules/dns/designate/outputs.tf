@@ -9,3 +9,7 @@ output "master_nodes" {
 output "worker_nodes" {
   value = "${openstack_dns_recordset_v2.worker_nodes.*.records}"
 }
+
+output "worker_nodes_public" {
+  value = "${openstack_dns_recordset_v2.worker_nodes_public.*.records}"
+}

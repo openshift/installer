@@ -49,6 +49,12 @@ variable "worker_ips" {
   type        = "list"
 }
 
+variable "worker_public_ips" {
+  description = "(optional) List of string public IPs for workers"
+  type        = "list"
+  default     = []
+}
+
 variable "api_ips" {
   description = "List of string IPs for k8s API"
   type        = "list"
