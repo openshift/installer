@@ -61,7 +61,7 @@ job("builders/tectonic-builder-docker-image") {
     wsCleanup()
     slackNotifier {
       authTokenCredentialId('tectonic-slack-token')
-      customMessage("Jenkins Builder: tectonic-builder - tag: ${TECTONIC_BUILDER_TAG}")
+      customMessage("Jenkins Builder: tectonic-builder - tag: \${TECTONIC_BUILDER_TAG}")
       includeCustomMessage(true)
       notifyBackToNormal(true)
       notifyFailure(true)

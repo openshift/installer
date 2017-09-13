@@ -52,7 +52,7 @@ fi
     wsCleanup()
     slackNotifier {
       authTokenCredentialId('tectonic-slack-token')
-      customMessage("Jenkins Builder: tectonic-smoke-test-env - tag: ${TECTONIC_SMOKE_TAG}")
+      customMessage("Jenkins Builder: tectonic-smoke-test-env - tag: \${TECTONIC_SMOKE_TAG}")
       includeCustomMessage(true)
       notifyBackToNormal(true)
       notifyFailure(true)

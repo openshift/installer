@@ -37,7 +37,7 @@ job("triggers/tectonic-installer-hyperkube-trigger") {
     wsCleanup()
     slackNotifier {
       authTokenCredentialId('tectonic-slack-token')
-      customMessage("Tectonic Installer Hyperkube Build - Master Branch - Hyperkube: ${hyperkube_image}")
+      customMessage("Tectonic Installer Hyperkube Build - Master Branch - Hyperkube: \${hyperkube_image}")
       includeCustomMessage(true)
       notifyBackToNormal(true)
       notifyFailure(true)
