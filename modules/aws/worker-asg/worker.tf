@@ -126,9 +126,19 @@ resource "aws_iam_role_policy" "worker_policy" {
   "Version": "2012-10-17",
   "Statement": [
     {
-      "Action": "ec2:*",
-      "Resource": "*",
-      "Effect": "Allow"
+      "Effect": "Allow",
+      "Action": "ec2:Describe*",
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ec2:AttachVolume",
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ec2:DetachVolume",
+      "Resource": "*"
     },
     {
       "Action": "elasticloadbalancing:*",
