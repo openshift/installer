@@ -107,6 +107,8 @@ spec:
             configMapKeyRef:
               name: tectonic-config
               key: dexAPIHost
+        - name: BRIDGE_DEX_CLIENT_CA_FILE
+          value: /etc/tectonic-identity-grpc-client-secret/ca-cert
         image: ${console_image}
         imagePullPolicy: IfNotPresent
         livenessProbe:
