@@ -14,13 +14,15 @@ data "ignition_config" "node" {
     "${data.ignition_file.sshd.id}",
   ]
 
-  systemd = [
-    "${var.ign_docker_dropin_id}",
-    "${var.ign_locksmithd_service_id}",
-    "${var.ign_kubelet_service_id}",
-    "${data.ignition_systemd_unit.bootkube.id}",
-    "${data.ignition_systemd_unit.tectonic.id}",
-  ]
+  systemd = ["${compact(list(
+    var.ign_docker_dropin_id,
+    var.ign_locksmithd_service_id,
+    var.ign_kubelet_service_id,
+    var.ign_bootkube_service_id,
+    var.ign_tectonic_service_id,
+    var.ign_bootkube_path_unit_id,
+    var.ign_tectonic_path_unit_id,
+   ))}"]
 }
 
 data "ignition_file" "resolv_conf" {
@@ -59,17 +61,6 @@ data "ignition_file" "kubeconfig" {
   content {
     content = "${var.kubeconfig_content}"
   }
-}
-
-data "ignition_systemd_unit" "bootkube" {
-  name    = "bootkube.service"
-  content = "${var.bootkube_service}"
-}
-
-data "ignition_systemd_unit" "tectonic" {
-  name    = "tectonic.service"
-  enable  = "${var.tectonic_service_disabled == 0 ? true : false}"
-  content = "${var.tectonic_service}"
 }
 
 data "ignition_file" "sshd" {

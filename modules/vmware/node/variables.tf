@@ -2,11 +2,6 @@ variable "base_domain" {
   type = "string"
 }
 
-variable "bootkube_service" {
-  type        = "string"
-  description = "The content of the bootkube systemd service unit"
-}
-
 variable "container_images" {
   description = "Container images to use"
   type        = "map"
@@ -35,16 +30,6 @@ variable "private_key" {
   type        = "string"
   description = "SSH private key file in .pem format corresponding to tectonic_vmware_ssh_authorized_key. If not provided, SSH agent will be used."
   default     = ""
-}
-
-variable "tectonic_service" {
-  type        = "string"
-  description = "The content of the tectonic installer systemd service unit"
-}
-
-variable "tectonic_service_disabled" {
-  description = "Specifies whether the tectonic installer systemd unit will be disabled. If true, no tectonic assets will be deployed"
-  default     = false
 }
 
 variable "vmware_folder" {
@@ -120,4 +105,27 @@ variable "vmware_datacenter" {
 variable "ign_kubelet_env_service_id" {
   type        = "string"
   description = "The kubelet env service to use"
+  default     = ""
+}
+
+variable "ign_bootkube_service_id" {
+  type        = "string"
+  description = "The ID of the bootkube systemd service unit"
+  default     = ""
+}
+
+variable "ign_bootkube_path_unit_id" {
+  type    = "string"
+  default = ""
+}
+
+variable "ign_tectonic_service_id" {
+  type        = "string"
+  description = "The ID of the tectonic installer systemd service unit"
+  default     = ""
+}
+
+variable "ign_tectonic_path_unit_id" {
+  type    = "string"
+  default = ""
 }

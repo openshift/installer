@@ -56,8 +56,20 @@ output "ca_key" {
   value = "${var.ca_cert == "" ? join(" ", tls_private_key.kube_ca.*.private_key_pem) : var.ca_key}"
 }
 
-output "systemd_service" {
+output "systemd_service_rendered" {
   value = "${data.template_file.bootkube_service.rendered}"
+}
+
+output "systemd_service_id" {
+  value = "${data.ignition_systemd_unit.bootkube_service.id}"
+}
+
+output "systemd_path_unit_rendered" {
+  value = "${data.template_file.bootkube_path_unit.rendered}"
+}
+
+output "systemd_path_unit_id" {
+  value = "${data.ignition_systemd_unit.bootkube_path_unit.id}"
 }
 
 output "kube_dns_service_ip" {

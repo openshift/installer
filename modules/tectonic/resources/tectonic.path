@@ -1,0 +1,7 @@
+[Unit]
+Description=Trigger for tectonic.service
+[Path]
+PathExists=/opt/tectonic/tectonic-rkt.sh
+Unit=tectonic.service
+[Install]
+WantedBy=multi-user.target

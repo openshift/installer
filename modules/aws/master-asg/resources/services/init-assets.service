@@ -1,18 +1,18 @@
 [Unit]
 Description=Download Tectonic Assets
-ConditionPathExists=!/opt/tectonic/init_assets.done
+ConditionPathExists=!/opt/init_assets.done
 Before=bootkube.service kubelet-env.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=true
-WorkingDirectory=/opt/tectonic
+WorkingDirectory=/opt
 
 User=root
 Group=root
 
-ExecStart=/usr/bin/bash /opt/tectonic/init-assets.sh
-ExecStartPost=/bin/touch /opt/tectonic/init_assets.done
+ExecStart=/usr/bin/bash /opt/init-assets.sh
+ExecStartPost=/bin/touch /opt/init_assets.done
 
 [Install]
 WantedBy=multi-user.target

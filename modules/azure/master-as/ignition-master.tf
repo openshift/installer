@@ -7,14 +7,16 @@ data "ignition_config" "master" {
     "${data.ignition_file.cloud_provider_config.id}",
   ]
 
-  systemd = [
-    "${var.ign_docker_dropin_id}",
-    "${var.ign_locksmithd_service_id}",
-    "${var.ign_kubelet_service_id}",
-    "${data.ignition_systemd_unit.tectonic.id}",
-    "${data.ignition_systemd_unit.bootkube.id}",
-    "${var.ign_tx_off_service_id}",
-  ]
+  systemd = ["${compact(list(
+    var.ign_docker_dropin_id,
+    var.ign_locksmithd_service_id,
+    var.ign_kubelet_service_id,
+    var.ign_tx_off_service_id,
+    var.ign_bootkube_service_id,
+    var.ign_tectonic_service_id,
+    var.ign_bootkube_path_unit_id,
+    var.ign_tectonic_path_unit_id,
+   ))}"]
 
   users = [
     "${data.ignition_user.core.id}",
@@ -47,15 +49,4 @@ data "ignition_file" "cloud_provider_config" {
   content {
     content = "${var.cloud_provider_config}"
   }
-}
-
-data "ignition_systemd_unit" "bootkube" {
-  name    = "bootkube.service"
-  content = "${var.bootkube_service}"
-}
-
-data "ignition_systemd_unit" "tectonic" {
-  name    = "tectonic.service"
-  enable  = "${var.tectonic_service_disabled == 0 ? true : false}"
-  content = "${var.tectonic_service}"
 }

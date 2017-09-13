@@ -136,20 +136,21 @@ search ${var.tectonic_base_domain}
 ${join("\n", formatlist("nameserver %s", var.tectonic_openstack_dns_nameservers))}
 EOF
 
-  bootkube_service          = "${module.bootkube.systemd_service}"
-  cluster_name              = "${var.tectonic_cluster_name}"
-  core_public_keys          = ["${module.secrets.core_public_key_openssh}"]
-  hostname_infix            = "master"
-  instance_count            = "${var.tectonic_master_count}"
-  kubeconfig_content        = "${module.bootkube.kubeconfig}"
-  tectonic_service          = "${module.tectonic.systemd_service}"
-  tectonic_service_disabled = "${var.tectonic_vanilla_k8s}"
+  cluster_name       = "${var.tectonic_cluster_name}"
+  core_public_keys   = ["${module.secrets.core_public_key_openssh}"]
+  hostname_infix     = "master"
+  instance_count     = "${var.tectonic_master_count}"
+  kubeconfig_content = "${module.bootkube.kubeconfig}"
 
+  ign_bootkube_path_unit_id = "${module.bootkube.systemd_path_unit_id}"
+  ign_bootkube_service_id   = "${module.bootkube.systemd_service_id}"
   ign_docker_dropin_id      = "${module.ignition_masters.docker_dropin_id}"
   ign_kubelet_env_id        = "${module.ignition_masters.kubelet_env_id}"
   ign_kubelet_service_id    = "${module.ignition_masters.kubelet_service_id}"
   ign_locksmithd_service_id = "${module.ignition_masters.locksmithd_service_id}"
   ign_max_user_watches_id   = "${module.ignition_masters.max_user_watches_id}"
+  ign_tectonic_path_unit_id = "${var.tectonic_vanilla_k8s ? "" : module.tectonic.systemd_path_unit_id}"
+  ign_tectonic_service_id   = "${module.tectonic.systemd_service_id}"
 }
 
 module "ignition_workers" {
@@ -171,14 +172,11 @@ search ${var.tectonic_base_domain}
 ${join("\n", formatlist("nameserver %s", var.tectonic_openstack_dns_nameservers))}
 EOF
 
-  bootkube_service          = ""
-  cluster_name              = "${var.tectonic_cluster_name}"
-  core_public_keys          = ["${module.secrets.core_public_key_openssh}"]
-  hostname_infix            = "worker"
-  instance_count            = "${var.tectonic_worker_count}"
-  kubeconfig_content        = "${module.bootkube.kubeconfig}"
-  tectonic_service          = ""
-  tectonic_service_disabled = "${var.tectonic_vanilla_k8s}"
+  cluster_name       = "${var.tectonic_cluster_name}"
+  core_public_keys   = ["${module.secrets.core_public_key_openssh}"]
+  hostname_infix     = "worker"
+  instance_count     = "${var.tectonic_worker_count}"
+  kubeconfig_content = "${module.bootkube.kubeconfig}"
 
   ign_docker_dropin_id      = "${module.ignition_workers.docker_dropin_id}"
   ign_kubelet_env_id        = "${module.ignition_masters.kubelet_env_id}"

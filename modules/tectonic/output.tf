@@ -19,8 +19,20 @@ output "id" {
   value = "${sha1("${template_dir.tectonic.id} ${local_file.tectonic.id}")}"
 }
 
-output "systemd_service" {
+output "systemd_service_rendered" {
   value = "${data.template_file.tectonic_service.rendered}"
+}
+
+output "systemd_service_id" {
+  value = "${data.ignition_systemd_unit.tectonic_service.id}"
+}
+
+output "systemd_path_unit_rendered" {
+  value = "${data.template_file.tectonic_path.rendered}"
+}
+
+output "systemd_path_unit_id" {
+  value = "${data.ignition_systemd_unit.tectonic_path.id}"
 }
 
 output "cluster_id" {

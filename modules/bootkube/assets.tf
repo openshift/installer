@@ -179,6 +179,23 @@ data "template_file" "bootkube_service" {
   template = "${file("${path.module}/resources/bootkube.service")}"
 }
 
+data "ignition_systemd_unit" "bootkube_service" {
+  name    = "bootkube.service"
+  enable  = false
+  content = "${data.template_file.bootkube_service.rendered}"
+}
+
+# bootkube.path (available as output variable)
+data "template_file" "bootkube_path_unit" {
+  template = "${file("${path.module}/resources/bootkube.path")}"
+}
+
+data "ignition_systemd_unit" "bootkube_path_unit" {
+  name    = "bootkube.path"
+  enable  = true
+  content = "${data.template_file.bootkube_path_unit.rendered}"
+}
+
 # etcd assets
 data "template_file" "etcd_ca_cert_pem" {
   template = "${var.experimental_enabled || var.etcd_tls_enabled

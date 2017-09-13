@@ -47,41 +47,19 @@ systemd:
     - name: kubelet.service
       enable: true
       contents: {{.ign_kubelet_service_json}}
+    - name: bootkube.path
+      enable: true
+      contents: {{.ign_bootkube_path_unit_json}}
     - name: bootkube.service
-      contents: |
-        [Unit]
-        Description=Bootstrap a Kubernetes cluster
-        ConditionPathExists=!/opt/tectonic/init_bootkube.done
-        Wants=kubelet.service
-        After=kubelet.service
-        [Service]
-        Type=oneshot
-        RemainAfterExit=true
-        WorkingDirectory=/opt/tectonic
-        User=root
-        Group=root
-        ExecStart=/usr/bin/bash /opt/tectonic/bootkube.sh
-        ExecStartPost=/bin/touch /opt/tectonic/init_bootkube.done
-        [Install]
-        WantedBy=multi-user.target
+      enable: false
+      contents: {{.ign_bootkube_service_json}}
 {{ if eq .exclude_tectonic "0" }}
+    - name: tectonic.path
+      enable: true
+      contents: {{.ign_tectonic_path_unit_json}}
     - name: tectonic.service
-      contents: |
-        [Unit]
-        Description=Bootstrap a Tectonic cluster
-        ConditionPathExists=!/opt/tectonic/init_tectonic.done
-        Requires=bootkube.service
-        After=bootkube.service
-        [Service]
-        Type=oneshot
-        RemainAfterExit=true
-        WorkingDirectory=/opt/tectonic
-        User=root
-        Group=root
-        ExecStart=/usr/bin/bash /opt/tectonic/tectonic-rkt.sh
-        ExecStartPost=/bin/touch /opt/tectonic/init_tectonic.done
-        [Install]
-        WantedBy=multi-user.target
+      enable: false
+      contents: {{.ign_tectonic_service_json}}
 {{end}}
 storage:
   files:

@@ -19,11 +19,6 @@ variable "base_domain" {
   description = "Domain on which the ELB records will be created"
 }
 
-variable "bootkube_service" {
-  type        = "string"
-  description = "The content of the bootkube systemd service unit"
-}
-
 variable "cl_channel" {
   type = "string"
 }
@@ -134,12 +129,20 @@ variable "subnet_ids" {
   type = "list"
 }
 
-variable "tectonic_service" {
+variable "ign_bootkube_service_id" {
   type        = "string"
-  description = "The content of the tectonic installer systemd service unit"
+  description = "The ID of the bootkube systemd service unit"
 }
 
-variable "tectonic_service_disabled" {
-  description = "Specifies whether the tectonic installer systemd unit will be disabled. If true, no tectonic assets will be deployed"
-  default     = false
+variable "ign_bootkube_path_unit_id" {
+  type = "string"
+}
+
+variable "ign_tectonic_service_id" {
+  type        = "string"
+  description = "The ID of the tectonic installer systemd service unit"
+}
+
+variable "ign_tectonic_path_unit_id" {
+  type = "string"
 }

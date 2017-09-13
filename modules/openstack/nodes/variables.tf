@@ -1,7 +1,3 @@
-variable "bootkube_service" {
-  type = "string"
-}
-
 variable "cluster_name" {
   type        = "string"
   description = "The name of the cluster. The master hostnames will be prefixed with this."
@@ -34,11 +30,24 @@ variable "resolv_conf_content" {
   description = "The content of the /etc/resolv.conf file."
 }
 
-variable "tectonic_service" {
-  type = "string"
+variable "ign_bootkube_service_id" {
+  type        = "string"
+  description = "The ID of the bootkube systemd service unit"
+  default     = ""
 }
 
-variable "tectonic_service_disabled" {
-  description = "Specifies whether the tectonic installer systemd unit will be disabled. If true, no tectonic assets will be deployed"
-  default     = false
+variable "ign_bootkube_path_unit_id" {
+  type    = "string"
+  default = ""
+}
+
+variable "ign_tectonic_service_id" {
+  type        = "string"
+  description = "The ID of the tectonic installer systemd service unit"
+  default     = ""
+}
+
+variable "ign_tectonic_path_unit_id" {
+  type    = "string"
+  default = ""
 }

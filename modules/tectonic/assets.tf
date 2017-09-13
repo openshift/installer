@@ -129,3 +129,20 @@ resource "local_file" "tectonic_rkt" {
 data "template_file" "tectonic_service" {
   template = "${file("${path.module}/resources/tectonic.service")}"
 }
+
+data "ignition_systemd_unit" "tectonic_service" {
+  name    = "tectonic.service"
+  enable  = false
+  content = "${data.template_file.tectonic_service.rendered}"
+}
+
+# tectonic.path (available as output variable)
+data "template_file" "tectonic_path" {
+  template = "${file("${path.module}/resources/tectonic.path")}"
+}
+
+data "ignition_systemd_unit" "tectonic_path" {
+  name    = "tectonic.path"
+  enable  = true
+  content = "${data.template_file.tectonic_path.rendered}"
+}
