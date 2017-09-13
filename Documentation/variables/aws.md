@@ -34,6 +34,7 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_worker_ec2_type | Instance size for the worker node(s). Example: `t2.medium`. | string | `t2.medium` |
 | tectonic_aws_worker_extra_sg_ids | (optional) List of additional security group IDs for worker nodes.<br><br>Example: `["sg-51530134", "sg-b253d7cc"]` | list | `<list>` |
 | tectonic_aws_worker_iam_role_name | (optional) Name of IAM role to use for the instance profiles of worker nodes. The name is also the last part of a role's ARN.<br><br>Example:  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer  * Role Name = tectonic-installer | string | `` |
+| tectonic_aws_worker_load_balancers | (optional) List of ELBs to attach all worker instances to. This is useful for exposing NodePort services via load-balancers managed separately from the cluster.<br><br>Example:  * `["ingress-nginx"]` | list | `<list>` |
 | tectonic_aws_worker_root_volume_iops | The amount of provisioned IOPS for the root block device of worker nodes. Ignored if the volume type is not io1. | string | `100` |
 | tectonic_aws_worker_root_volume_size | The size of the volume in gigabytes for the root block device of worker nodes. | string | `30` |
 | tectonic_aws_worker_root_volume_type | The type of volume for the root block device of worker nodes. | string | `gp2` |

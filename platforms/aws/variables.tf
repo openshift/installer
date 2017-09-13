@@ -292,3 +292,16 @@ Example:
  * Role Name = tectonic-installer
 EOF
 }
+
+variable "tectonic_aws_worker_load_balancers" {
+  type    = "list"
+  default = []
+
+  description = <<EOF
+(optional) List of ELBs to attach all worker instances to.
+This is useful for exposing NodePort services via load-balancers managed separately from the cluster.
+
+Example:
+ * `["ingress-nginx"]`
+EOF
+}

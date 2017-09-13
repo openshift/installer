@@ -135,6 +135,13 @@ tectonic_aws_worker_ec2_type = "t2.medium"
 //  * Role Name = tectonic-installer
 // tectonic_aws_worker_iam_role_name = ""
 
+// (optional) List of ELBs to attach all worker instances to.
+// This is useful for exposing NodePort services via load-balancers managed separately from the cluster.
+// 
+// Example:
+//  * `["ingress-nginx"]`
+// tectonic_aws_worker_load_balancers = ""
+
 // The amount of provisioned IOPS for the root block device of worker nodes.
 // Ignored if the volume type is not io1.
 tectonic_aws_worker_root_volume_iops = "100"

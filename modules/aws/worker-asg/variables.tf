@@ -35,6 +35,12 @@ variable "sg_ids" {
   description = "The security group IDs to be applied."
 }
 
+variable "load_balancers" {
+  description = "List of ELBs to attach all worker instances to."
+  type        = "list"
+  default     = []
+}
+
 variable "extra_tags" {
   description = "Extra AWS tags to be applied to created resources."
   type        = "map"

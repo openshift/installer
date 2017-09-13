@@ -166,6 +166,7 @@ module "workers" {
   subnet_ids                   = "${module.vpc.worker_subnet_ids}"
   vpc_id                       = "${module.vpc.vpc_id}"
   worker_iam_role              = "${var.tectonic_aws_worker_iam_role_name}"
+  load_balancers               = ["${var.tectonic_aws_worker_load_balancers}"]
 
   ign_docker_dropin_id          = "${module.ignition_workers.docker_dropin_id}"
   ign_kubelet_service_id        = "${module.ignition_workers.kubelet_service_id}"

@@ -53,6 +53,7 @@ resource "aws_autoscaling_group" "workers" {
   max_size             = "${var.instance_count * 3}"
   min_size             = "${var.instance_count}"
   launch_configuration = "${aws_launch_configuration.worker_conf.id}"
+  load_balancers       = ["${var.load_balancers}"]
   vpc_zone_identifier  = ["${var.subnet_ids}"]
 
   tags = [
