@@ -46,7 +46,6 @@
     "whatwg-fetch": "1.0.x"
   },
   "devDependencies": {
-    "babel-jest": "18.x",
     "babel-plugin-syntax-async-functions": "6.x",
     "babel-plugin-transform-regenerator": "6.x",
     "babel-polyfill": "6.x",
@@ -59,11 +58,11 @@
     "eslint": "4.x",
     "eslint-plugin-import": "2.x",
     "eslint-plugin-react": "7.x",
-    "jest-cli": "20.x",
+    "jest-cli": "21.x",
     "jszip": "3.x",
     "nightwatch": "0.9.x",
     "request": "2.x",
-    "selenium-server": "3.1.x",
+    "selenium-server": "3.5.x",
     "watchify": "3.x"
   }
 }
