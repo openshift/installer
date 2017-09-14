@@ -55,6 +55,12 @@ variable "worker_public_ips" {
   default     = []
 }
 
+// hack: worker_public_ips_enabled is a workaround for https://github.com/hashicorp/terraform/issues/10857
+variable "worker_public_ips_enabled" {
+  description = "Worker nodes have public IPs assigned. worker_public_ips must be provided if true."
+  default     = true
+}
+
 variable "api_ips" {
   description = "List of string IPs for k8s API"
   type        = "list"
