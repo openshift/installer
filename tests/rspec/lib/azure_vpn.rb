@@ -79,7 +79,7 @@ class AzureVpn
     loop do
       puts 'Waiting for VPN to connect...'
       break if system("ping -c 1 #{gwip}")
-      raise 'waiting for vpn connection timed out' if Time.now - from > 30
+      raise 'waiting for vpn connection timed out' if Time.now - from > 120
     end
   end
 
