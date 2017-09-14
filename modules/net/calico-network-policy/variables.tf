@@ -1,7 +1,3 @@
-variable "bootkube_id" {
-  type = "string"
-}
-
 variable "calico_image" {
   description = "Container image for calico node"
   type        = "string"

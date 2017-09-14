@@ -93,8 +93,6 @@ module "flannel_vxlan" {
   flannel_image     = "${var.tectonic_container_images["flannel"]}"
   flannel_cni_image = "${var.tectonic_container_images["flannel_cni"]}"
   cluster_cidr      = "${var.tectonic_cluster_cidr}"
-
-  bootkube_id = "${module.bootkube.id}"
 }
 
 module "calico_network_policy" {
@@ -105,8 +103,6 @@ module "calico_network_policy" {
   calico_cni_image   = "${var.tectonic_container_images["calico_cni"]}"
   cluster_cidr       = "${var.tectonic_cluster_cidr}"
   enabled            = "${var.tectonic_calico_network_policy}"
-
-  bootkube_id = "${module.bootkube.id}"
 }
 
 data "archive_file" "assets" {

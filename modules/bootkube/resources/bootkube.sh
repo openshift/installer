@@ -9,6 +9,8 @@ mkdir -p /etc/kubernetes/manifests/
 # Move optional experimental manifests into bootkube friendly locations
 [ -d /opt/tectonic/experimental ] && mv /opt/tectonic/experimental/* /opt/tectonic/manifests/ && rm -r /opt/tectonic/experimental
 [ -d /opt/tectonic/bootstrap-experimental ] && mv /opt/tectonic/bootstrap-experimental/* /opt/tectonic/bootstrap-manifests/ && rm -r /opt/tectonic/bootstrap-experimental
+# Move network related manifests into bootkube friendly locations
+[ -d /opt/tectonic/net-manifests ] && mv /opt/tectonic/net-manifests/* /opt/tectonic/manifests/ && rm -r /opt/tectonic/net-manifests
 
 # shellcheck disable=SC2154
 /usr/bin/rkt run \

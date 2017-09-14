@@ -1,7 +1,3 @@
-variable "bootkube_id" {
-  type = "string"
-}
-
 variable "flannel_image" {
   description = "Container image for flanneld"
   type        = "string"

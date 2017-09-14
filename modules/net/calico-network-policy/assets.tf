@@ -9,14 +9,12 @@ data "template_file" "calico_network_policy" {
     calico_cni_image   = "${var.calico_cni_image}"
     cluster_cidr       = "${var.cluster_cidr}"
     host_cni_bin       = "/var/lib/cni/bin"
-
-    bootkube_id = "${var.bootkube_id}"
   }
 }
 
 resource "local_file" "calico_network_policy" {
-  count = "${ var.enabled ? 1 : 0 }"
+  count = "${var.enabled ? 1 : 0}"
 
   content  = "${data.template_file.calico_network_policy.rendered}"
-  filename = "./generated/manifests/kube-calico.yaml"
+  filename = "./generated/net-manifests/kube-calico.yaml"
 }
