@@ -1,3 +1,35 @@
+terraform {
+  required_version = ">= 0.10.4"
+}
+
+provider "archive" {
+  version = "0.1.0"
+}
+
+provider "ignition" {
+  version = "0.1.0"
+}
+
+provider "local" {
+  version = "0.1.0"
+}
+
+provider "null" {
+  version = "0.1.0"
+}
+
+provider "random" {
+  version = "0.1.0"
+}
+
+provider "template" {
+  version = "0.1.1"
+}
+
+provider "tls" {
+  version = "0.1.0"
+}
+
 variable "tectonic_config_version" {
   description = <<EOF
 (internal) This declares the version of the global configuration variables.
@@ -14,10 +46,6 @@ EOF
 
   type    = "string"
   default = "/^([^/]+/[^/]+/[^/]+):(.*)$/"
-}
-
-terraform {
-  required_version = ">= 0.9.6"
 }
 
 variable "tectonic_container_images" {

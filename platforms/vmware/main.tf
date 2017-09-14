@@ -1,3 +1,7 @@
+provider "vsphere" {
+  version = "0.2.2"
+}
+
 module "etcd" {
   source         = "../../modules/vmware/etcd"
   instance_count = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count }"

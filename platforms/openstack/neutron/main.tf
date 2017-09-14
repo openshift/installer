@@ -1,3 +1,7 @@
+provider "openstack" {
+  version = "0.2.1"
+}
+
 module "bootkube" {
   source         = "../../../modules/bootkube"
   cloud_provider = ""
