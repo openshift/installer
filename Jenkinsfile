@@ -16,6 +16,11 @@ def creds = [
     usernameVariable: 'AZURE_SMOKE_SSH_KEY_PUB'
   ],
   [
+    $class: 'FileBinding',
+    credentialsId: 'azure-smoke-public-ssh-key',
+    variable: 'TF_VAR_tectonic_azure_ssh_key'
+  ],
+  [
     $class: 'UsernamePasswordMultiBinding',
     credentialsId: 'tectonic-console-login',
     passwordVariable: 'TF_VAR_tectonic_admin_email',
@@ -323,6 +328,26 @@ pipeline {
                           deleteDir()
                         }
                       }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "SmokeTest Azure Private RSpec": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(tectonic_smoke_test_env_image) {
+                  sshagent(['azure-smoke-ssh-key-kind-ssh']) {
+                    ansiColor('xterm') {
+                      checkout scm
+                      unstash 'installer'
+                      unstash 'smoke'
+                      sh """#!/bin/bash -ex
+                        cd tests/rspec
+                        bundle exec rspec spec/azure_private_external_spec.rb
+                      """
+                      deleteDir()
                     }
                   }
                 }

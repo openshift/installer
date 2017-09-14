@@ -13,7 +13,7 @@ class AwsCluster < Cluster
   def initialize(tfvars_file)
     if Jenkins.environment?
       export_random_region_if_not_defined
-      AWSIAM.assume_role
+      # AWSIAM.assume_role
     end
 
     super(tfvars_file)

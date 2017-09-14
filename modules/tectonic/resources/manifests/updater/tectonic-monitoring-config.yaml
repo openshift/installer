@@ -14,4 +14,4 @@ data:
     alertmanagerMain:
       baseImage: ${replace(alertmanager_image,image_re,"$1")}
     ingress:
-      baseAddress: ${console_base_address}
+      baseAddress: ${console_base_host}

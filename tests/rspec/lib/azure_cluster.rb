@@ -1,12 +1,16 @@
 # frozen_string_literal: true
 
 require 'cluster'
+require 'azure_support'
 
 # AzureCluster represents a k8s cluster on Azure cloud provider
 class AzureCluster < Cluster
+  extend AzureSupport
+
   def env_variables
     variables = super
     variables['PLATFORM'] = 'azure'
+    variables['TF_VAR_tectonic_azure_location'] = AzureSupport.random_location_unless_defined
     variables
   end
 

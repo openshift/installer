@@ -100,30 +100,3 @@ module "calico-network-policy" {
 
   bootkube_id = "${module.bootkube.id}"
 }
-
-resource "null_resource" "tectonic" {
-  depends_on = ["module.vnet", "module.dns", "module.etcd", "module.masters", "module.bootkube", "module.tectonic", "module.flannel-vxlan", "module.calico-network-policy"]
-
-  triggers {
-    api-endpoint = "${module.vnet.api_fqdn}"
-  }
-
-  connection {
-    host  = "${module.vnet.api_fqdn}"
-    user  = "core"
-    agent = true
-  }
-
-  provisioner "file" {
-    source      = "./generated"
-    destination = "$HOME/tectonic"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "sudo mkdir -p /opt",
-      "sudo rm -rf /opt/tectonic",
-      "sudo mv /home/core/tectonic /opt/",
-    ]
-  }
-}

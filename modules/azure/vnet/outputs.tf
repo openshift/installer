@@ -31,7 +31,6 @@ output "etcd_nsg_name" {
   value = "${var.external_nsg_etcd_id == "" ? join(" ", azurerm_network_security_group.etcd.*.name) : replace(var.external_nsg_etcd_id, "${var.const_id_to_group_name_regex}", "$2")}"
 }
 
-# TODO: Allow user to provide their own network
 output "worker_nsg_name" {
   value = "${var.external_nsg_worker_id == "" ? join(" ", azurerm_network_security_group.worker.*.name) : var.external_nsg_worker_id }"
 }
@@ -61,17 +60,17 @@ output "worker_private_ip_addresses" {
 }
 
 output "api_ip_addresses" {
-  value = ["${azurerm_public_ip.api_ip.ip_address}"]
+  value = ["${split("|", var.private_cluster ? join("|", azurerm_network_interface.tectonic_master.*.private_ip_address) : join("|", azurerm_public_ip.api_ip.*.ip_address))}"]
 }
 
 output "console_ip_addresses" {
-  value = ["${azurerm_public_ip.console_ip.ip_address}"]
+  value = ["${split("|", var.private_cluster ? join("|", azurerm_network_interface.tectonic_worker.*.private_ip_address) : join("|", azurerm_public_ip.console_ip.*.ip_address))}"]
 }
 
 output "ingress_fqdn" {
-  value = "${var.base_domain == "" ? azurerm_public_ip.console_ip.fqdn : "${var.cluster_name}.${var.base_domain}"}"
+  value = "${var.base_domain == "" ? join("", azurerm_public_ip.console_ip.*.fqdn) : "${var.cluster_name}.${var.base_domain}${var.private_cluster ? ":32000" : ""}"}"
 }
 
 output "api_fqdn" {
-  value = "${var.base_domain == "" ? azurerm_public_ip.api_ip.fqdn : "${var.cluster_name}-api.${var.base_domain}"}"
+  value = "${var.base_domain == "" ? join("", azurerm_public_ip.api_ip.*.fqdn) : "${var.cluster_name}-api.${var.base_domain}"}"
 }

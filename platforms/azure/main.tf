@@ -44,6 +44,8 @@ module "vnet" {
   external_nsg_worker_id    = "${var.tectonic_azure_external_nsg_worker_id}"
 
   extra_tags = "${var.tectonic_azure_extra_tags}"
+
+  private_cluster = "${var.tectonic_azure_private_cluster}"
 }
 
 module "etcd" {

@@ -57,6 +57,7 @@ resource "template_dir" "tectonic" {
     admin_password_hash = "${var.admin_password_hash}"
 
     console_base_address = "${var.base_address}"
+    console_base_host    = "${element(split(":", var.base_address), 0)}"
     console_client_id    = "${var.console_client_id}"
     console_secret       = "${random_id.console_secret.b64}"
     console_callback     = "https://${var.base_address}/auth/callback"

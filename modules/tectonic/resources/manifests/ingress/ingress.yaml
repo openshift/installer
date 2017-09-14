@@ -10,10 +10,10 @@ metadata:
 spec:
   tls:
   - hosts:
-    - ${console_base_address}
+    - ${console_base_host}
     secretName: tectonic-ingress-tls-secret
   rules:
-  - host: ${console_base_address}
+  - host: ${console_base_host}
     http:
       paths:
       - path: /

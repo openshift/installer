@@ -263,3 +263,13 @@ EOF
 
   default = {}
 }
+
+variable "tectonic_azure_private_cluster" {
+  description = <<EOF
+(optional) Setting this to true will result in NO public facing endpoints being created. All traffic is contained within the VNET.
+A VNET with an already configured and active VPN connection is required and needs to be supplied via 'tectonic_azure_external_vnet_id'.
+DNS is currently required, either the Azure managed one or configured via the generic DNS module.
+EOF
+
+  default = false
+}

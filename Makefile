@@ -11,6 +11,7 @@ INSTALLER_BIN = $(INSTALLER_PATH)/installer
 TF_DOCS := $(shell which terraform-docs 2> /dev/null)
 TF_EXAMPLES := $(shell which terraform-examples 2> /dev/null)
 TF_CMD = terraform
+TEST_COMMAND = /bin/bash -c "bundler exec rspec ${TEST}"
 
 include ./makelib/*.mk
 
@@ -157,11 +158,21 @@ tests/smoke: bin/smoke smoke-test-env-docker-image
 	docker run \
 	--rm \
 	-it \
-	-v ${CURDIR}:${CURDIR} \
-	-w ${CURDIR}/tests/rspec \
+	-v "${CURDIR}":"${CURDIR}" \
+	-w "${CURDIR}/tests/rspec" \
+	-v "${TF_VAR_tectonic_license_path}":"${TF_VAR_tectonic_license_path}" \
+	-v "${TF_VAR_tectonic_pull_secret_path}":"${TF_VAR_tectonic_pull_secret_path}" \
+	-v "${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}" \
+	-v "${TF_VAR_tectonic_azure_ssh_key}":"${TF_VAR_tectonic_azure_ssh_key}" \
+	-e SSH_AUTH_SOCK \
 	-e CLUSTER \
 	-e AWS_ACCESS_KEY_ID \
 	-e AWS_SECRET_ACCESS_KEY \
+	-e ARM_CLIENT_ID \
+	-e ARM_CLIENT_SECRET \
+	-e ARM_ENVIRONMENT \
+	-e ARM_SUBSCRIPTION_ID \
+	-e ARM_TENANT_ID \
 	-e TF_VAR_tectonic_aws_region \
 	-e TF_VAR_tectonic_aws_ssh_key \
 	-e TF_VAR_tectonic_license_path \
@@ -169,5 +180,8 @@ tests/smoke: bin/smoke smoke-test-env-docker-image
 	-e TF_VAR_base_domain \
 	-e TF_VAR_tectonic_admin_email \
 	-e TF_VAR_tectonic_admin_password_hash \
+	-e TECTONIC_TESTS_DONT_CLEANUP \
+	--cap-add NET_ADMIN \
+	--device /dev/net/tun \
 	quay.io/coreos/tectonic-smoke-test-env \
-	/bin/bash -c "bundler exec rspec ${TEST}"
+	$(TEST_COMMAND)

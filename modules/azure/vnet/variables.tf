@@ -108,3 +108,7 @@ variable "worker_count" {
 variable "extra_tags" {
   type = "map"
 }
+
+variable "private_cluster" {
+  default = false
+}

@@ -2,7 +2,7 @@ resource "azurerm_network_interface" "etcd_nic" {
   count                     = "${var.etcd_count}"
   name                      = "${var.cluster_name}-etcd-nic-${count.index}"
   location                  = "${var.location}"
-  network_security_group_id = "${azurerm_network_security_group.etcd.id}"
+  network_security_group_id = "${var.external_nsg_etcd_id == "" ? join("", azurerm_network_security_group.etcd.*.id) : var.external_nsg_etcd_id}"
   resource_group_name       = "${var.resource_group_name}"
 
   ip_configuration {

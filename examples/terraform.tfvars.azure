@@ -112,6 +112,11 @@ tectonic_azure_location = ""
 // (optional) Instance size for the master node(s). Example: Standard_DS2_v2.
 // tectonic_azure_master_vm_size = "Standard_DS2_v2"
 
+// (optional) Setting this to true will result in NO public facing endpoints being created. All traffic is contained within the VNET.
+// A VNET with an already configured and active VPN connection is required and needs to be supplied via 'tectonic_azure_external_vnet_id'.
+// DNS is currently required, either the Azure managed one or configured via the generic DNS module.
+// tectonic_azure_private_cluster = false
+
 // (required) Path to an SSH public key file to be provisioned as the SSH key for the 'core' user.
 tectonic_azure_ssh_key = ""
 

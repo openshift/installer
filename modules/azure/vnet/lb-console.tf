@@ -1,4 +1,6 @@
 resource "azurerm_public_ip" "console_ip" {
+  count = "${var.private_cluster ? 0 : 1}"
+
   name                         = "${var.cluster_name}_console_ip"
   location                     = "${var.location}"
   resource_group_name          = "${var.resource_group_name}"
@@ -12,10 +14,12 @@ resource "azurerm_public_ip" "console_ip" {
 }
 
 resource "azurerm_lb_rule" "console_lb_https" {
+  count = "${var.private_cluster ? 0 : 1}"
+
   name                    = "${var.cluster_name}-console-lb-rule-443-32000"
   resource_group_name     = "${var.resource_group_name}"
   loadbalancer_id         = "${azurerm_lb.tectonic_lb.id}"
-  backend_address_pool_id = "${azurerm_lb_backend_address_pool.api-lb.id}"
+  backend_address_pool_id = "${join("", azurerm_lb_backend_address_pool.api-lb.*.id)}"
   probe_id                = "${azurerm_lb_probe.console_lb.id}"
 
   protocol                       = "tcp"
@@ -25,10 +29,12 @@ resource "azurerm_lb_rule" "console_lb_https" {
 }
 
 resource "azurerm_lb_rule" "console_lb_identity" {
+  count = "${var.private_cluster ? 0 : 1}"
+
   name                    = "${var.cluster_name}-console-lb-rule-80-32001"
   resource_group_name     = "${var.resource_group_name}"
   loadbalancer_id         = "${azurerm_lb.tectonic_lb.id}"
-  backend_address_pool_id = "${azurerm_lb_backend_address_pool.api-lb.id}"
+  backend_address_pool_id = "${join("", azurerm_lb_backend_address_pool.api-lb.*.id)}"
   probe_id                = "${azurerm_lb_probe.console_lb.id}"
 
   protocol                       = "tcp"
@@ -38,6 +44,8 @@ resource "azurerm_lb_rule" "console_lb_identity" {
 }
 
 resource "azurerm_lb_probe" "console_lb" {
+  count = "${var.private_cluster ? 0 : 1}"
+
   name                = "${var.cluster_name}-console-lb-probe-443-up"
   loadbalancer_id     = "${azurerm_lb.tectonic_lb.id}"
   resource_group_name = "${var.resource_group_name}"
