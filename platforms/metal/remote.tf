@@ -9,27 +9,27 @@ resource "null_resource" "etcd_secrets" {
   }
 
   provisioner "file" {
-    content     = "${module.bootkube.etcd_ca_crt_pem}"
+    content     = "${module.etcd_certs.etcd_ca_crt_pem}"
     destination = "$HOME/etcd_ca.crt"
   }
 
   provisioner "file" {
-    content     = "${module.bootkube.etcd_server_crt_pem}"
+    content     = "${module.etcd_certs.etcd_server_crt_pem}"
     destination = "$HOME/etcd_server.crt"
   }
 
   provisioner "file" {
-    content     = "${module.bootkube.etcd_server_key_pem}"
+    content     = "${module.etcd_certs.etcd_server_key_pem}"
     destination = "$HOME/etcd_server.key"
   }
 
   provisioner "file" {
-    content     = "${module.bootkube.etcd_peer_crt_pem}"
+    content     = "${module.etcd_certs.etcd_peer_crt_pem}"
     destination = "$HOME/etcd_peer.crt"
   }
 
   provisioner "file" {
-    content     = "${module.bootkube.etcd_peer_key_pem}"
+    content     = "${module.etcd_certs.etcd_peer_key_pem}"
     destination = "$HOME/etcd_peer.key"
   }
 

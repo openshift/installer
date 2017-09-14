@@ -17,18 +17,10 @@
 # interpolated once the assets have all been created.
 output "id" {
   value = "${sha1("
-  ${data.archive_file.etcd_tls_zip.id}
   ${local_file.kubeconfig.id}
   ${local_file.bootkube_sh.id}
   ${template_dir.bootkube.id} ${template_dir.bootkube_bootstrap.id}
   ${join(" ",
-    local_file.etcd_ca_crt.*.id,
-    local_file.etcd_server_crt.*.id,
-    local_file.etcd_server_key.*.id,
-    local_file.etcd_client_crt.*.id,
-    local_file.etcd_client_key.*.id,
-    local_file.etcd_peer_crt.*.id,
-    local_file.etcd_peer_key.*.id,
     template_dir.experimental.*.id,
     template_dir.bootstrap_experimental.*.id,
     template_dir.etcd_experimental.*.id,
@@ -36,24 +28,8 @@ output "id" {
   ")}"
 }
 
-output "etcd_tls_zip" {
-  value = "${data.archive_file.etcd_tls_zip.id != "" ? file("./.terraform/etcd_tls.zip") : ""}"
-}
-
 output "kubeconfig" {
   value = "${data.template_file.kubeconfig.rendered}"
-}
-
-output "ca_cert" {
-  value = "${var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube_ca.*.cert_pem) : var.ca_cert}"
-}
-
-output "ca_key_alg" {
-  value = "${var.ca_cert == "" ? join(" ", tls_self_signed_cert.kube_ca.*.key_algorithm) : var.ca_key_alg}"
-}
-
-output "ca_key" {
-  value = "${var.ca_cert == "" ? join(" ", tls_private_key.kube_ca.*.private_key_pem) : var.ca_key}"
 }
 
 output "systemd_service_rendered" {
@@ -74,32 +50,4 @@ output "systemd_path_unit_id" {
 
 output "kube_dns_service_ip" {
   value = "${cidrhost(var.service_cidr, 10)}"
-}
-
-output "etcd_ca_crt_pem" {
-  value = "${join("", tls_self_signed_cert.etcd_ca.*.cert_pem)}"
-}
-
-output "etcd_server_crt_pem" {
-  value = "${join("", tls_locally_signed_cert.etcd_server.*.cert_pem)}"
-}
-
-output "etcd_server_key_pem" {
-  value = "${join("", tls_private_key.etcd_server.*.private_key_pem)}"
-}
-
-output "etcd_client_crt_pem" {
-  value = "${join("", tls_locally_signed_cert.etcd_client.*.cert_pem)}"
-}
-
-output "etcd_client_key_pem" {
-  value = "${join("", tls_private_key.etcd_client.*.private_key_pem)}"
-}
-
-output "etcd_peer_crt_pem" {
-  value = "${join("", tls_locally_signed_cert.etcd_peer.*.cert_pem)}"
-}
-
-output "etcd_peer_key_pem" {
-  value = "${join("", tls_private_key.etcd_peer.*.private_key_pem)}"
 }

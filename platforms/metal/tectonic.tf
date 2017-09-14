@@ -1,22 +1,56 @@
+module "kube_certs" {
+  source = "../../modules/tls/kube/self-signed"
+
+  ca_cert_pem        = "${var.tectonic_ca_cert}"
+  ca_key_alg         = "${var.tectonic_ca_key_alg}"
+  ca_key_pem         = "${var.tectonic_ca_key}"
+  kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:443"
+  service_cidr       = "${var.tectonic_service_cidr}"
+}
+
+module "etcd_certs" {
+  source = "../../modules/tls/etcd"
+
+  etcd_ca_cert_path     = "${var.tectonic_etcd_ca_cert_path}"
+  etcd_client_cert_path = "${var.tectonic_etcd_client_cert_path}"
+  etcd_client_key_path  = "${var.tectonic_etcd_client_key_path}"
+  self_signed           = "${var.tectonic_experimental || var.tectonic_etcd_tls_enabled}"
+  service_cidr          = "${var.tectonic_service_cidr}"
+
+  etcd_cert_dns_names = "${var.tectonic_metal_controller_domains}"
+}
+
+module "ingress_certs" {
+  source = "../../modules/tls/ingress/self-signed"
+
+  base_address = "${var.tectonic_metal_ingress_domain}"
+  ca_cert_pem  = "${module.kube_certs.ca_cert_pem}"
+  ca_key_alg   = "${module.kube_certs.ca_key_alg}"
+  ca_key_pem   = "${module.kube_certs.ca_key_pem}"
+}
+
+module "identity_certs" {
+  source = "../../modules/tls/identity/self-signed"
+
+  ca_cert_pem = "${module.kube_certs.ca_cert_pem}"
+  ca_key_alg  = "${module.kube_certs.ca_key_alg}"
+  ca_key_pem  = "${module.kube_certs.ca_key_pem}"
+}
+
 module "bootkube" {
-  source         = "../../modules/bootkube"
-  cloud_provider = ""
+  source = "../../modules/bootkube"
+
+  cloud_provider        = ""
+  cloud_provider_config = ""
 
   cluster_name = "${var.tectonic_cluster_name}"
 
-  # Address of kube-apiserver
   kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:443"
-
-  # Address of Identity service
-  oidc_issuer_url = "https://${var.tectonic_metal_ingress_domain}/identity"
+  oidc_issuer_url    = "https://${var.tectonic_metal_ingress_domain}/identity"
 
   # platform-independent defaults
   container_images = "${var.tectonic_container_images}"
   versions         = "${var.tectonic_versions}"
-
-  ca_cert    = "${var.tectonic_ca_cert}"
-  ca_key     = "${var.tectonic_ca_key}"
-  ca_key_alg = "${var.tectonic_ca_key_alg}"
 
   service_cidr = "${var.tectonic_service_cidr}"
   cluster_cidr = "${var.tectonic_cluster_cidr}"
@@ -27,18 +61,26 @@ module "bootkube" {
   oidc_username_claim = "email"
   oidc_groups_claim   = "groups"
   oidc_client_id      = "tectonic-kubectl"
+  oidc_ca_cert        = "${module.ingress_certs.ca_cert_pem}"
+
+  apiserver_cert_pem   = "${module.kube_certs.apiserver_cert_pem}"
+  apiserver_key_pem    = "${module.kube_certs.apiserver_key_pem}"
+  etcd_ca_cert_pem     = "${module.etcd_certs.etcd_ca_crt_pem}"
+  etcd_client_cert_pem = "${module.etcd_certs.etcd_client_crt_pem}"
+  etcd_client_key_pem  = "${module.etcd_certs.etcd_client_key_pem}"
+  etcd_peer_cert_pem   = "${module.etcd_certs.etcd_peer_crt_pem}"
+  etcd_peer_key_pem    = "${module.etcd_certs.etcd_peer_key_pem}"
+  etcd_server_cert_pem = "${module.etcd_certs.etcd_server_crt_pem}"
+  etcd_server_key_pem  = "${module.etcd_certs.etcd_server_key_pem}"
+  kube_ca_cert_pem     = "${module.kube_certs.ca_cert_pem}"
+  kubelet_cert_pem     = "${module.kube_certs.kubelet_cert_pem}"
+  kubelet_key_pem      = "${module.kube_certs.kubelet_key_pem}"
 
   etcd_endpoints = "${split(",",
     length(compact(var.tectonic_etcd_servers)) == 0
       ? join(",", var.tectonic_metal_controller_domains)
       : join(",", var.tectonic_etcd_servers)
     )}"
-
-  etcd_ca_cert        = "${var.tectonic_etcd_ca_cert_path}"
-  etcd_client_cert    = "${var.tectonic_etcd_client_cert_path}"
-  etcd_client_key     = "${var.tectonic_etcd_client_key_path}"
-  etcd_tls_enabled    = "${var.tectonic_etcd_tls_enabled}"
-  etcd_cert_dns_names = "${var.tectonic_metal_controller_domains}"
 
   experimental_enabled = "${var.tectonic_experimental}"
 
@@ -53,12 +95,10 @@ module "tectonic" {
 
   cluster_name = "${var.tectonic_cluster_name}"
 
-  # Address of kube-apiserver
+  base_address       = "${var.tectonic_metal_ingress_domain}"
   kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:443"
 
   # Address of the Tectonic console (without protocol)
-  base_address = "${var.tectonic_metal_ingress_domain}"
-
   container_images = "${var.tectonic_container_images}"
   versions         = "${var.tectonic_versions}"
 
@@ -72,10 +112,17 @@ module "tectonic" {
   update_app_id  = "${var.tectonic_update_app_id}"
   update_server  = "${var.tectonic_update_server}"
 
-  ca_generated = "${module.bootkube.ca_cert == "" ? false : true}"
-  ca_cert      = "${module.bootkube.ca_cert}"
-  ca_key_alg   = "${module.bootkube.ca_key_alg}"
-  ca_key       = "${module.bootkube.ca_key}"
+  ca_generated = "${var.tectonic_ca_cert == "" ? false : true}"
+  ca_cert      = "${module.kube_certs.ca_cert_pem}"
+
+  ingress_ca_cert_pem = "${module.ingress_certs.ca_cert_pem}"
+  ingress_cert_pem    = "${module.ingress_certs.cert_pem}"
+  ingress_key_pem     = "${module.ingress_certs.key_pem}"
+
+  identity_client_cert_pem = "${module.identity_certs.client_cert_pem}"
+  identity_client_key_pem  = "${module.identity_certs.client_key_pem}"
+  identity_server_cert_pem = "${module.identity_certs.server_cert_pem}"
+  identity_server_key_pem  = "${module.identity_certs.server_key_pem}"
 
   console_client_id = "tectonic-console"
   kubectl_client_id = "tectonic-kubectl"
