@@ -67,6 +67,7 @@ label {
 }
 
 textarea {
+  display: block;
   font-family: Menlo, Monaco, Consolas, "Courier New", monospace;
   min-height: 60px;
 }
