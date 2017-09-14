@@ -17,6 +17,7 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_cluster_cidr | This declares the IP range to assign Kubernetes pod IPs in CIDR notation. | string | `10.2.0.0/16` |
 | tectonic_cluster_name | The name of the cluster. If used in a cloud-environment, this will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.<br><br>Note: This field MUST be set manually prior to creating the cluster. Warning: Special characters in the name like '.' may cause errors on OpenStack platforms due to resource name constraints. | string | - |
 | tectonic_config_version | (internal) This declares the version of the global configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
+| tectonic_container_base_images | (internal) Base images of the components to use | map | `<map>` |
 | tectonic_container_images | (internal) Container images to use | map | `<map>` |
 | tectonic_ddns_key_algorithm | (optional) This only applies if you use the modules/dns/ddns module.<br><br>Specifies the RFC2136 Dynamic DNS server key algorithm. | string | `` |
 | tectonic_ddns_key_name | (optional) This only applies if you use the modules/dns/ddns module.<br><br>Specifies the RFC2136 Dynamic DNS server key name. | string | `` |

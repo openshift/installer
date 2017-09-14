@@ -33,6 +33,7 @@ data:
       - '${console_callback}'
       - '${prometheus_callback}'
       - '${alertmanager_callback}'
+      - '${grafana_callback}'
       name: 'Tectonic Console'
       secret: ${console_secret}
     - id: ${kubectl_client_id}

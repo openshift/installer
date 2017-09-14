@@ -7,6 +7,11 @@ variable "container_images" {
   type        = "map"
 }
 
+variable "container_base_images" {
+  description = "Container base images to use. Leave blank for defaults."
+  type        = "map"
+}
+
 variable "versions" {
   description = "Versions of the components to use. Leave blank for defaults."
   type        = "map"

@@ -99,8 +99,9 @@ module "tectonic" {
   kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:443"
 
   # Address of the Tectonic console (without protocol)
-  container_images = "${var.tectonic_container_images}"
-  versions         = "${var.tectonic_versions}"
+  container_images      = "${var.tectonic_container_images}"
+  container_base_images = "${var.tectonic_container_base_images}"
+  versions              = "${var.tectonic_versions}"
 
   license_path     = "${var.tectonic_vanilla_k8s ? "/dev/null" : pathexpand(var.tectonic_license_path)}"
   pull_secret_path = "${var.tectonic_vanilla_k8s ? "/dev/null" : pathexpand(var.tectonic_pull_secret_path)}"
