@@ -1,22 +1,27 @@
 const fs = require('fs');
 const path = require('path');
 
-const sshKeysPageCommands = {
+const pageCommands = {
   test(json) {
     const parentDir = path.resolve(__dirname, '..');
-    const sshKeysPath = path.join(parentDir, 'ssh-keys.txt');
+    const sshKeyPath = path.join(parentDir, 'ssh-keys.txt');
 
     /* eslint-disable no-sync */
-    fs.writeFileSync(sshKeysPath, json.tectonic_ssh_authorized_key);
+    fs.writeFileSync(sshKeyPath, json.tectonic_ssh_authorized_key);
 
-    this.setValue('@publicKey', sshKeysPath);
+    this
+      .setField('@key', 'abc')
+      .expectValidationErrorContains('Invalid SSH pubkey')
+      .setValue('@upload', sshKeyPath)
+      .expectNoValidationError();
   },
 };
 
 module.exports = {
-  commands: [sshKeysPageCommands],
+  commands: [pageCommands],
   elements: {
-    publicKey: {
+    key: 'textarea#sshAuthorizedKey',
+    upload: {
       selector: '(//*[text()="Upload"]/input[@type="file"])',
       locateStrategy: 'xpath',
     },

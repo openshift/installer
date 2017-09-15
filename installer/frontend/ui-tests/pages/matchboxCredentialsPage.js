@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const matchBoxCredentialsPageCommands = {
+const pageCommands = {
   test(json) {
     const parentDir = path.resolve(__dirname, '..');
     const caCertPath = path.join(parentDir, 'ca-cert.txt');
@@ -13,22 +13,31 @@ const matchBoxCredentialsPageCommands = {
     fs.writeFileSync(clientCertPath, json.tectonic_metal_matchbox_client_cert);
     fs.writeFileSync(clientKeyPath, json.tectonic_metal_matchbox_client_key);
     /* eslint-enable no-sync */
+
     this
-      .setValue('@caCertificate', caCertPath)
-      .setValue('@clientCertificate', clientCertPath)
-      .setValue('@clientKey', clientKeyPath);
+      .setValue('@caCert', clientKeyPath)
+      .expectValidationErrorContains('Invalid certificate')
+      .setValue('@caCert', caCertPath)
+      .expectNoValidationError()
+      .setValue('@clientCert', clientKeyPath)
+      .expectValidationErrorContains('Invalid certificate')
+      .setValue('@clientCert', clientCertPath)
+      .expectNoValidationError()
+      .setValue('@clientKey', caCertPath)
+      .expectValidationErrorContains('Invalid private key')
+      .setValue('@clientKey', clientKeyPath)
+      .expectNoValidationError();
   },
 };
 
 module.exports = {
-  commands: [matchBoxCredentialsPageCommands],
+  commands: [pageCommands],
   elements: {
-    name: 'input#clusterName',
-    caCertificate: {
+    caCert: {
       selector: '(//*[text()="Upload"]/input[@type="file"])[1]',
       locateStrategy: 'xpath',
     },
-    clientCertificate: {
+    clientCert: {
       selector: '(//*[text()="Upload"]/input[@type="file"])[2]',
       locateStrategy: 'xpath',
     },

@@ -30,9 +30,8 @@ const testPage = (page, platform, json, nextInitiallyDisabled = true) => {
   // Save progress link exists
   page.expect.element('.wiz-form__header a').text.which.contains('Save progress');
 
-  if (page.test) {
-    page.test(json, platform);
-  }
+  page.test(json, platform);
+
   page.expect.element(nextStep).to.have.attribute('class').which.not.contains('disabled');
   return page.click(nextStep);
 };

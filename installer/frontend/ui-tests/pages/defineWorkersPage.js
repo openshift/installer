@@ -1,24 +1,40 @@
-const defineWorkersPageCommands = {
+const pageCommands = {
   test(json) {
+    this.click('@deleteIcon0');
+    this.expect.element('@alertError').text.to.contain('At least 1 Worker is required');
+
     this
-      .setField('@workers0', json.tectonic_metal_worker_macs[0])
-      .setField('@hosts0', json.tectonic_metal_worker_domains[0])
       .click('@addMore')
-      .setField('@workers1', json.tectonic_metal_worker_macs[1])
-      .setField('@hosts1', json.tectonic_metal_worker_domains[1]);
+      .setField('@mac0', 'abc')
+      .expectValidationErrorContains('Invalid MAC address')
+      .setField('@mac0', json.tectonic_metal_worker_macs[0])
+      .setField('@hosts0', '%')
+      .expectValidationErrorContains('Invalid format')
+      .setField('@hosts0', json.tectonic_metal_worker_domains[0])
+      .expectNoValidationError()
+      .click('@addMore')
+      .setField('@mac1', json.tectonic_metal_worker_macs[0])
+      .expectValidationErrorContains('MACs must be unique')
+      .setField('@mac1', json.tectonic_metal_worker_macs[1])
+      .setField('@hosts1', json.tectonic_metal_worker_domains[0])
+      .expectValidationErrorContains('Hostnames must be unique')
+      .setField('@hosts1', json.tectonic_metal_worker_domains[1])
+      .expectNoValidationError();
   },
 };
 
 module.exports = {
-  commands: [defineWorkersPageCommands],
+  commands: [pageCommands],
   elements: {
-    workers0: 'input[id="workers.0.mac"]',
+    mac0: 'input[id="workers.0.mac"]',
     hosts0: 'input[id="workers.0.host"]',
-    workers1: 'input[id="workers.1.mac"]',
+    deleteIcon0: '.row:nth-child(1) i.fa-minus-circle',
+    mac1: 'input[id="workers.1.mac"]',
     hosts1: 'input[id="workers.1.host"]',
     addMore: {
       selector: '//*[text()[contains(.,"Add More")]]',
       locateStrategy: 'xpath',
     },
+    alertError: '.alert-error',
   },
 };

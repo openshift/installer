@@ -1,13 +1,19 @@
-const matchboxPageCommands = {
+const pageCommands = {
   test(json) {
     this
+      .setField('@matchboxHTTP', 'abc')
+      .expectValidationErrorContains('Invalid format')
       .setField('@matchboxHTTP', json.tectonic_metal_matchbox_http_url.replace(/^https?:\/\//i, ''))
-      .setField('@matchboxRPC', json.tectonic_metal_matchbox_rpc_endpoint);
+      .expectNoValidationError()
+      .setField('@matchboxRPC', 'abc')
+      .expectValidationErrorContains('Invalid format')
+      .setField('@matchboxRPC', json.tectonic_metal_matchbox_rpc_endpoint)
+      .expectNoValidationError();
   },
 };
 
 module.exports = {
-  commands: [matchboxPageCommands],
+  commands: [pageCommands],
   elements: {
     matchboxHTTP: 'input#matchboxHTTP',
     matchboxRPC: 'input#matchboxRPC',

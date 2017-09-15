@@ -1,4 +1,4 @@
-const networkingPageCommands = {
+const pageCommands = {
   testCidrInputs(json) {
     this.setField('#serviceCIDR', json.tectonic_service_cidr);
 
@@ -55,13 +55,11 @@ const networkingPageCommands = {
     this.testCidrInputs(json);
 
     this.selectOption('@vpcOptionNewPublic');
-
-    return this;
   },
 };
 
 module.exports = {
-  commands: [networkingPageCommands],
+  commands: [pageCommands],
   elements: {
     advanced: {
       selector: '//*[text()[contains(.,"Advanced Settings")]]',
