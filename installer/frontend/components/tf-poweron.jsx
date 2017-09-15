@@ -27,11 +27,11 @@ const estimateTerraformProgress = terraform => {
 
   let done = output.match(/.*: Creation complete/g) || [];
 
-  // Ignore resources from the bootkube, flannel-vxlan and tectonic modules because they all complete very quickly
-  done = done.filter(c => !/module\.(bootkube|flannel-vxlan|tectonic)/.test(c));
+  // Ignore resources that complete very quickly
+  done = done.filter(c => /(aws_route53_zone|aws_s3_bucket|module\.masters|module\.vpc|module\.workers)\./.test(c));
 
   // Approximate number of AWS resources we expect Terraform to create
-  const total = 82;
+  const total = 80;
 
   // We have some output, but are not finished, so don't show the progress as either completely empty or full
   return _.clamp(done.length / total, 0.01, 0.99);
