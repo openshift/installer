@@ -298,7 +298,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
           <div className="col-xs-12 wiz-launch-progress">
             <Step done={statusMsg === 'success'} error={tfError}>
               {tfError
-                ? <span><span className="wiz-running-fg">{tfTitle}:</span> [Failure] Terraform {action} failed</span>
+                ? <span><span className="wiz-running-fg">{tfTitle}:</span> [Failure] {_.startCase(action)} failed</span>
                 : tfTitle}
               {output && !isApplySuccess &&
                 <div className="pull-right" style={{fontSize: '13px'}}>
