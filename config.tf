@@ -58,7 +58,7 @@ variable "tectonic_container_images" {
     bootkube                     = "quay.io/coreos/bootkube:v0.6.2"
     calico                       = "quay.io/calico/node:v2.4.1"
     calico_cni                   = "quay.io/calico/cni:v1.10.0"
-    console                      = "quay.io/coreos/tectonic-console:v1.9.3"
+    console                      = "quay.io/coreos/tectonic-console:v2.0.0"
     error_server                 = "quay.io/coreos/tectonic-error-server:1.0"
     etcd                         = "quay.io/coreos/etcd:v3.1.8"
     etcd_operator                = "quay.io/coreos/etcd-operator:v0.5.0"
