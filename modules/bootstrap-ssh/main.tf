@@ -1,6 +1,7 @@
 resource "null_resource" "bootstrapper" {
   triggers {
-    endpoint = "${var.bootstrapping_host}"
+    endpoint    = "${var.bootstrapping_host}"
+    dependecies = "${join("", concat(flatten(var._dependencies)))}"
   }
 
   connection {
@@ -10,11 +11,14 @@ resource "null_resource" "bootstrapper" {
   }
 
   provisioner "file" {
+    when        = "create"
     source      = "./generated"
     destination = "$HOME/tectonic"
   }
 
   provisioner "remote-exec" {
+    when = "create"
+
     inline = [
       "sudo mkdir -p /opt",
       "sudo rm -rf /opt/tectonic",

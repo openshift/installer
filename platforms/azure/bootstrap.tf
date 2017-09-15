@@ -7,7 +7,15 @@ locals {
 module "bootstrapper" {
   source = "../../modules/bootstrap-ssh"
 
-  # depends_on         = ["module.etcd_certs", "module.vnet", "module.dns", "module.etcd", "module.masters", "module.bootkube", "module.tectonic", "module.flannel-vxlan", "module.calico-network-policy"]
-  _deps              = ["${module.masters.master-vm-ids}"]
+  _dependencies = [
+    "${module.masters.master_vm_ids}",
+    "${module.etcd.etcd_vm_ids}",
+    "${module.etcd_certs.id}",
+    "${module.bootkube.id}",
+    "${module.tectonic.id}",
+    "${module.flannel-vxlan.id}",
+    "${module.calico-network-policy.id}",
+  ]
+
   bootstrapping_host = "${local.bootstrapping_host}"
 }
