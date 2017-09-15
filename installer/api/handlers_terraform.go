@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"time"
 
 	"github.com/dghubble/sessions"
@@ -18,8 +19,7 @@ import (
 )
 
 const (
-	bcryptCost        = 12
-	pluginsFolderName = "terraform.d/plugins"
+	bcryptCost = 12
 )
 
 // TerraformApplyHandlerInput describes the input expected by the
@@ -178,7 +178,13 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 	exPath := filepath.Join(binaryPath, "clusters", clusterName+time.Now().Format("_2006-01-02_15-04-05"))
 
 	// Publish custom providers to execution environment
-	clusterPluginDir := filepath.Join(exPath, pluginsFolderName)
+	clusterPluginDir := filepath.Join(
+		exPath,
+		"terraform.d",
+		"plugins",
+		fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH),
+	)
+
 	err = os.MkdirAll(clusterPluginDir, os.ModeDir|0755)
 	if err != nil {
 		return nil, newInternalServerError("Could not create custom provider plugins location: %s", err)
