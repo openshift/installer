@@ -127,6 +127,9 @@ kubectl create -f rbac/role-user.yaml
 kubectl create -f rbac/binding-admin.yaml
 kubectl create -f rbac/binding-discovery.yaml
 
+echo "Creating Cluster Config For Tectonic"
+kubectl create -f cluster-config.yaml
+
 echo "Creating Tectonic ConfigMaps"
 kubectl create -f config.yaml
 
