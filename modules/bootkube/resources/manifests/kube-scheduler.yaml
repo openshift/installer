@@ -6,6 +6,7 @@ metadata:
   labels:
     tier: control-plane
     k8s-app: kube-scheduler
+    tectonic-operators.coreos.com/managed-by: kube-version-operator
 spec:
   replicas: ${master_count}
   strategy:
@@ -22,6 +23,7 @@ spec:
         tier: control-plane
         k8s-app: kube-scheduler
         pod-anti-affinity: kube-scheduler-${kubernetes_version}
+        tectonic-operators.coreos.com/managed-by: kube-version-operator
       annotations:
         scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
