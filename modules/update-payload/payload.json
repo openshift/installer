@@ -167,7 +167,7 @@
                   "--operator-name=tectonic-cluo-operator",
                   "--appversion-name=tectonic-cluo-operator"
                 ],
-                "image": "quay.io/coreos/tectonic-cluo-operator:v0.2.0",
+                "image": "quay.io/coreos/tectonic-cluo-operator:v0.2.1",
                 "name": "tectonic-cluo-operator",
                 "resources": {
                   "limits": {
@@ -334,7 +334,7 @@
         "name": "tectonic-cluo-operator",
         "namespace": "tectonic-system"
       },
-      "version": "0.2.0"
+      "version": "0.2.1"
     },
     {
       "metadata": {
