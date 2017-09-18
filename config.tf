@@ -65,7 +65,7 @@ variable "tectonic_container_images" {
     flannel                      = "quay.io/coreos/flannel:v0.8.0-amd64"
     flannel_cni                  = "quay.io/coreos/flannel-cni:v0.2.0"
     heapster                     = "gcr.io/google_containers/heapster:v1.4.1"
-    hyperkube                    = "quay.io/coreos/hyperkube:v1.7.3_coreos.0"
+    hyperkube                    = "quay.io/coreos/hyperkube:v1.7.5_coreos.0"
     identity                     = "quay.io/coreos/dex:v2.6.1"
     ingress_controller           = "gcr.io/google_containers/nginx-ingress-controller:0.9.0-beta.12"
     kenc                         = "quay.io/coreos/kenc:0.0.2"
@@ -110,9 +110,9 @@ variable "tectonic_versions" {
 
   default = {
     etcd          = "3.1.8"
-    kubernetes    = "1.7.3+tectonic.1"
+    kubernetes    = "1.7.5+tectonic.1"
     monitoring    = "1.6.0"
-    tectonic      = "1.7.3-tectonic.2"
+    tectonic      = "1.7.5-tectonic.1"
     tectonic-etcd = "0.0.1"
     cluo          = "0.2.0"
   }
