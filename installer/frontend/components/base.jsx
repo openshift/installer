@@ -11,9 +11,7 @@ import { savable } from '../reducer';
 import { sections as trailSections, trail } from '../trail';
 
 import { Loader } from './loader';
-import { ResetButton } from './reset-button';
 import { restoreModal } from './restore';
-import { WithTooltip } from './tooltip';
 import { PLATFORM_TYPE } from '../cluster-config';
 import { TectonicGA } from '../tectonic-ga';
 import { Header } from './header';
@@ -56,29 +54,23 @@ const NavSection = connect(state => ({state}))(
   }
 );
 
-const Pager = withNav(
-  ({navNext, navPrevious, showPrev, showNext, disableNext, resetBtn}) => {
-    const nextLinkClasses = classNames('btn', 'btn-primary', {disabled: disableNext});
+const NextButton = withNav(
+  ({disabled, navNext}) => <div className="withtooltip">
+    <button onClick={navNext} className={`btn btn-primary ${disabled ? 'disabled' : ''}`}>Next Step</button>
+    {disabled && <div className="tooltip">All fields are required unless specified.</div>}
+  </div>
+);
 
-    return (
-      <div className="wiz-form__actions">
-        {showPrev && <button onClick={navPrevious} className="btn btn-default wiz-form__actions__prev">
-          Previous Step
-        </button>
-        }
-        {resetBtn && <div className="wiz-form__actions__prev">
-          <ResetButton />
-        </div>
-        }
-        {showNext && <div className="wiz-form__actions__next">
-          <WithTooltip text="All fields are required unless specified." shouldShow={disableNext}>
-            <button onClick={navNext} className={nextLinkClasses}>Next Step</button>
-          </WithTooltip>
-        </div>
-        }
-      </div>
-    );
-  });
+const PreviousButton = withNav(
+  ({navPrevious}) => <button onClick={navPrevious} className="btn btn-default">Previous Step</button>
+);
+
+const ResetButton = () => <button onClick={() => {
+  // eslint-disable-next-line no-alert
+  (window.config.devMode || window.confirm('Do you really want to start over?')) && window.reset();
+}} className="btn btn-link">
+  <i className="fa fa-refresh"></i>&nbsp;&nbsp;Start Over
+</button>;
 
 const stateToProps = (state, {history}) => {
   const t = trail(state);
@@ -134,7 +126,9 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
 
       const nav = page => this.navigate(currentPage, page);
 
-      const canNavigateForward = currentPage.component.canNavigateForward || (() => true);
+      const {canNavigateForward} = currentPage.component;
+      const disableNext = canNavigateForward ? !canNavigateForward(state) : false;
+
       return (
         <div className="tectonic">
           <Header />
@@ -167,28 +161,23 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
               <div className="wiz-wizard__content wiz-wizard__cell">
                 <div className="wiz-form__header">
                   <span className="wiz-form__header__title">{title}</span>
-                  {currentPage.showRestore &&
-                    <span className="wiz-form__header__control">
-                      <a onClick={() => restoreModal(navNext)}><i className="fa fa-upload"></i>&nbsp;&nbsp;Restore progress</a>
-                    </span>
-                  }
-                  {currentPage.hideSave ||
-                    <span className="wiz-form__header__control">
-                      <a onClick={() => downloadState(state)}><i className="fa fa-download"></i>&nbsp;&nbsp;Save progress</a>
-                    </span>
-                  }
+                  {currentPage.showRestore && <a onClick={() => restoreModal(navNext)}><i className="fa fa-upload"></i>&nbsp;&nbsp;Restore progress</a>}
+                  {currentPage.hideSave || <a onClick={() => downloadState(state)}><i className="fa fa-download"></i>&nbsp;&nbsp;Save progress</a>}
                 </div>
                 <div className="wiz-wizard__content__body">
                   <Switch>
                     {routes.map(r => <Route exact key={r.path} path={r.path} render={() => <r.component />} />)}
                   </Switch>
                 </div>
-                {currentPage.hidePager ||
-                  <Pager
-                    showPrev={!!t.previousFrom(currentPage)}
-                    showNext={!!t.nextFrom(currentPage)}
-                    disableNext={!canNavigateForward(state)}
-                    resetBtn={currentPage.canReset} />
+                {currentPage.hidePager || <div className="wiz-form__actions">
+                  <div className="wiz-form__actions__prev">
+                    {t.previousFrom(currentPage) && <PreviousButton />}
+                    {currentPage.canReset && <ResetButton />}
+                  </div>
+                  <div className="wiz-form__actions__next">
+                    {t.nextFrom(currentPage) && <NextButton disabled={disableNext} />}
+                  </div>
+                </div>
                 }
               </div>
             </div>

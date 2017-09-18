@@ -1,5 +1,5 @@
 const nextStep = '.wiz-form__actions__next button.btn-primary';
-const prevStep = 'button.wiz-form__actions__prev';
+const prevStep = '.wiz-form__actions__prev button.btn-default';
 
 const testPage = (page, platform, json, nextInitiallyDisabled = true) => {
   page.expect.element(prevStep).to.be.visible;
