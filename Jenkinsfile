@@ -320,6 +320,9 @@ pipeline {
               }
             }
           },
+/*
+* Disabled until DNS issue is fixed
+*
           "SmokeTest Azure Private RSpec": {
             node('worker && ec2') {
               withCredentials(creds) {
@@ -338,6 +341,7 @@ pipeline {
               }
             }
           },
+*/
 /*
  * Test temporarily disabled
  *
