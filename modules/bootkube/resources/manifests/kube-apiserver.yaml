@@ -17,10 +17,10 @@ spec:
       labels:
         tier: control-plane
         k8s-app: kube-apiserver
+        tectonic-operators.coreos.com/managed-by: kube-version-operator
       annotations:
         checkpointer.alpha.coreos.com/checkpoint: "true"
         scheduler.alpha.kubernetes.io/critical-pod: ""
-        tectonic-operators.coreos.com/managed-by: kube-version-operator
     spec:
       containers:
       - name: kube-apiserver
