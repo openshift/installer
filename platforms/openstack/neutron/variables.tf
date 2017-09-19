@@ -151,3 +151,13 @@ Please look at the OpenStack documentation for more details:
 https://developer.openstack.org/api-ref/networking/v2/index.html?expanded=create-a-load-balancer-detail#lbaas-2-0-stable
 EOF
 }
+
+variable "tectonic_openstack_disable_floatingip" {
+  default = false
+
+  description = <<EOF
+Disable floating ip assignments for k8s nodes.
+Warning: Enabling this option removes direct internet access,
+which prevents NodePorts from working.
+EOF
+}

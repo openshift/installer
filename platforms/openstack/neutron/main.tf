@@ -271,7 +271,7 @@ module "dns" {
   worker_count              = "${var.tectonic_worker_count}"
   worker_ips                = "${openstack_networking_port_v2.worker.*.all_fixed_ips}"
   worker_public_ips         = "${openstack_networking_floatingip_v2.worker.*.address}"
-  worker_public_ips_enabled = true
+  worker_public_ips_enabled = "${var.tectonic_openstack_disable_floatingip ? false : true}"
 
   tectonic_experimental = "${var.tectonic_experimental}"
   tectonic_vanilla_k8s  = "${var.tectonic_vanilla_k8s}"

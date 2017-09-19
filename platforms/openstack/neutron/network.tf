@@ -87,7 +87,7 @@ resource "openstack_networking_port_v2" "worker" {
 }
 
 resource "openstack_networking_floatingip_v2" "worker" {
-  count = "${var.tectonic_worker_count}"
+  count = "${var.tectonic_openstack_disable_floatingip ? 0 : var.tectonic_worker_count}"
   pool  = "${var.tectonic_openstack_floatingip_pool}"
 }
 

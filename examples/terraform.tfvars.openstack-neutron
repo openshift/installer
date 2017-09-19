@@ -129,6 +129,11 @@ tectonic_license_path = ""
 // This applies only to cloud platforms.
 tectonic_master_count = "1"
 
+// Disable floating ip assignments for k8s nodes.
+// Warning: Enabling this option removes direct internet access,
+// which prevents NodePorts from working.
+tectonic_openstack_disable_floatingip = false
+
 // The nameservers used by the nodes and the generated OpenStack subnet resource.
 // 
 // Example: `["8.8.8.8", "8.8.4.4"]`
