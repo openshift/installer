@@ -29,10 +29,6 @@ variable "ign_azure_udev_rules_id" {
   type = "string"
 }
 
-variable "ign_kubelet_env_id" {
-  type = "string"
-}
-
 variable "ign_tx_off_service_id" {
   type = "string"
 }

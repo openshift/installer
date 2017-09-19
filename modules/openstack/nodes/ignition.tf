@@ -7,7 +7,7 @@ data "ignition_config" "node" {
 
   files = [
     "${data.ignition_file.kubeconfig.id}",
-    "${var.ign_kubelet_env_id}",
+    "${var.ign_installer_kubelet_env_id}",
     "${var.ign_max_user_watches_id}",
     "${data.ignition_file.resolv_conf.id}",
     "${data.ignition_file.hostname.*.id[count.index]}",
@@ -16,6 +16,7 @@ data "ignition_config" "node" {
 
   systemd = ["${compact(list(
     var.ign_docker_dropin_id,
+    var.ign_k8s_node_bootstrap_service_id,
     var.ign_locksmithd_service_id,
     var.ign_kubelet_service_id,
     var.ign_bootkube_service_id,

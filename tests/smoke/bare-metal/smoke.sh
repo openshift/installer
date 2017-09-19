@@ -206,6 +206,11 @@ kill_terraform_and_cleanup() {
 }
 
 kubelet_up() {
+  ssh -q -i ${ROOT}/matchbox/tests/smoke/fake_rsa \
+   -o StrictHostKeyChecking=no \
+   -o UserKnownHostsFile=/dev/null \
+   -o PreferredAuthentications=publickey \
+   core@$1 /usr/bin/systemctl status k8s-node-bootstrap kubelet
   curl --silent --fail -m 1 "http://$1:10255/healthz" > /dev/null
 }
 

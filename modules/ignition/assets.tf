@@ -48,21 +48,23 @@ data "ignition_systemd_unit" "kubelet" {
   content = "${data.template_file.kubelet.rendered}"
 }
 
-data "template_file" "kubelet_env_service" {
-  template = "${file("${path.module}/resources/services/kubelet-env.service")}"
+data "template_file" "k8s_node_bootstrap" {
+  template = "${file("${path.module}/resources/services/k8s-node-bootstrap.service")}"
 
   vars {
-    kube_version_image_url = "${replace(var.container_images["kube_version"],var.image_re,"$1")}"
-    kube_version_image_tag = "${replace(var.container_images["kube_version"],var.image_re,"$2")}"
-    kubelet_image_url      = "${replace(var.container_images["hyperkube"],var.image_re,"$1")}"
-    kubeconfig_fetch_cmd   = "${var.kubeconfig_fetch_cmd != "" ? "ExecStartPre=${var.kubeconfig_fetch_cmd}" : ""}"
+    bootstrap_upgrade_cl     = "${var.bootstrap_upgrade_cl}"
+    kubeconfig_fetch_cmd     = "${var.kubeconfig_fetch_cmd != "" ? "ExecStartPre=${var.kubeconfig_fetch_cmd}" : ""}"
+    tectonic_torcx_image_url = "${replace(var.container_images["tectonic_torcx"],var.image_re,"$1")}"
+    tectonic_torcx_image_tag = "${replace(var.container_images["tectonic_torcx"],var.image_re,"$2")}"
+    torcx_skip_setup         = "${var.tectonic_vanilla_k8s ? "true" : "false" }"
+    torcx_store_url          = "${var.torcx_store_url}"
   }
 }
 
-data "ignition_systemd_unit" "kubelet_env" {
-  name    = "kubelet-env.service"
+data "ignition_systemd_unit" "k8s_node_bootstrap" {
+  name    = "k8s-node-bootstrap.service"
   enable  = true
-  content = "${data.template_file.kubelet_env_service.rendered}"
+  content = "${data.template_file.k8s_node_bootstrap.rendered}"
 }
 
 data "template_file" "s3_puller" {
@@ -88,7 +90,7 @@ data "ignition_systemd_unit" "locksmithd" {
   mask = true
 }
 
-data "template_file" "kubelet_env" {
+data "template_file" "installer_kubelet_env" {
   template = "${file("${path.module}/resources/kubernetes/kubelet.env")}"
 
   vars {
@@ -97,13 +99,13 @@ data "template_file" "kubelet_env" {
   }
 }
 
-data "ignition_file" "kubelet_env" {
+data "ignition_file" "installer_kubelet_env" {
   filesystem = "root"
-  path       = "/etc/kubernetes/kubelet.env"
+  path       = "/etc/kubernetes/installer/kubelet.env"
   mode       = 0644
 
   content {
-    content = "${data.template_file.kubelet_env.rendered}"
+    content = "${data.template_file.installer_kubelet_env.rendered}"
   }
 }
 

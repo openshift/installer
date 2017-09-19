@@ -86,6 +86,7 @@ module "etcd" {
 module "ignition_masters" {
   source = "../../modules/ignition"
 
+  bootstrap_upgrade_cl = "${var.tectonic_bootstrap_upgrade_cl}"
   cloud_provider       = "aws"
   container_images     = "${var.tectonic_container_images}"
   image_re             = "${var.tectonic_image_re}"
@@ -94,6 +95,7 @@ module "ignition_masters" {
   kubelet_cni_bin_dir  = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
   kubelet_node_label   = "node-role.kubernetes.io/master"
   kubelet_node_taints  = "node-role.kubernetes.io/master=:NoSchedule"
+  tectonic_vanilla_k8s = "${var.tectonic_vanilla_k8s}"
 }
 
 module "masters" {
@@ -125,21 +127,23 @@ module "masters" {
   ssh_key                      = "${var.tectonic_aws_ssh_key}"
   subnet_ids                   = "${module.vpc.master_subnet_ids}"
 
-  ign_bootkube_path_unit_id     = "${module.bootkube.systemd_path_unit_id}"
-  ign_bootkube_service_id       = "${module.bootkube.systemd_service_id}"
-  ign_docker_dropin_id          = "${module.ignition_masters.docker_dropin_id}"
-  ign_kubelet_service_id        = "${module.ignition_masters.kubelet_service_id}"
-  ign_locksmithd_service_id     = "${module.ignition_masters.locksmithd_service_id}"
-  ign_max_user_watches_id       = "${module.ignition_masters.max_user_watches_id}"
-  ign_s3_kubelet_env_service_id = "${module.ignition_masters.kubelet_env_service_id}"
-  ign_s3_puller_id              = "${module.ignition_masters.s3_puller_id}"
-  ign_tectonic_path_unit_id     = "${var.tectonic_vanilla_k8s ? "" : module.tectonic.systemd_path_unit_id}"
-  ign_tectonic_service_id       = "${module.tectonic.systemd_service_id}"
+  ign_bootkube_path_unit_id         = "${module.bootkube.systemd_path_unit_id}"
+  ign_bootkube_service_id           = "${module.bootkube.systemd_service_id}"
+  ign_docker_dropin_id              = "${module.ignition_masters.docker_dropin_id}"
+  ign_installer_kubelet_env_id      = "${module.ignition_masters.installer_kubelet_env_id}"
+  ign_k8s_node_bootstrap_service_id = "${module.ignition_masters.k8s_node_bootstrap_service_id}"
+  ign_kubelet_service_id            = "${module.ignition_masters.kubelet_service_id}"
+  ign_locksmithd_service_id         = "${module.ignition_masters.locksmithd_service_id}"
+  ign_max_user_watches_id           = "${module.ignition_masters.max_user_watches_id}"
+  ign_s3_puller_id                  = "${module.ignition_masters.s3_puller_id}"
+  ign_tectonic_path_unit_id         = "${var.tectonic_vanilla_k8s ? "" : module.tectonic.systemd_path_unit_id}"
+  ign_tectonic_service_id           = "${module.tectonic.systemd_service_id}"
 }
 
 module "ignition_workers" {
   source = "../../modules/ignition"
 
+  bootstrap_upgrade_cl = "${var.tectonic_bootstrap_upgrade_cl}"
   cloud_provider       = "aws"
   container_images     = "${var.tectonic_container_images}"
   image_re             = "${var.tectonic_image_re}"
@@ -148,6 +152,7 @@ module "ignition_workers" {
   kubelet_cni_bin_dir  = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
   kubelet_node_label   = "node-role.kubernetes.io/node"
   kubelet_node_taints  = ""
+  tectonic_vanilla_k8s = "${var.tectonic_vanilla_k8s}"
 }
 
 module "workers" {
@@ -170,10 +175,11 @@ module "workers" {
   worker_iam_role              = "${var.tectonic_aws_worker_iam_role_name}"
   load_balancers               = ["${var.tectonic_aws_worker_load_balancers}"]
 
-  ign_docker_dropin_id          = "${module.ignition_workers.docker_dropin_id}"
-  ign_kubelet_service_id        = "${module.ignition_workers.kubelet_service_id}"
-  ign_locksmithd_service_id     = "${module.ignition_masters.locksmithd_service_id}"
-  ign_max_user_watches_id       = "${module.ignition_workers.max_user_watches_id}"
-  ign_s3_kubelet_env_service_id = "${module.ignition_workers.kubelet_env_service_id}"
-  ign_s3_puller_id              = "${module.ignition_workers.s3_puller_id}"
+  ign_docker_dropin_id              = "${module.ignition_workers.docker_dropin_id}"
+  ign_installer_kubelet_env_id      = "${module.ignition_workers.installer_kubelet_env_id}"
+  ign_k8s_node_bootstrap_service_id = "${module.ignition_workers.k8s_node_bootstrap_service_id}"
+  ign_kubelet_service_id            = "${module.ignition_workers.kubelet_service_id}"
+  ign_locksmithd_service_id         = "${module.ignition_masters.locksmithd_service_id}"
+  ign_max_user_watches_id           = "${module.ignition_workers.max_user_watches_id}"
+  ign_s3_puller_id                  = "${module.ignition_workers.s3_puller_id}"
 }

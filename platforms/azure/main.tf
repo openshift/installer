@@ -99,6 +99,7 @@ data "null_data_source" "cloud_provider" {
 module "ignition_masters" {
   source = "../../modules/ignition"
 
+  bootstrap_upgrade_cl  = "${var.tectonic_bootstrap_upgrade_cl}"
   cloud_provider        = "azure"
   cloud_provider_config = "${jsonencode(data.null_data_source.cloud_provider.inputs)}"
   container_images      = "${var.tectonic_container_images}"
@@ -107,6 +108,7 @@ module "ignition_masters" {
   kubelet_cni_bin_dir   = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
   kubelet_node_label    = "node-role.kubernetes.io/master"
   kubelet_node_taints   = "node-role.kubernetes.io/master=:NoSchedule"
+  tectonic_vanilla_k8s  = "${var.tectonic_vanilla_k8s}"
 }
 
 module "masters" {
@@ -127,22 +129,24 @@ module "masters" {
   storage_type          = "${var.tectonic_azure_master_storage_type}"
   vm_size               = "${var.tectonic_azure_master_vm_size}"
 
-  ign_azure_udev_rules_id   = "${module.ignition_masters.azure_udev_rules_id}"
-  ign_bootkube_path_unit_id = "${module.bootkube.systemd_path_unit_id}"
-  ign_bootkube_service_id   = "${module.bootkube.systemd_service_id}"
-  ign_docker_dropin_id      = "${module.ignition_masters.docker_dropin_id}"
-  ign_kubelet_env_id        = "${module.ignition_masters.kubelet_env_id}"
-  ign_kubelet_service_id    = "${module.ignition_masters.kubelet_service_id}"
-  ign_locksmithd_service_id = "${module.ignition_masters.locksmithd_service_id}"
-  ign_max_user_watches_id   = "${module.ignition_masters.max_user_watches_id}"
-  ign_tectonic_path_unit_id = "${var.tectonic_vanilla_k8s ? "" : module.tectonic.systemd_path_unit_id}"
-  ign_tectonic_service_id   = "${module.tectonic.systemd_service_id}"
-  ign_tx_off_service_id     = "${module.ignition_masters.tx_off_service_id}"
+  ign_azure_udev_rules_id           = "${module.ignition_masters.azure_udev_rules_id}"
+  ign_bootkube_path_unit_id         = "${module.bootkube.systemd_path_unit_id}"
+  ign_bootkube_service_id           = "${module.bootkube.systemd_service_id}"
+  ign_docker_dropin_id              = "${module.ignition_masters.docker_dropin_id}"
+  ign_installer_kubelet_env_id      = "${module.ignition_workers.installer_kubelet_env_id}"
+  ign_k8s_node_bootstrap_service_id = "${module.ignition_masters.k8s_node_bootstrap_service_id}"
+  ign_kubelet_service_id            = "${module.ignition_masters.kubelet_service_id}"
+  ign_locksmithd_service_id         = "${module.ignition_masters.locksmithd_service_id}"
+  ign_max_user_watches_id           = "${module.ignition_masters.max_user_watches_id}"
+  ign_tectonic_path_unit_id         = "${var.tectonic_vanilla_k8s ? "" : module.tectonic.systemd_path_unit_id}"
+  ign_tectonic_service_id           = "${module.tectonic.systemd_service_id}"
+  ign_tx_off_service_id             = "${module.ignition_masters.tx_off_service_id}"
 }
 
 module "ignition_workers" {
   source = "../../modules/ignition"
 
+  bootstrap_upgrade_cl  = "${var.tectonic_bootstrap_upgrade_cl}"
   cloud_provider        = "azure"
   cloud_provider_config = "${jsonencode(data.null_data_source.cloud_provider.inputs)}"
   container_images      = "${var.tectonic_container_images}"
@@ -151,6 +155,7 @@ module "ignition_workers" {
   kubelet_cni_bin_dir   = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
   kubelet_node_label    = "node-role.kubernetes.io/node"
   kubelet_node_taints   = ""
+  tectonic_vanilla_k8s  = "${var.tectonic_vanilla_k8s}"
 }
 
 module "workers" {
@@ -172,13 +177,14 @@ module "workers" {
   vm_size                      = "${var.tectonic_azure_worker_vm_size}"
   worker_count                 = "${var.tectonic_worker_count}"
 
-  ign_azure_udev_rules_id   = "${module.ignition_workers.azure_udev_rules_id}"
-  ign_docker_dropin_id      = "${module.ignition_workers.docker_dropin_id}"
-  ign_kubelet_env_id        = "${module.ignition_workers.kubelet_env_id}"
-  ign_kubelet_service_id    = "${module.ignition_workers.kubelet_service_id}"
-  ign_locksmithd_service_id = "${module.ignition_masters.locksmithd_service_id}"
-  ign_max_user_watches_id   = "${module.ignition_workers.max_user_watches_id}"
-  ign_tx_off_service_id     = "${module.ignition_workers.tx_off_service_id}"
+  ign_azure_udev_rules_id           = "${module.ignition_workers.azure_udev_rules_id}"
+  ign_docker_dropin_id              = "${module.ignition_workers.docker_dropin_id}"
+  ign_installer_kubelet_env_id      = "${module.ignition_workers.installer_kubelet_env_id}"
+  ign_k8s_node_bootstrap_service_id = "${module.ignition_workers.k8s_node_bootstrap_service_id}"
+  ign_kubelet_service_id            = "${module.ignition_workers.kubelet_service_id}"
+  ign_locksmithd_service_id         = "${module.ignition_masters.locksmithd_service_id}"
+  ign_max_user_watches_id           = "${module.ignition_workers.max_user_watches_id}"
+  ign_tx_off_service_id             = "${module.ignition_workers.tx_off_service_id}"
 }
 
 module "dns" {

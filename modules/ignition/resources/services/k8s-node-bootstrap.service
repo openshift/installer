@@ -1,0 +1,36 @@
+[Unit]
+Description=Bootstrap Kubernetes Node Components
+ConditionPathExists=!/etc/kubernetes/kubelet.env
+Before=kubelet.service
+
+[Service]
+Type=simple
+RemainAfterExit=true
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=1h
+ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes
+${kubeconfig_fetch_cmd}
+ExecStartPre=/usr/bin/docker run --rm \
+            --tmpfs /tmp \
+            -v /usr/share:/usr/share:ro \
+            -v /usr/lib/os-release:/usr/lib/os-release:ro \
+            -v /usr/share/ca-certificates/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro \
+            -v /var/lib/torcx:/var/lib/torcx \
+            -v /var/run/dbus:/var/run/dbus \
+            -v /run/metadata:/run/metadata:ro \
+            -v /run/torcx:/run/torcx:ro \
+            -v /run/systemd:/run/systemd \
+            -v /etc/coreos:/etc/coreos:ro \
+            -v /etc/torcx:/etc/torcx \
+            -v /etc/kubernetes:/etc/kubernetes \
+            ${tectonic_torcx_image_url}:${tectonic_torcx_image_tag} \
+            /tectonic-torcx-bootstrap \
+            --upgrade-os=${bootstrap_upgrade_cl} \
+            --torcx-manifest-url="${torcx_store_url}" \
+            --torcx-skip-setup=${torcx_skip_setup} \
+            --verbose=debug
+ExecStart=/usr/bin/echo "node components bootstrapped"
+
+[Install]
+WantedBy=multi-user.target kubelet.service

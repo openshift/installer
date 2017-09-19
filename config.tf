@@ -82,6 +82,7 @@ variable "tectonic_container_images" {
     tectonic_etcd_operator       = "quay.io/coreos/tectonic-etcd-operator:v0.0.2"
     tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.6.0"
     tectonic_cluo_operator       = "quay.io/coreos/tectonic-cluo-operator:v0.2.1"
+    tectonic_torcx               = "quay.io/coreos/tectonic-torcx:installer-latest"
   }
 }
 
@@ -444,4 +445,10 @@ variable "tectonic_calico_network_policy" {
 WARNING: Enabling an alpha feature means that future updates may become unsupported.
 This should only be enabled on clusters that are meant to be short-lived to begin validating the alpha feature.
 EOF
+}
+
+variable "tectonic_bootstrap_upgrade_cl" {
+  type        = "string"
+  default     = "true"
+  description = "(internal) Whether to trigger a ContainerLinux upgrade on node bootstrap."
 }

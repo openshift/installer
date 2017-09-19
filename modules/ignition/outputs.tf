@@ -22,12 +22,12 @@ output "kubelet_service_rendered" {
   value = "${data.template_file.kubelet.rendered}"
 }
 
-output "kubelet_env_service_id" {
-  value = "${data.ignition_systemd_unit.kubelet_env.id}"
+output "k8s_node_bootstrap_service_id" {
+  value = "${data.ignition_systemd_unit.k8s_node_bootstrap.id}"
 }
 
-output "kubelet_env_service_rendered" {
-  value = "${data.template_file.kubelet_env_service.rendered}"
+output "k8s_node_bootstrap_service_rendered" {
+  value = "${data.template_file.k8s_node_bootstrap.rendered}"
 }
 
 output "s3_puller_id" {
@@ -42,12 +42,12 @@ output "locksmithd_service_id" {
   value = "${data.ignition_systemd_unit.locksmithd.id}"
 }
 
-output "kubelet_env_id" {
-  value = "${data.ignition_file.kubelet_env.id}"
+output "installer_kubelet_env_id" {
+  value = "${data.ignition_file.installer_kubelet_env.id}"
 }
 
-output "kubelet_env_rendered" {
-  value = "${data.template_file.kubelet_env.rendered}"
+output "installer_kubelet_env_rendered" {
+  value = "${data.template_file.installer_kubelet_env.rendered}"
 }
 
 output "tx_off_service_id" {

@@ -15,3 +15,11 @@ variable "ign_kubelet_service_id" {
 variable "ign_locksmithd_service_id" {
   type = "string"
 }
+
+variable "ign_installer_kubelet_env_id" {
+  type = "string"
+}
+
+variable "ign_k8s_node_bootstrap_service_id" {
+  type = "string"
+}

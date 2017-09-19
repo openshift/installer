@@ -1,16 +1,17 @@
 data "ignition_config" "main" {
   files = [
+    "${data.ignition_file.detect_master.id}",
+    "${data.ignition_file.init_assets.id}",
+    "${var.ign_installer_kubelet_env_id}",
     "${var.ign_max_user_watches_id}",
     "${var.ign_s3_puller_id}",
-    "${data.ignition_file.init_assets.id}",
-    "${data.ignition_file.detect_master.id}",
   ]
 
   systemd = ["${compact(list(
     var.ign_docker_dropin_id,
     var.ign_locksmithd_service_id,
     var.ign_kubelet_service_id,
-    var.ign_s3_kubelet_env_service_id,
+    var.ign_k8s_node_bootstrap_service_id,
     data.ignition_systemd_unit.init_assets.id,
     var.ign_bootkube_service_id,
     var.ign_tectonic_service_id,

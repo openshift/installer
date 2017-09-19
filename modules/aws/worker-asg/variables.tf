@@ -78,7 +78,3 @@ variable "worker_iam_role" {
 variable "ign_s3_puller_id" {
   type = "string"
 }
-
-variable "ign_s3_kubelet_env_service_id" {
-  type = "string"
-}

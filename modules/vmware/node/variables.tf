@@ -7,10 +7,6 @@ variable "container_images" {
   type        = "map"
 }
 
-variable "ign_kubelet_env_id" {
-  type = "string"
-}
-
 variable "image_re" {
   description = "(internal) Regular expression used to extract repo and tag components from image strings"
   type        = "string"
@@ -100,12 +96,6 @@ variable "vmware_cluster" {
 variable "vmware_datacenter" {
   type        = "string"
   description = "vSphere Datacenter to create VMs in"
-}
-
-variable "ign_kubelet_env_service_id" {
-  type        = "string"
-  description = "The kubelet env service to use"
-  default     = ""
 }
 
 variable "ign_bootkube_service_id" {

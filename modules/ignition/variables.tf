@@ -48,3 +48,21 @@ variable "cloud_provider_config" {
   description = "(optional) The cloud provider config to be used for the kubelet."
   default     = ""
 }
+
+variable "bootstrap_upgrade_cl" {
+  type        = "string"
+  description = "(optional) Whether to trigger a ContainerLinux OS upgrade during the bootstrap process."
+  default     = "true"
+}
+
+variable "torcx_store_url" {
+  type        = "string"
+  description = "(optional) URL template for torcx store. Leave empty to use the default CoreOS endpoint."
+  default     = ""
+}
+
+variable "tectonic_vanilla_k8s" {
+  description = <<EOF
+If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
+EOF
+}

@@ -44,6 +44,9 @@ systemd:
         ExecStart=/bin/sh -c 'while ! /usr/bin/grep '^[^#[:space:]]' /etc/resolv.conf > /dev/null; do sleep 1; done'
         [Install]
         RequiredBy=kubelet.service
+    - name: k8s-node-bootstrap.service
+      enable: true
+      contents: {{.ign_k8s_node_bootstrap_service_json}}
     - name: kubelet.service
       enable: true
       contents: {{.ign_kubelet_service_json}}
@@ -63,11 +66,6 @@ systemd:
 {{end}}
 storage:
   files:
-    - path: /etc/kubernetes/kubelet.env
-      filesystem: root
-      mode: 0644
-      contents:
-        inline: {{.ign_kubelet_env_json}}
     - path: /etc/hostname
       filesystem: root
       mode: 0644
@@ -79,6 +77,11 @@ storage:
       mode: 0644
       contents:
         inline: {{.ign_max_user_watches_json}}
+    - path: /etc/kubernetes/installer/kubelet.env
+      filesystem: root
+      mode: 0644
+      contents:
+        inline: {{.ign_installer_kubelet_env_json}}
 passwd:
   users:
     - name: core

@@ -11,10 +11,6 @@ variable "hostname_infix" {
   type = "string"
 }
 
-variable "ign_kubelet_env_id" {
-  type = "string"
-}
-
 variable "instance_count" {
   type        = "string"
   description = "The amount of nodes to be created. Example: `3`"
