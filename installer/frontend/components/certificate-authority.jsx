@@ -2,9 +2,15 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { configActionTypes } from '../actions';
-import { validate } from '../validate';
 import { CA_TYPE, CA_CERTIFICATE, CA_PRIVATE_KEY } from '../cluster-config';
-import { WithClusterConfig, CertArea, PrivateKeyArea } from './ui';
+import { Field, Form } from '../form';
+import { validate } from '../validate';
+import { CertArea, Connect, PrivateKeyArea } from './ui';
+
+const form = new Form('CERTIFICATE_AUTHORITY', [
+  new Field(CA_CERTIFICATE, {default: '', validator: validate.certificate}),
+  new Field(CA_PRIVATE_KEY, {default: '', validator: validate.privateKey}),
+]);
 
 export const CertificateAuthority = connect(
   ({clusterConfig}) => {
@@ -65,22 +71,17 @@ export const CertificateAuthority = connect(
                 caType === 'owned' && <div>
                   <div className="row form-group">
                     <div className="col-xs-12">
-                      <WithClusterConfig field={CA_CERTIFICATE}>
-                        <CertArea
-                          id={CA_CERTIFICATE}
-                          autoFocus="true"
-                          uploadButtonLabel="Upload CA Certificate" />
-                      </WithClusterConfig>
+                      <Connect field={CA_CERTIFICATE}>
+                        <CertArea autoFocus="true" uploadButtonLabel="Upload CA Certificate" />
+                      </Connect>
                     </div>
                   </div>
 
                   <div className="row form-group">
                     <div className="col-xs-12">
-                      <WithClusterConfig field={CA_PRIVATE_KEY}>
-                        <PrivateKeyArea
-                          id={CA_PRIVATE_KEY}
-                          uploadButtonLabel="Upload CA Private Key" />
-                      </WithClusterConfig>
+                      <Connect field={CA_PRIVATE_KEY}>
+                        <PrivateKeyArea uploadButtonLabel="Upload CA Private Key" />
+                      </Connect>
                     </div>
                   </div>
                 </div>
@@ -92,11 +93,5 @@ export const CertificateAuthority = connect(
     </div>
   );
 });
-CertificateAuthority.canNavigateForward = ({clusterConfig}) => {
-  if (clusterConfig[CA_TYPE] === 'self-signed') {
-    return true;
-  }
 
-  return (!validate.certificate(clusterConfig[CA_CERTIFICATE]) &&
-          !validate.privateKey(clusterConfig[CA_PRIVATE_KEY]));
-};
+CertificateAuthority.canNavigateForward = state => state.clusterConfig[CA_TYPE] === 'self-signed' || form.canNavigateForward(state);
