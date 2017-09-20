@@ -296,7 +296,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
                   <Connect field={AWS_CREATE_VPC}>
                     <Radio name={AWS_CREATE_VPC} value="VPC_CREATE" />
                   </Connect>
-                Create a new VPC (Public)
+                  Create a new VPC (Public)
                 </label>&nbsp;(default)
                 <p className="text-muted wiz-help-text">Launch into a new VPC with subnet defaults.</p>
               </div>
@@ -307,7 +307,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
                   <Connect field={AWS_CREATE_VPC}>
                     <Radio name={AWS_CREATE_VPC} value="VPC_PUBLIC" />
                   </Connect>
-                Use an existing VPC (Public)
+                  Use an existing VPC (Public)
                 </label>
                 <p className="text-muted wiz-help-text">
                   {/* eslint-disable react/jsx-no-target-blank */}
@@ -322,7 +322,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
                   <Connect field={AWS_CREATE_VPC}>
                     <Radio name={AWS_CREATE_VPC} value="VPC_PRIVATE" />
                   </Connect>
-                Use an existing VPC (Private)
+                  Use an existing VPC (Private)
                 </label>
                 <p className="text-muted wiz-help-text">
                   {/* eslint-disable react/jsx-no-target-blank */}
@@ -337,7 +337,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
         <hr />
 
         <p className="text-muted">
-        Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <a target="_blank" href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html" rel="noopener noreferrer">Working with Hosted Zones</a>.
+          Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <a target="_blank" href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html" rel="noopener noreferrer">Working with Hosted Zones</a>.
         </p>
         <div className="row form-group">
           <div className="col-xs-3">
@@ -383,7 +383,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
         }
         {(advanced || !awsCreateVpc) && <div>
           {internalCluster && <Alert>
-          You must be on a VPN with access to the target VPC. The cluster will have no public endpoints.
+            You must be on a VPN with access to the target VPC. The cluster will have no public endpoints.
           </Alert>}
 
           {awsCreateVpc &&
