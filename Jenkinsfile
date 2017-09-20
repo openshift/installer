@@ -359,6 +359,9 @@ pipeline {
               }
             }
           },
+          /* Temporarily disabled for consolidation
+           * Fails very often due to Packet flakiness
+           *
           "SmokeTest: Bare Metal": {
             node('worker && bare-metal') {
               ansiColor('xterm') {
@@ -373,7 +376,7 @@ pipeline {
                 }
               }
             }
-          },
+          }, */
           "IntegrationTest AWS Installer Gui": {
             node('worker && ec2') {
               withCredentials(creds) {
