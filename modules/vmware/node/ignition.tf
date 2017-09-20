@@ -16,7 +16,6 @@ data "ignition_config" "node" {
     var.ign_locksmithd_service_id,
     var.ign_k8s_node_bootstrap_service_id,
     var.ign_kubelet_service_id,
-    var.ign_kubelet_env_service_id,
     var.ign_bootkube_service_id,
     var.ign_tectonic_service_id,
     var.ign_bootkube_path_unit_id,

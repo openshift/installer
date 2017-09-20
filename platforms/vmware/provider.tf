@@ -1,4 +1,5 @@
 provider "vsphere" {
+  version              = "0.2.2"
   vsphere_server       = "${var.tectonic_vmware_server}"
   allow_unverified_ssl = "${var.tectonic_vmware_sslselfsigned}"
 }

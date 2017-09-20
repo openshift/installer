@@ -33,11 +33,4 @@ rm /var/tmp/tectonic.zip
 # make files in /opt/tectonic available atomically
 mv /var/tmp/tectonic /opt/tectonic
 
-# Populate the kubelet.env file.
-mkdir -p /etc/kubernetes
-# shellcheck disable=SC2154
-echo "KUBELET_IMAGE_URL=${kubelet_image_url}" > /etc/kubernetes/kubelet.env
-# shellcheck disable=SC2154
-echo "KUBELET_IMAGE_TAG=${kubelet_image_tag}" >> /etc/kubernetes/kubelet.env
-
 exit 0
