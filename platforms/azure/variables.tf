@@ -32,8 +32,13 @@ EOF
 }
 
 variable "tectonic_azure_location" {
-  type        = "string"
-  description = "An Azure location where the cluster will be built."
+  type = "string"
+
+  description = <<EOF
+An Azure location where the cluster will be built.
+Use the location name as returned in the *Name* column by `az account list-locations` CLI command.
+Lowercase string with no spaces between words. Example: southcentralus
+EOF
 }
 
 variable "tectonic_azure_ssh_key" {
