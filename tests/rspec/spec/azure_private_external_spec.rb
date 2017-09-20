@@ -30,9 +30,7 @@ RSpec.describe 'azure-private-external' do
 
   context 'private cluster' do
     include_examples('withRunningCluster', TEST_CLUSTER_CONFIG_FILE)
-
-    it 'does nothing now' do
-      puts 'This should check private cluster stuff.'
+    it 'should have a vpn' do
     end
   end
 end

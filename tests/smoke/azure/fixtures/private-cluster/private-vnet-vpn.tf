@@ -12,7 +12,7 @@ resource "azurerm_resource_group" "tectonic_cluster" {
 }
 
 resource "azurerm_public_ip" "vpn_gw_ip" {
-  name                         = "${var.tectonic_cluster_name}_api_ip"
+  name                         = "${var.tectonic_cluster_name}_vpn_gw_ip"
   location                     = "${var.tectonic_azure_location}"
   resource_group_name          = "${azurerm_resource_group.tectonic_cluster.name}"
   public_ip_address_allocation = "dynamic"
@@ -86,11 +86,11 @@ resource "azurerm_virtual_machine" "vpn_gw" {
   os_profile {
     computer_name  = "${var.tectonic_cluster_name}-vpn-gw"
     admin_username = "${var.admin_username}"
-    admin_password = "${var.admin_password}"
+    admin_password = ""
   }
 
   os_profile_linux_config {
-    disable_password_authentication = false
+    disable_password_authentication = true
 
     ssh_keys {
       path     = "/home/${var.admin_username}/.ssh/authorized_keys"
@@ -101,26 +101,33 @@ resource "azurerm_virtual_machine" "vpn_gw" {
   tags = "${merge(map(
     "Name", "tectonic-cluster-${var.tectonic_cluster_name}"),
     var.tectonic_azure_extra_tags)}"
+}
+
+resource "null_resource" "openvpn_as_bootstrap" {
+  triggers {
+    vm_id = "${azurerm_virtual_machine.vpn_gw.id}"
+  }
+
+  connection {
+    type  = "ssh"
+    user  = "${var.admin_username}"
+    agent = true
+    host  = "${azurerm_public_ip.vpn_gw_ip.fqdn}"
+  }
 
   provisioner "remote-exec" {
-    connection {
-      type  = "ssh"
-      user  = "${var.admin_username}"
-      agent = true
-      host  = "${azurerm_public_ip.vpn_gw_ip.fqdn}"
-    }
-
     inline = [
       "cd ~",
       "while ( ! curl --silent --fail -I http://swupdate.openvpn.org/as/openvpn-as-2.1.9-Ubuntu16.amd_64.deb); do echo 'Waiting for network...'; sleep 1; done",
       "curl -O http://swupdate.openvpn.org/as/openvpn-as-2.1.9-Ubuntu16.amd_64.deb",
       "sudo dpkg -i openvpn-as-2.1.9-Ubuntu16.amd_64.deb",
-      "sudo echo 'openvpn:${var.admin_password}' | sudo chpasswd",
+      "sudo echo '${var.admin_username}:${var.admin_password}' | sudo chpasswd",
+      "sleep 60",
       "sudo /usr/local/openvpn_as/scripts/sacli -k 'host.name' -v '${azurerm_public_ip.vpn_gw_ip.fqdn}' ConfigPut",
-      "sudo /usr/local/openvpn_as/scripts/sacli -k 'vpn.server.routing.private_network.0' -v '${var.tectonic_azure_vnet_cidr_block}' ConfigPut",
+      "sudo /usr/local/openvpn_as/scripts/sacli -k 'vpn.server.routing.private_network.1' -v '${var.tectonic_azure_vnet_cidr_block}' ConfigPut",
       "sudo /usr/local/openvpn_as/scripts/sacli -k 'vpn.server.routing.private_access' -v 'nat' ConfigPut",
-      "sudo /usr/local/openvpn_as/scripts/sacli -k 'vpn.client.routing.reroute_gw' -v 'true' ConfigPut",
       "sudo /usr/local/openvpn_as/scripts/sacli -k 'vpn.client.routing.reroute_dns' -v 'true' ConfigPut",
+      "sudo /usr/local/openvpn_as/scripts/sacli -k 'vpn.client.routing.reroute_gw' -v 'false' ConfigPut",
       "sudo systemctl restart openvpnas",
     ]
   }
@@ -183,7 +190,7 @@ resource "azurerm_network_security_rule" "vpn_gw_ingress_OpenVPN_1194" {
   priority                    = 1100
   direction                   = "Inbound"
   access                      = "Allow"
-  protocol                    = "tcp"
+  protocol                    = "*"
   source_port_range           = "*"
   destination_port_range      = "1194"
   source_address_prefix       = "*"

@@ -12,6 +12,11 @@ SSH_CMD_TECTONIC_DONE = "journalctl --no-pager -u tectonic | grep -q 'Started Bo
 class AzureCluster < Cluster
   extend AzureSupport
 
+  def initialize(tfvars_file)
+    super(tfvars_file)
+    @random_location = AzureSupport.random_location_unless_defined
+  end
+
   def start
     super
     # Wait for bootstrapping to complete
@@ -23,12 +28,13 @@ class AzureCluster < Cluster
     from = Time.now
     Net::SSH.start(ssh_ip, 'core') do |ssh|
       loop do
-        puts 'Waiting for bootstrapping to complete...'
-        raise 'timeout waiting for bootstrapping' if Time.now - from > 1200 # 20 mins timeout
         bootkube_done = ssh.exec!(SSH_CMD_BOOTKUBE_DONE).exitstatus.zero?
         tectonic_done = ssh.exec!(SSH_CMD_TECTONIC_DONE).exitstatus.zero?
         break if bootkube_done && tectonic_done
-        sleep(5)
+        elapsed = Time.now - from
+        puts 'Waiting for bootstrapping to complete...' if (elapsed % 5).zero?
+        raise 'timeout waiting for bootstrapping' if elapsed > 1200 # 20 mins timeout
+        sleep 2
       end
     end
     puts 'HOORAY! The cluster is up'
@@ -43,7 +49,8 @@ class AzureCluster < Cluster
   def env_variables
     variables = super
     variables['PLATFORM'] = 'azure'
-    variables['TF_VAR_tectonic_azure_location'] = AzureSupport.random_location_unless_defined
+    variables['TF_VAR_tectonic_azure_location'] = @random_location
+    variables['TF_VAR_tectonic_azure_client_secret'] = ENV['ARM_CLIENT_SECRET']
     variables
   end
 

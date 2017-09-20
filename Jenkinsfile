@@ -226,107 +226,49 @@ pipeline {
               }
             }
           },
-          "SmokeTest: Azure": {
-            node('worker && ec2') {
-              withCredentials(creds) {
-                withDockerContainer(params.builder_image) {
-                  sshagent(['azure-smoke-ssh-key-kind-ssh']) {
-                    ansiColor('xterm') {
-                      unstash 'repository'
-                      script {
-                        try {
-                          timeout(45) {
-                            sh """#!/bin/bash -ex
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh plan vars/basic.tfvars
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh create vars/basic.tfvars
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh test vars/basic.tfvars
-
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/basic.tfvars
-                          """
-                          }
-                        }
-                        catch (error) {
-                            throw error
-                        }
-                        finally {
-                          retry(3) {
-                            timeout(15) {
-                              try {
-                                sh """#!/bin/bash -x
-                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/basic.tfvars
-                                """
-                              }
-                              catch (error) {
-                                notifySlack()
-                                sh """#!/bin/bash -x
-                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy_azure_cli vars/basic.tfvars
-                                """
-                              }
-                            }
-                          }
-                          cleanWs notFailBuild: true
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "SmokeTest: Azure (Experimental)": {
-            node('worker && ec2') {
-              withCredentials(creds) {
-                withDockerContainer(params.builder_image) {
-                  sshagent(['azure-smoke-ssh-key-kind-ssh']) {
-                    ansiColor('xterm') {
-                      unstash 'repository'
-                      script {
-                        try {
-                          timeout(45) {
-                            sh """#!/bin/bash -ex
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh plan vars/exper.tfvars
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh create vars/exper.tfvars
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh test vars/exper.tfvars
-
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/exper.tfvars
-                          """
-                          }
-                        }
-                        catch (error) {
-                            throw error
-                        }
-                        finally {
-                          retry(3) {
-                            timeout(15) {
-                              try {
-                                sh """#!/bin/bash -x
-                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/exper.tfvars
-                                """
-                              }
-                              catch (error) {
-                                notifySlack()
-                                sh """#!/bin/bash -x
-                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy_azure_cli vars/exper.tfvars
-                                """
-                              }
-                            }
-                          }
-                          cleanWs notFailBuild: true
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-/*
-* Disabled until DNS issue is fixed
-*
-          "SmokeTest Azure Private RSpec": {
+          "SmokeTest Azure Basic": {
             node('worker && ec2') {
               withCredentials(creds) {
                 withDockerContainer(tectonic_smoke_test_env_image) {
+                  sshagent(['azure-smoke-ssh-key-kind-ssh']) {
+                    ansiColor('xterm') {
+                      unstash 'repository'
+                      sh """#!/bin/bash -ex
+                        cd tests/rspec
+                        bundle exec rspec spec/azure_basic_spec.rb
+                      """
+                      cleanWs notFailBuild: true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "SmokeTest Azure (Experimental)": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(tectonic_smoke_test_env_image) {
+                  sshagent(['azure-smoke-ssh-key-kind-ssh']) {
+                    ansiColor('xterm') {
+                      unstash 'repository'
+                      sh """#!/bin/bash -ex
+                        cd tests/rspec
+                        bundle exec rspec spec/azure_experimental_spec.rb
+                      """
+                      cleanWs notFailBuild: true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "SmokeTest Azure Private Cluster": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(
+                    image: tectonic_smoke_test_env_image,
+                    args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root'
+                ) {
                   sshagent(['azure-smoke-ssh-key-kind-ssh']) {
                     ansiColor('xterm') {
                       unstash 'repository'
@@ -341,51 +283,21 @@ pipeline {
               }
             }
           },
-*/
 /*
  * Test temporarily disabled
  *
           "SmokeTest: Azure (existing DNS)": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(params.builder_image) {
+                withDockerContainer(tectonic_smoke_test_env_image) {
                   sshagent(['azure-smoke-ssh-key-kind-ssh']) {
                     ansiColor('xterm') {
                       unstash 'repository'
-                      script {
-                        try {
-                          timeout(45) {
-                            sh """#!/bin/bash -ex
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh plan vars/dns.tfvars
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh create vars/dns.tfvars
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh test vars/dns.tfvars
-
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/dns.tfvars
-                          """
-                          }
-                        }
-                        catch (error) {
-                            throw error
-                        }
-                        finally {
-                          retry(3) {
-                            timeout(15) {
-                              try {
-                                sh """#!/bin/bash -x
-                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/dns.tfvars
-                                """
-                              }
-                              catch (error) {
-                                notifySlack()
-                                sh """#!/bin/bash -x
-                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy_azure_cli vars/dns.tfvars
-                                """
-                              }
-                            }
-                          }
-                          cleanWs notFailBuild: true
-                        }
-                      }
+                      sh """#!/bin/bash -ex
+                        cd tests/rspec
+                        bundle exec rspec spec/azure_dns_spec.rb
+                      """
+                      cleanWs notFailBuild: true
                     }
                   }
                 }
@@ -393,135 +305,54 @@ pipeline {
             }
           },
 */
-          "SmokeTest: Azure (external network)": {
+          "SmokeTest Azure External Network": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(params.builder_image) {
+                withDockerContainer(tectonic_smoke_test_env_image) {
                   sshagent(['azure-smoke-ssh-key-kind-ssh']) {
                     ansiColor('xterm') {
                       unstash 'repository'
-                      script {
-                        try {
-                          timeout(45) {
-                            sh """#!/bin/bash -ex
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh plan vars/extern.tfvars
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh create vars/extern.tfvars
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh test vars/extern.tfvars
-
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/extern.tfvars
-                          """
-                          }
-                        }
-                        catch (error) {
-                            throw error
-                        }
-                        finally {
-                          retry(3) {
-                            timeout(15) {
-                              try {
-                                sh """#!/bin/bash -x
-                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/extern.tfvars
-                                """
-                              }
-                              catch (error) {
-                                notifySlack()
-                              }
-                            }
-                          }
-                          cleanWs notFailBuild: true
-                        }
-                      }
+                      sh """#!/bin/bash -ex
+                        cd tests/rspec
+                        bundle exec rspec spec/azure_external_spec.rb
+                      """
+                      cleanWs notFailBuild: true
                     }
                   }
                 }
               }
             }
           },
-          "SmokeTest: Azure (external network, experimental)": {
+          "SmokeTest: Azure External Network, Experimental)": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(params.builder_image) {
+                withDockerContainer(tectonic_smoke_test_env_image) {
                   sshagent(['azure-smoke-ssh-key-kind-ssh']) {
                     ansiColor('xterm') {
                       unstash 'repository'
-                      script {
-                        try {
-                          timeout(45) {
-                            sh """#!/bin/bash -ex
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh plan vars/extern-exper.tfvars
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh create vars/extern-exper.tfvars
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh test vars/extern-exper.tfvars
-
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/extern-exper.tfvars
-                          """
-                          }
-                        }
-                        catch (error) {
-                            throw error
-                        }
-                        finally {
-                          retry(3) {
-                            timeout(15) {
-                              try {
-                                sh """#!/bin/bash -x
-                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/extern-exper.tfvars
-                                """
-                              }
-                              catch (error) {
-                                notifySlack()
-                              }
-                            }
-                          }
-                          cleanWs notFailBuild: true
-                        }
-                      }
+                      sh """#!/bin/bash -ex
+                        cd tests/rspec
+                        bundle exec rspec spec/azure_external_experimental_spec.rb
+                      """
+                      cleanWs notFailBuild: true
                     }
                   }
                 }
               }
             }
           },
-          "SmokeTest: Azure (example file)": {
+          "SmokeTest: Azure Example File": {
             node('worker && ec2') {
               withCredentials(creds) {
-                withDockerContainer(params.builder_image) {
+                withDockerContainer(tectonic_smoke_test_env_image) {
                   sshagent(['azure-smoke-ssh-key-kind-ssh']) {
                     ansiColor('xterm') {
                       unstash 'repository'
-                      script {
-                        try {
-                          timeout(45) {
-                            sh """#!/bin/bash -ex
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh plan vars/example.tfvars
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh create vars/example.tfvars
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh test vars/example.tfvars
-
-                            ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/example.tfvars
-                          """
-                          }
-                        }
-                        catch (error) {
-                            throw error
-                        }
-                        finally {
-                          retry(3) {
-                            timeout(15) {
-                              try {
-                                sh """#!/bin/bash -x
-                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy vars/example.tfvars
-                                """
-                              }
-                              catch (error) {
-                                notifySlack()
-                                sh """#!/bin/bash -x
-                                  ${WORKSPACE}/tests/smoke/azure/smoke.sh destroy_azure_cli vars/example.tfvars
-                                """
-                              }
-                            }
-                          }
-                          cleanWs notFailBuild: true
-                        }
-                      }
+                      sh """#!/bin/bash -ex
+                        cd tests/rspec
+                        bundle exec rspec spec/azure_example_spec.rb
+                      """
+                      cleanWs notFailBuild: true
                     }
                   }
                 }

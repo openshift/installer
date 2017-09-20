@@ -29,4 +29,8 @@ describe TFVarsFile do
   it '#calico? returns false if not set' do
     expect(subject.calico?).to eq(false)
   end
+
+  it 'returns raw variable values via reflection' do
+    expect(subject.tectonic_aws_worker_ec2_type).to eq('m4.large')
+  end
 end
