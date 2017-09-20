@@ -39,18 +39,18 @@ tectonic_base_domain = ""
 // This field is mandatory if `tectonic_ca_cert` is set.
 // tectonic_ca_key_alg = "RSA"
 
-// [ALPHA] If set to true, calico network policy support will be deployed.
+// (optional) [ALPHA] If set to true, calico network policy support will be deployed.
 // WARNING: Enabling an alpha feature means that future updates may become unsupported.
 // This should only be enabled on clusters that are meant to be short-lived to begin validating the alpha feature.
-tectonic_calico_network_policy = false
+// tectonic_calico_network_policy = false
 
-// The Container Linux update channel.
+// (optional) The Container Linux update channel.
 // 
 // Examples: `stable`, `beta`, `alpha`
-tectonic_cl_channel = "stable"
+// tectonic_cl_channel = "stable"
 
-// This declares the IP range to assign Kubernetes pod IPs in CIDR notation.
-tectonic_cluster_cidr = "10.2.0.0/16"
+// (optional) This declares the IP range to assign Kubernetes pod IPs in CIDR notation.
+// tectonic_cluster_cidr = "10.2.0.0/16"
 
 // The name of the cluster.
 // If used in a cloud-environment, this will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.
@@ -242,16 +242,14 @@ tectonic_metal_worker_names = ""
 // Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 tectonic_pull_secret_path = ""
 
-// This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. The maximum size of this IP range is /12
-tectonic_service_cidr = "10.3.0.0/16"
+// (optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. 
+// The maximum size of this IP range is /12
+// tectonic_service_cidr = "10.3.0.0/16"
 
 // SSH public key to use as an authorized key.
 // 
 // Example: `ssh-rsa AAAB3N...`
 tectonic_ssh_authorized_key = ""
-
-// The Tectonic statistics collection URL to which to report.
-tectonic_stats_url = "https://stats-collector.tectonic.com"
 
 // If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
 tectonic_vanilla_k8s = false

@@ -123,14 +123,17 @@ variable "tectonic_service_cidr" {
   type    = "string"
   default = "10.3.0.0/16"
 
-  description = "This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. The maximum size of this IP range is /12"
+  description = <<EOF
+(optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. 
+The maximum size of this IP range is /12
+EOF
 }
 
 variable "tectonic_cluster_cidr" {
   type    = "string"
   default = "10.2.0.0/16"
 
-  description = "This declares the IP range to assign Kubernetes pod IPs in CIDR notation."
+  description = "(optional) This declares the IP range to assign Kubernetes pod IPs in CIDR notation."
 }
 
 variable "tectonic_master_count" {
@@ -293,7 +296,7 @@ variable "tectonic_cl_channel" {
   default = "stable"
 
   description = <<EOF
-The Container Linux update channel.
+(optional) The Container Linux update channel.
 
 Examples: `stable`, `beta`, `alpha`
 EOF
@@ -390,7 +393,7 @@ EOF
 variable "tectonic_stats_url" {
   type        = "string"
   default     = "https://stats-collector.tectonic.com"
-  description = "The Tectonic statistics collection URL to which to report."
+  description = "(internal) The Tectonic statistics collection URL to which to report."
 }
 
 variable "tectonic_ddns_server" {
@@ -441,7 +444,7 @@ variable "tectonic_calico_network_policy" {
   default = false
 
   description = <<EOF
-[ALPHA] If set to true, calico network policy support will be deployed.
+(optional) [ALPHA] If set to true, calico network policy support will be deployed.
 WARNING: Enabling an alpha feature means that future updates may become unsupported.
 This should only be enabled on clusters that are meant to be short-lived to begin validating the alpha feature.
 EOF
