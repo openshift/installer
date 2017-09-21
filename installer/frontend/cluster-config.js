@@ -38,6 +38,7 @@ export const BM_WORKERS = 'workers';
 export const CA_CERTIFICATE = 'caCertificate';
 export const CA_PRIVATE_KEY = 'caPrivateKey';
 export const CA_TYPE = 'caType';
+export const CA_TYPES = {SELF_SIGNED: 'self-signed', OWNED: 'owned'};
 export const CLUSTER_NAME = 'clusterName';
 export const CLUSTER_SUBDOMAIN = 'clusterSubdomain';
 export const CONTROLLER_DOMAIN = 'controllerDomain';
@@ -170,7 +171,7 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [BM_TECTONIC_DOMAIN]: '',
   [CA_CERTIFICATE]: '',
   [CA_PRIVATE_KEY]: '',
-  [CA_TYPE]: 'self-signed',
+  [CA_TYPE]: '',
   [CLUSTER_NAME]: '',
   [CONTROLLER_DOMAIN]: '',
   [DRY_RUN]: false,
@@ -186,7 +187,6 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [POD_CIDR]: '10.2.0.0/16',
   [SERVICE_CIDR]: '10.3.0.0/16',
 };
-
 
 export const toAWS_TF = (cc, FORMS) => {
   const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
@@ -280,7 +280,7 @@ export const toAWS_TF = (cc, FORMS) => {
     ret.variables.tectonic_aws_private_endpoints = false;
   }
 
-  if (cc[CA_TYPE] === 'owned') {
+  if (cc[CA_TYPE] === CA_TYPES.OWNED) {
     ret.variables.tectonic_ca_cert = cc[CA_CERTIFICATE];
     ret.variables.tectonic_ca_key = cc[CA_PRIVATE_KEY];
     ret.variables.tectonic_ca_key_alg = keyToAlg(cc[CA_PRIVATE_KEY]);
@@ -331,7 +331,7 @@ export const toBaremetal_TF = (cc, FORMS) => {
     ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT]];
   }
 
-  if (cc[CA_TYPE] === 'owned') {
+  if (cc[CA_TYPE] === CA_TYPES.OWNED) {
     ret.variables.tectonic_ca_cert = cc[CA_CERTIFICATE];
     ret.variables.tectonic_ca_key = cc[CA_PRIVATE_KEY];
     ret.variables.tectonic_ca_key_alg = keyToAlg(cc[CA_PRIVATE_KEY]);

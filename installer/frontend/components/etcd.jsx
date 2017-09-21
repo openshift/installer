@@ -51,7 +51,7 @@ export const Etcd = connect(({clusterConfig}) => ({
   ({etcdOption, isAWS}) => <div>
     <div className="row form-group">
       <div className="col-xs-12">
-      etcd is the key-value store used by Kubernetes for cluster coordination and state management.
+        etcd is the key-value store used by Kubernetes for cluster coordination and state management.
       </div>
     </div>
 
@@ -76,7 +76,7 @@ export const Etcd = connect(({clusterConfig}) => ({
               <Connect field={ETCD_OPTION}>
                 <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.EXTERNAL} id={ETCD_OPTIONS.EXTERNAL} />
               </Connect>
-            I have my own v3 etcd cluster
+              I have my own v3 etcd cluster
             </label>
             <p className="text-muted wiz-help-text">Your Tectonic cluster will be configured to use an external etcd, which you specify.</p>
           </div>
