@@ -52,10 +52,6 @@ apply: terraform-init
 destroy: terraform-init
 	cd $(BUILD_DIR) && $(TF_CMD) destroy $(TF_DESTROY_OPTIONS) -force $(TOP_DIR)/platforms/$(PLATFORM)
 
-.PHONY: payload
-payload:
-	@${TOP_DIR}/modules/update-payload/make-update-payload.sh > /dev/null
-
 define terraform-docs
 	$(if $(TF_DOCS),,$(error "terraform-docs revision >= a8b59f8 is required (https://github.com/segmentio/terraform-docs)"))
 
@@ -137,7 +133,6 @@ structure-check:
 
 	@if $(MAKE) docs && ! git diff --exit-code; then echo "outdated docs (run 'make docs' to fix)"; exit 1; fi
 	@if $(MAKE) examples && ! git diff --exit-code; then echo "outdated examples (run 'make examples' to fix)"; exit 1; fi
-	@if $(TOP_DIR)/modules/update-payload/make-update-payload.sh && ! git diff --exit-code; then echo "outdated payload (run '$(TOP_DIR)/modules/update-payload/make-update-payload.sh' to fix)"; exit 1; fi
 
 SMOKE_SOURCES := $(shell find $(TOP_DIR)/tests/smoke -name '*.go')
 .PHONY: bin/smoke

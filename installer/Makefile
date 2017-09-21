@@ -72,17 +72,6 @@ shellcheck: $(SHELL_FILES)
 dirtycheck:
 	@if git status --short | grep 'yarn.lock' > /dev/null; then echo "outdated yarn.lock (commit it to fix)"; exit 1; fi
 
-.PHONY: dist
-dist: release-bins
-	./scripts/release/make_release_tarball.sh
-
-.PHONY: release
-release: release-bins
-	./scripts/release/upload_installer_bins.sh
-	./scripts/release/make_release_tarball.sh
-	./scripts/release/upload_release_tarball.sh
-	./scripts/release/make_github_release.sh
-
 .PHONY: license-parse
 license-parse:
 	./scripts/license-gen/collect_project_licenses.sh
