@@ -57,7 +57,8 @@ job("tectonic-tests/tectonic-conformance-test") {
       notifyBackToNormal(true)
       notifyFailure(true)
       notifySuccess(true)
-      room('#team-installer')
+      notifyRepeatedFailure(true)
+      room('#forum-installer')
       teamDomain('coreos')
     }
   }

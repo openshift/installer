@@ -37,6 +37,6 @@ multibranchPipelineJob("tectonic-installer") {
     }
   }
   triggers {
-    periodic(1440)
+    periodic(30)
   }
 }
