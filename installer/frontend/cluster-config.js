@@ -85,7 +85,6 @@ export const LICENSING = 'licensing';
 export const PLATFORM_FORM = 'platform';
 export const EXPERIMENTAL_FEATURES = 'experimentalFeatures';
 
-
 export const SPLIT_DNS_ON = 'on';
 export const SPLIT_DNS_OFF = 'off';
 export const SPLIT_DNS_OPTIONS = {
