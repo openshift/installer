@@ -9,6 +9,7 @@ export TF_VAR_tectonic_pull_secret_path=${TF_VAR_tectonic_pull_secret_path}
 export TF_VAR_tectonic_license_path=${TF_VAR_tectonic_license_path}
 export TECTONIC_BUILDER=quay.io/coreos/tectonic-builder:v1.39
 export KUBE_CONFORMANCE=quay.io/coreos/kube-conformance:v1.7.1_coreos.0
+export TF_VAR_base_domain="dev.coreos.systems"
 
 # Create an env var file
 # shellcheck disable=SC2154
@@ -25,6 +26,7 @@ TF_VAR_tectonic_license_path=${TF_VAR_tectonic_license_path}
 TF_VAR_tectonic_aws_ssh_key="jenkins"
 TF_VAR_tectonic_admin_email=${TF_VAR_tectonic_admin_email}
 TF_VAR_tectonic_admin_password_hash=${TF_VAR_tectonic_admin_password_hash}
+TF_VAR_base_domain=${TF_VAR_base_domain}
 EOF
 }
 
