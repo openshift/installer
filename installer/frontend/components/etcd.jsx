@@ -74,15 +74,6 @@ export const Etcd = connect(({clusterConfig}) => ({
           <div className="radio wiz-radio-group__radio">
             <label>
               <Connect field={ETCD_OPTION}>
-                <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.SELF_HOSTED} id={ETCD_OPTIONS.SELF_HOSTED} />
-              </Connect>
-            Create self-hosted etcd cluster
-            </label>&nbsp;(alpha)
-            <p className="text-muted wiz-help-text">The installer will automatically launch and configure etcd inside your Tectonic cluster.</p>
-          </div>
-          <div className="radio wiz-radio-group__radio">
-            <label>
-              <Connect field={ETCD_OPTION}>
                 <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.EXTERNAL} id={ETCD_OPTIONS.EXTERNAL} />
               </Connect>
             I have my own v3 etcd cluster

@@ -92,10 +92,9 @@ export const SPLIT_DNS_OPTIONS = {
   [SPLIT_DNS_OFF]: 'Do not create a private zone.',
 };
 
-const SELF_HOSTED = 'selfHosted';
 const EXTERNAL = 'external';
 const PROVISIONED = 'provisioned';
-export const ETCD_OPTIONS = { SELF_HOSTED, EXTERNAL, PROVISIONED };
+export const ETCD_OPTIONS = { EXTERNAL, PROVISIONED };
 
 export const toVPCSubnet = (region, subnets, deselected) => {
   const vpcSubnets = {};
@@ -252,7 +251,6 @@ export const toAWS_TF = (cc, FORMS, opts = {}) => {
       tectonic_worker_count: workers[NUMBER_OF_INSTANCES],
       // TODO: shouldn't hostedZoneID be specified somewhere?
       tectonic_dns_name: cc[CLUSTER_SUBDOMAIN],
-      tectonic_experimental: cc[ETCD_OPTION] === SELF_HOSTED,
     },
   };
 
@@ -331,7 +329,6 @@ export const toBaremetal_TF = (cc, FORMS, opts = {}) => {
       tectonic_cluster_cidr: cc[POD_CIDR],
       tectonic_service_cidr: cc[SERVICE_CIDR],
       tectonic_dns_name: cc[CLUSTER_SUBDOMAIN],
-      tectonic_experimental: cc[ETCD_OPTION] === SELF_HOSTED,
       tectonic_base_domain: 'unused',
     },
   };

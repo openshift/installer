@@ -3,9 +3,6 @@ const pageCommands = {
     this.expect.element('@optionProvisioned').to.be.selected;
     this.expect.element('@address').to.not.be.present;
 
-    this.selectOption('@optionSelfHosted');
-    this.expect.element('@address').to.not.be.present;
-
     this
       .selectOption('@optionExternal')
       .setField('@address', 'abc')
@@ -23,7 +20,6 @@ module.exports = {
   elements: {
     address: 'input[type=text]#externalETCDClient',
     optionProvisioned: 'input[type=radio]#provisioned',
-    optionSelfHosted: 'input[type=radio]#selfHosted',
     optionExternal: 'input[type=radio]#external',
   },
 };
