@@ -120,6 +120,65 @@ pipeline {
       }
     }
 
+    stage('GUI Tests') {
+      environment {
+        TECTONIC_INSTALLER_ROLE = 'tectonic-installer'
+        GRAFITI_DELETER_ROLE = 'grafiti-deleter'
+        TF_VAR_tectonic_container_images = "${params.hyperkube_image}"
+      }
+      steps {
+        parallel (
+          "IntegrationTest AWS Installer Gui": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(params.builder_image) {
+                  ansiColor('xterm') {
+                    unstash 'repository'
+                    sh """#!/bin/bash -ex
+                    cd installer
+                    make launch-aws-installer-guitests
+                    make gui-aws-tests-cleanup
+                    """
+                    cleanWs notFailBuild: true
+                  }
+                }
+              }
+            }
+          },
+          "IntegrationTest Baremetal Installer Gui": {
+            node('worker && ec2') {
+              withCredentials(creds) {
+                withDockerContainer(image: params.builder_image, args: '-u root') {
+                  ansiColor('xterm') {
+                    unstash 'repository'
+                    script {
+                      try {
+                        sh """#!/bin/bash -ex
+                        cd installer
+                        make launch-baremetal-installer-guitests
+                        """
+                      }
+                      catch (error) {
+                        throw error
+                      }
+                      finally {
+                        sh """#!/bin/bash -x
+                        cd installer
+                        make gui-baremetal-tests-cleanup
+                        make clean
+                        """
+                        cleanWs notFailBuild: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        )
+      }
+    }
+
     stage("Smoke Tests") {
       when {
         expression {
@@ -377,53 +436,6 @@ pipeline {
               }
             }
           }, */
-          "IntegrationTest AWS Installer Gui": {
-            node('worker && ec2') {
-              withCredentials(creds) {
-                withDockerContainer(params.builder_image) {
-                  ansiColor('xterm') {
-                    unstash 'repository'
-                    sh """#!/bin/bash -ex
-                    cd installer
-                    make launch-aws-installer-guitests
-                    make gui-aws-tests-cleanup
-                    """
-                    cleanWs notFailBuild: true
-                  }
-                }
-              }
-            }
-          },
-          "IntegrationTest Baremetal Installer Gui": {
-            node('worker && ec2') {
-              withCredentials(creds) {
-                withDockerContainer(image: params.builder_image, args: '-u root') {
-                  ansiColor('xterm') {
-                    unstash 'repository'
-                    script {
-                      try {
-                        sh """#!/bin/bash -ex
-                        cd installer
-                        make launch-baremetal-installer-guitests
-                        """
-                      }
-                      catch (error) {
-                        throw error
-                      }
-                      finally {
-                        sh """#!/bin/bash -x
-                        cd installer
-                        make gui-baremetal-tests-cleanup
-                        make clean
-                        """
-                        cleanWs notFailBuild: true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
         )
       }
     }
