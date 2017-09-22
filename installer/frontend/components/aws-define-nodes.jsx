@@ -108,11 +108,7 @@ const fields = [
   makeNodeForm(AWS_WORKERS),
 ];
 
-const DefineNodesForm = 'DefineNodesForm';
-const form = new Form(DefineNodesForm, fields, {
-  // TODO: add after we have an ENTITLEMENTS field...
-  // dependencies: [ENTITLEMENTS],
-});
+const form = new Form('DefineNodesForm', fields);
 
 export const AWS_DefineNodes = () => <div>
   <DefineNode type={AWS_CONTROLLERS} name="Master Nodes" max={10} />
