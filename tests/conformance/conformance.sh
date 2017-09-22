@@ -8,7 +8,7 @@ export CLUSTER="tf-${PLATFORM}-${BUILD_ID}"
 export TF_VAR_tectonic_pull_secret_path=${TF_VAR_tectonic_pull_secret_path}
 export TF_VAR_tectonic_license_path=${TF_VAR_tectonic_license_path}
 export TECTONIC_BUILDER=quay.io/coreos/tectonic-builder:v1.39
-export KUBE_CONFORMANCE=quay.io/coreos/kube-conformance:v1.7.1_coreos.0
+export KUBE_CONFORMANCE=quay.io/coreos/kube-conformance:v1.7.5_coreos.0
 export TF_VAR_tectonic_base_domain="tectonic.dev.coreos.systems"
 
 # Create an env var file
@@ -44,7 +44,7 @@ EOF
 trap cleanup EXIT
 
 export KUBECTL=${WORKSPACE}/kubectl
-curl -o "${KUBECTL}" https://storage.googleapis.com/kubernetes-release/release/v1.6.3/bin/linux/amd64/kubectl && chmod +x "${KUBECTL}"
+curl -o "${KUBECTL}" https://storage.googleapis.com/kubernetes-release/release/v1.7.5/bin/linux/amd64/kubectl && chmod +x "${KUBECTL}"
 
 function kubectl() {
     local i=0
