@@ -8,9 +8,19 @@ import { CertArea, Connect, PrivateKeyArea, Radio } from './ui';
 
 const form = new Form('CERTIFICATE_AUTHORITY', [
   new Field(CA_TYPE, {default: CA_TYPES.SELF_SIGNED}),
-  new Field(CA_CERTIFICATE, {default: '', validator: validate.certificate}),
-  new Field(CA_PRIVATE_KEY, {default: '', validator: validate.privateKey}),
-]);
+  new Field(CA_CERTIFICATE, {
+    default: '',
+    ignoreWhen: cc => cc[CA_TYPE] !== CA_TYPES.OWNED,
+  }),
+  new Field(CA_PRIVATE_KEY, {
+    default: '',
+    ignoreWhen: cc => cc[CA_TYPE] !== CA_TYPES.OWNED,
+  }),
+], {
+  validator: (data, cc) => cc[CA_TYPE] === CA_TYPES.SELF_SIGNED ||
+    validate.certificate(cc[CA_CERTIFICATE]) ||
+    validate.privateKey(cc[CA_PRIVATE_KEY]),
+});
 
 export const CertificateAuthority = connect(
   ({clusterConfig}) => ({caType: clusterConfig[CA_TYPE]})
@@ -67,4 +77,4 @@ export const CertificateAuthority = connect(
   </div>
 </div>);
 
-CertificateAuthority.canNavigateForward = state => state.clusterConfig[CA_TYPE] === CA_TYPES.SELF_SIGNED || form.canNavigateForward(state);
+CertificateAuthority.canNavigateForward = form.canNavigateForward;
