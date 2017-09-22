@@ -46,7 +46,7 @@ const Errors = connect(
   })
 )(props => props.error ? <div className="wiz-error-message">{props.error}</div> : <span />);
 
-export const DefineNode = ({name, type, disabled, withoutTitle, max}) =>
+export const DefineNode = ({name, type, withoutTitle, max}) =>
   <div>
     {!withoutTitle &&
       <div>
@@ -56,12 +56,7 @@ export const DefineNode = ({name, type, disabled, withoutTitle, max}) =>
     }
     <Row htmlFor={`${name}--number`} label="Instances">
       <Connect field={toKey(type, NUMBER_OF_INSTANCES)}>
-        <NumberInput
-          id={`${name}--number`}
-          className="wiz-super-short-input"
-          disabled={disabled}
-          min="1"
-          max={max || 1000} />
+        <NumberInput className="wiz-super-short-input" id={`${name}--number`} min="1" max={max || 1000} />
       </Connect>
     </Row>
     <Row htmlFor={`${name}--instance`} label="Instance Type">
