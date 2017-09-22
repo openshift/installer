@@ -3,7 +3,6 @@ import React from 'react';
 
 import { Input, Connect } from './ui';
 import { TectonicLicense, licenseForm } from './tectonic-license';
-import { ExperimentalFeatures } from './experimental-features';
 import { AWS_Tags, tagsFields } from './aws-tags';
 import { Form } from '../form';
 import fields from '../fields';
@@ -31,8 +30,6 @@ export const AWS_ClusterInfo = () => <div>
       </p>
     </div>
   </div>
-
-  <ExperimentalFeatures />
 
   <TectonicLicense />
 

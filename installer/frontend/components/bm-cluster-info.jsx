@@ -2,7 +2,6 @@ import React from 'react';
 
 import { Input, Connect } from './ui';
 import { TectonicLicense, licenseForm } from './tectonic-license';
-import { ExperimentalFeatures } from './experimental-features';
 import { CLUSTER_NAME } from '../cluster-config';
 import { Form } from '../form';
 import fields from '../fields';
@@ -26,7 +25,6 @@ export const BM_ClusterInfo = () => {
           <p className="text-muted">Give this cluster a name that will help you identify it.</p>
         </div>
       </div>
-      <ExperimentalFeatures />
       <TectonicLicense />
     </div>
   );
