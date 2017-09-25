@@ -21,12 +21,6 @@ def creds = [
     variable: 'TF_VAR_tectonic_azure_ssh_key'
   ],
   [
-    $class: 'UsernamePasswordMultiBinding',
-    credentialsId: 'tectonic-console-login',
-    passwordVariable: 'TF_VAR_tectonic_admin_email',
-    usernameVariable: 'TF_VAR_tectonic_admin_password_hash'
-  ],
-  [
     $class: 'AmazonWebServicesCredentialsBinding',
     credentialsId: 'tectonic-jenkins-installer'
   ],
@@ -49,8 +43,8 @@ def quay_creds = [
 ]
 
 def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.39'
-def tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v5.1'
- 
+def tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v5.2'
+
 pipeline {
   agent none
   options {

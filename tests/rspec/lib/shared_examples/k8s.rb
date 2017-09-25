@@ -4,6 +4,10 @@ require 'smoke_test'
 require 'forensic'
 require 'cluster_factory'
 require 'operators'
+require 'pages/login_page'
+require 'name_generator'
+require 'password_generator'
+require 'webdriver_helpers'
 
 RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
   before(:all) do
@@ -26,6 +30,30 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
 
   it 'succeeds with the golang test suit' do
     expect { SmokeTest.run(@cluster) }.to_not raise_error
+  end
+
+  describe 'Interact with tectonic console' do
+    before(:all) do
+      @driver = WebdriverHelpers.start_webdriver
+      @login = Login.new(@driver)
+      console_url = @cluster.tectonic_console_url
+      @login.login_page "https://#{console_url}"
+    end
+
+    after(:all) do
+      WebdriverHelpers.stop_webdriver(@driver)
+    end
+
+    it 'can login in the tectonic console' do
+      @login.with(@cluster.tectonic_admin_email, @cluster.tecnotic_admin_passw)
+      expect(@login.success_login?).to be_truthy
+      @login.logout
+    end
+
+    it 'fail to login with wrong credentials' do
+      @login.with(NameGenerator.generate_fake_email, PasswordGenerator.generate_password)
+      expect(@login.fail_to_login?).to be_truthy
+    end
   end
 end
 

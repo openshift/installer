@@ -134,8 +134,6 @@ TF_VAR_tectonic_aws_region
 TF_VAR_tectonic_license_path
 TF_VAR_tectonic_pull_secret_path
 TF_VAR_base_domain
-TF_VAR_tectonic_admin_email
-TF_VAR_tectonic_admin_password_hash
 ```
 
 Make sure both the *Tectonic pull secret* as well as the *Tectonic license* is

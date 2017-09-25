@@ -3,6 +3,10 @@ Metrics/AbcSize:
 Metrics/LineLength:
   Max: 120
 Metrics/ClassLength:
-  Max: 200
+  Max: 500
 Metrics/MethodLength:
   Max: 30
+Metrics/ModuleLength:
+  Max: 500
+Metrics/BlockLength:
+  Max: 200

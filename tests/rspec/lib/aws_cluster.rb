@@ -58,4 +58,18 @@ class AwsCluster < Cluster
     Grafiti.new(@build_path, ENV['TF_VAR_tectonic_aws_region']).clean
     super
   end
+
+  def tectonic_console_url
+    Dir.chdir(@build_path) do
+      ingress_ext = `echo module.masters.ingress_external_fqdn | terraform console ../../platforms/aws`.chomp
+      ingress_int = `echo module.masters.ingress_internal_fqdn | terraform console ../../platforms/aws`.chomp
+      if ingress_ext.empty?
+        if ingress_int.empty?
+          raise 'should get the console url to use in the UI tests.'
+        end
+        return ingress_int
+      end
+      ingress_ext
+    end
+  end
 end

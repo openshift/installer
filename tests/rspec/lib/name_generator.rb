@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'jenkins'
+require 'faker'
 
 # NameGenerator contains helper functions to generate test resource names
 module NameGenerator
@@ -32,5 +33,9 @@ module NameGenerator
             '`export CLUSTER=my-cluster-name`'
     end
     ENV['CLUSTER']
+  end
+
+  def self.generate_fake_email
+    Faker::Internet.email
   end
 end
