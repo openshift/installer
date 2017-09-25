@@ -14,6 +14,6 @@ module.exports = {
   commands: [nodesPageCommands],
   elements: {
     externalEtcdAddress: 'input#externalETCDClient[type=text]',
-    provisionedEtcdCount: 'input[id="etcd--number"][type=number][min="1"]',
+    provisionedEtcdCount: 'input[id="aws_etcds--number"]',
   },
 };

@@ -46,56 +46,45 @@ const Errors = connect(
   })
 )(props => props.error ? <div className="wiz-error-message">{props.error}</div> : <span />);
 
-export const DefineNode = ({name, type, withoutTitle, max}) =>
-  <div>
-    {!withoutTitle &&
-      <div>
-        <h3>{name}</h3>
-        <br />
-      </div>
-    }
-    <Row htmlFor={`${name}--number`} label="Instances">
-      <Connect field={toKey(type, NUMBER_OF_INSTANCES)}>
-        <NumberInput className="wiz-super-short-input" id={`${name}--number`} min="1" max={max || 1000} />
-      </Connect>
-    </Row>
-    <Row htmlFor={`${name}--instance`} label="Instance Type">
-      <Connect field={toKey(type, INSTANCE_TYPE)}>
-        <Select id={`${name}--instance`}>
-          <option value="" disabled>Please select AWS EC2 instance type</option>
-          {
-            AWS_INSTANCE_TYPES.map(({value, label}, ix) => {
-              return <option value={value} key={`${value}-${ix}`}>{label}</option>;
-            })
-          }
-        </Select>
-      </Connect>
-      {type === 'aws_etcds' && <p className="text-muted wiz-help-text">
-        {/* eslint-disable react/jsx-no-target-blank */}
-        Read the <a href="https://coreos.com/etcd/docs/latest/op-guide/hardware.html" rel="noopener" target="_blank">etcd recommended hardware</a> guide for best performance.
-        {/* eslint-enable react/jsx-no-target-blank */}
-      </p>}
-    </Row>
-    <Row htmlFor={`${name}--storage-size`} label="Storage Size">
-      <Connect field={toKey(type, STORAGE_SIZE_IN_GIB)}>
-        <NumberInput id={`${name}--storage-size`} className="wiz-super-short-input" suffix="GiB" />
-      </Connect>
-    </Row>
-    <Row htmlFor={`${name}--storage-type`} label="Storage Type">
-      <Connect field={toKey(type, STORAGE_TYPE)}>
-        <Select id={`${name}--storage-type`}>
-          <option value="" disabled>Please select storage type</option>
-          <option value="gp2" key="gp2">General Purpose SSD (GP2)</option>
-          <option value="io1" key="io1">Provisioned IOPS SSD (IO1)</option>
-          <option value="standard" key="standard">Magnetic</option>
-        </Select>
-      </Connect>
-    </Row>
+export const DefineNode = ({type, max}) => <div>
+  <Row htmlFor={`${type}--number`} label="Instances">
+    <Connect field={toKey(type, NUMBER_OF_INSTANCES)}>
+      <NumberInput className="wiz-super-short-input" id={`${type}--number`} min="1" max={max} />
+    </Connect>
+  </Row>
+  <Row htmlFor={`${type}--instance`} label="Instance Type">
+    <Connect field={toKey(type, INSTANCE_TYPE)}>
+      <Select id={`${type}--instance`}>
+        <option value="" disabled>Please select AWS EC2 instance type</option>
+        {AWS_INSTANCE_TYPES.map(({value, label}) => <option value={value} key={value}>{label}</option>)}
+      </Select>
+    </Connect>
+    {type === 'aws_etcds' && <p className="text-muted wiz-help-text">
+      {/* eslint-disable react/jsx-no-target-blank */}
+      Read the <a href="https://coreos.com/etcd/docs/latest/op-guide/hardware.html" rel="noopener" target="_blank">etcd recommended hardware</a> guide for best performance.
+      {/* eslint-enable react/jsx-no-target-blank */}
+    </p>}
+  </Row>
+  <Row htmlFor={`${type}--storage-size`} label="Storage Size">
+    <Connect field={toKey(type, STORAGE_SIZE_IN_GIB)}>
+      <NumberInput id={`${type}--storage-size`} className="wiz-super-short-input" suffix="GiB" />
+    </Connect>
+  </Row>
+  <Row htmlFor={`${type}--storage-type`} label="Storage Type">
+    <Connect field={toKey(type, STORAGE_TYPE)}>
+      <Select id={`${type}--storage-type`}>
+        <option value="" disabled>Please select storage type</option>
+        <option value="gp2" key="gp2">General Purpose SSD (GP2)</option>
+        <option value="io1" key="io1">Provisioned IOPS SSD (IO1)</option>
+        <option value="standard" key="standard">Magnetic</option>
+      </Select>
+    </Connect>
+  </Row>
 
-    <IOPs fieldName={type} />
+  <IOPs fieldName={type} />
 
-    <Errors type={type} />
-  </div>;
+  <Errors type={type} />
+</div>;
 
 // TODO (kans): add ectdForm here
 const fields = [
@@ -106,9 +95,13 @@ const fields = [
 const form = new Form('DefineNodesForm', fields);
 
 export const AWS_DefineNodes = () => <div>
-  <DefineNode type={AWS_CONTROLLERS} name="Master Nodes" max={10} />
+  <h3>Master Nodes</h3>
+  <br />
+  <DefineNode type={AWS_CONTROLLERS} max={10} />
   <hr />
-  <DefineNode type={AWS_WORKERS} name="Worker Nodes" />
+  <h3>Worker Nodes</h3>
+  <br />
+  <DefineNode type={AWS_WORKERS} max={1000} />
   <form.Errors />
   <hr />
   <h3>etcd Nodes</h3>
