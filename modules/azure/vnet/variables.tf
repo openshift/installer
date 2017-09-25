@@ -47,16 +47,6 @@ variable "external_worker_subnet_id" {
   default = ""
 }
 
-variable "external_nsg_etcd_id" {
-  type    = "string"
-  default = ""
-}
-
-variable "external_nsg_api_id" {
-  type    = "string"
-  default = ""
-}
-
 variable "external_nsg_master_id" {
   type    = "string"
   default = ""

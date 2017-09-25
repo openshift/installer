@@ -166,36 +166,6 @@ EOF
   default = ""
 }
 
-variable "tectonic_azure_external_nsg_etcd_id" {
-  type = "string"
-
-  description = <<EOF
-(optional) The ID of the external Network Security Group used for etcd.
-Leave blank to have a new one created.
-
-Note this is the complete ID as returned in the "id" field by the Azure client, not just the name of the resource.
-
-Example: "/subscriptions/b520eabf-d6c0-4757-8a5e-0fa7d2fe12b5/resourceGroups/my-k8s-cluster/providers/Microsoft.Network/networkSecurityGroups/my-etcd-nsg
-EOF
-
-  default = ""
-}
-
-variable "tectonic_azure_external_nsg_api_id" {
-  type = "string"
-
-  description = <<EOF
-(optional) The ID of the external Network Security Group used for the Tectonic Console and Kubernetes API Server.
-Leave blank to have a new one created.
-
-Note this is the complete ID as returned in the "id" field by the Azure client, not just the name of the resource.
-
-Example: "/subscriptions/b520eabf-d6c0-4757-8a5e-0fa7d2fe12b5/resourceGroups/my-k8s-cluster/providers/Microsoft.Network/networkSecurityGroups/my-lb-nsg
-EOF
-
-  default = ""
-}
-
 variable "tectonic_azure_external_nsg_master_id" {
   type = "string"
 

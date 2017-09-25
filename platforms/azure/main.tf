@@ -38,8 +38,6 @@ module "vnet" {
   external_vnet_id          = "${var.tectonic_azure_external_vnet_id}"
   external_master_subnet_id = "${var.tectonic_azure_external_master_subnet_id}"
   external_worker_subnet_id = "${var.tectonic_azure_external_worker_subnet_id}"
-  external_nsg_etcd_id      = "${var.tectonic_azure_external_nsg_etcd_id}"
-  external_nsg_api_id       = "${var.tectonic_azure_external_nsg_api_id}"
   external_nsg_master_id    = "${var.tectonic_azure_external_nsg_master_id}"
   external_nsg_worker_id    = "${var.tectonic_azure_external_nsg_worker_id}"
 
