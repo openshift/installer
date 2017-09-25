@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/route53domains"
 
@@ -225,6 +226,28 @@ func awsGetKeyPairsHandler(w http.ResponseWriter, req *http.Request, _ *Context)
 	})
 
 	return writeJSONResponse(w, req, http.StatusOK, response)
+}
+
+// awsGetIamRolesHandler returns the list of IAM roles.
+func awsGetIamRolesHandler(w http.ResponseWriter, req *http.Request, _ *Context) error {
+	awsSession, err := awsSessionFromRequest(req)
+	if err != nil {
+		return fromAWSErr(err)
+	}
+
+	iamSvc := iam.New(awsSession)
+	resp, err := iamSvc.ListRoles(&iam.ListRolesInput{})
+	if err != nil {
+		return fromAWSErr(err)
+	}
+
+	roles := make([]string, len(resp.Roles))
+	for i, role := range resp.Roles {
+		roles[i] = aws.StringValue(role.RoleName)
+	}
+	sort.Strings(roles)
+
+	return writeJSONResponse(w, req, http.StatusOK, roles)
 }
 
 // awsGetZonesHandler returns the list of Route53 Hosted Zones.

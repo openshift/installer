@@ -61,6 +61,7 @@ export const ADMIN_PASSWORD2 = 'adminPassword2';
 export const POD_CIDR = 'podCIDR';
 export const SERVICE_CIDR = 'serviceCIDR';
 
+export const IAM_ROLE = 'iamRole';
 export const NUMBER_OF_INSTANCES = 'numberOfInstances';
 export const INSTANCE_TYPE = 'instanceType';
 export const STORAGE_SIZE_IN_GIB = 'storageSizeInGiB';
@@ -70,6 +71,7 @@ export const STORAGE_IOPS = 'storageIOPS';
 export const RETRY = 'retry';
 
 // FORMS:
+export const AWS_CREDS = 'AWSCreds';
 export const AWS_ETCDS = 'aws_etcds';
 export const AWS_VPC_FORM = 'aws_vpc';
 export const AWS_CONTROLLERS = 'aws_controllers';
@@ -91,6 +93,9 @@ export const SPLIT_DNS_OPTIONS = {
 const EXTERNAL = 'external';
 const PROVISIONED = 'provisioned';
 export const ETCD_OPTIONS = { EXTERNAL, PROVISIONED };
+
+// String that would be an invalid IAM role name
+export const IAM_ROLE_CREATE_OPTION = '%create%';
 
 export const toVPCSubnet = (region, subnets, deselected) => {
   const vpcSubnets = {};
@@ -229,10 +234,12 @@ export const toAWS_TF = (cc, FORMS) => {
       tectonic_aws_region: cc[AWS_REGION],
       tectonic_admin_email: cc[ADMIN_EMAIL],
       tectonic_aws_master_ec2_type: controllers[INSTANCE_TYPE],
+      tectonic_aws_master_iam_role_name: controllers[IAM_ROLE] === IAM_ROLE_CREATE_OPTION ? undefined : controllers[IAM_ROLE],
       tectonic_aws_master_root_volume_iops: controllers[STORAGE_TYPE] === 'io1' ? controllers[STORAGE_IOPS] : undefined,
       tectonic_aws_master_root_volume_size: controllers[STORAGE_SIZE_IN_GIB],
       tectonic_aws_master_root_volume_type: controllers[STORAGE_TYPE],
       tectonic_aws_worker_ec2_type: workers[INSTANCE_TYPE],
+      tectonic_aws_worker_iam_role_name: workers[IAM_ROLE] === IAM_ROLE_CREATE_OPTION ? undefined : workers[IAM_ROLE],
       tectonic_aws_worker_root_volume_iops: workers[STORAGE_TYPE] === 'io1' ? controllers[STORAGE_IOPS] : undefined,
       tectonic_aws_worker_root_volume_size: workers[STORAGE_SIZE_IN_GIB],
       tectonic_aws_worker_root_volume_type: workers[STORAGE_TYPE],

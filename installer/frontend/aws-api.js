@@ -45,9 +45,9 @@ const TFPostJSON = url => (body = {}, creds = {}, platform = 'aws') => {
   );
 };
 
-
 export const getRegions = postJSON('/aws/regions');
 export const getSsh = postJSON('/aws/ssh-key-pairs');
+export const getIamRoles = postJSON('/aws/iam-roles');
 export const getVpcs = postJSON('/aws/vpcs');
 export const getVpcSubnets = postJSON('/aws/vpcs/subnets');
 export const getZones = postJSON('/aws/zones');

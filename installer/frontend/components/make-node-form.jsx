@@ -1,6 +1,10 @@
 import _ from 'lodash';
 
+import * as awsActions from '../aws-actions';
 import {
+  AWS_CREDS,
+  IAM_ROLE,
+  IAM_ROLE_CREATE_OPTION,
   INSTANCE_TYPE,
   NUMBER_OF_INSTANCES,
   STORAGE_IOPS,
@@ -13,7 +17,18 @@ import { validate } from '../validate';
 
 const toKey = (name, field) => `${name}-${field}`;
 
-export const makeNodeForm = (name, instanceValidator = validate.int({min: 1, max: 999}), opts) => {
+// Use this single dummy form / field to trigger loading the IAM roles list. Then IAM role fields can set this as their
+// dependency, which avoids triggering a separate API request for each field.
+new Form('DUMMY_NODE_FORM', [
+  new Field(IAM_ROLE, {
+    default: 'DUMMY_VALUE',
+    name: IAM_ROLE,
+    dependencies: [AWS_CREDS],
+    getExtraStuff: (dispatch, isNow) => dispatch(awsActions.getIamRoles(null, null, isNow)),
+  }),
+]);
+
+export const makeNodeForm = (name, withIamRole = true, instanceValidator = validate.int({min: 1, max: 999}), opts) => {
   const storageType = toKey(name, STORAGE_TYPE);
 
   // all fields must have a unique name!
@@ -46,6 +61,14 @@ export const makeNodeForm = (name, instanceValidator = validate.int({min: 1, max
       ignoreWhen: cc => cc[storageType] !== 'io1',
     }),
   ];
+
+  if (withIamRole) {
+    fields.unshift(new Field(toKey(name, IAM_ROLE), {
+      default: IAM_ROLE_CREATE_OPTION,
+      name: IAM_ROLE,
+      dependencies: [IAM_ROLE],
+    }));
+  }
 
   const validator = (data) => {
     const type = data[STORAGE_TYPE];

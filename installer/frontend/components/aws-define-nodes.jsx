@@ -5,6 +5,8 @@ import { connect } from 'react-redux';
 import {
   AWS_CONTROLLERS,
   AWS_WORKERS,
+  IAM_ROLE,
+  IAM_ROLE_CREATE_OPTION,
   INSTANCE_TYPE,
   NUMBER_OF_INSTANCES,
   STORAGE_IOPS,
@@ -40,13 +42,27 @@ const IOPs = connect(
   </Row>
 );
 
+const IamRoles = connect(
+  ({clusterConfig}) => ({roles: _.get(clusterConfig, ['extra', IAM_ROLE], [])})
+)(
+  ({roles, type}) => <Row htmlFor={`${type}--iam-role`} label="IAM Role">
+    <Connect field={toKey(type, IAM_ROLE)}>
+      <Select id={`${type}--iam-role`}>
+        <option value={IAM_ROLE_CREATE_OPTION}>Create an IAM role for me (default)</option>
+        {roles.map(r => <option value={r} key={r}>{r}</option>)}
+      </Select>
+    </Connect>
+  </Row>
+);
+
 const Errors = connect(
   ({clusterConfig}, {type}) => ({
     error: _.get(clusterConfig, toError(type)) || _.get(clusterConfig, toAsyncError(type)),
   })
 )(props => props.error ? <div className="wiz-error-message">{props.error}</div> : <span />);
 
-export const DefineNode = ({type, max}) => <div>
+export const DefineNode = ({type, max, withIamRole = true}) => <div>
+  {withIamRole && <IamRoles type={type} />}
   <Row htmlFor={`${type}--number`} label="Instances">
     <Connect field={toKey(type, NUMBER_OF_INSTANCES)}>
       <NumberInput className="wiz-super-short-input" id={`${type}--number`} min="1" max={max} />

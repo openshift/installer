@@ -80,6 +80,7 @@ func New(config *Config) (http.Handler, error) {
 	mux.Handle("/aws/vpcs", logRequests(httpHandler("POST", ctx, awsGetVPCsHandler)))
 	mux.Handle("/aws/vpcs/subnets", logRequests(httpHandler("POST", ctx, awsGetVPCsSubnetsHandler)))
 	mux.Handle("/aws/ssh-key-pairs", logRequests(httpHandler("POST", ctx, awsGetKeyPairsHandler)))
+	mux.Handle("/aws/iam-roles", logRequests(httpHandler("POST", ctx, awsGetIamRolesHandler)))
 	mux.Handle("/aws/zones", logRequests(httpHandler("POST", ctx, awsGetZonesHandler)))
 	mux.Handle("/aws/domain", logRequests(httpHandler("POST", ctx, awsGetDomainInfoHandler)))
 

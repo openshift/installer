@@ -14,6 +14,7 @@ import { TectonicGA } from '../tectonic-ga';
 import {
   AWS_ACCESS_KEY_ID,
   AWS_CONTROLLER_SUBNETS,
+  AWS_CREDS,
   AWS_WORKER_SUBNETS,
   AWS_CONTROLLER_SUBNET_IDS,
   AWS_WORKER_SUBNET_IDS,
@@ -44,7 +45,6 @@ const REGION_NAMES = {
 };
 
 const { batchSetIn } = configActions;
-const AWS_CREDS = 'AWSCreds';
 
 const awsCredsForm = new Form(AWS_CREDS, [
   new Field(STS_ENABLED, {default: false}),
