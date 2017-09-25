@@ -1,10 +1,9 @@
 resource "azurerm_network_interface" "tectonic_master" {
-  count                     = "${var.master_count}"
-  name                      = "${var.cluster_name}-master-${count.index}"
-  location                  = "${var.location}"
-  resource_group_name       = "${var.resource_group_name}"
-  network_security_group_id = "${var.external_nsg_master_id == "" ? join("", azurerm_network_security_group.master.*.id) : var.external_nsg_master_id}"
-  enable_ip_forwarding      = true
+  count                = "${var.master_count}"
+  name                 = "${var.cluster_name}-master-${count.index}"
+  location             = "${var.location}"
+  resource_group_name  = "${var.resource_group_name}"
+  enable_ip_forwarding = true
 
   ip_configuration {
     private_ip_address_allocation           = "dynamic"
