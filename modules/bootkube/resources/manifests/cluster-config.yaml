@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: cluster-config
-  namespace: tectonic-system
+  namespace: kube-system
 data:
   kvo-config: |
     apiVersion: v1
