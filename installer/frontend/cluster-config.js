@@ -49,7 +49,6 @@ export const EXTERNAL_ETCD_CLIENT = 'externalETCDClient';
 export const ETCD_OPTION = 'etcdOption';
 
 export const DRY_RUN = 'dryRun';
-export const ENTITLEMENTS = 'entitlements';
 export const PLATFORM_TYPE = 'platformType';
 export const PULL_SECRET = 'pullSecret';
 export const SSH_AUTHORIZED_KEY = 'sshAuthorizedKey';
@@ -83,7 +82,6 @@ export const BM_SSH_KEY = 'bm_sshKey';
 export const CREDS = 'creds';
 export const LICENSING = 'licensing';
 export const PLATFORM_FORM = 'platform';
-export const EXPERIMENTAL_FEATURES = 'experimentalFeatures';
 
 export const SPLIT_DNS_ON = 'on';
 export const SPLIT_DNS_OFF = 'off';
@@ -179,7 +177,6 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [CLUSTER_NAME]: '',
   [CONTROLLER_DOMAIN]: '',
   [DRY_RUN]: false,
-  [ENTITLEMENTS]: {},
   [PULL_SECRET]: '',
   [RETRY]: false, // whether we're retrying a terraform apply
   [STS_ENABLED]: false,
