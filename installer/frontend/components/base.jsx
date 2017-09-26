@@ -19,6 +19,10 @@ import { Footer } from './footer';
 
 const downloadState = (state) => {
   const toSave = savable(state);
+
+  // Extra field data doesn't need to be saved
+  _.unset(toSave, 'clusterConfig.extra');
+
   const saved = JSON.stringify(toSave, null, 2);
   const stateBlob = new Blob([saved], {type: 'application/json'});
   saveAs(stateBlob, 'tectonic.progress');
