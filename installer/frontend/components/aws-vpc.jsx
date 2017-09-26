@@ -128,21 +128,6 @@ const SubnetSelect = ({field, name, subnets, asyncValidator, disabled, fieldName
   </div>
 </div>;
 
-/* ggreer: This component (along with its usage) is commented-out because it will soon be needed,
- * but not in this release. Matt & I didn't realize that until after we'd written it.
- * ESLint will fail if you have an unused variable, so we commented it out.
- */
-// const IP = ({field, name, disabled, placeholder}) => <div className="row form-group">
-//   <div className="col-xs-4">
-//     <label htmlFor={field}>{name}</label>
-//   </div>
-//   <div className="col-xs-8">
-//     <WithClusterConfig field={field} validator={validate.IP}>
-//       <Input placeholder={placeholder} id={field} disabled={disabled} />
-//     </WithClusterConfig>
-//   </div>
-// </div>;
-
 const stateToProps = ({aws, clusterConfig}) => {
   // populate subnet selection with all available azs ... many to many :(
   const azs = new Set();
