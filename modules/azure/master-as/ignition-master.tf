@@ -2,6 +2,7 @@ data "ignition_config" "master" {
   files = [
     "${data.ignition_file.kubeconfig.id}",
     "${var.ign_installer_kubelet_env_id}",
+    "${var.ign_installer_runtime_mappings_id}",
     "${var.ign_azure_udev_rules_id}",
     "${var.ign_max_user_watches_id}",
     "${data.ignition_file.cloud_provider_config.id}",

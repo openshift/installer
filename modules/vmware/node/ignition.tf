@@ -9,6 +9,7 @@ data "ignition_config" "node" {
     "${var.ign_max_user_watches_id}",
     "${data.ignition_file.node_hostname.*.id[count.index]}",
     "${var.ign_installer_kubelet_env_id}",
+    "${var.ign_installer_runtime_mappings_id}",
   ]
 
   systemd = ["${compact(list(

@@ -16,6 +16,10 @@ variable "ign_locksmithd_service_id" {
   type = "string"
 }
 
+variable "ign_installer_runtime_mappings_id" {
+  type = "string"
+}
+
 variable "ign_installer_kubelet_env_id" {
   type = "string"
 }

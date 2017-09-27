@@ -28,6 +28,20 @@ data "ignition_systemd_unit" "docker_dropin" {
   ]
 }
 
+data "template_file" "installer_runtime_mappings" {
+  template = "${file("${path.module}/resources/kubernetes/runtime-mappings.yaml")}"
+}
+
+data "ignition_file" "installer_runtime_mappings" {
+  filesystem = "root"
+  path       = "/etc/kubernetes/installer/runtime-mappings.yaml"
+  mode       = 0644
+
+  content {
+    content = "${data.template_file.installer_runtime_mappings.rendered}"
+  }
+}
+
 data "template_file" "kubelet" {
   template = "${file("${path.module}/resources/services/kubelet.service")}"
 

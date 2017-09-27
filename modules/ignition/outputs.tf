@@ -46,6 +46,14 @@ output "locksmithd_service_id" {
   value = "${data.ignition_systemd_unit.locksmithd.id}"
 }
 
+output "installer_runtime_mappings_id" {
+  value = "${data.ignition_file.installer_runtime_mappings.id}"
+}
+
+output "installer_runtime_mappings_rendered" {
+  value = "${data.template_file.installer_runtime_mappings.rendered}"
+}
+
 output "installer_kubelet_env_id" {
   value = "${data.ignition_file.installer_kubelet_env.id}"
 }
