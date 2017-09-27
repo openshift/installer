@@ -53,7 +53,22 @@ pipeline {
       description: 'Hyperkube image. Please define the param like: {hyperkube="<HYPERKUBE_IMAGE>"}'
     )
     booleanParam(
-      name: 'run_smoke_tests',
+      name: 'RUN_SMOKE_TESTS',
+      defaultValue: true,
+      description: ''
+    )
+    booleanParam(
+      name: 'PLATFORM/AWS',
+      defaultValue: true,
+      description: ''
+    )
+    booleanParam(
+      name: 'PLATFORM/AZURE',
+      defaultValue: true,
+      description: ''
+    )
+    booleanParam(
+      name: 'PLATFORM/BARE_METAL',
       defaultValue: true,
       description: ''
     )
@@ -165,7 +180,7 @@ pipeline {
     stage("Smoke Tests") {
       when {
         expression {
-          return params.run_smoke_tests
+          return params.RUN_SMOKE_TESTS
         }
       }
       environment {
@@ -177,45 +192,51 @@ pipeline {
         script {
           def builds = [:]
 
-          builds['aws'] = runRSpecTest('spec/aws_spec.rb', '')
-          builds['aws_vpc_internal'] = runRSpecTest(
-              'spec/aws_vpc_internal_spec.rb',
-              '--device=/dev/net/tun --cap-add=NET_ADMIN -u root'
-              )
-          builds['aws_network_policy'] = runRSpecTest('spec/aws_network_policy_spec.rb', '')
-          builds['aws_exp'] = runRSpecTest('spec/aws_exp_spec.rb', '')
-          builds['aws_ca'] = runRSpecTest('spec/aws_ca_spec.rb', '')
+          if (params."PLATFORM/AWS") {
+            builds['aws'] = runRSpecTest('spec/aws_spec.rb', '')
+            builds['aws_vpc_internal'] = runRSpecTest(
+                'spec/aws_vpc_internal_spec.rb',
+                '--device=/dev/net/tun --cap-add=NET_ADMIN -u root'
+                )
+            builds['aws_network_policy'] = runRSpecTest('spec/aws_network_policy_spec.rb', '')
+            builds['aws_exp'] = runRSpecTest('spec/aws_exp_spec.rb', '')
+            builds['aws_ca'] = runRSpecTest('spec/aws_ca_spec.rb', '')
+          }
 
-          builds['azure_basic'] = runRSpecTest('spec/azure_basic_spec.rb', '')
-          builds['azure_experimental'] = runRSpecTest('spec/azure_experimental_spec.rb', '')
-          builds['azure_private_external'] = runRSpecTest('spec/azure_private_external_spec.rb', '--device=/dev/net/tun --cap-add=NET_ADMIN -u root')
-          /*
-          * Test temporarily disabled
-          builds['azure_dns'] = runRSpecTest('spec/azure_dns_spec.rb', '')
-          */
-          builds['azure_external'] = runRSpecTest('spec/azure_external_spec.rb', '')
-          builds['azure_external_experimental'] = runRSpecTest('spec/azure_external_experimental_spec.rb', '')
-          builds['azure_example'] = runRSpecTest('spec/azure_example_spec.rb', '')
+          if (params."PLATFORM/AZURE") {
+            builds['azure_basic'] = runRSpecTest('spec/azure_basic_spec.rb', '')
+            builds['azure_experimental'] = runRSpecTest('spec/azure_experimental_spec.rb', '')
+            builds['azure_private_external'] = runRSpecTest('spec/azure_private_external_spec.rb', '--device=/dev/net/tun --cap-add=NET_ADMIN -u root')
+            /*
+            * Test temporarily disabled
+            builds['azure_dns'] = runRSpecTest('spec/azure_dns_spec.rb', '')
+            */
+            builds['azure_external'] = runRSpecTest('spec/azure_external_spec.rb', '')
+            builds['azure_external_experimental'] = runRSpecTest('spec/azure_external_experimental_spec.rb', '')
+            builds['azure_example'] = runRSpecTest('spec/azure_example_spec.rb', '')
+          }
 
-          /* Temporarily disabled for consolidation
-          * Fails very often due to Packet flakiness
-          *
-          builds['bare_metal'] = {
-            node('worker && bare-metal') {
-              ansiColor('xterm') {
-                unstash 'repository'
-                withCredentials(creds) {
-                  timeout(35) {
-                    sh """#!/bin/bash -ex
-                    ${WORKSPACE}/tests/smoke/bare-metal/smoke.sh vars/metal.tfvars
-                    """
+          if (params."PLATFORM/BARE_METAL") {
+            /* Temporarily disabled for consolidation
+            * Fails very often due to Packet flakiness
+            *
+            builds['bare_metal'] = {
+              node('worker && bare-metal') {
+                ansiColor('xterm') {
+                  unstash 'repository'
+                  withCredentials(creds) {
+                    timeout(35) {
+                      sh """#!/bin/bash -ex
+                      ${WORKSPACE}/tests/smoke/bare-metal/smoke.sh vars/metal.tfvars
+                      """
+                    }
+                    cleanWs notFailBuild: true
                   }
-                  cleanWs notFailBuild: true
                 }
               }
             }
+            */
           }
-          */
 
           parallel builds
         }
