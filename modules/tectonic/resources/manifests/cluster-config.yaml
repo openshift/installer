@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-config
+  namespace: tectonic-system
+data:
+  tuo-config: |
+    apiVersion: v1
+    kind: ClusterConfig
+    identityConfig: |
+      adminEmail: ${admin_email}
+      adminPasswordHash: ${admin_password_hash}
+      adminUserID: ${admin_user_id}
+      consoleClientID: ${console_client_id}
+      consoleSecret: ${console_secret}
+      kubectlClientID: ${kubectl_client_id}
+      kubectlSecret: ${kubectl_secret}
+    ingressConfig: |
+      consoleBaseHost: ${console_base_host}
+      ingressKind: ${ingress_kind}
+    statsEmitterConfig: |
+      statsURL: ${stats_url}
+    tectonicConfigMap: |
+      baseAddress: ${base_address}
+      certificatesStrategy: ${certificates_strategy}
+      clusterID: ${cluster_id}
+      clusterName: ${cluster_name}
+      identityAPIService: ${identity_api_service}
+      installerPlatform: ${platform}
+      kubeAPIserverURL: ${kube_apiserver_url}
+      tectonicVersion: ${tectonic_version}

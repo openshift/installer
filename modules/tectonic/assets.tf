@@ -58,6 +58,7 @@ resource "template_dir" "tectonic" {
     admin_email         = "${lower(var.admin_email)}"
     admin_password_hash = "${var.admin_password_hash}"
 
+    base_address         = "${var.base_address}"
     console_base_address = "${var.base_address}"
     console_base_host    = "${element(split(":", var.base_address), 0)}"
     console_client_id    = "${var.console_client_id}"
