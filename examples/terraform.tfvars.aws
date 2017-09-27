@@ -286,7 +286,7 @@ tectonic_master_count = "1"
 // Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 tectonic_pull_secret_path = ""
 
-// (optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. 
+// (optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation.
 // The maximum size of this IP range is /12
 // tectonic_service_cidr = "10.3.0.0/16"
 

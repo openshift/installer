@@ -128,8 +128,8 @@ data "ignition_systemd_unit" "locksmithd" {
       name    = "40-etcd-lock.conf"
 
       content = <<EOF
-[Service] 
-Environment=REBOOT_STRATEGY=etcd-lock 
+[Service]
+Environment=REBOOT_STRATEGY=etcd-lock
 Environment=LOCKSMITHD_ETCD_CAFILE=/etc/ssl/etcd/ca.crt
 Environment=LOCKSMITHD_ETCD_KEYFILE=/etc/ssl/etcd/client.key
 Environment=LOCKSMITHD_ETCD_CERTFILE=/etc/ssl/etcd/client.crt
@@ -176,7 +176,7 @@ ExecStart=/usr/lib/coreos/etcd-wrapper \
 --peer-client-cert-auth=true \
 --initial-advertise-peer-urls=https://${var.hostname["${count.index}"]}.${var.base_domain}:2380 \
 --listen-client-urls=https://0.0.0.0:2379 \
---listen-peer-urls=https://0.0.0.0:2380 
+--listen-peer-urls=https://0.0.0.0:2380
 EOF
     },
   ]

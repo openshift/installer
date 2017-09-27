@@ -31,7 +31,7 @@ resource "aws_subnet" "worker_subnet" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-worker-${ "${length(var.worker_azs)}" > 0 ?
-    "${var.worker_azs[count.index]}" : 
+    "${var.worker_azs[count.index]}" :
     "${data.aws_availability_zones.azs.names[count.index]}" }",
       "kubernetes.io/cluster/${var.cluster_name}", "shared",
       "kubernetes.io/role/internal-elb", "",

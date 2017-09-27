@@ -2,7 +2,7 @@ output "vpc_id" {
   value = "${data.aws_vpc.cluster_vpc.id}"
 }
 
-# We have to do this join() & split() 'trick' because null_data_source and 
+# We have to do this join() & split() 'trick' because null_data_source and
 # the ternary operator can't output lists or maps
 output "master_subnet_ids" {
   value = ["${split(",", var.external_vpc_id == "" ? join(",", aws_subnet.master_subnet.*.id) :  join(",", data.aws_subnet.external_master.*.id))}"]
