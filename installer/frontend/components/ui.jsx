@@ -279,7 +279,7 @@ export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirt
 
   return (
     <div className={className} style={style}>
-      <select id={id} value={value} disabled={disabled} onChange={e => {
+      <select id={id} value={value} disabled={disabled} style={value === '' ? {color: '#aaa'} : undefined} onChange={e => {
         makeDirty();
         onValue(e.target.value);
       }}>
