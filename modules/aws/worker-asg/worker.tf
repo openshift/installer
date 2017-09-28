@@ -91,13 +91,13 @@ resource "aws_iam_instance_profile" "worker_profile" {
 
   role = "${var.worker_iam_role == "" ?
     join("|", aws_iam_role.worker_role.*.name) :
-    join("|", data.aws_iam_role.worker_role.*.role_name)
+    join("|", data.aws_iam_role.worker_role.*.name)
   }"
 }
 
 data "aws_iam_role" "worker_role" {
-  count     = "${var.worker_iam_role == "" ? 0 : 1}"
-  role_name = "${var.worker_iam_role}"
+  count = "${var.worker_iam_role == "" ? 0 : 1}"
+  name  = "${var.worker_iam_role}"
 }
 
 resource "aws_iam_role" "worker_role" {

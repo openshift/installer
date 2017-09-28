@@ -87,13 +87,13 @@ resource "aws_iam_instance_profile" "master_profile" {
 
   role = "${var.master_iam_role == "" ?
     join("|", aws_iam_role.master_role.*.name) :
-    join("|", data.aws_iam_role.master_role.*.role_name)
+    join("|", data.aws_iam_role.master_role.*.name)
   }"
 }
 
 data "aws_iam_role" "master_role" {
-  count     = "${var.master_iam_role == "" ? 0 : 1}"
-  role_name = "${var.master_iam_role}"
+  count = "${var.master_iam_role == "" ? 0 : 1}"
+  name  = "${var.master_iam_role}"
 }
 
 resource "aws_iam_role" "master_role" {
