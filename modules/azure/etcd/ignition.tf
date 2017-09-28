@@ -169,8 +169,8 @@ Environment="RKT_RUN_ARGS=--volume etcd-ssl,kind=host,source=/etc/ssl/etcd \
   --mount volume=etcd-ssl,target=/etc/ssl/etcd"
 ExecStart=
 ExecStart=/usr/lib/coreos/etcd-wrapper \
-  --name=${element(split(";", var.base_domain == "" ? 
-          join(";", slice(formatlist("${var.cluster_name}-%s", var.const_internal_node_names), 0, var.etcd_count)) : 
+  --name=${element(split(";", var.base_domain == "" ?
+          join(";", slice(formatlist("${var.cluster_name}-%s", var.const_internal_node_names), 0, var.etcd_count)) :
           join(";", formatlist("%s.${var.base_domain}", slice(formatlist("${var.cluster_name}-%s", var.const_internal_node_names), 0, var.etcd_count)))), count.index)} \
   --advertise-client-urls=${var.tls_enabled ? "https" : "http"}://$${COREOS_AZURE_IPV4_DYNAMIC}:2379 \
   ${var.tls_enabled
@@ -181,12 +181,12 @@ ExecStart=/usr/lib/coreos/etcd-wrapper \
   --listen-peer-urls=${var.tls_enabled ? "https" : "http"}://0.0.0.0:2380 \
   --initial-cluster=${
     join(",",
-      formatlist("%s=${var.tls_enabled ? "https" : "http"}://%s:2380", 
-        split(";", var.base_domain == "" ? 
-          join(";", slice(formatlist("${var.cluster_name}-%s", var.const_internal_node_names), 0, var.etcd_count)) : 
-          join(";", formatlist("%s.${var.base_domain}", slice(formatlist("${var.cluster_name}-%s", var.const_internal_node_names), 0, var.etcd_count)))), 
-        split(";", var.base_domain == "" ? 
-          join(";", slice(formatlist("${var.cluster_name}-%s", var.const_internal_node_names), 0, var.etcd_count)) : 
+      formatlist("%s=${var.tls_enabled ? "https" : "http"}://%s:2380",
+        split(";", var.base_domain == "" ?
+          join(";", slice(formatlist("${var.cluster_name}-%s", var.const_internal_node_names), 0, var.etcd_count)) :
+          join(";", formatlist("%s.${var.base_domain}", slice(formatlist("${var.cluster_name}-%s", var.const_internal_node_names), 0, var.etcd_count)))),
+        split(";", var.base_domain == "" ?
+          join(";", slice(formatlist("${var.cluster_name}-%s", var.const_internal_node_names), 0, var.etcd_count)) :
           join(";", formatlist("%s.${var.base_domain}", slice(formatlist("${var.cluster_name}-%s", var.const_internal_node_names), 0, var.etcd_count))))
     ))
   }

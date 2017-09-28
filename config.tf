@@ -124,7 +124,7 @@ variable "tectonic_service_cidr" {
   default = "10.3.0.0/16"
 
   description = <<EOF
-(optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. 
+(optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation.
 The maximum size of this IP range is /12
 EOF
 }

@@ -1,6 +1,6 @@
 locals {
-  "bootstrapping_host" = "${var.tectonic_azure_private_cluster ? 
-    module.vnet.master_private_ip_addresses[0] : 
+  "bootstrapping_host" = "${var.tectonic_azure_private_cluster ?
+    module.vnet.master_private_ip_addresses[0] :
     module.vnet.api_fqdn}"
 }
 
