@@ -67,6 +67,12 @@ data "ignition_systemd_unit" "k8s_node_bootstrap" {
   content = "${data.template_file.k8s_node_bootstrap.rendered}"
 }
 
+data "ignition_systemd_unit" "init_assets" {
+  name    = "init-assets.service"
+  enable  = "${var.assets_location != "" ? true : false}"
+  content = "${file("${path.module}/resources/services/init-assets.service")}"
+}
+
 data "template_file" "s3_puller" {
   template = "${file("${path.module}/resources/bin/s3-puller.sh")}"
 
@@ -82,6 +88,20 @@ data "ignition_file" "s3_puller" {
 
   content {
     content = "${data.template_file.s3_puller.rendered}"
+  }
+}
+
+data "template_file" "gcs_puller" {
+  template = "${file("${path.module}/resources/bin/gcs-puller.sh")}"
+}
+
+data "ignition_file" "gcs_puller" {
+  filesystem = "root"
+  path       = "/opt/gcs-puller.sh"
+  mode       = 0755
+
+  content {
+    content = "${data.template_file.gcs_puller.rendered}"
   }
 }
 

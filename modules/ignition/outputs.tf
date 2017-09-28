@@ -30,12 +30,24 @@ output "k8s_node_bootstrap_service_rendered" {
   value = "${data.template_file.k8s_node_bootstrap.rendered}"
 }
 
+output "init_assets_service_id" {
+  value = "${data.ignition_systemd_unit.init_assets.id}"
+}
+
 output "s3_puller_id" {
   value = "${data.ignition_file.s3_puller.id}"
 }
 
 output "s3_puller_rendered" {
   value = "${data.template_file.s3_puller.rendered}"
+}
+
+output "gcs_puller_id" {
+  value = "${data.ignition_file.gcs_puller.id}"
+}
+
+output "gcs_puller_rendered" {
+  value = "${data.template_file.gcs_puller.rendered}"
 }
 
 output "locksmithd_service_id" {

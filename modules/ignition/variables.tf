@@ -66,3 +66,9 @@ variable "tectonic_vanilla_k8s" {
 If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
 EOF
 }
+
+variable "assets_location" {
+  type        = "string"
+  description = "(optional) The storing location to retrieve the assets."
+  default     = ""
+}

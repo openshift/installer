@@ -92,6 +92,10 @@ docs:
 			'This document gives an overview of variables used in the VMware platform of the Tectonic SDK.', \
 			platforms/vmware/variables.tf)
 
+	$(call terraform-docs, Documentation/variables/gcp.md, \
+			'This document gives an overview of variables used in the Google Cloud platform of the Tectonic SDK.', \
+			platforms/gcp/variables.tf)
+
 .PHONY: examples
 examples:
 	$(call terraform-examples, examples/terraform.tfvars.aws, \
@@ -118,6 +122,10 @@ examples:
 			config.tf, \
 			platforms/vmware/variables.tf)
 
+	$(call terraform-examples, \
+			examples/terraform.tfvars.gcp, \
+			config.tf, \
+			platforms/gcp/variables.tf)
 .PHONY: clean
 clean:
 	rm -rf $(BUILD_DIR)
@@ -174,6 +182,10 @@ tests/smoke: bin/smoke smoke-test-env-docker-image
 	-e ARM_ENVIRONMENT \
 	-e ARM_SUBSCRIPTION_ID \
 	-e ARM_TENANT_ID \
+	-e GOOGLE_APPLICATION_CREDENTIALS \
+	-e GOOGLE_CREDENTIALS \
+	-e GOOGLE_CLOUD_KEYFILE_JSON \
+	-e GCLOUD_KEYFILE_JSON \
 	-e TF_VAR_tectonic_aws_region \
 	-e TF_VAR_tectonic_aws_ssh_key \
 	-e TF_VAR_tectonic_azure_location \

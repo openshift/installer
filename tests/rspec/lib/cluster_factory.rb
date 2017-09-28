@@ -2,6 +2,7 @@
 
 require 'aws_cluster'
 require 'azure_cluster'
+require 'gcp_cluster'
 
 # Creates a platform specific Cluster object based on the provided tfvars file.
 #
