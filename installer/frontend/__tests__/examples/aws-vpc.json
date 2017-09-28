@@ -12,7 +12,7 @@
   "retry": false,
   "variables": {
     "tectonic_admin_email": "admin@example.com",
-    "tectonic_admin_password_hash": "$2a$12$96LR7NxL/T7LaijR0fxl3.aVI8owkpq0B./ogZ8wNmzF1bGPEZPBK",
+    "tectonic_admin_password": "password",
     "tectonic_aws_etcd_ec2_type": "t2.large",
     "tectonic_aws_etcd_root_volume_size": 300,
     "tectonic_aws_etcd_root_volume_type": "gp2",

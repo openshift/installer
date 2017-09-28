@@ -46,7 +46,7 @@
     "tectonicLicense": "<TECTONIC_LICENSE>",
     "pullSecret": "<TECTONIC_PULL_SECRET>",
     "adminEmail": "admin@example.com",
-    "adminPassword": "PASSWORD",
+    "adminPassword": "password",
     "awsTags": [
       {
         "key": "test_tag",

@@ -60,10 +60,9 @@ variable "admin_email" {
   default     = "admin@example.com"
 }
 
-variable "admin_password_hash" {
-  description = "Hashed password used to by the cluster admin to login to the Tectonic Console. Generate with the bcrypt-hash tool (https://github.com/coreos/bcrypt-tool/releases/tag/v1.0.0)."
+variable "admin_password" {
+  description = "Password used to by the cluster admin to login to the Tectonic Console. Backslashes and double quotes must be escaped."
   type        = "string"
-  default     = "2a$12$k9wa31uE/4uD9aVtT/vNtOZwxXyEJ/9DwXXEYB/eUpb9fvEPsH/kO"
 }
 
 variable "update_server" {

@@ -37,7 +37,7 @@
     "tectonicLicense": "<TECTONIC_LICENSE>",
     "pullSecret": "<TECTONIC_PULL_SECRET>",
     "adminEmail": "admin@example.com",
-    "adminPassword": "PASSWORD",
+    "adminPassword": "password",
     "updater": {
       "enabled": false,
       "server": "https://tectonic.update.core-os.net",

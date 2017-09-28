@@ -1,10 +1,7 @@
 import _ from 'lodash';
-import bcrypt from 'bcryptjs';
 
 import { BARE_METAL_TF } from './platforms';
 import { keyToAlg } from './utils';
-
-const bcryptCost = 12;
 
 // TODO: (ggreer) clean up key names. Warning: Doing this will break progress files.
 export const AWS_ACCESS_KEY_ID = 'awsAccessKeyId';
@@ -191,7 +188,7 @@ export const DEFAULT_CLUSTER_CONFIG = {
 };
 
 
-export const toAWS_TF = (cc, FORMS, opts = {}) => {
+export const toAWS_TF = (cc, FORMS) => {
   const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
   const etcds = FORMS[AWS_ETCDS].getData(cc);
   const workers = FORMS[AWS_WORKERS].getData(cc);
@@ -228,7 +225,7 @@ export const toAWS_TF = (cc, FORMS, opts = {}) => {
     },
     variables: {
       // eslint-disable-next-line no-sync
-      tectonic_admin_password_hash: bcrypt.hashSync(cc[ADMIN_PASSWORD], opts.salt || bcrypt.genSaltSync(bcryptCost)),
+      tectonic_admin_password: cc[ADMIN_PASSWORD],
       tectonic_aws_region: cc[AWS_REGION],
       tectonic_admin_email: cc[ADMIN_EMAIL],
       tectonic_aws_master_ec2_type: controllers[INSTANCE_TYPE],
@@ -291,7 +288,7 @@ export const toAWS_TF = (cc, FORMS, opts = {}) => {
   return ret;
 };
 
-export const toBaremetal_TF = (cc, FORMS, opts = {}) => {
+export const toBaremetal_TF = (cc, FORMS) => {
   const sshKey = FORMS[BM_SSH_KEY].getData(cc);
   const masters = cc[BM_MASTERS];
   const workers = cc[BM_WORKERS];
@@ -305,7 +302,7 @@ export const toBaremetal_TF = (cc, FORMS, opts = {}) => {
     retry: cc[RETRY],
     variables: {
       // eslint-disable-next-line no-sync
-      tectonic_admin_password_hash: bcrypt.hashSync(cc[ADMIN_PASSWORD], opts.salt || bcrypt.genSaltSync(bcryptCost)),
+      tectonic_admin_password: cc[ADMIN_PASSWORD],
       tectonic_cluster_name: cc[CLUSTER_NAME],
       tectonic_admin_email: cc[ADMIN_EMAIL],
       tectonic_metal_cl_version: cc[BM_OS_TO_USE],

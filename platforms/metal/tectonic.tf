@@ -106,8 +106,8 @@ module "tectonic" {
   license_path     = "${var.tectonic_vanilla_k8s ? "/dev/null" : pathexpand(var.tectonic_license_path)}"
   pull_secret_path = "${var.tectonic_vanilla_k8s ? "/dev/null" : pathexpand(var.tectonic_pull_secret_path)}"
 
-  admin_email         = "${var.tectonic_admin_email}"
-  admin_password_hash = "${var.tectonic_admin_password_hash}"
+  admin_email    = "${var.tectonic_admin_email}"
+  admin_password = "${var.tectonic_admin_password}"
 
   update_channel = "${var.tectonic_update_channel}"
   update_app_id  = "${var.tectonic_update_app_id}"

@@ -45,7 +45,7 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
     end
 
     it 'can login in the tectonic console' do
-      @login.with(@cluster.tectonic_admin_email, @cluster.tecnotic_admin_passw)
+      @login.with(@cluster.tectonic_admin_email, @cluster.tectonic_admin_password)
       expect(@login.success_login?).to be_truthy
       @login.logout
     end

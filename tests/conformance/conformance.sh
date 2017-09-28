@@ -25,7 +25,7 @@ TF_VAR_tectonic_pull_secret_path=${TF_VAR_tectonic_pull_secret_path}
 TF_VAR_tectonic_license_path=${TF_VAR_tectonic_license_path}
 TF_VAR_tectonic_aws_ssh_key="jenkins"
 TF_VAR_tectonic_admin_email=${TF_VAR_tectonic_admin_email}
-TF_VAR_tectonic_admin_password_hash=${TF_VAR_tectonic_admin_password_hash}
+TF_VAR_tectonic_admin_password=${TF_VAR_tectonic_admin_password}
 TF_VAR_tectonic_base_domain=${TF_VAR_tectonic_base_domain}
 EOF
 }

@@ -11,7 +11,7 @@ require 'password_generator'
 # Cluster represents a k8s cluster
 class Cluster
   attr_reader :tfvars_file, :kubeconfig, :manifest_path, :build_path,
-              :tectonic_admin_email, :tecnotic_admin_passw
+              :tectonic_admin_email, :tectonic_admin_password
 
   def initialize(tfvars_file)
     @tfvars_file = tfvars_file
@@ -20,8 +20,7 @@ class Cluster
     # S3 buckets can only handle lower case names
     @name = ENV['CLUSTER'] || NameGenerator.generate(tfvars_file.prefix)
     @tectonic_admin_email = ENV['TF_VAR_tectonic_admin_email'] || NameGenerator.generate_fake_email
-    @tecnotic_admin_passw = ENV['tectonic_admin_password'] || PasswordGenerator.generate_password
-    @tecnotic_admin_passw_hash = PasswordGenerator.generate_hash(@tecnotic_admin_passw)
+    @tectonic_admin_password = ENV['tectonic_admin_password'] || PasswordGenerator.generate_password
 
     @build_path = File.join(File.realpath('../../'), "build/#{@name}")
     @manifest_path = File.join(@build_path, 'generated')
@@ -46,7 +45,7 @@ class Cluster
     if ENV.key?('TECTONIC_TESTS_DONT_CLEAN_UP')
       puts "*** Cleanup inhibiting flag set. Stopping here. ***\n"
       puts '*** Your email/password to use in the tectonic console is:'\
-           "#{@tectonic_admin_email} / #{@tecnotic_admin_passw} ***\n"
+           "#{@tectonic_admin_email} / #{@tectonic_admin_password} ***\n"
       return
     end
     destroy
@@ -64,8 +63,8 @@ class Cluster
       'CLUSTER' => @name,
       'TF_VAR_tectonic_cluster_name' => @name,
       'TF_VAR_tectonic_admin_email' => @tectonic_admin_email,
-      'TF_VAR_tectonic_admin_password_hash' => @tecnotic_admin_passw_hash,
-      'tectonic_admin_password' => @tecnotic_admin_passw
+      'TF_VAR_tectonic_admin_password' => @tectonic_admin_password,
+      'tectonic_admin_password' => @tectonic_admin_password
     }
   end
 

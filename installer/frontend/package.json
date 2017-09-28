@@ -28,7 +28,6 @@
   "dependencies": {
     "babel-plugin-git-version": "github:coreos/babel-plugin-git-version-build#3f828164febc6b2f486f043fef75157989e97315",
     "babyparse": "0.4.x",
-    "bcryptjs": "2.x",
     "classnames": "2.2.x",
     "file-saver": "1.3.x",
     "immutable": "3.8.x",

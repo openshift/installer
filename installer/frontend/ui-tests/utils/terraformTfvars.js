@@ -76,7 +76,7 @@ const assertDeepEqual = (client, actual, expected) => {
   if (diff !== undefined) {
     client.assert.fail(
       'The following terraform.tfvars attributes differ from their expected value: ' +
-      diff.map(({path, lhs, rhs}) => `${path} (expected: ${rhs}, got: ${lhs})`).join(', '),
+      diff.map(({path, lhs, rhs}) => `${path} (expected: ${rhs}, got: ${lhs})`).join(', ')
     );
   }
 };

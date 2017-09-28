@@ -56,7 +56,7 @@ resource "template_dir" "tectonic" {
 
     admin_user_id       = "${random_id.admin_user_id.b64}"
     admin_email         = "${lower(var.admin_email)}"
-    admin_password_hash = "${var.admin_password_hash}"
+    admin_password_hash = "${bcrypt(var.admin_password, 12)}"
 
     base_address         = "${var.base_address}"
     console_base_address = "${var.base_address}"
