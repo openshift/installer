@@ -103,3 +103,7 @@ variable "container_image" {
 variable "extra_tags" {
   type = "map"
 }
+
+variable "ign_etcd_dropin_id_list" {
+  type = "list"
+}

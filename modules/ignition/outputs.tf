@@ -77,3 +77,19 @@ output "azure_udev_rules_id" {
 output "azure_udev_rules_rendered" {
   value = "${data.template_file.azure_udev_rules.rendered}"
 }
+
+output "etcd_dropin_id_list" {
+  value = "${data.ignition_systemd_unit.etcd.*.id}"
+}
+
+output "etcd_dropin_rendered_list" {
+  value = "${data.template_file.etcd.*.rendered}"
+}
+
+output "coreos_metadata_dropin_id" {
+  value = "${data.ignition_systemd_unit.coreos_metadata.id}"
+}
+
+output "coreos_metadata_dropin_rendered" {
+  value = "${data.template_file.coreos_metadata.rendered}"
+}

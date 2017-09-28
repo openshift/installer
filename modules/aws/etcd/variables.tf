@@ -82,3 +82,7 @@ variable "tls_enabled" {
 variable "tls_zip" {
   type = "string"
 }
+
+variable "ign_etcd_dropin_id_list" {
+  type = "list"
+}

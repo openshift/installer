@@ -1,0 +1,2 @@
+[Service]
+Environment=COREOS_METADATA_OPT_PROVIDER="-provider=${metadata_provider}"

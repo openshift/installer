@@ -2,6 +2,11 @@ provider "openstack" {
   version = "0.2.1"
 }
 
+data "template_file" "etcd_hostname_list" {
+  count    = "${var.tectonic_etcd_count}"
+  template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
+}
+
 module "kube_certs" {
   source = "../../../modules/tls/kube/self-signed"
 
@@ -16,20 +21,11 @@ module "etcd_certs" {
   source = "../../../modules/tls/etcd"
 
   etcd_ca_cert_path     = "${var.tectonic_etcd_ca_cert_path}"
+  etcd_cert_dns_names   = "${data.template_file.etcd_hostname_list.*.rendered}"
   etcd_client_cert_path = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key_path  = "${var.tectonic_etcd_client_key_path}"
   self_signed           = "${var.tectonic_experimental || var.tectonic_etcd_tls_enabled}"
   service_cidr          = "${var.tectonic_service_cidr}"
-
-  etcd_cert_dns_names = [
-    "${var.tectonic_cluster_name}-etcd-0.${var.tectonic_base_domain}",
-    "${var.tectonic_cluster_name}-etcd-1.${var.tectonic_base_domain}",
-    "${var.tectonic_cluster_name}-etcd-2.${var.tectonic_base_domain}",
-    "${var.tectonic_cluster_name}-etcd-3.${var.tectonic_base_domain}",
-    "${var.tectonic_cluster_name}-etcd-4.${var.tectonic_base_domain}",
-    "${var.tectonic_cluster_name}-etcd-5.${var.tectonic_base_domain}",
-    "${var.tectonic_cluster_name}-etcd-6.${var.tectonic_base_domain}",
-  ]
 }
 
 module "ingress_certs" {
@@ -166,26 +162,29 @@ EOF
   tls_peer_key_pem   = "${module.etcd_certs.etcd_peer_key_pem}"
 
   instance_count = "${var.tectonic_etcd_count}"
-}
 
-data "null_data_source" "local" {
-  inputs = {
-    kube_image_url = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$1")}"
-    kube_image_tag = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$2")}"
-  }
+  ign_etcd_dropin_id_list       = "${module.ignition_masters.etcd_dropin_id_list}"
+  ign_coreos_metadata_dropin_id = "${module.ignition_masters.coreos_metadata_dropin_id}"
 }
 
 module "ignition_masters" {
   source = "../../../modules/ignition"
 
-  bootstrap_upgrade_cl = "${var.tectonic_bootstrap_upgrade_cl}"
-  container_images     = "${var.tectonic_container_images}"
-  image_re             = "${var.tectonic_image_re}"
-  kube_dns_service_ip  = "${module.bootkube.kube_dns_service_ip}"
-  kubelet_cni_bin_dir  = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
-  kubelet_node_label   = "node-role.kubernetes.io/master"
-  kubelet_node_taints  = "node-role.kubernetes.io/master=:NoSchedule"
-  tectonic_vanilla_k8s = "${var.tectonic_vanilla_k8s}"
+  base_domain               = "${var.tectonic_base_domain}"
+  bootstrap_upgrade_cl      = "${var.tectonic_bootstrap_upgrade_cl}"
+  cluster_name              = "${var.tectonic_cluster_name}"
+  container_images          = "${var.tectonic_container_images}"
+  etcd_advertise_name_list  = "${data.template_file.etcd_hostname_list.*.rendered}"
+  etcd_count                = "${var.tectonic_etcd_count}"
+  etcd_initial_cluster_list = "${data.template_file.etcd_hostname_list.*.rendered}"
+  etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
+  image_re                  = "${var.tectonic_image_re}"
+  kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
+  kubelet_cni_bin_dir       = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
+  kubelet_node_label        = "node-role.kubernetes.io/master"
+  kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
+  metadata_provider         = "openstack-metadata"
+  tectonic_vanilla_k8s      = "${var.tectonic_vanilla_k8s}"
 }
 
 module "master_nodes" {
@@ -270,12 +269,12 @@ module "dns" {
   admin_email               = "${var.tectonic_admin_email}"
   api_ips                   = "${openstack_networking_floatingip_v2.loadbalancer.*.address}"
   etcd_count                = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count}"
-  etcd_ips                  = "${openstack_networking_port_v2.etcd.*.all_fixed_ips}"
+  etcd_ips                  = "${flatten(openstack_networking_port_v2.etcd.*.all_fixed_ips)}"
   etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
   master_count              = "${var.tectonic_master_count}"
-  master_ips                = "${openstack_networking_port_v2.master.*.all_fixed_ips}"
+  master_ips                = "${flatten(openstack_networking_port_v2.master.*.all_fixed_ips)}"
   worker_count              = "${var.tectonic_worker_count}"
-  worker_ips                = "${openstack_networking_port_v2.worker.*.all_fixed_ips}"
+  worker_ips                = "${flatten(openstack_networking_port_v2.worker.*.all_fixed_ips)}"
   worker_public_ips         = "${openstack_networking_floatingip_v2.worker.*.address}"
   worker_public_ips_enabled = "${var.tectonic_openstack_disable_floatingip ? false : true}"
 

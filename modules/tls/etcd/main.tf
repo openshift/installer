@@ -49,13 +49,13 @@ resource "tls_cert_request" "etcd_server" {
     organization = "etcd"
   }
 
-  dns_names = "${concat(
+  dns_names = ["${concat(
     var.etcd_cert_dns_names,
     list(
       "localhost",
       "*.kube-etcd.kube-system.svc.cluster.local",
       "kube-etcd-client.kube-system.svc.cluster.local",
-    ))}"
+    ))}"]
 
   ip_addresses = [
     "127.0.0.1",
@@ -141,12 +141,12 @@ resource "tls_cert_request" "etcd_peer" {
     organization = "etcd"
   }
 
-  dns_names = "${concat(
+  dns_names = ["${concat(
     var.etcd_cert_dns_names,
     list(
       "*.kube-etcd.kube-system.svc.cluster.local",
       "kube-etcd-client.kube-system.svc.cluster.local",
-    ))}"
+    ))}"]
 
   ip_addresses = [
     "${cidrhost(var.service_cidr, 15)}",

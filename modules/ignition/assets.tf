@@ -152,3 +152,23 @@ data "ignition_file" "azure_udev_rules" {
     content = "${data.template_file.azure_udev_rules.rendered}"
   }
 }
+
+data "template_file" "coreos_metadata" {
+  template = "${file("${path.module}/resources/services/coreos-metadata.service")}"
+
+  vars {
+    metadata_provider = "${var.metadata_provider}"
+  }
+}
+
+data "ignition_systemd_unit" "coreos_metadata" {
+  name   = "coreos-metadata.service"
+  enable = true
+
+  dropin = [
+    {
+      name    = "10-metadata.conf"
+      content = "${data.template_file.coreos_metadata.rendered}"
+    },
+  ]
+}

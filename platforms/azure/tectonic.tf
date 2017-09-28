@@ -1,3 +1,12 @@
+locals {
+  etcd_count = "${var.tectonic_experimental ? 0 : max(var.tectonic_etcd_count, 1)}"
+}
+
+data "template_file" "etcd_hostname_list" {
+  count    = "${local.etcd_count}"
+  template = "${var.tectonic_cluster_name}-etcd-${count.index}${var.tectonic_base_domain == "" ? "" : ".${var.tectonic_base_domain}"}"
+}
+
 module "kube_certs" {
   source = "../../modules/tls/kube/self-signed"
 
@@ -12,12 +21,11 @@ module "etcd_certs" {
   source = "../../modules/tls/etcd"
 
   etcd_ca_cert_path     = "${var.tectonic_etcd_ca_cert_path}"
+  etcd_cert_dns_names   = "${data.template_file.etcd_hostname_list.*.rendered}"
   etcd_client_cert_path = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key_path  = "${var.tectonic_etcd_client_key_path}"
   self_signed           = "${var.tectonic_experimental || var.tectonic_etcd_tls_enabled}"
   service_cidr          = "${var.tectonic_service_cidr}"
-
-  etcd_cert_dns_names = "${module.etcd.node_names}"
 }
 
 module "ingress_certs" {
@@ -76,7 +84,7 @@ module "bootkube" {
   kubelet_cert_pem     = "${module.kube_certs.kubelet_cert_pem}"
   kubelet_key_pem      = "${module.kube_certs.kubelet_key_pem}"
 
-  etcd_endpoints       = "${module.etcd.node_names}"
+  etcd_endpoints       = "${data.template_file.etcd_hostname_list.*.rendered}"
   experimental_enabled = "${var.tectonic_experimental}"
 
   master_count = "${var.tectonic_master_count}"

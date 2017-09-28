@@ -72,3 +72,42 @@ variable "assets_location" {
   description = "(optional) The storing location to retrieve the assets."
   default     = ""
 }
+
+variable "etcd_count" {
+  type    = "string"
+  default = 0
+}
+
+variable "etcd_tls_enabled" {
+  type    = "string"
+  default = true
+}
+
+variable "etcd_advertise_name_list" {
+  type    = "list"
+  default = []
+}
+
+variable "etcd_initial_cluster_list" {
+  type    = "list"
+  default = []
+}
+
+variable "base_domain" {
+  type    = "string"
+  default = ""
+}
+
+variable "cluster_name" {
+  type    = "string"
+  default = ""
+}
+
+variable "metadata_provider" {
+  type    = "string"
+  default = ""
+}
+
+variable "use_metadata" {
+  default = true
+}

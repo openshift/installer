@@ -30,19 +30,29 @@ module "etcd" {
   vm_disk_template        = "${var.tectonic_vmware_vm_template}"
   vm_disk_template_folder = "${var.tectonic_vmware_vm_template_folder}"
   vmware_folder           = "${vsphere_folder.tectonic_vsphere_folder.path}"
+
+  ign_etcd_dropin_id_list = "${module.ignition_masters.etcd_dropin_id_list}"
+}
+
+data "template_file" "etcd_hostname_list" {
+  count    = "${var.tectonic_etcd_count}"
+  template = "${var.tectonic_vmware_etcd_hostnames[count.index]}.${var.tectonic_base_domain}"
 }
 
 module "ignition_masters" {
   source = "../../modules/ignition"
 
-  bootstrap_upgrade_cl = "${var.tectonic_bootstrap_upgrade_cl}"
-  container_images     = "${var.tectonic_container_images}"
-  image_re             = "${var.tectonic_image_re}"
-  kube_dns_service_ip  = "${module.bootkube.kube_dns_service_ip}"
-  kubelet_cni_bin_dir  = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
-  kubelet_node_label   = "node-role.kubernetes.io/master"
-  kubelet_node_taints  = "node-role.kubernetes.io/master=:NoSchedule"
-  tectonic_vanilla_k8s = "${var.tectonic_vanilla_k8s}"
+  base_domain              = "${var.tectonic_base_domain}"
+  bootstrap_upgrade_cl     = "${var.tectonic_bootstrap_upgrade_cl}"
+  cluster_name             = "${var.tectonic_cluster_name}"
+  container_images         = "${var.tectonic_container_images}"
+  etcd_advertise_name_list = "${data.template_file.etcd_hostname_list.*.rendered}"
+  image_re                 = "${var.tectonic_image_re}"
+  kube_dns_service_ip      = "${module.bootkube.kube_dns_service_ip}"
+  kubelet_cni_bin_dir      = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
+  kubelet_node_label       = "node-role.kubernetes.io/master"
+  kubelet_node_taints      = "node-role.kubernetes.io/master=:NoSchedule"
+  tectonic_vanilla_k8s     = "${var.tectonic_vanilla_k8s}"
 }
 
 module "masters" {
