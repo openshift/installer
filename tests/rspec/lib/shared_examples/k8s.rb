@@ -36,21 +36,22 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
     before(:all) do
       @driver = WebdriverHelpers.start_webdriver
       @login = Login.new(@driver)
-      console_url = @cluster.tectonic_console_url
-      @login.login_page "https://#{console_url}"
+      @console_url = @cluster.tectonic_console_url
     end
 
     after(:all) do
       WebdriverHelpers.stop_webdriver(@driver)
     end
 
-    it 'can login in the tectonic console' do
+    it 'can login in the tectonic console', :ui, retry: 3, retry_wait: 10 do
+      @login.login_page "https://#{@console_url}"
       @login.with(@cluster.tectonic_admin_email, @cluster.tectonic_admin_password)
       expect(@login.success_login?).to be_truthy
       @login.logout
     end
 
-    it 'fail to login with wrong credentials' do
+    it 'fail to login with wrong credentials', :ui, retry: 3, retry_wait: 10 do
+      @login.login_page "https://#{@console_url}"
       @login.with(NameGenerator.generate_fake_email, PasswordGenerator.generate_password)
       expect(@login.fail_to_login?).to be_truthy
     end
