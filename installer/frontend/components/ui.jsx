@@ -353,6 +353,7 @@ class Connect_ extends React.Component {
       child.props.onValue(v);
     }
   }
+
   componentDidMount () {
     const { getDefault } = this.props;
 
