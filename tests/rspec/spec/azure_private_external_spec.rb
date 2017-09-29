@@ -12,6 +12,7 @@ RSpec.describe 'azure-private-external' do
     @curent_env = ENV.clone
     @varfile = TFVarsFile.new(TEST_CLUSTER_CONFIG_FILE)
     ENV['CLUSTER'] ||= NameGenerator.generate(@varfile.prefix)
+    @azure_ssh_key_path = AzureSupport.set_ssh_key_path
     @vpn_vnet = AzureVpn.new(@varfile)
     @vpn_vnet.start
     # Pick up the VNET and resource group created for the VPN

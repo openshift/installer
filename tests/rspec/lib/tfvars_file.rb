@@ -50,6 +50,7 @@ class TFVarsFile
   def method_missing(method_name, *arguments, &block)
     data.fetch(method_name.to_s)
   rescue KeyError
+    return ENV["TF_VAR_#{method_name}"] if ENV.key?("TF_VAR_#{method_name}")
     super
   end
 

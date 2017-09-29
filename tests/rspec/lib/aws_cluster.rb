@@ -7,6 +7,7 @@ require 'jenkins'
 require 'grafiti'
 require 'env_var'
 require 'aws_iam'
+require 'aws_support'
 
 # AWSCluster represents a k8s cluster on AWS cloud provider
 class AwsCluster < Cluster
@@ -15,7 +16,8 @@ class AwsCluster < Cluster
       export_random_region_if_not_defined
       # AWSIAM.assume_role
     end
-
+    @aws_region = tfvars_file.tectonic_aws_region
+    @aws_ssh_key = ENV['TF_VAR_tectonic_aws_ssh_key'] = AwsSupport.create_aws_key_pairs(@aws_region)
     super(tfvars_file)
   end
 
@@ -23,6 +25,27 @@ class AwsCluster < Cluster
     variables = super
     variables['PLATFORM'] = 'aws'
     variables
+  end
+
+  def stop
+    AwsSupport.delete_aws_key_pairs(@aws_ssh_key, @aws_region)
+
+    super
+  end
+
+  def master_ip_address
+    ssh_master_ip = nil
+    Dir.chdir(@build_path) do
+      terraform_state = `terraform state show module.masters.aws_autoscaling_group.masters`.chomp.split("\n")
+      terraform_state.each do |value|
+        attributes = value.split('=')
+        next unless attributes[0].strip.eql?('id')
+        instances_id = AwsSupport.sorted_auto_scaling_instances(attributes[1].strip.chomp, @aws_region)
+        ssh_master_ip = AwsSupport.preferred_instance_ip_address(instances_id[0], @aws_region)
+        break
+      end
+    end
+    ssh_master_ip
   end
 
   def check_prerequisites

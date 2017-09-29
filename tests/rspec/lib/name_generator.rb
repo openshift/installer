@@ -38,4 +38,8 @@ module NameGenerator
   def self.generate_fake_email
     Faker::Internet.email
   end
+
+  def self.generate_short_name
+    "rspec-#{Faker::Internet.user_name(5..8)}"
+  end
 end

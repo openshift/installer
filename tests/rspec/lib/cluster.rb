@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'net/ssh'
 require 'kubectl_helpers'
 require 'securerandom'
 require 'jenkins'
@@ -7,6 +8,9 @@ require 'tfvars_file'
 require 'fileutils'
 require 'name_generator'
 require 'password_generator'
+
+SSH_CMD_BOOTKUBE_DONE = 'systemctl is-active bootkube'
+SSH_CMD_TECTONIC_DONE = 'systemctl is-active tectonic'
 
 # Cluster represents a k8s cluster
 class Cluster
@@ -113,15 +117,34 @@ class Cluster
   end
 
   def wait_til_ready
-    90.times do
+    from = Time.now
+    loop do
       begin
         KubeCTL.run(@kubeconfig, 'cluster-info')
-        return
+        break
       rescue KubeCTL::KubeCTLCmdError
+        elapsed = Time.now - from
+        raise 'kubectl cluster-info never returned with successful error code' if elapsed > 1200 # 20 mins timeout
         sleep 10
       end
     end
+    wait_for_bootstrapping
+  end
 
-    raise 'kubectl cluster-info never returned with successful error code'
+  def wait_for_bootstrapping
+    ssh_master_ip = master_ip_address
+    from = Time.now
+    Net::SSH.start(ssh_master_ip, 'core', forward_agent: true, use_agent: true) do |ssh|
+      loop do
+        bootkube_done = ssh.exec!(SSH_CMD_BOOTKUBE_DONE).exitstatus.zero?
+        tectonic_done = ssh.exec!(SSH_CMD_TECTONIC_DONE).exitstatus.zero?
+        break if bootkube_done && tectonic_done
+        elapsed = Time.now - from
+        puts 'Waiting for bootstrapping to complete...' if (elapsed.round % 5).zero?
+        raise 'timeout waiting for bootstrapping' if elapsed > 1200 # 20 mins timeout
+        sleep 2
+      end
+    end
+    puts 'HOORAY! The cluster is up'
   end
 end

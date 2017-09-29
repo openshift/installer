@@ -18,7 +18,8 @@ module WebdriverHelpers
     driver = Selenium::WebDriver.for :chrome, options: options
     target_size = Selenium::WebDriver::Dimension.new(1920, 1080)
     driver.manage.window.size = target_size
-    driver.manage.timeouts.implicit_wait = 10 # seconds
+    driver.manage.timeouts.implicit_wait = 20 # seconds
+    driver.manage.timeouts.page_load = 300 # seconds
     driver
   end
 

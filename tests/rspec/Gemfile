@@ -10,3 +10,4 @@ gem "chromedriver-helper", '~>1.1.0'
 gem "headless", "~>2.3.1"
 gem "faker", "~>1.8.4"
 gem "bcrypt", "~>3.1.6"
+gem 'aws-sdk', "~> 3"

@@ -2,10 +2,6 @@
 
 require 'cluster'
 require 'azure_support'
-require 'net/ssh'
-
-SSH_CMD_BOOTKUBE_DONE = "journalctl --no-pager -u bootkube | grep -q 'Started Bootstrap a Kubernetes cluster.'"
-SSH_CMD_TECTONIC_DONE = "journalctl --no-pager -u tectonic | grep -q 'Started Bootstrap a Tectonic cluster.'"
 
 # AzureCluster represents a k8s cluster on Azure cloud provider
 #
@@ -13,31 +9,9 @@ class AzureCluster < Cluster
   extend AzureSupport
 
   def initialize(tfvars_file)
-    super(tfvars_file)
     @random_location = AzureSupport.random_location_unless_defined
-  end
-
-  def start
-    super
-    # Wait for bootstrapping to complete
-    wait_for_bootstrapping
-  end
-
-  def wait_for_bootstrapping
-    ssh_ip = master_ip_address
-    from = Time.now
-    Net::SSH.start(ssh_ip, 'core') do |ssh|
-      loop do
-        bootkube_done = ssh.exec!(SSH_CMD_BOOTKUBE_DONE).exitstatus.zero?
-        tectonic_done = ssh.exec!(SSH_CMD_TECTONIC_DONE).exitstatus.zero?
-        break if bootkube_done && tectonic_done
-        elapsed = Time.now - from
-        puts 'Waiting for bootstrapping to complete...' if (elapsed.round % 5).zero?
-        raise 'timeout waiting for bootstrapping' if elapsed > 1200 # 20 mins timeout
-        sleep 2
-      end
-    end
-    puts 'HOORAY! The cluster is up'
+    @azure_ssh_key_path = AzureSupport.set_ssh_key_path unless EnvVar.set?(%w[TF_VAR_tectonic_azure_ssh_key])
+    super(tfvars_file)
   end
 
   def master_ip_address
