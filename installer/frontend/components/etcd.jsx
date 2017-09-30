@@ -76,7 +76,7 @@ export const Etcd = connect(({clusterConfig}) => ({
               <Connect field={ETCD_OPTION}>
                 <Radio name={ETCD_OPTION} value={ETCD_OPTIONS.EXTERNAL} id={ETCD_OPTIONS.EXTERNAL} />
               </Connect>
-              I have my own v3 etcd cluster
+              I have my own etcd v3 cluster
             </label>
             <p className="text-muted wiz-help-text">Your Tectonic cluster will be configured to use an external etcd, which you specify.</p>
           </div>
