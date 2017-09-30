@@ -277,7 +277,7 @@ export class Field extends Node {
     console.info(`finish validating ${this.name} ${isValid}`);
   }
 
-  validationData_ (clusterConfig, syncOnly) {
+  isValid (clusterConfig, syncOnly) {
     const id = this.id;
     const value = _.get(clusterConfig, id);
     const ignore = _.get(clusterConfig, toIgnore(id));
@@ -286,15 +286,7 @@ export class Field extends Node {
       error = _.get(clusterConfig, toAsyncError(id));
     }
 
-    return {value, ignore, error};
-  }
-
-  isValid_ ({ignore, error, value}) {
     return ignore || value !== '' && value !== undefined && _.isEmpty(error);
-  }
-
-  isValid (clusterConfig, syncOnly) {
-    return this.isValid_(this.validationData_(clusterConfig, syncOnly));
   }
 
   inFly (clusterConfig) {
