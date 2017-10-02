@@ -1,5 +1,5 @@
-hash: 0c380a25f159deff7d3bd4be5c511eb248c09f271cea1aaf6c1a485c8d745f74
-updated: 2017-08-16T20:00:11.480418788+02:00
+hash: dde9ab706d49291d0f1461bcedbba326a57b778d15156122adbb5a81f939b7a3
+updated: 2017-09-25T15:43:14.194961165Z
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -43,6 +43,7 @@ imports:
   - private/protocol/restxml
   - private/protocol/xml/xmlutil
   - service/ec2
+  - service/iam
   - service/route53
   - service/route53domains
   - service/s3
@@ -125,7 +126,7 @@ imports:
 - name: github.com/go-ini/ini
   version: 6e4869b434bd001f6983749881c7ead3545887d8
 - name: github.com/go-ole/go-ole
-  version: 085abb85892dc1949567b726dff00fa226c60c45
+  version: 8a4f5c214bfb4475619b8bb7ccbe6fa5c91745f4
   subpackages:
   - oleutil
 - name: github.com/go-openapi/jsonpointer
@@ -193,7 +194,7 @@ imports:
 - name: github.com/hashicorp/go-uuid
   version: 64130c7a86d732268a38cb04cfbaf0cc987fda98
 - name: github.com/hashicorp/go-version
-  version: 03c5bf6be031b6dd45afec16b1cf94fc8938bc77
+  version: fc61389e27c71d120f87031ca8c88a3428f372dd
 - name: github.com/hashicorp/hcl
   version: a4b07c25de5ff55ad3b8936cea69a79a3d95a855
   subpackages:
@@ -266,7 +267,7 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: 281073eb9eb092240d33ef253c404f1cca550309
 - name: github.com/mitchellh/reflectwalk
-  version: 8d802ff4ae93611b807597f639c19f76074df5c6
+  version: 63d60e9d0dbc60cf9164e6510889b0db6683d98c
 - name: github.com/pborman/uuid
   version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
 - name: github.com/pmezard/go-difflib

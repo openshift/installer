@@ -23,7 +23,7 @@ const fields = [
   new Field(ETCD_OPTION, {
     default: ETCD_OPTIONS.PROVISIONED,
   }),
-  makeNodeForm(AWS_ETCDS, value => one2Nine(value) || validate.isOdd(value), {
+  makeNodeForm(AWS_ETCDS, false, value => one2Nine(value) || validate.isOdd(value), {
     dependencies: [ETCD_OPTION],
     ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.PROVISIONED,
   }),
@@ -107,7 +107,7 @@ export const Etcd = connect(({clusterConfig}) => ({
     {isAWS && etcdOption === ETCD_OPTIONS.PROVISIONED && <hr />}
     {isAWS && etcdOption === ETCD_OPTIONS.PROVISIONED &&
       <div className="row form-group col-xs-12">
-        <DefineNode type={AWS_ETCDS} max={9} />
+        <DefineNode type={AWS_ETCDS} max={9} withIamRole={false} />
       </div>
     }
   </div>

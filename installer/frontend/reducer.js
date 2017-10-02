@@ -29,6 +29,7 @@ const DEFAULT_AWS = {
   availableVpcs: UNLOADED_AWS_VALUE,
   availableVpcSubnets: UNLOADED_AWS_VALUE,
   availableSsh: UNLOADED_AWS_VALUE,
+  availableIamRoles: UNLOADED_AWS_VALUE,
   availableRegions: UNLOADED_AWS_VALUE,
   availableKms: UNLOADED_AWS_VALUE,
   availableR53Zones: UNLOADED_AWS_VALUE,

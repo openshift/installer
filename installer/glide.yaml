@@ -7,6 +7,7 @@ import:
   - aws/credentials
   - aws/session
   - service/ec2
+  - service/iam
 - package: github.com/go-ini/ini
   version: 6e4869b434bd001f6983749881c7ead3545887d8
 - package: github.com/jmespath/go-jmespath
