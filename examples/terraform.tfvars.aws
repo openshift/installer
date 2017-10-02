@@ -18,6 +18,12 @@ tectonic_admin_password = ""
 // Example: `[ { key = "foo", value = "bar", propagate_at_launch = true } ]`
 // tectonic_autoscaling_group_extra_tags = ""
 
+// (optional) Unique name under which the Amazon S3 bucket will be created. Bucket name must start with a lower case name and is limited to 63 characters.
+// The Tectonic Installer uses the bucket to store tectonic assets and kubeconfig.
+// 
+// If name is not provided the installer will construct the name using "tectonic_cluster_name", current AWS region and "tectonic_base_domain"
+// tectonic_aws_assets_s3_bucket_name = ""
+
 // Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
 tectonic_aws_etcd_ec2_type = "t2.medium"
 
