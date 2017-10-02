@@ -107,7 +107,7 @@ export const Etcd = connect(({clusterConfig}) => ({
     {isAWS && etcdOption === ETCD_OPTIONS.PROVISIONED && <hr />}
     {isAWS && etcdOption === ETCD_OPTIONS.PROVISIONED &&
       <div className="row form-group col-xs-12">
-        <DefineNode type={AWS_ETCDS} name="etcd" withoutTitle={true} max={9} />
+        <DefineNode type={AWS_ETCDS} max={9} />
       </div>
     }
   </div>
