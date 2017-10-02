@@ -48,7 +48,7 @@ module.exports = {
   'AWS: Submit': client => {
     const submitPage = client.page.submitPage();
     submitPage.click('@manuallyBoot');
-    submitPage.expect.element('a[href="/terraform/assets"]').to.be.visible.before(30000);
+    submitPage.expect.element('a[href="/terraform/assets"]').to.be.visible.before(120000);
     client.getCookie('tectonic-installer', result => {
       tfvarsUtil.returnTerraformTfvars(client.launch_url, result.value, (err, actualJson) => {
         if (err) {
