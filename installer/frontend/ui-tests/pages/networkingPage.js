@@ -1,3 +1,5 @@
+const networkConfigurationPage = require('./networkConfigurationPage');
+
 const pageCommands = {
   testCidrInputs(json) {
     this.setField('#serviceCIDR', json.serviceCIDR);
@@ -26,6 +28,8 @@ const pageCommands = {
     this.expectValidationErrorContains('AWS subnets must be between /16 and /28');
     this.expect.element('@alertErrorTitle').text.to.equal('Pod range too small');
     this.expect.element('@alertWarningTitle').to.not.be.present;
+
+    networkConfigurationPage.testDockerBridgeValidation(this);
 
     this.setField('#podCIDR', json.podCIDR);
     this.expectNoValidationError();

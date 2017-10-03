@@ -19,6 +19,23 @@ import {
   SERVICE_CIDR,
 } from '../cluster-config';
 
+const DockerBridgeWarning = connect(
+  ({clusterConfig}) => ({podCidr: clusterConfig[POD_CIDR]})
+)(({podCidr}) => {
+  if (!validate.CIDR(podCidr)) {
+    const ip = podCidr.split('/')[0];
+    const octets = ip.split('.').map(octet => parseInt(octet, 10));
+    if ((ip.startsWith('172.') && 17 <= octets[1] && octets[1] <= 31) ||
+        (ip.startsWith('192.168.') && octets[2] <= 15)) {
+      return <Alert>
+        <b>Pod range may conflict with Docker Bridge subnet</b><br />
+        Docker Bridge may use any IP range from 172.17-31.x.x or 192.168.0-15.x.
+      </Alert>;
+    }
+  }
+  return null;
+});
+
 const PodRangeWarning = connect(
   ({clusterConfig: cc}) => {
     let nodes;
@@ -71,6 +88,7 @@ export const KubernetesCIDRs = () => <div className="row form-group">
     <h4>Kubernetes</h4>
     <CIDRRow name="Pod Range" field={POD_CIDR} placeholder={DEFAULT_POD_CIDR} />
     <CIDRRow name="Service Range" field={SERVICE_CIDR} placeholder={DEFAULT_SERVICE_CIDR} />
+    <DockerBridgeWarning />
     <PodRangeWarning />
   </div>
 </div>;
