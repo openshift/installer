@@ -24,8 +24,6 @@ spec:
         k8s-app: kube-controller-manager
         pod-anti-affinity: kube-controller-manager-${kubernetes_version}
         tectonic-operators.coreos.com/managed-by: kube-version-operator
-      annotations:
-        scheduler.alpha.kubernetes.io/critical-pod: ""
     spec:
       affinity:
         podAntiAffinity:
@@ -74,8 +72,6 @@ spec:
         runAsNonRoot: true
         runAsUser: 65534
       tolerations:
-      - key: "CriticalAddonsOnly"
-        operator: "Exists"
       - key: "node-role.kubernetes.io/master"
         operator: "Exists"
         effect: "NoSchedule"
