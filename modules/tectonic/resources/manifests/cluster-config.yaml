@@ -4,10 +4,10 @@ metadata:
   name: cluster-config
   namespace: tectonic-system
 data:
-  tuo-config: |
+  tuo-config:
     apiVersion: v1
     kind: ClusterConfig
-    identityConfig: |
+    identityConfig:
       adminEmail: ${admin_email}
       adminPasswordHash: ${admin_password_hash}
       adminUserID: ${admin_user_id}
@@ -15,12 +15,12 @@ data:
       consoleSecret: ${console_secret}
       kubectlClientID: ${kubectl_client_id}
       kubectlSecret: ${kubectl_secret}
-    ingressConfig: |
+    ingressConfig:
       consoleBaseHost: ${console_base_host}
       ingressKind: ${ingress_kind}
-    statsEmitterConfig: |
+    statsEmitterConfig:
       statsURL: ${stats_url}
-    tectonicConfigMap: |
+    tectonicConfigMap:
       baseAddress: ${base_address}
       certificatesStrategy: ${certificates_strategy}
       clusterID: ${cluster_id}
@@ -29,3 +29,9 @@ data:
       installerPlatform: ${platform}
       kubeAPIserverURL: ${kube_apiserver_url}
       tectonicVersion: ${tectonic_version}
+  addon-config:
+      apiVersion: v1
+      kind: AddonConfig
+      heapsterConfig:
+      dnsConfig:
+          clusterIP: ${kube_dns_service_ip}
