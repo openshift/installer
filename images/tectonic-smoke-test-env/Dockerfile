@@ -1,6 +1,6 @@
 FROM ruby:2.4-slim
 
-ENV TERRAFORM_VERSION="v0.10.7"
+ENV TERRAFORM_VERSION="0.10.7"
 
 COPY ./tests/rspec/Gemfile* /tmp/app/
 
