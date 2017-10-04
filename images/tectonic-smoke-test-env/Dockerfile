@@ -1,6 +1,6 @@
 FROM ruby:2.4-slim
 
-ENV TERRAFORM_VERSION="v0.10.4-coreos.1"
+ENV TERRAFORM_VERSION="v0.10.7"
 
 COPY ./tests/rspec/Gemfile* /tmp/app/
 
@@ -17,7 +17,7 @@ RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s
     mv ./kubectl /bin/kubectl
 
 # Install Terraform
-RUN curl -L https://github.com/coreos/terraform/releases/download/${TERRAFORM_VERSION}/linux_amd64.zip | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
+RUN curl -L https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
 
 # Install Chrome for installer gui tests
 # Use Chrome beta because v60 or higher is needed for headless mode

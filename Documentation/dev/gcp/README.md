@@ -4,7 +4,7 @@ Use this guide to manually install a Tectonic cluster on a GCP account.
 
 ## Prerequsities
 
-- **Terraform:** >= v0.10.4
+- **Terraform:** >= v0.10.7
 - **DNS**: Ensure that the DNS zone is already created and available in [Cloud DNS](https://console.cloud.google.com/net-services/dns) for the account. For example if the `tectonic_base_domain` is set to `kube.example.com` a Cloud DNS zone must exist with the nameservers configured for that domain.
 Tectonic Account: Register for a Tectonic Account, which is free for up to 10 nodes. You must provide the cluster license and pull secret during installation.
 - **Tectonic Account** - Register for a [Tectonic Account](https://coreos.com/tectonic), which is free for up to 10 nodes. You must provide the cluster license and pull secret during installation.

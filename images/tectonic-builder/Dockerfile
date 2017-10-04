@@ -42,7 +42,7 @@ RUN chmod 777 -R /go
 
 ### Install Shellcheck, Terraform, NodeJS and Yarn
 ENV SHELLCHECK_VERSION="v0.4.6"
-ENV TERRAFORM_VERSION="v0.10.4-coreos.1"
+ENV TERRAFORM_VERSION="v0.10.7"
 ENV NODE_VERSION="v8.1.2"
 ENV YARN_VERSION="v0.24.6"
 ENV MATCHBOXVERSION="v0.6.1"
@@ -59,7 +59,7 @@ RUN apt-get update && \
 # Install Terraform
 # TERRAFORM_URL enables us to build the upstream-terraform Tectonic builder
 # image (See README.md/##Upstream-and-CoreOS-Terraform)
-ARG TERRAFORM_URL=https://github.com/coreos/terraform/releases/download/${TERRAFORM_VERSION}/linux_amd64.zip
+ARG TERRAFORM_URL=https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 RUN curl -L ${TERRAFORM_URL} | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
 
 # Install NodeJS
