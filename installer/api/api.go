@@ -92,10 +92,10 @@ func New(config *Config) (http.Handler, error) {
 	// handlers_tectonic.go
 	mux.Handle("/tectonic/status", logRequests(httpHandler("POST", ctx, tectonicStatusHandler)))
 	mux.Handle("/tectonic/kubeconfig", logRequests(httpHandler("GET", ctx, tectonicKubeconfigHandler)))
+	mux.Handle("/tectonic/facts", logRequests(httpHandler("GET", ctx, tectonicFactsHandler)))
 
 	// handlers_containerlinux.go
 	mux.Handle("/containerlinux/images/matchbox", logRequests(httpHandler("GET", ctx, listMatchboxImagesHandler)))
-	mux.Handle("/containerlinux/images/amis", logRequests(httpHandler("GET", ctx, listAMIImagesHandler)))
 
 	//handlers_latest_release.go
 	mux.Handle("/releases/latest", logRequests(httpHandler("GET", ctx, latestReleaseHandler)))

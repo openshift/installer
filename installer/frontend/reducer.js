@@ -130,6 +130,13 @@ const reducersTogether = combineReducers({
       });
       return object.toJS();
     }
+
+    // Adds a value at a given path or no-op if a value already for the path
+    case configActionTypes.ADD_IN:
+      return _.isEmpty(_.get(state, action.payload.path))
+        ? setIn(state, action.payload.path, action.payload.value)
+        : state;
+
     case configActionTypes.SET_IN:
       return setIn(state, action.payload.path, action.payload.value);
 

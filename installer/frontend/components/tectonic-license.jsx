@@ -1,91 +1,124 @@
+import _ from 'lodash';
 import React from 'react';
 import jwt_decode from 'jwt-decode';
 
 import { validate } from '../validate';
-import { FileArea, Connect } from './ui';
 import { PULL_SECRET, TECTONIC_LICENSE, LICENSING } from '../cluster-config';
 import { Field, Form } from '../form';
+import { readFile } from '../readfile';
 
-const TECTONIC_LICENSE_PLACEHOLDER = `Raw formatted license:
+import { Alert } from './alert';
+import { Connect } from './ui';
 
-06jd9rqTAr1DZWs/ssB0k128C1nfcq0v4yqL4PpDLXg...`;
+// eslint-disable-next-line react/jsx-no-target-blank
+const accountLink = <a href="https://account.coreos.com" rel="noopener" target="_blank">account.coreos.com</a>;
 
-const PULL_SECRET_PLACEHOLDER = `{
-  "auths": {
-    "quay.io": {
-      "auth": "Y29yZW9zK3RlY190ZXN0aW5nOmZha2VwYXNzd29yZAo=",
-      "email": "user@example.com"
-    }
-  }
-}...`;
-
-const TectonicLicenseField = new Field(TECTONIC_LICENSE, {
+const licenseField = new Field(TECTONIC_LICENSE, {
   default: '',
   validator: token => {
     const err = validate.nonEmpty(token);
     if (err) {
-      return err;
+      return <p>{err}</p>;
     }
     try {
       const decoded = jwt_decode(token, {header: false});
       if (!decoded.license) {
-        return 'Error parsing license.';
+        return <p>Error parsing license.</p>;
       }
     } catch (unused) {
-      return 'Error parsing license. Please make sure you pasted the "raw format" license from account.coreos.com.';
+      return <div>
+        <b>Error parsing license</b>
+        <p>Please make sure you upload the "raw format" license from {accountLink}.</p>
+      </div>;
     }
     return;
   },
 });
 
-const PullSecretField = new Field(PULL_SECRET, {
+const pullSecretField = new Field(PULL_SECRET, {
   default: '',
+  // eslint-disable-next-line react/display-name
   validator: secret => {
     const err = validate.nonEmpty(secret);
     if (err) {
-      return err;
+      return <p>{err}</p>;
     }
     try {
       JSON.parse(secret);
     } catch (unused) {
-      return 'Pull secret must be valid JSON.';
+      return <div>
+        <b>Error parsing pull secret</b>
+        <p>Please make sure you upload the pull secret from {accountLink} in a valid JSON format.</p>
+      </div>;
     }
     return;
   },
 });
 
-export const licenseForm = new Form(LICENSING, [TectonicLicenseField, PullSecretField]);
+new Form(LICENSING, [licenseField, pullSecretField]);
 
-export const TectonicLicense = () =>
-  <div>
-    <div className="row form-group">
-      <div className="col-xs-3">
-        <label htmlFor="tectonicLicense">CoreOS License</label>
-      </div>
-      <div className="col-xs-9">
-        <Connect field={TECTONIC_LICENSE}>
-          <FileArea id="tectonicLicense" placeholder={TECTONIC_LICENSE_PLACEHOLDER} uploadButtonLabel='Upload "tectonic-license.txt"' />
-        </Connect>
-        {/* eslint-disable react/jsx-no-target-blank */}
-        <p className="text-muted">Input "CoreOS License" from <a href="https://account.coreos.com" rel="noopener" target="_blank">account.coreos.com</a>.</p>
-        {/* eslint-enable react/jsx-no-target-blank */}
-      </div>
-    </div>
+const FileInput = ({id, onValue}) => {
+  const upload = e => {
+    readFile(e.target.files.item(0))
+      .then(onValue)
+      .catch(msg => console.error(msg));
 
-    <div className="row form-group">
-      <div className="col-xs-3">
-        <label htmlFor={PULL_SECRET}>Pull Secret</label>
-      </div>
-      <div className="col-xs-9">
-        <Connect field={PULL_SECRET}>
-          <FileArea id={PULL_SECRET} placeholder={PULL_SECRET_PLACEHOLDER} uploadButtonLabel='Upload "config.json"' />
-        </Connect>
-        {/* eslint-disable react/jsx-no-target-blank */}
-        <p className="text-muted">Input "Pull Secret" from <a href="https://account.coreos.com" rel="noopener" target="_blank">account.coreos.com</a>.</p>
-        {/* eslint-enable react/jsx-no-target-blank */}
-      </div>
-    </div>
+    // Reset value so that onChange fires if you pick the same file again.
+    e.target.value = null;
+  };
+  return <input type="file" id={id} onChange={upload} style={{display: 'none'}} />;
+};
 
-    <licenseForm.Errors />
-
+const FileUpload = ({buttonTitle, description, field, id, onValue, value}) => {
+  const invalid = field.validator(value);
+  if (invalid) {
+    return <div style={{marginTop: 8}}>
+      <i className="fa fa-ban wiz-error-fg"></i>&nbsp;&nbsp;Invalid {description}
+      <Alert noIcon severity="error">
+        {invalid}
+        <label className="btn btn-flat btn-warning">
+          {buttonTitle}
+          <FileInput id={id} onValue={onValue} />
+        </label>
+      </Alert>
+    </div>;
+  }
+  return <div style={{marginTop: 8}}>
+    <i className="fa fa-check-circle wiz-success-fg"></i>&nbsp;&nbsp;Valid {description}
+    <label style={{fontSize: 14, margin: '0 0 0 15px'}}>
+      <a>Edit</a>
+      <FileInput id={id} onValue={onValue} />
+    </label>
+    <p className="text-muted">Your "{_.startCase(description)}" from {accountLink} has been included.</p>
   </div>;
+};
+
+const License = () => <Connect field={TECTONIC_LICENSE}>
+  <FileUpload buttonTitle={'Upload "coreos-license.txt"'} description="CoreOS license" field={licenseField} />
+</Connect>;
+
+const Secret = () => <Connect field={PULL_SECRET}>
+  <FileUpload buttonTitle={'Upload "config.json"'} description="pull secret" field={pullSecretField} />
+</Connect>;
+
+export const TectonicLicense = () => <div>
+  <div className="row form-group">
+    <div className="col-xs-3">
+      <label htmlFor={TECTONIC_LICENSE}>CoreOS License</label>
+    </div>
+    <div className="col-xs-9">
+      <License />
+    </div>
+  </div>
+  <div className="row form-group">
+    <div className="col-xs-3">
+      <label htmlFor={PULL_SECRET}>Pull Secret</label>
+    </div>
+    <div className="col-xs-9">
+      <Secret />
+    </div>
+  </div>
+</div>;
+
+TectonicLicense.canNavigateForward = ({clusterConfig: cc}) => !licenseField.validator(cc[TECTONIC_LICENSE]) &&
+  !pullSecretField.validator(cc[PULL_SECRET]);

@@ -40,13 +40,3 @@ func listMatchboxImagesHandler(w http.ResponseWriter, req *http.Request, _ *Cont
 
 	return writeJSONResponse(w, req, http.StatusOK, response)
 }
-
-// listAMIImagesHandler returns the list of available Container Linux AMIs.
-func listAMIImagesHandler(w http.ResponseWriter, req *http.Request, _ *Context) error {
-	amis, err := containerlinux.ListAMIImages(containerLinuxListTimeout)
-	if err != nil {
-		return newInternalServerError("Failed to query available images: %s", err)
-	}
-
-	return writeJSONResponse(w, req, http.StatusOK, amis)
-}

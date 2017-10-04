@@ -6,6 +6,7 @@ export const awsActionTypes = {
 };
 
 export const configActionTypes = {
+  ADD_IN: 'CONFIG_ACTION_ADD_IN',
   APPEND: 'CONFIG_ACTION_APPEND',
   REMOVE_AT: 'CONFIG_ACTION_REMOVE_AT',
   SET: 'CONFIG_ACTION_SIMPLE_SET',
@@ -64,6 +65,7 @@ export const FORMS = {};
 
 // TODO (ggreer) standardize on order of params. is dispatch first or last?
 export const configActions = {
+  addIn: (path, value, dispatch) => dispatch({payload: {path, value}, type: configActionTypes.ADD_IN}),
   set: (payload, dispatch) => dispatch({type: configActionTypes.SET, payload}),
   setIn: (path, value, dispatch) => dispatch({payload: {path, value}, type: configActionTypes.SET_IN}),
   batchSetIn: (dispatch, payload) => {
