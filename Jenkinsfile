@@ -31,8 +31,8 @@ def quay_creds = [
   )
 ]
 
-def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.39'
-def tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v5.4'
+def default_builder_image = 'quay.io/coreos/tectonic-builder:v1.40-upstream-terraform'
+def tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v5.6'
 
 pipeline {
   agent none
