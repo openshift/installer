@@ -1,6 +1,5 @@
 {
     "tectonic_azure_private_cluster": "false",
-    "tectonic_base_domain": "",
     "tectonic_cluster_cidr": "10.2.0.0/16",
     "tectonic_container_linux_channel": "stable",
     "tectonic_etcd_count": "0",
