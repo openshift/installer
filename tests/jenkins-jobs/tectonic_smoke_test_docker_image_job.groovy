@@ -32,7 +32,7 @@ job("builders/tectonic-smoke-env-docker-image") {
 
 
   steps {
-    def cmd = """#!/bin/bash -e
+    def cmd = """#!/bin/bash -ex
 export TECTONIC_SMOKE_IMAGE=quay.io/coreos/tectonic-smoke-test-env:\${TECTONIC_SMOKE_TAG}
 docker build -t \${TECTONIC_SMOKE_IMAGE} -f images/tectonic-smoke-test-env/Dockerfile .
 
