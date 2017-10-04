@@ -289,17 +289,3 @@ def runRSpecTest(testFilePath, dockerArgs) {
     }
   }
 }
-
-
-def notifySlack() {
-  def link = "<${env.BUILD_URL}>"
-  def msg = "Tectonic Installer failed to destroy azure resources (${link})"
-  slackSend(
-    channel: '#tectonic-installer-ci',
-    color: "warning",
-    message: msg,
-    teamDomain: 'coreos',
-    tokenCredentialId: 'tectonic-slack-token',
-    failOnError: true,
-  )
-}
