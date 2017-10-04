@@ -97,6 +97,7 @@ module "tectonic" {
 
   base_address       = "${var.tectonic_metal_ingress_domain}"
   kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:443"
+  service_cidr       = "${var.tectonic_service_cidr}"
 
   # Address of the Tectonic console (without protocol)
   container_images      = "${var.tectonic_container_images}"

@@ -100,6 +100,7 @@ module "tectonic" {
 
   base_address       = "${module.vnet.ingress_fqdn}"
   kube_apiserver_url = "https://${module.vnet.api_fqdn}:443"
+  service_cidr       = "${var.tectonic_service_cidr}"
 
   # Platform-independent variables wiring, do not modify.
   container_images      = "${var.tectonic_container_images}"

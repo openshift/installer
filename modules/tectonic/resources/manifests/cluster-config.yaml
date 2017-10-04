@@ -4,7 +4,7 @@ metadata:
   name: cluster-config
   namespace: tectonic-system
 data:
-  tuo-config:
+  tuo-config: |
     apiVersion: v1
     kind: ClusterConfig
     identityConfig:
@@ -29,7 +29,7 @@ data:
       installerPlatform: ${platform}
       kubeAPIserverURL: ${kube_apiserver_url}
       tectonicVersion: ${tectonic_version}
-  addon-config:
+  addon-config: |
       apiVersion: v1
       kind: AddonConfig
       heapsterConfig:

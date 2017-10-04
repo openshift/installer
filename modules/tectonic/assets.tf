@@ -96,7 +96,8 @@ resource "template_dir" "tectonic" {
     certificates_strategy = "${var.ca_generated == "true" ? "installerGeneratedCA" : "userProvidedCA"}"
     identity_api_service  = "${var.identity_api_service}"
 
-    image_re = "${var.image_re}"
+    image_re            = "${var.image_re}"
+    kube_dns_service_ip = "${cidrhost(var.service_cidr, 10)}"
   }
 }
 

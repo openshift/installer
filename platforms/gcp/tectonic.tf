@@ -115,6 +115,7 @@ module "tectonic" {
 
   base_address       = "${module.dns.kube_ingress_fqdn}"
   kube_apiserver_url = "https://${module.dns.kube_apiserver_fqdn}:443"
+  service_cidr       = "${var.tectonic_service_cidr}"
 
   # Platform-independent variables wiring, do not modify.
   container_images      = "${var.tectonic_container_images}"
@@ -124,8 +125,8 @@ module "tectonic" {
   license_path     = "${var.tectonic_vanilla_k8s ? "/dev/null" : pathexpand(var.tectonic_license_path)}"
   pull_secret_path = "${var.tectonic_vanilla_k8s ? "/dev/null" : pathexpand(var.tectonic_pull_secret_path)}"
 
-  admin_email         = "${var.tectonic_admin_email}"
-  admin_password_hash = "${var.tectonic_admin_password_hash}"
+  admin_email    = "${var.tectonic_admin_email}"
+  admin_password = "${var.tectonic_admin_password}"
 
   update_channel = "${var.tectonic_update_channel}"
   update_app_id  = "${var.tectonic_update_app_id}"
