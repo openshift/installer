@@ -154,7 +154,7 @@ vendor-smoke: $(TOP_DIR)/tests/smoke/glide.yaml
 
 .PHONY: e2e-docker-image
 e2e-docker-image: images/kubernetes-e2e/Dockerfile
-	  @E2E_IMAGE="quay.io/coreos/kube-conformance:$$(grep "ARG E2E_REF" $< | cut -d "=" -f2 | sed 's/+/_/') \
+	  @export E2E_IMAGE="quay.io/coreos/kube-conformance:$$(grep 'ARG E2E_REF' $< | cut -d '=' -f2 | sed 's/+/_/')"; \
 	  echo "Building E2E image $${E2E_IMAGE}"; \
 	  docker build -t $${E2E_IMAGE} $(dir $<)
 
