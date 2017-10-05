@@ -7,8 +7,8 @@ export PLATFORM=aws
 export CLUSTER="tf-${PLATFORM}-${BUILD_ID}"
 export TF_VAR_tectonic_pull_secret_path=${TF_VAR_tectonic_pull_secret_path}
 export TF_VAR_tectonic_license_path=${TF_VAR_tectonic_license_path}
-export TECTONIC_BUILDER=quay.io/coreos/tectonic-builder:v1.39
-export KUBE_CONFORMANCE=quay.io/coreos/kube-conformance:v1.7.5_coreos.0
+export TECTONIC_BUILDER=quay.io/coreos/tectonic-builder:v1.41
+export KUBE_CONFORMANCE=quay.io/coreos/kube-conformance:v1.7.5_coreos.0_golang1.9.1
 export TF_VAR_tectonic_base_domain="tectonic.dev.coreos.systems"
 
 # Create an env var file
