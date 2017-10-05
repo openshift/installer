@@ -9,7 +9,7 @@ job("builders/tectonic-builder-docker-image") {
   label 'worker&&ec2'
 
   parameters {
-    stringParam('TERRAFORM_UPSTREAM_URL', '', 'upstream Terraform download url, defaults to CoreOS custom Terraform release (github.com/coreos/terraform)')
+    stringParam('TERRAFORM_UPSTREAM_URL', '', 'upstream Terraform download url, defaults to upstream Terraform release')
     stringParam('TECTONIC_BUILDER_TAG', '', 'Tectonic Builder Docker tag')
     booleanParam('DRY_RUN', true, 'Just build the docker image')
   }
