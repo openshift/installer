@@ -17,6 +17,12 @@ spec:
         k8s-app: tectonic-channel-operator
         tectonic-app-version-name: tectonic-cluster
     spec:
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
       containers:
       - name: tectonic-channel-operator
         image: ${tectonic_channel_operator_image}
