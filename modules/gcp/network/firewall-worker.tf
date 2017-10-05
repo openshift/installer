@@ -74,7 +74,7 @@ resource "google_compute_firewall" "worker-ingress-services" {
 
   allow {
     protocol = "tcp"
-    ports    = ["32000-32767"]
+    ports    = ["30000-32767"]
   }
 
   source_tags = ["tectonic-workers"]

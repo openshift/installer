@@ -87,7 +87,7 @@ resource "google_compute_firewall" "master-ingress-services" {
 
   allow {
     protocol = "tcp"
-    ports    = ["32000-32767"]
+    ports    = ["30000-32767"]
   }
 
   source_tags = ["tectonic-masters"]
