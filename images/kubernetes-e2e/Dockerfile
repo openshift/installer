@@ -1,4 +1,4 @@
-ARG GO_VERSION=1.9
+ARG GO_VERSION=1.9.1
 FROM golang:${GO_VERSION}
 
 # install e2e dependencies
