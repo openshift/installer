@@ -7,18 +7,18 @@ data:
   kvo-config: |
     apiVersion: v1
     kind: KubeVersionOperatorConfig
-    authConfig: |
+    authConfig:
       oidc_client_id: ${oidc_client_id}
       oidc_issuer_url: ${oidc_issuer_url}
       oidc_groups_claim: ${oidc_groups_claim}
       oidc_username_claim: ${oidc_username_claim}
-    cloudProviderConfig: |
+    cloudProviderConfig:
       cloud_config_path: ${cloud_config_path}
       cloud_provider_profile: ${cloud_provider_profile}
-    networkConfig: |
+    networkConfig:
       advertise_address: ${advertise_address}
       cluster_cidr: ${cluster_cidr}
       etcd_servers: ${etcd_servers}
       service_cidr: ${service_cidr}
-    inititalConfig: |
+    initialConfig:
       initial_master_count: ${master_count}
