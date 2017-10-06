@@ -61,7 +61,7 @@ job("triggers/tectonic-installer-pr-trigger") {
       done
 
 
-      curl "https://api.github.com/repos/coreos/tectonic-installer/issues/1839" > pr
+      curl "https://api.github.com/repos/coreos/tectonic-installer/issues/\${ghprbPullId}" > pr
       labels=\$(jq ".labels | .[] | .name" pr)
       labels=\$(echo \$labels | tr -d "\\"" | tr [a-z] [A-Z] | tr - _)
       for label in \$labels
