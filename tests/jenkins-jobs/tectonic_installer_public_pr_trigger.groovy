@@ -8,7 +8,7 @@ job("triggers/tectonic-installer-pr-trigger") {
   concurrentBuild()
 
   logRotator(30, 100)
-  label("master")
+  label("worker && ec2")
 
   properties {
     githubProjectUrl('https://github.com/coreos/tectonic-installer')
@@ -17,6 +17,9 @@ job("triggers/tectonic-installer-pr-trigger") {
   wrappers {
     colorizeOutput()
     timestamps()
+    buildInDocker {
+      image('quay.io/coreos/tectonic-smoke-test-env:v5.6')
+    }
   }
 
   triggers {
@@ -41,15 +44,38 @@ job("triggers/tectonic-installer-pr-trigger") {
       commitStatusContext("Jenkins-Tectonic-Installer")
       buildDescTemplate("#\$pullId: \$abbrTitle")
       blackListLabels("")
-      whiteListLabels("run-smoke-tests")
+      whiteListLabels("")
       includedRegions("")
       excludedRegions("")
     }
   }
 
   steps {
+    shell """#!/bin/bash -ex
+      curl "https://api.github.com/repos/coreos/tectonic-installer/labels" > repoLabels
+      repoLabels=\$(jq ".[] | .name" repoLabels)
+      repoLabels=\$(echo \$repoLabels | tr -d "\\"" | tr [a-z] [A-Z] | tr - _)
+      for label in \$repoLabels
+      do
+        echo \$label=false >> env_vars
+      done
+
+
+      curl "https://api.github.com/repos/coreos/tectonic-installer/issues/1839" > pr
+      labels=\$(jq ".labels | .[] | .name" pr)
+      labels=\$(echo \$labels | tr -d "\\"" | tr [a-z] [A-Z] | tr - _)
+      for label in \$labels
+      do
+        echo \$label=true >> env_vars
+      done
+    """
+
     downstreamParameterized {
-      trigger('tectonic-installer/PR-\${ghprbPullId}')
+      trigger('tectonic-installer/PR-\${ghprbPullId}') {
+        parameters {
+          propertiesFile("env_vars", true)
+        }
+      }
     }
   }
 
