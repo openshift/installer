@@ -99,51 +99,7 @@ PLATFORM=azure CLUSTER=my-cluster make destroy
 
 #### Tests
 
-We have different set of tests:
-
-##### Basic tests
-
-Our basic set of tests includes:
-- Code linting
-- UI tests
-- Backend unit tests
-
-They are run on **every** PR.
-
-##### Smoke tests
-
-In addition to our basic set of tests we have smoke tests. These test the
-Tectonic installer on our supported platforms.
-- AWS
-- Azure
-- Bare metal
-
-They can be run on a PR by applying the *run-smoke-tests* GitHub label.
-
-Further details can be found in our [Jenkinsfile](./Jenkinsfile) which serves as
-the single source of truth.
-
-To run a smoke test locally you need to set the following environment variables:
-
-```
-CLUSTER
-AWS_ACCESS_KEY_ID
-AWS_SECRET_ACCESS_KEY
-TF_VAR_tectonic_aws_ssh_key
-TF_VAR_tectonic_aws_region
-TF_VAR_tectonic_license_path
-TF_VAR_tectonic_pull_secret_path
-TF_VAR_base_domain
-```
-
-Make sure both the *Tectonic pull secret* as well as the *Tectonic license* is
-saved somewhere in the repository folder. Only the repository folder will be
-mounted into the Docker container where the tests will be executed in. The test
-framework will not be able to read any files outside the repository folder
-during test execution.
-
-Once the environment variables are set, run `make tests/smoke
-TEST=spec/aws_spec.rb`.
+See [tests/README.md](tests/README.md).
 
 
 [platform-lifecycle]: Documentation/platform-lifecycle.md
