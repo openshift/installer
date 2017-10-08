@@ -22,7 +22,7 @@ They are run on **every** PR by default.
 ## Running smoke tests on PRs
 
 In addition to our basic set of tests we have smoke tests. These test the
-Tectonic installer on our supported platforms.
+Tectonic installer on our supported platforms:
 - AWS
 - Azure
 - Bare metal
@@ -75,12 +75,6 @@ TF_VAR_tectonic_license_path
 TF_VAR_tectonic_pull_secret_path
 TF_VAR_base_domain
 ```
-
-> Make sure both the *Tectonic pull secret* as well as the *Tectonic license* is
-> saved somewhere in the repository folder. Only the repository folder will be
-> mounted into the Docker container where the tests will be executed in. The test
-> framework will not be able to read any files outside the repository folder
-> during test execution.
 
 ### 2. Launch the tests
 Once the environment variables are set, run `make tests/smoke TEST=aws_spec.rb`.
