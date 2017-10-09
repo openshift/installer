@@ -13,7 +13,7 @@ class Login < BasePage
   PASSWORD_INPUT          = { id: 'password' }.freeze
   SUBMIT_INPUT            = { css: 'body > div.dex-container > div > form > button' }.freeze
   CLUSTER_STATUS_LABEL    = {
-    css: '#content > div > div.co-p-cluster__body > div.row.co-m-nav-title > div > h1 > span'
+    css: '#content > div > div.co-p-cluster__body > div.row.co-m-nav-title > div > h1 > div > span'
   }.freeze
   LOGIN_FAIL              = { css: 'body > div.dex-container > div > form > div.dex-error-box' }.freeze
   ADMIN_SIDE_BAR          = { css: '#sidebar > div > div:nth-child(7) > div' }.freeze
