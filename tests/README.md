@@ -14,6 +14,13 @@ They are run on **every** PR by default.
 - **none**
 
 ### FAQ
+- *I am not part of the `coreos` or `coreos-inc` GitHub organization. Why are
+  the tests not being executed on my changes?*
+
+  Pull requests by external contributors need to be checked before they are
+  tested by our Jenkins setup. Please ask a [maintainer](../MAINTAINERS) to mark
+  your PR via commenting `ok to test`.
+
 - *How do I retrigger the tests?*
 
   Comment with `ok to test` on the PR.
@@ -33,6 +40,11 @@ Tectonic installer on our supported platforms:
   tests against
   
 ### FAQ
+- *I am not able to add labels, what should I do?*
+
+  Please ask one of the repository [maintainers](../MAINTAINERS) to add the
+  labels.
+
 - *How do I retrigger the tests?*
 
   Comment with `ok to test` on the PR.
