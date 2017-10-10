@@ -60,12 +60,8 @@ export const observeClusterStatus = (dispatch, getState) => {
 };
 
 const platformToFunc = {
-  [AWS_TF]: {
-    f: toAWS_TF,
-  },
-  [BARE_METAL_TF]: {
-    f: toBaremetal_TF,
-  },
+  [AWS_TF]: toAWS_TF,
+  [BARE_METAL_TF]: toBaremetal_TF,
 };
 
 let observeInterval;
@@ -82,12 +78,12 @@ export const commitToServer = (dryRun = false, retry = false, opts = {}) => (dis
   const state = getState();
   const request = Object.assign({}, state.clusterConfig, {progress: savable(state)});
 
-  const obj = _.get(platformToFunc, request.platformType);
-  if (!_.isFunction(obj.f)) {
+  const f = platformToFunc[request.platformType];
+  if (!_.isFunction(f)) {
     throw Error(`unknown platform type "${request.platformType}"`);
   }
 
-  const body = obj.f(request, FORMS, opts);
+  const body = f(request, FORMS, opts);
   fetch('/terraform/apply', {
     credentials: 'same-origin',
     method: 'POST',
