@@ -5,7 +5,6 @@ import { AWS_TF } from './platforms';
 const FIELDS = {};
 export default FIELDS;
 
-
 FIELDS[CLUSTER_NAME] = new Field(CLUSTER_NAME, {
   default: '',
   validator: (s = '', CC) => {

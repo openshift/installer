@@ -90,7 +90,6 @@ const usersPage = {
   title: 'Console Login',
 };
 
-
 // Baremetal pages
 const bmClusterInfoPage = {
   path: '/define/cluster-info',
@@ -139,7 +138,6 @@ const bmWorkersPage = {
   component: BM_Workers,
   title: 'Define Workers',
 };
-
 
 // AWS pages
 const awsClusterInfoPage = {

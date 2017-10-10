@@ -34,7 +34,6 @@ const resetCC = () => store.dispatch({
 
 const updateField = (field, value) => store.dispatch(configActions.updateField(field, value));
 
-
 beforeEach(() => store.dispatch(__deleteEverything__()));
 
 test('updates a Field', () => {

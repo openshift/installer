@@ -51,6 +51,7 @@
     "no-eval": 2,
     "no-lone-blocks": 2,
     "no-multi-spaces": 2,
+    "no-multiple-empty-lines": [2, {max: 1, maxBOF: 0, maxEOF: 0}],
     "no-nested-ternary": 2,
     "no-self-compare": 2,
     "no-sequences": 2,
