@@ -10,11 +10,11 @@ const pageCommands = {
     this.setField('#podCIDR', '10.2.0.0/22');
     this.expectNoValidationError();
     this.expect.element('@alertError').to.not.be.present;
-    this.expect.element('@alertWarning').text.to.contain('Pod Range Mostly Assigned');
+    this.expect.element('@alertWarning').text.to.contain('Pod range mostly assigned');
 
     this.setField('#podCIDR', '10.2.0.0/23');
     this.expectNoValidationError();
-    this.expect.element('@alertError').text.to.contain('Pod Range Too Small');
+    this.expect.element('@alertError').text.to.contain('Pod range too small');
     this.expect.element('@alertWarning').to.not.be.present;
 
     this.setField('#podCIDR', json.podCIDR);

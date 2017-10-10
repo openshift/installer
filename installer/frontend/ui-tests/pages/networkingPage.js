@@ -15,16 +15,16 @@ const pageCommands = {
     this.setField('#podCIDR', '10.2.0.0/21');
     this.expectNoValidationError();
     this.expect.element('@alertErrorTitle').to.not.be.present;
-    this.expect.element('@alertWarningTitle').text.to.equal('Pod Range Mostly Assigned');
+    this.expect.element('@alertWarningTitle').text.to.equal('Pod range mostly assigned');
 
     this.setField('#podCIDR', '10.2.0.0/22');
     this.expectNoValidationError();
-    this.expect.element('@alertErrorTitle').text.to.equal('Pod Range Too Small');
+    this.expect.element('@alertErrorTitle').text.to.equal('Pod range too small');
     this.expect.element('@alertWarningTitle').to.not.be.present;
 
     this.setField('#podCIDR', '10.2.0.0/29');
     this.expectValidationErrorContains('AWS subnets must be between /16 and /28');
-    this.expect.element('@alertErrorTitle').text.to.equal('Pod Range Too Small');
+    this.expect.element('@alertErrorTitle').text.to.equal('Pod range too small');
     this.expect.element('@alertWarningTitle').to.not.be.present;
 
     this.setField('#podCIDR', json.podCIDR);

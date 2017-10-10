@@ -46,12 +46,12 @@ const PodRangeWarning = connect(
 
   if (utilization > 1) {
     return <Alert severity="error">
-      <b>Pod Range Too Small</b><br />
+      <b>Pod range too small</b><br />
       {maxNodes === 0 ? 'No nodes' : `Only ${maxNodes} of your ${nodes} ${pluralize('node', nodes)}`} can fit within the pod range, since each node requires a minimum of 256 IP addresses.
     </Alert>;
   }
   return <Alert>
-    <b>Pod Range Mostly Assigned</b><br />
+    <b>Pod range mostly assigned</b><br />
     Only {maxNodes} {pluralize('node', maxNodes)} can fit within the pod range, since each node requires a minimum of 256 IP addresses. You have selected {nodes} {pluralize('node', nodes)}.
   </Alert>;
 });
