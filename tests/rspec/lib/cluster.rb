@@ -24,12 +24,11 @@ class Cluster
     # S3 buckets can only handle lower case names
     @name = ENV['CLUSTER'] || NameGenerator.generate(tfvars_file.prefix)
     @tectonic_admin_email = ENV['TF_VAR_tectonic_admin_email'] || NameGenerator.generate_fake_email
-    @tectonic_admin_password = ENV['tectonic_admin_password'] || PasswordGenerator.generate_password
+    @tectonic_admin_password = ENV['TF_VAR_tectonic_admin_password'] || PasswordGenerator.generate_password
 
     @build_path = File.join(File.realpath('../../'), "build/#{@name}")
     @manifest_path = File.join(@build_path, 'generated')
     @kubeconfig = File.join(manifest_path, 'auth/kubeconfig')
-
     check_prerequisites
     localconfig
     prepare_assets
@@ -67,8 +66,7 @@ class Cluster
       'CLUSTER' => @name,
       'TF_VAR_tectonic_cluster_name' => @name,
       'TF_VAR_tectonic_admin_email' => @tectonic_admin_email,
-      'TF_VAR_tectonic_admin_password' => @tectonic_admin_password,
-      'tectonic_admin_password' => @tectonic_admin_password
+      'TF_VAR_tectonic_admin_password' => @tectonic_admin_password
     }
   end
 
