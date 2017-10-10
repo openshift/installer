@@ -704,7 +704,6 @@ export const ConnectedFieldList = connect(
   (dispatch) => ({removeField: (id, i) => dispatch(configActions.removeField(id, i))})
 )((props) => <InnerFieldList_ {...props} />);
 
-
 export class DropdownMixin extends React.PureComponent {
   constructor(props) {
     super(props);

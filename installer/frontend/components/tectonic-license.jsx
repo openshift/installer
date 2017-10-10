@@ -54,7 +54,6 @@ const PullSecretField = new Field(PULL_SECRET, {
   },
 });
 
-
 export const licenseForm = new Form(LICENSING, [TectonicLicenseField, PullSecretField]);
 
 export const TectonicLicense = () =>

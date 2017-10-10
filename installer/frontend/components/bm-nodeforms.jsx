@@ -94,7 +94,6 @@ const BulkUpload = connect(null, dispatch => ({
       this.props.close();
     }
 
-
     render () {
       const { csv, name, nameCol, macCol } = this.state;
 

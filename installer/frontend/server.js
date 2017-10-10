@@ -112,7 +112,6 @@ export const commitToServer = (dryRun = false, retry = false, opts = {}) => (dis
   });
 };
 
-
 // One-time fetch of AMIs from server, followed by firing appropriate actions
 // Guaranteed not to reject.
 const getAMIs = (dispatch) => {

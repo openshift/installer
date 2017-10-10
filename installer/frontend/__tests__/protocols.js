@@ -60,7 +60,6 @@ beforeEach(() => {
   dispatch = jest.fn();
 });
 
-
 const readExample = example => {
   let json;
   try {
@@ -71,7 +70,6 @@ const readExample = example => {
   }
   return json;
 };
-
 
 /* eslint-disable max-nested-callbacks */
 describe('progress file example', () => {
