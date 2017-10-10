@@ -45,17 +45,17 @@ const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PL
 
 const platformForm = new Form(PLATFORM_FORM, [
   new Field(PLATFORM_TYPE, {
-    default: AWS_TF,
+    default: _.find([AWS_TF, BARE_METAL_TF], isEnabled) || AWS_TF,
     validator: validate.nonEmpty,
-  })], {
+  }),
+], {
   validator: (data, cc) => {
     const platform = cc[PLATFORM_TYPE];
     if (!isSupported(platform)) {
       return `${PLATFORM_NAMES[platform]} not supported for GUI`;
     }
   },
-}
-);
+});
 
 const platformOptions = [];
 _.each(optGroups, optgroup => {
