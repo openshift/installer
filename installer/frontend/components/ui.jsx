@@ -752,20 +752,18 @@ export class Dropdown extends DropdownMixin {
     const {active} = this.state;
     const {items, header} = this.props;
 
-    const children = _.map(items, (href, key) => {
-      return <li className="tectonic-dropdown-menu-item" key={key}>
-        <a className="tectonic-dropdown-menu-item__link" href={href} key={key} rel="noopener" target="_blank">
-          {key}
-        </a>
+    const children = _.map(items, (href, title) => {
+      return <li className="tectonic-dropdown-menu-item" key={title}>
+        <a className="tectonic-dropdown-menu-item__link" href={href} rel="noopener" target="_blank">{title}</a>
       </li>;
     });
 
     return (
-      <div ref={el => this.dropdownElement = el}>
-        <div className="dropdown" onClick={this.toggle}>
-          <a className="tectonic-dropdown-menu-title">{header}&nbsp;&nbsp;<i className="fa fa-angle-down" aria-hidden="true"></i></a>
-          <ul className="dropdown-menu tectonic-dropdown-menu" style={{display: active ? 'block' : 'none'}}>{children}</ul>
-        </div>
+      <div ref={el => this.dropdownElement = el} className="dropdown" onClick={this.toggle}>
+        <a className="tectonic-dropdown-menu-title">{header}&nbsp;&nbsp;<i className="fa fa-angle-down"></i></a>
+        <ul className="dropdown-menu tectonic-dropdown-menu" style={{display: active ? 'block' : 'none'}}>
+          {children}
+        </ul>
       </div>
     );
   }
