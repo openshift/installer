@@ -82,6 +82,7 @@ pipeline {
       }
       steps {
         node('worker && ec2') {
+          forcefullyCleanWorkspace()
           withDockerContainer(params.builder_image) {
             ansiColor('xterm') {
               checkout scm
@@ -128,6 +129,7 @@ pipeline {
         parallel (
           "IntegrationTest AWS Installer Gui": {
             node('worker && ec2') {
+              forcefullyCleanWorkspace()
               withCredentials(creds) {
                 withDockerContainer(params.builder_image) {
                   ansiColor('xterm') {
@@ -145,6 +147,7 @@ pipeline {
           },
           "IntegrationTest Baremetal Installer Gui": {
             node('worker && ec2') {
+              forcefullyCleanWorkspace()
               withCredentials(creds) {
                 withDockerContainer(image: params.builder_image, args: '-u root') {
                   ansiColor('xterm') {
@@ -249,6 +252,7 @@ pipeline {
       }
       steps {
         node('worker && ec2') {
+          forcefullyCleanWorkspace()
           withCredentials(quay_creds) {
             ansiColor('xterm') {
               unstash 'repository'
@@ -267,10 +271,26 @@ pipeline {
   }
 }
 
+def forcefullyCleanWorkspace() {
+  return withDockerContainer(
+    image: tectonic_smoke_test_env_image,
+    args: '-u root'
+  ) {
+    ansiColor('xterm') {
+      sh """#!/bin/bash -ex
+        if [ -d "\$WORKSPACE" ]
+        then
+          rm -rfv \$WORKSPACE/*
+        fi
+      """
+    }
+  }
+}
 
 def runRSpecTest(testFilePath, dockerArgs) {
   return {
     node('worker && ec2') {
+      forcefullyCleanWorkspace()
       withCredentials(creds) {
         withDockerContainer(
             image: tectonic_smoke_test_env_image,
