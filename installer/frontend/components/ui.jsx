@@ -335,7 +335,7 @@ const stateToProps = ({clusterConfig, dirty}, {field}) => ({
 });
 
 const dispatchToProps = (dispatch, {field}) => ({
-  setField: (path, value, invalid) => dispatch(configActions.updateField(path, value, invalid)),
+  updateField: (path, value, invalid) => dispatch(configActions.updateField(path, value, invalid)),
   makeDirty: () => markIDDirty(dispatch, field),
   makeClean: () => dispatch({type: dirtyActionTypes.CLEAN, payload: field }),
   refreshExtraData: () => dispatch(configActions.refreshExtraData(field)),
@@ -345,10 +345,10 @@ const dispatchToProps = (dispatch, {field}) => ({
 
 class Connect_ extends React.Component {
   handleValue (v) {
-    const { children, field, setField } = this.props;
+    const { children, field, updateField } = this.props;
     const child = React.Children.only(children);
 
-    setField(field, v);
+    updateField(field, v);
     if (child.props.onValue) {
       child.props.onValue(v);
     }
@@ -557,14 +557,7 @@ const stateToIsDeselected = ({clusterConfig}, {field}) => {
 
 export const Deselect = connect(
   stateToIsDeselected,
-  dispatch => ({
-    setField: (k, v) => {
-      dispatch({
-        type: configActionTypes.SET_IN,
-        payload: {value: v, path: k},
-      });
-    },
-  })
+  dispatch => ({setField: (k, v) => configActions.setIn(k, v, dispatch)})
 )(({field, isDeselected, setField}) => <span className="deselect">
   <CheckBox id={field} value={!isDeselected} onValue={v => setField(field, !v)} />
 </span>);
