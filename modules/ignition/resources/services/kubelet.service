@@ -36,7 +36,7 @@ ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --cluster-dns=${cluster_dns_ip} \
   --cluster-domain=cluster.local \
   --client-ca-file=/etc/kubernetes/ca.crt \
-  ${cloud_provider} \
+  --cloud-provider=${cloud_provider} \
   ${cloud_provider_config} \
   --anonymous-auth=false
 
