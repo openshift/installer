@@ -1,3 +1,10 @@
+module "container_linux" {
+  source = "../../modules/container_linux"
+
+  channel = "${var.tectonic_container_linux_channel}"
+  version = "${var.tectonic_container_linux_version}"
+}
+
 // Install CoreOS to disk
 resource "matchbox_group" "coreos_install" {
   count   = "${length(var.tectonic_metal_controller_names) + length(var.tectonic_metal_worker_names)}"
@@ -9,8 +16,8 @@ resource "matchbox_group" "coreos_install" {
   }
 
   metadata {
-    coreos_channel     = "${var.tectonic_cl_channel}"
-    coreos_version     = "${var.tectonic_metal_cl_version}"
+    coreos_channel     = "${var.tectonic_container_linux_channel}"
+    coreos_version     = "${module.container_linux.version}"
     ignition_endpoint  = "${var.tectonic_metal_matchbox_http_url}/ignition"
     baseurl            = "${var.tectonic_metal_matchbox_http_url}/assets/coreos"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"

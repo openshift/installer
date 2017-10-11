@@ -15,12 +15,13 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_ca_key | (optional) The content of the PEM-encoded CA key, used to generate Tectonic Console's server certificate. This field is mandatory if `tectonic_ca_cert` is set. | string | `` |
 | tectonic_ca_key_alg | (optional) The algorithm used to generate tectonic_ca_key. The default value is currently recommended. This field is mandatory if `tectonic_ca_cert` is set. | string | `RSA` |
 | tectonic_calico_network_policy | (optional) [ALPHA] If set to true, calico network policy support will be deployed. WARNING: Enabling an alpha feature means that future updates may become unsupported. This should only be enabled on clusters that are meant to be short-lived to begin validating the alpha feature. | string | `false` |
-| tectonic_cl_channel | (optional) The Container Linux update channel.<br><br>Examples: `stable`, `beta`, `alpha` | string | `stable` |
 | tectonic_cluster_cidr | (optional) This declares the IP range to assign Kubernetes pod IPs in CIDR notation. | string | `10.2.0.0/16` |
 | tectonic_cluster_name | The name of the cluster. If used in a cloud-environment, this will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.<br><br>Note: This field MUST be set manually prior to creating the cluster. Warning: Special characters in the name like '.' may cause errors on OpenStack platforms due to resource name constraints. | string | - |
 | tectonic_config_version | (internal) This declares the version of the global configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
 | tectonic_container_base_images | (internal) Base images of the components to use | map | `<map>` |
 | tectonic_container_images | (internal) Container images to use | map | `<map>` |
+| tectonic_container_linux_channel | (optional) The Container Linux update channel.<br><br>Examples: `stable`, `beta`, `alpha` | string | `stable` |
+| tectonic_container_linux_version | The Container Linux version to use. Set to `latest` to select the latest available version for the selected update channel.<br><br>Examples: `latest`, `1465.6.0` | string | `latest` |
 | tectonic_ddns_key_algorithm | (optional) This only applies if you use the modules/dns/ddns module.<br><br>Specifies the RFC2136 Dynamic DNS server key algorithm. | string | `` |
 | tectonic_ddns_key_name | (optional) This only applies if you use the modules/dns/ddns module.<br><br>Specifies the RFC2136 Dynamic DNS server key name. | string | `` |
 | tectonic_ddns_key_secret | (optional) This only applies if you use the modules/dns/ddns module.<br><br>Specifies the RFC2136 Dynamic DNS server key secret. | string | `` |

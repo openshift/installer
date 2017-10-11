@@ -6,7 +6,6 @@ This document gives an overview of variables used in the bare metal platform of 
 
 | Name | Description | Type | Default |
 |------|-------------|:----:|:-----:|
-| tectonic_metal_cl_version | CoreOS kernel/initrd version to PXE boot. Must be present in Matchbox assets and correspond to `tectonic_cl_channel`.<br><br>Example: `1298.7.0` | string | - |
 | tectonic_metal_config_version | (internal) This declares the version of the Matchbox configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
 | tectonic_metal_controller_domain | The domain name which resolves to controller node(s)<br><br>Example: `cluster.example.com` | string | - |
 | tectonic_metal_controller_domains | Ordered list of controller domain names.<br><br>Example: `["node2.example.com", "node3.example.com"]` | list | - |

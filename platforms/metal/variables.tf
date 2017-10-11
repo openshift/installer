@@ -85,17 +85,6 @@ EOD
 EOF
 }
 
-variable "tectonic_metal_cl_version" {
-  type = "string"
-
-  description = <<EOF
-CoreOS kernel/initrd version to PXE boot.
-Must be present in Matchbox assets and correspond to `tectonic_cl_channel`.
-
-Example: `1298.7.0`
-EOF
-}
-
 variable "tectonic_metal_controller_domain" {
   type = "string"
 

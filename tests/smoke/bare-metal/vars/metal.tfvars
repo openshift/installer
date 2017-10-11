@@ -93,8 +93,8 @@ kA==
 -----END CERTIFICATE-----
 EOF
 
-tectonic_cl_channel = "stable"
-tectonic_metal_cl_version = "1298.7.0"
+tectonic_container_linux_channel = "stable"
+tectonic_container_linux_version = "1465.8.0"
 
 # Bare-Metal nodes
 tectonic_metal_controller_names = ["node1"]

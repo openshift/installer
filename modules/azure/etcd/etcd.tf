@@ -25,8 +25,8 @@ resource "azurerm_virtual_machine" "etcd_node" {
   storage_image_reference {
     publisher = "CoreOS"
     offer     = "CoreOS"
-    sku       = "${var.cl_channel}"
-    version   = "latest"
+    sku       = "${var.container_linux_channel}"
+    version   = "${var.container_linux_version}"
   }
 
   storage_os_disk {

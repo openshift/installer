@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'net/ssh'
 require 'kubectl_helpers'
 require 'securerandom'
 require 'jenkins'
@@ -8,6 +7,7 @@ require 'tfvars_file'
 require 'fileutils'
 require 'name_generator'
 require 'password_generator'
+require 'ssh'
 
 SSH_CMD_BOOTKUBE_DONE = 'systemctl is-active bootkube'
 SSH_CMD_TECTONIC_DONE = 'systemctl is-active tectonic'
@@ -72,6 +72,16 @@ class Cluster
     }
   end
 
+  def tf_var(v)
+    tf_value "var.#{v}"
+  end
+
+  def tf_value(v)
+    Dir.chdir(@build_path) do
+      `echo "#{v}" | terraform console ../../platforms/#{env_variables['PLATFORM']}`.chomp
+    end
+  end
+
   private
 
   def license_and_pull_secret_defined?
@@ -132,18 +142,15 @@ class Cluster
   end
 
   def wait_for_bootstrapping
-    ssh_master_ip = master_ip_address
     from = Time.now
-    Net::SSH.start(ssh_master_ip, 'core', forward_agent: true, use_agent: true) do |ssh|
-      loop do
-        bootkube_done = ssh.exec!(SSH_CMD_BOOTKUBE_DONE).exitstatus.zero?
-        tectonic_done = ssh.exec!(SSH_CMD_TECTONIC_DONE).exitstatus.zero?
-        break if bootkube_done && tectonic_done
-        elapsed = Time.now - from
-        puts 'Waiting for bootstrapping to complete...' if (elapsed.round % 5).zero?
-        raise 'timeout waiting for bootstrapping' if elapsed > 1200 # 20 mins timeout
-        sleep 2
-      end
+    loop do
+      _, _, bootkube_exitstatus = ssh_exec(master_ip_address, SSH_CMD_BOOTKUBE_DONE)
+      _, _, tectonic_exitstatus = ssh_exec(master_ip_address, SSH_CMD_TECTONIC_DONE)
+      break if bootkube_exitstatus.zero? && tectonic_exitstatus.zero?
+      elapsed = Time.now - from
+      puts 'Waiting for bootstrapping to complete...' if (elapsed.round % 5).zero?
+      raise 'timeout waiting for bootstrapping' if elapsed > 1200 # 20 mins timeout
+      sleep 2
     end
     puts 'HOORAY! The cluster is up'
   end

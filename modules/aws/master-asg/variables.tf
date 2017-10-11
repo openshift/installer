@@ -19,7 +19,11 @@ variable "base_domain" {
   description = "Domain on which the ELB records will be created"
 }
 
-variable "cl_channel" {
+variable "container_linux_channel" {
+  type = "string"
+}
+
+variable "container_linux_version" {
   type = "string"
 }
 

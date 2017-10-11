@@ -1,9 +1,7 @@
 data "aws_ami" "coreos_ami" {
-  most_recent = true
-
   filter {
     name   = "name"
-    values = ["CoreOS-${var.cl_channel}-*"]
+    values = ["CoreOS-${var.container_linux_channel}-${var.container_linux_version}-*"]
   }
 
   filter {

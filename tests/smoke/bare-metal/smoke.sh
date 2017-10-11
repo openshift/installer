@@ -160,8 +160,8 @@ configure() {
   make localconfig
   ln -sf ${CONFIG} ${ROOT}/build/${CLUSTER}/terraform.tfvars
 
-  COREOS_CHANNEL=$(awk -F "=" '/^tectonic_cl_channel/ {gsub(/[ \t"]/, "", $2); print $2}' ${CONFIG})
-  COREOS_VERSION=$(awk -F "=" '/^tectonic_metal_cl_version/ {gsub(/[ \t"]/, "", $2); print $2}' ${CONFIG})
+  COREOS_CHANNEL=$(awk -F "=" '/^tectonic_container_linux_channel/ {gsub(/[ \t"]/, "", $2); print $2}' ${CONFIG})
+  COREOS_VERSION=$(awk -F "=" '/^tectonic_container_linux_version/ {gsub(/[ \t"]/, "", $2); print $2}' ${CONFIG})
 
   export SMOKE_KUBECONFIG=${ROOT}/build/${CLUSTER}/generated/auth/kubeconfig
 }

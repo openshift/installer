@@ -1,10 +1,10 @@
 // CoreOS Install Profile
 resource "matchbox_profile" "coreos_install" {
   name   = "coreos-install"
-  kernel = "/assets/coreos/${var.tectonic_metal_cl_version}/coreos_production_pxe.vmlinuz"
+  kernel = "/assets/coreos/${module.container_linux.version}/coreos_production_pxe.vmlinuz"
 
   initrd = [
-    "/assets/coreos/${var.tectonic_metal_cl_version}/coreos_production_pxe_image.cpio.gz",
+    "/assets/coreos/${module.container_linux.version}/coreos_production_pxe_image.cpio.gz",
   ]
 
   args = [

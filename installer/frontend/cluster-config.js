@@ -312,7 +312,7 @@ export const toBaremetal_TF = (cc, FORMS) => {
       tectonic_admin_password: cc[ADMIN_PASSWORD],
       tectonic_cluster_name: cc[CLUSTER_NAME],
       tectonic_admin_email: cc[ADMIN_EMAIL],
-      tectonic_metal_cl_version: cc[BM_OS_TO_USE],
+      tectonic_container_linux_version: cc[BM_OS_TO_USE],
       tectonic_metal_ingress_domain: getTectonicDomain(cc),
       tectonic_metal_controller_domain: getControllerDomain(cc),
       tectonic_metal_controller_domains: masters.map(({host}) => host),

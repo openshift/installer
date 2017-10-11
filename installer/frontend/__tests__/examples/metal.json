@@ -12,7 +12,7 @@
     "tectonic_cluster_cidr": "10.2.0.0/16",
     "tectonic_cluster_name": "my-cluster",
     "tectonic_dns_name": "",
-    "tectonic_metal_cl_version": "1353.8.0",
+    "tectonic_container_linux_version": "1353.8.0",
     "tectonic_metal_controller_domain": "cluster.example.com",
     "tectonic_metal_controller_domains": [
       "node1.example.com"

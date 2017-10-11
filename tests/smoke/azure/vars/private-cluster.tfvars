@@ -3,6 +3,7 @@
     "tectonic_azure_private_cluster": "true",
     "tectonic_base_domain": "azure.tectonic-integ.cloudns.cc",
     "tectonic_calico_network_policy": "false",
+    "tectonic_container_linux_channel": "stable",
     "tectonic_azure_vnet_cidr_block": "10.0.0.0/16",
     "tectonic_etcd_count": "1",
     "tectonic_experimental": "false",

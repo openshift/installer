@@ -6,6 +6,13 @@ provider "azurerm" {
 
 data "azurerm_client_config" "current" {}
 
+module "container_linux" {
+  source = "../../modules/container_linux"
+
+  channel = "${var.tectonic_container_linux_channel}"
+  version = "${var.tectonic_container_linux_version}"
+}
+
 module "resource_group" {
   source = "../../modules/azure/resource-group"
 
@@ -49,29 +56,30 @@ module "vnet" {
 module "etcd" {
   source = "../../modules/azure/etcd"
 
-  base_domain           = "${var.tectonic_base_domain}"
-  cl_channel            = "${var.tectonic_cl_channel}"
-  cluster_id            = "${module.tectonic.cluster_id}"
-  cluster_name          = "${var.tectonic_cluster_name}"
-  container_image       = "${var.tectonic_container_images["etcd"]}"
-  etcd_count            = "${local.etcd_count}"
-  extra_tags            = "${var.tectonic_azure_extra_tags}"
-  location              = "${var.tectonic_azure_location}"
-  network_interface_ids = "${module.vnet.etcd_network_interface_ids}"
-  public_ssh_key        = "${var.tectonic_azure_ssh_key}"
-  resource_group_name   = "${module.resource_group.name}"
-  storage_id            = "${module.resource_group.storage_id}"
-  storage_type          = "${var.tectonic_azure_etcd_storage_type}"
-  tls_ca_crt_pem        = "${module.etcd_certs.etcd_ca_crt_pem}"
-  tls_client_crt_pem    = "${module.etcd_certs.etcd_client_crt_pem}"
-  tls_client_key_pem    = "${module.etcd_certs.etcd_client_key_pem}"
-  tls_enabled           = "${var.tectonic_etcd_tls_enabled}"
-  tls_peer_crt_pem      = "${module.etcd_certs.etcd_peer_crt_pem}"
-  tls_peer_key_pem      = "${module.etcd_certs.etcd_peer_key_pem}"
-  tls_server_crt_pem    = "${module.etcd_certs.etcd_server_crt_pem}"
-  tls_server_key_pem    = "${module.etcd_certs.etcd_server_key_pem}"
-  versions              = "${var.tectonic_versions}"
-  vm_size               = "${var.tectonic_azure_etcd_vm_size}"
+  base_domain             = "${var.tectonic_base_domain}"
+  cluster_id              = "${module.tectonic.cluster_id}"
+  cluster_name            = "${var.tectonic_cluster_name}"
+  container_image         = "${var.tectonic_container_images["etcd"]}"
+  container_linux_channel = "${var.tectonic_container_linux_channel}"
+  container_linux_version = "${module.container_linux.version}"
+  etcd_count              = "${local.etcd_count}"
+  extra_tags              = "${var.tectonic_azure_extra_tags}"
+  location                = "${var.tectonic_azure_location}"
+  network_interface_ids   = "${module.vnet.etcd_network_interface_ids}"
+  public_ssh_key          = "${var.tectonic_azure_ssh_key}"
+  resource_group_name     = "${module.resource_group.name}"
+  storage_id              = "${module.resource_group.storage_id}"
+  storage_type            = "${var.tectonic_azure_etcd_storage_type}"
+  tls_ca_crt_pem          = "${module.etcd_certs.etcd_ca_crt_pem}"
+  tls_client_crt_pem      = "${module.etcd_certs.etcd_client_crt_pem}"
+  tls_client_key_pem      = "${module.etcd_certs.etcd_client_key_pem}"
+  tls_enabled             = "${var.tectonic_etcd_tls_enabled}"
+  tls_peer_crt_pem        = "${module.etcd_certs.etcd_peer_crt_pem}"
+  tls_peer_key_pem        = "${module.etcd_certs.etcd_peer_key_pem}"
+  tls_server_crt_pem      = "${module.etcd_certs.etcd_server_crt_pem}"
+  tls_server_key_pem      = "${module.etcd_certs.etcd_server_key_pem}"
+  versions                = "${var.tectonic_versions}"
+  vm_size                 = "${var.tectonic_azure_etcd_vm_size}"
 
   ign_etcd_dropin_id_list = "${module.ignition_masters.etcd_dropin_id_list}"
 }
@@ -122,20 +130,21 @@ module "ignition_masters" {
 module "masters" {
   source = "../../modules/azure/master-as"
 
-  cl_channel            = "${var.tectonic_cl_channel}"
-  cloud_provider_config = "${jsonencode(data.null_data_source.cloud_provider.inputs)}"
-  cluster_id            = "${module.tectonic.cluster_id}"
-  cluster_name          = "${var.tectonic_cluster_name}"
-  extra_tags            = "${var.tectonic_azure_extra_tags}"
-  kubeconfig_content    = "${module.bootkube.kubeconfig}"
-  location              = "${var.tectonic_azure_location}"
-  master_count          = "${var.tectonic_master_count}"
-  network_interface_ids = "${module.vnet.master_network_interface_ids}"
-  public_ssh_key        = "${var.tectonic_azure_ssh_key}"
-  resource_group_name   = "${module.resource_group.name}"
-  storage_id            = "${module.resource_group.storage_id}"
-  storage_type          = "${var.tectonic_azure_master_storage_type}"
-  vm_size               = "${var.tectonic_azure_master_vm_size}"
+  cloud_provider_config   = "${jsonencode(data.null_data_source.cloud_provider.inputs)}"
+  cluster_id              = "${module.tectonic.cluster_id}"
+  cluster_name            = "${var.tectonic_cluster_name}"
+  container_linux_channel = "${var.tectonic_container_linux_channel}"
+  container_linux_version = "${module.container_linux.version}"
+  extra_tags              = "${var.tectonic_azure_extra_tags}"
+  kubeconfig_content      = "${module.bootkube.kubeconfig}"
+  location                = "${var.tectonic_azure_location}"
+  master_count            = "${var.tectonic_master_count}"
+  network_interface_ids   = "${module.vnet.master_network_interface_ids}"
+  public_ssh_key          = "${var.tectonic_azure_ssh_key}"
+  resource_group_name     = "${module.resource_group.name}"
+  storage_id              = "${module.resource_group.storage_id}"
+  storage_type            = "${var.tectonic_azure_master_storage_type}"
+  vm_size                 = "${var.tectonic_azure_master_vm_size}"
 
   ign_azure_udev_rules_id           = "${module.ignition_masters.azure_udev_rules_id}"
   ign_bootkube_path_unit_id         = "${module.bootkube.systemd_path_unit_id}"
@@ -169,7 +178,8 @@ module "ignition_workers" {
 module "workers" {
   source = "../../modules/azure/worker-as"
 
-  cl_channel                   = "${var.tectonic_cl_channel}"
+  container_linux_channel      = "${var.tectonic_container_linux_channel}"
+  container_linux_version      = "${module.container_linux.version}"
   cloud_provider_config        = "${jsonencode(data.null_data_source.cloud_provider.inputs)}"
   cluster_id                   = "${module.tectonic.cluster_id}"
   cluster_name                 = "${var.tectonic_cluster_name}"

@@ -50,11 +50,6 @@ tectonic_base_domain = ""
 // This should only be enabled on clusters that are meant to be short-lived to begin validating the alpha feature.
 // tectonic_calico_network_policy = false
 
-// (optional) The Container Linux update channel.
-// 
-// Examples: `stable`, `beta`, `alpha`
-// tectonic_cl_channel = "stable"
-
 // (optional) This declares the IP range to assign Kubernetes pod IPs in CIDR notation.
 // tectonic_cluster_cidr = "10.2.0.0/16"
 
@@ -64,6 +59,16 @@ tectonic_base_domain = ""
 // Note: This field MUST be set manually prior to creating the cluster.
 // Warning: Special characters in the name like '.' may cause errors on OpenStack platforms due to resource name constraints.
 tectonic_cluster_name = ""
+
+// (optional) The Container Linux update channel.
+// 
+// Examples: `stable`, `beta`, `alpha`
+// tectonic_container_linux_channel = "stable"
+
+// The Container Linux version to use. Set to `latest` to select the latest available version for the selected update channel.
+// 
+// Examples: `latest`, `1465.6.0`
+tectonic_container_linux_version = "latest"
 
 // (optional) This only applies if you use the modules/dns/ddns module.
 // 
@@ -134,12 +139,6 @@ tectonic_license_path = ""
 // The number of master nodes to be created.
 // This applies only to cloud platforms.
 tectonic_master_count = "1"
-
-// CoreOS kernel/initrd version to PXE boot.
-// Must be present in Matchbox assets and correspond to `tectonic_cl_channel`.
-// 
-// Example: `1298.7.0`
-tectonic_metal_cl_version = ""
 
 // The domain name which resolves to controller node(s)
 // 
