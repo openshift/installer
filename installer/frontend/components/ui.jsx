@@ -557,14 +557,7 @@ const stateToIsDeselected = ({clusterConfig}, {field}) => {
 
 export const Deselect = connect(
   stateToIsDeselected,
-  dispatch => ({
-    setField: (k, v) => {
-      dispatch({
-        type: configActionTypes.SET_IN,
-        payload: {value: v, path: k},
-      });
-    },
-  })
+  dispatch => ({setField: (k, v) => configActions.setIn(k, v, dispatch)})
 )(({field, isDeselected, setField}) => <span className="deselect">
   <CheckBox id={field} value={!isDeselected} onValue={v => setField(field, !v)} />
 </span>);
