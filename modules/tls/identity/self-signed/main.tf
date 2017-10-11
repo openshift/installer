@@ -21,7 +21,7 @@ resource "tls_locally_signed_cert" "identity_server" {
   ca_private_key_pem = "${var.ca_key_pem}"
   ca_cert_pem        = "${var.ca_cert_pem}"
 
-  validity_period_hours = 8760
+  validity_period_hours = 26280
 
   allowed_uses = [
     "server_auth",
@@ -49,7 +49,7 @@ resource "tls_locally_signed_cert" "identity_client" {
   ca_private_key_pem = "${var.ca_key_pem}"
   ca_cert_pem        = "${var.ca_cert_pem}"
 
-  validity_period_hours = 8760
+  validity_period_hours = 26280
 
   allowed_uses = [
     "client_auth",
