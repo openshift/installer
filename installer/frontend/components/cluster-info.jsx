@@ -3,12 +3,13 @@ import React from 'react';
 import jwt_decode from 'jwt-decode';
 
 import { validate } from '../validate';
-import { PULL_SECRET, TECTONIC_LICENSE, LICENSING } from '../cluster-config';
+import { CLUSTER_NAME, PULL_SECRET, TECTONIC_LICENSE, LICENSING } from '../cluster-config';
+import fields from '../fields';
 import { Field, Form } from '../form';
 import { readFile } from '../readfile';
 
 import { Alert } from './alert';
-import { Connect } from './ui';
+import { Connect, Input } from './ui';
 
 // eslint-disable-next-line react/jsx-no-target-blank
 const accountLink = <a href="https://account.coreos.com" rel="noopener" target="_blank">account.coreos.com</a>;
@@ -55,7 +56,9 @@ const pullSecretField = new Field(PULL_SECRET, {
   },
 });
 
-new Form(LICENSING, [licenseField, pullSecretField]);
+const form = new Form(LICENSING, [fields[CLUSTER_NAME], licenseField, pullSecretField], {
+  validator: (data, cc) => !licenseField.validator(cc[TECTONIC_LICENSE]) && !pullSecretField.validator(cc[PULL_SECRET]),
+});
 
 const FileInput = ({id, onValue}) => {
   const upload = e => {
@@ -101,7 +104,18 @@ const Secret = () => <Connect field={PULL_SECRET}>
   <FileUpload buttonTitle={'Upload "config.json"'} description="pull secret" field={pullSecretField} />
 </Connect>;
 
-export const TectonicLicense = () => <div>
+export const ClusterInfo = () => <div>
+  <div className="row form-group">
+    <div className="col-xs-3">
+      <label htmlFor={CLUSTER_NAME}>Cluster Name</label>
+    </div>
+    <div className="col-xs-9">
+      <Connect field={CLUSTER_NAME}>
+        <Input placeholder="production" autoFocus="true" />
+      </Connect>
+      <p className="text-muted">Give this cluster a name that will help you identify it.</p>
+    </div>
+  </div>
   <div className="row form-group">
     <div className="col-xs-3">
       <label htmlFor={TECTONIC_LICENSE}>CoreOS License</label>
@@ -120,5 +134,4 @@ export const TectonicLicense = () => <div>
   </div>
 </div>;
 
-TectonicLicense.canNavigateForward = ({clusterConfig: cc}) => !licenseField.validator(cc[TECTONIC_LICENSE]) &&
-  !pullSecretField.validator(cc[PULL_SECRET]);
+ClusterInfo.canNavigateForward = form.canNavigateForward;
