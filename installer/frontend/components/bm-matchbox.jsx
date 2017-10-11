@@ -2,7 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
 
-import { configActionTypes, eventErrorsActionTypes } from '../actions';
+import { configActions, eventErrorsActionTypes } from '../actions';
 import { Field, Form } from '../form';
 import { compareVersions } from '../utils';
 import { validate } from '../validate';
@@ -39,20 +39,14 @@ const dispatchToProps = dispatch => ({
         error: null,
       },
     });
-    dispatch({
-      type: configActionTypes.SET,
-      payload: {matchboxHTTP: value},
-    });
+    configActions.set({matchboxHTTP: value}, dispatch);
   },
   getOsToUse: matchboxHTTP => {
     if (validate.hostPort(matchboxHTTP)) {
       return;
     }
 
-    dispatch({
-      type: configActionTypes.SET,
-      payload: {bootCfgInfly: true},
-    });
+    configActions.set({bootCfgInfly: true}, dispatch);
 
     const endpointURL = `http://${matchboxHTTP}/assets/coreos`;
     return fetch(`/containerlinux/images/matchbox?endpoint=${encodeURIComponent(endpointURL)}`)
@@ -70,11 +64,7 @@ const dispatchToProps = dispatch => ({
         }
 
         const useVersion = available.map(v => v.version).sort(compareVersions).pop();
-
-        dispatch({
-          type: configActionTypes.SET,
-          payload: {[BM_OS_TO_USE]: useVersion},
-        });
+        configActions.set({[BM_OS_TO_USE]: useVersion}, dispatch);
 
         return Promise.resolve(true);
       })
@@ -86,12 +76,9 @@ const dispatchToProps = dispatch => ({
             error: err,
           },
         });
-        dispatch({
-          type: configActionTypes.SET,
-          payload: {[BM_OS_TO_USE]: DEFAULT_CLUSTER_CONFIG[BM_OS_TO_USE]},
-        });
+        configActions.set({[BM_OS_TO_USE]: DEFAULT_CLUSTER_CONFIG[BM_OS_TO_USE]}, dispatch);
       })
-      .then(() => dispatch({type: configActionTypes.SET, payload: {bootCfgInfly: false}}));
+      .then(() => configActions.set({bootCfgInfly: false}, dispatch));
   },
 });
 

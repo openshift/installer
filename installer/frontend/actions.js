@@ -69,6 +69,7 @@ export const FORMS = {};
 
 // TODO (ggreer) standardize on order of params. is dispatch first or last?
 export const configActions = {
+  set: (payload, dispatch) => dispatch({type: configActionTypes.SET, payload}),
   setIn: (path, value, dispatch) => dispatch({payload: {path, value}, type: configActionTypes.SET_IN}),
   batchSetIn: (dispatch, payload) => {
     const values = dispatch({payload, type: configActionTypes.BATCH_SET_IN});
