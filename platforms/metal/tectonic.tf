@@ -91,7 +91,7 @@ module "bootkube" {
 
 module "tectonic" {
   source   = "../../modules/tectonic"
-  platform = ""
+  platform = "bare-metal"
 
   cluster_name = "${var.tectonic_cluster_name}"
 

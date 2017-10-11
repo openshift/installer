@@ -94,7 +94,7 @@ module "bootkube" {
 
 module "tectonic" {
   source   = "../../../modules/tectonic"
-  platform = "aws"
+  platform = "openstack"
 
   cluster_name = "${var.tectonic_cluster_name}"
 
