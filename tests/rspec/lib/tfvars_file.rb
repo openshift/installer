@@ -18,8 +18,8 @@ class TFVarsFile
     data['tectonic_experimental'] == 'true'
   end
 
-  def calico?
-    data['tectonic_calico_network_policy'] == 'true'
+  def networking
+    data['tectonic_networking']
   end
 
   def node_count

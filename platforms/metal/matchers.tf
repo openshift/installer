@@ -37,7 +37,7 @@ module "ignition_masters" {
   etcd_initial_cluster_list = "${var.tectonic_metal_controller_domains}"
   image_re                  = "${var.tectonic_image_re}"
   kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
-  kubelet_cni_bin_dir       = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
+  kubelet_cni_bin_dir       = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
   use_metadata              = false
@@ -80,7 +80,7 @@ module "ignition_workers" {
   container_images     = "${var.tectonic_container_images}"
   image_re             = "${var.tectonic_image_re}"
   kube_dns_service_ip  = "${module.bootkube.kube_dns_service_ip}"
-  kubelet_cni_bin_dir  = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
+  kubelet_cni_bin_dir  = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
   kubelet_node_label   = "node-role.kubernetes.io/node"
   kubelet_node_taints  = ""
   tectonic_vanilla_k8s = "${var.tectonic_vanilla_k8s}"

@@ -9,6 +9,10 @@ variable "cluster_cidr" {
 }
 
 variable "enabled" {
-  description = "If set to true, flannel networking will be deployed"
-  default     = true
+  description = "If set true, calico networking will be deployed"
+}
+
+variable "mtu" {
+  type    = "string"
+  default = 1500
 }

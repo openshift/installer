@@ -9,6 +9,5 @@ variable "cluster_cidr" {
 }
 
 variable "enabled" {
-  description = "If set to true, flannel networking will be deployed"
-  default     = true
+  description = "If set true, calico network policy will be deployed"
 }

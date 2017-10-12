@@ -28,7 +28,7 @@ module SmokeTest
       'SMOKE_NODE_COUNT' => cluster.tfvars_file.node_count.to_s,
       'SMOKE_MANIFEST_PATHS' => cluster.manifest_path,
       'SMOKE_MANIFEST_EXPERIMENTAL' => cluster.tfvars_file.experimental?.to_s,
-      'SMOKE_CALICO_NETWORK_POLICY' => cluster.tfvars_file.calico?.to_s
+      'SMOKE_NETWORKING' => cluster.tfvars_file.networking.to_s
     }
   end
 end

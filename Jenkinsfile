@@ -201,7 +201,7 @@ pipeline {
                 'spec/aws_vpc_internal_spec.rb',
                 '--device=/dev/net/tun --cap-add=NET_ADMIN -u root'
                 )
-            builds['aws_network_policy'] = runRSpecTest('spec/aws_network_policy_spec.rb', '')
+            builds['aws_canal'] = runRSpecTest('spec/aws_network_canal_spec.rb', '')
             builds['aws_exp'] = runRSpecTest('spec/aws_exp_spec.rb', '')
             builds['aws_ca'] = runRSpecTest('spec/aws_ca_spec.rb', '')
           }

@@ -463,13 +463,17 @@ Specifies the RFC2136 Dynamic DNS server key secret.
 EOF
 }
 
-variable "tectonic_calico_network_policy" {
-  default = false
+variable "tectonic_networking" {
+  default = "flannel"
 
   description = <<EOF
-(optional) [ALPHA] If set to true, calico network policy support will be deployed.
-WARNING: Enabling an alpha feature means that future updates may become unsupported.
-This should only be enabled on clusters that are meant to be short-lived to begin validating the alpha feature.
+(optional) Configures the network to be used in Tectonic. One of the following values can be used:
+
+- "flannel": enables overlay networking only. This is implemented by flannel using VXLAN.
+
+- "canal": [ALPHA] enables overlay networking including network policy. Overlay is implemented by flannel using VXLAN. Network policy is implemented by Calico.
+
+- "calico": [ALPHA] enables BGP based networking. Routing and network policy is implemented by Calico. Note this has been tested on baremetal installations only.
 EOF
 }
 

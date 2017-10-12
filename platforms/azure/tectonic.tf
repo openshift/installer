@@ -139,20 +139,26 @@ module "tectonic" {
   image_re = "${var.tectonic_image_re}"
 }
 
-module "flannel-vxlan" {
+module "flannel_vxlan" {
   source = "../../modules/net/flannel-vxlan"
 
-  flannel_image     = "${var.tectonic_container_images["flannel"]}"
-  flannel_cni_image = "${var.tectonic_container_images["flannel_cni"]}"
-  cluster_cidr      = "${var.tectonic_cluster_cidr}"
+  cluster_cidr     = "${var.tectonic_cluster_cidr}"
+  enabled          = "${var.tectonic_networking == "flannel"}"
+  container_images = "${var.tectonic_container_images}"
 }
 
-module "calico-network-policy" {
-  source = "../../modules/net/calico-network-policy"
+module "calico" {
+  source = "../../modules/net/calico"
 
-  kube_apiserver_url = "https://${module.vnet.api_fqdn}:443"
-  calico_image       = "${var.tectonic_container_images["calico"]}"
-  calico_cni_image   = "${var.tectonic_container_images["calico_cni"]}"
-  cluster_cidr       = "${var.tectonic_cluster_cidr}"
-  enabled            = "${var.tectonic_calico_network_policy}"
+  container_images = "${var.tectonic_container_images}"
+  cluster_cidr     = "${var.tectonic_cluster_cidr}"
+  enabled          = "${var.tectonic_networking == "calico"}"
+}
+
+module "canal" {
+  source = "../../modules/net/canal"
+
+  container_images = "${var.tectonic_container_images}"
+  cluster_cidr     = "${var.tectonic_cluster_cidr}"
+  enabled          = "${var.tectonic_networking == "canal"}"
 }

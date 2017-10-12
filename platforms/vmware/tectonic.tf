@@ -134,22 +134,28 @@ module "tectonic" {
   image_re = "${var.tectonic_image_re}"
 }
 
-module "flannel-vxlan" {
+module "flannel_vxlan" {
   source = "../../modules/net/flannel-vxlan"
 
-  flannel_image     = "${var.tectonic_container_images["flannel"]}"
-  flannel_cni_image = "${var.tectonic_container_images["flannel_cni"]}"
-  cluster_cidr      = "${var.tectonic_cluster_cidr}"
+  cluster_cidr     = "${var.tectonic_cluster_cidr}"
+  enabled          = "${var.tectonic_networking == "flannel"}"
+  container_images = "${var.tectonic_container_images}"
 }
 
-module "calico-network-policy" {
-  source = "../../modules/net/calico-network-policy"
+module "calico" {
+  source = "../../modules/net/calico"
 
-  kube_apiserver_url = "https://${var.tectonic_vmware_controller_domain}:443"
-  calico_image       = "${var.tectonic_container_images["calico"]}"
-  calico_cni_image   = "${var.tectonic_container_images["calico_cni"]}"
-  cluster_cidr       = "${var.tectonic_cluster_cidr}"
-  enabled            = "${var.tectonic_calico_network_policy}"
+  container_images = "${var.tectonic_container_images}"
+  cluster_cidr     = "${var.tectonic_cluster_cidr}"
+  enabled          = "${var.tectonic_networking == "calico"}"
+}
+
+module "canal" {
+  source = "../../modules/net/canal"
+
+  container_images = "${var.tectonic_container_images}"
+  cluster_cidr     = "${var.tectonic_cluster_cidr}"
+  enabled          = "${var.tectonic_networking == "canal"}"
 }
 
 data "archive_file" "assets" {
@@ -166,5 +172,5 @@ data "archive_file" "assets" {
   # Additionally, data sources do not support managing any lifecycle whatsoever,
   # and therefore, the archive is never deleted. To avoid cluttering the module
   # folder, we write it in the Terraform managed hidden folder `.terraform`.
-  output_path = "./.terraform/generated_${sha1("${module.etcd_certs.id} ${module.tectonic.id} ${module.bootkube.id} ${module.flannel-vxlan.id} ${module.calico-network-policy.id}")}.zip"
+  output_path = "./.terraform/generated_${sha1("${module.etcd_certs.id} ${module.tectonic.id} ${module.bootkube.id} ${module.flannel_vxlan.id} ${module.calico.id} ${module.canal.id}")}.zip"
 }

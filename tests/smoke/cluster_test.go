@@ -29,8 +29,8 @@ import (
 )
 
 const (
-	// calicoNetworkPolicyEnv is the environment variable that specifies if calico is running.
-	calicoNetworkPolicyEnv = "SMOKE_CALICO_NETWORK_POLICY"
+	// networkingEnv is the environment variable that specifies if calico is running.
+	networkingEnv = "SMOKE_NETWORKING"
 	// nodeCountEnv is the environment variable that specifies the node count.
 	nodeCountEnv = "SMOKE_NODE_COUNT"
 	// manifestPathsEnv is the environment variable that defines the paths to the manifests that are deployed on the cluster.
@@ -73,7 +73,8 @@ func testCluster(t *testing.T) {
 	t.Run("KillAPIServer", testKillAPIServer)
 	t.Run("AllResourcesCreated", testAllResourcesCreated)
 
-	if calicoNetworkPolicy := os.Getenv(calicoNetworkPolicyEnv); calicoNetworkPolicy == "true" {
+	ne := os.Getenv(networkingEnv)
+	if ne == "canal" || ne == "calico" {
 		t.Run("NetworkPolicy", testNetworkPolicy)
 	}
 }

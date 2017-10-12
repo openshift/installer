@@ -281,7 +281,7 @@ test_cluster() {
   # shellcheck disable=SC2155
   export SMOKE_MANIFEST_EXPERIMENTAL=$(grep tectonic_experimental "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}' | tr -d ' ')
   # shellcheck disable=SC2155
-  export SMOKE_CALICO_NETWORK_POLICY=$(grep tectonic_calico_network_policy "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}' | tr -d ' ')
+  export SMOKE_NETWORKING=$(grep tectonic_networking "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}' | tr -d ' ')
   bin/smoke -test.v -test.parallel=1 --cluster
 }
 

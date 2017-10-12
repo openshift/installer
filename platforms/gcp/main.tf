@@ -164,7 +164,7 @@ module "ignition_masters" {
   image_re             = "${var.tectonic_image_re}"
   kube_dns_service_ip  = "${module.bootkube.kube_dns_service_ip}"
   kubeconfig_fetch_cmd = "/opt/gcs-puller.sh ${google_storage_bucket.tectonic.name}/${google_storage_bucket_object.kubeconfig.name} /etc/kubernetes/kubeconfig"
-  kubelet_cni_bin_dir  = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
+  kubelet_cni_bin_dir  = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
   kubelet_node_label   = "node-role.kubernetes.io/master"
   kubelet_node_taints  = "node-role.kubernetes.io/master=:NoSchedule"
   assets_location      = "${google_storage_bucket.tectonic.name}/${google_storage_bucket_object.tectonic-assets.name}"
@@ -179,7 +179,7 @@ module "ignition_workers" {
   image_re             = "${var.tectonic_image_re}"
   kube_dns_service_ip  = "${module.bootkube.kube_dns_service_ip}"
   kubeconfig_fetch_cmd = "/opt/gcs-puller.sh ${google_storage_bucket.tectonic.name}/${google_storage_bucket_object.kubeconfig.name} /etc/kubernetes/kubeconfig"
-  kubelet_cni_bin_dir  = "${var.tectonic_calico_network_policy ? "/var/lib/cni/bin" : "" }"
+  kubelet_cni_bin_dir  = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
   kubelet_node_label   = "node-role.kubernetes.io/node"
   kubelet_node_taints  = ""
 }

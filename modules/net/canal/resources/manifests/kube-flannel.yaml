@@ -69,20 +69,6 @@ spec:
           mountPath: /etc/cni/net.d
         - name: flannel-cfg
           mountPath: /etc/kube-flannel/
-      - name: install-cni
-        image: ${flannel_cni_image}
-        command: ["/install-cni.sh"]
-        env:
-        - name: CNI_NETWORK_CONFIG
-          valueFrom:
-            configMapKeyRef:
-              name: kube-flannel-cfg
-              key: cni-conf.json
-        volumeMounts:
-        - name: cni
-          mountPath: /host/etc/cni/net.d
-        - name: host-cni-bin
-          mountPath: /host/opt/cni/bin/
       hostNetwork: true
       tolerations:
       - key: "node-role.kubernetes.io/master"

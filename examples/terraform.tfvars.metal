@@ -45,11 +45,6 @@ tectonic_base_domain = ""
 // This field is mandatory if `tectonic_ca_cert` is set.
 // tectonic_ca_key_alg = "RSA"
 
-// (optional) [ALPHA] If set to true, calico network policy support will be deployed.
-// WARNING: Enabling an alpha feature means that future updates may become unsupported.
-// This should only be enabled on clusters that are meant to be short-lived to begin validating the alpha feature.
-// tectonic_calico_network_policy = false
-
 // (optional) This declares the IP range to assign Kubernetes pod IPs in CIDR notation.
 // tectonic_cluster_cidr = "10.2.0.0/16"
 
@@ -139,6 +134,11 @@ tectonic_license_path = ""
 // The number of master nodes to be created.
 // This applies only to cloud platforms.
 tectonic_master_count = "1"
+
+// (optional) Sets the MTU size for workload interfaces and the IP-in-IP tunnel device.
+// 
+// Note: This setting is only effective, if tectonic_networking is set to `calico`.
+// tectonic_metal_calico_mtu = "1500"
 
 // The domain name which resolves to controller node(s)
 // 
@@ -232,6 +232,15 @@ tectonic_metal_worker_macs = ""
 // 
 // Example: `["node2", "node3"]`
 tectonic_metal_worker_names = ""
+
+// (optional) Configures the network to be used in Tectonic. One of the following values can be used:
+// 
+// - "flannel": enables overlay networking only. This is implemented by flannel using VXLAN.
+// 
+// - "canal": [ALPHA] enables overlay networking including network policy. Overlay is implemented by flannel using VXLAN. Network policy is implemented by Calico.
+// 
+// - "calico": [ALPHA] enables BGP based networking. Routing and network policy is implemented by Calico. Note this has been tested on baremetal installations only.
+// tectonic_networking = "flannel"
 
 // The path the pull secret file in JSON format.
 // This is known to be a "Docker pull secret" as produced by the docker login [1] command.

@@ -174,3 +174,13 @@ SSH public key to use as an authorized key.
 Example: `ssh-rsa AAAB3N...`
 EOF
 }
+
+variable "tectonic_metal_calico_mtu" {
+  default = "1500"
+
+  description = <<EOF
+(optional) Sets the MTU size for workload interfaces and the IP-in-IP tunnel device.
+
+Note: This setting is only effective, if tectonic_networking is set to `calico`.
+EOF
+}
