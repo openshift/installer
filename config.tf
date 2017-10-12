@@ -6,6 +6,10 @@ provider "archive" {
   version = "0.1.0"
 }
 
+provider "external" {
+  version = "1.0.0"
+}
+
 provider "ignition" {
   version = "0.1.0"
 }
