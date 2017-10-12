@@ -347,9 +347,18 @@ func tectonicKubeconfigHandler(w http.ResponseWriter, req *http.Request, ctx *Co
 // tectonicFactsHandler gets a list of available Container Linux AMIs as well
 // as the Tectonic license and pull secret if they exist.
 func tectonicFactsHandler(w http.ResponseWriter, req *http.Request, ctx *Context) error {
-	amis, err := containerlinux.ListAMIImages(containerLinuxListTimeout)
-	if err != nil {
-		return newInternalServerError("Failed to query available images: %s", err)
+	var amis []containerlinux.AMI
+	var err error
+
+	// We only need the AMIs list if AWS is enabled
+	for _, platform := range ctx.Config.Platforms {
+		if platform == "aws-tf" {
+			amis, err = containerlinux.ListAMIImages(containerLinuxListTimeout)
+			if err != nil {
+				return newInternalServerError("Failed to query available images: %s", err)
+			}
+			break
+		}
 	}
 
 	ex, err := os.Executable()

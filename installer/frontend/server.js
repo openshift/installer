@@ -116,7 +116,7 @@ export const loadFacts = (dispatch) => {
       addIn(TECTONIC_LICENSE, m.license, dispatch);
       addIn(PULL_SECRET, m.pullSecret, dispatch);
 
-      const awsRegions = m.amis.map(({name}) => {
+      const awsRegions = _.map(m.amis, ({name}) => {
         return {label: name, value: name};
       });
       dispatch({
