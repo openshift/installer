@@ -38,10 +38,13 @@ quay_creds = [
 ]
 
 default_builder_image = 'quay.io/coreos/tectonic-builder:v1.41'
-tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v5.7'
+tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v5.7_incl-docker'
 
 pipeline {
   agent none
+  environment {
+    KUBE_CONFORMANCE_IMAGE = 'quay.io/coreos/kube-conformance:v1.7.5_coreos.0_golang1.9.1'
+  }
   options {
     timeout(time:120, unit:'MINUTES')
     timestamps()
@@ -57,6 +60,11 @@ pipeline {
       name: 'hyperkube_image',
       defaultValue: '',
       description: 'Hyperkube image. Please define the param like: {hyperkube="<HYPERKUBE_IMAGE>"}'
+    )
+    booleanParam(
+      name: 'RUN_CONFORMANCE_TESTS',
+      defaultValue: false,
+      description: ''
     )
     booleanParam(
       name: 'RUN_SMOKE_TESTS',
@@ -375,17 +383,17 @@ def runRSpecTest(testFilePath, dockerArgs) {
         forcefullyCleanWorkspace()
         ansiColor('xterm') {
           withCredentials(creds) {
-              withDockerContainer(
-                image: tectonic_smoke_test_env_image,
-                args: dockerArgs
-              ) {
-                checkout scm
-                unstash 'smoke-test-binary'
-                sh """#!/bin/bash -ex
-                  cd tests/rspec
-                  bundler exec rspec ${testFilePath}
-                """
-              }
+            withDockerContainer(
+              image: tectonic_smoke_test_env_image,
+              args: '-v /var/run/docker.sock:/var/run/docker.sock ' + dockerArgs
+            ) {
+              checkout scm
+              unstash 'smoke-test-binary'
+              sh """#!/bin/bash -ex
+                cd tests/rspec
+                bundler exec rspec ${testFilePath}
+              """
+            }
           }
         }
       } catch (error) {

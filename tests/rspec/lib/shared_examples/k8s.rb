@@ -9,6 +9,7 @@ require 'pages/login_page'
 require 'name_generator'
 require 'password_generator'
 require 'webdriver_helpers'
+require 'k8s_conformance_tests'
 
 RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
   before(:all) do
@@ -70,6 +71,13 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
       @login.login_page "https://#{@console_url}"
       @login.with(NameGenerator.generate_fake_email, PasswordGenerator.generate_password)
       expect(@login.fail_to_login?).to be_truthy
+    end
+  end
+
+  it 'passes the k8s conformance tests' do
+    if ENV['RUN_CONFORMANCE_TESTS'] == 'true'
+      conformance_test = K8sConformanceTest.new(@cluster.kubeconfig)
+      expect { conformance_test.run }.to_not raise_error
     end
   end
 end
