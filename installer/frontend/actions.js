@@ -39,10 +39,6 @@ export const restoreActionTypes = {
   RESTORE_STATE: 'RESTORE_RESTORE_STATE',
 };
 
-export const sequenceActionTypes = {
-  INCREMENT: 'SEQUENCE_INCREMENT',
-};
-
 export const serverActionTypes = {
   COMMIT_REQUESTED: 'COMMIT_REQUESTED',
   COMMIT_SENT: 'COMMIT_SENT',

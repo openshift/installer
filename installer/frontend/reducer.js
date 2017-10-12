@@ -15,7 +15,6 @@ import {
   loadFactsActionTypes,
   restoreActionTypes,
   serverActionTypes,
-  sequenceActionTypes,
   commitPhases,
 } from './actions';
 
@@ -299,20 +298,6 @@ const reducersTogether = combineReducers({
       return state;
     }
   },
-
-  // A value guaranteed to monotonically increase. Should be saved/restored.
-  sequence: (state, action) => {
-    if (state === undefined) {
-      return 0;
-    }
-
-    switch (action.type) {
-    case sequenceActionTypes.INCREMENT:
-      return state + 1;
-    default:
-      return state;
-    }
-  },
 });
 
 function filterClusterConfig(cc = {}) {
@@ -371,6 +356,6 @@ export const reducer = (state, action) => {
 
 // Preserves only the savable bits of state
 export const savable = (state) => {
-  const {dirty, clusterConfig, sequence} = state;
-  return {dirty, clusterConfig, sequence};
+  const {dirty, clusterConfig} = state;
+  return {dirty, clusterConfig};
 };
