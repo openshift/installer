@@ -4,7 +4,7 @@
 console.debug = console.debug || console.info;
 
 import _ from 'lodash';
-import { __deleteEverything__, configActions, configActionTypes } from '../actions';
+import { __deleteEverything__, configActions } from '../actions';
 import { Field, Form } from '../form';
 import { store } from '../store';
 import { DEFAULT_CLUSTER_CONFIG } from '../cluster-config';
@@ -28,9 +28,7 @@ const expectCC = (path, expected, f) => {
   expect(value).toEqual(expected);
 };
 
-const resetCC = () => store.dispatch({
-  type: configActionTypes.SET, payload: DEFAULT_CLUSTER_CONFIG,
-});
+const resetCC = () => configActions.set(DEFAULT_CLUSTER_CONFIG, store.dispatch);
 
 const updateField = (field, value) => store.dispatch(configActions.updateField(field, value));
 
