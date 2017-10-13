@@ -2,14 +2,13 @@ import { connect } from 'react-redux';
 import React from 'react';
 
 import { Input, Connect } from './ui';
-import { TectonicLicense, licenseForm } from './tectonic-license';
+import { TectonicLicense } from './tectonic-license';
 import { AWS_Tags, tagsFields } from './aws-tags';
 import { Form } from '../form';
 import fields from '../fields';
 import { AWS_CLUSTER_INFO, CLUSTER_NAME } from '../cluster-config';
 
 const clusterInfoForm = new Form(AWS_CLUSTER_INFO, [
-  licenseForm,
   tagsFields,
   fields[CLUSTER_NAME],
 ]);
@@ -45,4 +44,5 @@ export const AWS_ClusterInfo = () => <div>
   <clusterInfoForm.Errors />
 </div>;
 
-AWS_ClusterInfo.canNavigateForward = clusterInfoForm.canNavigateForward;
+AWS_ClusterInfo.canNavigateForward = state => clusterInfoForm.canNavigateForward(state) &&
+  TectonicLicense.canNavigateForward(state);

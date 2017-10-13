@@ -20,6 +20,7 @@ import (
 
 	"os"
 
+	"github.com/coreos/tectonic-installer/installer/pkg/containerlinux"
 	"github.com/coreos/tectonic-installer/installer/pkg/terraform"
 	"github.com/dghubble/sessions"
 )
@@ -341,4 +342,44 @@ func tectonicKubeconfigHandler(w http.ResponseWriter, req *http.Request, ctx *Co
 	w.Header().Set("Content-Type", "text/plain")
 	io.Copy(w, cfg)
 	return nil
+}
+
+// tectonicFactsHandler gets a list of available Container Linux AMIs as well
+// as the Tectonic license and pull secret if they exist.
+func tectonicFactsHandler(w http.ResponseWriter, req *http.Request, ctx *Context) error {
+	var amis []containerlinux.AMI
+	var err error
+
+	// We only need the AMIs list if AWS is enabled
+	for _, platform := range ctx.Config.Platforms {
+		if platform == "aws-tf" {
+			amis, err = containerlinux.ListAMIImages(containerLinuxListTimeout)
+			if err != nil {
+				return newInternalServerError("Failed to query available images: %s", err)
+			}
+			break
+		}
+	}
+
+	ex, err := os.Executable()
+	if err != nil {
+		return newInternalServerError("Could not retrieve Tectonic facts")
+	}
+
+	license, err := ioutil.ReadFile(filepath.Join(filepath.Dir(ex), "license.txt"))
+	if err != nil {
+		license = nil
+	}
+
+	pullSecret, err := ioutil.ReadFile(filepath.Join(filepath.Dir(ex), "pull_secret.json"))
+	if err != nil {
+		pullSecret = nil
+	}
+
+	type response struct {
+		AMIs       []containerlinux.AMI `json:"amis"`
+		License    string               `json:"license"`
+		PullSecret string               `json:"pullSecret"`
+	}
+	return writeJSONResponse(w, req, http.StatusOK, response{amis, string(license), string(pullSecret)})
 }

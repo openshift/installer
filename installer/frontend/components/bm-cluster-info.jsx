@@ -1,15 +1,12 @@
 import React from 'react';
 
 import { Input, Connect } from './ui';
-import { TectonicLicense, licenseForm } from './tectonic-license';
+import { TectonicLicense } from './tectonic-license';
 import { CLUSTER_NAME } from '../cluster-config';
 import { Form } from '../form';
 import fields from '../fields';
 
-const clusterInfoForm = new Form('BM_ClusterInfo', [
-  licenseForm,
-  fields[CLUSTER_NAME],
-]);
+const clusterInfoForm = new Form('BM_ClusterInfo', [fields[CLUSTER_NAME]]);
 
 export const BM_ClusterInfo = () => {
   return (
@@ -30,4 +27,5 @@ export const BM_ClusterInfo = () => {
   );
 };
 
-BM_ClusterInfo.canNavigateForward = clusterInfoForm.canNavigateForward;
+BM_ClusterInfo.canNavigateForward = state => clusterInfoForm.canNavigateForward(state) &&
+  TectonicLicense.canNavigateForward(state);
