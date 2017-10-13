@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # shellcheck disable=SC2086,SC2154
 /usr/bin/rkt run \
