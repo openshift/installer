@@ -4,9 +4,9 @@ metadata:
   name: cluster-config
   namespace: tectonic-system
 data:
-  tuo-config: |
+  utility-config: |
     apiVersion: v1
-    kind: ClusterConfig
+    kind: UtilityConfig
     identityConfig:
       adminEmail: ${admin_email}
       adminPasswordHash: ${admin_password_hash}
