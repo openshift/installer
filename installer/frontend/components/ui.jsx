@@ -575,11 +575,10 @@ It should end with:
 export const CertArea = (props) => {
   const invalid = validate.certificate(props.value);
   const areaProps = Object.assign({}, props, {
-    className: props.className + ' wiz-tls-asset-field',
     invalid: invalid,
     placeholder: certPlaceholder,
   });
-  return <FileArea {...areaProps} />;
+  return <FileArea {...areaProps} className="wiz-tls-asset-field" />;
 };
 
 const privateKeyPlaceholder = `Paste your private key here. It should start with:
@@ -593,11 +592,10 @@ It should end with:
 export const PrivateKeyArea = (props) => {
   const invalid = validate.privateKey(props.value);
   const areaProps = Object.assign({}, props, {
-    className: props.className + ' wiz-tls-asset-field',
     invalid: invalid,
     placeholder: privateKeyPlaceholder,
   });
-  return <FileArea {...areaProps} />;
+  return <FileArea {...areaProps} className="wiz-tls-asset-field" />;
 };
 
 export class AsyncSelect extends React.Component {
