@@ -81,16 +81,6 @@ const reducersTogether = combineReducers({
         phase: commitPhases.FAILED,
         response: action.payload,
       };
-    case serverActionTypes.COMMIT_RESET:
-      if (state.phase !== commitPhases.SUCCEEDED &&
-          state.phase !== commitPhases.FAILED &&
-          state.phase !== commitPhases.IDLE) {
-        throw Error('attempt to reset a working server connection');
-      }
-
-      return {
-        phase: commitPhases.IDLE,
-      };
     default:
       return state;
     }

@@ -48,7 +48,6 @@ export const serverActionTypes = {
   COMMIT_SENT: 'COMMIT_SENT',
   COMMIT_SUCCESSFUL: 'COMMIT_SUCCESSFUL',
   COMMIT_FAILED: 'COMMIT_FAILED',
-  COMMIT_RESET: 'COMMIT_RESET',
 };
 
 // Commit state machine
