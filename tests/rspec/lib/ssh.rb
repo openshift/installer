@@ -27,7 +27,8 @@ def ssh_exec(ip_address, command, max_retries = 5)
         end
       end
     end
-  rescue Errno::ECONNREFUSED, Errno::ECONNRESET, IOError, Net::SSH::ConnectionTimeout, Net::SSH::Disconnect
+  rescue Errno::ECONNREFUSED, Errno::ECONNRESET, Errno::ETIMEDOUT, IOError, Net::SSH::ConnectionTimeout,
+         Net::SSH::Disconnect
     raise "failed to exec '#{command}' in #{max_retries} retries" if retries >= max_retries
     retries += 1
     sleep_time = 5 * retries
