@@ -9,6 +9,9 @@ require 'name_generator'
 require 'password_generator'
 require 'ssh'
 
+SSH_CMD_BOOTKUBE_FAILED = 'systemctl is-failed bootkube'
+SSH_CMD_TECTONIC_FAILED = 'systemctl is-failed tectonic'
+
 # Cluster represents a k8s cluster
 class Cluster
   attr_reader :tfvars_file, :kubeconfig, :manifest_path, :build_path,
@@ -161,6 +164,7 @@ class Cluster
     command = "test -e /opt/tectonic/init_#{service}.done"
 
     ips.each do |ip|
+      bootstrap_failed?
       _, _, finished = ssh_exec(ip, command, 20)
       if finished.zero?
         puts "#{service} service finished successfully"
@@ -169,5 +173,12 @@ class Cluster
     end
 
     false
+  end
+
+  def bootstrap_failed?(ip)
+    _, _, bootkube_failed_exitstatus = ssh_exec(ip, SSH_CMD_BOOTKUBE_FAILED, 20)
+    _, _, tectonic_failed_exitstatus = ssh_exec(ip, SSH_CMD_TECTONIC_FAILED, 20)
+    raise 'BootKube failed to start' if bootkube_failed_exitstatus.zero?
+    raise 'Tectonic failed to start' if tectonic_failed_exitstatus.zero?
   end
 end
