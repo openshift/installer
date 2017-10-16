@@ -171,7 +171,7 @@ tests/smoke: bin/smoke smoke-test-env-docker-image
 	-w "${CURDIR}/tests/rspec" \
 	-v "${TF_VAR_tectonic_license_path}":"${TF_VAR_tectonic_license_path}" \
 	-v "${TF_VAR_tectonic_pull_secret_path}":"${TF_VAR_tectonic_pull_secret_path}" \
-	-v "${HOME}/.ssh:${HOME}/.ssh:ro" \
+	-v "${HOME}/.ssh:/root/.ssh:ro" \
 	-v "${TF_VAR_tectonic_azure_ssh_key}":"${TF_VAR_tectonic_azure_ssh_key}" \
 	-e CLUSTER \
 	-e AWS_ACCESS_KEY_ID \
@@ -191,6 +191,8 @@ tests/smoke: bin/smoke smoke-test-env-docker-image
 	-e TF_VAR_tectonic_license_path \
 	-e TF_VAR_tectonic_pull_secret_path \
 	-e TF_VAR_tectonic_base_domain \
+	-e TF_VAR_tectonic_admin_email \
+	-e TF_VAR_tectonic_admin_password \
 	-e TECTONIC_TESTS_DONT_CLEAN_UP \
 	--cap-add NET_ADMIN \
 	--device /dev/net/tun \
