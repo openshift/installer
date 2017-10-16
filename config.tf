@@ -123,18 +123,6 @@ variable "tectonic_versions" {
   }
 }
 
-variable "tectonic_aws_assets_s3_bucket_name" {
-  type    = "string"
-  default = ""
-
-  description = <<EOF
-(optional) Unique name under which the Amazon S3 bucket will be created. Bucket name must start with a lower case name and is limited to 63 characters.
-The Tectonic Installer uses the bucket to store tectonic assets and kubeconfig.
-
-If name is not provided the installer will construct the name using "tectonic_cluster_name", current AWS region and "tectonic_base_domain"
-EOF
-}
-
 variable "tectonic_service_cidr" {
   type    = "string"
   default = "10.3.0.0/16"
