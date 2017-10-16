@@ -16,7 +16,7 @@ limitations under the License.
 
 provider "google" {
   region  = "${var.tectonic_gcp_region}"
-  version = "0.1.3"
+  version = "1.1.0"
 }
 
 module "network" {
@@ -76,7 +76,7 @@ module "etcd" {
   base_domain       = "${var.tectonic_base_domain}"
   container_image   = "${var.tectonic_container_images["etcd"]}"
 
-  cl_channel = "${var.tectonic_cl_channel}"
+  cl_channel = "${var.tectonic_container_linux_channel}"
 
   disk_type = "${var.tectonic_gcp_etcd_disktype}"
   disk_size = "${var.tectonic_gcp_etcd_disk_size}"
@@ -107,7 +107,7 @@ module "masters" {
   master_subnetwork_name      = "${module.network.master_subnetwork_name}"
   master_targetpool_self_link = "${module.network.master_targetpool_self_link}"
 
-  cl_channel = "${var.tectonic_cl_channel}"
+  cl_channel = "${var.tectonic_container_linux_channel}"
 
   disk_type = "${var.tectonic_gcp_master_disktype}"
   disk_size = "${var.tectonic_gcp_master_disk_size}"
@@ -140,7 +140,7 @@ module "workers" {
   worker_subnetwork_name      = "${module.network.worker_subnetwork_name}"
   worker_targetpool_self_link = "${module.network.worker_targetpool_self_link}"
 
-  cl_channel = "${var.tectonic_cl_channel}"
+  cl_channel = "${var.tectonic_container_linux_channel}"
 
   disk_type = "${var.tectonic_gcp_worker_disktype}"
   disk_size = "${var.tectonic_gcp_worker_disk_size}"
