@@ -38,3 +38,11 @@ def ssh_exec(ip_address, command, max_retries = 5)
   end
   [stdout, stderr, status[:exit_code]]
 end
+
+def create_if_not_exist_and_add_ssh_key
+  key_file = '${HOME}/.ssh/id_rsa'
+  ssh_file = File.join(Dir.home, '.ssh/id_rsa')
+  `KEY_FILE=#{key_file} && ssh-keygen -f "${KEY_FILE}" -t rsa -N ''` unless File.exist?(ssh_file)
+  %x(eval `ssh-agent -a /tmp/ssh-agent.sock`; ssh-add ${HOME}/.ssh/id_rsa)
+  ENV['SSH_AUTH_SOCK'] = '/tmp/ssh-agent.sock'
+end
