@@ -25,6 +25,12 @@ class AzureCluster < Cluster
     variables['PLATFORM'] = 'azure'
     variables['TF_VAR_tectonic_azure_location'] = @random_location
     variables['TF_VAR_tectonic_azure_client_secret'] = ENV['ARM_CLIENT_SECRET']
+
+    # To use Azure-provided DNS, `tectonic_base_domain` should be set to `""`
+    unless ENV.key?('TF_VAR_tectonic_base_domain')
+      variables['TF_VAR_tectonic_base_domain'] = ''
+    end
+
     variables
   end
 

@@ -85,7 +85,7 @@ AWS_SECRET_ACCESS_KEY
 TF_VAR_tectonic_aws_region
 TF_VAR_tectonic_license_path
 TF_VAR_tectonic_pull_secret_path
-TF_VAR_base_domain
+TF_VAR_tectonic_base_domain
 ```
 
 ### 2. Launch the tests

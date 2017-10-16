@@ -14,7 +14,6 @@
     "tectonic_azure_private_cluster": "false",
     "tectonic_azure_worker_storage_type": "Standard_LRS",
     "tectonic_azure_worker_vm_size": "Standard_D1_v2",
-    "tectonic_base_domain": "",
     "tectonic_cluster_cidr": "10.2.0.0/16",
     "tectonic_container_linux_channel": "stable",
     "tectonic_etcd_count": "0",

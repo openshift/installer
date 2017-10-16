@@ -24,6 +24,12 @@ class AwsCluster < Cluster
   def env_variables
     variables = super
     variables['PLATFORM'] = 'aws'
+
+    # Unless base domain is provided by the user:
+    unless ENV.key?('TF_VAR_tectonic_base_domain')
+      variables['TF_VAR_tectonic_base_domain'] = 'tectonic.dev.coreos.systems'
+    end
+
     variables
   end
 
