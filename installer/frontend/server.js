@@ -111,17 +111,13 @@ export const commitToServer = (dryRun = false, retry = false, opts = {}) => (dis
 // One-time fetch of initial data from server, followed by firing appropriate actions
 // Guaranteed not to reject.
 export const loadFacts = (dispatch) => {
-  return fetchJSON('/tectonic/facts', { retries: 5 })
+  return fetchJSON('/tectonic/facts', {retries: 5})
     .then(m => {
       addIn(TECTONIC_LICENSE, m.license, dispatch);
       addIn(PULL_SECRET, m.pullSecret, dispatch);
-
-      const awsRegions = _.map(m.amis, ({name}) => {
-        return {label: name, value: name};
-      });
       dispatch({
         type: loadFactsActionTypes.LOADED,
-        payload: {awsRegions},
+        payload: {awsRegions: _.map(m.amis, 'name')},
       });
     },
     err => {
