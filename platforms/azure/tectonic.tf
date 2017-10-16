@@ -142,6 +142,10 @@ module "tectonic" {
   stats_url         = "${var.tectonic_stats_url}"
 
   image_re = "${var.tectonic_image_re}"
+
+  tectonic_networking = "${var.tectonic_networking}"
+  calico_mtu          = "1480"
+  cluster_cidr        = "${var.tectonic_cluster_cidr}"
 }
 
 module "flannel_vxlan" {

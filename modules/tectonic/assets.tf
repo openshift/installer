@@ -98,6 +98,10 @@ resource "template_dir" "tectonic" {
 
     image_re            = "${var.image_re}"
     kube_dns_service_ip = "${cidrhost(var.service_cidr, 10)}"
+
+    tectonic_networking = "${var.tectonic_networking}"
+    calico_mtu          = "${var.calico_mtu}"
+    cluster_cidr        = "${var.cluster_cidr}"
   }
 }
 

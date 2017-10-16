@@ -176,7 +176,7 @@ EOF
 }
 
 variable "tectonic_metal_calico_mtu" {
-  default = "1500"
+  default = "1480"
 
   description = <<EOF
 (optional) Sets the MTU size for workload interfaces and the IP-in-IP tunnel device.
