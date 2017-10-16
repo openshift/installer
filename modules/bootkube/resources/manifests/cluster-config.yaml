@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: cluster-config
+  name: cluster-config-v1
   namespace: kube-system
 data:
   kvo-config: |
