@@ -7,14 +7,20 @@ import path from 'path';
 import { reducer } from '../reducer';
 import { restoreActionTypes } from '../actions';
 import { commitToServer } from '../server';
+import '../components/aws-cloud-credentials';
 import '../components/aws-cluster-info';
 import '../components/aws-define-nodes';
+import '../components/aws-submit-keys';
 import '../components/aws-vpc';
-import '../components/etcd';
-import '../components/bm-sshkeys';
-import '../components/bm-nodeforms';
+import '../components/bm-credentials';
 import '../components/bm-hostname';
+import '../components/bm-matchbox';
+import '../components/bm-nodeforms';
+import '../components/bm-sshkeys';
+import '../components/certificate-authority';
 import '../components/cluster-type';
+import '../components/etcd';
+import '../components/users';
 
 const structureOnly = (obj) => {
   const toString = Object.prototype.toString;
