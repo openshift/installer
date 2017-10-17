@@ -142,8 +142,8 @@ class Cluster
   def wait_for_bootstrapping
     from = Time.now
     loop do
-      _, _, bootkube_exitstatus = ssh_exec(master_ip_address, SSH_CMD_BOOTKUBE_DONE)
-      _, _, tectonic_exitstatus = ssh_exec(master_ip_address, SSH_CMD_TECTONIC_DONE)
+      _, _, bootkube_exitstatus = ssh_exec(master_ip_address, SSH_CMD_BOOTKUBE_DONE, 20)
+      _, _, tectonic_exitstatus = ssh_exec(master_ip_address, SSH_CMD_TECTONIC_DONE, 20)
       break if bootkube_exitstatus.zero? && tectonic_exitstatus.zero?
       elapsed = Time.now - from
       puts 'Waiting for bootstrapping to complete...' if (elapsed.round % 5).zero?
