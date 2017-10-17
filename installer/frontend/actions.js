@@ -81,21 +81,21 @@ export const configActions = {
   removeField: (fieldName, i) => (dispatch, getState) => {
     const field = FIELDS[fieldName];
     if (!field) {
-      throw new Error(`${fieldName} has no field for removing...`);
+      throw new Error(`${fieldName} has no field for removing`);
     }
     field.remove(dispatch, i, getState);
   },
   appendField: fieldName => (dispatch, getState) => {
     const field = FIELDS[fieldName];
     if (!field) {
-      throw new Error(`${fieldName} has no field for appending...`);
+      throw new Error(`${fieldName} has no field for appending`);
     }
     field.append(dispatch, getState);
   },
   refreshExtraData: fieldName => (dispatch, getState) => {
     const field = FIELDS[fieldName];
     if (!field) {
-      throw new Error(`${fieldName} has no field`);
+      throw new Error(`${fieldName} has no field for refreshing`);
     }
     field.getExtraStuff(dispatch, getState().clusterConfig, FIELDS, 0);
   },
@@ -103,7 +103,7 @@ export const configActions = {
     const [name, ...split] = fieldName.split('.');
     const field = FIELDS[name];
     if (!field) {
-      throw new Error(`${name} has no field`);
+      throw new Error(`${name} has no field for updating`);
     }
 
     return field.update(dispatch, inputValue, getState, FIELDS, FIELD_TO_DEPS, split);
