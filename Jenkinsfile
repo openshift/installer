@@ -240,7 +240,7 @@ pipeline {
     stage("Smoke Tests") {
       when {
         expression {
-          return params.RUN_SMOKE_TESTS
+          return params.RUN_SMOKE_TESTS || params.RUN_CONFORMANCE_TESTS
         }
       }
       environment {
