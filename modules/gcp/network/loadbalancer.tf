@@ -4,6 +4,18 @@ resource "google_compute_target_pool" "tectonic-master-targetpool" {
 
 resource "google_compute_target_pool" "tectonic-worker-targetpool" {
   name = "${var.cluster_name}-tectonic-worker-targetpool"
+
+  health_checks = [
+    "${google_compute_http_health_check.tectonic-worker-hc.name}",
+  ]
+}
+
+resource "google_compute_http_health_check" "tectonic-worker-hc" {
+  name         = "${var.cluster_name}-tectonic-worker-hc"
+  request_path = "/"
+
+  timeout_sec        = 1
+  check_interval_sec = 1
 }
 
 resource "google_compute_address" "tectonic-masters-ip" {
