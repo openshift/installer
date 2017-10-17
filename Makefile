@@ -143,7 +143,6 @@ structure-check:
 	@if $(MAKE) examples && ! git diff --exit-code; then echo "outdated examples (run 'make examples' to fix)"; exit 1; fi
 
 SMOKE_SOURCES := $(shell find $(TOP_DIR)/tests/smoke -name '*.go')
-.PHONY: bin/smoke
 bin/smoke: $(SMOKE_SOURCES)
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go test ./tests/smoke/ -c -o bin/smoke
 
