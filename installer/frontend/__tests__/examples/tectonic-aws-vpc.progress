@@ -52,7 +52,6 @@
         "key": "test_tag",
         "value": "testing"
       }
-    ],
-    "updater": {}
+    ]
   }
 }

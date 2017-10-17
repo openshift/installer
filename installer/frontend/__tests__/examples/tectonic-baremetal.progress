@@ -37,12 +37,6 @@
     "tectonicLicense": "<TECTONIC_LICENSE>",
     "pullSecret": "<TECTONIC_PULL_SECRET>",
     "adminEmail": "admin@example.com",
-    "adminPassword": "password",
-    "updater": {
-      "enabled": false,
-      "server": "https://tectonic.update.core-os.net",
-      "channel": "tectonic-1.6",
-      "appID": "6bc7b986-4654-4a0f-94b3-84ce6feb1db4"
-    }
+    "adminPassword": "password"
   }
 }
