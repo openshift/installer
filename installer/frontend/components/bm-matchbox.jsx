@@ -122,7 +122,7 @@ export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
           <div className="form-group">
             <div className="row">
               <div className="col-xs-3">
-                <label htmlFor={BM_MATCHBOX_HTTP}>HTTP address</label>
+                <label htmlFor={BM_MATCHBOX_HTTP}>HTTP Address</label>
               </div>
               <div className="col-xs-9">
                 <Input id={BM_MATCHBOX_HTTP}
@@ -143,7 +143,7 @@ export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
             </div>
             <div className="row">
               <div className="col-xs-3">
-                <label htmlFor={BM_MATCHBOX_RPC}>API address</label>
+                <label htmlFor={BM_MATCHBOX_RPC}>API Address</label>
               </div>
               <div className="col-xs-9">
                 <Connect field={BM_MATCHBOX_RPC}>
