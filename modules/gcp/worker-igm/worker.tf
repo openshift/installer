@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 resource "google_compute_instance_template" "tectonic-worker-it" {
-  name           = "tectonic-worker-it"
+  name           = "${var.cluster_name}-tectonic-worker-it"
   region         = "${var.region}"
   machine_type   = "${var.machine_type}"
   can_ip_forward = false
@@ -49,7 +49,7 @@ resource "google_compute_instance_template" "tectonic-worker-it" {
 resource "google_compute_instance_group_manager" "tectonic-worker-igm" {
   count              = "${var.instance_count}"
   target_size        = 1
-  name               = "tectonic-worker-igm-${count.index}"
+  name               = "${var.cluster_name}-tectonic-worker-igm-${count.index}"
   zone               = "${element(var.zone_list, count.index)}"
   instance_template  = "${google_compute_instance_template.tectonic-worker-it.self_link}"
   target_pools       = ["${var.worker_targetpool_self_link}"]

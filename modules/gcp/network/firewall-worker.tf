@@ -1,5 +1,5 @@
 resource "google_compute_firewall" "worker-ingress" {
-  name    = "worker-ingress"
+  name    = "${var.cluster_name}-worker-ingress"
   network = "${google_compute_network.tectonic-network.name}"
 
   # ICMP
@@ -17,7 +17,7 @@ resource "google_compute_firewall" "worker-ingress" {
 }
 
 resource "google_compute_firewall" "worker-ingress-heapster" {
-  name    = "worker-ingress-heapster"
+  name    = "${var.cluster_name}-worker-ingress-heapster"
   network = "${google_compute_network.tectonic-network.name}"
 
   allow {
@@ -30,7 +30,7 @@ resource "google_compute_firewall" "worker-ingress-heapster" {
 }
 
 resource "google_compute_firewall" "worker-ingress-flannel" {
-  name    = "worker-ingress-flannel"
+  name    = "${var.cluster_name}-worker-ingress-flannel"
   network = "${google_compute_network.tectonic-network.name}"
 
   allow {
@@ -43,7 +43,7 @@ resource "google_compute_firewall" "worker-ingress-flannel" {
 }
 
 resource "google_compute_firewall" "worker-ingress-node-exporter" {
-  name    = "worker-ingress-node-exporter"
+  name    = "${var.cluster_name}-worker-ingress-node-exporter"
   network = "${google_compute_network.tectonic-network.name}"
 
   allow {
@@ -56,7 +56,7 @@ resource "google_compute_firewall" "worker-ingress-node-exporter" {
 }
 
 resource "google_compute_firewall" "worker-ingress-kubelet" {
-  name    = "worker-ingress-kubelet"
+  name    = "${var.cluster_name}-worker-ingress-kubelet"
   network = "${google_compute_network.tectonic-network.name}"
 
   allow {
@@ -69,7 +69,7 @@ resource "google_compute_firewall" "worker-ingress-kubelet" {
 }
 
 resource "google_compute_firewall" "worker-ingress-services" {
-  name    = "worker-ingress-services"
+  name    = "${var.cluster_name}-worker-ingress-services"
   network = "${google_compute_network.tectonic-network.name}"
 
   allow {

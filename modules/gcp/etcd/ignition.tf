@@ -162,12 +162,12 @@ Environment="RKT_RUN_ARGS=--volume etcd-ssl,kind=host,source=/etc/ssl/etcd \
 ExecStart=
 ExecStart=/usr/lib/coreos/etcd-wrapper \
   --name=etcd \
-  --discovery-srv=${var.base_domain} \
-  --advertise-client-urls=${var.tls_enabled ? "https" : "http"}://${var.cluster_name}-etcd-${count.index}.${var.base_domain}:2379 \
+  --discovery-srv=${var.cluster_name}.${var.base_domain} \
+  --advertise-client-urls=${var.tls_enabled ? "https" : "http"}://etcd-${count.index}.${var.cluster_name}.${var.base_domain}:2379 \
   ${var.tls_enabled
     ? "--cert-file=/etc/ssl/etcd/server.crt --key-file=/etc/ssl/etcd/server.key --peer-cert-file=/etc/ssl/etcd/peer.crt --peer-key-file=/etc/ssl/etcd/peer.key --peer-trusted-ca-file=/etc/ssl/etcd/ca.crt --peer-client-cert-auth=true"
     : ""} \
-  --initial-advertise-peer-urls=${var.tls_enabled ? "https" : "http"}://${var.cluster_name}-etcd-${count.index}.${var.base_domain}:2380 \
+  --initial-advertise-peer-urls=${var.tls_enabled ? "https" : "http"}://etcd-${count.index}.${var.cluster_name}.${var.base_domain}:2380 \
   --listen-client-urls=${var.tls_enabled ? "https" : "http"}://0.0.0.0:2379 \
   --listen-peer-urls=${var.tls_enabled ? "https" : "http"}://0.0.0.0:2380
 EOF

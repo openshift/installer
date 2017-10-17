@@ -34,13 +34,13 @@ module "etcd_certs" {
   service_cidr          = "${var.tectonic_service_cidr}"
 
   etcd_cert_dns_names = [
-    "${var.tectonic_cluster_name}-etcd-0.${var.tectonic_base_domain}",
-    "${var.tectonic_cluster_name}-etcd-1.${var.tectonic_base_domain}",
-    "${var.tectonic_cluster_name}-etcd-2.${var.tectonic_base_domain}",
-    "${var.tectonic_cluster_name}-etcd-3.${var.tectonic_base_domain}",
-    "${var.tectonic_cluster_name}-etcd-4.${var.tectonic_base_domain}",
-    "${var.tectonic_cluster_name}-etcd-5.${var.tectonic_base_domain}",
-    "${var.tectonic_cluster_name}-etcd-6.${var.tectonic_base_domain}",
+    "etcd-0.${var.tectonic_cluster_name}.${var.tectonic_base_domain}",
+    "etcd-1.${var.tectonic_cluster_name}.${var.tectonic_base_domain}",
+    "etcd-2.${var.tectonic_cluster_name}.${var.tectonic_base_domain}",
+    "etcd-3.${var.tectonic_cluster_name}.${var.tectonic_base_domain}",
+    "etcd-4.${var.tectonic_cluster_name}.${var.tectonic_base_domain}",
+    "etcd-5.${var.tectonic_cluster_name}.${var.tectonic_base_domain}",
+    "etcd-6.${var.tectonic_cluster_name}.${var.tectonic_base_domain}",
   ]
 }
 

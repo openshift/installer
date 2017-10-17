@@ -158,6 +158,7 @@ module "workers" {
 module "ignition_masters" {
   source = "../../modules/ignition"
 
+  cluster_name         = "${var.tectonic_cluster_name}"
   bootstrap_upgrade_cl = "${var.tectonic_bootstrap_upgrade_cl}"
   tectonic_vanilla_k8s = "${var.tectonic_vanilla_k8s}"
   container_images     = "${var.tectonic_container_images}"
@@ -173,6 +174,7 @@ module "ignition_masters" {
 module "ignition_workers" {
   source = "../../modules/ignition"
 
+  cluster_name         = "${var.tectonic_cluster_name}"
   bootstrap_upgrade_cl = "${var.tectonic_bootstrap_upgrade_cl}"
   tectonic_vanilla_k8s = "${var.tectonic_vanilla_k8s}"
   container_images     = "${var.tectonic_container_images}"
