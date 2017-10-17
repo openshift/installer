@@ -1,5 +1,6 @@
 resource "google_compute_target_pool" "master-targetpool" {
-  name = "${var.cluster_name}-master-targetpool"
+  name             = "${var.cluster_name}-master-targetpool"
+  session_affinity = "CLIENT_IP_PROTO"
 }
 
 resource "google_compute_target_pool" "worker-targetpool" {
@@ -33,6 +34,19 @@ resource "google_compute_forwarding_rule" "api-external-fwd-rule" {
 
 resource "google_compute_address" "ingress-ip" {
   name = "${var.cluster_name}-ingress-ip"
+}
+
+resource "google_compute_forwarding_rule" "api-external-ssh-fwd-rule" {
+  load_balancing_scheme = "EXTERNAL"
+  name                  = "${var.cluster_name}-api-external-ssh-fwd-rule"
+  ip_address            = "${google_compute_address.masters-ip.address}"
+  region                = "${var.gcp_region}"
+  target                = "${google_compute_target_pool.master-targetpool.self_link}"
+  port_range            = "22"
+}
+
+resource "google_compute_address" "tectonic-ingress-ip" {
+  name = "tectonic-ingress-ip"
 }
 
 resource "google_compute_forwarding_rule" "ingress-external-http-fwd-rule" {

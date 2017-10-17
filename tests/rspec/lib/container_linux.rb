@@ -16,13 +16,13 @@ echo "$GROUP"'
 module ContainerLinux
   def self.version(cluster)
     v, err, = ssh_exec(cluster.master_ip_address, SSH_CMD_CONTAINER_LINUX_VERSION)
-    raise "failed to get Container Linux version for #{cluster.master_ip_address}" if err != ''
+    raise "failed to get Container Linux version for #{cluster.master_ip_address}: #{err}" if err != ''
     v.chomp
   end
 
   def self.channel(cluster)
     c, err, = ssh_exec(cluster.master_ip_address, SSH_CMD_CONTAINER_LINUX_CHANNEL)
-    raise "failed to get Container Linux channel for #{cluster.master_ip_address}" if err != ''
+    raise "failed to get Container Linux channel for #{cluster.master_ip_address}: #{err}" if err != ''
     c.chomp
   end
 end

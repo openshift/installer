@@ -19,6 +19,13 @@ provider "google" {
   version = "1.1.0"
 }
 
+module "container_linux" {
+  source = "../../modules/container_linux"
+
+  channel = "${var.tectonic_container_linux_channel}"
+  version = "${var.tectonic_container_linux_version}"
+}
+
 module "network" {
   source = "../../modules/gcp/network"
 
@@ -73,6 +80,7 @@ module "etcd" {
   machine_type      = "${var.tectonic_gcp_etcd_gce_type}"
   managed_zone_name = "${var.tectonic_gcp_ext_google_managedzone_name}"
   cluster_name      = "${var.tectonic_cluster_name}"
+  public_ssh_key    = "${var.tectonic_gcp_ssh_key}"
   base_domain       = "${var.tectonic_base_domain}"
   container_image   = "${var.tectonic_container_images["etcd"]}"
 
@@ -103,6 +111,7 @@ module "masters" {
   zone_list           = "${var.tectonic_gcp_zones}"
   machine_type        = "${var.tectonic_gcp_master_gce_type}"
   cluster_name        = "${var.tectonic_cluster_name}"
+  public_ssh_key      = "${var.tectonic_gcp_ssh_key}"
   assets_gcs_location = "${google_storage_bucket.tectonic.name}/${google_storage_bucket_object.tectonic-assets.name}"
 
   master_subnetwork_name      = "${module.network.master_subnetwork_name}"
@@ -137,6 +146,7 @@ module "workers" {
   zone_list      = "${var.tectonic_gcp_zones}"
   machine_type   = "${var.tectonic_gcp_worker_gce_type}"
   cluster_name   = "${var.tectonic_cluster_name}"
+  public_ssh_key = "${var.tectonic_gcp_ssh_key}"
 
   worker_subnetwork_name      = "${module.network.worker_subnetwork_name}"
   worker_targetpool_self_link = "${module.network.worker_targetpool_self_link}"

@@ -184,6 +184,8 @@ tests/smoke: bin/smoke smoke-test-env-docker-image
 	-e GOOGLE_CREDENTIALS \
 	-e GOOGLE_CLOUD_KEYFILE_JSON \
 	-e GCLOUD_KEYFILE_JSON \
+	-e GOOGLE_PROJECT \
+	-e tectonic_gcp_ssh_key \
 	-e TF_VAR_tectonic_aws_region \
 	-e TF_VAR_tectonic_aws_ssh_key \
 	-e TF_VAR_tectonic_azure_location \
