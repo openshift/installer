@@ -9,9 +9,6 @@ require 'name_generator'
 require 'password_generator'
 require 'ssh'
 
-SSH_CMD_BOOTKUBE_DONE = 'systemctl is-active bootkube'
-SSH_CMD_TECTONIC_DONE = 'systemctl is-active tectonic'
-
 # Cluster represents a k8s cluster
 class Cluster
   attr_reader :tfvars_file, :kubeconfig, :manifest_path, :build_path,
@@ -125,6 +122,8 @@ class Cluster
   end
 
   def wait_til_ready
+    wait_for_bootstrapping
+
     from = Time.now
     loop do
       begin
@@ -136,20 +135,39 @@ class Cluster
         sleep 10
       end
     end
-    wait_for_bootstrapping
   end
 
   def wait_for_bootstrapping
-    from = Time.now
-    loop do
-      _, _, bootkube_exitstatus = ssh_exec(master_ip_address, SSH_CMD_BOOTKUBE_DONE, 20)
-      _, _, tectonic_exitstatus = ssh_exec(master_ip_address, SSH_CMD_TECTONIC_DONE, 20)
-      break if bootkube_exitstatus.zero? && tectonic_exitstatus.zero?
-      elapsed = Time.now - from
-      puts 'Waiting for bootstrapping to complete...' if (elapsed.round % 5).zero?
-      raise 'timeout waiting for bootstrapping' if elapsed > 1200 # 20 mins timeout
-      sleep 2
-    end
+    wait_for_service('bootkube')
+    wait_for_service('tectonic')
     puts 'HOORAY! The cluster is up'
+  end
+
+  def wait_for_service(service)
+    from = Time.now
+    180.times do # 180 * 10 = 1800 seconds = 30 minutes
+      ips = master_ip_addresses
+      return if service_finished_bootstrapping?(ips, service)
+
+      elapsed = Time.now - from
+      puts "Waiting for bootstrapping of #{service} service to complete..." if (elapsed.round % 5).zero?
+      sleep 10
+    end
+
+    raise "timeout waiting for #{service} service to bootstrap" if elapsed > 1200 # 20 mins timeout
+  end
+
+  def service_finished_bootstrapping?(ips, service)
+    command = "test -e /opt/tectonic/init_#{service}.done"
+
+    ips.each do |ip|
+      _, _, finished = ssh_exec(ip, command, 20)
+      if finished.zero?
+        puts "#{service} service finished successfully"
+        return true
+      end
+    end
+
+    false
   end
 end
