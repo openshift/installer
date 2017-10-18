@@ -385,7 +385,7 @@ def runRSpecTest(testFilePath, dockerArgs) {
           withCredentials(creds) {
             withDockerContainer(
               image: tectonic_smoke_test_env_image,
-              args: '-v /var/run/docker.sock:/var/run/docker.sock ' + dockerArgs
+              args: '-u root -v /var/run/docker.sock:/var/run/docker.sock ' + dockerArgs
             ) {
               checkout scm
               unstash 'smoke-test-binary'
