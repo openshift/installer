@@ -45,19 +45,22 @@ class AwsCluster < Cluster
     super
   end
 
-  def master_ip_address
-    ssh_master_ip = nil
+  def master_ip_addresses
+    ssh_master_ips = []
     Dir.chdir(@build_path) do
       terraform_state = `terraform state show module.masters.aws_autoscaling_group.masters`.chomp.split("\n")
       terraform_state.each do |value|
         attributes = value.split('=')
         next unless attributes[0].strip.eql?('id')
         instances_id = AwsSupport.sorted_auto_scaling_instances(attributes[1].strip.chomp, @aws_region)
-        ssh_master_ip = AwsSupport.preferred_instance_ip_address(instances_id[0], @aws_region)
-        break
+        ssh_master_ips.push AwsSupport.preferred_instance_ip_address(instances_id[0], @aws_region)
       end
     end
-    ssh_master_ip
+    ssh_master_ips
+  end
+
+  def master_ip_address
+    master_ip_addresses[0]
   end
 
   def check_prerequisites
