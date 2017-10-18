@@ -68,15 +68,16 @@ var (
 func testCluster(t *testing.T) {
 	// wait for all nodes to become available
 	t.Run("AllNodesRunning", testAllNodesRunning)
-	t.Run("GetIdentityLogs", testGetIdentityLogs)
-	t.Run("AllPodsRunning", testAllPodsRunning)
-	t.Run("KillAPIServer", testKillAPIServer)
 	t.Run("AllResourcesCreated", testAllResourcesCreated)
+	t.Run("AllPodsRunning", testAllPodsRunning)
+	t.Run("GetIdentityLogs", testGetIdentityLogs)
 
 	ne := os.Getenv(networkingEnv)
 	if ne == "canal" || ne == "calico" {
 		t.Run("NetworkPolicy", testNetworkPolicy)
 	}
+
+	t.Run("KillAPIServer", testKillAPIServer)
 }
 
 func testAllPodsRunning(t *testing.T) {
