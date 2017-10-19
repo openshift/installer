@@ -95,3 +95,7 @@ variable "tls_peer_key_pem" {
 variable "tls_peer_crt_pem" {
   default = ""
 }
+
+variable "ign_etcd_dropin_id_list" {
+  type = "list"
+}

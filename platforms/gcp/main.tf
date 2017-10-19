@@ -84,14 +84,15 @@ module "etcd" {
   master_subnetwork_name = "${module.network.master_subnetwork_name}"
   external_endpoints     = ["${compact(var.tectonic_etcd_servers)}"]
 
-  tls_enabled        = "${var.tectonic_etcd_tls_enabled}"
-  tls_ca_crt_pem     = "${module.etcd_certs.etcd_ca_crt_pem}"
-  tls_server_crt_pem = "${module.etcd_certs.etcd_server_crt_pem}"
-  tls_server_key_pem = "${module.etcd_certs.etcd_server_key_pem}"
-  tls_client_crt_pem = "${module.etcd_certs.etcd_client_crt_pem}"
-  tls_client_key_pem = "${module.etcd_certs.etcd_client_key_pem}"
-  tls_peer_crt_pem   = "${module.etcd_certs.etcd_peer_crt_pem}"
-  tls_peer_key_pem   = "${module.etcd_certs.etcd_peer_key_pem}"
+  tls_enabled             = "${var.tectonic_etcd_tls_enabled}"
+  tls_ca_crt_pem          = "${module.etcd_certs.etcd_ca_crt_pem}"
+  tls_server_crt_pem      = "${module.etcd_certs.etcd_server_crt_pem}"
+  tls_server_key_pem      = "${module.etcd_certs.etcd_server_key_pem}"
+  tls_client_crt_pem      = "${module.etcd_certs.etcd_client_crt_pem}"
+  tls_client_key_pem      = "${module.etcd_certs.etcd_client_key_pem}"
+  tls_peer_crt_pem        = "${module.etcd_certs.etcd_peer_crt_pem}"
+  tls_peer_key_pem        = "${module.etcd_certs.etcd_peer_key_pem}"
+  ign_etcd_dropin_id_list = "${module.ignition_masters.etcd_dropin_id_list}"
 }
 
 module "masters" {
@@ -158,17 +159,21 @@ module "workers" {
 module "ignition_masters" {
   source = "../../modules/ignition"
 
-  cluster_name         = "${var.tectonic_cluster_name}"
-  bootstrap_upgrade_cl = "${var.tectonic_bootstrap_upgrade_cl}"
-  tectonic_vanilla_k8s = "${var.tectonic_vanilla_k8s}"
-  container_images     = "${var.tectonic_container_images}"
-  image_re             = "${var.tectonic_image_re}"
-  kube_dns_service_ip  = "${module.bootkube.kube_dns_service_ip}"
-  kubeconfig_fetch_cmd = "/opt/gcs-puller.sh ${google_storage_bucket.tectonic.name}/${google_storage_bucket_object.kubeconfig.name} /etc/kubernetes/kubeconfig"
-  kubelet_cni_bin_dir  = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
-  kubelet_node_label   = "node-role.kubernetes.io/master"
-  kubelet_node_taints  = "node-role.kubernetes.io/master=:NoSchedule"
-  assets_location      = "${google_storage_bucket.tectonic.name}/${google_storage_bucket_object.tectonic-assets.name}"
+  cluster_name              = "${var.tectonic_cluster_name}"
+  bootstrap_upgrade_cl      = "${var.tectonic_bootstrap_upgrade_cl}"
+  tectonic_vanilla_k8s      = "${var.tectonic_vanilla_k8s}"
+  container_images          = "${var.tectonic_container_images}"
+  image_re                  = "${var.tectonic_image_re}"
+  kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
+  kubeconfig_fetch_cmd      = "/opt/gcs-puller.sh ${google_storage_bucket.tectonic.name}/${google_storage_bucket_object.kubeconfig.name} /etc/kubernetes/kubeconfig"
+  kubelet_cni_bin_dir       = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
+  kubelet_node_label        = "node-role.kubernetes.io/master"
+  kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
+  assets_location           = "${google_storage_bucket.tectonic.name}/${google_storage_bucket_object.tectonic-assets.name}"
+  etcd_advertise_name_list  = "${data.template_file.etcd_hostname_list.*.rendered}"
+  etcd_count                = "${length(data.template_file.etcd_hostname_list.*.id)}"
+  etcd_initial_cluster_list = "${data.template_file.etcd_hostname_list.*.rendered}"
+  etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
 }
 
 module "ignition_workers" {
