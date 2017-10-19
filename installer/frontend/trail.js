@@ -19,7 +19,7 @@ import { BM_Controllers, BM_Workers } from './components/bm-nodeforms';
 import { BM_Credentials } from './components/bm-credentials';
 import { BM_Hostname } from './components/bm-hostname';
 import { BM_Matchbox } from './components/bm-matchbox';
-import { BM_NetworkConfig } from './components/bm-network-config';
+import { KubernetesCIDRs } from './components/k8s-cidrs';
 import { BM_SSHKeys } from './components/bm-sshkeys';
 
 import { AWS_CloudCredentials } from './components/aws-cloud-credentials';
@@ -123,7 +123,7 @@ const bmMatchboxPage = {
 
 const bmNetworkConfigPage = {
   path: '/define/network-config',
-  component: BM_NetworkConfig,
+  component: KubernetesCIDRs,
   title: 'Network Configuration',
 };
 
