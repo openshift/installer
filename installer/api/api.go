@@ -28,6 +28,10 @@ type Config struct {
 	// Whether the server was started with --dev
 	DevMode bool
 
+	// If not "", search this directory for Tectonic license and pull secret
+	// files rather than the installer executable directory
+	SecretsDir string
+
 	// Cookie Sessions
 	CookieSigningSecret string
 

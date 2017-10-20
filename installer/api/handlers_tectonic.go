@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"time"
 
+	log "github.com/Sirupsen/logrus"
+
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/tools/clientcmd"
@@ -361,19 +363,26 @@ func tectonicFactsHandler(w http.ResponseWriter, req *http.Request, ctx *Context
 		}
 	}
 
-	ex, err := os.Executable()
-	if err != nil {
-		return newInternalServerError("Could not retrieve Tectonic facts")
+	dir := ctx.Config.SecretsDir
+	if dir == "" {
+		// Default to the installer executable directory
+		ex, err := os.Executable()
+		if err != nil {
+			return newInternalServerError("Could not retrieve Tectonic facts")
+		}
+		dir = filepath.Dir(ex)
 	}
 
-	license, err := ioutil.ReadFile(filepath.Join(filepath.Dir(ex), "license.txt"))
+	license, err := ioutil.ReadFile(filepath.Join(dir, "license.txt"))
 	if err != nil {
 		license = nil
+		log.Warningf("Tectonic license not found in %s", dir)
 	}
 
-	pullSecret, err := ioutil.ReadFile(filepath.Join(filepath.Dir(ex), "pull_secret.json"))
+	pullSecret, err := ioutil.ReadFile(filepath.Join(dir, "pull_secret.json"))
 	if err != nil {
 		pullSecret = nil
+		log.Warningf("Pull secret not found in %s", dir)
 	}
 
 	type response struct {
