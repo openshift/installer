@@ -1,6 +1,7 @@
 import _ from 'lodash';
 
 import { DEFAULT_CLUSTER_CONFIG } from './cluster-config';
+
 export const awsActionTypes = {
   SET: 'AWS_SET',
 };

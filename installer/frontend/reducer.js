@@ -2,9 +2,7 @@ import _ from 'lodash';
 import { combineReducers } from 'redux';
 import { fromJS } from 'immutable';
 
-import {
-  DEFAULT_CLUSTER_CONFIG,
-} from './cluster-config';
+import { DEFAULT_CLUSTER_CONFIG } from './cluster-config';
 
 import {
   awsActionTypes,
