@@ -15,7 +15,7 @@ When a cluster node is being bootstrapped from scratch, it goes through several 
    * triggering a ContainerLinux update, via update-engine (optional)
    * downloading and deploying proper docker addon version, via tectonic-torcx
    * writing the `kubelet.env` file
-1. if needed, a node reboot is triggered to apply systemd-wide changes
+1. if needed, a node reboot is triggered to apply systemd-wide changes and to clean container runtime datadir
 1. `kubelet.service` picks up the `kubelet.env` file and actually starts the kubelet as a rkt-fly service.
 
 Additionally, only on one of the master nodes the following kubernetes bootstrapping happens:
@@ -33,7 +33,7 @@ Additionally, only on one of the master nodes the following kubernetes bootstrap
 The following systemd units are deployed to a node by tectonic-installer and take part in the bootstrapping process:
 
 * `k8s-node-bootstrap.service` ensures node and assets freshness. It is automatically started on boot, can crash-loop, and it runs only during bootstrap
-* `kubelet.service` is the main kubelet deamon. It is automatically started on boot, it is crash-looping until `kubelet.env` is populated, and it runs on each boot
+* `kubelet.service` is the main kubelet daemon. It is automatically started on boot, it is crash-looping until `kubelet.env` is populated, and it runs on each boot
 
 Additionally, only on one of the master nodes the following kubernetes bootstrapping happens:
 
@@ -41,6 +41,11 @@ Additionally, only on one of the master nodes the following kubernetes bootstrap
 * `bootkube.path` waits for bootkube assets/scripts to exist on disk and triggers `bootkube.service`
 * `tectonic.service` deploys tectonic control-plane. It is started only after `bootkube.service` _has completed_.  It is a oneshot unit and cannot crash, and it runs only during bootstrap
 * `bootkube.path` waits for tectonic assets/scripts to exist on disk and triggers `tectonic.service`
+
+`k8s-node-bootstrap` runs [tectonic-torcx][tectonic-torcx] as a containerized service, thus relying on a container runtime being already on the node.
+It currently assumes that Docker is available and working. In case of version changes, a cleanup of the Docker datadir `/var/lib/docker` is scheduled before rebooting.
+
+[tectonic-torcx]: https://github.com/coreos/tectonic-torcx
 
 ## Service ordering
 
