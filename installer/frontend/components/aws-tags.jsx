@@ -3,7 +3,7 @@ import React from 'react';
 
 import { Input, Connect } from './ui';
 import { AWS_TAGS } from '../cluster-config';
-import { FieldList } from '../form';
+import { FieldList, Form } from '../form';
 
 const validators = {
   AWSTag: value => {
@@ -55,7 +55,7 @@ const validators = {
   },
 };
 
-export const tagsFields = new FieldList(AWS_TAGS, {
+const tagsFields = new FieldList(AWS_TAGS, {
   fields: {
     key: {
       default: '',
@@ -68,6 +68,8 @@ export const tagsFields = new FieldList(AWS_TAGS, {
   },
   validator: validators.AWSTagUniqueKeys,
 });
+
+export const tagsForm = new Form('AWS_TAGS_FORM', [tagsFields]);
 
 const Tag = ({row, remove, placeholder, autoFocus, showAutofocus}) => <div className="row" style={{padding: '0 0 20px 0'}}>
   <div className="col-xs-5" style={{paddingRight: 0}}>

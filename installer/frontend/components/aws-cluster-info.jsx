@@ -1,37 +1,14 @@
 import { connect } from 'react-redux';
 import React from 'react';
 
-import { Input, Connect } from './ui';
-import { TectonicLicense } from './tectonic-license';
-import { AWS_Tags, tagsFields } from './aws-tags';
-import { Form } from '../form';
-import fields from '../fields';
-import { AWS_CLUSTER_INFO, CLUSTER_NAME } from '../cluster-config';
-
-const clusterInfoForm = new Form(AWS_CLUSTER_INFO, [
-  tagsFields,
-  fields[CLUSTER_NAME],
-]);
+import { ClusterInfo } from './cluster-info';
+import { AWS_Tags, tagsForm } from './aws-tags';
+import { CLUSTER_NAME } from '../cluster-config';
 
 const TagsWithPlaceholder = connect(({clusterConfig}) => ({clusterName: clusterConfig[CLUSTER_NAME] || 'myclustername'}))(({clusterName}) => <AWS_Tags placeholder={`e.g. ${clusterName}`} />);
 
 export const AWS_ClusterInfo = () => <div>
-  <div className="row form-group">
-    <div className="col-xs-3">
-      <label htmlFor={CLUSTER_NAME}>Name</label>
-    </div>
-    <div className="col-xs-6">
-      <Connect field={CLUSTER_NAME}>
-        <Input placeholder="production" autoFocus="true" />
-      </Connect>
-      <p className="text-muted" style={{marginBottom: 0}}>
-        This name is used in the Tectonic Console to identify this cluster.
-      </p>
-    </div>
-  </div>
-
-  <TectonicLicense />
-
+  <ClusterInfo />
   <div className="row form-group">
     <div className="col-xs-3">
       <label htmlFor="tags">AWS Tags</label>
@@ -40,9 +17,8 @@ export const AWS_ClusterInfo = () => <div>
       <TagsWithPlaceholder />
     </div>
   </div>
-
-  <clusterInfoForm.Errors />
+  <tagsForm.Errors />
 </div>;
 
-AWS_ClusterInfo.canNavigateForward = state => clusterInfoForm.canNavigateForward(state) &&
-  TectonicLicense.canNavigateForward(state);
+AWS_ClusterInfo.canNavigateForward = state => tagsForm.canNavigateForward(state) &&
+  ClusterInfo.canNavigateForward(state);
