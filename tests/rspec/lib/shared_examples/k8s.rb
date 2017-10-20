@@ -13,7 +13,12 @@ require 'webdriver_helpers'
 RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
   before(:all) do
     @cluster = ClusterFactory.from_tf_vars(TFVarsFile.new(tf_vars_path))
-    @cluster.start
+    begin
+      @cluster.start
+    rescue => e
+      Forensic.run(@cluster)
+      raise "Aborting execution due startup failed. Error: #{e}"
+    end
   end
 
   after(:each) do |example|
