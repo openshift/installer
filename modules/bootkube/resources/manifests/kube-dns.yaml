@@ -43,8 +43,6 @@ spec:
     metadata:
       labels:
         k8s-app: kube-dns
-      annotations:
-        scheduler.alpha.kubernetes.io/critical-pod: ''
     spec:
       containers:
       - name: kubedns
@@ -162,8 +160,6 @@ spec:
             cpu: 10m
       dnsPolicy: Default  # Don't use cluster DNS.
       tolerations:
-      - key: "CriticalAddonsOnly"
-        operator: "Exists"
       - key: "node-role.kubernetes.io/master"
         operator: "Exists"
         effect: "NoSchedule"
