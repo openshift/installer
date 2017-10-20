@@ -62,7 +62,7 @@ class AzureCluster < Cluster
     Dir.chdir(@build_path) do
       console_url = `echo module.vnet.ingress_fqdn | terraform console ../../platforms/azure`.chomp
       if console_url.empty?
-        raise 'should get the console url to use in the UI tests.'
+        raise 'failed to get the console url to use in the UI tests.'
       end
       console_url
     end

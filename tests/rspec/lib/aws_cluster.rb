@@ -103,7 +103,7 @@ class AwsCluster < Cluster
       ingress_int = `echo module.masters.ingress_internal_fqdn | terraform console ../../platforms/aws`.chomp
       if ingress_ext.empty?
         if ingress_int.empty?
-          raise 'should get the console url to use in the UI tests.'
+          raise 'failed to get the console url to use in the UI tests.'
         end
         return ingress_int
       end

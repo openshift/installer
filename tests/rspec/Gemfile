@@ -2,13 +2,13 @@
 
 source 'https://rubygems.org'
 
+gem 'aws-sdk', '~> 3'
+gem 'bcrypt', '~>3.1.6'
+gem 'chromedriver-helper', '~>1.1.0'
+gem 'faker', '~>1.8.4'
+gem 'headless', '~>2.3.1'
 gem 'net-ssh', '~>4.2.0'
 gem 'rspec', '~>3.0'
+gem 'rspec-retry', '~>0.5.5'
 gem 'rubocop', '~>0.49.1'
 gem 'selenium-webdriver', '~>3.5.2'
-gem "chromedriver-helper", '~>1.1.0'
-gem "headless", "~>2.3.1"
-gem "faker", "~>1.8.4"
-gem "bcrypt", "~>3.1.6"
-gem 'aws-sdk', "~> 3"
-gem 'rspec-retry', "~>0.5.5"

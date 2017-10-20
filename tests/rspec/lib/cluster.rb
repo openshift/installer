@@ -73,7 +73,7 @@ class Cluster
 
   def tf_value(v)
     Dir.chdir(@build_path) do
-      `echo "#{v}" | terraform console ../../platforms/#{env_variables['PLATFORM']}`.chomp
+      `echo '#{v}' | terraform console ../../platforms/#{env_variables['PLATFORM']}`.chomp
     end
   end
 
