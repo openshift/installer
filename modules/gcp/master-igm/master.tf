@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-resource "google_compute_instance_template" "tectonic-master-it" {
-  name           = "tectonic-master-it"
+resource "google_compute_instance_template" "master-it" {
+  name           = "${var.cluster_name}-master-it"
   region         = "${var.region}"
   machine_type   = "${var.machine_type}"
   can_ip_forward = false
@@ -46,12 +46,12 @@ resource "google_compute_instance_template" "tectonic-master-it" {
   }
 }
 
-resource "google_compute_instance_group_manager" "tectonic-master-igm" {
+resource "google_compute_instance_group_manager" "master-igm" {
   count              = "${var.instance_count}"
   target_size        = 1
-  name               = "tectonic-master-igm-${count.index}"
+  name               = "${var.cluster_name}-master-igm-${count.index}"
   zone               = "${element(var.zone_list, count.index)}"
-  instance_template  = "${google_compute_instance_template.tectonic-master-it.self_link}"
+  instance_template  = "${google_compute_instance_template.master-it.self_link}"
   target_pools       = ["${var.master_targetpool_self_link}"]
   base_instance_name = "mstr"
 }

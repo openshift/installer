@@ -1,6 +1,6 @@
 resource "google_compute_firewall" "master-ingress" {
-  name    = "master-ingress"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-master-ingress"
+  network = "${google_compute_network.network.name}"
 
   # ICMP
   allow {
@@ -17,8 +17,8 @@ resource "google_compute_firewall" "master-ingress" {
 }
 
 resource "google_compute_firewall" "master-ingress-heapster" {
-  name    = "master-ingress-heapster"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-master-ingress-heapster"
+  network = "${google_compute_network.network.name}"
 
   allow {
     protocol = "tcp"
@@ -30,8 +30,8 @@ resource "google_compute_firewall" "master-ingress-heapster" {
 }
 
 resource "google_compute_firewall" "master-ingress-flannel" {
-  name    = "master-ingress-flannel"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-master-ingress-flannel"
+  network = "${google_compute_network.network.name}"
 
   allow {
     protocol = "udp"
@@ -43,8 +43,8 @@ resource "google_compute_firewall" "master-ingress-flannel" {
 }
 
 resource "google_compute_firewall" "master-ingress-node-exporter" {
-  name    = "master-ingress-node-exporter"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-master-ingress-node-exporter"
+  network = "${google_compute_network.network.name}"
 
   allow {
     protocol = "tcp"
@@ -56,8 +56,8 @@ resource "google_compute_firewall" "master-ingress-node-exporter" {
 }
 
 resource "google_compute_firewall" "master-ingress-kubelet" {
-  name    = "master-ingress-kubelet"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-master-ingress-kubelet"
+  network = "${google_compute_network.network.name}"
 
   allow {
     protocol = "tcp"
@@ -69,8 +69,8 @@ resource "google_compute_firewall" "master-ingress-kubelet" {
 }
 
 resource "google_compute_firewall" "master-ingress-etcd" {
-  name    = "master-ingress-etcd"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-master-ingress-etcd"
+  network = "${google_compute_network.network.name}"
 
   allow {
     protocol = "tcp"
@@ -82,8 +82,8 @@ resource "google_compute_firewall" "master-ingress-etcd" {
 }
 
 resource "google_compute_firewall" "master-ingress-services" {
-  name    = "master-ingress-services"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-master-ingress-services"
+  network = "${google_compute_network.network.name}"
 
   allow {
     protocol = "tcp"

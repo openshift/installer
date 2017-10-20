@@ -15,22 +15,22 @@ limitations under the License.
 */
 
 ## A single GCP network
-resource "google_compute_network" "tectonic-network" {
-  name                    = "tectonic-network"
+resource "google_compute_network" "network" {
+  name                    = "${var.cluster_name}-network"
   auto_create_subnetworks = "false"
 }
 
 ## Two subnetworks (masters, workers)
-resource "google_compute_subnetwork" "tectonic-master-subnet" {
-  name          = "tectonic-master-subnet"
+resource "google_compute_subnetwork" "master-subnet" {
+  name          = "${var.cluster_name}-master-subnet"
   ip_cidr_range = "${var.master_ip_cidr_range}"
-  network       = "${google_compute_network.tectonic-network.self_link}"
+  network       = "${google_compute_network.network.self_link}"
   region        = "${var.gcp_region}"
 }
 
-resource "google_compute_subnetwork" "tectonic-worker-subnet" {
-  name          = "tectonic-worker-subnet"
+resource "google_compute_subnetwork" "worker-subnet" {
+  name          = "${var.cluster_name}-worker-subnet"
   ip_cidr_range = "${var.worker_ip_cidr_range}"
-  network       = "${google_compute_network.tectonic-network.self_link}"
+  network       = "${google_compute_network.network.self_link}"
   region        = "${var.gcp_region}"
 }

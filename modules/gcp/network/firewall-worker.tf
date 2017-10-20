@@ -1,6 +1,6 @@
 resource "google_compute_firewall" "worker-ingress" {
-  name    = "worker-ingress"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-worker-ingress"
+  network = "${google_compute_network.network.name}"
 
   # ICMP
   allow {
@@ -17,8 +17,8 @@ resource "google_compute_firewall" "worker-ingress" {
 }
 
 resource "google_compute_firewall" "worker-ingress-heapster" {
-  name    = "worker-ingress-heapster"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-worker-ingress-heapster"
+  network = "${google_compute_network.network.name}"
 
   allow {
     protocol = "tcp"
@@ -30,8 +30,8 @@ resource "google_compute_firewall" "worker-ingress-heapster" {
 }
 
 resource "google_compute_firewall" "worker-ingress-flannel" {
-  name    = "worker-ingress-flannel"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-worker-ingress-flannel"
+  network = "${google_compute_network.network.name}"
 
   allow {
     protocol = "udp"
@@ -43,8 +43,8 @@ resource "google_compute_firewall" "worker-ingress-flannel" {
 }
 
 resource "google_compute_firewall" "worker-ingress-node-exporter" {
-  name    = "worker-ingress-node-exporter"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-worker-ingress-node-exporter"
+  network = "${google_compute_network.network.name}"
 
   allow {
     protocol = "tcp"
@@ -56,8 +56,8 @@ resource "google_compute_firewall" "worker-ingress-node-exporter" {
 }
 
 resource "google_compute_firewall" "worker-ingress-kubelet" {
-  name    = "worker-ingress-kubelet"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-worker-ingress-kubelet"
+  network = "${google_compute_network.network.name}"
 
   allow {
     protocol = "tcp"
@@ -69,8 +69,8 @@ resource "google_compute_firewall" "worker-ingress-kubelet" {
 }
 
 resource "google_compute_firewall" "worker-ingress-services" {
-  name    = "worker-ingress-services"
-  network = "${google_compute_network.tectonic-network.name}"
+  name    = "${var.cluster_name}-worker-ingress-services"
+  network = "${google_compute_network.network.name}"
 
   allow {
     protocol = "tcp"
