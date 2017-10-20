@@ -21,10 +21,12 @@ resource "google_compute_instance" "etcd-node" {
   can_ip_forward = false
   zone           = "${element(var.zone_list, count.index)}"
 
-  disk {
-    image = "coreos-${var.cl_channel}"
-    type  = "${var.disk_type}"
-    size  = "${var.disk_size}"
+  boot_disk {
+    initialize_params {
+      image = "coreos-${var.cl_channel}"
+      type  = "${var.disk_type}"
+      size  = "${var.disk_size}"
+    }
   }
 
   network_interface {
