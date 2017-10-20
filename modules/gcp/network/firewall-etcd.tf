@@ -1,6 +1,6 @@
 resource "google_compute_firewall" "etcd-ingress" {
   name    = "${var.cluster_name}-etcd-ingress"
-  network = "${google_compute_network.tectonic-network.name}"
+  network = "${google_compute_network.network.name}"
 
   # ICMP
   allow {
@@ -18,7 +18,7 @@ resource "google_compute_firewall" "etcd-ingress" {
 
 resource "google_compute_firewall" "etcd" {
   name    = "${var.cluster_name}-etcd"
-  network = "${google_compute_network.tectonic-network.name}"
+  network = "${google_compute_network.network.name}"
 
   allow {
     protocol = "tcp"

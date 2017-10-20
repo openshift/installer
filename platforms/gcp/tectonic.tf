@@ -13,12 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-locals {
-  etcd_count = "${var.tectonic_experimental ? 0 : max(var.tectonic_etcd_count, 1)}"
-}
-
 data "template_file" "etcd_hostname_list" {
-  count    = "${local.etcd_count}"
+  count    = "${var.tectonic_experimental ? 0 : max(var.tectonic_etcd_count, 1)}"
   template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
 }
 

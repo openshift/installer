@@ -15,5 +15,5 @@ limitations under the License.
 */
 
 output "instance_group" {
-  value = ["${google_compute_instance_group_manager.tectonic-master-igm.*.instance_group}"]
+  value = ["${google_compute_instance_group_manager.master-igm.*.instance_group}"]
 }

@@ -15,29 +15,29 @@ limitations under the License.
 */
 
 output "master_ip" {
-  value = "${google_compute_address.tectonic-masters-ip.address}"
+  value = "${google_compute_address.masters-ip.address}"
 }
 
 output "ingress_ip" {
-  value = "${google_compute_address.tectonic-ingress-ip.address}"
+  value = "${google_compute_address.ingress-ip.address}"
 }
 
 output "master_targetpool_self_link" {
-  value = "${google_compute_target_pool.tectonic-master-targetpool.self_link}"
+  value = "${google_compute_target_pool.master-targetpool.self_link}"
 }
 
 output "worker_targetpool_self_link" {
-  value = "${google_compute_target_pool.tectonic-worker-targetpool.self_link}"
+  value = "${google_compute_target_pool.worker-targetpool.self_link}"
 }
 
 output "master_subnetwork_name" {
-  value = "${google_compute_subnetwork.tectonic-master-subnet.name}"
+  value = "${google_compute_subnetwork.master-subnet.name}"
 }
 
 output "worker_subnetwork_name" {
-  value = "${google_compute_subnetwork.tectonic-worker-subnet.name}"
+  value = "${google_compute_subnetwork.worker-subnet.name}"
 }
 
 output "tectonic_network_name" {
-  value = "${google_compute_network.tectonic-network.name}"
+  value = "${google_compute_network.network.name}"
 }
