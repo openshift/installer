@@ -19,18 +19,15 @@ const licenseField = new Field(TECTONIC_LICENSE, {
   validator: token => {
     const err = validate.nonEmpty(token);
     if (err) {
-      return <p>{err}</p>;
+      return err;
     }
     try {
       const decoded = jwt_decode(token, {header: false});
       if (!decoded.license) {
-        return <p>Error parsing license.</p>;
+        return 'Error parsing license';
       }
     } catch (unused) {
-      return <div>
-        <b>Error parsing license</b>
-        <p>Please make sure you upload the "raw format" license from {accountLink}.</p>
-      </div>;
+      return 'Error parsing license';
     }
     return;
   },
@@ -42,15 +39,12 @@ const pullSecretField = new Field(PULL_SECRET, {
   validator: secret => {
     const err = validate.nonEmpty(secret);
     if (err) {
-      return <p>{err}</p>;
+      return err;
     }
     try {
       JSON.parse(secret);
     } catch (unused) {
-      return <div>
-        <b>Error parsing pull secret</b>
-        <p>Please make sure you upload the pull secret from {accountLink} in a valid JSON format.</p>
-      </div>;
+      return 'Error parsing pull secret';
     }
     return;
   },
@@ -72,13 +66,14 @@ const FileInput = ({id, onValue}) => {
   return <input type="file" id={id} onChange={upload} style={{display: 'none'}} />;
 };
 
-const FileUpload = ({buttonTitle, description, field, id, onValue, value}) => {
+const FileUpload = ({buttonTitle, description, ErrorHelp, field, id, onValue, value}) => {
   const invalid = field.validator(value);
   if (invalid) {
     return <div style={{marginTop: 8}}>
       <i className="fa fa-ban wiz-error-fg"></i>&nbsp;&nbsp;Invalid {description}
       <Alert noIcon severity="error">
-        {invalid}
+        <b>{invalid}</b>
+        {ErrorHelp}
         <label className="btn btn-flat btn-warning">
           {buttonTitle}
           <FileInput id={id} onValue={onValue} />
@@ -97,11 +92,21 @@ const FileUpload = ({buttonTitle, description, field, id, onValue, value}) => {
 };
 
 const License = () => <Connect field={TECTONIC_LICENSE}>
-  <FileUpload buttonTitle={'Upload "coreos-license.txt"'} description="CoreOS license" field={licenseField} />
+  <FileUpload
+    buttonTitle={'Upload "coreos-license.txt"'}
+    description="CoreOS license"
+    ErrorHelp={<p>Please make sure you upload the "raw format" license from {accountLink}.</p>}
+    field={licenseField}
+  />
 </Connect>;
 
 const Secret = () => <Connect field={PULL_SECRET}>
-  <FileUpload buttonTitle={'Upload "config.json"'} description="pull secret" field={pullSecretField} />
+  <FileUpload
+    buttonTitle={'Upload "config.json"'}
+    description="pull secret"
+    ErrorHelp={<p>Please make sure you upload the pull secret from {accountLink} in a valid JSON format.</p>}
+    field={pullSecretField}
+  />
 </Connect>;
 
 export const ClusterInfo = () => <div>
