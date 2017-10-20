@@ -45,10 +45,6 @@ resource "google_compute_forwarding_rule" "api-external-ssh-fwd-rule" {
   port_range            = "22"
 }
 
-resource "google_compute_address" "tectonic-ingress-ip" {
-  name = "tectonic-ingress-ip"
-}
-
 resource "google_compute_forwarding_rule" "ingress-external-http-fwd-rule" {
   load_balancing_scheme = "EXTERNAL"
   name                  = "${var.cluster_name}-ingress-external-http-fwd-rule"
