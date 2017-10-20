@@ -2,9 +2,15 @@
 
 require 'ssh'
 
-SSH_CMD_CONTAINER_LINUX_VERSION = 'sudo cat /var/lib/update_engine/prefs/aleph-version'
-SSH_CMD_CONTAINER_LINUX_CHANNEL = 'for conf in /usr/share/coreos/update.conf /etc/coreos/update.conf ; \
-do [ -f "$conf" ] && source "$conf" ; done ; echo "$GROUP"'
+SSH_CMD_CONTAINER_LINUX_VERSION = 'if sudo [ -f /var/lib/update_engine/prefs/aleph-version ]; then \
+  sudo cat /var/lib/update_engine/prefs/aleph-version; \
+else \
+  source /usr/share/coreos/release && echo "$COREOS_RELEASE_VERSION"; \
+fi'
+SSH_CMD_CONTAINER_LINUX_CHANNEL = 'for conf in /usr/share/coreos/update.conf /etc/coreos/update.conf; do \
+  [ -f "$conf" ] && source "$conf"; \
+done; \
+echo "$GROUP"'
 
 # ContainerLinux provides helpers to find OS-level properties for a cluster.
 module ContainerLinux
