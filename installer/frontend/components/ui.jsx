@@ -572,15 +572,12 @@ It should end with:
 
 -----END CERTIFICATE-----`;
 
-export const CertArea = (props) => {
-  const invalid = validate.certificate(props.value);
-  const areaProps = Object.assign({}, props, {
-    className: props.className + ' wiz-tls-asset-field',
-    invalid: invalid,
-    placeholder: certPlaceholder,
-  });
-  return <FileArea {...areaProps} />;
-};
+export const CertArea = (props) => <FileArea
+  {...props}
+  className="wiz-tls-asset-field"
+  invalid={validate.certificate(props.value)}
+  placeholder={certPlaceholder}
+/>;
 
 const privateKeyPlaceholder = `Paste your private key here. It should start with:
 
@@ -590,15 +587,12 @@ It should end with:
 
 -----END RSA PRIVATE KEY-----`;
 
-export const PrivateKeyArea = (props) => {
-  const invalid = validate.privateKey(props.value);
-  const areaProps = Object.assign({}, props, {
-    className: props.className + ' wiz-tls-asset-field',
-    invalid: invalid,
-    placeholder: privateKeyPlaceholder,
-  });
-  return <FileArea {...areaProps} />;
-};
+export const PrivateKeyArea = (props) => <FileArea
+  {...props}
+  className="wiz-tls-asset-field"
+  invalid={validate.privateKey(props.value)}
+  placeholder={privateKeyPlaceholder}
+/>;
 
 export class AsyncSelect extends React.Component {
   componentDidMount () {
