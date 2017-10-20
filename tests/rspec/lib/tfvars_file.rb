@@ -26,7 +26,6 @@ class TFVarsFile
     master_count + worker_count
   end
 
-  # TODO: Randomize region on AWS
   def region
     data['tectonic_aws_region']
   end
