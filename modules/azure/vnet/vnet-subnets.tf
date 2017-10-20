@@ -1,5 +1,5 @@
 resource "azurerm_virtual_network" "tectonic_vnet" {
-  count               = "${var.external_vnet_id == "" ? 1 :0 }"
+  count               = "${var.external_vnet_id == "" ? 1 : 0 }"
   name                = "${var.cluster_name}"
   resource_group_name = "${var.resource_group_name}"
   address_space       = ["${var.vnet_cidr_block}"]
