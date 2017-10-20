@@ -385,7 +385,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
                   Specify a range of IPv4 addresses for the VPC in the form of a <a href="https://tools.ietf.org/html/rfc4632" rel="noopener noreferrer" target="_blank">CIDR block</a>. Safe defaults have been chosen for you.
                 </div>
               </div>
-              <CIDR name="CIDR block" field={AWS_VPC_CIDR} placeholder="10.0.0.0/16" />
+              <CIDR name="CIDR Block" field={AWS_VPC_CIDR} placeholder="10.0.0.0/16" />
             </div>
           }
           {!awsCreateVpc &&
