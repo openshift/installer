@@ -18,7 +18,7 @@ import { Header } from './header';
 import { Footer } from './footer';
 
 const downloadState = (state) => {
-  const toSave = savable(state);
+  const toSave = _.cloneDeep(savable(state));
 
   // Extra field data doesn't need to be saved
   _.unset(toSave, 'clusterConfig.extra');
