@@ -4,7 +4,7 @@ Tectonic is built on pure-upstream Kubernetes but has an opinion on the best way
 
 Goals of the project:
 
-- Install [Self-Hosted Kubernetes Clusters](https://github.com/kubernetes/community/blob/master/contributors/design-proposals/self-hosted-kubernetes.md)
+- Install Kubernetes clusters
 - Secure by default (uses TLS, RBAC by default, OIDC AuthN, etcd)
 - Automatable install process for scripts and CI/CD
 - Deploy on any infrastructure: Amazon AWS, Microsoft Azure, OpenStack, Google Cloud, bare metal
