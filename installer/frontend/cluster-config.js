@@ -52,7 +52,6 @@ export const PULL_SECRET = 'pullSecret';
 export const SSH_AUTHORIZED_KEY = 'sshAuthorizedKey';
 export const STS_ENABLED = 'sts_enabled';
 export const TECTONIC_LICENSE = 'tectonicLicense';
-export const UPDATER = 'updater';
 export const ADMIN_EMAIL = 'adminEmail';
 export const ADMIN_PASSWORD = 'adminPassword';
 export const ADMIN_PASSWORD2 = 'adminPassword2';
@@ -164,11 +163,6 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [BM_OS_TO_USE]: '',
   [DRY_RUN]: false,
   [RETRY]: false, // whether we're retrying a terraform apply
-  [UPDATER]: {
-    server: 'https://tectonic.update.core-os.net',
-    channel: 'tectonic-1.6',
-    appID: '6bc7b986-4654-4a0f-94b3-84ce6feb1db4',
-  },
   [POD_CIDR]: '10.2.0.0/16',
   [SERVICE_CIDR]: '10.3.0.0/16',
 };
