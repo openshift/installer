@@ -3,9 +3,11 @@ import pluralize from 'pluralize';
 import React from 'react';
 import { connect } from 'react-redux';
 
+import { Field, Form } from '../form';
 import { AWS_TF, BARE_METAL_TF } from '../platforms';
+import { validate } from '../validate';
 import { Alert } from './alert';
-import { CIDR, cidrSize } from './cidr';
+import { CIDRRow, cidrSize } from './cidr';
 import {
   AWS_CONTROLLERS,
   AWS_WORKERS,
@@ -54,11 +56,23 @@ const PodRangeWarning = connect(
   </Alert>;
 });
 
-export const KubernetesCIDRs = ({validator}) => <div className="row form-group">
+const DEFAULT_POD_CIDR = '10.2.0.0/16';
+const DEFAULT_SERVICE_CIDR = '10.3.0.0/16';
+
+const validator = (s, cc) => cc[PLATFORM_TYPE] === AWS_TF ? validate.AWSsubnetCIDR(s) : validate.CIDR(s);
+
+const form = new Form('K8S_CIDRS_FORM', [
+  new Field(POD_CIDR, {default: DEFAULT_POD_CIDR, validator}),
+  new Field(SERVICE_CIDR, {default: DEFAULT_SERVICE_CIDR, validator}),
+]);
+
+export const KubernetesCIDRs = () => <div className="row form-group">
   <div className="col-xs-12">
     <h4>Kubernetes</h4>
-    <CIDR name="Pod Range" field={POD_CIDR} placeholder="10.2.0.0/16" validator={validator} />
-    <CIDR name="Service Range" field={SERVICE_CIDR} placeholder="10.3.0.0/16" validator={validator} />
+    <CIDRRow name="Pod Range" field={POD_CIDR} placeholder={DEFAULT_POD_CIDR} />
+    <CIDRRow name="Service Range" field={SERVICE_CIDR} placeholder={DEFAULT_SERVICE_CIDR} />
     <PodRangeWarning />
   </div>
 </div>;
+
+KubernetesCIDRs.canNavigateForward = form.canNavigateForward;

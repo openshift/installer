@@ -153,18 +153,13 @@ export const DEFAULT_CLUSTER_CONFIG = {
   extra: {}, // extraneous, non-value data for this field
   bootCfgInfly: false, // TODO (ggreer): total hack. clean up after release
   [AWS_VPC_ID]: '',
-  [AWS_VPC_CIDR]: '10.0.0.0/16',
-  [AWS_CONTROLLER_SUBNETS]: {},
   [AWS_CONTROLLER_SUBNET_IDS]: {},
   [DESELECTED_FIELDS]: {},
-  [AWS_WORKER_SUBNETS]: {},
   [AWS_WORKER_SUBNET_IDS]: {},
   [BM_MATCHBOX_HTTP]: '',
   [BM_OS_TO_USE]: '',
   [DRY_RUN]: false,
   [RETRY]: false, // whether we're retrying a terraform apply
-  [POD_CIDR]: '10.2.0.0/16',
-  [SERVICE_CIDR]: '10.3.0.0/16',
 };
 
 export const toAWS_TF = (cc, FORMS) => {

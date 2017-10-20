@@ -21,7 +21,7 @@ import { configActions } from '../actions';
 import { AWS_DomainValidation } from './aws-domain-validation';
 import { TectonicGA } from '../tectonic-ga';
 import { KubernetesCIDRs } from './k8s-cidrs';
-import { CIDR } from './cidr';
+import { CIDRRow } from './cidr';
 import { Field, Form } from '../form';
 
 const { setIn } = configActions;
@@ -53,17 +53,13 @@ import {
 } from '../cluster-config';
 
 const vpcInfoForm = new Form(AWS_VPC_FORM, [
+  new Field(AWS_ADVANCED_NETWORKING, {default: false}),
+  new Field(AWS_CONTROLLER_SUBNETS, {default: {}}),
+  new Field(AWS_CREATE_VPC, {default: 'VPC_CREATE'}),
   new Field(AWS_SPLIT_DNS, {default: SPLIT_DNS_ON}),
-  new Field(AWS_CREATE_VPC, {
-    default: 'VPC_CREATE',
-  }),
-  new Field(CLUSTER_SUBDOMAIN, {
-    default: '',
-    validator: compose(validate.nonEmpty, validate.domainName),
-  }),
-  new Field(AWS_ADVANCED_NETWORKING, {
-    default: false,
-  }),
+  new Field(AWS_VPC_CIDR, {default: '10.0.0.0/16', validator: validate.AWSsubnetCIDR}),
+  new Field(AWS_WORKER_SUBNETS, {default: {}}),
+  new Field(CLUSTER_SUBDOMAIN, {default: '', validator: compose(validate.nonEmpty, validate.domainName)}),
   new Field(AWS_HOSTED_ZONE_ID, {
     default: '',
     dependencies: [AWS_REGION_FORM],
@@ -227,13 +223,26 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
         controllerSubnets = _.map(this.props.awsControllerSubnets, (subnet, az) => {
           const fieldName = `${AWS_SUBNETS}.${az}`;
           return <DeselectField key={az} field={fieldName}>
-            <CIDR field={`${AWS_CONTROLLER_SUBNETS}.${az}`} name={az} fieldName={fieldName} placeholder="10.0.0.0/24" autoFocus={az.endsWith('a')} />
+            <CIDRRow
+              autoFocus={az.endsWith('a')}
+              field={`${AWS_CONTROLLER_SUBNETS}.${az}`}
+              fieldName={fieldName}
+              name={az}
+              placeholder="10.0.0.0/24"
+              validator={validate.AWSsubnetCIDR}
+            />
           </DeselectField>;
         });
         workerSubnets = _.map(this.props.awsWorkerSubnets, (subnet, az) => {
           const fieldName = `${AWS_SUBNETS}.${az}`;
           return <DeselectField key={az} field={fieldName}>
-            <CIDR field={`${AWS_WORKER_SUBNETS}.${az}`} name={az} fieldName={fieldName} placeholder="10.0.0.0/24" />
+            <CIDRRow
+              field={`${AWS_WORKER_SUBNETS}.${az}`}
+              fieldName={fieldName}
+              name={az}
+              placeholder="10.0.0.0/24"
+              validator={validate.AWSsubnetCIDR}
+            />
           </DeselectField>;
         });
       } else if (awsVpcId) {
@@ -385,7 +394,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
                   Specify a range of IPv4 addresses for the VPC in the form of a <a href="https://tools.ietf.org/html/rfc4632" rel="noopener noreferrer" target="_blank">CIDR block</a>. Safe defaults have been chosen for you.
                 </div>
               </div>
-              <CIDR name="CIDR Block" field={AWS_VPC_CIDR} placeholder="10.0.0.0/16" />
+              <CIDRRow name="CIDR Block" field={AWS_VPC_CIDR} placeholder="10.0.0.0/16" />
             </div>
           }
           {!awsCreateVpc &&
@@ -435,7 +444,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
           </div>
           }
           <hr />
-          <KubernetesCIDRs validator={validate.AWSsubnetCIDR} />
+          <KubernetesCIDRs />
         </div>
         }
       </div>;
@@ -443,7 +452,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
   });
 
 AWS_VPC.canNavigateForward = ({clusterConfig}) => {
-  if (!vpcInfoForm.canNavigateForward({clusterConfig})) {
+  if (!vpcInfoForm.canNavigateForward({clusterConfig}) || !KubernetesCIDRs.canNavigateForward({clusterConfig})) {
     return false;
   }
 
@@ -453,10 +462,8 @@ AWS_VPC.canNavigateForward = ({clusterConfig}) => {
     return !validate.AWSsubnetCIDR(clusterConfig[AWS_VPC_CIDR]) &&
            _.every(controllerSubnets, subnet => !validate.AWSsubnetCIDR(subnet)) &&
            _.every(workerSubnets, subnet => !validate.AWSsubnetCIDR(subnet)) &&
-          !validate.AWSsubnetCIDR(clusterConfig[POD_CIDR]) &&
-          !validate.AWSsubnetCIDR(clusterConfig[SERVICE_CIDR]) &&
-          !validate.someSelected(_.keys(clusterConfig[AWS_CONTROLLER_SUBNETS]), clusterConfig[DESELECTED_FIELDS][AWS_SUBNETS]) &&
-          !validate.someSelected(_.keys(clusterConfig[AWS_WORKER_SUBNETS]), clusterConfig[DESELECTED_FIELDS][AWS_SUBNETS]);
+           !validate.someSelected(_.keys(clusterConfig[AWS_CONTROLLER_SUBNETS]), clusterConfig[DESELECTED_FIELDS][AWS_SUBNETS]) &&
+           !validate.someSelected(_.keys(clusterConfig[AWS_WORKER_SUBNETS]), clusterConfig[DESELECTED_FIELDS][AWS_SUBNETS]);
   }
 
   return _.size(clusterConfig[AWS_CONTROLLER_SUBNET_IDS]) > 0 &&
@@ -464,7 +471,5 @@ AWS_VPC.canNavigateForward = ({clusterConfig}) => {
          _.some(clusterConfig[AWS_CONTROLLER_SUBNET_IDS], id => !validate.nonEmpty(id)) &&
          _.some(clusterConfig[AWS_WORKER_SUBNET_IDS], id => !validate.nonEmpty(id)) &&
          !validate.someSelected(_.keys(clusterConfig[AWS_CONTROLLER_SUBNET_IDS]), clusterConfig[DESELECTED_FIELDS][AWS_SUBNETS]) &&
-         !validate.someSelected(_.keys(clusterConfig[AWS_WORKER_SUBNET_IDS]), clusterConfig[DESELECTED_FIELDS][AWS_SUBNETS]) &&
-         !validate.AWSsubnetCIDR(clusterConfig[POD_CIDR]) &&
-         !validate.AWSsubnetCIDR(clusterConfig[SERVICE_CIDR]);
+         !validate.someSelected(_.keys(clusterConfig[AWS_WORKER_SUBNET_IDS]), clusterConfig[DESELECTED_FIELDS][AWS_SUBNETS]);
 };
