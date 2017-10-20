@@ -18,7 +18,8 @@ def ssh_exec(ip_address, command, max_retries = 5)
   stdout = ''
   stderr = ''
   begin
-    Net::SSH.start(ip_address, 'core', forward_agent: true, use_agent: true) do |ssh|
+    Net::SSH.start(ip_address, 'core', forward_agent: true, use_agent: true,
+                                       verify_host_key: Net::SSH::Verifiers::Null.new) do |ssh|
       ssh.exec! command, status: status do |_ch, stream, data|
         if stream == :stdout
           stdout = data
