@@ -15,7 +15,7 @@ import {
 import { Field, Form } from '../form';
 import { validate } from '../validate';
 
-const toKey = (name, field) => `${name}-${field}`;
+export const toKey = (name, field) => `${name}-${field}`;
 
 // Use this single dummy form / field to trigger loading the IAM roles list. Then IAM role fields can set this as their
 // dependency, which avoids triggering a separate API request for each field.

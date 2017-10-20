@@ -18,10 +18,8 @@ import { Form } from '../form';
 import { toError, toAsyncError } from '../utils';
 import { AWS_INSTANCE_TYPES } from '../facts';
 import { NumberInput, Connect, Select } from './ui';
-import { makeNodeForm } from './make-node-form';
+import { makeNodeForm, toKey } from './make-node-form';
 import { Etcd } from './etcd';
-
-const toKey = (name, field) => `${name}-${field}`;
 
 const Row = ({label, htmlFor, children}) => <div className="row form-group">
   <div className="col-xs-4">

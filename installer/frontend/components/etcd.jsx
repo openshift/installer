@@ -9,7 +9,7 @@ import {
   ETCD_OPTIONS,
   PLATFORM_TYPE,
 } from '../cluster-config';
-import { validate } from '../validate';
+import { compose, validate } from '../validate';
 import { Connect, Input, Radio } from './ui';
 import { DefineNode } from './aws-define-nodes';
 import { makeNodeForm } from './make-node-form';
@@ -17,13 +17,12 @@ import { Field, Form } from '../form';
 import { AWS_TF } from '../platforms';
 
 const EtcdForm = 'EtcdForm';
-const one2Nine = validate.int({min: 1, max: 9});
 
 const fields = [
   new Field(ETCD_OPTION, {
     default: ETCD_OPTIONS.PROVISIONED,
   }),
-  makeNodeForm(AWS_ETCDS, false, value => one2Nine(value) || validate.isOdd(value), {
+  makeNodeForm(AWS_ETCDS, false, compose(validate.int({min: 1, max: 9}), validate.isOdd), {
     dependencies: [ETCD_OPTION],
     ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.PROVISIONED,
   }),
