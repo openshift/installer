@@ -137,7 +137,7 @@ module "tectonic" {
 }
 
 module "flannel_vxlan" {
-  source = "../../modules/net/flannel-vxlan"
+  source = "../../modules/net/flannel_vxlan"
 
   cluster_cidr     = "${var.tectonic_cluster_cidr}"
   enabled          = "${var.tectonic_networking == "flannel"}"
