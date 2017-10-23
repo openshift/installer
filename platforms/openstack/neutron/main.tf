@@ -63,7 +63,7 @@ module "bootkube" {
   service_cidr = "${var.tectonic_service_cidr}"
   cluster_cidr = "${var.tectonic_cluster_cidr}"
 
-  advertise_address = "0.0.0.0"
+  advertise_address = "${openstack_networking_floatingip_v2.loadbalancer.address}"
   anonymous_auth    = "false"
 
   oidc_username_claim = "email"
