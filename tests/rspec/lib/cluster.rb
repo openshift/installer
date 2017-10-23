@@ -145,25 +145,36 @@ class Cluster
 
   def wait_for_service(service)
     from = Time.now
+    ips = []
+
     180.times do # 180 * 10 = 1800 seconds = 30 minutes
       ips = master_ip_addresses
       return if service_finished_bootstrapping?(ips, service)
 
       elapsed = Time.now - from
-      puts "Waiting for bootstrapping of #{service} service to complete..." if (elapsed.round % 5).zero?
+      if (elapsed.round % 5).zero?
+        puts "Waiting for bootstrapping of #{service} service to complete..."
+        puts "Checked master nodes: #{ips}"
+      end
       sleep 10
     end
 
-    raise "timeout waiting for #{service} service to bootstrap" if elapsed > 1200 # 20 mins timeout
+    raise "timeout waiting for #{service} service to bootstrap on any of: #{ips}"
   end
 
   def service_finished_bootstrapping?(ips, service)
     command = "test -e /opt/tectonic/init_#{service}.done"
 
     ips.each do |ip|
-      _, _, finished = ssh_exec(ip, command, 20)
+      finished = 1
+      begin
+        _, _, finished = ssh_exec(ip, command)
+      rescue => e
+        puts "failed to ssh exec on ip #{ip} with: #{e}"
+      end
+
       if finished.zero?
-        puts "#{service} service finished successfully"
+        puts "#{service} service finished successfully on ip #{ip}"
         return true
       end
     end
