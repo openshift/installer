@@ -76,6 +76,12 @@ EOF
   default = "Premium_LRS"
 }
 
+variable "tectonic_azure_master_root_volume_size" {
+  type        = "string"
+  default     = "32"
+  description = "The size of the volume in gigabytes for the root block device of master nodes."
+}
+
 variable "tectonic_azure_worker_storage_type" {
   type = "string"
 
@@ -88,6 +94,12 @@ EOF
   default = "Premium_LRS"
 }
 
+variable "tectonic_azure_worker_root_volume_size" {
+  type        = "string"
+  default     = "32"
+  description = "The size of the volume in gigabytes for the root block device of worker nodes."
+}
+
 variable "tectonic_azure_etcd_storage_type" {
   type = "string"
 
@@ -98,6 +110,12 @@ See https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage#suppo
 EOF
 
   default = "Premium_LRS"
+}
+
+variable "tectonic_azure_etcd_root_volume_size" {
+  type        = "string"
+  default     = "32"
+  description = "The size of the volume in gigabytes for the root block device of etcd nodes."
 }
 
 variable "tectonic_azure_vnet_cidr_block" {

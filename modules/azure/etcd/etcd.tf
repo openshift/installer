@@ -36,6 +36,7 @@ resource "azurerm_virtual_machine" "etcd_node" {
     create_option     = "FromImage"
     caching           = "ReadWrite"
     os_type           = "linux"
+    disk_size_gb      = "${var.root_volume_size}"
   }
 
   os_profile {

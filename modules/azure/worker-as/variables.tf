@@ -69,6 +69,10 @@ variable "storage_type" {
   description = "Storage account type"
 }
 
+variable "root_volume_size" {
+  type = "string"
+}
+
 variable "tectonic_kube_dns_service_ip" {
   type = "string"
 }
