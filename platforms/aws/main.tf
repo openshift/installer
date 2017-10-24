@@ -1,6 +1,6 @@
 provider "aws" {
   region  = "${var.tectonic_aws_region}"
-  version = "0.1.4"
+  version = "1.1.0"
 }
 
 data "aws_availability_zones" "azs" {}

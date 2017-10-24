@@ -1,4 +1,6 @@
 provider "dns" {
+  version = "1.0.0"
+
   update {
     server        = "${var.dns_server}"
     key_name      = "${var.dns_key_name}"

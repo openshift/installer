@@ -159,6 +159,12 @@ class Cluster
       sleep 10
     end
 
+    # Here we're already into timeout condition so
+    # we'll print the journal of the service before raising
+    ips.each do |master_ip|
+      print_service_logs(master_ip, service)
+    end
+
     raise "timeout waiting for #{service} service to bootstrap on any of: #{ips}"
   end
 
@@ -180,5 +186,18 @@ class Cluster
     end
 
     false
+  end
+
+  def print_service_logs(ip, service)
+    command = "journalctl --no-pager -u '#{service}'"
+    begin
+      stdout, stderr, exitcode = ssh_exec(ip, command)
+      puts "Journal of #{service} service on #{ip} (exitcode #{exitcode})"
+      puts "Standard output: \n#{stdout}"
+      puts "Standard error: \n#{stderr}"
+      puts "End of journal of #{service} service on #{ip}"
+    rescue => e
+      puts "Cannot retrieve logs of service #{service} - failed to ssh exec on ip #{ip} with: #{e}"
+    end
   end
 end

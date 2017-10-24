@@ -3,7 +3,7 @@ terraform {
 }
 
 provider "archive" {
-  version = "0.1.0"
+  version = "1.0.0"
 }
 
 provider "external" {
@@ -15,23 +15,23 @@ provider "ignition" {
 }
 
 provider "local" {
-  version = "0.1.0"
+  version = "1.0.0"
 }
 
 provider "null" {
-  version = "0.1.0"
+  version = "1.0.0"
 }
 
 provider "random" {
-  version = "0.1.0"
+  version = "1.0.0"
 }
 
 provider "template" {
-  version = "0.1.1"
+  version = "1.0.0"
 }
 
 provider "tls" {
-  version = "0.1.0"
+  version = "1.0.0"
 }
 
 variable "tectonic_config_version" {
