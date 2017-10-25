@@ -145,6 +145,13 @@ class Cluster
     wait_for_service('bootkube')
     wait_for_service('tectonic')
     puts 'HOORAY! The cluster is up'
+  rescue
+    master_ip_addresses.each do |master_ip|
+      ['bootkube', 'tectonic', 'kubelet', 'k8s-node-bootstrap'].each do |s|
+        print_service_logs(master_ip, s)
+      end
+    end
+    raise
   end
 
   def wait_for_service(service)
@@ -161,12 +168,6 @@ class Cluster
         puts "Checked master nodes: #{ips}"
       end
       sleep 10
-    end
-
-    # Here we're already into timeout condition so
-    # we'll print the journal of the service before raising
-    ips.each do |master_ip|
-      print_service_logs(master_ip, service)
     end
 
     raise "timeout waiting for #{service} service to bootstrap on any of: #{ips}"
