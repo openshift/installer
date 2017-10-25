@@ -1,17 +1,14 @@
-const fs = require('fs');
-const path = require('path');
-
 const log = require('../utils/log');
 const wizard = require('../utils/wizard');
 const tfvarsUtil = require('../utils/terraformTfvars');
 
-// Expected Terraform tfvars file variables
-// TODO: Confusingly, this is also used as input to the tests
-const jsonPath = path.join(__dirname, '..', '..', '__tests__', 'examples', 'aws.json');
-// eslint-disable-next-line no-sync
-const json = JSON.parse(fs.readFileSync(jsonPath, 'utf8')).variables;
+// Test input .progress file
+const input = tfvarsUtil.loadJson('tectonic-aws.progress').clusterConfig;
 
-const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, 'aws', json, nextInitiallyDisabled);
+// Expected Terraform tfvars file variables
+const expected = tfvarsUtil.loadJson('aws.json').variables;
+
+const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, 'aws', input, nextInitiallyDisabled);
 
 const REQUIRED_ENV_VARS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
 
@@ -54,7 +51,7 @@ module.exports = {
         if (err) {
           return client.assert.fail(err);
         }
-        tfvarsUtil.assertDeepEqual(client, actualJson, json);
+        tfvarsUtil.assertDeepEqual(client, actualJson, expected);
       });
     });
   },

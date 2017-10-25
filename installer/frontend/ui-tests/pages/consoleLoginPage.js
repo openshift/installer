@@ -3,7 +3,7 @@ const consoleLoginPageCommands = {
     this
       .setField('@email', 'abc')
       .expectValidationErrorContains('Invalid email address')
-      .setField('@email', json.tectonic_admin_email)
+      .setField('@email', json.adminEmail)
       .expectNoValidationError();
 
     this.setField('@password', 'password');

@@ -7,7 +7,7 @@ const pageCommands = {
     const sshKeyPath = path.join(parentDir, 'ssh-keys.txt');
 
     /* eslint-disable no-sync */
-    fs.writeFileSync(sshKeyPath, json.tectonic_ssh_authorized_key);
+    fs.writeFileSync(sshKeyPath, json.sshAuthorizedKey);
 
     this
       .setField('@key', 'abc')

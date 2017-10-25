@@ -3,11 +3,11 @@ const pageCommands = {
     this
       .setField('@matchboxHTTP', 'abc')
       .expectValidationErrorContains('Invalid format')
-      .setField('@matchboxHTTP', json.tectonic_metal_matchbox_http_url.replace(/^https?:\/\//i, ''))
+      .setField('@matchboxHTTP', json.matchboxHTTP)
       .expectNoValidationError()
       .setField('@matchboxRPC', 'abc')
       .expectValidationErrorContains('Invalid format')
-      .setField('@matchboxRPC', json.tectonic_metal_matchbox_rpc_endpoint)
+      .setField('@matchboxRPC', json.matchboxRPC)
       .expectNoValidationError();
   },
 };

@@ -1,6 +1,6 @@
 const pageCommands = {
   testCidrInputs(json) {
-    this.setField('#serviceCIDR', json.tectonic_service_cidr);
+    this.setField('#serviceCIDR', json.serviceCIDR);
 
     this.setField('#podCIDR', '10.2.0.0/15');
     this.expectValidationErrorContains('AWS subnets must be between /16 and /28');
@@ -27,7 +27,7 @@ const pageCommands = {
     this.expect.element('@alertErrorTitle').text.to.equal('Pod Range Too Small');
     this.expect.element('@alertWarningTitle').to.not.be.present;
 
-    this.setField('#podCIDR', json.tectonic_cluster_cidr);
+    this.setField('#podCIDR', json.podCIDR);
     this.expectNoValidationError();
     this.expect.element('@alertErrorTitle').to.not.be.present;
     this.expect.element('@alertWarningTitle').to.not.be.present;

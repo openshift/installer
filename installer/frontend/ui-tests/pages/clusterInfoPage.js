@@ -22,7 +22,7 @@ const clusterInfoPageCommands = {
       this.expectValidationErrorContains('must be alphanumeric');
     }
 
-    this.setField('@name', json.tectonic_cluster_name);
+    this.setField('@name', json.clusterName);
     this.expectNoValidationError();
 
     this.setValue('@licenseUpload', licensePath);
