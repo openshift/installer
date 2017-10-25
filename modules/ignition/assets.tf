@@ -91,20 +91,6 @@ data "ignition_file" "s3_puller" {
   }
 }
 
-data "template_file" "gcs_puller" {
-  template = "${file("${path.module}/resources/bin/gcs-puller.sh")}"
-}
-
-data "ignition_file" "gcs_puller" {
-  filesystem = "root"
-  path       = "/opt/gcs-puller.sh"
-  mode       = 0755
-
-  content {
-    content = "${data.template_file.gcs_puller.rendered}"
-  }
-}
-
 data "ignition_systemd_unit" "locksmithd" {
   name = "locksmithd.service"
   mask = true

@@ -34,11 +34,6 @@ variable "tectonic_gcp_region" {
   description = "The GCP region to use. Some regions only have 2 zones."
 }
 
-variable "tectonic_gcp_zones" {
-  type        = "list"
-  description = "List of two or more zones to use from specified GCP region."
-}
-
 variable "tectonic_gcp_master_gce_type" {
   type        = "string"
   description = "Instance size for the master node(s). Example: `n1-standard-2`."

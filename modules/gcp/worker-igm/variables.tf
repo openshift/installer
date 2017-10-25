@@ -26,10 +26,6 @@ variable "region" {
   type = "string"
 }
 
-variable "zone_list" {
-  type = "list"
-}
-
 variable "machine_type" {
   type = "string"
 }
@@ -56,10 +52,10 @@ variable "disk_size" {
   description = "The size of the volume in gigabytes for the root block device."
 }
 
-variable "ign_gcs_puller_id" {
-  type = "string"
-}
-
 variable "public_ssh_key" {
   default = ""
+}
+
+variable "kubeconfig_content" {
+  type = "string"
 }

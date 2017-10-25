@@ -47,11 +47,11 @@ resource "google_compute_instance_template" "worker-it" {
   }
 }
 
-resource "google_compute_instance_group_manager" "worker-igm" {
-  count              = "${var.instance_count}"
-  target_size        = 1
+resource "google_compute_region_instance_group_manager" "worker-igm" {
+  count              = 1
+  region             = "${var.region}"
+  target_size        = "${var.instance_count}"
   name               = "${var.cluster_name}-worker-igm-${count.index}"
-  zone               = "${element(var.zone_list, count.index)}"
   instance_template  = "${google_compute_instance_template.worker-it.self_link}"
   target_pools       = ["${var.worker_targetpool_self_link}"]
   base_instance_name = "wrkr"
