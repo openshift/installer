@@ -99,15 +99,19 @@ class Cluster
   end
 
   def apply
-    3.times do
-      return if system(env_variables, 'make -C ../.. apply')
+    3.times do |idx|
+      env = env_variables
+      env['TF_LOG'] = 'TRACE' if idx.positive?
+      return true if system(env, 'make -C ../.. apply')
     end
     raise 'Applying cluster failed'
   end
 
   def destroy
-    3.times do
-      return if system(env_variables, 'make -C ../.. destroy')
+    3.times do |idx|
+      env = env_variables
+      env['TF_LOG'] = 'TRACE' if idx.positive?
+      return true if system(env, 'make -C ../.. destroy')
     end
 
     recover_from_failed_destroy
