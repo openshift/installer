@@ -117,7 +117,7 @@ variable "tectonic_versions" {
     etcd          = "3.1.8"
     kubernetes    = "1.7.5+tectonic.1"
     monitoring    = "1.7.0"
-    tectonic      = "1.7.5-tectonic.1"
+    tectonic      = "1.8.2-tectonic.1"
     tectonic-etcd = "0.0.1"
     cluo          = "0.2.3"
   }
