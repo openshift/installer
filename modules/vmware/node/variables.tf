@@ -93,8 +93,8 @@ variable "vmware_clusters" {
   description = "vSphere Cluster to create VMs in"
 }
 
-variable "vmware_datacenter" {
-  type        = "string"
+variable "vmware_datacenters" {
+  type        = "map"
   description = "vSphere Datacenter to create VMs in"
 }
 

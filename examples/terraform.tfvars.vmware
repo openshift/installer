@@ -173,9 +173,6 @@ tectonic_vanilla_k8s = false
 // The domain name which resolves to controller node(s)
 tectonic_vmware_controller_domain = ""
 
-// Virtual DataCenter to deploy VMs
-tectonic_vmware_datacenter = ""
-
 // Terraform map of etcd node(s) vSphere Clusters, Example:
 //   tectonic_vmware_etcd_clusters = {
 //   "0" = "myvmwarecluster-0"
@@ -183,6 +180,14 @@ tectonic_vmware_datacenter = ""
 //   "2" = "myvmwarecluster-2"
 // }
 tectonic_vmware_etcd_clusters = ""
+
+// terraform map of etcd node(s) Virtual DataCenters, example:
+//   tectonic_vmware_etcd_datacenters = {
+//   "0" = "myvmwaredc-0"
+//   "1" = "myvmwaredc-1"
+//   "2" = "myvmwaredc-2"
+// }
+tectonic_vmware_etcd_datacenters = ""
 
 // The storage LUN used by etcd nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
 tectonic_vmware_etcd_datastore = ""
@@ -224,6 +229,14 @@ tectonic_vmware_ingress_domain = ""
 //   "1" = "myvmwarecluster-1"
 // }
 tectonic_vmware_master_clusters = ""
+
+// terraform map of master node(s) Virtual DataCenters, example:
+//   tectonic_vmware_master_datacenters = {
+//   "0" = "myvmwaredc-0"
+//   "1" = "myvmwaredc-1"
+//   "2" = "myvmwaredc-2"
+// }
+tectonic_vmware_master_datacenters = ""
 
 // The storage LUN used by master nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
 tectonic_vmware_master_datastore = ""
@@ -281,6 +294,13 @@ tectonic_vmware_vm_template_folder = ""
 //   "1" = "myvmwarecluster-1"
 // }
 tectonic_vmware_worker_clusters = ""
+
+// terraform map of worker node(s) Virtual DataCenters, example:
+//   tectonic_vmware_worker_datacenters = {
+//   "0" = "myvmwaredc-0"
+//   "1" = "myvmwaredc-1"
+// }
+tectonic_vmware_worker_datacenters = ""
 
 // The storage LUN used by worker nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
 tectonic_vmware_worker_datastore = ""
