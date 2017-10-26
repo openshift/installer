@@ -59,3 +59,7 @@ variable "disk_size" {
 variable "ign_gcs_puller_id" {
   type = "string"
 }
+
+variable "public_ssh_key" {
+  default = ""
+}

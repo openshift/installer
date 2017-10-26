@@ -92,3 +92,8 @@ variable "tectonic_gcp_etcd_disk_size" {
   default     = "30"
   description = "The size of the disk in gigabytes for the root block device of etcd nodes."
 }
+
+variable "tectonic_gcp_ssh_key" {
+  type        = "string"
+  description = "(required) Path to an SSH public key file to be provisioned as the SSH key for the 'core' user."
+}

@@ -39,6 +39,7 @@ resource "google_compute_instance_template" "worker-it" {
 
   metadata = {
     user-data = "${data.ignition_config.main.rendered}"
+    sshKeys   = "core:${file(var.public_ssh_key)}"
   }
 
   service_account {

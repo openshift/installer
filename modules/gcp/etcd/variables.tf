@@ -99,3 +99,7 @@ variable "tls_peer_crt_pem" {
 variable "ign_etcd_dropin_id_list" {
   type = "list"
 }
+
+variable "public_ssh_key" {
+  default = ""
+}

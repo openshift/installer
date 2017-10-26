@@ -15,6 +15,7 @@ This document gives an overview of variables used in the Google Cloud platform o
 | tectonic_gcp_master_disktype | The type of disk (pd-standard or pd-ssd) for the master nodes. | string | `pd-standard` |
 | tectonic_gcp_master_gce_type | Instance size for the master node(s). Example: `n1-standard-2`. | string | `n1-standard-2` |
 | tectonic_gcp_region | The GCP region to use. Some regions only have 2 zones. | string | - |
+| tectonic_gcp_ssh_key | (required) Path to an SSH public key file to be provisioned as the SSH key for the 'core' user. | string | - |
 | tectonic_gcp_worker_disk_size | The size of the disk in gigabytes for the root block device of worker nodes. | string | `30` |
 | tectonic_gcp_worker_disktype | The type of disk (pd-standard or pd-ssd) for the worker nodes. | string | `pd-standard` |
 | tectonic_gcp_worker_gce_type | Instance size for the worker node(s). Example: `n1-standard-2`. | string | `n1-standard-2` |

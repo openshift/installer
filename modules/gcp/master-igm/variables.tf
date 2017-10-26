@@ -96,3 +96,7 @@ variable "image_re" {
   description = "(internal) Regular expression used to extract repo and tag components from image strings"
   type        = "string"
 }
+
+variable "public_ssh_key" {
+  default = ""
+}

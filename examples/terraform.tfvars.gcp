@@ -145,6 +145,9 @@ tectonic_gcp_master_gce_type = "n1-standard-2"
 // The GCP region to use. Some regions only have 2 zones.
 tectonic_gcp_region = ""
 
+// (required) Path to an SSH public key file to be provisioned as the SSH key for the 'core' user.
+tectonic_gcp_ssh_key = ""
+
 // The size of the disk in gigabytes for the root block device of worker nodes.
 tectonic_gcp_worker_disk_size = "30"
 
