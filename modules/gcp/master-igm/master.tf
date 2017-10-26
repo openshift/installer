@@ -54,7 +54,7 @@ resource "google_compute_region_instance_group_manager" "master-igm" {
   name               = "${var.cluster_name}-master-igm-${count.index}"
   instance_template  = "${google_compute_instance_template.master-it.self_link}"
   target_pools       = ["${var.master_targetpool_self_link}"]
-  base_instance_name = "mstr"
+  base_instance_name = "${var.cluster_name}-mstr"
 
   named_port {
     name = "https"

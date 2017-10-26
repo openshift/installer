@@ -54,5 +54,5 @@ resource "google_compute_region_instance_group_manager" "worker-igm" {
   name               = "${var.cluster_name}-worker-igm-${count.index}"
   instance_template  = "${google_compute_instance_template.worker-it.self_link}"
   target_pools       = ["${var.worker_targetpool_self_link}"]
-  base_instance_name = "wrkr"
+  base_instance_name = "${var.cluster_name}-wrkr"
 }

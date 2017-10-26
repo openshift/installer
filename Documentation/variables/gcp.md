@@ -19,5 +19,4 @@ This document gives an overview of variables used in the Google Cloud platform o
 | tectonic_gcp_worker_disk_size | The size of the disk in gigabytes for the root block device of worker nodes. | string | `30` |
 | tectonic_gcp_worker_disktype | The type of disk (pd-standard or pd-ssd) for the worker nodes. | string | `pd-standard` |
 | tectonic_gcp_worker_gce_type | Instance size for the worker node(s). Example: `n1-standard-2`. | string | `n1-standard-2` |
-| tectonic_gcp_zones | List of two or more zones to use from specified GCP region. | list | - |
 
