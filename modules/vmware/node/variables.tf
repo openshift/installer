@@ -88,8 +88,8 @@ variable "vm_vcpu" {
   description = "VMs vCPU count"
 }
 
-variable "vmware_cluster" {
-  type        = "string"
+variable "vmware_clusters" {
+  type        = "map"
   description = "vSphere Cluster to create VMs in"
 }
 

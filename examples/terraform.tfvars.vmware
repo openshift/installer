@@ -159,9 +159,6 @@ tectonic_pull_secret_path = ""
 // If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
 tectonic_vanilla_k8s = false
 
-// vCenter Cluster used to create VMs under
-tectonic_vmware_cluster = ""
-
 // The domain name which resolves to controller node(s)
 tectonic_vmware_controller_domain = ""
 
@@ -181,6 +178,14 @@ tectonic_vmware_etcd_gateway = ""
 //   "2" = "mycluster-etcd-2"
 // }
 tectonic_vmware_etcd_hostnames = ""
+
+//  Terraform map of etcd node(s) vSphere Clusters, Example:
+//    tectonic_vmware_etcd_clusters = {
+//    "0" = "myvmwarecluster-0"
+//    "1" = "myvmwarecluster-1"
+//    "2" = "myvmwarecluster-2"
+// }
+tectonic_vmware_etcd_clusters = ""
 
 // Terraform map of etcd node(s) IP Addresses, Example:
 //   tectonic_vmware_etcd_ip = {
@@ -214,6 +219,13 @@ tectonic_vmware_master_gateway = ""
 //   "1" = "mycluster-master-1"
 // }
 tectonic_vmware_master_hostnames = ""
+
+//  Terraform map of master node(s) vSphere Clusters, Example:
+//    tectonic_vmware_master_clusters = {
+//    "0" = "myvmwarecluster-0"
+//    "1" = "myvmwarecluster-1"
+// }
+tectonic_vmware_master_clusters = ""
 
 // Terraform map of Master node(s) IP Addresses, Example:
 //   tectonic_vmware_master_ip = {
@@ -264,6 +276,13 @@ tectonic_vmware_worker_gateway = ""
 //   "1" = "mycluster-worker-1"
 // }
 tectonic_vmware_worker_hostnames = ""
+
+//  Terraform map of worker node(s) vSphere Clusters, Example:
+//    tectonic_vmware_worker_clusters = {
+//    "0" = "myvmwarecluster-0"
+//    "1" = "myvmwarecluster-1"
+// }
+tectonic_vmware_worker_clusters = ""
 
 // Terraform map of Worker node(s) IP Addresses, Example:
 //   tectonic_vmware_worker_ip = {
