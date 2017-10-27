@@ -13,13 +13,10 @@ mkdir -p /etc/kubernetes/manifests/
 [ -d /opt/tectonic/net-manifests ] && mv /opt/tectonic/net-manifests/* /opt/tectonic/manifests/ && rm -r /opt/tectonic/net-manifests
 
 # shellcheck disable=SC2154
-/usr/bin/rkt run \
-  --trust-keys-from-https \
-  --volume assets,kind=host,source="$(pwd)" \
-  --mount volume=assets,target=/assets \
-  --volume etc-kubernetes,kind=host,source=/etc/kubernetes \
-  --mount volume=etc-kubernetes,target=/etc/kubernetes \
-  "${bootkube_image}" \
-  --net=host \
-  --dns=host \
-  --exec=/bootkube -- start --asset-dir=/assets
+/usr/bin/docker run \
+    --volume "$(pwd)":/assets \
+    --volume /etc/kubernetes:/etc/kubernetes \
+    --network=host \
+    --entrypoint=/bootkube \
+    "${bootkube_image}" \
+    start --asset-dir=/assets

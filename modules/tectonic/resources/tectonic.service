@@ -12,5 +12,5 @@ WorkingDirectory=/opt/tectonic
 User=root
 Group=root
 
-ExecStart=/usr/bin/bash /opt/tectonic/tectonic-rkt.sh
+ExecStart=/usr/bin/bash /opt/tectonic/tectonic-wrapper.sh
 ExecStartPost=/bin/touch /opt/tectonic/init_tectonic.done
