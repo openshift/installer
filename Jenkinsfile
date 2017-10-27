@@ -9,6 +9,7 @@
 creds = [
   file(credentialsId: 'tectonic-license', variable: 'TF_VAR_tectonic_license_path'),
   file(credentialsId: 'tectonic-pull', variable: 'TF_VAR_tectonic_pull_secret_path'),
+  file(credentialsId: 'GCP-APPLICATION', variable: 'GOOGLE_APPLICATION_CREDENTIALS'),
   [
     $class: 'AmazonWebServicesCredentialsBinding',
     credentialsId: 'tectonic-jenkins-installer'
@@ -69,6 +70,11 @@ pipeline {
     )
     booleanParam(
       name: 'PLATFORM/AZURE',
+      defaultValue: true,
+      description: ''
+    )
+    booleanParam(
+      name: 'PLATFORM/GCP',
       defaultValue: true,
       description: ''
     )
@@ -197,6 +203,7 @@ pipeline {
         GRAFITI_DELETER_ROLE = 'grafiti-deleter'
         TF_VAR_tectonic_container_images = "${params.hyperkube_image}"
         TF_VAR_tectonic_container_linux_version = "${params.container_linux_version}"
+        GOOGLE_PROJECT = "tectonic-installer"
       }
       steps {
         script {
@@ -224,6 +231,10 @@ pipeline {
             builds['azure_external'] = runRSpecTest('spec/azure_external_spec.rb', '')
             builds['azure_external_experimental'] = runRSpecTest('spec/azure_external_experimental_spec.rb', '')
             builds['azure_example'] = runRSpecTest('spec/azure_example_spec.rb', '')
+          }
+
+          if (params."PLATFORM/GCP") {
+            builds['gcp'] = runRSpecTest('spec/gcp_spec.rb', '')
           }
 
           if (params."PLATFORM/BARE_METAL") {

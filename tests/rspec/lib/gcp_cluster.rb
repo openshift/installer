@@ -30,7 +30,7 @@ class GcpCluster < Cluster
   def master_ip_addresses
     ip_addresses = []
     Dir.chdir(@build_path) do
-      ip_address = `echo module.network.master_ip | terraform console ../../platforms/gcp`.chomp
+      ip_address = `echo module.network.ssh_master_ip | terraform console ../../platforms/gcp`.chomp
       if ip_address.empty?
         raise 'should get the master_ip_address to use in the tests.'
       end

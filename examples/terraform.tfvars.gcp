@@ -157,9 +157,6 @@ tectonic_gcp_worker_disktype = "pd-standard"
 // Instance size for the worker node(s). Example: `n1-standard-2`.
 tectonic_gcp_worker_gce_type = "n1-standard-2"
 
-// List of two or more zones to use from specified GCP region.
-tectonic_gcp_zones = ""
-
 // The path to the tectonic licence file.
 // You can download the Tectonic license file from your Account overview page at [1].
 // 
