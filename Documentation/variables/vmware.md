@@ -14,6 +14,7 @@ This document gives an overview of variables used in the VMware platform of the 
 | tectonic_vmware_etcd_hostnames | Terraform map of etcd node(s) Hostnames, Example:   tectonic_vmware_etcd_hostnames = {   "0" = "mycluster-etcd-0"   "1" = "mycluster-etcd-1"   "2" = "mycluster-etcd-2" } | map | - |
 | tectonic_vmware_etcd_ip | Terraform map of etcd node(s) IP Addresses, Example:   tectonic_vmware_etcd_ip = {   "0" = "192.168.246.10/24"   "1" = "192.168.246.11/24"   "2" = "192.168.246.12/24" } | map | - |
 | tectonic_vmware_etcd_memory | etcd node(s) VM Memory Size in MB | string | `4096` |
+| tectonic_vmware_etcd_resource_pool | Terraform map of etcd node(s) vSphere Resource Pools, Example:   tectonic_vmware_etcd_resource_pool = {   "0" = "myresourcepool-0"   "1" = "myresourcepool-1"   "2" = "myresourcepool-2" } | map | - |
 | tectonic_vmware_etcd_vcpu | etcd node(s) VM vCPU count | string | `1` |
 | tectonic_vmware_folder | vSphere Folder to create and add the Tectonic nodes | string | - |
 | tectonic_vmware_ingress_domain | The domain name which resolves to Tectonic Ingress (i.e. worker node(s)) | string | - |
@@ -24,6 +25,7 @@ This document gives an overview of variables used in the VMware platform of the 
 | tectonic_vmware_master_hostnames | Terraform map of Master node(s) Hostnames, Example:   tectonic_vmware_master_hostnames = {   "0" = "mycluster-master-0"   "1" = "mycluster-master-1" } | map | - |
 | tectonic_vmware_master_ip | Terraform map of Master node(s) IP Addresses, Example:   tectonic_vmware_master_ip = {   "0" = "192.168.246.20/24"   "1" = "192.168.246.21/24" } | map | - |
 | tectonic_vmware_master_memory | Master node(s) Memory Size in MB | string | `4096` |
+| tectonic_vmware_master_resource_pool | Terraform map of master node(s) vSphere Resource pools, Example:   tectonic_vmware_master_resource_pool = {   "0" = "myresourcepool-0"   "1" = "myresourcepool-1" } | map | - |
 | tectonic_vmware_master_vcpu | Master node(s) vCPU count | string | `1` |
 | tectonic_vmware_network | Portgroup to attach the cluster nodes | string | - |
 | tectonic_vmware_node_dns | DNS Server to be used by Virtual Machine(s). Multiple DNS servers can be separated by whitespace. Example: `"192.168.1.1 192.168.2.1"` | string | - |
@@ -40,5 +42,6 @@ This document gives an overview of variables used in the VMware platform of the 
 | tectonic_vmware_worker_hostnames | Terraform map of Worker node(s) Hostnames, Example:   tectonic_vmware_worker_hostnames = {   "0" = "mycluster-worker-0"   "1" = "mycluster-worker-1" } | map | - |
 | tectonic_vmware_worker_ip | Terraform map of Worker node(s) IP Addresses, Example:   tectonic_vmware_worker_ip = {   "0" = "192.168.246.30/24"   "1" = "192.168.246.31/24" } | map | - |
 | tectonic_vmware_worker_memory | Worker node(s) Memory Size in MB | string | `4096` |
+| tectonic_vmware_worker_resource_pool | Terraform map of worker node(s) vSphere Resource Pools, Example:   tectonic_vmware_worker_resource_pool = {   "0" = "myresourcepool-0"   "1" = "myresourcepool-1" } | map | - |
 | tectonic_vmware_worker_vcpu | Worker node(s) vCPU count | string | `1` |
 

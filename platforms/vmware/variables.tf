@@ -113,6 +113,19 @@ variable "tectonic_vmware_etcd_datacenters" {
 EOF
 }
 
+variable "tectonic_vmware_etcd_resource_pool" {
+  type = "map"
+
+  description = <<EOF
+  Terraform map of etcd node(s) vSphere Resource Pools, Example:
+  tectonic_vmware_etcd_resource_pool = {
+  "0" = "myresourcepool-0"
+  "1" = "myresourcepool-1"
+  "2" = "myresourcepool-2"
+}
+EOF
+}
+
 variable "tectonic_vmware_etcd_ip" {
   type = "map"
 
@@ -188,6 +201,18 @@ variable "tectonic_vmware_master_datacenters" {
 EOF
 }
 
+variable "tectonic_vmware_master_resource_pool" {
+  type = "map"
+
+  description = <<EOF
+  Terraform map of master node(s) vSphere Resource pools, Example:
+  tectonic_vmware_master_resource_pool = {
+  "0" = "myresourcepool-0"
+  "1" = "myresourcepool-1"
+}
+EOF
+}
+
 variable "tectonic_vmware_master_ip" {
   type = "map"
 
@@ -257,6 +282,18 @@ variable "tectonic_vmware_worker_datacenters" {
   tectonic_vmware_worker_datacenters = {
   "0" = "myvmwaredc-0"
   "1" = "myvmwaredc-1"
+}
+EOF
+}
+
+variable "tectonic_vmware_worker_resource_pool" {
+  type = "map"
+
+  description = <<EOF
+  Terraform map of worker node(s) vSphere Resource Pools, Example:
+  tectonic_vmware_worker_resource_pool = {
+  "0" = "myresourcepool-0"
+  "1" = "myresourcepool-1"
 }
 EOF
 }
