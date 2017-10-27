@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
-require 'kubectl_helpers'
-require 'securerandom'
-require 'jenkins'
-require 'tfvars_file'
 require 'fileutils'
+require 'jenkins'
+require 'kubectl_helpers'
 require 'name_generator'
 require 'password_generator'
+require 'securerandom'
 require 'ssh'
+require 'tfvars_file'
+require 'timeout'
 
 # Cluster represents a k8s cluster
 class Cluster
@@ -99,23 +100,30 @@ class Cluster
   end
 
   def apply
-    3.times do |idx|
-      env = env_variables
-      env['TF_LOG'] = 'TRACE' if idx.positive?
-      return true if system(env, 'make -C ../.. apply')
+    ::Timeout.timeout(30 * 60) do # 30 minutes
+      3.times do |idx|
+        env = env_variables
+        env['TF_LOG'] = 'TRACE' if idx.positive?
+        return true if system(env, 'make -C ../.. apply')
+      end
     end
     raise 'Applying cluster failed'
   end
 
   def destroy
-    3.times do |idx|
-      env = env_variables
-      env['TF_LOG'] = 'TRACE' if idx.positive?
-      return true if system(env, 'make -C ../.. destroy')
+    ::Timeout.timeout(30 * 60) do # 30 minutes
+      3.times do |idx|
+        env = env_variables
+        env['TF_LOG'] = 'TRACE' if idx.positive?
+        return true if system(env, 'make -C ../.. destroy')
+      end
     end
 
     recover_from_failed_destroy
     raise 'Destroying cluster failed'
+  rescue => e
+    recover_from_failed_destroy
+    raise e
   end
 
   def recover_from_failed_destroy() end

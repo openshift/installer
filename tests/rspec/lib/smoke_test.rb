@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'timeout'
+
 # SmokeTest contains helper functions to operate the smoke tests written in
 # golang
 module SmokeTest
@@ -9,13 +11,15 @@ module SmokeTest
   end
 
   def self.run(cluster)
-    build unless compiled?
+    ::Timeout.timeout(30 * 60) do # 30 minutes
+      build unless compiled?
 
-    succeeded = system(
-      env_variables(cluster),
-      './../../bin/smoke -test.v -test.parallel=1 --cluster'
-    )
-    raise 'SmokeTests failed' unless succeeded
+      succeeded = system(
+        env_variables(cluster),
+        './../../bin/smoke -test.v -test.parallel=1 --cluster'
+      )
+      raise 'SmokeTests failed' unless succeeded
+    end
   end
 
   def self.compiled?
