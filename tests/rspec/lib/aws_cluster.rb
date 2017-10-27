@@ -53,7 +53,9 @@ class AwsCluster < Cluster
         attributes = value.split('=')
         next unless attributes[0].strip.eql?('id')
         instances_id = AwsSupport.sorted_auto_scaling_instances(attributes[1].strip.chomp, @aws_region)
-        ssh_master_ips.push AwsSupport.preferred_instance_ip_address(instances_id[0], @aws_region)
+        instances_id.each do |instance_id|
+          ssh_master_ips.push AwsSupport.preferred_instance_ip_address(instance_id, @aws_region)
+        end
       end
     end
     ssh_master_ips
