@@ -8,7 +8,7 @@ Goals of the project:
 - Secure by default (uses TLS, RBAC by default, OIDC AuthN, etcd)
 - Automatable install process for scripts and CI/CD
 - Deploy on any infrastructure: Amazon AWS, Microsoft Azure, OpenStack, Google Cloud, bare metal
-- Run on any OS: Container Linux (the default), [RHEL](Documentation/install/rhel/installing-workers.md#installing-tectonic-workers-on-red-hat-enterprise-linux), Ubuntu, and others
+- Run on any OS: Container Linux (the default), [RHEL][rhel-installation], Ubuntu, and others
 - Customizable and modular: Change DNS providers, security settings, authentication providers
 - Highly Available by default: Deploy all Kubernetes components HA, use etcd Operator
 
@@ -104,3 +104,4 @@ See [tests/README.md](tests/README.md).
 
 [platform-lifecycle]: Documentation/platform-lifecycle.md
 [release-notes]: https://coreos.com/tectonic/releases/
+[rhel-installation]: https://coreos.com/tectonic/docs/latest/install/rhel/installing-workers.html
