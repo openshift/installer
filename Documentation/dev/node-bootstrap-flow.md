@@ -111,7 +111,7 @@ Requires=bootkube.service
 After=bootkube.service
 Type=oneshot
 RemainAfterExit=true
-ExecStart=/usr/bin/bash /opt/tectonic/tectonic-rkt.sh
+ExecStart=/usr/bin/bash /opt/tectonic/tectonic-wrapper.sh
 ExecStartPost=/bin/touch /opt/tectonic/init_tectonic.done
 ```
 

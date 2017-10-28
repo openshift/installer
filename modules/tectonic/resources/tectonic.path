@@ -1,7 +1,7 @@
 [Unit]
 Description=Trigger for tectonic.service
 [Path]
-PathExists=/opt/tectonic/tectonic-rkt.sh
+PathExists=/opt/tectonic/tectonic-wrapper.sh
 Unit=tectonic.service
 [Install]
 WantedBy=multi-user.target
