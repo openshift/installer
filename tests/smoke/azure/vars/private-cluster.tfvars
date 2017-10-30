@@ -5,7 +5,6 @@
     "tectonic_container_linux_channel": "stable",
     "tectonic_azure_vnet_cidr_block": "10.0.0.0/16",
     "tectonic_etcd_count": "1",
-    "tectonic_experimental": "false",
     "tectonic_master_count": "2",
     "tectonic_worker_count": "1"
 }

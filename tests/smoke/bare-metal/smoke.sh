@@ -279,7 +279,7 @@ test_cluster() {
   export SMOKE_NODE_COUNT=$(( MASTER_COUNT + WORKER_COUNT ))
   export SMOKE_MANIFEST_PATHS=${ROOT}/build/${CLUSTER}/generated/
   # shellcheck disable=SC2155
-  export SMOKE_MANIFEST_EXPERIMENTAL=$(grep tectonic_experimental "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}' | tr -d ' ')
+  export SMOKE_MANIFEST_SELF_HOSTED_ETCD=$(grep tectonic_self_hosted_etcd "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}' | tr -d ' ')
   # shellcheck disable=SC2155
   export SMOKE_NETWORKING=$(grep tectonic_networking "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}' | tr -d ' ')
   bin/smoke -test.v -test.parallel=1 --cluster

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 data "template_file" "etcd_hostname_list" {
-  count    = "${var.tectonic_experimental ? 0 : max(var.tectonic_etcd_count, 1)}"
+  count    = "${var.tectonic_self_hosted_etcd != "" ? 0 : max(var.tectonic_etcd_count, 1)}"
   template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
 }
 
@@ -35,7 +35,7 @@ module "etcd_certs" {
   etcd_cert_dns_names   = "${data.template_file.etcd_hostname_list.*.rendered}"
   etcd_client_cert_path = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key_path  = "${var.tectonic_etcd_client_key_path}"
-  self_signed           = "${var.tectonic_experimental || var.tectonic_etcd_tls_enabled}"
+  self_signed           = "${var.tectonic_self_hosted_etcd != "" || var.tectonic_etcd_tls_enabled}"
   service_cidr          = "${var.tectonic_service_cidr}"
 }
 
@@ -74,15 +74,10 @@ module "bootkube" {
   advertise_address = "0.0.0.0"
   anonymous_auth    = "false"
 
-  oidc_username_claim = "email"
-  oidc_groups_claim   = "groups"
-  oidc_client_id      = "tectonic-kubectl"
-
-  etcd_endpoints      = "${data.template_file.etcd_hostname_list.*.rendered}"
-  oidc_username_claim = "email"
-  oidc_groups_claim   = "groups"
-  oidc_client_id      = "tectonic-kubectl"
   oidc_ca_cert        = "${module.ingress_certs.ca_cert_pem}"
+  oidc_client_id      = "tectonic-kubectl"
+  oidc_groups_claim   = "groups"
+  oidc_username_claim = "email"
 
   apiserver_cert_pem   = "${module.kube_certs.apiserver_cert_pem}"
   apiserver_key_pem    = "${module.kube_certs.apiserver_key_pem}"
@@ -97,9 +92,12 @@ module "bootkube" {
   kubelet_cert_pem     = "${module.kube_certs.kubelet_cert_pem}"
   kubelet_key_pem      = "${module.kube_certs.kubelet_key_pem}"
 
-  experimental_enabled = "${var.tectonic_experimental}"
-  master_count         = "${var.tectonic_master_count}"
-  cloud_config_path    = ""
+  cloud_config_path         = ""
+  etcd_backup_size          = "${var.tectonic_etcd_backup_size}"
+  etcd_backup_storage_class = "${var.tectonic_etcd_backup_storage_class}"
+  etcd_endpoints            = "${data.template_file.etcd_hostname_list.*.rendered}"
+  master_count              = "${var.tectonic_master_count}"
+  self_hosted_etcd          = "${var.tectonic_self_hosted_etcd}"
 }
 
 module "tectonic" {
@@ -142,7 +140,7 @@ module "tectonic" {
   console_client_id = "tectonic-console"
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "HostPort"
-  experimental      = "${var.tectonic_experimental}"
+  self_hosted_etcd  = "${var.tectonic_self_hosted_etcd}"
   master_count      = "${var.tectonic_master_count}"
   stats_url         = "${var.tectonic_stats_url}"
 

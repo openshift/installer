@@ -2,13 +2,13 @@
 set -e
 
 if [ "$#" -ne "3" ]; then
-    echo "Usage: $0 kubeconfig assets_path experimental"
+    echo "Usage: $0 kubeconfig assets_path self_hosted_etcd"
     exit 1
 fi
 
 KUBECONFIG="$1"
 ASSETS_PATH="$2"
-EXPERIMENTAL="$3"
+SELF_HOSTED_ETCD="$3"
 
 # Setup API Authentication
 KUBECTL="/kubectl --kubeconfig=$KUBECONFIG"
@@ -197,8 +197,8 @@ kubectl create -f updater/app_versions/app-version-kubernetes.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-monitoring.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-cluo.yaml
 
-if [ "$EXPERIMENTAL" = "true" ]; then
-  echo "Creating Experimental resources"
+if [ "$SELF_HOSTED_ETCD" = "true" ]; then
+  echo "Creating self hosted etcd resources"
   kubectl apply -f updater/cluster-config.yaml
   kubectl create -f updater/app_versions/app-version-tectonic-etcd.yaml
   kubectl create -f updater/operators/tectonic-etcd-operator.yaml

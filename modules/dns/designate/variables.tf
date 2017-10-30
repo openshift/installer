@@ -66,12 +66,9 @@ variable "api_ips" {
   type        = "list"
 }
 
-variable "tectonic_experimental" {
-  default = false
-
-  description = <<EOF
-If set to true, experimental Tectonic assets are being deployed.
-EOF
+variable "self_hosted_etcd" {
+  default     = ""
+  description = "See tectonic_self_hosted_etcd in config.tf"
 }
 
 variable "tectonic_vanilla_k8s" {

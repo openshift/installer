@@ -14,8 +14,8 @@ class TFVarsFile
     @data = JSON.parse(File.read(path))
   end
 
-  def experimental?
-    data['tectonic_experimental'] == 'true'
+  def self_hosted_etcd?
+    !data.fetch('tectonic_self_hosted_etcd', '').empty?
   end
 
   def networking

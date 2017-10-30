@@ -1,6 +1,6 @@
 module "etcd" {
   source         = "../../modules/vmware/etcd"
-  instance_count = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count }"
+  instance_count = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count }"
 
   cluster_name       = "${var.tectonic_cluster_name}"
   core_public_keys   = ["${var.tectonic_vmware_ssh_authorized_key}"]

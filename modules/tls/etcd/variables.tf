@@ -1,5 +1,5 @@
 // usually the caller sets this to:
-// var.tectonic_experimental || var.tectonic_etcd_tls_enabled
+// var.tectonic_self_hosted_etcd != "" || var.tectonic_etcd_tls_enabled
 variable "self_signed" {
   description = <<EOF
 If set to true, self-signed certificates are generated.

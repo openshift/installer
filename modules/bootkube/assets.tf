@@ -1,49 +1,3 @@
-resource "template_dir" "experimental" {
-  count           = "${var.experimental_enabled ? 1 : 0}"
-  source_dir      = "${path.module}/resources/experimental/manifests"
-  destination_dir = "./generated/experimental"
-
-  vars {
-    etcd_operator_image = "${var.container_images["etcd_operator"]}"
-    etcd_service_ip     = "${cidrhost(var.service_cidr, 15)}"
-    kenc_image          = "${var.container_images["kenc"]}"
-
-    etcd_ca_cert = "${base64encode(var.etcd_ca_cert_pem)}"
-
-    etcd_server_cert = "${base64encode(var.etcd_server_cert_pem)}"
-    etcd_server_key  = "${base64encode(var.etcd_server_key_pem)}"
-
-    etcd_client_cert = "${base64encode(var.etcd_client_cert_pem)}"
-    etcd_client_key  = "${base64encode(var.etcd_client_key_pem)}"
-
-    etcd_peer_cert = "${base64encode(var.etcd_peer_cert_pem)}"
-    etcd_peer_key  = "${base64encode(var.etcd_peer_key_pem)}"
-  }
-}
-
-resource "template_dir" "bootstrap_experimental" {
-  count           = "${var.experimental_enabled ? 1 : 0}"
-  source_dir      = "${path.module}/resources/experimental/bootstrap-manifests"
-  destination_dir = "./generated/bootstrap-experimental"
-
-  vars {
-    etcd_image                = "${var.container_images["etcd"]}"
-    etcd_version              = "${var.versions["etcd"]}"
-    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 20)}"
-  }
-}
-
-resource "template_dir" "etcd_experimental" {
-  count           = "${var.experimental_enabled ? 1 : 0}"
-  source_dir      = "${path.module}/resources/experimental/etcd"
-  destination_dir = "./generated/etcd"
-
-  vars {
-    etcd_version              = "${var.versions["etcd"]}"
-    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 20)}"
-  }
-}
-
 # Self-hosted manifests (resources/generated/manifests/)
 resource "template_dir" "bootkube" {
   source_dir      = "${path.module}/resources/manifests"
@@ -57,14 +11,14 @@ resource "template_dir" "bootkube" {
     kubedns_sidecar_image  = "${var.container_images["kubedns_sidecar"]}"
 
     # Choose the etcd endpoints to use.
-    # 1. If experimental mode is enabled (self-hosted etcd), then use
+    # 1. If self-hosted etcd is enabled, then use
     # var.etcd_service_ip.
     # 2. Else if no etcd TLS certificates are provided, i.e. we bootstrap etcd
     # nodes ourselves (using http), then use insecure http var.etcd_endpoints.
     # 3. Else (if etcd TLS certific are provided), then use the secure https
     # var.etcd_endpoints.
     etcd_servers = "${
-      var.experimental_enabled
+      var.self_hosted_etcd != ""
         ? format("https://%s:2379", cidrhost(var.service_cidr, 15))
         : var.etcd_ca_cert_pem == ""
           ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
@@ -125,14 +79,14 @@ resource "template_dir" "bootkube_bootstrap" {
     etcd_image      = "${var.container_images["etcd"]}"
 
     # Choose the etcd endpoints to use.
-    # 1. If experimental mode is enabled (self-hosted etcd), then use
+    # 1. If self-hosted etcd mode is enabled, then use
     # var.etcd_service_ip.
     # 2. Else if no etcd TLS certificates are provided, i.e. we bootstrap etcd
     # nodes ourselves (using http), then use insecure http var.etcd_endpoints.
     # 3. Else (if etcd TLS certific are provided), then use the secure https
     # var.etcd_endpoints.
     etcd_servers = "${
-      var.experimental_enabled
+      var.self_hosted_etcd != ""
         ? format("https://%s:2379,https://127.0.0.1:12379", cidrhost(var.service_cidr, 15))
         : var.etcd_ca_cert_pem == ""
           ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))

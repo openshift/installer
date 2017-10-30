@@ -19,8 +19,9 @@ variable "core_public_keys" {
   type = "list"
 }
 
-variable "tectonic_experimental" {
-  default = false
+variable "self_hosted_etcd" {
+  default     = ""
+  description = "See tectonic_self_hosted_etcd in config.tf"
 }
 
 variable "instance_count" {

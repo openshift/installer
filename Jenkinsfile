@@ -216,14 +216,14 @@ pipeline {
 
           if (params."PLATFORM/AZURE") {
             builds['azure_basic'] = runRSpecTest('spec/azure_basic_spec.rb', '')
-            builds['azure_experimental'] = runRSpecTest('spec/azure_experimental_spec.rb', '')
+            builds['azure_self_hosted_etcd'] = runRSpecTest('spec/azure_self_hosted_etcd_spec.rb', '')
             builds['azure_private_external'] = runRSpecTest('spec/azure_private_external_spec.rb', '--device=/dev/net/tun --cap-add=NET_ADMIN -u root')
             /*
             * Test temporarily disabled
             builds['azure_dns'] = runRSpecTest('spec/azure_dns_spec.rb', '')
             */
             builds['azure_external'] = runRSpecTest('spec/azure_external_spec.rb', '')
-            builds['azure_external_experimental'] = runRSpecTest('spec/azure_external_experimental_spec.rb', '')
+            builds['azure_external_self_hosted_etcd'] = runRSpecTest('spec/azure_external_self_hosted_etcd_spec.rb', '')
             builds['azure_example'] = runRSpecTest('spec/azure_example_spec.rb', '')
           }
 

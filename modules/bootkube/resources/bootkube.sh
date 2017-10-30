@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # When self-hosted etcd is enabled, bootkube places an static pod manifest in
 # /etc/kubernetes/manifests for Kubelet to boot a temporary etcd instance.
@@ -6,11 +7,19 @@
 # be missing for now, making bootkube crash.
 mkdir -p /etc/kubernetes/manifests/
 
-# Move optional experimental manifests into bootkube friendly locations
-[ -d /opt/tectonic/experimental ] && mv /opt/tectonic/experimental/* /opt/tectonic/manifests/ && rm -r /opt/tectonic/experimental
-[ -d /opt/tectonic/bootstrap-experimental ] && mv /opt/tectonic/bootstrap-experimental/* /opt/tectonic/bootstrap-manifests/ && rm -r /opt/tectonic/bootstrap-experimental
+# Move optional self hosted etcd manifests into bootkube friendly locations
+if [ -d /opt/tectonic/etcd ]; then
+    mv /opt/tectonic/etcd/manifests/* /opt/tectonic/manifests/
+    rm -r /opt/tectonic/etcd/manifests
+    mv /opt/tectonic/etcd/bootstrap-manifests/* /opt/tectonic/bootstrap-manifests/
+    rm -r /opt/tectonic/etcd/bootstrap-manifests
+fi
+
 # Move network related manifests into bootkube friendly locations
-[ -d /opt/tectonic/net-manifests ] && mv /opt/tectonic/net-manifests/* /opt/tectonic/manifests/ && rm -r /opt/tectonic/net-manifests
+if [ -d /opt/tectonic/net-manifests ]; then
+    mv /opt/tectonic/net-manifests/* /opt/tectonic/manifests/
+    rm -r /opt/tectonic/net-manifests
+fi
 
 # shellcheck disable=SC2154
 /usr/bin/docker run \

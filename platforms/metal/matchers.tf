@@ -56,7 +56,7 @@ resource "matchbox_group" "controller" {
 
   metadata {
     domain_name        = "${element(var.tectonic_metal_controller_domains, count.index)}"
-    etcd_enabled       = "${var.tectonic_experimental ? "false" : length(compact(var.tectonic_etcd_servers)) != 0 ? "false" : "true"}"
+    etcd_enabled       = "${var.tectonic_self_hosted_etcd != "" ? "false" : length(compact(var.tectonic_etcd_servers)) != 0 ? "false" : "true"}"
     exclude_tectonic   = "${var.tectonic_vanilla_k8s}"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
 

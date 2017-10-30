@@ -101,9 +101,9 @@ variable "identity_api_service" {
   default     = "tectonic-identity-api.tectonic-system.svc.cluster.local"
 }
 
-variable "experimental" {
-  description = "If set to true, experimental Tectonic assets are being deployed."
-  default     = false
+variable "self_hosted_etcd" {
+  default     = ""
+  description = "See tectonic_self_hosted_etcd in config.tf"
 }
 
 variable "master_count" {

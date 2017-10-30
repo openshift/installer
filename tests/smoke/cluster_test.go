@@ -35,8 +35,8 @@ const (
 	nodeCountEnv = "SMOKE_NODE_COUNT"
 	// manifestPathsEnv is the environment variable that defines the paths to the manifests that are deployed on the cluster.
 	manifestPathsEnv = "SMOKE_MANIFEST_PATHS"
-	// manifestExperimentalEnv is the environment variable that specifies whether or not to test for experimental manifests.
-	manifestExperimentalEnv = "SMOKE_MANIFEST_EXPERIMENTAL"
+	// manifestSelfHostedEnv is the environment variable that specifies whether or not to test for self-hosted etcd manifests.
+	manifestSelfHostedEtcdEnv = "SMOKE_MANIFEST_SELF_HOSTED_ETCD"
 )
 
 var (
@@ -44,9 +44,9 @@ var (
 	// testAllResourcesCreated by default.
 	defaultIgnoredManifests = []string{"bootstrap"}
 
-	// experimentalManifests represents the manifests that are ignored by
-	// testAllResourcesCreated when manifestExperimentalEnv isn't set to 'true'.
-	experimentalManifests = []string{
+	// selfHostedEtcdManifests represents the manifests that are ignored by
+	// testAllResourcesCreated when manifestSelfHostedEtcdEnv isn't set to empty string.
+	selfHostedEtcdManifests = []string{
 		// Generated all the time but only deployed when experimental is enabled.
 		"tectonic/updater/cluster-config.yaml",
 		"tectonic/updater/app_versions/app-version-tectonic-etcd.yaml",
@@ -350,8 +350,8 @@ func testAllResourcesCreated(t *testing.T) {
 	}
 
 	ignoredManifests := defaultIgnoredManifests
-	if manifestExperimental := os.Getenv(manifestExperimentalEnv); manifestExperimental != "true" {
-		ignoredManifests = append(ignoredManifests, experimentalManifests...)
+	if manifestSelfHostedEtcd := os.Getenv(manifestSelfHostedEtcdEnv); manifestSelfHostedEtcd != "" {
+		ignoredManifests = append(ignoredManifests, selfHostedEtcdManifests...)
 	}
 
 	max := 10 * time.Minute

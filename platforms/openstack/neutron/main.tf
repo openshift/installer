@@ -24,7 +24,7 @@ module "etcd_certs" {
   etcd_cert_dns_names   = "${data.template_file.etcd_hostname_list.*.rendered}"
   etcd_client_cert_path = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key_path  = "${var.tectonic_etcd_client_key_path}"
-  self_signed           = "${var.tectonic_experimental || var.tectonic_etcd_tls_enabled}"
+  self_signed           = "${var.tectonic_self_hosted_etcd != "" || var.tectonic_etcd_tls_enabled}"
   service_cidr          = "${var.tectonic_service_cidr}"
 }
 
@@ -84,8 +84,10 @@ module "bootkube" {
   kubelet_cert_pem     = "${module.kube_certs.kubelet_cert_pem}"
   kubelet_key_pem      = "${module.kube_certs.kubelet_key_pem}"
 
-  etcd_endpoints       = "${module.dns.etcd_a_nodes}"
-  experimental_enabled = "${var.tectonic_experimental}"
+  etcd_backup_size          = "${var.tectonic_etcd_backup_size}"
+  etcd_backup_storage_class = "${var.tectonic_etcd_backup_storage_class}"
+  etcd_endpoints            = "${module.dns.etcd_a_nodes}"
+  self_hosted_etcd          = "${var.tectonic_self_hosted_etcd}"
 
   master_count = "${var.tectonic_master_count}"
 
@@ -132,7 +134,7 @@ module "tectonic" {
   console_client_id = "tectonic-console"
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "HostPort"
-  experimental      = "${var.tectonic_experimental}"
+  self_hosted_etcd  = "${var.tectonic_self_hosted_etcd}"
   master_count      = "${var.tectonic_master_count}"
   stats_url         = "${var.tectonic_stats_url}"
 
@@ -147,12 +149,12 @@ search ${var.tectonic_base_domain}
 ${join("\n", formatlist("nameserver %s", var.tectonic_openstack_dns_nameservers))}
 EOF
 
-  base_domain           = "${var.tectonic_base_domain}"
-  cluster_name          = "${var.tectonic_cluster_name}"
-  container_image       = "${var.tectonic_container_images["etcd"]}"
-  core_public_keys      = ["${module.secrets.core_public_key_openssh}"]
-  tectonic_experimental = "${var.tectonic_experimental}"
-  tls_enabled           = "${var.tectonic_etcd_tls_enabled}"
+  base_domain      = "${var.tectonic_base_domain}"
+  cluster_name     = "${var.tectonic_cluster_name}"
+  container_image  = "${var.tectonic_container_images["etcd"]}"
+  core_public_keys = ["${module.secrets.core_public_key_openssh}"]
+  self_hosted_etcd = "${var.tectonic_self_hosted_etcd}"
+  tls_enabled      = "${var.tectonic_etcd_tls_enabled}"
 
   tls_ca_crt_pem     = "${module.etcd_certs.etcd_ca_crt_pem}"
   tls_server_crt_pem = "${module.etcd_certs.etcd_server_crt_pem}"
@@ -255,10 +257,10 @@ module "secrets" {
 }
 
 module "secgroups" {
-  source                = "../../../modules/openstack/secgroups"
-  cluster_name          = "${var.tectonic_cluster_name}"
-  cluster_cidr          = "${var.tectonic_openstack_subnet_cidr}"
-  tectonic_experimental = "${var.tectonic_experimental}"
+  source           = "../../../modules/openstack/secgroups"
+  cluster_name     = "${var.tectonic_cluster_name}"
+  cluster_cidr     = "${var.tectonic_openstack_subnet_cidr}"
+  self_hosted_etcd = "${var.tectonic_self_hosted_etcd}"
 }
 
 module "dns" {
@@ -269,7 +271,7 @@ module "dns" {
 
   admin_email               = "${var.tectonic_admin_email}"
   api_ips                   = "${openstack_networking_floatingip_v2.loadbalancer.*.address}"
-  etcd_count                = "${var.tectonic_experimental ? 0 : var.tectonic_etcd_count}"
+  etcd_count                = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count}"
   etcd_ips                  = "${flatten(openstack_networking_port_v2.etcd.*.all_fixed_ips)}"
   etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
   master_count              = "${var.tectonic_master_count}"
@@ -279,8 +281,8 @@ module "dns" {
   worker_public_ips         = "${openstack_networking_floatingip_v2.worker.*.address}"
   worker_public_ips_enabled = "${var.tectonic_openstack_disable_floatingip ? false : true}"
 
-  tectonic_experimental = "${var.tectonic_experimental}"
-  tectonic_vanilla_k8s  = "${var.tectonic_vanilla_k8s}"
+  self_hosted_etcd     = "${var.tectonic_self_hosted_etcd}"
+  tectonic_vanilla_k8s = "${var.tectonic_vanilla_k8s}"
 }
 
 module "flannel-vxlan" {

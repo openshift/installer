@@ -1,5 +1,5 @@
 data "ignition_config" "etcd" {
-  count = "${var.tectonic_experimental ? 0 : var.instance_count}"
+  count = "${var.self_hosted_etcd != "" ? 0 : var.instance_count}"
 
   users = [
     "${data.ignition_user.core.id}",

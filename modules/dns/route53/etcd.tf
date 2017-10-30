@@ -1,5 +1,5 @@
 resource "aws_route53_record" "etcd_a_nodes" {
-  count   = "${var.tectonic_experimental ? 0 : var.etcd_count}"
+  count   = "${var.self_hosted_etcd != "" ? 0 : var.etcd_count}"
   type    = "A"
   ttl     = "60"
   zone_id = "${data.aws_route53_zone.tectonic.zone_id}"

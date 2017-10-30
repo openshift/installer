@@ -14,7 +14,7 @@ module "etcd_certs" {
   etcd_ca_cert_path     = "${var.tectonic_etcd_ca_cert_path}"
   etcd_client_cert_path = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key_path  = "${var.tectonic_etcd_client_key_path}"
-  self_signed           = "${var.tectonic_experimental || var.tectonic_etcd_tls_enabled}"
+  self_signed           = "${var.tectonic_self_hosted_etcd != "" || var.tectonic_etcd_tls_enabled}"
   service_cidr          = "${var.tectonic_service_cidr}"
 
   etcd_cert_dns_names = ["${formatlist("%s.%s",
@@ -79,8 +79,10 @@ module "bootkube" {
   kubelet_cert_pem     = "${module.kube_certs.kubelet_cert_pem}"
   kubelet_key_pem      = "${module.kube_certs.kubelet_key_pem}"
 
-  etcd_endpoints       = "${formatlist("%s.%s", values(var.tectonic_vmware_etcd_hostnames), var.tectonic_base_domain)}"
-  experimental_enabled = "${var.tectonic_experimental}"
+  etcd_backup_size          = "${var.tectonic_etcd_backup_size}"
+  etcd_backup_storage_class = "${var.tectonic_etcd_backup_storage_class}"
+  etcd_endpoints            = "${formatlist("%s.%s", values(var.tectonic_vmware_etcd_hostnames), var.tectonic_base_domain)}"
+  self_hosted_etcd          = "${var.tectonic_self_hosted_etcd}"
 
   master_count = "${var.tectonic_master_count}"
 
@@ -127,7 +129,7 @@ module "tectonic" {
   console_client_id = "tectonic-console"
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "HostPort"
-  experimental      = "${var.tectonic_experimental}"
+  self_hosted_etcd  = "${var.tectonic_self_hosted_etcd}"
   master_count      = "${var.tectonic_master_count}"
   stats_url         = "${var.tectonic_stats_url}"
 

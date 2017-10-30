@@ -22,8 +22,8 @@ describe TFVarsFile do
     expect(subject.node_count).to eq(4)
   end
 
-  it '#experimental? returns false if not set' do
-    expect(subject.experimental?).to eq(false)
+  it '#self_hosted_etcd? returns false if not set' do
+    expect(subject.self_hosted_etcd?).to eq(false)
   end
 
   it '#networking? returns empty string if not set' do

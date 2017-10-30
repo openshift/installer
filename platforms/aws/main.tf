@@ -24,7 +24,7 @@ module "vpc" {
   external_worker_subnets = "${compact(var.tectonic_aws_external_worker_subnet_ids)}"
   cluster_id              = "${module.tectonic.cluster_id}"
   extra_tags              = "${var.tectonic_aws_extra_tags}"
-  enable_etcd_sg          = "${!var.tectonic_experimental && length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
+  enable_etcd_sg          = "${var.tectonic_self_hosted_etcd == "" && length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
 
   # VPC layout settings.
   #
@@ -68,7 +68,7 @@ module "etcd" {
   container_image         = "${var.tectonic_container_images["etcd"]}"
   container_linux_channel = "${var.tectonic_container_linux_channel}"
   container_linux_version = "${module.container_linux.version}"
-  dns_enabled             = "${!var.tectonic_experimental && length(compact(var.tectonic_etcd_servers)) == 0}"
+  dns_enabled             = "${var.tectonic_self_hosted_etcd == "" && length(compact(var.tectonic_etcd_servers)) == 0}"
   dns_zone_id             = "${var.tectonic_aws_private_endpoints ? data.null_data_source.zones.inputs["private"] : data.null_data_source.zones.inputs["public"]}"
   ec2_type                = "${var.tectonic_aws_etcd_ec2_type}"
   external_endpoints      = "${compact(var.tectonic_etcd_servers)}"

@@ -83,9 +83,9 @@ variable "etcd_server_key_pem" {
   description = "The etcd server key in PEM format."
 }
 
-variable "experimental_enabled" {
-  description = "If set to true, provision experimental assets, like self-hosted etcd."
-  default     = false
+variable "self_hosted_etcd" {
+  default     = ""
+  description = "See tectonic_self_hosted_etcd in config.tf"
 }
 
 variable "kube_apiserver_url" {
@@ -152,6 +152,16 @@ variable "pod_eviction_timeout" {
 variable "cloud_config_path" {
   description = "The path to the secret file that contains the cloud config contents. Either be empty ('') or ('/etc/kubernetes/cloud/config')."
   type        = "string"
+}
+
+variable "etcd_backup_size" {
+  type        = "string"
+  description = "The size of the PersistentVolume used to handle etcd backups"
+}
+
+variable "etcd_backup_storage_class" {
+  type        = "string"
+  description = "The name of the Kubernetes StorageClass that will be used to handle etcd backups"
 }
 
 variable "service_cidr" {
