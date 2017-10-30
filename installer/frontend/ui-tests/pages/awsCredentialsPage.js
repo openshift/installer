@@ -1,6 +1,6 @@
 const awsCredentialsPageCommands = {
   test(json) {
-    const regionOption = `select#awsRegion option[value=${json.tectonic_aws_region}]`;
+    const regionOption = `select#awsRegion option[value=${json.awsRegion}]`;
 
     this.expect.element('@sessionTokenFalse').to.be.selected;
 

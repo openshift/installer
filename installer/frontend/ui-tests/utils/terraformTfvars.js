@@ -1,6 +1,8 @@
-const request = require('request');
-const JSZip = require('jszip');
 const deep = require('deep-diff').diff;
+const fs = require('fs');
+const JSZip = require('jszip');
+const path = require('path');
+const request = require('request');
 
 const getAssets = (launchUrl, cookie, callback) => {
   const options = {
@@ -76,12 +78,17 @@ const assertDeepEqual = (client, actual, expected) => {
   if (diff !== undefined) {
     client.assert.fail(
       'The following terraform.tfvars attributes differ from their expected value: ' +
-      diff.map(({path, lhs, rhs}) => `${path} (expected: ${rhs}, got: ${lhs})`).join(', ')
+      diff.map(({attr, lhs, rhs}) => `${attr} (expected: ${rhs}, got: ${lhs})`).join(', ')
     );
   }
 };
 
+const jsonDir = path.join(__dirname, '..', '..', '__tests__', 'examples');
+// eslint-disable-next-line no-sync
+const loadJson = filename => JSON.parse(fs.readFileSync(path.join(jsonDir, filename), 'utf8'));
+
 module.exports = {
   returnTerraformTfvars,
   assertDeepEqual,
+  loadJson,
 };

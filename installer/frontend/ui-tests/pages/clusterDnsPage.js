@@ -5,13 +5,13 @@ const pageCommands = {
       .expectValidationErrorContains('Invalid domain name')
       .setField('@controllerDomain', '')
       .expectValidationErrorContains('This field is required')
-      .setField('@controllerDomain', json.tectonic_metal_controller_domain)
+      .setField('@controllerDomain', json.controllerDomain)
       .expectNoValidationError()
       .setField('@tectonicDomain', '%')
       .expectValidationErrorContains('Invalid domain name')
       .setField('@tectonicDomain', '')
       .expectValidationErrorContains('This field is required')
-      .setField('@tectonicDomain', json.tectonic_metal_ingress_domain)
+      .setField('@tectonicDomain', json.tectonicDomain)
       .expectNoValidationError();
   },
 };

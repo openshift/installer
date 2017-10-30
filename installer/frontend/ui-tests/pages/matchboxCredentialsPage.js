@@ -9,9 +9,9 @@ const pageCommands = {
     const clientKeyPath = path.join(parentDir, 'client-key.txt');
 
     /* eslint-disable no-sync */
-    fs.writeFileSync(caCertPath, json.tectonic_metal_matchbox_ca);
-    fs.writeFileSync(clientCertPath, json.tectonic_metal_matchbox_client_cert);
-    fs.writeFileSync(clientKeyPath, json.tectonic_metal_matchbox_client_key);
+    fs.writeFileSync(caCertPath, json.matchboxCA);
+    fs.writeFileSync(clientCertPath, json.matchboxClientCert);
+    fs.writeFileSync(clientKeyPath, json.matchboxClientKey);
     /* eslint-enable no-sync */
 
     this
