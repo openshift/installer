@@ -77,7 +77,7 @@ variable "tectonic_container_images" {
     kubednsmasq                  = "gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.5"
     kubedns_sidecar              = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.5"
     kube_version                 = "quay.io/coreos/kube-version:0.1.0"
-    kube_version_operator        = "quay.io/coreos/kube-version-operator:v1.7.5-kvo.12"
+    kube_version_operator        = "quay.io/coreos/kube-version-operator:v1.7.9-kvo.2"
     node_agent                   = "quay.io/coreos/node-agent:v1.7.5-kvo.3"
     pod_checkpointer             = "quay.io/coreos/pod-checkpointer:3517908b1a1837e78cfd041a0e51e61c7835d85f"
     stats_emitter                = "quay.io/coreos/tectonic-stats:6e882361357fe4b773adbf279cddf48cb50164c1"
@@ -115,7 +115,7 @@ variable "tectonic_versions" {
 
   default = {
     etcd          = "3.1.8"
-    kubernetes    = "1.7.5+tectonic.1"
+    kubernetes    = "1.7.9+tectonic.1"
     monitoring    = "1.7.0"
     tectonic      = "1.8.2-tectonic.1"
     tectonic-etcd = "0.0.1"
