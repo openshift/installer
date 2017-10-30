@@ -28,7 +28,7 @@ const fields = [
   }),
   new Field(EXTERNAL_ETCD_CLIENT, {
     default: '',
-    validator: validate.hostPort,
+    validator: validate.host,
     dependencies: [ETCD_OPTION],
     ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.EXTERNAL,
   }),
@@ -96,9 +96,9 @@ export const Etcd = connect(({clusterConfig}) => ({
                 autoFocus
                 className="wiz-inline-field wiz-inline-field--protocol"
                 prefix={<span className="input__prefix--protocol">http://</span>}
-                placeholder="etcd.example.com:2379" />
+                placeholder="etcd.example.com" />
             </Connect>
-            <p className="text-muted">Hostname and port of etcd client endpoint</p>
+            <p className="text-muted">Hostname or IP address of etcd client endpoint</p>
           </div>
         </div>
       </div>
