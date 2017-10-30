@@ -5,9 +5,9 @@ const pageCommands = {
 
     this
       .selectOption('@optionExternal')
-      .setField('@address', 'abc')
-      .expectValidationErrorContains('Invalid format')
       .setField('@address', 'example.com:1234')
+      .expectValidationErrorContains('Invalid format')
+      .setField('@address', 'example.com')
       .expectNoValidationError();
 
     this.selectOption('@optionProvisioned');
