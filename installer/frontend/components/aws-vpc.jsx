@@ -10,7 +10,6 @@ import {
   Select,
   Deselect,
   DeselectField,
-  WithClusterConfig,
   Connect,
   Input,
   Selector,
@@ -24,10 +23,6 @@ import { KubernetesCIDRs } from './k8s-cidrs';
 import { CIDRRow } from './cidr';
 import { Field, Form } from '../form';
 
-const { setIn } = configActions;
-
-const AWS_ADVANCED_NETWORKING = 'awsAdvancedNetworking';
-
 import {
   AWS_CONTROLLER_SUBNET_IDS,
   AWS_CONTROLLER_SUBNETS,
@@ -38,28 +33,95 @@ import {
   AWS_SUBNETS,
   AWS_SPLIT_DNS,
   AWS_VPC_CIDR,
-  AWS_VPC_ID,
   AWS_VPC_FORM,
-  AWS_WORKER_SUBNET_IDS,
+  AWS_VPC_ID,
   AWS_WORKER_SUBNETS,
+  AWS_WORKER_SUBNET_IDS,
   CLUSTER_NAME,
   CLUSTER_SUBDOMAIN,
   DESELECTED_FIELDS,
   POD_CIDR,
   SERVICE_CIDR,
-  toVPCSubnetID,
   SPLIT_DNS_ON,
   SPLIT_DNS_OPTIONS,
+  VPC_CREATE ,
+  VPC_PRIVATE,
+  VPC_PUBLIC,
+  toVPCSubnet,
 } from '../cluster-config';
+
+const AWS_ADVANCED_NETWORKING = 'awsAdvancedNetworking';
+const DEFAULT_AWS_VPC_CIDR = '10.0.0.0/16';
+
+const {setIn} = configActions;
+
+const validateVPC = (dispatch, getState, data, oldData, isNow, extraData, oldCC) => {
+  const cc = getState().clusterConfig;
+
+  const isCreate = cc[AWS_CREATE_VPC] === VPC_CREATE;
+  const awsVpcId = cc[AWS_VPC_ID];
+
+  if (!isCreate && !awsVpcId) {
+    // User hasn't selected a VPC yet. Don't try to validate.
+    return Promise.resolve();
+  }
+
+  // Fields relevant to the VPC validation
+  const vpcFields = [
+    AWS_CONTROLLER_SUBNETS,
+    AWS_CONTROLLER_SUBNET_IDS,
+    AWS_CREATE_VPC,
+    AWS_REGION,
+    AWS_VPC_CIDR,
+    AWS_VPC_ID,
+    AWS_WORKER_SUBNETS,
+    AWS_WORKER_SUBNET_IDS,
+    DESELECTED_FIELDS,
+    POD_CIDR,
+    SERVICE_CIDR,
+  ];
+
+  // Prevent unnecessary calls to validate API by only continuing if a field relevant to VPC validation has changed.
+  // However, we always continue if none of the form data has changed, since that probably means the form has just been
+  // loaded and we are doing initial validation.
+  if (_.every(vpcFields, k => _.isEqual(cc[k], oldCC[k])) && !_.isEqual(data, oldData)) {
+    return Promise.resolve();
+  }
+
+  const getSubnets = subnets => {
+    const selected = toVPCSubnet(cc[AWS_REGION], subnets, cc[DESELECTED_FIELDS][AWS_SUBNETS]);
+    return _.map(selected, (v, k) => isCreate ? {availabilityZone: k, instanceCIDR: v} : {availabilityZone: k, id: v});
+  };
+
+  const controllerSubnets = getSubnets(cc[isCreate ? AWS_CONTROLLER_SUBNETS : AWS_CONTROLLER_SUBNET_IDS]);
+  const workerSubnets = getSubnets(cc[isCreate ? AWS_WORKER_SUBNETS : AWS_WORKER_SUBNET_IDS]);
+
+  const isPrivate = cc[AWS_CREATE_VPC] === VPC_PRIVATE;
+  const network = {
+    privateSubnets: isPrivate ? _.uniqWith([...controllerSubnets, ...workerSubnets], _.isEqual) : workerSubnets,
+    publicSubnets: isPrivate ? [] : controllerSubnets,
+    podCIDR: cc[POD_CIDR],
+    serviceCIDR: cc[SERVICE_CIDR],
+  };
+
+  if (isCreate) {
+    network.vpcCIDR = cc[AWS_VPC_CIDR];
+  } else {
+    network.awsVpcId = awsVpcId;
+  }
+
+  return dispatch(awsActions.validateSubnets(network)).then(json => {
+    if (!json.valid) {
+      return Promise.reject(json.message);
+    }
+  });
+};
 
 const vpcInfoForm = new Form(AWS_VPC_FORM, [
   new Field(AWS_ADVANCED_NETWORKING, {default: false}),
   new Field(AWS_CONTROLLER_SUBNETS, {default: {}}),
-  new Field(AWS_CREATE_VPC, {default: 'VPC_CREATE'}),
-  new Field(AWS_SPLIT_DNS, {default: SPLIT_DNS_ON}),
-  new Field(AWS_VPC_CIDR, {default: '10.0.0.0/16', validator: validate.AWSsubnetCIDR}),
-  new Field(AWS_WORKER_SUBNETS, {default: {}}),
-  new Field(CLUSTER_SUBDOMAIN, {default: '', validator: compose(validate.nonEmpty, validate.domainName)}),
+  new Field(AWS_CONTROLLER_SUBNET_IDS, {default: {}}),
+  new Field(AWS_CREATE_VPC, {default: VPC_CREATE}),
   new Field(AWS_HOSTED_ZONE_ID, {
     default: '',
     dependencies: [AWS_REGION_FORM],
@@ -94,33 +156,41 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
         return {options: _.sortBy(options, 'label'), zoneToName, privateZones};
       }),
   }),
+  new Field(AWS_SPLIT_DNS, {default: SPLIT_DNS_ON}),
+  new Field(AWS_VPC_CIDR, {default: DEFAULT_AWS_VPC_CIDR, validator: validate.AWSsubnetCIDR}),
+  new Field(AWS_VPC_ID, {default: '', ignoreWhen: cc => cc[AWS_CREATE_VPC] === VPC_CREATE}),
+  new Field(AWS_WORKER_SUBNETS, {default: {}}),
+  new Field(AWS_WORKER_SUBNET_IDS, {default: {}}),
+  new Field(CLUSTER_SUBDOMAIN, {default: '', validator: compose(validate.nonEmpty, validate.domainName)}),
 ], {
+  dependencies: [POD_CIDR, SERVICE_CIDR],
   validator: (data, cc) => {
     const hostedZoneID = data[AWS_HOSTED_ZONE_ID];
     const privateZone = _.get(cc, ['extra', AWS_HOSTED_ZONE_ID, 'privateZones', hostedZoneID]);
     if (!privateZone || !hostedZoneID) {
       return;
     }
-    if (privateZone && data[AWS_CREATE_VPC] !== 'VPC_PRIVATE') {
+    if (privateZone && data[AWS_CREATE_VPC] !== VPC_PRIVATE) {
       return 'Private Route 53 Zones must use an existing private VPC.';
     }
   },
+  asyncValidator: validateVPC,
 });
 
-const SubnetSelect = ({field, name, subnets, asyncValidator, disabled, fieldName}) => <div className="row form-group">
+const SubnetSelect = ({field, name, subnets, disabled, fieldName}) => <div className="row form-group">
   <div className="col-xs-3">
     <Deselect field={fieldName} />
     <label htmlFor={`${DESELECTED_FIELDS}.${fieldName}`}>{name}</label>
   </div>
   <div className="col-xs-6">
-    <WithClusterConfig field={field} asyncValidator={asyncValidator}>
+    <Connect field={field}>
       <Select disabled={disabled}>
         <option disabled>Select a subnet</option>
         {_.filter(subnets, ({availabilityZone}) => availabilityZone === name)
           .map(({id, instanceCIDR}) => <option value={id} key={instanceCIDR}>{instanceCIDR} ({id})</option>)
         }
       </Select>
-    </WithClusterConfig>
+    </Connect>
   </div>
 </div>;
 
@@ -139,74 +209,27 @@ const stateToProps = ({aws, clusterConfig}) => {
     azs: new Array(...azs).sort(),
     availableVpcs: aws.availableVpcs,
     availableVpcSubnets: aws.availableVpcSubnets,
-    region: clusterConfig[AWS_REGION],
     awsWorkerSubnets: clusterConfig[AWS_WORKER_SUBNETS],
-    awsWorkerSubnetIds: clusterConfig[AWS_WORKER_SUBNET_IDS],
     awsControllerSubnets: clusterConfig[AWS_CONTROLLER_SUBNETS],
-    awsControllerSubnetIds: clusterConfig[AWS_CONTROLLER_SUBNET_IDS],
-    awsCreateVpc: clusterConfig[AWS_CREATE_VPC] === 'VPC_CREATE',
+    awsCreateVpc: clusterConfig[AWS_CREATE_VPC] === VPC_CREATE,
     awsVpcId: clusterConfig[AWS_VPC_ID],
-    awsVpcCIDR: clusterConfig[AWS_VPC_CIDR],
     clusterName: clusterConfig[CLUSTER_NAME],
     clusterSubdomain: clusterConfig[CLUSTER_SUBDOMAIN],
-    internalCluster: clusterConfig[AWS_CREATE_VPC] === 'VPC_PRIVATE',
-    podCIDR: clusterConfig[POD_CIDR],
-    serviceCIDR: clusterConfig[SERVICE_CIDR],
+    internalCluster: clusterConfig[AWS_CREATE_VPC] === VPC_PRIVATE,
     advanced: clusterConfig[AWS_ADVANCED_NETWORKING],
   };
 };
 
 const dispatchToProps = dispatch => ({
-  getVpcs: () => dispatch(awsActions.getVpcs()),
-  getVpcSubnets: vpcID => dispatch(awsActions.getVpcSubnets({vpcID})),
-  validate: body => dispatch(awsActions.validateSubnets(body)),
-  reset: () => {
-    setIn(AWS_CONTROLLER_SUBNET_IDS, {}, dispatch);
-    setIn(AWS_WORKER_SUBNET_IDS, {}, dispatch);
-  },
+  clearControllerSubnets: () => setIn(AWS_CONTROLLER_SUBNET_IDS, {}, dispatch),
+  clearWorkerSubnets: () => setIn(AWS_WORKER_SUBNET_IDS, {}, dispatch),
   getDefaultSubnets: () => dispatch(awsActions.getDefaultSubnets()),
-  setSubdomain: subdomain => setIn(CLUSTER_SUBDOMAIN, subdomain, dispatch),
+  getVpcSubnets: vpcID => dispatch(awsActions.getVpcSubnets({vpcID})),
+  getVpcs: () => dispatch(awsActions.getVpcs()),
 });
 
 export const AWS_VPC = connect(stateToProps, dispatchToProps)(
   class AWS_VPCComponent extends React.Component {
-    validateVPC () {
-      const { awsCreateVpc, awsVpcCIDR, awsVpcId, region, internalCluster, serviceCIDR, podCIDR } = this.props;
-      let controllerSubnets, privateSubnets;
-      if (awsCreateVpc) {
-        controllerSubnets = toVPCSubnetID(region, this.props.awsControllerSubnets);
-        privateSubnets = toVPCSubnetID(region, this.props.awsWorkerSubnets);
-      } else {
-        if (!awsVpcId) {
-          // User hasn't selected a VPC yet. Don't try to validate.
-          return Promise.resolve();
-        }
-        controllerSubnets = toVPCSubnetID(region, this.props.awsControllerSubnetIds);
-        privateSubnets = toVPCSubnetID(region, this.props.awsWorkerSubnetIds);
-      }
-
-      let publicSubnets;
-      if (internalCluster) {
-        publicSubnets = [];
-        privateSubnets.push(...controllerSubnets);
-        privateSubnets = _.uniqWith(privateSubnets, _.isEqual);
-      } else {
-        publicSubnets = controllerSubnets;
-      }
-
-      const network = { publicSubnets, privateSubnets, podCIDR, serviceCIDR };
-      if (awsCreateVpc) {
-        network.vpcCIDR = awsVpcCIDR;
-      } else {
-        network.awsVpcId = awsVpcId;
-      }
-      return this.props.validate(network).then(json => {
-        if (!json.valid) {
-          return Promise.reject(json.message);
-        }
-      });
-    }
-
     componentDidMount () {
       if (_.size(this.props.awsControllerSubnets) && _.size(this.props.awsWorkerSubnets)) {
         return;
@@ -215,7 +238,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
     }
 
     render () {
-      const { availableVpcs, awsCreateVpc, availableVpcSubnets, awsVpcId, clusterName, clusterSubdomain, internalCluster, advanced } = this.props;
+      const {availableVpcs, awsCreateVpc, availableVpcSubnets, awsVpcId, clusterName, clusterSubdomain, internalCluster, advanced} = this.props;
 
       let controllerSubnets;
       let workerSubnets;
@@ -288,7 +311,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
               <div className="radio wiz-radio-group__radio">
                 <label>
                   <Connect field={AWS_CREATE_VPC}>
-                    <Radio name={AWS_CREATE_VPC} value="VPC_CREATE" />
+                    <Radio name={AWS_CREATE_VPC} value={VPC_CREATE} />
                   </Connect>
                   Create a new VPC (Public)
                 </label>&nbsp;(default)
@@ -299,7 +322,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
               <div className="radio wiz-radio-group__radio">
                 <label>
                   <Connect field={AWS_CREATE_VPC}>
-                    <Radio name={AWS_CREATE_VPC} value="VPC_PUBLIC" />
+                    <Radio name={AWS_CREATE_VPC} value={VPC_PUBLIC} onChange={() => this.props.clearControllerSubnets()} />
                   </Connect>
                   Use an existing VPC (Public)
                 </label>
@@ -314,7 +337,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
               <div className="radio wiz-radio-group__radio">
                 <label>
                   <Connect field={AWS_CREATE_VPC}>
-                    <Radio name={AWS_CREATE_VPC} value="VPC_PRIVATE" />
+                    <Radio name={AWS_CREATE_VPC} value={VPC_PRIVATE} onChange={() => this.props.clearControllerSubnets()} />
                   </Connect>
                   Use an existing VPC (Private)
                 </label>
@@ -394,7 +417,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
                   Specify a range of IPv4 addresses for the VPC in the form of a <a href="https://tools.ietf.org/html/rfc4632" rel="noopener noreferrer" target="_blank">CIDR block</a>. Safe defaults have been chosen for you.
                 </div>
               </div>
-              <CIDRRow name="CIDR Block" field={AWS_VPC_CIDR} placeholder="10.0.0.0/16" />
+              <CIDRRow name="CIDR Block" field={AWS_VPC_CIDR} placeholder={DEFAULT_AWS_VPC_CIDR} />
             </div>
           }
           {!awsCreateVpc &&
@@ -404,7 +427,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
               </div>
               <div className="col-xs-9">
                 <div className="radio wiz-radio-group__radio">
-                  <WithClusterConfig field={AWS_VPC_ID} asyncValidator={() => this.validateVPC()}>
+                  <Connect field={AWS_VPC_ID}>
                     <AsyncSelect
                       id={AWS_VPC_ID}
                       availableValues={availableVpcs}
@@ -417,12 +440,13 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
                       }}
                       onChange={vpcID => {
                         if (vpcID !== awsVpcId) {
-                          this.props.reset();
+                          this.props.clearControllerSubnets();
+                          this.props.clearWorkerSubnets();
                         }
                         this.props.getVpcSubnets(vpcID);
                       }}
                     />
-                  </WithClusterConfig>
+                  </Connect>
                 </div>
               </div>
             </div>
@@ -449,14 +473,15 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
         }
       </div>;
     }
-  });
+  }
+);
 
 AWS_VPC.canNavigateForward = ({clusterConfig}) => {
   if (!vpcInfoForm.canNavigateForward({clusterConfig}) || !KubernetesCIDRs.canNavigateForward({clusterConfig})) {
     return false;
   }
 
-  if (clusterConfig[AWS_CREATE_VPC] === 'VPC_CREATE') {
+  if (clusterConfig[AWS_CREATE_VPC] === VPC_CREATE) {
     const workerSubnets = clusterConfig[AWS_WORKER_SUBNETS];
     const controllerSubnets = clusterConfig[AWS_CONTROLLER_SUBNETS];
     return !validate.AWSsubnetCIDR(clusterConfig[AWS_VPC_CIDR]) &&
