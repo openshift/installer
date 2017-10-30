@@ -196,7 +196,6 @@ pipeline {
         TECTONIC_INSTALLER_ROLE = 'tectonic-installer'
         GRAFITI_DELETER_ROLE = 'grafiti-deleter'
         TF_VAR_tectonic_container_images = "${params.hyperkube_image}"
-        TF_VAR_tectonic_container_linux_version = "${params.container_linux_version}"
         GOOGLE_PROJECT = "tectonic-installer"
       }
       steps {
