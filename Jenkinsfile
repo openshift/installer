@@ -53,11 +53,6 @@ pipeline {
       defaultValue: '',
       description: 'Hyperkube image. Please define the param like: {hyperkube="<HYPERKUBE_IMAGE>"}'
     )
-    string(
-      name: 'container_linux_version',
-      defaultValue: '1520.6.0',
-      description: 'container_linux_version version'
-    )
     booleanParam(
       name: 'RUN_SMOKE_TESTS',
       defaultValue: true,
@@ -135,7 +130,6 @@ pipeline {
         TECTONIC_INSTALLER_ROLE = 'tectonic-installer'
         GRAFITI_DELETER_ROLE = 'grafiti-deleter'
         TF_VAR_tectonic_container_images = "${params.hyperkube_image}"
-        TF_VAR_tectonic_container_linux_version = "${params.container_linux_version}"
       }
       steps {
         parallel (
