@@ -1,3 +1,4 @@
+import _ from 'lodash';
 import React from 'react';
 import classNames from 'classnames';
 import { connect } from 'react-redux';
@@ -26,8 +27,6 @@ const stateToProps = ({eventErrors, clusterConfig}) => ({
   http: clusterConfig[BM_MATCHBOX_HTTP],
   osToUse: clusterConfig[BM_OS_TO_USE],
   versionError: eventErrors[COREOS_VERSIONS_ERROR_NAME],
-  // TODO: (ggreer) total hack
-  bootCfgInfly: clusterConfig.bootCfgInfly,
 });
 
 const dispatchToProps = dispatch => ({
@@ -39,14 +38,16 @@ const dispatchToProps = dispatch => ({
         error: null,
       },
     });
-    configActions.set({matchboxHTTP: value}, dispatch);
+    const payload = {
+      [BM_OS_TO_USE]: DEFAULT_CLUSTER_CONFIG[BM_OS_TO_USE],
+      matchboxHTTP: value,
+    };
+    configActions.set(payload, dispatch);
   },
   getOsToUse: matchboxHTTP => {
     if (validate.hostPort(matchboxHTTP)) {
       return;
     }
-
-    configActions.set({bootCfgInfly: true}, dispatch);
 
     const endpointURL = `http://${matchboxHTTP}/assets/coreos`;
     return fetch(`/containerlinux/images/matchbox?endpoint=${encodeURIComponent(endpointURL)}`)
@@ -76,9 +77,7 @@ const dispatchToProps = dispatch => ({
             error: err,
           },
         });
-        configActions.set({[BM_OS_TO_USE]: DEFAULT_CLUSTER_CONFIG[BM_OS_TO_USE]}, dispatch);
-      })
-      .then(() => configActions.set({bootCfgInfly: false}, dispatch));
+      });
   },
 });
 
@@ -103,10 +102,11 @@ export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
     }
 
     render () {
-      const {http, osToUse, versionError, bootCfgInfly} = this.props;
+      const {http, osToUse, versionError} = this.props;
       const osError = osToUse ? false : versionError;
+      const httpError = validate.hostPort(http);
       const iClassNames = classNames('fa', 'fa-refresh', {
-        'fa-spin': bootCfgInfly,
+        'fa-spin': !httpError && _.isEmpty(osToUse) && _.isEmpty(versionError),
       });
 
       return <div className="row form-group">
@@ -131,10 +131,10 @@ export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
                   prefix={<span className="input__prefix--protocol">http://</span>}
                   placeholder="matchbox.example.com:8080"
                   forceDirty={!!osError}
-                  invalid={osError || validate.hostPort(http)}
+                  invalid={osError || httpError}
                   value={http}
                   onValue={v => this.onBootCfg(v)}>
-                  <button className="btn btn-default" disabled={!!validate.hostPort(http)} onClick={() => this.onBootCfg(http, 0)}>
+                  <button className="btn btn-default" disabled={!!httpError} onClick={() => this.onBootCfg(http, 0)}>
                     <i className={iClassNames}></i>
                   </button>
                 </Input>
