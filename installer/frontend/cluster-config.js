@@ -22,6 +22,10 @@ export const AWS_CREATE_VPC = 'awsCreateVpc';
 export const AWS_VPC_CIDR = 'awsVpcCIDR';
 export const AWS_VPC_ID = 'awsVpcId';
 
+export const VPC_CREATE = 'VPC_CREATE';
+export const VPC_PRIVATE = 'VPC_PRIVATE';
+export const VPC_PUBLIC = 'VPC_PUBLIC';
+
 export const AWS_WORKER_SUBNETS = 'awsWorkerSubnets';
 export const AWS_WORKER_SUBNET_IDS = 'awsWorkerSubnetIds';
 
@@ -152,10 +156,7 @@ export const DEFAULT_CLUSTER_CONFIG = {
   inFly: {}, // to store inFly
   extra: {}, // extraneous, non-value data for this field
   bootCfgInfly: false, // TODO (ggreer): total hack. clean up after release
-  [AWS_VPC_ID]: '',
-  [AWS_CONTROLLER_SUBNET_IDS]: {},
   [DESELECTED_FIELDS]: {},
-  [AWS_WORKER_SUBNET_IDS]: {},
   [BM_MATCHBOX_HTTP]: '',
   [BM_OS_TO_USE]: '',
   [DRY_RUN]: false,
@@ -171,7 +172,7 @@ export const toAWS_TF = (cc, FORMS) => {
   let controllerSubnets;
   let workerSubnets;
 
-  if (cc[AWS_CREATE_VPC] === 'VPC_CREATE') {
+  if (cc[AWS_CREATE_VPC] === VPC_CREATE) {
     controllerSubnets = toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
     workerSubnets = toVPCSubnet(region, cc[AWS_WORKER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
   } else {
@@ -241,7 +242,7 @@ export const toAWS_TF = (cc, FORMS) => {
   if (cc[STS_ENABLED]) {
     ret.credentials.AWSSessionToken = cc[AWS_SESSION_TOKEN];
   }
-  if (cc[AWS_CREATE_VPC] === 'VPC_CREATE') {
+  if (cc[AWS_CREATE_VPC] === VPC_CREATE) {
     ret.variables.tectonic_aws_vpc_cidr_block = cc[AWS_VPC_CIDR];
     ret.variables.tectonic_aws_master_custom_subnets = controllerSubnets;
     ret.variables.tectonic_aws_worker_custom_subnets = workerSubnets;
@@ -249,10 +250,10 @@ export const toAWS_TF = (cc, FORMS) => {
     ret.variables.tectonic_aws_external_vpc_id = cc[AWS_VPC_ID];
     ret.variables.tectonic_aws_external_master_subnet_ids = controllerSubnets;
     ret.variables.tectonic_aws_external_worker_subnet_ids = workerSubnets;
-    ret.variables.tectonic_aws_public_endpoints = cc[AWS_CREATE_VPC] !== 'VPC_PRIVATE';
+    ret.variables.tectonic_aws_public_endpoints = cc[AWS_CREATE_VPC] !== VPC_PRIVATE;
   }
 
-  if (cc[AWS_CREATE_VPC] !== 'VPC_PRIVATE' && cc[AWS_SPLIT_DNS] === SPLIT_DNS_OFF) {
+  if (cc[AWS_CREATE_VPC] !== VPC_PRIVATE && cc[AWS_SPLIT_DNS] === SPLIT_DNS_OFF) {
     ret.variables.tectonic_aws_private_endpoints = false;
   }
 

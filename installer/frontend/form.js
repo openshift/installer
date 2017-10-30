@@ -98,7 +98,7 @@ class Node {
     }
 
     console.debug(`validating ${this.name}`);
-    const syncError = this.validator(value, clusterConfig, oldValue, extraData);
+    const syncError = this.validator(value, clusterConfig, oldValue, extraData, oldCC);
     if (!_.isEmpty(syncError)) {
       console.info(`sync error ${this.name}: ${JSON.stringify(syncError)}`);
       batches.push([syncErrorPath, syncError]);
@@ -131,7 +131,7 @@ class Node {
     this.updateClock(now);
 
     try {
-      asyncError = await this.asyncValidator_(dispatch, getState, value, oldValue, this.isNow, extraData);
+      asyncError = await this.asyncValidator_(dispatch, getState, value, oldValue, this.isNow, extraData, oldCC);
     } catch (e) {
       asyncError = e.message || e.toString();
     }
