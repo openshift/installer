@@ -8,6 +8,7 @@ require 'uri'
 require 'openssl'
 require 'time'
 require 'net/ssh'
+require 'open3'
 require 'English'
 
 # Versions for Bare metal machine
@@ -24,13 +25,13 @@ TERRAFORM_URL =
 module MetalSupport
   def self.install_base_software
     root = root_path
-    `sudo curl -L -o /usr/local/bin/kubectl #{KUBECTL_URL}`
-    `sudo chmod +x /usr/local/bin/kubectl`
-    `curl #{TERRAFORM_URL} | funzip > /tmp/terraform`
-    `sudo mv /tmp/terraform /usr/local/bin/`
-    `sudo chmod +x /usr/local/bin/terraform`
-    `(cd #{root}/ && rm -rf matchbox && git clone https://github.com/coreos/matchbox)`
-    `(cd #{root}/matchbox && git checkout #{MATCHBOX_VERSION})`
+    execute_command("sudo curl -L -o /usr/local/bin/kubectl #{KUBECTL_URL}")
+    execute_command('sudo chmod +x /usr/local/bin/kubectl')
+    execute_command("curl #{TERRAFORM_URL} | funzip > /tmp/terraform")
+    execute_command('sudo mv /tmp/terraform /usr/local/bin/')
+    execute_command('sudo chmod +x /usr/local/bin/terraform')
+    execute_command("cd #{root}/ && rm -rf matchbox && git clone https://github.com/coreos/matchbox")
+    execute_command("cd #{root}/matchbox && git checkout #{MATCHBOX_VERSION}")
     puts 'Finished initial setup'
   end
 
@@ -51,21 +52,21 @@ module MetalSupport
     system(env_variables_setup, "#{root}/matchbox/scripts/get-coreos #{cl_channel} #{cl_version} ${ASSETS_DIR}")
 
     # Configuring ssh-agent
-    `eval "$(ssh-agent -s)"`
-    `sudo chmod 600 #{root}/matchbox/tests/smoke/fake_rsa`
-    `ssh-add #{root}/matchbox/tests/smoke/fake_rsa`
+    execute_command('eval "$(ssh-agent -s)"')
+    execute_command("sudo chmod 600 #{root}/matchbox/tests/smoke/fake_rsa")
+    execute_command("ssh-add #{root}/matchbox/tests/smoke/fake_rsa")
 
     # Setting up the metal0 bridge
-    `sudo mkdir -p /etc/rkt/net.d`
-    `sudo cp #{root}/tests/rspec/utils/20-metal.conf /etc/rkt/net.d/`
-    `cat /etc/rkt/net.d/20-metal.conf`
+    execute_command('sudo mkdir -p /etc/rkt/net.d')
+    execute_command("sudo cp #{root}/tests/rspec/utils/20-metal.conf /etc/rkt/net.d/")
+    execute_command('cat /etc/rkt/net.d/20-metal.conf')
 
     # Setting up DNS
     `grep -q "172.18.0.3" /etc/resolv.conf`
     return if $CHILD_STATUS.exitstatus.zero?
-    `sudo cp /etc/resolv.conf /etc/resolv.conf.bak`
-    `echo "nameserver 172.18.0.3" | cat - /etc/resolv.conf | sudo tee /etc/resolv.conf >/dev/null`
-    `cat /etc/resolv.conf`
+    execute_command('sudo cp /etc/resolv.conf /etc/resolv.conf.bak')
+    execute_command('echo "nameserver 172.18.0.3" | cat - /etc/resolv.conf | sudo tee /etc/resolv.conf >/dev/null')
+    execute_command('cat /etc/resolv.conf')
   end
 
   def self.start_matchbox
@@ -87,16 +88,16 @@ module MetalSupport
       system(env_variables_setup, 'sudo -E ./scripts/libvirt destroy')
     end
     # Restore resolv.conf
-    `sudo cp /etc/resolv.conf.bak /etc/resolv.conf`
-    `sudo cp /dev/null ${HOME}/.ssh/known_hosts`
+    execute_command('sudo cp /etc/resolv.conf.bak /etc/resolv.conf')
+    execute_command('sudo cp /dev/null ${HOME}/.ssh/known_hosts')
     %x(for p in \`sudo rkt list | tail -n +2 | awk '{print $1}'\`; do sudo rkt stop --force $p; done)
-    `sudo rkt gc --grace-period=0s`
+    execute_command('sudo rkt gc --grace-period=0s')
     %x(for ns in \`ip netns l | grep -o -E '^[[:alnum:]]+'\`; do sudo ip netns del $ns; done; sudo ip l del metal0)
     %x(for veth in \`ip l show | grep -oE 'veth[^@]+'\`; do sudo ip l del $veth; done)
-    `sudo rm -Rf /var/lib/cni/networks/*`
-    `sudo rm -Rf /var/lib/rkt/*`
-    `sudo rm -f /etc/rkt/net.d/20-metal.conf`
-    `sudo systemctl reset-failed`
+    execute_command('sudo rm -Rf /var/lib/cni/networks/*')
+    execute_command('sudo rm -Rf /var/lib/rkt/*')
+    execute_command('sudo rm -f /etc/rkt/net.d/20-metal.conf')
+    execute_command('sudo systemctl reset-failed')
   end
 
   def self.wait_for_matchbox
@@ -107,13 +108,40 @@ module MetalSupport
         puts 'Waiting for matchbox...'
         elapsed = Time.now - from
         raise 'matchbox never returned with successful error code' if elapsed > 1200 # 20 mins timeout
-        raise 'dev-matchbox failed to load' if `sudo systemctl is-failed dev-matchbox`.chomp.include?('failed')
-        raise 'dev-dnsmasq failed to load' if `sudo systemctl is-failed dev-dnsmasq`.chomp.include?('failed')
+        check_service('dev-matchbox')
+        check_service('dev-dnsmasq')
         sleep 5
       else
         puts 'Matchbox up and running...'
         break
       end
+    end
+  end
+
+  def self.check_service(service)
+    return true unless `sudo systemctl is-failed #{service}`.chomp.include?('failed')
+    print_service_logs(service)
+    raise "#{service} failed to load"
+  end
+
+  def self.print_service_logs(service)
+    cmd = "journalctl --no-pager -u '#{service}'"
+    begin
+      Open3.popen3(cmd) do |_stdin, stdout, stderr, wait_thr|
+        exit_status = wait_thr.value
+        while (line = stdout.gets)
+          stdout_output << line
+        end
+        while (line = stderr.gets)
+          stderr_output << line
+        end
+        puts "Journal of #{service} service (exitcode #{exit_status})"
+        puts "Standard output: \n#{stdout_output}"
+        puts "Standard error: \n#{stderr_output}"
+        puts "End of journal of #{service} service"
+      end
+    rescue => e
+      puts "Cannot retrieve logs of service #{service} - failed to exec with: #{e}"
     end
   end
 
@@ -127,5 +155,20 @@ module MetalSupport
       'VM_MEMORY' => '2048',
       'ASSETS_DIR' => '/tmp/matchbox/assets'
     }
+  end
+
+  def self.execute_command(cmd)
+    Open3.popen3(cmd) do |_stdin, stdout, _stderr, wait_thr|
+      exit_status = wait_thr.value
+      unless exit_status.success?
+        while (line = stdout.gets)
+          puts line
+        end
+        while (line = stderr.gets)
+          puts line
+        end
+        raise "Command execution FAILED! #{cmd}"
+      end
+    end
   end
 end
