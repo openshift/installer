@@ -11,7 +11,7 @@ require 'password_generator'
 require 'webdriver_helpers'
 require 'k8s_conformance_tests'
 
-RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
+RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
   before(:all) do
     @cluster = ClusterFactory.from_tf_vars(TFVarsFile.new(tf_vars_path))
     begin
@@ -76,7 +76,7 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
 
   it 'passes the k8s conformance tests' do
     if ENV['RUN_CONFORMANCE_TESTS'] == 'true'
-      conformance_test = K8sConformanceTest.new(@cluster.kubeconfig)
+      conformance_test = K8sConformanceTest.new(@cluster.kubeconfig, vpn_tunnel)
       expect { conformance_test.run }.to_not raise_error
     end
   end
