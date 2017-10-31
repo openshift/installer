@@ -35,7 +35,7 @@ const IOPs = connect(
 )(
   ({type, fieldName}) => type !== 'io1' ? null : <Row htmlFor={`${fieldName}--storage-iops`} label="Storage Speed">
     <Connect field={toKey(fieldName, STORAGE_IOPS)}>
-      <NumberInput id={`${fieldName}--storage-iops`} className="wiz-super-short-input" suffix="IOPS" />
+      <NumberInput id={`${fieldName}--storage-iops`} className="wiz-super-short-input" suffix="&nbsp;&nbsp;IOPS" />
     </Connect>
   </Row>
 );
@@ -81,7 +81,7 @@ export const DefineNode = ({type, max, withIamRole = true}) => <div>
   </Row>
   <Row htmlFor={`${type}--storage-size`} label="Storage Size">
     <Connect field={toKey(type, STORAGE_SIZE_IN_GIB)}>
-      <NumberInput id={`${type}--storage-size`} className="wiz-super-short-input" suffix="GiB" />
+      <NumberInput id={`${type}--storage-size`} className="wiz-super-short-input" suffix="&nbsp;&nbsp;GiB" />
     </Connect>
   </Row>
   <Row htmlFor={`${type}--storage-type`} label="Storage Type">

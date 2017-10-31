@@ -5,9 +5,13 @@ const pageCommands = {
 
     this
       .selectOption('@optionExternal')
-      .setField('@address', 'example.com:1234')
-      .expectValidationErrorContains('Invalid format')
       .setField('@address', 'example.com')
+      .expectValidationErrorContains('Invalid format')
+      .setField('@address', 'https://example.com:1234')
+      .expectValidationErrorContains('Invalid format')
+      .setField('@address', 'http://example.com')
+      .expectNoValidationError()
+      .setField('@address', 'https://example.com')
       .expectNoValidationError();
 
     this.selectOption('@optionProvisioned');

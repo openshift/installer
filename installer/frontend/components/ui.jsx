@@ -123,7 +123,7 @@ const Field = withNav(connect(
         ? props.renderField(props, elementProps, fieldClasses)
         : React.createElement(tag, nextProps)
       }
-      {props.suffix && <span>&nbsp;&nbsp;{props.suffix}</span>}
+      {props.suffix}
       {props.children}
       <div className={errorClasses}>
         {props.invalid}
