@@ -2,6 +2,6 @@
 
 require 'shared_examples/k8s'
 
-RSpec.describe 'gcp-standard' do
+RSpec.describe 'gcp-basic' do
   include_examples('withRunningCluster', '../smoke/gcp/vars/gcp.tfvars.json')
 end

@@ -278,7 +278,8 @@ pipeline {
           }
 
           if (params."PLATFORM/GCP") {
-            builds['gcp'] = runRSpecTest('spec/gcp_spec.rb', '')
+            builds['gcp_basic'] = runRSpecTest('spec/gcp_spec.rb', '')
+            builds['gcp_ha'] = runRSpecTest('spec/gcp_ha_spec.rb', '')
           }
 
           if (params."PLATFORM/BARE_METAL") {
