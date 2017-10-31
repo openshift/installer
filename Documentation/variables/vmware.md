@@ -7,8 +7,8 @@ This document gives an overview of variables used in the VMware platform of the 
 | Name | Description | Type | Default |
 |------|-------------|:----:|:-----:|
 | tectonic_vmware_controller_domain | The domain name which resolves to controller node(s) | string | - |
-| tectonic_vmware_datacenter | Virtual DataCenter to deploy VMs | string | - |
 | tectonic_vmware_etcd_clusters | Terraform map of etcd node(s) vSphere Clusters, Example:   tectonic_vmware_etcd_clusters = {   "0" = "myvmwarecluster-0"   "1" = "myvmwarecluster-1"   "2" = "myvmwarecluster-2" } | map | - |
+| tectonic_vmware_etcd_datacenters | terraform map of etcd node(s) Virtual DataCenters, example:   tectonic_vmware_etcd_datacenters = {   "0" = "myvmwaredc-0"   "1" = "myvmwaredc-1"   "2" = "myvmwaredc-2" } | map | - |
 | tectonic_vmware_etcd_datastore | The storage LUN used by etcd nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore. | string | `` |
 | tectonic_vmware_etcd_gateway | Default Gateway IP address for etcd nodes(s) | string | - |
 | tectonic_vmware_etcd_hostnames | Terraform map of etcd node(s) Hostnames, Example:   tectonic_vmware_etcd_hostnames = {   "0" = "mycluster-etcd-0"   "1" = "mycluster-etcd-1"   "2" = "mycluster-etcd-2" } | map | - |
@@ -18,6 +18,7 @@ This document gives an overview of variables used in the VMware platform of the 
 | tectonic_vmware_folder | vSphere Folder to create and add the Tectonic nodes | string | - |
 | tectonic_vmware_ingress_domain | The domain name which resolves to Tectonic Ingress (i.e. worker node(s)) | string | - |
 | tectonic_vmware_master_clusters | Terraform map of master node(s) vSphere Clusters, Example:   tectonic_vmware_master_clusters = {   "0" = "myvmwarecluster-0"   "1" = "myvmwarecluster-1" } | map | - |
+| tectonic_vmware_master_datacenters | terraform map of master node(s) Virtual DataCenters, example:   tectonic_vmware_master_datacenters = {   "0" = "myvmwaredc-0"   "1" = "myvmwaredc-1"   "2" = "myvmwaredc-2" } | map | - |
 | tectonic_vmware_master_datastore | The storage LUN used by master nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore. | string | `` |
 | tectonic_vmware_master_gateway | Default Gateway IP address for Master nodes(s) | string | - |
 | tectonic_vmware_master_hostnames | Terraform map of Master node(s) Hostnames, Example:   tectonic_vmware_master_hostnames = {   "0" = "mycluster-master-0"   "1" = "mycluster-master-1" } | map | - |
@@ -33,6 +34,7 @@ This document gives an overview of variables used in the VMware platform of the 
 | tectonic_vmware_vm_template | Virtual Machine template of CoreOS Container Linux. | string | - |
 | tectonic_vmware_vm_template_folder | Folder for VM template of CoreOS Container Linux. | string | - |
 | tectonic_vmware_worker_clusters | Terraform map of worker node(s) vSphere Clusters, Example:   tectonic_vmware_worker_clusters = {   "0" = "myvmwarecluster-0"   "1" = "myvmwarecluster-1" } | map | - |
+| tectonic_vmware_worker_datacenters | terraform map of worker node(s) Virtual DataCenters, example:   tectonic_vmware_worker_datacenters = {   "0" = "myvmwaredc-0"   "1" = "myvmwaredc-1" } | map | - |
 | tectonic_vmware_worker_datastore | The storage LUN used by worker nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore. | string | `` |
 | tectonic_vmware_worker_gateway | Default Gateway IP address for Master nodes(s) | string | - |
 | tectonic_vmware_worker_hostnames | Terraform map of Worker node(s) Hostnames, Example:   tectonic_vmware_worker_hostnames = {   "0" = "mycluster-worker-0"   "1" = "mycluster-worker-1" } | map | - |

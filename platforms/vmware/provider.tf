@@ -6,5 +6,5 @@ provider "vsphere" {
 
 resource "vsphere_folder" "tectonic_vsphere_folder" {
   path       = "${var.tectonic_vmware_folder}"
-  datacenter = "${var.tectonic_vmware_datacenter}"
+  datacenter = "${var.tectonic_vmware_worker_datacenters[0]}"
 }

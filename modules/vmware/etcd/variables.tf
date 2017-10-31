@@ -30,8 +30,8 @@ variable core_public_keys {
   description = "Public Key for Core User"
 }
 
-variable vmware_datacenter {
-  type        = "string"
+variable vmware_datacenters {
+  type        = "map"
   description = "vSphere Datacenter to create VMs in"
 }
 
