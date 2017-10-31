@@ -103,7 +103,7 @@ See [tests/README.md](tests/README.md).
 
 
 [openstack-tf]: https://github.com/coreos/tectonic-docs/blob/master/Documentation/install/openstack/openstack-terraform.md
-[platform-lifecycle]: Documentation/platform-lifecycle.md
+[platform-lifecycle]: https://coreos.com/tectonic/docs/latest/platform-lifecycle.html
 [release-notes]: https://coreos.com/tectonic/releases/
 [rhel-installation]: https://coreos.com/tectonic/docs/latest/install/rhel/installing-workers.html
 [vmware-tf]: https://github.com/coreos/tectonic-docs/blob/master/Documentation/install/vmware/vmware-terraform.md
