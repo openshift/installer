@@ -133,7 +133,7 @@ const getZoneDomain = (cc) => {
   return _.get(cc, ['extra', AWS_HOSTED_ZONE_ID, 'zoneToName', cc[AWS_HOSTED_ZONE_ID]]);
 };
 
-export const getControllerDomain = (cc) => {
+const getControllerDomain = (cc) => {
   if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     return cc[CONTROLLER_DOMAIN];
   }
