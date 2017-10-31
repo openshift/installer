@@ -83,76 +83,65 @@ export const ErrorComponent = props => {
 
 const Field = withNav(connect(
   (state, {id}) => ({isDirty: _.get(state.dirty, id)}),
-  dispatch => ({
-    markDirty: id => markIDDirty(dispatch, id),
-    markClean: id => dispatch({type: dirtyActionTypes.CLEAN, payload: id }),
-  })
-)(class Field extends React.Component {
-  componentWillUnmount() {
-    if (this.props.autoClean) {
-      this.props.markClean(this.props.id);
+  dispatch => ({markDirty: id => markIDDirty(dispatch, id)})
+)(props => {
+  const tag = props.tag || 'input';
+  const dirty = props.forceDirty || props.isDirty;
+  const fieldClasses = classNames(props.className, {
+    'wiz-dirty': dirty,
+    'wiz-invalid': props.invalid,
+  });
+  const errorClasses = classNames('wiz-error-message', {
+    hidden: !(dirty && props.invalid),
+  });
+
+  const elementProps = {};
+  Object.keys(props).filter(k => FIELD_PROPS.has(k)).forEach(k => {
+    elementProps[k] = props[k];
+  });
+
+  const onEnterKeyNavigateNext = e => {
+    if (e.keyCode === 13) {
+      e.preventDefault();
+      props.navNext();
     }
-  }
-  render () {
-    const props = this.props;
-    const tag = props.tag || 'input';
-    const dirty = props.forceDirty || props.isDirty;
-    const fieldClasses = classNames(props.className, {
-      'wiz-dirty': dirty,
-      'wiz-invalid': props.invalid,
-    });
-    const errorClasses = classNames('wiz-error-message', {
-      hidden: !(dirty && props.invalid),
-    });
+  };
 
-    const elementProps = {};
-    Object.keys(props).filter(k => FIELD_PROPS.has(k)).forEach(k => {
-      elementProps[k] = props[k];
-    });
-
-    const onEnterKeyNavigateNext = e => {
-      if (e.keyCode === 13) {
-        e.preventDefault();
-        props.navNext();
+  const nextProps = Object.assign({
+    className: fieldClasses,
+    value: props.value || '',
+    autoCorrect: 'off',
+    autoComplete: 'off',
+    spellCheck: 'false',
+    children: undefined,
+    onPaste: () => props.markDirty(props.id),
+    onChange: e => {
+      if (props.onValue) {
+        props.onValue(e.target.value);
       }
-    };
+    },
+    onBlur: e => {
+      if (props.blurry || e.target.value) {
+        props.markDirty(props.id);
+      }
+    },
+    onKeyDown: ['number', 'password', 'text'].includes(props.type) ? onEnterKeyNavigateNext : undefined,
+  }, elementProps);
 
-    const nextProps = Object.assign({
-      className: fieldClasses,
-      value: props.value || '',
-      autoCorrect: 'off',
-      autoComplete: 'off',
-      spellCheck: 'false',
-      children: undefined,
-      onPaste: () => props.markDirty(props.id),
-      onChange: e => {
-        if (props.onValue) {
-          props.onValue(e.target.value);
-        }
-      },
-      onBlur: e => {
-        if (props.blurry || e.target.value) {
-          props.markDirty(props.id);
-        }
-      },
-      onKeyDown: ['number', 'password', 'text'].includes(props.type) ? onEnterKeyNavigateNext : undefined,
-    }, elementProps);
-
-    return (
-      <div>
-        {props.prefix}
-        {props.renderField
-          ? props.renderField(props, elementProps, fieldClasses)
-          : React.createElement(tag, nextProps)
-        }
-        {props.suffix && <span>&nbsp;&nbsp;{props.suffix}</span>}
-        {props.children}
-        <div className={errorClasses}>
-          {props.invalid}
-        </div>
+  return (
+    <div>
+      {props.prefix}
+      {props.renderField
+        ? props.renderField(props, elementProps, fieldClasses)
+        : React.createElement(tag, nextProps)
+      }
+      {props.suffix && <span>&nbsp;&nbsp;{props.suffix}</span>}
+      {props.children}
+      <div className={errorClasses}>
+        {props.invalid}
       </div>
-    );
-  }
+    </div>
+  );
 }));
 
 const makeBooleanField = type => {
