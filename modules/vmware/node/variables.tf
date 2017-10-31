@@ -68,6 +68,11 @@ variable "vm_disk_datastore" {
   description = "Datastore to create VM(s) in "
 }
 
+variable vm_network_labels {
+  type        = "map"
+  description = "VMs PortGroups"
+}
+
 variable "vm_disk_template" {
   type        = "string"
   description = "Disk template to use for cloning CoreOS Container Linux"

@@ -10,7 +10,7 @@ resource "vsphere_virtual_machine" "etcd_node" {
   domain        = "${var.base_domain}"
 
   network_interface {
-    label = "${var.vm_network_label}"
+    label = "${var.vm_network_labels["${count.index}"]}"
   }
 
   disk {
