@@ -48,7 +48,7 @@ job("triggers/tectonic-installer-pr-trigger") {
       allowMembersOfWhitelistedOrgsAsAdmin(true)
       msgSuccess("")
       msgFailure("")
-      commitStatusContext("Jenkins-Tectonic-Installer")
+      commitStatusContext("pr-trigger")
       buildDescTemplate("#\$pullId: \$abbrTitle")
       blackListLabels("")
       whiteListLabels("")
