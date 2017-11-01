@@ -156,7 +156,7 @@ if [ ! $force ]; then
   fi
 fi
 
-trap 'docker stop grafiti-deleter && docker rm grafiti-deleter; exit' EXIT
+trap 'docker stop grafiti-deleter; exit' EXIT
 
 docker run -t --rm --name grafiti-deleter \
 	-v "$tmp_dir":/tmp/config:z \
