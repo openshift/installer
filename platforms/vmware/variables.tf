@@ -121,6 +121,19 @@ variable "tectonic_vmware_etcd_resource_pool" {
 EOF
 }
 
+variable "tectonic_vmware_etcd_gateways" {
+  type = "map"
+
+  description = <<EOF
+  Terraform map of etcd node(s) network gateway IP, Example:
+  tectonic_vmware_etcd_gateways = {
+  "0" = "192.168.246.99"
+  "1" = "192.168.246.99"
+  "2" = "192.168.246.99"
+}
+EOF
+}
+
 variable "tectonic_vmware_etcd_ip" {
   type = "map"
 
@@ -132,11 +145,6 @@ variable "tectonic_vmware_etcd_ip" {
   "2" = "192.168.246.12/24"
 }
 EOF
-}
-
-variable "tectonic_vmware_etcd_gateway" {
-  type        = "string"
-  description = "Default Gateway IP address for etcd nodes(s)"
 }
 
 variable "tectonic_vmware_etcd_datastore" {
@@ -221,6 +229,18 @@ variable "tectonic_vmware_master_resource_pool" {
 EOF
 }
 
+variable "tectonic_vmware_master_gateways" {
+  type = "map"
+
+  description = <<EOF
+  Terraform map of master node(s) network gateway IP, Example:
+  tectonic_vmware_master_gateways = {
+  "0" = "192.168.246.99"
+  "1" = "192.168.246.99"
+}
+EOF
+}
+
 variable "tectonic_vmware_master_ip" {
   type = "map"
 
@@ -231,11 +251,6 @@ variable "tectonic_vmware_master_ip" {
   "1" = "192.168.246.21/24"
 }
 EOF
-}
-
-variable "tectonic_vmware_master_gateway" {
-  type        = "string"
-  description = "Default Gateway IP address for Master nodes(s)"
 }
 
 variable "tectonic_vmware_master_datastore" {
@@ -318,6 +333,18 @@ variable "tectonic_vmware_worker_resource_pool" {
 EOF
 }
 
+variable "tectonic_vmware_worker_gateways" {
+  type = "map"
+
+  description = <<EOF
+  Terraform map of worker node(s) network gateway IP, Example:
+  tectonic_vmware_worker_gateways = {
+  "0" = "192.168.246.99"
+  "1" = "192.168.246.99"
+}
+EOF
+}
+
 variable "tectonic_vmware_worker_ip" {
   type = "map"
 
@@ -328,11 +355,6 @@ variable "tectonic_vmware_worker_ip" {
   "1" = "192.168.246.31/24"
 }
 EOF
-}
-
-variable "tectonic_vmware_worker_gateway" {
-  type        = "string"
-  description = "Default Gateway IP address for Master nodes(s)"
 }
 
 variable "tectonic_vmware_worker_networks" {

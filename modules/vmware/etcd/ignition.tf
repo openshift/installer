@@ -160,7 +160,7 @@ data "ignition_networkd_unit" "vmnetwork" {
   [Network]
   DNS=${var.dns_server}
   Address=${var.ip_address["${count.index}"]}
-  Gateway=${var.gateway}
+  Gateway=${var.gateways["${count.index}"]}
   UseDomains=yes
   Domains=${var.base_domain}
 EOF

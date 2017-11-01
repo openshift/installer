@@ -192,8 +192,13 @@ tectonic_vmware_etcd_datacenters = ""
 // The storage LUN used by etcd nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
 tectonic_vmware_etcd_datastore = ""
 
-// Default Gateway IP address for etcd nodes(s)
-tectonic_vmware_etcd_gateway = ""
+// Terraform map of etcd node(s) network gateway IP, Example:
+//   tectonic_vmware_etcd_gateways = {
+//   "0" = "192.168.246.99"
+//   "1" = "192.168.246.99"
+//   "2" = "192.168.246.99"
+// }
+tectonic_vmware_etcd_gateways = ""
 
 // Terraform map of etcd node(s) Hostnames, Example:
 //   tectonic_vmware_etcd_hostnames = {
@@ -257,8 +262,12 @@ tectonic_vmware_master_datacenters = ""
 // The storage LUN used by master nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
 tectonic_vmware_master_datastore = ""
 
-// Default Gateway IP address for Master nodes(s)
-tectonic_vmware_master_gateway = ""
+// Terraform map of master node(s) network gateway IP, Example:
+//   tectonic_vmware_master_gateways = {
+//   "0" = "192.168.246.99"
+//   "1" = "192.168.246.99"
+// }
+tectonic_vmware_master_gateways = ""
 
 // Terraform map of Master node(s) Hostnames, Example:
 //   tectonic_vmware_master_hostnames = {
@@ -332,8 +341,12 @@ tectonic_vmware_worker_datacenters = ""
 // The storage LUN used by worker nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
 tectonic_vmware_worker_datastore = ""
 
-// Default Gateway IP address for Master nodes(s)
-tectonic_vmware_worker_gateway = ""
+// Terraform map of worker node(s) network gateway IP, Example:
+//   tectonic_vmware_worker_gateways = {
+//   "0" = "192.168.246.99"
+//   "1" = "192.168.246.99"
+// }
+tectonic_vmware_worker_gateways = ""
 
 // Terraform map of Worker node(s) Hostnames, Example:
 //   tectonic_vmware_worker_hostnames = {
