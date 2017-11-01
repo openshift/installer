@@ -1,5 +1,10 @@
 resource "null_resource" "etcd_secrets" {
-  count = "${var.tectonic_etcd_tls_enabled ? length(var.tectonic_metal_controller_domains) : 0}"
+  count = "${var.tectonic_etcd_tls_enabled
+             && var.tectonic_self_hosted_etcd == ""
+             && length(compact(var.tectonic_etcd_servers)) == 0
+             ? length(var.tectonic_metal_controller_domains)
+             : 0
+          }"
 
   connection {
     type    = "ssh"
