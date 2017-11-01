@@ -214,6 +214,14 @@ tectonic_vmware_etcd_ip = ""
 // etcd node(s) VM Memory Size in MB
 tectonic_vmware_etcd_memory = "4096"
 
+// Terraform map of etcd node(s) vSphere network portgroups, Example:
+//   tectonic_vmware_etcd_ip = {
+//   "0" = "mynet-0"
+//   "1" = "mynet-1"
+//   "2" = "mynet-2"
+// }
+tectonic_vmware_etcd_networks = ""
+
 // Terraform map of etcd node(s) vSphere Resource Pools, Example:
 //   tectonic_vmware_etcd_resource_pool = {
 //   "0" = "myresourcepool-0"
@@ -269,6 +277,13 @@ tectonic_vmware_master_ip = ""
 // Master node(s) Memory Size in MB
 tectonic_vmware_master_memory = "4096"
 
+// Terraform map of master node(s) vSphere network portgroups, Example:
+//   tectonic_vmware_master_ip = {
+//   "0" = "mynet-0"
+//   "1" = "mynet-1"
+// }
+tectonic_vmware_master_networks = ""
+
 // Terraform map of master node(s) vSphere Resource pools, Example:
 //   tectonic_vmware_master_resource_pool = {
 //   "0" = "myresourcepool-0"
@@ -278,9 +293,6 @@ tectonic_vmware_master_resource_pool = ""
 
 // Master node(s) vCPU count
 tectonic_vmware_master_vcpu = "1"
-
-// Portgroup to attach the cluster nodes
-tectonic_vmware_network = ""
 
 // DNS Server to be used by Virtual Machine(s). Multiple DNS servers can be separated by whitespace. Example: `"192.168.1.1 192.168.2.1"`
 tectonic_vmware_node_dns = ""
@@ -339,6 +351,13 @@ tectonic_vmware_worker_ip = ""
 
 // Worker node(s) Memory Size in MB
 tectonic_vmware_worker_memory = "4096"
+
+// Terraform map of worker node(s) vSphere network portgroups, Example:
+//   tectonic_vmware_worker_ip = {
+//   "0" = "mynet-0"
+//   "1" = "mynet-1"
+// }
+tectonic_vmware_worker_networks = ""
 
 // Terraform map of worker node(s) vSphere Resource Pools, Example:
 //   tectonic_vmware_worker_resource_pool = {

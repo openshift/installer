@@ -55,9 +55,9 @@ variable vm_memory {
   description = "ETCD VMs Memory size in MB"
 }
 
-variable vm_network_label {
-  type        = "string"
-  description = "ETCD VMs PortGroup"
+variable vm_network_labels {
+  type        = "map"
+  description = "ETCD VMs PortGroups"
 }
 
 variable vm_disk_datastore {
