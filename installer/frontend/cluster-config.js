@@ -9,7 +9,6 @@ export const AWS_SUBNETS = 'awsSubnets';
 export const AWS_CONTROLLER_SUBNETS = 'awsControllerSubnets';
 export const AWS_CONTROLLER_SUBNET_IDS = 'awsControllerSubnetIds';
 export const DESELECTED_FIELDS = 'deselectedFields';
-export const AWS_DOMAIN = 'awsDomain';
 export const AWS_HOSTED_ZONE_ID = 'awsHostedZoneId';
 export const AWS_SPLIT_DNS = 'awsSplitDNS';
 export const AWS_REGION = 'awsRegion';
@@ -78,7 +77,6 @@ export const AWS_CREDS = 'AWSCreds';
 export const AWS_ETCDS = 'aws_etcds';
 export const AWS_VPC_FORM = 'aws_vpc';
 export const AWS_CONTROLLERS = 'aws_controllers';
-export const AWS_CLUSTER_INFO = 'aws_clusterInfo';
 export const AWS_WORKERS = 'aws_workers';
 export const AWS_REGION_FORM = 'aws_regionForm';
 export const BM_SSH_KEY = 'bm_sshKey';
@@ -135,7 +133,7 @@ const getZoneDomain = (cc) => {
   return _.get(cc, ['extra', AWS_HOSTED_ZONE_ID, 'zoneToName', cc[AWS_HOSTED_ZONE_ID]]);
 };
 
-export const getControllerDomain = (cc) => {
+const getControllerDomain = (cc) => {
   if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     return cc[CONTROLLER_DOMAIN];
   }

@@ -303,7 +303,7 @@ class NodeForm extends React.Component {
 }
 
 const mastersFields = generateField(BM_MASTERS, 'Master', 9);
-export const mastersForm = new Form('MASTERSFORM', [mastersFields]);
+const mastersForm = new Form('MASTERSFORM', [mastersFields]);
 
 export const BM_Controllers = () => <NodeForm
   name="Master"
@@ -315,7 +315,8 @@ export const BM_Controllers = () => <NodeForm
 BM_Controllers.canNavigateForward = mastersForm.canNavigateForward;
 
 const workerFields = generateField(BM_WORKERS, 'Worker', 1000);
-export const workersForm = new Form('WORKERS_FORM', [workerFields]);
+const workersForm = new Form('WORKERS_FORM', [workerFields]);
+
 export const BM_Workers = () => <NodeForm
   name="Worker"
   docs={`Worker nodes run end-user apps. The cluster software automatically shares load
