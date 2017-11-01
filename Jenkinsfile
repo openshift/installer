@@ -262,6 +262,10 @@ pipeline {
             [file: 'self_hosted_etcd_spec.rb', args: ''],
             [file: 'external_self_hosted_etcd_spec.rb', args: '']
           ]
+          def gcp = [
+            [file: 'basic_spec.rb', args: ''],
+            [file: 'ha_spec.rb', args: ''],
+          ]
 
           if (params."PLATFORM/AWS") {
             aws.each { build ->
@@ -278,8 +282,10 @@ pipeline {
           }
 
           if (params."PLATFORM/GCP") {
-            builds['gcp_basic'] = runRSpecTest('spec/gcp_spec.rb', '')
-            builds['gcp_ha'] = runRSpecTest('spec/gcp_ha_spec.rb', '')
+            gcp.each { build ->
+              filepath = 'spec/gcp/' + build.file
+              builds['gcp/' + build.file] = runRSpecTest(filepath, build.args)
+            }
           }
 
           if (params."PLATFORM/BARE_METAL") {
