@@ -1,8 +1,3 @@
-variable "api_sg_ids" {
-  type        = "list"
-  description = "The security group IDs to be applied to the public facing ELB."
-}
-
 variable "assets_s3_location" {
   type        = "string"
   description = "Location on S3 of the Bootkube/Tectonic assets to use (bucket/key)"
@@ -35,29 +30,13 @@ variable "cluster_name" {
   type = "string"
 }
 
-variable "console_sg_ids" {
-  type        = "list"
-  description = "The security group IDs to be applied to the console ELB."
-}
-
 variable "container_images" {
   description = "Container images to use"
   type        = "map"
 }
 
-variable "custom_dns_name" {
-  type        = "string"
-  default     = ""
-  description = "DNS prefix used to construct the console and API server endpoints."
-}
-
 variable "ec2_type" {
   type = "string"
-}
-
-variable "external_zone_id" {
-  type        = "string"
-  description = "ID of the public facing Route53 Hosted Zone on which the ELB records will be created"
 }
 
 variable "extra_tags" {
@@ -79,11 +58,6 @@ variable "instance_count" {
   type = "string"
 }
 
-variable "internal_zone_id" {
-  type        = "string"
-  description = "ID of the internal facing Route53 Hosted Zone on which the ELB records will be created"
-}
-
 variable "master_iam_role" {
   type        = "string"
   default     = ""
@@ -95,14 +69,15 @@ variable "master_sg_ids" {
   description = "The security group IDs to be applied to the master nodes."
 }
 
-variable "private_endpoints" {
-  description = "If set to true, private-facing ingress resources are created."
-  default     = true
-}
-
 variable "public_endpoints" {
   description = "If set to true, public-facing ingress resources are created."
   default     = true
+}
+
+variable "aws_lbs" {
+  description = "List of aws_lb IDs for the Console & APIs"
+  type        = "list"
+  default     = []
 }
 
 variable "root_volume_iops" {

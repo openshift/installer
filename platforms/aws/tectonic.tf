@@ -9,7 +9,7 @@ module "kube_certs" {
   ca_cert_pem        = "${var.tectonic_ca_cert}"
   ca_key_alg         = "${var.tectonic_ca_key_alg}"
   ca_key_pem         = "${var.tectonic_ca_key}"
-  kube_apiserver_url = "https://${module.masters.api_internal_fqdn}:443"
+  kube_apiserver_url = "https://${module.dns.api_internal_fqdn}:443"
   service_cidr       = "${var.tectonic_service_cidr}"
 }
 
@@ -27,7 +27,7 @@ module "etcd_certs" {
 module "ingress_certs" {
   source = "../../modules/tls/ingress/self-signed"
 
-  base_address = "${module.masters.ingress_internal_fqdn}"
+  base_address = "${module.dns.ingress_internal_fqdn}"
   ca_cert_pem  = "${module.kube_certs.ca_cert_pem}"
   ca_key_alg   = "${module.kube_certs.ca_key_alg}"
   ca_key_pem   = "${module.kube_certs.ca_key_pem}"
@@ -47,8 +47,8 @@ module "bootkube" {
 
   cluster_name = "${var.tectonic_cluster_name}"
 
-  kube_apiserver_url = "https://${var.tectonic_aws_private_endpoints ? module.masters.api_internal_fqdn : module.masters.api_external_fqdn}:443"
-  oidc_issuer_url    = "https://${var.tectonic_aws_private_endpoints ? module.masters.ingress_internal_fqdn : module.masters.ingress_external_fqdn}/identity"
+  kube_apiserver_url = "https://${var.tectonic_aws_private_endpoints ? module.dns.api_internal_fqdn : module.dns.api_external_fqdn}:443"
+  oidc_issuer_url    = "https://${var.tectonic_aws_private_endpoints ? module.dns.ingress_internal_fqdn : module.dns.ingress_external_fqdn}/identity"
 
   # Platform-independent variables wiring, do not modify.
   container_images = "${var.tectonic_container_images}"
@@ -80,9 +80,8 @@ module "bootkube" {
 
   etcd_backup_size          = "${var.tectonic_etcd_backup_size}"
   etcd_backup_storage_class = "${var.tectonic_etcd_backup_storage_class}"
-  etcd_endpoints            = "${module.etcd.endpoints}"
+  etcd_endpoints            = "${module.dns.etcd_endpoints}"
   master_count              = "${var.tectonic_master_count}"
-  self_hosted_etcd          = "${var.tectonic_self_hosted_etcd}"
 
   # The default behavior of Kubernetes's controller manager is to mark a node
   # as Unhealthy after 40s without an update from the node's kubelet. However,
@@ -115,8 +114,8 @@ module "tectonic" {
 
   cluster_name = "${var.tectonic_cluster_name}"
 
-  base_address       = "${var.tectonic_aws_private_endpoints ? module.masters.ingress_internal_fqdn : module.masters.ingress_external_fqdn}"
-  kube_apiserver_url = "https://${var.tectonic_aws_private_endpoints ? module.masters.api_internal_fqdn : module.masters.api_external_fqdn}:443"
+  base_address       = "${var.tectonic_aws_private_endpoints ? module.dns.ingress_internal_fqdn : module.dns.ingress_external_fqdn}"
+  kube_apiserver_url = "https://${var.tectonic_aws_private_endpoints ? module.dns.api_internal_fqdn : module.dns.api_external_fqdn}:443"
   service_cidr       = "${var.tectonic_service_cidr}"
 
   # Platform-independent variables wiring, do not modify.

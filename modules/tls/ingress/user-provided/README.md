@@ -13,7 +13,7 @@ Comment out the existing self-signed ingress TLS in your platform, i.e. `platfor
 module "ingress_certs" {
   source = "../../modules/tls/ingress/self-signed"
 
-  base_address = "${module.masters.ingress_internal_fqdn}"
+  base_address = "${module.dns.ingress_internal_fqdn}"
   ca_cert_pem  = "${module.kube_certs.ca_cert_pem}"
   ca_key_alg   = "${module.kube_certs.ca_key_alg}"
   ca_key_pem   = "${module.kube_certs.ca_key_pem}"

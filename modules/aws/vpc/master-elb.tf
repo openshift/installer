@@ -1,9 +1,9 @@
 resource "aws_elb" "api_internal" {
-  count           = "${var.private_endpoints}"
+  count           = "${var.private_master_endpoints}"
   name            = "${var.cluster_name}-int"
-  subnets         = ["${var.subnet_ids}"]
+  subnets         = ["${local.master_subnet_ids}"]
   internal        = true
-  security_groups = ["${var.api_sg_ids}"]
+  security_groups = ["${aws_security_group.api.id}"]
 
   idle_timeout                = 3600
   connection_draining         = true
@@ -31,25 +31,12 @@ resource "aws_elb" "api_internal" {
     ), var.extra_tags)}"
 }
 
-resource "aws_route53_record" "api_internal" {
-  count   = "${var.private_endpoints}"
-  zone_id = "${var.internal_zone_id}"
-  name    = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-api.${var.base_domain}"
-  type    = "A"
-
-  alias {
-    name                   = "${aws_elb.api_internal.dns_name}"
-    zone_id                = "${aws_elb.api_internal.zone_id}"
-    evaluate_target_health = true
-  }
-}
-
 resource "aws_elb" "api_external" {
-  count           = "${var.public_endpoints}"
+  count           = "${var.public_master_endpoints}"
   name            = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-ext"
-  subnets         = ["${var.subnet_ids}"]
+  subnets         = ["${local.master_subnet_ids}"]
   internal        = false
-  security_groups = ["${var.api_sg_ids}"]
+  security_groups = ["${aws_security_group.api.id}"]
 
   idle_timeout                = 3600
   connection_draining         = true
@@ -77,24 +64,11 @@ resource "aws_elb" "api_external" {
     ), var.extra_tags)}"
 }
 
-resource "aws_route53_record" "api_external" {
-  count   = "${var.public_endpoints}"
-  zone_id = "${var.external_zone_id}"
-  name    = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-api.${var.base_domain}"
-  type    = "A"
-
-  alias {
-    name                   = "${aws_elb.api_external.dns_name}"
-    zone_id                = "${aws_elb.api_external.zone_id}"
-    evaluate_target_health = true
-  }
-}
-
 resource "aws_elb" "console" {
   name            = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}-con"
-  subnets         = ["${var.subnet_ids}"]
-  internal        = "${var.public_endpoints ? false : true}"
-  security_groups = ["${var.console_sg_ids}"]
+  subnets         = ["${local.master_subnet_ids}"]
+  internal        = "${var.public_master_endpoints ? false : true}"
+  security_groups = ["${aws_security_group.console.id}"]
 
   idle_timeout = 3600
 
@@ -125,30 +99,4 @@ resource "aws_elb" "console" {
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
       "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
-}
-
-resource "aws_route53_record" "ingress_public" {
-  count   = "${var.public_endpoints}"
-  zone_id = "${var.external_zone_id}"
-  name    = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}.${var.base_domain}"
-  type    = "A"
-
-  alias {
-    name                   = "${aws_elb.console.dns_name}"
-    zone_id                = "${aws_elb.console.zone_id}"
-    evaluate_target_health = true
-  }
-}
-
-resource "aws_route53_record" "ingress_private" {
-  count   = "${var.private_endpoints}"
-  zone_id = "${var.internal_zone_id}"
-  name    = "${var.custom_dns_name == "" ? var.cluster_name : var.custom_dns_name}.${var.base_domain}"
-  type    = "A"
-
-  alias {
-    name                   = "${aws_elb.console.dns_name}"
-    zone_id                = "${aws_elb.console.zone_id}"
-    evaluate_target_health = true
-  }
 }

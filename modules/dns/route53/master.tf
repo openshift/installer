@@ -1,5 +1,5 @@
 resource "aws_route53_record" "master_nodes" {
-  count   = "${var.master_count}"
+  count   = "${var.elb_alias_enabled ? 0 : var.master_count}"
   zone_id = "${data.aws_route53_zone.tectonic.zone_id}"
   name    = "${var.cluster_name}-master-${count.index}"
   type    = "A"
