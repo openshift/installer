@@ -39,23 +39,55 @@ const pageCommands = {
 
   test(json) {
     this.expect.element('@vpcOptionNewPublic').to.be.selected;
+    this.expect.element('#awsVpcId').to.not.be.present;
 
     this.selectOption('#awsHostedZoneId option[value=Z1ILIMNSJGTMO2]');
     this.selectOption('#awsSplitDNS option[value=off]');
 
     this.click('@advanced');
     this.expect.element('#awsVpcCIDR').to.be.visible;
-    this.expect.element('[id="awsControllerSubnets.us-west-1a"]').to.be.visible;
-    this.expect.element('[id="awsControllerSubnets.us-west-1c"]').to.be.visible;
-    this.expect.element('[id="awsWorkerSubnets.us-west-1a"]').to.be.visible;
-    this.expect.element('[id="awsWorkerSubnets.us-west-1a"]').to.be.visible;
+    this.expect.element('@masterSubnet1a').to.be.visible;
+    this.expect.element('@masterSubnet1c').to.be.visible;
+    this.expect.element('@workerSubnet1a').to.be.visible;
+    this.expect.element('@workerSubnet1c').to.be.visible;
+
+    // Subnet CIDR outside of VPC CIDR
+    this.setField('#awsVpcCIDR', '0.0.0.0/20');
+    this.expect.element('@alertError').text.to.contain('vpcCIDR (0.0.0.0/20) does not contain instanceCIDR');
+    this.setField('#awsVpcCIDR', '10.0.0.0/16');
+    this.expect.element('@alertError').to.not.be.present;
+
+    // Overlapping public subnets
+    this.setField('@masterSubnet1c', '10.0.0.0/19');
+    this.expect.element('@alertError').text.to.contain('CIDR of subnet 1 (10.0.0.0/19) overlaps with CIDR of subnet 0');
+    this.setField('@masterSubnet1c', '10.0.32.0/19');
+    this.expect.element('@alertError').to.not.be.present;
+
+    // Overlapping private subnets
+    this.setField('@workerSubnet1c', '10.0.64.0/19');
+    this.expect.element('@alertError').text.to.contain('CIDR of subnet 1 (10.0.64.0/19) overlaps with CIDR of subnet 0');
+    this.setField('@workerSubnet1c', '10.0.96.0/19');
+    this.expect.element('@alertError').to.not.be.present;
+
+    // Pod CIDR overlaps with AWS VPC CIDR
+    this.setField('#podCIDR', '10.0.0.0/16');
+    this.expect.element('@alertError').text.to.contain('IP Network "10.0.0.0/16" has been given twice');
+
+    // Pod CIDR overlaps with Service CIDR
+    this.setField('#podCIDR', '10.3.0.0/16');
+    this.expect.element('@alertError').text.to.contain('IP Network "10.3.0.0/16" has been given twice');
+
+    this.setField('#podCIDR', '10.2.0.0/16');
+    this.expect.element('@alertError').to.not.be.present;
 
     this.testCidrInputs(json);
 
     this.selectOption('@vpcOptionExistingPublic');
+    this.expect.element('#awsVpcId').to.be.visible;
     this.testCidrInputs(json);
 
     this.selectOption('@vpcOptionExistingPrivate');
+    this.expect.element('#awsVpcId').to.be.visible;
     this.testCidrInputs(json);
 
     this.selectOption('@vpcOptionNewPublic');
@@ -69,10 +101,15 @@ module.exports = {
       selector: '//*[text()[contains(.,"Advanced Settings")]]',
       locateStrategy: 'xpath',
     },
-    alertWarningTitle: '.alert-info b',
+    alertError: '.alert-error',
     alertErrorTitle: '.alert-error b',
-    vpcOptionNewPublic: '.wiz-radio-group:nth-child(1) input[type=radio]',
-    vpcOptionExistingPublic: '.wiz-radio-group:nth-child(2) input[type=radio]',
+    alertWarningTitle: '.alert-info b',
+    masterSubnet1a: '[id="awsControllerSubnets.us-west-1a"]',
+    masterSubnet1c: '[id="awsControllerSubnets.us-west-1c"]',
     vpcOptionExistingPrivate: '.wiz-radio-group:nth-child(3) input[type=radio]',
+    vpcOptionExistingPublic: '.wiz-radio-group:nth-child(2) input[type=radio]',
+    vpcOptionNewPublic: '.wiz-radio-group:nth-child(1) input[type=radio]',
+    workerSubnet1a: '[id="awsWorkerSubnets.us-west-1a"]',
+    workerSubnet1c: '[id="awsWorkerSubnets.us-west-1c"]',
   },
 };
