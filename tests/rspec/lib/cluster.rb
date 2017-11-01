@@ -142,11 +142,12 @@ class Cluster
   end
 
   def wait_for_bootstrapping
-    wait_for_service('bootkube')
-    wait_for_service('tectonic')
+    ips = master_ip_addresses
+    wait_for_service('bootkube', ips)
+    wait_for_service('tectonic', ips)
     puts 'HOORAY! The cluster is up'
   rescue
-    master_ip_addresses.each do |master_ip|
+    ips.each do |master_ip|
       ['bootkube', 'tectonic', 'kubelet', 'k8s-node-bootstrap'].each do |s|
         print_service_logs(master_ip, s)
       end
@@ -154,12 +155,10 @@ class Cluster
     raise
   end
 
-  def wait_for_service(service)
+  def wait_for_service(service, ips)
     from = Time.now
-    ips = []
 
     180.times do # 180 * 10 = 1800 seconds = 30 minutes
-      ips = master_ip_addresses
       return if service_finished_bootstrapping?(ips, service)
 
       elapsed = Time.now - from
