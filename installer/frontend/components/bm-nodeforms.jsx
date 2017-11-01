@@ -5,7 +5,7 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 
-import { configActions } from '../actions';
+import { configActions, dirtyActions } from '../actions';
 import { Alert } from './alert';
 import { validate } from '../validate';
 import { readFile } from '../readfile';
@@ -16,18 +16,14 @@ import {
   BM_WORKERS,
 } from '../cluster-config';
 
-import {
-  Input,
-  Connect,
-  markIDDirty,
-} from './ui';
+import { Input, Connect } from './ui';
 
 const BulkUpload = connect(null, dispatch => ({
   updateNodes: (fieldID, payload) => {
     dispatch(configActions.updateField(fieldID, payload));
     _.each(payload, (row, i) => {
       _.each(row, (ignore, key) => {
-        markIDDirty(dispatch, [fieldID, i, key].join('.'));
+        dispatch(dirtyActions.add(`${fieldID}.${i}.${key}`));
       });
     });
     dispatch(configActions.updateField(fieldID, payload));
@@ -101,7 +97,7 @@ const BulkUpload = connect(null, dispatch => ({
       if (!csv) {
         body = <div>
           <div>
-          Select a CSV file to populate the node addresses
+            Select a CSV file to populate the node addresses
           </div>
           <div className="wiz-minimodal__body">
             <input type="file" onChange={e => this.handleUpload(e)} />
@@ -112,7 +108,7 @@ const BulkUpload = connect(null, dispatch => ({
         </div>;
       } else if (csv.errors.length) {
         body = <Alert severity="error">
-        Error parsing CSV:
+          Error parsing CSV:
           <ul>
             {csv.errors.map((e, i) => <li key={i}>{e.message} on line {e.row}.</li>)}
           </ul>
@@ -178,7 +174,8 @@ const BulkUpload = connect(null, dispatch => ({
         </div>
       );
     }
-  });
+  }
+);
 
 const generateField = (id, name, maxNodes) => new FieldList(id, {
   fields: {

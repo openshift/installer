@@ -9,22 +9,10 @@ import { validate } from '../validate';
 import { readFile } from '../readfile';
 import { toError, toAsyncError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from '../utils';
 
-import { dirtyActionTypes, configActions } from '../actions';
+import { dirtyActions, configActions } from '../actions';
 import { DESELECTED_FIELDS } from '../cluster-config.js';
 
 import { Alert } from './alert';
-
-// Use this function to dirty a field due to
-// non-user interaction (like uploading a config file)
-export const markIDDirty = (dispatch, id) => {
-  if (!id) {
-    throw new Error('ID required!');
-  }
-  dispatch({
-    type: dirtyActionTypes.ADD,
-    payload: id,
-  });
-};
 
 // Taken more-or-less from https://www.w3.org/TR/html5/forms.html#the-input-element
 const FIELD_PROPS = ImmutableSet([
@@ -83,76 +71,65 @@ export const ErrorComponent = props => {
 
 const Field = withNav(connect(
   (state, {id}) => ({isDirty: _.get(state.dirty, id)}),
-  dispatch => ({
-    markDirty: id => markIDDirty(dispatch, id),
-    markClean: id => dispatch({type: dirtyActionTypes.CLEAN, payload: id }),
-  })
-)(class Field extends React.Component {
-  componentWillUnmount() {
-    if (this.props.autoClean) {
-      this.props.markClean(this.props.id);
+  (dispatch, {id}) => ({makeDirty: () => dispatch(dirtyActions.add(id))}),
+)(props => {
+  const tag = props.tag || 'input';
+  const dirty = props.forceDirty || props.isDirty;
+  const fieldClasses = classNames(props.className, {
+    'wiz-dirty': dirty,
+    'wiz-invalid': props.invalid,
+  });
+  const errorClasses = classNames('wiz-error-message', {
+    hidden: !(dirty && props.invalid),
+  });
+
+  const elementProps = {};
+  Object.keys(props).filter(k => FIELD_PROPS.has(k)).forEach(k => {
+    elementProps[k] = props[k];
+  });
+
+  const onEnterKeyNavigateNext = e => {
+    if (e.keyCode === 13) {
+      e.preventDefault();
+      props.navNext();
     }
-  }
-  render () {
-    const props = this.props;
-    const tag = props.tag || 'input';
-    const dirty = props.forceDirty || props.isDirty;
-    const fieldClasses = classNames(props.className, {
-      'wiz-dirty': dirty,
-      'wiz-invalid': props.invalid,
-    });
-    const errorClasses = classNames('wiz-error-message', {
-      hidden: !(dirty && props.invalid),
-    });
+  };
 
-    const elementProps = {};
-    Object.keys(props).filter(k => FIELD_PROPS.has(k)).forEach(k => {
-      elementProps[k] = props[k];
-    });
-
-    const onEnterKeyNavigateNext = e => {
-      if (e.keyCode === 13) {
-        e.preventDefault();
-        props.navNext();
+  const nextProps = Object.assign({
+    className: fieldClasses,
+    value: props.value || '',
+    autoCorrect: 'off',
+    autoComplete: 'off',
+    spellCheck: 'false',
+    children: undefined,
+    onPaste: props.makeDirty,
+    onChange: e => {
+      if (props.onValue) {
+        props.onValue(e.target.value);
       }
-    };
+    },
+    onBlur: e => {
+      if (props.blurry || e.target.value) {
+        props.makeDirty();
+      }
+    },
+    onKeyDown: ['number', 'password', 'text'].includes(props.type) ? onEnterKeyNavigateNext : undefined,
+  }, elementProps);
 
-    const nextProps = Object.assign({
-      className: fieldClasses,
-      value: props.value || '',
-      autoCorrect: 'off',
-      autoComplete: 'off',
-      spellCheck: 'false',
-      children: undefined,
-      onPaste: () => props.markDirty(props.id),
-      onChange: e => {
-        if (props.onValue) {
-          props.onValue(e.target.value);
-        }
-      },
-      onBlur: e => {
-        if (props.blurry || e.target.value) {
-          props.markDirty(props.id);
-        }
-      },
-      onKeyDown: ['number', 'password', 'text'].includes(props.type) ? onEnterKeyNavigateNext : undefined,
-    }, elementProps);
-
-    return (
-      <div>
-        {props.prefix}
-        {props.renderField
-          ? props.renderField(props, elementProps, fieldClasses)
-          : React.createElement(tag, nextProps)
-        }
-        {props.suffix && <span>&nbsp;&nbsp;{props.suffix}</span>}
-        {props.children}
-        <div className={errorClasses}>
-          {props.invalid}
-        </div>
+  return (
+    <div>
+      {props.prefix}
+      {props.renderField
+        ? props.renderField(props, elementProps, fieldClasses)
+        : React.createElement(tag, nextProps)
+      }
+      {props.suffix && <span>&nbsp;&nbsp;{props.suffix}</span>}
+      {props.children}
+      <div className={errorClasses}>
+        {props.invalid}
       </div>
-    );
-  }
+    </div>
+  );
 }));
 
 const makeBooleanField = type => {
@@ -166,7 +143,7 @@ const makeBooleanField = type => {
             props.onChange(value);
           }
         }}
-        onBlur={() => injectedProps.markDirty(injectedProps.id)}
+        onBlur={injectedProps.makeDirty}
       />;
     };
     return <Field {...props} renderField={renderField} />;
@@ -201,7 +178,7 @@ export const Radio = props => {
           props.onChange(props.value);
         }
       }}
-      onBlur={() => injectedProps.markDirty(injectedProps.id)}
+      onBlur={injectedProps.makeDirty}
     />;
   };
   return <Field {...props} renderField={renderField} />;
@@ -217,20 +194,10 @@ export const ToggleButton = props => <button className={props.className} style={
 // A textarea/file-upload combo
 // <FileArea id:REQUIRED invalid="error message" placeholder value onValue>
 export const FileArea = connect(
-  () => {
-    return {
-      tag: 'textarea',
-    };
-  },
-  (dispatch) => {
-    return {
-      markDirtyUpload: (id) => {
-        markIDDirty(dispatch, id);
-      },
-    };
-  }
+  () => ({tag: 'textarea'}),
+  (dispatch, {id}) => ({makeDirty: () => dispatch(dirtyActions.add(id))}),
 )((props) => {
-  const {id, onValue, markDirtyUpload, uploadButtonLabel} = props;
+  const {onValue, makeDirty, uploadButtonLabel} = props;
   const handleUpload = (e) => {
     readFile(e.target.files.item(0))
       .then((value) => {
@@ -240,7 +207,7 @@ export const FileArea = connect(
         console.error(msg);
       })
       .then(() => {
-        markDirtyUpload(id);
+        makeDirty();
       });
     // Reset value so that onChange fires if you pick the same file again.
     e.target.value = null;
@@ -347,8 +314,7 @@ const stateToProps = ({clusterConfig, dirty}, {field}) => ({
 
 const dispatchToProps = (dispatch, {field}) => ({
   updateField: (path, value, invalid) => dispatch(configActions.updateField(path, value, invalid)),
-  makeDirty: () => markIDDirty(dispatch, field),
-  makeClean: () => dispatch({type: dirtyActionTypes.CLEAN, payload: field }),
+  makeDirty: () => dispatch(dirtyActions.add(field)),
   refreshExtraData: () => dispatch(configActions.refreshExtraData(field)),
   removeField: (i) => dispatch(configActions.removeField(field, i)),
   appendField: () => dispatch(configActions.appendField(field)),
@@ -374,7 +340,7 @@ class Connect_ extends React.Component {
   }
 
   render () {
-    const { field, value, invalid, children, isDirty, makeDirty, makeClean,
+    const { field, value, invalid, children, isDirty, makeDirty,
       extraData, refreshExtraData, inFly, removeField, appendField,
     } = this.props;
 
@@ -387,7 +353,6 @@ class Connect_ extends React.Component {
       inFly,
       invalid,
       isDirty,
-      makeClean,
       makeDirty,
       refreshExtraData,
       removeField,
