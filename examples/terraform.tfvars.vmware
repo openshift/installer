@@ -214,6 +214,14 @@ tectonic_vmware_etcd_ip = ""
 // etcd node(s) VM Memory Size in MB
 tectonic_vmware_etcd_memory = "4096"
 
+// Terraform map of etcd node(s) vSphere Resource Pools, Example:
+//   tectonic_vmware_etcd_resource_pool = {
+//   "0" = "myresourcepool-0"
+//   "1" = "myresourcepool-1"
+//   "2" = "myresourcepool-2"
+// }
+tectonic_vmware_etcd_resource_pool = ""
+
 // etcd node(s) VM vCPU count
 tectonic_vmware_etcd_vcpu = "1"
 
@@ -260,6 +268,13 @@ tectonic_vmware_master_ip = ""
 
 // Master node(s) Memory Size in MB
 tectonic_vmware_master_memory = "4096"
+
+// Terraform map of master node(s) vSphere Resource pools, Example:
+//   tectonic_vmware_master_resource_pool = {
+//   "0" = "myresourcepool-0"
+//   "1" = "myresourcepool-1"
+// }
+tectonic_vmware_master_resource_pool = ""
 
 // Master node(s) vCPU count
 tectonic_vmware_master_vcpu = "1"
@@ -324,6 +339,13 @@ tectonic_vmware_worker_ip = ""
 
 // Worker node(s) Memory Size in MB
 tectonic_vmware_worker_memory = "4096"
+
+// Terraform map of worker node(s) vSphere Resource Pools, Example:
+//   tectonic_vmware_worker_resource_pool = {
+//   "0" = "myresourcepool-0"
+//   "1" = "myresourcepool-1"
+// }
+tectonic_vmware_worker_resource_pool = ""
 
 // Worker node(s) vCPU count
 tectonic_vmware_worker_vcpu = "1"

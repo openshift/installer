@@ -58,6 +58,11 @@ variable "ip_address" {
   description = "IP Address of the node"
 }
 
+variable "vmware_resource_pool" {
+  type        = "map"
+  description = "vSphere resource pool to create VMs in"
+}
+
 variable "vm_disk_datastore" {
   type        = "string"
   description = "Datastore to create VM(s) in "
