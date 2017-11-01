@@ -179,7 +179,7 @@ if [ ! $force ]; then
   fi
 fi
 
-trap 'docker stop grafiti-tagger && docker rm grafiti-tagger; exit' EXIT
+trap 'docker stop grafiti-tagger; exit' EXIT
 
 docker run -t --rm --name grafiti-tagger \
 	-v "$tmp_dir":/tmp/config:z \
