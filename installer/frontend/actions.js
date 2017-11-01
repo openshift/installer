@@ -27,6 +27,10 @@ export const dirtyActionTypes = {
   ADD: 'DIRTY_ADD',
   CLEAN: 'DIRTY_CLEAN',
 };
+export const dirtyActions = {
+  add: field => ({type: dirtyActionTypes.ADD, payload: field}),
+  clean: field => ({type: dirtyActionTypes.CLEAN, payload: field}),
+};
 
 export const eventErrorsActionTypes = {
   ERROR: 'EVENT_ERRORS_ERROR',
