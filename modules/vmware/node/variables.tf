@@ -43,9 +43,9 @@ variable "dns_server" {
   description = "DNS Server of the nodes"
 }
 
-variable "gateway" {
-  type        = "string"
-  description = "Gateway of the node"
+variable "gateways" {
+  type        = "map"
+  description = "Network gateway IP for the node"
 }
 
 variable "hostname" {

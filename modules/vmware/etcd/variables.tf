@@ -85,9 +85,9 @@ variable ip_address {
   description = "IP Address of the node"
 }
 
-variable gateway {
-  type        = "string"
-  description = "Gateway of the node"
+variable gateways {
+  type        = "map"
+  description = "Network gateway IP for the node"
 }
 
 variable hostname {

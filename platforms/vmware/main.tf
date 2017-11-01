@@ -19,7 +19,7 @@ module "etcd" {
   hostname   = "${var.tectonic_vmware_etcd_hostnames}"
   dns_server = "${var.tectonic_vmware_node_dns}"
   ip_address = "${var.tectonic_vmware_etcd_ip}"
-  gateway    = "${var.tectonic_vmware_etcd_gateway}"
+  gateways   = "${var.tectonic_vmware_etcd_gateways}"
 
   vmware_datacenters      = "${var.tectonic_vmware_etcd_datacenters}"
   vmware_clusters         = "${var.tectonic_vmware_etcd_clusters}"
@@ -64,7 +64,7 @@ module "masters" {
   hostname         = "${var.tectonic_vmware_master_hostnames}"
   dns_server       = "${var.tectonic_vmware_node_dns}"
   ip_address       = "${var.tectonic_vmware_master_ip}"
-  gateway          = "${var.tectonic_vmware_master_gateway}"
+  gateways         = "${var.tectonic_vmware_master_gateways}"
 
   container_images = "${var.tectonic_container_images}"
 
@@ -115,7 +115,7 @@ module "workers" {
   hostname         = "${var.tectonic_vmware_worker_hostnames}"
   dns_server       = "${var.tectonic_vmware_node_dns}"
   ip_address       = "${var.tectonic_vmware_worker_ip}"
-  gateway          = "${var.tectonic_vmware_worker_gateway}"
+  gateways         = "${var.tectonic_vmware_worker_gateways}"
 
   container_images = "${var.tectonic_container_images}"
 
