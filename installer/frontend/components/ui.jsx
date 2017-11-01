@@ -315,7 +315,6 @@ const stateToProps = ({clusterConfig, dirty}, {field}) => ({
 const dispatchToProps = (dispatch, {field}) => ({
   updateField: (path, value, invalid) => dispatch(configActions.updateField(path, value, invalid)),
   makeDirty: () => dispatch(dirtyActions.add(field)),
-  makeClean: () => dispatch(dirtyActions.clean(field)),
   refreshExtraData: () => dispatch(configActions.refreshExtraData(field)),
   removeField: (i) => dispatch(configActions.removeField(field, i)),
   appendField: () => dispatch(configActions.appendField(field)),
@@ -341,7 +340,7 @@ class Connect_ extends React.Component {
   }
 
   render () {
-    const { field, value, invalid, children, isDirty, makeDirty, makeClean,
+    const { field, value, invalid, children, isDirty, makeDirty,
       extraData, refreshExtraData, inFly, removeField, appendField,
     } = this.props;
 
@@ -354,7 +353,6 @@ class Connect_ extends React.Component {
       inFly,
       invalid,
       isDirty,
-      makeClean,
       makeDirty,
       refreshExtraData,
       removeField,
