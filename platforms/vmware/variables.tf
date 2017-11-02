@@ -164,7 +164,7 @@ variable "tectonic_vmware_etcd_networks" {
 
   description = <<EOF
   Terraform map of etcd node(s) vSphere network portgroups, Example:
-  tectonic_vmware_etcd_ip = {
+  tectonic_vmware_etcd_networks = {
   "0" = "mynet-0"
   "1" = "mynet-1"
   "2" = "mynet-2"
@@ -270,7 +270,7 @@ variable "tectonic_vmware_master_networks" {
 
   description = <<EOF
   Terraform map of master node(s) vSphere network portgroups, Example:
-  tectonic_vmware_master_ip = {
+  tectonic_vmware_master_networks = {
   "0" = "mynet-0"
   "1" = "mynet-1"
 }
@@ -368,7 +368,7 @@ variable "tectonic_vmware_worker_networks" {
 
   description = <<EOF
   Terraform map of worker node(s) vSphere network portgroups, Example:
-  tectonic_vmware_worker_ip = {
+  tectonic_vmware_worker_networks = {
   "0" = "mynet-0"
   "1" = "mynet-1"
 }

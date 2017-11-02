@@ -220,7 +220,7 @@ tectonic_vmware_etcd_ip = ""
 tectonic_vmware_etcd_memory = "4096"
 
 // Terraform map of etcd node(s) vSphere network portgroups, Example:
-//   tectonic_vmware_etcd_ip = {
+//   tectonic_vmware_etcd_networks = {
 //   "0" = "mynet-0"
 //   "1" = "mynet-1"
 //   "2" = "mynet-2"
@@ -287,7 +287,7 @@ tectonic_vmware_master_ip = ""
 tectonic_vmware_master_memory = "4096"
 
 // Terraform map of master node(s) vSphere network portgroups, Example:
-//   tectonic_vmware_master_ip = {
+//   tectonic_vmware_master_networks = {
 //   "0" = "mynet-0"
 //   "1" = "mynet-1"
 // }
@@ -369,7 +369,7 @@ tectonic_vmware_worker_ip = ""
 tectonic_vmware_worker_memory = "4096"
 
 // Terraform map of worker node(s) vSphere network portgroups, Example:
-//   tectonic_vmware_worker_ip = {
+//   tectonic_vmware_worker_networks = {
 //   "0" = "mynet-0"
 //   "1" = "mynet-1"
 // }
