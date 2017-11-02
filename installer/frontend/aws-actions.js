@@ -114,7 +114,7 @@ export const getRegions = () => (dispatch, getState) => {
     SecretAccessKey: cc[AWS_SECRET_ACCESS_KEY],
     SessionToken: cc[AWS_SESSION_TOKEN] || '',
     // you must send a region to get a region!!!
-    Region: cc[AWS_REGION] || 'us-east-1',
+    Region: 'us-east-1',
   };
 
   return getRegions_(null, creds)(dispatch, getState);
