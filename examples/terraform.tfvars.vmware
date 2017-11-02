@@ -318,6 +318,9 @@ tectonic_vmware_ssh_private_key_path = ""
 // Is the vCenter certificate Self-Signed? Example: `tectonic_vmware_sslselfsigned = "true"`
 tectonic_vmware_sslselfsigned = ""
 
+// The type of folder to create. Allowed options: datacenter, host, vm, datastore, and network.
+tectonic_vmware_type = "vm"
+
 // Virtual Machine template of CoreOS Container Linux.
 tectonic_vmware_vm_template = ""
 
