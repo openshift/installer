@@ -34,6 +34,7 @@ This document gives an overview of variables used in the VMware platform of the 
 | tectonic_vmware_ssh_authorized_key | SSH public key to use as an authorized key. Example: `"ssh-rsa AAAB3N..."` | string | - |
 | tectonic_vmware_ssh_private_key_path | SSH private key file in .pem format corresponding to tectonic_vmware_ssh_authorized_key. If not provided, SSH agent will be used. | string | `` |
 | tectonic_vmware_sslselfsigned | Is the vCenter certificate Self-Signed? Example: `tectonic_vmware_sslselfsigned = "true"` | string | - |
+| tectonic_vmware_type | The type of folder to create. Allowed options: datacenter, host, vm, datastore, and network. | string | `vm` |
 | tectonic_vmware_vm_template | Virtual Machine template of CoreOS Container Linux. | string | - |
 | tectonic_vmware_vm_template_folder | Folder for VM template of CoreOS Container Linux. | string | - |
 | tectonic_vmware_worker_clusters | Terraform map of worker node(s) vSphere Clusters, Example:   tectonic_vmware_worker_clusters = {   "0" = "myvmwarecluster-0"   "1" = "myvmwarecluster-1" } | map | - |
