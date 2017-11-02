@@ -410,9 +410,7 @@ def reportStatusToGithub(status, context) {
 }
 //Function used to print environment variables that are used by Logstash as attributes for the log file.
 def printLogstashAttributes() {
-    sh "env"
     echo  "Build_Number=" + env.BUILD_NUMBER
-    echo  "Build_ID=" + env.BUILD_ID
     echo  "JOB_NAME=" + env.JOB_NAME
     echo  "USER_REQUEST=" +  env.CHANGE_AUTHOR
     echo  "Build_Status=" + env.BUILD_STATUS
