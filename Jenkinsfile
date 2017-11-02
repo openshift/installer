@@ -101,6 +101,7 @@ pipeline {
           script {
             def err = null
             try {
+              PrintLogstashAttributes()
               forcefullyCleanWorkspace()
               withDockerContainer(params.builder_image) {
                 ansiColor('xterm') {
@@ -406,5 +407,17 @@ def reportStatusToGithub(status, context) {
     sh """#!/bin/bash -ex
       ./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} ${context}
     """
+  }
+}
+
+def PrintLogstashAttributes() {
+  withCredentials(creds) {
+    echo  "Build_Number="+ env.BUILD_NUMBER
+    echo  "Build_ID="+ env.BUILD_ID
+    echo  "JOB_NAME="+ env.JOB_NAME
+    echo  "USER_REQUEST="+ env.CHANGE_AUTHOR
+    echo  "Build_Status="+ env.BUILD_STATUS
+    echo  "GIT_BRANCH="+ env.GIT_BRANCH
+    echo  "GIT_PR_NUMBER="+ env.ghprbPullId
   }
 }
