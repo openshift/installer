@@ -115,14 +115,11 @@ export const getDefaultSubnets = (body, creds, isNow) => (dispatch, getState) =>
         return;
       }
       const batches = [];
-      _.each(subnets.public, ({availabilityZone, instanceCIDR, id}) => {
+      _.each(subnets.public, ({availabilityZone, instanceCIDR}) => {
         batches.push([`${AWS_CONTROLLER_SUBNETS}.${availabilityZone}`, instanceCIDR]);
-        // TODO: (ggreer) stop resetting this? (ditto for worker subnet ids)
-        batches.push([`${AWS_CONTROLLER_SUBNET_IDS}.${availabilityZone}`, id]);
       });
-      _.each(subnets.private, ({availabilityZone, instanceCIDR, id}) => {
+      _.each(subnets.private, ({availabilityZone, instanceCIDR}) => {
         batches.push([`${AWS_WORKER_SUBNETS}.${availabilityZone}`, instanceCIDR]);
-        batches.push([`${AWS_WORKER_SUBNET_IDS}.${availabilityZone}`, id]);
       });
       batchSetIn(dispatch, batches);
     });
