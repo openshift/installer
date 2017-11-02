@@ -1,6 +1,7 @@
 FROM ruby:2.4-slim
 
 ENV TERRAFORM_VERSION="0.10.7"
+ENV DOCKER_VERSION 1.13.1
 
 COPY ./tests/rspec/Gemfile* /tmp/app/
 
@@ -26,6 +27,12 @@ RUN wget --quiet -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | ap
     apt-get update && \
     apt-get install --no-install-recommends -y -q \
     google-chrome-beta ca-certificates
+
+# Install docker client to start k8s conformance test docker container
+RUN curl https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz | tar -xvz && \
+    mv docker/docker /usr/local/bin/docker && \
+    chmod +x /usr/local/bin/docker && \
+    rm -r docker
 
 # Add user jenkins (uid: 1000), this is needed among others for `ssh` to not
 # complain about missing user.
