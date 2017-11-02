@@ -106,6 +106,7 @@ pipeline {
                 ansiColor('xterm') {
                   checkout scm
                   sh """#!/bin/bash -ex
+                  env
                   mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT
 
                   cd $GO_PROJECT/
