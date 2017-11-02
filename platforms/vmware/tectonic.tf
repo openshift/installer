@@ -14,7 +14,7 @@ module "etcd_certs" {
   etcd_ca_cert_path     = "${var.tectonic_etcd_ca_cert_path}"
   etcd_client_cert_path = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key_path  = "${var.tectonic_etcd_client_key_path}"
-  self_signed           = "${var.tectonic_self_hosted_etcd != "" || var.tectonic_etcd_tls_enabled}"
+  self_signed           = "${var.tectonic_self_hosted_etcd != "" ? "true" : length(compact(var.tectonic_etcd_servers)) == 0 ? "true" : "false"}"
   service_cidr          = "${var.tectonic_service_cidr}"
 
   etcd_cert_dns_names = ["${formatlist("%s.%s",

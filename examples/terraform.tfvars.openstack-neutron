@@ -88,7 +88,7 @@ tectonic_container_linux_version = "latest"
 // (optional) The path of the file containing the CA certificate for TLS communication with etcd.
 // 
 // Note: This works only when used in conjunction with an external etcd cluster.
-// If set, the variables `tectonic_etcd_servers`, `tectonic_etcd_client_cert_path`, and `tectonic_etcd_client_key_path` must also be set.
+// If set, the variable `tectonic_etcd_servers` must also be set.
 // tectonic_etcd_ca_cert_path = "/dev/null"
 
 // (optional) The path of the file containing the client certificate for TLS communication with etcd.
@@ -111,11 +111,13 @@ tectonic_etcd_count = "0"
 
 // (optional) List of external etcd v3 servers to connect with (hostnames/IPs only).
 // Needs to be set if using an external etcd cluster.
+// Note: If this variable is defined, the installer will not create self-signed certs.
+// To provide a CA certificate to trust the etcd servers, set "tectonic_etcd_ca_cert_path".
 // 
 // Example: `["etcd1", "etcd2", "etcd3"]`
 // tectonic_etcd_servers = ""
 
-// (optional) If set to `true`, TLS secure communication for self-provisioned etcd. will be used.
+// (optional) If set to `true`, all etcd endpoints will be configured to use the "https" scheme.
 // 
 // Note: If `tectonic_experimental` is set to `true` this variable has no effect, because the experimental self-hosted etcd always uses TLS.
 // tectonic_etcd_tls_enabled = true

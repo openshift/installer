@@ -20,9 +20,9 @@ resource "template_dir" "bootkube" {
     etcd_servers = "${
       var.self_hosted_etcd != ""
         ? format("https://%s:2379", cidrhost(var.service_cidr, 15))
-        : var.etcd_ca_cert_pem == ""
-          ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
-          : join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+        : var.etcd_tls_enabled
+          ? join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+          : join(",", formatlist("http://%s:2379", var.etcd_endpoints))
       }"
 
     etcd_service_ip           = "${cidrhost(var.service_cidr, 15)}"
@@ -88,9 +88,9 @@ resource "template_dir" "bootkube_bootstrap" {
     etcd_servers = "${
       var.self_hosted_etcd != ""
         ? format("https://%s:2379,https://127.0.0.1:12379", cidrhost(var.service_cidr, 15))
-        : var.etcd_ca_cert_pem == ""
-          ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
-          : join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+        : var.etcd_tls_enabled
+          ? join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+          : join(",", formatlist("http://%s:2379", var.etcd_endpoints))
       }"
 
     etcd_ca_flag   = "${var.etcd_ca_cert_pem != "" ? "- --etcd-cafile=/etc/kubernetes/secrets/etcd-client-ca.crt" : "# no etcd-client-ca.crt given" }"
