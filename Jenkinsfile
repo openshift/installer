@@ -101,7 +101,7 @@ pipeline {
           script {
             def err = null
             try {
-              PrintLogstashAttributes()
+              printLogstashAttributes()
               forcefullyCleanWorkspace()
               withDockerContainer(params.builder_image) {
                 ansiColor('xterm') {
@@ -409,7 +409,7 @@ def reportStatusToGithub(status, context) {
   }
 }
 
-def PrintLogstashAttributes() {
+def printLogstashAttributes() {
   withCredentials(creds) {
     echo  "Build_Number="+ env.BUILD_NUMBER
     echo  "Build_ID="+ env.BUILD_ID
