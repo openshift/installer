@@ -25,6 +25,12 @@ variable "tectonic_vmware_folder" {
   description = "vSphere Folder to create and add the Tectonic nodes"
 }
 
+variable "tectonic_vmware_type" {
+  type        = "string"
+  description = "The type of folder to create. Allowed options: datacenter, host, vm, datastore, and network."
+  default     = "vm"
+}
+
 // # Global
 
 variable "tectonic_vmware_ssh_authorized_key" {
