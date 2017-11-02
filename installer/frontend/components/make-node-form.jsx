@@ -1,6 +1,6 @@
 import _ from 'lodash';
 
-import * as awsActions from '../aws-actions';
+import { getIamRoles } from '../aws-actions';
 import {
   AWS_CREDS,
   IAM_ROLE,
@@ -24,7 +24,7 @@ new Form('DUMMY_NODE_FORM', [
     default: 'DUMMY_VALUE',
     name: IAM_ROLE,
     dependencies: [AWS_CREDS],
-    getExtraStuff: (dispatch, isNow) => dispatch(awsActions.getIamRoles(null, null, isNow)),
+    getExtraStuff: (dispatch, isNow) => dispatch(getIamRoles(null, null, isNow)),
   }),
 ]);
 

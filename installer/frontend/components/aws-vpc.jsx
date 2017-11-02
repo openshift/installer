@@ -3,7 +3,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { compose, validate } from '../validate';
-import * as awsActions from '../aws-actions';
+import { getDefaultSubnets, getZones, getVpcs, getVpcSubnets, validateSubnets } from '../aws-actions';
 import {
   AsyncSelect,
   Radio,
@@ -110,7 +110,7 @@ const validateVPC = (dispatch, getState, data, oldData, isNow, extraData, oldCC)
     network.awsVpcId = awsVpcId;
   }
 
-  return dispatch(awsActions.validateSubnets(network)).then(json => {
+  return dispatch(validateSubnets(network)).then(json => {
     if (!json.valid) {
       return Promise.reject(json.message);
     }
@@ -119,7 +119,11 @@ const validateVPC = (dispatch, getState, data, oldData, isNow, extraData, oldCC)
 
 const vpcInfoForm = new Form(AWS_VPC_FORM, [
   new Field(AWS_ADVANCED_NETWORKING, {default: false}),
-  new Field(AWS_CONTROLLER_SUBNETS, {default: {}}),
+  new Field(AWS_CONTROLLER_SUBNETS, {
+    default: {},
+    dependencies: [AWS_REGION_FORM],
+    getExtraStuff: (dispatch, isNow) => dispatch(getDefaultSubnets(null, null, isNow)),
+  }),
   new Field(AWS_CONTROLLER_SUBNET_IDS, {default: {}}),
   new Field(AWS_CREATE_VPC, {default: VPC_CREATE}),
   new Field(AWS_HOSTED_ZONE_ID, {
@@ -135,7 +139,7 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
         return 'Unknown zone id.';
       }
     },
-    getExtraStuff: (dispatch, isNow) => dispatch(awsActions.getZones(null, null, isNow))
+    getExtraStuff: (dispatch, isNow) => dispatch(getZones(null, null, isNow))
       .then(zones => {
         if (!isNow()) {
           return;
@@ -223,258 +227,246 @@ const stateToProps = ({aws, clusterConfig}) => {
 const dispatchToProps = dispatch => ({
   clearControllerSubnets: () => setIn(AWS_CONTROLLER_SUBNET_IDS, {}, dispatch),
   clearWorkerSubnets: () => setIn(AWS_WORKER_SUBNET_IDS, {}, dispatch),
-  getDefaultSubnets: () => dispatch(awsActions.getDefaultSubnets()),
-  getVpcSubnets: vpcID => dispatch(awsActions.getVpcSubnets({vpcID})),
-  getVpcs: () => dispatch(awsActions.getVpcs()),
+  getVpcSubnets: vpcID => dispatch(getVpcSubnets({vpcID})),
+  getVpcs: () => dispatch(getVpcs()),
 });
 
-export const AWS_VPC = connect(stateToProps, dispatchToProps)(
-  class AWS_VPCComponent extends React.Component {
-    componentDidMount () {
-      if (_.size(this.props.awsControllerSubnets) && _.size(this.props.awsWorkerSubnets)) {
-        return;
-      }
-      this.props.getDefaultSubnets();
+export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
+  const {availableVpcs, awsCreateVpc, availableVpcSubnets, awsVpcId, clusterName, clusterSubdomain, internalCluster, advanced} = props;
+
+  let controllerSubnets;
+  let workerSubnets;
+  if (awsCreateVpc) {
+    controllerSubnets = _.map(props.awsControllerSubnets, (subnet, az) => {
+      const fieldName = `${AWS_SUBNETS}.${az}`;
+      return <DeselectField key={az} field={fieldName}>
+        <CIDRRow
+          autoFocus={az.endsWith('a')}
+          field={`${AWS_CONTROLLER_SUBNETS}.${az}`}
+          fieldName={fieldName}
+          name={az}
+          placeholder="10.0.0.0/24"
+          validator={validate.AWSsubnetCIDR}
+        />
+      </DeselectField>;
+    });
+    workerSubnets = _.map(props.awsWorkerSubnets, (subnet, az) => {
+      const fieldName = `${AWS_SUBNETS}.${az}`;
+      return <DeselectField key={az} field={fieldName}>
+        <CIDRRow
+          field={`${AWS_WORKER_SUBNETS}.${az}`}
+          fieldName={fieldName}
+          name={az}
+          placeholder="10.0.0.0/24"
+          validator={validate.AWSsubnetCIDR}
+        />
+      </DeselectField>;
+    });
+  } else if (awsVpcId) {
+    const availableControllerSubnets = internalCluster ? availableVpcSubnets.value.private : availableVpcSubnets.value.public;
+    if (_.size(availableControllerSubnets)) {
+      controllerSubnets = _.map(props.azs, az => {
+        const fieldName = `${AWS_SUBNETS}.${az}`;
+        return <DeselectField key={az} field={fieldName}>
+          <SubnetSelect
+            field={`${AWS_CONTROLLER_SUBNET_IDS}.${az}`}
+            name={az}
+            fieldName={fieldName}
+            key={az}
+            subnets={availableControllerSubnets}
+          />
+        </DeselectField>;
+      });
+    } else if (!availableVpcSubnets.inFly) {
+      controllerSubnets = <Alert>{awsVpcId} has no {internalCluster ? 'private' : 'public'} subnets. Please create some using the AWS console.</Alert>;
     }
-
-    render () {
-      const {availableVpcs, awsCreateVpc, availableVpcSubnets, awsVpcId, clusterName, clusterSubdomain, internalCluster, advanced} = this.props;
-
-      let controllerSubnets;
-      let workerSubnets;
-      if (awsCreateVpc) {
-        controllerSubnets = _.map(this.props.awsControllerSubnets, (subnet, az) => {
-          const fieldName = `${AWS_SUBNETS}.${az}`;
-          return <DeselectField key={az} field={fieldName}>
-            <CIDRRow
-              autoFocus={az.endsWith('a')}
-              field={`${AWS_CONTROLLER_SUBNETS}.${az}`}
-              fieldName={fieldName}
-              name={az}
-              placeholder="10.0.0.0/24"
-              validator={validate.AWSsubnetCIDR}
-            />
-          </DeselectField>;
-        });
-        workerSubnets = _.map(this.props.awsWorkerSubnets, (subnet, az) => {
-          const fieldName = `${AWS_SUBNETS}.${az}`;
-          return <DeselectField key={az} field={fieldName}>
-            <CIDRRow
-              field={`${AWS_WORKER_SUBNETS}.${az}`}
-              fieldName={fieldName}
-              name={az}
-              placeholder="10.0.0.0/24"
-              validator={validate.AWSsubnetCIDR}
-            />
-          </DeselectField>;
-        });
-      } else if (awsVpcId) {
-        const availableControllerSubnets = internalCluster ? availableVpcSubnets.value.private : availableVpcSubnets.value.public;
-        if (_.size(availableControllerSubnets)) {
-          controllerSubnets = _.map(this.props.azs, az => {
-            const fieldName = `${AWS_SUBNETS}.${az}`;
-            return <DeselectField key={az} field={fieldName}>
-              <SubnetSelect
-                field={`${AWS_CONTROLLER_SUBNET_IDS}.${az}`}
-                name={az}
-                fieldName={fieldName}
-                key={az}
-                subnets={availableControllerSubnets}
-              />
-            </DeselectField>;
-          });
-        } else if (!availableVpcSubnets.inFly) {
-          controllerSubnets = <Alert>{awsVpcId} has no {internalCluster ? 'private' : 'public'} subnets. Please create some using the AWS console.</Alert>;
-        }
-        if (_.size(availableVpcSubnets.value.private)) {
-          workerSubnets = _.map(this.props.azs, az => {
-            const fieldName = `${AWS_SUBNETS}.${az}`;
-            return <DeselectField key={az} field={fieldName}>
-              <SubnetSelect
-                field={`${AWS_WORKER_SUBNET_IDS}.${az}`}
-                name={az}
-                fieldName={fieldName}
-                key={az}
-                subnets={availableVpcSubnets.value.private}
-              />
-            </DeselectField>;
-          });
-        } else if (!availableVpcSubnets.inFly) {
-          workerSubnets = <Alert>{awsVpcId} has no private subnets. Please create some using the AWS console.</Alert>;
-        }
-      }
-
-      return <div>
-        <div className="row form-group">
-          <div className="col-xs-12">
-            <div className="wiz-radio-group">
-              <div className="radio wiz-radio-group__radio">
-                <label>
-                  <Connect field={AWS_CREATE_VPC}>
-                    <Radio name={AWS_CREATE_VPC} value={VPC_CREATE} />
-                  </Connect>
-                  Create a new VPC (Public)
-                </label>&nbsp;(default)
-                <p className="text-muted wiz-help-text">Launch into a new VPC with subnet defaults.</p>
-              </div>
-            </div>
-            <div className="wiz-radio-group">
-              <div className="radio wiz-radio-group__radio">
-                <label>
-                  <Connect field={AWS_CREATE_VPC}>
-                    <Radio name={AWS_CREATE_VPC} value={VPC_PUBLIC} onChange={() => this.props.clearControllerSubnets()} />
-                  </Connect>
-                  Use an existing VPC (Public)
-                </label>
-                <p className="text-muted wiz-help-text">
-                  {/* eslint-disable react/jsx-no-target-blank */}
-                  Useful for installing beside existing resources. Your VPC must be <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} rel="noopener" target="_blank">set up correctly</a>.
-                  {/* eslint-enable react/jsx-no-target-blank */}
-                </p>
-              </div>
-            </div>
-            <div className="wiz-radio-group">
-              <div className="radio wiz-radio-group__radio">
-                <label>
-                  <Connect field={AWS_CREATE_VPC}>
-                    <Radio name={AWS_CREATE_VPC} value={VPC_PRIVATE} onChange={() => this.props.clearControllerSubnets()} />
-                  </Connect>
-                  Use an existing VPC (Private)
-                </label>
-                <p className="text-muted wiz-help-text">
-                  {/* eslint-disable react/jsx-no-target-blank */}
-                  Useful for installing beside existing resources. Your VPC must be <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} rel="noopener" target="_blank">set up correctly</a>.
-                  {/* eslint-enable react/jsx-no-target-blank */}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <hr />
-
-        <p className="text-muted">
-          Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <a target="_blank" href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html" rel="noopener noreferrer">Working with Hosted Zones</a>.
-        </p>
-        <div className="row form-group">
-          <div className="col-xs-2">
-            <label htmlFor="r53Zone">DNS</label>
-          </div>
-          <div className="col-xs-10">
-            <div className="row">
-              <div className="col-xs-4" style={{paddingRight: 0}}>
-                <Connect field={CLUSTER_SUBDOMAIN} getDefault={() => clusterSubdomain || clusterName}>
-                  <Input placeholder="subdomain" />
-                </Connect>
-              </div>
-              <div className="col-xs-8">
-                <Connect field={AWS_HOSTED_ZONE_ID}>
-                  <Selector refreshBtn={true} disabledValue="Please select domain" />
-                </Connect>
-              </div>
-            </div>
-          </div>
-        </div>
-        {!internalCluster &&
-          <div className="row form-group">
-            <div className="col-xs-offset-2 col-xs-10">
-              <Connect field={AWS_SPLIT_DNS}>
-                <Select>
-                  {_.map(SPLIT_DNS_OPTIONS, ((k, v) => <option value={v} key={k}>{k}</option>))}
-                </Select>
-              </Connect>
-              <p className="text-muted wiz-help-text">
-                See AWS <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html" rel="noopener noreferrer" target="_blank">Split-View DNS documentation&nbsp;<i className="fa fa-external-link" /></a>
-              </p>
-            </div>
-          </div>
-        }
-
-        <vpcInfoForm.Errors />
-        <AWS_DomainValidation />
-        <hr />
-
-        {awsCreateVpc && <Connect field={AWS_ADVANCED_NETWORKING}>
-          <ToggleButton className="btn btn-default">Advanced Settings</ToggleButton>
-        </Connect>
-        }
-        {(advanced || !awsCreateVpc) && <div>
-          {internalCluster && <Alert>
-            You must be on a VPN with access to the target VPC. The cluster will have no public endpoints.
-          </Alert>}
-
-          {awsCreateVpc &&
-            <div>
-              <br />
-              <Alert>
-                The installer will create your EC2 instances within the following CIDR ranges.
-                <br /><br />
-                Safe defaults have been chosen for you.
-                If you make changes, the ranges must not overlap and subnets must be within the VPC CIDR.
-              </Alert>
-              <div className="row form-group">
-                <div className="col-xs-12">
-                  Specify a range of IPv4 addresses for the VPC in the form of a <a href="https://tools.ietf.org/html/rfc4632" rel="noopener noreferrer" target="_blank">CIDR block</a>. Safe defaults have been chosen for you.
-                </div>
-              </div>
-              <CIDRRow name="CIDR Block" field={AWS_VPC_CIDR} placeholder={DEFAULT_AWS_VPC_CIDR} />
-            </div>
-          }
-          {!awsCreateVpc &&
-            <div className="row">
-              <div className="col-xs-3">
-                <label htmlFor="r53Zone">VPC</label>
-              </div>
-              <div className="col-xs-9">
-                <div className="radio wiz-radio-group__radio">
-                  <Connect field={AWS_VPC_ID}>
-                    <AsyncSelect
-                      id={AWS_VPC_ID}
-                      availableValues={availableVpcs}
-                      disabledValue="Please select a VPC"
-                      onRefresh={() => {
-                        this.props.getVpcs();
-                        if (awsVpcId) {
-                          this.props.getVpcSubnets(awsVpcId);
-                        }
-                      }}
-                      onChange={vpcID => {
-                        if (vpcID !== awsVpcId) {
-                          this.props.clearControllerSubnets();
-                          this.props.clearWorkerSubnets();
-                        }
-                        this.props.getVpcSubnets(vpcID);
-                      }}
-                    />
-                  </Connect>
-                </div>
-              </div>
-            </div>
-          }
-
-          {(controllerSubnets || workerSubnets) && <hr />}
-          {controllerSubnets && <div className="row form-group">
-            <div className="col-xs-12">
-              <h4>Masters</h4>
-              {controllerSubnets}
-            </div>
-          </div>
-          }
-          {workerSubnets && <div className="row form-group">
-            <div className="col-xs-12">
-              <h4>Workers</h4>
-              {workerSubnets}
-            </div>
-          </div>
-          }
-          <hr />
-          <KubernetesCIDRs />
-        </div>
-        }
-      </div>;
+    if (_.size(availableVpcSubnets.value.private)) {
+      workerSubnets = _.map(props.azs, az => {
+        const fieldName = `${AWS_SUBNETS}.${az}`;
+        return <DeselectField key={az} field={fieldName}>
+          <SubnetSelect
+            field={`${AWS_WORKER_SUBNET_IDS}.${az}`}
+            name={az}
+            fieldName={fieldName}
+            key={az}
+            subnets={availableVpcSubnets.value.private}
+          />
+        </DeselectField>;
+      });
+    } else if (!availableVpcSubnets.inFly) {
+      workerSubnets = <Alert>{awsVpcId} has no private subnets. Please create some using the AWS console.</Alert>;
     }
   }
-);
+
+  return <div>
+    <div className="row form-group">
+      <div className="col-xs-12">
+        <div className="wiz-radio-group">
+          <div className="radio wiz-radio-group__radio">
+            <label>
+              <Connect field={AWS_CREATE_VPC}>
+                <Radio name={AWS_CREATE_VPC} value={VPC_CREATE} />
+              </Connect>
+              Create a new VPC (Public)
+            </label>&nbsp;(default)
+            <p className="text-muted wiz-help-text">Launch into a new VPC with subnet defaults.</p>
+          </div>
+        </div>
+        <div className="wiz-radio-group">
+          <div className="radio wiz-radio-group__radio">
+            <label>
+              <Connect field={AWS_CREATE_VPC}>
+                <Radio name={AWS_CREATE_VPC} value={VPC_PUBLIC} onChange={() => props.clearControllerSubnets()} />
+              </Connect>
+              Use an existing VPC (Public)
+            </label>
+            <p className="text-muted wiz-help-text">
+              {/* eslint-disable react/jsx-no-target-blank */}
+              Useful for installing beside existing resources. Your VPC must be <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} rel="noopener" target="_blank">set up correctly</a>.
+              {/* eslint-enable react/jsx-no-target-blank */}
+            </p>
+          </div>
+        </div>
+        <div className="wiz-radio-group">
+          <div className="radio wiz-radio-group__radio">
+            <label>
+              <Connect field={AWS_CREATE_VPC}>
+                <Radio name={AWS_CREATE_VPC} value={VPC_PRIVATE} onChange={() => props.clearControllerSubnets()} />
+              </Connect>
+              Use an existing VPC (Private)
+            </label>
+            <p className="text-muted wiz-help-text">
+              {/* eslint-disable react/jsx-no-target-blank */}
+              Useful for installing beside existing resources. Your VPC must be <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} rel="noopener" target="_blank">set up correctly</a>.
+              {/* eslint-enable react/jsx-no-target-blank */}
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr />
+
+    <p className="text-muted">
+      Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <a target="_blank" href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html" rel="noopener noreferrer">Working with Hosted Zones</a>.
+    </p>
+    <div className="row form-group">
+      <div className="col-xs-2">
+        <label htmlFor="r53Zone">DNS</label>
+      </div>
+      <div className="col-xs-10">
+        <div className="row">
+          <div className="col-xs-4" style={{paddingRight: 0}}>
+            <Connect field={CLUSTER_SUBDOMAIN} getDefault={() => clusterSubdomain || clusterName}>
+              <Input placeholder="subdomain" />
+            </Connect>
+          </div>
+          <div className="col-xs-8">
+            <Connect field={AWS_HOSTED_ZONE_ID}>
+              <Selector refreshBtn={true} disabledValue="Please select domain" />
+            </Connect>
+          </div>
+        </div>
+      </div>
+    </div>
+    {!internalCluster &&
+      <div className="row form-group">
+        <div className="col-xs-offset-2 col-xs-10">
+          <Connect field={AWS_SPLIT_DNS}>
+            <Select>
+              {_.map(SPLIT_DNS_OPTIONS, ((k, v) => <option value={v} key={k}>{k}</option>))}
+            </Select>
+          </Connect>
+          <p className="text-muted wiz-help-text">
+            See AWS <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html" rel="noopener noreferrer" target="_blank">Split-View DNS documentation&nbsp;<i className="fa fa-external-link" /></a>
+          </p>
+        </div>
+      </div>
+    }
+
+    <vpcInfoForm.Errors />
+    <AWS_DomainValidation />
+    <hr />
+
+    {awsCreateVpc && <Connect field={AWS_ADVANCED_NETWORKING}>
+      <ToggleButton className="btn btn-default">Advanced Settings</ToggleButton>
+    </Connect>
+    }
+    {(advanced || !awsCreateVpc) && <div>
+      {internalCluster && <Alert>
+        You must be on a VPN with access to the target VPC. The cluster will have no public endpoints.
+      </Alert>}
+
+      {awsCreateVpc &&
+        <div>
+          <br />
+          <Alert>
+            The installer will create your EC2 instances within the following CIDR ranges.
+            <br /><br />
+            Safe defaults have been chosen for you.
+            If you make changes, the ranges must not overlap and subnets must be within the VPC CIDR.
+          </Alert>
+          <div className="row form-group">
+            <div className="col-xs-12">
+              Specify a range of IPv4 addresses for the VPC in the form of a <a href="https://tools.ietf.org/html/rfc4632" rel="noopener noreferrer" target="_blank">CIDR block</a>. Safe defaults have been chosen for you.
+            </div>
+          </div>
+          <CIDRRow name="CIDR Block" field={AWS_VPC_CIDR} placeholder={DEFAULT_AWS_VPC_CIDR} />
+        </div>
+      }
+      {!awsCreateVpc &&
+        <div className="row">
+          <div className="col-xs-3">
+            <label htmlFor="r53Zone">VPC</label>
+          </div>
+          <div className="col-xs-9">
+            <div className="radio wiz-radio-group__radio">
+              <Connect field={AWS_VPC_ID}>
+                <AsyncSelect
+                  id={AWS_VPC_ID}
+                  availableValues={availableVpcs}
+                  disabledValue="Please select a VPC"
+                  onRefresh={() => {
+                    props.getVpcs();
+                    if (awsVpcId) {
+                      props.getVpcSubnets(awsVpcId);
+                    }
+                  }}
+                  onChange={vpcID => {
+                    if (vpcID !== awsVpcId) {
+                      props.clearControllerSubnets();
+                      props.clearWorkerSubnets();
+                    }
+                    props.getVpcSubnets(vpcID);
+                  }}
+                />
+              </Connect>
+            </div>
+          </div>
+        </div>
+      }
+
+      {(controllerSubnets || workerSubnets) && <hr />}
+      {controllerSubnets && <div className="row form-group">
+        <div className="col-xs-12">
+          <h4>Masters</h4>
+          {controllerSubnets}
+        </div>
+      </div>
+      }
+      {workerSubnets && <div className="row form-group">
+        <div className="col-xs-12">
+          <h4>Workers</h4>
+          {workerSubnets}
+        </div>
+      </div>
+      }
+      <hr />
+      <KubernetesCIDRs />
+    </div>
+    }
+  </div>;
+});
 
 AWS_VPC.canNavigateForward = ({clusterConfig}) => {
   if (!vpcInfoForm.canNavigateForward({clusterConfig}) || !KubernetesCIDRs.canNavigateForward({clusterConfig})) {

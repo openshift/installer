@@ -3,21 +3,16 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { compose, validate } from '../validate';
-import { configActions } from '../actions';
 import { Input, Password, Select, RadioBoolean, Connect } from './ui';
 import { Alert } from './alert';
 
-import { getRegions, getDefaultSubnets } from '../aws-actions';
+import { getRegions } from '../aws-actions';
 import { Field, Form } from '../form';
 import { TectonicGA } from '../tectonic-ga';
 
 import {
   AWS_ACCESS_KEY_ID,
-  AWS_CONTROLLER_SUBNETS,
   AWS_CREDS,
-  AWS_WORKER_SUBNETS,
-  AWS_CONTROLLER_SUBNET_IDS,
-  AWS_WORKER_SUBNET_IDS,
   AWS_REGION,
   AWS_REGION_FORM,
   AWS_SECRET_ACCESS_KEY,
@@ -43,8 +38,6 @@ const REGION_NAMES = {
   'us-west-1': 'Northern California',
   'us-west-2': 'Oregon',
 };
-
-const { batchSetIn } = configActions;
 
 const awsCredsForm = new Form(AWS_CREDS, [
   new Field(STS_ENABLED, {default: false}),
@@ -79,20 +72,7 @@ const awsCredsForm = new Form(AWS_CREDS, [
     dependencies: [STS_ENABLED],
     ignoreWhen: cc => !cc[STS_ENABLED],
   }),
-], {
-  asyncValidator: (dispatch, getState, data, ignored, isNow) => {
-    const creds = {
-      AccessKeyID: data[AWS_ACCESS_KEY_ID],
-      SecretAccessKey: data[AWS_SECRET_ACCESS_KEY],
-      SessionToken: data[AWS_SESSION_TOKEN] || '',
-      // you must send a region to get a region!!!
-      Region: data[AWS_REGION] || 'us-east-1',
-    };
-
-    // This returns the list of regions, which we don't want to show as an error message.
-    return dispatch(getRegions(null, creds, isNow)).then(() => {});
-  },
-});
+]);
 
 const selectRegionForm = new Form(AWS_REGION_FORM, [
   awsCredsForm,
@@ -100,25 +80,9 @@ const selectRegionForm = new Form(AWS_REGION_FORM, [
     default: '',
     validator: validate.nonEmpty,
     dependencies: [AWS_CREDS],
+    getExtraStuff: dispatch => dispatch(getRegions()),
   }),
-], {
-  asyncValidator: (dispatch, getState, data, oldData, isNow) => {
-    const oldAws = oldData[AWS_REGION];
-    const newAws = data[AWS_REGION];
-    if (!oldAws || newAws === oldAws) {
-      return Promise.resolve();
-    }
-    batchSetIn(dispatch, [
-      [AWS_CONTROLLER_SUBNETS, {}],
-      [AWS_CONTROLLER_SUBNET_IDS, {}],
-      [AWS_WORKER_SUBNETS, {}],
-      [AWS_WORKER_SUBNET_IDS, {}],
-    ]);
-
-    // TODO: (ggreer) move this to getextradata in another form
-    return dispatch(getDefaultSubnets(null, null, isNow));
-  },
-});
+]);
 
 const OPT_GROUPS = { ap: 'Asia Pacific', ca: 'Canada', cn: 'China', eu: 'European Union', sa: 'South America', us: 'United States'};
 
