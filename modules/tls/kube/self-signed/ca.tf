@@ -39,13 +39,3 @@ resource "tls_self_signed_cert" "kube_ca" {
     "cert_signing",
   ]
 }
-
-resource "local_file" "kube_ca_key" {
-  content  = "${var.ca_cert_pem == "" ? join(" ", tls_private_key.kube_ca.*.private_key_pem) : var.ca_key_pem}"
-  filename = "./generated/tls/ca.key"
-}
-
-resource "local_file" "kube_ca_crt" {
-  content  = "${var.ca_cert_pem == "" ? join(" ", tls_self_signed_cert.kube_ca.*.cert_pem) : var.ca_cert_pem}"
-  filename = "./generated/tls/ca.crt"
-}

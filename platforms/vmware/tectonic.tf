@@ -9,7 +9,7 @@ module "kube_certs" {
 }
 
 module "etcd_certs" {
-  source = "../../modules/tls/etcd"
+  source = "../../modules/tls/etcd/signed"
 
   etcd_ca_cert_path     = "${var.tectonic_etcd_ca_cert_path}"
   etcd_client_cert_path = "${var.tectonic_etcd_client_cert_path}"

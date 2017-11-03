@@ -25,3 +25,16 @@ output "apiserver_cert_pem" {
 output "apiserver_key_pem" {
   value = "${tls_private_key.apiserver.private_key_pem}"
 }
+
+output "id" {
+  value = "${sha1("
+  ${join(" ",
+    local_file.apiserver_key.id,
+    local_file.apiserver_crt.id,
+    local_file.kube_ca_key.id,
+    local_file.kube_ca_crt.id,
+    local_file.kubelet_key.id,
+    local_file.kubelet_crt.id,
+    )}
+  ")}"
+}

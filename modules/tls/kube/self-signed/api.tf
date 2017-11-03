@@ -42,13 +42,3 @@ resource "tls_locally_signed_cert" "apiserver" {
     "client_auth",
   ]
 }
-
-resource "local_file" "apiserver_key" {
-  content  = "${tls_private_key.apiserver.private_key_pem}"
-  filename = "./generated/tls/apiserver.key"
-}
-
-resource "local_file" "apiserver_crt" {
-  content  = "${tls_locally_signed_cert.apiserver.cert_pem}"
-  filename = "./generated/tls/apiserver.crt"
-}
