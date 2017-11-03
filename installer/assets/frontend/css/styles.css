@@ -601,20 +601,33 @@ input.wiz-super-short-input {
   vertical-align: middle;
 }
 
-.input__prefix--protocol {
+.input__prefix--protocol, .input__suffix {
   background: rgba(0, 0, 0, 0.03);
   border: 1px solid #ccc;
-  border-radius: 4px 0 0 4px;
-  border-right: none;
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
   color: #999;
   padding: 7px 12px;
+}
+
+.input__prefix--protocol {
+  border-radius: 4px 0 0 4px;
+  border-right: none;
+}
+
+.input__suffix {
+  border-radius: 0 4px 4px 0;
+  border-left: none;
 }
 
 /* Need extra selectors to override wiz style :( */
 input.wiz-inline-field.wiz-inline-field--protocol {
   border-radius: 0 4px 4px 0;
   margin-left: 0;
+}
+input.wiz-inline-field.wiz-inline-field--suffix {
+  border-radius: 4px 0 0 4px;
+  margin-left: 0;
+  margin-right: 0;
 }
 
 /* Handy for +/- in lists. */

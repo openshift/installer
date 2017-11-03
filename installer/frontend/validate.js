@@ -127,6 +127,14 @@ export const validate = {
     return 'Invalid format. You must provide a domain name or IP address.';
   },
 
+  url: (s) => {
+    const matched = (s || '').match(/^https?:\/\/(.*)$/);
+    if (matched && matched[1]) {
+      return validate.host(matched[1]);
+    }
+    return 'Invalid format. Please include "http://" or "https://".';
+  },
+
   port: (s = '') => {
     const errMsg = 'Invalid port value. You must provide a valid port number.';
     if (!s.match(/^[0-9]+$/)) {
