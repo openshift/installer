@@ -21,20 +21,20 @@
       "subnet-43ef260a",
       "subnet-1ad7e242"
     ],
-    "tectonic_aws_public_endpoints": true,
     "tectonic_aws_external_vpc_id": "someVPCID",
     "tectonic_aws_external_worker_subnet_ids": [
       "subnet-277ccb40",
       "subnet-19ef2650",
       "subnet-36d7e26e"
     ],
-    "tectonic_aws_region": "us-west-1",
     "tectonic_aws_extra_tags": {
       "test_tag": "testing"
     },
     "tectonic_aws_master_ec2_type": "t2.large",
     "tectonic_aws_master_root_volume_size": 33,
     "tectonic_aws_master_root_volume_type": "gp2",
+    "tectonic_aws_public_endpoints": true,
+    "tectonic_aws_region": "us-west-1",
     "tectonic_aws_ssh_key": "some-ssh-key",
     "tectonic_aws_worker_ec2_type": "t2.medium",
     "tectonic_aws_worker_root_volume_iops": 1000,
