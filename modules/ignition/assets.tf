@@ -140,7 +140,7 @@ data "ignition_file" "azure_udev_rules" {
 }
 
 data "template_file" "coreos_metadata" {
-  template = "${file("${path.module}/resources/services/coreos-metadata.service")}"
+  template = "${file("${path.module}/resources/dropins/10-metadata.conf")}"
 
   vars {
     metadata_provider = "${var.metadata_provider}"
