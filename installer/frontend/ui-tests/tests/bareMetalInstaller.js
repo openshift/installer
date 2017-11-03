@@ -5,9 +5,6 @@ const tfvarsUtil = require('../utils/terraformTfvars');
 // Test input .progress file
 const input = tfvarsUtil.loadJson('tectonic-baremetal.progress').clusterConfig;
 
-// Expected Terraform tfvars file variables
-const expected = tfvarsUtil.loadJson('metal.json').variables;
-
 const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, 'metal', input, nextInitiallyDisabled);
 
 const REQUIRED_ENV_VARS = ['TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
@@ -46,17 +43,5 @@ module.exports = {
   'BM: SSH Key': ({page}) => testPage(page.sshKeysPage()),
   'BM: Console Login': ({page}) => testPage(page.consoleLoginPage()),
 
-  'BM: Submit': client => {
-    const submitPage = client.page.submitPage();
-    submitPage.click('@manuallyBoot');
-    submitPage.expect.element('a[href="/terraform/assets"]').to.be.visible.before(120000);
-    client.getCookie('tectonic-installer', result => {
-      tfvarsUtil.returnTerraformTfvars(client.launch_url, result.value, (err, actualJson) => {
-        if (err) {
-          return client.assert.fail(err);
-        }
-        tfvarsUtil.assertDeepEqual(client, actualJson, expected);
-      });
-    });
-  },
+  'BM: Manual Boot': client => tfvarsUtil.testManualBoot(client, 'metal.tfvars'),
 };

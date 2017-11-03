@@ -5,9 +5,6 @@ const tfvarsUtil = require('../utils/terraformTfvars');
 // Test input .progress file
 const input = tfvarsUtil.loadJson('tectonic-aws.progress').clusterConfig;
 
-// Expected Terraform tfvars file variables
-const expected = tfvarsUtil.loadJson('aws.json').variables;
-
 const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, 'aws', input, nextInitiallyDisabled);
 
 const REQUIRED_ENV_VARS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
@@ -42,17 +39,5 @@ module.exports = {
   'AWS: Networking': ({page}) => testPage(page.networkingPage()),
   'AWS: Console Login': ({page}) => testPage(page.consoleLoginPage()),
 
-  'AWS: Submit': client => {
-    const submitPage = client.page.submitPage();
-    submitPage.click('@manuallyBoot');
-    submitPage.expect.element('a[href="/terraform/assets"]').to.be.visible.before(120000);
-    client.getCookie('tectonic-installer', result => {
-      tfvarsUtil.returnTerraformTfvars(client.launch_url, result.value, (err, actualJson) => {
-        if (err) {
-          return client.assert.fail(err);
-        }
-        tfvarsUtil.assertDeepEqual(client, actualJson, expected);
-      });
-    });
-  },
+  'AWS: Manual Boot': client => tfvarsUtil.testManualBoot(client, 'aws.tfvars'),
 };
