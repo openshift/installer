@@ -48,6 +48,7 @@ module "ignition_masters" {
   cluster_name             = "${var.tectonic_cluster_name}"
   container_images         = "${var.tectonic_container_images}"
   etcd_advertise_name_list = "${data.template_file.etcd_hostname_list.*.rendered}"
+  etcd_count               = "${length(data.template_file.etcd_hostname_list.*.rendered)}"
   image_re                 = "${var.tectonic_image_re}"
   kube_dns_service_ip      = "${module.bootkube.kube_dns_service_ip}"
   kubelet_cni_bin_dir      = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
