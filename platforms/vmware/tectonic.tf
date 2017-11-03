@@ -6,6 +6,7 @@ module "kube_certs" {
   ca_key_pem         = "${var.tectonic_ca_key}"
   kube_apiserver_url = "https://${var.tectonic_vmware_controller_domain}:443"
   service_cidr       = "${var.tectonic_service_cidr}"
+  validity_period    = "${var.tectonic_tls_validity_period}"
 }
 
 module "etcd_certs" {
@@ -26,18 +27,20 @@ module "etcd_certs" {
 module "ingress_certs" {
   source = "../../modules/tls/ingress/self-signed"
 
-  base_address = "${var.tectonic_vmware_ingress_domain}"
-  ca_cert_pem  = "${module.kube_certs.ca_cert_pem}"
-  ca_key_alg   = "${module.kube_certs.ca_key_alg}"
-  ca_key_pem   = "${module.kube_certs.ca_key_pem}"
+  base_address    = "${var.tectonic_vmware_ingress_domain}"
+  ca_cert_pem     = "${module.kube_certs.ca_cert_pem}"
+  ca_key_alg      = "${module.kube_certs.ca_key_alg}"
+  ca_key_pem      = "${module.kube_certs.ca_key_pem}"
+  validity_period = "${var.tectonic_tls_validity_period}"
 }
 
 module "identity_certs" {
   source = "../../modules/tls/identity/self-signed"
 
-  ca_cert_pem = "${module.kube_certs.ca_cert_pem}"
-  ca_key_alg  = "${module.kube_certs.ca_key_alg}"
-  ca_key_pem  = "${module.kube_certs.ca_key_pem}"
+  ca_cert_pem     = "${module.kube_certs.ca_cert_pem}"
+  ca_key_alg      = "${module.kube_certs.ca_key_alg}"
+  ca_key_pem      = "${module.kube_certs.ca_key_pem}"
+  validity_period = "${var.tectonic_tls_validity_period}"
 }
 
 module "bootkube" {

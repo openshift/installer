@@ -19,7 +19,7 @@ resource "tls_self_signed_cert" "etcd_ca" {
   }
 
   is_ca_certificate     = true
-  validity_period_hours = 26280
+  validity_period_hours = "${var.validity_period}"
 
   allowed_uses = [
     "key_encipherment",
@@ -69,11 +69,10 @@ resource "tls_locally_signed_cert" "etcd_server" {
 
   cert_request_pem = "${tls_cert_request.etcd_server.cert_request_pem}"
 
-  ca_key_algorithm   = "${join(" ", tls_self_signed_cert.etcd_ca.*.key_algorithm)}"
-  ca_private_key_pem = "${join(" ", tls_private_key.etcd_ca.*.private_key_pem)}"
-  ca_cert_pem        = "${join(" ", tls_self_signed_cert.etcd_ca.*.cert_pem)}"
-
-  validity_period_hours = 26280
+  ca_key_algorithm      = "${join(" ", tls_self_signed_cert.etcd_ca.*.key_algorithm)}"
+  ca_private_key_pem    = "${join(" ", tls_private_key.etcd_ca.*.private_key_pem)}"
+  ca_cert_pem           = "${join(" ", tls_self_signed_cert.etcd_ca.*.cert_pem)}"
+  validity_period_hours = "${var.validity_period}"
 
   allowed_uses = [
     "key_encipherment",
@@ -108,11 +107,10 @@ resource "tls_locally_signed_cert" "etcd_client" {
 
   cert_request_pem = "${tls_cert_request.etcd_client.cert_request_pem}"
 
-  ca_key_algorithm   = "${join(" ", tls_self_signed_cert.etcd_ca.*.key_algorithm)}"
-  ca_private_key_pem = "${join(" ", tls_private_key.etcd_ca.*.private_key_pem)}"
-  ca_cert_pem        = "${join(" ", tls_self_signed_cert.etcd_ca.*.cert_pem)}"
-
-  validity_period_hours = 26280
+  ca_key_algorithm      = "${join(" ", tls_self_signed_cert.etcd_ca.*.key_algorithm)}"
+  ca_private_key_pem    = "${join(" ", tls_private_key.etcd_ca.*.private_key_pem)}"
+  ca_cert_pem           = "${join(" ", tls_self_signed_cert.etcd_ca.*.cert_pem)}"
+  validity_period_hours = "${var.validity_period}"
 
   allowed_uses = [
     "key_encipherment",
@@ -159,11 +157,10 @@ resource "tls_locally_signed_cert" "etcd_peer" {
 
   cert_request_pem = "${tls_cert_request.etcd_peer.cert_request_pem}"
 
-  ca_key_algorithm   = "${join(" ", tls_self_signed_cert.etcd_ca.*.key_algorithm)}"
-  ca_private_key_pem = "${join(" ", tls_private_key.etcd_ca.*.private_key_pem)}"
-  ca_cert_pem        = "${join(" ", tls_self_signed_cert.etcd_ca.*.cert_pem)}"
-
-  validity_period_hours = 26280
+  ca_key_algorithm      = "${join(" ", tls_self_signed_cert.etcd_ca.*.key_algorithm)}"
+  ca_private_key_pem    = "${join(" ", tls_private_key.etcd_ca.*.private_key_pem)}"
+  ca_cert_pem           = "${join(" ", tls_self_signed_cert.etcd_ca.*.cert_pem)}"
+  validity_period_hours = "${var.validity_period}"
 
   allowed_uses = [
     "key_encipherment",
