@@ -196,6 +196,7 @@ tests/smoke: bin/smoke smoke-test-env-docker-image
 	-e TF_VAR_tectonic_admin_email \
 	-e TF_VAR_tectonic_admin_password \
 	-e TECTONIC_TESTS_DONT_CLEAN_UP \
+	-e RUN_SMOKE_TESTS \
 	-e RUN_CONFORMANCE_TESTS \
 	-e KUBE_CONFORMANCE_IMAGE \
 	--cap-add NET_ADMIN \

@@ -35,7 +35,7 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
       .to_not raise_error
   end
 
-  it 'succeeds with the golang test suit' do
+  it 'succeeds with the golang test suit', :smoke_tests do
     expect { SmokeTest.run(@cluster) }.to_not raise_error
   end
 
@@ -74,11 +74,9 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
     end
   end
 
-  it 'passes the k8s conformance tests' do
-    if ENV['RUN_CONFORMANCE_TESTS'] == 'true'
-      conformance_test = K8sConformanceTest.new(@cluster.kubeconfig, vpn_tunnel)
-      expect { conformance_test.run }.to_not raise_error
-    end
+  it 'passes the k8s conformance tests', :conformance_tests do
+    conformance_test = K8sConformanceTest.new(@cluster.kubeconfig, vpn_tunnel)
+    expect { conformance_test.run }.to_not raise_error
   end
 end
 
