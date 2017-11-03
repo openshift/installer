@@ -223,7 +223,7 @@ export const toAWS_TF = (cc, FORMS) => {
   };
 
   if (cc[ETCD_OPTION] === EXTERNAL) {
-    ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT]];
+    ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT].replace(/^https?:\/\//, '')];
     ret.variables.tectonic_etcd_tls_enabled = cc[EXTERNAL_ETCD_CLIENT].startsWith('https:');
   } else if (cc[ETCD_OPTION] === PROVISIONED) {
     ret.variables.tectonic_aws_etcd_ec2_type = etcds[INSTANCE_TYPE];
@@ -303,7 +303,7 @@ export const toBaremetal_TF = (cc, FORMS) => {
   };
 
   if (cc[ETCD_OPTION] === EXTERNAL) {
-    ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT]];
+    ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT].replace(/^https?:\/\//, '')];
     ret.variables.tectonic_etcd_tls_enabled = cc[EXTERNAL_ETCD_CLIENT].startsWith('https:');
   }
 
