@@ -9,8 +9,9 @@ require 'pages/login_page'
 require 'name_generator'
 require 'password_generator'
 require 'webdriver_helpers'
+require 'k8s_conformance_tests'
 
-RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
+RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
   before(:all) do
     @cluster = ClusterFactory.from_tf_vars(TFVarsFile.new(tf_vars_path))
     begin
@@ -34,7 +35,7 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
       .to_not raise_error
   end
 
-  it 'succeeds with the golang test suit' do
+  it 'succeeds with the golang test suit', :smoke_tests do
     expect { SmokeTest.run(@cluster) }.to_not raise_error
   end
 
@@ -71,6 +72,11 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
       @login.with(NameGenerator.generate_fake_email, PasswordGenerator.generate_password)
       expect(@login.fail_to_login?).to be_truthy
     end
+  end
+
+  it 'passes the k8s conformance tests', :conformance_tests do
+    conformance_test = K8sConformanceTest.new(@cluster.kubeconfig, vpn_tunnel)
+    expect { conformance_test.run }.to_not raise_error
   end
 end
 

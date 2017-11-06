@@ -38,12 +38,16 @@ quay_creds = [
 ]
 
 default_builder_image = 'quay.io/coreos/tectonic-builder:v1.41'
-tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v5.7'
+tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v5.8'
 
 pipeline {
   agent none
+  environment {
+    KUBE_CONFORMANCE_IMAGE = 'quay.io/coreos/kube-conformance:v1.7.5_coreos.0_golang1.9.1'
+  }
   options {
-    timeout(time:120, unit:'MINUTES')
+    // Individual steps have stricter timeouts. 300 minutes should be never reached.
+    timeout(time:5, unit:'HOURS')
     timestamps()
     buildDiscarder(logRotator(numToKeepStr:'100'))
   }
@@ -57,6 +61,11 @@ pipeline {
       name: 'hyperkube_image',
       defaultValue: '',
       description: 'Hyperkube image. Please define the param like: {hyperkube="<HYPERKUBE_IMAGE>"}'
+    )
+    booleanParam(
+      name: 'RUN_CONFORMANCE_TESTS',
+      defaultValue: false,
+      description: ''
     )
     booleanParam(
       name: 'RUN_SMOKE_TESTS',
@@ -101,38 +110,40 @@ pipeline {
           script {
             def err = null
             try {
-              printLogstashAttributes()
-              forcefullyCleanWorkspace()
-              withDockerContainer(params.builder_image) {
-                ansiColor('xterm') {
-                  checkout scm
-                  sh """#!/bin/bash -ex
-                  mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT
+              timeout(time: 10, unit: 'MINUTES') {
+                forcefullyCleanWorkspace()
+                printLogstashAttributes()
+                withDockerContainer(params.builder_image) {
+                  ansiColor('xterm') {
+                    checkout scm
+                    sh """#!/bin/bash -ex
+                    mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT
 
-                  cd $GO_PROJECT/
-                  make structure-check
-                  make bin/smoke
+                    cd $GO_PROJECT/
+                    make structure-check
+                    make bin/smoke
 
-                  cd $GO_PROJECT/installer
-                  make clean
-                  make tools
-                  make build
+                    cd $GO_PROJECT/installer
+                    make clean
+                    make tools
+                    make build
 
-                  make dirtycheck
-                  make lint
-                  make test
-                  rm -fr frontend/tests_output
-                  """
-                  stash name: 'installer-binary', includes: 'installer/bin/linux/installer'
-                  stash name: 'node-modules', includes: 'installer/frontend/node_modules/**'
-                  stash name: 'smoke-test-binary', includes: 'bin/smoke'
+                    make dirtycheck
+                    make lint
+                    make test
+                    rm -fr frontend/tests_output
+                    """
+                    stash name: 'installer-binary', includes: 'installer/bin/linux/installer'
+                    stash name: 'node-modules', includes: 'installer/frontend/node_modules/**'
+                    stash name: 'smoke-test-binary', includes: 'bin/smoke'
+                  }
                 }
-              }
-              withDockerContainer(tectonic_smoke_test_env_image) {
-                sh"""#!/bin/bash -ex
-                  cd tests/rspec
-                  bundler exec rubocop --cache false spec lib
-                """
+                withDockerContainer(tectonic_smoke_test_env_image) {
+                  sh"""#!/bin/bash -ex
+                    cd tests/rspec
+                    bundler exec rubocop --cache false spec lib
+                  """
+                }
               }
             } catch (error) {
               err = error
@@ -164,19 +175,21 @@ pipeline {
             parallel (
               "IntegrationTest AWS Installer Gui": {
                 node('worker && ec2') {
-                  forcefullyCleanWorkspace()
-                  withCredentials(creds) {
-                    withDockerContainer(params.builder_image) {
-                      ansiColor('xterm') {
-                        checkout scm
-                        unstash 'installer-binary'
-                        unstash 'node-modules'
-                        sh """#!/bin/bash -ex
-                        cd installer
-                        make launch-aws-installer-guitests
-                        make gui-aws-tests-cleanup
-                        """
-                        cleanWs notFailBuild: true
+                  timeout(time: 10, unit: 'MINUTES') {
+                    forcefullyCleanWorkspace()
+                    withCredentials(creds) {
+                      withDockerContainer(params.builder_image) {
+                        ansiColor('xterm') {
+                          checkout scm
+                          unstash 'installer-binary'
+                          unstash 'node-modules'
+                          sh """#!/bin/bash -ex
+                          cd installer
+                          make launch-aws-installer-guitests
+                          make gui-aws-tests-cleanup
+                          """
+                          cleanWs notFailBuild: true
+                        }
                       }
                     }
                   }
@@ -184,30 +197,32 @@ pipeline {
               },
               "IntegrationTest Baremetal Installer Gui": {
                 node('worker && ec2') {
-                  forcefullyCleanWorkspace()
-                  withCredentials(creds) {
-                    withDockerContainer(image: params.builder_image, args: '-u root') {
-                      ansiColor('xterm') {
-                        checkout scm
-                        unstash 'installer-binary'
-                        unstash 'node-modules'
-                        script {
-                          try {
-                            sh """#!/bin/bash -ex
-                            cd installer
-                            make launch-baremetal-installer-guitests
-                            """
-                          }
-                          catch (error) {
-                            throw error
-                          }
-                          finally {
-                            sh """#!/bin/bash -x
-                            cd installer
-                            make gui-baremetal-tests-cleanup
-                            make clean
-                            """
-                            cleanWs notFailBuild: true
+                  timeout(time: 10, unit: 'MINUTES') {
+                    forcefullyCleanWorkspace()
+                    withCredentials(creds) {
+                      withDockerContainer(image: params.builder_image, args: '-u root') {
+                        ansiColor('xterm') {
+                          checkout scm
+                          unstash 'installer-binary'
+                          unstash 'node-modules'
+                          script {
+                            try {
+                              sh """#!/bin/bash -ex
+                              cd installer
+                              make launch-baremetal-installer-guitests
+                              """
+                            }
+                            catch (error) {
+                              throw error
+                            }
+                            finally {
+                              sh """#!/bin/bash -x
+                              cd installer
+                              make gui-baremetal-tests-cleanup
+                              make clean
+                              """
+                              cleanWs notFailBuild: true
+                            }
                           }
                         }
                       }
@@ -232,7 +247,7 @@ pipeline {
     stage("Smoke Tests") {
       when {
         expression {
-          return params.RUN_SMOKE_TESTS
+          return params.RUN_SMOKE_TESTS || params.RUN_CONFORMANCE_TESTS
         }
       }
       environment {
@@ -295,20 +310,22 @@ pipeline {
                 def err = null
                 def specFile = 'spec/metal/basic_spec.rb'
                 try {
-                  ansiColor('xterm') {
-                    checkout scm
-                    unstash 'smoke-test-binary'
-                    withCredentials(creds) {
-                      sh """#!/bin/bash -ex
-                      cd tests/rspec
-                      export RBENV_ROOT=/usr/local/rbenv
-                      export PATH="/usr/local/rbenv/bin:$PATH"
-                      eval \"\$(rbenv init -)\"
-                      rbenv install -s
-                      gem install bundler
-                      bundler install
-                      bundler exec rspec $specFile
-                      """
+                  timeout(time: 4, unit: 'HOURS') {
+                    ansiColor('xterm') {
+                      checkout scm
+                      unstash 'smoke-test-binary'
+                      withCredentials(creds) {
+                        sh """#!/bin/bash -ex
+                        cd tests/rspec
+                        export RBENV_ROOT=/usr/local/rbenv
+                        export PATH="/usr/local/rbenv/bin:$PATH"
+                        eval \"\$(rbenv init -)\"
+                        rbenv install -s
+                        gem install bundler
+                        bundler install
+                        bundler exec rspec $specFile
+                        """
+                      }
                     }
                   }
                 } catch (error) {
@@ -372,12 +389,13 @@ def runRSpecTest(testFilePath, dockerArgs) {
     node('worker && ec2') {
       def err = null
       try {
-        forcefullyCleanWorkspace()
-        ansiColor('xterm') {
-          withCredentials(creds) {
+        timeout(time: 4, unit: 'HOURS') {
+          forcefullyCleanWorkspace()
+          ansiColor('xterm') {
+            withCredentials(creds) {
               withDockerContainer(
                 image: tectonic_smoke_test_env_image,
-                args: dockerArgs
+                args: '-u root -v /var/run/docker.sock:/var/run/docker.sock ' + dockerArgs
               ) {
                 checkout scm
                 unstash 'smoke-test-binary'
@@ -386,6 +404,7 @@ def runRSpecTest(testFilePath, dockerArgs) {
                   bundler exec rspec ${testFilePath}
                 """
               }
+            }
           }
         }
       } catch (error) {
