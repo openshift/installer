@@ -112,10 +112,13 @@ pipeline {
             try {
               timeout(time: 10, unit: 'MINUTES') {
                 forcefullyCleanWorkspace()
+                // First run `checkout scm` and then `printLogstashAttributes`
+                // as `printLogstashAttributes` accesses scm related variables
+                // like `env.CHANGE_ID`.
+                checkout scm
                 printLogstashAttributes()
                 withDockerContainer(params.builder_image) {
                   ansiColor('xterm') {
-                    checkout scm
                     sh """#!/bin/bash -ex
                     mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT
 
@@ -422,6 +425,7 @@ def runRSpecTest(testFilePath, dockerArgs) {
 
 def reportStatusToGithub(status, context) {
   withCredentials(creds) {
+    checkout scm
     sh """#!/bin/bash -ex
       ./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} ${context}
     """
