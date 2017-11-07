@@ -43,6 +43,7 @@ resource "google_compute_instance_template" "worker-it" {
   }
 
   service_account {
+    email  = "${google_service_account.worker-node-sa.email}"
     scopes = ["cloud-platform"]
   }
 }
