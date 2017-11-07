@@ -29,7 +29,7 @@ const CIDRTooltip = connect(
 export const CIDRRow = ({field, name, disabled, placeholder, autoFocus, selectable, fieldName, validator}) => {
   fieldName = fieldName || field;
   return <div className="row form-group">
-    <div className="col-xs-3">
+    <div className="col-xs-4">
       {selectable && <Deselect field={fieldName} />}
       <label htmlFor={(selectable ? `${DESELECTED_FIELDS}.` : '') + fieldName}>{name}</label>
     </div>

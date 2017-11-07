@@ -178,7 +178,7 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
 });
 
 const SubnetSelect = ({field, name, subnets, disabled, fieldName}) => <div className="row form-group">
-  <div className="col-xs-3">
+  <div className="col-xs-4">
     <Deselect field={fieldName} />
     <label htmlFor={`${DESELECTED_FIELDS}.${fieldName}`}>{name}</label>
   </div>
@@ -357,10 +357,10 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
           Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <a target="_blank" href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html" rel="noopener noreferrer">Working with Hosted Zones</a>.
         </p>
         <div className="row form-group">
-          <div className="col-xs-3">
+          <div className="col-xs-2">
             <label htmlFor="r53Zone">DNS</label>
           </div>
-          <div className="col-xs-9">
+          <div className="col-xs-10">
             <div className="row">
               <div className="col-xs-4" style={{paddingRight: 0}}>
                 <Connect field={CLUSTER_SUBDOMAIN} getDefault={() => clusterSubdomain || clusterName}>
@@ -377,7 +377,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(
         </div>
         {!internalCluster &&
           <div className="row form-group">
-            <div className="col-xs-offset-3 col-xs-9">
+            <div className="col-xs-offset-2 col-xs-10">
               <Connect field={AWS_SPLIT_DNS}>
                 <Select>
                   {_.map(SPLIT_DNS_OPTIONS, ((k, v) => <option value={v} key={k}>{k}</option>))}
