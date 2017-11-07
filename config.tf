@@ -467,7 +467,7 @@ variable "tectonic_self_hosted_etcd" {
   default = ""
 
   description = <<EOF
-(optional) [ALPHA] If set to one of the following values, self-hosted etcd is deployed:
+(internal) [ALPHA] If set to one of the following values, self-hosted etcd is deployed:
 
 - "enabled": Deploys a self-hosted etcd cluster.
 

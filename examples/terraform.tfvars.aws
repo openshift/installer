@@ -305,14 +305,6 @@ tectonic_master_count = "1"
 // Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 tectonic_pull_secret_path = ""
 
-// (optional) [ALPHA] If set to one of the following values, self-hosted etcd is deployed:
-// 
-// - "enabled": Deploys a self-hosted etcd cluster.
-// 
-// - "pv_backup": Deploys a self-hosted etcd cluster including backups to Persistence Volumes.
-// `tectonic_etcd_backup_size` and `tectonic_etcd_backup_storage_class` must be configured when using this setting.
-// tectonic_self_hosted_etcd = ""
-
 // (optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation.
 // The maximum size of this IP range is /12
 // tectonic_service_cidr = "10.3.0.0/16"
