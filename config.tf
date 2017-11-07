@@ -85,7 +85,7 @@ variable "tectonic_container_images" {
     tectonic_channel_operator    = "quay.io/coreos/tectonic-channel-operator:0.5.4"
     tectonic_etcd_operator       = "quay.io/coreos/tectonic-etcd-operator:v0.0.2"
     tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.7.1"
-    tectonic_cluo_operator       = "quay.io/coreos/tectonic-cluo-operator:v0.2.3"
+    tectonic_cluo_operator       = "quay.io/coreos/tectonic-cluo-operator:v0.2.4"
     tectonic_torcx               = "quay.io/coreos/tectonic-torcx:installer-latest"
   }
 }
@@ -119,7 +119,7 @@ variable "tectonic_versions" {
     monitoring    = "1.7.1"
     tectonic      = "1.8.2-tectonic.1"
     tectonic-etcd = "0.0.1"
-    cluo          = "0.2.3"
+    cluo          = "0.2.4"
   }
 }
 
