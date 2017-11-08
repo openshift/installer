@@ -14,11 +14,6 @@ variable "base_domain" {
   type        = "string"
 }
 
-variable "admin_email" {
-  description = "The admin email for the DNS zone"
-  type        = "string"
-}
-
 variable "master_count" {
   description = "The number of masters"
   type        = "string"
