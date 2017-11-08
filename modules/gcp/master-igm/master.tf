@@ -43,6 +43,7 @@ resource "google_compute_instance_template" "master-it" {
   }
 
   service_account {
+    email  = "${google_service_account.master-node-sa.email}"
     scopes = ["cloud-platform"]
   }
 }
