@@ -3,7 +3,7 @@
 # Shared support code for Azure-based operations
 #
 module AzureSupport
-  LOCATIONS = %w[westus2 westcentralus westeurope southeastasia japanwest].freeze
+  LOCATIONS = %w[westus2 westcentralus westeurope southeastasia japaneast].freeze
 
   def self.random_location_unless_defined
     ENV['TF_VAR_tectonic_azure_location'] || LOCATIONS.sample
