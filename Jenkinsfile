@@ -10,6 +10,11 @@ creds = [
   file(credentialsId: 'tectonic-license', variable: 'TF_VAR_tectonic_license_path'),
   file(credentialsId: 'tectonic-pull', variable: 'TF_VAR_tectonic_pull_secret_path'),
   file(credentialsId: 'GCP-APPLICATION', variable: 'GOOGLE_APPLICATION_CREDENTIALS'),
+  usernamePassword(
+    credentialsId: 'jenkins-log-analyzer-user',
+    passwordVariable: 'LOG_ANALYZER_PASSWORD',
+    usernameVariable: 'LOG_ANALYZER_USER'
+  ),
   [
     $class: 'AmazonWebServicesCredentialsBinding',
     credentialsId: 'tectonic-jenkins-installer'
@@ -363,6 +368,26 @@ pipeline {
                 docker logout quay.io
               """
               cleanWs notFailBuild: true
+            }
+          }
+        }
+      }
+    }
+    
+    stage('Send logfile to S3') {
+      environment {
+        LOGSTASH_BUCKET = 'log-analyzer-tectonic-installer'
+      }
+      steps {
+        node('worker && ec2') {
+          forcefullyCleanWorkspace()
+          echo "Starting with streaming the logfile to the S3 bucket"
+          withDockerContainer(params.builder_image) {
+            withCredentials(creds) {
+              checkout scm
+              sh """#!/bin/bash -xe
+              ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh
+              """
             }
           }
         }
