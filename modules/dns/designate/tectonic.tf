@@ -1,7 +1,5 @@
 data "openstack_dns_zone_v2" "tectonic" {
-  name  = "${var.base_domain}."
-  email = "${var.admin_email}"
-  ttl   = "60"
+  name = "${var.base_domain}."
 }
 
 resource "openstack_dns_recordset_v2" "tectonic-api" {

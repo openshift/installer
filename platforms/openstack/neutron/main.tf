@@ -269,7 +269,6 @@ module "dns" {
   cluster_name = "${var.tectonic_cluster_name}"
   base_domain  = "${var.tectonic_base_domain}"
 
-  admin_email               = "${var.tectonic_admin_email}"
   api_ips                   = "${openstack_networking_floatingip_v2.loadbalancer.*.address}"
   etcd_count                = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count}"
   etcd_ips                  = "${flatten(openstack_networking_port_v2.etcd.*.all_fixed_ips)}"
