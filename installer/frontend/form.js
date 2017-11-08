@@ -12,8 +12,6 @@ import { PLATFORM_TYPE } from './cluster-config';
 const { setIn, batchSetIn, append, removeAt } = configActions;
 const nop = () => undefined;
 
-// TODO: (kans) make a sideffectful field instead of putting all side effects in async validate
-
 let clock_ = 0;
 
 class Node {
