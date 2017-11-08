@@ -80,6 +80,7 @@ module "etcd" {
   tls_server_key_pem      = "${module.etcd_certs.etcd_server_key_pem}"
   versions                = "${var.tectonic_versions}"
   vm_size                 = "${var.tectonic_azure_etcd_vm_size}"
+  fault_domains           = "${var.tectonic_azure_location_fault_domains["${var.tectonic_azure_location}"]}"
 
   ign_etcd_dropin_id_list = "${module.ignition_masters.etcd_dropin_id_list}"
 }
@@ -158,6 +159,7 @@ module "masters" {
   ign_tectonic_path_unit_id         = "${var.tectonic_vanilla_k8s ? "" : module.tectonic.systemd_path_unit_id}"
   ign_tectonic_service_id           = "${module.tectonic.systemd_service_id}"
   ign_tx_off_service_id             = "${module.ignition_masters.tx_off_service_id}"
+  fault_domains                     = "${var.tectonic_azure_location_fault_domains["${var.tectonic_azure_location}"]}"
 }
 
 module "ignition_workers" {
@@ -203,6 +205,7 @@ module "workers" {
   ign_locksmithd_service_id         = "${module.ignition_masters.locksmithd_service_id}"
   ign_max_user_watches_id           = "${module.ignition_workers.max_user_watches_id}"
   ign_tx_off_service_id             = "${module.ignition_workers.tx_off_service_id}"
+  fault_domains                     = "${var.tectonic_azure_location_fault_domains["${var.tectonic_azure_location}"]}"
 }
 
 module "dns" {

@@ -248,3 +248,49 @@ EOF
 
   default = false
 }
+
+variable "tectonic_azure_location_fault_domains" {
+  description = <<EOF
+(internal) This mapping is for internal use only. It should not be overriden by users.
+It holds the correspondent number of fault domains for each location,
+because Azure doesn't provide an API call to query this data per location.
+The latest version of this data is always available at this location:
+https://docs.microsoft.com/en-us/azure/virtual-machines/windows/manage-availability
+EOF
+
+  type = "map"
+
+  default = {
+    eastus             = 3
+    eastus2            = 3
+    westus             = 3
+    westus2            = 2
+    centralus          = 3
+    northcentralus     = 3
+    southcentralus     = 3
+    westcentralus      = 2
+    canadacentral      = 2
+    canadaeast         = 2
+    northeurope        = 3
+    westeurope         = 3
+    uksouth            = 2
+    ukwest             = 2
+    eastasia           = 2
+    southeastasia      = 2
+    japaneast          = 2
+    japanwest          = 2
+    southindia         = 2
+    centralindia       = 2
+    westindia          = 2
+    koreacentral       = 2
+    koreasouth         = 2
+    australiaeast      = 2
+    australiasoutheast = 2
+    brazilsouth        = 2
+    usgovvirginia      = 2
+    usgovtexas         = 2
+    usgovarizona       = 2
+    usdodcentral       = 2
+    usdodeast          = 2
+  }
+}
