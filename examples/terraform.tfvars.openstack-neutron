@@ -1,17 +1,4 @@
 
-// The e-mail address used to:
-// 1. login as the admin user to the Tectonic Console.
-// 2. generate DNS zones for some providers.
-// 
-// Note: This field MUST be in all lower-case e-mail address format and set manually prior to creating the cluster.
-tectonic_admin_email = ""
-
-// The admin user password to login to the Tectonic Console.
-// 
-// Note: This field MUST be set manually prior to creating the cluster. Backslashes and double quotes must
-// also be escaped.
-tectonic_admin_password = ""
-
 // The base DNS domain of the cluster. It must NOT contain a trailing period. Some
 // DNS providers will automatically add this if necessary.
 // 

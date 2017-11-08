@@ -1,20 +1,4 @@
 
-// The e-mail address used to:
-// 1. login as the admin user to the Tectonic Console.
-// 2. generate DNS zones for some providers.
-// 
-// Note: This field MUST be in all lower-case e-mail address format and set manually prior to creating the cluster.
-tectonic_admin_email = ""
-
-// The admin user password to login to the Tectonic Console.
-// 
-// Note: This field MUST be set manually prior to creating the cluster. Backslashes and double quotes must
-// also be escaped.
-tectonic_admin_password = ""
-
-// The client secret to use.
-tectonic_azure_client_secret = ""
-
 // (optional) Azure cloud environment to use. See
 // https://github.com/Azure/go-autorest/blob/ec5f4903f77ed9927ac95b19ab8e44ada64c1356/autorest/azure/environments.go#L13
 // for available environments.
@@ -84,11 +68,6 @@ tectonic_azure_client_secret = ""
 // (optional) A map of extra Azure tags to be applied to created resources.
 // NOTE: Tags MUST NOT contain reserved characters '<,>,%,&,\,?,/' or control characters.
 // tectonic_azure_extra_tags = ""
-
-// An Azure location where the cluster will be built.
-// Use the location name as returned in the *Name* column by `az account list-locations` CLI command.
-// Lowercase string with no spaces between words. Example: southcentralus
-tectonic_azure_location = ""
 
 // (optional) Storage account type for the master node(s). Example: Premium_LRS.
 // Using Premium storage is constrained by the of instance specified in 'tectonic_azure_master_vm_size'.

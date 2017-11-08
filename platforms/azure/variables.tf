@@ -35,7 +35,7 @@ variable "tectonic_azure_location" {
   type = "string"
 
   description = <<EOF
-An Azure location where the cluster will be built.
+(internal) An Azure location where the cluster will be built.
 Use the location name as returned in the *Name* column by `az account list-locations` CLI command.
 Lowercase string with no spaces between words. Example: southcentralus
 EOF
@@ -225,7 +225,7 @@ EOF
 variable "tectonic_azure_client_secret" {
   type = "string"
 
-  description = "The client secret to use."
+  description = "(internal) The client secret to use."
 }
 
 variable "tectonic_azure_extra_tags" {

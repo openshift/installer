@@ -341,7 +341,7 @@ variable "tectonic_admin_email" {
   type = "string"
 
   description = <<EOF
-The e-mail address used to:
+(internal) The e-mail address used to:
 1. login as the admin user to the Tectonic Console.
 2. generate DNS zones for some providers.
 
@@ -353,7 +353,7 @@ variable "tectonic_admin_password" {
   type = "string"
 
   description = <<EOF
-The admin user password to login to the Tectonic Console.
+(internal) The admin user password to login to the Tectonic Console.
 
 Note: This field MUST be set manually prior to creating the cluster. Backslashes and double quotes must
 also be escaped.
