@@ -2,7 +2,7 @@
 
 STATUS="$1"
 CONTEXT=${2/spec/smoke-tests}
-COMMIT=$(git log -n 1 --no-merges --pretty=format:'%H')
+COMMIT=$(git rev-parse origin/"${BRANCH_NAME}")
 
 curl -f \
      -H 'Content-Type: application/json' \
