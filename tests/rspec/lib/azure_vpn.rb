@@ -56,14 +56,14 @@ class AzureVpn
   end
 
   def create_resources
+    commands = ['terraform init', 'terraform apply']
+
     Dir.chdir(@build_dir) do
-      MAX_RETRIES.times do |count|
-        raise 'Private vnet: init failed too many times' unless MAX_RETRIES > count
-        break if system(env_config, 'terraform init')
-      end
-      MAX_RETRIES.times do |count|
-        raise 'Private vnet: apply failed too many times' unless MAX_RETRIES > count
-        break if system(env_config, 'terraform apply')
+      commands.each do |command|
+        MAX_RETRIES.times do |count|
+          break if system(env_config, command)
+          raise "Private vnet: #{command} failed #{MAX_RETRIES} times" if MAX_RETRIES == count + 1
+        end
       end
     end
   end
