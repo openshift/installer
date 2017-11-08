@@ -1,5 +1,5 @@
 provider "openstack" {
-  version = "0.3.0"
+  version = "1.0.0"
 }
 
 data "template_file" "etcd_hostname_list" {
