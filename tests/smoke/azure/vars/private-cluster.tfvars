@@ -1,7 +1,7 @@
 {
-    "tectonic_azure_external_dns_zone_id": "/subscriptions/060bce24-f340-4249-a6c6-51a765e2e4c0/resourceGroups/integ_external_dns/providers/Microsoft.Network/dnszones/azure.tectonic-integ.cloudns.cc",
+  "tectonic_azure_external_dns_zone_id": "/subscriptions/060bce24-f340-4249-a6c6-51a765e2e4c0/resourceGroups/long-term-dns-records/providers/Microsoft.Network/dnszones/azure.tectonic.dev.coreos.systems",
     "tectonic_azure_private_cluster": "true",
-    "tectonic_base_domain": "azure.tectonic-integ.cloudns.cc",
+  "tectonic_base_domain": "azure.tectonic.dev.coreos.systems",
     "tectonic_container_linux_channel": "stable",
     "tectonic_azure_vnet_cidr_block": "10.0.0.0/16",
     "tectonic_etcd_count": "1",
