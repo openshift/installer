@@ -40,6 +40,7 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_self_hosted_etcd | (internal) [ALPHA] If set to one of the following values, self-hosted etcd is deployed:<br><br>- "enabled": Deploys a self-hosted etcd cluster.<br><br>- "pv_backup": Deploys a self-hosted etcd cluster including backups to Persistence Volumes. `tectonic_etcd_backup_size` and `tectonic_etcd_backup_storage_class` must be configured when using this setting. | string | `` |
 | tectonic_service_cidr | (optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. The maximum size of this IP range is /12 | string | `10.3.0.0/16` |
 | tectonic_stats_url | (internal) The Tectonic statistics collection URL to which to report. | string | `https://stats-collector.tectonic.com` |
+| tectonic_tls_validity_period | Validity period of the self-signed certificates (in hours). Default is 3 years. This setting is ignored if user provided certificates are used. | string | `26280` |
 | tectonic_update_app_id | (internal) The Tectonic Omaha update App ID | string | `6bc7b986-4654-4a0f-94b3-84ce6feb1db4` |
 | tectonic_update_channel | (internal) The Tectonic Omaha update channel | string | `tectonic-1.7-production` |
 | tectonic_update_server | (internal) The URL of the Tectonic Omaha update server | string | `https://tectonic.update.core-os.net` |
