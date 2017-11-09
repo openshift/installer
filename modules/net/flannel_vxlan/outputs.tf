@@ -3,5 +3,5 @@ output "id" {
 }
 
 output "name" {
-  value = "flannel-vxlan"
+  value = "flannel_vxlan"
 }
