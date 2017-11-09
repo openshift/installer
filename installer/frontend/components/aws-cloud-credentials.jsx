@@ -9,6 +9,7 @@ import { Alert } from './alert';
 import { getRegions } from '../aws-actions';
 import { Field, Form } from '../form';
 import { TectonicGA } from '../tectonic-ga';
+import { toExtraDataError } from '../utils';
 
 import {
   AWS_ACCESS_KEY_ID,
@@ -81,6 +82,10 @@ const selectRegionForm = new Form(AWS_REGION_FORM, [
     validator: validate.nonEmpty,
     dependencies: [AWS_CREDS],
     getExtraStuff: dispatch => dispatch(getRegions()),
+    asyncValidator: (dispatch, getState) => {
+      const error = _.get(getState().clusterConfig, toExtraDataError('awsRegion'));
+      return _.isEmpty(error) ? Promise.resolve() : Promise.reject(error);
+    },
   }),
 ]);
 
