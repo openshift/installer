@@ -88,11 +88,6 @@ variable "vm_memory" {
   description = "VMs Memory size in MB"
 }
 
-variable "vm_network_label" {
-  type        = "string"
-  description = "VMs PortGroup"
-}
-
 variable "vm_vcpu" {
   type        = "string"
   description = "VMs vCPU count"
