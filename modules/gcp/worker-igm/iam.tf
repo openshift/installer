@@ -1,5 +1,5 @@
 resource "google_service_account" "worker-node-sa" {
-  account_id   = "${var.cluster_name}-worker-node"
+  account_id   = "${format("%.28s", var.cluster_name)}-w"
   display_name = "Worker node"
 }
 
