@@ -373,7 +373,7 @@ pipeline {
         }
       }
     }
-    
+
     stage('Send logfile to S3') {
       environment {
         LOGSTASH_BUCKET = 'log-analyzer-tectonic-installer'
