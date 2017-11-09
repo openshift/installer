@@ -24,7 +24,7 @@ data:
       }
     }
 ---
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: DaemonSet
 metadata:
   name: kube-flannel
@@ -33,6 +33,10 @@ metadata:
     tier: node
     k8s-app: flannel
 spec:
+  selector:
+    matchLabels:
+      tier: node
+      k8s-app: flannel
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 1

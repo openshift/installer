@@ -1,4 +1,4 @@
-apiVersion: "extensions/v1beta1"
+apiVersion: apps/v1beta2
 kind: DaemonSet
 metadata:
   name: kube-apiserver
@@ -6,8 +6,11 @@ metadata:
   labels:
     tier: control-plane
     k8s-app: kube-apiserver
-    tectonic-operators.coreos.com/managed-by: kube-version-operator
 spec:
+  selector:
+    matchLabels:
+      tier: control-plane
+      k8s-app: kube-apiserver
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 1

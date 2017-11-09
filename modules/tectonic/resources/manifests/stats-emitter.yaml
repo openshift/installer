@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   name: tectonic-stats-emitter
@@ -8,6 +8,10 @@ metadata:
     component: stats-emitter
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: tectonic-stats-emitter
+      component: stats-emitter
   template:
     metadata:
       name: tectonic-stats-emitter

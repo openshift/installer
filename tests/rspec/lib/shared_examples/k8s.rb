@@ -35,6 +35,49 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
       .to_not raise_error
   end
 
+  it 'verifies api checkpoint manifests' do
+    @cluster.master_ip_addresses.each do |ip|
+      cmd = "sudo sh -c 'cat /etc/kubernetes/inactive-manifests/kube-system-kube-apiserver-*.json'"
+
+      retries = 0
+      begin
+        stdout, _, fin = ssh_exec(ip, cmd, 20)
+        raise unless fin.zero?
+        expect { JSON.parse(stdout) }.to_not raise_error
+      rescue
+        retries += 1
+        expect(retries).to be < 20
+        puts "failed to exec '#{cmd}'; retrying in 3 seconds"
+        sleep 3
+        retry
+      end
+    end
+  end
+
+  it 'verifies api secret checkpoints' do
+    secrets = @cluster.secret_files('kube-system', 'kube-apiserver')
+
+    @cluster.master_ip_addresses.each do |ip|
+      path = '/etc/kubernetes/checkpoint-secrets/kube-system/kube-apiserver-*/kube-apiserver'
+      cmd = secrets
+            .map { |secret| "test -e #{path}/#{secret}" }
+            .join(' && ')
+      cmd = "sudo sh -c '#{cmd}'"
+
+      retries = 0
+      begin
+        _, _, fin = ssh_exec(ip, cmd, 20)
+        raise unless fin.zero?
+      rescue
+        retries += 1
+        expect(retries).to be < 20
+        puts "failed to exec '#{cmd}'; retrying in 3 seconds"
+        sleep 3
+        retry
+      end
+    end
+  end
+
   it 'succeeds with the golang test suit', :smoke_tests do
     expect { SmokeTest.run(@cluster) }.to_not raise_error
   end

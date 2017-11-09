@@ -59,6 +59,8 @@ var (
 	equivalentKindRemapping = map[string]string{
 		"extensions/v1beta1:DaemonSet":  "extensions/v1beta1:DeploymentOrDaemonSet",
 		"extensions/v1beta1:Deployment": "extensions/v1beta1:DeploymentOrDaemonSet",
+		"apps/v1beta2:DaemonSet":        "apps/v1beta2:DeploymentOrDaemonSet",
+		"apps/v1beta2:Deployment":       "apps/v1beta2:DeploymentOrDaemonSet",
 	}
 
 	// decodeErrorRegexp defines the format of the error returned by Kubernetes' resource mapper.

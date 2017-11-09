@@ -78,6 +78,37 @@ class Cluster
     end
   end
 
+  def secret_files(namespace, secret)
+    cmd = "get secret -n #{namespace} #{secret} -o go-template "\
+          "\'--template={{range $key, $value := .data}}{{$key}}\n{{end}}\'"
+    KubeCTL.run(@kubeconfig, cmd).split("\n")
+  end
+
+  def api_ip_addresses
+    nodes = KubeCTL.run(
+      @kubeconfig,
+      'get node -l=node-role.kubernetes.io/master '\
+      '-o jsonpath=\'{range .items[*]}'\
+      '{@.metadata.name}{"\t"}{@.status.addresses[?(@.type=="ExternalIP")].address}'\
+      '{"\n"}{end}\''
+    )
+
+    nodes = nodes.split("\n").map { |node| node.split("\t") }.to_h
+
+    api_pods = KubeCTL.run(
+      @kubeconfig,
+      'get pod -n kube-system -l k8s-app=kube-apiserver '\
+      '-o \'jsonpath={range .items[*]}'\
+      '{@.metadata.name}{"\t"}{@.spec.nodeName}'\
+      '{"\n"}{end}\''
+    )
+
+    api_pods
+      .split("\n")
+      .map { |pod| pod.split("\t") }
+      .map { |pod| [pod[0], nodes[pod[1]]] }.to_h
+  end
+
   private
 
   def license_and_pull_secret_defined?

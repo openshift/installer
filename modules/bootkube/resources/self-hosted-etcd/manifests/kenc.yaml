@@ -1,4 +1,4 @@
-apiVersion: "extensions/v1beta1"
+apiVersion: apps/v1beta2
 kind: DaemonSet
 metadata:
   name: kube-etcd-network-checkpointer
@@ -7,6 +7,10 @@ metadata:
     tier: control-plane
     k8s-app: kube-etcd-network-checkpointer
 spec:
+  selector:
+    matchLabels:
+      tier: control-plane
+      k8s-app: kube-etcd-network-checkpointer
   template:
     metadata:
       labels:
