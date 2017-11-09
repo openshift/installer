@@ -49,7 +49,9 @@ class Node {
       .filter(d => !d.isValid(clusterConfig));
 
     if (unsatisfiedDeps.length) {
-      return setIn(toExtraData(this.id), undefined, dispatch);
+      // Dependencies are not all satisfied yet
+      setIn(toExtraData(this.id), undefined, dispatch);
+      return Promise.resolve();
     }
 
     this.updateClock(now);
