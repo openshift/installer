@@ -70,11 +70,27 @@ module "etcd" {
 module "masters" {
   source = "../../modules/gcp/master-igm"
 
-  cl_channel                        = "${var.tectonic_container_linux_channel}"
-  cluster_name                      = "${var.tectonic_cluster_name}"
-  container_images                  = "${var.tectonic_container_images}"
-  disk_size                         = "${var.tectonic_gcp_master_disk_size}"
-  disk_type                         = "${var.tectonic_gcp_master_disktype}"
+  cl_channel       = "${var.tectonic_container_linux_channel}"
+  cluster_name     = "${var.tectonic_cluster_name}"
+  container_images = "${var.tectonic_container_images}"
+  disk_size        = "${var.tectonic_gcp_master_disk_size}"
+  disk_type        = "${var.tectonic_gcp_master_disktype}"
+
+  region             = "${var.tectonic_gcp_region}"
+  instance_count     = "${var.tectonic_master_count}"
+  machine_type       = "${var.tectonic_gcp_master_gce_type}"
+  cluster_name       = "${var.tectonic_cluster_name}"
+  public_ssh_key     = "${var.tectonic_gcp_ssh_key}"
+  kubeconfig_content = "${module.bootkube.kubeconfig}"
+
+  master_subnetwork_name      = "${module.network.master_subnetwork_name}"
+  master_targetpool_self_link = "${module.network.master_targetpool_self_link}"
+
+  assets_gcs_location               = "${google_storage_bucket.assets_storage_bucket.name}/${google_storage_bucket_object.tectonic-assets.name}"
+  ign_init_assets_service_id        = "${module.ignition_masters.init_assets_service_id}"
+  ign_gcs_puller_id                 = "${module.ignition_masters.gcs_puller_id}"
+  ign_k8s_node_bootstrap_service_id = "${module.ignition_masters.k8s_node_bootstrap_service_id}"
+
   ign_bootkube_path_unit_id         = "${module.bootkube.systemd_path_unit_id}"
   ign_bootkube_service_id           = "${module.bootkube.systemd_service_id}"
   ign_docker_dropin_id              = "${module.ignition_masters.docker_dropin_id}"
@@ -128,13 +144,15 @@ module "ignition_masters" {
   etcd_count                = "${length(data.template_file.etcd_hostname_list.*.id)}"
   etcd_initial_cluster_list = "${data.template_file.etcd_hostname_list.*.rendered}"
   etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
-  image_re                  = "${var.tectonic_image_re}"
-  kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
-  kubelet_cni_bin_dir       = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
-  kubelet_debug_config      = "${var.tectonic_kubelet_debug_config}"
-  kubelet_node_label        = "node-role.kubernetes.io/master"
-  kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
-  tectonic_vanilla_k8s      = "${var.tectonic_vanilla_k8s}"
+
+  image_re             = "${var.tectonic_image_re}"
+  kube_dns_service_ip  = "${module.bootkube.kube_dns_service_ip}"
+  kubelet_cni_bin_dir  = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
+  kubelet_debug_config = "${var.tectonic_kubelet_debug_config}"
+  kubelet_node_label   = "node-role.kubernetes.io/master"
+  kubelet_node_taints  = "node-role.kubernetes.io/master=:NoSchedule"
+  tectonic_vanilla_k8s = "${var.tectonic_vanilla_k8s}"
+  assets_location      = "${google_storage_bucket.assets_storage_bucket.name}/${google_storage_bucket_object.tectonic-assets.name}"
 }
 
 module "ignition_workers" {

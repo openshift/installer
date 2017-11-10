@@ -85,3 +85,7 @@ output "coreos_metadata_dropin_id" {
 output "coreos_metadata_dropin_rendered" {
   value = "${data.template_file.coreos_metadata.rendered}"
 }
+
+output "gcs_puller_id" {
+  value = "${data.ignition_file.gcs_puller.id}"
+}
