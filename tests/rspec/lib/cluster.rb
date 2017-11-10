@@ -36,8 +36,10 @@ class Cluster
   end
 
   def plan
-    succeeded = system(env_variables, 'make -C ../.. plan')
-    raise 'Planning cluster failed' unless succeeded
+    3.times do
+      return if system(env_variables, 'make -C ../.. plan')
+    end
+    raise 'Planning cluster failed after 3 tries'
   end
 
   def start
