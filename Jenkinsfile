@@ -49,6 +49,7 @@ pipeline {
   agent none
   environment {
     KUBE_CONFORMANCE_IMAGE = 'quay.io/coreos/kube-conformance:v1.7.5_coreos.0_golang1.9.1'
+    LOGSTASH_BUCKET = 'log-analyzer-tectonic-installer'
   }
   options {
     // Individual steps have stricter timeouts. 300 minutes should be never reached.
@@ -375,21 +376,18 @@ pipeline {
       }
     }
 
-    stage('Send logfile to S3') {
-      environment {
-        LOGSTASH_BUCKET = 'log-analyzer-tectonic-installer'
-      }
-      steps {
-        node('worker && ec2') {
-          forcefullyCleanWorkspace()
-          echo "Starting with streaming the logfile to the S3 bucket"
-          withDockerContainer(params.builder_image) {
-            withCredentials(creds) {
-              unstash 'clean-repo'
-              sh """#!/bin/bash -xe
-              ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh
-              """
-            }
+  }
+  post {
+    always {
+      node('worker && ec2') {
+        forcefullyCleanWorkspace()
+        echo "Starting with streaming the logfile to the S3 bucket"
+        withDockerContainer(params.builder_image) {
+          withCredentials(creds) {
+            unstash 'clean-repo'
+            sh """#!/bin/bash -xe
+            ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh
+            """
           }
         }
       }
