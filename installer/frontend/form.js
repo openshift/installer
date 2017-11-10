@@ -283,7 +283,7 @@ export class Field extends Node {
     const ignore = _.get(clusterConfig, toIgnore(id));
     let error = _.get(clusterConfig, toError(id));
     if (!error && !syncOnly) {
-      error = _.get(clusterConfig, toAsyncError(id));
+      error = _.get(clusterConfig, toAsyncError(id)) || _.get(clusterConfig, toExtraDataError(id));
     }
 
     return ignore || value !== '' && value !== undefined && _.isEmpty(error);
