@@ -7,13 +7,14 @@ require 'name_generator'
 require 'password_generator'
 require 'securerandom'
 require 'ssh'
+require 'tfstate_file'
 require 'tfvars_file'
 require 'timeout'
 
 # Cluster represents a k8s cluster
 class Cluster
   attr_reader :tfvars_file, :kubeconfig, :manifest_path, :build_path,
-              :tectonic_admin_email, :tectonic_admin_password
+              :tectonic_admin_email, :tectonic_admin_password, :tfstate_file
 
   def initialize(tfvars_file)
     @tfvars_file = tfvars_file
@@ -27,6 +28,8 @@ class Cluster
     @build_path = File.join(File.realpath('../../'), "build/#{@name}")
     @manifest_path = File.join(@build_path, 'generated')
     @kubeconfig = File.join(manifest_path, 'auth/kubeconfig')
+    @tfstate_file = TFStateFile.new(@build_path)
+
     check_prerequisites
     localconfig
     prepare_assets

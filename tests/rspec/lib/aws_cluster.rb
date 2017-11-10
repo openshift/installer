@@ -8,6 +8,7 @@ require 'grafiti'
 require 'env_var'
 require 'aws_iam'
 require 'aws_support'
+require 'tfstate_file'
 
 # AWSCluster represents a k8s cluster on AWS cloud provider
 class AwsCluster < Cluster
@@ -111,5 +112,31 @@ class AwsCluster < Cluster
       end
       ingress_ext
     end
+  end
+
+  private
+
+  def destroy
+    # For debugging purposes (see: https://github.com/terraform-providers/terraform-provider-aws/pull/1051)
+    describe_network_interfaces
+
+    super
+
+    # For debugging purposes (see: https://github.com/terraform-providers/terraform-provider-aws/pull/1051)
+    describe_network_interfaces
+  end
+
+  def describe_network_interfaces
+    puts 'describing network interfaces for debugging purposes'
+    vpc_id = @tfstate_file.value('module.vpc.aws_vpc.cluster_vpc', 'id')
+    filter = "--filters=Name=vpc-id,Values=#{vpc_id}"
+    region = "--region #{@aws_region}"
+
+    success = system("aws ec2 describe-network-interfaces #{filter}  #{region}")
+    raise 'failed to describe network interfaces by vpc' unless success
+
+  # Do not fail build. This is only for debugging purposes
+  rescue => e
+    puts e
   end
 end
