@@ -504,3 +504,10 @@ variable "tectonic_bootstrap_upgrade_cl" {
   default     = "true"
   description = "(internal) Whether to trigger a ContainerLinux upgrade on node bootstrap."
 }
+
+variable "tectonic_kubelet_debug_config" {
+  type    = "string"
+  default = ""
+
+  description = "(internal) debug flags for the kubelet (used in CI only)"
+}

@@ -38,6 +38,7 @@ ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --client-ca-file=/etc/kubernetes/ca.crt \
   --cloud-provider=${cloud_provider} \
   ${cloud_provider_config} \
+  ${debug_config} \
   --anonymous-auth=false
 
 ExecStop=-/usr/bin/rkt stop --uuid-file=/var/cache/kubelet-pod.uuid

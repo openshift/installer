@@ -15,6 +15,12 @@ variable "kubelet_cni_bin_dir" {
   type = "string"
 }
 
+variable "kubelet_debug_config" {
+  type        = "string"
+  default     = ""
+  description = "internal debug flags for the kubelet (used in CI only)"
+}
+
 variable "kube_dns_service_ip" {
   type        = "string"
   description = "Service IP used to reach kube-dns"
