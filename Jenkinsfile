@@ -117,10 +117,11 @@ pipeline {
             try {
               timeout(time: 10, unit: 'MINUTES') {
                 forcefullyCleanWorkspace()
-                // First run `checkout scm` and then `printLogstashAttributes`
-                // as `printLogstashAttributes` accesses scm related variables
-                // like `env.CHANGE_ID`.
                 checkout scm
+                stash name: 'clean-repo', excludes: 'installer/vendor/**,tests/smoke/vendor/**,images/tectonic-stats-extender/vendor/**'
+                sh('git rev-parse origin/"\${BRANCH_NAME}" > original-commit-hash')
+                stash name: 'original-commit-hash', includes: 'original-commit-hash'
+
                 printLogstashAttributes()
                 withDockerContainer(params.builder_image) {
                   ansiColor('xterm') {
@@ -188,7 +189,7 @@ pipeline {
                     withCredentials(creds) {
                       withDockerContainer(params.builder_image) {
                         ansiColor('xterm') {
-                          checkout scm
+                          unstash 'clean-repo'
                           unstash 'installer-binary'
                           unstash 'node-modules'
                           sh """#!/bin/bash -ex
@@ -210,7 +211,7 @@ pipeline {
                     withCredentials(creds) {
                       withDockerContainer(image: params.builder_image, args: '-u root') {
                         ansiColor('xterm') {
-                          checkout scm
+                          unstash 'clean-repo'
                           unstash 'installer-binary'
                           unstash 'node-modules'
                           script {
@@ -244,7 +245,7 @@ pipeline {
             throw error
           } finally {
             node('worker && ec2') {
-              checkout scm
+              unstash 'clean-repo'
               reportStatusToGithub((err == null) ? 'success' : 'failure', 'gui-tests')
             }
           }
@@ -320,7 +321,7 @@ pipeline {
                 try {
                   timeout(time: 4, unit: 'HOURS') {
                     ansiColor('xterm') {
-                      checkout scm
+                      unstash 'clean-repo'
                       unstash 'smoke-test-binary'
                       withCredentials(creds) {
                         sh """#!/bin/bash -ex
@@ -360,7 +361,7 @@ pipeline {
           forcefullyCleanWorkspace()
           withCredentials(quay_creds) {
             ansiColor('xterm') {
-              checkout scm
+              unstash 'clean-repo'
               sh """
                 docker build -t quay.io/coreos/tectonic-installer:master -f images/tectonic-installer/Dockerfile .
                 docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
@@ -384,7 +385,7 @@ pipeline {
           echo "Starting with streaming the logfile to the S3 bucket"
           withDockerContainer(params.builder_image) {
             withCredentials(creds) {
-              checkout scm
+              unstash 'clean-repo'
               sh """#!/bin/bash -xe
               ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh
               """
@@ -425,7 +426,7 @@ def runRSpecTest(testFilePath, dockerArgs) {
                 image: tectonic_smoke_test_env_image,
                 args: '-u root -v /var/run/docker.sock:/var/run/docker.sock ' + dockerArgs
               ) {
-                checkout scm
+                unstash 'clean-repo'
                 unstash 'smoke-test-binary'
                 sh """#!/bin/bash -ex
                   cd tests/rspec
@@ -450,9 +451,10 @@ def runRSpecTest(testFilePath, dockerArgs) {
 
 def reportStatusToGithub(status, context) {
   withCredentials(creds) {
-    checkout scm
+    unstash 'original-commit-hash'
+    commitId = readFile('original-commit-hash')
     sh """#!/bin/bash -ex
-      ./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} ${context}
+      ./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} ${context} ${commitId}
     """
   }
 }
