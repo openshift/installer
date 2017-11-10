@@ -7,13 +7,7 @@ const request = require('request');
 const diffTfvars = (client, assetsZip, expected) => {
   JSZip.loadAsync(assetsZip).then(zip => {
     zip.file(/tfvars$/)[0].async('string').then(tfvars => {
-      const actual = JSON.parse(tfvars);
-
-      // The password hash will be different every time, so can't diff
-      delete actual.tectonic_admin_password_hash;
-      delete expected.tectonic_admin_password_hash;
-
-      const diff = deep(actual, expected);
+      const diff = deep(JSON.parse(tfvars), expected);
       if (diff !== undefined) {
         client.assert.fail(
           'The following terraform.tfvars attributes differ from their expected value: ' +
