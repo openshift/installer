@@ -50,7 +50,6 @@ class Node {
 
     if (unsatisfiedDeps.length) {
       // Dependencies are not all satisfied yet
-      setIn(toExtraData(this.id), undefined, dispatch);
       return Promise.resolve();
     }
 
