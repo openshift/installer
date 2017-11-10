@@ -102,6 +102,11 @@ wait_for_pods() {
   set -e
 }
 
+asset_cleanup() {
+  echo "Cleaning up installation assets"
+  rm -rf "$${ASSETS_PATH:?}/"*
+}
+
 # chdir into the assets path directory
 cd "$ASSETS_PATH/tectonic"
 
@@ -206,6 +211,7 @@ fi
 
 # wait for Tectonic pods
 wait_for_pods tectonic-system
+asset_cleanup
 
 echo "Tectonic installation is done"
 exit 0
