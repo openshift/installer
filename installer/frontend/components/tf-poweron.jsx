@@ -331,7 +331,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                 </div>
               }
               {state.xhrError && <Alert severity="error">{state.xhrError}</Alert>}
-              {commitPhase === commitPhases.FAILED && <Alert severity="error">{commitState.response}</Alert>}
+              {commitPhase === commitPhases.FAILED && <Alert severity="error">{commitState.response ? commitState.response.toString() : ''}</Alert>}
               {tfError && <Alert severity="error">{tfError.toString()}</Alert>}
               {tfError && !isTFRunning &&
                 <Alert severity="error" noIcon>
