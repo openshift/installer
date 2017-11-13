@@ -143,10 +143,10 @@ module MetalSupport
         puts "End of journal of #{service} service"
 
         output = File.open("#{service_logs_path}/#{service}.log", 'w+')
-        output << "Journal of #{service} service on #{ip} (exitcode #{exitcode})"
-        output << "Standard output: \n#{stdout}"
-        output << "Standard error: \n#{stderr}"
-        output << "End of journal of #{service} service on #{ip}"
+        output += "Journal of #{service} service on #{ip} (exitcode #{exitcode})"
+        output += "Standard output: \n#{stdout}"
+        output += "Standard error: \n#{stderr}"
+        output += "End of journal of #{service} service on #{ip}"
         output.close
       end
     rescue => e

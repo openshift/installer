@@ -344,7 +344,7 @@ pipeline {
                   throw error
                 } finally {
                   reportStatusToGithub((err == null) ? 'success' : 'failure', specFile)
-                  archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**/*'
+                  archiveArtifacts allowEmptyArchive: true, artifacts: 'tests/rspec/logs/**/*.log'
                   cleanWs notFailBuild: true
                 }
               }
@@ -441,7 +441,7 @@ def runRSpecTest(testFilePath, dockerArgs) {
         throw error
       } finally {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath)
-        archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**/*'
+        archiveArtifacts allowEmptyArchive: true, artifacts: 'tests/rspec/logs/**/*.log'
         cleanWs notFailBuild: true
       }
 
