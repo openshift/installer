@@ -55,7 +55,7 @@ pipeline {
     // Individual steps have stricter timeouts. 300 minutes should be never reached.
     timeout(time:5, unit:'HOURS')
     timestamps()
-    buildDiscarder(logRotator(numToKeepStr:'100'))
+    buildDiscarder(logRotator(numToKeepStr:'20', artifactNumToKeepStr: '20'))
   }
   parameters {
     string(
@@ -264,6 +264,7 @@ pipeline {
         TECTONIC_INSTALLER_ROLE = 'tectonic-installer'
         GRAFITI_DELETER_ROLE = 'grafiti-deleter'
         TF_VAR_tectonic_container_images = "${params.hyperkube_image}"
+        TF_VAR_tectonic_kubelet_debug_config = "--minimum-container-ttl-duration=8h --maximum-dead-containers-per-container=9999 --maximum-dead-containers=9999"
         GOOGLE_PROJECT = "tectonic-installer"
       }
       steps {
@@ -343,6 +344,7 @@ pipeline {
                   throw error
                 } finally {
                   reportStatusToGithub((err == null) ? 'success' : 'failure', specFile)
+                  archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**/*'
                   cleanWs notFailBuild: true
                 }
               }
@@ -439,6 +441,7 @@ def runRSpecTest(testFilePath, dockerArgs) {
         throw error
       } finally {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath)
+        archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**/*'
         cleanWs notFailBuild: true
       }
 

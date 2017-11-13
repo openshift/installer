@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'cluster_support'
 require 'fileutils'
 require 'jenkins'
 require 'kubectl_helpers'
@@ -190,13 +191,15 @@ class Cluster
     wait_for_service('bootkube', ips)
     wait_for_service('tectonic', ips)
     puts 'HOORAY! The cluster is up'
-  rescue
+  rescue => e
     ips.each do |master_ip|
-      ['bootkube', 'tectonic', 'kubelet', 'k8s-node-bootstrap'].each do |s|
-        print_service_logs(master_ip, s)
+      save_docker_logs(master_ip, @name)
+
+      ['bootkube', 'tectonic', 'kubelet', 'k8s-node-bootstrap'].each do |service|
+        print_service_logs(master_ip, service, @name)
       end
     end
-    raise
+    raise "Error in wait_for_bootstrapping: #{e}"
   end
 
   def wait_for_service(service, ips)
@@ -234,18 +237,5 @@ class Cluster
     end
 
     false
-  end
-
-  def print_service_logs(ip, service)
-    command = "journalctl --no-pager -u '#{service}'"
-    begin
-      stdout, stderr, exitcode = ssh_exec(ip, command)
-      puts "Journal of #{service} service on #{ip} (exitcode #{exitcode})"
-      puts "Standard output: \n#{stdout}"
-      puts "Standard error: \n#{stderr}"
-      puts "End of journal of #{service} service on #{ip}"
-    rescue => e
-      puts "Cannot retrieve logs of service #{service} - failed to ssh exec on ip #{ip} with: #{e}"
-    end
   end
 end

@@ -125,6 +125,8 @@ module MetalSupport
   end
 
   def self.print_service_logs(service)
+    service_logs_path = 'logs/service_logs_packet'
+    FileUtils.mkdir_p(service_logs_path)
     cmd = "journalctl --no-pager -u '#{service}'"
     begin
       Open3.popen3(cmd) do |_stdin, stdout, stderr, wait_thr|
@@ -139,6 +141,13 @@ module MetalSupport
         puts "Standard output: \n#{stdout_output}"
         puts "Standard error: \n#{stderr_output}"
         puts "End of journal of #{service} service"
+
+        output = File.open("#{service_logs_path}/#{service}.log", 'w+')
+        output << "Journal of #{service} service on #{ip} (exitcode #{exitcode})"
+        output << "Standard output: \n#{stdout}"
+        output << "Standard error: \n#{stderr}"
+        output << "End of journal of #{service} service on #{ip}"
+        output.close
       end
     rescue => e
       puts "Cannot retrieve logs of service #{service} - failed to exec with: #{e}"
