@@ -48,7 +48,7 @@ tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v5.8'
 pipeline {
   agent none
   environment {
-    KUBE_CONFORMANCE_IMAGE = 'quay.io/coreos/kube-conformance:v1.7.5_coreos.0_golang1.9.1'
+    KUBE_CONFORMANCE_IMAGE = 'quay.io/coreos/kube-conformance:v1.8.2_coreos.0'
     LOGSTASH_BUCKET = 'log-analyzer-tectonic-installer'
   }
   options {
