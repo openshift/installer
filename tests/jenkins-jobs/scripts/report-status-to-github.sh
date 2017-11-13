@@ -2,6 +2,7 @@
 
 STATUS="$1"
 CONTEXT=${2/spec/smoke-tests}
+CONTEXT=${CONTEXT/_spec.rb/}
 COMMIT="$3"
 
 curl -f \
