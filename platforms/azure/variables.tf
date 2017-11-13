@@ -292,5 +292,7 @@ EOF
     usgovarizona       = 2
     usdodcentral       = 2
     usdodeast          = 2
+    germanycentral     = 2
+    germanynortheast   = 2
   }
 }
