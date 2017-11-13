@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "0doc.go",
+        "binc.go",
+        "cbor.go",
+        "decode.go",
+        "encode.go",
+        "fast-path.generated.go",
+        "gen.generated.go",
+        "gen.go",
+        "gen-helper.generated.go",
+        "helper.go",
+        "helper_internal.go",
+        "helper_not_unsafe.go",
+        "json.go",
+        "msgpack.go",
+        "noop.go",
+        "prebuild.go",
+        "rpc.go",
+        "simple.go",
+        "time.go",
+    ],
+    importpath = "github.com/ugorji/go/codec",
+    visibility = ["//visibility:public"],
+)

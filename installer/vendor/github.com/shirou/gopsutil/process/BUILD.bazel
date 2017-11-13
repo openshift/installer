@@ -1,0 +1,42 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "process.go",
+        "process_fallback.go",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:darwin_amd64": [
+            "process_darwin.go",
+            "process_darwin_amd64.go",
+            "process_posix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux_amd64": [
+            "process_linux.go",
+            "process_posix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows_amd64": [
+            "process_windows.go",
+            "process_windows_amd64.go",
+        ],
+        "//conditions:default": [],
+    }),
+    cgo = True,
+    importpath = "github.com/shirou/gopsutil/process",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/shirou/gopsutil/cpu:go_default_library",
+        "//installer/vendor/github.com/shirou/gopsutil/internal/common:go_default_library",
+        "//installer/vendor/github.com/shirou/gopsutil/mem:go_default_library",
+        "//installer/vendor/github.com/shirou/gopsutil/net:go_default_library",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:linux_amd64": [
+            "//installer/vendor/github.com/shirou/gopsutil/host:go_default_library",
+        ],
+        "@io_bazel_rules_go//go/platform:windows_amd64": [
+            "//installer/vendor/github.com/StackExchange/wmi:go_default_library",
+            "//installer/vendor/github.com/shirou/w32:go_default_library",
+        ],
+        "//conditions:default": [],
+    }),
+)

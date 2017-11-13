@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "codec_factory.go",
+        "negotiated_codec.go",
+        "protobuf_extension.go",
+    ],
+    importpath = "k8s.io/kubernetes/pkg/runtime/serializer",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/k8s.io/kubernetes/pkg/api/unversioned:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/runtime:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/runtime/serializer/json:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/runtime/serializer/protobuf:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/runtime/serializer/recognizer:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/runtime/serializer/versioning:go_default_library",
+    ],
+)

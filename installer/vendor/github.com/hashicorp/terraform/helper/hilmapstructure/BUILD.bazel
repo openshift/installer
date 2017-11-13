@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["hilmapstructure.go"],
+    importpath = "github.com/hashicorp/terraform/helper/hilmapstructure",
+    visibility = ["//visibility:public"],
+    deps = ["//installer/vendor/github.com/mitchellh/mapstructure:go_default_library"],
+)

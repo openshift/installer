@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "closer.go",
+        "compared_value.go",
+        "keyed_value.go",
+        "ordered_value.go",
+        "value.go",
+    ],
+    importpath = "github.com/hashicorp/terraform/helper/shadow",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/hashicorp/go-multierror:go_default_library",
+        "//installer/vendor/github.com/mitchellh/reflectwalk:go_default_library",
+    ],
+)

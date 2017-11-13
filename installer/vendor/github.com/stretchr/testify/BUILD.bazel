@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["doc.go"],
+    importpath = "github.com/stretchr/testify",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/stretchr/testify/assert:go_default_library",
+        "//installer/vendor/github.com/stretchr/testify/http:go_default_library",
+        "//installer/vendor/github.com/stretchr/testify/mock:go_default_library",
+    ],
+)

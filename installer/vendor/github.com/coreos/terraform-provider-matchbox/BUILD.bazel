@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/coreos/terraform-provider-matchbox",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//installer/vendor/github.com/coreos/terraform-provider-matchbox/matchbox:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/plugin:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "terraform-provider-matchbox",
+    importpath = "github.com/coreos/terraform-provider-matchbox",
+    library = ":go_default_library",
+    visibility = ["//visibility:public"],
+)

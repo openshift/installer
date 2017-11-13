@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "helpers.go",
+        "validate.go",
+        "validate_disabled.go",
+    ],
+    importpath = "k8s.io/kubernetes/pkg/security/apparmor",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//tests/smoke/vendor/k8s.io/apiserver/pkg/util/feature:go_default_library",
+        "//tests/smoke/vendor/k8s.io/kubernetes/pkg/api/v1:go_default_library",
+        "//tests/smoke/vendor/k8s.io/kubernetes/pkg/features:go_default_library",
+        "//tests/smoke/vendor/k8s.io/kubernetes/pkg/util:go_default_library",
+    ],
+)

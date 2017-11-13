@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "doc.go",
+        "sessions.go",
+        "store.go",
+    ],
+    importpath = "github.com/dghubble/sessions",
+    visibility = ["//visibility:public"],
+    deps = ["//installer/vendor/github.com/gorilla/securecookie:go_default_library"],
+)

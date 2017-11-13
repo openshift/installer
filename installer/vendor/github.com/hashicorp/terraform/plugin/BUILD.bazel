@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "plugin.go",
+        "resource_provider.go",
+        "resource_provisioner.go",
+        "serve.go",
+        "ui_input.go",
+        "ui_output.go",
+    ],
+    importpath = "github.com/hashicorp/terraform/plugin",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/hashicorp/go-plugin:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/terraform:go_default_library",
+    ],
+)

@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "append.go",
+        "cloudinit.go",
+        "config.go",
+        "translate.go",
+    ],
+    importpath = "github.com/coreos/ignition/config",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/ajeddeloh/go-json:go_default_library",
+        "//installer/vendor/github.com/coreos/ignition/config/types:go_default_library",
+        "//installer/vendor/github.com/coreos/ignition/config/v1:go_default_library",
+        "//installer/vendor/github.com/coreos/ignition/config/v1/types:go_default_library",
+        "//installer/vendor/github.com/coreos/ignition/config/v2_0:go_default_library",
+        "//installer/vendor/github.com/coreos/ignition/config/v2_0/types:go_default_library",
+        "//installer/vendor/github.com/coreos/ignition/config/validate:go_default_library",
+        "//installer/vendor/github.com/coreos/ignition/config/validate/astjson:go_default_library",
+        "//installer/vendor/github.com/coreos/ignition/config/validate/report:go_default_library",
+        "//installer/vendor/github.com/vincent-petithory/dataurl:go_default_library",
+        "//installer/vendor/go4.org/errorutil:go_default_library",
+    ],
+)

@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["install.go"],
+    importpath = "k8s.io/client-go/pkg/apis/extensions/install",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/k8s.io/client-go/pkg/apimachinery/announced:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/apis/extensions:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/apis/extensions/v1beta1:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/util/sets:go_default_library",
+    ],
+)

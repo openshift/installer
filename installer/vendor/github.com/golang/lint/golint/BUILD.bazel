@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "golint.go",
+        "import.go",
+    ],
+    importpath = "github.com/golang/lint/golint",
+    visibility = ["//visibility:private"],
+    deps = ["//installer/vendor/github.com/golang/lint:go_default_library"],
+)
+
+go_binary(
+    name = "golint",
+    importpath = "github.com/golang/lint/golint",
+    library = ":go_default_library",
+    visibility = ["//visibility:public"],
+)

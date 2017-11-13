@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "builtins.go",
+        "check_identifier.go",
+        "check_types.go",
+        "convert.go",
+        "eval.go",
+        "eval_type.go",
+        "evaltype_string.go",
+        "parse.go",
+        "transform_fixed.go",
+        "walk.go",
+    ],
+    importpath = "github.com/hashicorp/hil",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/hashicorp/hil/ast:go_default_library",
+        "//installer/vendor/github.com/hashicorp/hil/parser:go_default_library",
+        "//installer/vendor/github.com/hashicorp/hil/scanner:go_default_library",
+        "//installer/vendor/github.com/mitchellh/mapstructure:go_default_library",
+        "//installer/vendor/github.com/mitchellh/reflectwalk:go_default_library",
+    ],
+)

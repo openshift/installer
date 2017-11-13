@@ -1,0 +1,18 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "context.go",
+        "node.go",
+        "report.go",
+        "rules.go",
+        "validate.go",
+    ],
+    importpath = "github.com/coreos/coreos-cloudinit/config/validate",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/config:go_default_library",
+        "//installer/vendor/github.com/coreos/yaml:go_default_library",
+    ],
+)

@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "fields.go",
+        "fold.go",
+    ],
+    importpath = "cloud.google.com/go/internal/fields",
+    visibility = ["//tests/smoke/vendor/cloud.google.com/go:__subpackages__"],
+    deps = ["//tests/smoke/vendor/cloud.google.com/go/internal/atomiccache:go_default_library"],
+)
