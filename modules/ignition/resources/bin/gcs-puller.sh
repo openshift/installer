@@ -14,6 +14,10 @@ docker run -i --net=host -v $HOME/.config:/.config -v /tmp:/gs $DOCKER_IMAGE gsu
 shopt -s expand_aliases
 
 assets=$(basename $${1})
-gsutil cp gs://$${1} /gs/$${assets}
+until gsutil cp gs://$${1} /gs/$${assets}; do
+    echo "Could not pull from GCS, retrying in 5 seconds"
+    sleep 5
+done
+
 gsutil rm gs://$${1}
 /usr/bin/sudo mv /tmp/$${assets} $${2}
