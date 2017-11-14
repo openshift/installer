@@ -47,9 +47,10 @@ const IamRoles = connect(
     <Connect field={toKey(type, IAM_ROLE)}>
       <Select id={`${type}--iam-role`}>
         <option value={IAM_ROLE_CREATE_OPTION}>Create an IAM role for me (default)</option>
-        {roles.map(r => <option value={r} key={r}>{r}</option>)}
+        {_.isArray(roles) && roles.map(r => <option value={r} key={r}>{r}</option>)}
       </Select>
     </Connect>
+    {!_.isArray(roles) && <div className="wiz-error-message">Could not load IAM role list</div>}
   </Row>
 );
 
