@@ -20,8 +20,10 @@ import { Footer } from './footer';
 const downloadState = (state) => {
   const toSave = _.cloneDeep(savable(state));
 
-  // Extra field data doesn't need to be saved
-  _.unset(toSave, 'clusterConfig.extra');
+  // Remove state entries that aren't field inputs and shouldn't be saved
+  ['error', 'error_async', 'extra', 'extraError', 'extraInFly', 'ignore', 'inFly'].forEach(key => {
+    _.unset(toSave, `clusterConfig.${key}`);
+  });
 
   const saved = JSON.stringify(toSave, null, 2);
   const stateBlob = new Blob([saved], {type: 'application/json'});
