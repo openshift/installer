@@ -74,14 +74,9 @@ const Field = withNav(connect(
   (dispatch, {id}) => ({makeDirty: () => dispatch(dirtyActions.add(id))}),
 )(props => {
   const tag = props.tag || 'input';
-  const dirty = props.forceDirty || props.isDirty;
-  const fieldClasses = classNames(props.className, {
-    'wiz-dirty': dirty,
-    'wiz-invalid': props.invalid,
-  });
-  const errorClasses = classNames('wiz-error-message', {
-    hidden: !(dirty && props.invalid),
-  });
+  const isInvalid = props.invalid && (props.forceDirty || props.isDirty);
+  const fieldClasses = classNames(props.className, {'wiz-invalid': isInvalid});
+  const errorClasses = classNames('wiz-error-message', {hidden: !isInvalid});
 
   const elementProps = {};
   Object.keys(props).filter(k => FIELD_PROPS.has(k)).forEach(k => {
