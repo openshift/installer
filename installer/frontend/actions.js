@@ -65,7 +65,6 @@ export const commitPhases = {
 };
 const FIELDS = {};
 const FIELD_TO_DEPS = {};
-const FIELD_TO_FORM = {};
 export const FORMS = {};
 
 // TODO (ggreer) standardize on order of params. is dispatch first or last?
@@ -115,7 +114,7 @@ export const configActions = {
 };
 
 export const __deleteEverything__ = () => {
-  [FIELDS, FIELD_TO_DEPS, FIELD_TO_FORM, FORMS, DEFAULT_CLUSTER_CONFIG]
+  [FIELDS, FIELD_TO_DEPS, FORMS, DEFAULT_CLUSTER_CONFIG]
     .forEach(o => _.keys(o).forEach(k => delete o[k]));
 
   ['error', 'error_async', 'ignore', 'inFly', 'extra']
@@ -190,7 +189,6 @@ export const registerForm = (form, fields) => {
 
   _.each(fields, f => {
     const fieldName = f.id;
-    FIELD_TO_FORM[fieldName] = form;
     if (f.isForm) {
       return;
     }
