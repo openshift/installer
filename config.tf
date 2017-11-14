@@ -393,14 +393,14 @@ EOF
 }
 
 variable "tectonic_tls_validity_period" {
+  type    = "string"
+  default = "26280"
+
   description = <<EOF
 Validity period of the self-signed certificates (in hours).
 Default is 3 years.
 This setting is ignored if user provided certificates are used.
 EOF
-
-  default = 26280
-  type    = "string"
 }
 
 variable "tectonic_vanilla_k8s" {
