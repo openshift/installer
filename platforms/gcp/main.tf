@@ -16,7 +16,7 @@ limitations under the License.
 
 provider "google" {
   region  = "${var.tectonic_gcp_region}"
-  version = "1.1.0"
+  version = "1.2.0"
 }
 
 module "container_linux" {
