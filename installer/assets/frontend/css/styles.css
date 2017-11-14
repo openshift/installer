@@ -466,7 +466,7 @@ input.wiz-super-short-input {
   margin: 20px 0 0 20px;
 }
 
-.wiz-invalid.wiz-dirty {
+.wiz-invalid {
   border-color: #f04c5c !important;
   border-bottom-left-radius: 0px !important;
   border-bottom-right-radius: 0px !important;
