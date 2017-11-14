@@ -32,7 +32,7 @@ class AwsCluster < Cluster
 
     # Unless base domain is provided by the user:
     unless ENV.key?('TF_VAR_tectonic_base_domain')
-      variables['TF_VAR_tectonic_base_domain'] = 'tectonic-ci.de'
+      variables['TF_VAR_tectonic_base_domain'] = 'installer.team.coreos.systems'
     end
 
     variables
