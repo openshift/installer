@@ -7,17 +7,27 @@ if [ "$#" -ne "2" ]; then
   exit 1
 fi
 
-# Overriding /etc/profile.d/google-cloud-sdk.sh
-DOCKER_IMAGE=${gcloudsdk_image}
-alias gsutil="(docker images $DOCKER_IMAGE  || docker pull $DOCKER_IMAGE) > /dev/null; \
-docker run -i --net=host -v $HOME/.config:/.config -v /tmp:/gs $DOCKER_IMAGE gsutil"
-shopt -s expand_aliases
+GSUTIL="docker run --net=host -v $HOME/.config:/.config -v /tmp:/gs ${gcloudsdk_image} gsutil"
+ASSETS_ADDRESS=$${1}
+ASSETS_NAME=$(basename $${1})
+TARGET_FOLDER=$${2}
 
-assets=$(basename $${1})
-until gsutil cp gs://$${1} /gs/$${assets}; do
+gcs_copy_assets(){
+  $${GSUTIL} cp gs://$${ASSETS_ADDRESS} /gs/$${ASSETS_NAME}
+}
+
+gcs_remove_assets(){
+  $${GSUTIL} rm gs://$${ASSETS_ADDRESS}
+}
+
+until gcs_copy_assets; do
     echo "Could not pull from GCS, retrying in 5 seconds"
     sleep 5
 done
 
-gsutil rm gs://$${1}
-/usr/bin/sudo mv /tmp/$${assets} $${2}
+until gcs_remove_assets; do
+  echo "Could not delete assets from GCS, retrying in 5 seconds"
+  sleep 5
+done
+
+/usr/bin/sudo mv /tmp/$${ASSETS_NAME} $${TARGET_FOLDER}
