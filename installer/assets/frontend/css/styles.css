@@ -101,10 +101,6 @@ h4 {
   display: none;
 }
 
-.widest {
-  width: 100% !important;
-}
-
 .btn-link-ordinary {
   display: inline;
   padding: 0;
@@ -160,19 +156,6 @@ input[type="text"].wiz-node-field {
   font-size: 14px;
 }
 
-.wiz-minitable__header {
-  border-bottom: 1px solid #ebebeb;
-  text-transform: uppercase;
-  color: #999;
-  padding-bottom: 4px;
-}
-
-.wiz-minitable__row {
-  border-bottom: 1px solid #ebebeb;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-
 .wiz-minimodal {
   border: 1px solid #eee;
   box-shadow: 0 3px 9px rgba(0, 0, 0, 0.5);
@@ -191,17 +174,6 @@ input[type="text"].wiz-node-field {
   margin-bottom: 30px;
   padding-top: 20px;
   padding-bottom: 20px;
-}
-
-.wiz-minitable__label {
-  line-height: 32px;
-}
-
-.row.wiz-minitable__header,
-.row.wiz-minitable__row,
-.row.wiz-minitable__footer {
-  margin-left: 0;
-  margin-right: 0;
 }
 
 .wiz-nav {
