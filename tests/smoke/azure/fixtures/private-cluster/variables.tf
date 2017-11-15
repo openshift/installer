@@ -12,7 +12,7 @@ variable "admin_password" {}
 variable "tectonic_azure_vnet_cidr_block" {}
 
 variable "tectonic_azure_worker_vm_size" {
-  default = "Standard_D1_v2"
+  default = "Standard_D2_v2"
 }
 
 variable "tectonic_azure_extra_tags" {
