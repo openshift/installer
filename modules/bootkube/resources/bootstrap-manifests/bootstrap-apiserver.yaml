@@ -28,6 +28,7 @@ spec:
     - --advertise-address=${advertise_address}
     - --kubelet-client-certificate=/etc/kubernetes/secrets/apiserver.crt
     - --kubelet-client-key=/etc/kubernetes/secrets/apiserver.key
+    - --runtime-config=""
     - --secure-port=443
     - --service-account-key-file=/etc/kubernetes/secrets/service-account.pub
     - --service-cluster-ip-range=${service_cidr}
