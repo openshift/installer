@@ -159,3 +159,21 @@ data "ignition_systemd_unit" "coreos_metadata" {
     },
   ]
 }
+
+data "template_file" "gcs_puller" {
+  vars {
+    gcloudsdk_image = "${var.container_images["gcloudsdk"]}"
+  }
+
+  template = "${file("${path.module}/resources/bin/gcs-puller.sh")}"
+}
+
+data "ignition_file" "gcs_puller" {
+  filesystem = "root"
+  path       = "/opt/gcs-puller.sh"
+  mode       = 0755
+
+  content {
+    content = "${data.template_file.gcs_puller.rendered}"
+  }
+}

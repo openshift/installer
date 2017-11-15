@@ -18,10 +18,6 @@ output "master_ip" {
   value = "${google_compute_global_address.masters-ip.address}"
 }
 
-output "ssh_master_ip" {
-  value = "${google_compute_address.ssh-masters-ip.address}"
-}
-
 output "ingress_ip" {
   value = "${google_compute_address.ingress-ip.address}"
 }

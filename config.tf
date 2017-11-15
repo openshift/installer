@@ -59,6 +59,7 @@ variable "tectonic_container_images" {
   default = {
     addon_resizer                = "gcr.io/google_containers/addon-resizer:2.1"
     awscli                       = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
+    gcloudsdk                    = "google/cloud-sdk:178.0.0-alpine"
     bootkube                     = "quay.io/coreos/bootkube:v0.8.1"
     calico                       = "quay.io/calico/node:v2.6.1"
     calico_cni                   = "quay.io/calico/cni:v1.11.0"

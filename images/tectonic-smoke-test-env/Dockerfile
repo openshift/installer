@@ -10,6 +10,13 @@ RUN apt-get update && \
     curl make unzip jq awscli wget xvfb xauth ssh openvpn build-essential && \
     apt-get clean
 
+# Install gcloud
+RUN echo "deb http://packages.cloud.google.com/apt cloud-sdk-jessie main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+    curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
+    apt-get update && \
+    apt-get install --no-install-recommends -y -q \
+    google-cloud-sdk
+
 RUN cd /tmp/app && bundler install && rm -r /tmp/app
 
 # Install kubectl
