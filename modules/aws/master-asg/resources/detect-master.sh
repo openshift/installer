@@ -1,4 +1,6 @@
 #!/bin/bash
+set -e
+set -o pipefail
 
 # Wait for the ASG to run at the expected scale.
 while true; do
