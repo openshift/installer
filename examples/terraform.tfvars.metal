@@ -254,7 +254,7 @@ tectonic_ssh_authorized_key = ""
 // Validity period of the self-signed certificates (in hours).
 // Default is 3 years.
 // This setting is ignored if user provided certificates are used.
-tectonic_tls_validity_period = "string"
+tectonic_tls_validity_period = "26280"
 
 // If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
 tectonic_vanilla_k8s = false
