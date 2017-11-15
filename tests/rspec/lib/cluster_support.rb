@@ -8,7 +8,7 @@ def save_docker_logs(ip, cluster_name)
   stdout, stderr, exitcode = ssh_exec(ip, command)
   if exitcode != 0
     puts "failed to execut docker ps on #{ip} (exitcode #{exitcode})"
-    puts1 "Standard error: \n#{stderr}"
+    puts "Standard error: \n#{stderr}"
     return
   end
 
@@ -21,10 +21,10 @@ def save_docker_logs(ip, cluster_name)
     puts "Trying to get the docker logs: #{command_log} - image: #{image_name}"
     stdout, stderr, exitcode = ssh_exec(ip, command_log)
     output = ''
-    output << "Docker Logs of #{image_name} on #{ip} (exitcode #{exitcode})\n"
-    output << "Standard output: \n#{stdout}"
-    output << "\nStandard error: \n#{stderr}"
-    output << "\nEnd of docker logs of #{image_name} container on #{ip}"
+    output += "Docker Logs of #{image_name} on #{ip} (exitcode #{exitcode})\n"
+    output += "Standard output: \n#{stdout}"
+    output += "\nStandard error: \n#{stderr}"
+    output += "\nEnd of docker logs of #{image_name} container on #{ip}"
 
     save_to_file(cluster_name, 'docker', ip, image_name, output)
   end
@@ -37,10 +37,10 @@ def print_service_logs(ip, service, cluster_name)
   begin
     stdout, stderr, exitcode = ssh_exec(ip, command)
     output = ''
-    output << "Journal of #{service} service on #{ip} (exitcode #{exitcode})\n"
-    output << "Standard output: \n#{stdout}"
-    output << "\nStandard error: \n#{stderr}"
-    output << "\nEnd of journal of #{service} service on #{ip}"
+    output += "Journal of #{service} service on #{ip} (exitcode #{exitcode})\n"
+    output += "Standard output: \n#{stdout}"
+    output += "\nStandard error: \n#{stderr}"
+    output += "\nEnd of journal of #{service} service on #{ip}"
     puts output
 
     save_to_file(cluster_name, 'journal', ip, service, output)
@@ -50,9 +50,9 @@ def print_service_logs(ip, service, cluster_name)
 end
 
 def save_to_file(cluster_name, service_type, ip, service, output_to_save)
-  logs_path = "../../build/#{cluster_name}/logs/#{service_type}_logs_#{cluster_name}"
-  FileUtils.mkdir_p(service_logs_path)
-  save_to_file = File.open("#{logs_path}/#{ip}_#{service}.log", 'w+')
+  logs_path = "logs/#{service_type}_logs_#{cluster_name}_#{ip}"
+  FileUtils.mkdir_p(logs_path)
+  save_to_file = File.open("#{logs_path}/#{service}.log", 'w+')
   save_to_file << output_to_save
   save_to_file.close
 end
