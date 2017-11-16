@@ -189,7 +189,7 @@ const SubnetSelect = ({field, name, subnets, disabled, fieldName}) => <div class
   <div className="col-xs-6">
     <Connect field={field}>
       <Select disabled={disabled}>
-        <option disabled>Select a subnet</option>
+        <option disabled selected value="">Select a subnet</option>
         {_.filter(subnets, ({availabilityZone}) => availabilityZone === name)
           .map(({id, instanceCIDR}) => <option value={id} key={instanceCIDR}>{instanceCIDR} ({id})</option>)
         }
