@@ -24,14 +24,14 @@ import { CIDRRow } from './cidr';
 import { Field, Form } from '../form';
 
 import {
-  AWS_CONTROLLER_SUBNET_IDS,
   AWS_CONTROLLER_SUBNETS,
+  AWS_CONTROLLER_SUBNET_IDS,
   AWS_CREATE_VPC,
   AWS_HOSTED_ZONE_ID,
   AWS_REGION,
   AWS_REGION_FORM,
-  AWS_SUBNETS,
   AWS_SPLIT_DNS,
+  AWS_SUBNETS,
   AWS_VPC_CIDR,
   AWS_VPC_FORM,
   AWS_VPC_ID,
@@ -48,7 +48,7 @@ import {
   VPC_PRIVATE,
   VPC_PUBLIC,
   getZoneDomain,
-  toVPCSubnet,
+  selectedSubnets,
 } from '../cluster-config';
 
 const AWS_ADVANCED_NETWORKING = 'awsAdvancedNetworking';
@@ -90,7 +90,7 @@ const validateVPC = (dispatch, getState, data, oldData, isNow, oldCC) => {
   }
 
   const getSubnets = subnets => {
-    const selected = toVPCSubnet(cc[AWS_REGION], subnets, cc[DESELECTED_FIELDS][AWS_SUBNETS]);
+    const selected = selectedSubnets(cc, subnets);
     return _.map(selected, (v, k) => isCreate ? {availabilityZone: k, instanceCIDR: v} : {availabilityZone: k, id: v});
   };
 
