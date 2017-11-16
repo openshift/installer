@@ -12,7 +12,7 @@ class K8sConformanceTest
   end
 
   def run
-    ::Timeout.timeout(90 * 60) do # 1 1/2 hour
+    ::Timeout.timeout(2 * 60 * 60) do # 2 hour
       image = ENV['KUBE_CONFORMANCE_IMAGE']
       succeeded = system("docker run -v #{@kubeconfig_path}:/kubeconfig #{network_config} #{image}")
       raise 'Running k8s conformance tests failed' unless succeeded
