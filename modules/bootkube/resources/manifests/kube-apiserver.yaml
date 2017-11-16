@@ -32,6 +32,7 @@ spec:
         - /var/lock/api-server.lock
         - /hyperkube
         - apiserver
+        - --runtime-config=""
         - --bind-address=0.0.0.0
         - --secure-port=443
         - --insecure-port=0
