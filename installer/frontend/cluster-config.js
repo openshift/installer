@@ -160,7 +160,7 @@ export const DEFAULT_CLUSTER_CONFIG = {
   [RETRY]: false, // whether we're retrying a terraform apply
 };
 
-export const toAWS_TF = (cc, FORMS) => {
+export const toAWS_TF = ({clusterConfig: cc, dirty}, FORMS) => {
   const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
   const etcds = FORMS[AWS_ETCDS].getData(cc);
   const workers = FORMS[AWS_WORKERS].getData(cc);
@@ -242,8 +242,12 @@ export const toAWS_TF = (cc, FORMS) => {
   }
   if (cc[AWS_CREATE_VPC] === VPC_CREATE) {
     ret.variables.tectonic_aws_vpc_cidr_block = cc[AWS_VPC_CIDR];
-    ret.variables.tectonic_aws_master_custom_subnets = controllerSubnets;
-    ret.variables.tectonic_aws_worker_custom_subnets = workerSubnets;
+
+    // If the subnets have not been edited, omit these variables so that sensible default subnets will be created
+    if (dirty[AWS_CONTROLLER_SUBNETS] || dirty[AWS_WORKER_SUBNETS]) {
+      ret.variables.tectonic_aws_master_custom_subnets = controllerSubnets;
+      ret.variables.tectonic_aws_worker_custom_subnets = workerSubnets;
+    }
   } else {
     ret.variables.tectonic_aws_external_vpc_id = cc[AWS_VPC_ID];
     ret.variables.tectonic_aws_external_master_subnet_ids = controllerSubnets;
@@ -263,7 +267,7 @@ export const toAWS_TF = (cc, FORMS) => {
   return ret;
 };
 
-export const toBaremetal_TF = (cc, FORMS) => {
+export const toBaremetal_TF = ({clusterConfig: cc}, FORMS) => {
   const sshKey = FORMS[BM_SSH_KEY].getData(cc);
   const masters = cc[BM_MASTERS];
   const workers = cc[BM_WORKERS];
