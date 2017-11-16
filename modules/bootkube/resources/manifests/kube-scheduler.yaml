@@ -23,7 +23,6 @@ spec:
         tier: control-plane
         k8s-app: kube-scheduler
         pod-anti-affinity: kube-scheduler-${kubernetes_version}
-        tectonic-operators.coreos.com/managed-by: kube-version-operator
     spec:
       affinity:
         podAntiAffinity:
