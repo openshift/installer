@@ -6,6 +6,7 @@ metadata:
   labels:
     tier: control-plane
     k8s-app: kube-apiserver
+    tectonic-operators.coreos.com/managed-by: kube-version-operator
 spec:
   selector:
     matchLabels:
@@ -20,7 +21,6 @@ spec:
       labels:
         tier: control-plane
         k8s-app: kube-apiserver
-        tectonic-operators.coreos.com/managed-by: kube-version-operator
       annotations:
         checkpointer.alpha.coreos.com/checkpoint: "true"
     spec:

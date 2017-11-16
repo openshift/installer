@@ -6,6 +6,7 @@ metadata:
   labels:
     tier: node
     k8s-app: kube-proxy
+    tectonic-operators.coreos.com/managed-by: kube-version-operator
 spec:
   selector:
     matchLabels:
@@ -20,7 +21,6 @@ spec:
       labels:
         tier: node
         k8s-app: kube-proxy
-        tectonic-operators.coreos.com/managed-by: kube-version-operator
     spec:
       containers:
       - name: kube-proxy
