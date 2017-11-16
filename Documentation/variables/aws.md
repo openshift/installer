@@ -27,6 +27,7 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_master_root_volume_size | The size of the volume in gigabytes for the root block device of master nodes. | string | `30` |
 | tectonic_aws_master_root_volume_type | The type of volume for the root block device of master nodes. | string | `gp2` |
 | tectonic_aws_private_endpoints | (optional) If set to true, create private-facing ingress resources (ELB, A-records). If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone. | string | `true` |
+| tectonic_aws_profile | (optional) This declares the AWS credentials profile to use. | string | `default` |
 | tectonic_aws_public_endpoints | (optional) If set to true, create public-facing ingress resources (ELB, A-records). If set to false, no public-facing ingress resources will be created. | string | `true` |
 | tectonic_aws_region | The target AWS region for the cluster. | string | `eu-west-1` |
 | tectonic_aws_ssh_key | Name of an SSH key located within the AWS region. Example: coreos-user. | string | - |

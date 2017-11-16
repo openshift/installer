@@ -7,6 +7,15 @@ EOF
   default = "1.0"
 }
 
+variable "tectonic_aws_profile" {
+  description = <<EOF
+(optional) This declares the AWS credentials profile to use.
+EOF
+
+  type    = "string"
+  default = "default"
+}
+
 variable "tectonic_aws_ssh_key" {
   type        = "string"
   description = "Name of an SSH key located within the AWS region. Example: coreos-user."
