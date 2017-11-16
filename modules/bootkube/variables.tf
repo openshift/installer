@@ -88,7 +88,7 @@ variable "etcd_server_key_pem" {
 }
 
 variable "self_hosted_etcd" {
-  default     = ""
+  type        = "string"
   description = "See tectonic_self_hosted_etcd in config.tf"
 }
 
