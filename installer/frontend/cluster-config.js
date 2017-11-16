@@ -126,7 +126,7 @@ export const toVPCSubnetID = (region, subnets, deselected) => {
   return vpcSubnets;
 };
 
-const getZoneDomain = (cc) => {
+export const getZoneDomain = (cc) => {
   if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     throw new Error("Can't get base domain for bare metal!");
   }

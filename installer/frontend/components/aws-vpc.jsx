@@ -47,6 +47,7 @@ import {
   VPC_CREATE ,
   VPC_PRIVATE,
   VPC_PUBLIC,
+  getZoneDomain,
   toVPCSubnet,
 } from '../cluster-config';
 
@@ -55,7 +56,7 @@ const DEFAULT_AWS_VPC_CIDR = '10.0.0.0/16';
 
 const {setIn} = configActions;
 
-const validateVPC = (dispatch, getState, data, oldData, isNow, extraData, oldCC) => {
+const validateVPC = (dispatch, getState, data, oldData, isNow, oldCC) => {
   const cc = getState().clusterConfig;
 
   const isCreate = cc[AWS_CREATE_VPC] === VPC_CREATE;
@@ -129,14 +130,13 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
   new Field(AWS_HOSTED_ZONE_ID, {
     default: '',
     dependencies: [AWS_REGION_FORM],
-    validator: (value, clusterConfig, oldValue, extraData) => {
+    validator: (value, cc) => {
       const empty = validate.nonEmpty(value);
       if (empty) {
         return empty;
       }
-
-      if (!extraData || !extraData.zoneToName[value]) {
-        return 'Unknown zone id.';
+      if (!getZoneDomain(cc)) {
+        return 'Unknown zone ID.';
       }
     },
     getExtraStuff: (dispatch, isNow) => dispatch(getZones(null, null, isNow))
