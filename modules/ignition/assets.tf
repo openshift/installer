@@ -74,6 +74,12 @@ data "ignition_systemd_unit" "init_assets" {
   content = "${file("${path.module}/resources/services/init-assets.service")}"
 }
 
+data "ignition_systemd_unit" "rm_assets" {
+  name    = "rm-assets.service"
+  enable  = "${var.assets_location != "" ? true : false}"
+  content = "${file("${path.module}/resources/services/rm-assets.service")}"
+}
+
 data "template_file" "s3_puller" {
   template = "${file("${path.module}/resources/bin/s3-puller.sh")}"
 

@@ -93,6 +93,7 @@ module "etcd" {
 module "ignition_masters" {
   source = "../../modules/ignition"
 
+  assets_location           = "${aws_s3_bucket_object.tectonic_assets.bucket}/${aws_s3_bucket_object.tectonic_assets.key}"
   base_domain               = "${var.tectonic_base_domain}"
   bootstrap_upgrade_cl      = "${var.tectonic_bootstrap_upgrade_cl}"
   cloud_provider            = "aws"
@@ -129,11 +130,13 @@ module "masters" {
   ign_bootkube_path_unit_id         = "${module.bootkube.systemd_path_unit_id}"
   ign_bootkube_service_id           = "${module.bootkube.systemd_service_id}"
   ign_docker_dropin_id              = "${module.ignition_masters.docker_dropin_id}"
+  ign_init_assets_service_id        = "${module.ignition_masters.init_assets_service_id}"
   ign_installer_kubelet_env_id      = "${module.ignition_masters.installer_kubelet_env_id}"
   ign_k8s_node_bootstrap_service_id = "${module.ignition_masters.k8s_node_bootstrap_service_id}"
   ign_kubelet_service_id            = "${module.ignition_masters.kubelet_service_id}"
   ign_locksmithd_service_id         = "${module.ignition_masters.locksmithd_service_id}"
   ign_max_user_watches_id           = "${module.ignition_masters.max_user_watches_id}"
+  ign_rm_assets_service_id          = "${module.ignition_masters.rm_assets_service_id}"
   ign_s3_puller_id                  = "${module.ignition_masters.s3_puller_id}"
   ign_tectonic_path_unit_id         = "${var.tectonic_vanilla_k8s ? "" : module.tectonic.systemd_path_unit_id}"
   ign_tectonic_service_id           = "${module.tectonic.systemd_service_id}"
