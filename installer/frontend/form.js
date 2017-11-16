@@ -83,7 +83,6 @@ class Node {
     const id = this.id;
     const clusterConfig = getState().clusterConfig;
     const value = this.getData(clusterConfig);
-    const extraData = _.get(clusterConfig, toExtraData(id));
 
     const syncErrorPath = toError(id);
     const inFlyPath = toInFly(id);
@@ -97,7 +96,7 @@ class Node {
     }
 
     console.debug(`validating ${this.name}`);
-    const syncError = this.validator(value, clusterConfig, oldValue, extraData, oldCC);
+    const syncError = this.validator(value, clusterConfig, oldValue, oldCC);
     if (!_.isEmpty(syncError)) {
       console.info(`sync error ${this.name}: ${JSON.stringify(syncError)}`);
       batches.push([syncErrorPath, syncError]);
@@ -130,7 +129,7 @@ class Node {
     this.updateClock(now);
 
     try {
-      asyncError = await this.asyncValidator_(dispatch, getState, value, oldValue, this.isNow, extraData, oldCC);
+      asyncError = await this.asyncValidator_(dispatch, getState, value, oldValue, this.isNow, oldCC);
     } catch (e) {
       asyncError = e.message || e.toString();
     }
@@ -356,8 +355,8 @@ export class Form extends Node {
   }
 }
 
-const toValidator = (fields, listValidator) => (value, clusterConfig, oldValue, extraData) => {
-  const errs = listValidator ? listValidator(value, clusterConfig, oldValue, extraData) : [];
+const toValidator = (fields, listValidator) => (value, clusterConfig, oldValue) => {
+  const errs = listValidator ? listValidator(value, clusterConfig, oldValue) : [];
   if (errs && !_.isObject(errs)) {
     throw new Error(`FieldLists validator must return an Array-like Object, not:\n${errs}`);
   }
@@ -369,7 +368,7 @@ const toValidator = (fields, listValidator) => (value, clusterConfig, oldValue, 
       if (!validator) {
         return;
       }
-      const err = validator(childValue, clusterConfig, _.get(oldValue, [i, name]), _.get(extraData, [i, name]));
+      const err = validator(childValue, clusterConfig, _.get(oldValue, [i, name]));
       if (!err) {
         return;
       }
