@@ -75,7 +75,7 @@ const platformToFunc = {
 let observeInterval;
 
 // An action creator that builds a server message, calls fetch on that message, fires the appropriate actions
-export const commitToServer = (dryRun = false, retry = false, opts = {}) => (dispatch, getState) => {
+export const commitToServer = (dryRun = false, retry = false) => (dispatch, getState) => {
   setIn(DRY_RUN, dryRun, dispatch);
   setIn(RETRY, retry, dispatch);
 
@@ -90,7 +90,7 @@ export const commitToServer = (dryRun = false, retry = false, opts = {}) => (dis
     throw Error(`unknown platform type "${state.clusterConfig[PLATFORM_TYPE]}"`);
   }
 
-  const body = f(state, FORMS, opts);
+  const body = f(state, FORMS);
   fetch('/terraform/apply', {
     credentials: 'same-origin',
     method: 'POST',
