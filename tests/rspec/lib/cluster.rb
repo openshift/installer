@@ -59,7 +59,6 @@ class Cluster
       return
     end
     destroy
-    clean if Jenkins.environment?
   end
 
   def check_prerequisites
@@ -165,11 +164,6 @@ class Cluster
   end
 
   def recover_from_failed_destroy() end
-
-  def clean
-    succeeded = system(env_variables, 'make -C ../.. clean')
-    raise 'could not clean build directory' unless succeeded
-  end
 
   def wait_til_ready
     wait_for_bootstrapping

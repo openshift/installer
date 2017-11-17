@@ -26,6 +26,10 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
     @cluster.start
   end
 
+  after(:all) do
+    @cluster.stop
+  end
+
   # See https://stackoverflow.com/a/45936219/4011134
   after(:each) do |example|
     @exceptions << example.exception
@@ -33,10 +37,6 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
 
   after(:all) do
     @cluster.forensic if @exceptions.any?
-  end
-
-  after(:all) do
-    @cluster.stop
   end
 
   it 'generates operator manifests' do
