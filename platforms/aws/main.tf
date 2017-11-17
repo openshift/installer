@@ -141,6 +141,7 @@ module "masters" {
   instance_count                    = "${var.tectonic_master_count}"
   master_iam_role                   = "${var.tectonic_aws_master_iam_role_name}"
   master_sg_ids                     = "${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"
+  private_endpoints                 = "${var.tectonic_aws_private_endpoints}"
   public_endpoints                  = "${var.tectonic_aws_public_endpoints}"
   root_volume_iops                  = "${var.tectonic_aws_master_root_volume_iops}"
   root_volume_size                  = "${var.tectonic_aws_master_root_volume_size}"

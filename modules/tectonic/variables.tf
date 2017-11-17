@@ -102,7 +102,7 @@ variable "identity_api_service" {
 }
 
 variable "self_hosted_etcd" {
-  default     = ""
+  type        = "string"
   description = "See tectonic_self_hosted_etcd in config.tf"
 }
 
