@@ -1,0 +1,16 @@
+kind: VersionManifestV1
+versions:
+  k8s:
+    1.6:
+        docker: [ "1.12"]
+    1.7:
+        # Kubernetes: https://github.com/kubernetes/kubernetes/blob/v1.9.0-alpha.2/CHANGELOG-1.7.md#external-dependency-version-information
+        # Latest CL stable: https://tectonic-torcx.release.core-os.net/manifests/amd64-usr/1520.8.0/torcx_manifest.json
+        docker: [ "1.12" ]
+    1.8:
+        # Kubernetes: https://github.com/kubernetes/kubernetes/blob/v1.9.0-alpha.2/CHANGELOG-1.8.md#external-dependency-version-information
+        # Latest CL stable: https://tectonic-torcx.release.core-os.net/manifests/amd64-usr/1520.8.0/torcx_manifest.json
+        docker: [ "17.03", "1.12"]
+    1.9:
+        # TODO: forecast only, fix this with actual versions
+        docker: [ "17.03", "1.12"]

@@ -4,6 +4,7 @@ data "ignition_config" "main" {
     "${data.ignition_file.init_assets.id}",
     "${data.ignition_file.rm_assets.id}",
     "${var.ign_installer_kubelet_env_id}",
+    "${var.ign_installer_runtime_mappings_id}",
     "${var.ign_max_user_watches_id}",
     "${var.ign_s3_puller_id}",
   ]

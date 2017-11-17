@@ -35,6 +35,11 @@ storage:
       mode: 0644
       contents:
         inline: {{.ign_installer_kubelet_env_json}}
+    - path: /etc/kubernetes/installer/runtime-mappings.yaml
+      filesystem: root
+      mode: 0644
+      contents:
+        inline: {{.ign_installer_runtime_mappings_json}}
     - path: /etc/hostname
       filesystem: root
       mode: 0644
