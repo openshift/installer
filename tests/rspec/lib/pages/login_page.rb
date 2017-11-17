@@ -49,7 +49,7 @@ class Login < BasePage
 
   def fail_to_login?
     wait_for { displayed?(LOGIN_FAIL) }
-    text_of(LOGIN_FAIL).include? 'Invalid username and password.'
+    displayed?(LOGIN_FAIL)
   end
 
   def check_console_health(console_url)
