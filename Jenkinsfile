@@ -403,7 +403,7 @@ def forcefullyCleanWorkspace() {
     args: '-u root'
   ) {
     ansiColor('xterm') {
-      sh """#!/bin/bash -ex
+      sh """#!/bin/bash -e
         if [ -d "\$WORKSPACE" ]
         then
           rm -rfv \$WORKSPACE/*
