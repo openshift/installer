@@ -19,6 +19,7 @@ module NameGenerator
 
   def self.jenkins_env_name(prefix)
     build_id = ENV['BUILD_ID']
+    # Resource names containing dots are prohibited on most cloud providers
     branch_name = ENV['BRANCH_NAME'].to_s.delete('.')
     name = "#{prefix}-#{branch_name}-#{build_id}"
     name = name[0..(MAX_NAME_LENGTH - RANDOM_HASH_LENGTH - 1)]
