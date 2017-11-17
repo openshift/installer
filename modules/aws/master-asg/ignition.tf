@@ -23,13 +23,21 @@ data "ignition_config" "main" {
    ))}"]
 }
 
+data "template_file" "detect_master" {
+  template = "${file("${path.module}/resources/detect-master.sh")}"
+
+  vars {
+    load_balancer_name = "${format("%s-%s", var.cluster_name, var.private_endpoints ? "int" : "ext")}"
+  }
+}
+
 data "ignition_file" "detect_master" {
   filesystem = "root"
   path       = "/opt/detect-master.sh"
   mode       = 0755
 
   content {
-    content = "${file("${path.module}/resources/detect-master.sh")}"
+    content = "${data.template_file.detect_master.rendered}"
   }
 }
 
