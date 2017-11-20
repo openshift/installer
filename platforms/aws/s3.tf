@@ -15,6 +15,10 @@ resource "aws_s3_bucket" "tectonic" {
       "KubernetesCluster", "${var.tectonic_cluster_name}",
       "tectonicClusterID", "${module.tectonic.cluster_id}"
     ), var.tectonic_aws_extra_tags)}"
+
+  lifecycle {
+    ignore_changes = ["*"]
+  }
 }
 
 # Bootkube / Tectonic assets
@@ -34,6 +38,10 @@ resource "aws_s3_bucket_object" "tectonic_assets" {
       "KubernetesCluster", "${var.tectonic_cluster_name}",
       "tectonicClusterID", "${module.tectonic.cluster_id}"
     ), var.tectonic_aws_extra_tags)}"
+
+  lifecycle {
+    ignore_changes = ["*"]
+  }
 }
 
 # kubeconfig

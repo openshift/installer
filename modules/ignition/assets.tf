@@ -88,9 +88,15 @@ data "ignition_systemd_unit" "init_assets" {
   content = "${file("${path.module}/resources/services/init-assets.service")}"
 }
 
+data "ignition_systemd_unit" "rm_assets_path_unit" {
+  name    = "rm-assets.path"
+  enable  = true
+  content = "${file("${path.module}/resources/paths/rm-assets.path")}"
+}
+
 data "ignition_systemd_unit" "rm_assets" {
   name    = "rm-assets.service"
-  enable  = "${var.assets_location != "" ? true : false}"
+  enable  = false
   content = "${file("${path.module}/resources/services/rm-assets.service")}"
 }
 

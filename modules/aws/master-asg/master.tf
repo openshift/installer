@@ -153,7 +153,7 @@ resource "aws_iam_role_policy" "master_policy" {
         "s3:GetObject",
         "s3:HeadObject",
         "s3:ListBucket",
-        "s3:DeleteObject"
+        "s3:PutObject"
       ],
       "Resource": "arn:aws:s3:::*",
       "Effect": "Allow"

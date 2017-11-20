@@ -1,7 +1,7 @@
 [Unit]
 Description=Clean up install assets from S3
-ConditionPathExists=/opt/tectonic/init_tectonic.done
-After=tectonic.service
+ConditionPathExists=!/opt/tectonic/init_rm_assets.done
+After=bootkube.service tectonic.service
 
 [Service]
 Type=oneshot
@@ -13,6 +13,7 @@ Group=root
 
 ExecStartPre=/usr/bin/bash /opt/rm-assets.sh
 ExecStart=/usr/bin/echo "cleaned up installation assets"
+ExecStartPost=/bin/touch /opt/tectonic/init_rm_assets.done
 
 [Install]
 WantedBy=multi-user.target

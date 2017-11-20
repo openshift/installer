@@ -104,7 +104,16 @@ wait_for_pods() {
 
 asset_cleanup() {
   echo "Cleaning up installation assets"
-  rm -rf "$${ASSETS_PATH:?}/"*
+
+  # shellcheck disable=SC2034
+  for d in "manifests" "auth" "bootstrap-manifests" "net-manifests" "tectonic" "tls"; do
+      rm -rf "$${ASSETS_PATH:?}/$${d:?}/"*
+  done
+
+  # shellcheck disable=SC2034
+  for f in "bootkube.sh" "tectonic.sh" "tectonic-wrapper.sh"; do
+      rm -f "$${ASSETS_PATH:?}/$${f:?}"
+  done
 }
 
 # chdir into the assets path directory

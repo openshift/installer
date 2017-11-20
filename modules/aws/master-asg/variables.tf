@@ -134,3 +134,7 @@ variable "ign_init_assets_service_id" {
 variable "ign_rm_assets_service_id" {
   type = "string"
 }
+
+variable "ign_rm_assets_path_unit_id" {
+  type = "string"
+}

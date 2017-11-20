@@ -133,6 +133,7 @@ module "masters" {
   ign_kubelet_service_id            = "${module.ignition_masters.kubelet_service_id}"
   ign_locksmithd_service_id         = "${module.ignition_masters.locksmithd_service_id}"
   ign_max_user_watches_id           = "${module.ignition_masters.max_user_watches_id}"
+  ign_rm_assets_path_unit_id        = "${module.ignition_masters.rm_assets_path_unit_id}"
   ign_rm_assets_service_id          = "${module.ignition_masters.rm_assets_service_id}"
   ign_s3_puller_id                  = "${module.ignition_masters.s3_puller_id}"
   ign_tectonic_path_unit_id         = "${var.tectonic_vanilla_k8s ? "" : module.tectonic.systemd_path_unit_id}"

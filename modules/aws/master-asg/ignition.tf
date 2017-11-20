@@ -20,6 +20,7 @@ data "ignition_config" "main" {
     var.ign_tectonic_service_id,
     var.ign_bootkube_path_unit_id,
     var.ign_tectonic_path_unit_id,
+    var.ign_rm_assets_path_unit_id,
    ))}"]
 }
 

@@ -38,6 +38,10 @@ output "rm_assets_service_id" {
   value = "${data.ignition_systemd_unit.rm_assets.id}"
 }
 
+output "rm_assets_path_unit_id" {
+  value = "${data.ignition_systemd_unit.rm_assets_path_unit.id}"
+}
+
 output "s3_puller_id" {
   value = "${data.ignition_file.s3_puller.id}"
 }
