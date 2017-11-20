@@ -8,7 +8,7 @@ resource "openstack_dns_recordset_v2" "tectonic-api" {
   name    = "${var.cluster_name}-k8s.${var.base_domain}."
   type    = "A"
   ttl     = "60"
-  records = ["${var.api_ips}"]
+  records = ["${var.api_ip_addresses}"]
 }
 
 resource "openstack_dns_recordset_v2" "tectonic-console" {
@@ -17,5 +17,5 @@ resource "openstack_dns_recordset_v2" "tectonic-console" {
   name    = "${var.cluster_name}.${var.base_domain}."
   type    = "A"
   ttl     = "60"
-  records = ["${var.worker_ips}"]
+  records = ["${var.worker_ip_addresses}"]
 }

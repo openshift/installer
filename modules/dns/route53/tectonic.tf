@@ -33,7 +33,7 @@ resource "aws_route53_record" "tectonic_api" {
   name    = "${var.cluster_name}-k8s"
   type    = "A"
   ttl     = "60"
-  records = ["${var.api_ips}"]
+  records = ["${var.api_ip_addresses}"]
 }
 
 resource "aws_route53_record" "tectonic_api_external" {
@@ -68,7 +68,7 @@ resource "aws_route53_record" "tectonic-console" {
   name    = "${var.cluster_name}"
   type    = "A"
   ttl     = "60"
-  records = ["${var.worker_ips}"]
+  records = ["${var.worker_ip_addresses}"]
 }
 
 resource "aws_route53_record" "tectonic_ingress_public" {

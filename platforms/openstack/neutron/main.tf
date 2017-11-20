@@ -268,18 +268,18 @@ module "secgroups" {
 module "dns" {
   source = "../../../modules/dns/designate"
 
-  api_ips                   = "${openstack_networking_floatingip_v2.loadbalancer.*.address}"
+  api_ip_addresses          = "${openstack_networking_floatingip_v2.loadbalancer.*.address}"
   base_domain               = "${var.tectonic_base_domain}"
   cluster_name              = "${var.tectonic_cluster_name}"
   etcd_count                = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count}"
-  etcd_ips                  = "${flatten(openstack_networking_port_v2.etcd.*.all_fixed_ips)}"
+  etcd_ip_addresses         = "${flatten(openstack_networking_port_v2.etcd.*.all_fixed_ips)}"
   etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
   master_count              = "${var.tectonic_master_count}"
-  master_ips                = "${flatten(openstack_networking_port_v2.master.*.all_fixed_ips)}"
+  master_ip_addresses       = "${flatten(openstack_networking_port_v2.master.*.all_fixed_ips)}"
   self_hosted_etcd          = "${var.tectonic_self_hosted_etcd}"
   tectonic_vanilla_k8s      = "${var.tectonic_vanilla_k8s}"
   worker_count              = "${var.tectonic_worker_count}"
-  worker_ips                = "${flatten(openstack_networking_port_v2.worker.*.all_fixed_ips)}"
+  worker_ip_addresses       = "${flatten(openstack_networking_port_v2.worker.*.all_fixed_ips)}"
   worker_public_ips         = "${openstack_networking_floatingip_v2.worker.*.address}"
   worker_public_ips_enabled = "${var.tectonic_openstack_disable_floatingip ? false : true}"
 }

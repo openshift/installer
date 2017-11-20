@@ -203,7 +203,7 @@ module "dns" {
   api_external_elb_zone_id       = "${module.vpc.aws_elb_api_external_zone_id}"
   api_internal_elb_dns_name      = "${module.vpc.aws_api_internal_dns_name}"
   api_internal_elb_zone_id       = "${module.vpc.aws_elb_api_internal_zone_id}"
-  api_ips                        = "${module.vpc.aws_lbs}"
+  api_ip_addresses               = "${module.vpc.aws_lbs}"
   base_domain                    = "${var.tectonic_base_domain}"
   cluster_id                     = "${module.tectonic.cluster_id}"
   cluster_name                   = "${var.tectonic_cluster_name}"
@@ -212,7 +212,7 @@ module "dns" {
   custom_dns_name                = "${var.tectonic_dns_name}"
   elb_alias_enabled              = true
   etcd_count                     = "${length(data.template_file.etcd_hostname_list.*.id)}"
-  etcd_ips                       = "${module.etcd.ip_addresses}"
+  etcd_ip_addresses              = "${module.etcd.ip_addresses}"
   external_endpoints             = ["${compact(var.tectonic_etcd_servers)}"]
   master_count                   = "${var.tectonic_master_count}"
   tectonic_external_private_zone = "${var.tectonic_aws_external_private_zone}"
