@@ -4,7 +4,7 @@ resource "openstack_dns_recordset_v2" "etcd_a_nodes" {
   ttl     = "60"
   zone_id = "${data.openstack_dns_zone_v2.tectonic.id}"
   name    = "${var.cluster_name}-etcd-${count.index}.${var.base_domain}."
-  records = ["${var.etcd_ips[count.index]}"]
+  records = ["${var.etcd_ip_addresses[count.index]}"]
 }
 
 resource "openstack_dns_recordset_v2" "etcd_srv_discover" {

@@ -4,5 +4,5 @@ resource "aws_route53_record" "master_nodes" {
   name    = "${var.cluster_name}-master-${count.index}"
   type    = "A"
   ttl     = "60"
-  records = ["${var.master_ips[count.index]}"]
+  records = ["${var.master_ip_addresses[count.index]}"]
 }
