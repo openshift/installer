@@ -100,7 +100,7 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
     end
 
     after(:all) do
-      WebdriverHelpers.stop_webdriver(@driver)
+      WebdriverHelpers.stop_webdriver(@driver) if defined? @driver
     end
 
     it 'can login in the tectonic console', :ui, retry: 3, retry_wait: 10 do

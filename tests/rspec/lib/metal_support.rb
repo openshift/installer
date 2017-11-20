@@ -125,33 +125,23 @@ module MetalSupport
   end
 
   def self.print_service_logs(service)
-    service_logs_path = 'logs/service_logs_packet'
-    FileUtils.mkdir_p(service_logs_path)
-    cmd = "journalctl --no-pager -u '#{service}'"
-    begin
-      Open3.popen3(cmd) do |_stdin, stdout, stderr, wait_thr|
-        exit_status = wait_thr.value
-        while (line = stdout.gets)
-          stdout_output << line
-        end
-        while (line = stderr.gets)
-          stderr_output << line
-        end
-        puts "Journal of #{service} service (exitcode #{exit_status})"
-        puts "Standard output: \n#{stdout_output}"
-        puts "Standard error: \n#{stderr_output}"
-        puts "End of journal of #{service} service"
+    cmd = "journalctl --no-pager -u #{service}"
+    stdout, stderr, exit_status = Open3.capture3(cmd)
+    raise "Cannot retrieve logs of service #{service}" unless exit_status.success?
+    output = "Journal of #{service} service (exitcode #{exit_status})"
+    output += "\nStandard output: \n#{stdout}"
+    output += "\nStandard error: \n#{stderr}"
+    output += "\nEnd of journal of #{service} service"
 
-        output = File.open("#{service_logs_path}/#{service}.log", 'w+')
-        output += "Journal of #{service} service on #{ip} (exitcode #{exitcode})"
-        output += "Standard output: \n#{stdout}"
-        output += "Standard error: \n#{stderr}"
-        output += "End of journal of #{service} service on #{ip}"
-        output.close
-      end
-    rescue => e
-      puts "Cannot retrieve logs of service #{service} - failed to exec with: #{e}"
-    end
+    puts output
+    save_file(service, output)
+  end
+
+  def self.save_to_file(service_name, output)
+    logs_path = "#{root_path}build/#{ENV['CLUSTER']}/logs/services"
+    save_file = File.open("#{logs_path}/#{service_name}.log", 'w+')
+    save_file << output
+    save_file.close
   end
 
   def self.root_path
