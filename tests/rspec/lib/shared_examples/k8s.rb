@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'shared_examples/build_folder_setup'
 require 'smoke_test'
 require 'forensic'
 require 'cluster_factory'
@@ -11,9 +12,14 @@ require 'password_generator'
 require 'webdriver_helpers'
 require 'k8s_conformance_tests'
 
-RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
+RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
+  include_examples('withBuildFolderSetup', tf_vars_path)
+  include_examples('withRunningClusterExistingBuildFolder')
+end
+
+RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do
   before(:all) do
-    @cluster = ClusterFactory.from_tf_vars(TFVarsFile.new(tf_vars_path))
+    @cluster = ClusterFactory.from_tf_vars(@tfvars_file)
     begin
       @cluster.start
     rescue => e
@@ -114,6 +120,21 @@ RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
       @login.login_page "https://#{@console_url}"
       @login.with(NameGenerator.generate_fake_email, PasswordGenerator.generate_password)
       expect(@login.fail_to_login?).to be_truthy
+    end
+  end
+
+  describe 'scale up worker cluster' do
+    before(:all) do
+      platform = @cluster.env_variables['PLATFORM']
+      # remove platform AZURE when the JIRA https://jira.prod.coreos.systems/browse/INST-619 is fixed
+      skip_platform = %w[metal azure]
+      skip "This test is not ready to run in #{platform}" if skip_platform.include?(platform)
+    end
+
+    it 'can scale up nodes by 1 worker' do
+      @cluster.tfvars_file.add_worker_node(@cluster.tfvars_file.worker_count + 1)
+
+      expect { @cluster.update_cluster }.to_not raise_error
     end
   end
 

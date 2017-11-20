@@ -11,6 +11,7 @@ require 'ssh'
 require 'tfstate_file'
 require 'tfvars_file'
 require 'timeout'
+require 'with_retries'
 
 # Cluster represents a k8s cluster
 class Cluster
@@ -22,7 +23,7 @@ class Cluster
 
     # Enable local testers to specify a static cluster name
     # S3 buckets can only handle lower case names
-    @name = ENV['CLUSTER'] || NameGenerator.generate(tfvars_file.prefix)
+    @name = ENV['CLUSTER'] || NameGenerator.generate(@tfvars_file.prefix)
     @tectonic_admin_email = ENV['TF_VAR_tectonic_admin_email'] || NameGenerator.generate_fake_email
     @tectonic_admin_password = ENV['TF_VAR_tectonic_admin_password'] || PasswordGenerator.generate_password
 
@@ -32,8 +33,6 @@ class Cluster
     @tfstate_file = TFStateFile.new(@build_path)
 
     check_prerequisites
-    localconfig
-    prepare_assets
   end
 
   def plan
@@ -46,6 +45,10 @@ class Cluster
   def start
     apply
     wait_til_ready
+  end
+
+  def update_cluster
+    start
   end
 
   def stop
@@ -124,18 +127,6 @@ class Cluster
     EnvVar.set?([license_path, pull_secret_path])
   end
 
-  def prepare_assets
-    FileUtils.cp(
-      @tfvars_file.path,
-      Dir.pwd + "/../../build/#{@name}/terraform.tfvars"
-    )
-  end
-
-  def localconfig
-    succeeded = system(env_variables, 'make -C ../.. localconfig')
-    raise 'Run localconfig failed' unless succeeded
-  end
-
   def apply
     ::Timeout.timeout(30 * 60) do # 30 minutes
       3.times do |idx|
@@ -182,6 +173,35 @@ class Cluster
         elapsed = Time.now - from
         raise 'kubectl cluster-info never returned with successful error code' if elapsed > 1200 # 20 mins timeout
         sleep 10
+      end
+    end
+
+    wait_nodes_ready
+  end
+
+  def wait_nodes_ready
+    from = Time.now
+    loop do
+      puts 'Waiting for nodes become in ready state after an update'
+      Retriable.with_retries(KubeCTL::KubeCTLCmdError, limit: 5, sleep: 10) do
+        nodes = describe_nodes
+        nodes_ready = Array.new(@tfvars_file.node_count, false)
+        nodes['items'].each_with_index do |item, index|
+          item['status']['conditions'].each do |condition|
+            if condition['type'] == 'Ready' && condition['status'] == 'True'
+              nodes_ready[index] = true
+            end
+          end
+        end
+        if nodes_ready.uniq.length == 1 && nodes_ready.uniq.include?(true)
+          puts '**All nodes are Ready!**'
+          return true
+        end
+        puts "One or more nodes are not ready yet or missing nodes. Waiting...\n" \
+             "# of returned nodes #{nodes['items'].size}. Expected #{@tfvars_file.node_count}"
+        elapsed = Time.now - from
+        raise 'waiting for all nodes to become ready timed out' if elapsed > 1200 # 20 mins timeout
+        sleep 20
       end
     end
   end
@@ -237,5 +257,9 @@ class Cluster
     end
 
     false
+  end
+
+  def describe_nodes
+    KubeCTL.run_and_parse(@kubeconfig, 'get nodes')
   end
 end

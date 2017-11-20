@@ -3,17 +3,15 @@
 require 'shared_examples/k8s'
 require 'azure_vpn'
 
-TEST_CLUSTER_CONFIG_FILE = '../smoke/azure/vars/private-cluster.tfvars'
-
 RSpec.describe 'azure-private-external' do
+  include_examples('withBuildFolderSetup', '../smoke/azure/vars/private-cluster.tfvars')
+
   before(:context) do |_context|
     # Save environment, to restore it once the test it done
     # (since we alter it further down)
     @curent_env = ENV.clone
-    @varfile = TFVarsFile.new(TEST_CLUSTER_CONFIG_FILE)
-    ENV['CLUSTER'] ||= NameGenerator.generate(@varfile.prefix)
     @azure_ssh_key_path = AzureSupport.set_ssh_key_path
-    @vpn_vnet = AzureVpn.new(@varfile)
+    @vpn_vnet = AzureVpn.new(@tfvars_file)
     @vpn_vnet.start
     # Pick up the VNET and resource group created for the VPN
     # and pass it to the installer as external resources
@@ -30,7 +28,8 @@ RSpec.describe 'azure-private-external' do
   end
 
   context 'private cluster' do
-    include_examples('withRunningCluster', TEST_CLUSTER_CONFIG_FILE, true)
+    include_examples('withRunningClusterExistingBuildFolder')
+
     it 'should have a vpn' do
     end
   end

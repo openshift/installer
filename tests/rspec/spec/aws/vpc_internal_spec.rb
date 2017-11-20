@@ -7,6 +7,8 @@ require 'jenkins'
 require 'aws_iam'
 
 RSpec.describe 'aws-vpc' do
+  include_examples('withBuildFolderSetup', '../smoke/aws/vars/aws-vpc-internal.tfvars.json')
+
   before(:all) do
     export_random_region_if_not_defined
     # AWSIAM.assume_role if Jenkins.environment?
@@ -15,11 +17,7 @@ RSpec.describe 'aws-vpc' do
   end
 
   context 'with a cluster' do
-    include_examples(
-      'withRunningCluster',
-      '../smoke/aws/vars/aws-vpc-internal.tfvars.json',
-      true
-    )
+    include_examples('withRunningClusterExistingBuildFolder')
   end
 
   after(:all) do

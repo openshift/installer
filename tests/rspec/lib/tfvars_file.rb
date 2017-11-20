@@ -26,6 +26,19 @@ class TFVarsFile
     master_count + worker_count
   end
 
+  def master_count
+    data['tectonic_master_count'].to_i
+  end
+
+  def worker_count
+    data['tectonic_worker_count'].to_i
+  end
+
+  def add_worker_node(node_count)
+    data['tectonic_worker_count'] = node_count.to_s
+    save
+  end
+
   def region
     data['tectonic_aws_region']
   end
@@ -57,15 +70,13 @@ class TFVarsFile
     data.keys.any? { |k| k == method_name.to_s } || super
   end
 
-  def master_count
-    data['tectonic_master_count'].to_i
-  end
-
-  def worker_count
-    data['tectonic_worker_count'].to_i
-  end
-
   def file_exists?
     File.exist? path
+  end
+
+  def save
+    File.open(path, 'w+') do |f|
+      f << data.to_json
+    end
   end
 end

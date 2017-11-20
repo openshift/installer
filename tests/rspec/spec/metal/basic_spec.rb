@@ -3,14 +3,12 @@
 require 'shared_examples/k8s'
 require 'metal_support'
 
-TEST_CLUSTER_CONFIG_FILE = '../smoke/bare-metal/vars/metal.tfvars.json'
-
 RSpec.describe 'bare-metal-standard' do
+  include_examples('withBuildFolderSetup', '../smoke/bare-metal/vars/metal.tfvars.json')
+
   before(:context) do |_context|
-    @varfile = TFVarsFile.new(TEST_CLUSTER_CONFIG_FILE)
-    ENV['CLUSTER'] ||= NameGenerator.generate(@varfile.prefix)
     MetalSupport.install_base_software
-    MetalSupport.setup_bare(@varfile)
+    MetalSupport.setup_bare(@tfvars_file)
     MetalSupport.start_matchbox
   end
 
@@ -19,6 +17,6 @@ RSpec.describe 'bare-metal-standard' do
   end
 
   context 'running Tectonic' do
-    include_examples('withRunningCluster', TEST_CLUSTER_CONFIG_FILE)
+    include_examples('withRunningClusterExistingBuildFolder')
   end
 end
