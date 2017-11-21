@@ -2,7 +2,6 @@
 
 require 'shared_examples/build_folder_setup'
 require 'smoke_test'
-require 'forensic'
 require 'cluster_factory'
 require 'container_linux'
 require 'operators'
@@ -20,17 +19,20 @@ end
 
 RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = false|
   before(:all) do
+    # See https://stackoverflow.com/a/45936219/4011134
+    @exceptions = []
+
     @cluster = ClusterFactory.from_tf_vars(@tfvars_file)
-    begin
-      @cluster.start
-    rescue => e
-      Forensic.run(@cluster)
-      raise "Aborting execution due startup failed. Error: #{e}"
-    end
+    @cluster.start
   end
 
+  # See https://stackoverflow.com/a/45936219/4011134
   after(:each) do |example|
-    Forensic.run(@cluster) if example.exception
+    @exceptions << example.exception
+  end
+
+  after(:all) do
+    @cluster.forensic if @exceptions.any?
   end
 
   after(:all) do
