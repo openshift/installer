@@ -11,6 +11,7 @@ require 'name_generator'
 require 'password_generator'
 require 'webdriver_helpers'
 require 'k8s_conformance_tests'
+require 'with_retries'
 
 RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
   include_examples('withBuildFolderSetup', tf_vars_path)
@@ -45,17 +46,12 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
     @cluster.master_ip_addresses.each do |ip|
       cmd = "sudo sh -c 'cat /etc/kubernetes/inactive-manifests/kube-system-kube-apiserver-*.json'"
 
-      retries = 0
-      begin
-        stdout, _, fin = ssh_exec(ip, cmd, 20)
-        raise unless fin.zero?
-        expect { JSON.parse(stdout) }.to_not raise_error
-      rescue
-        retries += 1
-        expect(retries).to be < 20
-        puts "failed to exec '#{cmd}'; retrying in 3 seconds"
-        sleep 3
-        retry
+      Retriable.with_retries(limit: 20, sleep: 3) do
+        stdout, stderr, fin = ssh_exec(ip, cmd, 20)
+        unless fin.zero? && JSON.parse(stdout)
+          raise "could not retrieve manifest checkpoints via #{cmd} on ip #{ip}, "\
+                "last try failed with:\n#{stdout}\n#{stderr}\nstatus code: #{fin}"
+        end
       end
     end
   end
@@ -70,16 +66,12 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
             .join(' && ')
       cmd = "sudo sh -c '#{cmd}'"
 
-      retries = 0
-      begin
-        _, _, fin = ssh_exec(ip, cmd, 20)
-        raise unless fin.zero?
-      rescue
-        retries += 1
-        expect(retries).to be < 20
-        puts "failed to exec '#{cmd}'; retrying in 3 seconds"
-        sleep 3
-        retry
+      Retriable.with_retries(limit: 20, sleep: 3) do
+        stdout, stderr, fin = ssh_exec(ip, cmd, 20)
+        unless fin.zero?
+          raise "could not retrieve secret checkpoints via #{cmd} on ip #{ip}, "\
+                "last try failed with:\n#{stdout}\n#{stderr}\nstatus code: #{fin}"
+        end
       end
     end
   end
