@@ -34,7 +34,7 @@ creds = [
   ]
 ]
 
-quay_creds = [
+quayCreds = [
   usernamePassword(
     credentialsId: 'quay-robot',
     passwordVariable: 'QUAY_ROBOT_SECRET',
@@ -42,8 +42,9 @@ quay_creds = [
   )
 ]
 
-default_builder_image = 'quay.io/coreos/tectonic-builder:v1.41'
-tectonic_smoke_test_env_image = 'quay.io/coreos/tectonic-smoke-test-env:v5.9'
+defaultBuilderImage = 'quay.io/coreos/tectonic-builder:v1.41'
+tectonicSmokeTestEnvImage = 'quay.io/coreos/tectonic-smoke-test-env:v5.9'
+def originalCommitId = 'UNKNOWN'
 
 pipeline {
   agent none
@@ -60,7 +61,7 @@ pipeline {
   parameters {
     string(
       name: 'builder_image',
-      defaultValue: default_builder_image,
+      defaultValue: defaultBuilderImage,
       description: 'tectonic-builder docker image to use for builds'
     )
     string(
@@ -120,8 +121,8 @@ pipeline {
                 forcefullyCleanWorkspace()
                 checkout scm
                 stash name: 'clean-repo', excludes: 'installer/vendor/**,tests/smoke/vendor/**,images/tectonic-stats-extender/vendor/**'
-                sh('git rev-parse origin/"\${BRANCH_NAME}" > original-commit-hash')
-                stash name: 'original-commit-hash', includes: 'original-commit-hash'
+                originalCommitId = sh(returnStdout: true, script: 'git rev-parse origin/"\${BRANCH_NAME}"')
+                echo "originalCommitId: ${originalCommitId}"
 
                 printLogstashAttributes()
                 withDockerContainer(params.builder_image) {
@@ -148,7 +149,7 @@ pipeline {
                     stash name: 'smoke-test-binary', includes: 'bin/smoke'
                   }
                 }
-                withDockerContainer(tectonic_smoke_test_env_image) {
+                withDockerContainer(tectonicSmokeTestEnvImage) {
                   sh"""#!/bin/bash -ex
                     cd tests/rspec
                     bundler exec rubocop --cache false spec lib
@@ -159,7 +160,7 @@ pipeline {
               err = error
               throw error
             } finally {
-              reportStatusToGithub((err == null) ? 'success' : 'failure', 'basic-tests')
+              reportStatusToGithub((err == null) ? 'success' : 'failure', 'basic-tests', originalCommitId)
               cleanWs notFailBuild: true
             }
           }
@@ -247,7 +248,7 @@ pipeline {
           } finally {
             node('worker && ec2') {
               unstash 'clean-repo'
-              reportStatusToGithub((err == null) ? 'success' : 'failure', 'gui-tests')
+              reportStatusToGithub((err == null) ? 'success' : 'failure', 'gui-tests', originalCommitId)
             }
           }
         }
@@ -343,7 +344,7 @@ pipeline {
                   err = error
                   throw error
                 } finally {
-                  reportStatusToGithub((err == null) ? 'success' : 'failure', specFile)
+                  reportStatusToGithub((err == null) ? 'success' : 'failure', specFile, originalCommitId)
                   archiveArtifacts allowEmptyArchive: true, artifacts: 'tests/rspec/logs/**/*.log'
                   cleanWs notFailBuild: true
                 }
@@ -362,7 +363,7 @@ pipeline {
       steps {
         node('worker && ec2') {
           forcefullyCleanWorkspace()
-          withCredentials(quay_creds) {
+          withCredentials(quayCreds) {
             ansiColor('xterm') {
               unstash 'clean-repo'
               sh """
@@ -399,7 +400,7 @@ pipeline {
 
 def forcefullyCleanWorkspace() {
   return withDockerContainer(
-    image: tectonic_smoke_test_env_image,
+    image: tectonicSmokeTestEnvImage,
     args: '-u root'
   ) {
     ansiColor('xterm') {
@@ -423,7 +424,7 @@ def runRSpecTest(testFilePath, dockerArgs) {
           ansiColor('xterm') {
             withCredentials(creds) {
               withDockerContainer(
-                image: tectonic_smoke_test_env_image,
+                image: tectonicSmokeTestEnvImage,
                 args: '-u root -v /var/run/docker.sock:/var/run/docker.sock ' + dockerArgs
               ) {
                 unstash 'clean-repo'
@@ -440,7 +441,7 @@ def runRSpecTest(testFilePath, dockerArgs) {
         err = error
         throw error
       } finally {
-        reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath)
+        reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
         archiveArtifacts allowEmptyArchive: true, artifacts: 'tests/rspec/logs/**/*.log'
         cleanWs notFailBuild: true
       }
@@ -450,10 +451,8 @@ def runRSpecTest(testFilePath, dockerArgs) {
 }
 
 
-def reportStatusToGithub(status, context) {
+def reportStatusToGithub(status, context, commitId) {
   withCredentials(creds) {
-    unstash 'original-commit-hash'
-    commitId = readFile('original-commit-hash')
     sh """#!/bin/bash -ex
       ./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} ${context} ${commitId}
     """
