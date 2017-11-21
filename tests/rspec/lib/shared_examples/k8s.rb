@@ -12,12 +12,12 @@ require 'password_generator'
 require 'webdriver_helpers'
 require 'k8s_conformance_tests'
 
-RSpec.shared_examples 'withRunningCluster' do |tf_vars_path|
+RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
   include_examples('withBuildFolderSetup', tf_vars_path)
-  include_examples('withRunningClusterExistingBuildFolder')
+  include_examples('withRunningClusterExistingBuildFolder', vpn_tunnel)
 end
 
-RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do
+RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = false|
   before(:all) do
     @cluster = ClusterFactory.from_tf_vars(@tfvars_file)
     begin
