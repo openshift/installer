@@ -45,8 +45,6 @@ const clusterTypePage = {
   path: '/define/cluster-type',
   component: ClusterType,
   title: 'Platform',
-  hideSave: true,
-  showRestore: true,
 };
 
 const dryRunPage = {
@@ -74,7 +72,6 @@ const successPage = {
   component: Success,
   title: 'Installation Complete',
   hidePager: true,
-  hideSave: true,
 };
 
 const TFPowerOnPage = {
