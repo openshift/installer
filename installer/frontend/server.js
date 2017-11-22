@@ -132,5 +132,6 @@ export const loadFacts = (dispatch) => {
         type: loadFactsActionTypes.ERROR,
         payload: err,
       });
-    }).catch(err => console.error(err));
+    })
+    .catch(err => console.error(err));
 };
