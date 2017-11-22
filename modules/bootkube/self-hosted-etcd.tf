@@ -57,7 +57,7 @@ data "template_file" "migrate_etcd_cluster" {
 }
 
 resource "local_file" "migrate_etcd_cluster" {
-  count    = "${var.self_hosted_etcd == "enabled" ? 1 : 0}"
+  count    = "${var.self_hosted_etcd != "" ? 1 : 0}"
   content  = "${data.template_file.migrate_etcd_cluster.rendered}"
   filename = "./generated/etcd/migrate-etcd-cluster.json"
 }
