@@ -73,10 +73,14 @@ variable "tls_enabled" {
   default = false
 }
 
-variable "tls_zip" {
+variable "ign_etcd_dropin_id_list" {
+  type = "list"
+}
+
+variable "s3_bucket" {
   type = "string"
 }
 
-variable "ign_etcd_dropin_id_list" {
+variable "ign_etcd_crt_id_list" {
   type = "list"
 }

@@ -46,6 +46,9 @@ tectonic_cluster_name = ""
 // Examples: `latest`, `1465.6.0`
 tectonic_container_linux_version = "latest"
 
+// (optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes.
+// tectonic_custom_ca_pem_list = ""
+
 // (optional) This only applies if you use the modules/dns/ddns module.
 // 
 // Specifies the RFC2136 Dynamic DNS server key algorithm.

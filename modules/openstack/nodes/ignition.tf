@@ -13,6 +13,7 @@ data "ignition_config" "node" {
     "${data.ignition_file.resolv_conf.id}",
     "${data.ignition_file.hostname.*.id[count.index]}",
     "${data.ignition_file.sshd.id}",
+    "${var.ign_ca_cert_id_list}",
   ]
 
   systemd = ["${compact(list(
@@ -24,6 +25,7 @@ data "ignition_config" "node" {
     var.ign_tectonic_service_id,
     var.ign_bootkube_path_unit_id,
     var.ign_tectonic_path_unit_id,
+    var.ign_update_ca_certificates_dropin_id,
    ))}"]
 }
 

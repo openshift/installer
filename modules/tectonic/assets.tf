@@ -137,7 +137,7 @@ data "template_file" "tectonic_service" {
 
 data "ignition_systemd_unit" "tectonic_service" {
   name    = "tectonic.service"
-  enable  = false
+  enabled = false
   content = "${data.template_file.tectonic_service.rendered}"
 }
 
@@ -148,6 +148,6 @@ data "template_file" "tectonic_path" {
 
 data "ignition_systemd_unit" "tectonic_path" {
   name    = "tectonic.path"
-  enable  = true
+  enabled = true
   content = "${data.template_file.tectonic_path.rendered}"
 }

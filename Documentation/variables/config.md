@@ -20,6 +20,7 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_container_images | (internal) Container images to use | map | `<map>` |
 | tectonic_container_linux_channel | (optional) The Container Linux update channel.<br><br>Examples: `stable`, `beta`, `alpha` | string | `stable` |
 | tectonic_container_linux_version | The Container Linux version to use. Set to `latest` to select the latest available version for the selected update channel.<br><br>Examples: `latest`, `1465.6.0` | string | `latest` |
+| tectonic_custom_ca_pem_list | (optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes. | list | `<list>` |
 | tectonic_ddns_key_algorithm | (optional) This only applies if you use the modules/dns/ddns module.<br><br>Specifies the RFC2136 Dynamic DNS server key algorithm. | string | `` |
 | tectonic_ddns_key_name | (optional) This only applies if you use the modules/dns/ddns module.<br><br>Specifies the RFC2136 Dynamic DNS server key name. | string | `` |
 | tectonic_ddns_key_secret | (optional) This only applies if you use the modules/dns/ddns module.<br><br>Specifies the RFC2136 Dynamic DNS server key secret. | string | `` |

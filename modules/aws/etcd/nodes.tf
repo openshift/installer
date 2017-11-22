@@ -20,14 +20,88 @@ data "aws_ami" "coreos_ami" {
   }
 }
 
+resource "aws_iam_role" "etcd" {
+  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+  name  = "${var.cluster_name}-etcd-role"
+  path  = "/"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Principal": {
+                "Service": "ec2.amazonaws.com"
+            },
+            "Effect": "Allow",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "etcd" {
+  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+  name  = "${var.cluster_name}_etcd_policy"
+  role  = "${aws_iam_role.etcd.id}"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "ec2:Describe*",
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ec2:AttachVolume",
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ec2:DetachVolume",
+      "Resource": "*"
+    },
+    {
+      "Action": [
+        "ecr:DescribeRepositories",
+        "ecr:ListImages",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
+    },
+    {
+      "Action" : [
+        "s3:GetObject"
+      ],
+      "Resource": "arn:aws:s3:::*",
+      "Effect": "Allow"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_instance_profile" "etcd" {
+  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+  name  = "${var.cluster_name}-etcd-profile"
+  role  = "${aws_iam_role.etcd.name}"
+}
+
 resource "aws_instance" "etcd_node" {
   count = "${length(var.external_endpoints) == 0 ? var.instance_count : 0}"
   ami   = "${data.aws_ami.coreos_ami.image_id}"
 
+  iam_instance_profile   = "${aws_iam_instance_profile.etcd.name}"
   instance_type          = "${var.ec2_type}"
-  subnet_id              = "${element(var.subnets, count.index)}"
   key_name               = "${var.ssh_key}"
-  user_data              = "${data.ignition_config.etcd.*.rendered[count.index]}"
+  subnet_id              = "${element(var.subnets, count.index)}"
+  user_data              = "${data.ignition_config.s3.*.rendered[count.index]}"
   vpc_security_group_ids = ["${var.sg_ids}"]
 
   lifecycle {

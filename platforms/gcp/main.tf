@@ -50,20 +50,14 @@ module "etcd" {
   disk_size               = "${var.tectonic_gcp_etcd_disk_size}"
   disk_type               = "${var.tectonic_gcp_etcd_disktype}"
   external_endpoints      = ["${compact(var.tectonic_etcd_servers)}"]
+  ign_etcd_crt_id_list    = "${module.ignition_masters.etcd_crt_id_list}"
   ign_etcd_dropin_id_list = "${module.ignition_masters.etcd_dropin_id_list}"
   instance_count          = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.google_compute_zones.available.names) == 5 ? 5 : 3}"
   machine_type            = "${var.tectonic_gcp_etcd_gce_type}"
   managed_zone_name       = "${var.tectonic_gcp_ext_google_managedzone_name}"
   master_subnetwork_name  = "${module.network.master_subnetwork_name}"
   public_ssh_key          = "${var.tectonic_gcp_ssh_key}"
-  tls_ca_crt_pem          = "${module.etcd_certs.etcd_ca_crt_pem}"
-  tls_client_crt_pem      = "${module.etcd_certs.etcd_client_crt_pem}"
-  tls_client_key_pem      = "${module.etcd_certs.etcd_client_key_pem}"
   tls_enabled             = "${var.tectonic_etcd_tls_enabled}"
-  tls_peer_crt_pem        = "${module.etcd_certs.etcd_peer_crt_pem}"
-  tls_peer_key_pem        = "${module.etcd_certs.etcd_peer_key_pem}"
-  tls_server_crt_pem      = "${module.etcd_certs.etcd_server_crt_pem}"
-  tls_server_key_pem      = "${module.etcd_certs.etcd_server_key_pem}"
   zone_list               = "${data.google_compute_zones.available.names}"
 }
 
@@ -138,22 +132,27 @@ module "workers" {
 module "ignition_masters" {
   source = "../../modules/ignition"
 
+  assets_location           = "${google_storage_bucket.assets_storage_bucket.name}/${google_storage_bucket_object.tectonic-assets.name}"
   bootstrap_upgrade_cl      = "${var.tectonic_bootstrap_upgrade_cl}"
   cluster_name              = "${var.tectonic_cluster_name}"
   container_images          = "${var.tectonic_container_images}"
   etcd_advertise_name_list  = "${data.template_file.etcd_hostname_list.*.rendered}"
+  etcd_client_crt_pem       = "${module.etcd_certs.etcd_client_crt_pem}"
+  etcd_client_key_pem       = "${module.etcd_certs.etcd_client_key_pem}"
   etcd_count                = "${length(data.template_file.etcd_hostname_list.*.id)}"
   etcd_initial_cluster_list = "${data.template_file.etcd_hostname_list.*.rendered}"
+  etcd_peer_crt_pem         = "${module.etcd_certs.etcd_peer_crt_pem}"
+  etcd_peer_key_pem         = "${module.etcd_certs.etcd_peer_key_pem}"
+  etcd_server_crt_pem       = "${module.etcd_certs.etcd_server_crt_pem}"
+  etcd_server_key_pem       = "${module.etcd_certs.etcd_server_key_pem}"
   etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
-
-  image_re             = "${var.tectonic_image_re}"
-  kube_dns_service_ip  = "${module.bootkube.kube_dns_service_ip}"
-  kubelet_cni_bin_dir  = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
-  kubelet_debug_config = "${var.tectonic_kubelet_debug_config}"
-  kubelet_node_label   = "node-role.kubernetes.io/master"
-  kubelet_node_taints  = "node-role.kubernetes.io/master=:NoSchedule"
-  tectonic_vanilla_k8s = "${var.tectonic_vanilla_k8s}"
-  assets_location      = "${google_storage_bucket.assets_storage_bucket.name}/${google_storage_bucket_object.tectonic-assets.name}"
+  image_re                  = "${var.tectonic_image_re}"
+  kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
+  kubelet_cni_bin_dir       = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
+  kubelet_debug_config      = "${var.tectonic_kubelet_debug_config}"
+  kubelet_node_label        = "node-role.kubernetes.io/master"
+  kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
+  tectonic_vanilla_k8s      = "${var.tectonic_vanilla_k8s}"
 }
 
 module "ignition_workers" {

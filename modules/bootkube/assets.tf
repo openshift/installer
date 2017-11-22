@@ -146,7 +146,7 @@ data "template_file" "bootkube_service" {
 
 data "ignition_systemd_unit" "bootkube_service" {
   name    = "bootkube.service"
-  enable  = false
+  enabled = false
   content = "${data.template_file.bootkube_service.rendered}"
 }
 
@@ -157,6 +157,6 @@ data "template_file" "bootkube_path_unit" {
 
 data "ignition_systemd_unit" "bootkube_path_unit" {
   name    = "bootkube.path"
-  enable  = true
+  enabled = true
   content = "${data.template_file.bootkube_path_unit.rendered}"
 }

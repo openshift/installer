@@ -7,6 +7,7 @@ data "ignition_config" "main" {
     "${var.ign_installer_runtime_mappings_id}",
     "${var.ign_max_user_watches_id}",
     "${var.ign_s3_puller_id}",
+    "${var.ign_ca_cert_id_list}",
   ]
 
   systemd = ["${compact(list(
@@ -21,6 +22,7 @@ data "ignition_config" "main" {
     var.ign_bootkube_path_unit_id,
     var.ign_tectonic_path_unit_id,
     var.ign_rm_assets_path_unit_id,
+    var.ign_update_ca_certificates_dropin_id,
    ))}"]
 }
 

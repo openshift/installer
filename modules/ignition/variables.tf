@@ -117,3 +117,47 @@ variable "metadata_provider" {
 variable "use_metadata" {
   default = true
 }
+
+variable "kube_ca_cert_pem" {
+  type        = "string"
+  description = "The public kube CA certificate in PEM format."
+}
+
+variable "ingress_ca_cert_pem" {
+  type        = "string"
+  description = "The ingress kube CA certificate in PEM format."
+}
+
+variable "etcd_ca_cert_pem" {
+  type        = "string"
+  description = "The etcd kube CA certificate in PEM format."
+}
+
+variable "etcd_client_key_pem" {
+  default = ""
+}
+
+variable "etcd_client_crt_pem" {
+  default = ""
+}
+
+variable "etcd_server_key_pem" {
+  default = ""
+}
+
+variable "etcd_server_crt_pem" {
+  default = ""
+}
+
+variable "etcd_peer_key_pem" {
+  default = ""
+}
+
+variable "etcd_peer_crt_pem" {
+  default = ""
+}
+
+variable "custom_ca_cert_pem_list" {
+  type        = "list"
+  description = "(optional) A list of custom CAs in PEM format."
+}

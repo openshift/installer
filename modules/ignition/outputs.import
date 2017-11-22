@@ -27,3 +27,12 @@ variable "ign_installer_kubelet_env_id" {
 variable "ign_k8s_node_bootstrap_service_id" {
   type = "string"
 }
+
+variable "ign_update_ca_certificates_dropin_id" {
+  type = "string"
+}
+
+variable "ign_ca_cert_id_list" {
+  type        = "list"
+  description = "The list of public CA certificate ignition file IDs."
+}

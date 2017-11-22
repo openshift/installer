@@ -11,7 +11,7 @@ provider "external" {
 }
 
 provider "ignition" {
-  version = "0.1.0"
+  version = "1.0.0"
 }
 
 provider "local" {
@@ -32,6 +32,14 @@ provider "template" {
 
 provider "tls" {
   version = "1.0.0"
+}
+
+locals {
+  // The total amount of public CA certificates present in Tectonic.
+  // That is all custom CAs + kube CA + etcd CA + ingress CA
+  // This is a local constant, which needs to be dependency inject because TF cannot handle length() on computed values,
+  // see https://github.com/hashicorp/terraform/issues/10857#issuecomment-268289775.
+  tectonic_ca_count = "${length(var.tectonic_custom_ca_pem_list) + 3}"
 }
 
 variable "tectonic_config_version" {
@@ -511,4 +519,13 @@ variable "tectonic_kubelet_debug_config" {
   default = ""
 
   description = "(internal) debug flags for the kubelet (used in CI only)"
+}
+
+variable "tectonic_custom_ca_pem_list" {
+  type    = "list"
+  default = []
+
+  description = <<EOF
+(optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes.
+EOF
 }
