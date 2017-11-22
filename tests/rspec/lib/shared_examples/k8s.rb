@@ -131,7 +131,7 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
   end
 
   it 'passes the k8s conformance tests', :conformance_tests do
-    conformance_test = K8sConformanceTest.new(@cluster.kubeconfig, vpn_tunnel)
+    conformance_test = K8sConformanceTest.new(@cluster.kubeconfig, vpn_tunnel, @cluster.env_variables['PLATFORM'])
     expect { conformance_test.run }.to_not raise_error
   end
 end
