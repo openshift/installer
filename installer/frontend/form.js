@@ -216,10 +216,6 @@ export class Field extends Node {
     this.default = opts.default;
   }
 
-  getExtraData (clusterConfig) {
-    return _.get(clusterConfig, toExtraData(this.id));
-  }
-
   getData (clusterConfig) {
     return clusterConfig[this.id];
   }
@@ -326,13 +322,6 @@ export class Form extends Node {
 
     const invalidFields = this.fields.filter(field => !field.isValid(clusterConfig));
     return invalidFields.length === 0;
-  }
-
-  getExtraData (clusterConfig) {
-    return this.fields.filter(f => !f.isIgnored(clusterConfig)).reduce((acc, f) => {
-      acc[f.name] = f.getExtraData(clusterConfig);
-      return acc;
-    }, {});
   }
 
   getData (clusterConfig) {
