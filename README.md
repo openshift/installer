@@ -12,8 +12,6 @@ Goals of the project:
 - Customizable and modular: Change DNS providers, security settings, authentication providers
 - Highly Available by default: Deploy all Kubernetes components HA, use etcd Operator
 
-Check the [ROADMAP](ROADMAP.md) for details on where the project is headed.
-
 ## Getting Started
 
 **To use a tested release** on a supported platform, follow the links below.
