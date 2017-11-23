@@ -119,7 +119,7 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
     before(:all) do
       platform = @cluster.env_variables['PLATFORM']
       # remove platform AZURE when the JIRA https://jira.prod.coreos.systems/browse/INST-619 is fixed
-      skip_platform = %w[metal azure]
+      skip_platform = %w[metal azure gcp]
       skip "This test is not ready to run in #{platform}" if skip_platform.include?(platform)
     end
 
