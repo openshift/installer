@@ -38,24 +38,21 @@ class Node {
     return () => this.clock_ === now;
   }
 
-  getExtraStuff (dispatch, clusterConfig, FIELDS, now) {
+  getExtraStuff (dispatch, cc, FIELDS, now) {
     if (!this.getExtraStuff_) {
       return Promise.resolve();
     }
-    const path = toExtraDataInFly(this.id);
 
-    const unsatisfiedDeps = this.dependencies
-      .map(d => FIELDS[d])
-      .filter(d => !d.isValid(clusterConfig));
-
-    if (unsatisfiedDeps.length) {
+    if (_.some(this.dependencies, d => FIELDS[d] && !FIELDS[d].isValid(cc))) {
       // Dependencies are not all satisfied yet
       return Promise.resolve();
     }
 
     this.updateClock(now);
 
-    setIn(path, true, dispatch);
+    const inFlyPath = toExtraDataInFly(this.id);
+
+    setIn(inFlyPath, true, dispatch);
     const isNow = this.isNow;
 
     return this.getExtraStuff_(dispatch, isNow).then(data => {
@@ -63,7 +60,7 @@ class Node {
         return;
       }
       batchSetIn(dispatch, [
-        [path, undefined],
+        [inFlyPath, undefined],
         [toExtraData(this.id), data],
         [toExtraDataError(this.id), undefined],
       ]);
@@ -72,7 +69,7 @@ class Node {
         return;
       }
       batchSetIn(dispatch, [
-        [path, undefined],
+        [inFlyPath, undefined],
         [toExtraData(this.id), undefined],
         [toExtraDataError(this.id), e.message || e.toString()],
       ]);
