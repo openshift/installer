@@ -46,17 +46,17 @@ const tests = [
   {
     description: 'works with baremetal',
     jsonPath: 'metal.json',
-    progressPath: 'tectonic-baremetal.progress',
+    progressPath: 'metal.progress',
   },
   {
     description: 'works with aws',
     jsonPath: 'aws.json',
-    progressPath: 'tectonic-aws.progress',
+    progressPath: 'aws-custom-vpc.progress',
   },
   {
-    description: 'works with aws (existing subnets)',
+    description: 'works with aws (existing VPC)',
     jsonPath: 'aws-vpc.json',
-    progressPath: 'tectonic-aws-vpc.progress',
+    progressPath: 'aws-existing-vpc.progress',
   },
 ];
 
