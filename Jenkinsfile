@@ -389,7 +389,7 @@ pipeline {
           withCredentials(creds) {
             unstash 'clean-repo'
             sh """#!/bin/bash -xe
-            ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh
+            ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh jenkins-logs
             """
           }
         }
@@ -443,6 +443,14 @@ def runRSpecTest(testFilePath, dockerArgs) {
       } finally {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
         archiveArtifacts allowEmptyArchive: true, artifacts: 'tests/rspec/logs/**/*.log'
+        withDockerContainer(params.builder_image) {
+         withCredentials(creds) {
+           sh """#!/bin/bash -xe
+           ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs
+           """
+         }
+        }
+
         cleanWs notFailBuild: true
       }
 
