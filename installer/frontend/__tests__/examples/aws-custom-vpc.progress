@@ -7,7 +7,7 @@
       "us-west-1a": "10.0.0.0/19",
       "us-west-1c": "10.0.32.0/19"
     },
-    "awsHostedZoneId": "asfd",
+    "awsHostedZoneId": "Z30TY4B8NT090S",
     "awsRegion": "us-west-1",
     "awsSecretAccessKey": "awsSecretAccessKey",
     "awsSessionToken": "awsSessionToken",
@@ -36,14 +36,14 @@
     "aws_workers-storageSizeInGiB": 30,
     "aws_workers-storageType": "gp2",
     "caType": "self-signed",
-    "clusterName": "test",
-    "clusterSubdomain": "test",
+    "clusterName": "aws-custom-vpc",
+    "clusterSubdomain": "aws-custom-vpc",
     "etcdOption": "provisioned",
     "externalETCDClient": "",
     "extra": {
       "awsHostedZoneId": {
         "zoneToName": {
-          "asfd": "tectonic.dev.coreos.systems"
+          "Z30TY4B8NT090S": "tectonic-ci.de"
         }
       }
     },
