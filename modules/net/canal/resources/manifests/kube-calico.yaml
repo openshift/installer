@@ -171,7 +171,7 @@ spec:
               value: "${cluster_cidr}"
             # Enable IPIP
             - name: CALICO_IPV4POOL_IPIP
-              value: "always"
+              value: "Always"
             # Set based on the k8s node name.
             - name: NODENAME
               valueFrom:
@@ -230,6 +230,7 @@ spec:
               name: host-cni-bin
             - mountPath: /host/etc/cni/net.d
               name: cni-net-dir
+      terminationGracePeriodSeconds: 0
       volumes:
         # Used by calico/node.
         - name: lib-modules
