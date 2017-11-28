@@ -132,7 +132,7 @@ class Cluster
       3.times do |idx|
         env = env_variables
         env['TF_LOG'] = 'TRACE' if idx.positive?
-        return true if system(env, 'make -C ../.. apply')
+        return true if system(env, "make -C ../.. apply | tee ../../build/#{@name}/terraform-apply.log")
       end
     end
     raise 'Applying cluster failed'
@@ -143,7 +143,7 @@ class Cluster
       3.times do |idx|
         env = env_variables
         env['TF_LOG'] = 'TRACE' if idx.positive?
-        return true if system(env, 'make -C ../.. destroy')
+        return true if system(env, "make -C ../.. destroy | tee ../../build/#{@name}/terraform-destroy.log")
       end
     end
 
