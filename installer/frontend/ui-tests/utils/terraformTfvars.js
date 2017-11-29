@@ -11,7 +11,7 @@ const diffTfvars = (client, assetsZip, expected) => {
       if (diff !== undefined) {
         client.assert.fail(
           'The following terraform.tfvars attributes differ from their expected value: ' +
-          diff.map(({attr, lhs, rhs}) => `${attr} (expected: ${rhs}, got: ${lhs})`).join(', ')
+          diff.map(d => `\n  ${d.path.join('.')} (expected: ${d.rhs}, got: ${d.lhs})`)
         );
       }
     });
