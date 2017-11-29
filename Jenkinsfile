@@ -43,7 +43,7 @@ quayCreds = [
 ]
 
 defaultBuilderImage = 'quay.io/coreos/tectonic-builder:v1.41'
-tectonicSmokeTestEnvImage = 'quay.io/coreos/tectonic-smoke-test-env:v5.9'
+tectonicSmokeTestEnvImage = 'quay.io/coreos/tectonic-smoke-test-env:v5.9_tap'
 originalCommitId = 'UNKNOWN'
 
 pipeline {
@@ -335,7 +335,7 @@ pipeline {
                         rbenv install -s
                         gem install bundler
                         bundler install
-                        bundler exec rspec $specFile
+                        bundler exec rspec $specFile --format RspecTap::Formatter
                         """
                       }
                     }
@@ -431,7 +431,7 @@ def runRSpecTest(testFilePath, dockerArgs) {
                 unstash 'smoke-test-binary'
                 sh """#!/bin/bash -ex
                   cd tests/rspec
-                  bundler exec rspec ${testFilePath}
+                  bundler exec rspec ${testFilePath} --format RspecTap::Formatter
                 """
               }
             }
