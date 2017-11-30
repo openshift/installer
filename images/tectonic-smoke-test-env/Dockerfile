@@ -3,6 +3,7 @@ FROM ruby:2.4-slim
 ENV TERRAFORM_VERSION="0.10.7"
 ENV DOCKER_VERSION 1.13.1
 ENV CT_VERSION 0.5.0
+ENV BUNDLER_VERSION 1.16.0
 
 COPY ./tests/rspec/Gemfile* /tmp/app/
 
@@ -18,7 +19,7 @@ RUN echo "deb http://packages.cloud.google.com/apt cloud-sdk-jessie main" | tee 
     apt-get install --no-install-recommends -y -q \
     google-cloud-sdk
 
-RUN cd /tmp/app && bundler install && rm -r /tmp/app
+RUN cd /tmp/app && gem install bundler -v ${BUNDLER_VERSION} && bundle install && rm -r /tmp/app
 
 # Install kubectl
 RUN curl -LO https://storage.googleapis.com/kubernetes-release/release/$(curl -s https://storage.googleapis.com/kubernetes-release/release/stable.txt)/bin/linux/amd64/kubectl && \
