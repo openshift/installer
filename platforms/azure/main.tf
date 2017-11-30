@@ -9,8 +9,8 @@ data "azurerm_client_config" "current" {}
 module "container_linux" {
   source = "../../modules/container_linux"
 
-  channel = "${var.tectonic_container_linux_channel}"
-  version = "${var.tectonic_container_linux_version}"
+  release_channel = "${var.tectonic_container_linux_channel}"
+  release_version = "${var.tectonic_container_linux_version}"
 }
 
 module "resource_group" {

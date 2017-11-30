@@ -1,4 +1,4 @@
-variable "channel" {
+variable "release_channel" {
   type = "string"
 
   description = <<EOF
@@ -8,7 +8,7 @@ Examples: `stable`, `beta`, `alpha`
 EOF
 }
 
-variable "version" {
+variable "release_version" {
   type = "string"
 
   description = <<EOF
