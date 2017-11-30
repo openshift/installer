@@ -9,8 +9,8 @@ data "aws_availability_zones" "azs" {}
 module "container_linux" {
   source = "../../modules/container_linux"
 
-  channel = "${var.tectonic_container_linux_channel}"
-  version = "${var.tectonic_container_linux_version}"
+  release_channel = "${var.tectonic_container_linux_channel}"
+  release_version = "${var.tectonic_container_linux_version}"
 }
 
 module "vpc" {
