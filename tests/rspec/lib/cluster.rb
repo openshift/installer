@@ -118,6 +118,16 @@ class Cluster
       .map { |pod| [pod[0], nodes[pod[1]]] }.to_h
   end
 
+  def forensic
+    master_ip_addresses.each do |master_ip|
+      save_docker_logs(master_ip, @name)
+
+      ['bootkube', 'tectonic', 'kubelet', 'k8s-node-bootstrap'].each do |service|
+        print_service_logs(master_ip, service, @name)
+      end
+    end
+  end
+
   private
 
   def license_and_pull_secret_defined?
@@ -211,15 +221,6 @@ class Cluster
     wait_for_service('bootkube', ips)
     wait_for_service('tectonic', ips)
     puts 'HOORAY! The cluster is up'
-  rescue => e
-    ips.each do |master_ip|
-      save_docker_logs(master_ip, @name)
-
-      ['bootkube', 'tectonic', 'kubelet', 'k8s-node-bootstrap'].each do |service|
-        print_service_logs(master_ip, service, @name)
-      end
-    end
-    raise "Error in wait_for_bootstrapping: #{e}"
   end
 
   def wait_for_service(service, ips)
