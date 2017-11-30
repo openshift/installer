@@ -15,8 +15,8 @@
     "dev": "mkdir -p ../assets/frontend/scripts && ./node_modules/.bin/watchify --extension=.jsx app.jsx --verbose -d -o ../assets/frontend/scripts/app-bundle.js -t [ babelify ]",
     "postinstall": "./check-versions.js",
     "test": "./node_modules/.bin/jest",
-    "aws-installer-tests": "./node_modules/.bin/nightwatch --test ui-tests/tests/awsInstaller.js",
-    "baremetal-installer-tests": "./node_modules/.bin/nightwatch --test ui-tests/tests/bareMetalInstaller.js"
+    "aws-installer-tests": "./node_modules/.bin/nightwatch --test ui-tests/tests/aws.js",
+    "baremetal-installer-tests": "./node_modules/.bin/nightwatch --test ui-tests/tests/metal.js"
   },
   "jest": {
     "automock": false,
