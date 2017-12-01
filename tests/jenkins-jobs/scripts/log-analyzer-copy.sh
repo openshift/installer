@@ -20,7 +20,8 @@ fi
 
 for file in *.log
   do
-    mv "$file" "pn:${CHANGE_ID}-bn:${BUILD_NUMBER}-au:${CHANGE_AUTHOR}-fn:${file}"
+    #pn: pull request , bn: build number , au: author, sb: source branch , tb: target branch , fn: file name
+    mv "$file" "pn:${CHANGE_ID}-bn:${BUILD_NUMBER}-au:${CHANGE_AUTHOR}-sb:${CHANGE_BRANCH}-tb:${CHANGE_TARGET}-fn:${file}"
   done
 
 aws s3 sync ../templogfiles "s3://""${LOGSTASH_BUCKET}"
