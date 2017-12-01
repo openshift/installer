@@ -9,7 +9,7 @@ RSpec.describe 'bare-metal-standard' do
   before(:context) do |_context|
     MetalSupport.install_base_software
     MetalSupport.setup_bare(@tfvars_file)
-    MetalSupport.start_matchbox
+    MetalSupport.start_matchbox(@tfvars_file)
   end
 
   after(:context) do |_context|

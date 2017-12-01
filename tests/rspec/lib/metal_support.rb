@@ -69,14 +69,13 @@ module MetalSupport
     execute_command('cat /etc/resolv.conf')
   end
 
-  def self.start_matchbox
+  def self.start_matchbox(varfile)
     root = root_path
     matchbox_dir = "#{root}/matchbox"
     Dir.chdir(matchbox_dir) do
       system(env_variables_setup, 'sudo -E ./scripts/devnet create')
       wait_for_matchbox
-      puts 'Starting QEMU/KVM nodes'
-      system(env_variables_setup, 'sudo -E ./scripts/libvirt create')
+      wait_for_terraform(varfile)
     end
   end
 
@@ -115,6 +114,26 @@ module MetalSupport
         puts 'Matchbox up and running...'
         break
       end
+    end
+  end
+
+  # We fork this to run independently from the current execution because we need to wait for
+  # terraform apply to reach some state that provide the ipxe before we boot the nodes.
+  def self.wait_for_terraform(varfile)
+    fork do
+      node_mac = varfile.tectonic_metal_controller_macs[0].tr(':', '-')
+      Retriable.with_retries(limit: 24, sleep: 10) do
+        succeeded = system('curl --silent --fail -k ' \
+                    "\"http://matchbox.example.com:8080/ipxe?uuid=&mac=#{node_mac}&domain=&hostname=&serial=\"" \
+                    ' > /dev/null')
+        raise 'IPXE is not available yet' unless succeeded
+      end
+      puts 'Terraform is ready'
+      puts 'Starting QEMU/KVM nodes'
+      succeeded = system(env_variables_setup, 'sudo -E ./scripts/libvirt create')
+      raise 'Failed to start QEMU/KVM nodes' unless succeeded
+      puts 'Done with QEMU/KVM nodes'
+      exit 0
     end
   end
 
