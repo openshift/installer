@@ -94,6 +94,11 @@ module "bootkube" {
   master_count = "${var.tectonic_master_count}"
 
   cloud_config_path = ""
+
+  tectonic_networking = "${var.tectonic_networking}"
+  calico_mtu          = "1480"
+  cluster_cidr        = "${var.tectonic_cluster_cidr}"
+  pull_secret_path    = "${pathexpand(var.tectonic_pull_secret_path)}"
 }
 
 module "tectonic" {
@@ -290,28 +295,4 @@ module "dns" {
   worker_ip_addresses       = "${flatten(openstack_networking_port_v2.worker.*.all_fixed_ips)}"
   worker_public_ips         = "${openstack_networking_floatingip_v2.worker.*.address}"
   worker_public_ips_enabled = "${var.tectonic_openstack_disable_floatingip ? false : true}"
-}
-
-module "flannel_vxlan" {
-  source = "../../../modules/net/flannel_vxlan"
-
-  cluster_cidr     = "${var.tectonic_cluster_cidr}"
-  enabled          = "${var.tectonic_networking == "flannel"}"
-  container_images = "${var.tectonic_container_images}"
-}
-
-module "calico" {
-  source = "../../../modules/net/calico"
-
-  container_images = "${var.tectonic_container_images}"
-  cluster_cidr     = "${var.tectonic_cluster_cidr}"
-  enabled          = "${var.tectonic_networking == "calico"}"
-}
-
-module "canal" {
-  source = "../../../modules/net/canal"
-
-  container_images = "${var.tectonic_container_images}"
-  cluster_cidr     = "${var.tectonic_cluster_cidr}"
-  enabled          = "${var.tectonic_networking == "canal"}"
 }

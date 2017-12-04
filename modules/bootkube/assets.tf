@@ -4,8 +4,10 @@ resource "template_dir" "bootkube" {
   destination_dir = "./generated/manifests"
 
   vars {
-    hyperkube_image        = "${var.container_images["hyperkube"]}"
-    pod_checkpointer_image = "${var.container_images["pod_checkpointer"]}"
+    hyperkube_image                   = "${var.container_images["hyperkube"]}"
+    pod_checkpointer_image            = "${var.container_images["pod_checkpointer"]}"
+    tectonic_network_operator_image   = "${var.container_images["tectonic_network_operator"]}"
+    tectonic_network_operator_version = "${var.versions["tno"]}"
 
     etcd_servers = "${
       var.etcd_tls_enabled
@@ -32,6 +34,8 @@ resource "template_dir" "bootkube" {
     oidc_groups_claim   = "${var.oidc_groups_claim}"
     oidc_ca_cert        = "${base64encode(var.oidc_ca_cert)}"
 
+    pull_secret = "${base64encode(file(var.pull_secret_path))}"
+
     kube_ca_cert       = "${base64encode(var.kube_ca_cert_pem)}"
     apiserver_key      = "${base64encode(var.apiserver_key_pem)}"
     apiserver_cert     = "${base64encode(var.apiserver_cert_pem)}"
@@ -54,6 +58,10 @@ resource "template_dir" "bootkube" {
 
     cloud_provider_profile = "${var.cloud_provider != "" ? "${var.cloud_provider}" : "metal"}"
     cloud_config_path      = "${var.cloud_config_path}"
+
+    cluster_cidr        = "${var.cluster_cidr}"
+    tectonic_networking = "${var.tectonic_networking}"
+    calico_mtu          = "${var.calico_mtu}"
   }
 }
 
