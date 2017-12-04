@@ -37,7 +37,7 @@
     "tectonic_aws_region": "us-west-1",
     "tectonic_aws_ssh_key": "some-ssh-key",
     "tectonic_aws_worker_ec2_type": "t2.medium",
-    "tectonic_aws_worker_root_volume_iops": 1000,
+    "tectonic_aws_worker_root_volume_iops": 1500,
     "tectonic_aws_worker_root_volume_size": 1000,
     "tectonic_aws_worker_root_volume_type": "io1",
     "tectonic_base_domain": "example.com",
