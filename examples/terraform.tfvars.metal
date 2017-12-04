@@ -127,7 +127,7 @@ tectonic_master_count = "1"
 // (optional) Sets the MTU size for workload interfaces and the IP-in-IP tunnel device.
 // 
 // Note: This setting is only effective, if tectonic_networking is set to `calico`.
-// tectonic_metal_calico_mtu = "1500"
+// tectonic_metal_calico_mtu = "1480"
 
 // The domain name which resolves to controller node(s)
 // 

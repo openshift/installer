@@ -156,3 +156,18 @@ variable "service_cidr" {
   description = "A CIDR notation IP range from which to assign service cluster IPs"
   type        = "string"
 }
+
+variable "cluster_cidr" {
+  description = "A CIDR notation IP range from which to assign pod IPs"
+  type        = "string"
+}
+
+variable "calico_mtu" {
+  description = "sets the MTU size for workload interfaces and the IP-in-IP tunnel device"
+  type        = "string"
+}
+
+variable "tectonic_networking" {
+  description = "configures the network to be used in the cluster"
+  type        = "string"
+}
