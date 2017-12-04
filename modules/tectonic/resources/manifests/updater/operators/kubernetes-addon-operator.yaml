@@ -1,0 +1,45 @@
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: kubernetes-addon-operator
+  namespace: tectonic-system
+  labels:
+    k8s-app: kubernetes-addon-operator
+    managed-by-channel-operator: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: kubernetes-addon-operator
+  template:
+    metadata:
+      labels:
+        k8s-app: kubernetes-addon-operator
+        tectonic-app-version-name: kubernetes_addon
+    spec:
+      containers:
+      - name: kubernetes-addon-operator
+        image: ${kubernetes_addon_operator_image}
+        resources:
+          limits:
+            cpu: 20m
+            memory: 50Mi
+          requests:
+            cpu: 20m
+            memory: 50Mi
+        volumeMounts:
+        - name: cluster-config
+          mountPath: /etc/cluster-config
+      restartPolicy: Always
+      imagePullSecrets:
+      - name: coreos-pull-secret
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65534
+      volumes:
+      - name: cluster-config
+        configMap:
+          name: cluster-config-v1
+          items:
+          - key: addon-config
+            path: addon-config
