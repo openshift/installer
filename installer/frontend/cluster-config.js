@@ -177,7 +177,7 @@ export const toAWS_TF = ({clusterConfig: cc, dirty}, FORMS) => {
       tectonic_aws_master_root_volume_type: controllers[STORAGE_TYPE],
       tectonic_aws_worker_ec2_type: workers[INSTANCE_TYPE],
       tectonic_aws_worker_iam_role_name: workers[IAM_ROLE] === IAM_ROLE_CREATE_OPTION ? undefined : workers[IAM_ROLE],
-      tectonic_aws_worker_root_volume_iops: workers[STORAGE_TYPE] === 'io1' ? controllers[STORAGE_IOPS] : undefined,
+      tectonic_aws_worker_root_volume_iops: workers[STORAGE_TYPE] === 'io1' ? workers[STORAGE_IOPS] : undefined,
       tectonic_aws_worker_root_volume_size: workers[STORAGE_SIZE_IN_GIB],
       tectonic_aws_worker_root_volume_type: workers[STORAGE_TYPE],
       tectonic_aws_ssh_key: cc[AWS_SSH],
