@@ -43,7 +43,7 @@ quayCreds = [
 ]
 
 defaultBuilderImage = 'quay.io/coreos/tectonic-builder:v1.41'
-tectonicSmokeTestEnvImage = 'quay.io/coreos/tectonic-smoke-test-env:v5.9_tap'
+tectonicSmokeTestEnvImage = 'quay.io/coreos/tectonic-smoke-test-env:v5.11_debian'
 originalCommitId = 'UNKNOWN'
 
 pipeline {
