@@ -25,6 +25,16 @@ job("triggers/tectonic-installer-nightly-trigger") {
             unstableThreshold("UNSTABLE")
             failureThreshold("FAILURE")
           }
+          configs {
+            booleanParameters {
+              configs {
+                booleanParameterConfig {
+                  name('PLATFORM/GCP')
+                  value(false)
+                }
+              }
+            }
+          }
         }
       }
     }
