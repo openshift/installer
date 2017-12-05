@@ -10,8 +10,12 @@ require 'pages/login_page'
 require 'name_generator'
 require 'password_generator'
 require 'webdriver_helpers'
-require 'k8s_conformance_tests'
+require 'test_container'
 require 'with_retries'
+
+COMPONENT_TESTS = [
+  { 'name' => 'console', 'image' => 'quay.io/repository/coreos/tectonic-console-tester:v11' }
+].freeze
 
 RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
   include_examples('withBuildFolderSetup', tf_vars_path)
@@ -155,8 +159,25 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
   end
 
   it 'passes the k8s conformance tests', :conformance_tests do
-    conformance_test = K8sConformanceTest.new(@cluster.kubeconfig, vpn_tunnel, @cluster.env_variables['PLATFORM'])
+    conformance_test = TestContainer.new(
+      ENV['KUBE_CONFORMANCE_IMAGE'],
+      @cluster.kubeconfig,
+      vpn_tunnel,
+      @cluster.env_variables['PLATFORM']
+    )
     expect { conformance_test.run }.to_not raise_error
+  end
+
+  COMPONENT_TESTS.map do |test|
+    it "passes #{test.name} component tests", :component_tests do
+      test_container = TestContainer.new(
+        test.image,
+        @cluster.kubeconfig,
+        vpn_tunnel,
+        @cluster.env_variables['PLATFORM']
+      )
+      expect { test_container.run }.to_not raise_error
+    end
   end
 end
 

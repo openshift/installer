@@ -80,6 +80,11 @@ pipeline {
       description: ''
     )
     booleanParam(
+      name: 'RUN_COMPONENT_TESTS',
+      defaultValue: true,
+      description: ''
+    )
+    booleanParam(
       name: 'RUN_GUI_TESTS',
       defaultValue: true,
       description: ''
