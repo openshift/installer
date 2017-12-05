@@ -16,6 +16,7 @@ resource "template_dir" "tectonic" {
     identity_image                     = "${var.container_images["identity"]}"
     ingress_controller_image           = "${var.container_images["ingress_controller"]}"
     kube_version_operator_image        = "${var.container_images["kube_version_operator"]}"
+    kubernetes_addon_operator_image    = "${var.container_images["kubernetes_addon_operator"]}"
     node_agent_image                   = "${var.container_images["node_agent"]}"
     etcd_operator_image                = "${var.container_images["etcd_operator"]}"
     stats_emitter_image                = "${var.container_images["stats_emitter"]}"
@@ -24,7 +25,6 @@ resource "template_dir" "tectonic" {
     tectonic_prometheus_operator_image = "${var.container_images["tectonic_prometheus_operator"]}"
     tectonic_etcd_operator_image       = "${var.container_images["tectonic_etcd_operator"]}"
     tectonic_cluo_operator_image       = "${var.container_images["tectonic_cluo_operator"]}"
-    kubernetes_addon_operator_image    = "${var.container_images["kubernetes_addon_operator"]}"
 
     tectonic_monitoring_auth_base_image = "${var.container_base_images["tectonic_monitoring_auth"]}"
     config_reload_base_image            = "${var.container_base_images["config_reload"]}"
