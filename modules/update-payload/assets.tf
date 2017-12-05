@@ -23,6 +23,5 @@ resource "template_dir" "payload_appversions" {
     tectonic_version               = "${var.tectonic_versions["tectonic"]}"
     tectonic_etcd_operator_version = "${var.tectonic_versions["tectonic-etcd"]}"
     tectonic_cluo_operator_version = "${var.tectonic_versions["cluo"]}"
-    kubernetes_addon_version       = "${var.versions["kubernetes_addon"]}"
   }
 }
