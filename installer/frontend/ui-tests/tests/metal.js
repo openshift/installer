@@ -3,7 +3,7 @@ const wizard = require('../utils/wizard');
 const tfvarsUtil = require('../utils/terraformTfvars');
 
 // Test input .progress file
-const input = tfvarsUtil.loadJson('tectonic-baremetal.progress').clusterConfig;
+const input = tfvarsUtil.loadJson('metal.progress').clusterConfig;
 
 const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, 'metal', input, nextInitiallyDisabled);
 

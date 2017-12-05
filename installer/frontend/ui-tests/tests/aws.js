@@ -3,7 +3,7 @@ const wizard = require('../utils/wizard');
 const tfvarsUtil = require('../utils/terraformTfvars');
 
 // Test input .progress file
-const input = tfvarsUtil.loadJson('tectonic-aws.progress').clusterConfig;
+const input = tfvarsUtil.loadJson('aws-custom-vpc.progress').clusterConfig;
 
 const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, 'aws', input, nextInitiallyDisabled);
 
