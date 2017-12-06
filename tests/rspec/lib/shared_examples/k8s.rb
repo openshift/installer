@@ -55,7 +55,7 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
       cmd = "sudo sh -c 'cat /etc/kubernetes/inactive-manifests/kube-system-kube-apiserver-*.json'"
 
       Retriable.with_retries(limit: 20, sleep: 3) do
-        stdout, stderr, exit_code = ssh_exec(ip, cmd, 20)
+        stdout, stderr, exit_code = ssh_exec(ip, cmd, nil, 20)
         unless exit_code.zero? && JSON.parse(stdout)
           raise "could not retrieve manifest checkpoints via #{cmd} on ip #{ip}, "\
                 "last try failed with:\n#{stdout}\n#{stderr}\nstatus code: #{exit_code}"
@@ -75,7 +75,7 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
       cmd = "sudo sh -c '#{cmd}'"
 
       Retriable.with_retries(limit: 20, sleep: 3) do
-        stdout, stderr, exit_code = ssh_exec(ip, cmd, 20)
+        stdout, stderr, exit_code = ssh_exec(ip, cmd, nil, 20)
         unless exit_code.zero?
           raise "could not retrieve secret checkpoints via #{cmd} on ip #{ip}, "\
                 "last try failed with:\n#{stdout}\n#{stderr}\nstatus code: #{exit_code}"

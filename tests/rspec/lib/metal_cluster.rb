@@ -23,6 +23,19 @@ class MetalCluster < Cluster
     master_ip_addresses[0]
   end
 
+  def worker_ip_addresses
+    workers_ip_address = []
+    workers = tf_value('var.tectonic_metal_worker_domains')
+
+    # the output is "[\n  node2.example.com,\n  node3.example.com\n]"
+    workers = workers.delete("\n[]").split(',')
+    workers.each do |value|
+      value.strip!
+      workers_ip_address.push(value)
+    end
+    workers_ip_address
+  end
+
   def tectonic_console_url
     console_url = tf_value('var.tectonic_metal_ingress_domain')
     if console_url.empty?

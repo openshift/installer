@@ -125,6 +125,14 @@ class Cluster
         print_service_logs(master_ip, service, @name)
       end
     end
+
+    worker_ip_addresses.each do |worker_ip|
+      save_docker_logs(worker_ip, @name, master_ip_address)
+
+      ['kubelet'].each do |service|
+        print_service_logs(worker_ip, service, @name, master_ip_address)
+      end
+    end
   end
 
   private

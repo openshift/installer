@@ -47,23 +47,21 @@ class AwsCluster < Cluster
   end
 
   def master_ip_addresses
-    ssh_master_ip_addresses = []
-    Dir.chdir(@build_path) do
-      terraform_state = `terraform state show module.masters.aws_autoscaling_group.masters`.chomp.split("\n")
-      terraform_state.each do |value|
-        attributes = value.split('=')
-        next unless attributes[0].strip.eql?('id')
-        instances_id = AwsSupport.sorted_auto_scaling_instances(attributes[1].strip.chomp, @aws_region)
-        instances_id.each do |instance_id|
-          ssh_master_ip_addresses.push AwsSupport.preferred_instance_ip_address(instance_id, @aws_region)
-        end
-      end
-    end
-    ssh_master_ip_addresses
+    aws_autoscaling_group_master = @tfstate_file.value('module.masters.aws_autoscaling_group.masters', 'id')
+    instances_id = AwsSupport.sorted_auto_scaling_instances(aws_autoscaling_group_master, @aws_region)
+
+    instances_id.map { |instance_id| AwsSupport.preferred_instance_ip_address(instance_id, @aws_region) }
   end
 
   def master_ip_address
     master_ip_addresses[0]
+  end
+
+  def worker_ip_addresses
+    aws_autoscaling_group_worker = @tfstate_file.value('module.workers.aws_autoscaling_group.workers', 'id')
+    instances_id = AwsSupport.sorted_auto_scaling_instances(aws_autoscaling_group_worker, @aws_region)
+
+    instances_id.map { |instance_id| AwsSupport.preferred_instance_ip_address(instance_id, @aws_region) }
   end
 
   def check_prerequisites

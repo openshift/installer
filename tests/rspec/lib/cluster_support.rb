@@ -2,12 +2,12 @@
 
 require 'fileutils'
 
-def save_docker_logs(ip, cluster_name)
+def save_docker_logs(destination_ip, cluster_name, via_host_ip = nil)
   # Get the Container IDs
   command = "docker ps -a --format '{{.ID}} {{.Names}}'"
-  stdout, stderr, exitcode = ssh_exec(ip, command)
+  stdout, stderr, exitcode = ssh_exec(destination_ip, command, via_host_ip)
   if exitcode != 0
-    puts "failed to execut docker ps on #{ip} (exitcode #{exitcode})"
+    puts "failed to execut docker ps on #{destination_ip} (exitcode #{exitcode})"
     puts "Standard error: \n#{stderr}"
     return
   end
@@ -19,33 +19,33 @@ def save_docker_logs(ip, cluster_name)
     id, image_name = container.split(' ')
     command_log = "docker logs #{id}"
     puts "Trying to get the docker logs: #{command_log} - image: #{image_name}"
-    stdout, stderr, exitcode = ssh_exec(ip, command_log)
+    stdout, stderr, exitcode = ssh_exec(destination_ip, command_log, via_host_ip)
     output = ''
-    output += "Docker Logs of #{image_name} on #{ip} (exitcode #{exitcode})\n"
+    output += "Docker Logs of #{image_name} on #{destination_ip} (exitcode #{exitcode})\n"
     output += "Standard output: \n#{stdout}"
     output += "\nStandard error: \n#{stderr}"
-    output += "\nEnd of docker logs of #{image_name} container on #{ip}"
+    output += "\nEnd of docker logs of #{image_name} container on #{destination_ip}"
 
-    save_to_file(cluster_name, 'docker', ip, image_name, output)
+    save_to_file(cluster_name, 'docker', destination_ip, image_name, output)
   end
 rescue => e
-  puts "failed to retrieve docker logs on ip #{ip} with: #{e}"
+  puts "failed to retrieve docker logs on ip #{destination_ip} with: #{e}"
 end
 
-def print_service_logs(ip, service, cluster_name)
+def print_service_logs(destination_ip, service, cluster_name, via_host_ip = nil)
   command = "journalctl --no-pager -u '#{service}'"
   begin
-    stdout, stderr, exitcode = ssh_exec(ip, command)
+    stdout, stderr, exitcode = ssh_exec(destination_ip, command, via_host_ip)
     output = ''
-    output += "Journal of #{service} service on #{ip} (exitcode #{exitcode})\n"
+    output += "Journal of #{service} service on #{destination_ip} (exitcode #{exitcode})\n"
     output += "Standard output: \n#{stdout}"
     output += "\nStandard error: \n#{stderr}"
-    output += "\nEnd of journal of #{service} service on #{ip}"
+    output += "\nEnd of journal of #{service} service on #{destination_ip}"
     puts output
 
-    save_to_file(cluster_name, 'systemd', ip, service, output)
+    save_to_file(cluster_name, 'systemd', destination_ip, service, output)
   rescue => e
-    puts "Cannot retrieve logs of service #{service} - failed to ssh exec on ip #{ip} with: #{e}"
+    puts "Cannot retrieve logs of service #{service} - failed to ssh exec on ip #{destination_ip} with: #{e}"
   end
 end
 

@@ -48,6 +48,14 @@ class GcpCluster < Cluster
     master_ip_addresses[0]
   end
 
+  def worker_ip_addresses
+    gcloud_command = "compute instances list \
+--format='value(networkInterfaces[0].accessConfigs[0].natIP)' \
+--filter='name~#{@name}.*worker.*'"
+    ip_addresses = @gcloud.run(gcloud_command).split("\n")
+    ip_addresses
+  end
+
   def tectonic_console_url
     Dir.chdir(@build_path) do
       console_url = `echo module.dns.kube_ingress_fqdn | terraform console ../../platforms/gcp`.chomp
