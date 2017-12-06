@@ -27,7 +27,11 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
   end
 
   after(:all) do
-    @cluster.stop
+    begin
+      @cluster.stop
+    rescue => e
+      puts "Destroy failed, however we will not fail the test. Error: #{e}"
+    end
   end
 
   # See https://stackoverflow.com/a/45936219/4011134
