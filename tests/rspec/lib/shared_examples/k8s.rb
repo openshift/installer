@@ -26,6 +26,8 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
     @cluster.start
   end
 
+  # after(:all) hooks that are defined first are executed last
+  # Make sure to run `@cluster.stop` after `@cluster.forensic`
   after(:all) do
     begin
       @cluster.stop
