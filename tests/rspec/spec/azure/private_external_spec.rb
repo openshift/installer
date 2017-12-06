@@ -28,7 +28,7 @@ RSpec.describe 'azure-private-external' do
   end
 
   context 'private cluster' do
-    include_examples('withRunningClusterExistingBuildFolder')
+    include_examples('withRunningClusterExistingBuildFolder', true)
 
     it 'should have a vpn' do
     end

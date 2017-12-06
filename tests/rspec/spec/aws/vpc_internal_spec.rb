@@ -17,7 +17,7 @@ RSpec.describe 'aws-vpc' do
   end
 
   context 'with a cluster' do
-    include_examples('withRunningClusterExistingBuildFolder')
+    include_examples('withRunningClusterExistingBuildFolder', true)
   end
 
   after(:all) do
