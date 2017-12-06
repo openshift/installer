@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 data "template_file" "etcd_hostname_list" {
-  count    = "${var.tectonic_self_hosted_etcd != "" ? 0 : max(var.tectonic_etcd_count, 1)}"
+  count    = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.google_compute_zones.available.names) == 5 ? 5 : 3}"
   template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
 }
 
