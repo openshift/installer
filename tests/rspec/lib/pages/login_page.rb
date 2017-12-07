@@ -14,9 +14,9 @@ class Login < BasePage
   SUBMIT_INPUT            = { id: 'submit-login' }.freeze
   CLUSTER_STATUS_LABEL    = { id: 'resource-title' }.freeze
   LOGIN_FAIL              = { id: 'login-error' }.freeze
-  ADMIN_SIDE_BAR          = { css: '#sidebar > div.navigation-container > div:nth-child(6) > div' }.freeze
+  ADMIN_SIDE_BAR          = { css: '#sidebar > div.navigation-container > div:nth-child(5) > div' }.freeze
   LOGOUT                  = {
-    css: '#sidebar > div.navigation-container > div:nth-child(6) > ul > li:nth-child(2) > a'
+    css: '#sidebar > div.navigation-container > div:nth-child(5) > ul > li:nth-child(2) > a'
   }.freeze
 
   def initialize(driver)
