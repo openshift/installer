@@ -7,7 +7,7 @@ import { connect } from 'react-redux';
 import { withNav } from '../nav';
 import { validate } from '../validate';
 import { readFile } from '../readfile';
-import { toError, toAsyncError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from '../utils';
+import { toError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from '../utils';
 
 import { dirtyActions, configActions } from '../actions';
 import { DESELECTED_FIELDS } from '../cluster-config.js';
@@ -299,9 +299,7 @@ export const Selector = props => {
 
 const stateToProps = ({clusterConfig, dirty}, {field}) => ({
   value: _.get(clusterConfig, field),
-  invalid: _.get(clusterConfig, toError(field))
-    || _.get(clusterConfig, toAsyncError(field))
-    || _.get(clusterConfig, toExtraDataError(field)),
+  invalid: _.get(clusterConfig, toError(field)) || _.get(clusterConfig, toExtraDataError(field)),
   isDirty: _.get(dirty, field),
   extraData: _.get(clusterConfig, toExtraData(field)),
   inFly: _.get(clusterConfig, toInFly(field)) || _.get(clusterConfig, toExtraDataInFly(field)),

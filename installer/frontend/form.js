@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 
 import { dispatch as dispatch_ } from './store';
 import { configActions, registerForm } from './actions';
-import { toError, toIgnore, toAsyncError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from './utils';
+import { toError, toIgnore, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from './utils';
 import { ErrorComponent, ConnectedFieldList } from './components/ui';
 import { TectonicGA } from './tectonic-ga';
 import { PLATFORM_TYPE } from './cluster-config';
@@ -25,7 +25,6 @@ class Node {
     this.validator = opts.validator || nop;
     this.dependencies = opts.dependencies || [];
     this.ignoreWhen_ = opts.ignoreWhen;
-    this.asyncValidator_ = opts.asyncValidator;
     this.getExtraStuff_ = opts.getExtraStuff;
   }
 
@@ -76,7 +75,7 @@ class Node {
     });
   }
 
-  async validate (dispatch, getState, oldCC, now) {
+  async validate (dispatch, getState, oldCC) {
     const id = this.id;
     const clusterConfig = getState().clusterConfig;
     const value = this.getData(clusterConfig);
@@ -93,7 +92,7 @@ class Node {
     }
 
     console.debug(`validating ${this.name}`);
-    const syncError = this.validator(value, clusterConfig, oldValue, oldCC);
+    const syncError = await this.validator(value, clusterConfig, oldValue, oldCC, dispatch);
     if (!_.isEmpty(syncError)) {
       console.info(`sync error ${this.name}: ${JSON.stringify(syncError)}`);
       batches.push([syncErrorPath, syncError]);
@@ -107,58 +106,10 @@ class Node {
       batchSetIn(dispatch, batches);
     }
 
-    const isValid = this.isValid(getState().clusterConfig, true);
+    const isValid = this.isValid(getState().clusterConfig);
     if (!isValid) {
       batchSetIn(dispatch, batches);
       return false;
-    }
-
-    if (!this.asyncValidator_) {
-      batchSetIn(dispatch, batches);
-      return true;
-    }
-
-    batches.push([inFlyPath, true]);
-    batchSetIn(dispatch, batches);
-
-    let asyncError;
-
-    this.updateClock(now);
-
-    try {
-      asyncError = await this.asyncValidator_(dispatch, getState, value, oldValue, this.isNow, oldCC);
-    } catch (e) {
-      asyncError = e.message || e.toString();
-    }
-
-    if (this.clock_ !== now) {
-      console.log(`${this.name} is stale ${this.clock_} ${now}`);
-      return false;
-    }
-
-    batches.push([inFlyPath, false]);
-
-    const asyncErrorPath = toAsyncError(id);
-
-    if (!_.isEmpty(asyncError)) {
-      if (!_.isString(asyncError)) {
-        console.warn(`asyncError is not a string!?:\n${JSON.stringify(asyncError)}`);
-        if (asyncError.type && asyncError.payload) {
-          console.warn('Did you accidentally return a dispatch?');
-          asyncError = null;
-        } else {
-          asyncError = asyncError.toString ? asyncError.toString() : JSON.stringify(asyncError);
-        }
-      }
-      console.log(`asyncError for ${this.name}: ${asyncError}`);
-      batches.push([asyncErrorPath, asyncError]);
-      batchSetIn(dispatch, batches);
-      return false;
-    }
-
-    const oldAsyncError = _.get(getState().clusterConfig, asyncErrorPath);
-    if (oldAsyncError) {
-      batches.push([asyncErrorPath, undefined]);
     }
 
     batchSetIn(dispatch, batches);
@@ -188,7 +139,7 @@ async function promisify (dispatch, getState, oldCC, now, deps, FIELDS) {
     const { id } = field;
     field.ignoreWhen(dispatch, clusterConfig);
     return field.getExtraStuff(dispatch, clusterConfig, FIELDS, now)
-      .then(() => field.validate(dispatch, getState, oldCC, now))
+      .then(() => field.validate(dispatch, getState, oldCC))
       .then(res => {
         if (!res) {
           console.debug(`${id} is invalid`);
@@ -231,7 +182,7 @@ export class Field extends Node {
     // TODO: (kans) - We need to lock the entire validation chain, not just validate proper
     setIn(id, value, dispatch);
 
-    const isValid = await this.validate(dispatch, getState, oldCC, now);
+    const isValid = await this.validate(dispatch, getState, oldCC);
 
     if (!isValid) {
       const dirty = getState().dirty;
@@ -268,16 +219,15 @@ export class Field extends Node {
     console.info(`finish validating ${this.name} ${isValid}`);
   }
 
-  isValid (clusterConfig, syncOnly) {
-    const id = this.id;
-    const value = _.get(clusterConfig, id);
-    const ignore = _.get(clusterConfig, toIgnore(id));
-    let error = _.get(clusterConfig, toError(id));
-    if (!error && !syncOnly) {
-      error = _.get(clusterConfig, toAsyncError(id)) || _.get(clusterConfig, toExtraDataError(id));
+  isValid (cc) {
+    if (_.get(cc, toIgnore(this.id))) {
+      return true;
     }
-
-    return ignore || value !== '' && value !== undefined && _.isEmpty(error);
+    const value = _.get(cc, this.id);
+    return value !== '' &&
+      value !== undefined &&
+      _.isEmpty(_.get(cc, toError(this.id))) &&
+      _.isEmpty(_.get(cc, toExtraDataError(this.id)));
   }
 
   inFly (clusterConfig) {
@@ -295,25 +245,18 @@ export class Form extends Node {
     this.dependencies = [...this.fieldIDs].concat(this.dependencies);
 
     this.errorComponent = connect(
-      ({clusterConfig}) => ({
-        error: _.get(clusterConfig, toError(id)) || _.get(clusterConfig, toAsyncError(id)),
-      })
+      ({clusterConfig}) => ({error: _.get(clusterConfig, toError(id))})
     )(ErrorComponent);
     registerForm(this, fields);
   }
 
-  isValid (clusterConfig, syncOnly) {
+  isValid (clusterConfig) {
     const ignore = _.get(clusterConfig, toIgnore(this.id));
     if (ignore) {
       return true;
     }
 
-    let error = _.get(clusterConfig, toError(this.id));
-    if (!syncOnly && !error) {
-      error = _.get(clusterConfig, toAsyncError(this.id));
-    }
-
-    if (error) {
+    if (_.get(clusterConfig, toError(this.id))) {
       return false;
     }
 
@@ -419,11 +362,11 @@ export class FieldList extends Field {
       child[name] = _.cloneDeep(f.default);
     });
     append(this.id, child, dispatch);
-    this.validate(dispatch, getState, getState().clusterConfig, () => true);
+    this.validate(dispatch, getState, getState().clusterConfig);
   }
 
   remove (dispatch, i, getState) {
     removeAt(this.id, i, dispatch);
-    this.validate(dispatch, getState, getState().clusterConfig, () => true);
+    this.validate(dispatch, getState, getState().clusterConfig);
   }
 }
