@@ -14,12 +14,12 @@ const pageCommands = {
     this.expect.element('@alertErrorTitle').to.not.be.present;
     this.expect.element('@alertWarningTitle').to.not.be.present;
 
-    this.setField('#podCIDR', '10.2.0.0/21');
+    this.setField('#podCIDR', '10.2.0.0/22');
     this.expectNoValidationError();
     this.expect.element('@alertErrorTitle').to.not.be.present;
     this.expect.element('@alertWarningTitle').text.to.equal('Pod range mostly assigned');
 
-    this.setField('#podCIDR', '10.2.0.0/22');
+    this.setField('#podCIDR', '10.2.0.0/23');
     this.expectNoValidationError();
     this.expect.element('@alertErrorTitle').text.to.equal('Pod range too small');
     this.expect.element('@alertWarningTitle').to.not.be.present;
@@ -44,51 +44,60 @@ const pageCommands = {
     this.selectOption('#awsHostedZoneId option[value=Z1ILIMNSJGTMO2]');
     this.selectOption('#awsSplitDNS option[value=off]');
 
-    this.click('@advanced');
-    this.expect.element('#awsVpcCIDR').to.be.visible;
-    this.expect.element('@masterSubnet1a').to.be.visible;
-    this.expect.element('@masterSubnet1c').to.be.visible;
-    this.expect.element('@workerSubnet1a').to.be.visible;
-    this.expect.element('@workerSubnet1c').to.be.visible;
+    // If a AWS VPC CIDR is specified, do a full test of the advanced networking options
+    const isAdvanced = !!json.awsVpcCIDR || !!json.awsControllerSubnets || !!json.awsWorkerSubnets;
 
-    // Subnet CIDR outside of VPC CIDR
-    this.setField('#awsVpcCIDR', '0.0.0.0/20');
-    this.expect.element('@alertError').text.to.contain('vpcCIDR (0.0.0.0/20) does not contain instanceCIDR');
-    this.setField('#awsVpcCIDR', '10.0.0.0/16');
-    this.expect.element('@alertError').to.not.be.present;
+    if (isAdvanced) {
+      this.click('@advanced');
+      this.expect.element('#awsVpcCIDR').to.be.visible;
+      this.expect.element('@masterSubnet1a').to.be.visible;
+      this.expect.element('@masterSubnet1c').to.be.visible;
+      this.expect.element('@workerSubnet1a').to.be.visible;
+      this.expect.element('@workerSubnet1c').to.be.visible;
 
-    // Overlapping public subnets
-    this.setField('@masterSubnet1c', '10.0.0.0/19');
-    this.expect.element('@alertError').text.to.contain('CIDR of subnet 1 (10.0.0.0/19) overlaps with CIDR of subnet 0');
-    this.setField('@masterSubnet1c', '10.0.32.0/19');
-    this.expect.element('@alertError').to.not.be.present;
+      // Subnet CIDR outside of VPC CIDR
+      this.setField('#awsVpcCIDR', '0.0.0.0/20');
+      this.expect.element('@alertError').text.to.contain('vpcCIDR (0.0.0.0/20) does not contain instanceCIDR');
+      this.setField('#awsVpcCIDR', '10.0.0.0/16');
+      this.expect.element('@alertError').to.not.be.present;
 
-    // Overlapping private subnets
-    this.setField('@workerSubnet1c', '10.0.64.0/19');
-    this.expect.element('@alertError').text.to.contain('CIDR of subnet 1 (10.0.64.0/19) overlaps with CIDR of subnet 0');
-    this.setField('@workerSubnet1c', '10.0.96.0/19');
-    this.expect.element('@alertError').to.not.be.present;
+      // Overlapping public subnets
+      this.setField('@masterSubnet1c', '10.0.0.0/19');
+      this.expect.element('@alertError').text.to.contain('CIDR of subnet 1 (10.0.0.0/19) overlaps with CIDR of subnet 0');
+      this.setField('@masterSubnet1c', '10.0.32.0/19');
+      this.expect.element('@alertError').to.not.be.present;
 
-    // Pod CIDR overlaps with AWS VPC CIDR
-    this.setField('#podCIDR', '10.0.0.0/16');
-    this.expect.element('@alertError').text.to.contain('IP Network "10.0.0.0/16" has been given twice');
+      // Overlapping private subnets
+      this.setField('@workerSubnet1c', '10.0.64.0/19');
+      this.expect.element('@alertError').text.to.contain('CIDR of subnet 1 (10.0.64.0/19) overlaps with CIDR of subnet 0');
+      this.setField('@workerSubnet1c', '10.0.96.0/19');
+      this.expect.element('@alertError').to.not.be.present;
 
-    // Pod CIDR overlaps with Service CIDR
-    this.setField('#podCIDR', '10.3.0.0/16');
-    this.expect.element('@alertError').text.to.contain('IP Network "10.3.0.0/16" has been given twice');
+      // Pod CIDR overlaps with AWS VPC CIDR
+      this.setField('#podCIDR', '10.0.0.0/16');
+      this.expect.element('@alertError').text.to.contain('IP Network "10.0.0.0/16" has been given twice');
 
-    this.setField('#podCIDR', '10.2.0.0/16');
-    this.expect.element('@alertError').to.not.be.present;
+      // Pod CIDR overlaps with Service CIDR
+      this.setField('#podCIDR', '10.3.0.0/16');
+      this.expect.element('@alertError').text.to.contain('IP Network "10.3.0.0/16" has been given twice');
 
-    this.testCidrInputs(json);
+      this.setField('#podCIDR', '10.2.0.0/16');
+      this.expect.element('@alertError').to.not.be.present;
+
+      this.testCidrInputs(json);
+    }
 
     this.selectOption('@vpcOptionExistingPublic');
     this.expect.element('#awsVpcId').to.be.visible;
-    this.testCidrInputs(json);
+    if (isAdvanced) {
+      this.testCidrInputs(json);
+    }
 
     this.selectOption('@vpcOptionExistingPrivate');
     this.expect.element('#awsVpcId').to.be.visible;
-    this.testCidrInputs(json);
+    if (isAdvanced) {
+      this.testCidrInputs(json);
+    }
 
     this.selectOption('@vpcOptionNewPublic');
   },
