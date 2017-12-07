@@ -100,7 +100,7 @@ export const configActions = {
     if (!field) {
       throw new Error(`${fieldName} has no field for refreshing`);
     }
-    field.getExtraStuff(dispatch, getState().clusterConfig, FIELDS, 0);
+    field.getExtraStuff(dispatch, getState, FIELDS);
   },
   updateField: (fieldName, inputValue) => (dispatch, getState) => {
     const [name, ...split] = fieldName.split('.');
@@ -108,7 +108,6 @@ export const configActions = {
     if (!field) {
       throw new Error(`${name} has no field for updating`);
     }
-
     return field.update(dispatch, inputValue, getState, FIELDS, FIELD_TO_DEPS, split);
   },
 };
@@ -117,50 +116,31 @@ export const __deleteEverything__ = () => {
   [FIELDS, FIELD_TO_DEPS, FORMS, DEFAULT_CLUSTER_CONFIG]
     .forEach(o => _.keys(o).forEach(k => delete o[k]));
 
-  ['error', 'ignore', 'inFly', 'extra'].forEach(k => DEFAULT_CLUSTER_CONFIG[k] = {});
+  ['error', 'inFly', 'extra'].forEach(k => DEFAULT_CLUSTER_CONFIG[k] = {});
 
   return {type: configActionTypes.RESET};
 };
 
-export const validateAllFields = cb => async (dispatch, getState) => {
-  const initialCC = getState().clusterConfig;
-  const unvisitedFields = new Set(_.values(FIELDS));
-  const visitedNames = new Set();
-
-  const visit = async field => {
-    const { id } = field;
-
-    visitedNames.add(id);
-    unvisitedFields.delete(field);
-
-    const { clusterConfig } = getState();
-    // we must update ignores before validation... because validation depends on it
-    field.ignoreWhen(dispatch, clusterConfig);
-    // TODO: (kans) this is bad
-    await field.getExtraStuff(dispatch, clusterConfig, FIELDS, 0);
-    await field.validate(dispatch, getState, initialCC, 0);
-  };
+export const validateFields = async (ids, getState, dispatch, updatedId, isNow) => {
+  const unvisitedIds = ids;
 
   // Just shake the array really hard until all the nodes fall out...
-  while (unvisitedFields.size > 0) {
-    const toVisit = [];
-
-    unvisitedFields.forEach(f => {
-      const unresolvedDeps = f.dependencies.filter(d => !visitedNames.has(d)).length;
-      if (unresolvedDeps) {
-        return;
-      }
-      toVisit.push(f);
-    });
-
-    if (!toVisit.length && unvisitedFields.size > 0) {
-      throw new Error(`unresolvable fields: ${unvisitedFields.toJSON().map(f => f.name).join(' ')}`);
+  while (unvisitedIds.length) {
+    // All the fields that have already had their dependencies validated
+    const toVisit = unvisitedIds.filter(id => !_.intersection(unvisitedIds, FIELDS[id].dependencies).length);
+    if (!toVisit.length) {
+      throw new Error(`Unresolvable fields: ${unvisitedIds}`);
     }
-    // TODO: (kans) use promise.All here for speeds
-    for (const dep of toVisit) {
-      await visit(dep);
-    }
+    await Promise.all(toVisit.map(
+      id => FIELDS[id].getExtraStuff(dispatch, getState, FIELDS, isNow)
+        .then(() => FIELDS[id].validate(dispatch, getState, updatedId, isNow))
+    ));
+    _.pullAll(unvisitedIds, toVisit);
   }
+};
+
+export const validateAllFields = cb => async (dispatch, getState) => {
+  await validateFields(_.keys(FIELDS), getState, dispatch);
   if (_.isFunction(cb)) {
     cb();
   }
@@ -201,10 +181,10 @@ export const registerForm = (form, fields) => {
     DEFAULT_CLUSTER_CONFIG[fieldName] = f.default;
     FIELDS[fieldName] = f;
 
-    _.each(f.dependencies, d => addDep(f, d));
+    _.each(f.dependencies, d => addDep(f.id, d));
   });
 
   // HACK to avoid figuring out the "correct" order in FIELD_TO_DEPS
   // ... peers can have deps on the same branch
-  _.each(form.dependencies, d => addDep(form, d));
+  _.each(form.dependencies, d => addDep(form.id, d));
 };

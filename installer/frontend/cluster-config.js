@@ -131,7 +131,6 @@ export const getTectonicDomain = (cc) => {
 
 export const DEFAULT_CLUSTER_CONFIG = {
   error: {}, // to store validation errors
-  ignore: {}, // to store validation errors
   inFly: {}, // to store inFly
   extra: {}, // extraneous, non-value data for this field
   [BM_MATCHBOX_HTTP]: '',
