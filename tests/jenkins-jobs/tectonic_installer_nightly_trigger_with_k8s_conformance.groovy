@@ -32,18 +32,6 @@ job("triggers/tectonic-installer-nightly-trigger_with_k8s_conformance") {
                   name('RUN_CONFORMANCE_TESTS')
                   value(true)
                 }
-                booleanParameterConfig {
-                  name('PLATFORM/AWS')
-                  value(false)
-                }
-                booleanParameterConfig {
-                  name('PLATFORM/AZURE')
-                  value(false)
-                }
-                booleanParameterConfig {
-                  name('PLATFORM/GCP')
-                  value(false)
-                }
               }
             }
           }
