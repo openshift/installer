@@ -161,9 +161,8 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
   it 'passes the k8s conformance tests', :conformance_tests do
     conformance_test = TestContainer.new(
       ENV['KUBE_CONFORMANCE_IMAGE'],
-      @cluster.kubeconfig,
-      vpn_tunnel,
-      @cluster.env_variables['PLATFORM']
+      @cluster,
+      vpn_tunnel
     )
     expect { conformance_test.run }.to_not raise_error
   end
@@ -173,8 +172,7 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
       test_container = TestContainer.new(
         test['image'],
         @cluster,
-        vpn_tunnel,
-        @cluster.env_variables['PLATFORM']
+        vpn_tunnel
       )
       expect { test_container.run }.to_not raise_error
     end
