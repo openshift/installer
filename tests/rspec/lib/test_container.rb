@@ -22,7 +22,7 @@ class TestContainer
                 end
 
       succeeded = system(command)
-      raise 'Running k8s conformance tests failed' unless succeeded
+      raise 'Running container tests failed' unless succeeded
     end
   end
 

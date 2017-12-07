@@ -169,10 +169,10 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
   end
 
   COMPONENT_TESTS.map do |test|
-    it "passes #{test.name} component tests", :component_tests do
+    it "passes #{test['name']} component tests", :component_tests do
       test_container = TestContainer.new(
-        test.image,
-        @cluster.kubeconfig,
+        test['image'],
+        @cluster,
         vpn_tunnel,
         @cluster.env_variables['PLATFORM']
       )
