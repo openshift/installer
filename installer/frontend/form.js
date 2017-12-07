@@ -126,11 +126,7 @@ export class Field extends Node {
   }
 
   isValid (cc) {
-    if (this.isIgnored(cc)) {
-      return true;
-    }
-    const value = this.getData(cc);
-    return value !== '' && value !== undefined && this.noError(cc);
+    return this.isIgnored(cc) || this.noError(cc);
   }
 
   inFly (cc) {
