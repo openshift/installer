@@ -313,6 +313,20 @@ Example:
 EOF
 }
 
+variable "tectonic_aws_etcd_iam_role_name" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) Name of IAM role to use for the instance profiles of etcd nodes.
+The name is also the last part of a role's ARN.
+
+Example:
+ * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
+ * Role Name = tectonic-installer
+EOF
+}
+
 variable "tectonic_aws_worker_load_balancers" {
   type    = "list"
   default = []

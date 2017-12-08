@@ -18,6 +18,14 @@ tectonic_aws_etcd_ec2_type = "t2.medium"
 // Example: `["sg-51530134", "sg-b253d7cc"]`
 // tectonic_aws_etcd_extra_sg_ids = ""
 
+// (optional) Name of IAM role to use for the instance profiles of etcd nodes.
+// The name is also the last part of a role's ARN.
+// 
+// Example:
+//  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
+//  * Role Name = tectonic-installer
+// tectonic_aws_etcd_iam_role_name = ""
+
 // The amount of provisioned IOPS for the root block device of etcd nodes.
 // Ignored if the volume type is not io1.
 tectonic_aws_etcd_root_volume_iops = "100"
