@@ -1,4 +1,4 @@
-FROM ruby:2.4-slim
+FROM debian:stretch
 
 ENV TERRAFORM_VERSION="0.10.7"
 ENV DOCKER_VERSION 1.13.1
@@ -9,11 +9,11 @@ COPY ./tests/rspec/Gemfile* /tmp/app/
 
 RUN apt-get update && \
     apt-get install --no-install-recommends -y -q \
-    curl make unzip jq awscli wget xvfb xauth ssh openvpn build-essential && \
+    curl make unzip jq awscli wget xvfb xauth ssh openvpn build-essential ruby-full zlib1g-dev bundler gnupg && \
     apt-get clean
 
 # Install gcloud
-RUN echo "deb http://packages.cloud.google.com/apt cloud-sdk-jessie main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
+RUN echo "deb http://packages.cloud.google.com/apt cloud-sdk-stretch main" | tee -a /etc/apt/sources.list.d/google-cloud-sdk.list && \
     curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add - && \
     apt-get update && \
     apt-get install --no-install-recommends -y -q \
