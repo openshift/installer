@@ -56,6 +56,10 @@ class GcpCluster < Cluster
     ip_addresses
   end
 
+  def etcd_ip_addresses
+    @tfstate_file.output('etcd', 'etcd_ip_addresses')
+  end
+
   def tectonic_console_url
     Dir.chdir(@build_path) do
       console_url = `echo module.dns.kube_ingress_fqdn | terraform console ../../platforms/gcp`.chomp

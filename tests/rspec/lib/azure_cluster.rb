@@ -34,6 +34,11 @@ class AzureCluster < Cluster
     end
   end
 
+  def etcd_ip_addresses
+    out = @tfstate_file.output('etcd', 'etcd_vm_ids')
+    out.map { |etcd_name| etcd_name.split('/').last }
+  end
+
   def env_variables
     variables = super
     variables['PLATFORM'] = 'azure'

@@ -64,6 +64,10 @@ class AwsCluster < Cluster
     instances_id.map { |instance_id| AwsSupport.preferred_instance_ip_address(instance_id, @aws_region) }
   end
 
+  def etcd_ip_addresses
+    @tfstate_file.output('etcd', 'ip_addresses')
+  end
+
   def check_prerequisites
     raise 'AWS credentials not defined' unless credentials_defined?
     raise 'TF_VAR_tectonic_aws_ssh_key is not defined' unless ssh_key_defined?

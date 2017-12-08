@@ -135,6 +135,12 @@ class Cluster
         print_service_logs(worker_ip, service, @name, master_ip_address)
       end
     end
+
+    etcd_ip_addresses.each do |etcd_ip|
+      ['etcd-member'].each do |service|
+        print_service_logs(etcd_ip, service, @name, master_ip_address)
+      end
+    end
   end
 
   private

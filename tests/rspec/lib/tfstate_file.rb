@@ -23,6 +23,14 @@ class TFStateFile
     raise TFStateFileValueForKeyDoesNotExist, msg
   end
 
+  def output(module_name, wanted_key)
+    Dir.chdir(@build_path) do
+      out = `terraform output -module=#{module_name} -json`.chomp
+      out = JSON.parse(out)
+      return out[wanted_key]['value']
+    end
+  end
+
   def file_exists?
     tfstate_file = File.join(@build_path, 'terraform.tfstate')
     raise "tfstate file #{tfstate_file} does not exist" unless File.exist? tfstate_file
