@@ -49,6 +49,12 @@ def print_service_logs(destination_ip, service, cluster_name, via_host_ip = nil)
   end
 end
 
+def save_kubernetes_events(kubeconfig, cluster_name)
+  logs = KubeCTL.run(kubeconfig, 'get ev --all-namespaces -o wide')
+
+  save_to_file(cluster_name, 'kubernetes_events', cluster_name, 'kubernetes_ev_all_namespaces', logs)
+end
+
 def save_to_file(cluster_name, service_type, ip, service, output_to_save)
   logs_path = "../../build/#{cluster_name}/logs/#{ip}/#{service_type}"
   FileUtils.mkdir_p(logs_path)

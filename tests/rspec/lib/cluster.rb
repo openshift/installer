@@ -118,6 +118,8 @@ class Cluster
   end
 
   def forensic
+    save_kubernetes_events(@kubeconfig, @name)
+
     master_ip_addresses.each do |master_ip|
       save_docker_logs(master_ip, @name)
 
