@@ -166,6 +166,7 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
   new Field(AWS_WORKER_SUBNETS, {default: {}}),
   new Field(AWS_WORKER_SUBNET_IDS, {default: {}}),
   new Field(CLUSTER_SUBDOMAIN, {default: '', validator: compose(validate.nonEmpty, validate.domainName)}),
+  new Field(DESELECTED_FIELDS, {default: {}}),
 ], {
   dependencies: [POD_CIDR, SERVICE_CIDR],
   validator: (data, cc) => {
