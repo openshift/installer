@@ -229,7 +229,7 @@ export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirt
   if (availableValues) {
     let options = availableValues.value;
     if (value && !options.map(r => r.value).includes(value)) {
-      options = [{label: value, value: value}].concat(options);
+      options = [{label: value, value}].concat(options);
     }
 
     const optgroups = new Map();
@@ -378,7 +378,7 @@ export const Connect = connect(stateToProps, dispatchToProps)(Connect_);
 const stateToIsDeselected = ({clusterConfig}, {field}) => {
   field = `${DESELECTED_FIELDS}.${field}`;
   return {
-    field: field,
+    field,
     isDeselected: !!_.get(clusterConfig, field),
   };
 };
@@ -440,7 +440,7 @@ export class AsyncSelect extends React.Component {
 
     let options = availableValues.value;
     if (value && !options.map(r => r.value).includes(value)) {
-      options = [{label: value, value: value}].concat(options);
+      options = [{label: value, value}].concat(options);
     }
     const style = {};
     if (!onRefresh) {

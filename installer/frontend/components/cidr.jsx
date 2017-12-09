@@ -17,7 +17,7 @@ export const cidrSize = cidr => {
 };
 
 const CIDRTooltip = connect(
-  ({clusterConfig}, {field}) => ({clusterConfig: clusterConfig, value: _.get(clusterConfig, field)})
+  ({clusterConfig}, {field}) => ({clusterConfig, value: _.get(clusterConfig, field)})
 )(({value}) => {
   const addresses = cidrSize(value);
   if (!_.isInteger(addresses)) {
