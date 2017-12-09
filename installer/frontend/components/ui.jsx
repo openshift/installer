@@ -308,7 +308,7 @@ const stateToProps = ({clusterConfig, dirty}, {field}) => ({
 });
 
 const dispatchToProps = (dispatch, {field}) => ({
-  updateField: (path, value, invalid) => dispatch(configActions.updateField(path, value, invalid)),
+  updateField: (path, value) => dispatch(configActions.updateField(path, value)),
   makeDirty: () => dispatch(dirtyActions.add(field)),
   refreshExtraData: () => dispatch(configActions.refreshExtraData(field)),
   removeField: (i) => dispatch(configActions.removeField(field, i)),
