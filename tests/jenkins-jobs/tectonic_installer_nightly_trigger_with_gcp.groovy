@@ -45,7 +45,7 @@ job("triggers/tectonic-installer-nightly-trigger_with_gcp") {
                   value(false)
                 }
                 booleanParameterConfig {
-                  name('PLATFORM/METAL')
+                  name('PLATFORM/BARE_METAL')
                   value(false)
                 }
                 booleanParameterConfig {
