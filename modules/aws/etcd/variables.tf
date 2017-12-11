@@ -84,3 +84,9 @@ variable "s3_bucket" {
 variable "ign_etcd_crt_id_list" {
   type = "list"
 }
+
+variable "etcd_iam_role" {
+  type        = "string"
+  default     = ""
+  description = "IAM role to use for the instance profiles of etcd nodes."
+}

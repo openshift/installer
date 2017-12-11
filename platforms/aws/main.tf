@@ -85,6 +85,7 @@ module "etcd" {
   ssh_key                 = "${var.tectonic_aws_ssh_key}"
   subnets                 = "${module.vpc.worker_subnet_ids}"
   tls_enabled             = "${var.tectonic_etcd_tls_enabled}"
+  etcd_iam_role           = "${var.tectonic_aws_etcd_iam_role_name}"
 }
 
 module "ignition_masters" {

@@ -20,7 +20,22 @@ data "aws_ami" "coreos_ami" {
   }
 }
 
-resource "aws_iam_role" "etcd" {
+resource "aws_iam_instance_profile" "etcd" {
+  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+  name  = "${var.cluster_name}-etcd-profile"
+
+  role = "${var.etcd_iam_role == "" ?
+    join("|", aws_iam_role.etcd_role.*.name) :
+    join("|", data.aws_iam_role.etcd_role.*.name)
+  }"
+}
+
+data "aws_iam_role" "etcd_role" {
+  count = "${var.etcd_iam_role == "" ? 0 : 1}"
+  name  = "${var.etcd_iam_role}"
+}
+
+resource "aws_iam_role" "etcd_role" {
   count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
   name  = "${var.cluster_name}-etcd-role"
   path  = "/"
@@ -43,9 +58,9 @@ EOF
 }
 
 resource "aws_iam_role_policy" "etcd" {
-  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+  count = "${var.etcd_iam_role == "" ? 1 : 0}"
   name  = "${var.cluster_name}_etcd_policy"
-  role  = "${aws_iam_role.etcd.id}"
+  role  = "${aws_iam_role.etcd_role.id}"
 
   policy = <<EOF
 {
@@ -85,12 +100,6 @@ resource "aws_iam_role_policy" "etcd" {
   ]
 }
 EOF
-}
-
-resource "aws_iam_instance_profile" "etcd" {
-  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
-  name  = "${var.cluster_name}-etcd-profile"
-  role  = "${aws_iam_role.etcd.name}"
 }
 
 resource "aws_instance" "etcd_node" {
