@@ -22,7 +22,7 @@ const fields = [
   new Field(ETCD_OPTION, {
     default: ETCD_OPTIONS.PROVISIONED,
   }),
-  makeNodeForm(AWS_ETCDS, false, compose(validate.int({min: 1, max: 9}), validate.isOdd), {
+  makeNodeForm(AWS_ETCDS, compose(validate.int({min: 1, max: 9}), validate.isOdd), false, {
     dependencies: [ETCD_OPTION],
     ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.PROVISIONED,
   }),
