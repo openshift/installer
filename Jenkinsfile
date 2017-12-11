@@ -124,7 +124,6 @@ pipeline {
                 originalCommitId = sh(returnStdout: true, script: 'git rev-parse origin/"\${BRANCH_NAME}"')
                 echo "originalCommitId: ${originalCommitId}"
 
-                printLogstashAttributes()
                 withDockerContainer(params.builder_image) {
                   ansiColor('xterm') {
                     sh """#!/bin/bash -ex
@@ -430,8 +429,10 @@ def runRSpecTest(testFilePath, dockerArgs) {
                 unstash 'clean-repo'
                 unstash 'smoke-test-binary'
                 sh """#!/bin/bash -ex
+                  mkdir -p templogfiles && chmod 777 templogfiles
                   cd tests/rspec
-                  rspec ${testFilePath} --format RspecTap::Formatter
+                  # Directing test output both to stdout as well as a log file
+                  rspec ${testFilePath} --format RspecTap::Formatter --format RspecTap::Formatter --out ../../templogfiles/format=tap.log
                 """
               }
             }
@@ -446,7 +447,7 @@ def runRSpecTest(testFilePath, dockerArgs) {
         withDockerContainer(params.builder_image) {
          withCredentials(creds) {
            sh """#!/bin/bash -xe
-           ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs
+           ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs ${testFilePath}
            """
          }
         }
@@ -465,12 +466,4 @@ def reportStatusToGithub(status, context, commitId) {
       ./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} ${context} ${commitId}
     """
   }
-}
-//Function used to print environment variables that are used by Logstash as attributes for the log file.
-def printLogstashAttributes() {
-    echo  "Build_Number=" + env.BUILD_NUMBER
-    echo  "JOB_NAME=" + env.JOB_NAME
-    echo  "USER_REQUEST=" +  env.CHANGE_AUTHOR
-    echo  "GIT_TARGET_BRANCH=" + env.CHANGE_TARGET
-    echo  "GIT_PR_NUMBER=" + env.CHANGE_ID
 }
