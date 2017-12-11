@@ -12,7 +12,7 @@ export const compose = (...validators) => {
 };
 
 export const validate = {
-  nonEmpty: function (s) {
+  nonEmpty: (s) => {
     if (s && ('' + s).trim().length > 0) {
       return;
     }

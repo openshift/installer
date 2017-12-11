@@ -67,6 +67,7 @@
     "no-void": 2,
     "no-whitespace-before-property": 2,
     "no-with": 2,
+    "object-shorthand": 2,
     "prefer-const": 2,
     "quotes": [2, "single", {"avoidEscape": true}],
     "radix": 2,

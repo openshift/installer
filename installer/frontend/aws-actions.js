@@ -58,7 +58,7 @@ const createAction = (name, fn, shouldReject = false) => (body, creds, isNow) =>
         payload: {
           [name]: {
             inFly: false,
-            value: value,
+            value,
             error: null,
           },
         },
@@ -79,7 +79,7 @@ const createAction = (name, fn, shouldReject = false) => (body, creds, isNow) =>
           [name]: {
             inFly: false,
             value: [],
-            error: error,
+            error,
           },
         },
       });
