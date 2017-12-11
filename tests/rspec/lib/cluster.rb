@@ -12,6 +12,7 @@ require 'tfstate_file'
 require 'tfvars_file'
 require 'timeout'
 require 'with_retries'
+require 'open3'
 
 # Cluster represents a k8s cluster
 class Cluster
@@ -35,11 +36,11 @@ class Cluster
     check_prerequisites
   end
 
-  def plan
-    3.times do
-      return if system(env_variables, 'make -C ../.. plan')
-    end
-    raise 'Planning cluster failed after 3 tries'
+  def plan(terraform_options = nil)
+    env = env_variables
+    env['TF_PLAN_OPTIONS'] = terraform_options unless terraform_options.nil?
+    stdout, stderr, exit_status = Open3.capture3(env, 'make -C ../.. plan')
+    [stdout, stderr, exit_status]
   end
 
   def start
