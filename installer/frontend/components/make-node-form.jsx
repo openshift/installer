@@ -28,7 +28,7 @@ new Form('DUMMY_NODE_FORM', [
   }),
 ]);
 
-export const makeNodeForm = (name, withIamRole = true, instanceValidator = validate.int({min: 1, max: 999}), opts) => {
+export const makeNodeForm = (name, instanceValidator, withIamRole = true, opts) => {
   const storageType = toKey(name, STORAGE_TYPE);
 
   // all fields must have a unique name!

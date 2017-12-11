@@ -16,6 +16,7 @@ import {
 
 import { Form } from '../form';
 import { toError, toAsyncError } from '../utils';
+import { validate } from '../validate';
 import { AWS_INSTANCE_TYPES } from '../facts';
 import { NumberInput, Connect, Select } from './ui';
 import { makeNodeForm, toKey } from './make-node-form';
@@ -101,10 +102,13 @@ export const DefineNode = ({type, max, withIamRole = true}) => <div>
   <Errors type={type} />
 </div>;
 
+const MAX_MASTERS = 10;
+const MAX_WORKERS = 1000;
+
 // TODO (kans): add ectdForm here
 const fields = [
-  makeNodeForm(AWS_CONTROLLERS),
-  makeNodeForm(AWS_WORKERS),
+  makeNodeForm(AWS_CONTROLLERS, validate.int({min: 1, max: MAX_MASTERS})),
+  makeNodeForm(AWS_WORKERS, validate.int({min: 1, max: MAX_WORKERS})),
 ];
 
 const form = new Form('DefineNodesForm', fields);
@@ -112,11 +116,11 @@ const form = new Form('DefineNodesForm', fields);
 export const AWS_DefineNodes = () => <div>
   <h3>Master Nodes</h3>
   <br />
-  <DefineNode type={AWS_CONTROLLERS} max={10} />
+  <DefineNode type={AWS_CONTROLLERS} max={MAX_MASTERS} />
   <hr />
   <h3>Worker Nodes</h3>
   <br />
-  <DefineNode type={AWS_WORKERS} max={1000} />
+  <DefineNode type={AWS_WORKERS} max={MAX_WORKERS} />
   <form.Errors />
   <hr />
   <h3>etcd Nodes</h3>

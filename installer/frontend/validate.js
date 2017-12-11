@@ -207,11 +207,11 @@ export const validate = {
       }
 
       if (min !== undefined && value < min) {
-        return `Invalid value. Provide a value greater than ${min - 1}.`;
+        return `Invalid value. Cannot be less than ${min}.`;
       }
 
       if (max !== undefined && value > max) {
-        return `Invalid value. Provide a value less than ${max + 1}.`;
+        return `Invalid value. Cannot be greater than ${max}.`;
       }
 
       return;
