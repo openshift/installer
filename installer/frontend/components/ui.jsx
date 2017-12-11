@@ -385,9 +385,9 @@ const stateToIsDeselected = ({clusterConfig}, {field}) => {
 
 export const Deselect = connect(
   stateToIsDeselected,
-  dispatch => ({setField: (k, v) => configActions.setIn(k, v, dispatch)})
-)(({field, isDeselected, setField}) => <span className="deselect">
-  <CheckBox id={field} value={!isDeselected} onValue={v => setField(field, !v)} />
+  {updateField: configActions.updateField}
+)(({field, isDeselected, updateField}) => <span className="deselect">
+  <CheckBox id={field} value={!isDeselected} onValue={v => updateField(field, !v)} />
 </span>);
 
 export const DeselectField = connect(stateToIsDeselected)(({children, isDeselected}) => React.cloneElement(

@@ -135,7 +135,6 @@ export const DEFAULT_CLUSTER_CONFIG = {
   ignore: {}, // to store validation errors
   inFly: {}, // to store inFly
   extra: {}, // extraneous, non-value data for this field
-  [DESELECTED_FIELDS]: {},
   [BM_MATCHBOX_HTTP]: '',
   [BM_OS_TO_USE]: '',
   [DRY_RUN]: false,
