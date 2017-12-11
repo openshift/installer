@@ -19,7 +19,8 @@ const diffTfvars = (client, assetsZip, expected) => {
 };
 
 const testManualBoot = (client, expectedFilename) => {
-  client.page.submitPage()
+  const page = client.page.submitPage();
+  page
     .click('@manuallyBoot')
     .expect.element('a[href="/terraform/assets"]').to.be.visible.before(120000);
 
@@ -44,6 +45,8 @@ const testManualBoot = (client, expectedFilename) => {
       diffTfvars(client, assetsZip, expected);
     });
   });
+
+  page.click('.btn-link .fa-refresh');
 };
 
 const jsonDir = path.join(__dirname, '..', '..', '__tests__', 'examples');

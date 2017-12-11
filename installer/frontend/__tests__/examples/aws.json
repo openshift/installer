@@ -33,8 +33,8 @@
     "tectonic_cluster_name": "test",
     "tectonic_dns_name": "test",
     "tectonic_etcd_count": 3,
-    "tectonic_master_count": 3,
+    "tectonic_master_count": 2,
     "tectonic_service_cidr": "10.3.0.0/16",
-    "tectonic_worker_count": 3
+    "tectonic_worker_count": 2
   }
 }
