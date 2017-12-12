@@ -1,8 +1,13 @@
-#!/bin/bash -xe
+#!/bin/bash
+
+
+set -xeo pipefail
 
 jenkins_filename="jenkins.log"
 logfile_location=./templogfiles
 action=$1
+testFilePath=$2
+additionalFields=""
 
 mkdir -p ${logfile_location}
 cd ${logfile_location}
@@ -18,10 +23,19 @@ elif [ "$action" = "jenkins-logs" ]; then
   curl -u  "${LOG_ANALYZER_USER}":"${LOG_ANALYZER_PASSWORD}" "${BUILD_URL}""consoleText" >> "${jenkins_filename}"
 fi
 
+#Logstash uses the key=value filter and the ',' character as split field. This means that branches can neither have the '=' nor ',' in them.
+SOURCE_BRANCH=${BRANCH_NAME//[=,]/_}
+TARGET_BRANCH=${CHANGE_TARGET//[=,]/_}
+
+if [ -n "$testFilePath" ]; then
+        platform=$(echo "${testFilePath}" | cut -d'/' -f2)
+        specName=$(echo "${testFilePath}" | cut -d'/' -f3 | sed 's/_spec\.rb//')
+        additionalFields="${additionalFields}platform=${platform},specName=${specName},"
+fi
+
 for file in *.log
   do
-    #pn: pull request , bn: build number , au: author, b: branch , tb: target branch , fn: file name
-    mv "$file" "pn:${CHANGE_ID}-bn:${BUILD_NUMBER}-au:${CHANGE_AUTHOR}-b:${BRANCH_NAME}-tb:${CHANGE_TARGET}-fn:${file}"
+    mv "$file" "pull_request=${CHANGE_ID},build_number=${BUILD_NUMBER},author=${CHANGE_AUTHOR},source_branch=${SOURCE_BRANCH},target_branch=${TARGET_BRANCH},${additionalFields}${file}"
   done
 
 aws s3 sync ../templogfiles "s3://""${LOGSTASH_BUCKET}"
