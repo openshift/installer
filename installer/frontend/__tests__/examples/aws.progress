@@ -3,7 +3,7 @@
     "adminEmail": "admin@example.com",
     "adminPassword": "password",
     "awsAccessKeyId": "awsAccessKeyId",
-    "awsHostedZoneId": "asfd",
+    "awsHostedZoneId": "Z30TY4B8NT090S",
     "awsRegion": "us-west-1",
     "awsSecretAccessKey": "awsSecretAccessKey",
     "awsSessionToken": "awsSessionToken",
@@ -23,17 +23,10 @@
     "aws_workers-storageSizeInGiB": 15,
     "aws_workers-storageType": "gp2",
     "caType": "self-signed",
-    "clusterName": "test",
-    "clusterSubdomain": "test",
+    "clusterName": "aws-basic",
+    "clusterSubdomain": "aws-basic",
     "etcdOption": "provisioned",
     "externalETCDClient": "",
-    "extra": {
-      "awsHostedZoneId": {
-        "zoneToName": {
-          "asfd": "tectonic.dev.coreos.systems"
-        }
-      }
-    },
     "platformType": "aws-tf",
     "podCIDR": "10.2.0.0/16",
     "pullSecret": "<TECTONIC_PULL_SECRET>",

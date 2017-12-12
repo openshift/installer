@@ -38,8 +38,8 @@
     "aws_workers-storageSizeInGiB": 1000,
     "aws_workers-storageType": "io1",
     "caType": "self-signed",
-    "clusterName": "test",
-    "clusterSubdomain": "test",
+    "clusterName": "aws-existing-vpc",
+    "clusterSubdomain": "aws-existing-vpc",
     "etcdOption": "provisioned",
     "externalETCDClient": "",
     "extra": {
