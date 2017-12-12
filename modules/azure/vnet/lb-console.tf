@@ -25,7 +25,7 @@ resource "azurerm_lb_rule" "console_lb_https" {
   protocol                       = "tcp"
   frontend_port                  = 443
   backend_port                   = 32000
-  frontend_ip_configuration_name = "console"
+  frontend_ip_configuration_name = "tectonic-console"
 }
 
 resource "azurerm_lb_rule" "console_lb_identity" {
@@ -40,7 +40,7 @@ resource "azurerm_lb_rule" "console_lb_identity" {
   protocol                       = "tcp"
   frontend_port                  = 80
   backend_port                   = 32001
-  frontend_ip_configuration_name = "console"
+  frontend_ip_configuration_name = "tectonic-console"
 }
 
 resource "azurerm_lb_probe" "console_lb" {
