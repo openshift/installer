@@ -43,6 +43,16 @@ class TFVarsFile
     save
   end
 
+  def change_cluster_name(cluster_name)
+    data['tectonic_cluster_name'] = cluster_name
+    save
+  end
+
+  def change_dns_name(dns_name)
+    data['tectonic_dns_name'] = dns_name
+    save
+  end
+
   def region
     data['tectonic_aws_region']
   end
