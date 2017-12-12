@@ -42,6 +42,8 @@ class TestContainer
   # build the environment parameters here.
   def container_env(engine)
     env = {
+      'KUBECONFIG' => '/kubeconfig',
+
       'BRIDGE_AUTH_USERNAME' => @cluster.tectonic_admin_email,
       'BRIDGE_AUTH_PASSWORD' => @cluster.tectonic_admin_password,
       'BRIDGE_BASE_ADDRESS' => 'https://' + @cluster.tectonic_console_url,

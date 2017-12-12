@@ -14,7 +14,7 @@ require 'test_container'
 require 'with_retries'
 
 COMPONENT_TESTS = [
-  { 'name' => 'console', 'image' => 'quay.io/coreos/tectonic-console-tester:v2.6.2' }
+  { 'name' => 'console', 'image' => 'quay.io/coreos/tectonic-console-tester:v2.7.1' }
 ].freeze
 
 RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
