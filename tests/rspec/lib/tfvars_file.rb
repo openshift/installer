@@ -34,6 +34,10 @@ class TFVarsFile
     data['tectonic_worker_count'].to_i
   end
 
+  def etcd_count
+    data['tectonic_etcd_count'].to_i
+  end
+
   def add_worker_node(node_count)
     data['tectonic_worker_count'] = node_count.to_s
     save

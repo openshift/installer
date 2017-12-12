@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'shared_examples/build_folder_setup'
+require 'shared_examples/tls_setup'
 require 'smoke_test'
 require 'cluster_factory'
 require 'container_linux'
@@ -14,6 +15,12 @@ require 'with_retries'
 
 RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
   include_examples('withBuildFolderSetup', tf_vars_path)
+  include_examples('withRunningClusterExistingBuildFolder', vpn_tunnel)
+end
+
+RSpec.shared_examples 'withRunningClusterWithCustomTLS' do |tf_vars_path, domain, vpn_tunnel = false|
+  include_examples('withBuildFolderSetup', tf_vars_path)
+  include_examples('withTLSSetup', domain)
   include_examples('withRunningClusterExistingBuildFolder', vpn_tunnel)
 end
 

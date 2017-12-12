@@ -276,7 +276,8 @@ pipeline {
             [file: 'vpc_internal_spec.rb', args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root'],
             [file: 'network_canal_spec.rb', args: ''],
             [file: 'exp_spec.rb', args: ''],
-            [file: 'ca_spec.rb', args: '']
+            [file: 'ca_spec.rb', args: ''],
+            [file: 'custom_tls_spec.rb', args: '']
           ]
           def azure = [
             [file: 'basic_spec.rb', args: ''],
@@ -288,11 +289,18 @@ pipeline {
             [file: 'external_spec.rb', args: ''],
             [file: 'example_spec.rb', args: ''],
             [file: 'self_hosted_etcd_spec.rb', args: ''],
-            [file: 'external_self_hosted_etcd_spec.rb', args: '']
+            [file: 'external_self_hosted_etcd_spec.rb', args: ''],
+            [file: 'custom_tls_spec.rb', args: '']
           ]
           def gcp = [
             [file: 'basic_spec.rb', args: ''],
             [file: 'ha_spec.rb', args: ''],
+            [file: 'custom_tls_spec.rb', args: '']
+          ]
+
+          def metal = [
+            [file: 'basic_spec.rb', args: ''],
+            [file: 'custom_tls_spec.rb', args: '']
           ]
 
           if (params."PLATFORM/AWS") {
@@ -317,38 +325,9 @@ pipeline {
           }
 
           if (params."PLATFORM/BARE_METAL") {
-            builds['bare_metal'] = {
-              node('worker && bare-metal') {
-                def err = null
-                def specFile = 'spec/metal/basic_spec.rb'
-                try {
-                  timeout(time: 4, unit: 'HOURS') {
-                    ansiColor('xterm') {
-                      unstash 'clean-repo'
-                      unstash 'smoke-test-binary'
-                      withCredentials(creds) {
-                        sh """#!/bin/bash -ex
-                        cd tests/rspec
-                        export RBENV_ROOT=/usr/local/rbenv
-                        export PATH="/usr/local/rbenv/bin:$PATH"
-                        eval \"\$(rbenv init -)\"
-                        rbenv install -s
-                        gem install bundler
-                        bundler install
-                        bundler exec rspec $specFile --format RspecTap::Formatter
-                        """
-                      }
-                    }
-                  }
-                } catch (error) {
-                  err = error
-                  throw error
-                } finally {
-                  reportStatusToGithub((err == null) ? 'success' : 'failure', specFile, originalCommitId)
-                  archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**'
-                  cleanWs notFailBuild: true
-                }
-              }
+            metal.each { build ->
+              filepath = 'spec/metal/' + build.file
+              builds['metal/' + build.file] = runRSpecTestBareMetal(filepath)
             }
           }
           parallel builds
@@ -458,6 +437,40 @@ def runRSpecTest(testFilePath, dockerArgs) {
   }
 }
 
+def runRSpecTestBareMetal(testFilePath) {
+  return {
+    node('worker && bare-metal') {
+      def err = null
+      try {
+        timeout(time: 4, unit: 'HOURS') {
+          ansiColor('xterm') {
+            unstash 'clean-repo'
+            unstash 'smoke-test-binary'
+            withCredentials(creds) {
+              sh """#!/bin/bash -ex
+              cd tests/rspec
+              export RBENV_ROOT=/usr/local/rbenv
+              export PATH="/usr/local/rbenv/bin:$PATH"
+              eval \"\$(rbenv init -)\"
+              rbenv install -s
+              gem install bundler
+              bundler install
+              bundler exec rspec ${testFilePath} --format RspecTap::Formatter
+              """
+            }
+          }
+        }
+      } catch (error) {
+        err = error
+        throw error
+      } finally {
+        reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
+        archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**'
+        cleanWs notFailBuild: true
+      }
+    }
+  }
+}
 
 def reportStatusToGithub(status, context, commitId) {
   withCredentials(creds) {
