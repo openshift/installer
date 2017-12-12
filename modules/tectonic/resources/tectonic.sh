@@ -138,9 +138,6 @@ kubectl create -f rbac/binding-discovery.yaml
 echo "Creating Cluster Config For Tectonic"
 kubectl create -f cluster-config.yaml
 
-echo "Creating Tectonic ConfigMaps"
-kubectl create -f config.yaml
-
 echo "Creating Tectonic Secrets"
 kubectl create -f secrets/pull.json
 kubectl create -f secrets/license.json
@@ -149,38 +146,9 @@ kubectl create -f secrets/ca-cert.yaml
 kubectl create -f secrets/identity-grpc-client.yaml
 kubectl create -f secrets/identity-grpc-server.yaml
 
-echo "Creating Ingress"
-kubectl create -f ingress/default-backend/configmap.yaml
-kubectl create -f ingress/default-backend/service.yaml
-kubectl create -f ingress/default-backend/deployment.yaml
-kubectl create -f ingress/ingress.yaml
-
-# shellcheck disable=SC2154
-if [ "${ingress_kind}" = "HostPort" ]; then
-  kubectl create -f ingress/hostport/service.yaml
-  kubectl create -f ingress/hostport/daemonset.yaml
-elif [ "${ingress_kind}" = "NodePort" ]; then
-  kubectl create -f ingress/nodeport/service.yaml
-  kubectl create -f ingress/nodeport/deployment.yaml
-else
-  echo "Unrecognized Ingress Kind: ${ingress_kind}"
-fi
-
-echo "Creating Tectonic Identity"
-kubectl create -f identity/configmap.yaml
-kubectl create -f identity/services.yaml
-kubectl create -f identity/deployment.yaml
-
-echo "Creating Tectonic Console"
-kubectl create -f console/service.yaml
-kubectl create -f console/deployment.yaml
-
 echo "Creating Etcd Operator"
 # Operator in the tectonic-system namespace used for etcd as a service
 kubectl create -f etcd/etcd-operator.yaml
-
-echo "Creating Heapster / Stats Emitter"
-kubectl create -f stats-emitter.yaml
 
 echo "Creating Operators"
 kubectl create -f updater/tectonic-channel-operator-kind.yaml
@@ -198,6 +166,7 @@ kubectl create -f updater/operators/tectonic-prometheus-operator.yaml
 kubectl create -f updater/operators/tectonic-cluo-operator.yaml
 kubectl create -f updater/operators/kubernetes-addon-operator.yaml
 kubectl create -f updater/operators/tectonic-alm-operator.yaml
+kubectl create -f updater/operators/tectonic-utility-operator.yaml
 
 wait_for_crd tectonic-system appversions.tco.coreos.com
 kubectl create -f updater/app_versions/app-version-tectonic-cluster.yaml
@@ -206,6 +175,7 @@ kubectl create -f updater/app_versions/app-version-tectonic-monitoring.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-cluo.yaml
 kubectl create -f updater/app_versions/app-version-kubernetes-addon.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-alm.yaml
+kubectl create -f updater/app_versions/app-version-tectonic-utility.yaml
 
 # wait for Tectonic pods
 wait_for_pods tectonic-system

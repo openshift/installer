@@ -17,21 +17,16 @@ resource "template_dir" "tectonic" {
 
   vars {
     addon_resizer_image                = "${var.container_images["addon_resizer"]}"
-    console_image                      = "${var.container_images["console"]}"
-    error_server_image                 = "${var.container_images["error_server"]}"
-    identity_image                     = "${var.container_images["identity"]}"
-    ingress_controller_image           = "${var.container_images["ingress_controller"]}"
     kube_version_operator_image        = "${var.container_images["kube_version_operator"]}"
     kubernetes_addon_operator_image    = "${var.container_images["kubernetes_addon_operator"]}"
     node_agent_image                   = "${var.container_images["node_agent"]}"
     etcd_operator_image                = "${var.container_images["etcd_operator"]}"
-    stats_emitter_image                = "${var.container_images["stats_emitter"]}"
-    stats_extender_image               = "${var.container_images["stats_extender"]}"
     tectonic_channel_operator_image    = "${var.container_images["tectonic_channel_operator"]}"
     tectonic_prometheus_operator_image = "${var.container_images["tectonic_prometheus_operator"]}"
     tectonic_etcd_operator_image       = "${var.container_images["tectonic_etcd_operator"]}"
     tectonic_cluo_operator_image       = "${var.container_images["tectonic_cluo_operator"]}"
     tectonic_alm_operator_image        = "${var.container_images["tectonic_alm_operator"]}"
+    tectonic_utility_operator_image    = "${var.container_images["tectonic_utility_operator"]}"
 
     tectonic_monitoring_auth_base_image = "${var.container_base_images["tectonic_monitoring_auth"]}"
     config_reload_base_image            = "${var.container_base_images["config_reload"]}"
@@ -53,6 +48,7 @@ resource "template_dir" "tectonic" {
     tectonic_cluo_operator_version    = "${var.versions["cluo"]}"
     kubernetes_addon_operator_version = "${var.versions["kubernetes_addon"]}"
     tectonic_alm_operator_version     = "${var.versions["alm"]}"
+    tectonic_utility_version          = "${var.versions["tectonic-utility"]}"
 
     etcd_cluster_size = "${var.master_count > 2 ? 3 : 1}"
 

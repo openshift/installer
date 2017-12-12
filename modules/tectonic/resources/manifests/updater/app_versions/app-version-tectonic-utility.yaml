@@ -1,0 +1,12 @@
+apiVersion: tco.coreos.com/v1
+kind: AppVersion
+metadata:
+  name: tectonic-utility
+  namespace: tectonic-system
+  labels:
+    managed-by-channel-operator: "true"
+spec:
+  desiredVersion: ${tectonic_utility_version}
+  paused: false
+status:
+  paused: false
