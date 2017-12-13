@@ -97,7 +97,7 @@ variable "tectonic_container_images" {
     tectonic_cluo_operator       = "quay.io/coreos/tectonic-cluo-operator:v0.2.5"
     tectonic_torcx               = "quay.io/coreos/tectonic-torcx:v0.2.0"
     kubernetes_addon_operator    = "quay.io/coreos/kubernetes-addon-operator:4b83569d763dc95e1f61c77b31989fd3957bfc67"
-    tectonic_alm_operator        = "quay.io/coreos/tectonic-alm-operator:v0.2.0"
+    tectonic_alm_operator        = "quay.io/coreos/tectonic-alm-operator:0.2.1"
   }
 }
 
@@ -132,7 +132,7 @@ variable "tectonic_versions" {
     tectonic-etcd    = "0.0.1"
     cluo             = "0.2.5"
     kubernetes_addon = "0.0.0"
-    alm              = "0.2.0"
+    alm              = "0.2.1"
   }
 }
 
