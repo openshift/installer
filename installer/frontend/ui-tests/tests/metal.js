@@ -4,8 +4,8 @@ const tfvarsUtil = require('../utils/terraformTfvars');
 
 const REQUIRED_ENV_VARS = ['TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
 
-// Expects an input file <prefix>.progress and an expected output file <prefix>.tfvars to both exist
-const steps = prefix => {
+// Expects an input file <prefix>.progress to exist
+const steps = (prefix, expectedOutputFilePath) => {
   // Test input cluster config
   const cc = tfvarsUtil.loadJson(`${prefix}.progress`).clusterConfig;
 
@@ -31,7 +31,7 @@ const steps = prefix => {
     [`${prefix}: SSH Key`]: ({page}) => testPage(page.sshKeysPage()),
     [`${prefix}: Console Login`]: ({page}) => testPage(page.consoleLoginPage()),
 
-    [`${prefix}: Manual Boot`]: client => tfvarsUtil.testManualBoot(client, `${prefix}.tfvars`),
+    [`${prefix}: Manual Boot`]: client => tfvarsUtil.testManualBoot(client, expectedOutputFilePath),
   };
 };
 
@@ -51,4 +51,8 @@ const toExport = {
   },
 };
 
-module.exports = Object.assign(toExport, steps('metal'));
+module.exports = Object.assign(
+  toExport,
+  steps('metal', '../output/metal.tfvars'),
+  steps('metal-smoke', '../../../../tests/smoke/bare-metal/vars/metal.tfvars.json')
+);
