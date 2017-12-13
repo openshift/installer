@@ -58,7 +58,7 @@ end
 def save_to_file(cluster_name, service_type, ip, service, output_to_save)
   logs_path = "../../build/#{cluster_name}/logs/#{ip}/#{service_type}"
   FileUtils.mkdir_p(logs_path)
-  save_to_file = File.open("#{logs_path}/ip=#{ip},cluster=#{cluster},service=#{service}.log", 'w+')
+  save_to_file = File.open("#{logs_path}/ip=#{ip},cluster=#{cluster_name},service=#{service}.log", 'w+')
   save_to_file << output_to_save
   save_to_file.close
 end
