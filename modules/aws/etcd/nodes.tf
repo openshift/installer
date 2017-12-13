@@ -82,15 +82,6 @@ resource "aws_iam_role_policy" "etcd" {
       "Resource": "*"
     },
     {
-      "Action": [
-        "ecr:DescribeRepositories",
-        "ecr:ListImages",
-        "ecr:BatchGetImage"
-      ],
-      "Resource": "*",
-      "Effect": "Allow"
-    },
-    {
       "Action" : [
         "s3:GetObject"
       ],
