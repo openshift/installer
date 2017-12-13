@@ -53,8 +53,8 @@ pipeline {
     LOGSTASH_BUCKET = 'log-analyzer-tectonic-installer'
   }
   options {
-    // Individual steps have stricter timeouts. 300 minutes should be never reached.
-    timeout(time:5, unit:'HOURS')
+    // Individual steps have stricter timeouts. 360 minutes should be never reached.
+    timeout(time:6, unit:'HOURS')
     timestamps()
     buildDiscarder(logRotator(numToKeepStr:'20', artifactNumToKeepStr: '20'))
   }
@@ -397,7 +397,7 @@ def runRSpecTest(testFilePath, dockerArgs) {
     node('worker && ec2') {
       def err = null
       try {
-        timeout(time: 4, unit: 'HOURS') {
+        timeout(time: 5, unit: 'HOURS') {
           forcefullyCleanWorkspace()
           ansiColor('xterm') {
             withCredentials(creds) {
@@ -443,7 +443,7 @@ def runRSpecTestBareMetal(testFilePath) {
     node('worker && bare-metal') {
       def err = null
       try {
-        timeout(time: 4, unit: 'HOURS') {
+        timeout(time: 5, unit: 'HOURS') {
           ansiColor('xterm') {
             unstash 'clean-repo'
             unstash 'smoke-test-binary'

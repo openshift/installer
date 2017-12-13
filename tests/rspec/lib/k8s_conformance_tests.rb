@@ -13,7 +13,7 @@ class K8sConformanceTest
   end
 
   def run
-    ::Timeout.timeout(2 * 60 * 60) do # 2 hour
+    ::Timeout.timeout(3 * 60 * 60) do # 2 hour
       image = ENV['KUBE_CONFORMANCE_IMAGE']
       command = if @platform.include?('metal')
                   "sudo rkt run --volume kubecfg,kind=host,readOnly=false,source=#{@kubeconfig_path} \
