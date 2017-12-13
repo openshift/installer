@@ -485,19 +485,6 @@ variable "tectonic_networking" {
 EOF
 }
 
-variable "tectonic_self_hosted_etcd" {
-  default = ""
-
-  description = <<EOF
-(internal) [ALPHA] If set to one of the following values, self-hosted etcd is deployed:
-
-- "enabled": Deploys a self-hosted etcd cluster.
-
-- "pv_backup": Deploys a self-hosted etcd cluster including backups to Persistence Volumes.
-`tectonic_etcd_backup_size` and `tectonic_etcd_backup_storage_class` must be configured when using this setting.
-EOF
-}
-
 variable "tectonic_etcd_backup_size" {
   type        = "string"
   description = "(optional) The size in MB of the PersistentVolume used for handling etcd backups."

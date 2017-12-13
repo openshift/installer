@@ -1,5 +1,5 @@
 data "template_file" "etcd_hostname_list" {
-  count    = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
+  count    = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
   template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
 }
 
@@ -15,7 +15,7 @@ module "bootkube" {
   # Platform-independent variables wiring, do not modify.
   container_images = "${var.tectonic_container_images}"
   versions         = "${var.tectonic_versions}"
-  self_hosted_etcd = "${var.tectonic_self_hosted_etcd}"
+  self_hosted_etcd = ""
 
   service_cidr = "${var.tectonic_service_cidr}"
   cluster_cidr = "${var.tectonic_cluster_cidr}"
@@ -111,7 +111,7 @@ module "tectonic" {
   console_client_id = "tectonic-console"
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "NodePort"
-  self_hosted_etcd  = "${var.tectonic_self_hosted_etcd}"
+  self_hosted_etcd  = ""
   master_count      = "${var.tectonic_master_count}"
   stats_url         = "${var.tectonic_stats_url}"
 

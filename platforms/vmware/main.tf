@@ -11,7 +11,7 @@ module "etcd" {
   hostname                = "${var.tectonic_vmware_etcd_hostnames}"
   ign_etcd_crt_id_list    = "${module.ignition_masters.etcd_crt_id_list}"
   ign_etcd_dropin_id_list = "${module.ignition_masters.etcd_dropin_id_list}"
-  instance_count          = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count }"
+  instance_count          = "${var.tectonic_etcd_count }"
   ip_address              = "${var.tectonic_vmware_etcd_ip}"
   vm_disk_datastore       = "${var.tectonic_vmware_etcd_datastore}"
   vm_disk_template        = "${var.tectonic_vmware_vm_template}"

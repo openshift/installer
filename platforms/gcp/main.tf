@@ -52,7 +52,7 @@ module "etcd" {
   external_endpoints      = ["${compact(var.tectonic_etcd_servers)}"]
   ign_etcd_crt_id_list    = "${module.ignition_masters.etcd_crt_id_list}"
   ign_etcd_dropin_id_list = "${module.ignition_masters.etcd_dropin_id_list}"
-  instance_count          = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.google_compute_zones.available.names) == 5 ? 5 : 3}"
+  instance_count          = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.google_compute_zones.available.names) == 5 ? 5 : 3}"
   machine_type            = "${var.tectonic_gcp_etcd_gce_type}"
   managed_zone_name       = "${var.tectonic_gcp_ext_google_managedzone_name}"
   master_subnetwork_name  = "${module.network.master_subnetwork_name}"
@@ -187,10 +187,10 @@ module "dns" {
   source = "../../modules/dns/gcp"
 
   cluster_name        = "${var.tectonic_cluster_name}"
-  etcd_dns_enabled    = "${var.tectonic_self_hosted_etcd == "" && length(compact(var.tectonic_etcd_servers)) == 0}"
+  etcd_dns_enabled    = "${length(compact(var.tectonic_etcd_servers)) == 0}"
   tls_enabled         = "${var.tectonic_etcd_tls_enabled}"
   external_endpoints  = ["${compact(var.tectonic_etcd_servers)}"]
-  etcd_instance_count = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.google_compute_zones.available.names) == 5 ? 5 : 3}"
+  etcd_instance_count = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.google_compute_zones.available.names) == 5 ? 5 : 3}"
   managed_zone_name   = "${var.tectonic_gcp_ext_google_managedzone_name}"
   etcd_ip_addresses   = "${module.etcd.etcd_ip_addresses}"
   base_domain         = "${var.tectonic_base_domain}"

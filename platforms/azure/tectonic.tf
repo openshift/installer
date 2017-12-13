@@ -1,5 +1,5 @@
 locals {
-  etcd_count = "${var.tectonic_self_hosted_etcd != "" ? 0 : max(var.tectonic_etcd_count, 1)}"
+  etcd_count = "${max(var.tectonic_etcd_count, 1)}"
 }
 
 data "template_file" "etcd_hostname_list" {
@@ -49,7 +49,7 @@ module "bootkube" {
   etcd_backup_size          = "${var.tectonic_etcd_backup_size}"
   etcd_backup_storage_class = "${var.tectonic_etcd_backup_storage_class}"
   etcd_endpoints            = "${data.template_file.etcd_hostname_list.*.rendered}"
-  self_hosted_etcd          = "${var.tectonic_self_hosted_etcd}"
+  self_hosted_etcd          = ""
 
   master_count = "${var.tectonic_master_count}"
 
@@ -96,7 +96,7 @@ module "tectonic" {
   console_client_id = "tectonic-console"
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "NodePort"
-  self_hosted_etcd  = "${var.tectonic_self_hosted_etcd}"
+  self_hosted_etcd  = ""
   master_count      = "${var.tectonic_master_count}"
   stats_url         = "${var.tectonic_stats_url}"
 
