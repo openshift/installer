@@ -365,6 +365,7 @@ pipeline {
           withCredentials(creds) {
             unstash 'clean-repo'
             sh """#!/bin/bash -xe
+            export BUILD_RESULT=${currentBuild.currentResult}
             ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh jenkins-logs
             """
           }

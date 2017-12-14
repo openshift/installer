@@ -27,6 +27,11 @@ fi
 SOURCE_BRANCH=${BRANCH_NAME//[=,]/_}
 TARGET_BRANCH=${CHANGE_TARGET//[=,]/_}
 
+#Check whether the BUILD_RESULT is not empty. If the variable is not empty (so success/failure/*), add the value to the additionalField variable.
+if [ -n "${BUILD_RESULT}" ]; then
+   additionalFields="${additionalFields}build_result=${BUILD_RESULT},"
+fi
+
 if [ -n "$testFilePath" ]; then
         platform=$(echo "${testFilePath}" | cut -d'/' -f2)
         specName=$(echo "${testFilePath}" | cut -d'/' -f3 | sed 's/_spec\.rb//')
