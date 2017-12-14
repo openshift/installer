@@ -21,7 +21,7 @@ module "vpc" {
   cluster_id               = "${module.tectonic.cluster_id}"
   cluster_name             = "${var.tectonic_cluster_name}"
   custom_dns_name          = "${var.tectonic_dns_name}"
-  enable_etcd_sg           = "${var.tectonic_self_hosted_etcd == "" && length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
+  enable_etcd_sg           = "${length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
   external_master_subnets  = "${compact(var.tectonic_aws_external_master_subnet_ids)}"
   external_vpc_id          = "${var.tectonic_aws_external_vpc_id}"
   external_worker_subnets  = "${compact(var.tectonic_aws_external_worker_subnet_ids)}"

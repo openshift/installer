@@ -25,7 +25,7 @@ module "etcd_certs" {
   etcd_cert_dns_names   = "${data.template_file.etcd_hostname_list.*.rendered}"
   etcd_client_cert_path = "${var.tectonic_etcd_client_cert_path}"
   etcd_client_key_path  = "${var.tectonic_etcd_client_key_path}"
-  self_signed           = "${var.tectonic_self_hosted_etcd != "" ? "true" : length(compact(var.tectonic_etcd_servers)) == 0 ? "true" : "false"}"
+  self_signed           = "${length(compact(var.tectonic_etcd_servers)) == 0 ? "true" : "false"}"
   service_cidr          = "${var.tectonic_service_cidr}"
 }
 
@@ -90,7 +90,7 @@ module "bootkube" {
   etcd_backup_size          = "${var.tectonic_etcd_backup_size}"
   etcd_backup_storage_class = "${var.tectonic_etcd_backup_storage_class}"
   etcd_endpoints            = "${module.dns.etcd_a_nodes}"
-  self_hosted_etcd          = "${var.tectonic_self_hosted_etcd}"
+  self_hosted_etcd          = ""
 
   master_count = "${var.tectonic_master_count}"
 
@@ -137,7 +137,7 @@ module "tectonic" {
   console_client_id = "tectonic-console"
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "HostPort"
-  self_hosted_etcd  = "${var.tectonic_self_hosted_etcd}"
+  self_hosted_etcd  = ""
   master_count      = "${var.tectonic_master_count}"
   stats_url         = "${var.tectonic_stats_url}"
 
@@ -164,7 +164,7 @@ EOF
   ign_etcd_crt_id_list          = "${module.ignition_masters.etcd_crt_id_list}"
   ign_etcd_dropin_id_list       = "${module.ignition_masters.etcd_dropin_id_list}"
   instance_count                = "${var.tectonic_etcd_count}"
-  self_hosted_etcd              = "${var.tectonic_self_hosted_etcd}"
+  self_hosted_etcd              = ""
   tls_enabled                   = "${var.tectonic_etcd_tls_enabled}"
 }
 
@@ -278,7 +278,7 @@ module "secgroups" {
   source           = "../../../modules/openstack/secgroups"
   cluster_name     = "${var.tectonic_cluster_name}"
   cluster_cidr     = "${var.tectonic_openstack_subnet_cidr}"
-  self_hosted_etcd = "${var.tectonic_self_hosted_etcd}"
+  self_hosted_etcd = ""
 }
 
 module "dns" {
@@ -287,12 +287,12 @@ module "dns" {
   api_ip_addresses          = "${openstack_networking_floatingip_v2.loadbalancer.*.address}"
   base_domain               = "${var.tectonic_base_domain}"
   cluster_name              = "${var.tectonic_cluster_name}"
-  etcd_count                = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count}"
+  etcd_count                = "${var.tectonic_etcd_count}"
   etcd_ip_addresses         = "${flatten(openstack_networking_port_v2.etcd.*.all_fixed_ips)}"
   etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
   master_count              = "${var.tectonic_master_count}"
   master_ip_addresses       = "${flatten(openstack_networking_port_v2.master.*.all_fixed_ips)}"
-  self_hosted_etcd          = "${var.tectonic_self_hosted_etcd}"
+  self_hosted_etcd          = ""
   tectonic_vanilla_k8s      = "${var.tectonic_vanilla_k8s}"
   worker_count              = "${var.tectonic_worker_count}"
   worker_ip_addresses       = "${flatten(openstack_networking_port_v2.worker.*.all_fixed_ips)}"

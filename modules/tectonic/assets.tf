@@ -16,6 +16,7 @@ resource "template_dir" "tectonic" {
     identity_image                     = "${var.container_images["identity"]}"
     ingress_controller_image           = "${var.container_images["ingress_controller"]}"
     kube_version_operator_image        = "${var.container_images["kube_version_operator"]}"
+    kubernetes_addon_operator_image    = "${var.container_images["kubernetes_addon_operator"]}"
     node_agent_image                   = "${var.container_images["node_agent"]}"
     etcd_operator_image                = "${var.container_images["etcd_operator"]}"
     stats_emitter_image                = "${var.container_images["stats_emitter"]}"
@@ -37,12 +38,13 @@ resource "template_dir" "tectonic" {
     grafana_base_image                  = "${var.container_base_images["grafana"]}"
     grafana_watcher_base_image          = "${var.container_base_images["grafana_watcher"]}"
 
-    kubernetes_version             = "${var.versions["kubernetes"]}"
-    monitoring_version             = "${var.versions["monitoring"]}"
-    tectonic_version               = "${var.versions["tectonic"]}"
-    etcd_version                   = "${var.versions["etcd"]}"
-    tectonic_etcd_operator_version = "${var.versions["tectonic-etcd"]}"
-    tectonic_cluo_operator_version = "${var.versions["cluo"]}"
+    kubernetes_version                = "${var.versions["kubernetes"]}"
+    monitoring_version                = "${var.versions["monitoring"]}"
+    tectonic_version                  = "${var.versions["tectonic"]}"
+    etcd_version                      = "${var.versions["etcd"]}"
+    tectonic_etcd_operator_version    = "${var.versions["tectonic-etcd"]}"
+    tectonic_cluo_operator_version    = "${var.versions["cluo"]}"
+    kubernetes_addon_operator_version = "${var.versions["kubernetes_addon"]}"
 
     etcd_cluster_size = "${var.master_count > 2 ? 3 : 1}"
 

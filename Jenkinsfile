@@ -287,8 +287,6 @@ pipeline {
             */
             [file: 'external_spec.rb', args: ''],
             [file: 'example_spec.rb', args: ''],
-            [file: 'self_hosted_etcd_spec.rb', args: ''],
-            [file: 'external_self_hosted_etcd_spec.rb', args: ''],
             [file: 'custom_tls_spec.rb', args: '']
           ]
           def gcp = [

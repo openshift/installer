@@ -31,7 +31,6 @@ module SmokeTest
       'SMOKE_KUBECONFIG' => cluster.kubeconfig,
       'SMOKE_NODE_COUNT' => cluster.tfvars_file.node_count.to_s,
       'SMOKE_MANIFEST_PATHS' => cluster.manifest_path,
-      'SMOKE_MANIFEST_SELF_HOSTED_ETCD' => cluster.tfvars_file.self_hosted_etcd?.to_s,
       'SMOKE_NETWORKING' => cluster.tfvars_file.networking.to_s
     }
   end

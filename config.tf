@@ -96,6 +96,7 @@ variable "tectonic_container_images" {
     tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.8.0"
     tectonic_cluo_operator       = "quay.io/coreos/tectonic-cluo-operator:v0.2.5"
     tectonic_torcx               = "quay.io/coreos/tectonic-torcx:v0.2.0"
+    kubernetes_addon_operator    = "quay.io/coreos/kubernetes-addon-operator:54a613dae60a068aa83c0361319c804ee366a228"
   }
 }
 
@@ -123,12 +124,13 @@ variable "tectonic_versions" {
   type        = "map"
 
   default = {
-    etcd          = "3.1.8"
-    kubernetes    = "1.8.4+tectonic.1"
-    monitoring    = "1.8.0"
-    tectonic      = "1.8.2-tectonic.1"
-    tectonic-etcd = "0.0.1"
-    cluo          = "0.2.5"
+    etcd             = "3.1.8"
+    kubernetes       = "1.8.4+tectonic.1"
+    monitoring       = "1.8.0"
+    tectonic         = "1.8.2-tectonic.1"
+    tectonic-etcd    = "0.0.1"
+    cluo             = "0.2.5"
+    kubernetes_addon = "0.0.0"
   }
 }
 
@@ -480,19 +482,6 @@ variable "tectonic_networking" {
 - "canal": [ALPHA] enables overlay networking including network policy. Overlay is implemented by flannel using VXLAN. Network policy is implemented by Calico.
 
 - "calico": [ALPHA] enables BGP based networking. Routing and network policy is implemented by Calico. Note this has been tested on baremetal installations only.
-EOF
-}
-
-variable "tectonic_self_hosted_etcd" {
-  default = ""
-
-  description = <<EOF
-(internal) [ALPHA] If set to one of the following values, self-hosted etcd is deployed:
-
-- "enabled": Deploys a self-hosted etcd cluster.
-
-- "pv_backup": Deploys a self-hosted etcd cluster including backups to Persistence Volumes.
-`tectonic_etcd_backup_size` and `tectonic_etcd_backup_storage_class` must be configured when using this setting.
 EOF
 }
 

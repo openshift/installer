@@ -26,7 +26,7 @@ resource "openstack_networking_router_interface_v2" "interface" {
 # etcd
 
 resource "openstack_networking_port_v2" "etcd" {
-  count              = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count}"
+  count              = "${var.tectonic_etcd_count}"
   name               = "${var.tectonic_cluster_name}_port_etcd_${count.index}"
   network_id         = "${openstack_networking_network_v2.network.id}"
   security_group_ids = ["${module.secgroups.secgroup_etcd_ids}"]

@@ -9,6 +9,7 @@ resource "template_dir" "payload_operators" {
     tectonic_prometheus_operator_image = "${var.tectonic_container_images["tectonic_prometheus_operator"]}"
     tectonic_etcd_operator_image       = "${var.tectonic_container_images["tectonic_etcd_operator"]}"
     tectonic_cluo_operator_image       = "${var.tectonic_container_images["tectonic_cluo_operator"]}"
+    kubernetes_addon_operator_image    = "${var.tectonic_container_images["kubernetes_addon_operator"]}"
     image_re                           = "${var.tectonic_image_re}"
   }
 }
