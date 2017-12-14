@@ -9,7 +9,8 @@ Our basic set of tests includes:
 - Backend unit tests
 
 They are run on **every** PR by default. Successful basic tests are required in
-order to merge any PRs.
+order to merge any PRs. Before starting to test your proposed changes, they are
+temporarily merged into the target branch of the pull request.
 
 ### Actions required
 - **none**
