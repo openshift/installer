@@ -7,7 +7,6 @@ const request = require('request');
 const ignoredKeys = [
   'tectonic_admin_email',
   'tectonic_admin_password',
-  'tectonic_dns_name',
   'tectonic_license_path',
   'tectonic_pull_secret_path',
   'tectonic_stats_url',
