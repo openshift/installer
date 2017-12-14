@@ -23,7 +23,7 @@ spec:
         command:
         - /kube-version-operator
         - --cache-images=true
-        - --version-mapping=/upgrade-spec.json
+        - --version-mapping=/upgrade-spec.yaml
       imagePullSecrets:
       - name: coreos-pull-secret
       securityContext:
