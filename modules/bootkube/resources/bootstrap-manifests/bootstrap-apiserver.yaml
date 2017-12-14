@@ -29,7 +29,7 @@ spec:
     - --kubelet-client-certificate=/etc/kubernetes/secrets/apiserver.crt
     - --kubelet-client-key=/etc/kubernetes/secrets/apiserver.key
     - --runtime-config=""
-    - --secure-port=443
+    - --secure-port=6443
     - --service-account-key-file=/etc/kubernetes/secrets/service-account.pub
     - --service-cluster-ip-range=${service_cidr}
     - --storage-backend=etcd3
