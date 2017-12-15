@@ -1,3 +1,7 @@
+provider "azurerm" {
+  version = "0.3.1"
+}
+
 variable "tectonic_azure_location" {
   default = "eastus"
 }
