@@ -5,9 +5,8 @@
     "caCertificate": "",
     "caPrivateKey": "",
     "caType": "self-signed",
-    "clusterName": "my-cluster",
+    "clusterName": "metal-smoke",
     "controllerDomain": "cluster.example.com",
-    "externalETCDClient": "",
     "masters": [
       {
         "mac": "52:54:00:a1:9c:ae",
@@ -24,7 +23,7 @@
     "podCIDR": "10.2.0.0/16",
     "pullSecret": "<TECTONIC_PULL_SECRET>",
     "serviceCIDR": "10.3.0.0/16",
-    "sshAuthorizedKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCt3BebCHqnSsgpLjo4kVvyfY/z2BS8t27r/7du+O2pb4xYkr7n+KFpbOz523vMTpQ+o1jY4u4TgexglyT9nqasWgLOvo1qjD1agHme8LlTPQSk07rXqOB85Uq5p7ig2zoOejF6qXhcc3n1c7+HkxHrgpBENjLVHOBpzPBIAHkAGaZcl07OCqbsG5yxqEmSGiAlh/IiUVOZgdDMaGjCRFy0wk0mQaGD66DmnFc1H5CzcPjsxr0qO65e7lTGsE930KkO1Vc+RHCVwvhdXs+c2NhJ2/3740Kpes9n1/YullaWZUzlCPDXtRuy6JRbFbvy39JUgHWGWzB3d+3f8oJ/N4qZ cardno:000603633110",
+    "sshAuthorizedKey": "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDPQFdwVLr+alsWIgYRz9OdqDhnx9jjuFbkdSdpqq4gd9uZApYlivMDD4UgjFazQpezx8DiNhu9ym7i6LgAcdwi+10hE4L9yoJv9uBgbBxOAd65znqLqF91NtV4mlKP5YfJtR7Ehs+pTB+IIC+o5veDbPn+BYgDMJ2x7Osbn1/gFSDken/yoOFbYbRMGMfVEQYjJzC4r/qCKH0bl/xuVNLxf9FkWSTCcQFKGOndwuGITDkshD4r2Kk8gUddXPxoahBv33/2QH0CY5zbKYjhgN6I6WtwO+O1uJwtNeV1AGhYjurdd60qggNwx+W7623uK3nIXvJd3hzDO8u5oa53/tIL fake-test-key",
     "tectonicDomain": "tectonic.example.com",
     "tectonicLicense": "<TECTONIC_LICENSE>",
     "workers": [
