@@ -212,7 +212,7 @@ export const AWS_CloudCredentials = connect(stateToProps)(
 
       <div className="row form-group">
         <div className="col-xs-12">
-          <awsCredsForm.Errors />
+          {regionSelections.error && <Alert severity="error">{regionSelections.error}</Alert>}
         </div>
       </div>
     </div>
