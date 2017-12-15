@@ -117,7 +117,7 @@ pipeline {
           script {
             def err = null
             try {
-              timeout(time: 10, unit: 'MINUTES') {
+              timeout(time: 20, unit: 'MINUTES') {
                 forcefullyCleanWorkspace()
                 checkout scm
                 stash name: 'clean-repo', excludes: 'installer/vendor/**,tests/smoke/vendor/**,images/tectonic-stats-extender/vendor/**'
