@@ -34,7 +34,7 @@ spec:
         - apiserver
         - --runtime-config=""
         - --bind-address=0.0.0.0
-        - --secure-port=443
+        - --secure-port=6443
         - --insecure-port=0
         - --advertise-address=${advertise_address}
         - --etcd-servers=${etcd_servers}

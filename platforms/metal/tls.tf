@@ -4,7 +4,7 @@ module "kube_certs" {
   ca_cert_pem        = "${var.tectonic_ca_cert}"
   ca_key_alg         = "${var.tectonic_ca_key_alg}"
   ca_key_pem         = "${var.tectonic_ca_key}"
-  kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:443"
+  kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:6443"
   service_cidr       = "${var.tectonic_service_cidr}"
   validity_period    = "${var.tectonic_tls_validity_period}"
 }

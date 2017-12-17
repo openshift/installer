@@ -10,7 +10,7 @@ resource "aws_elb" "api_internal" {
   connection_draining_timeout = 300
 
   listener {
-    instance_port     = 443
+    instance_port     = 6443
     instance_protocol = "tcp"
     lb_port           = 443
     lb_protocol       = "tcp"
@@ -20,7 +20,7 @@ resource "aws_elb" "api_internal" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
-    target              = "SSL:443"
+    target              = "SSL:6443"
     interval            = 5
   }
 
@@ -43,7 +43,7 @@ resource "aws_elb" "api_external" {
   connection_draining_timeout = 300
 
   listener {
-    instance_port     = 443
+    instance_port     = 6443
     instance_protocol = "tcp"
     lb_port           = 443
     lb_protocol       = "tcp"
@@ -53,7 +53,7 @@ resource "aws_elb" "api_external" {
     healthy_threshold   = 2
     unhealthy_threshold = 2
     timeout             = 3
-    target              = "SSL:443"
+    target              = "SSL:6443"
     interval            = 5
   }
 

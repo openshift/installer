@@ -58,7 +58,7 @@ resource "google_compute_health_check" "api-health-check" {
   check_interval_sec = 1
 
   ssl_health_check {
-    port = "443"
+    port = "6443"
   }
 }
 

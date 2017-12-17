@@ -15,7 +15,7 @@ module "bootkube" {
 
   cluster_name = "${var.tectonic_cluster_name}"
 
-  kube_apiserver_url = "https://${module.vnet.api_fqdn}:443"
+  kube_apiserver_url = "https://${module.vnet.api_fqdn}:${var.tectonic_azure_private_cluster ? "6" : ""}443"
   oidc_issuer_url    = "https://${module.vnet.ingress_fqdn}/identity"
 
   # Platform-independent variables wiring, do not modify.
