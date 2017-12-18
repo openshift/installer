@@ -86,3 +86,8 @@ variable "ign_s3_puller_id" {
 variable "s3_bucket" {
   type = "string"
 }
+
+variable "dns_server_ip" {
+  type    = "string"
+  default = ""
+}

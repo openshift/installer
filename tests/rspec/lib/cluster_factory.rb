@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'aws_cluster'
+require 'govcloud_cluster'
 require 'azure_cluster'
 require 'metal_cluster'
 require 'gcp_cluster'

@@ -6,7 +6,7 @@
 3. CoreOS does not ship with `make`, so Docker builds still have to use small scripts.
 */
 
-creds = [
+commonCreds = [
   file(credentialsId: 'tectonic-license', variable: 'TF_VAR_tectonic_license_path'),
   file(credentialsId: 'tectonic-pull', variable: 'TF_VAR_tectonic_pull_secret_path'),
   file(credentialsId: 'GCP-APPLICATION', variable: 'GOOGLE_APPLICATION_CREDENTIALS'),
@@ -15,10 +15,6 @@ creds = [
     passwordVariable: 'LOG_ANALYZER_PASSWORD',
     usernameVariable: 'LOG_ANALYZER_USER'
   ),
-  [
-    $class: 'AmazonWebServicesCredentialsBinding',
-    credentialsId: 'tectonic-jenkins-installer'
-  ],
   [
     $class: 'AzureCredentialsBinding',
     credentialsId: 'azure-tectonic-test-service-principal',
@@ -33,6 +29,23 @@ creds = [
     variable: 'GITHUB_CREDENTIALS'
   ]
 ]
+
+creds = commonCreds.collect()
+creds.push(
+  [
+    $class: 'AmazonWebServicesCredentialsBinding',
+    credentialsId: 'tectonic-jenkins-installer'
+  ],
+)
+
+govcloudCreds = commonCreds.collect()
+govcloudCreds.push(
+    usernamePassword(
+      credentialsId: 'tectonic-jenkins-installer-govcloud',
+      passwordVariable: 'AWS_SECRET_ACCESS_KEY',
+      usernameVariable: 'AWS_ACCESS_KEY_ID'
+    )
+)
 
 quayCreds = [
   usernamePassword(
@@ -91,6 +104,11 @@ pipeline {
     )
     booleanParam(
       name: 'PLATFORM/AWS',
+      defaultValue: true,
+      description: ''
+    )
+    booleanParam(
+      name: 'PLATFORM/GOVCLOUD',
       defaultValue: true,
       description: ''
     )
@@ -283,6 +301,9 @@ pipeline {
             [file: 'ca_spec.rb', args: ''],
             [file: 'custom_tls_spec.rb', args: '']
           ]
+          def govcloud = [
+            [file: 'vpc_internal_spec.rb', args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root']
+          ]
           def azure = [
             [file: 'basic_spec.rb', args: ''],
             [file: 'private_external_spec.rb', args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root'],
@@ -310,28 +331,35 @@ pipeline {
           if (params."PLATFORM/AWS") {
             aws.each { build ->
               filepath = 'spec/aws/' + build.file
-              builds['aws/' + build.file] = runRSpecTest(filepath, build.args)
+              builds['aws/' + build.file] = runRSpecTest(filepath, build.args, creds)
+            }
+          }
+
+          if (params."PLATFORM/GOVCLOUD") {
+            govcloud.each { build ->
+              filepath = 'spec/govcloud/' + build.file
+              builds['govcloud/' + build.file] = runRSpecTest(filepath, build.args, govcloudCreds)
             }
           }
 
           if (params."PLATFORM/AZURE") {
             azure.each { build ->
               filepath = 'spec/azure/' + build.file
-              builds['azure/' + build.file] = runRSpecTest(filepath, build.args)
+              builds['azure/' + build.file] = runRSpecTest(filepath, build.args, creds)
             }
           }
 
           if (params."PLATFORM/GCP") {
             gcp.each { build ->
               filepath = 'spec/gcp/' + build.file
-              builds['gcp/' + build.file] = runRSpecTest(filepath, build.args)
+              builds['gcp/' + build.file] = runRSpecTest(filepath, build.args, creds)
             }
           }
 
           if (params."PLATFORM/BARE_METAL") {
             metal.each { build ->
               filepath = 'spec/metal/' + build.file
-              builds['metal/' + build.file] = runRSpecTestBareMetal(filepath)
+              builds['metal/' + build.file] = runRSpecTestBareMetal(filepath, creds)
             }
           }
           parallel builds
@@ -398,7 +426,7 @@ def forcefullyCleanWorkspace() {
   }
 }
 
-def runRSpecTest(testFilePath, dockerArgs) {
+def runRSpecTest(testFilePath, dockerArgs, credentials) {
   return {
     node('worker && ec2') {
       def err = null
@@ -406,7 +434,7 @@ def runRSpecTest(testFilePath, dockerArgs) {
         timeout(time: 5, unit: 'HOURS') {
           forcefullyCleanWorkspace()
           ansiColor('xterm') {
-            withCredentials(creds + quayCreds) {
+            withCredentials(credentials + quayCreds) {
               withDockerContainer(
                 image: tectonicSmokeTestEnvImage,
                 args: '-u root -v /var/run/docker.sock:/var/run/docker.sock ' + dockerArgs

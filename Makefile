@@ -76,6 +76,10 @@ docs:
 			'This document gives an overview of variables used in the AWS platform of the Tectonic SDK.', \
 			platforms/aws/variables.tf)
 
+	$(call terraform-docs, Documentation/variables/govcloud.md, \
+			'This document gives an overview of variables used in the GovCloud AWS platform of the Tectonic SDK.', \
+			platforms/govcloud/variables.tf)
+
 	$(call terraform-docs, Documentation/variables/azure.md, \
 			'This document gives an overview of variables used in the Azure platform of the Tectonic SDK.', \
 			platforms/azure/variables.tf)
@@ -101,6 +105,10 @@ examples:
 	$(call terraform-examples, examples/terraform.tfvars.aws, \
 			config.tf, \
 			platforms/aws/variables.tf)
+
+	$(call terraform-examples, examples/terraform.tfvars.govcloud, \
+			config.tf, \
+			platforms/govcloud/variables.tf)
 
 	$(call terraform-examples, \
 			examples/terraform.tfvars.azure, \

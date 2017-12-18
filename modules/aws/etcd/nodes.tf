@@ -16,7 +16,7 @@ data "aws_ami" "coreos_ami" {
 
   filter {
     name   = "owner-id"
-    values = ["595879546273"]
+    values = ["${local.ami_owner}"]
   }
 }
 
@@ -85,7 +85,7 @@ resource "aws_iam_role_policy" "etcd" {
       "Action" : [
         "s3:GetObject"
       ],
-      "Resource": "arn:aws:s3:::*",
+      "Resource": "arn:${local.arn}:s3:::*",
       "Effect": "Allow"
     }
   ]
