@@ -49,6 +49,6 @@ const toExport = {
 
 module.exports = Object.assign(
   toExport,
-  steps('aws', '../output/aws.tfvars'),
+  steps('aws', '../../../../tests/smoke/aws/vars/aws.tfvars.json'),
   steps('aws-custom-vpc', '../output/aws-custom-vpc.tfvars')
 );

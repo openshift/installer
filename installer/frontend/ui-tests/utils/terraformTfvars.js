@@ -5,6 +5,7 @@ const path = require('path');
 const request = require('request');
 
 const ignoredKeys = [
+  'tectonic_aws_ssh_key',
   'tectonic_admin_email',
   'tectonic_admin_password',
   'tectonic_dns_name',
