@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "backoff.go",
+        "throttle.go",
+    ],
+    importpath = "k8s.io/client-go/pkg/util/flowcontrol",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/k8s.io/client-go/pkg/util/clock:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/util/integer:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/util/ratelimit:go_default_library",
+    ],
+)

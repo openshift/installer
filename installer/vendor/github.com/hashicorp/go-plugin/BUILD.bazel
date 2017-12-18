@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "client.go",
+        "discover.go",
+        "error.go",
+        "mux_broker.go",
+        "plugin.go",
+        "process.go",
+        "process_posix.go",
+        "rpc_client.go",
+        "rpc_server.go",
+        "server.go",
+        "server_mux.go",
+        "stream.go",
+        "testing.go",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:windows_amd64": [
+            "process_windows.go",
+        ],
+        "//conditions:default": [],
+    }),
+    importpath = "github.com/hashicorp/go-plugin",
+    visibility = ["//visibility:public"],
+    deps = ["//installer/vendor/github.com/hashicorp/yamux:go_default_library"],
+)

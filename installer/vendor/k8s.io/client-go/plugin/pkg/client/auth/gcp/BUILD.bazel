@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["gcp.go"],
+    importpath = "k8s.io/client-go/plugin/pkg/client/auth/gcp",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/golang/glog:go_default_library",
+        "//installer/vendor/golang.org/x/net/context:go_default_library",
+        "//installer/vendor/golang.org/x/oauth2:go_default_library",
+        "//installer/vendor/golang.org/x/oauth2/google:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/util/jsonpath:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/util/yaml:go_default_library",
+        "//installer/vendor/k8s.io/client-go/rest:go_default_library",
+    ],
+)

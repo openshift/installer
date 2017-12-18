@@ -1,0 +1,27 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "error.go",
+        "id.go",
+        "map.go",
+        "resource.go",
+        "state.go",
+        "testing.go",
+        "testing_config.go",
+        "testing_import_state.go",
+        "wait.go",
+    ],
+    importpath = "github.com/hashicorp/terraform/helper/resource",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/davecgh/go-spew/spew:go_default_library",
+        "//installer/vendor/github.com/hashicorp/go-getter:go_default_library",
+        "//installer/vendor/github.com/hashicorp/go-multierror:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/config/module:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/helper/config:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/helper/logging:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/terraform:go_default_library",
+    ],
+)

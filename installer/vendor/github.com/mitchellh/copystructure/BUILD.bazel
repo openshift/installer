@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "copier_time.go",
+        "copystructure.go",
+    ],
+    importpath = "github.com/mitchellh/copystructure",
+    visibility = ["//visibility:public"],
+    deps = ["//installer/vendor/github.com/mitchellh/reflectwalk:go_default_library"],
+)

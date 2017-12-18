@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "connection_func.go",
+        "go-get.go",
+        "oleutil.go",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:windows_amd64": [
+            "connection.go",
+            "connection_windows.go",
+        ],
+        "//conditions:default": [],
+    }),
+    importpath = "github.com/go-ole/go-ole/oleutil",
+    visibility = ["//visibility:public"],
+    deps = ["//installer/vendor/github.com/go-ole/go-ole:go_default_library"],
+)

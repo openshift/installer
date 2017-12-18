@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "credentials.go",
+        "executor.go",
+        "sources.go",
+    ],
+    importpath = "github.com/coreos/tectonic-installer/installer/pkg/terraform",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/terraform:go_default_library",
+        "//installer/vendor/github.com/kardianos/osext:go_default_library",
+        "//installer/vendor/github.com/shirou/gopsutil/process:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["executor_test.go"],
+    importpath = "github.com/coreos/tectonic-installer/installer/pkg/terraform",
+    library = ":go_default_library",
+    deps = ["//installer/vendor/github.com/stretchr/testify/assert:go_default_library"],
+)

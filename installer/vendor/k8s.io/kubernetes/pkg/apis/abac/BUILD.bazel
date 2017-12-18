@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "register.go",
+        "types.go",
+    ],
+    importpath = "k8s.io/kubernetes/pkg/apis/abac",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/k8s.io/kubernetes/pkg/api/unversioned:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/runtime:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/runtime/serializer:go_default_library",
+    ],
+)

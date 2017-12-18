@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["read.go"],
+    importpath = "github.com/hashicorp/terraform/helper/pathorcontents",
+    visibility = ["//visibility:public"],
+    deps = ["//installer/vendor/github.com/mitchellh/go-homedir:go_default_library"],
+)

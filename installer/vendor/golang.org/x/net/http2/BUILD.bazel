@@ -1,0 +1,31 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "client_conn_pool.go",
+        "configure_transport.go",
+        "errors.go",
+        "fixed_buffer.go",
+        "flow.go",
+        "frame.go",
+        "go16.go",
+        "go17.go",
+        "gotrack.go",
+        "headermap.go",
+        "http2.go",
+        "not_go16.go",
+        "not_go17.go",
+        "pipe.go",
+        "server.go",
+        "transport.go",
+        "write.go",
+        "writesched.go",
+    ],
+    importpath = "golang.org/x/net/http2",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/golang.org/x/net/http2/hpack:go_default_library",
+        "//installer/vendor/golang.org/x/net/lex/httplex:go_default_library",
+    ],
+)

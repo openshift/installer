@@ -1,0 +1,21 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "doc.go",
+        "key.go",
+        "manager.go",
+        "repo.go",
+        "rotate.go",
+        "sync.go",
+    ],
+    importpath = "github.com/coreos/go-oidc/key",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//tests/smoke/vendor/github.com/coreos/go-oidc/jose:go_default_library",
+        "//tests/smoke/vendor/github.com/coreos/pkg/health:go_default_library",
+        "//tests/smoke/vendor/github.com/coreos/pkg/timeutil:go_default_library",
+        "//tests/smoke/vendor/github.com/jonboulle/clockwork:go_default_library",
+    ],
+)

@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "constants.go",
+        "typedef.go",
+        "vars.go",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:windows_amd64": [
+            "advapi32.go",
+            "comctl32.go",
+            "comdlg32.go",
+            "dwmapi.go",
+            "gdi32.go",
+            "gdiplus.go",
+            "idispatch.go",
+            "istream.go",
+            "iunknown.go",
+            "kernel32.go",
+            "ole32.go",
+            "oleaut32.go",
+            "opengl32.go",
+            "psapi.go",
+            "shell32.go",
+            "user32.go",
+            "utils.go",
+        ],
+        "//conditions:default": [],
+    }),
+    importpath = "github.com/shirou/w32",
+    visibility = ["//visibility:public"],
+)
