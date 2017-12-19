@@ -121,13 +121,13 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
 
     updateStatus ({tectonic, terraform}) {
       if (terraform.action === 'apply') {
-        const services = (tectonic.isEtcdSelfHosted ? [{key: 'etcd', name: 'Etcd'}] : []).concat([
+        const services = [
           {key: 'kubernetes', name: 'Kubernetes'},
           {key: 'identity', name: 'Tectonic Identity'},
           {key: 'ingress', name: 'Tectonic Ingress Controller'},
           {key: 'console', name: 'Tectonic Console'},
           {key: 'tectonicSystem', name: 'other Tectonic services'},
-        ]);
+        ];
         this.setState({services});
 
         const tectonicSucceeded = services.filter(s => _.get(tectonic[s.key], 'success')).length;
