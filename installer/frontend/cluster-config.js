@@ -108,25 +108,20 @@ export const selectedSubnets = (cc, subnets) => {
   return awsSubnets;
 };
 
-export const getZoneDomain = (cc) => {
-  if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
-    throw new Error("Can't get base domain for bare metal!");
-  }
-  return _.get(cc, ['extra', AWS_HOSTED_ZONE_ID, 'zoneToName', cc[AWS_HOSTED_ZONE_ID]]);
-};
+export const getAwsZoneDomain = cc => _.get(cc, ['extra', AWS_HOSTED_ZONE_ID, 'zoneToName', cc[AWS_HOSTED_ZONE_ID]]);
 
 const getControllerDomain = (cc) => {
   if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     return cc[CONTROLLER_DOMAIN];
   }
-  return `${cc[CLUSTER_SUBDOMAIN]}-k8s.${getZoneDomain(cc)}`;
+  return `${cc[CLUSTER_SUBDOMAIN]}-k8s.${getAwsZoneDomain(cc)}`;
 };
 
 export const getTectonicDomain = (cc) => {
   if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     return cc[BM_TECTONIC_DOMAIN];
   }
-  return cc[CLUSTER_SUBDOMAIN] + (cc[CLUSTER_SUBDOMAIN].endsWith('.') ? '' : '.') + getZoneDomain(cc);
+  return cc[CLUSTER_SUBDOMAIN] + (cc[CLUSTER_SUBDOMAIN].endsWith('.') ? '' : '.') + getAwsZoneDomain(cc);
 };
 
 export const DEFAULT_CLUSTER_CONFIG = {
@@ -180,7 +175,7 @@ export const toAWS_TF = ({clusterConfig: cc, dirty}, FORMS) => {
       tectonic_aws_worker_root_volume_size: workers[STORAGE_SIZE_IN_GIB],
       tectonic_aws_worker_root_volume_type: workers[STORAGE_TYPE],
       tectonic_aws_ssh_key: cc[AWS_SSH],
-      tectonic_base_domain: getZoneDomain(cc),
+      tectonic_base_domain: getAwsZoneDomain(cc),
       tectonic_cluster_cidr: cc[POD_CIDR],
       tectonic_cluster_name: cc[CLUSTER_NAME],
       tectonic_master_count: controllers[NUMBER_OF_INSTANCES],
