@@ -265,7 +265,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
         );
       }
 
-      const tfTitle = `${isApply ? 'Applying' : 'Destroying'} Terraform`;
+      const tfTitle = `Terraform ${_.startCase(action)}`;
 
       return <div>
         {!isBareMetal &&
