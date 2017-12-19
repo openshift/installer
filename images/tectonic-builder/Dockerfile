@@ -24,7 +24,8 @@ RUN go get github.com/jstemmer/go-junit-report
 
 ### Tools used by 'make structure-check'
 RUN go get github.com/segmentio/terraform-docs
-RUN go get github.com/coreos/tectonic-installer/contrib/terraform-examples
+RUN go get github.com/coreos/tectonic-installer/contrib/terraform-examples && \
+    rm -rf /go/src/github.com/coreos/tectonic-installer/
 RUN go get github.com/bronze1man/yaml2json
 
 ### License parser
@@ -42,16 +43,15 @@ RUN chmod 777 -R /go
 
 ### Install Shellcheck, Terraform, NodeJS and Yarn
 ENV SHELLCHECK_VERSION="v0.4.6"
-ENV TERRAFORM_VERSION="0.10.7"
+ENV TERRAFORM_VERSION="0.11.1"
 ENV NODE_VERSION="v8.1.2"
 ENV YARN_VERSION="v0.24.6"
 ENV MATCHBOXVERSION="v0.6.1"
 # yarn needs a home writable by any user running the container
 ENV HOME /opt/home
-RUN mkdir -p ${HOME}
-RUN chmod 777 -R ${HOME}
-
-RUN apt-get update && \
+RUN mkdir -p ${HOME} && \
+    chmod 777 -R ${HOME} && \
+    apt-get update && \
     apt-get install --no-install-recommends -y -q \
     build-essential sudo curl wget git autoconf automake unzip libtool jq awscli gnupg1 \
     openvpn xvfb xauth
@@ -70,9 +70,9 @@ RUN cd /tmp && \
     cd node-* && \
     cp -r lib/node_modules /usr/local/lib/node_modules && \
     cp bin/node /usr/local/bin && \
-    ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
+    ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && \
 # so any container user can install global node modules if needed
-RUN chmod 777 /usr/local/lib/node_modules
+    chmod 777 /usr/local/lib/node_modules
 
 # Install Yarn
 RUN cd /tmp && \
@@ -107,5 +107,5 @@ RUN cd /tmp && \
     cp matchbox-*/matchbox /usr/local/bin
 
 # cleanup
-RUN rm -rf /tmp/node-v*
-RUN rm -f /tmp/yarn.tar.gz
+RUN rm -rf /tmp/node-v* && rm -f /tmp/yarn.tar.gz
+
