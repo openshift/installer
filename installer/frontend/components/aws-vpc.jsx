@@ -47,7 +47,7 @@ import {
   VPC_CREATE ,
   VPC_PRIVATE,
   VPC_PUBLIC,
-  getZoneDomain,
+  getAwsZoneDomain,
   selectedSubnets,
 } from '../cluster-config';
 
@@ -135,7 +135,7 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
       if (empty) {
         return empty;
       }
-      if (!getZoneDomain(cc)) {
+      if (!getAwsZoneDomain(cc)) {
         return 'Unknown zone ID.';
       }
     },
