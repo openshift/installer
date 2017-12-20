@@ -13,10 +13,6 @@ require 'webdriver_helpers'
 require 'test_container'
 require 'with_retries'
 
-COMPONENT_TESTS = [
-  { 'name' => 'console', 'image' => 'quay.io/coreos/tectonic-console-tester:v2.7.1' }
-].freeze
-
 RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
   include_examples('withBuildFolderSetup', tf_vars_path)
   include_examples('withRunningClusterExistingBuildFolder', vpn_tunnel)
@@ -167,10 +163,10 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
     expect { conformance_test.run }.to_not raise_error
   end
 
-  COMPONENT_TESTS.map do |test|
-    it "passes #{test['name']} component tests", :component_tests do
+  (ENV['COMPONENT_TEST_IMAGES'] || '').split(',').each do |image|
+    it "passes component test '#{image}'", :component_tests do
       test_container = TestContainer.new(
-        test['image'],
+        image.chomp,
         @cluster,
         vpn_tunnel
       )

@@ -197,9 +197,9 @@ tests/smoke: bin/smoke smoke-test-env-docker-image
 	-e TF_VAR_tectonic_admin_password \
 	-e TECTONIC_TESTS_DONT_CLEAN_UP \
 	-e RUN_SMOKE_TESTS \
-	-e RUN_COMPONENT_TESTS \
 	-e RUN_CONFORMANCE_TESTS \
 	-e KUBE_CONFORMANCE_IMAGE \
+	-e COMPONENT_TEST_IMAGES \
 	--cap-add NET_ADMIN \
 	--device /dev/net/tun \
 	quay.io/coreos/tectonic-smoke-test-env \

@@ -80,14 +80,14 @@ pipeline {
       description: ''
     )
     booleanParam(
-      name: 'RUN_COMPONENT_TESTS',
-      defaultValue: true,
-      description: ''
-    )
-    booleanParam(
       name: 'RUN_GUI_TESTS',
       defaultValue: true,
       description: ''
+    )
+    string(
+      name: 'COMPONENT_TEST_IMAGES',
+      defaultValue: '',
+      description: 'List of container images for component tests to run (comma-separated)'
     )
     booleanParam(
       name: 'PLATFORM/AWS',
@@ -262,7 +262,7 @@ pipeline {
     stage("Smoke Tests") {
       when {
         expression {
-          return params.RUN_SMOKE_TESTS || params.RUN_CONFORMANCE_TESTS || params.RUN_COMPONENT_TESTS
+          return params.RUN_SMOKE_TESTS || params.RUN_CONFORMANCE_TESTS || params.COMPONENT_TEST_IMAGES != ''
         }
       }
       environment {
