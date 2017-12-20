@@ -24,7 +24,7 @@ export const BM_Credentials = () => <div>
     </div>
     <div className="col-xs-9">
       <Connect field={BM_MATCHBOX_CA}>
-        <CertArea autoFocus="true" />
+        <CertArea autoFocus={true} />
       </Connect>
     </div>
   </div>

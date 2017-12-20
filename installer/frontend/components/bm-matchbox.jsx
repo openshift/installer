@@ -127,7 +127,7 @@ export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
               <div className="col-xs-9">
                 <Input id={BM_MATCHBOX_HTTP}
                   className="wiz-inline-field wiz-inline-field--prefix"
-                  autoFocus="true"
+                  autoFocus={true}
                   prefix={<span className="input__prefix">http://</span>}
                   placeholder="matchbox.example.com:8080"
                   forceDirty={!!osError}
