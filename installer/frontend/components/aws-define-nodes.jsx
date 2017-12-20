@@ -15,7 +15,7 @@ import {
 } from '../cluster-config';
 
 import { Form } from '../form';
-import { toError, toAsyncError } from '../utils';
+import { toError } from '../utils';
 import { validate } from '../validate';
 import { AWS_INSTANCE_TYPES } from '../facts';
 import { NumberInput, Connect, Select } from './ui';
@@ -56,9 +56,7 @@ const IamRoles = connect(
 );
 
 const Errors = connect(
-  ({clusterConfig}, {type}) => ({
-    error: _.get(clusterConfig, toError(type)) || _.get(clusterConfig, toAsyncError(type)),
-  })
+  ({clusterConfig}, {type}) => ({error: _.get(clusterConfig, toError(type))})
 )(props => props.error ? <div className="wiz-error-message">{props.error}</div> : <span />);
 
 export const DefineNode = ({type, max, withIamRole = true}) => <div>

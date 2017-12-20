@@ -56,8 +56,6 @@ const toPath = function (base) {
 };
 
 export const toError = toPath('error');
-export const toAsyncError = toPath('error_async');
-export const toIgnore = toPath('ignore');
 export const toInFly = toPath('inFly');
 export const toExtraData = toPath('extra');
 export const toExtraDataError = toPath('extraError');

@@ -22,6 +22,7 @@ import { TectonicGA } from '../tectonic-ga';
 import { KubernetesCIDRs } from './k8s-cidrs';
 import { CIDRRow } from './cidr';
 import { Field, Form } from '../form';
+import { toError } from '../utils';
 
 import {
   AWS_CONTROLLER_SUBNETS,
@@ -56,19 +57,25 @@ const DEFAULT_AWS_VPC_CIDR = '10.0.0.0/16';
 
 const {setIn} = configActions;
 
-const validateVPC = (dispatch, getState, data, oldData, isNow, oldCC) => {
-  const cc = getState().clusterConfig;
+const validateVPC = async (data, cc, updatedId, dispatch) => {
+  const hostedZoneID = data[AWS_HOSTED_ZONE_ID];
+  const privateZone = _.get(cc, ['extra', AWS_HOSTED_ZONE_ID, 'privateZones', hostedZoneID]);
+  if (privateZone && hostedZoneID && data[AWS_CREATE_VPC] !== VPC_PRIVATE) {
+    return 'Private Route 53 Zones must use an existing private VPC.';
+  }
 
   const isCreate = cc[AWS_CREATE_VPC] === VPC_CREATE;
   const awsVpcId = cc[AWS_VPC_ID];
 
   if (!isCreate && !awsVpcId) {
     // User hasn't selected a VPC yet. Don't try to validate.
-    return Promise.resolve();
+    return;
   }
 
-  // Fields relevant to the VPC validation
-  const vpcFields = [
+  // Prevent unnecessary calls to validate API by only continuing if a field relevant to VPC validation has changed.
+  // However, we always continue if updatedId is undefined, since that probably means the form has just been loaded and
+  // we are doing initial validation.
+  if (updatedId && ![
     AWS_CONTROLLER_SUBNETS,
     AWS_CONTROLLER_SUBNET_IDS,
     AWS_CREATE_VPC,
@@ -80,13 +87,8 @@ const validateVPC = (dispatch, getState, data, oldData, isNow, oldCC) => {
     DESELECTED_FIELDS,
     POD_CIDR,
     SERVICE_CIDR,
-  ];
-
-  // Prevent unnecessary calls to validate API by only continuing if a field relevant to VPC validation has changed.
-  // However, we always continue if none of the form data has changed, since that probably means the form has just been
-  // loaded and we are doing initial validation.
-  if (_.every(vpcFields, k => _.isEqual(cc[k], oldCC[k])) && !_.isEqual(data, oldData)) {
-    return Promise.resolve();
+  ].includes(updatedId)) {
+    return _.get(cc, toError(AWS_VPC_FORM));
   }
 
   const getSubnets = subnets => {
@@ -111,11 +113,12 @@ const validateVPC = (dispatch, getState, data, oldData, isNow, oldCC) => {
     network.awsVpcId = awsVpcId;
   }
 
-  return dispatch(validateSubnets(network)).then(json => {
-    if (!json.valid) {
-      return Promise.reject(json.message);
-    }
-  });
+  try {
+    return await dispatch(validateSubnets(network))
+      .then(json => json.valid ? undefined : json.message);
+  } catch (e) {
+    return e.message || e.toString();
+  }
 };
 
 const vpcInfoForm = new Form(AWS_VPC_FORM, [
@@ -169,17 +172,7 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
   new Field(DESELECTED_FIELDS, {default: {}}),
 ], {
   dependencies: [POD_CIDR, SERVICE_CIDR],
-  validator: (data, cc) => {
-    const hostedZoneID = data[AWS_HOSTED_ZONE_ID];
-    const privateZone = _.get(cc, ['extra', AWS_HOSTED_ZONE_ID, 'privateZones', hostedZoneID]);
-    if (!privateZone || !hostedZoneID) {
-      return;
-    }
-    if (privateZone && data[AWS_CREATE_VPC] !== VPC_PRIVATE) {
-      return 'Private Route 53 Zones must use an existing private VPC.';
-    }
-  },
-  asyncValidator: validateVPC,
+  validator: validateVPC,
 });
 
 const SubnetSelect = ({field, name, subnets, disabled, fieldName}) => <div className="row form-group">
