@@ -5,7 +5,6 @@
   "tectonic_cluster_cidr": "10.2.0.0/16",
   "tectonic_cluster_name": "my-cluster",
   "tectonic_container_linux_version": "1520.9.0",
-  "tectonic_dns_name": "",
   "tectonic_kube_apiserver_service_ip": "10.3.0.1",
   "tectonic_kube_dns_service_ip": "10.3.0.10",
   "tectonic_kube_etcd_service_ip": "10.3.0.15",
