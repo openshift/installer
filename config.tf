@@ -96,7 +96,7 @@ variable "tectonic_container_images" {
     tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.8.0"
     tectonic_cluo_operator       = "quay.io/coreos/tectonic-cluo-operator:v0.2.5"
     tectonic_torcx               = "quay.io/coreos/tectonic-torcx:v0.2.0"
-    kubernetes_addon_operator    = "quay.io/coreos/kubernetes-addon-operator:54a613dae60a068aa83c0361319c804ee366a228"
+    kubernetes_addon_operator    = "quay.io/coreos/kubernetes-addon-operator:4b83569d763dc95e1f61c77b31989fd3957bfc67"
   }
 }
 
