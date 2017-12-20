@@ -18,7 +18,7 @@ export const DryRun = () => <div className="row">
       <div className="wiz-giant-button-container">
         <a href="/terraform/assets" download>
           <button className="btn btn-primary wiz-giant-button">
-            <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
+            <i className="fa fa-download"></i>&nbsp;&nbsp;Download Assets
           </button>
         </a>
       </div>
