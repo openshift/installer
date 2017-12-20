@@ -4,11 +4,12 @@ require 'certificate_authority'
 require 'fileutils'
 
 # Generates necessary TLS certificates
-def generate_tls(path, cluster_name, domain, etcd_server_count)
-  root_kube, server_kube, client_kube = generate_api_certs(cluster_name, domain)
-  server_identity, client_identity = generate_identity_certs(root_kube)
-  root_etcd, server_etcd, server_peer_etcd, client_etcd = generate_etcd_certs(cluster_name, domain, etcd_server_count)
-  server_ingress = generate_ingress_certs(root_kube, cluster_name, domain)
+def generate_tls(path, cluster_name, domain, etcd_server_count, expiration_date = 365)
+  root_kube, server_kube, client_kube = generate_api_certs(cluster_name, domain, expiration_date)
+  server_identity, client_identity = generate_identity_certs(root_kube, expiration_date)
+  root_etcd, server_etcd, server_peer_etcd, client_etcd = generate_etcd_certs(cluster_name, domain,
+                                                                              etcd_server_count, expiration_date)
+  server_ingress = generate_ingress_certs(root_kube, cluster_name, domain, expiration_date)
 
   [
     ['kube/ca.crt', root_kube.to_pem],
@@ -38,8 +39,8 @@ def generate_tls(path, cluster_name, domain, etcd_server_count)
   end
 end
 
-def generate_api_certs(cluster_name, domain)
-  root_kube = certificate_authority('kube-ca', 'bootkube')
+def generate_api_certs(cluster_name, domain, expiration_date = 365)
+  root_kube = certificate_authority('kube-ca', 'bootkube', expiration_date)
 
   # when in bare-metal tests we have a pre defined dns name (example.com)
   # and we need to set the correct names for the certs we are about to generate
@@ -59,7 +60,7 @@ def generate_api_certs(cluster_name, domain)
                             'ips' => ['10.3.0.1'] }
     }
   }
-  server_kube = server_certificate(root_kube, 'kube-apiserver', 'kube-master', signing_profile_server)
+  server_kube = server_certificate(root_kube, 'kube-apiserver', 'kube-master', signing_profile_server, expiration_date)
 
   signing_profile_client = {
     'extensions' => {
@@ -69,12 +70,12 @@ def generate_api_certs(cluster_name, domain)
       }
     }
   }
-  client_kube = client_certificate(root_kube, 'kubelet', 'system:masters', signing_profile_client)
+  client_kube = client_certificate(root_kube, 'kubelet', 'system:masters', signing_profile_client, expiration_date)
 
   [root_kube, server_kube, client_kube]
 end
 
-def generate_identity_certs(root_kube)
+def generate_identity_certs(root_kube, expiration_date = 365)
   signing_profile_server = {
     'extensions' => {
       'keyUsage' => { 'usage' => [] },
@@ -82,7 +83,7 @@ def generate_identity_certs(root_kube)
     }
   }
   server_identity = server_certificate(root_kube, 'tectonic-identity-api.tectonic-system.svc.cluster.local',
-                                       '', signing_profile_server)
+                                       '', signing_profile_server, expiration_date)
 
   signing_profile_client = {
     'extensions' => {
@@ -92,15 +93,15 @@ def generate_identity_certs(root_kube)
     }
   }
   client_identity = client_certificate(root_kube, 'tectonic-identity-api.tectonic-system.svc.cluster.local',
-                                       '', signing_profile_client)
+                                       '', signing_profile_client, expiration_date)
 
   [server_identity, client_identity]
 end
 
-def generate_etcd_certs(cluster_name, domain, etcd_server_count)
+def generate_etcd_certs(cluster_name, domain, etcd_server_count, expiration_date = 365)
   dns_etcd_server, dns_etcd_peer, dns_main_node = generate_etcd_dns(cluster_name, domain, etcd_server_count)
 
-  root_etcd = certificate_authority(dns_main_node, '')
+  root_etcd = certificate_authority(dns_main_node, '', expiration_date)
 
   signing_profile_server_etcd = {
     'extensions' => {
@@ -110,7 +111,7 @@ def generate_etcd_certs(cluster_name, domain, etcd_server_count)
                             'ips' => ['127.0.0.1', '10.3.0.15', '10.3.0.20'] }
     }
   }
-  server_etcd = server_certificate(root_etcd, dns_main_node, '', signing_profile_server_etcd)
+  server_etcd = server_certificate(root_etcd, dns_main_node, '', signing_profile_server_etcd, expiration_date)
 
   signing_profile_peer_etcd = {
     'extensions' => {
@@ -120,7 +121,7 @@ def generate_etcd_certs(cluster_name, domain, etcd_server_count)
                             'ips' => ['10.3.0.15', '10.3.0.20'] }
     }
   }
-  server_peer_etcd = server_certificate(root_etcd, dns_main_node, '', signing_profile_peer_etcd)
+  server_peer_etcd = server_certificate(root_etcd, dns_main_node, '', signing_profile_peer_etcd, expiration_date)
 
   signing_profile_client = {
     'extensions' => {
@@ -130,12 +131,12 @@ def generate_etcd_certs(cluster_name, domain, etcd_server_count)
       }
     }
   }
-  client_etcd = client_certificate(root_etcd, dns_main_node, '', signing_profile_client)
+  client_etcd = client_certificate(root_etcd, dns_main_node, '', signing_profile_client, expiration_date)
 
   [root_etcd, server_etcd, server_peer_etcd, client_etcd]
 end
 
-def generate_ingress_certs(root_ca, cluster_name, domain)
+def generate_ingress_certs(root_ca, cluster_name, domain, expiration_date = 365)
   dns_name = if domain.include?('example.com')
                "tectonic.#{domain}"
              else
@@ -149,11 +150,11 @@ def generate_ingress_certs(root_ca, cluster_name, domain)
       'subjectAltName' => { 'dns_names' => [dns_name] }
     }
   }
-  server_ingress = server_certificate(root_ca, dns_name, '', signing_profile_server)
+  server_ingress = server_certificate(root_ca, dns_name, '', signing_profile_server, expiration_date)
   server_ingress
 end
 
-def certificate_authority(common_name, organization)
+def certificate_authority(common_name, organization, expiration_date = 365)
   mem_key = CertificateAuthority::MemoryKeyMaterial.new
   mem_key.generate_key
 
@@ -162,6 +163,7 @@ def certificate_authority(common_name, organization)
   root.subject.organization = organization
   root.serial_number.number = 1
   root.signing_entity = true
+  root.not_after = (Time.now + expiration_date * 86_400).utc # default is 365 days
   root.key_material = mem_key
 
   ca_profile = {
@@ -173,12 +175,13 @@ def certificate_authority(common_name, organization)
   root
 end
 
-def client_certificate(root_ca, common_name, organization, signing_profile)
+def client_certificate(root_ca, common_name, organization, signing_profile, expiration_date = 365)
   client = CertificateAuthority::Certificate.new
   client.subject.common_name = common_name
   client.subject.organization = organization
   client.serial_number.number = 2
   client.parent = root_ca
+  client.not_after = (Time.now + expiration_date * 86_400).utc # + 1 day
 
   client.key_material.generate_key
 
@@ -186,12 +189,13 @@ def client_certificate(root_ca, common_name, organization, signing_profile)
   client
 end
 
-def server_certificate(root, common_name, organization, signing_profile)
+def server_certificate(root, common_name, organization, signing_profile, expiration_date = 365)
   server = CertificateAuthority::Certificate.new
   server.subject.common_name = common_name
   server.subject.organization = organization
   server.serial_number.number = rand(3..100_000)
   server.parent = root
+  server.not_after = (Time.now + expiration_date * 86_400).utc # + 1 day
   server.key_material.generate_key
 
   server.sign!(signing_profile)
