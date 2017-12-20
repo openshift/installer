@@ -91,7 +91,7 @@ variable "tectonic_container_images" {
     pod_checkpointer             = "quay.io/coreos/pod-checkpointer:e22cc0e3714378de92f45326474874eb602ca0ac"
     stats_emitter                = "quay.io/coreos/tectonic-stats:6e882361357fe4b773adbf279cddf48cb50164c1"
     stats_extender               = "quay.io/coreos/tectonic-stats-extender:487b3da4e175da96dabfb44fba65cdb8b823db2e"
-    tectonic_channel_operator    = "quay.io/coreos/tectonic-channel-operator:0.6.1"
+    tectonic_channel_operator    = "quay.io/coreos/tectonic-channel-operator:0.6.2"
     tectonic_etcd_operator       = "quay.io/coreos/tectonic-etcd-operator:v0.0.2"
     tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.8.0"
     tectonic_cluo_operator       = "quay.io/coreos/tectonic-cluo-operator:v0.2.5"
