@@ -376,9 +376,14 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
             <div className="col-xs-12">
               <a href="/terraform/assets" download>
                 <button className={classNames('btn btn-primary wiz-giant-button')}>
-                  <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
+                  <i className="fa fa-download"></i>&nbsp;&nbsp;Download Assets
                 </button>
               </a>
+            </div>
+            <div className="col-xs-12">
+              <div className="wiz-pending-fg">
+                <p>The assets contain TLS certificates used by Kubelets and manifests for all Tectonic components.</p>
+              </div>
             </div>
           </div>
         }
