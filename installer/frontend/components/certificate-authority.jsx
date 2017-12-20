@@ -59,7 +59,7 @@ export const CertificateAuthority = connect(
           <div className="row form-group">
             <div className="col-xs-12">
               <Connect field={CA_CERTIFICATE}>
-                <CertArea autoFocus="true" uploadButtonLabel="Upload CA Certificate" />
+                <CertArea autoFocus={true} uploadButtonLabel="Upload CA Certificate" />
               </Connect>
             </div>
           </div>

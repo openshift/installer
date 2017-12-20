@@ -127,7 +127,7 @@ const awsCreds = <div>
     </div>
     <div className="col-xs-8">
       <Connect field={AWS_ACCESS_KEY_ID}>
-        <Input id="accessKeyId" autoFocus="true" placeholder="AKxxxxxxxxxxxxxxxxxx" />
+        <Input id="accessKeyId" autoFocus={true} placeholder="AKxxxxxxxxxxxxxxxxxx" />
       </Connect>
     </div>
   </div>

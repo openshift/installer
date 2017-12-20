@@ -242,7 +242,6 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
       const fieldName = `${AWS_SUBNETS}.${az}`;
       return <DeselectField key={az} field={fieldName}>
         <CIDRRow
-          autoFocus={az.endsWith('a')}
           field={`${AWS_CONTROLLER_SUBNETS}.${az}`}
           fieldName={fieldName}
           name={az}
@@ -463,7 +462,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
       </div>
       }
       <hr />
-      <KubernetesCIDRs />
+      <KubernetesCIDRs autoFocus={false} />
     </div>
     }
   </div>;

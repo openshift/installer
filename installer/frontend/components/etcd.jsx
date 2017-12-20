@@ -93,7 +93,7 @@ export const Etcd = connect(({clusterConfig}) => ({
           <div className="col-xs-8">
             <Connect field={EXTERNAL_ETCD_CLIENT}>
               <Input id={EXTERNAL_ETCD_CLIENT}
-                autoFocus
+                autoFocus={true}
                 className="wiz-inline-field wiz-inline-field--suffix"
                 suffix={<span className="input__suffix">:2379</span>}
                 placeholder="https://etcd.example.com" />

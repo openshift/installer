@@ -114,7 +114,7 @@ export const ClusterInfo = () => <div>
     </div>
     <div className="col-xs-9">
       <Connect field={CLUSTER_NAME}>
-        <Input placeholder="production" autoFocus="true" />
+        <Input placeholder="production" autoFocus={true} />
       </Connect>
       <p className="text-muted">Give this cluster a name that will help you identify it.</p>
     </div>
