@@ -107,6 +107,11 @@ const validateVPC = async (data, cc, updatedId, dispatch) => {
     serviceCIDR: cc[SERVICE_CIDR],
   };
 
+  // No need to validate if no subnets have been set yet
+  if (_.isEmpty(network.privateSubnets) && _.isEmpty(network.publicSubnets)) {
+    return;
+  }
+
   if (isCreate) {
     network.vpcCIDR = cc[AWS_VPC_CIDR];
   } else {
