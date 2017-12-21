@@ -71,7 +71,7 @@ variable "tectonic_container_images" {
     bootkube                     = "quay.io/coreos/bootkube:v0.8.1"
     calico                       = "quay.io/calico/node:v2.6.3"
     calico_cni                   = "quay.io/calico/cni:v1.11.1"
-    console                      = "quay.io/coreos/tectonic-console:v2.6.2"
+    console                      = "quay.io/coreos/tectonic-console:v2.6.5"
     error_server                 = "quay.io/coreos/tectonic-error-server:1.0"
     etcd                         = "quay.io/coreos/etcd:v3.1.8"
     etcd_operator                = "quay.io/coreos/etcd-operator:v0.5.0"
@@ -86,7 +86,7 @@ variable "tectonic_container_images" {
     kubednsmasq                  = "gcr.io/google_containers/k8s-dns-dnsmasq-nanny-amd64:1.14.5"
     kubedns_sidecar              = "gcr.io/google_containers/k8s-dns-sidecar-amd64:1.14.5"
     kube_version                 = "quay.io/coreos/kube-version:0.1.0"
-    kube_version_operator        = "quay.io/coreos/kube-version-operator:v1.8.4-kvo.3"
+    kube_version_operator        = "quay.io/coreos/kube-version-operator:v1.8.4-kvo.5"
     node_agent                   = "quay.io/coreos/node-agent:cd69b4a0f65b0d3a3b30edfce3bb184fd2a22c26"
     pod_checkpointer             = "quay.io/coreos/pod-checkpointer:e22cc0e3714378de92f45326474874eb602ca0ac"
     stats_emitter                = "quay.io/coreos/tectonic-stats:6e882361357fe4b773adbf279cddf48cb50164c1"
@@ -97,7 +97,7 @@ variable "tectonic_container_images" {
     tectonic_cluo_operator       = "quay.io/coreos/tectonic-cluo-operator:v0.2.5"
     tectonic_torcx               = "quay.io/coreos/tectonic-torcx:v0.2.0"
     kubernetes_addon_operator    = "quay.io/coreos/kubernetes-addon-operator:4b83569d763dc95e1f61c77b31989fd3957bfc67"
-    tectonic_alm_operator        = "quay.io/coreos/tectonic-alm-operator:v0.2.0"
+    tectonic_alm_operator        = "quay.io/coreos/tectonic-alm-operator:0.2.1"
   }
 }
 
@@ -132,7 +132,7 @@ variable "tectonic_versions" {
     tectonic-etcd    = "0.0.1"
     cluo             = "0.2.5"
     kubernetes_addon = "0.0.0"
-    alm              = "0.2.0"
+    alm              = "0.2.1"
   }
 }
 
