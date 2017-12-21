@@ -83,17 +83,13 @@ ReactDom.render(
 const init = () => {
   TectonicGA.initialize();
 
-  try {
-    observeClusterStatus(dispatch, store.getState)
-      .then(res => {
-        if (res && res.type === clusterReadyActionTypes.STATUS) {
-          setInterval(() => observeClusterStatus(dispatch, store.getState), 10000);
-        }
-        fixLocation();
-      });
-  } catch (e) {
-    console.error(`Error restoring state from sessionStorage: ${e.message || e.toString()}`);
-  }
+  observeClusterStatus(dispatch, store.getState)
+    .then(res => {
+      if (res && res.type === clusterReadyActionTypes.STATUS) {
+        setInterval(() => observeClusterStatus(dispatch, store.getState), 10000);
+      }
+      fixLocation();
+    });
 };
 
 // Stuff we need to load before we can run anything
