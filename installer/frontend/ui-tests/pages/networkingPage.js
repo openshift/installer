@@ -64,13 +64,13 @@ const pageCommands = {
       // Overlapping public subnets
       this.setField('@masterSubnet1c', '10.0.0.0/19');
       this.expect.element('@alertError').text.to.contain('CIDR of subnet 1 (10.0.0.0/19) overlaps with CIDR of subnet 0');
-      this.setField('@masterSubnet1c', '10.0.32.0/19');
+      this.setField('@masterSubnet1c', '10.0.32.0/20');
       this.expect.element('@alertError').to.not.be.present;
 
       // Overlapping private subnets
       this.setField('@workerSubnet1c', '10.0.64.0/19');
       this.expect.element('@alertError').text.to.contain('CIDR of subnet 1 (10.0.64.0/19) overlaps with CIDR of subnet 0');
-      this.setField('@workerSubnet1c', '10.0.96.0/19');
+      this.setField('@workerSubnet1c', '10.0.96.0/20');
       this.expect.element('@alertError').to.not.be.present;
 
       // Pod CIDR overlaps with AWS VPC CIDR

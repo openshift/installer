@@ -25,6 +25,11 @@ const diffTfvars = (client, assetsZip, expected, ignoredKeys = []) => {
 
 const testManualBoot = (client, expectedOutputFilePath, ignoredKeys) => {
   const page = client.page.submitPage();
+
+  // It should be safe to refresh the page and have all field values preserved
+  client.refresh();
+  page.expect.element('@manuallyBoot').to.be.visible.before(60000);
+
   page
     .click('@manuallyBoot')
     .expect.element('a[href="/terraform/assets"]').to.be.visible.before(120000);
