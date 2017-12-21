@@ -17,8 +17,6 @@ import {
 import { BARE_METAL_TF } from './platforms';
 import { TectonicGA } from './tectonic-ga';
 
-const { batchSetIn } = configActions;
-
 const createAction = (name, fn, shouldReject = false) => (body, creds, isNow) => (dispatch, getState) => {
   const { clusterConfig } = getState();
 
@@ -128,10 +126,11 @@ export const getDefaultSubnets = (body, creds, isNow) => (dispatch, getState) =>
       if (isNow && !isNow()) {
         return;
       }
-      batchSetIn(dispatch, [
-        [AWS_CONTROLLER_SUBNETS, _.fromPairs(_.map(subnets.public, s => [s.availabilityZone, s.instanceCIDR]))],
-        [AWS_CONTROLLER_SUBNET_IDS, {}],
-        [AWS_WORKER_SUBNETS, _.fromPairs(_.map(subnets.private, s => [s.availabilityZone, s.instanceCIDR]))],
-        [AWS_WORKER_SUBNET_IDS, {}],
-      ]);
+
+      // Use addIn to preserve any existing values
+      const add = (path, v) => configActions.addIn(path, v, dispatch);
+      add(AWS_CONTROLLER_SUBNETS, _.fromPairs(_.map(subnets.public, s => [s.availabilityZone, s.instanceCIDR])));
+      add(AWS_CONTROLLER_SUBNET_IDS, {});
+      add(AWS_WORKER_SUBNETS, _.fromPairs(_.map(subnets.private, s => [s.availabilityZone, s.instanceCIDR])));
+      add(AWS_WORKER_SUBNET_IDS, {});
     });
