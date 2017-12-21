@@ -10,7 +10,7 @@ require 'pages/login_page'
 require 'name_generator'
 require 'password_generator'
 require 'webdriver_helpers'
-require 'k8s_conformance_tests'
+require 'test_container'
 require 'with_retries'
 
 RSpec.shared_examples 'withRunningCluster' do |tf_vars_path, vpn_tunnel = false|
@@ -155,8 +155,23 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
   end
 
   it 'passes the k8s conformance tests', :conformance_tests do
-    conformance_test = K8sConformanceTest.new(@cluster.kubeconfig, vpn_tunnel, @cluster.env_variables['PLATFORM'])
+    conformance_test = TestContainer.new(
+      ENV['KUBE_CONFORMANCE_IMAGE'],
+      @cluster,
+      vpn_tunnel
+    )
     expect { conformance_test.run }.to_not raise_error
+  end
+
+  (ENV['COMPONENT_TEST_IMAGES'] || '').split(',').each do |image|
+    it "passes component test '#{image}'", :component_tests do
+      test_container = TestContainer.new(
+        image.chomp,
+        @cluster,
+        vpn_tunnel
+      )
+      expect { test_container.run }.to_not raise_error
+    end
   end
 end
 

@@ -125,6 +125,7 @@ TECTONIC_TESTS_DONT_CLEAN_UP // If you want to keep the cluster alive after the 
 RUN_SMOKE_TESTS=true
 RUN_CONFORMANCE_TESTS=true
 KUBE_CONFORMANCE_IMAGE=quay.io/coreos/kube-conformance:v1.7.5_coreos.0_golang1.9.1
+COMPONENT_TEST_IMAGES=quay.io/coreos/tectonic-console-tester:v2.7.1,
 ```
 
 And depending on your platform:
