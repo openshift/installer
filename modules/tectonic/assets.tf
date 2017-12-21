@@ -12,7 +12,6 @@ resource "template_dir" "tectonic" {
     addon_resizer_image                = "${var.container_images["addon_resizer"]}"
     console_image                      = "${var.container_images["console"]}"
     error_server_image                 = "${var.container_images["error_server"]}"
-    heapster_image                     = "${var.container_images["heapster"]}"
     identity_image                     = "${var.container_images["identity"]}"
     ingress_controller_image           = "${var.container_images["ingress_controller"]}"
     kube_version_operator_image        = "${var.container_images["kube_version_operator"]}"
