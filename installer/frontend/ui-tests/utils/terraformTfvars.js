@@ -4,19 +4,7 @@ const JSZip = require('jszip');
 const path = require('path');
 const request = require('request');
 
-const ignoredKeys = [
-  'tectonic_aws_ssh_key',
-  'tectonic_admin_email',
-  'tectonic_admin_password',
-  'tectonic_license_path',
-  'tectonic_pull_secret_path',
-  'tectonic_stats_url',
-  'tectonic_update_app_id',
-  'tectonic_update_channel',
-  'tectonic_update_server',
-];
-
-const diffTfvars = (client, assetsZip, expected) => {
+const diffTfvars = (client, assetsZip, expected, ignoredKeys = []) => {
   JSZip.loadAsync(assetsZip).then(zip => {
     zip.file(/tfvars$/)[0].async('string').then(tfvars => {
       const actual = JSON.parse(tfvars);
@@ -35,7 +23,7 @@ const diffTfvars = (client, assetsZip, expected) => {
   });
 };
 
-const testManualBoot = (client, expectedOutputFilePath) => {
+const testManualBoot = (client, expectedOutputFilePath, ignoredKeys) => {
   const page = client.page.submitPage();
   page
     .click('@manuallyBoot')
@@ -59,7 +47,7 @@ const testManualBoot = (client, expectedOutputFilePath) => {
       // eslint-disable-next-line no-sync
       const expected = JSON.parse(fs.readFileSync(path.join(__dirname, expectedOutputFilePath), 'utf8'));
 
-      diffTfvars(client, assetsZip, expected);
+      diffTfvars(client, assetsZip, expected, ignoredKeys);
     });
   });
 

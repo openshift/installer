@@ -5,7 +5,7 @@ const tfvarsUtil = require('../utils/terraformTfvars');
 const REQUIRED_ENV_VARS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
 
 // Expects an input file <prefix>.progress to exist
-const steps = (prefix, expectedOutputFilePath) => {
+const steps = (prefix, expectedOutputFilePath, ignoredKeys) => {
   // Test input cluster config
   const cc = tfvarsUtil.loadJson(`${prefix}.progress`).clusterConfig;
 
@@ -27,7 +27,7 @@ const steps = (prefix, expectedOutputFilePath) => {
     [`${prefix}: Networking`]: ({page}) => testPage(page.networkingPage()),
     [`${prefix}: Console Login`]: ({page}) => testPage(page.consoleLoginPage()),
 
-    [`${prefix}: Manual Boot`]: client => tfvarsUtil.testManualBoot(client, expectedOutputFilePath),
+    [`${prefix}: Manual Boot`]: client => tfvarsUtil.testManualBoot(client, expectedOutputFilePath, ignoredKeys),
   };
 };
 
@@ -47,8 +47,17 @@ const toExport = {
   },
 };
 
+const ignoredKeys = [
+  'tectonic_admin_email',
+  'tectonic_admin_password',
+  'tectonic_aws_ssh_key',
+  'tectonic_license_path',
+  'tectonic_pull_secret_path',
+  'tectonic_stats_url',
+];
+
 module.exports = Object.assign(
   toExport,
-  steps('aws', '../../../../tests/smoke/aws/vars/aws.tfvars.json'),
+  steps('aws', '../../../../tests/smoke/aws/vars/aws.tfvars.json', ignoredKeys),
   steps('aws-custom-vpc', '../output/aws-custom-vpc.tfvars')
 );
