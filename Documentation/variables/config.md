@@ -43,7 +43,7 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_stats_url | (internal) The Tectonic statistics collection URL to which to report. | string | `https://stats-collector.tectonic.com` |
 | tectonic_tls_validity_period | Validity period of the self-signed certificates (in hours). Default is 3 years. This setting is ignored if user provided certificates are used. | string | `26280` |
 | tectonic_update_app_id | (internal) The Tectonic Omaha update App ID | string | `6bc7b986-4654-4a0f-94b3-84ce6feb1db4` |
-| tectonic_update_channel | (internal) The Tectonic Omaha update channel | string | `tectonic-1.7-production` |
+| tectonic_update_channel | (internal) The Tectonic Omaha update channel | string | `tectonic-1.8-production` |
 | tectonic_update_server | (internal) The URL of the Tectonic Omaha update server | string | `https://tectonic.update.core-os.net` |
 | tectonic_vanilla_k8s | If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets. | string | `false` |
 | tectonic_versions | (internal) Versions of the components to use | map | `<map>` |
