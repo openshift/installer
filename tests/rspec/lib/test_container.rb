@@ -13,11 +13,13 @@ class TestContainer
   def run
     ::Timeout.timeout(3 * 60 * 60) do # 3 hours
       command = if @cluster.env_variables['PLATFORM'].include?('metal')
-                  "sudo rkt run --volume kubecfg,kind=host,readOnly=false,source=#{@cluster.kubeconfig} \
+                  "sudo rkt fetch --insecure-options=image #{@image}; \
+                  sudo rkt run --volume kubecfg,kind=host,readOnly=false,source=#{@cluster.kubeconfig} \
                   --mount volume=kubecfg,target=/kubeconfig #{network_config} --dns=host \
                   #{container_env('rkt')} --insecure-options=image #{@image}"
                 else
-                  "docker run -v #{@cluster.kubeconfig}:/kubeconfig \
+                  "docker pull #{@image}; \
+                  docker run -v #{@cluster.kubeconfig}:/kubeconfig \
                   #{network_config} #{container_env('docker')} #{@image}"
                 end
 
