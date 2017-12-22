@@ -167,9 +167,15 @@ EOF
 }
 
 variable "tectonic_aws_extra_tags" {
-  type        = "map"
-  description = "(optional) Extra AWS tags to be applied to created resources."
-  default     = {}
+  type = "map"
+
+  description = <<EOF
+(optional) Extra AWS tags to be applied to created resources.
+
+Example: `{ "key" = "value", "foo" = "bar" }`
+EOF
+
+  default = {}
 }
 
 variable "tectonic_autoscaling_group_extra_tags" {

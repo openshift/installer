@@ -62,6 +62,8 @@ tectonic_aws_etcd_root_volume_type = "gp2"
 // tectonic_aws_external_worker_subnet_ids = ""
 
 // (optional) Extra AWS tags to be applied to created resources.
+// 
+// Example: `{ "key" = "value", "foo" = "bar" }`
 // tectonic_aws_extra_tags = ""
 
 // (optional) This configures master availability zones and their corresponding subnet CIDRs directly.
