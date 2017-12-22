@@ -287,8 +287,6 @@ You can download the pull secret from your Account overview page at [3].
 [2] https://coreos.com/os/docs/latest/registry-authentication.html#manual-registry-auth-setup
 
 [3] https://account.coreos.com/overview
-
-Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 EOF
 }
 
@@ -301,8 +299,6 @@ The path to the tectonic licence file.
 You can download the Tectonic license file from your Account overview page at [1].
 
 [1] https://account.coreos.com/overview
-
-Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 EOF
 }
 
@@ -408,14 +404,6 @@ variable "tectonic_tls_validity_period" {
 Validity period of the self-signed certificates (in hours).
 Default is 3 years.
 This setting is ignored if user provided certificates are used.
-EOF
-}
-
-variable "tectonic_vanilla_k8s" {
-  default = false
-
-  description = <<EOF
-If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
 EOF
 }
 

@@ -43,14 +43,12 @@ systemd:
       dropins:
         - name: 10-alwaysrun.conf
           contents: {{.ign_update_ca_certificates_dropin_json}}
-{{ if eq .exclude_tectonic "0" }}
     - name: tectonic.path
       enable: true
       contents: {{.ign_tectonic_path_unit_json}}
     - name: tectonic.service
       enable: false
       contents: {{.ign_tectonic_service_json}}
-{{end}}
 storage:
   files:
     - path: /etc/hostname

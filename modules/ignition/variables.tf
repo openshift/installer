@@ -67,12 +67,6 @@ variable "torcx_store_url" {
   default     = ""
 }
 
-variable "tectonic_vanilla_k8s" {
-  description = <<EOF
-If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
-EOF
-}
-
 variable "assets_location" {
   type        = "string"
   description = "(optional) The storing location to retrieve the assets."

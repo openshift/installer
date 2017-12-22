@@ -60,11 +60,3 @@ variable "api_ip_addresses" {
   description = "List of string IPs for k8s API"
   type        = "list"
 }
-
-variable "tectonic_vanilla_k8s" {
-  default = false
-
-  description = <<EOF
-If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
-EOF
-}

@@ -118,7 +118,6 @@ module "ignition_masters" {
   kubelet_debug_config      = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
-  tectonic_vanilla_k8s      = "${var.tectonic_vanilla_k8s}"
 }
 
 module "masters" {
@@ -149,7 +148,7 @@ module "masters" {
   ign_rm_assets_path_unit_id           = "${module.ignition_masters.rm_assets_path_unit_id}"
   ign_rm_assets_service_id             = "${module.ignition_masters.rm_assets_service_id}"
   ign_s3_puller_id                     = "${module.ignition_masters.s3_puller_id}"
-  ign_tectonic_path_unit_id            = "${var.tectonic_vanilla_k8s ? "" : module.tectonic.systemd_path_unit_id}"
+  ign_tectonic_path_unit_id            = "${module.tectonic.systemd_path_unit_id}"
   ign_tectonic_service_id              = "${module.tectonic.systemd_service_id}"
   ign_update_ca_certificates_dropin_id = "${module.ignition_masters.update_ca_certificates_dropin_id}"
   image_re                             = "${var.tectonic_image_re}"
@@ -183,7 +182,6 @@ module "ignition_workers" {
   kubelet_debug_config    = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label      = "node-role.kubernetes.io/node"
   kubelet_node_taints     = ""
-  tectonic_vanilla_k8s    = "${var.tectonic_vanilla_k8s}"
 }
 
 module "workers" {
@@ -243,5 +241,4 @@ module "dns" {
   tectonic_extra_tags            = "${var.tectonic_aws_extra_tags}"
   tectonic_private_endpoints     = "${var.tectonic_aws_private_endpoints}"
   tectonic_public_endpoints      = "${var.tectonic_aws_public_endpoints}"
-  tectonic_vanilla_k8s           = "${var.tectonic_vanilla_k8s}"
 }

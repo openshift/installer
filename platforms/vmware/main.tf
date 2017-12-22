@@ -58,7 +58,6 @@ module "ignition_masters" {
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
   use_metadata              = false
-  tectonic_vanilla_k8s      = "${var.tectonic_vanilla_k8s}"
 }
 
 module "masters" {
@@ -80,7 +79,7 @@ module "masters" {
   ign_kubelet_service_id               = "${module.ignition_masters.kubelet_service_id}"
   ign_locksmithd_service_id            = "${module.ignition_masters.locksmithd_service_id}"
   ign_max_user_watches_id              = "${module.ignition_masters.max_user_watches_id}"
-  ign_tectonic_path_unit_id            = "${var.tectonic_vanilla_k8s ? "" : module.tectonic.systemd_path_unit_id}"
+  ign_tectonic_path_unit_id            = "${module.tectonic.systemd_path_unit_id}"
   ign_tectonic_service_id              = "${module.tectonic.systemd_service_id}"
   ign_update_ca_certificates_dropin_id = "${module.ignition_masters.update_ca_certificates_dropin_id}"
   image_re                             = "${var.tectonic_image_re}"
@@ -115,7 +114,6 @@ module "ignition_workers" {
   kubelet_debug_config    = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label      = "node-role.kubernetes.io/node"
   kubelet_node_taints     = ""
-  tectonic_vanilla_k8s    = "${var.tectonic_vanilla_k8s}"
 }
 
 module "workers" {

@@ -45,7 +45,6 @@ module "ignition_masters" {
   kubelet_debug_config      = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
-  tectonic_vanilla_k8s      = "${var.tectonic_vanilla_k8s}"
   use_metadata              = false
 }
 
@@ -62,7 +61,6 @@ resource "matchbox_group" "controller" {
   metadata {
     domain_name        = "${element(var.tectonic_metal_controller_domains, count.index)}"
     etcd_enabled       = "${length(compact(var.tectonic_etcd_servers)) != 0 ? "false" : "true"}"
-    exclude_tectonic   = "${var.tectonic_vanilla_k8s}"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
 
     ign_bootkube_path_unit_json            = "${jsonencode(module.bootkube.systemd_path_unit_rendered)}"
@@ -96,7 +94,6 @@ module "ignition_workers" {
   kubelet_debug_config    = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label      = "node-role.kubernetes.io/node"
   kubelet_node_taints     = ""
-  tectonic_vanilla_k8s    = "${var.tectonic_vanilla_k8s}"
 }
 
 resource "matchbox_group" "worker" {

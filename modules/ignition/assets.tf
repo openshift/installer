@@ -71,7 +71,7 @@ data "template_file" "k8s_node_bootstrap" {
     kubeconfig_fetch_cmd     = "${var.kubeconfig_fetch_cmd != "" ? "ExecStartPre=${var.kubeconfig_fetch_cmd}" : ""}"
     tectonic_torcx_image_url = "${replace(var.container_images["tectonic_torcx"],var.image_re,"$1")}"
     tectonic_torcx_image_tag = "${replace(var.container_images["tectonic_torcx"],var.image_re,"$2")}"
-    torcx_skip_setup         = "${var.tectonic_vanilla_k8s ? "true" : "false" }"
+    torcx_skip_setup         = "false"
     torcx_store_url          = "${var.torcx_store_url}"
   }
 }
