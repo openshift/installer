@@ -229,6 +229,8 @@ tectonic_metal_worker_names = ""
 // - "canal": [ALPHA] enables overlay networking including network policy. Overlay is implemented by flannel using VXLAN. Network policy is implemented by Calico.
 // 
 // - "calico": [ALPHA] enables BGP based networking. Routing and network policy is implemented by Calico. Note this has been tested on baremetal installations only.
+// 
+// - "none": disables the installation of any Pod level networking layer provided by Tectonic. By setting this value, users are expected to deploy their own solution to enable network connectivity for Pods and Services.
 // tectonic_networking = "flannel"
 
 // The path the pull secret file in JSON format.

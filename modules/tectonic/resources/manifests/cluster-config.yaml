@@ -39,7 +39,4 @@ data:
   network-config: |
       apiVersion: v1
       kind: NetworkConfig
-      podCIDR: ${cluster_cidr}
-      networkProfile: ${tectonic_networking}
-      calicoConfig:
-          mtu: ${calico_mtu}
+      ${network_config}

@@ -1,3 +1,10 @@
+locals {
+  calico_config_yaml   = "${var.tectonic_networking == "calico" ? "calicoConfig:\n    mtu: ${var.calico_mtu}" : ""}"
+  network_config_yaml  = "${join("\n", compact(list(local.network_profile_yaml, local.pod_cidr_yaml, local.calico_config_yaml)))}"
+  network_profile_yaml = "networkProfile: ${var.tectonic_networking}"
+  pod_cidr_yaml        = "${var.tectonic_networking != "none" ? "podCIDR: ${var.cluster_cidr}" : ""}"
+}
+
 # Unique Cluster ID (uuid)
 resource "random_id" "cluster_id" {
   byte_length = 16
@@ -103,9 +110,7 @@ resource "template_dir" "tectonic" {
     image_re            = "${var.image_re}"
     kube_dns_service_ip = "${cidrhost(var.service_cidr, 10)}"
 
-    tectonic_networking = "${var.tectonic_networking}"
-    calico_mtu          = "${var.calico_mtu}"
-    cluster_cidr        = "${var.cluster_cidr}"
+    network_config = "${indent(6, local.network_config_yaml)}"
   }
 }
 
