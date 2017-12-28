@@ -466,20 +466,15 @@ AWS_VPC.canNavigateForward = ({clusterConfig}) => {
     return false;
   }
 
-  if (clusterConfig[AWS_CREATE_VPC] === VPC_CREATE) {
-    const workerSubnets = clusterConfig[AWS_WORKER_SUBNETS];
-    const controllerSubnets = clusterConfig[AWS_CONTROLLER_SUBNETS];
-    return !validate.AWSsubnetCIDR(clusterConfig[AWS_VPC_CIDR]) &&
-           _.every(controllerSubnets, subnet => !validate.AWSsubnetCIDR(subnet)) &&
-           _.every(workerSubnets, subnet => !validate.AWSsubnetCIDR(subnet)) &&
-           !validate.someSelected(_.keys(clusterConfig[AWS_CONTROLLER_SUBNETS]), clusterConfig[DESELECTED_FIELDS][AWS_SUBNETS]) &&
-           !validate.someSelected(_.keys(clusterConfig[AWS_WORKER_SUBNETS]), clusterConfig[DESELECTED_FIELDS][AWS_SUBNETS]);
-  }
+  const deselectedSubnets = clusterConfig[DESELECTED_FIELDS][AWS_SUBNETS];
+  const isSelected = field => !validate.someSelected(_.keys(clusterConfig[field]), deselectedSubnets);
 
-  return _.size(clusterConfig[AWS_CONTROLLER_SUBNET_IDS]) > 0 &&
-         _.size(clusterConfig[AWS_WORKER_SUBNET_IDS]) > 0 &&
-         _.some(clusterConfig[AWS_CONTROLLER_SUBNET_IDS], id => !validate.nonEmpty(id)) &&
-         _.some(clusterConfig[AWS_WORKER_SUBNET_IDS], id => !validate.nonEmpty(id)) &&
-         !validate.someSelected(_.keys(clusterConfig[AWS_CONTROLLER_SUBNET_IDS]), clusterConfig[DESELECTED_FIELDS][AWS_SUBNETS]) &&
-         !validate.someSelected(_.keys(clusterConfig[AWS_WORKER_SUBNET_IDS]), clusterConfig[DESELECTED_FIELDS][AWS_SUBNETS]);
+  if (clusterConfig[AWS_CREATE_VPC] === VPC_CREATE) {
+    // The subnet CIDR fields are dynamically generated, so their validators won't automatically invalidate the form
+    return _.every(clusterConfig[AWS_CONTROLLER_SUBNETS], subnet => !validate.AWSsubnetCIDR(subnet)) &&
+      _.every(clusterConfig[AWS_WORKER_SUBNETS], subnet => !validate.AWSsubnetCIDR(subnet)) &&
+      isSelected(AWS_CONTROLLER_SUBNETS) &&
+      isSelected(AWS_WORKER_SUBNETS);
+  }
+  return isSelected(AWS_CONTROLLER_SUBNET_IDS) && isSelected(AWS_WORKER_SUBNET_IDS);
 };
