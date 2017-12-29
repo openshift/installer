@@ -49,10 +49,8 @@ export const compareVersions = (v1, v2) => {
   return 0;
 };
 
-const toPath = function (base) {
-  return function (field) {
-    return `${base}.${_.isArray(field) ? field.join('.') : field}`;
-  };
+const toPath = base => {
+  return field => `${base}.${_.isArray(field) ? field.join('.') : field}`;
 };
 
 export const toError = toPath('error');
