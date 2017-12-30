@@ -222,7 +222,9 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
         const dnsReady = tectonic.console.success || ((tectonic.console.message || '').search('no such host') === -1);
         consoleSubsteps.push(
           <Step pending={isTFRunning} done={dnsReady && !isTFRunning} cancel={tfError} key="dnsReady">
-            Resolving <a href={`https://${tectonicDomain}`} target="_blank">{tectonicDomain}</a>
+            Resolving {tectonicDomain
+              ? <a href={`https://${tectonicDomain}`} target="_blank">{tectonicDomain}</a>
+              : 'Tectonic DNS'}
           </Step>
         );
 
@@ -267,6 +269,12 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
 
       const tfTitle = `Terraform ${_.startCase(action)}`;
 
+      // Show Terraform actions menu if,
+      //   (1) The Terraform apply step has succeeded, and
+      //   (2) The cluster state data is populated (required by some of the menu actions)
+      // Otherwise, we will just show the Terraform logs instead.
+      const showTfActions = isApplySuccess && !!clusterName;
+
       return <div>
         {!isBareMetal &&
           <p>
@@ -300,7 +308,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
               {tfError
                 ? <span><span className="wiz-running-fg">{tfTitle}:</span> [Failure] {_.startCase(action)} failed</span>
                 : tfTitle}
-              {output && !isApplySuccess &&
+              {output && !showTfActions &&
                 <div className="pull-right" style={{fontSize: '13px'}}>
                   <a onClick={() => this.setState({showLogs: !showLogs})}>
                     {showLogs
@@ -316,7 +324,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
             </Step>
             <div style={{marginLeft: 22}}>
               {isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} isActive={isTFRunning} />}
-              {showLogs && output && !isApplySuccess &&
+              {showLogs && output && !showTfActions &&
                 <div className="log-pane">
                   <div className="log-pane__header">
                     <div className="log-pane__header__message">Terraform logs</div>
@@ -353,7 +361,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                   <Btn isError={false} onClick={this.retry} title="Retry Terraform Apply" />
                 </Alert>
               }
-              {isApplySuccess &&
+              {showTfActions &&
                 <div className="wiz-launch-progress__help">
                   You can save Terraform logs, or destroy your cluster if you changed your mind:&nbsp;
                   <DropdownInline
