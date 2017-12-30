@@ -325,7 +325,6 @@ const platformToSection = {
 
 export const trail = ({cluster, clusterConfig, commitState}) => {
   const platform = clusterConfig[PLATFORM_TYPE];
-  const { ready } = cluster;
 
   if (platform === '') {
     return new Trail([sections.loading]);
@@ -334,10 +333,12 @@ export const trail = ({cluster, clusterConfig, commitState}) => {
     return new Trail([sections.choose]);
   }
 
-  const { phase } = commitState;
-  const submitted = ready || (phase === commitPhases.SUCCEEDED);
+  const {phase} = commitState;
+  const submitted = cluster.ready || (phase === commitPhases.SUCCEEDED);
   if (submitted) {
-    if (clusterConfig[DRY_RUN]) {
+    // If we detected a dry run in progress when the app started, then clusterConfig will not be populated, so also
+    // check for a Terraform "show" (dry run) action
+    if (clusterConfig[DRY_RUN] || _.get(cluster, 'status.terraform.action') === 'show') {
       return new Trail([sections.bootDryRun]);
     }
     return platformToSection[platform].boot;
