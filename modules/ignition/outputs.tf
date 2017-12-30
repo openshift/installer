@@ -144,6 +144,15 @@ output "etcd_crt_id_list" {
   ]
 }
 
+
 output "iscsi_service_id" {
   value = "${data.ignition_systemd_unit.iscsi.id}"
+}
+
+output "profile_env_id" {
+  value = "${data.ignition_file.profile_env.id}"
+}
+
+output "systemd_default_env_id" {
+  value = "${data.ignition_file.systemd_default_env.id}"
 }

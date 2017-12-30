@@ -106,6 +106,16 @@ tectonic_etcd_count = "0"
 // Note: If `tectonic_experimental` is set to `true` this variable has no effect, because the experimental self-hosted etcd always uses TLS.
 // tectonic_etcd_tls_enabled = true
 
+// (optional) HTTP proxy address.
+// 
+// Example: `http://myproxy.example.com`
+// tectonic_http_proxy_address = ""
+
+// (optional) HTTPS proxy address.
+// 
+// Example: `http://myproxy.example.com`
+// tectonic_https_proxy_address = ""
+
 // (optional) Start iscsid.service to enable iscsi volume attachment.
 // tectonic_iscsi_enabled = "false"
 
@@ -129,6 +139,11 @@ tectonic_master_count = "1"
 // 
 // - "none": disables the installation of any Pod level networking layer provided by Tectonic. By setting this value, users are expected to deploy their own solution to enable network connectivity for Pods and Services.
 // tectonic_networking = "flannel"
+
+// (optional) List of local endpoints that will not use HTTP proxy.
+// 
+// Example: `["127.0.0.1","localhost",".example.com","10.3.0.1"]`
+// tectonic_no_proxy = ""
 
 // Disable floating ip assignments for k8s nodes.
 // Warning: Enabling this option removes direct internet access,
