@@ -14,7 +14,7 @@ resource "vsphere_virtual_machine" "node" {
   }
 
   disk {
-    datastore = "${var.vm_disk_datastore}"
+    datastore = "${var.vm_disk_datastores["${count.index}"]}"
     template  = "${var.vm_disk_template_folder}/${var.vm_disk_template}"
     type      = "thin"
   }
