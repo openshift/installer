@@ -6,9 +6,6 @@ resource "template_dir" "bootkube" {
   vars {
     hyperkube_image        = "${var.container_images["hyperkube"]}"
     pod_checkpointer_image = "${var.container_images["pod_checkpointer"]}"
-    kubedns_image          = "${var.container_images["kubedns"]}"
-    kubednsmasq_image      = "${var.container_images["kubednsmasq"]}"
-    kubedns_sidecar_image  = "${var.container_images["kubedns_sidecar"]}"
 
     # Choose the etcd endpoints to use.
     # 1. If self-hosted etcd is enabled, then use
