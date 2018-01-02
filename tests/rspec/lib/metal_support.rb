@@ -60,6 +60,17 @@ module MetalSupport
     execute_command("sudo cp #{root}/tests/rspec/utils/20-metal.conf /etc/rkt/net.d/")
     execute_command('cat /etc/rkt/net.d/20-metal.conf')
 
+    # Setting up auth to download images from quay.io
+    execute_command('sudo mkdir -p /etc/rkt/auth.d')
+    rkt_auth_file = File.read("#{root}/tests/rspec/utils/rkt-auth.json")
+    data_hash = JSON.parse(rkt_auth_file)
+    data_hash['credentials']['user'] = ENV['QUAY_ROBOT_USERNAME']
+    data_hash['credentials']['password'] = ENV['QUAY_ROBOT_SECRET']
+    File.open('/tmp/rkt-auth.json', 'w') do |f|
+      f.write(data_hash.to_json)
+    end
+    execute_command('sudo mv /tmp/rkt-auth.json /etc/rkt/auth.d/')
+
     # Setting up DNS
     `grep -q "172.18.0.3" /etc/resolv.conf`
     return if $CHILD_STATUS.exitstatus.zero?

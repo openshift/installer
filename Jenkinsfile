@@ -416,12 +416,9 @@ def runRSpecTest(testFilePath, dockerArgs) {
                 sh """#!/bin/bash -ex
                   mkdir -p templogfiles && chmod 777 templogfiles
                   cd tests/rspec
-                  docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
 
                   # Directing test output both to stdout as well as a log file
                   rspec ${testFilePath} --format RspecTap::Formatter --format RspecTap::Formatter --out ../../templogfiles/format=tap.log
-
-                  docker logout quay.io
                 """
               }
             }
@@ -460,7 +457,6 @@ def runRSpecTestBareMetal(testFilePath) {
             withCredentials(creds + quayCreds) {
               sh """#!/bin/bash -ex
               cd tests/rspec
-              docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
               export RBENV_ROOT=/usr/local/rbenv
               export PATH="/usr/local/rbenv/bin:$PATH"
               eval \"\$(rbenv init -)\"
@@ -468,7 +464,6 @@ def runRSpecTestBareMetal(testFilePath) {
               gem install bundler
               bundler install
               bundler exec rspec ${testFilePath} --format RspecTap::Formatter
-              docker logout quay.io
               """
             }
           }

@@ -23,7 +23,9 @@ class TestContainer
                   #{network_config} #{container_env('docker')} #{@image}"
                 end
 
+      login_quay unless @cluster.env_variables['PLATFORM'].include?('metal')
       succeeded = system(command)
+      logout_quay unless @cluster.env_variables['PLATFORM'].include?('metal')
       raise 'Running container tests failed' unless succeeded
     end
   end
@@ -55,5 +57,16 @@ class TestContainer
     return env.map { |k, v| "-e #{k}='#{v}'" }.join(' ').chomp if engine == 'docker'
     return env.map { |k, v| "--set-env #{k}='#{v}'" }.join(' ').chomp if engine == 'rkt'
     raise 'unknown container engine'
+  end
+
+  def login_quay
+    command = "docker login -u=#{ENV['QUAY_ROBOT_USERNAME']} -p=#{ENV['QUAY_ROBOT_SECRET']} quay.io"
+    succeeded = system(command)
+    raise 'Error to login to QUAY.IO' unless succeeded
+  end
+
+  def logout_quay
+    command = 'docker logout quay.io'
+    system(command)
   end
 end
