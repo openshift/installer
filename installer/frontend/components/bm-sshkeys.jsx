@@ -43,7 +43,6 @@ export const BM_SSHKeys = () => <div>
       </div>
     </div>
   </div>
-  <sshKeyForm.Errors />
 </div>;
 
 BM_SSHKeys.canNavigateForward = sshKeyForm.canNavigateForward;
