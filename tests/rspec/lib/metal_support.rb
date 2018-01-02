@@ -163,7 +163,7 @@ module MetalSupport
     output += "\nEnd of journal of #{service} service"
 
     puts output
-    save_file(service, output)
+    save_to_file(service, output)
   end
 
   def self.save_to_file(service_name, output)
