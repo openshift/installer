@@ -9,7 +9,6 @@ import { CertificateAuthority } from './components/certificate-authority';
 import { ClusterInfo } from './components/cluster-info';
 import { ClusterType } from './components/cluster-type';
 import { DryRun } from './components/dry-run';
-import { Etcd } from './components/etcd';
 import { SubmitDefinition } from './components/submit-definition';
 import { Success } from './components/success';
 import { TF_PowerOn } from './components/tf-poweron';
@@ -24,7 +23,7 @@ import { BM_SSHKeys } from './components/bm-sshkeys';
 
 import { AWS_CloudCredentials } from './components/aws-cloud-credentials';
 import { AWS_ClusterInfo } from './components/aws-cluster-info';
-import { AWS_DefineNodes } from './components/aws-define-nodes';
+import { AWS_Nodes, Etcd } from './components/nodes';
 import { AWS_SubmitKeys } from './components/aws-submit-keys';
 import { AWS_VPC } from './components/aws-vpc';
 
@@ -149,7 +148,7 @@ const awsCloudCredentialsPage = {
 
 const awsDefineNodesPage = {
   path: '/define/aws/nodes',
-  component: AWS_DefineNodes,
+  component: AWS_Nodes,
   title: 'Define Nodes',
 };
 

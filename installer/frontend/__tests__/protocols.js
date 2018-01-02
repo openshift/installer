@@ -9,7 +9,6 @@ import { restoreActionTypes } from '../actions';
 import { commitToServer } from '../server';
 import '../components/aws-cloud-credentials';
 import '../components/aws-cluster-info';
-import '../components/aws-define-nodes';
 import '../components/aws-submit-keys';
 import '../components/aws-vpc';
 import '../components/bm-credentials';
@@ -19,7 +18,7 @@ import '../components/bm-nodeforms';
 import '../components/bm-sshkeys';
 import '../components/certificate-authority';
 import '../components/cluster-type';
-import '../components/etcd';
+import '../components/nodes';
 import '../components/users';
 
 const structureOnly = (obj) => {
