@@ -74,12 +74,12 @@ export const tagsForm = new Form('AWS_TAGS_FORM', [tagsFields]);
 const Tag = ({row, remove, placeholder, autoFocus, showAutofocus}) => <div className="row" style={{padding: '0 0 20px 0'}}>
   <div className="col-xs-5" style={{paddingRight: 0}}>
     <Connect field={row.key}>
-      <Input placeholder="e.g. Name" blurry autoFocus={showAutofocus && !!autoFocus} />
+      <Input placeholder="e.g. Name" autoFocus={showAutofocus && !!autoFocus} />
     </Connect>
   </div>
   <div className="col-xs-6" style={{paddingRight: 0}}>
     <Connect field={row.value}>
-      <Input placeholder={placeholder} blurry />
+      <Input placeholder={placeholder} />
     </Connect>
   </div>
   <div className="col-xs-1">

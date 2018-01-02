@@ -234,13 +234,13 @@ const NodeRow = ({ row, remove }) =>
   <div className="row" style={{padding: '0 0 20px 0'}}>
     <div className="col-xs-5" style={{paddingRight: 0}}>
       <Connect field={row.mac}>
-        <Input placeholder="MAC address" blurry />
+        <Input placeholder="MAC address" />
       </Connect>
     </div>
 
     <div className="col-xs-6" style={{paddingRight: 0}}>
       <Connect field={row.host}>
-        <Input placeholder="node.domain.com" blurry />
+        <Input placeholder="node.domain.com" />
       </Connect>
     </div>
 
