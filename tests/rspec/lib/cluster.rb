@@ -163,6 +163,8 @@ class Cluster
         return true if system(env, "make -C ../.. apply | tee ../../build/#{@name}/terraform-apply.log")
       end
     end
+  rescue Timeout::Error
+    forensic
     raise 'Applying cluster failed'
   end
 
