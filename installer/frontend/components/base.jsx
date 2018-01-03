@@ -4,9 +4,8 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { Route, Switch, withRouter } from 'react-router-dom';
 
-import { fixLocation } from '../app';
 import { withNav } from '../nav';
-import { sections as trailSections, trail } from '../trail';
+import { sections, trail } from '../trail';
 
 import { Loader } from './loader';
 import { PLATFORM_TYPE } from '../cluster-config';
@@ -14,34 +13,26 @@ import { TectonicGA } from '../tectonic-ga';
 import { Header } from './header';
 import { Footer } from './footer';
 
-const NavSection = connect(state => ({state}))(
-  ({title, navTrail, sections, currentPage, handlePage, state}) => {
-    const currentSection = navTrail.sectionFor(currentPage);
-    const section = sections.find(s => s === currentSection);
+const NavSection = ({canNavigateForward, currentPage, navigate, navSections, navTrail, title}) => {
+  const section = _.find(navTrail.sections, s => navSections.includes(s) && s.includes(currentPage));
+  let disabled = false;
 
-    return (
-      <ul className="wiz-wizard__nav__section">
-        <li className="wiz-wizard__nav__heading">{title}</li>
-        {
-          section &&
-          section.map(page => {
-            const classes = classNames('wiz-wizard__nav__step', {
-              'wiz-wizard__nav__step--active': page === currentPage,
-            });
-            return (
-              <li className={classes} key={page.path}>
-                <button className="wiz-wizard__nav__link btn btn-link btn-link-ordinary"
-                  onClick={() => handlePage(page)}
-                  disabled={!navTrail.navigable(page) || !navTrail.canNavigateForward(currentPage, page, state)}
-                >{page.title}</button>
-              </li>
-            );
-          })
-        }
-      </ul>
-    );
-  }
-);
+  return <ul className="wiz-wizard__nav__section">
+    <li className="wiz-wizard__nav__heading">{title}</li>
+    {_.map(section, page => {
+      const classes = classNames('wiz-wizard__nav__step', {'wiz-wizard__nav__step--active': page === currentPage});
+      const link = <li className={classes} key={page.path}>
+        <button
+          className="wiz-wizard__nav__link btn btn-link btn-link-ordinary"
+          disabled={disabled}
+          onClick={() => navigate(page)}
+        >{page.title}</button>
+      </li>;
+      disabled = disabled || !canNavigateForward(page);
+      return link;
+    })}
+  </ul>;
+};
 
 const NextButton = withNav(
   ({disabled, navNext}) => <div className="withtooltip">
@@ -65,6 +56,7 @@ const stateToProps = (state, {history}) => {
   const t = trail(state);
   const currentPage = t.pageByPath.get(history.location.pathname);
   return {
+    canReset: _.has(currentPage, 'component.canReset') && currentPage.component.canReset(state),
     currentPage,
     state,
     t,
@@ -73,11 +65,13 @@ const stateToProps = (state, {history}) => {
 };
 
 // No components have the same path, so this is safe.
-const routes = _.uniq(_.flatMap(trailSections));
+const routes = _.uniq(_.flatMap(sections));
 
 const Wizard = withNav(withRouter(connect(stateToProps)(
-  class extends React.Component {
-    navigate (currentPage, nextPage, state) {
+  class Wizard_ extends React.Component {
+    navigate (nextPage, state) {
+      const {currentPage, history} = this.props;
+
       if (currentPage.path === '/define/cluster-type' && nextPage !== currentPage && state) {
         TectonicGA.sendEvent('Platform Selected', 'user input', state.clusterConfig[PLATFORM_TYPE], state.clusterConfig[PLATFORM_TYPE]);
       }
@@ -89,33 +83,55 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
       if (state) {
         TectonicGA.sendEvent('Page Navigation Next', 'click', 'next on', state.clusterConfig[PLATFORM_TYPE]);
       }
-      this.props.history.push(nextPage.path);
+      history.push(nextPage.path);
     }
 
-    componentDidMount() {
+    canNavigateForward (page) {
+      return page.component.canNavigateForward ? page.component.canNavigateForward(this.props.state) : true;
+    }
+
+    fixLocation () {
+      const {history, t} = this.props;
+      const page = t.pageByPath.get(history.location.pathname);
+
+      if (!page) {
+        // Path does not exist in the current trail, so navigate to the trail's first page instead
+        history.push(t.pages[0].path);
+        return;
+      }
+
+      // If the Next button on a previous page is disabled, you shouldn't be able to see this page. Show the first
+      // page, before or including this one, that won't allow forward navigation.
+      const fixed = t.pages.find(p => p === page || !this.canNavigateForward(p)).path;
+      if (fixed !== history.location.pathname) {
+        history.push(fixed);
+      }
+    }
+
+    componentWillMount () {
+      this.fixLocation();
       document.title = `Tectonic - ${this.props.title}`;
     }
 
     componentWillReceiveProps (nextProps) {
-      if (!nextProps.currentPage) {
-        fixLocation();
+      this.fixLocation();
+      if (nextProps.title !== this.props.title) {
+        document.title = `Tectonic - ${nextProps.title}`;
       }
-      if (nextProps.title === this.props.title) {
-        return;
-      }
-      document.title = `Tectonic - ${nextProps.title}`;
     }
 
     render() {
-      const {t, currentPage, state, title} = this.props;
+      const {t, canReset, currentPage, title} = this.props;
       if (!currentPage) {
         return null;
       }
 
-      const nav = page => this.navigate(currentPage, page);
-
-      const {canNavigateForward, canReset} = currentPage.component;
-      const disableNext = canNavigateForward ? !canNavigateForward(state) : false;
+      const navProps = {
+        canNavigateForward: page => this.canNavigateForward(page),
+        currentPage,
+        navigate: page => this.navigate(page),
+        navTrail: t,
+      };
 
       return (
         <div className="tectonic">
@@ -124,27 +140,17 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
             <div className="wiz-wizard">
               <div className="wiz-wizard__cell wiz-wizard__nav">
                 <NavSection
+                  {...navProps}
                   title="1. Choose Cluster Type"
-                  navTrail={t}
-                  sections={[trailSections.choose]}
-                  currentPage={currentPage}
-                  handlePage={nav} />
+                  navSections={[sections.choose]} />
                 <NavSection
+                  {...navProps}
                   title="2. Define Cluster"
-                  navTrail={t}
-                  sections={[trailSections.defineBaremetal, trailSections.defineAWS]}
-                  currentPage={currentPage}
-                  handlePage={nav} />
+                  navSections={[sections.defineBaremetal, sections.defineAWS]} />
                 <NavSection
+                  {...navProps}
                   title="3. Boot Cluster"
-                  navTrail={t}
-                  sections={[
-                    trailSections.bootBaremetalTF,
-                    trailSections.bootAWSTF,
-                    trailSections.bootDryRun,
-                  ]}
-                  currentPage={currentPage}
-                  handlePage={nav} />
+                  navSections={[sections.bootBaremetalTF, sections.bootAWSTF, sections.bootDryRun]} />
               </div>
               <div className="wiz-wizard__content wiz-wizard__cell">
                 <div className="wiz-form__header">
@@ -158,10 +164,10 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
                 {currentPage.hidePager || <div className="wiz-form__actions">
                   <div className="wiz-form__actions__prev">
                     {t.previousFrom(currentPage) && <PreviousButton />}
-                    {canReset && canReset(state) && <ResetButton />}
+                    {canReset && <ResetButton />}
                   </div>
                   <div className="wiz-form__actions__next">
-                    {t.nextFrom(currentPage) && <NextButton disabled={disableNext} />}
+                    {t.nextFrom(currentPage) && <NextButton disabled={!this.canNavigateForward(currentPage)} />}
                   </div>
                 </div>
                 }
