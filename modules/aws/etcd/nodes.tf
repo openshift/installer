@@ -36,7 +36,7 @@ data "aws_iam_role" "etcd_role" {
 }
 
 resource "aws_iam_role" "etcd_role" {
-  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+  count = "${length(var.external_endpoints) == 0 && var.etcd_iam_role == "" ? 1 : 0}"
   name  = "${var.cluster_name}-etcd-role"
   path  = "/"
 
