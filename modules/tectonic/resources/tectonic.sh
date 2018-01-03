@@ -1,14 +1,8 @@
 #!/bin/sh
 set -e
 
-if [ "$#" -ne "3" ]; then
-    echo "Usage: $0 kubeconfig assets_path self_hosted_etcd"
-    exit 1
-fi
-
 KUBECONFIG="$1"
 ASSETS_PATH="$2"
-SELF_HOSTED_ETCD="$3"
 
 # Setup API Authentication
 KUBECTL="/kubectl --kubeconfig=$KUBECONFIG"
@@ -212,13 +206,6 @@ kubectl create -f updater/app_versions/app-version-tectonic-monitoring.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-cluo.yaml
 kubectl create -f updater/app_versions/app-version-kubernetes-addon.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-alm.yaml
-
-if [ "$SELF_HOSTED_ETCD" = "true" ]; then
-  echo "Creating self hosted etcd resources"
-  kubectl apply -f updater/cluster-config.yaml
-  kubectl create -f updater/app_versions/app-version-tectonic-etcd.yaml
-  kubectl create -f updater/operators/tectonic-etcd-operator.yaml
-fi
 
 # wait for Tectonic pods
 wait_for_pods tectonic-system

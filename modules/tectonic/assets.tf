@@ -132,8 +132,7 @@ data "template_file" "tectonic_wrapper" {
   template = "${file("${path.module}/resources/tectonic-wrapper.sh")}"
 
   vars {
-    hyperkube_image  = "${var.container_images["hyperkube"]}"
-    self_hosted_etcd = "${var.self_hosted_etcd != "" ? "true" : "false"}"
+    hyperkube_image = "${var.container_images["hyperkube"]}"
   }
 }
 

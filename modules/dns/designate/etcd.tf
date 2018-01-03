@@ -1,5 +1,5 @@
 resource "openstack_dns_recordset_v2" "etcd_a_nodes" {
-  count   = "${var.self_hosted_etcd != "" ? 0 : var.etcd_count}"
+  count   = "${var.etcd_count}"
   type    = "A"
   ttl     = "60"
   zone_id = "${data.openstack_dns_zone_v2.tectonic.id}"
@@ -8,7 +8,6 @@ resource "openstack_dns_recordset_v2" "etcd_a_nodes" {
 }
 
 resource "openstack_dns_recordset_v2" "etcd_srv_discover" {
-  count   = "${var.self_hosted_etcd != "" ? 0 : 1}"
   name    = "${var.etcd_tls_enabled ? "_etcd-server-ssl._tcp" : "_etcd-server._tcp"}.${var.base_domain}."
   type    = "SRV"
   zone_id = "${data.openstack_dns_zone_v2.tectonic.id}"
@@ -17,7 +16,6 @@ resource "openstack_dns_recordset_v2" "etcd_srv_discover" {
 }
 
 resource "openstack_dns_recordset_v2" "etcd_srv_client" {
-  count   = "${var.self_hosted_etcd != "" ? 0 : 1}"
   name    = "${var.etcd_tls_enabled ? "_etcd-client-ssl._tcp" : "_etcd-client._tcp"}.${var.base_domain}."
   type    = "SRV"
   zone_id = "${data.openstack_dns_zone_v2.tectonic.id}"

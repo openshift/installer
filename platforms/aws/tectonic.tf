@@ -15,7 +15,6 @@ module "bootkube" {
   # Platform-independent variables wiring, do not modify.
   container_images = "${var.tectonic_container_images}"
   versions         = "${var.tectonic_versions}"
-  self_hosted_etcd = ""
 
   service_cidr = "${var.tectonic_service_cidr}"
   cluster_cidr = "${var.tectonic_cluster_cidr}"
@@ -111,7 +110,6 @@ module "tectonic" {
   console_client_id = "tectonic-console"
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "NodePort"
-  self_hosted_etcd  = ""
   master_count      = "${var.tectonic_master_count}"
   stats_url         = "${var.tectonic_stats_url}"
 

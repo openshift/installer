@@ -17,7 +17,7 @@ This module enables the use of RFC 2136 DNS updates with optional secret key bas
 module "dns" {
   source = "../../modules/dns/azure"
 
-  etcd_count   = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count}"
+  etcd_count   = "${var.tectonic_etcd_count}"
   master_count = "${var.tectonic_master_count}"
   worker_count = "${var.tectonic_worker_count}"
 
@@ -44,7 +44,7 @@ module "dns" {
 module "dns" {
   source = "../../modules/dns/ddns"
 
-  etcd_count   = "${var.tectonic_self_hosted_etcd != "" ? 0 : var.tectonic_etcd_count}"
+  etcd_count   = "${var.tectonic_etcd_count}"
   master_count = "${var.tectonic_master_count}"
   worker_count = "${var.tectonic_worker_count}"
 
