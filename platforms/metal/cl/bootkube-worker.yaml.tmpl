@@ -32,6 +32,8 @@ systemd:
       dropins:
         - name: 10-alwaysrun.conf
           contents: {{.ign_update_ca_certificates_dropin_json}}
+    - name: iscsid.service
+      enable: {{.iscsi.enabled}}
 
 storage:
   files:

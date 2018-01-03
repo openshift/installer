@@ -20,6 +20,7 @@ data "ignition_config" "master" {
     var.ign_bootkube_path_unit_id,
     var.ign_tectonic_path_unit_id,
     var.ign_update_ca_certificates_dropin_id,
+    var.ign_iscsi_service_id,
    ))}"]
 
   users = [

@@ -202,3 +202,8 @@ data "ignition_file" "gcs_puller" {
     content = "${data.template_file.gcs_puller.rendered}"
   }
 }
+
+data "ignition_systemd_unit" "iscsi" {
+  name    = "iscsid.service"
+  enabled = "${var.iscsi_enabled ? true : false}"
+}

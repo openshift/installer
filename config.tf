@@ -485,3 +485,9 @@ variable "tectonic_custom_ca_pem_list" {
 (optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes.
 EOF
 }
+
+variable "tectonic_iscsi_enabled" {
+  type        = "string"
+  default     = "false"
+  description = "(optional) Start iscsid.service to enable iscsi volume attachment."
+}

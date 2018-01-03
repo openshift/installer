@@ -151,3 +151,8 @@ variable "custom_ca_cert_pem_list" {
   type        = "list"
   description = "(optional) A list of custom CAs in PEM format."
 }
+
+variable "iscsi_enabled" {
+  type    = "string"
+  default = "false"
+}
