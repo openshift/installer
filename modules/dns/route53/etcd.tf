@@ -1,5 +1,5 @@
 resource "aws_route53_record" "etcd_a_nodes" {
-  count   = "${var.self_hosted_etcd != "" ? 0 : var.etcd_count}"
+  count   = "${var.etcd_count}"
   type    = "A"
   ttl     = "60"
   zone_id = "${local.zone_id}"

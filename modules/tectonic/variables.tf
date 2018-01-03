@@ -101,11 +101,6 @@ variable "identity_api_service" {
   default     = "tectonic-identity-api.tectonic-system.svc.cluster.local"
 }
 
-variable "self_hosted_etcd" {
-  type        = "string"
-  description = "See tectonic_self_hosted_etcd in config.tf"
-}
-
 variable "master_count" {
   description = "The amount of master nodes present in the cluster."
   type        = "string"

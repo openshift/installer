@@ -61,11 +61,6 @@ variable "api_ip_addresses" {
   type        = "list"
 }
 
-variable "self_hosted_etcd" {
-  default     = ""
-  description = "See tectonic_self_hosted_etcd in config.tf"
-}
-
 variable "tectonic_vanilla_k8s" {
   default = false
 

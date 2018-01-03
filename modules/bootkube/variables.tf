@@ -87,11 +87,6 @@ variable "etcd_server_key_pem" {
   description = "The etcd server key in PEM format."
 }
 
-variable "self_hosted_etcd" {
-  type        = "string"
-  description = "See tectonic_self_hosted_etcd in config.tf"
-}
-
 variable "kube_apiserver_url" {
   description = "URL used to reach kube-apiserver"
   type        = "string"

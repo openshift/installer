@@ -41,6 +41,5 @@ resource "openstack_networking_secgroup_v2" "etcd" {
 module "etcd" {
   source       = "rules/etcd"
   secgroup_id  = "${openstack_networking_secgroup_v2.etcd.id}"
-  self_hosted  = "${var.self_hosted_etcd != ""}"
   cluster_cidr = "${var.cluster_cidr}"
 }
