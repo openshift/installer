@@ -73,7 +73,6 @@ const stateToProps = (state, {history}) => {
 };
 
 // No components have the same path, so this is safe.
-// If a user guesses an invalid URL, they could get in a weird state. Oh well.
 const routes = _.uniq(_.flatMap(trailSections));
 
 const Wizard = withNav(withRouter(connect(stateToProps)(
