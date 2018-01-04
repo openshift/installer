@@ -79,6 +79,16 @@ storage:
       mode: 0400
       contents:
         inline: {{.ign_custom_ca_certs_json}}
+    - path: /etc/profile.env
+      filesystem: root
+      mode: 0644
+      contents:
+        inline: {{.ign_profile_env_json}}
+    - path: /etc/systemd/system.conf.d/10-default-env.conf
+      filesystem: root
+      mode: 0644
+      contents:
+        inline: {{.ign_systemd_default_env_json}}
 passwd:
   users:
     - name: core

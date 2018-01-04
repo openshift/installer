@@ -153,6 +153,14 @@ output "profile_env_id" {
   value = "${data.ignition_file.profile_env.id}"
 }
 
+output "profile_env_rendered" {
+  value = "${data.template_file.profile_env.rendered}"
+}
+
 output "systemd_default_env_id" {
   value = "${data.ignition_file.systemd_default_env.id}"
+}
+
+output "systemd_default_env_rendered" {
+  value = "${data.template_file.systemd_default_env.rendered}"
 }

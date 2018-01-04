@@ -1,9 +1,12 @@
 data "ignition_config" "main" {
-  files = [
-    "${data.ignition_file.kubeconfig.id}",
-    "${var.ign_max_user_watches_id}",
-    "${var.ign_installer_kubelet_env_id}",
-    "${var.ign_installer_runtime_mappings_id}",
+  files = ["${compact(list(
+    data.ignition_file.kubeconfig.id,
+    var.ign_max_user_watches_id,
+    var.ign_installer_kubelet_env_id,
+    var.ign_installer_runtime_mappings_id,
+    var.ign_profile_env_id,
+    var.ign_systemd_default_env_id,
+   ))}",
     "${var.ign_ca_cert_id_list}",
   ]
 

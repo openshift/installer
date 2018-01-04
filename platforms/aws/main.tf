@@ -65,27 +65,29 @@ module "vpc" {
 module "etcd" {
   source = "../../modules/aws/etcd"
 
-  base_domain             = "${var.tectonic_base_domain}"
-  cluster_id              = "${module.tectonic.cluster_id}"
-  cluster_name            = "${var.tectonic_cluster_name}"
-  container_image         = "${var.tectonic_container_images["etcd"]}"
-  container_linux_channel = "${var.tectonic_container_linux_channel}"
-  container_linux_version = "${module.container_linux.version}"
-  ec2_type                = "${var.tectonic_aws_etcd_ec2_type}"
-  external_endpoints      = "${compact(var.tectonic_etcd_servers)}"
-  extra_tags              = "${var.tectonic_aws_extra_tags}"
-  ign_etcd_crt_id_list    = "${module.ignition_masters.etcd_crt_id_list}"
-  ign_etcd_dropin_id_list = "${module.ignition_masters.etcd_dropin_id_list}"
-  instance_count          = "${length(data.template_file.etcd_hostname_list.*.id)}"
-  root_volume_iops        = "${var.tectonic_aws_etcd_root_volume_iops}"
-  root_volume_size        = "${var.tectonic_aws_etcd_root_volume_size}"
-  root_volume_type        = "${var.tectonic_aws_etcd_root_volume_type}"
-  s3_bucket               = "${aws_s3_bucket.tectonic.bucket}"
-  sg_ids                  = "${concat(var.tectonic_aws_etcd_extra_sg_ids, list(module.vpc.etcd_sg_id))}"
-  ssh_key                 = "${var.tectonic_aws_ssh_key}"
-  subnets                 = "${module.vpc.worker_subnet_ids}"
-  tls_enabled             = "${var.tectonic_etcd_tls_enabled}"
-  etcd_iam_role           = "${var.tectonic_aws_etcd_iam_role_name}"
+  base_domain                = "${var.tectonic_base_domain}"
+  cluster_id                 = "${module.tectonic.cluster_id}"
+  cluster_name               = "${var.tectonic_cluster_name}"
+  container_image            = "${var.tectonic_container_images["etcd"]}"
+  container_linux_channel    = "${var.tectonic_container_linux_channel}"
+  container_linux_version    = "${module.container_linux.version}"
+  ec2_type                   = "${var.tectonic_aws_etcd_ec2_type}"
+  external_endpoints         = "${compact(var.tectonic_etcd_servers)}"
+  extra_tags                 = "${var.tectonic_aws_extra_tags}"
+  ign_etcd_crt_id_list       = "${module.ignition_masters.etcd_crt_id_list}"
+  ign_etcd_dropin_id_list    = "${module.ignition_masters.etcd_dropin_id_list}"
+  instance_count             = "${length(data.template_file.etcd_hostname_list.*.id)}"
+  root_volume_iops           = "${var.tectonic_aws_etcd_root_volume_iops}"
+  root_volume_size           = "${var.tectonic_aws_etcd_root_volume_size}"
+  root_volume_type           = "${var.tectonic_aws_etcd_root_volume_type}"
+  s3_bucket                  = "${aws_s3_bucket.tectonic.bucket}"
+  sg_ids                     = "${concat(var.tectonic_aws_etcd_extra_sg_ids, list(module.vpc.etcd_sg_id))}"
+  ssh_key                    = "${var.tectonic_aws_ssh_key}"
+  subnets                    = "${module.vpc.worker_subnet_ids}"
+  tls_enabled                = "${var.tectonic_etcd_tls_enabled}"
+  etcd_iam_role              = "${var.tectonic_aws_etcd_iam_role_name}"
+  ign_profile_env_id         = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.profile_env_id : ""}"
+  ign_systemd_default_env_id = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.systemd_default_env_id : ""}"
 }
 
 module "ignition_masters" {
@@ -118,6 +120,9 @@ module "ignition_masters" {
   kubelet_debug_config      = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
+  http_proxy                = "${var.tectonic_http_proxy_address}"
+  https_proxy               = "${var.tectonic_https_proxy_address}"
+  no_proxy                  = "${var.tectonic_no_proxy}"
 }
 
 module "masters" {
@@ -164,6 +169,8 @@ module "masters" {
   s3_bucket                            = "${aws_s3_bucket.tectonic.bucket}"
   ssh_key                              = "${var.tectonic_aws_ssh_key}"
   subnet_ids                           = "${module.vpc.master_subnet_ids}"
+  ign_profile_env_id                   = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.profile_env_id : ""}"
+  ign_systemd_default_env_id           = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.systemd_default_env_id : ""}"
 }
 
 module "ignition_workers" {
@@ -183,6 +190,9 @@ module "ignition_workers" {
   kubelet_debug_config    = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label      = "node-role.kubernetes.io/node"
   kubelet_node_taints     = ""
+  http_proxy              = "${var.tectonic_http_proxy_address}"
+  https_proxy             = "${var.tectonic_https_proxy_address}"
+  no_proxy                = "${var.tectonic_no_proxy}"
 }
 
 module "workers" {
@@ -217,6 +227,8 @@ module "workers" {
   subnet_ids                           = "${module.vpc.worker_subnet_ids}"
   vpc_id                               = "${module.vpc.vpc_id}"
   worker_iam_role                      = "${var.tectonic_aws_worker_iam_role_name}"
+  ign_profile_env_id                   = "${local.tectonic_http_proxy_enabled ? module.ignition_workers.profile_env_id : ""}"
+  ign_systemd_default_env_id           = "${local.tectonic_http_proxy_enabled ? module.ignition_workers.systemd_default_env_id : ""}"
 }
 
 module "dns" {

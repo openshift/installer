@@ -208,21 +208,34 @@ data "ignition_systemd_unit" "iscsi" {
   enabled = "${var.iscsi_enabled ? true : false}"
 }
 
+data "template_file" "profile_env" {
+  vars {
+    http_proxy  = "${var.http_proxy}"
+    https_proxy = "${var.https_proxy}"
+    no_proxy    = "${join(",", var.no_proxy)}"
+  }
+
+  template = "${file("${path.module}/resources/proxy/profile.env")}"
+}
+
 data "ignition_file" "profile_env" {
   path       = "/etc/profile.env"
   mode       = 0644
   filesystem = "root"
 
   content {
-    content = <<EOF
-export HTTP_PROXY=${var.http_proxy}
-export HTTPS_PROXY=${var.https_proxy}
-export NO_PROXY=${join(",", var.no_proxy)}
-export http_proxy=${var.http_proxy}
-export https_proxy=${var.https_proxy}
-export no_proxy=${join(",", var.no_proxy)}
-EOF
+    content = "${data.template_file.profile_env.rendered}"
   }
+}
+
+data "template_file" "systemd_default_env" {
+  vars {
+    http_proxy  = "${var.http_proxy}"
+    https_proxy = "${var.https_proxy}"
+    no_proxy    = "${join(",", var.no_proxy)}"
+  }
+
+  template = "${file("${path.module}/resources/proxy/10-default-env.conf")}"
 }
 
 data "ignition_file" "systemd_default_env" {
@@ -231,14 +244,6 @@ data "ignition_file" "systemd_default_env" {
   filesystem = "root"
 
   content {
-    content = <<EOF
-[Manager]
-DefaultEnvironment=HTTP_PROXY=${var.http_proxy}
-DefaultEnvironment=HTTPS_PROXY=${var.https_proxy}
-DefaultEnvironment=NO_PROXY=${join(",", var.no_proxy)}
-DefaultEnvironment=http_proxy=${var.http_proxy}
-DefaultEnvironment=https_proxy=${var.https_proxy}
-DefaultEnvironment=no_proxy=${join(",", var.no_proxy)}
-EOF
+    content = "${data.template_file.systemd_default_env.rendered}"
   }
 }

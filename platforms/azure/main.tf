@@ -56,26 +56,28 @@ module "vnet" {
 module "etcd" {
   source = "../../modules/azure/etcd"
 
-  base_domain             = "${var.tectonic_base_domain}"
-  cluster_id              = "${module.tectonic.cluster_id}"
-  cluster_name            = "${var.tectonic_cluster_name}"
-  container_image         = "${var.tectonic_container_images["etcd"]}"
-  container_linux_channel = "${var.tectonic_container_linux_channel}"
-  container_linux_version = "${module.container_linux.version}"
-  etcd_count              = "${local.etcd_count}"
-  extra_tags              = "${var.tectonic_azure_extra_tags}"
-  fault_domains           = "${var.tectonic_azure_location_fault_domains["${var.tectonic_azure_location}"]}"
-  ign_etcd_crt_id_list    = "${module.ignition_masters.etcd_crt_id_list}"
-  ign_etcd_dropin_id_list = "${module.ignition_masters.etcd_dropin_id_list}"
-  location                = "${var.tectonic_azure_location}"
-  network_interface_ids   = "${module.vnet.etcd_network_interface_ids}"
-  public_ssh_key          = "${var.tectonic_azure_ssh_key}"
-  resource_group_name     = "${module.resource_group.name}"
-  storage_id              = "${module.resource_group.storage_id}"
-  storage_type            = "${var.tectonic_azure_etcd_storage_type}"
-  tls_enabled             = "${var.tectonic_etcd_tls_enabled}"
-  versions                = "${var.tectonic_versions}"
-  vm_size                 = "${var.tectonic_azure_etcd_vm_size}"
+  base_domain                = "${var.tectonic_base_domain}"
+  cluster_id                 = "${module.tectonic.cluster_id}"
+  cluster_name               = "${var.tectonic_cluster_name}"
+  container_image            = "${var.tectonic_container_images["etcd"]}"
+  container_linux_channel    = "${var.tectonic_container_linux_channel}"
+  container_linux_version    = "${module.container_linux.version}"
+  etcd_count                 = "${local.etcd_count}"
+  extra_tags                 = "${var.tectonic_azure_extra_tags}"
+  fault_domains              = "${var.tectonic_azure_location_fault_domains["${var.tectonic_azure_location}"]}"
+  ign_etcd_crt_id_list       = "${module.ignition_masters.etcd_crt_id_list}"
+  ign_etcd_dropin_id_list    = "${module.ignition_masters.etcd_dropin_id_list}"
+  location                   = "${var.tectonic_azure_location}"
+  network_interface_ids      = "${module.vnet.etcd_network_interface_ids}"
+  public_ssh_key             = "${var.tectonic_azure_ssh_key}"
+  resource_group_name        = "${module.resource_group.name}"
+  storage_id                 = "${module.resource_group.storage_id}"
+  storage_type               = "${var.tectonic_azure_etcd_storage_type}"
+  tls_enabled                = "${var.tectonic_etcd_tls_enabled}"
+  versions                   = "${var.tectonic_versions}"
+  vm_size                    = "${var.tectonic_azure_etcd_vm_size}"
+  ign_profile_env_id         = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.profile_env_id : ""}"
+  ign_systemd_default_env_id = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.systemd_default_env_id : ""}"
 }
 
 # Workaround for https://github.com/hashicorp/terraform/issues/4084
@@ -129,6 +131,9 @@ module "ignition_masters" {
   kubelet_debug_config      = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
+  http_proxy                = "${var.tectonic_http_proxy_address}"
+  https_proxy               = "${var.tectonic_https_proxy_address}"
+  no_proxy                  = "${var.tectonic_no_proxy}"
 }
 
 module "masters" {
@@ -166,6 +171,8 @@ module "masters" {
   storage_id                           = "${module.resource_group.storage_id}"
   storage_type                         = "${var.tectonic_azure_master_storage_type}"
   vm_size                              = "${var.tectonic_azure_master_vm_size}"
+  ign_profile_env_id                   = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.profile_env_id : ""}"
+  ign_systemd_default_env_id           = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.systemd_default_env_id : ""}"
 }
 
 module "ignition_workers" {
@@ -185,6 +192,9 @@ module "ignition_workers" {
   kubelet_debug_config    = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label      = "node-role.kubernetes.io/node"
   kubelet_node_taints     = ""
+  http_proxy              = "${var.tectonic_http_proxy_address}"
+  https_proxy             = "${var.tectonic_https_proxy_address}"
+  no_proxy                = "${var.tectonic_no_proxy}"
 }
 
 module "workers" {
@@ -219,6 +229,8 @@ module "workers" {
   tectonic_kube_dns_service_ip         = "${module.bootkube.kube_dns_service_ip}"
   vm_size                              = "${var.tectonic_azure_worker_vm_size}"
   worker_count                         = "${var.tectonic_worker_count}"
+  ign_profile_env_id                   = "${local.tectonic_http_proxy_enabled ? module.ignition_workers.profile_env_id : ""}"
+  ign_systemd_default_env_id           = "${local.tectonic_http_proxy_enabled ? module.ignition_workers.systemd_default_env_id : ""}"
 }
 
 module "dns" {

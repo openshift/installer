@@ -10,7 +10,10 @@ data "ignition_config" "etcd" {
     "${data.ignition_user.core.id}",
   ]
 
-  files = [
+  files = ["${compact(list(
+    var.ign_profile_env_id,
+    var.ign_systemd_default_env_id,
+   ))}",
     "${var.ign_etcd_crt_id_list}",
   ]
 }

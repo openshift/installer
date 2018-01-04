@@ -79,3 +79,13 @@ variable "public_ssh_key" {
 variable "ign_etcd_crt_id_list" {
   type = "list"
 }
+
+variable "ign_profile_env_id" {
+  type    = "string"
+  default = ""
+}
+
+variable "ign_systemd_default_env_id" {
+  type    = "string"
+  default = ""
+}
