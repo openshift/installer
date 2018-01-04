@@ -78,17 +78,6 @@ variable "api_ip_addresses" {
   type        = "list"
 }
 
-variable "self_hosted_etcd" {
-  default     = ""
-  description = "See tectonic_self_hosted_etcd in config.tf"
-}
-
-variable "tectonic_vanilla_k8s" {
-  description = <<EOF
-If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
-EOF
-}
-
 variable "tectonic_extra_tags" {
   type        = "map"
   description = "(optional) Extra tags to be applied to created resources."
