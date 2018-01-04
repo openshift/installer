@@ -485,7 +485,6 @@ variable "tectonic_custom_ca_pem_list" {
 EOF
 }
 
-
 variable "tectonic_iscsi_enabled" {
   type        = "string"
   default     = "false"

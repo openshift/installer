@@ -37,7 +37,6 @@ variable "ign_ca_cert_id_list" {
   description = "The list of public CA certificate ignition file IDs."
 }
 
-
 variable "ign_iscsi_service_id" {
   type = "string"
 }

@@ -88,8 +88,6 @@ module "etcd" {
   subnets                    = "${module.vpc.worker_subnet_ids}"
   tls_enabled                = "${var.tectonic_etcd_tls_enabled}"
   etcd_iam_role              = "${var.tectonic_aws_etcd_iam_role_name}"
-  ign_profile_env_id         = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.profile_env_id : ""}"
-  ign_systemd_default_env_id = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.systemd_default_env_id : ""}"
 }
 
 module "ignition_masters" {

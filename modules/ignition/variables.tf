@@ -170,5 +170,4 @@ variable "https_proxy" {
 variable "no_proxy" {
   type        = "list"
   description = "List of local endpoints that will not use HTTP proxy."
-
 }
