@@ -267,8 +267,6 @@ tectonic_govcloud_worker_root_volume_type = "gp2"
 // You can download the Tectonic license file from your Account overview page at [1].
 // 
 // [1] https://account.coreos.com/overview
-// 
-// Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 tectonic_license_path = ""
 
 // The number of master nodes to be created.
@@ -296,8 +294,6 @@ tectonic_master_count = "1"
 // [2] https://coreos.com/os/docs/latest/registry-authentication.html#manual-registry-auth-setup
 // 
 // [3] https://account.coreos.com/overview
-// 
-// Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 tectonic_pull_secret_path = ""
 
 // (optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation.
@@ -308,9 +304,6 @@ tectonic_pull_secret_path = ""
 // Default is 3 years.
 // This setting is ignored if user provided certificates are used.
 tectonic_tls_validity_period = "26280"
-
-// If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
-tectonic_vanilla_k8s = false
 
 // The number of worker nodes to be created.
 // This applies only to cloud platforms.
