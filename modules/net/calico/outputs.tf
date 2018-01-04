@@ -1,5 +1,5 @@
 output "id" {
-  value = "${var.enabled ? "${sha1("${join(" ", local_file.calico.*.id)}")}" : "# calico disabled"}"
+  value = "${var.enabled ? sha1(element(concat(local_file.calico.*.id, list("")), 0)) : "# calico disabled"}"
 }
 
 output "name" {

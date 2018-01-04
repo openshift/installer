@@ -56,7 +56,7 @@ class AzureVpn
   end
 
   def create_resources
-    commands = ['terraform init', 'terraform apply']
+    commands = ['terraform init', 'terraform apply -auto-approve']
 
     Dir.chdir(@build_dir) do
       commands.each do |command|

@@ -45,7 +45,7 @@ class AWSVPC
     Dir.chdir('../../contrib/internal-cluster') do
       succeeded = system(env_variables, 'terraform init')
       raise 'could not init Terraform to create VPC' unless succeeded
-      succeeded = system(env_variables, 'terraform apply')
+      succeeded = system(env_variables, 'terraform apply -auto-approve')
       raise 'could not create vpc with Terraform' unless succeeded
 
       parse_terraform_output

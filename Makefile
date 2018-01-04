@@ -46,7 +46,7 @@ plan: terraform-init
 
 .PHONY: apply
 apply: terraform-init
-	cd $(BUILD_DIR) && $(TF_CMD) apply $(TF_APPLY_OPTIONS) $(TOP_DIR)/platforms/$(PLATFORM)
+	cd $(BUILD_DIR) && $(TF_CMD) apply $(TF_APPLY_OPTIONS) -auto-approve $(TOP_DIR)/platforms/$(PLATFORM)
 
 .PHONY: destroy
 destroy: terraform-init

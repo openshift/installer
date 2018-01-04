@@ -82,7 +82,7 @@ func TestExecutorSimple(t *testing.T) {
 	assert.Equal(t, ExecutionStatusSuccess, status)
 
 	// Execute TerraForm apply.
-	id, done, err = ex.Execute("apply")
+	id, done, err = ex.Execute("apply", "-auto-approve")
 	assert.Nil(t, err)
 	assert.NotZero(t, id)
 

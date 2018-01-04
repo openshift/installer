@@ -11,19 +11,19 @@ output "etcd_client_key_pem" {
 }
 
 output "etcd_peer_crt_pem" {
-  value = "${join("", tls_locally_signed_cert.etcd_peer.*.cert_pem)}"
+  value = "${element(concat(tls_locally_signed_cert.etcd_peer.*.cert_pem, list("")), 0)}"
 }
 
 output "etcd_peer_key_pem" {
-  value = "${join("", tls_private_key.etcd_peer.*.private_key_pem)}"
+  value = "${element(concat(tls_private_key.etcd_peer.*.private_key_pem, list("")), 0)}"
 }
 
 output "etcd_server_crt_pem" {
-  value = "${join("", tls_locally_signed_cert.etcd_server.*.cert_pem)}"
+  value = "${element(concat(tls_locally_signed_cert.etcd_server.*.cert_pem, list("")), 0)}"
 }
 
 output "etcd_server_key_pem" {
-  value = "${join("", tls_private_key.etcd_server.*.private_key_pem)}"
+  value = "${element(concat(tls_private_key.etcd_server.*.private_key_pem, list("")), 0)}"
 }
 
 output "id" {

@@ -13,7 +13,7 @@ require 'English'
 
 # Versions for Bare metal machine
 MATCHBOX_VERSION = 'v0.6.1'
-TERRAFORM_VERSION = '0.10.7'
+TERRAFORM_VERSION = '0.11.1'
 KUBECTL_VERSION = 'v1.8.4'
 
 KUBECTL_URL = "https://storage.googleapis.com/kubernetes-release/release/#{KUBECTL_VERSION}/bin/linux/amd64/kubectl"
