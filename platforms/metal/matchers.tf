@@ -61,7 +61,7 @@ resource "matchbox_group" "controller" {
   metadata {
     domain_name        = "${element(var.tectonic_metal_controller_domains, count.index)}"
     etcd_enabled       = "${length(compact(var.tectonic_etcd_servers)) != 0 ? "false" : "true"}"
-    iscsi_enabled      = "${var.iscsi_enabled ? true : false}"
+    iscsi_enabled      = "${var.tectonic_iscsi_enabled ? true : false}"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
 
     ign_bootkube_path_unit_json            = "${jsonencode(module.bootkube.systemd_path_unit_rendered)}"
@@ -109,7 +109,7 @@ resource "matchbox_group" "worker" {
 
   metadata {
     domain_name        = "${element(var.tectonic_metal_worker_domains, count.index)}"
-    iscsi_enabled      = "${var.iscsi_enabled ? true : false}"
+    iscsi_enabled      = "${var.tectonic_iscsi_enabled ? true : false}"
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
 
     # extra data

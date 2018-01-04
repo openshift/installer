@@ -257,6 +257,9 @@ tectonic_govcloud_worker_root_volume_size = "30"
 // The type of volume for the root block device of worker nodes.
 tectonic_govcloud_worker_root_volume_type = "gp2"
 
+// (optional) Start iscsid.service to enable iscsi volume attachment.
+// tectonic_iscsi_enabled = "false"
+
 // The path to the tectonic licence file.
 // You can download the Tectonic license file from your Account overview page at [1].
 // 
