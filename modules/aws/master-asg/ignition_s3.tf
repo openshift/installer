@@ -1,6 +1,7 @@
 resource "aws_s3_bucket_object" "ignition_master" {
+  count   = "${local.aws_partition}"
   bucket  = "${var.s3_bucket}"
-  key     = "ignition_master.json"
+  key     = "${local.s3_object_key}"
   content = "${data.ignition_config.main.rendered}"
   acl     = "private"
 
@@ -15,7 +16,7 @@ resource "aws_s3_bucket_object" "ignition_master" {
 
 data "ignition_config" "s3" {
   replace {
-    source       = "${format("s3://%s/%s", var.s3_bucket, aws_s3_bucket_object.ignition_master.key)}"
+    source       = "${local.s3_endpoint}"
     verification = "sha512-${sha512(data.ignition_config.main.rendered)}"
   }
 }

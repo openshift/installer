@@ -142,3 +142,8 @@ variable "ign_rm_assets_path_unit_id" {
 variable "s3_bucket" {
   type = "string"
 }
+
+variable "dns_server_ip" {
+  type    = "string"
+  default = ""
+}

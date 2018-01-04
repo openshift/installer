@@ -90,3 +90,8 @@ variable "etcd_iam_role" {
   default     = ""
   description = "IAM role to use for the instance profiles of etcd nodes."
 }
+
+variable "dns_server_ip" {
+  type    = "string"
+  default = ""
+}

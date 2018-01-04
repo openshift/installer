@@ -2,7 +2,7 @@
 
 require 'json'
 
-PLATFORMS = %w[aws azure metal vmware gcp].freeze
+PLATFORMS = %w[govcloud aws azure metal vmware gcp].freeze
 
 # TFVarsFile represents a Terraform configuration file describing a Tectonic
 # cluster configuration

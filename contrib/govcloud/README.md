@@ -1,13 +1,13 @@
 # Internal Cluster
 
-This directory contains Terraform configuration that provisions a VPC with a VPN connection in AWS. This setup is designed to emulate a customer-like deployment in order to end-to-end test deploying Tectonic as a private "Internal Cluster" to an "Existing VPC.
+This directory contains Terraform configuration that provisions a VPC with a VPN connection and a PowerDNS server in AWS GovCloud. This setup is designed to emulate a customer-like deployment in order to end-to-end test deploying Tectonic as a private "Internal Cluster" to an "Existing VPC.
 
 This Terraform configuration provisions the following AWS resources by default:
 * 1 VPC with name configured by `TF_VAR_vpc_name`
 * 4 subnets in the VPC with count configured by `TF_VAR_subnet_count`
 * 1 public subnet containing an internet gateway and NAT gateway
 * 1 private Route 53 zone for `tectonic.dev.coreos.systems` configured by `TF_VAR_base_domain`
-* 1 t2.micro EC2 instance in the public subnet running [OpenVPN Access Server](https://aws.amazon.com/marketplace/pp/B00MI40CAE/ref=mkt_wir_openvpn_byol)
+* 1 t2.micro EC2 Container Linux instance in the public subnet running docker containers for OpenVPN, PowerDNS and Nginx for serving OpenVPN client configuration.
 * 1 VPN gateway and VPN connection
 
 ## Usage
@@ -53,15 +53,10 @@ Once the infrastructure is ready, Terraform will output an `ovpn_url` variable c
 3. Follow the instructions for the appropriate OS to setup a VPN connection using the configuration file.
 4. When establishing the VPN connection, use the same credentials used when connecting to the Access Server. If prompted, do not provide a private key password.
 
-### Manual DNS configuration
-
-Terraform does not support changing SOA TTLs in Route 53. As a result, in order to make use of the private zone immediately, the TTLs must be manually modified in the AWS console.
-
 ### Tectonic Installation
 
 Once all the infrastructure is provisioned and the VPN connection is available, a Tectonic cluster can be installed in the VPC. When running the Tectonic installer, be sure to:
 
-* Select the provisioned private DNS Zone using the GUI or by setting the `TF_VAR_tectonic_aws_external_private_zone` environment variable.
 * Install Tectonic in the provisioned VPC by selecting the "Existing VPC" option and selecting the appropriate VPC ID in the GUI or by setting the `TF_VAR_tectonic_aws_external_vpc_id` environment variable.
 
 
