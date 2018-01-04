@@ -111,8 +111,8 @@ module "tectonic" {
   container_base_images = "${var.tectonic_container_base_images}"
   versions              = "${var.tectonic_versions}"
 
-  license_path     = "${var.tectonic_vanilla_k8s ? "/dev/null" : pathexpand(var.tectonic_license_path)}"
-  pull_secret_path = "${var.tectonic_vanilla_k8s ? "/dev/null" : pathexpand(var.tectonic_pull_secret_path)}"
+  license_path     = "${pathexpand(var.tectonic_license_path)}"
+  pull_secret_path = "${pathexpand(var.tectonic_pull_secret_path)}"
 
   admin_email    = "${var.tectonic_admin_email}"
   admin_password = "${var.tectonic_admin_password}"
@@ -193,7 +193,6 @@ module "ignition_masters" {
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
   metadata_provider         = "openstack-metadata"
-  tectonic_vanilla_k8s      = "${var.tectonic_vanilla_k8s}"
 }
 
 module "master_nodes" {
@@ -217,7 +216,7 @@ EOF
   ign_kubelet_service_id               = "${module.ignition_masters.kubelet_service_id}"
   ign_locksmithd_service_id            = "${module.ignition_masters.locksmithd_service_id}"
   ign_max_user_watches_id              = "${module.ignition_masters.max_user_watches_id}"
-  ign_tectonic_path_unit_id            = "${var.tectonic_vanilla_k8s ? "" : module.tectonic.systemd_path_unit_id}"
+  ign_tectonic_path_unit_id            = "${module.tectonic.systemd_path_unit_id}"
   ign_tectonic_service_id              = "${module.tectonic.systemd_service_id}"
   ign_update_ca_certificates_dropin_id = "${module.ignition_masters.update_ca_certificates_dropin_id}"
   instance_count                       = "${var.tectonic_master_count}"
@@ -239,7 +238,6 @@ module "ignition_workers" {
   kubelet_debug_config    = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label      = "node-role.kubernetes.io/node"
   kubelet_node_taints     = ""
-  tectonic_vanilla_k8s    = "${var.tectonic_vanilla_k8s}"
 }
 
 module "worker_nodes" {
@@ -288,7 +286,6 @@ module "dns" {
   etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
   master_count              = "${var.tectonic_master_count}"
   master_ip_addresses       = "${flatten(openstack_networking_port_v2.master.*.all_fixed_ips)}"
-  tectonic_vanilla_k8s      = "${var.tectonic_vanilla_k8s}"
   worker_count              = "${var.tectonic_worker_count}"
   worker_ip_addresses       = "${flatten(openstack_networking_port_v2.worker.*.all_fixed_ips)}"
   worker_public_ips         = "${openstack_networking_floatingip_v2.worker.*.address}"
