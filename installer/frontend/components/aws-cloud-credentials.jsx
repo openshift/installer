@@ -103,7 +103,7 @@ const stateToProps = ({aws, clusterConfig, serverFacts}) => {
   // Calculate intersection of AWS regions: those w/coreos images & those the user has access to
   if (!aws.availableRegions.inFly && !_.isEmpty(aws.availableRegions.value) && !_.isEmpty(serverFacts.awsRegions)) {
     const intersection = _.intersection(aws.availableRegions.value, serverFacts.awsRegions);
-    // Format for use with <AsyncSelect/>
+    // Format for use with <Select />
     regionSelections.value = intersection.sort().map(value => {
       const optgroupKey = value.split('-')[0];
       return {
