@@ -160,7 +160,8 @@ class Cluster
         env['TF_LOG'] = 'TRACE' if idx.positive?
         env['TF_APPLY_OPTIONS'] = '-no-color'
         env['TF_INIT_OPTIONS'] = '-no-color'
-        return true if system(env, "make -C ../.. apply | tee ../../build/#{@name}/terraform-apply.log")
+        return true if system(env, "bash -co pipefail 'make -C ../.. apply |
+                                    tee ../../build/#{@name}/terraform-apply.log'")
       end
     end
   rescue Timeout::Error
@@ -175,7 +176,8 @@ class Cluster
         env['TF_LOG'] = 'TRACE' if idx.positive?
         env['TF_DESTROY_OPTIONS'] = '-no-color'
         env['TF_INIT_OPTIONS'] = '-no-color'
-        return true if system(env, "make -C ../.. destroy | tee ../../build/#{@name}/terraform-destroy.log")
+        return true if system(env, "bash -co pipefail 'make -C ../.. destroy |
+                                    tee ../../build/#{@name}/terraform-destroy.log'")
       end
     end
 
