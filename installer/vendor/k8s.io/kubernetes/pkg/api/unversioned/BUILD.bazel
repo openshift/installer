@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "deep_copy_generated.go",
+        "duration.go",
+        "generated.pb.go",
+        "group_version.go",
+        "helpers.go",
+        "meta.go",
+        "register.go",
+        "time.go",
+        "time_proto.go",
+        "types.go",
+        "types_swagger_doc_generated.go",
+        "well_known_labels.go",
+    ],
+    importpath = "k8s.io/kubernetes/pkg/api/unversioned",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/gogo/protobuf/proto:go_default_library",
+        "//installer/vendor/github.com/google/gofuzz:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/conversion:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/labels:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/util/sets:go_default_library",
+    ],
+)

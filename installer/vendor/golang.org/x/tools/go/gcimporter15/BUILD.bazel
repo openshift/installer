@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "bexport.go",
+        "bimport.go",
+        "exportdata.go",
+        "gcimporter.go",
+        "setname15.go",
+        "setname16.go",
+    ],
+    importpath = "golang.org/x/tools/go/gcimporter15",
+    visibility = ["//visibility:public"],
+)

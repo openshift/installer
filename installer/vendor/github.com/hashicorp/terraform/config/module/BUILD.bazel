@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "copy_dir.go",
+        "get.go",
+        "module.go",
+        "testing.go",
+        "tree.go",
+        "tree_gob.go",
+        "validate_provider_alias.go",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:darwin_amd64": [
+            "inode.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux_amd64": [
+            "inode.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows_amd64": [
+            "inode_windows.go",
+        ],
+        "//conditions:default": [],
+    }),
+    importpath = "github.com/hashicorp/terraform/config/module",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/hashicorp/go-getter:go_default_library",
+        "//installer/vendor/github.com/hashicorp/go-multierror:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/config:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/dag:go_default_library",
+    ],
+)

@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "codec.go",
+        "codec_check.go",
+        "conversion.go",
+        "deep_copy_generated.go",
+        "doc.go",
+        "embedded.go",
+        "error.go",
+        "extension.go",
+        "generated.pb.go",
+        "helper.go",
+        "interfaces.go",
+        "register.go",
+        "scheme.go",
+        "swagger_doc_generator.go",
+        "types.go",
+        "types_proto.go",
+        "unstructured.go",
+    ],
+    importpath = "k8s.io/kubernetes/pkg/runtime",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/gogo/protobuf/proto:go_default_library",
+        "//installer/vendor/github.com/golang/glog:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/api/meta/metatypes:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/api/unversioned:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/conversion:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/conversion/queryparams:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/types:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/util/errors:go_default_library",
+        "//installer/vendor/k8s.io/kubernetes/pkg/util/json:go_default_library",
+    ],
+)

@@ -43,6 +43,7 @@ resource "google_compute_instance_template" "master-it" {
   }
 
   service_account {
+    email  = "${google_service_account.master-node-sa.email}"
     scopes = ["cloud-platform"]
   }
 }
@@ -58,6 +59,6 @@ resource "google_compute_region_instance_group_manager" "master-igm" {
 
   named_port {
     name = "https"
-    port = 443
+    port = 6443
   }
 }

@@ -7,7 +7,7 @@ variable vpc_name {
 }
 
 variable base_domain {
-  default     = "tectonic.dev.coreos.systems"
+  default     = "tectonic-ci.de"
   description = "The base domain for this cluster's FQDN"
 }
 

@@ -7,6 +7,15 @@ EOF
   default = "1.0"
 }
 
+variable "tectonic_aws_profile" {
+  description = <<EOF
+(optional) This declares the AWS credentials profile to use.
+EOF
+
+  type    = "string"
+  default = "default"
+}
+
 variable "tectonic_aws_ssh_key" {
   type        = "string"
   description = "Name of an SSH key located within the AWS region. Example: coreos-user."
@@ -158,9 +167,15 @@ EOF
 }
 
 variable "tectonic_aws_extra_tags" {
-  type        = "map"
-  description = "(optional) Extra AWS tags to be applied to created resources."
-  default     = {}
+  type = "map"
+
+  description = <<EOF
+(optional) Extra AWS tags to be applied to created resources.
+
+Example: `{ "key" = "value", "foo" = "bar" }`
+EOF
+
+  default = {}
 }
 
 variable "tectonic_autoscaling_group_extra_tags" {
@@ -296,6 +311,20 @@ variable "tectonic_aws_worker_iam_role_name" {
 
   description = <<EOF
 (optional) Name of IAM role to use for the instance profiles of worker nodes.
+The name is also the last part of a role's ARN.
+
+Example:
+ * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
+ * Role Name = tectonic-installer
+EOF
+}
+
+variable "tectonic_aws_etcd_iam_role_name" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) Name of IAM role to use for the instance profiles of etcd nodes.
 The name is also the last part of a role's ARN.
 
 Example:

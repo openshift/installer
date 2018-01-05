@@ -1,3 +1,8 @@
+locals {
+  ami_owner = "595879546273"
+  arn       = "aws"
+}
+
 data "aws_ami" "coreos_ami" {
   filter {
     name   = "name"
@@ -16,7 +21,7 @@ data "aws_ami" "coreos_ami" {
 
   filter {
     name   = "owner-id"
-    values = ["595879546273"]
+    values = ["${local.ami_owner}"]
   }
 }
 
@@ -27,7 +32,7 @@ resource "aws_launch_configuration" "worker_conf" {
   key_name             = "${var.ssh_key}"
   security_groups      = ["${var.sg_ids}"]
   iam_instance_profile = "${aws_iam_instance_profile.worker_profile.arn}"
-  user_data            = "${data.ignition_config.main.rendered}"
+  user_data            = "${data.ignition_config.s3.rendered}"
 
   lifecycle {
     create_before_destroy = true
@@ -166,7 +171,7 @@ resource "aws_iam_role_policy" "worker_policy" {
       "Action" : [
         "s3:GetObject"
       ],
-      "Resource": "arn:aws:s3:::*",
+      "Resource": "arn:${local.arn}:s3:::*",
       "Effect": "Allow"
     },
     {

@@ -1,14 +1,8 @@
 #!/bin/sh
 set -e
 
-if [ "$#" -ne "3" ]; then
-    echo "Usage: $0 kubeconfig assets_path self_hosted_etcd"
-    exit 1
-fi
-
 KUBECONFIG="$1"
 ASSETS_PATH="$2"
-SELF_HOSTED_ETCD="$3"
 
 # Setup API Authentication
 KUBECTL="/kubectl --kubeconfig=$KUBECONFIG"
@@ -102,6 +96,20 @@ wait_for_pods() {
   set -e
 }
 
+asset_cleanup() {
+  echo "Cleaning up installation assets"
+
+  # shellcheck disable=SC2034
+  for d in "manifests" "auth" "bootstrap-manifests" "net-manifests" "tectonic" "tls"; do
+      rm -rf "$${ASSETS_PATH:?}/$${d:?}/"*
+  done
+
+  # shellcheck disable=SC2034
+  for f in "bootkube.sh" "tectonic.sh" "tectonic-wrapper.sh"; do
+      rm -f "$${ASSETS_PATH:?}/$${f:?}"
+  done
+}
+
 # chdir into the assets path directory
 cd "$ASSETS_PATH/tectonic"
 
@@ -172,8 +180,6 @@ echo "Creating Etcd Operator"
 kubectl create -f etcd/etcd-operator.yaml
 
 echo "Creating Heapster / Stats Emitter"
-kubectl create -f heapster/service.yaml
-kubectl create -f heapster/deployment.yaml
 kubectl create -f stats-emitter.yaml
 
 echo "Creating Operators"
@@ -190,22 +196,20 @@ kubectl create -f updater/operators/kube-version-operator.yaml
 kubectl create -f updater/operators/tectonic-channel-operator.yaml
 kubectl create -f updater/operators/tectonic-prometheus-operator.yaml
 kubectl create -f updater/operators/tectonic-cluo-operator.yaml
+kubectl create -f updater/operators/kubernetes-addon-operator.yaml
+kubectl create -f updater/operators/tectonic-alm-operator.yaml
 
 wait_for_crd tectonic-system appversions.tco.coreos.com
 kubectl create -f updater/app_versions/app-version-tectonic-cluster.yaml
 kubectl create -f updater/app_versions/app-version-kubernetes.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-monitoring.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-cluo.yaml
-
-if [ "$SELF_HOSTED_ETCD" = "true" ]; then
-  echo "Creating self hosted etcd resources"
-  kubectl apply -f updater/cluster-config.yaml
-  kubectl create -f updater/app_versions/app-version-tectonic-etcd.yaml
-  kubectl create -f updater/operators/tectonic-etcd-operator.yaml
-fi
+kubectl create -f updater/app_versions/app-version-kubernetes-addon.yaml
+kubectl create -f updater/app_versions/app-version-tectonic-alm.yaml
 
 # wait for Tectonic pods
 wait_for_pods tectonic-system
+asset_cleanup
 
 echo "Tectonic installation is done"
 exit 0

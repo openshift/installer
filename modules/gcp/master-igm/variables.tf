@@ -87,3 +87,16 @@ variable "public_ssh_key" {
 variable "kubeconfig_content" {
   type = "string"
 }
+
+variable "ign_gcs_puller_id" {
+  type = "string"
+}
+
+variable "ign_init_assets_service_id" {
+  type = "string"
+}
+
+variable "assets_gcs_location" {
+  type        = "string"
+  description = "Location on gcs of the Bootkube/Tectonic assets to use (bucket/key)"
+}

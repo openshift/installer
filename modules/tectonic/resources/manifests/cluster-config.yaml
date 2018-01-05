@@ -35,3 +35,8 @@ data:
       heapsterConfig:
       dnsConfig:
           clusterIP: ${kube_dns_service_ip}
+      cloudProvider: ${platform}
+  network-config: |
+      apiVersion: v1
+      kind: NetworkConfig
+      ${network_config}

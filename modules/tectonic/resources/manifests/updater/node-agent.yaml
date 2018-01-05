@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: DaemonSet
 metadata:
   name: node-agent
@@ -6,6 +6,9 @@ metadata:
   labels:
     k8s-app: node-agent
 spec:
+  selector:
+    matchLabels:
+      k8s-app: node-agent
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 1

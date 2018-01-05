@@ -32,7 +32,7 @@ resource "azurerm_network_security_rule" "api_ingress_https" {
   access                 = "Allow"
   protocol               = "TCP"
   source_port_range      = "*"
-  destination_port_range = "443"
+  destination_port_range = "6443"
 
   # TODO: Ternary on private implementation
   source_address_prefix       = "*"

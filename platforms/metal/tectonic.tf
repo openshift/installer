@@ -1,42 +1,3 @@
-module "kube_certs" {
-  source = "../../modules/tls/kube/self-signed"
-
-  ca_cert_pem        = "${var.tectonic_ca_cert}"
-  ca_key_alg         = "${var.tectonic_ca_key_alg}"
-  ca_key_pem         = "${var.tectonic_ca_key}"
-  kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:443"
-  service_cidr       = "${var.tectonic_service_cidr}"
-}
-
-module "etcd_certs" {
-  source = "../../modules/tls/etcd"
-
-  etcd_ca_cert_path     = "${var.tectonic_etcd_ca_cert_path}"
-  etcd_client_cert_path = "${var.tectonic_etcd_client_cert_path}"
-  etcd_client_key_path  = "${var.tectonic_etcd_client_key_path}"
-  self_signed           = "${var.tectonic_self_hosted_etcd != "" || var.tectonic_etcd_tls_enabled}"
-  service_cidr          = "${var.tectonic_service_cidr}"
-
-  etcd_cert_dns_names = "${var.tectonic_metal_controller_domains}"
-}
-
-module "ingress_certs" {
-  source = "../../modules/tls/ingress/self-signed"
-
-  base_address = "${var.tectonic_metal_ingress_domain}"
-  ca_cert_pem  = "${module.kube_certs.ca_cert_pem}"
-  ca_key_alg   = "${module.kube_certs.ca_key_alg}"
-  ca_key_pem   = "${module.kube_certs.ca_key_pem}"
-}
-
-module "identity_certs" {
-  source = "../../modules/tls/identity/self-signed"
-
-  ca_cert_pem = "${module.kube_certs.ca_cert_pem}"
-  ca_key_alg  = "${module.kube_certs.ca_key_alg}"
-  ca_key_pem  = "${module.kube_certs.ca_key_pem}"
-}
-
 module "bootkube" {
   source = "../../modules/bootkube"
 
@@ -45,7 +6,7 @@ module "bootkube" {
 
   cluster_name = "${var.tectonic_cluster_name}"
 
-  kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:443"
+  kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:6443"
   oidc_issuer_url    = "https://${var.tectonic_metal_ingress_domain}/identity"
 
   # platform-independent defaults
@@ -72,6 +33,7 @@ module "bootkube" {
   etcd_peer_key_pem    = "${module.etcd_certs.etcd_peer_key_pem}"
   etcd_server_cert_pem = "${module.etcd_certs.etcd_server_crt_pem}"
   etcd_server_key_pem  = "${module.etcd_certs.etcd_server_key_pem}"
+  etcd_tls_enabled     = "${var.tectonic_etcd_tls_enabled}"
   kube_ca_cert_pem     = "${module.kube_certs.ca_cert_pem}"
   kubelet_cert_pem     = "${module.kube_certs.kubelet_cert_pem}"
   kubelet_key_pem      = "${module.kube_certs.kubelet_key_pem}"
@@ -84,7 +46,6 @@ module "bootkube" {
 
   etcd_backup_size          = "${var.tectonic_etcd_backup_size}"
   etcd_backup_storage_class = "${var.tectonic_etcd_backup_storage_class}"
-  self_hosted_etcd          = "${var.tectonic_self_hosted_etcd}"
 
   master_count = "${length(var.tectonic_metal_controller_names)}"
 
@@ -98,7 +59,7 @@ module "tectonic" {
   cluster_name = "${var.tectonic_cluster_name}"
 
   base_address       = "${var.tectonic_metal_ingress_domain}"
-  kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:443"
+  kube_apiserver_url = "https://${var.tectonic_metal_controller_domain}:6443"
   service_cidr       = "${var.tectonic_service_cidr}"
 
   # Address of the Tectonic console (without protocol)
@@ -106,8 +67,8 @@ module "tectonic" {
   container_base_images = "${var.tectonic_container_base_images}"
   versions              = "${var.tectonic_versions}"
 
-  license_path     = "${var.tectonic_vanilla_k8s ? "/dev/null" : pathexpand(var.tectonic_license_path)}"
-  pull_secret_path = "${var.tectonic_vanilla_k8s ? "/dev/null" : pathexpand(var.tectonic_pull_secret_path)}"
+  license_path     = "${pathexpand(var.tectonic_license_path)}"
+  pull_secret_path = "${pathexpand(var.tectonic_pull_secret_path)}"
 
   admin_email    = "${var.tectonic_admin_email}"
   admin_password = "${var.tectonic_admin_password}"
@@ -131,15 +92,18 @@ module "tectonic" {
   console_client_id = "tectonic-console"
   kubectl_client_id = "tectonic-kubectl"
   ingress_kind      = "HostPort"
-  self_hosted_etcd  = "${var.tectonic_self_hosted_etcd}"
   master_count      = "${length(var.tectonic_metal_controller_names)}"
   stats_url         = "${var.tectonic_stats_url}"
 
   image_re = "${var.tectonic_image_re}"
+
+  tectonic_networking = "${var.tectonic_networking}"
+  calico_mtu          = "${var.tectonic_metal_calico_mtu}"
+  cluster_cidr        = "${var.tectonic_cluster_cidr}"
 }
 
 module "flannel_vxlan" {
-  source = "../../modules/net/flannel-vxlan"
+  source = "../../modules/net/flannel_vxlan"
 
   cluster_cidr     = "${var.tectonic_cluster_cidr}"
   enabled          = "${var.tectonic_networking == "flannel"}"

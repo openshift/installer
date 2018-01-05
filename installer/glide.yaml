@@ -29,6 +29,8 @@ import:
   version: fa29b1d70f0beaddd4c7021607cc3c3be8ce94b8
   subpackages:
   - flagutil
+- package: github.com/blang/semver
+  version: 4a1e882c79dcf4ec00d2e29fac74b9c8938d5052
 - package: github.com/coreos/go-semver
   version: 8ab6407b697782a06568d4b7f1db25550ec2e4c6
   subpackages:
@@ -69,7 +71,7 @@ import:
 - package: github.com/pborman/uuid
   version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
 - package: golang.org/x/net
-  version: e90d6d0afc4c315a0d87a568ae68577cc15149a0
+  version: a04bdaca5b32abe1c069418fb7088ae607de5bd0
   subpackages:
   - context
   - http2
@@ -78,6 +80,8 @@ import:
   - http2/hpack
 - package: golang.org/x/sys
   version: d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03
+- package: golang.org/x/text
+  version: c4d099d611ac3ded35360abf03581e13d91c828f
 - package: golang.org/x/tools
   version: 9e7459099f9afd6a15464d69d93c6eed49bb545d
   subpackages:
@@ -331,7 +335,7 @@ import:
   - parser
   - scanner
 - package: github.com/hashicorp/terraform
-  version: 85e0979c6af6a15345c9131e4478ba712bb3c21d
+  version: v0.11.1
   subpackages:
   - config
   - config/module
@@ -369,7 +373,7 @@ import:
   - ssh
   - ssh/terminal
 - package: github.com/hashicorp/go-getter
-  version: c3d66e76678dce180a7b452653472f949aedfbcd
+  version: a686900cb3753aa644dc4812be91ceaf9fdd3b98
   subpackages:
   - helper/url
 - package: github.com/hashicorp/go-plugin

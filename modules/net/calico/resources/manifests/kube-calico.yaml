@@ -103,11 +103,13 @@ subjects:
 - kind: ServiceAccount
   name: kube-calico
   namespace: kube-system
+
 ---
+
 # This manifest installs the calico/node container, as well
 # as the Calico CNI plugins and network config on
 # each master and worker node in a Kubernetes cluster.
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: DaemonSet
 metadata:
   name: kube-calico
@@ -170,7 +172,7 @@ spec:
               value: "${cluster_cidr}"
             # Enable IPIP
             - name: CALICO_IPV4POOL_IPIP
-              value: "always"
+              value: "Always"
             - name: FELIX_IPINIPENABLED
               value: "true"
             - name: FELIX_IPINIPMTU
@@ -233,6 +235,7 @@ spec:
               name: host-cni-bin
             - mountPath: /host/etc/cni/net.d
               name: cni-net-dir
+      terminationGracePeriodSeconds: 0
       volumes:
         # Used by calico/node.
         - name: lib-modules

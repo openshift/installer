@@ -83,10 +83,10 @@ const form = new Form('K8S_CIDRS_FORM', [
   new Field(SERVICE_CIDR, {default: DEFAULT_SERVICE_CIDR, validator}),
 ]);
 
-export const KubernetesCIDRs = () => <div className="row form-group">
+export const KubernetesCIDRs = ({autoFocus = true}) => <div id="k8sCIDRs" className="row form-group">
   <div className="col-xs-12">
     <h4>Kubernetes</h4>
-    <CIDRRow name="Pod Range" field={POD_CIDR} placeholder={DEFAULT_POD_CIDR} />
+    <CIDRRow autoFocus={autoFocus} name="Pod Range" field={POD_CIDR} placeholder={DEFAULT_POD_CIDR} />
     <CIDRRow name="Service Range" field={SERVICE_CIDR} placeholder={DEFAULT_SERVICE_CIDR} />
     <DockerBridgeWarning />
     <PodRangeWarning />

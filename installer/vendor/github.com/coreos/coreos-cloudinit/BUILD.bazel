@@ -1,0 +1,35 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["coreos-cloudinit.go"],
+    importpath = "github.com/coreos/coreos-cloudinit",
+    visibility = ["//visibility:private"],
+    deps = [
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/config:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/config/validate:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/datasource:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/datasource/configdrive:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/datasource/file:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/datasource/metadata/cloudsigma:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/datasource/metadata/digitalocean:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/datasource/metadata/ec2:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/datasource/metadata/gce:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/datasource/metadata/packet:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/datasource/proc_cmdline:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/datasource/url:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/datasource/vmware:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/datasource/waagent:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/initialize:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/network:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/pkg:go_default_library",
+        "//installer/vendor/github.com/coreos/coreos-cloudinit/system:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "coreos-cloudinit",
+    importpath = "github.com/coreos/coreos-cloudinit",
+    library = ":go_default_library",
+    visibility = ["//visibility:public"],
+)

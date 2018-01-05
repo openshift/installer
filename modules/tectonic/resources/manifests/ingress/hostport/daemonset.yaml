@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: DaemonSet
 metadata:
   name: tectonic-ingress-controller
@@ -12,6 +12,11 @@ spec:
     rollingUpdate:
       maxUnavailable: 1
     type: RollingUpdate
+  selector:
+    matchLabels:
+      k8s-app: tectonic-lb
+      component: ingress-controller
+      type: nginx
   template:
     metadata:
       labels:

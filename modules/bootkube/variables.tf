@@ -43,6 +43,10 @@ variable "container_images" {
   type        = "map"
 }
 
+variable "etcd_tls_enabled" {
+  default = true
+}
+
 variable "etcd_ca_cert_pem" {
   type        = "string"
   description = "The etcd CA certificate in PEM format."
@@ -81,11 +85,6 @@ variable "etcd_server_cert_pem" {
 variable "etcd_server_key_pem" {
   type        = "string"
   description = "The etcd server key in PEM format."
-}
-
-variable "self_hosted_etcd" {
-  default     = ""
-  description = "See tectonic_self_hosted_etcd in config.tf"
 }
 
 variable "kube_apiserver_url" {

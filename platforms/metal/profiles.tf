@@ -8,6 +8,7 @@ resource "matchbox_profile" "coreos_install" {
   ]
 
   args = [
+    "initrd=coreos_production_pxe_image.cpio.gz",
     "coreos.config.url=${var.tectonic_metal_matchbox_http_url}/ignition?uuid=$${uuid}&mac=$${mac:hexhyp}",
     "coreos.first_boot=yes",
     "console=tty0",

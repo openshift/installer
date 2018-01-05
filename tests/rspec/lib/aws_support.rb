@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
-require 'aws-sdk'
+require 'aws-sdk-autoscaling'
+require 'aws-sdk-ec2'
 require 'with_retries'
 
 # Shared support code for AWS-based operations

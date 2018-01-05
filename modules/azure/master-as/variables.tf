@@ -89,3 +89,7 @@ variable "ign_tectonic_service_id" {
 variable "ign_tectonic_path_unit_id" {
   type = "string"
 }
+
+variable "fault_domains" {
+  type = "string"
+}

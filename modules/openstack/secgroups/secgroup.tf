@@ -4,7 +4,7 @@ resource "openstack_networking_secgroup_v2" "base" {
 }
 
 module "default" {
-  source      = "rules/default"
+  source      = "./rules/default"
   secgroup_id = "${openstack_networking_secgroup_v2.base.id}"
 }
 
@@ -15,7 +15,7 @@ resource "openstack_networking_secgroup_v2" "k8s" {
 }
 
 module "k8s" {
-  source       = "rules/k8s"
+  source       = "./rules/k8s"
   secgroup_id  = "${openstack_networking_secgroup_v2.k8s.id}"
   cluster_cidr = "${var.cluster_cidr}"
 }
@@ -27,7 +27,7 @@ resource "openstack_networking_secgroup_v2" "k8s_nodes" {
 }
 
 module "k8s_nodes" {
-  source       = "rules/k8s_nodes"
+  source       = "./rules/k8s_nodes"
   secgroup_id  = "${openstack_networking_secgroup_v2.k8s_nodes.id}"
   cluster_cidr = "${var.cluster_cidr}"
 }
@@ -39,8 +39,7 @@ resource "openstack_networking_secgroup_v2" "etcd" {
 }
 
 module "etcd" {
-  source       = "rules/etcd"
+  source       = "./rules/etcd"
   secgroup_id  = "${openstack_networking_secgroup_v2.etcd.id}"
-  self_hosted  = "${var.self_hosted_etcd != ""}"
   cluster_cidr = "${var.cluster_cidr}"
 }

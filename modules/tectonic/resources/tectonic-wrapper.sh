@@ -7,4 +7,4 @@ set -e
     --network=host \
     --entrypoint=/bin/sh \
     ${hyperkube_image} \
-    /assets/tectonic.sh /assets/auth/kubeconfig /assets ${self_hosted_etcd}
+    /assets/tectonic.sh /assets/auth/kubeconfig /assets

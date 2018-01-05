@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "encrypt_decrypt.go",
+        "flag.go",
+        "keybase.go",
+        "test_keys.go",
+    ],
+    importpath = "github.com/hashicorp/vault/helper/pgpkeys",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/hashicorp/go-cleanhttp:go_default_library",
+        "//installer/vendor/github.com/hashicorp/vault/helper/jsonutil:go_default_library",
+        "//installer/vendor/github.com/keybase/go-crypto/openpgp:go_default_library",
+        "//installer/vendor/github.com/keybase/go-crypto/openpgp/packet:go_default_library",
+    ],
+)

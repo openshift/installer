@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   name: kube-controller-manager
@@ -23,7 +23,6 @@ spec:
         tier: control-plane
         k8s-app: kube-controller-manager
         pod-anti-affinity: kube-controller-manager-${kubernetes_version}
-        tectonic-operators.coreos.com/managed-by: kube-version-operator
     spec:
       affinity:
         podAntiAffinity:

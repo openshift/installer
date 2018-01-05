@@ -121,13 +121,13 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
 
     updateStatus ({tectonic, terraform}) {
       if (terraform.action === 'apply') {
-        const services = (tectonic.isEtcdSelfHosted ? [{key: 'etcd', name: 'Etcd'}] : []).concat([
+        const services = [
           {key: 'kubernetes', name: 'Kubernetes'},
           {key: 'identity', name: 'Tectonic Identity'},
           {key: 'ingress', name: 'Tectonic Ingress Controller'},
           {key: 'console', name: 'Tectonic Console'},
           {key: 'tectonicSystem', name: 'other Tectonic services'},
-        ]);
+        ];
         this.setState({services});
 
         const tectonicSucceeded = services.filter(s => _.get(tectonic[s.key], 'success')).length;
@@ -265,7 +265,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
         );
       }
 
-      const tfTitle = `${isApply ? 'Applying' : 'Destroying'} Terraform`;
+      const tfTitle = `Terraform ${_.startCase(action)}`;
 
       return <div>
         {!isBareMetal &&
@@ -331,7 +331,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                 </div>
               }
               {state.xhrError && <Alert severity="error">{state.xhrError}</Alert>}
-              {commitPhase === commitPhases.FAILED && <Alert severity="error">{commitState.response}</Alert>}
+              {commitPhase === commitPhases.FAILED && <Alert severity="error">{commitState.response ? commitState.response.toString() : ''}</Alert>}
               {tfError && <Alert severity="error">{tfError.toString()}</Alert>}
               {tfError && !isTFRunning &&
                 <Alert severity="error" noIcon>
@@ -376,9 +376,14 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
             <div className="col-xs-12">
               <a href="/terraform/assets" download>
                 <button className={classNames('btn btn-primary wiz-giant-button')}>
-                  <i className="fa fa-download"></i>&nbsp;&nbsp;Download assets
+                  <i className="fa fa-download"></i>&nbsp;&nbsp;Download Assets
                 </button>
               </a>
+            </div>
+            <div className="col-xs-12">
+              <div className="wiz-pending-fg">
+                <p>The assets contain TLS certificates used by Kubelets and manifests for all Tectonic components.</p>
+              </div>
             </div>
           </div>
         }

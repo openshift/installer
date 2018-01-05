@@ -12,7 +12,7 @@ export const compose = (...validators) => {
 };
 
 export const validate = {
-  nonEmpty: function (s) {
+  nonEmpty: (s) => {
     if (s && ('' + s).trim().length > 0) {
       return;
     }
@@ -127,6 +127,14 @@ export const validate = {
     return 'Invalid format. You must provide a domain name or IP address.';
   },
 
+  url: (s) => {
+    const matched = (s || '').match(/^https?:\/\/(.*)$/);
+    if (matched && matched[1]) {
+      return validate.host(matched[1]);
+    }
+    return 'Invalid format. Please include "http://" or "https://".';
+  },
+
   port: (s = '') => {
     const errMsg = 'Invalid port value. You must provide a valid port number.';
     if (!s.match(/^[0-9]+$/)) {
@@ -199,11 +207,11 @@ export const validate = {
       }
 
       if (min !== undefined && value < min) {
-        return `Invalid value. Provide a value greater than ${min - 1}.`;
+        return `Invalid value. Cannot be less than ${min}.`;
       }
 
       if (max !== undefined && value > max) {
-        return `Invalid value. Provide a value less than ${max + 1}.`;
+        return `Invalid value. Cannot be greater than ${max}.`;
       }
 
       return;

@@ -1,3 +1,8 @@
+locals {
+  ami_owner = "595879546273"
+  arn       = "aws"
+}
+
 data "aws_ami" "coreos_ami" {
   filter {
     name   = "name"
@@ -16,7 +21,7 @@ data "aws_ami" "coreos_ami" {
 
   filter {
     name   = "owner-id"
-    values = ["595879546273"]
+    values = ["${local.ami_owner}"]
   }
 }
 
@@ -62,7 +67,7 @@ resource "aws_launch_configuration" "master_conf" {
   security_groups             = ["${var.master_sg_ids}"]
   iam_instance_profile        = "${aws_iam_instance_profile.master_profile.arn}"
   associate_public_ip_address = "${var.public_endpoints}"
-  user_data                   = "${data.ignition_config.main.rendered}"
+  user_data                   = "${data.ignition_config.s3.rendered}"
 
   lifecycle {
     create_before_destroy = true
@@ -152,9 +157,10 @@ resource "aws_iam_role_policy" "master_policy" {
       "Action" : [
         "s3:GetObject",
         "s3:HeadObject",
-        "s3:ListBucket"
+        "s3:ListBucket",
+        "s3:PutObject"
       ],
-      "Resource": "arn:aws:s3:::*",
+      "Resource": "arn:${local.arn}:s3:::*",
       "Effect": "Allow"
     },
     {

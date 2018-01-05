@@ -98,84 +98,46 @@ export const ETCD_OPTIONS = { EXTERNAL, PROVISIONED };
 // String that would be an invalid IAM role name
 export const IAM_ROLE_CREATE_OPTION = '%create%';
 
-export const toVPCSubnet = (region, subnets, deselected) => {
-  const vpcSubnets = {};
+export const selectedSubnets = (cc, subnets) => {
+  const awsSubnets = {};
   _.each(subnets, (v, availabilityZone) => {
-    if (!availabilityZone.startsWith(region) || deselected && deselected[availabilityZone]) {
-      return;
+    if (v && availabilityZone.startsWith(cc[AWS_REGION]) && !_.get(cc, [DESELECTED_FIELDS, AWS_SUBNETS, availabilityZone])) {
+      awsSubnets[availabilityZone] = v;
     }
-    if (!v) {
-      return;
-    }
-    vpcSubnets[availabilityZone] = v;
   });
-  return vpcSubnets;
+  return awsSubnets;
 };
 
-export const toVPCSubnetID = (region, subnets, deselected) => {
-  const vpcSubnets = [];
-  _.each(subnets, (v, availabilityZone) => {
-    if (!availabilityZone.startsWith(region) || deselected && deselected[availabilityZone]) {
-      return;
-    }
-    if (!v) {
-      return;
-    }
-    vpcSubnets.push(v);
-  });
-  return vpcSubnets;
-};
-
-const getZoneDomain = (cc) => {
-  if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
-    throw new Error("Can't get base domain for bare metal!");
-  }
-  return _.get(cc, ['extra', AWS_HOSTED_ZONE_ID, 'zoneToName', cc[AWS_HOSTED_ZONE_ID]]);
-};
+export const getAwsZoneDomain = cc => _.get(cc, ['extra', AWS_HOSTED_ZONE_ID, 'zoneToName', cc[AWS_HOSTED_ZONE_ID]]);
 
 const getControllerDomain = (cc) => {
   if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     return cc[CONTROLLER_DOMAIN];
   }
-  return `${cc[CLUSTER_SUBDOMAIN]}-k8s.${getZoneDomain(cc)}`;
+  return `${cc[CLUSTER_SUBDOMAIN]}-k8s.${getAwsZoneDomain(cc)}`;
 };
 
 export const getTectonicDomain = (cc) => {
   if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     return cc[BM_TECTONIC_DOMAIN];
   }
-  return cc[CLUSTER_SUBDOMAIN] + (cc[CLUSTER_SUBDOMAIN].endsWith('.') ? '' : '.') + getZoneDomain(cc);
+  return cc[CLUSTER_SUBDOMAIN] + (cc[CLUSTER_SUBDOMAIN].endsWith('.') ? '' : '.') + getAwsZoneDomain(cc);
 };
 
 export const DEFAULT_CLUSTER_CONFIG = {
   error: {}, // to store validation errors
-  error_async: {}, // to store async validation errors
-  ignore: {}, // to store validation errors
   inFly: {}, // to store inFly
   extra: {}, // extraneous, non-value data for this field
-  [DESELECTED_FIELDS]: {},
   [BM_MATCHBOX_HTTP]: '',
   [BM_OS_TO_USE]: '',
   [DRY_RUN]: false,
   [RETRY]: false, // whether we're retrying a terraform apply
 };
 
-export const toAWS_TF = (cc, FORMS) => {
+export const toAWS_TF = ({clusterConfig: cc, dirty}, FORMS) => {
   const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
   const etcds = FORMS[AWS_ETCDS].getData(cc);
   const workers = FORMS[AWS_WORKERS].getData(cc);
-
-  const region = cc[AWS_REGION];
-  let controllerSubnets;
-  let workerSubnets;
-
-  if (cc[AWS_CREATE_VPC] === VPC_CREATE) {
-    controllerSubnets = toVPCSubnet(region, cc[AWS_CONTROLLER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
-    workerSubnets = toVPCSubnet(region, cc[AWS_WORKER_SUBNETS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
-  } else {
-    controllerSubnets = toVPCSubnetID(region, cc[AWS_CONTROLLER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
-    workerSubnets = toVPCSubnetID(region, cc[AWS_WORKER_SUBNET_IDS], cc[DESELECTED_FIELDS][AWS_SUBNETS]);
-  }
 
   const extraTags = {};
   _.each(cc[AWS_TAGS], ({key, value}) => {
@@ -207,11 +169,11 @@ export const toAWS_TF = (cc, FORMS) => {
       tectonic_aws_master_root_volume_type: controllers[STORAGE_TYPE],
       tectonic_aws_worker_ec2_type: workers[INSTANCE_TYPE],
       tectonic_aws_worker_iam_role_name: workers[IAM_ROLE] === IAM_ROLE_CREATE_OPTION ? undefined : workers[IAM_ROLE],
-      tectonic_aws_worker_root_volume_iops: workers[STORAGE_TYPE] === 'io1' ? controllers[STORAGE_IOPS] : undefined,
+      tectonic_aws_worker_root_volume_iops: workers[STORAGE_TYPE] === 'io1' ? workers[STORAGE_IOPS] : undefined,
       tectonic_aws_worker_root_volume_size: workers[STORAGE_SIZE_IN_GIB],
       tectonic_aws_worker_root_volume_type: workers[STORAGE_TYPE],
       tectonic_aws_ssh_key: cc[AWS_SSH],
-      tectonic_base_domain: getZoneDomain(cc),
+      tectonic_base_domain: getAwsZoneDomain(cc),
       tectonic_cluster_cidr: cc[POD_CIDR],
       tectonic_cluster_name: cc[CLUSTER_NAME],
       tectonic_master_count: controllers[NUMBER_OF_INSTANCES],
@@ -223,7 +185,8 @@ export const toAWS_TF = (cc, FORMS) => {
   };
 
   if (cc[ETCD_OPTION] === EXTERNAL) {
-    ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT]];
+    ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT].replace(/^https?:\/\//, '')];
+    ret.variables.tectonic_etcd_tls_enabled = cc[EXTERNAL_ETCD_CLIENT].startsWith('https:');
   } else if (cc[ETCD_OPTION] === PROVISIONED) {
     ret.variables.tectonic_aws_etcd_ec2_type = etcds[INSTANCE_TYPE];
     ret.variables.tectonic_aws_etcd_root_volume_iops = etcds[STORAGE_TYPE] === 'io1' ? etcds[STORAGE_IOPS] : undefined;
@@ -239,14 +202,19 @@ export const toAWS_TF = (cc, FORMS) => {
   if (cc[STS_ENABLED]) {
     ret.credentials.AWSSessionToken = cc[AWS_SESSION_TOKEN];
   }
+
   if (cc[AWS_CREATE_VPC] === VPC_CREATE) {
     ret.variables.tectonic_aws_vpc_cidr_block = cc[AWS_VPC_CIDR];
-    ret.variables.tectonic_aws_master_custom_subnets = controllerSubnets;
-    ret.variables.tectonic_aws_worker_custom_subnets = workerSubnets;
+
+    // If the subnets have not been edited, omit these variables so that sensible default subnets will be created
+    if (dirty[AWS_CONTROLLER_SUBNETS] || dirty[AWS_WORKER_SUBNETS]) {
+      ret.variables.tectonic_aws_master_custom_subnets = selectedSubnets(cc, cc[AWS_CONTROLLER_SUBNETS]);
+      ret.variables.tectonic_aws_worker_custom_subnets = selectedSubnets(cc, cc[AWS_WORKER_SUBNETS]);
+    }
   } else {
     ret.variables.tectonic_aws_external_vpc_id = cc[AWS_VPC_ID];
-    ret.variables.tectonic_aws_external_master_subnet_ids = controllerSubnets;
-    ret.variables.tectonic_aws_external_worker_subnet_ids = workerSubnets;
+    ret.variables.tectonic_aws_external_master_subnet_ids = _.values(selectedSubnets(cc, cc[AWS_CONTROLLER_SUBNET_IDS]));
+    ret.variables.tectonic_aws_external_worker_subnet_ids = _.values(selectedSubnets(cc, cc[AWS_WORKER_SUBNET_IDS]));
     ret.variables.tectonic_aws_public_endpoints = cc[AWS_CREATE_VPC] !== VPC_PRIVATE;
   }
 
@@ -262,7 +230,7 @@ export const toAWS_TF = (cc, FORMS) => {
   return ret;
 };
 
-export const toBaremetal_TF = (cc, FORMS) => {
+export const toBaremetal_TF = ({clusterConfig: cc}, FORMS) => {
   const sshKey = FORMS[BM_SSH_KEY].getData(cc);
   const masters = cc[BM_MASTERS];
   const workers = cc[BM_WORKERS];
@@ -296,13 +264,13 @@ export const toBaremetal_TF = (cc, FORMS) => {
       tectonic_ssh_authorized_key: sshKey[SSH_AUTHORIZED_KEY],
       tectonic_cluster_cidr: cc[POD_CIDR],
       tectonic_service_cidr: cc[SERVICE_CIDR],
-      tectonic_dns_name: cc[CLUSTER_SUBDOMAIN],
       tectonic_base_domain: 'unused',
     },
   };
 
   if (cc[ETCD_OPTION] === EXTERNAL) {
-    ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT]];
+    ret.variables.tectonic_etcd_servers = [cc[EXTERNAL_ETCD_CLIENT].replace(/^https?:\/\//, '')];
+    ret.variables.tectonic_etcd_tls_enabled = cc[EXTERNAL_ETCD_CLIENT].startsWith('https:');
   }
 
   if (cc[CA_TYPE] === CA_TYPES.OWNED) {

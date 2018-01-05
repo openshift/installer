@@ -126,9 +126,9 @@ export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
               </div>
               <div className="col-xs-9">
                 <Input id={BM_MATCHBOX_HTTP}
-                  className="wiz-inline-field wiz-inline-field--protocol"
-                  autoFocus="true"
-                  prefix={<span className="input__prefix--protocol">http://</span>}
+                  className="wiz-inline-field wiz-inline-field--prefix"
+                  autoFocus={true}
+                  prefix={<span className="input__prefix">http://</span>}
                   placeholder="matchbox.example.com:8080"
                   forceDirty={!!osError}
                   invalid={osError || httpError}
@@ -149,8 +149,8 @@ export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
                 <Connect field={BM_MATCHBOX_RPC}>
                   <Input
                     id={BM_MATCHBOX_RPC}
-                    className="wiz-inline-field wiz-inline-field--protocol"
-                    prefix={<span className="input__prefix--protocol">https://</span>}
+                    className="wiz-inline-field wiz-inline-field--prefix"
+                    prefix={<span className="input__prefix">https://</span>}
                     placeholder="matchbox.example.com:8081" />
                 </Connect>
                 <p className="text-muted">Hostname and port of matchbox API endpoint</p>

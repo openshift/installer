@@ -38,14 +38,17 @@ systemd:
     - name: bootkube.service
       enable: false
       contents: {{.ign_bootkube_service_json}}
-{{ if eq .exclude_tectonic "0" }}
+    - name: update-ca-certificates.service
+      enable: true
+      dropins:
+        - name: 10-alwaysrun.conf
+          contents: {{.ign_update_ca_certificates_dropin_json}}
     - name: tectonic.path
       enable: true
       contents: {{.ign_tectonic_path_unit_json}}
     - name: tectonic.service
       enable: false
       contents: {{.ign_tectonic_service_json}}
-{{end}}
 storage:
   files:
     - path: /etc/hostname
@@ -64,6 +67,16 @@ storage:
       mode: 0644
       contents:
         inline: {{.ign_installer_kubelet_env_json}}
+    - path: /etc/kubernetes/installer/runtime-mappings.yaml
+      filesystem: root
+      mode: 0644
+      contents:
+        inline: {{.ign_installer_runtime_mappings_json}}
+    - path: /etc/ssl/certs/custom_ca_certs.pem
+      filesystem: root
+      mode: 0400
+      contents:
+        inline: {{.ign_custom_ca_certs_json}}
 passwd:
   users:
     - name: core

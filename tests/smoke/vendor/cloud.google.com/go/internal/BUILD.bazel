@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["retry.go"],
+    importpath = "cloud.google.com/go/internal",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//tests/smoke/vendor/github.com/googleapis/gax-go:go_default_library",
+        "//tests/smoke/vendor/golang.org/x/net/context:go_default_library",
+    ],
+)

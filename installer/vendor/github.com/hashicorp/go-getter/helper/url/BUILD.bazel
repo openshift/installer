@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "url.go",
+        "url_unix.go",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:windows_amd64": [
+            "url_windows.go",
+        ],
+        "//conditions:default": [],
+    }),
+    importpath = "github.com/hashicorp/go-getter/helper/url",
+    visibility = ["//visibility:public"],
+)

@@ -6,23 +6,11 @@ resource "template_dir" "bootkube" {
   vars {
     hyperkube_image        = "${var.container_images["hyperkube"]}"
     pod_checkpointer_image = "${var.container_images["pod_checkpointer"]}"
-    kubedns_image          = "${var.container_images["kubedns"]}"
-    kubednsmasq_image      = "${var.container_images["kubednsmasq"]}"
-    kubedns_sidecar_image  = "${var.container_images["kubedns_sidecar"]}"
 
-    # Choose the etcd endpoints to use.
-    # 1. If self-hosted etcd is enabled, then use
-    # var.etcd_service_ip.
-    # 2. Else if no etcd TLS certificates are provided, i.e. we bootstrap etcd
-    # nodes ourselves (using http), then use insecure http var.etcd_endpoints.
-    # 3. Else (if etcd TLS certific are provided), then use the secure https
-    # var.etcd_endpoints.
     etcd_servers = "${
-      var.self_hosted_etcd != ""
-        ? format("https://%s:2379", cidrhost(var.service_cidr, 15))
-        : var.etcd_ca_cert_pem == ""
-          ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
-          : join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+      var.etcd_tls_enabled
+          ? join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+          : join(",", formatlist("http://%s:2379", var.etcd_endpoints))
       }"
 
     etcd_service_ip           = "${cidrhost(var.service_cidr, 15)}"
@@ -78,19 +66,10 @@ resource "template_dir" "bootkube_bootstrap" {
     hyperkube_image = "${var.container_images["hyperkube"]}"
     etcd_image      = "${var.container_images["etcd"]}"
 
-    # Choose the etcd endpoints to use.
-    # 1. If self-hosted etcd mode is enabled, then use
-    # var.etcd_service_ip.
-    # 2. Else if no etcd TLS certificates are provided, i.e. we bootstrap etcd
-    # nodes ourselves (using http), then use insecure http var.etcd_endpoints.
-    # 3. Else (if etcd TLS certific are provided), then use the secure https
-    # var.etcd_endpoints.
     etcd_servers = "${
-      var.self_hosted_etcd != ""
-        ? format("https://%s:2379,https://127.0.0.1:12379", cidrhost(var.service_cidr, 15))
-        : var.etcd_ca_cert_pem == ""
-          ? join(",", formatlist("http://%s:2379", var.etcd_endpoints))
-          : join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+      var.etcd_tls_enabled
+          ? join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+          : join(",", formatlist("http://%s:2379", var.etcd_endpoints))
       }"
 
     etcd_ca_flag   = "${var.etcd_ca_cert_pem != "" ? "- --etcd-cafile=/etc/kubernetes/secrets/etcd-client-ca.crt" : "# no etcd-client-ca.crt given" }"
@@ -146,7 +125,7 @@ data "template_file" "bootkube_service" {
 
 data "ignition_systemd_unit" "bootkube_service" {
   name    = "bootkube.service"
-  enable  = false
+  enabled = false
   content = "${data.template_file.bootkube_service.rendered}"
 }
 
@@ -157,6 +136,6 @@ data "template_file" "bootkube_path_unit" {
 
 data "ignition_systemd_unit" "bootkube_path_unit" {
   name    = "bootkube.path"
-  enable  = true
+  enabled = true
   content = "${data.template_file.bootkube_path_unit.rendered}"
 }

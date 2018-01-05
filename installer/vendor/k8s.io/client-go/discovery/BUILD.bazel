@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "discovery_client.go",
+        "helper.go",
+        "restmapper.go",
+        "unstructured.go",
+    ],
+    importpath = "k8s.io/client-go/discovery",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/emicklei/go-restful/swagger:go_default_library",
+        "//installer/vendor/github.com/golang/glog:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/api:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/api/errors:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/api/meta:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/api/unversioned:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/api/v1:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/runtime:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/runtime/serializer:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/util/sets:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/version:go_default_library",
+        "//installer/vendor/k8s.io/client-go/plugin/pkg/client/auth:go_default_library",
+        "//installer/vendor/k8s.io/client-go/rest:go_default_library",
+    ],
+)

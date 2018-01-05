@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   labels:
@@ -6,6 +6,9 @@ metadata:
   name: etcd-operator
   namespace: tectonic-system
 spec:
+  selector:
+    matchLabels:
+      k8s-app: etcd-operator
   strategy:
     type: RollingUpdate
     rollingUpdate:

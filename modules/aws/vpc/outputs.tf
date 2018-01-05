@@ -13,7 +13,7 @@ output "worker_subnet_ids" {
 }
 
 output "etcd_sg_id" {
-  value = "${aws_security_group.etcd.id}"
+  value = "${element(concat(aws_security_group.etcd.*.id, list("")), 0)}"
 }
 
 output "master_sg_id" {
@@ -49,19 +49,19 @@ output "aws_lbs" {
 }
 
 output "aws_api_external_dns_name" {
-  value = "${aws_elb.api_external.dns_name}"
+  value = "${element(concat(aws_elb.api_external.*.dns_name, list("")), 0)}"
 }
 
 output "aws_elb_api_external_zone_id" {
-  value = "${aws_elb.api_external.zone_id}"
+  value = "${element(concat(aws_elb.api_external.*.zone_id, list("")), 0)}"
 }
 
 output "aws_api_internal_dns_name" {
-  value = "${aws_elb.api_internal.dns_name}"
+  value = "${element(concat(aws_elb.api_internal.*.dns_name, list("")), 0)}"
 }
 
 output "aws_elb_api_internal_zone_id" {
-  value = "${aws_elb.api_internal.zone_id}"
+  value = "${element(concat(aws_elb.api_internal.*.zone_id, list("")), 0)}"
 }
 
 output "aws_console_dns_name" {

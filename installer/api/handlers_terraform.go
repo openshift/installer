@@ -91,7 +91,7 @@ func terraformApplyHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 		id, _, err = ex.Execute("plan", "-no-color", tfMainDir)
 		action = "show"
 	} else {
-		id, _, err = ex.Execute("apply", "-input=false", "-no-color", tfMainDir)
+		id, _, err = ex.Execute("apply", "-input=false", "-no-color", "-auto-approve", tfMainDir)
 		action = "apply"
 	}
 	if err != nil {

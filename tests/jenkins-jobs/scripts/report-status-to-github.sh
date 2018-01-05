@@ -2,7 +2,8 @@
 
 STATUS="$1"
 CONTEXT=${2/spec/smoke-tests}
-COMMIT=$(git log -n 1 --no-merges --pretty=format:'%H')
+CONTEXT=${CONTEXT/_spec.rb/}
+COMMIT="$3"
 
 curl -f \
      -H 'Content-Type: application/json' \

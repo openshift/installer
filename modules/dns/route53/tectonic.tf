@@ -33,7 +33,7 @@ resource "aws_route53_record" "tectonic_api" {
   name    = "${var.cluster_name}-k8s"
   type    = "A"
   ttl     = "60"
-  records = ["${var.api_ips}"]
+  records = ["${var.api_ip_addresses}"]
 }
 
 resource "aws_route53_record" "tectonic_api_external" {
@@ -63,12 +63,12 @@ resource "aws_route53_record" "tectonic_api_internal" {
 }
 
 resource "aws_route53_record" "tectonic-console" {
-  count   = "${var.tectonic_vanilla_k8s ? 0 : var.elb_alias_enabled ? 0 : 1}"
+  count   = "${var.elb_alias_enabled ? 0 : 1}"
   zone_id = "${local.public_zone_id}"
   name    = "${var.cluster_name}"
   type    = "A"
   ttl     = "60"
-  records = ["${var.worker_ips}"]
+  records = ["${var.worker_ip_addresses}"]
 }
 
 resource "aws_route53_record" "tectonic_ingress_public" {

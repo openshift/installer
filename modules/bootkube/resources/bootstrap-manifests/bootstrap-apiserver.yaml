@@ -12,7 +12,7 @@ spec:
     - /var/lock/api-server.lock
     - /hyperkube
     - apiserver
-    - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,DefaultStorageClass,ResourceQuota
+    - --admission-control=NamespaceLifecycle,LimitRanger,ServiceAccount,PersistentVolumeLabel,DefaultStorageClass,ResourceQuota,DefaultTolerationSeconds
     - --allow-privileged=true
     - --authorization-mode=RBAC
     - --bind-address=0.0.0.0
@@ -28,7 +28,8 @@ spec:
     - --advertise-address=${advertise_address}
     - --kubelet-client-certificate=/etc/kubernetes/secrets/apiserver.crt
     - --kubelet-client-key=/etc/kubernetes/secrets/apiserver.key
-    - --secure-port=443
+    - --runtime-config=""
+    - --secure-port=6443
     - --service-account-key-file=/etc/kubernetes/secrets/service-account.pub
     - --service-cluster-ip-range=${service_cidr}
     - --storage-backend=etcd3

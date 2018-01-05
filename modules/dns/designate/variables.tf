@@ -14,11 +14,6 @@ variable "base_domain" {
   type        = "string"
 }
 
-variable "admin_email" {
-  description = "The admin email for the DNS zone"
-  type        = "string"
-}
-
 variable "master_count" {
   description = "The number of masters"
   type        = "string"
@@ -34,17 +29,17 @@ variable "etcd_count" {
   type        = "string"
 }
 
-variable "etcd_ips" {
+variable "etcd_ip_addresses" {
   description = "List of string IPs for etcd nodes"
   type        = "list"
 }
 
-variable "master_ips" {
+variable "master_ip_addresses" {
   description = "List of string IPs for masters"
   type        = "list"
 }
 
-variable "worker_ips" {
+variable "worker_ip_addresses" {
   description = "List of string IPs for workers"
   type        = "list"
 }
@@ -61,20 +56,7 @@ variable "worker_public_ips_enabled" {
   default     = true
 }
 
-variable "api_ips" {
+variable "api_ip_addresses" {
   description = "List of string IPs for k8s API"
   type        = "list"
-}
-
-variable "self_hosted_etcd" {
-  default     = ""
-  description = "See tectonic_self_hosted_etcd in config.tf"
-}
-
-variable "tectonic_vanilla_k8s" {
-  default = false
-
-  description = <<EOF
-If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
-EOF
 }

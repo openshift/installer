@@ -56,14 +56,14 @@ class AzureVpn
   end
 
   def create_resources
+    commands = ['terraform init', 'terraform apply -auto-approve']
+
     Dir.chdir(@build_dir) do
-      MAX_RETRIES.times do |count|
-        raise 'Private vnet: init failed too many times' unless MAX_RETRIES > count
-        break if system(env_config, 'terraform init')
-      end
-      MAX_RETRIES.times do |count|
-        raise 'Private vnet: apply failed too many times' unless MAX_RETRIES > count
-        break if system(env_config, 'terraform apply')
+      commands.each do |command|
+        MAX_RETRIES.times do |count|
+          break if system(env_config, command)
+          raise "Private vnet: #{command} failed #{MAX_RETRIES} times" if MAX_RETRIES == count + 1
+        end
       end
     end
   end
@@ -81,10 +81,10 @@ class AzureVpn
   end
 
   def wait_for_vpn_access_server
-    90.times do
+    180.times do
       puts 'Waiting for VPN access server to boot...'
       return if system("curl -ksL https://#{@vpn_gw_endpoint}:443/ >/dev/null")
-      sleep(0.5)
+      sleep(1)
     end
     raise 'waiting for vpn access server timed out'
   end
@@ -149,7 +149,7 @@ class AzureVpn
       resolv_lines.insert(last_ns + 2, 'nameserver 8.8.4.4')
       File.write('/etc/resolv.conf', resolv_lines.join("\n"))
     end
-  rescue Net::SSH::ConnectionTimeout
+  rescue Net::SSH::ConnectionTimeout => ex
     puts "Retrying to SSH into #{@vpn_gw_private_ip}..."
     sleep TIMEOUT_RETRY_DELAY
     retries ||= TIMEOUT_RETRIES

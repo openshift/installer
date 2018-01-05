@@ -17,8 +17,6 @@ import {
 import { BARE_METAL_TF } from './platforms';
 import { TectonicGA } from './tectonic-ga';
 
-const { batchSetIn } = configActions;
-
 const createAction = (name, fn, shouldReject = false) => (body, creds, isNow) => (dispatch, getState) => {
   const { clusterConfig } = getState();
 
@@ -58,7 +56,7 @@ const createAction = (name, fn, shouldReject = false) => (body, creds, isNow) =>
         payload: {
           [name]: {
             inFly: false,
-            value: value,
+            value,
             error: null,
           },
         },
@@ -79,7 +77,7 @@ const createAction = (name, fn, shouldReject = false) => (body, creds, isNow) =>
           [name]: {
             inFly: false,
             value: [],
-            error: error,
+            error,
           },
         },
       });
@@ -100,11 +98,25 @@ export const getVpcs = createAction('availableVpcs', awsApis.getVpcs);
 export const getVpcSubnets = createAction('availableVpcSubnets', awsApis.getVpcSubnets);
 export const getSsh = createAction('availableSsh', awsApis.getSsh, true);
 export const getIamRoles = createAction('availableIamRoles', awsApis.getIamRoles);
-export const getRegions = createAction('availableRegions', awsApis.getRegions, true);
 export const getZones = createAction('availableR53Zones', awsApis.getZones, true);
 export const getDomainInfo = createAction('domainInfo', awsApis.getDomainInfo);
 export const validateSubnets = createAction('validateSubnets', awsApis.validateSubnets);
 export const TFDestroy = createAction('destroy', awsApis.TFDestroy, true);
+
+const getRegions_ = createAction('availableRegions', awsApis.getRegions, true);
+
+export const getRegions = () => (dispatch, getState) => {
+  const cc = getState().clusterConfig;
+  const creds = {
+    AccessKeyID: cc[AWS_ACCESS_KEY_ID],
+    SecretAccessKey: cc[AWS_SECRET_ACCESS_KEY],
+    SessionToken: cc[AWS_SESSION_TOKEN] || '',
+    // you must send a region to get a region!!!
+    Region: 'us-east-1',
+  };
+
+  return getRegions_(null, creds)(dispatch, getState);
+};
 
 const getDefaultSubnets_ = createAction('subnets', awsApis.getDefaultSubnets);
 
@@ -114,15 +126,11 @@ export const getDefaultSubnets = (body, creds, isNow) => (dispatch, getState) =>
       if (isNow && !isNow()) {
         return;
       }
-      const batches = [];
-      _.each(subnets.public, ({availabilityZone, instanceCIDR, id}) => {
-        batches.push([`${AWS_CONTROLLER_SUBNETS}.${availabilityZone}`, instanceCIDR]);
-        // TODO: (ggreer) stop resetting this? (ditto for worker subnet ids)
-        batches.push([`${AWS_CONTROLLER_SUBNET_IDS}.${availabilityZone}`, id]);
-      });
-      _.each(subnets.private, ({availabilityZone, instanceCIDR, id}) => {
-        batches.push([`${AWS_WORKER_SUBNETS}.${availabilityZone}`, instanceCIDR]);
-        batches.push([`${AWS_WORKER_SUBNET_IDS}.${availabilityZone}`, id]);
-      });
-      batchSetIn(dispatch, batches);
+
+      // Use addIn to preserve any existing values
+      const add = (path, v) => configActions.addIn(path, v, dispatch);
+      add(AWS_CONTROLLER_SUBNETS, _.fromPairs(_.map(subnets.public, s => [s.availabilityZone, s.instanceCIDR])));
+      add(AWS_CONTROLLER_SUBNET_IDS, {});
+      add(AWS_WORKER_SUBNETS, _.fromPairs(_.map(subnets.private, s => [s.availabilityZone, s.instanceCIDR])));
+      add(AWS_WORKER_SUBNET_IDS, {});
     });

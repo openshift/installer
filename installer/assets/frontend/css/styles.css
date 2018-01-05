@@ -101,10 +101,6 @@ h4 {
   display: none;
 }
 
-.widest {
-  width: 100% !important;
-}
-
 .btn-link-ordinary {
   display: inline;
   padding: 0;
@@ -137,13 +133,6 @@ fieldset[disabled] .btn.btn-link-ordinary {
   padding: 16px 40px;
 }
 
-input[type="text"].wiz-inline-field {
-  display: inline;
-  max-width: 250px;
-  margin-left: 5px;
-  margin-right: 5px;
-}
-
 input[type="text"].wiz-node-field {
   width: 150px;
 }
@@ -167,19 +156,6 @@ input[type="text"].wiz-node-field {
   font-size: 14px;
 }
 
-.wiz-minitable__header {
-  border-bottom: 1px solid #ebebeb;
-  text-transform: uppercase;
-  color: #999;
-  padding-bottom: 4px;
-}
-
-.wiz-minitable__row {
-  border-bottom: 1px solid #ebebeb;
-  padding-top: 10px;
-  padding-bottom: 10px;
-}
-
 .wiz-minimodal {
   border: 1px solid #eee;
   box-shadow: 0 3px 9px rgba(0, 0, 0, 0.5);
@@ -198,17 +174,6 @@ input[type="text"].wiz-node-field {
   margin-bottom: 30px;
   padding-top: 20px;
   padding-bottom: 20px;
-}
-
-.wiz-minitable__label {
-  line-height: 32px;
-}
-
-.row.wiz-minitable__header,
-.row.wiz-minitable__row,
-.row.wiz-minitable__footer {
-  margin-left: 0;
-  margin-right: 0;
 }
 
 .wiz-nav {
@@ -473,7 +438,7 @@ input.wiz-super-short-input {
   margin: 20px 0 0 20px;
 }
 
-.wiz-invalid.wiz-dirty {
+.wiz-invalid {
   border-color: #f04c5c !important;
   border-bottom-left-radius: 0px !important;
   border-bottom-right-radius: 0px !important;
@@ -601,20 +566,36 @@ input.wiz-super-short-input {
   vertical-align: middle;
 }
 
-.input__prefix--protocol {
+input.wiz-inline-field {
+  display: inline;
+  max-width: 250px;
+}
+
+input.wiz-inline-field.wiz-inline-field--prefix {
+  border-radius: 0 4px 4px 0;
+  margin-right: 5px;
+}
+
+input.wiz-inline-field.wiz-inline-field--suffix {
+  border-radius: 4px 0 0 4px;
+}
+
+.input__prefix, .input__suffix {
   background: rgba(0, 0, 0, 0.03);
   border: 1px solid #ccc;
-  border-radius: 4px 0 0 4px;
-  border-right: none;
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075);
   color: #999;
   padding: 7px 12px;
 }
 
-/* Need extra selectors to override wiz style :( */
-input.wiz-inline-field.wiz-inline-field--protocol {
+.input__prefix {
+  border-radius: 4px 0 0 4px;
+  border-right: none;
+}
+
+.input__suffix {
   border-radius: 0 4px 4px 0;
-  margin-left: 0;
+  border-left: none;
 }
 
 /* Handy for +/- in lists. */

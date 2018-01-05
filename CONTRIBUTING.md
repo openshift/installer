@@ -39,7 +39,7 @@ Due to their public nature, GitHub and mailing lists are not appropriate places 
 - Go get a couple of projects nesessary for updating docs and examples:
     ```shell
     $ go get github.com/segmentio/terraform-docs
-    $ go get github.com/s-urbaniak/terraform-examples
+    $ go get github.com/coreos/tectonic-installer/contrib/terraform-examples
     ```
 
 ### Contribution Flow

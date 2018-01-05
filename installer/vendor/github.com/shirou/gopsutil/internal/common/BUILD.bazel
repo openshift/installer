@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "binary.go",
+        "common.go",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:darwin_amd64": [
+            "common_darwin.go",
+            "common_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux_amd64": [
+            "common_linux.go",
+            "common_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows_amd64": [
+            "common_windows.go",
+        ],
+        "//conditions:default": [],
+    }),
+    importpath = "github.com/shirou/gopsutil/internal/common",
+    visibility = ["//installer/vendor/github.com/shirou/gopsutil:__subpackages__"],
+)

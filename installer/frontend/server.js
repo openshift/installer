@@ -1,8 +1,16 @@
 import _ from 'lodash';
 
-import { getTectonicDomain, toAWS_TF, toBaremetal_TF, DRY_RUN, PULL_SECRET, RETRY, TECTONIC_LICENSE } from './cluster-config';
+import {
+  DRY_RUN,
+  PLATFORM_TYPE,
+  PULL_SECRET,
+  RETRY,
+  TECTONIC_LICENSE,
+  getTectonicDomain,
+  toAWS_TF,
+  toBaremetal_TF,
+} from './cluster-config';
 import { clusterReadyActionTypes, configActions, loadFactsActionTypes, serverActionTypes, FORMS } from './actions';
-import { savable } from './reducer';
 import { AWS_TF, BARE_METAL_TF } from './platforms';
 
 const { addIn, setIn } = configActions;
@@ -67,7 +75,7 @@ const platformToFunc = {
 let observeInterval;
 
 // An action creator that builds a server message, calls fetch on that message, fires the appropriate actions
-export const commitToServer = (dryRun = false, retry = false, opts = {}) => (dispatch, getState) => {
+export const commitToServer = (dryRun = false, retry = false) => (dispatch, getState) => {
   setIn(DRY_RUN, dryRun, dispatch);
   setIn(RETRY, retry, dispatch);
 
@@ -76,14 +84,13 @@ export const commitToServer = (dryRun = false, retry = false, opts = {}) => (dis
   dispatch({type: COMMIT_REQUESTED});
 
   const state = getState();
-  const request = Object.assign({}, state.clusterConfig, {progress: savable(state)});
 
-  const f = platformToFunc[request.platformType];
+  const f = platformToFunc[state.clusterConfig[PLATFORM_TYPE]];
   if (!_.isFunction(f)) {
-    throw Error(`unknown platform type "${request.platformType}"`);
+    throw Error(`unknown platform type "${state.clusterConfig[PLATFORM_TYPE]}"`);
   }
 
-  const body = f(request, FORMS, opts);
+  const body = f(state, FORMS);
   fetch('/terraform/apply', {
     credentials: 'same-origin',
     method: 'POST',
@@ -125,5 +132,6 @@ export const loadFacts = (dispatch) => {
         type: loadFactsActionTypes.ERROR,
         payload: err,
       });
-    }).catch(err => console.error(err));
+    })
+    .catch(err => console.error(err));
 };

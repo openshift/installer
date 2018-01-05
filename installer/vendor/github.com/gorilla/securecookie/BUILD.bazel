@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "doc.go",
+        "securecookie.go",
+    ],
+    importpath = "github.com/gorilla/securecookie",
+    visibility = ["//visibility:public"],
+)

@@ -9,7 +9,7 @@ resource "google_compute_firewall" "master-ingress" {
 
   allow {
     protocol = "tcp"
-    ports    = ["22", "80", "443"] # ssh, http, https
+    ports    = ["22", "80", "6443"] # ssh, http, https
   }
 
   source_ranges = ["0.0.0.0/0"]

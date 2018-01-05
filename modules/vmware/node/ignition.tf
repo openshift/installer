@@ -9,6 +9,8 @@ data "ignition_config" "node" {
     "${var.ign_max_user_watches_id}",
     "${data.ignition_file.node_hostname.*.id[count.index]}",
     "${var.ign_installer_kubelet_env_id}",
+    "${var.ign_installer_runtime_mappings_id}",
+    "${var.ign_ca_cert_id_list}",
   ]
 
   systemd = ["${compact(list(
@@ -20,6 +22,7 @@ data "ignition_config" "node" {
     var.ign_tectonic_service_id,
     var.ign_bootkube_path_unit_id,
     var.ign_tectonic_path_unit_id,
+    var.ign_update_ca_certificates_dropin_id,
    ))}"]
 
   networkd = [

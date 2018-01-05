@@ -1,33 +1,18 @@
 import _ from 'lodash';
 import classNames from 'classnames';
 import React from 'react';
-import { saveAs } from 'file-saver';
 import { connect } from 'react-redux';
 import { Route, Switch, withRouter } from 'react-router-dom';
 
 import { fixLocation } from '../app';
 import { withNav } from '../nav';
-import { savable } from '../reducer';
 import { sections as trailSections, trail } from '../trail';
 
 import { Loader } from './loader';
-import { restoreModal } from './restore';
 import { PLATFORM_TYPE } from '../cluster-config';
 import { TectonicGA } from '../tectonic-ga';
 import { Header } from './header';
 import { Footer } from './footer';
-
-const downloadState = (state) => {
-  const toSave = _.cloneDeep(savable(state));
-
-  // Extra field data doesn't need to be saved
-  _.unset(toSave, 'clusterConfig.extra');
-
-  const saved = JSON.stringify(toSave, null, 2);
-  const stateBlob = new Blob([saved], {type: 'application/json'});
-  saveAs(stateBlob, 'tectonic.progress');
-  TectonicGA.sendEvent('Installer Link', 'click', 'User downloads progress file', state.clusterConfig[PLATFORM_TYPE]);
-};
 
 const NavSection = connect(state => ({state}))(
   ({title, navTrail, sections, currentPage, handlePage, state}) => {
@@ -123,7 +108,7 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
     }
 
     render() {
-      const {t, currentPage, navNext, state, title} = this.props;
+      const {t, currentPage, state, title} = this.props;
       if (!currentPage) {
         return null;
       }
@@ -165,8 +150,6 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
               <div className="wiz-wizard__content wiz-wizard__cell">
                 <div className="wiz-form__header">
                   <span className="wiz-form__header__title">{title}</span>
-                  {currentPage.showRestore && <a onClick={() => restoreModal(navNext)}><i className="fa fa-upload"></i>&nbsp;&nbsp;Restore progress</a>}
-                  {currentPage.hideSave || <a onClick={() => downloadState(state)}><i className="fa fa-download"></i>&nbsp;&nbsp;Save progress</a>}
                 </div>
                 <div className="wiz-wizard__content__body">
                   <Switch>

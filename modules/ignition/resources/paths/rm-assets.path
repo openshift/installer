@@ -1,0 +1,7 @@
+[Unit]
+Description=Trigger for rm-assets.service
+[Path]
+PathExists=/opt/tectonic/manifests
+Unit=rm-assets.service
+[Install]
+WantedBy=multi-user.target

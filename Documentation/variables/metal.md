@@ -6,7 +6,7 @@ This document gives an overview of variables used in the bare metal platform of 
 
 | Name | Description | Type | Default |
 |------|-------------|:----:|:-----:|
-| tectonic_metal_calico_mtu | (optional) Sets the MTU size for workload interfaces and the IP-in-IP tunnel device.<br><br>Note: This setting is only effective, if tectonic_networking is set to `calico`. | string | `1500` |
+| tectonic_metal_calico_mtu | (optional) Sets the MTU size for workload interfaces and the IP-in-IP tunnel device.<br><br>Note: This setting is only effective, if tectonic_networking is set to `calico`. | string | `1480` |
 | tectonic_metal_config_version | (internal) This declares the version of the Matchbox configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
 | tectonic_metal_controller_domain | The domain name which resolves to controller node(s)<br><br>Example: `cluster.example.com` | string | - |
 | tectonic_metal_controller_domains | Ordered list of controller domain names.<br><br>Example: `["node2.example.com", "node3.example.com"]` | list | - |

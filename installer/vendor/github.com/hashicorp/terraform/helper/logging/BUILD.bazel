@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "logging.go",
+        "transport.go",
+    ],
+    importpath = "github.com/hashicorp/terraform/helper/logging",
+    visibility = ["//visibility:public"],
+    deps = ["//installer/vendor/github.com/hashicorp/logutils:go_default_library"],
+)

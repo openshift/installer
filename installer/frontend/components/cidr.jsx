@@ -17,7 +17,7 @@ export const cidrSize = cidr => {
 };
 
 const CIDRTooltip = connect(
-  ({clusterConfig}, {field}) => ({clusterConfig: clusterConfig, value: _.get(clusterConfig, field)})
+  ({clusterConfig}, {field}) => ({clusterConfig, value: _.get(clusterConfig, field)})
 )(({value}) => {
   const addresses = cidrSize(value);
   if (!_.isInteger(addresses)) {
@@ -29,7 +29,7 @@ const CIDRTooltip = connect(
 export const CIDRRow = ({field, name, disabled, placeholder, autoFocus, selectable, fieldName, validator}) => {
   fieldName = fieldName || field;
   return <div className="row form-group">
-    <div className="col-xs-3">
+    <div className="col-xs-4">
       {selectable && <Deselect field={fieldName} />}
       <label htmlFor={(selectable ? `${DESELECTED_FIELDS}.` : '') + fieldName}>{name}</label>
     </div>

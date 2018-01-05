@@ -11,13 +11,13 @@ class Login < BasePage
 
   USERNAME_INPUT          = { id: 'login' }.freeze
   PASSWORD_INPUT          = { id: 'password' }.freeze
-  SUBMIT_INPUT            = { css: 'body > div.dex-container > div > form > button' }.freeze
-  CLUSTER_STATUS_LABEL    = {
-    css: '#content > div > div.co-p-cluster__body > div.row.co-m-nav-title > div > h1 > div > span'
+  SUBMIT_INPUT            = { id: 'submit-login' }.freeze
+  CLUSTER_STATUS_LABEL    = { id: 'resource-title' }.freeze
+  LOGIN_FAIL              = { id: 'login-error' }.freeze
+  ADMIN_SIDE_BAR          = { css: '#sidebar > div.navigation-container > div:nth-child(6) > div' }.freeze
+  LOGOUT                  = {
+    css: '#sidebar > div.navigation-container > div:nth-child(6) > ul > li:nth-child(2) > a'
   }.freeze
-  LOGIN_FAIL              = { css: 'body > div.dex-container > div > form > div.dex-error-box' }.freeze
-  ADMIN_SIDE_BAR          = { css: '#sidebar > div > div:nth-child(7) > div' }.freeze
-  LOGOUT                  = { css: '#sidebar > div > div:nth-child(7) > ul > li:nth-child(2) > a' }.freeze
 
   def initialize(driver)
     super
@@ -49,7 +49,7 @@ class Login < BasePage
 
   def fail_to_login?
     wait_for { displayed?(LOGIN_FAIL) }
-    text_of(LOGIN_FAIL).include? 'Invalid username and password.'
+    displayed?(LOGIN_FAIL)
   end
 
   def check_console_health(console_url)

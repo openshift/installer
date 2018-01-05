@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "net.go",
+        "net_fallback.go",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:darwin_amd64": [
+            "net_darwin.go",
+            "net_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux_amd64": [
+            "net_linux.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows_amd64": [
+            "net_windows.go",
+        ],
+        "//conditions:default": [],
+    }),
+    importpath = "github.com/shirou/gopsutil/net",
+    visibility = ["//visibility:public"],
+    deps = ["//installer/vendor/github.com/shirou/gopsutil/internal/common:go_default_library"],
+)

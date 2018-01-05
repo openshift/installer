@@ -7,7 +7,7 @@ TLS_CERTS=../tests/smoke/bare-metal/fake-creds
 MATCHBOX_ASSETS_PATH=/tmp/assets
 MATCHBOX_IMAGES_PATH=/tmp/images
 MATCHBOX_OPTS=-data-path=$(MATCHBOX_IMAGES_PATH) -assets-path=$(MATCHBOX_ASSETS_PATH) -cert-file=$(TLS_CERTS)/server.crt -key-file=$(TLS_CERTS)/server.key -ca-file=$(TLS_CERTS)/ca.crt
-COREOS_VERSION=1353.8.0
+COREOS_VERSION=1520.9.0
 REPO=github.com/coreos/tectonic-installer/installer
 
 # Wrapper around find. Works with filenamess containing spaces.

@@ -1,4 +1,4 @@
-apiVersion: "extensions/v1beta1"
+apiVersion: apps/v1beta2
 kind: DaemonSet
 metadata:
   name: kube-proxy
@@ -8,6 +8,10 @@ metadata:
     k8s-app: kube-proxy
     tectonic-operators.coreos.com/managed-by: kube-version-operator
 spec:
+  selector:
+    matchLabels:
+      tier: node
+      k8s-app: kube-proxy
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 1
@@ -17,7 +21,6 @@ spec:
       labels:
         tier: node
         k8s-app: kube-proxy
-        tectonic-operators.coreos.com/managed-by: kube-version-operator
     spec:
       containers:
       - name: kube-proxy

@@ -1,0 +1,33 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "assets.go",
+        "doc.go",
+        ":bindata"
+    ],
+    importpath = "github.com/coreos/tectonic-installer/installer/assets",
+    visibility = ["//visibility:public"],
+)
+
+filegroup(
+    name = "asset_files",
+    srcs = glob(
+        ["**"],
+        exclude = ["*.go"],
+    ),
+)
+
+genrule(
+    name = "bindata",
+    srcs = [
+        ":asset_files",
+    ],
+    outs = ["bindata.go"],
+    cmd = "$(location //installer/vendor/github.com/jteeuwen/go-bindata/go-bindata:go-bindata) -o $@ -pkg assets -prefix assets -ignore=$@ -ignore=doc.go -ignore=assets.go $(@D)",
+    tools = [
+        "//installer/vendor/github.com/jteeuwen/go-bindata/go-bindata",
+    ],
+    visibility = ["//visibility:public"],
+)

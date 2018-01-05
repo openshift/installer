@@ -13,8 +13,8 @@ require 'English'
 
 # Versions for Bare metal machine
 MATCHBOX_VERSION = 'v0.6.1'
-TERRAFORM_VERSION = '0.10.7'
-KUBECTL_VERSION = 'v1.7.5'
+TERRAFORM_VERSION = '0.11.1'
+KUBECTL_VERSION = 'v1.8.4'
 
 KUBECTL_URL = "https://storage.googleapis.com/kubernetes-release/release/#{KUBECTL_VERSION}/bin/linux/amd64/kubectl"
 TERRAFORM_URL =
@@ -47,9 +47,8 @@ module MetalSupport
     end
 
     # Download CoreOS images
-    cl_channel = varfile.tectonic_container_linux_channel
     cl_version = varfile.tectonic_container_linux_version
-    system(env_variables_setup, "#{root}/matchbox/scripts/get-coreos #{cl_channel} #{cl_version} ${ASSETS_DIR}")
+    system(env_variables_setup, "#{root}/matchbox/scripts/get-coreos stable #{cl_version} ${ASSETS_DIR}")
 
     # Configuring ssh-agent
     execute_command('eval "$(ssh-agent -s)"')
@@ -61,6 +60,17 @@ module MetalSupport
     execute_command("sudo cp #{root}/tests/rspec/utils/20-metal.conf /etc/rkt/net.d/")
     execute_command('cat /etc/rkt/net.d/20-metal.conf')
 
+    # Setting up auth to download images from quay.io
+    execute_command('sudo mkdir -p /etc/rkt/auth.d')
+    rkt_auth_file = File.read("#{root}/tests/rspec/utils/rkt-auth.json")
+    data_hash = JSON.parse(rkt_auth_file)
+    data_hash['credentials']['user'] = ENV['QUAY_ROBOT_USERNAME']
+    data_hash['credentials']['password'] = ENV['QUAY_ROBOT_SECRET']
+    File.open('/tmp/rkt-auth.json', 'w') do |f|
+      f.write(data_hash.to_json)
+    end
+    execute_command('sudo mv /tmp/rkt-auth.json /etc/rkt/auth.d/')
+
     # Setting up DNS
     `grep -q "172.18.0.3" /etc/resolv.conf`
     return if $CHILD_STATUS.exitstatus.zero?
@@ -69,14 +79,13 @@ module MetalSupport
     execute_command('cat /etc/resolv.conf')
   end
 
-  def self.start_matchbox
+  def self.start_matchbox(varfile)
     root = root_path
     matchbox_dir = "#{root}/matchbox"
     Dir.chdir(matchbox_dir) do
       system(env_variables_setup, 'sudo -E ./scripts/devnet create')
       wait_for_matchbox
-      puts 'Starting QEMU/KVM nodes'
-      system(env_variables_setup, 'sudo -E ./scripts/libvirt create')
+      wait_for_terraform(varfile)
     end
   end
 
@@ -97,6 +106,7 @@ module MetalSupport
     execute_command('sudo rm -Rf /var/lib/cni/networks/*')
     execute_command('sudo rm -Rf /var/lib/rkt/*')
     execute_command('sudo rm -f /etc/rkt/net.d/20-metal.conf')
+    execute_command('sudo rm -rf /tmp/matchbox')
     execute_command('sudo systemctl reset-failed')
   end
 
@@ -118,6 +128,26 @@ module MetalSupport
     end
   end
 
+  # We fork this to run independently from the current execution because we need to wait for
+  # terraform apply to reach some state that provide the ipxe before we boot the nodes.
+  def self.wait_for_terraform(varfile)
+    fork do
+      node_mac = varfile.tectonic_metal_controller_macs[0].tr(':', '-')
+      Retriable.with_retries(limit: 24, sleep: 10) do
+        succeeded = system('curl --silent --fail -k ' \
+                    "\"http://matchbox.example.com:8080/ipxe?uuid=&mac=#{node_mac}&domain=&hostname=&serial=\"" \
+                    ' > /dev/null')
+        raise 'IPXE is not available yet' unless succeeded
+      end
+      puts 'Terraform is ready'
+      puts 'Starting QEMU/KVM nodes'
+      succeeded = system(env_variables_setup, 'sudo -E ./scripts/libvirt create')
+      raise 'Failed to start QEMU/KVM nodes' unless succeeded
+      puts 'Done with QEMU/KVM nodes'
+      exit 0
+    end
+  end
+
   def self.check_service(service)
     return true unless `sudo systemctl is-failed #{service}`.chomp.include?('failed')
     print_service_logs(service)
@@ -125,24 +155,22 @@ module MetalSupport
   end
 
   def self.print_service_logs(service)
-    cmd = "journalctl --no-pager -u '#{service}'"
-    begin
-      Open3.popen3(cmd) do |_stdin, stdout, stderr, wait_thr|
-        exit_status = wait_thr.value
-        while (line = stdout.gets)
-          stdout_output << line
-        end
-        while (line = stderr.gets)
-          stderr_output << line
-        end
-        puts "Journal of #{service} service (exitcode #{exit_status})"
-        puts "Standard output: \n#{stdout_output}"
-        puts "Standard error: \n#{stderr_output}"
-        puts "End of journal of #{service} service"
-      end
-    rescue => e
-      puts "Cannot retrieve logs of service #{service} - failed to exec with: #{e}"
-    end
+    cmd = "sudo journalctl --no-pager -u #{service}"
+    stdout, stderr, exit_status = Open3.capture3(cmd)
+    output = "Journal of #{service} service (exitcode #{exit_status})"
+    output += "\nStandard output: \n#{stdout}"
+    output += "\nStandard error: \n#{stderr}"
+    output += "\nEnd of journal of #{service} service"
+
+    puts output
+    save_to_file(service, output)
+  end
+
+  def self.save_to_file(service_name, output)
+    logs_path = "#{root_path}build/#{ENV['CLUSTER']}/logs/systemd"
+    save_file = File.open("#{logs_path}/#{service_name}.log", 'w+')
+    save_file << output
+    save_file.close
   end
 
   def self.root_path
@@ -158,7 +186,7 @@ module MetalSupport
   end
 
   def self.execute_command(cmd)
-    Open3.popen3(cmd) do |_stdin, stdout, _stderr, wait_thr|
+    Open3.popen3(cmd) do |_stdin, stdout, stderr, wait_thr|
       exit_status = wait_thr.value
       unless exit_status.success?
         while (line = stdout.gets)

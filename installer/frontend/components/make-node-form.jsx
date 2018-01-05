@@ -1,8 +1,8 @@
 import _ from 'lodash';
 
-import * as awsActions from '../aws-actions';
+import { getIamRoles } from '../aws-actions';
 import {
-  AWS_CREDS,
+  AWS_REGION_FORM,
   IAM_ROLE,
   IAM_ROLE_CREATE_OPTION,
   INSTANCE_TYPE,
@@ -23,12 +23,12 @@ new Form('DUMMY_NODE_FORM', [
   new Field(IAM_ROLE, {
     default: 'DUMMY_VALUE',
     name: IAM_ROLE,
-    dependencies: [AWS_CREDS],
-    getExtraStuff: (dispatch, isNow) => dispatch(awsActions.getIamRoles(null, null, isNow)),
+    dependencies: [AWS_REGION_FORM],
+    getExtraStuff: (dispatch, isNow) => dispatch(getIamRoles(null, null, isNow)),
   }),
 ]);
 
-export const makeNodeForm = (name, withIamRole = true, instanceValidator = validate.int({min: 1, max: 999}), opts) => {
+export const makeNodeForm = (name, instanceValidator, withIamRole = true, opts) => {
   const storageType = toKey(name, STORAGE_TYPE);
 
   // all fields must have a unique name!

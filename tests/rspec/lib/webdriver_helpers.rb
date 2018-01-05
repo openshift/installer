@@ -3,7 +3,7 @@
 require 'selenium-webdriver'
 require 'headless'
 
-# PasswordGenerator contains helper functions to generate test passwords and also the bcrypted hash
+# WebdriverHelpers contains helper functions to create the browser to use in the UI tests.
 module WebdriverHelpers
   def self.start_webdriver
     @headless = Headless.new

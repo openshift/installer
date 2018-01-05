@@ -118,8 +118,14 @@ ExecStartPost=/bin/touch /opt/tectonic/init_tectonic.done
 Tectonic service unit is not enabled by default. It is instead triggered by a path unit, which waits for assets written synchronously by terraform.
 
 This service waits for bootkube process to be *completed* via systemd dependency.
-It is a oneshot service, thus marked as started only once the script return with success.
+It is a oneshot service, thus marked as started only once the script returns with success.
 It is skipped on further boots, as the condition-path exists.
+
+### `rm-assets.path` and `rm-assets.service`
+
+This service waits for the bootkube and tectonic process to be completed.
+It is a oneshot service, thus marked as started only once the script returns with success.
+This is an optional service only present on platforms which pull assets from block storage.
 
 ## Diagram
 
@@ -135,29 +141,31 @@ Legend:
  * b.s   -> bootkube.service
  * t.p   -> tectonic.path
  * t.s   -> tectonic.service
+ * rm.p  -> rm-assets.path
+ * rm.s  -> rm-assets.service
 
-.------------------------------------------------------------------------------------------------------------------.
-|                                                                                                                  |
-|           Provision cloud/userdata                  +----------+                Provision files                  |
-|     ,----------------------------------------------o|    TF    |o-----------------.------------------------.     |
-|     |                                               +----------+                  |                        |     |
-|     |                                                                             v                        v     |
-|     |                  +----------+                                            +-----+                 +-------+ |
-|     |             .--->| (reboot) |----.                                       | b.p |                 |  t.p  | |
-|     |             |    +----------+    |                                       +-----+                 +-------+ |
-|     V             |                    |                                          o                        o     |
-| +-------+         |                    v  Before   +------------+   Before        | Trigger        Trigger |     |
-| |  IGN  |         |                    *---------->|    k.s     |o--------.       |                        |     |
-| +-------+         o                    ^           +------------+         |       v                        v     |
-|     |       +----------+               |              ^      |            |    +-----+      Before     +-------+ |
-|     '------>|   knb.s  |o--------------'              |      v            '--->| b.s |o--------------->|  t.s  | |
-|   Enable    +----------+                              '------'                 +-----+                 +-------+ |
-|                ^    |                                                                                            |
-|                |    v                                                                                            |
-|                '----'                        o                            o                                      |
-|                                              |                            |                                      |
-|               * First boot                   |        * Each boot         |         * First boot                 |
-|               * All nodes                    |        * All nodes         |         * Bootkube master            |
-|                                              |                            |                                      |
-'----------------------------------------------o----------------------------o--------------------------------------'
+.---------------------------------------------------------------------------------------------------------------------------------------+
+|                                                                                                                                       |
+|           Provision cloud/userdata                  +----------+                Provision files                                       |
+|     ,----------------------------------------------o|    TF    |o-----------------.------------------------.-----------------+        |
+|     |                                               +----------+                  |                        |                 |        |
+|     |                                                                             v                        v                 v        |
+|     |                  +----------+                                            +-----+                 +-------+         +------+     |
+|     |             .--->| (reboot) |----.                                       | b.p |                 |  t.p  |         | rm.p |     |
+|     |             |    +----------+    |                                       +-----+                 +-------+         +------+     |
+|     V             |                    |                                          o                        o                 o        |
+| +-------+         |                    v  Before   +------------+   Before        | Trigger        Trigger |         Trigger |        |
+| |  IGN  |         |                    *---------->|    k.s     |o--------.       |                        |                 |        |
+| +-------+         o                    ^           +------------+         |       v                        v                 v        |
+|     |       +----------+               |              ^      |            |    +-----+      Before     +-------+   Before +-----+     |
+|     '------>|   knb.s  |o--------------'              |      v            '--->| b.s |o--------------->|  t.s  |--------> |rm.s |     |
+|   Enable    +----------+                              '------'                 +-----+                 +-------+          +-----+     |
+|                ^    |                                                                                                                 |
+|                |    v                                                                                                                 |
+|                '----'                        o                            o                                                           |
+|                                              |                            |                                                           |
+|               * First boot                   |        * Each boot         |         * First boot                                      |
+|               * All nodes                    |        * All nodes         |         * Bootkube master                                 |
+|                                              |                            |                                                           |
+'----------------------------------------------o----------------------------o-----------------------------------------------------------+
 ```

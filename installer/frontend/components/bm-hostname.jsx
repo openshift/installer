@@ -24,9 +24,7 @@ export const BM_Hostname = () =>
       </div>
       <div className="col-xs-9">
         <Connect field={CONTROLLER_DOMAIN}>
-          <Input id={CONTROLLER_DOMAIN}
-            placeholder="masters.example.com"
-            autoFocus="true" />
+          <Input autoFocus={true} id={CONTROLLER_DOMAIN} placeholder="masters.example.com" />
         </Connect>
       </div>
     </div>

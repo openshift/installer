@@ -1,3 +1,8 @@
+locals {
+  ami_owner = "595879546273"
+  arn       = "aws"
+}
+
 data "aws_ami" "coreos_ami" {
   filter {
     name   = "name"
@@ -16,18 +21,92 @@ data "aws_ami" "coreos_ami" {
 
   filter {
     name   = "owner-id"
-    values = ["595879546273"]
+    values = ["${local.ami_owner}"]
   }
+}
+
+resource "aws_iam_instance_profile" "etcd" {
+  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
+  name  = "${var.cluster_name}-etcd-profile"
+
+  role = "${var.etcd_iam_role == "" ?
+    join("|", aws_iam_role.etcd_role.*.name) :
+    join("|", data.aws_iam_role.etcd_role.*.name)
+  }"
+}
+
+data "aws_iam_role" "etcd_role" {
+  count = "${var.etcd_iam_role == "" ? 0 : 1}"
+  name  = "${var.etcd_iam_role}"
+}
+
+resource "aws_iam_role" "etcd_role" {
+  count = "${length(var.external_endpoints) == 0 && var.etcd_iam_role == "" ? 1 : 0}"
+  name  = "${var.cluster_name}-etcd-role"
+  path  = "/"
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": "sts:AssumeRole",
+            "Principal": {
+                "Service": "ec2.amazonaws.com"
+            },
+            "Effect": "Allow",
+            "Sid": ""
+        }
+    ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "etcd" {
+  count = "${var.etcd_iam_role == "" ? 1 : 0}"
+  name  = "${var.cluster_name}_etcd_policy"
+  role  = "${aws_iam_role.etcd_role.id}"
+
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": "ec2:Describe*",
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ec2:AttachVolume",
+      "Resource": "*"
+    },
+    {
+      "Effect": "Allow",
+      "Action": "ec2:DetachVolume",
+      "Resource": "*"
+    },
+    {
+      "Action" : [
+        "s3:GetObject"
+      ],
+      "Resource": "arn:${local.arn}:s3:::*",
+      "Effect": "Allow"
+    }
+  ]
+}
+EOF
 }
 
 resource "aws_instance" "etcd_node" {
   count = "${length(var.external_endpoints) == 0 ? var.instance_count : 0}"
   ami   = "${data.aws_ami.coreos_ami.image_id}"
 
+  iam_instance_profile   = "${aws_iam_instance_profile.etcd.name}"
   instance_type          = "${var.ec2_type}"
-  subnet_id              = "${element(var.subnets, count.index)}"
   key_name               = "${var.ssh_key}"
-  user_data              = "${data.ignition_config.etcd.*.rendered[count.index]}"
+  subnet_id              = "${element(var.subnets, count.index)}"
+  user_data              = "${data.ignition_config.s3.*.rendered[count.index]}"
   vpc_security_group_ids = ["${var.sg_ids}"]
 
   lifecycle {

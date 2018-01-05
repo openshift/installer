@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   name: kube-version-operator
@@ -23,7 +23,7 @@ spec:
         command:
         - /kube-version-operator
         - --cache-images=true
-        - --version-mapping=/upgrade-spec.json
+        - --version-mapping=/upgrade-spec.yaml
       imagePullSecrets:
       - name: coreos-pull-secret
       securityContext:

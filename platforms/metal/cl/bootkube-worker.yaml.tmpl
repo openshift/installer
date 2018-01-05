@@ -27,6 +27,11 @@ systemd:
     - name: kubelet.service
       enable: true
       contents: {{.ign_kubelet_service_json}}
+    - name: update-ca-certificates.service
+      enable: true
+      dropins:
+        - name: 10-alwaysrun.conf
+          contents: {{.ign_update_ca_certificates_dropin_json}}
 
 storage:
   files:
@@ -35,6 +40,11 @@ storage:
       mode: 0644
       contents:
         inline: {{.ign_installer_kubelet_env_json}}
+    - path: /etc/kubernetes/installer/runtime-mappings.yaml
+      filesystem: root
+      mode: 0644
+      contents:
+        inline: {{.ign_installer_runtime_mappings_json}}
     - path: /etc/hostname
       filesystem: root
       mode: 0644
@@ -46,6 +56,11 @@ storage:
       mode: 0644
       contents:
         inline: {{.ign_max_user_watches_json}}
+    - path: /etc/ssl/certs/custom_ca_certs.pem
+      filesystem: root
+      mode: 0400
+      contents:
+        inline: {{.ign_custom_ca_certs_json}}
 passwd:
   users:
     - name: core

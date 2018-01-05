@@ -1,0 +1,57 @@
+{
+  "clusterConfig": {
+    "adminEmail": "admin@example.com",
+    "adminPassword": "password",
+    "awsAccessKeyId": "awsAccessKeyId",
+    "awsControllerSubnets": {
+      "us-west-1a": "10.0.0.0/19",
+      "us-west-1c": "10.0.32.0/19"
+    },
+    "awsHostedZoneId": "Z30TY4B8NT090S",
+    "awsRegion": "us-west-1",
+    "awsSecretAccessKey": "awsSecretAccessKey",
+    "awsSessionToken": "awsSessionToken",
+    "awsSplitDNS": "off",
+    "awsTags": [
+      {
+        "key": "test_tag",
+        "value": "testing"
+      }
+    ],
+    "awsWorkerSubnets": {
+      "us-west-1a": "10.0.64.0/19",
+      "us-west-1c": "10.0.96.0/19"
+    },
+    "aws_controllers-instanceType": "t2.medium",
+    "aws_controllers-numberOfInstances": 2,
+    "aws_controllers-storageSizeInGiB": 30,
+    "aws_etcds-instanceType": "t2.medium",
+    "aws_etcds-numberOfInstances": 3,
+    "aws_etcds-storageSizeInGiB": 30,
+    "aws_etcds-storageType": "gp2",
+    "aws_ssh": "tectonic-jenkins",
+    "aws_workers-instanceType": "t2.medium",
+    "aws_workers-numberOfInstances": 2,
+    "aws_workers-storageIOPS": 1500,
+    "aws_workers-storageSizeInGiB": 30,
+    "aws_workers-storageType": "gp2",
+    "caType": "self-signed",
+    "clusterName": "aws-custom-vpc",
+    "clusterSubdomain": "aws-custom-vpc",
+    "etcdOption": "provisioned",
+    "externalETCDClient": "",
+    "extra": {
+      "awsHostedZoneId": {
+        "zoneToName": {
+          "Z30TY4B8NT090S": "tectonic-ci.de"
+        }
+      }
+    },
+    "platformType": "aws-tf",
+    "podCIDR": "10.2.0.0/16",
+    "pullSecret": "<TECTONIC_PULL_SECRET>",
+    "serviceCIDR": "10.3.0.0/16",
+    "sts_enabled": false,
+    "tectonicLicense": "<TECTONIC_LICENSE>"
+  }
+}

@@ -1,4 +1,4 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   name: tectonic-identity
@@ -7,6 +7,10 @@ metadata:
     k8s-app: tectonic-identity
     component: identity
 spec:
+  selector:
+    matchLabels:
+      k8s-app: tectonic-identity
+      component: identity
   replicas: 2
   # New identity pods must be healthy for 30 seconds
   # before they're marked as ready.

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'timeout'
+
 # SmokeTest contains helper functions to operate the smoke tests written in
 # golang
 module SmokeTest
@@ -9,13 +11,15 @@ module SmokeTest
   end
 
   def self.run(cluster)
-    build unless compiled?
+    ::Timeout.timeout(30 * 60) do # 30 minutes
+      build unless compiled?
 
-    succeeded = system(
-      env_variables(cluster),
-      './../../bin/smoke -test.v -test.parallel=1 --cluster'
-    )
-    raise 'SmokeTests failed' unless succeeded
+      succeeded = system(
+        env_variables(cluster),
+        './../../bin/smoke -test.v -test.parallel=1 --cluster'
+      )
+      raise 'SmokeTests failed' unless succeeded
+    end
   end
 
   def self.compiled?
@@ -27,7 +31,6 @@ module SmokeTest
       'SMOKE_KUBECONFIG' => cluster.kubeconfig,
       'SMOKE_NODE_COUNT' => cluster.tfvars_file.node_count.to_s,
       'SMOKE_MANIFEST_PATHS' => cluster.manifest_path,
-      'SMOKE_MANIFEST_SELF_HOSTED_ETCD' => cluster.tfvars_file.self_hosted_etcd?.to_s,
       'SMOKE_NETWORKING' => cluster.tfvars_file.networking.to_s
     }
   end

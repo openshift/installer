@@ -50,7 +50,7 @@ const pullSecretField = new Field(PULL_SECRET, {
   },
 });
 
-new Form(LICENSING, [fields[CLUSTER_NAME], licenseField, pullSecretField]);
+const form = new Form(LICENSING, [fields[CLUSTER_NAME], licenseField, pullSecretField]);
 
 const FileInput = ({id, onValue}) => {
   const upload = e => {
@@ -114,7 +114,7 @@ export const ClusterInfo = () => <div>
     </div>
     <div className="col-xs-9">
       <Connect field={CLUSTER_NAME}>
-        <Input placeholder="production" autoFocus="true" />
+        <Input placeholder="production" autoFocus={true} />
       </Connect>
       <p className="text-muted">Give this cluster a name that will help you identify it.</p>
     </div>
@@ -137,6 +137,4 @@ export const ClusterInfo = () => <div>
   </div>
 </div>;
 
-ClusterInfo.canNavigateForward = ({clusterConfig: cc}) => !fields[CLUSTER_NAME].validator(cc[CLUSTER_NAME], cc) &&
-  !licenseField.validator(cc[TECTONIC_LICENSE]) &&
-  !pullSecretField.validator(cc[PULL_SECRET]);
+ClusterInfo.canNavigateForward = form.canNavigateForward;

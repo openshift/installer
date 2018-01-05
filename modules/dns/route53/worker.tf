@@ -4,7 +4,7 @@ resource "aws_route53_record" "worker_nodes" {
   name    = "${var.cluster_name}-worker-${count.index}"
   type    = "A"
   ttl     = "60"
-  records = ["${var.worker_ips[count.index]}"]
+  records = ["${var.worker_ip_addresses[count.index]}"]
 }
 
 resource "aws_route53_record" "worker_nodes_public" {

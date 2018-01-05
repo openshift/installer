@@ -1,0 +1,38 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "codec.go",
+        "codec_check.go",
+        "conversion.go",
+        "doc.go",
+        "embedded.go",
+        "error.go",
+        "extension.go",
+        "generated.pb.go",
+        "helper.go",
+        "interfaces.go",
+        "register.go",
+        "scheme.go",
+        "scheme_builder.go",
+        "swagger_doc_generator.go",
+        "types.go",
+        "types_proto.go",
+        "unstructured.go",
+        "zz_generated.deepcopy.go",
+    ],
+    importpath = "k8s.io/client-go/pkg/runtime",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/gogo/protobuf/proto:go_default_library",
+        "//installer/vendor/github.com/golang/glog:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/api/meta/metatypes:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/api/unversioned:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/conversion:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/conversion/queryparams:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/types:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/util/errors:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/util/json:go_default_library",
+    ],
+)

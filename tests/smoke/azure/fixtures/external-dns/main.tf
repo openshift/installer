@@ -1,10 +1,12 @@
+provider "azurerm" {
+  version = "0.3.1"
+}
+
 variable "tectonic_azure_location" {
   default = "eastus"
 }
 
-variable "tectonic_base_domain" {
-  default = "azure.tectonic-integ.cloudns.cc"
-}
+variable "tectonic_base_domain" {}
 
 resource "azurerm_resource_group" "integ_external_dns" {
   name     = "integ_external_dns"

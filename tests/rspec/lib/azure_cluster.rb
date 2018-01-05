@@ -26,6 +26,19 @@ class AzureCluster < Cluster
     master_ip_addresses[0]
   end
 
+  def worker_ip_addresses
+    Dir.chdir(@build_path) do
+      ips_raw = `echo 'jsonencode(module.vnet.worker_private_ip_addresses)' \
+         | terraform console ../../platforms/azure`.chomp
+      JSON.parse(ips_raw)
+    end
+  end
+
+  def etcd_ip_addresses
+    out = @tfstate_file.output('etcd', 'etcd_vm_ids')
+    out.map { |etcd_name| etcd_name.split('/').last }
+  end
+
   def env_variables
     variables = super
     variables['PLATFORM'] = 'azure'

@@ -1,7 +1,7 @@
 resource "null_resource" "bootstrapper" {
   triggers {
-    endpoint    = "${var.bootstrapping_host}"
-    dependecies = "${join("", concat(flatten(var._dependencies)))}"
+    endpoint     = "${var.bootstrapping_host}"
+    dependencies = "${join("", concat(flatten(var._dependencies)))}"
   }
 
   connection {

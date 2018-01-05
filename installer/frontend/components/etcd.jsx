@@ -22,13 +22,13 @@ const fields = [
   new Field(ETCD_OPTION, {
     default: ETCD_OPTIONS.PROVISIONED,
   }),
-  makeNodeForm(AWS_ETCDS, false, compose(validate.int({min: 1, max: 9}), validate.isOdd), {
+  makeNodeForm(AWS_ETCDS, compose(validate.int({min: 1, max: 9}), validate.isOdd), false, {
     dependencies: [ETCD_OPTION],
     ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.PROVISIONED,
   }),
   new Field(EXTERNAL_ETCD_CLIENT, {
     default: '',
-    validator: validate.host,
+    validator: validate.url,
     dependencies: [ETCD_OPTION],
     ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.EXTERNAL,
   }),
@@ -93,12 +93,12 @@ export const Etcd = connect(({clusterConfig}) => ({
           <div className="col-xs-8">
             <Connect field={EXTERNAL_ETCD_CLIENT}>
               <Input id={EXTERNAL_ETCD_CLIENT}
-                autoFocus
-                className="wiz-inline-field wiz-inline-field--protocol"
-                prefix={<span className="input__prefix--protocol">http://</span>}
-                placeholder="etcd.example.com" />
+                autoFocus={true}
+                className="wiz-inline-field wiz-inline-field--suffix"
+                suffix={<span className="input__suffix">:2379</span>}
+                placeholder="https://etcd.example.com" />
             </Connect>
-            <p className="text-muted">Hostname or IP address of etcd client endpoint</p>
+            <p className="text-muted">Address of etcd client endpoint</p>
           </div>
         </div>
       </div>

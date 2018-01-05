@@ -27,9 +27,6 @@ const testPage = (page, platform, json, nextInitiallyDisabled = true) => {
     page.expect.element('.wiz-wizard__nav__step--active + .wiz-wizard__nav__step button').to.not.have.attribute('disabled');
   }
 
-  // Save progress link exists
-  page.expect.element('.wiz-form__header a').text.which.contains('Save progress');
-
   page.test(json, platform);
 
   page.expect.element(nextStep).to.have.attribute('class').which.not.contains('disabled');

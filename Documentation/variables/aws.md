@@ -11,6 +11,7 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_config_version | (internal) This declares the version of the AWS configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
 | tectonic_aws_etcd_ec2_type | Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance | string | `t2.medium` |
 | tectonic_aws_etcd_extra_sg_ids | (optional) List of additional security group IDs for etcd nodes.<br><br>Example: `["sg-51530134", "sg-b253d7cc"]` | list | `<list>` |
+| tectonic_aws_etcd_iam_role_name | (optional) Name of IAM role to use for the instance profiles of etcd nodes. The name is also the last part of a role's ARN.<br><br>Example:  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer  * Role Name = tectonic-installer | string | `` |
 | tectonic_aws_etcd_root_volume_iops | The amount of provisioned IOPS for the root block device of etcd nodes. Ignored if the volume type is not io1. | string | `100` |
 | tectonic_aws_etcd_root_volume_size | The size of the volume in gigabytes for the root block device of etcd nodes. | string | `30` |
 | tectonic_aws_etcd_root_volume_type | The type of volume for the root block device of etcd nodes. | string | `gp2` |
@@ -18,7 +19,7 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_external_private_zone | (optional) If set, the given Route53 zone ID will be used as the internal (private) zone. This zone will be used to create etcd DNS records as well as internal API and internal Ingress records. If set, no additional private zone will be created.<br><br>Example: `"Z1ILINNUJGTAO1"` | string | `` |
 | tectonic_aws_external_vpc_id | (optional) ID of an existing VPC to launch nodes into. If unset a new VPC is created.<br><br>Example: `vpc-123456` | string | `` |
 | tectonic_aws_external_worker_subnet_ids | (optional) List of subnet IDs within an existing VPC to deploy worker nodes into. Required to use an existing VPC and the list must match the AZ count.<br><br>Example: `["subnet-111111", "subnet-222222", "subnet-333333"]` | list | `<list>` |
-| tectonic_aws_extra_tags | (optional) Extra AWS tags to be applied to created resources. | map | `<map>` |
+| tectonic_aws_extra_tags | (optional) Extra AWS tags to be applied to created resources.<br><br>Example: `{ "key" = "value", "foo" = "bar" }` | map | `<map>` |
 | tectonic_aws_master_custom_subnets | (optional) This configures master availability zones and their corresponding subnet CIDRs directly.<br><br>Example: `{ eu-west-1a = "10.0.0.0/20", eu-west-1b = "10.0.16.0/20" }` | map | `<map>` |
 | tectonic_aws_master_ec2_type | Instance size for the master node(s). Example: `t2.medium`. | string | `t2.medium` |
 | tectonic_aws_master_extra_sg_ids | (optional) List of additional security group IDs for master nodes.<br><br>Example: `["sg-51530134", "sg-b253d7cc"]` | list | `<list>` |
@@ -27,6 +28,7 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_master_root_volume_size | The size of the volume in gigabytes for the root block device of master nodes. | string | `30` |
 | tectonic_aws_master_root_volume_type | The type of volume for the root block device of master nodes. | string | `gp2` |
 | tectonic_aws_private_endpoints | (optional) If set to true, create private-facing ingress resources (ELB, A-records). If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone. | string | `true` |
+| tectonic_aws_profile | (optional) This declares the AWS credentials profile to use. | string | `default` |
 | tectonic_aws_public_endpoints | (optional) If set to true, create public-facing ingress resources (ELB, A-records). If set to false, no public-facing ingress resources will be created. | string | `true` |
 | tectonic_aws_region | The target AWS region for the cluster. | string | `eu-west-1` |
 | tectonic_aws_ssh_key | Name of an SSH key located within the AWS region. Example: coreos-user. | string | - |

@@ -49,15 +49,11 @@ export const compareVersions = (v1, v2) => {
   return 0;
 };
 
-const toPath = function (base) {
-  return function (field) {
-    return `${base}.${_.isArray(field) ? field.join('.') : field}`;
-  };
+const toPath = base => {
+  return field => `${base}.${_.isArray(field) ? field.join('.') : field}`;
 };
 
 export const toError = toPath('error');
-export const toAsyncError = toPath('error_async');
-export const toIgnore = toPath('ignore');
 export const toInFly = toPath('inFly');
 export const toExtraData = toPath('extra');
 export const toExtraDataError = toPath('extraError');

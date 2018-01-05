@@ -1,10 +1,13 @@
-apiVersion: extensions/v1beta1
+apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   name: default-http-backend
   namespace: tectonic-system
 spec:
   replicas: 1
+  selector:
+    matchLabels:
+      k8s-app: default-http-backend
   template:
     metadata:
       labels:

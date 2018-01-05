@@ -25,7 +25,7 @@ class AWSVPC
       'TF_VAR_vpc_aws_region' => ENV['TF_VAR_tectonic_aws_region'],
       'TF_VAR_vpc_name' => @name,
       'TF_VAR_ovpn_password' => @ovpn_password,
-      'TF_VAR_base_domain' => 'tectonic.dev.coreos.systems'
+      'TF_VAR_base_domain' => 'tectonic-ci.de'
     }
   end
 
@@ -45,7 +45,7 @@ class AWSVPC
     Dir.chdir('../../contrib/internal-cluster') do
       succeeded = system(env_variables, 'terraform init')
       raise 'could not init Terraform to create VPC' unless succeeded
-      succeeded = system(env_variables, 'terraform apply')
+      succeeded = system(env_variables, 'terraform apply -auto-approve')
       raise 'could not create vpc with Terraform' unless succeeded
 
       parse_terraform_output

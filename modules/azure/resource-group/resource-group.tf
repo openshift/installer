@@ -36,7 +36,7 @@ resource "azurerm_resource_group" "tectonic_cluster" {
 }
 
 output "name" {
-  value = "${var.external_rsg_id == "" ? join("", azurerm_resource_group.tectonic_cluster.*.name) : element(split("/", var.external_rsg_id), 4) }"
+  value = "${var.external_rsg_id == "" ? element(concat(azurerm_resource_group.tectonic_cluster.*.name, list("")), 0) : element(split("/", var.external_rsg_id), 4)}"
 }
 
 output "storage_id" {

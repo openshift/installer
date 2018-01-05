@@ -1,4 +1,4 @@
-apiVersion: "extensions/v1beta1"
+apiVersion: apps/v1beta2
 kind: DaemonSet
 metadata:
   name: pod-checkpointer
@@ -7,6 +7,10 @@ metadata:
     tier: control-plane
     k8s-app: pod-checkpointer
 spec:
+  selector:
+    matchLabels:
+      tier: control-plane
+      k8s-app: pod-checkpointer
   template:
     metadata:
       labels:
@@ -20,7 +24,6 @@ spec:
         image: ${pod_checkpointer_image}
         command:
         - /checkpoint
-        - --v=4
         - --lock-file=/var/run/lock/pod-checkpointer.lock
         env:
         - name: NODE_NAME

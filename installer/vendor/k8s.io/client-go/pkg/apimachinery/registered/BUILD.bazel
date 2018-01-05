@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["registered.go"],
+    importpath = "k8s.io/client-go/pkg/apimachinery/registered",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/golang/glog:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/api/meta:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/api/unversioned:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/apimachinery:go_default_library",
+        "//installer/vendor/k8s.io/client-go/pkg/util/sets:go_default_library",
+    ],
+)

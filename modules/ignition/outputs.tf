@@ -34,6 +34,14 @@ output "init_assets_service_id" {
   value = "${data.ignition_systemd_unit.init_assets.id}"
 }
 
+output "rm_assets_service_id" {
+  value = "${data.ignition_systemd_unit.rm_assets.id}"
+}
+
+output "rm_assets_path_unit_id" {
+  value = "${data.ignition_systemd_unit.rm_assets_path_unit.id}"
+}
+
 output "s3_puller_id" {
   value = "${data.ignition_file.s3_puller.id}"
 }
@@ -44,6 +52,14 @@ output "s3_puller_rendered" {
 
 output "locksmithd_service_id" {
   value = "${data.ignition_systemd_unit.locksmithd.id}"
+}
+
+output "installer_runtime_mappings_id" {
+  value = "${data.ignition_file.installer_runtime_mappings.id}"
+}
+
+output "installer_runtime_mappings_rendered" {
+  value = "${data.template_file.installer_runtime_mappings.rendered}"
 }
 
 output "installer_kubelet_env_id" {
@@ -84,4 +100,46 @@ output "coreos_metadata_dropin_id" {
 
 output "coreos_metadata_dropin_rendered" {
   value = "${data.template_file.coreos_metadata.rendered}"
+}
+
+output "gcs_puller_id" {
+  value = "${data.ignition_file.gcs_puller.id}"
+}
+
+output "update_ca_certificates_dropin_id" {
+  value = "${data.ignition_systemd_unit.update_ca_certificates_dropin.id}"
+}
+
+output "update_ca_certificates_dropin_rendered" {
+  value = "${data.template_file.update_ca_certificates_dropin.rendered}"
+}
+
+output "ca_cert_id_list" {
+  value = [
+    "${data.ignition_file.kube_ca_cert_pem.id}",
+    "${data.ignition_file.ingress_ca_cert_pem.id}",
+    "${data.ignition_file.etcd_ca_cert_pem.id}",
+    "${data.ignition_file.custom_ca_cert_pem.*.id}",
+  ]
+}
+
+output "ca_cert_pem_list" {
+  value = [
+    "${var.kube_ca_cert_pem}",
+    "${var.ingress_ca_cert_pem}",
+    "${var.etcd_ca_cert_pem}",
+    "${var.custom_ca_cert_pem_list}",
+  ]
+}
+
+output "etcd_crt_id_list" {
+  value = [
+    "${data.ignition_file.etcd_ca.*.id}",
+    "${data.ignition_file.etcd_client_key.*.id}",
+    "${data.ignition_file.etcd_client_crt.*.id}",
+    "${data.ignition_file.etcd_server_key.*.id}",
+    "${data.ignition_file.etcd_server_crt.*.id}",
+    "${data.ignition_file.etcd_peer_key.*.id}",
+    "${data.ignition_file.etcd_peer_crt.*.id}",
+  ]
 }

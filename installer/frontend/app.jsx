@@ -48,9 +48,6 @@ export const fixLocation = () => {
 store.subscribe(_.debounce(saveState, 5000));
 window.addEventListener('beforeunload', saveState);
 
-// Stuff we need to load before we can run anything
-loadFacts(dispatch);
-
 try {
   const state = JSON.parse(sessionStorage.getItem('state'));
   dispatch({
@@ -62,42 +59,42 @@ try {
   console.error(`Error restoring state from sessionStorage: ${e.message || e.toString()}`);
 }
 
-store.dispatch(validateAllFields(() => {
+history.listen(({pathname, state}) => {
+  // Process next step / previous step navigation trigger if present
+  if (state && (state.next || state.previous)) {
+    const t = trail(store.getState());
+    const currentPage = t.pageByPath.get(history.location.pathname);
+    const nextPage = state.next ? t.nextFrom(currentPage) : t.previousFrom(currentPage);
+    history.replace(_.get(nextPage, 'path'));
+    return;
+  }
+  TectonicGA.sendPageView(pathname);
+});
+
+ReactDom.render(
+  <Provider store={store}>
+    <Router history={history}>
+      <Base />
+    </Router>
+  </Provider>,
+  document.getElementById('application')
+);
+
+const init = () => {
   TectonicGA.initialize();
 
-  try {
-    observeClusterStatus(dispatch, store.getState)
-      .then(res => {
-        if (res && res.type === clusterReadyActionTypes.STATUS) {
-          setInterval(() => observeClusterStatus(dispatch, store.getState), 10000);
-        }
-        fixLocation();
-      });
-  } catch (e) {
-    console.error(`Error restoring state from sessionStorage: ${e.message || e.toString()}`);
-  }
+  observeClusterStatus(dispatch, store.getState)
+    .then(res => {
+      if (res && res.type === clusterReadyActionTypes.STATUS) {
+        setInterval(() => observeClusterStatus(dispatch, store.getState), 10000);
+      }
+      fixLocation();
+    });
+};
 
-  history.listen(({pathname, state}) => {
-    // Process next step / previous step navigation trigger if present
-    if (state && (state.next || state.previous)) {
-      const t = trail(store.getState());
-      const currentPage = t.pageByPath.get(history.location.pathname);
-      const nextPage = state.next ? t.nextFrom(currentPage) : t.previousFrom(currentPage);
-      history.replace(_.get(nextPage, 'path'));
-      return;
-    }
-    TectonicGA.sendPageView(pathname);
-  });
-
-  ReactDom.render(
-    <Provider store={store}>
-      <Router history={history}>
-        <Base />
-      </Router>
-    </Provider>,
-    document.getElementById('application')
-  );
-}));
+// Stuff we need to load before we can run anything
+loadFacts(dispatch)
+  .then(() => store.dispatch(validateAllFields(init)));
 
 window.onerror = (message, source, lineno, colno, optError = {}) => {
   try {

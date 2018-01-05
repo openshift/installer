@@ -1,17 +1,4 @@
 
-// The e-mail address used to:
-// 1. login as the admin user to the Tectonic Console.
-// 2. generate DNS zones for some providers.
-// 
-// Note: This field MUST be in all lower-case e-mail address format and set manually prior to creating the cluster.
-tectonic_admin_email = ""
-
-// The admin user password to login to the Tectonic Console.
-// 
-// Note: This field MUST be set manually prior to creating the cluster. Backslashes and double quotes must
-// also be escaped.
-tectonic_admin_password = ""
-
 // The base DNS domain of the cluster. It must NOT contain a trailing period. Some
 // DNS providers will automatically add this if necessary.
 // 
@@ -59,6 +46,9 @@ tectonic_cluster_name = ""
 // Examples: `latest`, `1465.6.0`
 tectonic_container_linux_version = "latest"
 
+// (optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes.
+// tectonic_custom_ca_pem_list = ""
+
 // (optional) This only applies if you use the modules/dns/ddns module.
 // 
 // Specifies the RFC2136 Dynamic DNS server key algorithm.
@@ -88,7 +78,7 @@ tectonic_container_linux_version = "latest"
 // (optional) The path of the file containing the CA certificate for TLS communication with etcd.
 // 
 // Note: This works only when used in conjunction with an external etcd cluster.
-// If set, the variables `tectonic_etcd_servers`, `tectonic_etcd_client_cert_path`, and `tectonic_etcd_client_key_path` must also be set.
+// If set, the variable `tectonic_etcd_servers` must also be set.
 // tectonic_etcd_ca_cert_path = "/dev/null"
 
 // (optional) The path of the file containing the client certificate for TLS communication with etcd.
@@ -111,11 +101,13 @@ tectonic_etcd_count = "0"
 
 // (optional) List of external etcd v3 servers to connect with (hostnames/IPs only).
 // Needs to be set if using an external etcd cluster.
+// Note: If this variable is defined, the installer will not create self-signed certs.
+// To provide a CA certificate to trust the etcd servers, set "tectonic_etcd_ca_cert_path".
 // 
 // Example: `["etcd1", "etcd2", "etcd3"]`
 // tectonic_etcd_servers = ""
 
-// (optional) If set to `true`, TLS secure communication for self-provisioned etcd. will be used.
+// (optional) If set to `true`, all etcd endpoints will be configured to use the "https" scheme.
 // 
 // Note: If `tectonic_experimental` is set to `true` this variable has no effect, because the experimental self-hosted etcd always uses TLS.
 // tectonic_etcd_tls_enabled = true
@@ -124,8 +116,6 @@ tectonic_etcd_count = "0"
 // You can download the Tectonic license file from your Account overview page at [1].
 // 
 // [1] https://account.coreos.com/overview
-// 
-// Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 tectonic_license_path = ""
 
 // The number of master nodes to be created.
@@ -139,6 +129,8 @@ tectonic_master_count = "1"
 // - "canal": [ALPHA] enables overlay networking including network policy. Overlay is implemented by flannel using VXLAN. Network policy is implemented by Calico.
 // 
 // - "calico": [ALPHA] enables BGP based networking. Routing and network policy is implemented by Calico. Note this has been tested on baremetal installations only.
+// 
+// - "none": disables the installation of any Pod level networking layer provided by Tectonic. By setting this value, users are expected to deploy their own solution to enable network connectivity for Pods and Services.
 // tectonic_networking = "flannel"
 
 // Disable floating ip assignments for k8s nodes.
@@ -224,24 +216,16 @@ tectonic_openstack_worker_flavor_name = ""
 // [2] https://coreos.com/os/docs/latest/registry-authentication.html#manual-registry-auth-setup
 // 
 // [3] https://account.coreos.com/overview
-// 
-// Note: This field MUST be set manually prior to creating the cluster unless `tectonic_vanilla_k8s` is set to `true`.
 tectonic_pull_secret_path = ""
-
-// (optional) [ALPHA] If set to one of the following values, self-hosted etcd is deployed:
-// 
-// - "enabled": Deploys a self-hosted etcd cluster.
-// 
-// - "pv_backup": Deploys a self-hosted etcd cluster including backups to Persistence Volumes.
-// `tectonic_etcd_backup_size` and `tectonic_etcd_backup_storage_class` must be configured when using this setting.
-// tectonic_self_hosted_etcd = ""
 
 // (optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation.
 // The maximum size of this IP range is /12
 // tectonic_service_cidr = "10.3.0.0/16"
 
-// If set to true, a vanilla Kubernetes cluster will be deployed, omitting any Tectonic assets.
-tectonic_vanilla_k8s = false
+// Validity period of the self-signed certificates (in hours).
+// Default is 3 years.
+// This setting is ignored if user provided certificates are used.
+tectonic_tls_validity_period = "26280"
 
 // The number of worker nodes to be created.
 // This applies only to cloud platforms.

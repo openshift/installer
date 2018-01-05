@@ -1,0 +1,57 @@
+{
+  "clusterConfig": {
+    "awsControllerSubnetIds": {
+      "us-west-1a": "subnet-9a7dcafd",
+      "us-west-1b": "subnet-43ef260a",
+      "us-west-1c": "subnet-1ad7e242"
+    },
+    "awsCreateVpc": "VPC_PUBLIC",
+    "awsTags": [
+      {
+        "key": "test_tag",
+        "value": "testing"
+      }
+    ],
+    "awsVpcId": "someVPCID",
+    "awsWorkerSubnetIds": {
+      "us-west-1a": "subnet-277ccb40",
+      "us-west-1b": "subnet-19ef2650",
+      "us-west-1c": "subnet-36d7e26e"
+    },
+    "adminEmail": "admin@example.com",
+    "adminPassword": "password",
+    "awsAccessKeyId": "awsAccessKeyId",
+    "awsHostedZoneId": "asfd",
+    "awsRegion": "us-west-1",
+    "awsSecretAccessKey": "awsSecretAccessKey",
+    "awsSessionToken": "awsSessionToken",
+    "aws_controllers-instanceType": "t2.large",
+    "aws_controllers-numberOfInstances": 1,
+    "aws_controllers-storageSizeInGiB": 33,
+    "aws_etcds-instanceType": "t2.large",
+    "aws_etcds-numberOfInstances": 3,
+    "aws_etcds-storageSizeInGiB": 300,
+    "aws_ssh": "some-ssh-key",
+    "aws_workers-instanceType": "t2.medium",
+    "aws_workers-numberOfInstances": 3,
+    "aws_workers-storageIOPS": 1500,
+    "aws_workers-storageSizeInGiB": 1000,
+    "aws_workers-storageType": "io1",
+    "caType": "self-signed",
+    "clusterName": "aws-existing-vpc",
+    "clusterSubdomain": "aws-existing-vpc",
+    "etcdOption": "provisioned",
+    "externalETCDClient": "",
+    "extra": {
+      "awsHostedZoneId": {
+        "zoneToName": {
+          "asfd": "example.com"
+        }
+      }
+    },
+    "platformType": "aws-tf",
+    "pullSecret": "<TECTONIC_PULL_SECRET>",
+    "sts_enabled": true,
+    "tectonicLicense": "<TECTONIC_LICENSE>"
+  }
+}

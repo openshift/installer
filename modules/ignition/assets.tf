@@ -17,8 +17,8 @@ data "template_file" "docker_dropin" {
 }
 
 data "ignition_systemd_unit" "docker_dropin" {
-  name   = "docker.service"
-  enable = true
+  name    = "docker.service"
+  enabled = true
 
   dropin = [
     {
@@ -26,6 +26,20 @@ data "ignition_systemd_unit" "docker_dropin" {
       content = "${data.template_file.docker_dropin.rendered}"
     },
   ]
+}
+
+data "template_file" "installer_runtime_mappings" {
+  template = "${file("${path.module}/resources/kubernetes/runtime-mappings.yaml")}"
+}
+
+data "ignition_file" "installer_runtime_mappings" {
+  filesystem = "root"
+  path       = "/etc/kubernetes/installer/runtime-mappings.yaml"
+  mode       = 0644
+
+  content {
+    content = "${data.template_file.installer_runtime_mappings.rendered}"
+  }
 }
 
 data "template_file" "kubelet" {
@@ -36,6 +50,7 @@ data "template_file" "kubelet" {
     cloud_provider_config = "${var.cloud_provider_config != "" ? "--cloud-config=/etc/kubernetes/cloud/config" : ""}"
     cluster_dns_ip        = "${var.kube_dns_service_ip}"
     cni_bin_dir_flag      = "${var.kubelet_cni_bin_dir != "" ? "--cni-bin-dir=${var.kubelet_cni_bin_dir}" : ""}"
+    debug_config          = "${var.kubelet_debug_config}"
     kubeconfig_fetch_cmd  = "${var.kubeconfig_fetch_cmd != "" ? "ExecStartPre=${var.kubeconfig_fetch_cmd}" : ""}"
     node_label            = "${var.kubelet_node_label}"
     node_taints_param     = "${var.kubelet_node_taints != "" ? "--register-with-taints=${var.kubelet_node_taints}" : ""}"
@@ -44,7 +59,7 @@ data "template_file" "kubelet" {
 
 data "ignition_systemd_unit" "kubelet" {
   name    = "kubelet.service"
-  enable  = true
+  enabled = true
   content = "${data.template_file.kubelet.rendered}"
 }
 
@@ -56,21 +71,33 @@ data "template_file" "k8s_node_bootstrap" {
     kubeconfig_fetch_cmd     = "${var.kubeconfig_fetch_cmd != "" ? "ExecStartPre=${var.kubeconfig_fetch_cmd}" : ""}"
     tectonic_torcx_image_url = "${replace(var.container_images["tectonic_torcx"],var.image_re,"$1")}"
     tectonic_torcx_image_tag = "${replace(var.container_images["tectonic_torcx"],var.image_re,"$2")}"
-    torcx_skip_setup         = "${var.tectonic_vanilla_k8s ? "true" : "false" }"
+    torcx_skip_setup         = "false"
     torcx_store_url          = "${var.torcx_store_url}"
   }
 }
 
 data "ignition_systemd_unit" "k8s_node_bootstrap" {
   name    = "k8s-node-bootstrap.service"
-  enable  = true
+  enabled = true
   content = "${data.template_file.k8s_node_bootstrap.rendered}"
 }
 
 data "ignition_systemd_unit" "init_assets" {
   name    = "init-assets.service"
-  enable  = "${var.assets_location != "" ? true : false}"
+  enabled = "${var.assets_location != "" ? true : false}"
   content = "${file("${path.module}/resources/services/init-assets.service")}"
+}
+
+data "ignition_systemd_unit" "rm_assets_path_unit" {
+  name    = "rm-assets.path"
+  enabled = true
+  content = "${file("${path.module}/resources/paths/rm-assets.path")}"
+}
+
+data "ignition_systemd_unit" "rm_assets" {
+  name    = "rm-assets.service"
+  enabled = false
+  content = "${file("${path.module}/resources/services/rm-assets.service")}"
 }
 
 data "template_file" "s3_puller" {
@@ -121,7 +148,7 @@ data "template_file" "tx_off" {
 
 data "ignition_systemd_unit" "tx_off" {
   name    = "tx-off.service"
-  enable  = true
+  enabled = true
   content = "${data.template_file.tx_off.rendered}"
 }
 
@@ -140,7 +167,7 @@ data "ignition_file" "azure_udev_rules" {
 }
 
 data "template_file" "coreos_metadata" {
-  template = "${file("${path.module}/resources/services/coreos-metadata.service")}"
+  template = "${file("${path.module}/resources/dropins/10-metadata.conf")}"
 
   vars {
     metadata_provider = "${var.metadata_provider}"
@@ -148,8 +175,8 @@ data "template_file" "coreos_metadata" {
 }
 
 data "ignition_systemd_unit" "coreos_metadata" {
-  name   = "coreos-metadata.service"
-  enable = true
+  name    = "coreos-metadata.service"
+  enabled = true
 
   dropin = [
     {
@@ -157,4 +184,22 @@ data "ignition_systemd_unit" "coreos_metadata" {
       content = "${data.template_file.coreos_metadata.rendered}"
     },
   ]
+}
+
+data "template_file" "gcs_puller" {
+  vars {
+    gcloudsdk_image = "${var.container_images["gcloudsdk"]}"
+  }
+
+  template = "${file("${path.module}/resources/bin/gcs-puller.sh")}"
+}
+
+data "ignition_file" "gcs_puller" {
+  filesystem = "root"
+  path       = "/opt/gcs-puller.sh"
+  mode       = 0755
+
+  content {
+    content = "${data.template_file.gcs_puller.rendered}"
+  }
 }

@@ -7,7 +7,7 @@ import { connect } from 'react-redux';
 import { withNav } from '../nav';
 import { validate } from '../validate';
 import { readFile } from '../readfile';
-import { toError, toAsyncError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from '../utils';
+import { toError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from '../utils';
 
 import { dirtyActions, configActions } from '../actions';
 import { DESELECTED_FIELDS } from '../cluster-config.js';
@@ -74,14 +74,9 @@ const Field = withNav(connect(
   (dispatch, {id}) => ({makeDirty: () => dispatch(dirtyActions.add(id))}),
 )(props => {
   const tag = props.tag || 'input';
-  const dirty = props.forceDirty || props.isDirty;
-  const fieldClasses = classNames(props.className, {
-    'wiz-dirty': dirty,
-    'wiz-invalid': props.invalid,
-  });
-  const errorClasses = classNames('wiz-error-message', {
-    hidden: !(dirty && props.invalid),
-  });
+  const isInvalid = props.invalid && (props.forceDirty || props.isDirty);
+  const fieldClasses = classNames(props.className, {'wiz-invalid': isInvalid});
+  const errorClasses = classNames('wiz-error-message', {hidden: !isInvalid});
 
   const elementProps = {};
   Object.keys(props).filter(k => FIELD_PROPS.has(k)).forEach(k => {
@@ -123,7 +118,7 @@ const Field = withNav(connect(
         ? props.renderField(props, elementProps, fieldClasses)
         : React.createElement(tag, nextProps)
       }
-      {props.suffix && <span>&nbsp;&nbsp;{props.suffix}</span>}
+      {props.suffix}
       {props.children}
       <div className={errorClasses}>
         {props.invalid}
@@ -234,7 +229,7 @@ export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirt
   if (availableValues) {
     let options = availableValues.value;
     if (value && !options.map(r => r.value).includes(value)) {
-      options = [{label: value, value: value}].concat(options);
+      options = [{label: value, value}].concat(options);
     }
 
     const optgroups = new Map();
@@ -304,16 +299,14 @@ export const Selector = props => {
 
 const stateToProps = ({clusterConfig, dirty}, {field}) => ({
   value: _.get(clusterConfig, field),
-  invalid: _.get(clusterConfig, toError(field))
-    || _.get(clusterConfig, toAsyncError(field))
-    || _.get(clusterConfig, toExtraDataError(field)),
+  invalid: _.get(clusterConfig, toError(field)) || _.get(clusterConfig, toExtraDataError(field)),
   isDirty: _.get(dirty, field),
   extraData: _.get(clusterConfig, toExtraData(field)),
   inFly: _.get(clusterConfig, toInFly(field)) || _.get(clusterConfig, toExtraDataInFly(field)),
 });
 
 const dispatchToProps = (dispatch, {field}) => ({
-  updateField: (path, value, invalid) => dispatch(configActions.updateField(path, value, invalid)),
+  updateField: (path, value) => dispatch(configActions.updateField(path, value)),
   makeDirty: () => dispatch(dirtyActions.add(field)),
   refreshExtraData: () => dispatch(configActions.refreshExtraData(field)),
   removeField: (i) => dispatch(configActions.removeField(field, i)),
@@ -383,16 +376,16 @@ export const Connect = connect(stateToProps, dispatchToProps)(Connect_);
 const stateToIsDeselected = ({clusterConfig}, {field}) => {
   field = `${DESELECTED_FIELDS}.${field}`;
   return {
-    field: field,
+    field,
     isDeselected: !!_.get(clusterConfig, field),
   };
 };
 
 export const Deselect = connect(
   stateToIsDeselected,
-  dispatch => ({setField: (k, v) => configActions.setIn(k, v, dispatch)})
-)(({field, isDeselected, setField}) => <span className="deselect">
-  <CheckBox id={field} value={!isDeselected} onValue={v => setField(field, !v)} />
+  {updateField: configActions.updateField}
+)(({field, isDeselected, updateField}) => <span className="deselect">
+  <CheckBox id={field} value={!isDeselected} onValue={v => updateField(field, !v)} />
 </span>);
 
 export const DeselectField = connect(stateToIsDeselected)(({children, isDeselected}) => React.cloneElement(
@@ -445,7 +438,7 @@ export class AsyncSelect extends React.Component {
 
     let options = availableValues.value;
     if (value && !options.map(r => r.value).includes(value)) {
-      options = [{label: value, value: value}].concat(options);
+      options = [{label: value, value}].concat(options);
     }
     const style = {};
     if (!onRefresh) {

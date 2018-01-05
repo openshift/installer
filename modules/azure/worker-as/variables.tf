@@ -82,3 +82,7 @@ variable "worker_count" {
   type        = "string"
   description = "Count of worker nodes to be created."
 }
+
+variable "fault_domains" {
+  type = "string"
+}

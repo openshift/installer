@@ -30,7 +30,7 @@ BIN_DIR="$ROOT/bin_test"
 
 MATCHBOX_VERSION=v0.6.1
 KUBECTL_VERSION=v1.6.4
-TERRAFORM_VERSION=0.10.7
+TERRAFORM_VERSION=0.11.1
 
 KUBECTL_URL="https://storage.googleapis.com/kubernetes-release/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl"
 TERRAFORM_URL="https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip"
@@ -278,8 +278,6 @@ test_cluster() {
   WORKER_COUNT=$(grep tectonic_worker_count "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}')
   export SMOKE_NODE_COUNT=$(( MASTER_COUNT + WORKER_COUNT ))
   export SMOKE_MANIFEST_PATHS=${ROOT}/build/${CLUSTER}/generated/
-  # shellcheck disable=SC2155
-  export SMOKE_MANIFEST_SELF_HOSTED_ETCD=$(grep tectonic_self_hosted_etcd "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}' | tr -d ' ')
   # shellcheck disable=SC2155
   export SMOKE_NETWORKING=$(grep tectonic_networking "$CONFIG" | awk -F "=" '{gsub(/"/, "", $2); print $2}' | tr -d ' ')
   bin/smoke -test.v -test.parallel=1 --cluster
