@@ -63,7 +63,7 @@ module "vpc" {
 }
 
 module "etcd" {
-  source = "../../modules/aws/etcd"
+  source = "../../modules/govcloud/etcd"
 
   base_domain             = "${var.tectonic_base_domain}"
   cluster_id              = "${module.tectonic.cluster_id}"
@@ -121,7 +121,7 @@ module "ignition_masters" {
 }
 
 module "masters" {
-  source = "../../modules/aws/master-asg"
+  source = "../../modules/govcloud/master-asg"
 
   assets_s3_location                   = "${aws_s3_bucket_object.tectonic_assets.bucket}/${aws_s3_bucket_object.tectonic_assets.key}"
   autoscaling_group_extra_tags         = "${var.tectonic_autoscaling_group_extra_tags}"
@@ -186,7 +186,7 @@ module "ignition_workers" {
 }
 
 module "workers" {
-  source = "../../modules/aws/worker-asg"
+  source = "../../modules/govcloud/worker-asg"
 
   autoscaling_group_extra_tags         = "${var.tectonic_autoscaling_group_extra_tags}"
   cluster_id                           = "${module.tectonic.cluster_id}"

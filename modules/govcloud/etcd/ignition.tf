@@ -8,6 +8,7 @@ data "ignition_config" "etcd" {
 
   files = [
     "${var.ign_etcd_crt_id_list}",
+    "${var.dns_server_ip != "" ? join("", data.ignition_file.node_resolv.*.id) : ""}",
   ]
 }
 
@@ -31,4 +32,21 @@ Environment="LOCKSMITHD_ENDPOINT=${var.tls_enabled ? "https" : "http"}://${var.c
 EOF
     },
   ]
+}
+
+// DNS Server resolution
+data "template_file" "node_resolv" {
+  count    = "${var.dns_server_ip != "" ? 1 : 0}"
+  template = "search us-gov-west-1.compute.internal\nnameserver ${var.dns_server_ip}"
+}
+
+data "ignition_file" "node_resolv" {
+  count      = "${var.dns_server_ip != "" ? 1 : 0}"
+  path       = "/etc/resolv.conf"
+  mode       = 0644
+  filesystem = "root"
+
+  content {
+    content = "${data.template_file.node_resolv.rendered}"
+  }
 }

@@ -8,6 +8,7 @@ data "ignition_config" "main" {
     "${var.ign_max_user_watches_id}",
     "${var.ign_s3_puller_id}",
     "${var.ign_ca_cert_id_list}",
+    "${var.dns_server_ip != "" ? join("", data.ignition_file.node_resolv.*.id) : ""}",
   ]
 
   systemd = ["${compact(list(
@@ -81,5 +82,22 @@ data "ignition_file" "rm_assets" {
 
   content {
     content = "${data.template_file.rm_assets.rendered}"
+  }
+}
+
+// DNS Server resolution
+data "template_file" "node_resolv" {
+  count    = "${var.dns_server_ip != "" ? 1 : 0}"
+  template = "search us-gov-west-1.compute.internal\nnameserver ${var.dns_server_ip}"
+}
+
+data "ignition_file" "node_resolv" {
+  count      = "${var.dns_server_ip != "" ? 1 : 0}"
+  path       = "/etc/resolv.conf"
+  mode       = 0644
+  filesystem = "root"
+
+  content {
+    content = "${data.template_file.node_resolv.rendered}"
   }
 }

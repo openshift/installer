@@ -1,6 +1,6 @@
 locals {
-  ami_owner = "595879546273"
-  arn       = "aws"
+  ami_owner = "190570271432"
+  arn       = "aws-us-gov"
 }
 
 data "aws_ami" "coreos_ami" {
