@@ -1,6 +1,6 @@
 locals {
-  ami_owner = "595879546273"
-  arn       = "aws"
+  ami_owner = "190570271432"
+  arn       = "aws-us-gov"
 }
 
 data "aws_ami" "coreos_ami" {
@@ -85,6 +85,15 @@ resource "aws_iam_role_policy" "etcd" {
       "Effect": "Allow",
       "Action": "ec2:DetachVolume",
       "Resource": "*"
+    },
+    {
+      "Action": [
+        "ecr:DescribeRepositories",
+        "ecr:ListImages",
+        "ecr:BatchGetImage"
+      ],
+      "Resource": "*",
+      "Effect": "Allow"
     },
     {
       "Action" : [
