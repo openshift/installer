@@ -294,39 +294,6 @@ const reducersTogether = combineReducers({
   },
 });
 
-function filterClusterConfig(cc = {}) {
-  Object.keys(cc).forEach(k => {
-    if (!DEFAULT_CLUSTER_CONFIG.hasOwnProperty(k)) {
-      console.error(`Removed clusterConfig.${k} because it's not in defaults.`);
-      delete cc[k];
-      return;
-    }
-    let defaultType;
-    let restoreType;
-    try {
-      defaultType = Object.getPrototypeOf(DEFAULT_CLUSTER_CONFIG[k]);
-    } catch (unused) {
-      defaultType = typeof DEFAULT_CLUSTER_CONFIG[k];
-    }
-    try {
-      restoreType = Object.getPrototypeOf(cc[k]);
-    } catch (unused) {
-      restoreType = typeof cc[k];
-    }
-    if (defaultType !== restoreType) {
-      console.error(`Removed clusterConfig.${k}. Should be ${defaultType} but was ${restoreType}`);
-      delete cc[k];
-      return;
-    }
-    if (cc[k].inFly) {
-      console.debug(`Set clusterConfig.${k}.inFly to false`);
-      cc[k].inFly = false;
-    }
-  });
-  delete cc.inFly;
-  return cc;
-}
-
 // Shim for tests
 export const reducer = (state, action) => {
   let restored;
@@ -338,7 +305,7 @@ export const reducer = (state, action) => {
     });
     restored.aws = _.defaults(restored.aws, DEFAULT_AWS);
     if (restored.clusterConfig) {
-      restored.clusterConfig = _.defaults(filterClusterConfig(restored.clusterConfig), DEFAULT_CLUSTER_CONFIG);
+      restored.clusterConfig = _.defaults(restored.clusterConfig, DEFAULT_CLUSTER_CONFIG);
     }
     break;
   default:
