@@ -13,8 +13,6 @@ describe('reducer', () => {
       type: restoreActionTypes.RESTORE_STATE,
       payload: saved,
     });
-    const initialJSON = JSON.stringify(initialState);
-    const restoredJSON = JSON.stringify(restoredState);
-    expect(initialJSON).toEqual(restoredJSON);
+    expect(initialState).toEqual(restoredState);
   });
 });
