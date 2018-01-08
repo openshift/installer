@@ -41,7 +41,7 @@
     "redux": "3.7.x",
     "redux-thunk": "2.2.x",
     "semver": "5.x",
-    "whatwg-fetch": "1.0.x"
+    "whatwg-fetch": "2.0.x"
   },
   "devDependencies": {
     "babel-plugin-syntax-async-functions": "6.x",
