@@ -38,7 +38,7 @@
     "react-dom": "15.6.x",
     "react-redux": "4.4.x",
     "react-router-dom": "4.2.x",
-    "redux": "3.5.x",
+    "redux": "3.7.x",
     "redux-thunk": "2.1.x",
     "semver": "5.x",
     "whatwg-fetch": "1.0.x"
