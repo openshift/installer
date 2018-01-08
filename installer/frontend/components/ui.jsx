@@ -104,7 +104,7 @@ const Field = withNav(connect(
       }
     },
     onBlur: e => {
-      if (props.blurry || e.target.value) {
+      if (e.target.value) {
         props.makeDirty();
       }
     },
