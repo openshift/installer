@@ -11,6 +11,7 @@ resource "template_dir" "payload_operators" {
     tectonic_cluo_operator_image       = "${var.tectonic_container_images["tectonic_cluo_operator"]}"
     kubernetes_addon_operator_image    = "${var.tectonic_container_images["kubernetes_addon_operator"]}"
     tectonic_alm_operator_image        = "${var.tectonic_container_images["tectonic_alm_operator"]}"
+    tectonic_utility_operator_image    = "${var.tectonic_container_images["tectonic_utility_operator"]}"
     image_re                           = "${var.tectonic_image_re}"
   }
 }
@@ -27,5 +28,6 @@ resource "template_dir" "payload_appversions" {
     tectonic_cluo_operator_version    = "${var.tectonic_versions["cluo"]}"
     kubernetes_addon_operator_version = "${var.tectonic_versions["kubernetes_addon"]}"
     tectonic_alm_operator_version     = "${var.tectonic_versions["alm"]}"
+    tectonic_utility_version          = "${var.tectonic_versions["tectonic-utility"]}"
   }
 }

@@ -71,22 +71,16 @@ variable "tectonic_container_images" {
     bootkube                     = "quay.io/coreos/bootkube:v0.8.1"
     calico                       = "quay.io/calico/node:v2.6.3"
     calico_cni                   = "quay.io/calico/cni:v1.11.1"
-    console                      = "quay.io/coreos/tectonic-console:v2.6.5"
-    error_server                 = "quay.io/coreos/tectonic-error-server:1.0"
     etcd                         = "quay.io/coreos/etcd:v3.1.8"
     etcd_operator                = "quay.io/coreos/etcd-operator:v0.5.0"
     flannel                      = "quay.io/coreos/flannel:v0.8.0-amd64"
     flannel_cni                  = "quay.io/coreos/flannel-cni:v0.2.0"
     hyperkube                    = "quay.io/coreos/hyperkube:v1.8.2_coreos.0"
-    identity                     = "quay.io/coreos/dex:v2.8.1"
-    ingress_controller           = "quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.9.0-beta.17"
     kenc                         = "quay.io/coreos/kenc:0.0.2"
     kube_version                 = "quay.io/coreos/kube-version:0.1.0"
     kube_version_operator        = "quay.io/coreos/kube-version-operator:v1.8.4-kvo.5"
     node_agent                   = "quay.io/coreos/node-agent:cd69b4a0f65b0d3a3b30edfce3bb184fd2a22c26"
     pod_checkpointer             = "quay.io/coreos/pod-checkpointer:e22cc0e3714378de92f45326474874eb602ca0ac"
-    stats_emitter                = "quay.io/coreos/tectonic-stats:6e882361357fe4b773adbf279cddf48cb50164c1"
-    stats_extender               = "quay.io/coreos/tectonic-stats-extender:487b3da4e175da96dabfb44fba65cdb8b823db2e"
     tectonic_channel_operator    = "quay.io/coreos/tectonic-channel-operator:0.6.2"
     tectonic_etcd_operator       = "quay.io/coreos/tectonic-etcd-operator:v0.0.2"
     tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.9.0"
@@ -94,6 +88,7 @@ variable "tectonic_container_images" {
     tectonic_torcx               = "quay.io/coreos/tectonic-torcx:v0.2.0"
     kubernetes_addon_operator    = "quay.io/coreos/kubernetes-addon-operator:4b83569d763dc95e1f61c77b31989fd3957bfc67"
     tectonic_alm_operator        = "quay.io/coreos/tectonic-alm-operator:0.2.1"
+    tectonic_utility_operator    = "quay.io/coreos/tectonic-utility-operator:fd342530b94b0addf41b3109d1fcd3adfd7f2101"
   }
 }
 
@@ -129,6 +124,7 @@ variable "tectonic_versions" {
     cluo             = "0.2.5"
     kubernetes_addon = "0.0.0"
     alm              = "0.2.1"
+    tectonic-utility = "0.1.0"
   }
 }
 
