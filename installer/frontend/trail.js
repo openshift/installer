@@ -51,7 +51,6 @@ const dryRunPage = {
   path: '/define/advanced',
   component: DryRun,
   title: 'Download Assets',
-  canReset: true,
 };
 
 const etcdPage = {
@@ -78,7 +77,6 @@ const TFPowerOnPage = {
   path: '/boot/tf/poweron',
   component: TF_PowerOn,
   title: 'Start Installation',
-  canReset: true,
 };
 
 const usersPage = {

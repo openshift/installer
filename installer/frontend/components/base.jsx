@@ -115,7 +115,7 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
 
       const nav = page => this.navigate(currentPage, page);
 
-      const {canNavigateForward} = currentPage.component;
+      const {canNavigateForward, canReset} = currentPage.component;
       const disableNext = canNavigateForward ? !canNavigateForward(state) : false;
 
       return (
@@ -159,7 +159,7 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
                 {currentPage.hidePager || <div className="wiz-form__actions">
                   <div className="wiz-form__actions__prev">
                     {t.previousFrom(currentPage) && <PreviousButton />}
-                    {currentPage.canReset && <ResetButton />}
+                    {canReset && canReset(state) && <ResetButton />}
                   </div>
                   <div className="wiz-form__actions__next">
                     {t.nextFrom(currentPage) && <NextButton disabled={disableNext} />}

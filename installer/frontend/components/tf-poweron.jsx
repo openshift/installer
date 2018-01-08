@@ -407,3 +407,6 @@ TF_PowerOn.canNavigateForward = ({cluster}) => {
 
   return ready;
 };
+
+// Don't allow resetting the wizard until Terraform has completed
+TF_PowerOn.canReset = ({cluster}) => _.get(cluster, 'status.terraform.status', '').toLowerCase() !== 'running';

@@ -27,3 +27,4 @@ export const DryRun = () => <div className="row">
 </div>;
 
 DryRun.canNavigateForward = () => false;
+DryRun.canReset = () => true;
