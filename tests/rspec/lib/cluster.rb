@@ -118,8 +118,8 @@ class Cluster
       .map { |pod| [pod[0], nodes[pod[1]]] }.to_h
   end
 
-  def forensic
-    save_kubernetes_events(@kubeconfig, @name)
+  def forensic(events = true)
+    save_kubernetes_events(@kubeconfig, @name) if events
 
     master_ip_addresses.each do |master_ip|
       save_docker_logs(master_ip, @name)
@@ -165,7 +165,7 @@ class Cluster
       end
     end
   rescue Timeout::Error
-    forensic
+    forensic(false)
     raise 'Applying cluster failed'
   end
 
@@ -256,6 +256,8 @@ class Cluster
       sleep 10
     end
 
+    puts 'Trying to collecting the logs...'
+    forensic(false) # Call forensic to collect logs when service timeout
     raise "timeout waiting for #{service} service to bootstrap on any of: #{ips}"
   end
 
