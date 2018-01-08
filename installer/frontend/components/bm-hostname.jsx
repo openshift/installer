@@ -39,7 +39,6 @@ export const BM_Hostname = () =>
         </Connect>
       </div>
     </div>
-    <hostNamesForm.Errors />
   </div>;
 
 BM_Hostname.canNavigateForward = hostNamesForm.canNavigateForward;

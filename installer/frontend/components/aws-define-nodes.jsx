@@ -119,7 +119,6 @@ export const AWS_DefineNodes = () => <div>
   <h3>Worker Nodes</h3>
   <br />
   <DefineNode type={AWS_WORKERS} max={MAX_WORKERS} />
-  <form.Errors />
   <hr />
   <h3>etcd Nodes</h3>
   <br />
