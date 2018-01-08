@@ -46,7 +46,6 @@ function setIn(object, path, value) {
 const reducersTogether = combineReducers({
 
   // State machine associated with server submissions
-  // Should not be saved or restored
   commitState: (state, action) => {
     if (!state) {
       return {
@@ -101,8 +100,7 @@ const reducersTogether = combineReducers({
     }
   },
 
-  // The user's intentions for their cluster. Should be
-  // saveable/restorable
+  // The user's intentions for their cluster
   clusterConfig: (state, action) => {
     if (!state) {
       return DEFAULT_CLUSTER_CONFIG;
@@ -168,8 +166,7 @@ const reducersTogether = combineReducers({
     }
   },
 
-  // Errors resulting from server states, user uploads, network issues,
-  // or other transient phenomena. Should not be saved or restored.
+  // Errors resulting from server states, user uploads, network issues, or other transient phenomena
   eventErrors: (state, action) => {
     if (!state) {
       return {};
@@ -185,8 +182,7 @@ const reducersTogether = combineReducers({
     }
   },
 
-  // Facts the server knows at load time, that we have to get asynchronously.
-  // Should not change value across restores. (so never save or restore it)
+  // Facts the server knows at load time, that we have to get asynchronously
   serverFacts: (state, action) => {
     if (state === undefined) {
       return {
@@ -214,7 +210,7 @@ const reducersTogether = combineReducers({
     }
   },
 
-  // The status of the cluster. Should be preserved across restores.
+  // The status of the cluster
   cluster: (state, action) => {
     if (!state) {
       return {
@@ -249,7 +245,7 @@ const reducersTogether = combineReducers({
     }
   },
 
-  // Stores the "dirtiness" of UI fields. Should be saved and restored
+  // Stores the "dirtiness" of UI fields
   dirty: (state, action) => {
     // this isArray check is just to prevent errors with old progress files & dev mode
     if (!state || _.isArray(state)) {
@@ -348,8 +344,8 @@ export const reducer = (state, action) => {
   return reducersTogether(restored, action);
 };
 
-// Preserves only the savable bits of state
+// Returns only the bits of state that should be saved and restored
 export const savable = (state) => {
   const {dirty, clusterConfig} = state;
-  return {dirty, clusterConfig};
+  return {dirty, clusterConfig: _.omit(clusterConfig, ['error', 'extra', 'extraError', 'extraInFly', 'inFly'])};
 };
