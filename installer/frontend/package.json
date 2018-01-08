@@ -60,7 +60,7 @@
     "jszip": "3.x",
     "nightwatch": "0.9.x",
     "request": "2.x",
-    "selenium-server": "3.5.x",
+    "selenium-server": "3.8.x",
     "watchify": "3.x"
   }
 }
