@@ -36,7 +36,7 @@
     "lodash": "4.x",
     "react": "15.6.x",
     "react-dom": "15.6.x",
-    "react-redux": "4.4.x",
+    "react-redux": "5.0.x",
     "react-router-dom": "4.2.x",
     "redux": "3.7.x",
     "redux-thunk": "2.1.x",
