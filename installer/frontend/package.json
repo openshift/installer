@@ -36,7 +36,6 @@
     "lodash": "4.x",
     "react": "15.3.x",
     "react-dom": "15.3.x",
-    "react-modal": "1.4.x",
     "react-redux": "4.4.x",
     "react-router-dom": "4.1.x",
     "redux": "3.5.x",
