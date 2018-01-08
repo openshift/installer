@@ -56,7 +56,7 @@
     "eslint": "4.x",
     "eslint-plugin-import": "2.x",
     "eslint-plugin-react": "7.x",
-    "jest-cli": "21.x",
+    "jest-cli": "22.x",
     "jszip": "3.x",
     "nightwatch": "0.9.x",
     "request": "2.x",
