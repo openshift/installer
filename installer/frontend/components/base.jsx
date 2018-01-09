@@ -5,7 +5,7 @@ import { connect } from 'react-redux';
 import { Route, Switch, withRouter } from 'react-router-dom';
 
 import { withNav } from '../nav';
-import { sections, trail } from '../trail';
+import { trail, trailSections } from '../trail';
 
 import { Loader } from './loader';
 import { PLATFORM_TYPE } from '../cluster-config';
@@ -13,8 +13,8 @@ import { TectonicGA } from '../tectonic-ga';
 import { Header } from './header';
 import { Footer } from './footer';
 
-const NavSection = ({canNavigateForward, currentPage, navigate, navSections, navTrail, title}) => {
-  const section = _.find(navTrail.sections, s => navSections.includes(s) && s.includes(currentPage));
+const NavSection = ({canNavigateForward, currentPage, navigate, sections, navTrail, title}) => {
+  const section = _.find(navTrail.sections, s => sections.includes(s) && s.includes(currentPage));
   let disabled = false;
 
   return <ul className="wiz-wizard__nav__section">
@@ -65,7 +65,7 @@ const stateToProps = (state, {history}) => {
 };
 
 // No components have the same path, so this is safe.
-const routes = _.uniq(_.flatMap(sections));
+const routes = _.uniq(_.flatMap(trailSections));
 
 const Wizard = withNav(withRouter(connect(stateToProps)(
   class Wizard_ extends React.Component {
@@ -142,15 +142,15 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
                 <NavSection
                   {...navProps}
                   title="1. Choose Cluster Type"
-                  navSections={[sections.choose]} />
+                  sections={[trailSections.choose]} />
                 <NavSection
                   {...navProps}
                   title="2. Define Cluster"
-                  navSections={[sections.defineBaremetal, sections.defineAWS]} />
+                  sections={[trailSections.defineBaremetal, trailSections.defineAWS]} />
                 <NavSection
                   {...navProps}
                   title="3. Boot Cluster"
-                  navSections={[sections.bootBaremetalTF, sections.bootAWSTF, sections.bootDryRun]} />
+                  sections={[trailSections.bootBaremetalTF, trailSections.bootAWSTF, trailSections.bootDryRun]} />
               </div>
               <div className="wiz-wizard__content wiz-wizard__cell">
                 <div className="wiz-form__header">

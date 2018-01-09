@@ -171,7 +171,7 @@ const loadingPage = {
   title: 'Tectonic',
 };
 
-export const sections = new Map([
+export const trailSections = new Map([
   ['loading', [
     loadingPage,
   ]],
@@ -215,15 +215,15 @@ export const sections = new Map([
   ]],
 ]);
 
-// Lets us do 'sections.defineAWS' instead of using sections.get('defineAWS')
-sections.forEach((v, k) => {
-  sections[k] = v;
+// Lets us do 'trailSections.defineAWS' instead of using trailSections.get('defineAWS')
+trailSections.forEach((v, k) => {
+  trailSections[k] = v;
 });
 
 // A Trail is an immutable representation of the navigation options available to a user.
 export class Trail {
-  constructor(trailSections, whitelist) {
-    this.sections = trailSections;
+  constructor(sections, whitelist) {
+    this.sections = sections;
     const sectionPages = this.sections.reduce((ls, l) => ls.concat(l), []);
     sectionPages.forEach(p => {
       if (!p.component) {
@@ -252,14 +252,14 @@ const doingStuff = ImmutableSet([commitPhases.REQUESTED, commitPhases.WAITING]);
 
 const platformToSection = {
   [AWS_TF]: {
-    choose: new Trail([sections.choose, sections.defineAWS]),
-    define: new Trail([sections.defineAWS], [submitDefinitionPage]),
-    boot: new Trail([sections.bootAWSTF]),
+    choose: new Trail([trailSections.choose, trailSections.defineAWS]),
+    define: new Trail([trailSections.defineAWS], [submitDefinitionPage]),
+    boot: new Trail([trailSections.bootAWSTF]),
   },
   [BARE_METAL_TF]: {
-    choose: new Trail([sections.choose, sections.defineBaremetal]),
-    define: new Trail([sections.defineBaremetal], [submitDefinitionPage]),
-    boot: new Trail([sections.bootBaremetalTF]),
+    choose: new Trail([trailSections.choose, trailSections.defineBaremetal]),
+    define: new Trail([trailSections.defineBaremetal], [submitDefinitionPage]),
+    boot: new Trail([trailSections.bootBaremetalTF]),
   },
 };
 
@@ -267,10 +267,10 @@ export const trail = ({cluster, clusterConfig, commitState}) => {
   const platform = clusterConfig[PLATFORM_TYPE];
 
   if (platform === '') {
-    return new Trail([sections.loading]);
+    return new Trail([trailSections.loading]);
   }
   if (!isSupported(platform)) {
-    return new Trail([sections.choose]);
+    return new Trail([trailSections.choose]);
   }
 
   const {phase} = commitState;
@@ -279,7 +279,7 @@ export const trail = ({cluster, clusterConfig, commitState}) => {
     // If we detected a dry run in progress when the app started, then clusterConfig will not be populated, so also
     // check for a Terraform "show" (dry run) action
     if (clusterConfig[DRY_RUN] || _.get(cluster, 'status.terraform.action') === 'show') {
-      return new Trail([sections.bootDryRun]);
+      return new Trail([trailSections.bootDryRun]);
     }
     return platformToSection[platform].boot;
   }
