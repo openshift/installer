@@ -491,7 +491,7 @@ def runRSpecTestBareMetal(testFilePath, credentials) {
               rbenv install -s
               gem install bundler
               bundler install
-              bundler exec rspec ${testFilePath} --format RspecTap::Formatter
+              bundler exec rspec ${testFilePath} --format RspecTap::Formatter --format RspecTap::Formatter --out ../../templogfiles/format=tap.log
               """
             }
           }
@@ -502,6 +502,11 @@ def runRSpecTestBareMetal(testFilePath, credentials) {
       } finally {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
         archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**'
+        withCredentials(credentials) {
+          sh """#!/bin/bash -xe
+          ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh baremetal-smoke-test-logs ${testFilePath}
+           """
+         }
         cleanWs notFailBuild: true
       }
     }
