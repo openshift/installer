@@ -4,9 +4,9 @@ metadata:
   name: cluster-config-v1
   namespace: kube-system
 data:
-  kvo-config: |
+  kco-config: |
     apiVersion: v1
-    kind: KubeVersionOperatorConfig
+    kind: KubeCoreOperatorConfig
     authConfig:
       oidc_client_id: ${oidc_client_id}
       oidc_issuer_url: ${oidc_issuer_url}
