@@ -24,6 +24,7 @@ ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --kubeconfig=/etc/kubernetes/kubeconfig \
   --require-kubeconfig \
   --cni-conf-dir=/etc/kubernetes/cni/net.d \
+  --cni-bin-dir=/var/lib/cni/bin \
   --network-plugin=cni \
   --lock-file=/var/run/lock/kubelet.lock \
   --exit-on-lock-contention \
@@ -31,7 +32,6 @@ ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --allow-privileged \
   --node-labels=${node_label} \
   ${node_taints_param} \
-  ${cni_bin_dir_flag} \
   --minimum-container-ttl-duration=6m0s \
   --cluster-dns=${cluster_dns_ip} \
   --cluster-domain=cluster.local \
