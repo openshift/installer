@@ -44,8 +44,8 @@ RUN chmod 777 -R /go
 ### Install Shellcheck, Terraform, NodeJS and Yarn
 ENV SHELLCHECK_VERSION="v0.4.6"
 ENV TERRAFORM_VERSION="0.11.1"
-ENV NODE_VERSION="v8.1.2"
-ENV YARN_VERSION="v0.24.6"
+ENV NODE_VERSION="v9.3.0"
+ENV YARN_VERSION="v1.3.2"
 ENV MATCHBOXVERSION="v0.6.1"
 # yarn needs a home writable by any user running the container
 ENV HOME /opt/home
@@ -79,7 +79,7 @@ RUN cd /tmp && \
     wget --quiet -O /tmp/yarn.tar.gz https://github.com/yarnpkg/yarn/releases/download/${YARN_VERSION}/yarn-${YARN_VERSION}.tar.gz && \
     tar xf yarn.tar.gz && \
     rm -f /tmp/yarn.tar.gz && \
-    mv /tmp/dist /usr/local/yarn && \
+    mv /tmp/yarn-${YARN_VERSION} /usr/local/yarn && \
     ln -s /usr/local/yarn/bin/yarn /usr/local/bin/yarn
 
 # Install Azure-cli
