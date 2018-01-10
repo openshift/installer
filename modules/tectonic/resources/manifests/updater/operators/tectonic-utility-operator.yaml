@@ -30,12 +30,18 @@ spec:
         volumeMounts:
         - name: cluster-config
           mountPath: /etc/cluster-config
-      restartPolicy: Always
       imagePullSecrets:
       - name: coreos-pull-secret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      restartPolicy: Always
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
       volumes:
       - name: cluster-config
         configMap:

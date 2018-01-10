@@ -26,6 +26,12 @@ spec:
         - --version-mapping=/upgrade-spec.yaml
       imagePullSecrets:
       - name: coreos-pull-secret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"

@@ -17,12 +17,6 @@ spec:
         k8s-app: tectonic-channel-operator
         tectonic-app-version-name: tectonic-cluster
     spec:
-      nodeSelector:
-        node-role.kubernetes.io/master: ""
-      tolerations:
-      - key: "node-role.kubernetes.io/master"
-        operator: "Exists"
-        effect: "NoSchedule"
       containers:
       - name: tectonic-channel-operator
         image: ${tectonic_channel_operator_image}
@@ -42,12 +36,18 @@ spec:
         volumeMounts:
         - name: certs
           mountPath: /etc/ssl/certs
-      restartPolicy: Always
       imagePullSecrets:
       - name: coreos-pull-secret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      restartPolicy: Always
       securityContext:
         runAsNonRoot: true
         runAsUser: 65534
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
       volumes:
       - name: certs
         hostPath:

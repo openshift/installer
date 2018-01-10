@@ -22,8 +22,6 @@ spec:
       labels:
         k8s-app: tectonic-alm-operator
     spec:
-      imagePullSecrets:
-        - name: coreos-pull-secret
       containers:
       - name: tectonic-alm-operator
         image: ${tectonic_alm_operator_image}
@@ -32,3 +30,11 @@ spec:
         - --operator-name=tectonic-alm-operator
         - --appversion-name=tectonic-alm-operator
         - --v=2
+      imagePullSecrets:
+        - name: coreos-pull-secret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
