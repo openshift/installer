@@ -68,6 +68,6 @@ output "aws_console_dns_name" {
   value = "${aws_elb.console.dns_name}"
 }
 
-output "aws_elb_onsole_zone_id" {
+output "aws_elb_console_zone_id" {
   value = "${aws_elb.console.zone_id}"
 }
