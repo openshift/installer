@@ -504,7 +504,7 @@ def runRSpecTestBareMetal(testFilePath, credentials) {
         archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**'
         withCredentials(credentials) {
           sh """#!/bin/bash -xe
-          ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh baremetal-smoke-test-logs ${testFilePath}
+          ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs ${testFilePath}
            """
          }
         cleanWs notFailBuild: true
