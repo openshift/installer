@@ -3,7 +3,7 @@
   "kind": "Secret",
   "type": "kubernetes.io/dockerconfigjson",
   "metadata": {
-    "namespace": "tectonic-system",
+    "namespace": "kube-system",
     "name": "coreos-pull-secret"
   },
   "data": {

@@ -27,6 +27,8 @@ module "bootkube" {
   oidc_client_id      = "tectonic-kubectl"
   oidc_ca_cert        = "${module.ingress_certs.ca_cert_pem}"
 
+  pull_secret_path = "${pathexpand(var.tectonic_pull_secret_path)}"
+
   apiserver_cert_pem   = "${module.kube_certs.apiserver_cert_pem}"
   apiserver_key_pem    = "${module.kube_certs.apiserver_key_pem}"
   etcd_ca_cert_pem     = "${module.etcd_certs.etcd_ca_crt_pem}"
@@ -67,7 +69,9 @@ module "bootkube" {
 
   pod_eviction_timeout = "220s"
 
-  cloud_config_path = ""
+  cloud_config_path   = ""
+  tectonic_networking = "${var.tectonic_networking}"
+  calico_mtu          = "1480"
 }
 
 module "tectonic" {
@@ -120,30 +124,6 @@ module "tectonic" {
   cluster_cidr        = "${var.tectonic_cluster_cidr}"
 }
 
-module "flannel_vxlan" {
-  source = "../../modules/net/flannel_vxlan"
-
-  cluster_cidr     = "${var.tectonic_cluster_cidr}"
-  enabled          = "${var.tectonic_networking == "flannel"}"
-  container_images = "${var.tectonic_container_images}"
-}
-
-module "calico" {
-  source = "../../modules/net/calico"
-
-  container_images = "${var.tectonic_container_images}"
-  cluster_cidr     = "${var.tectonic_cluster_cidr}"
-  enabled          = "${var.tectonic_networking == "calico"}"
-}
-
-module "canal" {
-  source = "../../modules/net/canal"
-
-  container_images = "${var.tectonic_container_images}"
-  cluster_cidr     = "${var.tectonic_cluster_cidr}"
-  enabled          = "${var.tectonic_networking == "canal"}"
-}
-
 data "archive_file" "assets" {
   type       = "zip"
   source_dir = "./generated/"
@@ -158,5 +138,5 @@ data "archive_file" "assets" {
   # Additionally, data sources do not support managing any lifecycle whatsoever,
   # and therefore, the archive is never deleted. To avoid cluttering the module
   # folder, we write it in the Terraform managed hidden folder `.terraform`.
-  output_path = "./.terraform/generated_${sha1("${module.etcd_certs.id} ${module.tectonic.id} ${module.bootkube.id} ${module.flannel_vxlan.id} ${module.calico.id} ${module.canal.id}")}.zip"
+  output_path = "./.terraform/generated_${sha1("${module.etcd_certs.id} ${module.tectonic.id} ${module.bootkube.id}")}.zip"
 }

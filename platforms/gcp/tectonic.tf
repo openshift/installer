@@ -59,6 +59,11 @@ module "bootkube" {
   etcd_backup_storage_class = "${var.tectonic_etcd_backup_storage_class}"
   etcd_endpoints            = "${data.template_file.etcd_hostname_list.*.rendered}"
   master_count              = "${var.tectonic_master_count}"
+
+  tectonic_networking = "${var.tectonic_networking}"
+  calico_mtu          = "1440"
+  cluster_cidr        = "${var.tectonic_cluster_cidr}"
+  pull_secret_path    = "${pathexpand(var.tectonic_pull_secret_path)}"
 }
 
 module "tectonic" {
@@ -111,30 +116,6 @@ module "tectonic" {
   cluster_cidr        = "${var.tectonic_cluster_cidr}"
 }
 
-module "flannel_vxlan" {
-  source = "../../modules/net/flannel_vxlan"
-
-  cluster_cidr     = "${var.tectonic_cluster_cidr}"
-  enabled          = "${var.tectonic_networking == "flannel"}"
-  container_images = "${var.tectonic_container_images}"
-}
-
-module "calico" {
-  source = "../../modules/net/calico"
-
-  container_images = "${var.tectonic_container_images}"
-  cluster_cidr     = "${var.tectonic_cluster_cidr}"
-  enabled          = "${var.tectonic_networking == "calico"}"
-}
-
-module "canal" {
-  source = "../../modules/net/canal"
-
-  container_images = "${var.tectonic_container_images}"
-  cluster_cidr     = "${var.tectonic_cluster_cidr}"
-  enabled          = "${var.tectonic_networking == "canal"}"
-}
-
 data "archive_file" "assets" {
   type       = "zip"
   source_dir = "${path.cwd}/generated/"
@@ -149,5 +130,5 @@ data "archive_file" "assets" {
   # Additionally, data sources do not support managing any lifecycle whatsoever,
   # and therefore, the archive is never deleted. To avoid cluttering the module
   # folder, we write it in the TerraForm managed hidden folder `.terraform`.
-  output_path = "./.terraform/generated_${sha1("${module.etcd_certs.id} ${module.tectonic.id} ${module.bootkube.id} ${module.flannel_vxlan.id} ${module.calico.id} ${module.canal.id}")}.zip"
+  output_path = "./.terraform/generated_${sha1("${module.etcd_certs.id} ${module.tectonic.id} ${module.bootkube.id}")}.zip"
 }

@@ -94,6 +94,11 @@ module "bootkube" {
   master_count = "${var.tectonic_master_count}"
 
   cloud_config_path = ""
+
+  tectonic_networking = "${var.tectonic_networking}"
+  calico_mtu          = "1480"
+  cluster_cidr        = "${var.tectonic_cluster_cidr}"
+  pull_secret_path    = "${pathexpand(var.tectonic_pull_secret_path)}"
 }
 
 module "tectonic" {
@@ -188,7 +193,6 @@ module "ignition_masters" {
   ingress_ca_cert_pem       = "${module.ingress_certs.ca_cert_pem}"
   kube_ca_cert_pem          = "${module.kube_certs.ca_cert_pem}"
   kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
-  kubelet_cni_bin_dir       = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
   kubelet_debug_config      = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
@@ -234,7 +238,6 @@ module "ignition_workers" {
   ingress_ca_cert_pem     = "${module.ingress_certs.ca_cert_pem}"
   kube_ca_cert_pem        = "${module.kube_certs.ca_cert_pem}"
   kube_dns_service_ip     = "${module.bootkube.kube_dns_service_ip}"
-  kubelet_cni_bin_dir     = "${var.tectonic_networking == "calico" || var.tectonic_networking == "canal" ? "/var/lib/cni/bin" : "" }"
   kubelet_debug_config    = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label      = "node-role.kubernetes.io/node"
   kubelet_node_taints     = ""
@@ -290,28 +293,4 @@ module "dns" {
   worker_ip_addresses       = "${flatten(openstack_networking_port_v2.worker.*.all_fixed_ips)}"
   worker_public_ips         = "${openstack_networking_floatingip_v2.worker.*.address}"
   worker_public_ips_enabled = "${var.tectonic_openstack_disable_floatingip ? false : true}"
-}
-
-module "flannel_vxlan" {
-  source = "../../../modules/net/flannel_vxlan"
-
-  cluster_cidr     = "${var.tectonic_cluster_cidr}"
-  enabled          = "${var.tectonic_networking == "flannel"}"
-  container_images = "${var.tectonic_container_images}"
-}
-
-module "calico" {
-  source = "../../../modules/net/calico"
-
-  container_images = "${var.tectonic_container_images}"
-  cluster_cidr     = "${var.tectonic_cluster_cidr}"
-  enabled          = "${var.tectonic_networking == "calico"}"
-}
-
-module "canal" {
-  source = "../../../modules/net/canal"
-
-  container_images = "${var.tectonic_container_images}"
-  cluster_cidr     = "${var.tectonic_cluster_cidr}"
-  enabled          = "${var.tectonic_networking == "canal"}"
 }

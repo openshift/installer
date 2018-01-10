@@ -27,6 +27,7 @@ resource "template_dir" "tectonic" {
     tectonic_cluo_operator_image       = "${var.container_images["tectonic_cluo_operator"]}"
     tectonic_alm_operator_image        = "${var.container_images["tectonic_alm_operator"]}"
     tectonic_utility_operator_image    = "${var.container_images["tectonic_utility_operator"]}"
+    tectonic_network_operator_image    = "${var.container_images["tectonic_network_operator"]}"
 
     tectonic_monitoring_auth_base_image = "${var.container_base_images["tectonic_monitoring_auth"]}"
     config_reload_base_image            = "${var.container_base_images["config_reload"]}"
@@ -49,6 +50,7 @@ resource "template_dir" "tectonic" {
     kubernetes_addon_operator_version = "${var.versions["kubernetes_addon"]}"
     tectonic_alm_operator_version     = "${var.versions["alm"]}"
     tectonic_utility_version          = "${var.versions["tectonic-utility"]}"
+    tectonic_network_operator_version = "${var.versions["tno"]}"
 
     etcd_cluster_size = "${var.master_count > 2 ? 3 : 1}"
 

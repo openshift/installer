@@ -11,10 +11,6 @@ EOF
   type = "string"
 }
 
-variable "kubelet_cni_bin_dir" {
-  type = "string"
-}
-
 variable "kubelet_debug_config" {
   type        = "string"
   default     = ""
