@@ -1,5 +1,5 @@
 locals {
-  calico_config_yaml   = "${var.tectonic_networking == "calico" ? "calicoConfig:\n    mtu: ${var.calico_mtu}" : ""}"
+  calico_config_yaml   = "${var.tectonic_networking == "calico-ipip" ? "calicoConfig:\n    mtu: ${var.calico_mtu}" : ""}"
   network_config_yaml  = "${join("\n", compact(list(local.network_profile_yaml, local.pod_cidr_yaml, local.calico_config_yaml)))}"
   network_profile_yaml = "networkProfile: ${var.tectonic_networking}"
   pod_cidr_yaml        = "${var.tectonic_networking != "none" ? "podCIDR: ${var.cluster_cidr}" : ""}"
