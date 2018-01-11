@@ -121,6 +121,9 @@ export const getTectonicDomain = (cc) => {
   if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     return cc[BM_TECTONIC_DOMAIN];
   }
+  if (!cc[CLUSTER_SUBDOMAIN]) {
+    return;
+  }
   return cc[CLUSTER_SUBDOMAIN] + (cc[CLUSTER_SUBDOMAIN].endsWith('.') ? '' : '.') + getAwsZoneDomain(cc);
 };
 
