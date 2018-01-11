@@ -89,7 +89,7 @@ variable "tectonic_container_images" {
     kubernetes_addon_operator    = "quay.io/coreos/kubernetes-addon-operator:4b83569d763dc95e1f61c77b31989fd3957bfc67"
     tectonic_alm_operator        = "quay.io/coreos/tectonic-alm-operator:0.2.1"
     tectonic_utility_operator    = "quay.io/coreos/tectonic-utility-operator:fd342530b94b0addf41b3109d1fcd3adfd7f2101"
-    tectonic_network_operator    = "quay.io/coreos/tectonic-network-operator:6b88188085ca3790ea44ae1beafc3cd956e1cbfe"
+    tectonic_network_operator    = "quay.io/coreos/tectonic-network-operator:5de83dde5aab8532cb5d1046de3f04193ac2d827"
   }
 }
 
@@ -465,7 +465,7 @@ variable "tectonic_networking" {
 
 - "canal": [ALPHA] enables overlay networking including network policy. Overlay is implemented by flannel using VXLAN. Network policy is implemented by Calico.
 
-- "calico": [ALPHA] enables BGP based networking. Routing and network policy is implemented by Calico. Note this has been tested on baremetal installations only.
+- "calico-ipip": [ALPHA] enables BGP based networking. Routing and network policy is implemented by Calico. Note this has been tested on baremetal installations only.
 
 - "none": disables the installation of any Pod level networking layer provided by Tectonic. By setting this value, users are expected to deploy their own solution to enable network connectivity for Pods and Services.
 EOF
