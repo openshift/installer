@@ -9,5 +9,5 @@ spec:
   desiredVersion: ${kubernetes_addon_operator_version}
   paused: false
 status:
-  currentVersion: 
+  currentVersion:
   paused: false

@@ -4,93 +4,27 @@ resource "template_dir" "bootkube" {
   destination_dir = "./generated/manifests"
 
   vars {
-    hyperkube_image                   = "${var.container_images["hyperkube"]}"
-    pod_checkpointer_image            = "${var.container_images["pod_checkpointer"]}"
     tectonic_network_operator_image   = "${var.container_images["tectonic_network_operator"]}"
     tectonic_network_operator_version = "${var.versions["tno"]}"
 
-    etcd_servers = "${
-      var.etcd_tls_enabled
-          ? join(",", formatlist("https://%s:2379", var.etcd_endpoints))
-          : join(",", formatlist("http://%s:2379", var.etcd_endpoints))
-      }"
+    kco_config = "${indent(4, chomp(data.template_file.kco-config_yaml.rendered))}"
 
-    etcd_service_ip           = "${cidrhost(var.service_cidr, 15)}"
-    bootstrap_etcd_service_ip = "${cidrhost(var.service_cidr, 20)}"
-
-    cloud_provider             = "${var.cloud_provider}"
-    cloud_provider_config      = "${var.cloud_provider_config}"
-    cloud_provider_config_flag = "${var.cloud_provider_config != "" ? "- --cloud-config=/etc/kubernetes/cloud/config" : "# no cloud provider config given"}"
-
-    cluster_cidr        = "${var.cluster_cidr}"
-    service_cidr        = "${var.service_cidr}"
-    kube_dns_service_ip = "${cidrhost(var.service_cidr, 10)}"
-    advertise_address   = "${var.advertise_address}"
-
-    anonymous_auth      = "${var.anonymous_auth}"
-    oidc_issuer_url     = "${var.oidc_issuer_url}"
-    oidc_client_id      = "${var.oidc_client_id}"
-    oidc_username_claim = "${var.oidc_username_claim}"
-    oidc_groups_claim   = "${var.oidc_groups_claim}"
-    oidc_ca_cert        = "${base64encode(var.oidc_ca_cert)}"
-
-    pull_secret = "${base64encode(file(var.pull_secret_path))}"
+    calico_mtu            = "${var.calico_mtu}"
+    cloud_provider_config = "${var.cloud_provider_config}"
+    cluster_cidr          = "${var.cluster_cidr}"
+    tectonic_networking   = "${var.tectonic_networking}"
 
     kube_ca_cert       = "${base64encode(var.kube_ca_cert_pem)}"
     apiserver_key      = "${base64encode(var.apiserver_key_pem)}"
     apiserver_cert     = "${base64encode(var.apiserver_cert_pem)}"
+    oidc_ca_cert       = "${base64encode(var.oidc_ca_cert)}"
+    pull_secret        = "${base64encode(file(var.pull_secret_path))}"
     serviceaccount_pub = "${base64encode(tls_private_key.service_account.public_key_pem)}"
     serviceaccount_key = "${base64encode(tls_private_key.service_account.private_key_pem)}"
-
-    etcd_ca_flag   = "${var.etcd_ca_cert_pem != "" ? "- --etcd-cafile=/etc/kubernetes/secrets/etcd-client-ca.crt" : "# no etcd-client-ca.crt given" }"
-    etcd_cert_flag = "${var.etcd_client_cert_pem != "" ? "- --etcd-certfile=/etc/kubernetes/secrets/etcd-client.crt" : "# no etcd-client.crt given" }"
-    etcd_key_flag  = "${var.etcd_client_key_pem != "" ? "- --etcd-keyfile=/etc/kubernetes/secrets/etcd-client.key" : "# no etcd-client.key given" }"
 
     etcd_ca_cert     = "${base64encode(var.etcd_ca_cert_pem)}"
     etcd_client_cert = "${base64encode(var.etcd_client_cert_pem)}"
     etcd_client_key  = "${base64encode(var.etcd_client_key_pem)}"
-
-    kubernetes_version = "${replace(var.versions["kubernetes"], "+", "-")}"
-
-    master_count              = "${var.master_count}"
-    node_monitor_grace_period = "${var.node_monitor_grace_period}"
-    pod_eviction_timeout      = "${var.pod_eviction_timeout}"
-
-    cloud_provider_profile = "${var.cloud_provider != "" ? "${var.cloud_provider}" : "metal"}"
-    cloud_config_path      = "${var.cloud_config_path}"
-
-    cluster_cidr        = "${var.cluster_cidr}"
-    tectonic_networking = "${var.tectonic_networking}"
-    calico_mtu          = "${var.calico_mtu}"
-  }
-}
-
-# Self-hosted bootstrapping manifests (resources/generated/manifests-bootstrap/)
-resource "template_dir" "bootkube_bootstrap" {
-  source_dir      = "${path.module}/resources/bootstrap-manifests"
-  destination_dir = "./generated/bootstrap-manifests"
-
-  vars {
-    hyperkube_image = "${var.container_images["hyperkube"]}"
-    etcd_image      = "${var.container_images["etcd"]}"
-
-    etcd_servers = "${
-      var.etcd_tls_enabled
-          ? join(",", formatlist("https://%s:2379", var.etcd_endpoints))
-          : join(",", formatlist("http://%s:2379", var.etcd_endpoints))
-      }"
-
-    etcd_ca_flag   = "${var.etcd_ca_cert_pem != "" ? "- --etcd-cafile=/etc/kubernetes/secrets/etcd-client-ca.crt" : "# no etcd-client-ca.crt given" }"
-    etcd_cert_flag = "${var.etcd_client_cert_pem != "" ? "- --etcd-certfile=/etc/kubernetes/secrets/etcd-client.crt" : "# no etcd-client.crt given" }"
-    etcd_key_flag  = "${var.etcd_client_key_pem != "" ? "- --etcd-keyfile=/etc/kubernetes/secrets/etcd-client.key" : "# no etcd-client.key given" }"
-
-    cloud_provider             = "${var.cloud_provider}"
-    cloud_provider_config      = "${var.cloud_provider_config}"
-    cloud_provider_config_flag = "${var.cloud_provider_config != "" ? "- --cloud-config=/etc/kubernetes/cloud/config" : "# no cloud provider config given"}"
-
-    advertise_address = "${var.advertise_address}"
-    cluster_cidr      = "${var.cluster_cidr}"
-    service_cidr      = "${var.service_cidr}"
   }
 }
 
@@ -112,12 +46,46 @@ resource "local_file" "kubeconfig" {
   filename = "./generated/auth/kubeconfig"
 }
 
+# kvo-config.yaml (resources/generated/kco-config.yaml)
+data "template_file" "kco-config_yaml" {
+  template = "${file("${path.module}/resources/kco-config.yaml")}"
+
+  vars {
+    cloud_config_path      = "${var.cloud_config_path}"
+    cloud_provider_profile = "${var.cloud_provider != "" ? "${var.cloud_provider}" : "metal"}"
+
+    advertise_address = "${var.advertise_address}"
+    cluster_cidr      = "${var.cluster_cidr}"
+
+    etcd_servers = "${
+      var.etcd_tls_enabled
+          ? join(",", formatlist("https://%s:2379", var.etcd_endpoints))
+          : join(",", formatlist("http://%s:2379", var.etcd_endpoints))
+      }"
+
+    service_cidr = "${var.service_cidr}"
+
+    oidc_client_id      = "${var.oidc_client_id}"
+    oidc_groups_claim   = "${var.oidc_groups_claim}"
+    oidc_issuer_url     = "${var.oidc_issuer_url}"
+    oidc_username_claim = "${var.oidc_username_claim}"
+
+    master_count = "${var.master_count}"
+  }
+}
+
+resource "local_file" "kco-config_yaml" {
+  content  = "${data.template_file.kco-config_yaml.rendered}"
+  filename = "./generated/kco-config.yaml"
+}
+
 # bootkube.sh (resources/generated/bootkube.sh)
 data "template_file" "bootkube_sh" {
   template = "${file("${path.module}/resources/bootkube.sh")}"
 
   vars {
-    bootkube_image = "${var.container_images["bootkube"]}"
+    bootkube_image           = "${var.container_images["bootkube"]}"
+    kube_core_renderer_image = "${var.container_images["kube_core_renderer"]}"
   }
 }
 

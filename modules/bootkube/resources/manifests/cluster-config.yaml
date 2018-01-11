@@ -2,26 +2,10 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: cluster-config-v1
-  namespace: kube-system 
+  namespace: kube-system
 data:
   kco-config: |
-    apiVersion: v1
-    kind: KubeCoreOperatorConfig
-    authConfig:
-      oidc_client_id: ${oidc_client_id}
-      oidc_issuer_url: ${oidc_issuer_url}
-      oidc_groups_claim: ${oidc_groups_claim}
-      oidc_username_claim: ${oidc_username_claim}
-    cloudProviderConfig:
-      cloud_config_path: ${cloud_config_path}
-      cloud_provider_profile: ${cloud_provider_profile}
-    networkConfig:
-      advertise_address: ${advertise_address}
-      cluster_cidr: ${cluster_cidr}
-      etcd_servers: ${etcd_servers}
-      service_cidr: ${service_cidr}
-    initialConfig:
-      initial_master_count: ${master_count}
+    ${kco_config}
   network-config: |
     apiVersion: v1
     kind: NetworkConfig

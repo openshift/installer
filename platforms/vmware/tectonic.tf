@@ -62,7 +62,6 @@ module "bootkube" {
   cluster_cidr = "${var.tectonic_cluster_cidr}"
 
   advertise_address = "0.0.0.0"
-  anonymous_auth    = "false"
 
   oidc_username_claim = "email"
   oidc_groups_claim   = "groups"
@@ -82,9 +81,7 @@ module "bootkube" {
   kubelet_cert_pem     = "${module.kube_certs.kubelet_cert_pem}"
   kubelet_key_pem      = "${module.kube_certs.kubelet_key_pem}"
 
-  etcd_backup_size          = "${var.tectonic_etcd_backup_size}"
-  etcd_backup_storage_class = "${var.tectonic_etcd_backup_storage_class}"
-  etcd_endpoints            = "${formatlist("%s.%s", values(var.tectonic_vmware_etcd_hostnames), var.tectonic_base_domain)}"
+  etcd_endpoints = "${formatlist("%s.%s", values(var.tectonic_vmware_etcd_hostnames), var.tectonic_base_domain)}"
 
   master_count = "${var.tectonic_master_count}"
 

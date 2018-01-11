@@ -69,18 +69,11 @@ variable "tectonic_container_images" {
     awscli                       = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
     gcloudsdk                    = "google/cloud-sdk:178.0.0-alpine"
     bootkube                     = "quay.io/coreos/bootkube:v0.8.1"
-    calico                       = "quay.io/calico/node:v2.6.3"
-    calico_cni                   = "quay.io/calico/cni:v1.11.1"
     etcd                         = "quay.io/coreos/etcd:v3.1.8"
     etcd_operator                = "quay.io/coreos/etcd-operator:v0.5.0"
-    flannel                      = "quay.io/coreos/flannel:v0.8.0-amd64"
-    flannel_cni                  = "quay.io/coreos/flannel-cni:v0.2.0"
-    hyperkube                    = "quay.io/coreos/hyperkube:v1.8.2_coreos.0"
-    kenc                         = "quay.io/coreos/kenc:0.0.2"
-    kube_version                 = "quay.io/coreos/kube-version:0.1.0"
+    hyperkube                    = "quay.io/coreos/hyperkube:v1.9.1_coreos.0"
+    kube_core_renderer           = "quay.io/coreos/kube-core-renderer-dev:79403c0864d4a98773d92d01998124c096faf59f"
     kube_version_operator        = "quay.io/coreos/kube-version-operator:v1.8.4-kvo.5"
-    node_agent                   = "quay.io/coreos/node-agent:cd69b4a0f65b0d3a3b30edfce3bb184fd2a22c26"
-    pod_checkpointer             = "quay.io/coreos/pod-checkpointer:e22cc0e3714378de92f45326474874eb602ca0ac"
     tectonic_channel_operator    = "quay.io/coreos/tectonic-channel-operator:0.6.2"
     tectonic_etcd_operator       = "quay.io/coreos/tectonic-etcd-operator:v0.0.2"
     tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.9.0"
@@ -469,18 +462,6 @@ variable "tectonic_networking" {
 
 - "none": disables the installation of any Pod level networking layer provided by Tectonic. By setting this value, users are expected to deploy their own solution to enable network connectivity for Pods and Services.
 EOF
-}
-
-variable "tectonic_etcd_backup_size" {
-  type        = "string"
-  description = "(optional) The size in MB of the PersistentVolume used for handling etcd backups."
-  default     = "512"
-}
-
-variable "tectonic_etcd_backup_storage_class" {
-  type        = "string"
-  default     = ""
-  description = "(optional) The name of an existing Kubernetes StorageClass that will be used for handling etcd backups."
 }
 
 variable "tectonic_bootstrap_upgrade_cl" {

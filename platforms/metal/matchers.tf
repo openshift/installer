@@ -109,9 +109,8 @@ resource "matchbox_group" "worker" {
     ssh_authorized_key = "${var.tectonic_ssh_authorized_key}"
 
     # extra data
-    kubelet_image_url  = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$1")}"
-    kubelet_image_tag  = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$2")}"
-    kube_version_image = "${var.tectonic_container_images["kube_version"]}"
+    kubelet_image_url = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$1")}"
+    kubelet_image_tag = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$2")}"
 
     ign_custom_ca_certs_json               = "${jsonencode(join("\n", module.ignition_workers.ca_cert_pem_list))}"
     ign_docker_dropin_json                 = "${jsonencode(module.ignition_workers.docker_dropin_rendered)}"

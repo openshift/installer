@@ -19,7 +19,8 @@ output "id" {
   value = "${sha1("
   ${local_file.kubeconfig.id}
   ${local_file.bootkube_sh.id}
-  ${template_dir.bootkube.id} ${template_dir.bootkube_bootstrap.id}
+  ${local_file.kco-config_yaml.id}
+  ${template_dir.bootkube.id}
   ")}"
 }
 

@@ -2,7 +2,7 @@ apiVersion: apps/v1beta2
 kind: DaemonSet
 metadata:
   name: tectonic-network-operator
-  namespace: kube-system 
+  namespace: kube-system
   labels:
     k8s-app: tectonic-network-operator
     managed-by-channel-operator: "true"

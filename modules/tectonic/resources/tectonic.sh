@@ -100,7 +100,7 @@ asset_cleanup() {
   echo "Cleaning up installation assets"
 
   # shellcheck disable=SC2034
-  for d in "manifests" "auth" "bootstrap-manifests" "net-manifests" "tectonic" "tls"; do
+  for d in "manifests" "auth" "tectonic" "tls"; do
       rm -rf "$${ASSETS_PATH:?}/$${d:?}/"*
   done
 
@@ -154,7 +154,6 @@ echo "Creating Operators"
 kubectl create -f updater/tectonic-channel-operator-kind.yaml
 kubectl create -f updater/app-version-kind.yaml
 kubectl create -f updater/migration-status-kind.yaml
-kubectl create -f updater/node-agent.yaml
 kubectl create -f updater/tectonic-monitoring-config.yaml
 
 wait_for_crd tectonic-system channeloperatorconfigs.tco.coreos.com

@@ -34,7 +34,6 @@ module "bootkube" {
   cluster_cidr = "${var.tectonic_cluster_cidr}"
 
   advertise_address = "0.0.0.0"
-  anonymous_auth    = "false"
 
   oidc_ca_cert        = "${module.ingress_certs.ca_cert_pem}"
   oidc_client_id      = "tectonic-kubectl"
@@ -54,11 +53,9 @@ module "bootkube" {
   kubelet_cert_pem     = "${module.kube_certs.kubelet_cert_pem}"
   kubelet_key_pem      = "${module.kube_certs.kubelet_key_pem}"
 
-  cloud_config_path         = ""
-  etcd_backup_size          = "${var.tectonic_etcd_backup_size}"
-  etcd_backup_storage_class = "${var.tectonic_etcd_backup_storage_class}"
-  etcd_endpoints            = "${data.template_file.etcd_hostname_list.*.rendered}"
-  master_count              = "${var.tectonic_master_count}"
+  cloud_config_path = ""
+  etcd_endpoints    = "${data.template_file.etcd_hostname_list.*.rendered}"
+  master_count      = "${var.tectonic_master_count}"
 
   tectonic_networking = "${var.tectonic_networking}"
   calico_mtu          = "1440"

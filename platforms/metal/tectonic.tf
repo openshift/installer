@@ -17,7 +17,6 @@ module "bootkube" {
   cluster_cidr = "${var.tectonic_cluster_cidr}"
 
   advertise_address = "0.0.0.0"
-  anonymous_auth    = "false"
 
   oidc_username_claim = "email"
   oidc_groups_claim   = "groups"
@@ -45,9 +44,6 @@ module "bootkube" {
       ? join(",", var.tectonic_metal_controller_domains)
       : join(",", var.tectonic_etcd_servers)
     )}"
-
-  etcd_backup_size          = "${var.tectonic_etcd_backup_size}"
-  etcd_backup_storage_class = "${var.tectonic_etcd_backup_storage_class}"
 
   master_count = "${length(var.tectonic_metal_controller_names)}"
 

@@ -45,6 +45,7 @@ var (
 		"tectonic/updater/app_versions/app-version-tectonic-etcd.yaml",
 		"tectonic/updater/operators/tectonic-etcd-operator.yaml",
 		"bootstrap",
+		"kco-config.yaml",
 	}
 
 	// equivalentKindRemapping is used by resourceIdentifier to map different

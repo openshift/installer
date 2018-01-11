@@ -20,7 +20,6 @@ module "bootkube" {
   cluster_cidr = "${var.tectonic_cluster_cidr}"
 
   advertise_address = "0.0.0.0"
-  anonymous_auth    = "false"
 
   oidc_username_claim = "email"
   oidc_groups_claim   = "groups"
@@ -42,32 +41,8 @@ module "bootkube" {
   kubelet_cert_pem     = "${module.kube_certs.kubelet_cert_pem}"
   kubelet_key_pem      = "${module.kube_certs.kubelet_key_pem}"
 
-  etcd_backup_size          = "${var.tectonic_etcd_backup_size}"
-  etcd_backup_storage_class = "${var.tectonic_etcd_backup_storage_class}"
-  etcd_endpoints            = "${module.dns.etcd_endpoints}"
-  master_count              = "${var.tectonic_master_count}"
-
-  # The default behavior of Kubernetes's controller manager is to mark a node
-  # as Unhealthy after 40s without an update from the node's kubelet. However,
-  # AWS ELB's Route53 records have a fixed TTL of 60s. Therefore, when an ELB's
-  # node disappears (e.g. scaled down or crashed), kubelet might fail to report
-  # for a period of time that exceed the default grace period of 40s and the
-  # node might become Unhealthy. While the eviction process won't start until
-  # the pod_eviction_timeout is reached, 5min by default, certain operators
-  # might already have taken action. This is the case for the etcd operator as
-  # of v0.3.3, which removes the likely-healthy etcd pods from the the
-  # cluster, potentially leading to a loss-of-quorum as generally all kubelets
-  # are affected simultaneously.
-  #
-  # To cope with this issue, we increase the grace period, and reduce the
-  # pod eviction time-out accordingly so pods still get evicted after an total
-  # time of 340s after the first post-status failure.
-  #
-  # Ref: https://github.com/kubernetes/kubernetes/issues/41916
-  # Ref: https://github.com/kubernetes-incubator/kube-aws/issues/598
-  node_monitor_grace_period = "2m"
-
-  pod_eviction_timeout = "220s"
+  etcd_endpoints = "${module.dns.etcd_endpoints}"
+  master_count   = "${var.tectonic_master_count}"
 
   cloud_config_path   = ""
   tectonic_networking = "${var.tectonic_networking}"

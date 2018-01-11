@@ -178,12 +178,6 @@ tectonic_container_linux_version = "latest"
 // Specifies the RFC2136 Dynamic DNS server IP/host to register IP addresses to.
 // tectonic_ddns_server = ""
 
-// (optional) The size in MB of the PersistentVolume used for handling etcd backups.
-// tectonic_etcd_backup_size = "512"
-
-// (optional) The name of an existing Kubernetes StorageClass that will be used for handling etcd backups.
-// tectonic_etcd_backup_storage_class = ""
-
 // (optional) The path of the file containing the CA certificate for TLS communication with etcd.
 // 
 // Note: This works only when used in conjunction with an external etcd cluster.
