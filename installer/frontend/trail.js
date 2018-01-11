@@ -171,7 +171,7 @@ const loadingPage = {
   title: 'Tectonic',
 };
 
-export const sections = new Map([
+export const trailSections = new Map([
   ['loading', [
     loadingPage,
   ]],
@@ -215,93 +215,36 @@ export const sections = new Map([
   ]],
 ]);
 
-// Lets us do 'sections.defineAWS' instead of using sections.get('defineAWS')
-sections.forEach((v, k) => {
-  sections[k] = v;
+// Lets us do 'trailSections.defineAWS' instead of using trailSections.get('defineAWS')
+trailSections.forEach((v, k) => {
+  trailSections[k] = v;
 });
 
 // A Trail is an immutable representation of the navigation options available to a user.
-// Navigation involves
-//    - moving from one page to the next page
-//    - moving from one page to some previous pages
-//    - presenting a (possibly disabled) list of all pages
 export class Trail {
-  constructor(trailSections, whitelist) {
-    this.sections = trailSections;
+  constructor(sections, whitelist) {
+    this.sections = sections;
     const sectionPages = this.sections.reduce((ls, l) => ls.concat(l), []);
     sectionPages.forEach(p => {
       if (!p.component) {
         throw new Error(`${p.title} has no component`);
       }
     });
-    this._pages = !whitelist ? sectionPages : sectionPages.filter(p => whitelist.includes(p));
-    this.ixByPage = this._pages.reduce((m, v, ix) => m.set(v, ix), ImmutableMap());
-    this.pageByPath = this._pages.reduce((m, v) => m.set(v.path, v), ImmutableMap());
-  }
-
-  sectionFor(page) {
-    return _.find(this.sections, s => s.includes(page));
-  }
-
-  navigable(page) {
-    return this.ixByPage.has(page);
-  }
-
-  // Given a path, return a "better" path for this trail. Will not navigate to that path.
-  fixPath(path, state) {
-    const page = this.pageByPath.get(path);
-    if (!page) {
-      return this._pages[0].path;
-    }
-
-    // If the NEXT button on a previous page is disabled, you
-    // shouldn't be able to see this page. Show the first page, before
-    // or including this one, that won't allow forward navigation.
-    const pred = this._pages.find(p => {
-      return p === page || !(p.component.canNavigateForward ? p.component.canNavigateForward(state) : true);
-    });
-
-    return pred.path;
-  }
-
-  // Returns -1, 0, or 1, if a is before, the same as, or after b in the trail
-  cmp(a, b) {
-    return this.ixByPage.get(a) - this.ixByPage.get(b);
-  }
-
-  canNavigateForward(pageA, pageB, state) {
-    const a = this.ixByPage.get(pageA);
-    const b = this.ixByPage.get(pageB);
-
-    if (!_.isFinite(a) || !_.isFinite(b)) {
-      return false;
-    }
-
-    const start = Math.min(a, b);
-    const end = Math.max(a, b);
-
-    for (let i = start; i < end; i++) {
-      const component = this._pages[i].component;
-      if (!component.canNavigateForward) {
-        continue;
-      }
-      if (!component.canNavigateForward(state)) {
-        return false;
-      }
-    }
-    return true;
+    this.pages = !whitelist ? sectionPages : sectionPages.filter(p => whitelist.includes(p));
+    this.ixByPage = this.pages.reduce((m, v, ix) => m.set(v, ix), ImmutableMap());
+    this.pageByPath = this.pages.reduce((m, v) => m.set(v.path, v), ImmutableMap());
   }
 
   // Returns the previous page in the trail if that page exists
   previousFrom(page) {
     const myIx = this.ixByPage.get(page);
-    return this._pages[myIx - 1];
+    return this.pages[myIx - 1];
   }
 
   // Returns the next page in the trail if that exists
   nextFrom(page) {
     const myIx = this.ixByPage.get(page);
-    return this._pages[myIx + 1];
+    return this.pages[myIx + 1];
   }
 }
 
@@ -309,14 +252,14 @@ const doingStuff = ImmutableSet([commitPhases.REQUESTED, commitPhases.WAITING]);
 
 const platformToSection = {
   [AWS_TF]: {
-    choose: new Trail([sections.choose, sections.defineAWS]),
-    define: new Trail([sections.defineAWS], [submitDefinitionPage]),
-    boot: new Trail([sections.bootAWSTF]),
+    choose: new Trail([trailSections.choose, trailSections.defineAWS]),
+    define: new Trail([trailSections.defineAWS], [submitDefinitionPage]),
+    boot: new Trail([trailSections.bootAWSTF]),
   },
   [BARE_METAL_TF]: {
-    choose: new Trail([sections.choose, sections.defineBaremetal]),
-    define: new Trail([sections.defineBaremetal], [submitDefinitionPage]),
-    boot: new Trail([sections.bootBaremetalTF]),
+    choose: new Trail([trailSections.choose, trailSections.defineBaremetal]),
+    define: new Trail([trailSections.defineBaremetal], [submitDefinitionPage]),
+    boot: new Trail([trailSections.bootBaremetalTF]),
   },
 };
 
@@ -324,10 +267,10 @@ export const trail = ({cluster, clusterConfig, commitState}) => {
   const platform = clusterConfig[PLATFORM_TYPE];
 
   if (platform === '') {
-    return new Trail([sections.loading]);
+    return new Trail([trailSections.loading]);
   }
   if (!isSupported(platform)) {
-    return new Trail([sections.choose]);
+    return new Trail([trailSections.choose]);
   }
 
   const {phase} = commitState;
@@ -336,7 +279,7 @@ export const trail = ({cluster, clusterConfig, commitState}) => {
     // If we detected a dry run in progress when the app started, then clusterConfig will not be populated, so also
     // check for a Terraform "show" (dry run) action
     if (clusterConfig[DRY_RUN] || _.get(cluster, 'status.terraform.action') === 'show') {
-      return new Trail([sections.bootDryRun]);
+      return new Trail([trailSections.bootDryRun]);
     }
     return platformToSection[platform].boot;
   }

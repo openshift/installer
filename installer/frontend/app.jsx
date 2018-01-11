@@ -35,16 +35,6 @@ window.reset = () => {
     .then(() => window.location = '/');
 };
 
-export const fixLocation = () => {
-  const state = store.getState();
-  const t = trail(state);
-  const {pathname} = history.location;
-  const fixed = t.fixPath(pathname, state);
-  if (fixed !== pathname) {
-    history.push(fixed);
-  }
-};
-
 store.subscribe(_.debounce(saveState, 5000));
 window.addEventListener('beforeunload', saveState);
 
@@ -88,7 +78,6 @@ const init = () => {
       if (res && res.type === clusterReadyActionTypes.STATUS) {
         setInterval(() => observeClusterStatus(dispatch, store.getState), 10000);
       }
-      fixLocation();
     });
 };
 
