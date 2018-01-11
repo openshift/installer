@@ -18,7 +18,7 @@ export const Success = connect(stateToProps)(
       <div className="col-xs-12">
         <h4>1. Cluster assets are important, save them now!</h4>
         <p>Download and keep your cluster assets in a safe place. These are needed to destroy, replicate or quickly reinstall.</p>
-        <a href="/terraform/assets" download>
+        <a href="/terraform/assets" download="assets.zip">
           <button className="btn btn-default" style={{marginTop: 10}}>
             <i className="fa fa-download"></i>&nbsp;&nbsp;Download Assets
           </button>

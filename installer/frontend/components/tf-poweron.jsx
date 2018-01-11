@@ -345,7 +345,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
                 <Alert severity="error" noIcon>
                   <b>{_.startCase(action)} Failed</b>. Your installation is blocked. To continue:
                   <ol style={{fontSize: 13, paddingLeft: 30, paddingTop: 10, paddingBottom: 10}}>
-                    <li><a onClick={saveLog}>Save Terraform logs</a> and <a href="/terraform/assets" download>download assets</a> for debugging purposes.</li>
+                    <li><a onClick={saveLog}>Save Terraform logs</a> and <a href="/terraform/assets" download="assets.zip">download assets</a> for debugging purposes.</li>
                     <li>Destroy your cluster to clear anything that may have been created. Or,</li>
                     <li>Reapply Terraform.</li>
                   </ol>
@@ -382,7 +382,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
         {!isTFRunning && !isDestroySuccess &&
           <div className="row">
             <div className="col-xs-12">
-              <a href="/terraform/assets" download>
+              <a href="/terraform/assets" download="assets.zip">
                 <button className={classNames('btn btn-primary wiz-giant-button')}>
                   <i className="fa fa-download"></i>&nbsp;&nbsp;Download Assets
                 </button>
