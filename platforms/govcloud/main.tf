@@ -229,7 +229,7 @@ module "dns" {
   cluster_id                     = "${module.tectonic.cluster_id}"
   cluster_name                   = "${var.tectonic_cluster_name}"
   console_elb_dns_name           = "${module.vpc.aws_console_dns_name}"
-  console_elb_zone_id            = "${module.vpc.aws_elb_onsole_zone_id}"
+  console_elb_zone_id            = "${module.vpc.aws_elb_console_zone_id}"
   custom_dns_name                = "${var.tectonic_dns_name}"
   elb_alias_enabled              = true
   etcd_count                     = "${length(data.template_file.etcd_hostname_list.*.id)}"
