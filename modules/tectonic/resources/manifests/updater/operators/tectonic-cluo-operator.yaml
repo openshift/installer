@@ -32,6 +32,12 @@ spec:
           requests:
             cpu: 20m
             memory: 50Mi
-      restartPolicy: Always
       imagePullSecrets:
       - name: coreos-pull-secret
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      restartPolicy: Always
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
