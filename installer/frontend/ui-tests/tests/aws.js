@@ -54,6 +54,7 @@ const ignoredKeys = [
   'tectonic_license_path',
   'tectonic_pull_secret_path',
   'tectonic_stats_url',
+  'tectonic_aws_region',
 ];
 
 module.exports = Object.assign(
