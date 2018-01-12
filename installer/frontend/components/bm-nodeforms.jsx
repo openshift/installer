@@ -11,13 +11,8 @@ import { MAX_MASTERS, MAX_WORKERS } from './nodes';
 import { validate } from '../validate';
 import { readFile } from '../readfile';
 import { FieldList, Form } from '../form';
-
-import {
-  BM_MASTERS,
-  BM_WORKERS,
-} from '../cluster-config';
-
-import { Input, Connect } from './ui';
+import { BM_MASTERS, BM_WORKERS } from '../cluster-config';
+import { Input, Connect, FieldRowList } from './ui';
 
 const BulkUpload = connect(null, dispatch => ({
   updateNodes: (fieldID, payload) => {
@@ -178,22 +173,21 @@ const BulkUpload = connect(null, dispatch => ({
   }
 );
 
-const generateField = (id, name, maxNodes) => new FieldList(id, {
-  fields: {
-    mac: {
-      default: '',
-      dependencies: [BM_MASTERS],
-      validator: validate.MAC,
-    },
-    host: {
-      default: '',
-      dependencies: [BM_MASTERS],
-      validator: validate.host,
-    },
+const rowFields = {
+  mac: {
+    default: '',
+    validator: validate.MAC,
   },
+  host: {
+    default: '',
+    validator: validate.host,
+  },
+};
+
+const makeFieldList = (id, name, maxNodes) => new FieldList(id, rowFields, {
   validator: (nodes, cc) => {
     const macs = _.map(nodes, 'mac');
-    const masters = id === BM_WORKERS ? _.map(cc[BM_MASTERS]) : [];
+    const masters = id === BM_WORKERS ? cc[BM_MASTERS] : [];
     const errors = {};
 
     _.each(nodes, (node, i) => {
@@ -221,44 +215,38 @@ const generateField = (id, name, maxNodes) => new FieldList(id, {
     });
 
     if (macs.length === 0) {
-      errors[-1] = `At least 1 ${name} is required.`;
+      errors.global = `At least 1 ${name} is required.`;
     }
 
     if (macs.length > maxNodes) {
-      errors[-1] = `No more than ${maxNodes} ${name}s are allowed.`;
+      errors.global = `No more than ${maxNodes} ${name}s are allowed.`;
     }
     return errors;
   },
 });
 
-const NodeRow = ({ row, remove }) =>
-  <div className="row" style={{padding: '0 0 20px 0'}}>
-    <div className="col-xs-5" style={{paddingRight: 0}}>
-      <Connect field={row.mac}>
-        <Input placeholder="MAC address" />
-      </Connect>
-    </div>
-
-    <div className="col-xs-6" style={{paddingRight: 0}}>
-      <Connect field={row.host}>
-        <Input placeholder="node.domain.com" />
-      </Connect>
-    </div>
-
-    <div className="col-xs-1">
-      <i className="fa fa-minus-circle list-add-or-subtract pull-right" onClick={remove}></i>
-    </div>
-  </div>;
+const NodeRow = ({autoFocus, row}) => <div>
+  <div className="col-xs-5" style={{paddingRight: 0}}>
+    <Connect field={row.mac}>
+      <Input autoFocus={autoFocus} placeholder="MAC address" />
+    </Connect>
+  </div>
+  <div className="col-xs-6" style={{paddingRight: 0}}>
+    <Connect field={row.host}>
+      <Input placeholder="node.domain.com" />
+    </Connect>
+  </div>
+</div>;
 
 class NodeForm extends React.Component {
   render() {
-    const { field } = this.props;
+    const {docs, id, name} = this.props;
+
     if (this.state && this.state.bulkUpload) {
       // TODO (ggreer) make a real modal with real modal classes
-      return <BulkUpload close={() => this.setState({bulkUpload: false})} fieldID={field.id} />;
+      return <BulkUpload close={() => this.setState({bulkUpload: false})} fieldID={id} />;
     }
 
-    const { docs, name } = this.props;
     return <div>
       <div className="form-group">
         <a onClick={() => this.setState({bulkUpload: true})}>
@@ -267,59 +255,43 @@ class NodeForm extends React.Component {
       </div>
       <div>
         {docs}
-        <div className="">
-          <div className="row">
-            <div className="col-xs-5">
-              <label className="text-muted cos-thin-label">{name}s</label>
-            </div>
-            <div className="col-xs-6">
-              <label className="text-muted cos-thin-label">Hosts</label>
-            </div>
+        <div className="row">
+          <div className="col-xs-5">
+            <label className="text-muted cos-thin-label">{name}s</label>
           </div>
-
-          <field.Map>
-            <NodeRow />
-          </field.Map>
-
-          <div className="row">
-            <div className="col-xs-3">
-              <span className="wiz-link" onClick={field.addOnClick}>
-                <i className="fa fa-plus-circle list-add wiz-link"></i>&nbsp; Add More
-              </span>
-            </div>
-          </div>
-
-          <div className="row">
-            <div className="col-xs-12" style={{margin: '10px 0'}}>
-              <field.NonFieldErrors />
-            </div>
+          <div className="col-xs-6">
+            <label className="text-muted cos-thin-label">Hosts</label>
           </div>
         </div>
+
+        <FieldRowList id={id} Row={NodeRow} rowFields={rowFields} />
       </div>
     </div>;
   }
 }
 
-const mastersFields = generateField(BM_MASTERS, 'Master', MAX_MASTERS);
+const mastersFields = makeFieldList(BM_MASTERS, 'Master', MAX_MASTERS);
 const mastersForm = new Form('MASTERSFORM', [mastersFields]);
 
 export const BM_Controllers = () => <NodeForm
+  id={BM_MASTERS}
   name="Master"
   docs={`Master nodes run essential cluster services and don't run end-user apps. Enter
       the MAC addresses of the nodes you'd like to use as masters, and the host names
       you'll use to refer to them.`}
-  field={mastersFields} />;
+/>;
 
 BM_Controllers.canNavigateForward = mastersForm.canNavigateForward;
 
-const workerFields = generateField(BM_WORKERS, 'Worker', MAX_WORKERS);
+const workerFields = makeFieldList(BM_WORKERS, 'Worker', MAX_WORKERS);
 const workersForm = new Form('WORKERS_FORM', [workerFields]);
 
 export const BM_Workers = () => <NodeForm
+  id={BM_WORKERS}
   name="Worker"
   docs={`Worker nodes run end-user apps. The cluster software automatically shares load
       between these nodes. Enter the MAC addresses of the nodes you'd like to use as
       workers, and the host names you'll use to refer to them.`}
-  field={workerFields} />;
+/>;
 
 BM_Workers.canNavigateForward = workersForm.canNavigateForward;

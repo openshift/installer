@@ -1,15 +1,13 @@
 import _ from 'lodash';
-import React from 'react';
 import { connect } from 'react-redux';
 
-import { dispatch as dispatch_ } from './store';
 import { configActions, registerForm, validateFields } from './actions';
 import { toError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from './utils';
-import { ErrorComponent, ConnectedFieldList } from './components/ui';
+import { ErrorComponent } from './components/ui';
 import { TectonicGA } from './tectonic-ga';
 import { PLATFORM_TYPE } from './cluster-config';
 
-const { setIn, batchSetIn, append, removeAt } = configActions;
+const { setIn, batchSetIn } = configActions;
 const nop = () => undefined;
 
 class Node {
@@ -195,65 +193,14 @@ const toValidator = (fields, listValidator) => (value, cc) => {
   return _.every(errs, err => _.isEmpty(err)) ? {} : errs;
 };
 
-const toDefaultOpts = opts => {
-  const default_ = {};
-
-  _.each(opts.fields, (v, k) => {
-    default_[k] = v.default;
-  });
-
-  return Object.assign({}, opts, {default: [default_], validator: toValidator(opts.fields, opts.validator)});
-};
-
 export class FieldList extends Field {
-  constructor(id, opts = {}) {
-    super(id, toDefaultOpts(opts));
-    this.fields = opts.fields;
-  }
-
-  get Map () {
-    if (this.OuterListComponent_) {
-      return this.OuterListComponent_;
-    }
-    const id = this.id;
-    const fields = this.fields;
-
-    this.OuterListComponent_ = function Outer ({children}) {
-      return React.createElement(ConnectedFieldList, {id, fields}, children);
-    };
-
-    return this.OuterListComponent_;
-  }
-
-  get addOnClick () {
-    return () => dispatch_(configActions.appendField(this.id));
-  }
-
-  get NonFieldErrors () {
-    if (this.errorComponent_) {
-      return this.errorComponent_;
-    }
-
-    const id = this.id;
-
-    this.errorComponent_ = connect(
-      ({clusterConfig}) => ({error: _.get(clusterConfig, toError(id), {})}),
-    )(({error}) => React.createElement(ErrorComponent, {error: error[-1]}));
-
-    return this.errorComponent_;
-  }
-
-  append (dispatch, getState) {
-    const child = {};
-    _.each(this.fields, (f, name) => {
-      child[name] = _.cloneDeep(f.default);
-    });
-    append(this.id, child, dispatch);
-    this.validate(dispatch, getState);
-  }
-
-  remove (dispatch, i, getState) {
-    removeAt(this.id, i, dispatch);
-    this.validate(dispatch, getState);
+  constructor(id, rowFields, opts = {}) {
+    // Lists default to a single row, so the default list value is [[field 1 default, field 2 default, ...]]
+    const listDefault = [_.mapValues(rowFields, 'default')];
+    super(id, Object.assign({}, opts, {
+      default: listDefault,
+      validator: toValidator(rowFields, opts.validator),
+    }));
+    this.rowFields = rowFields;
   }
 }
