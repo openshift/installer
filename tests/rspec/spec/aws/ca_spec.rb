@@ -4,7 +4,7 @@ require 'shared_examples/k8s'
 
 RSpec.describe 'aws-custom-ca' do
   include_examples(
-    'withPlannedCluster',
+    'withRunningCluster',
     '../smoke/aws/vars/aws-ca.tfvars.json'
   )
 end

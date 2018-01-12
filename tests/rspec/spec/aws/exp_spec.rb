@@ -4,7 +4,7 @@ require 'shared_examples/k8s'
 
 RSpec.describe 'aws-exp' do
   include_examples(
-    'withPlannedCluster',
+    'withRunningCluster',
     '../smoke/aws/vars/aws-exp.tfvars.json'
   )
 end
