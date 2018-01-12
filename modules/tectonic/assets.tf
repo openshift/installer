@@ -40,16 +40,13 @@ resource "template_dir" "tectonic" {
     grafana_base_image                  = "${var.container_base_images["grafana"]}"
     grafana_watcher_base_image          = "${var.container_base_images["grafana_watcher"]}"
 
-    kubernetes_version                = "${var.versions["kubernetes"]}"
-    monitoring_version                = "${var.versions["monitoring"]}"
-    tectonic_version                  = "${var.versions["tectonic"]}"
-    etcd_version                      = "${var.versions["etcd"]}"
-    tectonic_etcd_operator_version    = "${var.versions["tectonic-etcd"]}"
-    tectonic_cluo_operator_version    = "${var.versions["cluo"]}"
-    kubernetes_addon_operator_version = "${var.versions["kubernetes_addon"]}"
-    tectonic_alm_operator_version     = "${var.versions["alm"]}"
-    tectonic_utility_version          = "${var.versions["tectonic-utility"]}"
-    tectonic_network_operator_version = "${var.versions["tno"]}"
+    kubernetes_version             = "${var.versions["kubernetes"]}"
+    monitoring_version             = "${var.versions["monitoring"]}"
+    tectonic_version               = "${var.versions["tectonic"]}"
+    etcd_version                   = "${var.versions["etcd"]}"
+    tectonic_etcd_operator_version = "${var.versions["tectonic-etcd"]}"
+    tectonic_cluo_operator_version = "${var.versions["cluo"]}"
+    tectonic_alm_operator_version  = "${var.versions["alm"]}"
 
     etcd_cluster_size = "${var.master_count > 2 ? 3 : 1}"
 

@@ -4,8 +4,7 @@ resource "template_dir" "bootkube" {
   destination_dir = "./generated/manifests"
 
   vars {
-    tectonic_network_operator_image   = "${var.container_images["tectonic_network_operator"]}"
-    tectonic_network_operator_version = "${var.versions["tno"]}"
+    tectonic_network_operator_image = "${var.container_images["tectonic_network_operator"]}"
 
     kco_config = "${indent(4, chomp(data.template_file.kco-config_yaml.rendered))}"
 

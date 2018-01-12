@@ -110,16 +110,13 @@ variable "tectonic_versions" {
   type        = "map"
 
   default = {
-    etcd             = "3.1.8"
-    kubernetes       = "1.8.4+tectonic.1"
-    monitoring       = "1.9.0"
-    tectonic         = "1.8.4-tectonic.2"
-    tectonic-etcd    = "0.0.1"
-    cluo             = "0.2.5"
-    kubernetes_addon = "0.0.0"
-    alm              = "0.2.1"
-    tectonic-utility = "0.1.0"
-    tno              = "0.0.0"
+    etcd          = "3.1.8"
+    kubernetes    = "1.8.4+tectonic.1"
+    monitoring    = "1.9.0"
+    tectonic      = "1.8.4-tectonic.2"
+    tectonic-etcd = "0.0.1"
+    cluo          = "0.2.5"
+    alm           = "0.2.1"
   }
 }
 
