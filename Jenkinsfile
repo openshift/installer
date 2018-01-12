@@ -117,11 +117,13 @@ pipeline {
       defaultValue: true,
       description: ''
     )
+    /* Disabled until we start the work again on gcp
     booleanParam(
       name: 'PLATFORM/GCP',
       defaultValue: false,
       description: ''
     )
+    */
     booleanParam(
       name: 'PLATFORM/BARE_METAL',
       defaultValue: true,
