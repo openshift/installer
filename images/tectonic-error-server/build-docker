@@ -1,6 +1,0 @@
-#!/bin/bash
-
-GOOS=$LOCALOS CGO_ENABLED=0 go build -o go-bindata github.com/coreos-inc/tectonic/installer/vendor/github.com/jteeuwen/go-bindata/go-bindata
-./go-bindata -pkg binassets -o binassets/assets.go -prefix web web/...
-
-CGO_ENABLED=0 GOOS=linux go build -a -o server ./server.go

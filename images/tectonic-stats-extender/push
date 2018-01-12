@@ -1,9 +1,0 @@
-#!/bin/bash -e
-
-DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-GIT_SHA=$("$DIR/../../git-version")
-
-QUAY_REPO=quay.io/coreos/tectonic-stats-extender
-
-docker build -t "$QUAY_REPO:$GIT_SHA" "$DIR"
-docker push "$QUAY_REPO:$GIT_SHA"

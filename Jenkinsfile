@@ -145,7 +145,7 @@ pipeline {
               timeout(time: 20, unit: 'MINUTES') {
                 forcefullyCleanWorkspace()
                 checkout scm
-                stash name: 'clean-repo', excludes: 'installer/vendor/**,tests/smoke/vendor/**,images/tectonic-stats-extender/vendor/**'
+                stash name: 'clean-repo', excludes: 'installer/vendor/**,tests/smoke/vendor/**'
                 originalCommitId = sh(returnStdout: true, script: 'git rev-parse origin/"\${BRANCH_NAME}"')
                 echo "originalCommitId: ${originalCommitId}"
 
