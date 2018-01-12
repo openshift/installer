@@ -167,8 +167,15 @@ tectonic_vmware_etcd_clusters = ""
 // }
 tectonic_vmware_etcd_datacenters = ""
 
-// The storage LUN used by etcd nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
-tectonic_vmware_etcd_datastore = ""
+// Terraform map of etcd node(s) vSphere datastores.
+//   In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
+//   Example:
+//   tectonic_vmware_etcd_datastores = {
+//   "0" = "mydatastore-0"
+//   "1" = "mydatastore-1"
+//   "2" = "mydatastore-2"
+// }
+tectonic_vmware_etcd_datastores = ""
 
 // Terraform map of etcd node(s) network gateway IP, Example:
 //   tectonic_vmware_etcd_gateways = {
@@ -237,8 +244,14 @@ tectonic_vmware_master_clusters = ""
 // }
 tectonic_vmware_master_datacenters = ""
 
-// The storage LUN used by master nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
-tectonic_vmware_master_datastore = ""
+// Terraform map of master node(s) vSphere datastores.
+//   In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
+//   Example:
+//   tectonic_vmware_master_datastores = {
+//   "0" = "mydatastore-0"
+//   "1" = "mydatastore-1"
+// }
+tectonic_vmware_master_datastores = ""
 
 // Terraform map of master node(s) network gateway IP, Example:
 //   tectonic_vmware_master_gateways = {
@@ -319,8 +332,14 @@ tectonic_vmware_worker_clusters = ""
 // }
 tectonic_vmware_worker_datacenters = ""
 
-// The storage LUN used by worker nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
-tectonic_vmware_worker_datastore = ""
+// Terraform map of worker node(s) vSphere datastores.
+//   In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
+//   Example:
+//   tectonic_vmware_worker_datastores = {
+//   "0" = "mydatastore-0"
+//   "1" = "mydatastore-1"
+// }
+tectonic_vmware_worker_datastores = ""
 
 // Terraform map of worker node(s) network gateway IP, Example:
 //   tectonic_vmware_worker_gateways = {

@@ -153,10 +153,19 @@ variable "tectonic_vmware_etcd_ip" {
 EOF
 }
 
-variable "tectonic_vmware_etcd_datastore" {
-  type        = "string"
-  default     = ""
-  description = "The storage LUN used by etcd nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore."
+variable "tectonic_vmware_etcd_datastores" {
+  type = "map"
+
+  description = <<EOF
+  Terraform map of etcd node(s) vSphere datastores.
+  In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
+  Example:
+  tectonic_vmware_etcd_datastores = {
+  "0" = "mydatastore-0"
+  "1" = "mydatastore-1"
+  "2" = "mydatastore-2"
+}
+EOF
 }
 
 variable "tectonic_vmware_etcd_networks" {
@@ -259,10 +268,18 @@ variable "tectonic_vmware_master_ip" {
 EOF
 }
 
-variable "tectonic_vmware_master_datastore" {
-  type        = "string"
-  default     = ""
-  description = "The storage LUN used by master nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore."
+variable "tectonic_vmware_master_datastores" {
+  type = "map"
+
+  description = <<EOF
+  Terraform map of master node(s) vSphere datastores.
+  In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
+  Example:
+  tectonic_vmware_master_datastores = {
+  "0" = "mydatastore-0"
+  "1" = "mydatastore-1"
+}
+EOF
 }
 
 variable "tectonic_vmware_master_networks" {
@@ -375,8 +392,16 @@ variable "tectonic_vmware_worker_networks" {
 EOF
 }
 
-variable "tectonic_vmware_worker_datastore" {
-  type        = "string"
-  default     = ""
-  description = "The storage LUN used by worker nodes. In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore."
+variable "tectonic_vmware_worker_datastores" {
+  type = "map"
+
+  description = <<EOF
+  Terraform map of worker node(s) vSphere datastores.
+  In order to use vSphere Datastore Cluster use the syntax DatastoreClusterName/datastore.
+  Example:
+  tectonic_vmware_worker_datastores = {
+  "0" = "mydatastore-0"
+  "1" = "mydatastore-1"
+}
+EOF
 }

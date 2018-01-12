@@ -63,9 +63,9 @@ variable "vmware_resource_pool" {
   description = "vSphere resource pool to create VMs in"
 }
 
-variable "vm_disk_datastore" {
-  type        = "string"
-  description = "Datastore to create VM(s) in "
+variable vm_disk_datastores {
+  type        = "map"
+  description = "vSphere datastores to use for VMs"
 }
 
 variable vm_network_labels {
