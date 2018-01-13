@@ -22,14 +22,11 @@ resource "template_dir" "payload_appversions" {
   destination_dir = "./generated/app_versions"
 
   vars {
-    kubernetes_version                = "${var.tectonic_versions["kubernetes"]}"
-    monitoring_version                = "${var.tectonic_versions["monitoring"]}"
-    tectonic_version                  = "${var.tectonic_versions["tectonic"]}"
-    tectonic_etcd_operator_version    = "${var.tectonic_versions["tectonic-etcd"]}"
-    tectonic_cluo_operator_version    = "${var.tectonic_versions["cluo"]}"
-    kubernetes_addon_operator_version = "${var.tectonic_versions["kubernetes_addon"]}"
-    tectonic_alm_operator_version     = "${var.tectonic_versions["alm"]}"
-    tectonic_utility_version          = "${var.tectonic_versions["tectonic-utility"]}"
-    tectonic_network_operator_version = "${var.tectonic_versions["tno"]}"
+    kubernetes_version             = "${var.tectonic_versions["kubernetes"]}"
+    monitoring_version             = "${var.tectonic_versions["monitoring"]}"
+    tectonic_version               = "${var.tectonic_versions["tectonic"]}"
+    tectonic_etcd_operator_version = "${var.tectonic_versions["tectonic-etcd"]}"
+    tectonic_cluo_operator_version = "${var.tectonic_versions["cluo"]}"
+    tectonic_alm_operator_version  = "${var.tectonic_versions["alm"]}"
   }
 }

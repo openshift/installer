@@ -6,8 +6,10 @@ metadata:
   labels:
     managed-by-channel-operator: "true"
 spec:
-  desiredVersion: ${tectonic_network_operator_version}
+  desiredVersion:
   paused: false
 status:
   currentVersion:
   paused: false
+upgradereq:  1
+upgradecomp: 0
