@@ -1,10 +1,3 @@
-locals {
-  calico_config_yaml   = "${var.tectonic_networking == "calico-ipip" ? "calicoConfig:\n    mtu: ${var.calico_mtu}" : ""}"
-  network_config_yaml  = "${join("\n", compact(list(local.network_profile_yaml, local.pod_cidr_yaml, local.calico_config_yaml)))}"
-  network_profile_yaml = "networkProfile: ${var.tectonic_networking}"
-  pod_cidr_yaml        = "${var.tectonic_networking != "none" ? "podCIDR: ${var.cluster_cidr}" : ""}"
-}
-
 # Unique Cluster ID (uuid)
 resource "random_id" "cluster_id" {
   byte_length = 16
@@ -26,7 +19,6 @@ resource "template_dir" "tectonic" {
     tectonic_cluo_operator_image       = "${var.container_images["tectonic_cluo_operator"]}"
     tectonic_alm_operator_image        = "${var.container_images["tectonic_alm_operator"]}"
     tectonic_utility_operator_image    = "${var.container_images["tectonic_utility_operator"]}"
-    tectonic_network_operator_image    = "${var.container_images["tectonic_network_operator"]}"
 
     tectonic_monitoring_auth_base_image = "${var.container_base_images["tectonic_monitoring_auth"]}"
     config_reload_base_image            = "${var.container_base_images["config_reload"]}"
@@ -89,7 +81,6 @@ resource "template_dir" "tectonic" {
     kubectl_secret    = "${random_id.kubectl_secret.b64}"
 
     kube_apiserver_url = "${var.kube_apiserver_url}"
-    oidc_issuer_url    = "https://${var.base_address}/identity"
     stats_url          = "${var.stats_url}"
 
     # TODO: We could also patch https://www.terraform.io/docs/providers/random/ to add an UUID resource.
@@ -102,8 +93,6 @@ resource "template_dir" "tectonic" {
 
     image_re            = "${var.image_re}"
     kube_dns_service_ip = "${cidrhost(var.service_cidr, 10)}"
-
-    network_config = "${indent(6, local.network_config_yaml)}"
   }
 }
 
