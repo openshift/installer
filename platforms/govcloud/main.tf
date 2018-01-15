@@ -1,7 +1,7 @@
 provider "aws" {
   region  = "us-gov-west-1"
   profile = "${var.tectonic_govcloud_profile}"
-  version = "1.1.0"
+  version = "1.7.0"
 }
 
 data "aws_availability_zones" "azs" {}
