@@ -33,7 +33,7 @@ export const SubmitDefinition = withNav(connect(
   return (
     <div>
       <p>
-        Congratulations! Your cluster has been defined and will be submitted to Terraform. After submission, the definition cannot be updated. Go <a onClick={!inProgress && navPrevious} className={inProgress && 'disabled'}>back</a> to update or make changes.
+        Congratulations! Your cluster has been defined and will be submitted to Terraform. After submission, the definition cannot be updated. Go <a onClick={inProgress ? undefined : navPrevious} className={inProgress ? 'disabled' : undefined}>back</a> to update or make changes.
       </p>
       <p>
         {/* eslint-disable react/jsx-no-target-blank */}
