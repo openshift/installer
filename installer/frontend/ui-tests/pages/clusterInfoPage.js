@@ -31,11 +31,24 @@ const clusterInfoPageCommands = {
 
     if (platform === 'aws-tf' && !_.isEmpty(json.awsTags)) {
       this
-        .setField('input[id="awsTags.0.value"]', json.awsTags[0].value)
+        .setField('input[id="awsTags.0.key"]', 'abc')
+        .setField('input[id="awsTags.0.value"]', 'abc')
+        .expectNoValidationError()
+        .setField('input[id="awsTags.0.key"]', '')
         .expectValidationErrorContains('Both fields are required')
-        .setField('input[id="awsTags.0.key"]', json.awsTags[0].key)
+        .setField('input[id="awsTags.0.key"]', 'abc')
+        .expectNoValidationError()
         .setField('input[id="awsTags.0.value"]', '')
         .expectValidationErrorContains('Both fields are required')
+        .setField('input[id="awsTags.0.key"]', '')
+        .expectNoValidationError()
+        .click('.fa-plus-circle')
+        .click('.fa-plus-circle')
+        .setField('input[id="awsTags.1.key"]', 'abc')
+        .setField('input[id="awsTags.2.key"]', 'abc')
+        .expectValidationErrorContains('Tag keys must be unique')
+        .click('.fa-minus-circle')
+        .click('.fa-minus-circle')
         .setField('input[id="awsTags.0.key"]', json.awsTags[0].key)
         .setField('input[id="awsTags.0.value"]', json.awsTags[0].value)
         .expectNoValidationError();
