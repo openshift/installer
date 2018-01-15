@@ -97,7 +97,7 @@ const stateToProps = ({aws, clusterConfig, serverFacts}) => {
   const regionSelections = {
     inFly: aws.availableRegions.inFly,
     value: [],
-    error: aws.availableRegions.error,
+    error: _.get(aws, 'availableRegions.error.message') || _.get(aws, 'availableRegions.error'),
   };
 
   // Calculate intersection of AWS regions: those w/coreos images & those the user has access to

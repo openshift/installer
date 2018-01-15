@@ -22,6 +22,10 @@ const parseLatestVersion = (html) => {
 };
 
 const hasNewVersion = (latestRelease) => {
+  if (!semver.valid(latestRelease) || !semver.valid(GIT_TAG)) {
+    return false;
+  }
+
   const lrMajor = semver.major(latestRelease);
   const gtMajor = semver.major(GIT_TAG);
   if (lrMajor !== gtMajor) {
