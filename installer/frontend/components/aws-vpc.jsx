@@ -98,6 +98,9 @@ const validateVPC = async (data, cc, updatedId, dispatch) => {
 
   const controllerSubnets = getSubnets(cc[isCreate ? AWS_CONTROLLER_SUBNETS : AWS_CONTROLLER_SUBNET_IDS]);
   const workerSubnets = getSubnets(cc[isCreate ? AWS_WORKER_SUBNETS : AWS_WORKER_SUBNET_IDS]);
+  if (_.isEmpty(controllerSubnets) || _.isEmpty(workerSubnets)) {
+    return 'You must provide subnets for both masters and workers.';
+  }
 
   const isPrivate = cc[AWS_CREATE_VPC] === VPC_PRIVATE;
   const network = {
@@ -106,11 +109,6 @@ const validateVPC = async (data, cc, updatedId, dispatch) => {
     podCIDR: cc[POD_CIDR],
     serviceCIDR: cc[SERVICE_CIDR],
   };
-
-  // No need to validate if no subnets have been set yet
-  if (_.isEmpty(network.privateSubnets) && _.isEmpty(network.publicSubnets)) {
-    return;
-  }
 
   if (isCreate) {
     network.vpcCIDR = cc[AWS_VPC_CIDR];
