@@ -8,12 +8,10 @@ import { withNav } from '../nav';
 import { trail, trailSections } from '../trail';
 
 import { Loader } from './loader';
-import { PLATFORM_TYPE } from '../cluster-config';
-import { TectonicGA } from '../tectonic-ga';
 import { Header } from './header';
 import { Footer } from './footer';
 
-const NavSection = ({canNavigateForward, currentPage, navigate, sections, navTrail, title}) => {
+const NavSection = withRouter(({canNavigateForward, currentPage, history, sections, navTrail, title}) => {
   const section = _.find(navTrail.sections, s => sections.includes(s) && s.includes(currentPage));
   let disabled = false;
 
@@ -25,14 +23,14 @@ const NavSection = ({canNavigateForward, currentPage, navigate, sections, navTra
         <button
           className="wiz-wizard__nav__link btn btn-link btn-link-ordinary"
           disabled={disabled}
-          onClick={() => navigate(page)}
+          onClick={() => history.push(page.path)}
         >{page.title}</button>
       </li>;
       disabled = disabled || !canNavigateForward(page);
       return link;
     })}
   </ul>;
-};
+});
 
 const NextButton = withNav(
   ({disabled, navNext}) => <div className="withtooltip">
@@ -53,13 +51,14 @@ const ResetButton = () => <button onClick={() => {
 </button>;
 
 const stateToProps = (state, {history}) => {
-  const t = trail(state);
-  const currentPage = t.pageByPath.get(history.location.pathname);
+  const navTrail = trail(state);
+  const currentPage = navTrail.pageByPath.get(history.location.pathname);
+
   return {
+    canNavigateForward: page => page.component.canNavigateForward ? page.component.canNavigateForward(state) : true,
     canReset: _.has(currentPage, 'component.canReset') && currentPage.component.canReset(state),
     currentPage,
-    state,
-    t,
+    navTrail,
     title: `${_.get(currentPage, 'title')}${window.config.devMode ? ' (dev)' : ''}`,
   };
 };
@@ -67,44 +66,23 @@ const stateToProps = (state, {history}) => {
 // No components have the same path, so this is safe.
 const routes = _.uniq(_.flatMap(trailSections));
 
-const Wizard = withNav(withRouter(connect(stateToProps)(
+const Wizard = withRouter(connect(stateToProps)(
   class Wizard_ extends React.Component {
-    navigate (nextPage, state) {
-      const {currentPage, history} = this.props;
-
-      if (currentPage.path === '/define/cluster-type' && nextPage !== currentPage && state) {
-        TectonicGA.sendEvent('Platform Selected', 'user input', state.clusterConfig[PLATFORM_TYPE], state.clusterConfig[PLATFORM_TYPE]);
-      }
-
-      if (nextPage === currentPage) {
-        return;
-      }
-
-      if (state) {
-        TectonicGA.sendEvent('Page Navigation Next', 'click', 'next on', state.clusterConfig[PLATFORM_TYPE]);
-      }
-      history.push(nextPage.path);
-    }
-
-    canNavigateForward (page) {
-      return page.component.canNavigateForward ? page.component.canNavigateForward(this.props.state) : true;
-    }
-
     fixLocation () {
-      const {history, t} = this.props;
-      const page = t.pageByPath.get(history.location.pathname);
+      const {canNavigateForward, history, navTrail} = this.props;
+      const page = navTrail.pageByPath.get(history.location.pathname);
 
       if (!page) {
         // Path does not exist in the current trail, so navigate to the trail's first page instead
-        history.push(t.pages[0].path);
+        history.push(navTrail.pages[0].path);
         return;
       }
 
       // If the Next button on a previous page is disabled, you shouldn't be able to see this page. Show the first
       // page, before or including this one, that won't allow forward navigation.
-      const fixed = t.pages.find(p => p === page || !this.canNavigateForward(p)).path;
-      if (fixed !== history.location.pathname) {
-        history.push(fixed);
+      const fixed = navTrail.pages.find(p => p === page || !canNavigateForward(p));
+      if (fixed !== page) {
+        history.push(fixed.path);
       }
     }
 
@@ -121,17 +99,12 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
     }
 
     render() {
-      const {t, canReset, currentPage, title} = this.props;
+      const {canNavigateForward, canReset, currentPage, navTrail, title} = this.props;
       if (!currentPage) {
         return null;
       }
 
-      const navProps = {
-        canNavigateForward: page => this.canNavigateForward(page),
-        currentPage,
-        navigate: page => this.navigate(page),
-        navTrail: t,
-      };
+      const navProps = {canNavigateForward, currentPage, navTrail};
 
       return (
         <div className="tectonic">
@@ -163,11 +136,11 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
                 </div>
                 {currentPage.hidePager || <div className="wiz-form__actions">
                   <div className="wiz-form__actions__prev">
-                    {t.previousFrom(currentPage) && <PreviousButton />}
+                    {navTrail.previousFrom(currentPage) && <PreviousButton />}
                     {canReset && <ResetButton />}
                   </div>
                   <div className="wiz-form__actions__next">
-                    {t.nextFrom(currentPage) && <NextButton disabled={!this.canNavigateForward(currentPage)} />}
+                    {navTrail.nextFrom(currentPage) && <NextButton disabled={!canNavigateForward(currentPage)} />}
                   </div>
                 </div>
                 }
@@ -179,33 +152,26 @@ const Wizard = withNav(withRouter(connect(stateToProps)(
       );
     }
   }
-)));
+));
 
 export const Base = connect(
-  ({cluster, serverFacts}) => {
-    return {
-      loaded: cluster.loaded && serverFacts.loaded,
-      failed: serverFacts.error !== null,
-    };
-  },
+  ({cluster, serverFacts}) => ({
+    loaded: cluster.loaded && serverFacts.loaded,
+    failed: serverFacts.error !== null,
+  }),
   undefined, // mapDispatchToProps
   undefined, // mergeProps
-  {pure: false} // base isn't pure because Wizard isn't pure
+  {pure: false} // Base isn't pure because Wizard isn't pure
 )(({loaded, failed}) => {
-  if (loaded && !failed) {
-    return <Wizard />;
+  if (!loaded) {
+    return <Loader />;
   }
-
-  if (loaded) {
-    return (
-      <div className="wiz-wizard">
-        <div className="wiz-wizard__cell wiz-wizard__content">
-          The Tectonic Installer has encountered an error. Please contact
-          Tectonic support.
-        </div>
+  if (failed) {
+    return <div className="wiz-wizard">
+      <div className="wiz-wizard__cell wiz-wizard__content">
+        The Tectonic Installer has encountered an error. Please contact Tectonic support.
       </div>
-    );
+    </div>;
   }
-
-  return <Loader />;
+  return <Wizard />;
 });

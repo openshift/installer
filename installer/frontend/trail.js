@@ -221,7 +221,7 @@ trailSections.forEach((v, k) => {
 });
 
 // A Trail is an immutable representation of the navigation options available to a user.
-export class Trail {
+class Trail {
   constructor(sections, whitelist) {
     this.sections = sections;
     const sectionPages = this.sections.reduce((ls, l) => ls.concat(l), []);

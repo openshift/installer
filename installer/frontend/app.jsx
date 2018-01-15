@@ -11,6 +11,7 @@ import createHistory from 'history/createBrowserHistory';
 import Cookie from 'js-cookie';
 
 import { clusterReadyActionTypes, restoreActionTypes, validateAllFields } from './actions';
+import { PLATFORM_TYPE } from './cluster-config';
 import { trail } from './trail';
 import { TectonicGA } from './tectonic-ga';
 import { savable } from './reducer';
@@ -52,9 +53,13 @@ try {
 history.listen(({pathname, state}) => {
   // Process next step / previous step navigation trigger if present
   if (state && (state.next || state.previous)) {
-    const t = trail(store.getState());
+    const storeState = store.getState();
+    const t = trail(storeState);
     const currentPage = t.pageByPath.get(history.location.pathname);
     const nextPage = state.next ? t.nextFrom(currentPage) : t.previousFrom(currentPage);
+    if (state.next) {
+      TectonicGA.sendEvent('Page Navigation Next', 'click', 'next on', storeState.clusterConfig[PLATFORM_TYPE]);
+    }
     history.replace(_.get(nextPage, 'path'));
     return;
   }
