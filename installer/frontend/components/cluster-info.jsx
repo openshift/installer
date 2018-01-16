@@ -6,10 +6,9 @@ import { validate } from '../validate';
 import { CLUSTER_NAME, PULL_SECRET, TECTONIC_LICENSE, LICENSING } from '../cluster-config';
 import fields from '../fields';
 import { Field, Form } from '../form';
-import { readFile } from '../readfile';
 
 import { Alert } from './alert';
-import { Connect, Input } from './ui';
+import { Connect, FileInput, Input } from './ui';
 
 // eslint-disable-next-line react/jsx-no-target-blank
 const accountLink = <a href="https://account.coreos.com" rel="noopener" target="_blank">account.coreos.com</a>;
@@ -51,18 +50,6 @@ const pullSecretField = new Field(PULL_SECRET, {
 });
 
 const form = new Form(LICENSING, [fields[CLUSTER_NAME], licenseField, pullSecretField]);
-
-const FileInput = ({id, onValue}) => {
-  const upload = e => {
-    readFile(e.target.files.item(0))
-      .then(onValue)
-      .catch(msg => console.error(msg));
-
-    // Reset value so that onChange fires if you pick the same file again.
-    e.target.value = null;
-  };
-  return <input type="file" id={id} onChange={upload} style={{display: 'none'}} />;
-};
 
 const FileUpload = ({buttonTitle, description, ErrorHelp, field, id, onValue, value}) => {
   const invalid = field.validator(value);
