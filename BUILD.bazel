@@ -69,11 +69,3 @@ alias(
     name = "backend",
     actual = "//installer/cmd/installer:installer",
 )
-
-# This absolutely must exist in the top package
-# Moving it into installer/frontend currently won't work
-#
-filegroup(
-    name = "node_modules", 
-    srcs = glob(["node_modules/**/*"])
-)

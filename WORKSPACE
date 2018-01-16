@@ -17,10 +17,10 @@ http_archive(
 
 http_archive(
     name = "build_bazel_rules_nodejs",
-    sha256 = "0ee9f6d9a34994a338b374ecb59df814dd5ba2952ad57fe27ddf44ef858a2c09",
+    sha256 = "7550c6f7904f602b69c2a69d92f7c739db87479336554c7a31d0649519ec414e",
     type = "tar.gz",
-    strip_prefix = "rules_nodejs-0.2.2",
-    url = "https://codeload.github.com/bazelbuild/rules_nodejs/tar.gz/0.2.2",
+    strip_prefix = "rules_nodejs-0.3.1",
+    url = "https://codeload.github.com/bazelbuild/rules_nodejs/tar.gz/0.3.1",
 )
 
 load("@io_bazel_rules_go//go:def.bzl", "go_rules_dependencies", "go_register_toolchains")

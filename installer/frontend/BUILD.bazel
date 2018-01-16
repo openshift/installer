@@ -1,20 +1,72 @@
 package(default_visibility = ["//visibility:public"])
 
-load("@build_bazel_rules_nodejs//:defs.bzl", "nodejs_binary")
+filegroup(
+    name = "files",
+    srcs = glob(
+        ["**/*"],
+        exclude = ["node_modules/**/*"],
+    ),
+)
+
+filegroup(
+    name = "packagejson",
+    srcs = ["package.json"],
+)
+
+# This genrule maintains a Bazel-managed node_modules that is completely
+# independent from the on-host node_modules.
+# TODO(squat): replace this with auto-managed dependencies, which 
+# currently does not work because of: https://github.com/bazelbuild/rules_nodejs/issues/77.
+genrule(
+    name = "node_modules",
+    message = "Installing JavaScript dependencies...",
+    srcs = [":files"],
+    outs = ["node_modules"],
+    cmd = "cp -RL installer/frontend/* tmp && $(location @yarn//:yarn) --cwd $$(pwd)/tmp install && cp -R tmp/node_modules $@",
+    tools = ["@yarn//:yarn"],
+)
+
+# To build the JavaScript hermetically we must use the Bazel-managed
+# node_modules and copy, not-symlink, the frontend files, as symlinks
+# will cause build issues when yarn tries to find modules relative to the
+# source file.
+# Copy the files to a tmp directory so that no files are left after the build.
+genrule(
+    name = "frontend",
+    message = "Building JavaScript...",
+    srcs = [":files", ":node_modules"],
+    outs = ["app-bundle.js"],
+    cmd = "cp -RL installer tmp && cp -R $(GENDIR)/installer tmp && OUT=$$(pwd)/$@ $(location @yarn//:yarn) --cwd $$(pwd)/tmp/installer/frontend run build",
+    tools = ["@yarn//:yarn"],
+)
 
 genrule(
-    name = "yarn-build",
-    message = "Installing JS dependencies...",
-    srcs = [":node_modules"],
-    outs = ["installer/assets/frontend/scripts/app-bundle.js"],
-    cmd = "$(location @yarn//:yarn) run build",
-    tools = [
-        "@yarn//:yarn",
-        ":browserify",
-    ],
+    name = "frontend_test_sh",
+    outs = ["frontend_test.sh"],
+    cmd = "printf '#!/bin/bash -e\ncp -RL $$(dirname $$3)/.. $$TMPDIR/installer && $$1 --cwd $$TMPDIR/$$(dirname $$3)/.. run test' > $@",
+    testonly = 1,
 )
 
-nodejs_binary(
-    name = "browserify",
-    entry_point = "browserify/.bin/browserify",
+sh_test(
+    name = "frontend_test",
+    size = "small",
+    srcs = [":frontend_test_sh"],
+    args = ["$(location @yarn//:yarn)", "$(location :node_modules)", "$(location :packagejson)"],
+    data = ["@yarn//:yarn", ":node_modules", ":packagejson", ":files"],
 )
+
+genrule(
+    name = "installer_gui_test_sh",
+    outs = ["installer_gui_test.sh"],
+    cmd = "printf '#!/bin/bash -e\ncp -RL $$(dirname $$3)/.. $$TMPDIR/installer && xvfb-run -a $$1 --cwd $$TMPDIR/$$(dirname $$3)/.. run $$4-installer-tests' > $@",
+    testonly = 1,
+)
+
+PLATFORMS = ["aws", "baremetal"]
+[sh_test(
+    name = platform + "_installer_gui_test",
+    size = "medium",
+    srcs = [":installer_gui_test_sh"],
+    args = ["$(location @yarn//:yarn)", "$(location :node_modules)", "$(location :packagejson)", platform],
+    data = ["@yarn//:yarn", ":node_modules", ":packagejson", ":files"],
+) for platform in PLATFORMS]
