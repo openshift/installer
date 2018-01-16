@@ -4,6 +4,13 @@ metadata:
   name: cluster-config-v1
   namespace: tectonic-system
 data:
+  addon-config: |
+      apiVersion: v1
+      kind: AddonConfig
+      heapsterConfig:
+      dnsConfig:
+          clusterIP: ${kube_dns_service_ip}
+      cloudProvider: ${platform}
   utility-config: |
     apiVersion: v1
     kind: UtilityConfig
@@ -29,14 +36,3 @@ data:
       installerPlatform: ${platform}
       kubeAPIserverURL: ${kube_apiserver_url}
       tectonicVersion: ${tectonic_version}
-  addon-config: |
-      apiVersion: v1
-      kind: AddonConfig
-      heapsterConfig:
-      dnsConfig:
-          clusterIP: ${kube_dns_service_ip}
-      cloudProvider: ${platform}
-  network-config: |
-      apiVersion: v1
-      kind: NetworkConfig
-      ${network_config}
