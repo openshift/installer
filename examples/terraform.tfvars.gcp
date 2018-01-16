@@ -146,6 +146,9 @@ tectonic_gcp_worker_disktype = "pd-standard"
 // Instance size for the worker node(s). Example: `n1-standard-2`.
 tectonic_gcp_worker_gce_type = "n1-standard-2"
 
+// (optional) Start iscsid.service to enable iscsi volume attachment.
+// tectonic_iscsi_enabled = "false"
+
 // The path to the tectonic licence file.
 // You can download the Tectonic license file from your Account overview page at [1].
 // 

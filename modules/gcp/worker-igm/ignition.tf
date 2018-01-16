@@ -13,6 +13,7 @@ data "ignition_config" "main" {
     "${var.ign_locksmithd_service_id}",
     "${var.ign_kubelet_service_id}",
     "${var.ign_update_ca_certificates_dropin_id}",
+    "${var.ign_iscsi_service_id}",
   ]
 }
 

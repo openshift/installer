@@ -49,6 +49,8 @@ systemd:
     - name: tectonic.service
       enable: false
       contents: {{.ign_tectonic_service_json}}
+    - name: iscsid.service
+      enable: {{.iscsi.enabled}}
 storage:
   files:
     - path: /etc/hostname

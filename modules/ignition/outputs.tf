@@ -143,3 +143,7 @@ output "etcd_crt_id_list" {
     "${data.ignition_file.etcd_peer_crt.*.id}",
   ]
 }
+
+output "iscsi_service_id" {
+  value = "${data.ignition_systemd_unit.iscsi.id}"
+}

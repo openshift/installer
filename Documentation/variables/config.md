@@ -32,6 +32,7 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_etcd_servers | (optional) List of external etcd v3 servers to connect with (hostnames/IPs only). Needs to be set if using an external etcd cluster. Note: If this variable is defined, the installer will not create self-signed certs. To provide a CA certificate to trust the etcd servers, set "tectonic_etcd_ca_cert_path".<br><br>Example: `["etcd1", "etcd2", "etcd3"]` | list | `<list>` |
 | tectonic_etcd_tls_enabled | (optional) If set to `true`, all etcd endpoints will be configured to use the "https" scheme.<br><br>Note: If `tectonic_experimental` is set to `true` this variable has no effect, because the experimental self-hosted etcd always uses TLS. | string | `true` |
 | tectonic_image_re | (internal) Regular expression used to extract repo and tag components | string | `/^([^/]+/[^/]+/[^/]+):(.*)$/` |
+| tectonic_iscsi_enabled | (optional) Start iscsid.service to enable iscsi volume attachment. | string | `false` |
 | tectonic_kubelet_debug_config | (internal) debug flags for the kubelet (used in CI only) | string | `` |
 | tectonic_license_path | The path to the tectonic licence file. You can download the Tectonic license file from your Account overview page at [1].<br><br>[1] https://account.coreos.com/overview | string | `` |
 | tectonic_master_count | The number of master nodes to be created. This applies only to cloud platforms. | string | `1` |
