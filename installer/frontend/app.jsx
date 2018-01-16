@@ -10,7 +10,7 @@ import { Router } from 'react-router-dom';
 import createHistory from 'history/createBrowserHistory';
 import Cookie from 'js-cookie';
 
-import { clusterReadyActionTypes, restoreActionTypes, validateAllFields } from './actions';
+import { clusterReadyActionTypes, FIELDS, restoreActionTypes, validateFields } from './actions';
 import { PLATFORM_TYPE } from './cluster-config';
 import { trail } from './trail';
 import { TectonicGA } from './tectonic-ga';
@@ -75,20 +75,18 @@ ReactDom.render(
   document.getElementById('application')
 );
 
-const init = () => {
-  TectonicGA.initialize();
-
-  observeClusterStatus(dispatch, store.getState)
-    .then(res => {
-      if (res && res.type === clusterReadyActionTypes.STATUS) {
-        setInterval(() => observeClusterStatus(dispatch, store.getState), 10000);
-      }
-    });
-};
-
 // Stuff we need to load before we can run anything
 loadFacts(dispatch)
-  .then(() => store.dispatch(validateAllFields(init)));
+  .then(() => validateFields(_.keys(FIELDS), store.getState, dispatch))
+  .then(() => {
+    TectonicGA.initialize();
+    return observeClusterStatus(dispatch, store.getState);
+  })
+  .then(res => {
+    if (res && res.type === clusterReadyActionTypes.STATUS) {
+      setInterval(() => observeClusterStatus(dispatch, store.getState), 10000);
+    }
+  });
 
 window.onerror = (message, source, lineno, colno, optError = {}) => {
   try {
