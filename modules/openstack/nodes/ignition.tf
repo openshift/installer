@@ -5,14 +5,15 @@ data "ignition_config" "node" {
     "${data.ignition_user.core.id}",
   ]
 
-  files = [
-    "${data.ignition_file.kubeconfig.id}",
-    "${var.ign_installer_kubelet_env_id}",
-    "${var.ign_installer_runtime_mappings_id}",
-    "${var.ign_max_user_watches_id}",
-    "${data.ignition_file.resolv_conf.id}",
-    "${data.ignition_file.hostname.*.id[count.index]}",
-    "${data.ignition_file.sshd.id}",
+  files = ["${compact(list(
+    data.ignition_file.kubeconfig.id,
+    var.ign_installer_kubelet_env_id,
+    var.ign_installer_runtime_mappings_id,
+    var.ign_max_user_watches_id,
+    data.ignition_file.resolv_conf.id,
+    data.ignition_file.hostname.*.id[count.index],
+    data.ignition_file.sshd.id,
+   ))}",
     "${var.ign_ca_cert_id_list}",
   ]
 

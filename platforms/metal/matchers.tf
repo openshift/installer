@@ -37,6 +37,8 @@ module "ignition_masters" {
   etcd_ca_cert_pem          = "${module.etcd_certs.etcd_ca_crt_pem}"
   etcd_count                = "${length(var.tectonic_metal_controller_names)}"
   etcd_initial_cluster_list = "${var.tectonic_metal_controller_domains}"
+  http_proxy                = "${var.tectonic_http_proxy_address}"
+  https_proxy               = "${var.tectonic_https_proxy_address}"
   image_re                  = "${var.tectonic_image_re}"
   ingress_ca_cert_pem       = "${module.ingress_certs.ca_cert_pem}"
   iscsi_enabled             = "${var.tectonic_iscsi_enabled}"
@@ -45,6 +47,7 @@ module "ignition_masters" {
   kubelet_debug_config      = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
+  no_proxy                  = "${var.tectonic_no_proxy}"
   use_metadata              = false
 }
 
@@ -74,6 +77,8 @@ resource "matchbox_group" "controller" {
     ign_k8s_node_bootstrap_service_json    = "${jsonencode(module.ignition_masters.k8s_node_bootstrap_service_rendered)}"
     ign_kubelet_service_json               = "${jsonencode(module.ignition_masters.kubelet_service_rendered)}"
     ign_max_user_watches_json              = "${jsonencode(module.ignition_masters.max_user_watches_rendered)}"
+    ign_profile_env_json                   = "${local.tectonic_http_proxy_enabled ? jsonencode(module.ignition_masters.profile_env_rendered) : ""}"
+    ign_systemd_default_env_json           = "${local.tectonic_http_proxy_enabled ? jsonencode(module.ignition_masters.systemd_default_env_rendered) : ""}"
     ign_tectonic_path_unit_json            = "${jsonencode(module.tectonic.systemd_path_unit_rendered)}"
     ign_tectonic_service_json              = "${jsonencode(module.tectonic.systemd_service_rendered)}"
     ign_update_ca_certificates_dropin_json = "${jsonencode(module.ignition_masters.update_ca_certificates_dropin_rendered)}"
@@ -87,6 +92,8 @@ module "ignition_workers" {
   container_images        = "${var.tectonic_container_images}"
   custom_ca_cert_pem_list = "${var.tectonic_custom_ca_pem_list}"
   etcd_ca_cert_pem        = "${module.etcd_certs.etcd_ca_crt_pem}"
+  http_proxy              = "${var.tectonic_http_proxy_address}"
+  https_proxy             = "${var.tectonic_https_proxy_address}"
   image_re                = "${var.tectonic_image_re}"
   ingress_ca_cert_pem     = "${module.ingress_certs.ca_cert_pem}"
   iscsi_enabled           = "${var.tectonic_iscsi_enabled}"
@@ -95,6 +102,7 @@ module "ignition_workers" {
   kubelet_debug_config    = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label      = "node-role.kubernetes.io/node"
   kubelet_node_taints     = ""
+  no_proxy                = "${var.tectonic_no_proxy}"
 }
 
 resource "matchbox_group" "worker" {
@@ -123,6 +131,8 @@ resource "matchbox_group" "worker" {
     ign_k8s_node_bootstrap_service_json    = "${jsonencode(module.ignition_workers.k8s_node_bootstrap_service_rendered)}"
     ign_kubelet_service_json               = "${jsonencode(module.ignition_workers.kubelet_service_rendered)}"
     ign_max_user_watches_json              = "${jsonencode(module.ignition_workers.max_user_watches_rendered)}"
+    ign_profile_env_json                   = "${local.tectonic_http_proxy_enabled ? jsonencode(module.ignition_workers.profile_env_rendered) : ""}"
+    ign_systemd_default_env_json           = "${local.tectonic_http_proxy_enabled ? jsonencode(module.ignition_workers.systemd_default_env_rendered) : ""}"
     ign_update_ca_certificates_dropin_json = "${jsonencode(module.ignition_workers.update_ca_certificates_dropin_rendered)}"
   }
 }

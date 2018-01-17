@@ -207,3 +207,43 @@ data "ignition_systemd_unit" "iscsi" {
   name    = "iscsid.service"
   enabled = "${var.iscsi_enabled ? true : false}"
 }
+
+data "template_file" "profile_env" {
+  vars {
+    http_proxy  = "${var.http_proxy}"
+    https_proxy = "${var.https_proxy}"
+    no_proxy    = "${join(",", var.no_proxy)}"
+  }
+
+  template = "${file("${path.module}/resources/proxy/profile.env")}"
+}
+
+data "ignition_file" "profile_env" {
+  path       = "/etc/profile.env"
+  mode       = 0644
+  filesystem = "root"
+
+  content {
+    content = "${data.template_file.profile_env.rendered}"
+  }
+}
+
+data "template_file" "systemd_default_env" {
+  vars {
+    http_proxy  = "${var.http_proxy}"
+    https_proxy = "${var.https_proxy}"
+    no_proxy    = "${join(",", var.no_proxy)}"
+  }
+
+  template = "${file("${path.module}/resources/proxy/10-default-env.conf")}"
+}
+
+data "ignition_file" "systemd_default_env" {
+  path       = "/etc/systemd/system.conf.d/10-default-env.conf"
+  mode       = 0644
+  filesystem = "root"
+
+  content {
+    content = "${data.template_file.systemd_default_env.rendered}"
+  }
+}
