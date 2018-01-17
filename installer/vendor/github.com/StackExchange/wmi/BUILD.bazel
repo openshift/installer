@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = select({
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
+        "@io_bazel_rules_go//go/platform:windows": [
             "swbemservices.go",
             "wmi.go",
         ],
@@ -12,7 +12,7 @@ go_library(
     importpath = "github.com/StackExchange/wmi",
     visibility = ["//visibility:public"],
     deps = select({
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
+        "@io_bazel_rules_go//go/platform:windows": [
             "//installer/vendor/github.com/go-ole/go-ole:go_default_library",
             "//installer/vendor/github.com/go-ole/go-ole/oleutil:go_default_library",
         ],

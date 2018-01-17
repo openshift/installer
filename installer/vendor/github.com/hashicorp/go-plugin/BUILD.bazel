@@ -9,7 +9,6 @@ go_library(
         "mux_broker.go",
         "plugin.go",
         "process.go",
-        "process_posix.go",
         "rpc_client.go",
         "rpc_server.go",
         "server.go",
@@ -17,12 +16,44 @@ go_library(
         "stream.go",
         "testing.go",
     ] + select({
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
+        "@io_bazel_rules_go//go/platform:android": [
+            "process_posix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "process_posix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:dragonfly": [
+            "process_posix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "process_posix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "process_posix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:nacl": [
+            "process_posix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "process_posix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "process_posix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:plan9": [
+            "process_posix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "process_posix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
             "process_windows.go",
         ],
         "//conditions:default": [],
     }),
     importpath = "github.com/hashicorp/go-plugin",
     visibility = ["//visibility:public"],
-    deps = ["//installer/vendor/github.com/hashicorp/yamux:go_default_library"],
+    deps = [
+        "//vendor/github.com/hashicorp/yamux:go_default_library",
+    ],
 )

@@ -17,11 +17,12 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//installer/vendor/github.com/davecgh/go-spew/spew:go_default_library",
-        "//installer/vendor/github.com/hashicorp/go-getter:go_default_library",
+        "//installer/vendor/github.com/hashicorp/errwrap:go_default_library",
         "//installer/vendor/github.com/hashicorp/go-multierror:go_default_library",
         "//installer/vendor/github.com/hashicorp/terraform/config/module:go_default_library",
         "//installer/vendor/github.com/hashicorp/terraform/helper/config:go_default_library",
         "//installer/vendor/github.com/hashicorp/terraform/helper/logging:go_default_library",
         "//installer/vendor/github.com/hashicorp/terraform/terraform:go_default_library",
+        "//vendor/github.com/hashicorp/logutils:go_default_library",
     ],
 )

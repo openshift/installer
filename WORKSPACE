@@ -11,8 +11,8 @@ supported_platforms = [
 
 http_archive(
     name = "io_bazel_rules_go",
-    sha256 = "91fca9cf860a1476abdc185a5f675b641b60d3acf0596679a27b580af60bf19c",
-    url = "https://github.com/bazelbuild/rules_go/releases/download/0.7.0/rules_go-0.7.0.tar.gz",
+    url = "https://github.com/bazelbuild/rules_go/releases/download/0.8.1/rules_go-0.8.1.tar.gz",
+    sha256 = "90bb270d0a92ed5c83558b2797346917c46547f6f7103e648941ecdb6b9d0e72",
 )
 
 http_archive(
@@ -21,6 +21,13 @@ http_archive(
     type = "tar.gz",
     strip_prefix = "rules_nodejs-0.3.1",
     url = "https://codeload.github.com/bazelbuild/rules_nodejs/tar.gz/0.3.1",
+)
+
+http_archive(
+    name = "bazel_gazelle",
+    sha256 = "4952295aa35241082eefbb53decd7d4dd4e67a1f52655d708a1da942e3f38975",
+    url = "https://github.com/bazelbuild/bazel-gazelle/archive/eaa1e87d2a3ca716780ca6650ef5b9b9663b8773.zip",
+    strip_prefix = "bazel-gazelle-eaa1e87d2a3ca716780ca6650ef5b9b9663b8773",
 )
 
 load("@io_bazel_rules_go//go:def.bzl", "go_rules_dependencies", "go_register_toolchains", "go_repository")
@@ -32,6 +39,10 @@ go_register_toolchains()
 load("@build_bazel_rules_nodejs//:defs.bzl", "node_repositories")
 
 node_repositories(package_json = ["//installer/frontend:package.json"])
+
+load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
+
+gazelle_dependencies()
 
 # Runtime binary dependencies follow.
 # These will be fetched and included in the build output verbatim.

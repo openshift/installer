@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "cache.go",
+        "credentials.go",
+        "from_map.go",
+        "helper_program.go",
+        "static.go",
+        "token_credentials.go",
+    ],
+    importpath = "github.com/hashicorp/terraform/svchost/auth",
+    visibility = ["//visibility:public"],
+    deps = ["//installer/vendor/github.com/hashicorp/terraform/svchost:go_default_library"],
+)

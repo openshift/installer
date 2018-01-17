@@ -12,7 +12,7 @@ go_library(
     importpath = "github.com/coreos/coreos-cloudinit/config/validate",
     visibility = ["//visibility:public"],
     deps = [
-        "//installer/vendor/github.com/coreos/coreos-cloudinit/config:go_default_library",
         "//installer/vendor/github.com/coreos/yaml:go_default_library",
+        "//vendor/github.com/coreos/coreos-cloudinit/config:go_default_library",
     ],
 )

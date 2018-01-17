@@ -1,0 +1,11 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "testing.go",
+        "testing_go19.go",
+    ],
+    importpath = "github.com/mitchellh/go-testing-interface",
+    visibility = ["//visibility:public"],
+)

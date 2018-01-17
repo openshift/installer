@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "block_labels.go",
+        "decode.go",
+        "doc.go",
+        "gob.go",
+        "public.go",
+        "schema.go",
+        "spec.go",
+        "variables.go",
+    ],
+    importpath = "github.com/hashicorp/hcl2/hcldec",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/hashicorp/hcl2/hcl:go_default_library",
+        "//installer/vendor/github.com/zclconf/go-cty/cty:go_default_library",
+        "//installer/vendor/github.com/zclconf/go-cty/cty/convert:go_default_library",
+    ],
+)

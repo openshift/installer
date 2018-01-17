@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "disco.go",
+        "host.go",
+    ],
+    importpath = "github.com/hashicorp/terraform/svchost/disco",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/hashicorp/go-cleanhttp:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/svchost:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/svchost/auth:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/version:go_default_library",
+    ],
+)

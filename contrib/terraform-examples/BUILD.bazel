@@ -3,17 +3,18 @@ load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["main.go"],
-    importpath = "github.com/coreos/tectonic-installer/contrib/terraform-examples/contrib/terraform-examples",
+    importpath = "github.com/coreos/tectonic-installer/contrib/terraform-examples",
     visibility = ["//visibility:private"],
     deps = [
-        "@com_github_hashicorp_hcl//:go_default_library",
-        "@com_github_hashicorp_hcl//hcl/ast:go_default_library",
-        "@com_github_hashicorp_hcl//hcl/token:go_default_library",
+        "//vendor/github.com/hashicorp/hcl:go_default_library",
+        "//vendor/github.com/hashicorp/hcl/hcl/ast:go_default_library",
+        "//vendor/github.com/hashicorp/hcl/hcl/token:go_default_library",
     ],
 )
 
 go_binary(
     name = "terraform-examples",
     embed = [":go_default_library"],
+    importpath = "github.com/coreos/tectonic-installer/contrib/terraform-examples",
     visibility = ["//visibility:public"],
 )

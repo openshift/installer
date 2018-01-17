@@ -43,7 +43,7 @@ genrule(
 genrule(
     name = "frontend_test_sh",
     outs = ["frontend_test.sh"],
-    cmd = "printf '#!/bin/bash -e\ncp -RL $$(dirname $$3)/.. $$TMPDIR/installer && $$1 --cwd $$TMPDIR/$$(dirname $$3)/.. run test' > $@",
+    cmd = "printf '#!/bin/bash -e\ncp -RL $$(dirname $$2)/.. $$TMPDIR/installer && $$1 --cwd $$TMPDIR/$$(dirname $$2)/.. run test' > $@",
     testonly = 1,
 )
 
@@ -51,14 +51,14 @@ sh_test(
     name = "frontend_test",
     size = "small",
     srcs = [":frontend_test_sh"],
-    args = ["$(location @yarn//:yarn)", "$(location :node_modules)", "$(location :packagejson)"],
+    args = ["$(location @yarn//:yarn)", "$(location :packagejson)"],
     data = ["@yarn//:yarn", ":node_modules", ":packagejson", ":files"],
 )
 
 genrule(
     name = "installer_gui_test_sh",
     outs = ["installer_gui_test.sh"],
-    cmd = "printf '#!/bin/bash -e\ncp -RL $$(dirname $$3)/.. $$TMPDIR/installer && xvfb-run -a $$1 --cwd $$TMPDIR/$$(dirname $$3)/.. run $$4-installer-tests' > $@",
+    cmd = "printf '#!/bin/bash -e\ncp -RL $$(dirname $$2)/.. $$TMPDIR/installer && xvfb-run -a $$1 --cwd $$TMPDIR/$$(dirname $$2)/.. run $$3-installer-tests' > $@",
     testonly = 1,
 )
 
@@ -67,6 +67,6 @@ PLATFORMS = ["aws", "baremetal"]
     name = platform + "_installer_gui_test",
     size = "medium",
     srcs = [":installer_gui_test_sh"],
-    args = ["$(location @yarn//:yarn)", "$(location :node_modules)", "$(location :packagejson)", platform],
+    args = ["$(location @yarn//:yarn)", "$(location :packagejson)", platform],
     data = ["@yarn//:yarn", ":node_modules", ":packagejson", ":files"],
 ) for platform in PLATFORMS]

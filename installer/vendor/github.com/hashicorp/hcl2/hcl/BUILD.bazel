@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "diagnostic.go",
+        "diagnostic_text.go",
+        "didyoumean.go",
+        "doc.go",
+        "eval_context.go",
+        "merged.go",
+        "ops.go",
+        "pos.go",
+        "schema.go",
+        "static_expr.go",
+        "structure.go",
+        "traversal.go",
+    ],
+    importpath = "github.com/hashicorp/hcl2/hcl",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/agext/levenshtein:go_default_library",
+        "//installer/vendor/github.com/mitchellh/go-wordwrap:go_default_library",
+        "//installer/vendor/github.com/zclconf/go-cty/cty:go_default_library",
+        "//installer/vendor/github.com/zclconf/go-cty/cty/convert:go_default_library",
+        "//installer/vendor/github.com/zclconf/go-cty/cty/function:go_default_library",
+    ],
+)

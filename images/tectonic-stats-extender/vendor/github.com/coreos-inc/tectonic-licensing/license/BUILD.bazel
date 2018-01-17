@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "joseutil.go",
+        "keys.go",
+        "license.go",
+    ],
+    importpath = "github.com/coreos-inc/tectonic-licensing/license",
+    visibility = ["//visibility:public"],
+    deps = ["//images/tectonic-stats-extender/vendor/gopkg.in/square/go-jose.v2:go_default_library"],
+)

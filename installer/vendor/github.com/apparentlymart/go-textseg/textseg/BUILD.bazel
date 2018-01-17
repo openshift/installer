@@ -1,0 +1,14 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "all_tokens.go",
+        "generate.go",
+        "grapheme_clusters.go",
+        "tables.go",
+        "utf8_seqs.go",
+    ],
+    importpath = "github.com/apparentlymart/go-textseg/textseg",
+    visibility = ["//visibility:public"],
+)

@@ -1,0 +1,37 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "capsule.go",
+        "collection.go",
+        "doc.go",
+        "element_iterator.go",
+        "error.go",
+        "gob.go",
+        "helper.go",
+        "json.go",
+        "list_type.go",
+        "map_type.go",
+        "null.go",
+        "object_type.go",
+        "path.go",
+        "primitive_type.go",
+        "set_internals.go",
+        "set_type.go",
+        "tuple_type.go",
+        "type.go",
+        "type_conform.go",
+        "types_to_register.go",
+        "unknown.go",
+        "value.go",
+        "value_init.go",
+        "value_ops.go",
+    ],
+    importpath = "github.com/zclconf/go-cty/cty",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/zclconf/go-cty/cty/set:go_default_library",
+        "//installer/vendor/golang.org/x/text/unicode/norm:go_default_library",
+    ],
+)

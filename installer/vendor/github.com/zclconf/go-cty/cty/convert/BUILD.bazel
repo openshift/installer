@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "compare_types.go",
+        "conversion.go",
+        "conversion_collection.go",
+        "conversion_dynamic.go",
+        "conversion_primitive.go",
+        "doc.go",
+        "public.go",
+        "sort_types.go",
+        "unify.go",
+    ],
+    importpath = "github.com/zclconf/go-cty/cty/convert",
+    visibility = ["//visibility:public"],
+    deps = ["//installer/vendor/github.com/zclconf/go-cty/cty:go_default_library"],
+)

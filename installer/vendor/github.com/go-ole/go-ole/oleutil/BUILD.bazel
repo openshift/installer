@@ -3,11 +3,49 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
-        "connection_func.go",
-        "go-get.go",
         "oleutil.go",
     ] + select({
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
+        "@io_bazel_rules_go//go/platform:android": [
+            "connection_func.go",
+            "go-get.go",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "connection_func.go",
+            "go-get.go",
+        ],
+        "@io_bazel_rules_go//go/platform:dragonfly": [
+            "connection_func.go",
+            "go-get.go",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "connection_func.go",
+            "go-get.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "connection_func.go",
+            "go-get.go",
+        ],
+        "@io_bazel_rules_go//go/platform:nacl": [
+            "connection_func.go",
+            "go-get.go",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "connection_func.go",
+            "go-get.go",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "connection_func.go",
+            "go-get.go",
+        ],
+        "@io_bazel_rules_go//go/platform:plan9": [
+            "connection_func.go",
+            "go-get.go",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "connection_func.go",
+            "go-get.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
             "connection.go",
             "connection_windows.go",
         ],
@@ -15,5 +53,7 @@ go_library(
     }),
     importpath = "github.com/go-ole/go-ole/oleutil",
     visibility = ["//visibility:public"],
-    deps = ["//installer/vendor/github.com/go-ole/go-ole:go_default_library"],
+    deps = [
+        "//installer/vendor/github.com/go-ole/go-ole:go_default_library",
+    ],
 )

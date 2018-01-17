@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "ast.go",
+        "didyoumean.go",
+        "doc.go",
+        "navigation.go",
+        "parser.go",
+        "peeker.go",
+        "public.go",
+        "scanner.go",
+        "structure.go",
+        "tokentype_string.go",
+    ],
+    importpath = "github.com/hashicorp/hcl2/hcl/json",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/agext/levenshtein:go_default_library",
+        "//installer/vendor/github.com/apparentlymart/go-textseg/textseg:go_default_library",
+        "//installer/vendor/github.com/hashicorp/hcl2/hcl:go_default_library",
+        "//installer/vendor/github.com/hashicorp/hcl2/hcl/hclsyntax:go_default_library",
+        "//installer/vendor/github.com/zclconf/go-cty/cty:go_default_library",
+    ],
+)

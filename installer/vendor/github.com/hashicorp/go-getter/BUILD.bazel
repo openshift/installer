@@ -9,9 +9,12 @@ go_library(
         "decompress.go",
         "decompress_bzip2.go",
         "decompress_gzip.go",
+        "decompress_tar.go",
         "decompress_tbz2.go",
         "decompress_testing.go",
         "decompress_tgz.go",
+        "decompress_txz.go",
+        "decompress_xz.go",
         "decompress_zip.go",
         "detect.go",
         "detect_bitbucket.go",
@@ -21,7 +24,6 @@ go_library(
         "folder_storage.go",
         "get.go",
         "get_file.go",
-        "get_file_unix.go",
         "get_git.go",
         "get_hg.go",
         "get_http.go",
@@ -31,7 +33,37 @@ go_library(
         "source.go",
         "storage.go",
     ] + select({
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
+        "@io_bazel_rules_go//go/platform:android": [
+            "get_file_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "get_file_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:dragonfly": [
+            "get_file_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "get_file_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "get_file_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:nacl": [
+            "get_file_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "get_file_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "get_file_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:plan9": [
+            "get_file_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "get_file_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
             "get_file_windows.go",
         ],
         "//conditions:default": [],
@@ -46,8 +78,11 @@ go_library(
         "//installer/vendor/github.com/aws/aws-sdk-go/aws/session:go_default_library",
         "//installer/vendor/github.com/aws/aws-sdk-go/service/s3:go_default_library",
         "//installer/vendor/github.com/bgentry/go-netrc/netrc:go_default_library",
+        "//installer/vendor/github.com/hashicorp/go-cleanhttp:go_default_library",
         "//installer/vendor/github.com/hashicorp/go-getter/helper/url:go_default_library",
         "//installer/vendor/github.com/hashicorp/go-version:go_default_library",
         "//installer/vendor/github.com/mitchellh/go-homedir:go_default_library",
+        "//installer/vendor/github.com/mitchellh/go-testing-interface:go_default_library",
+        "//installer/vendor/github.com/ulikunitz/xz:go_default_library",
     ],
 )

@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "bool.go",
+        "bytes.go",
+        "collection.go",
+        "doc.go",
+        "general.go",
+        "json.go",
+        "number.go",
+        "sequence.go",
+        "string.go",
+    ],
+    importpath = "github.com/zclconf/go-cty/cty/function/stdlib",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/apparentlymart/go-textseg/textseg:go_default_library",
+        "//installer/vendor/github.com/zclconf/go-cty/cty:go_default_library",
+        "//installer/vendor/github.com/zclconf/go-cty/cty/convert:go_default_library",
+        "//installer/vendor/github.com/zclconf/go-cty/cty/function:go_default_library",
+        "//installer/vendor/github.com/zclconf/go-cty/cty/gocty:go_default_library",
+        "//installer/vendor/github.com/zclconf/go-cty/cty/json:go_default_library",
+    ],
+)

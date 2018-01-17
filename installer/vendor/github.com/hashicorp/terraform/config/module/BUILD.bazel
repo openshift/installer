@@ -6,18 +6,33 @@ go_library(
         "copy_dir.go",
         "get.go",
         "module.go",
+        "registry.go",
+        "storage.go",
         "testing.go",
         "tree.go",
         "tree_gob.go",
         "validate_provider_alias.go",
+        "versions.go",
     ] + select({
-        "@io_bazel_rules_go//go/platform:darwin_amd64": [
+        "@io_bazel_rules_go//go/platform:darwin": [
             "inode.go",
         ],
-        "@io_bazel_rules_go//go/platform:linux_amd64": [
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "inode_freebsd.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
             "inode.go",
         ],
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "inode.go",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "inode.go",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "inode.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
             "inode_windows.go",
         ],
         "//conditions:default": [],
@@ -25,9 +40,19 @@ go_library(
     importpath = "github.com/hashicorp/terraform/config/module",
     visibility = ["//visibility:public"],
     deps = [
+        "//installer/vendor/github.com/hashicorp/go-cleanhttp:go_default_library",
         "//installer/vendor/github.com/hashicorp/go-getter:go_default_library",
         "//installer/vendor/github.com/hashicorp/go-multierror:go_default_library",
+        "//installer/vendor/github.com/hashicorp/go-version:go_default_library",
         "//installer/vendor/github.com/hashicorp/terraform/config:go_default_library",
         "//installer/vendor/github.com/hashicorp/terraform/dag:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/registry/regsrc:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/registry/response:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/svchost:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/svchost/auth:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/svchost/disco:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/tfdiags:go_default_library",
+        "//installer/vendor/github.com/hashicorp/terraform/version:go_default_library",
+        "//installer/vendor/github.com/mitchellh/cli:go_default_library",
     ],
 )

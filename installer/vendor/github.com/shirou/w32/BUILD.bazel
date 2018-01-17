@@ -7,7 +7,7 @@ go_library(
         "typedef.go",
         "vars.go",
     ] + select({
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
+        "@io_bazel_rules_go//go/platform:windows": [
             "advapi32.go",
             "comctl32.go",
             "comdlg32.go",

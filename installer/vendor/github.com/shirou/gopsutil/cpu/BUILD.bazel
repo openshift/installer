@@ -4,16 +4,40 @@ go_library(
     name = "go_default_library",
     srcs = [
         "cpu.go",
-        "cpu_fallback.go",
     ] + select({
-        "@io_bazel_rules_go//go/platform:darwin_amd64": [
+        "@io_bazel_rules_go//go/platform:android": [
+            "cpu_fallback.go",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
             "cpu_darwin.go",
             "cpu_darwin_cgo.go",
+            "cpu_darwin_nocgo.go",
         ],
-        "@io_bazel_rules_go//go/platform:linux_amd64": [
+        "@io_bazel_rules_go//go/platform:dragonfly": [
+            "cpu_fallback.go",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "cpu_freebsd.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
             "cpu_linux.go",
         ],
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
+        "@io_bazel_rules_go//go/platform:nacl": [
+            "cpu_fallback.go",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "cpu_fallback.go",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "cpu_openbsd.go",
+        ],
+        "@io_bazel_rules_go//go/platform:plan9": [
+            "cpu_fallback.go",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "cpu_solaris.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
             "cpu_windows.go",
         ],
         "//conditions:default": [],
@@ -24,7 +48,7 @@ go_library(
     deps = [
         "//installer/vendor/github.com/shirou/gopsutil/internal/common:go_default_library",
     ] + select({
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
+        "@io_bazel_rules_go//go/platform:windows": [
             "//installer/vendor/github.com/StackExchange/wmi:go_default_library",
         ],
         "//conditions:default": [],

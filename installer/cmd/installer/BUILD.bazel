@@ -19,6 +19,6 @@ go_library(
 go_binary(
     name = "installer",
     embed = [":go_default_library"],
-    importpath = "github.com/coreos/tectonic-installer/intaller/installer/cmd/installer",
+    importpath = "github.com/coreos/tectonic-installer/installer/cmd/installer",
     visibility = ["//visibility:public"],
 )

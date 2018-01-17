@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["server.go"],
+    importpath = "github.com/coreos/tectonic-installer/images/tectonic-error-server",
+    visibility = ["//visibility:private"],
+    deps = ["//vendor/github.com/coreos-inc/tectonic/ingress-error/binassets:go_default_library"],
+)
+
+go_binary(
+    name = "tectonic-error-server",
+    embed = [":go_default_library"],
+    importpath = "github.com/coreos/tectonic-installer/images/tectonic-error-server",
+    visibility = ["//visibility:public"],
+)

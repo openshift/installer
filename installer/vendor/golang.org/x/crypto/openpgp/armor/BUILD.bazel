@@ -1,0 +1,12 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "armor.go",
+        "encode.go",
+    ],
+    importpath = "golang.org/x/crypto/openpgp/armor",
+    visibility = ["//visibility:public"],
+    deps = ["//installer/vendor/golang.org/x/crypto/openpgp/errors:go_default_library"],
+)

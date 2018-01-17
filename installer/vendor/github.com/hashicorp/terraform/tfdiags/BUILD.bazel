@@ -1,0 +1,23 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "diagnostic.go",
+        "diagnostics.go",
+        "doc.go",
+        "error.go",
+        "hcl.go",
+        "rpc_friendly.go",
+        "severity_string.go",
+        "simple_warning.go",
+        "source_range.go",
+    ],
+    importpath = "github.com/hashicorp/terraform/tfdiags",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/hashicorp/errwrap:go_default_library",
+        "//installer/vendor/github.com/hashicorp/go-multierror:go_default_library",
+        "//installer/vendor/github.com/hashicorp/hcl2/hcl:go_default_library",
+    ],
+)

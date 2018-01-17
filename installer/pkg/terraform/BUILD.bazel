@@ -20,7 +20,7 @@ go_library(
 go_test(
     name = "go_default_test",
     srcs = ["executor_test.go"],
+    embed = [":go_default_library"],
     importpath = "github.com/coreos/tectonic-installer/installer/pkg/terraform",
-    library = ":go_default_library",
     deps = ["//installer/vendor/github.com/stretchr/testify/assert:go_default_library"],
 )

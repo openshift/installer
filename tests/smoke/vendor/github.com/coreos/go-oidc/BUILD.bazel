@@ -11,8 +11,8 @@ go_library(
     importpath = "github.com/coreos/go-oidc",
     visibility = ["//visibility:public"],
     deps = [
-        "//tests/smoke/vendor/github.com/pquerna/cachecontrol:go_default_library",
         "//tests/smoke/vendor/golang.org/x/oauth2:go_default_library",
-        "//tests/smoke/vendor/gopkg.in/square/go-jose.v2:go_default_library",
+        "//vendor/github.com/pquerna/cachecontrol:go_default_library",
+        "//vendor/gopkg.in/square/go-jose.v2:go_default_library",
     ],
 )

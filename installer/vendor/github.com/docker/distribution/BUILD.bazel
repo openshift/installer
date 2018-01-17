@@ -13,8 +13,8 @@ go_library(
     importpath = "github.com/docker/distribution",
     visibility = ["//visibility:public"],
     deps = [
-        "//installer/vendor/github.com/docker/distribution/context:go_default_library",
         "//installer/vendor/github.com/docker/distribution/digest:go_default_library",
         "//installer/vendor/github.com/docker/distribution/reference:go_default_library",
+        "//vendor/github.com/docker/distribution/context:go_default_library",
     ],
 )

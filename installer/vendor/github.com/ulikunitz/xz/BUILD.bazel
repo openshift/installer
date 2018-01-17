@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "bits.go",
+        "crc.go",
+        "format.go",
+        "lzmafilter.go",
+        "reader.go",
+        "writer.go",
+    ],
+    importpath = "github.com/ulikunitz/xz",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/ulikunitz/xz/internal/xlog:go_default_library",
+        "//installer/vendor/github.com/ulikunitz/xz/lzma:go_default_library",
+    ],
+)

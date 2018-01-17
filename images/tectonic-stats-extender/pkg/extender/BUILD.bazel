@@ -1,0 +1,22 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "extender.go",
+        "extensions.go",
+    ],
+    importpath = "github.com/coreos/tectonic-installer/images/tectonic-stats-extender/pkg/extender",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//images/tectonic-stats-extender/vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//images/tectonic-stats-extender/vendor/github.com/coreos-inc/tectonic-licensing/license:go_default_library",
+    ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["extensions_test.go"],
+    embed = [":go_default_library"],
+    importpath = "github.com/coreos/tectonic-installer/images/tectonic-stats-extender/pkg/extender",
+)

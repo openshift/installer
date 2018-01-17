@@ -8,5 +8,5 @@ go_library(
     ],
     importpath = "github.com/hashicorp/terraform/helper/logging",
     visibility = ["//visibility:public"],
-    deps = ["//installer/vendor/github.com/hashicorp/logutils:go_default_library"],
+    deps = ["//vendor/github.com/hashicorp/logutils:go_default_library"],
 )

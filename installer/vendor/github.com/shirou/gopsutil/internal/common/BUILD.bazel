@@ -6,15 +6,23 @@ go_library(
         "binary.go",
         "common.go",
     ] + select({
-        "@io_bazel_rules_go//go/platform:darwin_amd64": [
+        "@io_bazel_rules_go//go/platform:darwin": [
             "common_darwin.go",
             "common_unix.go",
         ],
-        "@io_bazel_rules_go//go/platform:linux_amd64": [
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "common_freebsd.go",
+            "common_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
             "common_linux.go",
             "common_unix.go",
         ],
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "common_openbsd.go",
+            "common_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
             "common_windows.go",
         ],
         "//conditions:default": [],

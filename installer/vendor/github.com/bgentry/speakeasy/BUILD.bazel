@@ -1,0 +1,36 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "speakeasy.go",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "speakeasy_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:dragonfly": [
+            "speakeasy_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "speakeasy_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "speakeasy_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "speakeasy_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "speakeasy_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "speakeasy_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
+            "speakeasy_windows.go",
+        ],
+        "//conditions:default": [],
+    }),
+    importpath = "github.com/bgentry/speakeasy",
+    visibility = ["//visibility:public"],
+)

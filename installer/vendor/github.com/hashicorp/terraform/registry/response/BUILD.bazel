@@ -1,0 +1,15 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "module.go",
+        "module_list.go",
+        "module_provider.go",
+        "module_versions.go",
+        "pagination.go",
+        "redirect.go",
+    ],
+    importpath = "github.com/hashicorp/terraform/registry/response",
+    visibility = ["//visibility:public"],
+)

@@ -4,18 +4,77 @@ go_library(
     name = "go_default_library",
     srcs = [
         "host.go",
-        "host_fallback.go",
     ] + select({
-        "@io_bazel_rules_go//go/platform:darwin_amd64": [
+        "@io_bazel_rules_go//go/platform:android": [
+            "host_fallback.go",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
             "host_darwin.go",
+        ],
+        "@io_bazel_rules_go//go/platform:dragonfly": [
+            "host_fallback.go",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "host_freebsd.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "host_linux.go",
+        ],
+        "@io_bazel_rules_go//go/platform:nacl": [
+            "host_fallback.go",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "host_fallback.go",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "host_openbsd.go",
+        ],
+        "@io_bazel_rules_go//go/platform:plan9": [
+            "host_fallback.go",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "host_solaris.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
+            "host_windows.go",
+        ],
+        "//conditions:default": [],
+    }) + select({
+        "@io_bazel_rules_go//go/platform:darwin_386": [
+            "host_darwin_386.go",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin_amd64": [
             "host_darwin_amd64.go",
         ],
+        "@io_bazel_rules_go//go/platform:freebsd_386": [
+            "host_freebsd_386.go",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd_amd64": [
+            "host_freebsd_amd64.go",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd_arm": [
+            "host_freebsd_arm.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux_386": [
+            "host_linux_386.go",
+        ],
         "@io_bazel_rules_go//go/platform:linux_amd64": [
-            "host_linux.go",
             "host_linux_amd64.go",
         ],
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
-            "host_windows.go",
+        "@io_bazel_rules_go//go/platform:linux_arm": [
+            "host_linux_arm.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux_arm64": [
+            "host_linux_arm64.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux_ppc64le": [
+            "host_linux_ppc64le.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux_s390x": [
+            "host_linux_s390x.go",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd_amd64": [
+            "host_openbsd_amd64.go",
         ],
         "//conditions:default": [],
     }),
@@ -25,10 +84,16 @@ go_library(
     deps = [
         "//installer/vendor/github.com/shirou/gopsutil/internal/common:go_default_library",
     ] + select({
-        "@io_bazel_rules_go//go/platform:darwin_amd64": [
+        "@io_bazel_rules_go//go/platform:darwin": [
             "//installer/vendor/github.com/shirou/gopsutil/process:go_default_library",
         ],
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "//installer/vendor/github.com/shirou/gopsutil/process:go_default_library",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "//installer/vendor/github.com/shirou/gopsutil/process:go_default_library",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
             "//installer/vendor/github.com/StackExchange/wmi:go_default_library",
             "//installer/vendor/github.com/shirou/gopsutil/process:go_default_library",
         ],

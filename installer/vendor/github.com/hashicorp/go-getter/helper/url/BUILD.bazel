@@ -4,9 +4,38 @@ go_library(
     name = "go_default_library",
     srcs = [
         "url.go",
-        "url_unix.go",
     ] + select({
-        "@io_bazel_rules_go//go/platform:windows_amd64": [
+        "@io_bazel_rules_go//go/platform:android": [
+            "url_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "url_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:dragonfly": [
+            "url_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "url_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "url_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:nacl": [
+            "url_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "url_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "url_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:plan9": [
+            "url_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "url_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
             "url_windows.go",
         ],
         "//conditions:default": [],

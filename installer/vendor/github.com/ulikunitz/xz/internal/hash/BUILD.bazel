@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "cyclic_poly.go",
+        "doc.go",
+        "rabin_karp.go",
+        "roller.go",
+    ],
+    importpath = "github.com/ulikunitz/xz/internal/hash",
+    visibility = ["//installer/vendor/github.com/ulikunitz/xz:__subpackages__"],
+)

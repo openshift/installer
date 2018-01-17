@@ -17,7 +17,7 @@ go_library(
     importpath = "gopkg.in/square/go-jose.v2",
     visibility = ["//visibility:public"],
     deps = [
-        "//installer/vendor/gopkg.in/square/go-jose.v2/cipher:go_default_library",
-        "//installer/vendor/gopkg.in/square/go-jose.v2/json:go_default_library",
+        "//vendor/gopkg.in/square/go-jose.v2/cipher:go_default_library",
+        "//vendor/gopkg.in/square/go-jose.v2/json:go_default_library",
     ],
 )

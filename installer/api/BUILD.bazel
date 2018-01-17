@@ -15,7 +15,7 @@ go_library(
     importpath = "github.com/coreos/tectonic-installer/installer/api",
     visibility = ["//visibility:public"],
     deps = [
-        "//installer:go_default_library",
+        "//installer/assets:go_default_library",
         "//installer/pkg/aws:go_default_library",
         "//installer/pkg/containerlinux:go_default_library",
         "//installer/pkg/tectonic:go_default_library",
