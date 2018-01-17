@@ -25,7 +25,7 @@ import { AWS_TF } from '../platforms';
 import { toError } from '../utils';
 import { compose, validate } from '../validate';
 import { makeNodeForm, toKey } from './make-node-form';
-import { Connect, Input, NumberInput, Radio, Select } from './ui';
+import { A, Connect, Input, NumberInput, Radio, Select } from './ui';
 
 const Row = ({label, htmlFor, children}) => <div className="row form-group">
   <div className="col-xs-4">
@@ -79,9 +79,7 @@ export const DefineNode = ({type, max, withIamRole = true}) => <div>
       </Select>
     </Connect>
     {type === 'aws_etcds' && <p className="text-muted wiz-help-text">
-      {/* eslint-disable react/jsx-no-target-blank */}
-      Read the <a href="https://coreos.com/etcd/docs/latest/op-guide/hardware.html" rel="noopener" target="_blank">etcd recommended hardware</a> guide for best performance.
-      {/* eslint-enable react/jsx-no-target-blank */}
+      Read the <A href="https://coreos.com/etcd/docs/latest/op-guide/hardware.html" rel="noopener">etcd recommended hardware</A> guide for best performance.
     </p>}
   </Row>
   <Row htmlFor={`${type}--storage-size`} label="Storage Size">

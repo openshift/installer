@@ -3,7 +3,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { validate } from '../validate';
-import { Connect, Selector } from './ui';
+import { A, Connect, Selector } from './ui';
 import { Field, Form } from '../form';
 
 import * as awsActions from '../aws-actions';
@@ -35,9 +35,7 @@ const Title = connect(
 export const AWS_SubmitKeys = () => <div>
   <div className="row form-group">
     <div className="col-xs-12">
-      {/* eslint-disable react/jsx-no-target-blank */}
-      <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#ssh-key" rel="noopener" target="_blank">Generate a new key</a> if you don't have an existing one in this region.
-      {/* eslint-enable react/jsx-no-target-blank */}
+      <A href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#ssh-key" rel="noopener">Generate a new key</A> if you don't have an existing one in this region.
     </div>
   </div>
   <div className="row form-group">

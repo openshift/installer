@@ -1,6 +1,6 @@
 import React from 'react';
 import semver from 'semver';
-import { Dropdown } from './ui';
+import { A, Dropdown } from './ui';
 
 const fetchLatestRelease = () => {
   const opts = {
@@ -120,18 +120,14 @@ export class Header extends React.Component {
             <Dropdown items={openSourceDdItems} header="Open Source" />
           </li>
           <li className="tectonic-dropdown-menu-title">
-            {/* eslint-disable react/jsx-no-target-blank */}
-            <a href="https://coreos.com/tectonic/docs/latest/" rel="noopener" target="_blank" className="tectonic-dropdown-menu-title__link">Tectonic Docs</a>
-            {/* eslint-enable react/jsx-no-target-blank */}
+            <A href="https://coreos.com/tectonic/docs/latest/" className="tectonic-dropdown-menu-title__link" rel="noopener">Tectonic Docs</A>
           </li>
         </ul>
         <div className="co-navbar--right">
           <ul className="co-navbar-nav">
             {latestRelease && hasNewVersion(latestRelease) && <li className="co-navbar-nav-item__version">
               <span className="co-navbar-nav-item__version--new">
-                {/* eslint-disable react/jsx-no-target-blank */}
-                New installer version: <a href="https://coreos.com/tectonic/releases/" rel="noopener" target="_blank">Release notes {latestRelease}</a>
-                {/* eslint-enable react/jsx-no-target-blank */}
+                New installer version: <A href="https://coreos.com/tectonic/releases/" rel="noopener">Release notes {latestRelease}</A>
               </span>
             </li>}
             <li className="co-navbar-nav-item__version">

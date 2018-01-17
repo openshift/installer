@@ -58,6 +58,9 @@ const FIELD_PROPS = ImmutableSet([
   'width',
 ]);
 
+// Same as an <a> except defaults to rel="noopener noreferrer" and target="_blank"
+export const A = props => <a rel="noopener noreferrer" target="_blank" {...props} />;
+
 export const ErrorComponent = props => {
   const error = props.error;
   if (props.ErrorComponent) {
