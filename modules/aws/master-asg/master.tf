@@ -141,19 +141,6 @@ resource "aws_iam_role_policy" "master_policy" {
       "Effect": "Allow"
     },
     {
-      "Action": [
-        "ecr:GetAuthorizationToken",
-        "ecr:BatchCheckLayerAvailability",
-        "ecr:GetDownloadUrlForLayer",
-        "ecr:GetRepositoryPolicy",
-        "ecr:DescribeRepositories",
-        "ecr:ListImages",
-        "ecr:BatchGetImage"
-      ],
-      "Resource": "*",
-      "Effect": "Allow"
-    },
-    {
       "Action" : [
         "s3:GetObject",
         "s3:HeadObject",
