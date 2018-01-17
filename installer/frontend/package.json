@@ -50,7 +50,7 @@
     "babel-preset-es2015": "6.24.x",
     "babel-preset-react": "6.24.x",
     "babelify": "8.0.x",
-    "browserify": "13.0.x",
+    "browserify": "15.2.x",
     "chromedriver": "2.x",
     "deep-diff": "0.3.x",
     "eslint": "4.x",
