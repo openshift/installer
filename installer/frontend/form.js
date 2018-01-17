@@ -38,7 +38,7 @@ class Node {
     const inFlyPath = toExtraDataInFly(this.id);
     setIn(inFlyPath, true, dispatch);
 
-    return this.getExtraStuff_(dispatch, isNow).then(data => {
+    return this.getExtraStuff_(dispatch, isNow, cc).then(data => {
       if (!isNow()) {
         return;
       }

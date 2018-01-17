@@ -82,10 +82,8 @@ Various input field components are defined in `components/ui.jsx`, including
   * For inputs than can optionally be deselected. `Deselect` is the checkbox that controls whether the field is deselected. `DeselectField` wraps the field that should be deselected.
 * `Select`
   * A dropdown input.
-* `Selector`
-  * `Select` with an associated Redux `extraData` entry and optionally with a refresh button that triggers reloading the dropdown options.
 * `AsyncSelect`
-  * Similar to `Selector`, so merging these two components would be a good area for refactoring.
+  * `Select` with an associated Redux `extraData` entry and optionally with a refresh button that triggers reloading the dropdown options.
 * `FileArea`
   * A combined file input and textarea for either uploading a file or entering the text directly.
 * `ConnectedFieldList`
