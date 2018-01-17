@@ -50,7 +50,7 @@ systemd:
       enable: false
       contents: {{.ign_tectonic_service_json}}
     - name: iscsid.service
-      enable: {{.iscsi.enabled}}
+      enable: {{.iscsi_enabled}}
 storage:
   files:
     - path: /etc/hostname
