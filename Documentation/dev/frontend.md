@@ -25,12 +25,18 @@ The app automatically jumps back to the first page before the current page that 
 
 ## State / Redux
 As the user progresses through the wizard, field values and related data are all stored in Redux state under the following keys.
+* `aws`: For tracking the status and response of AWS related API calls.
+* `cluster`: Tracks the status of the cluster during installation.
 * `clusterConfig`: The actual field values that will be used to generate the .tfvars file (often abbreviated to `cc` in the code).
-* `error`: All field validation errors, including “form level” validation errors.
-* `inFly`: Flags indicating which fields / forms are currently being validated (field `validator()` functions can be `async`).
-* `extra`: Data fetched by `getExtraStuff()` functions.
-* `extraError`: Errors while executing `getExtraStuff()` functions.
-* `extraInFly`: Flags indicating which `getExtraStuff()` calls are in progress.
+* `clusterConfig.error`: All field validation errors, including “form level” validation errors.
+* `clusterConfig.inFly`: Flags indicating which fields / forms are currently being validated (field `validator()` functions can be `async`).
+* `clusterConfig.extra`: Data fetched by `getExtraStuff()` functions.
+* `clusterConfig.extraError`: Errors while executing `getExtraStuff()` functions.
+* `clusterConfig.extraInFly`: Flags indicating which `getExtraStuff()` calls are in progress.
+* `commitState`: Tracks the status of the `/terraform/apply` API call, which actually initiates the Terraform apply action.
+* `dirty`: Tracks which fields have been changed. Validation errors are only shown for fields marked as `dirty`.
+* `eventErrors`: Another place where errors are stored. Almost unused and should probably be refactored away.
+* `serverFacts`: Stores additional data loaded from the backend when the app launches.
 
 We use `sessionStorage` instead of `localStorage` to persist the installer state, so all field values are lost when the tab is closed. The `sessionStorage` data is updated periodically and also when the `beforeunload` event fires, so that no field values are lost when refreshing the page.
 
