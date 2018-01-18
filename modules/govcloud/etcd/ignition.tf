@@ -6,9 +6,12 @@ data "ignition_config" "etcd" {
     "${var.ign_etcd_dropin_id_list[count.index]}",
   ]
 
-  files = [
+  files = ["${compact(list(
+    var.ign_profile_env_id,
+    var.ign_systemd_default_env_id,
+    var.dns_server_ip != "" ? join("", data.ignition_file.node_resolv.*.id) : "",
+   ))}",
     "${var.ign_etcd_crt_id_list}",
-    "${var.dns_server_ip != "" ? join("", data.ignition_file.node_resolv.*.id) : ""}",
   ]
 }
 

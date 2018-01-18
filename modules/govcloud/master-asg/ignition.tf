@@ -1,17 +1,22 @@
 data "ignition_config" "main" {
   files = [
-    "${data.ignition_file.detect_master.id}",
-    "${data.ignition_file.init_assets.id}",
-    "${data.ignition_file.rm_assets.id}",
-    "${var.ign_installer_kubelet_env_id}",
-    "${var.ign_installer_runtime_mappings_id}",
-    "${var.ign_max_user_watches_id}",
-    "${var.ign_s3_puller_id}",
+    "${compact(list(
+    data.ignition_file.detect_master.id,
+    data.ignition_file.init_assets.id,
+    data.ignition_file.rm_assets.id,
+    var.ign_installer_kubelet_env_id,
+    var.ign_installer_runtime_mappings_id,
+    var.ign_max_user_watches_id,
+    var.ign_s3_puller_id,
+    var.ign_profile_env_id,
+    var.ign_systemd_default_env_id,
+    var.dns_server_ip != "" ? join("", data.ignition_file.node_resolv.*.id) : "",
+   ))}",
     "${var.ign_ca_cert_id_list}",
-    "${var.dns_server_ip != "" ? join("", data.ignition_file.node_resolv.*.id) : ""}",
   ]
 
-  systemd = ["${compact(list(
+  systemd = [
+    "${compact(list(
     var.ign_docker_dropin_id,
     var.ign_locksmithd_service_id,
     var.ign_kubelet_service_id,
@@ -24,7 +29,9 @@ data "ignition_config" "main" {
     var.ign_tectonic_path_unit_id,
     var.ign_rm_assets_path_unit_id,
     var.ign_update_ca_certificates_dropin_id,
-   ))}"]
+    var.ign_iscsi_service_id,
+   ))}",
+  ]
 }
 
 data "template_file" "detect_master" {
