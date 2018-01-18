@@ -186,40 +186,34 @@ export const ToggleButton = props => <button className={props.className} style={
   <i style={{marginLeft: 7}} className={classNames('fa', {'fa-chevron-up': props.value, 'fa-chevron-down': !props.value})}></i>
 </button>;
 
-// A textarea/file-upload combo
-// <FileArea id:REQUIRED invalid="error message" placeholder value onValue>
-export const FileArea = connect(
-  () => ({tag: 'textarea'}),
+export const FileInput = connect(
+  null,
   (dispatch, {id}) => ({makeDirty: () => dispatch(dirtyActions.add(id))}),
-)((props) => {
-  const {onValue, makeDirty, uploadButtonLabel} = props;
-  const handleUpload = (e) => {
+)(({id, makeDirty, onValue}) => {
+  const upload = e => {
     readFile(e.target.files.item(0))
-      .then((value) => {
-        onValue(value);
-      })
-      .catch((msg) => {
-        console.error(msg);
-      })
-      .then(() => {
-        makeDirty();
-      });
+      .then(onValue)
+      .catch(msg => console.error(msg))
+      .then(makeDirty);
+
     // Reset value so that onChange fires if you pick the same file again.
     e.target.value = null;
   };
-
-  return (
-    <div>
-      <label className="btn btn-sm btn-link">
-        <span className="fa fa-upload"></span>&nbsp;&nbsp;{uploadButtonLabel || 'Upload'} {' '}
-        <input style={{display: 'none'}}
-          type="file"
-          onChange={handleUpload} />
-      </label>
-      <Field {...props} />
-    </div>
-  );
+  return <input type="file" id={id} onChange={upload} style={{display: 'none'}} />;
 });
+
+// A textarea/file-upload combo
+// <FileArea id:REQUIRED invalid="error message" placeholder value onValue>
+export const FileArea = props => {
+  const {id, onValue, uploadButtonLabel} = props;
+  return <div>
+    <label className="btn btn-sm btn-link">
+      <span className="fa fa-upload"></span>&nbsp;&nbsp;{uploadButtonLabel || 'Upload'}
+      <FileInput id={id} onValue={onValue} />
+    </label>
+    <Field {...props} tag="textarea" />
+  </div>;
+};
 
 // <Select id:REQUIRED value onValue>
 //   <option....>
