@@ -63,7 +63,7 @@ export const commitPhases = {
   SUCCEEDED: 'COMMIT_SUCCEEDED',
   FAILED: 'COMMIT_FAILED',
 };
-const FIELDS = {};
+export const FIELDS = {};
 const FIELD_TO_DEPS = {};
 export const FORMS = {};
 
@@ -136,13 +136,6 @@ export const validateFields = async (ids, getState, dispatch, updatedId, isNow) 
         .then(() => FIELDS[id].validate(dispatch, getState, updatedId, isNow))
     ));
     _.pullAll(unvisitedIds, toVisit);
-  }
-};
-
-export const validateAllFields = cb => async (dispatch, getState) => {
-  await validateFields(_.keys(FIELDS), getState, dispatch);
-  if (_.isFunction(cb)) {
-    cb();
   }
 };
 
