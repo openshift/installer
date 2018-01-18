@@ -47,6 +47,12 @@ spec:
           items:
           - key: network-config
             path: network-config
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 1
