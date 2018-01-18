@@ -36,3 +36,13 @@ variable "ign_ca_cert_id_list" {
   type        = "list"
   description = "The list of public CA certificate ignition file IDs."
 }
+
+variable "ign_profile_env_id" {
+  type    = "string"
+  default = ""
+}
+
+variable "ign_systemd_default_env_id" {
+  type    = "string"
+  default = ""
+}
