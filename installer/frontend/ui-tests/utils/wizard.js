@@ -27,6 +27,10 @@ const testPage = (page, platform, json, nextInitiallyDisabled = true) => {
     page.expect.element('.wiz-wizard__nav__step--active + .wiz-wizard__nav__step button').to.not.have.attribute('disabled');
   }
 
+  // Links that open in a new tab must set rel="noopener noreferrer", but coreos.com links must set rel="noopener"
+  page.expect.element('a[target=_blank][href*="coreos.com"]:not([rel="noopener"])').not.present;
+  page.expect.element('a[target=_blank]:not([href*="coreos.com"]):not([rel="noopener noreferrer"])').not.present;
+
   page.test(json, platform);
 
   page.expect.element(nextStep).to.have.attribute('class').which.not.contains('disabled');
