@@ -18,7 +18,7 @@ spec:
     metadata:
       labels:
         k8s-app: tectonic-network-operator
-        tectonic-app-version-name: tno
+        tectonic-app-version-name: tectonic-network
     spec:
       containers:
       - name: tectonic-network-operator

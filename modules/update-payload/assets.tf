@@ -12,9 +12,23 @@ resource "template_dir" "payload_operators" {
     kubernetes_addon_operator_image    = "${var.tectonic_container_images["kubernetes_addon_operator"]}"
     tectonic_alm_operator_image        = "${var.tectonic_container_images["tectonic_alm_operator"]}"
     tectonic_utility_operator_image    = "${var.tectonic_container_images["tectonic_utility_operator"]}"
-    tectonic_network_operator_image    = "${var.tectonic_container_images["tectonic_network_operator"]}"
-    image_re                           = "${var.tectonic_image_re}"
   }
+}
+
+# TNO
+data "template_file" "tectonic_network_operator" {
+  template = "${file("${path.module}/../bootkube/resources/manifests/tectonic-network-operator.yaml")}"
+
+  vars {
+    tectonic_network_operator_image = "${var.tectonic_container_images["tectonic_network_operator"]}"
+  }
+}
+
+resource "local_file" "tectonic_network_operator" {
+  content  = "${data.template_file.tectonic_network_operator.rendered}"
+  filename = "./generated/operators/tectonic-network-operator.yaml"
+
+  depends_on = ["template_dir.payload_operators"]
 }
 
 resource "template_dir" "payload_appversions" {
@@ -29,4 +43,12 @@ resource "template_dir" "payload_appversions" {
     tectonic_cluo_operator_version = "${var.tectonic_versions["cluo"]}"
     tectonic_alm_operator_version  = "${var.tectonic_versions["alm"]}"
   }
+}
+
+# TNO
+resource "local_file" "appversion_tectonic_network" {
+  content  = "${file("${path.module}/../bootkube/resources/manifests/app-version-tectonic-network.yaml")}"
+  filename = "./generated/app_versions/app-version-tectonic-network.yaml"
+
+  depends_on = ["template_dir.payload_appversions"]
 }
