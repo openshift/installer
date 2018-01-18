@@ -7,6 +7,7 @@ import { connect } from 'react-redux';
 
 import { configActions, dirtyActions } from '../actions';
 import { Alert } from './alert';
+import { MAX_MASTERS, MAX_WORKERS } from './nodes';
 import { validate } from '../validate';
 import { readFile } from '../readfile';
 import { FieldList, Form } from '../form';
@@ -299,7 +300,7 @@ class NodeForm extends React.Component {
   }
 }
 
-const mastersFields = generateField(BM_MASTERS, 'Master', 9);
+const mastersFields = generateField(BM_MASTERS, 'Master', MAX_MASTERS);
 const mastersForm = new Form('MASTERSFORM', [mastersFields]);
 
 export const BM_Controllers = () => <NodeForm
@@ -311,7 +312,7 @@ export const BM_Controllers = () => <NodeForm
 
 BM_Controllers.canNavigateForward = mastersForm.canNavigateForward;
 
-const workerFields = generateField(BM_WORKERS, 'Worker', 1000);
+const workerFields = generateField(BM_WORKERS, 'Worker', MAX_WORKERS);
 const workersForm = new Form('WORKERS_FORM', [workerFields]);
 
 export const BM_Workers = () => <NodeForm

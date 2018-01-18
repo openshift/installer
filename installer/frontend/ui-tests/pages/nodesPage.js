@@ -22,7 +22,7 @@ const nodesPageCommands = {
         .setField(field, value);
     };
 
-    testInstanceCount('@mastersCount', json['aws_controllers-numberOfInstances'], 10);
+    testInstanceCount('@mastersCount', json['aws_controllers-numberOfInstances'], 100);
     testInstanceCount('@workersCount', json['aws_workers-numberOfInstances'], 1000);
     testInstanceCount('@etcdCount', json['aws_etcds-numberOfInstances'], 9);
 

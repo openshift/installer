@@ -105,8 +105,8 @@ export const DefineNode = ({type, max, withIamRole = true}) => <div>
   <Errors type={type} />
 </div>;
 
-const MAX_MASTERS = 10;
-const MAX_WORKERS = 1000;
+export const MAX_MASTERS = 100;
+export const MAX_WORKERS = 1000;
 
 const etcdForm = new Form('etcdForm', [
   new Field(ETCD_OPTION, {default: ETCD_OPTIONS.PROVISIONED}),
