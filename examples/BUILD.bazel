@@ -1,0 +1,13 @@
+load("//:variables.bzl", "PLATFORMS")
+
+# EXAMPLES is a dict of tuples matching {"name": ("src", "out"), ...}.
+EXAMPLES = {p: (PLATFORMS[p] + "/variables.tf", "terraform.tfvars." + p) for p in PLATFORMS.keys()}
+
+[genrule(
+    name = example[0],
+    message = "Compiling examples for " + example[0] + "...",
+    srcs = ["//:config.tf", example[1][0]],
+    outs = [example[1][1]],
+    cmd = "$(location //contrib/terraform-examples:terraform-examples) $(SRCS) > $@",
+    tools = ["//contrib/terraform-examples:terraform-examples"],
+) for example in EXAMPLES.items()]
