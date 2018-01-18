@@ -61,7 +61,7 @@ const dispatchToProps = dispatch => ({
       .then(value => {
         const available = value.coreos;
         if (!available || available.length === 0) {
-          return Promise.reject(`could not find any coreos images at ${endpointURL}`);
+          return Promise.reject(`Could not find any Container Linux images at ${endpointURL}`);
         }
 
         const useVersion = available.map(v => v.version).sort(compareVersions).pop();
