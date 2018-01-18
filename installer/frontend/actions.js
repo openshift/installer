@@ -67,6 +67,13 @@ export const FIELDS = {};
 const FIELD_TO_DEPS = {};
 export const FORMS = {};
 
+const getField = name => {
+  if (!FIELDS[name]) {
+    throw new Error(`Field ${name} not found`);
+  }
+  return FIELDS[name];
+};
+
 // TODO (ggreer) standardize on order of params. is dispatch first or last?
 export const configActions = {
   addIn: (path, value, dispatch) => dispatch({payload: {path, value}, type: configActionTypes.ADD_IN}),
@@ -77,37 +84,27 @@ export const configActions = {
     payload.splice(0, payload.length - 1);
     return values;
   },
-  append: (path, value, dispatch) => dispatch({payload: {path, value}, type: configActionTypes.APPEND}),
-  removeAt: (path, index, dispatch) => dispatch({payload: {path, index}, type: configActionTypes.REMOVE_AT}),
   merge: payload => dispatch => dispatch({payload, type: configActionTypes.MERGE}),
+
   // TODO: (kans) move below to form actions...
-  removeField: (fieldName, i) => (dispatch, getState) => {
-    const field = FIELDS[fieldName];
-    if (!field) {
-      throw new Error(`${fieldName} has no field for removing`);
-    }
-    field.remove(dispatch, i, getState);
+  removeField: (fieldListId, index) => (dispatch, getState) => {
+    const fieldList = getField(fieldListId);
+    dispatch({payload: {path: fieldListId, index}, type: configActionTypes.REMOVE_AT});
+    fieldList.validate(dispatch, getState);
   },
-  appendField: fieldName => (dispatch, getState) => {
-    const field = FIELDS[fieldName];
-    if (!field) {
-      throw new Error(`${fieldName} has no field for appending`);
-    }
-    field.append(dispatch, getState);
+  appendField: fieldListId => (dispatch, getState) => {
+    const fieldList = getField(fieldListId);
+    const value = _.mapValues(fieldList.rowFields, 'default');
+    dispatch({payload: {path: fieldListId, value}, type: configActionTypes.APPEND});
+    fieldList.validate(dispatch, getState);
   },
   refreshExtraData: fieldName => (dispatch, getState) => {
-    const field = FIELDS[fieldName];
-    if (!field) {
-      throw new Error(`${fieldName} has no field for refreshing`);
-    }
+    const field = getField(fieldName);
     field.getExtraStuff(dispatch, getState, FIELDS);
   },
   updateField: (fieldName, inputValue) => (dispatch, getState) => {
     const [name, ...split] = fieldName.split('.');
-    const field = FIELDS[name];
-    if (!field) {
-      throw new Error(`${name} has no field for updating`);
-    }
+    const field = getField(name);
     return field.update(dispatch, inputValue, getState, FIELDS, FIELD_TO_DEPS, split);
   },
 };

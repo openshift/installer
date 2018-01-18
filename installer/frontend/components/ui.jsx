@@ -303,8 +303,6 @@ const dispatchToProps = (dispatch, {field}) => ({
   updateField: (path, value) => dispatch(configActions.updateField(path, value)),
   makeDirty: () => dispatch(dirtyActions.add(field)),
   refreshExtraData: () => dispatch(configActions.refreshExtraData(field)),
-  removeField: (i) => dispatch(configActions.removeField(field, i)),
-  appendField: () => dispatch(configActions.appendField(field)),
 });
 
 class Connect_ extends React.Component {
@@ -327,9 +325,7 @@ class Connect_ extends React.Component {
   }
 
   render () {
-    const { field, value, invalid, children, isDirty, makeDirty,
-      extraData, refreshExtraData, inFly, removeField, appendField,
-    } = this.props;
+    const {children, extraData, field, inFly, invalid, isDirty, makeDirty, refreshExtraData, value} = this.props;
 
     const child = React.Children.only(children);
     const id = child.props.id || field;
@@ -342,8 +338,6 @@ class Connect_ extends React.Component {
       isDirty,
       makeDirty,
       refreshExtraData,
-      removeField,
-      appendField,
       onValue: v => this.handleValue(v),
     };
 
@@ -492,27 +486,53 @@ export class AsyncSelect extends React.Component {
   }
 }
 
-class InnerFieldList_ extends React.Component {
-  render() {
-    const {value, removeField, children, fields, id} = this.props;
-    const onlyChild = React.Children.only(children);
-    const newChildren = _.map(value, (unused, i) => {
-      const row = {};
-      _.keys(fields).forEach(k => row[k] = `${id}.${i}.${k}`);
-      const childProps = { row, i, key: i, remove: () => removeField(id, i) };
-      if (i === value.length - 1) {
-        childProps.autoFocus = true;
-      }
-      return React.cloneElement(onlyChild, childProps);
-    });
-    return <div>{newChildren}</div>;
-  }
-}
+export const FieldRowList = connect(
+  ({clusterConfig}, {id}) => ({
+    globalError: _.get(clusterConfig, `${toError(id)}.global`),
+    rowIndexes: _.keys(clusterConfig[id]),
+  }),
+  {appendField: configActions.appendField, removeField: configActions.removeField}
+)(
+  class FieldRowList_ extends React.Component {
+    constructor(props) {
+      super(props);
+      this.state = {
+        autoFocus: props.autoFocus,
+      };
+    }
 
-export const ConnectedFieldList = connect(
-  ({clusterConfig}, {id}) => ({value: clusterConfig[id]}),
-  (dispatch) => ({removeField: (id, i) => dispatch(configActions.removeField(id, i))})
-)((props) => <InnerFieldList_ {...props} />);
+    render() {
+      const {appendField, globalError, id, placeholder, removeField, Row, rowFields, rowIndexes} = this.props;
+
+      return <div>
+        {_.map(rowIndexes, i => {
+          const row = _.mapValues(rowFields, (v, k) => `${id}.${i}.${k}`);
+          return <div className="row" key={i} style={{padding: '0 0 20px 0'}}>
+            <Row autoFocus={this.state.autoFocus && i === _.last(rowIndexes)} placeholder={placeholder} row={row} />
+            <div className="col-xs-1">
+              <i className="fa fa-minus-circle list-add-or-subtract pull-right" onClick={() => removeField(id, i)}></i>
+            </div>
+          </div>;
+        })}
+        <div className="row">
+          <div className="col-xs-3">
+            <span className="wiz-link" onClick={() => {
+              this.setState({autoFocus: true});
+              appendField(id);
+            }}>
+              <i className="fa fa-plus-circle list-add wiz-link"></i>&nbsp; Add More
+            </span>
+          </div>
+        </div>
+        <div className="row">
+          <div className="col-xs-12" style={{margin: '10px 0'}}>
+            <ErrorComponent error={globalError} />
+          </div>
+        </div>
+      </div>;
+    }
+  }
+);
 
 export class DropdownMixin extends React.PureComponent {
   constructor(props) {

@@ -1,8 +1,9 @@
 import _ from 'lodash';
 import React from 'react';
+import { connect } from 'react-redux';
 
-import { Input, Connect } from './ui';
-import { AWS_TAGS } from '../cluster-config';
+import { Input, Connect, FieldRowList } from './ui';
+import { AWS_TAGS, CLUSTER_NAME } from '../cluster-config';
 import { FieldList, Form } from '../form';
 
 const validators = {
@@ -34,47 +35,45 @@ const validators = {
   },
 
   AWSTagUniqueKeys: tags => {
-    const keys = _.map(tags, t => t.key);
-    const errors = {};
-    let i = 1;
-    for (const name1 of keys) {
-      for (const name2 of keys.slice(i)) {
-        if (name1 === name2) {
-          errors[i] = {key: 'Tag keys must be unique'};
-        }
-        i += 1;
+    const REQUIRED_MSG = 'Both fields are required';
+    const keyCounts = _.countBy(tags, 'key');
+
+    return _.map(tags, tag => {
+      const error = {};
+      if (tag.key && !tag.value) {
+        error.value = REQUIRED_MSG;
       }
-    }
-    _.each(tags, (tag, index) => {
-      if (tag.value ? !tag.key : tag.key) {
-        errors[index] = errors[index] || {};
-        errors[index].value = 'Both fields are required';
+      if (!tag.key && tag.value) {
+        error.key = REQUIRED_MSG;
+      } else if (keyCounts[tag.key] > 1) {
+        error.key = 'Tag keys must be unique';
       }
+      return error;
     });
-    return errors;
   },
 };
 
-const tagsFields = new FieldList(AWS_TAGS, {
-  fields: {
-    key: {
-      default: '',
-      validator: validators.AWSTagKey,
-    },
-    value: {
-      default: '',
-      validator: validators.AWSTagValue,
-    },
+const rowFields = {
+  key: {
+    default: '',
+    validator: validators.AWSTagKey,
   },
+  value: {
+    default: '',
+    validator: validators.AWSTagValue,
+  },
+};
+
+const tagsFields = new FieldList(AWS_TAGS, rowFields, {
   validator: validators.AWSTagUniqueKeys,
 });
 
 export const tagsForm = new Form('AWS_TAGS_FORM', [tagsFields]);
 
-const Tag = ({row, remove, placeholder, autoFocus, showAutofocus}) => <div className="row" style={{padding: '0 0 20px 0'}}>
+const Tag = ({autoFocus, placeholder, row}) => <div>
   <div className="col-xs-5" style={{paddingRight: 0}}>
     <Connect field={row.key}>
-      <Input placeholder="e.g. Name" autoFocus={showAutofocus && !!autoFocus} />
+      <Input autoFocus={autoFocus} placeholder="e.g. Name" />
     </Connect>
   </div>
   <div className="col-xs-6" style={{paddingRight: 0}}>
@@ -82,44 +81,19 @@ const Tag = ({row, remove, placeholder, autoFocus, showAutofocus}) => <div class
       <Input placeholder={placeholder} />
     </Connect>
   </div>
-  <div className="col-xs-1">
-    <i className="fa fa-minus-circle list-add-or-subtract pull-right" onClick={remove}></i>
-  </div>
 </div>;
 
-export class AWS_Tags extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      showAutofocus: false,
-    };
-  }
+export const AWS_Tags = connect(
+  ({clusterConfig}) => ({placeholder: `e.g. ${clusterConfig[CLUSTER_NAME] || 'myclustername'}`})
+)(({placeholder}) => <div>
+  <div className="row">
+    <div className="col-xs-5">
+      <label className="text-muted cos-thin-label">KEY</label>
+    </div>
+    <div className="col-xs-6">
+      <label className="text-muted cos-thin-label">VALUE</label>
+    </div>
+  </div>
 
-  render() {
-    return <div>
-      <div className="row">
-        <div className="col-xs-5">
-          <label className="text-muted cos-thin-label">KEY</label>
-        </div>
-        <div className="col-xs-6">
-          <label className="text-muted cos-thin-label">VALUE</label>
-        </div>
-      </div>
-
-      <tagsFields.Map>
-        <Tag {...this.props} showAutofocus={this.state.showAutofocus} />
-      </tagsFields.Map>
-
-      <div className="row">
-        <div className="col-xs-3">
-          <span className="wiz-link" onClick={() => {
-            this.setState({ showAutofocus: true });
-            tagsFields.addOnClick();
-          }}>
-            <i className="fa fa-plus-circle list-add wiz-link"></i>&nbsp; Add More
-          </span>
-        </div>
-      </div>
-    </div>;
-  }
-}
+  <FieldRowList id={AWS_TAGS} placeholder={placeholder} Row={Tag} rowFields={rowFields} />
+</div>);
