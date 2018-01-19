@@ -78,7 +78,7 @@ variable "tectonic_container_images" {
     kube_version_operator        = "quay.io/coreos/kube-version-operator:v1.8.4-kvo.5"
     tectonic_channel_operator    = "quay.io/coreos/tectonic-channel-operator:0.6.2"
     tectonic_etcd_operator       = "quay.io/coreos/tectonic-etcd-operator:v0.0.2"
-    tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.9.0"
+    tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.9.1"
     tectonic_cluo_operator       = "quay.io/coreos/tectonic-cluo-operator:v0.3.0"
     tectonic_torcx               = "quay.io/coreos/tectonic-torcx:v0.2.0"
     kubernetes_addon_operator    = "quay.io/coreos/kubernetes-addon-operator:4b83569d763dc95e1f61c77b31989fd3957bfc67"
@@ -104,6 +104,7 @@ variable "tectonic_container_base_images" {
     prometheus               = "quay.io/prometheus/prometheus"
     alertmanager             = "quay.io/prometheus/alertmanager"
     node_exporter            = "quay.io/prometheus/node-exporter"
+    kube_rbac_proxy          = "quay.io/brancz/kube-rbac-proxy"
   }
 }
 
@@ -114,7 +115,7 @@ variable "tectonic_versions" {
   default = {
     etcd          = "3.2.14"
     kubernetes    = "1.8.4+tectonic.1"
-    monitoring    = "1.9.0"
+    monitoring    = "1.9.1"
     tectonic      = "1.8.4-tectonic.2"
     tectonic-etcd = "0.0.1"
     cluo          = "0.3.0"

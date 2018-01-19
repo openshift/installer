@@ -22,3 +22,9 @@ data:
     kubeStateMetrics:
       baseImage: ${kube_state_metrics_base_image}
       addonResizerBaseImage: ${addon_resizer_base_image}
+    grafana:
+      baseImage: ${grafana_base_image}
+      grafanaWatcherBaseImage: ${grafana_watcher_base_image}
+    kubeRbacProxy:
+      baseImage: ${kube_rbac_proxy_base_image}
+
