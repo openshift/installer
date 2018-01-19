@@ -102,3 +102,83 @@ alias(
     name = "backend",
     actual = "//installer/cmd/installer:installer",
 )
+
+load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
+
+# We use a genrule here to combine the tarballs rather than a pkg_tar
+# because we want to be able to optionally add a version string to the
+# directory name and pkg_tar does not allow for formatted names.
+genrule(
+    name = "tarball",
+    srcs = [
+        # Cross compiling to darwin using goos is currently broken.
+        # Instead we can cross compile ad hoc on the terminal
+        # by explicitly setting the toolchain: https://github.com/bazelbuild/rules_go/issues/1148
+        #":tarball_installer_binary_darwin",
+        ":tarball_installer_binary_linux",
+        ":tarball_terraform_configuration",
+        ":tarball_terraform_binary_darwin",
+        ":tarball_terraform_binary_linux",
+        ":tarball_terraform_provider_matchbox_darwin",
+        ":tarball_terraform_provider_matchbox_linux",
+    ],
+    outs = ["tectonic.tar.gz"],
+    cmd = '\n'.join([
+            "VERSION=$${VERSION:-}",
+            "DIR=tectonic",
+            "[ ! -z $$VERSION ] && DIR=\"$$DIR\"_\"$$VERSION\"",
+            "for s in $(SRCS); do",
+                "tar --extract --file $$s --transform s,^,./$$DIR/,",
+            "done",
+            "tar --create --gzip --file $@ $$DIR"
+    ]),
+    output_to_bindir = 1,
+)
+
+pkg_tar(
+    name = "tarball_terraform_configuration",
+    mode = "0644",
+    srcs = ["config.tf", "modules", "platforms"],
+)
+
+pkg_tar(
+    name = "tarball_installer_binary_darwin",
+    mode = "0755",
+    package_dir = "tectonic-installer/darwin",
+    srcs = ["//installer/cmd/installer:installer_darwin"],
+)
+
+pkg_tar(
+    name = "tarball_installer_binary_linux",
+    mode = "0755",
+    package_dir = "tectonic-installer/linux",
+    srcs = ["//installer/cmd/installer:installer_linux"],
+)
+
+pkg_tar(
+    name = "tarball_terraform_binary_darwin",
+    mode = "0755",
+    package_dir = "tectonic-installer/darwin",
+    srcs = ["@terraform_runtime_darwin//:terraform"],
+)
+
+pkg_tar(
+    name = "tarball_terraform_binary_linux",
+    mode = "0755",
+    package_dir = "tectonic-installer/linux",
+    srcs = ["@terraform_runtime_linux//:terraform"],
+)
+
+pkg_tar(
+    name = "tarball_terraform_provider_matchbox_darwin",
+    mode = "0755",
+    package_dir = "tectonic-installer/darwin",
+    srcs = ["@terraform_provider_matchbox_darwin//:terraform-provider-matchbox"],
+)
+
+pkg_tar(
+    name = "tarball_terraform_provider_matchbox_linux",
+    mode = "0755",
+    package_dir = "tectonic-installer/linux",
+    srcs = ["@terraform_provider_matchbox_linux//:terraform-provider-matchbox"],
+)
