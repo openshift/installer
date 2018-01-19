@@ -29,7 +29,6 @@ import {
   AWS_CONTROLLER_SUBNET_IDS,
   AWS_CREATE_VPC,
   AWS_HOSTED_ZONE_ID,
-  AWS_REGION,
   AWS_REGION_FORM,
   AWS_SPLIT_DNS,
   AWS_SUBNETS,
@@ -72,22 +71,8 @@ const validateVPC = async (data, cc, updatedId, dispatch) => {
     return;
   }
 
-  // Prevent unnecessary calls to validate API by only continuing if a field relevant to VPC validation has changed.
-  // However, we always continue if updatedId is undefined, since that probably means the form has just been loaded and
-  // we are doing initial validation.
-  if (updatedId && ![
-    AWS_CONTROLLER_SUBNETS,
-    AWS_CONTROLLER_SUBNET_IDS,
-    AWS_CREATE_VPC,
-    AWS_REGION,
-    AWS_VPC_CIDR,
-    AWS_VPC_ID,
-    AWS_WORKER_SUBNETS,
-    AWS_WORKER_SUBNET_IDS,
-    DESELECTED_FIELDS,
-    POD_CIDR,
-    SERVICE_CIDR,
-  ].includes(updatedId)) {
+  // Prevent unnecessary calls to validate API by only continuing if a field relevant to VPC validation has changed
+  if ([AWS_ADVANCED_NETWORKING, CLUSTER_SUBDOMAIN].includes(updatedId)) {
     return _.get(cc, toError(AWS_VPC_FORM));
   }
 
