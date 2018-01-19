@@ -348,7 +348,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
     </p>
     <div className="row form-group">
       <div className="col-xs-2">
-        <label htmlFor="r53Zone">DNS</label>
+        <label htmlFor={CLUSTER_SUBDOMAIN}>DNS</label>
       </div>
       <div className="col-xs-10">
         <div className="row">
@@ -413,7 +413,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
       {!awsCreateVpc &&
         <div className="row">
           <div className="col-xs-3">
-            <label htmlFor="r53Zone">VPC</label>
+            <label htmlFor={AWS_VPC_ID}>VPC</label>
           </div>
           <div className="col-xs-9">
             <div className="radio wiz-radio-group__radio">
