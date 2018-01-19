@@ -42,6 +42,11 @@ variable "ec2_type" {
   type = "string"
 }
 
+variable "ec2_ami" {
+  type    = "string"
+  default = ""
+}
+
 variable "extra_tags" {
   description = "Extra AWS tags to be applied to created resources."
   type        = "map"

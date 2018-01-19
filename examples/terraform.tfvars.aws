@@ -10,6 +10,9 @@
 // If name is not provided the installer will construct the name using "tectonic_cluster_name", current AWS region and "tectonic_base_domain"
 // tectonic_aws_assets_s3_bucket_name = ""
 
+// (optional) AMI override for all nodes. Example: `ami-foobar123`.
+// tectonic_aws_ec2_ami_override = ""
+
 // Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
 tectonic_aws_etcd_ec2_type = "t2.medium"
 

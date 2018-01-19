@@ -61,7 +61,7 @@ resource "aws_autoscaling_group" "masters" {
 
 resource "aws_launch_configuration" "master_conf" {
   instance_type               = "${var.ec2_type}"
-  image_id                    = "${data.aws_ami.coreos_ami.image_id}"
+  image_id                    = "${coalesce(var.ec2_ami, data.aws_ami.coreos_ami.image_id)}"
   name_prefix                 = "${var.cluster_name}-master-"
   key_name                    = "${var.ssh_key}"
   security_groups             = ["${var.master_sg_ids}"]

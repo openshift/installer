@@ -49,9 +49,9 @@ variable "ign_s3_puller_id" {
   type = "string"
 }
 
-variable "image_re" {
-  description = "(internal) Regular expression used to extract repo and tag components from image strings"
-  type        = "string"
+variable "ec2_ami" {
+  type    = "string"
+  default = ""
 }
 
 variable "instance_count" {
