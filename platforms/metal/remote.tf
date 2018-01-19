@@ -1,6 +1,5 @@
 resource "null_resource" "etcd_secrets" {
-  count = "${var.tectonic_etcd_tls_enabled
-             && length(compact(var.tectonic_etcd_servers)) == 0
+  count = "${length(compact(var.tectonic_etcd_servers)) == 0
              ? length(var.tectonic_metal_controller_domains)
              : 0
           }"

@@ -162,7 +162,6 @@ EOF
   ign_profile_env_id            = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.profile_env_id : ""}"
   ign_systemd_default_env_id    = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.systemd_default_env_id : ""}"
   instance_count                = "${var.tectonic_etcd_count}"
-  tls_enabled                   = "${var.tectonic_etcd_tls_enabled}"
 }
 
 module "ignition_masters" {
@@ -183,7 +182,6 @@ module "ignition_masters" {
   etcd_peer_key_pem         = "${module.etcd_certs.etcd_peer_key_pem}"
   etcd_server_crt_pem       = "${module.etcd_certs.etcd_server_crt_pem}"
   etcd_server_key_pem       = "${module.etcd_certs.etcd_server_key_pem}"
-  etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
   http_proxy                = "${var.tectonic_http_proxy_address}"
   https_proxy               = "${var.tectonic_https_proxy_address}"
   image_re                  = "${var.tectonic_image_re}"
@@ -295,7 +293,6 @@ module "dns" {
   cluster_name              = "${var.tectonic_cluster_name}"
   etcd_count                = "${var.tectonic_etcd_count}"
   etcd_ip_addresses         = "${flatten(openstack_networking_port_v2.etcd.*.all_fixed_ips)}"
-  etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
   master_count              = "${var.tectonic_master_count}"
   master_ip_addresses       = "${flatten(openstack_networking_port_v2.master.*.all_fixed_ips)}"
   worker_count              = "${var.tectonic_worker_count}"

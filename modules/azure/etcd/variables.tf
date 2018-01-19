@@ -68,10 +68,6 @@ variable "const_internal_node_names" {
   description = "(internal) The list of hostnames assigned to etcd member nodes."
 }
 
-variable "tls_enabled" {
-  default = false
-}
-
 variable "container_image" {
   type = "string"
 }

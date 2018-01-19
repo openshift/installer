@@ -210,11 +210,6 @@ tectonic_etcd_count = "0"
 // Example: `["etcd1", "etcd2", "etcd3"]`
 // tectonic_etcd_servers = ""
 
-// (optional) If set to `true`, all etcd endpoints will be configured to use the "https" scheme.
-// 
-// Note: If `tectonic_experimental` is set to `true` this variable has no effect, because the experimental self-hosted etcd always uses TLS.
-// tectonic_etcd_tls_enabled = true
-
 // (optional) HTTP proxy address.
 // 
 // Example: `http://myproxy.example.com`

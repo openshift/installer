@@ -44,10 +44,10 @@ data "ignition_systemd_unit" "locksmithd" {
       content = <<EOF
 [Service]
 Environment=REBOOT_STRATEGY=etcd-lock
-${var.tls_enabled ? "Environment=\"LOCKSMITHD_ETCD_CAFILE=/etc/ssl/etcd/ca.crt\"" : ""}
-${var.tls_enabled ? "Environment=\"LOCKSMITHD_ETCD_KEYFILE=/etc/ssl/etcd/client.key\"" : ""}
-${var.tls_enabled ? "Environment=\"LOCKSMITHD_ETCD_CERTFILE=/etc/ssl/etcd/client.crt\"" : ""}
-Environment="LOCKSMITHD_ENDPOINT=${var.tls_enabled ? "https" : "http"}://${var.cluster_name}-etcd-${count.index}.${var.base_domain}:2379"
+Environment="LOCKSMITHD_ETCD_CAFILE=/etc/ssl/etcd/ca.crt"
+Environment="LOCKSMITHD_ETCD_KEYFILE=/etc/ssl/etcd/client.key"
+Environment="LOCKSMITHD_ETCD_CERTFILE=/etc/ssl/etcd/client.crt"
+Environment="LOCKSMITHD_ENDPOINT=https://${var.cluster_name}-etcd-${count.index}.${var.base_domain}:2379"
 EOF
     },
   ]

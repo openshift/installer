@@ -34,7 +34,6 @@ module "bootkube" {
   etcd_peer_key_pem    = "${module.etcd_certs.etcd_peer_key_pem}"
   etcd_server_cert_pem = "${module.etcd_certs.etcd_server_crt_pem}"
   etcd_server_key_pem  = "${module.etcd_certs.etcd_server_key_pem}"
-  etcd_tls_enabled     = "${var.tectonic_etcd_tls_enabled}"
   kube_ca_cert_pem     = "${module.kube_certs.ca_cert_pem}"
   kubelet_cert_pem     = "${module.kube_certs.kubelet_cert_pem}"
   kubelet_key_pem      = "${module.kube_certs.kubelet_key_pem}"

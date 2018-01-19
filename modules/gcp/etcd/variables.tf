@@ -64,10 +64,6 @@ variable "disk_size" {
   description = "The size of the volume in gigabytes for the root block device."
 }
 
-variable "tls_enabled" {
-  default = false
-}
-
 variable "ign_etcd_dropin_id_list" {
   type = "list"
 }

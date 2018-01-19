@@ -38,10 +38,6 @@ variable "container_images" {
   type        = "map"
 }
 
-variable "etcd_tls_enabled" {
-  default = true
-}
-
 variable "etcd_ca_cert_pem" {
   type        = "string"
   description = "The etcd CA certificate in PEM format."

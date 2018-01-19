@@ -86,7 +86,6 @@ module "etcd" {
   sg_ids                     = "${concat(var.tectonic_govcloud_etcd_extra_sg_ids, list(module.vpc.etcd_sg_id))}"
   ssh_key                    = "${var.tectonic_govcloud_ssh_key}"
   subnets                    = "${module.vpc.worker_subnet_ids}"
-  tls_enabled                = "${var.tectonic_etcd_tls_enabled}"
   dns_server_ip              = "${var.tectonic_govcloud_dns_server_ip}"
 }
 
@@ -110,7 +109,6 @@ module "ignition_masters" {
   etcd_peer_key_pem         = "${module.etcd_certs.etcd_peer_key_pem}"
   etcd_server_crt_pem       = "${module.etcd_certs.etcd_server_crt_pem}"
   etcd_server_key_pem       = "${module.etcd_certs.etcd_server_key_pem}"
-  etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
   http_proxy                = "${var.tectonic_http_proxy_address}"
   https_proxy               = "${var.tectonic_https_proxy_address}"
   image_re                  = "${var.tectonic_image_re}"

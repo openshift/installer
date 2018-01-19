@@ -185,16 +185,6 @@ EOF
   default = []
 }
 
-variable "tectonic_etcd_tls_enabled" {
-  default = true
-
-  description = <<EOF
-(optional) If set to `true`, all etcd endpoints will be configured to use the "https" scheme.
-
-Note: If `tectonic_experimental` is set to `true` this variable has no effect, because the experimental self-hosted etcd always uses TLS.
-EOF
-}
-
 variable "tectonic_etcd_ca_cert_path" {
   type    = "string"
   default = "/dev/null"

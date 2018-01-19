@@ -59,7 +59,6 @@ module "etcd" {
   managed_zone_name          = "${var.tectonic_gcp_ext_google_managedzone_name}"
   master_subnetwork_name     = "${module.network.master_subnetwork_name}"
   public_ssh_key             = "${var.tectonic_gcp_ssh_key}"
-  tls_enabled                = "${var.tectonic_etcd_tls_enabled}"
   zone_list                  = "${data.google_compute_zones.available.names}"
 }
 
@@ -158,7 +157,6 @@ module "ignition_masters" {
   etcd_peer_key_pem         = "${module.etcd_certs.etcd_peer_key_pem}"
   etcd_server_crt_pem       = "${module.etcd_certs.etcd_server_crt_pem}"
   etcd_server_key_pem       = "${module.etcd_certs.etcd_server_key_pem}"
-  etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
   http_proxy                = "${var.tectonic_http_proxy_address}"
   https_proxy               = "${var.tectonic_https_proxy_address}"
   image_re                  = "${var.tectonic_image_re}"
@@ -200,7 +198,6 @@ module "dns" {
 
   cluster_name        = "${var.tectonic_cluster_name}"
   etcd_dns_enabled    = "${length(compact(var.tectonic_etcd_servers)) == 0}"
-  tls_enabled         = "${var.tectonic_etcd_tls_enabled}"
   external_endpoints  = ["${compact(var.tectonic_etcd_servers)}"]
   etcd_instance_count = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.google_compute_zones.available.names) == 5 ? 5 : 3}"
   managed_zone_name   = "${var.tectonic_gcp_ext_google_managedzone_name}"

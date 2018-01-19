@@ -74,11 +74,6 @@ variable "etcd_count" {
   default = 0
 }
 
-variable "etcd_tls_enabled" {
-  type    = "string"
-  default = true
-}
-
 variable "etcd_advertise_name_list" {
   type    = "list"
   default = []

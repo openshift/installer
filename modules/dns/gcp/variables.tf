@@ -8,11 +8,6 @@ variable "etcd_dns_enabled" {
   type        = "string"
 }
 
-variable "tls_enabled" {
-  description = "The name of the cluster"
-  type        = "string"
-}
-
 variable "etcd_instance_count" {
   description = "The number of etcd nods"
   type        = "string"

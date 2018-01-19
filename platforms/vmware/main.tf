@@ -46,7 +46,6 @@ module "ignition_masters" {
   etcd_client_key_pem       = "${module.etcd_certs.etcd_client_key_pem}"
   etcd_count                = "${length(data.template_file.etcd_hostname_list.*.rendered)}"
   etcd_initial_cluster_list = "${data.template_file.etcd_hostname_list.*.rendered}"
-  etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
   etcd_peer_crt_pem         = "${module.etcd_certs.etcd_peer_crt_pem}"
   etcd_peer_key_pem         = "${module.etcd_certs.etcd_peer_key_pem}"
   etcd_server_crt_pem       = "${module.etcd_certs.etcd_server_crt_pem}"

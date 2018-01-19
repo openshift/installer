@@ -69,10 +69,6 @@ variable "sg_ids" {
   description = "The security group IDs to be applied."
 }
 
-variable "tls_enabled" {
-  default = false
-}
-
 variable "ign_etcd_dropin_id_list" {
   type = "list"
 }

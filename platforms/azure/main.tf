@@ -75,7 +75,6 @@ module "etcd" {
   resource_group_name        = "${module.resource_group.name}"
   storage_id                 = "${module.resource_group.storage_id}"
   storage_type               = "${var.tectonic_azure_etcd_storage_type}"
-  tls_enabled                = "${var.tectonic_etcd_tls_enabled}"
   versions                   = "${var.tectonic_versions}"
   vm_size                    = "${var.tectonic_azure_etcd_vm_size}"
 }
@@ -122,7 +121,6 @@ module "ignition_masters" {
   etcd_peer_key_pem         = "${module.etcd_certs.etcd_peer_key_pem}"
   etcd_server_crt_pem       = "${module.etcd_certs.etcd_server_crt_pem}"
   etcd_server_key_pem       = "${module.etcd_certs.etcd_server_key_pem}"
-  etcd_tls_enabled          = "${var.tectonic_etcd_tls_enabled}"
   http_proxy                = "${var.tectonic_http_proxy_address}"
   https_proxy               = "${var.tectonic_https_proxy_address}"
   image_re                  = "${var.tectonic_image_re}"

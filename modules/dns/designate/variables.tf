@@ -1,9 +1,3 @@
-variable "etcd_tls_enabled" {
-  description = "Indicates whether TLS is used for etcd"
-  type        = "string"
-  default     = "1"
-}
-
 variable "cluster_name" {
   description = "The name of the cluster"
   type        = "string"
