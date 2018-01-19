@@ -1,3 +1,5 @@
+load("//bazel-rules:gen_test.bzl", "gen_test")
+
 package(
     default_visibility = ["//visibility:public"],
 )
@@ -28,6 +30,7 @@ genrule(
     }),
     outs = ["bin/terraform"],
     cmd = "cp $(<) $(@)",
+    executable = True,
 )
 
 genrule(
@@ -181,4 +184,19 @@ pkg_tar(
     mode = "0755",
     package_dir = "tectonic-installer/linux",
     srcs = ["@terraform_provider_matchbox_linux//:terraform-provider-matchbox"],
+)
+
+filegroup(
+    name = "terraform_files",
+    srcs = glob(
+        ["**/*.tf"],
+        exclude=["bazel-bin/**/*", "bazel-out/**/*", "bazel-genfiles/**/*", "build/**/*"],
+        exclude_directories=1,
+    ),
+)
+
+gen_test(
+    name = "terraform_fmt",
+    command = "./bin/terraform fmt -list -check -write=false",
+    deps = [":terraform_runtime", ":terraform_files"],
 )
