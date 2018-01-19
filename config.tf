@@ -71,7 +71,7 @@ variable "tectonic_container_images" {
     awscli                       = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
     gcloudsdk                    = "google/cloud-sdk:178.0.0-alpine"
     bootkube                     = "quay.io/coreos/bootkube:v0.8.1"
-    etcd                         = "quay.io/coreos/etcd:v3.1.8"
+    etcd                         = "quay.io/coreos/etcd:v3.2.14"
     etcd_operator                = "quay.io/coreos/etcd-operator:v0.5.0"
     hyperkube                    = "quay.io/coreos/hyperkube:v1.9.1_coreos.0"
     kube_core_renderer           = "quay.io/coreos/kube-core-renderer-dev:79403c0864d4a98773d92d01998124c096faf59f"
@@ -112,7 +112,7 @@ variable "tectonic_versions" {
   type        = "map"
 
   default = {
-    etcd          = "3.1.8"
+    etcd          = "3.2.14"
     kubernetes    = "1.8.4+tectonic.1"
     monitoring    = "1.9.0"
     tectonic      = "1.8.4-tectonic.2"
