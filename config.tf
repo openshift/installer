@@ -97,7 +97,7 @@ variable "tectonic_container_base_images" {
     config_reload            = "quay.io/coreos/configmap-reload"
     addon_resizer            = "quay.io/coreos/addon-resizer"
     kube_state_metrics       = "quay.io/coreos/kube-state-metrics"
-    grafana                  = "quay.io/coreos/grafana-monitoring"
+    grafana                  = "quay.io/coreos/monitoring-grafana"
     grafana_watcher          = "quay.io/coreos/grafana-watcher"
     prometheus_operator      = "quay.io/coreos/prometheus-operator"
     prometheus_config_reload = "quay.io/coreos/prometheus-config-reloader"
