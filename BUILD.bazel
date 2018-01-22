@@ -102,6 +102,7 @@ genrule(
         ":tarball_terraform_binary_linux",
         ":tarball_terraform_provider_matchbox_darwin",
         ":tarball_terraform_provider_matchbox_linux",
+        ":tarball_examples",
     ],
     outs = ["tectonic.tar.gz"],
     cmd = '\n'.join([
@@ -126,14 +127,14 @@ pkg_tar(
     name = "tarball_installer_binary_darwin",
     mode = "0755",
     package_dir = "tectonic-installer/darwin",
-    srcs = ["//installer/cmd/installer:installer_darwin"],
+    srcs = ["//installer/cmd/installer:darwin"],
 )
 
 pkg_tar(
     name = "tarball_installer_binary_linux",
     mode = "0755",
     package_dir = "tectonic-installer/linux",
-    srcs = ["//installer/cmd/installer:installer_linux"],
+    srcs = ["//installer/cmd/installer:linux"],
 )
 
 pkg_tar(
@@ -162,6 +163,14 @@ pkg_tar(
     mode = "0755",
     package_dir = "tectonic-installer/linux",
     srcs = ["@terraform_provider_matchbox_linux//:terraform-provider-matchbox"],
+)
+
+load("//:variables.bzl", "PLATFORMS")
+
+pkg_tar(
+    name = "tarball_examples",
+    package_dir = "examples",
+    srcs = ["//examples:terraform.tfvars." + p for p in PLATFORMS],
 )
 
 filegroup(

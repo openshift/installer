@@ -10,4 +10,5 @@ EXAMPLES = {p: (PLATFORMS[p] + "/variables.tf", "terraform.tfvars." + p) for p i
     outs = [example[1][1]],
     cmd = "$(location //contrib/terraform-examples:terraform-examples) $(SRCS) > $@",
     tools = ["//contrib/terraform-examples:terraform-examples"],
+    visibility = ["//visibility:public"],
 ) for example in EXAMPLES.items()]
