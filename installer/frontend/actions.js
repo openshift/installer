@@ -9,7 +9,7 @@ export const awsActionTypes = {
 export const configActionTypes = {
   ADD_IN: 'CONFIG_ACTION_ADD_IN',
   APPEND: 'CONFIG_ACTION_APPEND',
-  REMOVE_AT: 'CONFIG_ACTION_REMOVE_AT',
+  REMOVE_FIELD_LIST_ROW: 'CONFIG_ACTION_REMOVE_FIELD_LIST_ROW',
   SET: 'CONFIG_ACTION_SIMPLE_SET',
   SET_IN: 'CONFIG_ACTION_SET_IN',
   BATCH_SET_IN: 'CONFIG_ACTION_BATCH_SET_IN',
@@ -89,7 +89,7 @@ export const configActions = {
   // TODO: (kans) move below to form actions...
   removeField: (fieldListId, index) => (dispatch, getState) => {
     const fieldList = getField(fieldListId);
-    dispatch({payload: {path: fieldListId, index}, type: configActionTypes.REMOVE_AT});
+    dispatch({payload: {fieldListId, index}, type: configActionTypes.REMOVE_FIELD_LIST_ROW});
     fieldList.validate(dispatch, getState);
   },
   appendField: fieldListId => (dispatch, getState) => {
