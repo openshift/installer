@@ -94,4 +94,5 @@ $ terraform destroy -var-file=build/${CLUSTER}/terraform.tfvars platforms/govclo
 
 ## Known issues and workarounds
 
-At the moment because of the [AWS user data limit](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-instance-metadata.html#instancedata-add-user-data) and [Ignition not supporting the S3 protocol for replacing the content](https://github.com/coreos/bugs/issues/2216), the Ignition config for the nodes is stored in a public bucket and it has to be removed manually.
+At the moment [Container Linux Alpha](https://coreos.com/releases/#1662.0.0) is a requirement as it contains [support for fetching s3 objects from govcloud partition](https://github.com/coreos/ignition/blob/v0.20.1/NEWS).
+Make sure to set ```tectonic_container_linux_channel = alpha``` before deploying your cluster.
