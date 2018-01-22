@@ -1,6 +1,6 @@
 workspace(name = "tectonic_installer")
 
-terrafom_version = "0.10.8"
+terrafom_version = "0.11.2"
 
 provider_matchbox_version = "0.2.2"
 
