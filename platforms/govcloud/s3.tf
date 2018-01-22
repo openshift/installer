@@ -33,6 +33,12 @@ resource "aws_s3_bucket_object" "tectonic_assets" {
   # client-side encryption.
   server_side_encryption = "AES256"
 
+  tags = "${merge(map(
+      "Name", "${var.tectonic_cluster_name}-tectonic-assets",
+      "KubernetesCluster", "${var.tectonic_cluster_name}",
+      "tectonicClusterID", "${module.tectonic.cluster_id}"
+    ), var.tectonic_govcloud_extra_tags)}"
+
   lifecycle {
     ignore_changes = ["*"]
   }
@@ -50,4 +56,10 @@ resource "aws_s3_bucket_object" "kubeconfig" {
   # we should consider using KMS-based client-side encryption, or uploading it
   # to KMS.
   server_side_encryption = "AES256"
+
+  tags = "${merge(map(
+      "Name", "${var.tectonic_cluster_name}-kubeconfig",
+      "KubernetesCluster", "${var.tectonic_cluster_name}",
+      "tectonicClusterID", "${module.tectonic.cluster_id}"
+    ), var.tectonic_govcloud_extra_tags)}"
 }
