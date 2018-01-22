@@ -45,7 +45,12 @@ end
 def create_if_not_exist_and_add_ssh_key
   key_file = '${HOME}/.ssh/id_rsa'
   ssh_file = File.join(Dir.home, '.ssh/id_rsa')
-  `KEY_FILE=#{key_file} && ssh-keygen -f "${KEY_FILE}" -t rsa -N ''` unless File.exist?(ssh_file)
-  %x(eval `ssh-agent -a /tmp/ssh-agent.sock`; ssh-add ${HOME}/.ssh/id_rsa)
+  if File.exist?(ssh_file)
+    puts "Using existing ssh key from #{ssh_file}"
+  else
+    `KEY_FILE=#{key_file} && ssh-keygen -f "${KEY_FILE}" -t rsa -N ''`
+    puts 'Created ssh key'
+  end
+  %x(rm -f /tmp/ssh-agent.sock && eval `ssh-agent -a /tmp/ssh-agent.sock`; ssh-add ${HOME}/.ssh/id_rsa)
   ENV['SSH_AUTH_SOCK'] = '/tmp/ssh-agent.sock'
 end

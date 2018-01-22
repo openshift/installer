@@ -164,6 +164,14 @@ TEST=aws/basic_spec.rb`, where `TEST=<xx>` represents the test spec you want to
 run.
 
 
+### 3. Running the rspec tests in a existing cluster
+To run the test suite on an existing cluster, use this command:
+```sh
+PLATFORM=<AWZ/AZURE/METAL/GCP...> rspec spec/existing_cluster_spec.rb
+```
+
+
+
 ## Running Conformance tests in a running cluster
 
 There are two ways to run the conformance tests in an existing k8s cluster.

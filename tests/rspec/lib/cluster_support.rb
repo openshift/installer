@@ -62,3 +62,15 @@ def save_to_file(cluster_name, service_type, ip, service, output_to_save)
   save_to_file << output_to_save
   save_to_file.close
 end
+
+def save_console_creds(cluster_name, tectonic_admin_email, tectonic_admin_password)
+  utils_path = "../../build/#{cluster_name}/utils/"
+  FileUtils.mkdir_p(utils_path)
+  save_to_file = File.open("#{utils_path}/console_creds.txt", 'w+')
+  creds = {
+    'tectonic_admin_email' => tectonic_admin_email,
+    'tectonic_admin_password' => tectonic_admin_password
+  }
+  save_to_file << creds.to_json
+  save_to_file.close
+end

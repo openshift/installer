@@ -27,6 +27,7 @@ class Cluster
     @name = ENV['CLUSTER'] || NameGenerator.generate(@tfvars_file.prefix)
     @tectonic_admin_email = ENV['TF_VAR_tectonic_admin_email'] || NameGenerator.generate_fake_email
     @tectonic_admin_password = ENV['TF_VAR_tectonic_admin_password'] || PasswordGenerator.generate_password
+    save_console_creds(@name, @tectonic_admin_email, @tectonic_admin_password)
 
     @build_path = File.join(File.realpath('../../'), "build/#{@name}")
     @manifest_path = File.join(@build_path, 'generated')
@@ -50,6 +51,10 @@ class Cluster
 
   def update_cluster
     start
+  end
+
+  def init
+    terraform_init
   end
 
   def stop
@@ -188,6 +193,17 @@ class Cluster
     raise e
   end
 
+  def terraform_init
+    ::Timeout.timeout(30 * 60) do # 30 minutes
+      env = env_variables
+      env['TF_INIT_OPTIONS'] = '-no-color'
+      return true if system(env, 'make -C ../.. terraform-init')
+    end
+  rescue Timeout::Error
+    forensic(false)
+    raise 'Terraform init failed'
+  end
+
   def recover_from_failed_destroy() end
 
   def wait_til_ready
@@ -237,6 +253,7 @@ class Cluster
 
   def wait_for_bootstrapping
     ips = master_ip_addresses
+    raise 'Empty master ips. Aborting...' if ips.empty?
     wait_for_service('bootkube', ips)
     wait_for_service('tectonic', ips)
     puts 'HOORAY! The cluster is up'

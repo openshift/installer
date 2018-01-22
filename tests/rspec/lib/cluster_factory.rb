@@ -13,4 +13,8 @@ module ClusterFactory
     cluster_class = "#{tf_vars_file.platform.downcase.capitalize}Cluster"
     Object.const_get(cluster_class).new(tf_vars_file)
   end
+
+  def self.from_variable(cluster_type, tf_vars_file)
+    Object.const_get("#{cluster_type.downcase.capitalize}Cluster").new(tf_vars_file)
+  end
 end
