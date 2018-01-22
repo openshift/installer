@@ -7,6 +7,7 @@ import { getDefaultSubnets, getZones, getVpcs, getVpcSubnets, validateSubnets } 
 import {
   A,
   AsyncSelect,
+  DocsA,
   Radio,
   Select,
   Deselect,
@@ -19,7 +20,6 @@ import {
 import { Alert } from './alert';
 import { configActions } from '../actions';
 import { AWS_DomainValidation } from './aws-domain-validation';
-import { TectonicGA } from '../tectonic-ga';
 import { KubernetesCIDRs } from './k8s-cidrs';
 import { CIDRRow } from './cidr';
 import { Field, Form } from '../form';
@@ -303,7 +303,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
               Use an existing VPC (Public)
             </label>
             <p className="text-muted wiz-help-text">
-              Useful for installing beside existing resources. Your VPC must be <A href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} rel="noopener">set up correctly</A>.
+              Useful for installing beside existing resources. Your VPC must be <DocsA path="/install/aws/requirements.html#using-an-existing-vpc">set up correctly</DocsA>.
             </p>
           </div>
         </div>
@@ -316,7 +316,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
               Use an existing VPC (Private)
             </label>
             <p className="text-muted wiz-help-text">
-              Useful for installing beside existing resources. Your VPC must be <A href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#using-an-existing-vpc" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} rel="noopener">set up correctly</A>.
+              Useful for installing beside existing resources. Your VPC must be <DocsA path="/install/aws/requirements.html#using-an-existing-vpc">set up correctly</DocsA>.
             </p>
           </div>
         </div>

@@ -26,10 +26,10 @@ export const optGroups = [
 ];
 
 export const DOCS = {
-  [AWS]: 'https://coreos.com/tectonic/docs/latest/install/aws/aws-terraform.html',
-  [AWS_TF]: 'https://coreos.com/tectonic/docs/latest/install/aws/index.html',
-  [AZURE]: 'https://coreos.com/tectonic/docs/latest/install/azure/azure-terraform.html',
-  [BARE_METAL]: 'https://coreos.com/tectonic/docs/latest/install/bare-metal/metal-terraform.html',
-  [BARE_METAL_TF]: 'https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html',
-  [OPENSTACK]: 'https://coreos.com/tectonic/docs/latest/install/openstack/openstack-terraform.html',
+  [AWS]: '/install/aws/aws-terraform.html',
+  [AWS_TF]: '/install/aws/index.html',
+  [AZURE]: '/install/azure/azure-terraform.html',
+  [BARE_METAL]: '/install/bare-metal/metal-terraform.html',
+  [BARE_METAL_TF]: '/install/bare-metal/index.html',
+  [OPENSTACK]: '/install/openstack/openstack-terraform.html',
 };

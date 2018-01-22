@@ -2,7 +2,7 @@ import _ from 'lodash';
 import React from 'react';
 import semver from 'semver';
 
-import { A, DropdownMixin } from './ui';
+import { A, DocsA, DropdownMixin } from './ui';
 
 const fetchLatestRelease = () => {
   const opts = {
@@ -145,7 +145,7 @@ export class Header extends React.Component {
             <MenuDropdown items={openSourceDdItems} header="Open Source" />
           </li>
           <li className="tectonic-dropdown-menu-title">
-            <A href="https://coreos.com/tectonic/docs/latest/" className="tectonic-dropdown-menu-title__link" rel="noopener">Tectonic Docs</A>
+            <DocsA className="tectonic-dropdown-menu-title__link" path="/">Tectonic Docs</DocsA>
           </li>
         </ul>
         <div className="co-navbar--right">

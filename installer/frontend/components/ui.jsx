@@ -7,10 +7,11 @@ import { connect } from 'react-redux';
 import { withNav } from '../nav';
 import { validate } from '../validate';
 import { readFile } from '../readfile';
+import { TectonicGA } from '../tectonic-ga';
 import { toError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from '../utils';
 
 import { dirtyActions, configActions } from '../actions';
-import { DESELECTED_FIELDS } from '../cluster-config.js';
+import { DESELECTED_FIELDS, PLATFORM_TYPE } from '../cluster-config.js';
 
 import { Alert } from './alert';
 
@@ -60,6 +61,14 @@ const FIELD_PROPS = ImmutableSet([
 
 // Same as an <a> except defaults to rel="noopener noreferrer" and target="_blank"
 export const A = props => <a rel="noopener noreferrer" target="_blank" {...props} />;
+
+export const DocsA = connect(({clusterConfig}) => ({platform: clusterConfig[PLATFORM_TYPE]}))(props => <a
+  {..._.omit(props, ['dispatch', 'path', 'platform'])}
+  href={`https://coreos.com/tectonic/docs/latest${props.path}`}
+  onClick={() => TectonicGA.sendDocsEvent(props.platform)}
+  rel="noopener"
+  target="_blank"
+/>);
 
 export const ErrorComponent = props => {
   const error = props.error;
