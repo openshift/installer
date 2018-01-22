@@ -40,7 +40,13 @@ fi
 
 for file in *.log
   do
-    mv "$file" "pull_request=${CHANGE_ID},build_number=${BUILD_NUMBER},author=${CHANGE_AUTHOR},source_branch=${SOURCE_BRANCH},target_branch=${TARGET_BRANCH},${additionalFields}${file}"
+    LOG_FILE_SIZE=$(wc -c < "${file}") #Output is in bytes
+    if [ "${LOG_FILE_SIZE}" -gt "1000000000" ]; then
+      echo "Log file is bigger than 1GB, dropping the file"
+      rm "${file}"
+    else
+      mv "$file" "pull_request=${CHANGE_ID},build_number=${BUILD_NUMBER},author=${CHANGE_AUTHOR},source_branch=${SOURCE_BRANCH},target_branch=${TARGET_BRANCH},${additionalFields}${file}"
+    fi
   done
 
 aws s3 sync ../templogfiles "s3://""${LOGSTASH_BUCKET}"
