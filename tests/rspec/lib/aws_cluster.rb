@@ -46,11 +46,30 @@ class AwsCluster < Cluster
     super
   end
 
-  def master_ip_addresses
-    aws_autoscaling_group_master = @tfstate_file.value('module.masters.aws_autoscaling_group.masters', 'id')
-    instances_id = AwsSupport.sorted_auto_scaling_instances(aws_autoscaling_group_master, @aws_region)
+  def machine_boot_console_logs
+    instances_id = retrieve_instances_ids('module.masters.aws_autoscaling_group.masters')
+    # Return the log output in a hash {ip => log}
+    hash_log_ip = instances_id.map do |instance_id|
+      {
+        instance_id_to_ip_address(instance_id) => AwsSupport.collect_ec2_console_logs(instance_id, @aws_region)
+      }
+    end
+    # convert the array to hash [{k1=>v1},{k2=>v2}] to {k1=>v1,k2=>v2}
+    hash_log_ip.reduce({}, :update)
+  end
 
-    instances_id.map { |instance_id| AwsSupport.preferred_instance_ip_address(instance_id, @aws_region) }
+  def retrieve_instances_ids(auto_scaling_groups)
+    aws_autoscaling_group_master = @tfstate_file.value(auto_scaling_groups, 'id')
+    AwsSupport.sorted_auto_scaling_instances(aws_autoscaling_group_master, @aws_region)
+  end
+
+  def instance_id_to_ip_address(instance_id)
+    AwsSupport.instance_ip_address(instance_id, @aws_region)
+  end
+
+  def master_ip_addresses
+    instances_id = retrieve_instances_ids('module.masters.aws_autoscaling_group.masters')
+    instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region) }
   end
 
   def master_ip_address
@@ -58,10 +77,8 @@ class AwsCluster < Cluster
   end
 
   def worker_ip_addresses
-    aws_autoscaling_group_worker = @tfstate_file.value('module.workers.aws_autoscaling_group.workers', 'id')
-    instances_id = AwsSupport.sorted_auto_scaling_instances(aws_autoscaling_group_worker, @aws_region)
-
-    instances_id.map { |instance_id| AwsSupport.preferred_instance_ip_address(instance_id, @aws_region) }
+    instances_id = retrieve_instances_ids('module.workers.aws_autoscaling_group.workers')
+    instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region) }
   end
 
   def etcd_ip_addresses

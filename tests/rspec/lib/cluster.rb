@@ -13,6 +13,7 @@ require 'tfvars_file'
 require 'timeout'
 require 'with_retries'
 require 'open3'
+require 'base64'
 
 # Cluster represents a k8s cluster
 class Cluster
@@ -124,6 +125,13 @@ class Cluster
   end
 
   def forensic(events = true)
+    outputs_console_logs = machine_boot_console_logs
+    outputs_console_logs.each do |ip, log|
+      puts "saving boot logs from master-#{ip}"
+      decoded_base64_content = Base64.decode64(log)
+      save_to_file(@name, 'console_machine', ip, 'console_machine', decoded_base64_content)
+    end
+
     save_kubernetes_events(@kubeconfig, @name) if events
 
     master_ip_addresses.each do |master_ip|
@@ -147,6 +155,10 @@ class Cluster
         print_service_logs(etcd_ip, service, @name, master_ip_address)
       end
     end
+  end
+
+  def machine_boot_console_logs
+    { '0.0.0.0' => 'not implemented yet' }
   end
 
   private
@@ -262,17 +274,19 @@ class Cluster
   def wait_for_service(service, ips)
     from = Time.now
 
-    180.times do # 180 * 10 = 1800 seconds = 30 minutes
-      return if service_finished_bootstrapping?(ips, service)
+    ::Timeout.timeout(30 * 60) do # 30 minutes
+      loop do
+        return if service_finished_bootstrapping?(ips, service)
 
-      elapsed = Time.now - from
-      if (elapsed.round % 5).zero?
-        puts "Waiting for bootstrapping of #{service} service to complete..."
-        puts "Checked master nodes: #{ips}"
+        elapsed = Time.now - from
+        if (elapsed.round % 5).zero?
+          puts "Waiting for bootstrapping of #{service} service to complete..."
+          puts "Checked master nodes: #{ips}"
+        end
+        sleep 10
       end
-      sleep 10
     end
-
+  rescue Timeout::Error
     puts 'Trying to collecting the logs...'
     forensic(false) # Call forensic to collect logs when service timeout
     raise "timeout waiting for #{service} service to bootstrap on any of: #{ips}"
@@ -280,7 +294,6 @@ class Cluster
 
   def service_finished_bootstrapping?(ips, service)
     command = "test -e /opt/tectonic/init_#{service}.done"
-
     ips.each do |ip|
       finished = 1
       begin
@@ -294,7 +307,6 @@ class Cluster
         return true
       end
     end
-
     false
   end
 

@@ -18,7 +18,7 @@ module AwsSupport
     resp.auto_scaling_groups[0].instances.map(&:instance_id).sort
   end
 
-  def self.preferred_instance_ip_address(instance_id, aws_region)
+  def self.instance_ip_address(instance_id, aws_region)
     aws = Aws::EC2::Client.new(region: aws_region)
     resp = ''
     Retriable.with_retries(Aws::EC2::Errors::RequestLimitExceeded, limit: 5, sleep: 10) do
@@ -55,5 +55,16 @@ module AwsSupport
       client.delete_key_pair(key_name: key_pair_name,
                              dry_run: false)
     end
+  end
+
+  def self.collect_ec2_console_logs(instance_id, aws_region)
+    client = Aws::EC2::Client.new(region: aws_region)
+
+    resp = ''
+    Retriable.with_retries(Aws::EC2::Errors::RequestLimitExceeded, limit: 3, sleep: 10) do
+      resp = client.get_console_output(instance_id: instance_id.to_s,
+                                       dry_run: false)
+    end
+    resp.output
   end
 end
