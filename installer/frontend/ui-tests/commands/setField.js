@@ -1,6 +1,6 @@
 // Nightwatch's setValue() command actually appends to any existing value, so use this helper to clear any existing
 // value first (see github.com/nightwatchjs/nightwatch/issues/4).
-exports.command = function(selector, value) {
+exports.command = function (selector, value) {
   this.expect.element(selector).to.be.visible;
 
   // Hack: Prefix the value with an End key code, followed by lots of backspace characters to clear any existing value

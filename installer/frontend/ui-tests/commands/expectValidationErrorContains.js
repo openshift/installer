@@ -1,6 +1,6 @@
 const wizard = require('../utils/wizard');
 
-exports.command = function(text) {
+exports.command = function (text) {
   this.expect.element('.wiz-error-message:not(.hidden)').text.contains(text);
 
   // Wizard next button should be disabled when there is a validation error

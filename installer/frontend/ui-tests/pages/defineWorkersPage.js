@@ -1,5 +1,5 @@
 const pageCommands = {
-  test(json) {
+  test (json) {
     this.click('@deleteIcon0');
     this.expect.element('@alertError').text.to.contain('At least 1 Worker is required');
 

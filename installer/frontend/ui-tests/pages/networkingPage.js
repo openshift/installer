@@ -1,7 +1,7 @@
 const networkConfigurationPage = require('./networkConfigurationPage');
 
 const pageCommands = {
-  testCidrInputs(json) {
+  testCidrInputs (json) {
     this.setField('#serviceCIDR', json.serviceCIDR);
 
     this.setField('#podCIDR', '10.2.0.0/15');
@@ -37,7 +37,7 @@ const pageCommands = {
     this.expect.element('@k8sCIDRsWarningTitle').to.not.be.present;
   },
 
-  test(json) {
+  test (json) {
     this.expect.element('@vpcOptionNewPublic').to.be.selected;
     this.expect.element('#awsVpcId').to.not.be.present;
 

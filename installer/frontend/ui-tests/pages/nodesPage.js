@@ -1,5 +1,5 @@
 const nodesPageCommands = {
-  test(json) {
+  test (json) {
     this.selectOption('input[type=radio]#external');
     this.expect.element('@etcdCount').to.not.be.present;
     this.expect.element('@externalEtcdAddress').to.be.present;

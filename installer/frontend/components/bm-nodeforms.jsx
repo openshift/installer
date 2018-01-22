@@ -239,7 +239,7 @@ const NodeRow = ({autoFocus, row}) => <div>
 </div>;
 
 class NodeForm extends React.Component {
-  render() {
+  render () {
     const {docs, id, name} = this.props;
 
     if (this.state && this.state.bulkUpload) {

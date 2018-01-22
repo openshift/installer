@@ -222,7 +222,7 @@ trailSections.forEach((v, k) => {
 
 // A Trail is an immutable representation of the navigation options available to a user.
 class Trail {
-  constructor(sections, whitelist) {
+  constructor (sections, whitelist) {
     this.sections = sections;
     const sectionPages = this.sections.reduce((ls, l) => ls.concat(l), []);
     sectionPages.forEach(p => {
@@ -236,13 +236,13 @@ class Trail {
   }
 
   // Returns the previous page in the trail if that page exists
-  previousFrom(page) {
+  previousFrom (page) {
     const myIx = this.ixByPage.get(page);
     return this.pages[myIx - 1];
   }
 
   // Returns the next page in the trail if that exists
-  nextFrom(page) {
+  nextFrom (page) {
     const myIx = this.ixByPage.get(page);
     return this.pages[myIx + 1];
   }
