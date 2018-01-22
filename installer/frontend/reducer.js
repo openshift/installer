@@ -38,7 +38,7 @@ const DEFAULT_AWS = {
 };
 
 // setIn({...}, 'a.b.c', 'd')
-function setIn(object, path, value) {
+function setIn (object, path, value) {
   const array = _.isString(path) ? path.split('.') : path;
   return fromJS(object).setIn(array, value).toJS();
 }

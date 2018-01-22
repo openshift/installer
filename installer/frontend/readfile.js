@@ -1,13 +1,13 @@
 export const readFile = (blob) => {
   const reader = new FileReader();
   const ret = new Promise((resolve, reject) => {
-    reader.onerror = function() {
+    reader.onerror = function () {
       reject(this.error);
     };
-    reader.onabort = function() {
+    reader.onabort = function () {
       reject('ABORTED');
     };
-    reader.onload = function() {
+    reader.onload = function () {
       resolve(this.result);
     };
   });

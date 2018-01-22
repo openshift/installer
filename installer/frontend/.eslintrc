@@ -84,6 +84,7 @@
     "react/prop-types": 0,
     "react/self-closing-comp": [2, {"component": true, "html": false}],
     "semi": 2,
+    "space-before-function-paren": 2,
     "space-infix-ops": 2,
     "strict": [2, "never"],
     "template-curly-spacing": 2,

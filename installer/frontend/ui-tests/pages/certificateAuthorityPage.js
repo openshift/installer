@@ -1,5 +1,5 @@
 const pageCommands = {
-  test() {
+  test () {
     this.expect.element('@optionGenerate').to.be.selected;
     this.expect.element('@cert').to.not.be.present;
     this.expect.element('@key').to.not.be.present;

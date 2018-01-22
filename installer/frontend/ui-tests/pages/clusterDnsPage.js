@@ -1,5 +1,5 @@
 const pageCommands = {
-  test(json) {
+  test (json) {
     this
       .setField('@controllerDomain', '%')
       .expectValidationErrorContains('Invalid domain name')

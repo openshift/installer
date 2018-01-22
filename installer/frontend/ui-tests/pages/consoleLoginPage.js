@@ -1,5 +1,5 @@
 const consoleLoginPageCommands = {
-  test(json) {
+  test (json) {
     this
       .setField('@email', 'abc')
       .expectValidationErrorContains('Invalid email address')

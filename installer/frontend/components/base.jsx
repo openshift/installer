@@ -98,7 +98,7 @@ const Wizard = withRouter(connect(stateToProps)(
       }
     }
 
-    render() {
+    render () {
       const {canNavigateForward, canReset, currentPage, navTrail, title} = this.props;
       if (!currentPage) {
         return null;

@@ -71,7 +71,7 @@ export class Header extends React.Component {
     this.state = { latestRelease: null };
   }
 
-  componentDidMount() {
+  componentDidMount () {
     fetchLatestRelease().then((release) => {
       this.setState({ latestRelease: parseLatestVersion(release) });
     }).catch((err) => {
@@ -81,7 +81,7 @@ export class Header extends React.Component {
 
   }
 
-  render() {
+  render () {
     const latestRelease = this.state.latestRelease || null;
 
     const productDdItems = {

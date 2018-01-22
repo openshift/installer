@@ -128,7 +128,7 @@ const Field = withNav(connect(
 }));
 
 const makeBooleanField = type => {
-  return function booleanField(props) {
+  return function booleanField (props) {
     const renderField = (injectedProps, cleanedProps, classes) => {
       return <input type={type} checked={injectedProps.inverted ? !injectedProps.value : injectedProps.value} className={classes} {...cleanedProps}
         onChange={e => {
@@ -494,14 +494,14 @@ export const FieldRowList = connect(
   {appendField: configActions.appendField, removeField: configActions.removeField}
 )(
   class FieldRowList_ extends React.Component {
-    constructor(props) {
+    constructor (props) {
       super(props);
       this.state = {
         autoFocus: props.autoFocus,
       };
     }
 
-    render() {
+    render () {
       const {appendField, globalError, id, placeholder, removeField, Row, rowFields, rowIndexes} = this.props;
 
       return <div>
@@ -535,7 +535,7 @@ export const FieldRowList = connect(
 );
 
 export class DropdownMixin extends React.PureComponent {
-  constructor(props) {
+  constructor (props) {
     super(props);
     this.listener = this._onWindowClick.bind(this);
     this.state = {active: !!props.active};
@@ -578,7 +578,7 @@ export class DropdownMixin extends React.PureComponent {
 }
 
 export class Dropdown extends DropdownMixin {
-  render() {
+  render () {
     const {active} = this.state;
     const {items, header} = this.props;
 
@@ -600,7 +600,7 @@ export class Dropdown extends DropdownMixin {
 }
 
 export class DropdownInline extends DropdownMixin {
-  render() {
+  render () {
     const {active} = this.state;
     const {items, header} = this.props;
 

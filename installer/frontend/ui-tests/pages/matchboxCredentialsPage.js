@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const pageCommands = {
-  test(json) {
+  test (json) {
     const parentDir = path.resolve(__dirname, '..');
     const caCertPath = path.join(parentDir, 'ca-cert.txt');
     const clientCertPath = path.join(parentDir, 'client-cert.txt');

@@ -1,5 +1,5 @@
 const keysPageCommands = {
-  test(json) {
+  test (json) {
     this.selectOption(`option[value=${json.aws_ssh}]`);
   },
 };

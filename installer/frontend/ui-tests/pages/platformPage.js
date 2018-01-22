@@ -1,7 +1,7 @@
 const wizard = require('../utils/wizard');
 
 const platformPageCommands = {
-  test(platformEl) {
+  test (platformEl) {
     this.expect.element('select#platformType').to.be.visible.before(60000);
 
     this.selectOption('@awsGUI');

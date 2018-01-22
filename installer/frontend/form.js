@@ -82,7 +82,7 @@ class Node {
 }
 
 export class Field extends Node {
-  constructor(id, opts = {}) {
+  constructor (id, opts = {}) {
     super(id, opts);
     if (!_.has(opts, 'default')) {
       throw new Error(`${id} needs a default`);
@@ -133,7 +133,7 @@ export class Field extends Node {
 }
 
 export class Form extends Node {
-  constructor(id, fields, opts = {}) {
+  constructor (id, fields, opts = {}) {
     super(id, opts);
     this.isForm = true;
     this.fields = fields;
@@ -194,7 +194,7 @@ const toValidator = (fields, listValidator) => (value, cc) => {
 };
 
 export class FieldList extends Field {
-  constructor(id, rowFields, opts = {}) {
+  constructor (id, rowFields, opts = {}) {
     // Lists default to a single row, so the default list value is [[field 1 default, field 2 default, ...]]
     const listDefault = [_.mapValues(rowFields, 'default')];
     super(id, Object.assign({}, opts, {

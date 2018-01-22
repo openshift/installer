@@ -20,7 +20,7 @@ const testDockerBridgeValidation = page => {
 };
 
 const pageCommands = {
-  test(json) {
+  test (json) {
     this.setField('#serviceCIDR', json.serviceCIDR);
 
     this.setField('#podCIDR', '10.2.0.0/21');

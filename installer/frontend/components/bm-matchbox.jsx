@@ -83,13 +83,13 @@ const dispatchToProps = dispatch => ({
 
 export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
   class Matchbox extends React.Component {
-    componentDidMount() {
+    componentDidMount () {
       if (!this.props.osToUse) {
         this.props.getOsToUse(this.props.http);
       }
     }
 
-    componentWillUnmount() {
+    componentWillUnmount () {
       clearTimeout(this.timeout);
     }
 

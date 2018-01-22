@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 const pageCommands = {
-  test(json) {
+  test (json) {
     const parentDir = path.resolve(__dirname, '..');
     const sshKeyPath = path.join(parentDir, 'ssh-keys.txt');
 

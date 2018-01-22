@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const clusterInfoPageCommands = {
-  test(json, platform) {
+  test (json, platform) {
     const parentDir = path.resolve(__dirname, '..');
     const licensePath = path.join(parentDir, 'tectonic-license.txt');
     const configPath = path.join(parentDir, 'config.json');
