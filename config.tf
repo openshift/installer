@@ -74,17 +74,17 @@ variable "tectonic_container_images" {
     etcd                         = "quay.io/coreos/etcd:v3.2.14"
     etcd_operator                = "quay.io/coreos/etcd-operator:v0.5.0"
     hyperkube                    = "quay.io/coreos/hyperkube:v1.9.1_coreos.0"
-    kube_core_renderer           = "quay.io/coreos/kube-core-renderer-dev:79403c0864d4a98773d92d01998124c096faf59f"
-    kube_version_operator        = "quay.io/coreos/kube-version-operator:v1.8.4-kvo.5"
+    kube_core_renderer           = "quay.io/coreos/kube-core-renderer:beryllium-m1"
+    kube_core_operator           = "quay.io/coreos/kube-core-operator:beryllium-m1"
     tectonic_channel_operator    = "quay.io/coreos/tectonic-channel-operator:0.6.2"
     tectonic_etcd_operator       = "quay.io/coreos/tectonic-etcd-operator:v0.0.2"
     tectonic_prometheus_operator = "quay.io/coreos/tectonic-prometheus-operator:v1.9.1"
     tectonic_cluo_operator       = "quay.io/coreos/tectonic-cluo-operator:v0.3.0"
     tectonic_torcx               = "quay.io/coreos/tectonic-torcx:v0.2.1"
-    kubernetes_addon_operator    = "quay.io/coreos/kubernetes-addon-operator:4b83569d763dc95e1f61c77b31989fd3957bfc67"
+    kubernetes_addon_operator    = "quay.io/coreos/kubernetes-addon-operator:beryllium-m1"
     tectonic_alm_operator        = "quay.io/coreos/tectonic-alm-operator:0.2.1"
-    tectonic_utility_operator    = "quay.io/coreos/tectonic-utility-operator:fd342530b94b0addf41b3109d1fcd3adfd7f2101"
-    tectonic_network_operator    = "quay.io/coreos/tectonic-network-operator:5de83dde5aab8532cb5d1046de3f04193ac2d827"
+    tectonic_utility_operator    = "quay.io/coreos/tectonic-utility-operator:beryllium-m1"
+    tectonic_network_operator    = "quay.io/coreos/tectonic-network-operator:beryllium-m1"
   }
 }
 
@@ -114,7 +114,7 @@ variable "tectonic_versions" {
 
   default = {
     etcd          = "3.2.14"
-    kubernetes    = "1.8.4+tectonic.1"
+    kubernetes    = "1.9.1+tectonic.1"
     monitoring    = "1.9.1"
     tectonic      = "1.8.4-tectonic.2"
     tectonic-etcd = "0.0.1"
