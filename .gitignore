@@ -15,3 +15,10 @@ bin_test/
 matchbox/
 modules/update-payload/generated/
 /contrib/govcloud/vpn.conf
+
+# Bazel
+bazel-bin
+bazel-out
+bazel-genfiles
+bazel-testlogs
+bazel-tectonic-installer
