@@ -161,7 +161,6 @@ export const toAWS_TF = ({clusterConfig: cc, dirty}, FORMS) => {
       AWSSecretAccessKey: cc[AWS_SECRET_ACCESS_KEY],
     },
     variables: {
-      // eslint-disable-next-line no-sync
       tectonic_admin_password: cc[ADMIN_PASSWORD],
       tectonic_aws_region: cc[AWS_REGION],
       tectonic_admin_email: cc[ADMIN_EMAIL],
@@ -245,7 +244,6 @@ export const toBaremetal_TF = ({clusterConfig: cc}, FORMS) => {
     pullSecret: cc[PULL_SECRET],
     retry: cc[RETRY],
     variables: {
-      // eslint-disable-next-line no-sync
       tectonic_admin_password: cc[ADMIN_PASSWORD],
       tectonic_cluster_name: cc[CLUSTER_NAME],
       tectonic_admin_email: cc[ADMIN_EMAIL],
