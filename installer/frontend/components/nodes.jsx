@@ -175,31 +175,31 @@ export const Etcd = connect(({clusterConfig}) => ({
         <etcdForm.Errors />
       </div>
     </div>
-    {etcdOption === ETCD_OPTIONS.EXTERNAL && <hr />}
-    {etcdOption === ETCD_OPTIONS.EXTERNAL &&
-      <div className="form-group">
-        <div className="row">
-          <div className="col-xs-3">
-            <label htmlFor={EXTERNAL_ETCD_CLIENT}>Client Address</label>
-          </div>
-          <div className="col-xs-8">
-            <Connect field={EXTERNAL_ETCD_CLIENT}>
-              <Input id={EXTERNAL_ETCD_CLIENT}
-                autoFocus={true}
-                className="wiz-inline-field wiz-inline-field--suffix"
-                suffix={<span className="input__suffix">:2379</span>}
-                placeholder="https://etcd.example.com" />
-            </Connect>
-            <p className="text-muted">Address of etcd client endpoint</p>
-          </div>
+    {etcdOption === ETCD_OPTIONS.EXTERNAL && <div>
+      <hr />
+      <div className="row form-group">
+        <div className="col-xs-3">
+          <label htmlFor={EXTERNAL_ETCD_CLIENT}>Client Address</label>
+        </div>
+        <div className="col-xs-8">
+          <Connect field={EXTERNAL_ETCD_CLIENT}>
+            <Input id={EXTERNAL_ETCD_CLIENT}
+              autoFocus={true}
+              className="wiz-inline-field wiz-inline-field--suffix"
+              suffix={<span className="input__suffix">:2379</span>}
+              placeholder="https://etcd.example.com" />
+          </Connect>
+          <p className="text-muted">Address of etcd client endpoint</p>
         </div>
       </div>
+    </div>
     }
-    {isAWS && etcdOption === ETCD_OPTIONS.PROVISIONED && <hr />}
-    {isAWS && etcdOption === ETCD_OPTIONS.PROVISIONED &&
+    {isAWS && etcdOption === ETCD_OPTIONS.PROVISIONED && <div>
+      <hr />
       <div className="row form-group col-xs-12">
         <DefineNode type={AWS_ETCDS} max={9} withIamRole={false} />
       </div>
+    </div>
     }
   </div>
 );
