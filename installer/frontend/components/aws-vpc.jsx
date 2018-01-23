@@ -25,6 +25,7 @@ import { Field, Form } from '../form';
 import { toError } from '../utils';
 
 import {
+  AWS_ADVANCED_NETWORKING,
   AWS_CONTROLLER_SUBNETS,
   AWS_CONTROLLER_SUBNET_IDS,
   AWS_CREATE_VPC,
@@ -52,7 +53,6 @@ import {
   selectedSubnets,
 } from '../cluster-config';
 
-const AWS_ADVANCED_NETWORKING = 'awsAdvancedNetworking';
 const DEFAULT_AWS_VPC_CIDR = '10.0.0.0/16';
 
 const {setIn} = configActions;

@@ -181,10 +181,16 @@ export const Radio = props => {
 
 export const CheckBox = makeBooleanField('checkbox');
 
-export const ToggleButton = props => <button className={props.className} style={props.style} onClick={() => props.onValue(!props.value)}>
-  {props.value ? 'Hide' : 'Show'}&nbsp;{props.children}
-  <i style={{marginLeft: 7}} className={classNames('fa', {'fa-chevron-up': props.value, 'fa-chevron-down': !props.value})}></i>
-</button>;
+export const ToggleButton = connect(
+  null,
+  (dispatch, {id, onValue, value}) => ({onClick: () => {
+    onValue(!value);
+    dispatch(dirtyActions.add(id));
+  }}),
+)(({children, className, onClick, value}) => <button className={className} onClick={onClick}>
+  {value ? 'Hide' : 'Show'}&nbsp;{children}
+  <i style={{marginLeft: 7}} className={classNames('fa', {'fa-chevron-up': value, 'fa-chevron-down': !value})}></i>
+</button>);
 
 export const FileInput = connect(
   null,

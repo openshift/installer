@@ -17,6 +17,7 @@ export const AWS_SESSION_TOKEN = 'awsSessionToken';
 export const AWS_SSH = 'aws_ssh';
 export const AWS_TAGS = 'awsTags';
 
+export const AWS_ADVANCED_NETWORKING = 'awsAdvancedNetworking';
 export const AWS_CREATE_VPC = 'awsCreateVpc';
 export const AWS_VPC_CIDR = 'awsVpcCIDR';
 export const AWS_VPC_ID = 'awsVpcId';
@@ -208,8 +209,9 @@ export const toAWS_TF = ({clusterConfig: cc, dirty}, FORMS) => {
   if (cc[AWS_CREATE_VPC] === VPC_CREATE) {
     ret.variables.tectonic_aws_vpc_cidr_block = cc[AWS_VPC_CIDR];
 
-    // If the subnets have not been edited, omit these variables so that sensible default subnets will be created
-    if (dirty[AWS_CONTROLLER_SUBNETS] || dirty[AWS_WORKER_SUBNETS]) {
+    // If the AWS Advanced Networking section was never opened, omit these variables so that sensible default subnets
+    // will be created
+    if (dirty[AWS_ADVANCED_NETWORKING]) {
       ret.variables.tectonic_aws_master_custom_subnets = selectedSubnets(cc, cc[AWS_CONTROLLER_SUBNETS]);
       ret.variables.tectonic_aws_worker_custom_subnets = selectedSubnets(cc, cc[AWS_WORKER_SUBNETS]);
     }
