@@ -46,24 +46,43 @@ class GovcloudCluster < Cluster
     super
   end
 
-  def master_ip_addresses
-    ssh_master_ip_addresses = []
-    Dir.chdir(@build_path) do
-      terraform_state = `terraform state show module.masters.aws_autoscaling_group.masters`.chomp.split("\n")
-      terraform_state.each do |value|
-        attributes = value.split('=')
-        next unless attributes[0].strip.eql?('id')
-        instances_id = AwsSupport.sorted_auto_scaling_instances(attributes[1].strip.chomp, @aws_region)
-        instances_id.each do |instance_id|
-          ssh_master_ip_addresses.push AwsSupport.preferred_instance_ip_address(instance_id, @aws_region)
-        end
-      end
+  def machine_boot_console_logs
+    instances_id = retrieve_instances_ids('module.masters.aws_autoscaling_group.masters')
+    # Return the log output in a hash {ip => log}
+    hash_log_ip = instances_id.map do |instance_id|
+      {
+        instance_id_to_ip_address(instance_id) => AwsSupport.collect_ec2_console_logs(instance_id, @aws_region)
+      }
     end
-    ssh_master_ip_addresses
+    # convert the array to hash [{k1=>v1},{k2=>v2}] to {k1=>v1,k2=>v2}
+    hash_log_ip.reduce({}, :update)
+  end
+
+  def retrieve_instances_ids(auto_scaling_groups)
+    aws_autoscaling_group_master = @tfstate_file.value(auto_scaling_groups, 'id')
+    AwsSupport.sorted_auto_scaling_instances(aws_autoscaling_group_master, @aws_region)
+  end
+
+  def instance_id_to_ip_address(instance_id)
+    AwsSupport.instance_ip_address(instance_id, @aws_region)
+  end
+
+  def master_ip_addresses
+    instances_id = retrieve_instances_ids('module.masters.aws_autoscaling_group.masters')
+    instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region) }
   end
 
   def master_ip_address
     master_ip_addresses[0]
+  end
+
+  def worker_ip_addresses
+    instances_id = retrieve_instances_ids('module.workers.aws_autoscaling_group.workers')
+    instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region) }
+  end
+
+  def etcd_ip_addresses
+    @tfstate_file.output('etcd', 'ip_addresses')
   end
 
   def check_prerequisites

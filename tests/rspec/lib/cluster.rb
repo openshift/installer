@@ -158,7 +158,7 @@ class Cluster
   end
 
   def machine_boot_console_logs
-    { '0.0.0.0' => 'not implemented yet' }
+    { '0.0.0.0' => "not implemented yet for platform #{env_variables['PLATFORM']}" }
   end
 
   private
@@ -172,13 +172,12 @@ class Cluster
 
   def apply
     ::Timeout.timeout(30 * 60) do # 30 minutes
-      3.times do |idx|
+      3.times do
         env = env_variables
-        env['TF_LOG'] = 'TRACE' if idx.positive?
         env['TF_APPLY_OPTIONS'] = '-no-color'
         env['TF_INIT_OPTIONS'] = '-no-color'
-        return true if system(env, "bash -co pipefail 'make -C ../.. apply |
-                                    tee ../../build/#{@name}/terraform-apply.log'")
+
+        return run_command(env, 'apply')
       end
     end
   rescue Timeout::Error
@@ -188,13 +187,11 @@ class Cluster
 
   def destroy
     ::Timeout.timeout(30 * 60) do # 30 minutes
-      3.times do |idx|
+      3.times do
         env = env_variables
-        env['TF_LOG'] = 'TRACE' if idx.positive?
         env['TF_DESTROY_OPTIONS'] = '-no-color'
         env['TF_INIT_OPTIONS'] = '-no-color'
-        return true if system(env, "bash -co pipefail 'make -C ../.. destroy |
-                                    tee ../../build/#{@name}/terraform-destroy.log'")
+        return run_command(env, 'destroy')
       end
     end
 
@@ -209,11 +206,26 @@ class Cluster
     ::Timeout.timeout(30 * 60) do # 30 minutes
       env = env_variables
       env['TF_INIT_OPTIONS'] = '-no-color'
-      return true if system(env, 'make -C ../.. terraform-init')
+      return run_command(env, 'init')
     end
   rescue Timeout::Error
     forensic(false)
     raise 'Terraform init failed'
+  end
+
+  def run_command(env, cmd)
+    Open3.popen3(env, "bash -co pipefail 'make -C ../.. #{cmd} |
+                    tee ../../build/#{@name}/terraform-#{cmd}.log'") do |_stdin, stdout, stderr, wait_thr|
+      while (line = stdout.gets)
+        puts line
+      end
+      while (line = stderr.gets)
+        puts line
+      end
+      exit_status = wait_thr.value
+      return exit_status.success?
+    end
+    false
   end
 
   def recover_from_failed_destroy() end
