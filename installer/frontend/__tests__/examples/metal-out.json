@@ -1,5 +1,4 @@
 {
-  "clusterKind": "tectonic-metal",
   "dryRun": false,
   "license": "<TECTONIC_LICENSE>",
   "platform": "metal",

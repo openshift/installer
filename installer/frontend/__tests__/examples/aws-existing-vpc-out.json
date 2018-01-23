@@ -1,5 +1,4 @@
 {
-  "clusterKind": "tectonic-aws-tf",
   "credentials": {
     "AWSAccessKeyID": "awsAccessKeyId",
     "AWSSecretAccessKey": "awsSecretAccessKey",
