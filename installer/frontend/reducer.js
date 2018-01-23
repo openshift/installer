@@ -145,21 +145,9 @@ const reducersTogether = combineReducers({
       return setIn(state, path, action.payload.value);
     }
 
-    case configActionTypes.REMOVE_AT: {
-      const {path, index} = action.payload;
-      const array = _.isString(path) ? path.split('.') : path;
-      array.push(index.toString());
-      // TODO: (kans) delete all the other stuff too
-      const invalidArray = ['error'].concat(array);
-      const arrays = [array, invalidArray];
-      return fromJS(state).withMutations(map => {
-        arrays.forEach(a => {
-          if (map.getIn(a)) {
-            map = map.deleteIn(a);
-          }
-          return map;
-        });
-      }).toJS();
+    case configActionTypes.REMOVE_FIELD_LIST_ROW: {
+      const {fieldListId, index} = action.payload;
+      return fromJS(state).deleteIn([fieldListId, index]).toJS();
     }
     default:
       return state;
@@ -253,11 +241,9 @@ const reducersTogether = combineReducers({
     }
 
     switch (action.type) {
-    case configActionTypes.REMOVE_AT: {
-      const {path, index} = action.payload;
-      const array = _.isString(path) ? path.split('.') : path;
-      array.push(index.toString());
-      return fromJS(state).deleteIn(array).toJS();
+    case configActionTypes.REMOVE_FIELD_LIST_ROW: {
+      const {fieldListId, index} = action.payload;
+      return fromJS(state).deleteIn([fieldListId, index]).toJS();
     }
     case dirtyActionTypes.ADD: {
       // {awsTags: [{key: true}]
