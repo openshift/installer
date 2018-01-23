@@ -132,6 +132,7 @@ export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
                   placeholder="matchbox.example.com:8080"
                   forceDirty={!!osError}
                   invalid={osError || httpError}
+                  style={{marginRight: 5}}
                   value={http}
                   onValue={v => this.onBootCfg(v)}>
                   <button className="btn btn-default" disabled={!!httpError} onClick={() => this.onBootCfg(http, 0)}>

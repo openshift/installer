@@ -116,7 +116,7 @@ const etcdForm = new Form('etcdForm', [
   }),
   new Field(EXTERNAL_ETCD_CLIENT, {
     default: '',
-    validator: validate.url,
+    validator: compose(validate.nonEmpty, validate.host),
     dependencies: [ETCD_OPTION],
     ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.EXTERNAL,
   }),
@@ -181,13 +181,14 @@ export const Etcd = connect(({clusterConfig}) => ({
         <div className="col-xs-3">
           <label htmlFor={EXTERNAL_ETCD_CLIENT}>Client Address</label>
         </div>
-        <div className="col-xs-8">
+        <div className="col-xs-9">
           <Connect field={EXTERNAL_ETCD_CLIENT}>
             <Input id={EXTERNAL_ETCD_CLIENT}
               autoFocus={true}
-              className="wiz-inline-field wiz-inline-field--suffix"
+              className="wiz-inline-field wiz-inline-field--prefix wiz-inline-field--suffix"
+              prefix={<span className="input__prefix">https://</span>}
               suffix={<span className="input__suffix">:2379</span>}
-              placeholder="https://etcd.example.com" />
+              placeholder="etcd.example.com" />
           </Connect>
           <p className="text-muted">Address of etcd client endpoint</p>
         </div>

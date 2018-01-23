@@ -572,12 +572,13 @@ input.wiz-inline-field {
 }
 
 input.wiz-inline-field.wiz-inline-field--prefix {
-  border-radius: 0 4px 4px 0;
-  margin-right: 5px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
 input.wiz-inline-field.wiz-inline-field--suffix {
-  border-radius: 4px 0 0 4px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .input__prefix, .input__suffix {
