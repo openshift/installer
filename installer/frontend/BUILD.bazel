@@ -22,8 +22,11 @@ genrule(
     message = "Installing JavaScript dependencies...",
     srcs = [":files"],
     outs = ["node_modules"],
-    cmd = "cp -RL installer/frontend/* tmp && $(location @yarn//:yarn) --cwd $$(pwd)/tmp install && cp -R tmp/node_modules $@",
-    tools = ["@yarn//:yarn"],
+    cmd = "PATH=$$(pwd)/$$(dirname $(location @nodejs//:node)):$$PATH"
+          + " && cp -RL installer/frontend/* tmp"
+          + " && $(location @yarn//:yarn) --cwd $$(pwd)/tmp install"
+          + " && cp -R tmp/node_modules $@",
+    tools = ["@yarn//:yarn", "@nodejs//:node"],
 )
 
 # To build the JavaScript hermetically we must use the Bazel-managed
@@ -36,14 +39,22 @@ genrule(
     message = "Building JavaScript...",
     srcs = [":files", ":node_dependencies"],
     outs = ["app-bundle.js"],
-    cmd = "cp -RL installer tmp && cp -R $(GENDIR)/installer tmp && OUT=$$(pwd)/$@ $(location @yarn//:yarn) --cwd $$(pwd)/tmp/installer/frontend run build",
-    tools = ["@yarn//:yarn"],
+    cmd = "PATH=$$(pwd)/$$(dirname $(location @nodejs//:node)):$$PATH"
+          + " && cp -RL installer tmp"
+          + " && cp -R $(GENDIR)/installer tmp"
+          + " && OUT=$$(pwd)/$@ $(location @yarn//:yarn) --cwd $$(pwd)/tmp/installer/frontend run build",
+    tools = ["@yarn//:yarn", "@nodejs//:node"],
 )
 
 genrule(
     name = "frontend_test_sh",
     outs = ["frontend_test.sh"],
-    cmd = "printf '#!/bin/bash -e\ncp -RL $$(dirname $$2)/.. $$TMPDIR/installer && $$1 --cwd $$TMPDIR/$$(dirname $$2)/.. run test' > $@",
+    cmd = "printf '"
+            + "#!/bin/bash -e\n"
+            + "export PATH=$$(pwd)/$$(dirname $$3):$$PATH\n"
+            + "cp -RL $$(dirname $$2)/.. $$TMPDIR/installer"
+            + "&& $$1 --cwd $$TMPDIR/$$(dirname $$2)/.. run test"
+          + "'> $@",
     testonly = 1,
 )
 
@@ -51,14 +62,19 @@ sh_test(
     name = "frontend_test",
     size = "small",
     srcs = [":frontend_test_sh"],
-    args = ["$(location @yarn//:yarn)", "$(location :packagejson)"],
-    data = ["@yarn//:yarn", ":node_dependencies", ":packagejson", ":files"],
+    args = ["$(location @yarn//:yarn)", "$(location :packagejson)", "$(location @nodejs//:node)"],
+    data = ["@yarn//:yarn", ":node_dependencies", ":packagejson", ":files", "@nodejs//:node"],
 )
 
 genrule(
     name = "installer_gui_test_sh",
     outs = ["installer_gui_test.sh"],
-    cmd = "printf '#!/bin/bash -e\ncp -RL $$(dirname $$2)/.. $$TMPDIR/installer && xvfb-run -a $$1 --cwd $$TMPDIR/$$(dirname $$2)/.. run $$3-installer-tests' > $@",
+    cmd = "printf '"
+            + "#!/bin/bash -ex\n"
+            + " export PATH=$$(pwd)/$$(dirname $$4):$$PATH\n"
+            + "cp -RL $$(dirname $$2)/.. $$TMPDIR/installer"
+            + "&& xvfb-run -a $$1 --cwd $$TMPDIR/$$(dirname $$2)/.. run $$3-installer-tests"
+          + "' > $@",
     testonly = 1,
 )
 
@@ -67,6 +83,6 @@ PLATFORMS = ["aws", "baremetal"]
     name = platform + "_installer_gui_test",
     size = "medium",
     srcs = [":installer_gui_test_sh"],
-    args = ["$(location @yarn//:yarn)", "$(location :packagejson)", platform],
-    data = ["@yarn//:yarn", ":node_dependencies", ":packagejson", ":files"],
+    args = ["$(location @yarn//:yarn)", "$(location :packagejson)", platform, "$(location @nodejs//:node)"],
+    data = ["@yarn//:yarn", ":node_dependencies", ":packagejson", ":files", "@nodejs//:node"],
 ) for platform in PLATFORMS]
