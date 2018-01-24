@@ -31,6 +31,7 @@ resource "template_dir" "tectonic" {
     node_exporter_base_image            = "${var.container_base_images["node_exporter"]}"
     grafana_base_image                  = "${var.container_base_images["grafana"]}"
     grafana_watcher_base_image          = "${var.container_base_images["grafana_watcher"]}"
+    kube_rbac_proxy_base_image          = "${var.container_base_images["kube_rbac_proxy"]}"
 
     kubernetes_version             = "${var.versions["kubernetes"]}"
     monitoring_version             = "${var.versions["monitoring"]}"
