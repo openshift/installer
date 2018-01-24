@@ -149,6 +149,13 @@ pipeline {
                 originalCommitId = sh(returnStdout: true, script: 'git rev-parse origin/"\${BRANCH_NAME}"')
                 echo "originalCommitId: ${originalCommitId}"
 
+                withDockerContainer("quay.io/coreos/tectonic-builder:bazel-v0.2") {
+                  sh"""#!/bin/bash -ex
+                    bazel build tarball
+                    bazel test terraform_fmt //installer/frontend:frontend_test --verbose_failures --test_output=errors
+                  """
+                }
+
                 withDockerContainer(params.builder_image) {
                   ansiColor('xterm') {
                     sh """#!/bin/bash -ex
