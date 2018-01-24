@@ -181,7 +181,6 @@ export const toAWS_TF = ({clusterConfig: cc, dirty}, FORMS) => {
       tectonic_master_count: controllers[NUMBER_OF_INSTANCES],
       tectonic_service_cidr: cc[SERVICE_CIDR],
       tectonic_worker_count: workers[NUMBER_OF_INSTANCES],
-      // TODO: shouldn't hostedZoneID be specified somewhere?
       tectonic_dns_name: cc[CLUSTER_SUBDOMAIN],
     },
   };
