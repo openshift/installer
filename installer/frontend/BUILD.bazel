@@ -18,7 +18,7 @@ filegroup(
 # TODO(squat): replace this with auto-managed dependencies, which 
 # currently does not work because of: https://github.com/bazelbuild/rules_nodejs/issues/77.
 genrule(
-    name = "node_modules",
+    name = "node_dependencies",
     message = "Installing JavaScript dependencies...",
     srcs = [":files"],
     outs = ["node_modules"],
@@ -34,7 +34,7 @@ genrule(
 genrule(
     name = "frontend",
     message = "Building JavaScript...",
-    srcs = [":files", ":node_modules"],
+    srcs = [":files", ":node_dependencies"],
     outs = ["app-bundle.js"],
     cmd = "cp -RL installer tmp && cp -R $(GENDIR)/installer tmp && OUT=$$(pwd)/$@ $(location @yarn//:yarn) --cwd $$(pwd)/tmp/installer/frontend run build",
     tools = ["@yarn//:yarn"],
@@ -52,7 +52,7 @@ sh_test(
     size = "small",
     srcs = [":frontend_test_sh"],
     args = ["$(location @yarn//:yarn)", "$(location :packagejson)"],
-    data = ["@yarn//:yarn", ":node_modules", ":packagejson", ":files"],
+    data = ["@yarn//:yarn", ":node_dependencies", ":packagejson", ":files"],
 )
 
 genrule(
@@ -68,5 +68,5 @@ PLATFORMS = ["aws", "baremetal"]
     size = "medium",
     srcs = [":installer_gui_test_sh"],
     args = ["$(location @yarn//:yarn)", "$(location :packagejson)", platform],
-    data = ["@yarn//:yarn", ":node_modules", ":packagejson", ":files"],
+    data = ["@yarn//:yarn", ":node_dependencies", ":packagejson", ":files"],
 ) for platform in PLATFORMS]
