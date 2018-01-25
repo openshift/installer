@@ -4,7 +4,6 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -102,24 +101,6 @@ func NewExecutor(executionPath string) (*Executor, error) {
 func (ex *Executor) AddFile(name string, content []byte) error {
 	filePath := filepath.Join(ex.WorkingDirectory(), name)
 	return ioutil.WriteFile(filePath, content, 0660)
-}
-
-// LoadVars is a convenience function to load the tfvars file into memory
-// as a JSON object.
-func (ex *Executor) LoadVars() (map[string]interface{}, error) {
-	filePath := filepath.Join(ex.WorkingDirectory(), tfVarsFileName)
-	txt, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return nil, err
-	}
-	var obj interface{}
-	if err = json.Unmarshal([]byte(txt), &obj); err != nil {
-		return nil, err
-	}
-	if data, ok := obj.(map[string]interface{}); ok {
-		return data, nil
-	}
-	return nil, errors.New("Could not parse config as JSON object")
 }
 
 // AddVariables writes the `terraform.tfvars` file in the Executor's working
