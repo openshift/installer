@@ -10,7 +10,7 @@ resource "template_dir" "tectonic" {
 
   vars {
     addon_resizer_image                = "${var.container_images["addon_resizer"]}"
-    kube_version_operator_image        = "${var.container_images["kube_version_operator"]}"
+    kube_core_operator_image           = "${var.container_images["kube_core_operator"]}"
     kubernetes_addon_operator_image    = "${var.container_images["kubernetes_addon_operator"]}"
     etcd_operator_image                = "${var.container_images["etcd_operator"]}"
     tectonic_channel_operator_image    = "${var.container_images["tectonic_channel_operator"]}"

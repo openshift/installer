@@ -1,25 +1,27 @@
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: kubernetes-addon-operator
-  namespace: tectonic-system
+  name: kube-core-operator
+  namespace: kube-system
   labels:
-    k8s-app: kubernetes-addon-operator
+    k8s-app: kube-core-operator
     managed-by-channel-operator: "true"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      k8s-app: kubernetes-addon-operator
+      k8s-app: kube-core-operator
   template:
     metadata:
       labels:
-        k8s-app: kubernetes-addon-operator
-        tectonic-app-version-name: kubernetes-addon
+        k8s-app: kube-core-operator
+        tectonic-app-version-name: kube-core
     spec:
       containers:
-      - name: kubernetes-addon-operator
-        image: ${kubernetes_addon_operator_image}
+      - name: kube-core-operator
+        image: ${kube_core_operator_image}
+        args:
+        - --config=/etc/cluster-config/kco-config.yaml
         resources:
           limits:
             cpu: 20m
@@ -47,5 +49,5 @@ spec:
         configMap:
           name: cluster-config-v1
           items:
-          - key: addon-config
-            path: addon-config
+          - key: kco-config
+            path: kco-config.yaml
