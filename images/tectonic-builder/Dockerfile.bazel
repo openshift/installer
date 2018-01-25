@@ -1,0 +1,13 @@
+FROM openjdk:8
+
+RUN echo "deb [arch=amd64] http://storage.googleapis.com/bazel-apt testing jdk1.8" | \
+    tee /etc/apt/sources.list.d/bazel.list && \
+    curl https://bazel.build/bazel-release.pub.gpg | apt-key add -
+
+RUN apt-get update \
+    && apt-get -y install bazel=0.10.0~rc6 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd -ms /bin/bash bazel
+USER bazel
+WORKDIR /home/bazel

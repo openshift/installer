@@ -177,4 +177,5 @@ gen_test(
     name = "terraform_fmt",
     command = "./bin/terraform fmt -list -check -write=false",
     deps = [":terraform_runtime", ":terraform_files"],
+    size = "small",
 )
