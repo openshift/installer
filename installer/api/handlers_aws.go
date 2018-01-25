@@ -154,7 +154,7 @@ func awsGetVPCsHandler(w http.ResponseWriter, req *http.Request, _ *Context) err
 
 		label := aws.StringValue(vpc.VpcId)
 		for _, tag := range vpc.Tags {
-			if aws.StringValue(tag.Key) == "Name" {
+			if aws.StringValue(tag.Key) == "Name" && aws.StringValue(tag.Value) != "" {
 				label = fmt.Sprintf("%s - %s", aws.StringValue(tag.Value), label)
 				break
 			}
