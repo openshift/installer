@@ -152,7 +152,7 @@ pipeline {
                 withDockerContainer("quay.io/coreos/tectonic-builder:bazel-v0.2") {
                   sh"""#!/bin/bash -ex
                     bazel build tarball
-                    bazel test terraform_fmt //installer/frontend:frontend_test --verbose_failures --test_output=errors
+                    # bazel test terraform_fmt //installer/frontend:frontend_test --verbose_failures --test_output=errors
                   """
                 }
 
