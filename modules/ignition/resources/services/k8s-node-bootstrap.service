@@ -1,6 +1,8 @@
 [Unit]
 Description=Bootstrap Kubernetes Node Components
 ConditionPathExists=!/etc/kubernetes/kubelet.env
+Wants=update-ca-certificates.service
+After=update-ca-certificates.service
 Before=kubelet.service
 
 [Service]
@@ -15,7 +17,7 @@ ExecStartPre=/usr/bin/docker run --rm \
             --tmpfs /tmp \
             -v /usr/share:/usr/share:ro \
             -v /usr/lib/os-release:/usr/lib/os-release:ro \
-            -v /usr/share/ca-certificates/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro \
+            -v /etc/ssl/certs/ca-certificates.crt:/etc/ssl/certs/ca-certificates.crt:ro \
             -v /var/lib/torcx:/var/lib/torcx \
             -v /var/run/dbus:/var/run/dbus \
             -v /run/metadata:/run/metadata:ro \
