@@ -50,9 +50,8 @@ const platformForm = new Form(PLATFORM_FORM, [
   }),
 ], {
   validator: (data, cc) => {
-    const platform = cc[PLATFORM_TYPE];
-    if (!isSupported(platform)) {
-      return `${PLATFORM_NAMES[platform]} not supported for GUI`;
+    if (!isSupported(cc[PLATFORM_TYPE])) {
+      return 'unused';
     }
   },
 });
