@@ -4,10 +4,10 @@ const tfvarsUtil = require('../utils/terraformTfvars');
 
 const REQUIRED_ENV_VARS = ['AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'TF_VAR_tectonic_license_path', 'TF_VAR_tectonic_pull_secret_path'];
 
-// Expects an input file <prefix>.progress to exist
+// Expects an input file <prefix>-in.json to exist
 const steps = (prefix, expectedOutputFilePath, ignoredKeys) => {
   // Test input cluster config
-  const cc = tfvarsUtil.loadJson(`${prefix}.progress`).clusterConfig;
+  const cc = tfvarsUtil.loadJson(`${prefix}-in.json`).clusterConfig;
 
   const testPage = (page, nextInitiallyDisabled) => wizard.testPage(page, 'aws-tf', cc, nextInitiallyDisabled);
 
