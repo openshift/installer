@@ -74,11 +74,7 @@ storage:
       mode: 0644
       contents:
         inline: {{.ign_installer_runtime_mappings_json}}
-    - path: /etc/ssl/certs/custom_ca_certs.pem
-      filesystem: root
-      mode: 0400
-      contents:
-        inline: {{.ign_custom_ca_certs_json}}
+${ign_custom_ca_certs}
     - path: /etc/profile.env
       filesystem: root
       mode: 0644
