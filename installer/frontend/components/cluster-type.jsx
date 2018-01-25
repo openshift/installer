@@ -7,15 +7,7 @@ import { Connect, Select } from './ui';
 import { Field, Form } from '../form';
 import { PLATFORM_TYPE, PLATFORM_FORM } from '../cluster-config';
 import { TectonicGA } from '../tectonic-ga';
-import {
-  AWS_TF,
-  BARE_METAL_TF,
-  DOCS,
-  PLATFORM_NAMES,
-  isEnabled,
-  isSupported,
-  optGroups,
-} from '../platforms';
+import { AWS_TF, BARE_METAL_TF, DOCS, PLATFORM_NAMES, isSupported, optGroups } from '../platforms';
 
 const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PLATFORM_TYPE]}))(
   ({error, platform}) => {
@@ -43,6 +35,8 @@ const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PL
     /* eslint-enable react/jsx-no-target-blank */
   });
 
+const isEnabled = platform => _.get(window.config, 'platforms', []).includes(platform);
+
 const platformForm = new Form(PLATFORM_FORM, [
   new Field(PLATFORM_TYPE, {
     default: _.find([AWS_TF, BARE_METAL_TF], isEnabled) || AWS_TF,
@@ -59,7 +53,7 @@ const platformForm = new Form(PLATFORM_FORM, [
 const platformOptions = [];
 _.each(optGroups, optgroup => {
   const [name, ...group] = optgroup;
-  const platforms = _.filter(group, p => isEnabled(p));
+  const platforms = _.filter(group, isEnabled);
   if (platforms.length) {
     platformOptions.push(<optgroup label={name} key={name}>{
       platforms.map(p => <option value={p} key={p}>{PLATFORM_NAMES[p]}</option>)

@@ -1,5 +1,3 @@
-import _ from 'lodash';
-
 export const AWS = 'aws';
 export const AWS_TF = 'aws-tf';
 export const AZURE = 'azure';
@@ -8,8 +6,6 @@ export const BARE_METAL_TF = 'bare-metal-tf';
 export const OPENSTACK = 'openstack';
 
 export const isSupported = platform => [AWS_TF, BARE_METAL_TF].includes(platform);
-
-export const isEnabled = platform => _.get(window.config, 'platforms', []).includes(platform);
 
 export const PLATFORM_NAMES = {
   [AWS]: 'Amazon Web Services',
