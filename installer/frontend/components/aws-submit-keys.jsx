@@ -3,7 +3,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { validate } from '../validate';
-import { Connect, DocsA, Selector } from './ui';
+import { AsyncSelect, Connect, DocsA } from './ui';
 import { Field, Form } from '../form';
 
 import * as awsActions from '../aws-actions';
@@ -42,7 +42,7 @@ export const AWS_SubmitKeys = () => <div>
     <div className="col-xs-12">
       <Title />
       <Connect field={AWS_SSH}>
-        <Selector refreshBtn={true} disabledValue="Please select a SSH Key Pair from this region." />
+        <AsyncSelect refreshBtn={true} disabledValue="Please select a SSH Key Pair from this region." />
       </Connect>
       <awsSshForm.Errors />
     </div>

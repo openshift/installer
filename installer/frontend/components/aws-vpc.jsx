@@ -4,19 +4,7 @@ import { connect } from 'react-redux';
 
 import { compose, validate } from '../validate';
 import { getDefaultSubnets, getZones, getVpcs, getVpcSubnets, validateSubnets } from '../aws-actions';
-import {
-  A,
-  AsyncSelect,
-  DocsA,
-  Radio,
-  Select,
-  Deselect,
-  DeselectField,
-  Connect,
-  Input,
-  Selector,
-  ToggleButton,
-} from './ui';
+import { A, AsyncSelect, Connect, Deselect, DeselectField, DocsA, Input, Radio, Select, ToggleButton } from './ui';
 import { Alert } from './alert';
 import { configActions } from '../actions';
 import { AWS_DomainValidation } from './aws-domain-validation';
@@ -117,7 +105,13 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
     dependencies: [AWS_REGION_FORM],
     getExtraStuff: (dispatch, isNow) => dispatch(getDefaultSubnets(null, null, isNow)),
   }),
-  new Field(AWS_CONTROLLER_SUBNET_IDS, {default: {}}),
+  new Field(AWS_CONTROLLER_SUBNET_IDS, {
+    default: {},
+    dependencies: [AWS_VPC_ID],
+    getExtraStuff: (dispatch, isNow, cc) => _.isEmpty(cc[AWS_VPC_ID])
+      ? Promise.resolve()
+      : dispatch(getVpcSubnets({vpcID: cc[AWS_VPC_ID]})),
+  }),
   new Field(AWS_CREATE_VPC, {default: VPC_CREATE}),
   new Field(AWS_HOSTED_ZONE_ID, {
     default: '',
@@ -154,7 +148,13 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
   }),
   new Field(AWS_SPLIT_DNS, {default: SPLIT_DNS_ON}),
   new Field(AWS_VPC_CIDR, {default: DEFAULT_AWS_VPC_CIDR, validator: validate.AWSsubnetCIDR}),
-  new Field(AWS_VPC_ID, {default: '', ignoreWhen: cc => cc[AWS_CREATE_VPC] === VPC_CREATE}),
+  new Field(AWS_VPC_ID, {
+    default: '',
+    dependencies: [AWS_REGION_FORM],
+    getExtraStuff: dispatch => dispatch(getVpcs()).then(vpcs => ({options: _.sortBy(vpcs, 'label')})),
+    ignoreWhen: cc => cc[AWS_CREATE_VPC] === VPC_CREATE,
+    validator: validate.nonEmpty,
+  }),
   new Field(AWS_WORKER_SUBNETS, {default: {}}),
   new Field(AWS_WORKER_SUBNET_IDS, {default: {}}),
   new Field(CLUSTER_SUBDOMAIN, {default: '', validator: compose(validate.nonEmpty, validate.domainName)}),
@@ -194,7 +194,6 @@ const stateToProps = ({aws, clusterConfig}) => {
 
   return {
     azs: new Array(...azs).sort(),
-    availableVpcs: aws.availableVpcs,
     availableVpcSubnets: aws.availableVpcSubnets,
     awsWorkerSubnets: clusterConfig[AWS_WORKER_SUBNETS],
     awsControllerSubnets: clusterConfig[AWS_CONTROLLER_SUBNETS],
@@ -211,11 +210,10 @@ const dispatchToProps = dispatch => ({
   clearControllerSubnets: () => setIn(AWS_CONTROLLER_SUBNET_IDS, {}, dispatch),
   clearWorkerSubnets: () => setIn(AWS_WORKER_SUBNET_IDS, {}, dispatch),
   getVpcSubnets: vpcID => dispatch(getVpcSubnets({vpcID})),
-  getVpcs: () => dispatch(getVpcs()),
 });
 
 export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
-  const {availableVpcs, awsCreateVpc, availableVpcSubnets, awsVpcId, clusterName, clusterSubdomain, internalCluster, advanced} = props;
+  const {awsCreateVpc, availableVpcSubnets, awsVpcId, clusterName, clusterSubdomain, internalCluster, advanced} = props;
 
   let controllerSubnets;
   let workerSubnets;
@@ -341,7 +339,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
           </div>
           <div className="col-xs-8">
             <Connect field={AWS_HOSTED_ZONE_ID}>
-              <Selector refreshBtn={true} disabledValue="Please select domain" />
+              <AsyncSelect refreshBtn={true} disabledValue="Please select domain" />
             </Connect>
           </div>
         </div>
@@ -401,22 +399,14 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
             <div className="radio wiz-radio-group__radio">
               <Connect field={AWS_VPC_ID}>
                 <AsyncSelect
-                  id={AWS_VPC_ID}
-                  availableValues={availableVpcs}
                   disabledValue="Please select a VPC"
-                  onRefresh={() => {
-                    props.getVpcs();
-                    if (awsVpcId) {
-                      props.getVpcSubnets(awsVpcId);
-                    }
-                  }}
-                  onChange={vpcID => {
+                  onValue={vpcID => {
                     if (vpcID !== awsVpcId) {
                       props.clearControllerSubnets();
                       props.clearWorkerSubnets();
                     }
-                    props.getVpcSubnets(vpcID);
                   }}
+                  refreshBtn={true}
                 />
               </Connect>
             </div>

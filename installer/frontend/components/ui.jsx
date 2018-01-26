@@ -280,7 +280,7 @@ export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirt
   );
 };
 
-export const Selector = props => {
+export const AsyncSelect = props => {
   const value = props.value;
   const options = _.get(props, 'extraData.options', []);
 
@@ -364,7 +364,7 @@ class Connect_ extends React.Component {
       props.checked = child.props.value === value;
       break;
     case Select:
-    case Selector:
+    case AsyncSelect:
       props.value = value || '';
       break;
     default:
@@ -428,81 +428,6 @@ export const PrivateKeyArea = (props) => <FileArea
   invalid={validate.privateKey(props.value)}
   placeholder={privateKeyPlaceholder}
 />;
-
-export class AsyncSelect extends React.Component {
-  componentDidMount () {
-    const { onChange, onRefresh, value } = this.props;
-    onRefresh && onRefresh();
-    value && onChange && onChange(value);
-  }
-
-  render () {
-    const {id, availableValues, disabledValue, value, onChange, onRefresh} = this.props;
-    const iClassNames = classNames('fa', 'fa-refresh', {
-      'fa-spin': availableValues.inFly,
-    });
-
-    let options = availableValues.value;
-    if (value && !options.map(r => r.value).includes(value)) {
-      options = [{label: value, value}].concat(options);
-    }
-    const style = {};
-    if (!onRefresh) {
-      style.marginRight = 0;
-    }
-
-    const optionElems = [];
-    const optgroups = new Map();
-
-    _.each(options, o => {
-      const elem = <option key={o.value} value={o.value}>{o.label}</option>;
-      if (!o.optgroup) {
-        optionElems.push(elem);
-        return;
-      }
-
-      if (!optgroups.get(o.optgroup)) {
-        optgroups.set(o.optgroup, []);
-      }
-      optgroups.get(o.optgroup).push(elem);
-    });
-
-    optgroups.forEach((children, label) => optionElems.push(<optgroup key={label} label={label}>{children}</optgroup>));
-
-    const props = this.props;
-
-    return (
-      <div>
-        <div className={classNames('async-select', props.className)} style={props.style}>
-          {props.children}
-          <select style={style}
-            id={id}
-            className="async-select--select"
-            value={value}
-            disabled={availableValues.inFly}
-            onChange={e => {
-              const v = e.target.value;
-              props.onValue && props.onValue(v);
-              onChange && onChange(v);
-            }}>
-            {disabledValue && <option value="" disabled>{disabledValue}</option>}
-            {optionElems}
-          </select>
-          {onRefresh &&
-            <button className="btn btn-default" disabled={availableValues.inFly} onClick={onRefresh} title="Refresh">
-              <i className={iClassNames}></i>
-            </button>
-          }
-        </div>
-        {props.invalid &&
-          <div className="wiz-error-message">
-            {props.invalid}
-          </div>
-        }
-      </div>
-    );
-  }
-}
 
 export const FieldRowList = connect(
   ({clusterConfig}, {id}) => ({
