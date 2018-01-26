@@ -1,3 +1,4 @@
+# Kubernetes CA (resources/generated/tls/{ca.crt,ca.key})
 resource "tls_private_key" "kube_ca" {
   algorithm = "RSA"
   rsa_bits  = "2048"

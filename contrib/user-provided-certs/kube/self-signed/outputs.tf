@@ -1,3 +1,7 @@
+output "aggregator_ca_cert_pem" {
+  value = "${tls_self_signed_cert.aggregator_ca.cert_pem}"
+}
+
 output "ca_cert_pem" {
   value = "${tls_self_signed_cert.kube_ca.cert_pem}"
 }
@@ -24,4 +28,12 @@ output "apiserver_cert_pem" {
 
 output "apiserver_key_pem" {
   value = "${tls_private_key.apiserver.private_key_pem}"
+}
+
+output "apiserver_proxy_cert_pem" {
+  value = "${tls_locally_signed_cert.apiserver_proxy.cert_pem}"
+}
+
+output "apiserver_proxy_key_pem" {
+  value = "${tls_private_key.apiserver_proxy.private_key_pem}"
 }
