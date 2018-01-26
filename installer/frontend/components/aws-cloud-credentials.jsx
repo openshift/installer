@@ -3,12 +3,11 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { compose, validate } from '../validate';
-import { Input, Password, Select, RadioBoolean, Connect } from './ui';
+import { A, DocsA, Input, Password, Select, RadioBoolean, Connect } from './ui';
 import { Alert } from './alert';
 
 import { getRegions } from '../aws-actions';
 import { Field, Form } from '../form';
-import { TectonicGA } from '../tectonic-ga';
 
 import {
   AWS_ACCESS_KEY_ID,
@@ -147,10 +146,7 @@ export const AWS_CloudCredentials = connect(stateToProps)(
   ({regionSelections, stsEnabled}) => <div>
     <div className="row form-group">
       <div className="col-xs-12">
-        Enter your Amazon Web Services (AWS) credentials to create and configure the required resources.
-        {/* eslint-disable react/jsx-no-target-blank */}
-        It is strongly suggested that you create a <a href="https://coreos.com/tectonic/docs/latest/install/aws/requirements.html#privileges" onClick={() => TectonicGA.sendDocsEvent('aws-tf')} rel="noopener" target="_blank">limited access role</a> for Tectonic's communication with your cloud provider.
-        {/* eslint-enable react/jsx-no-target-blank */}
+        Enter your Amazon Web Services (AWS) credentials to create and configure the required resources. It is strongly suggested that you create a <DocsA path="/install/aws/requirements.html#privileges">limited access role</DocsA> for Tectonic's communication with your cloud provider.
       </div>
     </div>
 
@@ -165,7 +161,7 @@ export const AWS_CloudCredentials = connect(stateToProps)(
               Use a normal access key
             </label>&nbsp;(default)
             <p className="text-muted">
-              Go to the <a href="https://console.aws.amazon.com/iam/home#/users" rel="noopener noreferrer" target="_blank">AWS console user section</a>, select your user name, and the Security Credentials tab.
+              Go to the <A href="https://console.aws.amazon.com/iam/home#/users">AWS console user section</A>, select your user name, and the Security Credentials tab.
             </p>
           </div>
           <div className="wiz-radio-group__body">

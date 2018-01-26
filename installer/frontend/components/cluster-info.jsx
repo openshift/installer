@@ -8,10 +8,9 @@ import fields from '../fields';
 import { Field, Form } from '../form';
 
 import { Alert } from './alert';
-import { Connect, FileInput, Input } from './ui';
+import { A, Connect, FileInput, Input } from './ui';
 
-// eslint-disable-next-line react/jsx-no-target-blank
-const accountLink = <a href="https://account.coreos.com" rel="noopener" target="_blank">account.coreos.com</a>;
+const accountLink = <A href="https://account.coreos.com" rel="noopener">account.coreos.com</A>;
 
 const licenseField = new Field(TECTONIC_LICENSE, {
   default: '',

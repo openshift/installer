@@ -7,9 +7,8 @@ import { configActions, eventErrorsActionTypes } from '../actions';
 import { Field, Form } from '../form';
 import { compareVersions } from '../utils';
 import { validate } from '../validate';
-import { TectonicGA } from '../tectonic-ga';
 
-import { Connect, Input } from './ui';
+import { Connect, DocsA, Input } from './ui';
 import {
   DEFAULT_CLUSTER_CONFIG,
   BM_MATCHBOX_HTTP,
@@ -112,12 +111,8 @@ export const BM_Matchbox = connect(stateToProps, dispatchToProps)(
       return <div className="row form-group">
         <div className="col-sm-12">
           <div className="form-group">Matchbox will provision nodes during network boot. Enter the matchbox endpoints.</div>
-          <div className="form-group">To find your matchbox endpoints, follow the instructions in the {' '}
-            {/* eslint-disable react/jsx-no-target-blank */}
-            <a href="https://coreos.com/tectonic/docs/latest/install/bare-metal/index.html" onClick={() => TectonicGA.sendDocsEvent('bare-metal-tf')} rel="noopener" target="_blank">
-              Tectonic Deploy Documentation
-            </a>.
-            {/* eslint-enable react/jsx-no-target-blank */}
+          <div className="form-group">
+            To find your matchbox endpoints, follow the instructions in the <DocsA path="/install/bare-metal/index.html">Tectonic Deploy Documentation</DocsA>.
           </div>
           <div className="form-group">
             <div className="row">

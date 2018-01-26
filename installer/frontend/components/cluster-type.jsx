@@ -3,7 +3,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { validate } from '../validate';
-import { Connect, Select } from './ui';
+import { Connect, DocsA, Select } from './ui';
 import { Field, Form } from '../form';
 import { PLATFORM_TYPE, PLATFORM_FORM } from '../cluster-config';
 import { TectonicGA } from '../tectonic-ga';
@@ -26,21 +26,17 @@ const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PL
         Use the documentation and the Terraform CLI to install a cluster with specific infrastructure use-cases.
         This method is designed for automation and doesn't use the graphical installer.
         <br />
-        {/* eslint-disable react/jsx-no-target-blank */}
-        <a href={DOCS[platform]} rel="noopener" target="_blank">
+        <DocsA path={DOCS[platform]}>
           <button className="btn btn-primary" style={{marginTop: 8}}>{platformName && platformName.split('(Alpha)')[0]} Docs&nbsp;&nbsp;{icon}</button>
-        </a>
-        {/* eslint-enable react/jsx-no-target-blank */}
+        </DocsA>
       </p>;
     }
-    /* eslint-disable react/jsx-no-target-blank */
     return <p className="text-muted">
       Use the graphical installer to input cluster details, this is best for demos and your first Tectonic cluster.
       &nbsp;&nbsp;{platform === BARE_METAL_TF
-        ? <span><br />{platformName} <a href="https://coreos.com/tectonic/docs/latest/install/bare-metal/requirements.html" rel="noopener" target="_blank">requirements&nbsp;&nbsp;{icon}</a> and <a href={DOCS[platform]} rel="noopener" target="_blank">install guide&nbsp;&nbsp;{icon}</a>.</span>
-        : <a href={DOCS[platform]} rel="noopener" target="_blank">{platformName} documentation&nbsp;&nbsp;{icon}</a>}
+        ? <span><br />{platformName} <DocsA path="/install/bare-metal/requirements.html">requirements&nbsp;&nbsp;{icon}</DocsA> and <DocsA path={DOCS[platform]}>install guide&nbsp;&nbsp;{icon}</DocsA>.</span>
+        : <DocsA path={DOCS[platform]}>{platformName} documentation&nbsp;&nbsp;{icon}</DocsA>}
     </p>;
-    /* eslint-enable react/jsx-no-target-blank */
   });
 
 const platformForm = new Form(PLATFORM_FORM, [

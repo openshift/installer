@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { commitToServer } from '../server';
 import { commitPhases } from '../actions';
 import { withNav } from '../nav';
+import { DocsA } from './ui';
 
 export const SubmitDefinition = withNav(connect(
   state => ({
@@ -36,9 +37,7 @@ export const SubmitDefinition = withNav(connect(
         Congratulations! Your cluster has been defined and will be submitted to Terraform. After submission, the definition cannot be updated. Go <a onClick={inProgress ? undefined : navPrevious} className={inProgress ? 'disabled' : undefined}>back</a> to update or make changes.
       </p>
       <p>
-        {/* eslint-disable react/jsx-no-target-blank */}
-        You'll be able to download your <a href="https://coreos.com/tectonic/docs/latest/admin/assets-zip.html" rel="noopener" target="_blank">assets zip file</a> after the definition is submitted.
-        {/* eslint-enable react/jsx-no-target-blank */}
+        You'll be able to download your <DocsA path="/admin/assets-zip.html">assets zip file</DocsA> after the definition is submitted.
       </p>
       <br />
       <div className="wiz-giant-button-container">

@@ -7,10 +7,11 @@ import { connect } from 'react-redux';
 import { withNav } from '../nav';
 import { validate } from '../validate';
 import { readFile } from '../readfile';
+import { TectonicGA } from '../tectonic-ga';
 import { toError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from '../utils';
 
 import { dirtyActions, configActions } from '../actions';
-import { DESELECTED_FIELDS } from '../cluster-config.js';
+import { DESELECTED_FIELDS, PLATFORM_TYPE } from '../cluster-config.js';
 
 import { Alert } from './alert';
 
@@ -57,6 +58,17 @@ const FIELD_PROPS = ImmutableSet([
   'type',
   'width',
 ]);
+
+// Same as an <a> except defaults to rel="noopener noreferrer" and target="_blank"
+export const A = props => <a rel="noopener noreferrer" target="_blank" {...props} />;
+
+export const DocsA = connect(({clusterConfig}) => ({platform: clusterConfig[PLATFORM_TYPE]}))(props => <a
+  {..._.omit(props, ['dispatch', 'path', 'platform'])}
+  href={`https://coreos.com/tectonic/docs/latest${props.path}`}
+  onClick={() => TectonicGA.sendDocsEvent(props.platform)}
+  rel="noopener"
+  target="_blank"
+/>);
 
 export const ErrorComponent = props => {
   const error = props.error;
@@ -574,28 +586,6 @@ export class DropdownMixin extends React.PureComponent {
   hide (e) {
     e && e.stopPropagation();
     this.setState({active: false});
-  }
-}
-
-export class Dropdown extends DropdownMixin {
-  render () {
-    const {active} = this.state;
-    const {items, header} = this.props;
-
-    const children = _.map(items, (href, title) => {
-      return <li className="tectonic-dropdown-menu-item" key={title}>
-        <a className="tectonic-dropdown-menu-item__link" href={href} rel="noopener" target="_blank">{title}</a>
-      </li>;
-    });
-
-    return (
-      <div ref={el => this.dropdownElement = el} className="dropdown" onClick={this.toggle}>
-        <a className="tectonic-dropdown-menu-title">{header}&nbsp;&nbsp;<i className="fa fa-angle-down"></i></a>
-        <ul className="dropdown-menu tectonic-dropdown-menu" style={{display: active ? 'block' : 'none'}}>
-          {children}
-        </ul>
-      </div>
-    );
   }
 }
 

@@ -1,6 +1,8 @@
+import _ from 'lodash';
 import React from 'react';
 import semver from 'semver';
-import { Dropdown } from './ui';
+
+import { A, DocsA, DropdownMixin } from './ui';
 
 const fetchLatestRelease = () => {
   const opts = {
@@ -65,6 +67,29 @@ const hasNewVersion = (latestRelease) => {
   return false;
 };
 
+class MenuDropdown extends DropdownMixin {
+  render () {
+    const {active} = this.state;
+    const {items, header} = this.props;
+
+    const children = _.map(items, (href, title) => {
+      const rel = href.includes('coreos.com') ? 'noopener' : 'noopener noreferrer';
+      return <li className="tectonic-dropdown-menu-item" key={title}>
+        <A className="tectonic-dropdown-menu-item__link" href={href} rel={rel}>{title}</A>
+      </li>;
+    });
+
+    return (
+      <div ref={el => this.dropdownElement = el} className="dropdown" onClick={this.toggle}>
+        <a className="tectonic-dropdown-menu-title">{header}&nbsp;&nbsp;<i className="fa fa-angle-down"></i></a>
+        <ul className="dropdown-menu tectonic-dropdown-menu" style={{display: active ? 'block' : 'none'}}>
+          {children}
+        </ul>
+      </div>
+    );
+  }
+}
+
 export class Header extends React.Component {
   constructor (props) {
     super(props);
@@ -114,24 +139,20 @@ export class Header extends React.Component {
       <div>
         <ul className="co-navbar-nav">
           <li>
-            <Dropdown items={productDdItems} header="Product" />
+            <MenuDropdown items={productDdItems} header="Product" />
           </li>
           <li>
-            <Dropdown items={openSourceDdItems} header="Open Source" />
+            <MenuDropdown items={openSourceDdItems} header="Open Source" />
           </li>
           <li className="tectonic-dropdown-menu-title">
-            {/* eslint-disable react/jsx-no-target-blank */}
-            <a href="https://coreos.com/tectonic/docs/latest/" rel="noopener" target="_blank" className="tectonic-dropdown-menu-title__link">Tectonic Docs</a>
-            {/* eslint-enable react/jsx-no-target-blank */}
+            <DocsA className="tectonic-dropdown-menu-title__link" path="/">Tectonic Docs</DocsA>
           </li>
         </ul>
         <div className="co-navbar--right">
           <ul className="co-navbar-nav">
             {latestRelease && hasNewVersion(latestRelease) && <li className="co-navbar-nav-item__version">
               <span className="co-navbar-nav-item__version--new">
-                {/* eslint-disable react/jsx-no-target-blank */}
-                New installer version: <a href="https://coreos.com/tectonic/releases/" rel="noopener" target="_blank">Release notes {latestRelease}</a>
-                {/* eslint-enable react/jsx-no-target-blank */}
+                New installer version: <A href="https://coreos.com/tectonic/releases/" rel="noopener">Release notes {latestRelease}</A>
               </span>
             </li>}
             <li className="co-navbar-nav-item__version">
