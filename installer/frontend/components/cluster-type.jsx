@@ -41,7 +41,7 @@ const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PL
 
 const platformForm = new Form(PLATFORM_FORM, [
   new Field(PLATFORM_TYPE, {
-    default: _.find([AWS_TF, BARE_METAL_TF], isEnabled) || AWS_TF,
+    default: _.find([AWS_TF, BARE_METAL_TF], isEnabled) || _.get(window.config, 'platforms[0]'),
     validator: validate.nonEmpty,
   }),
 ], {
