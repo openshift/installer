@@ -24,7 +24,7 @@ import { Field, Form } from '../form';
 import { AWS_TF } from '../platforms';
 import { toError } from '../utils';
 import { compose, validate } from '../validate';
-import { makeNodeForm, toKey } from './make-node-form';
+import { makeNodeForm, toId } from './make-node-form';
 import { A, Connect, Input, NumberInput, Radio, Select } from './ui';
 
 const Row = ({label, htmlFor, children}) => <div className="row form-group">
@@ -37,10 +37,10 @@ const Row = ({label, htmlFor, children}) => <div className="row form-group">
 </div>;
 
 const IOPs = connect(
-  ({clusterConfig}, {fieldName}) => ({type: clusterConfig[toKey(fieldName, STORAGE_TYPE)]})
+  ({clusterConfig}, {fieldName}) => ({type: clusterConfig[toId(fieldName, STORAGE_TYPE)]})
 )(
   ({type, fieldName}) => type !== 'io1' ? null : <Row htmlFor={`${fieldName}--storage-iops`} label="Storage Speed">
-    <Connect field={toKey(fieldName, STORAGE_IOPS)}>
+    <Connect field={toId(fieldName, STORAGE_IOPS)}>
       <NumberInput id={`${fieldName}--storage-iops`} className="wiz-super-short-input" suffix="&nbsp;&nbsp;IOPS" />
     </Connect>
   </Row>
@@ -50,7 +50,7 @@ const IamRoles = connect(
   ({clusterConfig}) => ({roles: _.get(clusterConfig, ['extra', IAM_ROLE], [])})
 )(
   ({roles, type}) => <Row htmlFor={`${type}--iam-role`} label="IAM Role">
-    <Connect field={toKey(type, IAM_ROLE)}>
+    <Connect field={toId(type, IAM_ROLE)}>
       <Select id={`${type}--iam-role`}>
         <option value={IAM_ROLE_CREATE_OPTION}>Create an IAM role for me (default)</option>
         {_.isArray(roles) && roles.map(r => <option value={r} key={r}>{r}</option>)}
@@ -67,12 +67,12 @@ const Errors = connect(
 export const DefineNode = ({type, max, withIamRole = true}) => <div>
   {withIamRole && <IamRoles type={type} />}
   <Row htmlFor={`${type}--number`} label="Instances">
-    <Connect field={toKey(type, NUMBER_OF_INSTANCES)}>
+    <Connect field={toId(type, NUMBER_OF_INSTANCES)}>
       <NumberInput className="wiz-super-short-input" id={`${type}--number`} min="1" max={max} />
     </Connect>
   </Row>
   <Row htmlFor={`${type}--instance`} label="Instance Type">
-    <Connect field={toKey(type, INSTANCE_TYPE)}>
+    <Connect field={toId(type, INSTANCE_TYPE)}>
       <Select id={`${type}--instance`}>
         <option value="" disabled>Please select AWS EC2 instance type</option>
         {AWS_INSTANCE_TYPES.map(({value, label}) => <option value={value} key={value}>{label}</option>)}
@@ -83,12 +83,12 @@ export const DefineNode = ({type, max, withIamRole = true}) => <div>
     </p>}
   </Row>
   <Row htmlFor={`${type}--storage-size`} label="Storage Size">
-    <Connect field={toKey(type, STORAGE_SIZE_IN_GIB)}>
+    <Connect field={toId(type, STORAGE_SIZE_IN_GIB)}>
       <NumberInput id={`${type}--storage-size`} className="wiz-super-short-input" suffix="&nbsp;&nbsp;GiB" />
     </Connect>
   </Row>
   <Row htmlFor={`${type}--storage-type`} label="Storage Type">
-    <Connect field={toKey(type, STORAGE_TYPE)}>
+    <Connect field={toId(type, STORAGE_TYPE)}>
       <Select id={`${type}--storage-type`}>
         <option value="" disabled>Please select storage type</option>
         <option value="gp2" key="gp2">General Purpose SSD (GP2)</option>
