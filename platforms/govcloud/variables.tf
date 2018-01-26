@@ -303,7 +303,7 @@ EOF
 }
 
 variable "tectonic_govcloud_dns_server_ip" {
-  description = "The resolver api of the dns server."
+  description = "The resolver ip of the dns server."
   type        = "string"
 }
 

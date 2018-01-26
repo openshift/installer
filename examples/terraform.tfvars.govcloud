@@ -121,7 +121,7 @@ tectonic_govcloud_dns_server_api_key = ""
 // The address of the dns server api to create the records.
 tectonic_govcloud_dns_server_api_url = ""
 
-// The resolver api of the dns server.
+// The resolver ip of the dns server.
 tectonic_govcloud_dns_server_ip = ""
 
 // Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance

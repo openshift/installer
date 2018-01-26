@@ -12,7 +12,7 @@ This document gives an overview of variables used in the GovCloud AWS platform o
 | tectonic_govcloud_config_version | (internal) This declares the version of the AWS configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
 | tectonic_govcloud_dns_server_api_key | The api key of the dns server to create the records. | string | - |
 | tectonic_govcloud_dns_server_api_url | The address of the dns server api to create the records. | string | - |
-| tectonic_govcloud_dns_server_ip | The resolver api of the dns server. | string | - |
+| tectonic_govcloud_dns_server_ip | The resolver ip of the dns server. | string | - |
 | tectonic_govcloud_etcd_ec2_type | Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance | string | `t2.medium` |
 | tectonic_govcloud_etcd_extra_sg_ids | (optional) List of additional security group IDs for etcd nodes.<br><br>Example: `["sg-51530134", "sg-b253d7cc"]` | list | `<list>` |
 | tectonic_govcloud_etcd_root_volume_iops | The amount of provisioned IOPS for the root block device of etcd nodes. Ignored if the volume type is not io1. | string | `100` |
