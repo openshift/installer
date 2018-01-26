@@ -43,19 +43,19 @@ const initialState = reducer(undefined, {type: 'Some Initial Action'});
 
 const tests = [
   {
-    description: 'works with baremetal',
-    jsonPath: 'metal.json',
-    progressPath: 'metal.progress',
+    description: 'works with bare metal',
+    expected: 'metal-out.json',
+    state: 'metal-in.json',
   },
   {
-    description: 'works with aws',
-    jsonPath: 'aws.json',
-    progressPath: 'aws-custom-vpc.progress',
+    description: 'works with AWS',
+    expected: 'aws-custom-vpc-out.json',
+    state: 'aws-custom-vpc-in.json',
   },
   {
-    description: 'works with aws (existing VPC)',
-    jsonPath: 'aws-vpc.json',
-    progressPath: 'aws-existing-vpc.progress',
+    description: 'works with AWS (existing VPC)',
+    expected: 'aws-existing-vpc-out.json',
+    state: 'aws-existing-vpc-in.json',
   },
 ];
 
@@ -65,12 +65,12 @@ beforeEach(() => {
   dispatch = jest.fn();
 });
 
-const readExample = example => {
+const readExample = filename => {
   let json;
   try {
-    json = JSON.parse(fs.readFileSync(path.resolve(__dirname, `examples/${example}`), 'utf8'));
+    json = JSON.parse(fs.readFileSync(path.resolve(__dirname, `examples/${filename}`), 'utf8'));
   } catch (e) {
-    console.warn(`${example} is not json`);
+    console.warn(`${filename} is not json`);
     throw e;
   }
   return json;
@@ -79,12 +79,10 @@ const readExample = example => {
 /* eslint-disable max-nested-callbacks */
 describe('progress file example', () => {
   tests.forEach(t => {
-    const example = readExample(t.jsonPath);
-    const payload = readExample(t.progressPath);
-
     it(t.description, () => {
       const restored = reducer(initialState, {
-        type: restoreActionTypes.RESTORE_STATE, payload,
+        payload: readExample(t.state),
+        type: restoreActionTypes.RESTORE_STATE,
       });
 
       global.fetch = jest.fn(() => Promise.resolve({
@@ -100,7 +98,7 @@ describe('progress file example', () => {
       expect(fetch.mock.calls.length).toBe(1);
       const body = JSON.parse(fetch.mock.calls[0][1].body);
 
-      expect(example).toEqual(body);
+      expect(readExample(t.expected)).toEqual(body);
     });
   });
 });
