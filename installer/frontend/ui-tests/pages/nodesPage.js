@@ -1,3 +1,5 @@
+const {testExternalEtcd} = require('./etcdConnectionPage');
+
 const nodesPageCommands = {
   test (json) {
     this.selectOption('input[type=radio]#external');
@@ -33,6 +35,8 @@ const nodesPageCommands = {
       .setField('[id=aws_workers--storage-size]', json['aws_workers-storageSizeInGiB'])
       .selectOption(`[id=aws_etcds--instance] [value="${json['aws_etcds-instanceType']}"]`)
       .setField('[id=aws_etcds--storage-size]', json['aws_etcds-storageSizeInGiB']);
+
+    testExternalEtcd(this);
   },
 };
 
