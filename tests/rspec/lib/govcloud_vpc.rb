@@ -35,7 +35,9 @@ class GovcloudVPC
       'TF_VAR_tectonic_govcloud_external_vpc_id' => @vpc_id,
       'TF_VAR_tectonic_govcloud_external_master_subnet_ids' => @master_subnet_ids,
       'TF_VAR_tectonic_govcloud_external_worker_subnet_ids' => @worker_subnet_ids,
-      'TF_VAR_tectonic_govcloud_dns_server_ip' => @vpc_dns
+      'TF_VAR_tectonic_govcloud_dns_server_ip' => @vpc_dns,
+      'TF_VAR_tectonic_govcloud_dns_server_api_url' => @dns_api_url,
+      'TF_VAT_tectonic_govcloud_dns_server_api_key' => 'tectonicgov'
     }
     vars.each do |key, value|
       ENV[key] = value
@@ -64,8 +66,9 @@ class GovcloudVPC
   def parse_terraform_output
     tf_out = JSON.parse(`terraform output -json`)
     @vpn_url = tf_out['ovpn_url']['value']
-    @vpc_dns = tf_out['vpc_dns']['value']
+    @vpc_dns = tf_out['vpc_dns_ip']['value']
     @vpc_id = tf_out['vpc_id']['value']
+    @dns_api_url = tf_out['dns_api_url']['value']
     parse_subnets(tf_out)
   end
 

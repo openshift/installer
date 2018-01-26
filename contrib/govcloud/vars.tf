@@ -58,8 +58,12 @@ output "vpc_id" {
   value = "${aws_vpc.vpc.id}"
 }
 
-output "vpc_dns" {
+output "vpc_dns_ip" {
   value = "${aws_instance.bastion.private_ip}"
+}
+
+output "dns_api_url" {
+  value = "http://${aws_instance.bastion.private_ip}:8081"
 }
 
 output "subnets" {

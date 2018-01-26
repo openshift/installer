@@ -115,7 +115,13 @@ tectonic_etcd_count = "0"
 // If name is not provided the installer will construct the name using "tectonic_cluster_name", current AWS region and "tectonic_base_domain"
 // tectonic_govcloud_assets_s3_bucket_name = ""
 
-// 
+// The api key of the dns server to create the records.
+tectonic_govcloud_dns_server_api_key = ""
+
+// The address of the dns server api to create the records.
+tectonic_govcloud_dns_server_api_url = ""
+
+// The resolver api of the dns server.
 tectonic_govcloud_dns_server_ip = ""
 
 // Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
@@ -196,16 +202,8 @@ tectonic_govcloud_master_root_volume_size = "30"
 // The type of volume for the root block device of master nodes.
 tectonic_govcloud_master_root_volume_type = "gp2"
 
-// (optional) If set to true, create private-facing ingress resources (ELB, A-records).
-// If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone.
-// tectonic_govcloud_private_endpoints = true
-
 // (optional) This declares the AWS credentials profile to use.
 // tectonic_govcloud_profile = "default"
-
-// (optional) If set to true, create public-facing ingress resources (ELB, A-records).
-// If set to false, no public-facing ingress resources will be created.
-// tectonic_govcloud_public_endpoints = false
 
 // Name of an SSH key located within the AWS region. Example: coreos-user.
 tectonic_govcloud_ssh_key = ""

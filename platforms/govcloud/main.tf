@@ -6,6 +6,11 @@ provider "aws" {
 
 data "aws_availability_zones" "azs" {}
 
+locals {
+  tectonic_govcloud_private_endpoints = true
+  tectonic_govcloud_public_endpoints  = false
+}
+
 module "container_linux" {
   source = "../../modules/container_linux"
 
@@ -26,8 +31,8 @@ module "vpc" {
   external_vpc_id          = "${var.tectonic_govcloud_external_vpc_id}"
   external_worker_subnets  = "${compact(var.tectonic_govcloud_external_worker_subnet_ids)}"
   extra_tags               = "${var.tectonic_govcloud_extra_tags}"
-  private_master_endpoints = "${var.tectonic_govcloud_private_endpoints}"
-  public_master_endpoints  = "${var.tectonic_govcloud_public_endpoints}"
+  private_master_endpoints = "${local.tectonic_govcloud_private_endpoints}"
+  public_master_endpoints  = "${local.tectonic_govcloud_public_endpoints}"
 
   # VPC layout settings.
   #
@@ -161,8 +166,8 @@ module "masters" {
   instance_count                       = "${var.tectonic_master_count}"
   master_iam_role                      = "${var.tectonic_govcloud_master_iam_role_name}"
   master_sg_ids                        = "${concat(var.tectonic_govcloud_master_extra_sg_ids, list(module.vpc.master_sg_id))}"
-  private_endpoints                    = "${var.tectonic_govcloud_private_endpoints}"
-  public_endpoints                     = "${var.tectonic_govcloud_public_endpoints}"
+  private_endpoints                    = "${local.tectonic_govcloud_private_endpoints}"
+  public_endpoints                     = "${local.tectonic_govcloud_public_endpoints}"
   root_volume_iops                     = "${var.tectonic_govcloud_master_root_volume_iops}"
   root_volume_size                     = "${var.tectonic_govcloud_master_root_volume_size}"
   root_volume_type                     = "${var.tectonic_govcloud_master_root_volume_type}"
@@ -233,7 +238,7 @@ module "workers" {
 
 module "dns" {
   source                         = "../../modules/dns/powerdns"
-  nameserver_url                 = "http://${var.tectonic_govcloud_dns_server_ip}:8081"
+  api_url                        = "${var.tectonic_govcloud_dns_server_api_url}"
   api_external_elb_dns_name      = "${module.vpc.aws_api_external_dns_name}"
   api_external_elb_zone_id       = "${module.vpc.aws_elb_api_external_zone_id}"
   api_internal_elb_dns_name      = "${module.vpc.aws_api_internal_dns_name}"
@@ -253,6 +258,7 @@ module "dns" {
   tectonic_external_private_zone = "${var.tectonic_govcloud_external_private_zone}"
   tectonic_external_vpc_id       = "${module.vpc.vpc_id}"
   tectonic_extra_tags            = "${var.tectonic_govcloud_extra_tags}"
-  tectonic_private_endpoints     = "${var.tectonic_govcloud_private_endpoints}"
-  tectonic_public_endpoints      = "${var.tectonic_govcloud_public_endpoints}"
+  tectonic_private_endpoints     = "${local.tectonic_govcloud_private_endpoints}"
+  tectonic_public_endpoints      = "${local.tectonic_govcloud_public_endpoints}"
+  api_key                        = "${var.tectonic_govcloud_dns_server_api_key}"
 }
