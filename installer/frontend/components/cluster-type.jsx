@@ -7,15 +7,7 @@ import { Connect, DocsA, Select } from './ui';
 import { Field, Form } from '../form';
 import { PLATFORM_TYPE, PLATFORM_FORM } from '../cluster-config';
 import { TectonicGA } from '../tectonic-ga';
-import {
-  AWS_TF,
-  BARE_METAL_TF,
-  DOCS,
-  PLATFORM_NAMES,
-  isEnabled,
-  isSupported,
-  optGroups,
-} from '../platforms';
+import { AWS_TF, BARE_METAL_TF, DOCS, PLATFORM_NAMES, isSupported, optGroups } from '../platforms';
 
 const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PLATFORM_TYPE]}))(
   ({error, platform}) => {
@@ -39,6 +31,8 @@ const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PL
     </p>;
   });
 
+const isEnabled = platform => _.get(window.config, 'platforms', []).includes(platform);
+
 const platformForm = new Form(PLATFORM_FORM, [
   new Field(PLATFORM_TYPE, {
     default: _.find([AWS_TF, BARE_METAL_TF], isEnabled) || _.get(window.config, 'platforms[0]'),
@@ -46,9 +40,8 @@ const platformForm = new Form(PLATFORM_FORM, [
   }),
 ], {
   validator: (data, cc) => {
-    const platform = cc[PLATFORM_TYPE];
-    if (!isSupported(platform)) {
-      return `${PLATFORM_NAMES[platform]} not supported for GUI`;
+    if (!isSupported(cc[PLATFORM_TYPE])) {
+      return 'unused';
     }
   },
 });
@@ -56,7 +49,7 @@ const platformForm = new Form(PLATFORM_FORM, [
 const platformOptions = [];
 _.each(optGroups, optgroup => {
   const [name, ...group] = optgroup;
-  const platforms = _.filter(group, p => isEnabled(p));
+  const platforms = _.filter(group, isEnabled);
   if (platforms.length) {
     platformOptions.push(<optgroup label={name} key={name}>{
       platforms.map(p => <option value={p} key={p}>{PLATFORM_NAMES[p]}</option>)
