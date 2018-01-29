@@ -7,6 +7,11 @@ variable vpc_name {
   default     = "bastion"
 }
 
+variable instance_type {
+  description = "The type of the ec2 machine."
+  default     = "t2.micro"
+}
+
 variable base_domain {
   default     = "tectonic-ci.de"
   description = "The base domain for this cluster's FQDN"
@@ -33,17 +38,32 @@ variable local_network_cidr {
 }
 
 variable "ssh_key" {
-  default = ""
+  description = "Name of an SSH key located within the AWS region. Example: coreos-user."
+  default     = ""
 }
 
 variable "nginx_username" {
   description = "Used for retrieving the OpenVPN client config file."
-  default     = "user"
 }
 
 variable "nginx_password" {
   description = "Used for retrieving the OpenVPN client config file."
-  default     = "password"
+}
+
+variable "mysql_password" {
+  description = "Used as PowerDNS backend."
+}
+
+variable "container_images" {
+  description = "Container images to use"
+  type        = "map"
+
+  default = {
+    powerdns = "quay.io/coreos/pdns:4.0-1"
+    mysql    = "quay.io/coreos/mysql:5.7.21"
+    openvpn  = "quay.io/coreos/openvpn:2.4"
+    nginx    = "quay.io/coreos/nginx:1.13.7-alpine"
+  }
 }
 
 output "ovpn_url" {

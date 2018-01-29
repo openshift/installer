@@ -1,0 +1,17 @@
+[Unit]
+Description=Nat Gateway routing
+
+[Service]
+Type=oneshot
+
+User=root
+Group=root
+
+ExecStartPre=/bin/sh -c 'echo 1 > /proc/sys/net/ipv4/ip_forward'
+ExecStart=/bin/sh -c 'iptables -t nat -A POSTROUTING -s ${private_cidr} -j MASQUERADE'
+
+[Install]
+WantedBy=multi-user.target
+
+
+

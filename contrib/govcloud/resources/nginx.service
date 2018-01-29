@@ -1,0 +1,27 @@
+[Unit]
+Description=nginx
+after=openvpn.service
+
+[Service]
+Environment="NGINX_DIR=/home/core/nginx-config"
+Environment="CLIENT_DIR=/home/core/vpn-config"
+ExecStartPre=/bin/mkdir -p $${NGINX_DIR}
+ExecStartPre=/bin/sh -c '/bin/printf "${username}:$(openssl passwd -crypt ${password})\n" >> $${NGINX_DIR}/htpasswd'
+
+ExecStartPre=/usr/bin/docker run -d \
+--name nginx-app \
+--net host \
+-v $${CLIENT_DIR}:/usr/share/nginx/html/ \
+-v $${NGINX_DIR}:/etc/nginx/conf.d/ \
+${nginx_image}
+
+ExecStart=/usr/bin/docker start -a nginx-app
+ExecStop=/usr/bin/docker stop nginx-app
+
+ExecStopPost=/usr/bin/docker rm nginx-app
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

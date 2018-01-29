@@ -1,0 +1,37 @@
+[Unit]
+Description=PowerDNS
+
+[Service]
+ExecStartPre=/usr/bin/docker run -d --name=mysql \
+--net=host \
+-e MYSQL_ROOT_PASSWORD=${mysql_password} \
+${mysql_image}
+
+ExecStartPre=/usr/bin/docker run --net=host \
+--name pdns-master -d \
+-e PDNS_RECURSOR=10.0.0.2 \
+-e PDNS_SOA=10.0.0.2 \
+-e PDNS_ALLOW_AXFR_IPS=127.0.0.1 \
+-e PDNS_DISTRIBUTOR_THREADS=3 \
+-e PDNS_CACHE_TTL=20 \
+-e PDNS_RECURSIVE_CACHE_TTL=10 \
+-e DB_ENV_MYSQL_ROOT_PASSWORD=${mysql_password} \
+-e MYSQL_HOST=127.0.0.1 \
+-e MYSQL_PORT="3306" \
+-e PDNS_ZONE=${dns_zone} \
+${powerdns_image}
+
+ExecStart=/usr/bin/docker start -a pdns-master
+ExecStartPost=/bin/sh -c 'until ncat -z 0.0.0.0 8081; do sleep 1; done; /usr/bin/docker exec pdns-master pdnsutil create-zone ${dns_zone}'
+ExecStop=/usr/bin/docker stop pdns-master
+
+ExecStopPost=/usr/bin/docker rm pdns-master
+
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+
+
+

@@ -18,6 +18,8 @@ class GovcloudVPC
     @name = name
     @ovpn_password =
       `tr -cd '[:alnum:]' < /dev/urandom | head -c 32 ; echo`.chomp
+    @mysql_password =
+      `tr -cd '[:alnum:]' < /dev/urandom | head -c 32 ; echo`.chomp
   end
 
   def env_variables
@@ -26,7 +28,8 @@ class GovcloudVPC
       'TF_VAR_vpc_name' => @name,
       'TF_VAR_base_domain' => 'tectonic-ci.de',
       'TF_VAR_nginx_username' => 'openvpn',
-      'TF_VAR_nginx_password' => @ovpn_password
+      'TF_VAR_nginx_password' => @ovpn_password,
+      'TF_VAR_mysql_password' => @mysql_password
     }
   end
 

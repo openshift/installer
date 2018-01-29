@@ -1,13 +1,13 @@
 # Internal Cluster
 
-This directory contains Terraform configuration that provisions a VPC with a VPN connection and a PowerDNS server in AWS GovCloud. This setup is designed to emulate a customer-like deployment in order to end-to-end test deploying Tectonic as a private "Internal Cluster" to an "Existing VPC.
+This directory contains Terraform configuration that provisions a VPC with a VPN connection and a PowerDNS server in AWS GovCloud.
+This setup is not production ready and is designed to emulate a customer-like deployment in order to end-to-end test deploying Tectonic in AWS GovCloud using a required pre-created internal VPC.
 
 This Terraform configuration provisions the following AWS resources by default:
 * 1 VPC with name configured by `TF_VAR_vpc_name`
 * 4 subnets in the VPC with count configured by `TF_VAR_subnet_count`
-* 1 public subnet containing an internet gateway and NAT gateway
-* 1 private Route 53 zone for `tectonic.dev.coreos.systems` configured by `TF_VAR_base_domain`
-* 1 t2.micro EC2 Container Linux instance in the public subnet running docker containers for OpenVPN, PowerDNS and Nginx for serving OpenVPN client configuration.
+* 1 public subnet containing an internet gateway.
+* 1 EC2 Container Linux instance in the public subnet acting as a NAT gateway to enable instances in the private subnet to initiate outbound traffic to the Internet and running docker containers for OpenVPN, PowerDNS (and mysql as the backend) and Nginx for serving OpenVPN client configuration.
 * 1 VPN gateway and VPN connection
 
 ## Usage
