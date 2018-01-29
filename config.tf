@@ -509,3 +509,14 @@ variable "tectonic_no_proxy" {
 Example: `["127.0.0.1","localhost",".example.com","10.3.0.1"]`
 EOF
 }
+
+variable "tectonic_enable_boot_diagnostics" {
+  type    = "string"
+  default = "false"
+
+  description = <<EOF
+(optional) Enable boot diagnostics for example the boot logs.
+It is only supported for Azure cloud provider.
+Used to collect the boot logs for debug purposes.
+EOF
+}

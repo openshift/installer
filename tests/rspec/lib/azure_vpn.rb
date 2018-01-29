@@ -75,7 +75,11 @@ class AzureVpn
       @vpn_gw_private_ip = tf_out['vpn_gw_private_ip']['value']
       @vpn_gw_dns_servers = tf_out['vpn_gw_dns_servers']['value']
       @vnet_id = tf_out['tectonic_azure_external_vnet_id']['value']
-      @rsg_id = tf_out['tectonic_azure_external_resource_group']['value']
+
+      # This produces /subscriptions/xoxoxo-249-a6c6-xoxox/resourceGroups/tectonic-priv-cluster-bla
+      # We need just the name of the resource group
+      temp_rsg_id = tf_out['tectonic_azure_external_resource_group']['value']
+      @rsg_id = temp_rsg_id[temp_rsg_id.rindex('/') + 1, temp_rsg_id.size]
     end
     raise 'No private IP address for gateway.' if @vpn_gw_private_ip.empty?
   end
