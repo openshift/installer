@@ -6,8 +6,10 @@ const awsCredentialsPageCommands = {
 
     if (process.env.AWS_SESSION_TOKEN) {
       this
-        .setField('@sessionTokenTrue')
-        .setField('@sessionToken', process.env.AWS_SESSION_TOKEN);
+        .click('@sessionTokenTrue')
+        .setValue('@sessionToken', process.env.AWS_SESSION_TOKEN)
+        .expectNoValidationError()
+        .expect.element('@sessionTokenTrue').to.be.selected;
     }
 
     this
