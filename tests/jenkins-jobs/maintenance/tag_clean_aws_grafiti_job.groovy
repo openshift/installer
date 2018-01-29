@@ -34,7 +34,7 @@ job("maintenance/tag_clean_aws_resources_grafiti") {
       amazonWebServicesCredentialsBinding {
         accessKeyVariable("AWS_ACCESS_KEY_ID")
         secretKeyVariable("AWS_SECRET_ACCESS_KEY")
-        credentialsId("tectonic-jenkins-installer")
+        credentialsId("TF-TECTONIC-JENKINS-GRAFITI")
       }
     }
   }

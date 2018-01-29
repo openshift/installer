@@ -185,6 +185,7 @@ docker run -t --rm --name grafiti-tagger \
 	-v "$tmp_dir":/tmp/config:z \
 	-e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
 	-e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+  -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
   -e AWS_REGION="$region" \
 	-e CONFIG_FILE="/tmp/config/$(basename "$config_file")" \
 	-e TAG_FILE="/tmp/config/$(basename "$exclude_file")" \

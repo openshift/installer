@@ -13,10 +13,8 @@ require 'tfstate_file'
 # AWSCluster represents a k8s cluster on AWS cloud provider
 class AwsCluster < Cluster
   def initialize(tfvars_file)
-    if Jenkins.environment?
-      export_random_region_if_not_defined
-      # AWSIAM.assume_role
-    end
+    export_random_region_if_not_defined if Jenkins.environment?
+    AWSIAM.assume_role if ENV.key?('TECTONIC_INSTALLER_ROLE')
     @aws_region = tfvars_file.tectonic_aws_region
 
     unless ssh_key_defined?

@@ -11,7 +11,7 @@ RSpec.describe 'aws-vpc' do
 
   before(:all) do
     export_random_region_if_not_defined
-    # AWSIAM.assume_role if Jenkins.environment?
+    AWSIAM.assume_role if ENV.key?('TECTONIC_INSTALLER_ROLE')
     @vpc = AWSVPC.new('test-vpc')
     @vpc.create
   end

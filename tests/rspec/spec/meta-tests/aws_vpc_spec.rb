@@ -5,7 +5,7 @@ require 'aws_iam'
 
 describe AWSVPC do
   before(:all) do
-    # AWSIAM.assume_role if Jenkins.environment?
+    AWSIAM.assume_role if ENV.key?('TECTONIC_INSTALLER_ROLE')
     @vpc = described_class.new('test-vpc')
   end
 
