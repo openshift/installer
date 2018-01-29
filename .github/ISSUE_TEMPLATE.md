@@ -1,4 +1,6 @@
-<!-- Thanks for filing an issue! Before hitting the button, please answer these questions.-->
+<!--
+Thanks for opening an issue! Before hitting the button, please answer these questions
+-->
 
 ## What keywords did you search in tectonic-installer issues before filing this one?
 
@@ -26,17 +28,80 @@ explain why.
 
 ## Versions
 
-* Tectonic version ([release](https://github.com/coreos/tectonic-installer/releases) or commit hash):
-* Terraform version (`terraform version`):
-* Platform (aws|azure|openstack|metal):
+### Tectonic version ([release](https://github.com/coreos/tectonic-installer/releases) or commit hash):
+```
+enter text here
+```
 
-## What happened?
+### Terraform version (`terraform version`):
+<!---
+Run `terraform -v` to show the version, and paste the result between the ``` marks below.
 
+If you are not running the latest version of Terraform, please try upgrading because your issue may have already been fixed.
+-->
 
-## What you expected to happen?
+```
+enter text here
+```
+### Platform (aws|azure|openstack|metal|vmware):
 
+```
+enter text here
+```
 
-## How to reproduce it (as minimally and precisely as possible)?
+### What happened?
+<!--
+What actually happened?
+-->
+```
+enter text here
+```
 
+### What you expected to happen?
+<!--
+What should have happened?
+-->
+```
+enter text here
+```
 
-## Anything else we need to know?
+### How to reproduce it (as minimally and precisely as possible)?
+<!--
+Please list the full steps required to reproduce the issue, for example:
+-->
+```
+enter text here
+```
+
+### Anything else we need to know?
+```
+enter text here
+```
+
+### References
+<!--
+Are there any other GitHub issues (open or closed) or Pull Requests that should be linked here? For example:
+- #6017
+-->
+```
+enter text here
+```
+
+## Feature Request
+
+### Environment
+<!--
+What hardware/cloud provider/hypervisor is being used with Tectonic?
+-->
+```
+enter text here
+```
+### Desired Feature
+```
+enter text here
+```
+
+### Other Information
+```
+enter text here
+```
