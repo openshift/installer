@@ -65,7 +65,7 @@ The cluster test suite requires four additional parameters:
 Export the following environment variables to parameterize the cluster tests:
 
 ```sh
-export SMOKE_NETWORKING=flannel
+export SMOKE_NETWORKING=canal
 export SMOKE_NODE_COUNT=3
 export SMOKE_MANIFEST_PATHS=/path/to/kubernetes/manifests
 export SMOKE_MANIFEST_EXPERIMENTAL=true

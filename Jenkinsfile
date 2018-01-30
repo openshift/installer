@@ -309,7 +309,7 @@ pipeline {
           def aws = [
             [file: 'basic_spec.rb', args: ''],
             [file: 'vpc_internal_spec.rb', args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root'],
-            [file: 'network_canal_spec.rb', args: ''],
+            [file: 'network_flannel_spec.rb', args: ''],
             [file: 'exp_spec.rb', args: ''],
             [file: 'ca_spec.rb', args: ''],
             [file: 'custom_tls_spec.rb', args: '']

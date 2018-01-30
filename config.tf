@@ -439,14 +439,14 @@ EOF
 }
 
 variable "tectonic_networking" {
-  default = "flannel"
+  default = "canal"
 
   description = <<EOF
 (optional) Configures the network to be used in Tectonic. One of the following values can be used:
 
 - "flannel": enables overlay networking only. This is implemented by flannel using VXLAN.
 
-- "canal": [ALPHA] enables overlay networking including network policy. Overlay is implemented by flannel using VXLAN. Network policy is implemented by Calico.
+- "canal": enables overlay networking including network policy. Overlay is implemented by flannel using VXLAN. Network policy is implemented by Calico.
 
 - "calico-ipip": [ALPHA] enables BGP based networking. Routing and network policy is implemented by Calico. Note this has been tested on baremetal installations only.
 
