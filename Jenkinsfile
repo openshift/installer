@@ -63,6 +63,7 @@ pipeline {
   agent none
   environment {
     KUBE_CONFORMANCE_IMAGE = 'quay.io/coreos/kube-conformance:v1.8.4_coreos.0'
+    LOGSTASH_BUCKET= "log-analyzer-tectonic-installer"
   }
   options {
     // Individual steps have stricter timeouts. 360 minutes should be never reached.
@@ -415,7 +416,6 @@ pipeline {
             script {
               try {
                 sh """#!/bin/bash -xe
-                export LOGSTASH_BUCKET='log-analyzer-tectonic-installer'
                 export BUILD_RESULT=${currentBuild.currentResult}
                 ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh jenkins-logs
                 """
@@ -486,12 +486,19 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
         archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**'
         withDockerContainer(params.builder_image) {
          withCredentials(creds) {
-           sh """#!/bin/bash -xe
-           ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs ${testFilePath}
-           """
+          script {
+            try {
+              sh """#!/bin/bash -xe
+              ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs ${testFilePath}
+              """
+            } catch (Exception e) {
+              notifyBuildSlack(true)
+            } finally {
+              cleanWs notFailBuild: true
+            }
+          }
          }
         }
-
         cleanWs notFailBuild: true
       }
 
@@ -529,9 +536,17 @@ def runRSpecTestBareMetal(testFilePath, credentials) {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
         archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**'
         withCredentials(credentials) {
-          sh """#!/bin/bash -xe
-          ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs ${testFilePath}
-           """
+          script {
+            try {
+              sh """#!/bin/bash -xe
+              ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs ${testFilePath}
+              """
+            } catch (Exception e) {
+              notifyBuildSlack(true)
+            } finally {
+              cleanWs notFailBuild: true
+            }
+          }
          }
         cleanWs notFailBuild: true
       }

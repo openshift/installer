@@ -42,6 +42,6 @@ module NameGenerator
   end
 
   def self.generate_short_name
-    "rspec-#{Faker::Internet.user_name(5..8)}-#{Time.now.to_i}"
+    "rspec-#{Faker::Internet.user_name(5..8)}-#{SecureRandom.hex[0...RANDOM_HASH_LENGTH]}"
   end
 end
