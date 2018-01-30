@@ -111,13 +111,6 @@ export const selectedSubnets = (cc, subnets) => {
 
 export const getAwsZoneDomain = cc => _.get(cc, ['extra', AWS_HOSTED_ZONE_ID, 'zoneToName', cc[AWS_HOSTED_ZONE_ID]]);
 
-const getControllerDomain = (cc) => {
-  if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
-    return cc[CONTROLLER_DOMAIN];
-  }
-  return `${cc[CLUSTER_SUBDOMAIN]}-k8s.${getAwsZoneDomain(cc)}`;
-};
-
 export const getTectonicDomain = (cc) => {
   if (cc[PLATFORM_TYPE] === BARE_METAL_TF) {
     return cc[BM_TECTONIC_DOMAIN];
@@ -250,7 +243,7 @@ export const toBaremetal_TF = ({clusterConfig: cc}, FORMS) => {
       tectonic_admin_email: cc[ADMIN_EMAIL],
       tectonic_container_linux_version: cc[BM_OS_TO_USE],
       tectonic_metal_ingress_domain: getTectonicDomain(cc),
-      tectonic_metal_controller_domain: getControllerDomain(cc),
+      tectonic_metal_controller_domain: cc[CONTROLLER_DOMAIN],
       tectonic_metal_controller_domains: masters.map(({host}) => host),
       tectonic_metal_controller_names: masters.map(({host}) => host.split('.')[0]),
       tectonic_metal_controller_macs: masters.map(({mac}) => mac),
