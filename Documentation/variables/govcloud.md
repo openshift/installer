@@ -10,7 +10,9 @@ This document gives an overview of variables used in the GovCloud AWS platform o
 | tectonic_dns_name | (optional) DNS prefix used to construct the console and API server endpoints. | string | `` |
 | tectonic_govcloud_assets_s3_bucket_name | (optional) Unique name under which the Amazon S3 bucket will be created. Bucket name must start with a lower case name and is limited to 63 characters. The Tectonic Installer uses the bucket to store tectonic assets and kubeconfig. If name is not provided the installer will construct the name using "tectonic_cluster_name", current AWS region and "tectonic_base_domain" | string | `` |
 | tectonic_govcloud_config_version | (internal) This declares the version of the AWS configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
-| tectonic_govcloud_dns_server_ip |  | string | - |
+| tectonic_govcloud_dns_server_api_key | The api key of the dns server to create the records. | string | - |
+| tectonic_govcloud_dns_server_api_url | The address of the dns server api to create the records. | string | - |
+| tectonic_govcloud_dns_server_ip | The resolver ip of the dns server. | string | - |
 | tectonic_govcloud_etcd_ec2_type | Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance | string | `t2.medium` |
 | tectonic_govcloud_etcd_extra_sg_ids | (optional) List of additional security group IDs for etcd nodes.<br><br>Example: `["sg-51530134", "sg-b253d7cc"]` | list | `<list>` |
 | tectonic_govcloud_etcd_root_volume_iops | The amount of provisioned IOPS for the root block device of etcd nodes. Ignored if the volume type is not io1. | string | `100` |
@@ -28,9 +30,7 @@ This document gives an overview of variables used in the GovCloud AWS platform o
 | tectonic_govcloud_master_root_volume_iops | The amount of provisioned IOPS for the root block device of master nodes. Ignored if the volume type is not io1. | string | `100` |
 | tectonic_govcloud_master_root_volume_size | The size of the volume in gigabytes for the root block device of master nodes. | string | `30` |
 | tectonic_govcloud_master_root_volume_type | The type of volume for the root block device of master nodes. | string | `gp2` |
-| tectonic_govcloud_private_endpoints | (optional) If set to true, create private-facing ingress resources (ELB, A-records). If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone. | string | `true` |
 | tectonic_govcloud_profile | (optional) This declares the AWS credentials profile to use. | string | `default` |
-| tectonic_govcloud_public_endpoints | (optional) If set to true, create public-facing ingress resources (ELB, A-records). If set to false, no public-facing ingress resources will be created. | string | `false` |
 | tectonic_govcloud_ssh_key | Name of an SSH key located within the AWS region. Example: coreos-user. | string | - |
 | tectonic_govcloud_vpc_cidr_block | Block of IP addresses used by the VPC. This should not overlap with any other networks, such as a private datacenter connected via Direct Connect. | string | `10.0.0.0/16` |
 | tectonic_govcloud_worker_custom_subnets | (optional) This configures worker availability zones and their corresponding subnet CIDRs directly.<br><br>Example: `{ eu-west-1a = "10.0.64.0/20", eu-west-1b = "10.0.80.0/20" }` | map | `<map>` |

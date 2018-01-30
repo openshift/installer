@@ -166,6 +166,10 @@ variable "console_elb_zone_id" {
   type        = "string"
 }
 
-variable "nameserver_url" {
+variable "api_url" {
+  type = "string"
+}
+
+variable "api_key" {
   type = "string"
 }

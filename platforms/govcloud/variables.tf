@@ -110,24 +110,6 @@ EOF
   default = ""
 }
 
-variable "tectonic_govcloud_private_endpoints" {
-  default = true
-
-  description = <<EOF
-(optional) If set to true, create private-facing ingress resources (ELB, A-records).
-If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone.
-EOF
-}
-
-variable "tectonic_govcloud_public_endpoints" {
-  default = false
-
-  description = <<EOF
-(optional) If set to true, create public-facing ingress resources (ELB, A-records).
-If set to false, no public-facing ingress resources will be created.
-EOF
-}
-
 variable "tectonic_govcloud_external_private_zone" {
   default = ""
 
@@ -321,5 +303,16 @@ EOF
 }
 
 variable "tectonic_govcloud_dns_server_ip" {
-  type = "string"
+  description = "The resolver ip of the dns server."
+  type        = "string"
+}
+
+variable "tectonic_govcloud_dns_server_api_url" {
+  description = "The address of the dns server api to create the records."
+  type        = "string"
+}
+
+variable "tectonic_govcloud_dns_server_api_key" {
+  description = "The api key of the dns server to create the records."
+  type        = "string"
 }

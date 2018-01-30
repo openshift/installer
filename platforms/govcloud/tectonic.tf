@@ -9,8 +9,8 @@ module "bootkube" {
 
   cluster_name = "${var.tectonic_cluster_name}"
 
-  kube_apiserver_url = "https://${var.tectonic_govcloud_private_endpoints  ? module.dns.api_internal_fqdn : module.dns.api_external_fqdn}:443"
-  oidc_issuer_url    = "https://${var.tectonic_govcloud_private_endpoints  ? module.dns.ingress_internal_fqdn : module.dns.ingress_external_fqdn}/identity"
+  kube_apiserver_url = "https://${module.dns.api_internal_fqdn}:443"
+  oidc_issuer_url    = "https://${module.dns.ingress_internal_fqdn}/identity"
 
   # Platform-independent variables wiring, do not modify.
   container_images = "${var.tectonic_container_images}"
@@ -54,8 +54,8 @@ module "tectonic" {
 
   cluster_name = "${var.tectonic_cluster_name}"
 
-  base_address       = "${var.tectonic_govcloud_private_endpoints  ? module.dns.ingress_internal_fqdn : module.dns.ingress_external_fqdn}"
-  kube_apiserver_url = "https://${var.tectonic_govcloud_private_endpoints  ? module.dns.api_internal_fqdn : module.dns.api_external_fqdn}:443"
+  base_address       = "${module.dns.ingress_internal_fqdn}"
+  kube_apiserver_url = "https://${module.dns.api_internal_fqdn}:443"
   service_cidr       = "${var.tectonic_service_cidr}"
 
   # Platform-independent variables wiring, do not modify.

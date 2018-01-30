@@ -1,7 +1,7 @@
 provider "powerdns" {
   version    = "0.1.0"
-  api_key    = "tectonicgov"
-  server_url = "${var.nameserver_url}"
+  api_key    = "${var.api_key}"
+  server_url = "${var.api_url}"
 }
 
 resource "powerdns_record" "api_internal" {
