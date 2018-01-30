@@ -14,7 +14,6 @@ import (
 	"github.com/dghubble/sessions"
 	"github.com/kardianos/osext"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/tectonic"
 	"github.com/coreos/tectonic-installer/installer/pkg/terraform"
 )
 
@@ -216,31 +215,6 @@ func newExecutorFromApplyHandlerInput(input *TerraformApplyHandlerInput) (*terra
 	ex.AddFile("pull_secret.json", []byte(input.PullSecret))
 	input.Variables["tectonic_license_path"] = "./license.txt"
 	input.Variables["tectonic_pull_secret_path"] = "./pull_secret.json"
-	serviceCidr := input.Variables["tectonic_service_cidr"].(string)
-
-	ip, ok := input.Variables["tectonic_kube_apiserver_service_ip"].(string)
-	if !ok || len(ip) == 0 {
-		input.Variables["tectonic_kube_apiserver_service_ip"], err = tectonic.APIServiceIP(serviceCidr)
-		if err != nil {
-			return nil, newInternalServerError("Error calculating service IP: %s", err)
-		}
-	}
-
-	ip, ok = input.Variables["tectonic_kube_dns_service_ip"].(string)
-	if !ok || len(ip) == 0 {
-		input.Variables["tectonic_kube_dns_service_ip"], err = tectonic.DNSServiceIP(serviceCidr)
-		if err != nil {
-			return nil, newInternalServerError("Error calculating DNS IP: %s", err)
-		}
-	}
-
-	ip, ok = input.Variables["tectonic_kube_etcd_service_ip"].(string)
-	if !ok || len(ip) == 0 {
-		input.Variables["tectonic_kube_etcd_service_ip"], err = tectonic.EtcdServiceIP(serviceCidr)
-		if err != nil {
-			return nil, newInternalServerError("Error calculating etcd service IP: %s", err)
-		}
-	}
 
 	// Add variables and the required environment variables.
 	if variables, err := json.MarshalIndent(input.Variables, "", "  "); err == nil {
