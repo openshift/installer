@@ -63,7 +63,6 @@ pipeline {
   agent none
   environment {
     KUBE_CONFORMANCE_IMAGE = 'quay.io/coreos/kube-conformance:v1.8.4_coreos.0'
-    LOGSTASH_BUCKET = 'log-analyzer-tectonic-installer'
   }
   options {
     // Individual steps have stricter timeouts. 360 minutes should be never reached.
@@ -127,6 +126,11 @@ pipeline {
     booleanParam(
       name: 'PLATFORM/BARE_METAL',
       defaultValue: true,
+      description: ''
+    )
+    booleanParam(
+      name: 'NOTIFY_SLACK',
+      defaultValue: false,
       description: ''
     )
   }
@@ -408,13 +412,26 @@ pipeline {
         withDockerContainer(params.builder_image) {
           withCredentials(creds) {
             unstash 'clean-repo'
-            sh """#!/bin/bash -xe
-            export BUILD_RESULT=${currentBuild.currentResult}
-            ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh jenkins-logs
-            """
+            script {
+              try {
+                sh """#!/bin/bash -xe
+                export LOGSTASH_BUCKET='log-analyzer-tectonic-installer'
+                export BUILD_RESULT=${currentBuild.currentResult}
+                ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh jenkins-logs
+                """
+              } catch (Exception e) {
+                notifyBuildSlack(true)
+              } finally {
+                cleanWs notFailBuild: true
+              }
+            }
           }
         }
       }
+    }
+
+    failure {
+      notifyBuildSlack(params.NOTIFY_SLACK)
     }
   }
 }
@@ -527,5 +544,18 @@ def reportStatusToGithub(status, context, commitId) {
     sh """#!/bin/bash -ex
       ./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} ${context} ${commitId}
     """
+  }
+}
+
+def notifyBuildSlack(Boolean notify) {
+  if(notify) {
+    def colorCode = '#FF0000'
+    def subject = "Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]': ${message}"
+    def summary = "${subject} (${env.BUILD_URL})"
+
+    // Send notifications
+    slackSend(color: colorCode, message: summary, channel: "#team-installer")
+  } else {
+    return 0
   }
 }
