@@ -22,7 +22,6 @@ import {
 import { AWS_INSTANCE_TYPES } from '../facts';
 import { Field, Form } from '../form';
 import { AWS_TF } from '../platforms';
-import { toError } from '../utils';
 import { compose, validate } from '../validate';
 import { makeNodeForm, toId } from './make-node-form';
 import { A, Connect, Input, NumberInput, Radio, Select } from './ui';
@@ -60,10 +59,6 @@ const IamRoles = connect(
   </Row>
 );
 
-const Errors = connect(
-  ({clusterConfig}, {type}) => ({error: _.get(clusterConfig, toError(type))})
-)(props => props.error ? <div className="wiz-error-message">{props.error}</div> : <span />);
-
 export const DefineNode = ({type, max, withIamRole = true}) => <div>
   {withIamRole && <IamRoles type={type} />}
   <Row htmlFor={`${type}--number`} label="Instances">
@@ -99,19 +94,18 @@ export const DefineNode = ({type, max, withIamRole = true}) => <div>
   </Row>
 
   <IOPs fieldName={type} />
-
-  <Errors type={type} />
 </div>;
 
 export const MAX_MASTERS = 100;
 export const MAX_WORKERS = 1000;
 
+const etcdNodeForm = makeNodeForm(AWS_ETCDS, compose(validate.int({min: 1, max: 9}), validate.isOdd), false, {
+  dependencies: [ETCD_OPTION],
+  ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.PROVISIONED,
+});
 const etcdForm = new Form('etcdForm', [
   new Field(ETCD_OPTION, {default: ETCD_OPTIONS.PROVISIONED}),
-  makeNodeForm(AWS_ETCDS, compose(validate.int({min: 1, max: 9}), validate.isOdd), false, {
-    dependencies: [ETCD_OPTION],
-    ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.PROVISIONED,
-  }),
+  etcdNodeForm,
   new Field(EXTERNAL_ETCD_CLIENT, {
     default: '',
     validator: compose(validate.nonEmpty, validate.host),
@@ -127,11 +121,9 @@ const etcdForm = new Form('etcdForm', [
   },
 });
 
-const awsNodesForm = new Form('awsNodesForm', [
-  makeNodeForm(AWS_CONTROLLERS, validate.int({min: 1, max: MAX_MASTERS})),
-  makeNodeForm(AWS_WORKERS, validate.int({min: 1, max: MAX_WORKERS})),
-  etcdForm,
-]);
+const mastersForm = makeNodeForm(AWS_CONTROLLERS, validate.int({min: 1, max: MAX_MASTERS}));
+const workersForm = makeNodeForm(AWS_WORKERS, validate.int({min: 1, max: MAX_WORKERS}));
+const awsNodesForm = new Form('awsNodesForm', [mastersForm, workersForm, etcdForm]);
 
 export const Etcd = connect(({clusterConfig}) => ({
   etcdOption: clusterConfig[ETCD_OPTION],
@@ -170,7 +162,6 @@ export const Etcd = connect(({clusterConfig}) => ({
             <p className="text-muted wiz-help-text">Your Tectonic cluster will be configured to use an external etcd, which you specify.</p>
           </div>
         </div>
-        <etcdForm.Errors />
       </div>
     </div>
     {etcdOption === ETCD_OPTIONS.EXTERNAL && <div>
@@ -197,6 +188,7 @@ export const Etcd = connect(({clusterConfig}) => ({
       <hr />
       <div className="row form-group col-xs-12">
         <DefineNode type={AWS_ETCDS} max={9} withIamRole={false} />
+        <etcdNodeForm.Errors />
       </div>
     </div>
     }
@@ -207,10 +199,12 @@ export const AWS_Nodes = () => <div>
   <h3>Master Nodes</h3>
   <br />
   <DefineNode type={AWS_CONTROLLERS} max={MAX_MASTERS} />
+  <mastersForm.Errors />
   <hr />
   <h3>Worker Nodes</h3>
   <br />
   <DefineNode type={AWS_WORKERS} max={MAX_WORKERS} />
+  <workersForm.Errors />
   <hr />
   <h3>etcd Nodes</h3>
   <br />
