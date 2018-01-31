@@ -151,7 +151,6 @@ export const toAWS_TF = ({clusterConfig: cc, dirty}, FORMS) => {
   });
 
   const ret = {
-    clusterKind: 'tectonic-aws-tf',
     dryRun: cc[DRY_RUN],
     platform: 'aws',
     license: cc[TECTONIC_LICENSE],
@@ -238,7 +237,6 @@ export const toBaremetal_TF = ({clusterConfig: cc}, FORMS) => {
   const workers = cc[BM_WORKERS];
 
   const ret = {
-    clusterKind: 'tectonic-metal',
     dryRun: cc[DRY_RUN],
     platform: 'metal',
     license: cc[TECTONIC_LICENSE],
