@@ -62,6 +62,7 @@ data "template_file" "powerdns_service" {
 
   vars {
     dns_zone       = "${var.base_domain}"
+    pdns_api_key   = "${var.pdns_api_key}"
     mysql_password = "${var.mysql_password}"
     powerdns_image = "${var.container_images["powerdns"]}"
     mysql_image    = "${var.container_images["mysql"]}"

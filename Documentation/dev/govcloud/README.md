@@ -54,7 +54,8 @@ tectonic_govcloud_external_vpc_id
 tectonic_govcloud_external_master_subnet_ids
 tectonic_govcloud_external_worker_subnet_ids
 tectonic_govcloud_dns_server_ip
-
+tectonic_govcloud_dns_server_api_url
+tectonic_govcloud_dns_server_api_key
 ```
 
 ## Deploy the cluster

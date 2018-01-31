@@ -20,6 +20,8 @@ class GovcloudVPC
       `tr -cd '[:alnum:]' < /dev/urandom | head -c 32 ; echo`.chomp
     @mysql_password =
       `tr -cd '[:alnum:]' < /dev/urandom | head -c 32 ; echo`.chomp
+    @pdns_api_key =
+      `tr -cd '[:alnum:]' < /dev/urandom | head -c 10; echo`.chomp
   end
 
   def env_variables
@@ -29,7 +31,8 @@ class GovcloudVPC
       'TF_VAR_base_domain' => 'tectonic-ci.de',
       'TF_VAR_nginx_username' => 'openvpn',
       'TF_VAR_nginx_password' => @ovpn_password,
-      'TF_VAR_mysql_password' => @mysql_password
+      'TF_VAR_mysql_password' => @mysql_password,
+      'TF_VAR_pdns_api_key' => @pdns_api_key
     }
   end
 
@@ -40,7 +43,7 @@ class GovcloudVPC
       'TF_VAR_tectonic_govcloud_external_worker_subnet_ids' => @worker_subnet_ids,
       'TF_VAR_tectonic_govcloud_dns_server_ip' => @vpc_dns,
       'TF_VAR_tectonic_govcloud_dns_server_api_url' => @dns_api_url,
-      'TF_VAR_tectonic_govcloud_dns_server_api_key' => 'tectonicgov'
+      'TF_VAR_tectonic_govcloud_dns_server_api_key' => @pdns_api_key
     }
     vars.each do |key, value|
       ENV[key] = value

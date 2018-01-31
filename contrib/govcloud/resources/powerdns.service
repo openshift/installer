@@ -9,6 +9,7 @@ ${mysql_image}
 
 ExecStartPre=/usr/bin/docker run --net=host \
 --name pdns-master -d \
+-e PDNS_API_KEY=${pdns_api_key} \
 -e PDNS_RECURSOR=10.0.0.2 \
 -e PDNS_SOA=10.0.0.2 \
 -e PDNS_ALLOW_AXFR_IPS=127.0.0.1 \
