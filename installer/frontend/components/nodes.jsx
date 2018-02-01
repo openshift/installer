@@ -22,9 +22,8 @@ import {
 import { AWS_INSTANCE_TYPES } from '../facts';
 import { Field, Form } from '../form';
 import { AWS_TF } from '../platforms';
-import { toError } from '../utils';
 import { compose, validate } from '../validate';
-import { makeNodeForm, toKey } from './make-node-form';
+import { makeNodeForm, toId } from './make-node-form';
 import { A, Connect, Input, NumberInput, Radio, Select } from './ui';
 
 const Row = ({label, htmlFor, children}) => <div className="row form-group">
@@ -37,10 +36,10 @@ const Row = ({label, htmlFor, children}) => <div className="row form-group">
 </div>;
 
 const IOPs = connect(
-  ({clusterConfig}, {fieldName}) => ({type: clusterConfig[toKey(fieldName, STORAGE_TYPE)]})
+  ({clusterConfig}, {fieldName}) => ({type: clusterConfig[toId(fieldName, STORAGE_TYPE)]})
 )(
   ({type, fieldName}) => type !== 'io1' ? null : <Row htmlFor={`${fieldName}--storage-iops`} label="Storage Speed">
-    <Connect field={toKey(fieldName, STORAGE_IOPS)}>
+    <Connect field={toId(fieldName, STORAGE_IOPS)}>
       <NumberInput id={`${fieldName}--storage-iops`} className="wiz-super-short-input" suffix="&nbsp;&nbsp;IOPS" />
     </Connect>
   </Row>
@@ -50,7 +49,7 @@ const IamRoles = connect(
   ({clusterConfig}) => ({roles: _.get(clusterConfig, ['extra', IAM_ROLE], [])})
 )(
   ({roles, type}) => <Row htmlFor={`${type}--iam-role`} label="IAM Role">
-    <Connect field={toKey(type, IAM_ROLE)}>
+    <Connect field={toId(type, IAM_ROLE)}>
       <Select id={`${type}--iam-role`}>
         <option value={IAM_ROLE_CREATE_OPTION}>Create an IAM role for me (default)</option>
         {_.isArray(roles) && roles.map(r => <option value={r} key={r}>{r}</option>)}
@@ -60,19 +59,15 @@ const IamRoles = connect(
   </Row>
 );
 
-const Errors = connect(
-  ({clusterConfig}, {type}) => ({error: _.get(clusterConfig, toError(type))})
-)(props => props.error ? <div className="wiz-error-message">{props.error}</div> : <span />);
-
 export const DefineNode = ({type, max, withIamRole = true}) => <div>
   {withIamRole && <IamRoles type={type} />}
   <Row htmlFor={`${type}--number`} label="Instances">
-    <Connect field={toKey(type, NUMBER_OF_INSTANCES)}>
+    <Connect field={toId(type, NUMBER_OF_INSTANCES)}>
       <NumberInput className="wiz-super-short-input" id={`${type}--number`} min="1" max={max} />
     </Connect>
   </Row>
   <Row htmlFor={`${type}--instance`} label="Instance Type">
-    <Connect field={toKey(type, INSTANCE_TYPE)}>
+    <Connect field={toId(type, INSTANCE_TYPE)}>
       <Select id={`${type}--instance`}>
         <option value="" disabled>Please select AWS EC2 instance type</option>
         {AWS_INSTANCE_TYPES.map(({value, label}) => <option value={value} key={value}>{label}</option>)}
@@ -83,12 +78,12 @@ export const DefineNode = ({type, max, withIamRole = true}) => <div>
     </p>}
   </Row>
   <Row htmlFor={`${type}--storage-size`} label="Storage Size">
-    <Connect field={toKey(type, STORAGE_SIZE_IN_GIB)}>
+    <Connect field={toId(type, STORAGE_SIZE_IN_GIB)}>
       <NumberInput id={`${type}--storage-size`} className="wiz-super-short-input" suffix="&nbsp;&nbsp;GiB" />
     </Connect>
   </Row>
   <Row htmlFor={`${type}--storage-type`} label="Storage Type">
-    <Connect field={toKey(type, STORAGE_TYPE)}>
+    <Connect field={toId(type, STORAGE_TYPE)}>
       <Select id={`${type}--storage-type`}>
         <option value="" disabled>Please select storage type</option>
         <option value="gp2" key="gp2">General Purpose SSD (GP2)</option>
@@ -99,19 +94,18 @@ export const DefineNode = ({type, max, withIamRole = true}) => <div>
   </Row>
 
   <IOPs fieldName={type} />
-
-  <Errors type={type} />
 </div>;
 
 export const MAX_MASTERS = 100;
 export const MAX_WORKERS = 1000;
 
+const etcdNodeForm = makeNodeForm(AWS_ETCDS, compose(validate.int({min: 1, max: 9}), validate.isOdd), false, {
+  dependencies: [ETCD_OPTION],
+  ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.PROVISIONED,
+});
 const etcdForm = new Form('etcdForm', [
   new Field(ETCD_OPTION, {default: ETCD_OPTIONS.PROVISIONED}),
-  makeNodeForm(AWS_ETCDS, compose(validate.int({min: 1, max: 9}), validate.isOdd), false, {
-    dependencies: [ETCD_OPTION],
-    ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.PROVISIONED,
-  }),
+  etcdNodeForm,
   new Field(EXTERNAL_ETCD_CLIENT, {
     default: '',
     validator: compose(validate.nonEmpty, validate.host),
@@ -127,11 +121,9 @@ const etcdForm = new Form('etcdForm', [
   },
 });
 
-const awsNodesForm = new Form('awsNodesForm', [
-  makeNodeForm(AWS_CONTROLLERS, validate.int({min: 1, max: MAX_MASTERS})),
-  makeNodeForm(AWS_WORKERS, validate.int({min: 1, max: MAX_WORKERS})),
-  etcdForm,
-]);
+const mastersForm = makeNodeForm(AWS_CONTROLLERS, validate.int({min: 1, max: MAX_MASTERS}));
+const workersForm = makeNodeForm(AWS_WORKERS, validate.int({min: 1, max: MAX_WORKERS}));
+const awsNodesForm = new Form('awsNodesForm', [mastersForm, workersForm, etcdForm]);
 
 export const Etcd = connect(({clusterConfig}) => ({
   etcdOption: clusterConfig[ETCD_OPTION],
@@ -170,7 +162,6 @@ export const Etcd = connect(({clusterConfig}) => ({
             <p className="text-muted wiz-help-text">Your Tectonic cluster will be configured to use an external etcd, which you specify.</p>
           </div>
         </div>
-        <etcdForm.Errors />
       </div>
     </div>
     {etcdOption === ETCD_OPTIONS.EXTERNAL && <div>
@@ -197,6 +188,7 @@ export const Etcd = connect(({clusterConfig}) => ({
       <hr />
       <div className="row form-group col-xs-12">
         <DefineNode type={AWS_ETCDS} max={9} withIamRole={false} />
+        <etcdNodeForm.Errors />
       </div>
     </div>
     }
@@ -207,10 +199,12 @@ export const AWS_Nodes = () => <div>
   <h3>Master Nodes</h3>
   <br />
   <DefineNode type={AWS_CONTROLLERS} max={MAX_MASTERS} />
+  <mastersForm.Errors />
   <hr />
   <h3>Worker Nodes</h3>
   <br />
   <DefineNode type={AWS_WORKERS} max={MAX_WORKERS} />
+  <workersForm.Errors />
   <hr />
   <h3>etcd Nodes</h3>
   <br />
