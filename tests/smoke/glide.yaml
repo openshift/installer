@@ -1,20 +1,12 @@
 package: "github.com/coreos/tectonic-installer/tests/smoke"
 import:
 - package: k8s.io/client-go
-  version: v3.0.0
-  subpackages:
-  - pkg/api/v1
+  version: v4.0.0-beta.0
 - package: k8s.io/kubernetes
-  version: v1.6.7
+  version: v1.7.0
+- package: k8s.io/apimachinery
+  version: abe34e4f5b4413c282a83011892cbeea5b32223b
 - package: github.com/coreos/ktestutil
-  version: 1c5a59f93ffab7cf69fde8b805fee942fd467cdc 
-- package: google.golang.org/api
-  version: 295e4bb0ade057ae2cfb9876ab0b54635dbfcea4
-- package: cloud.google.com/go
-  version: v0.10.0
-- package: google.golang.org/grpc
-  version: v1.5.0
-- package: golang.org/x/net
-  version: ab5485076ff3407ad2d02db054635913f017b0ed
-- package: golang.org/x/text
-  version: 836efe42bb4aa16aaa17b9c155d8813d336ed720
+  version: 47edf51e9cdb1955e93e56e6c84ed944fdda4789
+- package: k8s.io/apiserver
+  version: release-1.7
