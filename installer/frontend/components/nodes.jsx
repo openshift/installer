@@ -2,9 +2,11 @@ import _ from 'lodash';
 import React from 'react';
 import { connect } from 'react-redux';
 
+import { getIamRoles } from '../aws-actions';
 import {
   AWS_CONTROLLERS,
   AWS_ETCDS,
+  AWS_REGION_FORM,
   AWS_WORKERS,
   ETCD_OPTION,
   ETCD_OPTIONS,
@@ -23,8 +25,75 @@ import { AWS_INSTANCE_TYPES } from '../facts';
 import { Field, Form } from '../form';
 import { AWS_TF } from '../platforms';
 import { compose, validate } from '../validate';
-import { makeNodeForm, toId } from './make-node-form';
 import { A, Connect, Input, NumberInput, Radio, Select } from './ui';
+
+const toId = (name, field) => `${name}-${field}`;
+
+// Use this single dummy form / field to trigger loading the IAM roles list. Then IAM role fields can set this as their
+// dependency, which avoids triggering a separate API request for each field.
+new Form('DUMMY_NODE_FORM', [
+  new Field(IAM_ROLE, {
+    default: 'DUMMY_VALUE',
+    name: IAM_ROLE,
+    dependencies: [AWS_REGION_FORM],
+    getExtraStuff: (dispatch, isNow) => dispatch(getIamRoles(null, null, isNow)),
+  }),
+]);
+
+const makeNodeForm = (name, instanceValidator, withIamRole = true, opts) => {
+  const storageTypeId = toId(name, STORAGE_TYPE);
+
+  // all fields must have a unique name!
+  const fields = [
+    new Field(toId(name, NUMBER_OF_INSTANCES), {
+      validator: instanceValidator,
+      default: 3,
+      name: NUMBER_OF_INSTANCES,
+    }),
+    new Field(toId(name, INSTANCE_TYPE), {
+      validator: validate.nonEmpty,
+      default: 't2.medium',
+      name: INSTANCE_TYPE,
+    }),
+    new Field(toId(name, STORAGE_SIZE_IN_GIB), {
+      validator: validate.int({min: 30, max: 15999}),
+      default: 30,
+      name: STORAGE_SIZE_IN_GIB,
+    }),
+    new Field(storageTypeId, {
+      validator: validate.nonEmpty,
+      default: 'gp2',
+      name: STORAGE_TYPE,
+    }),
+    new Field(toId(name, STORAGE_IOPS), {
+      validator: validate.int({min: 100, max: 20000}),
+      default: 1000,
+      name: STORAGE_IOPS,
+      dependencies: [storageTypeId],
+      ignoreWhen: cc => cc[storageTypeId] !== 'io1',
+    }),
+  ];
+
+  if (withIamRole) {
+    fields.unshift(new Field(toId(name, IAM_ROLE), {
+      default: IAM_ROLE_CREATE_OPTION,
+      name: IAM_ROLE,
+      dependencies: [IAM_ROLE],
+    }));
+  }
+
+  const validator = (data) => {
+    const type = data[STORAGE_TYPE];
+    const maxIops = 50 * data[STORAGE_SIZE_IN_GIB];
+    const ops = data[STORAGE_IOPS];
+
+    if (type === 'io1' && ops > maxIops) {
+      return `IOPS can't be larger than ${maxIops} (50 IOPS/GiB)`;
+    }
+  };
+
+  return new Form(name, fields, _.defaults({validator}, opts));
+};
 
 const Row = ({label, htmlFor, children}) => <div className="row form-group">
   <div className="col-xs-4">
@@ -59,7 +128,7 @@ const IamRoles = connect(
   </Row>
 );
 
-export const DefineNode = ({type, max, withIamRole = true}) => <div>
+const DefineNode = ({type, max, withIamRole = true}) => <div>
   {withIamRole && <IamRoles type={type} />}
   <Row htmlFor={`${type}--number`} label="Instances">
     <Connect field={toId(type, NUMBER_OF_INSTANCES)}>
