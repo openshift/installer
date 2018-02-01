@@ -30,11 +30,24 @@ const nodesPageCommands = {
 
     this
       .selectOption(`[id=aws_controllers--instance] [value="${json['aws_controllers-instanceType']}"]`)
-      .setField('[id=aws_controllers--storage-size]', json['aws_controllers-storageSizeInGiB'])
       .selectOption(`[id=aws_workers--instance] [value="${json['aws_workers-instanceType']}"]`)
-      .setField('[id=aws_workers--storage-size]', json['aws_workers-storageSizeInGiB'])
       .selectOption(`[id=aws_etcds--instance] [value="${json['aws_etcds-instanceType']}"]`)
-      .setField('[id=aws_etcds--storage-size]', json['aws_etcds-storageSizeInGiB']);
+      .expectNoValidationError();
+
+    const testVolumeSize = (field, value) => {
+      const min = 30;
+      this
+        .setField(field, min - 1)
+        .expectValidationErrorContains(`Cannot be less than ${min}`)
+        .setField(field, min)
+        .expectNoValidationError()
+        .setField(field, value)
+        .expectNoValidationError();
+    };
+
+    testVolumeSize('[id=aws_controllers--storage-size]', json['aws_controllers-storageSizeInGiB']);
+    testVolumeSize('[id=aws_workers--storage-size]', json['aws_workers-storageSizeInGiB']);
+    testVolumeSize('[id=aws_etcds--storage-size]', json['aws_etcds-storageSizeInGiB']);
 
     testExternalEtcd(this);
   },

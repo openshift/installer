@@ -44,7 +44,7 @@ export const makeNodeForm = (name, instanceValidator, withIamRole = true, opts) 
       name: INSTANCE_TYPE,
     }),
     new Field(toKey(name, STORAGE_SIZE_IN_GIB), {
-      validator: validate.int({min: 1, max: 15999}),
+      validator: validate.int({min: 30, max: 15999}),
       default: 30,
       name: STORAGE_SIZE_IN_GIB,
     }),
