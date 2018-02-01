@@ -23,7 +23,7 @@ go_library(
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/labels:go_default_library",
         "//tests/smoke/vendor/k8s.io/client-go/tools/cache:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/api/v1:go_default_library",
-        "//tests/smoke/vendor/k8s.io/kubernetes/pkg/apis/extensions:go_default_library",
+        "//tests/smoke/vendor/k8s.io/kubernetes/pkg/apis/apps/v1beta1:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/apis/extensions/v1beta1:go_default_library",
     ],
 )

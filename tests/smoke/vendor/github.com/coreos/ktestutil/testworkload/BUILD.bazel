@@ -6,6 +6,7 @@ go_library(
     importpath = "github.com/coreos/ktestutil/testworkload",
     visibility = ["//visibility:public"],
     deps = [
+        "//tests/smoke/vendor/github.com/golang/glog:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/api/errors:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/util/intstr:go_default_library",

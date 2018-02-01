@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/golang/glog"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -17,9 +18,9 @@ import (
 
 var (
 	// PollTimeoutForNginx is the max duration for polling when using Nginx testworkload.
-	PollTimeoutForNginx = 2 * time.Minute
+	PollTimeoutForNginx = 10 * time.Minute
 	// PollIntervalForNginx is the interval between each condition check of poolling when using Nginx testworkload.
-	PollIntervalForNginx = 5 * time.Second
+	PollIntervalForNginx = 10 * time.Second
 )
 
 // Nginx creates a temp nginx deployment/service pair
@@ -44,7 +45,6 @@ type NginxOpts func(*Nginx) error
 func NewNginx(kc kubernetes.Interface, namespace string, options ...NginxOpts) (*Nginx, error) {
 	//create random suffix
 	name := fmt.Sprintf("nginx-%s", utilrand.String(5))
-
 	n := &Nginx{
 		Namespace: namespace,
 		Name:      name,
@@ -58,7 +58,6 @@ func NewNginx(kc kubernetes.Interface, namespace string, options ...NginxOpts) (
 		},
 		client: kc,
 	}
-
 	//apply options
 	for _, option := range options {
 		if err := option(n); err != nil {
@@ -66,38 +65,40 @@ func NewNginx(kc kubernetes.Interface, namespace string, options ...NginxOpts) (
 		}
 	}
 
-	//create nginx deployment
-	if err := n.newNginxDeployment(); err != nil && !apierrors.IsAlreadyExists(err) {
+	var err error
+	defer func() {
+		if err != nil {
+			n.Delete()
+		}
+	}()
+
+	if err = n.newNginxDeployment(); err != nil {
 		return nil, fmt.Errorf("error creating deployment %s: %v", n.Name, err)
 	}
-	if err := wait.PollImmediate(PollIntervalForNginx, PollTimeoutForNginx, func() (bool, error) {
+	if err = n.newNginxService(); err != nil {
+		return nil, fmt.Errorf("error creating service %s: %v", n.Name, err)
+	}
+	if err = wait.PollImmediate(PollIntervalForNginx, PollTimeoutForNginx, func() (bool, error) {
 		d, err := kc.ExtensionsV1beta1().Deployments(n.Namespace).Get(n.Name, metav1.GetOptions{})
 		if err != nil {
-			return false, err
+			glog.Errorf("Error getting deployment %s: %v", n.Name, err)
+			return false, nil
 		}
-
 		if d.Status.UpdatedReplicas != d.Status.AvailableReplicas && d.Status.UnavailableReplicas != 0 {
 			return false, nil
 		}
 
-		return true, nil
-	}); err != nil {
-		return nil, fmt.Errorf("deployment %s is not ready: %v", n.Name, err)
-	}
-
-	//wait for all pods to enter running phase
-	if err := wait.PollImmediate(PollIntervalForNginx, PollTimeoutForNginx, func() (bool, error) {
+		//wait for all pods to enter running phase
 		pl, err := kc.CoreV1().Pods(n.Namespace).List(metav1.ListOptions{
 			LabelSelector: metav1.FormatLabelSelector(n.podSelector),
 		})
 		if err != nil {
-			return false, err
+			glog.Errorf("Error getting pods for deployment %s: %v", n.Name, err)
+			return false, nil
 		}
-
 		if len(pl.Items) == 0 {
 			return false, nil
 		}
-
 		var pods []*v1.Pod
 		for i := range pl.Items {
 			p := &pl.Items[i]
@@ -107,16 +108,11 @@ func NewNginx(kc kubernetes.Interface, namespace string, options ...NginxOpts) (
 
 			pods = append(pods, p)
 		}
-
 		n.Pods = pods
+
 		return true, nil
 	}); err != nil {
-		return nil, fmt.Errorf("pods in deployment %s not ready: %v", n.Name, err)
-	}
-
-	//create nginx service
-	if err := n.newNginxService(); err != nil && !apierrors.IsAlreadyExists(err) {
-		return nil, fmt.Errorf("error creating service %s: %v", n.Name, err)
+		return nil, fmt.Errorf("deployment %s is not ready: %v", n.Name, err)
 	}
 
 	return n, nil
@@ -310,7 +306,8 @@ func (n *Nginx) newPingPod(reachable bool) error {
 	if err := wait.PollImmediate(PollIntervalForNginx, PollTimeoutForNginx, func() (bool, error) {
 		j, err := n.client.BatchV1().Jobs(n.Namespace).Get(job.GetName(), metav1.GetOptions{})
 		if err != nil {
-			return false, err
+			glog.Errorf("Error getting job %s: %v", job.GetName(), err)
+			return false, nil
 		}
 
 		if j.Status.Succeeded < 1 {

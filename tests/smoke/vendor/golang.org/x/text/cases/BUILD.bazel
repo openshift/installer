@@ -11,11 +11,9 @@ go_library(
         "tables.go",
         "trieval.go",
     ],
-    cgo = True,
     importpath = "golang.org/x/text/cases",
     visibility = ["//visibility:public"],
     deps = [
-        "//tests/smoke/vendor/golang.org/x/text/internal:go_default_library",
         "//tests/smoke/vendor/golang.org/x/text/language:go_default_library",
         "//tests/smoke/vendor/golang.org/x/text/transform:go_default_library",
         "//tests/smoke/vendor/golang.org/x/text/unicode/norm:go_default_library",

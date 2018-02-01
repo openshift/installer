@@ -8,10 +8,5 @@ go_library(
     ],
     importpath = "k8s.io/kubernetes/pkg/fieldpath",
     visibility = ["//visibility:public"],
-    deps = [
-        "//tests/smoke/vendor/k8s.io/apimachinery/pkg/api/meta:go_default_library",
-        "//tests/smoke/vendor/k8s.io/apimachinery/pkg/api/resource:go_default_library",
-        "//tests/smoke/vendor/k8s.io/kubernetes/pkg/api:go_default_library",
-        "//tests/smoke/vendor/k8s.io/kubernetes/pkg/api/v1:go_default_library",
-    ],
+    deps = ["//tests/smoke/vendor/k8s.io/apimachinery/pkg/api/meta:go_default_library"],
 )
