@@ -1,4 +1,4 @@
-FROM golang:1.9.1-stretch
+FROM golang:1.9.2-stretch
 
 ENV TERRAFORM_VERSION="0.11.1"
 
