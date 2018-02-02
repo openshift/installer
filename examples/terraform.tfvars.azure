@@ -4,6 +4,9 @@
 // for available environments.
 // tectonic_azure_cloud_environment = "AZUREPUBLICCLOUD"
 
+// The size of the volume in gigabytes for the root block device of etcd nodes.
+tectonic_azure_etcd_root_volume_size = "32"
+
 // (optional) Storage account type for the etcd node(s). Example: Premium_LRS.
 // Using Premium storage is constrained by the of instance specified in 'tectonic_azure_etcd_vm_size'.
 // See https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage#supported-vms
@@ -69,6 +72,9 @@
 // NOTE: Tags MUST NOT contain reserved characters '<,>,%,&,\,?,/' or control characters.
 // tectonic_azure_extra_tags = ""
 
+// The size of the volume in gigabytes for the root block device of master nodes.
+tectonic_azure_master_root_volume_size = "32"
+
 // (optional) Storage account type for the master node(s). Example: Premium_LRS.
 // Using Premium storage is constrained by the of instance specified in 'tectonic_azure_master_vm_size'.
 // See https://docs.microsoft.com/en-us/azure/storage/storage-premium-storage#supported-vms
@@ -99,6 +105,9 @@ tectonic_azure_ssh_key = ""
 // This should not overlap with any other networks, such as the Kubernetes cluster (pod) range,
 // service range or a private datacenter connected via ExpressRoute."
 // tectonic_azure_vnet_cidr_block = "10.0.0.0/16"
+
+// The size of the volume in gigabytes for the root block device of worker nodes.
+tectonic_azure_worker_root_volume_size = "32"
 
 // (optional) Storage account type for the worker node(s). Example: Premium_LRS.
 // Using Premium storage is constrained by the of instance specified in 'tectonic_azure_worker_vm_size'.
