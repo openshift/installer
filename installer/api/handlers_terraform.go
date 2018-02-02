@@ -7,7 +7,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"time"
 
@@ -61,18 +60,8 @@ func terraformApplyHandler(w http.ResponseWriter, req *http.Request, ctx *Contex
 		return newInternalServerError("could not write Terraform templates: %s", err)
 	}
 
-	// Choose to run 'get' or 'init' based on Terraform version.
-	sub10Rx := regexp.MustCompile("^Terraform v0\\.[0-9]\\.[0-9]+")
-	out, err := ex.ExecuteSync("version")
-	if err != nil {
-		return newInternalServerError("Failed to determine Terraform version: %s", err)
-	}
+	// Execute Terraform init and wait for it to finish.
 	prepCommand := "init"
-	if sub10Rx.Match(out) {
-		prepCommand = "get"
-	}
-
-	// Execute Terraform get or init and wait for it to finish.
 	_, prepDone, err := ex.Execute(prepCommand, "-no-color", tfMainDir)
 	if err != nil {
 		return newInternalServerError("Failed to run Terraform (%s): %s", prepCommand, err)
