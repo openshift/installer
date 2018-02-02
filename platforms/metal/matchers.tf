@@ -8,7 +8,7 @@ module "container_linux" {
 // Install CoreOS to disk
 resource "matchbox_group" "coreos_install" {
   count   = "${length(var.tectonic_metal_controller_names) + length(var.tectonic_metal_worker_names)}"
-  name    = "${format("coreos-install-%s", element(concat(var.tectonic_metal_controller_names, var.tectonic_metal_worker_names), count.index))}"
+  name    = "${format("%s-coreos-install-%s", var.tectonic_cluster_name, element(concat(var.tectonic_metal_controller_names, var.tectonic_metal_worker_names), count.index))}"
   profile = "${matchbox_profile.coreos_install.name}"
 
   selector {

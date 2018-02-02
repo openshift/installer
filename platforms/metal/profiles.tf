@@ -1,6 +1,6 @@
 // CoreOS Install Profile
 resource "matchbox_profile" "coreos_install" {
-  name   = "coreos-install"
+  name   = "${var.tectonic_cluster_name}-coreos-install"
   kernel = "/assets/coreos/${module.container_linux.version}/coreos_production_pxe.vmlinuz"
 
   initrd = [
@@ -20,12 +20,12 @@ resource "matchbox_profile" "coreos_install" {
 
 // Self-hosted Kubernetes Controller profile
 resource "matchbox_profile" "tectonic_controller" {
-  name                   = "tectonic-controller"
+  name                   = "${var.tectonic_cluster_name}-tectonic-controller"
   container_linux_config = "${file("${path.module}/cl/bootkube-controller.yaml.tmpl")}"
 }
 
 // Self-hosted Kubernetes Worker profile
 resource "matchbox_profile" "tectonic_worker" {
-  name                   = "tectonic-worker"
+  name                   = "${var.tectonic_cluster_name}-tectonic-worker"
   container_linux_config = "${file("${path.module}/cl/bootkube-worker.yaml.tmpl")}"
 }
