@@ -11,7 +11,6 @@ module Operators
     'kubernetes-addon-operator',
     'tectonic-channel-operator',
     'tectonic-cluo-operator',
-    'tectonic-etcd-operator',
     'tectonic-prometheus-operator',
     'tectonic-utility-operator'
   ].freeze

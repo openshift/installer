@@ -12,10 +12,8 @@ resource "template_dir" "tectonic" {
     addon_resizer_image                = "${var.container_images["addon_resizer"]}"
     kube_core_operator_image           = "${var.container_images["kube_core_operator"]}"
     kubernetes_addon_operator_image    = "${var.container_images["kubernetes_addon_operator"]}"
-    etcd_operator_image                = "${var.container_images["etcd_operator"]}"
     tectonic_channel_operator_image    = "${var.container_images["tectonic_channel_operator"]}"
     tectonic_prometheus_operator_image = "${var.container_images["tectonic_prometheus_operator"]}"
-    tectonic_etcd_operator_image       = "${var.container_images["tectonic_etcd_operator"]}"
     tectonic_cluo_operator_image       = "${var.container_images["tectonic_cluo_operator"]}"
     tectonic_alm_operator_image        = "${var.container_images["tectonic_alm_operator"]}"
     tectonic_utility_operator_image    = "${var.container_images["tectonic_utility_operator"]}"
@@ -37,7 +35,6 @@ resource "template_dir" "tectonic" {
     monitoring_version             = "${var.versions["monitoring"]}"
     tectonic_version               = "${var.versions["tectonic"]}"
     etcd_version                   = "${var.versions["etcd"]}"
-    tectonic_etcd_operator_version = "${var.versions["tectonic-etcd"]}"
     tectonic_cluo_operator_version = "${var.versions["cluo"]}"
     tectonic_alm_operator_version  = "${var.versions["alm"]}"
 

@@ -146,10 +146,6 @@ kubectl create -f secrets/ca-cert.yaml
 kubectl create -f secrets/identity-grpc-client.yaml
 kubectl create -f secrets/identity-grpc-server.yaml
 
-echo "Creating Etcd Operator"
-# Operator in the tectonic-system namespace used for etcd as a service
-kubectl create -f etcd/etcd-operator.yaml
-
 echo "Creating Operators"
 kubectl create -f updater/tectonic-channel-operator-kind.yaml
 kubectl create -f updater/app-version-kind.yaml
