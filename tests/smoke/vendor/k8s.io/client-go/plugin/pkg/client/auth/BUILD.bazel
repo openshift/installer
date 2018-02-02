@@ -6,6 +6,7 @@ go_library(
     importpath = "k8s.io/client-go/plugin/pkg/client/auth",
     visibility = ["//visibility:public"],
     deps = [
+        "//tests/smoke/vendor/k8s.io/client-go/plugin/pkg/client/auth/azure:go_default_library",
         "//tests/smoke/vendor/k8s.io/client-go/plugin/pkg/client/auth/gcp:go_default_library",
         "//tests/smoke/vendor/k8s.io/client-go/plugin/pkg/client/auth/oidc:go_default_library",
     ],

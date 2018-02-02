@@ -567,8 +567,7 @@ func walkPathForObjects(cfg clientcmd.ClientConfig, paths []string, fn resource.
 		return []error{err}
 	}
 
-	// As of 1.7, we need to replace the typer with: f.CategoryExpander()
-	result := resource.NewBuilder(mapper, typer, resource.ClientMapperFunc(f.UnstructuredClientForMapping), unstructured.UnstructuredJSONScheme).
+	result := resource.NewBuilder(mapper, f.CategoryExpander(), typer, resource.ClientMapperFunc(f.UnstructuredClientForMapping), unstructured.UnstructuredJSONScheme).
 		ContinueOnError().
 		Schema(schema).
 		FilenameParam(false, &resource.FilenameOptions{Recursive: true, Filenames: paths}).

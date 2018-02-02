@@ -14,7 +14,6 @@ go_library(
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/api/equality:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/api/meta:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
-        "//tests/smoke/vendor/k8s.io/apimachinery/pkg/labels:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/runtime:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/types:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/util/errors:go_default_library",
@@ -22,7 +21,6 @@ go_library(
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/util/wait:go_default_library",
         "//tests/smoke/vendor/k8s.io/client-go/util/integer:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/api:go_default_library",
-        "//tests/smoke/vendor/k8s.io/kubernetes/pkg/api/annotations:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/api/v1:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/apis/extensions:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/apis/extensions/v1beta1:go_default_library",
@@ -33,7 +31,6 @@ go_library(
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/client/listers/extensions/v1beta1:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/client/retry:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/controller:go_default_library",
-        "//tests/smoke/vendor/k8s.io/kubernetes/pkg/util/hash:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/util/labels:go_default_library",
     ],
 )

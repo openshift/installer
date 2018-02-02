@@ -6,10 +6,8 @@ go_library(
     importpath = "k8s.io/client-go/plugin/pkg/client/auth/oidc",
     visibility = ["//visibility:public"],
     deps = [
-        "//tests/smoke/vendor/github.com/coreos/go-oidc/jose:go_default_library",
-        "//tests/smoke/vendor/github.com/coreos/go-oidc/oauth2:go_default_library",
-        "//tests/smoke/vendor/github.com/coreos/go-oidc/oidc:go_default_library",
         "//tests/smoke/vendor/github.com/golang/glog:go_default_library",
+        "//tests/smoke/vendor/golang.org/x/oauth2:go_default_library",
         "//tests/smoke/vendor/k8s.io/client-go/rest:go_default_library",
     ],
 )

@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "builder.go",
+        "categories.go",
         "doc.go",
         "helper.go",
         "interfaces.go",
@@ -30,6 +31,7 @@ go_library(
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/util/sets:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/util/yaml:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/watch:go_default_library",
+        "//tests/smoke/vendor/k8s.io/client-go/discovery:go_default_library",
         "//tests/smoke/vendor/k8s.io/client-go/rest:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/api:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/api/validation:go_default_library",

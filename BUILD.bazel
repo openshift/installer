@@ -167,10 +167,12 @@ pkg_tar(
 filegroup(
     name = "terraform_files",
     srcs = glob(
-        ["**/*.tf"],
-        exclude=["bazel-bin/**/*", "bazel-out/**/*", "bazel-genfiles/**/*", "build/**/*"],
+        ["modules/**/*.tf"],
         exclude_directories=1,
-    ),
+    ) + glob(
+        ["platforms/**/*.tf"],
+        exclude_directories=1,
+    ) + ["config.tf"],
 )
 
 gen_test(

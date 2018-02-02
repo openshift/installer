@@ -9,7 +9,6 @@ go_library(
         "identity.go",
         "identity_vm.go",
         "internal.go",
-        "main_vm.go",
         "metadata.go",
         "net.go",
         "transaction.go",

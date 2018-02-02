@@ -25,13 +25,10 @@ const (
 var (
 	// runClusterTests is used as a flag to control whether or not to run cluster tests.
 	runClusterTests bool
-	// runQATests is used as a flag to control whether or not to run QA tests.
-	runQATests bool
 )
 
 func TestMain(m *testing.M) {
 	flag.BoolVar(&runClusterTests, "cluster", false, "run cluster tests (default false)")
-	flag.BoolVar(&runQATests, "qa", false, "run qa-checklist tests (default false)")
 	flag.Parse()
 	os.Exit(m.Run())
 }
@@ -42,9 +39,6 @@ func Test(t *testing.T) {
 	t.Run("Common", testCommon)
 	if runClusterTests {
 		t.Run("Cluster", testCluster)
-	}
-	if runQATests {
-		t.Run("QA", testQA)
 	}
 }
 
