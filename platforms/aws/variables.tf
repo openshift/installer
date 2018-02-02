@@ -297,6 +297,19 @@ variable "tectonic_aws_region" {
   description = "The target AWS region for the cluster."
 }
 
+variable "tectonic_aws_installer_role" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) Name of IAM role to use to access AWS in order to deploy the Tectonic Cluster.
+The name is also the full role's ARN.
+
+Example:
+ * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
+EOF
+}
+
 variable "tectonic_aws_master_iam_role_name" {
   type    = "string"
   default = ""

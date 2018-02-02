@@ -2,6 +2,11 @@ provider "aws" {
   region  = "${var.tectonic_aws_region}"
   profile = "${var.tectonic_aws_profile}"
   version = "1.7.0"
+
+  assume_role {
+    role_arn     = "${var.tectonic_aws_installer_role == "" ? "" : "${var.tectonic_aws_installer_role}"}"
+    session_name = "TECTONIC_INSTALLER_${var.tectonic_cluster_name}"
+  }
 }
 
 data "aws_availability_zones" "azs" {}

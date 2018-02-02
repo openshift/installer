@@ -1,5 +1,10 @@
 provider "aws" {
   region = "${var.vpc_aws_region}"
+
+  assume_role {
+    role_arn     = "${var.aws_role == "" ? "" : "${var.aws_role}"}"
+    session_name = "token-${var.vpc_name}"
+  }
 }
 
 # Declare the data source

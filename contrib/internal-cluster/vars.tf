@@ -15,6 +15,11 @@ variable vpc_aws_region {
   description = "The target AWS region for the cluster"
 }
 
+variable aws_role {
+  default     = ""
+  description = "The IAM Role to assume if using role based keys"
+}
+
 variable vpc_cidr {
   default     = "10.0.0.0/16"
   description = "The CIDR range used for your entire VPC"

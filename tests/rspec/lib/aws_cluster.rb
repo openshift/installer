@@ -14,11 +14,12 @@ require 'tfstate_file'
 class AwsCluster < Cluster
   def initialize(tfvars_file)
     export_random_region_if_not_defined if Jenkins.environment?
-    AWSIAM.assume_role if ENV.key?('TECTONIC_INSTALLER_ROLE')
     @aws_region = tfvars_file.tectonic_aws_region
+    @role_credentials = nil
+    @role_credentials = AWSIAM.assume_role(@aws_region) if ENV.key?('TECTONIC_INSTALLER_ROLE')
 
     unless ssh_key_defined?
-      ENV['TF_VAR_tectonic_aws_ssh_key'] = AwsSupport.create_aws_key_pairs(@aws_region)
+      ENV['TF_VAR_tectonic_aws_ssh_key'] = AwsSupport.create_aws_key_pairs(@aws_region, @role_credentials)
     end
 
     super(tfvars_file)
@@ -38,7 +39,7 @@ class AwsCluster < Cluster
 
   def stop
     if ENV['TF_VAR_tectonic_aws_ssh_key'].include?('rspec-')
-      AwsSupport.delete_aws_key_pairs(ENV['TF_VAR_tectonic_aws_ssh_key'], @aws_region)
+      AwsSupport.delete_aws_key_pairs(ENV['TF_VAR_tectonic_aws_ssh_key'], @aws_region, @role_credentials)
     end
 
     super
@@ -49,7 +50,8 @@ class AwsCluster < Cluster
     # Return the log output in a hash {ip => log}
     hash_log_ip = instances_id.map do |instance_id|
       {
-        instance_id_to_ip_address(instance_id) => AwsSupport.collect_ec2_console_logs(instance_id, @aws_region)
+        instance_id_to_ip_address(instance_id) =>
+        AwsSupport.collect_ec2_console_logs(instance_id, @aws_region, @role_credentials)
       }
     end
     # convert the array to hash [{k1=>v1},{k2=>v2}] to {k1=>v1,k2=>v2}
@@ -58,16 +60,16 @@ class AwsCluster < Cluster
 
   def retrieve_instances_ids(auto_scaling_groups)
     aws_autoscaling_group_master = @tfstate_file.value(auto_scaling_groups, 'id')
-    AwsSupport.sorted_auto_scaling_instances(aws_autoscaling_group_master, @aws_region)
+    AwsSupport.sorted_auto_scaling_instances(aws_autoscaling_group_master, @aws_region, @role_credentials)
   end
 
   def instance_id_to_ip_address(instance_id)
-    AwsSupport.instance_ip_address(instance_id, @aws_region)
+    AwsSupport.instance_ip_address(instance_id, @aws_region, @role_credentials)
   end
 
   def master_ip_addresses
     instances_id = retrieve_instances_ids('module.masters.aws_autoscaling_group.masters')
-    instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region) }
+    instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region, @role_credentials) }
   end
 
   def master_ip_address
@@ -76,7 +78,7 @@ class AwsCluster < Cluster
 
   def worker_ip_addresses
     instances_id = retrieve_instances_ids('module.workers.aws_autoscaling_group.workers')
-    instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region) }
+    instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region, @role_credentials) }
   end
 
   def etcd_ip_addresses
@@ -149,6 +151,7 @@ class AwsCluster < Cluster
     filter = "--filters=Name=vpc-id,Values=#{vpc_id}"
     region = "--region #{@aws_region}"
 
+    # TODO: use aws sdk instead of command line
     success = system("aws ec2 describe-network-interfaces #{filter}  #{region}")
     raise 'failed to describe network interfaces by vpc' unless success
 

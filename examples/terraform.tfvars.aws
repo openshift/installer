@@ -69,6 +69,13 @@ tectonic_aws_etcd_root_volume_type = "gp2"
 // Example: `{ "key" = "value", "foo" = "bar" }`
 // tectonic_aws_extra_tags = ""
 
+// (optional) Name of IAM role to use to access AWS in order to deploy the Tectonic Cluster.
+// The name is also the full role's ARN.
+// 
+// Example:
+//  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
+// tectonic_aws_installer_role = ""
+
 // (optional) This configures master availability zones and their corresponding subnet CIDRs directly.
 // 
 // Example:

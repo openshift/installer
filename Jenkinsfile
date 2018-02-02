@@ -10,6 +10,7 @@ commonCreds = [
   file(credentialsId: 'tectonic-license', variable: 'TF_VAR_tectonic_license_path'),
   file(credentialsId: 'tectonic-pull', variable: 'TF_VAR_tectonic_pull_secret_path'),
   file(credentialsId: 'GCP-APPLICATION', variable: 'GOOGLE_APPLICATION_CREDENTIALS'),
+  string(credentialsId: 'AWS-TECTONIC-ROLE-NAME', variable: 'TF_VAR_tectonic_aws_installer_role'),
   usernamePassword(
     credentialsId: 'jenkins-log-analyzer-user',
     passwordVariable: 'LOG_ANALYZER_PASSWORD',
@@ -30,12 +31,20 @@ commonCreds = [
   ]
 ]
 
+credsUI = commonCreds.collect()
+credsUI.push(
+  [
+    $class: 'AmazonWebServicesCredentialsBinding',
+    credentialsId: 'TF-TECTONIC-JENKINS'
+  ]
+)
+
 creds = commonCreds.collect()
 creds.push(
   [
     $class: 'AmazonWebServicesCredentialsBinding',
-    credentialsId: 'TF-TECTONIC-JENKINS'
-  ],
+    credentialsId: 'TF-TECTONIC-JENKINS-NO-SESSION'
+  ]
 )
 
 govcloudCreds = commonCreds.collect()
@@ -224,7 +233,7 @@ pipeline {
                 node('worker && ec2') {
                   timeout(time: 10, unit: 'MINUTES') {
                     forcefullyCleanWorkspace()
-                    withCredentials(creds) {
+                    withCredentials(credsUI) {
                       withDockerContainer(params.builder_image) {
                         ansiColor('xterm') {
                           unstash 'clean-repo'
@@ -246,7 +255,7 @@ pipeline {
                 node('worker && ec2') {
                   timeout(time: 10, unit: 'MINUTES') {
                     forcefullyCleanWorkspace()
-                    withCredentials(creds) {
+                    withCredentials(credsUI) {
                       withDockerContainer(image: params.builder_image, args: '-u root') {
                         ansiColor('xterm') {
                           unstash 'clean-repo'
@@ -411,7 +420,7 @@ pipeline {
         forcefullyCleanWorkspace()
         echo "Starting with streaming the logfile to the S3 bucket"
         withDockerContainer(params.builder_image) {
-          withCredentials(creds) {
+          withCredentials(credsUI) {
             unstash 'clean-repo'
             script {
               try {
@@ -485,7 +494,7 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
         archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**'
         withDockerContainer(params.builder_image) {
-         withCredentials(creds) {
+         withCredentials(credsUI) {
           script {
             try {
               sh """#!/bin/bash -xe

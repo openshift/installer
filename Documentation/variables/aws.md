@@ -21,6 +21,7 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_external_vpc_id | (optional) ID of an existing VPC to launch nodes into. If unset a new VPC is created.<br><br>Example: `vpc-123456` | string | `` |
 | tectonic_aws_external_worker_subnet_ids | (optional) List of subnet IDs within an existing VPC to deploy worker nodes into. Required to use an existing VPC and the list must match the AZ count.<br><br>Example: `["subnet-111111", "subnet-222222", "subnet-333333"]` | list | `<list>` |
 | tectonic_aws_extra_tags | (optional) Extra AWS tags to be applied to created resources.<br><br>Example: `{ "key" = "value", "foo" = "bar" }` | map | `<map>` |
+| tectonic_aws_installer_role | (optional) Name of IAM role to use to access AWS in order to deploy the Tectonic Cluster. The name is also the full role's ARN.<br><br>Example:  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer | string | `` |
 | tectonic_aws_master_custom_subnets | (optional) This configures master availability zones and their corresponding subnet CIDRs directly.<br><br>Example: `{ eu-west-1a = "10.0.0.0/20", eu-west-1b = "10.0.16.0/20" }` | map | `<map>` |
 | tectonic_aws_master_ec2_type | Instance size for the master node(s). Example: `t2.medium`. | string | `t2.medium` |
 | tectonic_aws_master_extra_sg_ids | (optional) List of additional security group IDs for master nodes.<br><br>Example: `["sg-51530134", "sg-b253d7cc"]` | list | `<list>` |

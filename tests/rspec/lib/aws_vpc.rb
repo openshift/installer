@@ -25,7 +25,8 @@ class AWSVPC
       'TF_VAR_vpc_aws_region' => ENV['TF_VAR_tectonic_aws_region'],
       'TF_VAR_vpc_name' => @name,
       'TF_VAR_ovpn_password' => @ovpn_password,
-      'TF_VAR_base_domain' => 'tectonic-ci.de'
+      'TF_VAR_base_domain' => 'tectonic-ci.de',
+      'TF_VAR_aws_role' => ENV['TF_VAR_tectonic_aws_installer_role']
     }
   end
 

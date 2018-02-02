@@ -15,6 +15,8 @@ class GovcloudCluster < Cluster
   def initialize(tfvars_file)
     if Jenkins.environment?
       export_random_region_if_not_defined
+      # need some refactor when we start using roles for govcloud
+      # see aws_cluster.rb
       # AWSIAM.assume_role
     end
     @aws_region = 'us-gov-west-1'
