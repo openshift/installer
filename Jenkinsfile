@@ -545,7 +545,7 @@ def runRSpecTestBareMetal(testFilePath, credentials) {
       } finally {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
         archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**'
-        withCredentials(credentials) {
+        withCredentials(credsUI) {
           script {
             try {
               sh """#!/bin/bash -xe
