@@ -16,10 +16,6 @@ import (
 	"github.com/coreos/tectonic-installer/installer/pkg/terraform"
 )
 
-const (
-	bcryptCost = 12
-)
-
 // TerraformApplyHandlerInput describes the input expected by the
 // terraformApplyHandler HTTP Handler.
 type TerraformApplyHandlerInput struct {
