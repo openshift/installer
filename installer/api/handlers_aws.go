@@ -22,6 +22,12 @@ import (
 	paws "github.com/coreos/tectonic-installer/installer/pkg/aws"
 )
 
+type awsVPC struct {
+	CIDR string `json:"instanceCIDR"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
 type labelValue struct {
 	Label string `json:"label"`
 	Value string `json:"value"`
@@ -145,26 +151,26 @@ func awsGetVPCsHandler(w http.ResponseWriter, req *http.Request, _ *Context) err
 		return fromAWSErr(err)
 	}
 
-	response := []labelValue{}
-
+	response := make([]awsVPC, 0, len(vpcs.Vpcs))
 	for _, vpc := range vpcs.Vpcs {
 		if vpc.VpcId == nil {
 			continue
 		}
 
-		label := aws.StringValue(vpc.VpcId)
+		var name string
 		for _, tag := range vpc.Tags {
-			if aws.StringValue(tag.Key) == "Name" && aws.StringValue(tag.Value) != "" {
-				label = fmt.Sprintf("%s - %s", aws.StringValue(tag.Value), label)
+			if aws.StringValue(tag.Key) == "Name" {
+				name = aws.StringValue(tag.Value)
 				break
 			}
 		}
 
-		response = append(response, labelValue{label, aws.StringValue(vpc.VpcId)})
+		response = append(response, awsVPC{
+			ID:   aws.StringValue(vpc.VpcId),
+			CIDR: aws.StringValue(vpc.CidrBlock),
+			Name: name,
+		})
 	}
-	sort.Slice(response, func(i, j int) bool {
-		return response[i].Label >= response[j].Label
-	})
 
 	return writeJSONResponse(w, req, http.StatusOK, response)
 }

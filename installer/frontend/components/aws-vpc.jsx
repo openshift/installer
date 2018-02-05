@@ -2,14 +2,15 @@ import _ from 'lodash';
 import React from 'react';
 import { connect } from 'react-redux';
 
+import { cidrEnd, cidrSize, cidrStart } from '../cidr';
 import { compose, validate } from '../validate';
 import { getDefaultSubnets, getZones, getVpcs, getVpcSubnets, validateSubnets } from '../aws-actions';
-import { A, AsyncSelect, Connect, Deselect, DeselectField, DocsA, ExternalLinkIcon, Input, Radio, Select, ToggleButton } from './ui';
+import { A, AsyncSelect, Connect, Deselect, DeselectField, DocsA, ExternalLinkIcon, Input, localeNum, Radio, Select, ToggleButton } from './ui';
 import { Alert } from './alert';
 import { configActions } from '../actions';
 import { AWS_DomainValidation } from './aws-domain-validation';
 import { KubernetesCIDRs } from './k8s-cidrs';
-import { CIDRRow } from './cidr';
+import { CIDRTooltip, CIDRRow } from './cidr';
 import { Field, Form } from '../form';
 import { toError } from '../utils';
 
@@ -44,6 +45,9 @@ import {
 const DEFAULT_AWS_VPC_CIDR = '10.0.0.0/16';
 
 const {setIn} = configActions;
+
+const toLabel = ({id, instanceCIDR, name}) => `${instanceCIDR} (${name ? `${_.truncate(name, {length: 30})} | ${id}` : id})`;
+const toOptions = vs => _.chain(vs).map(v => ({label: toLabel(v), value: v.id})).sortBy('label').value();
 
 const validateVPC = async (data, cc, updatedId, dispatch) => {
   const hostedZoneID = data[AWS_HOSTED_ZONE_ID];
@@ -151,7 +155,7 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
   new Field(AWS_VPC_ID, {
     default: '',
     dependencies: [AWS_REGION_FORM],
-    getExtraStuff: dispatch => dispatch(getVpcs()).then(vpcs => ({options: _.sortBy(vpcs, 'label')})),
+    getExtraStuff: dispatch => dispatch(getVpcs()).then(vpcs => ({options: toOptions(vpcs)})),
     ignoreWhen: cc => cc[AWS_CREATE_VPC] === VPC_CREATE,
     validator: validate.nonEmpty,
   }),
@@ -164,24 +168,29 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
   validator: validateVPC,
 });
 
-const SubnetSelect = ({field, name, subnets, disabled, fieldName}) => <div className="row form-group">
-  <div className="col-xs-4">
-    <Deselect field={fieldName} />
-    <label htmlFor={`${DESELECTED_FIELDS}.${fieldName}`}>{name}</label>
+const SubnetSelect = connect(
+  ({clusterConfig}, {field, subnets}) => ({value: _.find(subnets, {id: _.get(clusterConfig, field)})})
+)(
+  ({az, deselectId, disabled, field, subnets, value}) => <div className="row form-group">
+    <div className="col-xs-4">
+      <Deselect field={deselectId} label={az} />
+    </div>
+    <div className="col-xs-8">
+      <div className="withtooltip">
+        <Connect field={field}>
+          <Select disabled={disabled} options={toOptions(_.filter(subnets, {availabilityZone: az}))}>
+            <option disabled value="">Select a subnet</option>
+          </Select>
+        </Connect>
+        {value && <div className="tooltip">
+          {localeNum(value.availableIPs)} available IP addresses out of {localeNum(cidrSize(value.instanceCIDR))} total ({cidrStart(value.instanceCIDR)} to {cidrEnd(value.instanceCIDR)})
+        </div>}
+      </div>
+    </div>
   </div>
-  <div className="col-xs-6">
-    <Connect field={field}>
-      <Select disabled={disabled}>
-        <option disabled value="">Select a subnet</option>
-        {_.filter(subnets, ({availabilityZone}) => availabilityZone === name)
-          .map(({id, instanceCIDR}) => <option value={id} key={instanceCIDR}>{instanceCIDR} ({id})</option>)
-        }
-      </Select>
-    </Connect>
-  </div>
-</div>;
+);
 
-const stateToProps = ({aws, clusterConfig}) => {
+const stateToProps = ({aws, clusterConfig: cc}) => {
   // populate subnet selection with all available azs ... many to many :(
   const azs = new Set();
   const availableVpcSubnets = aws.availableVpcSubnets.value;
@@ -193,16 +202,17 @@ const stateToProps = ({aws, clusterConfig}) => {
   });
 
   return {
-    azs: new Array(...azs).sort(),
+    advanced: cc[AWS_ADVANCED_NETWORKING],
     availableVpcSubnets: aws.availableVpcSubnets,
-    awsWorkerSubnets: clusterConfig[AWS_WORKER_SUBNETS],
-    awsControllerSubnets: clusterConfig[AWS_CONTROLLER_SUBNETS],
-    awsCreateVpc: clusterConfig[AWS_CREATE_VPC] === VPC_CREATE,
-    awsVpcId: clusterConfig[AWS_VPC_ID],
-    clusterName: clusterConfig[CLUSTER_NAME],
-    clusterSubdomain: clusterConfig[CLUSTER_SUBDOMAIN],
-    internalCluster: clusterConfig[AWS_CREATE_VPC] === VPC_PRIVATE,
-    advanced: clusterConfig[AWS_ADVANCED_NETWORKING],
+    awsControllerSubnets: cc[AWS_CONTROLLER_SUBNETS],
+    awsCreateVpc: cc[AWS_CREATE_VPC] === VPC_CREATE,
+    awsVpc: _.find(aws.availableVpcs.value, {id: cc[AWS_VPC_ID]}),
+    awsVpcId: cc[AWS_VPC_ID],
+    awsWorkerSubnets: cc[AWS_WORKER_SUBNETS],
+    azs: new Array(...azs).sort(),
+    clusterName: cc[CLUSTER_NAME],
+    clusterSubdomain: cc[CLUSTER_SUBDOMAIN],
+    internalCluster: cc[AWS_CREATE_VPC] === VPC_PRIVATE,
   };
 };
 
@@ -213,17 +223,17 @@ const dispatchToProps = dispatch => ({
 });
 
 export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
-  const {awsCreateVpc, availableVpcSubnets, awsVpcId, clusterName, clusterSubdomain, internalCluster, advanced} = props;
+  const {awsCreateVpc, availableVpcSubnets, awsVpc, awsVpcId, clusterName, clusterSubdomain, internalCluster, advanced} = props;
 
   let controllerSubnets;
   let workerSubnets;
+  const deselectId = az => `${AWS_SUBNETS}.${az}`;
   if (awsCreateVpc) {
     controllerSubnets = _.map(props.awsControllerSubnets, (subnet, az) => {
-      const fieldName = `${AWS_SUBNETS}.${az}`;
-      return <DeselectField key={az} field={fieldName}>
+      return <DeselectField key={az} field={deselectId(az)}>
         <CIDRRow
+          deselectId={deselectId(az)}
           field={`${AWS_CONTROLLER_SUBNETS}.${az}`}
-          fieldName={fieldName}
           name={az}
           placeholder="10.0.0.0/24"
           validator={validate.AWSsubnetCIDR}
@@ -231,11 +241,10 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
       </DeselectField>;
     });
     workerSubnets = _.map(props.awsWorkerSubnets, (subnet, az) => {
-      const fieldName = `${AWS_SUBNETS}.${az}`;
-      return <DeselectField key={az} field={fieldName}>
+      return <DeselectField key={az} field={deselectId(az)}>
         <CIDRRow
+          deselectId={deselectId(az)}
           field={`${AWS_WORKER_SUBNETS}.${az}`}
-          fieldName={fieldName}
           name={az}
           placeholder="10.0.0.0/24"
           validator={validate.AWSsubnetCIDR}
@@ -245,34 +254,26 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
   } else if (awsVpcId) {
     const availableControllerSubnets = internalCluster ? availableVpcSubnets.value.private : availableVpcSubnets.value.public;
     if (_.size(availableControllerSubnets)) {
-      controllerSubnets = _.map(props.azs, az => {
-        const fieldName = `${AWS_SUBNETS}.${az}`;
-        return <DeselectField key={az} field={fieldName}>
-          <SubnetSelect
-            field={`${AWS_CONTROLLER_SUBNET_IDS}.${az}`}
-            name={az}
-            fieldName={fieldName}
-            key={az}
-            subnets={availableControllerSubnets}
-          />
-        </DeselectField>;
-      });
+      controllerSubnets = _.map(props.azs, az => <DeselectField field={deselectId(az)} key={az}>
+        <SubnetSelect
+          az={az}
+          deselectId={deselectId(az)}
+          field={`${AWS_CONTROLLER_SUBNET_IDS}.${az}`}
+          subnets={availableControllerSubnets}
+        />
+      </DeselectField>);
     } else if (!availableVpcSubnets.inFly) {
       controllerSubnets = <Alert>{awsVpcId} has no {internalCluster ? 'private' : 'public'} subnets. Please create some using the AWS console.</Alert>;
     }
     if (_.size(availableVpcSubnets.value.private)) {
-      workerSubnets = _.map(props.azs, az => {
-        const fieldName = `${AWS_SUBNETS}.${az}`;
-        return <DeselectField key={az} field={fieldName}>
-          <SubnetSelect
-            field={`${AWS_WORKER_SUBNET_IDS}.${az}`}
-            name={az}
-            fieldName={fieldName}
-            key={az}
-            subnets={availableVpcSubnets.value.private}
-          />
-        </DeselectField>;
-      });
+      workerSubnets = _.map(props.azs, az => <DeselectField field={deselectId(az)} key={az}>
+        <SubnetSelect
+          az={az}
+          deselectId={deselectId(az)}
+          field={`${AWS_WORKER_SUBNET_IDS}.${az}`}
+          subnets={availableVpcSubnets.value.private}
+        />
+      </DeselectField>);
     } else if (!availableVpcSubnets.inFly) {
       workerSubnets = <Alert>{awsVpcId} has no private subnets. Please create some using the AWS console.</Alert>;
     }
@@ -392,11 +393,11 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
       }
       {!awsCreateVpc &&
         <div className="row">
-          <div className="col-xs-3">
+          <div className="col-xs-2">
             <label htmlFor={AWS_VPC_ID}>VPC</label>
           </div>
-          <div className="col-xs-9">
-            <div className="radio wiz-radio-group__radio">
+          <div className="col-xs-10">
+            <div className="withtooltip">
               <Connect field={AWS_VPC_ID}>
                 <AsyncSelect
                   disabledValue="Please select a VPC"
@@ -409,6 +410,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
                   refreshBtn={true}
                 />
               </Connect>
+              {awsVpc && <CIDRTooltip cidr={awsVpc.instanceCIDR} />}
             </div>
           </div>
         </div>

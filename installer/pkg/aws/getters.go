@@ -24,6 +24,8 @@ type VPCSubnet struct {
 	// Availability zone for this subnet
 	// Max one subnet per availability zone
 	AvailabilityZone string `json:"availabilityZone"`
+	// Number of available IP addresses remaining in this subnet
+	AvailableIPs int64 `json:"availableIPs"`
 	// CIDR for this subnet
 	// must be disjoint from other subnets
 	// must be contained by VPC CIDR
@@ -261,11 +263,22 @@ func getVPCSubnetsByIDs(sess *session.Session, subnetIDs []*string) ([]VPCSubnet
 
 	subnets := make([]VPCSubnet, 0, len(output.Subnets))
 	for _, subnet := range output.Subnets {
+		var name string
+		for _, tag := range subnet.Tags {
+			if aws.StringValue(tag.Key) == "Name" {
+				name = aws.StringValue(tag.Value)
+				break
+			}
+		}
+
 		subnets = append(subnets, VPCSubnet{
 			ID:               aws.StringValue(subnet.SubnetId),
 			AvailabilityZone: aws.StringValue(subnet.AvailabilityZone),
+			AvailableIPs:     aws.Int64Value(subnet.AvailableIpAddressCount),
 			InstanceCIDR:     aws.StringValue(subnet.CidrBlock),
+			Name:             name,
 		})
 	}
+
 	return subnets, nil
 }

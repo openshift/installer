@@ -61,6 +61,8 @@ const FIELD_PROPS = ImmutableSet([
 
 export const ExternalLinkIcon = () => <i className="fa fa-external-link" style={{marginLeft: 5}} />;
 
+export const localeNum = num => num.toLocaleString('en', {useGrouping: true});
+
 // Same as an <a> except defaults to rel="noopener noreferrer" and target="_blank"
 export const A = props => <a rel="noopener noreferrer" target="_blank" {...props} />;
 
@@ -238,10 +240,9 @@ export const FileArea = props => {
 // <Select id:REQUIRED value onValue>
 //   <option....>
 // </Select>
-export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirty, availableValues, className, disabled, style}) => {
+export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirty, options, className, disabled, style}) => {
   const optionElems = [];
-  if (availableValues) {
-    let options = availableValues.value;
+  if (options) {
     if (value && !options.map(r => r.value).includes(value)) {
       options = [{label: value, value}].concat(options);
     }
@@ -380,7 +381,7 @@ class Connect_ extends React.Component {
 
 export const Connect = connect(stateToProps, dispatchToProps)(Connect_);
 
-// if undefined, default to true
+// If undefined, default to not deselected
 const stateToIsDeselected = ({clusterConfig}, {field}) => {
   field = `${DESELECTED_FIELDS}.${field}`;
   return {
@@ -392,13 +393,16 @@ const stateToIsDeselected = ({clusterConfig}, {field}) => {
 export const Deselect = connect(
   stateToIsDeselected,
   {updateField: configActions.updateField}
-)(({field, isDeselected, updateField}) => <span className="deselect">
-  <CheckBox id={field} value={!isDeselected} onValue={v => updateField(field, !v)} />
-</span>);
+)(({field, isDeselected, label, updateField}) => <div>
+  <span className="deselect">
+    <CheckBox id={field} value={!isDeselected} onValue={v => updateField(field, !v)} />
+  </span>
+  <label htmlFor={field}>{label}</label>
+</div>);
 
 export const DeselectField = connect(stateToIsDeselected)(({children, isDeselected}) => React.cloneElement(
   React.Children.only(children),
-  {disabled: isDeselected, selectable: true}
+  {disabled: isDeselected}
 ));
 
 const certPlaceholder = `Paste your certificate here. It should start with:

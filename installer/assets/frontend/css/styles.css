@@ -496,9 +496,9 @@ input.wiz-super-short-input {
   color: #fff;
   display: block;
   left: 50%;
-  max-width: 400px;
+  max-width: 500px;
   opacity: 0;
-  padding: 8px 15px 6px;;
+  padding: 8px 15px 6px;
   pointer-events: none;
   position: absolute;
   text-align: center;
