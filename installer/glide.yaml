@@ -389,3 +389,4 @@ import:
   - json/parser
   - json/scanner
   - json/token
+- package: gopkg.in/alecthomas/kingpin.v2

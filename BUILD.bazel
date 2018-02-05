@@ -84,6 +84,11 @@ alias(
     actual = "//installer/cmd/installer:installer",
 )
 
+alias(
+    name = "cli",
+    actual = "//installer/cmd/tectonic:tectonic",
+)
+
 load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
 
 # We use a genrule here to combine the tarballs rather than a pkg_tar
