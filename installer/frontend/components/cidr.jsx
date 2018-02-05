@@ -3,27 +3,19 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { CIDR, Connect, Deselect } from './ui';
-import { validate } from '../validate';
-import { DESELECTED_FIELDS } from '../cluster-config.js';
-
-export const cidrSize = cidr => {
-  if (validate.CIDR(cidr)) {
-    return undefined;
-  }
-  const [, bits] = cidr.split('/');
-
-  // JavaScript's bit shifting only works on signed 32bit ints so <<31 would be negative :(
-  return Math.pow(2, 32 - parseInt(bits, 10));
-};
+import { cidrEnd, cidrSize, cidrStart } from '../cidr';
+import { DESELECTED_FIELDS } from '../cluster-config';
 
 const CIDRTooltip = connect(
-  ({clusterConfig}, {field}) => ({clusterConfig, value: _.get(clusterConfig, field)})
-)(({value}) => {
-  const addresses = cidrSize(value);
-  if (!_.isInteger(addresses)) {
+  ({clusterConfig}, {field}) => ({cidr: _.get(clusterConfig, field)})
+)(({cidr}) => {
+  const size = cidrSize(cidr);
+  if (!_.isInteger(size)) {
     return null;
   }
-  return <div className="tooltip">{addresses.toLocaleString('en', {useGrouping: true})} IP address{addresses > 1 && 'es'}</div>;
+  return <div className="tooltip">
+    {size.toLocaleString('en', {useGrouping: true})} IP address{size > 1 && 'es'} ({size === 1 ? cidrStart(cidr) : `${cidrStart(cidr)} to ${cidrEnd(cidr)}`})
+  </div>;
 });
 
 export const CIDRRow = ({field, name, disabled, placeholder, autoFocus, selectable, fieldName, validator}) => {

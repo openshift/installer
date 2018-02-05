@@ -3,11 +3,12 @@ import pluralize from 'pluralize';
 import React from 'react';
 import { connect } from 'react-redux';
 
+import { cidrSize } from '../cidr';
 import { Field, Form } from '../form';
 import { AWS_TF, BARE_METAL_TF } from '../platforms';
 import { validate } from '../validate';
 import { Alert } from './alert';
-import { CIDRRow, cidrSize } from './cidr';
+import { CIDRRow } from './cidr';
 import {
   AWS_CONTROLLERS,
   AWS_WORKERS,
