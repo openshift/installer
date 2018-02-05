@@ -430,7 +430,7 @@ pipeline {
                 ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh jenkins-logs
                 """
               } catch (Exception e) {
-                notifyBuildSlack(true)
+                notifyBuildSlack()
               } finally {
                 cleanWs notFailBuild: true
               }
@@ -441,7 +441,13 @@ pipeline {
     }
 
     failure {
-      notifyBuildSlack(params.NOTIFY_SLACK)
+      script {
+        if (params.NOTIFY_SLACK) {
+          echo 'Sending notification to slack...'
+          notifyBuildSlack()
+          echo 'Slack notifacation sent.'
+        }
+      }
     }
   }
 }
@@ -572,15 +578,11 @@ def reportStatusToGithub(status, context, commitId) {
   }
 }
 
-def notifyBuildSlack(Boolean notify) {
-  if(notify) {
-    def colorCode = '#FF0000'
-    def subject = "Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]': ${message}"
-    def summary = "${subject} (${env.BUILD_URL})"
+def notifyBuildSlack() {
+  def colorCode = '#FF0000'
+  def subject = "Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
+  def summary = "${subject} (${env.BUILD_URL})"
 
-    // Send notifications
-    slackSend(color: colorCode, message: summary, channel: "#team-installer")
-  } else {
-    return 0
-  }
+  // Send notifications
+  slackSend(color: colorCode, message: summary, channel: "#team-installer")
 }
