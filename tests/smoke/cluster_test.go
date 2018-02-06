@@ -41,9 +41,6 @@ var (
 	// defaultIgnoredManifests represents the manifests that are ignored by
 	// testAllResourcesCreated by default.
 	defaultIgnoredManifests = []string{
-		"tectonic/updater/cluster-config.yaml",
-		"tectonic/updater/app_versions/app-version-tectonic-etcd.yaml",
-		"tectonic/updater/operators/tectonic-etcd-operator.yaml",
 		"bootstrap",
 		"kco-config.yaml",
 	}

@@ -6,8 +6,8 @@ metadata:
   labels:
     managed-by-channel-operator: "true"
 spec:
-  desiredVersion: ${kubernetes_version}
   paused: false
 status:
-  currentVersion: ${kubernetes_version}
   paused: false
+upgradereq: 0
+upgradecomp: 0
