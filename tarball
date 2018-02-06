@@ -1,0 +1,11 @@
+#!/bin/bash -e
+VERSION=${VERSION:-}
+DIR=tectonic
+[ ! -z "$VERSION" ] && DIR="$DIR"_"$VERSION"
+
+bazel build tarball --action_env=VERSION
+bazel build backend --experimental_platforms=@io_bazel_rules_go//go/toolchain:darwin_amd64
+TEMP="$(mktemp -d)"
+tar -xzf bazel-bin/tectonic.tar.gz -C "$TEMP"
+cp bazel-bin/installer/cmd/installer/darwin_amd64_pure_stripped/installer "$TEMP"/"$DIR"/tectonic-installer/darwin/
+tar -C "$TEMP"/ -czf "$DIR".tar.gz "$DIR"
