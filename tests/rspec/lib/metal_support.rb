@@ -46,9 +46,7 @@ module MetalSupport
       FileUtils.cp(cert, dest_folder)
     end
 
-    # Download CoreOS images
-    cl_version = varfile.tectonic_container_linux_version
-    system(env_variables_setup, "#{root}/matchbox/scripts/get-coreos stable #{cl_version} ${ASSETS_DIR}")
+    download_cl(varfile)
 
     # Configuring ssh-agent
     execute_command('eval "$(ssh-agent -s)"')
@@ -76,7 +74,6 @@ module MetalSupport
     return if $CHILD_STATUS.exitstatus.zero?
     execute_command('sudo cp /etc/resolv.conf /etc/resolv.conf.bak')
     execute_command('echo "nameserver 172.18.0.3" | cat - /etc/resolv.conf | sudo tee /etc/resolv.conf >/dev/null')
-    execute_command('cat /etc/resolv.conf')
   end
 
   def self.start_matchbox(varfile)
@@ -87,6 +84,17 @@ module MetalSupport
       wait_for_matchbox
       wait_for_terraform(varfile)
     end
+  end
+
+  def self.download_cl(varfile)
+    # Download CoreOS images
+    cl_channel = varfile.tectonic_container_linux_channel
+    cl_version = varfile.tectonic_container_linux_version
+    if cl_version.include?('latest')
+      cl_version_text = `curl https://#{cl_channel}.release.core-os.net/amd64-usr/current/version.txt`
+      cl_version = cl_version_text[/COREOS_VERSION=.*/].split('=').last
+    end
+    system(env_variables_setup, "#{root_path}/matchbox/scripts/get-coreos #{cl_channel} #{cl_version} ${ASSETS_DIR}")
   end
 
   def self.destroy

@@ -7,5 +7,6 @@
     "tectonic_master_count": "1",
     "tectonic_service_cidr": "10.3.0.0/16",
     "tectonic_stats_url": "https://stats-collector.tectonic.com",
-    "tectonic_worker_count": "1"
+    "tectonic_worker_count": "1",
+    "tectonic_container_linux_channel": "beta"
 }
