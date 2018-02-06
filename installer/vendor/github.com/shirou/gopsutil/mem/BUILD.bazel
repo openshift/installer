@@ -4,49 +4,17 @@ go_library(
     name = "go_default_library",
     srcs = [
         "mem.go",
-    ] + select({
-        "@io_bazel_rules_go//go/platform:android": [
-            "mem_fallback.go",
-        ],
-        "@io_bazel_rules_go//go/platform:darwin": [
-            "mem_darwin.go",
-            "mem_darwin_cgo.go",
-            "mem_darwin_nocgo.go",
-        ],
-        "@io_bazel_rules_go//go/platform:dragonfly": [
-            "mem_fallback.go",
-        ],
-        "@io_bazel_rules_go//go/platform:freebsd": [
-            "mem_freebsd.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux": [
-            "mem_linux.go",
-        ],
-        "@io_bazel_rules_go//go/platform:nacl": [
-            "mem_fallback.go",
-        ],
-        "@io_bazel_rules_go//go/platform:netbsd": [
-            "mem_fallback.go",
-        ],
-        "@io_bazel_rules_go//go/platform:openbsd": [
-            "mem_openbsd.go",
-        ],
-        "@io_bazel_rules_go//go/platform:plan9": [
-            "mem_fallback.go",
-        ],
-        "@io_bazel_rules_go//go/platform:solaris": [
-            "mem_solaris.go",
-        ],
-        "@io_bazel_rules_go//go/platform:windows": [
-            "mem_windows.go",
-        ],
-        "//conditions:default": [],
-    }) + select({
-        "@io_bazel_rules_go//go/platform:openbsd_amd64": [
-            "mem_openbsd_amd64.go",
-        ],
-        "//conditions:default": [],
-    }),
+        "mem_fallback.go",
+        "mem_darwin.go",
+        "mem_darwin_cgo.go",
+        "mem_darwin_nocgo.go",
+        "mem_freebsd.go",
+        "mem_linux.go",
+        "mem_openbsd.go",
+        "mem_solaris.go",
+        "mem_windows.go",
+        "mem_openbsd_amd64.go",
+    ],
     cgo = True,
     importpath = "github.com/shirou/gopsutil/mem",
     visibility = ["//visibility:public"],

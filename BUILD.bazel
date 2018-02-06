@@ -92,10 +92,7 @@ load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
 genrule(
     name = "tarball",
     srcs = [
-        # Cross compiling to darwin using goos is currently broken.
-        # Instead we can cross compile ad hoc on the terminal
-        # by explicitly setting the toolchain: https://github.com/bazelbuild/rules_go/issues/1148
-        #":tarball_installer_binary_darwin",
+        ":tarball_installer_binary_darwin",
         ":tarball_installer_binary_linux",
         ":tarball_terraform_configuration",
         ":tarball_terraform_binary_darwin",
@@ -106,13 +103,15 @@ genrule(
     ],
     outs = ["tectonic.tar.gz"],
     cmd = '\n'.join([
-            "VERSION=$${VERSION:-}",
+            "VERSION=$${TECTONIC_VERSION:-}",
             "DIR=tectonic",
             "[ ! -z $$VERSION ] && DIR=\"$$DIR\"_\"$$VERSION\"",
+            "TMPDIR=$$(mktemp -d)",
+            "mkdir $$TMPDIR/$$DIR",
             "for s in $(SRCS); do",
-                "tar --extract --file $$s --transform s,^,./$$DIR/,",
+                "tar -C $$TMPDIR/$$DIR --extract --file $$s --strip-components=1",
             "done",
-            "tar --create --gzip --file $@ $$DIR"
+            "tar -C $$TMPDIR --create --gzip --file $@ $$DIR"
     ]),
     output_to_bindir = 1,
 )
