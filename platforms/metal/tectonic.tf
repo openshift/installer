@@ -25,18 +25,21 @@ module "bootkube" {
 
   pull_secret_path = "${pathexpand(var.tectonic_pull_secret_path)}"
 
-  apiserver_cert_pem   = "${module.kube_certs.apiserver_cert_pem}"
-  apiserver_key_pem    = "${module.kube_certs.apiserver_key_pem}"
-  etcd_ca_cert_pem     = "${module.etcd_certs.etcd_ca_crt_pem}"
-  etcd_client_cert_pem = "${module.etcd_certs.etcd_client_crt_pem}"
-  etcd_client_key_pem  = "${module.etcd_certs.etcd_client_key_pem}"
-  etcd_peer_cert_pem   = "${module.etcd_certs.etcd_peer_crt_pem}"
-  etcd_peer_key_pem    = "${module.etcd_certs.etcd_peer_key_pem}"
-  etcd_server_cert_pem = "${module.etcd_certs.etcd_server_crt_pem}"
-  etcd_server_key_pem  = "${module.etcd_certs.etcd_server_key_pem}"
-  kube_ca_cert_pem     = "${module.kube_certs.ca_cert_pem}"
-  kubelet_cert_pem     = "${module.kube_certs.kubelet_cert_pem}"
-  kubelet_key_pem      = "${module.kube_certs.kubelet_key_pem}"
+  aggregator_ca_cert_pem   = "${module.kube_certs.aggregator_ca_cert_pem}"
+  apiserver_cert_pem       = "${module.kube_certs.apiserver_cert_pem}"
+  apiserver_key_pem        = "${module.kube_certs.apiserver_key_pem}"
+  apiserver_proxy_cert_pem = "${module.kube_certs.apiserver_proxy_cert_pem}"
+  apiserver_proxy_key_pem  = "${module.kube_certs.apiserver_proxy_key_pem}"
+  etcd_ca_cert_pem         = "${module.etcd_certs.etcd_ca_crt_pem}"
+  etcd_client_cert_pem     = "${module.etcd_certs.etcd_client_crt_pem}"
+  etcd_client_key_pem      = "${module.etcd_certs.etcd_client_key_pem}"
+  etcd_peer_cert_pem       = "${module.etcd_certs.etcd_peer_crt_pem}"
+  etcd_peer_key_pem        = "${module.etcd_certs.etcd_peer_key_pem}"
+  etcd_server_cert_pem     = "${module.etcd_certs.etcd_server_crt_pem}"
+  etcd_server_key_pem      = "${module.etcd_certs.etcd_server_key_pem}"
+  kube_ca_cert_pem         = "${module.kube_certs.ca_cert_pem}"
+  kubelet_cert_pem         = "${module.kube_certs.kubelet_cert_pem}"
+  kubelet_key_pem          = "${module.kube_certs.kubelet_key_pem}"
 
   etcd_endpoints = "${split(",",
     length(compact(var.tectonic_etcd_servers)) == 0

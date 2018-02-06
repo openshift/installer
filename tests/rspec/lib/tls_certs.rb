@@ -4,19 +4,24 @@ require 'certificate_authority'
 require 'fileutils'
 
 # Generates necessary TLS certificates
+# rubocop:disable Metrics/MethodLength
 def generate_tls(path, cluster_name, domain, etcd_server_count, expiration_date = 365)
   root_kube, server_kube, client_kube = generate_api_certs(cluster_name, domain, expiration_date)
+  aggregator_kube, proxy_kube = generate_api_proxy_certs(expiration_date)
   server_identity, client_identity = generate_identity_certs(root_kube, expiration_date)
   root_etcd, server_etcd, server_peer_etcd, client_etcd = generate_etcd_certs(cluster_name, domain,
                                                                               etcd_server_count, expiration_date)
   server_ingress = generate_ingress_certs(root_kube, cluster_name, domain, expiration_date)
 
   [
+    ['kube/aggregator-ca.crt', aggregator_kube.to_pem],
     ['kube/ca.crt', root_kube.to_pem],
     ['kube/kubelet.key', client_kube.key_material.private_key],
     ['kube/kubelet.crt', client_kube.to_pem],
     ['kube/apiserver.key', server_kube.key_material.private_key],
     ['kube/apiserver.crt', server_kube.to_pem],
+    ['kube/apiserver-proxy.key', proxy_kube.key_material.private_key],
+    ['kube/apiserver-proxy.crt', proxy_kube.to_pem],
 
     ['identity/identity-client.key', client_identity.key_material.private_key],
     ['identity/identity-client.crt', client_identity.to_pem],
@@ -73,6 +78,24 @@ def generate_api_certs(cluster_name, domain, expiration_date = 365)
   client_kube = client_certificate(root_kube, 'kubelet', 'system:masters', signing_profile_client, expiration_date)
 
   [root_kube, server_kube, client_kube]
+end
+
+def generate_api_proxy_certs(expiration_date = 365)
+  aggregator_kube = certificate_authority('aggregator', 'bootkube', expiration_date)
+
+  signing_profile_proxy = {
+    'extensions' => {
+      'keyUsage' => { 'usage' => %w[critical keyCertSign digitalSignature keyEncipherment] },
+      'extendedKeyUsage' => { 'usage' => %w[clientAuth] }
+    }
+  }
+  proxy_kube = server_certificate(aggregator_kube,
+                                  'kube-apiserver-proxy',
+                                  'kube-master',
+                                  signing_profile_proxy,
+                                  expiration_date)
+
+  [aggregator_kube, proxy_kube]
 end
 
 def generate_identity_certs(root_kube, expiration_date = 365)

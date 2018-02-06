@@ -13,6 +13,16 @@ variable "apiserver_key_pem" {
   description = "The API server key in PEM format."
 }
 
+variable "apiserver_proxy_cert_pem" {
+  type        = "string"
+  description = "The API server proxy certificate in PEM format."
+}
+
+variable "apiserver_proxy_key_pem" {
+  type        = "string"
+  description = "The API server proxy key in PEM format."
+}
+
 variable "cloud_provider" {
   description = "The provider for cloud services (empty string for no provider)"
   type        = "string"
@@ -81,6 +91,11 @@ variable "etcd_server_key_pem" {
 variable "kube_apiserver_url" {
   description = "URL used to reach kube-apiserver"
   type        = "string"
+}
+
+variable "aggregator_ca_cert_pem" {
+  type        = "string"
+  description = "The Aggregated API Server CA in PEM format."
 }
 
 variable "kube_ca_cert_pem" {
