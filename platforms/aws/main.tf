@@ -11,6 +11,11 @@ provider "aws" {
 
 data "aws_availability_zones" "azs" {}
 
+data "template_file" "etcd_hostname_list" {
+  count    = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
+  template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
+}
+
 module "container_linux" {
   source = "../../modules/container_linux"
 
@@ -23,7 +28,7 @@ module "vpc" {
 
   base_domain              = "${var.tectonic_base_domain}"
   cidr_block               = "${var.tectonic_aws_vpc_cidr_block}"
-  cluster_id               = "${module.tectonic.cluster_id}"
+  cluster_id               = "${local.cluster_id}"
   cluster_name             = "${var.tectonic_cluster_name}"
   custom_dns_name          = "${var.tectonic_dns_name}"
   enable_etcd_sg           = "${length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
@@ -71,7 +76,7 @@ module "etcd" {
   source = "../../modules/aws/etcd"
 
   base_domain                = "${var.tectonic_base_domain}"
-  cluster_id                 = "${module.tectonic.cluster_id}"
+  cluster_id                 = "${local.cluster_id}"
   cluster_name               = "${var.tectonic_cluster_name}"
   container_image            = "${var.tectonic_container_images["etcd"]}"
   container_linux_channel    = "${var.tectonic_container_linux_channel}"
@@ -87,7 +92,7 @@ module "etcd" {
   root_volume_iops           = "${var.tectonic_aws_etcd_root_volume_iops}"
   root_volume_size           = "${var.tectonic_aws_etcd_root_volume_size}"
   root_volume_type           = "${var.tectonic_aws_etcd_root_volume_type}"
-  s3_bucket                  = "${aws_s3_bucket.tectonic.bucket}"
+  s3_bucket                  = "${local.s3_bucket}"
   sg_ids                     = "${concat(var.tectonic_aws_etcd_extra_sg_ids, list(module.vpc.etcd_sg_id))}"
   ssh_key                    = "${var.tectonic_aws_ssh_key}"
   subnets                    = "${module.vpc.worker_subnet_ids}"
@@ -98,7 +103,7 @@ module "etcd" {
 module "ignition_masters" {
   source = "../../modules/ignition"
 
-  assets_location           = "${aws_s3_bucket_object.tectonic_assets.bucket}/${aws_s3_bucket_object.tectonic_assets.key}"
+  assets_location           = "${local.tectonic_bucket}/${local.tectonic_key}"
   base_domain               = "${var.tectonic_base_domain}"
   bootstrap_upgrade_cl      = "${var.tectonic_bootstrap_upgrade_cl}"
   cloud_provider            = "aws"
@@ -106,23 +111,23 @@ module "ignition_masters" {
   container_images          = "${var.tectonic_container_images}"
   custom_ca_cert_pem_list   = "${var.tectonic_custom_ca_pem_list}"
   etcd_advertise_name_list  = "${data.template_file.etcd_hostname_list.*.rendered}"
-  etcd_ca_cert_pem          = "${module.etcd_certs.etcd_ca_crt_pem}"
-  etcd_client_crt_pem       = "${module.etcd_certs.etcd_client_crt_pem}"
-  etcd_client_key_pem       = "${module.etcd_certs.etcd_client_key_pem}"
+  etcd_ca_cert_pem          = "${local.etcd_ca_crt_pem}"
+  etcd_client_crt_pem       = "${local.etcd_client_crt_pem}"
+  etcd_client_key_pem       = "${local.etcd_client_key_pem}"
   etcd_count                = "${length(data.template_file.etcd_hostname_list.*.id)}"
   etcd_initial_cluster_list = "${data.template_file.etcd_hostname_list.*.rendered}"
-  etcd_peer_crt_pem         = "${module.etcd_certs.etcd_peer_crt_pem}"
-  etcd_peer_key_pem         = "${module.etcd_certs.etcd_peer_key_pem}"
-  etcd_server_crt_pem       = "${module.etcd_certs.etcd_server_crt_pem}"
-  etcd_server_key_pem       = "${module.etcd_certs.etcd_server_key_pem}"
+  etcd_peer_crt_pem         = "${local.etcd_peer_crt_pem}"
+  etcd_peer_key_pem         = "${local.etcd_peer_key_pem}"
+  etcd_server_crt_pem       = "${local.etcd_server_crt_pem}"
+  etcd_server_key_pem       = "${local.etcd_server_key_pem}"
   http_proxy                = "${var.tectonic_http_proxy_address}"
   https_proxy               = "${var.tectonic_https_proxy_address}"
   image_re                  = "${var.tectonic_image_re}"
-  ingress_ca_cert_pem       = "${module.ingress_certs.ca_cert_pem}"
+  ingress_ca_cert_pem       = "${local.ingress_certs_ca_cert_pem}"
   iscsi_enabled             = "${var.tectonic_iscsi_enabled}"
-  kube_ca_cert_pem          = "${module.kube_certs.ca_cert_pem}"
-  kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
-  kubeconfig_fetch_cmd      = "/opt/s3-puller.sh ${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key} /etc/kubernetes/kubeconfig"
+  kube_ca_cert_pem          = "${local.kube_certs_ca_cert_pem}"
+  kube_dns_service_ip       = "${local.kube_dns_service_ip}"
+  kubeconfig_fetch_cmd      = "/opt/s3-puller.sh ${local.kubeconfig_bucket}/${local.kubeconfig_key} /etc/kubernetes/kubeconfig"
   kubelet_debug_config      = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label        = "node-role.kubernetes.io/master"
   kubelet_node_taints       = "node-role.kubernetes.io/master=:NoSchedule"
@@ -132,19 +137,19 @@ module "ignition_masters" {
 module "masters" {
   source = "../../modules/aws/master-asg"
 
-  assets_s3_location                   = "${aws_s3_bucket_object.tectonic_assets.bucket}/${aws_s3_bucket_object.tectonic_assets.key}"
+  assets_s3_location                   = "${local.tectonic_bucket}/${local.tectonic_key}"
   autoscaling_group_extra_tags         = "${var.tectonic_autoscaling_group_extra_tags}"
   aws_lbs                              = "${module.vpc.aws_lbs}"
   base_domain                          = "${var.tectonic_base_domain}"
-  cluster_id                           = "${module.tectonic.cluster_id}"
+  cluster_id                           = "${local.cluster_id}"
   cluster_name                         = "${var.tectonic_cluster_name}"
   container_images                     = "${var.tectonic_container_images}"
   container_linux_channel              = "${var.tectonic_container_linux_channel}"
   container_linux_version              = "${module.container_linux.version}"
   ec2_type                             = "${var.tectonic_aws_master_ec2_type}"
   extra_tags                           = "${var.tectonic_aws_extra_tags}"
-  ign_bootkube_path_unit_id            = "${module.bootkube.systemd_path_unit_id}"
-  ign_bootkube_service_id              = "${module.bootkube.systemd_service_id}"
+  ign_bootkube_path_unit_id            = "${data.ignition_systemd_unit.bootkube_path_unit.id}"
+  ign_bootkube_service_id              = "${data.ignition_systemd_unit.bootkube_service.id}"
   ign_ca_cert_id_list                  = "${module.ignition_masters.ca_cert_id_list}"
   ign_docker_dropin_id                 = "${module.ignition_masters.docker_dropin_id}"
   ign_init_assets_service_id           = "${module.ignition_masters.init_assets_service_id}"
@@ -160,8 +165,8 @@ module "masters" {
   ign_rm_assets_service_id             = "${module.ignition_masters.rm_assets_service_id}"
   ign_s3_puller_id                     = "${module.ignition_masters.s3_puller_id}"
   ign_systemd_default_env_id           = "${local.tectonic_http_proxy_enabled ? module.ignition_masters.systemd_default_env_id : ""}"
-  ign_tectonic_path_unit_id            = "${module.tectonic.systemd_path_unit_id}"
-  ign_tectonic_service_id              = "${module.tectonic.systemd_service_id}"
+  ign_tectonic_path_unit_id            = "${data.ignition_systemd_unit.tectonic_path_unit.id}"
+  ign_tectonic_service_id              = "${data.ignition_systemd_unit.tectonic_service.id}"
   ign_update_ca_certificates_dropin_id = "${module.ignition_masters.update_ca_certificates_dropin_id}"
   instance_count                       = "${var.tectonic_master_count}"
   master_iam_role                      = "${var.tectonic_aws_master_iam_role_name}"
@@ -171,7 +176,7 @@ module "masters" {
   root_volume_iops                     = "${var.tectonic_aws_master_root_volume_iops}"
   root_volume_size                     = "${var.tectonic_aws_master_root_volume_size}"
   root_volume_type                     = "${var.tectonic_aws_master_root_volume_type}"
-  s3_bucket                            = "${aws_s3_bucket.tectonic.bucket}"
+  s3_bucket                            = "${local.tectonic_bucket}"
   ssh_key                              = "${var.tectonic_aws_ssh_key}"
   subnet_ids                           = "${module.vpc.master_subnet_ids}"
   ec2_ami                              = "${var.tectonic_aws_ec2_ami_override}"
@@ -184,15 +189,15 @@ module "ignition_workers" {
   cloud_provider          = "aws"
   container_images        = "${var.tectonic_container_images}"
   custom_ca_cert_pem_list = "${var.tectonic_custom_ca_pem_list}"
-  etcd_ca_cert_pem        = "${module.etcd_certs.etcd_ca_crt_pem}"
+  etcd_ca_cert_pem        = "${local.etcd_ca_crt_pem}"
   http_proxy              = "${var.tectonic_http_proxy_address}"
   https_proxy             = "${var.tectonic_https_proxy_address}"
   image_re                = "${var.tectonic_image_re}"
-  ingress_ca_cert_pem     = "${module.ingress_certs.ca_cert_pem}"
+  ingress_ca_cert_pem     = "${local.ingress_certs_ca_cert_pem}"
   iscsi_enabled           = "${var.tectonic_iscsi_enabled}"
-  kube_ca_cert_pem        = "${module.kube_certs.ca_cert_pem}"
-  kube_dns_service_ip     = "${module.bootkube.kube_dns_service_ip}"
-  kubeconfig_fetch_cmd    = "/opt/s3-puller.sh ${aws_s3_bucket_object.kubeconfig.bucket}/${aws_s3_bucket_object.kubeconfig.key} /etc/kubernetes/kubeconfig"
+  kube_ca_cert_pem        = "${local.kube_certs_ca_cert_pem}"
+  kube_dns_service_ip     = "${local.kube_dns_service_ip}"
+  kubeconfig_fetch_cmd    = "/opt/s3-puller.sh ${local.kubeconfig_bucket}/${local.kubeconfig_key} /etc/kubernetes/kubeconfig"
   kubelet_debug_config    = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label      = "node-role.kubernetes.io/node"
   kubelet_node_taints     = ""
@@ -203,7 +208,7 @@ module "workers" {
   source = "../../modules/aws/worker-asg"
 
   autoscaling_group_extra_tags         = "${var.tectonic_autoscaling_group_extra_tags}"
-  cluster_id                           = "${module.tectonic.cluster_id}"
+  cluster_id                           = "${local.cluster_id}"
   cluster_name                         = "${var.tectonic_cluster_name}"
   container_linux_channel              = "${var.tectonic_container_linux_channel}"
   container_linux_version              = "${module.container_linux.version}"
@@ -227,7 +232,7 @@ module "workers" {
   root_volume_iops                     = "${var.tectonic_aws_worker_root_volume_iops}"
   root_volume_size                     = "${var.tectonic_aws_worker_root_volume_size}"
   root_volume_type                     = "${var.tectonic_aws_worker_root_volume_type}"
-  s3_bucket                            = "${aws_s3_bucket.tectonic.bucket}"
+  s3_bucket                            = "${local.s3_bucket}"
   sg_ids                               = "${concat(var.tectonic_aws_worker_extra_sg_ids, list(module.vpc.worker_sg_id))}"
   ssh_key                              = "${var.tectonic_aws_ssh_key}"
   subnet_ids                           = "${module.vpc.worker_subnet_ids}"
@@ -245,7 +250,7 @@ module "dns" {
   api_internal_elb_zone_id       = "${module.vpc.aws_elb_api_internal_zone_id}"
   api_ip_addresses               = "${module.vpc.aws_lbs}"
   base_domain                    = "${var.tectonic_base_domain}"
-  cluster_id                     = "${module.tectonic.cluster_id}"
+  cluster_id                     = "${local.cluster_id}"
   cluster_name                   = "${var.tectonic_cluster_name}"
   console_elb_dns_name           = "${module.vpc.aws_console_dns_name}"
   console_elb_zone_id            = "${module.vpc.aws_elb_console_zone_id}"
@@ -260,4 +265,28 @@ module "dns" {
   tectonic_extra_tags            = "${var.tectonic_aws_extra_tags}"
   tectonic_private_endpoints     = "${var.tectonic_aws_private_endpoints}"
   tectonic_public_endpoints      = "${var.tectonic_aws_public_endpoints}"
+}
+
+data "ignition_systemd_unit" "tectonic_service" {
+  name    = "tectonic.service"
+  enabled = false
+  content = "${local.tectonic_service}"
+}
+
+data "ignition_systemd_unit" "tectonic_path_unit" {
+  name    = "tectonic.path"
+  enabled = true
+  content = "${local.tectonic_path_unit}"
+}
+
+data "ignition_systemd_unit" "bootkube_service" {
+  name    = "bootkube.service"
+  enabled = false
+  content = "${local.bootkube_service}"
+}
+
+data "ignition_systemd_unit" "bootkube_path_unit" {
+  name    = "bootkube.path"
+  enabled = true
+  content = "${local.bootkube_path_unit}"
 }

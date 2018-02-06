@@ -1,3 +1,16 @@
+provider "aws" {
+  region  = "${var.tectonic_aws_region}"
+  profile = "${var.tectonic_aws_profile}"
+  version = "1.7.0"
+}
+
+locals {
+  ingress_internal_fqdn = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}"
+  api_internal_fqdn     = "${var.tectonic_cluster_name}-api.${var.tectonic_base_domain}"
+}
+
+data "aws_availability_zones" "azs" {}
+
 data "template_file" "etcd_hostname_list" {
   count    = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
   template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
@@ -9,8 +22,8 @@ module "bootkube" {
 
   cluster_name = "${var.tectonic_cluster_name}"
 
-  kube_apiserver_url = "https://${var.tectonic_aws_private_endpoints ? module.dns.api_internal_fqdn : module.dns.api_external_fqdn}:443"
-  oidc_issuer_url    = "https://${var.tectonic_aws_private_endpoints ? module.dns.ingress_internal_fqdn : module.dns.ingress_external_fqdn}/identity"
+  kube_apiserver_url = "https://${local.api_internal_fqdn}:443"
+  oidc_issuer_url    = "https://${local.ingress_internal_fqdn}/identity"
 
   # Platform-independent variables wiring, do not modify.
   container_images = "${var.tectonic_container_images}"
@@ -45,7 +58,7 @@ module "bootkube" {
   admin_cert_pem           = "${module.kube_certs.admin_cert_pem}"
   admin_key_pem            = "${module.kube_certs.admin_key_pem}"
 
-  etcd_endpoints = "${module.dns.etcd_endpoints}"
+  etcd_endpoints = "${data.template_file.etcd_hostname_list.*.rendered}"
   master_count   = "${var.tectonic_master_count}"
 
   cloud_config_path   = ""
@@ -59,8 +72,8 @@ module "tectonic" {
 
   cluster_name = "${var.tectonic_cluster_name}"
 
-  base_address       = "${var.tectonic_aws_private_endpoints ? module.dns.ingress_internal_fqdn : module.dns.ingress_external_fqdn}"
-  kube_apiserver_url = "https://${var.tectonic_aws_private_endpoints ? module.dns.api_internal_fqdn : module.dns.api_external_fqdn}:443"
+  base_address       = "${local.ingress_internal_fqdn}"
+  kube_apiserver_url = "https://${local.api_internal_fqdn}:443"
   service_cidr       = "${var.tectonic_service_cidr}"
 
   # Platform-independent variables wiring, do not modify.
