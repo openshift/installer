@@ -31,14 +31,10 @@ resource "template_dir" "tectonic" {
     grafana_watcher_base_image          = "${var.container_base_images["grafana_watcher"]}"
     kube_rbac_proxy_base_image          = "${var.container_base_images["kube_rbac_proxy"]}"
 
-    kubernetes_version             = "${var.versions["kubernetes"]}"
     monitoring_version             = "${var.versions["monitoring"]}"
     tectonic_version               = "${var.versions["tectonic"]}"
-    etcd_version                   = "${var.versions["etcd"]}"
     tectonic_cluo_operator_version = "${var.versions["cluo"]}"
     tectonic_alm_operator_version  = "${var.versions["alm"]}"
-
-    etcd_cluster_size = "${var.master_count > 2 ? 3 : 1}"
 
     license     = "${base64encode(file(var.license_path))}"
     pull_secret = "${base64encode(file(var.pull_secret_path))}"

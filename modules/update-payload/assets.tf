@@ -35,7 +35,6 @@ resource "template_dir" "payload_appversions" {
   destination_dir = "./generated/app_versions"
 
   vars {
-    kubernetes_version             = "${var.tectonic_versions["kubernetes"]}"
     monitoring_version             = "${var.tectonic_versions["monitoring"]}"
     tectonic_version               = "${var.tectonic_versions["tectonic"]}"
     tectonic_cluo_operator_version = "${var.tectonic_versions["cluo"]}"
