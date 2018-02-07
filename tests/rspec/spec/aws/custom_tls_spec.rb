@@ -5,7 +5,7 @@ require 'shared_examples/k8s'
 DOMAIN = 'tectonic-ci.de'
 
 RSpec.describe 'aws-custom-tls' do
-  include_examples('withBuildFolderSetup', '../smoke/aws/vars/aws.tfvars.json')
+  include_examples('withBuildFolderSetup', File.join(ENV['RSPEC_PATH'], '../smoke/aws/vars/aws.tfvars.json'))
   include_examples('withTLSSetup', DOMAIN)
 
   before(:all) do

@@ -7,7 +7,7 @@ require 'metal_support'
 DOMAIN = 'example.com'
 
 RSpec.describe 'metal-custom-tls' do
-  include_examples('withBuildFolderSetup', '../smoke/bare-metal/vars/metal.tfvars.json')
+  include_examples('withBuildFolderSetup', File.join(ENV['RSPEC_PATH'], '../smoke/bare-metal/vars/metal.tfvars.json'))
   include_examples('withTLSSetup', DOMAIN)
 
   before(:all) do

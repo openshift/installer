@@ -24,16 +24,28 @@ RSpec.configure do |config|
     create_if_not_exist_and_add_ssh_key
   end
 
-  unless ENV['RUN_CONFORMANCE_TESTS'] == 'true'
-    config.filter_run_excluding conformance_tests: true
-  end
+  config.filter_run_excluding conformance_tests: true unless ENV['RUN_CONFORMANCE_TESTS'] == 'true'
+  config.filter_run_excluding smoke_tests: true unless ENV['RUN_SMOKE_TESTS'] == 'true'
 
-  unless ENV['RUN_SMOKE_TESTS'] == 'true'
-    config.filter_run_excluding smoke_tests: true
+  ENV['RSPEC_PATH'] = Dir.pwd unless ENV.key?('RSPEC_PATH')
+  unless ENV.key?('RELEASE_TARBALL_PATH')
+    ENV['RELEASE_TARBALL_PATH'] = File.expand_path(File.join(Dir.pwd, '../../bazel-bin/tectonic.tar.gz'))
   end
 
   # Supressing the `Run options` announcements to have a standard TAP output.
   config.silence_filter_announcements = true
+
+  # Untar release tarball
+  tar_gz = ENV['RELEASE_TARBALL_PATH']
+  tar_gz_dir = File.dirname(tar_gz)
+  succeeded = system("tar -zxvf #{tar_gz} -C #{tar_gz_dir} > /dev/null")
+  raise 'failed to untar build tarball' unless succeeded
+
+  # Add terraform binary to path
+  ENV['PATH'] =
+    File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), 'tectonic/tectonic-installer', 'linux') +
+    ':' +
+    ENV['PATH']
 
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest

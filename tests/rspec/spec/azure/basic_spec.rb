@@ -3,5 +3,5 @@
 require 'shared_examples/k8s'
 
 RSpec.describe 'azure-basic' do
-  include_examples('withRunningCluster', '../smoke/azure/vars/basic.tfvars')
+  include_examples('withRunningCluster', File.join(ENV['RSPEC_PATH'], '../smoke/azure/vars/basic.tfvars'))
 end

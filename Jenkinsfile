@@ -165,10 +165,16 @@ pipeline {
 
                 withDockerContainer("quay.io/coreos/tectonic-builder:bazel-v0.2") {
                   sh"""#!/bin/bash -ex
-                    bazel build tarball
-                    bazel build tests/smoke
+                    bazel build tarball tests/smoke
                     # bazel test terraform_fmt //installer/frontend:frontend_test --verbose_failures --test_output=errors
+
+                    # Jenkins `stash` does not follow symlinks - thereby temporarily copy the files to the root dir
+                    cp bazel-bin/tectonic.tar.gz .
+                    cp bazel-bin/tests/smoke/linux_amd64_stripped/smoke .
                   """
+
+                  stash name: 'tectonic.tar.gz', includes: 'tectonic.tar.gz'
+                  stash name: 'smoke-tests', includes: 'smoke'
                 }
 
                 withDockerContainer(params.builder_image) {
@@ -190,9 +196,7 @@ pipeline {
                     make test
                     rm -fr frontend/tests_output
                     """
-                    stash name: 'installer-binary', includes: 'installer/bin/linux/installer'
                     stash name: 'node-modules', includes: 'installer/frontend/node_modules/**'
-                    stash name: 'smoke-test-binary', includes: 'bin/smoke'
                   }
                 }
                 withDockerContainer(tectonicSmokeTestEnvImage) {
@@ -468,6 +472,18 @@ def forcefullyCleanWorkspace() {
   }
 }
 
+def unstashCleanRepoTectonicTarGZSmokeTests() {
+  unstash 'clean-repo'
+  unstash 'tectonic.tar.gz'
+  unstash 'smoke-tests'
+  sh """#!/bin/bash -ex
+    # Jenkins `stash` does not follow symlinks - thereby temporarily copy the files to the root dir
+    mkdir -p bazel-bin/tests/smoke/linux_amd64_stripped/
+    cp tectonic.tar.gz bazel-bin/.
+    cp smoke bazel-bin/tests/smoke/linux_amd64_stripped/.
+  """
+}
+
 def runRSpecTest(testFilePath, dockerArgs, credentials) {
   return {
     node('worker && ec2') {
@@ -481,8 +497,7 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
                 image: tectonicSmokeTestEnvImage,
                 args: '-u root -v /var/run/docker.sock:/var/run/docker.sock ' + dockerArgs
               ) {
-                unstash 'clean-repo'
-                unstash 'smoke-test-binary'
+                unstashCleanRepoTectonicTarGZSmokeTests()
                 sh """#!/bin/bash -ex
                   mkdir -p templogfiles && chmod 777 templogfiles
                   cd tests/rspec
@@ -500,7 +515,7 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
       } finally {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
         step([$class: "TapPublisher", testResults: "templogfiles/*", outputTapToConsole: true, planRequired: false])
-        archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**'
+        archiveArtifacts allowEmptyArchive: true, artifacts: 'bazel-bin/tectonic/build/**/logs/**'
         withDockerContainer(params.builder_image) {
          withCredentials(credsUI) {
           script {
@@ -530,8 +545,7 @@ def runRSpecTestBareMetal(testFilePath, credentials) {
       try {
         timeout(time: 5, unit: 'HOURS') {
           ansiColor('xterm') {
-            unstash 'clean-repo'
-            unstash 'smoke-test-binary'
+            unstashCleanRepoTectonicTarGZSmokeTests()
             withCredentials(credentials + quayCreds) {
               sh """#!/bin/bash -ex
               cd tests/rspec
@@ -552,7 +566,7 @@ def runRSpecTestBareMetal(testFilePath, credentials) {
       } finally {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
         step([$class: "TapPublisher", testResults: "../../templogfiles/*", outputTapToConsole: true, planRequired: false])
-        archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**'
+        archiveArtifacts allowEmptyArchive: true, artifacts: 'bazel-bin/tectonic/build/**/logs/**'
         withCredentials(credsUI) {
           script {
             try {

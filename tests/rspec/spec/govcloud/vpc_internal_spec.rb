@@ -7,7 +7,10 @@ require 'jenkins'
 require 'aws_iam'
 
 RSpec.describe 'govcloud-vpc' do
-  include_examples('withBuildFolderSetup', '../smoke/govcloud/vars/govcloud-vpc-internal.tfvars.json')
+  include_examples(
+    'withBuildFolderSetup',
+    File.join(ENV['RSPEC_PATH'], '../smoke/govcloud/vars/govcloud-vpc-internal.tfvars.json')
+  )
 
   before(:all) do
     @ssh_key = ENV['TF_VAR_tectonic_govcloud_ssh_key'] || AwsSupport.create_aws_key_pairs('us-gov-west-1')

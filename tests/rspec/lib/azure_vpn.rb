@@ -9,7 +9,7 @@ require 'time'
 require 'net/ssh'
 require 'azure_support'
 
-AZURE_VPN_TEMPLATES = '../smoke/azure/fixtures/private-cluster/*.tf'
+AZURE_VPN_TEMPLATES = File.join(ENV['RSPEC_PATH'], '../smoke/azure/fixtures/private-cluster/*.tf')
 MAX_RETRIES = 3
 TIMEOUT_RETRIES = 30
 TIMEOUT_RETRY_DELAY = 3

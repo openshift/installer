@@ -10,11 +10,11 @@ RSpec.describe 'existing_cluster' do
   end
 
   context 'with a cluster' do
-    vars_file_path = "../../build/#{ENV['CLUSTER']}/terraform.tfvars"
+    vars_file_path = File.join(ENV['RELEASE_TARBALL_PATH'], "../tectonic/build/#{ENV['CLUSTER']}/terraform.tfvars")
     raise 'Missing tfvars. Aborting...' unless File.exist?(vars_file_path)
     existing_vars_file = TFVarsFile.new(vars_file_path)
 
-    cred_file = "../../build/#{ENV['CLUSTER']}/utils/console_creds.txt"
+    cred_file = File.join(ENV['RELEASE_TARBALL_PATH'], "../tectonic/build/#{ENV['CLUSTER']}/utils/console_creds.txt")
     if File.exist?(cred_file)
       creds = File.read(cred_file)
       creds_hash = JSON.parse(creds)

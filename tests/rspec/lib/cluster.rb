@@ -30,7 +30,7 @@ class Cluster
     @tectonic_admin_password = ENV['TF_VAR_tectonic_admin_password'] || PasswordGenerator.generate_password
     save_console_creds(@name, @tectonic_admin_email, @tectonic_admin_password)
 
-    @build_path = File.join(File.realpath('../../'), "build/#{@name}")
+    @build_path = File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), "tectonic/build/#{@name}")
     @manifest_path = File.join(@build_path, 'generated')
     @kubeconfig = File.join(manifest_path, 'auth/kubeconfig')
     @tfstate_file = TFStateFile.new(@build_path)
@@ -177,7 +177,7 @@ class Cluster
         env['TF_APPLY_OPTIONS'] = '-no-color'
         env['TF_INIT_OPTIONS'] = '-no-color'
 
-        return run_command(env, 'apply')
+        return run_command(env, 'apply', '-auto-approve')
       end
     end
   rescue Timeout::Error
@@ -191,7 +191,7 @@ class Cluster
         env = env_variables
         env['TF_DESTROY_OPTIONS'] = '-no-color'
         env['TF_INIT_OPTIONS'] = '-no-color'
-        return run_command(env, 'destroy')
+        return run_command(env, 'destroy', '-force')
       end
     end
 
@@ -213,9 +213,10 @@ class Cluster
     raise 'Terraform init failed'
   end
 
-  def run_command(env, cmd)
-    Open3.popen3(env, "bash -co pipefail 'make -C ../.. #{cmd} |
-                    tee ../../build/#{@name}/terraform-#{cmd}.log'") do |_stdin, stdout, stderr, wait_thr|
+  def run_command(env, cmd, flags = '')
+    command = "terraform #{cmd} #{flags} -var-file=terraform.tfvars ../../platforms/#{env_variables['PLATFORM']} |
+      tee terraform-#{cmd}.log"
+    Open3.popen3(env, "bash -coxe pipefail '#{command}'") do |_stdin, stdout, stderr, wait_thr|
       while (line = stdout.gets)
         puts line
       end

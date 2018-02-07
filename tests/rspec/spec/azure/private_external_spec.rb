@@ -4,7 +4,7 @@ require 'shared_examples/k8s'
 require 'azure_vpn'
 
 RSpec.describe 'azure-private-external' do
-  include_examples('withBuildFolderSetup', '../smoke/azure/vars/private-cluster.tfvars')
+  include_examples('withBuildFolderSetup', File.join(ENV['RSPEC_PATH'], '../smoke/azure/vars/private-cluster.tfvars'))
 
   before(:context) do |_context|
     # Save environment, to restore it once the test it done

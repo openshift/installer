@@ -4,7 +4,7 @@ require 'shared_examples/k8s'
 require 'metal_support'
 
 RSpec.describe 'bare-metal-standard' do
-  include_examples('withBuildFolderSetup', '../smoke/bare-metal/vars/metal.tfvars.json')
+  include_examples('withBuildFolderSetup', File.join(ENV['RSPEC_PATH'], '../smoke/bare-metal/vars/metal.tfvars.json'))
 
   before(:context) do |_context|
     MetalSupport.install_base_software

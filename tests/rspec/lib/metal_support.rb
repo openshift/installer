@@ -37,9 +37,8 @@ module MetalSupport
 
   def self.setup_bare(varfile)
     # Copy the certificates to matchbox folder
-    tectonic_folder = File.expand_path('../', Dir.pwd)
     root = root_path
-    certs = Dir["#{tectonic_folder}/smoke/bare-metal/fake-creds/{ca.crt,server.crt,server.key}"]
+    certs = Dir[File.join(ENV['RSPEC_PATH'], '../smoke/bare-metal/fake-creds/{ca.crt,server.crt,server.key}')]
     certs.each do |cert|
       filename_dest = cert.split('/')[-1]
       dest_folder = "#{root}/matchbox/examples/etc/matchbox/#{filename_dest}"
@@ -55,12 +54,12 @@ module MetalSupport
 
     # Setting up the metal0 bridge
     execute_command('sudo mkdir -p /etc/rkt/net.d')
-    execute_command("sudo cp #{root}/tests/rspec/utils/20-metal.conf /etc/rkt/net.d/")
+    execute_command('sudo cp ' + File.join(ENV['RSPEC_PATH'], 'utils/20-metal.conf') + ' /etc/rkt/net.d/')
     execute_command('cat /etc/rkt/net.d/20-metal.conf')
 
     # Setting up auth to download images from quay.io
     execute_command('sudo mkdir -p /etc/rkt/auth.d')
-    rkt_auth_file = File.read("#{root}/tests/rspec/utils/rkt-auth.json")
+    rkt_auth_file = File.read(File.join(ENV['RSPEC_PATH'], 'utils/rkt-auth.json'))
     data_hash = JSON.parse(rkt_auth_file)
     data_hash['credentials']['user'] = ENV['QUAY_ROBOT_USERNAME']
     data_hash['credentials']['password'] = ENV['QUAY_ROBOT_SECRET']
@@ -175,14 +174,14 @@ module MetalSupport
   end
 
   def self.save_to_file(service_name, output)
-    logs_path = "#{root_path}build/#{ENV['CLUSTER']}/logs/systemd"
+    logs_path = "#{root_path}/build/#{ENV['CLUSTER']}/logs/systemd"
     save_file = File.open("#{logs_path}/#{service_name}.log", 'w+')
     save_file << output
     save_file.close
   end
 
   def self.root_path
-    File.expand_path('../../', Dir.pwd)
+    File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), 'tectonic')
   end
 
   def self.env_variables_setup
