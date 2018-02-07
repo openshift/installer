@@ -50,11 +50,12 @@ const toExport = {
 const ignoredKeys = [
   'tectonic_admin_email',
   'tectonic_admin_password',
+  'tectonic_aws_region',
   'tectonic_aws_ssh_key',
+  'tectonic_container_linux_channel',
   'tectonic_license_path',
   'tectonic_pull_secret_path',
   'tectonic_stats_url',
-  'tectonic_aws_region',
 ];
 
 module.exports = Object.assign(
