@@ -1,5 +1,5 @@
 provider "azurerm" {
-  version       = "0.3.1"
+  version       = "1.1.1"
   environment   = "${var.tectonic_azure_cloud_environment}"
   client_secret = "${var.tectonic_azure_client_secret}"
 }
