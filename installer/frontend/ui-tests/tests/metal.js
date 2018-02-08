@@ -54,6 +54,8 @@ const toExport = {
 const ignoredKeys = [
   'tectonic_admin_email',
   'tectonic_admin_password',
+  'tectonic_container_linux_channel',
+  'tectonic_container_linux_version',
   'tectonic_license_path',
   'tectonic_pull_secret_path',
   'tectonic_stats_url',
