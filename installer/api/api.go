@@ -103,6 +103,7 @@ func New(config *Config) (http.Handler, error) {
 
 	//handlers_latest_release.go
 	mux.Handle("/releases/latest", logRequests(httpHandler("GET", ctx, latestReleaseHandler)))
+	mux.Handle("/releases/current", logRequests(httpHandler("GET", ctx, currentReleaseHandler)))
 	return mux, nil
 }
 

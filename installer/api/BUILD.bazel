@@ -16,6 +16,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//installer/assets:go_default_library",
+        "//installer/version:go_default_library",
         "//installer/pkg/aws:go_default_library",
         "//installer/pkg/containerlinux:go_default_library",
         "//installer/pkg/terraform:go_default_library",
