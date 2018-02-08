@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 
 import { getTectonicDomain, PLATFORM_TYPE } from '../cluster-config';
 import { TectonicGA } from '../tectonic-ga';
+import { ExternalLinkIcon } from './ui';
 
 const handleAllDone = (platformType) => TectonicGA.sendEvent('Installer Button', 'click', 'User clicks over to the console', platformType);
 
@@ -35,7 +36,7 @@ export const Success = connect(stateToProps)(
         <a href={`https://${tectonicDomain}`} target="_blank">
           <button className="btn btn-primary wiz-giant-button"
             style={{marginTop: 20, marginBottom: 80}}
-            onClick={() => handleAllDone(platformType)}>Go to my Tectonic Console&nbsp;&nbsp;<i className="fa fa-external-link"></i></button>
+            onClick={() => handleAllDone(platformType)}>Go to my Tectonic Console<ExternalLinkIcon /></button>
         </a>
       </div>
     </div>

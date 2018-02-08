@@ -4,7 +4,7 @@ import { connect } from 'react-redux';
 
 import { compose, validate } from '../validate';
 import { getDefaultSubnets, getZones, getVpcs, getVpcSubnets, validateSubnets } from '../aws-actions';
-import { A, AsyncSelect, Connect, Deselect, DeselectField, DocsA, Input, Radio, Select, ToggleButton } from './ui';
+import { A, AsyncSelect, Connect, Deselect, DeselectField, DocsA, ExternalLinkIcon, Input, Radio, Select, ToggleButton } from './ui';
 import { Alert } from './alert';
 import { configActions } from '../actions';
 import { AWS_DomainValidation } from './aws-domain-validation';
@@ -324,7 +324,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
     <hr />
 
     <p className="text-muted">
-      Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <A href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html">Working with Hosted Zones</A>.
+      Please select a Route 53 hosted zone. For more information, see AWS Route 53 docs on <A href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/AboutHZWorkingWith.html">Working with Hosted Zones<ExternalLinkIcon /></A>.
     </p>
     <div className="row form-group">
       <div className="col-xs-2">
@@ -354,7 +354,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
             </Select>
           </Connect>
           <p className="text-muted wiz-help-text">
-            See AWS <A href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html">Split-View DNS documentation&nbsp;<i className="fa fa-external-link" /></A>
+            See AWS <A href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/hosted-zones-private.html">Split-View DNS documentation<ExternalLinkIcon /></A>
           </p>
         </div>
       </div>
@@ -384,7 +384,7 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
           </Alert>
           <div className="row form-group">
             <div className="col-xs-12">
-              Specify a range of IPv4 addresses for the VPC in the form of a <A href="https://tools.ietf.org/html/rfc4632">CIDR block</A>. Safe defaults have been chosen for you.
+              Specify a range of IPv4 addresses for the VPC in the form of a <A href="https://tools.ietf.org/html/rfc4632">CIDR block<ExternalLinkIcon /></A>. Safe defaults have been chosen for you.
             </div>
           </div>
           <CIDRRow name="CIDR Block" field={AWS_VPC_CIDR} placeholder={DEFAULT_AWS_VPC_CIDR} />

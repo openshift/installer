@@ -59,6 +59,8 @@ const FIELD_PROPS = ImmutableSet([
   'width',
 ]);
 
+export const ExternalLinkIcon = () => <i className="fa fa-external-link" style={{marginLeft: 5}} />;
+
 // Same as an <a> except defaults to rel="noopener noreferrer" and target="_blank"
 export const A = props => <a rel="noopener noreferrer" target="_blank" {...props} />;
 
