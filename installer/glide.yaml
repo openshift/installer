@@ -55,7 +55,7 @@ import:
 - package: github.com/jteeuwen/go-bindata
   version: a0ff2567cfb70903282db057e799fd826784d41d
   subpackages:
-  - go-bindata # Must specify here or glide-vc will remove it.
+  - go-bindata
 - package: github.com/pmezard/go-difflib
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
@@ -103,7 +103,7 @@ import:
 - package: github.com/coreos/coreos-cloudinit
   version: 36c4b72b9fb389688f5ba34038478f8d918bb8d3
   subpackages:
-    - config/validate
+  - config/validate
 - package: github.com/coreos/yaml
   version: 6b16a5714269b2f70720a45406b1babd947a17ef
 - package: github.com/dghubble/sessions
@@ -270,7 +270,7 @@ import:
 - package: github.com/google/gofuzz
   version: bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5
 - package: github.com/gogo/protobuf
-  version: e18d7aa8f8c624c915db340349aad4c49b10d173
+  version:  v1.0.0
   subpackages:
   - gogoproto
   - plugin/defaultcheck
@@ -303,8 +303,6 @@ import:
   - codec/codecgen
 - package: github.com/StackExchange/wmi
   version: 9f32b5905fd6ce7384093f9d048437e79f7b4d85
-
-# config-transpiler converts configs to Ignition
 - package: github.com/coreos/container-linux-config-transpiler
   version: dd0df6d1bf49c82c904c4825c7412507bef2d8b4
 - package: github.com/ajeddeloh/yaml
@@ -317,8 +315,6 @@ import:
   - config
 - package: github.com/vincent-petithory/dataurl
   version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
-
-# vpc availability subnet splitting math
 - package: github.com/coreos/ipnets
   version: 02aaf3c1ee2483ada21d643ce1c94708c8d1c7d0
 - package: github.com/coreos/go-systemd
@@ -326,8 +322,6 @@ import:
   subpackages:
   - journal
   - unit
-
-# used by terraform
 - package: github.com/hashicorp/hil
   version: fac2259da677551de1fb92b844c4d020a38d8468
   subpackages:
@@ -356,7 +350,7 @@ import:
   version: 8fef92e41e22a70e700a96b29f066cda30ea24ef
 - package: github.com/mitchellh/mapstructure
   version: 281073eb9eb092240d33ef253c404f1cca550309
-- package: github.com/coreos/terraform-provider-matchbox 
+- package: github.com/coreos/terraform-provider-matchbox
   version: v0.1.2
   subpackages:
   - matchbox
@@ -390,3 +384,10 @@ import:
   - json/scanner
   - json/token
 - package: gopkg.in/alecthomas/kingpin.v2
+  version: 947dcec5ba9c011838740e680966fd7087a71d0d
+- package: github.com/coreos/tectonic-config
+  version: ff997d9ae68b0f4c02390d69cc355cd85a5a0f93
+- package: k8s.io/apimachinery
+  version: kubernetes-1.9.0
+- package: github.com/satori/go.uuid
+  version: b061729afc07e77a8aa4fad0a2fd840958f1942a

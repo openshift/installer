@@ -9,7 +9,6 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//installer/pkg/workflow:go_default_library",
-        "//installer/pkg/tectonic:go_default_library",
         "//installer/vendor/gopkg.in/alecthomas/kingpin.v2:go_default_library",
     ],
 )
@@ -18,30 +17,30 @@ go_binary(
     name = "tectonic",
     embed = [":go_default_library"],
     importpath = "github.com/coreos/tectonic-installer/installer/cmd/tectonic",
-    visibility = ["//visibility:public"],
     # Use pure to build a pure-go binary.
     # This has the nice side effect of making the binary statically linked.
     pure = "on",
+    visibility = ["//visibility:public"],
 )
 
 go_binary(
     name = "tectonic_darwin",
     embed = [":go_default_library"],
+    goos = "darwin",
     importpath = "github.com/coreos/tectonic-installer/installer/cmd/tectonic",
-    visibility = ["//visibility:public"],
     # Use pure to build a pure-go binary.
     # This has the nice side effect of making the binary statically linked.
     pure = "on",
-    goos = "darwin",
+    visibility = ["//visibility:public"],
 )
 
 go_binary(
     name = "tectonic_linux",
     embed = [":go_default_library"],
+    goos = "linux",
     importpath = "github.com/coreos/tectonic-installer/installer/cmd/tectonic",
-    visibility = ["//visibility:public"],
     # Use pure to build a pure-go binary.
     # This has the nice side effect of making the binary statically linked.
     pure = "on",
-    goos = "linux",
+    visibility = ["//visibility:public"],
 )

@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
@@ -61,22 +61,4 @@ go_library(
         "//installer/vendor/github.com/alecthomas/template:go_default_library",
         "//installer/vendor/github.com/alecthomas/units:go_default_library",
     ],
-)
-
-go_test(
-    name = "go_default_test",
-    srcs = [
-        "app_test.go",
-        "args_test.go",
-        "cmd_test.go",
-        "completions_test.go",
-        "examples_test.go",
-        "flags_test.go",
-        "parser_test.go",
-        "parsers_test.go",
-        "usage_test.go",
-        "values_test.go",
-    ],
-    embed = [":go_default_library"],
-    deps = ["//installer/vendor/github.com/stretchr/testify/assert:go_default_library"],
 )

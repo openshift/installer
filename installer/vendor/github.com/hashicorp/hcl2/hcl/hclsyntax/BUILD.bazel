@@ -19,6 +19,7 @@ go_library(
         "parser_traversal.go",
         "peeker.go",
         "public.go",
+        "scan_string_lit.go",
         "scan_tokens.go",
         "structure.go",
         "token.go",

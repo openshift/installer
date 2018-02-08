@@ -30,6 +30,5 @@ go_library(
 go_binary(
     name = "coreos-cloudinit",
     embed = [":go_default_library"],
-    importpath = "github.com/coreos/coreos-cloudinit",
     visibility = ["//visibility:public"],
 )

@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "bash.go",
+        "fish.go",
         "install.go",
         "utils.go",
         "zsh.go",

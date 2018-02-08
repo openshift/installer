@@ -87,6 +87,5 @@ go_library(
 go_binary(
     name = "terraform",
     embed = [":go_default_library"],
-    importpath = "github.com/hashicorp/terraform",
     visibility = ["//visibility:public"],
 )
