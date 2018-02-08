@@ -4,6 +4,7 @@ require 'aws-sdk-autoscaling'
 require 'aws-sdk-ec2'
 require 'aws_iam'
 require 'with_retries'
+require 'base64'
 
 # Shared support code for AWS-based operations
 #
@@ -74,7 +75,7 @@ module AwsSupport
       resp = client.get_console_output(instance_id: instance_id.to_s,
                                        dry_run: false)
     end
-    resp.output
+    Base64.decode64(resp.output)
   end
 
   def self.check_expiration_role(aws_region, role_credentials)

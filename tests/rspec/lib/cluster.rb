@@ -13,7 +13,6 @@ require 'tfvars_file'
 require 'timeout'
 require 'with_retries'
 require 'open3'
-require 'base64'
 
 # Cluster represents a k8s cluster
 class Cluster
@@ -128,8 +127,7 @@ class Cluster
     outputs_console_logs = machine_boot_console_logs
     outputs_console_logs.each do |ip, log|
       puts "saving boot logs from master-#{ip}"
-      decoded_base64_content = Base64.decode64(log)
-      save_to_file(@name, 'console_machine', ip, 'console_machine', decoded_base64_content)
+      save_to_file(@name, 'console_machine', ip, 'console_machine', log)
     end
 
     save_kubernetes_events(@kubeconfig, @name) if events
