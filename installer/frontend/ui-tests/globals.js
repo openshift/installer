@@ -1,4 +1,5 @@
 const chromedriver = require('chromedriver');
+const path = require('path');
 
 module.exports = {
   default: {
@@ -14,4 +15,6 @@ module.exports = {
     chromedriver.stop();
     done();
   },
+
+  tmpUploadPath: path.join(path.resolve(__dirname), 'tmp-upload-test'),
 };

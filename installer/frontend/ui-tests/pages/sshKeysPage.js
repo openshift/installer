@@ -1,29 +1,16 @@
-const fs = require('fs');
-const path = require('path');
-
 const pageCommands = {
   test (json) {
-    const parentDir = path.resolve(__dirname, '..');
-    const sshKeyPath = path.join(parentDir, 'ssh-keys.txt');
-
-    /* eslint-disable no-sync */
-    fs.writeFileSync(sshKeyPath, json.sshAuthorizedKey);
-
-    this
-      .setField('@key', 'abc')
-      .expectValidationErrorContains('Invalid SSH pubkey')
-      .setValue('@upload', sshKeyPath)
-      .expectNoValidationError();
+    this.testFileTextCombo(
+      'input[type=file]#sshAuthorizedKey',
+      'textarea#sshAuthorizedKey',
+      json.sshAuthorizedKey,
+      'abc',
+      'Invalid SSH pubkey'
+    );
   },
 };
 
 module.exports = {
   commands: [pageCommands],
-  elements: {
-    key: 'textarea#sshAuthorizedKey',
-    upload: {
-      selector: '(//*[text()="Upload"]/input[@type="file"])',
-      locateStrategy: 'xpath',
-    },
-  },
+  elements: {},
 };
