@@ -32,6 +32,9 @@ RSpec.configure do |config|
     config.filter_run_excluding smoke_tests: true
   end
 
+  # Supressing the `Run options` announcements to have a standard TAP output.
+  config.silence_filter_announcements = true
+
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
   # assertions if you prefer.

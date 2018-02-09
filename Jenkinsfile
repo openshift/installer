@@ -499,6 +499,7 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
         throw error
       } finally {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
+        step([$class: "TapPublisher", testResults: "templogfiles/*", outputTapToConsole: true, planRequired: false])
         archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**'
         withDockerContainer(params.builder_image) {
          withCredentials(credsUI) {
@@ -550,6 +551,7 @@ def runRSpecTestBareMetal(testFilePath, credentials) {
         throw error
       } finally {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
+        step([$class: "TapPublisher", testResults: "../../templogfiles/*", outputTapToConsole: true, planRequired: false])
         archiveArtifacts allowEmptyArchive: true, artifacts: 'build/**/logs/**'
         withCredentials(credsUI) {
           script {
