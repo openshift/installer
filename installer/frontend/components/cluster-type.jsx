@@ -3,7 +3,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { validate } from '../validate';
-import { Connect, DocsA, Select } from './ui';
+import { Connect, DocsA, ExternalLinkIcon, Select } from './ui';
 import { Field, Form } from '../form';
 import { PLATFORM_TYPE, PLATFORM_FORM } from '../cluster-config';
 import { TectonicGA } from '../tectonic-ga';
@@ -12,22 +12,21 @@ import { AWS_TF, BARE_METAL_TF, DOCS, PLATFORM_NAMES, isSupported, optGroups } f
 const ErrorComponent = connect(({clusterConfig}) => ({platform: clusterConfig[PLATFORM_TYPE]}))(
   ({error, platform}) => {
     const platformName = PLATFORM_NAMES[platform];
-    const icon = <i className="fa fa-external-link" />;
     if (error) {
       return <p>
         Use the documentation and the Terraform CLI to install a cluster with specific infrastructure use-cases.
         This method is designed for automation and doesn't use the graphical installer.
         <br />
         <DocsA path={DOCS[platform]}>
-          <button className="btn btn-primary" style={{marginTop: 8}}>{platformName && platformName.split('(Alpha)')[0]} Docs&nbsp;&nbsp;{icon}</button>
+          <button className="btn btn-primary" style={{marginTop: 8}}>{platformName && platformName.split('(Alpha)')[0]} Docs<ExternalLinkIcon /></button>
         </DocsA>
       </p>;
     }
     return <p className="text-muted">
       Use the graphical installer to input cluster details, this is best for demos and your first Tectonic cluster.
       &nbsp;&nbsp;{platform === BARE_METAL_TF
-        ? <span><br />{platformName} <DocsA path="/install/bare-metal/requirements.html">requirements&nbsp;&nbsp;{icon}</DocsA> and <DocsA path={DOCS[platform]}>install guide&nbsp;&nbsp;{icon}</DocsA>.</span>
-        : <DocsA path={DOCS[platform]}>{platformName} documentation&nbsp;&nbsp;{icon}</DocsA>}
+        ? <span><br />{platformName} <DocsA path="/install/bare-metal/requirements.html">requirements<ExternalLinkIcon /></DocsA> and <DocsA path={DOCS[platform]}>install guide<ExternalLinkIcon /></DocsA>.</span>
+        : <DocsA path={DOCS[platform]}>{platformName} documentation<ExternalLinkIcon /></DocsA>}
     </p>;
   });
 

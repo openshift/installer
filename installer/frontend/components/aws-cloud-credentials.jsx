@@ -3,7 +3,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 
 import { compose, validate } from '../validate';
-import { A, DocsA, Input, Password, Select, RadioBoolean, Connect } from './ui';
+import { A, DocsA, ExternalLinkIcon, Input, Password, Select, RadioBoolean, Connect } from './ui';
 import { Alert } from './alert';
 
 import { getRegions } from '../aws-actions';
@@ -161,7 +161,7 @@ export const AWS_CloudCredentials = connect(stateToProps)(
               Use a normal access key
             </label>&nbsp;(default)
             <p className="text-muted">
-              Go to the <A href="https://console.aws.amazon.com/iam/home#/users">AWS console user section</A>, select your user name, and the Security Credentials tab.
+              Go to the <A href="https://console.aws.amazon.com/iam/home#/users">AWS console user section<ExternalLinkIcon /></A>, select your user name, and the Security Credentials tab.
             </p>
           </div>
           <div className="wiz-radio-group__body">
