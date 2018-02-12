@@ -16,13 +16,13 @@ git clone git@github.com:coreos/tectonic-installer.git && cd tectonic-installer
 
 ## Quickstart
 
-To build Tectonic for development or testing, run the `tarball` script located in the base directory:
+To build Tectonic for development or testing, build the `tarball` target with Bazel:
 
 ```sh
-./tarball
+bazel build tarball
 ```
 
-This will produce an archive named `tectonic.tar.gz` containing all the assets necessary to bring up a Tectonic cluster, namely the:
+This will produce an archive named `tectonic.tar.gz` in the `bazel-bin` directory, containing all the assets necessary to bring up a Tectonic cluster, namely the:
 
 * Tectonic Installer binary;
 * Terraform modules;
@@ -30,14 +30,14 @@ This will produce an archive named `tectonic.tar.gz` containing all the assets n
 * Terraform provider binaries; and
 * examples
 
-To build a versioned Tectonic release tarball, set a `VERSION` environment variable and run the `tarball` script:
+To build a versioned Tectonic release tarball, set a `TECTONIC_VERSION` environment variable and build the `tarball` target:
 
 ```sh
-export VERSION=1.2.3-beta
-./tarball
+export TECTONIC_VERSION=1.2.3-beta
+bazel build tarball --action_env=TECTONIC_VERSION
 ```
 
-This will create an archive named `tectonic_1.2.3-beta.tar.gz` in the base directory.
+This will also create an archive named `tectonic.tar.gz` in the `bazel-bin` directory, however when the archive is extracted, the base directory name will include the specified version number.
 
 For more details on building a Tectonic release or other Tectonic assets as well as workarounds to some known issues, read on.
 
@@ -65,6 +65,7 @@ tectonic
 ├── platforms
 └── tectonic-installer
     ├── darwin
+    │   ├── installer
     │   ├── terraform
     │   └── terraform-provider-matchbox
     └── linux
@@ -73,19 +74,11 @@ tectonic
         └── terraform-provider-matchbox
 ```
 
-*Note*: declarative cross-compilation of Golang binaries from Linux to other platforms is [currently broken in Bazel](https://github.com/bazelbuild/rules_go/issues/1148) so the tarball will not include a Darwin binary. 
-
-To build a tarball with the Darwin binary included, run the temporary `tarball` script:
+In order to build a release tarball with the version string in the directory name within the tarball, export a `TECTONIC_VERSION` environment variable and then build the tarball while passing the variable to the build:
 
 ```sh
-./tarball
-```
-
-In order to build a release tarball with the version string in the directory name within the tarball, export a `VERSION` environment variable and then build the tarball while passing the variable to the build:
-
-```sh
-export VERSION=1.2.3-beta
-bazel build tarball --action_env=VERSION
+export TECTONIC_VERSION=1.2.3-beta
+bazel build tarball --action_env=TECTONIC_VERSION
 ```
 
 This will create a tarball named `tectonic.tar.gz` in the `bazel-bin` directory with the following directory structure:
@@ -99,17 +92,7 @@ tectonic_1.2.3-beta
 └── tectonic-installer
 ```
 
-*Note*: the generated tarball will not include the version string in its own name since output names must be known ahead of time in Bazel. To include the version in the tarball name copy or move the archive with the desired name in the destination.
-
-Similarly, to build a versioned tarball with the Darwin binary included, export the `VERSION` environment variable and run the `tarball` shell script:
-
-```sh
-export VERSION=1.2.3-beta
-./tarball
-```
-
-This will create a tarball named `tectonic_1.2.3-beta.tar.gz` in the base directory.
-
+*Note*: the generated tarball will not include the version string in its own name since output names must be known ahead of time in Bazel. To include the version in the tarball name, copy or move the archive with the desired name in the destination.
 
 ## Building the Installer Binary
 
@@ -130,7 +113,7 @@ bazel build backend --experimental_platforms=@io_bazel_rules_go//go/toolchain:da
 
 ## Building the Smoke Test Binary
 
-We are also using Bazel to build the smoke test binary. To do so, run:
+We also use Bazel to build the smoke test binary. To do so, run:
 
 ```sh
 bazel build tests/smoke

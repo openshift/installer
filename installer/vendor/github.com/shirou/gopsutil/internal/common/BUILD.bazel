@@ -5,28 +5,13 @@ go_library(
     srcs = [
         "binary.go",
         "common.go",
-    ] + select({
-        "@io_bazel_rules_go//go/platform:darwin": [
-            "common_darwin.go",
-            "common_unix.go",
-        ],
-        "@io_bazel_rules_go//go/platform:freebsd": [
-            "common_freebsd.go",
-            "common_unix.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux": [
-            "common_linux.go",
-            "common_unix.go",
-        ],
-        "@io_bazel_rules_go//go/platform:openbsd": [
-            "common_openbsd.go",
-            "common_unix.go",
-        ],
-        "@io_bazel_rules_go//go/platform:windows": [
-            "common_windows.go",
-        ],
-        "//conditions:default": [],
-    }),
+        "common_darwin.go",
+        "common_unix.go",
+        "common_freebsd.go",
+        "common_linux.go",
+        "common_openbsd.go",
+        "common_windows.go",
+    ],
     importpath = "github.com/shirou/gopsutil/internal/common",
     visibility = ["//installer/vendor/github.com/shirou/gopsutil:__subpackages__"],
 )

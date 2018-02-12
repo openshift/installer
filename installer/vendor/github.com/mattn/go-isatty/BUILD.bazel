@@ -4,83 +4,13 @@ go_library(
     name = "go_default_library",
     srcs = [
         "doc.go",
-    ] + select({
-        "@io_bazel_rules_go//go/platform:android": [
-            "isatty_others.go",
-        ],
-        "@io_bazel_rules_go//go/platform:darwin": [
-            "isatty_bsd.go",
-            "isatty_others.go",
-        ],
-        "@io_bazel_rules_go//go/platform:dragonfly": [
-            "isatty_bsd.go",
-            "isatty_others.go",
-        ],
-        "@io_bazel_rules_go//go/platform:freebsd": [
-            "isatty_bsd.go",
-            "isatty_others.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux": [
-            "isatty_others.go",
-        ],
-        "@io_bazel_rules_go//go/platform:nacl": [
-            "isatty_others.go",
-        ],
-        "@io_bazel_rules_go//go/platform:netbsd": [
-            "isatty_bsd.go",
-            "isatty_others.go",
-        ],
-        "@io_bazel_rules_go//go/platform:openbsd": [
-            "isatty_bsd.go",
-            "isatty_others.go",
-        ],
-        "@io_bazel_rules_go//go/platform:plan9": [
-            "isatty_others.go",
-        ],
-        "@io_bazel_rules_go//go/platform:solaris": [
-            "isatty_others.go",
-            "isatty_solaris.go",
-        ],
-        "@io_bazel_rules_go//go/platform:windows": [
-            "isatty_windows.go",
-        ],
-        "//conditions:default": [],
-    }) + select({
-        "@io_bazel_rules_go//go/platform:linux_386": [
-            "isatty_linux.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux_amd64": [
-            "isatty_linux.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux_arm": [
-            "isatty_linux.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux_arm64": [
-            "isatty_linux.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux_mips": [
-            "isatty_linux.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux_mips64": [
-            "isatty_linux.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux_mips64le": [
-            "isatty_linux.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux_mipsle": [
-            "isatty_linux.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux_ppc64": [
-            "isatty_linux_ppc64x.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux_ppc64le": [
-            "isatty_linux_ppc64x.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux_s390x": [
-            "isatty_linux.go",
-        ],
-        "//conditions:default": [],
-    }),
+        "isatty_others.go",
+        "isatty_bsd.go",
+        "isatty_solaris.go",
+        "isatty_windows.go",
+        "isatty_linux.go",
+        "isatty_linux_ppc64x.go",
+    ],
     importpath = "github.com/mattn/go-isatty",
     visibility = ["//visibility:public"],
     deps = select({
