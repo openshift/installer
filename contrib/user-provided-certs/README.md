@@ -25,28 +25,29 @@ Once configured, execute `terraform apply`. The folder `generated/tls` will cont
 
 The following table gives an overview which generated certificates have to be configured for the corresponding variables for the `user-provided` flavor of TLS modules:
 
-Certificate            | TLS module                             | Variable
------------------------| ---------------------------------------| ---------
-`aggregator-ca.crt`    | `modules/tls/kube/user-provided`       | `aggregator_ca_cert_pem_path`
-`apiserver.crt`        | `modules/tls/kube/user-provided`       | `apiserver_cert_pem_path`
-`apiserver.key`        | `modules/tls/kube/user-provided`       | `apiserver_key_pem_path`
-`apiserver-proxy.crt`  | `modules/tls/kube/user-provided`       | `apiserver_proxy_cert_pem_path`
-`apiserver-proxy.key`  | `modules/tls/kube/user-provided`       | `apiserver_proxy_key_pem_path`
-`ca.crt`               | `modules/tls/kube/user-provided`       | `ca_cert_pem_path`
-`ca.crt`               | `modules/tls/ingress/user-provided`    | `ca_cert_pem_path`
-`etcd-ca.crt`          | `modules/tls/etcd/user-provided`       | `etcd_ca_crt_pem_path`
-`etcd-client.crt`      | `modules/tls/etcd/user-provided`       | `etcd_client_crt_pem_path`
-`etcd-client.key`      | `modules/tls/etcd/user-provided`       | `etcd_client_key_pem_path`
-`etcd-peer.crt`        | `modules/tls/etcd/user-provided`       | `etcd_peer_crt_pem_path`
-`etcd-peer.key`        | `modules/tls/etcd/user-provided`       | `etcd_peer_key_pem_path`
-`etcd-server.crt`      | `modules/tls/etcd/user-provided`       | `etcd_server_crt_pem_path`
-`etcd-server.key`      | `modules/tls/etcd/user-provided`       | `etcd_server_key_pem_path`
-`identity-client.crt`  | `modules/tls/identity/user-provided`   | `client_cert_pem_path`
-`identity-client.key`  | `modules/tls/identity/user-provided`   | `client_key_pem_path`
-`identity-server.crt`  | `modules/tls/identity/user-provided`   | `server_cert_pem_path`
-`identity-server.key`  | `modules/tls/identity/user-provided`   | `server_key_pem_path`
-`ingress.crt`          | `modules/tls/ingress/user-provided`    | `cert_pem_path`
-`ingress.key`          | `modules/tls/ingress/user-provided`    | `key_pem_path`
-`kubelet.crt`          | `modules/tls/kube/user-provided`       | `kubelet_cert_pem_path`
-`kubelet.key`          | `modules/tls/kube/user-provided`       | `kubelet_key_pem_path`
+Certificate           | TLS module                           | Variable
+----------------------|--------------------------------------|---------
+`aggregator-ca.crt`   | `modules/tls/kube/user-provided`     | `aggregator_ca_cert_pem_path`
+`apiserver.crt`       | `modules/tls/kube/user-provided`     | `apiserver_cert_pem_path`
+`apiserver.key`       | `modules/tls/kube/user-provided`     | `apiserver_key_pem_path`
+`apiserver-proxy.crt` | `modules/tls/kube/user-provided`     | `apiserver_proxy_cert_pem_path`
+`apiserver-proxy.key` | `modules/tls/kube/user-provided`     | `apiserver_proxy_key_pem_path`
+`ca.crt`              | `modules/tls/kube/user-provided`     | `ca_cert_pem_path`
+`ca.key`              | `modules/tls/kube/user-provided`     | `ca_key_pem_path`
+`ca.crt`              | `modules/tls/ingress/user-provided`  | `ca_cert_pem_path`
+`etcd-ca.crt`         | `modules/tls/etcd/user-provided`     | `etcd_ca_crt_pem_path`
+`etcd-client.crt`     | `modules/tls/etcd/user-provided`     | `etcd_client_crt_pem_path`
+`etcd-client.key`     | `modules/tls/etcd/user-provided`     | `etcd_client_key_pem_path`
+`etcd-peer.crt`       | `modules/tls/etcd/user-provided`     | `etcd_peer_crt_pem_path`
+`etcd-peer.key`       | `modules/tls/etcd/user-provided`     | `etcd_peer_key_pem_path`
+`etcd-server.crt`     | `modules/tls/etcd/user-provided`     | `etcd_server_crt_pem_path`
+`etcd-server.key`     | `modules/tls/etcd/user-provided`     | `etcd_server_key_pem_path`
+`identity-client.crt` | `modules/tls/identity/user-provided` | `client_cert_pem_path`
+`identity-client.key` | `modules/tls/identity/user-provided` | `client_key_pem_path`
+`identity-server.crt` | `modules/tls/identity/user-provided` | `server_cert_pem_path`
+`identity-server.key` | `modules/tls/identity/user-provided` | `server_key_pem_path`
+`ingress.crt`         | `modules/tls/ingress/user-provided`  | `cert_pem_path`
+`ingress.key`         | `modules/tls/ingress/user-provided`  | `key_pem_path`
+`admin.crt`           | `modules/tls/kube/user-provided`     | `admin_cert_pem_path`
+`admin.key`           | `modules/tls/kube/user-provided`     | `admin_key_pem_path`
 

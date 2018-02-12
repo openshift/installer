@@ -62,7 +62,7 @@ resource "null_resource" "kubeconfig" {
   }
 
   provisioner "file" {
-    content     = "${module.bootkube.kubeconfig}"
+    content     = "${module.bootkube.kubeconfig-kubelet}"
     destination = "$HOME/kubeconfig"
   }
 

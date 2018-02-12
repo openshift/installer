@@ -48,7 +48,7 @@ resource "aws_s3_bucket_object" "tectonic_assets" {
 resource "aws_s3_bucket_object" "kubeconfig" {
   bucket  = "${aws_s3_bucket.tectonic.bucket}"
   key     = "kubeconfig"
-  content = "${module.bootkube.kubeconfig}"
+  content = "${module.bootkube.kubeconfig-kubelet}"
   acl     = "private"
 
   # The current Tectonic installer stores bits of the kubeconfig in KMS. As we

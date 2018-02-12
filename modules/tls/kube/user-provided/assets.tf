@@ -28,12 +28,17 @@ resource "local_file" "kube_ca_crt" {
   filename = "./generated/tls/ca.crt"
 }
 
-resource "local_file" "kubelet_key" {
-  content  = "${file(var.kubelet_key_pem_path)}"
-  filename = "./generated/tls/kubelet.key"
+resource "local_file" "kube_ca_key" {
+  content  = "${file(var.ca_key_pem_path)}"
+  filename = "./generated/tls/ca.key"
 }
 
-resource "local_file" "kubelet_crt" {
-  content  = "${file(var.kubelet_cert_pem_path)}"
-  filename = "./generated/tls/kubelet.crt"
+resource "local_file" "admin_key" {
+  content  = "${file(var.admin_key_pem_path)}"
+  filename = "./generated/tls/admin.key"
+}
+
+resource "local_file" "admin_crt" {
+  content  = "${file(var.admin_cert_pem_path)}"
+  filename = "./generated/tls/admin.crt"
 }

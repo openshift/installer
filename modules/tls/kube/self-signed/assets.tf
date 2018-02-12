@@ -38,12 +38,12 @@ resource "local_file" "kube_ca_crt" {
   filename = "./generated/tls/ca.crt"
 }
 
-resource "local_file" "kubelet_key" {
-  content  = "${tls_private_key.kubelet.private_key_pem}"
-  filename = "./generated/tls/kubelet.key"
+resource "local_file" "admin_key" {
+  content  = "${tls_private_key.admin.private_key_pem}"
+  filename = "./generated/tls/admin.key"
 }
 
-resource "local_file" "kubelet_crt" {
-  content  = "${tls_locally_signed_cert.kubelet.cert_pem}"
-  filename = "./generated/tls/kubelet.crt"
+resource "local_file" "admin_crt" {
+  content  = "${tls_locally_signed_cert.admin.cert_pem}"
+  filename = "./generated/tls/admin.crt"
 }

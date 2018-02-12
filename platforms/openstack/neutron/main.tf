@@ -86,8 +86,9 @@ module "bootkube" {
   etcd_server_cert_pem     = "${module.etcd_certs.etcd_server_crt_pem}"
   etcd_server_key_pem      = "${module.etcd_certs.etcd_server_key_pem}"
   kube_ca_cert_pem         = "${module.kube_certs.ca_cert_pem}"
-  kubelet_cert_pem         = "${module.kube_certs.kubelet_cert_pem}"
-  kubelet_key_pem          = "${module.kube_certs.kubelet_key_pem}"
+  kube_ca_key_pem          = "${module.kube_certs.ca_key_pem}"
+  admin_cert_pem           = "${module.kube_certs.admin_cert_pem}"
+  admin_key_pem            = "${module.kube_certs.admin_key_pem}"
 
   etcd_endpoints = "${module.dns.etcd_a_nodes}"
 
@@ -227,7 +228,7 @@ EOF
   ign_tectonic_service_id              = "${module.tectonic.systemd_service_id}"
   ign_update_ca_certificates_dropin_id = "${module.ignition_masters.update_ca_certificates_dropin_id}"
   instance_count                       = "${var.tectonic_master_count}"
-  kubeconfig_content                   = "${module.bootkube.kubeconfig}"
+  kubeconfig_content                   = "${module.bootkube.kubeconfig-kubelet}"
 }
 
 module "ignition_workers" {
@@ -274,7 +275,7 @@ EOF
   ign_systemd_default_env_id           = "${local.tectonic_http_proxy_enabled ? module.ignition_workers.systemd_default_env_id : ""}"
   ign_update_ca_certificates_dropin_id = "${module.ignition_workers.update_ca_certificates_dropin_id}"
   instance_count                       = "${var.tectonic_worker_count}"
-  kubeconfig_content                   = "${module.bootkube.kubeconfig}"
+  kubeconfig_content                   = "${module.bootkube.kubeconfig-kubelet}"
 }
 
 module "secrets" {

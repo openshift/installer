@@ -16,8 +16,9 @@ def generate_tls(path, cluster_name, domain, etcd_server_count, expiration_date 
   [
     ['kube/aggregator-ca.crt', aggregator_kube.to_pem],
     ['kube/ca.crt', root_kube.to_pem],
-    ['kube/kubelet.key', client_kube.key_material.private_key],
-    ['kube/kubelet.crt', client_kube.to_pem],
+    ['kube/ca.key', root_kube.key_material.private_key],
+    ['kube/admin.key', client_kube.key_material.private_key],
+    ['kube/admin.crt', client_kube.to_pem],
     ['kube/apiserver.key', server_kube.key_material.private_key],
     ['kube/apiserver.crt', server_kube.to_pem],
     ['kube/apiserver-proxy.key', proxy_kube.key_material.private_key],

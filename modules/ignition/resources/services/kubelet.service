@@ -8,6 +8,8 @@ Environment="RKT_RUN_ARGS=--uuid-file-save=/var/cache/kubelet-pod.uuid \
   --mount volume=resolv,target=/etc/resolv.conf \
   --volume var-lib-cni,kind=host,source=/var/lib/cni \
   --mount volume=var-lib-cni,target=/var/lib/cni \
+  --volume var-lib-kubelet,kind=host,source=/var/lib/kubelet \
+  --mount volume=var-lib-kubelet,target=/var/lib/kubelet \
   --volume var-log,kind=host,source=/var/log \
   --mount volume=var-log,target=/var/log"
 
@@ -16,30 +18,33 @@ ExecStartPre=/bin/mkdir -p /srv/kubernetes/manifests
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets
 ExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d
 ExecStartPre=/bin/mkdir -p /var/lib/cni
+ExecStartPre=/bin/mkdir -p /var/lib/kubelet/pki
 ${kubeconfig_fetch_cmd}
 ExecStartPre=/usr/bin/bash -c "grep 'certificate-authority-data' /etc/kubernetes/kubeconfig | awk '{print $2}' | base64 -d > /etc/kubernetes/ca.crt"
 ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/cache/kubelet-pod.uuid
 
 ExecStart=/usr/lib/coreos/kubelet-wrapper \
-  --kubeconfig=/etc/kubernetes/kubeconfig \
-  --require-kubeconfig \
-  --cni-conf-dir=/etc/kubernetes/cni/net.d \
-  --cni-bin-dir=/var/lib/cni/bin \
-  --network-plugin=cni \
-  --lock-file=/var/run/lock/kubelet.lock \
-  --exit-on-lock-contention \
-  --pod-manifest-path=/etc/kubernetes/manifests \
   --allow-privileged \
-  --node-labels=${node_label} \
-  ${node_taints_param} \
-  --minimum-container-ttl-duration=6m0s \
-  --cluster-dns=${cluster_dns_ip} \
-  --cluster-domain=cluster.local \
+  --anonymous-auth=false \
+  --cert-dir=/var/lib/kubelet/pki \
   --client-ca-file=/etc/kubernetes/ca.crt \
   --cloud-provider=${cloud_provider} \
+  --cluster-dns=${cluster_dns_ip} \
+  --cluster-domain=cluster.local \
+  --cni-bin-dir=/var/lib/cni/bin \
+  --cni-conf-dir=/etc/kubernetes/cni/net.d \
+  --exit-on-lock-contention \
+  --kubeconfig=/etc/kubernetes/kubeconfig \
+  --lock-file=/var/run/lock/kubelet.lock \
+  --minimum-container-ttl-duration=6m0s \
+  --network-plugin=cni \
+  --node-labels=${node_label} \
+  --pod-manifest-path=/etc/kubernetes/manifests \
+  --require-kubeconfig \
+  --rotate-certificates \
   ${cloud_provider_config} \
   ${debug_config} \
-  --anonymous-auth=false
+  ${node_taints_param}
 
 ExecStop=-/usr/bin/rkt stop --uuid-file=/var/cache/kubelet-pod.uuid
 

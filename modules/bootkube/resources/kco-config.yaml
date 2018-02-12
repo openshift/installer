@@ -1,5 +1,7 @@
 apiVersion: v1
 kind: KubeCoreOperatorConfig
+clusterConfig:
+  apiserver_url: ${kube_apiserver_url}
 authConfig:
   oidc_client_id: ${oidc_client_id}
   oidc_issuer_url: ${oidc_issuer_url}
@@ -13,5 +15,3 @@ networkConfig:
   cluster_cidr: ${cluster_cidr}
   etcd_servers: ${etcd_servers}
   service_cidr: ${service_cidr}
-initialConfig:
-  initial_master_count: ${master_count}

@@ -103,12 +103,17 @@ variable "kube_ca_cert_pem" {
   description = "The Kubernetes CA in PEM format."
 }
 
-variable "kubelet_cert_pem" {
+variable "kube_ca_key_pem" {
+  type        = "string"
+  description = "The Kubernetes CA key in PEM format."
+}
+
+variable "admin_cert_pem" {
   type        = "string"
   description = "The kubelet certificate in PEM format."
 }
 
-variable "kubelet_key_pem" {
+variable "admin_key_pem" {
   type        = "string"
   description = "The kubelet key in PEM format."
 }

@@ -6,11 +6,15 @@ variable "ca_cert_pem_path" {
   type = "string"
 }
 
-variable "kubelet_cert_pem_path" {
+variable "ca_key_pem_path" {
   type = "string"
 }
 
-variable "kubelet_key_pem_path" {
+variable "admin_cert_pem_path" {
+  type = "string"
+}
+
+variable "admin_key_pem_path" {
   type = "string"
 }
 

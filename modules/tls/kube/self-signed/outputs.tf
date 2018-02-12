@@ -14,12 +14,12 @@ output "ca_key_pem" {
   value = "${var.ca_cert_pem == "" ? element(concat(tls_private_key.kube_ca.*.private_key_pem, list("")), 0) : var.ca_key_pem}"
 }
 
-output "kubelet_cert_pem" {
-  value = "${tls_locally_signed_cert.kubelet.cert_pem}"
+output "admin_cert_pem" {
+  value = "${tls_locally_signed_cert.admin.cert_pem}"
 }
 
-output "kubelet_key_pem" {
-  value = "${tls_private_key.kubelet.private_key_pem}"
+output "admin_key_pem" {
+  value = "${tls_private_key.admin.private_key_pem}"
 }
 
 output "apiserver_cert_pem" {
@@ -49,8 +49,8 @@ output "id" {
     local_file.apiserver_proxy_crt.id,
     local_file.kube_ca_key.id,
     local_file.kube_ca_crt.id,
-    local_file.kubelet_key.id,
-    local_file.kubelet_crt.id,)
+    local_file.admin_key.id,
+    local_file.admin_crt.id,)
     )}
   ")}"
 }

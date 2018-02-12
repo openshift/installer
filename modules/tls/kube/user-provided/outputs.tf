@@ -6,12 +6,16 @@ output "ca_cert_pem" {
   value = "${file(var.ca_cert_pem_path)}"
 }
 
-output "kubelet_cert_pem" {
-  value = "${file(var.kubelet_cert_pem_path)}"
+output "ca_key_pem" {
+  value = "${file(var.ca_key_pem_path)}"
 }
 
-output "kubelet_key_pem" {
-  value = "${file(var.kubelet_key_pem_path)}"
+output "admin_cert_pem" {
+  value = "${file(var.admin_cert_pem_path)}"
+}
+
+output "admin_key_pem" {
+  value = "${file(var.admin_key_pem_path)}"
 }
 
 output "apiserver_cert_pem" {
@@ -39,8 +43,8 @@ output "id" {
     local_file.apiserver_proxy_key.id,
     local_file.apiserver_proxy_crt.id,
     local_file.kube_ca_crt.id,
-    local_file.kubelet_key.id,
-    local_file.kubelet_crt.id,)
+    local_file.admin_key.id,
+    local_file.admin_crt.id,)
     )}
   ")}"
 }
