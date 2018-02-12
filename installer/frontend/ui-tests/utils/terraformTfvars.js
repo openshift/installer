@@ -28,10 +28,10 @@ const testManualBoot = (client, expectedOutputFilePath, ignoredKeys) => {
 
   // It should be safe to refresh the page and have all field values preserved
   client.refresh();
-  page.expect.element('@manuallyBoot').to.be.visible.before(60000);
+  page.expect.element('@manualBoot').to.be.visible.before(60000);
 
   page
-    .click('@manuallyBoot')
+    .click('@manualBoot')
     .expect.element('a[href="/terraform/assets"]').to.be.visible.before(120000);
 
   client.getCookie('tectonic-installer', ({value}) => {

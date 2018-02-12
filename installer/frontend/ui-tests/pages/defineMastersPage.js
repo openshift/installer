@@ -33,10 +33,7 @@ module.exports = {
     mac1: 'input[id="masters.1.mac"]',
     hosts1: 'input[id="masters.1.host"]',
     deleteIcon1: '.row:nth-child(2) i.fa-minus-circle',
-    addMore: {
-      selector: '//*[text()[contains(.,"Add More")]]',
-      locateStrategy: 'xpath',
-    },
+    addMore: '#addMore',
     alertError: '.alert-error',
   },
 };

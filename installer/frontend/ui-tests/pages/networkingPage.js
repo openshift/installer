@@ -106,10 +106,7 @@ const pageCommands = {
 module.exports = {
   commands: [pageCommands],
   elements: {
-    advanced: {
-      selector: '//*[text()[contains(.,"Advanced Settings")]]',
-      locateStrategy: 'xpath',
-    },
+    advanced: '#awsAdvancedNetworking',
     alertError: '.alert-error',
     k8sCIDRsErrorTitle: '#k8sCIDRs .alert-error b',
     k8sCIDRsWarningTitle: '#k8sCIDRs .alert-info b',

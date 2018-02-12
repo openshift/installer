@@ -201,7 +201,7 @@ export const ToggleButton = connect(
     onValue(!value);
     dispatch(dirtyActions.add(id));
   }}),
-)(({children, className, onClick, value}) => <button className={className} onClick={onClick}>
+)(({children, className, id, onClick, value}) => <button className={className} id={id} onClick={onClick}>
   {value ? 'Hide' : 'Show'}&nbsp;{children}
   <i style={{marginLeft: 7}} className={classNames('fa', {'fa-chevron-up': value, 'fa-chevron-down': !value})}></i>
 </button>);
@@ -461,7 +461,7 @@ export const FieldRowList = connect(
         })}
         <div className="row">
           <div className="col-xs-3">
-            <span className="wiz-link" onClick={() => {
+            <span className="wiz-link" id="addMore" onClick={() => {
               this.setState({autoFocus: true});
               appendField(id);
             }}>

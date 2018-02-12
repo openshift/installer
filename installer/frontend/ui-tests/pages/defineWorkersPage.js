@@ -31,10 +31,7 @@ module.exports = {
     deleteIcon0: '.row:nth-child(1) i.fa-minus-circle',
     mac1: 'input[id="workers.1.mac"]',
     hosts1: 'input[id="workers.1.host"]',
-    addMore: {
-      selector: '//*[text()[contains(.,"Add More")]]',
-      locateStrategy: 'xpath',
-    },
+    addMore: '#addMore',
     alertError: '.alert-error',
   },
 };

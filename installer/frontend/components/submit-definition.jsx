@@ -45,7 +45,7 @@ export const SubmitDefinition = withNav(connect(
       </div>
       <p>
         <b>Advanced mode: </b>
-        <a onClick={() => onFinish(true)}>Manually boot</a> your own cluster. Validate configuration, generate assets, but don't create the cluster.
+        <a id="manualBoot" onClick={() => onFinish(true)}>Manually boot</a> your own cluster. Validate configuration, generate assets, but don't create the cluster.
       </p>
       <div className={errorClasses}>
         {errorMessage}
