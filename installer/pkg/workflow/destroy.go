@@ -3,9 +3,6 @@ package workflow
 import (
 	"log"
 	"os"
-	"os/exec"
-
-	"github.com/coreos/tectonic-installer/installer/pkg/tectonic"
 )
 
 // NewDestroyWorkflow creates new instances of the 'destroy' workflow,
@@ -24,7 +21,7 @@ func NewDestroyWorkflow(buildPath string) Workflow {
 			statePath: buildPath,
 		},
 		steps: []Step{
-			terraformPrepareStep,
+			tectonicPrepareStep,
 			terraformInitStep,
 			terraformDestroyStep,
 		},
@@ -35,15 +32,8 @@ func terraformDestroyStep(m *metadata) error {
 	if m.statePath == "" {
 		log.Fatalf("Invalid build location - cannot destroy.")
 	}
+
 	log.Printf("Destroying cluster from %s...", m.statePath)
-	tfDestroy := exec.Command("terraform", "destroy", "-force", tectonic.FindTemplatesForType("aws")) // TODO: get from cluster config
-	tfDestroy.Dir = m.statePath
-	tfDestroy.Stdin = os.Stdin
-	tfDestroy.Stdout = os.Stdout
-	tfDestroy.Stderr = os.Stderr
-	err := tfDestroy.Run()
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return terraformExec(m, "destroy", "-force")
 }

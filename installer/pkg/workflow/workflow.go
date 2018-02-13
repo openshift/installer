@@ -1,6 +1,10 @@
 package workflow
 
-import "log"
+import (
+	"log"
+
+	"github.com/coreos/tectonic-installer/installer/pkg/config"
+)
 
 // Workflow is a high-level representation
 // of a set of actions performed in a predictable order.
@@ -15,9 +19,9 @@ type Workflow interface {
 // Steps taked thier inputs from the metadata object and persist
 // results onto it for later consumption.
 type metadata struct {
-	statePath   string
-	clusterName string
-	configFile  string
+	config.Cluster
+	configFile string
+	statePath  string
 }
 
 // Step is the entrypoint of a workflow step implementation.

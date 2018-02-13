@@ -4,37 +4,54 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/exec"
 	"path/filepath"
 
+	"github.com/coreos/tectonic-installer/installer/pkg/config"
 	"github.com/coreos/tectonic-installer/installer/pkg/tectonic"
 )
 
-const configFileName string = "config.yaml"
+const (
+	configFileName             = "config.yaml"
+	terraformVariablesFileName = "terraform.tfvars"
+)
 
 // NewInstallWorkflow creates new instances of the 'install' workflow,
 // responsible for running the actions necessary to install a new cluster.
 func NewInstallWorkflow(configFile string) Workflow {
-	clusterName, err := tectonic.ClusterNameFromConfig(configFile) // TODO @spangenberg: re-implement with config object
+	config, err := config.ParseFile(configFile)
 	if err != nil {
-		log.Fatalf("%s is not a valid config file", configFile)
+		log.Fatalf("%s is not a valid config file: %s", configFile, err)
 	}
+	cluster := config.Clusters[0]
+
 	return simpleWorkflow{
 		metadata: metadata{
-			clusterName: clusterName,
-			configFile:  configFile,
+			Cluster:    cluster,
+			configFile: configFile,
 		},
 		steps: []Step{
-			terraformPrepareStep,
+			tectonicPrepareStep,
+			tectonicGenerateClusterConfig,
+			tectonicGenerateTerraformVariables,
 			terraformInitStep,
 			terraformApplyStep,
 		},
 	}
 }
 
-func terraformPrepareStep(m *metadata) error {
+func tectonicGenerateClusterConfig(m *metadata) error {
+	return tectonic.GenerateClusterConfig(m.Cluster, m.statePath)
+}
+
+func tectonicGenerateTerraformVariables(m *metadata) error {
+	configFilePath := filepath.Join(m.statePath, terraformVariablesFileName)
+
+	return tectonic.GenerateTerraformVars(m.Cluster, configFilePath)
+}
+
+func tectonicPrepareStep(m *metadata) error {
 	if m.statePath == "" {
-		m.statePath = tectonic.NewBuildLocation(m.clusterName)
+		m.statePath = tectonic.NewBuildLocation(m.Cluster.Name)
 	}
 	varfile := filepath.Join(m.statePath, configFileName)
 	if _, err := os.Stat(varfile); os.IsNotExist(err) {
@@ -56,30 +73,14 @@ func terraformPrepareStep(m *metadata) error {
 	return nil
 }
 
-func terraformInitStep(m *metadata) error {
-	log.Printf("Initializing cluster ...")
-	tfInit := exec.Command("terraform", "init", tectonic.FindTemplatesForType("aws")) // TODO: get from cluster config
-	tfInit.Dir = m.statePath
-	tfInit.Stdin = os.Stdin
-	tfInit.Stdout = os.Stdout
-	tfInit.Stderr = os.Stderr
-	err := tfInit.Run()
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 func terraformApplyStep(m *metadata) error {
 	log.Printf("Installation is running...")
-	tfInit := exec.Command("terraform", "apply", tectonic.FindTemplatesForType("aws")) // TODO: get from cluster config
-	tfInit.Dir = m.statePath
-	tfInit.Stdin = os.Stdin
-	tfInit.Stdout = os.Stdout
-	tfInit.Stderr = os.Stderr
-	err := tfInit.Run()
-	if err != nil {
-		return err
-	}
-	return nil
+
+	return terraformExec(m, "apply")
+}
+
+func terraformInitStep(m *metadata) error {
+	log.Printf("Initializing cluster ...")
+
+	return terraformExec(m, "init")
 }

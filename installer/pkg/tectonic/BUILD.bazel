@@ -7,4 +7,9 @@ go_library(
     ],
     importpath = "github.com/coreos/tectonic-installer/installer/pkg/tectonic",
     visibility = ["//installer:__subpackages__"],
+    deps = [
+        "//installer/pkg/config:go_default_library",
+        "//installer/pkg/config-generator:go_default_library",
+        "//installer/pkg/terraform-generator:go_default_library",
+    ],
 )

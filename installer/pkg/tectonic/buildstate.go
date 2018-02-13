@@ -1,19 +1,22 @@
 package tectonic
 
 import (
-	"errors"
+	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
+
+	"github.com/coreos/tectonic-installer/installer/pkg/config"
+	"github.com/coreos/tectonic-installer/installer/pkg/config-generator"
+	"github.com/coreos/tectonic-installer/installer/pkg/terraform-generator"
 )
 
-// ClusterNameFromConfig determines the name of the cluster form a
-// configuration object specified by the user.
-// TEMPORARY: This is a stub, until we wire in the cluster config object.
-func ClusterNameFromConfig(varfile string) (string, error) {
-	// TODO @spangenberg: implement this based on parsed config object.
-	return "", errors.New("not found")
-}
+const (
+	kubeSystemFileName     = "kube-system.yml"
+	tectonicSystemFileName = "tectonic-system.yml"
+)
 
 // NewBuildLocation creates a new directory on disk that will become
 // the root location for all statefull artefacts of the current cluster build.
@@ -36,5 +39,56 @@ func NewBuildLocation(clusterName string) string {
 // TEMPORARY: implement actual detection of templates from released artefacts.
 func FindTemplatesForType(buildType string) string {
 	pwd, _ := os.Getwd()
-	return filepath.Join(pwd, "platforms", buildType)
+	return filepath.Join(pwd, "platforms", strings.ToLower(buildType))
+}
+
+// GenerateClusterConfig writes, if successful, the cluster configuration.
+func GenerateClusterConfig(cluster config.Cluster, configPath string) error {
+	configGenerator := configgenerator.New(cluster)
+
+	kubeSystem, err := configGenerator.KubeSystem()
+	if err != nil {
+		return err
+	}
+
+	kubeSystemConfigFilePath := filepath.Join(configPath, kubeSystemFileName)
+	if err := writeFile(kubeSystemConfigFilePath, kubeSystem); err != nil {
+		return err
+	}
+
+	tectonicSystem, err := configGenerator.TectonicSystem()
+	if err != nil {
+		return err
+	}
+
+	tectonicSystemConfigFilePath := filepath.Join(configPath, tectonicSystemFileName)
+	return writeFile(tectonicSystemConfigFilePath, tectonicSystem)
+}
+
+// GenerateTerraformVars writes, if successful, the terraform variables.
+func GenerateTerraformVars(cluster config.Cluster, configFilePath string) error {
+	terraformGenerator := terraformgenerator.New(cluster)
+
+	vars, err := terraformGenerator.TFVars()
+	if err != nil {
+		return err
+	}
+
+	return writeFile(configFilePath, vars)
+}
+
+func writeFile(path, content string) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	w := bufio.NewWriter(f)
+	if _, err := fmt.Fprintln(w, content); err != nil {
+		return err
+	}
+	w.Flush()
+
+	return nil
 }
