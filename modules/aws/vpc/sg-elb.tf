@@ -1,4 +1,4 @@
-resource "aws_security_group" "ncg" {
+resource "aws_security_group" "tnc" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(

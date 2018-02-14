@@ -59,9 +59,9 @@ resource "aws_autoscaling_group" "masters" {
   }
 }
 
-data "ignition_config" "ncg_master" {
+data "ignition_config" "tnc_master" {
   append {
-    source = "http://${var.cluster_name}-ncg.${var.base_domain}/ignition?profile=master"
+    source = "http://${var.cluster_name}-tnc.${var.base_domain}/ign/v1/role/master"
   }
 
   files = ["${data.ignition_file.kubelet_master_kubeconfig.id}"]
@@ -85,7 +85,7 @@ resource "aws_launch_configuration" "master_conf" {
   security_groups             = ["${var.master_sg_ids}"]
   iam_instance_profile        = "${aws_iam_instance_profile.master_profile.arn}"
   associate_public_ip_address = "${var.public_endpoints}"
-  user_data                   = "${data.ignition_config.ncg_master.rendered}"
+  user_data                   = "${data.ignition_config.tnc_master.rendered}"
 
   lifecycle {
     create_before_destroy = true

@@ -1,7 +1,7 @@
 resource "aws_s3_bucket" "tectonic" {
   # This bucket name must match the CNAME
   # https://docs.aws.amazon.com/AmazonS3/latest/dev/VirtualHosting.html#VirtualHostingCustomURLs
-  bucket = "${lower(var.tectonic_cluster_name)}-ncg.${var.tectonic_base_domain}"
+  bucket = "${lower(var.tectonic_cluster_name)}-tnc.${var.tectonic_base_domain}"
 
   acl = "private"
 
@@ -59,12 +59,12 @@ data "archive_file" "assets" {
 # Ignition
 resource "aws_s3_bucket_object" "ignition_bootstrap" {
   bucket  = "${aws_s3_bucket.tectonic.bucket}"
-  key     = "ignition"
+  key     = "ign/v1/role/master"
   content = "${local.ignition_bootstrap}"
   acl     = "public-read"
 
   # TODO: Lock down permissions.
-  # At the minute this is pulic (so accessible via http) so joiners nodes can reach the NCG using the same url
+  # At the minute this is pulic (so accessible via http) so joiners nodes can reach the TNC using the same url
   server_side_encryption = "AES256"
 
   tags = "${merge(map(
