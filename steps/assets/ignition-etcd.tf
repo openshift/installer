@@ -3,22 +3,6 @@ locals {
   etcd_instance_count          = "${length(compact(var.tectonic_etcd_servers)) == 0 ? local.etcd_internal_instance_count : 0}"
 }
 
-resource "aws_s3_bucket_object" "ignition_etcd" {
-  count   = "${local.etcd_instance_count}"
-  bucket  = "${aws_s3_bucket.tectonic.bucket}"
-  key     = "ignition_etcd_${count.index}.json"
-  content = "${data.ignition_config.etcd.*.rendered[count.index]}"
-  acl     = "private"
-
-  server_side_encryption = "AES256"
-
-  tags = "${merge(map(
-      "Name", "${var.tectonic_cluster_name}-ignition-etcd-${count.index}",
-      "KubernetesCluster", "${var.tectonic_cluster_name}",
-      "tectonicClusterID", "${module.tectonic.cluster_id}"
-    ), var.tectonic_aws_extra_tags)}"
-}
-
 data "ignition_config" "etcd" {
   count = "${local.etcd_instance_count}"
 
@@ -55,4 +39,10 @@ Environment="LOCKSMITHD_ENDPOINT=https://${var.tectonic_cluster_name}-etcd-${cou
 EOF
     },
   ]
+}
+
+resource "local_file" "ignition_etcd" {
+  count    = "${local.etcd_instance_count}"
+  content  = "${data.ignition_config.etcd.*.rendered[count.index]}"
+  filename = "./generated/ignition/etcd-${count.index}.json"
 }

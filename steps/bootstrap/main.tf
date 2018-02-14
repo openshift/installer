@@ -24,8 +24,8 @@ module "container_linux" {
 }
 
 module "vpc" {
-  source = "../../modules/aws/vpc"
-
+  source                   = "../../modules/aws/vpc"
+  depends_on               = ["${aws_s3_bucket_object.tectonic_assets.id}"]
   base_domain              = "${var.tectonic_base_domain}"
   cidr_block               = "${var.tectonic_aws_vpc_cidr_block}"
   cluster_id               = "${local.cluster_id}"
@@ -88,7 +88,7 @@ module "etcd" {
   root_volume_iops        = "${var.tectonic_aws_etcd_root_volume_iops}"
   root_volume_size        = "${var.tectonic_aws_etcd_root_volume_size}"
   root_volume_type        = "${var.tectonic_aws_etcd_root_volume_type}"
-  s3_bucket               = "${local.s3_bucket}"
+  s3_bucket               = "${aws_s3_bucket.tectonic.bucket}"
   sg_ids                  = "${concat(var.tectonic_aws_etcd_extra_sg_ids, list(module.vpc.etcd_sg_id))}"
   ssh_key                 = "${var.tectonic_aws_ssh_key}"
   subnets                 = "${module.vpc.worker_subnet_ids}"

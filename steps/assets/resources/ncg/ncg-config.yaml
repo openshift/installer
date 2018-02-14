@@ -24,7 +24,8 @@ data:
       "name": "Worker Profile",
       "clc_id": "worker.ign"
     }
-  worker.clc: ${ncg_config_worker}
+  worker.clc: |
+    ${ncg_config_worker}
   master.group: |
     {
       "id": "master",
@@ -43,4 +44,5 @@ data:
       "name": "Master Profile",
       "clc_id": "master.ign"
     }
-  master.clc: ${ncg_config_master}
+  master.clc: |
+    ${ncg_config_master}

@@ -17,5 +17,5 @@ resource "aws_route53_record" "tectonic_ncg" {
   type    = "CNAME"
   ttl     = "1"
 
-  records = ["${local.s3_bucket_domain_name}"]
+  records = ["${aws_s3_bucket.tectonic.bucket_domain_name}"]
 }

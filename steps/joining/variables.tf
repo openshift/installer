@@ -1,1 +1,1 @@
-../../platforms/aws/variables.tf
+../variables.tf

@@ -7,6 +7,8 @@ provider "aws" {
 locals {
   ingress_internal_fqdn = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}"
   api_internal_fqdn     = "${var.tectonic_cluster_name}-api.${var.tectonic_base_domain}"
+  bucket_name           = "${var.tectonic_cluster_name}-ncg.${var.tectonic_base_domain}"
+  bucket_assets_key     = "assets.zip"
 }
 
 data "aws_availability_zones" "azs" {}
@@ -110,21 +112,4 @@ module "tectonic" {
   stats_url         = "${var.tectonic_stats_url}"
 
   image_re = "${var.tectonic_image_re}"
-}
-
-data "archive_file" "assets" {
-  type       = "zip"
-  source_dir = "./generated/"
-
-  # Because the archive_file provider is a data source, depends_on can't be
-  # used to guarantee that the tectonic/bootkube modules have generated
-  # all the assets on disk before trying to archive them. Instead, we use their
-  # ID outputs, that are only computed once the assets have actually been
-  # written to disk. We re-hash the IDs (or dedicated module outputs, like module.bootkube.content_hash)
-  # to make the filename shorter, since there is no security nor collision risk anyways.
-  #
-  # Additionally, data sources do not support managing any lifecycle whatsoever,
-  # and therefore, the archive is never deleted. To avoid cluttering the module
-  # folder, we write it in the Terraform managed hidden folder `.terraform`.
-  output_path = "./.terraform/generated_${sha1("${data.template_file.ncg.id} ${data.template_file.ncg_config.id} ${module.etcd_certs.id} ${module.tectonic.id} ${module.bootkube.id}")}.zip"
 }

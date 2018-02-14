@@ -122,8 +122,9 @@ data "template_file" "ncg_config" {
   template = "${file("${path.module}/resources/ncg/ncg-config.yaml")}"
 
   vars {
-    ncg_config_worker   = "${jsonencode(data.ignition_config.workers.rendered)}"
-    ncg_config_master   = "${jsonencode(data.ignition_config.masters.rendered)}"
+    # need indent here https://github.com/hashicorp/terraform/issues/16775
+    ncg_config_worker   = "${indent(2, data.ignition_config.workers.rendered)}"
+    ncg_config_master   = "${indent(2, data.ignition_config.masters.rendered)}"
     kube_dns_service_ip = "${cidrhost(var.tectonic_service_cidr, 10)}"
   }
 }

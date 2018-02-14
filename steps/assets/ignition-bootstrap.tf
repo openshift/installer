@@ -1,24 +1,7 @@
-resource "aws_s3_bucket_object" "ignition_bootstrap" {
-  bucket  = "${aws_s3_bucket.tectonic.bucket}"
-  key     = "ignition"
-  content = "${data.ignition_config.bootstrap.rendered}"
-  acl     = "public-read"
-
-  # TODO: Lock down permissions.
-  # At the minute this is pulic (so accessible via http) so joiners nodes can reach the NCG using the same url
-  server_side_encryption = "AES256"
-
-  tags = "${merge(map(
-      "Name", "${var.tectonic_cluster_name}-ignition-master",
-      "KubernetesCluster", "${var.tectonic_cluster_name}",
-      "tectonicClusterID", "${module.tectonic.cluster_id}"
-    ), var.tectonic_aws_extra_tags)}"
-}
-
 module "ignition_bootstrap" {
   source = "../../modules/ignition"
 
-  assets_location           = "${aws_s3_bucket_object.tectonic_assets.bucket}/${aws_s3_bucket_object.tectonic_assets.key}"
+  assets_location           = "${local.bucket_name}/${local.bucket_assets_key}"
   base_domain               = "${var.tectonic_base_domain}"
   bootstrap_upgrade_cl      = "${var.tectonic_bootstrap_upgrade_cl}"
   cloud_provider            = "aws"
@@ -85,7 +68,7 @@ data "template_file" "init_assets" {
   vars {
     cluster_name       = "${var.tectonic_cluster_name}"
     awscli_image       = "${var.tectonic_container_images["awscli"]}"
-    assets_s3_location = "${aws_s3_bucket_object.tectonic_assets.bucket}/${aws_s3_bucket_object.tectonic_assets.key}"
+    assets_s3_location = "${local.bucket_name}/${local.bucket_assets_key}"
   }
 }
 
@@ -105,7 +88,7 @@ data "template_file" "rm_assets" {
   vars {
     cluster_name       = "${var.tectonic_cluster_name}"
     awscli_image       = "${var.tectonic_container_images["awscli"]}"
-    assets_s3_location = "${aws_s3_bucket_object.tectonic_assets.bucket}/${aws_s3_bucket_object.tectonic_assets.key}"
+    assets_s3_location = "${local.bucket_name}/${local.bucket_assets_key}"
   }
 }
 
@@ -117,4 +100,9 @@ data "ignition_file" "rm_assets" {
   content {
     content = "${data.template_file.rm_assets.rendered}"
   }
+}
+
+resource "local_file" "ignition_bootstrap" {
+  content  = "${data.ignition_config.bootstrap.rendered}"
+  filename = "./generated/ignition/bootstrap.json"
 }
