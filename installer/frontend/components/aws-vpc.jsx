@@ -5,6 +5,7 @@ import { connect } from 'react-redux';
 import { cidrEnd, cidrSize, cidrStart } from '../cidr';
 import { compose, validate } from '../validate';
 import { getDefaultSubnets, getZones, getVpcs, getVpcSubnets, validateSubnets } from '../aws-actions';
+import { Loader } from './loader';
 import { A, AsyncSelect, Connect, Deselect, DeselectField, DocsA, ExternalLinkIcon, Input, localeNum, Radio, Select, ToggleButton } from './ui';
 import { Alert } from './alert';
 import { configActions } from '../actions';
@@ -171,22 +172,15 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
 const SubnetSelect = connect(
   ({clusterConfig}, {field, subnets}) => ({value: _.find(subnets, {id: _.get(clusterConfig, field)})})
 )(
-  ({az, deselectId, disabled, field, subnets, value}) => <div className="row form-group">
-    <div className="col-xs-4">
-      <Deselect field={deselectId} label={az} />
-    </div>
-    <div className="col-xs-8">
-      <div className="withtooltip">
-        <Connect field={field}>
-          <Select disabled={disabled} options={toOptions(_.filter(subnets, {availabilityZone: az}))}>
-            <option disabled value="">Select a subnet</option>
-          </Select>
-        </Connect>
-        {value && <div className="tooltip">
-          {localeNum(value.availableIPs)} available IP addresses out of {localeNum(cidrSize(value.instanceCIDR))} total ({cidrStart(value.instanceCIDR)} to {cidrEnd(value.instanceCIDR)})
-        </div>}
-      </div>
-    </div>
+  ({disabled, field, subnets, value}) => <div className="withtooltip">
+    <Connect field={field}>
+      <Select disabled={disabled} options={toOptions(subnets)}>
+        <option disabled value="">Select a subnet</option>
+      </Select>
+    </Connect>
+    {value && <div className="tooltip">
+      {localeNum(value.availableIPs)} available IP addresses out of {localeNum(cidrSize(value.instanceCIDR))} total ({cidrStart(value.instanceCIDR)} to {cidrEnd(value.instanceCIDR)})
+    </div>}
   </div>
 );
 
@@ -252,31 +246,28 @@ export const AWS_VPC = connect(stateToProps, dispatchToProps)(props => {
       </DeselectField>;
     });
   } else if (awsVpcId) {
-    const availableControllerSubnets = internalCluster ? availableVpcSubnets.value.private : availableVpcSubnets.value.public;
-    if (_.size(availableControllerSubnets)) {
-      controllerSubnets = _.map(props.azs, az => <DeselectField field={deselectId(az)} key={az}>
-        <SubnetSelect
-          az={az}
-          deselectId={deselectId(az)}
-          field={`${AWS_CONTROLLER_SUBNET_IDS}.${az}`}
-          subnets={availableControllerSubnets}
-        />
-      </DeselectField>);
-    } else if (!availableVpcSubnets.inFly) {
-      controllerSubnets = <Alert>{awsVpcId} has no {internalCluster ? 'private' : 'public'} subnets. Please create some using the AWS console.</Alert>;
-    }
-    if (_.size(availableVpcSubnets.value.private)) {
-      workerSubnets = _.map(props.azs, az => <DeselectField field={deselectId(az)} key={az}>
-        <SubnetSelect
-          az={az}
-          deselectId={deselectId(az)}
-          field={`${AWS_WORKER_SUBNET_IDS}.${az}`}
-          subnets={availableVpcSubnets.value.private}
-        />
-      </DeselectField>);
-    } else if (!availableVpcSubnets.inFly) {
-      workerSubnets = <Alert>{awsVpcId} has no private subnets. Please create some using the AWS console.</Alert>;
-    }
+    const buildSubnets = (field, isPrivate) => {
+      if (availableVpcSubnets.inFly) {
+        return <Loader />;
+      }
+      const subnets = availableVpcSubnets.value[isPrivate ? 'private' : 'public'];
+      if (_.isEmpty(subnets)) {
+        return <Alert>{awsVpcId} has no {isPrivate ? 'private' : 'public'} subnets. Please create some using the AWS console.</Alert>;
+      }
+      return _.map(props.azs, az => <div className="row form-group" key={az}>
+        <div className="col-xs-4">
+          <Deselect field={deselectId(az)} label={az} />
+        </div>
+        <div className="col-xs-8">
+          <DeselectField field={deselectId(az)}>
+            <SubnetSelect field={`${field}.${az}`} subnets={_.filter(subnets, {availabilityZone: az})} />
+          </DeselectField>
+        </div>
+      </div>);
+    };
+
+    controllerSubnets = buildSubnets(AWS_CONTROLLER_SUBNET_IDS, internalCluster);
+    workerSubnets = buildSubnets(AWS_WORKER_SUBNET_IDS, true);
   }
 
   return <div>
