@@ -15,7 +15,7 @@ locals {
 }
 
 resource "aws_route53_zone" "tectonic_int" {
-  count         = "${var.tectonic_private_endpoints ? "${var.tectonic_external_private_zone == "" ? 1 : 0 }" : 0}"
+  count         = "0"
   vpc_id        = "${var.tectonic_external_vpc_id}"
   name          = "${var.base_domain}"
   force_destroy = true

@@ -74,16 +74,8 @@ variable "sg_ids" {
   description = "The security group IDs to be applied."
 }
 
-variable "ign_etcd_dropin_id_list" {
-  type = "list"
-}
-
 variable "s3_bucket" {
   type = "string"
-}
-
-variable "ign_etcd_crt_id_list" {
-  type = "list"
 }
 
 variable "etcd_iam_role" {
@@ -93,16 +85,6 @@ variable "etcd_iam_role" {
 }
 
 variable "dns_server_ip" {
-  type    = "string"
-  default = ""
-}
-
-variable "ign_profile_env_id" {
-  type    = "string"
-  default = ""
-}
-
-variable "ign_systemd_default_env_id" {
   type    = "string"
   default = ""
 }

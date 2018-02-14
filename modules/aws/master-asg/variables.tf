@@ -1,8 +1,3 @@
-variable "assets_s3_location" {
-  type        = "string"
-  description = "Location on S3 of the Bootkube/Tectonic assets to use (bucket/key)"
-}
-
 variable "autoscaling_group_extra_tags" {
   description = "Extra AWS tags to be applied to created autoscaling group resources."
   type        = "list"
@@ -43,10 +38,6 @@ variable "extra_tags" {
   description = "Extra AWS tags to be applied to created resources."
   type        = "map"
   default     = {}
-}
-
-variable "ign_s3_puller_id" {
-  type = "string"
 }
 
 variable "ec2_ami" {
@@ -109,41 +100,12 @@ variable "subnet_ids" {
   type = "list"
 }
 
-variable "ign_bootkube_service_id" {
-  type        = "string"
-  description = "The ID of the bootkube systemd service unit"
-}
-
-variable "ign_bootkube_path_unit_id" {
-  type = "string"
-}
-
-variable "ign_tectonic_service_id" {
-  type        = "string"
-  description = "The ID of the tectonic installer systemd service unit"
-}
-
-variable "ign_tectonic_path_unit_id" {
-  type = "string"
-}
-
-variable "ign_init_assets_service_id" {
-  type = "string"
-}
-
-variable "ign_rm_assets_service_id" {
-  type = "string"
-}
-
-variable "ign_rm_assets_path_unit_id" {
-  type = "string"
-}
-
-variable "s3_bucket" {
-  type = "string"
-}
-
 variable "dns_server_ip" {
+  type    = "string"
+  default = ""
+}
+
+variable "kubeconfig_content" {
   type    = "string"
   default = ""
 }

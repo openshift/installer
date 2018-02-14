@@ -14,4 +14,7 @@ locals {
   cluster_id                       = "${data.terraform_remote_state.bootstrap.cluster_id}"
   aws_launch_configuration_workers = "${data.terraform_remote_state.bootstrap.aws_launch_configuration_workers}"
   subnet_ids_workers               = "${data.terraform_remote_state.bootstrap.subnet_ids_workers}"
+  private_zone_id                  = "${data.terraform_remote_state.bootstrap.private_zone_id}"
+  ncg_elb_dns_name                 = "${data.terraform_remote_state.bootstrap.ncg_elb_dns_name}"
+  ncg_elb_zone_id                  = "${data.terraform_remote_state.bootstrap.ncg_elb_zone_id}"
 }

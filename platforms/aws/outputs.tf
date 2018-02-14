@@ -31,3 +31,16 @@ output "subnet_ids_workers" {
 output "aws_lbs_workers" {
   value = "${module.workers.aws_lbs}"
 }
+
+# NCG
+output "private_zone_id" {
+  value = "${aws_route53_zone.tectonic_int.id}"
+}
+
+output "ncg_elb_dns_name" {
+  value = "${module.vpc.aws_elb_ncg_dns_name}"
+}
+
+output "ncg_elb_zone_id" {
+  value = "${module.vpc.aws_elb_api_internal_zone_id}"
+}

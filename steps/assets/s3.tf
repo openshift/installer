@@ -3,10 +3,9 @@ data "aws_region" "current" {
 }
 
 resource "aws_s3_bucket" "tectonic" {
-  # Buckets must start with a lower case name and are limited to 63 characters,
-  # so we prepend the letter 'a' and use the md5 hex digest for the case of a long domain
-  # leaving 29 chars for the cluster name.
-  bucket = "${var.tectonic_aws_assets_s3_bucket_name == "" ? format("%s%s-%s", "a", var.tectonic_cluster_name, md5(format("%s-%s", data.aws_region.current.name , var.tectonic_base_domain))) : var.tectonic_aws_assets_s3_bucket_name }"
+  # This name must match the CNAME
+  # https://docs.aws.amazon.com/AmazonS3/latest/dev/VirtualHosting.html#VirtualHostingCustomURLs
+  bucket = "${var.tectonic_cluster_name}-ncg.${var.tectonic_base_domain}"
 
   acl = "private"
 

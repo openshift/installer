@@ -1,0 +1,72 @@
+apiVersion: apps/v1beta2
+kind: DaemonSet
+metadata:
+  name: ncg
+  namespace: kube-system
+spec:
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      name: ncg
+      phase: prod
+  template:
+    metadata:
+      labels:
+        name: ncg
+        phase: prod
+    spec:
+      containers:
+        - name: node-configuration-generator
+          image: quay.io/coreos/ncg:e173eaab92ccda04e38ac14e44d2aa1ee86428a1
+          imagePullPolicy: Always
+          env:
+            - name: NCG_ADDRESS
+              value: "0.0.0.0:8080"
+            - name: NCG_LOG_LEVEL
+              value: "debug"
+          ports:
+            - name: http
+              containerPort: 8080
+              hostPort: 8080
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "50Mi"
+          volumeMounts:
+          - name: ncg-config
+            mountPath: /var/lib/ncg
+      hostNetwork: true
+      dnsPolicy: ClusterFirst
+      volumes:
+      - name: ncg-config
+        configMap:
+          name: ncg-config-v1
+          items:
+          - key: worker.group
+            path: groups/worker.json
+          - key: worker.profile
+            path: profiles/worker.json
+          - key: worker.clc
+            path: clc/worker.ign
+          - key: master.group
+            path: groups/master.json
+          - key: master.profile
+            path: profiles/master.json
+          - key: master.clc
+            path: clc/master.ign
+          - key: assets
+            path: assets/static
+      imagePullSecrets:
+        - name: coreos-pull-secret
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - key: "node-role.kubernetes.io/master"
+        operator: "Exists"
+        effect: "NoSchedule"
+      nodeSelector:
+        node-role.kubernetes.io/master: ""
+#TODO: readiness/liveness probe

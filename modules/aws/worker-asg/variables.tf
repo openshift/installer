@@ -84,15 +84,12 @@ variable "worker_iam_role" {
   description = "IAM role to use for the instance profiles of worker nodes."
 }
 
-variable "ign_s3_puller_id" {
-  type = "string"
+variable "base_domain" {
+  type        = "string"
+  description = "Domain on which the ELB records will be created"
 }
 
-variable "s3_bucket" {
-  type = "string"
-}
-
-variable "dns_server_ip" {
+variable "kubeconfig_content" {
   type    = "string"
   default = ""
 }

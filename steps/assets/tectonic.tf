@@ -126,5 +126,5 @@ data "archive_file" "assets" {
   # Additionally, data sources do not support managing any lifecycle whatsoever,
   # and therefore, the archive is never deleted. To avoid cluttering the module
   # folder, we write it in the Terraform managed hidden folder `.terraform`.
-  output_path = "./.terraform/generated_${sha1("${module.etcd_certs.id} ${module.tectonic.id} ${module.bootkube.id}")}.zip"
+  output_path = "./.terraform/generated_${sha1("${data.template_file.ncg.id} ${data.template_file.ncg_config.id} ${module.etcd_certs.id} ${module.tectonic.id} ${module.bootkube.id}")}.zip"
 }
