@@ -10,6 +10,7 @@ import { trail, trailSections } from '../trail';
 import { Loader } from './loader';
 import { Header } from './header';
 import { Footer } from './footer';
+import { AppError, ErrorBoundary } from './ui';
 
 const NavSection = withRouter(({canNavigateForward, currentPage, history, sections, navTrail, title}) => {
   const section = _.find(navTrail.sections, s => sections.includes(s) && s.includes(currentPage));
@@ -106,50 +107,54 @@ const Wizard = withRouter(connect(stateToProps)(
 
       const navProps = {canNavigateForward, currentPage, navTrail};
 
-      return (
+      return <ErrorBoundary>
         <div className="tectonic">
-          <Header />
+          <ErrorBoundary>
+            <Header />
+          </ErrorBoundary>
           <div className="tectonic-installer">
-            <div className="wiz-wizard">
-              <div className="wiz-wizard__cell wiz-wizard__nav">
-                <NavSection
-                  {...navProps}
-                  title="1. Choose Cluster Type"
-                  sections={[trailSections.choose]} />
-                <NavSection
-                  {...navProps}
-                  title="2. Define Cluster"
-                  sections={[trailSections.defineBaremetal, trailSections.defineAWS]} />
-                <NavSection
-                  {...navProps}
-                  title="3. Boot Cluster"
-                  sections={[trailSections.bootBaremetalTF, trailSections.bootAWSTF, trailSections.bootDryRun]} />
-              </div>
-              <div className="wiz-wizard__content wiz-wizard__cell">
-                <div className="wiz-form__header">
-                  <span className="wiz-form__header__title">{title}</span>
+            <ErrorBoundary>
+              <div className="wiz-wizard">
+                <div className="wiz-wizard__cell wiz-wizard__nav">
+                  <NavSection
+                    {...navProps}
+                    title="1. Choose Cluster Type"
+                    sections={[trailSections.choose]} />
+                  <NavSection
+                    {...navProps}
+                    title="2. Define Cluster"
+                    sections={[trailSections.defineBaremetal, trailSections.defineAWS]} />
+                  <NavSection
+                    {...navProps}
+                    title="3. Boot Cluster"
+                    sections={[trailSections.bootBaremetalTF, trailSections.bootAWSTF, trailSections.bootDryRun]} />
                 </div>
-                <div className="wiz-wizard__content__body">
-                  <Switch>
-                    {routes.map(r => <Route exact key={r.path} path={r.path} render={() => <r.component />} />)}
-                  </Switch>
-                </div>
-                {currentPage.hidePager || <div className="wiz-form__actions">
-                  <div className="wiz-form__actions__prev">
-                    {navTrail.previousFrom(currentPage) && <PreviousButton />}
-                    {canReset && <ResetButton />}
+                <div className="wiz-wizard__content wiz-wizard__cell">
+                  <div className="wiz-form__header">
+                    <span className="wiz-form__header__title">{title}</span>
                   </div>
-                  <div className="wiz-form__actions__next">
-                    {navTrail.nextFrom(currentPage) && <NextButton disabled={!canNavigateForward(currentPage)} />}
+                  <div className="wiz-wizard__content__body">
+                    <Switch>
+                      {routes.map(r => <Route exact key={r.path} path={r.path} render={() => <r.component />} />)}
+                    </Switch>
                   </div>
+                  {currentPage.hidePager || <div className="wiz-form__actions">
+                    <div className="wiz-form__actions__prev">
+                      {navTrail.previousFrom(currentPage) && <PreviousButton />}
+                      {canReset && <ResetButton />}
+                    </div>
+                    <div className="wiz-form__actions__next">
+                      {navTrail.nextFrom(currentPage) && <NextButton disabled={!canNavigateForward(currentPage)} />}
+                    </div>
+                  </div>
+                  }
                 </div>
-                }
               </div>
-            </div>
+            </ErrorBoundary>
           </div>
           <Footer />
         </div>
-      );
+      </ErrorBoundary>;
     }
   }
 ));
@@ -166,12 +171,5 @@ export const Base = connect(
   if (!loaded) {
     return <Loader />;
   }
-  if (failed) {
-    return <div className="wiz-wizard">
-      <div className="wiz-wizard__cell wiz-wizard__content">
-        The Tectonic Installer has encountered an error. Please contact Tectonic support.
-      </div>
-    </div>;
-  }
-  return <Wizard />;
+  return failed ? <AppError /> : <Wizard />;
 });
