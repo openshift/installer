@@ -62,9 +62,7 @@ Thanks for your contributions!
 
 ## Coding Style
 
-CoreOS projects written in Go follow a set of style guidelines that we've documented in [Go at CoreOS][coreos-golang]. Please follow them when
-working on your contributions.
-
+The coding style suggested by the Golang community is used in tectonic-installer. See the [style doc][golang-style] for details. Please follow them when working on your contributions.
 
 Tectonic Installer includes syntax checks on the Terraform templates which will fail the PR checker for non-standard formatted code.
 
@@ -103,5 +101,5 @@ git tools.
 
 [modify-installer]: Documentation/contrib/modify-installer.md
 [tf-doc]: https://www.terraform.io/docs/index.html
-[coreos-golang]: https://github.com/coreos/docs/tree/master/golang
+[golang-style]: https://github.com/golang/go/wiki/CodeReviewComments
 [disclosure]: https://coreos.com/security/disclosure/
