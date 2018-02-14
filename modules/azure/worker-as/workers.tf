@@ -60,6 +60,9 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
     var.extra_tags)}"
 
   lifecycle {
-    ignore_changes = ["storage_data_disk"]
+    ignore_changes = [
+      "storage_os_disk",
+      "storage_data_disk",
+    ]
   }
 }

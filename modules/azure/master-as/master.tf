@@ -58,4 +58,11 @@ resource "azurerm_virtual_machine" "tectonic_master" {
     "Name", "${var.cluster_name}-master-${count.index}",
     "tectonicClusterID", "${var.cluster_id}"),
     var.extra_tags)}"
+
+  lifecycle {
+    ignore_changes = [
+      "storage_os_disk",
+      "storage_data_disk",
+    ]
+  }
 }
