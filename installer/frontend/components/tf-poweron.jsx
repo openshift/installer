@@ -20,12 +20,18 @@ const ProgressBar = ({progress, isActive}) => <div className="progress-bar-wrap"
 // Estimate the Terraform action progress based on the log output. The intention is to replace this in the future with
 // progress information provided by the backend.
 const estimateTerraformProgress = terraform => {
-  const {output = ''} = terraform;
-  if (output === '') {
+  const {action, output = ''} = terraform;
+
+  const doneRegExp = {
+    apply: /.*: Creation complete/g,
+    destroy: /.*: Destruction complete/g,
+  }[action];
+
+  if (!doneRegExp || output === '') {
     return 0;
   }
 
-  let done = output.match(/.*: Creation complete/g) || [];
+  let done = output.match(doneRegExp) || [];
 
   // Ignore resources that complete very quickly
   done = done.filter(c => /(aws_route53_zone|aws_s3_bucket|module\.masters|module\.vpc|module\.workers)\./.test(c));
@@ -120,6 +126,12 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
     }
 
     updateStatus ({tectonic, terraform}) {
+      if (this.props.isAWS &&
+        (terraform.action === 'apply' || terraform.action === 'destroy') &&
+        (this.state.terraformProgress === 0 || !this.isOutputSame(terraform))) {
+        this.setState({terraformProgress: estimateTerraformProgress(terraform)});
+      }
+
       if (terraform.action === 'apply') {
         const services = [
           {key: 'kubernetes', name: 'Kubernetes'},
@@ -133,16 +145,9 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
         const tectonicSucceeded = services.filter(s => _.get(tectonic[s.key], 'success')).length;
         const tectonicProgress = tectonicSucceeded / services.length;
 
-        // Don't let progress bars go backwards (e.g. if a service flips back to incomplete)
+        // Don't let Tectonic progress bar go backwards (e.g. if a service flips back to incomplete)
         if (tectonicProgress > this.state.tectonicProgress) {
           this.setState({tectonicProgress});
-        }
-
-        if (this.props.isAWS && (this.state.terraformProgress === 0 || !this.isOutputSame(terraform))) {
-          const terraformProgress = estimateTerraformProgress(terraform);
-          if (terraformProgress > this.state.terraformProgress) {
-            this.setState({terraformProgress});
-          }
         }
       }
     }
@@ -194,6 +199,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
     destroy () {
       // eslint-disable-next-line no-alert
       if (window.config.devMode || window.confirm('Are you sure you want to destroy your cluster?')) {
+        this.setState({terraformProgress: 0});
         this.props.TFDestroy().catch(xhrError => this.setState({xhrError}));
       }
     }
@@ -323,7 +329,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
               }
             </Step>
             <div style={{marginLeft: 22}}>
-              {isAWS && isApply && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} isActive={isTFRunning} />}
+              {isAWS && statusMsg !== 'success' && <ProgressBar progress={state.terraformProgress} isActive={isTFRunning} />}
               {showLogs && output && !showTfActions &&
                 <div className="log-pane">
                   <div className="log-pane__header">
