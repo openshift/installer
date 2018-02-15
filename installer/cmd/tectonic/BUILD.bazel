@@ -24,23 +24,27 @@ go_binary(
 )
 
 go_binary(
-    name = "tectonic_darwin",
+    name = "darwin",
+    basename = "tectonic",
     embed = [":go_default_library"],
-    goos = "darwin",
     importpath = "github.com/coreos/tectonic-installer/installer/cmd/tectonic",
     # Use pure to build a pure-go binary.
     # This has the nice side effect of making the binary statically linked.
     pure = "on",
+    goos = "darwin",
+    goarch = "amd64",
     visibility = ["//visibility:public"],
 )
 
 go_binary(
-    name = "tectonic_linux",
+    name = "linux",
+    basename = "tectonic",
     embed = [":go_default_library"],
-    goos = "linux",
     importpath = "github.com/coreos/tectonic-installer/installer/cmd/tectonic",
     # Use pure to build a pure-go binary.
     # This has the nice side effect of making the binary statically linked.
     pure = "on",
+    goos = "linux",
+    goarch = "amd64",
     visibility = ["//visibility:public"],
 )
