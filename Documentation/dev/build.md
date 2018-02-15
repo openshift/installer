@@ -31,6 +31,15 @@ This will produce an archive named `tectonic.tar.gz` in the `bazel-bin` director
 * Terraform provider binaries; and
 * examples
 
+To use the installer you can now do the following:
+
+```sh
+cd bazel-bin
+tar -xvzf tectonic.tar.gz
+cd tectonic
+```
+
+Then proceed using the installer as documented on [coreos.com](https://coreos.com/tectonic/docs/).
 
 For more details on building a Tectonic release or other Tectonic assets as well as workarounds to some known issues, read on.
 
