@@ -6,6 +6,7 @@ go_library(
         "destroy.go",
         "install.go",
         "utils.go",
+        "terraform.go",
         "workflow.go",
     ],
     importpath = "github.com/coreos/tectonic-installer/installer/pkg/workflow",
@@ -13,5 +14,7 @@ go_library(
     deps = [
         "//installer/pkg/config:go_default_library",
         "//installer/pkg/tectonic:go_default_library",
+        "//installer/vendor/k8s.io/client-go/kubernetes:go_default_library",
+        "//installer/vendor/k8s.io/client-go/tools/clientcmd:go_default_library",
     ],
 )
