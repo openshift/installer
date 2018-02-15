@@ -205,7 +205,7 @@ export const AWS_CloudCredentials = connect(stateToProps)(
       </div>
       <div className="col-xs-8">
         <Connect field={AWS_REGION}>
-          <Select id="awsRegion" availableValues={regionSelections} disabled={regionSelections.inFly}>
+          <Select id="awsRegion" options={regionSelections.value} disabled={regionSelections.inFly}>
             <option value="" disabled>Please select region</option>
           </Select>
         </Connect>
