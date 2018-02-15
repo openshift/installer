@@ -285,17 +285,17 @@ class Cluster
   end
 
   # Adding this sleep to wait for some time before we start ssh into the server
-  # ssh early during the reboot from torcx might put the shutdown in a weird state
-  # and thats why we saw several connection timeouts in tests while spinning up a cluster
+  # if we ssh during the reboot from torcx this might put the shutdown in a weird state
+  # and that's might be the reason why we saw several connection timeouts in tests while spinning up a cluster
   def sleep_wait_for_reboot
     from = Time.now
     loop do
       elapsed = Time.now - from
-      puts "Sleeping for 5 minutes. Renaming #{elapsed} seconds. Giving some time to the server reboot."
+      puts "Sleeping for 5 minutes. Remaining #{300 - elapsed} seconds. Giving some time to the server reboot."
       sleep 30
       break if elapsed > 300 # 5 mins timeout
     end
-    puts 'Done the initial sleep. Lets check the cluster now...'
+    puts 'Done. Lets check the cluster now...'
   end
 
   def wait_for_service(service, ips)
