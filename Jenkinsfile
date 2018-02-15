@@ -251,41 +251,6 @@ pipeline {
                     }
                   }
                 }
-              },
-              "IntegrationTest Baremetal Installer Gui": {
-                node('worker && ec2') {
-                  timeout(time: 10, unit: 'MINUTES') {
-                    forcefullyCleanWorkspace()
-                    withCredentials(credsUI) {
-                      withDockerContainer(image: params.builder_image, args: '-u root') {
-                        ansiColor('xterm') {
-                          unstash 'clean-repo'
-                          unstash 'installer-binary'
-                          unstash 'node-modules'
-                          script {
-                            try {
-                              sh """#!/bin/bash -ex
-                              cd installer
-                              make launch-baremetal-installer-guitests
-                              """
-                            }
-                            catch (error) {
-                              throw error
-                            }
-                            finally {
-                              sh """#!/bin/bash -x
-                              cd installer
-                              make gui-baremetal-tests-cleanup
-                              make clean
-                              """
-                              cleanWs notFailBuild: true
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
               }
             )
           } catch (error) {

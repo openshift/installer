@@ -10,8 +10,6 @@ const platformPageCommands = {
     this.expect.element(wizard.nextStep).to.not.be.present;
     this.selectOption('@azureAdvanced');
     this.expect.element(wizard.nextStep).to.not.be.present;
-    this.selectOption('@metalGUI');
-    this.expect.element(wizard.nextStep).to.be.present;
     this.selectOption('@metalAdvanced');
     this.expect.element(wizard.nextStep).to.not.be.present;
     this.selectOption('@openstackAdvanced');
@@ -29,7 +27,6 @@ module.exports = {
     awsGUI: 'option[value="aws-tf"]',
     azureAdvanced: 'option[value="azure"]',
     metalAdvanced: 'option[value="bare-metal"]',
-    metalGUI: 'option[value="bare-metal-tf"]',
     openstackAdvanced: 'option[value="openstack"]',
   },
 };

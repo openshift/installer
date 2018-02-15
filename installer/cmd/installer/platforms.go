@@ -10,7 +10,6 @@ var knownPlatforms = []string{
 	"aws",
 	"aws-tf",
 	"bare-metal",
-	"bare-metal-tf",
 	"azure",
 	"openstack",
 }
