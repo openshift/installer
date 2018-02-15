@@ -4,8 +4,10 @@ const platformPageCommands = {
   test (platformEl) {
     this.expect.element('select#platformType').to.be.visible.before(60000);
 
-    this.selectOption('@awsGUI');
+    // Platform should default to AWS
+    this.expect.element('select#platformType').to.have.value.that.equals('aws-tf');
     this.expect.element(wizard.nextStep).to.be.present;
+
     this.selectOption('@awsAdvanced');
     this.expect.element(wizard.nextStep).to.not.be.present;
     this.selectOption('@azureAdvanced');
