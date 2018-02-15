@@ -7,6 +7,7 @@ The Tectonic Installer leverages the [Bazel build system](https://bazel.build/) 
 Install Bazel > 0.10.x using the instructions [provided online](https://docs.bazel.build/versions/master/install.html).
 *Note*: compiling Bazel from source requires Bazel.
 *Note*: cross-compilation of Golang binaries, which the Tectonic Installer leverages, is [broken in Bazel 0.9.0](https://github.com/bazelbuild/rules_go/issues/1161).
+*Note*: some Linux platforms may require installing _Static libraries for the GNU standard C++ library_ (on Fedora `dnf install libstdc++-static`)
 
 Clone the Tectonic Installer git repository locally:
 
@@ -30,14 +31,6 @@ This will produce an archive named `tectonic.tar.gz` in the `bazel-bin` director
 * Terraform provider binaries; and
 * examples
 
-To build a versioned Tectonic release tarball, set a `TECTONIC_VERSION` environment variable and build the `tarball` target:
-
-```sh
-export TECTONIC_VERSION=1.2.3-beta
-bazel build tarball --action_env=TECTONIC_VERSION
-```
-
-This will also create an archive named `tectonic.tar.gz` in the `bazel-bin` directory, however when the archive is extracted, the base directory name will include the specified version number.
 
 For more details on building a Tectonic release or other Tectonic assets as well as workarounds to some known issues, read on.
 
