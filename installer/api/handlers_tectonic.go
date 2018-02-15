@@ -24,6 +24,7 @@ import (
 
 	"github.com/coreos/tectonic-installer/installer/pkg/containerlinux"
 	"github.com/coreos/tectonic-installer/installer/pkg/terraform"
+	"github.com/coreos/tectonic-installer/installer/version"
 	"github.com/dghubble/sessions"
 )
 
@@ -350,9 +351,18 @@ func tectonicFactsHandler(w http.ResponseWriter, req *http.Request, ctx *Context
 	}
 
 	type response struct {
-		AMIs       []containerlinux.AMI `json:"amis"`
-		License    string               `json:"license"`
-		PullSecret string               `json:"pullSecret"`
+		AMIs            []containerlinux.AMI `json:"amis"`
+		BuildTime       string               `json:"buildTime"`
+		License         string               `json:"license"`
+		PullSecret      string               `json:"pullSecret"`
+		TectonicVersion string               `json:"tectonicVersion"`
 	}
-	return writeJSONResponse(w, req, http.StatusOK, response{amis, string(license), string(pullSecret)})
+
+	return writeJSONResponse(w, req, http.StatusOK, response{
+		amis,
+		version.BuildTime,
+		string(license),
+		string(pullSecret),
+		version.TectonicVersion,
+	})
 }
