@@ -14,7 +14,7 @@ data:
     alertmanagerMain:
       baseImage: ${alertmanager_base_image}
     ingress:
-      baseAddress: ${console_base_host}
+      baseAddress: ${base_address}
     auth:
       baseImage: ${tectonic_monitoring_auth_base_image}
     nodeExporter:
