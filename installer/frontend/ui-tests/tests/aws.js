@@ -64,5 +64,6 @@ const ignoredKeys = [
 module.exports = Object.assign(
   toExport,
   steps('aws', '../../../../tests/smoke/aws/vars/aws.tfvars.json', ignoredKeys),
+  steps('aws-external-etcd', '../output/aws-external-etcd.tfvars'),
   steps('aws-custom-vpc', '../output/aws-custom-vpc.tfvars')
 );

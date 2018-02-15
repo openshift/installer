@@ -18,6 +18,7 @@
         "value": "testing"
       }
     ],
+    "awsVpcCIDR": "10.0.0.0/16",
     "awsWorkerSubnets": {
       "us-west-1a": "10.0.64.0/19",
       "us-west-1c": "10.0.96.0/19"
@@ -32,7 +33,6 @@
     "aws_ssh": "tectonic-jenkins",
     "aws_workers-instanceType": "t2.medium",
     "aws_workers-numberOfInstances": 2,
-    "aws_workers-storageIOPS": 1500,
     "aws_workers-storageSizeInGiB": 30,
     "aws_workers-storageType": "gp2",
     "caType": "self-signed",

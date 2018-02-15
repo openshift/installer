@@ -42,6 +42,14 @@ const clusterInfoPageCommands = {
         .setField('input[id="awsTags.0.key"]', json.awsTags[0].key)
         .setField('input[id="awsTags.0.value"]', json.awsTags[0].value)
         .expectNoValidationError();
+
+      for (let i = 1; i < json.awsTags.length; i++) {
+        this
+          .click('.fa-plus-circle')
+          .setField('input[id="awsTags.1.key"]', json.awsTags[1].key)
+          .setField('input[id="awsTags.1.value"]', json.awsTags[1].value)
+          .expectNoValidationError();
+      }
     }
   },
 };
