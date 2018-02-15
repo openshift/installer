@@ -231,6 +231,7 @@ class Cluster
   def recover_from_failed_destroy() end
 
   def wait_til_ready
+    sleep_wait_for_reboot
     wait_for_bootstrapping
 
     from = Time.now
@@ -281,6 +282,20 @@ class Cluster
     wait_for_service('bootkube', ips)
     wait_for_service('tectonic', ips)
     puts 'HOORAY! The cluster is up'
+  end
+
+  # Adding this sleep to wait for some time before we start ssh into the server
+  # ssh early during the reboot from torcx might put the shutdown in a weird state
+  # and thats why we saw several connection timeouts in tests while spinning up a cluster
+  def sleep_wait_for_reboot
+    from = Time.now
+    loop do
+      elapsed = Time.now - from
+      puts "Sleeping for 5 minutes. Renaming #{elapsed} seconds. Giving some time to the server reboot."
+      sleep 30
+      break if elapsed > 300 # 5 mins timeout
+    end
+    puts 'Done the initial sleep. Lets check the cluster now...'
   end
 
   def wait_for_service(service, ips)
