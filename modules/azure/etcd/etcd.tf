@@ -36,6 +36,7 @@ resource "azurerm_virtual_machine" "etcd_node" {
     create_option     = "FromImage"
     caching           = "ReadWrite"
     os_type           = "linux"
+    disk_size_gb      = "${var.root_volume_size}"
   }
 
   os_profile {
@@ -58,4 +59,11 @@ resource "azurerm_virtual_machine" "etcd_node" {
     "Name", "${var.cluster_name}-etcd-${count.index}",
     "tectonicClusterID", "${var.cluster_id}"),
     var.extra_tags)}"
+
+  lifecycle {
+    ignore_changes = [
+      "storage_os_disk",
+      "storage_data_disk",
+    ]
+  }
 }

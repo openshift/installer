@@ -35,6 +35,7 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
     create_option     = "FromImage"
     caching           = "ReadWrite"
     os_type           = "linux"
+    disk_size_gb      = "${var.root_volume_size}"
   }
 
   os_profile {
@@ -59,6 +60,9 @@ resource "azurerm_virtual_machine" "tectonic_worker" {
     var.extra_tags)}"
 
   lifecycle {
-    ignore_changes = ["storage_data_disk"]
+    ignore_changes = [
+      "storage_os_disk",
+      "storage_data_disk",
+    ]
   }
 }

@@ -25,6 +25,10 @@ variable "storage_id" {
   type = "string"
 }
 
+variable "root_volume_size" {
+  type = "string"
+}
+
 // Count of etcd nodes to be created.
 variable "etcd_count" {
   type = "string"
