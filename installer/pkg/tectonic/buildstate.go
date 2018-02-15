@@ -92,3 +92,11 @@ func writeFile(path, content string) error {
 
 	return nil
 }
+
+// FindTemplatesForStep determines the location of top-level
+// Terraform templates for a given step of build.
+func FindTemplatesForStep(step ...string) string {
+	pwd, _ := os.Getwd()
+	step = append([]string{pwd, "steps"}, step...)
+	return filepath.Join(step...)
+}

@@ -1,11 +1,5 @@
 package workflow
 
-import (
-	"log"
-
-	"github.com/coreos/tectonic-installer/installer/pkg/config"
-)
-
 // Workflow is a high-level representation
 // of a set of actions performed in a predictable order.
 type Workflow interface {
@@ -19,9 +13,11 @@ type Workflow interface {
 // Steps taked thier inputs from the metadata object and persist
 // results onto it for later consumption.
 type metadata struct {
-	config.Cluster
-	configFile string
-	statePath  string
+	// TODO: use config and cluster structs
+	clusterName string
+	configFile  string
+	statePath   string
+	platform    string
 }
 
 // Step is the entrypoint of a workflow step implementation.
@@ -39,7 +35,7 @@ func (w simpleWorkflow) Execute() error {
 	for _, step := range w.steps {
 		err = step(&w.metadata)
 		if err != nil {
-			log.Fatal(err) // TODO: actually do proper error handling
+			return err
 		}
 	}
 	return nil

@@ -3,6 +3,8 @@ package workflow
 import (
 	"log"
 	"os"
+
+	"github.com/coreos/tectonic-installer/installer/pkg/tectonic"
 )
 
 // NewDestroyWorkflow creates new instances of the 'destroy' workflow,
@@ -16,12 +18,29 @@ func NewDestroyWorkflow(buildPath string) Workflow {
 	} else if err != nil {
 		log.Fatalf("%v encountered while validating build location.", err)
 	}
+
+	// TODO: get this dynamically once we move to cluster config
+	platform := "aws"
+
+	if platform == "aws" {
+		return simpleWorkflow{
+			metadata: metadata{
+				statePath: buildPath,
+			},
+			steps: []Step{
+				terraformPrepareStep,
+				joiningDestroyStep,
+				bootstrapDestroyStep,
+				assetsDestroyStep,
+			},
+		}
+	}
 	return simpleWorkflow{
 		metadata: metadata{
 			statePath: buildPath,
 		},
 		steps: []Step{
-			tectonicPrepareStep,
+			terraformPrepareStep,
 			terraformInitStep,
 			terraformDestroyStep,
 		},
@@ -32,8 +51,21 @@ func terraformDestroyStep(m *metadata) error {
 	if m.statePath == "" {
 		log.Fatalf("Invalid build location - cannot destroy.")
 	}
-
 	log.Printf("Destroying cluster from %s...", m.statePath)
+	return tfDestroy(m.statePath, "state", tectonic.FindTemplatesForType(m.platform))
+}
 
-	return terraformExec(m, "destroy", "-force")
+func joiningDestroyStep(m *metadata) error {
+	log.Printf("Destroying cluster from %s...", m.statePath)
+	return tfDestroy(m.statePath, "joining", tectonic.FindTemplatesForStep("joining"))
+}
+
+func bootstrapDestroyStep(m *metadata) error {
+	log.Printf("Destroying cluster from %s...", m.statePath)
+	return tfDestroy(m.statePath, "bootstrap", tectonic.FindTemplatesForStep("bootstrap"))
+}
+
+func assetsDestroyStep(m *metadata) error {
+	log.Printf("Destroying cluster from %s...", m.statePath)
+	return tfDestroy(m.statePath, "assets", tectonic.FindTemplatesForStep("assets"))
 }
