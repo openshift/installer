@@ -100,6 +100,8 @@ genrule(
     srcs = [
         ":tarball_installer_binary_darwin",
         ":tarball_installer_binary_linux",
+        ":tarball_tectonic_binary_darwin",
+        ":tarball_tectonic_binary_linux",
         ":tarball_terraform_configuration",
         ":tarball_terraform_binary_darwin",
         ":tarball_terraform_binary_linux",
