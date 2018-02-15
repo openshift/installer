@@ -88,7 +88,7 @@ data "template_file" "rm_assets" {
   vars {
     cluster_name       = "${var.tectonic_cluster_name}"
     awscli_image       = "${var.tectonic_container_images["awscli"]}"
-    assets_s3_location = "${local.bucket_name}/${local.bucket_assets_key}"
+    bucket_s3_location = "${local.bucket_name}"
   }
 }
 

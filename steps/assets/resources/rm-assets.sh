@@ -11,14 +11,15 @@ s3_clean() {
     /usr/bin/docker run \
         --volume /tmp:/tmp \
         --network=host \
-        --env LOCATION="${assets_s3_location}" \
+        --env LOCATION="${bucket_s3_location}" \
         --entrypoint=/bin/bash \
         ${awscli_image} \
         -c '
             set -e
             set -o pipefail
             REGION=$(wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone | sed '"'"'s/[a-zA-Z]$//'"'"')
-            /usr/bin/aws --region="$REGION" s3 cp /tmp/assets.zip s3://"$LOCATION"
+            /usr/bin/aws --region="$REGION" s3 cp /tmp/assets.zip s3://"$LOCATION/assets.zip"
+            /usr/bin/aws --region="$REGION" s3 cp /tmp/assets.zip s3://"$LOCATION/ignition"
         '
 }
 
