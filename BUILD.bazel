@@ -7,6 +7,7 @@ package(
 template_files = glob([
     "modules/**/*",
     "platforms/**/*",
+    "steps/**/*",
 ])
 
 config_setting(
@@ -124,7 +125,7 @@ genrule(
 pkg_tar(
     name = "tarball_terraform_configuration",
     mode = "0644",
-    srcs =  glob(["modules/**"]) + glob(["platforms/**"]) + ["config.tf"],
+    srcs =  glob(["modules/**"]) + glob(["platforms/**"]) + glob(["steps/**"]) + ["config.tf"],
     strip_prefix = ".",
 )
 
@@ -140,6 +141,20 @@ pkg_tar(
     mode = "0755",
     package_dir = "tectonic-installer/linux",
     srcs = ["//installer/cmd/installer:linux"],
+)
+
+pkg_tar(
+    name = "tarball_tectonic_cli_binary_darwin",
+    mode = "0755",
+    package_dir = "tectonic-installer/darwin",
+    srcs = ["//installer/cmd/tectonic:darwin"],
+)
+
+pkg_tar(
+    name = "tarball_tectonic_cli_binary_linux",
+    mode = "0755",
+    package_dir = "tectonic-installer/linux",
+    srcs = ["//installer/cmd/tectonic:linux"],
 )
 
 pkg_tar(
@@ -185,6 +200,9 @@ filegroup(
         exclude_directories=1,
     ) + glob(
         ["platforms/**/*.tf"],
+        exclude_directories=1,
+    ) + glob(
+        ["steps/**/*.tf"],
         exclude_directories=1,
     ) + ["config.tf"],
 )
