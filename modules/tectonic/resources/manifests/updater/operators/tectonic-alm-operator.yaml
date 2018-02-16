@@ -25,12 +25,11 @@ spec:
       containers:
       - name: tectonic-alm-operator
         image: ${tectonic_alm_operator_image}
-        command:
-        - /app/x-operator/cmd/xoperator/tectonic-x-operator.binary
-        - '--operator-name=tectonic-alm-operator'
-        - '--appversion-name=tectonic-alm-operator'
-        - '--v=2'
-        - '-manifest-dir=/manifests'
+        args:
+        - --manifest-dir=/manifests
+        - --operator-name=tectonic-alm-operator
+        - --appversion-name=tectonic-alm-operator
+        - --v=2
       imagePullSecrets:
         - name: coreos-pull-secret
       nodeSelector:
