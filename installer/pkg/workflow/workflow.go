@@ -1,10 +1,6 @@
 package workflow
 
-// Workflow is a high-level representation
-// of a set of actions performed in a predictable order.
-type Workflow interface {
-	Execute() error
-}
+import "github.com/coreos/tectonic-installer/installer/pkg/config"
 
 // metadata is the state store of the current workflow execution.
 // It is meant to carry state for one step to another.
@@ -13,11 +9,9 @@ type Workflow interface {
 // Steps taked thier inputs from the metadata object and persist
 // results onto it for later consumption.
 type metadata struct {
-	// TODO: use config and cluster structs
-	clusterName string
-	configFile  string
-	statePath   string
-	platform    string
+	cluster        config.Cluster
+	configFilePath string
+	clusterDir     string
 }
 
 // Step is the entrypoint of a workflow step implementation.
@@ -25,18 +19,20 @@ type metadata struct {
 // Next, add a refrence to this new function in a Workflow's steps list.
 type Step func(*metadata) error
 
-type simpleWorkflow struct {
+// Workflow is a high-level representation
+// of a set of actions performed in a predictable order.
+type Workflow struct {
 	metadata metadata
 	steps    []Step
 }
 
-func (w simpleWorkflow) Execute() error {
-	var err error
+// Execute runs all steps in order.
+func (w Workflow) Execute() error {
 	for _, step := range w.steps {
-		err = step(&w.metadata)
-		if err != nil {
+		if err := step(&w.metadata); err != nil {
 			return err
 		}
 	}
+
 	return nil
 }

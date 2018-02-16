@@ -1,31 +1,29 @@
 package workflow
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 )
 
-func runTfCommand(buildPath string, args ...string) error {
-	tfCommand := exec.Command("terraform", args...)
-	tfCommand.Dir = buildPath
-	tfCommand.Stdin = os.Stdin
-	tfCommand.Stdout = os.Stdout
-	tfCommand.Stderr = os.Stderr
-	err := tfCommand.Run()
-	if err != nil {
-		return err
-	}
-	return nil
+func terraformExec(clusterDir string, args ...string) error {
+	tf := exec.Command("terraform", args...)
+	tf.Dir = clusterDir
+	tf.Stdin = os.Stdin
+	tf.Stdout = os.Stdout
+	tf.Stderr = os.Stderr
+
+	return tf.Run()
 }
 
-func tfInit(buildPath string, codePath string) error {
-	return runTfCommand(buildPath, "init", codePath)
+func tfApply(clusterDir, state, templateDir string) error {
+	return terraformExec(clusterDir, "apply", "-auto-approve", fmt.Sprintf("-state=%s.tfstate", state), templateDir)
 }
 
-func tfDestroy(buildPath string, state string, codePath string) error {
-	return runTfCommand(buildPath, "destroy", "-force", "-state="+state+".tfstate", codePath)
+func tfDestroy(clusterDir, state, templateDir string) error {
+	return terraformExec(clusterDir, "destroy", "-force", fmt.Sprintf("-state=%s.tfstate", state), templateDir)
 }
 
-func tfApply(buildPath string, state string, codePath string) error {
-	return runTfCommand(buildPath, "apply", "-state="+state+".tfstate", codePath)
+func tfInit(clusterDir, templateDir string) error {
+	return terraformExec(clusterDir, "init", templateDir)
 }

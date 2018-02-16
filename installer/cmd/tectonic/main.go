@@ -2,60 +2,47 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/coreos/tectonic-installer/installer/pkg/workflow"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
-	dryRunFlag                = kingpin.Flag("dry-run", "Just pretend, but don't do anything").Bool()
-	clusterInstallCommand     = kingpin.Command("install", "Create a new Tectonic cluster")
-	clusterFullInstallCommand = clusterInstallCommand.Command("full", "Create a new Tectonic cluster").Default()
-	clusterAssetsCommand      = clusterInstallCommand.Command("assets", "Generate Tectonic assets.")
-	clusterBootstrapCommand   = clusterInstallCommand.Command("bootstrap", "Create a single bootstrap node Tectonic cluster.")
-	clusterJoinCommand        = clusterInstallCommand.Command("join", "Create master and worker nodes to join an exisiting Tectonic cluster.")
-	clusterDeleteCommand      = kingpin.Command("delete", "Delete an existing Tectonic cluster")
-	deleteClusterDir          = clusterDeleteCommand.Arg("dir", "The name of the cluster to delete").String()
-	clusterConfigFlag         = clusterInstallCommand.Flag("config", "Cluster specification file").Required().ExistingFile()
+	clusterInitCommand    = kingpin.Command("init", "Initialize a new Tectonic cluster")
+	clusterInitConfigFlag = clusterInitCommand.Flag("config", "Cluster specification file").Required().ExistingFile()
+
+	clusterInstallCommand          = kingpin.Command("install", "Create a new Tectonic cluster")
+	clusterInstallAssetsCommand    = clusterInstallCommand.Command("assets", "Generate Tectonic assets.")
+	clusterInstallBootstrapCommand = clusterInstallCommand.Command("bootstrap", "Create a single bootstrap node Tectonic cluster.")
+	clusterInstallFullCommand      = clusterInstallCommand.Command("full", "Create a new Tectonic cluster").Default()
+	clusterInstallJoinCommand      = clusterInstallCommand.Command("join", "Create master and worker nodes to join an exisiting Tectonic cluster.")
+	clusterInstallDirFlag          = clusterInstallCommand.Flag("dir", "Cluster directory").Default(".").ExistingDir()
+
+	clusterDestroyCommand = kingpin.Command("destroy", "Destroy an existing Tectonic cluster")
+	clusterDestroyDirFlag = clusterDestroyCommand.Arg("dir", "Cluster directory").Default(".").ExistingDir()
 )
 
 func main() {
-	// TODO: actually do proper error handling
+	var w workflow.Workflow
+
 	switch kingpin.Parse() {
-	case clusterFullInstallCommand.FullCommand():
-		{
-			w := workflow.NewInstallWorkflow(*clusterConfigFlag)
-			if err := w.Execute(); err != nil {
-				log.Fatal(err)
-			}
-		}
-	case clusterAssetsCommand.FullCommand():
-		{
-			w := workflow.NewAssetsWorkflow(*clusterConfigFlag)
-			if err := w.Execute(); err != nil {
-				log.Fatal(err)
-			}
-		}
-	case clusterBootstrapCommand.FullCommand():
-		{
-			w := workflow.NewBootstrapWorkflow(*clusterConfigFlag)
-			if err := w.Execute(); err != nil {
-				log.Fatal(err)
-			}
-		}
-	case clusterJoinCommand.FullCommand():
-		{
-			w := workflow.NewJoinWorkflow(*clusterConfigFlag)
-			if err := w.Execute(); err != nil {
-				log.Fatal(err)
-			}
-		}
-	case clusterDeleteCommand.FullCommand():
-		{
-			w := workflow.NewDestroyWorkflow(*deleteClusterDir)
-			if err := w.Execute(); err != nil {
-				log.Fatal(err)
-			}
-		}
+	case clusterInitCommand.FullCommand():
+		w = workflow.NewInitWorkflow(*clusterInitConfigFlag)
+	case clusterInstallFullCommand.FullCommand():
+		w = workflow.NewInstallFullWorkflow(*clusterInstallDirFlag)
+	case clusterInstallAssetsCommand.FullCommand():
+		w = workflow.NewInstallAssetsWorkflow(*clusterInstallDirFlag)
+	case clusterInstallBootstrapCommand.FullCommand():
+		w = workflow.NewInstallBootstrapWorkflow(*clusterInstallDirFlag)
+	case clusterInstallJoinCommand.FullCommand():
+		w = workflow.NewInstallJoinWorkflow(*clusterInstallDirFlag)
+	case clusterDestroyCommand.FullCommand():
+		w = workflow.NewDestroyWorkflow(*clusterDestroyDirFlag)
+	}
+
+	if err := w.Execute(); err != nil {
+		log.Fatal(err)
+		os.Exit(1)
 	}
 }

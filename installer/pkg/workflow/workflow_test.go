@@ -41,7 +41,7 @@ func TestWorkflowTypeExecute(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		wf := simpleWorkflow{
+		wf := Workflow{
 			metadata: tc.m,
 			steps:    tc.steps,
 		}
