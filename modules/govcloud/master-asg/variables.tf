@@ -147,7 +147,3 @@ variable "dns_server_ip" {
   type    = "string"
   default = ""
 }
-
-variable "ign_iscsi_service_id" {
-  type = "string"
-}
