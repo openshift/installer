@@ -36,11 +36,8 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
                  ClusterFactory.from_variable(exist_plat, exist_tf)
                end
 
-    if exist_plat.nil? && exist_tf.nil?
-      @cluster.start
-    else
-      @cluster.init
-    end
+    @cluster.init
+    @cluster.start if exist_plat.nil? && exist_tf.nil?
   end
 
   # after(:all) hooks that are defined first are executed last

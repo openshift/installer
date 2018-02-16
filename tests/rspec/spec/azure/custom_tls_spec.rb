@@ -9,6 +9,11 @@ RSpec.describe 'azure-custom-tls' do
     ENV['TF_VAR_tectonic_azure_location'] = azure_region
     @domain = "#{azure_region}.cloudapp.azure.com"
 
-    include_examples('withRunningClusterWithCustomTLS', '../smoke/azure/vars/basic.tfvars', @domain, false)
+    include_examples(
+      'withRunningClusterWithCustomTLS',
+      File.join(ENV['RSPEC_PATH'], '../smoke/azure/vars/basic.tfvars'),
+      @domain,
+      false
+    )
   end
 end

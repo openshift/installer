@@ -7,7 +7,10 @@ require 'jenkins'
 require 'aws_iam'
 
 RSpec.describe 'aws-vpc' do
-  include_examples('withBuildFolderSetup', '../smoke/aws/vars/aws-vpc-internal.tfvars.json')
+  include_examples(
+    'withBuildFolderSetup',
+    File.join(ENV['RSPEC_PATH'], '../smoke/aws/vars/aws-vpc-internal.tfvars.json')
+  )
 
   before(:all) do
     export_random_region_if_not_defined

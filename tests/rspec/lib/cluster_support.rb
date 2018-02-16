@@ -41,7 +41,6 @@ def print_service_logs(destination_ip, service, cluster_name, via_host_ip = nil)
     output += "Standard output: \n#{stdout}"
     output += "\nStandard error: \n#{stderr}"
     output += "\nEnd of journal of #{service} service on #{destination_ip}"
-    puts output
 
     save_to_file(cluster_name, 'systemd', destination_ip, service, output)
   rescue => e

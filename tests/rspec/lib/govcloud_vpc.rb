@@ -51,7 +51,7 @@ class GovcloudVPC
   end
 
   def create
-    Dir.chdir('../../contrib/govcloud') do
+    Dir.chdir(File.join(ENV['RSPEC_PATH'], '../../contrib/govcloud')) do
       succeeded = system(env_variables, 'terraform init')
       raise 'could not init Terraform to create VPC' unless succeeded
       succeeded = system(env_variables, 'terraform apply -auto-approve')
@@ -88,15 +88,15 @@ class GovcloudVPC
 
   def destroy
     @vpn_connection.stop
-  rescue
-    raise 'could not disconnect from vpn'
+  rescue => e
+    raise 'could not disconnect from vpn:' + e
   ensure
     terraform_destroy
     recover_etc_resolv
   end
 
   def terraform_destroy
-    Dir.chdir('../../contrib/govcloud') do
+    Dir.chdir(File.join(ENV['RSPEC_PATH'], '../../contrib/govcloud')) do
       3.times do
         return if system(env_variables, 'terraform destroy -force')
       end

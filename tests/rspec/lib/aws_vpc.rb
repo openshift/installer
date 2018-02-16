@@ -43,7 +43,7 @@ class AWSVPC
   end
 
   def create
-    Dir.chdir('../../contrib/internal-cluster') do
+    Dir.chdir(File.join(ENV['RSPEC_PATH'], '../../contrib/internal-cluster')) do
       succeeded = system(env_variables, 'terraform init')
       raise 'could not init Terraform to create VPC' unless succeeded
       succeeded = system(env_variables, 'terraform apply -auto-approve')
@@ -87,7 +87,7 @@ class AWSVPC
   end
 
   def terraform_destroy
-    Dir.chdir('../../contrib/internal-cluster') do
+    Dir.chdir(File.join(ENV['RSPEC_PATH'], '../../contrib/internal-cluster')) do
       3.times do
         return if system(env_variables, 'terraform destroy -force')
       end
