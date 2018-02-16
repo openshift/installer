@@ -42,5 +42,5 @@ output "ncg_elb_dns_name" {
 }
 
 output "ncg_elb_zone_id" {
-  value = "${module.vpc.aws_elb_api_internal_zone_id}"
+  value = "${module.vpc.aws_elb_ncg_zone_id}"
 }

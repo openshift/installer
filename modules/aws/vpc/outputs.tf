@@ -77,5 +77,5 @@ output "aws_elb_ncg_dns_name" {
 }
 
 output "aws_elb_ncg_zone_id" {
-  value = "${aws_elb.ncg.zone_id}"
+  value = "${element(concat(aws_elb.ncg.*.zone_id, list("")), 0)}"
 }
