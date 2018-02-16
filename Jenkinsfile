@@ -175,6 +175,7 @@ pipeline {
 
                   stash name: 'tectonic.tar.gz', includes: 'tectonic.tar.gz'
                   stash name: 'smoke-tests', includes: 'smoke'
+                  archiveArtifacts allowEmptyArchive: true, artifacts: 'tectonic.tar.gz'
                 }
 
                 withDockerContainer(params.builder_image) {
