@@ -41,11 +41,13 @@ window.addEventListener('beforeunload', saveState);
 
 try {
   const state = JSON.parse(sessionStorage.getItem('state'));
-  dispatch({
-    type: restoreActionTypes.RESTORE_STATE,
-    payload: state,
-  });
-  console.debug('Restored state from sessionStorage.');
+  if (!_.isEmpty(state)) {
+    dispatch({
+      type: restoreActionTypes.RESTORE_STATE,
+      payload: state,
+    });
+    console.debug('Restored state from sessionStorage.');
+  }
 } catch (e) {
   console.error(`Error restoring state from sessionStorage: ${e.message || e.toString()}`);
 }
