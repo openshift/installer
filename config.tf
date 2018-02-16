@@ -74,7 +74,7 @@ variable "tectonic_container_images" {
     tnc_bootstrap                        = "quay.io/coreos/tectonic-node-controller-dev:76a584680b7f39aa7b3c40cd742c736b30b5a89a"
     etcd                                 = "quay.io/coreos/etcd:v3.2.14"
     hyperkube                            = "quay.io/coreos/hyperkube:v1.9.1_coreos.0"
-    kube_core_renderer                   = "quay.io/coreos/kube-core-renderer-dev:6c49ce4da9fc36966812381891b4f558aa53097b"
+    kube_core_renderer                   = "quay.io/coreos/kube-core-renderer-dev:4ed85ee12e167da71e7d5f06ffdb94d1ce21f540"
     kube_core_operator                   = "quay.io/coreos/kube-core-operator:beryllium-m1"
     tectonic_channel_operator            = "quay.io/coreos/tectonic-channel-operator:0.6.2"
     tectonic_prometheus_operator         = "quay.io/coreos/tectonic-prometheus-operator:v1.9.3"

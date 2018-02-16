@@ -14,15 +14,15 @@ data "ignition_systemd_unit" "update_ca_certificates_dropin" {
   ]
 }
 
-data "ignition_file" "kube_ca_cert_pem" {
+data "ignition_file" "root_ca_cert_pem" {
   filesystem = "root"
-  path       = "/etc/ssl/certs/kube_ca.pem"
-  mode       = 0444
+  path       = "/etc/ssl/certs/root_ca.pem"
+  mode       = 0400
   uid        = 0
   gid        = 0
 
   content {
-    content = "${var.kube_ca_cert_pem}"
+    content = "${var.root_ca_cert_pem}"
   }
 }
 

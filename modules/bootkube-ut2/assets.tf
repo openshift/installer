@@ -27,6 +27,7 @@ resource "template_dir" "bootkube" {
     cluster_cidr          = "${var.cluster_cidr}"
     tectonic_networking   = "${var.tectonic_networking}"
 
+    root_ca_cert                   = "${base64encode(var.root_ca_cert_pem)}"
     aggregator_ca_cert             = "${base64encode(var.aggregator_ca_cert_pem)}"
     kube_ca_cert                   = "${base64encode(var.kube_ca_cert_pem)}"
     kube_ca_key                    = "${base64encode(var.kube_ca_key_pem)}"
