@@ -1,6 +1,7 @@
 package configgenerator
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
@@ -73,10 +74,27 @@ func (c ConfigGenerator) coreConfig() *kubecore.OperatorConfig {
 			Kind:       kubecore.Kind,
 		},
 	}
+	coreConfig.ClusterConfig.APIServerURL = fmt.Sprintf("%s-api.%s", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
+	coreConfig.AuthConfig.OIDCClientID = "tectonic-kubectl"
+	coreConfig.AuthConfig.OIDCIssuerURL = fmt.Sprintf("%s.%s/identity", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
+	coreConfig.AuthConfig.OIDCGroupsClaim = "groups"
+	coreConfig.AuthConfig.OIDCUsernameClaim = "email"
+
+	coreConfig.CloudProviderConfig.CloudConfigPath = ""
+	coreConfig.CloudProviderConfig.CloudProviderProfile = c.Cluster.Platform
 
 	coreConfig.NetworkConfig.ClusterCIDR = c.Cluster.Networking.NodeCIDR
-	coreConfig.NetworkConfig.EtcdServers = strings.Join(c.Cluster.Etcd.ExternalServers, ",")
 	coreConfig.NetworkConfig.ServiceCIDR = c.Cluster.Networking.ServiceCIDR
+	coreConfig.NetworkConfig.AdvertiseAddress = "0.0.0.0"
+	if len(c.Cluster.Etcd.ExternalServers) > 0 {
+		coreConfig.NetworkConfig.EtcdServers = strings.Join(c.Cluster.Etcd.ExternalServers, ",")
+	} else {
+		var etcdServers []string
+		for i := 0; i < c.Etcd.NodeCount; i++ {
+			etcdServers = append(etcdServers, fmt.Sprintf("https://%s-etcd-%v.%s:2379", c.Cluster.Name, i, c.Cluster.DNS.BaseDomain))
+		}
+		coreConfig.NetworkConfig.EtcdServers = strings.Join(etcdServers, ",")
+	}
 
 	return &coreConfig
 }
