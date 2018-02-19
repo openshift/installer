@@ -541,3 +541,24 @@ export class DropdownInline extends DropdownMixin {
     );
   }
 }
+
+export const AppError = () => <div className="wiz-wizard">
+  <div className="wiz-wizard__cell wiz-wizard__content">
+    The Tectonic Installer has encountered an error. Please contact Tectonic support.
+  </div>
+</div>;
+
+export class ErrorBoundary extends React.Component {
+  constructor (props) {
+    super(props);
+    this.state = {hasError: false};
+  }
+
+  componentDidCatch () {
+    this.setState({hasError: true});
+  }
+
+  render () {
+    return this.state.hasError ? <AppError /> : this.props.children;
+  }
+}
