@@ -1,5 +1,6 @@
 import _ from 'lodash';
 import React from 'react';
+import { connect } from 'react-redux';
 import semver from 'semver';
 
 import { A, DocsA, DropdownMixin } from './ui';
@@ -23,48 +24,14 @@ const parseLatestVersion = (html) => {
   return htmlDoc.getElementsByClassName('latestReleaseTag')[0].textContent.trim();
 };
 
-const hasNewVersion = (latestRelease) => {
-  if (!semver.valid(latestRelease) || !semver.valid(GIT_TAG)) {
+const hasNewVersion = (currentRelease, latestRelease) => {
+  if (!semver.valid(latestRelease)) {
     return false;
   }
-
-  const lrMajor = semver.major(latestRelease);
-  const gtMajor = semver.major(GIT_TAG);
-  if (lrMajor !== gtMajor) {
-    return lrMajor > gtMajor;
-  }
-
-  const lrMinor = semver.minor(latestRelease);
-  const gtMinor = semver.minor(GIT_TAG);
-  if (lrMinor !== gtMinor) {
-    return lrMinor > gtMinor;
-  }
-
-  const lrPatch = semver.patch(latestRelease);
-  const gtPatch = semver.patch(GIT_TAG);
-  if (lrPatch !== gtPatch) {
-    return lrPatch > gtPatch;
-  }
-
-  const latestReleasePr = semver.prerelease(latestRelease);
-  const gitTagPr = semver.prerelease(GIT_TAG);
-
-  //No rc string in the latest release
-  if (latestReleasePr.length < gitTagPr.length) {
+  if (!semver.valid(currentRelease)) {
     return true;
   }
-
-  //compares rc-x string
-  if (latestReleasePr[1] !== gitTagPr[1]) {
-    return latestReleasePr[1] > gitTagPr[1];
-  }
-
-  //rc version
-  if (latestReleasePr[2] !== gitTagPr[2]) {
-    return latestReleasePr[2] > gitTagPr[2];
-  }
-
-  return false;
+  return latestRelease > currentRelease;
 };
 
 class MenuDropdown extends DropdownMixin {
@@ -90,7 +57,9 @@ class MenuDropdown extends DropdownMixin {
   }
 }
 
-export class Header extends React.Component {
+export const Header = connect(
+  ({serverFacts: {buildTime, version}}) => ({buildTime, version})
+)(class Header_ extends React.Component {
   constructor (props) {
     super(props);
     this.state = { latestRelease: null };
@@ -100,14 +69,14 @@ export class Header extends React.Component {
     fetchLatestRelease().then((release) => {
       this.setState({ latestRelease: parseLatestVersion(release) });
     }).catch((err) => {
-      console.error('Error retrieving latest version of tectonic ', err.message);
+      console.error('Error retrieving latest version of Tectonic ', err.message);
       this.setState({ latestRelease: null });
     });
-
   }
 
   render () {
-    const latestRelease = this.state.latestRelease || null;
+    const {buildTime, version} = this.props;
+    const {latestRelease} = this.state;
 
     const productDdItems = {
       'Tectonic - Kubernetes': 'https://coreos.com/tectonic/',
@@ -150,17 +119,15 @@ export class Header extends React.Component {
         </ul>
         <div className="co-navbar--right">
           <ul className="co-navbar-nav">
-            {latestRelease && hasNewVersion(latestRelease) && <li className="co-navbar-nav-item__version">
+            {hasNewVersion(version, latestRelease) && <li className="co-navbar-nav-item__version">
               <span className="co-navbar-nav-item__version--new">
                 New installer version: <A href="https://coreos.com/tectonic/releases/" rel="noopener">Release notes {latestRelease}</A>
               </span>
             </li>}
-            <li className="co-navbar-nav-item__version">
-              <span>Version: {GIT_TAG} ({GIT_COMMIT})</span>
-            </li>
+            {version && <li className="co-navbar-nav-item__version" title={buildTime && (new Date(buildTime)).toString()}>Version: {version}</li>}
           </ul>
         </div>
       </div>
     </div>;
   }
-}
+});

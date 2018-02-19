@@ -748,10 +748,6 @@ span.spacer {
   background-color: #fff;
 }
 
-.co-navbar-nav > li > span {
-  font-size: 14px;
-}
-
 .co-navbar--right {
   float: right;
 }
@@ -775,7 +771,7 @@ span.spacer {
 }
 
 .co-navbar-nav-item__version {
-  font-size: 12px;
+  font-size: 14px;
   padding-right: 20px;
 }
 

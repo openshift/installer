@@ -1,4 +1,10 @@
-import { isReleaseVersion } from './utils';
+import _ from 'lodash';
+import semver from 'semver';
+
+import { store } from './store';
+
+const version = () => _.get(store.getState(), 'serverFacts.version');
+const isReleaseVersion = () => semver.valid(version()) !== null && !version().includes('-rc.');
 
 const send = (obj) => {
   if (!isReleaseVersion()) {
@@ -41,14 +47,14 @@ export const TectonicGA = {
   },
 
   sendPageView: (page) => {
-    send({ type: 'pageview', page});
+    send({type: 'pageview', page});
   },
 
   sendError: (message, stack = '') => {
     send({
       type: 'event',
       category: 'installerError',
-      label: `${GIT_TAG} ${message} Stack: ${stack}`,
+      label: `${version()} ${message} Stack: ${stack}`,
     });
   },
 
@@ -56,7 +62,7 @@ export const TectonicGA = {
     send({
       type: 'event',
       category, action,
-      label: `${platform}-${GIT_TAG} ${label}`,
+      label: `${platform}-${version()} ${label}`,
     });
   },
 
@@ -65,7 +71,7 @@ export const TectonicGA = {
       type: 'event',
       category: 'Installer Docs Link',
       action: 'click',
-      label: `${platform}-${GIT_TAG} User clicks on documentation link`,
+      label: `${platform}-${version()} User clicks on documentation link`,
     });
   },
 };

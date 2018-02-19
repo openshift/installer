@@ -176,22 +176,19 @@ const reducersTogether = combineReducers({
       return {
         loaded: false,
         error: null,
-        awsRegions: null,
       };
     }
 
     switch (action.type) {
     case loadFactsActionTypes.LOADED:
-      return {
+      return Object.assign({}, action.payload, {
         loaded: true,
         error: null,
-        awsRegions: action.payload.awsRegions,
-      };
+      });
     case loadFactsActionTypes.ERROR:
       return {
         loaded: true,
         error: action.payload,
-        awsRegions: null,
       };
     default:
       return state;
