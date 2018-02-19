@@ -1,20 +1,8 @@
 const _ = require('lodash');
 const fs = require('fs');
-const path = require('path');
 
 const clusterInfoPageCommands = {
   test (json, platform) {
-    const parentDir = path.resolve(__dirname, '..');
-    const licensePath = path.join(parentDir, 'tectonic-license.txt');
-    const configPath = path.join(parentDir, 'config.json');
-
-    /* eslint-disable no-sync */
-    const tectonic_license = fs.readFileSync(process.env.TF_VAR_tectonic_license_path, 'utf8');
-    const pull_secret = fs.readFileSync(process.env.TF_VAR_tectonic_pull_secret_path, 'utf8');
-    fs.writeFileSync(licensePath, tectonic_license);
-    fs.writeFileSync(configPath, pull_secret);
-    /* eslint-enable no-sync */
-
     this.setField('@name', 'a%$#b');
     if (platform === 'aws-tf') {
       this.expectValidationErrorContains('must be a valid AWS Stack Name');
@@ -26,8 +14,10 @@ const clusterInfoPageCommands = {
     this.setField('@name', json.clusterName);
     this.expectNoValidationError();
 
-    this.setValue('@licenseUpload', licensePath);
-    this.setValue('@pullSecretUpload', configPath);
+    /* eslint-disable no-sync */
+    this.setFileField('@licenseUpload', fs.readFileSync(process.env.TF_VAR_tectonic_license_path, 'utf8'));
+    this.setFileField('@pullSecretUpload', fs.readFileSync(process.env.TF_VAR_tectonic_pull_secret_path, 'utf8'));
+    /* eslint-enable no-sync */
 
     if (platform === 'aws-tf' && !_.isEmpty(json.awsTags)) {
       this

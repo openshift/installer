@@ -1,3 +1,5 @@
+const fs = require('fs');
+
 const log = require('../utils/log');
 const wizard = require('../utils/wizard');
 const tfvarsUtil = require('../utils/terraformTfvars');
@@ -42,6 +44,7 @@ const toExport = {
   },
 
   after (client) {
+    fs.unlink(client.globals.tmpUploadPath);
     client.getLog('browser', log.logger);
     client.end();
   },
