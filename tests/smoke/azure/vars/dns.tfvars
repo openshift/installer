@@ -9,7 +9,6 @@
     "tectonic_azure_worker_vm_size": "Standard_D2_v2",
     "tectonic_base_domain": "azure.tectonic-ci.de",
     "tectonic_cluster_cidr": "10.2.0.0/16",
-    "tectonic_container_linux_channel": "stable",
     "tectonic_etcd_count": "1",
     "tectonic_master_count": "1",
     "tectonic_service_cidr": "10.3.0.0/16",
