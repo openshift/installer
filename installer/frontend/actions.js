@@ -13,7 +13,6 @@ export const configActionTypes = {
   SET: 'CONFIG_ACTION_SIMPLE_SET',
   SET_IN: 'CONFIG_ACTION_SET_IN',
   BATCH_SET_IN: 'CONFIG_ACTION_BATCH_SET_IN',
-  MERGE: 'CONFIG_ACTION_MERGE',
   RESET: 'CONFIG_ACTION_RESET',
 };
 
@@ -80,7 +79,6 @@ export const configActions = {
   set: (payload, dispatch) => dispatch({type: configActionTypes.SET, payload}),
   setIn: (path, value, dispatch) => dispatch({payload: {path, value}, type: configActionTypes.SET_IN}),
   batchSetIn: (dispatch, payload) => dispatch({payload, type: configActionTypes.BATCH_SET_IN}),
-  merge: payload => dispatch => dispatch({payload, type: configActionTypes.MERGE}),
 
   // TODO: (kans) move below to form actions...
   removeField: (fieldListId, index) => (dispatch, getState) => {

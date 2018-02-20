@@ -136,9 +136,6 @@ const reducersTogether = combineReducers({
     case configActionTypes.SET_IN:
       return setIn(state, action.payload.path, action.payload.value);
 
-    case configActionTypes.MERGE:
-      return fromJS(state).mergeDeep(action.payload).toJS();
-
     case configActionTypes.APPEND: {
       const length = _.get(state, action.payload.path).length;
       const path = `${action.payload.path}.${length}`;
