@@ -101,3 +101,12 @@ variable "ign_systemd_default_env_id" {
   type    = "string"
   default = ""
 }
+
+variable "boot_diagnostics" {
+  type = "string"
+}
+
+variable "storage_name_boot_diag" {
+  type    = "string"
+  default = ""
+}

@@ -5,7 +5,7 @@
     "tectonic_azure_external_nsg_api_id": "/subscriptions/060bce24-f340-4249-a6c6-51a765e2e4c0/resourceGroups/integ_external_net/providers/Microsoft.Network/networkSecurityGroups/integ_external_sg_api",
     "tectonic_azure_external_nsg_master_id": "/subscriptions/060bce24-f340-4249-a6c6-51a765e2e4c0/resourceGroups/integ_external_net/providers/Microsoft.Network/networkSecurityGroups/integ_external_sg_master",
     "tectonic_azure_external_nsg_worker_id": "/subscriptions/060bce24-f340-4249-a6c6-51a765e2e4c0/resourceGroups/integ_external_net/providers/Microsoft.Network/networkSecurityGroups/integ_external_sg_worker",
-    "tectonic_azure_external_resource_group": "/subscriptions/060bce24-f340-4249-a6c6-51a765e2e4c0/resourceGroups/integ_external_net",
+    "tectonic_azure_external_resource_group": "integ_external_net",
     "tectonic_azure_external_vnet_id": "/subscriptions/060bce24-f340-4249-a6c6-51a765e2e4c0/resourceGroups/integ_external_net/providers/Microsoft.Network/virtualNetworks/integ_external_net",
     "tectonic_azure_external_worker_subnet_id": "/subscriptions/060bce24-f340-4249-a6c6-51a765e2e4c0/resourceGroups/integ_external_net/providers/Microsoft.Network/virtualNetworks/integ_external_net/subnets/integ_external_worker_subnet",
     "tectonic_azure_location": "eastus",
@@ -18,5 +18,6 @@
     "tectonic_master_count": "2",
     "tectonic_service_cidr": "10.3.0.0/16",
     "tectonic_worker_count": "1",
-    "tectonic_container_linux_channel": "beta"
+    "tectonic_container_linux_channel": "beta",
+    "tectonic_enable_boot_diagnostics": "true"
 }

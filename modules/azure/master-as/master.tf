@@ -54,6 +54,11 @@ resource "azurerm_virtual_machine" "tectonic_master" {
     }
   }
 
+  boot_diagnostics {
+    enabled     = "${var.boot_diagnostics}"
+    storage_uri = "${var.storage_name_boot_diag}"
+  }
+
   tags = "${merge(map(
     "Name", "${var.cluster_name}-master-${count.index}",
     "tectonicClusterID", "${var.cluster_id}"),

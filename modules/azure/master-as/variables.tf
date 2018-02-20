@@ -97,3 +97,12 @@ variable "ign_tectonic_path_unit_id" {
 variable "fault_domains" {
   type = "string"
 }
+
+variable "boot_diagnostics" {
+  type = "string"
+}
+
+variable "storage_name_boot_diag" {
+  type    = "string"
+  default = ""
+}

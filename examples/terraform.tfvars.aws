@@ -240,6 +240,11 @@ tectonic_container_linux_version = "latest"
 // (optional) DNS prefix used to construct the console and API server endpoints.
 // tectonic_dns_name = ""
 
+// (optional) Enable boot diagnostics for example the boot logs.
+// It is only supported for Azure cloud provider.
+// Used to collect the boot logs for debug purposes.
+// tectonic_enable_boot_diagnostics = "false"
+
 // (optional) The path of the file containing the CA certificate for TLS communication with etcd.
 // 
 // Note: This works only when used in conjunction with an external etcd cluster.

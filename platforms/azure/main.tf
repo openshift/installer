@@ -16,11 +16,12 @@ module "container_linux" {
 module "resource_group" {
   source = "../../modules/azure/resource-group"
 
-  external_rsg_id = "${var.tectonic_azure_external_resource_group}"
-  azure_location  = "${var.tectonic_azure_location}"
-  cluster_name    = "${var.tectonic_cluster_name}"
-  cluster_id      = "${module.tectonic.cluster_id}"
-  extra_tags      = "${var.tectonic_azure_extra_tags}"
+  external_rsg_id  = "${var.tectonic_azure_external_resource_group}"
+  azure_location   = "${var.tectonic_azure_location}"
+  cluster_name     = "${var.tectonic_cluster_name}"
+  cluster_id       = "${module.tectonic.cluster_id}"
+  extra_tags       = "${var.tectonic_azure_extra_tags}"
+  boot_diagnostics = "${var.tectonic_enable_boot_diagnostics}"
 }
 
 module "vnet" {
@@ -78,6 +79,8 @@ module "etcd" {
   storage_type               = "${var.tectonic_azure_etcd_storage_type}"
   versions                   = "${var.tectonic_versions}"
   vm_size                    = "${var.tectonic_azure_etcd_vm_size}"
+  boot_diagnostics           = "${var.tectonic_enable_boot_diagnostics}"
+  storage_name_boot_diag     = "${module.resource_group.storage_blob_endpoint}"
 }
 
 # Workaround for https://github.com/hashicorp/terraform/issues/4084
@@ -173,6 +176,8 @@ module "masters" {
   storage_id                           = "${module.resource_group.storage_id}"
   storage_type                         = "${var.tectonic_azure_master_storage_type}"
   vm_size                              = "${var.tectonic_azure_master_vm_size}"
+  boot_diagnostics                     = "${var.tectonic_enable_boot_diagnostics}"
+  storage_name_boot_diag               = "${module.resource_group.storage_blob_endpoint}"
 }
 
 module "ignition_workers" {
@@ -232,6 +237,8 @@ module "workers" {
   tectonic_kube_dns_service_ip         = "${module.bootkube.kube_dns_service_ip}"
   vm_size                              = "${var.tectonic_azure_worker_vm_size}"
   worker_count                         = "${var.tectonic_worker_count}"
+  boot_diagnostics                     = "${var.tectonic_enable_boot_diagnostics}"
+  storage_name_boot_diag               = "${module.resource_group.storage_blob_endpoint}"
 }
 
 module "dns" {

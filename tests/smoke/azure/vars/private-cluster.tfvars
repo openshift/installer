@@ -6,5 +6,6 @@
   "tectonic_etcd_count": "1",
   "tectonic_master_count": "2",
   "tectonic_worker_count": "1",
-  "tectonic_container_linux_channel": "beta"
+  "tectonic_container_linux_channel": "beta",
+  "tectonic_enable_boot_diagnostics": "true"
 }

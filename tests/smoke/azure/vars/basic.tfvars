@@ -11,5 +11,6 @@
     "tectonic_master_count": "1",
     "tectonic_service_cidr": "10.3.0.0/16",
     "tectonic_worker_count": "1",
-    "tectonic_container_linux_channel": "beta"
+    "tectonic_container_linux_channel": "beta",
+    "tectonic_enable_boot_diagnostics": "true"
 }
