@@ -59,30 +59,9 @@ genrule(
 )
 
 sh_test(
-    name = "frontend_test",
+    name = "unit",
     size = "small",
     srcs = [":frontend_test_sh"],
     args = ["$(location @yarn//:yarn)", "$(location :packagejson)", "$(location @nodejs//:node)"],
     data = ["@yarn//:yarn", ":node_dependencies", ":packagejson", ":files", "@nodejs//:node"],
 )
-
-genrule(
-    name = "installer_gui_test_sh",
-    outs = ["installer_gui_test.sh"],
-    cmd = "printf '"
-            + "#!/bin/bash -ex\n"
-            + " export PATH=$$(pwd)/$$(dirname $$4):$$PATH\n"
-            + "cp -RL $$(dirname $$2)/.. $$TMPDIR/installer"
-            + "&& xvfb-run -a $$1 --cwd $$TMPDIR/$$(dirname $$2)/.. run $$3-installer-tests"
-          + "' > $@",
-    testonly = 1,
-)
-
-PLATFORMS = ["aws", "baremetal"]
-[sh_test(
-    name = platform + "_installer_gui_test",
-    size = "medium",
-    srcs = [":installer_gui_test_sh"],
-    args = ["$(location @yarn//:yarn)", "$(location :packagejson)", platform, "$(location @nodejs//:node)"],
-    data = ["@yarn//:yarn", ":node_dependencies", ":packagejson", ":files", "@nodejs//:node"],
-) for platform in PLATFORMS]

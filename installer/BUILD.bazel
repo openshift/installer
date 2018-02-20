@@ -1,0 +1,29 @@
+genrule(
+    name = "installer_gui_test_sh",
+    outs = ["installer_gui_test.sh"],
+    cmd = "printf '" + '\n'.join([
+            "#!/bin/bash -ex",
+            "trap \"pkill -F $$TMPDIR/tectonic/installer.pid; rm -rf $$TMPDIR/tectonic\" EXIT",
+            "rm -rf $$TMPDIR/tectonic",
+            "tar -xzf $$5 -C $$TMPDIR",
+            "mkdir -p $$TMPDIR/tectonic/installer",
+            "cp -RL $$(dirname $$2)/.. $$TMPDIR/tectonic/installer",
+            "mkdir -p $$TMPDIR/tectonic/tests/smoke/aws/vars",
+            "cp $$6 $$TMPDIR/tectonic/tests/smoke/aws/vars",
+            "mkdir -p $$TMPDIR/tectonic/tests/smoke/bare-metal/vars",
+            "cp $$7 $$TMPDIR/tectonic/tests/smoke/bare-metal/vars",
+            "export PATH=$$(pwd)/$$(dirname $$4):$$TMPDIR/tectonic/tectonic-installer/linux:$$PATH",
+            "installer --address=127.0.0.1:4444 --open-browser=false --log-level=debug --dev & echo $$! > $$TMPDIR/tectonic/installer.pid",
+            "xvfb-run -a $$1 --cwd $$TMPDIR/tectonic/$$(dirname $$2)/.. run $$3-installer-tests",
+          ]) + "' > $@",
+    testonly = 1,
+)
+
+PLATFORMS = ["aws", "baremetal"]
+[sh_test(
+    name    = platform + "_gui",
+    size    = "large",
+    srcs    = [":installer_gui_test_sh"],
+    args    = ["$(location @yarn//:yarn)", "$(location //installer/frontend:packagejson)", platform, "$(location @nodejs//:node)", "$(location //:tarball)", "$(locations //tests/smoke:test_vars)"],
+    data    = ["@yarn//:yarn", "//installer/frontend:node_dependencies", "//installer/frontend:packagejson", "//installer/frontend:files", "@nodejs//:node", "//:tarball", "//tests/smoke:test_vars"],
+) for platform in PLATFORMS]

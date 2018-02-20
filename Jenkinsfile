@@ -66,6 +66,7 @@ quayCreds = [
 
 defaultBuilderImage = 'quay.io/coreos/tectonic-builder:v1.44'
 tectonicSmokeTestEnvImage = 'quay.io/coreos/tectonic-smoke-test-env:v5.15'
+tectonicBazelImage = 'quay.io/coreos/tectonic-builder:bazel-v0.3'
 originalCommitId = 'UNKNOWN'
 
 pipeline {
@@ -163,16 +164,15 @@ pipeline {
                 originalCommitId = sh(returnStdout: true, script: 'git rev-parse origin/"\${BRANCH_NAME}"')
                 echo "originalCommitId: ${originalCommitId}"
 
-                withDockerContainer("quay.io/coreos/tectonic-builder:bazel-v0.2") {
+                withDockerContainer(tectonicBazelImage) {
                   sh"""#!/bin/bash -ex
                     bazel build tarball tests/smoke
-                    # bazel test terraform_fmt //installer/frontend:frontend_test --verbose_failures --test_output=errors
+                    bazel test installer/frontend:unit —test_output=all
 
                     # Jenkins `stash` does not follow symlinks - thereby temporarily copy the files to the root dir
                     cp bazel-bin/tectonic.tar.gz .
                     cp bazel-bin/tests/smoke/linux_amd64_stripped/smoke .
                   """
-
                   stash name: 'tectonic.tar.gz', includes: 'tectonic.tar.gz'
                   stash name: 'smoke-tests', includes: 'smoke'
                   archiveArtifacts allowEmptyArchive: true, artifacts: 'tectonic.tar.gz'
@@ -185,19 +185,7 @@ pipeline {
 
                     cd $GO_PROJECT/
                     make structure-check
-                    make bin/smoke
-
-                    cd $GO_PROJECT/installer
-                    make clean
-                    make tools
-                    make build
-
-                    make dirtycheck
-                    make lint
-                    make test
-                    rm -fr frontend/tests_output
                     """
-                    stash name: 'node-modules', includes: 'installer/frontend/node_modules/**'
                   }
                 }
                 withDockerContainer(tectonicSmokeTestEnvImage) {
@@ -212,7 +200,6 @@ pipeline {
               throw error
             } finally {
               reportStatusToGithub((err == null) ? 'success' : 'failure', 'basic-tests', originalCommitId)
-              cleanWs notFailBuild: true
             }
           }
         }
@@ -237,21 +224,14 @@ pipeline {
             parallel (
               "IntegrationTest AWS Installer Gui": {
                 node('worker && ec2') {
-                  timeout(time: 10, unit: 'MINUTES') {
-                    forcefullyCleanWorkspace()
+                  timeout(time: 20, unit: 'MINUTES') {
                     withCredentials(credsUI) {
-                      withDockerContainer(params.builder_image) {
-                        ansiColor('xterm') {
-                          unstash 'clean-repo'
-                          unstash 'installer-binary'
-                          unstash 'node-modules'
-                          sh """#!/bin/bash -ex
-                          cd installer
-                          make launch-aws-installer-guitests
-                          make gui-aws-tests-cleanup
-                          """
-                          cleanWs notFailBuild: true
-                        }
+                      withDockerContainer(tectonicBazelImage)  {
+                        unstash 'clean-repo'
+                        sh """#!/bin/bash -ex
+                        bazel test installer:aws_gui --action_env=AWS_ACCESS_KEY_ID --action_env=AWS_SECRET_ACCESS_KEY --action_env=TF_VAR_tectonic_license_path --action_env=TF_VAR_tectonic_pull_secret_path --action_env=AWS_SESSION_TOKEN --test_output=all
+                        """
+                        cleanWs notFailBuild: true
                       }
                     }
                   }

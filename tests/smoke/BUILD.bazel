@@ -52,3 +52,9 @@ go_test(
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/kubectl/resource:go_default_library",
     ],
 )
+
+filegroup(
+    name = "test_vars",
+    srcs = ["aws/vars/aws.tfvars.json", "bare-metal/vars/metal.tfvars.json"],
+    visibility = ["//visibility:public"],
+)
