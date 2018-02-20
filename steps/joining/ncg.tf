@@ -1,5 +1,5 @@
 resource "aws_route53_record" "ngc_internal" {
-  zone_id = "${data.terraform_remote_state.bootstrap.private_zone_id}"
+  zone_id = "${local.private_zone_id}"
   name    = "${var.tectonic_cluster_name}-ncg.${var.tectonic_base_domain}"
   type    = "A"
 
