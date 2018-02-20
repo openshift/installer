@@ -49,7 +49,7 @@ func NewTectonic(cluster config.Cluster) Tectonic {
 		// CACert:                    "",
 		// CAKey:                     "",
 		// CAKeyAlg:                  "",
-		ClusterCIDR:           cluster.Networking.NodeCIDR,
+		ClusterCIDR:           cluster.Networking.PodCIDR,
 		ClusterName:           cluster.Name,
 		ContainerLinuxChannel: cluster.ContainerLinux.Channel,
 		ContainerLinuxVersion: cluster.ContainerLinux.Version,

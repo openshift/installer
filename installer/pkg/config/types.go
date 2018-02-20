@@ -72,7 +72,6 @@ type masters struct {
 type networking struct {
 	Type        string `yaml:"Type"`
 	MTU         string `yaml:"MTU"`
-	NodeCIDR    string `yaml:"NodeCIDR"`
 	ServiceCIDR string `yaml:"ServiceCIDR"`
 	PodCIDR     string `yaml:"PodCIDR"`
 }

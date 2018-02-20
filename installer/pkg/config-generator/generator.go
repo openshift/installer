@@ -21,6 +21,19 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	authConfigOIDCClientID        = "tectonic-kubectl"
+	authConfigOIDCGroupsClaim     = "groups"
+	authConfigOIDCUsernameClaim   = "email"
+	networkConfigAdvertiseAddress = "0.0.0.0"
+	identityConfigConsoleClientID = "tectonic-console"
+	identityConfigKubectlClientID = "tectonic-kubectl"
+	statsEmitterConfigStatsURL    = "https://stats-collector.tectonic.com"
+	ingressConfigIngressKind      = "NodePort"
+	certificatesStrategy          = "userProvidedCA"
+	identityAPIService            = "tectonic-identity-api.tectonic-system.svc.cluster.local"
+)
+
 // ConfigGenerator defines the cluster config generation for a cluster.
 type ConfigGenerator struct {
 	config.Cluster
@@ -97,36 +110,19 @@ func (c ConfigGenerator) coreConfig() *kubecore.OperatorConfig {
 			Kind:       kubecore.Kind,
 		},
 	}
-	coreConfig.ClusterConfig.APIServerURL = fmt.Sprintf("%s-api.%s", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
-	coreConfig.AuthConfig.OIDCClientID = "tectonic-kubectl"
-	coreConfig.AuthConfig.OIDCIssuerURL = fmt.Sprintf("%s.%s/identity", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
-	coreConfig.AuthConfig.OIDCGroupsClaim = "groups"
-	coreConfig.AuthConfig.OIDCUsernameClaim = "email"
+	coreConfig.ClusterConfig.APIServerURL = c.getApiServerUrl()
+	coreConfig.AuthConfig.OIDCClientID = authConfigOIDCClientID
+	coreConfig.AuthConfig.OIDCIssuerURL = c.getOicdIssuerUrl()
+	coreConfig.AuthConfig.OIDCGroupsClaim = authConfigOIDCGroupsClaim
+	coreConfig.AuthConfig.OIDCUsernameClaim = authConfigOIDCUsernameClaim
 
 	coreConfig.CloudProviderConfig.CloudConfigPath = ""
 	coreConfig.CloudProviderConfig.CloudProviderProfile = c.Cluster.Platform
 
-	coreConfig.ClusterConfig.APIServerURL = fmt.Sprintf("https://%s-api.%s:443", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
-	coreConfig.AuthConfig.OIDCClientID = "tectonic-kubectl"
-	coreConfig.AuthConfig.OIDCIssuerURL = fmt.Sprintf("%s.%s/identity", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
-	coreConfig.AuthConfig.OIDCGroupsClaim = "groups"
-	coreConfig.AuthConfig.OIDCUsernameClaim = "email"
-
-	coreConfig.CloudProviderConfig.CloudConfigPath = ""
-	coreConfig.CloudProviderConfig.CloudProviderProfile = c.Cluster.Platform
-
-	coreConfig.NetworkConfig.ClusterCIDR = c.Cluster.Networking.NodeCIDR
+	coreConfig.NetworkConfig.ClusterCIDR = c.Cluster.Networking.PodCIDR
 	coreConfig.NetworkConfig.ServiceCIDR = c.Cluster.Networking.ServiceCIDR
-	coreConfig.NetworkConfig.AdvertiseAddress = "0.0.0.0"
-	if len(c.Cluster.Etcd.ExternalServers) > 0 {
-		coreConfig.NetworkConfig.EtcdServers = strings.Join(c.Cluster.Etcd.ExternalServers, ",")
-	} else {
-		var etcdServers []string
-		for i := 0; i < c.Etcd.NodeCount; i++ {
-			etcdServers = append(etcdServers, fmt.Sprintf("https://%s-etcd-%v.%s:2379", c.Cluster.Name, i, c.Cluster.DNS.BaseDomain))
-		}
-		coreConfig.NetworkConfig.EtcdServers = strings.Join(etcdServers, ",")
-	}
+	coreConfig.NetworkConfig.AdvertiseAddress = networkConfigAdvertiseAddress
+	coreConfig.NetworkConfig.EtcdServers = c.getEtcdServersUrls()
 
 	return &coreConfig
 }
@@ -180,24 +176,24 @@ func (c ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, error
 	utilityConfig.IdentityConfig.AdminEmail = c.Console.AdminEmail
 	utilityConfig.IdentityConfig.AdminPasswordHash = hashedAdminPassword
 	utilityConfig.IdentityConfig.AdminUserID = adminUserID
-	utilityConfig.IdentityConfig.ConsoleClientID = "tectonic-console"
+	utilityConfig.IdentityConfig.ConsoleClientID = identityConfigConsoleClientID
 	utilityConfig.IdentityConfig.ConsoleSecret = consoleSecret
-	utilityConfig.IdentityConfig.KubectlClientID = "tectonic-kubectl"
+	utilityConfig.IdentityConfig.KubectlClientID = identityConfigKubectlClientID
 	utilityConfig.IdentityConfig.KubectlSecret = KubectlSecret
 
-	utilityConfig.IngressConfig.ConsoleBaseHost = fmt.Sprintf("%s.%s", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
-	utilityConfig.IngressConfig.IngressKind = "NodePort"
+	utilityConfig.IngressConfig.ConsoleBaseHost = c.getBaseAddress()
+	utilityConfig.IngressConfig.IngressKind = ingressConfigIngressKind
 
-	utilityConfig.StatsEmitterConfig.StatsURL = "https://stats-collector.tectonic.com"
+	utilityConfig.StatsEmitterConfig.StatsURL = statsEmitterConfigStatsURL
 
-	utilityConfig.TectonicConfigMapConfig.BaseAddress = fmt.Sprintf("%s.%s", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
-	utilityConfig.TectonicConfigMapConfig.CertificatesStrategy = "userProvidedCA"
+	utilityConfig.TectonicConfigMapConfig.BaseAddress = c.getBaseAddress()
+	utilityConfig.TectonicConfigMapConfig.CertificatesStrategy = certificatesStrategy
 	// TODO: Consolidate ClusterID with the one genereated by terraform and and passed to the bootstrap step.
 	utilityConfig.TectonicConfigMapConfig.ClusterID = clusterID
 	utilityConfig.TectonicConfigMapConfig.ClusterName = c.Cluster.Name
-	utilityConfig.TectonicConfigMapConfig.IdentityAPIService = "tectonic-identity-api.tectonic-system.svc.cluster.local"
+	utilityConfig.TectonicConfigMapConfig.IdentityAPIService = identityAPIService
 	utilityConfig.TectonicConfigMapConfig.InstallerPlatform = c.Cluster.Platform
-	utilityConfig.TectonicConfigMapConfig.KubeAPIServerURL = fmt.Sprintf("https://%s-api.%s:443", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
+	utilityConfig.TectonicConfigMapConfig.KubeAPIServerURL = c.getApiServerUrl()
 	// TODO: Speficy what's a version in ut2 and set it here
 	utilityConfig.TectonicConfigMapConfig.TectonicVersion = "ut2"
 
@@ -241,6 +237,30 @@ func marshalYAML(obj interface{}) (string, error) {
 	}
 
 	return string(data), nil
+}
+
+func (c ConfigGenerator) getEtcdServersUrls() string {
+	if len(c.Cluster.Etcd.ExternalServers) > 0 {
+		return strings.Join(c.Cluster.Etcd.ExternalServers, ",")
+	} else {
+		var etcdServers []string
+		for i := 0; i < c.Etcd.NodeCount; i++ {
+			etcdServers = append(etcdServers, fmt.Sprintf("https://%s-etcd-%v.%s:2379", c.Cluster.Name, i, c.Cluster.DNS.BaseDomain))
+		}
+		return strings.Join(etcdServers, ",")
+	}
+}
+
+func (c ConfigGenerator) getApiServerUrl() string {
+	return fmt.Sprintf("https://%s-api.%s:443", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
+}
+
+func (c ConfigGenerator) getBaseAddress() string {
+	return fmt.Sprintf("%s.%s", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
+}
+
+func (c ConfigGenerator) getOicdIssuerUrl() string {
+	return fmt.Sprintf("%s.%s/identity", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
 }
 
 // generateRandomID reproduce tf random_id behaviour
