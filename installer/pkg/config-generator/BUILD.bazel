@@ -15,5 +15,7 @@ go_library(
         "//installer/vendor/github.com/coreos/tectonic-config/config/tectonic-utility:go_default_library",
         "//installer/vendor/github.com/ghodss/yaml:go_default_library",
         "//installer/vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
+        "//installer/vendor/github.com/apparentlymart/go-cidr/cidr:go_default_library",
+        "//installer/vendor/golang.org/x/crypto/bcrypt:go_default_library",
     ],
 )
