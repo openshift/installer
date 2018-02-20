@@ -287,7 +287,7 @@ func generateClusterID(byteLength int) (string, error) {
 func cidrhost(iprange string, hostNum int) (string, error) {
 	_, network, err := net.ParseCIDR(iprange)
 	if err != nil {
-		return "", fmt.Errorf("invalid CIDR expression: %s", err)
+		return "", fmt.Errorf("invalid CIDR expression (%s): %s", iprange, err)
 	}
 
 	ip, err := cidr.Host(network, hostNum)

@@ -14,7 +14,7 @@ func test2Step(m *metadata) error {
 }
 
 func test3Step(m *metadata) error {
-	return errors.New("Step failed!")
+	return errors.New("step failed")
 }
 
 func TestWorkflowTypeExecute(t *testing.T) {
