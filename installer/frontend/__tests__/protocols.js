@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { reducer } from '../reducer';
-import { restoreActionTypes } from '../actions';
+import { restoreActions } from '../actions';
 import { commitToServer } from '../server';
 import '../components/aws-cloud-credentials';
 import '../components/aws-cluster-info';
@@ -80,10 +80,7 @@ const readExample = filename => {
 describe('progress file example', () => {
   tests.forEach(t => {
     it(t.description, () => {
-      const restored = reducer(initialState, {
-        payload: readExample(t.state),
-        type: restoreActionTypes.RESTORE_STATE,
-      });
+      const restored = reducer(initialState, restoreActions.restore(readExample(t.state)));
 
       global.fetch = jest.fn(() => Promise.resolve({
         ok: true,

@@ -5,6 +5,11 @@ import { DEFAULT_CLUSTER_CONFIG } from './cluster-config';
 export const awsActionTypes = {
   SET: 'AWS_SET',
 };
+export const awsActions = {
+  error: (key, error) => awsActions.set(key, {error, inFly: false, value: []}),
+  loaded: (key, value) => awsActions.set(key, {error: null, inFly: false, value}),
+  set: (key, data) => ({payload: {[key]: data}, type: awsActionTypes.SET}),
+};
 
 export const configActionTypes = {
   ADD_IN: 'CONFIG_ACTION_ADD_IN',
@@ -17,9 +22,14 @@ export const configActionTypes = {
 };
 
 export const clusterReadyActionTypes = {
-  ERROR: 'clusterReadyActionTypes.ERROR',
-  STATUS: 'clusterReadyActionTypes.CLUSTER_STATUS',
-  NOT_READY: 'clusterReadyActionTypes.NOT_READY',
+  ERROR: 'CLUSTER_READY_ERROR',
+  NOT_READY: 'CLUSTER_READY_NOT_READY',
+  STATUS: 'CLUSTER_READY_STATUS',
+};
+export const clusterReadyActions = {
+  error: payload => ({payload, type: clusterReadyActionTypes.ERROR}),
+  notReady: () => ({type: clusterReadyActionTypes.NOT_READY}),
+  status: payload => ({payload, type: clusterReadyActionTypes.STATUS}),
 };
 
 export const dirtyActionTypes = {
@@ -34,27 +44,41 @@ export const dirtyActions = {
 export const eventErrorsActionTypes = {
   ERROR: 'EVENT_ERRORS_ERROR',
 };
+export const eventErrorsActions = {
+  error: payload => ({payload, type: eventErrorsActionTypes.ERROR}),
+};
 
 export const loadFactsActionTypes = {
-  LOADED: 'LOAD_FACTS_LOADED',
   ERROR: 'LOAD_FACTS_ERROR',
+  LOADED: 'LOAD_FACTS_LOADED',
+};
+export const loadFactsActions = {
+  error: payload => ({payload, type: loadFactsActionTypes.ERROR}),
+  loaded: payload => ({payload, type: loadFactsActionTypes.LOADED}),
 };
 
 export const restoreActionTypes = {
   RESTORE_STATE: 'RESTORE_RESTORE_STATE',
 };
-
-export const serverActionTypes = {
-  COMMIT_REQUESTED: 'COMMIT_REQUESTED',
-  COMMIT_SENT: 'COMMIT_SENT',
-  COMMIT_SUCCESSFUL: 'COMMIT_SUCCESSFUL',
-  COMMIT_FAILED: 'COMMIT_FAILED',
+export const restoreActions = {
+  restore: payload => ({payload, type: restoreActionTypes.RESTORE_STATE}),
 };
 
-// Commit state machine
-//
-// IDLE|FAILED -> REQUESTED -> WAITING -> SUCCEEDED|FAILED
+export const serverActionTypes = {
+  COMMIT_REQUESTED: 'SERVER_COMMIT_REQUESTED',
+  COMMIT_SENT: 'SERVER_COMMIT_SENT',
+  COMMIT_SUCCESSFUL: 'SERVER_COMMIT_SUCCESSFUL',
+  COMMIT_FAILED: 'SERVER_COMMIT_FAILED',
+};
+export const serverActions = {
+  requested: () => ({type: serverActionTypes.COMMIT_REQUESTED}),
+  sent: () => ({type: serverActionTypes.COMMIT_SENT}),
+  successful: payload => ({payload, type: serverActionTypes.COMMIT_SUCCESSFUL}),
+  failed: payload => ({payload, type: serverActionTypes.COMMIT_FAILED}),
+};
 
+// Commit state machine:
+//   IDLE|FAILED -> REQUESTED -> WAITING -> SUCCEEDED|FAILED
 export const commitPhases = {
   IDLE: 'COMMIT_IDLE',
   REQUESTED: 'COMMIT_REQUESTED',
@@ -62,6 +86,7 @@ export const commitPhases = {
   SUCCEEDED: 'COMMIT_SUCCEEDED',
   FAILED: 'COMMIT_FAILED',
 };
+
 export const FIELDS = {};
 export const FIELD_TO_DEPS = {};
 export const FORMS = {};

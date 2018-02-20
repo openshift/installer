@@ -10,7 +10,7 @@ import {
   toAWS_TF,
   toBaremetal_TF,
 } from './cluster-config';
-import { clusterReadyActionTypes, configActions, loadFactsActionTypes, serverActionTypes, FORMS } from './actions';
+import { clusterReadyActions, configActions, loadFactsActions, serverActions, FORMS } from './actions';
 import { AWS_TF, BARE_METAL_TF } from './platforms';
 
 const { addIn, setIn } = configActions;
@@ -34,8 +34,6 @@ const fetchJSON = (url, opts, ...args) => {
 
 // Poll server for cluster status.
 // Guaranteed not to reject
-const {NOT_READY, STATUS, ERROR} = clusterReadyActionTypes;
-
 export const observeClusterStatus = (dispatch, getState) => {
   const cc = getState().clusterConfig;
   const tectonicDomain = getTectonicDomain(cc);
@@ -51,18 +49,18 @@ export const observeClusterStatus = (dispatch, getState) => {
 
   return fetch('/tectonic/status', opts).then(response => {
     if (response.status === 404) {
-      dispatch({type: NOT_READY});
+      dispatch(clusterReadyActions.notReady());
       return;
     }
     if (response.ok) {
-      return response.json().then(payload => dispatch({type: STATUS, payload}));
+      return response.json().then(json => dispatch(clusterReadyActions.status(json)));
     }
-    return response.text().then(payload => dispatch({type: ERROR, payload}));
+    return response.text().then(err => dispatch(clusterReadyActions.error(err)));
   }, payload => {
     if (payload instanceof TypeError) {
       payload = `${payload.message}. Is the installer running?`;
     }
-    return dispatch({type: ERROR, payload});
+    return dispatch(clusterReadyActions.error(payload));
   })
     .catch(err => console.error(err) || err);
 };
@@ -78,10 +76,7 @@ let observeInterval;
 export const commitToServer = (dryRun = false, retry = false) => (dispatch, getState) => {
   setIn(DRY_RUN, dryRun, dispatch);
   setIn(RETRY, retry, dispatch);
-
-  const {COMMIT_REQUESTED, COMMIT_FAILED, COMMIT_SUCCESSFUL, COMMIT_SENT} = serverActionTypes;
-
-  dispatch({type: COMMIT_REQUESTED});
+  dispatch(serverActions.requested);
 
   const state = getState();
 
@@ -103,36 +98,30 @@ export const commitToServer = (dryRun = false, retry = false) => (dispatch, getS
           if (!observeInterval) {
             observeInterval = setInterval(() => observeClusterStatus(dispatch, getState), 10000);
           }
-          return dispatch({payload, type: COMMIT_SUCCESSFUL});
+          return dispatch(serverActions.successful(payload));
         }) :
-        response.text().then(payload => dispatch({payload, type: COMMIT_FAILED}))
-      , payload => dispatch({payload, type: COMMIT_FAILED}))
+        response.text().then(payload => dispatch(serverActions.failed(payload)))
+      , payload => dispatch(serverActions.failed(payload)))
     .catch(err => console.error(err));
 
-  return dispatch({type: COMMIT_SENT});
+  return dispatch(serverActions.sent);
 };
 
 // One-time fetch of initial data from server, followed by firing appropriate actions
 // Guaranteed not to reject.
 export const loadFacts = (dispatch) => {
   return fetchJSON('/tectonic/facts', {retries: 5})
-    .then(facts => {
-      addIn(TECTONIC_LICENSE, facts.license, dispatch);
-      addIn(PULL_SECRET, facts.pullSecret, dispatch);
-      dispatch({
-        type: loadFactsActionTypes.LOADED,
-        payload: {
+    .then(
+      facts => {
+        addIn(TECTONIC_LICENSE, facts.license, dispatch);
+        addIn(PULL_SECRET, facts.pullSecret, dispatch);
+        dispatch(loadFactsActions.loaded({
           awsRegions: _.map(facts.amis, 'name'),
           buildTime: facts.buildTime,
           version: facts.tectonicVersion,
-        },
-      });
-    },
-    err => {
-      dispatch({
-        type: loadFactsActionTypes.ERROR,
-        payload: err,
-      });
-    })
+        }));
+      },
+      err => dispatch(loadFactsActions.error(err))
+    )
     .catch(err => console.error(err));
 };
