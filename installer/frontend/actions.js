@@ -64,7 +64,7 @@ export const commitPhases = {
   FAILED: 'COMMIT_FAILED',
 };
 export const FIELDS = {};
-const FIELD_TO_DEPS = {};
+export const FIELD_TO_DEPS = {};
 export const FORMS = {};
 
 const getField = name => {
@@ -96,12 +96,12 @@ export const configActions = {
   },
   refreshExtraData: fieldName => (dispatch, getState) => {
     const field = getField(fieldName);
-    field.getExtraStuff(dispatch, getState, FIELDS);
+    field.getExtraStuff(dispatch, getState);
   },
   updateField: (fieldName, inputValue) => (dispatch, getState) => {
     const [name, ...split] = fieldName.split('.');
     const field = getField(name);
-    return field.update(dispatch, inputValue, getState, FIELDS, FIELD_TO_DEPS, split);
+    return field.update(dispatch, inputValue, getState, split);
   },
 };
 
@@ -125,7 +125,7 @@ export const validateFields = async (ids, getState, dispatch, updatedId, isNow) 
       throw new Error(`Unresolvable fields: ${unvisitedIds}`);
     }
     await Promise.all(toVisit.map(
-      id => FIELDS[id].getExtraStuff(dispatch, getState, FIELDS, isNow)
+      id => FIELDS[id].getExtraStuff(dispatch, getState, isNow)
         .then(() => FIELDS[id].validate(dispatch, getState, updatedId, isNow))
     ));
     _.pullAll(unvisitedIds, toVisit);
