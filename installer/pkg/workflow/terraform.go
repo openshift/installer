@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 )
 
 func terraformExec(clusterDir string, args ...string) error {
@@ -26,4 +27,10 @@ func tfDestroy(clusterDir, state, templateDir string) error {
 
 func tfInit(clusterDir, templateDir string) error {
 	return terraformExec(clusterDir, "init", templateDir)
+}
+
+func hasStateFile(stateDir string, stateName string) bool {
+	stepStateFile := filepath.Join(stateDir, fmt.Sprintf("%s.tfstate", stateName))
+	_, err := os.Stat(stepStateFile)
+	return !os.IsNotExist(err)
 }

@@ -7,7 +7,9 @@ import (
 	"io"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
@@ -17,11 +19,13 @@ import (
 )
 
 const (
+	stepsBaseDir   = "steps"
 	assetsStep     = "assets"
 	bootstrapStep  = "bootstrap"
-	configFileName = "config.yaml"
 	joinStep       = "joining"
+	configFileName = "config.yaml"
 	kubeConfigPath = "generated/auth/kubeconfig"
+	binaryPrefix   = "tectonic-installer"
 )
 
 func copyFile(fromFilePath, toFilePath string) error {
@@ -42,13 +46,27 @@ func copyFile(fromFilePath, toFilePath string) error {
 }
 
 func destroyCNAME(clusterDir string) error {
-	return terraformExec(clusterDir, "destroy", "-force", fmt.Sprintf("-state=%s.tfstate", bootstrapStep), "-target=aws_route53_record.tectonic_ncg", findTemplatesForStep(bootstrapStep))
+	templatesPath, err := findTemplates(bootstrapStep)
+	if err != nil {
+		return err
+	}
+	return terraformExec(clusterDir, "destroy", "-force", fmt.Sprintf("-state=%s.tfstate", bootstrapStep), "-target=aws_route53_record.tectonic_ncg", templatesPath)
 }
 
-// TODO: Handle errors for Getwd
-func findTemplatesForStep(step string) string {
-	dir, _ := os.Getwd()
-	return filepath.Join(dir, "steps", step)
+func findTemplates(relativePath string) (string, error) {
+	base, err := baseLocation()
+	if err != nil {
+		return "", fmt.Errorf("unknown base path for '%s' templates: %s", relativePath, err)
+	}
+	base = filepath.Join(base, stepsBaseDir, relativePath)
+	stat, err := os.Stat(base)
+	if err != nil {
+		return "", fmt.Errorf("invalid path for '%s' templates: %s", base, err)
+	}
+	if !stat.IsDir() {
+		return "", fmt.Errorf("invalid path for '%s' templates", base)
+	}
+	return base, nil
 }
 
 func generateClusterConfigStep(m *metadata) error {
@@ -84,12 +102,28 @@ func generateClusterConfigStep(m *metadata) error {
 }
 
 func importAutoScalingGroup(m *metadata) error {
-	if err := terraformExec(m.clusterDir, "import", fmt.Sprintf("-state=%s.tfstate", joinStep), fmt.Sprintf("-config=%s", findTemplatesForStep(joinStep)), "aws_autoscaling_group.masters", fmt.Sprintf("%s-masters", m.cluster.Name)); err != nil {
+	templatesPath, err := findTemplates(joinStep)
+	if err != nil {
 		return err
 	}
-
-	return terraformExec(m.clusterDir, "import", fmt.Sprintf("-state=%s.tfstate", joinStep), fmt.Sprintf("-config=%s", findTemplatesForStep(joinStep)), "aws_autoscaling_group.workers", fmt.Sprintf("%s-workers", m.cluster.Name))
-
+	err = terraformExec(
+		m.clusterDir,
+		"import",
+		fmt.Sprintf("-state=%s.tfstate", joinStep),
+		fmt.Sprintf("-config=%s", templatesPath),
+		"aws_autoscaling_group.masters",
+		fmt.Sprintf("%s-masters", m.cluster.Name))
+	if err != nil {
+		return err
+	}
+	err = terraformExec(
+		m.clusterDir,
+		"import",
+		fmt.Sprintf("-state=%s.tfstate", joinStep),
+		fmt.Sprintf("-config=%s", templatesPath),
+		"aws_autoscaling_group.workers",
+		fmt.Sprintf("%s-workers", m.cluster.Name))
+	return err
 }
 
 func readClusterConfig(configFilePath string) (*config.Cluster, error) {
@@ -161,4 +195,20 @@ func writeFile(path, content string) error {
 	w.Flush()
 
 	return nil
+}
+
+func baseLocation() (string, error) {
+	ex, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("undetermined location of own executable: %s", err)
+	}
+	ex = path.Dir(ex)
+	if path.Base(ex) != runtime.GOOS {
+		return "", fmt.Errorf("%s executable in unknown location: %s", path.Base(ex), err)
+	}
+	ex = path.Dir(ex)
+	if path.Base(ex) != binaryPrefix {
+		return "", fmt.Errorf("%s executable in unknown location: %s", path.Base(ex), err)
+	}
+	return path.Dir(ex), nil
 }

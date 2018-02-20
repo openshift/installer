@@ -24,7 +24,7 @@ type Tectonic struct {
 	EtcdCACertPath            string `json:"tectonic_etcd_ca_cert_path,omitempty"`
 	EtcdClientCertPath        string `json:"tectonic_etcd_client_cert_path,omitempty"`
 	EtcdClientKeyPath         string `json:"tectonic_etcd_client_key_path,omitempty"`
-	EtcdCount                 string `json:"tectonic_etcd_count,omitempty"`
+	EtcdCount                 int    `json:"tectonic_etcd_count,omitempty"`
 	EtcdServers               string `json:"tectonic_etcd_servers,omitempty"`
 	EtcdTLSEnabled            string `json:"tectonic_etcd_tls_enabled,omitempty"`
 	HTTPProxyAddress          string `json:"tectonic_http_proxy_address,omitempty"`
@@ -62,7 +62,7 @@ func NewTectonic(cluster config.Cluster) Tectonic {
 		// EtcdCACertPath:            "",
 		// EtcdClientCertPath:        "",
 		// EtcdClientKeyPath:         "",
-		// EtcdCount:                 "",
+		EtcdCount: cluster.Etcd.NodeCount,
 		// EtcdServers:               "",
 		// EtcdTLSEnabled:            "",
 		// HTTPProxyAddress:          "",

@@ -65,11 +65,7 @@ func installBootstrapStep(m *metadata) error {
 		return err
 	}
 
-	if err := destroyCNAME(m.clusterDir); err != nil {
-		return err
-	}
-
-	return nil
+	return destroyCNAME(m.clusterDir)
 }
 
 func installJoinStep(m *metadata) error {
@@ -80,7 +76,10 @@ func installJoinStep(m *metadata) error {
 }
 
 func runInstallStep(clusterDir, step string) error {
-	templateDir := findTemplatesForStep(step)
+	templateDir, err := findTemplates(step)
+	if err != nil {
+		return err
+	}
 	if err := tfInit(clusterDir, templateDir); err != nil {
 		return err
 	}
