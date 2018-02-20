@@ -283,7 +283,13 @@ export const Select = ({id, children, value, onValue, invalid, isDirty, makeDirt
   );
 };
 
-export const AsyncSelect = props => {
+export const AsyncSelect = connect(
+  ({clusterConfig: cc}, {id}) => ({
+    extraData: _.get(cc, toExtraData(id)),
+    inFly: _.get(cc, toInFly(id)) || _.get(cc, toExtraDataInFly(id)),
+  }),
+  (dispatch, {id}) => ({refreshExtraData: () => dispatch(configActions.refreshExtraData(id))})
+)(props => {
   const value = props.value;
   const options = _.get(props, 'extraData.options', []);
 
@@ -310,35 +316,32 @@ export const AsyncSelect = props => {
       <i className={iClassNames}></i>
     </button>}
   </div>;
-};
+});
 
 const stateToProps = ({clusterConfig, dirty}, {field}) => ({
-  value: _.get(clusterConfig, field),
   invalid: _.get(clusterConfig, toError(field)) || _.get(clusterConfig, toExtraDataError(field)),
   isDirty: _.get(dirty, field),
-  extraData: _.get(clusterConfig, toExtraData(field)),
-  inFly: _.get(clusterConfig, toInFly(field)) || _.get(clusterConfig, toExtraDataInFly(field)),
+  value: _.get(clusterConfig, field),
 });
 
 const dispatchToProps = (dispatch, {field}) => ({
-  updateField: (path, value) => dispatch(configActions.updateField(path, value)),
   makeDirty: () => dispatch(dirtyActions.add(field)),
-  refreshExtraData: () => dispatch(configActions.refreshExtraData(field)),
+  updateField: v => dispatch(configActions.updateField(field, v)),
 });
 
 class Connect_ extends React.Component {
   handleValue (v) {
-    const { children, field, updateField } = this.props;
+    const {children, updateField} = this.props;
     const child = React.Children.only(children);
 
-    updateField(field, v);
+    updateField(v);
     if (child.props.onValue) {
       child.props.onValue(v);
     }
   }
 
   componentDidMount () {
-    const { getDefault } = this.props;
+    const {getDefault} = this.props;
 
     if (_.isFunction(getDefault)) {
       this.handleValue(getDefault());
@@ -346,19 +349,16 @@ class Connect_ extends React.Component {
   }
 
   render () {
-    const {children, extraData, field, inFly, invalid, isDirty, makeDirty, refreshExtraData, value} = this.props;
+    const {children, field, invalid, isDirty, makeDirty, value} = this.props;
 
     const child = React.Children.only(children);
     const id = child.props.id || field;
 
     const props = {
-      extraData,
       id,
-      inFly,
       invalid,
       isDirty,
       makeDirty,
-      refreshExtraData,
       onValue: v => this.handleValue(v),
     };
 
