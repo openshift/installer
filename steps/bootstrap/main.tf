@@ -167,7 +167,7 @@ module "dns" {
   etcd_ip_addresses              = "${module.etcd.ip_addresses}"
   external_endpoints             = ["${compact(var.tectonic_etcd_servers)}"]
   master_count                   = "${var.tectonic_master_count}"
-  tectonic_external_private_zone = "${aws_route53_zone.tectonic_int.id}"
+  tectonic_external_private_zone = "${join("", aws_route53_zone.tectonic_int.*.zone_id)}"
   tectonic_external_vpc_id       = "${module.vpc.vpc_id}"
   tectonic_extra_tags            = "${var.tectonic_aws_extra_tags}"
   tectonic_private_endpoints     = "${var.tectonic_aws_private_endpoints}"
