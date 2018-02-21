@@ -28,8 +28,8 @@ func TestUrlFunctions(t *testing.T) {
 		expected string
 	}{
 		{
-			test:     "getApiServerURL",
-			got:      config.getApiServerURL(),
+			test:     "getAPIServerURL",
+			got:      config.getAPIServerURL(),
 			expected: "https://test-api.cluster.com:443",
 		},
 		{

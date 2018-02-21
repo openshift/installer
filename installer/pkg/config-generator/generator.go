@@ -110,7 +110,7 @@ func (c ConfigGenerator) coreConfig() *kubecore.OperatorConfig {
 			Kind:       kubecore.Kind,
 		},
 	}
-	coreConfig.ClusterConfig.APIServerURL = c.getApiServerURL()
+	coreConfig.ClusterConfig.APIServerURL = c.getAPIServerURL()
 	coreConfig.AuthConfig.OIDCClientID = authConfigOIDCClientID
 	coreConfig.AuthConfig.OIDCIssuerURL = c.getOicdIssuerURL()
 	coreConfig.AuthConfig.OIDCGroupsClaim = authConfigOIDCGroupsClaim
@@ -193,7 +193,7 @@ func (c ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, error
 	utilityConfig.TectonicConfigMapConfig.ClusterName = c.Cluster.Name
 	utilityConfig.TectonicConfigMapConfig.IdentityAPIService = identityAPIService
 	utilityConfig.TectonicConfigMapConfig.InstallerPlatform = c.Cluster.Platform
-	utilityConfig.TectonicConfigMapConfig.KubeAPIServerURL = c.getApiServerURL()
+	utilityConfig.TectonicConfigMapConfig.KubeAPIServerURL = c.getAPIServerURL()
 	// TODO: Speficy what's a version in ut2 and set it here
 	utilityConfig.TectonicConfigMapConfig.TectonicVersion = "ut2"
 
@@ -242,16 +242,15 @@ func marshalYAML(obj interface{}) (string, error) {
 func (c ConfigGenerator) getEtcdServersUrls() string {
 	if len(c.Cluster.Etcd.ExternalServers) > 0 {
 		return strings.Join(c.Cluster.Etcd.ExternalServers, ",")
-	} else {
-		var etcdServers []string
-		for i := 0; i < c.Etcd.NodeCount; i++ {
-			etcdServers = append(etcdServers, fmt.Sprintf("https://%s-etcd-%v.%s:2379", c.Cluster.Name, i, c.Cluster.DNS.BaseDomain))
-		}
-		return strings.Join(etcdServers, ",")
 	}
+	var etcdServers []string
+	for i := 0; i < c.Etcd.NodeCount; i++ {
+		etcdServers = append(etcdServers, fmt.Sprintf("https://%s-etcd-%v.%s:2379", c.Cluster.Name, i, c.Cluster.DNS.BaseDomain))
+	}
+	return strings.Join(etcdServers, ",")
 }
 
-func (c ConfigGenerator) getApiServerURL() string {
+func (c ConfigGenerator) getAPIServerURL() string {
 	return fmt.Sprintf("https://%s-api.%s:443", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
 }
 
