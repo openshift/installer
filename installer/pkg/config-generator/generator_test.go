@@ -1,6 +1,7 @@
 package configgenerator
 
 import (
+	"io/ioutil"
 	"testing"
 
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
@@ -27,8 +28,8 @@ func TestUrlFunctions(t *testing.T) {
 		expected string
 	}{
 		{
-			test:     "getApiServerUrl",
-			got:      config.getApiServerUrl(),
+			test:     "getApiServerURL",
+			got:      config.getApiServerURL(),
 			expected: "https://test-api.cluster.com:443",
 		},
 		{
@@ -37,8 +38,8 @@ func TestUrlFunctions(t *testing.T) {
 			expected: "test.cluster.com",
 		},
 		{
-			test:     "getOicdIssuerUrl",
-			got:      config.getOicdIssuerUrl(),
+			test:     "getOicdIssuerURL",
+			got:      config.getOicdIssuerURL(),
 			expected: "test.cluster.com/identity",
 		},
 	}
@@ -70,4 +71,52 @@ func TestGetEtcdServersUrls(t *testing.T) {
 		}
 	}
 
+}
+
+func TestKubeSystem(t *testing.T) {
+
+	config := initConfig(t, "test-aws.yaml")
+	got, err := config.KubeSystem()
+	if err != nil {
+		t.Errorf("Test case TestKubeSystem: failed to get KubeSystem(): %s", err)
+	}
+	expected, err := ioutil.ReadFile("./fixtures/kube-system.yaml")
+	if err != nil {
+		t.Errorf("Test case TestKubeSystem: failed to ReadFile(): %s", err)
+	}
+
+	if got != string(expected) {
+		t.Errorf("Test case TestKubeSystem: expected: %s, got: %s", expected, got)
+	}
+}
+
+func TestCidrhost(t *testing.T) {
+	testCases := []struct {
+		test     string
+		iprange  string
+		hostNum  int
+		expected string
+	}{
+		{
+			test:     "10.0.0.0/8",
+			iprange:  "10.0.0.0/8",
+			hostNum:  8,
+			expected: "10.0.0.8",
+		},
+		{
+			test:     "10.3.0.0/16",
+			iprange:  "10.3.0.0/16",
+			hostNum:  10,
+			expected: "10.3.0.10",
+		},
+	}
+	for _, tc := range testCases {
+		got, err := cidrhost(tc.iprange, tc.hostNum)
+		if err != nil {
+			t.Errorf("Test case %s: failed to run cidrhost(): %s", tc.test, err)
+		}
+		if got != tc.expected {
+			t.Errorf("Test case %s: expected: %s, got: %s", tc.test, tc.expected, got)
+		}
+	}
 }

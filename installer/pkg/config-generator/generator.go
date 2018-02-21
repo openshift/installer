@@ -110,9 +110,9 @@ func (c ConfigGenerator) coreConfig() *kubecore.OperatorConfig {
 			Kind:       kubecore.Kind,
 		},
 	}
-	coreConfig.ClusterConfig.APIServerURL = c.getApiServerUrl()
+	coreConfig.ClusterConfig.APIServerURL = c.getApiServerURL()
 	coreConfig.AuthConfig.OIDCClientID = authConfigOIDCClientID
-	coreConfig.AuthConfig.OIDCIssuerURL = c.getOicdIssuerUrl()
+	coreConfig.AuthConfig.OIDCIssuerURL = c.getOicdIssuerURL()
 	coreConfig.AuthConfig.OIDCGroupsClaim = authConfigOIDCGroupsClaim
 	coreConfig.AuthConfig.OIDCUsernameClaim = authConfigOIDCUsernameClaim
 
@@ -193,7 +193,7 @@ func (c ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, error
 	utilityConfig.TectonicConfigMapConfig.ClusterName = c.Cluster.Name
 	utilityConfig.TectonicConfigMapConfig.IdentityAPIService = identityAPIService
 	utilityConfig.TectonicConfigMapConfig.InstallerPlatform = c.Cluster.Platform
-	utilityConfig.TectonicConfigMapConfig.KubeAPIServerURL = c.getApiServerUrl()
+	utilityConfig.TectonicConfigMapConfig.KubeAPIServerURL = c.getApiServerURL()
 	// TODO: Speficy what's a version in ut2 and set it here
 	utilityConfig.TectonicConfigMapConfig.TectonicVersion = "ut2"
 
@@ -251,7 +251,7 @@ func (c ConfigGenerator) getEtcdServersUrls() string {
 	}
 }
 
-func (c ConfigGenerator) getApiServerUrl() string {
+func (c ConfigGenerator) getApiServerURL() string {
 	return fmt.Sprintf("https://%s-api.%s:443", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
 }
 
@@ -259,7 +259,7 @@ func (c ConfigGenerator) getBaseAddress() string {
 	return fmt.Sprintf("%s.%s", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
 }
 
-func (c ConfigGenerator) getOicdIssuerUrl() string {
+func (c ConfigGenerator) getOicdIssuerURL() string {
 	return fmt.Sprintf("%s.%s/identity", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
 }
 
