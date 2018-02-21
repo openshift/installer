@@ -275,11 +275,14 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
 
       const tfTitle = `Terraform ${_.startCase(action)}`;
 
+      // If we detected an install in progress when the app started, then the cluster config will not be populated
+      const isClusterConfigPopulated = !!clusterName;
+
       // Show Terraform actions menu if,
       //   (1) The Terraform apply step has succeeded, and
       //   (2) The cluster state data is populated (required by some of the menu actions)
       // Otherwise, we will just show the Terraform logs instead.
-      const showTfActions = isApplySuccess && !!clusterName;
+      const showTfActions = isApplySuccess && isClusterConfigPopulated;
 
       return <div>
         {!isBareMetal &&
@@ -308,6 +311,7 @@ export const TF_PowerOn = connect(stateToProps, dispatchToProps)(
           </div>
         }
         <hr />
+        {!isClusterConfigPopulated && <Alert>Detected installation already in progress.</Alert>}
         <div className="row">
           <div className="col-xs-12 wiz-launch-progress">
             <Step done={statusMsg === 'success'} error={tfError}>
