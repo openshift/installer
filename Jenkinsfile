@@ -165,9 +165,10 @@ pipeline {
                 echo "originalCommitId: ${originalCommitId}"
 
                 withDockerContainer(tectonicBazelImage) {
+                  sh "bazel test terraform_fmt --test_output=all"
+                  sh "bazel test installer/frontend:unit --test_output=all"
                   sh"""#!/bin/bash -ex
                     bazel build tarball tests/smoke
-                    bazel test installer/frontend:unit —test_output=all
 
                     # Jenkins `stash` does not follow symlinks - thereby temporarily copy the files to the root dir
                     cp bazel-bin/tectonic.tar.gz .
