@@ -5,7 +5,7 @@ import React from 'react';
 
 import { connect } from 'react-redux';
 
-import { configActions, dirtyActions } from '../actions';
+import { dirtyActions, formActions } from '../actions';
 import { Alert } from './alert';
 import { MAX_MASTERS, MAX_WORKERS } from './nodes';
 import { validate } from '../validate';
@@ -16,13 +16,13 @@ import { Input, Connect, FieldRowList } from './ui';
 
 const BulkUpload = connect(null, dispatch => ({
   updateNodes: (fieldID, payload) => {
-    dispatch(configActions.updateField(fieldID, payload));
+    dispatch(formActions.updateField(fieldID, payload));
     _.each(payload, (row, i) => {
       _.each(row, (ignore, key) => {
         dispatch(dirtyActions.add(`${fieldID}.${i}.${key}`));
       });
     });
-    dispatch(configActions.updateField(fieldID, payload));
+    dispatch(formActions.updateField(fieldID, payload));
   },
 }))(
   class BulkUpload extends React.Component {

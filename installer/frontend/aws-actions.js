@@ -108,7 +108,7 @@ export const getDefaultSubnets = (body, creds, isNow) => (dispatch, getState) =>
       }
 
       // Use addIn to preserve any existing values
-      const add = (path, v) => configActions.addIn(path, v, dispatch);
+      const add = (path, v) => dispatch(configActions.addIn(path, v));
       add(AWS_CONTROLLER_SUBNETS, _.fromPairs(_.map(subnets.public, s => [s.availabilityZone, s.instanceCIDR])));
       add(AWS_CONTROLLER_SUBNET_IDS, {});
       add(AWS_WORKER_SUBNETS, _.fromPairs(_.map(subnets.private, s => [s.availabilityZone, s.instanceCIDR])));

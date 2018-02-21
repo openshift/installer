@@ -12,13 +12,22 @@ export const awsActions = {
 };
 
 export const configActionTypes = {
-  ADD_IN: 'CONFIG_ACTION_ADD_IN',
-  APPEND: 'CONFIG_ACTION_APPEND',
-  REMOVE_FIELD_LIST_ROW: 'CONFIG_ACTION_REMOVE_FIELD_LIST_ROW',
-  SET: 'CONFIG_ACTION_SIMPLE_SET',
-  SET_IN: 'CONFIG_ACTION_SET_IN',
-  BATCH_SET_IN: 'CONFIG_ACTION_BATCH_SET_IN',
-  RESET: 'CONFIG_ACTION_RESET',
+  BATCH_SET_IN: 'CONFIG_BATCH_SET_IN',
+  DELETE_IN: 'CONFIG_DELETE_IN',
+  RESET: 'CONFIG_RESET',
+  SET: 'CONFIG_SET',
+  SET_IN: 'CONFIG_SET_IN',
+};
+export const configActions = {
+  // Adds a value at a given path or no-op if a value already exists for the path
+  addIn: (path, value) => (dispatch, getState) => {
+    if (_.isEmpty(_.get(getState().clusterConfig, path))) {
+      dispatch(configActions.setIn(path, value));
+    }
+  },
+  batchSetIn: payload => ({payload, type: configActionTypes.BATCH_SET_IN}),
+  set: payload => ({payload, type: configActionTypes.SET}),
+  setIn: (path, value) => ({payload: {path, value}, type: configActionTypes.SET_IN}),
 };
 
 export const clusterReadyActionTypes = {
@@ -98,28 +107,22 @@ const getField = name => {
   return FIELDS[name];
 };
 
-// TODO (ggreer) standardize on order of params. is dispatch first or last?
-export const configActions = {
-  addIn: (path, value, dispatch) => dispatch({payload: {path, value}, type: configActionTypes.ADD_IN}),
-  set: (payload, dispatch) => dispatch({type: configActionTypes.SET, payload}),
-  setIn: (path, value, dispatch) => dispatch({payload: {path, value}, type: configActionTypes.SET_IN}),
-  batchSetIn: (dispatch, payload) => dispatch({payload, type: configActionTypes.BATCH_SET_IN}),
-
-  // TODO: (kans) move below to form actions...
-  removeField: (fieldListId, index) => (dispatch, getState) => {
-    const fieldList = getField(fieldListId);
-    dispatch({payload: {fieldListId, index}, type: configActionTypes.REMOVE_FIELD_LIST_ROW});
-    fieldList.validate(dispatch, getState);
-  },
-  appendField: fieldListId => (dispatch, getState) => {
+export const formActions = {
+  appendFieldListRow: fieldListId => (dispatch, getState) => {
     const fieldList = getField(fieldListId);
     const value = _.mapValues(fieldList.rowFields, 'default');
-    dispatch({payload: {path: fieldListId, value}, type: configActionTypes.APPEND});
+    const length = _.get(getState().clusterConfig, fieldListId).length;
+    dispatch(configActions.setIn(`${fieldListId}.${length}`, value));
     fieldList.validate(dispatch, getState);
   },
   refreshExtraData: fieldName => (dispatch, getState) => {
     const field = getField(fieldName);
     field.getExtraStuff(dispatch, getState);
+  },
+  removeFieldListRow: (fieldListId, index) => (dispatch, getState) => {
+    const fieldList = getField(fieldListId);
+    dispatch({payload: [fieldListId, index], type: configActionTypes.DELETE_IN});
+    fieldList.validate(dispatch, getState);
   },
   updateField: (fieldName, inputValue) => (dispatch, getState) => {
     const [name, ...split] = fieldName.split('.');

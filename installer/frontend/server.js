@@ -74,8 +74,8 @@ let observeInterval;
 
 // An action creator that builds a server message, calls fetch on that message, fires the appropriate actions
 export const commitToServer = (dryRun = false, retry = false) => (dispatch, getState) => {
-  setIn(DRY_RUN, dryRun, dispatch);
-  setIn(RETRY, retry, dispatch);
+  dispatch(setIn(DRY_RUN, dryRun));
+  dispatch(setIn(RETRY, retry));
   dispatch(serverActions.requested);
 
   const state = getState();
@@ -113,8 +113,8 @@ export const loadFacts = (dispatch) => {
   return fetchJSON('/tectonic/facts', {retries: 5})
     .then(
       facts => {
-        addIn(TECTONIC_LICENSE, facts.license, dispatch);
-        addIn(PULL_SECRET, facts.pullSecret, dispatch);
+        dispatch(addIn(TECTONIC_LICENSE, facts.license));
+        dispatch(addIn(PULL_SECRET, facts.pullSecret));
         dispatch(loadFactsActions.loaded({
           awsRegions: _.map(facts.amis, 'name'),
           buildTime: facts.buildTime,

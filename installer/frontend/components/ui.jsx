@@ -10,7 +10,7 @@ import { readFile } from '../readfile';
 import { TectonicGA } from '../tectonic-ga';
 import { toError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from '../utils';
 
-import { dirtyActions, configActions } from '../actions';
+import { dirtyActions, formActions } from '../actions';
 import { DESELECTED_FIELDS, PLATFORM_TYPE } from '../cluster-config.js';
 
 import { Alert } from './alert';
@@ -288,7 +288,7 @@ export const AsyncSelect = connect(
     extraData: _.get(cc, toExtraData(id)),
     inFly: _.get(cc, toInFly(id)) || _.get(cc, toExtraDataInFly(id)),
   }),
-  (dispatch, {id}) => ({refreshExtraData: () => dispatch(configActions.refreshExtraData(id))})
+  (dispatch, {id}) => ({refreshExtraData: () => dispatch(formActions.refreshExtraData(id))})
 )(props => {
   const value = props.value;
   const options = _.get(props, 'extraData.options', []);
@@ -326,7 +326,7 @@ const stateToProps = ({clusterConfig, dirty}, {field}) => ({
 
 const dispatchToProps = (dispatch, {field}) => ({
   makeDirty: () => dispatch(dirtyActions.add(field)),
-  updateField: v => dispatch(configActions.updateField(field, v)),
+  updateField: v => dispatch(formActions.updateField(field, v)),
 });
 
 class Connect_ extends React.Component {
@@ -392,7 +392,7 @@ const stateToIsDeselected = ({clusterConfig}, {field}) => {
 
 export const Deselect = connect(
   stateToIsDeselected,
-  {updateField: configActions.updateField}
+  {updateField: formActions.updateField}
 )(({field, isDeselected, label, updateField}) => <div>
   <span className="deselect">
     <CheckBox id={field} value={!isDeselected} onValue={v => updateField(field, !v)} />
@@ -440,7 +440,7 @@ export const FieldRowList = connect(
     globalError: _.get(clusterConfig, `${toError(id)}.global`),
     rowIndexes: _.keys(clusterConfig[id]),
   }),
-  {appendField: configActions.appendField, removeField: configActions.removeField}
+  {appendRow: formActions.appendFieldListRow, removeRow: formActions.removeFieldListRow}
 )(
   class FieldRowList_ extends React.Component {
     constructor (props) {
@@ -451,7 +451,7 @@ export const FieldRowList = connect(
     }
 
     render () {
-      const {appendField, globalError, id, placeholder, removeField, Row, rowFields, rowIndexes} = this.props;
+      const {appendRow, globalError, id, placeholder, removeRow, Row, rowFields, rowIndexes} = this.props;
 
       return <div>
         {_.map(rowIndexes, i => {
@@ -459,7 +459,7 @@ export const FieldRowList = connect(
           return <div className="row" key={i} style={{padding: '0 0 20px 0'}}>
             <Row autoFocus={this.state.autoFocus && i === _.last(rowIndexes)} placeholder={placeholder} row={row} />
             <div className="col-xs-1">
-              <i className="fa fa-minus-circle list-add-or-subtract pull-right" onClick={() => removeField(id, i)}></i>
+              <i className="fa fa-minus-circle list-add-or-subtract pull-right" onClick={() => removeRow(id, i)}></i>
             </div>
           </div>;
         })}
@@ -467,7 +467,7 @@ export const FieldRowList = connect(
           <div className="col-xs-3">
             <span className="wiz-link" id="addMore" onClick={() => {
               this.setState({autoFocus: true});
-              appendField(id);
+              appendRow(id);
             }}>
               <i className="fa fa-plus-circle list-add wiz-link"></i>&nbsp; Add More
             </span>

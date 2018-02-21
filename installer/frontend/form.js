@@ -36,26 +36,26 @@ class Node {
     }
 
     const inFlyPath = toExtraDataInFly(this.id);
-    setIn(inFlyPath, true, dispatch);
+    dispatch(setIn(inFlyPath, true));
 
     return this.getExtraStuff_(dispatch, isNow, cc).then(data => {
       if (!isNow()) {
         return;
       }
-      batchSetIn(dispatch, [
+      dispatch(batchSetIn([
         [inFlyPath, undefined],
         [toExtraData(this.id), data],
         [toExtraDataError(this.id), undefined],
-      ]);
+      ]));
     }, e => {
       if (!isNow()) {
         return;
       }
-      batchSetIn(dispatch, [
+      dispatch(batchSetIn([
         [inFlyPath, undefined],
         [toExtraData(this.id), undefined],
         [toExtraDataError(this.id), e.message || e.toString()],
-      ]);
+      ]));
     });
   }
 
@@ -63,7 +63,7 @@ class Node {
     const cc = getState().clusterConfig;
     const error = await this.validator(this.getData(cc), cc, updatedId, dispatch);
     if (isNow()) {
-      await setIn(toError(this.id), _.isEmpty(error) ? undefined : error, dispatch);
+      await dispatch(setIn(toError(this.id), _.isEmpty(error) ? undefined : error));
     }
     return _.isEmpty(error);
   }
@@ -97,7 +97,7 @@ export class Field extends Node {
     const now = this.clock;
     const isNow = () => this.clock === now;
 
-    setIn([this.id, ...split], value, dispatch);
+    dispatch(setIn([this.id, ...split], value));
     const isFieldValid = await this.validate(dispatch, getState, this.id, isNow);
 
     if (!isFieldValid) {
