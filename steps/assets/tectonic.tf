@@ -24,7 +24,7 @@ data "template_file" "etcd_hostname_list" {
 }
 
 module "bootkube" {
-  source         = "../../modules/bootkube"
+  source         = "../../modules/bootkube-ut2"
   cloud_provider = "aws"
 
   cluster_name = "${var.tectonic_cluster_name}"
@@ -64,6 +64,10 @@ module "bootkube" {
   kube_ca_key_pem          = "${module.kube_certs.ca_key_pem}"
   admin_cert_pem           = "${module.kube_certs.admin_cert_pem}"
   admin_key_pem            = "${module.kube_certs.admin_key_pem}"
+
+  # need indent here https://github.com/hashicorp/terraform/issues/16775
+  ncg_config_worker = "${indent(2, data.ignition_config.workers.rendered)}"
+  ncg_config_master = "${indent(2, data.ignition_config.masters.rendered)}"
 
   etcd_endpoints = "${data.template_file.etcd_hostname_list.*.rendered}"
   master_count   = "${var.tectonic_master_count}"

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-config-v1
+  namespace: kube-system
+data:
+  kco-config: |
+    ${kco_config}
+  network-config: |
+    apiVersion: v1
+    kind: NetworkConfig
+    podCIDR: ${cluster_cidr}
+    networkProfile: ${tectonic_networking}
+    calicoConfig:
+      mtu: ${calico_mtu}
