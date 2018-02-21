@@ -30,10 +30,10 @@ data "ignition_config" "ncg_worker" {
     source = "http://${var.cluster_name}-ncg.${var.base_domain}/ignition?profile=worker"
   }
 
-  files = ["${data.ignition_file.kubeconfig.id}"]
+  files = ["${data.ignition_file.kubelet_worker_kubeconfig.id}"]
 }
 
-data "ignition_file" "kubeconfig" {
+data "ignition_file" "kubelet_worker_kubeconfig" {
   filesystem = "root"
   path       = "/etc/kubernetes/kubeconfig"
   mode       = 0644
