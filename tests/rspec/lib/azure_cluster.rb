@@ -39,6 +39,28 @@ class AzureCluster < Cluster
     out.map { |etcd_name| etcd_name.split('/').last }
   end
 
+  def storage_blob_apikey
+    Dir.chdir(@build_path) do
+      `echo 'module.resource_group.storage_blob_apikey' \
+         | terraform console ../../platforms/azure`.chomp
+    end
+  end
+
+  def storage_name
+    Dir.chdir(@build_path) do
+      `echo 'module.resource_group.storage_name' \
+         | terraform console ../../platforms/azure`.chomp
+    end
+  end
+
+  def machine_boot_console_logs
+    api_key = storage_blob_apikey
+    stg_name = storage_name
+
+    # Return the log output in a hash {ip => log}
+    AzureSupport.collect_azure_vm_console_logs(stg_name.to_s, api_key.to_s)
+  end
+
   def env_variables
     variables = super
     variables['PLATFORM'] = 'azure'
