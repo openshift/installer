@@ -79,11 +79,7 @@ export const configActions = {
   addIn: (path, value, dispatch) => dispatch({payload: {path, value}, type: configActionTypes.ADD_IN}),
   set: (payload, dispatch) => dispatch({type: configActionTypes.SET, payload}),
   setIn: (path, value, dispatch) => dispatch({payload: {path, value}, type: configActionTypes.SET_IN}),
-  batchSetIn: (dispatch, payload) => {
-    const values = dispatch({payload, type: configActionTypes.BATCH_SET_IN});
-    payload.splice(0, payload.length - 1);
-    return values;
-  },
+  batchSetIn: (dispatch, payload) => dispatch({payload, type: configActionTypes.BATCH_SET_IN}),
   merge: payload => dispatch => dispatch({payload, type: configActionTypes.MERGE}),
 
   // TODO: (kans) move below to form actions...
