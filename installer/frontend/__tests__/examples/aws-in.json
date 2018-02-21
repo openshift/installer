@@ -19,7 +19,6 @@
     "aws_ssh": "tectonic-jenkins",
     "aws_workers-instanceType": "m4.large",
     "aws_workers-numberOfInstances": 2,
-    "aws_workers-storageIOPS": 1500,
     "aws_workers-storageSizeInGiB": 32,
     "aws_workers-storageType": "gp2",
     "caType": "self-signed",

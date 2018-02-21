@@ -6,16 +6,18 @@ const consoleLoginPageCommands = {
       .setField('@email', json.adminEmail)
       .expectNoValidationError();
 
-    this.setField('@password', 'password');
+    const password = json.adminPassword || 'password';
+
+    this.setField('@password', password);
     this.setField('@confirmPassword', 'abc');
     this.expect.element('@alertError').text.to.contain('Passwords do not match');
 
     this.setField('@password', 'abc');
-    this.setField('@confirmPassword', 'password');
+    this.setField('@confirmPassword', password);
     this.expect.element('@alertError').text.to.contain('Passwords do not match');
 
-    this.setField('@password', 'password');
-    this.setField('@confirmPassword', 'password');
+    this.setField('@password', password);
+    this.setField('@confirmPassword', password);
     this.expect.element('@alertError').to.not.be.present;
   },
 };

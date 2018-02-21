@@ -2,8 +2,6 @@ const networkConfigurationPage = require('./networkConfigurationPage');
 
 const pageCommands = {
   testCidrInputs (json) {
-    this.setField('#serviceCIDR', json.serviceCIDR);
-
     this.setField('#podCIDR', '10.2.0.0/15');
     this.expectValidationErrorContains('AWS subnets must be between /16 and /28');
     this.expect.element('@k8sCIDRsErrorTitle').to.not.be.present;
@@ -30,16 +28,15 @@ const pageCommands = {
     this.expect.element('@k8sCIDRsWarningTitle').to.not.be.present;
 
     networkConfigurationPage.testDockerBridgeValidation(this);
-
-    this.setField('#podCIDR', json.podCIDR);
-    this.expectNoValidationError();
-    this.expect.element('@k8sCIDRsErrorTitle').to.not.be.present;
-    this.expect.element('@k8sCIDRsWarningTitle').to.not.be.present;
   },
 
   test (json) {
     this.expect.element('@vpcOptionNewPublic').to.be.selected;
     this.expect.element('#awsVpcId').to.not.be.present;
+
+    if (json.clusterSubdomain) {
+      this.setField('#clusterSubdomain', json.clusterSubdomain);
+    }
 
     this.selectOption(`#awsHostedZoneId option[value=${json.awsHostedZoneId}]`);
     this.selectOption('#awsSplitDNS option[value=off]');
@@ -47,13 +44,12 @@ const pageCommands = {
     // If a AWS VPC CIDR is specified, do a full test of the advanced networking options
     const isAdvanced = !!json.awsVpcCIDR || !!json.awsControllerSubnets || !!json.awsWorkerSubnets;
 
+    const advancedFields = ['#awsVpcCIDR', '@masterSubnet1a', '@masterSubnet1c', '@workerSubnet1a', '@workerSubnet1c'];
+    advancedFields.forEach(f => this.expect.element(f).to.not.be.present);
+
     if (isAdvanced) {
       this.click('@advanced');
-      this.expect.element('#awsVpcCIDR').to.be.visible;
-      this.expect.element('@masterSubnet1a').to.be.visible;
-      this.expect.element('@masterSubnet1c').to.be.visible;
-      this.expect.element('@workerSubnet1a').to.be.visible;
-      this.expect.element('@workerSubnet1c').to.be.visible;
+      advancedFields.forEach(f => this.expect.element(f).to.be.visible);
 
       // Subnet CIDR outside of VPC CIDR
       this.setField('#awsVpcCIDR', '0.0.0.0/20');
@@ -100,6 +96,15 @@ const pageCommands = {
     }
 
     this.selectOption('@vpcOptionNewPublic');
+    if (isAdvanced) {
+      this.setField('#awsVpcCIDR', json.awsVpcCIDR);
+      this.setField('#podCIDR', json.podCIDR);
+      this.setField('#serviceCIDR', json.serviceCIDR);
+      this.expectNoValidationError();
+      this.expect.element('@alertError').to.not.be.present;
+      this.expect.element('@k8sCIDRsErrorTitle').to.not.be.present;
+      this.expect.element('@k8sCIDRsWarningTitle').to.not.be.present;
+    }
   },
 };
 
