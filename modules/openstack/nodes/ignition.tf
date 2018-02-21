@@ -76,7 +76,6 @@ data "ignition_file" "sshd" {
 
   content {
     content = <<EOF
-UsePrivilegeSeparation sandbox
 Subsystem sftp internal-sftp
 
 PermitRootLogin no
