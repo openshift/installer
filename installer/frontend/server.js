@@ -109,10 +109,7 @@ export const commitToServer = (dryRun = false, retry = false) => (dispatch, getS
       , payload => dispatch({payload, type: COMMIT_FAILED}))
     .catch(err => console.error(err));
 
-  return dispatch({
-    type: COMMIT_SENT,
-    payload: body,
-  });
+  return dispatch({type: COMMIT_SENT});
 };
 
 // One-time fetch of initial data from server, followed by firing appropriate actions
