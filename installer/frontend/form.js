@@ -60,15 +60,11 @@ class Node {
   }
 
   async validate (dispatch, getState, updatedId = undefined, isNow = () => true) {
-    const inFlyPath = toInFly(this.id);
-    setIn(inFlyPath, true, dispatch);
-
     const cc = getState().clusterConfig;
     const error = await this.validator(this.getData(cc), cc, updatedId, dispatch);
     if (isNow()) {
       await setIn(toError(this.id), _.isEmpty(error) ? undefined : error, dispatch);
     }
-    setIn(inFlyPath, false, dispatch);
     return _.isEmpty(error);
   }
 

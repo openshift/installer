@@ -13,7 +13,7 @@ import { AWS_DomainValidation } from './aws-domain-validation';
 import { KubernetesCIDRs } from './k8s-cidrs';
 import { CIDRTooltip, CIDRRow } from './cidr';
 import { Field, Form } from '../form';
-import { toError } from '../utils';
+import { toError, toInFly } from '../utils';
 
 import {
   AWS_ADVANCED_NETWORKING,
@@ -95,12 +95,17 @@ const validateVPC = async (data, cc, updatedId, dispatch) => {
     network.awsVpcId = awsVpcId;
   }
 
+  const inFlyPath = toInFly(AWS_VPC_FORM);
+  setIn(inFlyPath, true, dispatch);
+  let result;
   try {
-    return await dispatch(validateSubnets(network))
+    result = await dispatch(validateSubnets(network))
       .then(json => json.valid ? undefined : json.message);
   } catch (e) {
-    return e.message || e.toString();
+    result = e.message || e.toString();
   }
+  setIn(inFlyPath, false, dispatch);
+  return result;
 };
 
 const vpcInfoForm = new Form(AWS_VPC_FORM, [
