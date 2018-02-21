@@ -2,7 +2,7 @@ data "terraform_remote_state" "assets" {
   backend = "local"
 
   config {
-    path = "${path.module}/../../${var.tectonic_cluster_name}/assets.tfstate"
+    path = "${path.cwd}/assets.tfstate"
   }
 }
 

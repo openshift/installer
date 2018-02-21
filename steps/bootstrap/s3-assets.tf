@@ -1,7 +1,7 @@
 resource "aws_s3_bucket" "tectonic" {
   # This bucket name must match the CNAME
   # https://docs.aws.amazon.com/AmazonS3/latest/dev/VirtualHosting.html#VirtualHostingCustomURLs
-  bucket = "${var.tectonic_cluster_name}-ncg.${var.tectonic_base_domain}"
+  bucket = "${lower(var.tectonic_cluster_name)}-ncg.${var.tectonic_base_domain}"
 
   acl = "private"
 
