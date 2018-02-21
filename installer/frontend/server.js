@@ -116,12 +116,16 @@ export const commitToServer = (dryRun = false, retry = false) => (dispatch, getS
 // Guaranteed not to reject.
 export const loadFacts = (dispatch) => {
   return fetchJSON('/tectonic/facts', {retries: 5})
-    .then(m => {
-      addIn(TECTONIC_LICENSE, m.license, dispatch);
-      addIn(PULL_SECRET, m.pullSecret, dispatch);
+    .then(facts => {
+      addIn(TECTONIC_LICENSE, facts.license, dispatch);
+      addIn(PULL_SECRET, facts.pullSecret, dispatch);
       dispatch({
         type: loadFactsActionTypes.LOADED,
-        payload: {awsRegions: _.map(m.amis, 'name')},
+        payload: {
+          awsRegions: _.map(facts.amis, 'name'),
+          buildTime: facts.buildTime,
+          version: facts.tectonicVersion,
+        },
       });
     },
     err => {
