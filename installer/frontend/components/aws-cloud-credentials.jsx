@@ -76,6 +76,7 @@ const REGION_NAMES = {
   'eu-central-1': 'Frankfurt',
   'eu-west-1': 'Ireland',
   'eu-west-2': 'London',
+  'eu-west-3': 'Paris',
   'sa-east-1': 'São Paulo',
   'us-east-1': 'Northern Virginia',
   'us-east-2': 'Ohio',
@@ -105,7 +106,7 @@ const stateToProps = ({aws, serverFacts}) => {
       const optgroupKey = value.split('-')[0];
       return {
         value,
-        label: `${REGION_NAMES[value]} (${value})`,
+        label: REGION_NAMES[value] ? `${REGION_NAMES[value]} (${value})` : value,
         optgroup: OPT_GROUPS[optgroupKey] || optgroupKey,
       };
     });
