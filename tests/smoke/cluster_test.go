@@ -83,6 +83,21 @@ func testAllPodsRunning(t *testing.T) {
 }
 
 func allPodsRunning(t *testing.T) error {
+	err := checkPodsRunning(t)
+	if err != nil {
+		return err
+	}
+
+	// check one more time, because in case of crashloop we might get the transition
+	time.Sleep(5 * time.Second)
+	err = checkPodsRunning(t)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func checkPodsRunning(t *testing.T) error {
 	c, _ := newClient(t)
 	pods, err := c.Core().Pods("").List(meta_v1.ListOptions{})
 	if err != nil {
@@ -91,14 +106,16 @@ func allPodsRunning(t *testing.T) error {
 
 	allReady := len(pods.Items) != 0
 	for _, p := range pods.Items {
-		if p.Status.Phase != v1.PodRunning {
+		if p.Status.Phase != v1.PodRunning || p.Status.ContainerStatuses[0].State.Running == nil {
 			allReady = false
 			t.Logf("pod %s/%s not running", p.Namespace, p.Name)
 		}
 	}
+
 	if !allReady {
 		return errors.New("pods are not all ready")
 	}
+
 	return nil
 }
 
