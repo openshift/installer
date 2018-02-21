@@ -14,6 +14,12 @@ TimeoutStartSec=1h
 ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes
 ${kubeconfig_fetch_cmd}
 ExecStartPre=/usr/bin/docker run --rm \
+            --env http_proxy \
+            --env HTTP_PROXY \
+            --env https_proxy \
+            --env HTTPS_PROXY \
+            --env no_proxy \
+            --env NO_PROXY \
             --tmpfs /tmp \
             -v /usr/share:/usr/share:ro \
             -v /usr/lib/os-release:/usr/lib/os-release:ro \

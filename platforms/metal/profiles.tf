@@ -18,14 +18,40 @@ resource "matchbox_profile" "coreos_install" {
   container_linux_config = "${file("${path.module}/cl/coreos-install.yaml.tmpl")}"
 }
 
+data "template_file" "ign_custom_ca_certs" {
+  count    = "${local.tectonic_ca_count}"
+  template = "${file("${path.module}/cl/custom-ca.yaml.tmpl")}"
+
+  vars {
+    filename = "custom_ca_${count.index}.pem"
+    pem      = "${replace(module.ignition_masters.ca_cert_pem_list[count.index], "\n", "\n\n")}"
+  }
+}
+
+data "template_file" "bootkube_controller_profile" {
+  template = "${file("${path.module}/cl/bootkube-controller.yaml.tmpl")}"
+
+  vars {
+    ign_custom_ca_certs = "${join("", data.template_file.ign_custom_ca_certs.*.rendered)}"
+  }
+}
+
+data "template_file" "bootkube_worker_profile" {
+  template = "${file("${path.module}/cl/bootkube-worker.yaml.tmpl")}"
+
+  vars {
+    ign_custom_ca_certs = "${join("", data.template_file.ign_custom_ca_certs.*.rendered)}"
+  }
+}
+
 // Self-hosted Kubernetes Controller profile
 resource "matchbox_profile" "tectonic_controller" {
   name                   = "${var.tectonic_cluster_name}-tectonic-controller"
-  container_linux_config = "${file("${path.module}/cl/bootkube-controller.yaml.tmpl")}"
+  container_linux_config = "${data.template_file.bootkube_controller_profile.rendered}"
 }
 
 // Self-hosted Kubernetes Worker profile
 resource "matchbox_profile" "tectonic_worker" {
   name                   = "${var.tectonic_cluster_name}-tectonic-worker"
-  container_linux_config = "${file("${path.module}/cl/bootkube-worker.yaml.tmpl")}"
+  container_linux_config = "${data.template_file.bootkube_worker_profile.rendered}"
 }

@@ -17,7 +17,7 @@ data "ignition_systemd_unit" "update_ca_certificates_dropin" {
 data "ignition_file" "kube_ca_cert_pem" {
   filesystem = "root"
   path       = "/etc/ssl/certs/kube_ca.pem"
-  mode       = 0400
+  mode       = 0444
   uid        = 0
   gid        = 0
 
@@ -29,7 +29,7 @@ data "ignition_file" "kube_ca_cert_pem" {
 data "ignition_file" "etcd_ca_cert_pem" {
   filesystem = "root"
   path       = "/etc/ssl/certs/etcd_ca.pem"
-  mode       = 0400
+  mode       = 0444
   uid        = 0
   gid        = 0
 
@@ -41,7 +41,7 @@ data "ignition_file" "etcd_ca_cert_pem" {
 data "ignition_file" "ingress_ca_cert_pem" {
   filesystem = "root"
   path       = "/etc/ssl/certs/ingress_ca.pem"
-  mode       = 0400
+  mode       = 0444
   uid        = 0
   gid        = 0
 
@@ -55,7 +55,7 @@ data "ignition_file" "custom_ca_cert_pem" {
 
   filesystem = "root"
   path       = "/etc/ssl/certs/custom_ca_${count.index}.pem"
-  mode       = 0400
+  mode       = 0444
   uid        = 0
   gid        = 0
 

@@ -69,7 +69,6 @@ resource "matchbox_group" "controller" {
 
     ign_bootkube_path_unit_json            = "${jsonencode(module.bootkube.systemd_path_unit_rendered)}"
     ign_bootkube_service_json              = "${jsonencode(module.bootkube.systemd_service_rendered)}"
-    ign_custom_ca_certs_json               = "${jsonencode(join("\n", module.ignition_masters.ca_cert_pem_list))}"
     ign_docker_dropin_json                 = "${jsonencode(module.ignition_masters.docker_dropin_rendered)}"
     ign_etcd_dropin_json                   = "${jsonencode(module.ignition_masters.etcd_dropin_rendered_list[count.index])}"
     ign_installer_kubelet_env_json         = "${jsonencode(module.ignition_masters.installer_kubelet_env_rendered)}"
@@ -124,7 +123,6 @@ resource "matchbox_group" "worker" {
     kubelet_image_url = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$1")}"
     kubelet_image_tag = "${replace(var.tectonic_container_images["hyperkube"],var.tectonic_image_re,"$2")}"
 
-    ign_custom_ca_certs_json               = "${jsonencode(join("\n", module.ignition_workers.ca_cert_pem_list))}"
     ign_docker_dropin_json                 = "${jsonencode(module.ignition_workers.docker_dropin_rendered)}"
     ign_installer_kubelet_env_json         = "${jsonencode(module.ignition_workers.installer_kubelet_env_rendered)}"
     ign_installer_runtime_mappings_json    = "${jsonencode(module.ignition_workers.installer_runtime_mappings_rendered)}"
