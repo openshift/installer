@@ -40,9 +40,3 @@ EOF
     },
   ]
 }
-
-resource "local_file" "ignition_etcd" {
-  count    = "${local.etcd_instance_count}"
-  content  = "${data.ignition_config.etcd.*.rendered[count.index]}"
-  filename = "./generated/ignition/etcd-${count.index}.json"
-}

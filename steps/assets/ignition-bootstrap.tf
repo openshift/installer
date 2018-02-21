@@ -101,8 +101,3 @@ data "ignition_file" "rm_assets" {
     content = "${data.template_file.rm_assets.rendered}"
   }
 }
-
-resource "local_file" "ignition_bootstrap" {
-  content  = "${data.ignition_config.bootstrap.rendered}"
-  filename = "./generated/ignition/bootstrap.json"
-}
