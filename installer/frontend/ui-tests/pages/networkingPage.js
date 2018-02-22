@@ -1,7 +1,7 @@
 const networkConfigurationPage = require('./networkConfigurationPage');
 
 const pageCommands = {
-  testCidrInputs (json) {
+  testCidrInputs () {
     this.setField('#podCIDR', '10.2.0.0/15');
     this.expectValidationErrorContains('AWS subnets must be between /16 and /28');
     this.expect.element('@k8sCIDRsErrorTitle').to.not.be.present;
