@@ -232,8 +232,7 @@ const reducersTogether = combineReducers({
 
   // Stores the "dirtiness" of UI fields
   dirty: (state, action) => {
-    // this isArray check is just to prevent errors with old progress files & dev mode
-    if (!state || _.isArray(state)) {
+    if (!state) {
       return {};
     }
 
