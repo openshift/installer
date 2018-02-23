@@ -8,6 +8,9 @@ subjects:
   - kind: ServiceAccount
     namespace: tectonic-system
     name: default
+  - kind: ServiceAccount
+    namespace: tectonic-ingress
+    name: tectonic-ingress-controller-operator
 roleRef:
   kind: ClusterRole
   name: cluster-admin

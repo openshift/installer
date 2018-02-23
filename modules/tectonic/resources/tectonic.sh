@@ -127,9 +127,13 @@ set -e
 # wait for Kubernetes pods
 wait_for_pods kube-system
 
+echo "creating namespaces"
+kubectl create -f ingress/namespace.yaml
+
 echo "Creating Initial Roles"
 kubectl delete -f rbac/role-admin.yaml
 
+kubectl create -f ingress/svc-account.yaml
 kubectl create -f rbac/role-admin.yaml
 kubectl create -f rbac/role-user.yaml
 kubectl create -f rbac/binding-admin.yaml
@@ -137,6 +141,7 @@ kubectl create -f rbac/binding-discovery.yaml
 
 echo "Creating Cluster Config For Tectonic"
 kubectl create -f cluster-config.yaml
+kubectl create -f ingress/cluster-config.yaml
 
 echo "Creating Tectonic Secrets"
 kubectl create -f secrets/pull.json
@@ -145,6 +150,7 @@ kubectl create -f secrets/ingress-tls.yaml
 kubectl create -f secrets/ca-cert.yaml
 kubectl create -f secrets/identity-grpc-client.yaml
 kubectl create -f secrets/identity-grpc-server.yaml
+kubectl create -f ingress/pull.json
 
 echo "Creating Operators"
 kubectl create -f updater/tectonic-channel-operator-kind.yaml
@@ -162,6 +168,7 @@ kubectl create -f updater/operators/tectonic-cluo-operator.yaml
 kubectl create -f updater/operators/kubernetes-addon-operator.yaml
 kubectl create -f updater/operators/tectonic-alm-operator.yaml
 kubectl create -f updater/operators/tectonic-utility-operator.yaml
+kubectl create -f updater/operators/tectonic-ingress-controller-operator.yaml
 
 wait_for_crd tectonic-system appversions.tco.coreos.com
 kubectl create -f updater/app_versions/app-version-tectonic-cluster.yaml
@@ -171,6 +178,7 @@ kubectl create -f updater/app_versions/app-version-tectonic-cluo.yaml
 kubectl create -f updater/app_versions/app-version-kubernetes-addon.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-alm.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-utility.yaml
+kubectl create -f updater/app_versions/app-version-tectonic-ingress.yaml
 
 # wait for Tectonic pods
 wait_for_pods tectonic-system

@@ -6,14 +6,14 @@ metadata:
 data:
   addon-config: |
       apiVersion: v1
-      kind: AddonConfig
+      kind: KubeAddonOperatorConfig
       heapsterConfig:
       dnsConfig:
           clusterIP: ${kube_dns_service_ip}
       cloudProvider: ${platform}
   utility-config: |
     apiVersion: v1
-    kind: UtilityConfig
+    kind: TectonicUtilityOperatorConfig
     identityConfig:
       adminEmail: ${admin_email}
       adminPasswordHash: ${admin_password_hash}
