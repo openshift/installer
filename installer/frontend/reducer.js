@@ -215,33 +215,12 @@ const reducersTogether = combineReducers({
     }
 
     switch (action.type) {
-    case configActionTypes.DELETE_IN:
-      return fromJS(state).deleteIn(action.payload.path).toJS();
     case dirtyActionTypes.ADD: {
-      // {awsTags: [{key: true}]
-      const split = action.payload.split('.')
-        .map(s => {
-          const int = parseInt(s, 10);
-          return isNaN(int) ? s : int;
-        });
-      // mirror structure of clusterconfig for storing field dirtiness
-      const obj = _.cloneDeep(state);
-      let s = split[0];
-      let current = obj;
-      for (let i = 1; i < split.length; ++i) {
-        if (!_.has(current, s) || current[s] === null) {
-          current[s] = _.isInteger(split[i]) ? [] : {};
-        }
-        current = current[s];
-        s = split[i];
-      }
-      current[s] = true;
-      return obj;
+      const pathArray = _.isString(action.payload) ? action.payload.split('.') : action.payload;
+      return fromJS(state).setIn(pathArray, true).toJS();
     }
-    case dirtyActionTypes.CLEAN: {
-      const array = _.isString(action.payload) ? action.payload.split('.') : action.payload;
-      return fromJS(state).deleteIn(array).toJS();
-    }
+    case dirtyActionTypes.DELETE_IN:
+      return fromJS(state).deleteIn(action.payload).toJS();
     default:
       return state;
     }

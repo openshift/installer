@@ -43,11 +43,10 @@ export const clusterReadyActions = {
 
 export const dirtyActionTypes = {
   ADD: 'DIRTY_ADD',
-  CLEAN: 'DIRTY_CLEAN',
+  DELETE_IN: 'DIRTY_DELETE_IN',
 };
 export const dirtyActions = {
-  add: field => ({type: dirtyActionTypes.ADD, payload: field}),
-  clean: field => ({type: dirtyActionTypes.CLEAN, payload: field}),
+  add: path => ({payload: path, type: dirtyActionTypes.ADD}),
 };
 
 export const eventErrorsActionTypes = {
@@ -121,7 +120,9 @@ export const formActions = {
   },
   removeFieldListRow: (fieldListId, index) => (dispatch, getState) => {
     const fieldList = getField(fieldListId);
-    dispatch({payload: [fieldListId, index], type: configActionTypes.DELETE_IN});
+    const payload = [fieldListId, index];
+    dispatch({payload, type: configActionTypes.DELETE_IN});
+    dispatch({payload, type: dirtyActionTypes.DELETE_IN});
     fieldList.validate(dispatch, getState);
   },
   updateField: (fieldName, inputValue) => (dispatch, getState) => {
