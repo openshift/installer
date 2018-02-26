@@ -61,7 +61,7 @@ type containerLinux struct {
 }
 
 type ddns struct {
-	Key    ddnsKey `yaml:"Secret"`
+	Key    ddnsKey `yaml:"Key"`
 	Server string  `yaml:"Secret"`
 }
 
@@ -78,7 +78,7 @@ type etcd struct {
 
 type etcdExternal struct {
 	CACertPath     string   `yaml:"CACertPath"`
-	ClientCertPath string   `yam:"ClientCertPath"`
+	ClientCertPath string   `yaml:"ClientCertPath"`
 	ClientKeyPath  string   `yaml:"ClientKeyPath"`
 	Servers        []string `yaml:"Servers"`
 }
