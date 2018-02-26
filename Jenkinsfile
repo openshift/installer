@@ -142,7 +142,12 @@ pipeline {
     booleanParam(
       name: 'NOTIFY_SLACK',
       defaultValue: false,
-      description: ''
+      description: 'Notify slack channel on failure.'
+    )
+    string(
+      name: 'SLACK_CHANNEL',
+      defaultValue: '#team-installer',
+      description: 'Slack channel to notify on failure.'
     )
   }
 
@@ -393,11 +398,7 @@ pipeline {
 
     failure {
       script {
-        if (params.NOTIFY_SLACK) {
-          echo 'Sending notification to slack...'
-          notifyBuildSlack()
-          echo 'Slack notifacation sent.'
-        }
+        notifyBuildSlack()
       }
     }
   }
@@ -471,7 +472,7 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
               ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs ${testFilePath}
               """
             } catch (Exception e) {
-              notifyBuildSlack(true)
+              notifyBuildSlack()
             } finally {
               cleanWs notFailBuild: true
             }
@@ -521,7 +522,7 @@ def runRSpecTestBareMetal(testFilePath, credentials) {
               ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs ${testFilePath}
               """
             } catch (Exception e) {
-              notifyBuildSlack(true)
+              notifyBuildSlack()
             } finally {
               cleanWs notFailBuild: true
             }
@@ -542,10 +543,15 @@ def reportStatusToGithub(status, context, commitId) {
 }
 
 def notifyBuildSlack() {
+  if (!params.NOTIFY_SLACK) {
+    return
+  }
   def colorCode = '#FF0000'
   def subject = "Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
   def summary = "${subject} (${env.BUILD_URL})"
 
   // Send notifications
-  slackSend(color: colorCode, message: summary, channel: "#team-installer")
+  echo 'Sending notification to slack...'
+  slackSend(color: colorCode, message: summary, channel: params.SLACK_CHANNEL)
+  echo 'Slack notification sent.'
 }
