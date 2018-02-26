@@ -106,11 +106,7 @@ export const configActions = {
 };
 
 export const __deleteEverything__ = () => {
-  [FIELDS, FIELD_TO_DEPS, FORMS, DEFAULT_CLUSTER_CONFIG]
-    .forEach(o => _.keys(o).forEach(k => delete o[k]));
-
-  ['error', 'inFly', 'extra'].forEach(k => DEFAULT_CLUSTER_CONFIG[k] = {});
-
+  [FIELDS, FIELD_TO_DEPS, FORMS].forEach(o => _.keys(o).forEach(k => delete o[k]));
   return {type: configActionTypes.RESET};
 };
 
@@ -160,7 +156,7 @@ export const registerForm = (form, fields) => {
     if (!fieldName) {
       throw new Error(`form ${formName}: field has no name!`);
     }
-    if (DEFAULT_CLUSTER_CONFIG[fieldName]) {
+    if (FIELDS[fieldName]) {
       throw new Error(`form ${formName}: field ${fieldName} already exists`);
     }
 
