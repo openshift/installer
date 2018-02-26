@@ -1,4 +1,4 @@
-#!/bin/bash -ex
+#!/bin/bash -e
 
 # Vars exported to the build info
 echo TECTONIC_VERSION ${TECTONIC_VERSION}
