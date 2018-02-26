@@ -5,7 +5,7 @@ const clusterInfoPageCommands = {
   test (json, platform) {
     this.setField('@name', 'a%$#b');
     if (platform === 'aws-tf') {
-      this.expectValidationErrorContains('must be a valid AWS Stack Name');
+      this.expectValidationErrorContains('must be a lower case AWS Stack Name');
     }
     if (platform === 'bare-metal-tf') {
       this.expectValidationErrorContains('must be alphanumeric');

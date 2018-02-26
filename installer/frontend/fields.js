@@ -18,8 +18,8 @@ FIELDS[CLUSTER_NAME] = new Field(CLUSTER_NAME, {
       if (s.toLowerCase() !== s) {
         return 'Value must be lower case.';
       }
-      if (!/^[a-zA-Z][-a-zA-Z0-9]*$/.test(s)) {
-        return 'Value must be a valid AWS Stack Name: [a-zA-Z][-a-zA-Z0-9]*';
+      if (!/^[a-z][-a-z0-9]*$/.test(s)) {
+        return 'Value must be a lower case AWS Stack Name: [a-z][-a-z0-9]*';
       }
       if (s.endsWith('-')) {
         return 'Value must not end with -';
