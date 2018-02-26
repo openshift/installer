@@ -35,65 +35,55 @@ These instructions can be used for the official stable platforms listed above, a
 - [OpenStack via Terraform][openstack-tf] [[**alpha**][platform-lifecycle]]
 - [VMware via Terraform][vmware-tf] [[**alpha**][platform-lifecycle]]
 
-**Go and Source**
 
-[Install Go](https://golang.org/doc/install) if not already installed.
+1. Build the project
+    ```shell
+    bazel build tarball
+    ```
 
-Then get the Tectonic Installer source code:
+2. Unzip the tarball
+    ```shell
+    cd bazel-bin
+    tar -zxvf tectonic.tar.gz
+    cd tectonic
+    ```
 
-```
-go get github.com/coreos/tectonic-installer
-cd $(go env GOPATH)/src/github.com/coreos/tectonic-installer
-```
+3. Add binaries to $PATH
+    ```shell
+    export PATH=$(pwd)/tectonic-installer/linux/:$PATH
+    ```
 
-**Terraform**
+4. Choose **one** of the platforms:
+    ```shell
+    export PLATFORM=aws
+    export PLATFORM=azure
+    export PLATFORM=gcp
+    export PLATFORM=govcloud
+    export PLATFORM=metal
+    export PLATFORM=openstack-neutron
+    export PLATFORM=vmware
+    ```
 
-The Tectonic Installer releases include a build of [Terraform](https://terraform.io). See the [Tectonic Installer release notes][release-notes] for information about which Terraform versions are compatible.
+5. Edit Tectonic configuration file including the $CLUSTER_NAME
+    ```shell
+    $EDITOR examples/tectonic.$PLATFORM.yaml`
+    ```
 
-The [latest Terraform binary](https://www.terraform.io/downloads.html) may not always work as Tectonic Installer, which sometimes relies on bug fixes or features not yet available in the official Terraform release.
+6. Init Tectonic CLI
+    ```shell
+    tectonic init --config=example/tectonic.$PLATFORM.yaml
+    ```
 
-**Yarn (optional)**
+7. Install Tectonic cluster
+    ```shell
+    tectonic install --dir=$CLUSTER_NAME
+    ```
 
-The [Yarn](https://yarnpkg.com) JavaScript package manager is required for building the frontend code. On OS X, install using Homebrew: `brew install yarn`.
+8. Teardown Tectonic cluster
+    ```shell
+    tectonic destroy $CLUSTER_NAME
+    ```
 
-#### Common Usage
-
-**Choose your platform**
-
-First, set the `PLATFORM=` environment variable. This example will use `PLATFORM=azure`.
-
-- `PLATFORM=openstack` [OpenStack via Terraform][openstack-tf] [[**alpha**][platform-lifecycle]]
-- `PLATFORM=vmware` [VMware via Terraform][vmware-tf] [[**alpha**][platform-lifecycle]]
-
-**Initiate the Cluster Configuration**
-
-Use `make` to create a new directory `build/<cluster-name>` to hold all module references, Terraform state files, and custom variable files.
-
-```
-PLATFORM=azure CLUSTER=my-cluster make localconfig
-```
-
-**Configure Cluster**
-
-Set variables in the `build/<cluster-name>/terraform.tfvars` file as needed. Available variables are found in the `platforms/<PLATFORM>/config.tf` and `platforms/<PLATFORM>/variables.tf` files.
-
-Examples for each platform can be found in [the examples directory](examples/).
-
-**Terraform Lifecycle**
-
-`plan`, `apply`, and `destroy` are provided as `make` targets to ease the build directory and custom binary complexity.
-
-```
-PLATFORM=azure CLUSTER=my-cluster make plan
-```
-
-```
-PLATFORM=azure CLUSTER=my-cluster make apply
-```
-
-```
-PLATFORM=azure CLUSTER=my-cluster make destroy
-```
 
 #### Tests
 
