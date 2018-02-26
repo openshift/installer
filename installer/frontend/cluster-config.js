@@ -124,8 +124,6 @@ export const getTectonicDomain = (cc) => {
 export const DEFAULT_CLUSTER_CONFIG = {
   [BM_MATCHBOX_HTTP]: '',
   [BM_OS_TO_USE]: '',
-  [DRY_RUN]: false,
-  [RETRY]: false, // whether we're retrying a terraform apply
 };
 
 export const toAWS_TF = ({clusterConfig: cc, dirty}, FORMS) => {
@@ -141,11 +139,11 @@ export const toAWS_TF = ({clusterConfig: cc, dirty}, FORMS) => {
   });
 
   const ret = {
-    dryRun: cc[DRY_RUN],
+    dryRun: !!cc[DRY_RUN],
     platform: 'aws',
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
-    retry: cc[RETRY],
+    retry: !!cc[RETRY],
     credentials: {
       AWSAccessKeyID: cc[AWS_ACCESS_KEY_ID],
       AWSSecretAccessKey: cc[AWS_SECRET_ACCESS_KEY],
@@ -227,11 +225,11 @@ export const toBaremetal_TF = ({clusterConfig: cc}, FORMS) => {
   const workers = cc[BM_WORKERS];
 
   const ret = {
-    dryRun: cc[DRY_RUN],
+    dryRun: !!cc[DRY_RUN],
     platform: 'metal',
     license: cc[TECTONIC_LICENSE],
     pullSecret: cc[PULL_SECRET],
-    retry: cc[RETRY],
+    retry: !!cc[RETRY],
     variables: {
       tectonic_admin_password: cc[ADMIN_PASSWORD],
       tectonic_cluster_name: cc[CLUSTER_NAME],
