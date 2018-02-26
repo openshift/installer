@@ -108,9 +108,6 @@ export const configActions = {
 export const __deleteEverything__ = () => {
   [FIELDS, FIELD_TO_DEPS, FORMS, DEFAULT_CLUSTER_CONFIG]
     .forEach(o => _.keys(o).forEach(k => delete o[k]));
-
-  ['error', 'inFly', 'extra'].forEach(k => DEFAULT_CLUSTER_CONFIG[k] = {});
-
   return {type: configActionTypes.RESET};
 };
 
