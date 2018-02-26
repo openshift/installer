@@ -1,14 +1,7 @@
-FROM golang:1.9.2-stretch
+FROM alpine:3.7
 
-ENV TERRAFORM_VERSION="0.11.1"
-
-RUN apt-get update \
-    && apt-get install --no-install-recommends -y -q \
-    unzip
-
-# Install Terraform
-RUN curl https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
-
-ENV PROJECT_DIR /go/src/github.com/coreos/tectonic-installer
-
-ADD . $PROJECT_DIR/
+# Docker build does not follow symlinks (see
+# https://github.com/moby/moby/issues/1676) Make sure to first copy the tarball
+# from bazel-bin/tectonic.tar.gz to the docker build context folder of your
+# choice (e.g. the root of the repository).
+ADD tectonic.tar.gz /
