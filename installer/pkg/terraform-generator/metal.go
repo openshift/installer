@@ -17,6 +17,7 @@ type Metal struct {
 	MatchboxClientKey   string `json:"tectonic_metal_matchbox_client_key,omitempty"`
 	MatchboxHTTPURL     string `json:"tectonic_metal_matchbox_http_url,omitempty"`
 	MatchboxRPCEndpoint string `json:"tectonic_metal_matchbox_rpc_endpoint,omitempty"`
+	SSHAuthorizedKey    string `json:"tectonic_ssh_authorized_key,omitempty"` // TODO(spangenberg): Prefix with metal.
 	WorkerDomains       string `json:"tectonic_metal_worker_domains,omitempty"`
 	WorkerMACs          string `json:"tectonic_metal_worker_macs,omitempty"`
 	WorkerNames         string `json:"tectonic_metal_worker_names,omitempty"`
@@ -36,6 +37,7 @@ func NewMetal(cluster config.Cluster) Metal {
 		MatchboxClientKey:   cluster.Metal.Matchbox.Client.Key,
 		MatchboxHTTPURL:     cluster.Metal.Matchbox.HTTPURL,
 		MatchboxRPCEndpoint: cluster.Metal.Matchbox.RPCEndpoint,
+		SSHAuthorizedKey:    cluster.Metal.SSHAuthorizedKey,
 		WorkerDomains:       cluster.Metal.Worker.Domains,
 		WorkerMACs:          cluster.Metal.Worker.MACs,
 		WorkerNames:         cluster.Metal.Worker.Names,

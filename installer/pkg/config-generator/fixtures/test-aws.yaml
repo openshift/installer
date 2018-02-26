@@ -1,43 +1,31 @@
 Clusters:
   - Name: test
+    BaseDomain: cluster.com
     Platform: AWS
-    SSHKey: tectonic
     Networking:
       Type: canal
       MTU: 1480
       PodCIDR: 10.2.0.0/16
       ServiceCIDR: 10.3.0.0/16
     Masters:
-      NodeCount: 2
-      MachineType: foo
+      Count: 2
     Workers:
-      NodeCount: 3
-      MachineType: bar
+      Count: 3
     Etcd:
-      NodeCount: 3
-      MachineType: baz
-    ExternalTLSMaterials:
-      ValidityPeriod: 26280
-    Tectonic:
-      PullSecretPath: /path/config.json
-      LicensePath: /path/tectonic-license.txt
-    DNS:
-      BaseDomain: cluster.com
+      Count: 3
+    TLSValidityPeriod: 26280
+    PullSecretPath: /path/config.json
+    LicensePath: /path/tectonic-license.txt
     ContainerLinux:
       Channel: stable
       Version: latest
-    Update:
-      Server: foo.bar
-      Channel: stable
-      AppID: 42-42-0
-    Console:
-      AdminEmail: test@coreos.com
-      AdminPassword: asd123
+    Admin:
+      Email: test@coreos.com
+      Password: asd123
     AWS:
       Region: eu-west-1
       SSHKey: tectonic
       VPCCIDRBlock: 10.0.0.0/16
-      External:
       Etcd:
         EC2Type: t2.medium
         RootVolume:

@@ -1,7 +1,6 @@
 Clusters:
   - Name: test
     Platform: AWS
-    DNS:
-      BaseDomain: cluster.com
+    BaseDomain: cluster.com
     Etcd:
-      NodeCount: 3
+      Count: 3

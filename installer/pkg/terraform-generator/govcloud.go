@@ -10,8 +10,8 @@ type GovCloud struct {
 	DNSServerIP             string `json:"tectonic_govcloud_dns_server_ip,omitempty"`
 	EtcdEC2Type             string `json:"tectonic_govcloud_etcd_ec2_type,omitempty"`
 	EtcdExtraSGIDs          string `json:"tectonic_govcloud_etcd_extra_sg_ids,omitempty"`
-	EtcdRootVolumeIOPS      string `json:"tectonic_govcloud_etcd_root_volume_iops,omitempty"`
-	EtcdRootVolumeSize      string `json:"tectonic_govcloud_etcd_root_volume_size,omitempty"`
+	EtcdRootVolumeIOPS      int    `json:"tectonic_govcloud_etcd_root_volume_iops,omitempty"`
+	EtcdRootVolumeSize      int    `json:"tectonic_govcloud_etcd_root_volume_size,omitempty"`
 	EtcdRootVolumeType      string `json:"tectonic_govcloud_etcd_root_volume_type,omitempty"`
 	ExternalMasterSubnetIDs string `json:"tectonic_govcloud_external_master_subnet_ids,omitempty"`
 	ExternalPrivateZone     string `json:"tectonic_govcloud_external_private_zone,omitempty"`
@@ -22,12 +22,12 @@ type GovCloud struct {
 	MasterEC2Type           string `json:"tectonic_govcloud_master_ec2_type,omitempty"`
 	MasterExtraSGIDs        string `json:"tectonic_govcloud_master_extra_sg_ids,omitempty"`
 	MasterIAMRoleName       string `json:"tectonic_govcloud_master_iam_role_name,omitempty"`
-	MasterRootVolumeIOPS    string `json:"tectonic_govcloud_master_root_volume_iops,omitempty"`
-	MasterRootVolumeSize    string `json:"tectonic_govcloud_master_root_volume_size,omitempty"`
+	MasterRootVolumeIOPS    int    `json:"tectonic_govcloud_master_root_volume_iops,omitempty"`
+	MasterRootVolumeSize    int    `json:"tectonic_govcloud_master_root_volume_size,omitempty"`
 	MasterRootVolumeType    string `json:"tectonic_govcloud_master_root_volume_type,omitempty"`
-	PrivateEndpoints        string `json:"tectonic_govcloud_private_endpoints,omitempty"`
+	PrivateEndpoints        bool   `json:"tectonic_govcloud_private_endpoints,omitempty"`
 	Profile                 string `json:"tectonic_govcloud_profile,omitempty"`
-	PublicEndpoints         string `json:"tectonic_govcloud_public_endpoints,omitempty"`
+	PublicEndpoints         bool   `json:"tectonic_govcloud_public_endpoints,omitempty"`
 	SSHKey                  string `json:"tectonic_govcloud_ssh_key,omitempty"`
 	VPCCIDRBlock            string `json:"tectonic_govcloud_vpc_cidr_block,omitempty"`
 	WorkerCustomSubnets     string `json:"tectonic_govcloud_worker_custom_subnets,omitempty"`
@@ -35,8 +35,8 @@ type GovCloud struct {
 	WorkerExtraSGIDs        string `json:"tectonic_govcloud_worker_extra_sg_ids,omitempty"`
 	WorkerIAMRoleName       string `json:"tectonic_govcloud_worker_iam_role_name,omitempty"`
 	WorkerLoadBalancers     string `json:"tectonic_govcloud_worker_load_balancers,omitempty"`
-	WorkerRootVolumeIOPS    string `json:"tectonic_govcloud_worker_root_volume_iops,omitempty"`
-	WorkerRootVolumeSize    string `json:"tectonic_govcloud_worker_root_volume_size,omitempty"`
+	WorkerRootVolumeIOPS    int    `json:"tectonic_govcloud_worker_root_volume_iops,omitempty"`
+	WorkerRootVolumeSize    int    `json:"tectonic_govcloud_worker_root_volume_size,omitempty"`
 	WorkerRootVolumeType    string `json:"tectonic_govcloud_worker_root_volume_type,omitempty"`
 }
 

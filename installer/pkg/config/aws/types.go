@@ -17,7 +17,7 @@ type external struct {
 }
 
 type rootVolume struct {
-	IOPS string `yaml:"RootVolumeIOPS,omitempty"`
-	Size string `yaml:"RootVolumeSize,omitempty"`
+	IOPS int    `yaml:"RootVolumeIOPS,omitempty"`
+	Size int    `yaml:"RootVolumeSize,omitempty"`
 	Type string `yaml:"RootVolumeType,omitempty"`
 }

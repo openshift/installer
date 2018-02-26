@@ -152,7 +152,7 @@ func (c ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, error
 	}
 
 	var err error
-	bytes, err := bcrypt.GenerateFromPassword([]byte(c.Console.AdminPassword), 12)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(c.Admin.Password), 12)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (c ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, error
 	if err != nil {
 		return nil, err
 	}
-	utilityConfig.IdentityConfig.AdminEmail = c.Console.AdminEmail
+	utilityConfig.IdentityConfig.AdminEmail = c.Admin.Email
 	utilityConfig.IdentityConfig.AdminPasswordHash = hashedAdminPassword
 	utilityConfig.IdentityConfig.AdminUserID = adminUserID
 	utilityConfig.IdentityConfig.ConsoleClientID = identityConfigConsoleClientID
@@ -240,26 +240,26 @@ func marshalYAML(obj interface{}) (string, error) {
 }
 
 func (c ConfigGenerator) getEtcdServersUrls() string {
-	if len(c.Cluster.Etcd.ExternalServers) > 0 {
-		return strings.Join(c.Cluster.Etcd.ExternalServers, ",")
+	if len(c.Cluster.Etcd.External.Servers) > 0 {
+		return strings.Join(c.Cluster.Etcd.External.Servers, ",")
 	}
 	var etcdServers []string
-	for i := 0; i < c.Etcd.NodeCount; i++ {
-		etcdServers = append(etcdServers, fmt.Sprintf("https://%s-etcd-%v.%s:2379", c.Cluster.Name, i, c.Cluster.DNS.BaseDomain))
+	for i := 0; i < c.Etcd.Count; i++ {
+		etcdServers = append(etcdServers, fmt.Sprintf("https://%s-etcd-%v.%s:2379", c.Cluster.Name, i, c.Cluster.BaseDomain))
 	}
 	return strings.Join(etcdServers, ",")
 }
 
 func (c ConfigGenerator) getAPIServerURL() string {
-	return fmt.Sprintf("https://%s-api.%s:443", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
+	return fmt.Sprintf("https://%s-api.%s:443", c.Cluster.Name, c.Cluster.BaseDomain)
 }
 
 func (c ConfigGenerator) getBaseAddress() string {
-	return fmt.Sprintf("%s.%s", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
+	return fmt.Sprintf("%s.%s", c.Cluster.Name, c.Cluster.BaseDomain)
 }
 
 func (c ConfigGenerator) getOicdIssuerURL() string {
-	return fmt.Sprintf("%s.%s/identity", c.Cluster.Name, c.Cluster.DNS.BaseDomain)
+	return fmt.Sprintf("%s.%s/identity", c.Cluster.Name, c.Cluster.BaseDomain)
 }
 
 // generateRandomID reproduce tf random_id behaviour

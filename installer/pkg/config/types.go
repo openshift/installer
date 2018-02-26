@@ -10,28 +10,44 @@ import (
 	"github.com/coreos/tectonic-installer/installer/pkg/config/vmware"
 )
 
+type admin struct {
+	Email    string `yaml:"Email"`
+	Password string `yaml:"Password"`
+}
+
+type ca struct {
+	Cert   string `yaml:"Cert"`
+	Key    string `yaml:"Key"`
+	KeyAlg string `yaml:"KeyAlg"`
+}
+
 // Cluster defines the config for a cluster.
 type Cluster struct {
-	Console              console              `yaml:"Console"`
-	ContainerLinux       containerLinux       `yaml:"ContainerLinux"`
-	DNS                  dns                  `yaml:"DNS"`
-	Etcd                 etcd                 `yaml:"Etcd"`
-	ExternalTLSMaterials externalTLSMaterials `yaml:"ExternalTLSMaterials"`
-	Masters              masters              `yaml:"Masters"`
-	Name                 string               `yaml:"Name"`
-	Networking           networking           `yaml:"Networking"`
-	Platform             string               `yaml:"Platform"`
-	Tectonic             tectonic             `yaml:"Tectonic"`
-	Update               update               `yaml:"Update"`
-	Workers              workers              `yaml:"Workers"`
-
-	AWS       aws.Config       `yaml:"AWS,omitempty"`
-	Azure     azure.Config     `yaml:"Azure,omitempty"`
-	GCP       gcp.Config       `yaml:"GCP,omitempty"`
-	GovCloud  govcloud.Config  `yaml:"GovCloud,omitempty"`
-	Metal     metal.Config     `yaml:"Metal,omitempty"`
-	OpenStack openstack.Config `yaml:"OpenStack,omitempty"`
-	VMware    vmware.Config    `yaml:"VMware,omitempty"`
+	AWS               aws.Config       `yaml:"AWS,omitempty"`
+	Admin             admin            `yaml:"Admin"`
+	Azure             azure.Config     `yaml:"Azure,omitempty"`
+	BaseDomain        string           `yaml:"BaseDomain"`
+	CA                ca               `yaml:"CA"`
+	ContainerLinux    containerLinux   `yaml:"ContainerLinux"`
+	CustomCAPEMList   string           `yaml:"CustomCAPEMList"`
+	DDNS              ddns             `yaml:"DDNS"`
+	DNSName           string           `yaml:"DNSName"`
+	Etcd              etcd             `yaml:"Etcd"`
+	GCP               gcp.Config       `yaml:"GCP,omitempty"`
+	GovCloud          govcloud.Config  `yaml:"GovCloud,omitempty"`
+	ISCSI             iscsi            `yaml:"ISCSI"`
+	LicensePath       string           `yaml:"LicensePath"`
+	Master            master           `yaml:"Master"`
+	Metal             metal.Config     `yaml:"Metal,omitempty"`
+	Name              string           `yaml:"Name"`
+	Networking        networking       `yaml:"Networking"`
+	OpenStack         openstack.Config `yaml:"OpenStack,omitempty"`
+	Platform          string           `yaml:"Platform"`
+	Proxy             proxy            `yaml:"Proxy"`
+	PullSecretPath    string           `yaml:"PullSecretPath"`
+	TLSValidityPeriod int              `yaml:"TLSValidityPeriod"`
+	VMware            vmware.Config    `yaml:"VMware,omitempty"`
+	Worker            worker           `yaml:"Worker"`
 }
 
 // Config defines the top level config for a configuration file.
@@ -39,34 +55,40 @@ type Config struct {
 	Clusters []Cluster `yaml:"Clusters"`
 }
 
-type console struct {
-	AdminEmail    string `yaml:"AdminEmail"`
-	AdminPassword string `yaml:"AdminPassword"`
-}
-
 type containerLinux struct {
 	Channel string `yaml:"Channel"`
 	Version string `yaml:"Version"`
 }
 
-type dns struct {
-	BaseDomain string `yaml:"BaseDomain"`
+type ddns struct {
+	Key    ddnsKey `yaml:"Secret"`
+	Server string  `yaml:"Secret"`
+}
+
+type ddnsKey struct {
+	Algorithm string `yaml:"Algorithm"`
+	Name      string `yaml:"Name"`
+	Secret    string `yaml:"Secret"`
 }
 
 type etcd struct {
-	NodeCount       int      `yaml:"NodeCount"`
-	MachineType     string   `yaml:"MachineType"`
-	ExternalServers []string `yaml:"ExternalServers"`
+	Count    int          `yaml:"Count"`
+	External etcdExternal `yaml:"External"`
 }
 
-type externalTLSMaterials struct {
-	ValidityPeriod int    `yaml:"ValidityPeriod"`
-	EtcdCACertPath string `yaml:"EtcdCACertPath"`
+type etcdExternal struct {
+	CACertPath     string   `yaml:"CACertPath"`
+	ClientCertPath string   `yam:"ClientCertPath"`
+	ClientKeyPath  string   `yaml:"ClientKeyPath"`
+	Servers        []string `yaml:"Servers"`
 }
 
-type masters struct {
-	NodeCount   int    `yaml:"NodeCount"`
-	MachineType string `yaml:"MachineType"`
+type iscsi struct {
+	Enabled bool `yaml:"Enabled"`
+}
+
+type master struct {
+	Count int `yaml:"Count"`
 }
 
 type networking struct {
@@ -76,18 +98,12 @@ type networking struct {
 	PodCIDR     string `yaml:"PodCIDR"`
 }
 
-type tectonic struct {
-	PullSecretPath string `yaml:"PullSecretPath"`
-	LicensePath    string `yaml:"LicensePath"`
+type proxy struct {
+	HTTP  string `yaml:"HTTP"`
+	HTTPS string `yaml:"HTTPS"`
+	No    string `yaml:"No"`
 }
 
-type update struct {
-	Server  string `yaml:"Server"`
-	Channel string `yaml:"Channel"`
-	AppID   string `yaml:"AppID"`
-}
-
-type workers struct {
-	NodeCount   int    `yaml:"NodeCount"`
-	MachineType string `yaml:"MachineType"`
+type worker struct {
+	Count int `yaml:"Count"`
 }
