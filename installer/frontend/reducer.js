@@ -37,12 +37,6 @@ const DEFAULT_AWS = {
   destroy: UNLOADED_AWS_VALUE,
 };
 
-// setIn({...}, 'a.b.c', 'd')
-function setIn (object, path, value) {
-  const array = _.isString(path) ? path.split('.') : path;
-  return fromJS(object).setIn(array, value).toJS();
-}
-
 const reducersTogether = combineReducers({
 
   // State machine associated with server submissions
@@ -126,29 +120,13 @@ const reducersTogether = combineReducers({
       });
       return object.toJS();
     }
-
-    // Adds a value at a given path or no-op if a value already exists for the path
-    case configActionTypes.ADD_IN:
-      return _.isEmpty(_.get(state, action.payload.path))
-        ? setIn(state, action.payload.path, action.payload.value)
-        : state;
-
-    case configActionTypes.SET_IN:
-      return setIn(state, action.payload.path, action.payload.value);
-
-    case configActionTypes.MERGE:
-      return fromJS(state).mergeDeep(action.payload).toJS();
-
-    case configActionTypes.APPEND: {
-      const length = _.get(state, action.payload.path).length;
-      const path = `${action.payload.path}.${length}`;
-      return setIn(state, path, action.payload.value);
+    case configActionTypes.SET_IN: {
+      const {path, value} = action.payload;
+      const pathArray = _.isString(path) ? path.split('.') : path;
+      return fromJS(state).setIn(pathArray, value).toJS();
     }
-
-    case configActionTypes.REMOVE_FIELD_LIST_ROW: {
-      const {fieldListId, index} = action.payload;
-      return fromJS(state).deleteIn([fieldListId, index]).toJS();
-    }
+    case configActionTypes.DELETE_IN:
+      return fromJS(state).deleteIn(action.payload).toJS();
     default:
       return state;
     }
@@ -237,35 +215,12 @@ const reducersTogether = combineReducers({
     }
 
     switch (action.type) {
-    case configActionTypes.REMOVE_FIELD_LIST_ROW: {
-      const {fieldListId, index} = action.payload;
-      return fromJS(state).deleteIn([fieldListId, index]).toJS();
-    }
     case dirtyActionTypes.ADD: {
-      // {awsTags: [{key: true}]
-      const split = action.payload.split('.')
-        .map(s => {
-          const int = parseInt(s, 10);
-          return isNaN(int) ? s : int;
-        });
-      // mirror structure of clusterconfig for storing field dirtiness
-      const obj = _.cloneDeep(state);
-      let s = split[0];
-      let current = obj;
-      for (let i = 1; i < split.length; ++i) {
-        if (!_.has(current, s) || current[s] === null) {
-          current[s] = _.isInteger(split[i]) ? [] : {};
-        }
-        current = current[s];
-        s = split[i];
-      }
-      current[s] = true;
-      return obj;
+      const pathArray = _.isString(action.payload) ? action.payload.split('.') : action.payload;
+      return fromJS(state).setIn(pathArray, true).toJS();
     }
-    case dirtyActionTypes.CLEAN: {
-      const array = _.isString(action.payload) ? action.payload.split('.') : action.payload;
-      return fromJS(state).deleteIn(array).toJS();
-    }
+    case dirtyActionTypes.DELETE_IN:
+      return fromJS(state).deleteIn(action.payload).toJS();
     default:
       return state;
     }

@@ -10,7 +10,7 @@ import { Router } from 'react-router-dom';
 import createHistory from 'history/createBrowserHistory';
 import Cookie from 'js-cookie';
 
-import { clusterReadyActionTypes, FIELDS, restoreActionTypes, validateFields } from './actions';
+import { clusterReadyActionTypes, FIELDS, restoreActions, validateFields } from './actions';
 import { PLATFORM_TYPE } from './cluster-config';
 import { trail } from './trail';
 import { TectonicGA } from './tectonic-ga';
@@ -42,10 +42,7 @@ window.addEventListener('beforeunload', saveState);
 try {
   const state = JSON.parse(sessionStorage.getItem('state'));
   if (!_.isEmpty(state)) {
-    dispatch({
-      type: restoreActionTypes.RESTORE_STATE,
-      payload: state,
-    });
+    dispatch(restoreActions.restore(state));
     console.debug('Restored state from sessionStorage.');
   }
 } catch (e) {

@@ -1,7 +1,7 @@
 import _ from 'lodash';
 import { connect } from 'react-redux';
 
-import { configActions, registerForm, validateFields } from './actions';
+import { configActions, FIELDS, FIELD_TO_DEPS, registerForm, validateFields } from './actions';
 import { toError, toExtraData, toInFly, toExtraDataInFly, toExtraDataError } from './utils';
 import { ErrorComponent } from './components/ui';
 import { TectonicGA } from './tectonic-ga';
@@ -24,7 +24,7 @@ class Node {
     this.getExtraStuff_ = opts.getExtraStuff;
   }
 
-  getExtraStuff (dispatch, getState, FIELDS, isNow = () => true) {
+  getExtraStuff (dispatch, getState, isNow = () => true) {
     if (!this.getExtraStuff_) {
       return Promise.resolve();
     }
@@ -36,26 +36,26 @@ class Node {
     }
 
     const inFlyPath = toExtraDataInFly(this.id);
-    setIn(inFlyPath, true, dispatch);
+    dispatch(setIn(inFlyPath, true));
 
     return this.getExtraStuff_(dispatch, isNow, cc).then(data => {
       if (!isNow()) {
         return;
       }
-      batchSetIn(dispatch, [
+      dispatch(batchSetIn([
         [inFlyPath, undefined],
         [toExtraData(this.id), data],
         [toExtraDataError(this.id), undefined],
-      ]);
+      ]));
     }, e => {
       if (!isNow()) {
         return;
       }
-      batchSetIn(dispatch, [
+      dispatch(batchSetIn([
         [inFlyPath, undefined],
         [toExtraData(this.id), undefined],
         [toExtraDataError(this.id), e.message || e.toString()],
-      ]);
+      ]));
     });
   }
 
@@ -63,7 +63,7 @@ class Node {
     const cc = getState().clusterConfig;
     const error = await this.validator(this.getData(cc), cc, updatedId, dispatch);
     if (isNow()) {
-      await setIn(toError(this.id), _.isEmpty(error) ? undefined : error, dispatch);
+      await dispatch(setIn(toError(this.id), _.isEmpty(error) ? undefined : error));
     }
     return _.isEmpty(error);
   }
@@ -90,14 +90,14 @@ export class Field extends Node {
     return cc[this.id];
   }
 
-  async update (dispatch, value, getState, FIELDS, FIELD_TO_DEPS, split) {
+  async update (dispatch, value, getState, split) {
     // Create an isNow() function that only returns true until this.update() is called again. This allows async
     // callbacks to confirm that we are still dealing with the same Field update event.
     this.clock = this.clock + 1;
     const now = this.clock;
     const isNow = () => this.clock === now;
 
-    setIn([this.id, ...split], value, dispatch);
+    dispatch(setIn([this.id, ...split], value));
     const isFieldValid = await this.validate(dispatch, getState, this.id, isNow);
 
     if (!isFieldValid) {

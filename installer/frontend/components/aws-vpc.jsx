@@ -96,7 +96,7 @@ const validateVPC = async (data, cc, updatedId, dispatch) => {
   }
 
   const inFlyPath = toInFly(AWS_VPC_FORM);
-  setIn(inFlyPath, true, dispatch);
+  dispatch(setIn(inFlyPath, true));
   let result;
   try {
     result = await dispatch(validateSubnets(network))
@@ -104,7 +104,7 @@ const validateVPC = async (data, cc, updatedId, dispatch) => {
   } catch (e) {
     result = e.message || e.toString();
   }
-  setIn(inFlyPath, false, dispatch);
+  dispatch(setIn(inFlyPath, false));
   return result;
 };
 
@@ -216,8 +216,8 @@ const stateToProps = ({aws, clusterConfig: cc}) => {
 };
 
 const dispatchToProps = dispatch => ({
-  clearControllerSubnets: () => setIn(AWS_CONTROLLER_SUBNET_IDS, {}, dispatch),
-  clearWorkerSubnets: () => setIn(AWS_WORKER_SUBNET_IDS, {}, dispatch),
+  clearControllerSubnets: () => dispatch(setIn(AWS_CONTROLLER_SUBNET_IDS, {})),
+  clearWorkerSubnets: () => dispatch(setIn(AWS_WORKER_SUBNET_IDS, {})),
   getVpcSubnets: vpcID => dispatch(getVpcSubnets({vpcID})),
 });
 

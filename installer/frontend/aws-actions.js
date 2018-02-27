@@ -1,7 +1,7 @@
 import _ from 'lodash';
 
 import * as awsApis from './aws-api';
-import { awsActionTypes, configActions } from './actions';
+import { awsActions, configActions } from './actions';
 import {
   AWS_ACCESS_KEY_ID,
   AWS_CONTROLLER_SUBNET_IDS,
@@ -37,10 +37,7 @@ const createAction = (name, fn, shouldReject = false) => (body, creds, isNow) =>
     obj.error = null;
   }
 
-  dispatch({
-    type: awsActionTypes.SET,
-    payload: {[name]: obj},
-  });
+  dispatch(awsActions.set(name, obj));
 
   let platform;
   if (clusterConfig[PLATFORM_TYPE] === BARE_METAL_TF) {
@@ -51,16 +48,7 @@ const createAction = (name, fn, shouldReject = false) => (body, creds, isNow) =>
       if (isNow && !isNow()) {
         return;
       }
-      dispatch({
-        type: awsActionTypes.SET,
-        payload: {
-          [name]: {
-            inFly: false,
-            value,
-            error: null,
-          },
-        },
-      });
+      dispatch(awsActions.loaded(name, value));
       return value;
     })
     .catch(error => {
@@ -71,16 +59,8 @@ const createAction = (name, fn, shouldReject = false) => (body, creds, isNow) =>
 
       console.error(error.stack || error);
 
-      dispatch({
-        type: awsActionTypes.SET,
-        payload: {
-          [name]: {
-            inFly: false,
-            value: [],
-            error,
-          },
-        },
-      });
+      dispatch(awsActions.error(name, error));
+
       if (!shouldReject) {
         return error;
       }
@@ -128,7 +108,7 @@ export const getDefaultSubnets = (body, creds, isNow) => (dispatch, getState) =>
       }
 
       // Use addIn to preserve any existing values
-      const add = (path, v) => configActions.addIn(path, v, dispatch);
+      const add = (path, v) => dispatch(configActions.addIn(path, v));
       add(AWS_CONTROLLER_SUBNETS, _.fromPairs(_.map(subnets.public, s => [s.availabilityZone, s.instanceCIDR])));
       add(AWS_CONTROLLER_SUBNET_IDS, {});
       add(AWS_WORKER_SUBNETS, _.fromPairs(_.map(subnets.private, s => [s.availabilityZone, s.instanceCIDR])));

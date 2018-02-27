@@ -41,7 +41,7 @@ const dispatchToProps = dispatch => ({
       [BM_OS_TO_USE]: DEFAULT_CLUSTER_CONFIG[BM_OS_TO_USE],
       matchboxHTTP: value,
     };
-    configActions.set(payload, dispatch);
+    dispatch(configActions.set(payload));
   },
   getOsToUse: matchboxHTTP => {
     if (validate.hostPort(matchboxHTTP)) {
@@ -64,7 +64,7 @@ const dispatchToProps = dispatch => ({
         }
 
         const useVersion = available.map(v => v.version).sort(compareVersions).pop();
-        configActions.set({[BM_OS_TO_USE]: useVersion}, dispatch);
+        dispatch(configActions.set({[BM_OS_TO_USE]: useVersion}));
 
         return Promise.resolve(true);
       })
