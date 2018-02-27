@@ -192,7 +192,7 @@ const SubnetSelect = connect(
 const stateToProps = ({aws, clusterConfig: cc}) => {
   // populate subnet selection with all available azs ... many to many :(
   const azs = new Set();
-  const availableVpcSubnets = aws.availableVpcSubnets.value;
+  const availableVpcSubnets = aws.availableVpcSubnets.value || [];
   _.each(availableVpcSubnets.public, v => {
     azs.add(v.availabilityZone);
   });
