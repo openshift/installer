@@ -7,6 +7,11 @@ variable "vpc_name" {
   default     = "bastion"
 }
 
+variable aws_role {
+  default     = ""
+  description = "The IAM Role to assume if using role based keys"
+}
+
 variable "instance_type" {
   description = "The type of the ec2 machine."
   default     = "t2.micro"

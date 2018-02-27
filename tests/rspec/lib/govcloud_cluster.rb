@@ -13,16 +13,12 @@ require 'tfstate_file'
 # AWSCluster represents a k8s cluster on AWS cloud provider
 class GovcloudCluster < Cluster
   def initialize(tfvars_file)
-    if Jenkins.environment?
-      export_random_region_if_not_defined
-      # need some refactor when we start using roles for govcloud
-      # see aws_cluster.rb
-      # AWSIAM.assume_role
-    end
-    @aws_region = 'us-gov-west-1'
+    @aws_region = ENV['TF_VAR_tectonic_aws_region'] = 'us-gov-west-1'
+    @role_credentials = nil
+    @role_credentials = AWSIAM.assume_role(@aws_region) if ENV.key?('TECTONIC_INSTALLER_ROLE')
 
     unless ssh_key_defined?
-      ENV['TF_VAR_tectonic_govcloud_ssh_key'] = AwsSupport.create_aws_key_pairs(@aws_region)
+      ENV['TF_VAR_tectonic_govcloud_ssh_key'] = AwsSupport.create_aws_key_pairs(@aws_region, @role_credentials)
     end
 
     super(tfvars_file)
@@ -42,7 +38,7 @@ class GovcloudCluster < Cluster
 
   def stop
     if ENV['TF_VAR_tectonic_govcloud_ssh_key'].include?('rspec-')
-      AwsSupport.delete_aws_key_pairs(ENV['TF_VAR_tectonic_govcloud_ssh_key'], @aws_region)
+      AwsSupport.delete_aws_key_pairs(ENV['TF_VAR_tectonic_govcloud_ssh_key'], @aws_region, @role_credentials)
     end
 
     super
@@ -53,7 +49,8 @@ class GovcloudCluster < Cluster
     # Return the log output in a hash {ip => log}
     hash_log_ip = instances_id.map do |instance_id|
       {
-        instance_id_to_ip_address(instance_id) => AwsSupport.collect_ec2_console_logs(instance_id, @aws_region)
+        instance_id_to_ip_address(instance_id) =>
+        AwsSupport.collect_ec2_console_logs(instance_id, @aws_region, @role_credentials)
       }
     end
     # convert the array to hash [{k1=>v1},{k2=>v2}] to {k1=>v1,k2=>v2}
@@ -62,7 +59,7 @@ class GovcloudCluster < Cluster
 
   def retrieve_instances_ids(auto_scaling_groups)
     aws_autoscaling_group_master = @tfstate_file.value(auto_scaling_groups, 'id')
-    AwsSupport.sorted_auto_scaling_instances(aws_autoscaling_group_master, @aws_region)
+    AwsSupport.sorted_auto_scaling_instances(aws_autoscaling_group_master, @aws_region, @role_credentials)
   end
 
   def instance_id_to_ip_address(instance_id)
@@ -71,7 +68,7 @@ class GovcloudCluster < Cluster
 
   def master_ip_addresses
     instances_id = retrieve_instances_ids('module.masters.aws_autoscaling_group.masters')
-    instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region) }
+    instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region, @role_credentials) }
   end
 
   def master_ip_address
@@ -80,7 +77,7 @@ class GovcloudCluster < Cluster
 
   def worker_ip_addresses
     instances_id = retrieve_instances_ids('module.workers.aws_autoscaling_group.workers')
-    instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region) }
+    instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region, @role_credentials) }
   end
 
   def etcd_ip_addresses

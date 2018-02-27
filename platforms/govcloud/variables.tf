@@ -21,6 +21,19 @@ variable "tectonic_govcloud_ssh_key" {
   description = "Name of an SSH key located within the AWS region. Example: coreos-user."
 }
 
+variable "tectonic_aws_installer_role" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) Name of IAM role to use to access AWS in order to deploy the Tectonic Cluster.
+The name is also the full role's ARN.
+
+Example:
+ * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
+EOF
+}
+
 variable "tectonic_govcloud_master_ec2_type" {
   type        = "string"
   description = "Instance size for the master node(s). Example: `t2.medium`."

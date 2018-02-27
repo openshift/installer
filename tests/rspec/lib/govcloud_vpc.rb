@@ -32,7 +32,8 @@ class GovcloudVPC
       'TF_VAR_nginx_username' => 'openvpn',
       'TF_VAR_nginx_password' => @ovpn_password,
       'TF_VAR_mysql_password' => @mysql_password,
-      'TF_VAR_pdns_api_key' => @pdns_api_key
+      'TF_VAR_pdns_api_key' => @pdns_api_key,
+      'TF_VAR_aws_role' => ENV['TF_VAR_tectonic_aws_installer_role']
     }
   end
 
