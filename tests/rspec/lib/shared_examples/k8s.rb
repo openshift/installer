@@ -25,26 +25,28 @@ RSpec.shared_examples 'withRunningClusterWithCustomTLS' do |tf_vars_path, domain
   include_examples('withRunningClusterExistingBuildFolder', vpn_tunnel)
 end
 
-RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = false, exist_plat = nil, exist_tf = nil|
+RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = false, exist_plat = nil, exist_cfg_file = nil|
   before(:all) do
     # See https://stackoverflow.com/a/45936219/4011134
     @exceptions = []
 
-    @cluster = if exist_plat.nil? && exist_tf.nil?
+    @cluster = if exist_plat.nil? && exist_cfg_file.nil? && @config_file.nil?
                  ClusterFactory.from_tf_vars(@tfvars_file)
+               elsif @config_file.platform.include?('aws') && @tfvars_file.nil?
+                 ClusterFactory.from_config_file(@config_file)
                else
-                 ClusterFactory.from_variable(exist_plat, exist_tf)
+                 ClusterFactory.hard_coded_aws(exist_plat, exist_cfg_file)
                end
 
     @cluster.init
-    @cluster.start if exist_plat.nil? && exist_tf.nil?
+    @cluster.start if exist_plat.nil? && exist_cfg_file.nil?
   end
 
   # after(:all) hooks that are defined first are executed last
   # Make sure to run `@cluster.stop` after `@cluster.forensic`
   after(:all) do
     begin
-      @cluster.stop if exist_plat.nil? && exist_tf.nil?
+      @cluster.stop if exist_plat.nil? && exist_cfg_file.nil?
     rescue => e
       puts "Destroy failed, however we will not fail the test. Error: #{e}"
     end
@@ -113,7 +115,8 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
 
   it 'installs the correct Container Linux version' do
     version = @cluster.tf_var('tectonic_container_linux_version')
-    version = @cluster.tf_value('module.container_linux.version') if version == 'latest'
+    # version = @cluster.tf_value('module.container_linux.version') if version == 'latest'
+    version = @cluster.tfstate_file.output('container_linux', 'version') if version == 'latest'
     expect(ContainerLinux.version(@cluster)).to eq(version)
   end
 
@@ -147,7 +150,8 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
     end
   end
 
-  describe 'scale up worker cluster' do
+  # Disabled because the new flow using CLI does not support scale up for now
+  xdescribe 'scale up worker cluster' do
     before(:all) do
       platform = @cluster.env_variables['PLATFORM']
       # remove platform AZURE when the JIRA https://jira.prod.coreos.systems/browse/INST-619 is fixed
@@ -157,7 +161,12 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
     end
 
     it 'can scale up nodes by 1 worker' do
-      @cluster.tfvars_file.add_worker_node(@cluster.tfvars_file.worker_count + 1)
+      platform = @cluster.env_variables['PLATFORM']
+      if platform.downcase.include?('aws')
+        @cluster.config_file.add_worker_node(@cluster.config_file.worker_count + 1)
+      else
+        @cluster.tfvars_file.add_worker_node(@cluster.tfvars_file.worker_count + 1)
+      end
 
       expect { @cluster.update_cluster }.to_not raise_error
     end

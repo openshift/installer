@@ -279,11 +279,11 @@ pipeline {
           def builds = [:]
           def aws = [
             [file: 'basic_spec.rb', args: ''],
-            [file: 'vpc_internal_spec.rb', args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root'],
-            [file: 'network_flannel_spec.rb', args: ''],
-            [file: 'exp_spec.rb', args: ''],
-            [file: 'ca_spec.rb', args: ''],
-            [file: 'custom_tls_spec.rb', args: '']
+            // [file: 'vpc_internal_spec.rb', args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root'],
+            // [file: 'network_flannel_spec.rb', args: ''],
+            // [file: 'exp_spec.rb', args: ''],
+            // [file: 'ca_spec.rb', args: ''],
+            // [file: 'custom_tls_spec.rb', args: '']
           ]
           def govcloud = [
             [file: 'vpc_internal_spec.rb', args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root']

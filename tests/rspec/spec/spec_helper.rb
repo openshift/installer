@@ -43,7 +43,7 @@ RSpec.configure do |config|
 
   # Add terraform binary to path
   ENV['PATH'] =
-    File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), 'tectonic/tectonic-installer', 'linux') +
+    File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), 'tectonic/tectonic-installer', Gem::Platform.local.os) +
     ':' +
     ENV['PATH']
 

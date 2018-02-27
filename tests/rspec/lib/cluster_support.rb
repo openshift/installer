@@ -55,7 +55,8 @@ def save_kubernetes_events(kubeconfig, cluster_name)
 end
 
 def save_to_file(cluster_name, service_type, ip, service, output_to_save)
-  logs_path = "../../build/#{cluster_name}/logs/#{ip}/#{service_type}"
+  logs_path = "tectonic/#{cluster_name}/logs/#{ip}/#{service_type}"
+  logs_path = File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), logs_path)
   FileUtils.mkdir_p(logs_path)
   save_to_file = File.open("#{logs_path}/ip=#{ip},cluster=#{cluster_name},service=#{service}.log", 'w+')
   save_to_file << output_to_save
