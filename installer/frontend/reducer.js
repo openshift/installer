@@ -104,13 +104,7 @@ const reducersTogether = combineReducers({
     case configActionTypes.RESET:
       return {};
     case configActionTypes.SET:
-      Object.keys(action.payload).forEach(k => {
-        if (!DEFAULT_CLUSTER_CONFIG.hasOwnProperty(k)) {
-          throw Error(`attempt to set cluster property ${k} missing from defaults`);
-        }
-      });
       return Object.assign({}, state, action.payload);
-
     case configActionTypes.BATCH_SET_IN: {
       let object = fromJS(state);
       action.payload.forEach(batch => {
