@@ -61,7 +61,7 @@ const selectRegionForm = new Form(AWS_REGION_FORM, [
     default: '',
     validator: validate.nonEmpty,
     dependencies: [AWS_CREDS],
-    getExtraStuff: dispatch => dispatch(getRegions()),
+    getExtraStuff: (dispatch, isNow) => dispatch(getRegions(isNow)),
   }),
 ]);
 

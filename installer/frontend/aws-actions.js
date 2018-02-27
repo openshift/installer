@@ -85,7 +85,7 @@ export const TFDestroy = createAction('destroy', awsApis.TFDestroy, true);
 
 const getRegions_ = createAction('availableRegions', awsApis.getRegions, true);
 
-export const getRegions = () => (dispatch, getState) => {
+export const getRegions = isNow => (dispatch, getState) => {
   const cc = getState().clusterConfig;
   const creds = {
     AccessKeyID: cc[AWS_ACCESS_KEY_ID],
@@ -95,7 +95,7 @@ export const getRegions = () => (dispatch, getState) => {
     Region: 'us-east-1',
   };
 
-  return getRegions_(null, creds)(dispatch, getState);
+  return getRegions_(null, creds, isNow)(dispatch, getState);
 };
 
 const getDefaultSubnets_ = createAction('subnets', awsApis.getDefaultSubnets);
