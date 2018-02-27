@@ -25,7 +25,7 @@ class Node {
   }
 
   getExtraStuff (dispatch, getState, isNow = () => true) {
-    if (!this.getExtraStuff_) {
+    if (!this.getExtraStuff_ || !isNow()) {
       return Promise.resolve();
     }
 

@@ -61,7 +61,7 @@ const selectRegionForm = new Form(AWS_REGION_FORM, [
     default: '',
     validator: validate.nonEmpty,
     dependencies: [AWS_CREDS],
-    getExtraStuff: dispatch => dispatch(getRegions()),
+    getExtraStuff: (dispatch, isNow) => dispatch(getRegions(isNow)),
   }),
 ]);
 
@@ -116,7 +116,7 @@ const stateToProps = ({aws, serverFacts}) => {
 };
 
 const Region = connect(stateToProps)(({error, inFly, options}) => {
-  if (error) {
+  if (error && !inFly) {
     return <div className="row form-group">
       <div className="col-xs-12">
         <Alert severity="error">{error}</Alert>

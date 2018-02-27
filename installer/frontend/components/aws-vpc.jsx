@@ -120,7 +120,7 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
     dependencies: [AWS_VPC_ID],
     getExtraStuff: (dispatch, isNow, cc) => _.isEmpty(cc[AWS_VPC_ID])
       ? Promise.resolve()
-      : dispatch(getVpcSubnets({vpcID: cc[AWS_VPC_ID]})),
+      : dispatch(getVpcSubnets({vpcID: cc[AWS_VPC_ID]}, null, isNow)),
   }),
   new Field(AWS_CREATE_VPC, {default: VPC_CREATE}),
   new Field(AWS_HOSTED_ZONE_ID, {
@@ -161,7 +161,7 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
   new Field(AWS_VPC_ID, {
     default: '',
     dependencies: [AWS_REGION_FORM],
-    getExtraStuff: dispatch => dispatch(getVpcs()).then(vpcs => ({options: toOptions(vpcs)})),
+    getExtraStuff: (dispatch, isNow) => dispatch(getVpcs(null, null, isNow)).then(vpcs => ({options: toOptions(vpcs)})),
     ignoreWhen: cc => cc[AWS_CREATE_VPC] === VPC_CREATE,
     validator: validate.nonEmpty,
   }),
@@ -192,7 +192,7 @@ const SubnetSelect = connect(
 const stateToProps = ({aws, clusterConfig: cc}) => {
   // populate subnet selection with all available azs ... many to many :(
   const azs = new Set();
-  const availableVpcSubnets = aws.availableVpcSubnets.value;
+  const availableVpcSubnets = aws.availableVpcSubnets.value || [];
   _.each(availableVpcSubnets.public, v => {
     azs.add(v.availabilityZone);
   });
