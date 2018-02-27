@@ -63,7 +63,6 @@ test('field dependency validator is called', done => {
 
   new Form('aForm', [aField, bField]);
 
-  resetCC();
   updateField(aName, 'b');
 });
 
@@ -78,7 +77,6 @@ test('form validator is called', done => {
     },
   });
 
-  resetCC();
   updateField(fieldName, 'b');
 });
 
@@ -92,7 +90,6 @@ test('validation', async () => {
 
   new Form('aForm', [field]);
 
-  resetCC();
   expectCC(fieldName, undefined, toError);
 
   await updateField(fieldName, 'b');
@@ -105,7 +102,7 @@ test('validation', async () => {
 test('ignores', async done => {
   expect.assertions(4);
 
-  const field1 = new Field(fieldName, { default: 'a'});
+  const field1 = new Field(fieldName, {default: 'a'});
   const field2 = new Field(fieldName2, {
     default: 'a',
     validator: () => invalid,
@@ -205,8 +202,6 @@ test('forms as dependencies', async done => {
   const form1 = new Form('aForm', [field]);
   const form2 = new Form('bForm', [form1]);
 
-  resetCC();
-
   let cc = store.getState().clusterConfig;
 
   expect(form2.isValid(cc)).toEqual(true);
@@ -222,16 +217,17 @@ test('forms as dependencies', async done => {
 });
 
 test('deep dependency chains', async done => {
-  expect.assertions(3);
+  expect.assertions(6);
 
-  const defaultValue = 'value';
-  const field1 = new Field(fieldName, {default: 'a'});
-  const field2 = new Field(fieldName2, {default: 'a', dependencies: [fieldName]});
-  const field3 = new Field(fieldName3, {default: defaultValue, dependencies: [fieldName2],
+  const field1 = new Field(fieldName, {default: '1'});
+  const field2 = new Field(fieldName2, {default: '2', dependencies: [fieldName]});
+  const field3 = new Field(fieldName3, {default: '3', dependencies: [fieldName2],
     validator: (value, cc, updatedId) => new Promise(accept => {
       expect(updatedId).toEqual(fieldName);
-      expectCC(fieldName, 'b');
-      expect(value).toEqual(defaultValue);
+      expect(value).toEqual('3');
+      expectCC(fieldName, 'new value');
+      expectCC(fieldName2, '2');
+      expectCC(fieldName3, '3');
       accept();
       done();
     }),
@@ -240,5 +236,6 @@ test('deep dependency chains', async done => {
   new Form('aForm', [field1, field2, field3]);
   resetCC();
 
-  await updateField(fieldName, 'b');
+  expectCC(fieldName, '1');
+  await updateField(fieldName, 'new value');
 });
