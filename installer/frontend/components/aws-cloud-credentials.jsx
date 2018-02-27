@@ -116,7 +116,7 @@ const stateToProps = ({aws, serverFacts}) => {
 };
 
 const Region = connect(stateToProps)(({error, inFly, options}) => {
-  if (error) {
+  if (error && !inFly) {
     return <div className="row form-group">
       <div className="col-xs-12">
         <Alert severity="error">{error}</Alert>
