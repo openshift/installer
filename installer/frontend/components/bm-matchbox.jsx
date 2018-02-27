@@ -9,12 +9,7 @@ import { compareVersions } from '../utils';
 import { validate } from '../validate';
 
 import { Connect, DocsA, Input } from './ui';
-import {
-  DEFAULT_CLUSTER_CONFIG,
-  BM_MATCHBOX_HTTP,
-  BM_MATCHBOX_RPC,
-  BM_OS_TO_USE,
-} from '../cluster-config';
+import { BM_MATCHBOX_HTTP, BM_MATCHBOX_RPC, BM_OS_TO_USE } from '../cluster-config';
 
 new Form('BM_MATCHBOX_ADDRESS', [
   new Field(BM_MATCHBOX_RPC, {default: '', validator: validate.hostPort}),
@@ -38,7 +33,7 @@ const dispatchToProps = dispatch => ({
       },
     });
     const payload = {
-      [BM_OS_TO_USE]: DEFAULT_CLUSTER_CONFIG[BM_OS_TO_USE],
+      [BM_OS_TO_USE]: '',
       matchboxHTTP: value,
     };
     dispatch(configActions.set(payload));
