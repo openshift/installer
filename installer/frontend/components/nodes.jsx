@@ -181,14 +181,7 @@ const etcdForm = new Form('etcdForm', [
     dependencies: [ETCD_OPTION],
     ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.EXTERNAL,
   }),
-], {
-  validator: value => {
-    const etcd = value[ETCD_OPTION];
-    if (!_.values(ETCD_OPTIONS).includes(etcd)) {
-      return 'Please select an option.';
-    }
-  },
-});
+]);
 
 const mastersForm = makeNodeForm(AWS_CONTROLLERS, validate.int({min: 1, max: MAX_MASTERS}));
 const workersForm = makeNodeForm(AWS_WORKERS, validate.int({min: 1, max: MAX_WORKERS}));
