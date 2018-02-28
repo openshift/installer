@@ -12,10 +12,11 @@ job("triggers/tectonic-installer-pr-trigger") {
 
   parameters {
     stringParam('ghprbPullId', '', 'PR number')
+    stringParam('GITHUB_REPO', 'coreos/tectonic-installer', 'Github repository')
   }
 
   properties {
-    githubProjectUrl('https://github.com/coreos/tectonic-installer')
+    githubProjectUrl('https://github.com/\${GITHUB_REPO}')
   }
 
   wrappers {
@@ -59,7 +60,7 @@ job("triggers/tectonic-installer-pr-trigger") {
 
   steps {
     shell """#!/bin/bash -ex
-      curl "https://api.github.com/repos/coreos/tectonic-installer/labels?per_page=100" > repoLabels
+      curl "https://api.github.com/repos/\${GITHUB_REPO}/labels?per_page=100" > repoLabels
       repoLabels=\$(jq ".[] | .name" repoLabels)
       repoLabels=\$(echo \$repoLabels | tr -d "\\"" | tr [a-z] [A-Z] | tr - _)
       for label in \$repoLabels
@@ -68,7 +69,7 @@ job("triggers/tectonic-installer-pr-trigger") {
       done
 
 
-      curl "https://api.github.com/repos/coreos/tectonic-installer/issues/\${ghprbPullId}" > pr
+      curl "https://api.github.com/repos/\${GITHUB_REPO}/issues/\${ghprbPullId}" > pr
       labels=\$(jq ".labels | .[] | .name" pr)
       labels=\$(echo \$labels | tr -d "\\"" | tr [a-z] [A-Z] | tr - _)
       for label in \$labels

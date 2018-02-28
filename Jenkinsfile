@@ -153,12 +153,17 @@ pipeline {
       defaultValue: '#team-installer',
       description: 'Slack channel to notify on failure.'
     )
+    string(
+      name : 'GITHUB_REPO',
+      defaultValue: 'coreos/tectonic-installer',
+      description: 'Github repository'
+    )
   }
 
   stages {
     stage('Build & Test') {
       environment {
-        GO_PROJECT = '/go/src/github.com/coreos/tectonic-installer'
+        GO_PROJECT = "/go/src/github.com/${params.GITHUB_REPO}"
         MAKEFLAGS = '-j4'
       }
       steps {
@@ -170,7 +175,7 @@ pipeline {
                 forcefullyCleanWorkspace()
                 checkout scm
                 stash name: 'clean-repo', excludes: 'installer/vendor/**,tests/smoke/vendor/**'
-                originalCommitId = sh(returnStdout: true, script: 'git rev-parse origin/"\${BRANCH_NAME}"')
+                originalCommitId = sh(returnStdout: true, script: 'git rev-parse origin/"\${BRANCH_NAME}"').trim()
                 echo "originalCommitId: ${originalCommitId}"
 
                 withDockerContainer(tectonicBazelImage) {
@@ -541,7 +546,7 @@ def runRSpecTestBareMetal(testFilePath, credentials) {
 def reportStatusToGithub(status, context, commitId) {
   withCredentials(creds) {
     sh """#!/bin/bash -ex
-      ./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} ${context} ${commitId}
+      ./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} ${context} ${commitId} ${params.GITHUB_REPO}
     """
   }
 }

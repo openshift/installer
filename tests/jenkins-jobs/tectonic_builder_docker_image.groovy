@@ -12,6 +12,7 @@ job("builders/tectonic-builder-docker-image") {
     stringParam('TERRAFORM_UPSTREAM_URL', '', 'upstream Terraform download url, defaults to upstream Terraform release')
     stringParam('TECTONIC_BUILDER_TAG', '', 'Tectonic Builder Docker tag')
     booleanParam('DRY_RUN', true, 'Just build the docker image')
+    stringParam('GITHUB_REPO', 'coreos/tectonic-installer', 'Github repository')
   }
 
   wrappers {
@@ -25,7 +26,7 @@ job("builders/tectonic-builder-docker-image") {
   scm {
     git {
       remote {
-        url('https://github.com/coreos/tectonic-installer')
+        url('https://github.com/\${GITHUB_REPO}')
       }
       branch('origin/master')
     }
