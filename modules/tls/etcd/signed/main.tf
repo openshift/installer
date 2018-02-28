@@ -14,8 +14,9 @@ resource "tls_self_signed_cert" "etcd_ca" {
   private_key_pem = "${tls_private_key.etcd_ca.private_key_pem}"
 
   subject {
-    common_name  = "etcd-ca"
-    organization = "etcd"
+    common_name         = "etcd-ca"
+    organization        = "${uuid()}"
+    organizational_unit = "etcd"
   }
 
   is_ca_certificate     = true
@@ -26,6 +27,10 @@ resource "tls_self_signed_cert" "etcd_ca" {
     "digital_signature",
     "cert_signing",
   ]
+
+  lifecycle {
+    ignore_changes = ["subject"]
+  }
 }
 
 // (etcd) server keys

@@ -13,8 +13,13 @@ resource "tls_cert_request" "aggregator_ca" {
   private_key_pem = "${tls_private_key.aggregator_ca.private_key_pem}"
 
   subject {
-    common_name  = "aggregator"
-    organization = "bootkube"
+    common_name         = "aggregator"
+    organization        = "${uuid()}"
+    organizational_unit = "bootkube"
+  }
+
+  lifecycle {
+    ignore_changes = ["subject"]
   }
 }
 

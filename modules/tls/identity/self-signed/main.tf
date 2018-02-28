@@ -10,7 +10,8 @@ resource "tls_cert_request" "identity_server" {
   private_key_pem = "${tls_private_key.identity_server.private_key_pem}"
 
   subject {
-    common_name = "tectonic-identity-api.tectonic-system.svc.cluster.local"
+    common_name  = "tectonic-identity-api.tectonic-system.svc.cluster.local"
+    organization = "identity"
   }
 }
 
@@ -37,7 +38,8 @@ resource "tls_cert_request" "identity_client" {
   private_key_pem = "${tls_private_key.identity_client.private_key_pem}"
 
   subject {
-    common_name = "tectonic-identity-api.tectonic-system.svc.cluster.local"
+    common_name  = "tectonic-identity-api.tectonic-system.svc.cluster.local"
+    organization = "identity"
   }
 }
 
