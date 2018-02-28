@@ -455,7 +455,7 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
                   cd tests/rspec
 
                   # Directing test output both to stdout as well as a log file
-                  rspec ${testFilePath} --format RspecTap::Formatter --format RspecTap::Formatter --out ../../templogfiles/format=tap.log
+                  rspec ${testFilePath} --format RspecTap::Formatter --format RspecTap::Formatter --out ../../templogfiles/tap.log
                 """
               }
             }
@@ -507,7 +507,7 @@ def runRSpecTestBareMetal(testFilePath, credentials) {
               rbenv install -s
               gem install bundler
               bundler install
-              bundler exec rspec ${testFilePath} --format RspecTap::Formatter --format RspecTap::Formatter --out ../../templogfiles/format=tap.log
+              bundler exec rspec ${testFilePath} --format RspecTap::Formatter --format RspecTap::Formatter --out ../../templogfiles/tap.log
               """
             }
           }
