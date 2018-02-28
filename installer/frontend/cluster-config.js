@@ -121,8 +121,6 @@ export const getTectonicDomain = (cc) => {
   return cc[CLUSTER_SUBDOMAIN] + (cc[CLUSTER_SUBDOMAIN].endsWith('.') ? '' : '.') + getAwsZoneDomain(cc);
 };
 
-export const DEFAULT_CLUSTER_CONFIG = {};
-
 export const toAWS_TF = ({clusterConfig: cc, dirty}, FORMS) => {
   const controllers = FORMS[AWS_CONTROLLERS].getData(cc);
   const etcds = FORMS[AWS_ETCDS].getData(cc);

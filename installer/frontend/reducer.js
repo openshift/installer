@@ -2,18 +2,17 @@ import _ from 'lodash';
 import { combineReducers } from 'redux';
 import { fromJS } from 'immutable';
 
-import { DEFAULT_CLUSTER_CONFIG } from './cluster-config';
-
 import {
+  FIELD_DEFAULTS,
   awsActionTypes,
   clusterReadyActionTypes,
+  commitPhases,
   configActionTypes,
   dirtyActionTypes,
   eventErrorsActionTypes,
   loadFactsActionTypes,
   restoreActionTypes,
   serverActionTypes,
-  commitPhases,
 } from './actions';
 
 const UNLOADED_AWS_VALUE = {
@@ -97,7 +96,7 @@ const reducersTogether = combineReducers({
   // The user's intentions for their cluster
   clusterConfig: (state, action) => {
     if (!state) {
-      return DEFAULT_CLUSTER_CONFIG;
+      return FIELD_DEFAULTS;
     }
 
     switch (action.type) {
@@ -232,7 +231,7 @@ export const reducer = (state, action) => {
     });
     restored.aws = _.defaults(restored.aws, DEFAULT_AWS);
     if (restored.clusterConfig) {
-      restored.clusterConfig = _.defaults(restored.clusterConfig, DEFAULT_CLUSTER_CONFIG);
+      restored.clusterConfig = _.defaults(restored.clusterConfig, FIELD_DEFAULTS);
     }
     break;
   default:

@@ -1,7 +1,5 @@
 import _ from 'lodash';
 
-import { DEFAULT_CLUSTER_CONFIG } from './cluster-config';
-
 export const awsActionTypes = {
   SET: 'AWS_SET',
 };
@@ -96,6 +94,7 @@ export const commitPhases = {
 };
 
 export const FIELDS = {};
+export const FIELD_DEFAULTS = {};
 export const FIELD_TO_DEPS = {};
 export const FORMS = {};
 
@@ -187,7 +186,7 @@ export const registerForm = (form, fields) => {
       throw new Error(`form ${formName}: field ${fieldName} already exists`);
     }
 
-    DEFAULT_CLUSTER_CONFIG[fieldName] = f.default;
+    FIELD_DEFAULTS[fieldName] = f.default;
     FIELDS[fieldName] = f;
 
     _.each(f.dependencies, d => addDep(f.id, d));

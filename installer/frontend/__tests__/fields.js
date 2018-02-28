@@ -4,10 +4,9 @@
 console.debug = console.debug || console.info;
 
 import _ from 'lodash';
-import { __deleteEverything__, configActions, formActions } from '../actions';
+import { __deleteEverything__, configActions, FIELD_DEFAULTS, formActions } from '../actions';
 import { Field, Form } from '../form';
 import { store } from '../store';
-import { DEFAULT_CLUSTER_CONFIG } from '../cluster-config';
 import { toError, toExtraData, toExtraDataError, toExtraDataInFly } from '../utils';
 
 const invalid = 'is invalid';
@@ -20,7 +19,7 @@ const expectCC = (path, expected, f) => {
   expect(value).toEqual(expected);
 };
 
-const resetCC = () => store.dispatch(configActions.set(DEFAULT_CLUSTER_CONFIG));
+const resetCC = () => store.dispatch(configActions.set(FIELD_DEFAULTS));
 
 const updateField = (field, value) => store.dispatch(formActions.updateField(field, value));
 
