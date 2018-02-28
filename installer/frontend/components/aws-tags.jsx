@@ -54,14 +54,8 @@ const validators = {
 };
 
 const rowFields = {
-  key: {
-    default: '',
-    validator: validators.AWSTagKey,
-  },
-  value: {
-    default: '',
-    validator: validators.AWSTagValue,
-  },
+  key: {validator: validators.AWSTagKey},
+  value: {validator: validators.AWSTagValue},
 };
 
 const tagsFields = new FieldList(AWS_TAGS, rowFields, {

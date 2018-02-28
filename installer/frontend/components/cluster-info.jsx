@@ -13,7 +13,6 @@ import { A, Connect, FileInput, Input } from './ui';
 const accountLink = <A href="https://account.coreos.com" rel="noopener">account.coreos.com</A>;
 
 const licenseField = new Field(TECTONIC_LICENSE, {
-  default: '',
   validator: token => {
     const err = validate.nonEmpty(token);
     if (err) {
@@ -32,8 +31,6 @@ const licenseField = new Field(TECTONIC_LICENSE, {
 });
 
 const pullSecretField = new Field(PULL_SECRET, {
-  default: '',
-  // eslint-disable-next-line react/display-name
   validator: secret => {
     const err = validate.nonEmpty(secret);
     if (err) {

@@ -182,7 +182,9 @@ export const registerForm = (form, fields) => {
       throw new Error(`form ${formName}: field ${fieldName} already exists`);
     }
 
-    FIELD_DEFAULTS[fieldName] = f.default;
+    if (!_.isNil(f.default)) {
+      FIELD_DEFAULTS[fieldName] = f.default;
+    }
     FIELDS[fieldName] = f;
 
     _.each(f.dependencies, d => addDep(f.id, d));

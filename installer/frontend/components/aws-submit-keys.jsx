@@ -11,7 +11,6 @@ import { AWS_SSH, AWS_REGION_FORM, AWS_REGION } from '../cluster-config';
 
 const awsSshForm = new Form('AWSSSHForm', [
   new Field(AWS_SSH, {
-    default: '',
     validator: validate.nonEmpty,
     dependencies: [AWS_REGION_FORM],
     getExtraStuff: (dispatch, isNow) => dispatch(awsActions.getSsh(null, null, isNow)).then(options => ({options: _.sortBy(options, 'label')})),

@@ -80,9 +80,6 @@ class Node {
 export class Field extends Node {
   constructor (id, opts = {}) {
     super(id, opts);
-    if (!_.has(opts, 'default')) {
-      throw new Error(`${id} needs a default`);
-    }
     this.default = opts.default;
   }
 

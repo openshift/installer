@@ -176,7 +176,6 @@ const etcdForm = new Form('etcdForm', [
   new Field(ETCD_OPTION, {default: ETCD_OPTIONS.PROVISIONED}),
   etcdNodeForm,
   new Field(EXTERNAL_ETCD_CLIENT, {
-    default: '',
     validator: compose(validate.nonEmpty, validate.host),
     dependencies: [ETCD_OPTION],
     ignoreWhen: cc => cc[ETCD_OPTION] !== ETCD_OPTIONS.EXTERNAL,
