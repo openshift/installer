@@ -25,6 +25,24 @@ data "aws_ami" "coreos_ami" {
   }
 }
 
+data "ignition_config" "ncg_worker" {
+  append {
+    source = "http://${var.cluster_name}-ncg.${var.base_domain}/ignition?profile=worker"
+  }
+
+  files = ["${data.ignition_file.kubelet_worker_kubeconfig.id}"]
+}
+
+data "ignition_file" "kubelet_worker_kubeconfig" {
+  filesystem = "root"
+  path       = "/etc/kubernetes/kubeconfig"
+  mode       = 0644
+
+  content {
+    content = "${var.kubeconfig_content}"
+  }
+}
+
 resource "aws_launch_configuration" "worker_conf" {
   instance_type        = "${var.ec2_type}"
   image_id             = "${coalesce(var.ec2_ami, data.aws_ami.coreos_ami.image_id)}"
@@ -32,7 +50,7 @@ resource "aws_launch_configuration" "worker_conf" {
   key_name             = "${var.ssh_key}"
   security_groups      = ["${var.sg_ids}"]
   iam_instance_profile = "${aws_iam_instance_profile.worker_profile.arn}"
-  user_data            = "${data.ignition_config.s3.rendered}"
+  user_data            = "${data.ignition_config.ncg_worker.rendered}"
 
   lifecycle {
     create_before_destroy = true

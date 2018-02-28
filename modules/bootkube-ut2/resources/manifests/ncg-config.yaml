@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ncg-config-v1
+  namespace: kube-system
+data:
+  assets: |
+    assets config will go here
+  worker.group: |
+    {
+      "id": "worker",
+      "name": "Worker Profile",
+      "profile": "worker",
+      "selector": {
+        "profile": "worker"
+      },
+      "metadata": {
+        "k8s_dns_service_ip": "${kube_dns_service_ip}"
+      }
+    }
+  worker.profile: |
+    {
+      "id": "worker",
+      "name": "Worker Profile",
+      "clc_id": "worker.ign"
+    }
+  worker.clc: |
+    ${ncg_config_worker}
+  master.group: |
+    {
+      "id": "master",
+      "name": "Master Profile",
+      "profile": "master",
+      "selector": {
+        "profile": "master"
+      },
+      "metadata": {
+        "k8s_dns_service_ip": "${kube_dns_service_ip}"
+      }
+    }
+  master.profile: |
+    {
+      "id": "master",
+      "name": "Master Profile",
+      "clc_id": "master.ign"
+    }
+  master.clc: |
+    ${ncg_config_master}

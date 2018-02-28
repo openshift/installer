@@ -1,0 +1,50 @@
+Clusters:
+  - Name: aws-basic
+    BaseDomain: tectonic-ci.de
+    Platform: AWS
+    Networking:
+      Type: canal
+      MTU: 1480
+      PodCIDR: 10.2.0.0/16
+      ServiceCIDR: 10.3.0.0/16
+    Master:
+      Count: 2
+    Worker:
+      Count: 3
+    Etcd:
+      Count: 3
+    TLSValidityPeriod: 26280
+    PullSecretPath: null
+    LicensePath: null
+    ContainerLinux:
+      Channel: beta
+      Version: latest
+    Update:
+      Server: foo.bar
+      Channel: stable
+      AppID: 42-42-0
+    Admin:
+      Email: null
+      Password: null
+    AWS:
+      Region: null
+      SSHKey: null
+      VPCCIDRBlock: 10.0.0.0/16
+      Etcd:
+        EC2Type: m4.large
+        RootVolume:
+          IOPS: 100
+          Size: 30
+          Type: gp2
+      Master:
+        EC2Type: m4.large
+        RootVolume:
+          IOPS: 100
+          Size: 30
+          Type: gp2
+      Worker:
+        EC2Type: m4.large
+        RootVolume:
+          IOPS: 100
+          Size: 30
+          Type: gp2

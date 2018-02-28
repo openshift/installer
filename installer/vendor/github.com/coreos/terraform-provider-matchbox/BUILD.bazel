@@ -14,6 +14,5 @@ go_library(
 go_binary(
     name = "terraform-provider-matchbox",
     embed = [":go_default_library"],
-    importpath = "github.com/coreos/terraform-provider-matchbox",
     visibility = ["//visibility:public"],
 )

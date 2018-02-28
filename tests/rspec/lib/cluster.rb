@@ -10,13 +10,14 @@ require 'securerandom'
 require 'ssh'
 require 'tfstate_file'
 require 'tfvars_file'
+require 'config_file'
 require 'timeout'
 require 'with_retries'
 require 'open3'
 
 # Cluster represents a k8s cluster
 class Cluster
-  attr_reader :tfvars_file, :kubeconfig, :manifest_path, :build_path,
+  attr_reader :config_file, :tfvars_file, :kubeconfig, :manifest_path, :build_path,
               :tectonic_admin_email, :tectonic_admin_password, :tfstate_file
 
   def initialize(tfvars_file)
@@ -35,13 +36,6 @@ class Cluster
     @tfstate_file = TFStateFile.new(@build_path)
 
     check_prerequisites
-  end
-
-  def plan(terraform_options = nil)
-    env = env_variables
-    env['TF_PLAN_OPTIONS'] = terraform_options unless terraform_options.nil?
-    stdout, stderr, exit_status = Open3.capture3(env, 'make -C ../.. plan')
-    [stdout, stderr, exit_status]
   end
 
   def start

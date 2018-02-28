@@ -1,0 +1,46 @@
+Clusters:
+  - Name: test
+    BaseDomain: cluster.com
+    Platform: AWS
+    Networking:
+      Type: canal
+      MTU: 1480
+      PodCIDR: 10.2.0.0/16
+      ServiceCIDR: 10.3.0.0/16
+    Masters:
+      Count: 2
+    Workers:
+      Count: 3
+    Etcd:
+      Count: 3
+    TLSValidityPeriod: 26280
+    PullSecretPath: /path/config.json
+    LicensePath: /path/tectonic-license.txt
+    ContainerLinux:
+      Channel: stable
+      Version: latest
+    Admin:
+      Email: test@coreos.com
+      Password: asd123
+    AWS:
+      Region: eu-west-1
+      SSHKey: tectonic
+      VPCCIDRBlock: 10.0.0.0/16
+      Etcd:
+        EC2Type: t2.medium
+        RootVolume:
+          IOPS: 100
+          Size: 30
+          Type: gp2
+      Master:
+        EC2Type: t2.medium
+        RootVolume:
+          IOPS: 100
+          Size: 30
+          Type: gp2
+      Worker:
+        EC2Type: t2.medium
+        RootVolume:
+          IOPS: 100
+          Size: 30
+          Type: gp2

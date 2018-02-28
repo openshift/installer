@@ -11,6 +11,5 @@ go_library(
 go_binary(
     name = "vault",
     embed = [":go_default_library"],
-    importpath = "github.com/hashicorp/vault",
     visibility = ["//visibility:public"],
 )

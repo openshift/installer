@@ -18,5 +18,6 @@ go_library(
         "//installer/vendor/github.com/hashicorp/hcl2/hcl:go_default_library",
         "//installer/vendor/github.com/zclconf/go-cty/cty:go_default_library",
         "//installer/vendor/github.com/zclconf/go-cty/cty/convert:go_default_library",
+        "//installer/vendor/github.com/zclconf/go-cty/cty/function:go_default_library",
     ],
 )

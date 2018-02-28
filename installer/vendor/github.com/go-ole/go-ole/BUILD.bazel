@@ -186,6 +186,9 @@ go_library(
         "@io_bazel_rules_go//go/platform:amd64": [
             "variant_amd64.go",
         ],
+        "@io_bazel_rules_go//go/platform:ppc64le": [
+            "variant_ppc64le.go",
+        ],
         "@io_bazel_rules_go//go/platform:s390x": [
             "variant_s390x.go",
         ],

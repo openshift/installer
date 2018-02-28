@@ -76,3 +76,8 @@ variable "custom_dns_name" {
   default     = ""
   description = "DNS prefix used to construct the console and API server endpoints."
 }
+
+variable "depends_on" {
+  default = []
+  type    = "list"
+}

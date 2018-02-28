@@ -1,0 +1,64 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "actions.go",
+        "app.go",
+        "args.go",
+        "cmd.go",
+        "completions.go",
+        "doc.go",
+        "envar.go",
+        "flags.go",
+        "global.go",
+        "model.go",
+        "parser.go",
+        "parsers.go",
+        "templates.go",
+        "usage.go",
+        "values.go",
+        "values_generated.go",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:android": [
+            "guesswidth.go",
+        ],
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "guesswidth_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:dragonfly": [
+            "guesswidth_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "guesswidth_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "guesswidth_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:nacl": [
+            "guesswidth.go",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "guesswidth_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "guesswidth_unix.go",
+        ],
+        "@io_bazel_rules_go//go/platform:plan9": [
+            "guesswidth.go",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "guesswidth.go",
+        ],
+        "@io_bazel_rules_go//go/platform:windows": [
+            "guesswidth.go",
+        ],
+        "//conditions:default": [],
+    }),
+    importpath = "gopkg.in/alecthomas/kingpin.v2",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//installer/vendor/github.com/alecthomas/template:go_default_library",
+        "//installer/vendor/github.com/alecthomas/units:go_default_library",
+    ],
+)

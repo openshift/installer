@@ -45,14 +45,25 @@ class TestContainer
   # Some tests require a few environment variables to run properly,
   # build the environment parameters here.
   def container_env(engine)
-    env = {
-      'KUBECONFIG' => '/kubeconfig',
+    env = if @cluster.env_variables['PLATFORM'].include?('aws')
+            {
+              'KUBECONFIG' => '/kubeconfig',
 
-      'BRIDGE_AUTH_USERNAME' => @cluster.tectonic_admin_email,
-      'BRIDGE_AUTH_PASSWORD' => @cluster.tectonic_admin_password,
-      'BRIDGE_BASE_ADDRESS' => 'https://' + @cluster.tectonic_console_url,
-      'BRIDGE_BASE_PATH' => '/'
-    }
+              'BRIDGE_AUTH_USERNAME' => @cluster.config_file.admin_credentials[0],
+              'BRIDGE_AUTH_PASSWORD' => @cluster.config_file.admin_credentials[1],
+              'BRIDGE_BASE_ADDRESS' => 'https://' + @cluster.tectonic_console_url,
+              'BRIDGE_BASE_PATH' => '/'
+            }
+          else
+            {
+              'KUBECONFIG' => '/kubeconfig',
+
+              'BRIDGE_AUTH_USERNAME' => @cluster.tectonic_admin_email,
+              'BRIDGE_AUTH_PASSWORD' => @cluster.tectonic_admin_password,
+              'BRIDGE_BASE_ADDRESS' => 'https://' + @cluster.tectonic_console_url,
+              'BRIDGE_BASE_PATH' => '/'
+            }
+          end
 
     return env.map { |k, v| "-e #{k}='#{v}'" }.join(' ').chomp if engine == 'docker'
     return env.map { |k, v| "--set-env #{k}='#{v}'" }.join(' ').chomp if engine == 'rkt'

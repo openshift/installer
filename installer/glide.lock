@@ -1,5 +1,5 @@
-hash: d8d14df554fe9b444b67b0aea9fc7e14e3f202206877fb056678313925c8c6df
-updated: 2017-12-20T16:00:54.37924+01:00
+hash: 9f9b172d4a1f2812571ba4a742908d30ae20b99e486dba316e3bef7c88b9f07c
+updated: 2018-02-07T17:48:55.005344+01:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -10,6 +10,10 @@ imports:
   version: 5f10fee965225ac1eecdc234c09daf5cd9e7f7b6
 - name: github.com/ajeddeloh/yaml
   version: 1072abfea31191db507785e2e0c1b8d1440d35a5
+- name: github.com/alecthomas/template
+  version: a0175ee3bccc567396460bf5acd36800cb10c49c
+  subpackages:
+  - parse
 - name: github.com/alecthomas/units
   version: 6b4e7dc5e3143b85ea77909c72caf89416fc2915
 - name: github.com/apparentlymart/go-cidr
@@ -109,6 +113,13 @@ imports:
   - health
   - httputil
   - timeutil
+- name: github.com/coreos/tectonic-config
+  version: ff997d9ae68b0f4c02390d69cc355cd85a5a0f93
+  subpackages:
+  - config/kube-addon
+  - config/kube-core
+  - config/tectonic-network
+  - config/tectonic-utility
 - name: github.com/coreos/terraform-provider-matchbox
   version: 016482b8add5122d41cce5e05d4f1730c5a9ff77
   subpackages:
@@ -136,7 +147,7 @@ imports:
 - name: github.com/go-ini/ini
   version: 6e4869b434bd001f6983749881c7ead3545887d8
 - name: github.com/go-ole/go-ole
-  version: a41e3c4b706f6ae8dfbff342b06e40fa4d2d0506
+  version: eabdf371ac1f50f1506de7426f53c0386ee80986
   subpackages:
   - oleutil
 - name: github.com/go-openapi/jsonpointer
@@ -150,7 +161,7 @@ imports:
 - name: github.com/go-yaml/yaml
   version: a83829b6f1293c91addabc89d0571c246397bbf4
 - name: github.com/gogo/protobuf
-  version: e18d7aa8f8c624c915db340349aad4c49b10d173
+  version: 1adfc126b41513cc696b209667c8656ea7aac67c
   subpackages:
   - gogoproto
   - plugin/defaultcheck
@@ -219,7 +230,7 @@ imports:
   - json/scanner
   - json/token
 - name: github.com/hashicorp/hcl2
-  version: 44bad6dbf5490f5da17ec991e664df3d017b706f
+  version: 5ca9713bf06addcefc0a4e16f779e43a2c88570c
   subpackages:
   - gohcl
   - hcl
@@ -293,7 +304,7 @@ imports:
 - name: github.com/mattn/go-isatty
   version: 6ca4dbf54d38eea1a992b3c722a76a5d1c4cb25c
 - name: github.com/mitchellh/cli
-  version: 33edc47170b5df54d2588696d590c5e20ee583fe
+  version: 518dc677a1e1222682f4e7db06721942cb8e9e4c
 - name: github.com/mitchellh/copystructure
   version: d23ffcb85de31694d6ccaa23ccb4a03e55c1303f
 - name: github.com/mitchellh/go-homedir
@@ -315,7 +326,7 @@ imports:
   subpackages:
   - difflib
 - name: github.com/posener/complete
-  version: 6bee943216c8cea4cc983c8596346d8945279a1f
+  version: cdc49b71388c2ab059f57997ef2575c9e8b4f146
   subpackages:
   - cmd
   - cmd/install
@@ -325,7 +336,7 @@ imports:
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
 - name: github.com/satori/go.uuid
-  version: 5bf94b69c6b68ee1b541973bb8e1144db23a194b
+  version: b061729afc07e77a8aa4fad0a2fd840958f1942a
 - name: github.com/shirou/gopsutil
   version: a00fdd2cc01be18fd06ed33a33d7ea758b6e2328
   subpackages:
@@ -363,7 +374,7 @@ imports:
 - name: github.com/vincent-petithory/dataurl
   version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
 - name: github.com/zclconf/go-cty
-  version: 48ce95f3a00f37ac934ff90a62e377146f9428e1
+  version: 709e4033eeb037dc543dbc2048065dfb814ce316
   subpackages:
   - cty
   - cty/convert
@@ -455,12 +466,38 @@ imports:
   - stats
   - tap
   - transport
+- name: gopkg.in/alecthomas/kingpin.v2
+  version: 947dcec5ba9c011838740e680966fd7087a71d0d
 - name: gopkg.in/inf.v0
   version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
 - name: gopkg.in/square/go-jose.v2
   version: 296c7f1463ec9b712176dc804dea0173d06dc728
 - name: gopkg.in/yaml.v2
   version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
+- name: k8s.io/apimachinery
+  version: 180eddb345a5be3a157cea1c624700ad5bd27b8f
+  subpackages:
+  - pkg/api/resource
+  - pkg/apis/meta/v1
+  - pkg/conversion
+  - pkg/conversion/queryparams
+  - pkg/fields
+  - pkg/labels
+  - pkg/runtime
+  - pkg/runtime/schema
+  - pkg/selection
+  - pkg/types
+  - pkg/util/errors
+  - pkg/util/intstr
+  - pkg/util/json
+  - pkg/util/net
+  - pkg/util/runtime
+  - pkg/util/sets
+  - pkg/util/validation
+  - pkg/util/validation/field
+  - pkg/util/wait
+  - pkg/watch
+  - third_party/forked/golang/reflect
 - name: k8s.io/client-go
   version: d81cb85237595f720d83eda492bae8f6162fc5c0
   subpackages:
@@ -575,6 +612,11 @@ imports:
   - tools/clientcmd/api/v1
   - tools/metrics
   - transport
+- name: k8s.io/kube-openapi
+  version: 39a7bf85c140f972372c2a0d1ee40adbf0c8bfe1
+  subpackages:
+  - pkg/common
+  - pkg/util/proto
 - name: k8s.io/kubernetes
   version: ae4550cc9c89a593bcda6678df201db1b208133b
   subpackages:
