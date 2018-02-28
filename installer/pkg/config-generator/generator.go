@@ -90,8 +90,7 @@ func (c ConfigGenerator) addonConfig() (*kubeaddon.OperatorConfig, error) {
 	addonConfig := kubeaddon.OperatorConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: kubeaddon.APIVersion,
-			// TODO: get Kind from kubeaddon.Kind. Operator doesn't like KubeAddonOperatorConfig
-			Kind: "AddonConfig",
+			Kind:       kubeaddon.Kind,
 		},
 	}
 	cidrhost, err := cidrhost(c.Cluster.Networking.ServiceCIDR, 10)
@@ -146,8 +145,7 @@ func (c ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, error
 	utilityConfig := tectonicutility.OperatorConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: tectonicutility.APIVersion,
-			// TODO: get Kind from tectonicutility.Kind. Operator doesn't like TectonicUtilityOperatorConfig
-			Kind: "UtilityConfig",
+			Kind:       tectonicutility.Kind,
 		},
 	}
 
