@@ -24,6 +24,7 @@ export const configActions = {
     }
   },
   batchSetIn: payload => ({payload, type: configActionTypes.BATCH_SET_IN}),
+  reset: () => ({type: configActionTypes.RESET}),
   set: payload => ({payload, type: configActionTypes.SET}),
   setIn: (path, value) => ({payload: {path, value}, type: configActionTypes.SET_IN}),
 };
@@ -129,11 +130,6 @@ export const formActions = {
     const field = getField(name);
     return field.update(dispatch, inputValue, getState, split);
   },
-};
-
-export const __deleteEverything__ = () => {
-  [FIELDS, FIELD_TO_DEPS, FORMS].forEach(o => _.keys(o).forEach(k => delete o[k]));
-  return {type: configActionTypes.RESET};
 };
 
 export const validateFields = async (ids, getState, dispatch, updatedId, isNow) => {

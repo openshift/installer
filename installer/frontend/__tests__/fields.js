@@ -4,10 +4,12 @@
 console.debug = console.debug || console.info;
 
 import _ from 'lodash';
-import { __deleteEverything__, configActions, FIELD_DEFAULTS, formActions } from '../actions';
+import { configActions, FIELDS, FIELD_DEFAULTS, FIELD_TO_DEPS, FORMS, formActions } from '../actions';
 import { Field, Form } from '../form';
 import { store } from '../store';
 import { toError, toExtraData, toExtraDataError, toExtraDataInFly } from '../utils';
+
+const {dispatch} = store;
 
 const invalid = 'is invalid';
 const fieldName = 'aField';
@@ -19,11 +21,12 @@ const expectCC = (path, expected, f) => {
   expect(value).toEqual(expected);
 };
 
-const resetCC = () => store.dispatch(configActions.set(FIELD_DEFAULTS));
+const updateField = (field, value) => dispatch(formActions.updateField(field, value));
 
-const updateField = (field, value) => store.dispatch(formActions.updateField(field, value));
-
-beforeEach(() => store.dispatch(__deleteEverything__()));
+beforeEach(() => {
+  [FIELDS, FIELD_DEFAULTS, FIELD_TO_DEPS, FORMS].forEach(o => _.each(o, (v, k) => delete o[k]));
+  dispatch(configActions.reset());
+});
 
 test('updates a Field', () => {
   expect.assertions(4);
@@ -38,7 +41,7 @@ test('updates a Field', () => {
   });
 
   new Form('aForm', [aField]);
-  resetCC();
+  dispatch(configActions.set(FIELD_DEFAULTS));
 
   expectCC(name, 'a');
   updateField(name, 'b');
@@ -233,7 +236,7 @@ test('deep dependency chains', async done => {
   });
 
   new Form('aForm', [field1, field2, field3]);
-  resetCC();
+  dispatch(configActions.set(FIELD_DEFAULTS));
 
   expectCC(fieldName, '1');
   await updateField(fieldName, 'new value');
