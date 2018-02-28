@@ -7,7 +7,7 @@ PLATFORMS = %w[govcloud aws azure metal vmware gcp].freeze
 # ConfigFile represents a Terraform configuration file describing a Tectonic
 # cluster configuration
 class ConfigFile
-  attr_reader :path, :data
+  attr_reader :path
   def initialize(file_path)
     @path = file_path
     raise "file #{file_path} does not exist" unless file_exists?
@@ -26,20 +26,20 @@ class ConfigFile
   end
 
   def master_count
-    data['Clusters'][0]['Masters']['NodeCount']
+    data['Clusters'][0]['Master']['Count']
   end
 
   def worker_count
-    data['Clusters'][0]['Workers']['NodeCount']
+    data['Clusters'][0]['Worker']['Count']
   end
 
   def etcd_count
-    data['Clusters'][0]['Etcd']['NodeCount']
+    data['Clusters'][0]['Etcd']['Count']
   end
 
   def add_worker_node(node_count)
     new_data = data
-    new_data['Clusters'][0]['Workers']['NodeCount'] = node_count
+    new_data['Clusters'][0]['Worker']['Count'] = node_count
     save(new_data)
   end
 
@@ -65,40 +65,40 @@ class ConfigFile
 
   def change_license(license_path)
     new_data = data
-    new_data['Clusters'][0]['Tectonic']['LicensePath'] = license_path
+    new_data['Clusters'][0]['LicensePath'] = license_path
     save(new_data)
   end
 
   def change_pull_secret(pull_secret_path)
     new_data = data
-    new_data['Clusters'][0]['Tectonic']['PullSecretPath'] = pull_secret_path
+    new_data['Clusters'][0]['PullSecretPath'] = pull_secret_path
     save(new_data)
   end
 
   def change_base_domain(base_domain)
     new_data = data
-    new_data['Clusters'][0]['DNS']['BaseDomain'] = base_domain
+    new_data['Clusters'][0]['BaseDomain'] = base_domain
     save(new_data)
   end
 
   def license
-    data['Clusters'][0]['Tectonic']['LicensePath']
+    data['Clusters'][0]['LicensePath']
   end
 
   def pull_secret
-    data['Clusters'][0]['Tectonic']['PullSecretPath']
+    data['Clusters'][0]['PullSecretPath']
   end
 
   def change_admin_credentials(admin_email, admin_passwd)
     new_data = data
-    new_data['Clusters'][0]['Console']['AdminEmail'] = admin_email
-    new_data['Clusters'][0]['Console']['AdminPassword'] = admin_passwd
+    new_data['Clusters'][0]['Admin']['Email'] = admin_email
+    new_data['Clusters'][0]['Admin']['Password'] = admin_passwd
     save(new_data)
   end
 
   def admin_credentials
-    admin_email = data['Clusters'][0]['Console']['AdminEmail']
-    admin_passwd = data['Clusters'][0]['Console']['AdminPassword']
+    admin_email = data['Clusters'][0]['Admin']['Email']
+    admin_passwd = data['Clusters'][0]['Admin']['Password']
     [admin_email, admin_passwd]
   end
 
