@@ -1,6 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: tectonic-ingress # Create the namespace first.
-  labels: # network policy can only select by labels
-    name: tectonic-ingress
