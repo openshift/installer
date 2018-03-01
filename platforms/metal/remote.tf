@@ -12,12 +12,12 @@ resource "null_resource" "etcd_secrets" {
   }
 
   provisioner "file" {
-    content     = "${module.etcd_certs.etcd_ca_crt_pem}"
+    content     = "${module.ca_certs.etcd_ca_cert_pem}"
     destination = "$HOME/etcd_ca.crt"
   }
 
   provisioner "file" {
-    content     = "${module.etcd_certs.etcd_server_crt_pem}"
+    content     = "${module.etcd_certs.etcd_server_cert_pem}"
     destination = "$HOME/etcd_server.crt"
   }
 
@@ -27,7 +27,7 @@ resource "null_resource" "etcd_secrets" {
   }
 
   provisioner "file" {
-    content     = "${module.etcd_certs.etcd_peer_crt_pem}"
+    content     = "${module.etcd_certs.etcd_peer_cert_pem}"
     destination = "$HOME/etcd_peer.crt"
   }
 
