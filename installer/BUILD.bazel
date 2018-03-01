@@ -27,3 +27,11 @@ PLATFORMS = ["aws", "baremetal"]
     args    = ["$(location @yarn//:yarn)", "$(location //installer/frontend:packagejson)", platform, "$(location @nodejs//:node)", "$(location //:tarball)", "$(locations //tests/smoke:test_vars)"],
     data    = ["@yarn//:yarn", "//installer/frontend:node_dependencies", "//installer/frontend:packagejson", "//installer/frontend:files", "@nodejs//:node", "//:tarball", "//tests/smoke:test_vars"],
 ) for platform in PLATFORMS]
+
+test_suite(
+    name = "cli_units",
+    tests = [
+        "//installer/pkg/workflow:go_default_test",
+        "//installer/pkg/config-generator:go_default_test",
+    ],
+)

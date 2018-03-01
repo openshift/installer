@@ -181,6 +181,7 @@ pipeline {
                 withDockerContainer(tectonicBazelImage) {
                   sh "bazel test terraform_fmt --test_output=all"
                   sh "bazel test installer/frontend:unit --test_output=all"
+                  sh "bazel test installer:cli_units --test_output=all"
                   sh"""#!/bin/bash -ex
                     bazel build tarball tests/smoke
 

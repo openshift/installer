@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "go_default_library",
@@ -18,4 +18,12 @@ go_library(
         "//installer/vendor/github.com/apparentlymart/go-cidr/cidr:go_default_library",
         "//installer/vendor/golang.org/x/crypto/bcrypt:go_default_library",
     ],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["generator_test.go"],
+    embed = [":go_default_library"],
+    data = glob(["fixtures/**"]),
+    deps = ["//installer/pkg/config:go_default_library"],
 )
