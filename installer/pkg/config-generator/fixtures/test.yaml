@@ -1,6 +1,6 @@
-Clusters:
-  - Name: test
-    Platform: AWS
-    BaseDomain: cluster.com
-    Etcd:
-      Count: 3
+clusters:
+  - name: test
+    platform: AWS
+    baseDomain: cluster.com
+    etcd:
+      count: 3

@@ -18,7 +18,7 @@ class ConfigFile
   end
 
   def networking
-    data['Clusters'][0]['Networking']['Type']
+    data['clusters'][0]['networking']['type']
   end
 
   def node_count
@@ -26,79 +26,79 @@ class ConfigFile
   end
 
   def master_count
-    data['Clusters'][0]['Master']['Count']
+    data['clusters'][0]['master']['count']
   end
 
   def worker_count
-    data['Clusters'][0]['Worker']['Count']
+    data['clusters'][0]['worker']['count']
   end
 
   def etcd_count
-    data['Clusters'][0]['Etcd']['Count']
+    data['clusters'][0]['etcd']['count']
   end
 
   def add_worker_node(node_count)
     new_data = data
-    new_data['Clusters'][0]['Worker']['Count'] = node_count
+    new_data['clusters'][0]['worker']['count'] = node_count
     save(new_data)
   end
 
   def change_cluster_name(cluster_name)
     new_data = data
-    new_data['Clusters'][0]['Name'] = cluster_name
+    new_data['clusters'][0]['name'] = cluster_name
     save(new_data)
   end
 
   def cluster_name
-    data['Clusters'][0]['Name']
+    data['clusters'][0]['name']
   end
 
   def change_aws_region(region)
     new_data = data
-    new_data['Clusters'][0]['AWS']['Region'] = region
+    new_data['clusters'][0]['aws']['region'] = region
     save(new_data)
   end
 
   def region(platform)
-    data['Clusters'][0][platform.upcase]['Region']
+    data['clusters'][0][platform]['region']
   end
 
   def change_license(license_path)
     new_data = data
-    new_data['Clusters'][0]['LicensePath'] = license_path
+    new_data['clusters'][0]['licensePath'] = license_path
     save(new_data)
   end
 
   def change_pull_secret(pull_secret_path)
     new_data = data
-    new_data['Clusters'][0]['PullSecretPath'] = pull_secret_path
+    new_data['clusters'][0]['pullSecretPath'] = pull_secret_path
     save(new_data)
   end
 
   def change_base_domain(base_domain)
     new_data = data
-    new_data['Clusters'][0]['BaseDomain'] = base_domain
+    new_data['clusters'][0]['baseDomain'] = base_domain
     save(new_data)
   end
 
   def license
-    data['Clusters'][0]['LicensePath']
+    data['clusters'][0]['licensePath']
   end
 
   def pull_secret
-    data['Clusters'][0]['PullSecretPath']
+    data['clusters'][0]['pullSecretPath']
   end
 
   def change_admin_credentials(admin_email, admin_passwd)
     new_data = data
-    new_data['Clusters'][0]['Admin']['Email'] = admin_email
-    new_data['Clusters'][0]['Admin']['Password'] = admin_passwd
+    new_data['clusters'][0]['admin']['email'] = admin_email
+    new_data['clusters'][0]['admin']['password'] = admin_passwd
     save(new_data)
   end
 
   def admin_credentials
-    admin_email = data['Clusters'][0]['Admin']['Email']
-    admin_passwd = data['Clusters'][0]['Admin']['Password']
+    admin_email = data['clusters'][0]['admin']['email']
+    admin_passwd = data['clusters'][0]['admin']['password']
     [admin_email, admin_passwd]
   end
 
@@ -110,13 +110,13 @@ class ConfigFile
 
   def change_ssh_key(platform, ssh_key)
     new_data = data
-    new_data['Clusters'][0][platform.upcase]['SSHKey'] = ssh_key
+    new_data['clusters'][0][platform]['sshKey'] = ssh_key
     save(new_data)
   end
 
   def platform
     PLATFORMS.each do |plat|
-      return plat if data['Clusters'][0]['Platform'].downcase.eql?(plat)
+      return plat if data['clusters'][0]['platform'].downcase.eql?(plat)
     end
   end
 

@@ -2,14 +2,14 @@ package openstack
 
 // Config defines the OpenStack configuraiton for a cluster.
 type Config struct {
-	DisableFloatingIP string `yaml:"DisableFloatingIP,omitempty"`
-	DNSNameservers    string `yaml:"DNSNameservers,omitempty"`
-	EtcdFlavor        flavor `yaml:"EtcdFlavor,omitempty"`
-	ExternalGatewayID string `yaml:"ExternalGatewayID,omitempty"`
-	FloatingIPPool    string `yaml:"FloatingIPPool,omitempty"`
-	Image             flavor `yaml:"Image,omitempty"`
-	LBProvider        string `yaml:"LBProvider,omitempty"`
-	MasterFlavor      flavor `yaml:"MasterFlavor,omitempty"`
-	SubnetCIDR        string `yaml:"SubnetCIDR,omitempty"`
-	WorkerFlavor      flavor `yaml:"WorkerFlavor,omitempty"`
+	DisableFloatingIP string `yaml:"disableFloatingIP,omitempty"`
+	DNSNameservers    string `yaml:"dnsNameservers,omitempty"`
+	EtcdFlavor        flavor `yaml:"etcdFlavor,omitempty"`
+	ExternalGatewayID string `yaml:"externalGatewayID,omitempty"`
+	FloatingIPPool    string `yaml:"floatingIPPool,omitempty"`
+	Image             flavor `yaml:"image,omitempty"`
+	LBProvider        string `yaml:"lbProvider,omitempty"`
+	MasterFlavor      flavor `yaml:"masterFlavor,omitempty"`
+	SubnetCIDR        string `yaml:"subnetCIDR,omitempty"`
+	WorkerFlavor      flavor `yaml:"workerFlavor,omitempty"`
 }

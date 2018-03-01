@@ -1,7 +1,7 @@
 package gcp
 
 type component struct {
-	DiskSize string `yaml:"DiskSize,omitempty"`
-	DiskType string `yaml:"DiskType,omitempty"`
-	GCEType  string `yaml:"GCEType,omitempty"`
+	DiskSize string `yaml:"diskSize,omitempty"`
+	DiskType string `yaml:"diskType,omitempty"`
+	GCEType  string `yaml:"gceType,omitempty"`
 }

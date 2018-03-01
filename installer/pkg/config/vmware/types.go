@@ -1,24 +1,24 @@
 package vmware
 
 type component struct {
-	Clusters     string `yaml:"Clusters,omitempty"`
-	Datacenters  string `yaml:"Datacenters,omitempty"`
-	Datastores   string `yaml:"Datastores,omitempty"`
-	Gateways     string `yaml:"Gateways,omitempty"`
-	Hostnames    string `yaml:"Hostnames,omitempty"`
-	IP           string `yaml:"IP,omitempty"`
-	Memory       string `yaml:"Memory,omitempty"`
-	Networks     string `yaml:"Networks,omitempty"`
-	ResourcePool string `yaml:"ResourcePool,omitempty"`
-	VCPU         string `yaml:"VCPU,omitempty"`
+	Clusters     string `yaml:"clusters,omitempty"`
+	Datacenters  string `yaml:"datacenters,omitempty"`
+	Datastores   string `yaml:"datastores,omitempty"`
+	Gateways     string `yaml:"gateways,omitempty"`
+	Hostnames    string `yaml:"hostnames,omitempty"`
+	IP           string `yaml:"ip,omitempty"`
+	Memory       string `yaml:"memory,omitempty"`
+	Networks     string `yaml:"networks,omitempty"`
+	ResourcePool string `yaml:"resourcePool,omitempty"`
+	VCPU         string `yaml:"vCPU,omitempty"`
 }
 
 type ssh struct {
-	AuthorizedKey  string `yaml:"AuthorizedKey,omitempty"`
-	PrivateKeyPath string `yaml:"PrivateKeyPath,omitempty"`
+	AuthorizedKey  string `yaml:"authorizedKey,omitempty"`
+	PrivateKeyPath string `yaml:"privateKeyPath,omitempty"`
 }
 
 type vm struct {
-	Template       string `yaml:"Template,omitempty"`
-	TemplateFolder string `yaml:"TemplateFolder,omitempty"`
+	Template       string `yaml:"template,omitempty"`
+	TemplateFolder string `yaml:"templateFolder,omitempty"`
 }

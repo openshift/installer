@@ -2,11 +2,11 @@ package gcp
 
 // Config defines the GCP configuraiton for a cluster.
 type Config struct {
-	ConfigVersion            string    `yaml:"ConfigVersion,omitempty"`
-	Etcd                     component `yaml:"Etcd,omitempty"`
-	ExtGoogleManagedZoneName string    `yaml:"ExtGoogleManagedZoneName,omitempty"`
-	Master                   component `yaml:"Master,omitempty"`
-	Region                   string    `yaml:"Region,omitempty"`
-	SSHKey                   string    `yaml:"SSHKey,omitempty"`
-	Worker                   component `yaml:"Worker,omitempty"`
+	ConfigVersion            string    `yaml:"configVersion,omitempty"`
+	Etcd                     component `yaml:"etcd,omitempty"`
+	ExtGoogleManagedZoneName string    `yaml:"extGoogleManagedZoneName,omitempty"`
+	Master                   component `yaml:"master,omitempty"`
+	Region                   string    `yaml:"region,omitempty"`
+	SSHKey                   string    `yaml:"sshKey,omitempty"`
+	Worker                   component `yaml:"worker,omitempty"`
 }

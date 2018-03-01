@@ -2,16 +2,16 @@ package vmware
 
 // Config defines the VMware configuraiton for a cluster.
 type Config struct {
-	ControllerDomain string    `yaml:"ControllerDomain,omitempty"`
-	Etcd             component `yaml:"Etcd,omitempty"`
-	Folder           string    `yaml:"Folder,omitempty"`
-	IngressDomain    string    `yaml:"IngressDomain,omitempty"`
-	Master           component `yaml:"Master,omitempty"`
-	NodeDNS          string    `yaml:"NodeDNS,omitempty"`
-	Server           string    `yaml:"Server,omitempty"`
-	SSH              ssh       `yaml:"SSH,omitempty"`
-	SSLSelfSigned    string    `yaml:"SSLSelfsigned,omitempty"`
-	Type             string    `yaml:"Type,omitempty"`
-	VM               vm        `yaml:"VM,omitempty"`
-	Worker           component `yaml:"Worker,omitempty"`
+	ControllerDomain string    `yaml:"controllerDomain,omitempty"`
+	Etcd             component `yaml:"etcd,omitempty"`
+	Folder           string    `yaml:"folder,omitempty"`
+	IngressDomain    string    `yaml:"ingressDomain,omitempty"`
+	Master           component `yaml:"master,omitempty"`
+	NodeDNS          string    `yaml:"nodeDNS,omitempty"`
+	Server           string    `yaml:"server,omitempty"`
+	SSH              ssh       `yaml:"ssh,omitempty"`
+	SSLSelfSigned    string    `yaml:"sslSelfsigned,omitempty"`
+	Type             string    `yaml:"type,omitempty"`
+	VM               vm        `yaml:"vm,omitempty"`
+	Worker           component `yaml:"worker,omitempty"`
 }

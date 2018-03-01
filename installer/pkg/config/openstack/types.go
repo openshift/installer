@@ -1,6 +1,6 @@
 package openstack
 
 type flavor struct {
-	ID   string `yaml:"ID,omitempty"`
-	Name string `yaml:"Name,omitempty"`
+	ID   string `yaml:"id,omitempty"`
+	Name string `yaml:"name,omitempty"`
 }

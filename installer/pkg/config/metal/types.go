@@ -1,20 +1,20 @@
 package metal
 
 type client struct {
-	Cert string `yaml:"Cert,omitempty"`
-	Key  string `yaml:"Key,omitempty"`
+	Cert string `yaml:"cert,omitempty"`
+	Key  string `yaml:"key,omitempty"`
 }
 
 type component struct {
-	Domain  string `yaml:"Domain,omitempty"`
-	Domains string `yaml:"Domains,omitempty"`
-	MACs    string `yaml:"MACs,omitempty"`
-	Names   string `yaml:"Names,omitempty"`
+	Domain  string `yaml:"domain,omitempty"`
+	Domains string `yaml:"domains,omitempty"`
+	MACs    string `yaml:"macs,omitempty"`
+	Names   string `yaml:"names,omitempty"`
 }
 
 type matchbox struct {
-	CA          string `yaml:"CA,omitempty"`
-	Client      client `yaml:"Client,omitempty"`
-	HTTPURL     string `yaml:"HTTPURL,omitempty"`
-	RPCEndpoint string `yaml:"RPCEndpoint,omitempty"`
+	CA          string `yaml:"ca,omitempty"`
+	Client      client `yaml:"client,omitempty"`
+	HTTPURL     string `yaml:"httpURL,omitempty"`
+	RPCEndpoint string `yaml:"rpcEndpoint,omitempty"`
 }

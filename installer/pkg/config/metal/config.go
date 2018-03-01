@@ -2,10 +2,10 @@ package metal
 
 // Config defines the Metal configuraiton for a cluster.
 type Config struct {
-	CalicoMTU        string    `yaml:"CalicoMTU,omitempty"`
-	Controller       component `yaml:"Controller,omitempty"`
-	IngressDomain    string    `yaml:"IngressDomain,omitempty"`
-	Matchbox         matchbox  `yaml:"Matchbox,omitempty"`
-	SSHAuthorizedKey string    `yaml:"SSHAuthorizedKey,omitempty"`
-	Worker           component `yaml:"Worker,omitempty"`
+	CalicoMTU        string    `yaml:"calicoMTU,omitempty"`
+	Controller       component `yaml:"controller,omitempty"`
+	IngressDomain    string    `yaml:"ingressDomain,omitempty"`
+	Matchbox         matchbox  `yaml:"matchbox,omitempty"`
+	SSHAuthorizedKey string    `yaml:"sshAuthorizedKey,omitempty"`
+	Worker           component `yaml:"worker,omitempty"`
 }

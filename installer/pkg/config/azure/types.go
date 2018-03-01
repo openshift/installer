@@ -1,30 +1,30 @@
 package azure
 
 type component struct {
-	StorageType string `yaml:"StorageType,omitempty"`
-	VMSize      string `yaml:"VMSize,omitempty"`
+	StorageType string `yaml:"storageType,omitempty"`
+	VMSize      string `yaml:"vmSize,omitempty"`
 }
 
 type external struct {
-	DNSZoneID      string `yaml:"DNSZoneID,omitempty"`
-	MasterSubnetID string `yaml:"MasterSubnetID,omitempty"`
-	NSG            nsg    `yaml:"NSG,omitempty"`
-	ResourceGroup  string `yaml:"ResourceGroup,omitempty"`
-	VNetID         string `yaml:"VNetID,omitempty"`
-	WorkerSubnetID string `yaml:"WorkerSubnetID,omitempty"`
+	DNSZoneID      string `yaml:"dnsZoneID,omitempty"`
+	MasterSubnetID string `yaml:"masterSubnetID,omitempty"`
+	NSG            nsg    `yaml:"nsg,omitempty"`
+	ResourceGroup  string `yaml:"resourceGroup,omitempty"`
+	VNetID         string `yaml:"vNetID,omitempty"`
+	WorkerSubnetID string `yaml:"workerSubnetID,omitempty"`
 }
 
 type network struct {
-	External string `yaml:"External,omitempty"`
-	Internal string `yaml:"Internal,omitempty"`
+	External string `yaml:"external,omitempty"`
+	Internal string `yaml:"internal,omitempty"`
 }
 
 type nsg struct {
-	MasterID string `yaml:"MasterID,omitempty"`
-	WorkerID string `yaml:"WorkerID,omitempty"`
+	MasterID string `yaml:"masterID,omitempty"`
+	WorkerID string `yaml:"workerID,omitempty"`
 }
 
 type ssh struct {
-	Key     string  `yaml:"Key,omitempty"`
-	Network network `yaml:"Network,omitempty"`
+	Key     string  `yaml:"key,omitempty"`
+	Network network `yaml:"network,omitempty"`
 }

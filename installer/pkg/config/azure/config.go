@@ -2,13 +2,13 @@ package azure
 
 // Config defines the Azure configuraiton for a cluster.
 type Config struct {
-	CloudEnvironment string    `yaml:"CloudEnvironment,omitempty"`
-	Etcd             component `yaml:"Etcd,omitempty"`
-	External         external  `yaml:"External,omitempty"`
-	ExtraTags        string    `yaml:"ExtraTags,omitempty"`
-	Master           component `yaml:"Master,omitempty"`
-	PrivateCluster   string    `yaml:"PrivateCluster,omitempty"`
-	SSH              ssh       `yaml:"SSH,omitempty"`
-	VNetCIDRBlock    string    `yaml:"VNetCIDRBlock,omitempty"`
-	Worker           component `yaml:"Worker,omitempty"`
+	CloudEnvironment string    `yaml:"cloudEnvironment,omitempty"`
+	Etcd             component `yaml:"etcd,omitempty"`
+	External         external  `yaml:"external,omitempty"`
+	ExtraTags        string    `yaml:"extraTags,omitempty"`
+	Master           component `yaml:"master,omitempty"`
+	PrivateCluster   string    `yaml:"privateCluster,omitempty"`
+	SSH              ssh       `yaml:"ssh,omitempty"`
+	VNetCIDRBlock    string    `yaml:"vNetCIDRBlock,omitempty"`
+	Worker           component `yaml:"worker,omitempty"`
 }
