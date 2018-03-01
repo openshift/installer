@@ -20,19 +20,10 @@ go_library(
     ],
 )
 
-filegroup(
-    name = "config_generator_fixtures",
-    srcs = [
-        "fixtures/kube-system.yaml",
-        "fixtures/test-aws.yaml",
-        "fixtures/test.yaml",
-    ],
-)
-
 go_test(
     name = "go_default_test",
     srcs = ["generator_test.go"],
     embed = [":go_default_library"],
-    data = [":config_generator_fixtures"],
+    data = glob(["fixtures/**"]),
     deps = ["//installer/pkg/config:go_default_library"],
 )
