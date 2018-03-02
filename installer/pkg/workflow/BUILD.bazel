@@ -2,7 +2,8 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_test(
     name = "go_default_test",
-    srcs = ["workflow_test.go"],
+    srcs = ["workflow_test.go", "init_test.go"],
+    data = glob(["fixtures/**"]),
     embed = [":go_default_library"],
 )
 
