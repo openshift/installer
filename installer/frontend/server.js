@@ -76,7 +76,7 @@ let observeInterval;
 export const commitToServer = (dryRun = false, retry = false) => (dispatch, getState) => {
   dispatch(setIn(DRY_RUN, dryRun));
   dispatch(setIn(RETRY, retry));
-  dispatch(serverActions.requested);
+  dispatch(serverActions.requested());
 
   const state = getState();
 
@@ -104,7 +104,7 @@ export const commitToServer = (dryRun = false, retry = false) => (dispatch, getS
       , payload => dispatch(serverActions.failed(payload)))
     .catch(err => console.error(err));
 
-  return dispatch(serverActions.sent);
+  return dispatch(serverActions.sent());
 };
 
 // One-time fetch of initial data from server, followed by firing appropriate actions
