@@ -9,7 +9,7 @@ import (
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
 )
 
-func initCluster(t *testing.T, file string) config.Cluster {
+func initTestCluster(t *testing.T, file string) config.Cluster {
 	testConfig, err := config.ParseFile(file)
 	if err != nil {
 		t.Errorf("Test case TestGenerateTerraformVariablesStep: failed to parse test config, %s", err)
@@ -18,33 +18,34 @@ func initCluster(t *testing.T, file string) config.Cluster {
 }
 
 func TestGenerateTerraformVariablesStep(t *testing.T) {
-
-	cluster := initCluster(t, "./fixtures/aws.basic.yaml")
-	clusterDir := "./"
+	cluster := initTestCluster(t, "./fixtures/aws.basic.yaml")
+	expectedTfVarsFilePath := "./fixtures/terraform.tfvars"
+	clusterDir := "."
 	m := &metadata{
 		cluster:    cluster,
 		clusterDir: clusterDir,
 	}
+
 	generateTerraformVariablesStep(m)
-	terraformVariablesFilePath := filepath.Join(m.clusterDir, terraformVariablesFileName)
-	gotData, err := ioutil.ReadFile(terraformVariablesFilePath)
+	gotTfVarsFilePath := filepath.Join(m.clusterDir, terraformVariablesFileName)
+	gotData, err := ioutil.ReadFile(gotTfVarsFilePath)
 	if err != nil {
-		t.Errorf("Test case TestGenerateTerraformVariablesStep: failed to ReadFile(): %s", err)
+		t.Errorf("Failed to load generated tf vars file: %s", err)
 	}
 	got := string(gotData)
 
-	expectedData, err := ioutil.ReadFile("./fixtures/terraform.tfvars")
+	expectedData, err := ioutil.ReadFile(expectedTfVarsFilePath)
 	if err != nil {
-		t.Errorf("Test case TestGenerateTerraformVariablesStep: failed to ReadFile(): %s", err)
+		t.Errorf("Failed to load expected tf vars file: %s", err)
 	}
 	expected := string(expectedData)
 
 	if got != expected {
-		t.Errorf("Test case TestGenerateTerraformVariablesStep: expected: %s, got: %s", expected, got)
+		t.Errorf("Expected: %s, got: %s", expected, got)
 	}
 
 	// clean up
-	if err := os.Remove(terraformVariablesFilePath); err != nil {
-		t.Errorf("TestGenerateTerraformVariablesStep: failed to clean up temp file: %s", err)
+	if err := os.Remove(gotTfVarsFilePath); err != nil {
+		t.Errorf("Failed to clean up generated tf vars file: %s", err)
 	}
 }
