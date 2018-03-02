@@ -174,14 +174,8 @@ const BulkUpload = connect(null, dispatch => ({
 );
 
 const rowFields = {
-  mac: {
-    default: '',
-    validator: validate.MAC,
-  },
-  host: {
-    default: '',
-    validator: validate.host,
-  },
+  mac: {validator: validate.MAC},
+  host: {validator: validate.host},
 };
 
 const makeFieldList = (id, name, maxNodes) => new FieldList(id, rowFields, {

@@ -9,8 +9,8 @@ import { CONTROLLER_DOMAIN, BM_TECTONIC_DOMAIN } from '../cluster-config';
 const validator = compose(validate.nonEmpty, validate.domainName);
 
 const hostNamesForm = new Form('BM_Hostname', [
-  new Field(CONTROLLER_DOMAIN, { validator, default: '' }),
-  new Field(BM_TECTONIC_DOMAIN, { validator, default: '' }),
+  new Field(CONTROLLER_DOMAIN, {validator}),
+  new Field(BM_TECTONIC_DOMAIN, {validator}),
 ]);
 
 export const BM_Hostname = () =>

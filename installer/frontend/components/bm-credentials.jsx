@@ -9,9 +9,9 @@ import { validate } from '../validate';
 import { CertArea, Connect, PrivateKeyArea } from './ui';
 
 const form = new Form('BM_MATCHBOX_CREDENTIALS', [
-  new Field(BM_MATCHBOX_CA, {default: '', validator: validate.certificate}),
-  new Field(BM_MATCHBOX_CLIENT_CERT, {default: '', validator: validate.certificate}),
-  new Field(BM_MATCHBOX_CLIENT_KEY, {default: '', validator: validate.privateKey}),
+  new Field(BM_MATCHBOX_CA, {validator: validate.certificate}),
+  new Field(BM_MATCHBOX_CLIENT_CERT, {validator: validate.certificate}),
+  new Field(BM_MATCHBOX_CLIENT_KEY, {validator: validate.privateKey}),
 ]);
 
 export const BM_Credentials = () => <div>

@@ -6,9 +6,9 @@ import { Field, Form } from '../form';
 import { Input, Password, Connect } from './ui';
 
 const credsForm = new Form(CREDS, [
-  new Field(ADMIN_EMAIL, {default: '', validator: validate.email}),
-  new Field(ADMIN_PASSWORD, {default: '', validator: validate.nonEmpty}),
-  new Field(ADMIN_PASSWORD2, {default: '', validator: validate.nonEmpty}),
+  new Field(ADMIN_EMAIL, {validator: validate.email}),
+  new Field(ADMIN_PASSWORD, {validator: validate.nonEmpty}),
+  new Field(ADMIN_PASSWORD2, {validator: validate.nonEmpty}),
 ], {
   validator: (data, cc) => {
     if (cc[ADMIN_PASSWORD] && cc[ADMIN_PASSWORD2] && cc[ADMIN_PASSWORD] !== cc[ADMIN_PASSWORD2]) {

@@ -124,7 +124,6 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
   }),
   new Field(AWS_CREATE_VPC, {default: VPC_CREATE}),
   new Field(AWS_HOSTED_ZONE_ID, {
-    default: '',
     dependencies: [AWS_REGION_FORM],
     validator: (value, cc) => {
       const empty = validate.nonEmpty(value);
@@ -159,7 +158,6 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
   new Field(AWS_SPLIT_DNS, {default: SPLIT_DNS_ON}),
   new Field(AWS_VPC_CIDR, {default: DEFAULT_AWS_VPC_CIDR, validator: validate.AWSsubnetCIDR}),
   new Field(AWS_VPC_ID, {
-    default: '',
     dependencies: [AWS_REGION_FORM],
     getExtraStuff: (dispatch, isNow) => dispatch(getVpcs(null, null, isNow)).then(vpcs => ({options: toOptions(vpcs)})),
     ignoreWhen: cc => cc[AWS_CREATE_VPC] === VPC_CREATE,
@@ -167,7 +165,7 @@ const vpcInfoForm = new Form(AWS_VPC_FORM, [
   }),
   new Field(AWS_WORKER_SUBNETS, {default: {}}),
   new Field(AWS_WORKER_SUBNET_IDS, {default: {}}),
-  new Field(CLUSTER_SUBDOMAIN, {default: '', validator: compose(validate.nonEmpty, validate.domainName)}),
+  new Field(CLUSTER_SUBDOMAIN, {validator: compose(validate.nonEmpty, validate.domainName)}),
   new Field(DESELECTED_FIELDS, {default: {}}),
 ], {
   dependencies: [POD_CIDR, SERVICE_CIDR],

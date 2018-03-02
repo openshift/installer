@@ -23,7 +23,6 @@ import {
 const awsCredsForm = new Form(AWS_CREDS, [
   new Field(STS_ENABLED, {default: false}),
   new Field(AWS_ACCESS_KEY_ID, {
-    default: '',
     validator: compose(validate.nonEmpty, (v) => {
       if (v.indexOf('@') >= 0) {
         return 'AWS access key IDs are not email addresses.';
@@ -37,7 +36,6 @@ const awsCredsForm = new Form(AWS_CREDS, [
     }),
   }),
   new Field(AWS_SECRET_ACCESS_KEY, {
-    default: '',
     validator: compose(validate.nonEmpty, (v) => {
       if (v.length < 40) {
         return 'AWS secrets are at least 40 characters.';
@@ -48,7 +46,6 @@ const awsCredsForm = new Form(AWS_CREDS, [
     }),
   }),
   new Field(AWS_SESSION_TOKEN, {
-    default: '',
     validator: validate.nonEmpty,
     dependencies: [STS_ENABLED],
     ignoreWhen: cc => !cc[STS_ENABLED],
@@ -58,7 +55,6 @@ const awsCredsForm = new Form(AWS_CREDS, [
 const selectRegionForm = new Form(AWS_REGION_FORM, [
   awsCredsForm,
   new Field(AWS_REGION, {
-    default: '',
     validator: validate.nonEmpty,
     dependencies: [AWS_CREDS],
     getExtraStuff: (dispatch, isNow) => dispatch(getRegions(isNow)),

@@ -15,10 +15,7 @@ you@example.com
 `;
 
 const sshKeyForm = new Form(BM_SSH_KEY, [
-  new Field(SSH_AUTHORIZED_KEY, {
-    default: '',
-    validator: validate.SSHKey,
-  }),
+  new Field(SSH_AUTHORIZED_KEY, {validator: validate.SSHKey}),
 ]);
 
 export const BM_SSHKeys = () => <div>

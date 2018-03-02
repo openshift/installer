@@ -12,7 +12,7 @@ import { Connect, DocsA, Input } from './ui';
 import { BM_MATCHBOX_HTTP, BM_MATCHBOX_RPC, BM_OS_TO_USE } from '../cluster-config';
 
 new Form('BM_MATCHBOX_ADDRESS', [
-  new Field(BM_MATCHBOX_RPC, {default: '', validator: validate.hostPort}),
+  new Field(BM_MATCHBOX_RPC, {validator: validate.hostPort}),
 ]);
 
 const COREOS_VERSIONS_ERROR_NAME = 'COREOS_VERSIONS_ERROR_NAME';

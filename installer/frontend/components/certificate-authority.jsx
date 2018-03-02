@@ -9,11 +9,9 @@ import { CertArea, Connect, PrivateKeyArea, Radio } from './ui';
 const form = new Form('CERTIFICATE_AUTHORITY', [
   new Field(CA_TYPE, {default: CA_TYPES.SELF_SIGNED}),
   new Field(CA_CERTIFICATE, {
-    default: '',
     ignoreWhen: cc => cc[CA_TYPE] !== CA_TYPES.OWNED,
   }),
   new Field(CA_PRIVATE_KEY, {
-    default: '',
     ignoreWhen: cc => cc[CA_TYPE] !== CA_TYPES.OWNED,
   }),
 ], {
