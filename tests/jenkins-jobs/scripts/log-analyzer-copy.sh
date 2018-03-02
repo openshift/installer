@@ -102,14 +102,30 @@ case "${action}" in
     fields[platform]=$(echo -n "${testFilePath}" | cut -d'/' -f2)
     fields[specName]=$(echo -n "${testFilePath}" | cut -d'/' -f3 | sed -e 's/_spec\.rb//')
 
-    # Checks whether there are any log files
-    if ! compgen -G ../build/*/*.log >/dev/null ; then
-      # Nothing to do
-      exit 0
+    logfiles_found="false"
+
+    # Old _terraform_ workflow copies logs to `build/<cluster_name>/*.log`
+    if compgen -G ../bazel-bin/tectonic/build/*/*.log >/dev/null ; then
+        # Note: only 1 sub-dir under build/ is expected. If the glob were to
+        # match >1 files with the same name in different build/* dirs, then cp
+        # is smart enough to exit with an error.
+        logfiles_found="true"
+        cp ../bazel-bin/tectonic/build/*/*.log .
     fi
-    # Note: only 1 sub-dir under build/ is expected. If the glob were to match >1 files with the same name in different
-    # build/* dirs, then cp is smart enough to exit with an error.
-    cp ../build/*/*.log .
+
+    # New _Tectonic CLI_ workflow copies logs to `<cluster_name>/*.log`
+    if compgen -G ../bazel-bin/tectonic/*/*.log >/dev/null ; then
+        # Note: only 1 sub-dir under */ is expected. If the glob were to match
+        # >1 files with the same name in different build/* dirs, then cp is
+        # smart enough to exit with an error.
+        logfiles_found="true"
+        cp ../bazel-bin/tectonic/*/*.log .
+    fi
+
+    if [ "${logfiles_found}" = "false" ]; then
+        echo "no logfiles found in cluster folder, exiting"
+        exit 0
+    fi
     ;;
 
   "jenkins-logs")
