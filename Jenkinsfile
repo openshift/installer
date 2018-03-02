@@ -473,7 +473,7 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
       } finally {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
         step([$class: "TapPublisher", testResults: "templogfiles/*", outputTapToConsole: true, planRequired: false])
-        archiveArtifacts allowEmptyArchive: true, artifacts: 'bazel-bin/tectonic/build/**/logs/**'
+        archiveArtifacts allowEmptyArchive: true, artifacts: 'bazel-bin/tectonic/**/logs/**'
         withDockerContainer(params.builder_image) {
          withCredentials(credsUI) {
           script {
@@ -524,7 +524,7 @@ def runRSpecTestBareMetal(testFilePath, credentials) {
       } finally {
         reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
         step([$class: "TapPublisher", testResults: "../../templogfiles/*", outputTapToConsole: true, planRequired: false])
-        archiveArtifacts allowEmptyArchive: true, artifacts: 'bazel-bin/tectonic/build/**/logs/**'
+        archiveArtifacts allowEmptyArchive: true, artifacts: 'bazel-bin/tectonic/**/logs/**'
         withCredentials(credsUI) {
           script {
             try {
