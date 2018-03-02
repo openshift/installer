@@ -42,8 +42,6 @@ We use `sessionStorage` instead of `localStorage` to persist the installer state
 
 The Start Over link provides a way to clear the app state without closing the tab. First `sessionStorage` is cleared and then the app is reloaded to clear the Redux state. This does not cancel any cluster install or destroy actions that may be in progress.
 
-Redux actions (`actions.js`, `aws-actions.js`) are currently defined inconsistently with some using action creator functions and some not and also with inconsistent naming and parameter ordering. It would be good to refactor, e.g. by consistently using action creators.
-
 ## App Initialization
 When the installer GUI starts, code in `app.jsx` goes through the initialization steps below.
 1. Restore state from `sessionStorage`, if it exists.
