@@ -26,8 +26,9 @@ resource "tls_self_signed_cert" "kube_ca" {
   private_key_pem = "${tls_private_key.kube_ca.private_key_pem}"
 
   subject {
-    common_name  = "kube-ca"
-    organization = "bootkube"
+    common_name         = "kube-ca"
+    organization        = "${uuid()}"
+    organizational_unit = "bootkube"
   }
 
   is_ca_certificate     = true
@@ -38,4 +39,8 @@ resource "tls_self_signed_cert" "kube_ca" {
     "digital_signature",
     "cert_signing",
   ]
+
+  lifecycle {
+    ignore_changes = ["subject"]
+  }
 }
