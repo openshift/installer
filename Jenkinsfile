@@ -154,9 +154,14 @@ pipeline {
       description: 'Slack channel to notify on failure.'
     )
     string(
-      name : 'GITHUB_REPO',
+      name: 'GITHUB_REPO',
       defaultValue: 'coreos/tectonic-installer',
       description: 'Github repository'
+    )
+    string(
+      name: 'SPECIFIC_GIT_COMMIT',
+      description: 'Checkout a specific git ref (e.g. sha or tag). If not set, Jenkins uses the most recent commit of the triggered branch.',
+      defaultValue: '',
     )
   }
 
@@ -173,10 +178,27 @@ pipeline {
             try {
               timeout(time: 20, unit: 'MINUTES') {
                 forcefullyCleanWorkspace()
-                checkout scm
-                stash name: 'clean-repo', excludes: 'installer/vendor/**,tests/smoke/vendor/**'
-                originalCommitId = sh(returnStdout: true, script: 'git rev-parse origin/"\${BRANCH_NAME}"').trim()
+
+                /*
+                  This supports users who require builds at a specific git ref
+                  instead of the branch tip.
+                */
+                if (params.SPECIFIC_GIT_COMMIT == '') {
+                  checkout scm
+                  originalCommitId = sh(returnStdout: true, script: 'git rev-parse origin/"\${BRANCH_NAME}"').trim()
+                } else {
+                  checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: params.SPECIFIC_GIT_COMMIT]],
+                    userRemoteConfigs: [[url: "https://github.com/${params.GITHUB_REPO}.git"]]
+                  ])
+                  // In case params.SPECIFIC_GIT_COMMIT is a mutable tag instead
+                  // of a sha
+                  originalCommitId = sh(returnStdout: true, script: "git rev-parse ${params.SPECIFIC_GIT_COMMIT}").trim()
+                }
+
                 echo "originalCommitId: ${originalCommitId}"
+                stash name: 'clean-repo', excludes: 'installer/vendor/**,tests/smoke/vendor/**'
 
                 withDockerContainer(tectonicBazelImage) {
                   sh "bazel test terraform_fmt --test_output=all"
