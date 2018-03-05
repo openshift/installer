@@ -33,5 +33,6 @@ test_suite(
     tests = [
         "//installer/pkg/workflow:go_default_test",
         "//installer/pkg/config-generator:go_default_test",
+        "//installer/pkg/validate:go_default_test",
     ],
 )
