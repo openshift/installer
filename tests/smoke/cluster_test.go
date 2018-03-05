@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/pkg/api"
 	"k8s.io/client-go/pkg/api/v1"
 	"k8s.io/client-go/pkg/apis/extensions/v1beta1"
+	rbacv1beta1 "k8s.io/client-go/pkg/apis/rbac/v1beta1"
 	"k8s.io/client-go/tools/clientcmd"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	"k8s.io/kubernetes/pkg/kubectl/resource"
@@ -367,6 +368,33 @@ func testAllResourcesCreated(t *testing.T) {
 	}
 }
 
+var networkPolicyTestNamespacePSPRoleBinding = []byte(`kind: RoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: permissive-psp-access
+  namespace: network-policy-test
+subjects:
+- kind: ServiceAccount
+  name: replicaset-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: replication-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: job-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: daemon-set-controller
+  namespace: kube-system
+- kind: ServiceAccount
+  name: statefulset-controller
+  namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: permissive-psp-access
+  apiGroup: rbac.authorization.k8s.io
+`)
+
 // testNetworkPolicy permforms 3 tests:
 // * first ping test to check if network is setup correctly and reachable.
 // * second ping test after setting `default-deny` policy on `network-policy-test` namespace
@@ -379,15 +407,39 @@ func testNetworkPolicy(t *testing.T) {
 		client    kubernetes.Interface
 	)
 	client, _ = newClient(t)
-	_, err := client.CoreV1().Namespaces().Create(&v1.Namespace{
-		ObjectMeta: metav1.ObjectMeta{
-			Name: namespace,
-		},
-	})
-	if apierrors.IsAlreadyExists(err) {
-		t.Logf("ns already exists")
-	} else if err != nil {
-		t.Fatalf("failed to create namespace with name %v", namespace)
+
+	ns := func(t *testing.T) error {
+		_, err := client.CoreV1().Namespaces().Create(&v1.Namespace{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: namespace,
+			},
+		})
+		if apierrors.IsAlreadyExists(err) {
+			t.Logf("ns already exists")
+		} else if err != nil {
+			return fmt.Errorf("failed to create namespace with name %v", namespace)
+		}
+
+		rbi, _, err := api.Codecs.UniversalDecoder().Decode(networkPolicyTestNamespacePSPRoleBinding, nil, &rbacv1beta1.RoleBinding{})
+		if err != nil {
+			return fmt.Errorf("unable to decode network policy manifest: %v", err)
+		}
+		rb, ok := rbi.(*rbacv1beta1.RoleBinding)
+		if !ok {
+			return fmt.Errorf("expected manifest to decode into *rbacv1beta1.RoleBinding, got %T", rbi)
+		}
+		_, err = client.RbacV1beta1().RoleBindings(namespace).Create(rb)
+		if apierrors.IsAlreadyExists(err) {
+			t.Logf("rolebinding already exists")
+		} else if err != nil {
+			return fmt.Errorf("failed to create rolebinding %v", rb)
+		}
+		return nil
+	}
+
+	max := 10 * time.Minute
+	if err := retry(ns, t, 30*time.Second, max); err != nil {
+		t.Fatalf("timed out waiting for namespace to be setup")
 	}
 
 	if err := wait.Poll(10*time.Second, 2*time.Minute, func() (bool, error) {
