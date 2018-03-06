@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "bool.go",
+        "bool_slice.go",
         "count.go",
         "duration.go",
         "flag.go",
@@ -16,6 +17,7 @@ go_library(
         "int8.go",
         "int_slice.go",
         "ip.go",
+        "ip_slice.go",
         "ipmask.go",
         "ipnet.go",
         "string.go",
@@ -26,6 +28,7 @@ go_library(
         "uint32.go",
         "uint64.go",
         "uint8.go",
+        "uint_slice.go",
     ],
     importpath = "github.com/spf13/pflag",
     visibility = ["//visibility:public"],

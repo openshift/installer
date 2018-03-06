@@ -12,7 +12,7 @@ job("maintenance/tag_clean_aws_resources_grafiti") {
       stringParam('DATE_OVERRIDE', '', 'Optional. YYYY-MM-DD formatted tag value of resources to delete.')
       stringParam('START_HOUR', '7', 'Used only when in Tag mode. Number of hours prior to now to start parsing logs from CloudTrail.')
       stringParam('END_HOUR', '0', 'Used only when in Tag mode. Number of hours prior to now to stop parsing logs from CloudTrail.')
-      stringParam('SCRIPT_DIR', 'installer/scripts', 'Folder which contains the scripts to run grafiti.')
+      stringParam('SCRIPT_DIR', 'scripts', 'Folder which contains the scripts to run grafiti.')
   }
 
   label('worker&&ec2')

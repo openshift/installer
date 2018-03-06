@@ -9,21 +9,21 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//installer/pkg/config:go_default_library",
+        "//installer/vendor/github.com/apparentlymart/go-cidr/cidr:go_default_library",
         "//installer/vendor/github.com/coreos/tectonic-config/config/kube-addon:go_default_library",
         "//installer/vendor/github.com/coreos/tectonic-config/config/kube-core:go_default_library",
         "//installer/vendor/github.com/coreos/tectonic-config/config/tectonic-network:go_default_library",
         "//installer/vendor/github.com/coreos/tectonic-config/config/tectonic-utility:go_default_library",
         "//installer/vendor/github.com/ghodss/yaml:go_default_library",
-        "//installer/vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
-        "//installer/vendor/github.com/apparentlymart/go-cidr/cidr:go_default_library",
         "//installer/vendor/golang.org/x/crypto/bcrypt:go_default_library",
+        "//installer/vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
     ],
 )
 
 go_test(
     name = "go_default_test",
     srcs = ["generator_test.go"],
-    embed = [":go_default_library"],
     data = glob(["fixtures/**"]),
+    embed = [":go_default_library"],
     deps = ["//installer/pkg/config:go_default_library"],
 )

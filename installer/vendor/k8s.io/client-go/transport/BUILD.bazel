@@ -12,6 +12,9 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//installer/vendor/github.com/golang/glog:go_default_library",
-        "//installer/vendor/k8s.io/client-go/pkg/util/net:go_default_library",
+        "//installer/vendor/github.com/gregjones/httpcache:go_default_library",
+        "//installer/vendor/github.com/gregjones/httpcache/diskcache:go_default_library",
+        "//installer/vendor/github.com/peterbourgon/diskv:go_default_library",
+        "//installer/vendor/k8s.io/apimachinery/pkg/util/net:go_default_library",
     ],
 )

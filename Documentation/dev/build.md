@@ -67,11 +67,11 @@ tectonic
 ├── platforms
 └── tectonic-installer
     ├── darwin
-    │   ├── installer
+    │   ├── tectonic
     │   ├── terraform
     │   └── terraform-provider-matchbox
     └── linux
-        ├── installer
+        ├── tectonic
         ├── terraform
         └── terraform-provider-matchbox
 ```
@@ -95,23 +95,6 @@ tectonic_1.2.3-beta
 ```
 
 *Note*: the generated tarball will not include the version string in its own name since output names must be known ahead of time in Bazel. To include the version in the tarball name, copy or move the archive with the desired name in the destination.
-
-## Building the Installer Binary
-
-For cases where the entire Tectonic tarball is not needed and only the Tectonic Installer GUI is required, the installer binary can be built by itself.
-To build the Tectonic Installer binary, issue the following command from the `tectonic-installer` root directory:
-
-```sh
-bazel build backend
-```
-
-This will produce a binary located at `bazel-bin/installer/cmd/installer/linux_amd64_pure_stripped/installer` when built on a Linux machine or `bazel-bin/installer/cmd/installer/darwin_amd64_pure_stripped/installer` if built on a Mac.
-
-To build a cross-compiled binary for another platform, e.g. a Darwin binary on a Linux machine, specify the target platform explicitly:
-
-```sh
-bazel build backend --experimental_platforms=@io_bazel_rules_go//go/toolchain:darwin_amd64
-```
 
 ## Building the Smoke Test Binary
 
