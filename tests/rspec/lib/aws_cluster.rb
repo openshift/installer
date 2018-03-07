@@ -193,7 +193,7 @@ class AwsCluster < Cluster
         env = env_variables
         env['TF_DESTROY_OPTIONS'] = '-no-color'
         env['TF_INIT_OPTIONS'] = '-no-color'
-        return run_tectonic_cli(env, 'destroy', @name)
+        return run_tectonic_cli(env, 'destroy', "--dir=#{@name}")
       end
     end
 

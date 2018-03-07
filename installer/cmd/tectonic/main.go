@@ -20,7 +20,7 @@ var (
 	clusterInstallDirFlag          = clusterInstallCommand.Flag("dir", "Cluster directory").Default(".").ExistingDir()
 
 	clusterDestroyCommand = kingpin.Command("destroy", "Destroy an existing Tectonic cluster")
-	clusterDestroyDirFlag = clusterDestroyCommand.Arg("dir", "Cluster directory").Default(".").ExistingDir()
+	clusterDestroyDirFlag = clusterDestroyCommand.Flag("dir", "Cluster directory").Default(".").ExistingDir()
 )
 
 func main() {

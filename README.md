@@ -81,7 +81,7 @@ These instructions can be used for the official stable platforms listed above, a
 
 8. Teardown Tectonic cluster
     ```shell
-    tectonic destroy $CLUSTER_NAME
+    tectonic destroy --dir=$CLUSTER_NAME
     ```
 
 
