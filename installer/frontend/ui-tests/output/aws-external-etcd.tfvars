@@ -7,7 +7,7 @@
   },
   "tectonic_aws_master_custom_subnets": {
     "us-west-1a": "10.0.0.0/19",
-    "us-west-1c": "10.0.32.0/20"
+    "us-west-1c": "10.0.32.0/19"
   },
   "tectonic_aws_master_ec2_type": "m3.large",
   "tectonic_aws_master_root_volume_iops": 2000,
@@ -19,7 +19,7 @@
   "tectonic_aws_vpc_cidr_block": "10.0.0.0/16",
   "tectonic_aws_worker_custom_subnets": {
     "us-west-1a": "10.0.64.0/19",
-    "us-west-1c": "10.0.96.0/20"
+    "us-west-1c": "10.0.96.0/19"
   },
   "tectonic_aws_worker_ec2_type": "m3.medium",
   "tectonic_aws_worker_root_volume_size": 100,

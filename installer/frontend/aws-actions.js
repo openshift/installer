@@ -107,10 +107,14 @@ export const getDefaultSubnets = (body, creds, isNow) => (dispatch, getState) =>
         return;
       }
 
+      // TODO: This will overwrite any user entered subnet CIDRs if the page is refreshed. Once this bug is fixed, the
+      //       Nightwatch tests will also need to be updated since they reflect the effect of this bug.
+      dispatch(configActions.batchSetIn([
+        [AWS_CONTROLLER_SUBNETS, _.fromPairs(_.map(subnets.public, s => [s.availabilityZone, s.instanceCIDR]))],
+        [AWS_WORKER_SUBNETS, _.fromPairs(_.map(subnets.private, s => [s.availabilityZone, s.instanceCIDR]))],
+      ]));
+
       // Use addIn to preserve any existing values
-      const add = (path, v) => dispatch(configActions.addIn(path, v));
-      add(AWS_CONTROLLER_SUBNETS, _.fromPairs(_.map(subnets.public, s => [s.availabilityZone, s.instanceCIDR])));
-      add(AWS_CONTROLLER_SUBNET_IDS, {});
-      add(AWS_WORKER_SUBNETS, _.fromPairs(_.map(subnets.private, s => [s.availabilityZone, s.instanceCIDR])));
-      add(AWS_WORKER_SUBNET_IDS, {});
+      dispatch(configActions.addIn(AWS_CONTROLLER_SUBNET_IDS, {}));
+      dispatch(configActions.addIn(AWS_WORKER_SUBNET_IDS, {}));
     });
