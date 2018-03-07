@@ -185,7 +185,7 @@ pipeline {
                 */
                 if (params.SPECIFIC_GIT_COMMIT == '') {
                   checkout scm
-                  originalCommitId = sh(returnStdout: true, script: 'git rev-parse origin/"\${BRANCH_NAME}"').trim()
+                  originalCommitId = sh(returnStdout: true, script: 'git rev-parse "origin/${BRANCH_NAME}"').trim()
                 } else {
                   checkout([
                     $class: 'GitSCM',
@@ -194,7 +194,7 @@ pipeline {
                   ])
                   // In case params.SPECIFIC_GIT_COMMIT is a mutable tag instead
                   // of a sha
-                  originalCommitId = sh(returnStdout: true, script: "git rev-parse ${params.SPECIFIC_GIT_COMMIT}").trim()
+                  originalCommitId = sh(returnStdout: true, script: 'git rev-parse "${SPECIFIC_GIT_COMMIT}"').trim()
                 }
 
                 echo "originalCommitId: ${originalCommitId}"
