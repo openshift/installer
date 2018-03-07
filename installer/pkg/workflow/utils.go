@@ -26,6 +26,7 @@ const (
 	configFileName = "config.yaml"
 	kubeConfigPath = "generated/auth/kubeconfig"
 	binaryPrefix   = "tectonic-installer"
+	tncDaemonSet   = "tectonic-node-controller"
 )
 
 func copyFile(fromFilePath, toFilePath string) error {
@@ -50,7 +51,7 @@ func destroyCNAME(clusterDir string) error {
 	if err != nil {
 		return err
 	}
-	return terraformExec(clusterDir, "destroy", "-force", fmt.Sprintf("-state=%s.tfstate", bootstrapStep), "-target=aws_route53_record.tectonic_ncg", templatesPath)
+	return terraformExec(clusterDir, "destroy", "-force", fmt.Sprintf("-state=%s.tfstate", bootstrapStep), "-target=aws_route53_record.tectonic_tnc", templatesPath)
 }
 
 func findTemplates(relativePath string) (string, error) {
@@ -154,7 +155,7 @@ func readClusterConfigStep(m *metadata) error {
 	return nil
 }
 
-func waitForNCG(m *metadata) error {
+func waitForTNC(m *metadata) error {
 	config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(m.clusterDir, kubeConfigPath))
 	if err != nil {
 		return err
@@ -169,8 +170,8 @@ func waitForNCG(m *metadata) error {
 	wait := 10
 	for retries > 0 {
 		// client will error until api sever is up
-		ds, _ := client.DaemonSets("kube-system").Get("ncg")
-		log.Printf("Waiting for NCG to be running, this might take a while...")
+		ds, _ := client.DaemonSets("kube-system").Get(tncDaemonSet)
+		log.Printf("Waiting for TNC to be running, this might take a while...")
 		if ds.Status.NumberReady >= 1 {
 			return nil
 		}
@@ -178,7 +179,7 @@ func waitForNCG(m *metadata) error {
 		retries--
 	}
 
-	return errors.New("NCG is not running")
+	return errors.New("TNC is not running")
 }
 
 func writeFile(path, content string) error {

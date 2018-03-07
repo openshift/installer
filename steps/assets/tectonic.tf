@@ -12,7 +12,7 @@ provider "aws" {
 locals {
   ingress_internal_fqdn = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}"
   api_internal_fqdn     = "${var.tectonic_cluster_name}-api.${var.tectonic_base_domain}"
-  bucket_name           = "${var.tectonic_cluster_name}-ncg.${var.tectonic_base_domain}"
+  bucket_name           = "${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}"
   bucket_assets_key     = "assets.zip"
 }
 
@@ -65,16 +65,21 @@ module "bootkube" {
   admin_cert_pem           = "${module.kube_certs.admin_cert_pem}"
   admin_key_pem            = "${module.kube_certs.admin_key_pem}"
 
-  # need indent here https://github.com/hashicorp/terraform/issues/16775
-  ncg_config_worker = "${indent(2, data.ignition_config.workers.rendered)}"
-  ncg_config_master = "${indent(2, data.ignition_config.masters.rendered)}"
-
   etcd_endpoints = "${data.template_file.etcd_hostname_list.*.rendered}"
   master_count   = "${var.tectonic_master_count}"
 
   cloud_config_path   = ""
   tectonic_networking = "${var.tectonic_networking}"
   calico_mtu          = "1480"
+
+  # ignition bootstrapping variables
+  no_proxy                  = "${var.tectonic_no_proxy}"
+  http_proxy                = "${var.tectonic_http_proxy_address}"
+  https_proxy               = "${var.tectonic_https_proxy_address}"
+  image_re                  = "${var.tectonic_image_re}"
+  kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
+  kubelet_master_node_label = "node-role.kubernetes.io/master"
+  kubelet_worker_node_label = "node-role.kubernetes.io/worker"
 }
 
 module "tectonic" {

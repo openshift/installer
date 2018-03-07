@@ -24,15 +24,15 @@ output "subnet_ids_workers" {
   value = "${module.workers.subnet_ids}"
 }
 
-# NCG
+# TNC
 output "private_zone_id" {
   value = "${aws_route53_zone.tectonic_int.id}"
 }
 
-output "ncg_elb_dns_name" {
-  value = "${module.vpc.aws_elb_ncg_dns_name}"
+output "tnc_elb_dns_name" {
+  value = "${module.vpc.aws_elb_tnc_dns_name}"
 }
 
-output "ncg_elb_zone_id" {
-  value = "${module.vpc.aws_elb_ncg_zone_id}"
+output "tnc_elb_zone_id" {
+  value = "${module.vpc.aws_elb_tnc_zone_id}"
 }

@@ -8,14 +8,14 @@ resource "aws_security_group" "master" {
     ), var.extra_tags)}"
 }
 
-resource "aws_security_group_rule" "master_ncg" {
+resource "aws_security_group_rule" "master_tnc" {
   type              = "ingress"
   security_group_id = "${aws_security_group.master.id}"
 
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-  from_port   = 8080
-  to_port     = 8080
+  from_port   = 49500
+  to_port     = 49500
 }
 
 resource "aws_security_group_rule" "master_egress" {

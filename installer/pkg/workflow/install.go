@@ -61,7 +61,7 @@ func installBootstrapStep(m *metadata) error {
 		return err
 	}
 
-	if err := waitForNCG(m); err != nil {
+	if err := waitForTNC(m); err != nil {
 		return err
 	}
 

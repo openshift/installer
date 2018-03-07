@@ -1,4 +1,4 @@
-# NCG
+# TNC
 resource "aws_route53_zone" "tectonic_int" {
   vpc_id        = "${module.vpc.vpc_id}"
   name          = "${var.tectonic_base_domain}"
@@ -11,9 +11,9 @@ resource "aws_route53_zone" "tectonic_int" {
     ), var.tectonic_aws_extra_tags)}"
 }
 
-resource "aws_route53_record" "tectonic_ncg" {
+resource "aws_route53_record" "tectonic_tnc" {
   zone_id = "${aws_route53_zone.tectonic_int.id}"
-  name    = "${var.tectonic_cluster_name}-ncg.${var.tectonic_base_domain}"
+  name    = "${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}"
   type    = "CNAME"
   ttl     = "1"
 

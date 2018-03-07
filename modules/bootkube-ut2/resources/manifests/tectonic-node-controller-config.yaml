@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: tectonic-node-controller-config-v1
+  namespace: kube-system
+data:
+  tnc-config: |
+    HTTPProxy: "${http_proxy}"
+    HTTPSProxy: "${https_proxy}"
+    NoProxy: "${no_proxy}"
+    KubeletImageUrl: "${kubelet_image_url}"
+    KubeletImageTag: "${kubelet_image_tag}"
+    IscsiEnabled: "${iscsi_enabled}"
+    KubeconfigFetchCmd: "${kubeconfig_fetch_cmd}"
+    TectonicTorcxImageURL: "${tectonic_torcx_image_url}"
+    TectonicTorcxImageTag: "${tectonic_torcx_image_tag}"
+    BootstrapUpgradeCl: "${bootstrap_upgrade_cl}"
+    TorcxStoreULL: "${torcx_store_url}"
+    TorcxSkipSetup: "${torcx_skip_setup}"
+    MasterNodeLabel: "${master_node_label}"
+    WorkerNodeLabel: "${worker_node_label}"
+    NodeTaintsParam: "${node_taints_param}"
+    ClusterDNSIP: "${cluster_dns_ip}"
+    CloudProvider: "${cloud_provider}"
+    CloudProviderConfig: "${cloud_provider_config}"
+    DebugConfig: "${debug_config}"
+    ClusterName: "${cluster_name}"
