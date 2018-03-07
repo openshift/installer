@@ -5,17 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"runtime"
 	"time"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/config"
-	"github.com/coreos/tectonic-installer/installer/pkg/config-generator"
+	log "github.com/Sirupsen/logrus"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
+
+	"github.com/coreos/tectonic-installer/installer/pkg/config"
+	"github.com/coreos/tectonic-installer/installer/pkg/config-generator"
 )
 
 const (
@@ -150,6 +151,14 @@ func readClusterConfigStep(m *metadata) error {
 		return err
 	}
 
+	if errs := cluster.Validate(); len(errs) != 0 {
+		log.Errorf("Found %d errors in the cluster definition:", len(errs))
+		for i, err := range errs {
+			log.Errorf("error %d: %v", i+1, err)
+		}
+		return fmt.Errorf("found %d cluster definition errors", len(errs))
+	}
+
 	m.cluster = *cluster
 
 	return nil
@@ -171,7 +180,7 @@ func waitForTNC(m *metadata) error {
 	for retries > 0 {
 		// client will error until api sever is up
 		ds, _ := client.DaemonSets("kube-system").Get(tncDaemonSet)
-		log.Printf("Waiting for TNC to be running, this might take a while...")
+		log.Info("Waiting for TNC to be running, this might take a while...")
 		if ds.Status.NumberReady >= 1 {
 			return nil
 		}

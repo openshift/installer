@@ -41,6 +41,7 @@ type Cluster struct {
 	Metal             metal.Config     `yaml:"metal,omitempty"`
 	Name              string           `yaml:"name"`
 	Networking        networking       `yaml:"networking"`
+	NodePools         nodePools        `yaml:"nodePools"`
 	OpenStack         openstack.Config `yaml:"openstack,omitempty"`
 	Platform          string           `yaml:"platform"`
 	Proxy             proxy            `yaml:"proxy"`
@@ -48,6 +49,21 @@ type Cluster struct {
 	TLSValidityPeriod int              `yaml:"tlsValidityPeriod"`
 	VMware            vmware.Config    `yaml:"vmware,omitempty"`
 	Worker            worker           `yaml:"worker"`
+}
+
+// NodeCount will return the number of nodes specified in NodePools with matching names.
+// If no matching NodePools are found, then 0 is returned.
+func (c Cluster) NodeCount(names []string) int {
+	var count int
+	for _, name := range names {
+		for _, n := range c.NodePools {
+			if n.Name == name {
+				count += n.Count
+				break
+			}
+		}
+	}
+	return count
 }
 
 // Config defines the top level config for a configuration file.
@@ -72,8 +88,8 @@ type ddnsKey struct {
 }
 
 type etcd struct {
-	Count    int          `yaml:"count"`
-	External etcdExternal `yaml:"external"`
+	External  etcdExternal `yaml:"external"`
+	NodePools []string     `yaml:"nodePools"`
 }
 
 type etcdExternal struct {
@@ -88,7 +104,7 @@ type iscsi struct {
 }
 
 type master struct {
-	Count int `yaml:"count"`
+	NodePools []string `yaml:"nodePools"`
 }
 
 type networking struct {
@@ -105,5 +121,21 @@ type proxy struct {
 }
 
 type worker struct {
-	Count int `yaml:"count"`
+	NodePools []string `yaml:"nodePools"`
+}
+
+type nodePools []nodePool
+
+type nodePool struct {
+	Count int    `yaml:"count"`
+	Name  string `yaml:"name"`
+}
+
+// Map returns a nodePools' map equivalent.
+func (n nodePools) Map() map[string]int {
+	m := make(map[string]int)
+	for i := range n {
+		m[n[i].Name] = n[i].Count
+	}
+	return m
 }

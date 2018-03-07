@@ -1,6 +1,8 @@
 package workflow
 
 import (
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -9,20 +11,26 @@ import (
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
 )
 
-func initTestCluster(t *testing.T, file string) config.Cluster {
+func initTestCluster(file string) (*config.Cluster, error) {
 	testConfig, err := config.ParseFile(file)
 	if err != nil {
-		t.Errorf("Test case TestGenerateTerraformVariablesStep: failed to parse test config, %s", err)
+		return nil, fmt.Errorf("failed to parse test config: %v", err)
 	}
-	return testConfig.Clusters[0]
+	if len((&testConfig.Clusters[0]).Validate()) != 0 {
+		return nil, errors.New("failed to validate test conifg")
+	}
+	return &testConfig.Clusters[0], nil
 }
 
 func TestGenerateTerraformVariablesStep(t *testing.T) {
-	cluster := initTestCluster(t, "./fixtures/aws.basic.yaml")
+	cluster, err := initTestCluster("./fixtures/aws.basic.yaml")
+	if err != nil {
+		t.Errorf("failed to init cluster: %v", err)
+	}
 	expectedTfVarsFilePath := "./fixtures/terraform.tfvars"
 	clusterDir := "."
 	m := &metadata{
-		cluster:    cluster,
+		cluster:    *cluster,
 		clusterDir: clusterDir,
 	}
 
