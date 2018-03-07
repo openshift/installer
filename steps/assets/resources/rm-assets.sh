@@ -21,6 +21,8 @@ s3_clean() {
             /usr/bin/aws --region="$REGION" s3 cp /tmp/assets.zip s3://"$LOCATION/assets.zip"
             /usr/bin/aws --region="$REGION" s3 cp /tmp/assets.zip s3://"$LOCATION/ign/v1/role/master"
         '
+    # Remove TNC static pod
+    rm /etc/kubernetes/manifests/tectonic-node-controller-pod.yaml
 }
 
 until s3_clean; do

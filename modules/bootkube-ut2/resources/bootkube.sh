@@ -10,6 +10,7 @@ set -e
     --output=/assets
 
 mkdir -p /etc/kubernetes/manifests/
+mv /opt/tectonic/manifests/tectonic-node-controller-pod.yaml /etc/kubernetes/manifests/
 
 # shellcheck disable=SC2154
 /usr/bin/docker run \
