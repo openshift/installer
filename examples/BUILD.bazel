@@ -12,3 +12,9 @@ EXAMPLES = {p: (PLATFORMS[p] + "/variables.tf", "terraform.tfvars." + p) for p i
     tools = ["//contrib/terraform-examples:terraform-examples"],
     visibility = ["//visibility:public"],
 ) for example in EXAMPLES.items()]
+
+filegroup(
+    name= "tectonic_cli_configs",
+    srcs = glob(["tectonic.*.yaml"]),
+    visibility = ["//visibility:public"],
+)
