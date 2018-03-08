@@ -108,9 +108,6 @@ asset_cleanup() {
   for f in "bootkube.sh" "tectonic.sh" "tectonic-wrapper.sh"; do
       rm -f "$${ASSETS_PATH:?}/$${f:?}"
   done
-
-  # Remove TNC static pod
-  rm /etc/kubernetes/manifests/tectonic-node-controller-pod.yaml
 }
 
 # chdir into the assets path directory

@@ -8,3 +8,6 @@ set -e
     --entrypoint=/bin/sh \
     ${hyperkube_image} \
     /assets/tectonic.sh /assets/auth/kubeconfig /assets
+
+# remove TNC static pod
+rm -f /etc/kubernetes/manifests/tectonic-node-controller-pod.yaml
