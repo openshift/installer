@@ -192,7 +192,9 @@ load("//:variables.bzl", "PLATFORMS")
 pkg_tar(
     name = "tarball_examples",
     package_dir = "examples",
-    srcs = ["//examples:terraform.tfvars." + p for p in PLATFORMS],
+    # As long as we are not auto-generating the tectonic cli configuration
+    # examples, make sure to add the manually created once to the tarball.
+    srcs = ["//examples:terraform.tfvars." + p for p in PLATFORMS] + ["//examples:tectonic_cli_configs"],
 )
 
 filegroup(
