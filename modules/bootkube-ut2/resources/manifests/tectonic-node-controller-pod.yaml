@@ -5,7 +5,6 @@ metadata:
   namespace: kube-system
   labels:
     k8s-app: tectonic-node-controller
-    managed-by-channel-operator: "true"
 spec:
   containers:
   - name: tectonic-node-controller
@@ -33,10 +32,3 @@ spec:
   - name: cluster-config
     hostPath:
       path: /opt/tectonic/tnc-config
-  nodeSelector:
-    node-role.kubernetes.io/master: ""
-  tolerations:
-  - key: "node-role.kubernetes.io/master"
-    operator: "Exists"
-    effect: "NoSchedule"
-
