@@ -66,12 +66,12 @@ These instructions can be used for the official stable platforms listed above, a
 
 5. Edit Tectonic configuration file including the $CLUSTER_NAME
     ```shell
-    $EDITOR examples/tectonic.$PLATFORM.yaml`
+    $EDITOR examples/tectonic.$PLATFORM.yaml
     ```
 
 6. Init Tectonic CLI
     ```shell
-    tectonic init --config=example/tectonic.$PLATFORM.yaml
+    tectonic init --config=examples/tectonic.$PLATFORM.yaml
     ```
 
 7. Install Tectonic cluster
