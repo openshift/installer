@@ -43,6 +43,7 @@ var (
 	defaultIgnoredManifests = []string{
 		"bootstrap",
 		"kco-config.yaml",
+		"tectonic-node-controller-pod.yaml",
 	}
 
 	// equivalentKindRemapping is used by resourceIdentifier to map different
