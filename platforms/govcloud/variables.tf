@@ -140,7 +140,7 @@ variable "tectonic_govcloud_external_master_subnet_ids" {
 
   description = <<EOF
 (optional) List of subnet IDs within an existing VPC to deploy master nodes into.
-Required to use an existing VPC and the list must match the AZ count.
+Required to use an existing VPC, not applicable otherwise.
 
 Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
 EOF
@@ -153,7 +153,7 @@ variable "tectonic_govcloud_external_worker_subnet_ids" {
 
   description = <<EOF
 (optional) List of subnet IDs within an existing VPC to deploy worker nodes into.
-Required to use an existing VPC and the list must match the AZ count.
+Required to use an existing VPC, not applicable otherwise.
 
 Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
 EOF

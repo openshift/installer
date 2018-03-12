@@ -1,11 +1,3 @@
-variable "master_az_count" {
-  type = "string"
-}
-
-variable "worker_az_count" {
-  type = "string"
-}
-
 variable "cidr_block" {
   type = "string"
 }
@@ -26,11 +18,11 @@ variable "external_vpc_id" {
   type = "string"
 }
 
-variable "external_master_subnets" {
+variable "external_master_subnet_ids" {
   type = "list"
 }
 
-variable "external_worker_subnets" {
+variable "external_worker_subnet_ids" {
   type = "list"
 }
 
@@ -45,20 +37,14 @@ variable "enable_etcd_sg" {
   default     = true
 }
 
-variable "master_subnets" {
-  type = "list"
+variable "new_master_subnet_configs" {
+  description = "{az_name = new_subnet_cidr}: Empty map means create new subnets in all availability zones in region with generated cidrs"
+  type        = "map"
 }
 
-variable "worker_subnets" {
-  type = "list"
-}
-
-variable "master_azs" {
-  type = "list"
-}
-
-variable "worker_azs" {
-  type = "list"
+variable "new_worker_subnet_configs" {
+  description = "{az_name = new_subnet_cidr}: Empty map means create new subnets in all availability zones in region with generated cidrs"
+  type        = "map"
 }
 
 variable "private_master_endpoints" {

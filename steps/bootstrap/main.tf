@@ -24,52 +24,27 @@ module "container_linux" {
 }
 
 module "vpc" {
-  source                   = "../../modules/aws/vpc"
-  depends_on               = ["${aws_s3_bucket_object.tectonic_assets.id}"]
-  base_domain              = "${var.tectonic_base_domain}"
-  cidr_block               = "${var.tectonic_aws_vpc_cidr_block}"
-  cluster_id               = "${local.cluster_id}"
-  cluster_name             = "${var.tectonic_cluster_name}"
-  custom_dns_name          = "${var.tectonic_dns_name}"
-  enable_etcd_sg           = "${length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
-  external_master_subnets  = "${compact(var.tectonic_aws_external_master_subnet_ids)}"
-  external_vpc_id          = "${var.tectonic_aws_external_vpc_id}"
-  external_worker_subnets  = "${compact(var.tectonic_aws_external_worker_subnet_ids)}"
-  extra_tags               = "${var.tectonic_aws_extra_tags}"
+  source     = "../../modules/aws/vpc"
+  depends_on = ["${aws_s3_bucket_object.tectonic_assets.id}"]
+
+  base_domain     = "${var.tectonic_base_domain}"
+  cidr_block      = "${var.tectonic_aws_vpc_cidr_block}"
+  cluster_id      = "${local.cluster_id}"
+  cluster_name    = "${var.tectonic_cluster_name}"
+  custom_dns_name = "${var.tectonic_dns_name}"
+  enable_etcd_sg  = "${length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
+  external_vpc_id = "${var.tectonic_aws_external_vpc_id}"
+
+  external_master_subnet_ids = "${compact(var.tectonic_aws_external_master_subnet_ids)}"
+  external_worker_subnet_ids = "${compact(var.tectonic_aws_external_worker_subnet_ids)}"
+  extra_tags                 = "${var.tectonic_aws_extra_tags}"
+
+  // empty map subnet_configs will have the vpc module creating subnets in all availabile AZs
+  new_master_subnet_configs = "${var.tectonic_aws_master_custom_subnets}"
+  new_worker_subnet_configs = "${var.tectonic_aws_worker_custom_subnets}"
+
   private_master_endpoints = "${var.tectonic_aws_private_endpoints}"
   public_master_endpoints  = "${var.tectonic_aws_public_endpoints}"
-
-  # VPC layout settings.
-  #
-  # The following parameters control the layout of the VPC accross availability zones.
-  # Two modes are available:
-  # A. Explicitly configure a list of AZs + associated subnet CIDRs
-  # B. Let the module calculate subnets accross a set number of AZs
-  #
-  # To enable mode A, configure a set of AZs + CIDRs for masters and workers using the
-  # "tectonic_aws_master_custom_subnets" and "tectonic_aws_worker_custom_subnets" variables.
-  #
-  # To enable mode B, make sure that "tectonic_aws_master_custom_subnets" and "tectonic_aws_worker_custom_subnets"
-  # ARE NOT SET.
-
-  # These counts could be deducted by length(keys(var.tectonic_aws_master_custom_subnets))
-  # but there is a restriction on passing computed values as counts. This approach works around that.
-  master_az_count = "${length(keys(var.tectonic_aws_master_custom_subnets)) > 0 ? "${length(keys(var.tectonic_aws_master_custom_subnets))}" : "${length(data.aws_availability_zones.azs.names)}"}"
-  worker_az_count = "${length(keys(var.tectonic_aws_worker_custom_subnets)) > 0 ? "${length(keys(var.tectonic_aws_worker_custom_subnets))}" : "${length(data.aws_availability_zones.azs.names)}"}"
-  # The appending of the "padding" element is required as workaround since the function
-  # element() won't work on empty lists. See https://github.com/hashicorp/terraform/issues/11210
-  master_subnets = "${concat(values(var.tectonic_aws_master_custom_subnets),list("padding"))}"
-  worker_subnets = "${concat(values(var.tectonic_aws_worker_custom_subnets),list("padding"))}"
-  # The split() / join() trick works around the limitation of ternary operator expressions
-  # only being able to return strings.
-  master_azs = "${ split("|", "${length(keys(var.tectonic_aws_master_custom_subnets))}" > 0 ?
-    join("|", keys(var.tectonic_aws_master_custom_subnets)) :
-    join("|", data.aws_availability_zones.azs.names)
-  )}"
-  worker_azs = "${ split("|", "${length(keys(var.tectonic_aws_worker_custom_subnets))}" > 0 ?
-    join("|", keys(var.tectonic_aws_worker_custom_subnets)) :
-    join("|", data.aws_availability_zones.azs.names)
-  )}"
 }
 
 module "etcd" {
