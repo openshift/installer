@@ -173,71 +173,71 @@ pipeline {
       }
       steps {
         node('worker && ec2') {
-          script {
-            def err = null
-            try {
-              timeout(time: 20, unit: 'MINUTES') {
-                forcefullyCleanWorkspace()
-
-                /*
-                  This supports users who require builds at a specific git ref
-                  instead of the branch tip.
-                */
-                if (params.SPECIFIC_GIT_COMMIT == '') {
-                  checkout scm
-                  originalCommitId = sh(returnStdout: true, script: 'git rev-parse "origin/${BRANCH_NAME}"').trim()
-                } else {
-                  checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: params.SPECIFIC_GIT_COMMIT]],
-                    userRemoteConfigs: [[url: "https://github.com/${params.GITHUB_REPO}.git"]]
-                  ])
-                  // In case params.SPECIFIC_GIT_COMMIT is a mutable tag instead
-                  // of a sha
-                  originalCommitId = sh(returnStdout: true, script: 'git rev-parse "${SPECIFIC_GIT_COMMIT}"').trim()
-                }
-
-                echo "originalCommitId: ${originalCommitId}"
-                stash name: 'clean-repo', excludes: 'installer/vendor/**,tests/smoke/vendor/**'
-
-                withDockerContainer(tectonicBazelImage) {
-                  sh "bazel test terraform_fmt --test_output=all"
-                  sh "bazel test installer/frontend:unit --test_output=all"
-                  sh "bazel test installer:cli_units --test_output=all"
-                  sh"""#!/bin/bash -ex
-                    bazel build tarball tests/smoke
-
-                    # Jenkins `stash` does not follow symlinks - thereby temporarily copy the files to the root dir
-                    cp bazel-bin/tectonic.tar.gz .
-                    cp bazel-bin/tests/smoke/linux_amd64_stripped/smoke .
-                  """
-                  stash name: 'tectonic.tar.gz', includes: 'tectonic.tar.gz'
-                  stash name: 'smoke-tests', includes: 'smoke'
-                  archiveArtifacts allowEmptyArchive: true, artifacts: 'tectonic.tar.gz'
-                }
-
-                withDockerContainer(params.builder_image) {
-                  ansiColor('xterm') {
+          ansiColor('xterm') {
+            script {
+              def err = null
+              try {
+                timeout(time: 20, unit: 'MINUTES') {
+                  forcefullyCleanWorkspace()
+  
+                  /*
+                    This supports users who require builds at a specific git ref
+                    instead of the branch tip.
+                  */
+                  if (params.SPECIFIC_GIT_COMMIT == '') {
+                    checkout scm
+                    originalCommitId = sh(returnStdout: true, script: 'git rev-parse "origin/${BRANCH_NAME}"').trim()
+                  } else {
+                    checkout([
+                      $class: 'GitSCM',
+                      branches: [[name: params.SPECIFIC_GIT_COMMIT]],
+                      userRemoteConfigs: [[url: "https://github.com/${params.GITHUB_REPO}.git"]]
+                    ])
+                    // In case params.SPECIFIC_GIT_COMMIT is a mutable tag instead
+                    // of a sha
+                    originalCommitId = sh(returnStdout: true, script: 'git rev-parse "${SPECIFIC_GIT_COMMIT}"').trim()
+                  }
+  
+                  echo "originalCommitId: ${originalCommitId}"
+                  stash name: 'clean-repo', excludes: 'installer/vendor/**,tests/smoke/vendor/**'
+  
+                  withDockerContainer(tectonicBazelImage) {
+                    sh "bazel test terraform_fmt --test_output=all"
+                    sh "bazel test installer/frontend:unit --test_output=all"
+                    sh "bazel test installer:cli_units --test_output=all"
+                    sh"""#!/bin/bash -ex
+                      bazel build tarball tests/smoke
+  
+                      # Jenkins `stash` does not follow symlinks - thereby temporarily copy the files to the root dir
+                      cp bazel-bin/tectonic.tar.gz .
+                      cp bazel-bin/tests/smoke/linux_amd64_stripped/smoke .
+                    """
+                    stash name: 'tectonic.tar.gz', includes: 'tectonic.tar.gz'
+                    stash name: 'smoke-tests', includes: 'smoke'
+                    archiveArtifacts allowEmptyArchive: true, artifacts: 'tectonic.tar.gz'
+                  }
+  
+                  withDockerContainer(params.builder_image) {
                     sh """#!/bin/bash -ex
                     mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT
-
+  
                     cd $GO_PROJECT/
                     make structure-check
                     """
                   }
+                  withDockerContainer(tectonicSmokeTestEnvImage) {
+                    sh"""#!/bin/bash -ex
+                      cd tests/rspec
+                      rubocop --cache false spec lib
+                    """
+                  }
                 }
-                withDockerContainer(tectonicSmokeTestEnvImage) {
-                  sh"""#!/bin/bash -ex
-                    cd tests/rspec
-                    rubocop --cache false spec lib
-                  """
-                }
+              } catch (error) {
+                err = error
+                throw error
+              } finally {
+                reportStatusToGithub((err == null) ? 'success' : 'failure', 'basic-tests', originalCommitId)
               }
-            } catch (error) {
-              err = error
-              throw error
-            } finally {
-              reportStatusToGithub((err == null) ? 'success' : 'failure', 'basic-tests', originalCommitId)
             }
           }
         }
