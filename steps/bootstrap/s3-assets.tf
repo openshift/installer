@@ -8,7 +8,7 @@ resource "aws_s3_bucket" "tectonic" {
   tags = "${merge(map(
       "Name", "${var.tectonic_cluster_name}-tectonic",
       "KubernetesCluster", "${var.tectonic_cluster_name}",
-      "tectonicClusterID", "${local.cluster_id}"
+      "tectonicClusterID", "${var.tectonic_cluster_id}"
     ), var.tectonic_aws_extra_tags)}"
 
   lifecycle {
@@ -31,7 +31,7 @@ resource "aws_s3_bucket_object" "tectonic_assets" {
   tags = "${merge(map(
       "Name", "${var.tectonic_cluster_name}-tectonic-assets",
       "KubernetesCluster", "${var.tectonic_cluster_name}",
-      "tectonicClusterID", "${local.cluster_id}"
+      "tectonicClusterID", "${var.tectonic_cluster_id}"
     ), var.tectonic_aws_extra_tags)}"
 
   lifecycle {
@@ -53,7 +53,7 @@ data "archive_file" "assets" {
   # Additionally, data sources do not support managing any lifecycle whatsoever,
   # and therefore, the archive is never deleted. To avoid cluttering the module
   # folder, we write it in the Terraform managed hidden folder `.terraform`.
-  output_path = "./.terraform/generated_${sha1("${local.cluster_id}")}.zip"
+  output_path = "./.terraform/generated_${sha1("${var.tectonic_cluster_id}")}.zip"
 }
 
 # Ignition
@@ -70,7 +70,7 @@ resource "aws_s3_bucket_object" "ignition_bootstrap" {
   tags = "${merge(map(
       "Name", "${var.tectonic_cluster_name}-ignition-master",
       "KubernetesCluster", "${var.tectonic_cluster_name}",
-      "tectonicClusterID", "${local.cluster_id}"
+      "tectonicClusterID", "${var.tectonic_cluster_id}"
     ), var.tectonic_aws_extra_tags)}"
 }
 
@@ -86,6 +86,6 @@ resource "aws_s3_bucket_object" "ignition_etcd" {
   tags = "${merge(map(
       "Name", "${var.tectonic_cluster_name}-ignition-etcd-${count.index}",
       "KubernetesCluster", "${var.tectonic_cluster_name}",
-      "tectonicClusterID", "${local.cluster_id}"
+      "tectonicClusterID", "${var.tectonic_cluster_id}"
     ), var.tectonic_aws_extra_tags)}"
 }

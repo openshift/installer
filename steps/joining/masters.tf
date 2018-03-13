@@ -32,7 +32,7 @@ resource "aws_autoscaling_group" "masters" {
     },
     {
       key                 = "tectonicClusterID"
-      value               = "${local.cluster_id}"
+      value               = "${var.tectonic_cluster_id}"
       propagate_at_launch = true
     },
     "${var.tectonic_autoscaling_group_extra_tags}",
