@@ -244,51 +244,6 @@ pipeline {
       }
     }
 
-    stage('GUI Tests') {
-      when {
-        expression {
-          return params.RUN_GUI_TESTS
-        }
-      }
-      environment {
-        TECTONIC_INSTALLER_ROLE = 'tf-tectonic-installer'
-        GRAFITI_DELETER_ROLE = 'tf-grafiti'
-        TF_VAR_tectonic_container_images = "${params.hyperkube_image}"
-      }
-      steps {
-        script {
-          def err = null
-          try {
-            parallel (
-              "IntegrationTest AWS Installer Gui": {
-                node('worker && ec2') {
-                  timeout(time: 20, unit: 'MINUTES') {
-                    withCredentials(credsUI) {
-                      withDockerContainer(tectonicBazelImage)  {
-                        unstash 'clean-repo'
-                        sh """#!/bin/bash -ex
-                        bazel test installer:aws_gui --action_env=AWS_ACCESS_KEY_ID --action_env=AWS_SECRET_ACCESS_KEY --action_env=TF_VAR_tectonic_license_path --action_env=TF_VAR_tectonic_pull_secret_path --action_env=AWS_SESSION_TOKEN --test_output=all
-                        """
-                        cleanWs notFailBuild: true
-                      }
-                    }
-                  }
-                }
-              }
-            )
-          } catch (error) {
-            err = error
-            throw error
-          } finally {
-            node('worker && ec2') {
-              unstash 'clean-repo'
-              reportStatusToGithub((err == null) ? 'success' : 'failure', 'gui-tests', originalCommitId)
-            }
-          }
-        }
-      }
-    }
-
     stage("Smoke Tests") {
       when {
         expression {
