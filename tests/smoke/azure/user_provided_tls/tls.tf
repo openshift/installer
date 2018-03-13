@@ -1,9 +1,14 @@
 module "ca_certs" {
-  source = "../../modules/tls/ca/self-signed"
+  source = "../../modules/tls/ca/user-provided"
 
-  root_ca_cert_pem = "${var.tectonic_ca_cert}"
-  root_ca_key_alg  = "${var.tectonic_ca_key_alg}"
-  root_ca_key_pem  = "${var.tectonic_ca_key}"
+  root_ca_cert_pem_path       = "../../tests/smoke/azure/user_provided_tls/certs/ca/root_ca.crt"
+  root_ca_key_pem_path        = "../../tests/smoke/azure/user_provided_tls/certs/ca/root_ca.key"
+  etcd_ca_cert_pem_path       = "../../tests/smoke/azure/user_provided_tls/certs/ca/etcd_ca.crt"
+  etcd_ca_key_pem_path        = "../../tests/smoke/azure/user_provided_tls/certs/ca/etcd_ca.key"
+  kube_ca_cert_pem_path       = "../../tests/smoke/azure/user_provided_tls/certs/ca/kube_ca.crt"
+  kube_ca_key_pem_path        = "../../tests/smoke/azure/user_provided_tls/certs/ca/kube_ca.key"
+  aggregator_ca_cert_pem_path = "../../tests/smoke/azure/user_provided_tls/certs/ca/aggregator_ca.crt"
+  aggregator_ca_key_pem_path  = "../../tests/smoke/azure/user_provided_tls/certs/ca/aggregator_ca.key"
 }
 
 module "kube_certs" {
@@ -30,12 +35,11 @@ module "etcd_certs" {
 }
 
 module "ingress_certs" {
-  source = "../../modules/tls/ingress/self-signed"
+  source = "../../modules/tls/ingress/user-provided"
 
-  base_address = "${module.vnet.ingress_fqdn}"
-  ca_cert_pem  = "${module.ca_certs.kube_ca_cert_pem}"
-  ca_key_alg   = "${module.ca_certs.kube_ca_key_alg}"
-  ca_key_pem   = "${module.ca_certs.kube_ca_key_pem}"
+  ca_cert_pem_path = "../../tests/smoke/azure/user_provided_tls/certs/ingress/ca.crt"
+  cert_pem_path    = "../../tests/smoke/azure/user_provided_tls/certs/ingress/ingress.crt"
+  key_pem_path     = "../../tests/smoke/azure/user_provided_tls/certs/ingress/ingress.key"
 }
 
 module "identity_certs" {

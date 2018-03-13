@@ -48,20 +48,21 @@ module "bootkube" {
 
   pull_secret_path = "${pathexpand(var.tectonic_pull_secret_path)}"
 
-  aggregator_ca_cert_pem   = "${module.kube_certs.aggregator_ca_cert_pem}"
+  root_ca_cert_pem         = "${module.ca_certs.root_ca_cert_pem}"
+  aggregator_ca_cert_pem   = "${module.ca_certs.aggregator_ca_cert_pem}"
   apiserver_cert_pem       = "${module.kube_certs.apiserver_cert_pem}"
   apiserver_key_pem        = "${module.kube_certs.apiserver_key_pem}"
   apiserver_proxy_cert_pem = "${module.kube_certs.apiserver_proxy_cert_pem}"
   apiserver_proxy_key_pem  = "${module.kube_certs.apiserver_proxy_key_pem}"
-  etcd_ca_cert_pem         = "${module.etcd_certs.etcd_ca_crt_pem}"
-  etcd_client_cert_pem     = "${module.etcd_certs.etcd_client_crt_pem}"
+  etcd_ca_cert_pem         = "${module.ca_certs.etcd_ca_cert_pem}"
+  etcd_client_cert_pem     = "${module.etcd_certs.etcd_client_cert_pem}"
   etcd_client_key_pem      = "${module.etcd_certs.etcd_client_key_pem}"
-  etcd_peer_cert_pem       = "${module.etcd_certs.etcd_peer_crt_pem}"
+  etcd_peer_cert_pem       = "${module.etcd_certs.etcd_peer_cert_pem}"
   etcd_peer_key_pem        = "${module.etcd_certs.etcd_peer_key_pem}"
-  etcd_server_cert_pem     = "${module.etcd_certs.etcd_server_crt_pem}"
+  etcd_server_cert_pem     = "${module.etcd_certs.etcd_server_cert_pem}"
   etcd_server_key_pem      = "${module.etcd_certs.etcd_server_key_pem}"
-  kube_ca_cert_pem         = "${module.kube_certs.ca_cert_pem}"
-  kube_ca_key_pem          = "${module.kube_certs.ca_key_pem}"
+  kube_ca_cert_pem         = "${module.ca_certs.kube_ca_cert_pem}"
+  kube_ca_key_pem          = "${module.ca_certs.kube_ca_key_pem}"
   admin_cert_pem           = "${module.kube_certs.admin_cert_pem}"
   admin_key_pem            = "${module.kube_certs.admin_key_pem}"
 
@@ -108,14 +109,15 @@ module "tectonic" {
   update_server  = "${var.tectonic_update_server}"
 
   ca_generated = "${var.tectonic_ca_cert == "" ? false : true}"
-  ca_cert      = "${module.kube_certs.ca_cert_pem}"
 
   ingress_ca_cert_pem = "${module.ingress_certs.ca_cert_pem}"
   ingress_cert_pem    = "${module.ingress_certs.cert_pem}"
   ingress_key_pem     = "${module.ingress_certs.key_pem}"
 
+  identity_client_ca_cert  = "${module.ca_certs.root_ca_cert_pem}"
   identity_client_cert_pem = "${module.identity_certs.client_cert_pem}"
   identity_client_key_pem  = "${module.identity_certs.client_key_pem}"
+  identity_server_ca_cert  = "${module.ca_certs.kube_ca_cert_pem}"
   identity_server_cert_pem = "${module.identity_certs.server_cert_pem}"
   identity_server_key_pem  = "${module.identity_certs.server_key_pem}"
 

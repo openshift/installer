@@ -25,7 +25,7 @@ resource "tls_locally_signed_cert" "ingress" {
   ca_key_algorithm      = "${var.ca_key_alg}"
   ca_private_key_pem    = "${var.ca_key_pem}"
   ca_cert_pem           = "${var.ca_cert_pem}"
-  validity_period_hours = "${var.validity_period}"
+  validity_period_hours = "26280"
 
   allowed_uses = [
     "key_encipherment",

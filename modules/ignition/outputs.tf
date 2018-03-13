@@ -116,7 +116,7 @@ output "update_ca_certificates_dropin_rendered" {
 
 output "ca_cert_id_list" {
   value = [
-    "${data.ignition_file.kube_ca_cert_pem.id}",
+    "${data.ignition_file.root_ca_cert_pem.id}",
     "${data.ignition_file.ingress_ca_cert_pem.id}",
     "${data.ignition_file.etcd_ca_cert_pem.id}",
     "${data.ignition_file.custom_ca_cert_pem.*.id}",
@@ -125,7 +125,7 @@ output "ca_cert_id_list" {
 
 output "ca_cert_pem_list" {
   value = [
-    "${var.kube_ca_cert_pem}",
+    "${var.root_ca_cert_pem}",
     "${var.ingress_ca_cert_pem}",
     "${var.etcd_ca_cert_pem}",
     "${var.custom_ca_cert_pem_list}",

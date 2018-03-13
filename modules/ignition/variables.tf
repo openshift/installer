@@ -103,9 +103,9 @@ variable "use_metadata" {
   default = true
 }
 
-variable "kube_ca_cert_pem" {
+variable "root_ca_cert_pem" {
   type        = "string"
-  description = "The public kube CA certificate in PEM format."
+  description = "The public root CA certificate in PEM format."
 }
 
 variable "ingress_ca_cert_pem" {

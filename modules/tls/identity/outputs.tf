@@ -11,5 +11,5 @@ output "server_key_pem" {
 }
 
 output "server_cert_pem" {
-  value = "${tls_locally_signed_cert.identity_server.cert_pem}"
+  value = "${data.template_file.identity_server_chained.rendered}"
 }

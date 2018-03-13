@@ -39,7 +39,6 @@ resource "template_dir" "tectonic" {
 
     license     = "${base64encode(file(var.license_path))}"
     pull_secret = "${base64encode(file(var.pull_secret_path))}"
-    ca_cert     = "${base64encode(var.ca_cert)}"
 
     update_server  = "${var.update_server}"
     update_channel = "${var.update_channel}"
@@ -69,8 +68,10 @@ resource "template_dir" "tectonic" {
 
     identity_server_tls_cert = "${base64encode(var.identity_server_cert_pem)}"
     identity_server_tls_key  = "${base64encode(var.identity_server_key_pem)}"
+    identity_server_ca_cert  = "${base64encode(var.identity_server_ca_cert)}"
     identity_client_tls_cert = "${base64encode(var.identity_client_cert_pem)}"
     identity_client_tls_key  = "${base64encode(var.identity_client_key_pem)}"
+    identity_client_ca_cert  = "${base64encode(var.identity_client_ca_cert)}"
 
     kubectl_client_id = "${var.kubectl_client_id}"
     kubectl_secret    = "${random_id.kubectl_secret.b64}"

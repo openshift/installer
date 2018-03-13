@@ -93,6 +93,11 @@ variable "kube_apiserver_url" {
   type        = "string"
 }
 
+variable "root_ca_cert_pem" {
+  type        = "string"
+  description = "The Root CA in PEM format."
+}
+
 variable "aggregator_ca_cert_pem" {
   type        = "string"
   description = "The Aggregated API Server CA in PEM format."
