@@ -13,8 +13,8 @@ var (
 	ErrNoClusters       = errors.New("no clusters were defined")
 )
 
-// Parse parses a yaml string and returns, if successful, a Config.
-func Parse(data []byte) (*Config, error) {
+// ParseConfig parses a yaml string and returns, if successful, a Config.
+func ParseConfig(data []byte) (*Config, error) {
 	config := &Config{}
 
 	if err := yaml.Unmarshal(data, config); err != nil {
@@ -32,12 +32,33 @@ func Parse(data []byte) (*Config, error) {
 	return config, nil
 }
 
-// ParseFile parses a yaml file and returns, if successful, a Config.
-func ParseFile(path string) (*Config, error) {
+// ParseConfigFile parses a yaml file and returns, if successful, a Config.
+func ParseConfigFile(path string) (*Config, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	return Parse(data)
+	return ParseConfig(data)
+}
+
+// ParseInternal parses a yaml string and returns, if successful, an internal.
+func ParseInternal(data []byte) (*internal, error) {
+	internal := &internal{}
+
+	if err := yaml.Unmarshal(data, internal); err != nil {
+		return nil, err
+	}
+
+	return internal, nil
+}
+
+// ParseInternalFile parses a yaml file and returns, if successful, an internal.
+func ParseInternalFile(path string) (*internal, error) {
+	data, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseInternal(data)
 }

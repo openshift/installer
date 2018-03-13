@@ -8,7 +8,7 @@ import (
 )
 
 func initConfig(t *testing.T, file string) ConfigGenerator {
-	testConfig, err := config.ParseFile("./fixtures/" + file)
+	testConfig, err := config.ParseConfigFile("./fixtures/" + file)
 	if err != nil {
 		t.Errorf("Test case TestUrlFunctions: failed to parse test config, %s", err)
 	}

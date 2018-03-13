@@ -1,9 +1,14 @@
 package workflow
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+
+	yaml "gopkg.in/yaml.v2"
+
+	configgenerator "github.com/coreos/tectonic-installer/installer/pkg/config-generator"
 )
 
 const (
@@ -22,9 +27,30 @@ func NewInitWorkflow(configFilePath string) Workflow {
 		steps: []Step{
 			readClusterConfigStep,
 			prepareWorspaceStep,
+			buildInternalStep,
 			generateTerraformVariablesStep,
 		},
 	}
+}
+
+func buildInternalStep(m *metadata) error {
+	if m.clusterDir == "" {
+		return errors.New("no clusterDir path set in metadata")
+	}
+
+	// fill the internal struct
+	clusterId, err := configgenerator.GenerateClusterID(16)
+	if err != nil {
+		return err
+	}
+	m.cluster.Internal.ClusterID = clusterId
+
+	// store the content
+	internalFileContent, err := yaml.Marshal(m.cluster.Internal)
+	if err != nil {
+		return err
+	}
+	return writeFile(filepath.Join(m.clusterDir, internalFileName), string(internalFileContent))
 }
 
 func generateTerraformVariablesStep(m *metadata) error {
@@ -56,7 +82,6 @@ func prepareWorspaceStep(m *metadata) error {
 	if err := copyFile(m.configFilePath, configFilePath); err != nil {
 		return err
 	}
-	m.configFilePath = configFilePath
 
 	return nil
 }

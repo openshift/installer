@@ -20,14 +20,15 @@ import (
 )
 
 const (
-	stepsBaseDir   = "steps"
-	assetsStep     = "assets"
-	bootstrapStep  = "bootstrap"
-	joinStep       = "joining"
-	configFileName = "config.yaml"
-	kubeConfigPath = "generated/auth/kubeconfig"
-	binaryPrefix   = "tectonic-installer"
-	tncDaemonSet   = "tectonic-node-controller"
+	stepsBaseDir     = "steps"
+	assetsStep       = "assets"
+	bootstrapStep    = "bootstrap"
+	joinStep         = "joining"
+	configFileName   = "config.yaml"
+	internalFileName = "internal.yaml"
+	kubeConfigPath   = "generated/auth/kubeconfig"
+	binaryPrefix     = "tectonic-installer"
+	tncDaemonSet     = "tectonic-node-controller"
 )
 
 func copyFile(fromFilePath, toFilePath string) error {
@@ -128,25 +129,35 @@ func importAutoScalingGroup(m *metadata) error {
 	return err
 }
 
-func readClusterConfig(configFilePath string) (*config.Cluster, error) {
-	config, err := config.ParseFile(configFilePath)
+func readClusterConfig(configFilePath string, internalFilePath string) (*config.Cluster, error) {
+	cfg, err := config.ParseConfigFile(configFilePath)
 	if err != nil {
 		return nil, fmt.Errorf("%s is not a valid config file: %s", configFilePath, err)
 	}
 
-	return &config.Clusters[0], nil
+	if internalFilePath != "" {
+		internal, err := config.ParseInternalFile(internalFilePath)
+		if err != nil {
+			return nil, fmt.Errorf("%s is not a valid internal file: %s", internalFilePath, err)
+		}
+		cfg.Clusters[0].Internal = *internal
+	}
+
+	return &cfg.Clusters[0], nil
 }
 
 func readClusterConfigStep(m *metadata) error {
 	var configFilePath string
+	var internalFilePath string
 
 	if m.configFilePath != "" {
 		configFilePath = m.configFilePath
 	} else {
 		configFilePath = filepath.Join(m.clusterDir, configFileName)
+		internalFilePath = filepath.Join(m.clusterDir, internalFileName)
 	}
 
-	cluster, err := readClusterConfig(configFilePath)
+	cluster, err := readClusterConfig(configFilePath, internalFilePath)
 	if err != nil {
 		return err
 	}
