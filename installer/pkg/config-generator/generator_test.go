@@ -19,7 +19,6 @@ func initConfig(t *testing.T, file string) ConfigGenerator {
 	}
 }
 func TestUrlFunctions(t *testing.T) {
-
 	config := initConfig(t, "test.yaml")
 
 	testCases := []struct {
@@ -50,7 +49,7 @@ func TestUrlFunctions(t *testing.T) {
 	}
 }
 
-func TestGetEtcdServersUrls(t *testing.T) {
+func TestGetEtcdServersURLs(t *testing.T) {
 	testCases := []struct {
 		test       string
 		configFile string
@@ -65,16 +64,14 @@ func TestGetEtcdServersUrls(t *testing.T) {
 	for _, tc := range testCases {
 
 		config := initConfig(t, tc.configFile)
-		got := config.getEtcdServersUrls()
+		got := config.getEtcdServersURLs()
 		if got != tc.expected {
 			t.Errorf("Test case %s: expected: %s, got: %s", tc.test, tc.expected, got)
 		}
 	}
-
 }
 
 func TestKubeSystem(t *testing.T) {
-
 	config := initConfig(t, "test-aws.yaml")
 	got, err := config.KubeSystem()
 	if err != nil {
@@ -90,7 +87,7 @@ func TestKubeSystem(t *testing.T) {
 	}
 }
 
-func TestCidrhost(t *testing.T) {
+func TestCIDRHost(t *testing.T) {
 	testCases := []struct {
 		test     string
 		iprange  string

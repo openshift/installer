@@ -8,11 +8,14 @@ clusters:
       podCIDR: 10.2.0.0/16
       serviceCIDR: 10.3.0.0/16
     masters:
-      count: 2
+      nodePools:
+        - master
     workers:
-      count: 3
+      nodePools:
+        - worker
     etcd:
-      count: 3
+      nodePools:
+        - etcd
     tlsValidityPeriod: 26280
     pullSecretPath: /path/config.json
     licensePath: /path/tectonic-license.txt
@@ -44,3 +47,10 @@ clusters:
           iops: 100
           size: 30
           type: gp2
+    nodePools:
+      - name: master
+        count: 2
+      - name: worker
+        count: 3
+      - name: etcd
+        count: 3

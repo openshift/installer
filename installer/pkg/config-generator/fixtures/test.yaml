@@ -3,4 +3,8 @@ clusters:
     platform: AWS
     baseDomain: cluster.com
     etcd:
-      count: 3
+      nodePools:
+        - etcd
+    nodePools:
+      - name: etcd
+        count: 3

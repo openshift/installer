@@ -29,18 +29,28 @@ clusters:
       channel: beta
       version: latest
     etcd:
-      count: 3
+      nodePools:
+        - etcd
     licensePath:
     master:
-      count: 2
+      nodePools:
+        - master
     name: aws-basic
     networking:
       mtu: 1480
       podCIDR: 10.2.0.0/16
       serviceCIDR: 10.3.0.0/16
       type: canal
+    nodePools:
+      - name: master
+        count: 2
+      - name: worker
+        count: 3
+      - name: etcd
+        count: 3
     platform: AWS
     pullSecretPath:
     tlsValidityPeriod: 26280
     worker:
-      count: 3
+      nodePools:
+        - worker

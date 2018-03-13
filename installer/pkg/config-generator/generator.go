@@ -9,8 +9,6 @@ import (
 	"net"
 	"strings"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/config"
-
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/coreos/tectonic-config/config/kube-addon"
 	"github.com/coreos/tectonic-config/config/kube-core"
@@ -19,6 +17,8 @@ import (
 	"github.com/ghodss/yaml"
 	"golang.org/x/crypto/bcrypt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/coreos/tectonic-installer/installer/pkg/config"
 )
 
 const (
@@ -121,7 +121,7 @@ func (c ConfigGenerator) coreConfig() *kubecore.OperatorConfig {
 	coreConfig.NetworkConfig.ClusterCIDR = c.Cluster.Networking.PodCIDR
 	coreConfig.NetworkConfig.ServiceCIDR = c.Cluster.Networking.ServiceCIDR
 	coreConfig.NetworkConfig.AdvertiseAddress = networkConfigAdvertiseAddress
-	coreConfig.NetworkConfig.EtcdServers = c.getEtcdServersUrls()
+	coreConfig.NetworkConfig.EtcdServers = c.getEtcdServersURLs()
 
 	return &coreConfig
 }
@@ -237,13 +237,13 @@ func marshalYAML(obj interface{}) (string, error) {
 	return string(data), nil
 }
 
-func (c ConfigGenerator) getEtcdServersUrls() string {
+func (c ConfigGenerator) getEtcdServersURLs() string {
 	if len(c.Cluster.Etcd.External.Servers) > 0 {
 		return strings.Join(c.Cluster.Etcd.External.Servers, ",")
 	}
-	var etcdServers []string
-	for i := 0; i < c.Etcd.Count; i++ {
-		etcdServers = append(etcdServers, fmt.Sprintf("https://%s-etcd-%v.%s:2379", c.Cluster.Name, i, c.Cluster.BaseDomain))
+	etcdServers := make([]string, c.Cluster.NodeCount(c.Cluster.Etcd.NodePools))
+	for i := range etcdServers {
+		etcdServers[i] = fmt.Sprintf("https://%s-etcd-%v.%s:2379", c.Cluster.Name, i, c.Cluster.BaseDomain)
 	}
 	return strings.Join(etcdServers, ",")
 }

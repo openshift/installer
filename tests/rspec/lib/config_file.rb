@@ -26,20 +26,19 @@ class ConfigFile
   end
 
   def master_count
-    data['clusters'][0]['master']['count']
+    get_node_count(data['clusters'][0]['master']['nodePools'])
   end
 
   def worker_count
-    data['clusters'][0]['worker']['count']
+    get_node_count(data['clusters'][0]['worker']['nodePools'])
   end
 
   def etcd_count
-    data['clusters'][0]['etcd']['count']
+    get_node_count(data['clusters'][0]['etcd']['nodePools'])
   end
 
   def add_worker_node(node_count)
-    new_data = data
-    new_data['clusters'][0]['worker']['count'] = node_count
+    new_data = set_node_count(data['clusters'][0]['worker']['nodePools'][0], node_count)
     save(new_data)
   end
 
@@ -130,5 +129,26 @@ class ConfigFile
     File.open(path, 'w+') do |f|
       f << data.to_yaml
     end
+  end
+
+  def get_node_count(names)
+    count = 0
+    names.each do |name|
+      data['clusters'][0]['nodePools'].each do |n|
+        count += n['count'] if n['name'] == name
+      end
+    end
+    count
+  end
+
+  def set_node_count(name, count)
+    d = data
+    d['clusters'][0]['nodePools'].each do |n|
+      if n['name'] == name
+        n['count'] = count
+        break
+      end
+    end
+    d
   end
 end

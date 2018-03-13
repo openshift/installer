@@ -9,16 +9,15 @@ import (
 
 // Error codes returned by failures to parse a config.
 var (
-	ErrMultipleClusters = errors.New("Multiple cluster configurations are not supported at the moment")
-	ErrNoClusters       = errors.New("No clusters were defined")
+	ErrMultipleClusters = errors.New("multiple cluster configurations are not currently supported")
+	ErrNoClusters       = errors.New("no clusters were defined")
 )
 
 // Parse parses a yaml string and returns, if successful, a Config.
-func Parse(data string) (*Config, error) {
+func Parse(data []byte) (*Config, error) {
 	config := &Config{}
 
-	err := yaml.Unmarshal([]byte(data), config)
-	if err != nil {
+	if err := yaml.Unmarshal(data, config); err != nil {
 		return nil, err
 	}
 
@@ -35,10 +34,10 @@ func Parse(data string) (*Config, error) {
 
 // ParseFile parses a yaml file and returns, if successful, a Config.
 func ParseFile(path string) (*Config, error) {
-	dat, err := ioutil.ReadFile(path)
+	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
 
-	return Parse(string(dat))
+	return Parse(data)
 }
