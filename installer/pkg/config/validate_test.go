@@ -325,14 +325,5 @@ func TestSharedNodePool(t *testing.T) {
 		if n != c.errs {
 			t.Errorf("test case %d: expected %d shared node pool errors, got %d", i, c.errs, n)
 		}
-		//if c.fields != 0 {
-		//if len(sharedErrs) != 1 {
-		//t.Errorf("test case %d: expected exactly one shared node pool error, got %d", i, len(sharedErrs))
-		//continue
-		//}
-		//if c.fields != len(sharedErrs[0].fields) {
-		//t.Errorf("test case %d: expected shared node pool error for %d fields, got %d", i, c.fields, len(sharedErrs[0].fields))
-		//}
-		//}
 	}
 }
