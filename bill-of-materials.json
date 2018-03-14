@@ -985,15 +985,6 @@
     ]
   },
   {
-    "project": "github.com/coreos/terraform-provider-matchbox/matchbox",
-    "licenses": [
-      {
-        "type": "Apache License 2.0",
-        "confidence": 1
-      }
-    ]
-  },
-  {
     "project": "github.com/coreos/yaml",
     "licenses": [
       {

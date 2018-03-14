@@ -120,10 +120,6 @@ imports:
   - config/kube-core
   - config/tectonic-network
   - config/tectonic-utility
-- name: github.com/coreos/terraform-provider-matchbox
-  version: 016482b8add5122d41cce5e05d4f1730c5a9ff77
-  subpackages:
-  - matchbox
 - name: github.com/coreos/yaml
   version: 6b16a5714269b2f70720a45406b1babd947a17ef
 - name: github.com/davecgh/go-spew

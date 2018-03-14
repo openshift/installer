@@ -350,10 +350,6 @@ import:
   version: 8fef92e41e22a70e700a96b29f066cda30ea24ef
 - package: github.com/mitchellh/mapstructure
   version: 281073eb9eb092240d33ef253c404f1cca550309
-- package: github.com/coreos/terraform-provider-matchbox
-  version: v0.1.2
-  subpackages:
-  - matchbox
 - package: github.com/hashicorp/vault
   version: 9a60bf2a50e4dd1ba4b929a3ccf8072435cbdd0a
   subpackages:
