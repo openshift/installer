@@ -210,13 +210,18 @@ class AwsCluster < Cluster
     tectonic_logs = File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), "tectonic/#{@name}/terraform-#{cmd}.log")
     command = "#{tectonic_binary} #{cmd} #{flags} | tee #{tectonic_logs}"
     Open3.popen3(env, "bash -coxe pipefail '#{command}'") do |_stdin, stdout, stderr, wait_thr|
+      puts 'Only printing terraform logs to stdout/stderr on failure. Logs are preserved via `tee`'
+      output = ''
+
       while (line = stdout.gets)
-        puts line
+        output += line
       end
       while (line = stderr.gets)
-        puts line
+        output += line
       end
+
       exit_status = wait_thr.value
+      puts output unless exit_status.success?
       return exit_status.success?
     end
     false
