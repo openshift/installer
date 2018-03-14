@@ -164,12 +164,12 @@ class Cluster
 
   def apply
     ::Timeout.timeout(30 * 60) do # 30 minutes
-      3.times do
+      Retriable.with_retries(limit: 3) do
         env = env_variables
         env['TF_APPLY_OPTIONS'] = '-no-color'
         env['TF_INIT_OPTIONS'] = '-no-color'
 
-        return run_command(env, 'apply', '-auto-approve')
+        run_command(env, 'apply', '-auto-approve')
       end
     end
   rescue Timeout::Error
@@ -179,11 +179,11 @@ class Cluster
 
   def destroy
     ::Timeout.timeout(30 * 60) do # 30 minutes
-      3.times do
+      Retriable.with_retries(limit: 3) do
         env = env_variables
         env['TF_DESTROY_OPTIONS'] = '-no-color'
         env['TF_INIT_OPTIONS'] = '-no-color'
-        return run_command(env, 'destroy', '-force')
+        run_command(env, 'destroy', '-force')
       end
     end
 
@@ -198,7 +198,7 @@ class Cluster
     ::Timeout.timeout(30 * 60) do # 30 minutes
       env = env_variables
       env['TF_INIT_OPTIONS'] = '-no-color'
-      return run_command(env, 'init')
+      run_command(env, 'init')
     end
   rescue Timeout::Error
     forensic(false)
@@ -215,10 +215,10 @@ class Cluster
       while (line = stderr.gets)
         puts line
       end
+
       exit_status = wait_thr.value
-      return exit_status.success?
+      raise "failed to execute command: #{command}" unless exit_status.success?
     end
-    false
   end
 
   def recover_from_failed_destroy() end
