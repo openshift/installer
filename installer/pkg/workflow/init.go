@@ -46,7 +46,9 @@ func buildInternalStep(m *metadata) error {
 	m.cluster.Internal.ClusterID = clusterId
 
 	// store the content
-	internalFileContent, err := yaml.Marshal(m.cluster.Internal)
+	yamlContent, err := yaml.Marshal(m.cluster.Internal)
+	internalFileContent := []byte("# Do not touch, auto-generated\n")
+	internalFileContent = append(internalFileContent, yamlContent...)
 	if err != nil {
 		return err
 	}
