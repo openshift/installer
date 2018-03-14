@@ -24,19 +24,28 @@ func initTestCluster(file string) (*config.Cluster, error) {
 }
 
 func TestGenerateTerraformVariablesStep(t *testing.T) {
+	expectedTfVarsFilePath := "./fixtures/terraform.tfvars"
+	clusterDir := "."
+	gotTfVarsFilePath := filepath.Join(clusterDir, terraformVariablesFileName)
+
+	// clean up
+	defer func() {
+		if err := os.Remove(gotTfVarsFilePath); err != nil {
+			t.Errorf("failed to clean up generated tf vars file: %v", err)
+		}
+	}()
+
 	cluster, err := initTestCluster("./fixtures/aws.basic.yaml")
 	if err != nil {
 		t.Errorf("failed to init cluster: %v", err)
 	}
-	expectedTfVarsFilePath := "./fixtures/terraform.tfvars"
-	clusterDir := "."
+
 	m := &metadata{
 		cluster:    *cluster,
 		clusterDir: clusterDir,
 	}
 
 	generateTerraformVariablesStep(m)
-	gotTfVarsFilePath := filepath.Join(m.clusterDir, terraformVariablesFileName)
 	gotData, err := ioutil.ReadFile(gotTfVarsFilePath)
 	if err != nil {
 		t.Errorf("failed to load generated tf vars file: %v", err)
@@ -52,16 +61,18 @@ func TestGenerateTerraformVariablesStep(t *testing.T) {
 	if got != expected {
 		t.Errorf("expected: %s, got: %s", expected, got)
 	}
-
-	// clean up
-	if err := os.Remove(gotTfVarsFilePath); err != nil {
-		t.Errorf("failed to clean up generated tf vars file: %v", err)
-	}
 }
 
 func TestBuildInternalStep(t *testing.T) {
 	testClusterDir := "."
 	internalFilePath := filepath.Join(testClusterDir, internalFileName)
+
+	// clean up
+	defer func() {
+		if err := os.Remove(internalFilePath); err != nil {
+			t.Errorf("failed to remove temp file: %v", err)
+		}
+	}()
 
 	metaNoClusterDir := &metadata{
 		cluster: config.Cluster{
@@ -123,10 +134,5 @@ func TestBuildInternalStep(t *testing.T) {
 		if !match {
 			t.Errorf("test case %s: expected: %s, got: %s", tc.test, tc.expected, tc.got)
 		}
-	}
-
-	// clean up
-	if err := os.Remove(internalFilePath); err != nil {
-		t.Errorf("failed to remove temp file: %v", err)
 	}
 }

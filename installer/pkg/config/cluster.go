@@ -40,6 +40,7 @@ type Cluster struct {
 	metal.Metal         `json:",inline" yaml:"metal,omitempty"`
 	openstack.OpenStack `json:",inline" yaml:"openstack,omitempty"`
 	vmware.VMware       `json:",inline" yaml:"vmware,omitempty"`
+	Internal            `json:",inline" yaml:"internal,omitempty"`
 }
 
 // NodeCount will return the number of nodes specified in NodePools with matching names.

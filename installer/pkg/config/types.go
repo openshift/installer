@@ -98,5 +98,5 @@ type Worker struct {
 }
 
 type internal struct {
-	ClusterID string `yaml:"clusterId"`
+	ClusterID string `json:"tectonic_cluster_id,omitempty" yaml:"clusterId"`
 }
