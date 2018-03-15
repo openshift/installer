@@ -41,10 +41,15 @@ These instructions can be used for the official stable platforms listed above, a
     bazel build tarball
     ```
 
-2. Unzip the tarball
+    *Note*: the project can optionally be built without installing Bazel, provided Docker is installed:
+    ```shell
+    docker run --rm -v $PWD:$PWD -w $PWD quay.io/coreos/tectonic-builder:bazel-v0.3 bazel --output_base=.cache build tarball
+    ```
+
+2. Extract the tarball
     ```shell
     cd bazel-bin
-    tar -zxvf tectonic.tar.gz
+    tar -zxf tectonic.tar.gz
     cd tectonic
     ```
 
