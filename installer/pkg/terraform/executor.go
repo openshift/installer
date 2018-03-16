@@ -345,10 +345,7 @@ func (ex *Executor) Zip(w io.Writer, withTopFolder bool) error {
 		return nil
 	}
 
-	if err := recursiveFileWalk(wd, wd, withTopFolder, f); err != nil {
-		return err
-	}
-	return nil
+	return recursiveFileWalk(wd, wd, withTopFolder, f)
 }
 
 // Cleanup removes resources that were allocated by the Executor.

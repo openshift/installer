@@ -90,14 +90,15 @@ class ConfigFile
 
   def change_admin_credentials(admin_email, admin_passwd)
     new_data = data
+    new_data['clusters'][0]['admin'] ||= {}
     new_data['clusters'][0]['admin']['email'] = admin_email
     new_data['clusters'][0]['admin']['password'] = admin_passwd
     save(new_data)
   end
 
   def admin_credentials
-    admin_email = data['clusters'][0]['admin']['email']
-    admin_passwd = data['clusters'][0]['admin']['password']
+    admin_email = data.dig('clusters', 0, 'admin', 'email')
+    admin_passwd = data.dig('clusters', 0, 'admin', 'password')
     [admin_email, admin_passwd]
   end
 

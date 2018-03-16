@@ -13,7 +13,7 @@ func TestMissingNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"", "", ""},
 				},
 			},
@@ -21,7 +21,7 @@ func TestMissingNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"master"},
 				},
 			},
@@ -29,13 +29,13 @@ func TestMissingNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"master"},
 				},
-				Worker: worker{
+				Worker: Worker{
 					NodePools: []string{"worker"},
 				},
-				Etcd: etcd{
+				Etcd: Etcd{
 					NodePools: []string{"etcd"},
 				},
 			},
@@ -69,7 +69,7 @@ func TestMoreThanOneNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"master"},
 				},
 			},
@@ -77,13 +77,13 @@ func TestMoreThanOneNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"master"},
 				},
-				Worker: worker{
+				Worker: Worker{
 					NodePools: []string{"worker"},
 				},
-				Etcd: etcd{
+				Etcd: Etcd{
 					NodePools: []string{"etcd"},
 				},
 			},
@@ -91,13 +91,13 @@ func TestMoreThanOneNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"master", "master2"},
 				},
-				Worker: worker{
+				Worker: Worker{
 					NodePools: []string{"worker"},
 				},
-				Etcd: etcd{
+				Etcd: Etcd{
 					NodePools: []string{"etcd"},
 				},
 			},
@@ -105,13 +105,13 @@ func TestMoreThanOneNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"master", "master2"},
 				},
-				Worker: worker{
+				Worker: Worker{
 					NodePools: []string{"worker", "worker2"},
 				},
-				Etcd: etcd{
+				Etcd: Etcd{
 					NodePools: []string{"etcd", "etcd2"},
 				},
 			},
@@ -145,7 +145,7 @@ func TestUnmatchedNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"master"},
 				},
 			},
@@ -153,13 +153,13 @@ func TestUnmatchedNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"master"},
 				},
-				Worker: worker{
+				Worker: Worker{
 					NodePools: []string{"worker"},
 				},
-				Etcd: etcd{
+				Etcd: Etcd{
 					NodePools: []string{"etcd"},
 				},
 			},
@@ -167,16 +167,16 @@ func TestUnmatchedNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"master", "master2"},
 				},
-				Worker: worker{
+				Worker: Worker{
 					NodePools: []string{"worker"},
 				},
-				Etcd: etcd{
+				Etcd: Etcd{
 					NodePools: []string{"etcd"},
 				},
-				NodePools: nodePools{
+				NodePools: NodePools{
 					{
 						Name:  "master",
 						Count: 1,
@@ -195,16 +195,16 @@ func TestUnmatchedNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"master"},
 				},
-				Worker: worker{
+				Worker: Worker{
 					NodePools: []string{"worker"},
 				},
-				Etcd: etcd{
+				Etcd: Etcd{
 					NodePools: []string{"etcd"},
 				},
-				NodePools: nodePools{
+				NodePools: NodePools{
 					{
 						Name:  "master",
 						Count: 1,
@@ -249,7 +249,7 @@ func TestSharedNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"master"},
 				},
 			},
@@ -257,13 +257,13 @@ func TestSharedNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"shared"},
 				},
-				Worker: worker{
+				Worker: Worker{
 					NodePools: []string{"shared"},
 				},
-				Etcd: etcd{
+				Etcd: Etcd{
 					NodePools: []string{"etcd"},
 				},
 			},
@@ -271,13 +271,13 @@ func TestSharedNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"shared"},
 				},
-				Worker: worker{
+				Worker: Worker{
 					NodePools: []string{"shared"},
 				},
-				Etcd: etcd{
+				Etcd: Etcd{
 					NodePools: []string{"shared"},
 				},
 			},
@@ -285,13 +285,13 @@ func TestSharedNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"shared", "shared2"},
 				},
-				Worker: worker{
+				Worker: Worker{
 					NodePools: []string{"shared", "shared2"},
 				},
-				Etcd: etcd{
+				Etcd: Etcd{
 					NodePools: []string{"shared"},
 				},
 			},
@@ -299,13 +299,13 @@ func TestSharedNodePool(t *testing.T) {
 		},
 		{
 			cluster: Cluster{
-				Master: master{
+				Master: Master{
 					NodePools: []string{"shared", "shared2"},
 				},
-				Worker: worker{
+				Worker: Worker{
 					NodePools: []string{"shared", "shared2", "shared3"},
 				},
-				Etcd: etcd{
+				Etcd: Etcd{
 					NodePools: []string{"shared", "shared3"},
 				},
 			},

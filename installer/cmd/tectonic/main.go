@@ -23,6 +23,9 @@ var (
 	clusterDestroyCommand = kingpin.Command("destroy", "Destroy an existing Tectonic cluster")
 	clusterDestroyDirFlag = clusterDestroyCommand.Flag("dir", "Cluster directory").Default(".").ExistingDir()
 
+	convertCommand    = kingpin.Command("convert", "Convert a tfvars.json to a Tectonic config.yaml")
+	convertConfigFlag = convertCommand.Flag("config", "tfvars.json file").Required().ExistingFile()
+
 	logLevel = kingpin.Flag("log-level", "log level (e.g. \"debug\")").Default("warn").Enum("debug", "info", "warn", "error", "fatal", "panic")
 )
 
@@ -42,6 +45,8 @@ func main() {
 		w = workflow.NewInstallJoinWorkflow(*clusterInstallDirFlag)
 	case clusterDestroyCommand.FullCommand():
 		w = workflow.NewDestroyWorkflow(*clusterDestroyDirFlag)
+	case convertCommand.FullCommand():
+		w = workflow.NewConvertWorkflow(*convertConfigFlag)
 	}
 
 	l, err := log.ParseLevel(*logLevel)

@@ -1,141 +1,98 @@
 package config
 
-import (
-	"github.com/coreos/tectonic-installer/installer/pkg/config/aws"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/azure"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/gcp"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/govcloud"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/metal"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/openstack"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/vmware"
-)
-
-type admin struct {
-	Email    string `yaml:"email"`
-	Password string `yaml:"password"`
+// Admin converts admin related config.
+type Admin struct {
+	Email    string `json:"-" yaml:"email,omitempty"`
+	Password string `json:"-" yaml:"password,omitempty"`
 }
 
-type ca struct {
-	Cert   string `yaml:"cert"`
-	Key    string `yaml:"key"`
-	KeyAlg string `yaml:"keyAlg"`
+// CA converts ca related config.
+type CA struct {
+	Cert   string `json:"tectonic_ca_cert,omitempty" yaml:"cert,omitempty"`
+	Key    string `json:"tectonic_ca_key,omitempty" yaml:"key,omitempty"`
+	KeyAlg string `json:"tectonic_ca_key_alg,omitempty" yaml:"keyAlg,omitempty"`
 }
 
-// Cluster defines the config for a cluster.
-type Cluster struct {
-	AWS               aws.Config       `yaml:"aws,omitempty"`
-	Admin             admin            `yaml:"admin"`
-	Azure             azure.Config     `yaml:"azure,omitempty"`
-	BaseDomain        string           `yaml:"baseDomain"`
-	CA                ca               `yaml:"ca"`
-	ContainerLinux    containerLinux   `yaml:"containerLinux"`
-	CustomCAPEMList   string           `yaml:"customCAPEMList"`
-	DDNS              ddns             `yaml:"ddns"`
-	DNSName           string           `yaml:"dnsName"`
-	Etcd              etcd             `yaml:"etcd"`
-	GCP               gcp.Config       `yaml:"gcp,omitempty"`
-	GovCloud          govcloud.Config  `yaml:"govcloud,omitempty"`
-	ISCSI             iscsi            `yaml:"iscsi"`
-	LicensePath       string           `yaml:"licensePath"`
-	Master            master           `yaml:"master"`
-	Metal             metal.Config     `yaml:"metal,omitempty"`
-	Name              string           `yaml:"name"`
-	Networking        networking       `yaml:"networking"`
-	NodePools         nodePools        `yaml:"nodePools"`
-	OpenStack         openstack.Config `yaml:"openstack,omitempty"`
-	Platform          string           `yaml:"platform"`
-	Proxy             proxy            `yaml:"proxy"`
-	PullSecretPath    string           `yaml:"pullSecretPath"`
-	TLSValidityPeriod int              `yaml:"tlsValidityPeriod"`
-	VMware            vmware.Config    `yaml:"vmware,omitempty"`
-	Worker            worker           `yaml:"worker"`
+// ContainerLinux converts container linux related config.
+type ContainerLinux struct {
+	Channel string `json:"tectonic_container_linux_channel,omitempty" yaml:"channel,omitempty"`
+	Version string `json:"tectonic_container_linux_version,omitempty" yaml:"version,omitempty"`
 }
 
-// NodeCount will return the number of nodes specified in NodePools with matching names.
-// If no matching NodePools are found, then 0 is returned.
-func (c Cluster) NodeCount(names []string) int {
-	var count int
-	for _, name := range names {
-		for _, n := range c.NodePools {
-			if n.Name == name {
-				count += n.Count
-				break
-			}
-		}
-	}
-	return count
+// DDNS converts ddns related config.
+type DDNS struct {
+	Key    `json:",inline" yaml:"key,omitempty"`
+	Server string `json:"tectonic_ddns_server,omitempty" yaml:"secret,omitempty"`
 }
 
-// Config defines the top level config for a configuration file.
-type Config struct {
-	Clusters []Cluster `yaml:"clusters"`
+// Key converts key related config.
+type Key struct {
+	Algorithm string `json:"tectonic_ddns_key_algorithm,omitempty" yaml:"algorithm,omitempty"`
+	Name      string `json:"tectonic_ddns_key_name,omitempty" yaml:"name,omitempty"`
+	Secret    string `json:"tectonic_ddns_key_secret,omitempty" yaml:"secret,omitempty"`
 }
 
-type containerLinux struct {
-	Channel string `yaml:"channel"`
-	Version string `yaml:"version"`
+// Etcd converts etcd related config.
+type Etcd struct {
+	Count     int `json:"tectonic_etcd_count,omitempty" yaml:"-"`
+	External  `json:",inline" yaml:"external,omitempty"`
+	NodePools []string `json:"-" yaml:"nodePools"`
 }
 
-type ddns struct {
-	Key    ddnsKey `yaml:"key"`
-	Server string  `yaml:"secret"`
+// External converts external related config.
+type External struct {
+	CACertPath     string   `json:"tectonic_etcd_ca_cert_path,omitempty" yaml:"caCertPath,omitempty"`
+	ClientCertPath string   `json:"tectonic_etcd_client_cert_path,omitempty" yaml:"clientCertPath,omitempty"`
+	ClientKeyPath  string   `json:"tectonic_etcd_client_key_path,omitempty" yaml:"clientKeyPath,omitempty"`
+	Servers        []string `json:"tectonic_etcd_servers,omitempty" yaml:"servers,omitempty"`
 }
 
-type ddnsKey struct {
-	Algorithm string `yaml:"algorithm"`
-	Name      string `yaml:"name"`
-	Secret    string `yaml:"secret"`
+// ISCSI converts iscsi related config.
+type ISCSI struct {
+	Enabled bool `json:"tectonic_iscsi_enabled,omitempty" yaml:"enabled,omitempty"`
 }
 
-type etcd struct {
-	External  etcdExternal `yaml:"external"`
-	NodePools []string     `yaml:"nodePools"`
+// NodePool converts node pool related config.
+type NodePool struct {
+	Count int    `json:"-" yaml:"count"`
+	Name  string `json:"-" yaml:"name"`
 }
 
-type etcdExternal struct {
-	CACertPath     string   `yaml:"caCertPath"`
-	ClientCertPath string   `yaml:"clientCertPath"`
-	ClientKeyPath  string   `yaml:"clientKeyPath"`
-	Servers        []string `yaml:"servers"`
-}
-
-type iscsi struct {
-	Enabled bool `yaml:"enabled"`
-}
-
-type master struct {
-	NodePools []string `yaml:"nodePools"`
-}
-
-type networking struct {
-	Type        string `yaml:"type"`
-	MTU         string `yaml:"mtu"`
-	ServiceCIDR string `yaml:"serviceCIDR"`
-	PodCIDR     string `yaml:"podCIDR"`
-}
-
-type proxy struct {
-	HTTP  string `yaml:"http"`
-	HTTPS string `yaml:"https"`
-	No    string `yaml:"no"`
-}
-
-type worker struct {
-	NodePools []string `yaml:"nodePools"`
-}
-
-type nodePools []nodePool
-
-type nodePool struct {
-	Count int    `yaml:"count"`
-	Name  string `yaml:"name"`
-}
+// NodePools converts node pools related config.
+type NodePools []NodePool
 
 // Map returns a nodePools' map equivalent.
-func (n nodePools) Map() map[string]int {
+func (n NodePools) Map() map[string]int {
 	m := make(map[string]int)
 	for i := range n {
 		m[n[i].Name] = n[i].Count
 	}
 	return m
+}
+
+// Master converts master related config.
+type Master struct {
+	Count     int      `json:"tectonic_master_count,omitempty" yaml:"-"`
+	NodePools []string `json:"-" yaml:"nodePools"`
+}
+
+// Networking converts networking related config.
+type Networking struct {
+	Type        string `json:"tectonic_networking,omitempty" yaml:"type,omitempty"`
+	MTU         string `json:"-" yaml:"mtu,omitempty"`
+	ServiceCIDR string `json:"tectonic_service_cidr,omitempty" yaml:"serviceCIDR,omitempty"`
+	PodCIDR     string `json:"tectonic_cluster_cidr,omitempty" yaml:"podCIDR,omitempty"`
+}
+
+// Proxy converts proxy related config.
+type Proxy struct {
+	HTTP  string `json:"tectonic_http_proxy_address,omitempty" yaml:"http,omitempty"`
+	HTTPS string `json:"tectonic_https_proxy_address,omitempty" yaml:"https,omitempty"`
+	No    string `json:"tectonic_no_proxy,omitempty" yaml:"no,omitempty"`
+}
+
+// Worker converts worker related config.
+type Worker struct {
+	Count     int      `json:"tectonic_worker_count,omitempty" yaml:"-"`
+	NodePools []string `json:"-" yaml:"nodePools"`
 }

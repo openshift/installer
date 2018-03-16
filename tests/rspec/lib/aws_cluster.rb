@@ -14,6 +14,8 @@ require 'with_retries'
 
 # AWSCluster represents a k8s cluster on AWS cloud provider
 class AwsCluster < Cluster
+  TIMEOUT_IN_SECONDS = (30 * 60).freeze # 30 minutes
+
   attr_reader :config_file, :kubeconfig, :manifest_path, :build_path,
               :tectonic_admin_email, :tectonic_admin_password, :tfstate_file
 
@@ -160,7 +162,7 @@ class AwsCluster < Cluster
   # TODO: Remove once other platforms caught up
 
   def init
-    ::Timeout.timeout(30 * 60) do # 30 minutes
+    ::Timeout.timeout(TIMEOUT_IN_SECONDS) do
       env = env_variables
       env['TF_INIT_OPTIONS'] = '-no-color'
 
@@ -172,7 +174,7 @@ class AwsCluster < Cluster
   end
 
   def apply
-    ::Timeout.timeout(30 * 60) do # 30 minutes
+    ::Timeout.timeout(TIMEOUT_IN_SECONDS) do
       Retriable.with_retries(limit: 3) do
         env = env_variables
         env['TF_APPLY_OPTIONS'] = '-no-color'
@@ -188,7 +190,7 @@ class AwsCluster < Cluster
 
   def destroy
     describe_network_interfaces
-    ::Timeout.timeout(30 * 60) do # 30 minutes
+    ::Timeout.timeout(TIMEOUT_IN_SECONDS) do
       Retriable.with_retries(limit: 3) do
         env = env_variables
         env['TF_DESTROY_OPTIONS'] = '-no-color'

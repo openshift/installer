@@ -10,6 +10,7 @@ go_test(
 go_library(
     name = "go_default_library",
     srcs = [
+        "convert.go",
         "destroy.go",
         "init.go",
         "install.go",
@@ -22,7 +23,6 @@ go_library(
     deps = [
         "//installer/pkg/config:go_default_library",
         "//installer/pkg/config-generator:go_default_library",
-        "//installer/pkg/terraform-generator:go_default_library",
         "//installer/vendor/github.com/Sirupsen/logrus:go_default_library",
         "//installer/vendor/k8s.io/client-go/kubernetes:go_default_library",
         "//installer/vendor/k8s.io/client-go/tools/clientcmd:go_default_library",

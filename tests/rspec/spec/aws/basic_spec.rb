@@ -3,7 +3,7 @@
 require 'shared_examples/k8s'
 
 RSpec.describe 'aws-standard' do
-  include_examples('withBuildFolderSetupWithConfig', File.join(ENV['RSPEC_PATH'], '../smoke/aws/vars/aws.basic.yaml'))
+  include_examples('withBuildFolderSetupWithConfig', File.join(ENV['RSPEC_PATH'], '../smoke/aws/vars/aws-basic.yaml'))
 
   before(:all) do
     # doing this because the example aws.tfvars.json is being used by the UI

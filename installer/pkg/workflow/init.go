@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/coreos/tectonic-installer/installer/pkg/terraform-generator"
 )
 
 const (
@@ -30,9 +28,7 @@ func NewInitWorkflow(configFilePath string) Workflow {
 }
 
 func generateTerraformVariablesStep(m *metadata) error {
-	terraformGenerator := terraformgenerator.New(m.cluster)
-
-	vars, err := terraformGenerator.TFVars()
+	vars, err := m.cluster.TFVars()
 	if err != nil {
 		return err
 	}
