@@ -235,7 +235,7 @@ class AwsCluster < Cluster
 
       # Save output in logs/
       FileUtils.mkdir_p(File.dirname(tectonic_logs))
-      save_to_file = File.open(tectonic_logs, 'w+')
+      save_to_file = File.open(tectonic_logs, 'a')
       save_to_file << output
       save_to_file.close
 
