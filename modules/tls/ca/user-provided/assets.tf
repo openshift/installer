@@ -14,12 +14,12 @@ resource "local_file" "kube_ca_cert" {
 }
 
 resource "local_file" "aggregator_ca_key" {
-  content  = "${file(var.aggregator_key_pem_path)}"
+  content  = "${file(var.aggregator_ca_key_pem_path)}"
   filename = "./generated/tls/aggregator-ca.key"
 }
 
 resource "local_file" "aggregator_ca_cert" {
-  content  = "${file(var.aggregator_cert_pem_path)}"
+  content  = "${file(var.aggregator_ca_cert_pem_path)}"
   filename = "./generated/tls/aggregator-ca.crt"
 }
 

@@ -13,9 +13,9 @@ resource "tls_self_signed_cert" "root_ca" {
   private_key_pem = "${tls_private_key.root_ca.private_key_pem}"
 
   subject {
-    common_name  = "root-ca"
-    organization = "${uuid()}"
-    organization = "tectonic"
+    common_name         = "root-ca"
+    organization        = "${uuid()}"
+    organizational_unit = "tectonic"
   }
 
   is_ca_certificate = true
@@ -45,8 +45,13 @@ resource "tls_cert_request" "etcd_ca" {
   private_key_pem = "${tls_private_key.etcd_ca.private_key_pem}"
 
   subject {
-    common_name  = "etcd-ca"
-    organization = "etcd"
+    common_name         = "etcd-ca"
+    organization        = "${uuid()}"
+    organizational_unit = "etcd"
+  }
+
+  lifecycle {
+    ignore_changes = ["subject"]
   }
 }
 
@@ -79,8 +84,13 @@ resource "tls_cert_request" "kube_ca" {
   private_key_pem = "${tls_private_key.kube_ca.private_key_pem}"
 
   subject {
-    common_name  = "kube-ca"
-    organization = "bootkube"
+    common_name         = "kube-ca"
+    organization        = "${uuid()}"
+    organizational_unit = "bootkube"
+  }
+
+  lifecycle {
+    ignore_changes = ["subject"]
   }
 }
 
@@ -113,8 +123,13 @@ resource "tls_cert_request" "aggregator_ca" {
   private_key_pem = "${tls_private_key.aggregator_ca.private_key_pem}"
 
   subject {
-    common_name  = "aggregator"
-    organization = "bootkube"
+    common_name         = "aggregator"
+    organization        = "${uuid()}"
+    organizational_unit = "bootkube"
+  }
+
+  lifecycle {
+    ignore_changes = ["subject"]
   }
 }
 
