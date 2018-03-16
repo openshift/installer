@@ -19,14 +19,6 @@ git_repository(
 )
 
 http_archive(
-    name = "build_bazel_rules_nodejs",
-    sha256 = "7550c6f7904f602b69c2a69d92f7c739db87479336554c7a31d0649519ec414e",
-    type = "tar.gz",
-    strip_prefix = "rules_nodejs-0.3.1",
-    url = "https://codeload.github.com/bazelbuild/rules_nodejs/tar.gz/0.3.1",
-)
-
-http_archive(
     name = "bazel_gazelle",
     sha256 = "4952295aa35241082eefbb53decd7d4dd4e67a1f52655d708a1da942e3f38975",
     url = "https://github.com/bazelbuild/bazel-gazelle/archive/eaa1e87d2a3ca716780ca6650ef5b9b9663b8773.zip",
@@ -38,10 +30,6 @@ load("@io_bazel_rules_go//go:def.bzl", "go_rules_dependencies", "go_register_too
 go_rules_dependencies()
 
 go_register_toolchains()
-
-load("@build_bazel_rules_nodejs//:defs.bzl", "node_repositories")
-
-node_repositories(package_json = ["//installer/frontend:package.json"])
 
 load("@bazel_gazelle//:deps.bzl", "gazelle_dependencies")
 

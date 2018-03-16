@@ -81,11 +81,6 @@ alias(
 )
 
 alias(
-    name = "backend",
-    actual = "//installer/cmd/installer:installer",
-)
-
-alias(
     name = "cli",
     actual = "//installer/cmd/tectonic:tectonic",
 )
@@ -98,8 +93,6 @@ load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
 genrule(
     name = "tarball",
     srcs = [
-        ":tarball_installer_binary_darwin",
-        ":tarball_installer_binary_linux",
         ":tarball_tectonic_binary_darwin",
         ":tarball_tectonic_binary_linux",
         ":tarball_terraform_configuration",
@@ -129,20 +122,6 @@ pkg_tar(
     mode = "0644",
     srcs =  glob(["modules/**"]) + glob(["platforms/**"]) + glob(["steps/**"]) + ["config.tf"],
     strip_prefix = ".",
-)
-
-pkg_tar(
-    name = "tarball_installer_binary_darwin",
-    mode = "0755",
-    package_dir = "tectonic-installer/darwin",
-    srcs = ["//installer/cmd/installer:darwin"],
-)
-
-pkg_tar(
-    name = "tarball_installer_binary_linux",
-    mode = "0755",
-    package_dir = "tectonic-installer/linux",
-    srcs = ["//installer/cmd/installer:linux"],
 )
 
 pkg_tar(

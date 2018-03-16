@@ -28,29 +28,6 @@ temporarily merged into the target branch of the pull request.
   Comment with `ok to test` on the PR.
 
 
-## Running GUI tests on PRs
-
-The GUI tests include integration tests for the AWS and the Baremetal GUI
-installer.
-
-### Actions required
-- Add the `run-gui-tests` GitHub label
-
-### FAQ
-- *I am not able to add labels, what should I do?*
-
-  Please ask one of the repository [maintainers](../MAINTAINERS) to add the
-  labels.
-
-- *How do I retrigger the tests?*
-
-  Comment with `ok to test` on the PR.
-
-- *I forgot to add the GitHub labels. Can I add them after creating the PR?*
-
-  Yes, just add the GitHub labels and comment `ok to test` on the PR.
-
-
 ## Running smoke / k8s-conformance tests on PRs
 
 In addition to our basic set of tests we have smoke tests and the k8s upstream

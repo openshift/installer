@@ -4,8 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "kind_string.go",
-        "tables10.0.0.go",
-        "tables9.0.0.go",
+        "tables.go",
         "transform.go",
         "trieval.go",
         "width.go",

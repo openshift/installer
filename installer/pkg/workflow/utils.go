@@ -11,12 +11,13 @@ import (
 	"runtime"
 	"time"
 
-	log "github.com/Sirupsen/logrus"
-	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
 	"github.com/coreos/tectonic-installer/installer/pkg/config-generator"
+
+	log "github.com/Sirupsen/logrus"
+	meta "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 const (
@@ -179,7 +180,7 @@ func waitForTNC(m *metadata) error {
 	wait := 10
 	for retries > 0 {
 		// client will error until api sever is up
-		ds, _ := client.DaemonSets("kube-system").Get(tncDaemonSet)
+		ds, _ := client.AppsV1().DaemonSets("kube-system").Get(tncDaemonSet, meta.GetOptions{})
 		log.Info("Waiting for TNC to be running, this might take a while...")
 		if ds.Status.NumberReady >= 1 {
 			return nil

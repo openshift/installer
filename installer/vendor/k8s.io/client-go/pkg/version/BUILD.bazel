@@ -5,13 +5,9 @@ go_library(
     srcs = [
         "base.go",
         "doc.go",
-        "semver.go",
         "version.go",
     ],
     importpath = "k8s.io/client-go/pkg/version",
     visibility = ["//visibility:public"],
-    deps = [
-        "//installer/vendor/github.com/blang/semver:go_default_library",
-        "//installer/vendor/github.com/golang/glog:go_default_library",
-    ],
+    deps = ["//installer/vendor/k8s.io/apimachinery/pkg/version:go_default_library"],
 )

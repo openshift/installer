@@ -57,6 +57,9 @@ go_test(
 
 filegroup(
     name = "test_vars",
-    srcs = ["aws/vars/aws.tfvars.json", "bare-metal/vars/metal.tfvars.json"],
+    srcs = [
+        "aws/vars/aws.tfvars.json",
+        "bare-metal/vars/metal.tfvars.json",
+    ],
     visibility = ["//visibility:public"],
 )

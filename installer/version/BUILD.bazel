@@ -7,6 +7,6 @@ go_library(
     visibility = ["//visibility:public"],
     x_defs = {
         "TectonicVersion": "{TECTONIC_VERSION}",
-        "BuildTime": "{BUILD_TIME}"
+        "BuildTime": "{BUILD_TIME}",
     },
 )
