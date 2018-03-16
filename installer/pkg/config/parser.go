@@ -43,8 +43,8 @@ func ParseConfigFile(path string) (*Config, error) {
 }
 
 // ParseInternal parses a yaml string and returns, if successful, an internal.
-func ParseInternal(data []byte) (*internal, error) {
-	internal := &internal{}
+func ParseInternal(data []byte) (*Internal, error) {
+	internal := &Internal{}
 
 	if err := yaml.Unmarshal(data, internal); err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func ParseInternal(data []byte) (*internal, error) {
 }
 
 // ParseInternalFile parses a yaml file and returns, if successful, an internal.
-func ParseInternalFile(path string) (*internal, error) {
+func ParseInternalFile(path string) (*Internal, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err

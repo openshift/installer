@@ -97,6 +97,6 @@ type Worker struct {
 	NodePools []string `json:"-" yaml:"nodePools"`
 }
 
-type internal struct {
+type Internal struct {
 	ClusterID string `json:"tectonic_cluster_id,omitempty" yaml:"clusterId"`
 }
