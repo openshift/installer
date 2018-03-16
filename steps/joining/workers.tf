@@ -19,7 +19,7 @@ resource "aws_autoscaling_group" "workers" {
     },
     {
       key                 = "tectonicClusterID"
-      value               = "${local.cluster_id}"
+      value               = "${var.tectonic_cluster_id}"
       propagate_at_launch = true
     },
     "${var.tectonic_autoscaling_group_extra_tags}",

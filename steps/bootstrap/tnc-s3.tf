@@ -7,7 +7,7 @@ resource "aws_route53_zone" "tectonic_int" {
   tags = "${merge(map(
       "Name", "${var.tectonic_cluster_name}_tectonic_int",
       "KubernetesCluster", "${var.tectonic_cluster_name}",
-      "tectonicClusterID", "${local.cluster_id}"
+      "tectonicClusterID", "${var.tectonic_cluster_id}"
     ), var.tectonic_aws_extra_tags)}"
 }
 

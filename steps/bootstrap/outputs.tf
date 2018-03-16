@@ -11,10 +11,6 @@ output "aws_lbs_masters" {
   value = "${module.masters.aws_lbs}"
 }
 
-output "cluster_id" {
-  value = "${module.masters.cluster_id}"
-}
-
 # Workers
 output "aws_launch_configuration_workers" {
   value = "${module.workers.aws_launch_configuration}"

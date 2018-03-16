@@ -167,7 +167,7 @@ func (c ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, error
 	if err != nil {
 		return nil, err
 	}
-	clusterID, err := generateClusterID(16)
+
 	if err != nil {
 		return nil, err
 	}
@@ -186,8 +186,7 @@ func (c ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, error
 
 	utilityConfig.TectonicConfigMapConfig.BaseAddress = c.getBaseAddress()
 	utilityConfig.TectonicConfigMapConfig.CertificatesStrategy = certificatesStrategy
-	// TODO: Consolidate ClusterID with the one genereated by terraform and and passed to the bootstrap step.
-	utilityConfig.TectonicConfigMapConfig.ClusterID = clusterID
+	utilityConfig.TectonicConfigMapConfig.ClusterID = c.Cluster.Internal.ClusterID
 	utilityConfig.TectonicConfigMapConfig.ClusterName = c.Cluster.Name
 	utilityConfig.TectonicConfigMapConfig.IdentityAPIService = identityAPIService
 	utilityConfig.TectonicConfigMapConfig.InstallerPlatform = c.Cluster.Platform
@@ -278,10 +277,10 @@ func generateRandomID(byteLength int) (string, error) {
 	return b64Str, nil
 }
 
-// generateClusterID reproduce tf cluster_id behaviour
+// GenerateClusterID reproduce tf cluster_id behaviour
 // https://github.com/coreos/tectonic-installer/blob/master/modules/tectonic/assets.tf#L81
 // TODO: re-evaluate solution
-func generateClusterID(byteLength int) (string, error) {
+func GenerateClusterID(byteLength int) (string, error) {
 	randomID, err := generateRandomID(byteLength)
 	if err != nil {
 		return "", err
