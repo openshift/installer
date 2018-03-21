@@ -26,7 +26,7 @@ var (
 	convertCommand    = kingpin.Command("convert", "Convert a tfvars.json to a Tectonic config.yaml")
 	convertConfigFlag = convertCommand.Flag("config", "tfvars.json file").Required().ExistingFile()
 
-	logLevel = kingpin.Flag("log-level", "log level (e.g. \"debug\")").Default("warn").Enum("debug", "info", "warn", "error", "fatal", "panic")
+	logLevel = kingpin.Flag("log-level", "log level (e.g. \"debug\")").Default("info").Enum("debug", "info", "warn", "error", "fatal", "panic")
 )
 
 func main() {
