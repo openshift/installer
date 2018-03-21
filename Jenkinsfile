@@ -30,8 +30,8 @@ commonCreds = [
   ]
 ]
 
-credsUI = commonCreds.collect()
-credsUI.push(
+credsLog = commonCreds.collect()
+credsLog.push(
   [
     $class: 'AmazonWebServicesCredentialsBinding',
     credentialsId: 'TF-TECTONIC-JENKINS'
@@ -46,7 +46,7 @@ creds.push(
   ]
 )
 creds.push(
-  string(credentialsId: 'AWS-TECTONIC-ROLE-NAME', variable: 'TF_VAR_tectonic_aws_installer_role')
+  string(credentialsId: 'AWS-TECTONIC-TRACK-2-ROLE-NAME', variable: 'TF_VAR_tectonic_aws_installer_role')
 )
 
 govcloudCreds = commonCreds.collect()
@@ -179,7 +179,7 @@ pipeline {
               try {
                 timeout(time: 20, unit: 'MINUTES') {
                   forcefullyCleanWorkspace()
-  
+
                   /*
                     This supports users who require builds at a specific git ref
                     instead of the branch tip.
@@ -197,16 +197,16 @@ pipeline {
                     // of a sha
                     originalCommitId = sh(returnStdout: true, script: 'git rev-parse "${SPECIFIC_GIT_COMMIT}"').trim()
                   }
-  
+
                   echo "originalCommitId: ${originalCommitId}"
                   stash name: 'clean-repo', excludes: 'installer/vendor/**,tests/smoke/vendor/**'
-  
+
                   withDockerContainer(tectonicBazelImage) {
                     sh "bazel test terraform_fmt --test_output=all"
                     sh "bazel test installer:cli_units --test_output=all"
                     sh"""#!/bin/bash -ex
                       bazel build tarball tests/smoke
-  
+
                       # Jenkins `stash` does not follow symlinks - thereby temporarily copy the files to the root dir
                       cp bazel-bin/tectonic.tar.gz .
                       cp bazel-bin/tests/smoke/linux_amd64_stripped/smoke .
@@ -215,11 +215,11 @@ pipeline {
                     stash name: 'smoke-tests', includes: 'smoke'
                     archiveArtifacts allowEmptyArchive: true, artifacts: 'tectonic.tar.gz'
                   }
-  
+
                   withDockerContainer(params.builder_image) {
                     sh """#!/bin/bash -ex
                     mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT
-  
+
                     cd $GO_PROJECT/
                     make structure-check
                     """
@@ -250,7 +250,7 @@ pipeline {
         }
       }
       environment {
-        TECTONIC_INSTALLER_ROLE = 'tf-tectonic-installer'
+        TECTONIC_INSTALLER_ROLE = 'tf-tectonic-installer-track-2'
         GRAFITI_DELETER_ROLE = 'tf-grafiti'
         TF_VAR_tectonic_container_images = "${params.hyperkube_image}"
         TF_VAR_tectonic_kubelet_debug_config = "--minimum-container-ttl-duration=8h --maximum-dead-containers-per-container=9999 --maximum-dead-containers=9999"
@@ -364,7 +364,7 @@ pipeline {
         forcefullyCleanWorkspace()
         echo "Starting with streaming the logfile to the S3 bucket"
         withDockerContainer(params.builder_image) {
-          withCredentials(credsUI) {
+          withCredentials(credsLog) {
             unstash 'clean-repo'
             script {
               try {
@@ -452,7 +452,7 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
         step([$class: "TapPublisher", testResults: "templogfiles/*", outputTapToConsole: true, planRequired: false])
         archiveArtifacts allowEmptyArchive: true, artifacts: 'bazel-bin/tectonic/**/logs/**'
         withDockerContainer(params.builder_image) {
-         withCredentials(credsUI) {
+         withCredentials(credsLog) {
           script {
             try {
               sh """#!/bin/bash -xe
