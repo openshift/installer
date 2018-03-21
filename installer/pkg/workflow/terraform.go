@@ -3,18 +3,21 @@ package workflow
 import (
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 )
 
 func terraformExec(clusterDir string, args ...string) error {
-	tf := exec.Command("terraform", args...)
-	tf.Dir = clusterDir
-	tf.Stdin = os.Stdin
-	tf.Stdout = os.Stdout
-	tf.Stderr = os.Stderr
+	// Create an executor
+	ex, err := newExecutor()
+	if err != nil {
+		return fmt.Errorf("Could not create Terraform executor: %s", err)
+	}
 
-	return tf.Run()
+	err = ex.execute(clusterDir, args...)
+	if err != nil {
+		return fmt.Errorf("Failed to run Terraform: %s", err)
+	}
+	return nil
 }
 
 func tfApply(clusterDir, state, templateDir string) error {
