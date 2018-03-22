@@ -41,12 +41,6 @@ RSpec.configure do |config|
   succeeded = system("tar -zxvf #{tar_gz} -C #{tar_gz_dir} > /dev/null")
   raise 'failed to untar build tarball' unless succeeded
 
-  # Add terraform binary to path
-  ENV['PATH'] =
-    File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), 'tectonic/tectonic-installer', Gem::Platform.local.os) +
-    ':' +
-    ENV['PATH']
-
   # rspec-expectations config goes here. You can use an alternate
   # assertion/expectation library such as wrong or the stdlib/minitest
   # assertions if you prefer.

@@ -16,6 +16,7 @@ go_library(
     srcs = [
         "convert.go",
         "destroy.go",
+        "executor.go",
         "init.go",
         "install.go",
         "terraform.go",
