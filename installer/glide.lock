@@ -1,6 +1,8 @@
-hash: a7bf01624144d3434e07630e60b9e8a76f283fed4b54e51cdbd3ff478ead0be9
-updated: 2018-03-15T14:52:52.707128292+01:00
+hash: b4b5aa74af489768595978bcdeb72ff062fae8df72325c3e9293a763d8ba75d8
+updated: 2018-03-23T11:31:29.662155125+01:00
 imports:
+- name: github.com/ajeddeloh/go-json
+  version: 73d058cf8437a1989030afe571eeab9f90eebbbd
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
   subpackages:
@@ -12,9 +14,28 @@ imports:
   subpackages:
   - cidr
 - name: github.com/coreos/go-semver
-  version: e214231b295a8ea9479f11b70b35d5acf3556d9b
+  version: 294930c1e79c64e7dbe360054274fdad492c8cf5
   subpackages:
   - semver
+- name: github.com/coreos/go-systemd
+  version: 40e2722dffead74698ca12a750f64ef313ddce05
+  subpackages:
+  - dbus
+  - unit
+- name: github.com/coreos/ignition
+  version: bd3876b8f1d627625fe266a0e35256ba05e664e3
+  subpackages:
+  - config/errors
+  - config/util
+  - config/v1
+  - config/v1/types
+  - config/v2_0
+  - config/v2_0/types
+  - config/v2_3_experimental/types
+  - config/validate
+  - config/validate/astjson
+  - config/validate/astnode
+  - config/validate/report
 - name: github.com/coreos/tectonic-config
   version: ff997d9ae68b0f4c02390d69cc355cd85a5a0f93
   subpackages:
@@ -52,7 +73,7 @@ imports:
   - ptypes/duration
   - ptypes/timestamp
 - name: github.com/google/btree
-  version: 7d79101e329e5a3adf994758c578dab82b90c017
+  version: e89373fe6b4a7413d7acd6da1725b83ef713e6e4
 - name: github.com/google/gofuzz
   version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
 - name: github.com/googleapis/gnostic
@@ -62,7 +83,7 @@ imports:
   - compiler
   - extensions
 - name: github.com/gregjones/httpcache
-  version: 787624de3eb7bd915c329cba748687a3b22666a6
+  version: 9cad4c3443a7200dd6400aef47183728de563a38
   subpackages:
   - diskcache
 - name: github.com/howeyc/gopass
@@ -72,7 +93,7 @@ imports:
 - name: github.com/json-iterator/go
   version: 36b14963da70d11297d313183d7e6388c8510e1e
 - name: github.com/juju/ratelimit
-  version: 5b9ff866471762aa2ab2dced63c9fb6f53921342
+  version: 59fac5042749a5afb9af70e813da1dd5474f0167
 - name: github.com/mailru/easyjson
   version: 2f5df55504ebc322e4d52d34df6a1f5b503bf26d
   subpackages:
@@ -80,7 +101,7 @@ imports:
   - jlexer
   - jwriter
 - name: github.com/peterbourgon/diskv
-  version: 5f041e8faa004a95c88a202771f4cc3e991971e6
+  version: 0646ccaebea1ed1539efcab30cae44019090093f
 - name: github.com/PuerkitoBio/purell
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
@@ -88,7 +109,13 @@ imports:
 - name: github.com/Sirupsen/logrus
   version: 081307d9bc1364753142d5962fc1d795c742baaf
 - name: github.com/spf13/pflag
-  version: 9ff6c6923cfffbcd502984b8e0c80539a94968b7
+  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
+- name: github.com/vincent-petithory/dataurl
+  version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
+- name: go4.org
+  version: 03efcb870d84809319ea509714dd6d19a1498483
+  subpackages:
+  - errorutil
 - name: golang.org/x/crypto
   version: 5dc8cb4b8a8eb076cbb5a06bc3b8682c15bdbbd3
   subpackages:
@@ -106,7 +133,7 @@ imports:
   - lex/httplex
   - websocket
 - name: golang.org/x/sys
-  version: 95c6576299259db960f6c5b9b69ea52422860fce
+  version: 91ee8cde435411ca3f1cd365e8f20131aed4d0a1
   subpackages:
   - unix
 - name: golang.org/x/text

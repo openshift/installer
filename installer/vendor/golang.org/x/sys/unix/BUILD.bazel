@@ -2,10 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
-    srcs = [
-        "env_unset.go",
-        "file_unix.go",
-    ] + select({
+    srcs = select({
         "@io_bazel_rules_go//go/platform:darwin": [
             "constants.go",
             "dev_darwin.go",
@@ -36,7 +33,6 @@ go_library(
             "syscall.go",
             "syscall_bsd.go",
             "syscall_dragonfly.go",
-            "syscall_no_getwd.go",
             "syscall_unix.go",
             "syscall_unix_gc.go",
             "timestruct.go",
@@ -55,12 +51,12 @@ go_library(
             "syscall.go",
             "syscall_bsd.go",
             "syscall_freebsd.go",
-            "syscall_no_getwd.go",
             "syscall_unix.go",
             "syscall_unix_gc.go",
             "timestruct.go",
         ],
         "@io_bazel_rules_go//go/platform:linux": [
+            "affinity_linux.go",
             "bluetooth_linux.go",
             "constants.go",
             "dev_linux.go",
@@ -74,6 +70,7 @@ go_library(
             "str.go",
             "syscall.go",
             "syscall_linux.go",
+            "syscall_linux_gc.go",
             "syscall_unix.go",
             "syscall_unix_gc.go",
             "timestruct.go",
@@ -94,7 +91,6 @@ go_library(
             "syscall.go",
             "syscall_bsd.go",
             "syscall_netbsd.go",
-            "syscall_no_getwd.go",
             "syscall_unix.go",
             "syscall_unix_gc.go",
             "timestruct.go",
@@ -111,7 +107,6 @@ go_library(
             "str.go",
             "syscall.go",
             "syscall_bsd.go",
-            "syscall_no_getwd.go",
             "syscall_openbsd.go",
             "syscall_unix.go",
             "syscall_unix_gc.go",
@@ -398,7 +393,6 @@ go_library(
             "syscall_solaris_amd64.go",
             "zerrors_solaris_amd64.go",
             "zsyscall_solaris_amd64.go",
-            "zsysnum_solaris_amd64.go",
             "ztypes_solaris_amd64.go",
         ],
         "//conditions:default": [],
