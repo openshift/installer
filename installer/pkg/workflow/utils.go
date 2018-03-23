@@ -141,10 +141,10 @@ func readClusterConfig(configFilePath string, internalFilePath string) (*config.
 		if err != nil {
 			return nil, fmt.Errorf("%s is not a valid internal file: %s", internalFilePath, err)
 		}
-		cfg.Clusters[0].Internal = *internal
+		cfg.Internal = *internal
 	}
 
-	return &cfg.Clusters[0], nil
+	return cfg, nil
 }
 
 func readClusterConfigStep(m *metadata) error {

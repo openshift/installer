@@ -39,11 +39,11 @@ func buildInternalStep(m *metadata) error {
 	}
 
 	// fill the internal struct
-	clusterId, err := configgenerator.GenerateClusterID(16)
+	clusterID, err := configgenerator.GenerateClusterID(16)
 	if err != nil {
 		return err
 	}
-	m.cluster.Internal.ClusterID = clusterId
+	m.cluster.Internal.ClusterID = clusterID
 
 	// store the content
 	yamlContent, err := yaml.Marshal(m.cluster.Internal)
@@ -81,9 +81,5 @@ func prepareWorspaceStep(m *metadata) error {
 	}
 
 	configFilePath := filepath.Join(m.clusterDir, configFileName)
-	if err := copyFile(m.configFilePath, configFilePath); err != nil {
-		return err
-	}
-
-	return nil
+	return copyFile(m.configFilePath, configFilePath)
 }

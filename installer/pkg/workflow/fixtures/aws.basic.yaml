@@ -1,56 +1,55 @@
-clusters:
-  - admin:
-      email: null
-      password: null
-    aws:
-      etcd:
-        ec2Type: m4.large
-        rootVolume:
-          iops: 100
-          size: 30
-          type: gp2
-      master:
-        ec2Type: m4.large
-        rootVolume:
-          iops: 100
-          size: 30
-          type: gp2
-      region: null
-      sshKey: null
-      vpcCIDRBlock: 10.0.0.0/16
-      worker:
-        ec2Type: m4.large
-        rootVolume:
-          iops: 100
-          size: 30
-          type: gp2
-    baseDomain: tectonic-ci.de
-    containerLinux:
-      channel: beta
-      version: latest
-    etcd:
-      nodePools:
-        - etcd
-    licensePath:
-    master:
-      nodePools:
-        - master
-    name: aws-basic
-    networking:
-      mtu: 1480
-      podCIDR: 10.2.0.0/16
-      serviceCIDR: 10.3.0.0/16
-      type: canal
-    nodePools:
-      - name: etcd
-        count: 3
-      - name: master
-        count: 2
-      - name: worker
-        count: 3
-    platform: AWS
-    pullSecretPath:
-    tlsValidityPeriod: 26280
-    worker:
-      nodePools:
-        - worker
+admin:
+  email: null
+  password: null
+aws:
+  etcd:
+    ec2Type: m4.large
+    rootVolume:
+      iops: 100
+      size: 30
+      type: gp2
+  master:
+    ec2Type: m4.large
+    rootVolume:
+      iops: 100
+      size: 30
+      type: gp2
+  region: null
+  sshKey: null
+  vpcCIDRBlock: 10.0.0.0/16
+  worker:
+    ec2Type: m4.large
+    rootVolume:
+      iops: 100
+      size: 30
+      type: gp2
+baseDomain: tectonic-ci.de
+containerLinux:
+  channel: beta
+  version: latest
+etcd:
+  nodePools:
+    - etcd
+licensePath:
+master:
+  nodePools:
+    - master
+name: aws-basic
+networking:
+  mtu: 1480
+  podCIDR: 10.2.0.0/16
+  serviceCIDR: 10.3.0.0/16
+  type: canal
+nodePools:
+  - name: etcd
+    count: 3
+  - name: master
+    count: 2
+  - name: worker
+    count: 3
+platform: AWS
+pullSecretPath:
+tlsValidityPeriod: 26280
+worker:
+  nodePools:
+    - worker

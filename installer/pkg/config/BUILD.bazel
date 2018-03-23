@@ -10,7 +10,6 @@ go_library(
     name = "go_default_library",
     srcs = [
         "cluster.go",
-        "config.go",
         "parser.go",
         "types.go",
         "validate.go",

@@ -1,23 +1,22 @@
-clusters:
-- aws:
-    etcd:
-      ec2Type: m4.large
-    master:
-      ec2Type: m4.large
-    vpcCIDRBlock: 10.0.0.0/16
-    worker:
-      ec2Type: m4.large
-  containerLinux:
-    channel: beta
+aws:
+  etcd:
+    ec2Type: m4.large
   master:
-    nodepools:
-      - master
-  nodePools:
+    ec2Type: m4.large
+  vpcCIDRBlock: 10.0.0.0/16
+  worker:
+    ec2Type: m4.large
+containerLinux:
+  channel: beta
+master:
+  nodepools:
+    - master
+nodePools:
   - count: 1
     name: master
   - count: 2
     name: worker
-  platform: AWS
-  worker:
-    nodePools:
-      - worker
+platform: AWS
+worker:
+  nodePools:
+    - worker

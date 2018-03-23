@@ -32,11 +32,7 @@ func readTFVarsConfigStep(m *metadata) error {
 }
 
 func printYAMLConfigStep(m *metadata) error {
-	config := config.Config{
-		Clusters: []config.Cluster{m.cluster},
-	}
-
-	yaml, err := config.YAML()
+	yaml, err := m.cluster.YAML()
 	if err != nil {
 		return err
 	}

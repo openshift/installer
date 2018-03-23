@@ -1,10 +1,9 @@
-clusters:
-  - name: test
-    platform: AWS
-    baseDomain: cluster.com
-    etcd:
-      nodePools:
-        - etcd
-    nodePools:
-      - name: etcd
-        count: 3
+name: test
+platform: AWS
+baseDomain: cluster.com
+etcd:
+  nodePools:
+    - etcd
+nodePools:
+  - name: etcd
+    count: 3

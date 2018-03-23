@@ -3,6 +3,8 @@ package config
 import (
 	"encoding/json"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/coreos/tectonic-installer/installer/pkg/config/aws"
 	"github.com/coreos/tectonic-installer/installer/pkg/config/azure"
 	"github.com/coreos/tectonic-installer/installer/pkg/config/gcp"
@@ -23,6 +25,7 @@ type Cluster struct {
 	DNSName             string `json:"tectonic_dns_name,omitempty" yaml:"dnsName,omitempty"`
 	Etcd                `json:",inline" yaml:"etcd,omitempty"`
 	ISCSI               `json:",inline" yaml:"iscsi,omitempty"`
+	Internal            `json:",inline" yaml:"-"`
 	LicensePath         string `json:"tectonic_license_path,omitempty" yaml:"licensePath,omitempty"`
 	Master              `json:",inline" yaml:"master,omitempty"`
 	Name                string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
@@ -40,7 +43,6 @@ type Cluster struct {
 	metal.Metal         `json:",inline" yaml:"metal,omitempty"`
 	openstack.OpenStack `json:",inline" yaml:"openstack,omitempty"`
 	vmware.VMware       `json:",inline" yaml:"vmware,omitempty"`
-	Internal            `json:",inline" yaml:"-"`
 }
 
 // NodeCount will return the number of nodes specified in NodePools with matching names.
@@ -70,4 +72,32 @@ func (c *Cluster) TFVars() (string, error) {
 	}
 
 	return string(data), nil
+}
+
+// YAML will return the config for the cluster in yaml format.
+func (c *Cluster) YAML() (string, error) {
+	c.NodePools = append(c.NodePools, NodePool{
+		Count: c.Etcd.Count,
+		Name:  "etcd",
+	})
+	c.Etcd.NodePools = []string{"etcd"}
+
+	c.NodePools = append(c.NodePools, NodePool{
+		Count: c.Master.Count,
+		Name:  "master",
+	})
+	c.Master.NodePools = []string{"master"}
+
+	c.NodePools = append(c.NodePools, NodePool{
+		Count: c.Worker.Count,
+		Name:  "worker",
+	})
+	c.Worker.NodePools = []string{"worker"}
+
+	yaml, err := yaml.Marshal(c)
+	if err != nil {
+		return "", err
+	}
+
+	return string(yaml), nil
 }

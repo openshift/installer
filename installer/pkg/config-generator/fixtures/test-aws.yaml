@@ -1,56 +1,55 @@
-clusters:
-  - name: test
-    baseDomain: cluster.com
-    platform: AWS
-    networking:
-      type: canal
-      mtu: 1480
-      podCIDR: 10.2.0.0/16
-      serviceCIDR: 10.3.0.0/16
-    masters:
-      nodePools:
-        - master
-    workers:
-      nodePools:
-        - worker
-    etcd:
-      nodePools:
-        - etcd
-    tlsValidityPeriod: 26280
-    pullSecretPath: /path/config.json
-    licensePath: /path/tectonic-license.txt
-    containerLinux:
-      channel: stable
-      version: latest
-    admin:
-      email: test@coreos.com
-      password: asd123
-    aws:
-      region: eu-west-1
-      sshKey: tectonic
-      vpcCIDRBlock: 10.0.0.0/16
-      etcd:
-        ec2Type: t2.medium
-        rootVolume:
-          iops: 100
-          size: 30
-          type: gp2
-      master:
-        ec2Type: t2.medium
-        rootVolume:
-          iops: 100
-          size: 30
-          type: gp2
-      worker:
-        ec2Type: t2.medium
-        rootVolume:
-          iops: 100
-          size: 30
-          type: gp2
-    nodePools:
-      - name: master
-        count: 2
-      - name: worker
-        count: 3
-      - name: etcd
-        count: 3
+name: test
+baseDomain: cluster.com
+platform: AWS
+networking:
+  type: canal
+  mtu: 1480
+  podCIDR: 10.2.0.0/16
+  serviceCIDR: 10.3.0.0/16
+masters:
+  nodePools:
+    - master
+workers:
+  nodePools:
+    - worker
+etcd:
+  nodePools:
+    - etcd
+tlsValidityPeriod: 26280
+pullSecretPath: /path/config.json
+licensePath: /path/tectonic-license.txt
+containerLinux:
+  channel: stable
+  version: latest
+admin:
+  email: test@coreos.com
+  password: asd123
+aws:
+  region: eu-west-1
+  sshKey: tectonic
+  vpcCIDRBlock: 10.0.0.0/16
+  etcd:
+    ec2Type: t2.medium
+    rootVolume:
+      iops: 100
+      size: 30
+      type: gp2
+  master:
+    ec2Type: t2.medium
+    rootVolume:
+      iops: 100
+      size: 30
+      type: gp2
+  worker:
+    ec2Type: t2.medium
+    rootVolume:
+      iops: 100
+      size: 30
+      type: gp2
+nodePools:
+  - name: master
+    count: 2
+  - name: worker
+    count: 3
+  - name: etcd
+    count: 3

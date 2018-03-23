@@ -17,10 +17,10 @@ func initTestCluster(file string) (*config.Cluster, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse test config: %v", err)
 	}
-	if len((&testConfig.Clusters[0]).Validate()) != 0 {
+	if len(testConfig.Validate()) != 0 {
 		return nil, errors.New("failed to validate test conifg")
 	}
-	return &testConfig.Clusters[0], nil
+	return testConfig, nil
 }
 
 func TestGenerateTerraformVariablesStep(t *testing.T) {

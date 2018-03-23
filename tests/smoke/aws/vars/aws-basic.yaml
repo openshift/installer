@@ -1,47 +1,46 @@
-clusters:
-- aws:
-    etcd:
-      ec2Type: m4.large
-      iamRoleName: tf-tectonic-etcd-node
-      rootVolume:
-        size: 32
-        type: gp2
-    master:
-      ec2Type: m4.large
-      iamRoleName: tf-tectonic-master-node
-      rootVolume:
-        size: 32
-        type: gp2
-    vpcCIDRBlock: 10.0.0.0/16
-    worker:
-      ec2Type: m4.large
-      iamRoleName: tf-tectonic-worker-node
-      rootVolume:
-        size: 32
-        type: gp2
-  baseDomain: tectonic-ci.de
-  containerLinux:
-    channel: beta
+aws:
   etcd:
-    nodePools:
-      - etcd
+    ec2Type: m4.large
+    iamRoleName: tf-tectonic-etcd-node
+    rootVolume:
+      size: 32
+      type: gp2
   master:
-    nodePools:
-      - master
-  name: aws-basic
-  networking:
-    mtu: 1480
-    podCIDR: 10.2.0.0/16
-    serviceCIDR: 10.3.0.0/16
-    type: canal
+    ec2Type: m4.large
+    iamRoleName: tf-tectonic-master-node
+    rootVolume:
+      size: 32
+      type: gp2
+  vpcCIDRBlock: 10.0.0.0/16
+  worker:
+    ec2Type: m4.large
+    iamRoleName: tf-tectonic-worker-node
+    rootVolume:
+      size: 32
+      type: gp2
+baseDomain: tectonic-ci.de
+containerLinux:
+  channel: beta
+etcd:
   nodePools:
+    - etcd
+master:
+  nodePools:
+    - master
+name: aws-basic
+networking:
+  mtu: 1480
+  podCIDR: 10.2.0.0/16
+  serviceCIDR: 10.3.0.0/16
+  type: canal
+nodePools:
   - count: 3
     name: etcd
   - count: 2
     name: master
   - count: 3
     name: worker
-  platform: AWS
-  worker:
-    nodePools:
-      - worker
+platform: AWS
+worker:
+  nodePools:
+    - worker

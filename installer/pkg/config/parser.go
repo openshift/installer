@@ -1,39 +1,24 @@
 package config
 
 import (
-	"errors"
 	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
 )
 
-// Error codes returned by failures to parse a config.
-var (
-	ErrMultipleClusters = errors.New("multiple cluster configurations are not currently supported")
-	ErrNoClusters       = errors.New("no clusters were defined")
-)
+// ParseConfig parses a yaml string and returns, if successful, a Cluster.
+func ParseConfig(data []byte) (*Cluster, error) {
+	cluster := &Cluster{}
 
-// ParseConfig parses a yaml string and returns, if successful, a Config.
-func ParseConfig(data []byte) (*Config, error) {
-	config := &Config{}
-
-	if err := yaml.Unmarshal(data, config); err != nil {
+	if err := yaml.Unmarshal(data, cluster); err != nil {
 		return nil, err
 	}
 
-	if len(config.Clusters) == 0 {
-		return config, ErrNoClusters
-	}
-
-	if len(config.Clusters) > 1 {
-		return config, ErrMultipleClusters
-	}
-
-	return config, nil
+	return cluster, nil
 }
 
-// ParseConfigFile parses a yaml file and returns, if successful, a Config.
-func ParseConfigFile(path string) (*Config, error) {
+// ParseConfigFile parses a yaml file and returns, if successful, a Cluster.
+func ParseConfigFile(path string) (*Cluster, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return nil, err

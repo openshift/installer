@@ -8,14 +8,13 @@ import (
 )
 
 func initConfig(t *testing.T, file string) ConfigGenerator {
-	testConfig, err := config.ParseConfigFile("./fixtures/" + file)
+	cluster, err := config.ParseConfigFile("./fixtures/" + file)
 	if err != nil {
 		t.Errorf("Test case TestUrlFunctions: failed to parse test config, %s", err)
 	}
-	cluster := testConfig.Clusters[0]
 
 	return ConfigGenerator{
-		cluster,
+		*cluster,
 	}
 }
 func TestUrlFunctions(t *testing.T) {
