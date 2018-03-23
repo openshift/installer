@@ -2,7 +2,7 @@
 
 require 'yaml'
 
-PLATFORMS = %w[govcloud aws azure metal vmware gcp].freeze
+PLATFORMS = %w[aws].freeze
 
 # ConfigFile represents a Terraform configuration file describing a Tectonic
 # cluster configuration
