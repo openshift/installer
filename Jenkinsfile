@@ -9,20 +9,11 @@
 commonCreds = [
   file(credentialsId: 'tectonic-license', variable: 'TF_VAR_tectonic_license_path'),
   file(credentialsId: 'tectonic-pull', variable: 'TF_VAR_tectonic_pull_secret_path'),
-  file(credentialsId: 'GCP-APPLICATION', variable: 'GOOGLE_APPLICATION_CREDENTIALS'),
   usernamePassword(
     credentialsId: 'jenkins-log-analyzer-user',
     passwordVariable: 'LOG_ANALYZER_PASSWORD',
     usernameVariable: 'LOG_ANALYZER_USER'
   ),
-  [
-    $class: 'AzureCredentialsBinding',
-    credentialsId: 'azure-tectonic-test-service-principal',
-    subscriptionIdVariable: 'ARM_SUBSCRIPTION_ID',
-    clientIdVariable: 'ARM_CLIENT_ID',
-    clientSecretVariable: 'ARM_CLIENT_SECRET',
-    tenantIdVariable: 'ARM_TENANT_ID'
-  ],
   [
     $class: 'StringBinding',
     credentialsId: 'github-coreosbot',
@@ -47,17 +38,6 @@ creds.push(
 )
 creds.push(
   string(credentialsId: 'AWS-TECTONIC-TRACK-2-ROLE-NAME', variable: 'TF_VAR_tectonic_aws_installer_role')
-)
-
-govcloudCreds = commonCreds.collect()
-govcloudCreds.push(
-    [
-      $class: 'AmazonWebServicesCredentialsBinding',
-      credentialsId: 'TF-TECTONIC-INSTALLER-GOVCLOUD'
-    ]
-)
-govcloudCreds.push(
-  string(credentialsId: 'GOVCLOUD-TECTONIC-ROLE-NAME', variable: 'TF_VAR_tectonic_aws_installer_role')
 )
 
 quayCreds = [
@@ -118,28 +98,6 @@ pipeline {
     )
     booleanParam(
       name: 'PLATFORM/AWS',
-      defaultValue: true,
-      description: ''
-    )
-    booleanParam(
-      name: 'PLATFORM/GOVCLOUD',
-      defaultValue: true,
-      description: ''
-    )
-    booleanParam(
-      name: 'PLATFORM/AZURE',
-      defaultValue: true,
-      description: ''
-    )
-    /* Disabled until we start the work again on gcp
-    booleanParam(
-      name: 'PLATFORM/GCP',
-      defaultValue: false,
-      description: ''
-    )
-    */
-    booleanParam(
-      name: 'PLATFORM/BARE_METAL',
       defaultValue: true,
       description: ''
     )
@@ -254,7 +212,6 @@ pipeline {
         GRAFITI_DELETER_ROLE = 'tf-grafiti'
         TF_VAR_tectonic_container_images = "${params.hyperkube_image}"
         TF_VAR_tectonic_kubelet_debug_config = "--minimum-container-ttl-duration=8h --maximum-dead-containers-per-container=9999 --maximum-dead-containers=9999"
-        GOOGLE_PROJECT = "tectonic-installer"
       }
       steps {
         script {
@@ -267,32 +224,6 @@ pipeline {
             // [file: 'ca_spec.rb', args: ''],
             // [file: 'custom_tls_spec.rb', args: '']
           ]
-          def govcloud = [
-            [file: 'vpc_internal_spec.rb', args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root']
-          ]
-          def azure = [
-            [file: 'basic_spec.rb', args: ''],
-            [file: 'private_external_spec.rb', args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root'],
-            /*
-            * Test temporarily disabled
-            [file: 'spec/azure_dns_spec.rb', args: ''],
-            */
-            [file: 'external_spec.rb', args: ''],
-            [file: 'example_spec.rb', args: ''],
-            [file: 'custom_tls_spec.rb', args: '']
-          ]
-          def gcp = [
-          /* Disabled until we start the work again on gcp
-           *  [file: 'basic_spec.rb', args: ''],
-            [file: 'ha_spec.rb', args: ''],
-            [file: 'custom_tls_spec.rb', args: '']
-           */
-          ]
-
-          def metal = [
-            [file: 'basic_spec.rb', args: ''],
-            [file: 'custom_tls_spec.rb', args: '']
-          ]
 
           if (params."PLATFORM/AWS") {
             aws.each { build ->
@@ -301,33 +232,6 @@ pipeline {
             }
           }
 
-          if (params."PLATFORM/GOVCLOUD") {
-            govcloud.each { build ->
-              filepath = 'spec/govcloud/' + build.file
-              builds['govcloud/' + build.file] = runRSpecTest(filepath, build.args, govcloudCreds)
-            }
-          }
-
-          if (params."PLATFORM/AZURE") {
-            azure.each { build ->
-              filepath = 'spec/azure/' + build.file
-              builds['azure/' + build.file] = runRSpecTest(filepath, build.args, creds)
-            }
-          }
-
-          if (params."PLATFORM/GCP") {
-            gcp.each { build ->
-              filepath = 'spec/gcp/' + build.file
-              builds['gcp/' + build.file] = runRSpecTest(filepath, build.args, creds)
-            }
-          }
-
-          if (params."PLATFORM/BARE_METAL") {
-            metal.each { build ->
-              filepath = 'spec/metal/' + build.file
-              builds['metal/' + build.file] = runRSpecTestBareMetal(filepath, creds)
-            }
-          }
           parallel builds
         }
       }
@@ -469,54 +373,6 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
         cleanWs notFailBuild: true
       }
 
-    }
-  }
-}
-
-def runRSpecTestBareMetal(testFilePath, credentials) {
-  return {
-    node('worker && bare-metal') {
-      def err = null
-      try {
-        timeout(time: 5, unit: 'HOURS') {
-          ansiColor('xterm') {
-            unstashCleanRepoTectonicTarGZSmokeTests()
-            withCredentials(credentials + quayCreds) {
-              sh """#!/bin/bash -ex
-              cd tests/rspec
-              export RBENV_ROOT=/usr/local/rbenv
-              export PATH="/usr/local/rbenv/bin:$PATH"
-              eval \"\$(rbenv init -)\"
-              rbenv install -s
-              gem install bundler
-              bundler install
-              bundler exec rspec ${testFilePath} --format RspecTap::Formatter --format RspecTap::Formatter --out ../../templogfiles/tap.log
-              """
-            }
-          }
-        }
-      } catch (error) {
-        err = error
-        throw error
-      } finally {
-        reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
-        step([$class: "TapPublisher", testResults: "../../templogfiles/*", outputTapToConsole: true, planRequired: false])
-        archiveArtifacts allowEmptyArchive: true, artifacts: 'bazel-bin/tectonic/**/logs/**'
-        withCredentials(credsUI) {
-          script {
-            try {
-              sh """#!/bin/bash -xe
-              ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs ${testFilePath}
-              """
-            } catch (Exception e) {
-              notifyBuildSlack()
-            } finally {
-              cleanWs notFailBuild: true
-            }
-          }
-         }
-        cleanWs notFailBuild: true
-      }
     }
   }
 }
