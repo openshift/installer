@@ -73,7 +73,7 @@ func findTemplates(relativePath string) (string, error) {
 	return base, nil
 }
 
-func generateClusterConfigStep(m *metadata) error {
+func generateKubeConfigStep(m *metadata) error {
 	configGenerator := configgenerator.New(m.cluster)
 
 	kubeSystem, err := configGenerator.KubeSystem()

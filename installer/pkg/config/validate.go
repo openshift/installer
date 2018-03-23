@@ -2,7 +2,11 @@ package config
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strings"
+
+	ignconfig "github.com/coreos/ignition/config/v2_0"
 )
 
 // ErrUnmatchedNodePool is returned when a nodePool was specified but not found in the nodePools list.
@@ -46,11 +50,63 @@ func (e *ErrSharedNodePool) Error() string {
 	return fmt.Sprintf("node pools cannot be shared, but %q is used by %s", e.name, strings.Join(e.fields, ", "))
 }
 
+// ErrInvalidIgnConfig is returned when a invalid ign config is given.
+type ErrInvalidIgnConfig struct {
+	filePath string
+	rpt      string
+}
+
+// ErrInvalidIgnConfig implements the error interface.
+func (e *ErrInvalidIgnConfig) Error() string {
+	return fmt.Sprintf("failed to parse ignition file %s: %s", e.filePath, e.rpt)
+}
+
 // Validate ensures that the Cluster is semantically correct and returns an error if not.
 func (c *Cluster) Validate() []error {
 	var errs []error
 	errs = append(errs, c.validateNodePools()...)
+	errs = append(errs, c.validateIgnitionFiles()...)
 	return errs
+}
+
+func (c *Cluster) validateIgnitionFiles() []error {
+	var errs []error
+	for _, n := range c.NodePools {
+		if n.IgnitionFile == "" {
+			continue
+		}
+
+		if err := validateFileExist(n.IgnitionFile); err != nil {
+			errs = append(errs, err)
+			continue
+		}
+
+		if err := validateIgnitionConfig(n.IgnitionFile); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errs
+}
+
+func validateFileExist(ignitionFile string) error {
+	_, err := os.Stat(ignitionFile)
+	return err
+}
+
+func validateIgnitionConfig(filePath string) error {
+	blob, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+
+	_, rpt, _ := ignconfig.Parse(blob)
+	if len(rpt.Entries) > 0 {
+		return &ErrInvalidIgnConfig{
+			filePath,
+			rpt.String(),
+		}
+	}
+	return nil
 }
 
 func (c *Cluster) validateNodePools() []error {

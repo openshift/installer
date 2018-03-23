@@ -54,8 +54,9 @@ type ISCSI struct {
 
 // NodePool converts node pool related config.
 type NodePool struct {
-	Count int    `json:"-" yaml:"count"`
-	Name  string `json:"-" yaml:"name"`
+	Count        int    `json:"-" yaml:"count"`
+	Name         string `json:"-" yaml:"name"`
+	IgnitionFile string `json:"-" yaml:"ignitionFile"`
 }
 
 // NodePools converts node pools related config.

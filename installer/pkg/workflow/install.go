@@ -1,5 +1,7 @@
 package workflow
 
+import "github.com/coreos/tectonic-installer/installer/pkg/config-generator"
+
 // NewInstallFullWorkflow creates new instances of the 'install' workflow,
 // responsible for running the actions necessary to install a new cluster.
 func NewInstallFullWorkflow(clusterDir string) Workflow {
@@ -8,7 +10,8 @@ func NewInstallFullWorkflow(clusterDir string) Workflow {
 		steps: []Step{
 			readClusterConfigStep,
 			installAssetsStep,
-			generateClusterConfigStep,
+			generateKubeConfigStep,
+			generateIgnConfigStep,
 			installBootstrapStep,
 			installJoinStep,
 		},
@@ -23,7 +26,8 @@ func NewInstallAssetsWorkflow(clusterDir string) Workflow {
 		steps: []Step{
 			readClusterConfigStep,
 			installAssetsStep,
-			generateClusterConfigStep,
+			generateKubeConfigStep,
+			generateIgnConfigStep,
 		},
 	}
 }
@@ -85,4 +89,9 @@ func runInstallStep(clusterDir, step string) error {
 	}
 
 	return tfApply(clusterDir, step, templateDir)
+}
+
+func generateIgnConfigStep(m *metadata) error {
+	c := configgenerator.New(m.cluster)
+	return c.GenerateIgnConfig(m.clusterDir)
 }

@@ -59,24 +59,6 @@ resource "aws_autoscaling_group" "masters" {
   }
 }
 
-data "ignition_config" "tnc_master" {
-  append {
-    source = "http://${var.cluster_name}-tnc.${var.base_domain}/ign/v1/role/master"
-  }
-
-  files = ["${data.ignition_file.kubelet_master_kubeconfig.id}"]
-}
-
-data "ignition_file" "kubelet_master_kubeconfig" {
-  filesystem = "root"
-  path       = "/etc/kubernetes/kubeconfig"
-  mode       = 0644
-
-  content {
-    content = "${var.kubeconfig_content}"
-  }
-}
-
 resource "aws_launch_configuration" "master_conf" {
   instance_type               = "${var.ec2_type}"
   image_id                    = "${coalesce(var.ec2_ami, data.aws_ami.coreos_ami.image_id)}"
@@ -85,7 +67,7 @@ resource "aws_launch_configuration" "master_conf" {
   security_groups             = ["${var.master_sg_ids}"]
   iam_instance_profile        = "${aws_iam_instance_profile.master_profile.arn}"
   associate_public_ip_address = "${var.public_endpoints}"
-  user_data                   = "${data.ignition_config.tnc_master.rendered}"
+  user_data                   = "${var.user_data_ign}"
 
   lifecycle {
     create_before_destroy = true
