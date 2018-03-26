@@ -18,6 +18,7 @@ resource "template_dir" "bootkube" {
 
   vars {
     tectonic_network_operator_image = "${var.container_images["tectonic_network_operator"]}"
+    tnc_bootstrap_image             = "${var.container_images["tnc_bootstrap"]}"
 
     kco_config = "${indent(4, chomp(data.template_file.kco-config_yaml.rendered))}"
 
@@ -40,10 +41,13 @@ resource "template_dir" "bootkube" {
     pull_secret                    = "${base64encode(file(var.pull_secret_path))}"
     serviceaccount_pub             = "${base64encode(tls_private_key.service_account.public_key_pem)}"
     serviceaccount_key             = "${base64encode(tls_private_key.service_account.private_key_pem)}"
+    kube_dns_service_ip            = "${cidrhost(var.service_cidr, 10)}"
 
     etcd_ca_cert     = "${base64encode(var.etcd_ca_cert_pem)}"
     etcd_client_cert = "${base64encode(var.etcd_client_cert_pem)}"
     etcd_client_key  = "${base64encode(var.etcd_client_key_pem)}"
+
+    tnc_config = "${indent(4, chomp(data.template_file.tnc_config.rendered))}"
   }
 }
 
@@ -147,4 +151,38 @@ data "ignition_systemd_unit" "bootkube_path_unit" {
   name    = "bootkube.path"
   enabled = true
   content = "${data.template_file.bootkube_path_unit.rendered}"
+}
+
+# TNC
+resource "local_file" "tnc_pod_config" {
+  content  = "${data.template_file.tnc_config.rendered}"
+  filename = "./generated/tnc-config"
+}
+
+data "template_file" "tnc_config" {
+  template = "${file("${path.module}/resources/tnc-config")}"
+
+  vars {
+    cloud_provider_config = "${var.cloud_provider_config}"
+
+    http_proxy               = "${var.http_proxy}"
+    https_proxy              = "${var.https_proxy}"
+    no_proxy                 = "${join(",", var.no_proxy)}"
+    kubelet_image_url        = "${replace(var.container_images["hyperkube"],var.image_re,"$1")}"
+    kubelet_image_tag        = "${replace(var.container_images["hyperkube"],var.image_re,"$2")}"
+    iscsi_enabled            = "${var.iscsi_enabled}"
+    kubeconfig_fetch_cmd     = "${var.kubeconfig_fetch_cmd != "" ? "ExecStartPre=${var.kubeconfig_fetch_cmd}" : ""}"
+    tectonic_torcx_image_url = "${replace(var.container_images["tectonic_torcx"],var.image_re,"$1")}"
+    tectonic_torcx_image_tag = "${replace(var.container_images["tectonic_torcx"],var.image_re,"$2")}"
+    torcx_skip_setup         = "false"
+    torcx_store_url          = "${var.torcx_store_url}"
+    bootstrap_upgrade_cl     = "${var.bootstrap_upgrade_cl}"
+    master_node_label        = "${var.kubelet_master_node_label}"
+    worker_node_label        = "${var.kubelet_worker_node_label}"
+    node_taints_param        = "${var.kubelet_node_taints != "" ? "--register-with-taints=${var.kubelet_node_taints}" : ""}"
+    cluster_dns_ip           = "${var.kube_dns_service_ip}"
+    cloud_provider           = "${var.cloud_provider}"
+    debug_config             = "${var.kubelet_debug_config}"
+    cluster_name             = "${var.cluster_name}"
+  }
 }

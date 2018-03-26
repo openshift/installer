@@ -174,14 +174,6 @@ pipeline {
                     archiveArtifacts allowEmptyArchive: true, artifacts: 'tectonic.tar.gz'
                   }
 
-                  withDockerContainer(params.builder_image) {
-                    sh """#!/bin/bash -ex
-                    mkdir -p \$(dirname $GO_PROJECT) && ln -sf $WORKSPACE $GO_PROJECT
-
-                    cd $GO_PROJECT/
-                    make structure-check
-                    """
-                  }
                   withDockerContainer(tectonicSmokeTestEnvImage) {
                     sh"""#!/bin/bash -ex
                       cd tests/rspec

@@ -4,12 +4,6 @@ package(
     default_visibility = ["//visibility:public"],
 )
 
-template_files = glob([
-    "modules/**/*",
-    "platforms/**/*",
-    "steps/**/*",
-])
-
 config_setting(
     name = "darwin",
     values = {"cpu": "darwin"},
@@ -46,21 +40,6 @@ genrule(
 )
 
 exports_files(["config.tf"])
-
-genrule(
-    name = "templates",
-    message = "Copying templates...",
-    output_to_bindir = 1,
-    srcs = template_files,
-    outs = ["templates/%s" % f for f in template_files],
-    cmd = '\n'.join([
-        "for tf_file in $(SRCS); do",
-        "target=\"$(@D)/templates/$$(dirname $${tf_file})\"",
-        "mkdir -p $${target}",
-        "cp $${tf_file} $${target}",
-        "done"
-    ]),
-)
 
 load("@io_bazel_rules_go//go:def.bzl", "go_prefix")
 
@@ -120,7 +99,7 @@ genrule(
 pkg_tar(
     name = "tarball_terraform_configuration",
     mode = "0644",
-    srcs =  glob(["modules/**"]) + glob(["platforms/**"]) + glob(["steps/**"]) + ["config.tf"],
+    srcs =  glob(["modules/**"], exclude=["modules/update-payload/**"]) + glob(["steps/**"]) + ["config.tf"],
     strip_prefix = ".",
 )
 
@@ -166,23 +145,18 @@ pkg_tar(
     srcs = ["@terraform_provider_matchbox_linux//:terraform-provider-matchbox"],
 )
 
-load("//:variables.bzl", "PLATFORMS")
-
 pkg_tar(
     name = "tarball_examples",
     package_dir = "examples",
     # As long as we are not auto-generating the tectonic cli configuration
     # examples, make sure to add the manually created once to the tarball.
-    srcs = ["//examples:terraform.tfvars." + p for p in PLATFORMS] + ["//examples:tectonic_cli_configs"],
+    srcs = ["//examples:tectonic_cli_configs"],
 )
 
 filegroup(
     name = "terraform_files",
     srcs = glob(
         ["modules/**/*.tf"],
-        exclude_directories=1,
-    ) + glob(
-        ["platforms/**/*.tf"],
         exclude_directories=1,
     ) + glob(
         ["steps/**/*.tf"],

@@ -54,22 +54,3 @@ visibility = ["//visibility:public"]
     strip_prefix = "terraform-provider-matchbox-v%s-%s-amd64/" % (provider_matchbox_version, platform),
     url = "https://github.com/coreos/terraform-provider-matchbox/releases/download/v%s/terraform-provider-matchbox-v%s-%s-amd64.tar.gz" % (provider_matchbox_version, provider_matchbox_version, platform),
 ) for platform in supported_platforms]
-
-# Import Go dependencies.
-go_repository(
-    name = "com_github_hashicorp_hcl",
-    importpath = "github.com/hashicorp/hcl",
-    commit = "23c074d0eceb2b8a5bfdbb271ab780cde70f05a8",
-)
-
-go_repository(
-    name = "com_github_segmentio_terraform-docs",
-    importpath = "github.com/segmentio/terraform-docs",
-    tag = "v0.3.0",
-)
-
-go_repository(
-    name = "com_github_tj_docopt",
-    importpath = "github.com/tj/docopt",
-    tag = "v1.0.0",
-)
