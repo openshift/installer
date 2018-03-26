@@ -1,1 +1,0 @@
-${etcd-name}=https://${etcd-address}:2380
