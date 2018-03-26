@@ -64,7 +64,7 @@ tectonic
 ├── config.tf
 ├── examples
 ├── modules
-├── platforms
+├── steps
 └── tectonic-installer
     ├── darwin
     │   ├── tectonic
@@ -90,7 +90,7 @@ tectonic_1.2.3-beta
 ├── config.tf
 ├── examples
 ├── modules
-├── platforms
+├── steps
 └── tectonic-installer
 ```
 

@@ -182,3 +182,76 @@ variable "tectonic_networking" {
   description = "configures the network to be used in the cluster"
   type        = "string"
 }
+
+variable "http_proxy" {
+  type        = "string"
+  description = "HTTP proxy address."
+}
+
+variable "https_proxy" {
+  type        = "string"
+  description = "HTTPS proxy address."
+}
+
+variable "no_proxy" {
+  type        = "list"
+  description = "List of local endpoints that will not use HTTP proxy."
+}
+
+variable "iscsi_enabled" {
+  type    = "string"
+  default = "false"
+}
+
+variable "kubeconfig_fetch_cmd" {
+  type        = "string"
+  description = "(optional) The command that fetches `/etc/kubernetes/kubeconfig`."
+  default     = ""
+}
+
+variable "bootstrap_upgrade_cl" {
+  type        = "string"
+  description = "(optional) Whether to trigger a ContainerLinux OS upgrade during the bootstrap process."
+  default     = "true"
+}
+
+variable "torcx_store_url" {
+  type        = "string"
+  description = "(optional) URL template for torcx store. Leave empty to use the default CoreOS endpoint."
+  default     = ""
+}
+
+variable "kubelet_node_taints" {
+  type        = "string"
+  description = "(optional) Taints that Kubelet will apply on the node"
+  default     = ""
+}
+
+variable "kube_dns_service_ip" {
+  type        = "string"
+  description = "Service IP used to reach kube-dns"
+}
+
+variable "kubelet_debug_config" {
+  type        = "string"
+  default     = ""
+  description = "internal debug flags for the kubelet (used in CI only)"
+}
+
+variable "kubelet_master_node_label" {
+  type        = "string"
+  description = "Label that Kubelet will apply on the master node"
+}
+
+variable "kubelet_worker_node_label" {
+  type        = "string"
+  description = "Label that Kubelet will apply on the worker node"
+}
+
+variable "image_re" {
+  description = <<EOF
+(internal) Regular expression used to extract repo and tag components from image strings
+EOF
+
+  type = "string"
+}

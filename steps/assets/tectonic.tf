@@ -24,7 +24,7 @@ data "template_file" "etcd_hostname_list" {
 }
 
 module "bootkube" {
-  source         = "../../modules/bootkube-ut2"
+  source         = "../../modules/bootkube"
   cloud_provider = "aws"
 
   cluster_name = "${var.tectonic_cluster_name}"
