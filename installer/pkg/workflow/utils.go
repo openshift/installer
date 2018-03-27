@@ -24,6 +24,7 @@ const (
 	stepsBaseDir     = "steps"
 	assetsStep       = "assets"
 	bootstrapStep    = "bootstrap"
+	etcdStep         = "etcd"
 	joinStep         = "joining"
 	configFileName   = "config.yaml"
 	internalFileName = "internal.yaml"

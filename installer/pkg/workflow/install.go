@@ -61,11 +61,13 @@ func installBootstrapStep(m *metadata) error {
 		return err
 	}
 
-	if err := waitForTNC(m); err != nil {
+	destroyCNAME(m.clusterDir)
+
+	if err := runInstallStep(m.clusterDir, etcdStep); err != nil {
 		return err
 	}
 
-	return destroyCNAME(m.clusterDir)
+	return waitForTNC(m)
 }
 
 func installJoinStep(m *metadata) error {
