@@ -16,3 +16,5 @@ import:
   version: kubernetes-1.9.0
 - package: golang.org/x/crypto
   version: 5dc8cb4b8a8eb076cbb5a06bc3b8682c15bdbbd3
+- package: github.com/coreos/ignition
+  version: v0.23.0

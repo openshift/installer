@@ -14,6 +14,15 @@ import (
 	"github.com/coreos/tectonic-installer/installer/pkg/config/vmware"
 )
 
+const (
+	// IgnitionMaster is the relative path to the ign master cfg from the tf working directory
+	IgnitionMaster = "ignition-master.ign"
+	// IgnitionWorker is the relative path to the ign worker cfg from the tf working directory
+	IgnitionWorker = "ignition-worker.ign"
+	// IgnitionEtcd is the relative path to the ign etcd cfg from the tf working directory
+	IgnitionEtcd = "ignition-etcd.ign"
+)
+
 // Cluster defines the config for a cluster.
 type Cluster struct {
 	Admin               `json:",inline" yaml:"admin,omitempty"`
@@ -43,6 +52,9 @@ type Cluster struct {
 	metal.Metal         `json:",inline" yaml:"metal,omitempty"`
 	openstack.OpenStack `json:",inline" yaml:"openstack,omitempty"`
 	vmware.VMware       `json:",inline" yaml:"vmware,omitempty"`
+	IgnitionMaster      string `json:"tectonic_ignition_master,omitempty" yaml:"-"`
+	IgnitionWorker      string `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
+	IgnitionEtcd        string `json:"tectonic_ignition_etcd,omitempty" yaml:"-"`
 }
 
 // NodeCount will return the number of nodes specified in NodePools with matching names.
@@ -66,6 +78,9 @@ func (c *Cluster) TFVars() (string, error) {
 	c.Master.Count = c.NodeCount(c.Master.NodePools)
 	c.Worker.Count = c.NodeCount(c.Worker.NodePools)
 
+	c.IgnitionMaster = IgnitionMaster
+	c.IgnitionWorker = IgnitionWorker
+	c.IgnitionEtcd = IgnitionEtcd
 	data, err := json.MarshalIndent(&c, "", "  ")
 	if err != nil {
 		return "", err

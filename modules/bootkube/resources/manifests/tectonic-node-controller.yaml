@@ -39,6 +39,10 @@ spec:
           mountPath: /etc/cluster-config
         - name: ssl-certs
           mountPath: /opt/tectonic/tls
+        livenessProbe:
+          httpGet:
+            path: /ign/v1/role/master
+            port: 49500
       hostNetwork: true
       restartPolicy: Always
       imagePullSecrets:

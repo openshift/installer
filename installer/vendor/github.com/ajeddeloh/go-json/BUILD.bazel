@@ -1,0 +1,16 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "decode.go",
+        "encode.go",
+        "fold.go",
+        "indent.go",
+        "scanner.go",
+        "stream.go",
+        "tags.go",
+    ],
+    importpath = "github.com/ajeddeloh/go-json",
+    visibility = ["//visibility:public"],
+)
