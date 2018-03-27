@@ -81,6 +81,13 @@ module "bootkube" {
   kube_dns_service_ip       = "${module.bootkube.kube_dns_service_ip}"
   kubelet_master_node_label = "node-role.kubernetes.io/master"
   kubelet_worker_node_label = "node-role.kubernetes.io/worker"
+  base_domain               = "${var.tectonic_base_domain}"
+  etcd_metadata_env         = "EnvironmentFile=/run/metadata/coreos"
+
+  etcd_metadata_deps = <<EOF
+Requires=coreos-metadata.service
+After=coreos-metadata.service
+EOF
 }
 
 module "tectonic" {

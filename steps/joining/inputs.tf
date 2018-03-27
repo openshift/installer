@@ -13,7 +13,4 @@ locals {
   aws_lbs_masters                  = "${data.terraform_remote_state.bootstrap.aws_lbs_masters}"
   aws_launch_configuration_workers = "${data.terraform_remote_state.bootstrap.aws_launch_configuration_workers}"
   subnet_ids_workers               = "${data.terraform_remote_state.bootstrap.subnet_ids_workers}"
-  private_zone_id                  = "${data.terraform_remote_state.bootstrap.private_zone_id}"
-  tnc_elb_dns_name                 = "${data.terraform_remote_state.bootstrap.tnc_elb_dns_name}"
-  tnc_elb_zone_id                  = "${data.terraform_remote_state.bootstrap.tnc_elb_zone_id}"
 }

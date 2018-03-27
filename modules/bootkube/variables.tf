@@ -255,3 +255,18 @@ EOF
 
   type = "string"
 }
+
+variable "base_domain" {
+  type        = "string"
+  description = "The cluster base domain"
+}
+
+variable "etcd_metadata_env" {
+  type        = "string"
+  description = "The cluster base domain"
+}
+
+variable "etcd_metadata_deps" {
+  type        = "string"
+  description = "The cluster base domain"
+}
