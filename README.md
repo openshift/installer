@@ -12,6 +12,8 @@ Goals of the project:
 - Customizable and modular: Change DNS providers, security settings, authentication providers
 - Highly Available by default: Deploy all Kubernetes components HA, use etcd Operator
 
+*Note*: the project has recently undergone some rearchitecting to support our goal of providing automatic operations, most notably automatic updates, to Kubernetes clusters. The master branch of the project reflects this new design approach and currently provides support only for AWS. In order to deploy Tectonic to other platforms, e.g. Azure, bare metal, OpenStack, etc, please checkout the [track-1](https://github.com/coreos/tectonic-installer/tree/track-1) branch of this project, which maintains support for the previous architecture and more platforms.
+
 ## Getting Started
 
 **To use a tested release** on a supported platform, follow the links below.
@@ -30,11 +32,7 @@ See the official Tectonic documentation:
 
 ### Hacking
 
-These instructions can be used for the official stable platforms listed above, and for the following alpha/beta platforms:
-
-- [OpenStack via Terraform][openstack-tf] [[**alpha**][platform-lifecycle]]
-- [VMware via Terraform][vmware-tf] [[**alpha**][platform-lifecycle]]
-
+These instructions can be used for AWS:
 
 1. Build the project
     ```shell
@@ -58,45 +56,31 @@ These instructions can be used for the official stable platforms listed above, a
     export PATH=$(pwd)/tectonic-installer/linux/:$PATH
     ```
 
-4. Choose **one** of the platforms:
+4. Edit Tectonic configuration file including the $CLUSTER_NAME
     ```shell
-    export PLATFORM=aws
-    export PLATFORM=azure
-    export PLATFORM=gcp
-    export PLATFORM=govcloud
-    export PLATFORM=metal
-    export PLATFORM=openstack-neutron
-    export PLATFORM=vmware
+    $EDITOR examples/tectonic.aws.yaml
     ```
 
-5. Edit Tectonic configuration file including the $CLUSTER_NAME
+5. Init Tectonic CLI
     ```shell
-    $EDITOR examples/tectonic.$PLATFORM.yaml
+    tectonic init --config=examples/tectonic.aws.yaml
     ```
 
-6. Init Tectonic CLI
-    ```shell
-    tectonic init --config=examples/tectonic.$PLATFORM.yaml
-    ```
-
-7. Install Tectonic cluster
+6. Install Tectonic cluster
     ```shell
     tectonic install --dir=$CLUSTER_NAME
     ```
 
-8. Teardown Tectonic cluster
+7. Teardown Tectonic cluster
     ```shell
     tectonic destroy --dir=$CLUSTER_NAME
     ```
-
 
 #### Tests
 
 See [tests/README.md](tests/README.md).
 
 
-[openstack-tf]: https://github.com/coreos/tectonic-docs/blob/master/Documentation/install/openstack/openstack-terraform.md
 [platform-lifecycle]: https://coreos.com/tectonic/docs/latest/platform-lifecycle.html
 [release-notes]: https://coreos.com/tectonic/releases/
 [rhel-installation]: https://coreos.com/tectonic/docs/latest/install/rhel/installing-workers.html
-[vmware-tf]: https://github.com/coreos/tectonic-docs/blob/master/Documentation/install/vmware/vmware-terraform.md
