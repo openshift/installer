@@ -20,6 +20,9 @@ func destroyAssetsStep(m *metadata) error {
 }
 
 func destroyBootstrapStep(m *metadata) error {
+	if err := runDestroyStep(m.clusterDir, etcdStep); err != nil {
+		return err
+	}
 	return runDestroyStep(m.clusterDir, bootstrapStep)
 }
 

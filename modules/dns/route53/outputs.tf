@@ -1,12 +1,3 @@
-output "etcd_a_nodes" {
-  value = "${aws_route53_record.etcd_a_nodes.*.fqdn}"
-}
-
-# We have to do this join() & split() 'trick' because the ternary operator can't output lists.
-output "etcd_endpoints" {
-  value = ["${split(",", length(var.external_endpoints) == 0 ? join(",", aws_route53_record.etcd_a_nodes.*.fqdn) : join(",", var.external_endpoints))}"]
-}
-
 output "worker_nodes" {
   value = "${aws_route53_record.worker_nodes.*.fqdn}"
 }
