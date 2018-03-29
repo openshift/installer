@@ -38,12 +38,13 @@ To add a new dependency:
 ```
 glide install -v
 glide-vc --use-lock-file --no-tests --only-code
-bazel run gazelle
+bazel run //:gazelle
 ```
 
 If it worked correctly it should:
 - Clone your new dep to the `/vendor` dir, and check out the ref you specified.
 - Update `glide.lock` to include your new package, adds any transitive dependencies, and updates its hash.
+- Regenerate BUILD.bazel files.
 
 For the sake of your fellow reviewers, commit vendored code changes as a separate commit from any other changes.
 
@@ -54,5 +55,5 @@ Should you need to regenerate or repair the vendored code en-mass from their sou
 ```
 glide install -v
 glide-vc --use-lock-file --no-tests --only-code
-bazel run gazelle
+bazel run //:gazelle
 ```
