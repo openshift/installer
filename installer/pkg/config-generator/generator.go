@@ -13,6 +13,7 @@ import (
 	"github.com/coreos/tectonic-config/config/kube-addon"
 	"github.com/coreos/tectonic-config/config/kube-core"
 	"github.com/coreos/tectonic-config/config/tectonic-network"
+	tnco "github.com/coreos/tectonic-config/config/tectonic-node-controller"
 	"github.com/coreos/tectonic-config/config/tectonic-utility"
 	"github.com/ghodss/yaml"
 	"golang.org/x/crypto/bcrypt"
@@ -64,9 +65,15 @@ func New(cluster config.Cluster) ConfigGenerator {
 
 // KubeSystem returns, if successful, a yaml string for the kube-system.
 func (c ConfigGenerator) KubeSystem() (string, error) {
+	tncoConfig, err := c.tncoConfig()
+	if err != nil {
+		return "", err
+	}
+
 	return configMap("kube-system", genericData{
 		"kco-config":     c.coreConfig(),
 		"network-config": c.networkConfig(),
+		"tnco-config":    tncoConfig,
 	})
 }
 
@@ -139,6 +146,39 @@ func (c ConfigGenerator) networkConfig() *tectonicnetwork.OperatorConfig {
 	networkConfig.NetworkProfile = tectonicnetwork.NetworkType(c.Cluster.Networking.Type)
 
 	return &networkConfig
+}
+
+func (c ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
+	tncoConfig := tnco.OperatorConfig{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: tnco.TNCOConfigAPIVersion,
+			Kind:       tnco.TNCOConfigKind,
+		},
+	}
+
+	tncoConfig.ControllerConfig = tnco.ControllerConfig{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: tnco.TNCConfigAPIVersion,
+			Kind:       tnco.TNCConfigKind,
+		},
+	}
+
+	cidrhost, err := cidrhost(c.Cluster.Networking.ServiceCIDR, 10)
+	if err != nil {
+		return nil, err
+	}
+
+	tncoConfig.ControllerConfig.KubeconfigFetchCmd = "" // TODO(yifan): Get kubeconfigFetchCmd.
+	tncoConfig.ControllerConfig.ClusterDNSIP = cidrhost
+	tncoConfig.ControllerConfig.CloudProvider = c.Cluster.Platform
+	tncoConfig.ControllerConfig.CloudProviderConfig = "" // TODO(yifan): Get CloudProviderConfig.
+	tncoConfig.ControllerConfig.ClusterName = c.Cluster.Name
+	tncoConfig.ControllerConfig.BaseDomain = c.Cluster.BaseDomain
+	tncoConfig.ControllerConfig.EtcdInitialCluster = c.etcdInitialCluster()
+	tncoConfig.ControllerConfig.AdditionalConfigs = []string{} // TODO(yifan): Get additional configs.
+	tncoConfig.ControllerConfig.NodePoolUpdateLimit = nil      // TODO(yifan): Get the node pool update limit.
+
+	return &tncoConfig, nil
 }
 
 func (c ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, error) {
@@ -312,4 +352,20 @@ func cidrhost(iprange string, hostNum int) (string, error) {
 	}
 
 	return ip.String(), nil
+}
+
+// etcdInitialCluster returns the string flag for `--initial-cluster`.
+func (c ConfigGenerator) etcdInitialCluster() string {
+	count := c.Cluster.NodeCount(c.Cluster.Etcd.NodePools)
+	if count <= 0 {
+		return `--initial-cluster=""`
+	}
+
+	var clusters []string
+	for i := 0; i < count; i++ {
+		endpoint := fmt.Sprintf("%s-etcd-%d.%s", c.Cluster.Name, i, c.Cluster.BaseDomain)
+		clusters = append(clusters, fmt.Sprintf("%s=https://%s:2380", endpoint, endpoint))
+	}
+
+	return fmt.Sprintf("--initial-cluster=%s", strings.Join(clusters, ","))
 }

@@ -18,7 +18,7 @@ resource "template_dir" "bootkube" {
 
   vars {
     tectonic_network_operator_image = "${var.container_images["tectonic_network_operator"]}"
-    tnc_bootstrap_image             = "${var.container_images["tnc_bootstrap"]}"
+    tnc_operator_image              = "${var.container_images["tnc_operator"]}"
 
     kco_config = "${indent(4, chomp(data.template_file.kco-config_yaml.rendered))}"
 
@@ -46,8 +46,6 @@ resource "template_dir" "bootkube" {
     etcd_ca_cert     = "${base64encode(var.etcd_ca_cert_pem)}"
     etcd_client_cert = "${base64encode(var.etcd_client_cert_pem)}"
     etcd_client_key  = "${base64encode(var.etcd_client_key_pem)}"
-
-    tnc_config = "${indent(4, chomp(data.template_file.tnc_config.rendered))}"
   }
 }
 
@@ -123,6 +121,7 @@ data "template_file" "bootkube_sh" {
   vars {
     bootkube_image           = "${var.container_images["bootkube"]}"
     kube_core_renderer_image = "${var.container_images["kube_core_renderer"]}"
+    tnc_operator_image       = "${var.container_images["tnc_operator"]}"
   }
 }
 
@@ -154,9 +153,9 @@ data "ignition_systemd_unit" "bootkube_path_unit" {
 }
 
 # TNC
-resource "local_file" "tnc_pod_config" {
-  content  = "${data.template_file.tnc_config.rendered}"
-  filename = "./generated/tnc-config"
+resource "local_file" "tnco_pod_config" {
+  content  = "${data.template_file.tnco_config.rendered}"
+  filename = "./generated/tnco-config.yaml"
 }
 
 data "template_file" "initial_cluster" {
@@ -164,35 +163,16 @@ data "template_file" "initial_cluster" {
   template = "${var.etcd_endpoints[count.index]}=https://${var.etcd_endpoints[count.index]}:2380"
 }
 
-data "template_file" "tnc_config" {
-  template = "${file("${path.module}/resources/tnc-config")}"
+data "template_file" "tnco_config" {
+  template = "${file("${path.module}/resources/tnco-config.yaml")}"
 
   vars {
-    cloud_provider_config = "${var.cloud_provider_config}"
-
-    http_proxy                = "${var.http_proxy}"
-    https_proxy               = "${var.https_proxy}"
-    no_proxy                  = "${join(",", var.no_proxy)}"
-    kubelet_image_url         = "${replace(var.container_images["hyperkube"],var.image_re,"$1")}"
-    kubelet_image_tag         = "${replace(var.container_images["hyperkube"],var.image_re,"$2")}"
-    iscsi_enabled             = "${var.iscsi_enabled}"
+    cloud_provider_config     = "${var.cloud_provider_config}"
     kubeconfig_fetch_cmd      = "${var.kubeconfig_fetch_cmd != "" ? "ExecStartPre=${var.kubeconfig_fetch_cmd}" : ""}"
-    tectonic_torcx_image_url  = "${replace(var.container_images["tectonic_torcx"],var.image_re,"$1")}"
-    tectonic_torcx_image_tag  = "${replace(var.container_images["tectonic_torcx"],var.image_re,"$2")}"
-    torcx_skip_setup          = "false"
-    torcx_store_url           = "${var.torcx_store_url}"
-    bootstrap_upgrade_cl      = "${var.bootstrap_upgrade_cl}"
-    master_node_label         = "${var.kubelet_master_node_label}"
-    worker_node_label         = "${var.kubelet_worker_node_label}"
-    node_taints_param         = "${var.kubelet_node_taints != "" ? "--register-with-taints=${var.kubelet_node_taints}" : ""}"
     cluster_dns_ip            = "${var.kube_dns_service_ip}"
     cloud_provider            = "${var.cloud_provider}"
-    debug_config              = "${var.kubelet_debug_config}"
     cluster_name              = "${var.cluster_name}"
     base_domain               = "${var.base_domain}"
     etcd_initial_cluster_list = "${length(var.etcd_endpoints) > 0 ? format("--initial-cluster=%s", join(",", data.template_file.initial_cluster.*.rendered)) : ""}"
-    etcd_image                = "${var.container_images["etcd"]}"
-    etcd_metadata_env         = "${var.etcd_metadata_env}"
-    etcd_metadata_deps        = "${var.etcd_metadata_deps}"
   }
 }
