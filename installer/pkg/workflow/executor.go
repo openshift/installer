@@ -58,7 +58,6 @@ func (ex *executor) execute(clusterDir string, args ...string) error {
 	}
 
 	cmd := exec.Command(ex.binaryPath, args...)
-
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

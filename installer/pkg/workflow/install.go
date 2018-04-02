@@ -61,27 +61,39 @@ func installAssetsStep(m *metadata) error {
 }
 
 func installBootstrapStep(m *metadata) error {
+
+	if err := runInstallStep(m.clusterDir, topologyStep); err != nil {
+		return err
+	}
+
+	if !clusterIsBootstrapped(m.clusterDir) {
+		if err := createTNCCNAME(m.clusterDir); err != nil {
+			return err
+		}
+	}
+
 	if err := runInstallStep(m.clusterDir, bootstrapStep); err != nil {
 		return err
 	}
 
-	destroyCNAME(m.clusterDir)
-
-	if err := runInstallStep(m.clusterDir, etcdStep); err != nil {
+	if err := createTNCARecord(m.clusterDir); err != nil {
 		return err
 	}
 
-	return waitForTNC(m)
+	return runInstallStep(m.clusterDir, etcdStep)
 }
 
 func installJoinStep(m *metadata) error {
 	// TODO: import will fail after a first run, error is ignored for now
 	importAutoScalingGroup(m)
 
-	return runInstallStep(m.clusterDir, joinStep)
+	if err := runInstallStep(m.clusterDir, joinMastersStep); err != nil {
+		return err
+	}
+	return runInstallStep(m.clusterDir, joinWorkersStep)
 }
 
-func runInstallStep(clusterDir, step string) error {
+func runInstallStep(clusterDir, step string, extraArgs ...string) error {
 	templateDir, err := findTemplates(step)
 	if err != nil {
 		return err
@@ -89,8 +101,7 @@ func runInstallStep(clusterDir, step string) error {
 	if err := tfInit(clusterDir, templateDir); err != nil {
 		return err
 	}
-
-	return tfApply(clusterDir, step, templateDir)
+	return tfApply(clusterDir, step, templateDir, extraArgs...)
 }
 
 func generateIgnConfigStep(m *metadata) error {

@@ -23,14 +23,26 @@ func destroyBootstrapStep(m *metadata) error {
 	if err := runDestroyStep(m.clusterDir, etcdStep); err != nil {
 		return err
 	}
-	return runDestroyStep(m.clusterDir, bootstrapStep)
+
+	if err := runDestroyStep(m.clusterDir, bootstrapStep); err != nil {
+		return err
+	}
+
+	if err := runDestroyStep(m.clusterDir, TNCDNSStep, "-var=tectonic_aws_bootstrap=false"); err != nil {
+		return err
+	}
+
+	return runDestroyStep(m.clusterDir, topologyStep)
 }
 
 func destroyJoinStep(m *metadata) error {
-	return runDestroyStep(m.clusterDir, joinStep)
+	if err := runDestroyStep(m.clusterDir, joinWorkersStep); err != nil {
+		return err
+	}
+	return runDestroyStep(m.clusterDir, joinMastersStep)
 }
 
-func runDestroyStep(clusterDir, step string) error {
+func runDestroyStep(clusterDir, step string, extraArgs ...string) error {
 	if !hasStateFile(clusterDir, step) {
 		// there is no statefile, therefore nothing to destroy for this step
 		return nil
@@ -40,5 +52,5 @@ func runDestroyStep(clusterDir, step string) error {
 		return err
 	}
 
-	return tfDestroy(clusterDir, step, templateDir)
+	return tfDestroy(clusterDir, step, templateDir, extraArgs...)
 }
