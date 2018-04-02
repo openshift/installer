@@ -1,7 +1,6 @@
-variable "etcd_tls_enabled" {
-  description = "Indicates whether TLS is used for etcd"
+variable "cluster_id" {
+  description = "Cluster ID"
   type        = "string"
-  default     = "1"
 }
 
 variable "cluster_name" {
@@ -25,11 +24,6 @@ variable "worker_count" {
   default     = "0"
 }
 
-variable "etcd_count" {
-  description = "The number of etcd nodes"
-  type        = "string"
-}
-
 variable "master_ip_addresses" {
   description = "List of string IPs for masters"
   type        = "list"
@@ -40,20 +34,6 @@ variable "worker_ip_addresses" {
   description = "List of string IPs for workers"
   type        = "list"
   default     = []
-}
-
-variable "cluster_id" {
-  description = "Cluster ID"
-  type        = "string"
-}
-
-variable "external_endpoints" {
-  type = "list"
-
-  description = <<EOF
-  (optional) List of external etcd v3 servers to connect with (hostnames/IPs only).
-Needs to be set if using an external etcd cluster.
-EOF
 }
 
 variable "worker_public_ips" {

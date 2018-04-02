@@ -9,8 +9,22 @@ provider "aws" {
   }
 }
 
+module "container_linux" {
+  source = "../../modules/container_linux"
+
+  release_channel = "${var.tectonic_container_linux_channel}"
+  release_version = "${var.tectonic_container_linux_version}"
+}
+
+data "aws_availability_zones" "azs" {}
+
+data "template_file" "etcd_hostname_list" {
+  count    = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
+  template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
+}
+
 resource "aws_s3_bucket_object" "ignition_etcd" {
-  count   = "${local.instance_count}"
+  count   = "${length(data.template_file.etcd_hostname_list.*.id)}"
   bucket  = "${local.s3_bucket}"
   key     = "ignition_etcd_${count.index}.json"
   content = "${local.ignition_etcd[count.index]}"
@@ -33,11 +47,11 @@ module "etcd" {
   cluster_name            = "${var.tectonic_cluster_name}"
   container_image         = "${var.tectonic_container_images["etcd"]}"
   container_linux_channel = "${var.tectonic_container_linux_channel}"
-  container_linux_version = "${local.container_linux_version}"
+  container_linux_version = "${module.container_linux.version}"
   ec2_type                = "${var.tectonic_aws_etcd_ec2_type}"
   external_endpoints      = "${compact(var.tectonic_etcd_servers)}"
   extra_tags              = "${var.tectonic_aws_extra_tags}"
-  instance_count          = "${local.instance_count}"
+  instance_count          = "${length(data.template_file.etcd_hostname_list.*.id)}"
   root_volume_iops        = "${var.tectonic_aws_etcd_root_volume_iops}"
   root_volume_size        = "${var.tectonic_aws_etcd_root_volume_size}"
   root_volume_type        = "${var.tectonic_aws_etcd_root_volume_type}"
@@ -50,7 +64,7 @@ module "etcd" {
 }
 
 resource "aws_route53_record" "etcd_a_nodes" {
-  count   = "${local.instance_count}"
+  count   = "${length(data.template_file.etcd_hostname_list.*.id)}"
   type    = "A"
   ttl     = "60"
   zone_id = "${local.private_zone_id}"
