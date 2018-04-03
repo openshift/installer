@@ -53,4 +53,4 @@ For the sake of your fellow reviewers, commit vendored code changes as a separat
 #### Regenerate or Repair Vendored Code
 
 Should you need to regenerate or repair the vendored code en-mass from their source repositories, you can run
-the same steps above under "Revendor the dependencies:".
+the same steps above under "Revendor the dependencies".
