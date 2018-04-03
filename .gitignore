@@ -13,7 +13,6 @@ build/
 bin/
 bin_test/
 matchbox/
-modules/update-payload/generated/
 /contrib/govcloud/vpn.conf
 
 # Bazel
