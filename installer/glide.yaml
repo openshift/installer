@@ -9,7 +9,7 @@ import:
 - package: gopkg.in/alecthomas/kingpin.v2
   version: 947dcec5ba9c011838740e680966fd7087a71d0d
 - package: github.com/coreos/tectonic-config
-  version: ff997d9ae68b0f4c02390d69cc355cd85a5a0f93
+  version: c5d0496fe04c797ef7f44e94328adc2d79753383
 - package: k8s.io/apimachinery
   version: kubernetes-1.9.0
 - package: k8s.io/client-go

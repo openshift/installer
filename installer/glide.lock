@@ -1,5 +1,5 @@
-hash: b4b5aa74af489768595978bcdeb72ff062fae8df72325c3e9293a763d8ba75d8
-updated: 2018-03-23T11:31:29.662155125+01:00
+hash: 612876c8f9f2ea2288acdcdd7dea71ed9e1e86fa3faa3cb5e0cd352f953743ca
+updated: 2018-04-02T17:41:58.382204119-07:00
 imports:
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
@@ -37,11 +37,12 @@ imports:
   - config/validate/astnode
   - config/validate/report
 - name: github.com/coreos/tectonic-config
-  version: ff997d9ae68b0f4c02390d69cc355cd85a5a0f93
+  version: c5d0496fe04c797ef7f44e94328adc2d79753383
   subpackages:
   - config/kube-addon
   - config/kube-core
   - config/tectonic-network
+  - config/tectonic-node-controller
   - config/tectonic-utility
 - name: github.com/emicklei/go-restful
   version: ff4f55a206334ef123e4f79bbf348980da81ca46
@@ -73,7 +74,7 @@ imports:
   - ptypes/duration
   - ptypes/timestamp
 - name: github.com/google/btree
-  version: e89373fe6b4a7413d7acd6da1725b83ef713e6e4
+  version: 7d79101e329e5a3adf994758c578dab82b90c017
 - name: github.com/google/gofuzz
   version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
 - name: github.com/googleapis/gnostic
@@ -83,7 +84,7 @@ imports:
   - compiler
   - extensions
 - name: github.com/gregjones/httpcache
-  version: 9cad4c3443a7200dd6400aef47183728de563a38
+  version: 787624de3eb7bd915c329cba748687a3b22666a6
   subpackages:
   - diskcache
 - name: github.com/howeyc/gopass
@@ -93,7 +94,7 @@ imports:
 - name: github.com/json-iterator/go
   version: 36b14963da70d11297d313183d7e6388c8510e1e
 - name: github.com/juju/ratelimit
-  version: 59fac5042749a5afb9af70e813da1dd5474f0167
+  version: 5b9ff866471762aa2ab2dced63c9fb6f53921342
 - name: github.com/mailru/easyjson
   version: 2f5df55504ebc322e4d52d34df6a1f5b503bf26d
   subpackages:
@@ -101,7 +102,7 @@ imports:
   - jlexer
   - jwriter
 - name: github.com/peterbourgon/diskv
-  version: 0646ccaebea1ed1539efcab30cae44019090093f
+  version: 5f041e8faa004a95c88a202771f4cc3e991971e6
 - name: github.com/PuerkitoBio/purell
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
@@ -133,7 +134,7 @@ imports:
   - lex/httplex
   - websocket
 - name: golang.org/x/sys
-  version: 91ee8cde435411ca3f1cd365e8f20131aed4d0a1
+  version: 378d26f46672a356c46195c28f61bdb4c0a781dd
   subpackages:
   - unix
 - name: golang.org/x/text
