@@ -36,8 +36,10 @@ To add a new dependency:
 - Revendor the dependencies:
 
 ```
+rm glide.lock
 glide install -v
 glide-vc --use-lock-file --no-tests --only-code
+git checkout vendor/golang.org/x/crypto/ssh/terminal/BUILD.bazel vendor/github.com/Sirupsen/logrus/BUILD.bazel
 bazel run //:gazelle
 ```
 
@@ -50,10 +52,5 @@ For the sake of your fellow reviewers, commit vendored code changes as a separat
 
 #### Regenerate or Repair Vendored Code
 
-Should you need to regenerate or repair the vendored code en-mass from their source repositories, you can run:
-
-```
-glide install -v
-glide-vc --use-lock-file --no-tests --only-code
-bazel run //:gazelle
-```
+Should you need to regenerate or repair the vendored code en-mass from their source repositories, you can run
+the same steps above under "Revendor the dependencies:".
