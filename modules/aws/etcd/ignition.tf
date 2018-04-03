@@ -6,7 +6,7 @@ data "ignition_config" "tnc" {
   count = "${length(var.external_endpoints) == 0 ? var.instance_count : 0}"
 
   append {
-    source = "${format("http://${var.cluster_name}-tnc.${var.base_domain}/ignition?role=etcd&etcd_index=%d", count.index)}"
+    source = "${format("http://${var.cluster_name}-tnc.${var.base_domain}/config/etcd?etcd_index=%d", count.index)}"
 
     # TODO: add verification
   }
