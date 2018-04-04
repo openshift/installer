@@ -128,7 +128,7 @@ func (c ConfigGenerator) getTNCURL(role string) ignconfigtypes.Url {
 		url = ignconfigtypes.Url{
 			Scheme: "http",
 			Host:   fmt.Sprintf("%s-tnc.%s", c.Name, c.BaseDomain),
-			Path:   fmt.Sprintf("/ign/v1/role/%s", role),
+			Path:   fmt.Sprintf("/config/%s", role),
 		}
 	}
 	return url
