@@ -27,7 +27,7 @@ resource "aws_s3_bucket_object" "ignition_etcd" {
   count   = "${length(data.template_file.etcd_hostname_list.*.id)}"
   bucket  = "${local.s3_bucket}"
   key     = "ignition_etcd_${count.index}.json"
-  content = "${local.ignition_etcd[count.index]}"
+  content = "${local.ignition[count.index]}"
   acl     = "private"
 
   server_side_encryption = "AES256"

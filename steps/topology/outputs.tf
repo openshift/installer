@@ -12,7 +12,7 @@ output "subnet_ids_masters" {
   value = "${module.vpc.master_subnet_ids}"
 }
 
-output "aws_lbs_masters" {
+output "aws_lbs" {
   value = "${module.vpc.aws_lbs}"
 }
 

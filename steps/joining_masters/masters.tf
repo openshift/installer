@@ -14,10 +14,10 @@ resource "aws_autoscaling_group" "masters" {
   desired_capacity     = "${var.tectonic_master_count}"
   max_size             = "${var.tectonic_master_count * 3}"
   min_size             = "${var.tectonic_master_count}"
-  launch_configuration = "${local.aws_launch_configuration_masters}"
-  vpc_zone_identifier  = ["${local.subnet_ids_masters}"]
+  launch_configuration = "${local.aws_launch_configuration}"
+  vpc_zone_identifier  = ["${local.subnet_ids}"]
 
-  load_balancers = ["${local.aws_lbs_masters}"]
+  load_balancers = ["${local.aws_lbs}"]
 
   tags = [
     {

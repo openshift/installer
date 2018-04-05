@@ -16,7 +16,7 @@ data "terraform_remote_state" "assets" {
 }
 
 locals {
-  ignition_etcd      = "${data.terraform_remote_state.assets.ignition_etcd}"
+  ignition           = "${data.terraform_remote_state.assets.ignition_etcd}"
   sg_id              = "${data.terraform_remote_state.topology.etcd_sg_id}"
   subnet_ids_workers = "${data.terraform_remote_state.topology.subnet_ids_workers}"
   s3_bucket          = "${data.terraform_remote_state.topology.s3_bucket}"
