@@ -56,7 +56,7 @@ originalCommitId = 'UNKNOWN'
 pipeline {
   agent none
   environment {
-    KUBE_CONFORMANCE_IMAGE = 'quay.io/coreos/kube-conformance:v1.8.4_coreos.0'
+    KUBE_CONFORMANCE_IMAGE = 'quay.io/coreos/kube-conformance:v1.9.1_coreos.0'
     LOGSTASH_BUCKET= "log-analyzer-tectonic-installer"
   }
   options {
