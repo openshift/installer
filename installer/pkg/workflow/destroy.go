@@ -28,7 +28,7 @@ func destroyBootstrapStep(m *metadata) error {
 		return err
 	}
 
-	if err := runDestroyStep(m.clusterDir, TNCDNSStep, "-var=tectonic_aws_bootstrap=false"); err != nil {
+	if err := destroyTNCDNS(m.clusterDir); err != nil {
 		return err
 	}
 
