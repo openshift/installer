@@ -20,7 +20,6 @@ output "id" {
   ${local_file.kubeconfig.id}
   ${local_file.kubeconfig-kubelet.id}
   ${local_file.bootkube_sh.id}
-  ${local_file.kco-config_yaml.id}
   ${template_dir.bootkube.id}
   ")}"
 }

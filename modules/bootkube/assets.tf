@@ -20,8 +20,6 @@ resource "template_dir" "bootkube" {
     tectonic_network_operator_image = "${var.container_images["tectonic_network_operator"]}"
     tnc_operator_image              = "${var.container_images["tnc_operator"]}"
 
-    kco_config = "${indent(4, chomp(data.template_file.kco-config_yaml.rendered))}"
-
     calico_mtu            = "${var.calico_mtu}"
     cloud_provider_config = "${var.cloud_provider_config}"
     cluster_cidr          = "${var.cluster_cidr}"
@@ -85,35 +83,6 @@ resource "local_file" "kubeconfig-kubelet" {
   filename = "./generated/auth/kubeconfig-kubelet"
 }
 
-# kvo-config.yaml (resources/generated/kco-config.yaml)
-data "template_file" "kco-config_yaml" {
-  template = "${file("${path.module}/resources/kco-config.yaml")}"
-
-  vars {
-    kube_apiserver_url = "${var.kube_apiserver_url}"
-
-    cloud_config_path      = "${var.cloud_config_path}"
-    cloud_provider_profile = "${var.cloud_provider != "" ? "${var.cloud_provider}" : "metal"}"
-
-    advertise_address = "${var.advertise_address}"
-    cluster_cidr      = "${var.cluster_cidr}"
-
-    etcd_servers = "${join(",", formatlist("https://%s:2379", var.etcd_endpoints))}"
-
-    service_cidr = "${var.service_cidr}"
-
-    oidc_client_id      = "${var.oidc_client_id}"
-    oidc_groups_claim   = "${var.oidc_groups_claim}"
-    oidc_issuer_url     = "${var.oidc_issuer_url}"
-    oidc_username_claim = "${var.oidc_username_claim}"
-  }
-}
-
-resource "local_file" "kco-config_yaml" {
-  content  = "${data.template_file.kco-config_yaml.rendered}"
-  filename = "./generated/kco-config.yaml"
-}
-
 # bootkube.sh (resources/generated/bootkube.sh)
 data "template_file" "bootkube_sh" {
   template = "${file("${path.module}/resources/bootkube.sh")}"
@@ -152,27 +121,7 @@ data "ignition_systemd_unit" "bootkube_path_unit" {
   content = "${data.template_file.bootkube_path_unit.rendered}"
 }
 
-# TNC
-resource "local_file" "tnco_pod_config" {
-  content  = "${data.template_file.tnco_config.rendered}"
-  filename = "./generated/tnco-config.yaml"
-}
-
 data "template_file" "initial_cluster" {
   count    = "${length(var.etcd_endpoints)}"
   template = "${var.etcd_endpoints[count.index]}=https://${var.etcd_endpoints[count.index]}:2380"
-}
-
-data "template_file" "tnco_config" {
-  template = "${file("${path.module}/resources/tnco-config.yaml")}"
-
-  vars {
-    cloud_provider_config     = "${var.cloud_provider_config}"
-    kubeconfig_fetch_cmd      = "${var.kubeconfig_fetch_cmd != "" ? "ExecStartPre=${var.kubeconfig_fetch_cmd}" : ""}"
-    cluster_dns_ip            = "${var.kube_dns_service_ip}"
-    cloud_provider            = "${var.cloud_provider}"
-    cluster_name              = "${var.cluster_name}"
-    base_domain               = "${var.base_domain}"
-    etcd_initial_cluster_list = "${length(var.etcd_endpoints) > 0 ? format("--initial-cluster=%s", join(",", data.template_file.initial_cluster.*.rendered)) : ""}"
-  }
 }
