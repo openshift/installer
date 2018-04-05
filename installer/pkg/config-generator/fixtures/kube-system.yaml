@@ -5,11 +5,11 @@ data:
     authConfig:
       oidc_client_id: tectonic-kubectl
       oidc_groups_claim: groups
-      oidc_issuer_url: test.cluster.com/identity
+      oidc_issuer_url: https://test.cluster.com/identity
       oidc_username_claim: email
     cloudProviderConfig:
       cloud_config_path: ""
-      cloud_provider_profile: AWS
+      cloud_provider_profile: aws
     clusterConfig:
       apiserver_url: https://test-api.cluster.com:443
     kind: KubeCoreOperatorConfig
@@ -31,7 +31,7 @@ data:
       additionalConfigs: []
       apiVersion: v1
       baseDomain: cluster.com
-      cloudProvider: AWS
+      cloudProvider: aws
       cloudProviderConfig: ""
       clusterDNSIP: 10.3.0.10
       clusterName: test

@@ -75,7 +75,32 @@ func findTemplates(relativePath string) (string, error) {
 }
 
 func generateKubeConfigStep(m *metadata) error {
+	clusterGeneratedPath := filepath.Join(m.clusterDir, generatedPath)
+	if err := os.MkdirAll(clusterGeneratedPath, os.ModeDir|0755); err != nil {
+		return fmt.Errorf("Failed to create cluster generated directory at %s", clusterGeneratedPath)
+	}
+
 	configGenerator := configgenerator.New(m.cluster)
+
+	kcoConfig, err := configGenerator.CoreConfig()
+	if err != nil {
+		return err
+	}
+
+	kcoConfigFilePath := filepath.Join(clusterGeneratedPath, kcoConfigFileName)
+	if err := writeFile(kcoConfigFilePath, kcoConfig); err != nil {
+		return err
+	}
+
+	tncoConfig, err := configGenerator.TncoConfig()
+	if err != nil {
+		return err
+	}
+
+	tncoConfigFilePath := filepath.Join(clusterGeneratedPath, tncoConfigFileName)
+	if err := writeFile(tncoConfigFilePath, tncoConfig); err != nil {
+		return err
+	}
 
 	kubeSystem, err := configGenerator.KubeSystem()
 	if err != nil {

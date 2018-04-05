@@ -93,6 +93,20 @@ func (c ConfigGenerator) TectonicSystem() (string, error) {
 	})
 }
 
+// CoreConfig returns, if successful, a yaml string for the on-disk kco-config.
+func (c ConfigGenerator) CoreConfig() (string, error) {
+	return marshalYAML(c.coreConfig())
+}
+
+// TncoConfig returns, if successful, a yaml string for the on-disk tnco-config.
+func (c ConfigGenerator) TncoConfig() (string, error) {
+	tncoConfig, err := c.tncoConfig()
+	if err != nil {
+		return "", err
+	}
+	return marshalYAML(tncoConfig)
+}
+
 func (c ConfigGenerator) addonConfig() (*kubeaddon.OperatorConfig, error) {
 	addonConfig := kubeaddon.OperatorConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -123,7 +137,7 @@ func (c ConfigGenerator) coreConfig() *kubecore.OperatorConfig {
 	coreConfig.AuthConfig.OIDCUsernameClaim = authConfigOIDCUsernameClaim
 
 	coreConfig.CloudProviderConfig.CloudConfigPath = ""
-	coreConfig.CloudProviderConfig.CloudProviderProfile = c.Cluster.Platform
+	coreConfig.CloudProviderConfig.CloudProviderProfile = strings.ToLower(c.Cluster.Platform)
 
 	coreConfig.NetworkConfig.ClusterCIDR = c.Cluster.Networking.PodCIDR
 	coreConfig.NetworkConfig.ServiceCIDR = c.Cluster.Networking.ServiceCIDR
@@ -170,7 +184,7 @@ func (c ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
 
 	tncoConfig.ControllerConfig.KubeconfigFetchCmd = "" // TODO(yifan): Get kubeconfigFetchCmd.
 	tncoConfig.ControllerConfig.ClusterDNSIP = cidrhost
-	tncoConfig.ControllerConfig.CloudProvider = c.Cluster.Platform
+	tncoConfig.ControllerConfig.CloudProvider = strings.ToLower(c.Cluster.Platform)
 	tncoConfig.ControllerConfig.CloudProviderConfig = "" // TODO(yifan): Get CloudProviderConfig.
 	tncoConfig.ControllerConfig.ClusterName = c.Cluster.Name
 	tncoConfig.ControllerConfig.BaseDomain = c.Cluster.BaseDomain
@@ -296,7 +310,7 @@ func (c ConfigGenerator) getBaseAddress() string {
 }
 
 func (c ConfigGenerator) getOicdIssuerURL() string {
-	return fmt.Sprintf("%s.%s/identity", c.Cluster.Name, c.Cluster.BaseDomain)
+	return fmt.Sprintf("https://%s.%s/identity", c.Cluster.Name, c.Cluster.BaseDomain)
 }
 
 // generateRandomID reproduce tf random_id behaviour
