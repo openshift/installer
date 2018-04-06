@@ -12,8 +12,13 @@ func NewInstallFullWorkflow(clusterDir string) Workflow {
 			installAssetsStep,
 			generateKubeConfigStep,
 			generateIgnConfigStep,
+			installTopologyStep,
+			installTNCCNAMEStep,
 			installBootstrapStep,
-			installJoinStep,
+			installTNCARecordStep,
+			installEtcdStep,
+			installJoinMastersStep,
+			installJoinWorkersStep,
 		},
 	}
 }
@@ -39,7 +44,11 @@ func NewInstallBootstrapWorkflow(clusterDir string) Workflow {
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
 			readClusterConfigStep,
+			installTopologyStep,
+			installTNCCNAMEStep,
 			installBootstrapStep,
+			installTNCARecordStep,
+			installEtcdStep,
 		},
 	}
 }
@@ -51,7 +60,8 @@ func NewInstallJoinWorkflow(clusterDir string) Workflow {
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
 			readClusterConfigStep,
-			installJoinStep,
+			installJoinMastersStep,
+			installJoinWorkersStep,
 		},
 	}
 }
@@ -60,36 +70,36 @@ func installAssetsStep(m *metadata) error {
 	return runInstallStep(m.clusterDir, assetsStep)
 }
 
+func installTopologyStep(m *metadata) error {
+	return runInstallStep(m.clusterDir, topologyStep)
+}
+
 func installBootstrapStep(m *metadata) error {
+	return runInstallStep(m.clusterDir, bootstrapStep)
+}
 
-	if err := runInstallStep(m.clusterDir, topologyStep); err != nil {
-		return err
-	}
-
+func installTNCCNAMEStep(m *metadata) error {
 	if !clusterIsBootstrapped(m.clusterDir) {
-		if err := createTNCCNAME(m.clusterDir); err != nil {
-			return err
-		}
+		return createTNCCNAME(m.clusterDir)
 	}
+	return nil
+}
 
-	if err := runInstallStep(m.clusterDir, bootstrapStep); err != nil {
-		return err
-	}
+func installTNCARecordStep(m *metadata) error {
+	return createTNCARecord(m.clusterDir)
+}
 
-	if err := createTNCARecord(m.clusterDir); err != nil {
-		return err
-	}
-
+func installEtcdStep(m *metadata) error {
 	return runInstallStep(m.clusterDir, etcdStep)
 }
 
-func installJoinStep(m *metadata) error {
+func installJoinMastersStep(m *metadata) error {
 	// TODO: import will fail after a first run, error is ignored for now
 	importAutoScalingGroup(m)
+	return runInstallStep(m.clusterDir, joinMastersStep)
+}
 
-	if err := runInstallStep(m.clusterDir, joinMastersStep); err != nil {
-		return err
-	}
+func installJoinWorkersStep(m *metadata) error {
 	return runInstallStep(m.clusterDir, joinWorkersStep)
 }
 

@@ -19,7 +19,7 @@ const (
 	stepsBaseDir     = "steps"
 	assetsStep       = "assets"
 	topologyStep     = "topology"
-	TNCDNSStep       = "tnc_dns"
+	tncDNSStep       = "tnc_dns"
 	bootstrapOn      = "-var=tectonic_aws_bootstrap=true"
 	bootstrapOff     = "-var=tectonic_aws_bootstrap=false"
 	bootstrapStep    = "bootstrap"
@@ -191,17 +191,17 @@ func baseLocation() (string, error) {
 func clusterIsBootstrapped(stateDir string) bool {
 	return hasStateFile(stateDir, topologyStep) &&
 		hasStateFile(stateDir, bootstrapStep) &&
-		hasStateFile(stateDir, TNCDNSStep)
+		hasStateFile(stateDir, tncDNSStep)
 }
 
 func createTNCCNAME(clusterDir string) error {
-	return runInstallStep(clusterDir, TNCDNSStep, []string{bootstrapOn}...)
+	return runInstallStep(clusterDir, tncDNSStep, []string{bootstrapOn}...)
 }
 
 func createTNCARecord(clusterDir string) error {
-	return runInstallStep(clusterDir, TNCDNSStep, []string{bootstrapOff}...)
+	return runInstallStep(clusterDir, tncDNSStep, []string{bootstrapOff}...)
 }
 
 func destroyTNCDNS(clusterDir string) error {
-	return runDestroyStep(clusterDir, TNCDNSStep, []string{bootstrapOff}...)
+	return runDestroyStep(clusterDir, tncDNSStep, []string{bootstrapOff}...)
 }
