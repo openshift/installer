@@ -67,51 +67,51 @@ func NewInstallJoinWorkflow(clusterDir string) Workflow {
 }
 
 func installAssetsStep(m *metadata) error {
-	return runInstallStep(m.clusterDir, assetsStep)
+	return runInstallStep(m, assetsStep)
 }
 
 func installTopologyStep(m *metadata) error {
-	return runInstallStep(m.clusterDir, topologyStep)
+	return runInstallStep(m, topologyStep)
 }
 
 func installBootstrapStep(m *metadata) error {
-	return runInstallStep(m.clusterDir, bootstrapStep)
+	return runInstallStep(m, bootstrapStep)
 }
 
 func installTNCCNAMEStep(m *metadata) error {
 	if !clusterIsBootstrapped(m.clusterDir) {
-		return createTNCCNAME(m.clusterDir)
+		return createTNCCNAME(m)
 	}
 	return nil
 }
 
 func installTNCARecordStep(m *metadata) error {
-	return createTNCARecord(m.clusterDir)
+	return createTNCARecord(m)
 }
 
 func installEtcdStep(m *metadata) error {
-	return runInstallStep(m.clusterDir, etcdStep)
+	return runInstallStep(m, etcdStep)
 }
 
 func installJoinMastersStep(m *metadata) error {
 	// TODO: import will fail after a first run, error is ignored for now
 	importAutoScalingGroup(m)
-	return runInstallStep(m.clusterDir, joinMastersStep)
+	return runInstallStep(m, joinMastersStep)
 }
 
 func installJoinWorkersStep(m *metadata) error {
-	return runInstallStep(m.clusterDir, joinWorkersStep)
+	return runInstallStep(m, joinWorkersStep)
 }
 
-func runInstallStep(clusterDir, step string, extraArgs ...string) error {
-	templateDir, err := findTemplates(step)
+func runInstallStep(m *metadata, step string, extraArgs ...string) error {
+	templateDir, err := findStepTemplates(step, m.cluster.Platform)
 	if err != nil {
 		return err
 	}
-	if err := tfInit(clusterDir, templateDir); err != nil {
+	if err := tfInit(m.clusterDir, templateDir); err != nil {
 		return err
 	}
-	return tfApply(clusterDir, step, templateDir, extraArgs...)
+	return tfApply(m.clusterDir, step, templateDir, extraArgs...)
 }
 
 func generateIgnConfigStep(m *metadata) error {

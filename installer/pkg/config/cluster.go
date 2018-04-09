@@ -40,7 +40,7 @@ type Cluster struct {
 	Name                string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
 	Networking          `json:",inline" yaml:"networking,omitempty"`
 	NodePools           `json:"-" yaml:"nodePools"`
-	Platform            string `json:"-" yaml:"platform,omitempty"`
+	Platform            string `json:"tectonic_platform" yaml:"platform,omitempty"`
 	Proxy               `json:",inline" yaml:"proxy,omitempty"`
 	PullSecretPath      string `json:"tectonic_pull_secret_path,omitempty" yaml:"pullSecretPath,omitempty"`
 	TLSValidityPeriod   int    `json:"tectonic_tls_validity_period,omitempty" yaml:"tlsValidityPeriod,omitempty"`
