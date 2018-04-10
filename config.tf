@@ -306,7 +306,7 @@ variable "tectonic_update_server" {
 
 variable "tectonic_update_channel" {
   type        = "string"
-  default     = "tectonic-1.8-production"
+  default     = "tectonic-1.9-production"
   description = "(internal) The Tectonic Omaha update channel"
 }
 
