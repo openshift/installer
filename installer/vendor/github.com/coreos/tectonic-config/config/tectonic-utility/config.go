@@ -18,6 +18,7 @@ type OperatorConfig struct {
 	IngressConfig           `json:"ingressConfig"`
 	StatsEmitterConfig      `json:"statsEmitterConfig"`
 	TectonicConfigMapConfig `json:"tectonicConfigMap"`
+	NetworkConfig           `json:"networkConfig"`
 }
 
 // IdentityConfig defines the config for Tectonic Identity.
@@ -52,4 +53,13 @@ type TectonicConfigMapConfig struct {
 	InstallerPlatform    string `json:"installerPlatform"`
 	KubeAPIServerURL     string `json:"kubeAPIserverURL"`
 	TectonicVersion      string `json:"tectonicVersion"`
+}
+
+// NetworkConfig holds information on cluster networking.
+// Copied from kube-core
+type NetworkConfig struct {
+	AdvertiseAddress string `json:"advertise_address"`
+	ClusterCIDR      string `json:"cluster_cidr"`
+	EtcdServers      string `json:"etcd_servers"`
+	ServiceCIDR      string `json:"service_cidr"`
 }

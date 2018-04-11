@@ -5,11 +5,11 @@ data:
     authConfig:
       oidc_client_id: tectonic-kubectl
       oidc_groups_claim: groups
-      oidc_issuer_url: test.cluster.com/identity
+      oidc_issuer_url: https://test.cluster.com/identity
       oidc_username_claim: email
     cloudProviderConfig:
       cloud_config_path: ""
-      cloud_provider_profile: AWS
+      cloud_provider_profile: aws
     clusterConfig:
       apiserver_url: https://test-api.cluster.com:443
     kind: KubeCoreOperatorConfig
@@ -25,6 +25,21 @@ data:
     kind: TectonicNetworkOperatorConfig
     networkProfile: canal
     podCIDR: 10.2.0.0/16
+  tnco-config: |
+    apiVersion: v1
+    controllerConfig:
+      additionalConfigs: []
+      apiVersion: v1
+      baseDomain: cluster.com
+      cloudProvider: aws
+      cloudProviderConfig: ""
+      clusterDNSIP: 10.3.0.10
+      clusterName: test
+      etcdInitialCluster: --initial-cluster=test-etcd-0.cluster.com=https://test-etcd-0.cluster.com:2380,test-etcd-1.cluster.com=https://test-etcd-1.cluster.com:2380,test-etcd-2.cluster.com=https://test-etcd-2.cluster.com:2380
+      kind: TectonicNodeControllerConfig
+      kubeconfigFetchCmd: ""
+      nodePoolUpdateLimit: null
+    kind: TectonicNodeControllerOperatorConfig
 kind: ConfigMap
 metadata:
   name: cluster-config-v1

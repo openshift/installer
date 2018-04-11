@@ -38,7 +38,7 @@ func TestUrlFunctions(t *testing.T) {
 		{
 			test:     "getOicdIssuerURL",
 			got:      config.getOicdIssuerURL(),
-			expected: "test.cluster.com/identity",
+			expected: "https://test.cluster.com/identity",
 		},
 	}
 	for _, tc := range testCases {
