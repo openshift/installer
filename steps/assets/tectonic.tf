@@ -44,14 +44,14 @@ module "bootkube" {
   apiserver_proxy_cert_pem = "${module.kube_certs.apiserver_proxy_cert_pem}"
   apiserver_proxy_key_pem  = "${module.kube_certs.apiserver_proxy_key_pem}"
   etcd_ca_cert_pem         = "${module.ca_certs.etcd_ca_cert_pem}"
-  etcd_ca_key_pem          = "${module.ca_certs.etcd_ca_key_pem}"
   etcd_client_cert_pem     = "${module.etcd_certs.etcd_client_cert_pem}"
   etcd_client_key_pem      = "${module.etcd_certs.etcd_client_key_pem}"
-
-  kube_ca_cert_pem = "${module.ca_certs.kube_ca_cert_pem}"
-  kube_ca_key_pem  = "${module.ca_certs.kube_ca_key_pem}"
-  admin_cert_pem   = "${module.kube_certs.admin_cert_pem}"
-  admin_key_pem    = "${module.kube_certs.admin_key_pem}"
+  kube_ca_cert_pem         = "${module.ca_certs.kube_ca_cert_pem}"
+  kube_ca_key_pem          = "${module.ca_certs.kube_ca_key_pem}"
+  admin_cert_pem           = "${module.kube_certs.admin_cert_pem}"
+  admin_key_pem            = "${module.kube_certs.admin_key_pem}"
+  kubelet_cert_pem         = "${module.kube_certs.kubelet_cert_pem}"
+  kubelet_key_pem          = "${module.kube_certs.kubelet_key_pem}"
 
   etcd_endpoints = "${data.template_file.etcd_hostname_list.*.rendered}"
 }
