@@ -2,7 +2,6 @@ package configgenerator
 
 import (
 	"bufio"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -21,10 +20,6 @@ var (
 		"worker": config.IgnitionWorker,
 		"etcd":   config.IgnitionEtcd,
 	}
-)
-
-const (
-	kubeconfigKubeletPath = "generated/auth/kubeconfig-kubelet"
 )
 
 func (c ConfigGenerator) poolToRoleMap() map[string]string {
@@ -55,13 +50,6 @@ func (c ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 		// TODO(alberto): Append block need to be different for each etcd node.
 		// add loop over count if role is etcd
 		c.embedAppendBlock(ignCfg, role)
-		if role != "etcd" {
-			kubeconfigKubeletContent, err := getKubeconfigKubeletContent(clusterDir)
-			if err != nil {
-				return err
-			}
-			c.embedKubeconfigKubeletBlock(ignCfg, kubeconfigKubeletContent)
-		}
 
 		fileTargetPath := filepath.Join(clusterDir, ignFilesPath[role])
 		if err = ignCfgToFile(*ignCfg, fileTargetPath); err != nil {
@@ -98,27 +86,6 @@ func (c ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role st
 		ignconfigtypes.Verification{Hash: nil},
 	}
 	ignCfg.Ignition.Config.Append = append(ignCfg.Ignition.Config.Append, appendBlock)
-	return ignCfg
-}
-
-func getKubeconfigKubeletContent(clusterDir string) ([]byte, error) {
-	kubeconfigKubeletPath := filepath.Join(clusterDir, kubeconfigKubeletPath)
-	return ioutil.ReadFile(kubeconfigKubeletPath)
-}
-
-func (c ConfigGenerator) embedKubeconfigKubeletBlock(ignCfg *ignconfigtypes.Config, kubeconfiKubeletContent []byte) *ignconfigtypes.Config {
-	kubeconfigKubelet := ignconfigtypes.File{
-		Path:       "/etc/kubernetes/kubeconfig",
-		Mode:       420,
-		Filesystem: "root",
-		Contents: ignconfigtypes.FileContents{
-			Source: ignconfigtypes.Url{
-				Scheme: "data",
-				Opaque: fmt.Sprintf("text/plain;charset=utf-8;base64,%s", base64.StdEncoding.EncodeToString(kubeconfiKubeletContent)),
-			},
-		},
-	}
-	ignCfg.Storage.Files = append(ignCfg.Storage.Files, kubeconfigKubelet)
 	return ignCfg
 }
 
