@@ -1,16 +1,3 @@
-# Kubelet tls bootstraping id and secret
-resource "random_string" "kubelet_bootstrap_token_id" {
-  length  = 6
-  special = false
-  upper   = false
-}
-
-resource "random_string" "kubelet_bootstrap_token_secret" {
-  length  = 16
-  special = false
-  upper   = false
-}
-
 # kubeconfig (/auth/kubeconfig)
 data "template_file" "kubeconfig" {
   template = "${file("${path.module}/resources/kubeconfig")}"
@@ -39,11 +26,11 @@ data "template_file" "kubeconfig-kubelet" {
   template = "${file("${path.module}/resources/kubeconfig-kubelet")}"
 
   vars {
-    root_ca_cert                   = "${base64encode(var.root_ca_cert_pem)}"
-    kubelet_bootstrap_token_id     = "${random_string.kubelet_bootstrap_token_id.result}"
-    kubelet_bootstrap_token_secret = "${random_string.kubelet_bootstrap_token_secret.result}"
-    server                         = "${var.kube_apiserver_url}"
-    cluster_name                   = "${var.cluster_name}"
+    root_ca_cert = "${base64encode(var.root_ca_cert_pem)}"
+    client_cert  = "${base64encode(var.kubelet_cert_pem)}"
+    client_key   = "${base64encode(var.kubelet_key_pem)}"
+    server       = "${var.kube_apiserver_url}"
+    cluster_name = "${var.cluster_name}"
   }
 }
 

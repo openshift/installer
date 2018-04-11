@@ -6,6 +6,14 @@ output "admin_key_pem" {
   value = "${tls_private_key.admin.private_key_pem}"
 }
 
+output "kubelet_cert_pem" {
+  value = "${tls_locally_signed_cert.kubelet.cert_pem}"
+}
+
+output "kubelet_key_pem" {
+  value = "${tls_private_key.kubelet.private_key_pem}"
+}
+
 output "apiserver_cert_pem" {
   value = "${data.template_file.apiserver_cert.rendered}"
 }
@@ -30,6 +38,8 @@ output "ignition_file_id_list" {
     "${data.ignition_file.apiserver_proxy_cert.id}",
     "${data.ignition_file.admin_key.id}",
     "${data.ignition_file.admin_cert.id}",
+    "${data.ignition_file.kubelet_key.id}",
+    "${data.ignition_file.kubelet_cert.id}",
   ]
 }
 
@@ -41,7 +51,9 @@ output "id" {
     local_file.apiserver_proxy_key.id,
     local_file.apiserver_proxy_cert.id,
     local_file.admin_key.id,
-    local_file.admin_cert.id,)
+    local_file.admin_cert.id,
+    local_file.kubelet_key.id,
+    local_file.kubelet_cert.id,)
     )}
   ")}"
 }

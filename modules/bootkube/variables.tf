@@ -80,10 +80,20 @@ variable "kube_ca_key_pem" {
 
 variable "admin_cert_pem" {
   type        = "string"
-  description = "The kubelet certificate in PEM format."
+  description = "The admin certificate in PEM format."
 }
 
 variable "admin_key_pem" {
+  type        = "string"
+  description = "The admin key in PEM format."
+}
+
+variable "kubelet_cert_pem" {
+  type        = "string"
+  description = "The kubelet certificate in PEM format."
+}
+
+variable "kubelet_key_pem" {
   type        = "string"
   description = "The kubelet key in PEM format."
 }
