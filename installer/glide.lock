@@ -1,5 +1,5 @@
-hash: 612876c8f9f2ea2288acdcdd7dea71ed9e1e86fa3faa3cb5e0cd352f953743ca
-updated: 2018-04-02T17:41:58.382204119-07:00
+hash: 2ba24ef17bcfbb896b307c0ec12e0719260dd507597116beb7d97a78a44696ac
+updated: 2018-04-11T16:24:19.014840642-07:00
 imports:
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
@@ -37,7 +37,7 @@ imports:
   - config/validate/astnode
   - config/validate/report
 - name: github.com/coreos/tectonic-config
-  version: c5d0496fe04c797ef7f44e94328adc2d79753383
+  version: 22c2fde25b6bd804166bb9dea5e62c16ef2e4900
   subpackages:
   - config/kube-addon
   - config/kube-core
@@ -134,7 +134,7 @@ imports:
   - lex/httplex
   - websocket
 - name: golang.org/x/sys
-  version: 378d26f46672a356c46195c28f61bdb4c0a781dd
+  version: 3b87a42e500a6dc65dae1a55d0b641295971163e
   subpackages:
   - unix
 - name: golang.org/x/text
