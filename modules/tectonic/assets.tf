@@ -44,24 +44,10 @@ resource "template_dir" "tectonic" {
     update_channel = "${var.update_channel}"
     update_app_id  = "${var.update_app_id}"
 
-    admin_user_id       = "${random_id.admin_user_id.b64}"
-    admin_email         = "${lower(var.admin_email)}"
-    admin_password_hash = "${bcrypt(var.admin_password, 12)}"
+    admin_email = "${lower(var.admin_email)}"
 
-    base_address         = "${var.base_address}"
-    console_base_address = "${var.base_address}"
-    console_base_host    = "${element(split(":", var.base_address), 0)}"
-    console_client_id    = "${var.console_client_id}"
-    console_secret       = "${random_id.console_secret.b64}"
-    console_callback     = "https://${var.base_address}/auth/callback"
+    base_address = "${var.base_address}"
 
-    tectonic_monitoring_auth_cookie_secret = "${base64encode(random_id.tectonic_monitoring_auth_cookie_secret.b64)}"
-
-    alertmanager_callback = "https://${var.base_address}/alertmanager/auth/callback"
-    prometheus_callback   = "https://${var.base_address}/prometheus/auth/callback"
-    grafana_callback      = "https://${var.base_address}/grafana/auth/callback"
-
-    ingress_kind     = "${var.ingress_kind}"
     ingress_ca_cert  = "${base64encode(var.ingress_ca_cert_pem)}"
     ingress_tls_cert = "${base64encode(var.ingress_cert_pem)}"
     ingress_tls_key  = "${base64encode(var.ingress_key_pem)}"
@@ -73,22 +59,7 @@ resource "template_dir" "tectonic" {
     identity_client_tls_key  = "${base64encode(var.identity_client_key_pem)}"
     identity_client_ca_cert  = "${base64encode(var.identity_client_ca_cert)}"
 
-    kubectl_client_id = "${var.kubectl_client_id}"
-    kubectl_secret    = "${random_id.kubectl_secret.b64}"
-
-    kube_apiserver_url = "${var.kube_apiserver_url}"
-    stats_url          = "${var.stats_url}"
-
-    # TODO: We could also patch https://www.terraform.io/docs/providers/random/ to add an UUID resource.
-    cluster_id   = "${format("%s-%s-%s-%s-%s", substr(random_id.cluster_id.hex, 0, 8), substr(random_id.cluster_id.hex, 8, 4), substr(random_id.cluster_id.hex, 12, 4), substr(random_id.cluster_id.hex, 16, 4), substr(random_id.cluster_id.hex, 20, 12))}"
-    cluster_name = "${var.cluster_name}"
-
-    platform              = "${var.platform}"
-    certificates_strategy = "${var.ca_generated == "true" ? "installerGeneratedCA" : "userProvidedCA"}"
-    identity_api_service  = "${var.identity_api_service}"
-
-    image_re            = "${var.image_re}"
-    kube_dns_service_ip = "${cidrhost(var.service_cidr, 10)}"
+    platform = "${var.platform}"
   }
 }
 
