@@ -1,12 +1,13 @@
-data "terraform_remote_state" "assets" {
+data "terraform_remote_state" "topology" {
   backend = "local"
 
   config {
-    path = "${path.cwd}/assets.tfstate"
+    path = "${path.cwd}/topology.tfstate"
   }
 }
 
 locals {
-  kubeconfig_kubelet_content = "${data.terraform_remote_state.assets.kubeconfig_kubelet_content}"
-  ignition_bootstrap         = "${data.terraform_remote_state.assets.ignition_bootstrap}"
+  subnet_ids = "${data.terraform_remote_state.topology.subnet_ids_masters}"
+  aws_lbs    = "${data.terraform_remote_state.topology.aws_lbs}"
+  sg_id      = "${data.terraform_remote_state.topology.master_sg_id}"
 }

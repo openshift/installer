@@ -72,4 +72,8 @@ resource "aws_s3_bucket_object" "ignition_bootstrap" {
       "KubernetesCluster", "${var.tectonic_cluster_name}",
       "tectonicClusterID", "${var.tectonic_cluster_id}"
     ), var.tectonic_aws_extra_tags)}"
+
+  lifecycle {
+    ignore_changes = ["*"]
+  }
 }

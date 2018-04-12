@@ -20,12 +20,26 @@ func terraformExec(clusterDir string, args ...string) error {
 	return nil
 }
 
-func tfApply(clusterDir, state, templateDir string) error {
-	return terraformExec(clusterDir, "apply", "-auto-approve", fmt.Sprintf("-state=%s.tfstate", state), templateDir)
+func tfApply(clusterDir string, state string, templateDir string, extraArgs ...string) error {
+	defaultArgs := []string{
+		"apply",
+		"-auto-approve",
+		fmt.Sprintf("-state=%s.tfstate", state),
+	}
+	extraArgs = append(extraArgs, templateDir)
+	args := append(defaultArgs, extraArgs...)
+	return terraformExec(clusterDir, args...)
 }
 
-func tfDestroy(clusterDir, state, templateDir string) error {
-	return terraformExec(clusterDir, "destroy", "-force", fmt.Sprintf("-state=%s.tfstate", state), templateDir)
+func tfDestroy(clusterDir, state, templateDir string, extraArgs ...string) error {
+	defaultArgs := []string{
+		"destroy",
+		"-force",
+		fmt.Sprintf("-state=%s.tfstate", state),
+	}
+	extraArgs = append(extraArgs, templateDir)
+	args := append(defaultArgs, extraArgs...)
+	return terraformExec(clusterDir, args...)
 }
 
 func tfInit(clusterDir, templateDir string) error {
