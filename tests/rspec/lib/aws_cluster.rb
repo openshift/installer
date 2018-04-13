@@ -27,7 +27,7 @@ class AwsCluster < Cluster
     @name = @config_file.cluster_name
     @build_path = File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), "tectonic/#{@name}")
     @manifest_path = File.join(@build_path, 'generated')
-    @kubeconfig = File.join(manifest_path, 'auth/kubeconfig')
+    @kubeconfig = File.join(@build_path, 'generated/auth/kubeconfig')
 
     @role_credentials = nil
     @role_credentials = AWSIAM.assume_role(@aws_region) if ENV.key?('TECTONIC_INSTALLER_ROLE')

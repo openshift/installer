@@ -12,7 +12,6 @@ Restart=on-failure
 RestartSec=10
 TimeoutStartSec=1h
 ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes
-${kubeconfig_fetch_cmd}
 ExecStartPre=/usr/bin/docker run --rm \
             --env http_proxy \
             --env HTTP_PROXY \

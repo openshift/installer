@@ -50,3 +50,14 @@ output "id" {
     )}
   ")}"
 }
+
+output "ignition_file_id_list" {
+  value = [
+    "${data.ignition_file.root_ca_cert.id}",
+    "${data.ignition_file.kube_ca_key.id}",
+    "${data.ignition_file.kube_ca_cert.id}",
+    "${data.ignition_file.aggregator_ca_key.id}",
+    "${data.ignition_file.aggregator_ca_cert.id}",
+    "${data.ignition_file.etcd_ca_cert.id}",
+  ]
+}

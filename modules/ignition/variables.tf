@@ -33,12 +33,6 @@ variable "kubelet_node_taints" {
   default     = ""
 }
 
-variable "kubeconfig_fetch_cmd" {
-  type        = "string"
-  description = "(optional) The command that fetches `/etc/kubernetes/kubeconfig`."
-  default     = ""
-}
-
 variable "cloud_provider" {
   type        = "string"
   description = "(optional) The cloud provider to be used for the kubelet."

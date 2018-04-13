@@ -32,8 +32,7 @@ resource "aws_route53_zone" "tectonic_int" {
 }
 
 module "vpc" {
-  source     = "../../modules/aws/vpc"
-  depends_on = ["${aws_s3_bucket_object.tectonic_assets.id}"]
+  source = "../../modules/aws/vpc"
 
   base_domain     = "${var.tectonic_base_domain}"
   cidr_block      = "${var.tectonic_aws_vpc_cidr_block}"
