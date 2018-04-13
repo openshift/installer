@@ -7,6 +7,9 @@ SSH_CMD_CONTAINER_LINUX_VERSION = 'if sudo [ -f /var/lib/update_engine/prefs/ale
 else \
   source /usr/share/coreos/release && echo "$COREOS_RELEASE_VERSION"; \
 fi'
+
+# /etc/coreos/update.conf tells what the update_engine will look for
+# /usr/share/coreos/update.conf tells where your current booted OS is coming from
 SSH_CMD_CONTAINER_LINUX_CHANNEL = 'for conf in /usr/share/coreos/update.conf /etc/coreos/update.conf; do \
   [ -f "$conf" ] && source "$conf"; \
 done; \
