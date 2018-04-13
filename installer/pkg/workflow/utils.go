@@ -75,7 +75,7 @@ func findStepTemplates(stepName, platform string) (string, error) {
 	return "", os.ErrNotExist
 }
 
-func generateKubeConfigStep(m *metadata) error {
+func generateClusterConfigMaps(m *metadata) error {
 	clusterGeneratedPath := filepath.Join(m.clusterDir, generatedPath)
 	if err := os.MkdirAll(clusterGeneratedPath, os.ModeDir|0755); err != nil {
 		return fmt.Errorf("Failed to create cluster generated directory at %s", clusterGeneratedPath)
