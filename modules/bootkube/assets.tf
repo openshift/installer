@@ -20,10 +20,7 @@ resource "template_dir" "bootkube" {
     tectonic_network_operator_image = "${var.container_images["tectonic_network_operator"]}"
     tnc_operator_image              = "${var.container_images["tnc_operator"]}"
 
-    calico_mtu            = "${var.calico_mtu}"
     cloud_provider_config = "${var.cloud_provider_config}"
-    cluster_cidr          = "${var.cluster_cidr}"
-    tectonic_networking   = "${var.tectonic_networking}"
 
     root_ca_cert                   = "${base64encode(var.root_ca_cert_pem)}"
     aggregator_ca_cert             = "${base64encode(var.aggregator_ca_cert_pem)}"
@@ -119,9 +116,4 @@ data "ignition_systemd_unit" "bootkube_path_unit" {
   name    = "bootkube.path"
   enabled = true
   content = "${data.template_file.bootkube_path_unit.rendered}"
-}
-
-data "template_file" "initial_cluster" {
-  count    = "${length(var.etcd_endpoints)}"
-  template = "${var.etcd_endpoints[count.index]}=https://${var.etcd_endpoints[count.index]}:2380"
 }

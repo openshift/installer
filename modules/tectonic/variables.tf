@@ -1,7 +1,3 @@
-variable "cluster_name" {
-  type = "string"
-}
-
 variable "container_images" {
   description = "Container images to use. Leave blank for defaults."
   type        = "map"
@@ -65,11 +61,6 @@ variable "admin_email" {
   default     = "admin@example.com"
 }
 
-variable "admin_password" {
-  description = "Password used to by the cluster admin to login to the Tectonic Console. Backslashes and double quotes must be escaped."
-  type        = "string"
-}
-
 variable "update_server" {
   description = "Server contacted to request Tectonic software updates. Leave blank for defaults."
   type        = "string"
@@ -83,45 +74,6 @@ variable "update_channel" {
 variable "update_app_id" {
   description = "Application identifier used to request Tectonic software updates. Leave blank for defaults."
   type        = "string"
-}
-
-variable "console_client_id" {
-  description = "OIDC identifier for the Tectonic Console. Leave blank for defaults."
-  type        = "string"
-}
-
-variable "kubectl_client_id" {
-  description = "OIDC identifier for kubectl. Leave blank for defaults."
-  type        = "string"
-}
-
-variable "kube_apiserver_url" {
-  description = "URL used to reach kube-apiserver. Leave blank for defaults."
-  type        = "string"
-}
-
-variable "identity_api_service" {
-  description = "service used to reach the identity apiserver."
-  type        = "string"
-  default     = "tectonic-identity-api.tectonic-system.svc.cluster.local"
-}
-
-variable "master_count" {
-  description = "The amount of master nodes present in the cluster."
-  type        = "string"
-}
-
-variable "stats_url" {
-  description = "The statistics collection URL to which to report."
-  type        = "string"
-}
-
-variable "image_re" {
-  description = <<EOF
-(internal) Regular expression used to extract repo and tag components from image strings
-EOF
-
-  type = "string"
 }
 
 variable "ingress_ca_cert_pem" {
@@ -150,9 +102,4 @@ variable "identity_client_cert_pem" {
 
 variable "identity_client_key_pem" {
   type = "string"
-}
-
-variable "service_cidr" {
-  description = "A CIDR notation IP range from which to assign service cluster IPs"
-  type        = "string"
 }

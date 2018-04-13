@@ -19,7 +19,7 @@ s3_clean() {
             set -o pipefail
             REGION=$(wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone | sed '"'"'s/[a-zA-Z]$//'"'"')
             /usr/bin/aws --region="$REGION" s3 cp /tmp/assets.zip s3://"$LOCATION/assets.zip"
-            /usr/bin/aws --region="$REGION" s3 cp /tmp/assets.zip s3://"$LOCATION/ign/v1/role/master"
+            /usr/bin/aws --region="$REGION" s3 cp /tmp/assets.zip s3://"$LOCATION/config/master"
         '
 }
 
