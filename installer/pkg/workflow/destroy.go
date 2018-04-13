@@ -20,42 +20,42 @@ func NewDestroyWorkflow(clusterDir string) Workflow {
 }
 
 func destroyAssetsStep(m *metadata) error {
-	return runDestroyStep(m.clusterDir, assetsStep)
+	return runDestroyStep(m, assetsStep)
 }
 
 func destroyEtcdStep(m *metadata) error {
-	return runDestroyStep(m.clusterDir, etcdStep)
+	return runDestroyStep(m, etcdStep)
 }
 
 func destroyBootstrapStep(m *metadata) error {
-	return runDestroyStep(m.clusterDir, bootstrapStep)
+	return runDestroyStep(m, bootstrapStep)
 }
 
 func destroyTNCDNSStep(m *metadata) error {
-	return destroyTNCDNS(m.clusterDir)
+	return destroyTNCDNS(m)
 }
 
 func destroyTopologyStep(m *metadata) error {
-	return runDestroyStep(m.clusterDir, topologyStep)
+	return runDestroyStep(m, topologyStep)
 }
 
 func destroyJoinWorkersStep(m *metadata) error {
-	return runDestroyStep(m.clusterDir, joinWorkersStep)
+	return runDestroyStep(m, joinWorkersStep)
 }
 
 func destroyJoinMastersStep(m *metadata) error {
-	return runDestroyStep(m.clusterDir, joinMastersStep)
+	return runDestroyStep(m, joinMastersStep)
 }
 
-func runDestroyStep(clusterDir, step string, extraArgs ...string) error {
-	if !hasStateFile(clusterDir, step) {
+func runDestroyStep(m *metadata, step string, extraArgs ...string) error {
+	if !hasStateFile(m.clusterDir, step) {
 		// there is no statefile, therefore nothing to destroy for this step
 		return nil
 	}
-	templateDir, err := findTemplates(step)
+	templateDir, err := findStepTemplates(step, m.cluster.Platform)
 	if err != nil {
 		return err
 	}
 
-	return tfDestroy(clusterDir, step, templateDir, extraArgs...)
+	return tfDestroy(m.clusterDir, step, templateDir, extraArgs...)
 }

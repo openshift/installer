@@ -48,20 +48,31 @@ func copyFile(fromFilePath, toFilePath string) error {
 	return err
 }
 
-func findTemplates(relativePath string) (string, error) {
+// returns the directory containing templates for a given step. If platform is
+// specified, it looks for a subdirectory with platform first, falling back if
+// there are no platform-specific templates for that step
+func findStepTemplates(stepName, platform string) (string, error) {
 	base, err := baseLocation()
 	if err != nil {
-		return "", fmt.Errorf("unknown base path for '%s' templates: %s", relativePath, err)
+		return "", fmt.Errorf("error looking up step %s templates: %v", stepName, err)
 	}
-	base = filepath.Join(base, stepsBaseDir, relativePath)
-	stat, err := os.Stat(base)
-	if err != nil {
-		return "", fmt.Errorf("invalid path for '%s' templates: %s", base, err)
+	for _, path := range []string{
+		filepath.Join(base, stepsBaseDir, stepName, platform),
+		filepath.Join(base, stepsBaseDir, stepName)} {
+
+		stat, err := os.Stat(path)
+		if err != nil {
+			if os.IsNotExist(err) {
+				continue
+			}
+			return "", fmt.Errorf("invalid path for '%s' templates: %s", base, err)
+		}
+		if !stat.IsDir() {
+			return "", fmt.Errorf("invalid path for '%s' templates", base)
+		}
+		return path, nil
 	}
-	if !stat.IsDir() {
-		return "", fmt.Errorf("invalid path for '%s' templates", base)
-	}
-	return base, nil
+	return "", os.ErrNotExist
 }
 
 func generateKubeConfigStep(m *metadata) error {
@@ -122,7 +133,7 @@ func generateKubeConfigStep(m *metadata) error {
 }
 
 func importAutoScalingGroup(m *metadata) error {
-	templatesPath, err := findTemplates(joinMastersStep)
+	templatesPath, err := findStepTemplates(joinMastersStep, m.cluster.Platform)
 	if err != nil {
 		return err
 	}
@@ -219,14 +230,14 @@ func clusterIsBootstrapped(stateDir string) bool {
 		hasStateFile(stateDir, tncDNSStep)
 }
 
-func createTNCCNAME(clusterDir string) error {
-	return runInstallStep(clusterDir, tncDNSStep, []string{bootstrapOn}...)
+func createTNCCNAME(m *metadata) error {
+	return runInstallStep(m, tncDNSStep, []string{bootstrapOn}...)
 }
 
-func createTNCARecord(clusterDir string) error {
-	return runInstallStep(clusterDir, tncDNSStep, []string{bootstrapOff}...)
+func createTNCARecord(m *metadata) error {
+	return runInstallStep(m, tncDNSStep, []string{bootstrapOff}...)
 }
 
-func destroyTNCDNS(clusterDir string) error {
-	return runDestroyStep(clusterDir, tncDNSStep, []string{bootstrapOff}...)
+func destroyTNCDNS(m *metadata) error {
+	return runDestroyStep(m, tncDNSStep, []string{bootstrapOff}...)
 }
