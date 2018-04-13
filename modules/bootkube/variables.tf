@@ -48,6 +48,11 @@ variable "etcd_client_key_pem" {
   description = "The etcd client key in PEM format."
 }
 
+variable "etcd_endpoints" {
+  description = "List of etcd endpoints to connect with (hostnames/IPs only)"
+  type        = "list"
+}
+
 variable "kube_apiserver_url" {
   description = "URL used to reach kube-apiserver"
   type        = "string"
