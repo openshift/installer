@@ -1,6 +1,6 @@
 admin:
-  email: null
-  password: null
+  email: fake-email
+  password: fake-password
 aws:
   etcd:
     ec2Type: m4.large
