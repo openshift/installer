@@ -1,4 +1,6 @@
 {
+  "tectonic_admin_email": "fake-email",
+  "tectonic_admin_password": "fake-password",
   "tectonic_base_domain": "tectonic-ci.de",
   "tectonic_container_linux_channel": "beta",
   "tectonic_container_linux_version": "latest",

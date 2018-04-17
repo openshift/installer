@@ -2,8 +2,8 @@ package config
 
 // Admin converts admin related config.
 type Admin struct {
-	Email    string `json:"-" yaml:"email,omitempty"`
-	Password string `json:"-" yaml:"password,omitempty"`
+	Email    string `json:"tectonic_admin_email" yaml:"email,omitempty"`
+	Password string `json:"tectonic_admin_password" yaml:"password,omitempty"`
 }
 
 // CA converts ca related config.
