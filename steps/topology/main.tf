@@ -39,7 +39,6 @@ module "vpc" {
   cidr_block      = "${var.tectonic_aws_vpc_cidr_block}"
   cluster_id      = "${var.tectonic_cluster_id}"
   cluster_name    = "${var.tectonic_cluster_name}"
-  custom_dns_name = "${var.tectonic_dns_name}"
   enable_etcd_sg  = "${length(compact(var.tectonic_etcd_servers)) == 0 ? 1 : 0}"
   external_vpc_id = "${var.tectonic_aws_external_vpc_id}"
 
@@ -68,7 +67,6 @@ module "dns" {
   cluster_name                   = "${var.tectonic_cluster_name}"
   console_elb_dns_name           = "${module.vpc.aws_console_dns_name}"
   console_elb_zone_id            = "${module.vpc.aws_elb_console_zone_id}"
-  custom_dns_name                = "${var.tectonic_dns_name}"
   elb_alias_enabled              = true
   master_count                   = "${var.tectonic_master_count}"
   tectonic_external_private_zone = "${join("", aws_route53_zone.tectonic_int.*.zone_id)}"
