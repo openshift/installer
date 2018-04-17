@@ -58,12 +58,6 @@ variable "tectonic_extra_tags" {
   description = "(optional) Extra tags to be applied to created resources."
 }
 
-variable "custom_dns_name" {
-  type        = "string"
-  default     = ""
-  description = "DNS prefix used to construct the console and API server endpoints."
-}
-
 // AWS specific internal zone variables
 
 variable "elb_alias_enabled" {

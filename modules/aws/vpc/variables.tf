@@ -57,12 +57,6 @@ variable "public_master_endpoints" {
   default     = true
 }
 
-variable "custom_dns_name" {
-  type        = "string"
-  default     = ""
-  description = "DNS prefix used to construct the console and API server endpoints."
-}
-
 variable "depends_on" {
   default = []
   type    = "list"

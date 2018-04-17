@@ -196,12 +196,6 @@ Example: `[ { key = "foo", value = "bar", propagate_at_launch = true } ]`
 EOF
 }
 
-variable "tectonic_dns_name" {
-  type        = "string"
-  default     = ""
-  description = "(optional) DNS prefix used to construct the console and API server endpoints."
-}
-
 variable "tectonic_aws_etcd_root_volume_type" {
   type        = "string"
   default     = "gp2"

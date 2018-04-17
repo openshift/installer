@@ -31,7 +31,6 @@ type Cluster struct {
 	ContainerLinux      `json:",inline" yaml:"containerLinux,omitempty"`
 	CustomCAPEMList     string `json:"tectonic_custom_ca_pem_list,omitempty" yaml:"customCAPEMList,omitempty"`
 	DDNS                `json:",inline" yaml:"ddns,omitempty"`
-	DNSName             string `json:"tectonic_dns_name,omitempty" yaml:"dnsName,omitempty"`
 	Etcd                `json:",inline" yaml:"etcd,omitempty"`
 	ISCSI               `json:",inline" yaml:"iscsi,omitempty"`
 	Internal            `json:",inline" yaml:"-"`
