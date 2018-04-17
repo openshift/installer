@@ -120,7 +120,10 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
     expect(ContainerLinux.version(@cluster)).to eq(version)
   end
 
-  it 'installs the correct Container Linux channel' do
+  # Disabled until bootstrap node and other nodes CL version gets consolidated
+  # https://github.com/coreos/tectonic-config/pull/16
+  # https://github.com/coreos-inc/tectonic-operators/pull/333
+  xit 'installs the correct Container Linux channel' do
     expect(ContainerLinux.channel(@cluster)).to eq(@cluster.tf_var('tectonic_container_linux_channel'))
   end
 
