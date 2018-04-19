@@ -166,6 +166,8 @@ class AwsCluster < Cluster
     env['TF_INIT_OPTIONS'] = '-no-color'
 
     run_tectonic_cli(env, 'init', '--config=config.yaml')
+    # The config within the build folder is the source of truth after init
+    @config_file = ConfigFile.new(File.expand_path("#{@name}/config.yaml"))
   end
 
   def apply
