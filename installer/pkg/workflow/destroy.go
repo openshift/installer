@@ -7,7 +7,7 @@ func NewDestroyWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
-			readClusterConfigStep,
+			refreshConfigStep,
 			destroyJoinMastersStep,
 			destroyJoinWorkersStep,
 			destroyEtcdStep,

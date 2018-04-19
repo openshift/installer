@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -163,16 +164,23 @@ func readClusterConfig(configFilePath string, internalFilePath string) (*config.
 	return cfg, nil
 }
 
-func readClusterConfigStep(m *metadata) error {
-	var configFilePath string
-	var internalFilePath string
-
-	if m.configFilePath != "" {
-		configFilePath = m.configFilePath
-	} else {
-		configFilePath = filepath.Join(m.clusterDir, configFileName)
-		internalFilePath = filepath.Join(m.clusterDir, internalFileName)
+func getClusterNameFromConfig(configFilePath string) (*string, error) {
+	if configFilePath == "" {
+		return nil, errors.New("no configFilePath given for getting cluster Name")
 	}
+	cluster, err := readClusterConfig(configFilePath, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read cluster config for while getting cluster name: %v", err)
+	}
+	return &cluster.Name, nil
+}
+
+func readClusterConfigStep(m *metadata) error {
+	if m.clusterDir == "" {
+		errors.New("no cluster dir given for reading config")
+	}
+	configFilePath := filepath.Join(m.clusterDir, configFileName)
+	internalFilePath := filepath.Join(m.clusterDir, internalFileName)
 
 	cluster, err := readClusterConfig(configFilePath, internalFilePath)
 	if err != nil {
