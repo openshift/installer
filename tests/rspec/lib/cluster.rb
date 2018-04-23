@@ -30,7 +30,7 @@ class Cluster
     @tectonic_admin_password = ENV['TF_VAR_tectonic_admin_password'] || PasswordGenerator.generate_password
     save_console_creds(@name, @tectonic_admin_email, @tectonic_admin_password)
 
-    @build_path = File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), "tectonic/build/#{@name}")
+    @build_path = File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), "tectonic-dev/#{@name}")
     @manifest_path = File.join(@build_path, 'generated')
     @kubeconfig = File.join(manifest_path, 'auth/kubeconfig')
     @tfstate_file = TFStateFile.new(@build_path)

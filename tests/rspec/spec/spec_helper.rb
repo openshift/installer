@@ -29,7 +29,7 @@ RSpec.configure do |config|
 
   ENV['RSPEC_PATH'] = Dir.pwd unless ENV.key?('RSPEC_PATH')
   unless ENV.key?('RELEASE_TARBALL_PATH')
-    ENV['RELEASE_TARBALL_PATH'] = File.expand_path(File.join(Dir.pwd, '../../bazel-bin/tectonic.tar.gz'))
+    ENV['RELEASE_TARBALL_PATH'] = File.expand_path(File.join(Dir.pwd, '../../bazel-bin/tectonic-dev.tar.gz'))
   end
 
   # Supressing the `Run options` announcements to have a standard TAP output.

@@ -7,10 +7,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
-	"github.com/coreos/tectonic-installer/installer/pkg/config-generator"
+	configgenerator "github.com/coreos/tectonic-installer/installer/pkg/config-generator"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -28,7 +27,9 @@ const (
 	joinWorkersStep  = "joining_workers"
 	configFileName   = "config.yaml"
 	internalFileName = "internal.yaml"
-	binaryPrefix     = "tectonic-installer"
+	kubeConfigPath   = "generated/auth/kubeconfig"
+	binaryPrefix     = "installer"
+	tncDaemonSet     = "tectonic-node-controller"
 )
 
 func copyFile(fromFilePath, toFilePath string) error {
@@ -212,10 +213,6 @@ func baseLocation() (string, error) {
 	ex, err := os.Executable()
 	if err != nil {
 		return "", fmt.Errorf("undetermined location of own executable: %s", err)
-	}
-	ex = path.Dir(ex)
-	if path.Base(ex) != runtime.GOOS {
-		return "", fmt.Errorf("%s executable in unknown location: %s", path.Base(ex), err)
 	}
 	ex = path.Dir(ex)
 	if path.Base(ex) != binaryPrefix {

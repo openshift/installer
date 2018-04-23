@@ -1,4 +1,5 @@
 load("//bazel-rules:gen_test.bzl", "gen_test")
+load("//:version.bzl", "TECTONIC_VERSION")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -17,7 +18,7 @@ config_setting(
 )
 
 genrule(
-    name = "terraform_runtime",
+    name = "terraform_runtime_fmt",
     output_to_bindir = 1,
     srcs = select({
         "//:linux": ["@terraform_runtime_linux//:terraform"],
@@ -27,19 +28,6 @@ genrule(
     cmd = "cp $(<) $(@)",
     executable = True,
 )
-
-genrule(
-    name = "provider_matchbox",
-    output_to_bindir = 1,
-    srcs =  select({
-        "//:linux": ["@terraform_provider_matchbox_linux//:terraform-provider-matchbox"],
-        "//:darwin": ["@terraform_provider_matchbox_darwin//:terraform-provider-matchbox"],
-    }),
-    outs = ["bin/terraform-provider-matchbox"],
-    cmd = "cp $(<) $(@)",
-)
-
-exports_files(["config.tf"])
 
 load("@io_bazel_rules_go//go:def.bzl", "go_prefix")
 
@@ -61,96 +49,54 @@ alias(
 
 alias(
     name = "cli",
-    actual = "//installer/cmd/tectonic:tectonic",
+    actual = "//installer:tectonic",
+)
+
+template_files = glob([
+    "modules/**/*",
+    "steps/**/*",
+    "config.tf"
+])
+
+exports_files(template_files)
+
+filegroup(
+    name = "template_resources",
+    srcs = template_files
 )
 
 load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
 
-# We use a genrule here to combine the tarballs rather than a pkg_tar
-# because we want to be able to optionally add a version string to the
-# directory name and pkg_tar does not allow for formatted names.
-genrule(
+alias(
     name = "tarball",
+    actual = ":tectonic-%s" % TECTONIC_VERSION
+)
+
+pkg_tar(
+    name = "tectonic-%s" % TECTONIC_VERSION,
+    strip_prefix = '.',
+    package_dir = "tectonic-%s" % TECTONIC_VERSION,
+    extension = "tar.gz",
     srcs = [
-        ":tarball_tectonic_binary_darwin",
-        ":tarball_tectonic_binary_linux",
-        ":tarball_terraform_configuration",
-        ":tarball_terraform_binary_darwin",
-        ":tarball_terraform_binary_linux",
-        ":tarball_terraform_provider_matchbox_darwin",
-        ":tarball_terraform_provider_matchbox_linux",
-        ":tarball_examples",
+        "//installer:tectonic",
+        "//:template_resources",
+        "//examples:tectonic_cli_examples",
     ],
-    outs = ["tectonic.tar.gz"],
-    cmd = '\n'.join([
-            "VERSION=$${TECTONIC_VERSION:-}",
-            "DIR=tectonic",
-            "[ ! -z $$VERSION ] && DIR=\"$$DIR\"_\"$$VERSION\"",
-            "TMPDIR=$$(mktemp -d)",
-            "mkdir $$TMPDIR/$$DIR",
-            "for s in $(SRCS); do",
-                "tar -C $$TMPDIR/$$DIR --extract --file $$s --strip-components=1",
-            "done",
-            "tar -C $$TMPDIR --create --gzip --file $@ $$DIR"
-    ]),
-    output_to_bindir = 1,
+    deps = [":tf_bin"]
+)
+
+filegroup (
+    name = "terraform_runtime",
+    srcs = select({
+        "//:linux": ["@terraform_runtime_linux//:terraform"],
+        "//:darwin": ["@terraform_runtime_darwin//:terraform"],
+    })
 )
 
 pkg_tar(
-    name = "tarball_terraform_configuration",
-    mode = "0644",
-    srcs =  glob(["modules/**"]) + glob(["steps/**"]) + ["config.tf"],
-    strip_prefix = ".",
-)
-
-pkg_tar(
-    name = "tarball_tectonic_binary_darwin",
-    mode = "0755",
-    package_dir = "tectonic-installer/darwin",
-    srcs = ["//installer/cmd/tectonic:darwin"],
-)
-
-pkg_tar(
-    name = "tarball_tectonic_binary_linux",
-    mode = "0755",
-    package_dir = "tectonic-installer/linux",
-    srcs = ["//installer/cmd/tectonic:linux"],
-)
-
-pkg_tar(
-    name = "tarball_terraform_binary_darwin",
-    mode = "0755",
-    package_dir = "tectonic-installer/darwin",
-    srcs = ["@terraform_runtime_darwin//:terraform"],
-)
-
-pkg_tar(
-    name = "tarball_terraform_binary_linux",
-    mode = "0755",
-    package_dir = "tectonic-installer/linux",
-    srcs = ["@terraform_runtime_linux//:terraform"],
-)
-
-pkg_tar(
-    name = "tarball_terraform_provider_matchbox_darwin",
-    mode = "0755",
-    package_dir = "tectonic-installer/darwin",
-    srcs = ["@terraform_provider_matchbox_darwin//:terraform-provider-matchbox"],
-)
-
-pkg_tar(
-    name = "tarball_terraform_provider_matchbox_linux",
-    mode = "0755",
-    package_dir = "tectonic-installer/linux",
-    srcs = ["@terraform_provider_matchbox_linux//:terraform-provider-matchbox"],
-)
-
-pkg_tar(
-    name = "tarball_examples",
-    package_dir = "examples",
-    # As long as we are not auto-generating the tectonic cli configuration
-    # examples, make sure to add the manually created once to the tarball.
-    srcs = ["//examples:tectonic_cli_configs"],
+    name = "tf_bin",
+    package_dir = "installer",
+    srcs = [":terraform_runtime"]
 )
 
 filegroup(
@@ -167,6 +113,6 @@ filegroup(
 gen_test(
     name = "terraform_fmt",
     command = "./bin/terraform fmt -list -check -write=false",
-    deps = [":terraform_runtime", ":terraform_files"],
+    deps = [":terraform_runtime_fmt", ":terraform_files"],
     size = "small",
 )

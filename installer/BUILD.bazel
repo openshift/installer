@@ -1,3 +1,5 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+
 test_suite(
     name = "cli_units",
     tests = [
@@ -6,4 +8,28 @@ test_suite(
         "//installer/pkg/validate:go_default_test",
         "//installer/pkg/workflow:go_default_test",
     ],
+)
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "cmd/tectonic/main.go",
+    ],
+    visibility = ["//visibility:private"],
+    deps = [
+        "//installer/pkg/workflow:go_default_library",
+        "//installer/vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//installer/vendor/gopkg.in/alecthomas/kingpin.v2:go_default_library",
+    ],
+)
+
+go_binary(
+    name = "tectonic",
+    out = "tectonic",
+    embed = [":go_default_library"],
+    # Use pure to build a pure-go binary.
+    # This has the nice side effect of making the binary statically linked.
+    pure = "on",
+    visibility = ["//visibility:public"],
+    data = ["//:template_resources"]
 )

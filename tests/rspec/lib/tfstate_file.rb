@@ -20,7 +20,7 @@ class TFStateFile
       end
     end
 
-    msg = "could not find value for key \"#{wanted_key}\" in tfstate file #{@build_path}"
+    msg = "could not find value for key \"#{wanted_key}\" in '#{@tfstate_file_name}' tfstate file #{@build_path}"
     raise TFStateFileValueForKeyDoesNotExist, msg
   end
 

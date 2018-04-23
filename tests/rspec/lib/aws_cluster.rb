@@ -25,7 +25,7 @@ class AwsCluster < Cluster
     @aws_region = ENV['TF_VAR_tectonic_aws_region']
 
     @name = @config_file.cluster_name
-    @build_path = File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), "tectonic/#{@name}")
+    @build_path = File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), "tectonic-dev/#{@name}")
     @manifest_path = File.join(@build_path, 'generated')
     @kubeconfig = File.join(@build_path, 'generated/auth/kubeconfig')
 
@@ -207,15 +207,14 @@ class AwsCluster < Cluster
   end
 
   def run_tectonic_cli(env, cmd, flags = '')
-    os = Gem::Platform.local.os
     tectonic_binary = File.join(
       File.dirname(ENV['RELEASE_TARBALL_PATH']),
-      "tectonic/tectonic-installer/#{os}/tectonic"
+      'tectonic-dev/installer/tectonic'
     )
 
     tectonic_logs = File.join(
       File.dirname(ENV['RELEASE_TARBALL_PATH']),
-      "tectonic/#{@name}/logs/tectonic-#{cmd}.log"
+      "tectonic-dev/#{@name}/logs/tectonic-#{cmd}.log"
     )
 
     command = "#{tectonic_binary} #{cmd} #{flags}"

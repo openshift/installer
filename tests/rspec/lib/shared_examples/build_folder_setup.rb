@@ -5,7 +5,7 @@ require 'name_generator'
 
 RSpec.shared_examples 'withBuildFolderSetupWithConfig' do |config_path|
   before(:all) do
-    Dir.chdir(File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), 'tectonic'))
+    Dir.chdir(File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), 'tectonic-dev'))
     # TODO: Only ignore on AWS
     temp_config_file = ConfigFile.new(config_path)
     @name = ENV['CLUSTER'] || NameGenerator.generate(temp_config_file.prefix)
@@ -21,7 +21,7 @@ end
 
 RSpec.shared_examples 'withBuildFolderSetup' do |tf_vars_path|
   before(:all) do
-    Dir.chdir(File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), 'tectonic'))
+    Dir.chdir(File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), 'tectonic-dev'))
     temp_tfvars_file = TFVarsFile.new(tf_vars_path)
     @name = ENV['CLUSTER'] || NameGenerator.generate(temp_tfvars_file.prefix)
     ENV['CLUSTER'] = @name

@@ -166,12 +166,12 @@ pipeline {
                       bazel build tarball tests/smoke
 
                       # Jenkins `stash` does not follow symlinks - thereby temporarily copy the files to the root dir
-                      cp bazel-bin/tectonic.tar.gz .
+                      cp bazel-bin/tectonic-dev.tar.gz .
                       cp bazel-bin/tests/smoke/linux_amd64_stripped/smoke .
                     """
-                    stash name: 'tectonic.tar.gz', includes: 'tectonic.tar.gz'
+                    stash name: 'tectonic-tarball', includes: 'tectonic-dev.tar.gz'
                     stash name: 'smoke-tests', includes: 'smoke'
-                    archiveArtifacts allowEmptyArchive: true, artifacts: 'tectonic.tar.gz'
+                    archiveArtifacts allowEmptyArchive: true, artifacts: 'tectonic-dev.tar.gz'
                   }
 
                   withDockerContainer(tectonicSmokeTestEnvImage) {
@@ -239,7 +239,7 @@ pipeline {
           withCredentials(quayCreds) {
             ansiColor('xterm') {
               unstash 'clean-repo'
-              unstash 'tectonic.tar.gz'
+              unstash 'tectonic-tarball'
               sh """
                 docker build -t quay.io/coreos/tectonic-installer:master -f images/tectonic-installer/Dockerfile .
                 docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
@@ -305,12 +305,12 @@ def forcefullyCleanWorkspace() {
 
 def unstashCleanRepoTectonicTarGZSmokeTests() {
   unstash 'clean-repo'
-  unstash 'tectonic.tar.gz'
+  unstash 'tectonic-tarball'
   unstash 'smoke-tests'
   sh """#!/bin/bash -ex
     # Jenkins `stash` does not follow symlinks - thereby temporarily copy the files to the root dir
     mkdir -p bazel-bin/tests/smoke/linux_amd64_stripped/
-    cp tectonic.tar.gz bazel-bin/.
+    cp tectonic-dev.tar.gz bazel-bin/.
     cp smoke bazel-bin/tests/smoke/linux_amd64_stripped/.
   """
 }

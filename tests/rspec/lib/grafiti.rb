@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require 'yaml'
+require 'json'
+
 # Grafiti contains helper functions to use the http://github.com/coreos/grafiti tool
 #
 class Grafiti
@@ -7,7 +10,7 @@ class Grafiti
   attr_reader :tmp_dir
   attr_reader :config_file_path
   attr_reader :tag_file_path
-  attr_reader :terraform_log_path
+  attr_reader :terraform_internal_file
   attr_reader :aws_region
 
   def initialize(build_path, region)
@@ -16,7 +19,7 @@ class Grafiti
     @tmp_dir = `mktemp -d -p #{@build_path}`.chomp
     @config_file_path = File.join(@tmp_dir, 'config.toml')
     @tag_file_path = File.join(@tmp_dir, 'tag.json')
-    @terraform_log_path = File.join(build_path, 'terraform.tfstate')
+    @terraform_internal_file = File.join(build_path, 'internal.yaml')
     write_config_file
     write_tag_file
   end
@@ -34,10 +37,8 @@ class Grafiti
   end
 
   def cluster_id
-    cmd = 'grep -m 1 -oP'\
-          ' \'^ *\"tags\.tectonicClusterID\": \"\K[0-9a-z-]*(?=\",$)\''\
-          " #{terraform_log_path}"
-    `#{cmd}`.chomp
+    config = YAML.load_file(terraform_internal_file)
+    config['clusterId'] || ''
   end
 
   def write_config_file
@@ -45,9 +46,7 @@ class Grafiti
   end
 
   def write_tag_file
-    content = '{"TagFilters":['\
-              "  {\"Key\":\"tectonicClusterID\",\"Values\":[\"#{cluster_id}\""\
-              ']}]}'
-    IO.write(@tag_file_path, content)
+    tags = { 'TagFilters' => [{ 'Key' => 'tectonicClusterID', 'Values' => [cluster_id] }] }
+    IO.write(@tag_file_path, tags.to_json)
   end
 end
