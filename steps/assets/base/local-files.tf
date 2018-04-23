@@ -14,9 +14,3 @@ resource "local_file" "kubeconfig" {
   content  = "${module.bootkube.kubeconfig_rendered}"
   filename = "${local.kubeconfig_path}"
 }
-
-# Generally not used except for debugging
-resource "local_file" "bootstrap_ignition" {
-  content  = "${data.ignition_config.bootstrap.rendered}"
-  filename = "ignition-bootstrap.ign"
-}

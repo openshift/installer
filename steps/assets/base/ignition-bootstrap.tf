@@ -1,9 +1,9 @@
 module "ignition_bootstrap" {
-  source = "../../modules/ignition"
+  source = "../../../modules/ignition"
 
   base_domain               = "${var.tectonic_base_domain}"
   bootstrap_upgrade_cl      = "${var.tectonic_bootstrap_upgrade_cl}"
-  cloud_provider            = "aws"
+  cloud_provider            = "${var.cloud_provider}"
   cluster_name              = "${var.tectonic_cluster_name}"
   container_images          = "${var.tectonic_container_images}"
   custom_ca_cert_pem_list   = "${var.tectonic_custom_ca_pem_list}"
@@ -26,7 +26,8 @@ module "ignition_bootstrap" {
   no_proxy                  = "${var.tectonic_no_proxy}"
 }
 
-# The cluster configs written by the install binary
+# The cluster configs written by the install binary external to Terraform.
+# Read them in so we can install them via ignition
 data "ignition_file" "kube-system_cluster_config" {
   filesystem = "root"
   mode       = "0644"
@@ -67,28 +68,6 @@ data "ignition_file" "kco_config" {
   }
 }
 
-# Removing assets is platform-specific
-# But it must be installed in /opt/tectonic/rm-assets.sh
-data "template_file" "rm_assets_sh" {
-  template = "${file("${path.module}/resources/rm-assets.sh")}"
-
-  vars {
-    cluster_name       = "${var.tectonic_cluster_name}"
-    awscli_image       = "${var.tectonic_container_images["awscli"]}"
-    bucket_s3_location = "${local.bucket_name}"
-  }
-}
-
-data "ignition_file" "rm_assets_sh" {
-  filesystem = "root"
-  path       = "/opt/tectonic/rm-assets.sh"
-  mode       = "0700"
-
-  content {
-    content = "${data.template_file.rm_assets_sh.rendered}"
-  }
-}
-
 data "ignition_file" "bootstrap_kubeconfig" {
   filesystem = "root"
   path       = "/etc/kubernetes/kubeconfig"
@@ -97,33 +76,4 @@ data "ignition_file" "bootstrap_kubeconfig" {
   content {
     content = "${module.bootkube.kubeconfig-kubelet}"
   }
-}
-
-data "ignition_config" "bootstrap" {
-  files = ["${compact(flatten(list(
-    list(
-      data.ignition_file.kube-system_cluster_config.id,
-      data.ignition_file.tectonic_cluster_config.id,
-      data.ignition_file.tnco_config.id,
-      data.ignition_file.kco_config.id,
-      data.ignition_file.rm_assets_sh.id,
-      data.ignition_file.bootstrap_kubeconfig.id,
-    ),
-    module.ignition_bootstrap.ignition_file_id_list,
-    module.bootkube.ignition_file_id_list,
-    module.tectonic.ignition_file_id_list,
-    module.ca_certs.ignition_file_id_list,
-    module.kube_certs.ignition_file_id_list,
-    module.etcd_certs.ignition_file_id_list,
-   )))}"]
-
-  systemd = ["${compact(flatten(list(
-    list(
-      module.bootkube.systemd_service_id,
-      module.bootkube.systemd_path_unit_id,
-      module.tectonic.systemd_service_id,
-      module.tectonic.systemd_path_unit_id,
-    ),
-    module.ignition_bootstrap.ignition_systemd_id_list,
-   )))}"]
 }

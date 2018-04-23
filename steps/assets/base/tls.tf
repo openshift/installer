@@ -1,5 +1,5 @@
 module "ca_certs" {
-  source = "../../modules/tls/ca/self-signed"
+  source = "../../../modules/tls/ca/self-signed"
 
   root_ca_cert_pem = "${var.tectonic_ca_cert}"
   root_ca_key_alg  = "${var.tectonic_ca_key_alg}"
@@ -7,7 +7,7 @@ module "ca_certs" {
 }
 
 module "kube_certs" {
-  source = "../../modules/tls/kube"
+  source = "../../../modules/tls/kube"
 
   kube_ca_cert_pem       = "${module.ca_certs.kube_ca_cert_pem}"
   kube_ca_key_alg        = "${module.ca_certs.kube_ca_key_alg}"
@@ -20,7 +20,7 @@ module "kube_certs" {
 }
 
 module "etcd_certs" {
-  source = "../../modules/tls/etcd"
+  source = "../../../modules/tls/etcd"
 
   etcd_ca_cert_pem = "${module.ca_certs.etcd_ca_cert_pem}"
   etcd_ca_key_alg  = "${module.ca_certs.etcd_ca_key_alg}"
@@ -28,7 +28,7 @@ module "etcd_certs" {
 }
 
 module "ingress_certs" {
-  source = "../../modules/tls/ingress/self-signed"
+  source = "../../../modules/tls/ingress/self-signed"
 
   base_address = "${local.ingress_internal_fqdn}"
   ca_cert_pem  = "${module.ca_certs.kube_ca_cert_pem}"
@@ -37,7 +37,7 @@ module "ingress_certs" {
 }
 
 module "identity_certs" {
-  source = "../../modules/tls/identity"
+  source = "../../../modules/tls/identity"
 
   kube_ca_cert_pem = "${module.ca_certs.kube_ca_cert_pem}"
   kube_ca_key_alg  = "${module.ca_certs.kube_ca_key_alg}"

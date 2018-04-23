@@ -1,30 +1,15 @@
-provider "aws" {
-  region  = "${var.tectonic_aws_region}"
-  profile = "${var.tectonic_aws_profile}"
-  version = "1.8.0"
-
-  assume_role {
-    role_arn     = "${var.tectonic_aws_installer_role == "" ? "" : "${var.tectonic_aws_installer_role}"}"
-    session_name = "TECTONIC_INSTALLER_${var.tectonic_cluster_name}"
-  }
-}
-
 locals {
   ingress_internal_fqdn = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}"
   api_internal_fqdn     = "${var.tectonic_cluster_name}-api.${var.tectonic_base_domain}"
-  bucket_name           = "${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}"
-  bucket_assets_key     = "assets.zip"
 }
 
-data "aws_availability_zones" "azs" {}
-
 data "template_file" "etcd_hostname_list" {
-  count    = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
+  count    = "${var.etcd_count}"
   template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
 }
 
 module "bootkube" {
-  source = "../../modules/bootkube"
+  source = "../../../modules/bootkube"
 
   cluster_name       = "${var.tectonic_cluster_name}"
   kube_apiserver_url = "https://${local.api_internal_fqdn}:443"
@@ -57,8 +42,7 @@ module "bootkube" {
 }
 
 module "tectonic" {
-  source   = "../../modules/tectonic"
-  platform = "aws"
+  source = "../../../modules/tectonic"
 
   base_address = "${local.ingress_internal_fqdn}"
 
@@ -89,5 +73,6 @@ module "tectonic" {
   identity_server_cert_pem = "${module.identity_certs.server_cert_pem}"
   identity_server_key_pem  = "${module.identity_certs.server_key_pem}"
 
-  ingress_kind = "NodePort"
+  platform     = "${var.tectonic_platform}"
+  ingress_kind = "${var.ingress_kind}"
 }
