@@ -5,7 +5,7 @@ s3_clean() {
     # instead of simply removing the remote assets.zip,
     # overwrite it with a zero byte file, such that terraform doesn't
     # detect deletion but rather a simple change which it can ignore.
-    touch /tmp/assets.zip
+    touch /tmp/empty
 
     # shellcheck disable=SC2086,SC2154,SC2016
     /usr/bin/docker run \
@@ -17,9 +17,9 @@ s3_clean() {
         -c '
             set -e
             set -o pipefail
+            set -u
             REGION=$(wget -q -O - http://169.254.169.254/latest/meta-data/placement/availability-zone | sed '"'"'s/[a-zA-Z]$//'"'"')
-            /usr/bin/aws --region="$REGION" s3 cp /tmp/assets.zip s3://"$LOCATION/assets.zip"
-            /usr/bin/aws --region="$REGION" s3 cp /tmp/assets.zip s3://"$LOCATION/config/master"
+            /usr/bin/aws --region="$REGION" s3 cp /tmp/empty s3://"$LOCATION/config/bootstrap"
         '
 }
 

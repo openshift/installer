@@ -22,6 +22,17 @@ output "apiserver_proxy_key_pem" {
   value = "${tls_private_key.apiserver_proxy.private_key_pem}"
 }
 
+output "ignition_file_id_list" {
+  value = [
+    "${data.ignition_file.apiserver_key.id}",
+    "${data.ignition_file.apiserver_cert.id}",
+    "${data.ignition_file.apiserver_proxy_key.id}",
+    "${data.ignition_file.apiserver_proxy_cert.id}",
+    "${data.ignition_file.admin_key.id}",
+    "${data.ignition_file.admin_cert.id}",
+  ]
+}
+
 output "id" {
   value = "${sha1("
   ${join(" ",

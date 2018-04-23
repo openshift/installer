@@ -9,8 +9,8 @@ func NewInstallFullWorkflow(clusterDir string) Workflow {
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
 			readClusterConfigStep,
+			generateClusterConfigMaps,
 			installAssetsStep,
-			generateKubeConfigStep,
 			generateIgnConfigStep,
 			installTopologyStep,
 			installTNCCNAMEStep,
@@ -30,8 +30,8 @@ func NewInstallAssetsWorkflow(clusterDir string) Workflow {
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
 			readClusterConfigStep,
+			generateClusterConfigMaps,
 			installAssetsStep,
-			generateKubeConfigStep,
 			generateIgnConfigStep,
 		},
 	}
