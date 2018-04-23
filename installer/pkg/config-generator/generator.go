@@ -182,13 +182,12 @@ func (c ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
 		return nil, err
 	}
 
-	tncoConfig.ControllerConfig.KubeconfigFetchCmd = "" // TODO(yifan): Get kubeconfigFetchCmd.
 	tncoConfig.ControllerConfig.ClusterDNSIP = cidrhost
 	tncoConfig.ControllerConfig.CloudProvider = strings.ToLower(c.Cluster.Platform)
 	tncoConfig.ControllerConfig.CloudProviderConfig = "" // TODO(yifan): Get CloudProviderConfig.
 	tncoConfig.ControllerConfig.ClusterName = c.Cluster.Name
 	tncoConfig.ControllerConfig.BaseDomain = c.Cluster.BaseDomain
-	tncoConfig.ControllerConfig.EtcdInitialCluster = c.etcdInitialCluster()
+	tncoConfig.ControllerConfig.EtcdInitialCount = c.Cluster.NodeCount(c.Cluster.Etcd.NodePools)
 	tncoConfig.ControllerConfig.AdditionalConfigs = []string{} // TODO(yifan): Get additional configs.
 	tncoConfig.ControllerConfig.NodePoolUpdateLimit = nil      // TODO(yifan): Get the node pool update limit.
 
@@ -366,20 +365,4 @@ func cidrhost(iprange string, hostNum int) (string, error) {
 	}
 
 	return ip.String(), nil
-}
-
-// etcdInitialCluster returns the string flag for `--initial-cluster`.
-func (c ConfigGenerator) etcdInitialCluster() string {
-	count := c.Cluster.NodeCount(c.Cluster.Etcd.NodePools)
-	if count <= 0 {
-		return `--initial-cluster=""`
-	}
-
-	var clusters []string
-	for i := 0; i < count; i++ {
-		endpoint := fmt.Sprintf("%s-etcd-%d.%s", c.Cluster.Name, i, c.Cluster.BaseDomain)
-		clusters = append(clusters, fmt.Sprintf("%s=https://%s:2380", endpoint, endpoint))
-	}
-
-	return fmt.Sprintf("--initial-cluster=%s", strings.Join(clusters, ","))
 }

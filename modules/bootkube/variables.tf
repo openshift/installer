@@ -48,6 +48,11 @@ variable "etcd_client_key_pem" {
   description = "The etcd client key in PEM format."
 }
 
+variable "etcd_endpoints" {
+  description = "List of etcd endpoints to connect with (hostnames/IPs only)"
+  type        = "list"
+}
+
 variable "kube_apiserver_url" {
   description = "URL used to reach kube-apiserver"
   type        = "string"
@@ -75,10 +80,20 @@ variable "kube_ca_key_pem" {
 
 variable "admin_cert_pem" {
   type        = "string"
-  description = "The kubelet certificate in PEM format."
+  description = "The admin certificate in PEM format."
 }
 
 variable "admin_key_pem" {
+  type        = "string"
+  description = "The admin key in PEM format."
+}
+
+variable "kubelet_cert_pem" {
+  type        = "string"
+  description = "The kubelet certificate in PEM format."
+}
+
+variable "kubelet_key_pem" {
   type        = "string"
   description = "The kubelet key in PEM format."
 }

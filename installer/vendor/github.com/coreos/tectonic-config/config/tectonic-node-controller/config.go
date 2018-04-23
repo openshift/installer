@@ -19,7 +19,6 @@ const (
 // ControllerConfig is the config structure TNC to generate NodeConfigs
 type ControllerConfig struct {
 	metav1.TypeMeta     `json:",inline"`
-	KubeconfigFetchCmd  string `json:"kubeconfigFetchCmd"` // TODO(yifan): Try to remove this.
 	ClusterDNSIP        string `json:"clusterDNSIP"`
 	CloudProvider       string `json:"cloudProvider"`
 	CloudProviderConfig string `json:"cloudProviderConfig"`
@@ -27,8 +26,8 @@ type ControllerConfig struct {
 
 	BaseDomain string `json:"baseDomain"`
 
-	// Etcd vars
-	EtcdInitialCluster string `json:"etcdInitialCluster"` // TODO(yifan): Calculate this based on 'BaseDomain'.
+	// Size of the initial etcd cluster.
+	EtcdInitialCount int `json:"etcdInitialCount"`
 
 	// User customizations, list of node configs in the cluster to collect and apply as part of the final config
 	AdditionalConfigs []string `json:"additionalConfigs"`

@@ -46,6 +46,7 @@ output "id" {
     local_file.kube_ca_cert.id,
     local_file.aggregator_ca_key.id,
     local_file.aggregator_ca_cert.id,
+    local_file.etcd_ca_key.id,
     local_file.etcd_ca_cert.id)
     )}
   ")}"
@@ -58,6 +59,7 @@ output "ignition_file_id_list" {
     "${data.ignition_file.kube_ca_cert.id}",
     "${data.ignition_file.aggregator_ca_key.id}",
     "${data.ignition_file.aggregator_ca_cert.id}",
+    "${data.ignition_file.etcd_ca_key.id}",
     "${data.ignition_file.etcd_ca_cert.id}",
   ]
 }

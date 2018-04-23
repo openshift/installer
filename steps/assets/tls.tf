@@ -22,11 +22,9 @@ module "kube_certs" {
 module "etcd_certs" {
   source = "../../modules/tls/etcd"
 
-  etcd_ca_cert_pem    = "${module.ca_certs.etcd_ca_cert_pem}"
-  etcd_ca_key_alg     = "${module.ca_certs.etcd_ca_key_alg}"
-  etcd_ca_key_pem     = "${module.ca_certs.etcd_ca_key_pem}"
-  service_cidr        = "${var.tectonic_service_cidr}"
-  etcd_cert_dns_names = "${data.template_file.etcd_hostname_list.*.rendered}"
+  etcd_ca_cert_pem = "${module.ca_certs.etcd_ca_cert_pem}"
+  etcd_ca_key_alg  = "${module.ca_certs.etcd_ca_key_alg}"
+  etcd_ca_key_pem  = "${module.ca_certs.etcd_ca_key_pem}"
 }
 
 module "ingress_certs" {

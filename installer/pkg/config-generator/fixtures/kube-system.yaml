@@ -35,9 +35,8 @@ data:
       cloudProviderConfig: ""
       clusterDNSIP: 10.3.0.10
       clusterName: test
-      etcdInitialCluster: --initial-cluster=test-etcd-0.cluster.com=https://test-etcd-0.cluster.com:2380,test-etcd-1.cluster.com=https://test-etcd-1.cluster.com:2380,test-etcd-2.cluster.com=https://test-etcd-2.cluster.com:2380
+      etcdInitialCount: 3
       kind: TectonicNodeControllerConfig
-      kubeconfigFetchCmd: ""
       nodePoolUpdateLimit: null
     kind: TectonicNodeControllerOperatorConfig
 kind: ConfigMap
