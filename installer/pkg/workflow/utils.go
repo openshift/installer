@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	tlsStep          = "tls"
 	stepsBaseDir     = "steps"
 	assetsStep       = "assets"
 	topologyStep     = "topology"

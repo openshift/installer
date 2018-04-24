@@ -10,6 +10,7 @@ func NewInstallFullWorkflow(clusterDir string) Workflow {
 		steps: []Step{
 			refreshConfigStep,
 			generateClusterConfigMaps,
+			installTLSAssetsStep,
 			installAssetsStep,
 			generateIgnConfigStep,
 			installTopologyStep,
@@ -19,6 +20,19 @@ func NewInstallFullWorkflow(clusterDir string) Workflow {
 			installEtcdStep,
 			installJoinMastersStep,
 			installJoinWorkersStep,
+		},
+	}
+}
+
+// NewInstallTLSWorkflow creates the TLS assets, previously created by the
+// "assets" step
+func NewInstallTLSWorkflow(clusterDir string) Workflow {
+	return Workflow{
+		metadata: metadata{clusterDir: clusterDir},
+		steps: []Step{
+			readClusterConfigStep,
+			generateClusterConfigMaps,
+			installTLSAssetsStep,
 		},
 	}
 }
@@ -71,6 +85,11 @@ func refreshConfigStep(m *metadata) error {
 		return err
 	}
 	return generateTerraformVariablesStep(m)
+}
+
+func installTLSAssetsStep(m *metadata) error {
+	return runInstallStep(m, tlsStep)
+
 }
 
 func installAssetsStep(m *metadata) error {
