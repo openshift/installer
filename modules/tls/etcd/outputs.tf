@@ -14,10 +14,3 @@ output "id" {
     )}
   ")}"
 }
-
-output "ignition_file_id_list" {
-  value = [
-    "${data.ignition_file.etcd_client_cert.id}",
-    "${data.ignition_file.etcd_client_key.id}",
-  ]
-}

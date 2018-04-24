@@ -1,13 +1,36 @@
-module "ca_certs" {
-  source = "../../../modules/tls/ca/self-signed"
+provider "aws" {
+  region  = "${var.tectonic_aws_region}"
+  profile = "${var.tectonic_aws_profile}"
+  version = "1.8.0"
 
-  root_ca_cert_pem = "${var.tectonic_ca_cert}"
-  root_ca_key_alg  = "${var.tectonic_ca_key_alg}"
-  root_ca_key_pem  = "${var.tectonic_ca_key}"
+  assume_role {
+    role_arn     = "${var.tectonic_aws_installer_role == "" ? "" : "${var.tectonic_aws_installer_role}"}"
+    session_name = "TECTONIC_INSTALLER_${var.tectonic_cluster_name}"
+  }
+}
+
+locals {
+  api_internal_fqdn     = "${var.tectonic_cluster_name}-api.${var.tectonic_base_domain}"
+  ingress_internal_fqdn = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}"
+}
+
+data "template_file" "etcd_hostname_list" {
+  count    = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
+  template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
+}
+
+data "aws_availability_zones" "azs" {}
+
+module "ca_certs" {
+  source = "../../modules/tls/ca"
+
+  root_ca_cert_pem_path = "${var.tectonic_ca_cert}"
+  root_ca_key_alg       = "${var.tectonic_ca_key_alg}"
+  root_ca_key_pem_path  = "${var.tectonic_ca_key}"
 }
 
 module "kube_certs" {
-  source = "../../../modules/tls/kube"
+  source = "../../modules/tls/kube"
 
   kube_ca_cert_pem       = "${module.ca_certs.kube_ca_cert_pem}"
   kube_ca_key_alg        = "${module.ca_certs.kube_ca_key_alg}"
@@ -20,7 +43,7 @@ module "kube_certs" {
 }
 
 module "etcd_certs" {
-  source = "../../../modules/tls/etcd"
+  source = "../../modules/tls/etcd"
 
   etcd_ca_cert_pem = "${module.ca_certs.etcd_ca_cert_pem}"
   etcd_ca_key_alg  = "${module.ca_certs.etcd_ca_key_alg}"
@@ -28,7 +51,7 @@ module "etcd_certs" {
 }
 
 module "ingress_certs" {
-  source = "../../../modules/tls/ingress/self-signed"
+  source = "../../modules/tls/ingress"
 
   base_address = "${local.ingress_internal_fqdn}"
   ca_cert_pem  = "${module.ca_certs.kube_ca_cert_pem}"
@@ -37,7 +60,7 @@ module "ingress_certs" {
 }
 
 module "identity_certs" {
-  source = "../../../modules/tls/identity"
+  source = "../../modules/tls/identity"
 
   kube_ca_cert_pem = "${module.ca_certs.kube_ca_cert_pem}"
   kube_ca_key_alg  = "${module.ca_certs.kube_ca_key_alg}"

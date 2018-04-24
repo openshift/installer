@@ -5,11 +5,11 @@ module "ignition_bootstrap" {
   cloud_provider          = "${var.cloud_provider}"
   container_images        = "${var.tectonic_container_images}"
   custom_ca_cert_pem_list = "${var.tectonic_custom_ca_pem_list}"
-  etcd_ca_cert_pem        = "${module.ca_certs.etcd_ca_cert_pem}"
+  etcd_ca_cert_pem        = "${local.etcd_ca_cert_pem}"
   etcd_count              = "${length(data.template_file.etcd_hostname_list.*.id)}"
   image_re                = "${var.tectonic_image_re}"
-  ingress_ca_cert_pem     = "${module.ingress_certs.ca_cert_pem}"
-  root_ca_cert_pem        = "${module.ca_certs.root_ca_cert_pem}"
+  ingress_ca_cert_pem     = "${local.ingress_ca_cert_pem}"
+  root_ca_cert_pem        = "${local.root_ca_cert_pem}"
   kube_dns_service_ip     = "${module.bootkube.kube_dns_service_ip}"
   kubelet_debug_config    = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label      = "node-role.kubernetes.io/master"
@@ -66,4 +66,47 @@ data "ignition_file" "bootstrap_kubeconfig" {
   content {
     content = "${module.bootkube.kubeconfig-kubelet}"
   }
+}
+
+data "ignition_config" "bootstrap" {
+  files = ["${compact(flatten(list(
+    list(
+      data.ignition_file.kube-system_cluster_config.id,
+      data.ignition_file.tectonic_cluster_config.id,
+      data.ignition_file.tnco_config.id,
+      data.ignition_file.kco_config.id,
+      data.ignition_file.rm_assets_sh.id,
+      data.ignition_file.bootstrap_kubeconfig.id,
+      data.ignition_file.apiserver_key.id,
+      data.ignition_file.apiserver_cert.id,
+      data.ignition_file.apiserver_proxy_key.id,
+      data.ignition_file.apiserver_proxy_cert.id,
+      data.ignition_file.admin_key.id,
+      data.ignition_file.admin_cert.id,
+      data.ignition_file.kubelet_key.id,
+      data.ignition_file.kubelet_cert.id,
+      data.ignition_file.etcd_client_cert.id,
+      data.ignition_file.etcd_client_key.id,
+      data.ignition_file.root_ca_cert.id,
+      data.ignition_file.kube_ca_key.id,
+      data.ignition_file.kube_ca_cert.id,
+      data.ignition_file.aggregator_ca_key.id,
+      data.ignition_file.aggregator_ca_cert.id,
+      data.ignition_file.etcd_ca_key.id,
+      data.ignition_file.etcd_ca_cert.id,
+    ),
+    module.ignition_bootstrap.ignition_file_id_list,
+    module.bootkube.ignition_file_id_list,
+    module.tectonic.ignition_file_id_list,
+   )))}"]
+
+  systemd = ["${compact(flatten(list(
+    list(
+      module.bootkube.systemd_service_id,
+      module.bootkube.systemd_path_unit_id,
+      module.tectonic.systemd_service_id,
+      module.tectonic.systemd_path_unit_id,
+    ),
+    module.ignition_bootstrap.ignition_systemd_id_list,
+   )))}"]
 }
