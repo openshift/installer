@@ -47,6 +47,12 @@ data "ignition_file" "rm_assets_sh" {
   }
 }
 
+data "ignition_systemd_unit" "remap_port" {
+  name    = "remap_port.service"
+  enabled = true
+  content = "${file("${path.module}/resources/remap_port.service")}"
+}
+
 data "ignition_user" "core" {
   name = "core"
 
@@ -65,9 +71,26 @@ data "ignition_config" "bootstrap" {
 
   systemd = [
     "${module.assets_base.ignition_bootstrap_systemd}",
+    "${data.ignition_systemd_unit.remap_port.id}",
   ]
 
   users = [
     "${data.ignition_user.core.id}",
   ]
+}
+
+data "ignition_config" "etcd" {
+  count = "${var.tectonic_etcd_count}"
+
+  users = [
+    "${data.ignition_user.core.id}",
+  ]
+
+  files = [
+    "${module.assets_base.ignition_etcd_files}",
+  ]
+
+  append {
+    source = "${format("http://${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}:49500/config/etcd?etcd_index=%d", count.index)}"
+  }
 }

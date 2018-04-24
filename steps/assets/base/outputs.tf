@@ -38,3 +38,8 @@ output "ignition_bootstrap_systemd" {
 output "ignition_etcd" {
   value = "${data.ignition_config.etcd.*.rendered}"
 }
+
+# TODO(cdc) clean this up, get rid of ignition_etcd
+output "ignition_etcd_files" {
+  value = ["${module.ignition_bootstrap.etcd_crt_id_list}"]
+}

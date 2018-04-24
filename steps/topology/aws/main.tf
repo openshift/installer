@@ -12,7 +12,7 @@ provider "aws" {
 data "aws_availability_zones" "azs" {}
 
 module "container_linux" {
-  source = "../../modules/container_linux"
+  source = "../../../modules/container_linux"
 
   release_channel = "${var.tectonic_container_linux_channel}"
   release_version = "${var.tectonic_container_linux_version}"
@@ -32,7 +32,7 @@ resource "aws_route53_zone" "tectonic_int" {
 }
 
 module "vpc" {
-  source = "../../modules/aws/vpc"
+  source = "../../../modules/aws/vpc"
 
   base_domain     = "${var.tectonic_base_domain}"
   cidr_block      = "${var.tectonic_aws_vpc_cidr_block}"
@@ -54,7 +54,7 @@ module "vpc" {
 }
 
 module "dns" {
-  source = "../../modules/dns/route53"
+  source = "../../../modules/dns/route53"
 
   api_external_elb_dns_name      = "${module.vpc.aws_api_external_dns_name}"
   api_external_elb_zone_id       = "${module.vpc.aws_elb_api_external_zone_id}"

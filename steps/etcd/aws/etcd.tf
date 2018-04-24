@@ -10,7 +10,7 @@ provider "aws" {
 }
 
 module "container_linux" {
-  source = "../../modules/container_linux"
+  source = "../../../modules/container_linux"
 
   release_channel = "${var.tectonic_container_linux_channel}"
   release_version = "${var.tectonic_container_linux_version}"
@@ -40,7 +40,7 @@ resource "aws_s3_bucket_object" "ignition_etcd" {
 }
 
 module "etcd" {
-  source = "../../modules/aws/etcd"
+  source = "../../../modules/aws/etcd"
 
   base_domain             = "${var.tectonic_base_domain}"
   cluster_id              = "${var.tectonic_cluster_id}"

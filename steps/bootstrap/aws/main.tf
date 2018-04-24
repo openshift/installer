@@ -10,14 +10,14 @@ provider "aws" {
 }
 
 module "container_linux" {
-  source = "../../modules/container_linux"
+  source = "../../../modules/container_linux"
 
   release_channel = "${var.tectonic_container_linux_channel}"
   release_version = "${var.tectonic_container_linux_version}"
 }
 
 module "masters" {
-  source = "../../modules/aws/master-asg"
+  source = "../../../modules/aws/master-asg"
 
   autoscaling_group_extra_tags = "${var.tectonic_autoscaling_group_extra_tags}"
   aws_lbs                      = "${local.aws_lbs}"
