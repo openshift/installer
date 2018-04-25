@@ -10,7 +10,6 @@ module Operators
     'kube-core-operator',
     'kubernetes-addon-operator',
     'tectonic-channel-operator',
-    'tectonic-cluo-operator',
     'tectonic-prometheus-operator',
     'tectonic-utility-operator'
   ].freeze

@@ -71,7 +71,7 @@ variable "tectonic_container_images" {
     awscli                               = "quay.io/coreos/awscli:025a357f05242fdad6a81e8a6b520098aa65a600"
     gcloudsdk                            = "google/cloud-sdk:178.0.0-alpine"
     bootkube                             = "quay.io/coreos/bootkube:v0.10.0"
-    tnc_operator                         = "quay.io/coreos/tectonic-node-controller-operator-dev:f95d58499c4047b52e484e1fd40f5b75fc387849"
+    tnc_operator                         = "quay.io/coreos/tectonic-node-controller-operator-dev:d881ecd563ad2d501b996e7eb054330d3f2dd79a"
     etcd_cert_signer                     = "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6"
     etcd                                 = "quay.io/coreos/etcd:v3.2.14"
     hyperkube                            = "quay.io/coreos/hyperkube:v1.9.1_coreos.0"
@@ -79,13 +79,12 @@ variable "tectonic_container_images" {
     kube_core_operator                   = "quay.io/coreos/kube-core-operator:beryllium-m1"
     tectonic_channel_operator            = "quay.io/coreos/tectonic-channel-operator:0.6.2"
     tectonic_prometheus_operator         = "quay.io/coreos/tectonic-prometheus-operator:v1.9.3"
-    tectonic_cluo_operator               = "quay.io/coreos/tectonic-cluo-operator:v0.3.1"
     tectonic_torcx                       = "quay.io/coreos/tectonic-torcx:v0.2.1"
     kubernetes_addon_operator            = "quay.io/coreos/kubernetes-addon-operator:beryllium-m1"
     tectonic_alm_operator                = "quay.io/coreos/tectonic-alm-operator:v0.3.1"
     tectonic_ingress_controller_operator = "quay.io/coreos/tectonic-ingress-controller-operator:f96287f555b7366af14dfcbb02f9a6529dd24b99"
-    tectonic_utility_operator            = "quay.io/coreos/tectonic-utility-operator:7884c5c9b6cf738e3bda2731449c5c2ead54b390"
-    tectonic_network_operator            = "quay.io/coreos/tectonic-network-operator:beryllium-m1"
+    tectonic_utility_operator            = "quay.io/coreos/tectonic-utility-operator-dev:868578d509680952008ba03117eb9a839a7bb62f"
+    tectonic_network_operator            = "quay.io/coreos/tectonic-network-operator-dev:d881ecd563ad2d501b996e7eb054330d3f2dd79a"
   }
 }
 
@@ -116,7 +115,6 @@ variable "tectonic_versions" {
   default = {
     monitoring = "1.9.3"
     tectonic   = "1.8.4-tectonic.2"
-    cluo       = "0.3.1"
     alm        = "0.3.1"
   }
 }
