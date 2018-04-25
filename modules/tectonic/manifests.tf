@@ -19,7 +19,7 @@ variable "manifest_names" {
     "secrets/pull.json",
     "updater/app-version-kind.yaml",
     "updater/app_versions/app-version-kube-core.yaml",
-    "updater/app_versions/app-version-kubernetes-addon.yaml",
+    "updater/app_versions/app-version-kube-addon.yaml",
     "updater/app_versions/app-version-tectonic-alm.yaml",
     "updater/app_versions/app-version-tectonic-cluster.yaml",
     "updater/app_versions/app-version-tectonic-ingress.yaml",
@@ -27,7 +27,7 @@ variable "manifest_names" {
     "updater/app_versions/app-version-tectonic-utility.yaml",
     "updater/migration-status-kind.yaml",
     "updater/operators/kube-core-operator.yaml",
-    "updater/operators/kubernetes-addon-operator.yaml",
+    "updater/operators/kube-addon-operator.yaml",
     "updater/operators/tectonic-alm-operator.yaml",
     "updater/operators/tectonic-channel-operator.yaml",
     "updater/operators/tectonic-ingress-controller-operator.yaml",
@@ -47,7 +47,7 @@ data "template_file" "manifest_file_list" {
   vars {
     addon_resizer_image                        = "${var.container_images["addon_resizer"]}"
     kube_core_operator_image                   = "${var.container_images["kube_core_operator"]}"
-    kubernetes_addon_operator_image            = "${var.container_images["kubernetes_addon_operator"]}"
+    kube_addon_operator_image                  = "${var.container_images["kube_addon_operator"]}"
     tectonic_channel_operator_image            = "${var.container_images["tectonic_channel_operator"]}"
     tectonic_prometheus_operator_image         = "${var.container_images["tectonic_prometheus_operator"]}"
     tectonic_alm_operator_image                = "${var.container_images["tectonic_alm_operator"]}"

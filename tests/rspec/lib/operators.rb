@@ -8,7 +8,7 @@ module Operators
 
   OPERATOR_NAMES = [
     'kube-core-operator',
-    'kubernetes-addon-operator',
+    'kube-addon-operator',
     'tectonic-channel-operator',
     'tectonic-prometheus-operator',
     'tectonic-utility-operator'
