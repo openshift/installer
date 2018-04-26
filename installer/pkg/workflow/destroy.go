@@ -28,7 +28,7 @@ func destroyEtcdStep(m *metadata) error {
 }
 
 func destroyBootstrapStep(m *metadata) error {
-	return runDestroyStep(m, bootstrapStep)
+	return runDestroyStep(m, mastersStep, []string{bootstrapOff}...)
 }
 
 func destroyTNCDNSStep(m *metadata) error {
@@ -44,7 +44,7 @@ func destroyJoinWorkersStep(m *metadata) error {
 }
 
 func destroyJoinMastersStep(m *metadata) error {
-	return runDestroyStep(m, joinMastersStep)
+	return runDestroyStep(m, mastersStep, []string{bootstrapOff}...)
 }
 
 func runDestroyStep(m *metadata, step string, extraArgs ...string) error {

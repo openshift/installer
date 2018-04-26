@@ -82,7 +82,10 @@ func installTopologyStep(m *metadata) error {
 }
 
 func installBootstrapStep(m *metadata) error {
-	return runInstallStep(m, bootstrapStep)
+	if !clusterIsBootstrapped(m.clusterDir) {
+		return runInstallStep(m, mastersStep, []string{bootstrapOn}...)
+	}
+	return nil
 }
 
 func installTNCCNAMEStep(m *metadata) error {
@@ -101,9 +104,7 @@ func installEtcdStep(m *metadata) error {
 }
 
 func installJoinMastersStep(m *metadata) error {
-	// TODO: import will fail after a first run, error is ignored for now
-	importAutoScalingGroup(m)
-	return runInstallStep(m, joinMastersStep)
+	return runInstallStep(m, mastersStep, []string{bootstrapOff}...)
 }
 
 func installJoinWorkersStep(m *metadata) error {

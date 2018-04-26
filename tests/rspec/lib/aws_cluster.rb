@@ -17,7 +17,7 @@ class AwsCluster < Cluster
   TIMEOUT_IN_SECONDS = (30 * 60).freeze # 30 minutes
 
   attr_reader :config_file, :kubeconfig, :manifest_path, :build_path,
-              :tectonic_admin_email, :tectonic_admin_password, :tfstate_file
+              :tectonic_admin_email, :tectonic_admin_password, :tfstate
 
   def initialize(config_file)
     @config_file = config_file
@@ -45,7 +45,11 @@ class AwsCluster < Cluster
     @tectonic_admin_password = PasswordGenerator.generate_password if @config_file.admin_credentials[1].nil?
     @config_file.change_admin_credentials(@tectonic_admin_email, @tectonic_admin_password)
 
-    @tfstate_file = TFStateFile.new(@build_path, 'bootstrap.tfstate')
+    @tfstate = {}
+    @tfstate['masters'] = TFStateFile.new(@build_path, 'masters.tfstate')
+    @tfstate['workers'] = TFStateFile.new(@build_path, 'joining_workers.tfstate')
+    @tfstate['etcd'] = TFStateFile.new(@build_path, 'etcd.tfstate')
+    @tfstate['topology'] = TFStateFile.new(@build_path, 'topology.tfstate')
   end
 
   def env_variables
@@ -72,7 +76,7 @@ class AwsCluster < Cluster
   end
 
   def machine_boot_console_logs
-    instances_id = retrieve_instances_ids('module.masters.aws_autoscaling_group.masters')
+    instances_id = retrieve_instances_ids(@tfstate['masters'], 'module.masters.aws_autoscaling_group.masters')
     # Return the log output in a hash {ip => log}
     hash_log_ip = instances_id.map do |instance_id|
       {
@@ -84,8 +88,8 @@ class AwsCluster < Cluster
     hash_log_ip.reduce({}, :update)
   end
 
-  def retrieve_instances_ids(auto_scaling_groups)
-    aws_autoscaling_group_master = @tfstate_file.value(auto_scaling_groups, 'id')
+  def retrieve_instances_ids(state_file, auto_scaling_groups)
+    aws_autoscaling_group_master = state_file.value(auto_scaling_groups, 'id')
     AwsSupport.sorted_auto_scaling_instances(aws_autoscaling_group_master, @aws_region, @role_credentials)
   end
 
@@ -94,7 +98,7 @@ class AwsCluster < Cluster
   end
 
   def master_ip_addresses
-    instances_id = retrieve_instances_ids('module.masters.aws_autoscaling_group.masters')
+    instances_id = retrieve_instances_ids(@tfstate['masters'], 'module.masters.aws_autoscaling_group.masters')
     instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region, @role_credentials) }
   end
 
@@ -103,12 +107,12 @@ class AwsCluster < Cluster
   end
 
   def worker_ip_addresses
-    instances_id = retrieve_instances_ids('module.workers.aws_autoscaling_group.workers')
+    instances_id = retrieve_instances_ids(@tfstate['workers'], 'module.workers.aws_autoscaling_group.workers')
     instances_id.map { |instance_id| AwsSupport.instance_ip_address(instance_id, @aws_region, @role_credentials) }
   end
 
   def etcd_ip_addresses
-    @tfstate_file.output('etcd', 'ip_addresses')
+    @tfstate['etcd'].output('etcd', 'ip_addresses')
   end
 
   def check_prerequisites
@@ -147,8 +151,8 @@ class AwsCluster < Cluster
 
   def tectonic_console_url
     Dir.chdir(@build_path) do
-      ingress_ext = @tfstate_file.output('dns', 'ingress_external_fqdn')
-      ingress_int = @tfstate_file.output('dns', 'ingress_internal_fqdn')
+      ingress_ext = @tfstate['topology'].output('dns', 'ingress_external_fqdn')
+      ingress_int = @tfstate['topology'].output('dns', 'ingress_internal_fqdn')
       if ingress_ext.empty?
         if ingress_int.empty?
           raise 'failed to get the console url to use in the UI tests.'
@@ -268,7 +272,7 @@ class AwsCluster < Cluster
   # TODO: (carlos) remove this
   def tf_value(v)
     Dir.chdir(@build_path) do
-      `echo '#{v}' | terraform console ../steps/bootstrap/aws`.chomp
+      `echo '#{v}' | terraform console ../steps/masters/aws`.chomp
     end
   end
 
@@ -286,7 +290,7 @@ class AwsCluster < Cluster
 
   def describe_network_interfaces
     puts 'describing network interfaces for debugging purposes'
-    vpc_id = @tfstate_file.value('module.vpc.aws_vpc.cluster_vpc', 'id')
+    vpc_id = @tfstate['topology'].value('module.vpc.aws_vpc.cluster_vpc', 'id')
     filter = "--filters=Name=vpc-id,Values=#{vpc_id}"
     region = "--region #{@aws_region}"
 

@@ -116,7 +116,7 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
   it 'installs the correct Container Linux version' do
     version = @cluster.tf_var('tectonic_container_linux_version')
     # version = @cluster.tf_value('module.container_linux.version') if version == 'latest'
-    version = @cluster.tfstate_file.output('container_linux', 'version') if version == 'latest'
+    version = @cluster.tfstate['masters'].output('container_linux', 'version') if version == 'latest'
     expect(ContainerLinux.version(@cluster)).to eq(version)
   end
 

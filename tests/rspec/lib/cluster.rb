@@ -18,7 +18,7 @@ require 'open3'
 # Cluster represents a k8s cluster
 class Cluster
   attr_reader :config_file, :tfvars_file, :kubeconfig, :manifest_path, :build_path,
-              :tectonic_admin_email, :tectonic_admin_password, :tfstate_file
+              :tectonic_admin_email, :tectonic_admin_password, :tfstate
 
   def initialize(tfvars_file)
     @tfvars_file = tfvars_file
@@ -33,7 +33,12 @@ class Cluster
     @build_path = File.join(File.dirname(ENV['RELEASE_TARBALL_PATH']), "tectonic-dev/#{@name}")
     @manifest_path = File.join(@build_path, 'generated')
     @kubeconfig = File.join(manifest_path, 'auth/kubeconfig')
-    @tfstate_file = TFStateFile.new(@build_path)
+
+    @tfstate = {}
+    @tfstate['masters'] = TFStateFile.new(@build_path, 'masters.tfstate')
+    @tfstate['workers'] = TFStateFile.new(@build_path, 'joining_workers.tfstate')
+    @tfstate['etcd'] = TFStateFile.new(@build_path, 'etcd.tfstate')
+    @tfstate['topology'] = TFStateFile.new(@build_path, 'topology.tfstate')
 
     check_prerequisites
   end
