@@ -23,7 +23,19 @@ s3_clean() {
         '
 }
 
+bootstrap_cleanup() {
+    rm /etc/systemd/system/multi-user.target.wants/tectonic.path
+    rm /etc/systemd/system/multi-user.target.wants/bootkube.path
+    rm /etc/systemd/system/multi-user.target.wants/rm-assets.service
+    rm /etc/systemd/system/tectonic.{path,service}
+    rm /etc/systemd/system/bootkube.{path,service}
+    rm /etc/systemd/system/rm-assets.service
+    rm -rf /opt/tectonic
+}
+
 until s3_clean; do
   echo "failed to clean up S3 assets. retrying in 5 seconds."
   sleep 5
 done
+
+bootstrap_cleanup
