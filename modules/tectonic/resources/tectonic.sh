@@ -161,7 +161,7 @@ kubectl create -f updater/tectonic-channel-operator-config.yaml
 kubectl create -f updater/operators/kube-core-operator.yaml
 kubectl create -f updater/operators/tectonic-channel-operator.yaml
 kubectl create -f updater/operators/tectonic-prometheus-operator.yaml
-kubectl create -f updater/operators/kubernetes-addon-operator.yaml
+kubectl create -f updater/operators/kube-addon-operator.yaml
 kubectl create -f updater/operators/tectonic-alm-operator.yaml
 kubectl create -f updater/operators/tectonic-utility-operator.yaml
 kubectl create -f updater/operators/tectonic-ingress-controller-operator.yaml
@@ -170,7 +170,7 @@ wait_for_crd tectonic-system appversions.tco.coreos.com
 kubectl create -f updater/app_versions/app-version-tectonic-cluster.yaml
 kubectl create -f updater/app_versions/app-version-kube-core.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-monitoring.yaml
-kubectl create -f updater/app_versions/app-version-kubernetes-addon.yaml
+kubectl create -f updater/app_versions/app-version-kube-addon.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-alm.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-utility.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-ingress.yaml

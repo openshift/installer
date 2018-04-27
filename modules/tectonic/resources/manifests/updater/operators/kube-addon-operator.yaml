@@ -1,25 +1,25 @@
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: kubernetes-addon-operator
+  name: kube-addon-operator
   namespace: tectonic-system
   labels:
-    k8s-app: kubernetes-addon-operator
+    k8s-app: kube-addon-operator
     managed-by-channel-operator: "true"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      k8s-app: kubernetes-addon-operator
+      k8s-app: kube-addon-operator
   template:
     metadata:
       labels:
-        k8s-app: kubernetes-addon-operator
-        tectonic-app-version-name: kubernetes-addon
+        k8s-app: kube-addon-operator
+        tectonic-app-version-name: kube-addon
     spec:
       containers:
-      - name: kubernetes-addon-operator
-        image: ${kubernetes_addon_operator_image}
+      - name: kube-addon-operator
+        image: ${kube_addon_operator_image}
         resources:
           limits:
             cpu: 20m
