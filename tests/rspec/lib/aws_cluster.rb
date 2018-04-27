@@ -162,41 +162,29 @@ class AwsCluster < Cluster
   # TODO: Remove once other platforms caught up
 
   def init
-    ::Timeout.timeout(TIMEOUT_IN_SECONDS) do
-      env = env_variables
-      env['TF_INIT_OPTIONS'] = '-no-color'
+    env = env_variables
+    env['TF_INIT_OPTIONS'] = '-no-color'
 
-      run_tectonic_cli(env, 'init', '--config=config.yaml')
-    end
-  rescue Timeout::Error
-    forensic(false)
-    raise 'Applying cluster failed'
+    run_tectonic_cli(env, 'init', '--config=config.yaml')
   end
 
   def apply
-    ::Timeout.timeout(TIMEOUT_IN_SECONDS) do
-      Retriable.with_retries(limit: 3) do
-        env = env_variables
-        env['TF_APPLY_OPTIONS'] = '-no-color'
-        env['TF_INIT_OPTIONS'] = '-no-color'
+    Retriable.with_retries(limit: 3) do
+      env = env_variables
+      env['TF_APPLY_OPTIONS'] = '-no-color'
+      env['TF_INIT_OPTIONS'] = '-no-color'
 
-        run_tectonic_cli(env, 'install', "--dir=#{@name}")
-      end
+      run_tectonic_cli(env, 'install', "--dir=#{@name}")
     end
-  rescue Timeout::Error
-    forensic(false)
-    raise 'Applying cluster failed'
   end
 
   def destroy
     describe_network_interfaces
-    ::Timeout.timeout(TIMEOUT_IN_SECONDS) do
-      Retriable.with_retries(limit: 3) do
-        env = env_variables
-        env['TF_DESTROY_OPTIONS'] = '-no-color'
-        env['TF_INIT_OPTIONS'] = '-no-color'
-        run_tectonic_cli(env, 'destroy', "--dir=#{@name}")
-      end
+    Retriable.with_retries(limit: 3) do
+      env = env_variables
+      env['TF_DESTROY_OPTIONS'] = '-no-color'
+      env['TF_INIT_OPTIONS'] = '-no-color'
+      run_tectonic_cli(env, 'destroy', "--dir=#{@name}")
     end
 
     recover_from_failed_destroy
@@ -217,32 +205,30 @@ class AwsCluster < Cluster
       "tectonic-dev/#{@name}/logs/tectonic-#{cmd}.log"
     )
 
-    command = "#{tectonic_binary} #{cmd} #{flags}"
-    Open3.popen3(env, "bash -coxe pipefail '#{command}'") do |_stdin, stdout, stderr, wait_thr|
-      puts "Only printing tectonic logs to stdout/stderr on failure for command: #{command}."
-      puts 'Logs are preserved via log files.'
+    ::Timeout.timeout(TIMEOUT_IN_SECONDS) do
+      command = "#{tectonic_binary} #{cmd} #{flags}"
       output = ''
+      Open3.popen3(env, "bash -coxe pipefail '#{command}'") do |_stdin, stdout, stderr, wait_thr|
+        puts "Only printing tectonic logs to stdout/stderr on failure for command: #{command}.\nLogs are preserved via log files."
 
-      while (line = stdout.gets)
-        output += line
-      end
-      while (line = stderr.gets)
-        output += line
-      end
+        while (line = stdout.gets)
+          output += line
+        end
+        while (line = stderr.gets)
+          output += line
+        end
 
-      exit_status = wait_thr.value
-
-      # Save output in logs/
-      FileUtils.mkdir_p(File.dirname(tectonic_logs))
-      save_to_file = File.open(tectonic_logs, 'a')
-      save_to_file << output
-      save_to_file.close
-
-      unless exit_status.success?
-        puts output
-        raise "failed to execute command: #{command}"
+        save_terraform_logs(tectonic_logs, output)
+        unless wait_thr.value.success?
+          puts output
+          raise "failed to execute command: #{command}"
+        end
       end
     end
+  rescue Timeout::Error
+    save_terraform_logs(tectonic_logs, output)
+    forensic(false)
+    raise 'Applying cluster failed'
   end
 
   def wait_nodes_ready
@@ -309,5 +295,13 @@ class AwsCluster < Cluster
   # Do not fail build. This is only for debugging purposes
   rescue => e
     puts e
+  end
+
+  def save_terraform_logs(tectonic_logs, output)
+    # Save output in logs/
+    FileUtils.mkdir_p(File.dirname(tectonic_logs))
+    save_to_file = File.open(tectonic_logs, 'a')
+    save_to_file << output
+    save_to_file.close
   end
 end
