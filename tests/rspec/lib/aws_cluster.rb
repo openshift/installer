@@ -266,7 +266,7 @@ class AwsCluster < Cluster
   # TODO: (carlos) remove this
   def tf_value(v)
     Dir.chdir(@build_path) do
-      `echo '#{v}' | terraform console ../steps/bootstrap`.chomp
+      `echo '#{v}' | terraform console ../steps/bootstrap/aws`.chomp
     end
   end
 

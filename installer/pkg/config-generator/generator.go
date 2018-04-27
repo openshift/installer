@@ -119,7 +119,7 @@ func (c ConfigGenerator) addonConfig() (*kubeaddon.OperatorConfig, error) {
 		return nil, err
 	}
 	addonConfig.DNSConfig.ClusterIP = cidrhost
-	addonConfig.CloudProvider = c.Platform
+	addonConfig.CloudProvider = cloudProvider(c.Platform)
 	return &addonConfig, nil
 }
 
@@ -137,7 +137,7 @@ func (c ConfigGenerator) coreConfig() *kubecore.OperatorConfig {
 	coreConfig.AuthConfig.OIDCUsernameClaim = authConfigOIDCUsernameClaim
 
 	coreConfig.CloudProviderConfig.CloudConfigPath = ""
-	coreConfig.CloudProviderConfig.CloudProviderProfile = strings.ToLower(c.Cluster.Platform)
+	coreConfig.CloudProviderConfig.CloudProviderProfile = cloudProvider(c.Cluster.Platform)
 
 	coreConfig.NetworkConfig.ClusterCIDR = c.Cluster.Networking.PodCIDR
 	coreConfig.NetworkConfig.ServiceCIDR = c.Cluster.Networking.ServiceCIDR
@@ -183,8 +183,8 @@ func (c ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
 	}
 
 	tncoConfig.ControllerConfig.ClusterDNSIP = cidrhost
-	tncoConfig.ControllerConfig.CloudProvider = strings.ToLower(c.Cluster.Platform)
-	tncoConfig.ControllerConfig.CloudProviderConfig = "" // TODO(yifan): Get CloudProviderConfig.
+	tncoConfig.ControllerConfig.CloudProvider = strings.ToLower(c.Platform) // This is not actually the cloud provider
+	tncoConfig.ControllerConfig.CloudProviderConfig = ""                    // TODO(yifan): Get CloudProviderConfig.
 	tncoConfig.ControllerConfig.ClusterName = c.Cluster.Name
 	tncoConfig.ControllerConfig.BaseDomain = c.Cluster.BaseDomain
 	tncoConfig.ControllerConfig.EtcdInitialCount = c.Cluster.NodeCount(c.Cluster.Etcd.NodePools)
@@ -365,4 +365,13 @@ func cidrhost(iprange string, hostNum int) (string, error) {
 	}
 
 	return ip.String(), nil
+}
+
+// Converts a platform to the cloudProvider that k8s understands
+func cloudProvider(platform string) string {
+	switch strings.ToLower(platform) {
+	case "aws":
+		return "aws"
+	}
+	return ""
 }
