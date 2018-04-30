@@ -1,11 +1,3 @@
-output "etcd_dropin_id_list" {
-  value = "${data.ignition_systemd_unit.etcd.*.id}"
-}
-
-output "etcd_dropin_rendered_list" {
-  value = "${data.template_file.etcd.*.rendered}"
-}
-
 output "update_ca_certificates_dropin_rendered" {
   value = "${data.template_file.update_ca_certificates_dropin.rendered}"
 }
@@ -35,9 +27,6 @@ output "ignition_file_id_list" {
       data.ignition_file.etcd_ca_cert_pem.id,
       data.ignition_file.installer_kubelet_env.id,
       data.ignition_file.installer_runtime_mappings.id,
-      data.ignition_file.max_user_watches.id,
-      data.ignition_file.profile_env.id,
-      data.ignition_file.systemd_default_env.id,
     ),
   ))}"]
 }
@@ -49,7 +38,6 @@ output "ignition_systemd_id_list" {
     "${data.ignition_systemd_unit.locksmithd.id}",
     "${data.ignition_systemd_unit.k8s_node_bootstrap.id}",
     "${data.ignition_systemd_unit.update_ca_certificates_dropin.id}",
-    "${data.ignition_systemd_unit.iscsi.id}",
     "${data.ignition_systemd_unit.rm_assets.id}",
   ]
 }

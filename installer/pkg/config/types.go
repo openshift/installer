@@ -47,11 +47,6 @@ type External struct {
 	Servers        []string `json:"tectonic_etcd_servers,omitempty" yaml:"servers,omitempty"`
 }
 
-// ISCSI converts iscsi related config.
-type ISCSI struct {
-	Enabled bool `json:"tectonic_iscsi_enabled,omitempty" yaml:"enabled,omitempty"`
-}
-
 // NodePool converts node pool related config.
 type NodePool struct {
 	Count        int    `json:"-" yaml:"count"`
@@ -83,13 +78,6 @@ type Networking struct {
 	MTU         string `json:"-" yaml:"mtu,omitempty"`
 	ServiceCIDR string `json:"tectonic_service_cidr,omitempty" yaml:"serviceCIDR,omitempty"`
 	PodCIDR     string `json:"tectonic_cluster_cidr,omitempty" yaml:"podCIDR,omitempty"`
-}
-
-// Proxy converts proxy related config.
-type Proxy struct {
-	HTTP  string `json:"tectonic_http_proxy_address,omitempty" yaml:"http,omitempty"`
-	HTTPS string `json:"tectonic_https_proxy_address,omitempty" yaml:"https,omitempty"`
-	No    string `json:"tectonic_no_proxy,omitempty" yaml:"no,omitempty"`
 }
 
 // Worker converts worker related config.

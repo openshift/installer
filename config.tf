@@ -34,16 +34,6 @@ provider "tls" {
   version = "1.0.1"
 }
 
-locals {
-  // The total amount of public CA certificates present in Tectonic.
-  // That is all custom CAs + kube CA + etcd CA + ingress CA
-  // This is a local constant, which needs to be dependency injected because TF cannot handle length() on computed values,
-  // see https://github.com/hashicorp/terraform/issues/10857#issuecomment-268289775.
-  tectonic_ca_count = "${length(var.tectonic_custom_ca_pem_list) + 3}"
-
-  tectonic_http_proxy_enabled = "${length(var.tectonic_http_proxy_address) > 0}"
-}
-
 variable "tectonic_config_version" {
   description = <<EOF
 (internal) This declares the version of the global configuration variables.
@@ -369,17 +359,6 @@ This field is mandatory if `tectonic_ca_cert` is set.
 EOF
 }
 
-variable "tectonic_tls_validity_period" {
-  type    = "string"
-  default = "26280"
-
-  description = <<EOF
-Validity period of the self-signed certificates (in hours).
-Default is 3 years.
-This setting is ignored if user provided certificates are used.
-EOF
-}
-
 variable "tectonic_stats_url" {
   type        = "string"
   default     = "https://stats-collector.tectonic.com"
@@ -465,56 +444,6 @@ variable "tectonic_custom_ca_pem_list" {
 
   description = <<EOF
 (optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes.
-EOF
-}
-
-variable "tectonic_iscsi_enabled" {
-  type        = "string"
-  default     = "false"
-  description = "(optional) Start iscsid.service to enable iscsi volume attachment."
-}
-
-variable "tectonic_http_proxy_address" {
-  type    = "string"
-  default = ""
-
-  description = <<EOF
-(optional) HTTP proxy address.
-
-Example: `http://myproxy.example.com`
-EOF
-}
-
-variable "tectonic_https_proxy_address" {
-  type    = "string"
-  default = ""
-
-  description = <<EOF
-(optional) HTTPS proxy address.
-
-Example: `http://myproxy.example.com`
-EOF
-}
-
-variable "tectonic_no_proxy" {
-  type    = "list"
-  default = []
-
-  description = <<EOF
-(optional) List of local endpoints that will not use HTTP proxy.
-
-Example: `["127.0.0.1","localhost",".example.com","10.3.0.1"]`
-EOF
-}
-
-variable "tectonic_enable_boot_diagnostics" {
-  type    = "string"
-  default = "false"
-
-  description = <<EOF
-(optional) Enable boot diagnostics for example the boot logs.
-It is only supported for Azure cloud provider.
-Used to collect the boot logs for debug purposes.
 EOF
 }
 
