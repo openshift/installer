@@ -27,7 +27,6 @@ const (
 	joinWorkersStep  = "joining_workers"
 	configFileName   = "config.yaml"
 	internalFileName = "internal.yaml"
-	kubeConfigPath   = "generated/auth/kubeconfig"
 	binaryPrefix     = "installer"
 	tncDaemonSet     = "tectonic-node-controller"
 )

@@ -1,6 +1,6 @@
 [Unit]
 Description=Clean up install assets from S3
-ConditionPathExists=!/opt/tectonic/init_rm_assets.done
+ConditionPathExists=/opt/tectonic
 
 [Service]
 Type=oneshot
@@ -12,7 +12,6 @@ Group=root
 
 ExecStartPre=/usr/bin/bash /opt/tectonic/rm-assets.sh
 ExecStart=/usr/bin/echo "cleaned up installation assets"
-ExecStartPost=/bin/touch /opt/tectonic/init_rm_assets.done
 
 [Install]
 WantedBy=multi-user.target

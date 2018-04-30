@@ -313,7 +313,7 @@ class Cluster
   end
 
   def service_finished_bootstrapping?(ips, service)
-    command = "test -e /opt/tectonic/init_#{service}.done"
+    command = "systemctl is-active #{service} --quiet && [ $(systemctl show -p SubState --value #{service}) == \"exited\" ]"
     ips.each do |ip|
       finished = 1
       begin
