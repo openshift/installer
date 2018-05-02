@@ -186,3 +186,31 @@ data "ignition_file" "kubelet_cert" {
 
   path = "/opt/tectonic/tls/kubelet.crt"
 }
+
+locals {
+  ca_certs_ignition_file_id_list = [
+    "${data.ignition_file.root_ca_cert.id}",
+    "${data.ignition_file.kube_ca_key.id}",
+    "${data.ignition_file.kube_ca_cert.id}",
+    "${data.ignition_file.aggregator_ca_key.id}",
+    "${data.ignition_file.aggregator_ca_cert.id}",
+    "${data.ignition_file.etcd_ca_key.id}",
+    "${data.ignition_file.etcd_ca_cert.id}",
+  ]
+
+  etcd_certs_ignition_file_id_list = [
+    "${data.ignition_file.etcd_client_cert.id}",
+    "${data.ignition_file.etcd_client_key.id}",
+  ]
+
+  kube_certs_ignition_file_id_list = [
+    "${data.ignition_file.apiserver_key.id}",
+    "${data.ignition_file.apiserver_cert.id}",
+    "${data.ignition_file.apiserver_proxy_key.id}",
+    "${data.ignition_file.apiserver_proxy_cert.id}",
+    "${data.ignition_file.admin_key.id}",
+    "${data.ignition_file.admin_cert.id}",
+    "${data.ignition_file.kubelet_key.id}",
+    "${data.ignition_file.kubelet_cert.id}",
+  ]
+}
