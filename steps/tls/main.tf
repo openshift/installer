@@ -14,13 +14,6 @@ locals {
   ingress_internal_fqdn = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}"
 }
 
-data "template_file" "etcd_hostname_list" {
-  count    = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
-  template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
-}
-
-data "aws_availability_zones" "azs" {}
-
 module "ca_certs" {
   source = "../../modules/tls/ca"
 

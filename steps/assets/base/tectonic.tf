@@ -35,7 +35,7 @@ module "bootkube" {
   kube_ca_key_pem          = "${local.kube_ca_key_pem}"
   kubelet_cert_pem         = "${local.kubelet_cert_pem}"
   kubelet_key_pem          = "${local.kubelet_key_pem}"
-  oidc_ca_cert             = "${local.identity_client_ca_cert}"
+  oidc_ca_cert             = "${local.oidc_ca_cert}"
   root_ca_cert_pem         = "${local.root_ca_cert_pem}"
 
   etcd_endpoints = "${data.template_file.etcd_hostname_list.*.rendered}"
