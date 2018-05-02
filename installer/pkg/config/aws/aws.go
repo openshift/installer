@@ -2,13 +2,13 @@ package aws
 
 // AWS converts AWS related config.
 type AWS struct {
-	AssetsS3BucketName        string `json:"tectonic_aws_assets_s3_bucket_name,omitempty" yaml:"assetsS3BucketName,omitempty"`
-	AutoScalingGroupExtraTags string `json:"tectonic_autoscaling_group_extra_tags,omitempty" yaml:"autoScalingGroupExtraTags,omitempty"`
-	EC2AMIOverride            string `json:"tectonic_aws_ec2_ami_override,omitempty" yaml:"ec2AMIOverride,omitempty"`
+	AssetsS3BucketName        string              `json:"tectonic_aws_assets_s3_bucket_name,omitempty" yaml:"assetsS3BucketName,omitempty"`
+	AutoScalingGroupExtraTags []map[string]string `json:"tectonic_autoscaling_group_extra_tags,omitempty" yaml:"autoScalingGroupExtraTags,omitempty"`
+	EC2AMIOverride            string              `json:"tectonic_aws_ec2_ami_override,omitempty" yaml:"ec2AMIOverride,omitempty"`
 	Etcd                      `json:",inline" yaml:"etcd,omitempty"`
 	External                  `json:",inline" yaml:"external,omitempty"`
-	ExtraTags                 string `json:"tectonic_aws_extra_tags,omitempty" yaml:"extraTags,omitempty"`
-	InstallerRole             string `json:"tectonic_aws_installer_role,omitempty" yaml:"installerRole,omitempty"`
+	ExtraTags                 map[string]string `json:"tectonic_aws_extra_tags,omitempty" yaml:"extraTags,omitempty"`
+	InstallerRole             string            `json:"tectonic_aws_installer_role,omitempty" yaml:"installerRole,omitempty"`
 	Master                    `json:",inline" yaml:"master,omitempty"`
 	PrivateEndpoints          bool   `json:"tectonic_aws_private_endpoints,omitempty" yaml:"privateEndpoints,omitempty"`
 	Profile                   string `json:"tectonic_aws_profile,omitempty" yaml:"profile,omitempty"`
@@ -21,17 +21,17 @@ type AWS struct {
 
 // External converts external related config.
 type External struct {
-	MasterSubnetIDs string `json:"tectonic_aws_external_master_subnet_ids,omitempty" yaml:"masterSubnetIDs,omitempty"`
-	PrivateZone     string `json:"tectonic_aws_external_private_zone,omitempty" yaml:"privateZone,omitempty"`
-	VPCID           string `json:"tectonic_aws_external_vpc_id,omitempty" yaml:"vpcID,omitempty"`
-	WorkerSubnetIDs string `json:"tectonic_aws_external_worker_subnet_ids,omitempty" yaml:"workerSubnetIDs,omitempty"`
+	MasterSubnetIDs []string `json:"tectonic_aws_external_master_subnet_ids,omitempty" yaml:"masterSubnetIDs,omitempty"`
+	PrivateZone     string   `json:"tectonic_aws_external_private_zone,omitempty" yaml:"privateZone,omitempty"`
+	VPCID           string   `json:"tectonic_aws_external_vpc_id,omitempty" yaml:"vpcID,omitempty"`
+	WorkerSubnetIDs []string `json:"tectonic_aws_external_worker_subnet_ids,omitempty" yaml:"workerSubnetIDs,omitempty"`
 }
 
 // Etcd converts etcd related config.
 type Etcd struct {
-	EC2Type        string `json:"tectonic_aws_etcd_ec2_type,omitempty" yaml:"ec2Type,omitempty"`
-	ExtraSGIDs     string `json:"tectonic_aws_etcd_extra_sg_ids,omitempty" yaml:"extraSGIDs,omitempty"`
-	IAMRoleName    string `json:"tectonic_aws_etcd_iam_role_name,omitempty" yaml:"iamRoleName,omitempty"`
+	EC2Type        string   `json:"tectonic_aws_etcd_ec2_type,omitempty" yaml:"ec2Type,omitempty"`
+	ExtraSGIDs     []string `json:"tectonic_aws_etcd_extra_sg_ids,omitempty" yaml:"extraSGIDs,omitempty"`
+	IAMRoleName    string   `json:"tectonic_aws_etcd_iam_role_name,omitempty" yaml:"iamRoleName,omitempty"`
 	EtcdRootVolume `json:",inline" yaml:"rootVolume,omitempty"`
 }
 
@@ -44,10 +44,10 @@ type EtcdRootVolume struct {
 
 // Master converts master related config.
 type Master struct {
-	CustomSubnets    string `json:"tectonic_aws_master_custom_subnets,omitempty" yaml:"customSubnets,omitempty"`
-	EC2Type          string `json:"tectonic_aws_master_ec2_type,omitempty" yaml:"ec2Type,omitempty"`
-	ExtraSGIDs       string `json:"tectonic_aws_master_extra_sg_ids,omitempty" yaml:"extraSGIDs,omitempty"`
-	IAMRoleName      string `json:"tectonic_aws_master_iam_role_name,omitempty" yaml:"iamRoleName,omitempty"`
+	CustomSubnets    map[string]string `json:"tectonic_aws_master_custom_subnets,omitempty" yaml:"customSubnets,omitempty"`
+	EC2Type          string            `json:"tectonic_aws_master_ec2_type,omitempty" yaml:"ec2Type,omitempty"`
+	ExtraSGIDs       []string          `json:"tectonic_aws_master_extra_sg_ids,omitempty" yaml:"extraSGIDs,omitempty"`
+	IAMRoleName      string            `json:"tectonic_aws_master_iam_role_name,omitempty" yaml:"iamRoleName,omitempty"`
 	MasterRootVolume `json:",inline" yaml:"rootVolume,omitempty"`
 }
 
@@ -60,11 +60,11 @@ type MasterRootVolume struct {
 
 // Worker converts worker related config.
 type Worker struct {
-	CustomSubnets    string `json:"tectonic_aws_worker_custom_subnets,omitempty" yaml:"customSubnets,omitempty"`
-	EC2Type          string `json:"tectonic_aws_worker_ec2_type,omitempty" yaml:"ec2Type,omitempty"`
-	ExtraSGIDs       string `json:"tectonic_aws_worker_extra_sg_ids,omitempty" yaml:"extraSGIDs,omitempty"`
-	IAMRoleName      string `json:"tectonic_aws_worker_iam_role_name,omitempty" yaml:"iamRoleName,omitempty"`
-	LoadBalancers    string `json:"tectonic_aws_worker_load_balancers,omitempty" yaml:"loadBalancers,omitempty"`
+	CustomSubnets    map[string]string `json:"tectonic_aws_worker_custom_subnets,omitempty" yaml:"customSubnets,omitempty"`
+	EC2Type          string            `json:"tectonic_aws_worker_ec2_type,omitempty" yaml:"ec2Type,omitempty"`
+	ExtraSGIDs       []string          `json:"tectonic_aws_worker_extra_sg_ids,omitempty" yaml:"extraSGIDs,omitempty"`
+	IAMRoleName      string            `json:"tectonic_aws_worker_iam_role_name,omitempty" yaml:"iamRoleName,omitempty"`
+	LoadBalancers    []string          `json:"tectonic_aws_worker_load_balancers,omitempty" yaml:"loadBalancers,omitempty"`
 	WorkerRootVolume `json:",inline" yaml:"rootVolume,omitempty"`
 }
 
