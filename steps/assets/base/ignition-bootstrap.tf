@@ -67,32 +67,3 @@ data "ignition_file" "bootstrap_kubeconfig" {
     content = "${module.bootkube.kubeconfig-kubelet}"
   }
 }
-
-data "ignition_config" "bootstrap" {
-  files = ["${compact(flatten(list(
-    list(
-      data.ignition_file.kube-system_cluster_config.id,
-      data.ignition_file.tectonic_cluster_config.id,
-      data.ignition_file.tnco_config.id,
-      data.ignition_file.kco_config.id,
-      data.ignition_file.rm_assets_sh.id,
-      data.ignition_file.bootstrap_kubeconfig.id,
-    ),
-    local.ca_certs_ignition_file_id_list,
-    local.etcd_certs_ignition_file_id_list,
-    local.kube_certs_ignition_file_id_list,
-    module.ignition_bootstrap.ignition_file_id_list,
-    module.bootkube.ignition_file_id_list,
-    module.tectonic.ignition_file_id_list,
-   )))}"]
-
-  systemd = ["${compact(flatten(list(
-    list(
-      module.bootkube.systemd_service_id,
-      module.bootkube.systemd_path_unit_id,
-      module.tectonic.systemd_service_id,
-      module.tectonic.systemd_path_unit_id,
-    ),
-    module.ignition_bootstrap.ignition_systemd_id_list,
-   )))}"]
-}

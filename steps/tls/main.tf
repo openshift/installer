@@ -1,14 +1,3 @@
-provider "aws" {
-  region  = "${var.tectonic_aws_region}"
-  profile = "${var.tectonic_aws_profile}"
-  version = "1.8.0"
-
-  assume_role {
-    role_arn     = "${var.tectonic_aws_installer_role == "" ? "" : "${var.tectonic_aws_installer_role}"}"
-    session_name = "TECTONIC_INSTALLER_${var.tectonic_cluster_name}"
-  }
-}
-
 locals {
   api_internal_fqdn     = "${var.tectonic_cluster_name}-api.${var.tectonic_base_domain}"
   ingress_internal_fqdn = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}"

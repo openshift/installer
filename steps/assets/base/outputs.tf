@@ -16,9 +16,9 @@ output "ignition_bootstrap_files" {
     module.ignition_bootstrap.ignition_file_id_list,
     module.bootkube.ignition_file_id_list,
     module.tectonic.ignition_file_id_list,
-    module.ca_certs.ignition_file_id_list,
-    module.kube_certs.ignition_file_id_list,
-    module.etcd_certs.ignition_file_id_list,
+    local.ca_certs_ignition_file_id_list,
+    local.etcd_certs_ignition_file_id_list,
+    local.kube_certs_ignition_file_id_list,
    )))}"]
 }
 
