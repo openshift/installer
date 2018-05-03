@@ -7,6 +7,5 @@ output "key_pem" {
 }
 
 output "cert_pem" {
-  value = "${tls_locally_signed_cert.ingress.cert_pem}"
   value = "${var.cert_pem_path == "" ? join("", tls_locally_signed_cert.ingress.*.cert_pem) : file(local._cert_pem_path)}"
 }
