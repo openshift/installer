@@ -1,6 +1,7 @@
 [Unit]
 Description=Clean up install assets from S3
 ConditionPathExists=/opt/tectonic
+After=bootkube.service tectonic.service
 
 [Service]
 Type=oneshot
