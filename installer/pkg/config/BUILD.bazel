@@ -23,6 +23,7 @@ go_library(
         "//installer/pkg/config/azure:go_default_library",
         "//installer/pkg/config/gcp:go_default_library",
         "//installer/pkg/config/govcloud:go_default_library",
+        "//installer/pkg/config/libvirt:go_default_library",
         "//installer/pkg/config/metal:go_default_library",
         "//installer/pkg/config/openstack:go_default_library",
         "//installer/pkg/config/vmware:go_default_library",

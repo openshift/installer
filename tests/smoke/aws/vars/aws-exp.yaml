@@ -16,7 +16,7 @@ nodePools:
     name: master
   - count: 2
     name: worker
-platform: AWS
+platform: aws
 worker:
   nodePools:
     - worker

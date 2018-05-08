@@ -9,6 +9,7 @@ import (
 	"github.com/coreos/tectonic-installer/installer/pkg/config/azure"
 	"github.com/coreos/tectonic-installer/installer/pkg/config/gcp"
 	"github.com/coreos/tectonic-installer/installer/pkg/config/govcloud"
+	"github.com/coreos/tectonic-installer/installer/pkg/config/libvirt"
 	"github.com/coreos/tectonic-installer/installer/pkg/config/metal"
 	"github.com/coreos/tectonic-installer/installer/pkg/config/openstack"
 	"github.com/coreos/tectonic-installer/installer/pkg/config/vmware"
@@ -48,6 +49,7 @@ type Cluster struct {
 	azure.Azure         `json:",inline" yaml:"azure,omitempty"`
 	gcp.GCP             `json:",inline" yaml:"gcp,omitempty"`
 	govcloud.GovCloud   `json:",inline" yaml:"govcloud,omitempty"`
+	libvirt.Libvirt     `json:",inline" yaml:"libvirt,omitempty"`
 	metal.Metal         `json:",inline" yaml:"metal,omitempty"`
 	openstack.OpenStack `json:",inline" yaml:"openstack,omitempty"`
 	vmware.VMware       `json:",inline" yaml:"vmware,omitempty"`
@@ -80,6 +82,14 @@ func (c *Cluster) TFVars() (string, error) {
 	c.IgnitionMaster = IgnitionMaster
 	c.IgnitionWorker = IgnitionWorker
 	c.IgnitionEtcd = IgnitionEtcd
+
+	// fill in master ips
+	if c.Platform == "libvirt" {
+		if err := c.Libvirt.TFVars(c.Master.Count); err != nil {
+			return "", err
+		}
+	}
+
 	data, err := json.MarshalIndent(&c, "", "  ")
 	if err != nil {
 		return "", err
