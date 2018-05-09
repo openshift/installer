@@ -269,6 +269,10 @@ etcd:
     # Example: `["etcd1", "etcd2", "etcd3"]`
     # servers:
 
+  # The name of the node pool(s) to use for etcd nodes
+  nodePools:
+   - etcd
+
 iscsi:
   # (optional) Start iscsid.service to enable iscsi volume attachment.
   # enabled: false
@@ -278,6 +282,11 @@ iscsi:
 #
 # [1] https://account.coreos.com/overview
 licensePath:
+
+master:
+  # The name of the node pool(s) to use for master nodes
+  nodePools:
+    - master
 
 # The name of the cluster.
 # If used in a cloud-environment, this will be prepended to `baseDomain` resulting in the URL to the Tectonic console.
@@ -290,12 +299,12 @@ networking:
   # (optional) This declares the MTU used by Calico.
   # mtu:
 
-  # (optional) This declares the IP range to assign Kubernetes pod IPs in CIDR notation.
-  # podCIDR: 10.2.0.0/16
+  # This declares the IP range to assign Kubernetes pod IPs in CIDR notation.
+  podCIDR: 10.2.0.0/16
 
-  # (optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation.
+  # This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation.
   # The maximum size of this IP range is /12
-  # serviceCIDR: 10.3.0.0/16
+  serviceCIDR: 10.3.0.0/16
 
   # (optional) Configures the network to be used in Tectonic. One of the following values can be used:
   #
@@ -361,3 +370,8 @@ pullSecretPath:
 # Default is 3 years.
 # This setting is ignored if user provided certificates are used.
 tlsValidityPeriod: 26280
+
+worker:
+  # The name of the node pool(s) to use for workers
+  nodePools:
+    - worker
