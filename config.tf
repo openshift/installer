@@ -81,7 +81,7 @@ variable "tectonic_container_images" {
     tectonic_prometheus_operator         = "quay.io/coreos/tectonic-prometheus-operator:v1.9.3"
     tectonic_torcx                       = "quay.io/coreos/tectonic-torcx:v0.2.1"
     kube_addon_operator                  = "quay.io/coreos/kube-addon-operator:beryllium-m2"
-    tectonic_alm_operator                = "quay.io/coreos/tectonic-alm-operator:v0.3.1"
+    tectonic_alm_operator                = "quay.io/coreos/tectonic-alm-operator:v0.4.0"
     tectonic_ingress_controller_operator = "quay.io/coreos/tectonic-ingress-controller-operator:beryllium-m2"
     tectonic_utility_operator            = "quay.io/coreos/tectonic-utility-operator:beryllium-m2"
     tectonic_network_operator            = "quay.io/coreos/tectonic-network-operator:beryllium-m2"
@@ -115,7 +115,7 @@ variable "tectonic_versions" {
   default = {
     monitoring = "1.9.3"
     tectonic   = "1.8.4-tectonic.2"
-    alm        = "0.3.1"
+    alm        = "0.4.0"
   }
 }
 
