@@ -57,44 +57,14 @@ variable "torcx_store_url" {
   default     = ""
 }
 
-variable "assets_location" {
-  type        = "string"
-  description = "(optional) The storing location to retrieve the assets."
-  default     = ""
-}
-
 variable "etcd_count" {
   type    = "string"
   default = 0
 }
 
-variable "etcd_advertise_name_list" {
-  type    = "list"
-  default = []
-}
-
-variable "etcd_initial_cluster_list" {
-  type    = "list"
-  default = []
-}
-
-variable "base_domain" {
-  type    = "string"
-  default = ""
-}
-
-variable "cluster_name" {
-  type    = "string"
-  default = ""
-}
-
 variable "metadata_provider" {
   type    = "string"
   default = ""
-}
-
-variable "use_metadata" {
-  default = true
 }
 
 variable "root_ca_cert_pem" {
@@ -112,35 +82,7 @@ variable "etcd_ca_cert_pem" {
   description = "The etcd kube CA certificate in PEM format."
 }
 
-variable "etcd_client_key_pem" {
-  default = ""
-}
-
-variable "etcd_client_crt_pem" {
-  default = ""
-}
-
 variable "custom_ca_cert_pem_list" {
   type        = "list"
   description = "(optional) A list of custom CAs in PEM format."
-}
-
-variable "iscsi_enabled" {
-  type    = "string"
-  default = false
-}
-
-variable "http_proxy" {
-  type        = "string"
-  description = "HTTP proxy address."
-}
-
-variable "https_proxy" {
-  type        = "string"
-  description = "HTTPS proxy address."
-}
-
-variable "no_proxy" {
-  type        = "list"
-  description = "List of local endpoints that will not use HTTP proxy."
 }

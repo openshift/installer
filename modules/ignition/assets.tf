@@ -1,17 +1,3 @@
-data "template_file" "max_user_watches" {
-  template = "${file("${path.module}/resources/sysctl.d/max-user-watches.conf")}"
-}
-
-data "ignition_file" "max_user_watches" {
-  filesystem = "root"
-  path       = "/etc/sysctl.d/10-max-user-watches.conf"
-  mode       = 0644
-
-  content {
-    content = "${data.template_file.max_user_watches.rendered}"
-  }
-}
-
 data "template_file" "docker_dropin" {
   template = "${file("${path.module}/resources/dropins/10-dockeropts.conf")}"
 }
@@ -127,49 +113,4 @@ data "ignition_systemd_unit" "coreos_metadata" {
       content = "${data.template_file.coreos_metadata.rendered}"
     },
   ]
-}
-
-data "ignition_systemd_unit" "iscsi" {
-  name    = "iscsid.service"
-  enabled = "${var.iscsi_enabled ? true : false}"
-}
-
-data "template_file" "profile_env" {
-  vars {
-    http_proxy  = "${var.http_proxy}"
-    https_proxy = "${var.https_proxy}"
-    no_proxy    = "${join(",", var.no_proxy)}"
-  }
-
-  template = "${file("${path.module}/resources/proxy/profile.env")}"
-}
-
-data "ignition_file" "profile_env" {
-  path       = "/etc/profile.env"
-  mode       = 0644
-  filesystem = "root"
-
-  content {
-    content = "${data.template_file.profile_env.rendered}"
-  }
-}
-
-data "template_file" "systemd_default_env" {
-  vars {
-    http_proxy  = "${var.http_proxy}"
-    https_proxy = "${var.https_proxy}"
-    no_proxy    = "${join(",", var.no_proxy)}"
-  }
-
-  template = "${file("${path.module}/resources/proxy/10-default-env.conf")}"
-}
-
-data "ignition_file" "systemd_default_env" {
-  path       = "/etc/systemd/system.conf.d/10-default-env.conf"
-  mode       = 0644
-  filesystem = "root"
-
-  content {
-    content = "${data.template_file.systemd_default_env.rendered}"
-  }
 }

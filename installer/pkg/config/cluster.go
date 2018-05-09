@@ -33,7 +33,6 @@ type Cluster struct {
 	CustomCAPEMList     string `json:"tectonic_custom_ca_pem_list,omitempty" yaml:"customCAPEMList,omitempty"`
 	DDNS                `json:",inline" yaml:"ddns,omitempty"`
 	Etcd                `json:",inline" yaml:"etcd,omitempty"`
-	ISCSI               `json:",inline" yaml:"iscsi,omitempty"`
 	Internal            `json:",inline" yaml:"-"`
 	LicensePath         string `json:"tectonic_license_path,omitempty" yaml:"licensePath,omitempty"`
 	Master              `json:",inline" yaml:"master,omitempty"`
@@ -41,7 +40,6 @@ type Cluster struct {
 	Networking          `json:",inline" yaml:"networking,omitempty"`
 	NodePools           `json:"-" yaml:"nodePools"`
 	Platform            string `json:"tectonic_platform" yaml:"platform,omitempty"`
-	Proxy               `json:",inline" yaml:"proxy,omitempty"`
 	PullSecretPath      string `json:"tectonic_pull_secret_path,omitempty" yaml:"pullSecretPath,omitempty"`
 	TLSValidityPeriod   int    `json:"tectonic_tls_validity_period,omitempty" yaml:"tlsValidityPeriod,omitempty"`
 	Worker              `json:",inline" yaml:"worker,omitempty"`
