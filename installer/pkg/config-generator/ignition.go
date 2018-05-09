@@ -51,6 +51,9 @@ func (c ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 		// add loop over count if role is etcd
 		c.embedAppendBlock(ignCfg, role)
 
+		// agentless platforms (e.g. libvirt) need to embed the ssh key
+		c.embedUserBlock(ignCfg)
+
 		fileTargetPath := filepath.Join(clusterDir, ignFilesPath[role])
 		if err = ignCfgToFile(*ignCfg, fileTargetPath); err != nil {
 			return err
@@ -89,12 +92,33 @@ func (c ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role st
 	return ignCfg
 }
 
+func (c ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) *ignconfigtypes.Config {
+	if c.Platform == "libvirt" {
+		userBlock := ignconfigtypes.User{
+			Name: "core",
+			SSHAuthorizedKeys: []string{
+				c.Libvirt.SshKey,
+			},
+		}
+
+		ignCfg.Passwd.Users = append(ignCfg.Passwd.Users, userBlock)
+	}
+	return ignCfg
+}
+
 func (c ConfigGenerator) getTNCURL(role string) ignconfigtypes.Url {
 	var url ignconfigtypes.Url
+
+	// cloud platforms put this behind a load balancer which remaps ports;
+	// libvirt doesn't do that - use the tnc port directly
+	port := 80
+	if c.Platform == "libvirt" {
+		port = 49500
+	}
 	if role == "master" || role == "worker" {
 		url = ignconfigtypes.Url{
 			Scheme: "http",
-			Host:   fmt.Sprintf("%s-tnc.%s", c.Name, c.BaseDomain),
+			Host:   fmt.Sprintf("%s-tnc.%s:%d", c.Name, c.BaseDomain, port),
 			Path:   fmt.Sprintf("/config/%s", role),
 		}
 	}
