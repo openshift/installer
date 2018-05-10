@@ -7,6 +7,12 @@ for operator development.
 
 ### Setup and preparation
 * Make sure you have the `virsh` binary on your path.
+* Install the libvirt terraform provider:
+    ```
+    go get github.com/dmacvicar/terraform-provider-libvirt
+    mkdir -p ~/.terraform.d/plugins
+    cp $GOPATH/bin/terraform-provider-libvirt ~/.terraform.d/plugins/
+    ```
 * Decide on an IP range. In this example, `192.168.124.0/24`
 * Decide on a domain. In this example, `tt.testing`
 * Download the latest CoreOS image. This is not done automatically to avoid unnecessary downloads. e.g.
