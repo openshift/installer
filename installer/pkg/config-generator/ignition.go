@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	ignVersion   = ignconfigtypes.IgnitionVersion{2, 0, 0, "", ""}
+	ignVersion   = ignconfigtypes.IgnitionVersion{Major: 2, Minor: 0, Patch: 0}
 	ignFilesPath = map[string]string{
 		"master": config.IgnitionMaster,
 		"worker": config.IgnitionWorker,
@@ -22,7 +22,7 @@ var (
 	}
 )
 
-func (c ConfigGenerator) poolToRoleMap() map[string]string {
+func (c *ConfigGenerator) poolToRoleMap() map[string]string {
 	poolToRole := make(map[string]string)
 	// assume no roles can share pools
 	for _, n := range c.Master.NodePools {
@@ -38,7 +38,7 @@ func (c ConfigGenerator) poolToRoleMap() map[string]string {
 }
 
 // GenerateIgnConfig generates, if successful, files with the ign config for each role.
-func (c ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
+func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 	poolToRole := c.poolToRoleMap()
 	for _, p := range c.NodePools {
 		ignFile := p.IgnitionFile
@@ -83,16 +83,15 @@ func parseIgnFile(filePath string) (*ignconfigtypes.Config, error) {
 	return &cfg, nil
 }
 
-func (c ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role string) *ignconfigtypes.Config {
+func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role string) {
 	appendBlock := ignconfigtypes.ConfigReference{
-		c.getTNCURL(role),
-		ignconfigtypes.Verification{Hash: nil},
+		Source:       c.getTNCURL(role),
+		Verification: ignconfigtypes.Verification{Hash: nil},
 	}
 	ignCfg.Ignition.Config.Append = append(ignCfg.Ignition.Config.Append, appendBlock)
-	return ignCfg
 }
 
-func (c ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) *ignconfigtypes.Config {
+func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
 	if c.Platform == "libvirt" {
 		userBlock := ignconfigtypes.User{
 			Name: "core",
@@ -103,10 +102,9 @@ func (c ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) *ignconfi
 
 		ignCfg.Passwd.Users = append(ignCfg.Passwd.Users, userBlock)
 	}
-	return ignCfg
 }
 
-func (c ConfigGenerator) getTNCURL(role string) ignconfigtypes.Url {
+func (c *ConfigGenerator) getTNCURL(role string) ignconfigtypes.Url {
 	var url ignconfigtypes.Url
 
 	// cloud platforms put this behind a load balancer which remaps ports;

@@ -64,7 +64,7 @@ func New(cluster config.Cluster) ConfigGenerator {
 }
 
 // KubeSystem returns, if successful, a yaml string for the kube-system.
-func (c ConfigGenerator) KubeSystem() (string, error) {
+func (c *ConfigGenerator) KubeSystem() (string, error) {
 	tncoConfig, err := c.tncoConfig()
 	if err != nil {
 		return "", err
@@ -78,7 +78,7 @@ func (c ConfigGenerator) KubeSystem() (string, error) {
 }
 
 // TectonicSystem returns, if successful, a yaml string for the tectonic-system.
-func (c ConfigGenerator) TectonicSystem() (string, error) {
+func (c *ConfigGenerator) TectonicSystem() (string, error) {
 	utilityConfig, err := c.utilityConfig()
 	if err != nil {
 		return "", err
@@ -94,12 +94,12 @@ func (c ConfigGenerator) TectonicSystem() (string, error) {
 }
 
 // CoreConfig returns, if successful, a yaml string for the on-disk kco-config.
-func (c ConfigGenerator) CoreConfig() (string, error) {
+func (c *ConfigGenerator) CoreConfig() (string, error) {
 	return marshalYAML(c.coreConfig())
 }
 
 // TncoConfig returns, if successful, a yaml string for the on-disk tnco-config.
-func (c ConfigGenerator) TncoConfig() (string, error) {
+func (c *ConfigGenerator) TncoConfig() (string, error) {
 	tncoConfig, err := c.tncoConfig()
 	if err != nil {
 		return "", err
@@ -107,7 +107,7 @@ func (c ConfigGenerator) TncoConfig() (string, error) {
 	return marshalYAML(tncoConfig)
 }
 
-func (c ConfigGenerator) addonConfig() (*kubeaddon.OperatorConfig, error) {
+func (c *ConfigGenerator) addonConfig() (*kubeaddon.OperatorConfig, error) {
 	addonConfig := kubeaddon.OperatorConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: kubeaddon.APIVersion,
@@ -123,7 +123,7 @@ func (c ConfigGenerator) addonConfig() (*kubeaddon.OperatorConfig, error) {
 	return &addonConfig, nil
 }
 
-func (c ConfigGenerator) coreConfig() *kubecore.OperatorConfig {
+func (c *ConfigGenerator) coreConfig() *kubecore.OperatorConfig {
 	coreConfig := kubecore.OperatorConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: kubecore.APIVersion,
@@ -147,7 +147,7 @@ func (c ConfigGenerator) coreConfig() *kubecore.OperatorConfig {
 	return &coreConfig
 }
 
-func (c ConfigGenerator) networkConfig() *tectonicnetwork.OperatorConfig {
+func (c *ConfigGenerator) networkConfig() *tectonicnetwork.OperatorConfig {
 	networkConfig := tectonicnetwork.OperatorConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: tectonicnetwork.APIVersion,
@@ -162,7 +162,7 @@ func (c ConfigGenerator) networkConfig() *tectonicnetwork.OperatorConfig {
 	return &networkConfig
 }
 
-func (c ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
+func (c *ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
 	tncoConfig := tnco.OperatorConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: tnco.TNCOConfigAPIVersion,
@@ -194,7 +194,7 @@ func (c ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
 	return &tncoConfig, nil
 }
 
-func (c ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, error) {
+func (c *ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, error) {
 	utilityConfig := tectonicutility.OperatorConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: tectonicutility.APIVersion,
@@ -289,7 +289,7 @@ func marshalYAML(obj interface{}) (string, error) {
 	return string(data), nil
 }
 
-func (c ConfigGenerator) getEtcdServersURLs() string {
+func (c *ConfigGenerator) getEtcdServersURLs() string {
 	if len(c.Cluster.Etcd.External.Servers) > 0 {
 		return strings.Join(c.Cluster.Etcd.External.Servers, ",")
 	}
@@ -300,15 +300,15 @@ func (c ConfigGenerator) getEtcdServersURLs() string {
 	return strings.Join(etcdServers, ",")
 }
 
-func (c ConfigGenerator) getAPIServerURL() string {
+func (c *ConfigGenerator) getAPIServerURL() string {
 	return fmt.Sprintf("https://%s-api.%s:443", c.Cluster.Name, c.Cluster.BaseDomain)
 }
 
-func (c ConfigGenerator) getBaseAddress() string {
+func (c *ConfigGenerator) getBaseAddress() string {
 	return fmt.Sprintf("%s.%s", c.Cluster.Name, c.Cluster.BaseDomain)
 }
 
-func (c ConfigGenerator) getOicdIssuerURL() string {
+func (c *ConfigGenerator) getOicdIssuerURL() string {
 	return fmt.Sprintf("https://%s.%s/identity", c.Cluster.Name, c.Cluster.BaseDomain)
 }
 
