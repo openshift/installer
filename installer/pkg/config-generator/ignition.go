@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	ignVersion   = ignconfigtypes.IgnitionVersion{2, 0, 0, "", ""}
+	ignVersion   = ignconfigtypes.IgnitionVersion{Major: 2, Minor: 0, Patch: 0}
 	ignFilesPath = map[string]string{
 		"master": config.IgnitionMaster,
 		"worker": config.IgnitionWorker,
@@ -22,7 +22,7 @@ var (
 	}
 )
 
-func (c ConfigGenerator) poolToRoleMap() map[string]string {
+func (c *ConfigGenerator) poolToRoleMap() map[string]string {
 	poolToRole := make(map[string]string)
 	// assume no roles can share pools
 	for _, n := range c.Master.NodePools {
@@ -38,7 +38,7 @@ func (c ConfigGenerator) poolToRoleMap() map[string]string {
 }
 
 // GenerateIgnConfig generates, if successful, files with the ign config for each role.
-func (c ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
+func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 	poolToRole := c.poolToRoleMap()
 	for _, p := range c.NodePools {
 		ignFile := p.IgnitionFile
@@ -50,6 +50,9 @@ func (c ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 		// TODO(alberto): Append block need to be different for each etcd node.
 		// add loop over count if role is etcd
 		c.embedAppendBlock(ignCfg, role)
+
+		// agentless platforms (e.g. libvirt) need to embed the ssh key
+		c.embedUserBlock(ignCfg)
 
 		fileTargetPath := filepath.Join(clusterDir, ignFilesPath[role])
 		if err = ignCfgToFile(*ignCfg, fileTargetPath); err != nil {
@@ -80,21 +83,40 @@ func parseIgnFile(filePath string) (*ignconfigtypes.Config, error) {
 	return &cfg, nil
 }
 
-func (c ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role string) *ignconfigtypes.Config {
+func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role string) {
 	appendBlock := ignconfigtypes.ConfigReference{
-		c.getTNCURL(role),
-		ignconfigtypes.Verification{Hash: nil},
+		Source:       c.getTNCURL(role),
+		Verification: ignconfigtypes.Verification{Hash: nil},
 	}
 	ignCfg.Ignition.Config.Append = append(ignCfg.Ignition.Config.Append, appendBlock)
-	return ignCfg
 }
 
-func (c ConfigGenerator) getTNCURL(role string) ignconfigtypes.Url {
+func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
+	if c.Platform == "libvirt" {
+		userBlock := ignconfigtypes.User{
+			Name: "core",
+			SSHAuthorizedKeys: []string{
+				c.Libvirt.SshKey,
+			},
+		}
+
+		ignCfg.Passwd.Users = append(ignCfg.Passwd.Users, userBlock)
+	}
+}
+
+func (c *ConfigGenerator) getTNCURL(role string) ignconfigtypes.Url {
 	var url ignconfigtypes.Url
+
+	// cloud platforms put this behind a load balancer which remaps ports;
+	// libvirt doesn't do that - use the tnc port directly
+	port := 80
+	if c.Platform == "libvirt" {
+		port = 49500
+	}
 	if role == "master" || role == "worker" {
 		url = ignconfigtypes.Url{
 			Scheme: "http",
-			Host:   fmt.Sprintf("%s-tnc.%s", c.Name, c.BaseDomain),
+			Host:   fmt.Sprintf("%s-tnc.%s:%d", c.Name, c.BaseDomain, port),
 			Path:   fmt.Sprintf("/config/%s", role),
 		}
 	}
