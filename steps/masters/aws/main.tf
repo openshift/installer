@@ -29,7 +29,7 @@ module "masters" {
   container_linux_version      = "${module.container_linux.version}"
   ec2_type                     = "${var.tectonic_aws_master_ec2_type}"
   extra_tags                   = "${var.tectonic_aws_extra_tags}"
-  instance_count               = "${var.tectonic_aws_bootstrap == "true" ? 1 : var.tectonic_master_count}"
+  instance_count               = "${var.tectonic_bootstrap == "true" ? 1 : var.tectonic_master_count}"
   master_iam_role              = "${var.tectonic_aws_master_iam_role_name}"
   master_sg_ids                = "${concat(var.tectonic_aws_master_extra_sg_ids, list(local.sg_id))}"
   private_endpoints            = "${var.tectonic_aws_private_endpoints}"

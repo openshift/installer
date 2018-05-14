@@ -10,7 +10,7 @@ provider "aws" {
 }
 
 resource "aws_route53_record" "tectonic_tnc_cname" {
-  count   = "${var.tectonic_aws_bootstrap == "true" ? 1 : 0}"
+  count   = "${var.tectonic_bootstrap == "true" ? 1 : 0}"
   zone_id = "${local.private_zone_id}"
   name    = "${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}"
   type    = "CNAME"
@@ -21,7 +21,7 @@ resource "aws_route53_record" "tectonic_tnc_cname" {
 
 resource "aws_route53_record" "tectonic_tnc_a" {
   depends_on = ["aws_route53_record.tectonic_tnc_cname"]
-  count      = "${var.tectonic_aws_bootstrap == "true" ? 0 : 1}"
+  count      = "${var.tectonic_bootstrap == "true" ? 0 : 1}"
   zone_id    = "${local.private_zone_id}"
   name       = "${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}"
   type       = "A"
