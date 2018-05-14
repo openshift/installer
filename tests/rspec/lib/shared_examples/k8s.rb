@@ -116,7 +116,7 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
   it 'installs the correct Container Linux version' do
     version = @cluster.tf_var('tectonic_container_linux_version')
     # version = @cluster.tf_value('module.container_linux.version') if version == 'latest'
-    version = @cluster.tfstate_file.output('container_linux', 'version') if version == 'latest'
+    version = @cluster.tfstate['masters'].output('container_linux', 'version') if version == 'latest'
     expect(ContainerLinux.version(@cluster)).to eq(version)
   end
 
@@ -153,24 +153,13 @@ RSpec.shared_examples 'withRunningClusterExistingBuildFolder' do |vpn_tunnel = f
     end
   end
 
-  # Disabled because the new flow using CLI does not support scale up for now
-  xdescribe 'scale up worker cluster' do
+  describe 'scale up worker cluster' do
     before(:all) do
-      platform = @cluster.env_variables['PLATFORM']
-      # remove platform AZURE when the JIRA https://jira.prod.coreos.systems/browse/INST-619 is fixed
-      skip_platform = %w[metal azure gcp]
-      skip "This test is not ready to run in #{platform}" if skip_platform.include?(platform)
       skip 'Skipping this tests. running locally' unless Jenkins.environment?
     end
 
     it 'can scale up nodes by 1 worker' do
-      platform = @cluster.env_variables['PLATFORM']
-      if platform.downcase.include?('aws')
-        @cluster.config_file.add_worker_node(@cluster.config_file.worker_count + 1)
-      else
-        @cluster.tfvars_file.add_worker_node(@cluster.tfvars_file.worker_count + 1)
-      end
-
+      @cluster.config_file.add_worker_node(@cluster.config_file.worker_count + 1)
       expect { @cluster.update_cluster }.to_not raise_error
     end
   end

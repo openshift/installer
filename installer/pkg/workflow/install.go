@@ -8,7 +8,7 @@ func NewInstallFullWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
-			readClusterConfigStep,
+			refreshConfigStep,
 			generateClusterConfigMaps,
 			installAssetsStep,
 			generateIgnConfigStep,
@@ -29,7 +29,7 @@ func NewInstallAssetsWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
-			readClusterConfigStep,
+			refreshConfigStep,
 			generateClusterConfigMaps,
 			installAssetsStep,
 			generateIgnConfigStep,
@@ -43,7 +43,7 @@ func NewInstallBootstrapWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
-			readClusterConfigStep,
+			refreshConfigStep,
 			installTopologyStep,
 			installTNCCNAMEStep,
 			installBootstrapStep,
@@ -59,11 +59,18 @@ func NewInstallJoinWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
-			readClusterConfigStep,
+			refreshConfigStep,
 			installJoinMastersStep,
 			installJoinWorkersStep,
 		},
 	}
+}
+
+func refreshConfigStep(m *metadata) error {
+	if err := readClusterConfigStep(m); err != nil {
+		return err
+	}
+	return generateTerraformVariablesStep(m)
 }
 
 func installAssetsStep(m *metadata) error {
@@ -75,7 +82,10 @@ func installTopologyStep(m *metadata) error {
 }
 
 func installBootstrapStep(m *metadata) error {
-	return runInstallStep(m, bootstrapStep)
+	if !clusterIsBootstrapped(m.clusterDir) {
+		return runInstallStep(m, mastersStep, []string{bootstrapOn}...)
+	}
+	return nil
 }
 
 func installTNCCNAMEStep(m *metadata) error {
@@ -94,9 +104,7 @@ func installEtcdStep(m *metadata) error {
 }
 
 func installJoinMastersStep(m *metadata) error {
-	// TODO: import will fail after a first run, error is ignored for now
-	importAutoScalingGroup(m)
-	return runInstallStep(m, joinMastersStep)
+	return runInstallStep(m, mastersStep, []string{bootstrapOff}...)
 }
 
 func installJoinWorkersStep(m *metadata) error {

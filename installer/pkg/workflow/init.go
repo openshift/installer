@@ -8,6 +8,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/coreos/tectonic-installer/installer/pkg/config"
 	configgenerator "github.com/coreos/tectonic-installer/installer/pkg/config-generator"
 )
 
@@ -28,17 +29,15 @@ func NewInitWorkflow(configFilePath string) Workflow {
 	return Workflow{
 		metadata: metadata{configFilePath: configFilePath},
 		steps: []Step{
-			readClusterConfigStep,
 			prepareWorspaceStep,
-			buildInternalStep,
-			generateTerraformVariablesStep,
+			refreshConfigStep,
 		},
 	}
 }
 
-func buildInternalStep(m *metadata) error {
-	if m.clusterDir == "" {
-		return errors.New("no clusterDir path set in metadata")
+func buildInternalConfig(clusterDir string) error {
+	if clusterDir == "" {
+		return errors.New("no cluster dir given for building internal config")
 	}
 
 	// fill the internal struct
@@ -46,16 +45,18 @@ func buildInternalStep(m *metadata) error {
 	if err != nil {
 		return err
 	}
-	m.cluster.Internal.ClusterID = clusterID
+	internalCfg := config.Internal{
+		ClusterID: clusterID,
+	}
 
 	// store the content
-	yamlContent, err := yaml.Marshal(m.cluster.Internal)
+	yamlContent, err := yaml.Marshal(internalCfg)
 	internalFileContent := []byte("# Do not touch, auto-generated\n")
 	internalFileContent = append(internalFileContent, yamlContent...)
 	if err != nil {
 		return err
 	}
-	return writeFile(filepath.Join(m.clusterDir, internalFileName), string(internalFileContent))
+	return writeFile(filepath.Join(clusterDir, internalFileName), string(internalFileContent))
 }
 
 func generateTerraformVariablesStep(m *metadata) error {
@@ -74,15 +75,33 @@ func prepareWorspaceStep(m *metadata) error {
 		return fmt.Errorf("Failed to get current directory because: %s", err)
 	}
 
-	m.clusterDir = filepath.Join(dir, m.cluster.Name)
-	if stat, err := os.Stat(m.clusterDir); err == nil && stat.IsDir() {
-		return fmt.Errorf("cluster directory already exists at %s", m.clusterDir)
+	if m.configFilePath == "" {
+		return errors.New("no configFilePath given for preparing the workspace")
 	}
 
-	if err := os.MkdirAll(m.clusterDir, os.ModeDir|0755); err != nil {
-		return fmt.Errorf("Failed to create cluster directory at %s", m.clusterDir)
+	// load initial cluster config to get cluster.Name
+	clusterName, err := getClusterNameFromConfig(m.configFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to get cluster name for config file %s: %v", m.configFilePath, err)
 	}
 
-	configFilePath := filepath.Join(m.clusterDir, configFileName)
-	return copyFile(m.configFilePath, configFilePath)
+	// generate clusterDir folder
+	clusterDir := filepath.Join(dir, *clusterName)
+	m.clusterDir = clusterDir
+	if stat, err := os.Stat(clusterDir); err == nil && stat.IsDir() {
+		return fmt.Errorf("cluster directory already exists at %s", clusterDir)
+	}
+
+	if err := os.MkdirAll(clusterDir, os.ModeDir|0755); err != nil {
+		return fmt.Errorf("failed to create cluster directory at %s", clusterDir)
+	}
+
+	// put config file under the clusterDir folder
+	configFilePath := filepath.Join(clusterDir, configFileName)
+	if err := copyFile(m.configFilePath, configFilePath); err != nil {
+		return fmt.Errorf("failed to create cluster config at %s: %v", clusterDir, err)
+	}
+
+	// generate the internal config file under the clusterDir folder
+	return buildInternalConfig(clusterDir)
 }

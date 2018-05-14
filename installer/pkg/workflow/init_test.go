@@ -63,7 +63,7 @@ func TestGenerateTerraformVariablesStep(t *testing.T) {
 	}
 }
 
-func TestBuildInternalStep(t *testing.T) {
+func TestBuildInternalConfig(t *testing.T) {
 	testClusterDir := "."
 	internalFilePath := filepath.Join(testClusterDir, internalFileName)
 
@@ -74,19 +74,6 @@ func TestBuildInternalStep(t *testing.T) {
 		}
 	}()
 
-	metaNoClusterDir := &metadata{
-		cluster: config.Cluster{
-			Name: "test",
-		},
-	}
-
-	meta := &metadata{
-		clusterDir: testClusterDir,
-		cluster: config.Cluster{
-			Name: "test",
-		},
-	}
-
 	errorTestCases := []struct {
 		test     string
 		got      string
@@ -94,8 +81,8 @@ func TestBuildInternalStep(t *testing.T) {
 	}{
 		{
 			test:     "no clusterDir exists",
-			got:      buildInternalStep(metaNoClusterDir).Error(),
-			expected: "no clusterDir path set in metadata",
+			got:      buildInternalConfig("").Error(),
+			expected: "no cluster dir given for building internal config",
 		},
 	}
 
@@ -105,7 +92,7 @@ func TestBuildInternalStep(t *testing.T) {
 		}
 	}
 
-	if err := buildInternalStep(meta); err != nil {
+	if err := buildInternalConfig(testClusterDir); err != nil {
 		t.Errorf("failed to run buildInternalStep, %v", err)
 	}
 

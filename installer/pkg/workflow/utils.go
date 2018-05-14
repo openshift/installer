@@ -2,6 +2,7 @@ package workflow
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -21,14 +22,12 @@ const (
 	tncDNSStep       = "tnc_dns"
 	bootstrapOn      = "-var=tectonic_aws_bootstrap=true"
 	bootstrapOff     = "-var=tectonic_aws_bootstrap=false"
-	bootstrapStep    = "bootstrap"
+	mastersStep      = "masters"
 	etcdStep         = "etcd"
-	joinMastersStep  = "joining_masters"
 	joinWorkersStep  = "joining_workers"
 	configFileName   = "config.yaml"
 	internalFileName = "internal.yaml"
 	binaryPrefix     = "installer"
-	tncDaemonSet     = "tectonic-node-controller"
 )
 
 func copyFile(fromFilePath, toFilePath string) error {
@@ -132,20 +131,6 @@ func generateClusterConfigMaps(m *metadata) error {
 	return writeFile(tectonicSystemConfigFilePath, tectonicSystem)
 }
 
-func importAutoScalingGroup(m *metadata) error {
-	templatesPath, err := findStepTemplates(joinMastersStep, m.cluster.Platform)
-	if err != nil {
-		return err
-	}
-	return terraformExec(
-		m.clusterDir,
-		"import",
-		fmt.Sprintf("-state=%s.tfstate", joinMastersStep),
-		fmt.Sprintf("-config=%s", templatesPath),
-		"aws_autoscaling_group.masters",
-		fmt.Sprintf("%s-masters", m.cluster.Name))
-}
-
 func readClusterConfig(configFilePath string, internalFilePath string) (*config.Cluster, error) {
 	cfg, err := config.ParseConfigFile(configFilePath)
 	if err != nil {
@@ -163,16 +148,23 @@ func readClusterConfig(configFilePath string, internalFilePath string) (*config.
 	return cfg, nil
 }
 
-func readClusterConfigStep(m *metadata) error {
-	var configFilePath string
-	var internalFilePath string
-
-	if m.configFilePath != "" {
-		configFilePath = m.configFilePath
-	} else {
-		configFilePath = filepath.Join(m.clusterDir, configFileName)
-		internalFilePath = filepath.Join(m.clusterDir, internalFileName)
+func getClusterNameFromConfig(configFilePath string) (*string, error) {
+	if configFilePath == "" {
+		return nil, errors.New("no configFilePath given for getting cluster Name")
 	}
+	cluster, err := readClusterConfig(configFilePath, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to read cluster config for while getting cluster name: %v", err)
+	}
+	return &cluster.Name, nil
+}
+
+func readClusterConfigStep(m *metadata) error {
+	if m.clusterDir == "" {
+		errors.New("no cluster dir given for reading config")
+	}
+	configFilePath := filepath.Join(m.clusterDir, configFileName)
+	internalFilePath := filepath.Join(m.clusterDir, internalFileName)
 
 	cluster, err := readClusterConfig(configFilePath, internalFilePath)
 	if err != nil {
@@ -222,7 +214,7 @@ func baseLocation() (string, error) {
 
 func clusterIsBootstrapped(stateDir string) bool {
 	return hasStateFile(stateDir, topologyStep) &&
-		hasStateFile(stateDir, bootstrapStep) &&
+		hasStateFile(stateDir, mastersStep) &&
 		hasStateFile(stateDir, tncDNSStep)
 }
 
