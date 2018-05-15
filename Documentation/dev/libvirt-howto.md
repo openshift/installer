@@ -21,15 +21,23 @@ wget https://beta.release.core-os.net/amd64-usr/current/coreos_production_qemu_i
 bunzip2 coreos_production_qemu_image.img.bz2
 ```
 
-Now, copy `examples/tectonic.libvirt.yaml` and customize it. You're ready to begin! The workflow is the same, but only the `install assets` and `install bootstrap` steps are supported.
+Now, copy `examples/tectonic.libvirt.yaml` and customize it. You're ready to begin! The workflow is the same:
+
+```
+tectonic init --config=<path-to-config>
+tectonic install --dir=<clustername>
+```
+
+The cluster should be up and running in about 10-20 minutes, depending on how quickly the container images are downloaded.
 
 
 ## Differences between libvirt and aws:
 
-1. We use the Libvirt DNS server. So, if you want to resolve those names on your host, you'll need to configure NetworkManager's dns overlay mode (dnsmasq mode)
-1. There isn't a load balancer. We need to manually remap port 6443 to 443
-1. We may not support changing the number of workers.
-
-## Remaining tasks
-1. Provision the masters and update the DNS names
-1. Provision the workers and update the ingress names
+1. We use the Libvirt DNS server. So, if you want to resolve those names on your host, you'll need to configure NetworkManager's dns overlay mode (dnsmasq mode):
+    1. Edit `/etc/NetworkManager/NetworkManager.conf` and set `dns=dnsmasq` in section `main`
+    2. Tell dnsmasq to use your cluster. For me, this is: `echo server=/tt.testing/192.168.124.1 
+     sudo tee /etc/NetworkManager/dnsmasq.d/tectonic.conf`
+    3. restart NetworkManager
+1. There isn't a load balancer. This means:
+    1. We need to manually remap ports that the loadbalancer would
+    2. Only the first server (e.g. master) is actually used. If you want to reach another, you have to manually update the domain name.

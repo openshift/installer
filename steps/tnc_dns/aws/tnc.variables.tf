@@ -1,3 +1,3 @@
-variable "tectonic_aws_bootstrap" {
+variable "tectonic_bootstrap" {
   type = "string"
 }
