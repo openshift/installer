@@ -3,28 +3,11 @@ data "aws_route53_zone" "tectonic" {
 }
 
 locals {
-  private_zone_id = "${var.tectonic_external_private_zone == "" ?
-                        join("", aws_route53_zone.tectonic_int.*.zone_id) :
-                        var.tectonic_external_private_zone}"
-
   public_zone_id = "${join("", data.aws_route53_zone.tectonic.*.zone_id)}"
 
-  zone_id = "${var.tectonic_private_endpoints ?
-                      local.private_zone_id :
+  zone_id = "${var.private_endpoints ?
+                      var.private_zone_id :
                       local.public_zone_id}"
-}
-
-resource "aws_route53_zone" "tectonic_int" {
-  count         = "0"
-  vpc_id        = "${var.tectonic_external_vpc_id}"
-  name          = "${var.base_domain}"
-  force_destroy = true
-
-  tags = "${merge(map(
-      "Name", "${var.cluster_name}_tectonic_int_zone",
-      "KubernetesCluster", "${var.cluster_name}",
-      "tectonicClusterID", "${var.cluster_id}"
-    ), var.tectonic_extra_tags)}"
 }
 
 resource "aws_route53_record" "tectonic_api" {
@@ -37,7 +20,7 @@ resource "aws_route53_record" "tectonic_api" {
 }
 
 resource "aws_route53_record" "tectonic_api_external" {
-  count   = "${var.elb_alias_enabled ? var.tectonic_public_endpoints : 0}"
+  count   = "${var.elb_alias_enabled ? var.public_endpoints : 0}"
   zone_id = "${local.public_zone_id}"
   name    = "${var.cluster_name}-api.${var.base_domain}"
   type    = "A"
@@ -50,8 +33,8 @@ resource "aws_route53_record" "tectonic_api_external" {
 }
 
 resource "aws_route53_record" "tectonic_api_internal" {
-  count   = "${var.elb_alias_enabled ? var.tectonic_private_endpoints : 0}"
-  zone_id = "${local.private_zone_id}"
+  count   = "${var.elb_alias_enabled ? var.private_endpoints : 0}"
+  zone_id = "${var.private_zone_id}"
   name    = "${var.cluster_name}-api.${var.base_domain}"
   type    = "A"
 
@@ -72,7 +55,7 @@ resource "aws_route53_record" "tectonic-console" {
 }
 
 resource "aws_route53_record" "tectonic_ingress_public" {
-  count   = "${var.elb_alias_enabled ? var.tectonic_public_endpoints : 0}"
+  count   = "${var.elb_alias_enabled ? var.public_endpoints : 0}"
   zone_id = "${local.public_zone_id}"
   name    = "${var.cluster_name}.${var.base_domain}"
   type    = "A"
@@ -85,8 +68,8 @@ resource "aws_route53_record" "tectonic_ingress_public" {
 }
 
 resource "aws_route53_record" "tectonic_ingress_private" {
-  count   = "${var.elb_alias_enabled ? var.tectonic_private_endpoints : 0}"
-  zone_id = "${local.private_zone_id}"
+  count   = "${var.elb_alias_enabled ? var.private_endpoints : 0}"
+  zone_id = "${var.private_zone_id}"
   name    = "${var.cluster_name}.${var.base_domain}"
   type    = "A"
 

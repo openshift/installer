@@ -31,7 +31,7 @@ output "worker_sg_id" {
 
 # TNC
 output "private_zone_id" {
-  value = "${aws_route53_zone.tectonic_int.id}"
+  value = "${join("", aws_route53_zone.tectonic_int.*.zone_id)}"
 }
 
 output "tnc_elb_dns_name" {
