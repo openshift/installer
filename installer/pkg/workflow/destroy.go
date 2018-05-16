@@ -15,8 +15,13 @@ func NewDestroyWorkflow(clusterDir string) Workflow {
 			destroyTNCDNSStep,
 			destroyTopologyStep,
 			destroyAssetsStep,
+			destroyTLSAssetsStep,
 		},
 	}
+}
+
+func destroyTLSAssetsStep(m *metadata) error {
+	return runDestroyStep(m, tlsStep)
 }
 
 func destroyAssetsStep(m *metadata) error {

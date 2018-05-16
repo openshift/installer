@@ -1,13 +1,24 @@
 # Root CA (resources/generated/tls/{root-ca.crt})
+locals {
+  _root_ca_cert_pem_path       = "${var.root_ca_cert_pem_path == "" ? "/dev/null" : var.root_ca_cert_pem_path}"
+  _root_ca_key_pem_path        = "${var.root_ca_key_pem_path == "" ? "/dev/null" : var.root_ca_key_pem_path}"
+  _etcd_ca_cert_pem_path       = "${var.etcd_ca_cert_pem_path == "" ? "/dev/null" : var.etcd_ca_cert_pem_path}"
+  _etcd_ca_key_pem_path        = "${var.etcd_ca_key_pem_path == "" ? "/dev/null" : var.etcd_ca_key_pem_path}"
+  _kube_ca_cert_pem_path       = "${var.kube_ca_cert_pem_path == "" ? "/dev/null" : var.kube_ca_cert_pem_path}"
+  _kube_ca_key_pem_path        = "${var.kube_ca_key_pem_path == "" ? "/dev/null" : var.kube_ca_key_pem_path}"
+  _aggregator_ca_cert_pem_path = "${var.aggregator_ca_cert_pem_path == "" ? "/dev/null" : var.aggregator_ca_cert_pem_path}"
+  _aggregator_ca_key_pem_path  = "${var.aggregator_ca_key_pem_path == "" ? "/dev/null" : var.aggregator_ca_key_pem_path}"
+}
+
 resource "tls_private_key" "root_ca" {
-  count = "${var.root_ca_cert_pem == "" ? 1 : 0}"
+  count = "${var.root_ca_key_pem_path == "" ? 1 : 0}"
 
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
 resource "tls_self_signed_cert" "root_ca" {
-  count = "${var.root_ca_cert_pem == "" ? 1 : 0}"
+  count = "${var.root_ca_cert_pem_path == "" ? 1 : 0}"
 
   key_algorithm   = "${tls_private_key.root_ca.algorithm}"
   private_key_pem = "${tls_private_key.root_ca.private_key_pem}"
@@ -36,11 +47,15 @@ resource "tls_self_signed_cert" "root_ca" {
 
 # Intermediate etcd CA (resources/generated/tls/{etcd-ca.crt})
 resource "tls_private_key" "etcd_ca" {
+  count = "${var.etcd_ca_key_pem_path == "" ? 1 : 0}"
+
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
 resource "tls_cert_request" "etcd_ca" {
+  count = "${var.etcd_ca_cert_pem_path == "" ? 1 : 0}"
+
   key_algorithm   = "${tls_private_key.etcd_ca.algorithm}"
   private_key_pem = "${tls_private_key.etcd_ca.private_key_pem}"
 
@@ -56,11 +71,12 @@ resource "tls_cert_request" "etcd_ca" {
 }
 
 resource "tls_locally_signed_cert" "etcd_ca" {
-  cert_request_pem = "${tls_cert_request.etcd_ca.cert_request_pem}"
+  count = "${var.etcd_ca_cert_pem_path == "" ? 1 : 0}"
 
-  ca_key_algorithm   = "${var.root_ca_cert_pem == "" ? join("", tls_self_signed_cert.root_ca.*.key_algorithm) : var.root_ca_key_alg}"
-  ca_private_key_pem = "${var.root_ca_cert_pem == "" ? join("", tls_private_key.root_ca.*.private_key_pem) : var.root_ca_key_pem}"
-  ca_cert_pem        = "${var.root_ca_cert_pem == "" ? join("", tls_self_signed_cert.root_ca.*.cert_pem) : var.root_ca_cert_pem}"
+  cert_request_pem   = "${tls_cert_request.etcd_ca.cert_request_pem}"
+  ca_key_algorithm   = "${var.root_ca_cert_pem_path == "" ? join("", tls_self_signed_cert.root_ca.*.key_algorithm) : var.root_ca_key_alg}"
+  ca_private_key_pem = "${var.root_ca_cert_pem_path == "" ? join("", tls_private_key.root_ca.*.private_key_pem) : var.root_ca_key_pem_path}"
+  ca_cert_pem        = "${var.root_ca_cert_pem_path == "" ? join("", tls_self_signed_cert.root_ca.*.cert_pem) : var.root_ca_cert_pem_path}"
   is_ca_certificate  = true
 
   # intermediate certs are valid for 3 years.
@@ -75,11 +91,15 @@ resource "tls_locally_signed_cert" "etcd_ca" {
 
 # Intermediate kube CA (resources/generated/tls/{kube-ca.crt,kube-ca.key})
 resource "tls_private_key" "kube_ca" {
+  count = "${var.kube_ca_key_pem_path == "" ? 1 : 0}"
+
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
 resource "tls_cert_request" "kube_ca" {
+  count = "${var.kube_ca_cert_pem_path == "" ? 1 : 0}"
+
   key_algorithm   = "${tls_private_key.kube_ca.algorithm}"
   private_key_pem = "${tls_private_key.kube_ca.private_key_pem}"
 
@@ -95,11 +115,13 @@ resource "tls_cert_request" "kube_ca" {
 }
 
 resource "tls_locally_signed_cert" "kube_ca" {
+  count = "${var.kube_ca_cert_pem_path == "" ? 1 : 0}"
+
   cert_request_pem = "${tls_cert_request.kube_ca.cert_request_pem}"
 
-  ca_key_algorithm   = "${var.root_ca_cert_pem == "" ? join("", tls_self_signed_cert.root_ca.*.key_algorithm) : var.root_ca_key_alg}"
-  ca_private_key_pem = "${var.root_ca_cert_pem == "" ? join("", tls_private_key.root_ca.*.private_key_pem) : var.root_ca_key_pem}"
-  ca_cert_pem        = "${var.root_ca_cert_pem == "" ? join("", tls_self_signed_cert.root_ca.*.cert_pem) : var.root_ca_cert_pem}"
+  ca_key_algorithm   = "${var.root_ca_cert_pem_path == "" ? join("", tls_self_signed_cert.root_ca.*.key_algorithm) : var.root_ca_key_alg}"
+  ca_private_key_pem = "${var.root_ca_cert_pem_path == "" ? join("", tls_private_key.root_ca.*.private_key_pem) : var.root_ca_key_pem_path}"
+  ca_cert_pem        = "${var.root_ca_cert_pem_path == "" ? join("", tls_self_signed_cert.root_ca.*.cert_pem) : var.root_ca_cert_pem_path}"
   is_ca_certificate  = true
 
   # intermediate certs are valid for 3 years.
@@ -114,11 +136,15 @@ resource "tls_locally_signed_cert" "kube_ca" {
 
 # Intermediate aggregator CA (resources/generated/tls/{aggregator-ca.crt,aggregator-ca.key})
 resource "tls_private_key" "aggregator_ca" {
+  count = "${var.aggregator_ca_key_pem_path == "" ? 1 : 0}"
+
   algorithm = "RSA"
   rsa_bits  = "2048"
 }
 
 resource "tls_cert_request" "aggregator_ca" {
+  count = "${var.aggregator_ca_cert_pem_path == "" ? 1 : 0}"
+
   key_algorithm   = "${tls_private_key.aggregator_ca.algorithm}"
   private_key_pem = "${tls_private_key.aggregator_ca.private_key_pem}"
 
@@ -134,11 +160,12 @@ resource "tls_cert_request" "aggregator_ca" {
 }
 
 resource "tls_locally_signed_cert" "aggregator_ca" {
-  cert_request_pem = "${tls_cert_request.aggregator_ca.cert_request_pem}"
+  count = "${var.aggregator_ca_cert_pem_path == "" ? 1 : 0}"
 
-  ca_key_algorithm   = "${var.root_ca_cert_pem == "" ? join("", tls_self_signed_cert.root_ca.*.key_algorithm) : var.root_ca_key_alg}"
-  ca_private_key_pem = "${var.root_ca_cert_pem == "" ? join("", tls_private_key.root_ca.*.private_key_pem) : var.root_ca_key_pem}"
-  ca_cert_pem        = "${var.root_ca_cert_pem == "" ? join("", tls_self_signed_cert.root_ca.*.cert_pem) : var.root_ca_cert_pem}"
+  cert_request_pem   = "${tls_cert_request.aggregator_ca.cert_request_pem}"
+  ca_key_algorithm   = "${var.root_ca_cert_pem_path == "" ? join("", tls_self_signed_cert.root_ca.*.key_algorithm) : var.root_ca_key_alg}"
+  ca_private_key_pem = "${var.root_ca_cert_pem_path == "" ? join("", tls_private_key.root_ca.*.private_key_pem) : var.root_ca_key_pem_path}"
+  ca_cert_pem        = "${var.root_ca_cert_pem_path == "" ? join("", tls_self_signed_cert.root_ca.*.cert_pem) : var.root_ca_cert_pem_path}"
   is_ca_certificate  = true
 
   # intermediate certs are valid for 3 years.
