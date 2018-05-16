@@ -8,13 +8,13 @@ import (
 
 // ParseConfig parses a yaml string and returns, if successful, a Cluster.
 func ParseConfig(data []byte) (*Cluster, error) {
-	cluster := &Cluster{}
+	cluster := defaultCluster
 
-	if err := yaml.Unmarshal(data, cluster); err != nil {
+	if err := yaml.Unmarshal(data, &cluster); err != nil {
 		return nil, err
 	}
 
-	return cluster, nil
+	return &cluster, nil
 }
 
 // ParseConfigFile parses a yaml file and returns, if successful, a Cluster.

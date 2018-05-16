@@ -14,6 +14,15 @@ func isMatch(re string, v string) bool {
 	return regexp.MustCompile(re).MatchString(v)
 }
 
+// PrefixError wraps an error with a prefix or returns nil if there was no error.
+// This is useful for wrapping errors returned by generic error funcs like `NonEmpty` so that the error includes the offending field name.
+func PrefixError(prefix string, err error) error {
+	if err != nil {
+		return fmt.Errorf("%s: %v", prefix, err)
+	}
+	return nil
+}
+
 // NonEmpty checks if the given string contains at least one non-whitespace character and returns an error if not.
 func NonEmpty(v string) error {
 	if utf8.RuneCountInString(strings.TrimSpace(v)) == 0 {
@@ -361,4 +370,49 @@ func OpenSSHPublicKey(v string) error {
 	}
 
 	return nil
+}
+
+// CIDRsOverlap checks whether two given CIDRs overlap
+// with one another. CIDR starting IPs should be canonicalized
+// before being compared.
+func CIDRsOverlap(a, b *net.IPNet) bool {
+	// IPs are of different families.
+	if len(a.IP) != len(b.IP) {
+		return false
+	}
+	if a.Contains(b.IP) {
+		return true
+	}
+	if a.Contains(lastIP(b)) {
+		return true
+	}
+	if b.Contains(a.IP) {
+		return true
+	}
+	if b.Contains(lastIP(a)) {
+		return true
+	}
+	return false
+}
+
+// CanonicalizeIP ensures that the given IP is in standard form
+// and returns an error otherwise.
+func CanonicalizeIP(ip *net.IP) error {
+	if ip.To4 != nil {
+		*ip = ip.To4()
+		return nil
+	}
+	if ip.To16 != nil {
+		*ip = ip.To16()
+		return nil
+	}
+	return fmt.Errorf("IP %q is of unknown type", ip)
+}
+
+func lastIP(cidr *net.IPNet) net.IP {
+	var last net.IP
+	for i := 0; i < len(cidr.IP); i++ {
+		last = append(last, cidr.IP[i]|^cidr.Mask[i])
+	}
+	return last
 }

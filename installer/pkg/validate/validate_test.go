@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"net"
 	"strings"
 	"testing"
 )
@@ -434,4 +435,118 @@ func TestOpenSSHPublicKey(t *testing.T) {
 		{"-----BEGIN RSA PRIVATE KEY-----\nabc\n-----END RSA PRIVATE KEY-----", privateKeyMsg},
 	}
 	runTests(t, "OpenSSHPublicKey", OpenSSHPublicKey, tests)
+}
+
+func TestCIDRsOverlap(t *testing.T) {
+	cases := []struct {
+		a   net.IPNet
+		b   net.IPNet
+		out bool
+	}{
+		{
+			a: net.IPNet{
+				IP:   net.ParseIP("192.168.0.0").To4(),
+				Mask: net.CIDRMask(24, 32),
+			},
+			b: net.IPNet{
+				IP:   net.ParseIP("192.168.0.0").To4(),
+				Mask: net.CIDRMask(24, 32),
+			},
+			out: true,
+		},
+		{
+			a: net.IPNet{
+				IP:   net.ParseIP("192.168.0.0").To4(),
+				Mask: net.CIDRMask(24, 32),
+			},
+			b: net.IPNet{
+				IP:   net.ParseIP("192.168.0.3").To4(),
+				Mask: net.CIDRMask(24, 32),
+			},
+			out: true,
+		},
+		{
+			a: net.IPNet{
+				IP:   net.ParseIP("192.168.0.0").To4(),
+				Mask: net.CIDRMask(30, 32),
+			},
+			b: net.IPNet{
+				IP:   net.ParseIP("192.168.0.3").To4(),
+				Mask: net.CIDRMask(30, 32),
+			},
+			out: true,
+		},
+		{
+			a: net.IPNet{
+				IP:   net.ParseIP("192.168.0.0").To4(),
+				Mask: net.CIDRMask(30, 32),
+			},
+			b: net.IPNet{
+				IP:   net.ParseIP("192.168.0.4").To4(),
+				Mask: net.CIDRMask(30, 32),
+			},
+			out: false,
+		},
+		{
+			a: net.IPNet{
+				IP:   net.ParseIP("0.0.0.0").To4(),
+				Mask: net.CIDRMask(0, 32),
+			},
+			b: net.IPNet{
+				IP:   net.ParseIP("192.168.0.0").To4(),
+				Mask: net.CIDRMask(24, 32),
+			},
+			out: true,
+		},
+	}
+
+	var out bool
+	for i, c := range cases {
+		if out = CIDRsOverlap(&c.a, &c.b); out != c.out {
+			t.Errorf("test case %d: expected %T but got %s", i, c.out, out)
+		}
+	}
+}
+
+func TestLastIP(t *testing.T) {
+	cases := []struct {
+		in  net.IPNet
+		out net.IP
+	}{
+		{
+			in: net.IPNet{
+				IP:   net.ParseIP("192.168.0.0").To4(),
+				Mask: net.CIDRMask(24, 32),
+			},
+			out: net.ParseIP("192.168.0.255"),
+		},
+		{
+			in: net.IPNet{
+				IP:   net.ParseIP("192.168.0.0").To4(),
+				Mask: net.CIDRMask(22, 32),
+			},
+			out: net.ParseIP("192.168.3.255"),
+		},
+		{
+			in: net.IPNet{
+				IP:   net.ParseIP("192.168.0.0").To4(),
+				Mask: net.CIDRMask(32, 32),
+			},
+			out: net.ParseIP("192.168.0.0"),
+		},
+		{
+			in: net.IPNet{
+				IP:   net.ParseIP("0.0.0.0").To4(),
+				Mask: net.CIDRMask(0, 32),
+			},
+			out: net.ParseIP("255.255.255.255"),
+		},
+	}
+
+	var out net.IP
+	for i, c := range cases {
+		if out = lastIP(&c.in); out.String() != c.out.String() {
+			t.Errorf("test case %d: expected %s but got %s", i, c.out, out)
+		}
+	}
 }
