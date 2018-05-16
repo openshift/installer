@@ -1,7 +1,7 @@
 example_cli_configs = glob(["tectonic.*.yaml"])
 
 filegroup(
-    name= "tectonic_cli_examples",
+    name = "tectonic_cli_examples",
     srcs = example_cli_configs,
     visibility = ["//visibility:public"],
 )

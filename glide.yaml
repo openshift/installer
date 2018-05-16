@@ -1,0 +1,20 @@
+package: github.com/coreos/tectonic-installer
+excludeDirs:
+- tests
+import:
+- package: github.com/ghodss/yaml
+  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
+- package: github.com/Sirupsen/logrus
+  version: 081307d9bc1364753142d5962fc1d795c742baaf
+- package: gopkg.in/yaml.v2
+  version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
+- package: gopkg.in/alecthomas/kingpin.v2
+  version: 947dcec5ba9c011838740e680966fd7087a71d0d
+- package: github.com/coreos/tectonic-config
+  version: 22c2fde25b6bd804166bb9dea5e62c16ef2e4900
+- package: k8s.io/apimachinery
+  version: kubernetes-1.9.0
+- package: golang.org/x/crypto
+  version: 5dc8cb4b8a8eb076cbb5a06bc3b8682c15bdbbd3
+- package: github.com/coreos/ignition
+  version: v0.23.0

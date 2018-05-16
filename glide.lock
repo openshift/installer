@@ -1,0 +1,158 @@
+hash: ec830afeeb6935f39288c7e9f2d6adcf691df1fd0173d6161a41d48a4192bedc
+updated: 2018-05-16T14:21:21.291519+02:00
+imports:
+- name: github.com/ajeddeloh/go-json
+  version: 73d058cf8437a1989030afe571eeab9f90eebbbd
+- name: github.com/alecthomas/template
+  version: a0175ee3bccc567396460bf5acd36800cb10c49c
+  subpackages:
+  - parse
+- name: github.com/alecthomas/units
+  version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
+- name: github.com/apparentlymart/go-cidr
+  version: 2bd8b58cf4275aeb086ade613de226773e29e853
+  subpackages:
+  - cidr
+- name: github.com/coreos/go-semver
+  version: 294930c1e79c64e7dbe360054274fdad492c8cf5
+  subpackages:
+  - semver
+- name: github.com/coreos/go-systemd
+  version: 40e2722dffead74698ca12a750f64ef313ddce05
+  subpackages:
+  - dbus
+  - unit
+- name: github.com/coreos/ignition
+  version: bd3876b8f1d627625fe266a0e35256ba05e664e3
+  subpackages:
+  - config/errors
+  - config/util
+  - config/v1
+  - config/v1/types
+  - config/v2_0
+  - config/v2_0/types
+  - config/v2_3_experimental/types
+  - config/validate
+  - config/validate/astjson
+  - config/validate/astnode
+  - config/validate/report
+- name: github.com/coreos/tectonic-config
+  version: 22c2fde25b6bd804166bb9dea5e62c16ef2e4900
+  subpackages:
+  - config/kube-addon
+  - config/kube-core
+  - config/tectonic-network
+  - config/tectonic-node-controller
+  - config/tectonic-utility
+- name: github.com/emicklei/go-restful
+  version: ff4f55a206334ef123e4f79bbf348980da81ca46
+  subpackages:
+  - log
+- name: github.com/ghodss/yaml
+  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
+- name: github.com/go-openapi/jsonpointer
+  version: 46af16f9f7b149af66e5d1bd010e3574dc06de98
+- name: github.com/go-openapi/jsonreference
+  version: 13c6e3589ad90f49bd3e3bbe2c2cb3d7a4142272
+- name: github.com/go-openapi/spec
+  version: 7abd5745472fff5eb3685386d5fb8bf38683154d
+- name: github.com/go-openapi/swag
+  version: f3f9494671f93fcff853e3c6e9e948b3eb71e590
+- name: github.com/gogo/protobuf
+  version: c0656edd0d9eab7c66d1eb0c568f9039345796f7
+  subpackages:
+  - proto
+  - sortkeys
+- name: github.com/golang/glog
+  version: 44145f04b68cf362d9c4df2182967c2275eaefed
+- name: github.com/google/gofuzz
+  version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
+- name: github.com/mailru/easyjson
+  version: 2f5df55504ebc322e4d52d34df6a1f5b503bf26d
+  subpackages:
+  - buffer
+  - jlexer
+  - jwriter
+- name: github.com/PuerkitoBio/purell
+  version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
+- name: github.com/PuerkitoBio/urlesc
+  version: 5bd2802263f21d8788851d5305584c82a5c75d7e
+- name: github.com/Sirupsen/logrus
+  version: 081307d9bc1364753142d5962fc1d795c742baaf
+- name: github.com/spf13/pflag
+  version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
+- name: github.com/vincent-petithory/dataurl
+  version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
+- name: go4.org
+  version: 03efcb870d84809319ea509714dd6d19a1498483
+  subpackages:
+  - errorutil
+- name: golang.org/x/crypto
+  version: 5dc8cb4b8a8eb076cbb5a06bc3b8682c15bdbbd3
+  subpackages:
+  - bcrypt
+  - blowfish
+- name: golang.org/x/net
+  version: 1c05540f6879653db88113bc4a2b70aec4bd491f
+  subpackages:
+  - html
+  - html/atom
+  - http2
+  - http2/hpack
+  - idna
+  - lex/httplex
+  - websocket
+- name: golang.org/x/sys
+  version: 7c87d13f8e835d2fb3a70a2912c811ed0c1d241b
+  subpackages:
+  - unix
+- name: golang.org/x/text
+  version: b19bf474d317b857955b12035d2c5acb57ce8b01
+  subpackages:
+  - cases
+  - internal
+  - internal/tag
+  - language
+  - runes
+  - secure/bidirule
+  - secure/precis
+  - transform
+  - unicode/bidi
+  - unicode/norm
+  - width
+- name: gopkg.in/alecthomas/kingpin.v2
+  version: 947dcec5ba9c011838740e680966fd7087a71d0d
+- name: gopkg.in/inf.v0
+  version: 3887ee99ecf07df5b447e9b00d9c0b2adaa9f3e4
+- name: gopkg.in/yaml.v2
+  version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
+- name: k8s.io/apimachinery
+  version: 180eddb345a5be3a157cea1c624700ad5bd27b8f
+  subpackages:
+  - pkg/api/resource
+  - pkg/apis/meta/v1
+  - pkg/conversion
+  - pkg/conversion/queryparams
+  - pkg/fields
+  - pkg/labels
+  - pkg/runtime
+  - pkg/runtime/schema
+  - pkg/selection
+  - pkg/types
+  - pkg/util/errors
+  - pkg/util/intstr
+  - pkg/util/json
+  - pkg/util/net
+  - pkg/util/runtime
+  - pkg/util/sets
+  - pkg/util/validation
+  - pkg/util/validation/field
+  - pkg/util/wait
+  - pkg/watch
+  - third_party/forked/golang/reflect
+- name: k8s.io/kube-openapi
+  version: 39a7bf85c140f972372c2a0d1ee40adbf0c8bfe1
+  subpackages:
+  - pkg/common
+  - pkg/util/proto
+testImports: []

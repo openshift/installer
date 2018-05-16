@@ -1,13 +1,5 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
-go_test(
-    name = "go_default_test",
-    size = "small",
-    srcs = ["validate_test.go"],
-    data = glob(["fixtures/**"]),
-    embed = [":go_default_library"],
-)
-
 go_library(
     name = "go_default_library",
     srcs = [
@@ -28,9 +20,17 @@ go_library(
         "//installer/pkg/config/openstack:go_default_library",
         "//installer/pkg/config/vmware:go_default_library",
         "//installer/pkg/validate:go_default_library",
-        "//installer/vendor/github.com/coreos/ignition/config/v2_0:go_default_library",
-        "//installer/vendor/github.com/coreos/tectonic-config/config/tectonic-network:go_default_library",
-        "//installer/vendor/github.com/Sirupsen/logrus:go_default_library",
-        "//installer/vendor/gopkg.in/yaml.v2:go_default_library",
+        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/github.com/coreos/ignition/config/v2_0:go_default_library",
+        "//vendor/github.com/coreos/tectonic-config/config/tectonic-network:go_default_library",
+        "//vendor/gopkg.in/yaml.v2:go_default_library",
     ],
+)
+
+go_test(
+    name = "go_default_test",
+    size = "small",
+    srcs = ["validate_test.go"],
+    data = glob(["fixtures/**"]),
+    embed = [":go_default_library"],
 )
