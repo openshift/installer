@@ -1,6 +1,6 @@
 name: test
 baseDomain: cluster.com
-platform: AWS
+platform: aws
 networking:
   type: canal
   mtu: 1480

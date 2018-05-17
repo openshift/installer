@@ -331,6 +331,72 @@ func TestSharedNodePool(t *testing.T) {
 	}
 }
 
+func TestTNCS3BucketNames(t *testing.T) {
+	cases := []struct {
+		cluster Cluster
+		err     bool
+	}{
+		{
+			cluster: Cluster{},
+			err:     false,
+		},
+		{
+			cluster: Cluster{
+				Platform: PlatformAWS,
+			},
+			err: true,
+		},
+		{
+			cluster: Cluster{
+				Platform: PlatformLibvirt,
+			},
+			err: false,
+		},
+		{
+			cluster: Cluster{
+				Name:       "foo",
+				BaseDomain: "example.com",
+				Platform:   PlatformAWS,
+			},
+			err: false,
+		},
+		{
+			cluster: Cluster{
+				Name:       ".foo",
+				BaseDomain: "example.com",
+				Platform:   PlatformAWS,
+			},
+			err: true,
+		},
+		{
+			cluster: Cluster{
+				Name:       "foo",
+				BaseDomain: "example.com.",
+				Platform:   PlatformAWS,
+			},
+			err: true,
+		},
+		{
+			cluster: Cluster{
+				Name:       "foo",
+				BaseDomain: "012345678901234567890123456789012345678901234567890123456789.com",
+				Platform:   PlatformAWS,
+			},
+			err: true,
+		},
+	}
+
+	for i, c := range cases {
+		if err := c.cluster.validateTNCS3Bucket(); (err != nil) != c.err {
+			no := "no"
+			if c.err {
+				no = "an"
+			}
+			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
+		}
+	}
+}
+
 func TestValidateIgnitionFiles(t *testing.T) {
 	c := Cluster{
 		NodePools: NodePools{

@@ -1,5 +1,5 @@
 name: test
-platform: AWS
+platform: aws
 baseDomain: cluster.com
 etcd:
   nodePools:
