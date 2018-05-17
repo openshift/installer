@@ -11,8 +11,6 @@ import (
 
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
 	configgenerator "github.com/coreos/tectonic-installer/installer/pkg/config-generator"
-
-	log "github.com/Sirupsen/logrus"
 )
 
 const (
@@ -149,17 +147,6 @@ func readClusterConfig(configFilePath string, internalFilePath string) (*config.
 	return cfg, nil
 }
 
-func getClusterNameFromConfig(configFilePath string) (*string, error) {
-	if configFilePath == "" {
-		return nil, errors.New("no configFilePath given for getting cluster Name")
-	}
-	cluster, err := readClusterConfig(configFilePath, "")
-	if err != nil {
-		return nil, fmt.Errorf("failed to read cluster config for while getting cluster name: %v", err)
-	}
-	return &cluster.Name, nil
-}
-
 func readClusterConfigStep(m *metadata) error {
 	if m.clusterDir == "" {
 		errors.New("no cluster dir given for reading config")
@@ -172,12 +159,8 @@ func readClusterConfigStep(m *metadata) error {
 		return err
 	}
 
-	if errs := cluster.Validate(); len(errs) != 0 {
-		log.Errorf("Found %d errors in the cluster definition:", len(errs))
-		for i, err := range errs {
-			log.Errorf("error %d: %v", i+1, err)
-		}
-		return fmt.Errorf("found %d cluster definition errors", len(errs))
+	if err := cluster.ValidateAndLog(); err != nil {
+		return err
 	}
 
 	m.cluster = *cluster
