@@ -53,7 +53,7 @@ variable "api_ip_addresses" {
   type        = "list"
 }
 
-variable "tectonic_extra_tags" {
+variable "extra_tags" {
   type        = "map"
   description = "(optional) Extra tags to be applied to created resources."
 }
@@ -70,7 +70,7 @@ EOF
   default = false
 }
 
-variable "tectonic_external_vpc_id" {
+variable "external_vpc_id" {
   type = "string"
 
   description = <<EOF
@@ -81,28 +81,23 @@ Example: `vpc-123456`
 EOF
 }
 
-variable "tectonic_private_endpoints" {
+variable "private_endpoints" {
   description = <<EOF
 (optional) If set to true, create private-facing ingress resources (ELB, A-records).
 If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone.
 EOF
 }
 
-variable "tectonic_public_endpoints" {
+variable "public_endpoints" {
   description = <<EOF
 (optional) If set to true, create public-facing ingress resources (ELB, A-records).
 If set to false, no public-facing ingress resources will be created.
 EOF
 }
 
-variable "tectonic_external_private_zone" {
-  description = <<EOF
-(optional) If set, the given Route53 zone ID will be used as the internal (private) zone.
-This zone will be used to create etcd DNS records as well as internal API and internal Ingress records.
-If set, no additional private zone will be created.
-
-# Example: `"Z1ILINNUJGTAO1"`
-EOF
+variable "private_zone_id" {
+  description = "Route53 Private Zone ID"
+  type        = "string"
 }
 
 variable "api_external_elb_dns_name" {

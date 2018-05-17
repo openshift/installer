@@ -20,6 +20,7 @@ module "container_linux" {
 
 # TNC
 resource "aws_route53_zone" "tectonic_int" {
+  count         = "${var.tectonic_aws_private_endpoints ? "${var.tectonic_aws_external_private_zone == "" ? 1 : 0 }" : 0}"
   vpc_id        = "${module.vpc.vpc_id}"
   name          = "${var.tectonic_base_domain}"
   force_destroy = true
@@ -56,21 +57,21 @@ module "vpc" {
 module "dns" {
   source = "../../../modules/dns/route53"
 
-  api_external_elb_dns_name      = "${module.vpc.aws_api_external_dns_name}"
-  api_external_elb_zone_id       = "${module.vpc.aws_elb_api_external_zone_id}"
-  api_internal_elb_dns_name      = "${module.vpc.aws_api_internal_dns_name}"
-  api_internal_elb_zone_id       = "${module.vpc.aws_elb_api_internal_zone_id}"
-  api_ip_addresses               = "${module.vpc.aws_lbs}"
-  base_domain                    = "${var.tectonic_base_domain}"
-  cluster_id                     = "${var.tectonic_cluster_id}"
-  cluster_name                   = "${var.tectonic_cluster_name}"
-  console_elb_dns_name           = "${module.vpc.aws_console_dns_name}"
-  console_elb_zone_id            = "${module.vpc.aws_elb_console_zone_id}"
-  elb_alias_enabled              = true
-  master_count                   = "${var.tectonic_master_count}"
-  tectonic_external_private_zone = "${join("", aws_route53_zone.tectonic_int.*.zone_id)}"
-  tectonic_external_vpc_id       = "${module.vpc.vpc_id}"
-  tectonic_extra_tags            = "${var.tectonic_aws_extra_tags}"
-  tectonic_private_endpoints     = "${var.tectonic_aws_private_endpoints}"
-  tectonic_public_endpoints      = "${var.tectonic_aws_public_endpoints}"
+  api_external_elb_dns_name = "${module.vpc.aws_api_external_dns_name}"
+  api_external_elb_zone_id  = "${module.vpc.aws_elb_api_external_zone_id}"
+  api_internal_elb_dns_name = "${module.vpc.aws_api_internal_dns_name}"
+  api_internal_elb_zone_id  = "${module.vpc.aws_elb_api_internal_zone_id}"
+  api_ip_addresses          = "${module.vpc.aws_lbs}"
+  base_domain               = "${var.tectonic_base_domain}"
+  cluster_id                = "${var.tectonic_cluster_id}"
+  cluster_name              = "${var.tectonic_cluster_name}"
+  console_elb_dns_name      = "${module.vpc.aws_console_dns_name}"
+  console_elb_zone_id       = "${module.vpc.aws_elb_console_zone_id}"
+  elb_alias_enabled         = true
+  master_count              = "${var.tectonic_master_count}"
+  private_zone_id           = "${var.tectonic_aws_external_private_zone != "" ? var.tectonic_aws_external_private_zone : join("", aws_route53_zone.tectonic_int.*.zone_id)}"
+  external_vpc_id           = "${module.vpc.vpc_id}"
+  extra_tags                = "${var.tectonic_aws_extra_tags}"
+  private_endpoints         = "${var.tectonic_aws_private_endpoints}"
+  public_endpoints          = "${var.tectonic_aws_public_endpoints}"
 }
