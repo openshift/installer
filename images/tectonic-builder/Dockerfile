@@ -20,8 +20,7 @@ RUN go get github.com/jstemmer/go-junit-report
 
 ### Tools used by 'make structure-check'
 RUN go get github.com/segmentio/terraform-docs
-RUN go get github.com/coreos/tectonic-installer/contrib/terraform-examples && \
-    rm -rf /go/src/github.com/coreos/tectonic-installer/
+RUN rm -rf /go/src/github.com/coreos/tectonic-installer/
 RUN go get github.com/bronze1man/yaml2json
 
 ### License parser
