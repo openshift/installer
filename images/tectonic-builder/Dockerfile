@@ -19,7 +19,6 @@ RUN go get -u github.com/golang/lint/golint
 RUN go get github.com/jstemmer/go-junit-report
 
 ### Tools used by 'make structure-check'
-RUN go get github.com/segmentio/terraform-docs
 RUN rm -rf /go/src/github.com/coreos/tectonic-installer/
 RUN go get github.com/bronze1man/yaml2json
 
