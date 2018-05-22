@@ -110,8 +110,7 @@ variable "tectonic_versions" {
 }
 
 variable "tectonic_service_cidr" {
-  type    = "string"
-  default = "10.3.0.0/16"
+  type = "string"
 
   description = <<EOF
 (optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation.
@@ -120,8 +119,7 @@ EOF
 }
 
 variable "tectonic_cluster_cidr" {
-  type    = "string"
-  default = "10.2.0.0/16"
+  type = "string"
 
   description = "(optional) This declares the IP range to assign Kubernetes pod IPs in CIDR notation."
 }
@@ -410,8 +408,6 @@ EOF
 }
 
 variable "tectonic_networking" {
-  default = "canal"
-
   description = <<EOF
 (optional) Configures the network to be used in Tectonic. One of the following values can be used:
 

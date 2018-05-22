@@ -1,12 +1,17 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"strings"
 
 	ignconfig "github.com/coreos/ignition/config/v2_0"
+	"github.com/coreos/tectonic-config/config/tectonic-network"
+
+	"github.com/coreos/tectonic-installer/installer/pkg/validate"
 )
 
 // ErrUnmatchedNodePool is returned when a nodePool was specified but not found in the nodePools list.
@@ -66,7 +71,63 @@ func (c *Cluster) Validate() []error {
 	var errs []error
 	errs = append(errs, c.validateNodePools()...)
 	errs = append(errs, c.validateIgnitionFiles()...)
+	errs = append(errs, c.validateNetworking()...)
+
 	return errs
+}
+
+func (c *Cluster) validateNetworking() []error {
+	var errs []error
+	// https://en.wikipedia.org/wiki/Maximum_transmission_unit#MTUs_for_common_media
+	if err := validate.PrefixError("mtu", validate.IntRange(c.Networking.MTU, 68, 64*1024)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.PrefixError("podCIDR", validate.SubnetCIDR(c.Networking.PodCIDR)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.PrefixError("serviceCIDR", validate.SubnetCIDR(c.Networking.ServiceCIDR)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := c.validateNetworkType(); err != nil {
+		errs = append(errs, err)
+	}
+
+	var podOK, serviceOK bool
+	_, pod, err := net.ParseCIDR(c.Networking.PodCIDR)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("invalid pod CIDR %q: %v", c.Networking.PodCIDR, err))
+	} else if err := validate.CanonicalizeIP(&pod.IP); err != nil {
+		errs = append(errs, fmt.Errorf("invalid pod CIDR %q: %v", c.Networking.PodCIDR, err))
+	} else {
+		podOK = true
+	}
+	_, service, err := net.ParseCIDR(c.Networking.ServiceCIDR)
+	if err != nil {
+		errs = append(errs, fmt.Errorf("invalid service CIDR %q: %v", c.Networking.ServiceCIDR, err))
+	} else if err := validate.CanonicalizeIP(&service.IP); err != nil {
+		errs = append(errs, fmt.Errorf("invalid service CIDR %q: %v", c.Networking.ServiceCIDR, err))
+	} else {
+		serviceOK = true
+	}
+	if podOK && serviceOK && validate.CIDRsOverlap(pod, service) {
+		errs = append(errs, errors.New("pod and service CIDRs overlap"))
+	}
+	return errs
+}
+
+func (c *Cluster) validateNetworkType() error {
+	switch tectonicnetwork.NetworkType(c.Networking.Type) {
+	case tectonicnetwork.NetworkNone:
+		fallthrough
+	case tectonicnetwork.NetworkCanal:
+		fallthrough
+	case tectonicnetwork.NetworkFlannel:
+		fallthrough
+	case tectonicnetwork.NetworkCalicoIPIP:
+		return nil
+	default:
+		return fmt.Errorf("invalid network type %q", c.Networking.Type)
+	}
 }
 
 func (c *Cluster) validateIgnitionFiles() []error {

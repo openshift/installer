@@ -29,9 +29,6 @@ master:
     - master
 name: aws-basic
 networking:
-  mtu: 1480
-  podCIDR: 10.2.0.0/16
-  serviceCIDR: 10.3.0.0/16
   type: canal
 nodePools:
   - count: 3

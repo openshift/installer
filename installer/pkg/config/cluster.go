@@ -3,6 +3,7 @@ package config
 import (
 	"encoding/json"
 
+	"github.com/coreos/tectonic-config/config/tectonic-network"
 	"gopkg.in/yaml.v2"
 
 	"github.com/coreos/tectonic-installer/installer/pkg/config/aws"
@@ -23,6 +24,15 @@ const (
 	// IgnitionEtcd is the relative path to the ign etcd cfg from the tf working directory
 	IgnitionEtcd = "ignition-etcd.ign"
 )
+
+var defaultCluster = Cluster{
+	Networking: Networking{
+		MTU:         "1480",
+		PodCIDR:     "10.2.0.0/16",
+		ServiceCIDR: "10.3.0.0/16",
+		Type:        tectonicnetwork.NetworkCanal,
+	},
+}
 
 // Cluster defines the config for a cluster.
 type Cluster struct {
