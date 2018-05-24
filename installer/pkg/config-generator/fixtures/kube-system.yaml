@@ -31,13 +31,13 @@ data:
       additionalConfigs: []
       apiVersion: v1
       baseDomain: cluster.com
-      cloudProvider: aws
       cloudProviderConfig: ""
       clusterDNSIP: 10.3.0.10
       clusterName: test
       etcdInitialCount: 3
       kind: TectonicNodeControllerConfig
       nodePoolUpdateLimit: null
+      platform: aws
     kind: TectonicNodeControllerOperatorConfig
 kind: ConfigMap
 metadata:

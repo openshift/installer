@@ -183,9 +183,9 @@ func (c *ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
 	}
 
 	tncoConfig.ControllerConfig.ClusterDNSIP = cidrhost
-	tncoConfig.ControllerConfig.CloudProvider = c.Platform.String() // This is not actually the cloud provider
-	tncoConfig.ControllerConfig.CloudProviderConfig = ""            // TODO(yifan): Get CloudProviderConfig.
+	tncoConfig.ControllerConfig.CloudProviderConfig = "" // TODO(yifan): Get CloudProviderConfig.
 	tncoConfig.ControllerConfig.ClusterName = c.Cluster.Name
+	tncoConfig.ControllerConfig.Platform = string(c.Cluster.Platform)
 	tncoConfig.ControllerConfig.BaseDomain = c.Cluster.BaseDomain
 	tncoConfig.ControllerConfig.EtcdInitialCount = c.Cluster.NodeCount(c.Cluster.Etcd.NodePools)
 	tncoConfig.ControllerConfig.AdditionalConfigs = []string{} // TODO(yifan): Get additional configs.
