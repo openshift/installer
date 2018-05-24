@@ -49,7 +49,7 @@ alias(
 
 alias(
     name = "cli",
-    actual = "//installer:tectonic",
+    actual = "//installer/cmd/tectonic",
 )
 
 template_files = glob([
@@ -77,12 +77,17 @@ pkg_tar(
     srcs = [
         "//:template_resources",
         "//examples:tectonic_cli_examples",
-        "//installer:tectonic",
     ],
     extension = "tar.gz",
     package_dir = "tectonic-%s" % TECTONIC_VERSION,
     strip_prefix = ".",
-    deps = [":tf_bin"],
+    deps = [":tf_bin", ":cli_bin"],
+)
+
+pkg_tar(
+    name = "cli_bin",
+    srcs = ["//installer/cmd/tectonic"],
+    package_dir = "installer",
 )
 
 filegroup(
