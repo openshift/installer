@@ -9,13 +9,13 @@ tectonic-*.tar.gz
 tectonic-license.txt
 terraform.tfstate*
 terraform.tfvars
-build/
 bin/
 bin_test/
 matchbox/
 /contrib/govcloud/vpn.conf
 
 # Bazel
+.build/
 bazel-bin
 bazel-out
 bazel-genfiles
