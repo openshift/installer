@@ -9,7 +9,6 @@ go_test(
         "common_test.go",
         "smoke_test.go",
     ],
-    importpath = "github.com/coreos/tectonic-installer/tests/smoke/tests/smoke",
     visibility = ["//visibility:public"],
     deps = [
         "//tests/smoke/vendor/github.com/coreos/ktestutil/testworkload:go_default_library",
@@ -36,7 +35,6 @@ go_test(
         "common_test.go",
         "smoke_test.go",
     ],
-    importpath = "github.com/coreos/tectonic-installer/tests/smoke",
     deps = [
         "//tests/smoke/vendor/github.com/coreos/ktestutil/testworkload:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/api/errors:go_default_library",

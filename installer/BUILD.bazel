@@ -18,8 +18,8 @@ go_library(
     visibility = ["//visibility:private"],
     deps = [
         "//installer/pkg/workflow:go_default_library",
-        "//installer/vendor/github.com/Sirupsen/logrus:go_default_library",
-        "//installer/vendor/gopkg.in/alecthomas/kingpin.v2:go_default_library",
+        "//vendor/github.com/Sirupsen/logrus:go_default_library",
+        "//vendor/gopkg.in/alecthomas/kingpin.v2:go_default_library",
     ],
 )
 

@@ -13,13 +13,12 @@ config_setting(
 
 config_setting(
     name = "linux",
-    values = {"cpu": "k8"}, # don't ask...
+    values = {"cpu": "k8"},  # don't ask...
     visibility = ["//visibility:public"],
 )
 
 genrule(
     name = "terraform_runtime_fmt",
-    output_to_bindir = 1,
     srcs = select({
         "//:linux": ["@terraform_runtime_linux//:terraform"],
         "//:darwin": ["@terraform_runtime_darwin//:terraform"],
@@ -27,6 +26,7 @@ genrule(
     outs = ["bin/terraform"],
     cmd = "cp $(<) $(@)",
     executable = True,
+    output_to_bindir = 1,
 )
 
 load("@io_bazel_rules_go//go:def.bzl", "go_prefix")
@@ -38,8 +38,8 @@ load("@bazel_gazelle//:def.bzl", "gazelle")
 gazelle(
     name = "gazelle",
     command = "fix",
-    prefix = "github.com/coreos/tectonic-installer",
     external = "vendored",
+    prefix = "github.com/coreos/tectonic-installer",
 )
 
 alias(
@@ -55,64 +55,67 @@ alias(
 template_files = glob([
     "modules/**/*",
     "steps/**/*",
-    "config.tf"
+    "config.tf",
 ])
 
 exports_files(template_files)
 
 filegroup(
     name = "template_resources",
-    srcs = template_files
+    srcs = template_files,
 )
 
 load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
 
 alias(
     name = "tarball",
-    actual = ":tectonic-%s" % TECTONIC_VERSION
+    actual = ":tectonic-%s" % TECTONIC_VERSION,
 )
 
 pkg_tar(
     name = "tectonic-%s" % TECTONIC_VERSION,
-    strip_prefix = '.',
-    package_dir = "tectonic-%s" % TECTONIC_VERSION,
-    extension = "tar.gz",
     srcs = [
-        "//installer:tectonic",
         "//:template_resources",
         "//examples:tectonic_cli_examples",
+        "//installer:tectonic",
     ],
-    deps = [":tf_bin"]
+    extension = "tar.gz",
+    package_dir = "tectonic-%s" % TECTONIC_VERSION,
+    strip_prefix = ".",
+    deps = [":tf_bin"],
 )
 
-filegroup (
+filegroup(
     name = "terraform_runtime",
     srcs = select({
         "//:linux": ["@terraform_runtime_linux//:terraform"],
         "//:darwin": ["@terraform_runtime_darwin//:terraform"],
-    })
+    }),
 )
 
 pkg_tar(
     name = "tf_bin",
+    srcs = [":terraform_runtime"],
     package_dir = "installer",
-    srcs = [":terraform_runtime"]
 )
 
 filegroup(
     name = "terraform_files",
     srcs = glob(
         ["modules/**/*.tf"],
-        exclude_directories=1,
+        exclude_directories = 1,
     ) + glob(
         ["steps/**/*.tf"],
-        exclude_directories=1,
+        exclude_directories = 1,
     ) + ["config.tf"],
 )
 
 gen_test(
     name = "terraform_fmt",
-    command = "./bin/terraform fmt -list -check -write=false",
-    deps = [":terraform_runtime_fmt", ":terraform_files"],
     size = "small",
+    command = "./bin/terraform fmt -list -check -write=false",
+    deps = [
+        ":terraform_files",
+        ":terraform_runtime_fmt",
+    ],
 )
