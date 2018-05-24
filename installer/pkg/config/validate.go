@@ -8,10 +8,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/coreos/tectonic-installer/installer/pkg/validate"
+
+	log "github.com/Sirupsen/logrus"
 	ignconfig "github.com/coreos/ignition/config/v2_0"
 	"github.com/coreos/tectonic-config/config/tectonic-network"
-
-	"github.com/coreos/tectonic-installer/installer/pkg/validate"
 )
 
 // ErrUnmatchedNodePool is returned when a nodePool was specified but not found in the nodePools list.
@@ -72,7 +73,9 @@ func (c *Cluster) Validate() []error {
 	errs = append(errs, c.validateNodePools()...)
 	errs = append(errs, c.validateIgnitionFiles()...)
 	errs = append(errs, c.validateNetworking()...)
-
+	if err := validate.PrefixError("cluster name", validate.ClusterName(c.Name)); err != nil {
+		errs = append(errs, err)
+	}
 	return errs
 }
 
@@ -128,6 +131,24 @@ func (c *Cluster) validateNetworkType() error {
 	default:
 		return fmt.Errorf("invalid network type %q", c.Networking.Type)
 	}
+}
+
+// ValidateAndLog performs cluster configuration validation using `Validate`
+// but rather than return a slice of errors, it logs any errors and returns
+// a single error for convenience.
+func (c *Cluster) ValidateAndLog() error {
+	if errs := c.Validate(); len(errs) != 0 {
+		s := ""
+		if len(errs) != 1 {
+			s = "s"
+		}
+		log.Errorf("Found %d error%s in the cluster definition:", len(errs), s)
+		for i, err := range errs {
+			log.Errorf("error %d: %v", i+1, err)
+		}
+		return fmt.Errorf("found %d cluster definition error%s", len(errs), s)
+	}
+	return nil
 }
 
 func (c *Cluster) validateIgnitionFiles() []error {
