@@ -264,7 +264,7 @@ pipeline {
                 ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh jenkins-logs
                 """
               } catch (Exception e) {
-                slackSend color: 'warning', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} - cannot send smoke test logs to S3"
+                slackSend color: 'warning', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} - cannot send jenkins logs to S3"
               } finally {
                 cleanWs notFailBuild: true
               }
