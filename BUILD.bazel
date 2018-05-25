@@ -81,7 +81,10 @@ pkg_tar(
     extension = "tar.gz",
     package_dir = "tectonic-%s" % TECTONIC_VERSION,
     strip_prefix = ".",
-    deps = [":tf_bin", ":cli_bin"],
+    deps = [
+        ":cli_bin",
+        ":tf_bin",
+    ],
 )
 
 pkg_tar(
