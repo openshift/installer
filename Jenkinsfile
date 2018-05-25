@@ -101,11 +101,6 @@ pipeline {
       defaultValue: true,
       description: ''
     )
-    booleanParam(
-      name: 'NOTIFY_SLACK',
-      defaultValue: false,
-      description: 'Notify slack channel on failure.'
-    )
     string(
       name: 'SLACK_CHANNEL',
       defaultValue: '#team-installer',
@@ -269,7 +264,7 @@ pipeline {
                 ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh jenkins-logs
                 """
               } catch (Exception e) {
-                notifyBuildSlack()
+                slackSend color: 'warning', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} - cannot send jenkins logs to S3"
               } finally {
                 cleanWs notFailBuild: true
               }
@@ -281,7 +276,7 @@ pipeline {
 
     failure {
       script {
-        notifyBuildSlack()
+        slackSend color: 'danger', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} failed! (<${env.BUILD_URL}|Open>)"
       }
     }
   }
@@ -355,7 +350,7 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
               ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs ${testFilePath}
               """
             } catch (Exception e) {
-              notifyBuildSlack()
+              slackSend color: 'warning', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} - cannot send smoke test logs to S3"
             } finally {
               cleanWs notFailBuild: true
             }
@@ -375,18 +370,4 @@ def reportStatusToGithub(status, context, commitId) {
       ./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} ${context} ${commitId} ${params.GITHUB_REPO}
     """
   }
-}
-
-def notifyBuildSlack() {
-  if (!params.NOTIFY_SLACK) {
-    return
-  }
-  def colorCode = '#FF0000'
-  def subject = "Job '${env.JOB_NAME} [${env.BUILD_NUMBER}]'"
-  def summary = "${subject} (${env.BUILD_URL})"
-
-  // Send notifications
-  echo 'Sending notification to slack...'
-  slackSend(color: colorCode, message: summary, channel: params.SLACK_CHANNEL)
-  echo 'Slack notification sent.'
 }
