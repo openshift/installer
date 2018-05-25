@@ -183,8 +183,8 @@ func (c *ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
 	}
 
 	tncoConfig.ControllerConfig.ClusterDNSIP = cidrhost
-	tncoConfig.ControllerConfig.CloudProvider = strings.ToLower(c.Platform) // This is not actually the cloud provider
-	tncoConfig.ControllerConfig.CloudProviderConfig = ""                    // TODO(yifan): Get CloudProviderConfig.
+	tncoConfig.ControllerConfig.CloudProvider = c.Platform.String() // This is not actually the cloud provider
+	tncoConfig.ControllerConfig.CloudProviderConfig = ""            // TODO(yifan): Get CloudProviderConfig.
 	tncoConfig.ControllerConfig.ClusterName = c.Cluster.Name
 	tncoConfig.ControllerConfig.BaseDomain = c.Cluster.BaseDomain
 	tncoConfig.ControllerConfig.EtcdInitialCount = c.Cluster.NodeCount(c.Cluster.Etcd.NodePools)
@@ -242,7 +242,7 @@ func (c *ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, erro
 	utilityConfig.TectonicConfigMapConfig.ClusterID = c.Cluster.Internal.ClusterID
 	utilityConfig.TectonicConfigMapConfig.ClusterName = c.Cluster.Name
 	utilityConfig.TectonicConfigMapConfig.IdentityAPIService = identityAPIService
-	utilityConfig.TectonicConfigMapConfig.InstallerPlatform = c.Cluster.Platform
+	utilityConfig.TectonicConfigMapConfig.InstallerPlatform = c.Platform.String()
 	utilityConfig.TectonicConfigMapConfig.KubeAPIServerURL = c.getAPIServerURL()
 	// TODO: Speficy what's a version in ut2 and set it here
 	utilityConfig.TectonicConfigMapConfig.TectonicVersion = "ut2"
@@ -368,10 +368,10 @@ func cidrhost(iprange string, hostNum int) (string, error) {
 }
 
 // Converts a platform to the cloudProvider that k8s understands
-func cloudProvider(platform string) string {
-	switch strings.ToLower(platform) {
-	case "aws":
-		return "aws"
+func cloudProvider(platform config.Platform) string {
+	switch platform {
+	case config.PlatformAWS:
+		return platform.String()
 	}
 	return ""
 }

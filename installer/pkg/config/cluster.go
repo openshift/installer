@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/coreos/tectonic-config/config/tectonic-network"
 	"gopkg.in/yaml.v2"
@@ -16,6 +17,9 @@ import (
 	"github.com/coreos/tectonic-installer/installer/pkg/config/vmware"
 )
 
+// Platform indicates the target platform of the cluster.
+type Platform string
+
 const (
 	// IgnitionMaster is the relative path to the ign master cfg from the tf working directory
 	IgnitionMaster = "ignition-master.ign"
@@ -23,6 +27,10 @@ const (
 	IgnitionWorker = "ignition-worker.ign"
 	// IgnitionEtcd is the relative path to the ign etcd cfg from the tf working directory
 	IgnitionEtcd = "ignition-etcd.ign"
+	// PlatformAWS is the platform for a cluster launched on AWS.
+	PlatformAWS = "aws"
+	// PlatformLibvirt is the platform for a cluster launched on libvirt.
+	PlatformLibvirt = "libvirt"
 )
 
 var defaultCluster = Cluster{
@@ -49,9 +57,9 @@ type Cluster struct {
 	Name                string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
 	Networking          `json:",inline" yaml:"networking,omitempty"`
 	NodePools           `json:"-" yaml:"nodePools"`
-	Platform            string `json:"tectonic_platform" yaml:"platform,omitempty"`
-	PullSecretPath      string `json:"tectonic_pull_secret_path,omitempty" yaml:"pullSecretPath,omitempty"`
-	TLSValidityPeriod   int    `json:"tectonic_tls_validity_period,omitempty" yaml:"tlsValidityPeriod,omitempty"`
+	Platform            Platform `json:"tectonic_platform" yaml:"platform,omitempty"`
+	PullSecretPath      string   `json:"tectonic_pull_secret_path,omitempty" yaml:"pullSecretPath,omitempty"`
+	TLSValidityPeriod   int      `json:"tectonic_tls_validity_period,omitempty" yaml:"tlsValidityPeriod,omitempty"`
 	Worker              `json:",inline" yaml:"worker,omitempty"`
 	aws.AWS             `json:",inline" yaml:"aws,omitempty"`
 	azure.Azure         `json:",inline" yaml:"azure,omitempty"`
@@ -92,7 +100,7 @@ func (c *Cluster) TFVars() (string, error) {
 	c.IgnitionEtcd = IgnitionEtcd
 
 	// fill in master ips
-	if c.Platform == "libvirt" {
+	if c.Platform == PlatformLibvirt {
 		if err := c.Libvirt.TFVars(c.Master.Count); err != nil {
 			return "", err
 		}
@@ -132,4 +140,11 @@ func (c *Cluster) YAML() (string, error) {
 	}
 
 	return string(yaml), nil
+}
+
+// String returns the string representation of a platform.
+// This is the representation that should be used for
+// consistent string comparison.
+func (p Platform) String() string {
+	return strings.ToLower(string(p))
 }

@@ -49,13 +49,13 @@ func copyFile(fromFilePath, toFilePath string) error {
 // returns the directory containing templates for a given step. If platform is
 // specified, it looks for a subdirectory with platform first, falling back if
 // there are no platform-specific templates for that step
-func findStepTemplates(stepName, platform string) (string, error) {
+func findStepTemplates(stepName string, platform config.Platform) (string, error) {
 	base, err := baseLocation()
 	if err != nil {
 		return "", fmt.Errorf("error looking up step %s templates: %v", stepName, err)
 	}
 	for _, path := range []string{
-		filepath.Join(base, stepsBaseDir, stepName, platform),
+		filepath.Join(base, stepsBaseDir, stepName, platform.String()),
 		filepath.Join(base, stepsBaseDir, stepName)} {
 
 		stat, err := os.Stat(path)
