@@ -1,2 +1,2 @@
-startup --output_base build
+startup --output_base .build
 build --color=yes --workspace_status_command "${PWD}/buildvars.sh"
