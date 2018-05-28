@@ -101,6 +101,11 @@ pipeline {
       defaultValue: true,
       description: ''
     )
+    booleanParam(
+      name: 'NOTIFY_SLACK',
+      defaultValue: false,
+      description: 'Notify slack channel on failure.'
+    )
     string(
       name: 'SLACK_CHANNEL',
       defaultValue: '#team-installer',
@@ -264,7 +269,9 @@ pipeline {
                 ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh jenkins-logs
                 """
               } catch (Exception e) {
-                slackSend color: 'warning', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} - cannot send jenkins logs to S3"
+                if (params.NOTIFY_SLACK) {
+                  slackSend color: 'warning', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} - cannot send jenkins logs to S3"
+                }
               } finally {
                 cleanWs notFailBuild: true
               }
@@ -276,7 +283,9 @@ pipeline {
 
     failure {
       script {
-        slackSend color: 'danger', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} failed! (<${env.BUILD_URL}|Open>)"
+        if (params.NOTIFY_SLACK) {
+          slackSend color: 'danger', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} failed! (<${env.BUILD_URL}|Open>)"
+        }
       }
     }
   }
@@ -350,7 +359,9 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
               ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs ${testFilePath}
               """
             } catch (Exception e) {
-              slackSend color: 'warning', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} - cannot send smoke test logs to S3"
+              if (params.NOTIFY_SLACK) {
+                slackSend color: 'warning', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} - cannot send smoke test logs to S3"
+              }
             } finally {
               cleanWs notFailBuild: true
             }
