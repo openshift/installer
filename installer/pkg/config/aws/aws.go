@@ -2,7 +2,6 @@ package aws
 
 // AWS converts AWS related config.
 type AWS struct {
-	AssetsS3BucketName        string              `json:"tectonic_aws_assets_s3_bucket_name,omitempty" yaml:"assetsS3BucketName,omitempty"`
 	AutoScalingGroupExtraTags []map[string]string `json:"tectonic_autoscaling_group_extra_tags,omitempty" yaml:"autoScalingGroupExtraTags,omitempty"`
 	EC2AMIOverride            string              `json:"tectonic_aws_ec2_ami_override,omitempty" yaml:"ec2AMIOverride,omitempty"`
 	Etcd                      `json:",inline" yaml:"etcd,omitempty"`
@@ -10,9 +9,9 @@ type AWS struct {
 	ExtraTags                 map[string]string `json:"tectonic_aws_extra_tags,omitempty" yaml:"extraTags,omitempty"`
 	InstallerRole             string            `json:"tectonic_aws_installer_role,omitempty" yaml:"installerRole,omitempty"`
 	Master                    `json:",inline" yaml:"master,omitempty"`
-	PrivateEndpoints          *bool   `json:"tectonic_aws_private_endpoints,omitempty" yaml:"privateEndpoints,omitempty"`
+	PrivateEndpoints          *bool  `json:"tectonic_aws_private_endpoints,omitempty" yaml:"privateEndpoints,omitempty"`
 	Profile                   string `json:"tectonic_aws_profile,omitempty" yaml:"profile,omitempty"`
-	PublicEndpoints           *bool   `json:"tectonic_aws_public_endpoints,omitempty" yaml:"publicEndpoints,omitempty"`
+	PublicEndpoints           *bool  `json:"tectonic_aws_public_endpoints,omitempty" yaml:"publicEndpoints,omitempty"`
 	Region                    string `json:"tectonic_aws_region,omitempty" yaml:"region,omitempty"`
 	SSHKey                    string `json:"tectonic_aws_ssh_key,omitempty" yaml:"sshKey,omitempty"`
 	VPCCIDRBlock              string `json:"tectonic_aws_vpc_cidr_block,omitempty" yaml:"vpcCIDRBlock,omitempty"`
