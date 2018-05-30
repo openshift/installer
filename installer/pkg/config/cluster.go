@@ -49,7 +49,6 @@ type Cluster struct {
 	CA                  `json:",inline" yaml:"ca,omitempty"`
 	ContainerLinux      `json:",inline" yaml:"containerLinux,omitempty"`
 	CustomCAPEMList     string `json:"tectonic_custom_ca_pem_list,omitempty" yaml:"customCAPEMList,omitempty"`
-	DDNS                `json:",inline" yaml:"ddns,omitempty"`
 	Etcd                `json:",inline" yaml:"etcd,omitempty"`
 	Internal            `json:",inline" yaml:"-"`
 	LicensePath         string `json:"tectonic_license_path,omitempty" yaml:"licensePath,omitempty"`

@@ -19,19 +19,6 @@ type ContainerLinux struct {
 	Version string `json:"tectonic_container_linux_version,omitempty" yaml:"version,omitempty"`
 }
 
-// DDNS converts ddns related config.
-type DDNS struct {
-	Key    `json:",inline" yaml:"key,omitempty"`
-	Server string `json:"tectonic_ddns_server,omitempty" yaml:"secret,omitempty"`
-}
-
-// Key converts key related config.
-type Key struct {
-	Algorithm string `json:"tectonic_ddns_key_algorithm,omitempty" yaml:"algorithm,omitempty"`
-	Name      string `json:"tectonic_ddns_key_name,omitempty" yaml:"name,omitempty"`
-	Secret    string `json:"tectonic_ddns_key_secret,omitempty" yaml:"secret,omitempty"`
-}
-
 // Etcd converts etcd related config.
 type Etcd struct {
 	Count     int `json:"tectonic_etcd_count,omitempty" yaml:"-"`

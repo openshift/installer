@@ -52,31 +52,6 @@ containerLinux:
   # (optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes.
   # customCAPEMList:
 
-ddns:
-  key:
-    # (optional) This only applies if you use the modules/dns/ddns module.
-    #
-    # Specifies the RFC2136 Dynamic DNS server key algorithm.
-    # algorithm:
-
-    # (optional) This only applies if you use the modules/dns/ddns module.
-    #
-    # Specifies the RFC2136 Dynamic DNS server key name.
-    # name:
-
-    # (optional) This only applies if you use the modules/dns/ddns module.
-    #
-    # Specifies the RFC2136 Dynamic DNS server key secret.
-    # secret:
-
-  # (optional) This only applies if you use the modules/dns/ddns module.
-  #
-  # Specifies the RFC2136 Dynamic DNS server IP/host to register IP addresses to.
-  # server:
-
-# (optional) DNS prefix used to construct the console and API server endpoints.
-# dnsName:
-
 etcd:
   nodePools:
     - etcd
