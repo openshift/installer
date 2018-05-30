@@ -32,11 +32,6 @@ variable "extra_tags" {
   default     = {}
 }
 
-variable "enable_etcd_sg" {
-  description = "If set to true, security groups for etcd nodes are being created"
-  default     = true
-}
-
 variable "new_master_subnet_configs" {
   description = "{az_name = new_subnet_cidr}: Empty map means create new subnets in all availability zones in region with generated cidrs"
   type        = "map"

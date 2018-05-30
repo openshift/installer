@@ -4,8 +4,7 @@ module assets_base {
   source = "../base"
 
   cloud_provider = ""
-  etcd_count     = "${length(var.tectonic_etcd_servers) > 0 ? length(var.tectonic_etcd_servers) : (
-			var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : 1)}"
+  etcd_count     = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : 1}"
 
   ingress_kind = "HostPort"
 
@@ -16,7 +15,6 @@ module assets_base {
   tectonic_custom_ca_pem_list   = "${var.tectonic_custom_ca_pem_list}"
   tectonic_image_re             = "${var.tectonic_image_re}"
   tectonic_kubelet_debug_config = "${var.tectonic_kubelet_debug_config}"
-  tectonic_etcd_servers         = "${var.tectonic_etcd_servers}"
   tectonic_cluster_cidr         = "${var.tectonic_cluster_cidr}"
   tectonic_service_cidr         = "${var.tectonic_service_cidr}"
   tectonic_networking           = "${var.tectonic_networking}"

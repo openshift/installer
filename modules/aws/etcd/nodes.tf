@@ -26,8 +26,7 @@ data "aws_ami" "coreos_ami" {
 }
 
 resource "aws_iam_instance_profile" "etcd" {
-  count = "${length(var.external_endpoints) == 0 ? 1 : 0}"
-  name  = "${var.cluster_name}-etcd-profile"
+  name = "${var.cluster_name}-etcd-profile"
 
   role = "${var.etcd_iam_role == "" ?
     join("|", aws_iam_role.etcd_role.*.name) :
@@ -41,7 +40,7 @@ data "aws_iam_role" "etcd_role" {
 }
 
 resource "aws_iam_role" "etcd_role" {
-  count = "${length(var.external_endpoints) == 0 && var.etcd_iam_role == "" ? 1 : 0}"
+  count = "${var.etcd_iam_role == "" ? 1 : 0}"
   name  = "${var.cluster_name}-etcd-role"
   path  = "/"
 
@@ -99,7 +98,7 @@ EOF
 }
 
 resource "aws_instance" "etcd_node" {
-  count = "${length(var.external_endpoints) == 0 ? var.instance_count : 0}"
+  count = "${var.instance_count}"
   ami   = "${coalesce(var.ec2_ami, data.aws_ami.coreos_ami.image_id)}"
 
   iam_instance_profile   = "${aws_iam_instance_profile.etcd.name}"

@@ -17,7 +17,7 @@ module assets_base {
   source = "../base"
 
   cloud_provider = "aws"
-  etcd_count     = "${length(var.tectonic_etcd_servers) > 0 ? length(var.tectonic_etcd_servers) : (var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3)}"
+  etcd_count     = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
   ingress_kind   = "NodePort"
 
   tectonic_base_domain          = "${var.tectonic_base_domain}"
@@ -27,7 +27,6 @@ module assets_base {
   tectonic_custom_ca_pem_list   = "${var.tectonic_custom_ca_pem_list}"
   tectonic_image_re             = "${var.tectonic_image_re}"
   tectonic_kubelet_debug_config = "${var.tectonic_kubelet_debug_config}"
-  tectonic_etcd_servers         = "${var.tectonic_etcd_servers}"
   tectonic_cluster_cidr         = "${var.tectonic_cluster_cidr}"
   tectonic_service_cidr         = "${var.tectonic_service_cidr}"
   tectonic_networking           = "${var.tectonic_networking}"

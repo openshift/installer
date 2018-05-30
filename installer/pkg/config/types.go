@@ -23,17 +23,8 @@ type ContainerLinux struct {
 
 // Etcd converts etcd related config.
 type Etcd struct {
-	Count     int `json:"tectonic_etcd_count,omitempty" yaml:"-"`
-	External  `json:",inline" yaml:"external,omitempty"`
+	Count     int      `json:"tectonic_etcd_count,omitempty" yaml:"-"`
 	NodePools []string `json:"-" yaml:"nodePools"`
-}
-
-// External converts external related config.
-type External struct {
-	CACertPath     string   `json:"tectonic_etcd_ca_cert_path,omitempty" yaml:"caCertPath,omitempty"`
-	ClientCertPath string   `json:"tectonic_etcd_client_cert_path,omitempty" yaml:"clientCertPath,omitempty"`
-	ClientKeyPath  string   `json:"tectonic_etcd_client_key_path,omitempty" yaml:"clientKeyPath,omitempty"`
-	Servers        []string `json:"tectonic_etcd_servers,omitempty" yaml:"servers,omitempty"`
 }
 
 // NodePool converts node pool related config.
