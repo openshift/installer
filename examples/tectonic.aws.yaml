@@ -300,7 +300,7 @@ nodePools:
     # If set to zero, the count of etcd nodes will be determined automatically.
     #
     # Note: This is not supported on bare metal.
-  - count: 0
+  - count: 3
     name: etcd
 
     # The number of master nodes to be created.
