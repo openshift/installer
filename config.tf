@@ -331,7 +331,7 @@ variable "tectonic_ca_cert" {
   default = ""
 
   description = <<EOF
-(optional) The content of the PEM-encoded CA certificate, used to generate Tectonic Console's server certificate.
+(optional) The content of the PEM-encoded CA certificate, used to generate all cluster certificates.
 If left blank, a CA certificate will be automatically generated.
 EOF
 }
@@ -341,7 +341,7 @@ variable "tectonic_ca_key" {
   default = ""
 
   description = <<EOF
-(optional) The content of the PEM-encoded CA key, used to generate Tectonic Console's server certificate.
+(optional) The content of the PEM-encoded CA key, used to generate Tectonic all cluster certificates.
 This field is mandatory if `tectonic_ca_cert` is set.
 EOF
 }
