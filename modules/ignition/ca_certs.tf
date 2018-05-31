@@ -49,17 +49,3 @@ data "ignition_file" "ingress_ca_cert_pem" {
     content = "${var.ingress_ca_cert_pem}"
   }
 }
-
-data "ignition_file" "custom_ca_cert_pem" {
-  count = "${length(var.custom_ca_cert_pem_list)}"
-
-  filesystem = "root"
-  path       = "/etc/ssl/certs/custom_ca_${count.index}.pem"
-  mode       = 0444
-  uid        = 0
-  gid        = 0
-
-  content {
-    content = "${var.custom_ca_cert_pem_list[count.index]}"
-  }
-}

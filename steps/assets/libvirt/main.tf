@@ -13,7 +13,6 @@ module assets_base {
   tectonic_bootstrap_upgrade_cl = "${var.tectonic_bootstrap_upgrade_cl}"
   tectonic_cluster_name         = "${var.tectonic_cluster_name}"
   tectonic_container_images     = "${var.tectonic_container_images}"
-  tectonic_custom_ca_pem_list   = "${var.tectonic_custom_ca_pem_list}"
   tectonic_image_re             = "${var.tectonic_image_re}"
   tectonic_kubelet_debug_config = "${var.tectonic_kubelet_debug_config}"
   tectonic_etcd_servers         = "${var.tectonic_etcd_servers}"

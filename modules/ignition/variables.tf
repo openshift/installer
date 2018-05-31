@@ -81,8 +81,3 @@ variable "etcd_ca_cert_pem" {
   type        = "string"
   description = "The etcd kube CA certificate in PEM format."
 }
-
-variable "custom_ca_cert_pem_list" {
-  type        = "list"
-  description = "(optional) A list of custom CAs in PEM format."
-}

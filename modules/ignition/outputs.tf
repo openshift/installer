@@ -7,7 +7,6 @@ output "ca_cert_pem_list" {
     "${var.root_ca_cert_pem}",
     "${var.ingress_ca_cert_pem}",
     "${var.etcd_ca_cert_pem}",
-    "${var.custom_ca_cert_pem_list}",
   ]
 }
 
@@ -19,16 +18,13 @@ output "etcd_crt_id_list" {
 }
 
 output "ignition_file_id_list" {
-  value = ["${flatten(list(
-    data.ignition_file.custom_ca_cert_pem.*.id,
-    list(
-      data.ignition_file.root_ca_cert_pem.id,
-      data.ignition_file.ingress_ca_cert_pem.id,
-      data.ignition_file.etcd_ca_cert_pem.id,
-      data.ignition_file.installer_kubelet_env.id,
-      data.ignition_file.installer_runtime_mappings.id,
-    ),
-  ))}"]
+  value = [
+    "${data.ignition_file.root_ca_cert_pem.id}",
+    "${data.ignition_file.ingress_ca_cert_pem.id}",
+    "${data.ignition_file.etcd_ca_cert_pem.id}",
+    "${data.ignition_file.installer_kubelet_env.id}",
+    "${data.ignition_file.installer_runtime_mappings.id}",
+  ]
 }
 
 output "ignition_systemd_id_list" {
