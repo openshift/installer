@@ -157,7 +157,7 @@ pipeline {
                   }
 
                   echo "originalCommitId: ${originalCommitId}"
-                  stash name: 'clean-repo', excludes: 'installer/vendor/**,tests/smoke/vendor/**'
+                  stash name: 'clean-repo', excludes: 'vendor/**,tests/smoke/vendor/**'
 
                   withDockerContainer(tectonicBazelImage) {
                     sh "bazel test terraform_fmt --test_output=all"
