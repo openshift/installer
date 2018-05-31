@@ -363,50 +363,6 @@ variable "tectonic_stats_url" {
   description = "(internal) The Tectonic statistics collection URL to which to report."
 }
 
-variable "tectonic_ddns_server" {
-  type    = "string"
-  default = ""
-
-  description = <<EOF
-(optional) This only applies if you use the modules/dns/ddns module.
-
-Specifies the RFC2136 Dynamic DNS server IP/host to register IP addresses to.
-EOF
-}
-
-variable "tectonic_ddns_key_name" {
-  type    = "string"
-  default = ""
-
-  description = <<EOF
-(optional) This only applies if you use the modules/dns/ddns module.
-
-Specifies the RFC2136 Dynamic DNS server key name.
-EOF
-}
-
-variable "tectonic_ddns_key_algorithm" {
-  type    = "string"
-  default = ""
-
-  description = <<EOF
-(optional) This only applies if you use the modules/dns/ddns module.
-
-Specifies the RFC2136 Dynamic DNS server key algorithm.
-EOF
-}
-
-variable "tectonic_ddns_key_secret" {
-  type    = "string"
-  default = ""
-
-  description = <<EOF
-(optional) This only applies if you use the modules/dns/ddns module.
-
-Specifies the RFC2136 Dynamic DNS server key secret.
-EOF
-}
-
 variable "tectonic_networking" {
   description = <<EOF
 (optional) Configures the network to be used in Tectonic. One of the following values can be used:
