@@ -9,6 +9,7 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_autoscaling_group_extra_tags | (optional) Extra AWS tags to be applied to created autoscaling group resources. This is a list of maps having the keys `key`, `value` and `propagate_at_launch`.<br><br>Example: `[ { key = "foo", value = "bar", propagate_at_launch = true } ]` | list | `<list>` |
 | tectonic_aws_config_version | (internal) This declares the version of the AWS configuration variables. It has no impact on generated assets but declares the version contract of the configuration. | string | `1.0` |
 | tectonic_aws_ec2_ami_override | (optional) AMI override for all nodes. Example: `ami-foobar123`. | string | `` |
+| tectonic_aws_endpoints | (optional) If set to "all", the default, then both public and private ingress resources (ELB, A-records) will be created. If set to "private", then only private-facing ingress resources (ELB, A-records) will be created. No public-facing ingress resources will be created. If set to "public", then only public-facing ingress resources (ELB, A-records) will be created. No private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone. | string | `all` |
 | tectonic_aws_etcd_ec2_type | Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance | string | `t2.medium` |
 | tectonic_aws_etcd_extra_sg_ids | (optional) List of additional security group IDs for etcd nodes.<br><br>Example: `["sg-51530134", "sg-b253d7cc"]` | list | `<list>` |
 | tectonic_aws_etcd_iam_role_name | (optional) Name of IAM role to use for the instance profiles of etcd nodes. The name is also the last part of a role's ARN.<br><br>Example:  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer  * Role Name = tectonic-installer | string | `` |
@@ -28,9 +29,8 @@ This document gives an overview of variables used in the AWS platform of the Tec
 | tectonic_aws_master_root_volume_iops | The amount of provisioned IOPS for the root block device of master nodes. Ignored if the volume type is not io1. | string | `100` |
 | tectonic_aws_master_root_volume_size | The size of the volume in gigabytes for the root block device of master nodes. | string | `30` |
 | tectonic_aws_master_root_volume_type | The type of volume for the root block device of master nodes. | string | `gp2` |
-| tectonic_aws_private_endpoints | (optional) If set to true, create private-facing ingress resources (ELB, A-records). If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone. | string | `true` |
+
 | tectonic_aws_profile | (optional) This declares the AWS credentials profile to use. | string | `default` |
-| tectonic_aws_public_endpoints | (optional) If set to true, create public-facing ingress resources (ELB, A-records). If set to false, no public-facing ingress resources will be created. | string | `true` |
 | tectonic_aws_region | The target AWS region for the cluster. | string | `eu-west-1` |
 | tectonic_aws_ssh_key | Name of an SSH key located within the AWS region. Example: coreos-user. | string | - |
 | tectonic_aws_vpc_cidr_block | Block of IP addresses used by the VPC. This should not overlap with any other networks, such as a private datacenter connected via Direct Connect. | string | `10.0.0.0/16` |

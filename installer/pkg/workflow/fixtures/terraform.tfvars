@@ -13,6 +13,7 @@
   "tectonic_platform": "AWS",
   "tectonic_tls_validity_period": 26280,
   "tectonic_worker_count": 3,
+  "tectonic_aws_endpoints": "all",
   "tectonic_aws_etcd_ec2_type": "m4.large",
   "tectonic_aws_etcd_root_volume_iops": 100,
   "tectonic_aws_etcd_root_volume_size": 30,

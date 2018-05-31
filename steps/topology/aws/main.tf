@@ -1,3 +1,8 @@
+locals {
+  private_endpoints = "${var.tectonic_aws_endpoints == "public" ? false : true}"
+  public_endpoints  = "${var.tectonic_aws_endpoints == "private" ? false : true}"
+}
+
 provider "aws" {
   region  = "${var.tectonic_aws_region}"
   profile = "${var.tectonic_aws_profile}"
@@ -20,7 +25,7 @@ module "container_linux" {
 
 # TNC
 resource "aws_route53_zone" "tectonic_int" {
-  count         = "${var.tectonic_aws_private_endpoints ? "${var.tectonic_aws_external_private_zone == "" ? 1 : 0 }" : 0}"
+  count         = "${local.private_endpoints ? "${var.tectonic_aws_external_private_zone == "" ? 1 : 0 }" : 0}"
   vpc_id        = "${module.vpc.vpc_id}"
   name          = "${var.tectonic_base_domain}"
   force_destroy = true
@@ -50,8 +55,8 @@ module "vpc" {
   new_master_subnet_configs = "${var.tectonic_aws_master_custom_subnets}"
   new_worker_subnet_configs = "${var.tectonic_aws_worker_custom_subnets}"
 
-  private_master_endpoints = "${var.tectonic_aws_private_endpoints}"
-  public_master_endpoints  = "${var.tectonic_aws_public_endpoints}"
+  private_master_endpoints = "${local.private_endpoints}"
+  public_master_endpoints  = "${local.public_endpoints}"
 }
 
 module "dns" {
@@ -72,6 +77,6 @@ module "dns" {
   private_zone_id           = "${var.tectonic_aws_external_private_zone != "" ? var.tectonic_aws_external_private_zone : join("", aws_route53_zone.tectonic_int.*.zone_id)}"
   external_vpc_id           = "${module.vpc.vpc_id}"
   extra_tags                = "${var.tectonic_aws_extra_tags}"
-  private_endpoints         = "${var.tectonic_aws_private_endpoints}"
-  public_endpoints          = "${var.tectonic_aws_public_endpoints}"
+  private_endpoints         = "${local.private_endpoints}"
+  public_endpoints          = "${local.public_endpoints}"
 }

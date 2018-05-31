@@ -105,21 +105,13 @@ EOF
   default = ""
 }
 
-variable "tectonic_aws_private_endpoints" {
-  default = true
+variable "tectonic_aws_endpoints" {
+  default = "all"
 
   description = <<EOF
-(optional) If set to true, create private-facing ingress resources (ELB, A-records).
-If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone.
-EOF
-}
-
-variable "tectonic_aws_public_endpoints" {
-  default = true
-
-  description = <<EOF
-(optional) If set to true, create public-facing ingress resources (ELB, A-records).
-If set to false, no public-facing ingress resources will be created.
+(optional) If set to "all", the default, then both public and private ingress resources (ELB, A-records) will be created.
+If set to "private", then only create private-facing ingress resources (ELB, A-records). No public-facing ingress resources will be created.
+If set to "public", then only create public-facing ingress resources (ELB, A-records). No private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone.
 EOF
 }
 

@@ -3,6 +3,8 @@ package config
 import (
 	"os"
 	"testing"
+
+	"github.com/coreos/tectonic-installer/installer/pkg/config/aws"
 )
 
 func TestMissingNodePool(t *testing.T) {
@@ -331,32 +333,81 @@ func TestSharedNodePool(t *testing.T) {
 	}
 }
 
-func TestTNCS3BucketNames(t *testing.T) {
+func TestAWSEndpoints(t *testing.T) {
 	cases := []struct {
 		cluster Cluster
 		err     bool
 	}{
 		{
 			cluster: Cluster{},
+			err:     true,
+		},
+		{
+			cluster: defaultCluster,
 			err:     false,
 		},
 		{
 			cluster: Cluster{
-				Platform: PlatformAWS,
+				AWS: aws.AWS{
+					Endpoints: "foo",
+				},
 			},
 			err: true,
 		},
 		{
 			cluster: Cluster{
-				Platform: PlatformLibvirt,
+				AWS: aws.AWS{
+					Endpoints: aws.EndpointsAll,
+				},
 			},
 			err: false,
 		},
 		{
 			cluster: Cluster{
+				AWS: aws.AWS{
+					Endpoints: aws.EndpointsPrivate,
+				},
+			},
+			err: false,
+		},
+		{
+			cluster: Cluster{
+				AWS: aws.AWS{
+					Endpoints: aws.EndpointsPublic,
+				},
+			},
+			err: false,
+		},
+	}
+
+	for i, c := range cases {
+		if err := c.cluster.validateAWSEndpoints(); (err != nil) != c.err {
+			no := "no"
+			if c.err {
+				no = "an"
+			}
+			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
+		}
+	}
+}
+
+func TestTNCS3BucketNames(t *testing.T) {
+	cases := []struct {
+		cluster Cluster
+		err     bool
+	}{
+		{
+			cluster: defaultCluster,
+			err:     true,
+		},
+		{
+			cluster: Cluster{},
+			err:     true,
+		},
+		{
+			cluster: Cluster{
 				Name:       "foo",
 				BaseDomain: "example.com",
-				Platform:   PlatformAWS,
 			},
 			err: false,
 		},
@@ -364,7 +415,6 @@ func TestTNCS3BucketNames(t *testing.T) {
 			cluster: Cluster{
 				Name:       ".foo",
 				BaseDomain: "example.com",
-				Platform:   PlatformAWS,
 			},
 			err: true,
 		},
@@ -372,7 +422,6 @@ func TestTNCS3BucketNames(t *testing.T) {
 			cluster: Cluster{
 				Name:       "foo",
 				BaseDomain: "example.com.",
-				Platform:   PlatformAWS,
 			},
 			err: true,
 		},

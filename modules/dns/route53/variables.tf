@@ -55,7 +55,7 @@ variable "api_ip_addresses" {
 
 variable "extra_tags" {
   type        = "map"
-  description = "(optional) Extra tags to be applied to created resources."
+  description = "Extra tags to be applied to created resources."
 }
 
 // AWS specific internal zone variables
@@ -74,7 +74,7 @@ variable "external_vpc_id" {
   type = "string"
 
   description = <<EOF
-(optional) ID of an existing VPC to launch nodes into.
+ID of an existing VPC to launch nodes into.
 If unset a new VPC is created.
 
 Example: `vpc-123456`
@@ -83,14 +83,14 @@ EOF
 
 variable "private_endpoints" {
   description = <<EOF
-(optional) If set to true, create private-facing ingress resources (ELB, A-records).
+If set to true, create private-facing ingress resources (ELB, A-records).
 If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone.
 EOF
 }
 
 variable "public_endpoints" {
   description = <<EOF
-(optional) If set to true, create public-facing ingress resources (ELB, A-records).
+If set to true, create public-facing ingress resources (ELB, A-records).
 If set to false, no public-facing ingress resources will be created.
 EOF
 }
