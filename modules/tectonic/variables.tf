@@ -35,11 +35,6 @@ variable "pull_secret_path" {
   default     = "/Users/coreos/Desktop/config.json"
 }
 
-variable "ca_generated" {
-  description = "Define whether the CA has been generated or user-provided."
-  type        = "string"
-}
-
 variable "identity_client_ca_cert" {
   description = "A PEM-encoded CA bundle, used to verify identity server."
   type        = "string"

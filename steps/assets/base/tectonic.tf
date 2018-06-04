@@ -60,8 +60,6 @@ module "tectonic" {
   update_app_id  = "${var.tectonic_update_app_id}"
   update_server  = "${var.tectonic_update_server}"
 
-  ca_generated = "${var.tectonic_ca_cert == "" ? false : true}"
-
   ingress_ca_cert_pem = "${local.ingress_ca_cert_pem}"
   ingress_cert_pem    = "${local.ingress_cert_pem}"
   ingress_key_pem     = "${local.ingress_key_pem}"
