@@ -1,5 +1,5 @@
 admin:
-  email: fake-email
+  email: fake-email@example.com
   password: fake-password
 aws:
   etcd:
