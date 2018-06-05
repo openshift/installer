@@ -51,7 +51,6 @@ type Cluster struct {
 	BaseDomain          string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
 	CA                  `json:",inline" yaml:"ca,omitempty"`
 	ContainerLinux      `json:",inline" yaml:"containerLinux,omitempty"`
-	CustomCAPEMList     string `json:"tectonic_custom_ca_pem_list,omitempty" yaml:"customCAPEMList,omitempty"`
 	Etcd                `json:",inline" yaml:"etcd,omitempty"`
 	Internal            `json:",inline" yaml:"-"`
 	LicensePath         string `json:"tectonic_license_path,omitempty" yaml:"licensePath,omitempty"`

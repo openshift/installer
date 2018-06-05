@@ -390,15 +390,6 @@ variable "tectonic_kubelet_debug_config" {
   description = "(internal) debug flags for the kubelet (used in CI only)"
 }
 
-variable "tectonic_custom_ca_pem_list" {
-  type    = "list"
-  default = []
-
-  description = <<EOF
-(optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes.
-EOF
-}
-
 variable "tectonic_ignition_master" {
   type    = "string"
   default = ""
