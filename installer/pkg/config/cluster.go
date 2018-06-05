@@ -28,12 +28,15 @@ const (
 	// IgnitionEtcd is the relative path to the ign etcd cfg from the tf working directory
 	IgnitionEtcd = "ignition-etcd.ign"
 	// PlatformAWS is the platform for a cluster launched on AWS.
-	PlatformAWS = "aws"
+	PlatformAWS Platform = "aws"
 	// PlatformLibvirt is the platform for a cluster launched on libvirt.
-	PlatformLibvirt = "libvirt"
+	PlatformLibvirt Platform = "libvirt"
 )
 
 var defaultCluster = Cluster{
+	AWS: aws.AWS{
+		Endpoints: aws.EndpointsAll,
+	},
 	Networking: Networking{
 		MTU:         "1480",
 		PodCIDR:     "10.2.0.0/16",

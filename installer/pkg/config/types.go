@@ -1,5 +1,7 @@
 package config
 
+import "github.com/coreos/tectonic-config/config/tectonic-network"
+
 // Admin converts admin related config.
 type Admin struct {
 	Email    string `json:"tectonic_admin_email" yaml:"email,omitempty"`
@@ -61,10 +63,10 @@ type Master struct {
 
 // Networking converts networking related config.
 type Networking struct {
-	Type        string `json:"tectonic_networking,omitempty" yaml:"type,omitempty"`
-	MTU         string `json:"-" yaml:"mtu,omitempty"`
-	ServiceCIDR string `json:"tectonic_service_cidr,omitempty" yaml:"serviceCIDR,omitempty"`
-	PodCIDR     string `json:"tectonic_cluster_cidr,omitempty" yaml:"podCIDR,omitempty"`
+	Type        tectonicnetwork.NetworkType `json:"tectonic_networking,omitempty" yaml:"type,omitempty"`
+	MTU         string                      `json:"-" yaml:"mtu,omitempty"`
+	ServiceCIDR string                      `json:"tectonic_service_cidr,omitempty" yaml:"serviceCIDR,omitempty"`
+	PodCIDR     string                      `json:"tectonic_cluster_cidr,omitempty" yaml:"podCIDR,omitempty"`
 }
 
 // Worker converts worker related config.

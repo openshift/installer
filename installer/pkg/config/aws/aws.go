@@ -1,9 +1,22 @@
 package aws
 
+// Endpoints is the type of the AWS endpoints.
+type Endpoints string
+
+const (
+	// EndpointsAll represents the configuration for using both private and public endpoints.
+	EndpointsAll Endpoints = "all"
+	// EndpointsPrivate represents the configuration for using only private endpoints.
+	EndpointsPrivate Endpoints = "private"
+	// EndpointsPublic represents the configuration for using only public endpoints.
+	EndpointsPublic Endpoints = "public"
+)
+
 // AWS converts AWS related config.
 type AWS struct {
 	AutoScalingGroupExtraTags []map[string]string `json:"tectonic_autoscaling_group_extra_tags,omitempty" yaml:"autoScalingGroupExtraTags,omitempty"`
 	EC2AMIOverride            string              `json:"tectonic_aws_ec2_ami_override,omitempty" yaml:"ec2AMIOverride,omitempty"`
+	Endpoints                 Endpoints           `json:"tectonic_aws_endpoints,omitempty" yaml:"endpoints,omitempty"`
 	Etcd                      `json:",inline" yaml:"etcd,omitempty"`
 	External                  `json:",inline" yaml:"external,omitempty"`
 	ExtraTags                 map[string]string `json:"tectonic_aws_extra_tags,omitempty" yaml:"extraTags,omitempty"`

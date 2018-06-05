@@ -1,5 +1,5 @@
 resource "aws_elb" "tnc" {
-  count           = "${var.private_master_endpoints}"
+  count           = "${var.private_master_endpoints ? 1 : 0}"
   name            = "${var.cluster_name}-tnc"
   subnets         = ["${local.master_subnet_ids}"]
   internal        = true
@@ -32,7 +32,7 @@ resource "aws_elb" "tnc" {
 }
 
 resource "aws_elb" "api_internal" {
-  count           = "${var.private_master_endpoints}"
+  count           = "${var.private_master_endpoints ? 1 : 0}"
   name            = "${var.cluster_name}-int"
   subnets         = ["${local.master_subnet_ids}"]
   internal        = true
@@ -65,7 +65,7 @@ resource "aws_elb" "api_internal" {
 }
 
 resource "aws_elb" "api_external" {
-  count           = "${var.public_master_endpoints}"
+  count           = "${var.public_master_endpoints ? 1 : 0}"
   name            = "${var.cluster_name}-ext"
   subnets         = ["${local.master_subnet_ids}"]
   internal        = false

@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/coreos/tectonic-installer/installer/pkg/config/aws"
 	"github.com/coreos/tectonic-installer/installer/pkg/validate"
 
 	log "github.com/Sirupsen/logrus"
@@ -78,10 +79,23 @@ func (c *Cluster) Validate() []error {
 	errs = append(errs, c.validateNodePools()...)
 	errs = append(errs, c.validateIgnitionFiles()...)
 	errs = append(errs, c.validateNetworking()...)
+	errs = append(errs, c.validateAWS()...)
 	if err := validate.PrefixError("cluster name", validate.ClusterName(c.Name)); err != nil {
 		errs = append(errs, err)
 	}
 	if err := validate.PrefixError("base domain", validate.DomainName(c.BaseDomain)); err != nil {
+		errs = append(errs, err)
+	}
+	return errs
+}
+
+// validateAWS validates all fields specific to AWS.
+func (c *Cluster) validateAWS() []error {
+	var errs []error
+	if c.Platform != PlatformAWS {
+		return errs
+	}
+	if err := c.validateAWSEndpoints(); err != nil {
 		errs = append(errs, err)
 	}
 	if err := c.validateTNCS3Bucket(); err != nil {
@@ -130,7 +144,7 @@ func (c *Cluster) validateNetworking() []error {
 }
 
 func (c *Cluster) validateNetworkType() error {
-	switch tectonicnetwork.NetworkType(c.Networking.Type) {
+	switch c.Networking.Type {
 	case tectonicnetwork.NetworkNone:
 		fallthrough
 	case tectonicnetwork.NetworkCanal:
@@ -162,14 +176,26 @@ func (c *Cluster) ValidateAndLog() error {
 	return nil
 }
 
+// validateAWSEndpoints ensures that the value of the endpoints field is one of:
+// 'all', 'public', or 'private'.
+func (c *Cluster) validateAWSEndpoints() error {
+	switch c.AWS.Endpoints {
+	case aws.EndpointsAll:
+		fallthrough
+	case aws.EndpointsPrivate:
+		fallthrough
+	case aws.EndpointsPublic:
+		return nil
+	default:
+		return fmt.Errorf("invalid AWS endpoints %q", c.AWS.Endpoints)
+	}
+}
+
 // validateTNCS3Bucket does some basic validation to ensure that the TNC bucket
 // matches the S3 bucket naming rules. Not all rules are checked
 // because Tectonic controls the generation of S3 bucket names, creating
 // buckets of the form: <cluster-name>-<tnc>.<domain-name>
 func (c *Cluster) validateTNCS3Bucket() error {
-	if c.Platform != PlatformAWS {
-		return nil
-	}
 	bucket := fmt.Sprintf("%s-tnc.%s", c.Name, c.BaseDomain)
 	if len(bucket) > maxS3BucketNameLength {
 		return fmt.Errorf("the S3 bucket name %q, generated from the cluster name and base domain, is too long; S3 bucket names must be less than 63 characters; please choose a shorter cluster name or base domain", bucket)
