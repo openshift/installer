@@ -15,7 +15,6 @@ workers:
 etcd:
   nodePools:
     - etcd
-tlsValidityPeriod: 26280
 pullSecretPath: /path/config.json
 licensePath: /path/tectonic-license.txt
 containerLinux:

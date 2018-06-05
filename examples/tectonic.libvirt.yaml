@@ -134,11 +134,6 @@ platform: libvirt
 # [3] https://account.coreos.com/overview
 pullSecretPath:
 
-# Validity period of the self-signed certificates (in hours).
-# Default is 3 years.
-# This setting is ignored if user provided certificates are used.
-tlsValidityPeriod: 26280
-
 worker:
   nodePools:
     - worker
