@@ -1,9 +1,18 @@
 package validate
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
 	"net"
+	"os"
 	"strings"
 	"testing"
+	"time"
+
+	jose "gopkg.in/square/go-jose.v2"
 )
 
 const caseMsg = "must be lower case"
@@ -547,6 +556,158 @@ func TestLastIP(t *testing.T) {
 	for i, c := range cases {
 		if out = lastIP(&c.in); out.String() != c.out.String() {
 			t.Errorf("test case %d: expected %s but got %s", i, c.out, out)
+		}
+	}
+}
+
+func TestJSONFile(t *testing.T) {
+	cases := []struct {
+		buf []byte
+		err bool
+	}{
+		{
+			buf: []byte(""),
+			err: true,
+		},
+		{
+			buf: []byte("[]"),
+			err: false,
+		},
+		{
+			buf: []byte("foobar"),
+			err: true,
+		},
+		{
+			buf: []byte("}}}}"),
+			err: true,
+		},
+		{
+			buf: []byte("{}"),
+			err: false,
+		},
+		{
+			buf: []byte(`{"foo": "bar"}`),
+			err: false,
+		},
+	}
+	for i, c := range cases {
+		f, err := ioutil.TempFile("", "validate")
+		if err != nil {
+			t.Fatalf("test case %d: failed to create temporary file: %v", i, err)
+		}
+		if _, err := f.Write(c.buf); err != nil {
+			t.Errorf("test case %d: failed to write to temporary file: %v", i, err)
+		}
+		if err := JSONFile(f.Name()); (err != nil) != c.err {
+			no := "no"
+			if c.err {
+				no = "an"
+			}
+			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
+		}
+		f.Close()
+		os.Remove(f.Name())
+	}
+}
+
+func TestFileExists(t *testing.T) {
+	cases := []struct {
+		path string
+		err  bool
+	}{
+		{
+			path: "./fixtures/doesnotexist",
+			err:  true,
+		},
+		{
+			path: "./fixtures/exists",
+			err:  false,
+		},
+	}
+	for i, c := range cases {
+		if err := FileExists(c.path); (err != nil) != c.err {
+			no := "no"
+			if c.err {
+				no = "an"
+			}
+			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
+		}
+	}
+}
+
+func generateLicense(name string, expiration time.Time) (*os.File, error) {
+	key, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create RSA key pair: %v", err)
+	}
+	s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.RS256, Key: key}, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create license signer: %v", err)
+	}
+	buf, err := json.Marshal(struct {
+		ExpirationDate time.Time `json:"expirationDate"`
+	}{expiration})
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal license: %v", err)
+	}
+	jws, err := s.Sign(buf)
+	if err != nil {
+		return nil, fmt.Errorf("failed to sign license: %v", err)
+	}
+	l, err := jws.CompactSerialize()
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize license: %v", err)
+	}
+	f, err := ioutil.TempFile("", name)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create valid license file: %v", err)
+	}
+	if _, err := f.WriteString(l); err != nil {
+		return nil, fmt.Errorf("failed to write valid license file: %v", err)
+	}
+	f.Close()
+	return f, nil
+}
+
+func TestLicense(t *testing.T) {
+	vFile, err := generateLicense("valid", time.Now().AddDate(1, 0, 0))
+	if err != nil {
+		t.Fatalf("failed to generate valid license: %v", err)
+	}
+	defer os.Remove(vFile.Name())
+	iFile, err := generateLicense("invalid", time.Now().AddDate(-1, 0, 0))
+	if err != nil {
+		t.Fatalf("failed to generate invalid license: %v", err)
+	}
+	defer os.Remove(iFile.Name())
+	cases := []struct {
+		path string
+		err  bool
+	}{
+		{
+			path: "./fixtures/doesnotexist",
+			err:  true,
+		},
+		{
+			path: "./fixtures/exists",
+			err:  true,
+		},
+		{
+			path: iFile.Name(),
+			err:  true,
+		},
+		{
+			path: vFile.Name(),
+			err:  false,
+		},
+	}
+	for i, c := range cases {
+		if err := License(c.path); (err != nil) != c.err {
+			no := "no"
+			if c.err {
+				no = "an"
+			}
+			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
 		}
 	}
 }

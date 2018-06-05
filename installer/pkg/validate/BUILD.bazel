@@ -5,11 +5,14 @@ go_test(
     size = "small",
     srcs = ["validate_test.go"],
     embed = [":go_default_library"],
+    deps = ["//vendor/gopkg.in/square/go-jose.v2:go_default_library"],
 )
 
 go_library(
     name = "go_default_library",
     srcs = ["validate.go"],
+    data = glob(["fixtures/**"]),
     importpath = "github.com/coreos/tectonic-installer/installer/pkg/validate",
     visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/dgrijalva/jwt-go:go_default_library"],
 )

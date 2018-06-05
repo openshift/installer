@@ -1,13 +1,19 @@
 package validate
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
+
+	"github.com/dgrijalva/jwt-go"
 )
 
 func isMatch(re string, v string) bool {
@@ -19,6 +25,43 @@ func isMatch(re string, v string) bool {
 func PrefixError(prefix string, err error) error {
 	if err != nil {
 		return fmt.Errorf("%s: %v", prefix, err)
+	}
+	return nil
+}
+
+// JSONFile validates that the file at the given path is valid JSON.
+func JSONFile(path string) error {
+	b, err := ioutil.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	if !json.Valid(b) {
+		return fmt.Errorf("file %q contains invalid JSON", path)
+	}
+	return nil
+}
+
+// FileExists validates a file exists at the given path.
+func FileExists(path string) error {
+	_, err := os.Stat(path)
+	return err
+}
+
+// License validates that the file at the given path is a valid license.
+func License(path string) error {
+	licenseBytes, err := ioutil.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("cannot read license file at %q: %v", path, err)
+	}
+	c := struct {
+		ExpirationDate time.Time `json:"expirationDate"`
+		jwt.StandardClaims
+	}{}
+	if _, _, err := (&jwt.Parser{}).ParseUnverified(string(licenseBytes), &c); err != nil {
+		return fmt.Errorf("invalid JWT in license: %v; %q", err, string(licenseBytes))
+	}
+	if time.Now().After(c.ExpirationDate) {
+		return fmt.Errorf("expired license %v", c.ExpirationDate)
 	}
 	return nil
 }
