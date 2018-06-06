@@ -1,10 +1,12 @@
 package config
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
 	"github.com/coreos/tectonic-installer/installer/pkg/config/aws"
+	"github.com/coreos/tectonic-installer/installer/pkg/config/libvirt"
 )
 
 func TestMissingNodePool(t *testing.T) {
@@ -562,6 +564,145 @@ func TestValidateCL(t *testing.T) {
 
 	for i, c := range cases {
 		if err := c.cluster.validateCL(); (err != nil) != c.err {
+			no := "no"
+			if c.err {
+				no = "an"
+			}
+			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
+		}
+	}
+}
+
+func TestValidateLibvirt(t *testing.T) {
+	fValid, err := ioutil.TempFile("", "qcow")
+	if err != nil {
+		t.Fatalf("failed to create temporary file: %v", err)
+	}
+	if _, err := fValid.Write(qcowMagic); err != nil {
+		t.Fatalf("failed to write to temporary file: %v", err)
+	}
+	fValid.Close()
+	defer os.Remove(fValid.Name())
+	fInvalid, err := ioutil.TempFile("", "qcow")
+	if err != nil {
+		t.Fatalf("failed to create temporary file: %v", err)
+	}
+	fInvalid.Close()
+	defer os.Remove(fInvalid.Name())
+	cases := []struct {
+		cluster Cluster
+		err     bool
+	}{
+		{
+			cluster: Cluster{},
+			err:     true,
+		},
+		{
+			cluster: defaultCluster,
+			err:     true,
+		},
+		{
+			cluster: Cluster{
+				Libvirt: libvirt.Libvirt{
+					Network:       libvirt.Network{},
+					QCOWImagePath: "",
+					SSHKey:        "",
+					URI:           "",
+				},
+				Networking: defaultCluster.Networking,
+			},
+			err: true,
+		},
+		{
+			cluster: Cluster{
+				Libvirt: libvirt.Libvirt{
+					Network: libvirt.Network{
+						Name:      "tectonic",
+						IfName:    libvirt.DefaultIfName,
+						DNSServer: libvirt.DefaultDNSServer,
+						IPRange:   "10.0.1.0/24",
+					},
+					QCOWImagePath: fInvalid.Name(),
+					SSHKey:        "bar",
+					URI:           "baz",
+				},
+				Networking: defaultCluster.Networking,
+			},
+			err: true,
+		},
+		{
+			cluster: Cluster{
+				Libvirt: libvirt.Libvirt{
+					Network: libvirt.Network{
+						Name:      "tectonic",
+						IfName:    libvirt.DefaultIfName,
+						DNSServer: libvirt.DefaultDNSServer,
+						IPRange:   "10.0.1.0/24",
+					},
+					QCOWImagePath: fValid.Name(),
+					SSHKey:        "bar",
+					URI:           "baz",
+				},
+				Networking: defaultCluster.Networking,
+			},
+			err: false,
+		},
+		{
+			cluster: Cluster{
+				Libvirt: libvirt.Libvirt{
+					Network: libvirt.Network{
+						Name:      "tectonic",
+						IfName:    libvirt.DefaultIfName,
+						DNSServer: libvirt.DefaultDNSServer,
+						IPRange:   "10.2.1.0/24",
+					},
+					QCOWImagePath: fValid.Name(),
+					SSHKey:        "bar",
+					URI:           "baz",
+				},
+				Networking: defaultCluster.Networking,
+			},
+			err: true,
+		},
+		{
+			cluster: Cluster{
+				Libvirt: libvirt.Libvirt{
+					Network: libvirt.Network{
+						Name:      "tectonic",
+						IfName:    libvirt.DefaultIfName,
+						DNSServer: libvirt.DefaultDNSServer,
+						IPRange:   "x",
+					},
+					QCOWImagePath: "foo",
+					SSHKey:        "bar",
+					URI:           "baz",
+				},
+				Networking: defaultCluster.Networking,
+			},
+			err: true,
+		},
+		{
+			cluster: Cluster{
+				Libvirt: libvirt.Libvirt{
+					Network: libvirt.Network{
+						Name:      "tectonic",
+						IfName:    libvirt.DefaultIfName,
+						DNSServer: "foo",
+						IPRange:   "192.168.0.1/24",
+					},
+					QCOWImagePath: "foo",
+					SSHKey:        "bar",
+					URI:           "baz",
+				},
+				Networking: defaultCluster.Networking,
+			},
+			err: true,
+		},
+	}
+
+	for i, c := range cases {
+		c.cluster.Platform = PlatformLibvirt
+		if err := c.cluster.validateLibvirt(); (err != nil) != c.err {
 			no := "no"
 			if c.err {
 				no = "an"

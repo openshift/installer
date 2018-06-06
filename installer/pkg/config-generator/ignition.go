@@ -96,7 +96,7 @@ func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
 		userBlock := ignconfigtypes.User{
 			Name: "core",
 			SSHAuthorizedKeys: []string{
-				c.Libvirt.SshKey,
+				c.Libvirt.SSHKey,
 			},
 		}
 

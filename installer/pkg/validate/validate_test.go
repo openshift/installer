@@ -446,73 +446,46 @@ func TestOpenSSHPublicKey(t *testing.T) {
 	runTests(t, "OpenSSHPublicKey", OpenSSHPublicKey, tests)
 }
 
-func TestCIDRsOverlap(t *testing.T) {
+func TestCIDRsDontOverlap(t *testing.T) {
 	cases := []struct {
-		a   net.IPNet
-		b   net.IPNet
-		out bool
+		a   string
+		b   string
+		err bool
 	}{
 		{
-			a: net.IPNet{
-				IP:   net.ParseIP("192.168.0.0").To4(),
-				Mask: net.CIDRMask(24, 32),
-			},
-			b: net.IPNet{
-				IP:   net.ParseIP("192.168.0.0").To4(),
-				Mask: net.CIDRMask(24, 32),
-			},
-			out: true,
+			a:   "192.168.0.0/24",
+			b:   "192.168.0.0/24",
+			err: true,
 		},
 		{
-			a: net.IPNet{
-				IP:   net.ParseIP("192.168.0.0").To4(),
-				Mask: net.CIDRMask(24, 32),
-			},
-			b: net.IPNet{
-				IP:   net.ParseIP("192.168.0.3").To4(),
-				Mask: net.CIDRMask(24, 32),
-			},
-			out: true,
+			a:   "192.168.0.0/24",
+			b:   "192.168.0.3/24",
+			err: true,
 		},
 		{
-			a: net.IPNet{
-				IP:   net.ParseIP("192.168.0.0").To4(),
-				Mask: net.CIDRMask(30, 32),
-			},
-			b: net.IPNet{
-				IP:   net.ParseIP("192.168.0.3").To4(),
-				Mask: net.CIDRMask(30, 32),
-			},
-			out: true,
+			a:   "192.168.0.0/30",
+			b:   "192.168.0.3/30",
+			err: true,
 		},
 		{
-			a: net.IPNet{
-				IP:   net.ParseIP("192.168.0.0").To4(),
-				Mask: net.CIDRMask(30, 32),
-			},
-			b: net.IPNet{
-				IP:   net.ParseIP("192.168.0.4").To4(),
-				Mask: net.CIDRMask(30, 32),
-			},
-			out: false,
+			a:   "192.168.0.0/30",
+			b:   "192.168.0.4/30",
+			err: false,
 		},
 		{
-			a: net.IPNet{
-				IP:   net.ParseIP("0.0.0.0").To4(),
-				Mask: net.CIDRMask(0, 32),
-			},
-			b: net.IPNet{
-				IP:   net.ParseIP("192.168.0.0").To4(),
-				Mask: net.CIDRMask(24, 32),
-			},
-			out: true,
+			a:   "0.0.0.0/0",
+			b:   "192.168.0.0/24",
+			err: true,
 		},
 	}
 
-	var out bool
 	for i, c := range cases {
-		if out = CIDRsOverlap(&c.a, &c.b); out != c.out {
-			t.Errorf("test case %d: expected %T but got %s", i, c.out, out)
+		if err := CIDRsDontOverlap(c.a, c.b); (err != nil) != c.err {
+			no := "no"
+			if c.err {
+				no = "an"
+			}
+			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
 		}
 	}
 }
@@ -709,5 +682,54 @@ func TestLicense(t *testing.T) {
 			}
 			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
 		}
+	}
+}
+
+func TestFileHeader(t *testing.T) {
+	cases := []struct {
+		actual   []byte
+		expected []byte
+		err      bool
+	}{
+		{
+			actual:   []byte{},
+			expected: []byte("foo"),
+			err:      true,
+		},
+		{
+			actual:   []byte("foo"),
+			expected: []byte("bar"),
+			err:      true,
+		},
+		{
+			actual:   []byte("fooooo"),
+			expected: []byte("foo"),
+			err:      false,
+		},
+		{
+			actual:   []byte("fooooo"),
+			expected: []byte{},
+			err:      false,
+		},
+	}
+
+	for i, c := range cases {
+		f, err := ioutil.TempFile("", "fileheader")
+		if err != nil {
+			t.Errorf("test case %d: failed to create temporary file: %v", i, err)
+			continue
+		}
+		if _, err := f.Write(c.actual); err != nil {
+			t.Errorf("test case %d: failed to write to temporary file: %v", i, err)
+		}
+		f.Close()
+		if err := FileHeader(f.Name(), c.expected); (err != nil) != c.err {
+			no := "no"
+			if c.err {
+				no = "an"
+			}
+			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
+		}
+		os.Remove(f.Name())
 	}
 }
