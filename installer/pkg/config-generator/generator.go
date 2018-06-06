@@ -290,9 +290,6 @@ func marshalYAML(obj interface{}) (string, error) {
 }
 
 func (c *ConfigGenerator) getEtcdServersURLs() string {
-	if len(c.Cluster.Etcd.External.Servers) > 0 {
-		return strings.Join(c.Cluster.Etcd.External.Servers, ",")
-	}
 	etcdServers := make([]string, c.Cluster.NodeCount(c.Cluster.Etcd.NodePools))
 	for i := range etcdServers {
 		etcdServers[i] = fmt.Sprintf("https://%s-etcd-%v.%s:2379", c.Cluster.Name, i, c.Cluster.BaseDomain)

@@ -1,5 +1,4 @@
 resource "aws_security_group" "etcd" {
-  count  = "${var.enable_etcd_sg}"
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(

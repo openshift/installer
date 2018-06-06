@@ -220,36 +220,9 @@ containerLinux:
   # customCAPEMList:
 
 etcd:
-  external:
-    # (optional) The path of the file containing the CA certificate for TLS communication with etcd.
-    #
-    # Note: This works only when used in conjunction with an external etcd cluster.
-    # If set, the variable `servers` must also be set.
-    # caCertPath: /dev/null
-
-    # (optional) The path of the file containing the client certificate for TLS communication with etcd.
-    #
-    # Note: This works only when used in conjunction with an external etcd cluster.
-    # If set, the variables `servers`, `caCertPath`, and `clientKeyPath` must also be set.
-    # clientCertPath: /dev/null
-
-    # (optional) The path of the file containing the client key for TLS communication with etcd.
-    #
-    # Note: This works only when used in conjunction with an external etcd cluster.
-    # If set, the variables `servers`, `caCertPath`, and `clientCertPath` must also be set.
-    # clientKeyPath: /dev/null
-
-    # (optional) List of external etcd v3 servers to connect with (hostnames/IPs only).
-    # Needs to be set if using an external etcd cluster.
-    # Note: If this variable is defined, the installer will not create self-signed certs.
-    # To provide a CA certificate to trust the etcd servers, set "caCertPath".
-    #
-    # Example: `["etcd1", "etcd2", "etcd3"]`
-    # servers:
-
   # The name of the node pool(s) to use for etcd nodes
   nodePools:
-   - etcd
+    - etcd
 
 iscsi:
   # (optional) Start iscsid.service to enable iscsi volume attachment.

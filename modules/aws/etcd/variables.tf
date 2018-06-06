@@ -30,10 +30,6 @@ variable "subnets" {
   type = "list"
 }
 
-variable "external_endpoints" {
-  type = "list"
-}
-
 variable "container_image" {
   type = "string"
 }

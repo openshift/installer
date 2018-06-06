@@ -49,7 +49,6 @@ module "etcd" {
   container_linux_channel = "${var.tectonic_container_linux_channel}"
   container_linux_version = "${module.container_linux.version}"
   ec2_type                = "${var.tectonic_aws_etcd_ec2_type}"
-  external_endpoints      = "${compact(var.tectonic_etcd_servers)}"
   extra_tags              = "${var.tectonic_aws_extra_tags}"
   instance_count          = "${length(data.template_file.etcd_hostname_list.*.id)}"
   root_volume_iops        = "${var.tectonic_aws_etcd_root_volume_iops}"

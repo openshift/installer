@@ -156,56 +156,6 @@ Note: This is not supported on bare metal.
 EOF
 }
 
-variable "tectonic_etcd_servers" {
-  description = <<EOF
-(optional) List of external etcd v3 servers to connect with (hostnames/IPs only).
-Needs to be set if using an external etcd cluster.
-Note: If this variable is defined, the installer will not create self-signed certs.
-To provide a CA certificate to trust the etcd servers, set "tectonic_etcd_ca_cert_path".
-
-Example: `["etcd1", "etcd2", "etcd3"]`
-EOF
-
-  type    = "list"
-  default = []
-}
-
-variable "tectonic_etcd_ca_cert_path" {
-  type    = "string"
-  default = "/dev/null"
-
-  description = <<EOF
-(optional) The path of the file containing the CA certificate for TLS communication with etcd.
-
-Note: This works only when used in conjunction with an external etcd cluster.
-If set, the variable `tectonic_etcd_servers` must also be set.
-EOF
-}
-
-variable "tectonic_etcd_client_cert_path" {
-  type    = "string"
-  default = "/dev/null"
-
-  description = <<EOF
-(optional) The path of the file containing the client certificate for TLS communication with etcd.
-
-Note: This works only when used in conjunction with an external etcd cluster.
-If set, the variables `tectonic_etcd_servers`, `tectonic_etcd_ca_cert_path`, and `tectonic_etcd_client_key_path` must also be set.
-EOF
-}
-
-variable "tectonic_etcd_client_key_path" {
-  type    = "string"
-  default = "/dev/null"
-
-  description = <<EOF
-(optional) The path of the file containing the client key for TLS communication with etcd.
-
-Note: This works only when used in conjunction with an external etcd cluster.
-If set, the variables `tectonic_etcd_servers`, `tectonic_etcd_ca_cert_path`, and `tectonic_etcd_client_cert_path` must also be set.
-EOF
-}
-
 variable "tectonic_base_domain" {
   type = "string"
 
