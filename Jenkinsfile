@@ -326,7 +326,7 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
       try {
         timeout(time: 5, unit: 'HOURS') {
           forcefullyCleanWorkspace()
-          ansiColor('xte') {
+          ansiColor('xterm') {
             withCredentials(credentials + quayCreds) {
               withDockerContainer(
                 image: tectonicSmokeTestEnvImage,
