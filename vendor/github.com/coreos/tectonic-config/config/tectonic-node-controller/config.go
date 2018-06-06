@@ -20,9 +20,11 @@ const (
 type ControllerConfig struct {
 	metav1.TypeMeta     `json:",inline"`
 	ClusterDNSIP        string `json:"clusterDNSIP"`
-	CloudProvider       string `json:"cloudProvider"`
 	CloudProviderConfig string `json:"cloudProviderConfig"`
 	ClusterName         string `json:"clusterName"`
+
+	// The tectonic platform, e.g. "libvirt" or "aws"
+	Platform string `json:"platform"`
 
 	BaseDomain string `json:"baseDomain"`
 
