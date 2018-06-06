@@ -300,7 +300,7 @@ def forcefullyCleanWorkspace() {
       sh """#!/bin/bash -e
         if [ -d "\$WORKSPACE" ]
         then
-          rm -rfv \$WORKSPACE/*
+          rm -rf \$WORKSPACE/*
         fi
       """
     }
