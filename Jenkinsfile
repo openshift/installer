@@ -300,7 +300,7 @@ def forcefullyCleanWorkspace() {
       sh """#!/bin/bash -e
         if [ -d "\$WORKSPACE" ]
         then
-          rm -rfv \$WORKSPACE/*
+          rm -rf \$WORKSPACE/*
         fi
       """
     }
@@ -326,7 +326,7 @@ def runRSpecTest(testFilePath, dockerArgs, credentials) {
       try {
         timeout(time: 5, unit: 'HOURS') {
           forcefullyCleanWorkspace()
-          ansiColor('xterm') {
+          ansiColor('xte') {
             withCredentials(credentials + quayCreds) {
               withDockerContainer(
                 image: tectonicSmokeTestEnvImage,
