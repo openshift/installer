@@ -80,6 +80,7 @@ func (c *Cluster) Validate() []error {
 	errs = append(errs, c.validateIgnitionFiles()...)
 	errs = append(errs, c.validateNetworking()...)
 	errs = append(errs, c.validateAWS()...)
+	errs = append(errs, c.validateCL()...)
 	if err := validate.PrefixError("cluster name", validate.ClusterName(c.Name)); err != nil {
 		errs = append(errs, err)
 	}
@@ -100,6 +101,25 @@ func (c *Cluster) validateAWS() []error {
 	}
 	if err := c.validateTNCS3Bucket(); err != nil {
 		errs = append(errs, err)
+	}
+	return errs
+}
+
+// validateCL validates all fields specific to Container Linux.
+func (c *Cluster) validateCL() []error {
+	var errs []error
+	switch c.ContainerLinux.Channel {
+	case ContainerLinuxChannelStable:
+		fallthrough
+	case ContainerLinuxChannelBeta:
+		fallthrough
+	case ContainerLinuxChannelAlpha:
+		break
+	default:
+		errs = append(errs, fmt.Errorf("invalid Container Linux channel %q", c.ContainerLinux.Channel))
+	}
+	if c.ContainerLinux.Version != ContainerLinuxVersionLatest && !regexp.MustCompile(`\d+\.\d+\.\d+`).MatchString(c.ContainerLinux.Version) {
+		errs = append(errs, fmt.Errorf("invalid Container Linux version %q", c.ContainerLinux.Version))
 	}
 	return errs
 }

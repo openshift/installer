@@ -214,19 +214,17 @@ EOF
 }
 
 variable "tectonic_container_linux_channel" {
-  type    = "string"
-  default = "stable"
+  type = "string"
 
   description = <<EOF
-(optional) The Container Linux update channel.
+The Container Linux update channel.
 
 Examples: `stable`, `beta`, `alpha`
 EOF
 }
 
 variable "tectonic_container_linux_version" {
-  type    = "string"
-  default = "latest"
+  type = "string"
 
   description = <<EOF
 The Container Linux version to use. Set to `latest` to select the latest available version for the selected update channel.

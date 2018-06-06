@@ -2,6 +2,20 @@ package config
 
 import "github.com/coreos/tectonic-config/config/tectonic-network"
 
+// ContainerLinuxChannel indicates the selected Container Linux channel.
+type ContainerLinuxChannel string
+
+const (
+	// ContainerLinuxChannelStable is the stable Container Linux channel.
+	ContainerLinuxChannelStable ContainerLinuxChannel = "stable"
+	// ContainerLinuxChannelBeta is the beta Container Linux channel.
+	ContainerLinuxChannelBeta ContainerLinuxChannel = "beta"
+	// ContainerLinuxChannelAlpha is the alpha Container Linux channel.
+	ContainerLinuxChannelAlpha ContainerLinuxChannel = "alpha"
+	// ContainerLinuxVersionLatest is the string to indicate the latest Container Linux version.
+	ContainerLinuxVersionLatest = "latest"
+)
+
 // Admin converts admin related config.
 type Admin struct {
 	Email    string `json:"tectonic_admin_email" yaml:"email,omitempty"`
@@ -17,8 +31,8 @@ type CA struct {
 
 // ContainerLinux converts container linux related config.
 type ContainerLinux struct {
-	Channel string `json:"tectonic_container_linux_channel,omitempty" yaml:"channel,omitempty"`
-	Version string `json:"tectonic_container_linux_version,omitempty" yaml:"version,omitempty"`
+	Channel ContainerLinuxChannel `json:"tectonic_container_linux_channel,omitempty" yaml:"channel,omitempty"`
+	Version string                `json:"tectonic_container_linux_version,omitempty" yaml:"version,omitempty"`
 }
 
 // Etcd converts etcd related config.
