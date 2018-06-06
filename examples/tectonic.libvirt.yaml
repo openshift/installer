@@ -122,22 +122,6 @@ nodePools:
 # The platform used for deploying.
 platform: libvirt
 
-proxy:
-  # (optional) HTTP proxy address.
-  #
-  # Example: `http://myproxy.example.com`
-  # http:
-
-  # (optional) HTTPS proxy address.
-  #
-  # Example: `http://myproxy.example.com`
-  # https:
-
-  # (optional) List of local endpoints that will not use HTTP proxy.
-  #
-  # Example: `["127.0.0.1","localhost",".example.com","10.3.0.1"]`
-  # no:
-
 # The path the pull secret file in JSON format.
 # This is known to be a "Docker pull secret" as produced by the docker login [1] command.
 # A sample JSON content is shown in [2].
