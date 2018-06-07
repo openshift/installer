@@ -1,5 +1,5 @@
 {
-  "tectonic_admin_email": "fake-email",
+  "tectonic_admin_email": "fake-email@example.com",
   "tectonic_admin_password": "fake-password",
   "tectonic_base_domain": "tectonic-ci.de",
   "tectonic_container_linux_channel": "beta",

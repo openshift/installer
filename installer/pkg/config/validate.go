@@ -87,6 +87,12 @@ func (c *Cluster) Validate() []error {
 	if err := validate.PrefixError("base domain", validate.DomainName(c.BaseDomain)); err != nil {
 		errs = append(errs, err)
 	}
+	if err := validate.PrefixError("admin password", validate.NonEmpty(c.Admin.Password)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.PrefixError("admin email", validate.Email(c.Admin.Email)); err != nil {
+		errs = append(errs, err)
+	}
 	return errs
 }
 
