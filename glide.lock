@@ -1,5 +1,5 @@
-hash: d6ce17985bafa5474b91d1988355b2b25bcf1effb6b03b9040ea3a8250c8a4ef
-updated: 2018-06-06T14:04:26.637287223+02:00
+hash: 86f03049faf31d22bf3562eb20b5cad88a563e83903495962b78bd066bdfb15a
+updated: 2018-06-07T10:44:57.417996427+02:00
 imports:
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
@@ -44,6 +44,8 @@ imports:
   - config/tectonic-network
   - config/tectonic-node-controller
   - config/tectonic-utility
+- name: github.com/dgrijalva/jwt-go
+  version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
 - name: github.com/emicklei/go-restful
   version: ff4f55a206334ef123e4f79bbf348980da81ca46
   subpackages:
@@ -88,10 +90,12 @@ imports:
   subpackages:
   - errorutil
 - name: golang.org/x/crypto
-  version: 5dc8cb4b8a8eb076cbb5a06bc3b8682c15bdbbd3
+  version: df8d4716b3472e4a531c33cedbe537dae921a1a9
   subpackages:
   - bcrypt
   - blowfish
+  - ed25519
+  - ed25519/internal/edwards25519
 - name: golang.org/x/net
   version: 1c05540f6879653db88113bc4a2b70aec4bd491f
   subpackages:
@@ -103,7 +107,7 @@ imports:
   - lex/httplex
   - websocket
 - name: golang.org/x/sys
-  version: 538ab54ba952cc4c7c705fa213fbf7993c97c175
+  version: 95c6576299259db960f6c5b9b69ea52422860fce
   subpackages:
   - unix
 - name: golang.org/x/text
@@ -155,4 +159,9 @@ imports:
   subpackages:
   - pkg/common
   - pkg/util/proto
-testImports: []
+testImports:
+- name: gopkg.in/square/go-jose.v2
+  version: 76dd09796242edb5b897103a75df2645c028c960
+  subpackages:
+  - cipher
+  - json

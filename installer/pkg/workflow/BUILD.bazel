@@ -30,5 +30,8 @@ go_test(
     ],
     data = glob(["fixtures/**"]),
     embed = [":go_default_library"],
-    deps = ["//installer/pkg/config:go_default_library"],
+    deps = [
+        "//installer/pkg/config:go_default_library",
+        "//vendor/gopkg.in/square/go-jose.v2:go_default_library",
+    ],
 )

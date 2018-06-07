@@ -8,13 +8,7 @@ import (
 	"gopkg.in/yaml.v2"
 
 	"github.com/coreos/tectonic-installer/installer/pkg/config/aws"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/azure"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/gcp"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/govcloud"
 	"github.com/coreos/tectonic-installer/installer/pkg/config/libvirt"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/metal"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/openstack"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/vmware"
 )
 
 // Platform indicates the target platform of the cluster.
@@ -51,32 +45,26 @@ var defaultCluster = Cluster{
 
 // Cluster defines the config for a cluster.
 type Cluster struct {
-	Admin               `json:",inline" yaml:"admin,omitempty"`
-	BaseDomain          string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
-	CA                  `json:",inline" yaml:"ca,omitempty"`
-	ContainerLinux      `json:",inline" yaml:"containerLinux,omitempty"`
-	Etcd                `json:",inline" yaml:"etcd,omitempty"`
-	Internal            `json:",inline" yaml:"-"`
-	LicensePath         string `json:"tectonic_license_path,omitempty" yaml:"licensePath,omitempty"`
-	Master              `json:",inline" yaml:"master,omitempty"`
-	Name                string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
-	Networking          `json:",inline" yaml:"networking,omitempty"`
-	NodePools           `json:"-" yaml:"nodePools"`
-	Platform            Platform `json:"tectonic_platform" yaml:"platform,omitempty"`
-	PullSecretPath      string   `json:"tectonic_pull_secret_path,omitempty" yaml:"pullSecretPath,omitempty"`
-	TLSValidityPeriod   int      `json:"tectonic_tls_validity_period,omitempty" yaml:"tlsValidityPeriod,omitempty"`
-	Worker              `json:",inline" yaml:"worker,omitempty"`
-	aws.AWS             `json:",inline" yaml:"aws,omitempty"`
-	azure.Azure         `json:",inline" yaml:"azure,omitempty"`
-	gcp.GCP             `json:",inline" yaml:"gcp,omitempty"`
-	govcloud.GovCloud   `json:",inline" yaml:"govcloud,omitempty"`
-	libvirt.Libvirt     `json:",inline" yaml:"libvirt,omitempty"`
-	metal.Metal         `json:",inline" yaml:"metal,omitempty"`
-	openstack.OpenStack `json:",inline" yaml:"openstack,omitempty"`
-	vmware.VMware       `json:",inline" yaml:"vmware,omitempty"`
-	IgnitionMaster      string `json:"tectonic_ignition_master,omitempty" yaml:"-"`
-	IgnitionWorker      string `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
-	IgnitionEtcd        string `json:"tectonic_ignition_etcd,omitempty" yaml:"-"`
+	Admin             `json:",inline" yaml:"admin,omitempty"`
+	BaseDomain        string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
+	CA                `json:",inline" yaml:"ca,omitempty"`
+	ContainerLinux    `json:",inline" yaml:"containerLinux,omitempty"`
+	Etcd              `json:",inline" yaml:"etcd,omitempty"`
+	Internal          `json:",inline" yaml:"-"`
+	LicensePath       string `json:"tectonic_license_path,omitempty" yaml:"licensePath,omitempty"`
+	Master            `json:",inline" yaml:"master,omitempty"`
+	Name              string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
+	Networking        `json:",inline" yaml:"networking,omitempty"`
+	NodePools         `json:"-" yaml:"nodePools"`
+	Platform          Platform `json:"tectonic_platform" yaml:"platform,omitempty"`
+	PullSecretPath    string   `json:"tectonic_pull_secret_path,omitempty" yaml:"pullSecretPath,omitempty"`
+	TLSValidityPeriod int      `json:"tectonic_tls_validity_period,omitempty" yaml:"tlsValidityPeriod,omitempty"`
+	Worker            `json:",inline" yaml:"worker,omitempty"`
+	aws.AWS           `json:",inline" yaml:"aws,omitempty"`
+	libvirt.Libvirt   `json:",inline" yaml:"libvirt,omitempty"`
+	IgnitionMaster    string `json:"tectonic_ignition_master,omitempty" yaml:"-"`
+	IgnitionWorker    string `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
+	IgnitionEtcd      string `json:"tectonic_ignition_etcd,omitempty" yaml:"-"`
 }
 
 // NodeCount will return the number of nodes specified in NodePools with matching names.

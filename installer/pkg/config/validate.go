@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
-	"os"
 	"regexp"
 	"strings"
 
@@ -81,6 +80,7 @@ func (c *Cluster) Validate() []error {
 	errs = append(errs, c.validateNetworking()...)
 	errs = append(errs, c.validateAWS()...)
 	errs = append(errs, c.validateCL()...)
+	errs = append(errs, c.validateTectonicFiles()...)
 	if err := validate.PrefixError("cluster name", validate.ClusterName(c.Name)); err != nil {
 		errs = append(errs, err)
 	}
@@ -226,6 +226,17 @@ func (c *Cluster) validateTNCS3Bucket() error {
 	return nil
 }
 
+func (c *Cluster) validateTectonicFiles() []error {
+	var errs []error
+	if err := validate.JSONFile(c.PullSecretPath); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.License(c.LicensePath); err != nil {
+		errs = append(errs, err)
+	}
+	return errs
+}
+
 func (c *Cluster) validateIgnitionFiles() []error {
 	var errs []error
 	for _, n := range c.NodePools {
@@ -233,7 +244,7 @@ func (c *Cluster) validateIgnitionFiles() []error {
 			continue
 		}
 
-		if err := validateFileExist(n.IgnitionFile); err != nil {
+		if err := validate.FileExists(n.IgnitionFile); err != nil {
 			errs = append(errs, err)
 			continue
 		}
@@ -243,11 +254,6 @@ func (c *Cluster) validateIgnitionFiles() []error {
 		}
 	}
 	return errs
-}
-
-func validateFileExist(ignitionFile string) error {
-	_, err := os.Stat(ignitionFile)
-	return err
 }
 
 func validateIgnitionConfig(filePath string) error {
