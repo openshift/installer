@@ -16,7 +16,6 @@ import (
 	tnco "github.com/coreos/tectonic-config/config/tectonic-node-controller"
 	"github.com/coreos/tectonic-config/config/tectonic-utility"
 	"github.com/ghodss/yaml"
-	"golang.org/x/crypto/bcrypt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
@@ -30,7 +29,7 @@ const (
 	identityConfigConsoleClientID = "tectonic-console"
 	identityConfigKubectlClientID = "tectonic-kubectl"
 	statsEmitterConfigStatsURL    = "https://stats-collector.tectonic.com"
-	ingressConfigIngressKind      = "NodePort"
+	ingressConfigIngressKind      = "haproxy-router"
 	certificatesStrategy          = "userProvidedCA"
 	identityAPIService            = "tectonic-identity-api.tectonic-system.svc.cluster.local"
 )
@@ -69,9 +68,13 @@ func (c *ConfigGenerator) KubeSystem() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	coreConfig, err := c.coreConfig()
+	if err != nil {
+		return "", err
+	}
 
 	return configMap("kube-system", genericData{
-		"kco-config":     c.coreConfig(),
+		"kco-config":     coreConfig,
 		"network-config": c.networkConfig(),
 		"tnco-config":    tncoConfig,
 	})
@@ -95,7 +98,11 @@ func (c *ConfigGenerator) TectonicSystem() (string, error) {
 
 // CoreConfig returns, if successful, a yaml string for the on-disk kco-config.
 func (c *ConfigGenerator) CoreConfig() (string, error) {
-	return marshalYAML(c.coreConfig())
+	coreConfig, err := c.coreConfig()
+	if err != nil {
+		return "", err
+	}
+	return marshalYAML(coreConfig)
 }
 
 // TncoConfig returns, if successful, a yaml string for the on-disk tnco-config.
@@ -114,16 +121,17 @@ func (c *ConfigGenerator) addonConfig() (*kubeaddon.OperatorConfig, error) {
 			Kind:       kubeaddon.Kind,
 		},
 	}
-	cidrhost, err := cidrhost(c.Cluster.Networking.ServiceCIDR, 10)
+	addonConfig.CloudProvider = c.Platform.String()
+	addonConfig.ClusterConfig.APIServerURL = c.getAPIServerURL()
+	registrySecret, err := generateRandomID(16)
 	if err != nil {
 		return nil, err
 	}
-	addonConfig.DNSConfig.ClusterIP = cidrhost
-	addonConfig.CloudProvider = cloudProvider(c.Platform)
+	addonConfig.RegistryHTTPSecret = registrySecret
 	return &addonConfig, nil
 }
 
-func (c *ConfigGenerator) coreConfig() *kubecore.OperatorConfig {
+func (c *ConfigGenerator) coreConfig() (*kubecore.OperatorConfig, error) {
 	coreConfig := kubecore.OperatorConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: kubecore.APIVersion,
@@ -136,15 +144,23 @@ func (c *ConfigGenerator) coreConfig() *kubecore.OperatorConfig {
 	coreConfig.AuthConfig.OIDCGroupsClaim = authConfigOIDCGroupsClaim
 	coreConfig.AuthConfig.OIDCUsernameClaim = authConfigOIDCUsernameClaim
 
+	cidrhost, err := cidrhost(c.Cluster.Networking.ServiceCIDR, 10)
+	if err != nil {
+		return nil, err
+	}
+	coreConfig.DNSConfig.ClusterIP = cidrhost
+
 	coreConfig.CloudProviderConfig.CloudConfigPath = ""
 	coreConfig.CloudProviderConfig.CloudProviderProfile = cloudProvider(c.Cluster.Platform)
+
+	coreConfig.RoutingConfig.Subdomain = c.getBaseAddress()
 
 	coreConfig.NetworkConfig.ClusterCIDR = c.Cluster.Networking.PodCIDR
 	coreConfig.NetworkConfig.ServiceCIDR = c.Cluster.Networking.ServiceCIDR
 	coreConfig.NetworkConfig.AdvertiseAddress = networkConfigAdvertiseAddress
 	coreConfig.NetworkConfig.EtcdServers = c.getEtcdServersURLs()
 
-	return &coreConfig
+	return &coreConfig, nil
 }
 
 func (c *ConfigGenerator) networkConfig() *tectonicnetwork.OperatorConfig {
@@ -183,9 +199,9 @@ func (c *ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
 	}
 
 	tncoConfig.ControllerConfig.ClusterDNSIP = cidrhost
+	tncoConfig.ControllerConfig.Platform = c.Platform.String()
 	tncoConfig.ControllerConfig.CloudProviderConfig = "" // TODO(yifan): Get CloudProviderConfig.
 	tncoConfig.ControllerConfig.ClusterName = c.Cluster.Name
-	tncoConfig.ControllerConfig.Platform = string(c.Cluster.Platform)
 	tncoConfig.ControllerConfig.BaseDomain = c.Cluster.BaseDomain
 	tncoConfig.ControllerConfig.EtcdInitialCount = c.Cluster.NodeCount(c.Cluster.Etcd.NodePools)
 	tncoConfig.ControllerConfig.AdditionalConfigs = []string{} // TODO(yifan): Get additional configs.
@@ -202,46 +218,11 @@ func (c *ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, erro
 		},
 	}
 
-	var err error
-	bytes, err := bcrypt.GenerateFromPassword([]byte(c.Admin.Password), 12)
-	if err != nil {
-		return nil, err
-	}
-	hashedAdminPassword := string(bytes)
-	adminUserID, err := generateRandomID(16)
-	if err != nil {
-		return nil, err
-	}
-	consoleSecret, err := generateRandomID(16)
-	if err != nil {
-		return nil, err
-	}
-	KubectlSecret, err := generateRandomID(16)
-	if err != nil {
-		return nil, err
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	utilityConfig.IdentityConfig.AdminEmail = c.Admin.Email
-	utilityConfig.IdentityConfig.AdminPasswordHash = hashedAdminPassword
-	utilityConfig.IdentityConfig.AdminUserID = adminUserID
-	utilityConfig.IdentityConfig.ConsoleClientID = identityConfigConsoleClientID
-	utilityConfig.IdentityConfig.ConsoleSecret = consoleSecret
-	utilityConfig.IdentityConfig.KubectlClientID = identityConfigKubectlClientID
-	utilityConfig.IdentityConfig.KubectlSecret = KubectlSecret
-
-	utilityConfig.IngressConfig.ConsoleBaseHost = c.getBaseAddress()
-	utilityConfig.IngressConfig.IngressKind = ingressConfigIngressKind
-
 	utilityConfig.StatsEmitterConfig.StatsURL = statsEmitterConfigStatsURL
 
-	utilityConfig.TectonicConfigMapConfig.BaseAddress = c.getBaseAddress()
 	utilityConfig.TectonicConfigMapConfig.CertificatesStrategy = certificatesStrategy
 	utilityConfig.TectonicConfigMapConfig.ClusterID = c.Cluster.Internal.ClusterID
 	utilityConfig.TectonicConfigMapConfig.ClusterName = c.Cluster.Name
-	utilityConfig.TectonicConfigMapConfig.IdentityAPIService = identityAPIService
 	utilityConfig.TectonicConfigMapConfig.InstallerPlatform = c.Platform.String()
 	utilityConfig.TectonicConfigMapConfig.KubeAPIServerURL = c.getAPIServerURL()
 	// TODO: Speficy what's a version in ut2 and set it here

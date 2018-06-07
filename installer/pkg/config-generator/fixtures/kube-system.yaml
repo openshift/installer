@@ -12,12 +12,16 @@ data:
       cloud_provider_profile: aws
     clusterConfig:
       apiserver_url: https://test-api.cluster.com:443
+    dnsConfig:
+      clusterIP: 10.3.0.10
     kind: KubeCoreOperatorConfig
     networkConfig:
       advertise_address: 0.0.0.0
       cluster_cidr: 10.2.0.0/16
       etcd_servers: https://test-etcd-0.cluster.com:2379,https://test-etcd-1.cluster.com:2379,https://test-etcd-2.cluster.com:2379
       service_cidr: 10.3.0.0/16
+    routingConfig:
+      subdomain: test.cluster.com
   network-config: |
     apiVersion: v1
     calicoConfig:
