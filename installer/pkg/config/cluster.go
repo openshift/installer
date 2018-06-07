@@ -37,6 +37,10 @@ var defaultCluster = Cluster{
 	AWS: aws.AWS{
 		Endpoints: aws.EndpointsAll,
 	},
+	ContainerLinux: ContainerLinux{
+		Channel: ContainerLinuxChannelStable,
+		Version: ContainerLinuxVersionLatest,
+	},
 	Networking: Networking{
 		MTU:         "1480",
 		PodCIDR:     "10.2.0.0/16",

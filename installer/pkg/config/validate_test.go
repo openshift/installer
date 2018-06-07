@@ -482,3 +482,91 @@ func TestValidateIgnitionFiles(t *testing.T) {
 		t.Errorf("expected: ErrInvalidIgnConfig, got: %v", errs[1])
 	}
 }
+
+func TestValidateCL(t *testing.T) {
+	cases := []struct {
+		cluster Cluster
+		err     bool
+	}{
+		{
+			cluster: defaultCluster,
+			err:     false,
+		},
+		{
+			cluster: Cluster{},
+			err:     true,
+		},
+		{
+			cluster: Cluster{
+				ContainerLinux: ContainerLinux{
+					Channel: ContainerLinuxChannelBeta,
+				},
+			},
+			err: true,
+		},
+		{
+			cluster: Cluster{
+				ContainerLinux: ContainerLinux{
+					Channel: ContainerLinuxChannelBeta,
+					Version: ContainerLinuxVersionLatest,
+				},
+			},
+			err: false,
+		},
+		{
+			cluster: Cluster{
+				ContainerLinux: ContainerLinux{
+					Channel: "foo",
+					Version: ContainerLinuxVersionLatest,
+				},
+			},
+			err: true,
+		},
+		{
+			cluster: Cluster{
+				ContainerLinux: ContainerLinux{
+					Channel: ContainerLinuxChannelStable,
+					Version: "100.99.98",
+				},
+			},
+			err: false,
+		},
+		{
+			cluster: Cluster{
+				ContainerLinux: ContainerLinux{
+					Channel: ContainerLinuxChannelStable,
+					Version: "100..98",
+				},
+			},
+			err: true,
+		},
+		{
+			cluster: Cluster{
+				ContainerLinux: ContainerLinux{
+					Channel: ContainerLinuxChannelStable,
+					Version: "100a99a98",
+				},
+			},
+			err: true,
+		},
+		{
+			cluster: Cluster{
+				ContainerLinux: ContainerLinux{
+					Channel: ContainerLinuxChannelStable,
+					Version: "foo",
+				},
+			},
+			err: true,
+		},
+	}
+
+	for i, c := range cases {
+		if err := c.cluster.validateCL(); (err != nil) != c.err {
+			no := "no"
+			if c.err {
+				no = "an"
+			}
+			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
+		}
+	}
+}
