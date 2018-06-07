@@ -23,3 +23,6 @@ bazel-genfiles
 bazel-testlogs
 bazel-tectonic-installer
 .cache
+
+# RSpec
+spec/examples.txt
