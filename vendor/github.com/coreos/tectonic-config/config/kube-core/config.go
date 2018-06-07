@@ -16,7 +16,9 @@ const (
 type OperatorConfig struct {
 	metav1.TypeMeta     `json:",inline"`
 	ClusterConfig       `json:"clusterConfig,omitempty"`
+	DNSConfig           `json:"dnsConfig,omitempty"`
 	AuthConfig          `json:"authConfig,omitempty"`
+	RoutingConfig       `json:"routingConfig,omitempty"`
 	CloudProviderConfig `json:"cloudProviderConfig,omitempty"`
 	NetworkConfig       `json:"networkConfig,omitempty"`
 }
@@ -46,4 +48,17 @@ type NetworkConfig struct {
 // ClusterConfig holds global/general information about the cluster.
 type ClusterConfig struct {
 	APIServerURL string `json:"apiserver_url"`
+}
+
+// DNSConfig options for the dns configuration
+type DNSConfig struct {
+	// ClusterIP ip address of the cluster
+	ClusterIP string `json:"clusterIP"`
+}
+
+// RoutingConfig holds options for routes.
+type RoutingConfig struct {
+	// Subdomain is the suffix appended to $service.$namespace. to form the default route hostname
+	// if empty, router.tectonic-ingress.cluster.local
+	Subdomain string `json:"subdomain"`
 }
