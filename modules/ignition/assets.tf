@@ -32,6 +32,8 @@ data "template_file" "kubelet" {
   template = "${file("${path.module}/resources/services/kubelet.service")}"
 
   vars {
+    kubelet_image_url     = "${replace(var.container_images["hyperkube"],var.image_re,"$1")}"
+    kubelet_image_tag     = "${replace(var.container_images["hyperkube"],var.image_re,"$2")}"
     cloud_provider        = "${var.cloud_provider}"
     cloud_provider_config = "${var.cloud_provider_config != "" ? "--cloud-config=/etc/kubernetes/cloud/config" : ""}"
     cluster_dns_ip        = "${var.kube_dns_service_ip}"
@@ -51,11 +53,10 @@ data "template_file" "k8s_node_bootstrap" {
   template = "${file("${path.module}/resources/services/k8s-node-bootstrap.service")}"
 
   vars {
-    bootstrap_upgrade_cl     = "${var.bootstrap_upgrade_cl}"
-    tectonic_torcx_image_url = "${replace(var.container_images["tectonic_torcx"],var.image_re,"$1")}"
-    tectonic_torcx_image_tag = "${replace(var.container_images["tectonic_torcx"],var.image_re,"$2")}"
-    torcx_skip_setup         = "false"
-    torcx_store_url          = "${var.torcx_store_url}"
+    bootstrap_upgrade_cl = "${var.bootstrap_upgrade_cl}"
+    tectonic_torcx_image = "${var.container_images["tectonic_torcx"]}"
+    torcx_skip_setup     = "false"
+    torcx_store_url      = "${var.torcx_store_url}"
   }
 }
 
