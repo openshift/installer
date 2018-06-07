@@ -58,8 +58,9 @@ export ETCDCTL_API=
 
 # shellcheck disable=SC2154
 /usr/bin/docker kill $${signer_id}
-
 rm /etc/kubernetes/manifests/tectonic-node-controller-pod.yaml
+
+cp -r $(pwd)/bootstrap-configs /etc/kubernetes/bootstrap-configs
 
 # shellcheck disable=SC2154
 /usr/bin/docker run \
