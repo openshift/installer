@@ -18,6 +18,14 @@ output "ingress_internal_fqdn" {
   value = "${element(concat(aws_route53_record.tectonic_ingress_private.*.name, list("")), 0)}"
 }
 
+output "routes_external_fqdn" {
+  value = "${element(concat(aws_route53_record.routes_ingress_public.*.name, list("")), 0)}"
+}
+
+output "routes_internal_fqdn" {
+  value = "${element(concat(aws_route53_record.routes_ingress_private.*.name, list("")), 0)}"
+}
+
 output "api_external_fqdn" {
   value = "${element(concat(aws_route53_record.tectonic_api_external.*.name, list("")), 0)}"
 }

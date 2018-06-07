@@ -65,7 +65,7 @@ resource "aws_security_group_rule" "master_ingress_https" {
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
   from_port   = 6443
-  to_port     = 6443
+  to_port     = 6445
 }
 
 resource "aws_security_group_rule" "master_ingress_heapster" {
