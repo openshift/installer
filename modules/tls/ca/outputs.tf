@@ -26,6 +26,18 @@ output "aggregator_ca_key_pem" {
   value = "${var.aggregator_ca_key_pem_path == "" ? join("", tls_private_key.aggregator_ca.*.private_key_pem) : file(local._aggregator_ca_key_pem_path)}"
 }
 
+output "service_serving_ca_cert_pem" {
+  value = "${var.service_serving_ca_cert_pem_path == "" ? join("", tls_locally_signed_cert.service_serving_ca.*.cert_pem) : file(local._service_serving_ca_cert_pem_path)}"
+}
+
+output "service_serving_ca_key_alg" {
+  value = "${var.service_serving_ca_key_alg == "" ? join("", tls_locally_signed_cert.service_serving_ca.*.ca_key_algorithm) : var.service_serving_ca_key_alg}"
+}
+
+output "service_serving_ca_key_pem" {
+  value = "${var.service_serving_ca_key_pem_path == "" ? join("", tls_private_key.service_serving_ca.*.private_key_pem) : file(local._service_serving_ca_key_pem_path)}"
+}
+
 output "etcd_ca_cert_pem" {
   value = "${var.etcd_ca_cert_pem_path == "" ? join("", tls_locally_signed_cert.etcd_ca.*.cert_pem) : file(local._etcd_ca_cert_pem_path)}"
 }

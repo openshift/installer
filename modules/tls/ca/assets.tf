@@ -23,6 +23,16 @@ resource "local_file" "aggregator_ca_cert" {
   filename = "./generated/tls/aggregator-ca.crt"
 }
 
+resource "local_file" "service_serving_ca_key" {
+  content  = "${var.service_serving_ca_key_pem_path == "" ? join("", tls_private_key.service_serving_ca.*.private_key_pem) : file(local._service_serving_ca_key_pem_path)}"
+  filename = "./generated/tls/service-serving-ca.key"
+}
+
+resource "local_file" "service_serving_ca_cert" {
+  content  = "${var.service_serving_ca_cert_pem_path == "" ? join("", tls_locally_signed_cert.service_serving_ca.*.cert_pem) : file(local._service_serving_ca_cert_pem_path)}"
+  filename = "./generated/tls/service-serving-ca.crt"
+}
+
 resource "local_file" "etcd_ca_key" {
   content  = "${var.etcd_ca_key_pem_path == "" ? join("", tls_private_key.etcd_ca.*.private_key_pem) : file(local._etcd_ca_key_pem_path)}"
   filename = "./generated/tls/etcd-client-ca.key"
