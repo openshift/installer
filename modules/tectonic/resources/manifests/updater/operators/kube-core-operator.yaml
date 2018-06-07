@@ -20,6 +20,7 @@ spec:
       containers:
       - name: kube-core-operator
         image: ${kube_core_operator_image}
+        imagePullPolicy: Always
         args:
         - --config=/etc/cluster-config/kco-config.yaml
         resources:
