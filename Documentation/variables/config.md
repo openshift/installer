@@ -31,10 +31,8 @@ This document gives an overview of variables used in all platforms of the Tecton
 | tectonic_pull_secret_path | The path the pull secret file in JSON format. This is known to be a "Docker pull secret" as produced by the docker login [1] command. A sample JSON content is shown in [2]. You can download the pull secret from your Account overview page at [3].<br><br>[1] https://docs.docker.com/engine/reference/commandline/login/<br><br>[2] https://coreos.com/os/docs/latest/registry-authentication.html#manual-registry-auth-setup<br><br>[3] https://account.coreos.com/overview | string | `` |
 | tectonic_service_cidr | (optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation. The maximum size of this IP range is /12 | string | `10.3.0.0/16` |
 | tectonic_stats_url | (internal) The Tectonic statistics collection URL to which to report. | string | `https://stats-collector.tectonic.com` |
-| tectonic_tls_validity_period | Validity period of the self-signed certificates (in hours). Default is 3 years. This setting is ignored if user provided certificates are used. | string | `26280` |
 | tectonic_update_app_id | (internal) The Tectonic Omaha update App ID | string | `6bc7b986-4654-4a0f-94b3-84ce6feb1db4` |
 | tectonic_update_channel | (internal) The Tectonic Omaha update channel | string | `tectonic-1.9-production` |
 | tectonic_update_server | (internal) The URL of the Tectonic Omaha update server | string | `https://tectonic.update.core-os.net` |
 | tectonic_versions | (internal) Versions of the components to use | map | `<map>` |
 | tectonic_worker_count | The number of worker nodes to be created. This applies only to cloud platforms. | string | `3` |
-

@@ -48,7 +48,6 @@ nodePools:
     count: 3
 platform: AWS
 pullSecretPath:
-tlsValidityPeriod: 26280
 worker:
   nodePools:
     - worker
