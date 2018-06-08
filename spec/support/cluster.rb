@@ -33,15 +33,14 @@ class Cluster
 
   def run(*args)
     cmd = [File.join("installer", "tectonic"), *args].join(" ")
-    puts cmd.inspect if ENV.key?("DEBUG")
     Open3.popen2e(cmd) do |_, stdout_stderr, wait_thr|
-      if ENV.key?("DEBUG")
-        Thread.new do
-          stdout_stderr.each { |line| puts line }
-        end
+      buffer = ""
+
+      Thread.new do
+        stdout_stderr.each { |line| buffer << line }
       end
 
-      raise Error, stdout_stderr unless wait_thr.value.success?
+      raise Error, buffer unless wait_thr.value.success?
     end
   end
 
