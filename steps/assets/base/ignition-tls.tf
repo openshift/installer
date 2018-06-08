@@ -53,6 +53,28 @@ data "ignition_file" "aggregator_ca_cert" {
   path = "/opt/tectonic/tls/aggregator-ca.crt"
 }
 
+data "ignition_file" "service_serving_ca_key" {
+  filesystem = "root"
+  mode       = "0600"
+
+  content {
+    content = "${local.service_serving_ca_key_pem}"
+  }
+
+  path = "/opt/tectonic/tls/service-serving-ca.key"
+}
+
+data "ignition_file" "service_serving_ca_cert" {
+  filesystem = "root"
+  mode       = "0644"
+
+  content {
+    content = "${local.service_serving_ca_cert_pem}"
+  }
+
+  path = "/opt/tectonic/tls/service-serving-ca.crt"
+}
+
 data "ignition_file" "etcd_ca_key" {
   filesystem = "root"
   mode       = "0600"
@@ -119,6 +141,28 @@ data "ignition_file" "apiserver_cert" {
   }
 
   path = "/opt/tectonic/tls/apiserver.crt"
+}
+
+data "ignition_file" "openshift_apiserver_key" {
+  filesystem = "root"
+  mode       = "0600"
+
+  content {
+    content = "${local.openshift_apiserver_key_pem}"
+  }
+
+  path = "/opt/tectonic/tls/openshift-apiserver.key"
+}
+
+data "ignition_file" "openshift_apiserver_cert" {
+  filesystem = "root"
+  mode       = "0644"
+
+  content {
+    content = "${local.openshift_apiserver_cert_pem}"
+  }
+
+  path = "/opt/tectonic/tls/openshift-apiserver.crt"
 }
 
 data "ignition_file" "apiserver_proxy_key" {
@@ -194,6 +238,8 @@ locals {
     "${data.ignition_file.kube_ca_cert.id}",
     "${data.ignition_file.aggregator_ca_key.id}",
     "${data.ignition_file.aggregator_ca_cert.id}",
+    "${data.ignition_file.service_serving_ca_key.id}",
+    "${data.ignition_file.service_serving_ca_cert.id}",
     "${data.ignition_file.etcd_ca_key.id}",
     "${data.ignition_file.etcd_ca_cert.id}",
   ]
@@ -206,6 +252,8 @@ locals {
   kube_certs_ignition_file_id_list = [
     "${data.ignition_file.apiserver_key.id}",
     "${data.ignition_file.apiserver_cert.id}",
+    "${data.ignition_file.openshift_apiserver_key.id}",
+    "${data.ignition_file.openshift_apiserver_cert.id}",
     "${data.ignition_file.apiserver_proxy_key.id}",
     "${data.ignition_file.apiserver_proxy_cert.id}",
     "${data.ignition_file.admin_key.id}",

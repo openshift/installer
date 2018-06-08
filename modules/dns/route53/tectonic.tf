@@ -84,3 +84,29 @@ resource "aws_route53_record" "tectonic_ingress_private" {
     evaluate_target_health = true
   }
 }
+
+resource "aws_route53_record" "routes_ingress_public" {
+  count   = "${var.elb_alias_enabled ? local.public_endpoints_count : 0}"
+  zone_id = "${local.public_zone_id}"
+  name    = "*.${var.cluster_name}.${var.base_domain}"
+  type    = "A"
+
+  alias {
+    name                   = "${var.console_elb_dns_name}"
+    zone_id                = "${var.console_elb_zone_id}"
+    evaluate_target_health = true
+  }
+}
+
+resource "aws_route53_record" "routes_ingress_private" {
+  count   = "${var.elb_alias_enabled ? local.private_endpoints_count : 0}"
+  zone_id = "${var.private_zone_id}"
+  name    = "*.${var.cluster_name}.${var.base_domain}"
+  type    = "A"
+
+  alias {
+    name                   = "${var.console_elb_dns_name}"
+    zone_id                = "${var.console_elb_zone_id}"
+    evaluate_target_health = true
+  }
+}

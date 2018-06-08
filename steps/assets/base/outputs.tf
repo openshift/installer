@@ -12,6 +12,7 @@ output "ignition_bootstrap_files" {
       data.ignition_file.tnco_config.id,
       data.ignition_file.kco_config.id,
       data.ignition_file.bootstrap_kubeconfig.id,
+      data.ignition_file.kubelet_kubeconfig.id,
     ),
     module.ignition_bootstrap.ignition_file_id_list,
     module.bootkube.ignition_file_id_list,

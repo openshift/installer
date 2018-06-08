@@ -31,7 +31,7 @@ ExecStartPre=/usr/bin/docker run --rm \
             -v /etc/coreos:/etc/coreos:ro \
             -v /etc/torcx:/etc/torcx \
             -v /etc/kubernetes:/etc/kubernetes \
-            ${tectonic_torcx_image_url}:${tectonic_torcx_image_tag} \
+            ${tectonic_torcx_image} \
             /tectonic-torcx-bootstrap \
             --upgrade-os=${bootstrap_upgrade_cl} \
             --torcx-manifest-url="${torcx_store_url}" \

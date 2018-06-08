@@ -10,7 +10,7 @@ resource "tls_cert_request" "admin" {
   private_key_pem = "${tls_private_key.admin.private_key_pem}"
 
   subject {
-    common_name  = "admin"
+    common_name  = "system:admin"
     organization = "system:masters"
   }
 }

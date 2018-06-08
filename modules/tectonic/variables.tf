@@ -35,25 +35,9 @@ variable "pull_secret_path" {
   default     = "/Users/coreos/Desktop/config.json"
 }
 
-variable "identity_client_ca_cert" {
-  description = "A PEM-encoded CA bundle, used to verify identity server."
-  type        = "string"
-}
-
-variable "identity_server_ca_cert" {
-  description = "A PEM-encoded CA certificate, used to authenticate identity client."
-  type        = "string"
-}
-
 variable "base_address" {
   description = "Base address used to access the Tectonic Console, without protocol nor trailing forward slash (may contain a port). Example: console.example.com:30000."
   type        = "string"
-}
-
-variable "admin_email" {
-  description = "E-mail address used to log in to the Tectonic Console."
-  type        = "string"
-  default     = "admin@example.com"
 }
 
 variable "update_server" {
@@ -83,18 +67,6 @@ variable "ingress_key_pem" {
   type = "string"
 }
 
-variable "identity_server_cert_pem" {
-  type = "string"
-}
-
-variable "identity_server_key_pem" {
-  type = "string"
-}
-
-variable "identity_client_cert_pem" {
-  type = "string"
-}
-
-variable "identity_client_key_pem" {
+variable "ingress_bundle_pem" {
   type = "string"
 }

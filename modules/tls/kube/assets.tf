@@ -12,6 +12,20 @@ resource "local_file" "apiserver_cert" {
   filename = "./generated/tls/apiserver.crt"
 }
 
+resource "local_file" "openshift_apiserver_key" {
+  content  = "${tls_private_key.openshift_apiserver.private_key_pem}"
+  filename = "./generated/tls/openshift-apiserver.key"
+}
+
+data "template_file" "openshift_apiserver_cert" {
+  template = "${join("", list(tls_locally_signed_cert.openshift_apiserver.cert_pem, var.aggregator_ca_cert_pem))}"
+}
+
+resource "local_file" "openshift_apiserver_cert" {
+  content  = "${data.template_file.openshift_apiserver_cert.rendered}"
+  filename = "./generated/tls/openshift-apiserver.crt"
+}
+
 resource "local_file" "apiserver_proxy_key" {
   content  = "${tls_private_key.apiserver_proxy.private_key_pem}"
   filename = "./generated/tls/apiserver-proxy.key"

@@ -28,6 +28,21 @@ variable "aggregator_ca_key_pem" {
   type        = "string"
 }
 
+variable "service_serving_ca_cert_pem" {
+  description = "PEM-encoded CA certificate"
+  type        = "string"
+}
+
+variable "service_serving_ca_key_alg" {
+  description = "Algorithm used to generate service_serving_ca_key"
+  type        = "string"
+}
+
+variable "service_serving_ca_key_pem" {
+  description = "PEM-encoded CA key"
+  type        = "string"
+}
+
 variable "kube_apiserver_url" {
   type = "string"
 }

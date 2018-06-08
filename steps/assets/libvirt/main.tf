@@ -6,7 +6,7 @@ module assets_base {
   cloud_provider = ""
   etcd_count     = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : 1}"
 
-  ingress_kind = "HostPort"
+  ingress_kind = "haproxy-router"
 
   tectonic_base_domain             = "${var.tectonic_base_domain}"
   tectonic_bootstrap_upgrade_cl    = "${var.tectonic_bootstrap_upgrade_cl}"

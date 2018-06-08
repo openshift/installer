@@ -18,7 +18,7 @@ module assets_base {
 
   cloud_provider = "aws"
   etcd_count     = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
-  ingress_kind   = "NodePort"
+  ingress_kind   = "haproxy-router"
 
   tectonic_base_domain             = "${var.tectonic_base_domain}"
   tectonic_bootstrap_upgrade_cl    = "${var.tectonic_bootstrap_upgrade_cl}"

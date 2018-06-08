@@ -5,7 +5,7 @@ KUBECONFIG="$1"
 ASSETS_PATH="$2"
 
 # Setup API Authentication
-KUBECTL="/kubectl --kubeconfig=$KUBECONFIG"
+KUBECTL="oc --config=$KUBECONFIG"
 
 # Setup helper functions
 
@@ -117,7 +117,7 @@ cd "$ASSETS_PATH/tectonic"
 set +e
 i=0
 echo "Waiting for Kubernetes API..."
-until $KUBECTL cluster-info; do
+until $KUBECTL status; do
   i=$((i+1))
   echo "Cluster not available yet, waiting for 5 seconds ($i)"
   sleep 5
@@ -145,22 +145,19 @@ kubectl create -f secrets/pull.json
 kubectl create -f secrets/license.json
 kubectl create -f secrets/ingress-tls.yaml
 kubectl create -f secrets/ca-cert.yaml
-kubectl create -f secrets/identity-grpc-client.yaml
-kubectl create -f secrets/identity-grpc-server.yaml
 kubectl create -f ingress/pull.json
 
 echo "Creating Operators"
+kubectl create -f security/priviledged-scc-tectonic.yaml
 kubectl create -f updater/tectonic-channel-operator-kind.yaml
 kubectl create -f updater/app-version-kind.yaml
 kubectl create -f updater/migration-status-kind.yaml
-kubectl create -f updater/tectonic-monitoring-config.yaml
 
 wait_for_crd tectonic-system channeloperatorconfigs.tco.coreos.com
 kubectl create -f updater/tectonic-channel-operator-config.yaml
 
 kubectl create -f updater/operators/kube-core-operator.yaml
 kubectl create -f updater/operators/tectonic-channel-operator.yaml
-kubectl create -f updater/operators/tectonic-prometheus-operator.yaml
 kubectl create -f updater/operators/kube-addon-operator.yaml
 kubectl create -f updater/operators/tectonic-alm-operator.yaml
 kubectl create -f updater/operators/tectonic-utility-operator.yaml
@@ -169,7 +166,6 @@ kubectl create -f updater/operators/tectonic-ingress-controller-operator.yaml
 wait_for_crd tectonic-system appversions.tco.coreos.com
 kubectl create -f updater/app_versions/app-version-tectonic-cluster.yaml
 kubectl create -f updater/app_versions/app-version-kube-core.yaml
-kubectl create -f updater/app_versions/app-version-tectonic-monitoring.yaml
 kubectl create -f updater/app_versions/app-version-kube-addon.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-alm.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-utility.yaml

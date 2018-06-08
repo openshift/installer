@@ -45,6 +45,8 @@ var (
 		"bootstrap",
 		"kco-config.yaml",
 		"tnco-config.yaml",
+		// TODO: temporary disabling this for OpenTonic
+		"tectonic/security/priviledged-scc-tectonic.yaml",
 	}
 
 	// equivalentKindRemapping is used by resourceIdentifier to map different
@@ -66,12 +68,14 @@ func testCluster(t *testing.T) {
 	t.Run("AllNodesRunning", testAllNodesRunning)
 	t.Run("AllResourcesCreated", testAllResourcesCreated)
 	t.Run("AllPodsRunning", testAllPodsRunning)
-	t.Run("GetIdentityLogs", testGetIdentityLogs)
+	// TODO: temporary disabling this for OpenTonic
+	// t.Run("GetIdentityLogs", testGetIdentityLogs)
 
-	ne := os.Getenv(networkingEnv)
-	if ne == "canal" || ne == "calico-ipip" {
-		t.Run("NetworkPolicy", testNetworkPolicy)
-	}
+	// TODO: temporary disabling this for OpenTonic
+	//ne := os.Getenv(networkingEnv)
+	//if ne == "canal" || ne == "calico-ipip" {
+	//	t.Run("NetworkPolicy", testNetworkPolicy)
+	//}
 
 	t.Run("KillAPIServer", testKillAPIServer)
 }

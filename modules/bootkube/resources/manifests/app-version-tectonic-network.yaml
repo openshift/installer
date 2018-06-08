@@ -2,7 +2,7 @@ apiVersion: tco.coreos.com/v1
 kind: AppVersion
 metadata:
   name: tectonic-network
-  namespace: tectonic-system
+  namespace: kube-system
   labels:
     managed-by-channel-operator: "true"
 spec:

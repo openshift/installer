@@ -7,3 +7,4 @@ metadata:
   labels:
     kubernetes.io/ingress.class: tectonic
     name: tectonic-ingress
+    openshift.io/run-level: "1"

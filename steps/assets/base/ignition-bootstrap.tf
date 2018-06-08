@@ -66,3 +66,13 @@ data "ignition_file" "bootstrap_kubeconfig" {
     content = "${module.bootkube.kubeconfig-kubelet}"
   }
 }
+
+data "ignition_file" "kubelet_kubeconfig" {
+  filesystem = "root"
+  path       = "/var/lib/kubelet/kubeconfig"
+  mode       = 0644
+
+  content {
+    content = "${module.bootkube.kubeconfig-kubelet}"
+  }
+}

@@ -26,6 +26,7 @@ resource "tls_cert_request" "ingress" {
   # subjectAltName
   dns_names = [
     "${element(split(":", var.base_address), 0)}",
+    "*.${element(split(":", var.base_address), 0)}",
   ]
 }
 

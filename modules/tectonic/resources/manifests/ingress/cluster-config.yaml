@@ -7,4 +7,6 @@ data:
   ingress-config: |
     apiVersion: v1
     kind: TectonicIngressOperatorConfig
-    installerPlatform: ${platform}
+    type: ${ingress_kind}
+    statsPassword: ${ingress_status_password}
+    statsUsername: admin
