@@ -10,7 +10,8 @@ module Operators
     'kube-core-operator',
     'kube-addon-operator',
     'tectonic-channel-operator',
-    'tectonic-prometheus-operator',
+    # TODO: temporary disabling this for OpenTonic
+    # 'tectonic-prometheus-operator',
     'tectonic-utility-operator'
   ].freeze
 
