@@ -1,7 +1,6 @@
 module "ignition_bootstrap" {
   source = "../../../modules/ignition"
 
-  bootstrap_upgrade_cl = "${var.tectonic_bootstrap_upgrade_cl}"
   cloud_provider       = "${var.cloud_provider}"
   container_images     = "${var.tectonic_container_images}"
   etcd_ca_cert_pem     = "${local.etcd_ca_cert_pem}"
