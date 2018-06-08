@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net"
 	"regexp"
 	"strings"
 
@@ -18,6 +17,10 @@ import (
 
 const (
 	maxS3BucketNameLength = 63
+)
+
+var (
+	qcowMagic = []byte{'Q', 'F', 'I', 0xfb}
 )
 
 // ErrUnmatchedNodePool is returned when a nodePool was specified but not found in the nodePools list.
@@ -81,6 +84,7 @@ func (c *Cluster) Validate() []error {
 	errs = append(errs, c.validateAWS()...)
 	errs = append(errs, c.validateCL()...)
 	errs = append(errs, c.validateTectonicFiles()...)
+	errs = append(errs, c.validateLibvirt()...)
 	if err := validate.PrefixError("cluster name", validate.ClusterName(c.Name)); err != nil {
 		errs = append(errs, err)
 	}
@@ -130,6 +134,52 @@ func (c *Cluster) validateCL() []error {
 	return errs
 }
 
+// validateLibvirt validates all fields specific to libvirt.
+func (c *Cluster) validateLibvirt() []error {
+	var errs []error
+	if c.Platform != PlatformLibvirt {
+		return errs
+	}
+	if err := validate.PrefixError("libvirt network ipRange", validate.SubnetCIDR(c.Libvirt.Network.IPRange)); err != nil {
+		errs = append(errs, err)
+	}
+	if len(c.Libvirt.MasterIPs) > 0 {
+		if len(c.Libvirt.MasterIPs) != c.NodeCount(c.Master.NodePools) {
+			errs = append(errs, fmt.Errorf("length of masterIPs does't match master count"))
+		}
+		for i, ip := range c.Libvirt.MasterIPs {
+			if err := validate.PrefixError(fmt.Sprintf("libvirt masterIPs[%d] %q", i, ip), validate.IPv4(ip)); err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+	if err := validate.PrefixError("libvirt uri", validate.NonEmpty(c.Libvirt.URI)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.PrefixError("libvirt imagePath is not a valid QCOW image", validate.FileHeader(c.Libvirt.QCOWImagePath, qcowMagic)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.PrefixError("libvirt sshKey", validate.NonEmpty(c.Libvirt.SSHKey)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.PrefixError("libvirt network name", validate.NonEmpty(c.Libvirt.Network.Name)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.PrefixError("libvirt network ifName", validate.NonEmpty(c.Libvirt.Network.IfName)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.PrefixError("libvirt network dnsServer", validate.IPv4(c.Libvirt.Network.DNSServer)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.PrefixError("libvirt ipRange and podCIDR", validate.CIDRsDontOverlap(c.Libvirt.Network.IPRange, c.Networking.PodCIDR)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.PrefixError("libvirt ipRange and serviceCIDR", validate.CIDRsDontOverlap(c.Libvirt.Network.IPRange, c.Networking.ServiceCIDR)); err != nil {
+		errs = append(errs, err)
+	}
+	return errs
+}
+
 func (c *Cluster) validateNetworking() []error {
 	var errs []error
 	// https://en.wikipedia.org/wiki/Maximum_transmission_unit#MTUs_for_common_media
@@ -145,26 +195,8 @@ func (c *Cluster) validateNetworking() []error {
 	if err := c.validateNetworkType(); err != nil {
 		errs = append(errs, err)
 	}
-
-	var podOK, serviceOK bool
-	_, pod, err := net.ParseCIDR(c.Networking.PodCIDR)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("invalid pod CIDR %q: %v", c.Networking.PodCIDR, err))
-	} else if err := validate.CanonicalizeIP(&pod.IP); err != nil {
-		errs = append(errs, fmt.Errorf("invalid pod CIDR %q: %v", c.Networking.PodCIDR, err))
-	} else {
-		podOK = true
-	}
-	_, service, err := net.ParseCIDR(c.Networking.ServiceCIDR)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("invalid service CIDR %q: %v", c.Networking.ServiceCIDR, err))
-	} else if err := validate.CanonicalizeIP(&service.IP); err != nil {
-		errs = append(errs, fmt.Errorf("invalid service CIDR %q: %v", c.Networking.ServiceCIDR, err))
-	} else {
-		serviceOK = true
-	}
-	if podOK && serviceOK && validate.CIDRsOverlap(pod, service) {
-		errs = append(errs, errors.New("pod and service CIDRs overlap"))
+	if err := validate.PrefixError("pod and service CIDRs", validate.CIDRsDontOverlap(c.Networking.PodCIDR, c.Networking.ServiceCIDR)); err != nil {
+		errs = append(errs, err)
 	}
 	return errs
 }

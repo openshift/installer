@@ -35,6 +35,12 @@ var defaultCluster = Cluster{
 		Channel: ContainerLinuxChannelStable,
 		Version: ContainerLinuxVersionLatest,
 	},
+	Libvirt: libvirt.Libvirt{
+		Network: libvirt.Network{
+			DNSServer: libvirt.DefaultDNSServer,
+			IfName:    libvirt.DefaultIfName,
+		},
+	},
 	Networking: Networking{
 		MTU:         "1480",
 		PodCIDR:     "10.2.0.0/16",

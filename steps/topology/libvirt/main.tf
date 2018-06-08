@@ -23,7 +23,7 @@ resource "libvirt_network" "tectonic_net" {
 module "libvirt_base_volume" {
   source = "../../../modules/libvirt/volume"
 
-  coreos_qow_path = "${var.tectonic_coreos_qow_path}"
+  coreos_qcow_path = "${var.tectonic_coreos_qcow_path}"
 }
 
 locals {

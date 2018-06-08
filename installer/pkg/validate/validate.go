@@ -1,6 +1,7 @@
 package validate
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -415,27 +416,42 @@ func OpenSSHPublicKey(v string) error {
 	return nil
 }
 
-// CIDRsOverlap checks whether two given CIDRs overlap
-// with one another. CIDR starting IPs should be canonicalized
+// CIDRsDontOverlap ensures two given CIDRs don't overlap
+// with one another. CIDR starting IPs are canonicalized
 // before being compared.
-func CIDRsOverlap(a, b *net.IPNet) bool {
+func CIDRsDontOverlap(acidr, bcidr string) error {
+	_, a, err := net.ParseCIDR(acidr)
+	if err != nil {
+		return fmt.Errorf("invalid CIDR %q: %v", acidr, err)
+	}
+	if err := CanonicalizeIP(&a.IP); err != nil {
+		return fmt.Errorf("invalid CIDR %q: %v", acidr, err)
+	}
+	_, b, err := net.ParseCIDR(bcidr)
+	if err != nil {
+		return fmt.Errorf("invalid CIDR %q: %v", bcidr, err)
+	}
+	if err := CanonicalizeIP(&b.IP); err != nil {
+		return fmt.Errorf("invalid CIDR %q: %v", bcidr, err)
+	}
+	err = fmt.Errorf("%q and %q overlap", acidr, bcidr)
 	// IPs are of different families.
 	if len(a.IP) != len(b.IP) {
-		return false
+		return nil
 	}
 	if a.Contains(b.IP) {
-		return true
+		return err
 	}
 	if a.Contains(lastIP(b)) {
-		return true
+		return err
 	}
 	if b.Contains(a.IP) {
-		return true
+		return err
 	}
 	if b.Contains(lastIP(a)) {
-		return true
+		return err
 	}
-	return false
+	return nil
 }
 
 // CanonicalizeIP ensures that the given IP is in standard form
@@ -458,4 +474,20 @@ func lastIP(cidr *net.IPNet) net.IP {
 		last = append(last, cidr.IP[i]|^cidr.Mask[i])
 	}
 	return last
+}
+
+// FileHeader validates that the file at the specified path begins with the given string.
+func FileHeader(path string, header []byte) error {
+	f, err := os.Open(path)
+	if err != nil {
+		return err
+	}
+	buf := make([]byte, len(header))
+	if _, err := f.Read(buf); err != nil {
+		return err
+	}
+	if !bytes.Equal(buf, header) {
+		return fmt.Errorf("file %q does not begin with %q", path, string(header))
+	}
+	return nil
 }

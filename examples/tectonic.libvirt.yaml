@@ -1,6 +1,6 @@
 admin:
-  email: "a@b.c"
-  password: "verysecure"
+  email: a@b.c
+  password: verysecure
 # The base DNS domain of the cluster. It must NOT contain a trailing period. Some
 # DNS providers will automatically add this if necessary.
 #
@@ -15,12 +15,12 @@ admin:
 baseDomain:
 
 libvirt:
-  uri: "qemu:///system"
+  uri: qemu:///system
   network:
     name: tectonic
     ifName: tt0
-    dnsServer: "8.8.8.8"
-    ipRange: "192.168.124.0/24"
+    dnsServer: 8.8.8.8
+    ipRange: 192.168.124.0/24
   sshKey: "ssh-rsa ..."
   imagePath: /path/to/image
 

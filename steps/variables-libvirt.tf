@@ -11,7 +11,6 @@ variable "tectonic_libvirt_network_name" {
 variable "tectonic_libvirt_network_if" {
   type        = "string"
   description = "The name of the bridge to use"
-  default     = "tt0"
 }
 
 variable "tectonic_libvirt_ip_range" {
@@ -22,12 +21,11 @@ variable "tectonic_libvirt_ip_range" {
 variable "tectonic_libvirt_resolver" {
   type        = "string"
   description = "the upstream dns resolver"
-  default     = "8.8.8.8"
 }
 
-variable "tectonic_coreos_qow_path" {
+variable "tectonic_coreos_qcow_path" {
   type        = "string"
-  description = "path to a container linux qow image"
+  description = "path to a container linux qcow image"
 }
 
 variable "tectonic_libvirt_master_ips" {
