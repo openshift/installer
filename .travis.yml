@@ -1,0 +1,31 @@
+---
+sudo: required
+language: bash
+services:
+  - docker
+env:
+  global:
+    - BAZEL_IMG="quay.io/coreos/tectonic-builder:bazel-v0.3"
+branches:
+  only:
+    - master
+jobs:
+  include:
+    - stage: Lint & Test
+      # Terraform lint
+      script: docker run -v $(pwd):/data -t quay.io/coreos/tflint
+      # YAML lint
+    - script: >
+        docker run -t -v $(pwd):/workdir 
+        quay.io/coreos/yamllint --config-data 
+        '{extends: default, rules: {line-length: {level: warning, max: 120}}}' 
+        ./examples/ ./installer/
+      # Go lint
+      #- script: "docker run -v $PWD:$PWD -w $PWD quay.io/coreos/golang-testing golint -set_exit_status installer/..."
+    - script: "docker run -v $PWD:$PWD -w $PWD quay.io/coreos/golang-testing golint installer/..."
+      # Terraform tests
+    - script: "chmod 0777 $PWD && docker run -v $PWD:$PWD:rw -w $PWD $BAZEL_IMG bazel test terraform_fmt --test_output=all"
+      # Installer unit tests
+    - script: "chmod 0777 $PWD && docker run -v $PWD:$PWD:rw -w $PWD $BAZEL_IMG bazel test installer:cli_units --test_output=all"
+    - stage: Build
+      script: "chmod 0777 $PWD && docker run -v $PWD:$PWD:rw -w $PWD $BAZEL_IMG bazel build tarball"

@@ -12,7 +12,7 @@ admin:
 # To use Azure-provided DNS, `BaseDomain` should be set to `""`
 # If using DNS records, ensure that `BaseDomain` is set to a properly configured external DNS zone.
 # Instructions for configuring delegated domains for Azure DNS can be found here: https://docs.microsoft.com/en-us/azure/dns/dns-delegate-domain-azure-dns
-baseDomain: 
+baseDomain:
 
 libvirt:
   uri: "qemu:///system"
