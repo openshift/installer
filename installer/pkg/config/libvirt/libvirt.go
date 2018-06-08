@@ -14,7 +14,7 @@ const (
 	DefaultIfName = "osbr0"
 )
 
-// Libvirt-specific configuration
+// Libvirt encompasses configuration specific to libvirt.
 type Libvirt struct {
 	URI           string `json:"tectonic_libvirt_uri,omitempty" yaml:"uri"`
 	SSHKey        string `json:"tectonic_libvirt_ssh_key,omitempty" yaml:"sshKey"`
@@ -23,6 +23,7 @@ type Libvirt struct {
 	MasterIPs     []string `json:"tectonic_libvirt_master_ips,omitempty" yaml:"masterIPs"`
 }
 
+// Network describes a libvirt network configuration.
 type Network struct {
 	Name      string `json:"tectonic_libvirt_network_name,omitempty" yaml:"name"`
 	IfName    string `json:"tectonic_libvirt_network_if,omitempty" yaml"ifName"`
@@ -30,7 +31,7 @@ type Network struct {
 	IPRange   string `json:"tectonic_libvirt_ip_range,omitempty" yaml:"ipRange"`
 }
 
-// Fill in any variables for terraform
+// TFVars fills in computed Terraform variables.
 func (l *Libvirt) TFVars(masterCount int) error {
 	_, network, err := net.ParseCIDR(l.Network.IPRange)
 	if err != nil {
@@ -40,9 +41,8 @@ func (l *Libvirt) TFVars(masterCount int) error {
 	if len(l.MasterIPs) > 0 {
 		if len(l.MasterIPs) != masterCount {
 			return fmt.Errorf("length of MasterIPs doesn't match master count")
-		} else {
-			return nil
 		}
+		return nil
 	}
 
 	for i := 0; i < masterCount; i++ {
