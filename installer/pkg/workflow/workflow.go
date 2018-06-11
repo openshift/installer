@@ -6,7 +6,7 @@ import "github.com/coreos/tectonic-installer/installer/pkg/config"
 // It is meant to carry state for one step to another.
 // When creating a new workflow, initial state from external parameters
 // is also injected by when initializing the metadata object.
-// Steps taked thier inputs from the metadata object and persist
+// Steps taked their inputs from the metadata object and persist
 // results onto it for later consumption.
 type metadata struct {
 	cluster        config.Cluster
@@ -16,7 +16,7 @@ type metadata struct {
 
 // Step is the entrypoint of a workflow step implementation.
 // To add a new step, put your logic in a function that matches this signature.
-// Next, add a refrence to this new function in a Workflow's steps list.
+// Next, add a reference to this new function in a Workflow's steps list.
 type Step func(*metadata) error
 
 // Workflow is a high-level representation
