@@ -29,7 +29,8 @@ const (
 
 var defaultCluster = Cluster{
 	AWS: aws.AWS{
-		Endpoints: aws.EndpointsAll,
+		Endpoints:    aws.EndpointsAll,
+		VPCCIDRBlock: aws.DefaultVPCCIDRBlock,
 	},
 	ContainerLinux: ContainerLinux{
 		Channel: ContainerLinuxChannelStable,

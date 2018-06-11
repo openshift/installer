@@ -431,7 +431,6 @@ func TestTNCS3BucketNames(t *testing.T) {
 			cluster: Cluster{
 				Name:       "foo",
 				BaseDomain: "012345678901234567890123456789012345678901234567890123456789.com",
-				Platform:   PlatformAWS,
 			},
 			err: true,
 		},
@@ -703,6 +702,116 @@ func TestValidateLibvirt(t *testing.T) {
 	for i, c := range cases {
 		c.cluster.Platform = PlatformLibvirt
 		if err := c.cluster.validateLibvirt(); (err != nil) != c.err {
+			no := "no"
+			if c.err {
+				no = "an"
+			}
+			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
+		}
+	}
+}
+
+func TestValidateAWS(t *testing.T) {
+	d1 := defaultCluster
+	d1.Platform = PlatformAWS
+	d2 := d1
+	d2.Name = "test"
+	d2.BaseDomain = "example.com"
+	cases := []struct {
+		cluster Cluster
+		err     bool
+	}{
+		{
+			cluster: Cluster{},
+			err:     false,
+		},
+		{
+			cluster: Cluster{
+				Platform: PlatformAWS,
+			},
+			err: true,
+		},
+		{
+			cluster: d1,
+			err:     true,
+		},
+		{
+			cluster: d2,
+			err:     false,
+		},
+	}
+
+	for i, c := range cases {
+		if err := c.cluster.validateAWS(); (err != nil) != c.err {
+			no := "no"
+			if c.err {
+				no = "an"
+			}
+			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
+		}
+	}
+}
+
+func TestValidateOverlapWithPodOrServiceCIDR(t *testing.T) {
+	cases := []struct {
+		cidr    string
+		cluster Cluster
+		err     bool
+	}{
+		{
+			cidr:    "192.168.0.1/24",
+			cluster: Cluster{},
+			err:     true,
+		},
+		{
+			cidr:    "192.168.0.1/24",
+			cluster: defaultCluster,
+			err:     false,
+		},
+		{
+			cidr:    "10.1.0.0/16",
+			cluster: defaultCluster,
+			err:     false,
+		},
+		{
+			cidr:    "10.2.0.0/16",
+			cluster: defaultCluster,
+			err:     true,
+		},
+		{
+			cidr: "10.1.0.0/16",
+			cluster: Cluster{
+				Networking: Networking{
+					PodCIDR:     "10.3.0.0/16",
+					ServiceCIDR: "10.4.0.0/16",
+				},
+			},
+			err: false,
+		},
+		{
+			cidr: "10.3.0.0/24",
+			cluster: Cluster{
+				Networking: Networking{
+					PodCIDR:     "10.3.0.0/16",
+					ServiceCIDR: "10.4.0.0/16",
+				},
+			},
+			err: true,
+		},
+		{
+			cidr: "0.0.0.0/0",
+			cluster: Cluster{
+				Networking: Networking{
+					PodCIDR:     "10.3.0.0/16",
+					ServiceCIDR: "10.4.0.0/16",
+				},
+			},
+			err: true,
+		},
+	}
+
+	for i, c := range cases {
+		if err := c.cluster.validateOverlapWithPodOrServiceCIDR(c.cidr, "test"); (err != nil) != c.err {
 			no := "no"
 			if c.err {
 				no = "an"
