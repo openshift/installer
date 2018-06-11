@@ -29,7 +29,7 @@ module Bazel
   end
 
   def build_tarball
-    stdout, stderr, status = Open3.capture3("bazel build #{target}")
+    stdout, stderr, status = Open3.capture3("bazel build tarball")
     unless status.success?
       STDOUT.puts(stdout)
       STDERR.puts(stderr)

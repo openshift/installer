@@ -23,7 +23,9 @@ class Config
   def defaults
     example.merge("name" => uuid,
                   "baseDomain" => ENV.fetch("BASE_DOMAIN") { "tectonic-ci.de" },
-                  "aws" => { "region" => ENV.fetch("AWS_REGION") })
+                  "aws" => { "region" => ENV.fetch("AWS_REGION") },
+                  "licensePath" => ENV.fetch("LICENSE_PATH"),
+                  "pullSecretPath" => ENV.fetch("PULL_SECRET_PATH"))
   end
 
   def example
