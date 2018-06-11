@@ -457,11 +457,11 @@ func CIDRsDontOverlap(acidr, bcidr string) error {
 // CanonicalizeIP ensures that the given IP is in standard form
 // and returns an error otherwise.
 func CanonicalizeIP(ip *net.IP) error {
-	if ip.To4 != nil {
+	if ip.To4() != nil {
 		*ip = ip.To4()
 		return nil
 	}
-	if ip.To16 != nil {
+	if ip.To16() != nil {
 		*ip = ip.To16()
 		return nil
 	}

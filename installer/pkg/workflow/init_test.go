@@ -41,7 +41,7 @@ func generatePullSecretAndLicense(name string, expiration time.Time) (*os.File, 
 		return nil, nil, fmt.Errorf("failed to create license signer: %v", err)
 	}
 	buf, err := json.Marshal(struct {
-		ExpirationDate time.Time `json: "expirationDate"`
+		ExpirationDate time.Time `json:"expirationDate"`
 	}{expiration})
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to marshal license: %v", err)
