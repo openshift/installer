@@ -15,11 +15,17 @@ In this example, we'll set the baseDomain to `tt.testing`, the name to `test1` a
 git clone https://github.com/coreos/tectonic-installer.git
 cd tectonic-installer
 ```
+
 #### 1.3 Download the Container Linux image
 You will need to do this every time Container Linux has a release.
 ```
 wget https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2
 bunzip2 coreos_production_qemu_image.img.bz2
+```
+
+Because of the greater disk requirements of OpenShift, you'll need to expand the root drive with the following:
+```
+qemu-img resize coreos_production_qemu_image.img +8G
 ```
 
 #### 1.4 Get a Tectonic License
