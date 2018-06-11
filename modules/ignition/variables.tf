@@ -45,12 +45,6 @@ variable "cloud_provider_config" {
   default     = ""
 }
 
-variable "bootstrap_upgrade_cl" {
-  type        = "string"
-  description = "(optional) Whether to trigger a ContainerLinux OS upgrade during the bootstrap process."
-  default     = "true"
-}
-
 variable "torcx_store_url" {
   type        = "string"
   description = "(optional) URL template for torcx store. Leave empty to use the default CoreOS endpoint."

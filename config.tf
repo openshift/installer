@@ -323,12 +323,6 @@ variable "tectonic_networking" {
 EOF
 }
 
-variable "tectonic_bootstrap_upgrade_cl" {
-  type        = "string"
-  default     = "true"
-  description = "(internal) Whether to trigger a ContainerLinux upgrade on node bootstrap."
-}
-
 variable "tectonic_kubelet_debug_config" {
   type    = "string"
   default = ""

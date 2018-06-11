@@ -32,7 +32,6 @@ output "ignition_systemd_id_list" {
     "${data.ignition_systemd_unit.docker_dropin.id}",
     "${data.ignition_systemd_unit.kubelet.id}",
     "${data.ignition_systemd_unit.locksmithd.id}",
-    "${data.ignition_systemd_unit.k8s_node_bootstrap.id}",
     "${data.ignition_systemd_unit.update_ca_certificates_dropin.id}",
     "${data.ignition_systemd_unit.rm_assets.id}",
   ]

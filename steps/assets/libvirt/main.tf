@@ -9,7 +9,6 @@ module assets_base {
   ingress_kind = "haproxy-router"
 
   tectonic_base_domain             = "${var.tectonic_base_domain}"
-  tectonic_bootstrap_upgrade_cl    = "${var.tectonic_bootstrap_upgrade_cl}"
   tectonic_cluster_name            = "${var.tectonic_cluster_name}"
   tectonic_container_images        = "${var.tectonic_container_images}"
   tectonic_image_re                = "${var.tectonic_image_re}"

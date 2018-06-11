@@ -49,23 +49,6 @@ data "ignition_systemd_unit" "kubelet" {
   content = "${data.template_file.kubelet.rendered}"
 }
 
-data "template_file" "k8s_node_bootstrap" {
-  template = "${file("${path.module}/resources/services/k8s-node-bootstrap.service")}"
-
-  vars {
-    bootstrap_upgrade_cl = "${var.bootstrap_upgrade_cl}"
-    tectonic_torcx_image = "${var.container_images["tectonic_torcx"]}"
-    torcx_skip_setup     = "false"
-    torcx_store_url      = "${var.torcx_store_url}"
-  }
-}
-
-data "ignition_systemd_unit" "k8s_node_bootstrap" {
-  name    = "k8s-node-bootstrap.service"
-  enabled = true
-  content = "${data.template_file.k8s_node_bootstrap.rendered}"
-}
-
 data "ignition_systemd_unit" "rm_assets" {
   name    = "rm-assets.service"
   enabled = true
