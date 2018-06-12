@@ -149,7 +149,7 @@ func readClusterConfig(configFilePath string, internalFilePath string) (*config.
 
 func readClusterConfigStep(m *metadata) error {
 	if m.clusterDir == "" {
-		errors.New("no cluster dir given for reading config")
+		return errors.New("no cluster dir given for reading config")
 	}
 	configFilePath := filepath.Join(m.clusterDir, configFileName)
 	internalFilePath := filepath.Join(m.clusterDir, internalFileName)
