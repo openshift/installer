@@ -28,7 +28,7 @@ func TestUrlFunctions(t *testing.T) {
 		{
 			test:     "getAPIServerURL",
 			got:      config.getAPIServerURL(),
-			expected: "https://test-api.cluster.com:443",
+			expected: "https://test-api.cluster.com:6443",
 		},
 		{
 			test:     "getBaseAddress",

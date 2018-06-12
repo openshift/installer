@@ -11,7 +11,7 @@ data:
       cloud_config_path: ""
       cloud_provider_profile: aws
     clusterConfig:
-      apiserver_url: https://test-api.cluster.com:443
+      apiserver_url: https://test-api.cluster.com:6443
     dnsConfig:
       clusterIP: 10.3.0.10
     kind: KubeCoreOperatorConfig
