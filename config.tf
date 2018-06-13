@@ -68,7 +68,6 @@ variable "tectonic_container_images" {
     kube_core_renderer                   = "quay.io/coreos/kube-core-renderer-dev:4ea06d9f277a749f88d8d8d9fb0f5bcd0b4a85ac"
     kube_core_operator                   = "quay.io/coreos/kube-core-operator-dev:4ea06d9f277a749f88d8d8d9fb0f5bcd0b4a85ac"
     tectonic_channel_operator            = "quay.io/coreos/tectonic-channel-operator-dev:4ea06d9f277a749f88d8d8d9fb0f5bcd0b4a85ac"
-    tectonic_torcx                       = "quay.io/coreos/tectonic-torcx:v0.2.1"
     kube_addon_operator                  = "quay.io/coreos/kube-addon-operator-dev:4ea06d9f277a749f88d8d8d9fb0f5bcd0b4a85ac"
     tectonic_alm_operator                = "quay.io/coreos/tectonic-alm-operator:v0.3.1"
     tectonic_ingress_controller_operator = "quay.io/coreos/tectonic-ingress-controller-operator-dev:4ea06d9f277a749f88d8d8d9fb0f5bcd0b4a85ac"
