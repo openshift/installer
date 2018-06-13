@@ -16,7 +16,6 @@ aws:
       type: gp2
   region: null
   sshKey: null
-  vpcCIDRBlock: 10.0.0.0/16
   worker:
     ec2Type: m4.large
     rootVolume:

@@ -10,6 +10,8 @@ const (
 	EndpointsPrivate Endpoints = "private"
 	// EndpointsPublic represents the configuration for using only public endpoints.
 	EndpointsPublic Endpoints = "public"
+	// DefaultVPCCIDRBlock is the default CIDR range for an AWS VPC.
+	DefaultVPCCIDRBlock = "10.0.0.0/16"
 )
 
 // AWS converts AWS related config.

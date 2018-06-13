@@ -112,6 +112,10 @@ func (c *Cluster) validateAWS() []error {
 	if err := c.validateTNCS3Bucket(); err != nil {
 		errs = append(errs, err)
 	}
+	if err := validate.PrefixError("aws vpcCIDRBlock", validate.SubnetCIDR(c.AWS.VPCCIDRBlock)); err != nil {
+		errs = append(errs, err)
+	}
+	errs = append(errs, c.validateOverlapWithPodOrServiceCIDR(c.AWS.VPCCIDRBlock, "aws vpcCIDRBlock")...)
 	return errs
 }
 
@@ -130,6 +134,19 @@ func (c *Cluster) validateCL() []error {
 	}
 	if c.ContainerLinux.Version != ContainerLinuxVersionLatest && !regexp.MustCompile(`\d+\.\d+\.\d+`).MatchString(c.ContainerLinux.Version) {
 		errs = append(errs, fmt.Errorf("invalid Container Linux version %q", c.ContainerLinux.Version))
+	}
+	return errs
+}
+
+// validateOverlapWithPodOrServiceCIDR ensures that the given CIDR does not
+// overlap with the pod or service CIDRs of the cluster config.
+func (c *Cluster) validateOverlapWithPodOrServiceCIDR(cidr, name string) []error {
+	var errs []error
+	if err := validate.PrefixError(fmt.Sprintf("%s and podCIDR", name), validate.CIDRsDontOverlap(cidr, c.Networking.PodCIDR)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.PrefixError(fmt.Sprintf("%s and serviceCIDR", name), validate.CIDRsDontOverlap(cidr, c.Networking.ServiceCIDR)); err != nil {
+		errs = append(errs, err)
 	}
 	return errs
 }
@@ -171,12 +188,7 @@ func (c *Cluster) validateLibvirt() []error {
 	if err := validate.PrefixError("libvirt network dnsServer", validate.IPv4(c.Libvirt.Network.DNSServer)); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError("libvirt ipRange and podCIDR", validate.CIDRsDontOverlap(c.Libvirt.Network.IPRange, c.Networking.PodCIDR)); err != nil {
-		errs = append(errs, err)
-	}
-	if err := validate.PrefixError("libvirt ipRange and serviceCIDR", validate.CIDRsDontOverlap(c.Libvirt.Network.IPRange, c.Networking.ServiceCIDR)); err != nil {
-		errs = append(errs, err)
-	}
+	errs = append(errs, c.validateOverlapWithPodOrServiceCIDR(c.Libvirt.Network.IPRange, "libvirt ipRange")...)
 	return errs
 }
 

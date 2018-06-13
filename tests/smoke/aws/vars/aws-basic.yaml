@@ -11,7 +11,6 @@ aws:
     rootVolume:
       size: 32
       type: gp2
-  vpcCIDRBlock: 10.0.0.0/16
   worker:
     ec2Type: m4.large
     iamRoleName: tf-tectonic-worker-node
