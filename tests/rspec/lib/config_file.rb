@@ -22,7 +22,7 @@ class ConfigFile
   end
 
   def node_count
-    master_count + worker_count
+    master_count + worker_count + etcd_count
   end
 
   def master_count
