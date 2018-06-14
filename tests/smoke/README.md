@@ -8,10 +8,6 @@ This directory is further partitioned into platform-specific directories and sho
 smoke/
 ├── aws        # Smoke tests for AWS
 │   └── vars   # Terraform tfvars files for AWS smoke tests
-├── azure
-│   └── vars   # Terraform tfvars files for Azure smoke tests
-├── bare-metal
-│   └── vars   # Terraform tfvars files for bare-metal smoke tests
 ├── *_test.go  # Smoke tests for all platforms
 ├── vendor     # Smoke test dependencies
 └── ...
