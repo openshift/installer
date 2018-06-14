@@ -27,5 +27,8 @@ go_test(
     srcs = ["validate_test.go"],
     data = glob(["fixtures/**"]),
     embed = [":go_default_library"],
-    deps = ["//installer/pkg/config/aws:go_default_library"],
+    deps = [
+        "//installer/pkg/config/aws:go_default_library",
+        "//installer/pkg/config/libvirt:go_default_library",
+    ],
 )
