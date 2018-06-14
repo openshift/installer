@@ -12,6 +12,7 @@ import (
 	ignconfig "github.com/coreos/ignition/config/v2_2"
 	ignconfigtypes "github.com/coreos/ignition/config/v2_2/types"
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
+	"github.com/vincent-petithory/dataurl"
 )
 
 var (
@@ -21,6 +22,7 @@ var (
 		"worker": config.IgnitionWorker,
 		"etcd":   config.IgnitionEtcd,
 	}
+	caPath = "generated/tls/root-ca.crt"
 )
 
 func (c *ConfigGenerator) poolToRoleMap() map[string]string {
@@ -51,6 +53,11 @@ func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 		// TODO(alberto): Append block need to be different for each etcd node.
 		// add loop over count if role is etcd
 		c.embedAppendBlock(ignCfg, role)
+
+		ca := filepath.Join(clusterDir, caPath)
+		if err = c.appendCertificateAuthority(ignCfg, ca); err != nil {
+			return err
+		}
 
 		// agentless platforms (e.g. libvirt) need to embed the ssh key
 		c.embedUserBlock(ignCfg)
@@ -92,6 +99,19 @@ func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role s
 	ignCfg.Ignition.Config.Append = append(ignCfg.Ignition.Config.Append, appendBlock)
 }
 
+func (c *ConfigGenerator) appendCertificateAuthority(ignCfg *ignconfigtypes.Config, caPath string) error {
+	ca, err := ioutil.ReadFile(caPath)
+	if err != nil {
+		return err
+	}
+
+	ignCfg.Ignition.Security.TLS.CertificateAuthorities = append(ignCfg.Ignition.Security.TLS.CertificateAuthorities, ignconfigtypes.CaReference{
+		Source: dataurl.EncodeBytes(ca),
+	})
+
+	return nil
+}
+
 func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
 	if c.Platform.String() == config.PlatformLibvirt.String() {
 		userBlock := ignconfigtypes.PasswdUser{
@@ -114,10 +134,18 @@ func (c *ConfigGenerator) getTNCURL(role string) string {
 	if c.Platform.String() == config.PlatformLibvirt.String() {
 		port = 49500
 	}
+
+	// XXX: The bootstrap node on AWS uses a CNAME to redirect TNC-bound
+	// traffic to S3. Because of this, HTTPS cannot be used.
+	scheme := "https"
+	if c.Platform.String() == config.PlatformAWS.String() && role == "master" {
+		scheme = "http"
+	}
+
 	if role == "master" || role == "worker" {
 		u = func() *url.URL {
 			return &url.URL{
-				Scheme: "http",
+				Scheme: scheme,
 				Host:   fmt.Sprintf("%s-tnc.%s:%d", c.Name, c.BaseDomain, port),
 				Path:   fmt.Sprintf("/config/%s", role),
 			}

@@ -19,6 +19,7 @@ go_library(
         "//vendor/github.com/coreos/tectonic-config/config/tectonic-node-controller:go_default_library",
         "//vendor/github.com/coreos/tectonic-config/config/tectonic-utility:go_default_library",
         "//vendor/github.com/ghodss/yaml:go_default_library",
+        "//vendor/github.com/vincent-petithory/dataurl:go_default_library",
         "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
     ],
 )
