@@ -3,6 +3,11 @@ resource "local_file" "root_ca_cert" {
   filename = "./generated/tls/root-ca.crt"
 }
 
+resource "local_file" "root_ca_key" {
+  content  = "${var.root_ca_key_pem_path == "" ? join("", tls_private_key.root_ca.*.private_key_pem) : file(local._root_ca_key_pem_path )}"
+  filename = "./generated/tls/root-ca.key"
+}
+
 resource "local_file" "kube_ca_key" {
   content  = "${var.kube_ca_key_pem_path == "" ? join("", tls_private_key.kube_ca.*.private_key_pem) : file(local._kube_ca_key_pem_path)}"
   filename = "./generated/tls/kube-ca.key"

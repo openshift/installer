@@ -2,6 +2,14 @@ output "root_ca_cert_pem" {
   value = "${var.root_ca_cert_pem_path == "" ? join("", tls_self_signed_cert.root_ca.*.cert_pem) : file(local._root_ca_cert_pem_path)}"
 }
 
+output "root_ca_key_alg" {
+  value = "${var.root_ca_key_alg == "" ? join("", tls_self_signed_cert.root_ca.*.key_algorithm) : var.root_ca_key_alg}"
+}
+
+output "root_ca_key_pem" {
+  value = "${var.root_ca_key_pem_path == "" ? join("", tls_private_key.root_ca.*.private_key_pem) : file(local._root_ca_key_pem_path)}"
+}
+
 output "kube_ca_cert_pem" {
   value = "${var.kube_ca_cert_pem_path == "" ? join("", tls_locally_signed_cert.kube_ca.*.cert_pem) : file(local._kube_ca_cert_pem_path)}"
 }
@@ -54,6 +62,7 @@ output "id" {
   value = "${sha1("
   ${join(" ",
     list(local_file.root_ca_cert.id,
+    local_file.root_ca_key.id,
     local_file.kube_ca_key.id,
     local_file.kube_ca_cert.id,
     local_file.aggregator_ca_key.id,

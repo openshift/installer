@@ -1,6 +1,7 @@
 locals {
   api_internal_fqdn     = "${var.tectonic_cluster_name}-api.${var.tectonic_base_domain}"
   ingress_internal_fqdn = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}"
+  tnc_fqdn              = "${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}"
 }
 
 module "ca_certs" {
@@ -42,4 +43,13 @@ module "ingress_certs" {
   ca_cert_pem  = "${module.ca_certs.kube_ca_cert_pem}"
   ca_key_alg   = "${module.ca_certs.kube_ca_key_alg}"
   ca_key_pem   = "${module.ca_certs.kube_ca_key_pem}"
+}
+
+module "tnc_certs" {
+  source = "../../modules/tls/tnc"
+
+  domain      = "${local.tnc_fqdn}"
+  ca_cert_pem = "${module.ca_certs.root_ca_cert_pem}"
+  ca_key_alg  = "${module.ca_certs.root_ca_key_alg}"
+  ca_key_pem  = "${module.ca_certs.root_ca_key_pem}"
 }

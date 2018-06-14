@@ -13,6 +13,7 @@ variable "manifest_names" {
     "rbac/role-user.yaml",
     "secrets/ca-cert.yaml",
     "secrets/ingress-tls.yaml",
+    "secrets/tnc-tls.yaml",
     "secrets/license.json",
     "secrets/pull.json",
     "security/priviledged-scc-tectonic.yaml",
@@ -72,6 +73,9 @@ data "template_file" "manifest_file_list" {
     ingress_tls_cert        = "${base64encode(var.ingress_cert_pem)}"
     ingress_tls_key         = "${base64encode(var.ingress_key_pem)}"
     ingress_tls_bundle      = "${base64encode(var.ingress_bundle_pem)}"
+
+    tnc_tls_cert = "${base64encode(var.tnc_cert_pem)}"
+    tnc_tls_key  = "${base64encode(var.tnc_key_pem)}"
 
     platform = "${var.platform}"
   }

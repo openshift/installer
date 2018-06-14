@@ -231,6 +231,28 @@ data "ignition_file" "kubelet_cert" {
   path = "/opt/tectonic/tls/kubelet.crt"
 }
 
+data "ignition_file" "tnc_key" {
+  filesystem = "root"
+  mode       = "0644"
+
+  content {
+    content = "${local.tnc_key_pem}"
+  }
+
+  path = "/opt/tectonic/tls/tnc.key"
+}
+
+data "ignition_file" "tnc_cert" {
+  filesystem = "root"
+  mode       = "0644"
+
+  content {
+    content = "${local.tnc_cert_pem}"
+  }
+
+  path = "/opt/tectonic/tls/tnc.crt"
+}
+
 locals {
   ca_certs_ignition_file_id_list = [
     "${data.ignition_file.root_ca_cert.id}",
@@ -260,5 +282,10 @@ locals {
     "${data.ignition_file.admin_cert.id}",
     "${data.ignition_file.kubelet_key.id}",
     "${data.ignition_file.kubelet_cert.id}",
+  ]
+
+  tnc_certs_ignition_file_id_list = [
+    "${data.ignition_file.tnc_key.id}",
+    "${data.ignition_file.tnc_cert.id}",
   ]
 }
