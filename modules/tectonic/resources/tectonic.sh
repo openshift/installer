@@ -144,7 +144,6 @@ echo "Creating Tectonic Secrets"
 kubectl create -f secrets/pull.json
 kubectl create -f secrets/license.json
 kubectl create -f secrets/ingress-tls.yaml
-kubectl create -f secrets/tnc-tls.yaml
 kubectl create -f secrets/ca-cert.yaml
 kubectl create -f ingress/pull.json
 

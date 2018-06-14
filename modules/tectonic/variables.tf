@@ -70,11 +70,3 @@ variable "ingress_key_pem" {
 variable "ingress_bundle_pem" {
   type = "string"
 }
-
-variable "tnc_cert_pem" {
-  type = "string"
-}
-
-variable "tnc_key_pem" {
-  type = "string"
-}

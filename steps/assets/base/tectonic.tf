@@ -40,6 +40,8 @@ module "bootkube" {
   kube_ca_key_pem              = "${local.kube_ca_key_pem}"
   kubelet_cert_pem             = "${local.kubelet_cert_pem}"
   kubelet_key_pem              = "${local.kubelet_key_pem}"
+  tnc_cert_pem                 = "${local.tnc_cert_pem}"
+  tnc_key_pem                  = "${local.tnc_key_pem}"
   oidc_ca_cert                 = "${local.oidc_ca_cert}"
   root_ca_cert_pem             = "${local.root_ca_cert_pem}"
 
@@ -67,9 +69,6 @@ module "tectonic" {
   ingress_cert_pem    = "${local.ingress_cert_pem}"
   ingress_key_pem     = "${local.ingress_key_pem}"
   ingress_bundle_pem  = "${join("", list(local.ingress_cert_pem, local.ingress_key_pem, local.ingress_ca_cert_pem))}"
-
-  tnc_cert_pem = "${local.tnc_cert_pem}"
-  tnc_key_pem  = "${local.tnc_key_pem}"
 
   platform     = "${var.tectonic_platform}"
   ingress_kind = "${var.ingress_kind}"
