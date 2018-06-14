@@ -30,6 +30,8 @@ const (
 var defaultCluster = Cluster{
 	AWS: aws.AWS{
 		Endpoints:    aws.EndpointsAll,
+		Profile:      aws.DefaultProfile,
+		Region:       aws.DefaultRegion,
 		VPCCIDRBlock: aws.DefaultVPCCIDRBlock,
 	},
 	ContainerLinux: ContainerLinux{

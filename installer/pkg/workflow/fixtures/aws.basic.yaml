@@ -14,8 +14,6 @@ aws:
       iops: 100
       size: 30
       type: gp2
-  region: null
-  sshKey: null
   worker:
     ec2Type: m4.large
     rootVolume:

@@ -116,6 +116,12 @@ func (c *Cluster) validateAWS() []error {
 		errs = append(errs, err)
 	}
 	errs = append(errs, c.validateOverlapWithPodOrServiceCIDR(c.AWS.VPCCIDRBlock, "aws vpcCIDRBlock")...)
+	if err := validate.PrefixError("aws profile", validate.NonEmpty(c.AWS.Profile)); err != nil {
+		errs = append(errs, err)
+	}
+	if err := validate.PrefixError("aws region", validate.NonEmpty(c.AWS.Region)); err != nil {
+		errs = append(errs, err)
+	}
 	return errs
 }
 
