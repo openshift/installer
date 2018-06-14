@@ -20,6 +20,7 @@ output "ignition_bootstrap_files" {
     local.ca_certs_ignition_file_id_list,
     local.etcd_certs_ignition_file_id_list,
     local.kube_certs_ignition_file_id_list,
+    local.tnc_certs_ignition_file_id_list,
    )))}"]
 }
 

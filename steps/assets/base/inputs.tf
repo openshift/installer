@@ -23,6 +23,8 @@ locals {
   kube_ca_key_pem              = "${file("${local.tls_path}/kube-ca.key")}"
   kubelet_cert_pem             = "${file("${local.tls_path}/kubelet.crt")}"
   kubelet_key_pem              = "${file("${local.tls_path}/kubelet.key")}"
+  tnc_cert_pem                 = "${file("${local.tls_path}/tnc.crt")}"
+  tnc_key_pem                  = "${file("${local.tls_path}/tnc.key")}"
   oidc_ca_cert                 = "${file("${local.tls_path}/ingress-ca.crt")}"
   root_ca_cert_pem             = "${file("${local.tls_path}/root-ca.crt")}"
 }
