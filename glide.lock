@@ -1,5 +1,5 @@
-hash: 98bfaa467f036a2f503722076628d66097e5d84bf86dbc97abb8cc5f23064148
-updated: 2018-06-14T10:11:11.199137022-07:00
+hash: bde3b463aa2a10c31a3b523598484c62937686ccaee7eb8e25bb5c6f5d885937
+updated: 2018-06-14T10:19:10.404273471-07:00
 imports:
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
@@ -18,19 +18,24 @@ imports:
   subpackages:
   - semver
 - name: github.com/coreos/go-systemd
-  version: 40e2722dffead74698ca12a750f64ef313ddce05
+  version: 39ca1b05acc7ad1220e09f133283b8859a8b71ab
   subpackages:
   - dbus
   - unit
 - name: github.com/coreos/ignition
-  version: bd3876b8f1d627625fe266a0e35256ba05e664e3
+  version: 76107251acd117c6d3e5b4dae2b47f82f944984b
   subpackages:
-  - config/errors
+  - config/shared/errors
+  - config/shared/validations
   - config/util
   - config/v1
   - config/v1/types
   - config/v2_0
   - config/v2_0/types
+  - config/v2_1
+  - config/v2_1/types
+  - config/v2_2
+  - config/v2_2/types
   - config/v2_3_experimental/types
   - config/validate
   - config/validate/astjson

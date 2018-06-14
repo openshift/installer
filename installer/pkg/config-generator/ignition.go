@@ -5,16 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 
-	ignconfig "github.com/coreos/ignition/config/v2_0"
-	ignconfigtypes "github.com/coreos/ignition/config/v2_0/types"
+	ignconfig "github.com/coreos/ignition/config/v2_2"
+	ignconfigtypes "github.com/coreos/ignition/config/v2_2/types"
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
 )
 
 var (
-	ignVersion   = ignconfigtypes.IgnitionVersion{Major: 2, Minor: 0, Patch: 0}
+	ignVersion   = "2.2.0"
 	ignFilesPath = map[string]string{
 		"master": config.IgnitionMaster,
 		"worker": config.IgnitionWorker,
@@ -93,10 +94,10 @@ func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role s
 
 func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
 	if c.Platform == "libvirt" {
-		userBlock := ignconfigtypes.User{
+		userBlock := ignconfigtypes.PasswdUser{
 			Name: "core",
-			SSHAuthorizedKeys: []string{
-				c.Libvirt.SSHKey,
+			SSHAuthorizedKeys: []ignconfigtypes.SSHAuthorizedKey{
+				ignconfigtypes.SSHAuthorizedKey(c.Libvirt.SSHKey),
 			},
 		}
 
@@ -104,8 +105,8 @@ func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
 	}
 }
 
-func (c *ConfigGenerator) getTNCURL(role string) ignconfigtypes.Url {
-	var url ignconfigtypes.Url
+func (c *ConfigGenerator) getTNCURL(role string) string {
+	var u string
 
 	// cloud platforms put this behind a load balancer which remaps ports;
 	// libvirt doesn't do that - use the tnc port directly
@@ -114,13 +115,15 @@ func (c *ConfigGenerator) getTNCURL(role string) ignconfigtypes.Url {
 		port = 49500
 	}
 	if role == "master" || role == "worker" {
-		url = ignconfigtypes.Url{
-			Scheme: "http",
-			Host:   fmt.Sprintf("%s-tnc.%s:%d", c.Name, c.BaseDomain, port),
-			Path:   fmt.Sprintf("/config/%s", role),
-		}
+		u = func() *url.URL {
+			return &url.URL{
+				Scheme: "http",
+				Host:   fmt.Sprintf("%s-tnc.%s:%d", c.Name, c.BaseDomain, port),
+				Path:   fmt.Sprintf("/config/%s", role),
+			}
+		}().String()
 	}
-	return url
+	return u
 }
 
 func ignCfgToFile(ignCfg ignconfigtypes.Config, filePath string) error {

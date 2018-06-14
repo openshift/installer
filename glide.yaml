@@ -17,4 +17,4 @@ import:
 - package: golang.org/x/crypto
   version: df8d4716b3472e4a531c33cedbe537dae921a1a9
 - package: github.com/coreos/ignition
-  version: v0.23.0
+  version: v0.26.0

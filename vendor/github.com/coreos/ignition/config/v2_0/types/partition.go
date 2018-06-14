@@ -19,6 +19,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
 )
 
@@ -39,10 +40,10 @@ func (n PartitionLabel) Validate() report.Report {
 	// XXX(vc): note GPT calls it a name, we're using label for consistency
 	// with udev naming /dev/disk/by-partlabel/*.
 	if len(string(n)) > 36 {
-		return report.ReportFromError(fmt.Errorf("partition labels may not exceed 36 characters"), report.EntryError)
+		return report.ReportFromError(errors.ErrLabelTooLong, report.EntryError)
 	}
 	if strings.Contains(string(n), ":") {
-		return report.ReportFromError(fmt.Errorf("partition label will be truncated to text before the colon"), report.EntryWarning)
+		return report.ReportFromError(errors.ErrLabelContainsColon, report.EntryWarning)
 	}
 	return report.Report{}
 }
@@ -57,7 +58,7 @@ func (d PartitionTypeGUID) Validate() report.Report {
 		return report.ReportFromError(fmt.Errorf("error matching type-guid regexp: %v", err), report.EntryError)
 	}
 	if !ok {
-		return report.ReportFromError(fmt.Errorf(`partition type-guid must have the form "01234567-89AB-CDEF-EDCB-A98765432101", got: %q`, string(d)), report.EntryError)
+		return report.ReportFromError(errors.ErrDoesntMatchGUIDRegex, report.EntryError)
 	}
 	return report.Report{}
 }

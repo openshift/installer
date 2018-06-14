@@ -15,7 +15,7 @@ go_library(
         "//installer/pkg/config/libvirt:go_default_library",
         "//installer/pkg/validate:go_default_library",
         "//vendor/github.com/Sirupsen/logrus:go_default_library",
-        "//vendor/github.com/coreos/ignition/config/v2_0:go_default_library",
+        "//vendor/github.com/coreos/ignition/config/v2_2:go_default_library",
         "//vendor/github.com/coreos/tectonic-config/config/tectonic-network:go_default_library",
         "//vendor/gopkg.in/yaml.v2:go_default_library",
     ],

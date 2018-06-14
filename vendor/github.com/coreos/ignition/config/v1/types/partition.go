@@ -15,15 +15,11 @@
 package types
 
 import (
-	"errors"
 	"fmt"
 	"regexp"
 
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
-)
-
-var (
-	ErrPartitionLabelTooLong = errors.New("partition labels may not exceed 36 characters")
 )
 
 type Partition struct {
@@ -43,7 +39,7 @@ func (n PartitionLabel) Validate() report.Report {
 	// XXX(vc): note GPT calls it a name, we're using label for consistency
 	// with udev naming /dev/disk/by-partlabel/*.
 	if len(string(n)) > 36 {
-		return report.ReportFromError(ErrPartitionLabelTooLong, report.EntryError)
+		return report.ReportFromError(errors.ErrLabelTooLong, report.EntryError)
 	}
 	return report.Report{}
 }

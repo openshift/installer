@@ -137,12 +137,14 @@ type NodeUser struct {
 }
 
 type Partition struct {
-	GUID     string `json:"guid,omitempty"`
-	Label    string `json:"label,omitempty"`
-	Number   int    `json:"number,omitempty"`
-	Size     int    `json:"size,omitempty"`
-	Start    int    `json:"start,omitempty"`
-	TypeGUID string `json:"typeGuid,omitempty"`
+	GUID               string  `json:"guid,omitempty"`
+	Label              *string `json:"label,omitempty"`
+	Number             int     `json:"number,omitempty"`
+	ShouldExist        *bool   `json:"shouldExist,omitempty"`
+	Size               *int    `json:"size,omitempty"`
+	Start              *int    `json:"start,omitempty"`
+	TypeGUID           string  `json:"typeGuid,omitempty"`
+	WipePartitionEntry bool    `json:"wipePartitionEntry,omitempty"`
 }
 
 type Passwd struct {

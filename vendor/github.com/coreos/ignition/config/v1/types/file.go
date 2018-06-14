@@ -15,14 +15,10 @@
 package types
 
 import (
-	"errors"
 	"os"
 
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
-)
-
-var (
-	ErrFileIllegalMode = errors.New("illegal file mode")
 )
 
 type FileMode os.FileMode
@@ -37,7 +33,7 @@ type File struct {
 
 func (m FileMode) Validate() report.Report {
 	if (m &^ 07777) != 0 {
-		return report.ReportFromError(ErrFileIllegalMode, report.EntryError)
+		return report.ReportFromError(errors.ErrFileIllegalMode, report.EntryError)
 	}
 	return report.Report{}
 }

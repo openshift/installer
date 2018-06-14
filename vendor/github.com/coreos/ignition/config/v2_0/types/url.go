@@ -16,15 +16,12 @@ package types
 
 import (
 	"encoding/json"
-	"errors"
 	"net/url"
 
-	"github.com/coreos/ignition/config/validate/report"
 	"github.com/vincent-petithory/dataurl"
-)
 
-var (
-	ErrInvalidScheme = errors.New("invalid url scheme")
+	"github.com/coreos/ignition/config/shared/errors"
+	"github.com/coreos/ignition/config/validate/report"
 )
 
 type Url url.URL
@@ -37,7 +34,7 @@ func (u *Url) UnmarshalJSON(data []byte) error {
 
 	pu, err := url.Parse(tu)
 	if err != nil {
-		return err
+		return errors.ErrInvalidUrl
 	}
 
 	*u = Url(*pu)
@@ -67,6 +64,6 @@ func (u Url) Validate() report.Report {
 		}
 		return report.Report{}
 	default:
-		return report.ReportFromError(ErrInvalidScheme, report.EntryError)
+		return report.ReportFromError(errors.ErrInvalidScheme, report.EntryError)
 	}
 }

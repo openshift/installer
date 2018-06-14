@@ -11,7 +11,7 @@ import (
 	"github.com/coreos/tectonic-installer/installer/pkg/validate"
 
 	log "github.com/Sirupsen/logrus"
-	ignconfig "github.com/coreos/ignition/config/v2_0"
+	ignconfig "github.com/coreos/ignition/config/v2_2"
 	"github.com/coreos/tectonic-config/config/tectonic-network"
 )
 

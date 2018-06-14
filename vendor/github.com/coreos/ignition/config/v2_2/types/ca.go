@@ -12,17 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package errors
+package types
 
-import "errors"
-
-var (
-	ErrInvalid            = errors.New("config is not valid")
-	ErrCloudConfig        = errors.New("not a config (found coreos-cloudconfig)")
-	ErrEmpty              = errors.New("not a config (empty)")
-	ErrUnknownVersion     = errors.New("unsupported config version")
-	ErrScript             = errors.New("not a config (found coreos-cloudinit script)")
-	ErrDeprecated         = errors.New("config format deprecated")
-	ErrVersion            = errors.New("incorrect config version")
-	ErrCompressionInvalid = errors.New("invalid compression method")
+import (
+	"github.com/coreos/ignition/config/validate/report"
 )
+
+func (c CaReference) ValidateSource() report.Report {
+	err := validateURL(c.Source)
+	if err != nil {
+		return report.ReportFromError(err, report.EntryError)
+	}
+	return report.Report{}
+}

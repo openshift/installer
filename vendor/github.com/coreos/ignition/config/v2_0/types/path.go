@@ -15,14 +15,10 @@
 package types
 
 import (
-	"errors"
 	"path"
 
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
-)
-
-var (
-	ErrPathRelative = errors.New("path not absolute")
 )
 
 type Path string
@@ -33,7 +29,7 @@ func (p Path) MarshalJSON() ([]byte, error) {
 
 func (p Path) Validate() report.Report {
 	if !path.IsAbs(string(p)) {
-		return report.ReportFromError(ErrPathRelative, report.EntryError)
+		return report.ReportFromError(errors.ErrPathRelative, report.EntryError)
 	}
 	return report.Report{}
 }

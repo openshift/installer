@@ -15,17 +15,13 @@
 package types
 
 import (
-	"fmt"
-
 	"github.com/coreos/ignition/config/validate/report"
 )
 
 func (c CaReference) ValidateSource() report.Report {
 	err := validateURL(c.Source)
 	if err != nil {
-		return report.ReportFromError(
-			fmt.Errorf("invalid url %q: %v", c.Source, err),
-			report.EntryError)
+		return report.ReportFromError(err, report.EntryError)
 	}
 	return report.Report{}
 }
