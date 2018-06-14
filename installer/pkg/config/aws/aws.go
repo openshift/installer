@@ -12,6 +12,10 @@ const (
 	EndpointsPublic Endpoints = "public"
 	// DefaultVPCCIDRBlock is the default CIDR range for an AWS VPC.
 	DefaultVPCCIDRBlock = "10.0.0.0/16"
+	// DefaultProfile is the default AWS credentials profile to use.
+	DefaultProfile = "default"
+	// DefaultRegion is the default AWS region for the cluster.
+	DefaultRegion = "eu-west-1"
 )
 
 // AWS converts AWS related config.

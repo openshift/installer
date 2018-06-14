@@ -2,7 +2,7 @@
 
 require 'json'
 
-PLATFORMS = %w[govcloud aws azure metal vmware gcp].freeze
+PLATFORMS = %w[aws].freeze
 
 # TFVarsFile represents a Terraform configuration file describing a Tectonic
 # cluster configuration
@@ -23,21 +23,11 @@ class TFVarsFile
   end
 
   def master_count
-    count = if platform.eql?('metal')
-              data['tectonic_metal_controller_names'].count
-            else
-              data['tectonic_master_count'].to_i
-            end
-    count
+    data['tectonic_master_count'].to_i
   end
 
   def worker_count
-    count = if platform.eql?('metal')
-              data['tectonic_metal_worker_names'].count
-            else
-              data['tectonic_worker_count'].to_i
-            end
-    count
+    data['tectonic_worker_count'].to_i
   end
 
   def etcd_count

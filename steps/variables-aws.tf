@@ -12,8 +12,7 @@ variable "tectonic_aws_profile" {
 (optional) This declares the AWS credentials profile to use.
 EOF
 
-  type    = "string"
-  default = "default"
+  type = "string"
 }
 
 variable "tectonic_aws_ssh_key" {
@@ -105,8 +104,6 @@ EOF
 }
 
 variable "tectonic_aws_endpoints" {
-  default = "all"
-
   description = <<EOF
 (optional) If set to "all", the default, then both public and private ingress resources (ELB, A-records) will be created.
 If set to "private", then only create private-facing ingress resources (ELB, A-records). No public-facing ingress resources will be created.
@@ -267,7 +264,6 @@ EOF
 
 variable "tectonic_aws_region" {
   type        = "string"
-  default     = "eu-west-1"
   description = "The target AWS region for the cluster."
 }
 
