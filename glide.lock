@@ -1,5 +1,5 @@
 hash: 98bfaa467f036a2f503722076628d66097e5d84bf86dbc97abb8cc5f23064148
-updated: 2018-06-07T11:12:15.139135692-07:00
+updated: 2018-06-14T10:11:11.199137022-07:00
 imports:
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
@@ -92,8 +92,6 @@ imports:
 - name: golang.org/x/crypto
   version: df8d4716b3472e4a531c33cedbe537dae921a1a9
   subpackages:
-  - bcrypt
-  - blowfish
   - ed25519
   - ed25519/internal/edwards25519
 - name: golang.org/x/net
