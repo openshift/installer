@@ -45,7 +45,7 @@ resource "aws_elb" "api_internal" {
   listener {
     instance_port     = 6443
     instance_protocol = "tcp"
-    lb_port           = 443
+    lb_port           = 6443
     lb_protocol       = "tcp"
   }
 
@@ -78,7 +78,7 @@ resource "aws_elb" "api_external" {
   listener {
     instance_port     = 6443
     instance_protocol = "tcp"
-    lb_port           = 443
+    lb_port           = 6443
     lb_protocol       = "tcp"
   }
 

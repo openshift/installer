@@ -279,7 +279,7 @@ func (c *ConfigGenerator) getEtcdServersURLs() string {
 }
 
 func (c *ConfigGenerator) getAPIServerURL() string {
-	return fmt.Sprintf("https://%s-api.%s:443", c.Cluster.Name, c.Cluster.BaseDomain)
+	return fmt.Sprintf("https://%s-api.%s:6443", c.Cluster.Name, c.Cluster.BaseDomain)
 }
 
 func (c *ConfigGenerator) getBaseAddress() string {

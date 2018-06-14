@@ -12,7 +12,7 @@ module "bootkube" {
   source = "../../../modules/bootkube"
 
   cluster_name       = "${var.tectonic_cluster_name}"
-  kube_apiserver_url = "https://${local.api_internal_fqdn}:443"
+  kube_apiserver_url = "https://${local.api_internal_fqdn}:6443"
 
   # Platform-independent variables wiring, do not modify.
   container_images = "${var.tectonic_container_images}"

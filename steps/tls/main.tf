@@ -23,7 +23,7 @@ module "kube_certs" {
   service_serving_ca_cert_pem = "${module.ca_certs.service_serving_ca_cert_pem}"
   service_serving_ca_key_alg  = "${module.ca_certs.service_serving_ca_key_alg}"
   service_serving_ca_key_pem  = "${module.ca_certs.service_serving_ca_key_pem}"
-  kube_apiserver_url          = "https://${local.api_internal_fqdn}:443"
+  kube_apiserver_url          = "https://${local.api_internal_fqdn}:6443"
   service_cidr                = "${var.tectonic_service_cidr}"
 }
 
