@@ -3,11 +3,10 @@
 FROM openshift/origin-release:golang-1.9 as build
 WORKDIR /go/src/github.com/coreos/tectonic-installer
 COPY . .
-### Install Terraform
-ENV TERRAFORM_VERSION="0.11.1"
 # Install Terraform
 # TERRAFORM_URL enables us to build the upstream-terraform Tectonic builder
 # image (See README.md/##Upstream-and-CoreOS-Terraform)
+ENV TERRAFORM_VERSION="0.11.1"
 ARG TERRAFORM_URL=https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 
 RUN go build -o ./installer/tectonic ./installer/cmd/tectonic && \
