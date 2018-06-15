@@ -33,9 +33,7 @@ temporarily merged into the target branch of the pull request.
 In addition to our basic set of tests we have smoke tests and the k8s upstream
 conformance tests. These test the Tectonic installer on our supported platforms:
 - AWS
-- Azure
-- Bare metal
-- GCP
+- libvirt
 
 ### Actions required
 - Add the `run-smoke-tests` or/and the `run-conformance-tests` GitHub label
@@ -78,10 +76,10 @@ conformance tests. These test the Tectonic installer on our supported platforms:
 
 ## Nightly Runs
 
-We use Jenkins to run our tests, and we have two Jenkins Jobs to run our `nightly` builds against master branch.
-One job run all smoke tests for all platforms we have tests for.
-The other job run the conformance tests for one or all platforms we support. Today this job is running
-the conformance tests for `Bare Metal`
+We use Jenkins to run our tests and we have two Jenkins jobs to run our `nightly` builds against the master branch.
+One job runs all smoke tests for all platforms we have tests for.
+The other job runs the conformance tests for one or all platforms we support. Today this job is running
+the conformance tests for `AWS`
 
 Those builds report the status to our internal chat tool.
 
@@ -115,26 +113,6 @@ TF_VAR_tectonic_aws_ssh_key
 TF_VAR_tectonic_aws_region
 ```
 
-#### Azure
-``` bash
-ARM_CLIENT_ID
-ARM_CLIENT_SECRET
-ARM_ENVIRONMENT
-ARM_SUBSCRIPTION_ID
-ARM_TENANT_ID
-TF_VAR_tectonic_azure_location
-```
-
-#### GCP
-``` bash
-GOOGLE_APPLICATION_CREDENTIALS
-GOOGLE_CREDENTIALS
-GOOGLE_CLOUD_KEYFILE_JSON
-GCLOUD_KEYFILE_JSON
-GOOGLE_PROJECT
-TF_VAR_tectonic_gcp_ssh_key
-```
-
 ### 2. Launch the tests
 Once the environment variables are set, run `make tests/smoke
 TEST=aws/basic_spec.rb`, where `TEST=<xx>` represents the test spec you want to
@@ -144,7 +122,7 @@ run.
 ### 3. Running the rspec tests in a existing cluster
 To run the test suite on an existing cluster, use this command:
 ```sh
-PLATFORM=<AWZ/AZURE/METAL/GCP...> rspec spec/existing_cluster_spec.rb
+PLATFORM=AWS rspec spec/existing_cluster_spec.rb
 ```
 
 

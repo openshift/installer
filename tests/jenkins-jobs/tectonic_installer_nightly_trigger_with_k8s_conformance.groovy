@@ -33,10 +33,6 @@ job("triggers/tectonic-installer-nightly-trigger_with_k8s_conformance") {
                   value(true)
                 }
                 booleanParameterConfig {
-                  name('PLATFORM/GCP')
-                  value(false)
-                }
-                booleanParameterConfig {
                   name('NOTIFY_SLACK')
                   value(true)
                 }
