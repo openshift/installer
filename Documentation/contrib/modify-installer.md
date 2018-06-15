@@ -32,7 +32,7 @@ Always safe to modify:
 
 Never safe to modify:
 * Security group settings.
-* Role permissions. Cloud Provider role permissions must meet and exceed documented requirements. (For example: [AWS IAM][iam] or [Azure RBAC][rbac].)
+* Role permissions. Cloud Provider role permissions must meet or exceed documented requirements. (For example: [AWS IAM][iam].)
 * EC2 block device mapping.
 * EC2 AMIs.
 
@@ -40,4 +40,3 @@ Modifying any of these settings might lead to invalid clusters.
 
 
 [iam]: http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles.html
-[rbac]: https://docs.microsoft.com/en-us/azure/active-directory/role-based-access-control-what-is
