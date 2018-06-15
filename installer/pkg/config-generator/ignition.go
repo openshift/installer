@@ -93,7 +93,7 @@ func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role s
 }
 
 func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
-	if c.Platform == "libvirt" {
+	if c.Platform.String() == config.PlatformLibvirt.String() {
 		userBlock := ignconfigtypes.PasswdUser{
 			Name: "core",
 			SSHAuthorizedKeys: []ignconfigtypes.SSHAuthorizedKey{
@@ -111,7 +111,7 @@ func (c *ConfigGenerator) getTNCURL(role string) string {
 	// cloud platforms put this behind a load balancer which remaps ports;
 	// libvirt doesn't do that - use the tnc port directly
 	port := 80
-	if c.Platform == "libvirt" {
+	if c.Platform.String() == config.PlatformLibvirt.String() {
 		port = 49500
 	}
 	if role == "master" || role == "worker" {
