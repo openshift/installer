@@ -61,8 +61,8 @@ Terraform does not support changing SOA TTLs in Route 53. As a result, in order 
 
 Once all the infrastructure is provisioned and the VPN connection is available, a Tectonic cluster can be installed in the VPC. When running the Tectonic installer, be sure to:
 
-* Select the provisioned private DNS Zone using the GUI or by setting the `TF_VAR_tectonic_aws_external_private_zone` environment variable.
-* Install Tectonic in the provisioned VPC by selecting the "Existing VPC" option and selecting the appropriate VPC ID in the GUI or by setting the `TF_VAR_tectonic_aws_external_vpc_id` environment variable.
+* Select the provisioned private DNS Zone by setting the `aws.external.privateZone` field in the Tectonc config.
+* Install Tectonic in the provisioned VPC by setting the `aws.external.vpcID` field in the Tectonc config.
 
 
 ### Tear Down
