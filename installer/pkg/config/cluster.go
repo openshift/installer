@@ -2,7 +2,7 @@ package config
 
 import (
 	"encoding/json"
-	"strings"
+	"fmt"
 
 	"github.com/coreos/tectonic-config/config/tectonic-network"
 	"gopkg.in/yaml.v2"
@@ -10,9 +10,6 @@ import (
 	"github.com/coreos/tectonic-installer/installer/pkg/config/aws"
 	"github.com/coreos/tectonic-installer/installer/pkg/config/libvirt"
 )
-
-// Platform indicates the target platform of the cluster.
-type Platform string
 
 const (
 	// IgnitionMaster is the relative path to the ign master cfg from the tf working directory
@@ -26,6 +23,27 @@ const (
 	// PlatformLibvirt is the platform for a cluster launched on libvirt.
 	PlatformLibvirt Platform = "libvirt"
 )
+
+// Platform indicates the target platform of the cluster.
+type Platform string
+
+// UnmarshalYAML unmarshals and verifies the platform.
+func (p *Platform) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var data string
+	if err := unmarshal(&data); err != nil {
+		return err
+	}
+
+	platform := Platform(data)
+	switch platform {
+	case PlatformAWS, PlatformLibvirt:
+	default:
+		return fmt.Errorf("invalid platform specified (%s); must be one of %s", platform, []Platform{PlatformAWS, PlatformLibvirt})
+	}
+
+	*p = platform
+	return nil
+}
 
 var defaultCluster = Cluster{
 	AWS: aws.AWS{
@@ -141,11 +159,4 @@ func (c *Cluster) YAML() (string, error) {
 	}
 
 	return string(yaml), nil
-}
-
-// String returns the string representation of a platform.
-// This is the representation that should be used for
-// consistent string comparison.
-func (p Platform) String() string {
-	return strings.ToLower(string(p))
 }

@@ -10,7 +10,7 @@
   "tectonic_networking": "canal",
   "tectonic_service_cidr": "10.3.0.0/16",
   "tectonic_cluster_cidr": "10.2.0.0/16",
-  "tectonic_platform": "AWS",
+  "tectonic_platform": "aws",
   "tectonic_worker_count": 3,
   "tectonic_aws_endpoints": "all",
   "tectonic_aws_etcd_ec2_type": "m4.large",

@@ -43,7 +43,7 @@ nodePools:
     count: 2
   - name: worker
     count: 3
-platform: AWS
+platform: aws
 pullSecretPath:
 worker:
   nodePools:

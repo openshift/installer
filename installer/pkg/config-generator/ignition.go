@@ -113,7 +113,7 @@ func (c *ConfigGenerator) appendCertificateAuthority(ignCfg *ignconfigtypes.Conf
 }
 
 func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
-	if c.Platform.String() == config.PlatformLibvirt.String() {
+	if c.Platform == config.PlatformLibvirt {
 		userBlock := ignconfigtypes.PasswdUser{
 			Name: "core",
 			SSHAuthorizedKeys: []ignconfigtypes.SSHAuthorizedKey{
@@ -131,14 +131,14 @@ func (c *ConfigGenerator) getTNCURL(role string) string {
 	// cloud platforms put this behind a load balancer which remaps ports;
 	// libvirt doesn't do that - use the tnc port directly
 	port := 80
-	if c.Platform.String() == config.PlatformLibvirt.String() {
+	if c.Platform == config.PlatformLibvirt {
 		port = 49500
 	}
 
 	// XXX: The bootstrap node on AWS uses a CNAME to redirect TNC-bound
 	// traffic to S3. Because of this, HTTPS cannot be used.
 	scheme := "https"
-	if c.Platform.String() == config.PlatformAWS.String() && role == "master" {
+	if c.Platform == config.PlatformAWS && role == "master" {
 		scheme = "http"
 	}
 
