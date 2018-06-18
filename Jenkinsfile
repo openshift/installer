@@ -67,16 +67,6 @@ pipeline {
       defaultValue: '#team-installer',
       description: 'Slack channel to notify on failure.'
     )
-    string(
-      name: 'GITHUB_REPO',
-      defaultValue: 'coreos/tectonic-installer',
-      description: 'Github repository'
-    )
-    string(
-      name: 'SPECIFIC_GIT_COMMIT',
-      description: 'Checkout a specific git ref (e.g. sha or tag). If not set, Jenkins uses the most recent commit of the triggered branch.',
-      defaultValue: '',
-    )
   }
 
   stages {
@@ -103,16 +93,7 @@ pipeline {
           }
         }
       }
-      post {
-        success {
-          reportStatusToGithub('success', originalCommitId)
-        }
-        failure {
-          reportStatusToGithub('failure', originalCommitId)
-        }
-      }
     }
-
 
     stage('Build docker image')  {
       when {
@@ -164,11 +145,5 @@ def forcefullyCleanWorkspace() {
         fi
       """
     }
-  }
-}
-
-def reportStatusToGithub(status, commitId) {
-  withCredentials(creds) {
-    sh "./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} smoke-test ${commitId} ${params.GITHUB_REPO} || true"
   }
 }
