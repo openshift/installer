@@ -68,15 +68,6 @@ func testCluster(t *testing.T) {
 	t.Run("AllNodesRunning", testAllNodesRunning)
 	t.Run("AllResourcesCreated", testAllResourcesCreated)
 	t.Run("AllPodsRunning", testAllPodsRunning)
-	// TODO: temporary disabling this for OpenTonic
-	// t.Run("GetIdentityLogs", testGetIdentityLogs)
-
-	// TODO: temporary disabling this for OpenTonic
-	//ne := os.Getenv(networkingEnv)
-	//if ne == "canal" || ne == "calico-ipip" {
-	//	t.Run("NetworkPolicy", testNetworkPolicy)
-	//}
-
 	t.Run("KillAPIServer", testKillAPIServer)
 }
 
@@ -163,71 +154,6 @@ func testAllNodesRunning(t *testing.T) {
 		t.Fatalf("Failed to find %d ready nodes in %v.", nodeCount, max)
 	}
 	t.Logf("Successfully found %d ready nodes.", nodeCount)
-}
-
-func getIdentityLogs(t *testing.T) error {
-	c, _ := newClient(t)
-	podPrefix := "tectonic-identity"
-	_, err := validatePodLogging(c, tectonicSystemNamespace, podPrefix)
-	if err != nil {
-		return fmt.Errorf("failed to gather logs for %s/%s, %v", tectonicSystemNamespace, podPrefix, err)
-	}
-	return nil
-}
-
-func testGetIdentityLogs(t *testing.T) {
-	max := 10 * time.Minute
-	err := retry(getIdentityLogs, t, 15*time.Second, max)
-	if err != nil {
-		t.Fatalf("Failed to gather identity logs in %v.", max)
-	}
-	t.Log("Successfully gathered identity logs.")
-}
-
-// validatePodLogging verifies that logs can be retrieved for a container in Pod.
-func validatePodLogging(c *kubernetes.Clientset, namespace, podPrefix string) ([]byte, error) {
-	var logs []byte
-	pods, err := c.Pods(namespace).List(meta_v1.ListOptions{})
-	if err != nil {
-		return logs, fmt.Errorf("could not list pods: %v", err)
-	}
-
-	var names string
-	for _, p := range pods.Items {
-		if len(names) != 0 {
-			names += ", "
-		}
-		names += p.Name
-
-		if !strings.HasPrefix(p.Name, podPrefix) {
-			continue
-		}
-		if len(p.Spec.Containers) == 0 {
-			return logs, fmt.Errorf("%s pod has no containers", p.Name)
-		}
-
-		opt := v1.PodLogOptions{
-			Container: p.Spec.Containers[0].Name,
-		}
-
-		result := c.Core().Pods(namespace).GetLogs(p.Name, &opt).Do()
-		if err := result.Error(); err != nil {
-			return logs, fmt.Errorf("failed to get pod logs: %v", err)
-		}
-
-		var statusCode int
-		result.StatusCode(&statusCode)
-		if statusCode/100 != 2 {
-			return logs, fmt.Errorf("expected 200 from log response, got %d", statusCode)
-		}
-		logs, err := result.Raw()
-		if err != nil {
-			return logs, fmt.Errorf("failed to read logs: %v", err)
-		}
-		return logs, nil
-	}
-
-	return logs, fmt.Errorf("failed to find pods with prefix %q (found pods in %s: %s)", podPrefix, namespace, names)
 }
 
 func testKillAPIServer(t *testing.T) {
@@ -373,106 +299,6 @@ func testAllResourcesCreated(t *testing.T) {
 	}
 }
 
-var networkPolicyTestNamespacePSPRoleBinding = []byte(`kind: RoleBinding
-apiVersion: rbac.authorization.k8s.io/v1beta1
-metadata:
-  name: permissive-psp-access
-  namespace: network-policy-test
-subjects:
-- kind: ServiceAccount
-  name: replicaset-controller
-  namespace: kube-system
-- kind: ServiceAccount
-  name: replication-controller
-  namespace: kube-system
-- kind: ServiceAccount
-  name: job-controller
-  namespace: kube-system
-- kind: ServiceAccount
-  name: daemon-set-controller
-  namespace: kube-system
-- kind: ServiceAccount
-  name: statefulset-controller
-  namespace: kube-system
-roleRef:
-  kind: ClusterRole
-  name: permissive-psp-access
-  apiGroup: rbac.authorization.k8s.io
-`)
-
-// testNetworkPolicy permforms 3 tests:
-// * first ping test to check if network is setup correctly and reachable.
-// * second ping test after setting `default-deny` policy on `network-policy-test` namespace
-//   to ensure nothing can talk to each other.
-// * third ping test after setting `access-nginx` policy to ensure now nginx workload is reachable.
-func testNetworkPolicy(t *testing.T) {
-	var (
-		namespace = "network-policy-test"
-		nginx     *testworkload.Nginx
-		client    kubernetes.Interface
-	)
-	client, _ = newClient(t)
-
-	ns := func(t *testing.T) error {
-		_, err := client.CoreV1().Namespaces().Create(&v1.Namespace{
-			ObjectMeta: metav1.ObjectMeta{
-				Name: namespace,
-			},
-		})
-		if apierrors.IsAlreadyExists(err) {
-			t.Logf("ns already exists")
-		} else if err != nil {
-			return fmt.Errorf("failed to create namespace with name %v", namespace)
-		}
-
-		rbi, _, err := api.Codecs.UniversalDecoder().Decode(networkPolicyTestNamespacePSPRoleBinding, nil, &rbacv1beta1.RoleBinding{})
-		if err != nil {
-			return fmt.Errorf("unable to decode network policy manifest: %v", err)
-		}
-		rb, ok := rbi.(*rbacv1beta1.RoleBinding)
-		if !ok {
-			return fmt.Errorf("expected manifest to decode into *rbacv1beta1.RoleBinding, got %T", rbi)
-		}
-		_, err = client.RbacV1beta1().RoleBindings(namespace).Create(rb)
-		if apierrors.IsAlreadyExists(err) {
-			t.Logf("rolebinding already exists")
-		} else if err != nil {
-			return fmt.Errorf("failed to create rolebinding %v", rb)
-		}
-		return nil
-	}
-
-	max := 10 * time.Minute
-	if err := retry(ns, t, 30*time.Second, max); err != nil {
-		t.Fatalf("timed out waiting for namespace to be setup")
-	}
-
-	if err := wait.Poll(10*time.Second, 2*time.Minute, func() (bool, error) {
-		var err error
-		if nginx, err = testworkload.NewNginx(client, namespace, testworkload.WithNginxPingJobLabels(map[string]string{"allow": "access"})); err != nil {
-			t.Logf("failed to create test nginx: %v", err)
-			return false, nil
-		}
-		return true, nil
-	}); err != nil {
-		t.Fatalf("failed to create an testworkload: %v", err)
-	}
-	defer nginx.Delete()
-
-	if err := wait.Poll(10*time.Second, 2*time.Minute, func() (bool, error) {
-		if err := nginx.IsReachable(); err != nil {
-			t.Logf("error not reachable %s: %v", nginx.Name, err)
-			return false, nil
-		}
-		return true, nil
-	}); err != nil {
-		t.Fatalf("network not set up correctly: %v", err)
-	}
-
-	t.Run("DefaultDeny", func(t *testing.T) { testDefaultDenyNetworkPolicy(t, client, namespace, nginx) })
-	t.Run("NetworkPolicy", func(t *testing.T) { testAllowNetworkPolicy(t, client, namespace, nginx) })
-}
-
 func testDefaultDenyNetworkPolicy(t *testing.T, client kubernetes.Interface, namespace string, nginx *testworkload.Nginx) {
 	var defaultDenyNetworkPolicy = []byte(`kind: NetworkPolicy
 apiVersion: extensions/v1beta1
@@ -600,18 +426,6 @@ func getAPIServers(client *kubernetes.Clientset) (*v1.PodList, error) {
 		return nil, fmt.Errorf("no pods matched the label selector %q in the %s namespace", apiServerSelector, kubeSystemNamespace)
 	}
 	return pods, nil
-}
-
-// podsStr prints a comma separated list of namespaced Pod names
-func podsStr(pods []v1.Pod) (out string) {
-	for n, p := range pods {
-		// add comma to all entries except first
-		if n != 0 {
-			out += ", "
-		}
-		out += fmt.Sprintf("%s/%s", p.GetNamespace(), p.GetName())
-	}
-	return
 }
 
 func nodeReady(node v1.Node) (ok bool) {
