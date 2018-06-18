@@ -19,8 +19,8 @@ set -e
     --render-output=/assets/tnc-bootstrap
 
 mkdir -p /etc/kubernetes/manifests/
-cp $(pwd)/tnc-bootstrap/tectonic-node-controller-pod.yaml /etc/kubernetes/manifests/
-cp $(pwd)/tnc-bootstrap/tectonic-node-controller-config.yaml /etc/kubernetes/tnc-config
+cp "$(pwd)/tnc-bootstrap/tectonic-node-controller-pod.yaml" /etc/kubernetes/manifests/
+cp "$(pwd)/tnc-bootstrap/tectonic-node-controller-config.yaml" /etc/kubernetes/tnc-config
 
 # We originally wanted to run the etcd cert signer as
 # a static pod, but kubelet could't remove static pod
@@ -28,7 +28,7 @@ cp $(pwd)/tnc-bootstrap/tectonic-node-controller-config.yaml /etc/kubernetes/tnc
 # docker container.
 # See https://github.com/kubernetes/kubernetes/issues/43292
 
-# shellcheck disable=SC2154
+# shellcheck disable=SC2154,SC2034
 signer_id=$(/usr/bin/docker run -d \
     --tmpfs /tmp \
     --volume /opt/tectonic/tls:/opt/tectonic/tls:ro \
@@ -45,8 +45,8 @@ signer_id=$(/usr/bin/docker run -d \
     --servercertdur=26280h)
 
 # Wait for the etcd cluster to come up.
-# shellcheck disable=SC2154
 export ETCDCTL_API=3
+# shellcheck disable=SC2154,SC2086
 /usr/bin/etcdctl \
     --dial-timeout=10m \
     --cacert=/opt/tectonic/tls/etcd-client-ca.crt \
@@ -56,11 +56,11 @@ export ETCDCTL_API=3
     endpoint health
 export ETCDCTL_API=
 
-# shellcheck disable=SC2154
+# shellcheck disable=SC2154,SC1083
 /usr/bin/docker kill $${signer_id}
 rm /etc/kubernetes/manifests/tectonic-node-controller-pod.yaml
 
-cp -r $(pwd)/bootstrap-configs /etc/kubernetes/bootstrap-configs
+cp -r "$(pwd)/bootstrap-configs" /etc/kubernetes/bootstrap-configs
 
 # shellcheck disable=SC2154
 /usr/bin/docker run \
