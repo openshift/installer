@@ -1,19 +1,8 @@
 #!/usr/bin/env groovy
 
-/* Tips
-1. Keep stages focused on producing one artifact or achieving one goal. This makes stages easier to parallelize or re-structure later.
-1. Stages should simply invoke a make target or a self-contained script. Do not write testing logic in this Jenkinsfile.
-3. CoreOS does not ship with `make`, so Docker builds still have to use small scripts.
-*/
-
 commonCreds = [
-  file(credentialsId: 'tectonic-license', variable: 'TF_VAR_tectonic_license_path'),
-  file(credentialsId: 'tectonic-pull', variable: 'TF_VAR_tectonic_pull_secret_path'),
-  usernamePassword(
-    credentialsId: 'jenkins-log-analyzer-user',
-    passwordVariable: 'LOG_ANALYZER_PASSWORD',
-    usernameVariable: 'LOG_ANALYZER_USER'
-  ),
+  file(credentialsId: 'tectonic-license', variable: 'LICENSE_PATH'),
+  file(credentialsId: 'tectonic-pull', variable: 'PULL_SECRET_PATH'),
   [
     $class: 'StringBinding',
     credentialsId: 'github-coreosbot',
@@ -36,9 +25,6 @@ creds.push(
     credentialsId: 'TF-TECTONIC-JENKINS-NO-SESSION'
   ]
 )
-creds.push(
-  string(credentialsId: 'AWS-TECTONIC-TRACK-2-ROLE-NAME', variable: 'TF_VAR_tectonic_aws_installer_role')
-)
 
 quayCreds = [
   usernamePassword(
@@ -48,17 +34,12 @@ quayCreds = [
   )
 ]
 
-defaultBuilderImage = 'quay.io/coreos/tectonic-builder:v1.46'
-tectonicSmokeTestEnvImage = 'quay.io/coreos/tectonic-smoke-test-env:v5.16'
+tectonicSmokeTestEnvImage = 'quay.io/coreos/tectonic-smoke-test-env:v6.0'
 tectonicBazelImage = 'quay.io/coreos/tectonic-builder:bazel-v0.3'
 originalCommitId = 'UNKNOWN'
 
 pipeline {
-  agent none
-  environment {
-    KUBE_CONFORMANCE_IMAGE = 'quay.io/coreos/kube-conformance:v1.9.1_coreos.0'
-    LOGSTASH_BUCKET= "log-analyzer-tectonic-installer"
-  }
+  agent { label 'worker && ec2' }
   options {
     // Individual steps have stricter timeouts. 360 minutes should be never reached.
     timeout(time:6, unit:'HOURS')
@@ -66,35 +47,10 @@ pipeline {
     buildDiscarder(logRotator(numToKeepStr:'20', artifactNumToKeepStr: '20'))
   }
   parameters {
-    string(
-      name: 'builder_image',
-      defaultValue: defaultBuilderImage,
-      description: 'tectonic-builder docker image to use for builds'
-    )
-    string(
-      name: 'hyperkube_image',
-      defaultValue: '',
-      description: 'Hyperkube image. Please define the param like: {hyperkube="<HYPERKUBE_IMAGE>"}'
-    )
-    booleanParam(
-      name: 'RUN_CONFORMANCE_TESTS',
-      defaultValue: false,
-      description: ''
-    )
     booleanParam(
       name: 'RUN_SMOKE_TESTS',
       defaultValue: true,
       description: ''
-    )
-    booleanParam(
-      name: 'RUN_GUI_TESTS',
-      defaultValue: true,
-      description: ''
-    )
-    string(
-      name: 'COMPONENT_TEST_IMAGES',
-      defaultValue: '',
-      description: 'List of container images for component tests to run (comma-separated)'
     )
     booleanParam(
       name: 'PLATFORM/AWS',
@@ -124,121 +80,48 @@ pipeline {
   }
 
   stages {
-    stage('Build & Test') {
-      environment {
-        GO_PROJECT = "/go/src/github.com/${params.GITHUB_REPO}"
-        MAKEFLAGS = '-j4'
-      }
-      steps {
-        node('worker && ec2') {
-          ansiColor('xterm') {
-            script {
-              def err = null
-              try {
-                timeout(time: 20, unit: 'MINUTES') {
-                  forcefullyCleanWorkspace()
-
-                  /*
-                    This supports users who require builds at a specific git ref
-                    instead of the branch tip.
-                  */
-                  if (params.SPECIFIC_GIT_COMMIT == '') {
-                    checkout scm
-                    originalCommitId = sh(returnStdout: true, script: 'git rev-parse "origin/${BRANCH_NAME}"').trim()
-                  } else {
-                    checkout([
-                      $class: 'GitSCM',
-                      branches: [[name: params.SPECIFIC_GIT_COMMIT]],
-                      userRemoteConfigs: [[url: "https://github.com/${params.GITHUB_REPO}.git"]]
-                    ])
-                    // In case params.SPECIFIC_GIT_COMMIT is a mutable tag instead
-                    // of a sha
-                    originalCommitId = sh(returnStdout: true, script: 'git rev-parse "${SPECIFIC_GIT_COMMIT}"').trim()
-                  }
-
-                  echo "originalCommitId: ${originalCommitId}"
-                  stash name: 'clean-repo', excludes: 'vendor/**,tests/smoke/vendor/**'
-
-                  withDockerContainer(tectonicBazelImage) {
-                    sh "bazel test terraform_fmt --test_output=all"
-                    sh "bazel test installer:cli_units --test_output=all"
-                    sh"""#!/bin/bash -ex
-                      bazel build tarball tests/smoke
-
-                      # Jenkins `stash` does not follow symlinks - thereby temporarily copy the files to the root dir
-                      cp bazel-bin/tectonic-dev.tar.gz .
-                      cp bazel-bin/tests/smoke/linux_amd64_stripped/smoke .
-                    """
-                    stash name: 'tectonic-tarball', includes: 'tectonic-dev.tar.gz'
-                    stash name: 'smoke-tests', includes: 'smoke'
-                    archiveArtifacts allowEmptyArchive: true, artifacts: 'tectonic-dev.tar.gz'
-                  }
-
-                  withDockerContainer(tectonicSmokeTestEnvImage) {
-                    sh"""#!/bin/bash -ex
-                      cd tests/rspec
-                      rubocop --cache false spec lib
-                    """
-                  }
-                }
-              } catch (error) {
-                err = error
-                throw error
-              } finally {
-                reportStatusToGithub((err == null) ? 'success' : 'failure', 'basic-tests', originalCommitId)
-              }
-            }
-          }
-        }
-      }
-    }
-
     stage("Smoke Tests") {
       when {
         expression {
-          return params.RUN_SMOKE_TESTS || params.RUN_CONFORMANCE_TESTS || params.COMPONENT_TEST_IMAGES != ''
+          return params.RUN_SMOKE_TESTS
         }
       }
-      environment {
-        TECTONIC_INSTALLER_ROLE = 'tf-tectonic-installer-track-2'
-        GRAFITI_DELETER_ROLE = 'tf-grafiti'
-        TF_VAR_tectonic_container_images = "${params.hyperkube_image}"
-        TF_VAR_tectonic_kubelet_debug_config = "--minimum-container-ttl-duration=8h --maximum-dead-containers-per-container=9999 --maximum-dead-containers=9999"
+      options {
+        timeout(time: 70, unit: 'MINUTES')
       }
       steps {
-        script {
-          def builds = [:]
-          def aws = [
-            [file: 'basic_spec.rb', args: ''],
-            // [file: 'vpc_internal_spec.rb', args: '--device=/dev/net/tun --cap-add=NET_ADMIN -u root'],
-            // [file: 'network_flannel_spec.rb', args: ''],
-            // [file: 'exp_spec.rb', args: ''],
-            // [file: 'ca_spec.rb', args: ''],
-            // [file: 'custom_tls_spec.rb', args: '']
-          ]
-
-          if (params."PLATFORM/AWS") {
-            aws.each { build ->
-              filepath = 'spec/aws/' + build.file
-              builds['aws/' + build.file] = runRSpecTest(filepath, build.args, creds)
+        withDockerContainer(tectonicSmokeTestEnvImage) {
+          withCredentials(creds) {
+            ansiColor('xterm') {
+              sh """#!/bin/bash -e
+                   export HOME=/home/jenkins
+                   ./tests/run.sh
+                   cp bazel-bin/tectonic-dev.tar.gz .
+                 """
+              stash name: 'tectonic-tarball', includes: 'tectonic-dev.tar.gz'
             }
           }
-
-          parallel builds
+        }
+      }
+      post {
+        success {
+          reportStatusToGithub('success', originalCommitId)
+        }
+        failure {
+          reportStatusToGithub('failure', originalCommitId)
         }
       }
     }
+
 
     stage('Build docker image')  {
       when {
         branch 'master'
       }
       steps {
-        node('worker && ec2') {
           forcefullyCleanWorkspace()
           withCredentials(quayCreds) {
             ansiColor('xterm') {
-              unstash 'clean-repo'
               unstash 'tectonic-tarball'
               sh """
                 docker build -t quay.io/coreos/tectonic-installer:master -f images/tectonic-installer/Dockerfile .
@@ -249,38 +132,15 @@ pipeline {
               cleanWs notFailBuild: true
             }
           }
-        }
       }
     }
 
   }
   post {
     always {
-      node('worker && ec2') {
-        forcefullyCleanWorkspace()
-        echo "Starting with streaming the logfile to the S3 bucket"
-        withDockerContainer(params.builder_image) {
-          withCredentials(credsLog) {
-            unstash 'clean-repo'
-            script {
-              try {
-                sh """#!/bin/bash -xe
-                export BUILD_RESULT=${currentBuild.currentResult}
-                ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh jenkins-logs
-                """
-              } catch (Exception e) {
-                if (params.NOTIFY_SLACK) {
-                  slackSend color: 'warning', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} - cannot send jenkins logs to S3"
-                }
-              } finally {
-                cleanWs notFailBuild: true
-              }
-            }
-          }
-        }
-      }
+      forcefullyCleanWorkspace()
+      cleanWs notFailBuild: true
     }
-
     failure {
       script {
         if (params.NOTIFY_SLACK) {
@@ -293,7 +153,7 @@ pipeline {
 
 def forcefullyCleanWorkspace() {
   return withDockerContainer(
-    image: tectonicSmokeTestEnvImage,
+    image: tectonicBazelImage,
     args: '-u root'
   ) {
     ansiColor('xterm') {
@@ -307,78 +167,8 @@ def forcefullyCleanWorkspace() {
   }
 }
 
-def unstashCleanRepoTectonicTarGZSmokeTests() {
-  unstash 'clean-repo'
-  unstash 'tectonic-tarball'
-  unstash 'smoke-tests'
-  sh """#!/bin/bash -ex
-    # Jenkins `stash` does not follow symlinks - thereby temporarily copy the files to the root dir
-    mkdir -p bazel-bin/tests/smoke/linux_amd64_stripped/
-    cp tectonic-dev.tar.gz bazel-bin/.
-    cp smoke bazel-bin/tests/smoke/linux_amd64_stripped/.
-  """
-}
-
-def runRSpecTest(testFilePath, dockerArgs, credentials) {
-  return {
-    node('worker && ec2') {
-      def err = null
-      try {
-        timeout(time: 5, unit: 'HOURS') {
-          forcefullyCleanWorkspace()
-          ansiColor('xterm') {
-            withCredentials(credentials + quayCreds) {
-              withDockerContainer(
-                image: tectonicSmokeTestEnvImage,
-                args: '-u root -v /var/run/docker.sock:/var/run/docker.sock ' + dockerArgs
-              ) {
-                unstashCleanRepoTectonicTarGZSmokeTests()
-                sh """#!/bin/bash -ex
-                  mkdir -p templogfiles && chmod 777 templogfiles
-                  cd tests/rspec
-
-                  # Directing test output both to stdout as well as a log file
-                  rspec ${testFilePath} --format RspecTap::Formatter --format RspecTap::Formatter --out ../../templogfiles/tap.log
-                """
-              }
-            }
-          }
-        }
-      } catch (error) {
-        err = error
-        throw error
-      } finally {
-        reportStatusToGithub((err == null) ? 'success' : 'failure', testFilePath, originalCommitId)
-        step([$class: "TapPublisher", testResults: "templogfiles/*", outputTapToConsole: true, planRequired: false])
-        archiveArtifacts allowEmptyArchive: true, artifacts: 'bazel-bin/tectonic/**/logs/**'
-        withDockerContainer(params.builder_image) {
-         withCredentials(credsLog) {
-          script {
-            try {
-              sh """#!/bin/bash -xe
-              ./tests/jenkins-jobs/scripts/log-analyzer-copy.sh smoke-test-logs ${testFilePath}
-              """
-            } catch (Exception e) {
-              if (params.NOTIFY_SLACK) {
-                slackSend color: 'warning', channel: params.SLACK_CHANNEL, message: "Job ${env.JOB_NAME}, build no. #${BUILD_NUMBER} - cannot send smoke test logs to S3"
-              }
-            } finally {
-              cleanWs notFailBuild: true
-            }
-          }
-         }
-        }
-        cleanWs notFailBuild: true
-      }
-
-    }
-  }
-}
-
-def reportStatusToGithub(status, context, commitId) {
+def reportStatusToGithub(status, commitId) {
   withCredentials(creds) {
-    sh """#!/bin/bash -ex
-      ./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} ${context} ${commitId} ${params.GITHUB_REPO}
-    """
+    sh "./tests/jenkins-jobs/scripts/report-status-to-github.sh ${status} smoke-test ${commitId} ${params.GITHUB_REPO} || true"
   }
 }
