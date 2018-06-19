@@ -29,10 +29,6 @@ job("triggers/tectonic-installer-nightly-trigger") {
             booleanParameters {
               configs {
                 booleanParameterConfig {
-                  name('PLATFORM/GCP')
-                  value(false)
-                }
-                booleanParameterConfig {
                   name('NOTIFY_SLACK')
                   value(true)
                 }

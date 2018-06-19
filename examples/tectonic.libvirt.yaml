@@ -4,14 +4,9 @@ admin:
 # The base DNS domain of the cluster. It must NOT contain a trailing period. Some
 # DNS providers will automatically add this if necessary.
 #
-# Example: `openstack.dev.coreos.systems`.
+# Example: `openshift.example.com`.
 #
 # Note: This field MUST be set manually prior to creating the cluster.
-#
-# [Azure-specific NOTE]
-# To use Azure-provided DNS, `BaseDomain` should be set to `""`
-# If using DNS records, ensure that `BaseDomain` is set to a properly configured external DNS zone.
-# Instructions for configuring delegated domains for Azure DNS can be found here: https://docs.microsoft.com/en-us/azure/dns/dns-delegate-domain-azure-dns
 baseDomain:
 
 libvirt:
@@ -104,8 +99,6 @@ networking:
 nodePools:
     # The number of etcd nodes to be created.
     # If set to zero, the count of etcd nodes will be determined automatically.
-    #
-    # Note: This is not supported on bare metal.
   - count: 1
     name: etcd
 

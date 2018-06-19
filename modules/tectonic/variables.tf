@@ -14,7 +14,7 @@ variable "versions" {
 }
 
 variable "platform" {
-  description = "Platform on which Tectonic is being installed. Example: bare-metal or aws."
+  description = "Platform on which Tectonic is being installed. Example: aws or libvirt."
   type        = "string"
 }
 

@@ -148,8 +148,6 @@ variable "tectonic_etcd_count" {
   description = <<EOF
 The number of etcd nodes to be created.
 If set to zero, the count of etcd nodes will be determined automatically.
-
-Note: This is not supported on bare metal.
 EOF
 }
 
@@ -160,11 +158,10 @@ variable "tectonic_base_domain" {
 The base DNS domain of the cluster. It must NOT contain a trailing period. Some
 DNS providers will automatically add this if necessary.
 
-Example: `openstack.dev.coreos.systems`.
+Example: `openshift.example.com`.
 
 Note: This field MUST be set manually prior to creating the cluster.
 This applies only to cloud platforms.
-
 EOF
 }
 
@@ -176,7 +173,6 @@ The name of the cluster.
 If used in a cloud-environment, this will be prepended to `tectonic_base_domain` resulting in the URL to the Tectonic console.
 
 Note: This field MUST be set manually prior to creating the cluster.
-Warning: Special characters in the name like '.' may cause errors on OpenStack platforms due to resource name constraints.
 EOF
 }
 
@@ -316,7 +312,7 @@ variable "tectonic_networking" {
 
 - "canal": enables overlay networking including network policy. Overlay is implemented by flannel using VXLAN. Network policy is implemented by Calico.
 
-- "calico-ipip": [ALPHA] enables BGP based networking. Routing and network policy is implemented by Calico. Note this has been tested on baremetal installations only.
+- "calico-ipip": [ALPHA] enables BGP based networking. Routing and network policy is implemented by Calico. Note this has been tested on bare metal installations only.
 
 - "none": disables the installation of any Pod level networking layer provided by Tectonic. By setting this value, users are expected to deploy their own solution to enable network connectivity for Pods and Services.
 EOF
