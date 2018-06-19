@@ -1,0 +1,13 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["unit.go"],
+    importpath = "github.com/coreos/ignition/config/shared/validations",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/coreos/go-systemd/unit:go_default_library",
+        "//vendor/github.com/coreos/ignition/config/shared/errors:go_default_library",
+        "//vendor/github.com/coreos/ignition/config/validate/report:go_default_library",
+    ],
+)

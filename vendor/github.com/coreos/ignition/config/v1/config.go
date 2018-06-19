@@ -15,9 +15,10 @@
 package v1
 
 import (
-	"github.com/coreos/ignition/config/errors"
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/util"
 	"github.com/coreos/ignition/config/v1/types"
+	"github.com/coreos/ignition/config/validate"
 	"github.com/coreos/ignition/config/validate/report"
 
 	json "github.com/ajeddeloh/go-json"
@@ -43,10 +44,10 @@ func Parse(rawConfig []byte) (types.Config, report.Report, error) {
 	}
 
 	if config.Version != types.Version {
-		return types.Config{}, report.Report{}, errors.ErrInvalid
+		return types.Config{}, report.Report{}, errors.ErrUnknownVersion
 	}
 
-	rpt := util.ValidateConfig(rawConfig, config)
+	rpt := validate.ValidateConfig(rawConfig, config)
 	if rpt.IsFatal() {
 		return types.Config{}, rpt, errors.ErrInvalid
 	}

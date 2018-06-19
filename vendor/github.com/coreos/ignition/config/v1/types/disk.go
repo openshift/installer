@@ -15,8 +15,7 @@
 package types
 
 import (
-	"fmt"
-
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
 )
 
@@ -31,25 +30,25 @@ func (n Disk) Validate() report.Report {
 	if len(n.Device) == 0 {
 		r.Add(report.Entry{
 			Kind:    report.EntryError,
-			Message: "disk device is required",
+			Message: errors.ErrDiskDeviceRequired.Error(),
 		})
 	}
 	if n.partitionNumbersCollide() {
 		r.Add(report.Entry{
 			Kind:    report.EntryError,
-			Message: fmt.Sprintf("disk %q: partition numbers collide", n.Device),
+			Message: errors.ErrPartitionNumbersCollide.Error(),
 		})
 	}
 	if n.partitionsOverlap() {
 		r.Add(report.Entry{
 			Kind:    report.EntryError,
-			Message: fmt.Sprintf("disk %q: partitions overlap", n.Device),
+			Message: errors.ErrPartitionsOverlap.Error(),
 		})
 	}
 	if n.partitionsMisaligned() {
 		r.Add(report.Entry{
 			Kind:    report.EntryError,
-			Message: fmt.Sprintf("disk %q: partitions misaligned", n.Device),
+			Message: errors.ErrPartitionsMisaligned.Error(),
 		})
 	}
 	// Disks which get to this point will likely succeed in sgdisk

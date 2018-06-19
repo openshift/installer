@@ -15,13 +15,8 @@
 package types
 
 import (
-	"errors"
-
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
-)
-
-var (
-	ErrFilesystemInvalidFormat = errors.New("invalid filesystem format")
 )
 
 type Filesystem struct {
@@ -43,7 +38,7 @@ func (f FilesystemFormat) Validate() report.Report {
 	case "ext4", "btrfs", "xfs":
 		return report.Report{}
 	default:
-		return report.ReportFromError(ErrFilesystemInvalidFormat, report.EntryError)
+		return report.ReportFromError(errors.ErrFilesystemInvalidFormat, report.EntryError)
 	}
 }
 

@@ -5,21 +5,24 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"path/filepath"
 
-	ignconfig "github.com/coreos/ignition/config/v2_0"
-	ignconfigtypes "github.com/coreos/ignition/config/v2_0/types"
+	ignconfig "github.com/coreos/ignition/config/v2_2"
+	ignconfigtypes "github.com/coreos/ignition/config/v2_2/types"
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
+	"github.com/vincent-petithory/dataurl"
 )
 
 var (
-	ignVersion   = ignconfigtypes.IgnitionVersion{Major: 2, Minor: 0, Patch: 0}
+	ignVersion   = "2.2.0"
 	ignFilesPath = map[string]string{
 		"master": config.IgnitionMaster,
 		"worker": config.IgnitionWorker,
 		"etcd":   config.IgnitionEtcd,
 	}
+	caPath = "generated/tls/root-ca.crt"
 )
 
 func (c *ConfigGenerator) poolToRoleMap() map[string]string {
@@ -50,6 +53,11 @@ func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 		// TODO(alberto): Append block need to be different for each etcd node.
 		// add loop over count if role is etcd
 		c.embedAppendBlock(ignCfg, role)
+
+		ca := filepath.Join(clusterDir, caPath)
+		if err = c.appendCertificateAuthority(ignCfg, ca); err != nil {
+			return err
+		}
 
 		// agentless platforms (e.g. libvirt) need to embed the ssh key
 		c.embedUserBlock(ignCfg)
@@ -91,12 +99,25 @@ func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role s
 	ignCfg.Ignition.Config.Append = append(ignCfg.Ignition.Config.Append, appendBlock)
 }
 
+func (c *ConfigGenerator) appendCertificateAuthority(ignCfg *ignconfigtypes.Config, caPath string) error {
+	ca, err := ioutil.ReadFile(caPath)
+	if err != nil {
+		return err
+	}
+
+	ignCfg.Ignition.Security.TLS.CertificateAuthorities = append(ignCfg.Ignition.Security.TLS.CertificateAuthorities, ignconfigtypes.CaReference{
+		Source: dataurl.EncodeBytes(ca),
+	})
+
+	return nil
+}
+
 func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
-	if c.Platform == "libvirt" {
-		userBlock := ignconfigtypes.User{
+	if c.Platform.String() == config.PlatformLibvirt.String() {
+		userBlock := ignconfigtypes.PasswdUser{
 			Name: "core",
-			SSHAuthorizedKeys: []string{
-				c.Libvirt.SSHKey,
+			SSHAuthorizedKeys: []ignconfigtypes.SSHAuthorizedKey{
+				ignconfigtypes.SSHAuthorizedKey(c.Libvirt.SSHKey),
 			},
 		}
 
@@ -104,23 +125,33 @@ func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
 	}
 }
 
-func (c *ConfigGenerator) getTNCURL(role string) ignconfigtypes.Url {
-	var url ignconfigtypes.Url
+func (c *ConfigGenerator) getTNCURL(role string) string {
+	var u string
 
 	// cloud platforms put this behind a load balancer which remaps ports;
 	// libvirt doesn't do that - use the tnc port directly
 	port := 80
-	if c.Platform == "libvirt" {
+	if c.Platform.String() == config.PlatformLibvirt.String() {
 		port = 49500
 	}
-	if role == "master" || role == "worker" {
-		url = ignconfigtypes.Url{
-			Scheme: "http",
-			Host:   fmt.Sprintf("%s-tnc.%s:%d", c.Name, c.BaseDomain, port),
-			Path:   fmt.Sprintf("/config/%s", role),
-		}
+
+	// XXX: The bootstrap node on AWS uses a CNAME to redirect TNC-bound
+	// traffic to S3. Because of this, HTTPS cannot be used.
+	scheme := "https"
+	if c.Platform.String() == config.PlatformAWS.String() && role == "master" {
+		scheme = "http"
 	}
-	return url
+
+	if role == "master" || role == "worker" {
+		u = func() *url.URL {
+			return &url.URL{
+				Scheme: scheme,
+				Host:   fmt.Sprintf("%s-tnc.%s:%d", c.Name, c.BaseDomain, port),
+				Path:   fmt.Sprintf("/config/%s", role),
+			}
+		}().String()
+	}
+	return u
 }
 
 func ignCfgToFile(ignCfg ignconfigtypes.Config, filePath string) error {

@@ -20,5 +20,8 @@ go_library(
     ],
     importpath = "github.com/coreos/ignition/config/v1/types",
     visibility = ["//visibility:public"],
-    deps = ["//vendor/github.com/coreos/ignition/config/validate/report:go_default_library"],
+    deps = [
+        "//vendor/github.com/coreos/ignition/config/shared/errors:go_default_library",
+        "//vendor/github.com/coreos/ignition/config/validate/report:go_default_library",
+    ],
 )

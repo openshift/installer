@@ -123,6 +123,14 @@ variable "kubelet_key_pem" {
   description = "The kubelet key in PEM format."
 }
 
+variable "tnc_cert_pem" {
+  type = "string"
+}
+
+variable "tnc_key_pem" {
+  type = "string"
+}
+
 variable "oidc_ca_cert" {
   type = "string"
 }

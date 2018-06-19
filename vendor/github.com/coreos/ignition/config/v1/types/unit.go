@@ -15,16 +15,10 @@
 package types
 
 import (
-	"errors"
 	"path"
 
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
-)
-
-var (
-	ErrSystemdUnitInvalidExt   = errors.New("invalid systemd unit extension")
-	ErrSystemdDropInInvalidExt = errors.New("invalid systemd unit extension")
-	ErrNetworkdUnitInvalidExt  = errors.New("invalid networkd unit extension")
 )
 
 type SystemdUnit struct {
@@ -47,7 +41,7 @@ func (n SystemdUnitName) Validate() report.Report {
 	case ".service", ".socket", ".device", ".mount", ".automount", ".swap", ".target", ".path", ".timer", ".snapshot", ".slice", ".scope":
 		return report.Report{}
 	default:
-		return report.ReportFromError(ErrSystemdUnitInvalidExt, report.EntryError)
+		return report.ReportFromError(errors.ErrInvalidSystemdExt, report.EntryError)
 	}
 }
 
@@ -58,7 +52,7 @@ func (n SystemdUnitDropInName) Validate() report.Report {
 	case ".conf":
 		return report.Report{}
 	default:
-		return report.ReportFromError(ErrSystemdDropInInvalidExt, report.EntryError)
+		return report.ReportFromError(errors.ErrInvalidSystemdDropinExt, report.EntryError)
 	}
 }
 
@@ -74,6 +68,6 @@ func (n NetworkdUnitName) Validate() report.Report {
 	case ".link", ".netdev", ".network":
 		return report.Report{}
 	default:
-		return report.ReportFromError(ErrNetworkdUnitInvalidExt, report.EntryError)
+		return report.ReportFromError(errors.ErrInvalidNetworkdExt, report.EntryError)
 	}
 }

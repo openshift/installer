@@ -6,6 +6,8 @@ go_library(
     importpath = "github.com/coreos/ignition/config/validate",
     visibility = ["//visibility:public"],
     deps = [
+        "//vendor/github.com/ajeddeloh/go-json:go_default_library",
+        "//vendor/github.com/coreos/ignition/config/validate/astjson:go_default_library",
         "//vendor/github.com/coreos/ignition/config/validate/astnode:go_default_library",
         "//vendor/github.com/coreos/ignition/config/validate/report:go_default_library",
     ],

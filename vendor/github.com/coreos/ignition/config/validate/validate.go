@@ -15,17 +15,38 @@
 package validate
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"reflect"
 	"strings"
 
+	json "github.com/ajeddeloh/go-json"
+	"github.com/coreos/ignition/config/validate/astjson"
 	"github.com/coreos/ignition/config/validate/astnode"
 	"github.com/coreos/ignition/config/validate/report"
 )
 
 type validator interface {
 	Validate() report.Report
+}
+
+// ValidateConfig validates a raw config object into a given config version
+func ValidateConfig(rawConfig []byte, config interface{}) report.Report {
+	// Unmarshal again to a json.Node to get offset information for building a report
+	var ast json.Node
+	var r report.Report
+	configValue := reflect.ValueOf(config)
+	if err := json.Unmarshal(rawConfig, &ast); err != nil {
+		r.Add(report.Entry{
+			Kind:    report.EntryWarning,
+			Message: "Ignition could not unmarshal your config for reporting line numbers. This should never happen. Please file a bug.",
+		})
+		r.Merge(ValidateWithoutSource(configValue))
+	} else {
+		r.Merge(Validate(configValue, astjson.FromJsonRoot(ast), bytes.NewReader(rawConfig), true))
+	}
+	return r
 }
 
 // Validate walks down a struct tree calling Validate on every node that implements it, building
@@ -153,8 +174,9 @@ func validateStruct(vObj reflect.Value, ast astnode.AstNode, source io.ReadSeeke
 		// Default to deepest node if the node's type isn't an object,
 		// such as when a json string actually unmarshal to structs (like with version)
 		line, col := 0, 0
+		highlight := ""
 		if ast != nil {
-			line, col, _ = ast.ValueLineCol(src)
+			line, col, highlight = ast.ValueLineCol(src)
 		}
 
 		// If there's a Validate<Name> func for the given field, call it
@@ -162,16 +184,16 @@ func validateStruct(vObj reflect.Value, ast astnode.AstNode, source io.ReadSeeke
 		if funct.IsValid() {
 			if sub_node != nil {
 				// if sub_node is non-nil, we can get better line/col info
-				line, col, _ = sub_node.ValueLineCol(src)
+				line, col, highlight = sub_node.ValueLineCol(src)
 			}
 			res := funct.Call(nil)
 			sub_report := res[0].Interface().(report.Report)
-			sub_report.AddPosition(line, col, "")
+			sub_report.AddPosition(line, col, highlight)
 			r.Merge(sub_report)
 		}
 
 		sub_report := Validate(f.Value, sub_node, src, checkUnusedKeys)
-		sub_report.AddPosition(line, col, "")
+		sub_report.AddPosition(line, col, highlight)
 		r.Merge(sub_report)
 	}
 	if !isFromObject || !checkUnusedKeys {

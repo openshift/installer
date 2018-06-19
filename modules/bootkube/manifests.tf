@@ -14,6 +14,7 @@ variable "manifest_names" {
     "pull.json",
     "tectonic-network-operator.yaml",
     "tectonic-node-controller-operator.yaml",
+    "tnc-tls-secret.yaml",
   ]
 }
 
@@ -52,6 +53,9 @@ data "template_file" "manifest_file_list" {
     etcd_ca_cert     = "${base64encode(var.etcd_ca_cert_pem)}"
     etcd_client_cert = "${base64encode(var.etcd_client_cert_pem)}"
     etcd_client_key  = "${base64encode(var.etcd_client_key_pem)}"
+
+    tnc_tls_cert = "${base64encode(var.tnc_cert_pem)}"
+    tnc_tls_key  = "${base64encode(var.tnc_key_pem)}"
   }
 }
 

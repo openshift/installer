@@ -18,16 +18,10 @@ import (
 	"crypto"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"strings"
 
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
-)
-
-var (
-	ErrHashMalformed    = errors.New("malformed hash specifier")
-	ErrHashWrongSize    = errors.New("incorrect size for hash sum")
-	ErrHashUnrecognized = errors.New("unrecognized hash function")
 )
 
 type Hash struct {
@@ -43,7 +37,7 @@ func (h *Hash) UnmarshalJSON(data []byte) error {
 
 	parts := strings.SplitN(th, "-", 2)
 	if len(parts) != 2 {
-		return ErrHashMalformed
+		return errors.ErrHashMalformed
 	}
 
 	h.Function = parts[0]
@@ -67,11 +61,11 @@ func (h Hash) Validate() report.Report {
 	case "sha512":
 		hash = crypto.SHA512
 	default:
-		return report.ReportFromError(ErrHashUnrecognized, report.EntryError)
+		return report.ReportFromError(errors.ErrHashUnrecognized, report.EntryError)
 	}
 
 	if len(h.Sum) != hex.EncodedLen(hash.Size()) {
-		return report.ReportFromError(ErrHashWrongSize, report.EntryError)
+		return report.ReportFromError(errors.ErrHashWrongSize, report.EntryError)
 	}
 
 	return report.Report{}

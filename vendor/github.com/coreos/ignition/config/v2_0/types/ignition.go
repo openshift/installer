@@ -16,16 +16,11 @@ package types
 
 import (
 	"encoding/json"
-	"errors"
 
 	"github.com/coreos/go-semver/semver"
 
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
-)
-
-var (
-	ErrOldVersion = errors.New("incorrect config version (too old)")
-	ErrNewVersion = errors.New("incorrect config version (too new)")
 )
 
 type Ignition struct {
@@ -60,10 +55,10 @@ func (v IgnitionVersion) MarshalJSON() ([]byte, error) {
 
 func (v IgnitionVersion) Validate() report.Report {
 	if MaxVersion.Major > v.Major {
-		return report.ReportFromError(ErrOldVersion, report.EntryError)
+		return report.ReportFromError(errors.ErrOldVersion, report.EntryError)
 	}
 	if MaxVersion.LessThan(semver.Version(v)) {
-		return report.ReportFromError(ErrNewVersion, report.EntryError)
+		return report.ReportFromError(errors.ErrNewVersion, report.EntryError)
 	}
 	return report.Report{}
 }

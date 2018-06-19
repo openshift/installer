@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+echo "Rendering Kubernetes core manifests..."
+
 # shellcheck disable=SC2154
 /usr/bin/docker run \
     --volume "$(pwd)":/assets \
@@ -8,6 +10,8 @@ set -e
     "${kube_core_renderer_image}" \
     --config=/assets/kco-config.yaml \
     --output=/assets
+
+echo "Rendering TNC manifests..."
 
 # shellcheck disable=SC2154
 /usr/bin/docker run \
@@ -28,6 +32,8 @@ cp "$(pwd)/tnc-bootstrap/tectonic-node-controller-config.yaml" /etc/kubernetes/t
 # docker container.
 # See https://github.com/kubernetes/kubernetes/issues/43292
 
+echo "Starting etcd certificate signer..."
+
 # shellcheck disable=SC2154,SC2034
 signer_id=$(/usr/bin/docker run -d \
     --tmpfs /tmp \
@@ -44,23 +50,47 @@ signer_id=$(/usr/bin/docker run -d \
     --peercertdur=26280h \
     --servercertdur=26280h)
 
+echo "Waiting for etcd cluster..."
+
 # Wait for the etcd cluster to come up.
 export ETCDCTL_API=3
-# shellcheck disable=SC2154,SC2086
-/usr/bin/etcdctl \
-    --dial-timeout=10m \
-    --cacert=/opt/tectonic/tls/etcd-client-ca.crt \
-    --cert=/opt/tectonic/tls/etcd-client.crt \
-    --key=/opt/tectonic/tls/etcd-client.key \
-    --endpoints=${etcd_cluster} \
-    endpoint health
+
+i=0
+while true; do
+    set +e
+    # shellcheck disable=SC2154,SC2086
+    /usr/bin/etcdctl \
+        --dial-timeout=10m \
+        --cacert=/opt/tectonic/tls/etcd-client-ca.crt \
+        --cert=/opt/tectonic/tls/etcd-client.crt \
+        --key=/opt/tectonic/tls/etcd-client.key \
+        --endpoints=${etcd_cluster} \
+        endpoint health
+    status=$?
+    set -e
+
+    if [ "$status" -eq 0 ]; then
+      break
+    fi
+
+    i=$((i+1))
+    [ $i -eq 10 ] && echo "etcdctl failed too many times." && exit 1
+
+    echo "etcdctl failed. Retrying in 5 seconds..."
+    sleep 5
+done
+
 export ETCDCTL_API=
+
+echo "etcd cluster up. Killing etcd certificate signer..."
 
 # shellcheck disable=SC2154,SC1083
 /usr/bin/docker kill $${signer_id}
 rm /etc/kubernetes/manifests/tectonic-node-controller-pod.yaml
 
 cp -r "$(pwd)/bootstrap-configs" /etc/kubernetes/bootstrap-configs
+
+echo "Starting bootkube..."
 
 # shellcheck disable=SC2154
 /usr/bin/docker run \

@@ -15,13 +15,14 @@
 package types
 
 import (
-	"bytes"
-	"errors"
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/coreos/go-systemd/unit"
 
+	"github.com/coreos/ignition/config/shared/errors"
+	"github.com/coreos/ignition/config/shared/validations"
 	"github.com/coreos/ignition/config/validate/report"
 )
 
@@ -34,11 +35,15 @@ type SystemdUnit struct {
 }
 
 func (u SystemdUnit) Validate() report.Report {
-	if err := validateUnitContent(u.Contents); err != nil {
+	r := report.Report{}
+	opts, err := validateUnitContent(u.Contents)
+	if err != nil {
 		return report.ReportFromError(err, report.EntryError)
 	}
 
-	return report.Report{}
+	r.Merge(validations.ValidateInstallSection(string(u.Name), u.Enable, u.Contents == "", opts))
+
+	return r
 }
 
 type SystemdUnitDropIn struct {
@@ -47,7 +52,7 @@ type SystemdUnitDropIn struct {
 }
 
 func (u SystemdUnitDropIn) Validate() report.Report {
-	if err := validateUnitContent(u.Contents); err != nil {
+	if _, err := validateUnitContent(u.Contents); err != nil {
 		return report.ReportFromError(err, report.EntryError)
 	}
 
@@ -61,7 +66,7 @@ func (n SystemdUnitName) Validate() report.Report {
 	case ".service", ".socket", ".device", ".mount", ".automount", ".swap", ".target", ".path", ".timer", ".snapshot", ".slice", ".scope":
 		return report.Report{}
 	default:
-		return report.ReportFromError(errors.New("invalid systemd unit extension"), report.EntryError)
+		return report.ReportFromError(errors.ErrInvalidSystemdExt, report.EntryError)
 	}
 }
 
@@ -72,7 +77,7 @@ func (n SystemdUnitDropInName) Validate() report.Report {
 	case ".conf":
 		return report.Report{}
 	default:
-		return report.ReportFromError(errors.New("invalid systemd unit drop-in extension"), report.EntryError)
+		return report.ReportFromError(errors.ErrInvalidSystemdDropinExt, report.EntryError)
 	}
 }
 
@@ -82,7 +87,7 @@ type NetworkdUnit struct {
 }
 
 func (u NetworkdUnit) Validate() report.Report {
-	if err := validateUnitContent(u.Contents); err != nil {
+	if _, err := validateUnitContent(u.Contents); err != nil {
 		return report.ReportFromError(err, report.EntryError)
 	}
 
@@ -96,16 +101,15 @@ func (n NetworkdUnitName) Validate() report.Report {
 	case ".link", ".netdev", ".network":
 		return report.Report{}
 	default:
-		return report.ReportFromError(errors.New("invalid networkd unit extension"), report.EntryError)
+		return report.ReportFromError(errors.ErrInvalidNetworkdExt, report.EntryError)
 	}
 }
 
-func validateUnitContent(content string) error {
-	c := bytes.NewBufferString(content)
-	_, err := unit.Deserialize(c)
+func validateUnitContent(content string) ([]*unit.UnitOption, error) {
+	c := strings.NewReader(content)
+	opts, err := unit.Deserialize(c)
 	if err != nil {
-		return fmt.Errorf("invalid unit content: %s", err)
+		return nil, fmt.Errorf("invalid unit content: %s", err)
 	}
-
-	return nil
+	return opts, nil
 }

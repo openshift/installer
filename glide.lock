@@ -1,5 +1,5 @@
-hash: 98bfaa467f036a2f503722076628d66097e5d84bf86dbc97abb8cc5f23064148
-updated: 2018-06-07T11:12:15.139135692-07:00
+hash: 0ecb3a97e888271fd9f1c815585759d843593950543e284e3f22b941707f12c5
+updated: 2018-06-14T10:48:03.647701802-07:00
 imports:
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
@@ -18,19 +18,24 @@ imports:
   subpackages:
   - semver
 - name: github.com/coreos/go-systemd
-  version: 40e2722dffead74698ca12a750f64ef313ddce05
+  version: 39ca1b05acc7ad1220e09f133283b8859a8b71ab
   subpackages:
   - dbus
   - unit
 - name: github.com/coreos/ignition
-  version: bd3876b8f1d627625fe266a0e35256ba05e664e3
+  version: 76107251acd117c6d3e5b4dae2b47f82f944984b
   subpackages:
-  - config/errors
+  - config/shared/errors
+  - config/shared/validations
   - config/util
   - config/v1
   - config/v1/types
   - config/v2_0
   - config/v2_0/types
+  - config/v2_1
+  - config/v2_1/types
+  - config/v2_2
+  - config/v2_2/types
   - config/v2_3_experimental/types
   - config/validate
   - config/validate/astjson
@@ -92,8 +97,6 @@ imports:
 - name: golang.org/x/crypto
   version: df8d4716b3472e4a531c33cedbe537dae921a1a9
   subpackages:
-  - bcrypt
-  - blowfish
   - ed25519
   - ed25519/internal/edwards25519
 - name: golang.org/x/net

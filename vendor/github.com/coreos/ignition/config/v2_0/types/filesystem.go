@@ -15,15 +15,8 @@
 package types
 
 import (
-	"errors"
-
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
-)
-
-var (
-	ErrFilesystemInvalidFormat = errors.New("invalid filesystem format")
-	ErrFilesystemNoMountPath   = errors.New("filesystem is missing mount or path")
-	ErrFilesystemMountAndPath  = errors.New("filesystem has both mount and path defined")
 )
 
 type Filesystem struct {
@@ -45,10 +38,10 @@ type FilesystemCreate struct {
 
 func (f Filesystem) Validate() report.Report {
 	if f.Mount == nil && f.Path == nil {
-		return report.ReportFromError(ErrFilesystemNoMountPath, report.EntryError)
+		return report.ReportFromError(errors.ErrFilesystemNoMountPath, report.EntryError)
 	}
 	if f.Mount != nil && f.Path != nil {
-		return report.ReportFromError(ErrFilesystemMountAndPath, report.EntryError)
+		return report.ReportFromError(errors.ErrFilesystemMountAndPath, report.EntryError)
 	}
 	return report.Report{}
 }
@@ -60,7 +53,7 @@ func (f FilesystemFormat) Validate() report.Report {
 	case "ext4", "btrfs", "xfs":
 		return report.Report{}
 	default:
-		return report.ReportFromError(ErrFilesystemInvalidFormat, report.EntryError)
+		return report.ReportFromError(errors.ErrFilesystemInvalidFormat, report.EntryError)
 	}
 }
 

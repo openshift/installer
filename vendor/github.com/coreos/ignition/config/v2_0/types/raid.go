@@ -15,8 +15,7 @@
 package types
 
 import (
-	"fmt"
-
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
 )
 
@@ -31,7 +30,7 @@ func (n Raid) Validate() report.Report {
 	switch n.Level {
 	case "linear", "raid0", "0", "stripe":
 		if n.Spares != 0 {
-			return report.ReportFromError(fmt.Errorf("spares unsupported for %q arrays", n.Level), report.EntryError)
+			return report.ReportFromError(errors.ErrSparesUnsupportedForLevel, report.EntryError)
 		}
 	case "raid1", "1", "mirror":
 	case "raid4", "4":
@@ -39,7 +38,7 @@ func (n Raid) Validate() report.Report {
 	case "raid6", "6":
 	case "raid10", "10":
 	default:
-		return report.ReportFromError(fmt.Errorf("unrecognized raid level: %q", n.Level), report.EntryError)
+		return report.ReportFromError(errors.ErrUnrecognizedRaidLevel, report.EntryError)
 	}
 	return report.Report{}
 }
