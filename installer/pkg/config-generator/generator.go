@@ -121,7 +121,7 @@ func (c *ConfigGenerator) addonConfig() (*kubeaddon.OperatorConfig, error) {
 			Kind:       kubeaddon.Kind,
 		},
 	}
-	addonConfig.CloudProvider = c.Platform.String()
+	addonConfig.CloudProvider = tectonicCloudProvider(c.Platform)
 	addonConfig.ClusterConfig.APIServerURL = c.getAPIServerURL()
 	registrySecret, err := generateRandomID(16)
 	if err != nil {
@@ -151,7 +151,7 @@ func (c *ConfigGenerator) coreConfig() (*kubecore.OperatorConfig, error) {
 	coreConfig.DNSConfig.ClusterIP = cidrhost
 
 	coreConfig.CloudProviderConfig.CloudConfigPath = ""
-	coreConfig.CloudProviderConfig.CloudProviderProfile = cloudProvider(c.Cluster.Platform)
+	coreConfig.CloudProviderConfig.CloudProviderProfile = k8sCloudProvider(c.Cluster.Platform)
 
 	coreConfig.RoutingConfig.Subdomain = c.getBaseAddress()
 
@@ -199,7 +199,7 @@ func (c *ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
 	}
 
 	tncoConfig.ControllerConfig.ClusterDNSIP = cidrhost
-	tncoConfig.ControllerConfig.Platform = c.Platform.String()
+	tncoConfig.ControllerConfig.Platform = tectonicCloudProvider(c.Platform)
 	tncoConfig.ControllerConfig.CloudProviderConfig = "" // TODO(yifan): Get CloudProviderConfig.
 	tncoConfig.ControllerConfig.ClusterName = c.Cluster.Name
 	tncoConfig.ControllerConfig.BaseDomain = c.Cluster.BaseDomain
@@ -223,7 +223,7 @@ func (c *ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, erro
 	utilityConfig.TectonicConfigMapConfig.CertificatesStrategy = certificatesStrategy
 	utilityConfig.TectonicConfigMapConfig.ClusterID = c.Cluster.Internal.ClusterID
 	utilityConfig.TectonicConfigMapConfig.ClusterName = c.Cluster.Name
-	utilityConfig.TectonicConfigMapConfig.InstallerPlatform = c.Platform.String()
+	utilityConfig.TectonicConfigMapConfig.InstallerPlatform = tectonicCloudProvider(c.Platform)
 	utilityConfig.TectonicConfigMapConfig.KubeAPIServerURL = c.getAPIServerURL()
 	// TODO: Speficy what's a version in ut2 and set it here
 	utilityConfig.TectonicConfigMapConfig.TectonicVersion = "ut2"
@@ -346,10 +346,23 @@ func cidrhost(iprange string, hostNum int) (string, error) {
 }
 
 // Converts a platform to the cloudProvider that k8s understands
-func cloudProvider(platform config.Platform) string {
+func k8sCloudProvider(platform config.Platform) string {
 	switch platform {
 	case config.PlatformAWS:
-		return platform.String()
+		return "aws"
+	case config.PlatformLibvirt:
+		return ""
 	}
-	return ""
+	panic("invalid platform")
+}
+
+// Converts a platform to the cloudProvider that Tectonic understands
+func tectonicCloudProvider(platform config.Platform) string {
+	switch platform {
+	case config.PlatformAWS:
+		return "aws"
+	case config.PlatformLibvirt:
+		return "libvirt"
+	}
+	panic("invalid platform")
 }

@@ -280,7 +280,7 @@ nodePools:
     name: worker
 
 # The platform used for deploying.
-platform: AWS
+platform: aws
 
 # The path the pull secret file in JSON format.
 # This is known to be a "Docker pull secret" as produced by the docker login [1] command.
