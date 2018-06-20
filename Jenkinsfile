@@ -49,12 +49,12 @@ pipeline {
   parameters {
     booleanParam(
       name: 'RUN_SMOKE_TESTS',
-      defaultValue: true,
+      defaultValue: false,
       description: ''
     )
     booleanParam(
       name: 'PLATFORM/AWS',
-      defaultValue: true,
+      defaultValue: false,
       description: ''
     )
     booleanParam(
@@ -72,8 +72,9 @@ pipeline {
   stages {
     stage("Smoke Tests") {
       when {
-        expression {
-          return params.RUN_SMOKE_TESTS
+        anyOf {
+          branch "master"
+          expression { return params.RUN_SMOKE_TESTS }
         }
       }
       options {
