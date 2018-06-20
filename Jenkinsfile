@@ -100,19 +100,18 @@ pipeline {
         branch 'master'
       }
       steps {
-          forcefullyCleanWorkspace()
-          withCredentials(quayCreds) {
-            ansiColor('xterm') {
-              unstash 'tectonic-tarball'
-              sh """
-                docker build -t quay.io/coreos/tectonic-installer:master -f images/tectonic-installer/Dockerfile .
-                docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
-                docker push quay.io/coreos/tectonic-installer:master
-                docker logout quay.io
-              """
-              cleanWs notFailBuild: true
-            }
+        withCredentials(quayCreds) {
+          ansiColor('xterm') {
+            unstash 'tectonic-tarball'
+            sh """
+              docker build -t quay.io/coreos/tectonic-installer:master -f images/tectonic-installer/Dockerfile .
+              docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
+              docker push quay.io/coreos/tectonic-installer:master
+              docker logout quay.io
+            """
+            cleanWs notFailBuild: true
           }
+        }
       }
     }
 
