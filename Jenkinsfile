@@ -89,6 +89,7 @@ pipeline {
                    ./tests/run.sh
                    cp bazel-bin/tectonic-dev.tar.gz .
                  """
+              // Produce an artifact which can be downloaded via web UI
               stash name: 'tectonic-tarball', includes: 'tectonic-dev.tar.gz'
             }
           }
@@ -103,7 +104,6 @@ pipeline {
       steps {
         withCredentials(quayCreds) {
           ansiColor('xterm') {
-            unstash 'tectonic-tarball'
             sh """
               docker build -t quay.io/coreos/tectonic-installer:master -f images/tectonic-installer/Dockerfile .
               docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
