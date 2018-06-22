@@ -144,11 +144,13 @@ manager.listener.logger.println("Job is building?: " + prBuild.isBuilding());
 
     WorkflowRun run = (WorkflowRun) prBuild;
     //hard kill
-    run.doKill();
+    //run.doKill();
+    run.doTerm();
 
     while(prBuild.isBuilding()) {
       manager.listener.logger.println("Trying to kill the job....");
-      run.doKill();
+      //run.doKill();
+      run.doTerm();
       sleep(1000);
     }
 
