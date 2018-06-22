@@ -33,44 +33,6 @@ Parameters:
 
 * No input parameters are required.
 
-## Tectonic Installer MultiBranch Job
-
-This file (`tectonic_installer_multibranch_job.groovy`) creates a Jenkins job called `tectonic-installer` this is the job which the tests will run.
-
-Parameters:
-
-* No input parameters are required.
-
-## Tectonic Installer Upstream Terraform Trigger
-
-This file creates a Jenkins job called `upstream-terraform-trigger` in the `triggers` directory to run the tests against the `Tectonic Installer` in the `master` branch using the `upstream Terraform`
-This job will run everyday.
-
-To change the default `builder_image` please update the code in the `tectonic_installer_upstream_terraform_trigger.groovy` file and submit a PR.
-
-Parameters:
-
-* `builder_image`: Tectonic-builder docker image with the upstream Terraform
-
-## Tectonic Installer Hyperkube Trigger
-
-This file creates a Jenkins job called `tectonic-installer-nightly-trigger` in the `triggers` directory to run the tests against the `Tectonic Installer` in the `master` branch using the `upstream Terraform`
-This job will run manually.
-
-Parameters:
-
-* `hyperkube_image`: Hyperkube image from Quay.io image with the upstream Terraform
-
-## Tectonic Conformance Tests
-
-This file (`tectonic_coformance_tests_job.groovy`) creates a Jenkins job called `tectonic-conformance-test` in the `tectonic-tests` directory to run the conformance tests against the Tectonic Installer in the specified branch.
-This job will run everyday at 12AM UTC time.
-
-Parameters:
-
-* `BRANCH`: In which branch to run the conformance tests. Default `master`.
-
-
 ## Tag/Clean AWS
 
 This file (`maintenance/grafiti_tag_clean_aws.groovy`) creates a Jenkins job called `tag_clean_aws_resources_grafiti` in the `maintenance` directory to tag and clean AWS resources across all AWS regions every 6 hours.
