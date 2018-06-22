@@ -50,12 +50,7 @@ pipeline {
     booleanParam(
       name: 'RUN_SMOKE_TESTS',
       defaultValue: false,
-      description: ''
-    )
-    booleanParam(
-      name: 'PLATFORM/AWS',
-      defaultValue: false,
-      description: ''
+      description: 'Determine if smoke tests should be running. Usually overwitten by trigger job.'
     )
     booleanParam(
       name: 'NOTIFY_SLACK',
@@ -74,7 +69,7 @@ pipeline {
       when {
         anyOf {
           branch "master"
-          expression { return params.RUN_SMOKE_TESTS }
+          expression { return params.RUN_SMOKE_TESTS.toBoolean() }
         }
       }
       options {
