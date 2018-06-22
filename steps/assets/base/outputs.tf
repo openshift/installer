@@ -28,9 +28,7 @@ output "ignition_bootstrap_systemd" {
   value = ["${compact(flatten(list(
     list(
       module.bootkube.systemd_service_id,
-      module.bootkube.systemd_path_unit_id,
       module.tectonic.systemd_service_id,
-      module.tectonic.systemd_path_unit_id,
     ),
     module.ignition_bootstrap.ignition_systemd_id_list,
    )))}"]

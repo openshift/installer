@@ -6,14 +6,6 @@ output "systemd_service_id" {
   value = "${data.ignition_systemd_unit.tectonic_service.id}"
 }
 
-output "systemd_path_unit_rendered" {
-  value = "${data.template_file.tectonic_path.rendered}"
-}
-
-output "systemd_path_unit_id" {
-  value = "${data.ignition_systemd_unit.tectonic_path.id}"
-}
-
 output "ignition_file_id_list" {
   value = ["${flatten(list(
     list(
