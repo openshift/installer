@@ -78,23 +78,3 @@ data "ignition_file" "installer_kubelet_env" {
     content = "${data.template_file.installer_kubelet_env.rendered}"
   }
 }
-
-data "template_file" "coreos_metadata" {
-  template = "${file("${path.module}/resources/dropins/10-metadata.conf")}"
-
-  vars {
-    metadata_provider = "${var.metadata_provider}"
-  }
-}
-
-data "ignition_systemd_unit" "coreos_metadata" {
-  name    = "coreos-metadata.service"
-  enabled = true
-
-  dropin = [
-    {
-      name    = "10-metadata.conf"
-      content = "${data.template_file.coreos_metadata.rendered}"
-    },
-  ]
-}
