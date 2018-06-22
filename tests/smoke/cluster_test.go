@@ -199,7 +199,7 @@ func testKillAPIServer(t *testing.T) {
 		return fmt.Errorf("API server has not yet been running for more than one check")
 	}
 
-	max := 9 * time.Minute
+	max := 15 * time.Minute
 	err = retry(apiServerUp, t, 15*time.Second, max)
 	if err != nil {
 		t.Fatalf("Failed waiting for API server pods to be ready in %v.", max)
