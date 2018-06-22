@@ -74,3 +74,6 @@ Optionally you can also set:
 DOMAIN
 AWS_REGION
 ```
+
+### 2. Launch the tests
+Once the environment variables are set, run `./tests/run.sh`.
