@@ -53,19 +53,23 @@ signer_id=$(/usr/bin/docker run -d \
 echo "Waiting for etcd cluster..."
 
 # Wait for the etcd cluster to come up.
-export ETCDCTL_API=3
-
 i=0
 while true; do
     set +e
     # shellcheck disable=SC2154,SC2086
-    /usr/bin/etcdctl \
-        --dial-timeout=10m \
-        --cacert=/opt/tectonic/tls/etcd-client-ca.crt \
-        --cert=/opt/tectonic/tls/etcd-client.crt \
-        --key=/opt/tectonic/tls/etcd-client.key \
-        --endpoints=${etcd_cluster} \
-        endpoint health
+    /usr/bin/docker run \
+        --rm \
+        --name etcdctl \
+        --env ETCDCTL_API=3 \
+        --volume /opt/tectonic/tls:/opt/tectonic/tls:ro \
+        "${etcdctl_image}" \
+        /usr/local/bin/etcdctl \
+            --dial-timeout=10m \
+            --cacert=/opt/tectonic/tls/etcd-client-ca.crt \
+            --cert=/opt/tectonic/tls/etcd-client.crt \
+            --key=/opt/tectonic/tls/etcd-client.key \
+            --endpoints=${etcd_cluster} \
+            endpoint health
     status=$?
     set -e
 
@@ -79,8 +83,6 @@ while true; do
     echo "etcdctl failed. Retrying in 5 seconds..."
     sleep 5
 done
-
-export ETCDCTL_API=
 
 echo "etcd cluster up. Killing etcd certificate signer..."
 
