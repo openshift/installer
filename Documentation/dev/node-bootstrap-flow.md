@@ -11,7 +11,6 @@ When a cluster node is being bootstrapped from scratch, it goes through several 
    * pushing from terraform file/remote-exec (SSH)
    * pulling from private cloud stores (S3 buckets)
 3. if needed, a node reboot is triggered to apply systemd-wide changes and to clean container runtime datadir
-4. `kubelet.service` picks up the `kubelet.env` file and actually starts the kubelet as a rkt-fly service.
 
 Additionally, only on one of the master nodes the following kubernetes bootstrapping happens:
 
@@ -27,7 +26,7 @@ Additionally, only on one of the master nodes the following kubernetes bootstrap
 
 The following systemd unit is deployed to a node by tectonic-installer and take part in the bootstrapping process:
 
-* `kubelet.service` is the main kubelet daemon. It is automatically started on boot, it is crash-looping until `kubelet.env` is populated, and it runs on each boot
+* `kubelet.service` is the main kubelet daemon. It is automatically started on boot.
 
 Additionally, only on one of the master nodes the following kubernetes bootstrapping happens:
 
@@ -43,14 +42,11 @@ Service ordering is enforced via systemd dependencies. This is the rationale for
 ### `kubelet.service`
 
 ```
-EnvironmentFile=/etc/kubernetes/kubelet.env
-ExecStart=/usr/lib/coreos/kubelet-wrapper [...]
 Restart=always
 WantedBy=multi-user.target
 ```
 
 This service is enabled by default and can crash-loop until success.
-It crash-loop until the `kubelet.env` file exists.
 It is started on every boot.
 
 ### `rm-assets.service`

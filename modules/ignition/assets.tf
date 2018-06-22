@@ -59,22 +59,3 @@ data "ignition_systemd_unit" "locksmithd" {
   name = "locksmithd.service"
   mask = true
 }
-
-data "template_file" "installer_kubelet_env" {
-  template = "${file("${path.module}/resources/kubernetes/kubelet.env")}"
-
-  vars {
-    kubelet_image_url = "${replace(var.container_images["hyperkube"],var.image_re,"$1")}"
-    kubelet_image_tag = "${replace(var.container_images["hyperkube"],var.image_re,"$2")}"
-  }
-}
-
-data "ignition_file" "installer_kubelet_env" {
-  filesystem = "root"
-  path       = "/etc/kubernetes/installer/kubelet.env"
-  mode       = 0644
-
-  content {
-    content = "${data.template_file.installer_kubelet_env.rendered}"
-  }
-}
