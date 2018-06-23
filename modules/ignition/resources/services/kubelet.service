@@ -1,55 +1,54 @@
 [Unit]
-Description=Kubelet via Hyperkube ACI
+Description=Kubernetes Kubelet
 Wants=rpc-statd.service
+
 [Service]
-Environment="KUBELET_IMAGE_URL=docker://${kubelet_image_url}"
-Environment="KUBELET_IMAGE_TAG=${kubelet_image_tag}"
-Environment="KUBELET_IMAGE_ARGS=--exec=/usr/bin/hyperkube"
-Environment="RKT_RUN_ARGS=--debug --uuid-file-save=/var/cache/kubelet-pod.uuid \
-  --volume=resolv,kind=host,source=/etc/resolv.conf \
-  --mount volume=resolv,target=/etc/resolv.conf \
-  --volume var-lib-cni,kind=host,source=/var/lib/cni \
-  --mount volume=var-lib-cni,target=/var/lib/cni \
-  --volume var-lib-kubelet,kind=host,source=/var/lib/kubelet \
-  --mount volume=var-lib-kubelet,target=/var/lib/kubelet \
-  --volume var-log,kind=host,source=/var/log \
-  --mount volume=var-log,target=/var/log \
-  --insecure-options=image"
+ExecStartPre=/bin/mkdir --parents /etc/kubernetes/manifests
+ExecStartPre=/bin/mkdir --parents /etc/kubernetes/checkpoint-secrets
+ExecStartPre=/bin/mkdir --parents /etc/kubernetes/cni/net.d
+ExecStartPre=/bin/mkdir --parents /run/kubelet
+ExecStartPre=/bin/mkdir --parents /var/lib/cni
+ExecStartPre=/bin/mkdir --parents /var/lib/kubelet/pki
 
-ExecStartPre=/bin/mkdir -p /etc/kubernetes/manifests
-ExecStartPre=/bin/mkdir -p /srv/kubernetes/manifests
-ExecStartPre=/bin/mkdir -p /etc/kubernetes/checkpoint-secrets
-ExecStartPre=/bin/mkdir -p /etc/kubernetes/cni/net.d
-ExecStartPre=/bin/mkdir -p /var/lib/cni
-ExecStartPre=/bin/mkdir -p /var/lib/kubelet/pki
-ExecStartPre=/usr/bin/bash -c "grep 'certificate-authority-data' /etc/kubernetes/kubeconfig | awk '{print $2}' | base64 -d > /etc/kubernetes/ca.crt"
-ExecStartPre=-/usr/bin/rkt rm --uuid-file=/var/cache/kubelet-pod.uuid
+ExecStartPre=/usr/bin/bash -c "gawk '/certificate-authority-data/ {print $2}' /etc/kubernetes/kubeconfig | base64 --decode > /etc/kubernetes/ca.crt"
 
-ExecStart=/usr/lib/coreos/kubelet-wrapper \
-  kubelet \
-  --allow-privileged \
-  --anonymous-auth=false \
-  --cert-dir=/var/lib/kubelet/pki \
-  --client-ca-file=/etc/kubernetes/ca.crt \
-  --cloud-provider=${cloud_provider} \
-  --cluster-dns=${cluster_dns_ip} \
-  --cluster-domain=cluster.local \
-  --cni-bin-dir=/var/lib/cni/bin \
-  --cni-conf-dir=/etc/kubernetes/cni/net.d \
-  --exit-on-lock-contention \
-  --bootstrap-kubeconfig=/etc/kubernetes/kubeconfig \
-  --kubeconfig=/var/lib/kubelet/kubeconfig \
-  --lock-file=/var/run/lock/kubelet.lock \
-  --minimum-container-ttl-duration=6m0s \
-  --network-plugin=cni \
-  --node-labels=${node_label} \
-  --pod-manifest-path=/etc/kubernetes/manifests \
-  --rotate-certificates \
-  ${cloud_provider_config} \
-  ${debug_config} \
-  ${node_taints_param}
-
-ExecStop=-/usr/bin/rkt stop --uuid-file=/var/cache/kubelet-pod.uuid
+ExecStart=/usr/bin/docker \
+  run \
+    --rm \
+    --net host \
+    --pid host \
+    --privileged \
+    --volume /dev:/dev:rw \
+    --volume /sys:/sys:ro \
+    --volume /var/run:/var/run:rw \
+    --volume /var/lib/cni/:/var/lib/cni:rw \
+    --volume /var/lib/docker/:/var/lib/docker:rw \
+    --volume /var/lib/kubelet/:/var/lib/kubelet:shared \
+    --volume /var/log:/var/log:shared \
+    --volume /etc/kubernetes:/etc/kubernetes:ro \
+    --entrypoint /usr/bin/hyperkube \
+  "${kubelet_image_url}:${kubelet_image_tag}" \
+    kubelet \
+      --bootstrap-kubeconfig=/etc/kubernetes/kubeconfig \
+      --kubeconfig=/var/lib/kubelet/kubeconfig \
+      --rotate-certificates \
+      --cni-conf-dir=/etc/kubernetes/cni/net.d \
+      --cni-bin-dir=/var/lib/cni/bin \
+      --network-plugin=cni \
+      --lock-file=/var/run/lock/kubelet.lock \
+      --exit-on-lock-contention \
+      --pod-manifest-path=/etc/kubernetes/manifests \
+      --allow-privileged \
+      --node-labels=${node_label} \
+      --minimum-container-ttl-duration=6m0s \
+      --cluster-dns=${cluster_dns_ip} \
+      --cluster-domain=cluster.local \
+      --client-ca-file=/etc/kubernetes/ca.crt \
+      --cloud-provider=${cloud_provider} \
+      --anonymous-auth=false \
+      ${cloud_provider_config} \
+      ${debug_config} \
+      ${node_taints_param} \
 
 Restart=always
 RestartSec=10

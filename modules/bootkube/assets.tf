@@ -53,6 +53,7 @@ data "template_file" "bootkube_sh" {
     kube_core_renderer_image = "${var.container_images["kube_core_renderer"]}"
     tnc_operator_image       = "${var.container_images["tnc_operator"]}"
     etcd_cert_signer_image   = "${var.container_images["etcd_cert_signer"]}"
+    etcdctl_image            = "${var.container_images["etcd"]}"
     etcd_cluster             = "${join(",", data.template_file.initial_cluster.*.rendered)}"
   }
 }
