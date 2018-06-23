@@ -22,7 +22,6 @@ output "ignition_file_id_list" {
     "${data.ignition_file.root_ca_cert_pem.id}",
     "${data.ignition_file.ingress_ca_cert_pem.id}",
     "${data.ignition_file.etcd_ca_cert_pem.id}",
-    "${data.ignition_file.installer_kubelet_env.id}",
     "${data.ignition_file.installer_runtime_mappings.id}",
   ]
 }

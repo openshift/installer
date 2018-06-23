@@ -78,17 +78,6 @@ data "ignition_systemd_unit" "bootkube_service" {
   content = "${data.template_file.bootkube_service.rendered}"
 }
 
-# bootkube.path (available as output variable)
-data "template_file" "bootkube_path_unit" {
-  template = "${file("${path.module}/resources/bootkube.path")}"
-}
-
-data "ignition_systemd_unit" "bootkube_path_unit" {
-  name    = "bootkube.path"
-  enabled = true
-  content = "${data.template_file.bootkube_path_unit.rendered}"
-}
-
 data "template_file" "initial_cluster" {
   count    = "${length(var.etcd_endpoints)}"
   template = "https://${var.etcd_endpoints[count.index]}:2379"

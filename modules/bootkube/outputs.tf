@@ -6,10 +6,6 @@ output "systemd_service_id" {
   value = "${data.ignition_systemd_unit.bootkube_service.id}"
 }
 
-output "systemd_path_unit_id" {
-  value = "${data.ignition_systemd_unit.bootkube_path_unit.id}"
-}
-
 output "kube_dns_service_ip" {
   value = "${cidrhost(var.service_cidr, 10)}"
 }

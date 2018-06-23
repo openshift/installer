@@ -58,14 +58,3 @@ data "ignition_systemd_unit" "tectonic_service" {
   enabled = false
   content = "${data.template_file.tectonic_service.rendered}"
 }
-
-# tectonic.path (available as output variable)
-data "template_file" "tectonic_path" {
-  template = "${file("${path.module}/resources/tectonic.path")}"
-}
-
-data "ignition_systemd_unit" "tectonic_path" {
-  name    = "tectonic.path"
-  enabled = true
-  content = "${data.template_file.tectonic_path.rendered}"
-}
