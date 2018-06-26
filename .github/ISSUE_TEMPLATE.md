@@ -1,29 +1,19 @@
 <!--
-Thanks for opening an issue! Before hitting the button, please answer these questions
+NOTE: New feature requests are no longer accepted in this repo. Only issues
+reporting critical bug-fixes and security patches will be accepted.
+
+See our blog for details:
+https://coreos.com/blog/coreos-tech-to-combine-with-red-hat-openshift
 -->
 
-## What keywords did you search in tectonic-installer issues before filing this one?
-
-If you have found any duplicates, you should instead reply there and close this page.
-
-If you have not found any duplicates, delete this section and continue on.
-
-
-## Is this a BUG REPORT or FEATURE REQUEST?
-
-Choose one: BUG REPORT or FEATURE REQUEST
 
 <!--
-If this is a BUG REPORT, please:
-  - Fill in as much of the template below as you can.  If you leave out information, we can't help you as well.
-
-If this is a FEATURE REQUEST, please:
-  - Describe *in detail* the feature/behavior/change you'd like to see.
-
-In both cases, be ready for follow up questions, and please respond in a timely
-manner.  If we can't reproduce a bug or think a feature already exists, we
-might close your issue.  If we're wrong, PLEASE feel free to reopen it and
-explain why.
+Thanks for opening a bug report!
+Before hitting the button, please fill in as much of the template below as you can.
+If you leave out information, we can't help you as well.
+Be ready for follow-up questions, and please respond in a timely manner.
+If we can't reproduce a bug we might close your issue.
+If we're wrong, PLEASE feel free to reopen it and explain why.
 -->
 
 ## Versions
@@ -36,7 +26,6 @@ enter text here
 ### Terraform version (`terraform version`):
 <!---
 Run `terraform -v` to show the version, and paste the result between the ``` marks below.
-
 If you are not running the latest version of Terraform, please try upgrading because your issue may have already been fixed.
 -->
 
@@ -87,21 +76,3 @@ Are there any other GitHub issues (open or closed) or Pull Requests that should 
 enter text here
 ```
 
-## Feature Request
-
-### Environment
-<!--
-What hardware/cloud provider/hypervisor is being used with Tectonic?
--->
-```
-enter text here
-```
-### Desired Feature
-```
-enter text here
-```
-
-### Other Information
-```
-enter text here
-```
