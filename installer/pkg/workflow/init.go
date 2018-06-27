@@ -23,9 +23,9 @@ const (
 	terraformVariablesFileName = "terraform.tfvars"
 )
 
-// NewInitWorkflow creates new instances of the 'init' workflow,
+// InitWorkflow creates new instances of the 'init' workflow,
 // responsible for initializing a new cluster.
-func NewInitWorkflow(configFilePath string) Workflow {
+func InitWorkflow(configFilePath string) Workflow {
 	return Workflow{
 		metadata: metadata{configFilePath: configFilePath},
 		steps: []Step{

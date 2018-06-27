@@ -1,9 +1,9 @@
 package workflow
 
-// NewDestroyWorkflow creates new instances of the 'destroy' workflow,
+// DestroyWorkflow creates new instances of the 'destroy' workflow,
 // responsible for running the actions required to remove resources
 // of an existing cluster and clean up any remaining artefacts.
-func NewDestroyWorkflow(clusterDir string) Workflow {
+func DestroyWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
