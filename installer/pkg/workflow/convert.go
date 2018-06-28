@@ -8,9 +8,9 @@ import (
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
 )
 
-// NewConvertWorkflow creates new instances of the 'convert' workflow,
+// ConvertWorkflow creates new instances of the 'convert' workflow,
 // responsible for converting an old cluster config.
-func NewConvertWorkflow(configFilePath string) Workflow {
+func ConvertWorkflow(configFilePath string) Workflow {
 	return Workflow{
 		metadata: metadata{configFilePath: configFilePath},
 		steps: []Step{

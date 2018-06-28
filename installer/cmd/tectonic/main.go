@@ -35,21 +35,21 @@ func main() {
 
 	switch kingpin.Parse() {
 	case clusterInitCommand.FullCommand():
-		w = workflow.NewInitWorkflow(*clusterInitConfigFlag)
+		w = workflow.InitWorkflow(*clusterInitConfigFlag)
 	case clusterInstallFullCommand.FullCommand():
-		w = workflow.NewInstallFullWorkflow(*clusterInstallDirFlag)
+		w = workflow.InstallFullWorkflow(*clusterInstallDirFlag)
 	case clusterInstallTLSCommand.FullCommand():
-		w = workflow.NewInstallTLSWorkflow(*clusterInstallDirFlag)
+		w = workflow.InstallTLSWorkflow(*clusterInstallDirFlag)
 	case clusterInstallAssetsCommand.FullCommand():
-		w = workflow.NewInstallAssetsWorkflow(*clusterInstallDirFlag)
+		w = workflow.InstallAssetsWorkflow(*clusterInstallDirFlag)
 	case clusterInstallBootstrapCommand.FullCommand():
-		w = workflow.NewInstallBootstrapWorkflow(*clusterInstallDirFlag)
+		w = workflow.InstallBootstrapWorkflow(*clusterInstallDirFlag)
 	case clusterInstallJoinCommand.FullCommand():
-		w = workflow.NewInstallJoinWorkflow(*clusterInstallDirFlag)
+		w = workflow.InstallJoinWorkflow(*clusterInstallDirFlag)
 	case clusterDestroyCommand.FullCommand():
-		w = workflow.NewDestroyWorkflow(*clusterDestroyDirFlag)
+		w = workflow.DestroyWorkflow(*clusterDestroyDirFlag)
 	case convertCommand.FullCommand():
-		w = workflow.NewConvertWorkflow(*convertConfigFlag)
+		w = workflow.ConvertWorkflow(*convertConfigFlag)
 	}
 
 	l, err := log.ParseLevel(*logLevel)

@@ -2,9 +2,9 @@ package workflow
 
 import "github.com/coreos/tectonic-installer/installer/pkg/config-generator"
 
-// NewInstallFullWorkflow creates new instances of the 'install' workflow,
+// InstallFullWorkflow creates new instances of the 'install' workflow,
 // responsible for running the actions necessary to install a new cluster.
-func NewInstallFullWorkflow(clusterDir string) Workflow {
+func InstallFullWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
@@ -26,9 +26,9 @@ func NewInstallFullWorkflow(clusterDir string) Workflow {
 	}
 }
 
-// NewInstallTLSWorkflow creates the TLS assets, previously created by the
+// InstallTLSWorkflow creates the TLS assets, previously created by the
 // "assets" step
-func NewInstallTLSWorkflow(clusterDir string) Workflow {
+func InstallTLSWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
@@ -38,9 +38,9 @@ func NewInstallTLSWorkflow(clusterDir string) Workflow {
 	}
 }
 
-// NewInstallAssetsWorkflow creates new instances of the 'assets' workflow,
+// InstallAssetsWorkflow creates new instances of the 'assets' workflow,
 // responsible for running the actions necessary to generate cluster assets.
-func NewInstallAssetsWorkflow(clusterDir string) Workflow {
+func InstallAssetsWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
@@ -52,9 +52,9 @@ func NewInstallAssetsWorkflow(clusterDir string) Workflow {
 	}
 }
 
-// NewInstallBootstrapWorkflow creates new instances of the 'bootstrap' workflow,
+// InstallBootstrapWorkflow creates new instances of the 'bootstrap' workflow,
 // responsible for running the actions necessary to generate a single bootstrap machine cluster.
-func NewInstallBootstrapWorkflow(clusterDir string) Workflow {
+func InstallBootstrapWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
@@ -68,9 +68,9 @@ func NewInstallBootstrapWorkflow(clusterDir string) Workflow {
 	}
 }
 
-// NewInstallJoinWorkflow creates new instances of the 'join' workflow,
+// InstallJoinWorkflow creates new instances of the 'join' workflow,
 // responsible for running the actions necessary to scale the machines of the cluster.
-func NewInstallJoinWorkflow(clusterDir string) Workflow {
+func InstallJoinWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []Step{
