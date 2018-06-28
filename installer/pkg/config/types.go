@@ -22,11 +22,11 @@ type Admin struct {
 	Password string `json:"tectonic_admin_password" yaml:"password,omitempty"`
 }
 
-// CA converts ca related config.
+// CA related config
 type CA struct {
-	Cert   string `json:"tectonic_ca_cert,omitempty" yaml:"cert,omitempty"`
-	Key    string `json:"tectonic_ca_key,omitempty" yaml:"key,omitempty"`
-	KeyAlg string `json:"tectonic_ca_key_alg,omitempty" yaml:"keyAlg,omitempty"`
+	RootCACertPath string `json:"-" yaml:"rootCACertPath,omitempty"`
+	RootCAKeyPath  string `json:"-" yaml:"rootCAKeyPath,omitempty"`
+	RootCAKeyAlg   string `json:"-" yaml:"rootCAKeyAlg,omitempty"`
 }
 
 // ContainerLinux converts container linux related config.

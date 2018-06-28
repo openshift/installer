@@ -15,6 +15,7 @@ var (
 
 	clusterInstallCommand          = kingpin.Command("install", "Create a new Tectonic cluster")
 	clusterInstallTLSCommand       = clusterInstallCommand.Command("tls", "Generate TLS Certificates.")
+	clusterInstallTLSNewCommand    = clusterInstallCommand.Command("newtls", "Generate TLS Certificates, using a new engine (experimental)")
 	clusterInstallAssetsCommand    = clusterInstallCommand.Command("assets", "Generate Tectonic assets.")
 	clusterInstallBootstrapCommand = clusterInstallCommand.Command("bootstrap", "Create a single bootstrap node Tectonic cluster.")
 	clusterInstallFullCommand      = clusterInstallCommand.Command("full", "Create a new Tectonic cluster").Default()
@@ -40,6 +41,8 @@ func main() {
 		w = workflow.InstallFullWorkflow(*clusterInstallDirFlag)
 	case clusterInstallTLSCommand.FullCommand():
 		w = workflow.InstallTLSWorkflow(*clusterInstallDirFlag)
+	case clusterInstallTLSNewCommand.FullCommand():
+		w = workflow.InstallTLSNewWorkflow(*clusterInstallDirFlag)
 	case clusterInstallAssetsCommand.FullCommand():
 		w = workflow.InstallAssetsWorkflow(*clusterInstallDirFlag)
 	case clusterInstallBootstrapCommand.FullCommand():

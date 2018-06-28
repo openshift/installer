@@ -2,7 +2,9 @@ package validate
 
 import (
 	"bytes"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -357,11 +359,14 @@ func Certificate(v string) error {
 	trimmed := strings.TrimSpace(v)
 
 	// Don't let users hang themselves
-	if isMatch(`-BEGIN [\w-]+ PRIVATE KEY-`, trimmed) {
+	if err := PrivateKey(trimmed); err == nil {
 		return errors.New("invalid certificate (appears to be a private key)")
 	}
-
-	if !isMatch("(?s:^-----BEGIN CERTIFICATE-----\n"+base64RegExp+"\n-----END CERTIFICATE-----$)", trimmed) {
+	block, _ := pem.Decode([]byte(trimmed))
+	if block == nil {
+		return errors.New("failed to parse certificate")
+	}
+	if _, err := x509.ParseCertificate(block.Bytes); err != nil {
 		return errors.New("invalid certificate")
 	}
 	return nil
@@ -373,12 +378,16 @@ func PrivateKey(v string) error {
 	if err := NonEmpty(v); err != nil {
 		return err
 	}
-
-	trimmed := strings.TrimSpace(v)
-
-	if !isMatch("(?s:^-----BEGIN [A-Z]{2,10} PRIVATE KEY-----\n"+base64RegExp+"\n-----END [A-Z]{2,10} PRIVATE KEY-----$)", trimmed) {
+	// try to decode the private key pem block
+	block, _ := pem.Decode([]byte(v))
+	if block == nil {
+		return errors.New("failed to parse private key")
+	}
+	// if input can be decoded, let's verify the pem input is a key (and not a certificate)
+	if block.Type != "RSA PRIVATE KEY" {
 		return errors.New("invalid private key")
 	}
+
 	return nil
 }
 

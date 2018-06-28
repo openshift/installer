@@ -1,12 +1,10 @@
 package configgenerator
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/url"
-	"os"
 	"path/filepath"
 
 	ignconfig "github.com/coreos/ignition/config/v2_2"
@@ -161,20 +159,4 @@ func ignCfgToFile(ignCfg ignconfigtypes.Config, filePath string) error {
 	}
 
 	return writeFile(filePath, string(data))
-}
-
-func writeFile(path, content string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	w := bufio.NewWriter(f)
-	if _, err := fmt.Fprintln(w, content); err != nil {
-		return err
-	}
-	w.Flush()
-
-	return nil
 }

@@ -14,19 +14,20 @@ import (
 )
 
 const (
-	tlsStep          = "tls"
-	stepsBaseDir     = "steps"
 	assetsStep       = "assets"
-	topologyStep     = "topology"
-	tncDNSStep       = "tnc_dns"
-	bootstrapOn      = "-var=tectonic_bootstrap=true"
-	bootstrapOff     = "-var=tectonic_bootstrap=false"
-	mastersStep      = "masters"
-	etcdStep         = "etcd"
-	joinWorkersStep  = "joining_workers"
-	configFileName   = "config.yaml"
-	internalFileName = "internal.yaml"
 	binaryPrefix     = "installer"
+	bootstrapOff     = "-var=tectonic_bootstrap=false"
+	bootstrapOn      = "-var=tectonic_bootstrap=true"
+	configFileName   = "config.yaml"
+	etcdStep         = "etcd"
+	internalFileName = "internal.yaml"
+	joinWorkersStep  = "joining_workers"
+	mastersStep      = "masters"
+	newTLSStep       = "newtls"
+	stepsBaseDir     = "steps"
+	tlsStep          = "tls"
+	tncDNSStep       = "tnc_dns"
+	topologyStep     = "topology"
 )
 
 func copyFile(fromFilePath, toFilePath string) error {

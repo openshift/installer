@@ -1,6 +1,12 @@
 package workflow
 
-import "github.com/coreos/tectonic-installer/installer/pkg/config-generator"
+import (
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/coreos/tectonic-installer/installer/pkg/config-generator"
+)
 
 // InstallFullWorkflow creates new instances of the 'install' workflow,
 // responsible for running the actions necessary to install a new cluster.
@@ -22,6 +28,18 @@ func InstallFullWorkflow(clusterDir string) Workflow {
 			installEtcdStep,
 			installJoinMastersStep,
 			installJoinWorkersStep,
+		},
+	}
+}
+
+// InstallTLSNewWorkflow generates the TLS certificates using go, instead of TF
+func InstallTLSNewWorkflow(clusterDir string) Workflow {
+	return Workflow{
+		metadata: metadata{clusterDir: clusterDir},
+		steps: []Step{
+			refreshConfigStep,
+			generateClusterConfigMaps,
+			generateTLSConfigStep,
 		},
 	}
 }
@@ -145,4 +163,13 @@ func runInstallStep(m *metadata, step string, extraArgs ...string) error {
 func generateIgnConfigStep(m *metadata) error {
 	c := configgenerator.New(m.cluster)
 	return c.GenerateIgnConfig(m.clusterDir)
+}
+
+func generateTLSConfigStep(m *metadata) error {
+	if err := os.MkdirAll(filepath.Join(m.clusterDir, newTLSPath), os.ModeDir|0755); err != nil {
+		return fmt.Errorf("failed to create TLS directory at %s", newTLSPath)
+	}
+
+	c := configgenerator.New(m.cluster)
+	return c.GenerateTLSConfig(m.clusterDir)
 }
