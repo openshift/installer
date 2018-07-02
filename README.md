@@ -109,7 +109,6 @@ For the sake of your fellow reviewers, commit vendored code separately from any 
 
 See [tests/README.md](tests/README.md).
 
-
 [platform-lifecycle]: https://coreos.com/tectonic/docs/latest/platform-lifecycle.html
 [release-notes]: https://coreos.com/tectonic/releases/
 [rhel-installation]: https://coreos.com/tectonic/docs/latest/install/rhel/installing-workers.html
