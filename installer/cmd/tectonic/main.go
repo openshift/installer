@@ -10,8 +10,14 @@ import (
 )
 
 var (
-	clusterInitCommand    = kingpin.Command("init", "Initialize a new Tectonic cluster")
-	clusterInitConfigFlag = clusterInitCommand.Flag("config", "Cluster specification file").Required().ExistingFile()
+	clusterInitCommand        = kingpin.Command("init", "Initialize a new Tectonic cluster")
+	clusterInitDomainArg      = clusterInitCommand.Arg("domain", "Domain for the new Tectonic cluster").Required().String()
+	clusterInitNameFlag       = clusterInitCommand.Flag("name", "Name for the new Tectonic cluster").String()
+	clusterInitLicenseFlag    = clusterInitCommand.Flag("license", "License path for the new Tectonic cluster").ExistingFile()
+	clusterInitPullSecretFlag = clusterInitCommand.Flag("pullsecret", "PullSecret path for the new Tectonic cluster").ExistingFile()
+
+	clusterImportCommand    = kingpin.Command("import", "Imports a Tectonic cluster from a config")
+	clusterImportConfigFlag = clusterImportCommand.Flag("config", "Cluster specification file").ExistingFile()
 
 	clusterInstallCommand          = kingpin.Command("install", "Create a new Tectonic cluster")
 	clusterInstallTLSCommand       = clusterInstallCommand.Command("tls", "Generate TLS Certificates.")
@@ -36,7 +42,9 @@ func main() {
 
 	switch kingpin.Parse() {
 	case clusterInitCommand.FullCommand():
-		w = workflow.InitWorkflow(*clusterInitConfigFlag)
+		w = workflow.InitWorkflow(*clusterInitDomainArg, *clusterInitNameFlag, *clusterInitLicenseFlag, *clusterInitPullSecretFlag)
+	case clusterImportCommand.FullCommand():
+		w = workflow.ImportWorkflow(*clusterImportConfigFlag)
 	case clusterInstallFullCommand.FullCommand():
 		w = workflow.InstallFullWorkflow(*clusterInstallDirFlag)
 	case clusterInstallTLSCommand.FullCommand():

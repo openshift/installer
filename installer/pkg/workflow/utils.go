@@ -9,26 +9,61 @@ import (
 	"path"
 	"path/filepath"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/coreos/tectonic-installer/installer/pkg/config"
 	configgenerator "github.com/coreos/tectonic-installer/installer/pkg/config-generator"
 )
 
 const (
-	assetsStep       = "assets"
-	binaryPrefix     = "installer"
-	bootstrapOff     = "-var=tectonic_bootstrap=false"
-	bootstrapOn      = "-var=tectonic_bootstrap=true"
-	configFileName   = "config.yaml"
-	etcdStep         = "etcd"
-	internalFileName = "internal.yaml"
-	joinWorkersStep  = "joining_workers"
-	mastersStep      = "masters"
-	newTLSStep       = "newtls"
-	stepsBaseDir     = "steps"
-	tlsStep          = "tls"
-	tncDNSStep       = "tnc_dns"
-	topologyStep     = "topology"
+	assetsStep                 = "assets"
+	binaryPrefix               = "installer"
+	bootstrapOff               = "-var=tectonic_bootstrap=false"
+	bootstrapOn                = "-var=tectonic_bootstrap=true"
+	configFileName             = "config.yaml"
+	etcdStep                   = "etcd"
+	generatedPath              = "generated"
+	internalFileName           = "internal.yaml"
+	joinWorkersStep            = "joining_workers"
+	kcoConfigFileName          = "kco-config.yaml"
+	kubeSystemFileName         = "cluster-config.yaml"
+	kubeSystemPath             = "generated/manifests"
+	mastersStep                = "masters"
+	newTLSPath                 = "generated/newTLS"
+	newTLSStep                 = "newtls"
+	stepsBaseDir               = "steps"
+	tectonicSystemFileName     = "cluster-config.yaml"
+	tectonicSystemPath         = "generated/tectonic"
+	terraformVariablesFileName = "terraform.tfvars"
+	tlsStep                    = "tls"
+	tncDNSStep                 = "tnc_dns"
+	tncoConfigFileName         = "tnco-config.yaml"
+	topologyStep               = "topology"
 )
+
+func buildInternalConfig(clusterDir string) error {
+	if clusterDir == "" {
+		return errors.New("no cluster dir given for building internal config")
+	}
+
+	// fill the internal struct
+	clusterID, err := configgenerator.GenerateClusterID(16)
+	if err != nil {
+		return err
+	}
+	internalCfg := config.Internal{
+		ClusterID: clusterID,
+	}
+
+	// store the content
+	yamlContent, err := yaml.Marshal(internalCfg)
+	internalFileContent := []byte("# Do not touch, auto-generated\n")
+	internalFileContent = append(internalFileContent, yamlContent...)
+	if err != nil {
+		return err
+	}
+	return writeFile(filepath.Join(clusterDir, internalFileName), string(internalFileContent))
+}
 
 func copyFile(fromFilePath, toFilePath string) error {
 	from, err := os.Open(fromFilePath)
@@ -223,4 +258,14 @@ func createTNCARecord(m *metadata) error {
 
 func destroyTNCDNS(m *metadata) error {
 	return runDestroyStep(m, tncDNSStep, []string{bootstrapOff}...)
+}
+
+func generateTerraformVariablesStep(m *metadata) error {
+	vars, err := m.cluster.TFVars()
+	if err != nil {
+		return err
+	}
+
+	terraformVariablesFilePath := filepath.Join(m.clusterDir, terraformVariablesFileName)
+	return writeFile(terraformVariablesFilePath, vars)
 }

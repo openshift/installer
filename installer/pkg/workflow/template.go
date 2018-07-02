@@ -1,4 +1,13 @@
-admin:
+package workflow
+
+type configTemplateData struct {
+	BaseDomain     string
+	LicensePath    string
+	Name           string
+	PullSecretPath string
+}
+
+const configTemplate = `admin:
   email: "a@b.c"
   password: "verysecure"
 
@@ -9,21 +18,21 @@ aws:
   # assetsS3BucketName:
 
   # (optional) Extra AWS tags to be applied to created autoscaling group resources.
-  # This is a list of maps having the keys `key`, `value` and `propagate_at_launch`.
+  # This is a list of maps having the keys ` + "`key`" + `, ` + "`value`" + ` and ` + "`propagate_at_launch`" + `.
   #
-  # Example: `[ { key = "foo", value = "bar", propagate_at_launch = true } ]`
+  # Example: ` + "`[ { key = \"foo\", value = \"bar\", propagate_at_launch = true } ]`" + `
   # autoScalingGroupExtraTags:
 
-  # (optional) AMI override for all nodes. Example: `ami-foobar123`.
+  # (optional) AMI override for all nodes. Example: ` + "`ami-foobar123`" + `.
   # ec2AMIOverride:
 
   etcd:
-    # Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https:#coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
+    # Instance size for the etcd node(s). Example: ` + "`t2.medium`" + `. Read the [etcd recommended hardware](https:#coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
     ec2Type: t2.medium
 
     # (optional) List of additional security group IDs for etcd nodes.
     #
-    # Example: `["sg-51530134", "sg-b253d7cc"]`
+    # Example: ` + "`[\"sg-51530134\", \"sg-b253d7cc\"]`" + `
     # extraSGIDs:
 
     # (optional) Name of IAM role to use for the instance profiles of etcd nodes.
@@ -39,9 +48,7 @@ aws:
       # Ignored if the volume type is not io1.
       iops: 100
 
-      # The size of the volume in gigabytes for the root block device of etcd nodes.
-      size: 30
-
+      # The size of the volume in gigabytes for the root block device of etcd nodes.  size: 30 
       # The type of volume for the root block device of etcd nodes.
       type: gp2
 
@@ -49,30 +56,29 @@ aws:
     # (optional) List of subnet IDs within an existing VPC to deploy master nodes into.
     # Required to use an existing VPC and the list must match the AZ count.
     #
-    # Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
     # masterSubnetIDs:
 
     # (optional) If set, the given Route53 zone ID will be used as the internal (private) zone.
     # This zone will be used to create etcd DNS records as well as internal API and internal Ingress records.
     # If set, no additional private zone will be created.
     #
-    # Example: `"Z1ILINNUJGTAO1"`
+    # Example: ` + "`\"Z1ILINNUJGTAO1\"`" + `
     # privateZone:
 
     # (optional) ID of an existing VPC to launch nodes into.
     # If unset a new VPC is created.
-    # Example: `vpc-123456`
+    # Example: ` + "`vpc-123456`" + `
     # vpcID:
 
     # (optional) List of subnet IDs within an existing VPC to deploy worker nodes into.
     # Required to use an existing VPC and the list must match the AZ count.
     #
-    # Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
+    # Example: ` + "`[\"subnet-111111\", \"subnet-222222\", \"subnet-333333\"]`" + `
     # workerSubnetIDs:
 
   # (optional) Extra AWS tags to be applied to created resources.
   #
-  # Example: `{ "key" = "value", "foo" = "bar" }`
+  # Example: ` + "`{ \"key\" = \"value\", \"foo\" = \"bar\" }`" + `
   # extraTags:
 
   # (optional) Name of IAM role to use to access AWS in order to deploy the Tectonic Cluster.
@@ -86,15 +92,15 @@ aws:
     # (optional) This configures master availability zones and their corresponding subnet CIDRs directly.
     #
     # Example:
-    # `{ eu-west-1a = "10.0.0.0/20", eu-west-1b = "10.0.16.0/20" }`
+    # ` + "`{ eu-west-1a = \"10.0.0.0/20\", eu-west-1b = \"10.0.16.0/20\" }`" + `
     # customSubnets:
 
-    # Instance size for the master node(s). Example: `t2.medium`.
+    # Instance size for the master node(s). Example: ` + "`t2.medium`" + `.
     ec2Type: t2.medium
 
     # (optional) List of additional security group IDs for master nodes.
     #
-    # Example: `["sg-51530134", "sg-b253d7cc"]`
+    # Example: ` + "`[\"sg-51530134\", \"sg-b253d7cc\"]`" + `
     # extraSGIDs:
 
     # (optional) Name of IAM role to use for the instance profiles of master nodes.
@@ -140,15 +146,15 @@ aws:
   worker:
     # (optional) This configures worker availability zones and their corresponding subnet CIDRs directly.
     #
-    # Example: `{ eu-west-1a = "10.0.64.0/20", eu-west-1b = "10.0.80.0/20" }`
+    # Example: ` + "`{ eu-west-1a = \"10.0.64.0/20\", eu-west-1b = \"10.0.80.0/20\" }`" + `
     # customSubnets:
 
-    # Instance size for the worker node(s). Example: `t2.medium`.
+    # Instance size for the worker node(s). Example: ` + "`t2.medium`" + `.
     ec2Type: t2.medium
 
     # (optional) List of additional security group IDs for worker nodes.
     #
-    # Example: `["sg-51530134", "sg-b253d7cc"]`
+    # Example: ` + "`[\"sg-51530134\", \"sg-b253d7cc\"]`" + `
     # extraSGIDs:
 
     # (optional) Name of IAM role to use for the instance profiles of worker nodes.
@@ -163,7 +169,7 @@ aws:
     # This is useful for exposing NodePort services via load-balancers managed separately from the cluster.
     #
     # Example:
-    #  * `["ingress-nginx"]`
+    #  * ` + "`[\"ingress-nginx\"]`" + `
     # loadBalancers:
 
     rootVolume:
@@ -180,11 +186,11 @@ aws:
 # The base DNS domain of the cluster. It must NOT contain a trailing period. Some
 # DNS providers will automatically add this if necessary.
 #
-# Example: `openshift.example.com`.
+# Example: ` + "`openshift.example.com`" + `.
 #
 # Note: This field MUST be set manually prior to creating the cluster.
 # This applies only to cloud platforms.
-baseDomain:
+baseDomain: {{.BaseDomain}}
 
 ca:
   # (optional) The content of the PEM-encoded CA certificate, used to generate Tectonic Console's server certificate.
@@ -192,23 +198,23 @@ ca:
   # cert:
 
   # (optional) The content of the PEM-encoded CA key, used to generate Tectonic Console's server certificate.
-  # This field is mandatory if `ca_cert` is set.
+  # This field is mandatory if ` + "`ca_cert`" + ` is set.
   # key:
 
   # (optional) The algorithm used to generate ca_key.
   # The default value is currently recommended.
-  # This field is mandatory if `ca_cert` is set.
+  # This field is mandatory if ` + "`ca_cert`" + ` is set.
   # keyAlg: RSA
 
 containerLinux:
   # (optional) The Container Linux update channel.
   #
-  # Examples: `stable`, `beta`, `alpha`
+  # Examples: ` + "`stable`" + `, ` + "`beta`" + `, ` + "`alpha`" + `
   # channel: stable
 
-  # The Container Linux version to use. Set to `latest` to select the latest available version for the selected update channel.
+  # The Container Linux version to use. Set to ` + "`latest`" + ` to select the latest available version for the selected update channel.
   #
-  # Examples: `latest`, `1465.6.0`
+  # Examples: ` + "`latest`" + `, ` + "`1465.6.0`" + `
   version: latest
 
   # (optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes.
@@ -227,7 +233,7 @@ iscsi:
 # You can download the Tectonic license file from your Account overview page at [1].
 #
 # [1] https://account.coreos.com/overview
-licensePath:
+licensePath: {{.LicensePath}}
 
 master:
   # The name of the node pool(s) to use for master nodes
@@ -235,11 +241,11 @@ master:
     - master
 
 # The name of the cluster.
-# If used in a cloud-environment, this will be prepended to `baseDomain` resulting in the URL to the Tectonic console.
+# If used in a cloud-environment, this will be prepended to ` + "`baseDomain`" + ` resulting in the URL to the Tectonic console.
 #
 # Note: This field MUST be set manually prior to creating the cluster.
 # Warning: Special characters in the name like '.' may cause errors on OpenStack platforms due to resource name constraints.
-name:
+name: {{.Name}}
 
 networking:
   # (optional) This declares the MTU used by Calico.
@@ -292,9 +298,10 @@ platform: aws
 # [2] https://coreos.com/os/docs/latest/registry-authentication.html#manual-registry-auth-setup
 #
 # [3] https://account.coreos.com/overview
-pullSecretPath:
+pullSecretPath: {{.PullSecretPath}}
 
 worker:
   # The name of the node pool(s) to use for workers
   nodePools:
     - worker
+`

@@ -10,8 +10,12 @@ import "github.com/coreos/tectonic-installer/installer/pkg/config"
 // results onto it for later consumption.
 type metadata struct {
 	cluster        config.Cluster
-	configFilePath string
 	clusterDir     string
+	configFilePath string
+	domain         string
+	licensePath    string
+	name           string
+	pullSecretPath string
 }
 
 // Step is the entrypoint of a workflow step implementation.

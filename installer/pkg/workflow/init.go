@@ -1,97 +1,43 @@
 package workflow
 
 import (
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	yaml "gopkg.in/yaml.v2"
-
-	"github.com/coreos/tectonic-installer/installer/pkg/config"
-	configgenerator "github.com/coreos/tectonic-installer/installer/pkg/config-generator"
-)
-
-const (
-	generatedPath              = "generated"
-	kcoConfigFileName          = "kco-config.yaml"
-	tncoConfigFileName         = "tnco-config.yaml"
-	kubeSystemPath             = "generated/manifests"
-	kubeSystemFileName         = "cluster-config.yaml"
-	tectonicSystemPath         = "generated/tectonic"
-	newTLSPath                 = "generated/newTLS"
-	tectonicSystemFileName     = "cluster-config.yaml"
-	terraformVariablesFileName = "terraform.tfvars"
+	"strings"
+	"text/template"
 )
 
 // InitWorkflow creates new instances of the 'init' workflow,
 // responsible for initializing a new cluster.
-func InitWorkflow(configFilePath string) Workflow {
+func InitWorkflow(domain, name, licensePath, pullSecretPath string) Workflow {
 	return Workflow{
-		metadata: metadata{configFilePath: configFilePath},
+		metadata: metadata{
+			domain:         domain,
+			name:           name,
+			licensePath:    licensePath,
+			pullSecretPath: pullSecretPath,
+		},
 		steps: []Step{
-			prepareWorspaceStep,
+			initWorspaceStep,
 			refreshConfigStep,
 		},
 	}
 }
 
-func buildInternalConfig(clusterDir string) error {
-	if clusterDir == "" {
-		return errors.New("no cluster dir given for building internal config")
-	}
-
-	// fill the internal struct
-	clusterID, err := configgenerator.GenerateClusterID(16)
-	if err != nil {
-		return err
-	}
-	internalCfg := config.Internal{
-		ClusterID: clusterID,
-	}
-
-	// store the content
-	yamlContent, err := yaml.Marshal(internalCfg)
-	internalFileContent := []byte("# Do not touch, auto-generated\n")
-	internalFileContent = append(internalFileContent, yamlContent...)
-	if err != nil {
-		return err
-	}
-	return writeFile(filepath.Join(clusterDir, internalFileName), string(internalFileContent))
-}
-
-func generateTerraformVariablesStep(m *metadata) error {
-	vars, err := m.cluster.TFVars()
-	if err != nil {
-		return err
-	}
-
-	terraformVariablesFilePath := filepath.Join(m.clusterDir, terraformVariablesFileName)
-	return writeFile(terraformVariablesFilePath, vars)
-}
-
-func prepareWorspaceStep(m *metadata) error {
+func initWorspaceStep(m *metadata) error {
 	dir, err := os.Getwd()
 	if err != nil {
 		return fmt.Errorf("failed to get current directory: %v", err)
 	}
 
-	if m.configFilePath == "" {
-		return errors.New("a path to a config file is required")
-	}
-
-	// load initial cluster config to get cluster.Name
-	cluster, err := readClusterConfig(m.configFilePath, "")
-	if err != nil {
-		return fmt.Errorf("failed to get configuration from file %q: %v", m.configFilePath, err)
-	}
-
-	if err := cluster.ValidateAndLog(); err != nil {
-		return err
+	if m.name == "" {
+		m.name = strings.Replace(m.domain, ".", "", -1)
 	}
 
 	// generate clusterDir folder
-	clusterDir := filepath.Join(dir, cluster.Name)
+	clusterDir := filepath.Join(dir, m.name)
 	m.clusterDir = clusterDir
 	if stat, err := os.Stat(clusterDir); err == nil && stat.IsDir() {
 		return fmt.Errorf("cluster directory already exists at %q", clusterDir)
@@ -101,10 +47,22 @@ func prepareWorspaceStep(m *metadata) error {
 		return fmt.Errorf("failed to create cluster directory at %q", clusterDir)
 	}
 
-	// put config file under the clusterDir folder
+	// generate cluster config
 	configFilePath := filepath.Join(clusterDir, configFileName)
-	if err := copyFile(m.configFilePath, configFilePath); err != nil {
+	f, err := os.Create(configFilePath)
+	if err != nil {
 		return fmt.Errorf("failed to create cluster config at %q: %v", clusterDir, err)
+	}
+
+	ctd := configTemplateData{
+		BaseDomain:     m.domain,
+		LicensePath:    m.licensePath,
+		Name:           m.name,
+		PullSecretPath: m.pullSecretPath,
+	}
+	tmpl := template.Must(template.New("config").Parse(configTemplate))
+	if err := tmpl.Execute(f, ctd); err != nil {
+		return err
 	}
 
 	// generate the internal config file under the clusterDir folder
