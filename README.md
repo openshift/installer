@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/coreos/tectonic-installer.svg?branch=master)](https://travis-ci.org/coreos/tectonic-installer)
+[![Build Status](https://travis-ci.org/openshift/installer.svg?branch=master)](https://travis-ci.org/openshift/installer)
 
 # Tectonic Installer
 
@@ -8,3 +8,4 @@ In the meantime, current Tectonic customers will continue to receive support and
 
 See the CoreOS blog for any additional details:
 https://coreos.com/blog/coreos-tech-to-combine-with-red-hat-openshift
+
