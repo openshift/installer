@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/coreos/tectonic-installer.svg?branch=master)](https://travis-ci.org/coreos/tectonic-installer)
+[![Build Status](https://travis-ci.org/openshift/installer.svg?branch=master)](https://travis-ci.org/openshift/installer)
 
 # Tectonic Installer
 
@@ -9,4 +9,3 @@ In the meantime, current Tectonic customers will continue to receive support and
 See the CoreOS blog for any additional details:
 https://coreos.com/blog/coreos-tech-to-combine-with-red-hat-openshift
 
-*Note*: The master branch of the project reflects a work-in-progress design approach works only on AWS and Libvirt. In order to deploy Tectonic to other platforms, e.g. Azure, bare metal, OpenStack, etc, please checkout the [track-1](https://github.com/coreos/tectonic-installer/tree/track-1) branch of this project, which maintains support for the previous architecture and more platforms.
