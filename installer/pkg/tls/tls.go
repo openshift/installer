@@ -54,7 +54,7 @@ func SelfSignedCACert(cfg *CertCfg, key *rsa.PrivateKey) (*x509.Certificate, err
 
 	certBytes, err := x509.CreateCertificate(rand.Reader, &cert, &cert, key.Public(), key)
 	if err != nil {
-		return nil, fmt.Errorf("error creating certificate: %s", err)
+		return nil, fmt.Errorf("error creating certificate: %v", err)
 	}
 	return x509.ParseCertificate(certBytes)
 }

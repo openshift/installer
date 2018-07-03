@@ -52,6 +52,9 @@ var defaultCluster = Cluster{
 		Region:       aws.DefaultRegion,
 		VPCCIDRBlock: aws.DefaultVPCCIDRBlock,
 	},
+	CA: CA{
+		RootCAKeyAlg: "RSA",
+	},
 	ContainerLinux: ContainerLinux{
 		Channel: ContainerLinuxChannelStable,
 		Version: ContainerLinuxVersionLatest,
@@ -73,11 +76,16 @@ var defaultCluster = Cluster{
 // Cluster defines the config for a cluster.
 type Cluster struct {
 	Admin           `json:",inline" yaml:"admin,omitempty"`
+	aws.AWS         `json:",inline" yaml:"aws,omitempty"`
 	BaseDomain      string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
-	CA              `json:",inline" yaml:"ca,omitempty"`
+	CA              `json:",inline" yaml:"CA,omitempty"`
 	ContainerLinux  `json:",inline" yaml:"containerLinux,omitempty"`
 	Etcd            `json:",inline" yaml:"etcd,omitempty"`
+	IgnitionEtcd    string `json:"tectonic_ignition_etcd,omitempty" yaml:"-"`
+	IgnitionMaster  string `json:"tectonic_ignition_master,omitempty" yaml:"-"`
+	IgnitionWorker  string `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
 	Internal        `json:",inline" yaml:"-"`
+	libvirt.Libvirt `json:",inline" yaml:"libvirt,omitempty"`
 	LicensePath     string `json:"tectonic_license_path,omitempty" yaml:"licensePath,omitempty"`
 	Master          `json:",inline" yaml:"master,omitempty"`
 	Name            string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
@@ -86,11 +94,6 @@ type Cluster struct {
 	Platform        Platform `json:"tectonic_platform" yaml:"platform,omitempty"`
 	PullSecretPath  string   `json:"tectonic_pull_secret_path,omitempty" yaml:"pullSecretPath,omitempty"`
 	Worker          `json:",inline" yaml:"worker,omitempty"`
-	aws.AWS         `json:",inline" yaml:"aws,omitempty"`
-	libvirt.Libvirt `json:",inline" yaml:"libvirt,omitempty"`
-	IgnitionMaster  string `json:"tectonic_ignition_master,omitempty" yaml:"-"`
-	IgnitionWorker  string `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
-	IgnitionEtcd    string `json:"tectonic_ignition_etcd,omitempty" yaml:"-"`
 }
 
 // NodeCount will return the number of nodes specified in NodePools with matching names.

@@ -3,7 +3,10 @@ package validate
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -12,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/coreos/tectonic-installer/installer/pkg/tls"
 	jose "gopkg.in/square/go-jose.v2"
 )
 
@@ -377,40 +381,88 @@ func TestEmail(t *testing.T) {
 func TestCertificate(t *testing.T) {
 	const invalidMsg = "invalid certificate"
 	const privateKeyMsg = "invalid certificate (appears to be a private key)"
+	const badPem = "failed to parse certificate"
+
+	// throwaway rsa key
+	rsaKey, err := tls.GeneratePrivateKey()
+	if err != nil {
+		t.Fatalf("failed to generate private key: %v", err)
+	}
+	keyInBytes := x509.MarshalPKCS1PrivateKey(rsaKey)
+	keyinPem := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: keyInBytes,
+		},
+	)
+
+	// throwaway certificate
+	cfg := &tls.CertCfg{
+		Subject: pkix.Name{
+			CommonName:         "test-ca",
+			OrganizationalUnit: []string{"openshift"},
+		},
+	}
+	cert, err := tls.SelfSignedCACert(cfg, rsaKey)
+	if err != nil {
+		t.Fatalf("failed to generate self signed certificate: %v", err)
+	}
+	certInPem := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "CERTIFICATE",
+			Bytes: cert.Raw,
+		},
+	)
+
 	tests := []test{
 		{"", emptyMsg},
 		{" ", emptyMsg},
-		{"a", invalidMsg},
-		{".", invalidMsg},
-		{"日本語", invalidMsg},
-		{"-----BEGIN CERTIFICATE-----\na\n-----END CERTIFICATE-----", ""},
-		{"-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----", ""},
-		{"-----BEGIN CERTIFICATE-----\nabc=\n-----END CERTIFICATE-----", ""},
-		{"-----BEGIN CERTIFICATE-----\nabc==\n-----END CERTIFICATE-----", ""},
-		{"-----BEGIN CERTIFICATE-----\nabc===\n-----END CERTIFICATE-----", invalidMsg},
-		{"-----BEGIN CERTIFICATE-----\na%a\n-----END CERTIFICATE-----", invalidMsg},
-		{"-----BEGIN CERTIFICATE-----\n\nab\n-----END CERTIFICATE-----", invalidMsg},
-		{"-----BEGIN CERTIFICATE-----\nab\n\n-----END CERTIFICATE-----", invalidMsg},
-		{"-----BEGIN CERTIFICATE-----\na\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\na\n-----END CERTIFICATE-----", invalidMsg},
-		{"-----BEGIN RSA PRIVATE KEY-----\nabc\n-----END RSA PRIVATE KEY-----", privateKeyMsg},
+		{"a", badPem},
+		{".", badPem},
+		{"日本語", badPem},
+		{string(certInPem), ""},
+
+		{"-----BEGIN CERTIFICATE-----\na\n-----END CERTIFICATE-----", badPem},
+		{"-----BEGIN CERTIFICATE-----\nabc\n-----END CERTIFICATE-----", badPem},
+		{"-----BEGIN CERTIFICATE-----\nabc=\n-----END CERTIFICATE-----", invalidMsg},
+		{"-----BEGIN CERTIFICATE-----\nabc===\n-----END CERTIFICATE-----", badPem},
+		{"-----BEGIN CERTIFICATE-----\na%a\n-----END CERTIFICATE-----", badPem},
+		{"-----BEGIN CERTIFICATE-----\n\nab\n-----END CERTIFICATE-----", badPem},
+		{"-----BEGIN CERTIFICATE-----\nab\n\n-----END CERTIFICATE-----", badPem},
+		{"-----BEGIN CERTIFICATE-----\na\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\na\n-----END CERTIFICATE-----", badPem},
+		{string(keyinPem), privateKeyMsg},
 	}
 	runTests(t, "Certificate", Certificate, tests)
 }
 
 func TestPrivateKey(t *testing.T) {
-	const invalidMsg = "invalid private key"
+	const invalidMsg = "failed to parse private key"
+
+	// throw-away rsa key
+	rsaKey, err := tls.GeneratePrivateKey()
+	if err != nil {
+		t.Fatalf("failed to generate private key: %v", err)
+	}
+	keyInBytes := x509.MarshalPKCS1PrivateKey(rsaKey)
+	keyinPem := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PRIVATE KEY",
+			Bytes: keyInBytes,
+		},
+	)
+
 	tests := []test{
 		{"", emptyMsg},
 		{" ", emptyMsg},
 		{"a", invalidMsg},
 		{".", invalidMsg},
 		{"日本語", invalidMsg},
-		{"-----BEGIN RSA PRIVATE KEY-----\na\n-----END RSA PRIVATE KEY-----", ""},
-		{"-----BEGIN RSA PRIVATE KEY-----\nabc\n-----END RSA PRIVATE KEY-----", ""},
-		{"-----BEGIN RSA PRIVATE KEY-----\nabc=\n-----END RSA PRIVATE KEY-----", ""},
-		{"-----BEGIN RSA PRIVATE KEY-----\nabc==\n-----END RSA PRIVATE KEY-----", ""},
+		{string(keyinPem), ""},
+		{"-----BEGIN RSA PRIVATE KEY-----\na\n-----END RSA PRIVATE KEY-----", invalidMsg},
+		{"-----BEGIN RSA PRIVATE KEY-----\nabc\n-----END RSA PRIVATE KEY-----", invalidMsg},
+		{"-----BEGIN RSA PRIVATE KEY-----\nabc==\n-----END RSA PRIVATE KEY-----", invalidMsg},
 		{"-----BEGIN RSA PRIVATE KEY-----\nabc===\n-----END RSA PRIVATE KEY-----", invalidMsg},
-		{"-----BEGIN EC PRIVATE KEY-----\nabc\n-----END EC PRIVATE KEY-----", ""},
+		{"-----BEGIN EC PRIVATE KEY-----\nabc\n-----END EC PRIVATE KEY-----", invalidMsg},
 		{"-----BEGIN RSA PRIVATE KEY-----\na%a\n-----END RSA PRIVATE KEY-----", invalidMsg},
 		{"-----BEGIN RSA PRIVATE KEY-----\n\nab\n-----END RSA PRIVATE KEY-----", invalidMsg},
 		{"-----BEGIN RSA PRIVATE KEY-----\nab\n\n-----END RSA PRIVATE KEY-----", invalidMsg},
