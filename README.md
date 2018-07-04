@@ -1,10 +1,12 @@
+[![Build Status](https://travis-ci.org/openshift/installer.svg?branch=master)](https://travis-ci.org/openshift/installer)
+
 # Openshift Installer
 
 The CoreOS and OpenShift teams are now working together to integrate Tectonic and OpenShift into a converged platform.
 See the CoreOS blog for any additional details:
 https://coreos.com/blog/coreos-tech-to-combine-with-red-hat-openshift
 
-### Hacking
+## Hacking
 
 These instructions can be used for AWS:
 
@@ -49,8 +51,8 @@ These instructions can be used for AWS:
     tectonic destroy --dir=$CLUSTER_NAME
     ```
 
-### Managing Dependencies
-#### Go
+## Managing Dependencies
+### Go
 
 We follow a hard flattening approach; i.e. direct and inherited dependencies are installed in the base `vendor/`.
 
@@ -77,6 +79,6 @@ If it worked correctly it should:
 
 For the sake of your fellow reviewers, commit vendored code separately from any other changes.
 
-#### Tests
+## Tests
 
 See [tests/README.md](tests/README.md).
