@@ -61,7 +61,8 @@ func testCluster(t *testing.T) {
 	t.Run("AllNodesRunning", testAllNodesRunning)
 	t.Run("AllResourcesCreated", testAllResourcesCreated)
 	t.Run("AllPodsRunning", testAllPodsRunning)
-	t.Run("KillAPIServer", testKillAPIServer)
+	// TODO: KillAPIServer should be refactored to reduce it's flakiness. Temporarily disabled to reduce number of false-positives.
+	// t.Run("KillAPIServer", testKillAPIServer)
 }
 
 func testAllPodsRunning(t *testing.T) {
