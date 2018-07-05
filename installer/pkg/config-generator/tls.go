@@ -159,7 +159,7 @@ func generateCACert(clusterDir string,
 	}
 
 	// create a CA cert
-	cfg := &tls.CertCfg{KeyUsages: keyUsages}
+	cfg := &tls.CertCfg{KeyUsages: keyUsages, IsCA: true}
 	_, err = generateSignedCert(cfg, csr, key, caKey, caCert, clusterDir, certPath)
 	if err != nil {
 		return fmt.Errorf("failed to create a certificate: %v", err)
@@ -176,6 +176,7 @@ func generateRootCA(path string, key *rsa.PrivateKey) (*x509.Certificate, error)
 			OrganizationalUnit: []string{"openshift"},
 		},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		IsCA:      true,
 	}
 	cert, err := tls.SelfSignedCACert(cfg, key)
 	if err != nil {

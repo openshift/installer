@@ -25,6 +25,7 @@ func TestSelfSignedCACert(t *testing.T) {
 					CommonName:         "root_ca",
 					OrganizationalUnit: []string{"openshift"},
 				},
+				IsCA: true,
 			},
 			err: false,
 		},
@@ -34,6 +35,7 @@ func TestSelfSignedCACert(t *testing.T) {
 				Subject: pkix.Name{
 					CommonName: "root_ca",
 				},
+				IsCA: false,
 			},
 			err: true,
 		},
