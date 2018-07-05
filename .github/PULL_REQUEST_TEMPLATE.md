@@ -1,4 +1,5 @@
-NOTE: Pull-requests for new features are no longer accepted in this repo. Only critical bug-fixes and security patches will be accepted.
+Before creating your PR, please make sure to add the appropriate GitHub label; i.e. `run-smoke-tests`. For more details see
+[tests/README.md](../tests/README.md).
 
-See our blog for details:
-https://coreos.com/blog/coreos-tech-to-combine-with-red-hat-openshift
+(In case you don't have permissions to add labels, please ask a
+[Maintainer](../MAINTAINERS).)
