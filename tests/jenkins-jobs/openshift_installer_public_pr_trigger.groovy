@@ -2,7 +2,7 @@
 
 folder("triggers")
 
-job("triggers/tectonic-installer-pr-trigger") {
+job("triggers/openshift-installer-pr-trigger") {
   description('Tectonic Installer PR Trigger. Changes here will be reverted automatically.')
 
   concurrentBuild()
@@ -12,7 +12,7 @@ job("triggers/tectonic-installer-pr-trigger") {
 
   parameters {
     stringParam('ghprbPullId', '', 'PR number')
-    stringParam('GITHUB_REPO', 'coreos/tectonic-installer', 'Github repository')
+    stringParam('GITHUB_REPO', 'openshift/installer', 'Github repository')
   }
 
   properties {
@@ -79,7 +79,7 @@ job("triggers/tectonic-installer-pr-trigger") {
     """
 
     downstreamParameterized {
-      trigger('tectonic-installer/PR-\${ghprbPullId}') {
+      trigger('openshift-installer/PR-\${ghprbPullId}') {
         parameters {
           propertiesFile("env_vars", true)
         }
@@ -121,7 +121,7 @@ sleep(10000);
 def params = [ ];
 
 // Get the PR Job
-def job = Jenkins.instance.getItemByFullName("tectonic-installer/PR-" + PRNum)
+def job = Jenkins.instance.getItemByFullName("openshift-installer/PR-" + PRNum)
 manager.listener.logger.println("Jobs: " + job);
 manager.listener.logger.println("PR Num: " + PRNum);
 // If job is in the queue wait for that
@@ -162,7 +162,7 @@ manager.listener.logger.println("Job is building?: " + prBuild.isBuilding());
     def cause = new Cause.UpstreamCause(currentBuild)
     def causeAction = new hudson.model.CauseAction(cause)
 
-    def pr_trigger_job = Jenkins.instance.getItemByFullName("triggers/tectonic-installer-pr-trigger")
+    def pr_trigger_job = Jenkins.instance.getItemByFullName("triggers/openshift-installer-pr-trigger")
     def paramsAction = new ParametersAction(parameters)
     manager.listener.logger.println(parameters);
 

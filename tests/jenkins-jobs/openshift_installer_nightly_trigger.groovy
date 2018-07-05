@@ -2,7 +2,7 @@
 
 folder("triggers")
 
-job("triggers/tectonic-installer-nightly-trigger") {
+job("triggers/openshift-installer-nightly-trigger") {
   logRotator(10, 1000)
   description('Tectonic Installer nightly builds against master. Changes here will be reverted automatically.')
 
@@ -19,7 +19,7 @@ job("triggers/tectonic-installer-nightly-trigger") {
     triggerBuilder {
       configs {
         blockableBuildTriggerConfig {
-          projects("tectonic-installer/master")
+          projects("openshift-installer/master")
           block {
             buildStepFailureThreshold("FAILURE")
             unstableThreshold("UNSTABLE")
