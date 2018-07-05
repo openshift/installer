@@ -26,8 +26,8 @@ type CertCfg struct {
 	Validity     time.Duration
 }
 
-// GeneratePrivateKey generates an RSA Private key and returns the value
-func GeneratePrivateKey() (*rsa.PrivateKey, error) {
+// PrivateKey generates an RSA Private key and returns the value
+func PrivateKey() (*rsa.PrivateKey, error) {
 	rsaKey, err := rsa.GenerateKey(rand.Reader, keySize)
 	if err != nil {
 		return nil, fmt.Errorf("error generating RSA private key: %v", err)
@@ -62,6 +62,7 @@ func SelfSignedCACert(cfg *CertCfg, key *rsa.PrivateKey) (*x509.Certificate, err
 // SignedCertificate creates a new X.509 certificate based on a template.
 func SignedCertificate(
 	cfg *CertCfg,
+	csr *x509.CertificateRequest,
 	key *rsa.PrivateKey,
 	caCert *x509.Certificate,
 	caKey *rsa.PrivateKey,
@@ -72,19 +73,20 @@ func SignedCertificate(
 	}
 
 	certTmpl := x509.Certificate{
-		DNSNames:     cfg.DNSNames,
+		DNSNames:     csr.DNSNames,
 		ExtKeyUsage:  cfg.ExtKeyUsages,
-		IPAddresses:  cfg.IPAddresses,
+		IPAddresses:  csr.IPAddresses,
 		KeyUsage:     cfg.KeyUsages,
 		NotAfter:     time.Now().Add(cfg.Validity),
 		NotBefore:    caCert.NotBefore,
 		SerialNumber: serial,
-		Subject:      cfg.Subject,
+		Subject:      csr.Subject,
+		IsCA:         true,
 	}
 
 	certBytes, err := x509.CreateCertificate(rand.Reader, &certTmpl, caCert, key.Public(), caKey)
 	if err != nil {
-		return nil, fmt.Errorf("error creating signed certificate: %s", err)
+		return nil, fmt.Errorf("error creating signed certificate: %v", err)
 	}
 	return x509.ParseCertificate(certBytes)
 }

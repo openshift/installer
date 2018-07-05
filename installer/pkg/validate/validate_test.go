@@ -384,7 +384,7 @@ func TestCertificate(t *testing.T) {
 	const badPem = "failed to parse certificate"
 
 	// throwaway rsa key
-	rsaKey, err := tls.GeneratePrivateKey()
+	rsaKey, err := tls.PrivateKey()
 	if err != nil {
 		t.Fatalf("failed to generate private key: %v", err)
 	}
@@ -439,7 +439,7 @@ func TestPrivateKey(t *testing.T) {
 	const invalidMsg = "failed to parse private key"
 
 	// throw-away rsa key
-	rsaKey, err := tls.GeneratePrivateKey()
+	rsaKey, err := tls.PrivateKey()
 	if err != nil {
 		t.Fatalf("failed to generate private key: %v", err)
 	}
