@@ -17,6 +17,7 @@ tectonic-dev
 
 # Bazel
 .build/
+bazel-installer
 bazel-bin
 bazel-out
 bazel-genfiles
