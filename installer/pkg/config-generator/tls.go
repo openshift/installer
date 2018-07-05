@@ -47,15 +47,16 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	}
 
 	// generate kube CA
-	if err := generateCACert(clusterDir, caKey, caCert, kubeCAKeyPath, kubeCACertPath, "kube-ca", "bootkube", x509.KeyUsageKeyEncipherment|x509.KeyUsageDigitalSignature|x509.KeyUsageCertSign); err != nil {
+	cfg := &tls.CertCfg{KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign, IsCA: true}
+	if err := generateCert(clusterDir, caKey, caCert, kubeCAKeyPath, kubeCACertPath, "kube-ca", "bootkube", cfg); err != nil {
 		return fmt.Errorf("failed to generate kube CAs: %v", err)
 	}
 	// generate aggregator CA
-	if err := generateCACert(clusterDir, caKey, caCert, aggregatorCAKeyPath, aggregatorCACertPath, "aggregator", "bootkube", x509.KeyUsageKeyEncipherment|x509.KeyUsageDigitalSignature|x509.KeyUsageCertSign); err != nil {
+	if err := generateCert(clusterDir, caKey, caCert, aggregatorCAKeyPath, aggregatorCACertPath, "aggregator", "bootkube", cfg); err != nil {
 		return fmt.Errorf("failed to generate aggregator CAs: %v", err)
 	}
 	// generate service-serving CA
-	if err := generateCACert(clusterDir, caKey, caCert, serviceServiceCAKeyPath, serviceServiceCACertPath, "service-serving", "bootkube", x509.KeyUsageKeyEncipherment|x509.KeyUsageDigitalSignature|x509.KeyUsageCertSign); err != nil {
+	if err := generateCert(clusterDir, caKey, caCert, serviceServiceCAKeyPath, serviceServiceCACertPath, "service-serving", "bootkube", cfg); err != nil {
 		return fmt.Errorf("failed to generate service-serving CAs: %v", err)
 	}
 	return nil
@@ -123,15 +124,15 @@ func getCertFiles(clusterDir string, certPath string, keyPath string) (*x509.Cer
 	return certs[0], key, nil
 }
 
-// generateCACert creates the CA key, csr & cert
-func generateCACert(clusterDir string,
+// generateCert creates a key, csr & a signed cert
+func generateCert(clusterDir string,
 	caKey *rsa.PrivateKey,
 	caCert *x509.Certificate,
 	keyPath string,
 	certPath string,
 	commonName string,
 	orgUnit string,
-	keyUsages x509.KeyUsage) error {
+	cfg *tls.CertCfg) error {
 
 	// create a private key
 	key, err := generatePrivateKey(clusterDir, keyPath)
@@ -158,8 +159,7 @@ func generateCACert(clusterDir string,
 		return fmt.Errorf("error parsing certificate request: %v", err)
 	}
 
-	// create a CA cert
-	cfg := &tls.CertCfg{KeyUsages: keyUsages, IsCA: true}
+	// create a cert
 	_, err = generateSignedCert(cfg, csr, key, caKey, caCert, clusterDir, certPath)
 	if err != nil {
 		return fmt.Errorf("failed to create a certificate: %v", err)
