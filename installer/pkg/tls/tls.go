@@ -24,6 +24,7 @@ type CertCfg struct {
 	KeyUsages    x509.KeyUsage
 	Subject      pkix.Name
 	Validity     time.Duration
+	IsCA         bool
 }
 
 // PrivateKey generates an RSA Private key and returns the value
@@ -40,7 +41,7 @@ func PrivateKey() (*rsa.PrivateKey, error) {
 func SelfSignedCACert(cfg *CertCfg, key *rsa.PrivateKey) (*x509.Certificate, error) {
 	cert := x509.Certificate{
 		BasicConstraintsValid: true,
-		IsCA:         true,
+		IsCA:         cfg.IsCA,
 		KeyUsage:     cfg.KeyUsages,
 		NotAfter:     time.Now().Add(cfg.Validity),
 		NotBefore:    time.Now(),
@@ -81,7 +82,7 @@ func SignedCertificate(
 		NotBefore:    caCert.NotBefore,
 		SerialNumber: serial,
 		Subject:      csr.Subject,
-		IsCA:         true,
+		IsCA:         cfg.IsCA,
 	}
 
 	certBytes, err := x509.CreateCertificate(rand.Reader, &certTmpl, caCert, key.Public(), caKey)
