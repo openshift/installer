@@ -16,18 +16,18 @@ This job has 3 input parameters:
 If you don't set the `TERRAFORM_UPSTREAM_URL` it will build the image using the tectonic custom terraform version.
 
 
-## Tectonic Installer Nightly Trigger
+## OpenShift Installer Nightly Trigger
 
-This file (`tectonic_installer_nightly_trigger.groovy`) creates a Jenkins job called `tectonic-installer-nightly-trigger` in the `triggers` directory to run the tests against the `Tectonic Installer` in the `master` branch.
+This file (`openshift_installer_nightly_trigger.groovy`) creates a Jenkins job called `openshift-installer-nightly-trigger` in the `triggers` directory to run the tests against the `OpenShift Installer` in the `master` branch.
 This job will run everyday around 3AM UTC time.
 
 Parameters:
 
 * No input parameters are required.
 
-## Tectonic Installer Public PR Trigger
+## OpenShift Installer Public PR Trigger
 
-This file (`tectonic_installer_public_pr_trigger.groovy`) creates a Jenkins job called `tectonic-installer-pr-trigger` in the `triggers` directory to run the tests against the `Tectonic Installer` using the PR branch.
+This file (`openshift_installer_public_pr_trigger.groovy`) creates a Jenkins job called `openshift-installer-pr-trigger` in the `triggers` directory to run the tests against the `OpenShift Installer` using the PR branch.
 
 Parameters:
 
