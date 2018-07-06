@@ -17,8 +17,10 @@ import (
 const (
 	aggregatorCACertPath     = "generated/newTLS/aggregator-ca.crt"
 	aggregatorCAKeyPath      = "generated/newTLS/aggregator-ca.key"
-	etcdClientCertPath       = "generated/newTLS/etcd-client-ca.crt"
-	etcdClientKeyPath        = "generated/newTLS/etcd-client-ca.key"
+	etcdCACertPath           = "generated/newTLS/etcd-ca.crt"
+	etcdCAKeyPath            = "generated/newTLS/etcd-ca.key"
+	etcdClientCertPath       = "generated/newTLS/etcd-client.crt"
+	etcdClientKeyPath        = "generated/newTLS/etcd-client.key"
 	kubeCACertPath           = "generated/newTLS/kube-ca.crt"
 	kubeCAKeyPath            = "generated/newTLS/kube-ca.key"
 	rootCACertPath           = "generated/newTLS/root-ca.crt"
@@ -37,12 +39,7 @@ const (
 func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	var caKey *rsa.PrivateKey
 	var caCert *x509.Certificate
-	var kubeCAKey *rsa.PrivateKey
-	var kubeCACert *x509.Certificate
 	var err error
-	var baseAddress string
-
-	baseAddress = c.getBaseAddress()
 
 	if c.CA.RootCAKeyPath == "" && c.CA.RootCACertPath == "" {
 		caCert, caKey, err = generateRootCert(clusterDir)
@@ -64,10 +61,32 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		Validity:  validityThreeYears,
 		IsCA:      true,
 	}
-	kubeCAKey, kubeCACert, err = generateCert(clusterDir, caKey, caCert, kubeCAKeyPath, kubeCACertPath, cfg)
+	kubeCAKey, kubeCACert, err := generateCert(clusterDir, caKey, caCert, kubeCAKeyPath, kubeCACertPath, cfg)
 	if err != nil {
-		return fmt.Errorf("failed to generate kube CAs: %v", err)
+		return fmt.Errorf("failed to generate kubernetes CA: %v", err)
 	}
+
+	// generate etcd CA
+	cfg = &tls.CertCfg{
+		Subject:   pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
+		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		IsCA:      true,
+	}
+	etcdCAKey, etcdCACert, err := generateCert(clusterDir, caKey, caCert, etcdCAKeyPath, etcdCACertPath, cfg)
+	if err != nil {
+		return fmt.Errorf("failed to generate etcd CA: %v", err)
+	}
+
+	// generate etcd client certificate
+	cfg = &tls.CertCfg{
+		Subject:      pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
+		KeyUsages:    x509.KeyUsageKeyEncipherment,
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+	}
+	if _, _, err := generateCert(clusterDir, etcdCAKey, etcdCACert, etcdClientKeyPath, etcdClientCertPath, cfg); err != nil {
+		return fmt.Errorf("failed to generate etcd client certificate: %v", err)
+	}
+
 	// generate aggregator CA
 	cfg = &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
@@ -76,7 +95,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:      true,
 	}
 	if _, _, err := generateCert(clusterDir, caKey, caCert, aggregatorCAKeyPath, aggregatorCACertPath, cfg); err != nil {
-		return fmt.Errorf("failed to generate aggregator CAs: %v", err)
+		return fmt.Errorf("failed to generate aggregator CA: %v", err)
 	}
 
 	// generate service-serving CA
@@ -87,7 +106,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:      true,
 	}
 	if _, _, err := generateCert(clusterDir, caKey, caCert, serviceServiceCAKeyPath, serviceServiceCACertPath, cfg); err != nil {
-		return fmt.Errorf("failed to generate service-serving CAs: %v", err)
+		return fmt.Errorf("failed to generate service-serving CA: %v", err)
 	}
 
 	// Ingress certs
@@ -95,6 +114,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		return fmt.Errorf("failed to import kube CA cert into ingress-ca.crt: %v", err)
 	}
 
+	baseAddress := c.getBaseAddress()
 	cfg = &tls.CertCfg{
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
