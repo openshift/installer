@@ -39,7 +39,7 @@ Due to their public nature, GitHub and mailing lists are not appropriate places 
 - Go get a couple of projects nesessary for updating docs and examples:
     ```shell
     $ go get github.com/segmentio/terraform-docs
-    $ go get github.com/coreos/tectonic-installer/contrib/terraform-examples
+    $ go get github.com/openshift/installer/contrib/terraform-examples
     ```
 
 ### Contribution Flow
@@ -62,7 +62,7 @@ Thanks for your contributions!
 
 ## Coding Style
 
-The coding style suggested by the Golang community is used in tectonic-installer. See the [style doc][golang-style] for details. Please follow them when working on your contributions.
+The coding style suggested by the Golang community is used in installer. See the [style doc][golang-style] for details. Please follow them when working on your contributions.
 
 Tectonic Installer includes syntax checks on the Terraform templates which will fail the PR checker for non-standard formatted code.
 
