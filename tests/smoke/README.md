@@ -31,21 +31,21 @@ export SMOKE_KUBECONFIG=/path/to/kubeconfig
 Compile the smoke test binary from the root directory of the project:
 
 ```sh
-make bin/smoke
+bazel build tests/smoke
 ```
 
-The tests can then be run by invoking the `smoke` binary in the `bin` directory.
+The tests can then be run by invoking the `smoke` binary in the `bazel-bin/tests/smoke/linux_amd64_stripped` directory.
 This binary accepts `--cluster` and `--qa` flags to specify which tests suites should be run, e.g.:
 
 ```sh
-bin/smoke --cluster --qa
+bazel-bin/tests/smoke/linux_amd64_stripped/smoke --cluster --qa
 ```
 
 *Note*: the `smoke` binary accepts several flags available to the `go test` command; to list them, invoke the `smoke` binary with the `--help` flag.
 For example, to run the cluster and QA test suites verbosely, use the `--test.v` flag:
 
 ```sh
-bin/smoke --cluster --qa --test.v
+bazel-bin/tests/smoke/linux_amd64_stripped/smoke --cluster --qa --test.v
 ```
 
 ## Cluster Suite
@@ -69,7 +69,7 @@ export SMOKE_MANIFEST_EXPERIMENTAL=true
 
 To run the cluster test suite, invoke the smoke test binary with the `--cluster` flag:
 ```sh
-bin/smoke --cluster
+bazel-bin/tests/smoke/linux_amd64_stripped/smoke --cluster
 ```
 
 ## QA Suite
@@ -89,5 +89,5 @@ export GOOGLE_APPLICATION_CREDENTIALS=/path/to/google/application/credentials
 
 To run the QA suite, invoke the smoke test binary with the `--qa` flag:
 ```sh
-bin/smoke --qa
+bazel-bin/tests/smoke/linux_amd64_stripped/smoke --qa
 ```
