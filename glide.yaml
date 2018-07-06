@@ -1,4 +1,4 @@
-package: github.com/coreos/tectonic-installer
+package: github.com/openshift/installer
 excludeDirs:
 - tests
 import:

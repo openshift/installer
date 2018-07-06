@@ -31,7 +31,7 @@ genrule(
 
 load("@io_bazel_rules_go//go:def.bzl", "go_prefix")
 
-go_prefix("github.com/coreos/tectonic-installer")
+go_prefix("github.com/openshift/installer")
 
 load("@bazel_gazelle//:def.bzl", "gazelle")
 
@@ -39,7 +39,7 @@ gazelle(
     name = "gazelle",
     command = "fix",
     external = "vendored",
-    prefix = "github.com/coreos/tectonic-installer",
+    prefix = "github.com/openshift/installer",
 )
 
 alias(

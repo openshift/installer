@@ -1,4 +1,4 @@
-package: "github.com/coreos/tectonic-installer/tests/smoke"
+package: "github.com/openshift/installer/tests/smoke"
 import:
 - package: k8s.io/client-go
   version: v4.0.0-beta.0

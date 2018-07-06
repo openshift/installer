@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/config-generator"
+	"github.com/openshift/installer/installer/pkg/config-generator"
 )
 
 // InstallFullWorkflow creates new instances of the 'install' workflow,

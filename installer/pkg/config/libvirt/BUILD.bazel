@@ -3,7 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = ["libvirt.go"],
-    importpath = "github.com/coreos/tectonic-installer/installer/pkg/config/libvirt",
+    importpath = "github.com/openshift/installer/installer/pkg/config/libvirt",
     visibility = ["//visibility:public"],
     deps = ["//vendor/github.com/apparentlymart/go-cidr/cidr:go_default_library"],
 )

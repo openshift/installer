@@ -15,7 +15,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/tls"
+	"github.com/openshift/installer/installer/pkg/tls"
 	jose "gopkg.in/square/go-jose.v2"
 )
 

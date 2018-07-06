@@ -6,7 +6,7 @@ import (
 	log "github.com/Sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/workflow"
+	"github.com/openshift/installer/installer/pkg/workflow"
 )
 
 var (

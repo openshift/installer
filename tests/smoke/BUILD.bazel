@@ -1,6 +1,6 @@
 load("@io_bazel_rules_go//go:def.bzl", "go_test", "go_prefix")
 
-go_prefix("github.com/coreos/tectonic-installer/tests/smoke/tests/smoke")
+go_prefix("github.com/openshift/installer/tests/smoke/tests/smoke")
 
 go_test(
     name = "smoke",
@@ -36,17 +36,11 @@ go_test(
         "smoke_test.go",
     ],
     deps = [
-        "//tests/smoke/vendor/github.com/coreos/ktestutil/testworkload:go_default_library",
-        "//tests/smoke/vendor/k8s.io/apimachinery/pkg/api/errors:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/apis/meta/v1/unstructured:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/util/errors:go_default_library",
-        "//tests/smoke/vendor/k8s.io/apimachinery/pkg/util/wait:go_default_library",
         "//tests/smoke/vendor/k8s.io/client-go/kubernetes:go_default_library",
-        "//tests/smoke/vendor/k8s.io/client-go/pkg/api:go_default_library",
         "//tests/smoke/vendor/k8s.io/client-go/pkg/api/v1:go_default_library",
-        "//tests/smoke/vendor/k8s.io/client-go/pkg/apis/extensions/v1beta1:go_default_library",
-        "//tests/smoke/vendor/k8s.io/client-go/pkg/apis/rbac/v1beta1:go_default_library",
         "//tests/smoke/vendor/k8s.io/client-go/tools/clientcmd:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/kubectl/cmd/util:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/kubectl/resource:go_default_library",
