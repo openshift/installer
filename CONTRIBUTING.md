@@ -7,7 +7,7 @@ resources to make it easier to get your contribution accepted.
 
 # Tectonic Installer contributions
 
-Tectonic Installer provides specific guidelines for the modification of included Terraform modules. For more information, please see [Modifying Tectonic Installer][modify-installer].
+Installer provides specific guidelines for the modification of included Terraform modules. For more information, please see [Modifying Tectonic Installer][modify-installer].
 
 For more information on Terraform, please see the [Terraform Documentation][tf-doc].
 
