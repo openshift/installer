@@ -11,43 +11,43 @@ https://coreos.com/blog/coreos-tech-to-combine-with-red-hat-openshift
 These instructions can be used for AWS:
 
 1. Build the project
-    ```shell
+    ```sh
     bazel build tarball
     ```
 
     *Note*: the project can optionally be built without installing Bazel, provided Docker is installed:
-    ```shell
+    ```sh
     docker run --rm -v $PWD:$PWD:Z -w $PWD quay.io/coreos/tectonic-builder:bazel-v0.3 bazel --output_base=.cache build tarball
     ```
 
 2. Extract the tarball
-    ```shell
+    ```sh
     tar -zxf bazel-bin/tectonic-dev.tar.gz
     cd tectonic-dev
     ```
 
 3. Add binaries to $PATH
-    ```shell
+    ```sh
     export PATH=$(pwd)/installer:$PATH
     ```
 
 4. Edit Tectonic configuration file including the $CLUSTER_NAME
-    ```shell
+    ```sh
     $EDITOR examples/tectonic.aws.yaml
     ```
 
 5. Init Tectonic CLI
-    ```shell
+    ```sh
     tectonic init --config=examples/tectonic.aws.yaml
     ```
 
 6. Install Tectonic cluster
-    ```shell
+    ```sh
     tectonic install --dir=$CLUSTER_NAME
     ```
 
 7. Teardown Tectonic cluster
-    ```shell
+    ```sh
     tectonic destroy --dir=$CLUSTER_NAME
     ```
 
@@ -65,7 +65,7 @@ To add a new dependency:
 - Ensure you add a `version` field for the sha or tag you want to pin to.
 - Revendor the dependencies:
 
-```
+```sh
 rm glide.lock
 glide install --strip-vendor
 glide-vc --use-lock-file --no-tests --only-code

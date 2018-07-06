@@ -11,20 +11,20 @@ It's expected that you will create and destroy clusters often in the course of d
 In this example, we'll set the baseDomain to `tt.testing`, the name to `test1` and the ipRange to `192.168.124.0/24`
 
 #### 1.2 Clone the repo
-```
+```sh
 git clone https://github.com/openshift/installer.git
 cd installer
 ```
 
 #### 1.3 Download the Container Linux image
 You will need to do this every time Container Linux has a release.
-```
+```sh
 wget https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2
 bunzip2 coreos_production_qemu_image.img.bz2
 ```
 
 Because of the greater disk requirements of OpenShift, you'll need to expand the root drive with the following:
-```
+```sh
 qemu-img resize coreos_production_qemu_image.img +8G
 ```
 
@@ -47,7 +47,7 @@ Go to https://account.coreos.com/ and obtain a Tectonic license. Save the *pull 
 This step is optional, but useful for being able to resolve cluster-internal hostnames from your host.
 1. Edit `/etc/NetworkManager/NetworkManager.conf` and set `dns=dnsmasq` in section `[main]`
 2. Tell dnsmasq to use your cluster. The syntax is `server=/<baseDomain>/<firstIP>`. For this example:
-```
+```sh
 echo server=/tt.testing/192.168.124.1 | sudo tee /etc/NetworkManager/dnsmasq.d/tectonic.conf
 ```
 3. `systemctl restart NetworkManager`
@@ -55,7 +55,7 @@ echo server=/tt.testing/192.168.124.1 | sudo tee /etc/NetworkManager/dnsmasq.d/t
 #### 1.7 Install the terraform provider
 1. Make sure you have the `virsh` binary installed: `sudo dnf install libvirt-client libvirt-devel`
 2. Install the libvirt terraform provider:
-```
+```sh
 go get github.com/dmacvicar/terraform-provider-libvirt
 mkdir -p ~/.terraform.d/plugins
 cp $GOPATH/bin/terraform-provider-libvirt ~/.terraform.d/plugins/
@@ -64,31 +64,31 @@ cp $GOPATH/bin/terraform-provider-libvirt ~/.terraform.d/plugins/
 ### 2. Build the installer
 Following the instructions in the root README:
 
-```
+```sh
 bazel build tarball
 ```
 
 ### 3. Create a cluster
-```
+```sh
 tar -zxf bazel-bin/tectonic-dev.tar.gz
 cd tectonic-dev
 export PATH=$(pwd)/installer:$PATH
 ```
 
 Initialize (the environment variables are a convenience):
-```
+```sh
 tectonic init --config=../tectonic.libvirt.yaml
 export CLUSTER_NAME=<the cluster name>
 export BASE_DOMAIN=<the base domain>
 ```
 
 Install ($CLUSTER_NAME is `test1`):
-```
+```sh
 tectonic install --dir=$CLUSTER_NAME
 ```
 
 When you're done, destroy:
-```
+```sh
 tectonic destroy --dir=$CLUSTER_NAME
 ```
 Be sure to destroy, or else you will need to manually use virsh to clean up the leaked resources.
@@ -99,7 +99,7 @@ Some things you can do:
 ## Watch the bootstrap process
 The first master node, e.g. test1-master-0.tt.testing, runs the tectonic bootstrap process. You can watch it:
 
-```
+```sh
 ssh core@$CLUSTER_NAME-master-0.$BASE_DOMAIN
 sudo journalctl -f -u bootkube -u tectonic
 ```
@@ -107,7 +107,7 @@ You'll have to wait for etcd to reach quorum before this makes any progress.
 
 ## Inspect the cluster with kubectl
 You'll need a kubectl binary on your path.
-```
+```sh
 export KUBECONFIG=$(pwd)/$CLUSTER_NAME/generated/auth/kubeconfig
 kubectl get -n tectonic-system pods
 ```

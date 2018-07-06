@@ -37,9 +37,9 @@ Due to their public nature, GitHub and mailing lists are not appropriate places 
 - Read the [README](README.md) for build and test instructions
 - Play with the project, submit bugs, submit patches!
 - Go get a couple of projects nesessary for updating docs and examples:
-    ```shell
-    $ go get github.com/segmentio/terraform-docs
-    $ go get github.com/openshift/installer/contrib/terraform-examples
+    ```sh
+    go get github.com/segmentio/terraform-docs
+    go get github.com/openshift/installer/contrib/terraform-examples
     ```
 
 ### Contribution Flow
@@ -52,8 +52,8 @@ This is a rough outline of what a contributor's workflow looks like:
 - Push your changes to a topic branch in your fork of the repository.
 - Make sure the tests pass, and add any new tests as appropriate.
 - Please run this command before submitting your pull request:
-    ```shell
-    $ make structure-check
+    ```sh
+    make structure-check
     ```
 - Note that a portion of the docs and examples are generated and that the generated files are to be committed by you. `make structure-check` checks that what is generated is what you must commit.
 - Submit a pull request to the original repository.

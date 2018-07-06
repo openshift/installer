@@ -28,12 +28,12 @@ To begin, verify that the following environment variables are set:
   A sensible value is `git rev-parse --abbrev-ref HEAD`.
 
 Example:
-```
-$ export AWS_ACCESS_KEY_ID=AKIAIQ5TVFGQ7CKWD6IA
-$ export AWS_SECRET_ACCESS_KEY_ID=rtp62V7H/JDY3cNBAs5vA0coaTou/OQbqJk96Hws
-$ export TF_VAR_tectonic_license_path="/home/user/tectonic-license"
-$ export TF_VAR_tectonic_pull_secret_path="/home/user/coreos-inc/pull-secret"
-$ export TF_VAR_tectonic_aws_ssh_key="user"
+```sh
+export AWS_ACCESS_KEY_ID=AKIAIQ5TVFGQ7CKWD6IA
+export AWS_SECRET_ACCESS_KEY_ID=rtp62V7H/JDY3cNBAs5vA0coaTou/OQbqJk96Hws
+export TF_VAR_tectonic_license_path="/home/user/tectonic-license"
+export TF_VAR_tectonic_pull_secret_path="/home/user/coreos-inc/pull-secret"
+export TF_VAR_tectonic_aws_ssh_key="user"
 ```
 
 ## Assume Role
@@ -90,16 +90,16 @@ Once all testing has concluded, clean up the AWS resources that were created:
 ## Sanity test cheatsheet
 To be able to ssh into the created machines, determine the generated cluster name and use the [AWS client](http://docs.aws.amazon.com/cli/latest/userguide/installing.html) to retrieve the public IP address or search for nodes having the cluster name via the AWS Web UI in "EC2 -> Instances":
 
-```sh
+```console
 $ ls build
 aws-exp-master-1012345678901
 
 $ export CLUSTER_NAME=aws-exp-master-1012345678901
 
-$ aws autoscaling describe-auto-scaling-groups \
-    | jq -r '.AutoScalingGroups[] | select(.AutoScalingGroupName | contains("'${CLUSTER_NAME}'")) | .Instances[].InstanceId' \
-    | xargs aws ec2 describe-instances --instance-ids \
-    | jq '.Reservations[].Instances[] | select(.PublicIpAddress != null) | .PublicIpAddress'
+$ aws autoscaling describe-auto-scaling-groups |
+>   jq -r '.AutoScalingGroups[] | select(.AutoScalingGroupName | contains("'${CLUSTER_NAME}'")) | .Instances[].InstanceId' |
+>   xargs aws ec2 describe-instances --instance-ids |
+>   jq '.Reservations[].Instances[] | select(.PublicIpAddress != null) | .PublicIpAddress'
 "52.15.184.15"
 
 $ ssh -A core@52.15.184.15
