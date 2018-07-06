@@ -1,6 +1,6 @@
 package workflow
 
-import "github.com/coreos/tectonic-installer/installer/pkg/config"
+import "github.com/openshift/installer/installer/pkg/config"
 
 // metadata is the state store of the current workflow execution.
 // It is meant to carry state for one step to another.

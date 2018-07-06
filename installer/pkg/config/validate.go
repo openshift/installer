@@ -7,8 +7,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/config/aws"
-	"github.com/coreos/tectonic-installer/installer/pkg/validate"
+	"github.com/openshift/installer/installer/pkg/config/aws"
+	"github.com/openshift/installer/installer/pkg/validate"
 
 	log "github.com/Sirupsen/logrus"
 	ignconfig "github.com/coreos/ignition/config/v2_2"

@@ -15,7 +15,7 @@ go_library(
     name = "go_default_library",
     srcs = ["validate.go"],
     data = glob(["fixtures/**"]),
-    importpath = "github.com/coreos/tectonic-installer/installer/pkg/validate",
+    importpath = "github.com/openshift/installer/installer/pkg/validate",
     visibility = ["//visibility:public"],
     deps = ["//vendor/github.com/dgrijalva/jwt-go:go_default_library"],
 )

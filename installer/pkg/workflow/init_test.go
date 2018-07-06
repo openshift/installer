@@ -15,7 +15,7 @@ import (
 
 	jose "gopkg.in/square/go-jose.v2"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/config"
+	"github.com/openshift/installer/installer/pkg/config"
 )
 
 func generatePullSecretAndLicense(name string, expiration time.Time) (*os.File, *os.File, error) {

@@ -10,7 +10,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/tls"
+	"github.com/openshift/installer/installer/pkg/tls"
 )
 
 const (

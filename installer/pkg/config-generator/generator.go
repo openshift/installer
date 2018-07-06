@@ -18,7 +18,7 @@ import (
 	"github.com/ghodss/yaml"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/config"
+	"github.com/openshift/installer/installer/pkg/config"
 )
 
 const (

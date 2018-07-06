@@ -4,7 +4,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/config"
+	"github.com/openshift/installer/installer/pkg/config"
 )
 
 func initConfig(t *testing.T, file string) ConfigGenerator {

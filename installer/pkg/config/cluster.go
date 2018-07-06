@@ -7,8 +7,8 @@ import (
 	"github.com/coreos/tectonic-config/config/tectonic-network"
 	"gopkg.in/yaml.v2"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/config/aws"
-	"github.com/coreos/tectonic-installer/installer/pkg/config/libvirt"
+	"github.com/openshift/installer/installer/pkg/config/aws"
+	"github.com/openshift/installer/installer/pkg/config/libvirt"
 )
 
 const (

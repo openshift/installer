@@ -8,8 +8,8 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/config"
-	configgenerator "github.com/coreos/tectonic-installer/installer/pkg/config-generator"
+	"github.com/openshift/installer/installer/pkg/config"
+	configgenerator "github.com/openshift/installer/installer/pkg/config-generator"
 )
 
 const (

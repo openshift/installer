@@ -9,8 +9,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/coreos/tectonic-installer/installer/pkg/config"
-	configgenerator "github.com/coreos/tectonic-installer/installer/pkg/config-generator"
+	"github.com/openshift/installer/installer/pkg/config"
+	configgenerator "github.com/openshift/installer/installer/pkg/config-generator"
 )
 
 const (
