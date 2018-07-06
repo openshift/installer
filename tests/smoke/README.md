@@ -34,7 +34,7 @@ Compile the smoke test binary from the root directory of the project:
 bazel build tests/smoke
 ```
 
-The tests can then be run by invoking the `smoke` binary in the `bin` directory.
+The tests can then be run by invoking the `smoke` binary in the `bazel-bin/tests/smoke/linux_amd64_stripped` directory.
 This binary accepts `--cluster` and `--qa` flags to specify which tests suites should be run, e.g.:
 
 ```sh
