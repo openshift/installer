@@ -41,6 +41,8 @@ const (
 	rootCAKeyPath            = "generated/newTLS/root-ca.key"
 	serviceServingCACertPath = "generated/newTLS/service-serving-ca.crt"
 	serviceServingCAKeyPath  = "generated/newTLS/service-serving-ca.key"
+	tncCertPath              = "generated/newTLS/tnc.crt"
+	tncKeyPath               = "generated/newTLS/tnc.key"
 
 	validityThreeYears = time.Hour * 24 * 365 * 3
 )
@@ -210,6 +212,19 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 
 	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, kubeletKeyPath, kubeletCertPath, cfg); err != nil {
 		return fmt.Errorf("failed to generate kubelet certificate: %v", err)
+	}
+
+	// TNC certs
+	tncDomain := fmt.Sprintf("%s-%s.%s", c.Name, "tnc", c.BaseDomain)
+	cfg = &tls.CertCfg{
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		DNSNames:     []string{tncDomain},
+		Subject:      pkix.Name{CommonName: tncDomain},
+		Validity:     validityThreeYears,
+		IsCA:         false}
+
+	if _, _, err = generateCert(clusterDir, caKey, caCert, tncKeyPath, tncCertPath, cfg); err != nil {
+		return fmt.Errorf("failed to generate tnc certs: %v", err)
 	}
 	return nil
 }
