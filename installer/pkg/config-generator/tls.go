@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"time"
 
 	"github.com/openshift/installer/installer/pkg/tls"
 )
@@ -27,6 +28,8 @@ const (
 	ingressCACertPath        = "generated/newTLS/ingress-ca.crt"
 	ingressCertPath          = "generated/newTLS/ingress.crt"
 	ingressKeyPath           = "generated/newTLS/ingress.key"
+
+	validityThreeYears = time.Hour * 24 * 365 * 3
 )
 
 // GenerateTLSConfig fetches and validates the TLS cert files
@@ -58,6 +61,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg := &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-ca", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		Validity:  validityThreeYears,
 		IsCA:      true,
 	}
 	kubeCAKey, kubeCACert, err = generateCert(clusterDir, caKey, caCert, kubeCAKeyPath, kubeCACertPath, cfg)
@@ -68,6 +72,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg = &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		Validity:  validityThreeYears,
 		IsCA:      true,
 	}
 	if _, _, err := generateCert(clusterDir, caKey, caCert, aggregatorCAKeyPath, aggregatorCACertPath, cfg); err != nil {
@@ -78,6 +83,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg = &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: "service-serving", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		Validity:  validityThreeYears,
 		IsCA:      true,
 	}
 	if _, _, err := generateCert(clusterDir, caKey, caCert, serviceServiceCAKeyPath, serviceServiceCACertPath, cfg); err != nil {
@@ -94,6 +100,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		DNSNames:     []string{baseAddress, fmt.Sprintf("%s.%s", "*", baseAddress)},
 		Subject:      pkix.Name{CommonName: baseAddress, Organization: []string{"ingress"}},
+		Validity:     validityThreeYears,
 		IsCA:         false}
 
 	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, ingressKeyPath, ingressCertPath, cfg); err != nil {
@@ -206,6 +213,7 @@ func generateRootCA(path string, key *rsa.PrivateKey) (*x509.Certificate, error)
 			OrganizationalUnit: []string{"openshift"},
 		},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		Validity:  validityThreeYears,
 		IsCA:      true,
 	}
 	cert, err := tls.SelfSignedCACert(cfg, key)
