@@ -24,6 +24,9 @@ const (
 	rootCAKeyPath            = "generated/newTLS/root-ca.key"
 	serviceServiceCACertPath = "generated/newTLS/service-serving-ca.crt"
 	serviceServiceCAKeyPath  = "generated/newTLS/service-serving-ca.key"
+	ingressCACertPath        = "generated/newTLS/ingress-ca.crt"
+	ingressCertPath          = "generated/newTLS/ingress.crt"
+	ingressKeyPath           = "generated/newTLS/ingress.key"
 )
 
 // GenerateTLSConfig fetches and validates the TLS cert files
@@ -31,7 +34,12 @@ const (
 func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	var caKey *rsa.PrivateKey
 	var caCert *x509.Certificate
+	var kubeCAKey *rsa.PrivateKey
+	var kubeCACert *x509.Certificate
 	var err error
+	var baseAddress string
+
+	baseAddress = c.getBaseAddress()
 
 	if c.CA.RootCAKeyPath == "" && c.CA.RootCACertPath == "" {
 		caCert, caKey, err = generateRootCert(clusterDir)
@@ -47,17 +55,49 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	}
 
 	// generate kube CA
-	cfg := &tls.CertCfg{KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign, IsCA: true}
-	if err := generateCert(clusterDir, caKey, caCert, kubeCAKeyPath, kubeCACertPath, "kube-ca", "bootkube", cfg); err != nil {
+	cfg := &tls.CertCfg{
+		Subject:   pkix.Name{CommonName: "kube-ca", OrganizationalUnit: []string{"bootkube"}},
+		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		IsCA:      true,
+	}
+	kubeCAKey, kubeCACert, err = generateCert(clusterDir, caKey, caCert, kubeCAKeyPath, kubeCACertPath, cfg)
+	if err != nil {
 		return fmt.Errorf("failed to generate kube CAs: %v", err)
 	}
 	// generate aggregator CA
-	if err := generateCert(clusterDir, caKey, caCert, aggregatorCAKeyPath, aggregatorCACertPath, "aggregator", "bootkube", cfg); err != nil {
+	cfg = &tls.CertCfg{
+		Subject:   pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
+		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		IsCA:      true,
+	}
+	if _, _, err := generateCert(clusterDir, caKey, caCert, aggregatorCAKeyPath, aggregatorCACertPath, cfg); err != nil {
 		return fmt.Errorf("failed to generate aggregator CAs: %v", err)
 	}
+
 	// generate service-serving CA
-	if err := generateCert(clusterDir, caKey, caCert, serviceServiceCAKeyPath, serviceServiceCACertPath, "service-serving", "bootkube", cfg); err != nil {
+	cfg = &tls.CertCfg{
+		Subject:   pkix.Name{CommonName: "service-serving", OrganizationalUnit: []string{"bootkube"}},
+		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		IsCA:      true,
+	}
+	if _, _, err := generateCert(clusterDir, caKey, caCert, serviceServiceCAKeyPath, serviceServiceCACertPath, cfg); err != nil {
 		return fmt.Errorf("failed to generate service-serving CAs: %v", err)
+	}
+
+	// Ingress certs
+	if copyFile(kubeCACertPath, ingressCACertPath); err != nil {
+		return fmt.Errorf("failed to import kube CA cert into ingress-ca.crt: %v", err)
+	}
+
+	cfg = &tls.CertCfg{
+		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		DNSNames:     []string{baseAddress, fmt.Sprintf("%s.%s", "*", baseAddress)},
+		Subject:      pkix.Name{CommonName: baseAddress, Organization: []string{"ingress"}},
+		IsCA:         false}
+
+	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, ingressKeyPath, ingressCertPath, cfg); err != nil {
+		return fmt.Errorf("failed to generate ingress CAs: %v", err)
 	}
 	return nil
 }
@@ -130,41 +170,31 @@ func generateCert(clusterDir string,
 	caCert *x509.Certificate,
 	keyPath string,
 	certPath string,
-	commonName string,
-	orgUnit string,
-	cfg *tls.CertCfg) error {
+	cfg *tls.CertCfg) (*rsa.PrivateKey, *x509.Certificate, error) {
 
 	// create a private key
 	key, err := generatePrivateKey(clusterDir, keyPath)
 	if err != nil {
-		return fmt.Errorf("failed to generate private key: %v", err)
+		return nil, nil, fmt.Errorf("failed to generate private key: %v", err)
 	}
 
 	// create a CSR
-	csrConfig := struct {
-		subject pkix.Name
-	}{
-		subject: pkix.Name{
-			CommonName:         commonName,
-			OrganizationalUnit: []string{orgUnit},
-		},
-	}
-	csrTmpl := x509.CertificateRequest{Subject: csrConfig.subject}
+	csrTmpl := x509.CertificateRequest{Subject: cfg.Subject, DNSNames: cfg.DNSNames}
 	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &csrTmpl, key)
 	if err != nil {
-		return fmt.Errorf("error creating certificate request: %v", err)
+		return nil, nil, fmt.Errorf("error creating certificate request: %v", err)
 	}
 	csr, err := x509.ParseCertificateRequest(csrBytes)
 	if err != nil {
-		return fmt.Errorf("error parsing certificate request: %v", err)
+		return nil, nil, fmt.Errorf("error parsing certificate request: %v", err)
 	}
 
 	// create a cert
-	_, err = generateSignedCert(cfg, csr, key, caKey, caCert, clusterDir, certPath)
+	cert, err := generateSignedCert(cfg, csr, key, caKey, caCert, clusterDir, certPath)
 	if err != nil {
-		return fmt.Errorf("failed to create a certificate: %v", err)
+		return nil, nil, fmt.Errorf("failed to create a certificate: %v", err)
 	}
-	return nil
+	return key, cert, nil
 }
 
 // generateRootCA creates and returns the root CA
