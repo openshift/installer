@@ -12,6 +12,8 @@ We should strive to _never require_ end-users to use or install `make`, `npm`, e
 
 ## Developer experience
 
-The developer workflow is reflective of how often clusters will be created and destroyed. This project makes heavy use of `make` to make these repetitive actions easier.
+The developer workflow is reflective of how often clusters will be created and destroyed. This project makes heavy use of [Bazel][] to make these repetitive actions easier.
 
 It is expected that developers have a working knowledge of Terraform, including how to configure/use a `.terraformrc` and things of that nature.
+
+[Bazel]: https://bazel.build/
