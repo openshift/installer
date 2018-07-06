@@ -10,8 +10,8 @@ go_test(
 go_library(
     name = "go_default_library",
     srcs = [
-      "tls.go",
-      "utils.go",
+        "tls.go",
+        "utils.go",
     ],
     importpath = "github.com/coreos/tectonic-installer/installer/pkg/tls",
     visibility = ["//visibility:public"],
