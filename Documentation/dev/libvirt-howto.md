@@ -12,8 +12,8 @@ In this example, we'll set the baseDomain to `tt.testing`, the name to `test1` a
 
 #### 1.2 Clone the repo
 ```
-git clone https://github.com/coreos/tectonic-installer.git
-cd tectonic-installer
+git clone https://github.com/openshift/installer.git
+cd installer
 ```
 
 #### 1.3 Download the Container Linux image

@@ -18,7 +18,7 @@ If we're wrong, PLEASE feel free to reopen it and explain why.
 
 ## Versions
 
-### Tectonic version ([release](https://github.com/coreos/tectonic-installer/releases) or commit hash):
+### Tectonic version ([release](https://github.com/openshift/installer/releases) or commit hash):
 ```
 enter text here
 ```

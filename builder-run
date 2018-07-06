@@ -21,4 +21,4 @@ done
 
 PROJECT=$SCRIPT_DIR
 set -x
-docker run --user="${BUILDER_RUN_USER}" $ENV_STR --rm -v $PROJECT:/go/src/github.com/coreos/tectonic-installer -w /go/src/github.com/coreos/tectonic-installer $DOCKER_RUN_ARGS $BUILDER_IMAGE $@
+docker run --user="${BUILDER_RUN_USER}" $ENV_STR --rm -v $PROJECT:/go/src/github.com/openshift/installer -w /go/src/github.com/openshift/installer $DOCKER_RUN_ARGS $BUILDER_IMAGE $@
