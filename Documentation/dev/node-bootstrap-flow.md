@@ -33,8 +33,6 @@ Additionally, only on one of the master nodes the following kubernetes bootstrap
 * `bootkube.service` deploys the initial bootstrapping control-plane. It is started only after `kubelet.service` _is started_. It is a oneshot unit and cannot crash, and it runs only during bootstrap
 * `tectonic.service` deploys tectonic control-plane. It is started only after `bootkube.service` _has completed_.  It is a oneshot unit and cannot crash, and it runs only during bootstrap
 
-[tectonic-torcx]: https://github.com/coreos/tectonic-torcx
-
 ## Service ordering
 
 Service ordering is enforced via systemd dependencies. This is the rationale for the settings, with relevant snippets:

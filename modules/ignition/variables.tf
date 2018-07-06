@@ -45,12 +45,6 @@ variable "cloud_provider_config" {
   default     = ""
 }
 
-variable "torcx_store_url" {
-  type        = "string"
-  description = "(optional) URL template for torcx store. Leave empty to use the default CoreOS endpoint."
-  default     = ""
-}
-
 variable "etcd_count" {
   type    = "string"
   default = 0
