@@ -131,12 +131,16 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg = &tls.CertCfg{
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
-		DNSNames:     []string{baseAddress, fmt.Sprintf("%s.%s", "*", baseAddress)},
-		Subject:      pkix.Name{CommonName: baseAddress, Organization: []string{"ingress"}},
-		Validity:     validityThreeYears,
-		IsCA:         false}
+		DNSNames: []string{
+			baseAddress,
+			fmt.Sprintf("%s.%s", "*", baseAddress),
+		},
+		Subject:  pkix.Name{CommonName: baseAddress, Organization: []string{"ingress"}},
+		Validity: validityThreeYears,
+		IsCA:     false,
+	}
 
-	if _, _, err = generateCert(clusterDir, kubeCAKey, kubeCACert, ingressKeyPath, ingressCertPath, cfg); err != nil {
+	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, ingressKeyPath, ingressCertPath, cfg); err != nil {
 		return fmt.Errorf("failed to generate ingress CA: %v", err)
 	}
 
@@ -146,7 +150,8 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
 		Validity:     validityThreeYears,
-		IsCA:         false}
+		IsCA:         false,
+	}
 
 	if _, _, err = generateCert(clusterDir, kubeCAKey, kubeCACert, adminKeyPath, adminCertPath, cfg); err != nil {
 		return fmt.Errorf("failed to generate kube admin certificate: %v", err)
@@ -161,10 +166,16 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Subject:      pkix.Name{CommonName: "kube-apiserver", Organization: []string{"kube-master"}},
-		DNSNames:     []string{fmt.Sprintf("%s-%s.%s", c.Name, "api", c.BaseDomain), "kubernetes", "kubernetes.default", "kubernetes.default.svc", "kubernetes.default.svc.cluster.local"},
-		Validity:     validityThreeYears,
-		IPAddresses:  []net.IP{net.ParseIP(apiServerAddress)},
-		IsCA:         false}
+		DNSNames: []string{
+			fmt.Sprintf("%s-api.%s", c.Name, c.BaseDomain),
+			"kubernetes", "kubernetes.default",
+			"kubernetes.default.svc",
+			"kubernetes.default.svc.cluster.local",
+		},
+		Validity:    validityThreeYears,
+		IPAddresses: []net.IP{net.ParseIP(apiServerAddress)},
+		IsCA:        false,
+	}
 
 	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, apiServerKeyPath, apiServerCertPath, cfg); err != nil {
 		return fmt.Errorf("failed to generate kube api server certificate: %v", err)
@@ -184,10 +195,11 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 			"localhost", "127.0.0.1"},
 		Validity:    validityThreeYears,
 		IPAddresses: []net.IP{net.ParseIP(apiServerAddress)},
-		IsCA:        false}
+		IsCA:        false,
+	}
 
 	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, osAPIServerKeyPath, osAPIServerCertPath, cfg); err != nil {
-		return fmt.Errorf("failed to generate kube openshift server certificate: %v", err)
+		return fmt.Errorf("failed to generate openshift api server certificate: %v", err)
 	}
 
 	// Kube API proxy certs
@@ -196,7 +208,8 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Subject:      pkix.Name{CommonName: "kube-apiserver-proxy", Organization: []string{"kube-master"}},
 		Validity:     validityThreeYears,
-		IsCA:         false}
+		IsCA:         false,
+	}
 
 	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, apiServerProxyKeyPath, apiServerProxyCertPath, cfg); err != nil {
 		return fmt.Errorf("failed to generate kube api proxy certificate: %v", err)
@@ -208,23 +221,25 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Subject:      pkix.Name{CommonName: "system:serviceaccount:kube-system:default", Organization: []string{"system:serviceaccounts:kube-system"}},
 		Validity:     validityThreeYears,
-		IsCA:         false}
+		IsCA:         false,
+	}
 
 	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, kubeletKeyPath, kubeletCertPath, cfg); err != nil {
 		return fmt.Errorf("failed to generate kubelet certificate: %v", err)
 	}
 
 	// TNC certs
-	tncDomain := fmt.Sprintf("%s-%s.%s", c.Name, "tnc", c.BaseDomain)
+	tncDomain := fmt.Sprintf("%s-tnc.%s", c.Name, c.BaseDomain)
 	cfg = &tls.CertCfg{
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		DNSNames:     []string{tncDomain},
 		Subject:      pkix.Name{CommonName: tncDomain},
 		Validity:     validityThreeYears,
-		IsCA:         false}
+		IsCA:         false,
+	}
 
-	if _, _, err = generateCert(clusterDir, caKey, caCert, tncKeyPath, tncCertPath, cfg); err != nil {
-		return fmt.Errorf("failed to generate tnc certs: %v", err)
+	if _, _, err := generateCert(clusterDir, caKey, caCert, tncKeyPath, tncCertPath, cfg); err != nil {
+		return fmt.Errorf("failed to generate tnc certificate: %v", err)
 	}
 	return nil
 }

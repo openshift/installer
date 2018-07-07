@@ -1,10 +1,14 @@
 package configgenerator
 
 import (
+	"crypto/x509"
+	"crypto/x509/pkix"
 	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/openshift/installer/installer/pkg/config"
+	"github.com/openshift/installer/installer/pkg/tls"
 )
 
 func initConfig(t *testing.T, file string) ConfigGenerator {
@@ -113,6 +117,62 @@ func TestCIDRHost(t *testing.T) {
 		}
 		if got != tc.expected {
 			t.Errorf("Test case %s: expected: %s, got: %s", tc.test, tc.expected, got)
+		}
+	}
+}
+
+func TestGenerateCert(t *testing.T) {
+	caKey, err := tls.PrivateKey()
+	if err != nil {
+		t.Fatalf("Failed to generate Private Key: %v", err)
+	}
+	caCfg := &tls.CertCfg{
+		Subject: pkix.Name{
+			CommonName:         "test-self-signed-ca",
+			OrganizationalUnit: []string{"openshift"},
+		},
+		Validity: validityThreeYears,
+	}
+	caCert, err := tls.SelfSignedCACert(caCfg, caKey)
+	if err != nil {
+		t.Fatalf("failed to generate self signed certificate: %v", err)
+	}
+	keyPath := "./test.key"
+	certPath := "./test.crt"
+
+	cases := []struct {
+		cfg        *tls.CertCfg
+		clusterDir string
+		err        bool
+	}{
+		{
+			cfg: &tls.CertCfg{
+				Subject:      pkix.Name{CommonName: "test-cert", OrganizationalUnit: []string{"test"}},
+				KeyUsages:    x509.KeyUsageKeyEncipherment,
+				DNSNames:     []string{"test-api.kubernetes.default"},
+				ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+				Validity:     validityThreeYears,
+				IsCA:         false,
+			},
+			clusterDir: "./",
+			err:        false,
+		},
+	}
+	for i, c := range cases {
+		_, _, err := generateCert(c.clusterDir, caKey, caCert, keyPath, certPath, c.cfg)
+		if err != nil {
+			no := "no"
+			if c.err {
+				no = "an"
+			}
+			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
+		}
+
+		if err := os.Remove(keyPath); err != nil {
+			t.Errorf("test case %d: failed to cleanup test key: %s, got %v", i, keyPath, err)
+		}
+		if err := os.Remove(certPath); err != nil {
+			t.Errorf("test case %d: failed to cleanup test certificate: %s, got %v", i, certPath, err)
 		}
 	}
 }
