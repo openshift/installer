@@ -77,7 +77,7 @@ private_zones=$(aws route53 list-hosted-zones | \
                 jq ".HostedZones[] | select(.Config.PrivateZone == true) | .Id" | \
                 sed "s@\"@@g")
 
-for key in $(echo -e "$tags" | jq ".[].Key"); do
+for key in $(echo "$tags" | jq ".[].Key"); do
   for zone in $private_zones; do
     zone="${zone##*/}"
     is_not_tagged=$(aws route53 list-tags-for-resource \
@@ -87,7 +87,7 @@ for key in $(echo -e "$tags" | jq ".[].Key"); do
     if [ -z "$is_not_tagged" ]; then
       if aws route53 change-tags-for-resource \
       --resource-type hostedzone \
-      --add-tags "$(echo -e "$tags")" \
+      --add-tags "$tags" \
       --resource-id "${zone##*/}"; then
         echo "Tagged hosted zone ${zone##*/}"
       else
