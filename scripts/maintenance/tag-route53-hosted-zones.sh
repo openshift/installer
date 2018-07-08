@@ -45,8 +45,8 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-if ! command -v jq > /dev/null || ! command -v aws > /dev/null; then
-  "Dependencies not installed."
+if ! command -V jq >/dev/null || ! command -V aws >/dev/null; then
+  echo "Missing required dependencies" >&2
   exit 1
 fi
 
