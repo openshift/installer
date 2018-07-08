@@ -68,7 +68,7 @@ echo "$tags"
 if [ ! $force ]; then
   read -rp "Proceed tagging these resources? [y/N]: " yn
   if [ "$yn" != "y" ]; then
-    echo "Aborting tagging and cleaning up."
+    echo "Aborting tagging and cleaning up." >&2
     exit 1
   fi
 fi
@@ -91,7 +91,7 @@ for key in $(echo -e "$tags" | jq ".[].Key"); do
       --resource-id "${zone##*/}"; then
         echo "Tagged hosted zone ${zone##*/}"
       else
-        echo "Error tagging hosted zone ${zone##*/}"
+        echo "Error tagging hosted zone ${zone##*/}" >&2
       fi
     fi
   done

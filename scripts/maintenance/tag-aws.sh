@@ -117,17 +117,17 @@ if [ -n "$AWS_REGION" ]; then
 fi
 
 if [ -z "$version" ]; then
-  echo "Grafiti image version required."
+  echo "Grafiti image version required." >&2
   exit 1
 fi
 
 if [ -z "$start_hour" ] || [ -z "$end_hour" ]; then
-  echo "Start hour and end hour must be specified."
+  echo "Start hour and end hour must be specified." >&2
   exit 1
 fi
 
 if [ -z "$region" ]; then
-  echo "Must provide an AWS region, set the AWS_REGION, or set a region in your ~/.aws/config}"
+  echo "Must provide an AWS region, set the AWS_REGION, or set a region in your ~/.aws/config" >&2
   exit 1
 fi
 
@@ -179,7 +179,7 @@ fi
 if [ ! $force ]; then
   read -rp "Proceed tagging these resources? [y/N]: " yn
   if [ "$yn" != "y" ]; then
-    echo "Aborting tagging and cleaning up."
+    echo "Aborting tagging and cleaning up." >&2
     exit 1
   fi
 fi
