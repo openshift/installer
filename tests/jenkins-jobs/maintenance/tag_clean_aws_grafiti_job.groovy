@@ -77,7 +77,6 @@ for region in "\${regions[@]}"; do
   \$SCRIPT_DIR/maintenance/\$TAG_CLEAN.sh \\
     --grafiti-version "\$GRAFITI_VERSION" \\
     --aws-region "\$region" \\
-    --workspace-dir "\$WORKSPACE" \\
     --force \\
     \$DATE_OVERRIDE_FLAG
 done

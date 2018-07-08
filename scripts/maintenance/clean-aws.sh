@@ -31,9 +31,6 @@ Options:
                     is replaced with either the following days' date or date-override.
                     Only use if --tag-file is not used.
 
-  --workspace-dir   (optional) Parent directory for a temporary directory. /tmp is
-                    used by default.
-
   --dry-run         (optional) If set, grafiti will only do a dry run, i.e. not
                     delete any resources.
 
@@ -46,7 +43,6 @@ region=
 config_file=
 tag_file=
 date_override=
-workspace=
 dry_run=
 
 while [ $# -gt 0 ]; do
@@ -76,10 +72,6 @@ while [ $# -gt 0 ]; do
     ;;
     --date-override)
       date_override="${2:-}"
-      shift
-    ;;
-    --workspace-dir)
-      workspace="${2:-}"
       shift
     ;;
     --dry-run)
@@ -119,19 +111,19 @@ fi
 
 set -e
 
-tmp_dir="/tmp/config"
-if [ -n "$workspace" ]; then
-  tmp_dir="$(readlink -m "${workspace}/config")"
-fi
+tmp_dir="$(readlink -m "$(mktemp -d clean-aws-XXXXXXXXXX)")"
 mkdir -p "$tmp_dir"
 trap 'rm -rf "$tmp_dir"; exit' EXIT
 
-if [ -z "$config_file" ]; then
-  config_file="$(mktemp -p "$tmp_dir" --suffix=.toml)"
-  echo "maxNumRequestRetries = 11" > "$config_file"
+if [ -n "$config_file" ]; then
+  cat "$config_file" >"$tmp_dir/config.toml"
+else
+  echo "maxNumRequestRetries = 11" >"$tmp_dir/config.toml"
 fi
 
-if [ -z "$tag_file" ]; then
+if [ -n "$tag_file" ]; then
+  cat "$tag_file" >"$tmp_dir/tag.json"
+else
   tag_file="$(mktemp -p "$tmp_dir")"
 
   date_string="$(date "+%Y-%m-%d" -d "-1 day")\",\"$(date "+%Y-%-m-%-d" -d "-1 day")\",
@@ -142,7 +134,7 @@ if [ -z "$tag_file" ]; then
   	date_string="$date_override"
   fi
 
-  cat <<EOF > "$tag_file"
+  cat <<EOF >"$tmp_dir/tag.json"
 {"TagFilters":[{"Key":"expirationDate","Values":["${date_string}"]}]}
 EOF
 fi
@@ -170,8 +162,8 @@ docker run -t --rm --name grafiti-deleter \
 	-e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
   -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
   -e AWS_REGION="$region" \
-	-e CONFIG_FILE="/tmp/config/$(basename "$config_file")" \
-	-e TAG_FILE="/tmp/config/$(basename "$tag_file")" \
+	-e CONFIG_FILE="/tmp/config/config.toml" \
+	-e TAG_FILE="/tmp/config/tag.json" \
 	quay.io/coreos/grafiti:"${version}" \
 	bash -c "grafiti $dry_run --config \"\$CONFIG_FILE\" --ignore-errors delete --all-deps --delete-file \"\$TAG_FILE\""
 

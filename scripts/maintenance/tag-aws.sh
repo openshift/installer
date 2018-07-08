@@ -35,9 +35,6 @@ Options:
                     with 'expirationDate: some-date-string', where some-date-string
                     is replaced with either the following days' date or date-override.
 
-  --workspace-dir   (optional) Parent directory for a temporary directory. /tmp is
-                    used by default.
-
   --dry-run         (optional) If set, grafiti will only do a dry run, i.e. not tag
                     any resources.
 
@@ -50,7 +47,6 @@ region=
 config_file=
 exclude_file=
 date_override=
-workspace=
 start_hour=8
 end_hour=1
 dry_run=
@@ -90,10 +86,6 @@ while [ $# -gt 0 ]; do
     ;;
     --date-override)
       date_override="${2:-}"
-      shift
-    ;;
-    --workspace-dir)
-      workspace="${2:-}"
       shift
     ;;
     --dry-run)
@@ -136,11 +128,7 @@ set -e
 # Tag all resources present in CloudTrail over the specified time period with the
 # following day's date as default, or with the DATE_VALUE_OVERRIDE value.
 # Format YYYY-MM-DD.
-tmp_dir="/tmp/config"
-if [ -n "$workspace" ]; then
-  tmp_dir="$(readlink -m "${workspace}/config")"
-fi
-mkdir -p "$tmp_dir"
+tmp_dir="$(readlink -m "$(mktemp -d tag-aws-XXXXXXXXXX)")"
 trap 'rm -rf "$tmp_dir"; exit' EXIT
 
 date_string='now|strftime(\"%Y-%m-%d\")'
@@ -150,9 +138,10 @@ fi
 
 # Configure grafiti to tag all resources created between START_HOUR and END_HOUR's
 # ago
-if [ -z "$config_file" ]; then
-  config_file="$(mktemp -p "$tmp_dir" --suffix=.toml)"
-  cat <<EOF > "$config_file"
+if [ -n "$config_file" ]; then
+  cat "$config_file" >"$tmp_dir/config.toml"
+else
+  cat <<EOF >"$tmp_dir/config.toml"
 endHour = -${end_hour}
 startHour = -${start_hour}
 includeEvent = false
@@ -164,13 +153,14 @@ fi
 
 # Exclusion file prevents tagging of resources that already have tags with the key
 # "expirationDate"
-if [ -z "$exclude_file" ]; then
-  exclude_file="$(mktemp -p "$tmp_dir")"
-  echo '{"TagFilters":[{"Key":"expirationDate","Values":[]}]}' > "$exclude_file"
+if [ -n "$exclude_file" ]; then
+  cat "$exclude_file" >"$tmp_dir/exclude"
+else
+  echo '{"TagFilters":[{"Key":"expirationDate","Values":[]}]}' >"$tmp_dir/exclude"
 fi
 
 echo "Tagging resources with the following configuration:"
-cat "$config_file"
+cat "$tmp_dir/config.toml"
 
 if [ -n "$dry_run" ]; then
   echo "Dry run flag set. Not tagging any resources."
@@ -192,8 +182,8 @@ docker run -t --rm --name grafiti-tagger \
 	-e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
   -e AWS_SESSION_TOKEN="$AWS_SESSION_TOKEN" \
   -e AWS_REGION="$region" \
-	-e CONFIG_FILE="/tmp/config/$(basename "$config_file")" \
-	-e TAG_FILE="/tmp/config/$(basename "$exclude_file")" \
+	-e CONFIG_FILE="/tmp/config/config.toml" \
+	-e TAG_FILE="/tmp/config/exclude" \
 	quay.io/coreos/grafiti:"${version}" \
   bash -c "grafiti --config \"\$CONFIG_FILE\" parse | \
 	grafiti --config \"\$CONFIG_FILE\" filter --ignore-file \"\$TAG_FILE\" | \
