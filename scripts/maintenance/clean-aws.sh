@@ -4,6 +4,7 @@ usage() {
   cat <<EOF
 
 $(basename "$0") deletes AWS resources tagged with tags specified in a tag file.
+Requires that 'docker' and 'jq' are installed.
 
 AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environmental variables must be set.
 
@@ -91,6 +92,11 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
+
+if ! command -V docker >/dev/null || ! command -V jq >/dev/null; then
+  echo "Missing required dependencies" >&2
+  exit 1
+fi
 
 if [ -n "$AWS_REGION" ]; then
   region="${AWS_REGION:-}"

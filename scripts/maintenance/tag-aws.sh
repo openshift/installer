@@ -5,8 +5,8 @@ usage() {
 
 $(basename "$0") tags AWS resources with 'expirationDate: some-date-string',
 defaulting to the following days' date, and excludes all resources tagged with
-tag keys/values specified in an 'exclude' file. Requires that both 'jq' and the
-AWS CLI are installed.
+tag keys/values specified in an 'exclude' file. Requires that 'docker' is
+installed.
 
 AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environmental variables must be set.
 
@@ -106,6 +106,11 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
+
+if ! command -V docker >/dev/null; then
+  echo "Missing required dependencies" >&2
+  exit 1
+fi
 
 if [ -n "$AWS_REGION" ]; then
   region="${AWS_REGION:-}"
