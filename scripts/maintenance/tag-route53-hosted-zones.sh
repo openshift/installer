@@ -38,8 +38,8 @@ while [ $# -gt 0 ]; do
       shift
     ;;
     *)
-      echo "Flag '$2' is not supported."
-      exit
+      echo "Flag '$1' is not supported." >&2
+      exit 1
     ;;
   esac
   shift
