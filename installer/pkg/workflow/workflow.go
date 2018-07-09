@@ -6,7 +6,7 @@ import "github.com/openshift/installer/installer/pkg/config"
 // It is meant to carry state for one step to another.
 // When creating a new workflow, initial state from external parameters
 // is also injected by when initializing the metadata object.
-// Steps taked their inputs from the metadata object and persist
+// Steps take their inputs from the metadata object and persist
 // results onto it for later consumption.
 type metadata struct {
 	cluster        config.Cluster
