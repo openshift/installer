@@ -158,5 +158,5 @@ func ignCfgToFile(ignCfg ignconfigtypes.Config, filePath string) error {
 		return err
 	}
 
-	return writeFile(filePath, string(data))
+	return ioutil.WriteFile(filePath, data, 0666)
 }

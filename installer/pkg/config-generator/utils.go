@@ -1,25 +1,9 @@
 package configgenerator
 
 import (
-	"bufio"
 	"io"
 	"os"
 )
-
-func writeFile(path, content string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	w := bufio.NewWriter(f)
-	if _, err := f.WriteString(content); err != nil {
-		return err
-	}
-	w.Flush()
-
-	return nil
-}
 
 func copyFile(fromFilePath, toFilePath string) error {
 	from, err := os.Open(fromFilePath)

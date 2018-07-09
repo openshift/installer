@@ -1,10 +1,10 @@
 package workflow
 
 import (
-	"bufio"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -98,7 +98,7 @@ func generateClusterConfigMaps(m *metadata) error {
 	}
 
 	kcoConfigFilePath := filepath.Join(clusterGeneratedPath, kcoConfigFileName)
-	if err := writeFile(kcoConfigFilePath, kcoConfig); err != nil {
+	if err := ioutil.WriteFile(kcoConfigFilePath, []byte(kcoConfig), 0666); err != nil {
 		return err
 	}
 
@@ -108,7 +108,7 @@ func generateClusterConfigMaps(m *metadata) error {
 	}
 
 	tncoConfigFilePath := filepath.Join(clusterGeneratedPath, tncoConfigFileName)
-	if err := writeFile(tncoConfigFilePath, tncoConfig); err != nil {
+	if err := ioutil.WriteFile(tncoConfigFilePath, []byte(tncoConfig), 0666); err != nil {
 		return err
 	}
 
@@ -123,7 +123,7 @@ func generateClusterConfigMaps(m *metadata) error {
 	}
 
 	kubeSystemConfigFilePath := filepath.Join(kubePath, kubeSystemFileName)
-	if err := writeFile(kubeSystemConfigFilePath, kubeSystem); err != nil {
+	if err := ioutil.WriteFile(kubeSystemConfigFilePath, []byte(kubeSystem), 0666); err != nil {
 		return err
 	}
 
@@ -138,7 +138,7 @@ func generateClusterConfigMaps(m *metadata) error {
 	}
 
 	tectonicSystemConfigFilePath := filepath.Join(tectonicPath, tectonicSystemFileName)
-	return writeFile(tectonicSystemConfigFilePath, tectonicSystem)
+	return ioutil.WriteFile(tectonicSystemConfigFilePath, []byte(tectonicSystem), 0666)
 }
 
 func readClusterConfig(configFilePath string, internalFilePath string) (*config.Cluster, error) {
@@ -175,22 +175,6 @@ func readClusterConfigStep(m *metadata) error {
 	}
 
 	m.cluster = *cluster
-
-	return nil
-}
-
-func writeFile(path, content string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	w := bufio.NewWriter(f)
-	if _, err := fmt.Fprintln(w, content); err != nil {
-		return err
-	}
-	w.Flush()
 
 	return nil
 }

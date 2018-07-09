@@ -3,6 +3,7 @@ package workflow
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
@@ -57,7 +58,7 @@ func buildInternalConfig(clusterDir string) error {
 	if err != nil {
 		return err
 	}
-	return writeFile(filepath.Join(clusterDir, internalFileName), string(internalFileContent))
+	return ioutil.WriteFile(filepath.Join(clusterDir, internalFileName), internalFileContent, 0666)
 }
 
 func generateTerraformVariablesStep(m *metadata) error {
@@ -67,7 +68,7 @@ func generateTerraformVariablesStep(m *metadata) error {
 	}
 
 	terraformVariablesFilePath := filepath.Join(m.clusterDir, terraformVariablesFileName)
-	return writeFile(terraformVariablesFilePath, vars)
+	return ioutil.WriteFile(terraformVariablesFilePath, []byte(vars), 0666)
 }
 
 func prepareWorspaceStep(m *metadata) error {
