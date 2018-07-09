@@ -8,6 +8,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"path/filepath"
 	"time"
 
@@ -15,21 +16,33 @@ import (
 )
 
 const (
+	adminCertPath            = "generated/newTLS/admin.crt"
+	adminKeyPath             = "generated/newTLS/admin.key"
 	aggregatorCACertPath     = "generated/newTLS/aggregator-ca.crt"
 	aggregatorCAKeyPath      = "generated/newTLS/aggregator-ca.key"
+	apiServerCertPath        = "generated/newTLS/apiserver.crt"
+	apiServerKeyPath         = "generated/newTLS/apiserver.key"
+	apiServerProxyCertPath   = "generated/newTLS/apiserver-proxy.crt"
+	apiServerProxyKeyPath    = "generated/newTLS/apiserver-proxy.key"
 	etcdCACertPath           = "generated/newTLS/etcd-ca.crt"
 	etcdCAKeyPath            = "generated/newTLS/etcd-ca.key"
 	etcdClientCertPath       = "generated/newTLS/etcd-client.crt"
 	etcdClientKeyPath        = "generated/newTLS/etcd-client.key"
-	kubeCACertPath           = "generated/newTLS/kube-ca.crt"
-	kubeCAKeyPath            = "generated/newTLS/kube-ca.key"
-	rootCACertPath           = "generated/newTLS/root-ca.crt"
-	rootCAKeyPath            = "generated/newTLS/root-ca.key"
-	serviceServiceCACertPath = "generated/newTLS/service-serving-ca.crt"
-	serviceServiceCAKeyPath  = "generated/newTLS/service-serving-ca.key"
 	ingressCACertPath        = "generated/newTLS/ingress-ca.crt"
 	ingressCertPath          = "generated/newTLS/ingress.crt"
 	ingressKeyPath           = "generated/newTLS/ingress.key"
+	kubeCACertPath           = "generated/newTLS/kube-ca.crt"
+	kubeCAKeyPath            = "generated/newTLS/kube-ca.key"
+	kubeletCertPath          = "generated/newTLS/kubelet.crt"
+	kubeletKeyPath           = "generated/newTLS/kubelet.key"
+	osAPIServerCertPath      = "generated/newTLS/openshift-apiserver.crt"
+	osAPIServerKeyPath       = "generated/newTLS/openshift-apiserver.key"
+	rootCACertPath           = "generated/newTLS/root-ca.crt"
+	rootCAKeyPath            = "generated/newTLS/root-ca.key"
+	serviceServingCACertPath = "generated/newTLS/service-serving-ca.crt"
+	serviceServingCAKeyPath  = "generated/newTLS/service-serving-ca.key"
+	tncCertPath              = "generated/newTLS/tnc.crt"
+	tncKeyPath               = "generated/newTLS/tnc.key"
 
 	validityThreeYears = time.Hour * 24 * 365 * 3
 )
@@ -105,7 +118,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		Validity:  validityThreeYears,
 		IsCA:      true,
 	}
-	if _, _, err := generateCert(clusterDir, caKey, caCert, serviceServiceCAKeyPath, serviceServiceCACertPath, cfg); err != nil {
+	if _, _, err := generateCert(clusterDir, caKey, caCert, serviceServingCAKeyPath, serviceServingCACertPath, cfg); err != nil {
 		return fmt.Errorf("failed to generate service-serving CA: %v", err)
 	}
 
@@ -118,13 +131,115 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg = &tls.CertCfg{
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
-		DNSNames:     []string{baseAddress, fmt.Sprintf("%s.%s", "*", baseAddress)},
-		Subject:      pkix.Name{CommonName: baseAddress, Organization: []string{"ingress"}},
-		Validity:     validityThreeYears,
-		IsCA:         false}
+		DNSNames: []string{
+			baseAddress,
+			fmt.Sprintf("%s.%s", "*", baseAddress),
+		},
+		Subject:  pkix.Name{CommonName: baseAddress, Organization: []string{"ingress"}},
+		Validity: validityThreeYears,
+		IsCA:     false,
+	}
 
 	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, ingressKeyPath, ingressCertPath, cfg); err != nil {
-		return fmt.Errorf("failed to generate ingress CAs: %v", err)
+		return fmt.Errorf("failed to generate ingress CA: %v", err)
+	}
+
+	// Kube admin certs
+	cfg = &tls.CertCfg{
+		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
+		Validity:     validityThreeYears,
+		IsCA:         false,
+	}
+
+	if _, _, err = generateCert(clusterDir, kubeCAKey, kubeCACert, adminKeyPath, adminCertPath, cfg); err != nil {
+		return fmt.Errorf("failed to generate kube admin certificate: %v", err)
+	}
+
+	// Kube API server certs
+	apiServerAddress, err := cidrhost(c.Cluster.Networking.ServiceCIDR, 1)
+	if err != nil {
+		return fmt.Errorf("can't resolve api server host address: %v", err)
+	}
+	cfg = &tls.CertCfg{
+		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		Subject:      pkix.Name{CommonName: "kube-apiserver", Organization: []string{"kube-master"}},
+		DNSNames: []string{
+			fmt.Sprintf("%s-api.%s", c.Name, c.BaseDomain),
+			"kubernetes", "kubernetes.default",
+			"kubernetes.default.svc",
+			"kubernetes.default.svc.cluster.local",
+		},
+		Validity:    validityThreeYears,
+		IPAddresses: []net.IP{net.ParseIP(apiServerAddress)},
+		IsCA:        false,
+	}
+
+	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, apiServerKeyPath, apiServerCertPath, cfg); err != nil {
+		return fmt.Errorf("failed to generate kube api server certificate: %v", err)
+	}
+
+	// Kube API openshift certs
+	cfg = &tls.CertCfg{
+		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		Subject:      pkix.Name{CommonName: "openshift-apiserver", Organization: []string{"kube-master"}},
+		DNSNames: []string{
+			fmt.Sprintf("%s-%s.%s", c.Name, "api", c.BaseDomain),
+			"openshift-apiserver",
+			"openshift-apiserver.kube-system",
+			"openshift-apiserver.kube-system.svc",
+			"openshift-apiserver.kube-system.svc.cluster.local",
+			"localhost", "127.0.0.1"},
+		Validity:    validityThreeYears,
+		IPAddresses: []net.IP{net.ParseIP(apiServerAddress)},
+		IsCA:        false,
+	}
+
+	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, osAPIServerKeyPath, osAPIServerCertPath, cfg); err != nil {
+		return fmt.Errorf("failed to generate openshift api server certificate: %v", err)
+	}
+
+	// Kube API proxy certs
+	cfg = &tls.CertCfg{
+		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		Subject:      pkix.Name{CommonName: "kube-apiserver-proxy", Organization: []string{"kube-master"}},
+		Validity:     validityThreeYears,
+		IsCA:         false,
+	}
+
+	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, apiServerProxyKeyPath, apiServerProxyCertPath, cfg); err != nil {
+		return fmt.Errorf("failed to generate kube api proxy certificate: %v", err)
+	}
+
+	// Kubelet certs
+	cfg = &tls.CertCfg{
+		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
+		Subject:      pkix.Name{CommonName: "system:serviceaccount:kube-system:default", Organization: []string{"system:serviceaccounts:kube-system"}},
+		Validity:     validityThreeYears,
+		IsCA:         false,
+	}
+
+	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, kubeletKeyPath, kubeletCertPath, cfg); err != nil {
+		return fmt.Errorf("failed to generate kubelet certificate: %v", err)
+	}
+
+	// TNC certs
+	tncDomain := fmt.Sprintf("%s-tnc.%s", c.Name, c.BaseDomain)
+	cfg = &tls.CertCfg{
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		DNSNames:     []string{tncDomain},
+		Subject:      pkix.Name{CommonName: tncDomain},
+		Validity:     validityThreeYears,
+		IsCA:         false,
+	}
+
+	if _, _, err := generateCert(clusterDir, caKey, caCert, tncKeyPath, tncCertPath, cfg); err != nil {
+		return fmt.Errorf("failed to generate tnc certificate: %v", err)
 	}
 	return nil
 }
@@ -206,7 +321,7 @@ func generateCert(clusterDir string,
 	}
 
 	// create a CSR
-	csrTmpl := x509.CertificateRequest{Subject: cfg.Subject, DNSNames: cfg.DNSNames}
+	csrTmpl := x509.CertificateRequest{Subject: cfg.Subject, DNSNames: cfg.DNSNames, IPAddresses: cfg.IPAddresses}
 	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &csrTmpl, key)
 	if err != nil {
 		return nil, nil, fmt.Errorf("error creating certificate request: %v", err)
