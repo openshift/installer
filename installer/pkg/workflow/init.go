@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/installer/installer/pkg/config"
 	configgenerator "github.com/openshift/installer/installer/pkg/config-generator"
+	"github.com/openshift/installer/installer/pkg/copy"
 )
 
 const (
@@ -104,7 +105,7 @@ func prepareWorspaceStep(m *metadata) error {
 
 	// put config file under the clusterDir folder
 	configFilePath := filepath.Join(clusterDir, configFileName)
-	if err := copyFile(m.configFilePath, configFilePath); err != nil {
+	if err := copy.Copy(m.configFilePath, configFilePath); err != nil {
 		return fmt.Errorf("failed to create cluster config at %q: %v", clusterDir, err)
 	}
 
