@@ -21,7 +21,7 @@ const (
 	kubeSystemPath             = "generated/manifests"
 	kubeSystemFileName         = "cluster-config.yaml"
 	tectonicSystemPath         = "generated/tectonic"
-	newTLSPath                 = "generated/newTLS"
+	tlsPath                    = "generated/tls"
 	tectonicSystemFileName     = "cluster-config.yaml"
 	terraformVariablesFileName = "terraform.tfvars"
 )

@@ -17,7 +17,7 @@ func InstallFullWorkflow(clusterDir string) Workflow {
 			refreshConfigStep,
 			generateClusterConfigMaps,
 			readClusterConfigStep,
-			installTLSAssetsStep,
+			generateTLSConfigStep,
 			generateClusterConfigMaps,
 			installAssetsStep,
 			generateIgnConfigStep,
@@ -40,18 +40,6 @@ func InstallTLSNewWorkflow(clusterDir string) Workflow {
 			refreshConfigStep,
 			generateClusterConfigMaps,
 			generateTLSConfigStep,
-		},
-	}
-}
-
-// InstallTLSWorkflow creates the TLS assets, previously created by the
-// "assets" step
-func InstallTLSWorkflow(clusterDir string) Workflow {
-	return Workflow{
-		metadata: metadata{clusterDir: clusterDir},
-		steps: []Step{
-			refreshConfigStep,
-			installTLSAssetsStep,
 		},
 	}
 }
@@ -104,11 +92,6 @@ func refreshConfigStep(m *metadata) error {
 		return err
 	}
 	return generateTerraformVariablesStep(m)
-}
-
-func installTLSAssetsStep(m *metadata) error {
-	return runInstallStep(m, tlsStep)
-
 }
 
 func installAssetsStep(m *metadata) error {
@@ -166,8 +149,8 @@ func generateIgnConfigStep(m *metadata) error {
 }
 
 func generateTLSConfigStep(m *metadata) error {
-	if err := os.MkdirAll(filepath.Join(m.clusterDir, newTLSPath), os.ModeDir|0755); err != nil {
-		return fmt.Errorf("failed to create TLS directory at %s", newTLSPath)
+	if err := os.MkdirAll(filepath.Join(m.clusterDir, tlsPath), os.ModeDir|0755); err != nil {
+		return fmt.Errorf("failed to create TLS directory at %s", tlsPath)
 	}
 
 	c := configgenerator.New(m.cluster)
