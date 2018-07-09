@@ -91,6 +91,15 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		return fmt.Errorf("failed to generate etcd CA: %v", err)
 	}
 
+	err = copy.Copy(filepath.Join(clusterDir, etcdCAKeyPath), filepath.Join(clusterDir, "generated/tls/etcd-client-ca.key"))
+	if err != nil {
+		return fmt.Errorf("failed to import etcd CA key into etcd-client-ca.key: %v", err)
+	}
+	err = copy.Copy(filepath.Join(clusterDir, etcdCACertPath), filepath.Join(clusterDir, "generated/tls/etcd-client-ca.crt"))
+	if err != nil {
+		return fmt.Errorf("failed to import etcd CA cert into etcd-client-ca.crt: %v", err)
+	}
+
 	// generate etcd client certificate
 	cfg = &tls.CertCfg{
 		Subject:      pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
@@ -124,7 +133,8 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	}
 
 	// Ingress certs
-	if copy.Copy(kubeCACertPath, ingressCACertPath); err != nil {
+	err = copy.Copy(filepath.Join(clusterDir, kubeCACertPath), filepath.Join(clusterDir, ingressCACertPath))
+	if err != nil {
 		return fmt.Errorf("failed to import kube CA cert into ingress-ca.crt: %v", err)
 	}
 
