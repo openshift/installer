@@ -55,9 +55,10 @@ func findStepTemplates(stepName string, platform config.Platform) (string, error
 	if err != nil {
 		return "", fmt.Errorf("error looking up step %s templates: %v", stepName, err)
 	}
+	stepDir := filepath.Join(base, stepsBaseDir, stepName)
 	for _, path := range []string{
-		filepath.Join(base, stepsBaseDir, stepName, platformPath(platform)),
-		filepath.Join(base, stepsBaseDir, stepName)} {
+		filepath.Join(stepDir, string(platform)),
+		stepDir} {
 
 		stat, err := os.Stat(path)
 		if err != nil {
@@ -72,16 +73,6 @@ func findStepTemplates(stepName string, platform config.Platform) (string, error
 		return path, nil
 	}
 	return "", os.ErrNotExist
-}
-
-func platformPath(platform config.Platform) string {
-	switch platform {
-	case config.PlatformLibvirt:
-		return "libvirt"
-	case config.PlatformAWS:
-		return "aws"
-	}
-	panic("invalid platform")
 }
 
 func generateClusterConfigMaps(m *metadata) error {
