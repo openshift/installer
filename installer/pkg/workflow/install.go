@@ -13,7 +13,7 @@ import (
 func InstallFullWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
-		steps: []Step{
+		steps: []step{
 			refreshConfigStep,
 			generateClusterConfigMaps,
 			readClusterConfigStep,
@@ -36,7 +36,7 @@ func InstallFullWorkflow(clusterDir string) Workflow {
 func InstallTLSNewWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
-		steps: []Step{
+		steps: []step{
 			refreshConfigStep,
 			generateClusterConfigMaps,
 			generateTLSConfigStep,
@@ -49,7 +49,7 @@ func InstallTLSNewWorkflow(clusterDir string) Workflow {
 func InstallAssetsWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
-		steps: []Step{
+		steps: []step{
 			refreshConfigStep,
 			generateClusterConfigMaps,
 			installAssetsStep,
@@ -63,7 +63,7 @@ func InstallAssetsWorkflow(clusterDir string) Workflow {
 func InstallBootstrapWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
-		steps: []Step{
+		steps: []step{
 			refreshConfigStep,
 			installTopologyStep,
 			installTNCCNAMEStep,
@@ -79,7 +79,7 @@ func InstallBootstrapWorkflow(clusterDir string) Workflow {
 func InstallJoinWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
-		steps: []Step{
+		steps: []step{
 			refreshConfigStep,
 			installJoinMastersStep,
 			installJoinWorkersStep,

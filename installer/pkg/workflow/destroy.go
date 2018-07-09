@@ -6,7 +6,7 @@ package workflow
 func DestroyWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
-		steps: []Step{
+		steps: []step{
 			refreshConfigStep,
 			destroyJoinMastersStep,
 			destroyJoinWorkersStep,

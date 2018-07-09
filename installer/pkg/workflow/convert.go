@@ -13,7 +13,7 @@ import (
 func ConvertWorkflow(configFilePath string) Workflow {
 	return Workflow{
 		metadata: metadata{configFilePath: configFilePath},
-		steps: []Step{
+		steps: []step{
 			readTFVarsConfigStep,
 			printYAMLConfigStep,
 		},

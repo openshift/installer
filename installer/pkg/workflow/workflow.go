@@ -14,16 +14,16 @@ type metadata struct {
 	clusterDir     string
 }
 
-// Step is the entrypoint of a workflow step implementation.
+// step is the entrypoint of a workflow step implementation.
 // To add a new step, put your logic in a function that matches this signature.
 // Next, add a reference to this new function in a Workflow's steps list.
-type Step func(*metadata) error
+type step func(*metadata) error
 
 // Workflow is a high-level representation
 // of a set of actions performed in a predictable order.
 type Workflow struct {
 	metadata metadata
-	steps    []Step
+	steps    []step
 }
 
 // Execute runs all steps in order.
