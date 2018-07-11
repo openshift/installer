@@ -1,3 +1,5 @@
+DO NOT MERGE
+
 [![Build Status](https://travis-ci.org/openshift/installer.svg?branch=master)](https://travis-ci.org/openshift/installer)
 
 # Openshift Installer
