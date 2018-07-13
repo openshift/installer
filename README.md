@@ -10,7 +10,10 @@ https://coreos.com/blog/coreos-tech-to-combine-with-red-hat-openshift
 
 These instructions can be used for AWS:
 
-1. Build the project
+1. Set you access-key and secret in `~/.aws/credentials`.
+    You can create credentials in [the IAM console][aws-iam-console], as documented [here][aws-cli-config] and [here][aws-cli-config-files].
+
+2. Build the project
     ```sh
     bazel build tarball
     ```
@@ -20,33 +23,33 @@ These instructions can be used for AWS:
     docker run --rm -v $PWD:$PWD:Z -w $PWD quay.io/coreos/tectonic-builder:bazel-v0.3 bazel --output_base=.cache build tarball
     ```
 
-2. Extract the tarball
+3. Extract the tarball
     ```sh
     tar -zxf bazel-bin/tectonic-dev.tar.gz
     cd tectonic-dev
     ```
 
-3. Add binaries to $PATH
+4. Add binaries to $PATH
     ```sh
     export PATH=$(pwd)/installer:$PATH
     ```
 
-4. Edit Tectonic configuration file including the $CLUSTER_NAME
+5. Edit Tectonic configuration file including the $CLUSTER_NAME
     ```sh
     $EDITOR examples/tectonic.aws.yaml
     ```
 
-5. Init Tectonic CLI
+6. Init Tectonic CLI
     ```sh
     tectonic init --config=examples/tectonic.aws.yaml
     ```
 
-6. Install Tectonic cluster
+7. Install Tectonic cluster
     ```sh
     tectonic install --dir=$CLUSTER_NAME
     ```
 
-7. Teardown Tectonic cluster
+8. Teardown Tectonic cluster
     ```sh
     tectonic destroy --dir=$CLUSTER_NAME
     ```
@@ -82,3 +85,7 @@ For the sake of your fellow reviewers, commit vendored code separately from any 
 ## Tests
 
 See [tests/README.md](tests/README.md).
+
+[aws-cli-config]: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-quick-configuration
+[aws-cli-config-files]: https://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
+[aws-iam-console]: https://console.aws.amazon.com/iam/home#/users
