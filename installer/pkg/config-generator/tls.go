@@ -251,7 +251,7 @@ func generatePrivateKey(clusterDir string, path string) (*rsa.PrivateKey, error)
 	if err != nil {
 		return nil, fmt.Errorf("error writing private key: %v", err)
 	}
-	if err := writeFile(fileTargetPath, tls.PrivateKeyToPem(key)); err != nil {
+	if err := ioutil.WriteFile(fileTargetPath, []byte(tls.PrivateKeyToPem(key)), 0600); err != nil {
 		return nil, err
 	}
 	return key, nil
@@ -355,7 +355,7 @@ func generateRootCA(path string, key *rsa.PrivateKey) (*x509.Certificate, error)
 	if err != nil {
 		return nil, fmt.Errorf("error generating self signed certificate: %v", err)
 	}
-	if err := writeFile(fileTargetPath, tls.CertToPem(cert)); err != nil {
+	if err := ioutil.WriteFile(fileTargetPath, []byte(tls.CertToPem(cert)), 0666); err != nil {
 		return nil, err
 	}
 	return cert, nil
@@ -373,7 +373,7 @@ func generateSignedCert(cfg *tls.CertCfg,
 		return nil, fmt.Errorf("error signing certificate: %v", err)
 	}
 	fileTargetPath := filepath.Join(clusterDir, path)
-	if err := writeFile(fileTargetPath, tls.CertToPem(cert)); err != nil {
+	if err := ioutil.WriteFile(fileTargetPath, []byte(tls.CertToPem(cert)), 0666); err != nil {
 		return nil, err
 	}
 	return cert, nil
