@@ -49,7 +49,11 @@ These instructions can be used for AWS:
     tectonic install --dir=$CLUSTER_NAME
     ```
 
-8. Teardown Tectonic cluster
+8. Visit `https://{$CLUSTER_NAME}-api.${BASE_DOMAIN}:6443/console/`.
+    You may need to ignore a certificate warning if you did not configure a CA known to your browser.
+    Log in with the admin credentials you configured in `tectonic.aws.yaml`.
+
+9. Teardown Tectonic cluster
     ```sh
     tectonic destroy --dir=$CLUSTER_NAME
     ```

@@ -113,7 +113,7 @@ kubectl get -n tectonic-system pods
 ```
 
 ## Connect to the cluster console
-This will take ~30 minutes to be available. Simply go to `https://$CLUSTER_NAME-api.BASE_DOMAIN:6443/console/` (e.g. `test1.tt.testing`) and log in using the credentials above.
+This will take ~30 minutes to be available. Simply go to `https://${CLUSTER_NAME}-api.${BASE_DOMAIN}:6443/console/` (e.g. `test1.tt.testing`) and log in using the credentials above.
 
 
 # Libvirt vs. AWS
