@@ -74,6 +74,7 @@ alias(
 
 pkg_tar(
     name = "tectonic-%s" % TECTONIC_VERSION,
+    mode = "0666",
     srcs = [
         "//:template_resources",
         "//examples:tectonic_cli_examples",
@@ -89,6 +90,7 @@ pkg_tar(
 
 pkg_tar(
     name = "cli_bin",
+    mode = "0777",
     srcs = ["//installer/cmd/tectonic"],
     package_dir = "installer",
 )
@@ -103,6 +105,7 @@ filegroup(
 
 pkg_tar(
     name = "tf_bin",
+    mode = "0777",
     srcs = [":terraform_runtime"],
     package_dir = "installer",
 )
