@@ -1,8 +1,11 @@
 [Unit]
 Description=Kubernetes Kubelet
 Wants=rpc-statd.service
+Requires=docker.service kubelet-workaround.service
+After=docker.service kubelet-workaround.service
 
 [Service]
+EnvironmentFile=-/etc/kubernetes/kubelet-workaround
 ExecStartPre=/bin/mkdir --parents /etc/kubernetes/manifests
 ExecStartPre=/bin/mkdir --parents /etc/kubernetes/checkpoint-secrets
 ExecStartPre=/bin/mkdir --parents /etc/kubernetes/cni/net.d
@@ -49,6 +52,7 @@ ExecStart=/usr/bin/docker \
       ${cloud_provider_config} \
       ${debug_config} \
       ${node_taints_param} \
+      $$CGROUP_DRIVER_FLAG \
 
 Restart=always
 RestartSec=10

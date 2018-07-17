@@ -30,6 +30,7 @@ output "ignition_systemd_id_list" {
   value = [
     "${data.ignition_systemd_unit.docker_dropin.id}",
     "${data.ignition_systemd_unit.kubelet.id}",
+    "${data.ignition_systemd_unit.kubelet_workaround.id}",
     "${data.ignition_systemd_unit.locksmithd.id}",
     "${data.ignition_systemd_unit.update_ca_certificates_dropin.id}",
     "${data.ignition_systemd_unit.rm_assets.id}",

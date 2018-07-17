@@ -49,6 +49,16 @@ data "ignition_systemd_unit" "kubelet" {
   content = "${data.template_file.kubelet.rendered}"
 }
 
+data "template_file" "kubelet_workaround" {
+  template = "${file("${path.module}/resources/services/kubelet-workaround.service")}"
+}
+
+data "ignition_systemd_unit" "kubelet_workaround" {
+  name    = "kubelet-workaround.service"
+  enabled = true
+  content = "${data.template_file.kubelet_workaround.rendered}"
+}
+
 data "ignition_systemd_unit" "rm_assets" {
   name    = "rm-assets.service"
   enabled = true
