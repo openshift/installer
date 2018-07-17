@@ -131,7 +131,7 @@ func TestGenerateCert(t *testing.T) {
 			CommonName:         "test-self-signed-ca",
 			OrganizationalUnit: []string{"openshift"},
 		},
-		Validity: validityThreeYears,
+		Validity: validityTenYears,
 	}
 	caCert, err := tls.SelfSignedCACert(caCfg, caKey)
 	if err != nil {
@@ -151,7 +151,7 @@ func TestGenerateCert(t *testing.T) {
 				KeyUsages:    x509.KeyUsageKeyEncipherment,
 				DNSNames:     []string{"test-api.kubernetes.default"},
 				ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-				Validity:     validityThreeYears,
+				Validity:     validityTenYears,
 				IsCA:         false,
 			},
 			clusterDir: "./",
