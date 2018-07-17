@@ -17,7 +17,7 @@ aws:
   # ec2AMIOverride:
 
   etcd:
-    # Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https:#coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
+    # Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
     ec2Type: t2.medium
 
     # (optional) List of additional security group IDs for etcd nodes.
