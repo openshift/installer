@@ -64,10 +64,10 @@ func findStepTemplates(stepName string, platform config.Platform) (string, error
 			if os.IsNotExist(err) {
 				continue
 			}
-			return "", fmt.Errorf("invalid path for '%s' templates: %s", base, err)
+			return "", fmt.Errorf("invalid path for %q templates: %s", base, err)
 		}
 		if !stat.IsDir() {
-			return "", fmt.Errorf("invalid path for '%s' templates", base)
+			return "", fmt.Errorf("invalid path for %q templates", base)
 		}
 		return path, nil
 	}
