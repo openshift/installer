@@ -5,7 +5,7 @@ for operator development.
 
 ## HOW TO:
 ### 1. One-time setup
-It's expected that you will create and destroy clusters often in the course of development. These steps only need to be run once (or once per Container Linux update).
+It's expected that you will create and destroy clusters often in the course of development. These steps only need to be run once (or once per Container Linux or RHCOS update).
 
 #### 1.1 Pick a name and ip range
 In this example, we'll set the baseDomain to `tt.testing`, the name to `test1` and the ipRange to `192.168.124.0/24`
@@ -16,8 +16,25 @@ git clone https://github.com/openshift/installer.git
 cd installer
 ```
 
-#### 1.3 Download the Container Linux image
-You will need to do this every time Container Linux has a release.
+#### 1.3 Download and prepare the operating system image
+
+#### 1.3a RHCOS
+
+Download the latest RHCOS image (you will need access to the Red Hat internal build systems):
+
+```sh
+wget http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos.qcow2.qemu.gz
+gunzip rhcos.qcow2.qemu.gz
+```
+
+Because of the greater disk requirements of OpenShift, you'll need to expand the root drive with the following:
+```sh
+qemu-img resize rhcos.qcow2.qemu +8G
+```
+
+#### 1.3b Container Linux
+
+Download the latest stable Container Linux image:
 ```sh
 wget https://stable.release.core-os.net/amd64-usr/current/coreos_production_qemu_image.img.bz2
 bunzip2 coreos_production_qemu_image.img.bz2
@@ -37,7 +54,7 @@ Go to https://account.coreos.com/ and obtain a Tectonic license. Save the *pull 
     1. Set an email and password in the `admin` section
     1. Set a `baseDomain` (to `tt.testing`)
     1. Set the `sshKey` in the `libvirt` section to the **contents** of an ssh key (e.g. `ssh-rsa AAAA...`)
-    1. Set the `imagePath` to the **absolute** path of the Container Linux image you downloaded
+    1. Set the `imagePath` to the **absolute** path of the operating system image you downloaded
     1. Set the `licensePath` to the **absolute** path of your downloaded license file.
     1. Set the `name` (e.g. test1)
     1. Look at the `podCIDR` and `serviceCIDR` fields in the `networking` section. Make sure they don't conflict with anything important.
