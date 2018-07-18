@@ -3,7 +3,6 @@ package workflow
 import (
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"path"
@@ -29,23 +28,6 @@ const (
 	tncDNSStep       = "tnc_dns"
 	topologyStep     = "topology"
 )
-
-func copyFile(fromFilePath, toFilePath string) error {
-	from, err := os.Open(fromFilePath)
-	if err != nil {
-		return err
-	}
-	defer from.Close()
-
-	to, err := os.OpenFile(toFilePath, os.O_RDWR|os.O_CREATE, 0666)
-	if err != nil {
-		return err
-	}
-	defer to.Close()
-
-	_, err = io.Copy(to, from)
-	return err
-}
 
 // returns the directory containing templates for a given step. If platform is
 // specified, it looks for a subdirectory with platform first, falling back if

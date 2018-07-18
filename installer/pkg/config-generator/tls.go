@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/openshift/installer/installer/pkg/copy"
 	"github.com/openshift/installer/installer/pkg/tls"
 )
 
@@ -123,7 +124,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	}
 
 	// Ingress certs
-	if copyFile(kubeCACertPath, ingressCACertPath); err != nil {
+	if copy.Copy(kubeCACertPath, ingressCACertPath); err != nil {
 		return fmt.Errorf("failed to import kube CA cert into ingress-ca.crt: %v", err)
 	}
 
@@ -274,12 +275,12 @@ func generateRootCert(clusterDir string) (cert *x509.Certificate, key *rsa.Priva
 // getCertFiles copies the given cert/key files into the generated folder and returns their contents
 func getCertFiles(clusterDir string, certPath string, keyPath string) (*x509.Certificate, *rsa.PrivateKey, error) {
 	keyDst := filepath.Join(clusterDir, rootCAKeyPath)
-	if err := copyFile(keyPath, keyDst); err != nil {
+	if err := copy.Copy(keyPath, keyDst); err != nil {
 		return nil, nil, fmt.Errorf("failed to write file: %v", err)
 	}
 
 	certDst := filepath.Join(clusterDir, rootCACertPath)
-	if err := copyFile(certPath, certDst); err != nil {
+	if err := copy.Copy(certPath, certDst); err != nil {
 		return nil, nil, fmt.Errorf("failed to write file: %v", err)
 	}
 	// content validation occurs in pkg/config/validate.go
