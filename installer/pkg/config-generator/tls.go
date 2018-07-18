@@ -76,7 +76,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		Validity:  validityTenYears,
 		IsCA:      true,
 	}
-	kubeCAKey, kubeCACert, err := generateCert(clusterDir, caKey, caCert, kubeCAKeyPath, kubeCACertPath, cfg)
+	kubeCAKey, kubeCACert, err := generateCert(clusterDir, caKey, caCert, kubeCAKeyPath, kubeCACertPath, cfg, false)
 	if err != nil {
 		return fmt.Errorf("failed to generate kubernetes CA: %v", err)
 	}
@@ -88,17 +88,15 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:      true,
 		Validity:  validityTenYears,
 	}
-	etcdCAKey, etcdCACert, err := generateCert(clusterDir, caKey, caCert, etcdCAKeyPath, etcdCACertPath, cfg)
+	etcdCAKey, etcdCACert, err := generateCert(clusterDir, caKey, caCert, etcdCAKeyPath, etcdCACertPath, cfg, false)
 	if err != nil {
 		return fmt.Errorf("failed to generate etcd CA: %v", err)
 	}
 
-	err = copyFile(filepath.Join(clusterDir, etcdCAKeyPath), filepath.Join(clusterDir, "generated/tls/etcd-client-ca.key"))
-	if err != nil {
+	if err := copy.Copy(filepath.Join(clusterDir, etcdCAKeyPath), filepath.Join(clusterDir, "generated/tls/etcd-client-ca.key")); err != nil {
 		return fmt.Errorf("failed to import kube CA cert into ingress-ca.crt: %v", err)
 	}
-	err = copyFile(filepath.Join(clusterDir, etcdCACertPath), filepath.Join(clusterDir, "generated/tls/etcd-client-ca.crt"))
-	if err != nil {
+	if err := copy.Copy(filepath.Join(clusterDir, etcdCACertPath), filepath.Join(clusterDir, "generated/tls/etcd-client-ca.crt")); err != nil {
 		return fmt.Errorf("failed to import kube CA cert into ingress-ca.crt: %v", err)
 	}
 
@@ -109,7 +107,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Validity:     validityTenYears,
 	}
-	if _, _, err := generateCert(clusterDir, etcdCAKey, etcdCACert, etcdClientKeyPath, etcdClientCertPath, cfg); err != nil {
+	if _, _, err := generateCert(clusterDir, etcdCAKey, etcdCACert, etcdClientKeyPath, etcdClientCertPath, cfg, false); err != nil {
 		return fmt.Errorf("failed to generate etcd client certificate: %v", err)
 	}
 
@@ -120,7 +118,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		Validity:  validityTenYears,
 		IsCA:      true,
 	}
-	if _, _, err := generateCert(clusterDir, caKey, caCert, aggregatorCAKeyPath, aggregatorCACertPath, cfg); err != nil {
+	if _, _, err := generateCert(clusterDir, caKey, caCert, aggregatorCAKeyPath, aggregatorCACertPath, cfg, false); err != nil {
 		return fmt.Errorf("failed to generate aggregator CA: %v", err)
 	}
 
@@ -131,12 +129,12 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		Validity:  validityTenYears,
 		IsCA:      true,
 	}
-	if _, _, err := generateCert(clusterDir, caKey, caCert, serviceServingCAKeyPath, serviceServingCACertPath, cfg); err != nil {
+	if _, _, err := generateCert(clusterDir, caKey, caCert, serviceServingCAKeyPath, serviceServingCACertPath, cfg, false); err != nil {
 		return fmt.Errorf("failed to generate service-serving CA: %v", err)
 	}
 
 	// Ingress certs
-	if copy.Copy(kubeCACertPath, ingressCACertPath); err != nil {
+	if err := copy.Copy(filepath.Join(clusterDir, kubeCACertPath), filepath.Join(clusterDir, ingressCACertPath)); err != nil {
 		return fmt.Errorf("failed to import kube CA cert into ingress-ca.crt: %v", err)
 	}
 
@@ -153,7 +151,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:     false,
 	}
 
-	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, ingressKeyPath, ingressCertPath, cfg); err != nil {
+	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, ingressKeyPath, ingressCertPath, cfg, false); err != nil {
 		return fmt.Errorf("failed to generate ingress CA: %v", err)
 	}
 
@@ -166,7 +164,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:         false,
 	}
 
-	if _, _, err = generateCert(clusterDir, kubeCAKey, kubeCACert, adminKeyPath, adminCertPath, cfg); err != nil {
+	if _, _, err = generateCert(clusterDir, kubeCAKey, kubeCACert, adminKeyPath, adminCertPath, cfg, false); err != nil {
 		return fmt.Errorf("failed to generate kube admin certificate: %v", err)
 	}
 
@@ -190,7 +188,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:        false,
 	}
 
-	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, apiServerKeyPath, apiServerCertPath, cfg); err != nil {
+	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, apiServerKeyPath, apiServerCertPath, cfg, true); err != nil {
 		return fmt.Errorf("failed to generate kube api server certificate: %v", err)
 	}
 
@@ -211,7 +209,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:        false,
 	}
 
-	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, osAPIServerKeyPath, osAPIServerCertPath, cfg); err != nil {
+	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, osAPIServerKeyPath, osAPIServerCertPath, cfg, true); err != nil {
 		return fmt.Errorf("failed to generate openshift api server certificate: %v", err)
 	}
 
@@ -224,7 +222,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:         false,
 	}
 
-	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, apiServerProxyKeyPath, apiServerProxyCertPath, cfg); err != nil {
+	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, apiServerProxyKeyPath, apiServerProxyCertPath, cfg, false); err != nil {
 		return fmt.Errorf("failed to generate kube api proxy certificate: %v", err)
 	}
 
@@ -237,7 +235,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:         false,
 	}
 
-	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, kubeletKeyPath, kubeletCertPath, cfg); err != nil {
+	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, kubeletKeyPath, kubeletCertPath, cfg, false); err != nil {
 		return fmt.Errorf("failed to generate kubelet certificate: %v", err)
 	}
 
@@ -251,7 +249,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:         false,
 	}
 
-	if _, _, err := generateCert(clusterDir, caKey, caCert, tncKeyPath, tncCertPath, cfg); err != nil {
+	if _, _, err := generateCert(clusterDir, caKey, caCert, tncKeyPath, tncCertPath, cfg, false); err != nil {
 		return fmt.Errorf("failed to generate tnc certificate: %v", err)
 	}
 	return nil
@@ -320,12 +318,16 @@ func getCertFiles(clusterDir string, certPath string, keyPath string) (*x509.Cer
 }
 
 // generateCert creates a key, csr & a signed cert
+// If appendCA is true, then also append the CA cert into the result cert.
+// This is useful for apiserver and openshift-apiser cert which will be
+// authenticated by the kubeconfig using root-ca.
 func generateCert(clusterDir string,
 	caKey *rsa.PrivateKey,
 	caCert *x509.Certificate,
 	keyPath string,
 	certPath string,
-	cfg *tls.CertCfg) (*rsa.PrivateKey, *x509.Certificate, error) {
+	cfg *tls.CertCfg,
+	appendCA bool) (*rsa.PrivateKey, *x509.Certificate, error) {
 
 	// create a private key
 	key, err := generatePrivateKey(clusterDir, keyPath)
@@ -345,7 +347,7 @@ func generateCert(clusterDir string,
 	}
 
 	// create a cert
-	cert, err := generateSignedCert(cfg, csr, key, caKey, caCert, clusterDir, certPath)
+	cert, err := generateSignedCert(cfg, csr, key, caKey, caCert, clusterDir, certPath, appendCA)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to create a certificate: %v", err)
 	}
@@ -380,13 +382,20 @@ func generateSignedCert(cfg *tls.CertCfg,
 	caKey *rsa.PrivateKey,
 	caCert *x509.Certificate,
 	clusterDir string,
-	path string) (*x509.Certificate, error) {
+	path string,
+	appendCA bool) (*x509.Certificate, error) {
 	cert, err := tls.SignedCertificate(cfg, csr, key, caCert, caKey)
 	if err != nil {
 		return nil, fmt.Errorf("error signing certificate: %v", err)
 	}
 	fileTargetPath := filepath.Join(clusterDir, path)
-	if err := ioutil.WriteFile(fileTargetPath, []byte(tls.CertToPem(cert)), 0666); err != nil {
+
+	content := []byte(tls.CertToPem(cert))
+	if appendCA {
+		content = append(content, '\n')
+		content = append(content, []byte(tls.CertToPem(caCert))...)
+	}
+	if err := ioutil.WriteFile(fileTargetPath, content, 0666); err != nil {
 		return nil, err
 	}
 	return cert, nil

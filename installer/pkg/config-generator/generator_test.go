@@ -159,7 +159,7 @@ func TestGenerateCert(t *testing.T) {
 		},
 	}
 	for i, c := range cases {
-		_, _, err := generateCert(c.clusterDir, caKey, caCert, keyPath, certPath, c.cfg)
+		_, _, err := generateCert(c.clusterDir, caKey, caCert, keyPath, certPath, c.cfg, false)
 		if err != nil {
 			no := "no"
 			if c.err {
