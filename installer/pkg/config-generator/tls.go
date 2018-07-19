@@ -118,7 +118,8 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		Validity:  validityTenYears,
 		IsCA:      true,
 	}
-	if _, _, err := generateCert(clusterDir, caKey, caCert, aggregatorCAKeyPath, aggregatorCACertPath, cfg, false); err != nil {
+	aggregatorCAKey, aggregatorCACert, err := generateCert(clusterDir, caKey, caCert, aggregatorCAKeyPath, aggregatorCACertPath, cfg, false)
+	if err != nil {
 		return fmt.Errorf("failed to generate aggregator CA: %v", err)
 	}
 
@@ -151,7 +152,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:     false,
 	}
 
-	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, ingressKeyPath, ingressCertPath, cfg, false); err != nil {
+	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, ingressKeyPath, ingressCertPath, cfg, true); err != nil {
 		return fmt.Errorf("failed to generate ingress CA: %v", err)
 	}
 
@@ -209,7 +210,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:        false,
 	}
 
-	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, osAPIServerKeyPath, osAPIServerCertPath, cfg, true); err != nil {
+	if _, _, err := generateCert(clusterDir, aggregatorCAKey, aggregatorCACert, osAPIServerKeyPath, osAPIServerCertPath, cfg, true); err != nil {
 		return fmt.Errorf("failed to generate openshift api server certificate: %v", err)
 	}
 
@@ -222,7 +223,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		IsCA:         false,
 	}
 
-	if _, _, err := generateCert(clusterDir, kubeCAKey, kubeCACert, apiServerProxyKeyPath, apiServerProxyCertPath, cfg, false); err != nil {
+	if _, _, err := generateCert(clusterDir, aggregatorCAKey, aggregatorCACert, apiServerProxyKeyPath, apiServerProxyCertPath, cfg, false); err != nil {
 		return fmt.Errorf("failed to generate kube api proxy certificate: %v", err)
 	}
 
