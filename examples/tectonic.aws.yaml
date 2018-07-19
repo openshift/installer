@@ -14,7 +14,8 @@ aws:
   # autoScalingGroupExtraTags:
 
   # (optional) AMI override for all nodes. Example: `ami-foobar123`.
-  # ec2AMIOverride:
+  # XXX: The following overrides the Container Linux settings below and uses an RHCOS image (3.10-7.5) instead of Container Linux.
+  ec2AMIOverride: ami-02323e873420d8eab
 
   etcd:
     # Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
