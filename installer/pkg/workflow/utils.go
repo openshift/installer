@@ -22,9 +22,8 @@ const (
 	internalFileName = "internal.yaml"
 	joinWorkersStep  = "joining_workers"
 	mastersStep      = "masters"
-	newTLSStep       = "newtls"
+	newTLSStep       = "tls"
 	stepsBaseDir     = "steps"
-	tlsStep          = "tls"
 	tncDNSStep       = "tnc_dns"
 	topologyStep     = "topology"
 )
