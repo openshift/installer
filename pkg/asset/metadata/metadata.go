@@ -51,6 +51,13 @@ func (m *Metadata) Generate(parents map[asset.Asset]*asset.State) (*asset.State,
 				"tectonicClusterID": installCfg.ClusterID,
 			},
 		}
+	case installCfg.Platform.OpenStack != nil:
+		cm.ClusterPlatformMetadata.OpenStack = &types.ClusterOpenStackPlatformMetadata{
+			Region: installCfg.Platform.OpenStack.Region,
+			Identifier: map[string]string{
+				"tectonicClusterID": installCfg.ClusterID,
+			},
+		}
 	case installCfg.Platform.Libvirt != nil:
 		cm.ClusterPlatformMetadata.Libvirt = &types.ClusterLibvirtPlatformMetadata{
 			URI: installCfg.Platform.Libvirt.URI,

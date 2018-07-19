@@ -18,8 +18,12 @@ type MachinePool struct {
 type MachinePoolPlatform struct {
 	// AWS is the configuration used when installing on AWS.
 	AWS *AWSMachinePoolPlatform `json:"aws,omitempty"`
+
 	// Libvirt is the configuration used when installing on libvirt.
 	Libvirt *LibvirtMachinePoolPlatform `json:"libvirt,omitempty"`
+
+	// OpenStack is the configuration used when installing on OpenStack.
+	OpenStack *OpenStackMachinePoolPlatform `json:"openstack,omitempty"`
 }
 
 // AWSMachinePoolPlatform stores the configuration for a machine pool
@@ -39,6 +43,27 @@ type AWSMachinePoolPlatform struct {
 
 // EC2RootVolume defines the storage for an ec2 instance.
 type EC2RootVolume struct {
+	// IOPS defines the iops for the instance.
+	IOPS int `json:"iops"`
+	// Size defines the size of the instance.
+	Size int `json:"size"`
+	// Type defines the type of the instance.
+	Type string `json:"type"`
+}
+
+// OpenStackMachinePoolPlatform stores the configuration for a machine pool
+// installed on OpenStack.
+type OpenStackMachinePoolPlatform struct {
+	// FlavorName defines the OpenStack Nova flavor.
+	// eg. m1.large
+	FlavorName string `json:"type"`
+
+	// OpenStackRootVolume defines the storage for Nova instance.
+	OpenStackRootVolume `json:"rootVolume"`
+}
+
+// OpenStackRootVolume defines the storage for a Nova instance.
+type OpenStackRootVolume struct {
 	// IOPS defines the iops for the instance.
 	IOPS int `json:"iops"`
 	// Size defines the size of the instance.

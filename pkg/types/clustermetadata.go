@@ -9,14 +9,22 @@ type ClusterMetadata struct {
 
 // ClusterPlatformMetadata contains metadata for platfrom.
 type ClusterPlatformMetadata struct {
-	AWS     *ClusterAWSPlatformMetadata     `json:"aws,omitempty"`
-	Libvirt *ClusterLibvirtPlatformMetadata `json:"libvirt,omitempty"`
+	AWS       *ClusterAWSPlatformMetadata       `json:"aws,omitempty"`
+	OpenStack *ClusterOpenStackPlatformMetadata `json:"openstack,omitempty"`
+	Libvirt   *ClusterLibvirtPlatformMetadata   `json:"libvirt,omitempty"`
 }
 
 // ClusterAWSPlatformMetadata contains AWS metadata.
 type ClusterAWSPlatformMetadata struct {
 	Region string `json:"region"`
 	// Most AWS resources are tagged with these tags as identifier.
+	Identifier map[string]string `json:"identifier"`
+}
+
+// ClusterOpenStackPlatformMetadata contains OpenStack metadata.
+type ClusterOpenStackPlatformMetadata struct {
+	Region string `json:"region"`
+	// Most OpenStack resources are tagged with these tags as identifier.
 	Identifier map[string]string `json:"identifier"`
 }
 

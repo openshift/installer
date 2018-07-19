@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/config/aws"
 	"github.com/openshift/installer/pkg/types/config/libvirt"
+	"github.com/openshift/installer/pkg/types/config/openstack"
 )
 
 const (
@@ -20,6 +21,8 @@ const (
 	PlatformAWS Platform = "aws"
 	// PlatformLibvirt is the platform for a cluster launched on libvirt.
 	PlatformLibvirt Platform = "libvirt"
+	// PlatformOpenStack is the platform for a cluster launched on OpenStack.
+	PlatformOpenStack Platform = "openstack"
 )
 
 // Platform indicates the target platform of the cluster.
@@ -34,9 +37,9 @@ func (p *Platform) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	platform := Platform(data)
 	switch platform {
-	case PlatformAWS, PlatformLibvirt:
+	case PlatformAWS, PlatformLibvirt, PlatformOpenStack:
 	default:
-		return fmt.Errorf("invalid platform specified (%s); must be one of %s", platform, []Platform{PlatformAWS, PlatformLibvirt})
+		return fmt.Errorf("invalid platform specified (%s); must be one of %s", platform, []Platform{PlatformAWS, PlatformLibvirt, PlatformOpenStack})
 	}
 
 	*p = platform
@@ -61,6 +64,10 @@ var defaultCluster = Cluster{
 		ServiceCIDR: "10.3.0.0/16",
 		Type:        tectonicnetwork.NetworkFlannel,
 	},
+	OpenStack: openstack.OpenStack{
+		Region:           openstack.DefaultRegion,
+		NetworkCIDRBlock: openstack.DefaultNetworkCIDRBlock,
+	},
 }
 
 // Cluster defines the config for a cluster.
@@ -73,16 +80,17 @@ type Cluster struct {
 	IgnitionMasters   []string `json:"ignition_masters,omitempty" yaml:"-"`
 	IgnitionWorker    string   `json:"ignition_worker,omitempty" yaml:"-"`
 
-	Internal        `json:",inline" yaml:"-"`
-	libvirt.Libvirt `json:",inline" yaml:"libvirt,omitempty"`
-	Master          `json:",inline" yaml:"master,omitempty"`
-	Name            string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
-	Networking      `json:",inline" yaml:"networking,omitempty"`
-	NodePools       `json:"-" yaml:"nodePools"`
-	Platform        Platform `json:"tectonic_platform" yaml:"platform,omitempty"`
-	PullSecret      string   `json:"tectonic_pull_secret,omitempty" yaml:"pullSecret,omitempty"`
-	PullSecretPath  string   `json:"-" yaml:"pullSecretPath,omitempty"` // Deprecated: remove after openshift/release is ported to pullSecret
-	Worker          `json:",inline" yaml:"worker,omitempty"`
+	Internal            `json:",inline" yaml:"-"`
+	libvirt.Libvirt     `json:",inline" yaml:"libvirt,omitempty"`
+	Master              `json:",inline" yaml:"master,omitempty"`
+	Name                string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
+	Networking          `json:",inline" yaml:"networking,omitempty"`
+	NodePools           `json:"-" yaml:"nodePools"`
+	openstack.OpenStack `json:",inline" yaml:"openstack,omitempty"`
+	Platform            Platform `json:"tectonic_platform" yaml:"platform,omitempty"`
+	PullSecret          string   `json:"tectonic_pull_secret,omitempty" yaml:"pullSecret,omitempty"`
+	PullSecretPath      string   `json:"-" yaml:"pullSecretPath,omitempty"` // Deprecated: remove after openshift/release is ported to pullSecret
+	Worker              `json:",inline" yaml:"worker,omitempty"`
 }
 
 // NodeCount will return the number of nodes specified in NodePools with matching names.
@@ -209,6 +217,14 @@ func ConvertInstallConfigToTFVars(cfg *types.InstallConfig, bootstrapIgn string,
 			Image:     cfg.Platform.Libvirt.DefaultMachinePlatform.Image,
 			MasterIPs: masterIPs,
 		}
+	} else if cfg.Platform.OpenStack != nil {
+		cluster.Platform = PlatformOpenStack
+		cluster.OpenStack = openstack.OpenStack{
+			Region:           cfg.Platform.OpenStack.Region,
+			NetworkCIDRBlock: cfg.Platform.OpenStack.NetworkCIDRBlock,
+		}
+		cluster.OpenStack.Credentials.Cloud = cfg.Platform.OpenStack.Cloud
+		cluster.OpenStack.ExternalNetwork = cfg.Platform.OpenStack.ExternalNetwork
 	}
 
 	for _, m := range cfg.Machines {
