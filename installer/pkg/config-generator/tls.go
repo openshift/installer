@@ -145,7 +145,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		DNSNames: []string{
 			baseAddress,
-			fmt.Sprintf("%s.%s", "*", baseAddress),
+			fmt.Sprintf("*.%s", baseAddress),
 		},
 		Subject:  pkix.Name{CommonName: baseAddress, Organization: []string{"ingress"}},
 		Validity: validityTenYears,
@@ -199,7 +199,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Subject:      pkix.Name{CommonName: "openshift-apiserver", Organization: []string{"kube-master"}},
 		DNSNames: []string{
-			fmt.Sprintf("%s-%s.%s", c.Name, "api", c.BaseDomain),
+			fmt.Sprintf("%s-api.%s", c.Name, c.BaseDomain),
 			"openshift-apiserver",
 			"openshift-apiserver.kube-system",
 			"openshift-apiserver.kube-system.svc",
