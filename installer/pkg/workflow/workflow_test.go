@@ -22,19 +22,19 @@ func TestWorkflowTypeExecute(t *testing.T) {
 
 	testCases := []struct {
 		test          string
-		steps         []Step
+		steps         []step
 		m             metadata
 		expectedError bool
 	}{
 		{
 			test:          "All steps succeed",
-			steps:         []Step{test1Step, test2Step},
+			steps:         []step{test1Step, test2Step},
 			m:             m,
 			expectedError: false,
 		},
 		{
 			test:          "At least one step fails",
-			steps:         []Step{test1Step, test2Step, test3Step},
+			steps:         []step{test1Step, test2Step, test3Step},
 			m:             m,
 			expectedError: true,
 		},
