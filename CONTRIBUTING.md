@@ -36,11 +36,6 @@ Due to their public nature, GitHub and mailing lists are not appropriate places 
 - Fork the repository on GitHub
 - Read the [README](README.md) for build and test instructions
 - Play with the project, submit bugs, submit patches!
-- Go get a couple of projects nesessary for updating docs and examples:
-    ```sh
-    go get github.com/segmentio/terraform-docs
-    go get github.com/openshift/installer/contrib/terraform-examples
-    ```
 
 ### Contribution Flow
 
