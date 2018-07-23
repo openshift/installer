@@ -13,11 +13,11 @@ import (
 
 const (
 	// IgnitionMaster is the relative path to the ign master cfg from the tf working directory
-	IgnitionMaster = "ignition-master.ign"
+	IgnitionMaster = "master.ign"
 	// IgnitionWorker is the relative path to the ign worker cfg from the tf working directory
-	IgnitionWorker = "ignition-worker.ign"
+	IgnitionWorker = "worker.ign"
 	// IgnitionEtcd is the relative path to the ign etcd cfg from the tf working directory
-	IgnitionEtcd = "ignition-etcd.ign"
+	IgnitionEtcd = "etcd.ign"
 	// PlatformAWS is the platform for a cluster launched on AWS.
 	PlatformAWS Platform = "aws"
 	// PlatformLibvirt is the platform for a cluster launched on libvirt.
