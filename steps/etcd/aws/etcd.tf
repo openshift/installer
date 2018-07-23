@@ -9,6 +9,15 @@ provider "aws" {
   }
 }
 
+module "defaults" {
+  source = "../../../modules/aws/target-defaults"
+
+  region     = "${var.tectonic_aws_region}"
+  profile    = "${var.tectonic_aws_profile}"
+  role_arn   = "${var.tectonic_aws_installer_role}"
+  etcd_count = "${var.tectonic_etcd_count}"
+}
+
 module "container_linux" {
   source = "../../../modules/container_linux"
 
@@ -16,10 +25,8 @@ module "container_linux" {
   release_version = "${var.tectonic_container_linux_version}"
 }
 
-data "aws_availability_zones" "azs" {}
-
 data "template_file" "etcd_hostname_list" {
-  count    = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
+  count    = "${module.defaults.etcd_count}"
   template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
 }
 

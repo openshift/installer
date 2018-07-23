@@ -2,20 +2,26 @@ provider "libvirt" {
   uri = "qemu:///system" #XXX fixme
 }
 
+module "defaults" {
+  source = "../../../modules/libvirt/target-defaults"
+
+  etcd_count = "${var.tectonic_etcd_count}"
+}
+
 resource "libvirt_volume" "etcd" {
-  count          = "${var.tectonic_etcd_count}"
+  count          = "${local.etcd_count}"
   name           = "etcd${count.index}"
   base_volume_id = "${local.libvirt_base_volume_id}"
 }
 
 resource "libvirt_ignition" "etcd" {
-  count   = "${var.tectonic_etcd_count}"
+  count   = "${module.defaults.etcd_count}"
   name    = "etcd${count.index}.ign"
   content = "${local.ignition[count.index]}"
 }
 
 resource "libvirt_domain" "etcd" {
-  count = "${var.tectonic_etcd_count}"
+  count = "${module.defaults.etcd_count}"
 
   name            = "etcd${count.index}"
   memory          = "${var.tectonic_libvirt_etcd_memory}"
