@@ -11,11 +11,13 @@ variable "cluster_name" {
 }
 
 variable "container_linux_channel" {
-  type = "string"
+  type    = "string"
+  default = "stable"
 }
 
 variable "container_linux_version" {
-  type = "string"
+  type    = "string"
+  default = "latest"
 }
 
 variable "instance_count" {
@@ -23,7 +25,8 @@ variable "instance_count" {
 }
 
 variable "ssh_key" {
-  type = "string"
+  type    = "string"
+  default = ""
 }
 
 variable "subnets" {
@@ -31,11 +34,13 @@ variable "subnets" {
 }
 
 variable "container_image" {
-  type = "string"
+  type    = "string"
+  default = "quay.io/coreos/etcd:v3.3.8"
 }
 
 variable "ec2_type" {
-  type = "string"
+  type    = "string"
+  default = "t2.medium"
 }
 
 variable "ec2_ami" {
@@ -51,11 +56,13 @@ variable "extra_tags" {
 
 variable "root_volume_type" {
   type        = "string"
+  default     = "gp2"
   description = "The type of volume for the root block device."
 }
 
 variable "root_volume_size" {
   type        = "string"
+  default     = "30"
   description = "The size of the volume in gigabytes for the root block device."
 }
 

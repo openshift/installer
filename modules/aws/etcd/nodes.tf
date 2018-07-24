@@ -3,10 +3,17 @@ locals {
   arn       = "aws"
 }
 
+module "container_linux" {
+  source = "../../container_linux"
+
+  release_channel = "${var.container_linux_channel}"
+  release_version = "${var.container_linux_version}"
+}
+
 data "aws_ami" "coreos_ami" {
   filter {
     name   = "name"
-    values = ["CoreOS-${var.container_linux_channel}-${var.container_linux_version}-*"]
+    values = ["CoreOS-${var.container_linux_channel}-${module.container_linux.version}-*"]
   }
 
   filter {
