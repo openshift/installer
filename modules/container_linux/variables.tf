@@ -1,5 +1,6 @@
 variable "release_channel" {
-  type = "string"
+  type    = "string"
+  default = "stable"
 
   description = <<EOF
 The Container Linux update channel.
@@ -9,7 +10,8 @@ EOF
 }
 
 variable "release_version" {
-  type = "string"
+  type    = "string"
+  default = "latest"
 
   description = <<EOF
 The Container Linux version to use. Set to `latest` to select the latest available version for the selected update channel.
