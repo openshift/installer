@@ -1,4 +1,8 @@
 # Etcd
+output "subnet_ids_etcds" {
+  value = "${module.vpc.etcd_subnet_ids}"
+}
+
 output "etcd_sg_id" {
   value = "${module.vpc.etcd_sg_id}"
 }

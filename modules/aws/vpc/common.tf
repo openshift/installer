@@ -15,10 +15,12 @@ locals {
   // List of possible AZs for each type of subnet
   new_worker_subnet_azs = ["${coalescelist(keys(var.new_worker_subnet_configs), data.aws_availability_zones.azs.names)}"]
   new_master_subnet_azs = ["${coalescelist(keys(var.new_master_subnet_configs), data.aws_availability_zones.azs.names)}"]
+  new_etcd_subnet_azs   = ["${coalescelist(keys(var.new_etcd_subnet_configs), data.aws_availability_zones.azs.names)}"]
 
   // How many AZs to create worker and master subnets in (always zero if external_vpc_mode)
   new_worker_az_count = "${local.external_vpc_mode ? 0 : length(local.new_worker_subnet_azs)}"
   new_master_az_count = "${local.external_vpc_mode ? 0 : length(local.new_master_subnet_azs)}"
+  new_etcd_az_count   = "${local.external_vpc_mode ? 0 : length(local.new_etcd_subnet_azs)}"
 
   // The base set of ids needs to build rest of vpc data sources
   // This is crux of dealing with existing vpc / new vpc incongruity
@@ -27,8 +29,10 @@ locals {
   // When referencing the _ids arrays or data source arrays via count = , always use the *_count variable rather than taking the length of the list
   worker_subnet_ids   = ["${coalescelist(aws_subnet.worker_subnet.*.id,var.external_worker_subnet_ids)}"]
   master_subnet_ids   = ["${coalescelist(aws_subnet.master_subnet.*.id,var.external_master_subnet_ids)}"]
+  etcd_subnet_ids     = ["${coalescelist(aws_subnet.etcd_subnet.*.id,var.external_etcd_subnet_ids)}"]
   worker_subnet_count = "${local.external_vpc_mode ? length(var.external_worker_subnet_ids) : local.new_worker_az_count}"
   master_subnet_count = "${local.external_vpc_mode ? length(var.external_master_subnet_ids) : local.new_master_az_count}"
+  etcd_subnet_count   = "${local.external_vpc_mode ? length(var.external_etcd_subnet_ids) : local.new_etcd_az_count}"
 }
 
 # all data sources should be input variable-agnostic and used as canonical source for querying "state of resources" and building outputs
@@ -47,6 +51,12 @@ data "aws_subnet" "worker" {
 data "aws_subnet" "master" {
   count  = "${local.master_subnet_count}"
   id     = "${local.master_subnet_ids[count.index]}"
+  vpc_id = "${local.vpc_id}"
+}
+
+data "aws_subnet" "etcd" {
+  count  = "${local.etcd_subnet_count}"
+  id     = "${local.etcd_subnet_ids[count.index]}"
   vpc_id = "${local.vpc_id}"
 }
 
