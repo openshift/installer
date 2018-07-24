@@ -2,8 +2,6 @@ output "vpc_id" {
   value = "${data.aws_vpc.cluster_vpc.id}"
 }
 
-# We have to do this join() & split() 'trick' because null_data_source and
-# the ternary operator can't output lists or maps
 output "master_subnet_ids" {
   value = "${local.master_subnet_ids}"
 }
