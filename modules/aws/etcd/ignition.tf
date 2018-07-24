@@ -1,7 +1,3 @@
-locals {
-  ignition_etcd_keys = ["ignition_etcd_0.json", "ignition_etcd_1.json", "ignition_etcd_2.json"]
-}
-
 data "ignition_config" "tnc" {
   count = "${var.instance_count}"
 
@@ -13,7 +9,7 @@ data "ignition_config" "tnc" {
 
   # Used for loading certificates
   append {
-    source = "${format("s3://%s/%s", var.s3_bucket, local.ignition_etcd_keys[count.index])}"
+    source = "${format("s3://%s/ignition_etcd_%d.json", var.s3_bucket, count.index)}"
 
     # TODO: add verification
   }
