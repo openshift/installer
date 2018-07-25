@@ -62,17 +62,9 @@ This will create a tarball named `tectonic.tar.gz` in the `bazel-bin` directory 
 tectonic
 ├── config.tf
 ├── examples
+├── installer
 ├── modules
-├── steps
-└── tectonic-installer
-    ├── darwin
-    │   ├── tectonic
-    │   ├── terraform
-    │   └── terraform-provider-matchbox
-    └── linux
-        ├── tectonic
-        ├── terraform
-        └── terraform-provider-matchbox
+└── steps
 ```
 
 In order to build a release tarball with the version string in the directory name within the tarball, export a `TECTONIC_VERSION` environment variable and then build the tarball while passing the variable to the build:
@@ -88,9 +80,9 @@ This will create a tarball named `tectonic.tar.gz` in the `bazel-bin` directory 
 tectonic_1.2.3-beta
 ├── config.tf
 ├── examples
+├── installer
 ├── modules
-├── steps
-└── tectonic-installer
+└── steps
 ```
 
 *Note*: the generated tarball will not include the version string in its own name since output names must be known ahead of time in Bazel. To include the version in the tarball name, copy or move the archive with the desired name in the destination.
