@@ -1,5 +1,5 @@
 load("//bazel-rules:gen_test.bzl", "gen_test")
-load("//:version.bzl", "TECTONIC_VERSION")
+load("//:version.bzl", "OPENSHIFT_VERSION")
 
 package(
     default_visibility = ["//visibility:public"],
@@ -49,7 +49,7 @@ alias(
 
 alias(
     name = "cli",
-    actual = "//installer/cmd/tectonic",
+    actual = "//installer/cmd/openshift-install",
 )
 
 template_files = glob([
@@ -69,18 +69,18 @@ load("@bazel_tools//tools/build_defs/pkg:pkg.bzl", "pkg_tar")
 
 alias(
     name = "tarball",
-    actual = ":tectonic-%s" % TECTONIC_VERSION,
+    actual = ":openshift-installer-%s" % OPENSHIFT_VERSION,
 )
 
 pkg_tar(
-    name = "tectonic-%s" % TECTONIC_VERSION,
+    name = "openshift-installer-%s" % OPENSHIFT_VERSION,
     mode = "0666",
     srcs = [
         "//:template_resources",
         "//examples:tectonic_cli_examples",
     ],
     extension = "tar.gz",
-    package_dir = "tectonic-%s" % TECTONIC_VERSION,
+    package_dir = "openshift-installer-%s" % OPENSHIFT_VERSION,
     strip_prefix = ".",
     deps = [
         ":cli_bin",
@@ -91,7 +91,7 @@ pkg_tar(
 pkg_tar(
     name = "cli_bin",
     mode = "0777",
-    srcs = ["//installer/cmd/tectonic"],
+    srcs = ["//installer/cmd/openshift-install"],
     package_dir = "installer",
 )
 

@@ -1,4 +1,4 @@
-# tectonic-installer
+# openshift-installer
 
 [![Container Repository on Quay](https://quay.io/repository/coreos/tectonic-installer/status "Container Repository on Quay")](https://quay.io/repository/coreos/tectonic-installer)
 

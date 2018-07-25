@@ -5,7 +5,7 @@ config.tfvars
 id_rsa*
 pull-secret.json
 ssh-key.pem
-tectonic-*.tar.gz
+openshift-installer-*.tar.gz
 tectonic-license.txt
 terraform.tfstate*
 terraform.tfvars
@@ -13,7 +13,7 @@ bin/
 bin_test/
 matchbox/
 /contrib/govcloud/vpn.conf
-tectonic-dev
+openshift-installer-dev
 
 # Bazel
 .build/
@@ -22,5 +22,5 @@ bazel-bin
 bazel-out
 bazel-genfiles
 bazel-testlogs
-bazel-tectonic-installer
+bazel-openshift-installer
 .cache

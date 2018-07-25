@@ -18,8 +18,8 @@ CLUSTER_NAME=$(echo "${PREFIX}-$(uuidgen -r | cut -c1-5)" | tr '[:upper:]' '[:lo
 exec &> >(tee -a "$CLUSTER_NAME.log")
 
 function destroy() {
-  echo -e "\\e[34m Exiting... Destroying Tectonic and cleaning SSH keys...\\e[0m"
-  tectonic destroy --dir="${CLUSTER_NAME}"
+  echo -e "\\e[34m Exiting... Destroying OpenShift and cleaning SSH keys...\\e[0m"
+  openshift-install destroy --dir="${CLUSTER_NAME}"
   aws ec2 delete-key-pair --key-name "${CLUSTER_NAME}"
   echo -e "\\e[36m Finished! Smoke test output:\\e[0m ${SMOKE_TEST_OUTPUT}"
   echo -e "\\e[34m So Long, and Thanks for All the Fish\\e[0m"
@@ -33,12 +33,12 @@ bazel build tarball tests/smoke
 # docker run --rm -v $PWD:$PWD:Z -w $PWD quay.io/coreos/tectonic-builder:bazel-v0.3 bazel build tarball tests/smoke
 
 echo -e "\\e[36m Unpacking artifacts...\\e[0m"
-tar -zxf bazel-bin/tectonic-dev.tar.gz
-cp bazel-bin/tests/smoke/linux_amd64_stripped/smoke tectonic-dev/smoke
-export PATH="$(pwd)/tectonic-dev/installer:${PATH}"
-cd tectonic-dev
+tar -zxf bazel-bin/openshift-installer-dev.tar.gz
+cp bazel-bin/tests/smoke/linux_amd64_stripped/smoke openshift-installer-dev/smoke
+export PATH="$(pwd)/openshift-installer-dev/installer:${PATH}"
+cd openshift-installer-dev
 
-echo -e "\\e[36m Creating Tectonic configuration...\\e[0m"
+echo -e "\\e[36m Creating OpenShift configuration...\\e[0m"
 CONFIG=$(python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout)' < examples/tectonic.aws.yaml)
 CONFIG=$(echo "${CONFIG}" | jq ".name = \"${CLUSTER_NAME}\"" |\
                             jq ".baseDomain = \"${DOMAIN}\"" |\
@@ -51,8 +51,8 @@ CONFIG=$(echo "${CONFIG}" | jq ".name = \"${CLUSTER_NAME}\"" |\
 )
 echo "${CONFIG}" | python -c 'import sys, yaml, json; yaml.safe_dump(json.load(sys.stdin), sys.stdout)' > "${CLUSTER_NAME}.yaml"
 
-echo -e "\\e[36m Initializing Tectonic...\\e[0m"
-tectonic init --config="${CLUSTER_NAME}".yaml
+echo -e "\\e[36m Initializing OpenShift...\\e[0m"
+openshift-install init --config="${CLUSTER_NAME}".yaml
 
 ### ASSUME ROLE ###
 echo -e "\\e[36m Setting up AWS credentials...\\e[0m"
@@ -74,8 +74,8 @@ fi
 aws ec2 import-key-pair --key-name "${CLUSTER_NAME}" --public-key-material "file://$HOME/.ssh/id_rsa.pub"
 export TF_VAR_tectonic_aws_ssh_key="${CLUSTER_NAME}"
 
-echo -e "\\e[36m Deploying Tectonic...\\e[0m"
-tectonic install --dir="${CLUSTER_NAME}"
+echo -e "\\e[36m Deploying OpenShift...\\e[0m"
+openshift-install install --dir="${CLUSTER_NAME}"
 echo -e "\\e[36m Running smoke test...\\e[0m"
 export SMOKE_KUBECONFIG="$(pwd)/$CLUSTER_NAME/generated/auth/kubeconfig"
 export SMOKE_NETWORKING="canal"
