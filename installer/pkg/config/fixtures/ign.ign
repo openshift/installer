@@ -1,5 +1,5 @@
 {
-  "ignition": { "version": "2.0.0" },
+  "ignition": { "version": "2.2.0" },
   "systemd": {
     "units": [{
       "name": "example.service",
