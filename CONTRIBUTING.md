@@ -38,11 +38,18 @@ For contributors who want to work up pull requests, the workflow is roughly:
 3. Make sure your commit messages are in the proper format (see [below](#commit-message-format)).
 4. Push your changes to a topic branch in your fork of the repository.
 5. Make sure the tests pass, and add any new tests as appropriate.
-6. Please run this command before submitting your pull request:
+6. We run a number of linters and tests on each pull request.
+    You may wish to run these locally before submitting your pull request:
     ```sh
-    make structure-check
+    hack/go-fmt.sh .
+    hack/go-lint.sh $(go list -f '{{ .ImportPath }}' ./...)
+    hack/go-vet.sh ./...
+    hack/shellcheck.sh
+    hack/test-bazel-build-tarball.sh
+    hack/tf-fmt.sh -list -check
+    hack/tf-lint.sh
+    hack/yaml-lint.sh
     ```
-    Note that a portion of the docs and examples are generated and that the generated files are to be committed by you. `make structure-check` checks that what is generated is what you must commit.
 7. Submit a pull request to the original repository.
 8. The [repo](OWNERS) [owners](OWNERS_ALIASES) will respond to your issue promptly, following [the ususal Prow workflow][prow-review].
 
@@ -52,9 +59,7 @@ Thanks for your contributions!
 
 The coding style suggested by the Golang community is used in installer. See the [style doc][golang-style] for details. Please follow them when working on your contributions.
 
-Tectonic Installer includes syntax checks on the Terraform templates which will fail the PR checker for non-standard formatted code.
-
-Use `make structure-check` to identify files that don't meet the canonical format and style. Then, use `terraform fmt` to align the template syntax, if necessary.
+Terraform has similar standards, and you can run `terraform fmt` to rewrite Terraform files to the canonical format.
 
 ## Commit Message Format
 
