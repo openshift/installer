@@ -1,15 +1,8 @@
 ###
 # Update the builder image manually by running:
-# (See README.md/##Upstream-and-CoreOS-Terraform)
 #
 # docker build -t quay.io/coreos/tectonic-builder:<next-semver> -f images/builder/Dockerfile .
 # docker push quay.io/coreos/tectonic-builder:<next-semver>
-#
-# docker build \
-# --build-arg TERRAFORM_URL=<upstream terraform download url> \
-# -t quay.io/coreos/tectonic-builder:<next-semver>-upstream-terraform \
-# -f images/builder/Dockerfile .
-# docker push quay.io/coreos/tectonic-builder:<next-semver>-upstream-terraform
 ###
 
 FROM golang:1.9.2-stretch
@@ -47,8 +40,6 @@ RUN mkdir -p ${HOME} && \
     openvpn xauth
 
 # Install Terraform
-# TERRAFORM_URL enables us to build the upstream-terraform Tectonic builder
-# image (See README.md/##Upstream-and-CoreOS-Terraform)
 ARG TERRAFORM_URL=https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 RUN curl -L ${TERRAFORM_URL} | funzip > /usr/local/bin/terraform && chmod +x /usr/local/bin/terraform
 
