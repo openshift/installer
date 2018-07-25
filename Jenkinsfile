@@ -82,10 +82,10 @@ pipeline {
               sh """#!/bin/bash -e
                    export HOME=/home/jenkins
                    ./tests/run.sh
-                   cp bazel-bin/tectonic-dev.tar.gz .
+                   cp bazel-bin/openshift-installer-dev.tar.gz .
                  """
               // Produce an artifact which can be downloaded via web UI
-              stash name: 'tectonic-tarball', includes: 'tectonic-dev.tar.gz'
+              stash name: 'openshift-installer-tarball', includes: 'openshift-installer-dev.tar.gz'
             }
           }
         }
@@ -100,7 +100,7 @@ pipeline {
         withCredentials(quayCreds) {
           ansiColor('xterm') {
             sh """
-              docker build -t quay.io/coreos/tectonic-installer:master -f images/tectonic-installer/Dockerfile .
+              docker build -t quay.io/coreos/tectonic-installer:master -f images/openshift-installer/Dockerfile .
               docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
               docker push quay.io/coreos/tectonic-installer:master
               docker logout quay.io

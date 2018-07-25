@@ -1,6 +1,6 @@
-# Building Tectonic Installer
+# Building OpenShift Installer
 
-The Tectonic Installer leverages the [Bazel build system](https://bazel.build/) to build all artifacts, binaries, and documentation.
+The OpenShift Installer leverages the [Bazel build system](https://bazel.build/) to build all artifacts, binaries, and documentation.
 
 ## Getting Started
 
@@ -8,23 +8,23 @@ Install Bazel > 0.11.x using the instructions [provided online](https://docs.baz
 *Note*: compiling Bazel from source requires Bazel.
 *Note*: some Linux platforms may require installing _Static libraries for the GNU standard C++ library_ (on Fedora `dnf install libstdc++-static`)
 
-Clone the Tectonic Installer git repository locally:
+Clone the OpenShift Installer git repository locally:
 
 ```sh
-git clone git@github.com:coreos/tectonic-installer.git && cd tectonic-installer
+git clone git@github.com:openshift/installer.git && cd installer
 ```
 
 ## Quickstart
 
-To build Tectonic for development or testing, build the `tarball` target with Bazel:
+To build OpenShift for development or testing, build the `tarball` target with Bazel:
 
 ```sh
 bazel build tarball
 ```
 
-This will produce an archive named `tectonic.tar.gz` in the `bazel-bin` directory, containing all the assets necessary to bring up a Tectonic cluster, namely the:
+This will produce an archive named `openshift-installer-dev.tar.gz` in the `bazel-bin` directory, containing all the assets necessary to bring up a OpenShift cluster, namely the:
 
-* Tectonic Installer binary;
+* OpenShift Installer binary;
 * Terraform modules;
 * Terraform binary;
 * Terraform provider binaries; and
@@ -34,17 +34,17 @@ To use the installer you can now do the following:
 
 ```sh
 cd bazel-bin
-tar -xvzf tectonic.tar.gz
-cd tectonic
+tar -xvzf openshift-installer-dev.tar.gz
+cd openshift-installer-dev
 ```
 
 Then proceed using the installer as documented on [coreos.com](https://coreos.com/tectonic/docs/).
 
-For more details on building a Tectonic release or other Tectonic assets as well as workarounds to some known issues, read on.
+For more details on building a OpenShift release or other OpenShift assets as well as workarounds to some known issues, read on.
 
 ## Building A Release Tarball
 
-To build a release tarball for the Tectonic Installer, issue the following command from the `tectonic-installer` root directory:
+To build a release tarball for the OpenShift Installer, issue the following command from the `installer` root directory:
 
 ```sh
 bazel build tarball
@@ -56,10 +56,10 @@ bazel build tarball
 bazel build --force_python=py2 --python_path=/usr/bin/python2 tarball
 ```
 
-This will create a tarball named `tectonic.tar.gz` in the `bazel-bin` directory with the following directory structure:
+This will create a tarball named `openshift-installer-dev.tar.gz` in the `bazel-bin` directory with the following directory structure:
 
 ```
-tectonic
+openshift-installer-dev
 ├── config.tf
 ├── examples
 ├── installer
@@ -67,17 +67,17 @@ tectonic
 └── steps
 ```
 
-In order to build a release tarball with the version string in the directory name within the tarball, export a `TECTONIC_VERSION` environment variable and then build the tarball while passing the variable to the build:
+In order to build a release tarball with the version string in the directory name within the tarball, export a `OPENSHIFT_VERSION` environment variable and then build the tarball while passing the variable to the build:
 
 ```sh
-export TECTONIC_VERSION=1.2.3-beta
-bazel build tarball --action_env=TECTONIC_VERSION
+export OPENSHIFT_VERSION=1.2.3-beta
+bazel build tarball --action_env=OPENSHIFT_VERSION
 ```
 
-This will create a tarball named `tectonic.tar.gz` in the `bazel-bin` directory with the following directory structure:
+This will create a tarball named `openshift-install.tar.gz` in the `bazel-bin` directory with the following directory structure:
 
 ```
-tectonic_1.2.3-beta
+openshift-install_1.2.3-beta
 ├── config.tf
 ├── examples
 ├── installer
@@ -96,7 +96,7 @@ bazel build tests/smoke
 ```
 
 This operation will produce a binary located at `bazel-bin/tests/smoke/linux_amd64_stripped/smoke`, if on a Linux machine, or `bazel-bin/tests/smoke/darwin_amd64_stripped/smoke`, if on a Mac.
-Follow the [smoke test instructions][smoke-test] to test a Tectonic cluster using this newly compiled binary.
+Follow the [smoke test instructions][smoke-test] to test a OpenShift cluster using this newly compiled binary.
 
 
 ## Cleaning

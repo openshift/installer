@@ -87,26 +87,26 @@ bazel build tarball
 
 ### 3. Create a cluster
 ```sh
-tar -zxf bazel-bin/tectonic-dev.tar.gz
-cd tectonic-dev
+tar -zxf bazel-bin/openshift-installer-dev.tar.gz
+cd openshift-installer-dev
 export PATH=$(pwd)/installer:$PATH
 ```
 
 Initialize (the environment variables are a convenience):
 ```sh
-tectonic init --config=../tectonic.libvirt.yaml
+openshift-install init --config=../tectonic.libvirt.yaml
 export CLUSTER_NAME=<the cluster name>
 export BASE_DOMAIN=<the base domain>
 ```
 
 Install ($CLUSTER_NAME is `test1`):
 ```sh
-tectonic install --dir=$CLUSTER_NAME
+openshift-install install --dir=$CLUSTER_NAME
 ```
 
 When you're done, destroy:
 ```sh
-tectonic destroy --dir=$CLUSTER_NAME
+openshift-install destroy --dir=$CLUSTER_NAME
 ```
 Be sure to destroy, or else you will need to manually use virsh to clean up the leaked resources.
 

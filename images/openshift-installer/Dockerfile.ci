@@ -1,4 +1,4 @@
-# This Dockerfile is a used as a CI job to validate Tectonic installer on CentOS
+# This Dockerfile is a used as a CI job to validate OpenShift installer on CentOS
 
 FROM openshift/origin-release:golang-1.9 as build
 WORKDIR /go/src/github.com/openshift/installer
@@ -7,19 +7,19 @@ COPY . .
 ENV TERRAFORM_VERSION="0.11.1"
 ARG TERRAFORM_URL=https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 
-RUN go build -o ./installer/tectonic ./installer/cmd/tectonic && \
+RUN go build -o ./installer/openshift-install ./installer/cmd/openshift-install && \
     yum install -y unzip && \
     yum clean all && \
     curl -L ${TERRAFORM_URL} | funzip > ./installer/terraform && chmod +x ./installer/terraform && \
-    tar cvzf /opt/tectonic-dev.tar.gz ./installer/tectonic ./installer/terraform ./modules ./config.tf ./steps
+    tar cvzf /opt/openshift-installer-dev.tar.gz ./installer/openshift-install ./installer/terraform ./modules ./config.tf ./steps
 
 FROM centos:7
-COPY --from=build /opt/tectonic-dev.tar.gz /tmp/tectonic-dev.tar.gz
+COPY --from=build /opt/openshift-installer-dev.tar.gz /tmp/openshift-installer-dev.tar.gz
 
 ENV HOME /home/user
 ENV PATH $PATH:/home/user/installer
 RUN yum install -y gettext && \
     yum clean all && \
     mkdir -p ${HOME}/installer && chmod 777 -R ${HOME} && \
-    tar xzf /tmp/tectonic-dev.tar.gz -C ${HOME}
+    tar xzf /tmp/openshift-installer-dev.tar.gz -C ${HOME}
 WORKDIR /home/user

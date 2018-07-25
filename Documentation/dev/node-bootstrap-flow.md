@@ -1,6 +1,6 @@
 # Node bootstrapping flow
 
-This is a development document which describes the bootstrapping flow for ContainerLinux nodes provisioned by the tectonic-installer as part of a Tectonic cluster.
+This is a development document which describes the bootstrapping flow for ContainerLinux nodes provisioned by the openshift-installer as part of a OpenShift cluster.
 
 ## Overview
 
@@ -24,7 +24,7 @@ Additionally, only on one of the master nodes the following kubernetes bootstrap
 
 ## Systemd units
 
-The following systemd unit is deployed to a node by tectonic-installer and take part in the bootstrapping process:
+The following systemd unit is deployed to a node by openshift-installer and take part in the bootstrapping process:
 
 * `kubelet.service` is the main kubelet daemon. It is automatically started on boot.
 

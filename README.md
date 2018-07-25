@@ -25,8 +25,8 @@ These instructions can be used for AWS:
 
 3. Extract the tarball
     ```sh
-    tar -zxf bazel-bin/tectonic-dev.tar.gz
-    cd tectonic-dev
+    tar -zxf bazel-bin/openshift-installer-dev.tar.gz
+    cd openshift-installer-dev
     ```
 
 4. Add binaries to $PATH
@@ -34,28 +34,28 @@ These instructions can be used for AWS:
     export PATH=$(pwd)/installer:$PATH
     ```
 
-5. Edit Tectonic configuration file including the $CLUSTER_NAME
+5. Edit OpenShift configuration file including the $CLUSTER_NAME
     ```sh
-    $EDITOR examples/tectonic.aws.yaml
+    $EDITOR examples/openshift.aws.yaml
     ```
 
-6. Init Tectonic CLI
+6. Init OpenShift Installer CLI
     ```sh
-    tectonic init --config=examples/tectonic.aws.yaml
+    openshift-install init --config=examples/openshift.aws.yaml
     ```
 
-7. Install Tectonic cluster
+7. Install OpenShift cluster
     ```sh
-    tectonic install --dir=$CLUSTER_NAME
+    openshift-install install --dir=$CLUSTER_NAME
     ```
 
 8. Visit `https://{$CLUSTER_NAME}-api.${BASE_DOMAIN}:6443/console/`.
     You may need to ignore a certificate warning if you did not configure a CA known to your browser.
-    Log in with the admin credentials you configured in `tectonic.aws.yaml`.
+    Log in with the admin credentials you configured in `openshift.aws.yaml`.
 
-9. Teardown Tectonic cluster
+9. Teardown OpenShift cluster
     ```sh
-    tectonic destroy --dir=$CLUSTER_NAME
+    openshift-install destroy --dir=$CLUSTER_NAME
     ```
 
 ## Managing Dependencies
