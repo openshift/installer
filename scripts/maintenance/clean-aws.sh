@@ -27,11 +27,10 @@ Options:
   --tag-file        A file containing a TagFilter list. See the AWS Resource Group
                     Tagging API 'TagFilter' documentation for file structure.
 
-  --date-override   (optional) Date of the format YYYY-MM-DD that overrides the
-                    default tag value of today's date. This script tags resources
-                    with 'expirationDate: some-date-string', where some-date-string
-                    is replaced with either the following days' date or date-override.
-                    Only use if --tag-file is not used.
+  --date-override   (optional) Date of the format YYYY-MM-DD to delete resources
+                    tagged with 'expirationDate: some-date-string'.  By default,
+                    this script deletes resources which expired yesterday or
+                    today.  Not compatible with --tag-file.
 
   --dry-run         (optional) If set, grafiti will only do a dry run, i.e. not
                     delete any resources.
@@ -44,7 +43,7 @@ version=
 region=
 config_file=
 tag_file=
-date_override=
+date_string=
 dry_run=
 
 while [ $# -gt 0 ]; do
@@ -73,7 +72,7 @@ while [ $# -gt 0 ]; do
       shift
     ;;
     --date-override)
-      date_override="${2:-}"
+      date_string="[\"${2:-}\"]"
       shift
     ;;
     --dry-run)
@@ -112,7 +111,7 @@ if [ -z "$version" ]; then
   exit 1
 fi
 
-if [ -n "$tag_file" ] && [ -n "$date_override" ]; then
+if [ -n "$tag_file" ] && [ -n "$date_string" ]; then
   echo "Cannot use both --tag-file and --date-override flags simultaneously." >&2
   exit 1
 fi
@@ -132,16 +131,12 @@ fi
 if [ -n "$tag_file" ]; then
   cat "$tag_file" >"$tmp_dir/tag.json"
 else
-  date_string="$(date "+%Y-%m-%d" -d "-1 day")\",\"$(date "+%Y-%-m-%-d" -d "-1 day")\",
-  \"$(date "+%m-%-d-%-Y" -d "-1 day")\",\"$(date "+%-m-%-d-%-Y" -d "-1 day")\",\"$(date "+%d-%m-%-Y" -d "-1 day")\",
-  \"$(date "+%d-%-m-%-Y" -d "-1 day")\",\"$(date +%m-%d-%Y)\",\"$(date +%d-%m-%Y)\",
-  \"$(date +%d-%-m-%Y)\",\"$(date +%Y-%m-%d)\",\"$(date +%Y-%-m-%-d)"
-  if [ -n "$date_override" ]; then
-  	date_string="$date_override"
+  if [ -z "$date_string" ]; then
+    date_string="$(jq --null-input '[["%Y-%m-%d", "%Y-%-m-%-d", "%m-%d-%Y", "%m-%-d-%-Y", "%-m-%-d-%-Y", "%d-%m-%Y", "%d-%-m-%-Y"][] | . as $format | [now, now - 24*60*60][] | strftime($format)]')"
   fi
 
   cat <<EOF >"$tmp_dir/tag.json"
-{"TagFilters":[{"Key":"expirationDate","Values":["${date_string}"]}]}
+{"TagFilters":[{"Key":"expirationDate","Values":${date_string}}]}
 EOF
 fi
 

@@ -14,15 +14,15 @@ Options:
   --force           Override user input prompts. Useful for automation.
 
   --date-override   (optional) Date of the format YYYY-MM-DD that overrides the
-                    default tag value of today's date. This script tags resources
+                    default tag value of tomorrow's date. This script tags resources
                     with 'expirationDate: some-date-string', where some-date-string
-                    is replaced with either the following days' date or date-override.
+                    is replaced with either tomorrow's date or date-override.
 
 EOF
 }
 
 force=
-date_override=
+date_string=
 
 while [ $# -gt 0 ]; do
   case $1 in
@@ -34,7 +34,7 @@ while [ $# -gt 0 ]; do
       force=true
     ;;
     --date-override)
-      date_override="${2:-}"
+      date_string="${2:-}"
       shift
     ;;
     *)
@@ -53,11 +53,10 @@ fi
 set -e
 
 # Tag all Route53 hosted zones that do not already have a tag with the same keys,
-# in this case 'expirationDate', with today's date as default, or
-# with the DATE_VALUE_OVERRIDE value. Format YYYY-MM-DD.
-date_string="$(date "+%Y-%m-%d")"
-if [ -n "$date_override" ]; then
-	date_string="${date_override}"
+# in this case 'expirationDate', with tomorrow's date as default, or
+# with the --date-override value. Format YYYY-MM-DD.
+if [ -z "$date_string" ]; then
+  date_string="$(date -d tomorrow '+%Y-%m-%d')"
 fi
 
 tags="[{\"Key\":\"expirationDate\",\"Value\":\"$date_string\"}]"
