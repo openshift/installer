@@ -1,23 +1,19 @@
-provider "aws" {
-  region  = "${var.tectonic_aws_region}"
-  profile = "${var.tectonic_aws_profile}"
-  version = "1.8.0"
-
-  assume_role {
-    role_arn     = "${var.tectonic_aws_installer_role == "" ? "" : "${var.tectonic_aws_installer_role}"}"
-    session_name = "TECTONIC_INSTALLER_${var.tectonic_cluster_name}"
-  }
-}
-
-data "aws_availability_zones" "azs" {}
-
 # Terraform doesn't support "inheritance"
 # So we have to pass all variables down
+module "defaults" {
+  source = "../../../modules/aws/target-defaults"
+
+  region     = "${var.tectonic_aws_region}"
+  profile    = "${var.tectonic_aws_profile}"
+  role_arn   = "${var.tectonic_aws_installer_role}"
+  etcd_count = "${var.tectonic_etcd_count}"
+}
+
 module assets_base {
   source = "../base"
 
   cloud_provider = "aws"
-  etcd_count     = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : length(data.aws_availability_zones.azs.names) == 5 ? 5 : 3}"
+  etcd_count     = "${module.defaults.etcd_count}"
   ingress_kind   = "haproxy-router"
 
   tectonic_admin_email             = "${var.tectonic_admin_email}"

@@ -1,10 +1,16 @@
+module "defaults" {
+  source = "../../../modules/libvirt/target-defaults"
+
+  etcd_count = "${var.tectonic_etcd_count}"
+}
+
 # Terraform doesn't support "inheritance"
 # So we have to pass all variables down
 module assets_base {
   source = "../base"
 
   cloud_provider = ""
-  etcd_count     = "${var.tectonic_etcd_count > 0 ? var.tectonic_etcd_count : 1}"
+  etcd_count     = "${module.defaults.etcd_count}"
 
   ingress_kind = "haproxy-router"
 
@@ -66,7 +72,7 @@ data "ignition_config" "bootstrap" {
 }
 
 data "ignition_config" "etcd" {
-  count = "${var.tectonic_etcd_count}"
+  count = "${module.defaults.etcd_count}"
 
   users = [
     "${data.ignition_user.core.id}",
