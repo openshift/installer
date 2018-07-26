@@ -39,19 +39,21 @@ Due to their public nature, GitHub and mailing lists are not appropriate places 
 
 ### Contribution Flow
 
-This is a rough outline of what a contributor's workflow looks like:
+Anyone may [file issues][new-issue].
+For contributors who want to work up pull requests, the workflow is roughly:
 
-- Create a topic branch from where you want to base your work (usually master).
-- Make commits of logical units.
-- Make sure your commit messages are in the proper format (see below).
-- Push your changes to a topic branch in your fork of the repository.
-- Make sure the tests pass, and add any new tests as appropriate.
-- Please run this command before submitting your pull request:
+1. Create a topic branch from where you want to base your work (usually master).
+2. Make commits of logical units.
+3. Make sure your commit messages are in the proper format (see [below](#commit-message-format)).
+4. Push your changes to a topic branch in your fork of the repository.
+5. Make sure the tests pass, and add any new tests as appropriate.
+6. Please run this command before submitting your pull request:
     ```sh
     make structure-check
     ```
-- Note that a portion of the docs and examples are generated and that the generated files are to be committed by you. `make structure-check` checks that what is generated is what you must commit.
-- Submit a pull request to the original repository.
+    Note that a portion of the docs and examples are generated and that the generated files are to be committed by you. `make structure-check` checks that what is generated is what you must commit.
+7. Submit a pull request to the original repository.
+8. The [repo owners](OWNERS) will respond to your issue promptly, following [the ususal Prow workflow][prow-review].
 
 Thanks for your contributions!
 
@@ -63,7 +65,7 @@ Tectonic Installer includes syntax checks on the Terraform templates which will 
 
 Use `make structure-check` to identify files that don't meet the canonical format and style. Then, use `terraform fmt` to align the template syntax, if necessary.
 
-## Format of the Commit Message
+## Commit Message Format
 
 We follow a rough convention for commit messages that is designed to answer two
 questions: what changed and why. The subject line should feature the what and
@@ -98,3 +100,5 @@ git tools.
 [tf-doc]: https://www.terraform.io/docs/index.html
 [golang-style]: https://github.com/golang/go/wiki/CodeReviewComments
 [disclosure]: https://coreos.com/security/disclosure/
+[new-issue]: https://github.com/openshift/installer/issues/new
+[prow-review]: https://github.com/kubernetes/community/blob/master/contributors/guide/owners.md#the-code-review-process
