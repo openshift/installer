@@ -61,6 +61,10 @@ resource "aws_eip" "nat_eip" {
   count = "${min(local.new_master_az_count,local.new_worker_az_count)}"
   vpc   = true
 
+  tags = "${merge(map(
+      "tectonicClusterID", "${var.cluster_id}"
+    ), var.extra_tags)}"
+
   # Terraform does not declare an explicit dependency towards the internet gateway.
   # this can cause the internet gateway to be deleted/detached before the EIPs.
   # https://github.com/coreos/tectonic-installer/issues/1017#issuecomment-307780549
