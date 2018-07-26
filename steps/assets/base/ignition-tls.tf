@@ -75,6 +75,28 @@ data "ignition_file" "service_serving_ca_cert" {
   path = "/opt/tectonic/tls/service-serving-ca.crt"
 }
 
+data "ignition_file" "clusterapi_ca_key" {
+  filesystem = "root"
+  mode       = "0600"
+
+  content {
+    content = "${local.clusterapi_ca_key_pem}"
+  }
+
+  path = "/opt/tectonic/tls/clusterapi-apiserver-ca.key"
+}
+
+data "ignition_file" "clusterapi_ca_cert" {
+  filesystem = "root"
+  mode       = "0644"
+
+  content {
+    content = "${local.clusterapi_ca_cert_pem}"
+  }
+
+  path = "/opt/tectonic/tls/clusterapi-apiserver-ca.crt"
+}
+
 data "ignition_file" "etcd_ca_key" {
   filesystem = "root"
   mode       = "0600"
@@ -264,6 +286,8 @@ locals {
     "${data.ignition_file.service_serving_ca_cert.id}",
     "${data.ignition_file.etcd_ca_key.id}",
     "${data.ignition_file.etcd_ca_cert.id}",
+    "${data.ignition_file.clusterapi_ca_key.id}",
+    "${data.ignition_file.clusterapi_ca_cert.id}",
   ]
 
   etcd_certs_ignition_file_id_list = [

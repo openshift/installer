@@ -11,6 +11,7 @@ variable "manifest_names" {
     "kube-controller-manager-secret.yaml",
     "node-config-kind.yaml",
     "openshift-apiserver-secret.yaml",
+    "clusterapi-apiserver-secret.yaml",
     "pull.json",
     "tectonic-network-operator.yaml",
     "tectonic-node-controller-operator.yaml",
@@ -42,6 +43,8 @@ data "template_file" "manifest_file_list" {
     openshift_apiserver_cert = "${base64encode(var.openshift_apiserver_cert_pem)}"
     apiserver_proxy_key      = "${base64encode(var.apiserver_proxy_key_pem)}"
     apiserver_proxy_cert     = "${base64encode(var.apiserver_proxy_cert_pem)}"
+    clusterapi_ca_cert       = "${base64encode(var.clusterapi_ca_cert_pem)}"
+    clusterapi_ca_key        = "${base64encode(var.clusterapi_ca_key_pem)}"
     oidc_ca_cert             = "${base64encode(var.oidc_ca_cert)}"
     pull_secret              = "${base64encode(file(var.pull_secret_path))}"
     serviceaccount_pub       = "${base64encode(tls_private_key.service_account.public_key_pem)}"

@@ -135,6 +135,14 @@ variable "oidc_ca_cert" {
   type = "string"
 }
 
+variable "clusterapi_ca_cert_pem" {
+  type = "string"
+}
+
+variable "clusterapi_ca_key_pem" {
+  type = "string"
+}
+
 variable "service_cidr" {
   description = "A CIDR notation IP range from which to assign service cluster IPs"
   type        = "string"

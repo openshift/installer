@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  # This is the namespace used to hold the machine-api-operator.
+  name: kube-cluster
+  labels:
+    name: kube-cluster
