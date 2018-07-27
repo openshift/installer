@@ -18,8 +18,10 @@ Options:
                     hash of a grafiti image hosted in quay.io.
 
   --aws-region      The AWS region you wish to query for taggable resources. This
-                    flag is optional if AWS_REGION is set. AWS_REGION overrides
-                    values passed in by this flag.
+                    flag is optional if AWS_REGION is set.  You can also set a
+                    default region for the default profile in your ~/.aws
+                    configuration files, although for this you must have the 'aws'
+                    command installed).
 
   --config-file     A grafiti configuration file. See an example at
                     https://github.com/coreos/grafiti/blob/master/config.toml.
@@ -104,8 +106,19 @@ if ! command -V docker >/dev/null; then
   exit 1
 fi
 
-if [ -n "$AWS_REGION" ]; then
-  region="${AWS_REGION:-}"
+if [ -z "$region" ]; then
+  if [ -n "$AWS_REGION" ]; then
+    region="${AWS_REGION:-}"
+  elif ! command -V aws >/dev/null; then
+    echo "Without the 'aws' command, you must set either --aws-region or \$AWS_REGION" >&2
+    exit 1
+  else
+    region="$(aws configure get region)"
+    if [ -z "$region" ]; then
+      echo "Must provide an AWS region, set the AWS_REGION, or set a region in your ~/.aws/config" >&2
+      exit 1
+    fi
+  fi
 fi
 
 if [ -z "$version" ]; then
@@ -115,11 +128,6 @@ fi
 
 if [ -z "$start_hour" ] || [ -z "$end_hour" ]; then
   echo "Start hour and end hour must be specified." >&2
-  exit 1
-fi
-
-if [ -z "$region" ]; then
-  echo "Must provide an AWS region, set the AWS_REGION, or set a region in your ~/.aws/config" >&2
   exit 1
 fi
 
