@@ -132,8 +132,6 @@ fi
 if [ -n "$tag_file" ]; then
   cat "$tag_file" >"$tmp_dir/tag.json"
 else
-  tag_file="$(mktemp -p "$tmp_dir")"
-
   date_string="$(date "+%Y-%m-%d" -d "-1 day")\",\"$(date "+%Y-%-m-%-d" -d "-1 day")\",
   \"$(date "+%m-%-d-%-Y" -d "-1 day")\",\"$(date "+%-m-%-d-%-Y" -d "-1 day")\",\"$(date "+%d-%m-%-Y" -d "-1 day")\",
   \"$(date "+%d-%-m-%-Y" -d "-1 day")\",\"$(date +%m-%d-%Y)\",\"$(date +%d-%m-%Y)\",
@@ -148,7 +146,7 @@ EOF
 fi
 
 echo "Deleting resources with the following tags:"
-jq '.' "$tag_file"
+jq '.' "$tmp_dir/tag.json"
 
 if [ -n "$dry_run" ]; then
   echo "Dry run flag set. Not deleting any resources."
