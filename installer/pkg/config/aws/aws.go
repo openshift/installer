@@ -20,7 +20,6 @@ const (
 
 // AWS converts AWS related config.
 type AWS struct {
-	AutoScalingGroupExtraTags []map[string]string `json:"tectonic_autoscaling_group_extra_tags,omitempty" yaml:"autoScalingGroupExtraTags,omitempty"`
 	EC2AMIOverride            string              `json:"tectonic_aws_ec2_ami_override,omitempty" yaml:"ec2AMIOverride,omitempty"`
 	Endpoints                 Endpoints           `json:"tectonic_aws_endpoints,omitempty" yaml:"endpoints,omitempty"`
 	Etcd                      `json:",inline" yaml:"etcd,omitempty"`
