@@ -9,7 +9,7 @@ module "defaults" {
 }
 
 resource "libvirt_volume" "etcd" {
-  count          = "${local.etcd_count}"
+  count          = "${module.defaults.etcd_count}"
   name           = "etcd${count.index}"
   base_volume_id = "${local.libvirt_base_volume_id}"
 }
