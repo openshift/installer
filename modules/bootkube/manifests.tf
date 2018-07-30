@@ -11,7 +11,7 @@ variable "manifest_names" {
     "kube-controller-manager-secret.yaml",
     "node-config-kind.yaml",
     "openshift-apiserver-secret.yaml",
-    "clusterapi-apiserver-secret.yaml",
+    "cluster-apiserver-secret.yaml",
     "pull.json",
     "tectonic-network-operator.yaml",
     "tectonic-node-controller-operator.yaml",

@@ -83,7 +83,7 @@ data "ignition_file" "clusterapi_ca_key" {
     content = "${local.clusterapi_ca_key_pem}"
   }
 
-  path = "/opt/tectonic/tls/clusterapi-apiserver-ca.key"
+  path = "/opt/tectonic/tls/cluster-apiserver-ca.key"
 }
 
 data "ignition_file" "clusterapi_ca_cert" {
@@ -94,7 +94,7 @@ data "ignition_file" "clusterapi_ca_cert" {
     content = "${local.clusterapi_ca_cert_pem}"
   }
 
-  path = "/opt/tectonic/tls/clusterapi-apiserver-ca.crt"
+  path = "/opt/tectonic/tls/cluster-apiserver-ca.crt"
 }
 
 data "ignition_file" "etcd_ca_key" {
