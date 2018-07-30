@@ -263,7 +263,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		Validity:  validityTenYears,
 		IsCA:      true,
 	}
-	if _, _, err := generateCert(clusterDir, caKey, caCert, clusterAPIServerKeyPath, clusterAPIServerCertPath, cfg, true); err != nil {
+	if _, _, err := generateCert(clusterDir, aggregatorCAKey, aggregatorCACert, clusterAPIServerKeyPath, clusterAPIServerCertPath, cfg, true); err != nil {
 		return fmt.Errorf("failed to generate cluster-apiserver CA: %v", err)
 	}
 
