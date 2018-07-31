@@ -7,8 +7,12 @@ Read the [etcd recommended hardware guide][hardware] for best performance.
 ## Example
 
 ```hcl
-provider "aws" {
+locals {
   region = "us-east-1"
+}
+
+provider "aws" {
+  region = "${local.region}"
 }
 
 resource "aws_s3_bucket" "etcd_ignition" {
@@ -50,6 +54,7 @@ module "etcd" {
   cluster_id     = "123"
   cluster_name   = "my-cluster"
   instance_count = "3"
+  region         = "${local.region}"
   s3_bucket      = "${aws_s3_bucket.etcd_ignition.id}"
   sg_ids         = ["${aws_security_group.etcd.id}"]
   subnets        = ["${aws_subnet.example.id}"]

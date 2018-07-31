@@ -76,6 +76,15 @@ variable "aws_lbs" {
   default     = []
 }
 
+variable "region" {
+  type = "string"
+
+  description = <<EOF
+This is the AWS region.
+It is passed through to the Terraform aws provider: https://www.terraform.io/docs/providers/aws/#region
+EOF
+}
+
 variable "root_volume_iops" {
   type        = "string"
   default     = "100"

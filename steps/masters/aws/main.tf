@@ -39,6 +39,7 @@ module "masters" {
   master_sg_ids                = "${concat(var.tectonic_aws_master_extra_sg_ids, list(local.sg_id))}"
   private_endpoints            = "${local.private_endpoints}"
   public_endpoints             = "${local.public_endpoints}"
+  region                       = "${var.tectonic_aws_region}"
   root_volume_iops             = "${var.tectonic_aws_master_root_volume_iops}"
   root_volume_size             = "${var.tectonic_aws_master_root_volume_size}"
   root_volume_type             = "${var.tectonic_aws_master_root_volume_type}"
