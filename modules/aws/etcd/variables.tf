@@ -24,6 +24,15 @@ variable "instance_count" {
   default = "3"
 }
 
+variable "region" {
+  type = "string"
+
+  description = <<EOF
+This is the AWS region.
+It is passed through to the Terraform aws provider: https://www.terraform.io/docs/providers/aws/#region
+EOF
+}
+
 variable "ssh_key" {
   type    = "string"
   default = ""

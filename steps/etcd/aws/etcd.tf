@@ -58,6 +58,7 @@ module "etcd" {
   ec2_type                = "${var.tectonic_aws_etcd_ec2_type}"
   extra_tags              = "${var.tectonic_aws_extra_tags}"
   instance_count          = "${length(data.template_file.etcd_hostname_list.*.id)}"
+  region                  = "${var.tectonic_aws_region}"
   root_volume_iops        = "${var.tectonic_aws_etcd_root_volume_iops}"
   root_volume_size        = "${var.tectonic_aws_etcd_root_volume_size}"
   root_volume_type        = "${var.tectonic_aws_etcd_root_volume_type}"

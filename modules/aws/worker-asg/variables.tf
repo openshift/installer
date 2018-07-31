@@ -58,6 +58,15 @@ variable "autoscaling_group_extra_tags" {
   default     = []
 }
 
+variable "region" {
+  type = "string"
+
+  description = <<EOF
+This is the AWS region.
+It is passed through to the Terraform aws provider: https://www.terraform.io/docs/providers/aws/#region
+EOF
+}
+
 variable "root_volume_type" {
   type        = "string"
   description = "The type of volume for the root block device."
