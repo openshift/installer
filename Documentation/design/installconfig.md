@@ -379,6 +379,6 @@ type LibvirtMachinePoolPlatformConfig struct {
 }
 ```
 
-### Why not MachineSets in InstallConfig?
+### Why not embed `MachineSets` in `InstallConfig`?
 
-To controll and delegate MachineSet implementation to Machine Operator and restrict the configuration options in InstallConfig, there will not be MachineSet object embedded.
+This installer is opinionated, and the `ClusterMachineSet` properties do not need to be configured by users.
