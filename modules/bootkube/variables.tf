@@ -131,6 +131,14 @@ variable "tnc_key_pem" {
   type = "string"
 }
 
+variable "service_account_public_key_pem" {
+  type = "string"
+}
+
+variable "service_account_private_key_pem" {
+  type = "string"
+}
+
 variable "oidc_ca_cert" {
   type = "string"
 }

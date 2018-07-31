@@ -1,6 +1,6 @@
 # This Dockerfile is a used as a CI job to validate Tectonic installer on CentOS
 
-FROM openshift/origin-release:golang-1.9 as build
+FROM openshift/origin-release:golang-1.10 as build
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 ### Install Terraform

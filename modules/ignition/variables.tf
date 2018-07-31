@@ -69,13 +69,3 @@ variable "etcd_ca_cert_pem" {
   type        = "string"
   description = "The etcd kube CA certificate in PEM format."
 }
-
-variable "tnc_cert_pem" {
-  type        = "string"
-  description = "The TNC certificate in PEM format."
-}
-
-variable "tnc_key_pem" {
-  type        = "string"
-  description = "The TNC key in PEM format."
-}

@@ -275,6 +275,28 @@ data "ignition_file" "tnc_cert" {
   path = "/opt/tectonic/tls/tnc.crt"
 }
 
+data "ignition_file" "service_account_private_key" {
+  filesystem = "root"
+  mode       = "0644"
+
+  content {
+    content = "${local.service_account_private_key_pem}"
+  }
+
+  path = "/opt/tectonic/tls/service-account.key"
+}
+
+data "ignition_file" "service_account_public_key" {
+  filesystem = "root"
+  mode       = "0644"
+
+  content {
+    content = "${local.service_account_public_key_pem}"
+  }
+
+  path = "/opt/tectonic/tls/service-account.pub"
+}
+
 locals {
   ca_certs_ignition_file_id_list = [
     "${data.ignition_file.root_ca_cert.id}",
@@ -311,5 +333,10 @@ locals {
   tnc_certs_ignition_file_id_list = [
     "${data.ignition_file.tnc_key.id}",
     "${data.ignition_file.tnc_cert.id}",
+  ]
+
+  service_account_keys_ignition_file_id_list = [
+    "${data.ignition_file.service_account_private_key.id}",
+    "${data.ignition_file.service_account_public_key.id}",
   ]
 }

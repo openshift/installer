@@ -12,8 +12,6 @@ module "ignition_bootstrap" {
   kubelet_debug_config = "${var.tectonic_kubelet_debug_config}"
   kubelet_node_label   = "node-role.kubernetes.io/master"
   kubelet_node_taints  = "node-role.kubernetes.io/master=:NoSchedule"
-  tnc_cert_pem         = "${local.tnc_cert_pem}"
-  tnc_key_pem          = "${local.tnc_key_pem}"
 }
 
 # The cluster configs written by the install binary external to Terraform.

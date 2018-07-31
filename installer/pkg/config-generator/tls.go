@@ -17,35 +17,37 @@ import (
 )
 
 const (
-	adminCertPath            = "generated/tls/admin.crt"
-	adminKeyPath             = "generated/tls/admin.key"
-	aggregatorCACertPath     = "generated/tls/aggregator-ca.crt"
-	aggregatorCAKeyPath      = "generated/tls/aggregator-ca.key"
-	apiServerCertPath        = "generated/tls/apiserver.crt"
-	apiServerKeyPath         = "generated/tls/apiserver.key"
-	apiServerProxyCertPath   = "generated/tls/apiserver-proxy.crt"
-	apiServerProxyKeyPath    = "generated/tls/apiserver-proxy.key"
-	etcdCACertPath           = "generated/tls/etcd-ca.crt"
-	etcdCAKeyPath            = "generated/tls/etcd-ca.key"
-	etcdClientCertPath       = "generated/tls/etcd-client.crt"
-	etcdClientKeyPath        = "generated/tls/etcd-client.key"
-	ingressCACertPath        = "generated/tls/ingress-ca.crt"
-	ingressCertPath          = "generated/tls/ingress.crt"
-	ingressKeyPath           = "generated/tls/ingress.key"
-	kubeCACertPath           = "generated/tls/kube-ca.crt"
-	kubeCAKeyPath            = "generated/tls/kube-ca.key"
-	kubeletCertPath          = "generated/tls/kubelet.crt"
-	kubeletKeyPath           = "generated/tls/kubelet.key"
-	clusterAPIServerCertPath = "generated/tls/cluster-apiserver-ca.crt"
-	clusterAPIServerKeyPath  = "generated/tls/cluster-apiserver-ca.key"
-	osAPIServerCertPath      = "generated/tls/openshift-apiserver.crt"
-	osAPIServerKeyPath       = "generated/tls/openshift-apiserver.key"
-	rootCACertPath           = "generated/tls/root-ca.crt"
-	rootCAKeyPath            = "generated/tls/root-ca.key"
-	serviceServingCACertPath = "generated/tls/service-serving-ca.crt"
-	serviceServingCAKeyPath  = "generated/tls/service-serving-ca.key"
-	tncCertPath              = "generated/tls/tnc.crt"
-	tncKeyPath               = "generated/tls/tnc.key"
+	adminCertPath                = "generated/tls/admin.crt"
+	adminKeyPath                 = "generated/tls/admin.key"
+	aggregatorCACertPath         = "generated/tls/aggregator-ca.crt"
+	aggregatorCAKeyPath          = "generated/tls/aggregator-ca.key"
+	apiServerCertPath            = "generated/tls/apiserver.crt"
+	apiServerKeyPath             = "generated/tls/apiserver.key"
+	apiServerProxyCertPath       = "generated/tls/apiserver-proxy.crt"
+	apiServerProxyKeyPath        = "generated/tls/apiserver-proxy.key"
+	etcdCACertPath               = "generated/tls/etcd-ca.crt"
+	etcdCAKeyPath                = "generated/tls/etcd-ca.key"
+	etcdClientCertPath           = "generated/tls/etcd-client.crt"
+	etcdClientKeyPath            = "generated/tls/etcd-client.key"
+	ingressCACertPath            = "generated/tls/ingress-ca.crt"
+	ingressCertPath              = "generated/tls/ingress.crt"
+	ingressKeyPath               = "generated/tls/ingress.key"
+	kubeCACertPath               = "generated/tls/kube-ca.crt"
+	kubeCAKeyPath                = "generated/tls/kube-ca.key"
+	kubeletCertPath              = "generated/tls/kubelet.crt"
+	kubeletKeyPath               = "generated/tls/kubelet.key"
+	clusterAPIServerCertPath     = "generated/tls/cluster-apiserver-ca.crt"
+	clusterAPIServerKeyPath      = "generated/tls/cluster-apiserver-ca.key"
+	osAPIServerCertPath          = "generated/tls/openshift-apiserver.crt"
+	osAPIServerKeyPath           = "generated/tls/openshift-apiserver.key"
+	rootCACertPath               = "generated/tls/root-ca.crt"
+	rootCAKeyPath                = "generated/tls/root-ca.key"
+	serviceServingCACertPath     = "generated/tls/service-serving-ca.crt"
+	serviceServingCAKeyPath      = "generated/tls/service-serving-ca.key"
+	tncCertPath                  = "generated/tls/tnc.crt"
+	tncKeyPath                   = "generated/tls/tnc.key"
+	serviceAccountPubkeyPath     = "generated/tls/service-account.pub"
+	serviceAccountPrivateKeyPath = "generated/tls/service-account.key"
 
 	validityTenYears      = time.Hour * 24 * 365 * 10
 	validityThirtyMinutes = time.Minute * 30
@@ -265,6 +267,21 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	}
 	if _, _, err := generateCert(clusterDir, aggregatorCAKey, aggregatorCACert, clusterAPIServerKeyPath, clusterAPIServerCertPath, cfg, true); err != nil {
 		return fmt.Errorf("failed to generate cluster-apiserver CA: %v", err)
+	}
+
+	// Service Account private and public key.
+	svcAccountPrivKey, err := generatePrivateKey(clusterDir, serviceAccountPrivateKeyPath)
+	if err != nil {
+		return fmt.Errorf("failed to generate service-account private key: %v", err)
+	}
+
+	pubkeyPath := filepath.Join(clusterDir, serviceAccountPubkeyPath)
+	pubkeyData, err := tls.PublicKeyToPem(&svcAccountPrivKey.PublicKey)
+	if err != nil {
+		return fmt.Errorf("failed to generate service-account public key: %v", err)
+	}
+	if err := ioutil.WriteFile(pubkeyPath, []byte(pubkeyData), 0600); err != nil {
+		return fmt.Errorf("failed to write service-account public key: %v", err)
 	}
 
 	return nil
