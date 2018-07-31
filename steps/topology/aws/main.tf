@@ -16,13 +16,6 @@ provider "aws" {
 
 data "aws_availability_zones" "azs" {}
 
-module "container_linux" {
-  source = "../../../modules/container_linux"
-
-  release_channel = "${var.tectonic_container_linux_channel}"
-  release_version = "${var.tectonic_container_linux_version}"
-}
-
 # TNC
 resource "aws_route53_zone" "tectonic_int" {
   count         = "${local.private_endpoints ? "${var.tectonic_aws_external_private_zone == "" ? 1 : 0 }" : 0}"
