@@ -14,9 +14,6 @@ RUN go get github.com/jstemmer/go-junit-report
 ### Tools used by 'make structure-check'
 RUN go get github.com/bronze1man/yaml2json
 
-### License parser
-RUN go get github.com/coreos/license-bill-of-materials
-
 ### 'grafiti' for cluster cleanup
 ENV GRAFITI_VERSION "v0.1.1"
 RUN git clone -q https://github.com/coreos/grafiti.git ${GOPATH}/src/github.com/coreos/grafiti \
