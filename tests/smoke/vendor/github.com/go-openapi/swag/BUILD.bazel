@@ -11,6 +11,7 @@ go_library(
         "path.go",
         "util.go",
     ],
+    importmap = "installer/tests/smoke/vendor/github.com/go-openapi/swag",
     importpath = "github.com/go-openapi/swag",
     visibility = ["//visibility:public"],
     deps = [

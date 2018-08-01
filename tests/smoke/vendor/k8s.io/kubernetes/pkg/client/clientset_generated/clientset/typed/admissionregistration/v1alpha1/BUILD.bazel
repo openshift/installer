@@ -9,6 +9,7 @@ go_library(
         "generated_expansion.go",
         "initializerconfiguration.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/client/clientset_generated/clientset/typed/admissionregistration/v1alpha1",
     importpath = "k8s.io/kubernetes/pkg/client/clientset_generated/clientset/typed/admissionregistration/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [

@@ -8,6 +8,7 @@ go_library(
         "interface.go",
         "statefulset.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/client/informers/informers_generated/externalversions/apps/v1beta1",
     importpath = "k8s.io/kubernetes/pkg/client/informers/informers_generated/externalversions/apps/v1beta1",
     visibility = ["//visibility:public"],
     deps = [

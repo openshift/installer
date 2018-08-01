@@ -8,6 +8,7 @@ go_library(
         "timerfc1123.go",
         "utility.go",
     ],
+    importmap = "installer/tests/smoke/vendor/github.com/Azure/go-autorest/autorest/date",
     importpath = "github.com/Azure/go-autorest/autorest/date",
     visibility = ["//visibility:public"],
 )

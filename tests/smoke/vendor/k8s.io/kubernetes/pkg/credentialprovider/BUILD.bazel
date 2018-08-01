@@ -9,6 +9,7 @@ go_library(
         "plugins.go",
         "provider.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/credentialprovider",
     importpath = "k8s.io/kubernetes/pkg/credentialprovider",
     visibility = ["//visibility:public"],
     deps = [

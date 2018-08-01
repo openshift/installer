@@ -21,6 +21,7 @@ go_library(
         "url.go",
         "verification.go",
     ],
+    importmap = "installer/vendor/github.com/coreos/ignition/config/v2_1/types",
     importpath = "github.com/coreos/ignition/config/v2_1/types",
     visibility = ["//visibility:public"],
     deps = [

@@ -9,6 +9,7 @@ go_library(
         "openapi_cache.go",
         "openapi_getter.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/kubectl/cmd/util/openapi",
     importpath = "k8s.io/kubernetes/pkg/kubectl/cmd/util/openapi",
     visibility = ["//visibility:public"],
     deps = [

@@ -6,6 +6,7 @@ go_library(
         "reference.go",
         "regexp.go",
     ],
+    importmap = "installer/tests/smoke/vendor/github.com/docker/distribution/reference",
     importpath = "github.com/docker/distribution/reference",
     visibility = ["//visibility:public"],
     deps = ["//tests/smoke/vendor/github.com/docker/distribution/digest:go_default_library"],

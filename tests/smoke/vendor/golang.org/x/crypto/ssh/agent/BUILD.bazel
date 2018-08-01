@@ -8,6 +8,7 @@ go_library(
         "keyring.go",
         "server.go",
     ],
+    importmap = "installer/tests/smoke/vendor/golang.org/x/crypto/ssh/agent",
     importpath = "golang.org/x/crypto/ssh/agent",
     visibility = ["//visibility:public"],
     deps = [

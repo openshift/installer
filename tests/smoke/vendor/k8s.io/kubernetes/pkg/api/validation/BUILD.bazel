@@ -8,6 +8,7 @@ go_library(
         "schema.go",
         "validation.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/api/validation",
     importpath = "k8s.io/kubernetes/pkg/api/validation",
     visibility = ["//visibility:public"],
     deps = [

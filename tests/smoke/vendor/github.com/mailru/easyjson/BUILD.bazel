@@ -6,6 +6,7 @@ go_library(
         "helpers.go",
         "raw.go",
     ],
+    importmap = "installer/tests/smoke/vendor/github.com/mailru/easyjson",
     importpath = "github.com/mailru/easyjson",
     visibility = ["//visibility:public"],
     deps = [

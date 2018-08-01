@@ -9,6 +9,7 @@ go_library(
         "set.go",
         "verifiers.go",
     ],
+    importmap = "installer/tests/smoke/vendor/github.com/docker/distribution/digest",
     importpath = "github.com/docker/distribution/digest",
     visibility = ["//visibility:public"],
 )

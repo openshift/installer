@@ -15,6 +15,7 @@ go_library(
         "zz_generated.deepcopy.go",
         "zz_generated.defaults.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/apis/autoscaling/v1",
     importpath = "k8s.io/kubernetes/pkg/apis/autoscaling/v1",
     visibility = ["//visibility:public"],
     deps = [
