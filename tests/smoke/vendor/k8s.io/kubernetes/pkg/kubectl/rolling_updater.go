@@ -23,24 +23,27 @@ import (
 	"strings"
 	"time"
 
+	"k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/apimachinery/pkg/util/wait"
+	scaleclient "k8s.io/client-go/scale"
 	"k8s.io/client-go/util/integer"
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/v1"
+	"k8s.io/client-go/util/retry"
 	podutil "k8s.io/kubernetes/pkg/api/v1/pod"
+	api "k8s.io/kubernetes/pkg/apis/core"
+	apiv1 "k8s.io/kubernetes/pkg/apis/core/v1"
 	coreclient "k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/typed/core/internalversion"
-	"k8s.io/kubernetes/pkg/client/retry"
-	client "k8s.io/kubernetes/pkg/client/unversioned"
 	deploymentutil "k8s.io/kubernetes/pkg/controller/deployment/util"
 	"k8s.io/kubernetes/pkg/kubectl/util"
 )
 
 const (
+	kubectlAnnotationPrefix    = "kubectl.kubernetes.io/"
 	sourceIdAnnotation         = kubectlAnnotationPrefix + "update-source-id"
 	desiredReplicasAnnotation  = kubectlAnnotationPrefix + "desired-replicas"
 	originalReplicasAnnotation = kubectlAnnotationPrefix + "original-replicas"
@@ -113,8 +116,9 @@ const (
 // RollingUpdater provides methods for updating replicated pods in a predictable,
 // fault-tolerant way.
 type RollingUpdater struct {
-	rcClient  coreclient.ReplicationControllersGetter
-	podClient coreclient.PodsGetter
+	rcClient    coreclient.ReplicationControllersGetter
+	podClient   coreclient.PodsGetter
+	scaleClient scaleclient.ScalesGetter
 	// Namespace for resources
 	ns string
 	// scaleAndWait scales a controller and returns its updated state.
@@ -131,11 +135,12 @@ type RollingUpdater struct {
 }
 
 // NewRollingUpdater creates a RollingUpdater from a client.
-func NewRollingUpdater(namespace string, rcClient coreclient.ReplicationControllersGetter, podClient coreclient.PodsGetter) *RollingUpdater {
+func NewRollingUpdater(namespace string, rcClient coreclient.ReplicationControllersGetter, podClient coreclient.PodsGetter, sc scaleclient.ScalesGetter) *RollingUpdater {
 	updater := &RollingUpdater{
-		rcClient:  rcClient,
-		podClient: podClient,
-		ns:        namespace,
+		rcClient:    rcClient,
+		podClient:   podClient,
+		scaleClient: sc,
+		ns:          namespace,
 	}
 	// Inject real implementations.
 	updater.scaleAndWait = updater.scaleAndWaitWithScaler
@@ -395,8 +400,8 @@ func (r *RollingUpdater) scaleDown(newRc, oldRc *api.ReplicationController, desi
 
 // scalerScaleAndWait scales a controller using a Scaler and a real client.
 func (r *RollingUpdater) scaleAndWaitWithScaler(rc *api.ReplicationController, retry *RetryParams, wait *RetryParams) (*api.ReplicationController, error) {
-	scaler := &ReplicationControllerScaler{r.rcClient}
-	if err := scaler.Scale(rc.Namespace, rc.Name, uint(rc.Spec.Replicas), &ScalePrecondition{-1, ""}, retry, wait); err != nil {
+	scaler := NewScaler(r.scaleClient)
+	if err := scaler.Scale(rc.Namespace, rc.Name, uint(rc.Spec.Replicas), &ScalePrecondition{-1, ""}, retry, wait, schema.GroupResource{Resource: "replicationcontrollers"}); err != nil {
 		return nil, err
 	}
 	return r.rcClient.ReplicationControllers(rc.Namespace).Get(rc.Name, metav1.GetOptions{})
@@ -423,7 +428,7 @@ func (r *RollingUpdater) readyPods(oldRc, newRc *api.ReplicationController, minR
 		}
 		for _, pod := range pods.Items {
 			v1Pod := &v1.Pod{}
-			if err := v1.Convert_api_Pod_To_v1_Pod(&pod, v1Pod, nil); err != nil {
+			if err := apiv1.Convert_core_Pod_To_v1_Pod(&pod, v1Pod, nil); err != nil {
 				return 0, 0, err
 			}
 			// Do not count deleted pods as ready
@@ -511,7 +516,7 @@ func (r *RollingUpdater) cleanupWithClients(oldRc, newRc *api.ReplicationControl
 		return err
 	}
 
-	if err = wait.Poll(config.Interval, config.Timeout, client.ControllerHasDesiredReplicas(r.rcClient, newRc)); err != nil {
+	if err = wait.Poll(config.Interval, config.Timeout, ControllerHasDesiredReplicas(r.rcClient, newRc)); err != nil {
 		return err
 	}
 	newRc, err = r.rcClient.ReplicationControllers(r.ns).Get(newRc.Name, metav1.GetOptions{})
@@ -544,8 +549,8 @@ func Rename(c coreclient.ReplicationControllersGetter, rc *api.ReplicationContro
 	rc.Name = newName
 	rc.ResourceVersion = ""
 	// First delete the oldName RC and orphan its pods.
-	trueVar := true
-	err := c.ReplicationControllers(rc.Namespace).Delete(oldName, &metav1.DeleteOptions{OrphanDependents: &trueVar})
+	policy := metav1.DeletePropagationOrphan
+	err := c.ReplicationControllers(rc.Namespace).Delete(oldName, &metav1.DeleteOptions{PropagationPolicy: &policy})
 	if err != nil && !errors.IsNotFound(err) {
 		return err
 	}
@@ -564,10 +569,7 @@ func Rename(c coreclient.ReplicationControllersGetter, rc *api.ReplicationContro
 	}
 	// Then create the same RC with the new name.
 	_, err = c.ReplicationControllers(rc.Namespace).Create(rc)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 func LoadExistingNextReplicationController(c coreclient.ReplicationControllersGetter, namespace, newName string) (*api.ReplicationController, error) {
@@ -683,14 +685,14 @@ func UpdateExistingReplicationController(rcClient coreclient.ReplicationControll
 	if _, found := oldRc.Spec.Selector[deploymentKey]; !found {
 		SetNextControllerAnnotation(oldRc, newName)
 		return AddDeploymentKeyToReplicationController(oldRc, rcClient, podClient, deploymentKey, deploymentValue, namespace, out)
-	} else {
-		// If we didn't need to update the controller for the deployment key, we still need to write
-		// the "next" controller.
-		applyUpdate := func(rc *api.ReplicationController) {
-			SetNextControllerAnnotation(rc, newName)
-		}
-		return updateRcWithRetries(rcClient, namespace, oldRc, applyUpdate)
 	}
+
+	// If we didn't need to update the controller for the deployment key, we still need to write
+	// the "next" controller.
+	applyUpdate := func(rc *api.ReplicationController) {
+		SetNextControllerAnnotation(rc, newName)
+	}
+	return updateRcWithRetries(rcClient, namespace, oldRc, applyUpdate)
 }
 
 func AddDeploymentKeyToReplicationController(oldRc *api.ReplicationController, rcClient coreclient.ReplicationControllersGetter, podClient coreclient.PodsGetter, deploymentKey, deploymentValue, namespace string, out io.Writer) (*api.ReplicationController, error) {
@@ -751,7 +753,9 @@ func AddDeploymentKeyToReplicationController(oldRc *api.ReplicationController, r
 	// we've finished re-adopting existing pods to the rc.
 	selector = labels.SelectorFromSet(selectorCopy)
 	options = metav1.ListOptions{LabelSelector: selector.String()}
-	podList, err = podClient.Pods(namespace).List(options)
+	if podList, err = podClient.Pods(namespace).List(options); err != nil {
+		return nil, err
+	}
 	for ix := range podList.Items {
 		pod := &podList.Items[ix]
 		if value, found := pod.Labels[deploymentKey]; !found || value != deploymentValue {
@@ -772,12 +776,8 @@ type updateRcFunc func(controller *api.ReplicationController)
 // 3. Update the resource
 func updateRcWithRetries(rcClient coreclient.ReplicationControllersGetter, namespace string, rc *api.ReplicationController, applyUpdate updateRcFunc) (*api.ReplicationController, error) {
 	// Deep copy the rc in case we failed on Get during retry loop
-	obj, err := api.Scheme.Copy(rc)
-	if err != nil {
-		return nil, fmt.Errorf("failed to deep copy rc before updating it: %v", err)
-	}
-	oldRc := obj.(*api.ReplicationController)
-	err = retry.RetryOnConflict(retry.DefaultBackoff, func() (e error) {
+	oldRc := rc.DeepCopy()
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (e error) {
 		// Apply the update, then attempt to push it to the apiserver.
 		applyUpdate(rc)
 		if rc, e = rcClient.ReplicationControllers(namespace).Update(rc); e == nil {
@@ -807,12 +807,8 @@ type updatePodFunc func(controller *api.Pod)
 // 3. Update the resource
 func updatePodWithRetries(podClient coreclient.PodsGetter, namespace string, pod *api.Pod, applyUpdate updatePodFunc) (*api.Pod, error) {
 	// Deep copy the pod in case we failed on Get during retry loop
-	obj, err := api.Scheme.Copy(pod)
-	if err != nil {
-		return nil, fmt.Errorf("failed to deep copy pod before updating it: %v", err)
-	}
-	oldPod := obj.(*api.Pod)
-	err = retry.RetryOnConflict(retry.DefaultBackoff, func() (e error) {
+	oldPod := pod.DeepCopy()
+	err := retry.RetryOnConflict(retry.DefaultBackoff, func() (e error) {
 		// Apply the update, then attempt to push it to the apiserver.
 		applyUpdate(pod)
 		if pod, e = podClient.Pods(namespace).Update(pod); e == nil {

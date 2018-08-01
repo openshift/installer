@@ -21,77 +21,31 @@ import (
 	"strings"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-func RoleRefGroupKind(roleRef RoleRef) schema.GroupKind {
-	return schema.GroupKind{Group: roleRef.APIGroup, Kind: roleRef.Kind}
-}
-
-func VerbMatches(rule *PolicyRule, requestedVerb string) bool {
-	for _, ruleVerb := range rule.Verbs {
-		if ruleVerb == VerbAll {
-			return true
-		}
-		if ruleVerb == requestedVerb {
-			return true
-		}
-	}
-
-	return false
-}
-
-func APIGroupMatches(rule *PolicyRule, requestedGroup string) bool {
-	for _, ruleGroup := range rule.APIGroups {
-		if ruleGroup == APIGroupAll {
-			return true
-		}
-		if ruleGroup == requestedGroup {
-			return true
-		}
-	}
-
-	return false
-}
-
-func ResourceMatches(rule *PolicyRule, requestedResource string) bool {
+func ResourceMatches(rule *PolicyRule, combinedRequestedResource, requestedSubresource string) bool {
 	for _, ruleResource := range rule.Resources {
+		// if everything is allowed, we match
 		if ruleResource == ResourceAll {
 			return true
 		}
-		if ruleResource == requestedResource {
+		// if we have an exact match, we match
+		if ruleResource == combinedRequestedResource {
 			return true
 		}
-	}
 
-	return false
-}
-
-func ResourceNameMatches(rule *PolicyRule, requestedName string) bool {
-	if len(rule.ResourceNames) == 0 {
-		return true
-	}
-
-	for _, ruleName := range rule.ResourceNames {
-		if ruleName == requestedName {
-			return true
+		// We can also match a */subresource.
+		// if there isn't a subresource, then continue
+		if len(requestedSubresource) == 0 {
+			continue
 		}
-	}
+		// if the rule isn't in the format */subresource, then we don't match, continue
+		if len(ruleResource) == len(requestedSubresource)+2 &&
+			strings.HasPrefix(ruleResource, "*/") &&
+			strings.HasSuffix(ruleResource, requestedSubresource) {
+			return true
 
-	return false
-}
-
-func NonResourceURLMatches(rule *PolicyRule, requestedURL string) bool {
-	for _, ruleURL := range rule.NonResourceURLs {
-		if ruleURL == NonResourceAll {
-			return true
-		}
-		if ruleURL == requestedURL {
-			return true
-		}
-		if strings.HasSuffix(ruleURL, "*") && strings.HasPrefix(requestedURL, strings.TrimRight(ruleURL, "*")) {
-			return true
 		}
 	}
 
@@ -132,6 +86,10 @@ func (r PolicyRule) String() string {
 func (r PolicyRule) CompactString() string {
 	formatStringParts := []string{}
 	formatArgs := []interface{}{}
+	if len(r.APIGroups) > 0 {
+		formatStringParts = append(formatStringParts, "APIGroups:%q")
+		formatArgs = append(formatArgs, r.APIGroups)
+	}
 	if len(r.Resources) > 0 {
 		formatStringParts = append(formatStringParts, "Resources:%q")
 		formatArgs = append(formatArgs, r.Resources)
@@ -143,10 +101,6 @@ func (r PolicyRule) CompactString() string {
 	if len(r.ResourceNames) > 0 {
 		formatStringParts = append(formatStringParts, "ResourceNames:%q")
 		formatArgs = append(formatArgs, r.ResourceNames)
-	}
-	if len(r.APIGroups) > 0 {
-		formatStringParts = append(formatStringParts, "APIGroups:%q")
-		formatArgs = append(formatArgs, r.APIGroups)
 	}
 	if len(r.Verbs) > 0 {
 		formatStringParts = append(formatStringParts, "Verbs:%q")
@@ -215,9 +169,8 @@ func (r *PolicyRuleBuilder) Rule() (PolicyRule, error) {
 			return PolicyRule{}, fmt.Errorf("non-resource rule may not have apiGroups, resources, or resourceNames: %#v", r.PolicyRule)
 		}
 	case len(r.PolicyRule.Resources) > 0:
-		if len(r.PolicyRule.NonResourceURLs) != 0 {
-			return PolicyRule{}, fmt.Errorf("resource rule may not have nonResourceURLs: %#v", r.PolicyRule)
-		}
+		// resource rule may not have nonResourceURLs
+
 		if len(r.PolicyRule.APIGroups) == 0 {
 			// this a common bug
 			return PolicyRule{}, fmt.Errorf("resource rule must have apiGroups: %#v", r.PolicyRule)
@@ -349,7 +302,7 @@ func NewRoleBindingForClusterRole(roleName, namespace string) *RoleBindingBuilde
 // Groups adds the specified groups as the subjects of the RoleBinding.
 func (r *RoleBindingBuilder) Groups(groups ...string) *RoleBindingBuilder {
 	for _, group := range groups {
-		r.RoleBinding.Subjects = append(r.RoleBinding.Subjects, Subject{Kind: GroupKind, Name: group})
+		r.RoleBinding.Subjects = append(r.RoleBinding.Subjects, Subject{Kind: GroupKind, APIGroup: GroupName, Name: group})
 	}
 	return r
 }
@@ -357,7 +310,7 @@ func (r *RoleBindingBuilder) Groups(groups ...string) *RoleBindingBuilder {
 // Users adds the specified users as the subjects of the RoleBinding.
 func (r *RoleBindingBuilder) Users(users ...string) *RoleBindingBuilder {
 	for _, user := range users {
-		r.RoleBinding.Subjects = append(r.RoleBinding.Subjects, Subject{Kind: UserKind, Name: user})
+		r.RoleBinding.Subjects = append(r.RoleBinding.Subjects, Subject{Kind: UserKind, APIGroup: GroupName, Name: user})
 	}
 	return r
 }

@@ -13,9 +13,8 @@ go_library(
     importpath = "k8s.io/kubernetes/pkg/credentialprovider",
     visibility = ["//visibility:public"],
     deps = [
-        "//tests/smoke/vendor/github.com/docker/engine-api/types:go_default_library",
+        "//tests/smoke/vendor/github.com/docker/docker/api/types:go_default_library",
         "//tests/smoke/vendor/github.com/golang/glog:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/util/sets:go_default_library",
-        "//tests/smoke/vendor/k8s.io/kubernetes/pkg/api/v1:go_default_library",
     ],
 )

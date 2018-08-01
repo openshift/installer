@@ -10,7 +10,7 @@ go_library(
     importpath = "k8s.io/client-go/util/flowcontrol",
     visibility = ["//visibility:public"],
     deps = [
-        "//tests/smoke/vendor/github.com/juju/ratelimit:go_default_library",
+        "//tests/smoke/vendor/golang.org/x/time/rate:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/util/clock:go_default_library",
         "//tests/smoke/vendor/k8s.io/client-go/util/integer:go_default_library",
     ],

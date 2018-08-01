@@ -32,52 +32,10 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"k8s.io/kubernetes/pkg/api"
+	api "k8s.io/kubernetes/pkg/apis/core"
 )
 
-const (
-	// SysctlsPodSecurityPolicyAnnotationKey represents the key of a whitelist of
-	// allowed safe and unsafe sysctls in a pod spec. It's a comma-separated list of plain sysctl
-	// names or sysctl patterns (which end in *). The string "*" matches all sysctls.
-	SysctlsPodSecurityPolicyAnnotationKey string = "security.alpha.kubernetes.io/sysctls"
-)
-
-// describes the attributes of a scale subresource
-type ScaleSpec struct {
-	// desired number of instances for the scaled object.
-	// +optional
-	Replicas int32
-}
-
-// represents the current status of a scale subresource.
-type ScaleStatus struct {
-	// actual number of observed instances of the scaled object.
-	Replicas int32
-
-	// label query over pods that should match the replicas count.
-	// More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
-	// +optional
-	Selector *metav1.LabelSelector
-}
-
-// +genclient=true
-// +noMethods=true
-
-// represents a scaling request for a resource.
-type Scale struct {
-	metav1.TypeMeta
-	// Standard object metadata; More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata.
-	// +optional
-	metav1.ObjectMeta
-
-	// defines the behavior of the scale. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status.
-	// +optional
-	Spec ScaleSpec
-
-	// current status of the scale. More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#spec-and-status. Read-only.
-	// +optional
-	Status ScaleStatus
-}
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Dummy definition
 type ReplicationControllerDummy struct {
@@ -107,57 +65,10 @@ type CustomMetricCurrentStatusList struct {
 	Items []CustomMetricCurrentStatus
 }
 
-// +genclient=true
-// +nonNamespaced=true
-
-// A ThirdPartyResource is a generic representation of a resource, it is used by add-ons and plugins to add new resource
-// types to the API.  It consists of one or more Versions of the api.
-type ThirdPartyResource struct {
-	metav1.TypeMeta
-
-	// Standard object metadata
-	// +optional
-	metav1.ObjectMeta
-
-	// Description is the description of this object.
-	// +optional
-	Description string
-
-	// Versions are versions for this third party object
-	Versions []APIVersion
-}
-
-type ThirdPartyResourceList struct {
-	metav1.TypeMeta
-
-	// Standard list metadata.
-	// +optional
-	metav1.ListMeta
-
-	// Items is the list of horizontal pod autoscalers.
-	Items []ThirdPartyResource
-}
-
-// An APIVersion represents a single concrete version of an object model.
-// TODO: we should consider merge this struct with GroupVersion in metav1.go
-type APIVersion struct {
-	// Name of this version (e.g. 'v1').
-	Name string
-}
-
-// An internal object, used for versioned storage in etcd.  Not exposed to the end user.
-type ThirdPartyResourceData struct {
-	metav1.TypeMeta
-	// Standard object metadata.
-	// +optional
-	metav1.ObjectMeta
-
-	// Data is the raw JSON data for this data.
-	// +optional
-	Data []byte
-}
-
-// +genclient=true
+// +genclient
+// +genclient:method=GetScale,verb=get,subresource=scale,result=k8s.io/kubernetes/pkg/apis/autoscaling.Scale
+// +genclient:method=UpdateScale,verb=update,subresource=scale,input=k8s.io/kubernetes/pkg/apis/autoscaling.Scale,result=k8s.io/kubernetes/pkg/apis/autoscaling.Scale
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 type Deployment struct {
 	metav1.TypeMeta
@@ -207,6 +118,7 @@ type DeploymentSpec struct {
 	// +optional
 	Paused bool
 
+	// DEPRECATED.
 	// The config this deployment is rolling back to. Will be cleared after rollback is done.
 	// +optional
 	RollbackTo *RollbackConfig
@@ -214,13 +126,16 @@ type DeploymentSpec struct {
 	// The maximum time in seconds for a deployment to make progress before it
 	// is considered to be failed. The deployment controller will continue to
 	// process failed deployments and a condition with a ProgressDeadlineExceeded
-	// reason will be surfaced in the deployment status. Once autoRollback is
-	// implemented, the deployment controller will automatically rollback failed
-	// deployments. Note that progress will not be estimated during the time a
-	// deployment is paused. This is not set by default.
+	// reason will be surfaced in the deployment status. Note that progress will
+	// not be estimated during the time a deployment is paused. This is not set
+	// by default.
+	// +optional
 	ProgressDeadlineSeconds *int32
 }
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+// DEPRECATED.
 // DeploymentRollback stores the information required to rollback a deployment.
 type DeploymentRollback struct {
 	metav1.TypeMeta
@@ -233,6 +148,7 @@ type DeploymentRollback struct {
 	RollbackTo RollbackConfig
 }
 
+// DEPRECATED.
 type RollbackConfig struct {
 	// The revision to rollback to. If set to 0, rollback to the last revision.
 	// +optional
@@ -320,7 +236,9 @@ type DeploymentStatus struct {
 	// +optional
 	AvailableReplicas int32
 
-	// Total number of unavailable pods targeted by this deployment.
+	// Total number of unavailable pods targeted by this deployment. This is the total number of
+	// pods that are still required for the deployment to have 100% available capacity. They may
+	// either be pods that are running but not yet available or pods that still have not been created.
 	// +optional
 	UnavailableReplicas int32
 
@@ -331,7 +249,7 @@ type DeploymentStatus struct {
 	// field as a collision avoidance mechanism when it needs to create the name for the
 	// newest ReplicaSet.
 	// +optional
-	CollisionCount *int64
+	CollisionCount *int32
 }
 
 type DeploymentConditionType string
@@ -366,6 +284,8 @@ type DeploymentCondition struct {
 	// A human readable message indicating details about the transition.
 	Message string
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 type DeploymentList struct {
 	metav1.TypeMeta
@@ -503,10 +423,32 @@ type DaemonSetStatus struct {
 	// uses this field as a collision avoidance mechanism when it needs to
 	// create the name for the newest ControllerRevision.
 	// +optional
-	CollisionCount *int64
+	CollisionCount *int32
+
+	// Represents the latest available observations of a DaemonSet's current state.
+	Conditions []DaemonSetCondition
 }
 
-// +genclient=true
+type DaemonSetConditionType string
+
+// TODO: Add valid condition types of a DaemonSet.
+
+// DaemonSetCondition describes the state of a DaemonSet at a certain point.
+type DaemonSetCondition struct {
+	// Type of DaemonSet condition.
+	Type DaemonSetConditionType
+	// Status of the condition, one of True, False, Unknown.
+	Status api.ConditionStatus
+	// Last time the condition transitioned from one status to another.
+	LastTransitionTime metav1.Time
+	// The reason for the condition's last transition.
+	Reason string
+	// A human readable message indicating details about the transition.
+	Message string
+}
+
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // DaemonSet represents the configuration of a daemon set.
 type DaemonSet struct {
@@ -538,6 +480,8 @@ const (
 	DaemonSetTemplateGenerationKey string = "pod-template-generation"
 )
 
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
 // DaemonSetList is a collection of daemon sets.
 type DaemonSetList struct {
 	metav1.TypeMeta
@@ -550,17 +494,8 @@ type DaemonSetList struct {
 	Items []DaemonSet
 }
 
-type ThirdPartyResourceDataList struct {
-	metav1.TypeMeta
-	// Standard list metadata
-	// More info: https://git.k8s.io/community/contributors/devel/api-conventions.md#metadata
-	// +optional
-	metav1.ListMeta
-	// Items is a list of third party objects
-	Items []ThirdPartyResourceData
-}
-
-// +genclient=true
+// +genclient
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Ingress is a collection of rules that allow inbound connections to reach the
 // endpoints defined by a backend. An Ingress can be configured to give services
@@ -583,6 +518,8 @@ type Ingress struct {
 	// +optional
 	Status IngressStatus
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // IngressList is a collection of Ingress.
 type IngressList struct {
@@ -726,9 +663,12 @@ type IngressBackend struct {
 	ServicePort intstr.IntOrString
 }
 
-// +genclient=true
+// +genclient
+// +genclient:method=GetScale,verb=get,subresource=scale,result=k8s.io/kubernetes/pkg/apis/autoscaling.Scale
+// +genclient:method=UpdateScale,verb=update,subresource=scale,input=k8s.io/kubernetes/pkg/apis/autoscaling.Scale,result=k8s.io/kubernetes/pkg/apis/autoscaling.Scale
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
-// ReplicaSet represents the configuration of a replica set.
+// ReplicaSet ensures that a specified number of pod replicas are running at any given time.
 type ReplicaSet struct {
 	metav1.TypeMeta
 	// +optional
@@ -743,6 +683,8 @@ type ReplicaSet struct {
 	// +optional
 	Status ReplicaSetStatus
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // ReplicaSetList is a collection of ReplicaSets.
 type ReplicaSetList struct {
@@ -830,318 +772,4 @@ type ReplicaSetCondition struct {
 	// A human readable message indicating details about the transition.
 	// +optional
 	Message string
-}
-
-// +genclient=true
-// +nonNamespaced=true
-
-// PodSecurityPolicy governs the ability to make requests that affect the SecurityContext
-// that will be applied to a pod and container.
-type PodSecurityPolicy struct {
-	metav1.TypeMeta
-	// +optional
-	metav1.ObjectMeta
-
-	// Spec defines the policy enforced.
-	// +optional
-	Spec PodSecurityPolicySpec
-}
-
-// PodSecurityPolicySpec defines the policy enforced.
-type PodSecurityPolicySpec struct {
-	// Privileged determines if a pod can request to be run as privileged.
-	// +optional
-	Privileged bool
-	// DefaultAddCapabilities is the default set of capabilities that will be added to the container
-	// unless the pod spec specifically drops the capability.  You may not list a capability in both
-	// DefaultAddCapabilities and RequiredDropCapabilities.
-	// +optional
-	DefaultAddCapabilities []api.Capability
-	// RequiredDropCapabilities are the capabilities that will be dropped from the container.  These
-	// are required to be dropped and cannot be added.
-	// +optional
-	RequiredDropCapabilities []api.Capability
-	// AllowedCapabilities is a list of capabilities that can be requested to add to the container.
-	// Capabilities in this field may be added at the pod author's discretion.
-	// You must not list a capability in both AllowedCapabilities and RequiredDropCapabilities.
-	// +optional
-	AllowedCapabilities []api.Capability
-	// Volumes is a white list of allowed volume plugins.  Empty indicates that all plugins
-	// may be used.
-	// +optional
-	Volumes []FSType
-	// HostNetwork determines if the policy allows the use of HostNetwork in the pod spec.
-	// +optional
-	HostNetwork bool
-	// HostPorts determines which host port ranges are allowed to be exposed.
-	// +optional
-	HostPorts []HostPortRange
-	// HostPID determines if the policy allows the use of HostPID in the pod spec.
-	// +optional
-	HostPID bool
-	// HostIPC determines if the policy allows the use of HostIPC in the pod spec.
-	// +optional
-	HostIPC bool
-	// SELinux is the strategy that will dictate the allowable labels that may be set.
-	SELinux SELinuxStrategyOptions
-	// RunAsUser is the strategy that will dictate the allowable RunAsUser values that may be set.
-	RunAsUser RunAsUserStrategyOptions
-	// SupplementalGroups is the strategy that will dictate what supplemental groups are used by the SecurityContext.
-	SupplementalGroups SupplementalGroupsStrategyOptions
-	// FSGroup is the strategy that will dictate what fs group is used by the SecurityContext.
-	FSGroup FSGroupStrategyOptions
-	// ReadOnlyRootFilesystem when set to true will force containers to run with a read only root file
-	// system.  If the container specifically requests to run with a non-read only root file system
-	// the PSP should deny the pod.
-	// If set to false the container may run with a read only root file system if it wishes but it
-	// will not be forced to.
-	// +optional
-	ReadOnlyRootFilesystem bool
-}
-
-// HostPortRange defines a range of host ports that will be enabled by a policy
-// for pods to use.  It requires both the start and end to be defined.
-type HostPortRange struct {
-	// Min is the start of the range, inclusive.
-	Min int
-	// Max is the end of the range, inclusive.
-	Max int
-}
-
-// FSType gives strong typing to different file systems that are used by volumes.
-type FSType string
-
-var (
-	AzureFile             FSType = "azureFile"
-	Flocker               FSType = "flocker"
-	FlexVolume            FSType = "flexVolume"
-	HostPath              FSType = "hostPath"
-	EmptyDir              FSType = "emptyDir"
-	GCEPersistentDisk     FSType = "gcePersistentDisk"
-	AWSElasticBlockStore  FSType = "awsElasticBlockStore"
-	GitRepo               FSType = "gitRepo"
-	Secret                FSType = "secret"
-	NFS                   FSType = "nfs"
-	ISCSI                 FSType = "iscsi"
-	Glusterfs             FSType = "glusterfs"
-	PersistentVolumeClaim FSType = "persistentVolumeClaim"
-	RBD                   FSType = "rbd"
-	Cinder                FSType = "cinder"
-	CephFS                FSType = "cephFS"
-	DownwardAPI           FSType = "downwardAPI"
-	FC                    FSType = "fc"
-	ConfigMap             FSType = "configMap"
-	VsphereVolume         FSType = "vsphereVolume"
-	Quobyte               FSType = "quobyte"
-	AzureDisk             FSType = "azureDisk"
-	PhotonPersistentDisk  FSType = "photonPersistentDisk"
-	StorageOS             FSType = "storageos"
-	Projected             FSType = "projected"
-	PortworxVolume        FSType = "portworxVolume"
-	ScaleIO               FSType = "scaleIO"
-	All                   FSType = "*"
-)
-
-// SELinuxStrategyOptions defines the strategy type and any options used to create the strategy.
-type SELinuxStrategyOptions struct {
-	// Rule is the strategy that will dictate the allowable labels that may be set.
-	Rule SELinuxStrategy
-	// seLinuxOptions required to run as; required for MustRunAs
-	// More info: https://git.k8s.io/community/contributors/design-proposals/security_context.md
-	// +optional
-	SELinuxOptions *api.SELinuxOptions
-}
-
-// SELinuxStrategy denotes strategy types for generating SELinux options for a
-// Security.
-type SELinuxStrategy string
-
-const (
-	// container must have SELinux labels of X applied.
-	SELinuxStrategyMustRunAs SELinuxStrategy = "MustRunAs"
-	// container may make requests for any SELinux context labels.
-	SELinuxStrategyRunAsAny SELinuxStrategy = "RunAsAny"
-)
-
-// RunAsUserStrategyOptions defines the strategy type and any options used to create the strategy.
-type RunAsUserStrategyOptions struct {
-	// Rule is the strategy that will dictate the allowable RunAsUser values that may be set.
-	Rule RunAsUserStrategy
-	// Ranges are the allowed ranges of uids that may be used.
-	// +optional
-	Ranges []UserIDRange
-}
-
-// UserIDRange provides a min/max of an allowed range of UserIDs.
-type UserIDRange struct {
-	// Min is the start of the range, inclusive.
-	Min int64
-	// Max is the end of the range, inclusive.
-	Max int64
-}
-
-// GroupIDRange provides a min/max of an allowed range of GroupIDs.
-type GroupIDRange struct {
-	// Min is the start of the range, inclusive.
-	Min int64
-	// Max is the end of the range, inclusive.
-	Max int64
-}
-
-// RunAsUserStrategy denotes strategy types for generating RunAsUser values for a
-// SecurityContext.
-type RunAsUserStrategy string
-
-const (
-	// container must run as a particular uid.
-	RunAsUserStrategyMustRunAs RunAsUserStrategy = "MustRunAs"
-	// container must run as a non-root uid
-	RunAsUserStrategyMustRunAsNonRoot RunAsUserStrategy = "MustRunAsNonRoot"
-	// container may make requests for any uid.
-	RunAsUserStrategyRunAsAny RunAsUserStrategy = "RunAsAny"
-)
-
-// FSGroupStrategyOptions defines the strategy type and options used to create the strategy.
-type FSGroupStrategyOptions struct {
-	// Rule is the strategy that will dictate what FSGroup is used in the SecurityContext.
-	// +optional
-	Rule FSGroupStrategyType
-	// Ranges are the allowed ranges of fs groups.  If you would like to force a single
-	// fs group then supply a single range with the same start and end.
-	// +optional
-	Ranges []GroupIDRange
-}
-
-// FSGroupStrategyType denotes strategy types for generating FSGroup values for a
-// SecurityContext
-type FSGroupStrategyType string
-
-const (
-	// container must have FSGroup of X applied.
-	FSGroupStrategyMustRunAs FSGroupStrategyType = "MustRunAs"
-	// container may make requests for any FSGroup labels.
-	FSGroupStrategyRunAsAny FSGroupStrategyType = "RunAsAny"
-)
-
-// SupplementalGroupsStrategyOptions defines the strategy type and options used to create the strategy.
-type SupplementalGroupsStrategyOptions struct {
-	// Rule is the strategy that will dictate what supplemental groups is used in the SecurityContext.
-	// +optional
-	Rule SupplementalGroupsStrategyType
-	// Ranges are the allowed ranges of supplemental groups.  If you would like to force a single
-	// supplemental group then supply a single range with the same start and end.
-	// +optional
-	Ranges []GroupIDRange
-}
-
-// SupplementalGroupsStrategyType denotes strategy types for determining valid supplemental
-// groups for a SecurityContext.
-type SupplementalGroupsStrategyType string
-
-const (
-	// container must run as a particular gid.
-	SupplementalGroupsStrategyMustRunAs SupplementalGroupsStrategyType = "MustRunAs"
-	// container may make requests for any gid.
-	SupplementalGroupsStrategyRunAsAny SupplementalGroupsStrategyType = "RunAsAny"
-)
-
-// PodSecurityPolicyList is a list of PodSecurityPolicy objects.
-type PodSecurityPolicyList struct {
-	metav1.TypeMeta
-	// +optional
-	metav1.ListMeta
-
-	Items []PodSecurityPolicy
-}
-
-// +genclient=true
-
-// NetworkPolicy describes what network traffic is allowed for a set of Pods
-type NetworkPolicy struct {
-	metav1.TypeMeta
-	// +optional
-	metav1.ObjectMeta
-
-	// Specification of the desired behavior for this NetworkPolicy.
-	// +optional
-	Spec NetworkPolicySpec
-}
-
-type NetworkPolicySpec struct {
-	// Selects the pods to which this NetworkPolicy object applies.  The array of ingress rules
-	// is applied to any pods selected by this field. Multiple network policies can select the
-	// same set of pods.  In this case, the ingress rules for each are combined additively.
-	// This field is NOT optional and follows standard label selector semantics.
-	// An empty podSelector matches all pods in this namespace.
-	PodSelector metav1.LabelSelector
-
-	// List of ingress rules to be applied to the selected pods.
-	// Traffic is allowed to a pod if there are no NetworkPolicies selecting the pod
-	// OR if the traffic source is the pod's local node,
-	// OR if the traffic matches at least one ingress rule across all of the NetworkPolicy
-	// objects whose podSelector matches the pod.
-	// If this field is empty then this NetworkPolicy does not allow any traffic
-	// (and serves solely to ensure that the pods it selects are isolated by default).
-	// +optional
-	Ingress []NetworkPolicyIngressRule
-}
-
-// This NetworkPolicyIngressRule matches traffic if and only if the traffic matches both ports AND from.
-type NetworkPolicyIngressRule struct {
-	// List of ports which should be made accessible on the pods selected for this rule.
-	// Each item in this list is combined using a logical OR.
-	// If this field is empty or missing, this rule matches all ports (traffic not restricted by port).
-	// If this field is present and contains at least one item, then this rule allows traffic
-	// only if the traffic matches at least one port in the list.
-	// +optional
-	Ports []NetworkPolicyPort
-
-	// List of sources which should be able to access the pods selected for this rule.
-	// Items in this list are combined using a logical OR operation.
-	// If this field is empty or missing, this rule matches all sources (traffic not restricted by source).
-	// If this field is present and contains at least on item, this rule allows traffic only if the
-	// traffic matches at least one item in the from list.
-	// +optional
-	From []NetworkPolicyPeer
-}
-
-type NetworkPolicyPort struct {
-	// Optional.  The protocol (TCP or UDP) which traffic must match.
-	// If not specified, this field defaults to TCP.
-	// +optional
-	Protocol *api.Protocol
-
-	// If specified, the port on the given protocol.  This can
-	// either be a numerical or named port on a pod.  If this field is not provided,
-	// this matches all port names and numbers.
-	// If present, only traffic on the specified protocol AND port
-	// will be matched.
-	// +optional
-	Port *intstr.IntOrString
-}
-
-type NetworkPolicyPeer struct {
-	// Exactly one of the following must be specified.
-
-	// This is a label selector which selects Pods in this namespace.
-	// This field follows standard label selector semantics.
-	// If present but empty, this selector selects all pods in this namespace.
-	// +optional
-	PodSelector *metav1.LabelSelector
-
-	// Selects Namespaces using cluster scoped-labels.  This
-	// matches all pods in all namespaces selected by this label selector.
-	// This field follows standard label selector semantics.
-	// If present but empty, this selector selects all namespaces.
-	// +optional
-	NamespaceSelector *metav1.LabelSelector
-}
-
-// NetworkPolicyList is a list of NetworkPolicy objects.
-type NetworkPolicyList struct {
-	metav1.TypeMeta
-	// +optional
-	metav1.ListMeta
-
-	Items []NetworkPolicy
 }

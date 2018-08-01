@@ -27,6 +27,13 @@ const (
 	// Header to hold the audit ID as the request is propagated through the serving hierarchy. The
 	// Audit-ID header should be set by the first server to receive the request (e.g. the federation
 	// server or kube-aggregator).
+	//
+	// Audit ID is also returned to client by http response header.
+	// It's not guaranteed Audit-Id http header is sent for all requests. When kube-apiserver didn't
+	// audit the events according to the audit policy, no Audit-ID is returned. Also, for request to
+	// pods/exec, pods/attach, pods/proxy, kube-apiserver works like a proxy and redirect the request
+	// to kubelet node, users will only get http headers sent from kubelet node, so no Audit-ID is
+	// sent when users run command like "kubectl exec" or "kubectl attach".
 	HeaderAuditID = "Audit-ID"
 )
 
@@ -61,22 +68,19 @@ const (
 	// The stage for events generated once the response body has been completed, and no more bytes
 	// will be sent.
 	StageResponseComplete = "ResponseComplete"
-	// The stage for events generated when a panic occured.
+	// The stage for events generated when a panic occurred.
 	StagePanic = "Panic"
 )
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Event captures all the information that can be included in an API audit log.
 type Event struct {
 	metav1.TypeMeta
-	// ObjectMeta is included for interoperability with API infrastructure.
-	// +optional
-	metav1.ObjectMeta
 
 	// AuditLevel at which event was generated
 	Level Level
 
-	// Time the request reached the apiserver.
-	Timestamp metav1.Time
 	// Unique audit ID, generated for each request.
 	AuditID types.UID
 	// Stage of the request handling when this event instance was generated.
@@ -95,13 +99,17 @@ type Event struct {
 	// Source IPs, from where the request originated and intermediate proxies.
 	// +optional
 	SourceIPs []string
+	// UserAgent records the user agent string reported by the client.
+	// Note that the UserAgent is provided by the client, and must not be trusted.
+	// +optional
+	UserAgent string
 	// Object reference this request is targeted at.
 	// Does not apply for List-type requests, or non-resource requests.
 	// +optional
 	ObjectRef *ObjectReference
 	// The response status, populated even when the ResponseObject is not a Status type.
-	// For successful responses, this will only include the Code and StatusSuccess.
-	// For non-status type error responses, this will be auto-populated with the error Message.
+	// For successful responses, this will only include the Code. For non-status type
+	// error responses, this will be auto-populated with the error Message.
 	// +optional
 	ResponseStatus *metav1.Status
 
@@ -112,11 +120,26 @@ type Event struct {
 	// +optional
 	RequestObject *runtime.Unknown
 	// API object returned in the response, in JSON. The ResponseObject is recorded after conversion
-	// to the external type, and serialized as JSON.  Omitted for non-resource requests.  Only logged
+	// to the external type, and serialized as JSON. Omitted for non-resource requests.  Only logged
 	// at Response Level.
 	// +optional
 	ResponseObject *runtime.Unknown
+
+	// Time the request reached the apiserver.
+	RequestReceivedTimestamp metav1.MicroTime
+	// Time the request reached current audit stage.
+	StageTimestamp metav1.MicroTime
+
+	// Annotations is an unstructured key value map stored with an audit event that may be set by
+	// plugins invoked in the request serving chain, including authentication, authorization and
+	// admission plugins. Keys should uniquely identify the informing component to avoid name
+	// collisions (e.g. podsecuritypolicy.admission.k8s.io/policy). Values should be short. Annotations
+	// are included in the Metadata level.
+	// +optional
+	Annotations map[string]string
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // EventList is a list of audit Events.
 type EventList struct {
@@ -126,6 +149,8 @@ type EventList struct {
 
 	Items []Event
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // Policy defines the configuration of audit logging, and the rules for how different request
 // categories are logged.
@@ -140,7 +165,14 @@ type Policy struct {
 	// The default audit level is None, but can be overridden by a catch-all rule at the end of the list.
 	// PolicyRules are strictly ordered.
 	Rules []PolicyRule
+
+	// OmitStages is a list of stages for which no events are created. Note that this can also
+	// be specified per rule in which case the union of both are omitted.
+	// +optional
+	OmitStages []Stage
 }
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 // PolicyList is a list of audit Policies.
 type PolicyList struct {
@@ -192,6 +224,12 @@ type PolicyRule struct {
 	//  "/healthz*" - Log all health checks
 	// +optional
 	NonResourceURLs []string
+
+	// OmitStages is a list of stages for which no events are created. Note that this can also
+	// be specified policy wide in which case the union of both are omitted.
+	// An empty list means no restrictions will apply.
+	// +optional
+	OmitStages []Stage
 }
 
 // GroupResources represents resource kinds in an API group.
@@ -200,10 +238,26 @@ type GroupResources struct {
 	// The empty string represents the core API group.
 	// +optional
 	Group string
-	// Resources is a list of resources within the API group.
-	// Any empty list implies every resource kind in the API group.
+	// Resources is a list of resources this rule applies to.
+	//
+	// For example:
+	// 'pods' matches pods.
+	// 'pods/log' matches the log subresource of pods.
+	// '*' matches all resources and their subresources.
+	// 'pods/*' matches all subresources of pods.
+	// '*/scale' matches all scale subresources.
+	//
+	// If wildcard is present, the validation rule will ensure resources do not
+	// overlap with each other.
+	//
+	// An empty list implies all resources and subresources in this API groups apply.
 	// +optional
 	Resources []string
+	// ResourceNames is a list of resource instance names that the policy matches.
+	// Using this field requires Resources to be specified.
+	// An empty list implies that every instance of the resource is matched.
+	// +optional
+	ResourceNames []string
 }
 
 // ObjectReference contains enough information to let you inspect or modify the referred object.
@@ -216,6 +270,11 @@ type ObjectReference struct {
 	Name string
 	// +optional
 	UID types.UID
+	// APIGroup is the name of the API group that contains the referred object.
+	// The empty string represents the core API group.
+	// +optional
+	APIGroup string
+	// APIVersion is the version of the API group that contains the referred object.
 	// +optional
 	APIVersion string
 	// +optional

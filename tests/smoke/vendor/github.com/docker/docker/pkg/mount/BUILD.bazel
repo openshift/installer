@@ -1,0 +1,40 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "flags.go",
+        "flags_freebsd.go",
+        "flags_linux.go",
+        "flags_unsupported.go",
+        "mount.go",
+        "mounter_freebsd.go",
+        "mounter_linux.go",
+        "mounter_solaris.go",
+        "mounter_unsupported.go",
+        "mountinfo.go",
+        "mountinfo_freebsd.go",
+        "mountinfo_linux.go",
+        "mountinfo_solaris.go",
+        "mountinfo_unsupported.go",
+        "mountinfo_windows.go",
+        "sharedsubtree_linux.go",
+        "sharedsubtree_solaris.go",
+    ],
+    cgo = True,
+    importmap = "installer/tests/smoke/vendor/github.com/docker/docker/pkg/mount",
+    importpath = "github.com/docker/docker/pkg/mount",
+    visibility = ["//visibility:public"],
+    deps = select({
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "//tests/smoke/vendor/golang.org/x/sys/unix:go_default_library",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "//tests/smoke/vendor/golang.org/x/sys/unix:go_default_library",
+        ],
+        "@io_bazel_rules_go//go/platform:solaris": [
+            "//tests/smoke/vendor/golang.org/x/sys/unix:go_default_library",
+        ],
+        "//conditions:default": [],
+    }),
+)

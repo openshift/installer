@@ -4,6 +4,7 @@ go_library(
     name = "go_default_library",
     srcs = [
         "doc.go",
+        "helpers.go",
         "types.go",
     ],
     importmap = "installer/tests/smoke/vendor/k8s.io/apimachinery/pkg/version",

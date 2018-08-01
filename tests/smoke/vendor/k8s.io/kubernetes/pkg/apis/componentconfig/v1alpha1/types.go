@@ -18,7 +18,6 @@ package v1alpha1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/kubernetes/pkg/api/v1"
 )
 
 // ClientConnectionConfiguration contains details for constructing a client.
@@ -34,184 +33,83 @@ type ClientConnectionConfiguration struct {
 	// cps controls the number of queries per second allowed for this connection.
 	QPS float32 `json:"qps"`
 	// burst allows extra queries to accumulate when a client is exceeding its rate.
-	Burst int `json:"burst"`
+	Burst int32 `json:"burst"`
 }
 
-// KubeProxyIPTablesConfiguration contains iptables-related configuration
-// details for the Kubernetes proxy server.
-type KubeProxyIPTablesConfiguration struct {
-	// masqueradeBit is the bit of the iptables fwmark space to use for SNAT if using
-	// the pure iptables proxy mode. Values must be within the range [0, 31].
-	MasqueradeBit *int32 `json:"masqueradeBit"`
-	// masqueradeAll tells kube-proxy to SNAT everything if using the pure iptables proxy mode.
-	MasqueradeAll bool `json:"masqueradeAll"`
-	// syncPeriod is the period that iptables rules are refreshed (e.g. '5s', '1m',
-	// '2h22m').  Must be greater than 0.
-	SyncPeriod metav1.Duration `json:"syncPeriod"`
-	// minSyncPeriod is the minimum period that iptables rules are refreshed (e.g. '5s', '1m',
-	// '2h22m').
-	MinSyncPeriod metav1.Duration `json:"minSyncPeriod"`
+// SchedulerPolicySource configures a means to obtain a scheduler Policy. One
+// source field must be specified, and source fields are mutually exclusive.
+type SchedulerPolicySource struct {
+	// File is a file policy source.
+	File *SchedulerPolicyFileSource `json:"file,omitempty"`
+	// ConfigMap is a config map policy source.
+	ConfigMap *SchedulerPolicyConfigMapSource `json:"configMap,omitempty"`
 }
 
-// KubeProxyConntrackConfiguration contains conntrack settings for
-// the Kubernetes proxy server.
-type KubeProxyConntrackConfiguration struct {
-	// max is the maximum number of NAT connections to track (0 to
-	// leave as-is).  This takes precedence over conntrackMaxPerCore and conntrackMin.
-	Max int32 `json:"max"`
-	// maxPerCore is the maximum number of NAT connections to track
-	// per CPU core (0 to leave the limit as-is and ignore conntrackMin).
-	MaxPerCore int32 `json:"maxPerCore"`
-	// min is the minimum value of connect-tracking records to allocate,
-	// regardless of conntrackMaxPerCore (set conntrackMaxPerCore=0 to leave the limit as-is).
-	Min int32 `json:"min"`
-	// tcpEstablishedTimeout is how long an idle TCP connection will be kept open
-	// (e.g. '2s').  Must be greater than 0.
-	TCPEstablishedTimeout metav1.Duration `json:"tcpEstablishedTimeout"`
-	// tcpCloseWaitTimeout is how long an idle conntrack entry
-	// in CLOSE_WAIT state will remain in the conntrack
-	// table. (e.g. '60s'). Must be greater than 0 to set.
-	TCPCloseWaitTimeout metav1.Duration `json:"tcpCloseWaitTimeout"`
+// SchedulerPolicyFileSource is a policy serialized to disk and accessed via
+// path.
+type SchedulerPolicyFileSource struct {
+	// Path is the location of a serialized policy.
+	Path string `json:"path"`
 }
 
-// KubeProxyConfiguration contains everything necessary to configure the
-// Kubernetes proxy server.
-type KubeProxyConfiguration struct {
-	metav1.TypeMeta `json:",inline"`
-
-	// featureGates is a comma-separated list of key=value pairs that control
-	// which alpha/beta features are enabled.
-	//
-	// TODO this really should be a map but that requires refactoring all
-	// components to use config files because local-up-cluster.sh only supports
-	// the --feature-gates flag right now, which is comma-separated key=value
-	// pairs.
-	FeatureGates string `json:"featureGates"`
-
-	// bindAddress is the IP address for the proxy server to serve on (set to 0.0.0.0
-	// for all interfaces)
-	BindAddress string `json:"bindAddress"`
-	// healthzBindAddress is the IP address and port for the health check server to serve on,
-	// defaulting to 0.0.0.0:10256
-	HealthzBindAddress string `json:"healthzBindAddress"`
-	// metricsBindAddress is the IP address and port for the metrics server to serve on,
-	// defaulting to 127.0.0.1:10249 (set to 0.0.0.0 for all interfaces)
-	MetricsBindAddress string `json:"metricsBindAddress"`
-	// enableProfiling enables profiling via web interface on /debug/pprof handler.
-	// Profiling handlers will be handled by metrics server.
-	EnableProfiling bool `json:"enableProfiling"`
-	// clusterCIDR is the CIDR range of the pods in the cluster. It is used to
-	// bridge traffic coming from outside of the cluster. If not provided,
-	// no off-cluster bridging will be performed.
-	ClusterCIDR string `json:"clusterCIDR"`
-	// hostnameOverride, if non-empty, will be used as the identity instead of the actual hostname.
-	HostnameOverride string `json:"hostnameOverride"`
-	// clientConnection specifies the kubeconfig file and client connection settings for the proxy
-	// server to use when communicating with the apiserver.
-	ClientConnection ClientConnectionConfiguration `json:"clientConnection"`
-	// iptables contains iptables-related configuration options.
-	IPTables KubeProxyIPTablesConfiguration `json:"iptables"`
-	// oomScoreAdj is the oom-score-adj value for kube-proxy process. Values must be within
-	// the range [-1000, 1000]
-	OOMScoreAdj *int32 `json:"oomScoreAdj"`
-	// mode specifies which proxy mode to use.
-	Mode ProxyMode `json:"mode"`
-	// portRange is the range of host ports (beginPort-endPort, inclusive) that may be consumed
-	// in order to proxy service traffic. If unspecified (0-0) then ports will be randomly chosen.
-	PortRange string `json:"portRange"`
-	// resourceContainer is the bsolute name of the resource-only container to create and run
-	// the Kube-proxy in (Default: /kube-proxy).
-	ResourceContainer string `json:"resourceContainer"`
-	// udpIdleTimeout is how long an idle UDP connection will be kept open (e.g. '250ms', '2s').
-	// Must be greater than 0. Only applicable for proxyMode=userspace.
-	UDPIdleTimeout metav1.Duration `json:"udpTimeoutMilliseconds"`
-	// conntrack contains conntrack-related configuration options.
-	Conntrack KubeProxyConntrackConfiguration `json:"conntrack"`
-	// configSyncPeriod is how often configuration from the apiserver is refreshed. Must be greater
-	// than 0.
-	ConfigSyncPeriod metav1.Duration `json:"configSyncPeriod"`
+// SchedulerPolicyConfigMapSource is a policy serialized into a config map value
+// under the SchedulerPolicyConfigMapKey key.
+type SchedulerPolicyConfigMapSource struct {
+	// Namespace is the namespace of the policy config map.
+	Namespace string `json:"namespace"`
+	// Name is the name of hte policy config map.
+	Name string `json:"name"`
 }
 
-// Currently two modes of proxying are available: 'userspace' (older, stable) or 'iptables'
-// (newer, faster). If blank, use the best-available proxy (currently iptables, but may
-// change in future versions).  If the iptables proxy is selected, regardless of how, but
-// the system's kernel or iptables versions are insufficient, this always falls back to the
-// userspace proxy.
-type ProxyMode string
+// SchedulerAlgorithmSource is the source of a scheduler algorithm. One source
+// field must be specified, and source fields are mutually exclusive.
+type SchedulerAlgorithmSource struct {
+	// Policy is a policy based algorithm source.
+	Policy *SchedulerPolicySource `json:"policy,omitempty"`
+	// Provider is the name of a scheduling algorithm provider to use.
+	Provider *string `json:"provider,omitempty"`
+}
 
-const (
-	ProxyModeUserspace ProxyMode = "userspace"
-	ProxyModeIPTables  ProxyMode = "iptables"
-)
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
 type KubeSchedulerConfiguration struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// port is the port that the scheduler's http service runs on.
-	Port int `json:"port"`
-	// address is the IP address to serve on.
-	Address string `json:"address"`
-	// algorithmProvider is the scheduling algorithm provider to use.
-	AlgorithmProvider string `json:"algorithmProvider"`
-	// policyConfigFile is the filepath to the scheduler policy configuration.
-	PolicyConfigFile string `json:"policyConfigFile"`
-	// enableProfiling enables profiling via web interface.
-	EnableProfiling *bool `json:"enableProfiling"`
-	// enableContentionProfiling enables lock contention profiling, if enableProfiling is true.
-	EnableContentionProfiling bool `json:"enableContentionProfiling"`
-	// contentType is contentType of requests sent to apiserver.
-	ContentType string `json:"contentType"`
-	// kubeAPIQPS is the QPS to use while talking with kubernetes apiserver.
-	KubeAPIQPS float32 `json:"kubeAPIQPS"`
-	// kubeAPIBurst is the QPS burst to use while talking with kubernetes apiserver.
-	KubeAPIBurst int `json:"kubeAPIBurst"`
-	// schedulerName is name of the scheduler, used to select which pods
+	// SchedulerName is name of the scheduler, used to select which pods
 	// will be processed by this scheduler, based on pod's "spec.SchedulerName".
 	SchedulerName string `json:"schedulerName"`
+	// AlgorithmSource specifies the scheduler algorithm source.
+	AlgorithmSource SchedulerAlgorithmSource `json:"algorithmSource"`
 	// RequiredDuringScheduling affinity is not symmetric, but there is an implicit PreferredDuringScheduling affinity rule
 	// corresponding to every RequiredDuringScheduling affinity rule.
 	// HardPodAffinitySymmetricWeight represents the weight of implicit PreferredDuringScheduling affinity rule, in the range 0-100.
-	HardPodAffinitySymmetricWeight int `json:"hardPodAffinitySymmetricWeight"`
+	HardPodAffinitySymmetricWeight int32 `json:"hardPodAffinitySymmetricWeight"`
+
+	// LeaderElection defines the configuration of leader election client.
+	LeaderElection KubeSchedulerLeaderElectionConfiguration `json:"leaderElection"`
+
+	// ClientConnection specifies the kubeconfig file and client connection
+	// settings for the proxy server to use when communicating with the apiserver.
+	ClientConnection ClientConnectionConfiguration `json:"clientConnection"`
+	// HealthzBindAddress is the IP address and port for the health check server to serve on,
+	// defaulting to 0.0.0.0:10251
+	HealthzBindAddress string `json:"healthzBindAddress"`
+	// MetricsBindAddress is the IP address and port for the metrics server to
+	// serve on, defaulting to 0.0.0.0:10251.
+	MetricsBindAddress string `json:"metricsBindAddress"`
+	// EnableProfiling enables profiling via web interface on /debug/pprof
+	// handler. Profiling handlers will be handled by metrics server.
+	EnableProfiling bool `json:"enableProfiling"`
+	// EnableContentionProfiling enables lock contention profiling, if
+	// EnableProfiling is true.
+	EnableContentionProfiling bool `json:"enableContentionProfiling"`
+
 	// Indicate the "all topologies" set for empty topologyKey when it's used for PreferredDuringScheduling pod anti-affinity.
 	FailureDomains string `json:"failureDomains"`
-	// leaderElection defines the configuration of leader election client.
-	LeaderElection LeaderElectionConfiguration `json:"leaderElection"`
-	// LockObjectNamespace defines the namespace of the lock object
-	LockObjectNamespace string `json:"lockObjectNamespace"`
-	// LockObjectName defines the lock object name
-	LockObjectName string `json:"lockObjectName"`
-	// PolicyConfigMapName is the name of the ConfigMap object that specifies
-	// the scheduler's policy config. If UseLegacyPolicyConfig is true, scheduler
-	// uses PolicyConfigFile. If UseLegacyPolicyConfig is false and
-	// PolicyConfigMapName is not empty, the ConfigMap object with this name must
-	// exist in PolicyConfigMapNamespace before scheduler initialization.
-	PolicyConfigMapName string `json:"policyConfigMapName"`
-	// PolicyConfigMapNamespace is the namespace where the above policy config map
-	// is located. If none is provided default system namespace ("kube-system")
-	// will be used.
-	PolicyConfigMapNamespace string `json:"policyConfigMapNamespace"`
-	// UseLegacyPolicyConfig tells the scheduler to ignore Policy ConfigMap and
-	// to use PolicyConfigFile if available.
-	UseLegacyPolicyConfig bool `json:"useLegacyPolicyConfig"`
+
+	// DisablePreemption disables the pod preemption feature.
+	DisablePreemption bool `json:"disablePreemption"`
 }
-
-// HairpinMode denotes how the kubelet should configure networking to handle
-// hairpin packets.
-type HairpinMode string
-
-// Enum settings for different ways to handle hairpin packets.
-const (
-	// Set the hairpin flag on the veth of containers in the respective
-	// container runtime.
-	HairpinVeth = "hairpin-veth"
-	// Make the container bridge promiscuous. This will force it to accept
-	// hairpin packets, even if the flag isn't set on ports of the bridge.
-	PromiscuousBridge = "promiscuous-bridge"
-	// Neither of the above. If the kubelet is started in this hairpin mode
-	// and kube-proxy is running in iptables mode, hairpin packets will be
-	// dropped by the container bridge.
-	HairpinNone = "none"
-)
 
 // LeaderElectionConfiguration defines the configuration of leader election
 // clients for components that can run with leader election enabled.
@@ -241,389 +139,429 @@ type LeaderElectionConfiguration struct {
 	ResourceLock string `json:"resourceLock"`
 }
 
-// A configuration field should go in KubeletFlags instead of KubeletConfiguration if any of these are true:
-// - its value will never, or cannot safely be changed during the lifetime of a node
-// - its value cannot be safely shared between nodes at the same time (e.g. a hostname)
-//   KubeletConfiguration is intended to be shared between nodes
-// In general, please try to avoid adding flags or configuration fields,
-// we already have a confusingly large amount of them.
-type KubeletConfiguration struct {
+// KubeSchedulerLeaderElectionConfiguration expands LeaderElectionConfiguration
+// to include scheduler specific configuration.
+type KubeSchedulerLeaderElectionConfiguration struct {
+	LeaderElectionConfiguration `json:",inline"`
+	// LockObjectNamespace defines the namespace of the lock object
+	LockObjectNamespace string `json:"lockObjectNamespace"`
+	// LockObjectName defines the lock object name
+	LockObjectName string `json:"lockObjectName"`
+}
+
+type PersistentVolumeRecyclerConfiguration struct {
+	// maximumRetry is number of retries the PV recycler will execute on failure to recycle
+	// PV.
+	MaximumRetry int32 `json:"maximumRetry"`
+	// minimumTimeoutNFS is the minimum ActiveDeadlineSeconds to use for an NFS Recycler
+	// pod.
+	MinimumTimeoutNFS int32 `json:"minimumTimeoutNFS"`
+	// podTemplateFilePathNFS is the file path to a pod definition used as a template for
+	// NFS persistent volume recycling
+	PodTemplateFilePathNFS string `json:"podTemplateFilePathNFS"`
+	// incrementTimeoutNFS is the increment of time added per Gi to ActiveDeadlineSeconds
+	// for an NFS scrubber pod.
+	IncrementTimeoutNFS int32 `json:"incrementTimeoutNFS"`
+	// podTemplateFilePathHostPath is the file path to a pod definition used as a template for
+	// HostPath persistent volume recycling. This is for development and testing only and
+	// will not work in a multi-node cluster.
+	PodTemplateFilePathHostPath string `json:"podTemplateFilePathHostPath"`
+	// minimumTimeoutHostPath is the minimum ActiveDeadlineSeconds to use for a HostPath
+	// Recycler pod.  This is for development and testing only and will not work in a multi-node
+	// cluster.
+	MinimumTimeoutHostPath int32 `json:"minimumTimeoutHostPath"`
+	// incrementTimeoutHostPath is the increment of time added per Gi to ActiveDeadlineSeconds
+	// for a HostPath scrubber pod.  This is for development and testing only and will not work
+	// in a multi-node cluster.
+	IncrementTimeoutHostPath int32 `json:"incrementTimeoutHostPath"`
+}
+
+// VolumeConfiguration contains *all* enumerated flags meant to configure all volume
+// plugins. From this config, the controller-manager binary will create many instances of
+// volume.VolumeConfig, each containing only the configuration needed for that plugin which
+// are then passed to the appropriate plugin. The ControllerManager binary is the only part
+// of the code which knows what plugins are supported and which flags correspond to each plugin.
+type VolumeConfiguration struct {
+	// enableHostPathProvisioning enables HostPath PV provisioning when running without a
+	// cloud provider. This allows testing and development of provisioning features. HostPath
+	// provisioning is not supported in any way, won't work in a multi-node cluster, and
+	// should not be used for anything other than testing or development.
+	EnableHostPathProvisioning *bool `json:"enableHostPathProvisioning"`
+	// enableDynamicProvisioning enables the provisioning of volumes when running within an environment
+	// that supports dynamic provisioning. Defaults to true.
+	EnableDynamicProvisioning *bool `json:"enableDynamicProvisioning"`
+	// persistentVolumeRecyclerConfiguration holds configuration for persistent volume plugins.
+	PersistentVolumeRecyclerConfiguration PersistentVolumeRecyclerConfiguration `json:"persistentVolumeRecyclerConfiguration"`
+	// volumePluginDir is the full path of the directory in which the flex
+	// volume plugin should search for additional third party volume plugins
+	FlexVolumePluginDir string `json:"flexVolumePluginDir"`
+}
+
+type GroupResource struct {
+	// group is the group portion of the GroupResource.
+	Group string `json:"group"`
+	// resource is the resource portion of the GroupResource.
+	Resource string `json:"resource"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+type KubeControllerManagerConfiguration struct {
 	metav1.TypeMeta `json:",inline"`
 
-	// podManifestPath is the path to the directory containing pod manifests to
-	// run, or the path to a single manifest file
-	PodManifestPath string `json:"podManifestPath"`
-	// syncFrequency is the max period between synchronizing running
-	// containers and config
-	SyncFrequency metav1.Duration `json:"syncFrequency"`
-	// fileCheckFrequency is the duration between checking config files for
-	// new data
-	FileCheckFrequency metav1.Duration `json:"fileCheckFrequency"`
-	// httpCheckFrequency is the duration between checking http for new data
-	HTTPCheckFrequency metav1.Duration `json:"httpCheckFrequency"`
-	// manifestURL is the URL for accessing the container manifest
-	ManifestURL string `json:"manifestURL"`
-	// manifestURLHeader is the HTTP header to use when accessing the manifest
-	// URL, with the key separated from the value with a ':', as in 'key:value'
-	ManifestURLHeader string `json:"manifestURLHeader"`
-	// enableServer enables the Kubelet's server
-	EnableServer *bool `json:"enableServer"`
-	// address is the IP address for the Kubelet to serve on (set to 0.0.0.0
-	// for all interfaces)
-	Address string `json:"address"`
-	// port is the port for the Kubelet to serve on.
-	Port int32 `json:"port"`
-	// readOnlyPort is the read-only port for the Kubelet to serve on with
-	// no authentication/authorization (set to 0 to disable)
-	ReadOnlyPort int32 `json:"readOnlyPort"`
-	// tlsCertFile is the file containing x509 Certificate for HTTPS.  (CA cert,
-	// if any, concatenated after server cert). If tlsCertFile and
-	// tlsPrivateKeyFile are not provided, a self-signed certificate
-	// and key are generated for the public address and saved to the directory
-	// passed to certDir.
-	TLSCertFile string `json:"tlsCertFile"`
-	// tlsPrivateKeyFile is the ile containing x509 private key matching
-	// tlsCertFile.
-	TLSPrivateKeyFile string `json:"tlsPrivateKeyFile"`
-	// certDirectory is the directory where the TLS certs are located (by
-	// default /var/run/kubernetes). If tlsCertFile and tlsPrivateKeyFile
-	// are provided, this flag will be ignored.
-	CertDirectory string `json:"certDirectory"`
-	// authentication specifies how requests to the Kubelet's server are authenticated
-	Authentication KubeletAuthentication `json:"authentication"`
-	// authorization specifies how requests to the Kubelet's server are authorized
-	Authorization KubeletAuthorization `json:"authorization"`
-	// rootDirectory is the directory path to place kubelet files (volume
-	// mounts,etc).
-	RootDirectory string `json:"rootDirectory"`
-	// seccompProfileRoot is the directory path for seccomp profiles.
-	SeccompProfileRoot string `json:"seccompProfileRoot"`
-	// allowPrivileged enables containers to request privileged mode.
-	// Defaults to false.
-	AllowPrivileged *bool `json:"allowPrivileged"`
-	// hostNetworkSources is a comma-separated list of sources from which the
-	// Kubelet allows pods to use of host network. Defaults to "*". Valid
-	// options are "file", "http", "api", and "*" (all sources).
-	HostNetworkSources []string `json:"hostNetworkSources"`
-	// hostPIDSources is a comma-separated list of sources from which the
-	// Kubelet allows pods to use the host pid namespace. Defaults to "*".
-	HostPIDSources []string `json:"hostPIDSources"`
-	// hostIPCSources is a comma-separated list of sources from which the
-	// Kubelet allows pods to use the host ipc namespace. Defaults to "*".
-	HostIPCSources []string `json:"hostIPCSources"`
-	// registryPullQPS is the limit of registry pulls per second. If 0,
-	// unlimited. Set to 0 for no limit. Defaults to 5.0.
-	RegistryPullQPS *int32 `json:"registryPullQPS"`
-	// registryBurst is the maximum size of a bursty pulls, temporarily allows
-	// pulls to burst to this number, while still not exceeding registryQps.
-	// Only used if registryQPS > 0.
-	RegistryBurst int32 `json:"registryBurst"`
-	// eventRecordQPS is the maximum event creations per second. If 0, there
-	// is no limit enforced.
-	EventRecordQPS *int32 `json:"eventRecordQPS"`
-	// eventBurst is the maximum size of a bursty event records, temporarily
-	// allows event records to burst to this number, while still not exceeding
-	// event-qps. Only used if eventQps > 0
-	EventBurst int32 `json:"eventBurst"`
-	// enableDebuggingHandlers enables server endpoints for log collection
-	// and local running of containers and commands
-	EnableDebuggingHandlers *bool `json:"enableDebuggingHandlers"`
-	// enableContentionProfiling enables lock contention profiling, if enableDebuggingHandlers is true.
-	EnableContentionProfiling bool `json:"enableContentionProfiling"`
-	// minimumGCAge is the minimum age for a finished container before it is
-	// garbage collected.
-	MinimumGCAge metav1.Duration `json:"minimumGCAge"`
-	// maxPerPodContainerCount is the maximum number of old instances to
-	// retain per container. Each container takes up some disk space.
-	MaxPerPodContainerCount int32 `json:"maxPerPodContainerCount"`
-	// maxContainerCount is the maximum number of old instances of containers
-	// to retain globally. Each container takes up some disk space.
-	MaxContainerCount *int32 `json:"maxContainerCount"`
-	// cAdvisorPort is the port of the localhost cAdvisor endpoint
-	CAdvisorPort *int32 `json:"cAdvisorPort"`
-	// healthzPort is the port of the localhost healthz endpoint
-	HealthzPort int32 `json:"healthzPort"`
-	// healthzBindAddress is the IP address for the healthz server to serve
-	// on.
-	HealthzBindAddress string `json:"healthzBindAddress"`
-	// oomScoreAdj is The oom-score-adj value for kubelet process. Values
-	// must be within the range [-1000, 1000].
-	OOMScoreAdj *int32 `json:"oomScoreAdj"`
-	// registerNode enables automatic registration with the apiserver.
-	RegisterNode *bool `json:"registerNode"`
-	// clusterDomain is the DNS domain for this cluster. If set, kubelet will
-	// configure all containers to search this domain in addition to the
-	// host's search domains.
-	ClusterDomain string `json:"clusterDomain"`
-	// masterServiceNamespace is The namespace from which the kubernetes
-	// master services should be injected into pods.
-	MasterServiceNamespace string `json:"masterServiceNamespace"`
-	// clusterDNS is a list of IP address for the cluster DNS server.  If set,
-	// kubelet will configure all containers to use this for DNS resolution
-	// instead of the host's DNS servers
-	ClusterDNS []string `json:"clusterDNS"`
-	// streamingConnectionIdleTimeout is the maximum time a streaming connection
-	// can be idle before the connection is automatically closed.
-	StreamingConnectionIdleTimeout metav1.Duration `json:"streamingConnectionIdleTimeout"`
-	// nodeStatusUpdateFrequency is the frequency that kubelet posts node
-	// status to master. Note: be cautious when changing the constant, it
-	// must work with nodeMonitorGracePeriod in nodecontroller.
-	NodeStatusUpdateFrequency metav1.Duration `json:"nodeStatusUpdateFrequency"`
-	// imageMinimumGCAge is the minimum age for an unused image before it is
-	// garbage collected.
-	ImageMinimumGCAge metav1.Duration `json:"imageMinimumGCAge"`
-	// imageGCHighThresholdPercent is the percent of disk usage after which
-	// image garbage collection is always run. The percent is calculated as
-	// this field value out of 100.
-	ImageGCHighThresholdPercent *int32 `json:"imageGCHighThresholdPercent"`
-	// imageGCLowThresholdPercent is the percent of disk usage before which
-	// image garbage collection is never run. Lowest disk usage to garbage
-	// collect to. The percent is calculated as this field value out of 100.
-	ImageGCLowThresholdPercent *int32 `json:"imageGCLowThresholdPercent"`
-	// lowDiskSpaceThresholdMB is the absolute free disk space, in MB, to
-	// maintain. When disk space falls below this threshold, new pods would
-	// be rejected.
-	LowDiskSpaceThresholdMB int32 `json:"lowDiskSpaceThresholdMB"`
-	// How frequently to calculate and cache volume disk usage for all pods
-	VolumeStatsAggPeriod metav1.Duration `json:"volumeStatsAggPeriod"`
-	// volumePluginDir is the full path of the directory in which to search
-	// for additional third party volume plugins
-	VolumePluginDir string `json:"volumePluginDir"`
-	// cloudProvider is the provider for cloud services.
-	CloudProvider string `json:"cloudProvider"`
+	// CloudProviderConfiguration holds configuration for CloudProvider related features.
+	CloudProvider CloudProviderConfiguration
+	// DebuggingConfiguration holds configuration for Debugging related features.
+	Debugging DebuggingConfiguration
+	// GenericComponentConfiguration holds configuration for GenericComponent
+	// related features both in cloud controller manager and kube-controller manager.
+	GenericComponent GenericComponentConfiguration
+	// KubeCloudSharedConfiguration holds configuration for shared related features
+	// both in cloud controller manager and kube-controller manager.
+	KubeCloudShared KubeCloudSharedConfiguration
+
+	// AttachDetachControllerConfiguration holds configuration for
+	// AttachDetachController related features.
+	AttachDetachController AttachDetachControllerConfiguration
+	// CSRSigningControllerConfiguration holds configuration for
+	// CSRSigningController related features.
+	CSRSigningController CSRSigningControllerConfiguration
+	// DaemonSetControllerConfiguration holds configuration for DaemonSetController
+	// related features.
+	DaemonSetController DaemonSetControllerConfiguration
+	// DeploymentControllerConfiguration holds configuration for
+	// DeploymentController related features.
+	DeploymentController DeploymentControllerConfiguration
+	// DeprecatedControllerConfiguration holds configuration for some deprecated
+	// features.
+	DeprecatedController DeprecatedControllerConfiguration
+	// EndPointControllerConfiguration holds configuration for EndPointController
+	// related features.
+	EndPointController EndPointControllerConfiguration
+	// GarbageCollectorControllerConfiguration holds configuration for
+	// GarbageCollectorController related features.
+	GarbageCollectorController GarbageCollectorControllerConfiguration
+	// HPAControllerConfiguration holds configuration for HPAController related features.
+	HPAController HPAControllerConfiguration
+	// JobControllerConfiguration holds configuration for JobController related features.
+	JobController JobControllerConfiguration
+	// NamespaceControllerConfiguration holds configuration for NamespaceController
+	// related features.
+	NamespaceController NamespaceControllerConfiguration
+	// NodeIpamControllerConfiguration holds configuration for NodeIpamController
+	// related features.
+	NodeIpamController NodeIpamControllerConfiguration
+	// NodeLifecycleControllerConfiguration holds configuration for
+	// NodeLifecycleController related features.
+	NodeLifecycleController NodeLifecycleControllerConfiguration
+	// PersistentVolumeBinderControllerConfiguration holds configuration for
+	// PersistentVolumeBinderController related features.
+	PersistentVolumeBinderController PersistentVolumeBinderControllerConfiguration
+	// PodGCControllerConfiguration holds configuration for PodGCController
+	// related features.
+	PodGCController PodGCControllerConfiguration
+	// ReplicaSetControllerConfiguration holds configuration for ReplicaSet related features.
+	ReplicaSetController ReplicaSetControllerConfiguration
+	// ReplicationControllerConfiguration holds configuration for
+	// ReplicationController related features.
+	ReplicationController ReplicationControllerConfiguration
+	// ResourceQuotaControllerConfiguration holds configuration for
+	// ResourceQuotaController related features.
+	ResourceQuotaController ResourceQuotaControllerConfiguration
+	// SAControllerConfiguration holds configuration for ServiceAccountController
+	// related features.
+	SAController SAControllerConfiguration
+	// ServiceControllerConfiguration holds configuration for ServiceController
+	// related features.
+	ServiceController ServiceControllerConfiguration
+
+	// Controllers is the list of controllers to enable or disable
+	// '*' means "all enabled by default controllers"
+	// 'foo' means "enable 'foo'"
+	// '-foo' means "disable 'foo'"
+	// first item for a particular name wins
+	Controllers []string `json:"controllers"`
+	// externalCloudVolumePlugin specifies the plugin to use when cloudProvider is "external".
+	// It is currently used by the in repo cloud providers to handle node and volume control in the KCM.
+	ExternalCloudVolumePlugin string `json:"externalCloudVolumePlugin"`
+}
+
+// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
+
+type CloudControllerManagerConfiguration struct {
+	metav1.TypeMeta `json:",inline"`
+
+	// CloudProviderConfiguration holds configuration for CloudProvider related features.
+	CloudProvider CloudProviderConfiguration
+	// DebuggingConfiguration holds configuration for Debugging related features.
+	Debugging DebuggingConfiguration
+	// GenericComponentConfiguration holds configuration for GenericComponent
+	// related features both in cloud controller manager and kube-controller manager.
+	GenericComponent GenericComponentConfiguration
+	// KubeCloudSharedConfiguration holds configuration for shared related features
+	// both in cloud controller manager and kube-controller manager.
+	KubeCloudShared KubeCloudSharedConfiguration
+	// ServiceControllerConfiguration holds configuration for ServiceController
+	// related features.
+	ServiceController ServiceControllerConfiguration
+	// NodeStatusUpdateFrequency is the frequency at which the controller updates nodes' status
+	NodeStatusUpdateFrequency metav1.Duration
+}
+
+type CloudProviderConfiguration struct {
+	// Name is the provider for cloud services.
+	Name string `json:"cloudProvider"`
 	// cloudConfigFile is the path to the cloud provider configuration file.
 	CloudConfigFile string `json:"cloudConfigFile"`
-	// kubeletCgroups is the absolute name of cgroups to isolate the kubelet in.
-	KubeletCgroups string `json:"kubeletCgroups"`
-	// runtimeCgroups are cgroups that container runtime is expected to be isolated in.
-	RuntimeCgroups string `json:"runtimeCgroups"`
-	// systemCgroups is absolute name of cgroups in which to place
-	// all non-kernel processes that are not already in a container. Empty
-	// for no container. Rolling back the flag requires a reboot.
-	SystemCgroups string `json:"systemCgroups"`
-	// cgroupRoot is the root cgroup to use for pods. This is handled by the
-	// container runtime on a best effort basis.
-	CgroupRoot string `json:"cgroupRoot"`
-	// Enable QoS based Cgroup hierarchy: top level cgroups for QoS Classes
-	// And all Burstable and BestEffort pods are brought up under their
-	// specific top level QoS cgroup.
-	// +optional
-	CgroupsPerQOS *bool `json:"cgroupsPerQOS,omitempty"`
-	// driver that the kubelet uses to manipulate cgroups on the host (cgroupfs or systemd)
-	// +optional
-	CgroupDriver string `json:"cgroupDriver,omitempty"`
-	// containerRuntime is the container runtime to use.
-	ContainerRuntime string `json:"containerRuntime"`
-	// remoteRuntimeEndpoint is the endpoint of remote runtime service
-	RemoteRuntimeEndpoint string `json:"remoteRuntimeEndpoint"`
-	// remoteImageEndpoint is the endpoint of remote image service
-	RemoteImageEndpoint string `json:"remoteImageEndpoint"`
-	// runtimeRequestTimeout is the timeout for all runtime requests except long running
-	// requests - pull, logs, exec and attach.
-	RuntimeRequestTimeout metav1.Duration `json:"runtimeRequestTimeout"`
-	// experimentalMounterPath is the path to mounter binary. If not set, kubelet will attempt to use mount
-	// binary that is available via $PATH,
-	ExperimentalMounterPath string `json:"experimentalMounterPath,omitempty"`
-	// lockFilePath is the path that kubelet will use to as a lock file.
-	// It uses this file as a lock to synchronize with other kubelet processes
-	// that may be running.
-	LockFilePath *string `json:"lockFilePath"`
-	// ExitOnLockContention is a flag that signifies to the kubelet that it is running
-	// in "bootstrap" mode. This requires that 'LockFilePath' has been set.
-	// This will cause the kubelet to listen to inotify events on the lock file,
-	// releasing it and exiting when another process tries to open that file.
-	ExitOnLockContention bool `json:"exitOnLockContention"`
-	// How should the kubelet configure the container bridge for hairpin packets.
-	// Setting this flag allows endpoints in a Service to loadbalance back to
-	// themselves if they should try to access their own Service. Values:
-	//   "promiscuous-bridge": make the container bridge promiscuous.
-	//   "hairpin-veth":       set the hairpin flag on container veth interfaces.
-	//   "none":               do nothing.
-	// Generally, one must set --hairpin-mode=veth-flag to achieve hairpin NAT,
-	// because promiscous-bridge assumes the existence of a container bridge named cbr0.
-	HairpinMode string `json:"hairpinMode"`
-	// maxPods is the number of pods that can run on this Kubelet.
-	MaxPods int32 `json:"maxPods"`
-	// The CIDR to use for pod IP addresses, only used in standalone mode.
-	// In cluster mode, this is obtained from the master.
-	PodCIDR string `json:"podCIDR"`
-	// ResolverConfig is the resolver configuration file used as the basis
-	// for the container DNS resolution configuration."), []
-	ResolverConfig string `json:"resolvConf"`
-	// cpuCFSQuota is Enable CPU CFS quota enforcement for containers that
-	// specify CPU limits
-	CPUCFSQuota *bool `json:"cpuCFSQuota"`
-	// containerized should be set to true if kubelet is running in a container.
-	Containerized *bool `json:"containerized"`
-	// maxOpenFiles is Number of files that can be opened by Kubelet process.
-	MaxOpenFiles int64 `json:"maxOpenFiles"`
-	// registerSchedulable tells the kubelet to register the node as
-	// schedulable. Won't have any effect if register-node is false.
-	// DEPRECATED: use registerWithTaints instead
-	RegisterSchedulable *bool `json:"registerSchedulable"`
-	// registerWithTaints are an array of taints to add to a node object when
-	// the kubelet registers itself. This only takes effect when registerNode
-	// is true and upon the initial registration of the node.
-	RegisterWithTaints []v1.Taint `json:"registerWithTaints"`
+}
+
+type DebuggingConfiguration struct {
+	// enableProfiling enables profiling via web interface host:port/debug/pprof/
+	EnableProfiling bool `json:"enableProfiling"`
+	// EnableContentionProfiling enables lock contention profiling, if
+	// EnableProfiling is true.
+	EnableContentionProfiling bool `json:"enableContentionProfiling"`
+}
+
+type GenericComponentConfiguration struct {
+
+	// minResyncPeriod is the resync period in reflectors; will be random between
+	// minResyncPeriod and 2*minResyncPeriod.
+	MinResyncPeriod metav1.Duration `json:"minResyncPeriod"`
 	// contentType is contentType of requests sent to apiserver.
 	ContentType string `json:"contentType"`
-	// kubeAPIQPS is the QPS to use while talking with kubernetes apiserver
-	KubeAPIQPS *int32 `json:"kubeAPIQPS"`
-	// kubeAPIBurst is the burst to allow while talking with kubernetes
-	// apiserver
+	// kubeAPIQPS is the QPS to use while talking with kubernetes apiserver.
+	KubeAPIQPS float32 `json:"kubeAPIQPS"`
+	// kubeAPIBurst is the burst to use while talking with kubernetes apiserver.
 	KubeAPIBurst int32 `json:"kubeAPIBurst"`
-	// serializeImagePulls when enabled, tells the Kubelet to pull images one
-	// at a time. We recommend *not* changing the default value on nodes that
-	// run docker daemon with version  < 1.9 or an Aufs storage backend.
-	// Issue #10959 has more details.
-	SerializeImagePulls *bool `json:"serializeImagePulls"`
-	// outOfDiskTransitionFrequency is duration for which the kubelet has to
-	// wait before transitioning out of out-of-disk node condition status.
-	OutOfDiskTransitionFrequency metav1.Duration `json:"outOfDiskTransitionFrequency"`
-	// nodeLabels to add when registering the node in the cluster.
-	NodeLabels map[string]string `json:"nodeLabels"`
-	// nonMasqueradeCIDR configures masquerading: traffic to IPs outside this range will use IP masquerade.
-	NonMasqueradeCIDR string `json:"nonMasqueradeCIDR"`
-	// enable gathering custom metrics.
-	EnableCustomMetrics bool `json:"enableCustomMetrics"`
-	// Comma-delimited list of hard eviction expressions.  For example, 'memory.available<300Mi'.
-	EvictionHard *string `json:"evictionHard"`
-	// Comma-delimited list of soft eviction expressions.  For example, 'memory.available<300Mi'.
-	EvictionSoft string `json:"evictionSoft"`
-	// Comma-delimeted list of grace periods for each soft eviction signal.  For example, 'memory.available=30s'.
-	EvictionSoftGracePeriod string `json:"evictionSoftGracePeriod"`
-	// Duration for which the kubelet has to wait before transitioning out of an eviction pressure condition.
-	EvictionPressureTransitionPeriod metav1.Duration `json:"evictionPressureTransitionPeriod"`
-	// Maximum allowed grace period (in seconds) to use when terminating pods in response to a soft eviction threshold being met.
-	EvictionMaxPodGracePeriod int32 `json:"evictionMaxPodGracePeriod"`
-	// Comma-delimited list of minimum reclaims (e.g. imagefs.available=2Gi) that describes the minimum amount of resource the kubelet will reclaim when performing a pod eviction if that resource is under pressure.
-	EvictionMinimumReclaim string `json:"evictionMinimumReclaim"`
-	// If enabled, the kubelet will integrate with the kernel memcg notification to determine if memory eviction thresholds are crossed rather than polling.
-	ExperimentalKernelMemcgNotification *bool `json:"experimentalKernelMemcgNotification"`
-	// Maximum number of pods per core. Cannot exceed MaxPods
-	PodsPerCore int32 `json:"podsPerCore"`
-	// enableControllerAttachDetach enables the Attach/Detach controller to
-	// manage attachment/detachment of volumes scheduled to this node, and
-	// disables kubelet from executing any attach/detach operations
-	EnableControllerAttachDetach *bool `json:"enableControllerAttachDetach"`
-	// A set of ResourceName=Percentage (e.g. memory=50%) pairs that describe
-	// how pod resource requests are reserved at the QoS level.
-	// Currently only memory is supported. [default=none]"
-	ExperimentalQOSReserved map[string]string `json:"experimentalQOSReserved"`
-	// Default behaviour for kernel tuning
-	ProtectKernelDefaults bool `json:"protectKernelDefaults"`
-	// If true, Kubelet ensures a set of iptables rules are present on host.
-	// These rules will serve as utility rules for various components, e.g. KubeProxy.
-	// The rules will be created based on IPTablesMasqueradeBit and IPTablesDropBit.
-	MakeIPTablesUtilChains *bool `json:"makeIPTablesUtilChains"`
-	// iptablesMasqueradeBit is the bit of the iptables fwmark space to mark for SNAT
-	// Values must be within the range [0, 31]. Must be different from other mark bits.
-	// Warning: Please match the value of corresponding parameter in kube-proxy
-	// TODO: clean up IPTablesMasqueradeBit in kube-proxy
-	IPTablesMasqueradeBit *int32 `json:"iptablesMasqueradeBit"`
-	// iptablesDropBit is the bit of the iptables fwmark space to mark for dropping packets.
-	// Values must be within the range [0, 31]. Must be different from other mark bits.
-	IPTablesDropBit *int32 `json:"iptablesDropBit"`
-	// Whitelist of unsafe sysctls or sysctl patterns (ending in *). Use these at your own risk.
-	// Resource isolation might be lacking and pod might influence each other on the same node.
-	// +optional
-	AllowedUnsafeSysctls []string `json:"allowedUnsafeSysctls,omitempty"`
-	// featureGates is a string of comma-separated key=value pairs that describe feature
-	// gates for alpha/experimental features.
-	FeatureGates string `json:"featureGates,omitempty"`
-	// TODO(#34726:1.8.0): Remove the opt-in for failing when swap is enabled.
-	// Tells the Kubelet to fail to start if swap is enabled on the node.
-	ExperimentalFailSwapOn bool `json:"experimentalFailSwapOn,omitempty"`
-	// This flag, if set, enables a check prior to mount operations to verify that the required components
-	// (binaries, etc.) to mount the volume are available on the underlying node. If the check is enabled
-	// and fails the mount operation fails.
-	ExperimentalCheckNodeCapabilitiesBeforeMount bool `json:"experimentalCheckNodeCapabilitiesBeforeMount,omitempty"`
-	// This flag, if set, instructs the kubelet to keep volumes from terminated pods mounted to the node.
-	// This can be useful for debugging volume related issues.
-	KeepTerminatedPodVolumes bool `json:"keepTerminatedPodVolumes,omitempty"`
-
-	/* following flags are meant for Node Allocatable */
-
-	// A set of ResourceName=ResourceQuantity (e.g. cpu=200m,memory=150G) pairs
-	// that describe resources reserved for non-kubernetes components.
-	// Currently only cpu and memory are supported. [default=none]
-	// See http://kubernetes.io/docs/user-guide/compute-resources for more detail.
-	SystemReserved map[string]string `json:"systemReserved"`
-	// A set of ResourceName=ResourceQuantity (e.g. cpu=200m,memory=150G) pairs
-	// that describe resources reserved for kubernetes system components.
-	// Currently cpu, memory and local storage for root file system are supported. [default=none]
-	// See http://kubernetes.io/docs/user-guide/compute-resources for more detail.
-	KubeReserved map[string]string `json:"kubeReserved"`
-
-	// This flag helps kubelet identify absolute name of top level cgroup used to enforce `SystemReserved` compute resource reservation for OS system daemons.
-	// Refer to [Node Allocatable](https://git.k8s.io/community/contributors/design-proposals/node-allocatable.md) doc for more information.
-	SystemReservedCgroup string `json:"systemReservedCgroup,omitempty"`
-	// This flag helps kubelet identify absolute name of top level cgroup used to enforce `KubeReserved` compute resource reservation for Kubernetes node system daemons.
-	// Refer to [Node Allocatable](https://git.k8s.io/community/contributors/design-proposals/node-allocatable.md) doc for more information.
-	KubeReservedCgroup string `json:"kubeReservedCgroup,omitempty"`
-	// This flag specifies the various Node Allocatable enforcements that Kubelet needs to perform.
-	// This flag accepts a list of options. Acceptible options are `pods`, `system-reserved` & `kube-reserved`.
-	// Refer to [Node Allocatable](https://git.k8s.io/community/contributors/design-proposals/node-allocatable.md) doc for more information.
-	EnforceNodeAllocatable []string `json:"enforceNodeAllocatable"`
-	// This flag, if set, will avoid including `EvictionHard` limits while computing Node Allocatable.
-	// Refer to [Node Allocatable](https://git.k8s.io/community/contributors/design-proposals/node-allocatable.md) doc for more information.
-	ExperimentalNodeAllocatableIgnoreEvictionThreshold bool `json:"experimentalNodeAllocatableIgnoreEvictionThreshold,omitempty"`
+	// How long to wait between starting controller managers
+	ControllerStartInterval metav1.Duration `json:"controllerStartInterval"`
+	// leaderElection defines the configuration of leader election client.
+	LeaderElection LeaderElectionConfiguration `json:"leaderElection"`
 }
 
-type KubeletAuthorizationMode string
-
-const (
-	// KubeletAuthorizationModeAlwaysAllow authorizes all authenticated requests
-	KubeletAuthorizationModeAlwaysAllow KubeletAuthorizationMode = "AlwaysAllow"
-	// KubeletAuthorizationModeWebhook uses the SubjectAccessReview API to determine authorization
-	KubeletAuthorizationModeWebhook KubeletAuthorizationMode = "Webhook"
-)
-
-type KubeletAuthorization struct {
-	// mode is the authorization mode to apply to requests to the kubelet server.
-	// Valid values are AlwaysAllow and Webhook.
-	// Webhook mode uses the SubjectAccessReview API to determine authorization.
-	Mode KubeletAuthorizationMode `json:"mode"`
-
-	// webhook contains settings related to Webhook authorization.
-	Webhook KubeletWebhookAuthorization `json:"webhook"`
+type KubeCloudSharedConfiguration struct {
+	// port is the port that the controller-manager's http service runs on.
+	Port int32 `json:"port"`
+	// address is the IP address to serve on (set to 0.0.0.0 for all interfaces).
+	Address string `json:"address"`
+	// useServiceAccountCredentials indicates whether controllers should be run with
+	// individual service account credentials.
+	UseServiceAccountCredentials bool `json:"useServiceAccountCredentials"`
+	// run with untagged cloud instances
+	AllowUntaggedCloud bool `json:"allowUntaggedCloud"`
+	// routeReconciliationPeriod is the period for reconciling routes created for Nodes by cloud provider..
+	RouteReconciliationPeriod metav1.Duration `json:"routeReconciliationPeriod"`
+	// nodeMonitorPeriod is the period for syncing NodeStatus in NodeController.
+	NodeMonitorPeriod metav1.Duration `json:"nodeMonitorPeriod"`
+	// clusterName is the instance prefix for the cluster.
+	ClusterName string `json:"clusterName"`
+	// clusterCIDR is CIDR Range for Pods in cluster.
+	ClusterCIDR string `json:"clusterCIDR"`
+	// AllocateNodeCIDRs enables CIDRs for Pods to be allocated and, if
+	// ConfigureCloudRoutes is true, to be set on the cloud provider.
+	AllocateNodeCIDRs bool `json:"allocateNodeCIDRs"`
+	// CIDRAllocatorType determines what kind of pod CIDR allocator will be used.
+	CIDRAllocatorType string `json:"cIDRAllocatorType"`
+	// configureCloudRoutes enables CIDRs allocated with allocateNodeCIDRs
+	// to be configured on the cloud provider.
+	ConfigureCloudRoutes *bool `json:"configureCloudRoutes"`
+	// nodeSyncPeriod is the period for syncing nodes from cloudprovider. Longer
+	// periods will result in fewer calls to cloud provider, but may delay addition
+	// of new nodes to cluster.
+	NodeSyncPeriod metav1.Duration `json:"nodeSyncPeriod"`
 }
 
-type KubeletWebhookAuthorization struct {
-	// cacheAuthorizedTTL is the duration to cache 'authorized' responses from the webhook authorizer.
-	CacheAuthorizedTTL metav1.Duration `json:"cacheAuthorizedTTL"`
-	// cacheUnauthorizedTTL is the duration to cache 'unauthorized' responses from the webhook authorizer.
-	CacheUnauthorizedTTL metav1.Duration `json:"cacheUnauthorizedTTL"`
+type AttachDetachControllerConfiguration struct {
+	// Reconciler runs a periodic loop to reconcile the desired state of the with
+	// the actual state of the world by triggering attach detach operations.
+	// This flag enables or disables reconcile.  Is false by default, and thus enabled.
+	DisableAttachDetachReconcilerSync bool `json:"disableAttachDetachReconcilerSync"`
+	// ReconcilerSyncLoopPeriod is the amount of time the reconciler sync states loop
+	// wait between successive executions. Is set to 5 sec by default.
+	ReconcilerSyncLoopPeriod metav1.Duration `json:"reconcilerSyncLoopPeriod"`
 }
 
-type KubeletAuthentication struct {
-	// x509 contains settings related to x509 client certificate authentication
-	X509 KubeletX509Authentication `json:"x509"`
-	// webhook contains settings related to webhook bearer token authentication
-	Webhook KubeletWebhookAuthentication `json:"webhook"`
-	// anonymous contains settings related to anonymous authentication
-	Anonymous KubeletAnonymousAuthentication `json:"anonymous"`
+type CSRSigningControllerConfiguration struct {
+	// clusterSigningCertFile is the filename containing a PEM-encoded
+	// X509 CA certificate used to issue cluster-scoped certificates
+	ClusterSigningCertFile string `json:"clusterSigningCertFile"`
+	// clusterSigningCertFile is the filename containing a PEM-encoded
+	// RSA or ECDSA private key used to issue cluster-scoped certificates
+	ClusterSigningKeyFile string `json:"clusterSigningKeyFile"`
+	// clusterSigningDuration is the length of duration signed certificates
+	// will be given.
+	ClusterSigningDuration metav1.Duration `json:"clusterSigningDuration"`
 }
 
-type KubeletX509Authentication struct {
-	// clientCAFile is the path to a PEM-encoded certificate bundle. If set, any request presenting a client certificate
-	// signed by one of the authorities in the bundle is authenticated with a username corresponding to the CommonName,
-	// and groups corresponding to the Organization in the client certificate.
-	ClientCAFile string `json:"clientCAFile"`
+type DaemonSetControllerConfiguration struct {
+	// concurrentDaemonSetSyncs is the number of daemonset objects that are
+	// allowed to sync concurrently. Larger number = more responsive daemonset,
+	// but more CPU (and network) load.
+	ConcurrentDaemonSetSyncs int32 `json:"concurrentDaemonSetSyncs"`
 }
 
-type KubeletWebhookAuthentication struct {
-	// enabled allows bearer token authentication backed by the tokenreviews.authentication.k8s.io API
-	Enabled *bool `json:"enabled"`
-	// cacheTTL enables caching of authentication results
-	CacheTTL metav1.Duration `json:"cacheTTL"`
+type DeploymentControllerConfiguration struct {
+	// concurrentDeploymentSyncs is the number of deployment objects that are
+	// allowed to sync concurrently. Larger number = more responsive deployments,
+	// but more CPU (and network) load.
+	ConcurrentDeploymentSyncs int32 `json:"concurrentDeploymentSyncs"`
+	// deploymentControllerSyncPeriod is the period for syncing the deployments.
+	DeploymentControllerSyncPeriod metav1.Duration `json:"deploymentControllerSyncPeriod"`
 }
 
-type KubeletAnonymousAuthentication struct {
-	// enabled allows anonymous requests to the kubelet server.
-	// Requests that are not rejected by another authentication method are treated as anonymous requests.
-	// Anonymous requests have a username of system:anonymous, and a group name of system:unauthenticated.
-	Enabled *bool `json:"enabled"`
+type DeprecatedControllerConfiguration struct {
+	// DEPRECATED: deletingPodsQps is the number of nodes per second on which pods are deleted in
+	// case of node failure.
+	DeletingPodsQps float32 `json:"deletingPodsQps"`
+	// DEPRECATED: deletingPodsBurst is the number of nodes on which pods are bursty deleted in
+	// case of node failure. For more details look into RateLimiter.
+	DeletingPodsBurst int32 `json:"deletingPodsBurst"`
+	// registerRetryCount is the number of retries for initial node registration.
+	// Retry interval equals node-sync-period.
+	RegisterRetryCount int32 `json:"registerRetryCount"`
+}
+
+type EndPointControllerConfiguration struct {
+	// concurrentEndpointSyncs is the number of endpoint syncing operations
+	// that will be done concurrently. Larger number = faster endpoint updating,
+	// but more CPU (and network) load.
+	ConcurrentEndpointSyncs int32 `json:"concurrentEndpointSyncs"`
+}
+
+type GarbageCollectorControllerConfiguration struct {
+	// enables the generic garbage collector. MUST be synced with the
+	// corresponding flag of the kube-apiserver. WARNING: the generic garbage
+	// collector is an alpha feature.
+	EnableGarbageCollector *bool `json:"enableGarbageCollector"`
+	// concurrentGCSyncs is the number of garbage collector workers that are
+	// allowed to sync concurrently.
+	ConcurrentGCSyncs int32 `json:"concurrentGCSyncs"`
+	// gcIgnoredResources is the list of GroupResources that garbage collection should ignore.
+	GCIgnoredResources []GroupResource `json:"gCIgnoredResources"`
+}
+
+type HPAControllerConfiguration struct {
+	// horizontalPodAutoscalerSyncPeriod is the period for syncing the number of
+	// pods in horizontal pod autoscaler.
+	HorizontalPodAutoscalerSyncPeriod metav1.Duration `json:"horizontalPodAutoscalerSyncPeriod"`
+	// horizontalPodAutoscalerUpscaleForbiddenWindow is a period after which next upscale allowed.
+	HorizontalPodAutoscalerUpscaleForbiddenWindow metav1.Duration `json:"horizontalPodAutoscalerUpscaleForbiddenWindow"`
+	// horizontalPodAutoscalerDownscaleForbiddenWindow is a period after which next downscale allowed.
+	HorizontalPodAutoscalerDownscaleForbiddenWindow metav1.Duration `json:"horizontalPodAutoscalerDownscaleForbiddenWindow"`
+	// horizontalPodAutoscalerTolerance is the tolerance for when
+	// resource usage suggests upscaling/downscaling
+	HorizontalPodAutoscalerTolerance float64 `json:"horizontalPodAutoscalerTolerance"`
+	// HorizontalPodAutoscalerUseRESTClients causes the HPA controller to use REST clients
+	// through the kube-aggregator when enabled, instead of using the legacy metrics client
+	// through the API server proxy.
+	HorizontalPodAutoscalerUseRESTClients *bool `json:"horizontalPodAutoscalerUseRESTClients"`
+}
+
+type JobControllerConfiguration struct {
+	// concurrentJobSyncs is the number of job objects that are
+	// allowed to sync concurrently. Larger number = more responsive jobs,
+	// but more CPU (and network) load.
+	ConcurrentJobSyncs int32
+}
+
+type NamespaceControllerConfiguration struct {
+	// namespaceSyncPeriod is the period for syncing namespace life-cycle
+	// updates.
+	NamespaceSyncPeriod metav1.Duration `json:"namespaceSyncPeriod"`
+	// concurrentNamespaceSyncs is the number of namespace objects that are
+	// allowed to sync concurrently.
+	ConcurrentNamespaceSyncs int32 `json:"concurrentNamespaceSyncs"`
+}
+
+type NodeIpamControllerConfiguration struct {
+	// serviceCIDR is CIDR Range for Services in cluster.
+	ServiceCIDR string `json:"serviceCIDR"`
+	// NodeCIDRMaskSize is the mask size for node cidr in cluster.
+	NodeCIDRMaskSize int32 `json:"nodeCIDRMaskSize"`
+}
+
+type NodeLifecycleControllerConfiguration struct {
+	// If set to true enables NoExecute Taints and will evict all not-tolerating
+	// Pod running on Nodes tainted with this kind of Taints.
+	EnableTaintManager *bool `json:"enableTaintManager"`
+	// nodeEvictionRate is the number of nodes per second on which pods are deleted in case of node failure when a zone is healthy
+	NodeEvictionRate float32 `json:"nodeEvictionRate"`
+	// secondaryNodeEvictionRate is the number of nodes per second on which pods are deleted in case of node failure when a zone is unhealthy
+	SecondaryNodeEvictionRate float32 `json:"secondaryNodeEvictionRate"`
+	// nodeStartupGracePeriod is the amount of time which we allow starting a node to
+	// be unresponsive before marking it unhealthy.
+	NodeStartupGracePeriod metav1.Duration `json:"nodeStartupGracePeriod"`
+	// nodeMontiorGracePeriod is the amount of time which we allow a running node to be
+	// unresponsive before marking it unhealthy. Must be N times more than kubelet's
+	// nodeStatusUpdateFrequency, where N means number of retries allowed for kubelet
+	// to post node status.
+	NodeMonitorGracePeriod metav1.Duration `json:"nodeMonitorGracePeriod"`
+	// podEvictionTimeout is the grace period for deleting pods on failed nodes.
+	PodEvictionTimeout metav1.Duration `json:"podEvictionTimeout"`
+	// secondaryNodeEvictionRate is implicitly overridden to 0 for clusters smaller than or equal to largeClusterSizeThreshold
+	LargeClusterSizeThreshold int32 `json:"largeClusterSizeThreshold"`
+	// Zone is treated as unhealthy in nodeEvictionRate and secondaryNodeEvictionRate when at least
+	// unhealthyZoneThreshold (no less than 3) of Nodes in the zone are NotReady
+	UnhealthyZoneThreshold float32 `json:"unhealthyZoneThreshold"`
+}
+
+type PersistentVolumeBinderControllerConfiguration struct {
+	// pvClaimBinderSyncPeriod is the period for syncing persistent volumes
+	// and persistent volume claims.
+	PVClaimBinderSyncPeriod metav1.Duration `json:"pVClaimBinderSyncPeriod"`
+	// volumeConfiguration holds configuration for volume related features.
+	VolumeConfiguration VolumeConfiguration `json:"volumeConfiguration"`
+}
+
+type PodGCControllerConfiguration struct {
+	// terminatedPodGCThreshold is the number of terminated pods that can exist
+	// before the terminated pod garbage collector starts deleting terminated pods.
+	// If <= 0, the terminated pod garbage collector is disabled.
+	TerminatedPodGCThreshold int32 `json:"terminatedPodGCThreshold"`
+}
+
+type ReplicaSetControllerConfiguration struct {
+	// concurrentRSSyncs is the number of replica sets that are  allowed to sync
+	// concurrently. Larger number = more responsive replica  management, but more
+	// CPU (and network) load.
+	ConcurrentRSSyncs int32 `json:"concurrentRSSyncs"`
+}
+
+type ReplicationControllerConfiguration struct {
+	// concurrentRCSyncs is the number of replication controllers that are
+	// allowed to sync concurrently. Larger number = more responsive replica
+	// management, but more CPU (and network) load.
+	ConcurrentRCSyncs int32 `json:"concurrentRCSyncs"`
+}
+
+type ResourceQuotaControllerConfiguration struct {
+	// resourceQuotaSyncPeriod is the period for syncing quota usage status
+	// in the system.
+	ResourceQuotaSyncPeriod metav1.Duration `json:"resourceQuotaSyncPeriod"`
+	// concurrentResourceQuotaSyncs is the number of resource quotas that are
+	// allowed to sync concurrently. Larger number = more responsive quota
+	// management, but more CPU (and network) load.
+	ConcurrentResourceQuotaSyncs int32 `json:"concurrentResourceQuotaSyncs"`
+}
+
+type SAControllerConfiguration struct {
+	// serviceAccountKeyFile is the filename containing a PEM-encoded private RSA key
+	// used to sign service account tokens.
+	ServiceAccountKeyFile string `json:"serviceAccountKeyFile"`
+	// concurrentSATokenSyncs is the number of service account token syncing operations
+	// that will be done concurrently.
+	ConcurrentSATokenSyncs int32 `json:"concurrentSATokenSyncs"`
+	// rootCAFile is the root certificate authority will be included in service
+	// account's token secret. This must be a valid PEM-encoded CA bundle.
+	RootCAFile string `json:"rootCAFile"`
+}
+
+type ServiceControllerConfiguration struct {
+	// concurrentServiceSyncs is the number of services that are
+	// allowed to sync concurrently. Larger number = more responsive service
+	// management, but more CPU (and network) load.
+	ConcurrentServiceSyncs int32 `json:"concurrentServiceSyncs"`
 }
 
 const (
@@ -632,4 +570,6 @@ const (
 
 	// "kube-scheduler" is the default scheduler lock object name
 	SchedulerDefaultLockObjectName = "kube-scheduler"
+
+	SchedulerDefaultProviderName = "DefaultProvider"
 )

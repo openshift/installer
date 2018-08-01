@@ -1,0 +1,46 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "alt_exit.go",
+        "doc.go",
+        "entry.go",
+        "exported.go",
+        "formatter.go",
+        "hooks.go",
+        "json_formatter.go",
+        "logger.go",
+        "logrus.go",
+        "terminal_bsd.go",
+        "terminal_linux.go",
+        "text_formatter.go",
+        "writer.go",
+    ],
+    importmap = "installer/tests/smoke/vendor/github.com/sirupsen/logrus",
+    importpath = "github.com/sirupsen/logrus",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//tests/smoke/vendor/golang.org/x/crypto/ssh/terminal:go_default_library",
+    ] + select({
+        "@io_bazel_rules_go//go/platform:darwin": [
+            "//tests/smoke/vendor/golang.org/x/sys/unix:go_default_library",
+        ],
+        "@io_bazel_rules_go//go/platform:dragonfly": [
+            "//tests/smoke/vendor/golang.org/x/sys/unix:go_default_library",
+        ],
+        "@io_bazel_rules_go//go/platform:freebsd": [
+            "//tests/smoke/vendor/golang.org/x/sys/unix:go_default_library",
+        ],
+        "@io_bazel_rules_go//go/platform:linux": [
+            "//tests/smoke/vendor/golang.org/x/sys/unix:go_default_library",
+        ],
+        "@io_bazel_rules_go//go/platform:netbsd": [
+            "//tests/smoke/vendor/golang.org/x/sys/unix:go_default_library",
+        ],
+        "@io_bazel_rules_go//go/platform:openbsd": [
+            "//tests/smoke/vendor/golang.org/x/sys/unix:go_default_library",
+        ],
+        "//conditions:default": [],
+    }),
+)

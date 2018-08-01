@@ -17,29 +17,23 @@ limitations under the License.
 package util
 
 import (
-	"fmt"
-
 	"github.com/golang/glog"
 
+	apps "k8s.io/api/apps/v1"
 	errorsutil "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/v1"
-	extensions "k8s.io/kubernetes/pkg/apis/extensions/v1beta1"
-	unversionedextensions "k8s.io/kubernetes/pkg/client/clientset_generated/clientset/typed/extensions/v1beta1"
-	extensionslisters "k8s.io/kubernetes/pkg/client/listers/extensions/v1beta1"
-	"k8s.io/kubernetes/pkg/client/retry"
-	"k8s.io/kubernetes/pkg/controller"
-	labelsutil "k8s.io/kubernetes/pkg/util/labels"
+	appsclient "k8s.io/client-go/kubernetes/typed/apps/v1"
+	appslisters "k8s.io/client-go/listers/apps/v1"
+	"k8s.io/client-go/util/retry"
 )
 
 // TODO: use client library instead when it starts to support update retries
 //       see https://github.com/kubernetes/kubernetes/issues/21479
-type updateRSFunc func(rs *extensions.ReplicaSet) error
+type updateRSFunc func(rs *apps.ReplicaSet) error
 
 // UpdateRSWithRetries updates a RS with given applyUpdate function. Note that RS not found error is ignored.
 // The returned bool value can be used to tell if the RS is actually updated.
-func UpdateRSWithRetries(rsClient unversionedextensions.ReplicaSetInterface, rsLister extensionslisters.ReplicaSetLister, namespace, name string, applyUpdate updateRSFunc) (*extensions.ReplicaSet, error) {
-	var rs *extensions.ReplicaSet
+func UpdateRSWithRetries(rsClient appsclient.ReplicaSetInterface, rsLister appslisters.ReplicaSetLister, namespace, name string, applyUpdate updateRSFunc) (*apps.ReplicaSet, error) {
+	var rs *apps.ReplicaSet
 
 	retryErr := retry.RetryOnConflict(retry.DefaultBackoff, func() error {
 		var err error
@@ -47,11 +41,7 @@ func UpdateRSWithRetries(rsClient unversionedextensions.ReplicaSetInterface, rsL
 		if err != nil {
 			return err
 		}
-		obj, deepCopyErr := api.Scheme.DeepCopy(rs)
-		if deepCopyErr != nil {
-			return deepCopyErr
-		}
-		rs = obj.(*extensions.ReplicaSet)
+		rs = rs.DeepCopy()
 		// Apply the update, then attempt to push it to the apiserver.
 		if applyErr := applyUpdate(rs); applyErr != nil {
 			return applyErr
@@ -67,15 +57,4 @@ func UpdateRSWithRetries(rsClient unversionedextensions.ReplicaSetInterface, rsL
 	}
 
 	return rs, retryErr
-}
-
-// GetReplicaSetHash returns the pod template hash of a ReplicaSet's pod template space
-func GetReplicaSetHash(rs *extensions.ReplicaSet, uniquifier *int64) (string, error) {
-	template, err := api.Scheme.DeepCopy(rs.Spec.Template)
-	if err != nil {
-		return "", err
-	}
-	rsTemplate := template.(v1.PodTemplateSpec)
-	rsTemplate.Labels = labelsutil.CloneAndRemoveLabel(rsTemplate.Labels, extensions.DefaultDeploymentUniqueLabelKey)
-	return fmt.Sprintf("%d", controller.ComputeHash(&rsTemplate, uniquifier)), nil
 }

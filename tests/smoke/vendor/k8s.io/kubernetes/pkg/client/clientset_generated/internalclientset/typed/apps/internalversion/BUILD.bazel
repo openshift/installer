@@ -18,6 +18,7 @@ go_library(
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/watch:go_default_library",
         "//tests/smoke/vendor/k8s.io/client-go/rest:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/apis/apps:go_default_library",
+        "//tests/smoke/vendor/k8s.io/kubernetes/pkg/apis/autoscaling:go_default_library",
         "//tests/smoke/vendor/k8s.io/kubernetes/pkg/client/clientset_generated/internalclientset/scheme:go_default_library",
     ],
 )

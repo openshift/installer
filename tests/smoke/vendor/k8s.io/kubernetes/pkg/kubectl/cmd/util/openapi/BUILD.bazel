@@ -6,7 +6,6 @@ go_library(
         "doc.go",
         "extensions.go",
         "openapi.go",
-        "openapi_cache.go",
         "openapi_getter.go",
     ],
     importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/kubectl/cmd/util/openapi",
@@ -14,10 +13,9 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//tests/smoke/vendor/github.com/go-openapi/spec:go_default_library",
-        "//tests/smoke/vendor/github.com/golang/glog:go_default_library",
+        "//tests/smoke/vendor/github.com/googleapis/gnostic/OpenAPIv2:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/runtime/schema:go_default_library",
-        "//tests/smoke/vendor/k8s.io/apimachinery/pkg/util/sets:go_default_library",
         "//tests/smoke/vendor/k8s.io/client-go/discovery:go_default_library",
-        "//tests/smoke/vendor/k8s.io/kubernetes/pkg/version:go_default_library",
+        "//tests/smoke/vendor/k8s.io/kube-openapi/pkg/util/proto:go_default_library",
     ],
 )

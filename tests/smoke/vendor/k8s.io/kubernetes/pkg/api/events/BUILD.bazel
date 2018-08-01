@@ -6,5 +6,5 @@ go_library(
     importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/api/events",
     importpath = "k8s.io/kubernetes/pkg/api/events",
     visibility = ["//visibility:public"],
-    deps = ["//tests/smoke/vendor/k8s.io/kubernetes/pkg/api:go_default_library"],
+    deps = ["//tests/smoke/vendor/k8s.io/kubernetes/pkg/apis/core:go_default_library"],
 )

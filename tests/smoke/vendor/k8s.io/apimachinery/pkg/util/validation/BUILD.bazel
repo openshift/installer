@@ -6,4 +6,5 @@ go_library(
     importmap = "installer/tests/smoke/vendor/k8s.io/apimachinery/pkg/util/validation",
     importpath = "k8s.io/apimachinery/pkg/util/validation",
     visibility = ["//visibility:public"],
+    deps = ["//tests/smoke/vendor/k8s.io/apimachinery/pkg/util/validation/field:go_default_library"],
 )
