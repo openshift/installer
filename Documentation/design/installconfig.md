@@ -53,9 +53,6 @@ type InstallConfig struct {
     // perform the installation.
     Platform `json:"platform"`
 
-    // License is an OpenShift license needed to install a cluster.
-    License string `json:"license"`
-
     // PullSecret is the secret to use when pulling images.
     PullSecret string `json:"pullSecret"`
 }

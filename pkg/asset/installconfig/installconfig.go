@@ -30,7 +30,6 @@ func (a *installConfig) Dependencies() []asset.Asset {
 		a.assetStock.SSHKey(),
 		a.assetStock.BaseDomain(),
 		a.assetStock.ClusterName(),
-		a.assetStock.License(),
 		a.assetStock.PullSecret(),
 		a.assetStock.Platform(),
 	}
@@ -44,7 +43,6 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 	sshKey := string(dependencies[a.assetStock.SSHKey()].Contents[0].Data)
 	baseDomain := string(dependencies[a.assetStock.BaseDomain()].Contents[0].Data)
 	clusterName := string(dependencies[a.assetStock.ClusterName()].Contents[0].Data)
-	license := string(dependencies[a.assetStock.License()].Contents[0].Data)
 	pullSecret := string(dependencies[a.assetStock.PullSecret()].Contents[0].Data)
 
 	installConfig := types.InstallConfig{
@@ -58,7 +56,6 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 			SSHKey:   sshKey,
 		},
 		BaseDomain: baseDomain,
-		License:    license,
 		PullSecret: pullSecret,
 	}
 

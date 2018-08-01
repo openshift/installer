@@ -1,7 +1,6 @@
 #!/usr/bin/env groovy
 
 commonCreds = [
-  file(credentialsId: 'tectonic-license', variable: 'LICENSE_PATH'),
   file(credentialsId: 'tectonic-pull', variable: 'PULL_SECRET_PATH'),
   [
     $class: 'StringBinding',

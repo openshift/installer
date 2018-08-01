@@ -192,18 +192,6 @@ You can download the pull secret from your Account overview page at [3].
 EOF
 }
 
-variable "tectonic_license_path" {
-  type    = "string"
-  default = ""
-
-  description = <<EOF
-The path to the tectonic licence file.
-You can download the Tectonic license file from your Account overview page at [1].
-
-[1] https://account.coreos.com/overview
-EOF
-}
-
 variable "tectonic_container_linux_channel" {
   type = "string"
 

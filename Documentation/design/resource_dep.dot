@@ -18,7 +18,6 @@ strict digraph resource {
     node [shape=rectangle,style=filled,color=gainsboro];
     base_domain [label="base domain"];
     cluster_name [label="cluster name"];
-    license [label="license"];
     pull_secret [label="pull secret"];
     platform [label="platform"];
     email_address [label="email address"];
@@ -93,7 +92,6 @@ strict digraph resource {
   platform -> install_config;
   email_address -> install_config;
   pull_secret -> install_config;
-  license -> install_config;
   cluster_name -> install_config;
   base_domain -> install_config;
 

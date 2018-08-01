@@ -40,8 +40,8 @@ Because of the greater disk requirements of OpenShift, you'll need to expand the
 qemu-img resize coreos_production_qemu_image.img +8G
 ```
 
-#### 1.4 Get a Tectonic License
-Go to https://account.coreos.com/ and obtain a Tectonic license. Save the *pull secret* and *license path* somewhere.
+#### 1.4 Get a pull secret
+Go to https://account.coreos.com/ and obtain a Tectonic *pull secret*.
 
 #### 1.5 Make sure you have permisions for `qemu:///system`
 You may want to grant yourself permissions to use libvirt as a non-root user. You could allow all users in the wheel group by doing the following:
@@ -62,7 +62,6 @@ EOF
     1. Set a `baseDomain` (to `tt.testing`)
     1. Set the `sshKey` in the `admin` section to the **contents** of an ssh key (e.g. `ssh-rsa AAAA...`)
     1. Set the `imagePath` to the **absolute** path of the operating system image you downloaded
-    1. Set the `licensePath` to the **absolute** path of your downloaded license file.
     1. Set the `name` (e.g. test1)
     1. Look at the `podCIDR` and `serviceCIDR` fields in the `networking` section. Make sure they don't conflict with anything important.
     1. Set the `pullSecretPath` to the **absolute** path of your downloaded pull secret file.

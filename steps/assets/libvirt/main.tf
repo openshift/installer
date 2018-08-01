@@ -16,7 +16,6 @@ module assets_base {
   tectonic_container_linux_version = "${var.tectonic_container_linux_version}"
   tectonic_image_re                = "${var.tectonic_image_re}"
   tectonic_kubelet_debug_config    = "${var.tectonic_kubelet_debug_config}"
-  tectonic_license_path            = "${var.tectonic_license_path}"
   tectonic_networking              = "${var.tectonic_networking}"
   tectonic_platform                = "${var.tectonic_platform}"
   tectonic_pull_secret_path        = "${var.tectonic_pull_secret_path}"

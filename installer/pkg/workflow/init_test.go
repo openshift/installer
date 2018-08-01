@@ -1,8 +1,6 @@
 package workflow
 
 import (
-	"crypto/rand"
-	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,68 +9,33 @@ import (
 	"path/filepath"
 	"regexp"
 	"testing"
-	"time"
-
-	jose "gopkg.in/square/go-jose.v2"
 
 	"github.com/openshift/installer/installer/pkg/config"
 )
 
-func generatePullSecretAndLicense(name string, expiration time.Time) (*os.File, *os.File, error) {
+func generatePullSecret(name string) (*os.File, error) {
 	pullBytes, err := json.Marshal(&struct{}{})
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to marshal pull secret: %v", err)
+		return nil, fmt.Errorf("failed to marshal pull secret: %v", err)
 	}
 	p, err := ioutil.TempFile("", fmt.Sprintf("%s_pull_secret", name))
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create pull secret file: %v", err)
+		return nil, fmt.Errorf("failed to create pull secret file: %v", err)
 	}
 	if _, err := p.Write(pullBytes); err != nil {
-		return nil, nil, fmt.Errorf("failed to write pull secret file: %v", err)
+		return nil, fmt.Errorf("failed to write pull secret file: %v", err)
 	}
 	p.Close()
 
-	key, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create RSA key pair: %v", err)
-	}
-	s, err := jose.NewSigner(jose.SigningKey{Algorithm: jose.RS256, Key: key}, nil)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create license signer: %v", err)
-	}
-	buf, err := json.Marshal(struct {
-		ExpirationDate time.Time `json:"expirationDate"`
-	}{expiration})
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to marshal license: %v", err)
-	}
-	jws, err := s.Sign(buf)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to sign license: %v", err)
-	}
-	license, err := jws.CompactSerialize()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to serialize license: %v", err)
-	}
-	l, err := ioutil.TempFile("", fmt.Sprintf("%s_license", name))
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create license file: %v", err)
-	}
-	if _, err := l.WriteString(license); err != nil {
-		return nil, nil, fmt.Errorf("failed to write license file: %v", err)
-	}
-	l.Close()
-
-	return p, l, nil
+	return p, nil
 }
 
-func initTestCluster(cfg, pullSecret, license string) (*config.Cluster, error) {
+func initTestCluster(cfg, pullSecret string) (*config.Cluster, error) {
 	testConfig, err := config.ParseConfigFile(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse test config: %v", err)
 	}
 	testConfig.PullSecretPath = pullSecret
-	testConfig.LicensePath = license
 	if len(testConfig.Validate()) != 0 {
 		return nil, errors.New("failed to validate test conifg")
 	}
@@ -91,20 +54,18 @@ func TestGenerateTerraformVariablesStep(t *testing.T) {
 		}
 	}()
 
-	ps, lic, err := generatePullSecretAndLicense("init_workflow", time.Now().AddDate(1, 0, 0))
+	ps, err := generatePullSecret("init_workflow")
 	if err != nil {
-		t.Fatalf("failed to generate pull secret and license: %v", err)
+		t.Fatalf("failed to generate pull secret: %v", err)
 	}
 	defer os.Remove(ps.Name())
-	defer os.Remove(lic.Name())
 
-	cluster, err := initTestCluster("./fixtures/aws.basic.yaml", ps.Name(), lic.Name())
+	cluster, err := initTestCluster("./fixtures/aws.basic.yaml", ps.Name())
 	if err != nil {
 		t.Fatalf("failed to init cluster: %v", err)
 	}
 
-	// Remove auto-generated license and pull secret for comparison.
-	cluster.LicensePath = ""
+	// Remove auto-generated pull secret for comparison.
 	cluster.PullSecretPath = ""
 
 	m := &metadata{

@@ -13,10 +13,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 	"unicode/utf8"
-
-	"github.com/dgrijalva/jwt-go"
 )
 
 func isMatch(re string, v string) bool {
@@ -48,25 +45,6 @@ func JSONFile(path string) error {
 func FileExists(path string) error {
 	_, err := os.Stat(path)
 	return err
-}
-
-// License validates that the file at the given path is a valid license.
-func License(path string) error {
-	licenseBytes, err := ioutil.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("cannot read license file at %q: %v", path, err)
-	}
-	c := struct {
-		ExpirationDate time.Time `json:"expirationDate"`
-		jwt.StandardClaims
-	}{}
-	if _, _, err := (&jwt.Parser{}).ParseUnverified(string(licenseBytes), &c); err != nil {
-		return fmt.Errorf("invalid JWT in license: %v; %q", err, string(licenseBytes))
-	}
-	if time.Now().After(c.ExpirationDate) {
-		return fmt.Errorf("expired license %v", c.ExpirationDate)
-	}
-	return nil
 }
 
 // NonEmpty checks if the given string contains at least one non-whitespace character and returns an error if not.

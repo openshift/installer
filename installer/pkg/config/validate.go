@@ -285,9 +285,6 @@ func (c *Cluster) validateTectonicFiles() []error {
 	if err := validate.JSONFile(c.PullSecretPath); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.License(c.LicensePath); err != nil {
-		errs = append(errs, err)
-	}
 	return errs
 }
 
