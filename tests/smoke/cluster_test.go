@@ -23,8 +23,6 @@ import (
 )
 
 const (
-	// networkingEnv is the environment variable that specifies if calico is running.
-	networkingEnv = "SMOKE_NETWORKING"
 	// nodeCountEnv is the environment variable that specifies the node count.
 	nodeCountEnv = "SMOKE_NODE_COUNT"
 	// manifestPathsEnv is the environment variable that defines the paths to the manifests that are deployed on the cluster.
