@@ -1,5 +1,5 @@
-hash: 48f784128dc58caf0bc54ad04b658d10bc6f0621d13ecb61cdc0790feb5f46fb
-updated: 2018-08-01T13:27:57.560951514-07:00
+hash: de23a8dcb4084f22686d01c996f3d56b3bc604d61a1f411ab4d58d15b2ce6292
+updated: 2018-08-01T15:07:50.434611778-07:00
 imports: []
 testImports:
 - name: github.com/Azure/go-ansiterm
@@ -118,7 +118,7 @@ testImports:
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/json-iterator/go
-  version: 2ddf6d758266fcb080a4f9e054b9f292c85e6798
+  version: f2b4162afba35581b6d4a50d3b8f34e33c144682
 - name: github.com/mailru/easyjson
   version: 2f5df55504ebc322e4d52d34df6a1f5b503bf26d
   subpackages:

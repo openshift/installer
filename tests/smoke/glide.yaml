@@ -19,3 +19,5 @@ testImport:
   subpackages:
   - pkg/kubectl/cmd/util
   - pkg/kubectl/genericclioptions/resource
+- package: github.com/json-iterator/go
+  version: f2b4162afba35581b6d4a50d3b8f34e33c144682
