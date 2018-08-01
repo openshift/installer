@@ -12,28 +12,29 @@ branches:
 jobs:
   include:
     - stage: Lint & Test
-      # Terraform lint
+      name: Terraform lint
       script: docker run -v $(pwd):/data -t quay.io/coreos/tflint
-      # YAML lint
     - script: >
         docker run -t -v $(pwd):/workdir 
         quay.io/coreos/yamllint --config-data 
         '{extends: default, rules: {line-length: {level: warning, max: 120}}}' 
         ./examples/ ./installer/
-      # shellcheck
+      name: YAML lint
     - script: >
         docker run -v $(pwd):/workdir:ro
         --entrypoint sh quay.io/coreos/shellcheck-alpine:v0.5.0
         -c 'for file in $(find /workdir/ -type f -name "*.sh"); do
         if ! shellcheck --format=gcc $file; then export FAILED=true; fi; done;
         if [ "$FAILED" != "" ]; then exit 1; fi'
-      # Go vet
+      name: shellcheck
     - script: "docker run -v $PWD:/go/src/github.com/openshift/installer -w /go/src/github.com/openshift/installer quay.io/coreos/golang-testing go vet ./installer/..."
-      # Go lint
+      name: Go vet
     - script: "docker run -v $PWD:$PWD -w $PWD quay.io/coreos/golang-testing golint -set_exit_status installer/..."
-      # Terraform tests
+      name: Go lint
     - script: "chmod 0777 $PWD && docker run -v $PWD:$PWD:rw -w $PWD $BAZEL_IMG bazel test terraform_fmt --test_output=all"
-      # Installer unit tests
+      name: Terraform tests
     - script: "chmod 0777 $PWD && docker run -v $PWD:$PWD:rw -w $PWD $BAZEL_IMG bazel test installer:cli_units --test_output=all"
+      name: Installer unit tests
     - stage: Build
       script: "chmod 0777 $PWD && docker run -v $PWD:$PWD:rw -w $PWD $BAZEL_IMG bazel build tarball"
+      name: Build tarball
