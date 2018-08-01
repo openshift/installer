@@ -4,7 +4,7 @@ usage() {
   cat <<EOF
 
 $(basename "$0") tags AWS resources with 'expirationDate: some-date-string',
-defaulting to the following days' date, and excludes all resources tagged with
+defaulting to tomorrow's date, and excludes all resources tagged with
 tag keys/values specified in an 'exclude' file. Requires that 'docker' is
 installed.
 
@@ -33,9 +33,9 @@ Options:
   --end-hour        Integer hour to end looking at CloudTrail logs. Defaults to 1.
 
   --date-override   (optional) Date of the format YYYY-MM-DD that overrides the
-                    default tag value of today's date. This script tags resources
+                    default tag value of tomorrow's date. This script tags resources
                     with 'expirationDate: some-date-string', where some-date-string
-                    is replaced with either the following days' date or date-override.
+                    is replaced with either tomorrow's date or date-override.
 
   --dry-run         (optional) If set, grafiti will only do a dry run, i.e. not tag
                     any resources.
@@ -48,7 +48,7 @@ version=
 region=
 config_file=
 exclude_file=
-date_override=
+date_string=
 start_hour=8
 end_hour=1
 dry_run=
@@ -87,7 +87,7 @@ while [ $# -gt 0 ]; do
       shift
     ;;
     --date-override)
-      date_override="${2:-}"
+      date_string="\\\"${2:-}\\\""
       shift
     ;;
     --dry-run)
@@ -134,14 +134,13 @@ fi
 set -e
 
 # Tag all resources present in CloudTrail over the specified time period with the
-# following day's date as default, or with the DATE_VALUE_OVERRIDE value.
+# today's date as default, or with the --date-override value.
 # Format YYYY-MM-DD.
 tmp_dir="$(readlink -m "$(mktemp -d tag-aws-XXXXXXXXXX)")"
 trap 'rm -rf "$tmp_dir"; exit' EXIT
 
-date_string='now|strftime(\"%Y-%m-%d\")'
-if [ -n "$date_override" ]; then
-	date_string='\"'"${date_override}"'\"'
+if [ -z "$date_string" ]; then
+	date_string='(now + 24*60*60|strftime(\"%Y-%m-%d\"))'
 fi
 
 # Configure grafiti to tag all resources created between START_HOUR and END_HOUR's
