@@ -1,5 +1,13 @@
 #!/bin/sh
 
+printf 'Warning: This will destroy effectively all libvirt resources\nContinue [yN]? '
+read CONTINUE
+if test "${CONTINUE}" != y -a "${CONTINUE}" != Y
+then
+	  echo 'Aborted' >&2
+	  exit 1
+fi
+
 CONNECT="${CONNECT:=qemu:///system}"
 POOL="${POOL:=default}"
 

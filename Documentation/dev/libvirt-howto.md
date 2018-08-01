@@ -108,7 +108,7 @@ When you're done, destroy:
 ```sh
 tectonic destroy --dir=$CLUSTER_NAME
 ```
-Be sure to destroy, or else you will need to manually use virsh to clean up the leaked resources (the [`virsh-cleanup`](../../scripts/maintenance/virsh-cleanup) script may help with this).
+Be sure to destroy, or else you will need to manually use virsh to clean up the leaked resources. The [`virsh-cleanup`](../../scripts/maintenance/virsh-cleanup) script may help with this, but note it will currently destroy *all* libvirt resources.
 
 # Exploring your cluster
 Some things you can do:
