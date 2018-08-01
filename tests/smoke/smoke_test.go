@@ -43,7 +43,7 @@ func Test(t *testing.T) {
 }
 
 // newClient is a convenient helper for generating a client-go client from a *testing.T.
-func newClient(t *testing.T) (*kubernetes.Clientset, clientcmd.ClientConfig) {
+func newClient(t *testing.T) (kubernetes.Interface) {
 	kcfgPath := os.Getenv(kubeconfigEnv)
 	if len(kcfgPath) == 0 {
 		t.Fatalf("no kubeconfig path in environment variable %s", kubeconfigEnv)
@@ -60,7 +60,7 @@ func newClient(t *testing.T) (*kubernetes.Clientset, clientcmd.ClientConfig) {
 	if err != nil {
 		t.Fatalf("could not create clientset: %v", err)
 	}
-	return cs, cfg
+	return cs
 }
 
 // stopped returns true if the done chan is closed and returns false otherwise.

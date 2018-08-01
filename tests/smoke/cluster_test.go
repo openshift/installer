@@ -1,8 +1,10 @@
 package smoke
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"regexp"
 	"strconv"
@@ -15,11 +17,7 @@ import (
 	"k8s.io/api/core/v1"
 	meta_v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/kubernetes"
-	"k8s.io/client-go/tools/clientcmd"
-	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
-	"k8s.io/kubernetes/pkg/kubectl/genericclioptions/resource"
 )
 
 const (
@@ -56,6 +54,8 @@ var (
 	decodeErrorRegexp = regexp.MustCompile(`unable to (?P<Type>decode|recognize) "(?P<Manifest>.*)": (?P<Message>.*)`)
 )
 
+type visitFunc func(path string, object *unstructured.Unstructured) (err error)
+
 func testCluster(t *testing.T) {
 	// wait for all nodes to become available
 	t.Run("AllNodesRunning", testAllNodesRunning)
@@ -89,8 +89,8 @@ func allPodsRunning(t *testing.T) error {
 }
 
 func checkPodsRunning(t *testing.T) error {
-	c, _ := newClient(t)
-	pods, err := c.Core().Pods("").List(meta_v1.ListOptions{})
+	c := newClient(t)
+	pods, err := c.CoreV1().Pods("").List(meta_v1.ListOptions{})
 	if err != nil {
 		return fmt.Errorf("could not list pods: %v", err)
 	}
@@ -112,8 +112,8 @@ func checkPodsRunning(t *testing.T) error {
 
 func allNodesRunning(expected int) func(t *testing.T) error {
 	return func(t *testing.T) error {
-		c, _ := newClient(t)
-		nodes, err := c.Core().Nodes().List(meta_v1.ListOptions{})
+		c := newClient(t)
+		nodes, err := c.CoreV1().Nodes().List(meta_v1.ListOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to list nodes: %v", err)
 		}
@@ -151,7 +151,7 @@ func testAllNodesRunning(t *testing.T) {
 }
 
 func testKillAPIServer(t *testing.T) {
-	c, _ := newClient(t)
+	c := newClient(t)
 	pods, err := getAPIServers(c)
 	if err != nil {
 		t.Fatalf("Failed to get API server pod: %v", err)
@@ -161,7 +161,7 @@ func testKillAPIServer(t *testing.T) {
 
 	// Nuke all API servers.
 	for _, pod := range pods.Items {
-		if err := c.Core().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
+		if err := c.CoreV1().Pods(pod.Namespace).Delete(pod.Name, nil); err != nil {
 			t.Fatalf("Failed to delete API server pod %s: %v", pod.Name, err)
 		}
 		oldPod[pod.Name] = true
@@ -214,20 +214,16 @@ func allResourcesCreated(manifestsPaths, ignoredManifests []string) func(t *test
 	return func(t *testing.T) error {
 		t.Logf("looking for resources defined by the provided manifests...")
 
-		_, cc := newClient(t)
+		c := newClient(t)
 		failed := false
 
 		// Walk recursively through the provided folders to find manifests, decode them and
 		// ensure they exist on the cluster.
 		resourcesToManifests := make(map[string][]string)
 		resourcesCreated := make(map[string]bool)
-		errs := walkPathForObjects(cc, manifestsPaths, func(info *resource.Info, walkErr error) error {
-			if walkErr != nil {
-				return walkErr
-			}
-
-			resourceIdentifier := resourceIdentifier(info)
-			manifest := stripPathPrefixes(info.Source, manifestsPaths)
+		errs := walkPathForObjects(c, manifestsPaths, func(path string, object *unstructured.Unstructured) error {
+			resourceIdentifier := resourceIdentifier(object)
+			manifest := stripPathPrefixes(path, manifestsPaths)
 
 			if containsAnyOfStrings(ignoredManifests, manifest) {
 				// The manifest is ignored.
@@ -235,7 +231,8 @@ func allResourcesCreated(manifestsPaths, ignoredManifests []string) func(t *test
 			}
 
 			resourcesToManifests[resourceIdentifier] = append(resourcesToManifests[resourceIdentifier], manifest)
-			resourcesCreated[resourceIdentifier] = resourcesCreated[resourceIdentifier] || (info.Get() == nil)
+			resourcesCreated[resourceIdentifier] = resourcesCreated[resourceIdentifier] || (
+				c.CoreV1().RESTClient().Get().Resource(resourceIdentifier).Do().Error() == nil)
 			if resourcesCreated[resourceIdentifier] {
 				t.Logf("OK : %s - %v", resourceIdentifier, manifest)
 			}
@@ -293,8 +290,8 @@ func testAllResourcesCreated(t *testing.T) {
 	}
 }
 
-func getAPIServers(client *kubernetes.Clientset) (*v1.PodList, error) {
-	pods, err := client.Core().Pods(kubeSystemNamespace).List(meta_v1.ListOptions{LabelSelector: apiServerSelector})
+func getAPIServers(client kubernetes.Interface) (*v1.PodList, error) {
+	pods, err := client.CoreV1().Pods(kubeSystemNamespace).List(meta_v1.ListOptions{LabelSelector: apiServerSelector})
 	if err != nil {
 		return nil, err
 	}
@@ -313,42 +310,43 @@ func nodeReady(node v1.Node) (ok bool) {
 	return false
 }
 
-// walkPathForObjects is a helper that calls the given resource.VisitorFunc function for each decoded Kubernetes
+// walkPathForObjects is a helper that calls the given function for each decoded Kubernetes
 // manifest present in the given paths. Any decoding or parsing errors are aggregated.
-func walkPathForObjects(cfg clientcmd.ClientConfig, paths []string, fn resource.VisitorFunc) (errs []error) {
-	f := cmdutil.NewFactory(cfg)
-
-	schema, err := f.Validator(false, "")
-	if err != nil {
-		return []error{err}
-	}
-
-	mapper, typer, err := f.UnstructuredObject()
-	if err != nil {
-		return []error{err}
-	}
-
-	result := resource.NewBuilder(mapper, f.CategoryExpander(), typer, resource.ClientMapperFunc(f.UnstructuredClientForMapping), unstructured.UnstructuredJSONScheme).
-		ContinueOnError().
-		Schema(schema).
-		FilenameParam(false, &resource.FilenameOptions{Recursive: true, Filenames: paths}).
-		Flatten().
-		Do()
-
-	err = result.Err()
-	if err != nil && !strings.HasPrefix(err.Error(), "you must provide one or more resources") {
-		return []error{err}
-	}
-
-	if err := result.Visit(fn); err != nil {
-		for _, err := range err.(utilerrors.Aggregate).Errors() {
-			if manifest, message, ok := parseMapperDecodingError(err.Error()); ok {
-				errs = append(errs, fmt.Errorf("manifest %q not recognized: %s (this is likely due to a missing TPR kind / Operator)", stripPathPrefixes(manifest, paths), message))
-			} else {
-				errs = append(errs, fmt.Errorf("failed to parse manifest: %s (syntax?)", err))
+func walkPathForObjects(client kubernetes.Interface, paths []string, fn visitFunc) (errs []error) {
+	for _, root := range paths {
+		err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+			if err != nil {
+				return err
 			}
+
+			if info.IsDir() {
+				return nil
+			}
+
+			data, err := ioutil.ReadFile(path)
+			if err != nil {
+				return err
+			}
+
+			object := unstructured.Unstructured{}
+			err = json.Unmarshal(data, &object)
+			if err != nil {
+				errs = append(errs, err)
+				return nil
+			}
+
+			err = fn(path, &object)
+			if err != nil {
+				errs = append(errs, err)
+			}
+
+			return nil
+		})
+		if err != nil {
+			return []error{err}
 		}
 	}
+
 	return errs
 }
 
@@ -397,11 +395,12 @@ func containsAnyOfStrings(needles []string, haystack string) bool {
 // resourcesIdentifier returns a string that can be used to identify and map
 // a Kubernetes resource easily. Some object kinds are treated equivalently
 // (see equivalentKindRemapping) in order to ease executing presence tests.
-func resourceIdentifier(info *resource.Info) string {
-	kindObject := info.VersionedObject.GetObjectKind().GroupVersionKind()
+func resourceIdentifier(object *unstructured.Unstructured) string {
+	kindObject := object.GetObjectKind().GroupVersionKind()
 	kind := fmt.Sprintf("%s/%s:%s", kindObject.Group, kindObject.Version, kindObject.Kind)
 	if equivalentKind, ok := equivalentKindRemapping[kind]; ok {
 		kind = equivalentKind
 	}
-	return fmt.Sprintf("[Kind: %s | Namespace: %s | Name: %s]", kind, info.Namespace, info.Name)
+	fmt.Printf("[Kind: %s | Namespace: %s | Name: %s] vs. %s", kind, object.GetNamespace(), object.GetName(), object.GetSelfLink())
+	return fmt.Sprintf("[Kind: %s | Namespace: %s | Name: %s]", kind, object.GetNamespace(), object.GetName())
 }
