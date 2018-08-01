@@ -44,7 +44,7 @@ gazelle(
 
 alias(
     name = "smoke_tests",
-    actual = "//tests/smoke:smoke",
+    actual = "//tests/smoke:go_default_test",
 )
 
 alias(

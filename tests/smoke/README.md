@@ -2,16 +2,6 @@
 
 This directory contains all smoke tests for Tectonic.
 The smoke tests are a set of Golang test files that perform minimal validation of a running Tectonic cluster.
-This directory is further partitioned into platform-specific directories and should conform to the following directory hierarchy:
-
-```
-smoke/
-├── aws        # Smoke tests for AWS
-│   └── vars   # Terraform tfvars files for AWS smoke tests
-├── *_test.go  # Smoke tests for all platforms
-├── vendor     # Smoke test dependencies
-└── ...
-```
 
 ## Getting Started
 
@@ -34,18 +24,18 @@ Compile the smoke test binary from the root directory of the project:
 bazel build tests/smoke
 ```
 
-The tests can then be run by invoking the `smoke` binary in the `bazel-bin/tests/smoke/linux_amd64_stripped` directory.
+The tests can then be run by invoking the `go_default_test` binary in the `bazel-bin/tests/smoke/linux_amd64_stripped` directory.
 This binary accepts the `--cluster` flag to specify which tests suites should be run, e.g.:
 
 ```sh
-bazel-bin/tests/smoke/linux_amd64_stripped/smoke --cluster
+bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test --cluster
 ```
 
-*Note*: the `smoke` binary accepts several flags available to the `go test` command; to list them, invoke the `smoke` binary with the `--help` flag.
+*Note*: the `go_default_test` binary accepts several flags available to the `go test` command; to list them, invoke the `go_default_test` binary with the `--help` flag.
 For example, to run the cluster suite verbosely, use the `--test.v` flag:
 
 ```sh
-bazel-bin/tests/smoke/linux_amd64_stripped/smoke --cluster --test.v
+bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test --cluster --test.v
 ```
 
 ## Cluster Suite
@@ -69,5 +59,5 @@ export SMOKE_MANIFEST_EXPERIMENTAL=true
 
 To run the cluster test suite, invoke the smoke test binary with the `--cluster` flag:
 ```sh
-bazel-bin/tests/smoke/linux_amd64_stripped/smoke --cluster
+bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test --cluster
 ```
