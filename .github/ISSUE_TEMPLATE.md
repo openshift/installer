@@ -1,13 +1,4 @@
 <!--
-NOTE: New feature requests are no longer accepted in this repo. Only issues
-reporting critical bug-fixes and security patches will be accepted.
-
-See our blog for details:
-https://coreos.com/blog/coreos-tech-to-combine-with-red-hat-openshift
--->
-
-
-<!--
 Thanks for opening a bug report!
 Before hitting the button, please fill in as much of the template below as you can.
 If you leave out information, we can't help you as well.
