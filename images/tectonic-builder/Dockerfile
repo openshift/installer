@@ -12,7 +12,6 @@ RUN go get -u github.com/golang/lint/golint
 RUN go get github.com/jstemmer/go-junit-report
 
 ### Tools used by 'make structure-check'
-RUN rm -rf /go/src/github.com/openshift/installer/
 RUN go get github.com/bronze1man/yaml2json
 
 ### License parser
