@@ -21,6 +21,7 @@ go_library(
         "service.go",
         "serviceaccount.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/client/informers/informers_generated/externalversions/core/v1",
     importpath = "k8s.io/kubernetes/pkg/client/informers/informers_generated/externalversions/core/v1",
     visibility = ["//visibility:public"],
     deps = [

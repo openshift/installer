@@ -8,6 +8,7 @@ go_library(
         "option.go",
         "serialize.go",
     ],
+    importmap = "installer/vendor/github.com/coreos/go-systemd/unit",
     importpath = "github.com/coreos/go-systemd/unit",
     visibility = ["//visibility:public"],
 )

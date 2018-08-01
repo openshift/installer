@@ -9,6 +9,7 @@ go_library(
         "types.go",
         "well_known_labels.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm",
     importpath = "k8s.io/kubernetes/cmd/kubeadm/app/apis/kubeadm",
     visibility = ["//visibility:public"],
     deps = [

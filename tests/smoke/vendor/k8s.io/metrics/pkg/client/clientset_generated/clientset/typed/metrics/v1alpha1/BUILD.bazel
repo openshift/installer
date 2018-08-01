@@ -9,6 +9,7 @@ go_library(
         "nodemetrics.go",
         "podmetrics.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/metrics/pkg/client/clientset_generated/clientset/typed/metrics/v1alpha1",
     importpath = "k8s.io/metrics/pkg/client/clientset_generated/clientset/typed/metrics/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [

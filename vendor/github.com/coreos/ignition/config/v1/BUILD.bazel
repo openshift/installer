@@ -6,6 +6,7 @@ go_library(
         "cloudinit.go",
         "config.go",
     ],
+    importmap = "installer/vendor/github.com/coreos/ignition/config/v1",
     importpath = "github.com/coreos/ignition/config/v1",
     visibility = ["//visibility:public"],
     deps = [

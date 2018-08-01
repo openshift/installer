@@ -7,6 +7,7 @@ go_library(
         "exec.go",
         "fake_exec.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/util/exec",
     importpath = "k8s.io/kubernetes/pkg/util/exec",
     visibility = ["//visibility:public"],
 )

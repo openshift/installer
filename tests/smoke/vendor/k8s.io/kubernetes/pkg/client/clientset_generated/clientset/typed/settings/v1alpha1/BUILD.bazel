@@ -8,6 +8,7 @@ go_library(
         "podpreset.go",
         "settings_client.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/client/clientset_generated/clientset/typed/settings/v1alpha1",
     importpath = "k8s.io/kubernetes/pkg/client/clientset_generated/clientset/typed/settings/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [

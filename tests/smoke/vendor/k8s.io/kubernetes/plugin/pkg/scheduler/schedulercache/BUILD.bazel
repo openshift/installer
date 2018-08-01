@@ -9,6 +9,7 @@ go_library(
         "reconcile_affinity.go",
         "util.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/plugin/pkg/scheduler/schedulercache",
     importpath = "k8s.io/kubernetes/plugin/pkg/scheduler/schedulercache",
     visibility = ["//visibility:public"],
     deps = [

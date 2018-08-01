@@ -8,6 +8,7 @@ go_library(
         "config.go",
         "translate.go",
     ],
+    importmap = "installer/vendor/github.com/coreos/ignition/config/v2_1",
     importpath = "github.com/coreos/ignition/config/v2_1",
     visibility = ["//visibility:public"],
     deps = [

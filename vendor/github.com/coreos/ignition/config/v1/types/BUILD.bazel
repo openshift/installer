@@ -18,6 +18,7 @@ go_library(
         "unit.go",
         "user.go",
     ],
+    importmap = "installer/vendor/github.com/coreos/ignition/config/v1/types",
     importpath = "github.com/coreos/ignition/config/v1/types",
     visibility = ["//visibility:public"],
     deps = [

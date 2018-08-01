@@ -7,6 +7,7 @@ go_library(
         "labels.go",
         "selector.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/apimachinery/pkg/labels",
     importpath = "k8s.io/apimachinery/pkg/labels",
     visibility = ["//visibility:public"],
     deps = [

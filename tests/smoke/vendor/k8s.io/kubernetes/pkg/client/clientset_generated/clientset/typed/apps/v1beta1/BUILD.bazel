@@ -11,6 +11,7 @@ go_library(
         "scale.go",
         "statefulset.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/client/clientset_generated/clientset/typed/apps/v1beta1",
     importpath = "k8s.io/kubernetes/pkg/client/clientset_generated/clientset/typed/apps/v1beta1",
     visibility = ["//visibility:public"],
     deps = [

@@ -10,6 +10,7 @@ go_library(
         "poddisruptionbudget.go",
         "policy_client.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/client/clientset_generated/clientset/typed/policy/v1beta1",
     importpath = "k8s.io/kubernetes/pkg/client/clientset_generated/clientset/typed/policy/v1beta1",
     visibility = ["//visibility:public"],
     deps = [

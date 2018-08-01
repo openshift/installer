@@ -6,6 +6,7 @@ go_library(
         "doc.go",
         "regexp.go",
     ],
+    importmap = "installer/tests/smoke/vendor/vbom.ml/util",
     importpath = "vbom.ml/util",
     visibility = ["//visibility:public"],
 )

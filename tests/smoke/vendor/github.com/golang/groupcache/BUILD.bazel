@@ -9,6 +9,7 @@ go_library(
         "peers.go",
         "sinks.go",
     ],
+    importmap = "installer/tests/smoke/vendor/github.com/golang/groupcache",
     importpath = "github.com/golang/groupcache",
     visibility = ["//visibility:public"],
     deps = [
