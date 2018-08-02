@@ -8,16 +8,10 @@ testImport:
   subpackages:
   - pkg/apis/meta/v1
   - pkg/apis/meta/v1/unstructured
-  - pkg/util/errors
 - package: k8s.io/client-go
   version: ^8.0.0
   subpackages:
   - kubernetes
   - tools/clientcmd
-- package: k8s.io/kubernetes
-  version: ~1.11.0
-  subpackages:
-  - pkg/kubectl/cmd/util
-  - pkg/kubectl/genericclioptions/resource
 - package: github.com/json-iterator/go
   version: f2b4162afba35581b6d4a50d3b8f34e33c144682
