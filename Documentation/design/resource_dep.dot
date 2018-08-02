@@ -1,0 +1,221 @@
+strict digraph resource {
+  rankdir=LR;
+  size="24,18"; ratio=fill; node[fontsize=20];
+  compound=true;
+  node [shape=rectangle];
+
+  // Targets.
+  {
+    node [shape=box,fontsize=36,style=filled,fillcolor=white,color=yellowgreen,penwidth=3];
+    install_cfg [label="install config"];
+    manifests [label="manifests"];
+    ignition_configs [label="ignition configs"];
+    cluster [label="cluster"];
+  }
+
+  // User inputs.
+  {
+    node [shape=rectangle,style=filled,color=gainsboro];
+    base_domain [label="base domain"];
+    cluster_name [label="cluster name"];
+    license [label="license"];
+    pull_secret [label="pull secret"];
+    platform [label="platform"];
+    email_address [label="email address"];
+    password [label="password"];
+  }
+
+  // Install config.
+  {
+    node [style=filled,color=lightcoral];
+    install_config [label="install-config.yaml"];
+  }
+
+  // TLS assets
+  {
+    node [style=filled,color=violet];
+    admin_bundle [label="admin crt/key"];
+    aggregator_ca_bundle [label="aggregator ca crt/key"];
+    apiserver_bundle [label="apiserver crt/key"];
+    apiserver_proxy_bundle [label="apiserver proxy crt/key"];
+    clusterapi_apiserver_bundle [label="clusterapi apiserver crt/key"];
+    etcd_ca_bundle [label="etcd ca crt/key"];
+    etcd_client_bundle [label="etcd client crt/key"];
+    ingress_ca_bundle [label="ingress ca crt/key"];
+    ingress_bundle [label="ingress crt/key"];
+    kube_ca_bundle [label="kube ca crt/key"];
+    kubelet_bundle [label="kubelet crt/key"];
+    openshift_apiserver_bundle [label="openshift apiserver crt/key"];
+    root_ca_bundle [label="root ca crt/key"];
+    service_account_bundle [label="service account pub/key"];
+    service_serving_ca_bundle [label="service serving ca crt/key"];
+    mcc_bundle [label="machine config controller crt/key"];
+  }
+
+  // Operator assets
+  {
+    node [style=filled,color=lightpink];
+    operator_configs [label="operator configs"];
+    operator_manifests [label="operator manifests"];
+  }
+
+  // Cluster assets
+  {
+    node [style=filled,color=lightpink];
+    bootstrap_control_plane [label="bootstrap control plane manifests"];
+    misc_manifests [label="misc manifests (rbac, namespace, CRD, pod security policy, etc)"];
+    secret_manifests [label="manifests for secrets"];
+  }
+
+  // Ignition files
+  {
+    node [style=filled,color=sandybrown];
+    bootstrap_ignition [label="bootstrap.ign"];
+    master_ignition [label="master.ign"];
+    worker_ignition [label="worker.ign"];
+  }
+
+  // Kubeconfigs
+  {
+    node [style=filled,color=lightblue];
+    kubelet_kubeconfig [label="kubeconfig-kubelet"];
+    kubeconfig [label="kubeconfig"];
+  }
+
+
+  // Output after cluster launch
+  {
+    node [style=filled,color=gold];
+    terraform_state [label="*.tfstate"];
+  }
+
+  // Dependencies
+  password -> install_config;
+  platform -> install_config;
+  email_address -> install_config;
+  pull_secret -> install_config;
+  license -> install_config;
+  cluster_name -> install_config;
+  base_domain -> install_config;
+
+  install_config -> operator_manifests;
+  install_config -> operator_configs;
+
+  root_ca_bundle -> kube_ca_bundle;
+  root_ca_bundle -> etcd_ca_bundle;
+  root_ca_bundle -> aggregator_ca_bundle;
+  root_ca_bundle -> service_serving_ca_bundle;
+  root_ca_bundle -> ingress_ca_bundle;
+  root_ca_bundle -> mcc_bundle;
+  install_config -> mcc_bundle;
+
+  root_ca_bundle -> kubeconfig;
+  root_ca_bundle -> kubelet_kubeconfig;
+  root_ca_bundle -> secret_manifests;
+  root_ca_bundle -> bootstrap_ignition;
+  root_ca_bundle -> master_ignition;
+  root_ca_bundle -> worker_ignition;
+
+  etcd_ca_bundle -> etcd_client_bundle;
+  etcd_ca_bundle -> secret_manifests;
+  etcd_ca_bundle -> master_ignition;
+
+  kube_ca_bundle -> admin_bundle;
+  kube_ca_bundle -> apiserver_bundle;
+  install_config -> apiserver_bundle;
+  kube_ca_bundle -> kubelet_bundle;
+  kube_ca_bundle -> secret_manifests;
+
+  ingress_ca_bundle -> ingress_bundle;
+  install_config -> ingress_bundle;
+  ingress_ca_bundle -> secret_manifests;
+  
+  aggregator_ca_bundle -> openshift_apiserver_bundle;
+  install_config -> openshift_apiserver_bundle;
+  aggregator_ca_bundle -> apiserver_proxy_bundle;
+  aggregator_ca_bundle -> clusterapi_apiserver_bundle;
+  aggregator_ca_bundle -> secret_manifests;
+
+  admin_bundle -> kubeconfig;
+
+  apiserver_bundle -> secret_manifests;
+
+  apiserver_proxy_bundle -> secret_manifests;
+
+  clusterapi_apiserver_bundle -> secret_manifests;
+
+  etcd_client_bundle -> secret_manifests;
+
+  kubelet_bundle -> bootstrap_ignition;
+  kubelet_bundle -> master_ignition;
+  kubelet_bundle -> worker_ignition;
+
+  ingress_bundle -> secret_manifests;
+
+  openshift_apiserver_bundle -> secret_manifests;
+
+  service_account_bundle -> secret_manifests;
+
+  service_serving_ca_bundle -> secret_manifests;
+
+  mcc_bundle -> secret_manifests;
+
+  operator_configs -> bootstrap_control_plane;
+  operator_manifests -> bootstrap_control_plane;
+  secret_manifests -> bootstrap_control_plane;
+  operator_configs -> misc_manifests;
+  operator_manifests -> misc_manifests;
+  
+  operator_configs -> bootstrap_ignition;
+  operator_manifests -> bootstrap_ignition;
+
+  bootstrap_control_plane -> bootstrap_ignition;
+  secret_manifests -> bootstrap_ignition;
+  misc_manifests -> bootstrap_ignition;
+
+  kubelet_kubeconfig -> bootstrap_ignition;
+  kubelet_kubeconfig -> master_ignition;
+  kubelet_kubeconfig -> worker_ignition;
+
+  bootstrap_ignition -> terraform_state;
+  master_ignition -> terraform_state;
+  worker_ignition -> terraform_state;
+
+  // Targets
+  install_config -> install_cfg;
+  install_config -> terraform_state;
+
+  admin_bundle -> manifests;
+  aggregator_ca_bundle -> manifests;
+  apiserver_bundle -> manifests;
+  apiserver_proxy_bundle -> manifests;
+  clusterapi_apiserver_bundle -> manifests;
+  etcd_ca_bundle -> manifests;
+  etcd_client_bundle -> manifests;
+  ingress_ca_bundle -> manifests;
+  ingress_bundle -> manifests;
+  kube_ca_bundle -> manifests;
+  kubelet_bundle -> manifests;
+  openshift_apiserver_bundle -> manifests;
+  root_ca_bundle -> manifests;
+  service_account_bundle -> manifests;
+  service_serving_ca_bundle -> manifests;
+  mcc_bundle -> manifests;
+  
+  operator_configs -> manifests;
+  operator_manifests -> manifests;
+
+  bootstrap_control_plane -> manifests;
+  secret_manifests -> manifests;
+  misc_manifests -> manifests;
+
+  kubelet_kubeconfig -> manifests;
+  kubeconfig -> manifests;
+  kubeconfig -> cluster;
+
+  bootstrap_ignition -> ignition_configs;
+  master_ignition -> ignition_configs;
+  worker_ignition -> ignition_configs;
+
+  terraform_state -> cluster;  
+}
