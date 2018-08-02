@@ -35,17 +35,17 @@ bazel build tests/smoke
 ```
 
 The tests can then be run by invoking the `smoke` binary in the `bazel-bin/tests/smoke/linux_amd64_stripped` directory.
-This binary accepts `--cluster` and `--qa` flags to specify which tests suites should be run, e.g.:
+This binary accepts the `--cluster` flag to specify which tests suites should be run, e.g.:
 
 ```sh
-bazel-bin/tests/smoke/linux_amd64_stripped/smoke --cluster --qa
+bazel-bin/tests/smoke/linux_amd64_stripped/smoke --cluster
 ```
 
 *Note*: the `smoke` binary accepts several flags available to the `go test` command; to list them, invoke the `smoke` binary with the `--help` flag.
-For example, to run the cluster and QA test suites verbosely, use the `--test.v` flag:
+For example, to run the cluster suite verbosely, use the `--test.v` flag:
 
 ```sh
-bazel-bin/tests/smoke/linux_amd64_stripped/smoke --cluster --qa --test.v
+bazel-bin/tests/smoke/linux_amd64_stripped/smoke --cluster --test.v
 ```
 
 ## Cluster Suite
@@ -70,24 +70,4 @@ export SMOKE_MANIFEST_EXPERIMENTAL=true
 To run the cluster test suite, invoke the smoke test binary with the `--cluster` flag:
 ```sh
 bazel-bin/tests/smoke/linux_amd64_stripped/smoke --cluster
-```
-
-## QA Suite
-
-The QA test suite is designed to automate several QA checklist items that verify that Tectonic cluster integrations work as expected.
-The QA test suite requires two additional parameters:
-
-* the spec of the BigQuery database to test for cluster metrics; and
-* the path to a file containing Google application credentials with job permissions on BigQuery database.
-
-Export the following environment variables to parameterize the QA tests:
-
-```sh
-export SMOKE_BIGQUERY_SPEC=bigquery://<project>.<dataset>.<table>
-export GOOGLE_APPLICATION_CREDENTIALS=/path/to/google/application/credentials
-```
-
-To run the QA suite, invoke the smoke test binary with the `--qa` flag:
-```sh
-bazel-bin/tests/smoke/linux_amd64_stripped/smoke --qa
 ```
