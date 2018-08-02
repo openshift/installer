@@ -129,6 +129,15 @@ export KUBECONFIG=$(pwd)/$CLUSTER_NAME/generated/auth/kubeconfig
 kubectl get -n tectonic-system pods
 ```
 
+Alternatively, if you didn't set up DNS on the host (or you want to
+do things from the node for other reasons), on the master you can
+```sh
+host# virsh domifaddr master0  # to get the master IP
+host# ssh core@<ip of master>
+master0# export KUBECONFIG=/var/opt/tectonic/auth/kubeconfig
+master0# kubectl get -n tectonic-system pods
+```
+
 ## Connect to the cluster console
 This will take ~30 minutes to be available. Simply go to `https://${CLUSTER_NAME}-api.${BASE_DOMAIN}:6443/console/` (e.g. `test1.tt.testing`) and log in using the credentials above.
 
