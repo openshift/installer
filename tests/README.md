@@ -25,7 +25,7 @@ In addition to our basic set of tests we have smoke tests which are running on A
 ### FAQ
 - *I am not able to add labels, what should I do?*
 
-  Please ask one of the repository [maintainers](../MAINTAINERS) to add the
+  Please ask one of [the repository maintainers](../OWNERS) to add the
   labels.
 
 - *How do I retrigger the tests?*
