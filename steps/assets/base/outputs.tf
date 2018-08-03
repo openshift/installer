@@ -21,6 +21,7 @@ output "ignition_bootstrap_files" {
     local.etcd_certs_ignition_file_id_list,
     local.kube_certs_ignition_file_id_list,
     local.tnc_certs_ignition_file_id_list,
+    local.service_account_keys_ignition_file_id_list,
    )))}"]
 }
 

@@ -39,3 +39,18 @@ func CSRToPem(cert *x509.CertificateRequest) string {
 	)
 	return string(certInPem)
 }
+
+// PublicKeyToPem converts an rsa.PublicKey object to pem string
+func PublicKeyToPem(key *rsa.PublicKey) (string, error) {
+	keyInBytes, err := x509.MarshalPKIXPublicKey(key)
+	if err != nil {
+		return "", err
+	}
+	keyinPem := pem.EncodeToMemory(
+		&pem.Block{
+			Type:  "RSA PUBLIC KEY",
+			Bytes: keyInBytes,
+		},
+	)
+	return string(keyinPem), nil
+}
