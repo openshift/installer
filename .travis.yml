@@ -14,11 +14,7 @@ jobs:
     - stage: Lint & Test
       name: Terraform lint
       script: docker run -v $(pwd):/data -t quay.io/coreos/tflint
-    - script: >
-        docker run -t -v $(pwd):/workdir 
-        quay.io/coreos/yamllint --config-data 
-        '{extends: default, rules: {line-length: {level: warning, max: 120}}}' 
-        ./examples/ ./installer/
+    - script: ./hack/yaml-lint.sh
       name: YAML lint
     - script: >
         docker run -v $(pwd):/workdir:ro
