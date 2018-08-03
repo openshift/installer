@@ -26,14 +26,6 @@ creds.push(
   ]
 )
 
-quayCreds = [
-  usernamePassword(
-    credentialsId: 'quay-robot',
-    passwordVariable: 'QUAY_ROBOT_SECRET',
-    usernameVariable: 'QUAY_ROBOT_USERNAME'
-  )
-]
-
 tectonicSmokeTestEnvImage = 'quay.io/coreos/tectonic-smoke-test-env:v6.0'
 tectonicBazelImage = 'quay.io/coreos/tectonic-builder:bazel-v0.3'
 originalCommitId = 'UNKNOWN'
@@ -87,25 +79,6 @@ pipeline {
               // Produce an artifact which can be downloaded via web UI
               stash name: 'tectonic-tarball', includes: 'tectonic-dev.tar.gz'
             }
-          }
-        }
-      }
-    }
-
-    stage('Build docker image')  {
-      when {
-        branch 'master'
-      }
-      steps {
-        withCredentials(quayCreds) {
-          ansiColor('xterm') {
-            sh """
-              docker build -t quay.io/coreos/tectonic-installer:master -f images/tectonic-installer/Dockerfile .
-              docker login -u="$QUAY_ROBOT_USERNAME" -p="$QUAY_ROBOT_SECRET" quay.io
-              docker push quay.io/coreos/tectonic-installer:master
-              docker logout quay.io
-            """
-            cleanWs notFailBuild: true
           }
         }
       }
