@@ -1,7 +1,7 @@
 #!/bin/sh
 
 printf 'Warning: This will destroy effectively all libvirt resources\nContinue [yN]? '
-read CONTINUE
+read -r CONTINUE
 if test "${CONTINUE}" != y -a "${CONTINUE}" != Y
 then
 	  echo 'Aborted' >&2
@@ -23,7 +23,7 @@ do
 	run virsh -c "${CONNECT}" undefine "${DOMAIN}"
 done
 
-virsh -c "${CONNECT}" vol-list "${POOL}" | tail -n +3 | while read VOLUME DETAILS
+virsh -c "${CONNECT}" vol-list "${POOL}" | tail -n +3 | while read -r VOLUME _
 do
 	if test -z "${VOLUME}"
 	then
