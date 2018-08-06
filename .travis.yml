@@ -12,8 +12,8 @@ branches:
 jobs:
   include:
     - stage: Lint & Test
+      script: ./hack/tf-lint.sh
       name: Terraform lint
-      script: docker run -v $(pwd):/data -t quay.io/coreos/tflint
     - script: ./hack/yaml-lint.sh
       name: YAML lint
     - script: ./hack/shellcheck.sh
