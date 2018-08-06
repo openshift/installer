@@ -12,7 +12,7 @@ branches:
 jobs:
   include:
     - stage: Lint & Test
-    - script: ./hack/tf-lint.sh
+      script: ./hack/tf-lint.sh
       name: Terraform lint
     - script: ./hack/yaml-lint.sh
       name: YAML lint
