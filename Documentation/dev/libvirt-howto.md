@@ -23,13 +23,13 @@ cd installer
 Download the latest RHCOS image (you will need access to the Red Hat internal build systems):
 
 ```sh
-wget http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos.qcow2.qemu.gz
-gunzip rhcos.qcow2.qemu.gz
+wget http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz
+gunzip rhcos-qemu.qcow2.gz
 ```
 
 Because of the greater disk requirements of OpenShift, you'll need to expand the root drive with the following:
 ```sh
-qemu-img resize rhcos.qcow2.qemu +8G
+qemu-img resize rhcos-qemu.qcow2 +8G
 ```
 
 #### 1.3b Container Linux
