@@ -1,0 +1,5 @@
+---
+admin:
+  email: "a@b.c"
+  password: "bad indentation"
+  bad-data: "{ a;;bad data} []"
