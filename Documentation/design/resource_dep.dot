@@ -54,8 +54,7 @@ strict digraph resource {
   // Operator assets
   {
     node [style=filled,color=lightpink];
-    operator_configs [label="operator configs"];
-    operator_manifests [label="operator manifests"];
+    operator_manifests [label="operator manifests and their configs"];
   }
 
   // Cluster assets
@@ -63,7 +62,6 @@ strict digraph resource {
     node [style=filled,color=lightpink];
     bootstrap_control_plane [label="bootstrap control plane manifests"];
     misc_manifests [label="misc manifests (rbac, namespace, CRD, pod security policy, etc)"];
-    secret_manifests [label="manifests for secrets"];
   }
 
   // Ignition files
@@ -98,7 +96,6 @@ strict digraph resource {
   base_domain -> install_config;
 
   install_config -> operator_manifests;
-  install_config -> operator_configs;
 
   root_ca_bundle -> kube_ca_bundle;
   root_ca_bundle -> etcd_ca_bundle;
@@ -109,65 +106,59 @@ strict digraph resource {
 
   root_ca_bundle -> kubeconfig;
   root_ca_bundle -> kubelet_kubeconfig;
-  root_ca_bundle -> secret_manifests;
-  root_ca_bundle -> bootstrap_ignition;
+  root_ca_bundle -> bootstrap_control_plane;
   root_ca_bundle -> master_ignition;
   root_ca_bundle -> worker_ignition;
 
   etcd_ca_bundle -> etcd_client_bundle;
-  etcd_ca_bundle -> secret_manifests;
   etcd_ca_bundle -> master_ignition;
+  etcd_ca_bundle -> bootstrap_control_plane;
 
   kube_ca_bundle -> admin_bundle;
   kube_ca_bundle -> apiserver_bundle;
   install_config -> apiserver_bundle;
   kube_ca_bundle -> kubelet_bundle;
-  kube_ca_bundle -> secret_manifests;
-
   kube_ca_bundle -> ingress_bundle;
+  kube_ca_bundle -> bootstrap_control_plane;
+  
   install_config -> ingress_bundle;
   
   aggregator_ca_bundle -> openshift_apiserver_bundle;
   install_config -> openshift_apiserver_bundle;
   aggregator_ca_bundle -> apiserver_proxy_bundle;
   aggregator_ca_bundle -> clusterapi_apiserver_bundle;
-  aggregator_ca_bundle -> secret_manifests;
+  aggregator_ca_bundle -> bootstrap_ignition;
 
   admin_bundle -> kubeconfig;
 
-  apiserver_bundle -> secret_manifests;
+  apiserver_bundle -> bootstrap_control_plane;
 
-  apiserver_proxy_bundle -> secret_manifests;
+  apiserver_proxy_bundle -> bootstrap_ignition;
 
-  clusterapi_apiserver_bundle -> secret_manifests;
+  clusterapi_apiserver_bundle -> bootstrap_ignition;
 
-  etcd_client_bundle -> secret_manifests;
+  etcd_client_bundle -> bootstrap_control_plane;
 
   kubelet_bundle -> bootstrap_ignition;
   kubelet_bundle -> master_ignition;
   kubelet_bundle -> worker_ignition;
 
-  ingress_bundle -> secret_manifests;
+  ingress_bundle -> bootstrap_ignition;
 
-  openshift_apiserver_bundle -> secret_manifests;
+  openshift_apiserver_bundle -> bootstrap_ignition;
 
-  service_account_bundle -> secret_manifests;
+  service_account_bundle -> bootstrap_ignition;
 
-  service_serving_ca_bundle -> secret_manifests;
+  service_serving_ca_bundle -> bootstrap_ignition;
 
-  mcc_bundle -> secret_manifests;
+  mcc_bundle -> bootstrap_ignition;
 
-  operator_configs -> bootstrap_control_plane;
   operator_manifests -> bootstrap_control_plane;
-  secret_manifests -> bootstrap_control_plane;
-  operator_configs -> misc_manifests;
   operator_manifests -> misc_manifests;
   
-  operator_configs -> bootstrap_ignition;
   operator_manifests -> bootstrap_ignition;
 
   bootstrap_control_plane -> bootstrap_ignition;
-  secret_manifests -> bootstrap_ignition;
   misc_manifests -> bootstrap_ignition;
 
   kubelet_kubeconfig -> bootstrap_ignition;
@@ -198,11 +189,9 @@ strict digraph resource {
   service_serving_ca_bundle -> manifests;
   mcc_bundle -> manifests;
   
-  operator_configs -> manifests;
   operator_manifests -> manifests;
 
   bootstrap_control_plane -> manifests;
-  secret_manifests -> manifests;
   misc_manifests -> manifests;
 
   kubelet_kubeconfig -> manifests;
