@@ -41,7 +41,6 @@ strict digraph resource {
     clusterapi_apiserver_bundle [label="clusterapi apiserver crt/key"];
     etcd_ca_bundle [label="etcd ca crt/key"];
     etcd_client_bundle [label="etcd client crt/key"];
-    ingress_ca_bundle [label="ingress ca crt/key"];
     ingress_bundle [label="ingress crt/key"];
     kube_ca_bundle [label="kube ca crt/key"];
     kubelet_bundle [label="kubelet crt/key"];
@@ -105,7 +104,6 @@ strict digraph resource {
   root_ca_bundle -> etcd_ca_bundle;
   root_ca_bundle -> aggregator_ca_bundle;
   root_ca_bundle -> service_serving_ca_bundle;
-  root_ca_bundle -> ingress_ca_bundle;
   root_ca_bundle -> mcc_bundle;
   install_config -> mcc_bundle;
 
@@ -126,9 +124,8 @@ strict digraph resource {
   kube_ca_bundle -> kubelet_bundle;
   kube_ca_bundle -> secret_manifests;
 
-  ingress_ca_bundle -> ingress_bundle;
+  kube_ca_bundle -> ingress_bundle;
   install_config -> ingress_bundle;
-  ingress_ca_bundle -> secret_manifests;
   
   aggregator_ca_bundle -> openshift_apiserver_bundle;
   install_config -> openshift_apiserver_bundle;
@@ -192,7 +189,6 @@ strict digraph resource {
   clusterapi_apiserver_bundle -> manifests;
   etcd_ca_bundle -> manifests;
   etcd_client_bundle -> manifests;
-  ingress_ca_bundle -> manifests;
   ingress_bundle -> manifests;
   kube_ca_bundle -> manifests;
   kubelet_bundle -> manifests;
