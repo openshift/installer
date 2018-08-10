@@ -27,5 +27,5 @@ jobs:
     - script: "docker run -v $PWD:$PWD -w $PWD quay.io/coreos/golang-testing golint -set_exit_status installer/..."
       name: Go lint
     - stage: Build
-      script: "chmod 0777 $PWD && docker run -v $PWD:$PWD:rw -w $PWD $BAZEL_IMG bazel build tarball"
+      script: ./hack/test-bazel-build-tarball.sh
       name: Build tarball
