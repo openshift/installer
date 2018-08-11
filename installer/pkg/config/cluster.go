@@ -9,6 +9,7 @@ import (
 
 	"github.com/openshift/installer/installer/pkg/config/aws"
 	"github.com/openshift/installer/installer/pkg/config/libvirt"
+	"github.com/openshift/installer/installer/pkg/config/openstack"
 )
 
 const (
@@ -22,6 +23,8 @@ const (
 	PlatformAWS Platform = "aws"
 	// PlatformLibvirt is the platform for a cluster launched on libvirt.
 	PlatformLibvirt Platform = "libvirt"
+	// PlatformOpenStack is the platform for a cluster launched on OpenStack.
+	PlatformOpenStack Platform = "openstack"
 )
 
 // Platform indicates the target platform of the cluster.
@@ -36,9 +39,9 @@ func (p *Platform) UnmarshalYAML(unmarshal func(interface{}) error) error {
 
 	platform := Platform(data)
 	switch platform {
-	case PlatformAWS, PlatformLibvirt:
+	case PlatformAWS, PlatformLibvirt, PlatformOpenStack:
 	default:
-		return fmt.Errorf("invalid platform specified (%s); must be one of %s", platform, []Platform{PlatformAWS, PlatformLibvirt})
+		return fmt.Errorf("invalid platform specified (%s); must be one of %s", platform, []Platform{PlatformAWS, PlatformLibvirt, PlatformOpenStack})
 	}
 
 	*p = platform
@@ -65,6 +68,9 @@ var defaultCluster = Cluster{
 			IfName:    libvirt.DefaultIfName,
 		},
 	},
+	Openstack: openstack.Openstack{
+		Cloud: openstack.DefaultCloud,
+	},
 	Networking: Networking{
 		MTU:         "1480",
 		PodCIDR:     "10.2.0.0/16",
@@ -75,25 +81,26 @@ var defaultCluster = Cluster{
 
 // Cluster defines the config for a cluster.
 type Cluster struct {
-	Admin           `json:",inline" yaml:"admin,omitempty"`
-	aws.AWS         `json:",inline" yaml:"aws,omitempty"`
-	BaseDomain      string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
-	CA              `json:",inline" yaml:"CA,omitempty"`
-	ContainerLinux  `json:",inline" yaml:"containerLinux,omitempty"`
-	Etcd            `json:",inline" yaml:"etcd,omitempty"`
-	IgnitionEtcd    string `json:"tectonic_ignition_etcd,omitempty" yaml:"-"`
-	IgnitionMaster  string `json:"tectonic_ignition_master,omitempty" yaml:"-"`
-	IgnitionWorker  string `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
-	Internal        `json:",inline" yaml:"-"`
-	libvirt.Libvirt `json:",inline" yaml:"libvirt,omitempty"`
-	LicensePath     string `json:"tectonic_license_path,omitempty" yaml:"licensePath,omitempty"`
-	Master          `json:",inline" yaml:"master,omitempty"`
-	Name            string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
-	Networking      `json:",inline" yaml:"networking,omitempty"`
-	NodePools       `json:"-" yaml:"nodePools"`
-	Platform        Platform `json:"tectonic_platform" yaml:"platform,omitempty"`
-	PullSecretPath  string   `json:"tectonic_pull_secret_path,omitempty" yaml:"pullSecretPath,omitempty"`
-	Worker          `json:",inline" yaml:"worker,omitempty"`
+	Admin               `json:",inline" yaml:"admin,omitempty"`
+	aws.AWS             `json:",inline" yaml:"aws,omitempty"`
+	BaseDomain          string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
+	CA                  `json:",inline" yaml:"CA,omitempty"`
+	ContainerLinux      `json:",inline" yaml:"containerLinux,omitempty"`
+	Etcd                `json:",inline" yaml:"etcd,omitempty"`
+	IgnitionEtcd        string `json:"tectonic_ignition_etcd,omitempty" yaml:"-"`
+	IgnitionMaster      string `json:"tectonic_ignition_master,omitempty" yaml:"-"`
+	IgnitionWorker      string `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
+	Internal            `json:",inline" yaml:"-"`
+	libvirt.Libvirt     `json:",inline" yaml:"libvirt,omitempty"`
+	LicensePath         string `json:"tectonic_license_path,omitempty" yaml:"licensePath,omitempty"`
+	Master              `json:",inline" yaml:"master,omitempty"`
+	Name                string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
+	Networking          `json:",inline" yaml:"networking,omitempty"`
+	NodePools           `json:"-" yaml:"nodePools"`
+	openstack.Openstack `json:",inline" yaml:"openstack,omitempty"`
+	Platform            Platform `json:"tectonic_platform" yaml:"platform,omitempty"`
+	PullSecretPath      string   `json:"tectonic_pull_secret_path,omitempty" yaml:"pullSecretPath,omitempty"`
+	Worker              `json:",inline" yaml:"worker,omitempty"`
 }
 
 // NodeCount will return the number of nodes specified in NodePools with matching names.

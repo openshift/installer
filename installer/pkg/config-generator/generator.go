@@ -352,6 +352,8 @@ func k8sCloudProvider(platform config.Platform) string {
 		return "aws"
 	case config.PlatformLibvirt:
 		return ""
+	case config.PlatformOpenStack:
+		return "openstack"
 	}
 	panic("invalid platform")
 }
@@ -363,6 +365,8 @@ func tectonicCloudProvider(platform config.Platform) string {
 		return "aws"
 	case config.PlatformLibvirt:
 		return "libvirt"
+	case config.PlatformOpenStack:
+		return "openstack"
 	}
 	panic("invalid platform")
 }
