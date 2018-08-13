@@ -1,0 +1,173 @@
+admin:
+  email: "a@b.c"
+  password: "verysecure"
+
+# The base DNS domain of the cluster. It must NOT contain a trailing period. Some
+# DNS providers will automatically add this if necessary.
+#
+# Example: `openshift.example.com`.
+#
+# Note: This field MUST be set manually prior to creating the cluster.
+baseDomain:
+
+ca:
+  # (optional) The content of the PEM-encoded CA certificate, used to generate Tectonic Console's server certificate.
+  # If left blank, a CA certificate will be automatically generated.
+  # cert:
+
+  # (optional) The content of the PEM-encoded CA key, used to generate Tectonic Console's server certificate.
+  # This field is mandatory if `ca_cert` is set.
+  # key:
+
+  # (optional) The algorithm used to generate ca_key.
+  # The default value is currently recommended.
+  # This field is mandatory if `ca_cert` is set.
+  # keyAlg: RSA
+
+containerLinux:
+  # (optional) The Container Linux update channel.
+  #
+  # Examples: `stable`, `beta`, `alpha`
+  channel: beta
+
+  # The Container Linux version to use. Set to `latest` to select the latest available version for the selected update channel.
+  #
+  # Examples: `latest`, `1465.6.0`
+  version: latest
+
+  # (optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes.
+  # customCAPEMList:
+
+etcd:
+  # The name of the node pool(s) to use for etcd nodes
+  nodePools:
+    - etcd
+
+iscsi:
+  # (optional) Start iscsid.service to enable iscsi volume attachment.
+  # enabled: false
+
+# The path to the tectonic licence file.
+# You can download the Tectonic license file from your Account overview page at [1].
+#
+# [1] https://account.coreos.com/overview
+licensePath:
+
+master:
+  nodePools:
+    - master
+
+# The name of the cluster.
+# If used in a cloud-environment, this will be prepended to `baseDomain` resulting in the URL to the Tectonic console.
+#
+# Note: This field MUST be set manually prior to creating the cluster.
+# Warning: Special characters in the name like '.' may cause errors on OpenStack platforms due to resource name constraints.
+name:
+
+networking:
+  # (optional) This declares the MTU used by Calico.
+  # mtu:
+
+  # (optional) This declares the IP range to assign Kubernetes pod IPs in CIDR notation.
+  podCIDR: 10.2.0.0/16
+
+  # (optional) This declares the IP range to assign Kubernetes service cluster IPs in CIDR notation.
+  # The maximum size of this IP range is /12
+  serviceCIDR: 10.3.0.0/16
+
+  # (optional) Configures the network to be used in Tectonic. One of the following values can be used:
+  #
+  # - "flannel": enables overlay networking only. This is implemented by flannel using VXLAN.
+  #
+  # - "canal": enables overlay networking including network policy. Overlay is implemented by flannel using VXLAN. Network policy is implemented by Calico.
+  #
+  # - "calico-ipip": [ALPHA] enables BGP based networking. Routing and network policy is implemented by Calico. Note this has been tested on baremetal installations only.
+  #
+  # - "none": disables the installation of any Pod level networking layer provided by Tectonic. By setting this value, users are expected to deploy their own solution to enable network connectivity for Pods and Services.
+  #type: canal
+
+nodePools:
+    # The number of etcd nodes to be created.
+    # If set to zero, the count of etcd nodes will be determined automatically.
+  - count: 3
+    name: etcd
+
+    # The number of master nodes to be created.
+    # This applies only to cloud platforms.
+  - count: 1
+    name: master
+
+    # The number of worker nodes to be created.
+    # This applies only to cloud platforms.
+  - count: 3
+    name: worker
+
+openstack:
+  # (optional) An entry in a clouds.yaml file.
+  #
+  # See https://docs.openstack.org/os-client-config/latest/user/configuration.html
+  # cloud: default
+
+  etcd:
+    # (optional) List of additional security group IDs for etcd nodes.
+    #
+    # Example: `["c65c403d-692c-450f-ba6e-d090ce8fc174", "d32a325b-295c-838f-ab5e-d151ec5ab321"]`
+    # extraSGIDs:
+
+    # Flavor to be used for the etcd node(s).
+    flavorName:
+
+    # (optional) Image to be used for the etcd node(s).
+    # imageName: RHCOS
+
+  # (optional) Name of the OpenStack key pair to associate with the cluster instances. Example: rhcos-user.
+  # keyPair:
+
+  master:
+    # (optional) List of additional security group IDs for master nodes.
+    #
+    # Example: `["c65c403d-692c-450f-ba6e-d090ce8fc174", "d32a325b-295c-838f-ab5e-d151ec5ab321"]`
+    # extraSGIDs:
+
+    # Flavor to be used for the master node(s).
+    flavorName:
+
+    # (optional) Image to be used for the master node(s).
+    # imageName: RHCOS
+
+  # (optional) The OpenStack network name to associate with the cluster instances.
+  # network:
+
+  # A public key to be used for SSH authentication to the instances. Example: "ssh-rsa ..."
+  sshKey:
+
+  worker:
+    # (optional) List of additional security group IDs for master nodes.
+    #
+    # Example: `["c65c403d-692c-450f-ba6e-d090ce8fc174", "d32a325b-295c-838f-ab5e-d151ec5ab321"]`
+    # extraSGIDs:
+
+    # Flavor to be used for the worker node(s).
+    flavorName:
+
+    # (optional) Image to be used for the worker node(s).
+    # imageName: RHCOS
+
+# The platform used for deploying.
+platform: openstack
+
+# The path the pull secret file in JSON format.
+# This is known to be a "Docker pull secret" as produced by the docker login [1] command.
+# A sample JSON content is shown in [2].
+# You can download the pull secret from your Account overview page at [3].
+#
+# [1] https://docs.docker.com/engine/reference/commandline/login/
+#
+# [2] https://coreos.com/os/docs/latest/registry-authentication.html#manual-registry-auth-setup
+#
+# [3] https://account.coreos.com/overview
+pullSecretPath:
+
+worker:
+  nodePools:
+    - worker
