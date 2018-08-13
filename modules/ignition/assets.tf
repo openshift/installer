@@ -59,12 +59,6 @@ data "ignition_systemd_unit" "kubelet_workaround" {
   content = "${data.template_file.kubelet_workaround.rendered}"
 }
 
-data "ignition_systemd_unit" "rm_assets" {
-  name    = "rm-assets.service"
-  enabled = true
-  content = "${file("${path.module}/resources/services/rm-assets.service")}"
-}
-
 data "ignition_systemd_unit" "locksmithd" {
   name = "locksmithd.service"
   mask = true

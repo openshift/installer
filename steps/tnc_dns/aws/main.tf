@@ -9,19 +9,9 @@ provider "aws" {
   }
 }
 
-resource "aws_route53_record" "tectonic_tnc_cname" {
-  count   = "${var.tectonic_bootstrap == "true" ? 1 : 0}"
-  zone_id = "${local.private_zone_id}"
-  name    = "${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}"
-  type    = "CNAME"
-  ttl     = "1"
-
-  records = ["${local.tnc_s3_bucket_domain_name}"]
-}
-
 resource "aws_route53_record" "tectonic_tnc_a" {
   depends_on = ["aws_route53_record.tectonic_tnc_cname"]
-  count      = "${var.tectonic_bootstrap == "true" ? 0 : 1}"
+  count      = "1"
   zone_id    = "${local.private_zone_id}"
   name       = "${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}"
   type       = "A"

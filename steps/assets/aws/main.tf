@@ -36,38 +36,3 @@ module assets_base {
   tectonic_update_channel          = "${var.tectonic_update_channel}"
   tectonic_versions                = "${var.tectonic_versions}"
 }
-
-# Removing assets is platform-specific
-# But it must be installed in /opt/tectonic/rm-assets.sh
-data "template_file" "rm_assets_sh" {
-  template = "${file("${path.module}/resources/rm-assets.sh")}"
-
-  vars {
-    cluster_name       = "${var.tectonic_cluster_name}"
-    awscli_image       = "${var.tectonic_container_images["awscli"]}"
-    bucket_s3_location = "${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}"
-  }
-}
-
-data "ignition_file" "rm_assets_sh" {
-  filesystem = "root"
-  path       = "/opt/tectonic/rm-assets.sh"
-  mode       = "0700"
-
-  content {
-    content = "${data.template_file.rm_assets_sh.rendered}"
-  }
-}
-
-data "ignition_config" "bootstrap" {
-  files = ["${flatten(list(
-    list(
-      data.ignition_file.rm_assets_sh.id,
-    ),
-    module.assets_base.ignition_bootstrap_files,
-  ))}"]
-
-  systemd = [
-    "${module.assets_base.ignition_bootstrap_systemd}",
-  ]
-}

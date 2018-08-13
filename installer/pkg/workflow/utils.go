@@ -14,9 +14,8 @@ import (
 
 const (
 	assetsStep       = "assets"
+	bootstrapStep    = "bootstrap"
 	binaryPrefix     = "installer"
-	bootstrapOff     = "-var=tectonic_bootstrap=false"
-	bootstrapOn      = "-var=tectonic_bootstrap=true"
 	configFileName   = "config.yaml"
 	etcdStep         = "etcd"
 	internalFileName = "internal.yaml"
@@ -165,18 +164,18 @@ func baseLocation() (string, error) {
 
 func clusterIsBootstrapped(stateDir string) bool {
 	return hasStateFile(stateDir, topologyStep) &&
-		hasStateFile(stateDir, mastersStep) &&
+		hasStateFile(stateDir, bootstrapStep) &&
 		hasStateFile(stateDir, tncDNSStep)
 }
 
 func createTNCCNAME(m *metadata) error {
-	return runInstallStep(m, tncDNSStep, []string{bootstrapOn}...)
+	return runInstallStep(m, tncDNSStep)
 }
 
 func createTNCARecord(m *metadata) error {
-	return runInstallStep(m, tncDNSStep, []string{bootstrapOff}...)
+	return runInstallStep(m, tncDNSStep)
 }
 
 func destroyTNCDNS(m *metadata) error {
-	return runDestroyStep(m, tncDNSStep, []string{bootstrapOff}...)
+	return runDestroyStep(m, tncDNSStep)
 }

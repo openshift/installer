@@ -104,7 +104,7 @@ func installTopologyStep(m *metadata) error {
 
 func installBootstrapStep(m *metadata) error {
 	if !clusterIsBootstrapped(m.clusterDir) {
-		return runInstallStep(m, mastersStep, []string{bootstrapOn}...)
+		return runInstallStep(m, bootstrapStep)
 	}
 	return nil
 }
@@ -125,7 +125,7 @@ func installEtcdStep(m *metadata) error {
 }
 
 func installJoinMastersStep(m *metadata) error {
-	return runInstallStep(m, mastersStep, []string{bootstrapOff}...)
+	return runInstallStep(m, mastersStep)
 }
 
 func installJoinWorkersStep(m *metadata) error {

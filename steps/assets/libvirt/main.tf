@@ -35,40 +35,12 @@ module assets_base {
   tectonic_container_linux_version = "${var.tectonic_container_linux_version}"
 }
 
-# Removing assets is platform-specific
-# But it must be installed in /opt/tectonic/rm-assets.sh
-data "ignition_file" "rm_assets_sh" {
-  filesystem = "root"
-  path       = "/opt/tectonic/rm-assets.sh"
-  mode       = "0700"
-
-  content {
-    content = "${file("${path.module}/resources/rm-assets.sh")}"
-  }
-}
-
+# XXX(crawford): Remove this once etcd is moved to the masters.
 data "ignition_user" "core" {
   name = "core"
 
   ssh_authorized_keys = [
     "${var.tectonic_admin_ssh_key}",
-  ]
-}
-
-data "ignition_config" "bootstrap" {
-  files = ["${flatten(list(
-    list(
-      data.ignition_file.rm_assets_sh.id,
-    ),
-    module.assets_base.ignition_bootstrap_files,
-  ))}"]
-
-  systemd = [
-    "${module.assets_base.ignition_bootstrap_systemd}",
-  ]
-
-  users = [
-    "${data.ignition_user.core.id}",
   ]
 }
 

@@ -55,6 +55,6 @@ data "template_file" "tectonic_service" {
 
 data "ignition_systemd_unit" "tectonic_service" {
   name    = "tectonic.service"
-  enabled = false
+  enabled = true
   content = "${data.template_file.tectonic_service.rendered}"
 }

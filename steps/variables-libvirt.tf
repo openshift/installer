@@ -28,6 +28,11 @@ variable "tectonic_coreos_qcow_path" {
   description = "path to a container linux qcow image"
 }
 
+variable "tectonic_libvirt_bootstrap_ip" {
+  type        = "string"
+  description = "the desired bootstrap ip"
+}
+
 variable "tectonic_libvirt_master_ips" {
   type        = "list"
   description = "the list of desired master ips. Must match tectonic_master_count"

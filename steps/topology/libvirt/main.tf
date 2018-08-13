@@ -20,6 +20,7 @@ resource "libvirt_network" "tectonic_net" {
   }
 
   dns_host = ["${flatten(list(
+    data.libvirt_network_dns_host_template.bootstrap.*.rendered,
     data.libvirt_network_dns_host_template.masters.*.rendered,
     data.libvirt_network_dns_host_template.etcds.*.rendered,
     data.libvirt_network_dns_host_template.workers.*.rendered,
@@ -39,6 +40,14 @@ locals {
     "${var.tectonic_cluster_name}-api",
     "${var.tectonic_cluster_name}-tnc",
   ]
+}
+
+data "libvirt_network_dns_host_template" "bootstrap" {
+  count = "${length(local.hostnames)}"
+
+  ip = "${var.tectonic_libvirt_bootstrap_ip}"
+
+  hostname = "${local.hostnames[count.index]}"
 }
 
 data "libvirt_network_dns_host_template" "masters" {

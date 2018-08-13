@@ -47,12 +47,6 @@ WantedBy=multi-user.target
 This service is enabled by default and can crash-loop until success.
 It is started on every boot.
 
-### `rm-assets.service`
-
-This service waits for the bootkube and tectonic process to be completed.
-It is a oneshot service, thus marked as started only once the script returns with success.
-This is an optional service only present on platforms which pull assets from block storage.
-
 ## Diagram
 
 This is a visual simplified representation of the overall bootstrapping flow.
@@ -64,30 +58,29 @@ Legend:
  * k.s   -> kubelet.service
  * b.s   -> bootkube.service
  * t.s   -> tectonic.service
- * rm.s  -> rm-assets.service
 
-.--------------------------------------------------------------------------------------------------------------------------------+
-|                                                                                                                                |
-|           Provision cloud/userdata           +----------+                                                                      |
-|     ,---------------------------------------o|    TF    |                                                                      |
-|     |                                        +----------+                                                                      |
-|     |                                                                                                                          |
-|     |                                                                                                                          |
-|     |                                                                                                                          |
-|     |                                                                                                                          |
-|     V                                                                                                                          |
-| +-------+                          Before   +------------+   Before                                                            |
-| |  IGN  |                  .--------------->|    k.s     |o--------.                                                           |
-| +-------+                  |                +------------+         |                                                           |
-|     |                      |                   ^      |            |    +-----+      Before     +-------+   Before +-----+     |
-|     '----------------------'                   |      v            '--->| b.s |o--------------->|  t.s  |--------> |rm.s |     |
-|   Enable                                       '------'                 +-----+                 +-------+          +-----+     |
-|                                                                                                                                |
-|                                                                                                                                |
-|                                       o                            o                                                           |
-|                                       |                            |                                                           |
-|                                       |        * Each boot         |         * First boot                                      |
-|                                       |        * All nodes         |         * Bootkube master                                 |
-|                                       |                            |                                                           |
-'---------------------------------------o----------------------------o-----------------------------------------------------------+
+.-----------------------------------------------------------------------------------------------------------+
+|                                                                                                           |
+|           Provision cloud/userdata           +----------+                                                 |
+|     ,---------------------------------------o|    TF    |                                                 |
+|     |                                        +----------+                                                 |
+|     |                                                                                                     |
+|     |                                                                                                     |
+|     |                                                                                                     |
+|     |                                                                                                     |
+|     V                                                                                                     |
+| +-------+                          Before   +------------+   Before                                       |
+| |  IGN  |                  .--------------->|    k.s     |o--------.                                      |
+| +-------+                  |                +------------+         |                                      |
+|     |                      |                   ^      |            |    +-----+      Before     +-------+ |
+|     '----------------------'                   |      v            '--->| b.s |o--------------->|  t.s  | |
+|   Enable                                       '------'                 +-----+                 +-------+ |
+|                                                                                                           |
+|                                                                                                           |
+|                                       o                            o                                      |
+|                                       |                            |                                      |
+|                                       |        * Each boot         |         * First boot                 |
+|                                       |        * All nodes         |         * Bootkube master            |
+|                                       |                            |                                      |
+'---------------------------------------o----------------------------o--------------------------------------+
 ```

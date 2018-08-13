@@ -14,3 +14,6 @@ Group=root
 
 ExecStart=/usr/bin/bash /opt/tectonic/tectonic-wrapper.sh
 ExecStartPost=/bin/touch /opt/tectonic/init_tectonic.done
+
+[Install]
+WantedBy=multi-user.target

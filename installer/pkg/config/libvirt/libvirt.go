@@ -22,6 +22,7 @@ type Libvirt struct {
 	MasterIPs     []string `json:"tectonic_libvirt_master_ips,omitempty" yaml:"masterIPs"`
 	WorkerIPs     []string `json:"tectonic_libvirt_worker_ips,omitempty" yaml:"workerIPs"`
 	EtcdIPs       []string `json:"tectonic_libvirt_etcd_ips,omitempty" yaml:"etcdIPs"`
+	BootstrapIP   string `json:"tectonic_libvirt_bootstrap_ip,omitempty" yaml:"bootstrapIP"`
 }
 
 // Network describes a libvirt network configuration.
@@ -39,12 +40,20 @@ func (l *Libvirt) TFVars(masterCount int, workerCount int, etcdCount int) error 
 		return fmt.Errorf("failed to parse libvirt network ipRange: %v", err)
 	}
 
+	if l.BootstrapIP == "" {
+		ip, err := cidr.Host(network, 10)
+		if err != nil {
+			return fmt.Errorf("failed to generate bootstrap IP: %v", err)
+		}
+		l.BootstrapIP = ip.String()
+	}
+
 	if len(l.MasterIPs) > 0 {
 		if len(l.MasterIPs) != masterCount {
 			return fmt.Errorf("length of MasterIPs doesn't match master count")
 		}
 	} else {
-		if ips, err := generateIPs("master", network, masterCount, 10); err == nil {
+		if ips, err := generateIPs("master", network, masterCount, 11); err == nil {
 			l.MasterIPs = ips
 		} else {
 			return err

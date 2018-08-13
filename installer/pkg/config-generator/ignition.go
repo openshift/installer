@@ -133,17 +133,10 @@ func (c *ConfigGenerator) getTNCURL(role string) string {
 		port = 49500
 	}
 
-	// XXX: The bootstrap node on AWS uses a CNAME to redirect TNC-bound
-	// traffic to S3. Because of this, HTTPS cannot be used.
-	scheme := "https"
-	if c.Platform == config.PlatformAWS && role == "master" {
-		scheme = "http"
-	}
-
 	if role == "master" || role == "worker" {
 		u = func() *url.URL {
 			return &url.URL{
-				Scheme: scheme,
+				Scheme: "https",
 				Host:   fmt.Sprintf("%s-tnc.%s:%d", c.Name, c.BaseDomain, port),
 				Path:   fmt.Sprintf("/config/%s", role),
 			}
