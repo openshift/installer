@@ -68,7 +68,6 @@ type AWS struct {
     Master                    `json:",inline" yaml:"master,omitempty"`
     Profile                   string `json:"tectonic_aws_profile,omitempty" yaml:"profile,omitempty"`
     Region                    string `json:"tectonic_aws_region,omitempty" yaml:"region,omitempty"`
-    SSHKey                    string `json:"tectonic_aws_ssh_key,omitempty" yaml:"sshKey,omitempty"`
     VPCCIDRBlock              string `json:"tectonic_aws_vpc_cidr_block,omitempty" yaml:"vpcCIDRBlock,omitempty"`
     Worker                    `json:",inline" yaml:"worker,omitempty"`
 }
@@ -106,7 +105,6 @@ type Worker struct {
 ```go
 type Libvirt struct {
     URI           string `json:"tectonic_libvirt_uri,omitempty" yaml:"uri"`
-    SSHKey        string `json:"tectonic_libvirt_ssh_key,omitempty" yaml:"sshKey"`
     QCOWImagePath string `json:"tectonic_coreos_qcow_path,omitempty" yaml:"imagePath"`
     Network       `json:",inline" yaml:"network"`
     MasterIPs     []string `json:"tectonic_libvirt_master_ips,omitempty" yaml:"masterIPs"`

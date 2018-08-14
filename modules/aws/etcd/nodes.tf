@@ -88,7 +88,6 @@ resource "aws_instance" "etcd_node" {
 
   iam_instance_profile   = "${aws_iam_instance_profile.etcd.name}"
   instance_type          = "${var.ec2_type}"
-  key_name               = "${var.ssh_key}"
   subnet_id              = "${element(var.subnets, count.index)}"
   user_data              = "${data.ignition_config.tnc.*.rendered[count.index]}"
   vpc_security_group_ids = ["${var.sg_ids}"]

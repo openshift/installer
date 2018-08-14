@@ -183,9 +183,6 @@ func (c *Cluster) validateLibvirt() []error {
 	if err := validate.PrefixError("libvirt imagePath is not a valid QCOW image", validate.FileHeader(c.Libvirt.QCOWImagePath, qcowMagic)); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError("libvirt sshKey", validate.NonEmpty(c.Libvirt.SSHKey)); err != nil {
-		errs = append(errs, err)
-	}
 	if err := validate.PrefixError("libvirt network name", validate.NonEmpty(c.Libvirt.Network.Name)); err != nil {
 		errs = append(errs, err)
 	}

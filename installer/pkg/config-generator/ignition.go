@@ -57,7 +57,9 @@ func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 			return err
 		}
 
-		// agentless platforms (e.g. libvirt) need to embed the ssh key
+		// XXX(crawford): The SSH key should only be added to the bootstrap
+		//                node. After that, MCO should be responsible for
+		//                distributing SSH keys.
 		c.embedUserBlock(ignCfg)
 
 		fileTargetPath := filepath.Join(clusterDir, ignFilesPath[role])
@@ -111,16 +113,14 @@ func (c *ConfigGenerator) appendCertificateAuthority(ignCfg *ignconfigtypes.Conf
 }
 
 func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
-	if c.Platform == config.PlatformLibvirt {
-		userBlock := ignconfigtypes.PasswdUser{
-			Name: "core",
-			SSHAuthorizedKeys: []ignconfigtypes.SSHAuthorizedKey{
-				ignconfigtypes.SSHAuthorizedKey(c.Libvirt.SSHKey),
-			},
-		}
-
-		ignCfg.Passwd.Users = append(ignCfg.Passwd.Users, userBlock)
+	userBlock := ignconfigtypes.PasswdUser{
+		Name: "core",
+		SSHAuthorizedKeys: []ignconfigtypes.SSHAuthorizedKey{
+			ignconfigtypes.SSHAuthorizedKey(c.SSHKey),
+		},
 	}
+
+	ignCfg.Passwd.Users = append(ignCfg.Passwd.Users, userBlock)
 }
 
 func (c *ConfigGenerator) getTNCURL(role string) string {

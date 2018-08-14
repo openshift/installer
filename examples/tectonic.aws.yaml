@@ -1,6 +1,7 @@
 admin:
   email: "a@b.c"
   password: "verysecure"
+  sshKey: "ssh-ed25519 AAAA..."
 aws:
   # (optional) Unique name under which the Amazon S3 bucket will be created. Bucket name must start with a lower case name and is limited to 63 characters.
   # The Tectonic Installer uses the bucket to store tectonic assets and kubeconfig.
@@ -129,9 +130,6 @@ aws:
 
   # The target AWS region for the cluster.
   region: eu-west-1
-
-  # Name of an SSH key located within the AWS region. Example: coreos-user.
-  sshKey:
 
   # Block of IP addresses used by the VPC.
   # This should not overlap with any other networks, such as a private datacenter connected via Direct Connect.

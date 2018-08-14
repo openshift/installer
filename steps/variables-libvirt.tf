@@ -3,11 +3,6 @@ variable "tectonic_libvirt_uri" {
   description = "libvirt connection URI"
 }
 
-variable "tectonic_libvirt_ssh_key" {
-  type        = "string"
-  description = "Contents of an SSH key to install for the core user"
-}
-
 variable "tectonic_libvirt_network_name" {
   type        = "string"
   description = "Name of the libvirt network to create"

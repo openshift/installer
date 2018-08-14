@@ -1,5 +1,7 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 #shellcheck disable=SC2155
+
+set -e
 
 # This should be executed from top-level directory not from `tests` directory
 # Script needs two variables to be set before execution
@@ -18,9 +20,8 @@ CLUSTER_NAME=$(echo "${PREFIX}-$(uuidgen -r | cut -c1-5)" | tr '[:upper:]' '[:lo
 exec &> >(tee -a "$CLUSTER_NAME.log")
 
 function destroy() {
-  echo -e "\\e[34m Exiting... Destroying Tectonic and cleaning SSH keys...\\e[0m"
+  echo -e "\\e[34m Exiting... Destroying Tectonic...\\e[0m"
   tectonic destroy --dir="${CLUSTER_NAME}"
-  aws ec2 delete-key-pair --key-name "${CLUSTER_NAME}"
   echo -e "\\e[36m Finished! Smoke test output:\\e[0m ${SMOKE_TEST_OUTPUT}"
   echo -e "\\e[34m So Long, and Thanks for All the Fish\\e[0m"
 }
@@ -66,13 +67,12 @@ export AWS_ACCESS_KEY_ID=$(echo  "${RES}" | jq --raw-output '.Credentials.Access
 export AWS_SESSION_TOKEN=$(echo "${RES}" | jq --raw-output '.Credentials.SessionToken')
 
 ### HANDLE SSH KEY ###
-echo -e "\\e[36m Uploading SSH key-pair to AWS...\\e[0m"
-if [ ! -f "$HOME/.ssh/id_rsa.pub" ]; then
+echo -e "\\e[36m Generating SSH key-pair...\\e[0m"
+if [ ! -f ~/.ssh/id_rsa.pub ]; then
   #shellcheck disable=SC2034
-  SSH=$(ssh-keygen -b 2048 -t rsa -f "${HOME}/.ssh/id_rsa" -N "" < /dev/zero)
+  SSH=$(ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -N "" < /dev/zero)
 fi
-aws ec2 import-key-pair --key-name "${CLUSTER_NAME}" --public-key-material "file://$HOME/.ssh/id_rsa.pub"
-export TF_VAR_tectonic_aws_ssh_key="${CLUSTER_NAME}"
+export TF_VAR_tectonic_admin_ssh_key="$(cat ~/.ssh/id_rsa.pub)"
 
 echo -e "\\e[36m Deploying Tectonic...\\e[0m"
 tectonic install --dir="${CLUSTER_NAME}"

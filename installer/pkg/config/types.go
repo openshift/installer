@@ -20,6 +20,7 @@ const (
 type Admin struct {
 	Email    string `json:"tectonic_admin_email" yaml:"email,omitempty"`
 	Password string `json:"tectonic_admin_password" yaml:"password,omitempty"`
+	SSHKey   string `json:"tectonic_admin_ssh_key,omitempty" yaml:"sshKey,omitempty"`
 }
 
 // CA related config
