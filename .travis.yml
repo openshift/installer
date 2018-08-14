@@ -3,9 +3,6 @@ sudo: required
 language: bash
 services:
   - docker
-env:
-  global:
-    - BAZEL_IMG="quay.io/coreos/tectonic-builder:bazel-v0.3"
 branches:
   only:
     - master
