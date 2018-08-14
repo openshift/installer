@@ -27,11 +27,6 @@ wget http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest
 gunzip rhcos-qemu.qcow2.gz
 ```
 
-Because of the greater disk requirements of OpenShift, you'll need to expand the root drive with the following:
-```sh
-qemu-img resize rhcos-qemu.qcow2 +8G
-```
-
 #### 1.3b Container Linux
 
 Download the latest stable Container Linux image:
