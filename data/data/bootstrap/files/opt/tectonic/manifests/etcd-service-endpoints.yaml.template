@@ -1,0 +1,20 @@
+{{$masterCount := int .MasterCount -}}
+{{$etcdURIs := etcdURIs .ClusterName .BaseDomain $masterCount -}}
+{{$clusterName := .ClusterName -}}
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: etcd
+  namespace: kube-system
+  annotations:
+    alpha.installer.openshift.io/dns-suffix: {{.BaseDomain}}
+subsets:
+- addresses:
+{{- range $index, $member := $etcdURIs }}
+  - ip: 192.0.2.{{ add $index 1 }}{{/* FIXME: this isn't right, why do we set it */}}
+    hostname: {{$clusterName}}-etcd-{{$index}}
+{{- end }}
+  ports:
+  - name: etcd
+    port: 2379
+    protocol: TCP

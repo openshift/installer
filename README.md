@@ -41,11 +41,11 @@ Log in using the admin credentials you configured when creating the cluster.
 
 #### Kubeconfig
 
-You can also use the admin kubeconfig which `openshift-install create cluster` placed under `--dir` (which defaults to `.`) in `auth/kubeconfig`.
+You can also use the admin kubeconfig which `openshift-install create cluster` placed under `--dir` (which defaults to `.`) in `auth/kubeconfig-admin`.
 If you launched the cluster with `openshift-install --dir "${DIR}" create cluster`, you can use:
 
 ```sh
-export KUBECONFIG="${DIR}/auth/kubeconfig"
+export KUBECONFIG="${DIR}/auth/kubeconfig-admin"
 ```
 
 ### Cleanup

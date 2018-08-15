@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: root-ca
-  namespace: kube-system
-data:
-  ca.crt: |
-    {{.RootCaCert | indent 4}}

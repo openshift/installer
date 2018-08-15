@@ -285,12 +285,12 @@ Here `OPENSHIFT_INSTALL_LIBVIRT_URI` is the libvirt connection URI which you [pa
 You'll need a `kubectl` binary on your path and [the kubeconfig from your `cluster` call](../../README.md#kubeconfig).
 
 ```sh
-export KUBECONFIG="${DIR}/auth/kubeconfig"
+export KUBECONFIG="${DIR}/auth/kubeconfig-admin"
 kubectl get --all-namespaces pods
 ```
 
 Alternatively, you can run `kubectl` from the bootstrap or master nodes.
-Use `scp` or similar to transfer your local `${DIR}/auth/kubeconfig`, then [SSH in](#ssh-access) and run:
+Use `scp` or similar to transfer your local `${DIR}/auth/kubeconfig-admin`, then [SSH in](#ssh-access) and run:
 
 ```sh
 export KUBECONFIG=/where/you/put/your/kubeconfig

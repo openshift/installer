@@ -43,7 +43,7 @@ func newRootCmd() *cobra.Command {
 		SilenceErrors:     true,
 		SilenceUsage:      true,
 	}
-	cmd.PersistentFlags().StringVar(&rootOpts.dir, "dir", ".", "assets directory")
+	cmd.PersistentFlags().StringVar(&rootOpts.dir, "dir", ".", "asset directory")
 	cmd.PersistentFlags().StringVar(&rootOpts.logLevel, "log-level", "info", "log level (e.g. \"debug | info | warn | error\")")
 	return cmd
 }

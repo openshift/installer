@@ -11,7 +11,7 @@ The installer doesn't provision worker nodes directly, like it does with master 
 The status of the Machine API Operator can be checked by running the following command from the machine used to install the cluster:
 
 ```sh
-oc --config=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-cluster-api get pods
+oc --config=${INSTALL_DIR}/auth/kubeconfig-admin --namespace=openshift-cluster-api get pods
 ```
 
 If the API is unavailable, that will need to be [investigated first](#kubernetes-api-is-unavailable).
@@ -27,7 +27,7 @@ machine-api-operator-7894d8f85-lq2ts             1/1       Running   0          
 The logs for the machine-controller container within the `clusterapi-manager-controllers` pod need to be checked to determine why the workers haven't been created. That can be done with the following (the exact name of the pod will need to be substituted):
 
 ```sh
-oc --config=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-cluster-api logs clusterapi-manager-controllers-774dc4557-nx5xq --container=machine-controller
+oc --config=${INSTALL_DIR}/auth/kubeconfig-admin --namespace=openshift-cluster-api logs clusterapi-manager-controllers-774dc4557-nx5xq --container=machine-controller
 ```
 
 ### Kubernetes API is Unavailable
@@ -100,7 +100,7 @@ For other generic troubleshooting, see [the Kubernetes documentation][kubernetes
 This is the generic version of the [*No Worker Nodes Created*](#no-worker-nodes-created) troubleshooting procedure.
 
 ```console
-$ oc --config=${INSTALL_DIR}/auth/kubeconfig get pods --all-namespaces
+$ oc --config=${INSTALL_DIR}/auth/kubeconfig-admin get pods --all-namespaces
 NAMESPACE                              NAME                                                              READY     STATUS              RESTARTS   AGE
 kube-system                            etcd-member-wking-master-0                                        1/1       Running             0          46s
 openshift-cluster-api                  machine-api-operator-586bd5b6b9-bxq9s                             0/1       Pending             0          1m
@@ -111,7 +111,7 @@ openshift-cluster-dns-operator         cluster-dns-operator-7f4f6866b9-kzth5    
 You can investigate any pods listed as `Pending` with:
 
 ```sh
-oc --config=${INSTALL_DIR}/auth/kubeconfig describe -n openshift-cluster-api pod/machine-api-operator-586bd5b6b9-bxq9s
+oc --config=${INSTALL_DIR}/auth/kubeconfig-admin describe -n openshift-cluster-api pod/machine-api-operator-586bd5b6b9-bxq9s
 ```
 
 which may show events with warnings like:
@@ -123,7 +123,7 @@ Warning  FailedScheduling  1m (x10 over 1m)  default-scheduler  0/1 nodes are av
 You can get the image used for a crashing pod with:
 
 ```console
-$ oc --config=${INSTALL_DIR}/auth/kubeconfig get pod -o "jsonpath={range .status.containerStatuses[*]}{.name}{'\t'}{.state}{'\t'}{.image}{'\n'}{end}" -n openshift-cluster-api machine-api-operator-586bd5b6b9-bxq9s
+$ oc --config=${INSTALL_DIR}/auth/kubeconfig-admin get pod -o "jsonpath={range .status.containerStatuses[*]}{.name}{'\t'}{.state}{'\t'}{.image}{'\n'}{end}" -n openshift-cluster-api machine-api-operator-586bd5b6b9-bxq9s
 machine-api-operator	map[running:map[startedAt:2018-11-13T19:04:50Z]]	registry.svc.ci.openshift.org/openshift/origin-v4.0-20181113175638@sha256:c97d0b53b98d07053090f3c9563cfd8277587ce94f8c2400b33e246aa08332c7
 ```
 

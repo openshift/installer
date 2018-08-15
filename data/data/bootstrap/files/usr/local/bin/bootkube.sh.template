@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+{{$masterCount := int .MasterCount -}}
+{{$etcdURISlice := etcdURIs .ClusterName .BaseDomain $masterCount -}}
+{{$etcdURIs := join "," $etcdURISlice -}}
 set -e
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
@@ -48,7 +51,7 @@ then
 		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-apiserver-operator render \
 		--manifest-etcd-serving-ca=etcd-client-ca.crt \
-		--manifest-etcd-server-urls={{.EtcdCluster}} \
+		--manifest-etcd-server-urls={{$etcdURIs}} \
 		--manifest-image=${OPENSHIFT_HYPERSHIFT_IMAGE} \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
@@ -173,13 +176,13 @@ until podman run \
 		--name etcdctl \
 		--env ETCDCTL_API=3 \
 		--volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
-		"{{.EtcdctlImage}}" \
+		"{{.EtcdCtlImage}}" \
 		/usr/local/bin/etcdctl \
 		--dial-timeout=10m \
 		--cacert=/opt/tectonic/tls/etcd-client-ca.crt \
 		--cert=/opt/tectonic/tls/etcd-client.crt \
 		--key=/opt/tectonic/tls/etcd-client.key \
-		--endpoints={{.EtcdCluster}} \
+		--endpoints={{$etcdURIs}} \
 		endpoint health
 do
 	echo "etcdctl failed. Retrying in 5 seconds..."

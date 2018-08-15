@@ -1,16 +1,21 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
-	"reflect"
+	"path"
+	"sort"
+	"strings"
 
 	"github.com/awalterschulze/gographviz"
+	"github.com/go-log/log/print"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/assets"
+	"github.com/openshift/installer/pkg/installerassets"
 )
 
 var (
@@ -31,21 +36,55 @@ func newGraphCmd() *cobra.Command {
 }
 
 func runGraphCmd(cmd *cobra.Command, args []string) error {
+	ctx := context.Background()
 	g := gographviz.NewGraph()
 	g.SetName("G")
 	g.SetDir(true)
 	g.SetStrict(true)
 
-	tNodeAttr := map[string]string{
-		string(gographviz.Shape): "box",
-		string(gographviz.Style): "filled",
+	installerAssets := installerassets.New()
+	err := installerAssets.Read(ctx, rootOpts.dir, installerassets.GetDefault, print.New(logrus.StandardLogger()))
+	if err != nil {
+		logrus.Fatal(err)
 	}
-	for _, t := range targets {
-		name := fmt.Sprintf(`"Target %s"`, t.name)
-		g.AddNode("G", name, tNodeAttr)
-		for _, dep := range t.assets {
-			addEdge(g, name, dep)
+
+	root, err := installerAssets.GetByHash(ctx, installerAssets.Root.Hash)
+	if err != nil {
+		logrus.Fatal(err)
+	}
+
+	directories := make(map[string]float32)
+	seen := make(map[string]bool)
+	stack := []*assets.Asset{&root}
+	for len(stack) > 0 {
+		asset := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if seen[asset.Name] {
+			continue
 		}
+
+		directories[path.Dir(asset.Name)] = 1
+		for _, reference := range asset.Parents {
+			parent, err := installerAssets.GetByHash(ctx, reference.Hash)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+			stack = append(stack, &parent)
+		}
+	}
+	dirSlice := make([]string, 0, len(directories))
+	for dir := range directories {
+		dirSlice = append(dirSlice, dir)
+	}
+	sort.Strings(dirSlice)
+	for i, dir := range dirSlice {
+		directories[dir] = float32(i) / float32(len(dirSlice))
+	}
+
+	added := make(map[string]bool)
+	err = addNodes(ctx, g, &root, installerAssets.GetByHash, added, directories)
+	if err != nil {
+		logrus.Fatal(err)
 	}
 
 	out := os.Stdout
@@ -61,33 +100,61 @@ func runGraphCmd(cmd *cobra.Command, args []string) error {
 	if _, err := io.WriteString(out, g.String()); err != nil {
 		return err
 	}
+
+	var unused []string
+	for key := range installerassets.Defaults {
+		if _, ok := added[key]; !ok {
+			unused = append(unused, key)
+		}
+	}
+	for key := range installerassets.Rebuilders {
+		if _, ok := added[key]; !ok {
+			unused = append(unused, key)
+		}
+	}
+	sort.Strings(unused)
+	if unused != nil {
+		logrus.Warnf("potentially unused asset(s): %s", strings.Join(unused, ", "))
+	}
+
 	return nil
 }
 
-func addEdge(g *gographviz.Graph, parent string, asset asset.Asset) {
-	elem := reflect.TypeOf(asset).Elem()
-	name := fmt.Sprintf(`"%s"`, elem.Name())
-
-	if !g.IsNode(name) {
-		logrus.Debugf("adding node %s", name)
-		g.AddNode("G", name, nil)
+func addNodes(ctx context.Context, g *gographviz.Graph, asset *assets.Asset, getByHash assets.GetByBytes, added map[string]bool, directories map[string]float32) (err error) {
+	_, ok := added[asset.Name]
+	if ok {
+		return nil
 	}
-	if !isEdge(g, name, parent) {
-		logrus.Debugf("adding edge %s -> %s", name, parent)
-		g.AddEdge(name, parent, true, nil)
-	}
+	added[asset.Name] = true
 
-	deps := asset.Dependencies()
-	for _, dep := range deps {
-		addEdge(g, name, dep)
-	}
-}
-
-func isEdge(g *gographviz.Graph, src, dst string) bool {
-	for _, edge := range g.Edges.Edges {
-		if edge.Src == src && edge.Dst == dst {
-			return true
+	assetName := fmt.Sprintf("%q", asset.Name)
+	attrs := make(map[string]string)
+	hue, ok := directories[path.Dir(asset.Name)]
+	if ok {
+		saturation := 0.1
+		if asset.Name == "tls/kubelet-client.crt" {
+			saturation = 0.3
 		}
+		attrs[string(gographviz.FillColor)] = fmt.Sprintf("\"%.2f %.2f 1\"", hue, saturation)
+
+		attrs[string(gographviz.Style)] = "filled"
 	}
-	return false
+	g.AddNode("G", assetName, attrs)
+
+	for _, parentReference := range asset.Parents {
+		parent, err := getByHash(ctx, parentReference.Hash)
+		if err != nil {
+			return err
+		}
+
+		err = addNodes(ctx, g, &parent, getByHash, added, directories)
+		if err != nil {
+			return err
+		}
+
+		parentName := fmt.Sprintf("%q", parent.Name)
+		g.AddEdge(parentName, assetName, true, nil)
+	}
+
+	return nil
 }

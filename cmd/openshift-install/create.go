@@ -2,11 +2,14 @@ package main
 
 import (
 	"context"
-	"os/exec"
+	"fmt"
+	"io/ioutil"
+	"os"
+	"path"
 	"path/filepath"
-	"strings"
 	"time"
 
+	"github.com/go-log/log/print"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -17,88 +20,20 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/cluster"
-	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
-	"github.com/openshift/installer/pkg/asset/ignition/machine"
-	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/kubeconfig"
-	"github.com/openshift/installer/pkg/asset/manifests"
-	"github.com/openshift/installer/pkg/asset/templates"
+	"github.com/openshift/installer/pkg/assets"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
+	"github.com/openshift/installer/pkg/installerassets"
+	_ "github.com/openshift/installer/pkg/installerassets/aws"
+	_ "github.com/openshift/installer/pkg/installerassets/libvirt"
+	_ "github.com/openshift/installer/pkg/installerassets/openstack"
+	_ "github.com/openshift/installer/pkg/installerassets/tls"
+	"github.com/openshift/installer/pkg/terraform"
 )
 
-type target struct {
-	name    string
-	command *cobra.Command
-	assets  []asset.WritableAsset
-}
-
-// each target is a variable to preserve the order when creating subcommands and still
-// allow other functions to directly access each target individually.
 var (
-	installConfigTarget = target{
-		name: "Install Config",
-		command: &cobra.Command{
-			Use:   "install-config",
-			Short: "Generates the Install Config asset",
-			// FIXME: add longer descriptions for our commands with examples for better UX.
-			// Long:  "",
-		},
-		assets: []asset.WritableAsset{&installconfig.InstallConfig{}},
+	createAssetsOpts struct {
+		prune bool
 	}
-
-	manifestsTarget = target{
-		name: "Manifests",
-		command: &cobra.Command{
-			Use:   "manifests",
-			Short: "Generates the Kubernetes manifests",
-			// FIXME: add longer descriptions for our commands with examples for better UX.
-			// Long:  "",
-		},
-		assets: []asset.WritableAsset{&manifests.Manifests{}, &manifests.Tectonic{}},
-	}
-
-	manifestTemplatesTarget = target{
-		name: "Manifest templates",
-		command: &cobra.Command{
-			Use:   "manifest-templates",
-			Short: "Generates the unrendered Kubernetes manifest templates",
-			Long:  "",
-		},
-		assets: []asset.WritableAsset{&templates.Templates{}},
-	}
-
-	ignitionConfigsTarget = target{
-		name: "Ignition Configs",
-		command: &cobra.Command{
-			Use:   "ignition-configs",
-			Short: "Generates the Ignition Config asset",
-			// FIXME: add longer descriptions for our commands with examples for better UX.
-			// Long:  "",
-		},
-		assets: []asset.WritableAsset{&bootstrap.Bootstrap{}, &machine.Master{}, &machine.Worker{}},
-	}
-
-	clusterTarget = target{
-		name: "Cluster",
-		command: &cobra.Command{
-			Use:   "cluster",
-			Short: "Create an OpenShift cluster",
-			// FIXME: add longer descriptions for our commands with examples for better UX.
-			// Long:  "",
-			PostRunE: func(_ *cobra.Command, _ []string) error {
-				err := destroyBootstrap(context.Background(), rootOpts.dir)
-				if err != nil {
-					return err
-				}
-				return logComplete(rootOpts.dir)
-			},
-		},
-		assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}},
-	}
-
-	targets = []target{installConfigTarget, manifestTemplatesTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
 )
 
 func newCreateCmd() *cobra.Command {
@@ -110,64 +45,126 @@ func newCreateCmd() *cobra.Command {
 		},
 	}
 
-	for _, t := range targets {
-		t.command.RunE = runTargetCmd(t.assets...)
-		cmd.AddCommand(t.command)
+	assets := &cobra.Command{
+		Use:   "assets",
+		Short: "Generates installer assets",
+		Long:  "Generates installer assets.  Can be run multiple times on the same directory to propagate changes made to any asset through the Merkle tree.",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := context.Background()
+
+			cleanup, err := setupFileHook(rootOpts.dir)
+			if err != nil {
+				return errors.Wrap(err, "failed to setup logging hook")
+			}
+			defer cleanup()
+
+			_, err = syncAssets(ctx, rootOpts.dir, createAssetsOpts.prune)
+			return err
+		},
 	}
+	assets.PersistentFlags().BoolVar(&createAssetsOpts.prune, "prune", false, "remove everything except referenced assets from the asset directory")
+	cmd.AddCommand(assets)
+
+	cmd.AddCommand(&cobra.Command{
+		Use:   "cluster",
+		Short: "Creates the cluster",
+		Long:  "Generates resources based on the installer assets, launching the cluster.",
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			ctx := context.Background()
+
+			cleanup, err := setupFileHook(rootOpts.dir)
+			if err != nil {
+				return errors.Wrap(err, "failed to setup logging hook")
+			}
+			defer cleanup()
+
+			assets, err := syncAssets(ctx, rootOpts.dir, createAssetsOpts.prune)
+			if err != nil {
+				return err
+			}
+
+			err = createCluster(ctx, assets, rootOpts.dir)
+			if err != nil {
+				return err
+			}
+
+			err = destroyBootstrap(ctx, assets)
+			if err != nil {
+				return err
+			}
+
+			return logComplete(rootOpts.dir)
+		},
+	})
 
 	return cmd
 }
 
-func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		cleanup, err := setupFileHook(rootOpts.dir)
-		if err != nil {
-			return errors.Wrap(err, "failed to setup logging hook")
-		}
-		defer cleanup()
-
-		assetStore, err := asset.NewStore(rootOpts.dir)
-		if err != nil {
-			return errors.Wrapf(err, "failed to create asset store")
-		}
-
-		for _, a := range targets {
-			err := assetStore.Fetch(a)
-			if err != nil {
-				if exitError, ok := errors.Cause(err).(*exec.ExitError); ok && len(exitError.Stderr) > 0 {
-					logrus.Error(strings.Trim(string(exitError.Stderr), "\n"))
-				}
-				err = errors.Wrapf(err, "failed to fetch %s", a.Name())
-			}
-
-			if err2 := asset.PersistToFile(a, rootOpts.dir); err2 != nil {
-				err2 = errors.Wrapf(err2, "failed to write asset (%s) to disk", a.Name())
-				if err != nil {
-					logrus.Error(err2)
-					return err
-				}
-				return err2
-			}
-
-			if err != nil {
-				return err
-			}
-		}
-		return nil
+func syncAssets(ctx context.Context, directory string, prune bool) (*assets.Assets, error) {
+	assets := installerassets.New()
+	err := assets.Read(ctx, directory, installerassets.GetDefault, print.New(logrus.StandardLogger()))
+	if err != nil {
+		return nil, err
 	}
+
+	err = assets.Write(ctx, directory, prune)
+	return assets, err
 }
 
-// FIXME: pulling the kubeconfig and metadata out of the root
-// directory is a bit cludgy when we already have them in memory.
-func destroyBootstrap(ctx context.Context, directory string) (err error) {
-	cleanup, err := setupFileHook(rootOpts.dir)
+func createCluster(ctx context.Context, assets *assets.Assets, directory string) error {
+	tmpDir, err := ioutil.TempDir("", "openshift-install-")
 	if err != nil {
-		return errors.Wrap(err, "failed to setup logging hook")
+		return err
 	}
-	defer cleanup()
+	defer os.RemoveAll(tmpDir)
 
+	platformAsset, err := assets.GetByName(ctx, "platform")
+	if err != nil {
+		return errors.Wrapf(err, `retrieve "platform" by name`)
+	}
+	platform := string(platformAsset.Data)
+
+	for _, filename := range []string{"terraform.tfvars", fmt.Sprintf("%s-terraform.auto.tfvars", platform)} {
+		assetName := path.Join("terraform", filename)
+		tfVars, err := assets.GetByName(ctx, assetName)
+		if err != nil {
+			return errors.Wrapf(err, "retrieve %q by name", assetName)
+		}
+
+		if err := ioutil.WriteFile(filepath.Join(tmpDir, filename), tfVars.Data, 0600); err != nil {
+			return err
+		}
+	}
+	logrus.Info("Using Terraform to create cluster...")
+	stateFile, err := terraform.Apply(tmpDir, platform)
+	if err != nil {
+		err = errors.Wrap(err, "run Terraform")
+	}
+
+	if stateFile != "" {
+		data, err2 := ioutil.ReadFile(stateFile)
+		if err2 == nil {
+			err2 = ioutil.WriteFile(filepath.Join(directory, "terraform", "terraform.tfstate"), data, 0666)
+		}
+		if err == nil {
+			err = err2
+		} else {
+			logrus.Error(errors.Wrap(err2, "read Terraform state"))
+		}
+	}
+
+	return err
+}
+
+func destroyBootstrap(ctx context.Context, assets *assets.Assets) error {
 	logrus.Info("Waiting for bootstrap completion...")
-	config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(directory, "auth", "kubeconfig"))
+
+	kubeconfig, err := assets.GetByName(ctx, "auth/kubeconfig-admin")
+	if err != nil {
+		return errors.Wrap(err, `retrieve "auth/kubeconfig-admin" by name`)
+	}
+
+	config, err := clientcmd.RESTConfigFromKubeConfig(kubeconfig.Data)
 	if err != nil {
 		return errors.Wrap(err, "loading kubeconfig")
 	}
@@ -191,7 +188,7 @@ func destroyBootstrap(ctx context.Context, directory string) (err error) {
 		}
 	}, 2*time.Second, apiContext.Done())
 
-	events := client.CoreV1().Events("kube-system")
+	events := client.CoreV1().Events(metav1.NamespaceSystem)
 
 	eventContext, cancel := context.WithTimeout(ctx, 30*time.Minute)
 	defer cancel()
@@ -239,6 +236,8 @@ func destroyBootstrap(ctx context.Context, directory string) (err error) {
 	}
 
 	logrus.Info("Destroying the bootstrap resources...")
+	// FIXME: pulling the metadata out of the root directory is a bit
+	// cludgy when we already have it in memory.
 	return destroybootstrap.Destroy(rootOpts.dir)
 }
 
