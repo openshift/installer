@@ -43,7 +43,19 @@ qemu-img resize coreos_production_qemu_image.img +8G
 #### 1.4 Get a Tectonic License
 Go to https://account.coreos.com/ and obtain a Tectonic license. Save the *pull secret* and *license path* somewhere.
 
-#### 1.5 Prepare the configuration file
+#### 1.5 Make sure you have permisions for `qemu:///system`
+You may want to grant yourself permissions to use libvirt as a non-root user. You could allow all users in the wheel group by doing the following:
+```sh
+cat <<EOF >> /etc/polkit-1/rules.d/80-libvirt.rules
+polkit.addRule(function(action, subject) {
+  if (action.id == "org.libvirt.unix.manage" && subject.local && subject.active && subject.isInGroup("wheel")) {
+      return polkit.Result.YES;
+  }
+});
+EOF
+```
+
+#### 1.6 Prepare the configuration file
 1. `cp examples/tectonic.libvirt.yaml ./`
 1. Edit the configuration file:
     1. Set an email and password in the `admin` section
@@ -55,7 +67,7 @@ Go to https://account.coreos.com/ and obtain a Tectonic license. Save the *pull 
     1. Look at the `podCIDR` and `serviceCIDR` fields in the `networking` section. Make sure they don't conflict with anything important.
     1. Set the `pullSecretPath` to the **absolute** path of your downloaded pull secret file.
 
-#### 1.6 Set up NetworkManager DNS overlay
+#### 1.7 Set up NetworkManager DNS overlay
 This step is optional, but useful for being able to resolve cluster-internal hostnames from your host.
 1. Edit `/etc/NetworkManager/NetworkManager.conf` and set `dns=dnsmasq` in section `[main]`
 2. Tell dnsmasq to use your cluster. The syntax is `server=/<baseDomain>/<firstIP>`. For this example:
@@ -64,7 +76,7 @@ echo server=/tt.testing/192.168.124.1 | sudo tee /etc/NetworkManager/dnsmasq.d/t
 ```
 3. `systemctl restart NetworkManager`
 
-#### 1.7 Install the terraform provider
+#### 1.8 Install the terraform provider
 1. Make sure you have the `virsh` binary installed: `sudo dnf install libvirt-client libvirt-devel`
 2. Install the libvirt terraform provider:
 ```sh
