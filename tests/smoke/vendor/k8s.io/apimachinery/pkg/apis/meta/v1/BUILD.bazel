@@ -3,6 +3,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library")
 go_library(
     name = "go_default_library",
     srcs = [
+        "controller_ref.go",
         "conversion.go",
         "doc.go",
         "duration.go",
@@ -22,10 +23,10 @@ go_library(
         "zz_generated.deepcopy.go",
         "zz_generated.defaults.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/apimachinery/pkg/apis/meta/v1",
     importpath = "k8s.io/apimachinery/pkg/apis/meta/v1",
     visibility = ["//visibility:public"],
     deps = [
-        "//tests/smoke/vendor/github.com/go-openapi/spec:go_default_library",
         "//tests/smoke/vendor/github.com/gogo/protobuf/proto:go_default_library",
         "//tests/smoke/vendor/github.com/gogo/protobuf/sortkeys:go_default_library",
         "//tests/smoke/vendor/github.com/google/gofuzz:go_default_library",
@@ -33,7 +34,6 @@ go_library(
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/conversion:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/fields:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/labels:go_default_library",
-        "//tests/smoke/vendor/k8s.io/apimachinery/pkg/openapi:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/runtime:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/runtime/schema:go_default_library",
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/selection:go_default_library",

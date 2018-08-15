@@ -17,8 +17,10 @@ limitations under the License.
 package wait
 
 import (
+	"context"
 	"errors"
 	"math/rand"
+	"sync"
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/runtime"
@@ -35,6 +37,40 @@ var ForeverTestTimeout = time.Second * 30
 
 // NeverStop may be passed to Until to make it never stop.
 var NeverStop <-chan struct{} = make(chan struct{})
+
+// Group allows to start a group of goroutines and wait for their completion.
+type Group struct {
+	wg sync.WaitGroup
+}
+
+func (g *Group) Wait() {
+	g.wg.Wait()
+}
+
+// StartWithChannel starts f in a new goroutine in the group.
+// stopCh is passed to f as an argument. f should stop when stopCh is available.
+func (g *Group) StartWithChannel(stopCh <-chan struct{}, f func(stopCh <-chan struct{})) {
+	g.Start(func() {
+		f(stopCh)
+	})
+}
+
+// StartWithContext starts f in a new goroutine in the group.
+// ctx is passed to f as an argument. f should stop when ctx.Done() is available.
+func (g *Group) StartWithContext(ctx context.Context, f func(context.Context)) {
+	g.Start(func() {
+		f(ctx)
+	})
+}
+
+// Start starts f in a new goroutine in the group.
+func (g *Group) Start(f func()) {
+	g.wg.Add(1)
+	go func() {
+		defer g.wg.Done()
+		f()
+	}()
+}
 
 // Forever calls f every period for ever.
 //
@@ -248,10 +284,30 @@ func PollImmediateInfinite(interval time.Duration, condition ConditionFunc) erro
 // PollUntil tries a condition func until it returns true, an error or stopCh is
 // closed.
 //
-// PolUntil always waits interval before the first run of 'condition'.
+// PollUntil always waits interval before the first run of 'condition'.
 // 'condition' will always be invoked at least once.
 func PollUntil(interval time.Duration, condition ConditionFunc, stopCh <-chan struct{}) error {
 	return WaitFor(poller(interval, 0), condition, stopCh)
+}
+
+// PollImmediateUntil tries a condition func until it returns true, an error or stopCh is closed.
+//
+// PollImmediateUntil runs the 'condition' before waiting for the interval.
+// 'condition' will always be invoked at least once.
+func PollImmediateUntil(interval time.Duration, condition ConditionFunc, stopCh <-chan struct{}) error {
+	done, err := condition()
+	if err != nil {
+		return err
+	}
+	if done {
+		return nil
+	}
+	select {
+	case <-stopCh:
+		return ErrWaitTimeout
+	default:
+		return PollUntil(interval, condition, stopCh)
+	}
 }
 
 // WaitFunc creates a channel that receives an item every time a test

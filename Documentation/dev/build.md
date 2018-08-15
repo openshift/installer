@@ -87,18 +87,6 @@ tectonic_1.2.3-beta
 
 *Note*: the generated tarball will not include the version string in its own name since output names must be known ahead of time in Bazel. To include the version in the tarball name, copy or move the archive with the desired name in the destination.
 
-## Building the Smoke Test Binary
-
-We also use Bazel to build the smoke test binary. To do so, run:
-
-```sh
-bazel build tests/smoke
-```
-
-This operation will produce a binary located at `bazel-bin/tests/smoke/linux_amd64_stripped/smoke`, if on a Linux machine, or `bazel-bin/tests/smoke/darwin_amd64_stripped/smoke`, if on a Mac.
-Follow the [smoke test instructions][smoke-test] to test a Tectonic cluster using this newly compiled binary.
-
-
 ## Cleaning
 
 You can cleanup all generated files by running:
@@ -110,5 +98,3 @@ Additionally you can remove all toolchains (in addition to the generated files) 
 ```sh
 bazel clean --expunge
 ```
-
-[smoke-test]: ../../tests/smoke/README.md

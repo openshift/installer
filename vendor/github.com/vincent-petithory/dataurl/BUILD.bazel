@@ -8,6 +8,7 @@ go_library(
         "lex.go",
         "rfc2396.go",
     ],
+    importmap = "installer/vendor/github.com/vincent-petithory/dataurl",
     importpath = "github.com/vincent-petithory/dataurl",
     visibility = ["//visibility:public"],
 )

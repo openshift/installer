@@ -12,6 +12,8 @@ go_library(
         "envar.go",
         "flags.go",
         "global.go",
+        "guesswidth.go",
+        "guesswidth_unix.go",
         "model.go",
         "parser.go",
         "parsers.go",
@@ -19,42 +21,8 @@ go_library(
         "usage.go",
         "values.go",
         "values_generated.go",
-    ] + select({
-        "@io_bazel_rules_go//go/platform:android": [
-            "guesswidth.go",
-        ],
-        "@io_bazel_rules_go//go/platform:darwin": [
-            "guesswidth_unix.go",
-        ],
-        "@io_bazel_rules_go//go/platform:dragonfly": [
-            "guesswidth_unix.go",
-        ],
-        "@io_bazel_rules_go//go/platform:freebsd": [
-            "guesswidth_unix.go",
-        ],
-        "@io_bazel_rules_go//go/platform:linux": [
-            "guesswidth_unix.go",
-        ],
-        "@io_bazel_rules_go//go/platform:nacl": [
-            "guesswidth.go",
-        ],
-        "@io_bazel_rules_go//go/platform:netbsd": [
-            "guesswidth_unix.go",
-        ],
-        "@io_bazel_rules_go//go/platform:openbsd": [
-            "guesswidth_unix.go",
-        ],
-        "@io_bazel_rules_go//go/platform:plan9": [
-            "guesswidth.go",
-        ],
-        "@io_bazel_rules_go//go/platform:solaris": [
-            "guesswidth.go",
-        ],
-        "@io_bazel_rules_go//go/platform:windows": [
-            "guesswidth.go",
-        ],
-        "//conditions:default": [],
-    }),
+    ],
+    importmap = "installer/vendor/gopkg.in/alecthomas/kingpin.v2",
     importpath = "gopkg.in/alecthomas/kingpin.v2",
     visibility = ["//visibility:public"],
     deps = [

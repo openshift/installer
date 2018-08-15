@@ -1,12 +1,17 @@
-package: "github.com/openshift/installer/tests/smoke"
-import:
-- package: k8s.io/client-go
-  version: v4.0.0-beta.0
-- package: k8s.io/kubernetes
-  version: v1.7.0
+package: github.com/openshift/installer/tests/smoke
+import: []
+testImport:
+- package: k8s.io/api
+  subpackages:
+  - core/v1
 - package: k8s.io/apimachinery
-  version: abe34e4f5b4413c282a83011892cbeea5b32223b
-- package: github.com/coreos/ktestutil
-  version: 47edf51e9cdb1955e93e56e6c84ed944fdda4789
-- package: k8s.io/apiserver
-  version: release-1.7
+  subpackages:
+  - pkg/apis/meta/v1
+  - pkg/apis/meta/v1/unstructured
+- package: k8s.io/client-go
+  version: ^8.0.0
+  subpackages:
+  - kubernetes
+  - tools/clientcmd
+- package: github.com/json-iterator/go
+  version: f2b4162afba35581b6d4a50d3b8f34e33c144682

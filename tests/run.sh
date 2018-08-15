@@ -28,13 +28,13 @@ function destroy() {
 trap destroy EXIT
 
 echo -e "\\e[36m Starting build process...\\e[0m"
-bazel build tarball tests/smoke
+bazel build tarball smoke_tests
 # In future bazel build could be extracted to another job which could be running in docker container like this:
-# docker run --rm -v $PWD:$PWD:Z -w $PWD quay.io/coreos/tectonic-builder:bazel-v0.3 bazel build tarball tests/smoke
+# docker run --rm -v $PWD:$PWD:Z -w $PWD quay.io/coreos/tectonic-builder:bazel-v0.3 bazel build tarball smoke_tests
 
 echo -e "\\e[36m Unpacking artifacts...\\e[0m"
 tar -zxf bazel-bin/tectonic-dev.tar.gz
-cp bazel-bin/tests/smoke/linux_amd64_stripped/smoke tectonic-dev/smoke
+cp bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test tectonic-dev/smoke
 export PATH="$(pwd)/tectonic-dev/installer:${PATH}"
 cd tectonic-dev
 

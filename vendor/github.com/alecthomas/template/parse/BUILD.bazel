@@ -7,6 +7,7 @@ go_library(
         "node.go",
         "parse.go",
     ],
+    importmap = "installer/vendor/github.com/alecthomas/template/parse",
     importpath = "github.com/alecthomas/template/parse",
     visibility = ["//visibility:public"],
 )

@@ -9,7 +9,9 @@ go_library(
         "streamwatcher.go",
         "until.go",
         "watch.go",
+        "zz_generated.deepcopy.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/apimachinery/pkg/watch",
     importpath = "k8s.io/apimachinery/pkg/watch",
     visibility = ["//visibility:public"],
     deps = [

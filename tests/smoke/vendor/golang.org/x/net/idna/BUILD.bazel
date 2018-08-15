@@ -5,7 +5,15 @@ go_library(
     srcs = [
         "idna.go",
         "punycode.go",
+        "tables.go",
+        "trie.go",
+        "trieval.go",
     ],
+    importmap = "installer/tests/smoke/vendor/golang.org/x/net/idna",
     importpath = "golang.org/x/net/idna",
     visibility = ["//visibility:public"],
+    deps = [
+        "//tests/smoke/vendor/golang.org/x/text/secure/bidirule:go_default_library",
+        "//tests/smoke/vendor/golang.org/x/text/unicode/norm:go_default_library",
+    ],
 )
