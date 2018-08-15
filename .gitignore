@@ -23,4 +23,5 @@ bazel-out
 bazel-genfiles
 bazel-testlogs
 bazel-tectonic-installer
+bazel-openshift-installer
 .cache
