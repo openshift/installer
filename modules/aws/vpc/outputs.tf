@@ -6,6 +6,10 @@ output "master_subnet_ids" {
   value = "${local.master_subnet_ids}"
 }
 
+output "etcd_subnet_ids" {
+  value = "${local.etcd_subnet_ids}"
+}
+
 output "worker_subnet_ids" {
   value = "${local.worker_subnet_ids}"
 }

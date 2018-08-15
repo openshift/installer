@@ -40,11 +40,13 @@ module "vpc" {
   external_vpc_id = "${var.tectonic_aws_external_vpc_id}"
 
   external_master_subnet_ids = "${compact(var.tectonic_aws_external_master_subnet_ids)}"
+  external_etcd_subnet_ids   = "${compact(var.tectonic_aws_external_etcd_subnet_ids)}"
   external_worker_subnet_ids = "${compact(var.tectonic_aws_external_worker_subnet_ids)}"
   extra_tags                 = "${var.tectonic_aws_extra_tags}"
 
   // empty map subnet_configs will have the vpc module creating subnets in all availabile AZs
   new_master_subnet_configs = "${var.tectonic_aws_master_custom_subnets}"
+  new_etcd_subnet_configs   = "${var.tectonic_aws_etcd_custom_subnets}"
   new_worker_subnet_configs = "${var.tectonic_aws_worker_custom_subnets}"
 
   private_master_endpoints = "${local.private_endpoints}"

@@ -41,3 +41,28 @@ resource "aws_route_table_association" "worker_routing" {
   route_table_id = "${aws_route_table.private_routes.*.id[count.index]}"
   subnet_id      = "${aws_subnet.worker_subnet.*.id[count.index]}"
 }
+
+resource "aws_subnet" "etcd_subnet" {
+  count = "${local.new_etcd_az_count}"
+
+  vpc_id = "${data.aws_vpc.cluster_vpc.id}"
+
+  cidr_block = "${lookup(var.new_etcd_subnet_configs,
+    local.new_etcd_subnet_azs[count.index],
+    cidrsubnet(local.new_etcd_cidr_range, 3, count.index),
+  )}"
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_name}-etcd-${local.new_etcd_subnet_azs[count.index]}",
+    "kubernetes.io/cluster/${var.cluster_name}","shared",
+    "kubernetes.io/role/internal-elb", "",
+    "tectonicClusterID", "${var.cluster_id}",
+    ),
+    var.extra_tags)}"
+}
+
+resource "aws_route_table_association" "etcd_routing" {
+  count          = "${local.new_etcd_az_count}"
+  route_table_id = "${aws_route_table.private_routes.*.id[count.index]}"
+  subnet_id      = "${aws_subnet.etcd_subnet.*.id[count.index]}"
+}

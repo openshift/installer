@@ -22,6 +22,10 @@ variable "external_master_subnet_ids" {
   type = "list"
 }
 
+variable "external_etcd_subnet_ids" {
+  type = "list"
+}
+
 variable "external_worker_subnet_ids" {
   type = "list"
 }
@@ -33,6 +37,11 @@ variable "extra_tags" {
 }
 
 variable "new_master_subnet_configs" {
+  description = "{az_name = new_subnet_cidr}: Empty map means create new subnets in all availability zones in region with generated cidrs"
+  type        = "map"
+}
+
+variable "new_etcd_subnet_configs" {
   description = "{az_name = new_subnet_cidr}: Empty map means create new subnets in all availability zones in region with generated cidrs"
   type        = "map"
 }

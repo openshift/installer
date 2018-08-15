@@ -65,7 +65,7 @@ module "etcd" {
   s3_bucket               = "${local.s3_bucket}"
   sg_ids                  = "${concat(var.tectonic_aws_etcd_extra_sg_ids, list(local.sg_id))}"
   ssh_key                 = "${var.tectonic_aws_ssh_key}"
-  subnets                 = ["${local.subnet_ids_workers}"]
+  subnets                 = ["${local.subnet_ids}"]
   etcd_iam_role           = "${var.tectonic_aws_etcd_iam_role_name}"
   ec2_ami                 = "${var.tectonic_aws_ec2_ami_override}"
 }

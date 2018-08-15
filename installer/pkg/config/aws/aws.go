@@ -41,10 +41,12 @@ type External struct {
 	PrivateZone     string   `json:"tectonic_aws_external_private_zone,omitempty" yaml:"privateZone,omitempty"`
 	VPCID           string   `json:"tectonic_aws_external_vpc_id,omitempty" yaml:"vpcID,omitempty"`
 	WorkerSubnetIDs []string `json:"tectonic_aws_external_worker_subnet_ids,omitempty" yaml:"workerSubnetIDs,omitempty"`
+	// FIXME: Do I need to add EtcdSubnetIDs as well?
 }
 
 // Etcd converts etcd related config.
 type Etcd struct {
+	// FIXME: Do I need to add CustomSubnets as well?
 	EC2Type        string   `json:"tectonic_aws_etcd_ec2_type,omitempty" yaml:"ec2Type,omitempty"`
 	ExtraSGIDs     []string `json:"tectonic_aws_etcd_extra_sg_ids,omitempty" yaml:"extraSGIDs,omitempty"`
 	IAMRoleName    string   `json:"tectonic_aws_etcd_iam_role_name,omitempty" yaml:"iamRoleName,omitempty"`
