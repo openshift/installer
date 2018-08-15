@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	log "github.com/Sirupsen/logrus"
@@ -13,15 +12,18 @@ import (
 var (
 	installConfigCommand = kingpin.Command("install-config", "Generate the Install Config asset")
 
+	dirFlag  = kingpin.Flag("dir", "Assets directory").Default(".").String()
 	logLevel = kingpin.Flag("log-level", "log level (e.g. \"debug\")").Default("info").Enum("debug", "info", "warn", "error", "fatal", "panic")
 )
 
 func main() {
-	assetStock := asset.EstablishStock()
+	command := kingpin.Parse()
+
+	assetStock := asset.EstablishStock(*dirFlag)
 
 	var targetAsset asset.Asset
 
-	switch kingpin.Parse() {
+	switch command {
 	case installConfigCommand.FullCommand():
 		targetAsset = assetStock.InstallConfig
 	}
@@ -34,16 +36,8 @@ func main() {
 	log.SetLevel(l)
 
 	assetStore := &asset.StoreImpl{}
-	assetState, err := assetStore.Fetch(targetAsset)
-	if err != nil {
+	if _, err := assetStore.Fetch(targetAsset); err != nil {
 		log.Fatalf("failed to generate asset: %v", err)
 		os.Exit(1)
-	}
-
-	fmt.Println()
-	fmt.Println("***** ASSET *****")
-	for i, c := range assetState.Contents {
-		fmt.Printf("*** Content %v ***\n", i)
-		fmt.Println(string(c.Data))
 	}
 }

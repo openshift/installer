@@ -2,6 +2,8 @@ package asset
 
 import (
 	"fmt"
+	"io/ioutil"
+	"path/filepath"
 
 	"github.com/ghodss/yaml"
 	"github.com/pborman/uuid"
@@ -54,9 +56,18 @@ func (a *InstallConfig) Generate(dependencies map[Asset]*State) (*State, error) 
 		return nil, err
 	}
 
+	assetPath := filepath.Join(a.assetStock.directory, "install-config.yml")
+	a.assetStock.createAssetDirectory()
+	if err := ioutil.WriteFile(assetPath, data, 0644); err != nil {
+		return nil, err
+	}
+
 	return &State{
 		Contents: []Content{
-			{Data: data},
+			{
+				Name: assetPath,
+				Data: data,
+			},
 		},
 	}, nil
 }
