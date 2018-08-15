@@ -1,5 +1,9 @@
 package asset
 
+import (
+	"os"
+)
+
 type Stock struct {
 	// Targetable assets
 	InstallConfig Asset
@@ -12,10 +16,14 @@ type Stock struct {
 	pullSecret   Asset
 	platform     Asset
 	emailAddress Asset
+
+	directory string
 }
 
-func EstablishStock() *Stock {
-	s := &Stock{}
+func EstablishStock(directory string) *Stock {
+	s := &Stock{
+		directory: directory,
+	}
 
 	s.InstallConfig = &InstallConfig{assetStock: s}
 
@@ -28,4 +36,8 @@ func EstablishStock() *Stock {
 	s.emailAddress = &UserProvided{Prompt: "Email Address: "}
 
 	return s
+}
+
+func (s *Stock) createAssetDirectory() error {
+	return os.MkdirAll(s.directory, 0755)
 }
