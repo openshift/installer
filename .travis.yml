@@ -9,20 +9,7 @@ branches:
 jobs:
   include:
     - stage: Lint & Test
-      script: ./hack/tf-lint.sh
-      name: Terraform lint
-    - script: ./hack/yaml-lint.sh
-      name: YAML lint
-    - script: ./hack/shellcheck.sh
-      name: shellcheck
-    - script: ./hack/tf-fmt.sh
-      name: Terraform format
-    - script: ./hack/gotest.sh
+      script: ./hack/gotest.sh
       name: Installer unit tests
-    - script: "docker run -v $PWD:/go/src/github.com/openshift/installer -w /go/src/github.com/openshift/installer quay.io/coreos/golang-testing go vet ./installer/..."
-      name: Go vet
     - script: "docker run -v $PWD:$PWD -w $PWD quay.io/coreos/golang-testing golint -set_exit_status installer/..."
       name: Go lint
-    - stage: Build
-      script: ./hack/test-bazel-build-tarball.sh
-      name: Build tarball
