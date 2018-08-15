@@ -1,27 +1,62 @@
-*.aci
-.terraform
+
+# non-default terraform ignores
 .terraformrc
 config.tfvars
+terraform.tfvars
+
+*.aci
 id_rsa*
 pull-secret.json
 ssh-key.pem
 tectonic-*.tar.gz
 tectonic-license.txt
-terraform.tfstate*
-terraform.tfvars
+config.yaml
+
 bin/
 bin_test/
 matchbox/
 /contrib/govcloud/vpn.conf
 tectonic-dev
 
-# Bazel
+# non-default Bazel stuff
 .build/
-bazel-installer
-bazel-bin
-bazel-out
-bazel-genfiles
-bazel-testlogs
-bazel-tectonic-installer
-bazel-openshift-installer
 .cache
+
+# Created by https://www.gitignore.io/api/go,bazel,terraform
+# HOWEVER, I had to remove the ignore for `vendor/`
+
+### Bazel ###
+/bazel-*
+
+### Go ###
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary, build with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+### Terraform ###
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+
+# Ignore any .tfvars files that are generated automatically for each Terraform run. Most
+# .tfvars files are managed as part of configuration and so should be included in
+# version control.
+#
+# example.tfvars
+
+# End of https://www.gitignore.io/api/go,bazel,terraform
