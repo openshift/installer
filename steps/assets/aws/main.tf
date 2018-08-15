@@ -18,6 +18,7 @@ module assets_base {
 
   tectonic_admin_email             = "${var.tectonic_admin_email}"
   tectonic_admin_password          = "${var.tectonic_admin_password}"
+  tectonic_admin_ssh_key           = "${var.tectonic_admin_ssh_key}"
   tectonic_base_domain             = "${var.tectonic_base_domain}"
   tectonic_cluster_cidr            = "${var.tectonic_cluster_cidr}"
   tectonic_cluster_id              = "${var.tectonic_cluster_id}"

@@ -33,7 +33,6 @@ module "workers" {
   root_volume_size             = "${var.tectonic_aws_worker_root_volume_size}"
   root_volume_type             = "${var.tectonic_aws_worker_root_volume_type}"
   sg_ids                       = "${concat(var.tectonic_aws_worker_extra_sg_ids, list(local.sg_id))}"
-  ssh_key                      = "${var.tectonic_aws_ssh_key}"
   subnet_ids                   = "${local.subnet_ids}"
   worker_iam_role              = "${var.tectonic_aws_worker_iam_role_name}"
   ec2_ami                      = "${var.tectonic_aws_ec2_ami_override}"

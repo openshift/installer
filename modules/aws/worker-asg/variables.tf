@@ -1,7 +1,3 @@
-variable "ssh_key" {
-  type = "string"
-}
-
 variable "container_linux_channel" {
   type = "string"
 }

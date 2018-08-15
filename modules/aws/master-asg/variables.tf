@@ -101,10 +101,6 @@ variable "root_volume_type" {
   description = "The type of volume for the root block device."
 }
 
-variable "ssh_key" {
-  type = "string"
-}
-
 variable "subnet_ids" {
   type = "list"
 }

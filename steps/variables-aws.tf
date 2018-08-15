@@ -15,11 +15,6 @@ EOF
   type = "string"
 }
 
-variable "tectonic_aws_ssh_key" {
-  type        = "string"
-  description = "Name of an SSH key located within the AWS region. Example: coreos-user."
-}
-
 variable "tectonic_aws_master_ec2_type" {
   type        = "string"
   description = "Instance size for the master node(s). Example: `t2.medium`."

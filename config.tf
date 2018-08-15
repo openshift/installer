@@ -267,6 +267,15 @@ also be escaped.
 EOF
 }
 
+variable "tectonic_admin_ssh_key" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) The admin user's SSH public key to login to the nodes.
+EOF
+}
+
 variable "tectonic_ca_cert" {
   type    = "string"
   default = ""

@@ -20,8 +20,7 @@ To begin, verify that the following environment variables are set:
 
 - `AWS_PROFILE` or alternatively `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`: These credentials are used by Terraform to spawn clusters on AWS.
 - `TF_VAR_tectonic_pull_secret_path` and `TF_VAR_tectonic_license_path`: The local path to the pull secret and Tectonic license file.
-- `TF_VAR_tectonic_aws_ssh_key`: The AWS ssh key pair which enables ssh'ing into the created machines using the `core` user.
-  It must be present in AWS under "EC2 -> Network & Security -> Key Pairs".
+- (optional) `TF_VAR_tectonic_admin_ssh_key`: The SSH public key which enables SSHing into the created machines using the `core` user.
 - (optional) `BUILD_ID`: Any number >= 1. Based on this number the region will be selected of the deployed cluster.
   See the `REGIONS` variable under `smoke.sh` for details.
 - (optional) `BRANCH_NAME`: The local branch name used as an infix for cluster names.
@@ -33,7 +32,7 @@ export AWS_ACCESS_KEY_ID=AKIAIQ5TVFGQ7CKWD6IA
 export AWS_SECRET_ACCESS_KEY_ID=rtp62V7H/JDY3cNBAs5vA0coaTou/OQbqJk96Hws
 export TF_VAR_tectonic_license_path="/home/user/tectonic-license"
 export TF_VAR_tectonic_pull_secret_path="/home/user/coreos-inc/pull-secret"
-export TF_VAR_tectonic_aws_ssh_key="user"
+export TF_VAR_tectonic_admin_ssh_key="ssh-ed25519 AAAA..."
 ```
 
 ## Assume Role

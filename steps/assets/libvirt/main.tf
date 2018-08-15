@@ -14,6 +14,9 @@ module assets_base {
 
   ingress_kind = "haproxy-router"
 
+  tectonic_admin_email             = "${var.tectonic_admin_email}"
+  tectonic_admin_password          = "${var.tectonic_admin_password}"
+  tectonic_admin_ssh_key           = "${var.tectonic_admin_ssh_key}"
   tectonic_base_domain             = "${var.tectonic_base_domain}"
   tectonic_cluster_name            = "${var.tectonic_cluster_name}"
   tectonic_container_images        = "${var.tectonic_container_images}"
@@ -24,11 +27,9 @@ module assets_base {
   tectonic_networking              = "${var.tectonic_networking}"
   tectonic_license_path            = "${var.tectonic_license_path}"
   tectonic_pull_secret_path        = "${var.tectonic_pull_secret_path}"
-  tectonic_admin_email             = "${var.tectonic_admin_email}"
   tectonic_update_channel          = "${var.tectonic_update_channel}"
   tectonic_platform                = "${var.tectonic_platform}"
   tectonic_versions                = "${var.tectonic_versions}"
-  tectonic_admin_password          = "${var.tectonic_admin_password}"
   tectonic_cluster_id              = "${var.tectonic_cluster_id}"
   tectonic_container_linux_channel = "${var.tectonic_container_linux_channel}"
   tectonic_container_linux_version = "${var.tectonic_container_linux_version}"
@@ -50,7 +51,7 @@ data "ignition_user" "core" {
   name = "core"
 
   ssh_authorized_keys = [
-    "${var.tectonic_libvirt_ssh_key}",
+    "${var.tectonic_admin_ssh_key}",
   ]
 }
 

@@ -1,5 +1,5 @@
 provider "libvirt" {
-  uri = "qemu:///system" #XXX fixme
+  uri = "${var.tectonic_libvirt_uri}"
 }
 
 module "defaults" {

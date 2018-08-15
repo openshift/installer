@@ -1,5 +1,5 @@
 provider "libvirt" {
-  uri = "qemu:///system"
+  uri = "${var.tectonic_libvirt_uri}"
 }
 
 locals {

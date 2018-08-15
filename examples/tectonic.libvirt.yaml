@@ -1,6 +1,7 @@
 admin:
   email: a@b.c
   password: verysecure
+  sshKey: "ssh-ed25519 AAAA..."
 # The base DNS domain of the cluster. It must NOT contain a trailing period. Some
 # DNS providers will automatically add this if necessary.
 #
@@ -16,7 +17,6 @@ libvirt:
     ifName: tt0
     dnsServer: 8.8.8.8
     ipRange: 192.168.124.0/24
-  sshKey: "ssh-rsa ..."
   imagePath: /path/to/image
 
 ca:

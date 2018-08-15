@@ -17,7 +17,6 @@ const (
 // Libvirt encompasses configuration specific to libvirt.
 type Libvirt struct {
 	URI           string `json:"tectonic_libvirt_uri,omitempty" yaml:"uri"`
-	SSHKey        string `json:"tectonic_libvirt_ssh_key,omitempty" yaml:"sshKey"`
 	QCOWImagePath string `json:"tectonic_coreos_qcow_path,omitempty" yaml:"imagePath"`
 	Network       `json:",inline" yaml:"network"`
 	MasterIPs     []string `json:"tectonic_libvirt_master_ips,omitempty" yaml:"masterIPs"`

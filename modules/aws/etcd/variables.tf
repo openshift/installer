@@ -33,11 +33,6 @@ It is passed through to the Terraform aws provider: https://www.terraform.io/doc
 EOF
 }
 
-variable "ssh_key" {
-  type    = "string"
-  default = ""
-}
-
 variable "subnets" {
   type = "list"
 }
