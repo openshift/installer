@@ -9,7 +9,5 @@ branches:
 jobs:
   include:
     - stage: Lint & Test
-      script: ./hack/gotest.sh
-      name: Installer unit tests
-    - script: ./hack/go-lint.sh installer/...
+      script: ./hack/go-lint.sh installer/...
       name: Go lint
