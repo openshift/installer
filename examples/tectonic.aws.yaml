@@ -11,34 +11,6 @@ aws:
   # (optional) AMI override for all nodes. Example: `ami-foobar123`.
   # ec2AMIOverride:
 
-  etcd:
-    # Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
-    ec2Type: t2.medium
-
-    # (optional) List of additional security group IDs for etcd nodes.
-    #
-    # Example: `["sg-51530134", "sg-b253d7cc"]`
-    # extraSGIDs:
-
-    # (optional) Name of IAM role to use for the instance profiles of etcd nodes.
-    # The name is also the last part of a role's ARN.
-    #
-    # Example:
-    #  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
-    #  * Role Name = tectonic-installer
-    # iamRoleName:
-
-    rootVolume:
-      # The amount of provisioned IOPS for the root block device of etcd nodes.
-      # Ignored if the volume type is not io1.
-      iops: 100
-
-      # The size of the volume in gigabytes for the root block device of etcd nodes.
-      size: 30
-
-      # The type of volume for the root block device of etcd nodes.
-      type: gp2
-
   external:
     # (optional) List of subnet IDs within an existing VPC to deploy master nodes into.
     # Required to use an existing VPC and the list must match the AZ count.
@@ -206,11 +178,6 @@ containerLinux:
   # (optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes.
   # customCAPEMList:
 
-etcd:
-  # The name of the node pool(s) to use for etcd nodes
-  nodePools:
-    - etcd
-
 iscsi:
   # (optional) Start iscsid.service to enable iscsi volume attachment.
   # enabled: false
@@ -256,11 +223,6 @@ networking:
   # type: flannel
 
 nodePools:
-    # The number of etcd nodes to be created.
-    # If set to zero, the count of etcd nodes will be determined automatically.
-  - count: 3
-    name: etcd
-
     # The number of master nodes to be created.
     # This applies only to cloud platforms.
   - count: 1

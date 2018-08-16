@@ -13,103 +13,78 @@ import (
 	"github.com/vincent-petithory/dataurl"
 )
 
-var (
-	ignVersion   = "2.2.0"
-	ignFilesPath = map[string]string{
-		"master": config.IgnitionMaster,
-		"worker": config.IgnitionWorker,
-		"etcd":   config.IgnitionEtcd,
-	}
-	caPath = "generated/tls/root-ca.crt"
+const (
+	ignitionConfigPathMaster = "master-%d.ign"
+	ignitionConfigPathWorker = "worker.ign"
+	caPath                   = "generated/tls/root-ca.crt"
 )
 
-func (c *ConfigGenerator) poolToRoleMap() map[string]string {
-	poolToRole := make(map[string]string)
-	// assume no roles can share pools
-	for _, n := range c.Master.NodePools {
-		poolToRole[n] = "master"
-	}
-	for _, n := range c.Worker.NodePools {
-		poolToRole[n] = "worker"
-	}
-	for _, n := range c.Etcd.NodePools {
-		poolToRole[n] = "etcd"
-	}
-	return poolToRole
-}
-
-// GenerateIgnConfig generates, if successful, files with the ign config for each role.
+// GenerateIgnConfig generates Ignition configs for the workers and masters.
 func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
-	poolToRole := c.poolToRoleMap()
-	for _, p := range c.NodePools {
-		role := poolToRole[p.Name]
-		if _, ok := ignFilesPath[role]; !ok {
-			return fmt.Errorf("unrecognized pool: %s", p.Name)
-		}
+	ca, err := ioutil.ReadFile(filepath.Join(clusterDir, caPath))
+	if err != nil {
+		return err
+	}
 
-		ignCfg, err := parseIgnFile(p.IgnitionFile)
-		if err != nil {
-			return fmt.Errorf("failed to GenerateIgnConfig for pool %s and file %s: %v", p.Name, p.IgnitionFile, err)
-		}
+	workerCfg, err := parseIgnFile(ignitionConfigPathWorker)
+	if err != nil {
+		return fmt.Errorf("failed to parse Ignition config for workers: %v", err)
+	}
 
-		var ignCfgs []ignconfigtypes.Config
-		for i := 0; i < p.Count; i++ {
-			ignCfgs = append(ignCfgs, *ignCfg)
-		}
+	// XXX(crawford): The SSH key should only be added to the bootstrap
+	//                node. After that, MCO should be responsible for
+	//                distributing SSH keys.
+	c.embedUserBlock(&workerCfg)
+	c.appendCertificateAuthority(&workerCfg, ca)
+	c.embedAppendBlock(&workerCfg, "worker", "")
 
-		ca, err := ioutil.ReadFile(filepath.Join(clusterDir, caPath))
-		if err != nil {
-			return err
-		}
+	if err = ignCfgToFile(workerCfg, filepath.Join(clusterDir, ignitionConfigPathWorker)); err != nil {
+		return err
+	}
 
-		for i := range ignCfgs {
-			c.appendCertificateAuthority(&ignCfgs[i], ca)
-		}
+	masterCfg, err := parseIgnFile(config.IgnitionPathMaster)
+	if err != nil {
+		return fmt.Errorf("failed to parse Ignition config for masters: %v", err)
+	}
+
+	for i := 0; i < c.Master.Count; i++ {
+		ignCfg := masterCfg
 
 		// XXX(crawford): The SSH key should only be added to the bootstrap
 		//                node. After that, MCO should be responsible for
 		//                distributing SSH keys.
-		for i := range ignCfgs {
-			c.embedUserBlock(&ignCfgs[i])
-		}
+		c.embedUserBlock(&ignCfg)
+		c.appendCertificateAuthority(&ignCfg, ca)
+		c.embedAppendBlock(&ignCfg, "master", fmt.Sprintf("etcd_index=%d", i))
 
-		fileTargetPath := filepath.Join(clusterDir, ignFilesPath[role])
-		if role == "master" {
-			for i := range ignCfgs {
-				c.embedAppendBlock(&ignCfgs[i], role, fmt.Sprintf("etcd_index=%d", i))
-				if err = ignCfgToFile(ignCfgs[i], fmt.Sprintf(fileTargetPath, i)); err != nil {
-					return err
-				}
-			}
-		} else {
-			c.embedAppendBlock(&ignCfgs[0], role, "")
-			if err = ignCfgToFile(ignCfgs[0], fileTargetPath); err != nil {
-				return err
-			}
+		if err = ignCfgToFile(ignCfg, fmt.Sprintf(filepath.Join(clusterDir, config.IgnitionPathMaster), i)); err != nil {
+			return err
 		}
 	}
+
 	return nil
 }
 
-func parseIgnFile(filePath string) (*ignconfigtypes.Config, error) {
+func parseIgnFile(filePath string) (ignconfigtypes.Config, error) {
 	if filePath == "" {
-		ignition := &ignconfigtypes.Ignition{
-			Version: ignVersion,
-		}
-		return &ignconfigtypes.Config{Ignition: *ignition}, nil
+		return ignconfigtypes.Config{
+			Ignition: ignconfigtypes.Ignition{
+				Version: ignconfigtypes.MaxVersion.String(),
+			},
+		}, nil
 	}
 
 	data, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return nil, err
+		return ignconfigtypes.Config{}, err
 	}
 
 	cfg, rpt, _ := ignconfig.Parse(data)
 	if len(rpt.Entries) > 0 {
-		return nil, fmt.Errorf("failed to parse ignition file %s: %s", filePath, rpt.String())
+		return ignconfigtypes.Config{}, fmt.Errorf("failed to parse ignition file %s: %s", filePath, rpt.String())
 	}
 
-	return &cfg, nil
+	return cfg, nil
 }
 
 func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role string, query string) {

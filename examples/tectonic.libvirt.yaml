@@ -44,13 +44,8 @@ containerLinux:
   # Examples: `latest`, `1465.6.0`
   version: latest
 
-  # (optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes.
+  # (optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on master and worker nodes.
   # customCAPEMList:
-
-etcd:
-  # The name of the node pool(s) to use for etcd nodes
-  nodePools:
-    - etcd
 
 iscsi:
   # (optional) Start iscsid.service to enable iscsi volume attachment.
@@ -96,11 +91,6 @@ networking:
   # type: flannel
 
 nodePools:
-    # The number of etcd nodes to be created.
-    # If set to zero, the count of etcd nodes will be determined automatically.
-  - count: 1
-    name: etcd
-
     # The number of master nodes to be created.
     # This applies only to cloud platforms.
   - count: 1
