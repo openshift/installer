@@ -2,12 +2,6 @@ admin:
   email: fake-email@example.com
   password: fake-password
 aws:
-  etcd:
-    ec2Type: m4.large
-    rootVolume:
-      iops: 100
-      size: 30
-      type: gp2
   master:
     ec2Type: m4.large
     rootVolume:
@@ -23,9 +17,6 @@ aws:
 baseDomain: tectonic-ci.de
 containerLinux:
   channel: beta
-etcd:
-  nodePools:
-    - etcd
 licensePath:
 master:
   nodePools:
@@ -37,8 +28,6 @@ networking:
   serviceCIDR: 10.3.0.0/16
   type: canal
 nodePools:
-  - name: etcd
-    count: 3
   - name: master
     count: 2
   - name: worker
