@@ -4,6 +4,7 @@ import (
 	"os"
 )
 
+// Stock is the stock of assets that cen be generated.
 type Stock struct {
 	// Targetable assets
 	InstallConfig Asset
@@ -20,6 +21,7 @@ type Stock struct {
 	directory string
 }
 
+// EstablishStock establishes the stock of assets in the specified directory.
 func EstablishStock(directory string) *Stock {
 	s := &Stock{
 		directory: directory,

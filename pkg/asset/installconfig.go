@@ -13,12 +13,15 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
+// InstallConfig generates the install-config.yml file.
 type InstallConfig struct {
 	assetStock *Stock
 }
 
 var _ Asset = (*InstallConfig)(nil)
 
+// Dependencies returns all of the dependencies directly needed by an
+// InstallConfig asset.
 func (a *InstallConfig) Dependencies() []Asset {
 	return []Asset{
 		a.assetStock.emailAddress,
@@ -31,6 +34,7 @@ func (a *InstallConfig) Dependencies() []Asset {
 	}
 }
 
+// Generate generates the install-config.yml file.
 func (a *InstallConfig) Generate(dependencies map[Asset]*State) (*State, error) {
 	clusterName := string(dependencies[a.assetStock.clusterName].Contents[0].Data)
 	platform := string(dependencies[a.assetStock.platform].Contents[0].Data)

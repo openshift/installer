@@ -12,7 +12,7 @@ import (
 var (
 	installConfigCommand = kingpin.Command("install-config", "Generate the Install Config asset")
 
-	dirFlag  = kingpin.Flag("dir", "Assets directory").Default(".").String()
+	dirFlag  = kingpin.Flag("dir", "assets directory").Default(".").String()
 	logLevel = kingpin.Flag("log-level", "log level (e.g. \"debug\")").Default("info").Enum("debug", "info", "warn", "error", "fatal", "panic")
 )
 

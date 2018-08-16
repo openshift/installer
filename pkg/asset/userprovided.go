@@ -4,16 +4,19 @@ import (
 	"fmt"
 )
 
+// UserProvided generates an asset that is supplied by a user.
 type UserProvided struct {
 	Prompt string
 }
 
 var _ Asset = (*UserProvided)(nil)
 
+// Dependencies returns no dependencies.
 func (a *UserProvided) Dependencies() []Asset {
 	return []Asset{}
 }
 
+// Generate queries for input from the user.
 func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
 	input := queryUser(a.Prompt)
 	return &State{
