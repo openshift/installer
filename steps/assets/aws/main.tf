@@ -6,7 +6,7 @@ module "defaults" {
   region     = "${var.tectonic_aws_region}"
   profile    = "${var.tectonic_aws_profile}"
   role_arn   = "${var.tectonic_aws_installer_role}"
-  etcd_count = "${var.tectonic_etcd_count}"
+  etcd_count = "${var.tectonic_master_count}"
 }
 
 module assets_base {

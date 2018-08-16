@@ -59,9 +59,9 @@ data "libvirt_network_dns_host_template" "masters" {
 }
 
 data "libvirt_network_dns_host_template" "etcds" {
-  count = "${var.tectonic_etcd_count}"
+  count = "${var.tectonic_master_count}"
 
-  ip = "${var.tectonic_libvirt_etcd_ips[count.index]}"
+  ip = "${var.tectonic_libvirt_master_ips[count.index]}"
 
   hostname = "${var.tectonic_cluster_name}-etcd-${count.index}"
 }

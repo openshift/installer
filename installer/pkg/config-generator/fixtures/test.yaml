@@ -1,9 +1,9 @@
 name: test
 platform: aws
 baseDomain: cluster.com
-etcd:
+master:
   nodePools:
-    - etcd
+    - master
 nodePools:
-  - name: etcd
+  - name: master
     count: 3

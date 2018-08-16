@@ -10,4 +10,6 @@ locals {
   subnet_ids = "${data.terraform_remote_state.topology.subnet_ids_masters}"
   aws_lbs    = "${data.terraform_remote_state.topology.aws_lbs}"
   sg_id      = "${data.terraform_remote_state.topology.master_sg_id}"
+
+  private_zone_id = "${var.tectonic_aws_external_private_zone != "" ? var.tectonic_aws_external_private_zone : data.terraform_remote_state.topology.private_zone_id}"
 }

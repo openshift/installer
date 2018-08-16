@@ -94,6 +94,7 @@ data "ignition_config" "bootstrap" {
       data.ignition_file.bootstrap_kubeconfig.id,
       data.ignition_file.kubelet_kubeconfig.id,
     ),
+    module.ignition_bootstrap.etcd_crt_id_list,
     module.ignition_bootstrap.ignition_file_id_list,
     module.bootkube.ignition_file_id_list,
     module.tectonic.ignition_file_id_list,

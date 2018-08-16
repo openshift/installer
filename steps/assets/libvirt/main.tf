@@ -1,7 +1,7 @@
 module "defaults" {
   source = "../../../modules/libvirt/target-defaults"
 
-  etcd_count = "${var.tectonic_etcd_count}"
+  etcd_count = "${var.tectonic_master_count}"
 }
 
 # Terraform doesn't support "inheritance"

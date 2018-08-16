@@ -44,5 +44,14 @@ module "masters" {
   root_volume_type        = "${var.tectonic_aws_master_root_volume_type}"
   subnet_ids              = "${local.subnet_ids}"
   ec2_ami                 = "${var.tectonic_aws_ec2_ami_override}"
-  user_data_ign           = "${file("${path.cwd}/${var.tectonic_ignition_master}")}"
+  user_data_igns          = "${var.tectonic_ignition_masters}"
+}
+
+resource "aws_route53_record" "etcd_a_nodes" {
+  count   = "${var.tectonic_master_count}"
+  type    = "A"
+  ttl     = "60"
+  zone_id = "${local.private_zone_id}"
+  name    = "${var.tectonic_cluster_name}-etcd-${count.index}"
+  records = ["${module.masters.ip_addresses[count.index]}"]
 }
