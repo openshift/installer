@@ -8,6 +8,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// InstallConfig is the configuration for an OpenShift install.
 type InstallConfig struct {
 	// +optional
 	metav1.TypeMeta `json:",inline"`
@@ -21,17 +22,23 @@ type InstallConfig struct {
 	Networking `json:"networking"`
 
 	// Machines is the list of MachinePools that need to be installed.
-	Machines []MachinePools `json:"machines"`
+	Machines []MachinePool `json:"machines"`
 
-	// only one of the platform configuration should be set
+	// Platform is the configuration for the specific platform upon which to
+	// perform the installation.
 	Platform `json:"platform"`
 }
 
+// Platform is the configuration for the specific platform upon which to perform
+// the installation. Only one of the platform configuration should be set.
 type Platform struct {
-	AWS     *AWSPlatform     `json:"aws,omitempty"`
+	// AWS is the configuration used when installing on AWS.
+	AWS *AWSPlatform `json:"aws,omitempty"`
+	// Libvirt is the configuration used when installing on libvirt.
 	Libvirt *LibvirtPlatform `json:"libvirt,omitempty"`
 }
 
+// Networking defines the pod network provider in the cluster.
 type Networking struct {
 	Type        NetworkType `json:"type"`
 	ServiceCIDR net.IPNet   `json:"serviceCIDR"`
@@ -42,9 +49,9 @@ type Networking struct {
 type NetworkType string
 
 const (
-	// NetworkTypeOpenshiftSDN
+	// NetworkTypeOpenshiftSDN is used to install with SDN.
 	NetworkTypeOpenshiftSDN NetworkType = "openshift-sdn"
-	// NetworkTypeOpenshiftOVN
+	// NetworkTypeOpenshiftOVN is used to install with OVN.
 	NetworkTypeOpenshiftOVN NetworkType = "openshift-ovn"
 )
 
@@ -84,9 +91,14 @@ type LibvirtPlatform struct {
 	MasterIPs []net.IP `json:"masterIPs"`
 }
 
+// LibvirtNetwork is the configuration of the libvirt network.
 type LibvirtNetwork struct {
-	Name      string `json:"name"`
-	IfName    string `json:"if"`
+	// Name is the name of the nework.
+	Name string `json:"name"`
+	// IfName is the name of the network interface.
+	IfName string `json:"if"`
+	// DNSServer is the name of the DNS server.
 	DNSServer string `json:"resolver"`
-	IPRange   string `json:"ipRange"`
+	// IPRange is the range of IPs to use.
+	IPRange string `json:"ipRange"`
 }

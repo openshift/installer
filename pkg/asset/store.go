@@ -1,13 +1,19 @@
 package asset
 
+// Store is a store for the states of assets.
 type Store interface {
+	// Fetch retrieves the state of the given asset, generating it and its
+	// dependencies if necessary.
 	Fetch(Asset) (*State, error)
 }
 
+// StoreImpl is the implementation of Store.
 type StoreImpl struct {
 	assets map[Asset]*State
 }
 
+// Fetch retrieves the state of the given asset, generating it and its
+// dependencies if necessary.
 func (s *StoreImpl) Fetch(asset Asset) (*State, error) {
 	state, ok := s.assets[asset]
 	if ok {

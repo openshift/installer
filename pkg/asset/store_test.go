@@ -36,6 +36,7 @@ func newTestAsset(gl *generationLog, name string) *testAsset {
 	}
 }
 
+// TestStoreFetch tests the Fetch method of StoreImpl.
 func TestStoreFetch(t *testing.T) {
 	cases := []struct {
 		name                  string
@@ -154,7 +155,7 @@ func TestStoreFetch(t *testing.T) {
 				assets: map[Asset]*State{},
 			}
 			assets := make(map[string]*testAsset, len(tc.assets))
-			for name, _ := range tc.assets {
+			for name := range tc.assets {
 				assets[name] = newTestAsset(gl, name)
 			}
 			for name, deps := range tc.assets {
