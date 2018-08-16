@@ -40,6 +40,11 @@ resource "libvirt_domain" "master" {
     volume_id = "${element(libvirt_volume.master.*.id, count.index)}"
   }
 
+  console {
+    type        = "pty"
+    target_port = 0
+  }
+
   network_interface {
     network_id = "${local.libvirt_network_id}"
     hostname   = "${var.tectonic_cluster_name}-master-${count.index}"

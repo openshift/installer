@@ -24,6 +24,11 @@ resource "libvirt_domain" "worker" {
     volume_id = "${element(libvirt_volume.worker.*.id, count.index)}"
   }
 
+  console {
+    type        = "pty"
+    target_port = 0
+  }
+
   network_interface {
     network_id = "${local.libvirt_network_id}"
     hostname   = "${var.tectonic_cluster_name}-worker-${count.index}"
