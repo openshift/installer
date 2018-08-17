@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"bufio"
 	"fmt"
 	"strings"
 )
@@ -12,36 +13,25 @@ const (
 	LibvirtPlatformType = "libvirt"
 )
 
-// Platform generates, via user input, the platform upon which to install OpenShift.
-type Platform struct{}
+var (
+	validPlatforms = []string{AWSPlatformType, LibvirtPlatformType}
+)
 
-var _ Asset = (*Platform)(nil)
-
-// Dependencies returns no dependencies.
-func (a *Platform) Dependencies() []Asset {
-	return []Asset{}
-}
-
-// Generate queries the user for the platform.
-func (a *Platform) Generate(map[Asset]*State) (*State, error) {
-	platform := queryUserForPlatform()
-	return &State{
-		Contents: []Content{
-			{Data: []byte(platform)},
-		},
-	}, nil
-}
-
-func queryUserForPlatform() string {
-	for {
-		validPlatforms := []string{AWSPlatformType, LibvirtPlatformType}
-		input := queryUser(fmt.Sprintf("Platform (%s): ", strings.Join(validPlatforms, ", ")))
-		input = strings.ToLower(input)
-		for _, p := range validPlatforms {
-			if input == p {
-				return p
-			}
-		}
-		fmt.Println("Invalid platform")
+func newPlatform(inputReader *bufio.Reader) *userProvided {
+	return &userProvided{
+		inputReader: inputReader,
+		prompt:      fmt.Sprintf("Platform (%s):", strings.Join(validPlatforms, ", ")),
+		validation:  validatePlatformInput,
 	}
+}
+
+func validatePlatformInput(input string) (string, bool) {
+	input = strings.ToLower(input)
+	for _, p := range validPlatforms {
+		if input == p {
+			return p, true
+		}
+	}
+	fmt.Println("Invalid platform")
+	return input, false
 }

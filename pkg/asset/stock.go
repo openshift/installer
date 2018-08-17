@@ -1,10 +1,11 @@
 package asset
 
 import (
+	"bufio"
 	"os"
 )
 
-// Stock is the stock of assets that cen be generated.
+// Stock is the stock of assets that can be generated.
 type Stock struct {
 	// Targetable assets
 	InstallConfig Asset
@@ -18,24 +19,26 @@ type Stock struct {
 	platform     Asset
 	emailAddress Asset
 
-	directory string
+	directory   string
+	inputReader *bufio.Reader
 }
 
 // EstablishStock establishes the stock of assets in the specified directory.
 func EstablishStock(directory string) *Stock {
 	s := &Stock{
-		directory: directory,
+		directory:   directory,
+		inputReader: bufio.NewReader(os.Stdin),
 	}
 
-	s.InstallConfig = &InstallConfig{assetStock: s}
+	s.InstallConfig = &installConfig{assetStock: s}
 
-	s.password = &UserProvided{Prompt: "Password: "}
-	s.baseDomain = &UserProvided{Prompt: "Base Domain: "}
-	s.clusterName = &UserProvided{Prompt: "Cluster Name: "}
-	s.license = &UserProvided{Prompt: "License: "}
-	s.pullSecret = &UserProvided{Prompt: "Pull Secret: "}
-	s.platform = &Platform{}
-	s.emailAddress = &UserProvided{Prompt: "Email Address: "}
+	s.emailAddress = &userProvided{prompt: "Email Address:", inputReader: s.inputReader}
+	s.password = &userProvided{prompt: "Password:", inputReader: s.inputReader}
+	s.baseDomain = &userProvided{prompt: "Base Domain:", inputReader: s.inputReader}
+	s.clusterName = &userProvided{prompt: "Cluster Name:", inputReader: s.inputReader}
+	s.license = &userProvided{prompt: "License:", inputReader: s.inputReader}
+	s.pullSecret = &userProvided{prompt: "Pull Secret:", inputReader: s.inputReader}
+	s.platform = newPlatform(s.inputReader)
 
 	return s
 }
