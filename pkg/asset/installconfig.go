@@ -14,15 +14,15 @@ import (
 )
 
 // InstallConfig generates the install-config.yml file.
-type InstallConfig struct {
+type installConfig struct {
 	assetStock *Stock
 }
 
-var _ Asset = (*InstallConfig)(nil)
+var _ Asset = (*installConfig)(nil)
 
 // Dependencies returns all of the dependencies directly needed by an
-// InstallConfig asset.
-func (a *InstallConfig) Dependencies() []Asset {
+// installConfig asset.
+func (a *installConfig) Dependencies() []Asset {
 	return []Asset{
 		a.assetStock.emailAddress,
 		a.assetStock.password,
@@ -35,7 +35,7 @@ func (a *InstallConfig) Dependencies() []Asset {
 }
 
 // Generate generates the install-config.yml file.
-func (a *InstallConfig) Generate(dependencies map[Asset]*State) (*State, error) {
+func (a *installConfig) Generate(dependencies map[Asset]*State) (*State, error) {
 	clusterName := string(dependencies[a.assetStock.clusterName].Contents[0].Data)
 	platform := string(dependencies[a.assetStock.platform].Contents[0].Data)
 
