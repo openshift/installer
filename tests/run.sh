@@ -10,6 +10,7 @@ set -e
 set -eo pipefail
 
 BACKEND="${1}"
+LEAVE_RUNNING="${LEAVE_RUNNING:-n}"  # do not teardown after successful initialization
 SMOKE_TEST_OUTPUT="Never executed. Problem with one of previous stages"
 [ -z ${PULL_SECRET_PATH+x} ] && (echo "Please set PULL_SECRET_PATH"; exit 1)
 [ -z ${DOMAIN+x} ] && DOMAIN="tectonic-ci.de"
@@ -122,4 +123,8 @@ libvirt)
   ;;
 esac
 exec 5>&1
+if test "${LEAVE_RUNNING}" = y; then
+  echo "leaving running; tear down manually with: cd ${PWD} && installer/tectonic destroy --dir=${CLUSTER_NAME}"
+  trap - EXIT
+fi
 SMOKE_TEST_OUTPUT=$(./smoke -test.v --cluster | tee >(cat - >&5))
