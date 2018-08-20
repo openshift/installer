@@ -16,7 +16,7 @@ fsGroup:
   type: RunAsAny
 groups:
 - system:serviceaccounts:tectonic-system
-- system:serviceaccounts:tectonic-ingress
+- system:serviceaccounts:openshift-ingress
 readOnlyRootFilesystem: false
 runAsUser:
   type: RunAsAny
