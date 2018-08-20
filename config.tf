@@ -70,7 +70,7 @@ variable "tectonic_container_images" {
     tectonic_channel_operator            = "quay.io/coreos/tectonic-channel-operator-dev:df42b97af403702013f4739fc82cd005cfd0c766"
     kube_addon_operator                  = "quay.io/coreos/kube-addon-operator-dev:df42b97af403702013f4739fc82cd005cfd0c766"
     tectonic_alm_operator                = "quay.io/coreos/tectonic-alm-operator:v0.3.1"
-    tectonic_ingress_controller_operator = "quay.io/coreos/tectonic-ingress-controller-operator-dev:df42b97af403702013f4739fc82cd005cfd0c766"
+    tectonic_ingress_controller_operator = "registry.svc.ci.openshift.org/clayton-dev/tectonic-ingress-controller-operator-dev:cc7977c70a011c3e08dc4d7c4a1cfa1518da82b4-dirty"
     tectonic_utility_operator            = "quay.io/coreos/tectonic-utility-operator-dev:df42b97af403702013f4739fc82cd005cfd0c766"
     tectonic_network_operator            = "quay.io/coreos/tectonic-network-operator-dev:df42b97af403702013f4739fc82cd005cfd0c766"
   }
