@@ -6,44 +6,54 @@ resource "aws_security_group" "etcd" {
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
       "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
+}
 
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    self        = true
-    cidr_blocks = ["0.0.0.0/0"]
-  }
+resource "aws_security_group_rule" "etcd_egress" {
+  type              = "egress"
+  security_group_id = "${aws_security_group.etcd.id}"
 
-  ingress {
-    protocol    = "icmp"
-    cidr_blocks = ["0.0.0.0/0"]
-    from_port   = 0
-    to_port     = 0
-  }
+  from_port   = 0
+  cidr_blocks = ["0.0.0.0/0"]
+  to_port     = 0
+  protocol    = "-1"
+}
 
-  ingress {
-    protocol  = "tcp"
-    from_port = 22
-    to_port   = 22
-    self      = true
+resource "aws_security_group_rule" "etcd_ingress_icmp" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.etcd.id}"
 
-    security_groups = ["${aws_security_group.master.id}"]
-  }
+  protocol    = "icmp"
+  cidr_blocks = ["0.0.0.0/0"]
+  from_port   = 0
+  to_port     = 0
+}
 
-  ingress {
-    protocol  = "tcp"
-    from_port = 2379
-    to_port   = 2379
-    self      = true
+resource "aws_security_group_rule" "etcd_ingress_ssh" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.etcd.id}"
 
-    security_groups = ["${aws_security_group.master.id}"]
-  }
+  protocol  = "tcp"
+  from_port = 22
+  to_port   = 22
+  self      = true
+}
 
-  ingress {
-    protocol  = "tcp"
-    from_port = 2380
-    to_port   = 2380
-    self      = true
-  }
+resource "aws_security_group_rule" "etcd_ingress_etcd" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.etcd.id}"
+
+  protocol  = "tcp"
+  from_port = 2379
+  to_port   = 2379
+  self      = true
+}
+
+resource "aws_security_group_rule" "etcd_ingress_peer" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.etcd.id}"
+
+  protocol  = "tcp"
+  from_port = 2380
+  to_port   = 2380
+  self      = true
 }
