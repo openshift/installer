@@ -7,7 +7,7 @@ subjects:
     namespace: tectonic-system
     name: default
   - kind: ServiceAccount
-    namespace: tectonic-ingress
+    namespace: openshift-ingress
     name: tectonic-ingress-controller-operator
 roleRef:
   kind: ClusterRole
