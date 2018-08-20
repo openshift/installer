@@ -24,6 +24,8 @@ resource "libvirt_network" "tectonic_net" {
     data.libvirt_network_dns_host_template.etcds.*.rendered,
     data.libvirt_network_dns_host_template.workers.*.rendered,
   ))}"]
+
+  autostart = true
 }
 
 module "libvirt_base_volume" {
