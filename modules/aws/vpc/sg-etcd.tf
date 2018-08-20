@@ -57,3 +57,33 @@ resource "aws_security_group_rule" "etcd_ingress_peer" {
   to_port   = 2380
   self      = true
 }
+
+resource "aws_security_group_rule" "etcd_ingress_flannel" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.etcd.id}"
+
+  protocol  = "udp"
+  from_port = 4789
+  to_port   = 4789
+  self      = true
+}
+
+resource "aws_security_group_rule" "etcd_ingress_flannel_from_master" {
+  type                     = "ingress"
+  security_group_id        = "${aws_security_group.etcd.id}"
+  source_security_group_id = "${aws_security_group.master.id}"
+
+  protocol  = "udp"
+  from_port = 4789
+  to_port   = 4789
+}
+
+resource "aws_security_group_rule" "etcd_ingress_from_master" {
+  type                     = "ingress"
+  security_group_id        = "${aws_security_group.etcd.id}"
+  source_security_group_id = "${aws_security_group.master.id}"
+
+  protocol  = "tcp"
+  from_port = 0
+  to_port   = 65535
+}
