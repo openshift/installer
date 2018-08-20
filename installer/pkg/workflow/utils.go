@@ -23,7 +23,6 @@ const (
 	mastersStep      = "masters"
 	newTLSStep       = "tls"
 	stepsBaseDir     = "steps"
-	tncDNSStep       = "tnc_dns"
 	topologyStep     = "topology"
 )
 
@@ -164,18 +163,5 @@ func baseLocation() (string, error) {
 
 func clusterIsBootstrapped(stateDir string) bool {
 	return hasStateFile(stateDir, topologyStep) &&
-		hasStateFile(stateDir, bootstrapStep) &&
-		hasStateFile(stateDir, tncDNSStep)
-}
-
-func createTNCCNAME(m *metadata) error {
-	return runInstallStep(m, tncDNSStep)
-}
-
-func createTNCARecord(m *metadata) error {
-	return runInstallStep(m, tncDNSStep)
-}
-
-func destroyTNCDNS(m *metadata) error {
-	return runDestroyStep(m, tncDNSStep)
+		hasStateFile(stateDir, bootstrapStep)
 }

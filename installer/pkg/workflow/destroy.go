@@ -12,7 +12,6 @@ func DestroyWorkflow(clusterDir string) Workflow {
 			destroyJoinWorkersStep,
 			destroyEtcdStep,
 			destroyBootstrapStep,
-			destroyTNCDNSStep,
 			destroyTopologyStep,
 			destroyAssetsStep,
 		},
@@ -29,10 +28,6 @@ func destroyEtcdStep(m *metadata) error {
 
 func destroyBootstrapStep(m *metadata) error {
 	return runDestroyStep(m, bootstrapStep)
-}
-
-func destroyTNCDNSStep(m *metadata) error {
-	return destroyTNCDNS(m)
 }
 
 func destroyTopologyStep(m *metadata) error {
