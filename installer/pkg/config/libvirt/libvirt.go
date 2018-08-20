@@ -20,6 +20,7 @@ type Libvirt struct {
 	QCOWImagePath string `json:"tectonic_coreos_qcow_path,omitempty" yaml:"imagePath"`
 	Network       `json:",inline" yaml:"network"`
 	MasterIPs     []string `json:"tectonic_libvirt_master_ips,omitempty" yaml:"masterIPs"`
+	WorkerIPs     []string `json:"tectonic_libvirt_worker_ips,omitempty" yaml:"workerIPs"`
 }
 
 // Network describes a libvirt network configuration.
@@ -31,7 +32,7 @@ type Network struct {
 }
 
 // TFVars fills in computed Terraform variables.
-func (l *Libvirt) TFVars(masterCount int) error {
+func (l *Libvirt) TFVars(masterCount int, workerCount int) error {
 	_, network, err := net.ParseCIDR(l.Network.IPRange)
 	if err != nil {
 		return fmt.Errorf("failed to parse libvirt network ipRange: %v", err)
@@ -41,16 +42,38 @@ func (l *Libvirt) TFVars(masterCount int) error {
 		if len(l.MasterIPs) != masterCount {
 			return fmt.Errorf("length of MasterIPs doesn't match master count")
 		}
-		return nil
+	} else {
+		if ips, err := generateIPs("master", network, masterCount, 10); err == nil {
+			l.MasterIPs = ips
+		} else {
+			return err
+		}
 	}
 
-	for i := 0; i < masterCount; i++ {
-		ip, err := cidr.Host(network, i+10)
-		if err != nil {
-			return fmt.Errorf("failed to generate master IPs: %v", err)
+	if len(l.WorkerIPs) > 0 {
+		if len(l.WorkerIPs) != workerCount {
+			return fmt.Errorf("length of WorkerIPs doesn't match worker count")
 		}
-		l.MasterIPs = append(l.MasterIPs, ip.String())
+	} else {
+		if ips, err := generateIPs("worker", network, workerCount, 50); err == nil {
+			l.WorkerIPs = ips
+		} else {
+			return err
+		}
 	}
 
 	return nil
+}
+
+func generateIPs(name string, network *net.IPNet, count int, offset int) ([]string, error) {
+	var ips []string
+	for i := 0; i < count; i++ {
+		ip, err := cidr.Host(network, offset+i)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate %s IPs: %v", name, err)
+		}
+		ips = append(ips, ip.String())
+	}
+
+	return ips, nil
 }

@@ -33,6 +33,11 @@ variable "tectonic_libvirt_master_ips" {
   description = "the list of desired master ips. Must match tectonic_master_count"
 }
 
+variable "tectonic_libvirt_worker_ips" {
+  type        = "list"
+  description = "the list of desired worker ips. Must match tectonic_worker_count"
+}
+
 variable "tectonic_libvirt_first_ip_etcd" {
   type        = "string"
   description = "the offset in the ip range of the first etcd servers"
