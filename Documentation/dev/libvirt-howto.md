@@ -60,7 +60,7 @@ EOF
 1. Edit the configuration file:
     1. Set an email and password in the `admin` section
     1. Set a `baseDomain` (to `tt.testing`)
-    1. Set the `sshKey` in the `libvirt` section to the **contents** of an ssh key (e.g. `ssh-rsa AAAA...`)
+    1. Set the `sshKey` in the `admin` section to the **contents** of an ssh key (e.g. `ssh-rsa AAAA...`)
     1. Set the `imagePath` to the **absolute** path of the operating system image you downloaded
     1. Set the `licensePath` to the **absolute** path of your downloaded license file.
     1. Set the `name` (e.g. test1)
