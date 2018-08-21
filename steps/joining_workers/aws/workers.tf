@@ -35,7 +35,6 @@ module "workers" {
   sg_ids                       = "${concat(var.tectonic_aws_worker_extra_sg_ids, list(local.sg_id))}"
   subnet_ids                   = "${local.subnet_ids}"
   worker_iam_role              = "${var.tectonic_aws_worker_iam_role_name}"
-  ec2_ami                      = "${var.tectonic_aws_ec2_ami_override}"
   base_domain                  = "${var.tectonic_base_domain}"
   user_data_ign                = "${file("${path.cwd}/${var.tectonic_ignition_worker}")}"
 }

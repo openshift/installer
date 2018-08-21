@@ -66,7 +66,6 @@ module "etcd" {
   sg_ids                  = "${concat(var.tectonic_aws_etcd_extra_sg_ids, list(local.sg_id))}"
   subnets                 = ["${local.subnet_ids_workers}"]
   etcd_iam_role           = "${var.tectonic_aws_etcd_iam_role_name}"
-  ec2_ami                 = "${var.tectonic_aws_ec2_ami_override}"
 }
 
 resource "aws_route53_record" "etcd_a_nodes" {
