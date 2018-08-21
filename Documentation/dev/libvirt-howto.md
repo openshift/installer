@@ -85,6 +85,13 @@ mkdir -p ~/.terraform.d/plugins
 cp $GOPATH/bin/terraform-provider-libvirt ~/.terraform.d/plugins/
 ```
 
+#### 1.9 Cache terrafrom plugins (optional, but makes subsequent runs a bit faster)
+```sh
+cat <<EOF > $HOME/.terraformrc
+plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"
+EOF
+```
+
 ### 2. Build the installer
 Following the instructions in the root README:
 
