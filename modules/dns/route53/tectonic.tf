@@ -5,6 +5,10 @@ locals {
 
 data "aws_route53_zone" "tectonic" {
   name = "${var.base_domain}"
+
+  tags = "${merge(map(
+      "tectonicClusterID", "${var.cluster_id}"
+    ), var.extra_tags)}"
 }
 
 locals {
