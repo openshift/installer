@@ -1,9 +1,11 @@
-package asset
+package installconfig
 
 import (
 	"bufio"
 	"fmt"
 	"strings"
+
+	"github.com/openshift/installer/pkg/asset"
 )
 
 const (
@@ -17,11 +19,11 @@ var (
 	validPlatforms = []string{AWSPlatformType, LibvirtPlatformType}
 )
 
-func newPlatform(inputReader *bufio.Reader) *userProvided {
-	return &userProvided{
-		inputReader: inputReader,
-		prompt:      fmt.Sprintf("Platform (%s):", strings.Join(validPlatforms, ", ")),
-		validation:  validatePlatformInput,
+func newPlatform(inputReader *bufio.Reader) *asset.UserProvided {
+	return &asset.UserProvided{
+		InputReader: inputReader,
+		Prompt:      fmt.Sprintf("Platform (%s):", strings.Join(validPlatforms, ", ")),
+		Validation:  validatePlatformInput,
 	}
 }
 

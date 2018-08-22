@@ -7,6 +7,7 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/stock"
 )
 
 var (
@@ -19,13 +20,13 @@ var (
 func main() {
 	command := kingpin.Parse()
 
-	assetStock := asset.EstablishStock(*dirFlag)
+	assetStock := stock.EstablishStock(*dirFlag)
 
 	var targetAsset asset.Asset
 
 	switch command {
 	case installConfigCommand.FullCommand():
-		targetAsset = assetStock.InstallConfig
+		targetAsset = assetStock.InstallConfig()
 	}
 
 	l, err := log.ParseLevel(*logLevel)

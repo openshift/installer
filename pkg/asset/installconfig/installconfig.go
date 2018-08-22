@@ -1,8 +1,10 @@
-package asset
+package installconfig
 
 import (
+	"bufio"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
@@ -10,34 +12,37 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types"
 )
 
 // InstallConfig generates the install-config.yml file.
 type installConfig struct {
-	assetStock *Stock
+	assetStock  Stock
+	directory   string
+	inputReader *bufio.Reader
 }
 
-var _ Asset = (*installConfig)(nil)
+var _ asset.Asset = (*installConfig)(nil)
 
 // Dependencies returns all of the dependencies directly needed by an
 // installConfig asset.
-func (a *installConfig) Dependencies() []Asset {
-	return []Asset{
-		a.assetStock.emailAddress,
-		a.assetStock.password,
-		a.assetStock.baseDomain,
-		a.assetStock.clusterName,
-		a.assetStock.license,
-		a.assetStock.pullSecret,
-		a.assetStock.platform,
+func (a *installConfig) Dependencies() []asset.Asset {
+	return []asset.Asset{
+		a.assetStock.EmailAddress(),
+		a.assetStock.Password(),
+		a.assetStock.BaseDomain(),
+		a.assetStock.ClusterName(),
+		a.assetStock.License(),
+		a.assetStock.PullSecret(),
+		a.assetStock.Platform(),
 	}
 }
 
 // Generate generates the install-config.yml file.
-func (a *installConfig) Generate(dependencies map[Asset]*State) (*State, error) {
-	clusterName := string(dependencies[a.assetStock.clusterName].Contents[0].Data)
-	platform := string(dependencies[a.assetStock.platform].Contents[0].Data)
+func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
+	clusterName := string(dependencies[a.assetStock.ClusterName()].Contents[0].Data)
+	platform := string(dependencies[a.assetStock.Platform()].Contents[0].Data)
 
 	installConfig := types.InstallConfig{
 		ObjectMeta: metav1.ObjectMeta{
@@ -60,14 +65,16 @@ func (a *installConfig) Generate(dependencies map[Asset]*State) (*State, error) 
 		return nil, err
 	}
 
-	assetPath := filepath.Join(a.assetStock.directory, "install-config.yml")
-	a.assetStock.createAssetDirectory()
+	if err := os.MkdirAll(a.directory, 0755); err != nil {
+		return nil, err
+	}
+	assetPath := filepath.Join(a.directory, "install-config.yml")
 	if err := ioutil.WriteFile(assetPath, data, 0644); err != nil {
 		return nil, err
 	}
 
-	return &State{
-		Contents: []Content{
+	return &asset.State{
+		Contents: []asset.Content{
 			{
 				Name: assetPath,
 				Data: data,

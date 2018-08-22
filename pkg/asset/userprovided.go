@@ -7,21 +7,21 @@ import (
 )
 
 // UserProvided generates an asset that is supplied by a user.
-type userProvided struct {
-	inputReader *bufio.Reader
-	prompt      string
-	validation  func(string) (string, bool)
+type UserProvided struct {
+	InputReader *bufio.Reader
+	Prompt      string
+	Validation  func(string) (string, bool)
 }
 
-var _ Asset = (*userProvided)(nil)
+var _ Asset = (*UserProvided)(nil)
 
 // Dependencies returns no dependencies.
-func (a *userProvided) Dependencies() []Asset {
+func (a *UserProvided) Dependencies() []Asset {
 	return []Asset{}
 }
 
 // Generate queries for input from the user.
-func (a *userProvided) Generate(map[Asset]*State) (*State, error) {
+func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
 	input := a.queryUser()
 	return &State{
 		Contents: []Content{
@@ -30,10 +30,10 @@ func (a *userProvided) Generate(map[Asset]*State) (*State, error) {
 	}, nil
 }
 
-func (a *userProvided) queryUser() string {
+func (a *UserProvided) queryUser() string {
 	for {
-		fmt.Println(a.prompt)
-		input, err := a.inputReader.ReadString('\n')
+		fmt.Println(a.Prompt)
+		input, err := a.InputReader.ReadString('\n')
 		if err != nil && err != io.EOF {
 			fmt.Println("Could not understand response. Please retry.")
 			continue
@@ -41,8 +41,8 @@ func (a *userProvided) queryUser() string {
 		if input != "" && input[len(input)-1] == '\n' {
 			input = input[:len(input)-1]
 		}
-		if a.validation != nil {
-			validatedInput, ok := a.validation(input)
+		if a.Validation != nil {
+			validatedInput, ok := a.Validation(input)
 			if !ok {
 				continue
 			}
