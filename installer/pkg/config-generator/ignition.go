@@ -42,12 +42,15 @@ func (c *ConfigGenerator) poolToRoleMap() map[string]string {
 func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 	poolToRole := c.poolToRoleMap()
 	for _, p := range c.NodePools {
+		role := poolToRole[p.Name]
+		if _, ok := ignFilesPath[role]; !ok {
+			return fmt.Errorf("unrecognized pool: %s", p.Name)
+		}
+
 		ignCfg, err := parseIgnFile(p.IgnitionFile)
 		if err != nil {
 			return fmt.Errorf("failed to GenerateIgnConfig for pool %s and file %s: %v", p.Name, p.IgnitionFile, err)
 		}
-
-		role := poolToRole[p.Name]
 
 		var ignCfgs []ignconfigtypes.Config
 		for i := 0; i < p.Count; i++ {
