@@ -40,6 +40,6 @@ resource "libvirt_domain" "etcd" {
   network_interface {
     network_id = "${local.libvirt_network_id}"
     hostname   = "${var.tectonic_cluster_name}-etcd-${count.index}"
-    addresses  = ["${cidrhost(var.tectonic_libvirt_ip_range, var.tectonic_libvirt_first_ip_etcd + count.index)}"]
+    addresses  = ["${var.tectonic_libvirt_etcd_ips[count.index]}"]
   }
 }

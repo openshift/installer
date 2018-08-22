@@ -123,7 +123,7 @@ func (c *Cluster) TFVars() (string, error) {
 
 	// fill in master ips
 	if c.Platform == PlatformLibvirt {
-		if err := c.Libvirt.TFVars(c.Master.Count, c.Worker.Count); err != nil {
+		if err := c.Libvirt.TFVars(c.Master.Count, c.Worker.Count, c.Etcd.Count); err != nil {
 			return "", err
 		}
 	}
