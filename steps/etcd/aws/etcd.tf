@@ -63,7 +63,7 @@ module "etcd" {
   root_volume_size        = "${var.tectonic_aws_etcd_root_volume_size}"
   root_volume_type        = "${var.tectonic_aws_etcd_root_volume_type}"
   s3_bucket               = "${local.s3_bucket}"
-  sg_ids                  = "${concat(var.tectonic_aws_etcd_extra_sg_ids, list(local.sg_id))}"
+  sg_ids                  = "${concat(var.tectonic_aws_etcd_extra_sg_ids, local.sg_ids)}"
   subnets                 = ["${local.subnet_ids_workers}"]
   etcd_iam_role           = "${var.tectonic_aws_etcd_iam_role_name}"
   ec2_ami                 = "${var.tectonic_aws_ec2_ami_override}"

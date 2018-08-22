@@ -17,7 +17,7 @@ data "terraform_remote_state" "assets" {
 
 locals {
   ignition           = "${data.terraform_remote_state.assets.ignition_etcd}"
-  sg_id              = "${data.terraform_remote_state.topology.etcd_sg_id}"
+  sg_ids             = ["${data.terraform_remote_state.topology.etcd_sg_id}", "${data.terraform_remote_state.topology.master_sg_id}"]
   subnet_ids_workers = "${data.terraform_remote_state.topology.subnet_ids_workers}"
   s3_bucket          = "${data.terraform_remote_state.topology.s3_bucket}"
   private_zone_id    = "${var.tectonic_aws_external_private_zone != "" ? var.tectonic_aws_external_private_zone : data.terraform_remote_state.topology.private_zone_id}"
