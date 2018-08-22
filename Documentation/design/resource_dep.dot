@@ -131,6 +131,11 @@ strict digraph resource {
 
   admin_bundle -> kubeconfig;
 
+  kubelet_bundle -> kubelet_kubeconfig;
+
+  install_config -> kubeconfig;
+  install_config -> kubelet_kubeconfig;
+
   apiserver_bundle -> bootstrap_control_plane;
 
   apiserver_proxy_bundle -> bootstrap_ignition;
@@ -138,10 +143,6 @@ strict digraph resource {
   clusterapi_apiserver_bundle -> bootstrap_ignition;
 
   etcd_client_bundle -> bootstrap_control_plane;
-
-  kubelet_bundle -> bootstrap_ignition;
-  kubelet_bundle -> master_ignition;
-  kubelet_bundle -> worker_ignition;
 
   ingress_bundle -> bootstrap_ignition;
 
@@ -163,7 +164,6 @@ strict digraph resource {
 
   kubelet_kubeconfig -> bootstrap_ignition;
   kubelet_kubeconfig -> master_ignition;
-  kubelet_kubeconfig -> worker_ignition;
 
   bootstrap_ignition -> terraform_state;
   master_ignition -> terraform_state;
