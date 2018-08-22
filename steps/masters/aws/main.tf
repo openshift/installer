@@ -44,6 +44,5 @@ module "masters" {
   root_volume_size             = "${var.tectonic_aws_master_root_volume_size}"
   root_volume_type             = "${var.tectonic_aws_master_root_volume_type}"
   subnet_ids                   = "${local.subnet_ids}"
-  ec2_ami                      = "${var.tectonic_aws_ec2_ami_override}"
   user_data_ign                = "${file("${path.cwd}/${var.tectonic_ignition_master}")}"
 }
