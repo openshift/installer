@@ -36,7 +36,7 @@ module "masters" {
   extra_tags                   = "${var.tectonic_aws_extra_tags}"
   instance_count               = "${var.tectonic_bootstrap == "true" ? 1 : var.tectonic_master_count}"
   master_iam_role              = "${var.tectonic_aws_master_iam_role_name}"
-  master_sg_ids                = "${concat(var.tectonic_aws_master_extra_sg_ids, list(local.sg_id))}"
+  master_sg_ids                = "${concat(var.tectonic_aws_master_extra_sg_ids, local.sg_ids)}"
   private_endpoints            = "${local.private_endpoints}"
   public_endpoints             = "${local.public_endpoints}"
   region                       = "${var.tectonic_aws_region}"
