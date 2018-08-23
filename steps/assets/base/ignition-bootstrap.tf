@@ -4,7 +4,7 @@ module "ignition_bootstrap" {
   cloud_provider       = "${var.cloud_provider}"
   container_images     = "${var.tectonic_container_images}"
   etcd_ca_cert_pem     = "${local.etcd_ca_cert_pem}"
-  etcd_count           = "${length(data.template_file.etcd_hostname_list.*.id)}"
+  etcd_count           = "${var.tectonic_master_count}"
   image_re             = "${var.tectonic_image_re}"
   ingress_ca_cert_pem  = "${local.ingress_ca_cert_pem}"
   root_ca_cert_pem     = "${local.root_ca_cert_pem}"

@@ -27,31 +27,10 @@ variable "tectonic_aws_worker_ec2_type" {
   default     = "t2.medium"
 }
 
-variable "tectonic_aws_etcd_ec2_type" {
-  type = "string"
-
-  description = <<EOF
-  Instance size for the etcd node(s). Example: `t2.medium`. Read the [etcd recommended hardware](https://coreos.com/etcd/docs/latest/op-guide/hardware.html) guide for best performance
-  EOF
-
-  default = "t2.medium"
-}
-
 variable "tectonic_aws_ec2_ami_override" {
   type        = "string"
   description = "(optional) AMI override for all nodes. Example: `ami-foobar123`."
   default     = ""
-}
-
-variable "tectonic_aws_etcd_extra_sg_ids" {
-  description = <<EOF
-(optional) List of additional security group IDs for etcd nodes.
-
-Example: `["sg-51530134", "sg-b253d7cc"]`
-EOF
-
-  type    = "list"
-  default = []
 }
 
 variable "tectonic_aws_master_extra_sg_ids" {
@@ -154,28 +133,6 @@ Example: `{ "key" = "value", "foo" = "bar" }`
 EOF
 
   default = {}
-}
-
-variable "tectonic_aws_etcd_root_volume_type" {
-  type        = "string"
-  default     = "gp2"
-  description = "The type of volume for the root block device of etcd nodes."
-}
-
-variable "tectonic_aws_etcd_root_volume_size" {
-  type        = "string"
-  default     = "30"
-  description = "The size of the volume in gigabytes for the root block device of etcd nodes."
-}
-
-variable "tectonic_aws_etcd_root_volume_iops" {
-  type    = "string"
-  default = "100"
-
-  description = <<EOF
-The amount of provisioned IOPS for the root block device of etcd nodes.
-Ignored if the volume type is not io1.
-EOF
 }
 
 variable "tectonic_aws_master_root_volume_type" {
@@ -283,20 +240,6 @@ variable "tectonic_aws_worker_iam_role_name" {
 
   description = <<EOF
 (optional) Name of IAM role to use for the instance profiles of worker nodes.
-The name is also the last part of a role's ARN.
-
-Example:
- * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
- * Role Name = tectonic-installer
-EOF
-}
-
-variable "tectonic_aws_etcd_iam_role_name" {
-  type    = "string"
-  default = ""
-
-  description = <<EOF
-(optional) Name of IAM role to use for the instance profiles of etcd nodes.
 The name is also the last part of a role's ARN.
 
 Example:

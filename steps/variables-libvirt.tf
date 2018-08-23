@@ -42,14 +42,3 @@ variable "tectonic_libvirt_worker_ips" {
   type        = "list"
   description = "the list of desired worker ips. Must match tectonic_worker_count"
 }
-
-variable "tectonic_libvirt_etcd_ips" {
-  type        = "list"
-  description = "the list of desired etcd ips. Must match tectonic_etcd_count"
-}
-
-variable "tectonic_libvirt_first_ip_worker" {
-  type        = "string"
-  description = "the offset in the ip range of the first worker"
-  default     = "50"
-}

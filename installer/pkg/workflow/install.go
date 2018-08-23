@@ -23,7 +23,6 @@ func InstallFullWorkflow(clusterDir string) Workflow {
 			generateIgnConfigStep,
 			installTopologyStep,
 			installBootstrapStep,
-			installEtcdStep,
 			installJoinMastersStep,
 			installJoinWorkersStep,
 		},
@@ -65,7 +64,6 @@ func InstallBootstrapWorkflow(clusterDir string) Workflow {
 			refreshConfigStep,
 			installTopologyStep,
 			installBootstrapStep,
-			installEtcdStep,
 		},
 	}
 }
@@ -103,10 +101,6 @@ func installBootstrapStep(m *metadata) error {
 		return runInstallStep(m, bootstrapStep)
 	}
 	return nil
-}
-
-func installEtcdStep(m *metadata) error {
-	return runInstallStep(m, etcdStep)
 }
 
 func installJoinMastersStep(m *metadata) error {

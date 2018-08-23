@@ -1,19 +1,7 @@
-# Terraform doesn't support "inheritance"
-# So we have to pass all variables down
-module "defaults" {
-  source = "../../../modules/aws/target-defaults"
-
-  region     = "${var.tectonic_aws_region}"
-  profile    = "${var.tectonic_aws_profile}"
-  role_arn   = "${var.tectonic_aws_installer_role}"
-  etcd_count = "${var.tectonic_master_count}"
-}
-
 module assets_base {
   source = "../base"
 
   cloud_provider = "aws"
-  etcd_count     = "${module.defaults.etcd_count}"
   ingress_kind   = "haproxy-router"
 
   tectonic_admin_email             = "${var.tectonic_admin_email}"

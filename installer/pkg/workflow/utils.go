@@ -17,7 +17,6 @@ const (
 	bootstrapStep    = "bootstrap"
 	binaryPrefix     = "installer"
 	configFileName   = "config.yaml"
-	etcdStep         = "etcd"
 	internalFileName = "internal.yaml"
 	joinWorkersStep  = "joining_workers"
 	mastersStep      = "masters"
