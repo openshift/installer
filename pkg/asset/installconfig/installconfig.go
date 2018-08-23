@@ -1,14 +1,12 @@
 package installconfig
 
 import (
-	"bufio"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
-	"github.com/pborman/uuid"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -16,11 +14,10 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-// InstallConfig generates the install-config.yml file.
+// installConfig generates the install-config.yml file.
 type installConfig struct {
-	assetStock  Stock
-	directory   string
-	inputReader *bufio.Reader
+	assetStock Stock
+	directory  string
 }
 
 var _ asset.Asset = (*installConfig)(nil)
@@ -29,6 +26,7 @@ var _ asset.Asset = (*installConfig)(nil)
 // installConfig asset.
 func (a *installConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		a.assetStock.ClusterID(),
 		a.assetStock.EmailAddress(),
 		a.assetStock.Password(),
 		a.assetStock.BaseDomain(),
@@ -41,6 +39,7 @@ func (a *installConfig) Dependencies() []asset.Asset {
 
 // Generate generates the install-config.yml file.
 func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
+	clusterID := string(dependencies[a.assetStock.ClusterID()].Contents[0].Data)
 	emailAddress := string(dependencies[a.assetStock.EmailAddress()].Contents[0].Data)
 	password := string(dependencies[a.assetStock.Password()].Contents[0].Data)
 	baseDomain := string(dependencies[a.assetStock.BaseDomain()].Contents[0].Data)
@@ -52,7 +51,7 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterName,
 		},
-		ClusterID: uuid.NewUUID(),
+		ClusterID: clusterID,
 		Admin: types.Admin{
 			Email:    emailAddress,
 			Password: password,

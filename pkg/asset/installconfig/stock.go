@@ -10,6 +10,8 @@ import (
 type Stock interface {
 	// InstallConfig is the asset that generates install-config.yml.
 	InstallConfig() asset.Asset
+	// ClusterID is the asset that generates a UUID for the cluster.
+	ClusterID() asset.Asset
 	// EmailAddress is the asset that queries the user for the admin email address.
 	EmailAddress() asset.Asset
 	// Password is the asset that queries the user for the admin password.
@@ -31,6 +33,7 @@ type Stock interface {
 // StockImpl is the
 type StockImpl struct {
 	installConfig asset.Asset
+	clusterID     asset.Asset
 	emailAddress  asset.Asset
 	password      asset.Asset
 	baseDomain    asset.Asset
@@ -43,10 +46,10 @@ type StockImpl struct {
 // EstablishStock establishes the stock of assets in the specified directory.
 func (s *StockImpl) EstablishStock(directory string, inputReader *bufio.Reader) {
 	s.installConfig = &installConfig{
-		assetStock:  s,
-		directory:   directory,
-		inputReader: inputReader,
+		assetStock: s,
+		directory:  directory,
 	}
+	s.clusterID = &clusterID{}
 	s.emailAddress = &asset.UserProvided{
 		Prompt:      "Email Address:",
 		InputReader: inputReader,
@@ -72,6 +75,11 @@ func (s *StockImpl) EstablishStock(directory string, inputReader *bufio.Reader) 
 		InputReader: inputReader,
 	}
 	s.platform = &Platform{InputReader: inputReader}
+}
+
+// ClusterID is the asset that generates a UUID for the cluster.
+func (s *StockImpl) ClusterID() asset.Asset {
+	return s.clusterID
 }
 
 // InstallConfig is the asset that generates install-config.yml.

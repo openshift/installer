@@ -243,7 +243,7 @@ type InstallConfig struct {
     metav1.ObjectMeta `json:"metadata"`
 
     // ClusterID is the ID of the cluster.
-    ClusterID       uuid.UUID `json:"clusterID"`
+    ClusterID       string `json:"clusterID"`
 
 	// Admin is the configuration for the admin user.
 	Admin Admin `json:"admin"`
