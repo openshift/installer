@@ -24,7 +24,8 @@ resource "libvirt_domain" "etcd" {
   count = "${module.defaults.etcd_count}"
 
   name            = "etcd${count.index}"
-  memory          = "${var.tectonic_libvirt_etcd_memory}"
+  memory          = "1024"
+  vcpu            = "2"
   coreos_ignition = "${element(libvirt_ignition.etcd.*.id,count.index)}"
 
   disk {

@@ -44,21 +44,3 @@ variable "tectonic_libvirt_first_ip_worker" {
   description = "the offset in the ip range of the first worker"
   default     = "50"
 }
-
-variable "tectonic_libvirt_etcd_memory" {
-  type        = "string"
-  description = "ram to allocate for each etcd node"
-  default     = "1024"
-}
-
-variable "tectonic_libvirt_master_memory" {
-  type        = "string"
-  description = "ram to allocate for each etcd node"
-  default     = "2048"
-}
-
-variable "tectonic_libvirt_worker_memory" {
-  type        = "string"
-  description = "ram to allocate for each etcd node"
-  default     = "1024"
-}
