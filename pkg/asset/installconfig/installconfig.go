@@ -41,21 +41,44 @@ func (a *installConfig) Dependencies() []asset.Asset {
 
 // Generate generates the install-config.yml file.
 func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
+	emailAddress := string(dependencies[a.assetStock.EmailAddress()].Contents[0].Data)
+	password := string(dependencies[a.assetStock.Password()].Contents[0].Data)
+	baseDomain := string(dependencies[a.assetStock.BaseDomain()].Contents[0].Data)
 	clusterName := string(dependencies[a.assetStock.ClusterName()].Contents[0].Data)
-	platform := string(dependencies[a.assetStock.Platform()].Contents[0].Data)
+	license := string(dependencies[a.assetStock.License()].Contents[0].Data)
+	pullSecret := string(dependencies[a.assetStock.PullSecret()].Contents[0].Data)
 
 	installConfig := types.InstallConfig{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterName,
 		},
 		ClusterID: uuid.NewUUID(),
+		Admin: types.Admin{
+			Email:    emailAddress,
+			Password: password,
+		},
+		BaseDomain: baseDomain,
+		License:    license,
+		PullSecret: pullSecret,
 	}
 
+	platformState := dependencies[a.assetStock.Platform()]
+	platform := string(platformState.Contents[0].Data)
 	switch platform {
 	case AWSPlatformType:
-		installConfig.AWS = &types.AWSPlatform{}
+		region := string(platformState.Contents[1].Data)
+		keyPairName := string(platformState.Contents[2].Data)
+		installConfig.AWS = &types.AWSPlatform{
+			Region:      region,
+			KeyPairName: keyPairName,
+		}
 	case LibvirtPlatformType:
-		installConfig.Libvirt = &types.LibvirtPlatform{}
+		uri := string(platformState.Contents[1].Data)
+		sshKey := string(platformState.Contents[2].Data)
+		installConfig.Libvirt = &types.LibvirtPlatform{
+			URI:    uri,
+			SSHKey: sshKey,
+		}
 	default:
 		return nil, fmt.Errorf("unknown platform type %q", platform)
 	}
