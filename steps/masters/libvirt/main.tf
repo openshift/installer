@@ -30,7 +30,8 @@ resource "libvirt_domain" "master" {
 
   name = "master${count.index}"
 
-  memory = "${var.tectonic_libvirt_master_memory}"
+  memory = "2048"
+  vcpu   = "2"
 
   # Override ignition for the first (bootstrap) node. It can't be re-ignited,
   # but that's okay for us

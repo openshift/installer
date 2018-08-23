@@ -17,7 +17,8 @@ resource "libvirt_domain" "worker" {
   count = "${var.tectonic_worker_count}"
 
   name            = "worker${count.index}"
-  memory          = "${var.tectonic_libvirt_worker_memory}"
+  memory          = "1024"
+  vcpu            = "2"
   coreos_ignition = "${libvirt_ignition.worker.id}"
 
   disk {
