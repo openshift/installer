@@ -34,6 +34,6 @@ locals {
 # This is currently limited to the first worker, due to an issue with net-update, even though libvirt supports multiple a-records
 resource "null_resource" "console_dns" {
   provisioner "local-exec" {
-    command = "virsh -c ${var.tectonic_libvirt_uri} net-update ${var.tectonic_libvirt_network_name} add dns-host \"<host ip='${local.first_worker_ip}'><hostname>${var.tectonic_cluster_name}</hostname></host>\" --live --config"
+    command = "virsh -c ${var.tectonic_libvirt_uri} net-update ${libvirt_network.tectonic_net.name} add dns-host \"<host ip='${local.first_worker_ip}'><hostname>${var.tectonic_cluster_name}</hostname></host>\" --live --config"
   }
 }
