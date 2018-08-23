@@ -69,7 +69,7 @@ var defaultCluster = Cluster{
 		MTU:         "1480",
 		PodCIDR:     "10.2.0.0/16",
 		ServiceCIDR: "10.3.0.0/16",
-		Type:        tectonicnetwork.NetworkCanal,
+		Type:        tectonicnetwork.NetworkFlannel,
 	},
 }
 

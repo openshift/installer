@@ -5,8 +5,8 @@ echo "Rendering Kubernetes core manifests..."
 
 # shellcheck disable=SC2154
 /usr/bin/docker run \
-    --volume "$(pwd)":/assets \
-    --volume /etc/kubernetes:/etc/kubernetes \
+    --volume "$(pwd)":/assets:z \
+    --volume /etc/kubernetes:/etc/kubernetes:z \
     "${kube_core_renderer_image}" \
     --config=/assets/kco-config.yaml \
     --output=/assets
@@ -16,7 +16,7 @@ echo "Rendering TNC manifests..."
 # shellcheck disable=SC2154
 /usr/bin/docker run \
     --user 0 \
-    --volume "$(pwd)":/assets \
+    --volume "$(pwd)":/assets:z \
     "${tnc_operator_image}" \
     --config=/assets/tnco-config.yaml \
     --render-bootstrap=true \
@@ -37,7 +37,7 @@ echo "Starting etcd certificate signer..."
 # shellcheck disable=SC2154,SC2034
 signer_id=$(/usr/bin/docker run -d \
     --tmpfs /tmp \
-    --volume /opt/tectonic/tls:/opt/tectonic/tls:ro \
+    --volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
     --network host \
     "${etcd_cert_signer_image}" \
     serve \
@@ -61,7 +61,7 @@ while true; do
         --rm \
         --name etcdctl \
         --env ETCDCTL_API=3 \
-        --volume /opt/tectonic/tls:/opt/tectonic/tls:ro \
+        --volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
         "${etcdctl_image}" \
         /usr/local/bin/etcdctl \
             --dial-timeout=10m \
@@ -96,8 +96,8 @@ echo "Starting bootkube..."
 
 # shellcheck disable=SC2154
 /usr/bin/docker run \
-    --volume "$(pwd)":/assets \
-    --volume /etc/kubernetes:/etc/kubernetes \
+    --volume "$(pwd)":/assets:z \
+    --volume /etc/kubernetes:/etc/kubernetes:z \
     --network=host \
     --entrypoint=/bootkube \
     "${bootkube_image}" \
