@@ -245,6 +245,12 @@ type InstallConfig struct {
     // ClusterID is the ID of the cluster.
     ClusterID       uuid.UUID `json:"clusterID"`
 
+	// Admin is the configuration for the admin user.
+	Admin Admin `json:"admin"`
+
+	// BaseDomain is the base domain to which the cluster should belong.
+	BaseDomain string `json:"baseDomain"`
+
     // Networking defines the pod network provider in the cluster.
     Networking      `json:"networking"`
 
@@ -253,6 +259,17 @@ type InstallConfig struct {
 
     // only one of the platform configuration should be set
     Platform    `json:"platform"`
+
+	// License is an OpenShift license needed to install a cluster.
+	License string `json:"license"`
+
+	// PullSecret is the secret to use when pulling images.
+	PullSecret string `json:"pullSecret"`
+}
+
+type Admin struct {
+	Email string `json:"email"`
+	Password string `json:"password"`
 }
 
 type Platform struct {

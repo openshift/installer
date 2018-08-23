@@ -10,7 +10,6 @@ import (
 type UserProvided struct {
 	InputReader *bufio.Reader
 	Prompt      string
-	Validation  func(string) (string, bool)
 }
 
 var _ Asset = (*UserProvided)(nil)
@@ -22,7 +21,7 @@ func (a *UserProvided) Dependencies() []Asset {
 
 // Generate queries for input from the user.
 func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
-	input := a.queryUser()
+	input := QueryUser(a.InputReader, a.Prompt)
 	return &State{
 		Contents: []Content{
 			{Data: []byte(input)},
@@ -30,23 +29,17 @@ func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
 	}, nil
 }
 
-func (a *UserProvided) queryUser() string {
+// QueryUser queries the user for input.
+func QueryUser(inputReader *bufio.Reader, prompt string) string {
 	for {
-		fmt.Println(a.Prompt)
-		input, err := a.InputReader.ReadString('\n')
+		fmt.Println(prompt)
+		input, err := inputReader.ReadString('\n')
 		if err != nil && err != io.EOF {
 			fmt.Println("Could not understand response. Please retry.")
 			continue
 		}
 		if input != "" && input[len(input)-1] == '\n' {
 			input = input[:len(input)-1]
-		}
-		if a.Validation != nil {
-			validatedInput, ok := a.Validation(input)
-			if !ok {
-				continue
-			}
-			input = validatedInput
 		}
 		return input
 	}
