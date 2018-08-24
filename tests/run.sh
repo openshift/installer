@@ -41,7 +41,9 @@ cd tectonic-dev
 
 echo -e "\\e[36m Creating Tectonic configuration...\\e[0m"
 python <<-EOF >"${CLUSTER_NAME}.yaml"
+	import datetime
 	import sys
+
 	import yaml
 
 	with open('examples/tectonic.aws.yaml') as f:
@@ -53,6 +55,11 @@ python <<-EOF >"${CLUSTER_NAME}.yaml"
 	config['aws']['region'] = '${AWS_REGION}'
 	config['aws']['master']['iamRoleName'] = 'tf-tectonic-master-node'
 	config['aws']['worker']['iamRoleName'] = 'tf-tectonic-worker-node'
+	config['aws']['extraTags'] = {
+	    'expirationDate': (
+	        datetime.datetime.utcnow() + datetime.timedelta(hours=4)
+	    ).strftime('%Y-%m-%dT%H:%M+0000'),
+	}
 	yaml.safe_dump(config, sys.stdout)
 	EOF
 
