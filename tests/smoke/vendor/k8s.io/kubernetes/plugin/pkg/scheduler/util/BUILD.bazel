@@ -6,6 +6,7 @@ go_library(
         "backoff_utils.go",
         "utils.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/plugin/pkg/scheduler/util",
     importpath = "k8s.io/kubernetes/plugin/pkg/scheduler/util",
     visibility = ["//visibility:public"],
     deps = [

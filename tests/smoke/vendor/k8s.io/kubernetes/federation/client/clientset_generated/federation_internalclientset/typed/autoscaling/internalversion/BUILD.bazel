@@ -8,6 +8,7 @@ go_library(
         "generated_expansion.go",
         "horizontalpodautoscaler.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/federation/client/clientset_generated/federation_internalclientset/typed/autoscaling/internalversion",
     importpath = "k8s.io/kubernetes/federation/client/clientset_generated/federation_internalclientset/typed/autoscaling/internalversion",
     visibility = ["//visibility:public"],
     deps = [

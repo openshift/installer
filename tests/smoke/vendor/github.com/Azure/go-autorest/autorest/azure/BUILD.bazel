@@ -11,6 +11,7 @@ go_library(
         "persist.go",
         "token.go",
     ],
+    importmap = "installer/tests/smoke/vendor/github.com/Azure/go-autorest/autorest/azure",
     importpath = "github.com/Azure/go-autorest/autorest/azure",
     visibility = ["//visibility:public"],
     deps = [

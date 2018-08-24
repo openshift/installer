@@ -15,6 +15,7 @@ go_library(
         "types.go",
         "zz_generated.deepcopy.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/api",
     importpath = "k8s.io/kubernetes/pkg/api",
     visibility = ["//visibility:public"],
     deps = [

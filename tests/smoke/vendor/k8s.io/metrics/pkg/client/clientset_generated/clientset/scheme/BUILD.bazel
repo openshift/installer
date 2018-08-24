@@ -6,6 +6,7 @@ go_library(
         "doc.go",
         "register.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/metrics/pkg/client/clientset_generated/clientset/scheme",
     importpath = "k8s.io/metrics/pkg/client/clientset_generated/clientset/scheme",
     visibility = ["//visibility:public"],
     deps = [

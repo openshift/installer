@@ -8,6 +8,7 @@ go_library(
         "predicates.go",
         "utils.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/plugin/pkg/scheduler/algorithm/predicates",
     importpath = "k8s.io/kubernetes/plugin/pkg/scheduler/algorithm/predicates",
     visibility = ["//visibility:public"],
     deps = [

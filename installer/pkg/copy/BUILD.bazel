@@ -2,9 +2,7 @@ load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
 
 go_library(
     name = "go_default_library",
-    srcs = [
-        "copy.go",
-    ],
+    srcs = ["copy.go"],
     importpath = "github.com/openshift/installer/installer/pkg/copy",
     visibility = ["//visibility:public"],
 )
@@ -12,8 +10,6 @@ go_library(
 go_test(
     name = "go_default_test",
     size = "small",
-    srcs = [
-        "copy_test.go",
-    ],
+    srcs = ["copy_test.go"],
     embed = [":go_default_library"],
 )

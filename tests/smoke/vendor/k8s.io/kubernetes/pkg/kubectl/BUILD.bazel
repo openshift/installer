@@ -38,6 +38,7 @@ go_library(
         "stop.go",
         "versioned_client.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/pkg/kubectl",
     importpath = "k8s.io/kubernetes/pkg/kubectl",
     visibility = ["//visibility:public"],
     deps = [

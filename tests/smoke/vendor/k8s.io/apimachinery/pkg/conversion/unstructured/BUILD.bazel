@@ -6,6 +6,7 @@ go_library(
         "converter.go",
         "doc.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/apimachinery/pkg/conversion/unstructured",
     importpath = "k8s.io/apimachinery/pkg/conversion/unstructured",
     visibility = ["//visibility:public"],
     deps = [

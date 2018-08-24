@@ -11,6 +11,7 @@ go_library(
         "zz_generated.conversion.go",
         "zz_generated.deepcopy.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/metrics/pkg/apis/metrics/v1alpha1",
     importpath = "k8s.io/metrics/pkg/apis/metrics/v1alpha1",
     visibility = ["//visibility:public"],
     deps = [

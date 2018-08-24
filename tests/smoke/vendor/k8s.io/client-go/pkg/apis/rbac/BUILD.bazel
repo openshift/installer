@@ -9,6 +9,7 @@ go_library(
         "types.go",
         "zz_generated.deepcopy.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/client-go/pkg/apis/rbac",
     importpath = "k8s.io/client-go/pkg/apis/rbac",
     visibility = ["//visibility:public"],
     deps = [

@@ -9,6 +9,7 @@ go_library(
         "types.go",
         "zz_generated.deepcopy.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/federation/apis/federation",
     importpath = "k8s.io/kubernetes/federation/apis/federation",
     visibility = ["//visibility:public"],
     deps = [

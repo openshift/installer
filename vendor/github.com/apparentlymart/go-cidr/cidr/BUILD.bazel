@@ -6,6 +6,7 @@ go_library(
         "cidr.go",
         "wrangling.go",
     ],
+    importmap = "installer/vendor/github.com/apparentlymart/go-cidr/cidr",
     importpath = "github.com/apparentlymart/go-cidr/cidr",
     visibility = ["//visibility:public"],
 )

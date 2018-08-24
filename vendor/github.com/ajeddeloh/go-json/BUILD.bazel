@@ -11,6 +11,7 @@ go_library(
         "stream.go",
         "tags.go",
     ],
+    importmap = "installer/vendor/github.com/ajeddeloh/go-json",
     importpath = "github.com/ajeddeloh/go-json",
     visibility = ["//visibility:public"],
 )

@@ -11,6 +11,7 @@ go_library(
         "ingress.go",
         "replicaset.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/kubernetes/federation/client/clientset_generated/federation_internalclientset/typed/extensions/internalversion",
     importpath = "k8s.io/kubernetes/federation/client/clientset_generated/federation_internalclientset/typed/extensions/internalversion",
     visibility = ["//visibility:public"],
     deps = [

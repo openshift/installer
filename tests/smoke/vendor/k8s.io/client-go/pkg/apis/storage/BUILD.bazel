@@ -8,6 +8,7 @@ go_library(
         "types.go",
         "zz_generated.deepcopy.go",
     ],
+    importmap = "installer/tests/smoke/vendor/k8s.io/client-go/pkg/apis/storage",
     importpath = "k8s.io/client-go/pkg/apis/storage",
     visibility = ["//visibility:public"],
     deps = [
