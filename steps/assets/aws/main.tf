@@ -1,19 +1,7 @@
-# Terraform doesn't support "inheritance"
-# So we have to pass all variables down
-module "defaults" {
-  source = "../../../modules/aws/target-defaults"
-
-  region     = "${var.tectonic_aws_region}"
-  profile    = "${var.tectonic_aws_profile}"
-  role_arn   = "${var.tectonic_aws_installer_role}"
-  etcd_count = "${var.tectonic_etcd_count}"
-}
-
 module assets_base {
   source = "../base"
 
   cloud_provider = "aws"
-  etcd_count     = "${module.defaults.etcd_count}"
   ingress_kind   = "haproxy-router"
 
   tectonic_admin_email             = "${var.tectonic_admin_email}"
@@ -35,39 +23,4 @@ module assets_base {
   tectonic_service_cidr            = "${var.tectonic_service_cidr}"
   tectonic_update_channel          = "${var.tectonic_update_channel}"
   tectonic_versions                = "${var.tectonic_versions}"
-}
-
-# Removing assets is platform-specific
-# But it must be installed in /opt/tectonic/rm-assets.sh
-data "template_file" "rm_assets_sh" {
-  template = "${file("${path.module}/resources/rm-assets.sh")}"
-
-  vars {
-    cluster_name       = "${var.tectonic_cluster_name}"
-    awscli_image       = "${var.tectonic_container_images["awscli"]}"
-    bucket_s3_location = "${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}"
-  }
-}
-
-data "ignition_file" "rm_assets_sh" {
-  filesystem = "root"
-  path       = "/opt/tectonic/rm-assets.sh"
-  mode       = "0700"
-
-  content {
-    content = "${data.template_file.rm_assets_sh.rendered}"
-  }
-}
-
-data "ignition_config" "bootstrap" {
-  files = ["${flatten(list(
-    list(
-      data.ignition_file.rm_assets_sh.id,
-    ),
-    module.assets_base.ignition_bootstrap_files,
-  ))}"]
-
-  systemd = [
-    "${module.assets_base.ignition_bootstrap_systemd}",
-  ]
 }

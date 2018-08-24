@@ -72,3 +72,15 @@ module "dns" {
   private_endpoints         = "${local.private_endpoints}"
   public_endpoints          = "${local.public_endpoints}"
 }
+
+resource "aws_route53_record" "tectonic_tnc_a" {
+  zone_id = "${var.tectonic_aws_external_private_zone != "" ? var.tectonic_aws_external_private_zone : join("", aws_route53_zone.tectonic_int.*.zone_id)}"
+  name    = "${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}"
+  type    = "A"
+
+  alias {
+    name                   = "${module.vpc.aws_elb_tnc_dns_name}"
+    zone_id                = "${module.vpc.aws_elb_tnc_zone_id}"
+    evaluate_target_health = true
+  }
+}

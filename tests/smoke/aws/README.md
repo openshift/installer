@@ -100,8 +100,8 @@ $ aws ec2 describe-instances --query "Reservations[].Instances[] | [?Tags[? Key 
 $ ssh -A core@52.15.184.15
 ```
 
-Once connected to the master node, follow the [troubleshooting guide](../../../Documentation/troubleshooting/troubleshooting.md) for master, worker, and etcd nodes to investigate the following checklist:
+Once connected to the master node, follow the [troubleshooting guide](../../../Documentation/troubleshooting/troubleshooting.md) for master and worker nodes to investigate the following checklist:
 
-- SSH connectivity to the master/worker/etcd nodes
+- SSH connectivity to the master/worker nodes
 - Successful start of all relevant installation service units on the corresponding nodes
 - Successful login to the Tectonic Console

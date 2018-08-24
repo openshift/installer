@@ -2,7 +2,7 @@ apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
   name: tectonic-ingress-controller-operator
-  namespace: tectonic-ingress
+  namespace: openshift-ingress
   labels:
     k8s-app: tectonic-ingress-controller-operator
     managed-by-channel-operator: "true"

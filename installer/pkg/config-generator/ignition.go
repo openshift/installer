@@ -42,29 +42,50 @@ func (c *ConfigGenerator) poolToRoleMap() map[string]string {
 func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 	poolToRole := c.poolToRoleMap()
 	for _, p := range c.NodePools {
-		ignFile := p.IgnitionFile
-		ignCfg, err := parseIgnFile(ignFile)
+		role := poolToRole[p.Name]
+		if _, ok := ignFilesPath[role]; !ok {
+			return fmt.Errorf("unrecognized pool: %s", p.Name)
+		}
+
+		ignCfg, err := parseIgnFile(p.IgnitionFile)
 		if err != nil {
 			return fmt.Errorf("failed to GenerateIgnConfig for pool %s and file %s: %v", p.Name, p.IgnitionFile, err)
 		}
-		role := poolToRole[p.Name]
-		// TODO(alberto): Append block need to be different for each etcd node.
-		// add loop over count if role is etcd
-		c.embedAppendBlock(ignCfg, role)
 
-		ca := filepath.Join(clusterDir, caPath)
-		if err = c.appendCertificateAuthority(ignCfg, ca); err != nil {
+		var ignCfgs []ignconfigtypes.Config
+		for i := 0; i < p.Count; i++ {
+			ignCfgs = append(ignCfgs, *ignCfg)
+		}
+
+		ca, err := ioutil.ReadFile(filepath.Join(clusterDir, caPath))
+		if err != nil {
 			return err
+		}
+
+		for i := range ignCfgs {
+			c.appendCertificateAuthority(&ignCfgs[i], ca)
 		}
 
 		// XXX(crawford): The SSH key should only be added to the bootstrap
 		//                node. After that, MCO should be responsible for
 		//                distributing SSH keys.
-		c.embedUserBlock(ignCfg)
+		for i := range ignCfgs {
+			c.embedUserBlock(&ignCfgs[i])
+		}
 
 		fileTargetPath := filepath.Join(clusterDir, ignFilesPath[role])
-		if err = ignCfgToFile(*ignCfg, fileTargetPath); err != nil {
-			return err
+		if role == "master" {
+			for i := range ignCfgs {
+				c.embedAppendBlock(&ignCfgs[i], role, fmt.Sprintf("etcd_index=%d", i))
+				if err = ignCfgToFile(ignCfgs[i], fmt.Sprintf(fileTargetPath, i)); err != nil {
+					return err
+				}
+			}
+		} else {
+			c.embedAppendBlock(&ignCfgs[0], role, "")
+			if err = ignCfgToFile(ignCfgs[0], fileTargetPath); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -91,25 +112,18 @@ func parseIgnFile(filePath string) (*ignconfigtypes.Config, error) {
 	return &cfg, nil
 }
 
-func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role string) {
+func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role string, query string) {
 	appendBlock := ignconfigtypes.ConfigReference{
-		Source:       c.getTNCURL(role),
+		Source:       c.getTNCURL(role, query),
 		Verification: ignconfigtypes.Verification{Hash: nil},
 	}
 	ignCfg.Ignition.Config.Append = append(ignCfg.Ignition.Config.Append, appendBlock)
 }
 
-func (c *ConfigGenerator) appendCertificateAuthority(ignCfg *ignconfigtypes.Config, caPath string) error {
-	ca, err := ioutil.ReadFile(caPath)
-	if err != nil {
-		return err
-	}
-
+func (c *ConfigGenerator) appendCertificateAuthority(ignCfg *ignconfigtypes.Config, ca []byte) {
 	ignCfg.Ignition.Security.TLS.CertificateAuthorities = append(ignCfg.Ignition.Security.TLS.CertificateAuthorities, ignconfigtypes.CaReference{
 		Source: dataurl.EncodeBytes(ca),
 	})
-
-	return nil
 }
 
 func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
@@ -123,7 +137,7 @@ func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
 	ignCfg.Passwd.Users = append(ignCfg.Passwd.Users, userBlock)
 }
 
-func (c *ConfigGenerator) getTNCURL(role string) string {
+func (c *ConfigGenerator) getTNCURL(role string, query string) string {
 	var u string
 
 	// cloud platforms put this behind a load balancer which remaps ports;
@@ -133,19 +147,13 @@ func (c *ConfigGenerator) getTNCURL(role string) string {
 		port = 49500
 	}
 
-	// XXX: The bootstrap node on AWS uses a CNAME to redirect TNC-bound
-	// traffic to S3. Because of this, HTTPS cannot be used.
-	scheme := "https"
-	if c.Platform == config.PlatformAWS && role == "master" {
-		scheme = "http"
-	}
-
 	if role == "master" || role == "worker" {
 		u = func() *url.URL {
 			return &url.URL{
-				Scheme: scheme,
-				Host:   fmt.Sprintf("%s-tnc.%s:%d", c.Name, c.BaseDomain, port),
-				Path:   fmt.Sprintf("/config/%s", role),
+				Scheme:   "https",
+				Host:     fmt.Sprintf("%s-tnc.%s:%d", c.Name, c.BaseDomain, port),
+				Path:     fmt.Sprintf("/config/%s", role),
+				RawQuery: query,
 			}
 		}().String()
 	}

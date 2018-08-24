@@ -47,8 +47,7 @@ CONFIG=$(echo "${CONFIG}" | jq ".name = \"${CLUSTER_NAME}\"" |\
                             jq ".pullSecretPath = \"${PULL_SECRET_PATH}\"" |\
                             jq ".aws.region = \"${AWS_REGION}\"" |\
                             jq ".aws.master.iamRoleName = \"tf-tectonic-master-node\"" |\
-                            jq ".aws.worker.iamRoleName = \"tf-tectonic-worker-node\"" |\
-                            jq ".aws.etcd.iamRoleName = \"tf-tectonic-etcd-node\""
+                            jq ".aws.worker.iamRoleName = \"tf-tectonic-worker-node\""
 )
 echo "${CONFIG}" | python -c 'import sys, yaml, json; yaml.safe_dump(json.load(sys.stdin), sys.stdout)' > "${CLUSTER_NAME}.yaml"
 
@@ -77,7 +76,7 @@ echo -e "\\e[36m Deploying Tectonic...\\e[0m"
 tectonic install --dir="${CLUSTER_NAME}"
 echo -e "\\e[36m Running smoke test...\\e[0m"
 export SMOKE_KUBECONFIG="$(pwd)/$CLUSTER_NAME/generated/auth/kubeconfig"
-export SMOKE_NODE_COUNT="7"  # Sum of all nodes (etcd + master + worker)
+export SMOKE_NODE_COUNT="5"  # Sum of all nodes (master + worker)
 export SMOKE_MANIFEST_PATHS="$(pwd)/$CLUSTER_NAME/generated"
 exec 5>&1
 SMOKE_TEST_OUTPUT=$(./smoke -test.v --cluster | tee >(cat - >&5))

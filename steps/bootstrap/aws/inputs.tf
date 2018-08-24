@@ -6,10 +6,19 @@ data "terraform_remote_state" "topology" {
   }
 }
 
+data "terraform_remote_state" "assets" {
+  backend = "local"
+
+  config {
+    path = "${path.cwd}/assets.tfstate"
+  }
+}
+
 locals {
   subnet_ids = "${data.terraform_remote_state.topology.subnet_ids_masters}"
   aws_lbs    = "${data.terraform_remote_state.topology.aws_lbs}"
   sg_id      = "${data.terraform_remote_state.topology.master_sg_id}"
+  s3_bucket  = "${data.terraform_remote_state.topology.s3_bucket}"
 
-  private_zone_id = "${var.tectonic_aws_external_private_zone != "" ? var.tectonic_aws_external_private_zone : data.terraform_remote_state.topology.private_zone_id}"
+  ignition_bootstrap = "${data.terraform_remote_state.assets.ignition_bootstrap}"
 }

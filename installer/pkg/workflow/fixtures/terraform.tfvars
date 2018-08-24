@@ -22,7 +22,10 @@
   "tectonic_container_linux_version": "latest",
   "tectonic_etcd_count": 3,
   "tectonic_ignition_etcd": "etcd.ign",
-  "tectonic_ignition_master": "master.ign",
+  "tectonic_ignition_masters": [
+    "master-0.ign",
+    "master-1.ign"
+  ],
   "tectonic_ignition_worker": "worker.ign",
   "tectonic_libvirt_network_if": "osbr0",
   "tectonic_libvirt_resolver": "8.8.8.8",

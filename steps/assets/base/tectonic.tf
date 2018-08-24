@@ -4,7 +4,7 @@ locals {
 }
 
 data "template_file" "etcd_hostname_list" {
-  count    = "${var.etcd_count}"
+  count    = "${var.tectonic_master_count}"
   template = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
 }
 

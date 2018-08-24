@@ -33,6 +33,6 @@ resource "libvirt_domain" "worker" {
   network_interface {
     network_id = "${local.libvirt_network_id}"
     hostname   = "${var.tectonic_cluster_name}-worker-${count.index}"
-    addresses  = ["${cidrhost(var.tectonic_libvirt_ip_range, var.tectonic_libvirt_first_ip_worker + count.index)}"]
+    addresses  = ["${var.tectonic_libvirt_worker_ips[count.index]}"]
   }
 }

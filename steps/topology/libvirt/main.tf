@@ -18,6 +18,15 @@ resource "libvirt_network" "tectonic_net" {
   dns_forwarder {
     address = "${var.tectonic_libvirt_resolver}"
   }
+
+  dns_host = ["${flatten(list(
+    data.libvirt_network_dns_host_template.bootstrap.*.rendered,
+    data.libvirt_network_dns_host_template.masters.*.rendered,
+    data.libvirt_network_dns_host_template.etcds.*.rendered,
+    data.libvirt_network_dns_host_template.workers.*.rendered,
+  ))}"]
+
+  autostart = true
 }
 
 module "libvirt_base_volume" {
@@ -27,13 +36,40 @@ module "libvirt_base_volume" {
 }
 
 locals {
-  first_worker_ip = "${cidrhost(var.tectonic_libvirt_ip_range, var.tectonic_libvirt_first_ip_worker)}"
+  "hostnames" = [
+    "${var.tectonic_cluster_name}-api",
+    "${var.tectonic_cluster_name}-tnc",
+  ]
 }
 
-# Set up the cluster domain name
-# This is currently limited to the first worker, due to an issue with net-update, even though libvirt supports multiple a-records
-resource "null_resource" "console_dns" {
-  provisioner "local-exec" {
-    command = "virsh -c ${var.tectonic_libvirt_uri} net-update ${libvirt_network.tectonic_net.name} add dns-host \"<host ip='${local.first_worker_ip}'><hostname>${var.tectonic_cluster_name}</hostname></host>\" --live --config"
-  }
+data "libvirt_network_dns_host_template" "bootstrap" {
+  count = "${length(local.hostnames)}"
+
+  ip = "${var.tectonic_libvirt_bootstrap_ip}"
+
+  hostname = "${local.hostnames[count.index]}"
+}
+
+data "libvirt_network_dns_host_template" "masters" {
+  count = "${var.tectonic_master_count * length(local.hostnames)}"
+
+  ip = "${var.tectonic_libvirt_master_ips[count.index / length(local.hostnames)]}"
+
+  hostname = "${local.hostnames[count.index % length(local.hostnames)]}"
+}
+
+data "libvirt_network_dns_host_template" "etcds" {
+  count = "${var.tectonic_master_count}"
+
+  ip = "${var.tectonic_libvirt_master_ips[count.index]}"
+
+  hostname = "${var.tectonic_cluster_name}-etcd-${count.index}"
+}
+
+data "libvirt_network_dns_host_template" "workers" {
+  count = "${var.tectonic_worker_count}"
+
+  ip = "${var.tectonic_libvirt_worker_ips[count.index]}"
+
+  hostname = "${var.tectonic_cluster_name}"
 }

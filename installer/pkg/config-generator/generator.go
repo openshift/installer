@@ -203,7 +203,7 @@ func (c *ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
 	tncoConfig.ControllerConfig.CloudProviderConfig = "" // TODO(yifan): Get CloudProviderConfig.
 	tncoConfig.ControllerConfig.ClusterName = c.Cluster.Name
 	tncoConfig.ControllerConfig.BaseDomain = c.Cluster.BaseDomain
-	tncoConfig.ControllerConfig.EtcdInitialCount = c.Cluster.NodeCount(c.Cluster.Etcd.NodePools)
+	tncoConfig.ControllerConfig.EtcdInitialCount = c.Cluster.NodeCount(c.Cluster.Master.NodePools)
 	tncoConfig.ControllerConfig.AdditionalConfigs = []string{} // TODO(yifan): Get additional configs.
 	tncoConfig.ControllerConfig.NodePoolUpdateLimit = nil      // TODO(yifan): Get the node pool update limit.
 
@@ -271,7 +271,7 @@ func marshalYAML(obj interface{}) (string, error) {
 }
 
 func (c *ConfigGenerator) getEtcdServersURLs() string {
-	etcdServers := make([]string, c.Cluster.NodeCount(c.Cluster.Etcd.NodePools))
+	etcdServers := make([]string, c.Cluster.NodeCount(c.Cluster.Master.NodePools))
 	for i := range etcdServers {
 		etcdServers[i] = fmt.Sprintf("https://%s-etcd-%v.%s:2379", c.Cluster.Name, i, c.Cluster.BaseDomain)
 	}

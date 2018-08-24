@@ -22,10 +22,7 @@ func InstallFullWorkflow(clusterDir string) Workflow {
 			installAssetsStep,
 			generateIgnConfigStep,
 			installTopologyStep,
-			installTNCCNAMEStep,
 			installBootstrapStep,
-			installTNCARecordStep,
-			installEtcdStep,
 			installJoinMastersStep,
 			installJoinWorkersStep,
 		},
@@ -66,10 +63,7 @@ func InstallBootstrapWorkflow(clusterDir string) Workflow {
 		steps: []step{
 			refreshConfigStep,
 			installTopologyStep,
-			installTNCCNAMEStep,
 			installBootstrapStep,
-			installTNCARecordStep,
-			installEtcdStep,
 		},
 	}
 }
@@ -104,28 +98,13 @@ func installTopologyStep(m *metadata) error {
 
 func installBootstrapStep(m *metadata) error {
 	if !clusterIsBootstrapped(m.clusterDir) {
-		return runInstallStep(m, mastersStep, []string{bootstrapOn}...)
+		return runInstallStep(m, bootstrapStep)
 	}
 	return nil
-}
-
-func installTNCCNAMEStep(m *metadata) error {
-	if !clusterIsBootstrapped(m.clusterDir) {
-		return createTNCCNAME(m)
-	}
-	return nil
-}
-
-func installTNCARecordStep(m *metadata) error {
-	return createTNCARecord(m)
-}
-
-func installEtcdStep(m *metadata) error {
-	return runInstallStep(m, etcdStep)
 }
 
 func installJoinMastersStep(m *metadata) error {
-	return runInstallStep(m, mastersStep, []string{bootstrapOff}...)
+	return runInstallStep(m, mastersStep)
 }
 
 func installJoinWorkersStep(m *metadata) error {

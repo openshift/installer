@@ -3,7 +3,7 @@
   "kind": "Secret",
   "type": "kubernetes.io/dockerconfigjson",
   "metadata": {
-    "namespace": "tectonic-ingress",
+    "namespace": "openshift-ingress",
     "name": "coreos-pull-secret"
   },
   "data": {
