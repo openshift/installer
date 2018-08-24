@@ -2,7 +2,7 @@ resource "aws_security_group" "tnc" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}_console_sg",
+      "Name", "${var.cluster_name}_tnc_sg",
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
       "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
