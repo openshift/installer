@@ -12,13 +12,11 @@ import (
 )
 
 const (
-	// IgnitionMaster is the relative path to the ign master cfg from the tf working directory
+	// IgnitionPathMaster is the relative path to the ign master cfg from the tf working directory
 	// This is a format string so that the index can be populated later
-	IgnitionMaster = "master-%d.ign"
+	IgnitionPathMaster = "master-%d.ign"
 	// IgnitionWorker is the relative path to the ign worker cfg from the tf working directory
 	IgnitionWorker = "worker.ign"
-	// IgnitionEtcd is the relative path to the ign etcd cfg from the tf working directory
-	IgnitionEtcd = "etcd.ign"
 	// PlatformAWS is the platform for a cluster launched on AWS.
 	PlatformAWS Platform = "aws"
 	// PlatformLibvirt is the platform for a cluster launched on libvirt.
@@ -81,8 +79,6 @@ type Cluster struct {
 	BaseDomain      string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
 	CA              `json:",inline" yaml:"CA,omitempty"`
 	ContainerLinux  `json:",inline" yaml:"containerLinux,omitempty"`
-	Etcd            `json:",inline" yaml:"etcd,omitempty"`
-	IgnitionEtcd    string   `json:"tectonic_ignition_etcd,omitempty" yaml:"-"`
 	IgnitionMasters []string `json:"tectonic_ignition_masters,omitempty" yaml:"-"`
 	IgnitionWorker  string   `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
 	Internal        `json:",inline" yaml:"-"`
@@ -114,20 +110,18 @@ func (c Cluster) NodeCount(names []string) int {
 
 // TFVars will return the config for the cluster in tfvars format.
 func (c *Cluster) TFVars() (string, error) {
-	c.Etcd.Count = c.NodeCount(c.Etcd.NodePools)
 	c.Master.Count = c.NodeCount(c.Master.NodePools)
 	c.Worker.Count = c.NodeCount(c.Worker.NodePools)
 
 	for i := 0; i < c.Master.Count; i++ {
-		c.IgnitionMasters = append(c.IgnitionMasters, fmt.Sprintf(IgnitionMaster, i))
+		c.IgnitionMasters = append(c.IgnitionMasters, fmt.Sprintf(IgnitionPathMaster, i))
 	}
 
 	c.IgnitionWorker = IgnitionWorker
-	c.IgnitionEtcd = IgnitionEtcd
 
 	// fill in master ips
 	if c.Platform == PlatformLibvirt {
-		if err := c.Libvirt.TFVars(c.Master.Count, c.Worker.Count, c.Etcd.Count); err != nil {
+		if err := c.Libvirt.TFVars(c.Master.Count, c.Worker.Count); err != nil {
 			return "", err
 		}
 	}
@@ -142,12 +136,6 @@ func (c *Cluster) TFVars() (string, error) {
 
 // YAML will return the config for the cluster in yaml format.
 func (c *Cluster) YAML() (string, error) {
-	c.NodePools = append(c.NodePools, NodePool{
-		Count: c.Etcd.Count,
-		Name:  "etcd",
-	})
-	c.Etcd.NodePools = []string{"etcd"}
-
 	c.NodePools = append(c.NodePools, NodePool{
 		Count: c.Master.Count,
 		Name:  "master",

@@ -2,10 +2,6 @@
   "tectonic_admin_email": "fake-email@example.com",
   "tectonic_admin_password": "fake-password",
   "tectonic_aws_endpoints": "all",
-  "tectonic_aws_etcd_ec2_type": "m4.large",
-  "tectonic_aws_etcd_root_volume_iops": 100,
-  "tectonic_aws_etcd_root_volume_size": 30,
-  "tectonic_aws_etcd_root_volume_type": "gp2",
   "tectonic_aws_master_ec2_type": "m4.large",
   "tectonic_aws_master_root_volume_iops": 100,
   "tectonic_aws_master_root_volume_size": 30,
@@ -20,8 +16,6 @@
   "tectonic_base_domain": "tectonic-ci.de",
   "tectonic_container_linux_channel": "beta",
   "tectonic_container_linux_version": "latest",
-  "tectonic_etcd_count": 3,
-  "tectonic_ignition_etcd": "etcd.ign",
   "tectonic_ignition_masters": [
     "master-0.ign",
     "master-1.ign"
