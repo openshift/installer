@@ -67,10 +67,9 @@ export AWS_ACCESS_KEY_ID=$(echo  "${RES}" | jq --raw-output '.Credentials.Access
 export AWS_SESSION_TOKEN=$(echo "${RES}" | jq --raw-output '.Credentials.SessionToken')
 
 ### HANDLE SSH KEY ###
-echo -e "\\e[36m Generating SSH key-pair...\\e[0m"
 if [ ! -f ~/.ssh/id_rsa.pub ]; then
-  #shellcheck disable=SC2034
-  SSH=$(ssh-keygen -b 2048 -t rsa -f ~/.ssh/id_rsa -N "" < /dev/zero)
+  echo -e "\\e[36m Generating SSH key-pair...\\e[0m"
+  ssh-keygen -qb 2048 -t rsa -f ~/.ssh/id_rsa -N "" </dev/zero
 fi
 export TF_VAR_tectonic_admin_ssh_key="$(cat ~/.ssh/id_rsa.pub)"
 
