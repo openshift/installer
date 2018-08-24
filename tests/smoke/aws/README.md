@@ -92,15 +92,11 @@ To be able to ssh into the created machines, determine the generated cluster nam
 ```console
 $ ls build
 aws-exp-master-1012345678901
-
 $ export CLUSTER_NAME=aws-exp-master-1012345678901
-
-$ aws autoscaling describe-auto-scaling-groups |
->   jq -r '.AutoScalingGroups[] | select(.AutoScalingGroupName | contains("'${CLUSTER_NAME}'")) | .Instances[].InstanceId' |
->   xargs aws ec2 describe-instances --instance-ids |
->   jq '.Reservations[].Instances[] | select(.PublicIpAddress != null) | .PublicIpAddress'
-"52.15.184.15"
-
+$ aws ec2 describe-instances --query "Reservations[].Instances[] | [?Tags[? Key == 'Name' && Value == '${CLUSTER_NAME}-master-0']].PublicIpAddress" | jq .
+[
+    "52.15.184.15"
+]
 $ ssh -A core@52.15.184.15
 ```
 

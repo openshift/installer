@@ -48,12 +48,6 @@ variable "extra_tags" {
   default     = {}
 }
 
-variable "autoscaling_group_extra_tags" {
-  description = "Extra AWS tags to be applied to created autoscaling group resources."
-  type        = "list"
-  default     = []
-}
-
 variable "region" {
   type = "string"
 

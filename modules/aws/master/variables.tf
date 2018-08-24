@@ -1,9 +1,3 @@
-variable "autoscaling_group_extra_tags" {
-  description = "Extra AWS tags to be applied to created autoscaling group resources."
-  type        = "list"
-  default     = []
-}
-
 variable "base_domain" {
   type        = "string"
   description = "Domain on which the ELB records will be created"

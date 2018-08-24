@@ -156,18 +156,6 @@ EOF
   default = {}
 }
 
-variable "tectonic_autoscaling_group_extra_tags" {
-  type    = "list"
-  default = []
-
-  description = <<EOF
-(optional) Extra AWS tags to be applied to created autoscaling group resources.
-This is a list of maps having the keys `key`, `value` and `propagate_at_launch`.
-
-Example: `[ { key = "foo", value = "bar", propagate_at_launch = true } ]`
-EOF
-}
-
 variable "tectonic_aws_etcd_root_volume_type" {
   type        = "string"
   default     = "gp2"
