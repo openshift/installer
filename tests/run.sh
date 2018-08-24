@@ -40,16 +40,21 @@ export PATH="$(pwd)/tectonic-dev/installer:${PATH}"
 cd tectonic-dev
 
 echo -e "\\e[36m Creating Tectonic configuration...\\e[0m"
-CONFIG=$(python -c 'import sys, yaml, json; json.dump(yaml.load(sys.stdin), sys.stdout)' < examples/tectonic.aws.yaml)
-CONFIG=$(echo "${CONFIG}" | jq ".name = \"${CLUSTER_NAME}\"" |\
-                            jq ".baseDomain = \"${DOMAIN}\"" |\
-                            jq ".licensePath = \"${LICENSE_PATH}\"" |\
-                            jq ".pullSecretPath = \"${PULL_SECRET_PATH}\"" |\
-                            jq ".aws.region = \"${AWS_REGION}\"" |\
-                            jq ".aws.master.iamRoleName = \"tf-tectonic-master-node\"" |\
-                            jq ".aws.worker.iamRoleName = \"tf-tectonic-worker-node\""
-)
-echo "${CONFIG}" | python -c 'import sys, yaml, json; yaml.safe_dump(json.load(sys.stdin), sys.stdout)' > "${CLUSTER_NAME}.yaml"
+python <<-EOF >"${CLUSTER_NAME}.yaml"
+	import sys
+	import yaml
+
+	with open('examples/tectonic.aws.yaml') as f:
+	    config = yaml.load(f)
+	config['name'] = '${CLUSTER_NAME}'
+	config['baseDomain'] = '${DOMAIN}'
+	config['licensePath'] = '${LICENSE_PATH}'
+	config['pullSecretPath'] = '${PULL_SECRET_PATH}'
+	config['aws']['region'] = '${AWS_REGION}'
+	config['aws']['master']['iamRoleName'] = 'tf-tectonic-master-node'
+	config['aws']['worker']['iamRoleName'] = 'tf-tectonic-worker-node'
+	yaml.safe_dump(config, sys.stdout)
+	EOF
 
 echo -e "\\e[36m Initializing Tectonic...\\e[0m"
 tectonic init --config="${CLUSTER_NAME}".yaml
