@@ -1,5 +1,5 @@
 hash: bb16a33462b16494d655413e8d037943cc832b3ac65e76c81f19a47d74f5f1a8
-updated: 2018-08-14T14:02:50.724224411-04:00
+updated: 2018-08-24T13:11:30.896190741-07:00
 imports:
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
@@ -50,7 +50,7 @@ imports:
   - config/tectonic-node-controller
   - config/tectonic-utility
 - name: github.com/dgrijalva/jwt-go
-  version: 06ea1031745cb8b3dab3f6a236daf2b0aa468b7e
+  version: 0b96aaa707760d6ab28d9b9d1913ff5993328bae
 - name: github.com/emicklei/go-restful
   version: ff4f55a206334ef123e4f79bbf348980da81ca46
   subpackages:
@@ -112,7 +112,7 @@ imports:
   - lex/httplex
   - websocket
 - name: golang.org/x/sys
-  version: 9527bec2660bd847c050fda93a0f0c6dee0800bb
+  version: e072cadbbdc8dd3d3ffa82b8b4b9304c261d9311
   subpackages:
   - unix
 - name: golang.org/x/text
@@ -159,6 +159,11 @@ imports:
   - pkg/util/wait
   - pkg/watch
   - third_party/forked/golang/reflect
+- name: k8s.io/client-go
+  version: 78700dec6369ba22221b72770783300f143df150
+  subpackages:
+  - tools/clientcmd/api
+  - tools/clientcmd/api/v1
 - name: k8s.io/kube-openapi
   version: 39a7bf85c140f972372c2a0d1ee40adbf0c8bfe1
   subpackages:
@@ -174,11 +179,11 @@ testImports:
   subpackages:
   - difflib
 - name: github.com/stretchr/testify
-  version: f35b8ab0b5a2cef36673838d662e249dd9c94686
+  version: f6abca593680b2315d2075e0f5e2a9751e3f431a
   subpackages:
   - assert
 - name: gopkg.in/square/go-jose.v2
-  version: 76dd09796242edb5b897103a75df2645c028c960
+  version: 349dc03548930652802aadc09fb126e2b7cb6d80
   subpackages:
   - cipher
   - json
