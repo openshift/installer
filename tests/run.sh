@@ -39,6 +39,17 @@ cp bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test tectonic-dev/smoke
 export PATH="$(pwd)/tectonic-dev/installer:${PATH}"
 cd tectonic-dev
 
+### ASSUME ROLE ###
+echo -e "\\e[36m Setting up AWS credentials...\\e[0m"
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/tf-tectonic-installer"
+RES="$(aws sts assume-role --role-arn="${ROLE_ARN}" --role-session-name="jenkins-${CLUSTER_NAME}" --query Credentials --output json)" &&
+export AWS_SECRET_ACCESS_KEY="$(echo "${RES}" | jq --raw-output '.SecretAccessKey')" &&
+export AWS_ACCESS_KEY_ID="$(echo  "${RES}" | jq --raw-output '.AccessKeyId')" &&
+export AWS_SESSION_TOKEN="$(echo "${RES}" | jq --raw-output '.SessionToken')" &&
+CONFIGURE_AWS_ROLES=True ||
+CONFIGURE_AWS_ROLES=False
+
 echo -e "\\e[36m Creating Tectonic configuration...\\e[0m"
 python <<-EOF >"${CLUSTER_NAME}.yaml"
 	import datetime
@@ -53,29 +64,19 @@ python <<-EOF >"${CLUSTER_NAME}.yaml"
 	config['licensePath'] = '${LICENSE_PATH}'
 	config['pullSecretPath'] = '${PULL_SECRET_PATH}'
 	config['aws']['region'] = '${AWS_REGION}'
-	config['aws']['master']['iamRoleName'] = 'tf-tectonic-master-node'
-	config['aws']['worker']['iamRoleName'] = 'tf-tectonic-worker-node'
 	config['aws']['extraTags'] = {
 	    'expirationDate': (
 	        datetime.datetime.utcnow() + datetime.timedelta(hours=4)
 	    ).strftime('%Y-%m-%dT%H:%M+0000'),
 	}
+	if ${CONFIGURE_AWS_ROLES:-False}:
+	    config['aws']['master']['iamRoleName'] = 'tf-tectonic-master-node'
+	    config['aws']['worker']['iamRoleName'] = 'tf-tectonic-worker-node'
 	yaml.safe_dump(config, sys.stdout)
 	EOF
 
 echo -e "\\e[36m Initializing Tectonic...\\e[0m"
 tectonic init --config="${CLUSTER_NAME}".yaml
-
-### ASSUME ROLE ###
-echo -e "\\e[36m Setting up AWS credentials...\\e[0m"
-export AWS_DEFAULT_REGION="${AWS_REGION}"
-unset AWS_SESSION_TOKEN
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/tf-tectonic-installer"
-RES=$(aws sts assume-role --role-arn="${ROLE_ARN}" --role-session-name="jenkins-${CLUSTER_NAME}")
-export AWS_SECRET_ACCESS_KEY=$(echo "${RES}" | jq --raw-output '.Credentials.SecretAccessKey')
-export AWS_ACCESS_KEY_ID=$(echo  "${RES}" | jq --raw-output '.Credentials.AccessKeyId')
-export AWS_SESSION_TOKEN=$(echo "${RES}" | jq --raw-output '.Credentials.SessionToken')
 
 ### HANDLE SSH KEY ###
 if [ ! -f ~/.ssh/id_rsa.pub ]; then
