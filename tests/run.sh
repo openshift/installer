@@ -14,7 +14,6 @@ SMOKE_TEST_OUTPUT="Never executed. Problem with one of previous stages"
 [ -z ${LICENSE_PATH+x} ] && (echo "Please set LICENSE_PATH"; exit 1)
 [ -z ${PULL_SECRET_PATH+x} ] && (echo "Please set PULL_SECRET_PATH"; exit 1)
 [ -z ${DOMAIN+x} ] && DOMAIN="tectonic-ci.de"
-[ -z ${AWS_REGION+x} ] && AWS_REGION="eu-west-1"
 [ -z ${JOB_NAME+x} ] && PREFIX="${USER:-test}" || PREFIX="ci-${JOB_NAME#*/}"
 CLUSTER_NAME=$(echo "${PREFIX}-$(uuidgen -r | cut -c1-5)" | tr '[:upper:]' '[:lower:]')
 exec &> >(tee -a "$CLUSTER_NAME.log")
@@ -38,6 +37,15 @@ tar -zxf bazel-bin/tectonic-dev.tar.gz
 cp bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test tectonic-dev/smoke
 export PATH="$(pwd)/tectonic-dev/installer:${PATH}"
 cd tectonic-dev
+
+if test -z "${AWS_REGION+x}"
+then
+  echo -e "\\e[36m Calculating the AWS region...\\e[0m"
+  AWS_REGION="$(aws configure get region)" ||
+  AWS_REGION="${AWS_REGION:-eu-west-1}"
+fi
+export AWS_DEFAULT_REGION="${AWS_REGION}"
+unset AWS_SESSION_TOKEN
 
 ### ASSUME ROLE ###
 echo -e "\\e[36m Setting up AWS credentials...\\e[0m"
