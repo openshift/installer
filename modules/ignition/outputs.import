@@ -16,10 +16,6 @@ variable "ign_locksmithd_service_id" {
   type = "string"
 }
 
-variable "ign_installer_runtime_mappings_id" {
-  type = "string"
-}
-
 variable "ign_update_ca_certificates_dropin_id" {
   type = "string"
 }
