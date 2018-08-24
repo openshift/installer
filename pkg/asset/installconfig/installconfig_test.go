@@ -110,7 +110,7 @@ func TestInstallConfigGenerate(t *testing.T) {
 
 			dir, err := ioutil.TempDir("", "TestInstallConfigGenerate")
 			if err != nil {
-				t.Skip("could not create temporary directory: %v", err)
+				t.Skipf("could not create temporary directory: %v", err)
 			}
 			defer os.RemoveAll(dir)
 
