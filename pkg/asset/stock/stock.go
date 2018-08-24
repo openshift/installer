@@ -12,8 +12,8 @@ import (
 // Stock is the stock of assets that can be generated.
 type Stock struct {
 	installConfigStock
-	tlsStock
 	kubeconfigStock
+	tlsStock
 }
 
 type installConfigStock struct {

@@ -1,21 +1,21 @@
 package kubeconfig
 
 import (
-	"encoding/base64"
 	"fmt"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/tls"
 	clientcmd "k8s.io/client-go/tools/clientcmd/api/v1"
 )
 
 const (
 	// KubeconfigUserNameAdmin is the user name of the admin kubeconfig.
 	KubeconfigUserNameAdmin = "admin"
-	// KubeconfigUserNamekubelet is the user name of the kubelet kubeconfig.
-	KubeconfigUserNamekubelet = "kubelet"
+	// KubeconfigUserNameKubelet is the user name of the kubelet kubeconfig.
+	KubeconfigUserNameKubelet = "kubelet"
 )
 
 // Kubeconfig implements the asset.Asset interface that generates
@@ -43,19 +43,27 @@ func (k *Kubeconfig) Dependencies() []asset.Asset {
 func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
 	var err error
 
-	caCertData, err := getCertKeyData(k.rootCA, parents, ".crt")
+	caCertData, err := asset.GetDataByFilename(k.rootCA, parents, tls.RootCACertName)
 	if err != nil {
 		return nil, err
 	}
-	clientKeyData, err := getCertKeyData(k.certKey, parents, ".key")
+
+	var keyFilename, certFilename string
+	switch k.userName {
+	case KubeconfigUserNameAdmin:
+		keyFilename, certFilename = tls.AdminKeyName, tls.AdminCertName
+	case KubeconfigUserNameKubelet:
+		keyFilename, certFilename = tls.KubeletKeyName, tls.KubeletCertName
+	}
+	clientKeyData, err := asset.GetDataByFilename(k.certKey, parents, keyFilename)
 	if err != nil {
 		return nil, err
 	}
-	clientCertData, err := getCertKeyData(k.certKey, parents, ".crt")
+	clientCertData, err := asset.GetDataByFilename(k.certKey, parents, certFilename)
 	if err != nil {
 		return nil, err
 	}
-	installConfig, err := getInstallConfig(k.installConfig, parents)
+	installConfig, err := installconfig.GetInstallConfig(k.installConfig, parents)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +107,8 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 	st := &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: assetFilePath(k.rootDir, k.userName),
+				// E.g. generated/auth/kubeconfig-admin.
+				Name: filepath.Join(k.rootDir, "auth", fmt.Sprintf("kubeconfig-%s", k.userName)),
 				Data: data,
 			},
 		},
@@ -110,48 +119,4 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 	}
 
 	return st, nil
-}
-
-func assetFilePath(rootDir, userName string) string {
-	if userName == KubeconfigUserNamekubelet {
-		return filepath.Join(rootDir, "auth", "kubeconfig-kubelet")
-	}
-	return filepath.Join(rootDir, "auth", "kubeconfig")
-}
-
-// getCertKeyData extracts the cert or key data from the parent map based on the ext (".crt" or ".key").
-// It returns a base64 encoded []bye for the data.
-func getCertKeyData(a asset.Asset, parents map[asset.Asset]*asset.State, ext string) ([]byte, error) {
-	st, ok := parents[a]
-	if !ok {
-		return nil, fmt.Errorf("failed to find %T in parents", a)
-	}
-
-	var data []byte
-	for _, c := range st.Contents {
-		if filepath.Ext(c.Name) == ext {
-			data = c.Data
-			break
-		}
-	}
-	if data == nil {
-		return nil, fmt.Errorf("failed to find data in %v with extension == %q", st, ext)
-	}
-
-	return []byte(base64.StdEncoding.EncodeToString(data)), nil
-}
-
-func getInstallConfig(a asset.Asset, parents map[asset.Asset]*asset.State) (*types.InstallConfig, error) {
-	var cfg types.InstallConfig
-
-	st, ok := parents[a]
-	if !ok {
-		return nil, fmt.Errorf("failed to find %T in parents", a)
-	}
-
-	if err := yaml.Unmarshal(st.Contents[0].Data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal the installconfig: %v", err)
-	}
-
-	return &cfg, nil
 }
