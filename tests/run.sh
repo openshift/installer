@@ -70,7 +70,7 @@ tectonic init --config="${CLUSTER_NAME}".yaml
 echo -e "\\e[36m Setting up AWS credentials...\\e[0m"
 export AWS_DEFAULT_REGION="${AWS_REGION}"
 unset AWS_SESSION_TOKEN
-ACCOUNT_ID=$(aws sts get-caller-identity | jq --raw-output '.Account')
+ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/tf-tectonic-installer"
 RES=$(aws sts assume-role --role-arn="${ROLE_ARN}" --role-session-name="jenkins-${CLUSTER_NAME}")
 export AWS_SECRET_ACCESS_KEY=$(echo "${RES}" | jq --raw-output '.Credentials.SecretAccessKey')
