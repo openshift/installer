@@ -2,8 +2,6 @@ package installconfig
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
@@ -87,20 +85,16 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 		return nil, err
 	}
 
-	if err := os.MkdirAll(a.directory, 0755); err != nil {
-		return nil, err
-	}
-	assetPath := filepath.Join(a.directory, "install-config.yml")
-	if err := ioutil.WriteFile(assetPath, data, 0644); err != nil {
-		return nil, err
-	}
-
-	return &asset.State{
+	state := &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: assetPath,
+				Name: filepath.Join(a.directory, "install-config.yml"),
 				Data: data,
 			},
 		},
-	}, nil
+	}
+
+	state.PersistToFile()
+
+	return state, nil
 }
