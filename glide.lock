@@ -1,5 +1,5 @@
-hash: 0ecb3a97e888271fd9f1c815585759d843593950543e284e3f22b941707f12c5
-updated: 2018-06-14T10:48:03.647701802-07:00
+hash: bb16a33462b16494d655413e8d037943cc832b3ac65e76c81f19a47d74f5f1a8
+updated: 2018-08-14T14:02:50.724224411-04:00
 imports:
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
@@ -80,6 +80,8 @@ imports:
   - buffer
   - jlexer
   - jwriter
+- name: github.com/pborman/uuid
+  version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
 - name: github.com/PuerkitoBio/purell
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
@@ -163,6 +165,18 @@ imports:
   - pkg/common
   - pkg/util/proto
 testImports:
+- name: github.com/davecgh/go-spew
+  version: 782f4967f2dc4564575ca782fe2d04090b5faca8
+  subpackages:
+  - spew
+- name: github.com/pmezard/go-difflib
+  version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
+  subpackages:
+  - difflib
+- name: github.com/stretchr/testify
+  version: f35b8ab0b5a2cef36673838d662e249dd9c94686
+  subpackages:
+  - assert
 - name: gopkg.in/square/go-jose.v2
   version: 76dd09796242edb5b897103a75df2645c028c960
   subpackages:
