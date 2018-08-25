@@ -335,7 +335,6 @@ func (c *Cluster) validateNodePools() []error {
 	}{
 		{pools: c.Master.NodePools, field: "master"},
 		{pools: c.Worker.NodePools, field: "worker"},
-		{pools: c.Etcd.NodePools, field: "etcd"},
 	}
 	for _, f := range fields {
 		var found bool
