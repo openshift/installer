@@ -120,28 +120,28 @@ func TestInstallConfigGenerate(t *testing.T) {
 			}
 
 			states := map[asset.Asset]*asset.State{
-				stock.clusterID: &asset.State{
+				stock.clusterID: {
 					Contents: []asset.Content{{Data: []byte("test-cluster-id")}},
 				},
-				stock.emailAddress: &asset.State{
+				stock.emailAddress: {
 					Contents: []asset.Content{{Data: []byte("test-email")}},
 				},
-				stock.password: &asset.State{
+				stock.password: {
 					Contents: []asset.Content{{Data: []byte("test-password")}},
 				},
-				stock.baseDomain: &asset.State{
+				stock.baseDomain: {
 					Contents: []asset.Content{{Data: []byte("test-domain")}},
 				},
-				stock.clusterName: &asset.State{
+				stock.clusterName: {
 					Contents: []asset.Content{{Data: []byte("test-cluster-name")}},
 				},
-				stock.license: &asset.State{
+				stock.license: {
 					Contents: []asset.Content{{Data: []byte("test-license")}},
 				},
-				stock.pullSecret: &asset.State{
+				stock.pullSecret: {
 					Contents: []asset.Content{{Data: []byte("test-pull-secret")}},
 				},
-				stock.platform: &asset.State{
+				stock.platform: {
 					Contents: make([]asset.Content, len(tc.platformContents)),
 				},
 			}
