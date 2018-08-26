@@ -6,31 +6,10 @@ After=docker.service kubelet-workaround.service
 
 [Service]
 EnvironmentFile=-/etc/kubernetes/kubelet-workaround
-ExecStartPre=/bin/mkdir --parents /etc/kubernetes/manifests
-ExecStartPre=/bin/mkdir --parents /etc/kubernetes/checkpoint-secrets
-ExecStartPre=/bin/mkdir --parents /etc/kubernetes/cni/net.d
-ExecStartPre=/bin/mkdir --parents /run/kubelet
-ExecStartPre=/bin/mkdir --parents /var/lib/cni
-ExecStartPre=/bin/mkdir --parents /var/lib/kubelet/pki
 
 ExecStartPre=/usr/bin/bash -c "gawk '/certificate-authority-data/ {print $2}' /etc/kubernetes/kubeconfig | base64 --decode > /etc/kubernetes/ca.crt"
 
-ExecStart=/usr/bin/docker \
-  run \
-    --rm \
-    --net host \
-    --pid host \
-    --privileged \
-    --volume /dev:/dev:rw \
-    --volume /sys:/sys:ro \
-    --volume /var/run:/var/run:rw \
-    --volume /var/lib/cni/:/var/lib/cni:rw \
-    --volume /var/lib/docker/:/var/lib/docker:rw \
-    --volume /var/lib/kubelet/:/var/lib/kubelet:shared \
-    --volume /var/log:/var/log:shared \
-    --volume /etc/kubernetes:/etc/kubernetes:ro \
-    --entrypoint /usr/bin/hyperkube \
-  "${kubelet_image_url}:${kubelet_image_tag}" \
+ExecStart=/usr/bin/hyperkube \
     kubelet \
       --bootstrap-kubeconfig=/etc/kubernetes/kubeconfig \
       --kubeconfig=/var/lib/kubelet/kubeconfig \
