@@ -125,7 +125,7 @@ func TestGenerateTerraformVariablesStep(t *testing.T) {
 	}
 	expected := string(expectedData)
 
-	if got + "\n" != expected {
+	if got+"\n" != expected {
 		t.Errorf("expected: %s, got: %s", expected, got)
 	}
 }

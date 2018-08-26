@@ -22,7 +22,7 @@ type Libvirt struct {
 	MasterIPs     []string `json:"tectonic_libvirt_master_ips,omitempty" yaml:"masterIPs"`
 	WorkerIPs     []string `json:"tectonic_libvirt_worker_ips,omitempty" yaml:"workerIPs"`
 	EtcdIPs       []string `json:"tectonic_libvirt_etcd_ips,omitempty" yaml:"etcdIPs"`
-	BootstrapIP   string `json:"tectonic_libvirt_bootstrap_ip,omitempty" yaml:"bootstrapIP"`
+	BootstrapIP   string   `json:"tectonic_libvirt_bootstrap_ip,omitempty" yaml:"bootstrapIP"`
 }
 
 // Network describes a libvirt network configuration.
