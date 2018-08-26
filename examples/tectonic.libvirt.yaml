@@ -15,7 +15,6 @@ libvirt:
   network:
     name: tectonic
     ifName: tt0
-    dnsServer: 8.8.8.8
     ipRange: 192.168.124.0/24
   imagePath: /path/to/image
 
