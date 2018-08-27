@@ -1,6 +1,4 @@
 #!/bin/sh
-# Example: ./hack/go-lint.sh installer/... tests/smoke
-
 if [ "$IS_CONTAINER" != "" ]; then
   for TARGET in "${@}"; do
     find "${TARGET}" -name '*.go' ! -path '*/vendor/*' ! -path '*/.build/*' -exec gofmt -s -w {} \+
