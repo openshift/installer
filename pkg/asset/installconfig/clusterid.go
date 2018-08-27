@@ -19,7 +19,7 @@ func (a *clusterID) Dependencies() []asset.Asset {
 func (a *clusterID) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
 	return &asset.State{
 		Contents: []asset.Content{
-			{Data: []byte(uuid.NewUUID().String())},
+			{Data: []byte(uuid.New())},
 		},
 	}, nil
 }
