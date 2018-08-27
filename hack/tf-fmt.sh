@@ -8,7 +8,6 @@ else
   docker run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:${PWD}:ro,z" \
-    --volume /tmp:/tmp:z \
     --workdir "${PWD}" \
     quay.io/coreos/terraform-alpine:v0.11.7 \
     ./hack/tf-fmt.sh

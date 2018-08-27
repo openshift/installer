@@ -6,7 +6,6 @@ else
   docker run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:${PWD}:z" \
-    --volume /tmp:/tmp:z \
     --workdir "${PWD}" \
     quay.io/coreos/tectonic-builder:bazel-v0.3 \
     ./hack/test-bazel-build-tarball.sh
