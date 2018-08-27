@@ -19,18 +19,9 @@ const (
 
 // GenerateIgnConfig generates Ignition configs for the workers and masters.
 func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
-	var masters config.NodePool
-	var workers config.NodePool
+	pools := map[string]config.NodePool{}
 	for _, pool := range c.NodePools {
-		switch pool.Name {
-		case "master":
-			masters = pool
-		case "worker":
-			workers = pool
-		case "etcd": // FIXME: ignore these until openshift/release stops defining them
-		default:
-			return fmt.Errorf("unrecognized role: %s", pool.Name)
-		}
+		pools[pool.Name] = pool
 	}
 
 	ca, err := ioutil.ReadFile(filepath.Join(clusterDir, caPath))
@@ -38,38 +29,33 @@ func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 		return err
 	}
 
-	workerCfg, err := parseIgnFile(workers.IgnitionFile)
-	if err != nil {
-		return fmt.Errorf("failed to parse Ignition config for workers: %v", err)
-	}
-
-	// XXX(crawford): The SSH key should only be added to the bootstrap
-	//                node. After that, MCO should be responsible for
-	//                distributing SSH keys.
-	c.embedUserBlock(&workerCfg)
-	c.appendCertificateAuthority(&workerCfg, ca)
-	c.embedAppendBlock(&workerCfg, "worker", "")
-
-	if err = ignCfgToFile(workerCfg, filepath.Join(clusterDir, config.IgnitionPathWorker)); err != nil {
-		return err
-	}
-
-	masterCfg, err := parseIgnFile(masters.IgnitionFile)
-	if err != nil {
-		return fmt.Errorf("failed to parse Ignition config for masters: %v", err)
-	}
-
-	for i := 0; i < masters.Count; i++ {
-		ignCfg := masterCfg
+	for _, role := range []struct {
+		name string
+		path string
+	}{
+		{
+			name: "master",
+			path: config.IgnitionPathMaster,
+		},
+		{
+			name: "worker",
+			path: config.IgnitionPathWorker,
+		},
+	} {
+		pool := pools[role.name]
+		ignCfg, err := parseIgnFile(pool.IgnitionFile)
+		if err != nil {
+			return fmt.Errorf("failed to parse Ignition config for %s: %v", role.name, err)
+		}
 
 		// XXX(crawford): The SSH key should only be added to the bootstrap
 		//                node. After that, MCO should be responsible for
 		//                distributing SSH keys.
 		c.embedUserBlock(&ignCfg)
 		c.appendCertificateAuthority(&ignCfg, ca)
-		c.embedAppendBlock(&ignCfg, "master", fmt.Sprintf("etcd_index=%d", i))
+		c.embedAppendBlock(&ignCfg, role.name)
 
-		if err = ignCfgToFile(ignCfg, filepath.Join(clusterDir, fmt.Sprintf(config.IgnitionPathMaster, i))); err != nil {
+		if err = ignCfgToFile(ignCfg, filepath.Join(clusterDir, role.path)); err != nil {
 			return err
 		}
 	}
@@ -99,9 +85,9 @@ func parseIgnFile(filePath string) (ignconfigtypes.Config, error) {
 	return cfg, nil
 }
 
-func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role string, query string) {
+func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role string) {
 	appendBlock := ignconfigtypes.ConfigReference{
-		Source:       c.getTNCURL(role, query),
+		Source:       c.getTNCURL(role, ""),
 		Verification: ignconfigtypes.Verification{Hash: nil},
 	}
 	ignCfg.Ignition.Config.Append = append(ignCfg.Ignition.Config.Append, appendBlock)

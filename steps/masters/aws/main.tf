@@ -44,7 +44,7 @@ module "masters" {
   root_volume_type        = "${var.tectonic_aws_master_root_volume_type}"
   subnet_ids              = "${local.subnet_ids}"
   ec2_ami                 = "${var.tectonic_aws_ec2_ami_override}"
-  user_data_igns          = "${var.tectonic_ignition_masters}"
+  user_data_ign           = "${var.tectonic_ignition_master}"
 }
 
 resource "aws_route53_record" "etcd_a_nodes" {

@@ -13,8 +13,7 @@ import (
 
 const (
 	// IgnitionPathMaster is the relative path to the ign master cfg from the tf working directory
-	// This is a format string so that the index can be populated later
-	IgnitionPathMaster = "master-%d.ign"
+	IgnitionPathMaster = "master.ign"
 	// IgnitionPathWorker is the relative path to the ign worker cfg from the tf working directory
 	IgnitionPathWorker = "worker.ign"
 	// PlatformAWS is the platform for a cluster launched on AWS.
@@ -79,8 +78,8 @@ type Cluster struct {
 	BaseDomain      string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
 	CA              `json:",inline" yaml:"CA,omitempty"`
 	ContainerLinux  `json:",inline" yaml:"containerLinux,omitempty"`
-	IgnitionMasters []string `json:"tectonic_ignition_masters,omitempty" yaml:"-"`
-	IgnitionWorker  string   `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
+	IgnitionMaster  string `json:"tectonic_ignition_master,omitempty" yaml:"-"`
+	IgnitionWorker  string `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
 	Internal        `json:",inline" yaml:"-"`
 	libvirt.Libvirt `json:",inline" yaml:"libvirt,omitempty"`
 	LicensePath     string `json:"tectonic_license_path,omitempty" yaml:"licensePath,omitempty"`
@@ -113,10 +112,7 @@ func (c *Cluster) TFVars() (string, error) {
 	c.Master.Count = c.NodeCount(c.Master.NodePools)
 	c.Worker.Count = c.NodeCount(c.Worker.NodePools)
 
-	for i := 0; i < c.Master.Count; i++ {
-		c.IgnitionMasters = append(c.IgnitionMasters, fmt.Sprintf(IgnitionPathMaster, i))
-	}
-
+	c.IgnitionMaster = IgnitionPathMaster
 	c.IgnitionWorker = IgnitionPathWorker
 
 	// fill in master ips
