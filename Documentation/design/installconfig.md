@@ -173,8 +173,6 @@ type AWSClusterSpec struct {
     SSHUser string
     SSLSecret corev1.LocalObjectReference
 
-    KeyPairName string
-
     Region string
     VPCName string
     VPCSubnet string
@@ -245,11 +243,11 @@ type InstallConfig struct {
     // ClusterID is the ID of the cluster.
     ClusterID       string `json:"clusterID"`
 
-	// Admin is the configuration for the admin user.
-	Admin Admin `json:"admin"`
+    // Admin is the configuration for the admin user.
+    Admin Admin `json:"admin"`
 
-	// BaseDomain is the base domain to which the cluster should belong.
-	BaseDomain string `json:"baseDomain"`
+    // BaseDomain is the base domain to which the cluster should belong.
+    BaseDomain string `json:"baseDomain"`
 
     // Networking defines the pod network provider in the cluster.
     Networking      `json:"networking"`
@@ -260,16 +258,17 @@ type InstallConfig struct {
     // only one of the platform configuration should be set
     Platform    `json:"platform"`
 
-	// License is an OpenShift license needed to install a cluster.
-	License string `json:"license"`
+    // License is an OpenShift license needed to install a cluster.
+    License string `json:"license"`
 
-	// PullSecret is the secret to use when pulling images.
-	PullSecret string `json:"pullSecret"`
+    // PullSecret is the secret to use when pulling images.
+    PullSecret string `json:"pullSecret"`
 }
 
 type Admin struct {
-	Email string `json:"email"`
-	Password string `json:"password"`
+    Email string `json:"email"`
+    Password string `json:"password"`
+    SSHKey string `json:"sshKey"`
 }
 
 type Platform struct {
@@ -299,10 +298,6 @@ type AWS struct {
     // Region specifies the AWS region where the cluster will be created.
     Region              string `json:"region"`
 
-    // KeyPairName is the name of the AWS key pair to use for SSH access to EC2
-    // instances in this cluster.
-    KeyPairName         string `json:"keyPairName"`
-
     // VPCID specifies the vpc to associate with the cluster.
     // If empty, new vpc will be created.
     // +optional
@@ -318,9 +313,6 @@ type AWS struct {
 type Libvirt struct {
     // URI
     URI           string `json:"URI"`
-
-    // SSHKey
-    SSHKey         string `json:"sshKey"`
 
     // Network
     Network       `json:"network"`

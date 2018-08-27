@@ -45,6 +45,8 @@ type Admin struct {
 	Email string `json:"email"`
 	// Password is the password of the admin user.
 	Password string `json:"password"`
+	// SSHKey to use for the access to compute instances.
+	SSHKey string `json:"sshKey,omitempty"`
 }
 
 // Platform is the configuration for the specific platform upon which to perform
@@ -79,10 +81,6 @@ type AWSPlatform struct {
 	// Region specifies the AWS region where the cluster will be created.
 	Region string `json:"region"`
 
-	// KeyPairName is the name of the AWS key pair to use for SSH access to EC2
-	// instances in this cluster.
-	KeyPairName string `json:"keyPairName"`
-
 	// VPCID specifies the vpc to associate with the cluster.
 	// If empty, new vpc will be created.
 	// +optional
@@ -98,9 +96,6 @@ type AWSPlatform struct {
 type LibvirtPlatform struct {
 	// URI
 	URI string `json:"URI"`
-
-	// SSHKey
-	SSHKey string `json:"sshKey"`
 
 	// Network
 	Network LibvirtNetwork `json:"network"`

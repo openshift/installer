@@ -31,581 +31,591 @@
 </g>
 <!-- base_domain -->
 <g id="node5" class="node"><title>base_domain</title>
-<polygon fill="gainsboro" stroke="gainsboro" points="123,-1394.27 7,-1394.27 7,-1358.27 123,-1358.27 123,-1394.27"/>
-<text text-anchor="middle" x="65" y="-1371.27" font-family="Times,serif" font-size="20.00">base domain</text>
+<polygon fill="gainsboro" stroke="gainsboro" points="123,-1433.27 7,-1433.27 7,-1397.27 123,-1397.27 123,-1433.27"/>
+<text text-anchor="middle" x="65" y="-1410.27" font-family="Times,serif" font-size="20.00">base domain</text>
 </g>
 <!-- install_config -->
-<g id="node12" class="node"><title>install_config</title>
+<g id="node13" class="node"><title>install_config</title>
 <polygon fill="lightcoral" stroke="lightcoral" points="333,-1394.27 167,-1394.27 167,-1358.27 333,-1358.27 333,-1394.27"/>
 <text text-anchor="middle" x="250" y="-1371.27" font-family="Times,serif" font-size="20.00">install&#45;config.yaml</text>
 </g>
 <!-- base_domain&#45;&gt;install_config -->
-<g id="edge7" class="edge"><title>base_domain&#45;&gt;install_config</title>
-<path fill="none" stroke="black" d="M123.15,-1376.27C133.856,-1376.27 145.297,-1376.27 156.754,-1376.27"/>
-<polygon fill="black" stroke="black" points="156.807,-1379.77 166.807,-1376.27 156.807,-1372.77 156.807,-1379.77"/>
+<g id="edge8" class="edge"><title>base_domain&#45;&gt;install_config</title>
+<path fill="none" stroke="black" d="M123.15,-1403.09C133.856,-1400.81 145.297,-1398.37 156.754,-1395.93"/>
+<polygon fill="black" stroke="black" points="157.756,-1399.29 166.807,-1393.78 156.297,-1392.44 157.756,-1399.29"/>
 </g>
 <!-- cluster_name -->
 <g id="node6" class="node"><title>cluster_name</title>
-<polygon fill="gainsboro" stroke="gainsboro" points="124,-1316.27 6,-1316.27 6,-1280.27 124,-1280.27 124,-1316.27"/>
-<text text-anchor="middle" x="65" y="-1293.27" font-family="Times,serif" font-size="20.00">cluster name</text>
+<polygon fill="gainsboro" stroke="gainsboro" points="124,-1355.27 6,-1355.27 6,-1319.27 124,-1319.27 124,-1355.27"/>
+<text text-anchor="middle" x="65" y="-1332.27" font-family="Times,serif" font-size="20.00">cluster name</text>
 </g>
 <!-- cluster_name&#45;&gt;install_config -->
-<g id="edge6" class="edge"><title>cluster_name&#45;&gt;install_config</title>
-<path fill="none" stroke="black" d="M108.444,-1316.36C134.91,-1327.64 169.152,-1342.23 197.211,-1354.19"/>
-<polygon fill="black" stroke="black" points="195.898,-1357.44 206.47,-1358.14 198.643,-1351 195.898,-1357.44"/>
+<g id="edge7" class="edge"><title>cluster_name&#45;&gt;install_config</title>
+<path fill="none" stroke="black" d="M124.154,-1349.66C134.677,-1351.9 145.882,-1354.29 157.094,-1356.68"/>
+<polygon fill="black" stroke="black" points="156.423,-1360.12 166.933,-1358.78 157.883,-1353.27 156.423,-1360.12"/>
 </g>
 <!-- license -->
 <g id="node7" class="node"><title>license</title>
-<polygon fill="gainsboro" stroke="gainsboro" points="100.5,-1238.27 29.5,-1238.27 29.5,-1202.27 100.5,-1202.27 100.5,-1238.27"/>
-<text text-anchor="middle" x="65" y="-1215.27" font-family="Times,serif" font-size="20.00">license</text>
+<polygon fill="gainsboro" stroke="gainsboro" points="100.5,-1277.27 29.5,-1277.27 29.5,-1241.27 100.5,-1241.27 100.5,-1277.27"/>
+<text text-anchor="middle" x="65" y="-1254.27" font-family="Times,serif" font-size="20.00">license</text>
 </g>
 <!-- license&#45;&gt;install_config -->
-<g id="edge5" class="edge"><title>license&#45;&gt;install_config</title>
-<path fill="none" stroke="black" d="M92.2535,-1238.31C104.573,-1247.43 119.031,-1259.12 130.5,-1271.27 149.889,-1291.79 146.656,-1303.69 167,-1323.27 178.521,-1334.36 192.686,-1344.47 205.982,-1352.82"/>
-<polygon fill="black" stroke="black" points="204.197,-1355.83 214.557,-1358.05 207.839,-1349.85 204.197,-1355.83"/>
+<g id="edge6" class="edge"><title>license&#45;&gt;install_config</title>
+<path fill="none" stroke="black" d="M94.1927,-1277.29C125.895,-1297.56 177.485,-1330.54 212.306,-1352.81"/>
+<polygon fill="black" stroke="black" points="210.465,-1355.78 220.775,-1358.22 214.235,-1349.89 210.465,-1355.78"/>
 </g>
 <!-- pull_secret -->
 <g id="node8" class="node"><title>pull_secret</title>
-<polygon fill="gainsboro" stroke="gainsboro" points="114,-1159.27 16,-1159.27 16,-1123.27 114,-1123.27 114,-1159.27"/>
-<text text-anchor="middle" x="65" y="-1136.27" font-family="Times,serif" font-size="20.00">pull secret</text>
+<polygon fill="gainsboro" stroke="gainsboro" points="114,-1199.27 16,-1199.27 16,-1163.27 114,-1163.27 114,-1199.27"/>
+<text text-anchor="middle" x="65" y="-1176.27" font-family="Times,serif" font-size="20.00">pull secret</text>
 </g>
 <!-- pull_secret&#45;&gt;install_config -->
-<g id="edge4" class="edge"><title>pull_secret&#45;&gt;install_config</title>
-<path fill="none" stroke="black" d="M95.8467,-1159.35C108.177,-1168.18 121.631,-1179.82 130.5,-1193.27 163.539,-1243.37 131.385,-1274.97 167,-1323.27 175.662,-1335.01 187.773,-1344.85 200.033,-1352.74"/>
-<polygon fill="black" stroke="black" points="198.574,-1355.95 208.94,-1358.14 202.202,-1349.96 198.574,-1355.95"/>
+<g id="edge5" class="edge"><title>pull_secret&#45;&gt;install_config</title>
+<path fill="none" stroke="black" d="M95.1825,-1199.36C107.389,-1208.09 120.931,-1219.46 130.5,-1232.27 156.58,-1267.18 139.288,-1289.64 167,-1323.27 176.634,-1334.96 189.536,-1344.95 202.25,-1352.99"/>
+<polygon fill="black" stroke="black" points="200.607,-1356.09 210.979,-1358.25 204.22,-1350.1 200.607,-1356.09"/>
 </g>
 <!-- platform -->
 <g id="node9" class="node"><title>platform</title>
-<polygon fill="gainsboro" stroke="gainsboro" points="107.5,-1628.27 22.5,-1628.27 22.5,-1592.27 107.5,-1592.27 107.5,-1628.27"/>
-<text text-anchor="middle" x="65" y="-1605.27" font-family="Times,serif" font-size="20.00">platform</text>
+<polygon fill="gainsboro" stroke="gainsboro" points="107.5,-1121.27 22.5,-1121.27 22.5,-1085.27 107.5,-1085.27 107.5,-1121.27"/>
+<text text-anchor="middle" x="65" y="-1098.27" font-family="Times,serif" font-size="20.00">platform</text>
 </g>
 <!-- platform&#45;&gt;install_config -->
-<g id="edge2" class="edge"><title>platform&#45;&gt;install_config</title>
-<path fill="none" stroke="black" d="M92.7734,-1592.18C105.068,-1583.13 119.356,-1571.52 130.5,-1559.27 175.51,-1509.79 214.844,-1441.43 234.892,-1403.82"/>
-<polygon fill="black" stroke="black" points="238.231,-1404.99 239.795,-1394.51 232.038,-1401.73 238.231,-1404.99"/>
+<g id="edge3" class="edge"><title>platform&#45;&gt;install_config</title>
+<path fill="none" stroke="black" d="M97.2381,-1121.34C109.356,-1129.85 122.271,-1141.06 130.5,-1154.27 171.137,-1219.48 123.304,-1260.06 167,-1323.27 175.222,-1335.16 187.068,-1345.01 199.211,-1352.86"/>
+<polygon fill="black" stroke="black" points="197.691,-1356.03 208.057,-1358.22 201.32,-1350.05 197.691,-1356.03"/>
 </g>
 <!-- email_address -->
 <g id="node10" class="node"><title>email_address</title>
-<polygon fill="gainsboro" stroke="gainsboro" points="127.5,-1550.27 2.5,-1550.27 2.5,-1514.27 127.5,-1514.27 127.5,-1550.27"/>
-<text text-anchor="middle" x="65" y="-1527.27" font-family="Times,serif" font-size="20.00">email address</text>
+<polygon fill="gainsboro" stroke="gainsboro" points="127.5,-1667.27 2.5,-1667.27 2.5,-1631.27 127.5,-1631.27 127.5,-1667.27"/>
+<text text-anchor="middle" x="65" y="-1644.27" font-family="Times,serif" font-size="20.00">email address</text>
 </g>
 <!-- email_address&#45;&gt;install_config -->
-<g id="edge3" class="edge"><title>email_address&#45;&gt;install_config</title>
-<path fill="none" stroke="black" d="M89.5398,-1514.16C101.872,-1504.55 117.146,-1492.45 130.5,-1481.27 162.311,-1454.63 197.804,-1422.9 221.579,-1401.35"/>
-<polygon fill="black" stroke="black" points="224.124,-1403.76 229.171,-1394.45 219.416,-1398.58 224.124,-1403.76"/>
+<g id="edge4" class="edge"><title>email_address&#45;&gt;install_config</title>
+<path fill="none" stroke="black" d="M93.8885,-1631.13C106.134,-1622.23 120.065,-1610.75 130.5,-1598.27 182.216,-1536.37 220.97,-1448.29 238.561,-1403.98"/>
+<polygon fill="black" stroke="black" points="241.903,-1405.05 242.283,-1394.46 235.383,-1402.5 241.903,-1405.05"/>
 </g>
 <!-- password -->
 <g id="node11" class="node"><title>password</title>
-<polygon fill="gainsboro" stroke="gainsboro" points="110.5,-1472.27 19.5,-1472.27 19.5,-1436.27 110.5,-1436.27 110.5,-1472.27"/>
-<text text-anchor="middle" x="65" y="-1449.27" font-family="Times,serif" font-size="20.00">password</text>
+<polygon fill="gainsboro" stroke="gainsboro" points="110.5,-1589.27 19.5,-1589.27 19.5,-1553.27 110.5,-1553.27 110.5,-1589.27"/>
+<text text-anchor="middle" x="65" y="-1566.27" font-family="Times,serif" font-size="20.00">password</text>
 </g>
 <!-- password&#45;&gt;install_config -->
 <g id="edge1" class="edge"><title>password&#45;&gt;install_config</title>
-<path fill="none" stroke="black" d="M108.444,-1436.18C134.91,-1424.89 169.152,-1410.3 197.211,-1398.34"/>
-<polygon fill="black" stroke="black" points="198.643,-1401.53 206.47,-1394.39 195.898,-1395.1 198.643,-1401.53"/>
+<path fill="none" stroke="black" d="M91.5369,-1553.07C103.83,-1543.82 118.473,-1532.06 130.5,-1520.27 169.002,-1482.51 207.565,-1432.93 229.812,-1402.89"/>
+<polygon fill="black" stroke="black" points="232.806,-1404.73 235.908,-1394.6 227.165,-1400.58 232.806,-1404.73"/>
+</g>
+<!-- sshkey -->
+<g id="node12" class="node"><title>sshkey</title>
+<polygon fill="gainsboro" stroke="gainsboro" points="108.5,-1511.27 21.5,-1511.27 21.5,-1475.27 108.5,-1475.27 108.5,-1511.27"/>
+<text text-anchor="middle" x="65" y="-1488.27" font-family="Times,serif" font-size="20.00">SSH key</text>
+</g>
+<!-- sshkey&#45;&gt;install_config -->
+<g id="edge2" class="edge"><title>sshkey&#45;&gt;install_config</title>
+<path fill="none" stroke="black" d="M94.1927,-1475.24C125.895,-1454.97 177.485,-1421.99 212.306,-1399.73"/>
+<polygon fill="black" stroke="black" points="214.235,-1402.65 220.775,-1394.31 210.465,-1396.75 214.235,-1402.65"/>
 </g>
 <!-- install_config&#45;&gt;install_cfg -->
-<g id="edge58" class="edge"><title>install_config&#45;&gt;install_cfg</title>
+<g id="edge59" class="edge"><title>install_config&#45;&gt;install_cfg</title>
 <path fill="none" stroke="black" d="M276.448,-1394.34C299.824,-1410.47 335.777,-1434.13 369,-1451.27 392.491,-1463.38 418.959,-1474.83 443.05,-1484.46"/>
 <polygon fill="black" stroke="black" points="441.919,-1487.78 452.505,-1488.2 444.492,-1481.27 441.919,-1487.78"/>
 </g>
 <!-- apiserver_bundle -->
-<g id="node15" class="node"><title>apiserver_bundle</title>
+<g id="node16" class="node"><title>apiserver_bundle</title>
 <polygon fill="violet" stroke="violet" points="594.5,-644.266 445.5,-644.266 445.5,-608.266 594.5,-608.266 594.5,-644.266"/>
 <text text-anchor="middle" x="520" y="-621.266" font-family="Times,serif" font-size="20.00">apiserver crt/key</text>
 </g>
 <!-- install_config&#45;&gt;apiserver_bundle -->
-<g id="edge25" class="edge"><title>install_config&#45;&gt;apiserver_bundle</title>
-<path fill="none" stroke="black" d="M251.613,-1358.16C255.312,-1259.23 277.666,-784.577 369,-677.266 385.919,-657.388 410.908,-645.239 435.658,-637.821"/>
-<polygon fill="black" stroke="black" points="436.774,-641.144 445.483,-635.11 434.912,-634.396 436.774,-641.144"/>
+<g id="edge26" class="edge"><title>install_config&#45;&gt;apiserver_bundle</title>
+<path fill="none" stroke="black" d="M251.627,-1358.2C255.404,-1259.46 278.1,-785.688 369,-678.266 385.896,-658.299 410.88,-645.99 435.632,-638.404"/>
+<polygon fill="black" stroke="black" points="436.786,-641.715 445.457,-635.627 434.882,-634.979 436.786,-641.715"/>
 </g>
 <!-- ingress_bundle -->
-<g id="node20" class="node"><title>ingress_bundle</title>
+<g id="node21" class="node"><title>ingress_bundle</title>
 <polygon fill="violet" stroke="violet" points="586,-1067.27 454,-1067.27 454,-1031.27 586,-1031.27 586,-1067.27"/>
 <text text-anchor="middle" x="520" y="-1044.27" font-family="Times,serif" font-size="20.00">ingress crt/key</text>
 </g>
 <!-- install_config&#45;&gt;ingress_bundle -->
-<g id="edge29" class="edge"><title>install_config&#45;&gt;ingress_bundle</title>
+<g id="edge30" class="edge"><title>install_config&#45;&gt;ingress_bundle</title>
 <path fill="none" stroke="black" d="M257.316,-1358.23C271.996,-1318.2 311.587,-1220.33 369,-1155.27 399.471,-1120.74 443.301,-1091.43 475.72,-1072.44"/>
 <polygon fill="black" stroke="black" points="477.619,-1075.39 484.54,-1067.37 474.127,-1069.32 477.619,-1075.39"/>
 </g>
 <!-- openshift_apiserver_bundle -->
-<g id="node23" class="node"><title>openshift_apiserver_bundle</title>
+<g id="node24" class="node"><title>openshift_apiserver_bundle</title>
 <polygon fill="violet" stroke="violet" points="1086.5,-1099.27 859.5,-1099.27 859.5,-1063.27 1086.5,-1063.27 1086.5,-1099.27"/>
 <text text-anchor="middle" x="973" y="-1076.27" font-family="Times,serif" font-size="20.00">openshift apiserver crt/key</text>
 </g>
 <!-- install_config&#45;&gt;openshift_apiserver_bundle -->
-<g id="edge31" class="edge"><title>install_config&#45;&gt;openshift_apiserver_bundle</title>
+<g id="edge32" class="edge"><title>install_config&#45;&gt;openshift_apiserver_bundle</title>
 <path fill="none" stroke="black" d="M270.323,-1358.1C292.504,-1338.2 330.77,-1306.65 369,-1288.27 494.028,-1228.13 564.426,-1298.09 671,-1209.27 699.638,-1185.4 677.131,-1156.23 706.5,-1133.27 746.742,-1101.8 800.71,-1087.69 849.478,-1081.86"/>
 <polygon fill="black" stroke="black" points="849.916,-1085.33 859.478,-1080.77 849.157,-1078.37 849.916,-1085.33"/>
 </g>
 <!-- mcc_bundle -->
-<g id="node27" class="node"><title>mcc_bundle</title>
+<g id="node28" class="node"><title>mcc_bundle</title>
 <polygon fill="violet" stroke="violet" points="660.5,-1200.27 379.5,-1200.27 379.5,-1164.27 660.5,-1164.27 660.5,-1200.27"/>
 <text text-anchor="middle" x="520" y="-1177.27" font-family="Times,serif" font-size="20.00">machine config controller crt/key</text>
 </g>
 <!-- install_config&#45;&gt;mcc_bundle -->
-<g id="edge14" class="edge"><title>install_config&#45;&gt;mcc_bundle</title>
+<g id="edge15" class="edge"><title>install_config&#45;&gt;mcc_bundle</title>
 <path fill="none" stroke="black" d="M261.703,-1358C280.036,-1328.21 320.228,-1269.12 369,-1235.27 388.456,-1221.76 411.707,-1211.36 434.029,-1203.49"/>
 <polygon fill="black" stroke="black" points="435.177,-1206.8 443.525,-1200.27 432.93,-1200.17 435.177,-1206.8"/>
 </g>
 <!-- operator_manifests -->
-<g id="node28" class="node"><title>operator_manifests</title>
+<g id="node29" class="node"><title>operator_manifests</title>
 <polygon fill="lightpink" stroke="lightpink" points="671,-1333.27 369,-1333.27 369,-1297.27 671,-1297.27 671,-1333.27"/>
 <text text-anchor="middle" x="520" y="-1310.27" font-family="Times,serif" font-size="20.00">operator manifests and their configs</text>
 </g>
 <!-- install_config&#45;&gt;operator_manifests -->
-<g id="edge8" class="edge"><title>install_config&#45;&gt;operator_manifests</title>
+<g id="edge9" class="edge"><title>install_config&#45;&gt;operator_manifests</title>
 <path fill="none" stroke="black" d="M330.321,-1358.21C361.654,-1351.08 397.801,-1342.85 430.019,-1335.52"/>
 <polygon fill="black" stroke="black" points="430.909,-1338.91 439.882,-1333.27 429.355,-1332.08 430.909,-1338.91"/>
 </g>
 <!-- kubelet_kubeconfig -->
-<g id="node34" class="node"><title>kubelet_kubeconfig</title>
+<g id="node35" class="node"><title>kubelet_kubeconfig</title>
 <polygon fill="lightblue" stroke="lightblue" points="1058,-699.266 888,-699.266 888,-663.266 1058,-663.266 1058,-699.266"/>
 <text text-anchor="middle" x="973" y="-676.266" font-family="Times,serif" font-size="20.00">kubeconfig&#45;kubelet</text>
 </g>
 <!-- install_config&#45;&gt;kubelet_kubeconfig -->
-<g id="edge38" class="edge"><title>install_config&#45;&gt;kubelet_kubeconfig</title>
-<path fill="none" stroke="black" d="M253.527,-1358.15C264.213,-1284.05 307.974,-1005.01 369,-944.266 467.49,-846.229 574.635,-963.394 671,-863.266 720.308,-812.034 653.152,-754.277 706.5,-707.266 752.392,-666.827 821.596,-661.193 877.845,-665.215"/>
-<polygon fill="black" stroke="black" points="877.574,-668.704 887.828,-666.038 878.15,-661.728 877.574,-668.704"/>
+<g id="edge39" class="edge"><title>install_config&#45;&gt;kubelet_kubeconfig</title>
+<path fill="none" stroke="black" d="M253.527,-1358.15C264.213,-1284.05 307.974,-1005.01 369,-944.266 467.49,-846.229 574.565,-963.326 671,-863.266 720.043,-812.38 653.531,-755.052 706.5,-708.266 752.362,-667.758 821.567,-661.86 877.823,-665.643"/>
+<polygon fill="black" stroke="black" points="877.566,-669.133 887.809,-666.424 878.112,-662.155 877.566,-669.133"/>
 </g>
 <!-- kubeconfig -->
-<g id="node35" class="node"><title>kubeconfig</title>
+<g id="node36" class="node"><title>kubeconfig</title>
 <polygon fill="lightblue" stroke="lightblue" points="1025.5,-1686.27 920.5,-1686.27 920.5,-1650.27 1025.5,-1650.27 1025.5,-1686.27"/>
 <text text-anchor="middle" x="973" y="-1663.27" font-family="Times,serif" font-size="20.00">kubeconfig</text>
 </g>
 <!-- install_config&#45;&gt;kubeconfig -->
-<g id="edge37" class="edge"><title>install_config&#45;&gt;kubeconfig</title>
+<g id="edge38" class="edge"><title>install_config&#45;&gt;kubeconfig</title>
 <path fill="none" stroke="black" d="M333.053,-1391.93C448.126,-1414.56 646.235,-1456.22 671,-1479.27 708.604,-1514.27 669.76,-1553.36 706.5,-1589.27 761.284,-1642.81 850.68,-1660.3 910.408,-1665.88"/>
 <polygon fill="black" stroke="black" points="910.203,-1669.38 920.463,-1666.74 910.795,-1662.4 910.203,-1669.38"/>
 </g>
 <!-- terraform_state -->
-<g id="node36" class="node"><title>terraform_state</title>
+<g id="node37" class="node"><title>terraform_state</title>
 <polygon fill="gold" stroke="gold" points="1627,-1232.27 1547,-1232.27 1547,-1196.27 1627,-1196.27 1627,-1232.27"/>
 <text text-anchor="middle" x="1587" y="-1209.27" font-family="Times,serif" font-size="20.00">*.tfstate</text>
 </g>
 <!-- install_config&#45;&gt;terraform_state -->
-<g id="edge59" class="edge"><title>install_config&#45;&gt;terraform_state</title>
+<g id="edge60" class="edge"><title>install_config&#45;&gt;terraform_state</title>
 <path fill="none" stroke="black" d="M259.5,-1394.48C276.125,-1428.34 315.999,-1501.55 369,-1545.27 671.848,-1795.09 890.061,-1874.21 1239.5,-1695.27 1434.68,-1595.32 1544.99,-1328.56 1576.5,-1241.88"/>
 <polygon fill="black" stroke="black" points="1579.8,-1243.05 1579.87,-1232.46 1573.21,-1240.69 1579.8,-1243.05"/>
 </g>
 <!-- admin_bundle -->
-<g id="node13" class="node"><title>admin_bundle</title>
+<g id="node14" class="node"><title>admin_bundle</title>
 <polygon fill="violet" stroke="violet" points="583,-801.266 457,-801.266 457,-765.266 583,-765.266 583,-801.266"/>
 <text text-anchor="middle" x="520" y="-778.266" font-family="Times,serif" font-size="20.00">admin crt/key</text>
 </g>
 <!-- admin_bundle&#45;&gt;manifests -->
-<g id="edge60" class="edge"><title>admin_bundle&#45;&gt;manifests</title>
-<path fill="none" stroke="black" d="M583.016,-773.452C612.576,-766.076 646.696,-753.291 671,-731.266 698.924,-705.961 674.761,-674.583 706.5,-654.266 806.257,-590.41 1134.89,-598.711 1239.5,-654.266 1265.08,-667.854 1258.06,-685.523 1276,-708.266 1289.91,-725.901 1306.65,-744.435 1320.88,-759.505"/>
+<g id="edge61" class="edge"><title>admin_bundle&#45;&gt;manifests</title>
+<path fill="none" stroke="black" d="M583.048,-773.955C612.616,-766.798 646.734,-754.233 671,-732.266 699.237,-706.705 674.471,-674.879 706.5,-654.266 806.101,-590.166 1134.89,-598.711 1239.5,-654.266 1265.08,-667.854 1258.06,-685.523 1276,-708.266 1289.91,-725.901 1306.65,-744.435 1320.88,-759.505"/>
 <polygon fill="black" stroke="black" points="1318.63,-762.219 1328.06,-767.047 1323.7,-757.391 1318.63,-762.219"/>
 </g>
 <!-- admin_bundle&#45;&gt;kubeconfig -->
-<g id="edge35" class="edge"><title>admin_bundle&#45;&gt;kubeconfig</title>
+<g id="edge36" class="edge"><title>admin_bundle&#45;&gt;kubeconfig</title>
 <path fill="none" stroke="black" d="M546.505,-801.377C581.748,-828.068 644.037,-881.632 671,-944.266 720.568,-1059.41 641.583,-1400.02 706.5,-1507.27 752.103,-1582.6 847.621,-1627.35 910.779,-1649.87"/>
 <polygon fill="black" stroke="black" points="909.643,-1653.18 920.238,-1653.17 911.945,-1646.57 909.643,-1653.18"/>
 </g>
 <!-- aggregator_ca_bundle -->
-<g id="node14" class="node"><title>aggregator_ca_bundle</title>
+<g id="node15" class="node"><title>aggregator_ca_bundle</title>
 <polygon fill="violet" stroke="violet" points="612.5,-989.266 427.5,-989.266 427.5,-953.266 612.5,-953.266 612.5,-989.266"/>
 <text text-anchor="middle" x="520" y="-966.266" font-family="Times,serif" font-size="20.00">aggregator ca crt/key</text>
 </g>
 <!-- aggregator_ca_bundle&#45;&gt;manifests -->
-<g id="edge61" class="edge"><title>aggregator_ca_bundle&#45;&gt;manifests</title>
-<path fill="none" stroke="black" d="M612.562,-954.393C634.161,-946.552 655.409,-935.073 671,-918.266 712.025,-874.043 658.591,-823.92 706.5,-787.266 874.522,-658.717 1145.75,-721.929 1276.6,-763.991"/>
-<polygon fill="black" stroke="black" points="1275.57,-767.335 1286.16,-767.106 1277.74,-760.679 1275.57,-767.335"/>
+<g id="edge62" class="edge"><title>aggregator_ca_bundle&#45;&gt;manifests</title>
+<path fill="none" stroke="black" d="M612.539,-954.372C634.139,-946.532 655.393,-935.057 671,-918.266 711.776,-874.397 658.896,-824.614 706.5,-788.266 874.428,-660.047 1145.11,-722.31 1276.12,-764.034"/>
+<polygon fill="black" stroke="black" points="1275.1,-767.382 1285.69,-767.124 1277.25,-760.72 1275.1,-767.382"/>
 </g>
 <!-- apiserver_proxy_bundle -->
-<g id="node16" class="node"><title>apiserver_proxy_bundle</title>
+<g id="node17" class="node"><title>apiserver_proxy_bundle</title>
 <polygon fill="violet" stroke="violet" points="1073,-966.266 873,-966.266 873,-930.266 1073,-930.266 1073,-966.266"/>
 <text text-anchor="middle" x="973" y="-943.266" font-family="Times,serif" font-size="20.00">apiserver proxy crt/key</text>
 </g>
 <!-- aggregator_ca_bundle&#45;&gt;apiserver_proxy_bundle -->
-<g id="edge32" class="edge"><title>aggregator_ca_bundle&#45;&gt;apiserver_proxy_bundle</title>
+<g id="edge33" class="edge"><title>aggregator_ca_bundle&#45;&gt;apiserver_proxy_bundle</title>
 <path fill="none" stroke="black" d="M612.538,-966.598C684.859,-962.91 786.016,-957.751 862.603,-953.845"/>
 <polygon fill="black" stroke="black" points="862.957,-957.332 872.766,-953.327 862.601,-950.341 862.957,-957.332"/>
 </g>
 <!-- clusterapi_apiserver_bundle -->
-<g id="node17" class="node"><title>clusterapi_apiserver_bundle</title>
-<polygon fill="violet" stroke="violet" points="1088.5,-832.266 857.5,-832.266 857.5,-796.266 1088.5,-796.266 1088.5,-832.266"/>
-<text text-anchor="middle" x="973" y="-809.266" font-family="Times,serif" font-size="20.00">clusterapi apiserver crt/key</text>
+<g id="node18" class="node"><title>clusterapi_apiserver_bundle</title>
+<polygon fill="violet" stroke="violet" points="1088.5,-833.266 857.5,-833.266 857.5,-797.266 1088.5,-797.266 1088.5,-833.266"/>
+<text text-anchor="middle" x="973" y="-810.266" font-family="Times,serif" font-size="20.00">clusterapi apiserver crt/key</text>
 </g>
 <!-- aggregator_ca_bundle&#45;&gt;clusterapi_apiserver_bundle -->
-<g id="edge33" class="edge"><title>aggregator_ca_bundle&#45;&gt;clusterapi_apiserver_bundle</title>
-<path fill="none" stroke="black" d="M600.76,-953.233C624.915,-945.208 650.46,-933.919 671,-918.266 692.966,-901.527 683.397,-882.398 706.5,-867.266 747.889,-840.157 800.13,-826.381 847.3,-819.556"/>
-<polygon fill="black" stroke="black" points="847.844,-823.015 857.283,-818.203 846.903,-816.078 847.844,-823.015"/>
+<g id="edge34" class="edge"><title>aggregator_ca_bundle&#45;&gt;clusterapi_apiserver_bundle</title>
+<path fill="none" stroke="black" d="M600.76,-953.233C624.915,-945.208 650.46,-933.919 671,-918.266 692.966,-901.527 683.37,-882.356 706.5,-867.266 747.908,-840.252 800.152,-826.661 847.32,-820.023"/>
+<polygon fill="black" stroke="black" points="847.844,-823.484 857.302,-818.709 846.931,-816.544 847.844,-823.484"/>
 </g>
 <!-- aggregator_ca_bundle&#45;&gt;openshift_apiserver_bundle -->
-<g id="edge30" class="edge"><title>aggregator_ca_bundle&#45;&gt;openshift_apiserver_bundle</title>
+<g id="edge31" class="edge"><title>aggregator_ca_bundle&#45;&gt;openshift_apiserver_bundle</title>
 <path fill="none" stroke="black" d="M594.968,-989.307C675.496,-1008.95 804.007,-1040.29 888.204,-1060.83"/>
 <polygon fill="black" stroke="black" points="887.447,-1064.25 897.991,-1063.22 889.105,-1057.45 887.447,-1064.25"/>
 </g>
 <!-- bootstrap_ignition -->
-<g id="node31" class="node"><title>bootstrap_ignition</title>
+<g id="node32" class="node"><title>bootstrap_ignition</title>
 <polygon fill="sandybrown" stroke="sandybrown" points="1412.5,-1232.27 1293.5,-1232.27 1293.5,-1196.27 1412.5,-1196.27 1412.5,-1232.27"/>
 <text text-anchor="middle" x="1353" y="-1209.27" font-family="Times,serif" font-size="20.00">bootstrap.ign</text>
 </g>
 <!-- aggregator_ca_bundle&#45;&gt;bootstrap_ignition -->
-<g id="edge34" class="edge"><title>aggregator_ca_bundle&#45;&gt;bootstrap_ignition</title>
+<g id="edge35" class="edge"><title>aggregator_ca_bundle&#45;&gt;bootstrap_ignition</title>
 <path fill="none" stroke="black" d="M612.669,-984.818C634.799,-992.377 656.281,-1004.1 671,-1022.27 712.848,-1073.91 656.788,-1275.14 706.5,-1319.27 795.084,-1397.89 1129.31,-1362.7 1239.5,-1319.27 1279.47,-1303.51 1313.62,-1266.11 1333.49,-1240.48"/>
 <polygon fill="black" stroke="black" points="1336.44,-1242.38 1339.66,-1232.29 1330.85,-1238.17 1336.44,-1242.38"/>
 </g>
 <!-- apiserver_bundle&#45;&gt;manifests -->
-<g id="edge62" class="edge"><title>apiserver_bundle&#45;&gt;manifests</title>
+<g id="edge63" class="edge"><title>apiserver_bundle&#45;&gt;manifests</title>
 <path fill="none" stroke="black" d="M577.835,-608.246C606.121,-598.854 640.666,-586.741 671,-574.266 687.179,-567.613 689.441,-561.14 706.5,-557.266 937.507,-504.807 1053.35,-410.754 1239.5,-557.266 1293.75,-599.969 1243.55,-647.324 1276,-708.266 1286.17,-727.358 1301.75,-745.459 1316.17,-759.855"/>
 <polygon fill="black" stroke="black" points="1313.95,-762.581 1323.57,-767.032 1318.83,-757.557 1313.95,-762.581"/>
 </g>
 <!-- bootstrap_control_plane -->
-<g id="node29" class="node"><title>bootstrap_control_plane</title>
+<g id="node30" class="node"><title>bootstrap_control_plane</title>
 <polygon fill="lightpink" stroke="lightpink" points="1112.5,-456.266 833.5,-456.266 833.5,-420.266 1112.5,-420.266 1112.5,-456.266"/>
 <text text-anchor="middle" x="973" y="-433.266" font-family="Times,serif" font-size="20.00">bootstrap control plane manifests</text>
 </g>
 <!-- apiserver_bundle&#45;&gt;bootstrap_control_plane -->
-<g id="edge39" class="edge"><title>apiserver_bundle&#45;&gt;bootstrap_control_plane</title>
+<g id="edge40" class="edge"><title>apiserver_bundle&#45;&gt;bootstrap_control_plane</title>
 <path fill="none" stroke="black" d="M594.668,-613.708C621.342,-606.055 650.03,-593.809 671,-574.266 700.352,-546.913 675.349,-516.552 706.5,-491.266 739.357,-464.597 781.941,-450.131 823.347,-442.583"/>
 <polygon fill="black" stroke="black" points="824.003,-446.022 833.277,-440.899 822.832,-439.12 824.003,-446.022"/>
 </g>
 <!-- apiserver_proxy_bundle&#45;&gt;manifests -->
-<g id="edge63" class="edge"><title>apiserver_proxy_bundle&#45;&gt;manifests</title>
+<g id="edge64" class="edge"><title>apiserver_proxy_bundle&#45;&gt;manifests</title>
 <path fill="none" stroke="black" d="M1073.14,-941.442C1124.95,-934.739 1188.1,-921.478 1239.5,-895.266 1273.77,-877.787 1305.23,-846.857 1326.12,-823.258"/>
 <polygon fill="black" stroke="black" points="1328.88,-825.415 1332.78,-815.565 1323.59,-820.831 1328.88,-825.415"/>
 </g>
 <!-- apiserver_proxy_bundle&#45;&gt;bootstrap_ignition -->
-<g id="edge40" class="edge"><title>apiserver_proxy_bundle&#45;&gt;bootstrap_ignition</title>
+<g id="edge41" class="edge"><title>apiserver_proxy_bundle&#45;&gt;bootstrap_ignition</title>
 <path fill="none" stroke="black" d="M1051.27,-966.351C1107.77,-982.434 1183.92,-1010.33 1239.5,-1054.27 1285.89,-1090.93 1321.22,-1151.75 1339.07,-1186.89"/>
 <polygon fill="black" stroke="black" points="1336.06,-1188.68 1343.64,-1196.08 1342.33,-1185.57 1336.06,-1188.68"/>
 </g>
 <!-- clusterapi_apiserver_bundle&#45;&gt;manifests -->
-<g id="edge64" class="edge"><title>clusterapi_apiserver_bundle&#45;&gt;manifests</title>
-<path fill="none" stroke="black" d="M1088.7,-807.288C1145.62,-803.824 1213.24,-799.709 1265.71,-796.517"/>
-<polygon fill="black" stroke="black" points="1266.22,-799.992 1275.99,-795.891 1265.79,-793.005 1266.22,-799.992"/>
+<g id="edge65" class="edge"><title>clusterapi_apiserver_bundle&#45;&gt;manifests</title>
+<path fill="none" stroke="black" d="M1088.7,-807.984C1145.62,-804.37 1213.24,-800.076 1265.71,-796.745"/>
+<polygon fill="black" stroke="black" points="1266.23,-800.219 1275.99,-796.093 1265.79,-793.233 1266.23,-800.219"/>
 </g>
 <!-- clusterapi_apiserver_bundle&#45;&gt;bootstrap_ignition -->
-<g id="edge41" class="edge"><title>clusterapi_apiserver_bundle&#45;&gt;bootstrap_ignition</title>
-<path fill="none" stroke="black" d="M1068.15,-832.342C1124.35,-847.513 1193.5,-874.5 1239.5,-921.266 1314.34,-997.356 1340.52,-1128.54 1348.68,-1185.96"/>
-<polygon fill="black" stroke="black" points="1345.25,-1186.67 1350.05,-1196.11 1352.18,-1185.74 1345.25,-1186.67"/>
+<g id="edge42" class="edge"><title>clusterapi_apiserver_bundle&#45;&gt;bootstrap_ignition</title>
+<path fill="none" stroke="black" d="M1069.42,-833.303C1125.38,-848.316 1193.83,-874.988 1239.5,-921.266 1314.47,-997.235 1340.58,-1128.48 1348.7,-1185.94"/>
+<polygon fill="black" stroke="black" points="1345.27,-1186.65 1350.06,-1196.1 1352.21,-1185.72 1345.27,-1186.65"/>
 </g>
 <!-- etcd_ca_bundle -->
-<g id="node18" class="node"><title>etcd_ca_bundle</title>
+<g id="node19" class="node"><title>etcd_ca_bundle</title>
 <polygon fill="violet" stroke="violet" points="316.5,-346.266 183.5,-346.266 183.5,-310.266 316.5,-310.266 316.5,-346.266"/>
 <text text-anchor="middle" x="250" y="-323.266" font-family="Times,serif" font-size="20.00">etcd ca crt/key</text>
 </g>
 <!-- etcd_ca_bundle&#45;&gt;manifests -->
-<g id="edge65" class="edge"><title>etcd_ca_bundle&#45;&gt;manifests</title>
-<path fill="none" stroke="black" d="M267.677,-310.176C288.821,-288.711 327.544,-254.091 369,-240.266 474.925,-204.944 1182.68,-186.697 1239.5,-239.266 1316.23,-310.26 1234.38,-612.374 1276,-708.266 1284.48,-727.802 1299.52,-745.749 1313.99,-759.918"/>
-<polygon fill="black" stroke="black" points="1311.79,-762.657 1321.47,-766.972 1316.59,-757.564 1311.79,-762.657"/>
+<g id="edge66" class="edge"><title>etcd_ca_bundle&#45;&gt;manifests</title>
+<path fill="none" stroke="black" d="M267.684,-310.197C288.835,-288.751 327.565,-254.152 369,-240.266 476.397,-204.276 1185.02,-187.857 1239.5,-238.266 1316.39,-309.417 1234.29,-612.167 1276,-708.266 1284.48,-727.802 1299.51,-745.749 1313.99,-759.919"/>
+<polygon fill="black" stroke="black" points="1311.79,-762.658 1321.47,-766.972 1316.59,-757.565 1311.79,-762.658"/>
 </g>
 <!-- etcd_client_bundle -->
-<g id="node19" class="node"><title>etcd_client_bundle</title>
+<g id="node20" class="node"><title>etcd_client_bundle</title>
 <polygon fill="violet" stroke="violet" points="599,-346.266 441,-346.266 441,-310.266 599,-310.266 599,-346.266"/>
 <text text-anchor="middle" x="520" y="-323.266" font-family="Times,serif" font-size="20.00">etcd client crt/key</text>
 </g>
 <!-- etcd_ca_bundle&#45;&gt;etcd_client_bundle -->
-<g id="edge20" class="edge"><title>etcd_ca_bundle&#45;&gt;etcd_client_bundle</title>
+<g id="edge21" class="edge"><title>etcd_ca_bundle&#45;&gt;etcd_client_bundle</title>
 <path fill="none" stroke="black" d="M316.56,-328.266C350.838,-328.266 393.284,-328.266 430.442,-328.266"/>
 <polygon fill="black" stroke="black" points="430.771,-331.766 440.771,-328.266 430.771,-324.766 430.771,-331.766"/>
 </g>
 <!-- etcd_ca_bundle&#45;&gt;bootstrap_control_plane -->
-<g id="edge22" class="edge"><title>etcd_ca_bundle&#45;&gt;bootstrap_control_plane</title>
+<g id="edge23" class="edge"><title>etcd_ca_bundle&#45;&gt;bootstrap_control_plane</title>
 <path fill="none" stroke="black" d="M316.633,-344.364C333.628,-348.235 351.945,-352.148 369,-355.266 523.064,-383.439 700.849,-406.81 823.25,-421.497"/>
 <polygon fill="black" stroke="black" points="823.096,-425.003 833.44,-422.715 823.927,-418.053 823.096,-425.003"/>
 </g>
 <!-- master_ignition -->
-<g id="node32" class="node"><title>master_ignition</title>
+<g id="node33" class="node"><title>master_ignition</title>
 <polygon fill="sandybrown" stroke="sandybrown" points="1403,-699.266 1303,-699.266 1303,-663.266 1403,-663.266 1403,-699.266"/>
 <text text-anchor="middle" x="1353" y="-676.266" font-family="Times,serif" font-size="20.00">master.ign</text>
 </g>
 <!-- etcd_ca_bundle&#45;&gt;master_ignition -->
-<g id="edge21" class="edge"><title>etcd_ca_bundle&#45;&gt;master_ignition</title>
+<g id="edge22" class="edge"><title>etcd_ca_bundle&#45;&gt;master_ignition</title>
 <path fill="none" stroke="black" d="M260.275,-309.873C277.054,-278.927 315.714,-217.463 369,-193.266 545.136,-113.286 1097.14,-62.2968 1239.5,-193.266 1311.22,-259.243 1226.61,-546.263 1276,-630.266 1282.42,-641.183 1292.21,-650.245 1302.64,-657.549"/>
 <polygon fill="black" stroke="black" points="1300.81,-660.529 1311.1,-663.033 1304.61,-654.656 1300.81,-660.529"/>
 </g>
 <!-- etcd_client_bundle&#45;&gt;manifests -->
-<g id="edge66" class="edge"><title>etcd_client_bundle&#45;&gt;manifests</title>
+<g id="edge67" class="edge"><title>etcd_client_bundle&#45;&gt;manifests</title>
 <path fill="none" stroke="black" d="M599.052,-331.907C775.766,-340.901 1194.64,-366.729 1239.5,-411.266 1286.69,-458.115 1248.17,-647.874 1276,-708.266 1284.98,-727.759 1300.25,-745.806 1314.76,-760.058"/>
 <polygon fill="black" stroke="black" points="1312.57,-762.81 1322.23,-767.153 1317.39,-757.731 1312.57,-762.81"/>
 </g>
 <!-- etcd_client_bundle&#45;&gt;bootstrap_control_plane -->
-<g id="edge42" class="edge"><title>etcd_client_bundle&#45;&gt;bootstrap_control_plane</title>
+<g id="edge43" class="edge"><title>etcd_client_bundle&#45;&gt;bootstrap_control_plane</title>
 <path fill="none" stroke="black" d="M573.334,-346.317C610.255,-358.634 661.036,-374.743 706.5,-386.266 755.064,-398.575 809.25,-409.654 855.942,-418.391"/>
 <polygon fill="black" stroke="black" points="855.316,-421.835 865.787,-420.219 856.595,-414.952 855.316,-421.835"/>
 </g>
 <!-- ingress_bundle&#45;&gt;manifests -->
-<g id="edge67" class="edge"><title>ingress_bundle&#45;&gt;manifests</title>
-<path fill="none" stroke="black" d="M586.374,-1039.07C615.125,-1031.77 647.6,-1019.35 671,-998.266 698.999,-973.044 676.361,-943.889 706.5,-921.266 898.078,-777.466 1009.53,-908.294 1239.5,-841.266 1258.55,-835.715 1278.57,-827.616 1296.36,-819.547"/>
-<polygon fill="black" stroke="black" points="1297.84,-822.72 1305.44,-815.344 1294.9,-816.368 1297.84,-822.72"/>
+<g id="edge68" class="edge"><title>ingress_bundle&#45;&gt;manifests</title>
+<path fill="none" stroke="black" d="M586.374,-1039.07C615.125,-1031.77 647.6,-1019.35 671,-998.266 698.999,-973.044 676.341,-943.861 706.5,-921.266 898.157,-777.681 1009.78,-909.915 1239.5,-842.266 1258.94,-836.54 1279.37,-828.09 1297.4,-819.707"/>
+<polygon fill="black" stroke="black" points="1299.05,-822.795 1306.59,-815.345 1296.05,-816.471 1299.05,-822.795"/>
 </g>
 <!-- ingress_bundle&#45;&gt;bootstrap_ignition -->
-<g id="edge43" class="edge"><title>ingress_bundle&#45;&gt;bootstrap_ignition</title>
+<g id="edge44" class="edge"><title>ingress_bundle&#45;&gt;bootstrap_ignition</title>
 <path fill="none" stroke="black" d="M562.78,-1067.35C597.566,-1084.7 645.399,-1114.3 671,-1155.27 723.021,-1238.51 631.716,-1309.68 706.5,-1373.27 796.733,-1449.99 1134.3,-1427.7 1239.5,-1373.27 1292.98,-1345.59 1326.5,-1279.48 1341.94,-1241.8"/>
 <polygon fill="black" stroke="black" points="1345.23,-1243.01 1345.65,-1232.42 1338.72,-1240.43 1345.23,-1243.01"/>
 </g>
 <!-- kube_ca_bundle -->
-<g id="node21" class="node"><title>kube_ca_bundle</title>
-<polygon fill="violet" stroke="violet" points="319,-683.266 181,-683.266 181,-647.266 319,-647.266 319,-683.266"/>
-<text text-anchor="middle" x="250" y="-660.266" font-family="Times,serif" font-size="20.00">kube ca crt/key</text>
+<g id="node22" class="node"><title>kube_ca_bundle</title>
+<polygon fill="violet" stroke="violet" points="319,-684.266 181,-684.266 181,-648.266 319,-648.266 319,-684.266"/>
+<text text-anchor="middle" x="250" y="-661.266" font-family="Times,serif" font-size="20.00">kube ca crt/key</text>
 </g>
 <!-- kube_ca_bundle&#45;&gt;manifests -->
-<g id="edge68" class="edge"><title>kube_ca_bundle&#45;&gt;manifests</title>
-<path fill="none" stroke="black" d="M255.591,-646.971C273.542,-576.133 339.448,-322.753 369,-301.266 489.887,-213.374 1122.77,-222.865 1239.5,-335.266 1299.49,-393.034 1242.08,-632.202 1276,-708.266 1284.74,-727.868 1299.97,-745.931 1314.52,-760.165"/>
+<g id="edge69" class="edge"><title>kube_ca_bundle&#45;&gt;manifests</title>
+<path fill="none" stroke="black" d="M255.587,-647.921C273.524,-576.89 339.383,-322.818 369,-301.266 489.844,-213.332 1122.68,-222.785 1239.5,-335.266 1299.49,-393.034 1242.08,-632.202 1276,-708.266 1284.74,-727.868 1299.97,-745.931 1314.52,-760.165"/>
 <polygon fill="black" stroke="black" points="1312.35,-762.93 1322.02,-767.248 1317.15,-757.839 1312.35,-762.93"/>
 </g>
 <!-- kube_ca_bundle&#45;&gt;admin_bundle -->
-<g id="edge23" class="edge"><title>kube_ca_bundle&#45;&gt;admin_bundle</title>
-<path fill="none" stroke="black" d="M279.839,-683.289C303.285,-697.474 337.52,-717.139 369,-731.266 394.753,-742.824 423.908,-753.457 449.621,-762.055"/>
-<polygon fill="black" stroke="black" points="448.7,-765.436 459.293,-765.248 450.895,-758.789 448.7,-765.436"/>
+<g id="edge24" class="edge"><title>kube_ca_bundle&#45;&gt;admin_bundle</title>
+<path fill="none" stroke="black" d="M279.816,-684.34C303.249,-698.554 337.478,-718.233 369,-732.266 394.289,-743.525 422.878,-753.814 448.263,-762.155"/>
+<polygon fill="black" stroke="black" points="447.229,-765.499 457.821,-765.255 449.388,-758.841 447.229,-765.499"/>
 </g>
 <!-- kube_ca_bundle&#45;&gt;apiserver_bundle -->
-<g id="edge24" class="edge"><title>kube_ca_bundle&#45;&gt;apiserver_bundle</title>
-<path fill="none" stroke="black" d="M319.321,-655.324C354.476,-650.208 397.644,-643.926 434.838,-638.514"/>
-<polygon fill="black" stroke="black" points="435.767,-641.916 445.158,-637.012 434.758,-634.989 435.767,-641.916"/>
+<g id="edge25" class="edge"><title>kube_ca_bundle&#45;&gt;apiserver_bundle</title>
+<path fill="none" stroke="black" d="M319.321,-656.069C354.476,-650.822 397.644,-644.379 434.838,-638.828"/>
+<polygon fill="black" stroke="black" points="435.785,-642.225 445.158,-637.288 434.751,-635.302 435.785,-642.225"/>
 </g>
 <!-- kube_ca_bundle&#45;&gt;ingress_bundle -->
-<g id="edge27" class="edge"><title>kube_ca_bundle&#45;&gt;ingress_bundle</title>
-<path fill="none" stroke="black" d="M252.059,-683.3C256.269,-738.495 276.468,-906.912 369,-998.266 389.222,-1018.23 417.552,-1030.39 444.152,-1037.79"/>
-<polygon fill="black" stroke="black" points="443.297,-1041.18 453.856,-1040.3 445.055,-1034.41 443.297,-1041.18"/>
+<g id="edge28" class="edge"><title>kube_ca_bundle&#45;&gt;ingress_bundle</title>
+<path fill="none" stroke="black" d="M252.107,-684.639C256.435,-740.071 276.889,-907.414 369,-998.266 389.231,-1018.22 417.563,-1030.38 444.162,-1037.78"/>
+<polygon fill="black" stroke="black" points="443.307,-1041.17 453.865,-1040.29 445.064,-1034.39 443.307,-1041.17"/>
 </g>
 <!-- kubelet_bundle -->
-<g id="node22" class="node"><title>kubelet_bundle</title>
-<polygon fill="violet" stroke="violet" points="587,-722.266 453,-722.266 453,-686.266 587,-686.266 587,-722.266"/>
-<text text-anchor="middle" x="520" y="-699.266" font-family="Times,serif" font-size="20.00">kubelet crt/key</text>
+<g id="node23" class="node"><title>kubelet_bundle</title>
+<polygon fill="violet" stroke="violet" points="587,-723.266 453,-723.266 453,-687.266 587,-687.266 587,-723.266"/>
+<text text-anchor="middle" x="520" y="-700.266" font-family="Times,serif" font-size="20.00">kubelet crt/key</text>
 </g>
 <!-- kube_ca_bundle&#45;&gt;kubelet_bundle -->
-<g id="edge26" class="edge"><title>kube_ca_bundle&#45;&gt;kubelet_bundle</title>
-<path fill="none" stroke="black" d="M319.321,-675.209C356.904,-680.678 403.645,-687.48 442.454,-693.127"/>
-<polygon fill="black" stroke="black" points="442.256,-696.635 452.656,-694.612 443.264,-689.708 442.256,-696.635"/>
+<g id="edge27" class="edge"><title>kube_ca_bundle&#45;&gt;kubelet_bundle</title>
+<path fill="none" stroke="black" d="M319.321,-676.209C356.904,-681.678 403.645,-688.48 442.454,-694.127"/>
+<polygon fill="black" stroke="black" points="442.256,-697.635 452.656,-695.612 443.264,-690.708 442.256,-697.635"/>
 </g>
 <!-- kube_ca_bundle&#45;&gt;bootstrap_control_plane -->
-<g id="edge28" class="edge"><title>kube_ca_bundle&#45;&gt;bootstrap_control_plane</title>
-<path fill="none" stroke="black" d="M278.619,-647.189C301.924,-632.59 336.579,-612.384 369,-599.266 497.716,-547.189 554.509,-594.829 671,-519.266 692.08,-505.592 684.635,-487.646 706.5,-475.266 741.594,-455.396 783.352,-444.739 823.24,-439.333"/>
+<g id="edge29" class="edge"><title>kube_ca_bundle&#45;&gt;bootstrap_control_plane</title>
+<path fill="none" stroke="black" d="M278.112,-648.189C301.396,-633.332 336.285,-612.625 369,-599.266 497.547,-546.775 554.509,-594.829 671,-519.266 692.08,-505.592 684.635,-487.646 706.5,-475.266 741.594,-455.396 783.352,-444.739 823.24,-439.333"/>
 <polygon fill="black" stroke="black" points="823.847,-442.785 833.335,-438.07 822.978,-435.839 823.847,-442.785"/>
 </g>
 <!-- kubelet_bundle&#45;&gt;manifests -->
-<g id="edge69" class="edge"><title>kubelet_bundle&#45;&gt;manifests</title>
-<path fill="none" stroke="black" d="M587.038,-690.929C614.768,-683.114 646.255,-671.15 671,-653.266 692.217,-637.932 683.066,-617.934 706.5,-606.266 812.53,-553.476 1142.66,-538.067 1239.5,-606.266 1278.87,-633.99 1251.14,-667.032 1276,-708.266 1287.34,-727.075 1303.37,-745.368 1317.79,-759.973"/>
+<g id="edge70" class="edge"><title>kubelet_bundle&#45;&gt;manifests</title>
+<path fill="none" stroke="black" d="M587.04,-691.436C614.771,-683.427 646.258,-671.261 671,-653.266 692.171,-637.869 683.066,-617.934 706.5,-606.266 812.53,-553.476 1142.66,-538.067 1239.5,-606.266 1278.87,-633.99 1251.14,-667.032 1276,-708.266 1287.34,-727.075 1303.37,-745.368 1317.79,-759.973"/>
 <polygon fill="black" stroke="black" points="1315.58,-762.71 1325.15,-767.257 1320.51,-757.735 1315.58,-762.71"/>
 </g>
 <!-- kubelet_bundle&#45;&gt;kubelet_kubeconfig -->
-<g id="edge36" class="edge"><title>kubelet_bundle&#45;&gt;kubelet_kubeconfig</title>
-<path fill="none" stroke="black" d="M587.062,-700.897C663.668,-696.991 790.535,-690.521 877.543,-686.084"/>
-<polygon fill="black" stroke="black" points="877.876,-689.571 887.684,-685.566 877.519,-682.58 877.876,-689.571"/>
+<g id="edge37" class="edge"><title>kubelet_bundle&#45;&gt;kubelet_kubeconfig</title>
+<path fill="none" stroke="black" d="M587.062,-701.751C663.668,-697.674 790.535,-690.923 877.543,-686.293"/>
+<polygon fill="black" stroke="black" points="877.885,-689.78 887.684,-685.753 877.513,-682.79 877.885,-689.78"/>
 </g>
 <!-- openshift_apiserver_bundle&#45;&gt;manifests -->
-<g id="edge70" class="edge"><title>openshift_apiserver_bundle&#45;&gt;manifests</title>
+<g id="edge71" class="edge"><title>openshift_apiserver_bundle&#45;&gt;manifests</title>
 <path fill="none" stroke="black" d="M1086.79,-1081.13C1137.96,-1075.82 1196.5,-1061.8 1239.5,-1028.27 1305.33,-976.932 1334.56,-877.623 1345.86,-825.346"/>
 <polygon fill="black" stroke="black" points="1349.29,-826.047 1347.89,-815.545 1342.43,-824.63 1349.29,-826.047"/>
 </g>
 <!-- openshift_apiserver_bundle&#45;&gt;bootstrap_ignition -->
-<g id="edge44" class="edge"><title>openshift_apiserver_bundle&#45;&gt;bootstrap_ignition</title>
+<g id="edge45" class="edge"><title>openshift_apiserver_bundle&#45;&gt;bootstrap_ignition</title>
 <path fill="none" stroke="black" d="M1025.37,-1099.34C1094.53,-1123.68 1217.39,-1166.91 1291.12,-1192.84"/>
 <polygon fill="black" stroke="black" points="1290.15,-1196.21 1300.74,-1196.23 1292.47,-1189.61 1290.15,-1196.21"/>
 </g>
 <!-- root_ca_bundle -->
-<g id="node24" class="node"><title>root_ca_bundle</title>
-<polygon fill="violet" stroke="violet" points="130.5,-683.266 -0.5,-683.266 -0.5,-647.266 130.5,-647.266 130.5,-683.266"/>
-<text text-anchor="middle" x="65" y="-660.266" font-family="Times,serif" font-size="20.00">root ca crt/key</text>
+<g id="node25" class="node"><title>root_ca_bundle</title>
+<polygon fill="violet" stroke="violet" points="130.5,-684.266 -0.5,-684.266 -0.5,-648.266 130.5,-648.266 130.5,-684.266"/>
+<text text-anchor="middle" x="65" y="-661.266" font-family="Times,serif" font-size="20.00">root ca crt/key</text>
 </g>
 <!-- root_ca_bundle&#45;&gt;manifests -->
-<g id="edge71" class="edge"><title>root_ca_bundle&#45;&gt;manifests</title>
-<path fill="none" stroke="black" d="M65.9295,-646.912C66.6699,-588.995 76.4766,-407.656 167,-301.266 322.091,-118.992 1064.28,-40.2511 1239.5,-203.266 1321.88,-279.905 1231.48,-604.933 1276,-708.266 1284.43,-727.825 1299.45,-745.775 1313.94,-759.941"/>
+<g id="edge72" class="edge"><title>root_ca_bundle&#45;&gt;manifests</title>
+<path fill="none" stroke="black" d="M65.9131,-647.863C66.605,-589.789 76.2833,-407.959 167,-301.266 322.027,-118.938 1064.28,-40.2511 1239.5,-203.266 1321.88,-279.905 1231.48,-604.933 1276,-708.266 1284.43,-727.825 1299.45,-745.775 1313.94,-759.941"/>
 <polygon fill="black" stroke="black" points="1311.74,-762.683 1321.42,-766.992 1316.54,-757.588 1311.74,-762.683"/>
 </g>
 <!-- root_ca_bundle&#45;&gt;aggregator_ca_bundle -->
-<g id="edge11" class="edge"><title>root_ca_bundle&#45;&gt;aggregator_ca_bundle</title>
-<path fill="none" stroke="black" d="M70.1184,-683.292C79.9223,-722.097 108.335,-814.014 167,-863.266 237.748,-922.664 340.79,-949.417 417.121,-961.453"/>
-<polygon fill="black" stroke="black" points="416.824,-964.948 427.236,-962.987 417.873,-958.027 416.824,-964.948"/>
+<g id="edge12" class="edge"><title>root_ca_bundle&#45;&gt;aggregator_ca_bundle</title>
+<path fill="none" stroke="black" d="M70.2212,-684.495C80.1491,-723.275 108.667,-814.394 167,-863.266 237.809,-922.591 340.843,-949.353 417.156,-961.412"/>
+<polygon fill="black" stroke="black" points="416.855,-964.906 427.268,-962.949 417.907,-957.986 416.855,-964.906"/>
 </g>
 <!-- root_ca_bundle&#45;&gt;etcd_ca_bundle -->
-<g id="edge10" class="edge"><title>root_ca_bundle&#45;&gt;etcd_ca_bundle</title>
-<path fill="none" stroke="black" d="M72.371,-647.045C86.6083,-607.332 123.219,-510.581 167,-436.266 184.512,-406.541 208.846,-375.457 226.453,-354.311"/>
-<polygon fill="black" stroke="black" points="229.314,-356.346 233.077,-346.441 223.959,-351.838 229.314,-356.346"/>
+<g id="edge11" class="edge"><title>root_ca_bundle&#45;&gt;etcd_ca_bundle</title>
+<path fill="none" stroke="black" d="M72.2489,-648.263C86.3792,-608.561 123.008,-511.076 167,-436.266 184.488,-406.527 208.825,-375.445 226.439,-354.303"/>
+<polygon fill="black" stroke="black" points="229.301,-356.338 233.067,-346.435 223.947,-351.829 229.301,-356.338"/>
 </g>
 <!-- root_ca_bundle&#45;&gt;kube_ca_bundle -->
-<g id="edge9" class="edge"><title>root_ca_bundle&#45;&gt;kube_ca_bundle</title>
-<path fill="none" stroke="black" d="M130.519,-665.266C143.475,-665.266 157.224,-665.266 170.592,-665.266"/>
-<polygon fill="black" stroke="black" points="170.721,-668.766 180.721,-665.266 170.721,-661.766 170.721,-668.766"/>
+<g id="edge10" class="edge"><title>root_ca_bundle&#45;&gt;kube_ca_bundle</title>
+<path fill="none" stroke="black" d="M130.519,-666.266C143.475,-666.266 157.224,-666.266 170.592,-666.266"/>
+<polygon fill="black" stroke="black" points="170.721,-669.766 180.721,-666.266 170.721,-662.766 170.721,-669.766"/>
 </g>
 <!-- service_serving_ca_bundle -->
-<g id="node26" class="node"><title>service_serving_ca_bundle</title>
+<g id="node27" class="node"><title>service_serving_ca_bundle</title>
 <polygon fill="violet" stroke="violet" points="1082.5,-1232.27 863.5,-1232.27 863.5,-1196.27 1082.5,-1196.27 1082.5,-1232.27"/>
 <text text-anchor="middle" x="973" y="-1209.27" font-family="Times,serif" font-size="20.00">service serving ca crt/key</text>
 </g>
 <!-- root_ca_bundle&#45;&gt;service_serving_ca_bundle -->
-<g id="edge12" class="edge"><title>root_ca_bundle&#45;&gt;service_serving_ca_bundle</title>
-<path fill="none" stroke="black" d="M69.8219,-683.348C79.7502,-727.093 109.663,-840.669 167,-917.266 235.467,-1008.73 265.919,-1026.99 369,-1076.27 414.258,-1097.9 714.649,-1161.46 873.655,-1194.23"/>
+<g id="edge13" class="edge"><title>root_ca_bundle&#45;&gt;service_serving_ca_bundle</title>
+<path fill="none" stroke="black" d="M69.8404,-684.276C79.8096,-727.846 109.807,-840.97 167,-917.266 235.53,-1008.69 265.919,-1026.99 369,-1076.27 414.258,-1097.9 714.649,-1161.46 873.655,-1194.23"/>
 <polygon fill="black" stroke="black" points="872.952,-1197.66 883.453,-1196.25 874.364,-1190.8 872.952,-1197.66"/>
 </g>
 <!-- root_ca_bundle&#45;&gt;mcc_bundle -->
-<g id="edge13" class="edge"><title>root_ca_bundle&#45;&gt;mcc_bundle</title>
-<path fill="none" stroke="black" d="M67.2586,-683.276C73.0684,-760.976 99.9267,-1066.41 167,-1129.27 220.295,-1179.21 299.406,-1194.34 369.136,-1196.15"/>
-<polygon fill="black" stroke="black" points="369.294,-1199.65 379.352,-1196.32 369.413,-1192.65 369.294,-1199.65"/>
+<g id="edge14" class="edge"><title>root_ca_bundle&#45;&gt;mcc_bundle</title>
+<path fill="none" stroke="black" d="M67.2542,-684.28C73.0459,-762 99.8394,-1067.5 167,-1130.27 220.342,-1180.12 299.456,-1195.02 369.177,-1196.62"/>
+<polygon fill="black" stroke="black" points="369.343,-1200.12 379.391,-1196.76 369.441,-1193.13 369.343,-1200.12"/>
 </g>
 <!-- root_ca_bundle&#45;&gt;bootstrap_control_plane -->
-<g id="edge17" class="edge"><title>root_ca_bundle&#45;&gt;bootstrap_control_plane</title>
-<path fill="none" stroke="black" d="M95.2588,-647.262C147.905,-615.776 263.007,-551.043 369,-519.266 451.339,-494.581 672.723,-468.543 823.064,-452.85"/>
-<polygon fill="black" stroke="black" points="823.728,-456.3 833.312,-451.785 823.004,-449.338 823.728,-456.3"/>
+<g id="edge18" class="edge"><title>root_ca_bundle&#45;&gt;bootstrap_control_plane</title>
+<path fill="none" stroke="black" d="M95.2396,-648.132C147.856,-616.419 262.913,-551.226 369,-519.266 451.306,-494.471 672.699,-468.463 823.051,-452.807"/>
+<polygon fill="black" stroke="black" points="823.714,-456.257 833.3,-451.744 822.992,-449.294 823.714,-456.257"/>
 </g>
 <!-- root_ca_bundle&#45;&gt;master_ignition -->
-<g id="edge18" class="edge"><title>root_ca_bundle&#45;&gt;master_ignition</title>
-<path fill="none" stroke="black" d="M74.4513,-647.245C89.1222,-617.915 122.089,-559.95 167,-528.266 367.482,-386.83 461.977,-431.415 706.5,-411.266 942.589,-391.813 1058.75,-258.147 1239.5,-411.266 1314.79,-475.048 1222.55,-547.322 1276,-630.266 1283,-641.122 1293.21,-650.225 1303.89,-657.594"/>
+<g id="edge19" class="edge"><title>root_ca_bundle&#45;&gt;master_ignition</title>
+<path fill="none" stroke="black" d="M74.416,-648.113C89.0361,-618.568 121.932,-560.179 167,-528.266 367.236,-386.482 461.977,-431.415 706.5,-411.266 942.589,-391.813 1058.75,-258.147 1239.5,-411.266 1314.79,-475.048 1222.55,-547.322 1276,-630.266 1283,-641.122 1293.21,-650.225 1303.89,-657.594"/>
 <polygon fill="black" stroke="black" points="1302.2,-660.67 1312.51,-663.133 1305.99,-654.781 1302.2,-660.67"/>
 </g>
 <!-- worker_ignition -->
-<g id="node33" class="node"><title>worker_ignition</title>
+<g id="node34" class="node"><title>worker_ignition</title>
 <polygon fill="sandybrown" stroke="sandybrown" points="1404.5,-621.266 1301.5,-621.266 1301.5,-585.266 1404.5,-585.266 1404.5,-621.266"/>
 <text text-anchor="middle" x="1353" y="-598.266" font-family="Times,serif" font-size="20.00">worker.ign</text>
 </g>
 <!-- root_ca_bundle&#45;&gt;worker_ignition -->
-<g id="edge19" class="edge"><title>root_ca_bundle&#45;&gt;worker_ignition</title>
-<path fill="none" stroke="black" d="M66.6496,-647.03C70.07,-562.292 88.9205,-208.175 167,-138.266 234.095,-78.1925 279.097,-127.556 369,-122.266 755.264,-99.539 937.043,132.055 1239.5,-109.266 1313.73,-168.494 1342.78,-479.26 1350.05,-575.098"/>
+<g id="edge20" class="edge"><title>root_ca_bundle&#45;&gt;worker_ignition</title>
+<path fill="none" stroke="black" d="M66.6439,-647.996C70.0384,-563.099 88.7898,-208.317 167,-138.266 234.085,-78.1808 279.097,-127.556 369,-122.266 755.264,-99.539 937.043,132.055 1239.5,-109.266 1313.73,-168.494 1342.78,-479.26 1350.05,-575.098"/>
 <polygon fill="black" stroke="black" points="1346.57,-575.479 1350.8,-585.194 1353.55,-574.963 1346.57,-575.479"/>
 </g>
 <!-- root_ca_bundle&#45;&gt;kubelet_kubeconfig -->
-<g id="edge16" class="edge"><title>root_ca_bundle&#45;&gt;kubelet_kubeconfig</title>
-<path fill="none" stroke="black" d="M92.8702,-683.276C143.966,-716.313 259.807,-785.485 369,-810.266 499.894,-839.973 561.716,-888.193 671,-810.266 710.424,-782.154 668.494,-737.268 706.5,-707.266 754.069,-669.715 822.377,-663.759 877.794,-666.91"/>
-<polygon fill="black" stroke="black" points="877.77,-670.417 887.984,-667.599 878.243,-663.433 877.77,-670.417"/>
+<g id="edge17" class="edge"><title>root_ca_bundle&#45;&gt;kubelet_kubeconfig</title>
+<path fill="none" stroke="black" d="M93.2909,-684.41C144.623,-717.322 260.198,-785.728 369,-810.266 499.933,-839.797 561.599,-888.028 671,-810.266 710.124,-782.457 668.835,-738.022 706.5,-708.266 754.073,-670.684 822.382,-664.468 877.797,-667.371"/>
+<polygon fill="black" stroke="black" points="877.786,-670.878 887.987,-668.014 878.227,-663.891 877.786,-670.878"/>
 </g>
 <!-- root_ca_bundle&#45;&gt;kubeconfig -->
-<g id="edge15" class="edge"><title>root_ca_bundle&#45;&gt;kubeconfig</title>
-<path fill="none" stroke="black" d="M65.3747,-683.508C63.8189,-752.959 65.7534,-1005.49 167,-1175.27 226.663,-1275.31 263.308,-1293.3 369,-1342.27 492.717,-1399.59 574.346,-1300.09 671,-1396.27 732.825,-1457.78 648.224,-1524.38 706.5,-1589.27 758.063,-1646.68 849.301,-1663.16 910.216,-1667.46"/>
+<g id="edge16" class="edge"><title>root_ca_bundle&#45;&gt;kubeconfig</title>
+<path fill="none" stroke="black" d="M67.9362,-684.383C76.7809,-764.836 115.151,-1089.61 167,-1176.27 226.666,-1275.98 263.492,-1293.57 369,-1342.27 492.801,-1399.41 574.346,-1300.09 671,-1396.27 732.825,-1457.78 648.224,-1524.38 706.5,-1589.27 758.063,-1646.68 849.301,-1663.16 910.216,-1667.46"/>
 <polygon fill="black" stroke="black" points="910.275,-1670.97 920.47,-1668.09 910.704,-1663.98 910.275,-1670.97"/>
 </g>
 <!-- service_account_bundle -->
-<g id="node25" class="node"><title>service_account_bundle</title>
+<g id="node26" class="node"><title>service_account_bundle</title>
 <polygon fill="violet" stroke="violet" points="1077,-1310.27 869,-1310.27 869,-1274.27 1077,-1274.27 1077,-1310.27"/>
 <text text-anchor="middle" x="973" y="-1287.27" font-family="Times,serif" font-size="20.00">service account pub/key</text>
 </g>
 <!-- service_account_bundle&#45;&gt;manifests -->
-<g id="edge72" class="edge"><title>service_account_bundle&#45;&gt;manifests</title>
+<g id="edge73" class="edge"><title>service_account_bundle&#45;&gt;manifests</title>
 <path fill="none" stroke="black" d="M1077.28,-1297.58C1132.07,-1294.8 1196.71,-1281.75 1239.5,-1241.27 1300.6,-1183.45 1336.9,-920.301 1348.18,-825.463"/>
 <polygon fill="black" stroke="black" points="1351.66,-825.866 1349.35,-815.527 1344.71,-825.052 1351.66,-825.866"/>
 </g>
 <!-- service_account_bundle&#45;&gt;bootstrap_ignition -->
-<g id="edge45" class="edge"><title>service_account_bundle&#45;&gt;bootstrap_ignition</title>
+<g id="edge46" class="edge"><title>service_account_bundle&#45;&gt;bootstrap_ignition</title>
 <path fill="none" stroke="black" d="M1073.82,-1274.21C1123.7,-1264.9 1184.9,-1253.06 1239.5,-1241.27 1253.78,-1238.18 1269.02,-1234.67 1283.53,-1231.23"/>
 <polygon fill="black" stroke="black" points="1284.52,-1234.59 1293.44,-1228.86 1282.9,-1227.78 1284.52,-1234.59"/>
 </g>
 <!-- service_serving_ca_bundle&#45;&gt;manifests -->
-<g id="edge73" class="edge"><title>service_serving_ca_bundle&#45;&gt;manifests</title>
+<g id="edge74" class="edge"><title>service_serving_ca_bundle&#45;&gt;manifests</title>
 <path fill="none" stroke="black" d="M1082.8,-1217.43C1136,-1213.33 1197.45,-1199.38 1239.5,-1161.27 1338.12,-1071.88 1351.46,-899.041 1352.46,-825.611"/>
 <polygon fill="black" stroke="black" points="1355.96,-825.543 1352.53,-815.52 1348.96,-825.497 1355.96,-825.543"/>
 </g>
 <!-- service_serving_ca_bundle&#45;&gt;bootstrap_ignition -->
-<g id="edge46" class="edge"><title>service_serving_ca_bundle&#45;&gt;bootstrap_ignition</title>
+<g id="edge47" class="edge"><title>service_serving_ca_bundle&#45;&gt;bootstrap_ignition</title>
 <path fill="none" stroke="black" d="M1082.57,-1214.27C1147.16,-1214.27 1227.14,-1214.27 1283.12,-1214.27"/>
 <polygon fill="black" stroke="black" points="1283.28,-1217.77 1293.28,-1214.27 1283.28,-1210.77 1283.28,-1217.77"/>
 </g>
 <!-- mcc_bundle&#45;&gt;manifests -->
-<g id="edge74" class="edge"><title>mcc_bundle&#45;&gt;manifests</title>
+<g id="edge75" class="edge"><title>mcc_bundle&#45;&gt;manifests</title>
 <path fill="none" stroke="black" d="M546.441,-1164.26C595.169,-1129.83 697.65,-1057.76 706.5,-1054.27 929.285,-966.425 1039.79,-1107.42 1239.5,-975.266 1293.7,-939.399 1326.12,-867.575 1341.38,-825.047"/>
 <polygon fill="black" stroke="black" points="1344.75,-826.011 1344.72,-815.417 1338.14,-823.717 1344.75,-826.011"/>
 </g>
 <!-- mcc_bundle&#45;&gt;bootstrap_ignition -->
-<g id="edge47" class="edge"><title>mcc_bundle&#45;&gt;bootstrap_ignition</title>
+<g id="edge48" class="edge"><title>mcc_bundle&#45;&gt;bootstrap_ignition</title>
 <path fill="none" stroke="black" d="M562.788,-1200.35C597.578,-1217.69 645.414,-1247.29 671,-1288.27 723.223,-1371.91 631.405,-1443.36 706.5,-1507.27 796.705,-1584.03 1141.88,-1574.35 1239.5,-1507.27 1328.67,-1445.98 1347.2,-1303.48 1351.02,-1242.63"/>
 <polygon fill="black" stroke="black" points="1354.52,-1242.76 1351.56,-1232.59 1347.53,-1242.38 1354.52,-1242.76"/>
 </g>
 <!-- operator_manifests&#45;&gt;manifests -->
-<g id="edge75" class="edge"><title>operator_manifests&#45;&gt;manifests</title>
+<g id="edge76" class="edge"><title>operator_manifests&#45;&gt;manifests</title>
 <path fill="none" stroke="black" d="M608.261,-1297.24C630.652,-1289.38 653.366,-1278.18 671,-1262.27 698.378,-1237.56 676.874,-1209.23 706.5,-1187.27 898.879,-1044.65 1054.57,-1260.42 1239.5,-1108.27 1326.86,-1036.39 1346.43,-891.779 1350.78,-825.665"/>
 <polygon fill="black" stroke="black" points="1354.29,-825.565 1351.37,-815.38 1347.3,-825.161 1354.29,-825.565"/>
 </g>
 <!-- operator_manifests&#45;&gt;bootstrap_control_plane -->
-<g id="edge48" class="edge"><title>operator_manifests&#45;&gt;bootstrap_control_plane</title>
+<g id="edge49" class="edge"><title>operator_manifests&#45;&gt;bootstrap_control_plane</title>
 <path fill="none" stroke="black" d="M565.204,-1297.1C600.49,-1280.04 647.738,-1250.88 671,-1209.27 731.304,-1101.39 649.885,-764.121 706.5,-654.266 754.4,-561.322 861.893,-494.097 924.422,-461.148"/>
 <polygon fill="black" stroke="black" points="926.416,-464.056 933.682,-456.346 923.194,-457.842 926.416,-464.056"/>
 </g>
 <!-- misc_manifests -->
-<g id="node30" class="node"><title>misc_manifests</title>
+<g id="node31" class="node"><title>misc_manifests</title>
 <polygon fill="lightpink" stroke="lightpink" points="1239.5,-1498.27 706.5,-1498.27 706.5,-1462.27 1239.5,-1462.27 1239.5,-1498.27"/>
 <text text-anchor="middle" x="973" y="-1475.27" font-family="Times,serif" font-size="20.00">misc manifests (rbac, namespace, CRD, pod security policy, etc)</text>
 </g>
 <!-- operator_manifests&#45;&gt;misc_manifests -->
-<g id="edge49" class="edge"><title>operator_manifests&#45;&gt;misc_manifests</title>
-<path fill="none" stroke="black" d="M604.123,-1333.4C627.483,-1341.34 651.74,-1352.55 671,-1368.27 694.711,-1387.61 681.47,-1409.66 706.5,-1427.27 726.012,-1440.99 748.224,-1451.36 771.298,-1459.16"/>
-<polygon fill="black" stroke="black" points="770.288,-1462.51 780.88,-1462.24 772.431,-1455.85 770.288,-1462.51"/>
+<g id="edge50" class="edge"><title>operator_manifests&#45;&gt;misc_manifests</title>
+<path fill="none" stroke="black" d="M604.196,-1333.31C627.559,-1341.24 651.798,-1352.48 671,-1368.27 694.935,-1387.94 681.192,-1410.39 706.5,-1428.27 725.048,-1441.37 746.059,-1451.37 767.941,-1458.99"/>
+<polygon fill="black" stroke="black" points="767.115,-1462.4 777.708,-1462.21 769.31,-1455.76 767.115,-1462.4"/>
 </g>
 <!-- operator_manifests&#45;&gt;bootstrap_ignition -->
-<g id="edge50" class="edge"><title>operator_manifests&#45;&gt;bootstrap_ignition</title>
+<g id="edge51" class="edge"><title>operator_manifests&#45;&gt;bootstrap_ignition</title>
 <path fill="none" stroke="black" d="M618.438,-1333.32C638.226,-1341.12 657.18,-1352.28 671,-1368.27 724.333,-1429.95 643.51,-1496.49 706.5,-1548.27 797.998,-1623.48 1143.3,-1617.37 1239.5,-1548.27 1340,-1476.07 1351.92,-1309.49 1352.5,-1242.72"/>
 <polygon fill="black" stroke="black" points="1356,-1242.53 1352.5,-1232.52 1349,-1242.52 1356,-1242.53"/>
 </g>
 <!-- bootstrap_control_plane&#45;&gt;manifests -->
-<g id="edge76" class="edge"><title>bootstrap_control_plane&#45;&gt;manifests</title>
+<g id="edge77" class="edge"><title>bootstrap_control_plane&#45;&gt;manifests</title>
 <path fill="none" stroke="black" d="M1112.81,-435.692C1158.86,-441.984 1206.69,-457.445 1239.5,-491.266 1307.6,-561.464 1233.11,-620.375 1276,-708.266 1285.41,-727.555 1300.74,-745.573 1315.18,-759.859"/>
 <polygon fill="black" stroke="black" points="1312.96,-762.586 1322.61,-766.976 1317.81,-757.531 1312.96,-762.586"/>
 </g>
 <!-- bootstrap_control_plane&#45;&gt;bootstrap_ignition -->
-<g id="edge51" class="edge"><title>bootstrap_control_plane&#45;&gt;bootstrap_ignition</title>
+<g id="edge52" class="edge"><title>bootstrap_control_plane&#45;&gt;bootstrap_ignition</title>
 <path fill="none" stroke="black" d="M1009.42,-456.404C1067.5,-488.112 1182.23,-559.389 1239.5,-654.266 1243.04,-660.133 1324.4,-1073.65 1346.5,-1186.23"/>
 <polygon fill="black" stroke="black" points="1343.09,-1187.03 1348.45,-1196.17 1349.96,-1185.68 1343.09,-1187.03"/>
 </g>
 <!-- misc_manifests&#45;&gt;manifests -->
-<g id="edge77" class="edge"><title>misc_manifests&#45;&gt;manifests</title>
+<g id="edge78" class="edge"><title>misc_manifests&#45;&gt;manifests</title>
 <path fill="none" stroke="black" d="M1028.5,-1462.24C1089.68,-1439.08 1187.2,-1392.87 1239.5,-1319.27 1254.13,-1298.68 1323.86,-938.53 1345.55,-825.15"/>
 <polygon fill="black" stroke="black" points="1349,-825.75 1347.44,-815.271 1342.12,-824.437 1349,-825.75"/>
 </g>
 <!-- misc_manifests&#45;&gt;bootstrap_ignition -->
-<g id="edge52" class="edge"><title>misc_manifests&#45;&gt;bootstrap_ignition</title>
-<path fill="none" stroke="black" d="M1169.34,-1462.25C1194.49,-1454.09 1218.68,-1442.79 1239.5,-1427.27 1302.01,-1380.64 1333.14,-1288.92 1345.44,-1242.55"/>
-<polygon fill="black" stroke="black" points="1348.91,-1243.13 1347.98,-1232.58 1342.12,-1241.4 1348.91,-1243.13"/>
+<g id="edge53" class="edge"><title>misc_manifests&#45;&gt;bootstrap_ignition</title>
+<path fill="none" stroke="black" d="M1172.07,-1462.19C1196.24,-1454.18 1219.44,-1443.21 1239.5,-1428.27 1302.43,-1381.4 1333.44,-1288.87 1345.6,-1242.35"/>
+<polygon fill="black" stroke="black" points="1349.06,-1242.92 1348.1,-1232.37 1342.27,-1241.21 1349.06,-1242.92"/>
 </g>
 <!-- bootstrap_ignition&#45;&gt;ignition_configs -->
-<g id="edge81" class="edge"><title>bootstrap_ignition&#45;&gt;ignition_configs</title>
+<g id="edge82" class="edge"><title>bootstrap_ignition&#45;&gt;ignition_configs</title>
 <path fill="none" stroke="black" d="M1361.85,-1196.23C1395.44,-1119.07 1527.3,-816.122 1571.48,-714.617"/>
 <polygon fill="black" stroke="black" points="1574.7,-716.003 1575.48,-705.437 1568.28,-713.209 1574.7,-716.003"/>
 </g>
 <!-- bootstrap_ignition&#45;&gt;terraform_state -->
-<g id="edge55" class="edge"><title>bootstrap_ignition&#45;&gt;terraform_state</title>
+<g id="edge56" class="edge"><title>bootstrap_ignition&#45;&gt;terraform_state</title>
 <path fill="none" stroke="black" d="M1412.54,-1214.27C1450.78,-1214.27 1500.17,-1214.27 1536.46,-1214.27"/>
 <polygon fill="black" stroke="black" points="1536.8,-1217.77 1546.8,-1214.27 1536.8,-1210.77 1536.8,-1217.77"/>
 </g>
 <!-- master_ignition&#45;&gt;ignition_configs -->
-<g id="edge82" class="edge"><title>master_ignition&#45;&gt;ignition_configs</title>
+<g id="edge83" class="edge"><title>master_ignition&#45;&gt;ignition_configs</title>
 <path fill="none" stroke="black" d="M1403.2,-681.266C1418.87,-681.266 1437.01,-681.266 1455.65,-681.266"/>
 <polygon fill="black" stroke="black" points="1455.74,-684.766 1465.74,-681.266 1455.74,-677.766 1455.74,-684.766"/>
 </g>
 <!-- master_ignition&#45;&gt;terraform_state -->
-<g id="edge56" class="edge"><title>master_ignition&#45;&gt;terraform_state</title>
+<g id="edge57" class="edge"><title>master_ignition&#45;&gt;terraform_state</title>
 <path fill="none" stroke="black" d="M1376.74,-699.379C1393.5,-713.78 1415.76,-735.268 1430,-758.266 1520.87,-905.076 1566.6,-1111.49 1580.93,-1186.03"/>
 <polygon fill="black" stroke="black" points="1577.52,-1186.87 1582.81,-1196.05 1584.4,-1185.57 1577.52,-1186.87"/>
 </g>
 <!-- worker_ignition&#45;&gt;ignition_configs -->
-<g id="edge83" class="edge"><title>worker_ignition&#45;&gt;ignition_configs</title>
+<g id="edge84" class="edge"><title>worker_ignition&#45;&gt;ignition_configs</title>
 <path fill="none" stroke="black" d="M1404.63,-620.287C1433.87,-630.12 1471.35,-642.719 1504.63,-653.911"/>
 <polygon fill="black" stroke="black" points="1503.76,-657.31 1514.36,-657.18 1505.99,-650.675 1503.76,-657.31"/>
 </g>
 <!-- worker_ignition&#45;&gt;terraform_state -->
-<g id="edge57" class="edge"><title>worker_ignition&#45;&gt;terraform_state</title>
+<g id="edge58" class="edge"><title>worker_ignition&#45;&gt;terraform_state</title>
 <path fill="none" stroke="black" d="M1391.93,-621.45C1405.69,-629.733 1420.23,-640.743 1430,-654.266 1494.3,-743.257 1561.99,-1085.48 1580.86,-1186.22"/>
 <polygon fill="black" stroke="black" points="1577.45,-1187.05 1582.72,-1196.24 1584.33,-1185.77 1577.45,-1187.05"/>
 </g>
 <!-- kubelet_kubeconfig&#45;&gt;manifests -->
-<g id="edge78" class="edge"><title>kubelet_kubeconfig&#45;&gt;manifests</title>
+<g id="edge79" class="edge"><title>kubelet_kubeconfig&#45;&gt;manifests</title>
 <path fill="none" stroke="black" d="M1058.06,-692.062C1111.07,-700.325 1180.42,-713.832 1239.5,-734.266 1260.85,-741.65 1283.26,-752.339 1302.41,-762.47"/>
 <polygon fill="black" stroke="black" points="1300.78,-765.569 1311.25,-767.226 1304.1,-759.405 1300.78,-765.569"/>
 </g>
 <!-- kubelet_kubeconfig&#45;&gt;bootstrap_ignition -->
-<g id="edge53" class="edge"><title>kubelet_kubeconfig&#45;&gt;bootstrap_ignition</title>
-<path fill="none" stroke="black" d="M1058.21,-694.417C1117.03,-707.924 1193.05,-734.759 1239.5,-787.266 1344.56,-906.023 1353.29,-1111.61 1352.77,-1186.2"/>
-<polygon fill="black" stroke="black" points="1349.27,-1186.19 1352.64,-1196.23 1356.27,-1186.28 1349.27,-1186.19"/>
+<g id="edge54" class="edge"><title>kubelet_kubeconfig&#45;&gt;bootstrap_ignition</title>
+<path fill="none" stroke="black" d="M1058.22,-694.761C1117.04,-708.503 1193.06,-735.629 1239.5,-788.266 1343.93,-906.629 1353.1,-1110.96 1352.73,-1185.77"/>
+<polygon fill="black" stroke="black" points="1349.23,-1185.8 1352.62,-1195.84 1356.23,-1185.88 1349.23,-1185.8"/>
 </g>
 <!-- kubelet_kubeconfig&#45;&gt;master_ignition -->
-<g id="edge54" class="edge"><title>kubelet_kubeconfig&#45;&gt;master_ignition</title>
+<g id="edge55" class="edge"><title>kubelet_kubeconfig&#45;&gt;master_ignition</title>
 <path fill="none" stroke="black" d="M1058.36,-681.266C1129.57,-681.266 1229.73,-681.266 1292.72,-681.266"/>
 <polygon fill="black" stroke="black" points="1292.89,-684.766 1302.89,-681.266 1292.89,-677.766 1292.89,-684.766"/>
 </g>
 <!-- kubeconfig&#45;&gt;manifests -->
-<g id="edge79" class="edge"><title>kubeconfig&#45;&gt;manifests</title>
+<g id="edge80" class="edge"><title>kubeconfig&#45;&gt;manifests</title>
 <path fill="none" stroke="black" d="M1025.66,-1652.57C1087.73,-1630.78 1189.71,-1585.01 1239.5,-1507.27 1278.1,-1447 1265.19,-1258.02 1276,-1187.27 1296.56,-1052.66 1329.75,-893.984 1344.51,-825.529"/>
 <polygon fill="black" stroke="black" points="1347.94,-826.229 1346.64,-815.715 1341.1,-824.749 1347.94,-826.229"/>
 </g>
 <!-- kubeconfig&#45;&gt;cluster -->
-<g id="edge80" class="edge"><title>kubeconfig&#45;&gt;cluster</title>
+<g id="edge81" class="edge"><title>kubeconfig&#45;&gt;cluster</title>
 <path fill="none" stroke="black" d="M1025.61,-1657.88C1169.46,-1628.94 1574.78,-1547.38 1733.81,-1515.38"/>
 <polygon fill="black" stroke="black" points="1734.81,-1518.75 1743.92,-1513.35 1733.43,-1511.89 1734.81,-1518.75"/>
 </g>
 <!-- terraform_state&#45;&gt;cluster -->
-<g id="edge84" class="edge"><title>terraform_state&#45;&gt;cluster</title>
+<g id="edge85" class="edge"><title>terraform_state&#45;&gt;cluster</title>
 <path fill="none" stroke="black" d="M1601.2,-1232.28C1636.01,-1279.8 1730.69,-1409.03 1775.23,-1469.83"/>
 <polygon fill="black" stroke="black" points="1772.44,-1471.94 1781.18,-1477.94 1778.09,-1467.8 1772.44,-1471.94"/>
 </g>

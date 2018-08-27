@@ -23,6 +23,7 @@ strict digraph resource {
     platform [label="platform"];
     email_address [label="email address"];
     password [label="password"];
+    sshkey [label="SSH key"];
   }
 
   // Install config.
@@ -88,6 +89,7 @@ strict digraph resource {
 
   // Dependencies
   password -> install_config;
+  sshkey -> install_config;
   platform -> install_config;
   email_address -> install_config;
   pull_secret -> install_config;
