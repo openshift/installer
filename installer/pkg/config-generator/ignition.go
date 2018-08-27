@@ -46,9 +46,9 @@ func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 	// XXX(crawford): The SSH key should only be added to the bootstrap
 	//                node. After that, MCO should be responsible for
 	//                distributing SSH keys.
-	c.embedUserBlock(&workerCfg)
-	c.appendCertificateAuthority(&workerCfg, ca)
-	c.embedAppendBlock(&workerCfg, "worker", "")
+	c.embedUserBlock(workerCfg)
+	c.appendCertificateAuthority(workerCfg, ca)
+	c.embedAppendBlock(workerCfg, "worker", "")
 
 	if err = ignCfgToFile(workerCfg, filepath.Join(clusterDir, config.IgnitionPathWorker)); err != nil {
 		return err
@@ -65,9 +65,9 @@ func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 		// XXX(crawford): The SSH key should only be added to the bootstrap
 		//                node. After that, MCO should be responsible for
 		//                distributing SSH keys.
-		c.embedUserBlock(&ignCfg)
-		c.appendCertificateAuthority(&ignCfg, ca)
-		c.embedAppendBlock(&ignCfg, "master", fmt.Sprintf("etcd_index=%d", i))
+		c.embedUserBlock(ignCfg)
+		c.appendCertificateAuthority(ignCfg, ca)
+		c.embedAppendBlock(ignCfg, "master", fmt.Sprintf("etcd_index=%d", i))
 
 		if err = ignCfgToFile(ignCfg, filepath.Join(clusterDir, fmt.Sprintf(config.IgnitionPathMaster, i))); err != nil {
 			return err
@@ -77,9 +77,9 @@ func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 	return nil
 }
 
-func parseIgnFile(filePath string) (ignconfigtypes.Config, error) {
+func parseIgnFile(filePath string) (*ignconfigtypes.Config, error) {
 	if filePath == "" {
-		return ignconfigtypes.Config{
+		return &ignconfigtypes.Config{
 			Ignition: ignconfigtypes.Ignition{
 				Version: ignconfigtypes.MaxVersion.String(),
 			},
@@ -88,15 +88,15 @@ func parseIgnFile(filePath string) (ignconfigtypes.Config, error) {
 
 	data, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		return ignconfigtypes.Config{}, err
+		return nil, err
 	}
 
 	cfg, rpt, _ := ignconfig.Parse(data)
 	if len(rpt.Entries) > 0 {
-		return ignconfigtypes.Config{}, fmt.Errorf("failed to parse ignition file %s: %s", filePath, rpt.String())
+		return nil, fmt.Errorf("failed to parse ignition file %s: %s", filePath, rpt.String())
 	}
 
-	return cfg, nil
+	return &cfg, nil
 }
 
 func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role string, query string) {
@@ -147,8 +147,8 @@ func (c *ConfigGenerator) getTNCURL(role string, query string) string {
 	return u
 }
 
-func ignCfgToFile(ignCfg ignconfigtypes.Config, filePath string) error {
-	data, err := json.MarshalIndent(&ignCfg, "", "  ")
+func ignCfgToFile(ignCfg *ignconfigtypes.Config, filePath string) error {
+	data, err := json.MarshalIndent(ignCfg, "", "  ")
 	if err != nil {
 		return err
 	}
