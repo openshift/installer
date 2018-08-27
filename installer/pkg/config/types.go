@@ -36,12 +36,6 @@ type ContainerLinux struct {
 	Version string                `json:"tectonic_container_linux_version,omitempty" yaml:"version,omitempty"`
 }
 
-// Etcd converts etcd related config.
-type Etcd struct {
-	Count     int      `json:"tectonic_etcd_count,omitempty" yaml:"-"`
-	NodePools []string `json:"-" yaml:"nodePools"`
-}
-
 // NodePool converts node pool related config.
 type NodePool struct {
 	Count        int    `json:"-" yaml:"count"`

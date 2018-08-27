@@ -21,7 +21,6 @@ type Libvirt struct {
 	Network       `json:",inline" yaml:"network"`
 	MasterIPs     []string `json:"tectonic_libvirt_master_ips,omitempty" yaml:"masterIPs"`
 	WorkerIPs     []string `json:"tectonic_libvirt_worker_ips,omitempty" yaml:"workerIPs"`
-	EtcdIPs       []string `json:"tectonic_libvirt_etcd_ips,omitempty" yaml:"etcdIPs"`
 	BootstrapIP   string   `json:"tectonic_libvirt_bootstrap_ip,omitempty" yaml:"bootstrapIP"`
 }
 
@@ -34,7 +33,7 @@ type Network struct {
 }
 
 // TFVars fills in computed Terraform variables.
-func (l *Libvirt) TFVars(masterCount int, workerCount int, etcdCount int) error {
+func (l *Libvirt) TFVars(masterCount int, workerCount int) error {
 	_, network, err := net.ParseCIDR(l.Network.IPRange)
 	if err != nil {
 		return fmt.Errorf("failed to parse libvirt network ipRange: %v", err)
@@ -67,18 +66,6 @@ func (l *Libvirt) TFVars(masterCount int, workerCount int, etcdCount int) error 
 	} else {
 		if ips, err := generateIPs("worker", network, workerCount, 50); err == nil {
 			l.WorkerIPs = ips
-		} else {
-			return err
-		}
-	}
-
-	if len(l.EtcdIPs) > 0 {
-		if len(l.EtcdIPs) != etcdCount {
-			return fmt.Errorf("length of EtcdIPs doesn't match etcd count")
-		}
-	} else {
-		if ips, err := generateIPs("etcd", network, etcdCount, 20); err == nil {
-			l.EtcdIPs = ips
 		} else {
 			return err
 		}

@@ -374,28 +374,6 @@ func (c *Cluster) validateNoSharedNodePools() []error {
 					fields[c.Master.NodePools[i]]["worker"] = struct{}{}
 				}
 			}
-			for j := range c.Etcd.NodePools {
-				if c.Master.NodePools[i] == c.Etcd.NodePools[j] {
-					if fields[c.Master.NodePools[i]] == nil {
-						fields[c.Master.NodePools[i]] = make(map[string]struct{})
-					}
-					fields[c.Master.NodePools[i]]["master"] = struct{}{}
-					fields[c.Master.NodePools[i]]["etcd"] = struct{}{}
-				}
-			}
-		}
-	}
-	for i := range c.Worker.NodePools {
-		if c.Worker.NodePools[i] != "" {
-			for j := range c.Etcd.NodePools {
-				if c.Worker.NodePools[i] == c.Etcd.NodePools[j] {
-					if fields[c.Worker.NodePools[i]] == nil {
-						fields[c.Worker.NodePools[i]] = make(map[string]struct{})
-					}
-					fields[c.Worker.NodePools[i]]["worker"] = struct{}{}
-					fields[c.Worker.NodePools[i]]["etcd"] = struct{}{}
-				}
-			}
 		}
 	}
 	for k, v := range fields {
