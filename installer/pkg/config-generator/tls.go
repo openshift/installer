@@ -10,10 +10,9 @@ import (
 	"io/ioutil"
 	"net"
 	"path/filepath"
-	"time"
 
 	"github.com/openshift/installer/installer/pkg/copy"
-	"github.com/openshift/installer/installer/pkg/tls"
+	"github.com/openshift/installer/pkg/asset/tls"
 )
 
 const (
@@ -48,9 +47,6 @@ const (
 	tncKeyPath                   = "generated/tls/tnc.key"
 	serviceAccountPubkeyPath     = "generated/tls/service-account.pub"
 	serviceAccountPrivateKeyPath = "generated/tls/service-account.key"
-
-	validityTenYears      = time.Hour * 24 * 365 * 10
-	validityThirtyMinutes = time.Minute * 30
 )
 
 // GenerateTLSConfig fetches and validates the TLS cert files
@@ -77,7 +73,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg := &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-ca", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  validityTenYears,
+		Validity:  tls.ValidityTenYears,
 		IsCA:      true,
 	}
 	kubeCAKey, kubeCACert, err := generateCert(clusterDir, caKey, caCert, kubeCAKeyPath, kubeCACertPath, cfg, false)
@@ -90,7 +86,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		Subject:   pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		IsCA:      true,
-		Validity:  validityTenYears,
+		Validity:  tls.ValidityTenYears,
 	}
 	etcdCAKey, etcdCACert, err := generateCert(clusterDir, caKey, caCert, etcdCAKeyPath, etcdCACertPath, cfg, false)
 	if err != nil {
@@ -109,7 +105,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		Subject:      pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     validityTenYears,
+		Validity:     tls.ValidityTenYears,
 	}
 	if _, _, err := generateCert(clusterDir, etcdCAKey, etcdCACert, etcdClientKeyPath, etcdClientCertPath, cfg, false); err != nil {
 		return fmt.Errorf("failed to generate etcd client certificate: %v", err)
@@ -119,7 +115,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg = &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  validityTenYears,
+		Validity:  tls.ValidityTenYears,
 		IsCA:      true,
 	}
 	aggregatorCAKey, aggregatorCACert, err := generateCert(clusterDir, caKey, caCert, aggregatorCAKeyPath, aggregatorCACertPath, cfg, false)
@@ -131,7 +127,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg = &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: "service-serving", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  validityTenYears,
+		Validity:  tls.ValidityTenYears,
 		IsCA:      true,
 	}
 	if _, _, err := generateCert(clusterDir, caKey, caCert, serviceServingCAKeyPath, serviceServingCACertPath, cfg, false); err != nil {
@@ -152,7 +148,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 			fmt.Sprintf("*.%s", baseAddress),
 		},
 		Subject:  pkix.Name{CommonName: baseAddress, Organization: []string{"ingress"}},
-		Validity: validityTenYears,
+		Validity: tls.ValidityTenYears,
 		IsCA:     false,
 	}
 
@@ -165,7 +161,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
-		Validity:     validityTenYears,
+		Validity:     tls.ValidityTenYears,
 		IsCA:         false,
 	}
 
@@ -188,7 +184,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 			"kubernetes.default.svc",
 			"kubernetes.default.svc.cluster.local",
 		},
-		Validity:    validityTenYears,
+		Validity:    tls.ValidityTenYears,
 		IPAddresses: []net.IP{net.ParseIP(apiServerAddress)},
 		IsCA:        false,
 	}
@@ -209,7 +205,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 			"openshift-apiserver.kube-system.svc",
 			"openshift-apiserver.kube-system.svc.cluster.local",
 			"localhost", "127.0.0.1"},
-		Validity:    validityTenYears,
+		Validity:    tls.ValidityTenYears,
 		IPAddresses: []net.IP{net.ParseIP(apiServerAddress)},
 		IsCA:        false,
 	}
@@ -223,7 +219,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Subject:      pkix.Name{CommonName: "kube-apiserver-proxy", Organization: []string{"kube-master"}},
-		Validity:     validityTenYears,
+		Validity:     tls.ValidityTenYears,
 		IsCA:         false,
 	}
 
@@ -236,7 +232,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Subject:      pkix.Name{CommonName: "system:serviceaccount:kube-system:default", Organization: []string{"system:serviceaccounts:kube-system"}},
-		Validity:     validityThirtyMinutes,
+		Validity:     tls.ValidityThirtyMinutes,
 		IsCA:         false,
 	}
 
@@ -250,7 +246,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		DNSNames:     []string{tncDomain},
 		Subject:      pkix.Name{CommonName: tncDomain},
-		Validity:     validityTenYears,
+		Validity:     tls.ValidityTenYears,
 		IsCA:         false,
 	}
 
@@ -262,7 +258,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg = &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: "cluster-apiserver", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  validityTenYears,
+		Validity:  tls.ValidityTenYears,
 		IsCA:      true,
 	}
 	if _, _, err := generateCert(clusterDir, aggregatorCAKey, aggregatorCACert, clusterAPIServerKeyPath, clusterAPIServerCertPath, cfg, true); err != nil {

@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/openshift/installer/installer/pkg/config"
-	"github.com/openshift/installer/installer/pkg/tls"
+	"github.com/openshift/installer/pkg/asset/tls"
 )
 
 func initConfig(t *testing.T, file string) ConfigGenerator {
