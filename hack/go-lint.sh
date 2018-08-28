@@ -1,5 +1,5 @@
 #!/bin/sh
-# Example:  ./hack/go-lint.sh installer/... tests/smoke
+# Example:  ./hack/go-lint.sh installer/... pkg/... tests/smoke
 
 if [ "$IS_CONTAINER" != "" ]; then
   golint -set_exit_status "${@}"
