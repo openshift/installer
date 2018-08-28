@@ -21,29 +21,18 @@ export SMOKE_KUBECONFIG=/path/to/kubeconfig
 Compile the smoke test binary from the root directory of the project:
 
 ```sh
-bazel build tests/smoke
+bazel build smoke_tests
 ```
 
 The tests can then be run by invoking the `go_default_test` binary in the `bazel-bin/tests/smoke/linux_amd64_stripped` directory.
-This binary accepts the `--cluster` flag to specify which tests suites should be run, e.g.:
 
-```sh
-bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test --cluster
-```
-
-*Note*: the `go_default_test` binary accepts several flags available to the `go test` command; to list them, invoke the `go_default_test` binary with the `--help` flag.
-For example, to run the cluster suite verbosely, use the `--test.v` flag:
-
-```sh
-bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test --cluster --test.v
-```
+*Note*: the `go_default_test` binary accepts several flags available to the `go test` command; to list them, invoke the `go_default_test` binary with the `-help` flag.
 
 ## Cluster Suite
 
 The cluster test suite runs a series of tests designed to verify the overall health of the cluster and ensure that all expected components are present.
-The cluster test suite requires four additional parameters:
+The cluster test suite requires additional parameters:
 
-* whether or not Calico network policy support is enabled;
 * the number of nodes in the cluster;
 * the paths of manifests deployed on the cluster; and
 * whether or not to test for experimental manifests.
@@ -56,7 +45,9 @@ export SMOKE_MANIFEST_PATHS=/path/to/kubernetes/manifests
 export SMOKE_MANIFEST_EXPERIMENTAL=true
 ```
 
-To run the cluster test suite, invoke the smoke test binary with the `--cluster` flag:
+To run the cluster test suite, invoke the smoke test binary with the `-cluster` flag.
+To run the cluster suite verbosely, add the `-test.v` flag:
+
 ```sh
-bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test --cluster
+bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test -cluster -test.v
 ```

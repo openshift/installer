@@ -77,3 +77,7 @@ AWS_REGION
 
 ### 2. Launch the tests
 Once the environment variables are set, run `./tests/run.sh`.
+
+## Or, if you already have a cluster running
+
+### Follow the [smoke/README.md](./smoke/README.md).
