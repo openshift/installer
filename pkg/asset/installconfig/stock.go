@@ -16,6 +16,8 @@ type Stock interface {
 	EmailAddress() asset.Asset
 	// Password is the asset that queries the user for the admin password.
 	Password() asset.Asset
+	// SSHKey is the asset that queries the user for the ssh public key in a string format.
+	SSHKey() asset.Asset
 	// BaseDomain is the asset that queries the user for the base domain to use
 	// for the cluster.
 	BaseDomain() asset.Asset
@@ -36,6 +38,7 @@ type StockImpl struct {
 	clusterID     asset.Asset
 	emailAddress  asset.Asset
 	password      asset.Asset
+	sshKey        asset.Asset
 	baseDomain    asset.Asset
 	clusterName   asset.Asset
 	license       asset.Asset
@@ -56,6 +59,10 @@ func (s *StockImpl) EstablishStock(directory string, inputReader *bufio.Reader) 
 	}
 	s.password = &asset.UserProvided{
 		Prompt:      "Password:",
+		InputReader: inputReader,
+	}
+	s.sshKey = &asset.UserProvided{
+		Prompt:      "SSH Key:",
 		InputReader: inputReader,
 	}
 	s.baseDomain = &asset.UserProvided{
@@ -95,6 +102,11 @@ func (s *StockImpl) EmailAddress() asset.Asset {
 // Password is the asset that queries the user for the admin password.
 func (s *StockImpl) Password() asset.Asset {
 	return s.password
+}
+
+// SSHKey is the asset that queries the user for the ssh public key in a string format.
+func (s *StockImpl) SSHKey() asset.Asset {
+	return s.sshKey
 }
 
 // BaseDomain is the asset that queries the user for the base domain to use

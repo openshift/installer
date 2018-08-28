@@ -25,46 +25,38 @@ func TestPlatformGenerate(t *testing.T) {
 		{
 			name: "aws",
 			input: `aws
-test_region
-test_keypairname`,
+test_region`,
 			expectedContents: []string{
 				"aws",
 				"test_region",
-				"test_keypairname",
 			},
 		},
 		{
 			name: "libvirt",
 			input: `libvirt
-test_uri
-test_sshkey`,
+test_uri`,
 			expectedContents: []string{
 				"libvirt",
 				"test_uri",
-				"test_sshkey",
 			},
 		},
 		{
 			name: "case insensitive platform",
 			input: `AWS
-test_region
-test_keypairname`,
+test_region`,
 			expectedContents: []string{
 				"aws",
 				"test_region",
-				"test_keypairname",
 			},
 		},
 		{
 			name: "invalid platform",
 			input: `bad-platform
 aws
-test_region
-test_keypairname`,
+test_region`,
 			expectedContents: []string{
 				"aws",
 				"test_region",
-				"test_keypairname",
 			},
 		},
 	}

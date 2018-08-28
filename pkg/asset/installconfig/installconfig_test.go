@@ -29,6 +29,7 @@ func TestInstallConfigDependencies(t *testing.T) {
 		clusterID:    &testAsset{name: "test-cluster-id"},
 		emailAddress: &testAsset{name: "test-email"},
 		password:     &testAsset{name: "test-password"},
+		sshKey:       &testAsset{name: "test-sshkey"},
 		baseDomain:   &testAsset{name: "test-domain"},
 		clusterName:  &testAsset{name: "test-cluster"},
 		license:      &testAsset{name: "test-license"},
@@ -42,6 +43,7 @@ func TestInstallConfigDependencies(t *testing.T) {
 		"test-cluster-id",
 		"test-email",
 		"test-password",
+		"test-sshkey",
 		"test-domain",
 		"test-cluster",
 		"test-license",
@@ -69,10 +71,8 @@ func TestInstallConfigGenerate(t *testing.T) {
 			platformContents: []string{
 				"aws",
 				"test-region",
-				"test-keypairname",
 			},
 			expectedPlatformYaml: `  aws:
-    keyPairName: test-keypairname
     region: test-region
     vpcCIDRBlock: ""
     vpcID: ""`,
@@ -82,7 +82,6 @@ func TestInstallConfigGenerate(t *testing.T) {
 			platformContents: []string{
 				"libvirt",
 				"test-uri",
-				"test-sshkey",
 			},
 			expectedPlatformYaml: `  libvirt:
     URI: test-uri
@@ -91,8 +90,7 @@ func TestInstallConfigGenerate(t *testing.T) {
       if: ""
       ipRange: ""
       name: ""
-      resolver: ""
-    sshKey: test-sshkey`,
+      resolver: ""`,
 		},
 	}
 	for _, tc := range cases {
@@ -101,6 +99,7 @@ func TestInstallConfigGenerate(t *testing.T) {
 				clusterID:    &testAsset{},
 				emailAddress: &testAsset{},
 				password:     &testAsset{},
+				sshKey:       &testAsset{},
 				baseDomain:   &testAsset{},
 				clusterName:  &testAsset{},
 				license:      &testAsset{},
@@ -128,6 +127,9 @@ func TestInstallConfigGenerate(t *testing.T) {
 				},
 				stock.password: {
 					Contents: []asset.Content{{Data: []byte("test-password")}},
+				},
+				stock.sshKey: {
+					Contents: []asset.Content{{Data: []byte("test-sshkey")}},
 				},
 				stock.baseDomain: {
 					Contents: []asset.Content{{Data: []byte("test-domain")}},
@@ -162,6 +164,7 @@ func TestInstallConfigGenerate(t *testing.T) {
 			exp := fmt.Sprintf(`admin:
   email: test-email
   password: test-password
+  sshKey: test-sshkey
 baseDomain: test-domain
 clusterID: test-cluster-id
 license: test-license

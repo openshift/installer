@@ -27,11 +27,9 @@ var (
 //
 // * AWS
 // Contents[1] is the region.
-// Contents[2] is the key pair name.
 //
 // * Libvirt
 // Contents[1] is the URI.
-// Contents[2] is the SSH key.
 type Platform struct {
 	InputReader *bufio.Reader
 }
@@ -73,15 +71,14 @@ func (a *Platform) awsPlatform() (*asset.State, error) {
 	return assetStateForStringContents(
 		AWSPlatformType,
 		asset.QueryUser(a.InputReader, "Region:"),
-		asset.QueryUser(a.InputReader, "Key Pair Name:"),
 	), nil
 }
 
 func (a *Platform) libvirtPlatform() (*asset.State, error) {
 	return assetStateForStringContents(
 		LibvirtPlatformType,
+		// TODO(yifan): Set the default URI.
 		asset.QueryUser(a.InputReader, "URI:"),
-		asset.QueryUser(a.InputReader, "SSH Key:"),
 	), nil
 }
 
