@@ -23,7 +23,7 @@ If you are not running the latest version of Terraform, please try upgrading bec
 ```
 enter text here
 ```
-### Platform (aws|azure|openstack|metal|vmware):
+### Platform (aws|libvirt):
 
 ```
 enter text here
