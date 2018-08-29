@@ -1,7 +1,6 @@
 package configgenerator
 
 import (
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -298,15 +297,32 @@ func generatePrivateKey(clusterDir string, path string) (*rsa.PrivateKey, error)
 
 // generateRootCert creates the rootCAKey and rootCACert
 func generateRootCert(clusterDir string) (cert *x509.Certificate, key *rsa.PrivateKey, err error) {
-	// generate key and certificate
-	caKey, err := generatePrivateKey(clusterDir, rootCAKeyPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate private key: %v", err)
+	targetKeyPath := filepath.Join(clusterDir, rootCAKeyPath)
+	targetCertPath := filepath.Join(clusterDir, rootCACertPath)
+
+	cfg := &tls.CertCfg{
+		Subject: pkix.Name{
+			CommonName:         "root-ca",
+			OrganizationalUnit: []string{"openshift"},
+		},
+		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		Validity:  validityTenYears,
+		IsCA:      true,
 	}
-	caCert, err := generateRootCA(clusterDir, caKey)
+
+	caKey, caCert, err := tls.GenerateRootCertKey(cfg)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create a certificate: %v", err)
+		return nil, nil, err
 	}
+
+	if err := ioutil.WriteFile(targetKeyPath, []byte(tls.PrivateKeyToPem(caKey)), 0600); err != nil {
+		return nil, nil, err
+	}
+
+	if err := ioutil.WriteFile(targetCertPath, []byte(tls.CertToPem(caCert)), 0666); err != nil {
+		return nil, nil, err
+	}
+
 	return caCert, caKey, nil
 }
 
@@ -357,74 +373,26 @@ func generateCert(clusterDir string,
 	cfg *tls.CertCfg,
 	appendCA bool) (*rsa.PrivateKey, *x509.Certificate, error) {
 
-	// create a private key
-	key, err := generatePrivateKey(clusterDir, keyPath)
+	targetKeyPath := filepath.Join(clusterDir, keyPath)
+	targetCertPath := filepath.Join(clusterDir, certPath)
+
+	key, cert, err := tls.GenerateCert(caKey, caCert, cfg)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate private key: %v", err)
+		return nil, nil, err
 	}
 
-	// create a CSR
-	csrTmpl := x509.CertificateRequest{Subject: cfg.Subject, DNSNames: cfg.DNSNames, IPAddresses: cfg.IPAddresses}
-	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &csrTmpl, key)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error creating certificate request: %v", err)
+	if err := ioutil.WriteFile(targetKeyPath, []byte(tls.PrivateKeyToPem(key)), 0600); err != nil {
+		return nil, nil, err
 	}
-	csr, err := x509.ParseCertificateRequest(csrBytes)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing certificate request: %v", err)
-	}
-
-	// create a cert
-	cert, err := generateSignedCert(cfg, csr, key, caKey, caCert, clusterDir, certPath, appendCA)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create a certificate: %v", err)
-	}
-	return key, cert, nil
-}
-
-// generateRootCA creates and returns the root CA
-func generateRootCA(path string, key *rsa.PrivateKey) (*x509.Certificate, error) {
-	fileTargetPath := filepath.Join(path, rootCACertPath)
-	cfg := &tls.CertCfg{
-		Subject: pkix.Name{
-			CommonName:         "root-ca",
-			OrganizationalUnit: []string{"openshift"},
-		},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  validityTenYears,
-		IsCA:      true,
-	}
-	cert, err := tls.SelfSignedCACert(cfg, key)
-	if err != nil {
-		return nil, fmt.Errorf("error generating self signed certificate: %v", err)
-	}
-	if err := ioutil.WriteFile(fileTargetPath, []byte(tls.CertToPem(cert)), 0666); err != nil {
-		return nil, err
-	}
-	return cert, nil
-}
-
-func generateSignedCert(cfg *tls.CertCfg,
-	csr *x509.CertificateRequest,
-	key *rsa.PrivateKey,
-	caKey *rsa.PrivateKey,
-	caCert *x509.Certificate,
-	clusterDir string,
-	path string,
-	appendCA bool) (*x509.Certificate, error) {
-	cert, err := tls.SignedCertificate(cfg, csr, key, caCert, caKey)
-	if err != nil {
-		return nil, fmt.Errorf("error signing certificate: %v", err)
-	}
-	fileTargetPath := filepath.Join(clusterDir, path)
 
 	content := []byte(tls.CertToPem(cert))
 	if appendCA {
 		content = append(content, '\n')
 		content = append(content, []byte(tls.CertToPem(caCert))...)
 	}
-	if err := ioutil.WriteFile(fileTargetPath, content, 0666); err != nil {
-		return nil, err
+	if err := ioutil.WriteFile(targetCertPath, content, 0666); err != nil {
+		return nil, nil, err
 	}
-	return cert, nil
+
+	return key, cert, nil
 }

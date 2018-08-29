@@ -54,3 +54,17 @@ func PublicKeyToPem(key *rsa.PublicKey) (string, error) {
 	)
 	return string(keyinPem), nil
 }
+
+// PemToPrivateKey converts a data block to rsa.PrivateKey.
+func PemToPrivateKey(data []byte) (*rsa.PrivateKey, error) {
+	block, _ := pem.Decode(data)
+	key, err := x509.ParsePKCS1PrivateKey(block.Bytes)
+	return key, err
+}
+
+// PemToCertificate converts a data block to x509.Certificate.
+func PemToCertificate(data []byte) (*x509.Certificate, error) {
+	block, _ := pem.Decode(data)
+	cert, err := x509.ParseCertificate(block.Bytes)
+	return cert, err
+}
