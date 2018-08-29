@@ -16,10 +16,12 @@ type RootCA struct {
 
 var _ asset.Asset = (*CertKey)(nil)
 
+// Dependencies returns the dependency of the root-ca, which is empty.
 func (c *RootCA) Dependencies() []asset.Asset {
 	return []asset.Asset{}
 }
 
+// Generate generates the root-ca key and cert pair.
 func (c *RootCA) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},

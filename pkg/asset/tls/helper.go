@@ -10,6 +10,10 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
+const (
+	tlsDir = "tls"
+)
+
 func assetFilePath(rootDir, filename string) string {
 	return filepath.Join(rootDir, tlsDir, filename)
 }

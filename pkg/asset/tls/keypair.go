@@ -16,10 +16,12 @@ type KeyPair struct {
 
 var _ asset.Asset = (*KeyPair)(nil)
 
+// Dependencies returns the dependency of an rsa private / public key pair.
 func (k *KeyPair) Dependencies() []asset.Asset {
 	return []asset.Asset{}
 }
 
+// Generate generates the rsa private / public key pair.
 func (k *KeyPair) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
 	key, err := PrivateKey()
 	if err != nil {

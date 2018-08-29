@@ -40,6 +40,9 @@ type CertKey struct {
 
 var _ asset.Asset = (*CertKey)(nil)
 
+// Dependencies returns the dependency of the the cert/key pair, which includes
+// the parent CA, and install config if it depends on the install config for
+// DNS names, etc.
 func (c *CertKey) Dependencies() []asset.Asset {
 	parents := []asset.Asset{c.ParentCA}
 
@@ -51,6 +54,7 @@ func (c *CertKey) Dependencies() []asset.Asset {
 	return parents
 }
 
+// Generate generates the cert/key pair based on its dependencies.
 func (c *CertKey) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
 	cfg := &CertCfg{
 		Subject:      c.Subject,

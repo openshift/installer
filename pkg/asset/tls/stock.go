@@ -8,24 +8,41 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
+// Stock is the stock of TLS assets that can be generated.
 type Stock interface {
+	// RootCA is the asset that generates the root-ca key/cert pair.
 	RootCA() asset.Asset
+	// KubeCA is the asset that generates the kube-ca key/cert pair.
 	KubeCA() asset.Asset
+	// EtcdCA is the asset that generates the etcd-ca key/cert pair.
 	EtcdCA() asset.Asset
+	// AggregatorCA is the asset that generates the aggregator-ca key/cert pair.
 	AggregatorCA() asset.Asset
+	// ServiceServingCA is the asset that generates the service-serving-ca key/cert pair.
 	ServiceServingCA() asset.Asset
+	// EtcdClientCertKey is the asset that generates the etcd client key/cert pair.
 	EtcdClientCertKey() asset.Asset
+	// AdminCertKey is the asset that generates the admin key/cert pair.
 	AdminCertKey() asset.Asset
+	// IngressCertKey is the asset that generates the ingress key/cert pair.
 	IngressCertKey() asset.Asset
+	// APIServerCertKey is the asset that generates the API server key/cert pair.
 	APIServerCertKey() asset.Asset
+	// OpenshiftAPIServerCertKey is the asset that generates the Openshift API server key/cert pair.
 	OpenshiftAPIServerCertKey() asset.Asset
+	// APIServerProxyCertKey is the asset that generates the API server proxy key/cert pair.
 	APIServerProxyCertKey() asset.Asset
+	// KubeletCertKey is the asset that generates the kubelet key/cert pair.
 	KubeletCertKey() asset.Asset
+	// TNCCertKey is the asset that generates the TNC key/cert pair.
 	TNCCertKey() asset.Asset
+	// ClusterAPIServerCertKey is the asset that generates the cluster API server key/cert pair.
 	ClusterAPIServerCertKey() asset.Asset
+	// ServiceAccountKeyPair is the asset that generates the service-account public/private key pair.
 	ServiceAccountKeyPair() asset.Asset
 }
 
+// StockImpl implements the Stock interface for tls assets.
 type StockImpl struct {
 	rootCA                    asset.Asset
 	kubeCA                    asset.Asset
@@ -46,6 +63,7 @@ type StockImpl struct {
 
 var _ Stock = (*StockImpl)(nil)
 
+// EstablishStock establishes the stock of assets in the specified directory.
 func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	s.rootCA = &RootCA{rootDir: rootDir}
 	s.kubeCA = &CertKey{
@@ -233,18 +251,47 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 }
 
-func (s *StockImpl) RootCA() asset.Asset                    { return s.rootCA }
-func (s *StockImpl) KubeCA() asset.Asset                    { return s.kubeCA }
-func (s *StockImpl) EtcdCA() asset.Asset                    { return s.etcdCA }
-func (s *StockImpl) AggregatorCA() asset.Asset              { return s.aggregatorCA }
-func (s *StockImpl) ServiceServingCA() asset.Asset          { return s.serviceServingCA }
-func (s *StockImpl) EtcdClientCertKey() asset.Asset         { return s.etcdClientCertKey }
-func (s *StockImpl) AdminCertKey() asset.Asset              { return s.adminCertKey }
-func (s *StockImpl) IngressCertKey() asset.Asset            { return s.ingressCertKey }
-func (s *StockImpl) APIServerCertKey() asset.Asset          { return s.apiServerCertKey }
+// RootCA is the asset that generates the root-ca key/cert pair.
+func (s *StockImpl) RootCA() asset.Asset { return s.rootCA }
+
+// KubeCA is the asset that generates the kube-ca key/cert pair.
+func (s *StockImpl) KubeCA() asset.Asset { return s.kubeCA }
+
+// EtcdCA is the asset that generates the etcd-ca key/cert pair.
+func (s *StockImpl) EtcdCA() asset.Asset { return s.etcdCA }
+
+// AggregatorCA is the asset that generates the aggregator-ca key/cert pair.
+func (s *StockImpl) AggregatorCA() asset.Asset { return s.aggregatorCA }
+
+// ServiceServingCA is the asset that generates the service-serving-ca key/cert pair.
+func (s *StockImpl) ServiceServingCA() asset.Asset { return s.serviceServingCA }
+
+// EtcdClientCertKey is the asset that generates the etcd client key/cert pair.
+func (s *StockImpl) EtcdClientCertKey() asset.Asset { return s.etcdClientCertKey }
+
+// AdminCertKey is the asset that generates the admin key/cert pair.
+func (s *StockImpl) AdminCertKey() asset.Asset { return s.adminCertKey }
+
+// IngressCertKey is the asset that generates the ingress key/cert pair.
+func (s *StockImpl) IngressCertKey() asset.Asset { return s.ingressCertKey }
+
+// APIServerCertKey is the asset that generates the API server key/cert pair.
+func (s *StockImpl) APIServerCertKey() asset.Asset { return s.apiServerCertKey }
+
+// OpenshiftAPIServerCertKey is the asset that generates the Openshift API server key/cert pair.
 func (s *StockImpl) OpenshiftAPIServerCertKey() asset.Asset { return s.openshiftAPIServerCertKey }
-func (s *StockImpl) APIServerProxyCertKey() asset.Asset     { return s.apiServerProxyCertKey }
-func (s *StockImpl) KubeletCertKey() asset.Asset            { return s.kubeletCertKey }
-func (s *StockImpl) TNCCertKey() asset.Asset                { return s.tncCertKey }
-func (s *StockImpl) ClusterAPIServerCertKey() asset.Asset   { return s.clusterAPIServerCertKey }
-func (s *StockImpl) ServiceAccountKeyPair() asset.Asset     { return s.serviceAccountKeyPair }
+
+// APIServerProxyCertKey is the asset that generates the API server proxy key/cert pair.
+func (s *StockImpl) APIServerProxyCertKey() asset.Asset { return s.apiServerProxyCertKey }
+
+// KubeletCertKey is the asset that generates the kubelet key/cert pair.
+func (s *StockImpl) KubeletCertKey() asset.Asset { return s.kubeletCertKey }
+
+// TNCCertKey is the asset that generates the TNC key/cert pair.
+func (s *StockImpl) TNCCertKey() asset.Asset { return s.tncCertKey }
+
+// ClusterAPIServerCertKey is the asset that generates the cluster API server key/cert pair.
+func (s *StockImpl) ClusterAPIServerCertKey() asset.Asset { return s.clusterAPIServerCertKey }
+
+// ServiceAccountKeyPair is the asset that generates the service-account public/private key pair.
+func (s *StockImpl) ServiceAccountKeyPair() asset.Asset { return s.serviceAccountKeyPair }

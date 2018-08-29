@@ -185,6 +185,7 @@ func GenerateRootCA(key *rsa.PrivateKey, cfg *CertCfg) (*x509.Certificate, error
 	return cert, nil
 }
 
+// GenerateSignedCert generates a signed certificate.
 func GenerateSignedCert(cfg *CertCfg,
 	csr *x509.CertificateRequest,
 	key *rsa.PrivateKey,
@@ -197,6 +198,7 @@ func GenerateSignedCert(cfg *CertCfg,
 	return cert, nil
 }
 
+// GenerateRootCertKey generates a root key/cert pair.
 func GenerateRootCertKey(cfg *CertCfg) (*rsa.PrivateKey, *x509.Certificate, error) {
 	key, err := PrivateKey()
 	if err != nil {
