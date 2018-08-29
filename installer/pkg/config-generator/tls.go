@@ -306,7 +306,7 @@ func generateRootCert(clusterDir string) (cert *x509.Certificate, key *rsa.Priva
 			OrganizationalUnit: []string{"openshift"},
 		},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  validityTenYears,
+		Validity:  tls.ValidityTenYears,
 		IsCA:      true,
 	}
 
