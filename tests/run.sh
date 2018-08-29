@@ -36,7 +36,7 @@ bazel build tarball smoke_tests
 echo -e "\\e[36m Unpacking artifacts...\\e[0m"
 tar -zxf bazel-bin/tectonic-dev.tar.gz
 cp bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test tectonic-dev/smoke
-export PATH="$(pwd)/tectonic-dev/installer:${PATH}"
+export PATH="${PWD}/tectonic-dev/installer:${PATH}"
 cd tectonic-dev
 
 echo -e "\\e[36m Creating Tectonic configuration...\\e[0m"
@@ -87,8 +87,8 @@ export TF_VAR_tectonic_admin_ssh_key="$(cat ~/.ssh/id_rsa.pub)"
 echo -e "\\e[36m Deploying Tectonic...\\e[0m"
 tectonic install --dir="${CLUSTER_NAME}"
 echo -e "\\e[36m Running smoke test...\\e[0m"
-export SMOKE_KUBECONFIG="$(pwd)/$CLUSTER_NAME/generated/auth/kubeconfig"
+export SMOKE_KUBECONFIG="${PWD}/${CLUSTER_NAME}/generated/auth/kubeconfig"
 export SMOKE_NODE_COUNT="5"  # Sum of all nodes (master + worker)
-export SMOKE_MANIFEST_PATHS="$(pwd)/$CLUSTER_NAME/generated"
+export SMOKE_MANIFEST_PATHS="${PWD}/${CLUSTER_NAME}/generated"
 exec 5>&1
 SMOKE_TEST_OUTPUT=$(./smoke -test.v --cluster | tee >(cat - >&5))

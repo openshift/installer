@@ -103,7 +103,7 @@ bazel build tarball
 ```sh
 tar -zxf bazel-bin/tectonic-dev.tar.gz
 cd tectonic-dev
-export PATH=$(pwd)/installer:$PATH
+export PATH="${PWD}/installer:${PATH}"
 ```
 
 Initialize (the environment variables are a convenience):
@@ -139,7 +139,7 @@ You'll have to wait for etcd to reach quorum before this makes any progress.
 ## Inspect the cluster with kubectl
 You'll need a kubectl binary on your path.
 ```sh
-export KUBECONFIG=$(pwd)/$CLUSTER_NAME/generated/auth/kubeconfig
+export KUBECONFIG="${PWD}/${CLUSTER_NAME}/generated/auth/kubeconfig"
 kubectl get -n tectonic-system pods
 ```
 
