@@ -20,6 +20,13 @@ import (
 
 const (
 	keySize = 2048
+
+	// ValidityTenYears sets the validity of a cert to 10 years.
+	ValidityTenYears = time.Hour * 24 * 365 * 10
+
+	// ValidityThirtyMinutes sets the validity of a cert to 30 minutes.
+	// This is for the kubelet bootstrap.
+	ValidityThirtyMinutes = time.Minute * 30
 )
 
 // CertCfg contains all needed fields to configure a new certificate
@@ -135,4 +142,73 @@ func generateSubjectKeyID(pub crypto.PublicKey) ([]byte, error) {
 
 	hash := sha1.Sum(publicKeyBytes)
 	return hash[:], nil
+}
+
+// GenerateCert creates a key, csr & a signed cert
+// This is useful for apiserver and openshift-apiser cert which will be
+// authenticated by the kubeconfig using root-ca.
+func GenerateCert(caKey *rsa.PrivateKey,
+	caCert *x509.Certificate,
+	cfg *CertCfg) (*rsa.PrivateKey, *x509.Certificate, error) {
+
+	// create a private key
+	key, err := PrivateKey()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate private key: %v", err)
+	}
+
+	// create a CSR
+	csrTmpl := x509.CertificateRequest{Subject: cfg.Subject, DNSNames: cfg.DNSNames, IPAddresses: cfg.IPAddresses}
+	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &csrTmpl, key)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error creating certificate request: %v", err)
+	}
+	csr, err := x509.ParseCertificateRequest(csrBytes)
+	if err != nil {
+		return nil, nil, fmt.Errorf("error parsing certificate request: %v", err)
+	}
+
+	// create a cert
+	cert, err := GenerateSignedCert(cfg, csr, key, caKey, caCert)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create a certificate: %v", err)
+	}
+	return key, cert, nil
+}
+
+// GenerateRootCA creates and returns the root CA
+func GenerateRootCA(key *rsa.PrivateKey, cfg *CertCfg) (*x509.Certificate, error) {
+	cert, err := SelfSignedCACert(cfg, key)
+	if err != nil {
+		return nil, fmt.Errorf("error generating self signed certificate: %v", err)
+	}
+	return cert, nil
+}
+
+// GenerateSignedCert generates a signed certificate.
+func GenerateSignedCert(cfg *CertCfg,
+	csr *x509.CertificateRequest,
+	key *rsa.PrivateKey,
+	caKey *rsa.PrivateKey,
+	caCert *x509.Certificate) (*x509.Certificate, error) {
+	cert, err := SignedCertificate(cfg, csr, key, caCert, caKey)
+	if err != nil {
+		return nil, fmt.Errorf("error signing certificate: %v", err)
+	}
+	return cert, nil
+}
+
+// GenerateRootCertKey generates a root key/cert pair.
+func GenerateRootCertKey(cfg *CertCfg) (*rsa.PrivateKey, *x509.Certificate, error) {
+	key, err := PrivateKey()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to generate private key: %v", err)
+	}
+
+	crt, err := GenerateRootCA(key, cfg)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to create a certificate: %v", err)
+	}
+
+	return key, crt, nil
 }

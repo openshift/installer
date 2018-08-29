@@ -1,7 +1,6 @@
 package configgenerator
 
 import (
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
@@ -10,10 +9,9 @@ import (
 	"io/ioutil"
 	"net"
 	"path/filepath"
-	"time"
 
 	"github.com/openshift/installer/installer/pkg/copy"
-	"github.com/openshift/installer/installer/pkg/tls"
+	"github.com/openshift/installer/pkg/asset/tls"
 )
 
 const (
@@ -48,9 +46,6 @@ const (
 	tncKeyPath                   = "generated/tls/tnc.key"
 	serviceAccountPubkeyPath     = "generated/tls/service-account.pub"
 	serviceAccountPrivateKeyPath = "generated/tls/service-account.key"
-
-	validityTenYears      = time.Hour * 24 * 365 * 10
-	validityThirtyMinutes = time.Minute * 30
 )
 
 // GenerateTLSConfig fetches and validates the TLS cert files
@@ -77,7 +72,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg := &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: "kube-ca", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  validityTenYears,
+		Validity:  tls.ValidityTenYears,
 		IsCA:      true,
 	}
 	kubeCAKey, kubeCACert, err := generateCert(clusterDir, caKey, caCert, kubeCAKeyPath, kubeCACertPath, cfg, false)
@@ -90,7 +85,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		Subject:   pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		IsCA:      true,
-		Validity:  validityTenYears,
+		Validity:  tls.ValidityTenYears,
 	}
 	etcdCAKey, etcdCACert, err := generateCert(clusterDir, caKey, caCert, etcdCAKeyPath, etcdCACertPath, cfg, false)
 	if err != nil {
@@ -109,7 +104,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		Subject:      pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-		Validity:     validityTenYears,
+		Validity:     tls.ValidityTenYears,
 	}
 	if _, _, err := generateCert(clusterDir, etcdCAKey, etcdCACert, etcdClientKeyPath, etcdClientCertPath, cfg, false); err != nil {
 		return fmt.Errorf("failed to generate etcd client certificate: %v", err)
@@ -119,7 +114,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg = &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  validityTenYears,
+		Validity:  tls.ValidityTenYears,
 		IsCA:      true,
 	}
 	aggregatorCAKey, aggregatorCACert, err := generateCert(clusterDir, caKey, caCert, aggregatorCAKeyPath, aggregatorCACertPath, cfg, false)
@@ -131,7 +126,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg = &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: "service-serving", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  validityTenYears,
+		Validity:  tls.ValidityTenYears,
 		IsCA:      true,
 	}
 	if _, _, err := generateCert(clusterDir, caKey, caCert, serviceServingCAKeyPath, serviceServingCACertPath, cfg, false); err != nil {
@@ -152,7 +147,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 			fmt.Sprintf("*.%s", baseAddress),
 		},
 		Subject:  pkix.Name{CommonName: baseAddress, Organization: []string{"ingress"}},
-		Validity: validityTenYears,
+		Validity: tls.ValidityTenYears,
 		IsCA:     false,
 	}
 
@@ -165,7 +160,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Subject:      pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
-		Validity:     validityTenYears,
+		Validity:     tls.ValidityTenYears,
 		IsCA:         false,
 	}
 
@@ -188,7 +183,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 			"kubernetes.default.svc",
 			"kubernetes.default.svc.cluster.local",
 		},
-		Validity:    validityTenYears,
+		Validity:    tls.ValidityTenYears,
 		IPAddresses: []net.IP{net.ParseIP(apiServerAddress)},
 		IsCA:        false,
 	}
@@ -209,7 +204,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 			"openshift-apiserver.kube-system.svc",
 			"openshift-apiserver.kube-system.svc.cluster.local",
 			"localhost", "127.0.0.1"},
-		Validity:    validityTenYears,
+		Validity:    tls.ValidityTenYears,
 		IPAddresses: []net.IP{net.ParseIP(apiServerAddress)},
 		IsCA:        false,
 	}
@@ -223,7 +218,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Subject:      pkix.Name{CommonName: "kube-apiserver-proxy", Organization: []string{"kube-master"}},
-		Validity:     validityTenYears,
+		Validity:     tls.ValidityTenYears,
 		IsCA:         false,
 	}
 
@@ -236,7 +231,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Subject:      pkix.Name{CommonName: "system:serviceaccount:kube-system:default", Organization: []string{"system:serviceaccounts:kube-system"}},
-		Validity:     validityThirtyMinutes,
+		Validity:     tls.ValidityThirtyMinutes,
 		IsCA:         false,
 	}
 
@@ -250,7 +245,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		DNSNames:     []string{tncDomain},
 		Subject:      pkix.Name{CommonName: tncDomain},
-		Validity:     validityTenYears,
+		Validity:     tls.ValidityTenYears,
 		IsCA:         false,
 	}
 
@@ -262,7 +257,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	cfg = &tls.CertCfg{
 		Subject:   pkix.Name{CommonName: "cluster-apiserver", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  validityTenYears,
+		Validity:  tls.ValidityTenYears,
 		IsCA:      true,
 	}
 	if _, _, err := generateCert(clusterDir, aggregatorCAKey, aggregatorCACert, clusterAPIServerKeyPath, clusterAPIServerCertPath, cfg, true); err != nil {
@@ -302,15 +297,32 @@ func generatePrivateKey(clusterDir string, path string) (*rsa.PrivateKey, error)
 
 // generateRootCert creates the rootCAKey and rootCACert
 func generateRootCert(clusterDir string) (cert *x509.Certificate, key *rsa.PrivateKey, err error) {
-	// generate key and certificate
-	caKey, err := generatePrivateKey(clusterDir, rootCAKeyPath)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate private key: %v", err)
+	targetKeyPath := filepath.Join(clusterDir, rootCAKeyPath)
+	targetCertPath := filepath.Join(clusterDir, rootCACertPath)
+
+	cfg := &tls.CertCfg{
+		Subject: pkix.Name{
+			CommonName:         "root-ca",
+			OrganizationalUnit: []string{"openshift"},
+		},
+		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		Validity:  tls.ValidityTenYears,
+		IsCA:      true,
 	}
-	caCert, err := generateRootCA(clusterDir, caKey)
+
+	caKey, caCert, err := tls.GenerateRootCertKey(cfg)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create a certificate: %v", err)
+		return nil, nil, err
 	}
+
+	if err := ioutil.WriteFile(targetKeyPath, []byte(tls.PrivateKeyToPem(caKey)), 0600); err != nil {
+		return nil, nil, err
+	}
+
+	if err := ioutil.WriteFile(targetCertPath, []byte(tls.CertToPem(caCert)), 0666); err != nil {
+		return nil, nil, err
+	}
+
 	return caCert, caKey, nil
 }
 
@@ -361,74 +373,26 @@ func generateCert(clusterDir string,
 	cfg *tls.CertCfg,
 	appendCA bool) (*rsa.PrivateKey, *x509.Certificate, error) {
 
-	// create a private key
-	key, err := generatePrivateKey(clusterDir, keyPath)
+	targetKeyPath := filepath.Join(clusterDir, keyPath)
+	targetCertPath := filepath.Join(clusterDir, certPath)
+
+	key, cert, err := tls.GenerateCert(caKey, caCert, cfg)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate private key: %v", err)
+		return nil, nil, err
 	}
 
-	// create a CSR
-	csrTmpl := x509.CertificateRequest{Subject: cfg.Subject, DNSNames: cfg.DNSNames, IPAddresses: cfg.IPAddresses}
-	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &csrTmpl, key)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error creating certificate request: %v", err)
+	if err := ioutil.WriteFile(targetKeyPath, []byte(tls.PrivateKeyToPem(key)), 0600); err != nil {
+		return nil, nil, err
 	}
-	csr, err := x509.ParseCertificateRequest(csrBytes)
-	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing certificate request: %v", err)
-	}
-
-	// create a cert
-	cert, err := generateSignedCert(cfg, csr, key, caKey, caCert, clusterDir, certPath, appendCA)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create a certificate: %v", err)
-	}
-	return key, cert, nil
-}
-
-// generateRootCA creates and returns the root CA
-func generateRootCA(path string, key *rsa.PrivateKey) (*x509.Certificate, error) {
-	fileTargetPath := filepath.Join(path, rootCACertPath)
-	cfg := &tls.CertCfg{
-		Subject: pkix.Name{
-			CommonName:         "root-ca",
-			OrganizationalUnit: []string{"openshift"},
-		},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  validityTenYears,
-		IsCA:      true,
-	}
-	cert, err := tls.SelfSignedCACert(cfg, key)
-	if err != nil {
-		return nil, fmt.Errorf("error generating self signed certificate: %v", err)
-	}
-	if err := ioutil.WriteFile(fileTargetPath, []byte(tls.CertToPem(cert)), 0666); err != nil {
-		return nil, err
-	}
-	return cert, nil
-}
-
-func generateSignedCert(cfg *tls.CertCfg,
-	csr *x509.CertificateRequest,
-	key *rsa.PrivateKey,
-	caKey *rsa.PrivateKey,
-	caCert *x509.Certificate,
-	clusterDir string,
-	path string,
-	appendCA bool) (*x509.Certificate, error) {
-	cert, err := tls.SignedCertificate(cfg, csr, key, caCert, caKey)
-	if err != nil {
-		return nil, fmt.Errorf("error signing certificate: %v", err)
-	}
-	fileTargetPath := filepath.Join(clusterDir, path)
 
 	content := []byte(tls.CertToPem(cert))
 	if appendCA {
 		content = append(content, '\n')
 		content = append(content, []byte(tls.CertToPem(caCert))...)
 	}
-	if err := ioutil.WriteFile(fileTargetPath, content, 0666); err != nil {
-		return nil, err
+	if err := ioutil.WriteFile(targetCertPath, content, 0666); err != nil {
+		return nil, nil, err
 	}
-	return cert, nil
+
+	return key, cert, nil
 }

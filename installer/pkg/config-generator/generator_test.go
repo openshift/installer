@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/openshift/installer/installer/pkg/config"
-	"github.com/openshift/installer/installer/pkg/tls"
+	"github.com/openshift/installer/pkg/asset/tls"
 )
 
 func initConfig(t *testing.T, file string) ConfigGenerator {
@@ -131,7 +131,7 @@ func TestGenerateCert(t *testing.T) {
 			CommonName:         "test-self-signed-ca",
 			OrganizationalUnit: []string{"openshift"},
 		},
-		Validity: validityTenYears,
+		Validity: tls.ValidityTenYears,
 	}
 	caCert, err := tls.SelfSignedCACert(caCfg, caKey)
 	if err != nil {
@@ -151,7 +151,7 @@ func TestGenerateCert(t *testing.T) {
 				KeyUsages:    x509.KeyUsageKeyEncipherment,
 				DNSNames:     []string{"test-api.kubernetes.default"},
 				ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
-				Validity:     validityTenYears,
+				Validity:     tls.ValidityTenYears,
 				IsCA:         false,
 			},
 			clusterDir: "./",

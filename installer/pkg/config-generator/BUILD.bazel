@@ -12,7 +12,7 @@ go_library(
     deps = [
         "//installer/pkg/config:go_default_library",
         "//installer/pkg/copy:go_default_library",
-        "//installer/pkg/tls:go_default_library",
+        "//pkg/asset/tls:go_default_library",
         "//vendor/github.com/apparentlymart/go-cidr/cidr:go_default_library",
         "//vendor/github.com/coreos/ignition/config/v2_2:go_default_library",
         "//vendor/github.com/coreos/ignition/config/v2_2/types:go_default_library",
@@ -35,6 +35,6 @@ go_test(
     embed = [":go_default_library"],
     deps = [
         "//installer/pkg/config:go_default_library",
-        "//installer/pkg/tls:go_default_library",
+        "//pkg/asset/tls:go_default_library",
     ],
 )

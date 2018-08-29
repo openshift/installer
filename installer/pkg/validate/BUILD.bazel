@@ -6,7 +6,7 @@ go_test(
     srcs = ["validate_test.go"],
     embed = [":go_default_library"],
     deps = [
-        "//installer/pkg/tls:go_default_library",
+        "//pkg/asset/tls:go_default_library",
         "//vendor/gopkg.in/square/go-jose.v2:go_default_library",
     ],
 )

@@ -32,7 +32,7 @@ type Stock interface {
 	Platform() asset.Asset
 }
 
-// StockImpl is the
+// StockImpl implements the Stock interface for installconfig and user inputs.
 type StockImpl struct {
 	installConfig asset.Asset
 	clusterID     asset.Asset
