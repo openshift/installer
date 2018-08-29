@@ -106,7 +106,7 @@ func (c *CertKey) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		return nil, fmt.Errorf("failed to parse CA from asset: %v", err)
 	}
 
-	key, crt, err = generateCert(caKey, caCert, cfg)
+	key, crt, err = GenerateCert(caKey, caCert, cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate cert/key pair: %v", err)
 	}
