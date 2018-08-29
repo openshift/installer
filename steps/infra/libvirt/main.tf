@@ -44,15 +44,15 @@ resource "libvirt_network" "tectonic_net" {
   ]
 
   dns = [{
-    local_only = true,
-  }]
+    local_only = true
 
-  dns_host = ["${flatten(list(
-    data.libvirt_network_dns_host_template.bootstrap.*.rendered,
-    data.libvirt_network_dns_host_template.masters.*.rendered,
-    data.libvirt_network_dns_host_template.etcds.*.rendered,
-    data.libvirt_network_dns_host_template.workers.*.rendered,
-  ))}"]
+    hosts = ["${flatten(list(
+      data.libvirt_network_dns_host_template.bootstrap.*.rendered,
+      data.libvirt_network_dns_host_template.masters.*.rendered,
+      data.libvirt_network_dns_host_template.etcds.*.rendered,
+      data.libvirt_network_dns_host_template.workers.*.rendered,
+    ))}"]
+  }]
 
   autostart = true
 }
