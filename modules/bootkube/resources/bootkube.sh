@@ -34,8 +34,8 @@ cp "$PWD/tnc-bootstrap/tectonic-node-controller-config.yaml" /etc/kubernetes/tnc
 
 echo "Starting etcd certificate signer..."
 
-# shellcheck disable=SC2154,SC2034
-signer_id=$(/usr/bin/docker run -d \
+# shellcheck disable=SC2154
+SIGNER=$(/usr/bin/docker run -d \
     --tmpfs /tmp \
     --volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
     --network host \
@@ -86,8 +86,7 @@ done
 
 echo "etcd cluster up. Killing etcd certificate signer..."
 
-# shellcheck disable=SC2154,SC1083
-/usr/bin/docker kill $${signer_id}
+/usr/bin/docker kill "$SIGNER"
 rm /etc/kubernetes/manifests/tectonic-node-controller-pod.yaml
 
 cp -r "$PWD/bootstrap-configs" /etc/kubernetes/bootstrap-configs
