@@ -87,6 +87,7 @@ metadata:
 	}
 
 	tests := []struct {
+		name         string
 		userName     string
 		certKey      asset.Asset
 		parents      map[asset.Asset]*asset.State
@@ -94,6 +95,7 @@ metadata:
 		expectedData []byte
 	}{
 		{
+			name:     "admin kubeconfig",
 			userName: "admin",
 			certKey:  adminCertKey,
 			parents: map[asset.Asset]*asset.State{
@@ -101,7 +103,6 @@ metadata:
 				adminCertKey:  adminCertState,
 				installConfig: installConfigState,
 			},
-			errString: "",
 			expectedData: []byte(`clusters:
 - cluster:
     certificate-authority-data: VEhJUyBJUyBST09UIENBIENFUlQgREFUQQ==
@@ -122,6 +123,7 @@ users:
 `),
 		},
 		{
+			name:     "kubelet kubeconfig",
 			userName: "kubelet",
 			certKey:  kubeletCertKey,
 			parents: map[asset.Asset]*asset.State{
@@ -129,7 +131,6 @@ users:
 				kubeletCertKey: kubeletCertState,
 				installConfig:  installConfigState,
 			},
-			errString: "",
 			expectedData: []byte(`clusters:
 - cluster:
     certificate-authority-data: VEhJUyBJUyBST09UIENBIENFUlQgREFUQQ==
@@ -150,6 +151,7 @@ users:
 `),
 		},
 		{
+			name:     "no root ca",
 			userName: "admin", // No root ca in parents.
 			certKey:  adminCertKey,
 			parents: map[asset.Asset]*asset.State{
@@ -160,6 +162,7 @@ users:
 			expectedData: nil,
 		},
 		{
+			name:     "no admin certs",
 			userName: "admin", // No admin cert in parents.
 			certKey:  adminCertKey,
 			parents: map[asset.Asset]*asset.State{
@@ -171,6 +174,7 @@ users:
 			expectedData: nil,
 		},
 		{
+			name:     "no kubelet certs",
 			userName: "kubelet", // No kubelet cert in parents.
 			certKey:  kubeletCertKey,
 			parents: map[asset.Asset]*asset.State{
@@ -182,6 +186,7 @@ users:
 			expectedData: nil,
 		},
 		{
+			name:     "no install config",
 			userName: "admin", // No install config in parents.
 			certKey:  adminCertKey,
 			parents: map[asset.Asset]*asset.State{
@@ -193,26 +198,27 @@ users:
 		},
 	}
 
-	for i, tt := range tests {
-		kubeconfig := &Kubeconfig{
-			rootDir:       testDir,
-			userName:      tt.userName,
-			rootCA:        rootCA,
-			certKey:       tt.certKey,
-			installConfig: installConfig,
-		}
-		st, err := kubeconfig.Generate(tt.parents)
-		if err != nil {
-			assert.EqualErrorf(t, err, tt.errString, fmt.Sprintf("test #%d expected %v, saw %v", i, tt.errString, err))
-			continue
-		} else {
-			if tt.errString != "" {
-				t.Errorf("test #%d expect error %v, saw nil", i, tt.errString)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			kubeconfig := &Kubeconfig{
+				rootDir:       testDir,
+				userName:      tt.userName,
+				rootCA:        rootCA,
+				certKey:       tt.certKey,
+				installConfig: installConfig,
 			}
-		}
+			st, err := kubeconfig.Generate(tt.parents)
+			if err != nil {
+				assert.EqualErrorf(t, err, tt.errString, fmt.Sprintf("expected %v, saw %v", tt.errString, err))
+				return
+			} else if tt.errString != "" {
+				t.Errorf("expect error %v, saw nil", tt.errString)
+			}
 
-		filename := filepath.Join(testDir, "auth", fmt.Sprintf("kubeconfig-%s", tt.userName))
-		assert.Equal(t, filename, st.Contents[0].Name, "unexpected filename")
-		assert.Equal(t, tt.expectedData, st.Contents[0].Data, "unexpected data in kubeconfig")
+			filename := filepath.Join(testDir, "auth", fmt.Sprintf("kubeconfig-%s", tt.userName))
+			assert.Equal(t, filename, st.Contents[0].Name, "unexpected filename")
+			assert.Equal(t, tt.expectedData, st.Contents[0].Data, "unexpected data in kubeconfig")
+		})
 	}
+
 }

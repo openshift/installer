@@ -64,12 +64,14 @@ func TestCertKeyGenerate(t *testing.T) {
 	}
 
 	tests := []struct {
-		certKey *CertKey
-		err     bool
-		parents map[asset.Asset]*asset.State
+		name      string
+		certKey   *CertKey
+		errString string
+		parents   map[asset.Asset]*asset.State
 	}{
 		{
-			&CertKey{
+			name: "simple ca",
+			certKey: &CertKey{
 				rootDir:       testDir,
 				installConfig: installConfig,
 				Subject:       pkix.Name{CommonName: "test0-ca", OrganizationalUnit: []string{"openshift"}},
@@ -80,13 +82,13 @@ func TestCertKeyGenerate(t *testing.T) {
 				IsCA:          true,
 				ParentCA:      root,
 			},
-			false,
-			map[asset.Asset]*asset.State{
+			parents: map[asset.Asset]*asset.State{
 				root: rootState,
 			},
 		},
 		{
-			&CertKey{
+			name: "more complicated ca",
+			certKey: &CertKey{
 				rootDir:        testDir,
 				installConfig:  installConfig,
 				Subject:        pkix.Name{CommonName: "test1-ca", OrganizationalUnit: []string{"openshift"}},
@@ -101,14 +103,14 @@ func TestCertKeyGenerate(t *testing.T) {
 				GenDNSNames:    testGenDNSNames,
 				GenIPAddresses: testGenIPAddresses,
 			},
-			false,
-			map[asset.Asset]*asset.State{
+			parents: map[asset.Asset]*asset.State{
 				root:          rootState,
 				installConfig: installConfigState,
 			},
 		},
 		{
-			&CertKey{
+			name: "can't find parents",
+			certKey: &CertKey{
 				rootDir:        testDir,
 				installConfig:  installConfig,
 				Subject:        pkix.Name{CommonName: "test1-ca", OrganizationalUnit: []string{"openshift"}},
@@ -123,49 +125,46 @@ func TestCertKeyGenerate(t *testing.T) {
 				GenDNSNames:    testGenDNSNames,
 				GenIPAddresses: testGenIPAddresses,
 			},
-			true,
-			nil,
+			errString: "failed to get install config state in the parent asset states",
+			parents:   nil,
 		},
 	}
 
-	for i, tt := range tests {
-		st, err := tt.certKey.Generate(tt.parents)
-		if tt.err != (err != nil) {
-			t.Errorf("test #%d error is not expected, expect %v, saw %v", i, tt.err, err != nil)
-		}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			st, err := tt.certKey.Generate(tt.parents)
+			if err != nil {
+				assert.EqualErrorf(t, err, tt.errString, tt.name)
+				return
+			} else if tt.errString != "" {
+				t.Errorf("expect error %v, saw nil", err)
+			}
 
-		if err != nil {
-			continue
+			keyFileName := assetFilePath(testDir, tt.certKey.KeyFileName)
+			crtFileName := assetFilePath(testDir, tt.certKey.CertFileName)
 
-		}
+			assert.Equal(t, keyFileName, st.Contents[0].Name, "unexpected key file name")
+			assert.Equal(t, crtFileName, st.Contents[1].Name, "unexpected cert file name")
 
-		keyFileName := assetFilePath(testDir, tt.certKey.KeyFileName)
-		crtFileName := assetFilePath(testDir, tt.certKey.CertFileName)
+			// Briefly check the certs.
+			certPool := x509.NewCertPool()
+			if !certPool.AppendCertsFromPEM(st.Contents[1].Data) {
+				t.Error("failed to append certs from PEM")
+			}
 
-		assert.Equal(t, keyFileName, st.Contents[0].Name, "unexpected key file name")
-		assert.Equal(t, crtFileName, st.Contents[1].Name, "unexpected cert file name")
+			opts := x509.VerifyOptions{
+				Roots:   certPool,
+				DNSName: tt.certKey.Subject.CommonName,
+			}
+			if tt.certKey.GenDNSNames != nil {
+				opts.DNSName = "test.openshift.io"
+			}
 
-		// Briefly check the certs.
-		certPool := x509.NewCertPool()
-		if !certPool.AppendCertsFromPEM(st.Contents[1].Data) {
-			t.Errorf("test #%d failed to append certs from PEM", i)
-		}
+			cert, err := PemToCertificate(st.Contents[1].Data)
+			assert.NoError(t, err, tt.name)
 
-		opts := x509.VerifyOptions{
-			Roots:   certPool,
-			DNSName: tt.certKey.Subject.CommonName,
-		}
-		if tt.certKey.GenDNSNames != nil {
-			opts.DNSName = "test.openshift.io"
-		}
-
-		cert, err := PemToCertificate(st.Contents[1].Data)
-		if err != nil {
-			t.Errorf("test #%d failed to parse certificate: %v", i, err)
-		}
-
-		if _, err := cert.Verify(opts); err != nil {
-			t.Errorf("test #%d failed to verify cert: %v", i, err)
-		}
+			_, err = cert.Verify(opts)
+			assert.NoError(t, err, tt.name)
+		})
 	}
 }
