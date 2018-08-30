@@ -75,4 +75,8 @@ resource "aws_nat_gateway" "nat_gw" {
   count         = "${min(local.new_master_az_count,local.new_worker_az_count)}"
   allocation_id = "${aws_eip.nat_eip.*.id[count.index]}"
   subnet_id     = "${aws_subnet.master_subnet.*.id[count.index]}"
+
+  tags = "${merge(map(
+      "tectonicClusterID", "${var.cluster_id}"
+    ), var.extra_tags)}"
 }
