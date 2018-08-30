@@ -1,7 +1,6 @@
 package kubeconfig
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -213,17 +212,7 @@ users:
 		}
 
 		filename := filepath.Join(testDir, "auth", fmt.Sprintf("kubeconfig-%s", tt.userName))
-		data, err := ioutil.ReadFile(filename)
-		if err != nil {
-			t.Errorf("test #%d failed to read kubeconfig %q: %v", i, filename, err)
-		}
-
-		if !bytes.Equal(st.Contents[0].Data, data) {
-			t.Errorf("test #%d expect kubeconfig data: %q, saw %q", i, string(st.Contents[0].Data), string(data))
-		}
-
-		if !bytes.Equal(tt.expectedData, data) {
-			t.Errorf("test #%d expect kubeconfig data: %q, saw %q", i, string(tt.expectedData), string(data))
-		}
+		assert.Equal(t, filename, st.Contents[0].Name, "unexpected filename")
+		assert.Equal(t, tt.expectedData, st.Contents[0].Data, "unexpected data in kubeconfig")
 	}
 }

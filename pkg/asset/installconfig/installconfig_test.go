@@ -158,8 +158,6 @@ func TestInstallConfigGenerate(t *testing.T) {
 			filename := filepath.Join(dir, "install-config.yml")
 			assert.Equal(t, 1, len(state.Contents), "unexpected number of contents in asset state")
 			assert.Equal(t, filename, state.Contents[0].Name, "unexpected filename in asset state")
-			data, err := ioutil.ReadFile(filename)
-			assert.NoError(t, err, "unexpected error reading install-config.yml file")
 
 			exp := fmt.Sprintf(`admin:
   email: test-email
@@ -185,7 +183,7 @@ platform:
 pullSecret: test-pull-secret
 `, tc.expectedPlatformYaml)
 
-			assert.Equal(t, exp, string(data), "unexpected data in install-config.yml")
+			assert.Equal(t, exp, string(state.Contents[0].Data), "unexpected data in install-config.yml")
 		})
 	}
 }

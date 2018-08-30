@@ -37,8 +37,14 @@ func main() {
 	log.SetLevel(l)
 
 	assetStore := &asset.StoreImpl{}
-	if _, err := assetStore.Fetch(targetAsset); err != nil {
+	st, err := assetStore.Fetch(targetAsset)
+	if err != nil {
 		log.Fatalf("failed to generate asset: %v", err)
+		os.Exit(1)
+	}
+
+	if err := st.PersistToFile(); err != nil {
+		log.Fatalf("failed to write target to disk: %v", err)
 		os.Exit(1)
 	}
 }

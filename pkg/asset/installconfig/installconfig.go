@@ -84,18 +84,14 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 		return nil, err
 	}
 
-	state := &asset.State{
+	return &asset.State{
 		Contents: []asset.Content{
 			{
 				Name: filepath.Join(a.directory, "install-config.yml"),
 				Data: data,
 			},
 		},
-	}
-
-	state.PersistToFile()
-
-	return state, nil
+	}, nil
 }
 
 // GetInstallConfig returns the *types.InstallConfig from the parent asset map.

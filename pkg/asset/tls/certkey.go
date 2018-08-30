@@ -122,23 +122,18 @@ func (c *CertKey) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		certData = append(certData, []byte(CertToPem(caCert))...)
 	}
 
-	var st asset.State
-	st.Contents = []asset.Content{
-		{
-			Name: assetFilePath(c.rootDir, c.KeyFileName),
-			Data: keyData,
+	return &asset.State{
+		Contents: []asset.Content{
+			{
+				Name: assetFilePath(c.rootDir, c.KeyFileName),
+				Data: keyData,
+			},
+			{
+				Name: assetFilePath(c.rootDir, c.CertFileName),
+				Data: certData,
+			},
 		},
-		{
-			Name: assetFilePath(c.rootDir, c.CertFileName),
-			Data: certData,
-		},
-	}
-
-	if err := st.PersistToFile(); err != nil {
-		return nil, err
-	}
-
-	return &st, nil
+	}, nil
 }
 
 func parseCAFromAssetState(ca *asset.State) (*rsa.PrivateKey, *x509.Certificate, error) {

@@ -104,7 +104,7 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 		return nil, err
 	}
 
-	st := &asset.State{
+	return &asset.State{
 		Contents: []asset.Content{
 			{
 				// E.g. generated/auth/kubeconfig-admin.
@@ -112,11 +112,5 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 				Data: data,
 			},
 		},
-	}
-
-	if err := st.PersistToFile(); err != nil {
-		return nil, err
-	}
-
-	return st, nil
+	}, nil
 }

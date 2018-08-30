@@ -33,21 +33,16 @@ func (k *KeyPair) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
 		return nil, fmt.Errorf("failed to get public key data: %v", err)
 	}
 
-	var st asset.State
-	st.Contents = []asset.Content{
-		{
-			Name: assetFilePath(k.rootDir, k.PrivKeyFileName),
-			Data: []byte(PrivateKeyToPem(key)),
+	return &asset.State{
+		Contents: []asset.Content{
+			{
+				Name: assetFilePath(k.rootDir, k.PrivKeyFileName),
+				Data: []byte(PrivateKeyToPem(key)),
+			},
+			{
+				Name: assetFilePath(k.rootDir, k.PubKeyFileName),
+				Data: []byte(pubkeyData),
+			},
 		},
-		{
-			Name: assetFilePath(k.rootDir, k.PubKeyFileName),
-			Data: []byte(pubkeyData),
-		},
-	}
-
-	if err := st.PersistToFile(); err != nil {
-		return nil, err
-	}
-
-	return &st, nil
+	}, nil
 }

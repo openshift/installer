@@ -1,7 +1,6 @@
 package tls
 
 import (
-	"bytes"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"io/ioutil"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/stretchr/testify/assert"
 )
 
 type fakeInstallConfig bool
@@ -142,27 +142,12 @@ func TestCertKeyGenerate(t *testing.T) {
 		keyFileName := assetFilePath(testDir, tt.certKey.KeyFileName)
 		crtFileName := assetFilePath(testDir, tt.certKey.CertFileName)
 
-		keyData, err := ioutil.ReadFile(keyFileName)
-		if err != nil {
-			t.Errorf("test #%d failed to read key file %q: %v", i, keyFileName, err)
-		}
-
-		crtData, err := ioutil.ReadFile(crtFileName)
-		if err != nil {
-			t.Errorf("test #%d failed to read key file %q: %v", i, crtFileName, err)
-		}
-
-		if !bytes.Equal(st.Contents[0].Data, keyData) {
-			t.Errorf("test #%d expect key data: %q, saw %q", i, string(st.Contents[0].Data), string(keyData))
-		}
-
-		if !bytes.Equal(st.Contents[1].Data, crtData) {
-			t.Errorf("test #%d expect crt data: %q, saw %q", i, string(st.Contents[1].Data), string(crtData))
-		}
+		assert.Equal(t, keyFileName, st.Contents[0].Name, "unexpected key file name")
+		assert.Equal(t, crtFileName, st.Contents[1].Name, "unexpected cert file name")
 
 		// Briefly check the certs.
 		certPool := x509.NewCertPool()
-		if !certPool.AppendCertsFromPEM(crtData) {
+		if !certPool.AppendCertsFromPEM(st.Contents[1].Data) {
 			t.Errorf("test #%d failed to append certs from PEM", i)
 		}
 
@@ -174,7 +159,7 @@ func TestCertKeyGenerate(t *testing.T) {
 			opts.DNSName = "test.openshift.io"
 		}
 
-		cert, err := PemToCertificate(crtData)
+		cert, err := PemToCertificate(st.Contents[1].Data)
 		if err != nil {
 			t.Errorf("test #%d failed to parse certificate: %v", i, err)
 		}
