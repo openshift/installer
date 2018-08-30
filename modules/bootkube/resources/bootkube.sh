@@ -5,7 +5,7 @@ echo "Rendering Kubernetes core manifests..."
 
 # shellcheck disable=SC2154
 /usr/bin/docker run \
-    --volume "$(pwd)":/assets:z \
+    --volume "$PWD:/assets:z" \
     --volume /etc/kubernetes:/etc/kubernetes:z \
     "${kube_core_renderer_image}" \
     --config=/assets/kco-config.yaml \
@@ -16,15 +16,15 @@ echo "Rendering TNC manifests..."
 # shellcheck disable=SC2154
 /usr/bin/docker run \
     --user 0 \
-    --volume "$(pwd)":/assets:z \
+    --volume "$PWD:/assets:z" \
     "${tnc_operator_image}" \
     --config=/assets/tnco-config.yaml \
     --render-bootstrap=true \
     --render-output=/assets/tnc-bootstrap
 
 mkdir -p /etc/kubernetes/manifests/
-cp "$(pwd)/tnc-bootstrap/tectonic-node-controller-pod.yaml" /etc/kubernetes/manifests/
-cp "$(pwd)/tnc-bootstrap/tectonic-node-controller-config.yaml" /etc/kubernetes/tnc-config
+cp "$PWD/tnc-bootstrap/tectonic-node-controller-pod.yaml" /etc/kubernetes/manifests/
+cp "$PWD/tnc-bootstrap/tectonic-node-controller-config.yaml" /etc/kubernetes/tnc-config
 
 # We originally wanted to run the etcd cert signer as
 # a static pod, but kubelet could't remove static pod
@@ -90,13 +90,13 @@ echo "etcd cluster up. Killing etcd certificate signer..."
 /usr/bin/docker kill $${signer_id}
 rm /etc/kubernetes/manifests/tectonic-node-controller-pod.yaml
 
-cp -r "$(pwd)/bootstrap-configs" /etc/kubernetes/bootstrap-configs
+cp -r "$PWD/bootstrap-configs" /etc/kubernetes/bootstrap-configs
 
 echo "Starting bootkube..."
 
 # shellcheck disable=SC2154
 /usr/bin/docker run \
-    --volume "$(pwd)":/assets:z \
+    --volume "$PWD:/assets:z" \
     --volume /etc/kubernetes:/etc/kubernetes:z \
     --network=host \
     --entrypoint=/bootkube \

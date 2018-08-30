@@ -3,7 +3,7 @@ set -e
 
 # shellcheck disable=SC2086,SC2154
 /usr/bin/docker run \
-    --volume "$(pwd)":/assets \
+    --volume "$PWD:/assets" \
     --network=host \
     --entrypoint=/bin/sh \
     ${hyperkube_image} \

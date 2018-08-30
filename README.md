@@ -31,7 +31,7 @@ These instructions can be used for AWS:
 
 4. Add binaries to $PATH
     ```sh
-    export PATH=$(pwd)/installer:$PATH
+    export PATH="${PWD}/installer:${PATH}"
     ```
 
 5. Edit Tectonic configuration file including the $CLUSTER_NAME
