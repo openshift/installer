@@ -8,6 +8,69 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
+const (
+	// RootCAKeyName is the filename of the RootCAKey.
+	RootCAKeyName = "root-ca.key"
+	// RootCACertName is the filename of the RootCACert.
+	RootCACertName = "root-ca.crt"
+	// KubeCAKeyName is the filename of the KubeCAKey.
+	KubeCAKeyName = "kube-ca.key"
+	// KubeCACertName is the filename of the KubeCACert.
+	KubeCACertName = "kube-ca.crt"
+	// EtcdCAKeyName is the filename of the EtcdCAKey.
+	EtcdCAKeyName = "etcd-ca.key"
+	// EtcdCACertName is the filename of the EtcdCACert.
+	EtcdCACertName = "etcd-ca.crt"
+	// AggregatorCAKeyName is the filename of the AggregatorCAKey.
+	AggregatorCAKeyName = "aggregator-ca.key"
+	// AggregatorCACertName is the filename of the AggregatorCACert.
+	AggregatorCACertName = "aggregator-ca.crt"
+	// ServiceServingCAKeyName is the filename of the ServiceServingCAKey.
+	ServiceServingCAKeyName = "service-serving-ca.key"
+	// ServiceServingCACertName is the filename of the ServiceServingCACert.
+	ServiceServingCACertName = "service-serving-ca.crt"
+	// EtcdClientKeyName is the filename of the EtcdClientKey.
+	EtcdClientKeyName = "etcd-client.key"
+	// EtcdClientCertName is the filename of the EtcdClientCert.
+	EtcdClientCertName = "etcd-client.crt"
+	// AdminKeyName is the filename of the AdminKey.
+	AdminKeyName = "admin.key"
+	// AdminCertName is the filename of the AdminCert.
+	AdminCertName = "admin.crt"
+	// IngressKeyName is the filename of the IngressKey.
+	IngressKeyName = "ingress.key"
+	// IngressCertName is the filename of the IngressCert.
+	IngressCertName = "ingress.crt"
+	// APIServerKeyName is the filename of the APIServerKey.
+	APIServerKeyName = "apiserver.key"
+	// APIServerCertName is the filename of the APIServerCert.
+	APIServerCertName = "apiserver.crt"
+	// OpenshiftAPIServerKeyName is the filename of the OpenshiftAPIServerKey.
+	OpenshiftAPIServerKeyName = "openshift-apiserver.key"
+	// OpenshiftAPIServerCertName is the filename of the OpenshiftAPIServerCert.
+	OpenshiftAPIServerCertName = "openshift-apiserver.crt"
+	// APIServerProxyKeyName is the filename of the APIServerProxyKey.
+	APIServerProxyKeyName = "apiserver-proxy.key"
+	// APIServerProxyCertName is the filename of the APIServerProxyCert.
+	APIServerProxyCertName = "apiserver-proxy.crt"
+	// KubeletKeyName is the filename of the KubeletKey.
+	KubeletKeyName = "kubelet.key"
+	// KubeletCertName is the filename of the KubeletCert.
+	KubeletCertName = "kubelet.crt"
+	// TNCKeyName is the filename of the TNCKey.
+	TNCKeyName = "tnc.key"
+	// TNCCertName is the filename of the TNCCert.
+	TNCCertName = "tnc.crt"
+	// ClusterAPIServerCAKeyName is the filename of the ClusterAPIServerCAKey.
+	ClusterAPIServerCAKeyName = "cluster-apiserver-ca.key"
+	// ClusterAPIServerCACertName is the filename of the ClusterAPIServerCACert.
+	ClusterAPIServerCACertName = "cluster-apiserver-ca.crt"
+	// ServiceAccountPrivateKeyName is the filename of the ServiceAccountPrivateKey.
+	ServiceAccountPrivateKeyName = "service-account.key"
+	// ServiceAccountPublicKeyName is the filename of the ServiceAccountPublicKey.
+	ServiceAccountPublicKeyName = "service-account.pub"
+)
+
 // Stock is the stock of TLS assets that can be generated.
 type Stock interface {
 	// RootCA is the asset that generates the root-ca key/cert pair.
@@ -72,8 +135,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		Subject:       pkix.Name{CommonName: "kube-ca", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		Validity:      ValidityTenYears,
-		KeyFileName:   "kube-ca.key",
-		CertFileName:  "kube-ca.crt",
+		KeyFileName:   KubeCAKeyName,
+		CertFileName:  KubeCACertName,
 
 		IsCA:     true,
 		ParentCA: s.rootCA,
@@ -85,8 +148,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		Subject:       pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		Validity:      ValidityTenYears,
-		KeyFileName:   "etcd-ca.key",
-		CertFileName:  "etcd-ca.crt",
+		KeyFileName:   EtcdCAKeyName,
+		CertFileName:  EtcdCACertName,
 
 		IsCA:     true,
 		ParentCA: s.rootCA,
@@ -98,8 +161,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		Subject:       pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		Validity:      ValidityTenYears,
-		KeyFileName:   "aggregator-ca.key",
-		CertFileName:  "aggregator-ca.crt",
+		KeyFileName:   AggregatorCAKeyName,
+		CertFileName:  AggregatorCACertName,
 
 		IsCA:     true,
 		ParentCA: s.rootCA,
@@ -111,8 +174,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		Subject:       pkix.Name{CommonName: "service-serving", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		Validity:      ValidityTenYears,
-		KeyFileName:   "service-serving-ca.key",
-		CertFileName:  "service-serving-ca.crt",
+		KeyFileName:   ServiceServingCAKeyName,
+		CertFileName:  ServiceServingCACertName,
 
 		IsCA:     true,
 		ParentCA: s.rootCA,
@@ -125,8 +188,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		KeyUsages:     x509.KeyUsageKeyEncipherment,
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Validity:      ValidityTenYears,
-		KeyFileName:   "etcd-client.key",
-		CertFileName:  "etcd-client.crt",
+		KeyFileName:   EtcdClientKeyName,
+		CertFileName:  EtcdClientCertName,
 
 		ParentCA: s.etcdCA,
 	}
@@ -138,8 +201,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Validity:      ValidityTenYears,
-		KeyFileName:   "admin.key",
-		CertFileName:  "admin.crt",
+		KeyFileName:   AdminKeyName,
+		CertFileName:  AdminCertName,
 
 		ParentCA: s.kubeCA,
 	}
@@ -150,8 +213,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Validity:      ValidityTenYears,
-		KeyFileName:   "ingress.key",
-		CertFileName:  "ingress.crt",
+		KeyFileName:   IngressKeyName,
+		CertFileName:  IngressCertName,
 
 		ParentCA:     s.kubeCA,
 		AppendParent: true,
@@ -166,8 +229,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Subject:       pkix.Name{CommonName: "kube-apiserver", Organization: []string{"kube-master"}},
 		Validity:      ValidityTenYears,
-		KeyFileName:   "apiserver.key",
-		CertFileName:  "apiserver.crt",
+		KeyFileName:   APIServerKeyName,
+		CertFileName:  APIServerCertName,
 
 		ParentCA:       s.kubeCA,
 		AppendParent:   true,
@@ -182,8 +245,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Subject:       pkix.Name{CommonName: "openshift-apiserver", Organization: []string{"kube-master"}},
 		Validity:      ValidityTenYears,
-		KeyFileName:   "openshift-apiserver.key",
-		CertFileName:  "openshift-apiserver.crt",
+		KeyFileName:   OpenshiftAPIServerKeyName,
+		CertFileName:  OpenshiftAPIServerCertName,
 
 		ParentCA:       s.aggregatorCA,
 		AppendParent:   true,
@@ -198,8 +261,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Subject:       pkix.Name{CommonName: "kube-apiserver-proxy", Organization: []string{"kube-master"}},
 		Validity:      ValidityTenYears,
-		KeyFileName:   "apiserver-proxy.key",
-		CertFileName:  "apiserver-proxy.crt",
+		KeyFileName:   APIServerProxyKeyName,
+		CertFileName:  APIServerProxyCertName,
 
 		ParentCA: s.aggregatorCA,
 	}
@@ -211,8 +274,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Subject:       pkix.Name{CommonName: "system:serviceaccount:kube-system:default", Organization: []string{"system:serviceaccounts:kube-system"}},
 		Validity:      ValidityThirtyMinutes,
-		KeyFileName:   "kubelet.key",
-		CertFileName:  "kubelet.crt",
+		KeyFileName:   KubeletKeyName,
+		CertFileName:  KubeletCertName,
 
 		ParentCA: s.kubeCA,
 	}
@@ -222,8 +285,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		installConfig: stock.InstallConfig(),
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		Validity:      ValidityTenYears,
-		KeyFileName:   "tnc.key",
-		CertFileName:  "tnc.crt",
+		KeyFileName:   TNCKeyName,
+		CertFileName:  TNCCertName,
 
 		ParentCA:    s.rootCA,
 		GenDNSNames: genDNSNamesForTNCCertKey,
@@ -236,8 +299,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		Subject:       pkix.Name{CommonName: "cluster-apiserver", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		Validity:      ValidityTenYears,
-		KeyFileName:   "cluster-apiserver-ca.key",
-		CertFileName:  "cluster-apiserver-ca.crt",
+		KeyFileName:   ClusterAPIServerCAKeyName,
+		CertFileName:  ClusterAPIServerCACertName,
 		IsCA:          true,
 
 		ParentCA:     s.aggregatorCA,
@@ -246,8 +309,8 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 
 	s.serviceAccountKeyPair = &KeyPair{
 		rootDir:         rootDir,
-		PrivKeyFileName: "service-account.key",
-		PubKeyFileName:  "service-account.pub",
+		PrivKeyFileName: ServiceAccountPrivateKeyName,
+		PubKeyFileName:  ServiceAccountPublicKeyName,
 	}
 }
 

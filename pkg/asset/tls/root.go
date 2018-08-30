@@ -38,11 +38,11 @@ func (c *RootCA) Generate(parents map[asset.Asset]*asset.State) (*asset.State, e
 	var st asset.State
 	st.Contents = []asset.Content{
 		{
-			Name: assetFilePath(c.rootDir, "root-ca.key"),
+			Name: assetFilePath(c.rootDir, RootCAKeyName),
 			Data: []byte(PrivateKeyToPem(key)),
 		},
 		{
-			Name: assetFilePath(c.rootDir, "root-ca.crt"),
+			Name: assetFilePath(c.rootDir, RootCACertName),
 			Data: []byte(CertToPem(crt)),
 		},
 	}

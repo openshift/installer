@@ -97,3 +97,19 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 
 	return state, nil
 }
+
+// GetInstallConfig returns the *types.InstallConfig from the parent asset map.
+func GetInstallConfig(installConfig asset.Asset, parents map[asset.Asset]*asset.State) (*types.InstallConfig, error) {
+	var cfg types.InstallConfig
+
+	st, ok := parents[installConfig]
+	if !ok {
+		return nil, fmt.Errorf("failed to find %T in parents", installConfig)
+	}
+
+	if err := yaml.Unmarshal(st.Contents[0].Data, &cfg); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal the installconfig: %v", err)
+	}
+
+	return &cfg, nil
+}

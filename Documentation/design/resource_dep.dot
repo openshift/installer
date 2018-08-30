@@ -76,8 +76,8 @@ strict digraph resource {
   // Kubeconfigs
   {
     node [style=filled,color=lightblue];
-    kubelet_kubeconfig [label="kubeconfig-kubelet"];
-    kubeconfig [label="kubeconfig"];
+    kubeconfig_admin [label="kubeconfig-admin"];
+    kubeconfig_kubelet [label="kubeconfig-kubelet"];
   }
 
 
@@ -106,8 +106,8 @@ strict digraph resource {
   root_ca_bundle -> mcc_bundle;
   install_config -> mcc_bundle;
 
-  root_ca_bundle -> kubeconfig;
-  root_ca_bundle -> kubelet_kubeconfig;
+  root_ca_bundle -> kubeconfig_admin;
+  root_ca_bundle -> kubeconfig_kubelet;
   root_ca_bundle -> bootstrap_control_plane;
   root_ca_bundle -> master_ignition;
   root_ca_bundle -> worker_ignition;
@@ -131,12 +131,12 @@ strict digraph resource {
   aggregator_ca_bundle -> clusterapi_apiserver_bundle;
   aggregator_ca_bundle -> bootstrap_ignition;
 
-  admin_bundle -> kubeconfig;
+  admin_bundle -> kubeconfig_admin;
 
-  kubelet_bundle -> kubelet_kubeconfig;
+  kubelet_bundle -> kubeconfig_kubelet;
 
-  install_config -> kubeconfig;
-  install_config -> kubelet_kubeconfig;
+  install_config -> kubeconfig_admin;
+  install_config -> kubeconfig_kubelet;
 
   apiserver_bundle -> bootstrap_control_plane;
 
@@ -164,8 +164,8 @@ strict digraph resource {
   bootstrap_control_plane -> bootstrap_ignition;
   misc_manifests -> bootstrap_ignition;
 
-  kubelet_kubeconfig -> bootstrap_ignition;
-  kubelet_kubeconfig -> master_ignition;
+  kubeconfig_kubelet -> bootstrap_ignition;
+  kubeconfig_kubelet -> master_ignition;
 
   bootstrap_ignition -> terraform_state;
   master_ignition -> terraform_state;
@@ -196,9 +196,9 @@ strict digraph resource {
   bootstrap_control_plane -> manifests;
   misc_manifests -> manifests;
 
-  kubelet_kubeconfig -> manifests;
-  kubeconfig -> manifests;
-  kubeconfig -> cluster;
+  kubeconfig_kubelet -> manifests;
+  kubeconfig_admin -> manifests;
+  kubeconfig_admin -> cluster;
 
   bootstrap_ignition -> ignition_configs;
   master_ignition -> ignition_configs;
