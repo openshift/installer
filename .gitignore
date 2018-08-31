@@ -9,7 +9,6 @@ id_rsa*
 pull-secret.json
 ssh-key.pem
 tectonic-*.tar.gz
-tectonic-license.txt
 config.yaml
 
 bin/

@@ -28,7 +28,6 @@ const (
 	networkConfigAdvertiseAddress = "0.0.0.0"
 	identityConfigConsoleClientID = "tectonic-console"
 	identityConfigKubectlClientID = "tectonic-kubectl"
-	statsEmitterConfigStatsURL    = "https://stats-collector.tectonic.com"
 	ingressConfigIngressKind      = "haproxy-router"
 	certificatesStrategy          = "userProvidedCA"
 	identityAPIService            = "tectonic-identity-api.tectonic-system.svc.cluster.local"
@@ -217,8 +216,6 @@ func (c *ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, erro
 			Kind:       tectonicutility.Kind,
 		},
 	}
-
-	utilityConfig.StatsEmitterConfig.StatsURL = statsEmitterConfigStatsURL
 
 	utilityConfig.TectonicConfigMapConfig.CertificatesStrategy = certificatesStrategy
 	utilityConfig.TectonicConfigMapConfig.ClusterID = c.Cluster.Internal.ClusterID

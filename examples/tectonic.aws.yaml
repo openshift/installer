@@ -182,12 +182,6 @@ iscsi:
   # (optional) Start iscsid.service to enable iscsi volume attachment.
   # enabled: false
 
-# The path to the tectonic licence file.
-# You can download the Tectonic license file from your Account overview page at [1].
-#
-# [1] https://account.coreos.com/overview
-licensePath:
-
 master:
   # The name of the node pool(s) to use for master nodes
   nodePools:

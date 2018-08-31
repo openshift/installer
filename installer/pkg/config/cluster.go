@@ -83,7 +83,6 @@ type Cluster struct {
 	IgnitionWorker  string   `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
 	Internal        `json:",inline" yaml:"-"`
 	libvirt.Libvirt `json:",inline" yaml:"libvirt,omitempty"`
-	LicensePath     string `json:"tectonic_license_path,omitempty" yaml:"licensePath,omitempty"`
 	Master          `json:",inline" yaml:"master,omitempty"`
 	Name            string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
 	Networking      `json:",inline" yaml:"networking,omitempty"`

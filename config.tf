@@ -59,18 +59,18 @@ variable "tectonic_container_images" {
   default = {
     addon_resizer                        = "gcr.io/google_containers/addon-resizer:2.1"
     bootkube                             = "quay.io/coreos/bootkube:v0.10.0"
-    tnc_operator                         = "quay.io/coreos/tectonic-node-controller-operator-dev:c56e9aa2ea01bb7bf638e56c5c43f1ae6740b23a"
+    tnc_operator                         = "quay.io/coreos/tectonic-node-controller-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
     etcd_cert_signer                     = "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6"
     etcd                                 = "quay.io/coreos/etcd:v3.2.14"
     hyperkube                            = "openshift/origin-node:latest"
-    kube_core_renderer                   = "quay.io/coreos/kube-core-renderer-dev:c56e9aa2ea01bb7bf638e56c5c43f1ae6740b23a"
-    kube_core_operator                   = "quay.io/coreos/kube-core-operator-dev:c56e9aa2ea01bb7bf638e56c5c43f1ae6740b23a"
-    tectonic_channel_operator            = "quay.io/coreos/tectonic-channel-operator-dev:c56e9aa2ea01bb7bf638e56c5c43f1ae6740b23a"
-    kube_addon_operator                  = "quay.io/coreos/kube-addon-operator-dev:c56e9aa2ea01bb7bf638e56c5c43f1ae6740b23a"
+    kube_core_renderer                   = "quay.io/coreos/kube-core-renderer-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
+    kube_core_operator                   = "quay.io/coreos/kube-core-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
+    tectonic_channel_operator            = "quay.io/coreos/tectonic-channel-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
+    kube_addon_operator                  = "quay.io/coreos/kube-addon-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
     tectonic_alm_operator                = "quay.io/coreos/tectonic-alm-operator:v0.3.1"
-    tectonic_ingress_controller_operator = "quay.io/coreos/tectonic-ingress-controller-operator-dev:c56e9aa2ea01bb7bf638e56c5c43f1ae6740b23a"
-    tectonic_utility_operator            = "quay.io/coreos/tectonic-utility-operator-dev:c56e9aa2ea01bb7bf638e56c5c43f1ae6740b23a"
-    tectonic_network_operator            = "quay.io/coreos/tectonic-network-operator-dev:c56e9aa2ea01bb7bf638e56c5c43f1ae6740b23a"
+    tectonic_ingress_controller_operator = "quay.io/coreos/tectonic-ingress-controller-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
+    tectonic_utility_operator            = "quay.io/coreos/tectonic-utility-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
+    tectonic_network_operator            = "quay.io/coreos/tectonic-network-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
   }
 }
 
@@ -192,18 +192,6 @@ You can download the pull secret from your Account overview page at [3].
 EOF
 }
 
-variable "tectonic_license_path" {
-  type    = "string"
-  default = ""
-
-  description = <<EOF
-The path to the tectonic licence file.
-You can download the Tectonic license file from your Account overview page at [1].
-
-[1] https://account.coreos.com/overview
-EOF
-}
-
 variable "tectonic_container_linux_channel" {
   type = "string"
 
@@ -303,12 +291,6 @@ variable "tectonic_ca_key_alg" {
 The default value is currently recommended.
 This field is mandatory if `tectonic_ca_cert` is set.
 EOF
-}
-
-variable "tectonic_stats_url" {
-  type        = "string"
-  default     = "https://stats-collector.tectonic.com"
-  description = "(internal) The Tectonic statistics collection URL to which to report."
 }
 
 variable "tectonic_networking" {

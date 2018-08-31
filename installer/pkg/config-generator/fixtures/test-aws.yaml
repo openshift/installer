@@ -13,7 +13,6 @@ worker:
   nodePools:
     - worker
 pullSecretPath: /path/config.json
-licensePath: /path/tectonic-license.txt
 containerLinux:
   channel: stable
   version: latest

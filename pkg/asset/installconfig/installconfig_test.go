@@ -32,7 +32,6 @@ func TestInstallConfigDependencies(t *testing.T) {
 		sshKey:       &testAsset{name: "test-sshkey"},
 		baseDomain:   &testAsset{name: "test-domain"},
 		clusterName:  &testAsset{name: "test-cluster"},
-		license:      &testAsset{name: "test-license"},
 		pullSecret:   &testAsset{name: "test-pull-secret"},
 		platform:     &testAsset{name: "test-platform"},
 	}
@@ -46,7 +45,6 @@ func TestInstallConfigDependencies(t *testing.T) {
 		"test-sshkey",
 		"test-domain",
 		"test-cluster",
-		"test-license",
 		"test-pull-secret",
 		"test-platform",
 	}
@@ -102,7 +100,6 @@ func TestInstallConfigGenerate(t *testing.T) {
 				sshKey:       &testAsset{},
 				baseDomain:   &testAsset{},
 				clusterName:  &testAsset{},
-				license:      &testAsset{},
 				pullSecret:   &testAsset{},
 				platform:     &testAsset{},
 			}
@@ -137,9 +134,6 @@ func TestInstallConfigGenerate(t *testing.T) {
 				stock.clusterName: {
 					Contents: []asset.Content{{Data: []byte("test-cluster-name")}},
 				},
-				stock.license: {
-					Contents: []asset.Content{{Data: []byte("test-license")}},
-				},
 				stock.pullSecret: {
 					Contents: []asset.Content{{Data: []byte("test-pull-secret")}},
 				},
@@ -165,7 +159,6 @@ func TestInstallConfigGenerate(t *testing.T) {
   sshKey: test-sshkey
 baseDomain: test-domain
 clusterID: test-cluster-id
-license: test-license
 machines: null
 metadata:
   creationTimestamp: null

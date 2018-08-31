@@ -13,7 +13,6 @@ variable "manifest_names" {
     "rbac/role-user.yaml",
     "secrets/ca-cert.yaml",
     "secrets/ingress-tls.yaml",
-    "secrets/license.json",
     "secrets/pull.json",
     "security/priviledged-scc-tectonic.yaml",
     "updater/app-version-kind.yaml",
@@ -57,7 +56,6 @@ data "template_file" "manifest_file_list" {
     tectonic_version              = "${var.versions["tectonic"]}"
     tectonic_alm_operator_version = "${var.versions["alm"]}"
 
-    license     = "${base64encode(file(var.license_path))}"
     pull_secret = "${base64encode(file(var.pull_secret_path))}"
 
     update_server  = "${var.update_server}"

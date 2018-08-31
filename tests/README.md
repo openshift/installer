@@ -65,7 +65,6 @@ environment variables:
 ``` bash
 AWS_ACCESS_KEY_ID
 AWS_SECRET_ACCESS_KEY
-LICENSE_PATH
 PULL_SECRET_PATH
 ```
 

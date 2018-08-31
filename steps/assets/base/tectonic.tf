@@ -62,7 +62,6 @@ module "tectonic" {
   container_base_images = "${var.tectonic_container_base_images}"
   versions              = "${var.tectonic_versions}"
 
-  license_path     = "${pathexpand(var.tectonic_license_path)}"
   pull_secret_path = "${pathexpand(var.tectonic_pull_secret_path)}"
 
   update_channel = "${var.tectonic_update_channel}"

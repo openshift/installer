@@ -4,14 +4,12 @@
 set -e
 
 # This should be executed from top-level directory not from `tests` directory
-# Script needs two variables to be set before execution
-# 1) LICENSE_PATH - path to tectonic license file
-# 2) PULL_SECRET_PATH - path to pull secret file
+# Script needs one variable to be set before execution
+# 1) PULL_SECRET_PATH - path to pull secret file
 
 set -eo pipefail
 
 SMOKE_TEST_OUTPUT="Never executed. Problem with one of previous stages"
-[ -z ${LICENSE_PATH+x} ] && (echo "Please set LICENSE_PATH"; exit 1)
 [ -z ${PULL_SECRET_PATH+x} ] && (echo "Please set PULL_SECRET_PATH"; exit 1)
 [ -z ${DOMAIN+x} ] && DOMAIN="tectonic-ci.de"
 [ -z ${JOB_NAME+x} ] && PREFIX="${USER:-test}" || PREFIX="ci-${JOB_NAME#*/}"
@@ -69,7 +67,6 @@ python <<-EOF >"${CLUSTER_NAME}.yaml"
 	    config = yaml.load(f)
 	config['name'] = '${CLUSTER_NAME}'
 	config['baseDomain'] = '${DOMAIN}'
-	config['licensePath'] = '${LICENSE_PATH}'
 	config['pullSecretPath'] = '${PULL_SECRET_PATH}'
 	config['aws']['region'] = '${AWS_REGION}'
 	config['aws']['extraTags'] = {

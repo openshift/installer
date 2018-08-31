@@ -17,7 +17,6 @@ aws:
 baseDomain: tectonic-ci.de
 containerLinux:
   channel: beta
-licensePath:
 master:
   nodePools:
     - master

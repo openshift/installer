@@ -23,8 +23,6 @@ type Stock interface {
 	BaseDomain() asset.Asset
 	// ClusterName is the asset that queries the user for the name of the cluster.
 	ClusterName() asset.Asset
-	// License is the asset that queries the user for the OpenShift license.
-	License() asset.Asset
 	// PullSecret is the asset that queries the user for the pull secret.
 	PullSecret() asset.Asset
 	// Platform is the asset that queries the user for the platform on which
@@ -41,7 +39,6 @@ type StockImpl struct {
 	sshKey        asset.Asset
 	baseDomain    asset.Asset
 	clusterName   asset.Asset
-	license       asset.Asset
 	pullSecret    asset.Asset
 	platform      asset.Asset
 }
@@ -71,10 +68,6 @@ func (s *StockImpl) EstablishStock(directory string, inputReader *bufio.Reader) 
 	}
 	s.clusterName = &asset.UserProvided{
 		Prompt:      "Cluster Name:",
-		InputReader: inputReader,
-	}
-	s.license = &asset.UserProvided{
-		Prompt:      "License:",
 		InputReader: inputReader,
 	}
 	s.pullSecret = &asset.UserProvided{
@@ -118,11 +111,6 @@ func (s *StockImpl) BaseDomain() asset.Asset {
 // ClusterName is the asset that queries the user for the name of the cluster.
 func (s *StockImpl) ClusterName() asset.Asset {
 	return s.clusterName
-}
-
-// License is the asset that queries the user for the OpenShift license.
-func (s *StockImpl) License() asset.Asset {
-	return s.license
 }
 
 // PullSecret is the asset that queries the user for the pull secret.
