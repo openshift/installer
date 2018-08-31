@@ -5,15 +5,14 @@ go_library(
     srcs = [
         "doc.go",
         "stock.go",
+        "tfvar.go",
     ],
-    importpath = "github.com/openshift/installer/pkg/asset/stock",
+    importpath = "github.com/openshift/installer/pkg/asset/cluster",
     visibility = ["//visibility:public"],
     deps = [
-        "//pkg/asset/cluster:go_default_library",
+        "//pkg/asset:go_default_library",
         "//pkg/asset/ignition:go_default_library",
         "//pkg/asset/installconfig:go_default_library",
-        "//pkg/asset/kubeconfig:go_default_library",
-        "//pkg/asset/manifests:go_default_library",
-        "//pkg/asset/tls:go_default_library",
+        "//pkg/types/config:go_default_library",
     ],
 )
