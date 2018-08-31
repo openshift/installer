@@ -44,7 +44,7 @@ For contributors who want to work up pull requests, the workflow is roughly:
     ```
     Note that a portion of the docs and examples are generated and that the generated files are to be committed by you. `make structure-check` checks that what is generated is what you must commit.
 7. Submit a pull request to the original repository.
-8. The [repo owners](OWNERS) will respond to your issue promptly, following [the ususal Prow workflow][prow-review].
+8. The [repo](OWNERS) [owners](OWNERS_ALIASES) will respond to your issue promptly, following [the ususal Prow workflow][prow-review].
 
 Thanks for your contributions!
 
