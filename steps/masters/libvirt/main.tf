@@ -10,9 +10,8 @@ resource "libvirt_volume" "master" {
 }
 
 resource "libvirt_ignition" "master" {
-  count   = "${var.tectonic_master_count}"
-  name    = "master-${count.index}.ign"
-  content = "${file(format("%s/%s", path.cwd, var.tectonic_ignition_masters[count.index]))}"
+  name    = "master.ign"
+  content = "${file(format("%s/%s", path.cwd, var.tectonic_ignition_master))}"
 }
 
 resource "libvirt_domain" "master" {
@@ -23,7 +22,7 @@ resource "libvirt_domain" "master" {
   memory = "2048"
   vcpu   = "2"
 
-  coreos_ignition = "${libvirt_ignition.master.*.id[count.index]}"
+  coreos_ignition = "${libvirt_ignition.master.id}"
 
   disk {
     volume_id = "${element(libvirt_volume.master.*.id, count.index)}"
