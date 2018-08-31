@@ -5,5 +5,10 @@ if [ "$IS_CONTAINER" != "" ]; then
   set -x
   /terraform fmt -list -check -write=false
 else
-  docker run -e IS_CONTAINER='TRUE' --rm -v "$PWD":"$PWD":ro -v /tmp:/tmp:rw -w "$PWD" quay.io/coreos/terraform-alpine:v0.11.7 ./hack/tf-fmt.sh
+  docker run --rm \
+    --env IS_CONTAINER=TRUE \
+    --volume "${PWD}:${PWD}:ro,z" \
+    --workdir "${PWD}" \
+    quay.io/coreos/terraform-alpine:v0.11.7 \
+    ./hack/tf-fmt.sh
 fi
