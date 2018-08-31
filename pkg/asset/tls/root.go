@@ -35,21 +35,16 @@ func (c *RootCA) Generate(parents map[asset.Asset]*asset.State) (*asset.State, e
 		return nil, fmt.Errorf("failed to generate RootCA %v", err)
 	}
 
-	var st asset.State
-	st.Contents = []asset.Content{
-		{
-			Name: assetFilePath(c.rootDir, RootCAKeyName),
-			Data: []byte(PrivateKeyToPem(key)),
+	return &asset.State{
+		Contents: []asset.Content{
+			{
+				Name: assetFilePath(c.rootDir, RootCAKeyName),
+				Data: []byte(PrivateKeyToPem(key)),
+			},
+			{
+				Name: assetFilePath(c.rootDir, RootCACertName),
+				Data: []byte(CertToPem(crt)),
+			},
 		},
-		{
-			Name: assetFilePath(c.rootDir, RootCACertName),
-			Data: []byte(CertToPem(crt)),
-		},
-	}
-
-	if err := st.PersistToFile(); err != nil {
-		return nil, err
-	}
-
-	return &st, nil
+	}, nil
 }
