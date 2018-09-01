@@ -58,9 +58,8 @@ func (s *StockImpl) EstablishStock(directory string, inputReader *bufio.Reader) 
 		Prompt:      "Password:",
 		InputReader: inputReader,
 	}
-	s.sshKey = &asset.UserProvided{
-		Prompt:      "SSH Key:",
-		InputReader: inputReader,
+	s.sshKey = &sshPublicKey{
+		inputReader: inputReader,
 	}
 	s.baseDomain = &asset.UserProvided{
 		Prompt:      "Base Domain:",
