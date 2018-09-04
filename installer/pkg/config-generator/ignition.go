@@ -27,7 +27,6 @@ func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 			masters = pool
 		case "worker":
 			workers = pool
-		case "etcd": // FIXME: ignore these until openshift/release stops defining them
 		default:
 			return fmt.Errorf("unrecognized role: %s", pool.Name)
 		}
