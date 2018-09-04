@@ -11,6 +11,7 @@ go_test(
     deps = [
         "//pkg/asset:go_default_library",
         "//pkg/types:go_default_library",
+        "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],
 )
 
