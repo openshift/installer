@@ -1,0 +1,19 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "doc.go",
+        "zz_generated.api.register.go",
+    ],
+    importmap = "installer/vendor/sigs.k8s.io/cluster-api/pkg/controller",
+    importpath = "sigs.k8s.io/cluster-api/pkg/controller",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/kubernetes-incubator/apiserver-builder/pkg/controller:go_default_library",
+        "//vendor/k8s.io/client-go/rest:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/pkg/controller/machinedeployment:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/pkg/controller/machineset:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/pkg/controller/sharedinformers:go_default_library",
+    ],
+)

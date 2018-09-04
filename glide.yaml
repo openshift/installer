@@ -20,6 +20,10 @@ import:
   version: v0.26.0
 - package: github.com/vincent-petithory/dataurl
   version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
+- package: sigs.k8s.io/cluster-api
+  version: 0.0.0-alpha.2
+  subpackages:
+  - pkg/client/clientset_generated/clientset
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.2.2

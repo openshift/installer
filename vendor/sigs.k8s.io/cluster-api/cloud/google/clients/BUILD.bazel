@@ -1,0 +1,20 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["computeservice.go"],
+    importmap = "installer/vendor/sigs.k8s.io/cluster-api/cloud/google/clients",
+    importpath = "sigs.k8s.io/cluster-api/cloud/google/clients",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/google.golang.org/api/compute/v1:go_default_library"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["computeservice_test.go"],
+    embed = [":go_default_library"],
+    deps = [
+        "//vendor/google.golang.org/api/compute/v1:go_default_library",
+        "//vendor/google.golang.org/api/googleapi:go_default_library",
+    ],
+)

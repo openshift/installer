@@ -1,0 +1,24 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "add.go",
+        "create.go",
+        "delete.go",
+        "root.go",
+    ],
+    importmap = "installer/vendor/sigs.k8s.io/cluster-api/gcp-deployer/cmd",
+    importpath = "sigs.k8s.io/cluster-api/gcp-deployer/cmd",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/ghodss/yaml:go_default_library",
+        "//vendor/github.com/golang/glog:go_default_library",
+        "//vendor/github.com/spf13/cobra:go_default_library",
+        "//vendor/k8s.io/apiserver/pkg/util/logs:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/gcp-deployer/deploy:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/pkg/cert:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/util:go_default_library",
+    ],
+)

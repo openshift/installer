@@ -1,0 +1,10 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["namedmachines.go"],
+    importmap = "installer/vendor/sigs.k8s.io/cluster-api/cloud/vsphere/namedmachines",
+    importpath = "sigs.k8s.io/cluster-api/cloud/vsphere/namedmachines",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/ghodss/yaml:go_default_library"],
+)
