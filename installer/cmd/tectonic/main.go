@@ -13,13 +13,8 @@ var (
 	clusterInitCommand    = kingpin.Command("init", "Initialize a new Tectonic cluster")
 	clusterInitConfigFlag = clusterInitCommand.Flag("config", "Cluster specification file").Required().ExistingFile()
 
-	clusterInstallCommand          = kingpin.Command("install", "Create a new Tectonic cluster")
-	clusterInstallFullCommand      = clusterInstallCommand.Command("full", "Create a new Tectonic cluster").Default()
-	clusterInstallTLSNewCommand    = clusterInstallCommand.Command("tls", "Generate TLS Certificates.")
-	clusterInstallAssetsCommand    = clusterInstallCommand.Command("assets", "Generate Tectonic assets.")
-	clusterInstallBootstrapCommand = clusterInstallCommand.Command("bootstrap", "Create a single bootstrap node Tectonic cluster.")
-	clusterInstallJoinCommand      = clusterInstallCommand.Command("join", "Create master and worker nodes to join an exisiting Tectonic cluster.")
-	clusterInstallDirFlag          = clusterInstallCommand.Flag("dir", "Cluster directory").Default(".").ExistingDir()
+	clusterInstallCommand = kingpin.Command("install", "Create a new Tectonic cluster")
+	clusterInstallDirFlag = clusterInstallCommand.Flag("dir", "Cluster directory").Default(".").ExistingDir()
 
 	clusterDestroyCommand = kingpin.Command("destroy", "Destroy an existing Tectonic cluster")
 	clusterDestroyDirFlag = clusterDestroyCommand.Flag("dir", "Cluster directory").Default(".").ExistingDir()
@@ -36,16 +31,8 @@ func main() {
 	switch kingpin.Parse() {
 	case clusterInitCommand.FullCommand():
 		w = workflow.InitWorkflow(*clusterInitConfigFlag)
-	case clusterInstallFullCommand.FullCommand():
-		w = workflow.InstallFullWorkflow(*clusterInstallDirFlag)
-	case clusterInstallTLSNewCommand.FullCommand():
-		w = workflow.InstallTLSNewWorkflow(*clusterInstallDirFlag)
-	case clusterInstallAssetsCommand.FullCommand():
-		w = workflow.InstallAssetsWorkflow(*clusterInstallDirFlag)
-	case clusterInstallBootstrapCommand.FullCommand():
-		w = workflow.InstallBootstrapWorkflow(*clusterInstallDirFlag)
-	case clusterInstallJoinCommand.FullCommand():
-		w = workflow.InstallJoinWorkflow(*clusterInstallDirFlag)
+	case clusterInstallCommand.FullCommand():
+		w = workflow.InstallWorkflow(*clusterInstallDirFlag)
 	case clusterDestroyCommand.FullCommand():
 		w = workflow.DestroyWorkflow(*clusterDestroyDirFlag)
 	case convertCommand.FullCommand():

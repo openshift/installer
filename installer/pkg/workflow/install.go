@@ -8,9 +8,9 @@ import (
 	"github.com/openshift/installer/installer/pkg/config-generator"
 )
 
-// InstallFullWorkflow creates new instances of the 'install' workflow,
+// InstallWorkflow creates new instances of the 'install' workflow,
 // responsible for running the actions necessary to install a new cluster.
-func InstallFullWorkflow(clusterDir string) Workflow {
+func InstallWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []step{
@@ -23,58 +23,6 @@ func InstallFullWorkflow(clusterDir string) Workflow {
 			generateIgnConfigStep,
 			installTopologyStep,
 			installBootstrapStep,
-			installJoinMastersStep,
-			installJoinWorkersStep,
-		},
-	}
-}
-
-// InstallTLSNewWorkflow generates the TLS certificates using go, instead of TF
-func InstallTLSNewWorkflow(clusterDir string) Workflow {
-	return Workflow{
-		metadata: metadata{clusterDir: clusterDir},
-		steps: []step{
-			refreshConfigStep,
-			generateClusterConfigMaps,
-			generateTLSConfigStep,
-		},
-	}
-}
-
-// InstallAssetsWorkflow creates new instances of the 'assets' workflow,
-// responsible for running the actions necessary to generate cluster assets.
-func InstallAssetsWorkflow(clusterDir string) Workflow {
-	return Workflow{
-		metadata: metadata{clusterDir: clusterDir},
-		steps: []step{
-			refreshConfigStep,
-			generateClusterConfigMaps,
-			installAssetsStep,
-			generateIgnConfigStep,
-		},
-	}
-}
-
-// InstallBootstrapWorkflow creates new instances of the 'bootstrap' workflow,
-// responsible for running the actions necessary to generate a single bootstrap machine cluster.
-func InstallBootstrapWorkflow(clusterDir string) Workflow {
-	return Workflow{
-		metadata: metadata{clusterDir: clusterDir},
-		steps: []step{
-			refreshConfigStep,
-			installTopologyStep,
-			installBootstrapStep,
-		},
-	}
-}
-
-// InstallJoinWorkflow creates new instances of the 'join' workflow,
-// responsible for running the actions necessary to scale the machines of the cluster.
-func InstallJoinWorkflow(clusterDir string) Workflow {
-	return Workflow{
-		metadata: metadata{clusterDir: clusterDir},
-		steps: []step{
-			refreshConfigStep,
 			installJoinMastersStep,
 			installJoinWorkersStep,
 		},
