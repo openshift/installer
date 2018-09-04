@@ -23,8 +23,7 @@ func InstallWorkflow(clusterDir string) Workflow {
 			generateIgnConfigStep,
 			installTopologyStep,
 			installBootstrapStep,
-			installJoinMastersStep,
-			installJoinWorkersStep,
+			installMachinesStep,
 		},
 	}
 }
@@ -51,12 +50,8 @@ func installBootstrapStep(m *metadata) error {
 	return nil
 }
 
-func installJoinMastersStep(m *metadata) error {
-	return runInstallStep(m, mastersStep)
-}
-
-func installJoinWorkersStep(m *metadata) error {
-	return runInstallStep(m, joinWorkersStep)
+func installMachinesStep(m *metadata) error {
+	return runInstallStep(m, machinesStep)
 }
 
 func runInstallStep(m *metadata, step string, extraArgs ...string) error {
