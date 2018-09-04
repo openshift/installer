@@ -19,7 +19,6 @@ const (
 	configFileName   = "config.yaml"
 	internalFileName = "internal.yaml"
 	machinesStep     = "machines"
-	newTLSStep       = "tls"
 	stepsBaseDir     = "steps"
 	topologyStep     = "topology"
 )

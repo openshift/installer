@@ -14,25 +14,17 @@ func InstallWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []step{
-			refreshConfigStep,
-			generateClusterConfigMaps,
 			readClusterConfigStep,
+			generateTerraformVariablesStep,
 			generateTLSConfigStep,
 			generateClusterConfigMaps,
 			installAssetsStep,
 			generateIgnConfigStep,
 			installTopologyStep,
-			installBootstrapStep,
 			installMachinesStep,
+			installBootstrapStep,
 		},
 	}
-}
-
-func refreshConfigStep(m *metadata) error {
-	if err := readClusterConfigStep(m); err != nil {
-		return err
-	}
-	return generateTerraformVariablesStep(m)
 }
 
 func installAssetsStep(m *metadata) error {
