@@ -41,26 +41,6 @@ module "masters" {
   user_data_igns      = "${var.tectonic_ignition_masters}"
 }
 
-module "workers" {
-  source = "../../../modules/aws/worker"
-
-  cluster_id       = "${var.tectonic_cluster_id}"
-  cluster_name     = "${var.tectonic_cluster_name}"
-  ec2_type         = "${var.tectonic_aws_worker_ec2_type}"
-  extra_tags       = "${var.tectonic_aws_extra_tags}"
-  instance_count   = "${var.tectonic_worker_count}"
-  load_balancers   = "${var.tectonic_aws_worker_load_balancers}"
-  root_volume_iops = "${var.tectonic_aws_worker_root_volume_iops}"
-  root_volume_size = "${var.tectonic_aws_worker_root_volume_size}"
-  root_volume_type = "${var.tectonic_aws_worker_root_volume_type}"
-  sg_ids           = "${concat(var.tectonic_aws_worker_extra_sg_ids, list(module.vpc.worker_sg_id))}"
-  subnet_ids       = "${module.vpc.worker_subnet_ids}"
-  worker_iam_role  = "${var.tectonic_aws_worker_iam_role_name}"
-  ec2_ami          = "${var.tectonic_aws_ec2_ami_override}"
-  base_domain      = "${var.tectonic_base_domain}"
-  user_data_ign    = "${file("${path.cwd}/${var.tectonic_ignition_worker}")}"
-}
-
 module "dns" {
   source = "../../../modules/dns/route53"
 

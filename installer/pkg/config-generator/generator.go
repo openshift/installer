@@ -6,7 +6,9 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net"
+	"path/filepath"
 	"strings"
 
 	"github.com/apparentlymart/go-cidr/cidr"
@@ -19,6 +21,7 @@ import (
 
 	"github.com/openshift/installer/installer/pkg/config"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -32,6 +35,7 @@ const (
 	ingressConfigIngressKind      = "haproxy-router"
 	certificatesStrategy          = "userProvidedCA"
 	identityAPIService            = "tectonic-identity-api.tectonic-system.svc.cluster.local"
+	maoTargetNamespace            = "openshift-cluster-api"
 )
 
 // ConfigGenerator defines the cluster config generation for a cluster.
@@ -62,8 +66,92 @@ func New(cluster config.Cluster) ConfigGenerator {
 	}
 }
 
+// maoOperatorConfig contains configuration for mao managed stack
+// TODO(enxebre): move up to "github.com/coreos/tectonic-config
+type maoOperatorConfig struct {
+	metav1.TypeMeta `json:",inline"`
+	TargetNamespace string         `json:"targetNamespace"`
+	APIServiceCA    string         `json:"apiServiceCA"`
+	Provider        string         `json:"provider"`
+	AWS             *awsConfig     `json:"aws"`
+	Libvirt         *libvirtConfig `json:"libvirt"`
+}
+
+type libvirtConfig struct {
+	ClusterName string `json:"clusterName"`
+	URI         string `json:"uri"`
+	NetworkName string `json:"networkName"`
+	IPRange     string `json:"iprange"`
+	Replicas    int    `json:"replicas"`
+}
+
+type awsConfig struct {
+	ClusterName      string `json:"clusterName"`
+	ClusterID        string `json:"clusterID"`
+	Region           string `json:"region"`
+	AvailabilityZone string `json:"availabilityZone"`
+	Image            string `json:"image"`
+	Replicas         int    `json:"replicas"`
+}
+
+func (c *ConfigGenerator) maoConfig(clusterDir string) (*maoOperatorConfig, error) {
+	cfg := maoOperatorConfig{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "machineAPIOperatorConfig",
+		},
+
+		TargetNamespace: maoTargetNamespace,
+	}
+
+	ca, err := ioutil.ReadFile(filepath.Join(clusterDir, aggregatorCACertPath))
+	if err != nil {
+		return nil, fmt.Errorf("could not read aggregator CA: %v", err)
+	}
+
+	cfg.APIServiceCA = string(ca)
+	cfg.Provider = tectonicCloudProvider(c.Platform)
+
+	switch c.Platform {
+	case config.PlatformAWS:
+		var ami string
+
+		if c.AWS.EC2AMIOverride != "" {
+			ami = c.AWS.EC2AMIOverride
+		} else {
+			ami, err = rhcos.AMI(config.DefaultChannel, c.Region)
+			if err != nil {
+				return nil, fmt.Errorf("failed to lookup RHCOS AMI: %v", err)
+			}
+		}
+
+		cfg.AWS = &awsConfig{
+			ClusterName:      c.Name,
+			ClusterID:        c.ClusterID,
+			Region:           c.Region,
+			AvailabilityZone: "",
+			Image:            ami,
+			Replicas:         c.NodeCount(c.Worker.NodePools),
+		}
+
+	case config.PlatformLibvirt:
+		cfg.Libvirt = &libvirtConfig{
+			ClusterName: c.Name,
+			URI:         c.Libvirt.URI,
+			NetworkName: c.Libvirt.Network.Name,
+			IPRange:     c.Libvirt.IPRange,
+			Replicas:    c.NodeCount(c.Worker.NodePools),
+		}
+
+	default:
+		return nil, fmt.Errorf("unknown provider for machine-api-operator: %v", cfg.Provider)
+	}
+
+	return &cfg, nil
+}
+
 // KubeSystem returns, if successful, a yaml string for the kube-system.
-func (c *ConfigGenerator) KubeSystem() (string, error) {
+func (c *ConfigGenerator) KubeSystem(clusterDir string) (string, error) {
 	coreConfig, err := c.coreConfig()
 	if err != nil {
 		return "", err
@@ -72,11 +160,16 @@ func (c *ConfigGenerator) KubeSystem() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	maoConfig, err := c.maoConfig(clusterDir)
+	if err != nil {
+		return "", err
+	}
 
 	return configMap("kube-system", genericData{
 		"kco-config":     coreConfig,
 		"network-config": c.networkConfig(),
 		"install-config": installConfig,
+		"mao-config":     maoConfig,
 	})
 }
 

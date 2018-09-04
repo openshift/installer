@@ -7,3 +7,8 @@ variable "cloud_provider" {
 variable "ingress_kind" {
   type = "string"
 }
+
+variable "aws_worker_ign_config" {
+  type    = "string"
+  default = ""
+}

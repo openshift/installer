@@ -3,7 +3,7 @@ kind: Secret
 type: kubernetes.io/tls
 metadata:
   name: cluster-apiserver-certs
-  namespace: default
+  namespace: openshift-cluster-api
   labels:
     api: clusterapi
     apiserver: "true"
