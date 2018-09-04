@@ -125,8 +125,26 @@ resource "aws_instance" "master" {
   ), var.extra_tags)}"
 }
 
-resource "aws_elb_attachment" "masters" {
-  count    = "${length(var.aws_lbs) * var.instance_count}"
-  elb      = "${var.aws_lbs[count.index / var.instance_count]}"
-  instance = "${aws_instance.master.*.id[count.index % var.instance_count]}"
+resource "aws_elb_attachment" "masters_tnc" {
+  count    = "${var.private_endpoints ? var.instance_count : 0}"
+  elb      = "${var.elb_tnc_id}"
+  instance = "${aws_instance.master.*.id[count.index]}"
+}
+
+resource "aws_elb_attachment" "masters_internal" {
+  count    = "${var.private_endpoints ? var.instance_count : 0}"
+  elb      = "${var.elb_api_internal_id}"
+  instance = "${aws_instance.master.*.id[count.index]}"
+}
+
+resource "aws_elb_attachment" "masters_external" {
+  count    = "${var.public_endpoints ? var.instance_count : 0}"
+  elb      = "${var.elb_api_external_id}"
+  instance = "${aws_instance.master.*.id[count.index]}"
+}
+
+resource "aws_elb_attachment" "masters_console" {
+  count    = "${var.instance_count}"
+  elb      = "${var.elb_console_id}"
+  instance = "${aws_instance.master.*.id[count.index]}"
 }

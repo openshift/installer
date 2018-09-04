@@ -17,10 +17,9 @@ const (
 	bootstrapStep    = "bootstrap"
 	binaryPrefix     = "installer"
 	configFileName   = "config.yaml"
+	infraStep        = "infra"
 	internalFileName = "internal.yaml"
-	machinesStep     = "machines"
 	stepsBaseDir     = "steps"
-	topologyStep     = "topology"
 )
 
 // returns the directory containing templates for a given step. If platform is
@@ -156,9 +155,4 @@ func baseLocation() (string, error) {
 		return "", fmt.Errorf("%s executable in unknown location: %s", path.Base(ex), err)
 	}
 	return path.Dir(ex), nil
-}
-
-func clusterIsBootstrapped(stateDir string) bool {
-	return hasStateFile(stateDir, topologyStep) &&
-		hasStateFile(stateDir, bootstrapStep)
 }

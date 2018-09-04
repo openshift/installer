@@ -20,8 +20,7 @@ func InstallWorkflow(clusterDir string) Workflow {
 			generateClusterConfigMaps,
 			installAssetsStep,
 			generateIgnConfigStep,
-			installTopologyStep,
-			installMachinesStep,
+			installInfraStep,
 			installBootstrapStep,
 		},
 	}
@@ -31,19 +30,15 @@ func installAssetsStep(m *metadata) error {
 	return runInstallStep(m, assetsStep)
 }
 
-func installTopologyStep(m *metadata) error {
-	return runInstallStep(m, topologyStep)
+func installInfraStep(m *metadata) error {
+	return runInstallStep(m, infraStep)
 }
 
 func installBootstrapStep(m *metadata) error {
-	if !clusterIsBootstrapped(m.clusterDir) {
+	if !hasStateFile(m.clusterDir, bootstrapStep) {
 		return runInstallStep(m, bootstrapStep)
 	}
 	return nil
-}
-
-func installMachinesStep(m *metadata) error {
-	return runInstallStep(m, machinesStep)
 }
 
 func runInstallStep(m *metadata, step string, extraArgs ...string) error {

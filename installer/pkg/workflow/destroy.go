@@ -9,9 +9,8 @@ func DestroyWorkflow(clusterDir string) Workflow {
 		steps: []step{
 			readClusterConfigStep,
 			generateTerraformVariablesStep,
-			destroyMachinesStep,
 			destroyBootstrapStep,
-			destroyTopologyStep,
+			destroyInfraStep,
 			destroyAssetsStep,
 		},
 	}
@@ -21,16 +20,12 @@ func destroyAssetsStep(m *metadata) error {
 	return runDestroyStep(m, assetsStep)
 }
 
+func destroyInfraStep(m *metadata) error {
+	return runDestroyStep(m, infraStep)
+}
+
 func destroyBootstrapStep(m *metadata) error {
 	return runDestroyStep(m, bootstrapStep)
-}
-
-func destroyTopologyStep(m *metadata) error {
-	return runDestroyStep(m, topologyStep)
-}
-
-func destroyMachinesStep(m *metadata) error {
-	return runDestroyStep(m, machinesStep)
 }
 
 func runDestroyStep(m *metadata, step string, extraArgs ...string) error {
