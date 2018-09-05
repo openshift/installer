@@ -2,16 +2,12 @@
 Description=Bootstrap a Kubernetes cluster
 ConditionPathExists=!/opt/tectonic/init_bootkube.done
 Wants=kubelet.service
-Requires=docker.service
-After=kubelet.service docker.service
+After=kubelet.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=true
 WorkingDirectory=/opt/tectonic
-
-User=root
-Group=root
 
 ExecStart=/usr/bin/bash /opt/tectonic/bootkube.sh
 ExecStartPost=/bin/touch /opt/tectonic/init_bootkube.done

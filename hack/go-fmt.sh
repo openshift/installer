@@ -5,7 +5,7 @@ if [ "$IS_CONTAINER" != "" ]; then
   done
   git diff --exit-code
 else
-  docker run --rm \
+  podman run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
     --workdir /go/src/github.com/openshift/installer \

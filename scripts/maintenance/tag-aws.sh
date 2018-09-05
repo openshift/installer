@@ -5,7 +5,7 @@ usage() {
 
 $(basename "$0") tags AWS resources with 'expirationDate: some-date-string',
 defaulting to tomorrow's date, and excludes all resources tagged with
-tag keys/values specified in an 'exclude' file. Requires that 'docker' is
+tag keys/values specified in an 'exclude' file. Requires that 'podman' is
 installed.
 
 AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environmental variables must be set.
@@ -101,7 +101,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-if ! command -V docker >/dev/null; then
+if ! command -V podman >/dev/null; then
   echo "Missing required dependencies" >&2
   exit 1
 fi
@@ -181,9 +181,9 @@ if [ ! $force ]; then
   fi
 fi
 
-trap 'docker stop grafiti-tagger; exit' EXIT
+trap 'podman stop grafiti-tagger; exit' EXIT
 
-docker run -t --rm --name grafiti-tagger \
+podman run -t --rm --name grafiti-tagger \
 	-v "$tmp_dir":/tmp/config:z \
 	-e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
 	-e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \

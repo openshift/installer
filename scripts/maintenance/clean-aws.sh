@@ -4,7 +4,7 @@ usage() {
   cat <<EOF
 
 $(basename "$0") deletes AWS resources tagged with tags specified in a tag file.
-Requires that 'docker' and 'jq' are installed.
+Requires that 'podman' and 'jq' are installed.
 
 AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY environmental variables must be set.
 
@@ -86,7 +86,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-if ! command -V docker >/dev/null || ! command -V jq >/dev/null; then
+if ! command -V podman >/dev/null || ! command -V jq >/dev/null; then
   echo "Missing required dependencies" >&2
   exit 1
 fi
@@ -155,9 +155,9 @@ if [ ! $force ]; then
   fi
 fi
 
-trap 'docker stop grafiti-deleter; exit' EXIT
+trap 'podman stop grafiti-deleter; exit' EXIT
 
-docker run -t --rm --name grafiti-deleter \
+podman run -t --rm --name grafiti-deleter \
 	-v "$tmp_dir":/tmp/config:z \
 	-e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
 	-e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \

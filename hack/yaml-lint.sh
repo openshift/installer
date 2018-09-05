@@ -2,7 +2,7 @@
 if [ "$IS_CONTAINER" != "" ]; then
   yamllint --config-data "{extends: default, rules: {line-length: {level: warning, max: 120}}}" ./examples/ ./installer/
 else
-  docker run --rm \
+  podman run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/workdir:z" \
     --entrypoint sh \

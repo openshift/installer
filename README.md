@@ -18,9 +18,9 @@ These instructions can be used for AWS:
     bazel build tarball
     ```
 
-    *Note*: the project can optionally be built without installing Bazel, provided Docker is installed:
+    *Note*: the project can optionally be built without installing Bazel, provided Podman is installed:
     ```sh
-    docker run --rm -v $PWD:$PWD:Z -w $PWD quay.io/coreos/tectonic-builder:bazel-v0.3 bazel --output_base=.cache build tarball
+    podman run --rm -v $PWD:$PWD:Z -w $PWD quay.io/coreos/tectonic-builder:bazel-v0.3 bazel --output_base=.cache build tarball
     ```
 
 3. Extract the tarball
