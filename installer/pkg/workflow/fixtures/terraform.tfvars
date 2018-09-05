@@ -22,7 +22,6 @@
   ],
   "tectonic_ignition_worker": "worker.ign",
   "tectonic_libvirt_network_if": "osbr0",
-  "tectonic_libvirt_resolver": "8.8.8.8",
   "tectonic_master_count": 2,
   "tectonic_cluster_name": "aws-basic",
   "tectonic_networking": "canal",

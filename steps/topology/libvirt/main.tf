@@ -15,16 +15,18 @@ resource "libvirt_network" "tectonic_net" {
     "${var.tectonic_libvirt_ip_range}",
   ]
 
-  dns_forwarder {
-    address = "${var.tectonic_libvirt_resolver}"
-  }
-
   dns_host = ["${flatten(list(
     data.libvirt_network_dns_host_template.bootstrap.*.rendered,
     data.libvirt_network_dns_host_template.masters.*.rendered,
     data.libvirt_network_dns_host_template.etcds.*.rendered,
     data.libvirt_network_dns_host_template.workers.*.rendered,
   ))}"]
+
+  dns = [
+    {
+      local_only = true
+    },
+  ]
 
   autostart = true
 }
