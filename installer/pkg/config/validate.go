@@ -83,7 +83,7 @@ func (c *Cluster) Validate() []error {
 	errs = append(errs, c.validateNetworking()...)
 	errs = append(errs, c.validateAWS()...)
 	errs = append(errs, c.validateCL()...)
-	errs = append(errs, c.validateTectonicFiles()...)
+	errs = append(errs, c.validatePullSecret()...)
 	errs = append(errs, c.validateLibvirt()...)
 	errs = append(errs, c.validateCA()...)
 	if err := validate.PrefixError("cluster name", validate.ClusterName(c.Name)); err != nil {
@@ -280,9 +280,9 @@ func (c *Cluster) validateTNCS3Bucket() error {
 	return nil
 }
 
-func (c *Cluster) validateTectonicFiles() []error {
+func (c *Cluster) validatePullSecret() []error {
 	var errs []error
-	if err := validate.JSONFile(c.PullSecretPath); err != nil {
+	if err := validate.JSON([]byte(c.PullSecret)); err != nil {
 		errs = append(errs, err)
 	}
 	return errs

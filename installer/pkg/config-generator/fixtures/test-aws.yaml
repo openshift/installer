@@ -12,7 +12,7 @@ master:
 worker:
   nodePools:
     - worker
-pullSecretPath: /path/config.json
+pullSecret: '{"auths": {}}'
 containerLinux:
   channel: stable
   version: latest

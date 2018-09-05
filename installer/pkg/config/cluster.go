@@ -88,7 +88,8 @@ type Cluster struct {
 	Networking      `json:",inline" yaml:"networking,omitempty"`
 	NodePools       `json:"-" yaml:"nodePools"`
 	Platform        Platform `json:"tectonic_platform" yaml:"platform,omitempty"`
-	PullSecretPath  string   `json:"tectonic_pull_secret_path,omitempty" yaml:"pullSecretPath,omitempty"`
+	PullSecret      string   `json:"tectonic_pull_secret,omitempty" yaml:"pullSecret,omitempty"`
+	PullSecretPath  string   `json:"-" yaml:"pullSecretPath,omitempty"` // Deprecated: remove after openshift/release is ported to pullSecret
 	Worker          `json:",inline" yaml:"worker,omitempty"`
 }
 

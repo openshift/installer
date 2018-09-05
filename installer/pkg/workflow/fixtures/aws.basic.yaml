@@ -32,7 +32,7 @@ nodePools:
   - name: worker
     count: 3
 platform: aws
-pullSecretPath:
+pullSecret: '{"auths": {}}'
 worker:
   nodePools:
     - worker

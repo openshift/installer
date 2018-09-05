@@ -1,7 +1,6 @@
 package workflow
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -13,29 +12,12 @@ import (
 	"github.com/openshift/installer/installer/pkg/config"
 )
 
-func generatePullSecret(name string) (*os.File, error) {
-	pullBytes, err := json.Marshal(&struct{}{})
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal pull secret: %v", err)
-	}
-	p, err := ioutil.TempFile("", fmt.Sprintf("%s_pull_secret", name))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create pull secret file: %v", err)
-	}
-	if _, err := p.Write(pullBytes); err != nil {
-		return nil, fmt.Errorf("failed to write pull secret file: %v", err)
-	}
-	p.Close()
-
-	return p, nil
-}
-
-func initTestCluster(cfg, pullSecret string) (*config.Cluster, error) {
+func initTestCluster(cfg string) (*config.Cluster, error) {
 	testConfig, err := config.ParseConfigFile(cfg)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse test config: %v", err)
 	}
-	testConfig.PullSecretPath = pullSecret
+	testConfig.PullSecret = "{\"auths\": {}}"
 	if len(testConfig.Validate()) != 0 {
 		return nil, errors.New("failed to validate test conifg")
 	}
@@ -54,19 +36,10 @@ func TestGenerateTerraformVariablesStep(t *testing.T) {
 		}
 	}()
 
-	ps, err := generatePullSecret("init_workflow")
-	if err != nil {
-		t.Fatalf("failed to generate pull secret: %v", err)
-	}
-	defer os.Remove(ps.Name())
-
-	cluster, err := initTestCluster("./fixtures/aws.basic.yaml", ps.Name())
+	cluster, err := initTestCluster("./fixtures/aws.basic.yaml")
 	if err != nil {
 		t.Fatalf("failed to init cluster: %v", err)
 	}
-
-	// Remove auto-generated pull secret for comparison.
-	cluster.PullSecretPath = ""
 
 	m := &metadata{
 		cluster:    *cluster,

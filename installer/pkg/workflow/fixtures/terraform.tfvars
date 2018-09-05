@@ -29,5 +29,6 @@
   "tectonic_service_cidr": "10.3.0.0/16",
   "tectonic_cluster_cidr": "10.2.0.0/16",
   "tectonic_platform": "aws",
+  "tectonic_pull_secret": "{\"auths\": {}}",
   "tectonic_worker_count": 3
 }

@@ -76,7 +76,8 @@ python <<-EOF >"${CLUSTER_NAME}.yaml"
 	with open(os.path.expanduser(os.path.join('~', '.ssh', 'id_rsa.pub'))) as f:
 	    config['admin']['sshKey'] = f.read()
 	config['baseDomain'] = '${DOMAIN}'
-	config['pullSecretPath'] = '${PULL_SECRET_PATH}'
+	with open('${PULL_SECRET_PATH}') as f:
+	    config['pullSecret'] = f.read()
 	config['aws']['region'] = '${AWS_REGION}'
 	config['aws']['extraTags'] = {
 	    'expirationDate': (

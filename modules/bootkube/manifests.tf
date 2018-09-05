@@ -46,7 +46,7 @@ data "template_file" "manifest_file_list" {
     clusterapi_ca_cert       = "${base64encode(var.clusterapi_ca_cert_pem)}"
     clusterapi_ca_key        = "${base64encode(var.clusterapi_ca_key_pem)}"
     oidc_ca_cert             = "${base64encode(var.oidc_ca_cert)}"
-    pull_secret              = "${base64encode(file(var.pull_secret_path))}"
+    pull_secret              = "${base64encode(var.pull_secret)}"
     serviceaccount_pub       = "${base64encode(var.service_account_public_key_pem)}"
     serviceaccount_key       = "${base64encode(var.service_account_private_key_pem)}"
     kube_dns_service_ip      = "${cidrhost(var.service_cidr, 10)}"

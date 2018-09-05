@@ -56,7 +56,7 @@ data "template_file" "manifest_file_list" {
     tectonic_version              = "${var.versions["tectonic"]}"
     tectonic_alm_operator_version = "${var.versions["alm"]}"
 
-    pull_secret = "${base64encode(file(var.pull_secret_path))}"
+    pull_secret = "${base64encode(var.pull_secret)}"
 
     update_server  = "${var.update_server}"
     update_channel = "${var.update_channel}"
