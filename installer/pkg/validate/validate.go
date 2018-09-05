@@ -35,10 +35,17 @@ func JSONFile(path string) error {
 	if err != nil {
 		return err
 	}
-	if !json.Valid(b) {
-		return fmt.Errorf("file %q contains invalid JSON", path)
+	err = JSON(b)
+	if err != nil {
+		return fmt.Errorf("file %q contains invalid JSON: %v", path, err)
 	}
 	return nil
+}
+
+// JSON validates that the given data is valid JSON.
+func JSON(data []byte) error {
+	var dummy interface{}
+	return json.Unmarshal(data, &dummy)
 }
 
 // FileExists validates a file exists at the given path.
