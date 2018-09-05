@@ -31,15 +31,19 @@ output "console_sg_id" {
 }
 
 output "aws_elb_api_external_id" {
-  value = "${aws_elb.api_external.*.id}"
+  value = "${aws_elb.api_external.0.id}"
 }
 
-output "aws_elb_internal_id" {
-  value = "${aws_elb.api_internal.*.id}"
+output "aws_elb_api_internal_id" {
+  value = "${aws_elb.api_internal.0.id}"
 }
 
 output "aws_elb_console_id" {
   value = "${aws_elb.console.id}"
+}
+
+output "aws_elb_tnc_id" {
+  value = "${aws_elb.tnc.0.id}"
 }
 
 output "aws_lbs" {

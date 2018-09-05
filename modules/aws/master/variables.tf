@@ -64,10 +64,20 @@ variable "public_endpoints" {
   default     = true
 }
 
-variable "aws_lbs" {
-  description = "List of aws_lb IDs for the Console & APIs"
-  type        = "list"
-  default     = []
+variable "elb_tnc_id" {
+  type = "string"
+}
+
+variable "elb_api_internal_id" {
+  type = "string"
+}
+
+variable "elb_api_external_id" {
+  type = "string"
+}
+
+variable "elb_console_id" {
+  type = "string"
 }
 
 variable "region" {

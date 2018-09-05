@@ -8,107 +8,37 @@ import (
 	"github.com/openshift/installer/installer/pkg/config-generator"
 )
 
-// InstallFullWorkflow creates new instances of the 'install' workflow,
+// InstallWorkflow creates new instances of the 'install' workflow,
 // responsible for running the actions necessary to install a new cluster.
-func InstallFullWorkflow(clusterDir string) Workflow {
+func InstallWorkflow(clusterDir string) Workflow {
 	return Workflow{
 		metadata: metadata{clusterDir: clusterDir},
 		steps: []step{
-			refreshConfigStep,
-			generateClusterConfigMaps,
 			readClusterConfigStep,
+			generateTerraformVariablesStep,
 			generateTLSConfigStep,
 			generateClusterConfigMaps,
 			installAssetsStep,
 			generateIgnConfigStep,
-			installTopologyStep,
-			installBootstrapStep,
-			installJoinMastersStep,
-			installJoinWorkersStep,
-		},
-	}
-}
-
-// InstallTLSNewWorkflow generates the TLS certificates using go, instead of TF
-func InstallTLSNewWorkflow(clusterDir string) Workflow {
-	return Workflow{
-		metadata: metadata{clusterDir: clusterDir},
-		steps: []step{
-			refreshConfigStep,
-			generateClusterConfigMaps,
-			generateTLSConfigStep,
-		},
-	}
-}
-
-// InstallAssetsWorkflow creates new instances of the 'assets' workflow,
-// responsible for running the actions necessary to generate cluster assets.
-func InstallAssetsWorkflow(clusterDir string) Workflow {
-	return Workflow{
-		metadata: metadata{clusterDir: clusterDir},
-		steps: []step{
-			refreshConfigStep,
-			generateClusterConfigMaps,
-			installAssetsStep,
-			generateIgnConfigStep,
-		},
-	}
-}
-
-// InstallBootstrapWorkflow creates new instances of the 'bootstrap' workflow,
-// responsible for running the actions necessary to generate a single bootstrap machine cluster.
-func InstallBootstrapWorkflow(clusterDir string) Workflow {
-	return Workflow{
-		metadata: metadata{clusterDir: clusterDir},
-		steps: []step{
-			refreshConfigStep,
-			installTopologyStep,
+			installInfraStep,
 			installBootstrapStep,
 		},
 	}
-}
-
-// InstallJoinWorkflow creates new instances of the 'join' workflow,
-// responsible for running the actions necessary to scale the machines of the cluster.
-func InstallJoinWorkflow(clusterDir string) Workflow {
-	return Workflow{
-		metadata: metadata{clusterDir: clusterDir},
-		steps: []step{
-			refreshConfigStep,
-			installJoinMastersStep,
-			installJoinWorkersStep,
-		},
-	}
-}
-
-func refreshConfigStep(m *metadata) error {
-	if err := readClusterConfigStep(m); err != nil {
-		return err
-	}
-	return generateTerraformVariablesStep(m)
 }
 
 func installAssetsStep(m *metadata) error {
 	return runInstallStep(m, assetsStep)
 }
 
-func installTopologyStep(m *metadata) error {
-	return runInstallStep(m, topologyStep)
+func installInfraStep(m *metadata) error {
+	return runInstallStep(m, infraStep)
 }
 
 func installBootstrapStep(m *metadata) error {
-	if !clusterIsBootstrapped(m.clusterDir) {
+	if !hasStateFile(m.clusterDir, bootstrapStep) {
 		return runInstallStep(m, bootstrapStep)
 	}
 	return nil
-}
-
-func installJoinMastersStep(m *metadata) error {
-	return runInstallStep(m, mastersStep)
-}
-
-func installJoinWorkersStep(m *metadata) error {
-	return runInstallStep(m, joinWorkersStep)
 }
 
 func runInstallStep(m *metadata, step string, extraArgs ...string) error {
