@@ -36,6 +36,12 @@ cp bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test tectonic-dev/smoke
 export PATH="${PWD}/tectonic-dev/installer:${PATH}"
 cd tectonic-dev
 
+### HANDLE SSH KEY ###
+if [ ! -f ~/.ssh/id_rsa.pub ]; then
+  echo -e "\\e[36m Generating SSH key-pair...\\e[0m"
+  ssh-keygen -qb 2048 -t rsa -f ~/.ssh/id_rsa -N "" </dev/zero
+fi
+
 if test -z "${AWS_REGION+x}"
 then
   echo -e "\\e[36m Calculating the AWS region...\\e[0m"
@@ -59,6 +65,7 @@ CONFIGURE_AWS_ROLES=False
 echo -e "\\e[36m Creating Tectonic configuration...\\e[0m"
 python <<-EOF >"${CLUSTER_NAME}.yaml"
 	import datetime
+	import os.path
 	import sys
 
 	import yaml
@@ -66,6 +73,8 @@ python <<-EOF >"${CLUSTER_NAME}.yaml"
 	with open('examples/tectonic.aws.yaml') as f:
 	    config = yaml.load(f)
 	config['name'] = '${CLUSTER_NAME}'
+	with open(os.path.expanduser(os.path.join('~', '.ssh', 'id_rsa.pub'))) as f:
+	    config['admin']['sshKey'] = f.read()
 	config['baseDomain'] = '${DOMAIN}'
 	config['pullSecretPath'] = '${PULL_SECRET_PATH}'
 	config['aws']['region'] = '${AWS_REGION}'
@@ -82,13 +91,6 @@ python <<-EOF >"${CLUSTER_NAME}.yaml"
 
 echo -e "\\e[36m Initializing Tectonic...\\e[0m"
 tectonic init --config="${CLUSTER_NAME}".yaml
-
-### HANDLE SSH KEY ###
-if [ ! -f ~/.ssh/id_rsa.pub ]; then
-  echo -e "\\e[36m Generating SSH key-pair...\\e[0m"
-  ssh-keygen -qb 2048 -t rsa -f ~/.ssh/id_rsa -N "" </dev/zero
-fi
-export TF_VAR_tectonic_admin_ssh_key="$(cat ~/.ssh/id_rsa.pub)"
 
 echo -e "\\e[36m Deploying Tectonic...\\e[0m"
 tectonic install --dir="${CLUSTER_NAME}"
