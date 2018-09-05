@@ -1,12 +1,3 @@
-variable "region" {
-  type = "string"
-
-  description = <<EOF
-This is the AWS region.
-It is passed through to the Terraform aws provider: https://www.terraform.io/docs/providers/aws/#region
-EOF
-}
-
 variable "release_channel" {
   type    = "string"
   default = "stable"
