@@ -79,7 +79,7 @@ echo server=/tt.testing/192.168.124.1 | sudo tee /etc/NetworkManager/dnsmasq.d/t
 1. Make sure you have the `virsh` binary installed: `sudo dnf install libvirt-client libvirt-devel`
 2. Install the libvirt terraform provider:
 ```sh
-GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-libvirt
+GOBIN=~/.terraform.d/plugins go get github.com/crawford/terraform-provider-libvirt
 ```
 
 #### 1.9 Cache terrafrom plugins (optional, but makes subsequent runs a bit faster)
