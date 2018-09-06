@@ -18,7 +18,7 @@ module assets_base {
   tectonic_kubelet_debug_config    = "${var.tectonic_kubelet_debug_config}"
   tectonic_networking              = "${var.tectonic_networking}"
   tectonic_platform                = "${var.tectonic_platform}"
-  tectonic_pull_secret_path        = "${var.tectonic_pull_secret_path}"
+  tectonic_pull_secret             = "${var.tectonic_pull_secret}"
   tectonic_service_cidr            = "${var.tectonic_service_cidr}"
   tectonic_update_channel          = "${var.tectonic_update_channel}"
   tectonic_versions                = "${var.tectonic_versions}"

@@ -19,7 +19,7 @@ module "bootkube" {
 
   service_cidr = "${var.tectonic_service_cidr}"
 
-  pull_secret_path = "${pathexpand(var.tectonic_pull_secret_path)}"
+  pull_secret = "${var.tectonic_pull_secret}"
 
   admin_cert_pem                  = "${local.admin_cert_pem}"
   admin_key_pem                   = "${local.admin_key_pem}"
@@ -62,7 +62,7 @@ module "tectonic" {
   container_base_images = "${var.tectonic_container_base_images}"
   versions              = "${var.tectonic_versions}"
 
-  pull_secret_path = "${pathexpand(var.tectonic_pull_secret_path)}"
+  pull_secret = "${var.tectonic_pull_secret}"
 
   update_channel = "${var.tectonic_update_channel}"
   update_app_id  = "${var.tectonic_update_app_id}"

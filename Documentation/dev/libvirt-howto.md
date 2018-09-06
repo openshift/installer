@@ -64,7 +64,7 @@ EOF
     1. Set the `imagePath` to the **absolute** path of the operating system image you downloaded
     1. Set the `name` (e.g. test1)
     1. Look at the `podCIDR` and `serviceCIDR` fields in the `networking` section. Make sure they don't conflict with anything important.
-    1. Set the `pullSecretPath` to the **absolute** path of your downloaded pull secret file.
+    1. Set the `pullSecret` to your JSON pull secret.
 
 #### 1.7 Set up NetworkManager DNS overlay
 This step is optional, but useful for being able to resolve cluster-internal hostnames from your host.

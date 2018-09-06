@@ -23,10 +23,9 @@ variable "ingress_kind" {
   type        = "string"
 }
 
-variable "pull_secret_path" {
+variable "pull_secret" {
   type        = "string"
-  description = "Path on disk to your Tectonic pull secret. Obtain this from your Tectonic Account: https://account.coreos.com."
-  default     = "/Users/coreos/Desktop/config.json"
+  description = "Your pull secret. Obtain this from your Tectonic Account: https://account.coreos.com."
 }
 
 variable "base_address" {

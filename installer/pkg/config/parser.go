@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
@@ -12,6 +13,19 @@ func ParseConfig(data []byte) (*Cluster, error) {
 
 	if err := yaml.Unmarshal(data, &cluster); err != nil {
 		return nil, err
+	}
+
+	// Deprecated: remove after openshift/release is ported to pullSecret
+	if cluster.PullSecretPath != "" {
+		if cluster.PullSecret != "" {
+			return nil, errors.New("pullSecretPath is deprecated; just set pullSecret")
+		}
+
+		data, err := ioutil.ReadFile(cluster.PullSecretPath)
+		if err != nil {
+			return nil, err
+		}
+		cluster.PullSecret = string(data)
 	}
 
 	return &cluster, nil

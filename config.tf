@@ -174,12 +174,12 @@ Note: This field MUST be set manually prior to creating the cluster.
 EOF
 }
 
-variable "tectonic_pull_secret_path" {
+variable "tectonic_pull_secret" {
   type    = "string"
   default = ""
 
   description = <<EOF
-The path the pull secret file in JSON format.
+The pull secret in JSON format.
 This is known to be a "Docker pull secret" as produced by the docker login [1] command.
 A sample JSON content is shown in [2].
 You can download the pull secret from your Account overview page at [3].
