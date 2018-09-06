@@ -9,6 +9,7 @@ import (
 
 	"github.com/openshift/installer/installer/pkg/config"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/stretchr/testify/assert"
 )
 
 func initConfig(t *testing.T, file string) ConfigGenerator {
@@ -46,9 +47,7 @@ func TestUrlFunctions(t *testing.T) {
 		},
 	}
 	for _, tc := range testCases {
-		if tc.got != tc.expected {
-			t.Errorf("Test case %s: expected: %s, got: %s", tc.test, tc.expected, tc.got)
-		}
+		assert.Equal(t, tc.expected, tc.got)
 	}
 }
 
@@ -68,9 +67,7 @@ func TestGetEtcdServersURLs(t *testing.T) {
 
 		config := initConfig(t, tc.configFile)
 		got := config.getEtcdServersURLs()
-		if got != tc.expected {
-			t.Errorf("Test case %s: expected: %s, got: %s", tc.test, tc.expected, got)
-		}
+		assert.Equal(t, tc.expected, got)
 	}
 }
 
@@ -85,9 +82,7 @@ func TestKubeSystem(t *testing.T) {
 		t.Errorf("Test case TestKubeSystem: failed to ReadFile(): %s", err)
 	}
 
-	if got != string(expected) {
-		t.Errorf("Test case TestKubeSystem: expected: %s, got: %s", expected, got)
-	}
+	assert.Equal(t, string(expected), got)
 }
 
 func TestCIDRHost(t *testing.T) {
@@ -115,9 +110,7 @@ func TestCIDRHost(t *testing.T) {
 		if err != nil {
 			t.Errorf("Test case %s: failed to run cidrhost(): %s", tc.test, err)
 		}
-		if got != tc.expected {
-			t.Errorf("Test case %s: expected: %s, got: %s", tc.test, tc.expected, got)
-		}
+		assert.Equal(t, tc.expected, got)
 	}
 }
 
