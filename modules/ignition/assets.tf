@@ -18,8 +18,6 @@ data "template_file" "kubelet" {
   template = "${file("${path.module}/resources/services/kubelet.service")}"
 
   vars {
-    kubelet_image_url     = "${replace(var.container_images["hyperkube"],var.image_re,"$1")}"
-    kubelet_image_tag     = "${replace(var.container_images["hyperkube"],var.image_re,"$2")}"
     cloud_provider        = "${var.cloud_provider}"
     cloud_provider_config = "${var.cloud_provider_config != "" ? "--cloud-config=/etc/kubernetes/cloud/config" : ""}"
     cluster_dns_ip        = "${var.kube_dns_service_ip}"

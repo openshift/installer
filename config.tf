@@ -59,18 +59,18 @@ variable "tectonic_container_images" {
   default = {
     addon_resizer                        = "gcr.io/google_containers/addon-resizer:2.1"
     bootkube                             = "quay.io/coreos/bootkube:v0.10.0"
-    tnc_operator                         = "quay.io/coreos/tectonic-node-controller-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
     etcd_cert_signer                     = "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6"
     etcd                                 = "quay.io/coreos/etcd:v3.2.14"
     hyperkube                            = "openshift/origin-node:latest"
-    kube_core_renderer                   = "quay.io/coreos/kube-core-renderer-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
-    kube_core_operator                   = "quay.io/coreos/kube-core-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
-    tectonic_channel_operator            = "quay.io/coreos/tectonic-channel-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
-    kube_addon_operator                  = "quay.io/coreos/kube-addon-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
     tectonic_alm_operator                = "quay.io/coreos/tectonic-alm-operator:v0.3.1"
-    tectonic_ingress_controller_operator = "quay.io/coreos/tectonic-ingress-controller-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
-    tectonic_utility_operator            = "quay.io/coreos/tectonic-utility-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
-    tectonic_network_operator            = "quay.io/coreos/tectonic-network-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
+    tnc_operator                         = "quay.io/coreos/tectonic-node-controller-operator-dev:b0e6febc1dfe4998f911c4ce2c911228a3fdcb38"
+    kube_core_renderer                   = "quay.io/coreos/kube-core-renderer-dev:b0e6febc1dfe4998f911c4ce2c911228a3fdcb38"
+    kube_core_operator                   = "quay.io/coreos/kube-core-operator-dev:b0e6febc1dfe4998f911c4ce2c911228a3fdcb38"
+    tectonic_channel_operator            = "quay.io/coreos/tectonic-channel-operator-dev:b0e6febc1dfe4998f911c4ce2c911228a3fdcb38"
+    kube_addon_operator                  = "quay.io/coreos/kube-addon-operator-dev:b0e6febc1dfe4998f911c4ce2c911228a3fdcb38"
+    tectonic_ingress_controller_operator = "quay.io/coreos/tectonic-ingress-controller-operator-dev:b0e6febc1dfe4998f911c4ce2c911228a3fdcb38"
+    tectonic_utility_operator            = "quay.io/coreos/tectonic-utility-operator-dev:b0e6febc1dfe4998f911c4ce2c911228a3fdcb38"
+    tectonic_network_operator            = "quay.io/coreos/tectonic-network-operator-dev:b0e6febc1dfe4998f911c4ce2c911228a3fdcb38"
   }
 }
 
