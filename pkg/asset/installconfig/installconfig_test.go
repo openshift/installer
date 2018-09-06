@@ -87,7 +87,8 @@ func TestInstallConfigGenerate(t *testing.T) {
     network:
       if: ""
       ipRange: ""
-      name: ""`,
+      name: ""
+      resolver: ""`,
 		},
 	}
 	for _, tc := range cases {
