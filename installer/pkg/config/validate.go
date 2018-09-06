@@ -189,6 +189,9 @@ func (c *Cluster) validateLibvirt() []error {
 	if err := validate.PrefixError("libvirt network ifName", validate.NonEmpty(c.Libvirt.Network.IfName)); err != nil {
 		errs = append(errs, err)
 	}
+	if err := validate.PrefixError("libvirt network dnsServer", validate.IPv4(c.Libvirt.Network.DNSServer)); err != nil {
+		errs = append(errs, err)
+	}
 	errs = append(errs, c.validateOverlapWithPodOrServiceCIDR(c.Libvirt.Network.IPRange, "libvirt ipRange")...)
 	return errs
 }

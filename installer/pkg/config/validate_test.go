@@ -574,9 +574,10 @@ func TestValidateLibvirt(t *testing.T) {
 			cluster: Cluster{
 				Libvirt: libvirt.Libvirt{
 					Network: libvirt.Network{
-						Name:    "tectonic",
-						IfName:  libvirt.DefaultIfName,
-						IPRange: "10.0.1.0/24",
+						Name:      "tectonic",
+						IfName:    libvirt.DefaultIfName,
+						DNSServer: libvirt.DefaultDNSServer,
+						IPRange:   "10.0.1.0/24",
 					},
 					QCOWImagePath: fInvalid.Name(),
 					URI:           "baz",
@@ -589,9 +590,10 @@ func TestValidateLibvirt(t *testing.T) {
 			cluster: Cluster{
 				Libvirt: libvirt.Libvirt{
 					Network: libvirt.Network{
-						Name:    "tectonic",
-						IfName:  libvirt.DefaultIfName,
-						IPRange: "10.0.1.0/24",
+						Name:      "tectonic",
+						IfName:    libvirt.DefaultIfName,
+						DNSServer: libvirt.DefaultDNSServer,
+						IPRange:   "10.0.1.0/24",
 					},
 					QCOWImagePath: fValid.Name(),
 					URI:           "baz",
@@ -604,9 +606,10 @@ func TestValidateLibvirt(t *testing.T) {
 			cluster: Cluster{
 				Libvirt: libvirt.Libvirt{
 					Network: libvirt.Network{
-						Name:    "tectonic",
-						IfName:  libvirt.DefaultIfName,
-						IPRange: "10.2.1.0/24",
+						Name:      "tectonic",
+						IfName:    libvirt.DefaultIfName,
+						DNSServer: libvirt.DefaultDNSServer,
+						IPRange:   "10.2.1.0/24",
 					},
 					QCOWImagePath: fValid.Name(),
 					URI:           "baz",
@@ -619,9 +622,10 @@ func TestValidateLibvirt(t *testing.T) {
 			cluster: Cluster{
 				Libvirt: libvirt.Libvirt{
 					Network: libvirt.Network{
-						Name:    "tectonic",
-						IfName:  libvirt.DefaultIfName,
-						IPRange: "x",
+						Name:      "tectonic",
+						IfName:    libvirt.DefaultIfName,
+						DNSServer: libvirt.DefaultDNSServer,
+						IPRange:   "x",
 					},
 					QCOWImagePath: "foo",
 					URI:           "baz",
@@ -634,9 +638,10 @@ func TestValidateLibvirt(t *testing.T) {
 			cluster: Cluster{
 				Libvirt: libvirt.Libvirt{
 					Network: libvirt.Network{
-						Name:    "tectonic",
-						IfName:  libvirt.DefaultIfName,
-						IPRange: "192.168.0.1/24",
+						Name:      "tectonic",
+						IfName:    libvirt.DefaultIfName,
+						DNSServer: "foo",
+						IPRange:   "192.168.0.1/24",
 					},
 					QCOWImagePath: "foo",
 					URI:           "baz",

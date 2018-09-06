@@ -18,6 +18,11 @@ variable "tectonic_libvirt_ip_range" {
   description = "IP range for the libvirt machines"
 }
 
+variable "tectonic_libvirt_resolver" {
+  type        = "string"
+  description = "the upstream dns resolver"
+}
+
 variable "tectonic_coreos_qcow_path" {
   type        = "string"
   description = "path to a container linux qcow image"

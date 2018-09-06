@@ -8,6 +8,8 @@ import (
 )
 
 const (
+	// DefaultDNSServer is the default DNS server for libvirt.
+	DefaultDNSServer = "8.8.8.8"
 	// DefaultIfName is the default interface name for libvirt.
 	DefaultIfName = "osbr0"
 )
@@ -24,9 +26,10 @@ type Libvirt struct {
 
 // Network describes a libvirt network configuration.
 type Network struct {
-	Name    string `json:"tectonic_libvirt_network_name,omitempty" yaml:"name"`
-	IfName  string `json:"tectonic_libvirt_network_if,omitempty" yaml:"ifName"`
-	IPRange string `json:"tectonic_libvirt_ip_range,omitempty" yaml:"ipRange"`
+	Name      string `json:"tectonic_libvirt_network_name,omitempty" yaml:"name"`
+	IfName    string `json:"tectonic_libvirt_network_if,omitempty" yaml:"ifName"`
+	DNSServer string `json:"tectonic_libvirt_resolver,omitempty" yaml:"dnsServer"`
+	IPRange   string `json:"tectonic_libvirt_ip_range,omitempty" yaml:"ipRange"`
 }
 
 // TFVars fills in computed Terraform variables.

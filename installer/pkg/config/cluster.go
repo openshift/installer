@@ -60,7 +60,8 @@ var defaultCluster = Cluster{
 	},
 	Libvirt: libvirt.Libvirt{
 		Network: libvirt.Network{
-			IfName: libvirt.DefaultIfName,
+			DNSServer: libvirt.DefaultDNSServer,
+			IfName:    libvirt.DefaultIfName,
 		},
 	},
 	Networking: Networking{
