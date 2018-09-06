@@ -53,7 +53,7 @@ func genDNSNamesForAPIServerCertKey(cfg *types.InstallConfig) ([]string, error) 
 }
 
 func genIPAddressesForAPIServerCertKey(cfg *types.InstallConfig) ([]net.IP, error) {
-	apiServerAddress, err := cidrhost(cfg.Networking.ServiceCIDR, 1)
+	apiServerAddress, err := cidrhost(cfg.Networking.ServiceCIDR.IPNet, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func genDNSNamesForOpenshiftAPIServerCertKey(cfg *types.InstallConfig) ([]string
 }
 
 func genIPAddressesForOpenshiftAPIServerCertKey(cfg *types.InstallConfig) ([]net.IP, error) {
-	apiServerAddress, err := cidrhost(cfg.Networking.ServiceCIDR, 1)
+	apiServerAddress, err := cidrhost(cfg.Networking.ServiceCIDR.IPNet, 1)
 	if err != nil {
 		return nil, err
 	}
