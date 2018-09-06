@@ -1,19 +1,12 @@
-output "systemd_service_rendered" {
-  value = "${data.template_file.tectonic_service.rendered}"
-}
-
 output "systemd_service_id" {
   value = "${data.ignition_systemd_unit.tectonic_service.id}"
 }
 
 output "ignition_file_id_list" {
-  value = ["${flatten(list(
-    list(
-      data.ignition_file.tectonic_sh.id,
-      data.ignition_file.tectonic_wrapper_sh.id,
-    ),
+  value = ["${concat(
+    list(data.ignition_file.tectonic_sh.id),
     data.ignition_file.tectonic_manifest_list.*.id,
-  ))}"]
+  )}"]
 }
 
 output "cluster_id" {

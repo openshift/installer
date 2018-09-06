@@ -1,7 +1,3 @@
-output "update_ca_certificates_dropin_rendered" {
-  value = "${data.template_file.update_ca_certificates_dropin.rendered}"
-}
-
 output "ca_cert_pem_list" {
   value = [
     "${var.root_ca_cert_pem}",
@@ -27,10 +23,6 @@ output "ignition_file_id_list" {
 
 output "ignition_systemd_id_list" {
   value = [
-    "${data.ignition_systemd_unit.docker_dropin.id}",
     "${data.ignition_systemd_unit.kubelet.id}",
-    "${data.ignition_systemd_unit.kubelet_workaround.id}",
-    "${data.ignition_systemd_unit.locksmithd.id}",
-    "${data.ignition_systemd_unit.update_ca_certificates_dropin.id}",
   ]
 }

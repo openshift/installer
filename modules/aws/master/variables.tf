@@ -3,14 +3,6 @@ variable "base_domain" {
   description = "Domain on which the ELB records will be created"
 }
 
-variable "container_linux_channel" {
-  type = "string"
-}
-
-variable "container_linux_version" {
-  type = "string"
-}
-
 variable "cluster_id" {
   type = "string"
 }

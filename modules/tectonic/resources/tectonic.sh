@@ -2,7 +2,6 @@
 set -e
 
 KUBECONFIG="$1"
-ASSETS_PATH="$2"
 
 # Setup API Authentication
 KUBECTL="oc --config=$KUBECONFIG"
@@ -96,23 +95,6 @@ wait_for_pods() {
   set -e
 }
 
-asset_cleanup() {
-  echo "Cleaning up installation assets"
-
-  # shellcheck disable=SC2034
-  for d in "manifests" "auth" "tectonic" "tls"; do
-      rm -rf "$${ASSETS_PATH:?}/$${d:?}/"*
-  done
-
-  # shellcheck disable=SC2034
-  for f in "bootkube.sh" "tectonic.sh" "tectonic-wrapper.sh"; do
-      rm -f "$${ASSETS_PATH:?}/$${f:?}"
-  done
-}
-
-# chdir into the assets path directory
-cd "$ASSETS_PATH/tectonic"
-
 # Wait for Kubernetes to be in a proper state
 set +e
 i=0
@@ -172,7 +154,6 @@ kubectl create -f updater/app_versions/app-version-tectonic-ingress.yaml
 
 # wait for Tectonic pods
 wait_for_pods tectonic-system
-asset_cleanup
 
 echo "Tectonic installation is done"
 exit 0

@@ -59,18 +59,17 @@ variable "tectonic_container_images" {
   default = {
     addon_resizer                        = "gcr.io/google_containers/addon-resizer:2.1"
     bootkube                             = "quay.io/coreos/bootkube:v0.10.0"
-    tnc_operator                         = "quay.io/coreos/tectonic-node-controller-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
+    tnc_operator                         = "quay.io/coreos/tectonic-node-controller-operator-dev:0a24db2288f00b10ced358d9643debd601ffd0f1"
     etcd_cert_signer                     = "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6"
     etcd                                 = "quay.io/coreos/etcd:v3.2.14"
-    hyperkube                            = "openshift/origin-node:latest"
-    kube_core_renderer                   = "quay.io/coreos/kube-core-renderer-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
-    kube_core_operator                   = "quay.io/coreos/kube-core-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
-    tectonic_channel_operator            = "quay.io/coreos/tectonic-channel-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
-    kube_addon_operator                  = "quay.io/coreos/kube-addon-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
+    kube_core_renderer                   = "quay.io/coreos/kube-core-renderer-dev:0a24db2288f00b10ced358d9643debd601ffd0f1"
+    kube_core_operator                   = "quay.io/coreos/kube-core-operator-dev:0a24db2288f00b10ced358d9643debd601ffd0f1"
+    tectonic_channel_operator            = "quay.io/coreos/tectonic-channel-operator-dev:0a24db2288f00b10ced358d9643debd601ffd0f1"
+    kube_addon_operator                  = "quay.io/coreos/kube-addon-operator-dev:0a24db2288f00b10ced358d9643debd601ffd0f1"
     tectonic_alm_operator                = "quay.io/coreos/tectonic-alm-operator:v0.3.1"
-    tectonic_ingress_controller_operator = "quay.io/coreos/tectonic-ingress-controller-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
-    tectonic_utility_operator            = "quay.io/coreos/tectonic-utility-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
-    tectonic_network_operator            = "quay.io/coreos/tectonic-network-operator-dev:436b1b4395ae54d866edc88864c9b01797cebac1"
+    tectonic_ingress_controller_operator = "quay.io/coreos/tectonic-ingress-controller-operator-dev:0a24db2288f00b10ced358d9643debd601ffd0f1"
+    tectonic_utility_operator            = "quay.io/coreos/tectonic-utility-operator-dev:0a24db2288f00b10ced358d9643debd601ffd0f1"
+    tectonic_network_operator            = "quay.io/coreos/tectonic-network-operator-dev:0a24db2288f00b10ced358d9643debd601ffd0f1"
   }
 }
 
@@ -189,26 +188,6 @@ You can download the pull secret from your Account overview page at [3].
 [2] https://coreos.com/os/docs/latest/registry-authentication.html#manual-registry-auth-setup
 
 [3] https://account.coreos.com/overview
-EOF
-}
-
-variable "tectonic_container_linux_channel" {
-  type = "string"
-
-  description = <<EOF
-The Container Linux update channel.
-
-Examples: `stable`, `beta`, `alpha`
-EOF
-}
-
-variable "tectonic_container_linux_version" {
-  type = "string"
-
-  description = <<EOF
-The Container Linux version to use. Set to `latest` to select the latest available version for the selected update channel.
-
-Examples: `latest`, `1465.6.0`
 EOF
 }
 

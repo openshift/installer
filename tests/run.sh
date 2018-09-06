@@ -46,7 +46,7 @@ if test -z "${AWS_REGION+x}"
 then
   echo -e "\\e[36m Calculating the AWS region...\\e[0m"
   AWS_REGION="$(aws configure get region)" ||
-  AWS_REGION="${AWS_REGION:-eu-west-1}"
+  AWS_REGION="${AWS_REGION:-us-east-1}"
 fi
 export AWS_DEFAULT_REGION="${AWS_REGION}"
 unset AWS_SESSION_TOKEN

@@ -40,7 +40,7 @@ data:
       type: canal
     platform:
       aws:
-        region: eu-west-1
+        region: us-east-1
         vpcCIDRBlock: 10.0.0.0/16
         vpcID: ""
     pullSecret: '{"auths": {}}'

@@ -2,9 +2,12 @@ package config
 
 import (
 	"errors"
+	"fmt"
 	"io/ioutil"
 
 	"gopkg.in/yaml.v2"
+
+	"github.com/openshift/installer/pkg/rhcos"
 )
 
 // ParseConfig parses a yaml string and returns, if successful, a Cluster.
@@ -26,6 +29,14 @@ func ParseConfig(data []byte) (*Cluster, error) {
 			return nil, err
 		}
 		cluster.PullSecret = string(data)
+	}
+
+	if cluster.EC2AMIOverride == "" {
+		ami, err := rhcos.AMI(DefaultChannel, cluster.AWS.Region)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to determine default AMI: %v", err)
+		}
+		cluster.EC2AMIOverride = ami
 	}
 
 	return &cluster, nil
