@@ -3,13 +3,13 @@ package types
 // MachinePool is a pool of machines to be installed.
 type MachinePool struct {
 	// Name is the name of the machine pool.
-	Name string
+	Name string `json:"name"`
 
 	// Replicas is the count of machines for this machine pool.
 	// Default is 1.
 	Replicas *int64 `json:"replicas"`
 
-	// PlatformConfig is configuration for machine pool specfic to the platfrom.
+	// PlatformConfig is configuration for machine pool specific to the platfrom.
 	PlatformConfig MachinePoolPlatformConfig `json:"platformConfig"`
 }
 

@@ -1,5 +1,49 @@
 apiVersion: v1
 data:
+  install-config: |
+    admin:
+      email: test@coreos.com
+      password: asd123
+    baseDomain: cluster.com
+    clusterID: ""
+    machines:
+    - name: master
+      platformConfig:
+        aws:
+          iamRoleName: ""
+          rootVolume:
+            iops: 100
+            size: 30
+            type: gp2
+          type: t2.medium
+      replicas: 3
+    - name: worker
+      platformConfig:
+        aws:
+          iamRoleName: ""
+          rootVolume:
+            iops: 100
+            size: 30
+            type: gp2
+          type: t2.medium
+      replicas: 3
+    metadata:
+      creationTimestamp: null
+      name: test
+    networking:
+      podCIDR:
+        IP: 10.2.0.0
+        Mask: //8AAA==
+      serviceCIDR:
+        IP: 10.3.0.0
+        Mask: //8AAA==
+      type: canal
+    platform:
+      aws:
+        region: eu-west-1
+        vpcCIDRBlock: 10.0.0.0/16
+        vpcID: ""
+    pullSecret: '{"auths": {}}'
   kco-config: |
     apiVersion: v1
     authConfig:

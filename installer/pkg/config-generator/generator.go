@@ -19,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/installer/pkg/config"
+	"github.com/openshift/installer/pkg/types"
 )
 
 const (
@@ -71,11 +72,16 @@ func (c *ConfigGenerator) KubeSystem() (string, error) {
 	if err != nil {
 		return "", err
 	}
+	installConfig, err := c.installConfig()
+	if err != nil {
+		return "", err
+	}
 
 	return configMap("kube-system", genericData{
 		"kco-config":     coreConfig,
 		"network-config": c.networkConfig(),
 		"tnco-config":    tncoConfig,
+		"install-config": installConfig,
 	})
 }
 
@@ -93,6 +99,106 @@ func (c *ConfigGenerator) TectonicSystem() (string, error) {
 		"addon-config":   addonConfig,
 		"utility-config": utilityConfig,
 	})
+}
+
+// InstallConfig returns a YAML-rendered Kubernetes object with the user-supplied cluster configuration.
+func (c *ConfigGenerator) InstallConfig() (string, error) {
+	ic, err := c.installConfig()
+	if err != nil {
+		return "", err
+	}
+	return marshalYAML(ic)
+}
+
+func (c *ConfigGenerator) installConfig() (*types.InstallConfig, error) {
+	_, podCIDR, err := net.ParseCIDR(c.Networking.PodCIDR)
+	if err != nil {
+		return nil, err
+	}
+	_, serviceCIDR, err := net.ParseCIDR(c.Networking.ServiceCIDR)
+	if err != nil {
+		return nil, err
+	}
+
+	var (
+		platform             types.Platform
+		masterPlatformConfig types.MachinePoolPlatformConfig
+		workerPlatformConfig types.MachinePoolPlatformConfig
+	)
+	switch c.Platform {
+	case config.PlatformAWS:
+		platform.AWS = &types.AWSPlatform{
+			Region:       c.Region,
+			VPCID:        c.VPCID,
+			VPCCIDRBlock: c.VPCCIDRBlock,
+		}
+		masterPlatformConfig.AWS = &types.AWSMachinePoolPlatformConfig{
+			InstanceType: c.AWS.Master.EC2Type,
+			IAMRoleName:  c.AWS.Master.IAMRoleName,
+			EC2RootVolume: types.EC2RootVolume{
+				IOPS: c.AWS.Master.MasterRootVolume.IOPS,
+				Size: c.AWS.Master.MasterRootVolume.Size,
+				Type: c.AWS.Master.MasterRootVolume.Type,
+			},
+		}
+		workerPlatformConfig.AWS = &types.AWSMachinePoolPlatformConfig{
+			InstanceType: c.AWS.Worker.EC2Type,
+			IAMRoleName:  c.AWS.Worker.IAMRoleName,
+			EC2RootVolume: types.EC2RootVolume{
+				IOPS: c.AWS.Worker.WorkerRootVolume.IOPS,
+				Size: c.AWS.Worker.WorkerRootVolume.Size,
+				Type: c.AWS.Worker.WorkerRootVolume.Type,
+			},
+		}
+	case config.PlatformLibvirt:
+		platform.Libvirt = &types.LibvirtPlatform{
+			URI: c.URI,
+			Network: types.LibvirtNetwork{
+				Name:    c.Network.Name,
+				IfName:  c.Network.IfName,
+				IPRange: c.Network.IPRange,
+			},
+		}
+		masterPlatformConfig.Libvirt = &types.LibvirtMachinePoolPlatformConfig{
+			QCOWImagePath: c.Libvirt.QCOWImagePath,
+		}
+		workerPlatformConfig.Libvirt = &types.LibvirtMachinePoolPlatformConfig{
+			QCOWImagePath: c.Libvirt.QCOWImagePath,
+		}
+	default:
+		return nil, fmt.Errorf("installconfig: invalid platform %s", c.Platform)
+	}
+	masterCount := int64(c.NodeCount(c.Master.NodePools))
+	workerCount := int64(c.NodeCount(c.Worker.NodePools))
+
+	return &types.InstallConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: c.Name,
+		},
+		ClusterID: c.ClusterID,
+		Admin: types.Admin{
+			Email:    c.Admin.Email,
+			Password: c.Admin.Password,
+			SSHKey:   c.Admin.SSHKey,
+		},
+		BaseDomain: c.BaseDomain,
+		PullSecret: c.PullSecret,
+		Networking: types.Networking{
+			Type:        types.NetworkType(string(c.Networking.Type)),
+			ServiceCIDR: *serviceCIDR,
+			PodCIDR:     *podCIDR,
+		},
+		Platform: platform,
+		Machines: []types.MachinePool{{
+			Name:           "master",
+			Replicas:       &masterCount,
+			PlatformConfig: masterPlatformConfig,
+		}, {
+			Name:           "worker",
+			Replicas:       &workerCount,
+			PlatformConfig: workerPlatformConfig,
+		}},
+	}, nil
 }
 
 // CoreConfig returns, if successful, a yaml string for the on-disk kco-config.
