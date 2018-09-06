@@ -42,7 +42,6 @@ data "ignition_config" "bootstrap_redirect" {
 module "ami" {
   source = "../../../modules/aws/ami"
 
-  region          = "${var.tectonic_aws_region}"
   release_channel = "${var.tectonic_container_linux_channel}"
   release_version = "${var.tectonic_container_linux_version}"
 }

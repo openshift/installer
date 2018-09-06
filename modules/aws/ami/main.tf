@@ -1,8 +1,3 @@
-provider "aws" {
-  region  = "${var.region}"
-  version = "1.8.0"
-}
-
 locals {
   ami_owner = "595879546273"
   arn       = "aws"

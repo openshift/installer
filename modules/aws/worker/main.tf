@@ -5,7 +5,6 @@ locals {
 module "ami" {
   source = "../ami"
 
-  region          = "${var.region}"
   release_channel = "${var.container_linux_channel}"
   release_version = "${var.container_linux_version}"
 }
