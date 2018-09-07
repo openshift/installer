@@ -67,7 +67,7 @@ func (ex *executor) execute(clusterDir string, args ...string) error {
 	return cmd.Run()
 }
 
-// tfBinatyPath searches for a TerraForm binary on disk:
+// tfBinaryPath searches for a TerraForm binary on disk:
 // - in the executing binary's folder,
 // - in the current working directory,
 // - in the PATH.
