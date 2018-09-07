@@ -105,6 +105,8 @@ resource "libvirt_domain" "worker" {
     hostname   = "${var.tectonic_cluster_name}-worker-${count.index}"
     addresses  = ["${var.tectonic_libvirt_worker_ips[count.index]}"]
   }
+
+  depends_on = ["libvirt_domain.master"]
 }
 
 locals {
