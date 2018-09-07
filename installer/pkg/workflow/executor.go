@@ -79,8 +79,14 @@ func tfBinaryPath() (string, error) {
 		binaryFileName = tfBinWindows
 	}
 
+	// Find the current executable's real path
+	execPath, err := os.Executable()
+	if err != nil {
+		return "", err
+	}
+
 	// Look into the executable's folder.
-	if execFolderPath, err := filepath.Abs(filepath.Dir(os.Args[0])); err == nil {
+	if execFolderPath, err := filepath.Abs(filepath.Dir(execPath)); err == nil {
 		path := filepath.Join(execFolderPath, binaryFileName)
 		if stat, err := os.Stat(path); err == nil && !stat.IsDir() {
 			return path, nil
