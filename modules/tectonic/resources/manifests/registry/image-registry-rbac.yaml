@@ -1,0 +1,85 @@
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: cluster-image-registry-operator
+rules:
+- apiGroups:
+  - dockerregistry.operator.openshift.io
+  resources:
+  - "*"
+  verbs:
+  - "*"
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - endpoints
+  - events
+  - persistentvolumeclaims
+  - pods
+  - secrets
+  - services
+  verbs:
+  - "*"
+- apiGroups:
+  - apps
+  resources:
+  - daemonsets
+  - deploymentconfigs
+  - deployments
+  - replicasets
+  - statefulsets
+  verbs:
+  - "*"
+- apiGroups:
+  - apps.openshift.io
+  resources:
+  - deploymentconfigs
+  verbs:
+  - "*"
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  verbs:
+  - "*"
+- apiGroups:
+  - rbac.authorization.k8s.io
+  resources:
+  - clusterroles
+  - clusterrolebindings
+  verbs:
+  - "*"
+- apiGroups:
+  - project.openshift.io
+  resources:
+  - projects
+  verbs:
+  - get
+- apiGroups:
+  - ""
+  resources:
+  - limitranges
+  - resourcequotas
+  verbs:
+  - list
+- apiGroups:
+  - image.openshift.io
+  resources:
+  - "*"
+  verbs:
+  - "*"
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1beta1
+metadata:
+  name: default-account-cluster-image-registry-operator
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: openshift-image-registry
+roleRef:
+  kind: ClusterRole
+  name: cluster-image-registry-operator
+  apiGroup: rbac.authorization.k8s.io

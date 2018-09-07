@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cluster-image-registry-operator
+  namespace: openshift-image-registry
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      name: cluster-image-registry-operator
+  template:
+    metadata:
+      labels:
+        name: cluster-image-registry-operator
+    spec:
+      containers:
+        - name: cluster-image-registry-operator
+          image: docker.io/openshift/origin-cluster-image-registry-operator:latest
+          ports:
+          - containerPort: 60000
+            name: metrics
+          command:
+          - cluster-image-registry-operator
+          imagePullPolicy: Always
+          env:
+            - name: WATCH_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: OPERATOR_NAME
+              value: "cluster-image-registry-operator"
