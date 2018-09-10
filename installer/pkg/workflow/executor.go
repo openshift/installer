@@ -79,15 +79,18 @@ func tfBinaryPath() (string, error) {
 		binaryFileName = tfBinWindows
 	}
 
-	// Find the current executable's real path
+	// Find the current executable's path, gets an absolute path or error
 	execPath, err := os.Executable()
-	if err != nil {
-		return "", err
-	}
+	if err == nil {
+		// execPath could be a symlink
+		if stat, err := os.Stat(execPath); err == nil && (stat.Mode()&os.ModeSymlink) == os.ModeSymlink {
+			if evalExecPath, err := filepath.EvalSymlinks(execPath); err != nil {
+				execPath = evalExecPath
+			}
+		}
 
-	// Look into the executable's folder.
-	if execFolderPath, err := filepath.Abs(filepath.Dir(execPath)); err == nil {
-		path := filepath.Join(execFolderPath, binaryFileName)
+		// Look into the executable's folder.
+		path := filepath.Join(filepath.Dir(execPath), binaryFileName)
 		if stat, err := os.Stat(path); err == nil && !stat.IsDir() {
 			return path, nil
 		}
