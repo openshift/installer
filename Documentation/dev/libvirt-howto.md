@@ -84,8 +84,7 @@ bazel build tarball
 ### 3. Create a cluster
 ```sh
 tar -zxf bazel-bin/tectonic-dev.tar.gz
-cd tectonic-dev
-export PATH="${PWD}/installer:${PATH}"
+alias tectonic="${PWD}/tectonic-dev/installer/tectonic"
 ```
 
 Initialize (the environment variables are a convenience):
