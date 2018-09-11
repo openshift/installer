@@ -9,7 +9,6 @@ else
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
     --workdir /go/src/github.com/openshift/installer \
-    --entrypoint sh \
-    quay.io/coreos/golang-testing \
+    docker.io/openshift/origin-release:golang-1.10 \
     ./hack/go-fmt.sh "${@}"
 fi
