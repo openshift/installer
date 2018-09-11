@@ -19,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/installer/pkg/config"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -185,8 +186,8 @@ func (c *ConfigGenerator) installConfig() (*types.InstallConfig, error) {
 		PullSecret: c.PullSecret,
 		Networking: types.Networking{
 			Type:        types.NetworkType(string(c.Networking.Type)),
-			ServiceCIDR: *serviceCIDR,
-			PodCIDR:     *podCIDR,
+			ServiceCIDR: ipnet.IPNet{IPNet: *serviceCIDR},
+			PodCIDR:     ipnet.IPNet{IPNet: *podCIDR},
 		},
 		Platform: platform,
 		Machines: []types.MachinePool{{

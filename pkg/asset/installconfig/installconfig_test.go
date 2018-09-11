@@ -163,12 +163,8 @@ metadata:
   creationTimestamp: null
   name: test-cluster-name
 networking:
-  podCIDR:
-    IP: ""
-    Mask: null
-  serviceCIDR:
-    IP: ""
-    Mask: null
+  podCIDR: null
+  serviceCIDR: null
   type: ""
 platform:
 %s

@@ -3,6 +3,7 @@ package types
 import (
 	"net"
 
+	"github.com/openshift/installer/pkg/ipnet"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -58,8 +59,8 @@ type Platform struct {
 // Networking defines the pod network provider in the cluster.
 type Networking struct {
 	Type        NetworkType `json:"type"`
-	ServiceCIDR net.IPNet   `json:"serviceCIDR"`
-	PodCIDR     net.IPNet   `json:"podCIDR"`
+	ServiceCIDR ipnet.IPNet `json:"serviceCIDR"`
+	PodCIDR     ipnet.IPNet `json:"podCIDR"`
 }
 
 // NetworkType defines the pod network provider in the cluster.
