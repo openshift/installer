@@ -1,7 +1,6 @@
 # This Dockerfile is used as a CI job to build smoke tests for OpenShift installer
-# FIXME: Move this image to an openshift repo?
 
-FROM  quay.io/coreos/origin-release-oc:bazel
+FROM  openshift/origin-release:bazel
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 
