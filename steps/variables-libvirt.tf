@@ -20,7 +20,7 @@ variable "tectonic_libvirt_ip_range" {
 
 variable "tectonic_coreos_qcow_path" {
   type        = "string"
-  description = "path to a container linux qcow image"
+  description = "path to a Red Hat CoreOS qcow image"
 }
 
 variable "tectonic_libvirt_bootstrap_ip" {

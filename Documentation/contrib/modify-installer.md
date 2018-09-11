@@ -7,7 +7,6 @@ Please also note that using "alpha features" through existing Beta or Stable API
 ## Machine level modifications
 
 Always safe to modify:
-* Container Linux channels. All Container Linux channels may be modified (stable, beta, and alpha).
 
 Never safe to modify:
 * Kubelet configuration, including CNI. Modification of the kubelet configuration may result in an inability to start pods, or a failure in communication between cluster components.
