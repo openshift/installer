@@ -16,3 +16,13 @@ data "ignition_systemd_unit" "kubelet" {
   enabled = true
   content = "${data.template_file.kubelet.rendered}"
 }
+
+data "ignition_file" "registries_config" {
+  filesystem = "root"
+  mode       = "0644"
+  path       = "/etc/containers/registries.conf"
+
+  content {
+    content = "${file("${path.module}/resources/files/registries.conf")}"
+  }
+}
