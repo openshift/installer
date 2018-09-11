@@ -13,7 +13,6 @@ import (
 	"github.com/coreos/tectonic-config/config/kube-addon"
 	"github.com/coreos/tectonic-config/config/kube-core"
 	"github.com/coreos/tectonic-config/config/tectonic-network"
-	tnco "github.com/coreos/tectonic-config/config/tectonic-node-controller"
 	"github.com/coreos/tectonic-config/config/tectonic-utility"
 	"github.com/ghodss/yaml"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -65,10 +64,6 @@ func New(cluster config.Cluster) ConfigGenerator {
 
 // KubeSystem returns, if successful, a yaml string for the kube-system.
 func (c *ConfigGenerator) KubeSystem() (string, error) {
-	tncoConfig, err := c.tncoConfig()
-	if err != nil {
-		return "", err
-	}
 	coreConfig, err := c.coreConfig()
 	if err != nil {
 		return "", err
@@ -81,7 +76,6 @@ func (c *ConfigGenerator) KubeSystem() (string, error) {
 	return configMap("kube-system", genericData{
 		"kco-config":     coreConfig,
 		"network-config": c.networkConfig(),
-		"tnco-config":    tncoConfig,
 		"install-config": installConfig,
 	})
 }
@@ -211,15 +205,6 @@ func (c *ConfigGenerator) CoreConfig() (string, error) {
 	return marshalYAML(coreConfig)
 }
 
-// TncoConfig returns, if successful, a yaml string for the on-disk tnco-config.
-func (c *ConfigGenerator) TncoConfig() (string, error) {
-	tncoConfig, err := c.tncoConfig()
-	if err != nil {
-		return "", err
-	}
-	return marshalYAML(tncoConfig)
-}
-
 func (c *ConfigGenerator) addonConfig() (*kubeaddon.OperatorConfig, error) {
 	addonConfig := kubeaddon.OperatorConfig{
 		TypeMeta: metav1.TypeMeta{
@@ -282,38 +267,6 @@ func (c *ConfigGenerator) networkConfig() *tectonicnetwork.OperatorConfig {
 	networkConfig.NetworkProfile = tectonicnetwork.NetworkType(c.Cluster.Networking.Type)
 
 	return &networkConfig
-}
-
-func (c *ConfigGenerator) tncoConfig() (*tnco.OperatorConfig, error) {
-	tncoConfig := tnco.OperatorConfig{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: tnco.TNCOConfigAPIVersion,
-			Kind:       tnco.TNCOConfigKind,
-		},
-	}
-
-	tncoConfig.ControllerConfig = tnco.ControllerConfig{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: tnco.TNCConfigAPIVersion,
-			Kind:       tnco.TNCConfigKind,
-		},
-	}
-
-	cidrhost, err := cidrhost(c.Cluster.Networking.ServiceCIDR, 10)
-	if err != nil {
-		return nil, err
-	}
-
-	tncoConfig.ControllerConfig.ClusterDNSIP = cidrhost
-	tncoConfig.ControllerConfig.Platform = tectonicCloudProvider(c.Platform)
-	tncoConfig.ControllerConfig.CloudProviderConfig = "" // TODO(yifan): Get CloudProviderConfig.
-	tncoConfig.ControllerConfig.ClusterName = c.Cluster.Name
-	tncoConfig.ControllerConfig.BaseDomain = c.Cluster.BaseDomain
-	tncoConfig.ControllerConfig.EtcdInitialCount = c.Cluster.NodeCount(c.Cluster.Master.NodePools)
-	tncoConfig.ControllerConfig.AdditionalConfigs = []string{} // TODO(yifan): Get additional configs.
-	tncoConfig.ControllerConfig.NodePoolUpdateLimit = nil      // TODO(yifan): Get the node pool update limit.
-
-	return &tncoConfig, nil
 }
 
 func (c *ConfigGenerator) utilityConfig() (*tectonicutility.OperatorConfig, error) {

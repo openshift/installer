@@ -68,16 +68,6 @@ func generateClusterConfigMaps(m *metadata) error {
 		return err
 	}
 
-	tncoConfig, err := configGenerator.TncoConfig()
-	if err != nil {
-		return err
-	}
-
-	tncoConfigFilePath := filepath.Join(clusterGeneratedPath, tncoConfigFileName)
-	if err := ioutil.WriteFile(tncoConfigFilePath, []byte(tncoConfig), 0666); err != nil {
-		return err
-	}
-
 	kubeSystem, err := configGenerator.KubeSystem()
 	if err != nil {
 		return err

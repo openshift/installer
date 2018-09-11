@@ -27,8 +27,8 @@ locals {
   service_serving_ca_cert_pem     = "${file("${local.tls_path}/service-serving-ca.crt")}"
   service_serving_ca_key_pem      = "${file("${local.tls_path}/service-serving-ca.key")}"
   tls_path                        = "${path.cwd}/generated/tls"
-  tnc_cert_pem                    = "${file("${local.tls_path}/tnc.crt")}"
-  tnc_key_pem                     = "${file("${local.tls_path}/tnc.key")}"
+  mcs_cert_pem                    = "${file("${local.tls_path}/machine-config-server.crt")}"
+  mcs_key_pem                     = "${file("${local.tls_path}/machine-config-server.key")}"
   service_account_public_key_pem  = "${file("${local.tls_path}/service-account.pub")}"
   service_account_private_key_pem = "${file("${local.tls_path}/service-account.key")}"
 }

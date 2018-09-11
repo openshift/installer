@@ -42,8 +42,8 @@ const (
 	rootCAKeyPath                = "generated/tls/root-ca.key"
 	serviceServingCACertPath     = "generated/tls/service-serving-ca.crt"
 	serviceServingCAKeyPath      = "generated/tls/service-serving-ca.key"
-	tncCertPath                  = "generated/tls/tnc.crt"
-	tncKeyPath                   = "generated/tls/tnc.key"
+	machineConfigServerCertPath  = "generated/tls/machine-config-server.crt"
+	machineConfigServerKeyPath   = "generated/tls/machine-config-server.key"
 	serviceAccountPubkeyPath     = "generated/tls/service-account.pub"
 	serviceAccountPrivateKeyPath = "generated/tls/service-account.key"
 )
@@ -239,18 +239,18 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 		return fmt.Errorf("failed to generate kubelet certificate: %v", err)
 	}
 
-	// TNC certs
-	tncDomain := fmt.Sprintf("%s-tnc.%s", c.Name, c.BaseDomain)
+	// MachineConfigServer certs
+	mcsDomain := fmt.Sprintf("%s-tnc.%s", c.Name, c.BaseDomain)
 	cfg = &tls.CertCfg{
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
-		DNSNames:     []string{tncDomain},
-		Subject:      pkix.Name{CommonName: tncDomain},
+		DNSNames:     []string{mcsDomain},
+		Subject:      pkix.Name{CommonName: mcsDomain},
 		Validity:     tls.ValidityTenYears,
 		IsCA:         false,
 	}
 
-	if _, _, err := generateCert(clusterDir, caKey, caCert, tncKeyPath, tncCertPath, cfg, false); err != nil {
-		return fmt.Errorf("failed to generate tnc certificate: %v", err)
+	if _, _, err := generateCert(clusterDir, caKey, caCert, machineConfigServerKeyPath, machineConfigServerCertPath, cfg, false); err != nil {
+		return fmt.Errorf("failed to generate machine-config-server certificate: %v", err)
 	}
 
 	// Cluster API cert

@@ -44,8 +44,8 @@ module "bootkube" {
   root_ca_cert_pem                = "${local.root_ca_cert_pem}"
   service_serving_ca_cert_pem     = "${local.service_serving_ca_cert_pem}"
   service_serving_ca_key_pem      = "${local.service_serving_ca_key_pem}"
-  tnc_cert_pem                    = "${local.tnc_cert_pem}"
-  tnc_key_pem                     = "${local.tnc_key_pem}"
+  mcs_cert_pem                    = "${local.mcs_cert_pem}"
+  mcs_key_pem                     = "${local.mcs_key_pem}"
   service_account_public_key_pem  = "${local.service_account_public_key_pem}"
   service_account_private_key_pem = "${local.service_account_private_key_pem}"
 
