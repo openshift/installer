@@ -51,11 +51,6 @@ In addition to our basic set of tests we have smoke tests which are running on A
   3. Get the approval of another person.
   4. Merge the PR.
 
-## Nightly Runs
-
-We use Jenkins to run our tests and our `nightly` builds against the master branch.
-Those jobs are executing smoke tests and building docker images.
-
 ## Running smoke tests locally
 
 ### 1. Expose environment variables
