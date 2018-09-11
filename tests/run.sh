@@ -34,6 +34,7 @@ bazel build tarball smoke_tests
 echo -e "\\e[36m Unpacking artifacts...\\e[0m"
 tar -zxf bazel-bin/tectonic-dev.tar.gz
 cp bazel-bin/tests/smoke/linux_amd64_pure_stripped/go_default_test tectonic-dev/smoke
+chmod 755 tectonic-dev/smoke
 cd tectonic-dev
 
 ### HANDLE SSH KEY ###
