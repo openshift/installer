@@ -2,7 +2,7 @@
 if [ "$IS_CONTAINER" != "" ]; then
   tflint
 else
-  docker run --rm \
+  podman run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/data:z" \
     --entrypoint sh \

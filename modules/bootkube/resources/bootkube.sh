@@ -4,7 +4,7 @@ set -e
 echo "Rendering Kubernetes core manifests..."
 
 # shellcheck disable=SC2154
-/usr/bin/docker run \
+/usr/bin/podman run \
     --volume "$PWD:/assets:z" \
     --volume /etc/kubernetes:/etc/kubernetes:z \
     "${kube_core_renderer_image}" \
@@ -14,7 +14,7 @@ echo "Rendering Kubernetes core manifests..."
 echo "Rendering TNC manifests..."
 
 # shellcheck disable=SC2154
-/usr/bin/docker run \
+/usr/bin/podman run \
     --user 0 \
     --volume "$PWD:/assets:z" \
     "${tnc_operator_image}" \
@@ -29,14 +29,13 @@ cp "$PWD/tnc-bootstrap/tectonic-node-controller-config.yaml" /etc/kubernetes/tnc
 # We originally wanted to run the etcd cert signer as
 # a static pod, but kubelet could't remove static pod
 # when API server is not up, so we have to run this as
-# docker container.
+# podman container.
 # See https://github.com/kubernetes/kubernetes/issues/43292
 
 echo "Starting etcd certificate signer..."
 
 # shellcheck disable=SC2154
-SIGNER=$(/usr/bin/docker run -d \
-    --tmpfs /tmp \
+SIGNER=$(/usr/bin/podman run -d \
     --volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
     --network host \
     "${etcd_cert_signer_image}" \
@@ -57,8 +56,9 @@ i=0
 while true; do
     set +e
     # shellcheck disable=SC2154,SC2086
-    /usr/bin/docker run \
+    /usr/bin/podman run \
         --rm \
+        --network host \
         --name etcdctl \
         --env ETCDCTL_API=3 \
         --volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
@@ -86,7 +86,7 @@ done
 
 echo "etcd cluster up. Killing etcd certificate signer..."
 
-/usr/bin/docker kill "$SIGNER"
+/usr/bin/podman kill "$SIGNER"
 rm /etc/kubernetes/manifests/tectonic-node-controller-pod.yaml
 
 cp -r "$PWD/bootstrap-configs" /etc/kubernetes/bootstrap-configs
@@ -94,7 +94,7 @@ cp -r "$PWD/bootstrap-configs" /etc/kubernetes/bootstrap-configs
 echo "Starting bootkube..."
 
 # shellcheck disable=SC2154
-/usr/bin/docker run \
+/usr/bin/podman run \
     --volume "$PWD:/assets:z" \
     --volume /etc/kubernetes:/etc/kubernetes:z \
     --network=host \

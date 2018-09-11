@@ -3,7 +3,7 @@ if [ "$IS_CONTAINER" != "" ]; then
   set -x
   bazel --output_base=/tmp build "$@" tarball
 else
-  docker run --rm \
+  podman run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:${PWD}:z" \
     --workdir "${PWD}" \

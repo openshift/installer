@@ -6,7 +6,7 @@ if [ "$IS_CONTAINER" != "" ]; then
     -o -path "${TOP_DIR}/.build" -prune \
     -o -type f -name '*.sh' -exec shellcheck --format=gcc {} \+
 else
-  docker run --rm \
+  podman run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:/workdir:ro,z" \
     --entrypoint sh \

@@ -1,11 +1,11 @@
 #!/bin/sh
 
-# in prow, already in container, so no 'docker run'
+# in prow, already in container, so no 'podman run'
 if [ "$IS_CONTAINER" != "" ]; then
   set -x
   /terraform fmt -list -check -write=false
 else
-  docker run --rm \
+  podman run --rm \
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:${PWD}:ro,z" \
     --workdir "${PWD}" \
