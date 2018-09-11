@@ -1,19 +1,14 @@
 [Unit]
 Description=Bootstrap a Tectonic cluster
-ConditionPathExists=!/opt/tectonic/init_tectonic.done
 Requires=bootkube.service
 After=bootkube.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=true
-WorkingDirectory=/opt/tectonic
+WorkingDirectory=/opt/tectonic/tectonic
 
-User=root
-Group=root
-
-ExecStart=/usr/bin/bash /opt/tectonic/tectonic-wrapper.sh
-ExecStartPost=/bin/touch /opt/tectonic/init_tectonic.done
+ExecStart=/opt/tectonic/tectonic.sh /opt/tectonic/auth/kubeconfig
 
 [Install]
 WantedBy=multi-user.target

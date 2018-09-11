@@ -15,8 +15,6 @@ aws:
       size: 30
       type: gp2
 baseDomain: tectonic-ci.de
-containerLinux:
-  channel: beta
 master:
   nodePools:
     - master

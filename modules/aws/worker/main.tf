@@ -2,13 +2,6 @@ locals {
   arn = "aws"
 }
 
-module "ami" {
-  source = "../ami"
-
-  release_channel = "${var.container_linux_channel}"
-  release_version = "${var.container_linux_version}"
-}
-
 resource "aws_iam_instance_profile" "worker" {
   name = "${var.cluster_name}-worker-profile"
 
@@ -88,7 +81,7 @@ EOF
 
 resource "aws_instance" "worker" {
   count = "${var.instance_count}"
-  ami   = "${coalesce(var.ec2_ami, module.ami.id)}"
+  ami   = "${var.ec2_ami}"
 
   iam_instance_profile   = "${aws_iam_instance_profile.worker.name}"
   instance_type          = "${var.ec2_type}"

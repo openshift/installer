@@ -39,13 +39,6 @@ data "ignition_config" "bootstrap_redirect" {
   }
 }
 
-module "ami" {
-  source = "../../../modules/aws/ami"
-
-  release_channel = "${var.tectonic_container_linux_channel}"
-  release_version = "${var.tectonic_container_linux_version}"
-}
-
 resource "aws_iam_instance_profile" "bootstrap" {
   name = "${var.tectonic_cluster_name}-bootstrap-profile"
 
@@ -116,7 +109,7 @@ EOF
 }
 
 resource "aws_instance" "bootstrap" {
-  ami = "${coalesce(var.tectonic_aws_ec2_ami_override, module.ami.id)}"
+  ami = "${var.tectonic_aws_ec2_ami_override}"
 
   iam_instance_profile        = "${aws_iam_instance_profile.bootstrap.name}"
   instance_type               = "${var.tectonic_aws_master_ec2_type}"

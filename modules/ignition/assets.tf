@@ -1,25 +1,7 @@
-data "template_file" "docker_dropin" {
-  template = "${file("${path.module}/resources/dropins/10-dockeropts.conf")}"
-}
-
-data "ignition_systemd_unit" "docker_dropin" {
-  name    = "docker.service"
-  enabled = true
-
-  dropin = [
-    {
-      name    = "10-dockeropts.conf"
-      content = "${data.template_file.docker_dropin.rendered}"
-    },
-  ]
-}
-
 data "template_file" "kubelet" {
   template = "${file("${path.module}/resources/services/kubelet.service")}"
 
   vars {
-    kubelet_image_url     = "${replace(var.container_images["hyperkube"],var.image_re,"$1")}"
-    kubelet_image_tag     = "${replace(var.container_images["hyperkube"],var.image_re,"$2")}"
     cloud_provider        = "${var.cloud_provider}"
     cloud_provider_config = "${var.cloud_provider_config != "" ? "--cloud-config=/etc/kubernetes/cloud/config" : ""}"
     cluster_dns_ip        = "${var.kube_dns_service_ip}"
@@ -33,19 +15,4 @@ data "ignition_systemd_unit" "kubelet" {
   name    = "kubelet.service"
   enabled = true
   content = "${data.template_file.kubelet.rendered}"
-}
-
-data "template_file" "kubelet_workaround" {
-  template = "${file("${path.module}/resources/services/kubelet-workaround.service")}"
-}
-
-data "ignition_systemd_unit" "kubelet_workaround" {
-  name    = "kubelet-workaround.service"
-  enabled = true
-  content = "${data.template_file.kubelet_workaround.rendered}"
-}
-
-data "ignition_systemd_unit" "locksmithd" {
-  name = "locksmithd.service"
-  mask = true
 }

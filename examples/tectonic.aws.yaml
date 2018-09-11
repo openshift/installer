@@ -3,11 +3,6 @@ admin:
   password: "verysecure"
   sshKey: "ssh-ed25519 AAAA..."
 aws:
-  # (optional) Unique name under which the Amazon S3 bucket will be created. Bucket name must start with a lower case name and is limited to 63 characters.
-  # The Tectonic Installer uses the bucket to store tectonic assets and kubeconfig.
-  # If name is not provided the installer will construct the name using "name", current AWS region and "baseDomain"
-  # assetsS3BucketName:
-
   # (optional) AMI override for all nodes. Example: `ami-foobar123`.
   # ec2AMIOverride:
 
@@ -95,7 +90,7 @@ aws:
   # publicEndpoints: true
 
   # The target AWS region for the cluster.
-  region: eu-west-1
+  region: us-east-1
 
   # Block of IP addresses used by the VPC.
   # This should not overlap with any other networks, such as a private datacenter connected via Direct Connect.
@@ -163,20 +158,6 @@ ca:
   # The default value is currently recommended.
   # This field is mandatory if `ca_cert` is set.
   # keyAlg: RSA
-
-containerLinux:
-  # (optional) The Container Linux update channel.
-  #
-  # Examples: `stable`, `beta`, `alpha`
-  # channel: stable
-
-  # The Container Linux version to use. Set to `latest` to select the latest available version for the selected update channel.
-  #
-  # Examples: `latest`, `1465.6.0`
-  version: latest
-
-  # (optional) A list of PEM encoded CA files that will be installed in /etc/ssl/certs on etcd, master, and worker nodes.
-  # customCAPEMList:
 
 iscsi:
   # (optional) Start iscsid.service to enable iscsi volume attachment.

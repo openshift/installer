@@ -14,7 +14,7 @@ import (
 func initConfig(t *testing.T, file string) ConfigGenerator {
 	cluster, err := config.ParseConfigFile("./fixtures/" + file)
 	if err != nil {
-		t.Errorf("Test case TestUrlFunctions: failed to parse test config, %s", err)
+		t.Fatalf("Test case TestUrlFunctions: failed to parse test config, %s", err)
 	}
 
 	return ConfigGenerator{

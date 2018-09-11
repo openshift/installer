@@ -21,6 +21,8 @@ const (
 	PlatformAWS Platform = "aws"
 	// PlatformLibvirt is the platform for a cluster launched on libvirt.
 	PlatformLibvirt Platform = "libvirt"
+	// DefaultChannel is the default RHCOS channel for the cluster.
+	DefaultChannel = "tested"
 )
 
 // Platform indicates the target platform of the cluster.
@@ -54,10 +56,6 @@ var defaultCluster = Cluster{
 	CA: CA{
 		RootCAKeyAlg: "RSA",
 	},
-	ContainerLinux: ContainerLinux{
-		Channel: ContainerLinuxChannelStable,
-		Version: ContainerLinuxVersionLatest,
-	},
 	Libvirt: libvirt.Libvirt{
 		Network: libvirt.Network{
 			IfName: libvirt.DefaultIfName,
@@ -77,7 +75,6 @@ type Cluster struct {
 	aws.AWS         `json:",inline" yaml:"aws,omitempty"`
 	BaseDomain      string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
 	CA              `json:",inline" yaml:"CA,omitempty"`
-	ContainerLinux  `json:",inline" yaml:"containerLinux,omitempty"`
 	IgnitionMasters []string `json:"tectonic_ignition_masters,omitempty" yaml:"-"`
 	IgnitionWorker  string   `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
 	Internal        `json:",inline" yaml:"-"`

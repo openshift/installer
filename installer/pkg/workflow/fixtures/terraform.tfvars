@@ -1,21 +1,20 @@
 {
   "tectonic_admin_email": "fake-email@example.com",
   "tectonic_admin_password": "fake-password",
+  "tectonic_aws_ec2_ami_override": "ami-07307c397daf4d02e",
   "tectonic_aws_endpoints": "all",
   "tectonic_aws_master_ec2_type": "m4.large",
   "tectonic_aws_master_root_volume_iops": 100,
   "tectonic_aws_master_root_volume_size": 30,
   "tectonic_aws_master_root_volume_type": "gp2",
   "tectonic_aws_profile": "default",
-  "tectonic_aws_region": "eu-west-1",
+  "tectonic_aws_region": "us-east-1",
   "tectonic_aws_vpc_cidr_block": "10.0.0.0/16",
   "tectonic_aws_worker_ec2_type": "m4.large",
   "tectonic_aws_worker_root_volume_iops": 100,
   "tectonic_aws_worker_root_volume_size": 30,
   "tectonic_aws_worker_root_volume_type": "gp2",
   "tectonic_base_domain": "tectonic-ci.de",
-  "tectonic_container_linux_channel": "beta",
-  "tectonic_container_linux_version": "latest",
   "tectonic_ignition_masters": [
     "master-0.ign",
     "master-1.ign"

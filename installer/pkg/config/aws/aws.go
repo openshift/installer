@@ -15,7 +15,7 @@ const (
 	// DefaultProfile is the default AWS credentials profile to use.
 	DefaultProfile = "default"
 	// DefaultRegion is the default AWS region for the cluster.
-	DefaultRegion = "eu-west-1"
+	DefaultRegion = "us-east-1"
 )
 
 // AWS converts AWS related config.
