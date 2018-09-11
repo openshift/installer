@@ -2,37 +2,12 @@ provider "libvirt" {
   uri = "${var.tectonic_libvirt_uri}"
 }
 
-resource "libvirt_volume" "bootstrap" {
-  name           = "bootstrap"
+module "bootstrap" {
+  source = "../../../modules/libvirt/bootstrap"
+
+  addresses      = ["${var.tectonic_libvirt_bootstrap_ip}"]
   base_volume_id = "${local.libvirt_base_volume_id}"
-}
-
-resource "libvirt_ignition" "bootstrap" {
-  name    = "bootstrap.ign"
-  content = "${local.ignition_bootstrap}"
-}
-
-resource "libvirt_domain" "bootstrap" {
-  name = "bootstrap"
-
-  memory = "2048"
-
-  vcpu = "2"
-
-  coreos_ignition = "${libvirt_ignition.bootstrap.id}"
-
-  disk {
-    volume_id = "${libvirt_volume.bootstrap.id}"
-  }
-
-  console {
-    type        = "pty"
-    target_port = 0
-  }
-
-  network_interface {
-    network_id = "${local.libvirt_network_id}"
-    hostname   = "${var.tectonic_cluster_name}-bootstrap"
-    addresses  = ["${var.tectonic_libvirt_bootstrap_ip}"]
-  }
+  cluster_name   = "${var.tectonic_cluster_name}"
+  ignition       = "${local.ignition_bootstrap}"
+  network_id     = "${local.libvirt_network_id}"
 }
