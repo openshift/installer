@@ -152,6 +152,11 @@ kubectl create -f updater/app_versions/app-version-tectonic-alm.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-utility.yaml
 kubectl create -f updater/app_versions/app-version-tectonic-ingress.yaml
 
+kubectl create -f registry/image-registry-namespace.yaml
+kubectl create -f registry/image-registry-crd.yaml
+kubectl create -f registry/image-registry-rbac.yaml
+kubectl create -f registry/image-registry-operator.yaml
+
 # wait for Tectonic pods
 wait_for_pods tectonic-system
 
