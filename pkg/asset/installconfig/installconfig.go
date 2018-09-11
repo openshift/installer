@@ -2,14 +2,22 @@ package installconfig
 
 import (
 	"fmt"
+	"net"
 	"path/filepath"
 
+	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/ghodss/yaml"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+)
+
+var (
+	defaultServiceCIDR = parseCIDR("10.3.0.0/16")
+	defaultPodCIDR     = parseCIDR("10.2.0.0/16")
 )
 
 // installConfig generates the install-config.yml file.
@@ -56,7 +64,25 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 			SSHKey:   sshKey,
 		},
 		BaseDomain: baseDomain,
+		Networking: types.Networking{
+			ServiceCIDR: ipnet.IPNet{
+				IPNet: defaultServiceCIDR,
+			},
+			PodCIDR: ipnet.IPNet{
+				IPNet: defaultPodCIDR,
+			},
+		},
 		PullSecret: pullSecret,
+		Machines: []types.MachinePool{
+			{
+				Name:     "master",
+				Replicas: func(x int64) *int64 { return &x }(3),
+			},
+			{
+				Name:     "worker",
+				Replicas: func(x int64) *int64 { return &x }(3),
+			},
+		},
 	}
 
 	platformState := dependencies[a.assetStock.Platform()]
@@ -105,4 +131,20 @@ func GetInstallConfig(installConfig asset.Asset, parents map[asset.Asset]*asset.
 	}
 
 	return &cfg, nil
+}
+
+// ClusterDNSIP returns the string representation of the DNS server's IP
+// address.
+func ClusterDNSIP(installConfig *types.InstallConfig) (string, error) {
+	ip, err := cidr.Host(&installConfig.ServiceCIDR.IPNet, 10)
+	if err != nil {
+		return "", err
+	}
+
+	return ip.String(), nil
+}
+
+func parseCIDR(s string) net.IPNet {
+	_, cidr, _ := net.ParseCIDR(s)
+	return *cidr
 }

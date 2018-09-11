@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	installConfigCommand = kingpin.Command("install-config", "Generate the Install Config asset")
+	installConfigCommand   = kingpin.Command("install-config", "Generate the Install Config asset")
+	ignitionConfigsCommand = kingpin.Command("ignition-configs", "Generate the Ignition Config assets")
 
 	dirFlag  = kingpin.Flag("dir", "assets directory").Default(".").String()
 	logLevel = kingpin.Flag("log-level", "log level (e.g. \"debug\")").Default("info").Enum("debug", "info", "warn", "error", "fatal", "panic")
@@ -22,11 +23,16 @@ func main() {
 
 	assetStock := stock.EstablishStock(*dirFlag)
 
-	var targetAsset asset.Asset
-
+	var targetAssets []asset.Asset
 	switch command {
 	case installConfigCommand.FullCommand():
-		targetAsset = assetStock.InstallConfig()
+		targetAssets = []asset.Asset{assetStock.InstallConfig()}
+	case ignitionConfigsCommand.FullCommand():
+		targetAssets = []asset.Asset{
+			assetStock.BootstrapIgnition(),
+			assetStock.MasterIgnition(),
+			assetStock.WorkerIgnition(),
+		}
 	}
 
 	l, err := log.ParseLevel(*logLevel)
@@ -37,14 +43,16 @@ func main() {
 	log.SetLevel(l)
 
 	assetStore := &asset.StoreImpl{}
-	st, err := assetStore.Fetch(targetAsset)
-	if err != nil {
-		log.Fatalf("failed to generate asset: %v", err)
-		os.Exit(1)
-	}
+	for _, asset := range targetAssets {
+		st, err := assetStore.Fetch(asset)
+		if err != nil {
+			log.Fatalf("failed to generate asset: %v", err)
+			os.Exit(1)
+		}
 
-	if err := st.PersistToFile(); err != nil {
-		log.Fatalf("failed to write target to disk: %v", err)
-		os.Exit(1)
+		if err := st.PersistToFile(); err != nil {
+			log.Fatalf("failed to write target to disk: %v", err)
+			os.Exit(1)
+		}
 	}
 }

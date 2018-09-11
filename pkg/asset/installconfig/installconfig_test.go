@@ -3,6 +3,7 @@ package installconfig
 import (
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"testing"
@@ -10,6 +11,8 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/types"
 )
 
 type testAsset struct {
@@ -158,13 +161,19 @@ func TestInstallConfigGenerate(t *testing.T) {
   sshKey: test-sshkey
 baseDomain: test-domain
 clusterID: test-cluster-id
-machines: null
+machines:
+- name: master
+  platform: {}
+  replicas: 3
+- name: worker
+  platform: {}
+  replicas: 3
 metadata:
   creationTimestamp: null
   name: test-cluster-name
 networking:
-  podCIDR: null
-  serviceCIDR: null
+  podCIDR: 10.2.0.0/16
+  serviceCIDR: 10.3.0.0/16
   type: ""
 platform:
 %s
@@ -174,4 +183,21 @@ pullSecret: test-pull-secret
 			assert.Equal(t, exp, string(state.Contents[0].Data), "unexpected data in install-config.yml")
 		})
 	}
+}
+
+// TestClusterDNSIP tests the ClusterDNSIP function.
+func TestClusterDNSIP(t *testing.T) {
+	_, cidr, err := net.ParseCIDR("10.0.1.0/24")
+	assert.NoError(t, err, "unexpected error parsing CIDR")
+	installConfig := &types.InstallConfig{
+		Networking: types.Networking{
+			ServiceCIDR: ipnet.IPNet{
+				IPNet: *cidr,
+			},
+		},
+	}
+	expected := "10.0.1.10"
+	actual, err := ClusterDNSIP(installConfig)
+	assert.NoError(t, err, "unexpected error get cluster DNS IP")
+	assert.Equal(t, expected, actual, "unexpected DNS IP")
 }
