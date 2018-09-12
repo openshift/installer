@@ -26,12 +26,11 @@ These instructions can be used for AWS:
 3. Extract the tarball
     ```sh
     tar -zxf bazel-bin/tectonic-dev.tar.gz
-    cd tectonic-dev
     ```
 
-4. Add binaries to $PATH
+4. Create an alias for tectonic
     ```sh
-    export PATH="${PWD}/installer:${PATH}"
+    alias tectonic="${PWD}/tectonic-dev/installer/tectonic"
     ```
 
 5. Edit Tectonic configuration file including the $CLUSTER_NAME

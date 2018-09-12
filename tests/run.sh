@@ -14,11 +14,12 @@ SMOKE_TEST_OUTPUT="Never executed. Problem with one of previous stages"
 [ -z ${DOMAIN+x} ] && DOMAIN="tectonic-ci.de"
 [ -z ${JOB_NAME+x} ] && PREFIX="${USER:-test}" || PREFIX="ci-${JOB_NAME#*/}"
 CLUSTER_NAME=$(echo "${PREFIX}-$(uuidgen -r | cut -c1-5)" | tr '[:upper:]' '[:lower:]')
+TECTONIC="${PWD}/tectonic-dev/installer/tectonic"
 exec &> >(tee -a "$CLUSTER_NAME.log")
 
 function destroy() {
   echo -e "\\e[34m Exiting... Destroying Tectonic...\\e[0m"
-  tectonic destroy --dir="${CLUSTER_NAME}"
+  "${TECTONIC}" destroy --dir="${CLUSTER_NAME}"
   echo -e "\\e[36m Finished! Smoke test output:\\e[0m ${SMOKE_TEST_OUTPUT}"
   echo -e "\\e[34m So Long, and Thanks for All the Fish\\e[0m"
 }
@@ -33,7 +34,6 @@ bazel build tarball smoke_tests
 echo -e "\\e[36m Unpacking artifacts...\\e[0m"
 tar -zxf bazel-bin/tectonic-dev.tar.gz
 cp bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test tectonic-dev/smoke
-export PATH="${PWD}/tectonic-dev/installer:${PATH}"
 cd tectonic-dev
 
 ### HANDLE SSH KEY ###
@@ -91,10 +91,10 @@ python <<-EOF >"${CLUSTER_NAME}.yaml"
 	EOF
 
 echo -e "\\e[36m Initializing Tectonic...\\e[0m"
-tectonic init --config="${CLUSTER_NAME}".yaml
+"${TECTONIC}" init --config="${CLUSTER_NAME}".yaml
 
 echo -e "\\e[36m Deploying Tectonic...\\e[0m"
-tectonic install --dir="${CLUSTER_NAME}"
+"${TECTONIC}" install --dir="${CLUSTER_NAME}"
 echo -e "\\e[36m Running smoke test...\\e[0m"
 export SMOKE_KUBECONFIG="${PWD}/${CLUSTER_NAME}/generated/auth/kubeconfig"
 export SMOKE_NODE_COUNT="5"  # Sum of all nodes (master + worker)

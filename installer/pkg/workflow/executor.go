@@ -67,7 +67,7 @@ func (ex *executor) execute(clusterDir string, args ...string) error {
 	return cmd.Run()
 }
 
-// tfBinatyPath searches for a TerraForm binary on disk:
+// tfBinaryPath searches for a TerraForm binary on disk:
 // - in the executing binary's folder,
 // - in the current working directory,
 // - in the PATH.
@@ -79,9 +79,18 @@ func tfBinaryPath() (string, error) {
 		binaryFileName = tfBinWindows
 	}
 
-	// Look into the executable's folder.
-	if execFolderPath, err := filepath.Abs(filepath.Dir(os.Args[0])); err == nil {
-		path := filepath.Join(execFolderPath, binaryFileName)
+	// Find the current executable's path, gets an absolute path or error
+	execPath, err := os.Executable()
+	if err == nil {
+		// execPath could be a symlink
+		if stat, err := os.Stat(execPath); err == nil && (stat.Mode()&os.ModeSymlink) == os.ModeSymlink {
+			if evalExecPath, err := filepath.EvalSymlinks(execPath); err != nil {
+				execPath = evalExecPath
+			}
+		}
+
+		// Look into the executable's folder.
+		path := filepath.Join(filepath.Dir(execPath), binaryFileName)
 		if stat, err := os.Stat(path); err == nil && !stat.IsDir() {
 			return path, nil
 		}
