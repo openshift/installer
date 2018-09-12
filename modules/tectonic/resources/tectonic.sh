@@ -9,87 +9,95 @@ KUBECTL="oc --config=$KUBECONFIG"
 # Setup helper functions
 
 kubectl() {
-  i=0
+	i=0
 
-  echo "Executing kubectl" "$@"
-  while true; do
-    i=$((i+1))
-    [ $i -eq 100 ] && echo "kubectl failed, giving up" && exit 1
+	echo "Executing kubectl" "$@"
+	while true
+	do
+		i=$((i+1))
+		[ $i -eq 100 ] && echo "kubectl failed, giving up" && exit 1
 
-    set +e
-    out=$($KUBECTL "$@" 2>&1)
-    status=$?
-    set -e
+		set +e
+		out=$($KUBECTL "$@" 2>&1)
+		status=$?
+		set -e
 
-    if echo "$out" | grep -q "AlreadyExists"; then
-      echo "$out, skipping"
-      return
-    fi
+		if echo "$out" | grep -q "AlreadyExists"
+		then
+			echo "$out, skipping"
+			return
+		fi
 
-    echo "$out"
-    if [ "$status" -eq 0 ]; then
-      return
-    fi
+		echo "$out"
+		if [ "$status" -eq 0 ]
+		then
+			return
+		fi
 
-    echo "kubectl failed, retrying in 5 seconds"
-    sleep 5
-  done
+		echo "kubectl failed, retrying in 5 seconds"
+		sleep 5
+	done
 }
 
 wait_for_crd() {
-  set +e
-  i=0
+	set +e
+	i=0
 
-  echo "Waiting for CRD $2"
-  until $KUBECTL -n "$1" get customresourcedefinition "$2"; do
-    i=$((i+1))
-    echo "CRD $2 not available yet, retrying in 5 seconds ($i)"
-    sleep 5
-  done
-  set -e
+	echo "Waiting for CRD $2"
+	until $KUBECTL -n "$1" get customresourcedefinition "$2"
+	do
+		i=$((i+1))
+		echo "CRD $2 not available yet, retrying in 5 seconds ($i)"
+		sleep 5
+	done
+	set -e
 }
 
 wait_for_pods() {
-  set +e
-  echo "Waiting for pods in namespace $1"
-  while true; do
-  
-    out=$($KUBECTL -n "$1" get po -o custom-columns=STATUS:.status.phase,NAME:.metadata.name)
-    status=$?
-    echo "$out"
-  
-    if [ "$status" -ne "0" ]; then
-      echo "kubectl command failed, retrying in 5 seconds"
-      sleep 5
-      continue
-    fi
-  
-    # make sure kubectl does not return "no resources found"
-    if [ "$(echo "$out" | tail -n +2 | grep -c '^')" -eq 0 ]; then
-      echo "no resources were found, retrying in 5 seconds"
-      sleep 5
-      continue
-    fi
-  
-    stat=$(echo "$out"| tail -n +2 | grep -v '^Running')
-    if [ -z "$stat" ]; then
-      return
-    fi
-  
-    echo "Pods not available yet, waiting for 5 seconds"
-    sleep 5
-  done
-  set -e
+	set +e
+	echo "Waiting for pods in namespace $1"
+	while true
+	do
+		out=$($KUBECTL -n "$1" get po -o custom-columns=STATUS:.status.phase,NAME:.metadata.name)
+		status=$?
+		echo "$out"
+
+		if [ "$status" -ne "0" ]
+		then
+			echo "kubectl command failed, retrying in 5 seconds"
+			sleep 5
+			continue
+		fi
+
+		# make sure kubectl does not return "no resources found"
+		if [ "$(echo "$out" | tail -n +2 | grep -c '^')" -eq 0 ]
+		then
+			echo "no resources were found, retrying in 5 seconds"
+			sleep 5
+			continue
+		fi
+
+		stat=$(echo "$out"| tail -n +2 | grep -v '^Running')
+		if [ -z "$stat" ]
+		then
+			return
+		fi
+
+		echo "Pods not available yet, waiting for 5 seconds"
+		sleep 5
+	done
+	set -e
 }
 
 # Wait for Kubernetes to be in a proper state
 set +e
 i=0
 echo "Waiting for Kubernetes API..."
-until $KUBECTL status; do
-  i=$((i+1))
-  echo "Cluster not available yet, waiting for 5 seconds ($i)"
-  sleep 5
+until $KUBECTL status
+do
+	i=$((i+1))
+	echo "Cluster not available yet, waiting for 5 seconds ($i)"
+	sleep 5
 done
 set -e
 
