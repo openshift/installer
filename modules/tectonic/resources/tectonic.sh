@@ -49,19 +49,6 @@ wait_for_crd() {
   set -e
 }
 
-wait_for_tpr() {
-  set +e
-  i=0
-
-  echo "Waiting for TPR $2"
-  until $KUBECTL -n "$1" get thirdpartyresources "$2"; do
-    i=$((i+1))
-    echo "TPR $2 not available yet, retrying in 5 seconds ($i)"
-    sleep 5
-  done
-  set -e
-}
-
 wait_for_pods() {
   set +e
   echo "Waiting for pods in namespace $1"
@@ -156,4 +143,3 @@ kubectl create -f updater/app_versions/app-version-tectonic-ingress.yaml
 wait_for_pods tectonic-system
 
 echo "Tectonic installation is done"
-exit 0
