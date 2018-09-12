@@ -79,6 +79,9 @@ type AWSPlatform struct {
 	// Region specifies the AWS region where the cluster will be created.
 	Region string `json:"region"`
 
+	// UserTags specifies additional tags for AWS resources created by the cluster.
+	UserTags map[string]string `json:"tags,omitempty"`
+
 	// VPCID specifies the vpc to associate with the cluster.
 	// If empty, new vpc will be created.
 	// +optional
