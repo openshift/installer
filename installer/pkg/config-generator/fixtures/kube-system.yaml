@@ -10,7 +10,6 @@ data:
     - name: master
       platform:
         aws:
-          iamRoleName: ""
           rootVolume:
             iops: 100
             size: 30
@@ -20,7 +19,6 @@ data:
     - name: worker
       platform:
         aws:
-          iamRoleName: ""
           rootVolume:
             iops: 100
             size: 30
@@ -38,7 +36,6 @@ data:
       aws:
         region: us-east-1
         vpcCIDRBlock: 10.0.0.0/16
-        vpcID: ""
     pullSecret: '{"auths": {}}'
   kco-config: |
     apiVersion: v1
