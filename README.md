@@ -38,7 +38,8 @@ These instructions can be used for AWS:
     $EDITOR examples/tectonic.aws.yaml
     ```
 
-6. Init Tectonic CLI
+6. Prepare a local configuration.
+    The structure behind the YAML input is described [here][godoc-InstallConfig].
     ```sh
     tectonic init --config=examples/tectonic.aws.yaml
     ```
@@ -92,3 +93,4 @@ See [tests/README.md](tests/README.md).
 [aws-cli-config]: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html#cli-quick-configuration
 [aws-cli-config-files]: https://docs.aws.amazon.com/cli/latest/userguide/cli-config-files.html
 [aws-iam-console]: https://console.aws.amazon.com/iam/home#/users
+[godoc-InstallConfig]: https://godoc.org/github.com/openshift/installer/pkg/types#InstallConfig
