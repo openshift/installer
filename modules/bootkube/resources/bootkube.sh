@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 echo "Rendering Kubernetes core manifests..."
 
 # shellcheck disable=SC2154
-/usr/bin/podman run \
+podman run \
 	--volume "$PWD:/assets:z" \
 	--volume /etc/kubernetes:/etc/kubernetes:z \
 	"${kube_core_renderer_image}" \
@@ -14,7 +14,7 @@ echo "Rendering Kubernetes core manifests..."
 echo "Rendering MCO manifests..."
 
 # shellcheck disable=SC2154
-/usr/bin/podman run \
+podman run \
 	--user 0 \
 	--volume "$PWD:/assets:z" \
 	"${machine_config_operator_image}" \
@@ -25,15 +25,15 @@ echo "Rendering MCO manifests..."
 		--dest-dir=/assets/mco-bootstrap \
 		--images-json-configmap=/assets/manifests/machine-config-operator-01-images-configmap.yaml
 
-mkdir -p /etc/kubernetes/manifests/
-mkdir -p /etc/mcc/bootstrap/
-mkdir -p /etc/ssl/mcs/
+mkdir --parents /etc/kubernetes/manifests/
+mkdir --parents /etc/mcc/bootstrap/
+mkdir --parents /etc/ssl/mcs/
 
 # Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
 # 1. read the controller config rendered by MachineConfigOperator
 # 2. read the default MachineConfigPools rendered by MachineConfigOperator
 # 3. read any additional MachineConfigs that are needed for the default MachineConfigPools.
-cp -r "$PWD/mco-bootstrap/manifests" /etc/mcc/bootstrap/manifests
+cp --recursive "$PWD/mco-bootstrap/manifests" /etc/mcc/bootstrap/manifests
 
 # /etc/ssl/mcs/tls.{crt, key} are locations for MachineConfigServer's tls assets.
 cp "$PWD/tls/machine-config-server.crt" /etc/ssl/mcs/tls.crt
@@ -49,7 +49,7 @@ cp "$PWD/mco-bootstrap/machineconfigoperator-bootstrap-pod.yaml" /etc/kubernetes
 echo "Starting etcd certificate signer..."
 
 # shellcheck disable=SC2154
-SIGNER=$(/usr/bin/podman run -d \
+SIGNER=$(podman run --detach \
 	--volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
 	--network host \
 	"${etcd_cert_signer_image}" \
@@ -66,12 +66,9 @@ SIGNER=$(/usr/bin/podman run -d \
 echo "Waiting for etcd cluster..."
 
 # Wait for the etcd cluster to come up.
-i=0
-while true
-do
-	set +e
-	# shellcheck disable=SC2154,SC2086
-	/usr/bin/podman run \
+set +e
+# shellcheck disable=SC2154,SC2086
+until podman run \
 		--rm \
 		--network host \
 		--name etcdctl \
@@ -85,32 +82,23 @@ do
 		--key=/opt/tectonic/tls/etcd-client.key \
 		--endpoints=${etcd_cluster} \
 		endpoint health
-	status=$?
-	set -e
-
-	if [ "$status" -eq 0 ]
-	then
-		break
-	fi
-
-	i=$((i+1))
-	[ $i -eq 10 ] && echo "etcdctl failed too many times." && exit 1
-
+do
 	echo "etcdctl failed. Retrying in 5 seconds..."
 	sleep 5
 done
+set -e
 
 echo "etcd cluster up. Killing etcd certificate signer..."
 
-/usr/bin/podman kill "$SIGNER"
+podman kill "$SIGNER"
 rm /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
 
-cp -r "$PWD/bootstrap-configs" /etc/kubernetes/bootstrap-configs
+cp --recursive "$PWD/bootstrap-configs" /etc/kubernetes/bootstrap-configs
 
 echo "Starting bootkube..."
 
 # shellcheck disable=SC2154
-/usr/bin/podman run \
+podman run \
 	--volume "$PWD:/assets:z" \
 	--volume /etc/kubernetes:/etc/kubernetes:z \
 	--network=host \

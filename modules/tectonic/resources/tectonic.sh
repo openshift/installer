@@ -1,30 +1,20 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -e
 
 KUBECONFIG="$1"
 
-# Setup API Authentication
-KUBECTL="oc --config=$KUBECONFIG"
-
-# Setup helper functions
-
 kubectl() {
-	i=0
-
-	echo "Executing kubectl" "$@"
+	(>&2 echo "Executing kubectl $*")
 	while true
 	do
-		i=$((i+1))
-		[ $i -eq 100 ] && echo "kubectl failed, giving up" && exit 1
-
 		set +e
-		out=$($KUBECTL "$@" 2>&1)
+		out=$(oc --config="$KUBECONFIG" "$@" 2>&1)
 		status=$?
 		set -e
 
-		if echo "$out" | grep -q "AlreadyExists"
+		if grep --quiet "AlreadyExists" <<< "$out"
 		then
-			echo "$out, skipping"
+			(>&2 echo "$out, skipping")
 			return
 		fi
 
@@ -34,120 +24,87 @@ kubectl() {
 			return
 		fi
 
-		echo "kubectl failed, retrying in 5 seconds"
+		(>&2 echo "kubectl $* failed. Retrying in 5 seconds...")
 		sleep 5
 	done
-}
-
-wait_for_crd() {
-	set +e
-	i=0
-
-	echo "Waiting for CRD $2"
-	until $KUBECTL -n "$1" get customresourcedefinition "$2"
-	do
-		i=$((i+1))
-		echo "CRD $2 not available yet, retrying in 5 seconds ($i)"
-		sleep 5
-	done
-	set -e
 }
 
 wait_for_pods() {
-	set +e
-	echo "Waiting for pods in namespace $1"
+	echo "Waiting for pods in namespace $1..."
 	while true
 	do
-		out=$($KUBECTL -n "$1" get po -o custom-columns=STATUS:.status.phase,NAME:.metadata.name)
-		status=$?
+		out=$(kubectl --namespace "$1" get pods --output custom-columns=STATUS:.status.phase,NAME:.metadata.name --no-headers=true)
 		echo "$out"
 
-		if [ "$status" -ne "0" ]
+		# make sure kubectl returns at least one status
+		if [ "$(wc --lines <<< "$out")" -eq 0 ]
 		then
-			echo "kubectl command failed, retrying in 5 seconds"
+			echo "No pods were found. Waiting for 5 seconds..."
 			sleep 5
 			continue
 		fi
 
-		# make sure kubectl does not return "no resources found"
-		if [ "$(echo "$out" | tail -n +2 | grep -c '^')" -eq 0 ]
-		then
-			echo "no resources were found, retrying in 5 seconds"
-			sleep 5
-			continue
-		fi
-
-		stat=$(echo "$out"| tail -n +2 | grep -v '^Running')
-		if [ -z "$stat" ]
+		if ! grep --invert-match '^Running' <<< "$out"
 		then
 			return
 		fi
 
-		echo "Pods not available yet, waiting for 5 seconds"
+		echo "Not all pods available yet. Waiting for 5 seconds..."
 		sleep 5
 	done
 	set -e
 }
 
 # Wait for Kubernetes to be in a proper state
-set +e
-i=0
-echo "Waiting for Kubernetes API..."
-until $KUBECTL status
-do
-	i=$((i+1))
-	echo "Cluster not available yet, waiting for 5 seconds ($i)"
-	sleep 5
-done
-set -e
+kubectl status
 
-# wait for Kubernetes pods
+# Wait for Kubernetes pods
 wait_for_pods kube-system
 
-echo "Creating Initial Roles"
-kubectl delete -f rbac/role-admin.yaml
+echo "Creating initial roles..."
+kubectl delete --filename rbac/role-admin.yaml
 
-kubectl create -f ingress/svc-account.yaml
-kubectl create -f rbac/role-admin.yaml
-kubectl create -f rbac/role-user.yaml
-kubectl create -f rbac/binding-admin.yaml
-kubectl create -f rbac/binding-discovery.yaml
+kubectl create --filename ingress/svc-account.yaml
+kubectl create --filename rbac/role-admin.yaml
+kubectl create --filename rbac/role-user.yaml
+kubectl create --filename rbac/binding-admin.yaml
+kubectl create --filename rbac/binding-discovery.yaml
 
-echo "Creating Cluster Config For Tectonic"
-kubectl create -f cluster-config.yaml
-kubectl create -f ingress/cluster-config.yaml
+echo "Creating cluster config for Tectonic..."
+kubectl create --filename cluster-config.yaml
+kubectl create --filename ingress/cluster-config.yaml
 
-echo "Creating Tectonic Secrets"
-kubectl create -f secrets/pull.json
-kubectl create -f secrets/ingress-tls.yaml
-kubectl create -f secrets/ca-cert.yaml
-kubectl create -f ingress/pull.json
+echo "Creating Tectonic secrets..."
+kubectl create --filename secrets/pull.json
+kubectl create --filename secrets/ingress-tls.yaml
+kubectl create --filename secrets/ca-cert.yaml
+kubectl create --filename ingress/pull.json
 
-echo "Creating Operators"
-kubectl create -f security/priviledged-scc-tectonic.yaml
-kubectl create -f updater/tectonic-channel-operator-kind.yaml
-kubectl create -f updater/app-version-kind.yaml
-kubectl create -f updater/migration-status-kind.yaml
+echo "Creating operators..."
+kubectl create --filename security/priviledged-scc-tectonic.yaml
+kubectl create --filename updater/tectonic-channel-operator-kind.yaml
+kubectl create --filename updater/app-version-kind.yaml
+kubectl create --filename updater/migration-status-kind.yaml
 
-wait_for_crd tectonic-system channeloperatorconfigs.tco.coreos.com
-kubectl create -f updater/tectonic-channel-operator-config.yaml
+kubectl --namespace=tectonic-system get customresourcedefinition channeloperatorconfigs.tco.coreos.com
+kubectl create --filename updater/tectonic-channel-operator-config.yaml
 
-kubectl create -f updater/operators/kube-core-operator.yaml
-kubectl create -f updater/operators/tectonic-channel-operator.yaml
-kubectl create -f updater/operators/kube-addon-operator.yaml
-kubectl create -f updater/operators/tectonic-alm-operator.yaml
-kubectl create -f updater/operators/tectonic-utility-operator.yaml
-kubectl create -f updater/operators/tectonic-ingress-controller-operator.yaml
+kubectl create --filename updater/operators/kube-core-operator.yaml
+kubectl create --filename updater/operators/tectonic-channel-operator.yaml
+kubectl create --filename updater/operators/kube-addon-operator.yaml
+kubectl create --filename updater/operators/tectonic-alm-operator.yaml
+kubectl create --filename updater/operators/tectonic-utility-operator.yaml
+kubectl create --filename updater/operators/tectonic-ingress-controller-operator.yaml
 
-wait_for_crd tectonic-system appversions.tco.coreos.com
-kubectl create -f updater/app_versions/app-version-tectonic-cluster.yaml
-kubectl create -f updater/app_versions/app-version-kube-core.yaml
-kubectl create -f updater/app_versions/app-version-kube-addon.yaml
-kubectl create -f updater/app_versions/app-version-tectonic-alm.yaml
-kubectl create -f updater/app_versions/app-version-tectonic-utility.yaml
-kubectl create -f updater/app_versions/app-version-tectonic-ingress.yaml
+kubectl --namespace=tectonic-system get customresourcedefinition appversions.tco.coreos.com
+kubectl create --filename updater/app_versions/app-version-tectonic-cluster.yaml
+kubectl create --filename updater/app_versions/app-version-kube-core.yaml
+kubectl create --filename updater/app_versions/app-version-kube-addon.yaml
+kubectl create --filename updater/app_versions/app-version-tectonic-alm.yaml
+kubectl create --filename updater/app_versions/app-version-tectonic-utility.yaml
+kubectl create --filename updater/app_versions/app-version-tectonic-ingress.yaml
 
-# wait for Tectonic pods
+# Wait for Tectonic pods
 wait_for_pods tectonic-system
 
 echo "Tectonic installation is done"
