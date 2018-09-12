@@ -87,10 +87,10 @@ iptables -I INPUT -p tcp -s 192.168.124.0/24 -d 192.168.124.1 --dport 16509 \
 1. `cp examples/libvirt.yaml ./`
 1. Edit the configuration file:
     1. Set an email and password in the `admin` section
-    1. Set a `baseDomain` (to `tt.testing`)
     1. Set the `sshKey` in the `admin` section to the **contents** of an ssh key (e.g. `ssh-rsa AAAA...`)
-    1. Set the `imagePath` to the **absolute** path of the operating system image you downloaded
-    1. Set the `name` (e.g. test1)
+    1. Set a `baseDomain` (to `tt.testing`)
+    1. Set the `imagePath` entries to the **absolute** path of the operating system image you downloaded
+    1. Set the `name` (e.g. `test1`)
     1. Look at the `podCIDR` and `serviceCIDR` fields in the `networking` section. Make sure they don't conflict with anything important.
     1. Set the `pullSecret` to your JSON pull secret.
 
