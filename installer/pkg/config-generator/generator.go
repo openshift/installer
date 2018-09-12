@@ -116,9 +116,9 @@ func (c *ConfigGenerator) installConfig() (*types.InstallConfig, error) {
 	}
 
 	var (
-		platform             types.Platform
-		masterPlatformConfig types.MachinePoolPlatformConfig
-		workerPlatformConfig types.MachinePoolPlatformConfig
+		platform       types.Platform
+		masterPlatform types.MachinePoolPlatform
+		workerPlatform types.MachinePoolPlatform
 	)
 	switch c.Platform {
 	case config.PlatformAWS:
@@ -127,7 +127,7 @@ func (c *ConfigGenerator) installConfig() (*types.InstallConfig, error) {
 			VPCID:        c.VPCID,
 			VPCCIDRBlock: c.VPCCIDRBlock,
 		}
-		masterPlatformConfig.AWS = &types.AWSMachinePoolPlatformConfig{
+		masterPlatform.AWS = &types.AWSMachinePoolPlatform{
 			InstanceType: c.AWS.Master.EC2Type,
 			IAMRoleName:  c.AWS.Master.IAMRoleName,
 			EC2RootVolume: types.EC2RootVolume{
@@ -136,7 +136,7 @@ func (c *ConfigGenerator) installConfig() (*types.InstallConfig, error) {
 				Type: c.AWS.Master.MasterRootVolume.Type,
 			},
 		}
-		workerPlatformConfig.AWS = &types.AWSMachinePoolPlatformConfig{
+		workerPlatform.AWS = &types.AWSMachinePoolPlatform{
 			InstanceType: c.AWS.Worker.EC2Type,
 			IAMRoleName:  c.AWS.Worker.IAMRoleName,
 			EC2RootVolume: types.EC2RootVolume{
@@ -154,10 +154,10 @@ func (c *ConfigGenerator) installConfig() (*types.InstallConfig, error) {
 				IPRange: c.Network.IPRange,
 			},
 		}
-		masterPlatformConfig.Libvirt = &types.LibvirtMachinePoolPlatformConfig{
+		masterPlatform.Libvirt = &types.LibvirtMachinePoolPlatform{
 			QCOWImagePath: c.Libvirt.QCOWImagePath,
 		}
-		workerPlatformConfig.Libvirt = &types.LibvirtMachinePoolPlatformConfig{
+		workerPlatform.Libvirt = &types.LibvirtMachinePoolPlatform{
 			QCOWImagePath: c.Libvirt.QCOWImagePath,
 		}
 	default:
@@ -185,13 +185,13 @@ func (c *ConfigGenerator) installConfig() (*types.InstallConfig, error) {
 		},
 		Platform: platform,
 		Machines: []types.MachinePool{{
-			Name:           "master",
-			Replicas:       &masterCount,
-			PlatformConfig: masterPlatformConfig,
+			Name:     "master",
+			Replicas: &masterCount,
+			Platform: masterPlatform,
 		}, {
-			Name:           "worker",
-			Replicas:       &workerCount,
-			PlatformConfig: workerPlatformConfig,
+			Name:     "worker",
+			Replicas: &workerCount,
+			Platform: workerPlatform,
 		}},
 	}, nil
 }
