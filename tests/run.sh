@@ -17,7 +17,7 @@ SMOKE_TEST_OUTPUT="Never executed. Problem with one of previous stages"
 [ -z ${JOB_NAME+x} ] && PREFIX="${USER:-test}" || PREFIX="ci-${JOB_NAME#*/}"
 CLUSTER_NAME=$(echo "${PREFIX}-$(uuidgen -r | cut -c1-5)" | tr '[:upper:]' '[:lower:]')
 TECTONIC="${PWD}/tectonic-dev/installer/tectonic"
-exec &> >(tee -a "$CLUSTER_NAME.log")
+exec &> >(tee -ai "$CLUSTER_NAME.log")
 
 function destroy() {
   echo -e "\\e[34m Exiting... Destroying Tectonic...\\e[0m"
@@ -128,4 +128,4 @@ if test "${LEAVE_RUNNING}" = y; then
   echo "leaving running; tear down manually with: cd ${PWD} && installer/tectonic destroy --dir=${CLUSTER_NAME}"
   trap - EXIT
 fi
-SMOKE_TEST_OUTPUT=$(./smoke -test.v --cluster | tee >(cat - >&5))
+SMOKE_TEST_OUTPUT=$(./smoke -test.v --cluster | tee -i >(cat - >&5))
