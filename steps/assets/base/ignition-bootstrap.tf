@@ -36,16 +36,6 @@ data "ignition_file" "tectonic_cluster_config" {
   }
 }
 
-data "ignition_file" "tnco_config" {
-  filesystem = "root"
-  mode       = "0644"
-  path       = "/opt/tectonic/tnco-config.yaml"
-
-  content {
-    content = "${file("./generated/tnco-config.yaml")}"
-  }
-}
-
 data "ignition_file" "kco_config" {
   filesystem = "root"
   mode       = "0644"
@@ -89,7 +79,6 @@ data "ignition_config" "bootstrap" {
     list(
       data.ignition_file.kube-system_cluster_config.id,
       data.ignition_file.tectonic_cluster_config.id,
-      data.ignition_file.tnco_config.id,
       data.ignition_file.kco_config.id,
       data.ignition_file.bootstrap_kubeconfig.id,
       data.ignition_file.kubelet_kubeconfig.id,
@@ -101,7 +90,7 @@ data "ignition_config" "bootstrap" {
     local.ca_certs_ignition_file_id_list,
     local.etcd_certs_ignition_file_id_list,
     local.kube_certs_ignition_file_id_list,
-    local.tnc_certs_ignition_file_id_list,
+    local.mcs_certs_ignition_file_id_list,
     local.service_account_keys_ignition_file_id_list,
    )))}"]
 

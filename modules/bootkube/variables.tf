@@ -123,11 +123,11 @@ variable "kubelet_key_pem" {
   description = "The kubelet key in PEM format."
 }
 
-variable "tnc_cert_pem" {
+variable "mcs_cert_pem" {
   type = "string"
 }
 
-variable "tnc_key_pem" {
+variable "mcs_key_pem" {
   type = "string"
 }
 

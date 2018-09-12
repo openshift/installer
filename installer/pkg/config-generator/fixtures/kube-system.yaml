@@ -69,20 +69,6 @@ data:
     kind: TectonicNetworkOperatorConfig
     networkProfile: canal
     podCIDR: 10.2.0.0/16
-  tnco-config: |
-    apiVersion: v1
-    controllerConfig:
-      additionalConfigs: []
-      apiVersion: v1
-      baseDomain: cluster.com
-      cloudProviderConfig: ""
-      clusterDNSIP: 10.3.0.10
-      clusterName: test
-      etcdInitialCount: 3
-      kind: TectonicNodeControllerConfig
-      nodePoolUpdateLimit: null
-      platform: aws
-    kind: TectonicNodeControllerOperatorConfig
 kind: ConfigMap
 metadata:
   name: cluster-config-v1

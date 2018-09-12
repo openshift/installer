@@ -3,19 +3,22 @@ variable "manifest_names" {
     "01-tectonic-namespace.yaml",
     "02-ingress-namespace.yaml",
     "03-openshift-web-console-namespace.yaml",
+    "04-openshift-machine-config-operator.yaml",        # https://github.com/openshift/machine-config-operator/tree/master/install/00_namespace.yaml
     "app-version-kind.yaml",
     "app-version-tectonic-network.yaml",
-    "app-version-tnc.yaml",
+    "cluster-apiserver-secret.yaml",
     "kube-apiserver-secret.yaml",
     "kube-cloud-config.yaml",
     "kube-controller-manager-secret.yaml",
-    "node-config-kind.yaml",
+    "machine-config-operator-00-config-crd.yaml",       # https://github.com/openshift/machine-config-operator/tree/master/install/01_mcoconfig.crd.yaml
+    "machine-config-operator-01-images-configmap.yaml", # https://github.com/openshift/machine-config-operator/tree/master/install/02_images.configmap.yaml
+    "machine-config-operator-02-rbac.yaml",             # https://github.com/openshift/machine-config-operator/tree/master/install/03_rbac.yaml
+    "machine-config-operator-03-deployment.yaml",       # https://github.com/openshift/machine-config-operator/tree/master/install/04_deployment.yaml
+    "machine-config-server-tls-secret.yaml",
     "openshift-apiserver-secret.yaml",
-    "cluster-apiserver-secret.yaml",
     "pull.json",
     "tectonic-network-operator.yaml",
-    "tectonic-node-controller-operator.yaml",
-    "tnc-tls-secret.yaml",
+    "operatorstatus-crd.yaml",
   ]
 }
 
@@ -26,7 +29,7 @@ data "template_file" "manifest_file_list" {
 
   vars {
     tectonic_network_operator_image = "${var.container_images["tectonic_network_operator"]}"
-    tnc_operator_image              = "${var.container_images["tnc_operator"]}"
+    machine_config_operator_image   = "${var.container_images["machine_config_operator"]}"
 
     cloud_provider_config = "${var.cloud_provider_config}"
 
@@ -57,8 +60,8 @@ data "template_file" "manifest_file_list" {
     etcd_client_cert = "${base64encode(var.etcd_client_cert_pem)}"
     etcd_client_key  = "${base64encode(var.etcd_client_key_pem)}"
 
-    tnc_tls_cert = "${base64encode(var.tnc_cert_pem)}"
-    tnc_tls_key  = "${base64encode(var.tnc_key_pem)}"
+    mcs_tls_cert = "${base64encode(var.mcs_cert_pem)}"
+    mcs_tls_key  = "${base64encode(var.mcs_key_pem)}"
   }
 }
 
