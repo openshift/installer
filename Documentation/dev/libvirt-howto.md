@@ -84,7 +84,7 @@ iptables -I INPUT -p tcp -s 192.168.124.0/24 -d 192.168.124.1 --dport 16509 \
 ```
 
 #### 1.7 Prepare the configuration file
-1. `cp examples/tectonic.libvirt.yaml ./`
+1. `cp examples/libvirt.yaml ./`
 1. Edit the configuration file:
     1. Set an email and password in the `admin` section
     1. Set a `baseDomain` (to `tt.testing`)
@@ -132,7 +132,7 @@ alias tectonic="${PWD}/tectonic-dev/installer/tectonic"
 
 Initialize (the environment variables are a convenience):
 ```sh
-tectonic init --config=../tectonic.libvirt.yaml
+tectonic init --config=../libvirt.yaml
 export CLUSTER_NAME=<the cluster name>
 export BASE_DOMAIN=<the base domain>
 ```

@@ -1,9 +1,9 @@
-example_cli_configs = glob(["tectonic.*.yaml"])
+config_examples = glob(["*.yaml"])
 
 filegroup(
-    name = "tectonic_cli_examples",
-    srcs = example_cli_configs,
+    name = "config_examples",
+    srcs = config_examples,
     visibility = ["//visibility:public"],
 )
 
-exports_files(example_cli_configs)
+exports_files(config_examples)

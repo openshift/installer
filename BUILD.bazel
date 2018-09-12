@@ -76,7 +76,7 @@ pkg_tar(
     name = "tectonic-%s" % TECTONIC_VERSION,
     srcs = [
         "//:template_resources",
-        "//examples:tectonic_cli_examples",
+        "//examples:config_examples",
     ],
     extension = "tar.gz",
     mode = "0666",
