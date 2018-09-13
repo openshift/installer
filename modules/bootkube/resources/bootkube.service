@@ -4,8 +4,10 @@ Wants=kubelet.service
 After=kubelet.service
 
 [Service]
-Type=oneshot
 RemainAfterExit=true
 WorkingDirectory=/opt/tectonic
 
 ExecStart=/opt/tectonic/bootkube.sh
+
+Restart=on-failure
+RestartSec=5s

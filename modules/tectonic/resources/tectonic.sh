@@ -55,9 +55,6 @@ wait_for_pods() {
 	set -e
 }
 
-# Wait for Kubernetes to be in a proper state
-kubectl status
-
 # Wait for Kubernetes pods
 wait_for_pods kube-system
 

@@ -1,14 +1,16 @@
 [Unit]
 Description=Bootstrap a Tectonic cluster
-Requires=bootkube.service
+Wants=bootkube.service
 After=bootkube.service
 
 [Service]
-Type=oneshot
 RemainAfterExit=true
 WorkingDirectory=/opt/tectonic/tectonic
 
 ExecStart=/opt/tectonic/tectonic.sh /opt/tectonic/auth/kubeconfig
+
+Restart=on-failure
+RestartSec=5s
 
 [Install]
 WantedBy=multi-user.target
