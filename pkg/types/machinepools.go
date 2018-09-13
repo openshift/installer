@@ -9,22 +9,22 @@ type MachinePool struct {
 	// Default is 1.
 	Replicas *int64 `json:"replicas"`
 
-	// PlatformConfig is configuration for machine pool specific to the platfrom.
-	PlatformConfig MachinePoolPlatformConfig `json:"platformConfig"`
+	// Platform is configuration for machine pool specific to the platfrom.
+	Platform MachinePoolPlatform `json:"platform"`
 }
 
-// MachinePoolPlatformConfig is the platform-specific configuration for a machine
+// MachinePoolPlatform is the platform-specific configuration for a machine
 // pool. Only one of the platforms should be set.
-type MachinePoolPlatformConfig struct {
+type MachinePoolPlatform struct {
 	// AWS is the configuration used when installing on AWS.
-	AWS *AWSMachinePoolPlatformConfig `json:"aws,omitempty"`
+	AWS *AWSMachinePoolPlatform `json:"aws,omitempty"`
 	// Libvirt is the configuration used when installing on libvirt.
-	Libvirt *LibvirtMachinePoolPlatformConfig `json:"libvirt,omitempty"`
+	Libvirt *LibvirtMachinePoolPlatform `json:"libvirt,omitempty"`
 }
 
-// AWSMachinePoolPlatformConfig stores the configuration for a machine pool
+// AWSMachinePoolPlatform stores the configuration for a machine pool
 // installed on AWS.
-type AWSMachinePoolPlatformConfig struct {
+type AWSMachinePoolPlatform struct {
 	// InstanceType defines the ec2 instance type.
 	// eg. m4-large
 	InstanceType string `json:"type"`
@@ -47,9 +47,9 @@ type EC2RootVolume struct {
 	Type string `json:"type"`
 }
 
-// LibvirtMachinePoolPlatformConfig stores the configuration for a machine pool
+// LibvirtMachinePoolPlatform stores the configuration for a machine pool
 // installed on libvirt.
-type LibvirtMachinePoolPlatformConfig struct {
+type LibvirtMachinePoolPlatform struct {
 	// QCOWImagePath
 	QCOWImagePath string `json:"qcowImagePath"`
 }

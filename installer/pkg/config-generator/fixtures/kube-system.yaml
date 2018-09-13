@@ -8,7 +8,7 @@ data:
     clusterID: ""
     machines:
     - name: master
-      platformConfig:
+      platform:
         aws:
           iamRoleName: ""
           rootVolume:
@@ -18,7 +18,7 @@ data:
           type: t2.medium
       replicas: 3
     - name: worker
-      platformConfig:
+      platform:
         aws:
           iamRoleName: ""
           rootVolume:
