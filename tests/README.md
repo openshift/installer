@@ -70,7 +70,7 @@ AWS_REGION
 ```
 
 ### 2. Launch the tests
-Once the environment variables are set, run `./tests/run.sh`.
+Once the environment variables are set, run `./tests/run.sh aws`.
 
 ## Or, if you already have a cluster running
 
