@@ -4,7 +4,6 @@ Wants=bootkube.service
 After=bootkube.service
 
 [Service]
-RemainAfterExit=true
 WorkingDirectory=/opt/tectonic/tectonic
 
 ExecStart=/opt/tectonic/tectonic.sh /opt/tectonic/auth/kubeconfig
