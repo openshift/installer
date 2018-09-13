@@ -4,4 +4,4 @@ metadata:
   name: machine-config-operator-images
   namespace: openshift-machine-config-operator
 data:
-  images.json: '{"machineConfigController": "openshift/origin-machine-config-controller:v4.0.0", "machineConfigDaemon": "openshift/origin-machine-config-daemon:v4.0.0", "machineConfigServer": "openshift/origin-machine-config-server:v4.0.0"}'
+  images.json: '{"machineConfigController": "docker.io/openshift/origin-machine-config-controller:v4.0.0", "machineConfigDaemon": "docker.io/openshift/origin-machine-config-daemon:v4.0.0", "machineConfigServer": "docker.io/openshift/origin-machine-config-server:v4.0.0"}'
