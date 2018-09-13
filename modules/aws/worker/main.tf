@@ -93,7 +93,7 @@ resource "aws_instance" "worker" {
     # Ignore changes in the AMI which force recreation of the resource. This
     # avoids accidental deletion of nodes whenever a new CoreOS Release comes
     # out.
-    ignore_changes = ["image_id"]
+    ignore_changes = ["ami"]
   }
 
   tags = "${merge(map(
