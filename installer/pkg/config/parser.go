@@ -34,7 +34,7 @@ func ParseConfig(data []byte) (*Cluster, error) {
 	if cluster.EC2AMIOverride == "" {
 		ami, err := rhcos.AMI(DefaultChannel, cluster.AWS.Region)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to determine default AMI: %v", err)
+			return nil, fmt.Errorf("failed to determine default AMI: %v", err)
 		}
 		cluster.EC2AMIOverride = ami
 	}

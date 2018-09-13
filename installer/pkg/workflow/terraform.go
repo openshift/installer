@@ -10,12 +10,12 @@ func terraformExec(clusterDir string, args ...string) error {
 	// Create an executor
 	ex, err := newExecutor()
 	if err != nil {
-		return fmt.Errorf("Could not create Terraform executor: %s", err)
+		return fmt.Errorf("could not create Terraform executor: %s", err)
 	}
 
 	err = ex.execute(clusterDir, args...)
 	if err != nil {
-		return fmt.Errorf("Failed to run Terraform: %s", err)
+		return fmt.Errorf("failed to run Terraform: %s", err)
 	}
 	return nil
 }

@@ -53,7 +53,7 @@ func findStepTemplates(stepName string, platform config.Platform) (string, error
 func generateClusterConfigMaps(m *metadata) error {
 	clusterGeneratedPath := filepath.Join(m.clusterDir, generatedPath)
 	if err := os.MkdirAll(clusterGeneratedPath, os.ModeDir|0755); err != nil {
-		return fmt.Errorf("Failed to create cluster generated directory at %s", clusterGeneratedPath)
+		return fmt.Errorf("failed to create cluster generated directory at %s", clusterGeneratedPath)
 	}
 
 	configGenerator := configgenerator.New(m.cluster)
@@ -75,7 +75,7 @@ func generateClusterConfigMaps(m *metadata) error {
 
 	kubePath := filepath.Join(m.clusterDir, kubeSystemPath)
 	if err := os.MkdirAll(kubePath, os.ModeDir|0755); err != nil {
-		return fmt.Errorf("Failed to create manifests directory at %s", kubePath)
+		return fmt.Errorf("failed to create manifests directory at %s", kubePath)
 	}
 
 	kubeSystemConfigFilePath := filepath.Join(kubePath, kubeSystemFileName)
@@ -90,7 +90,7 @@ func generateClusterConfigMaps(m *metadata) error {
 
 	tectonicPath := filepath.Join(m.clusterDir, tectonicSystemPath)
 	if err := os.MkdirAll(tectonicPath, os.ModeDir|0755); err != nil {
-		return fmt.Errorf("Failed to create tectonic directory at %s", tectonicPath)
+		return fmt.Errorf("failed to create tectonic directory at %s", tectonicPath)
 	}
 
 	tectonicSystemConfigFilePath := filepath.Join(tectonicPath, tectonicSystemFileName)
