@@ -6,10 +6,9 @@ import (
 
 	"github.com/ghodss/yaml"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // installConfig generates the install-config.yml file.
@@ -49,7 +48,8 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterName,
 		},
-		ClusterID: clusterID,
+		ClusterName: clusterName,
+		ClusterID:   clusterID,
 		Admin: types.Admin{
 			Email:    emailAddress,
 			Password: password,

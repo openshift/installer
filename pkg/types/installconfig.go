@@ -12,7 +12,11 @@ type InstallConfig struct {
 	// +optional
 	metav1.TypeMeta `json:",inline"`
 
+	// +optional
 	metav1.ObjectMeta `json:"metadata"`
+
+	// ClusterName is the name of the cluster.
+	ClusterName string `json:"clusterName"`
 
 	// ClusterID is the ID of the cluster.
 	ClusterID string `json:"clusterID"`
