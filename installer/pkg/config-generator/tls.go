@@ -255,13 +255,21 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 
 	// Cluster API cert
 	cfg = &tls.CertCfg{
-		Subject:   pkix.Name{CommonName: "cluster-apiserver", OrganizationalUnit: []string{"bootkube"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  tls.ValidityTenYears,
-		IsCA:      true,
+		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
+		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
+		Subject:      pkix.Name{CommonName: "clusterapi", OrganizationalUnit: []string{"bootkube"}},
+		DNSNames: []string{
+			"clusterapi",
+			fmt.Sprintf("clusterapi.%s", maoTargetNamespace),
+			fmt.Sprintf("clusterapi.%s.svc", maoTargetNamespace),
+			fmt.Sprintf("clusterapi.%s.svc.cluster.local", maoTargetNamespace),
+		},
+		Validity: tls.ValidityTenYears,
+		IsCA:     false,
 	}
+
 	if _, _, err := generateCert(clusterDir, aggregatorCAKey, aggregatorCACert, clusterAPIServerKeyPath, clusterAPIServerCertPath, cfg, true); err != nil {
-		return fmt.Errorf("failed to generate cluster-apiserver CA: %v", err)
+		return fmt.Errorf("failed to generate cluster-apiserver certificate: %v", err)
 	}
 
 	// Service Account private and public key.

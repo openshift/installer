@@ -1,0 +1,9 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["configtemplate.go"],
+    importmap = "installer/vendor/sigs.k8s.io/cluster-api/cloud/vsphere/config",
+    importpath = "sigs.k8s.io/cluster-api/cloud/vsphere/config",
+    visibility = ["//visibility:public"],
+)

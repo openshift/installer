@@ -1,0 +1,28 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "deploy.go",
+        "deploy_helper.go",
+        "machinedeployer.go",
+    ],
+    importmap = "installer/vendor/sigs.k8s.io/cluster-api/gcp-deployer/deploy",
+    importpath = "sigs.k8s.io/cluster-api/gcp-deployer/deploy",
+    visibility = ["//visibility:public"],
+    deps = [
+        "//vendor/github.com/golang/glog:go_default_library",
+        "//vendor/k8s.io/api/core/v1:go_default_library",
+        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
+        "//vendor/k8s.io/client-go/kubernetes:go_default_library",
+        "//vendor/k8s.io/client-go/plugin/pkg/client/auth/gcp:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/cloud/google:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/cloud/google/machinesetup:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/pkg/cert:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset/typed/cluster/v1alpha1:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/pkg/controller/machine:go_default_library",
+        "//vendor/sigs.k8s.io/cluster-api/util:go_default_library",
+    ],
+)

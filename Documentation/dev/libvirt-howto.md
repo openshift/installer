@@ -40,7 +40,50 @@ polkit.addRule(function(action, subject) {
 EOF
 ```
 
-#### 1.6 Prepare the configuration file
+#### 1.6 Configure libvirt to accept TCP connections
+
+The Kubernetes [cluster-api](https://github.com/kubernetes-sigs/cluster-api)
+components drive deployment of worker machines.  The libvirt cluster-api
+provider will run inside the local cluster, and will need to connect back to
+the libvirt instance on the host machine to deploy workers.
+
+In order for this to work, you'll need to enable TCP connections for libvirt.
+To do this, first modify your `/etc/libvirt/libvirtd.conf` and set the
+following:
+```
+listen_tls = 0
+listen_tcp = 1
+auth_tcp="none"
+tcp_port = "16509"
+```
+
+Note that authentication is not currently supported, but should be soon.
+
+In addition to the config, you'll have to pass an additional command-line
+argument to libvirtd. On Fedora, modify `/etc/sysconfig/libvirtd` and set:
+
+```
+LIBVIRTD_ARGS="--listen"
+```
+
+On Debian based distros, modify `/etc/default/libvirtd` and set:
+
+```
+libvirtd_opts="--listen"
+```
+
+Next, restart libvirt: `systemctl restart libvirtd`
+
+Finally, if you have a firewall, you may have to allow connections from the IP
+range used by your cluster nodes.  If you're using the default subnet of
+`192.168.124.0/24`, something along these lines should work:
+
+```
+iptables -I INPUT -p tcp -s 192.168.124.0/24 -d 192.168.124.1 --dport 16509 \
+  -j ACCEPT -m comment --comment "Allow insecure libvirt clients"
+```
+
+#### 1.7 Prepare the configuration file
 1. `cp examples/tectonic.libvirt.yaml ./`
 1. Edit the configuration file:
     1. Set an email and password in the `admin` section
@@ -51,7 +94,7 @@ EOF
     1. Look at the `podCIDR` and `serviceCIDR` fields in the `networking` section. Make sure they don't conflict with anything important.
     1. Set the `pullSecret` to your JSON pull secret.
 
-#### 1.7 Set up NetworkManager DNS overlay
+#### 1.8 Set up NetworkManager DNS overlay
 This step is optional, but useful for being able to resolve cluster-internal hostnames from your host.
 1. Edit `/etc/NetworkManager/NetworkManager.conf` and set `dns=dnsmasq` in section `[main]`
 2. Tell dnsmasq to use your cluster. The syntax is `server=/<baseDomain>/<firstIP>`. For this example:
@@ -60,14 +103,14 @@ echo server=/tt.testing/192.168.124.1 | sudo tee /etc/NetworkManager/dnsmasq.d/t
 ```
 3. `systemctl restart NetworkManager`
 
-#### 1.8 Install the terraform provider
+#### 1.9 Install the terraform provider
 1. Make sure you have the `virsh` binary installed: `sudo dnf install libvirt-client libvirt-devel`
 2. Install the libvirt terraform provider:
 ```sh
 GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-libvirt
 ```
 
-#### 1.9 Cache terrafrom plugins (optional, but makes subsequent runs a bit faster)
+#### 1.10 Cache terrafrom plugins (optional, but makes subsequent runs a bit faster)
 ```sh
 cat <<EOF > $HOME/.terraformrc
 plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"

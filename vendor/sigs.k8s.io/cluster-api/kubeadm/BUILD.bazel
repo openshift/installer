@@ -1,0 +1,17 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+
+go_library(
+    name = "go_default_library",
+    srcs = ["kubeadm.go"],
+    importmap = "installer/vendor/sigs.k8s.io/cluster-api/kubeadm",
+    importpath = "sigs.k8s.io/cluster-api/kubeadm",
+    visibility = ["//visibility:public"],
+    deps = ["//vendor/sigs.k8s.io/cluster-api/pkg/cmd-runner:go_default_library"],
+)
+
+go_test(
+    name = "go_default_test",
+    srcs = ["kubeadm_test.go"],
+    embed = [":go_default_library"],
+    deps = ["//vendor/sigs.k8s.io/cluster-api/pkg/test-cmd-runner:go_default_library"],
+)

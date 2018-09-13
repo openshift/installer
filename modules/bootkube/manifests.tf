@@ -4,9 +4,9 @@ variable "manifest_names" {
     "02-ingress-namespace.yaml",
     "03-openshift-web-console-namespace.yaml",
     "04-openshift-machine-config-operator.yaml",        # https://github.com/openshift/machine-config-operator/tree/master/install/00_namespace.yaml
+    "05-openshift-cluster-api-namespace.yaml",
     "app-version-kind.yaml",
     "app-version-tectonic-network.yaml",
-    "cluster-apiserver-secret.yaml",
     "kube-apiserver-secret.yaml",
     "kube-cloud-config.yaml",
     "kube-controller-manager-secret.yaml",
@@ -16,9 +16,13 @@ variable "manifest_names" {
     "machine-config-operator-03-deployment.yaml",       # https://github.com/openshift/machine-config-operator/tree/master/install/04_deployment.yaml
     "machine-config-server-tls-secret.yaml",
     "openshift-apiserver-secret.yaml",
+    "cluster-apiserver-certs.yaml",
     "pull.json",
     "tectonic-network-operator.yaml",
     "operatorstatus-crd.yaml",
+    "app-version-mao.yaml",
+    "machine-api-operator.yaml",
+    "ign-config.yaml",
   ]
 }
 
@@ -62,6 +66,8 @@ data "template_file" "manifest_file_list" {
 
     mcs_tls_cert = "${base64encode(var.mcs_cert_pem)}"
     mcs_tls_key  = "${base64encode(var.mcs_key_pem)}"
+
+    worker_ign_config = "${base64encode(var.worker_ign_config)}"
   }
 }
 

@@ -73,7 +73,7 @@ func TestGetEtcdServersURLs(t *testing.T) {
 
 func TestKubeSystem(t *testing.T) {
 	config := initConfig(t, "test-aws.yaml")
-	got, err := config.KubeSystem()
+	got, err := config.KubeSystem("./fixtures")
 	if err != nil {
 		t.Errorf("Test case TestKubeSystem: failed to get KubeSystem(): %s", err)
 	}

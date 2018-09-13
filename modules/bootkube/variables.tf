@@ -160,3 +160,9 @@ variable "pull_secret" {
   type        = "string"
   description = "Your pull secret.  Obtain this from your Tectonic Account: https://account.coreos.com."
 }
+
+variable "worker_ign_config" {
+  description = "Worker ignition config"
+  type        = "string"
+  default     = ""
+}
