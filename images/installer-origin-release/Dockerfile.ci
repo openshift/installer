@@ -8,5 +8,5 @@ ENV USER="bazel"
 ENV HOME="/tmp"
 
 RUN bazel --output_base=/tmp build smoke_tests && \
-    cp bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test /usr/bin/smoke && \
+    cp bazel-bin/tests/smoke/linux_amd64_pure_stripped/go_default_test /usr/bin/smoke && \
     bazel clean

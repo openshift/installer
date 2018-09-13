@@ -24,7 +24,7 @@ Compile the smoke test binary from the root directory of the project:
 bazel build smoke_tests
 ```
 
-The tests can then be run by invoking the `go_default_test` binary in the `bazel-bin/tests/smoke/linux_amd64_stripped` directory.
+The tests can then be run by invoking the `go_default_test` binary in the `bazel-bin/tests/smoke/linux_amd64_pure_stripped` directory.
 
 *Note*: the `go_default_test` binary accepts several flags available to the `go test` command; to list them, invoke the `go_default_test` binary with the `-help` flag.
 
@@ -49,5 +49,5 @@ To run the cluster test suite, invoke the smoke test binary with the `-cluster` 
 To run the cluster suite verbosely, add the `-test.v` flag:
 
 ```sh
-bazel-bin/tests/smoke/linux_amd64_stripped/go_default_test -cluster -test.v
+bazel-bin/tests/smoke/linux_amd64_pure_stripped/go_default_test -cluster -test.v
 ```
