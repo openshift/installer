@@ -59,7 +59,7 @@ variable "tectonic_container_images" {
   default = {
     addon_resizer                        = "gcr.io/google_containers/addon-resizer:2.1"
     bootkube                             = "quay.io/coreos/bootkube:v0.10.0"
-    machine_config_operator              = "openshift/origin-machine-config-operator:v4.0.0"
+    machine_config_operator              = "docker.io/openshift/origin-machine-config-operator:v4.0.0"
     etcd_cert_signer                     = "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6"
     etcd                                 = "quay.io/coreos/etcd:v3.2.14"
     hyperkube                            = "openshift/origin-node:latest"
