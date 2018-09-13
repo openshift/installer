@@ -9,11 +9,11 @@ import (
 	"runtime"
 )
 
-// executor enables calling TerraForm from Go, across platforms, with any
+// executor enables calling Terraform from Go, across platforms, with any
 // additional providers/provisioners that the currently executing binary
 // exposes.
 //
-// The TerraForm binary is expected to be in the executing binary's folder, in
+// The Terraform binary is expected to be in the executing binary's folder, in
 // the current working directory or in the PATH.
 type executor struct {
 	binaryPath string
@@ -25,17 +25,17 @@ const (
 	tfBinWindows = "terraform.exe"
 )
 
-// errBinaryNotFound denotes the fact that the TerraForm binary could not be
+// errBinaryNotFound denotes the fact that the Terraform binary could not be
 // found on disk.
 var errBinaryNotFound = errors.New(
-	"TerraForm not in executable's folder, cwd nor PATH",
+	"terraform not in executable's folder, cwd nor PATH",
 )
 
 // newExecutor initializes a new Executor.
 func newExecutor() (*executor, error) {
 	ex := new(executor)
 
-	// Find the TerraForm binary.
+	// Find the Terraform binary.
 	binPath, err := tfBinaryPath()
 	if err != nil {
 		return nil, err
@@ -45,13 +45,13 @@ func newExecutor() (*executor, error) {
 	return ex, nil
 }
 
-// Execute runs the given command and arguments against TerraForm.
+// Execute runs the given command and arguments against Terraform.
 //
-// An error is returned if the TerraForm binary could not be found, or if the
-// TerraForm call itself failed, in which case, details can be found in the
+// An error is returned if the Terraform binary could not be found, or if the
+// Terraform call itself failed, in which case, details can be found in the
 // output.
 func (ex *executor) execute(clusterDir string, args ...string) error {
-	// Prepare TerraForm command by setting up the command, configuration,
+	// Prepare Terraform command by setting up the command, configuration,
 	// and the working directory
 	if clusterDir == "" {
 		return fmt.Errorf("clusterDir is unset. Quitting")
@@ -63,11 +63,11 @@ func (ex *executor) execute(clusterDir string, args ...string) error {
 	cmd.Stderr = os.Stderr
 	cmd.Dir = clusterDir
 
-	// Start TerraForm.
+	// Start Terraform.
 	return cmd.Run()
 }
 
-// tfBinaryPath searches for a TerraForm binary on disk:
+// tfBinaryPath searches for a Terraform binary on disk:
 // - in the executing binary's folder,
 // - in the current working directory,
 // - in the PATH.
