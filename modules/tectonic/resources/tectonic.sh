@@ -4,7 +4,7 @@ set -e
 KUBECONFIG="$1"
 
 kubectl() {
-	(>&2 echo "Executing kubectl $*")
+	echo "Executing kubectl $*" >&2
 	while true
 	do
 		set +e
@@ -14,7 +14,7 @@ kubectl() {
 
 		if grep --quiet "AlreadyExists" <<< "$out"
 		then
-			(>&2 echo "$out, skipping")
+			echo "$out, skipping" >&2
 			return
 		fi
 
@@ -24,7 +24,7 @@ kubectl() {
 			return
 		fi
 
-		(>&2 echo "kubectl $* failed. Retrying in 5 seconds...")
+		echo "kubectl $* failed. Retrying in 5 seconds..." >&2
 		sleep 5
 	done
 }

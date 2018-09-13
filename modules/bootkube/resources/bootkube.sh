@@ -3,7 +3,7 @@ set -e
 
 mkdir --parents /etc/kubernetes/manifests/
 
-if [ ! -d "$PWD/kco-bootstrap" ]
+if [ ! -d kco-bootstrap ]
 then
 	echo "Rendering Kubernetes core manifests..."
 
@@ -15,13 +15,12 @@ then
 		--config=/assets/kco-config.yaml \
 		--output=/assets/kco-bootstrap
 
-	cp --recursive "$PWD/kco-bootstrap/bootstrap-configs" /etc/kubernetes/bootstrap-configs
-	cp --recursive "$PWD/kco-bootstrap/bootstrap-configs" .
-	cp --recursive "$PWD/kco-bootstrap/bootstrap-manifests" .
-	cp --recursive "$PWD/kco-bootstrap/manifests" .
+	cp --recursive kco-bootstrap/bootstrap-configs /etc/kubernetes/bootstrap-configs
+	cp --recursive kco-bootstrap/bootstrap-manifests .
+	cp --recursive kco-bootstrap/manifests .
 fi
 
-if [ ! -d "$PWD/mco-bootstrap" ]
+if [ ! -d "mco-bootstrap" ]
 then
 	echo "Rendering MCO manifests..."
 
@@ -42,13 +41,13 @@ then
 	# 2. read the default MachineConfigPools rendered by MachineConfigOperator
 	# 3. read any additional MachineConfigs that are needed for the default MachineConfigPools.
 	mkdir --parents /etc/mcc/bootstrap/
-	cp --recursive "$PWD/mco-bootstrap/manifests" /etc/mcc/bootstrap/manifests
-	cp "$PWD/mco-bootstrap/machineconfigoperator-bootstrap-pod.yaml" /etc/kubernetes/manifests/
+	cp --recursive mco-bootstrap/manifests /etc/mcc/bootstrap/manifests
+	cp mco-bootstrap/machineconfigoperator-bootstrap-pod.yaml /etc/kubernetes/manifests/
 
 	# /etc/ssl/mcs/tls.{crt, key} are locations for MachineConfigServer's tls assets.
 	mkdir --parents /etc/ssl/mcs/
-	cp "$PWD/tls/machine-config-server.crt" /etc/ssl/mcs/tls.crt
-	cp "$PWD/tls/machine-config-server.key" /etc/ssl/mcs/tls.key
+	cp tls/machine-config-server.crt /etc/ssl/mcs/tls.crt
+	cp tls/machine-config-server.key /etc/ssl/mcs/tls.key
 fi
 
 # We originally wanted to run the etcd cert signer as
