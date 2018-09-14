@@ -16,3 +16,13 @@ data "ignition_systemd_unit" "kubelet" {
   enabled = true
   content = "${data.template_file.kubelet.rendered}"
 }
+
+data "ignition_file" "sysconfig_crio_network" {
+  filesystem = "root"
+  mode       = "0644"
+  path       = "/etc/sysconfig/crio-network"
+
+  content {
+    content = "${file("${path.module}/resources/files/crio-network")}"
+  }
+}
