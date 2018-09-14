@@ -2,12 +2,15 @@
 
 # in prow, already in container, so no 'podman run'
 if [ "$IS_CONTAINER" != "" ]; then
+  if [ "${#N}" -gt 1 ]; then
+    set -- -list -check -write=false
+  fi
   set -x
-  /terraform fmt -list -check -write=false
+  /terraform fmt "${@}"
 else
   podman run --rm \
     --env IS_CONTAINER=TRUE \
-    --volume "${PWD}:${PWD}:ro,z" \
+    --volume "${PWD}:${PWD}:z" \
     --workdir "${PWD}" \
     quay.io/coreos/terraform-alpine:v0.11.7 \
     ./hack/tf-fmt.sh
