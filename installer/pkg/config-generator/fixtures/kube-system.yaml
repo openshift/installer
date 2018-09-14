@@ -89,7 +89,7 @@ data:
       availabilityZone: ""
       clusterID: ""
       clusterName: test
-      image: ami-07307c397daf4d02e
+      image: ami-0af8953af3ec06b7c
       region: us-east-1
       replicas: 3
     kind: machineAPIOperatorConfig

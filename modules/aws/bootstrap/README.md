@@ -29,7 +29,7 @@ resource "aws_subnet" "example" {
 module "bootstrap" {
   source = "github.com/openshift/installer//modules/aws/bootstrap"
 
-  ami            = "ami-07307c397daf4d02e"
+  ami            = "ami-0af8953af3ec06b7c"
   bucket         = "${aws_s3_bucket.example.id}"
   cluster_name   = "my-cluster"
   ignition       = "{\"ignition\": {\"version\": \"2.2.0\"}}",
