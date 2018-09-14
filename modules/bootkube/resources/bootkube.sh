@@ -64,6 +64,7 @@ trap "podman rm --force etcd-signer" ERR
 podman run \
 	--name etcd-signer \
 	--detach \
+	--tmpfs /tmp \
 	--volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
 	--network host \
 	"${etcd_cert_signer_image}" \
