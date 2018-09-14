@@ -6,7 +6,7 @@ if [ "$IS_CONTAINER" != "" ]; then
     set -- -list -check -write=false
   fi
   set -x
-  terraform fmt "${@}"
+  /terraform fmt "${@}"  # FIXME: drop this slash after we update openshift/release
 else
   podman run --rm \
     --env IS_CONTAINER=TRUE \
