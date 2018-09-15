@@ -10,11 +10,11 @@ go_library(
     importpath = "github.com/openshift/installer/installer/pkg/config-generator",
     visibility = ["//visibility:public"],
     deps = [
-        "//pkg/rhcos:go_default_library",
         "//installer/pkg/config:go_default_library",
         "//installer/pkg/copy:go_default_library",
         "//pkg/asset/tls:go_default_library",
         "//pkg/ipnet:go_default_library",
+        "//pkg/rhcos:go_default_library",
         "//pkg/types:go_default_library",
         "//vendor/github.com/apparentlymart/go-cidr/cidr:go_default_library",
         "//vendor/github.com/coreos/ignition/config/v2_2:go_default_library",

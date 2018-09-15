@@ -2,12 +2,12 @@ load("@io_bazel_rules_go//go:def.bzl", "go_test")
 
 go_test(
     name = "go_default_test",
-    pure = "on",
     srcs = [
         "cluster_test.go",
         "common_test.go",
         "smoke_test.go",
     ],
+    pure = "on",
     visibility = ["//visibility:public"],
     deps = [
         "//tests/smoke/vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
