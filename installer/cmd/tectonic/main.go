@@ -16,8 +16,9 @@ var (
 	clusterInstallCommand = kingpin.Command("install", "Create a new Tectonic cluster")
 	clusterInstallDirFlag = clusterInstallCommand.Flag("dir", "Cluster directory").Default(".").ExistingDir()
 
-	clusterDestroyCommand = kingpin.Command("destroy", "Destroy an existing Tectonic cluster")
-	clusterDestroyDirFlag = clusterDestroyCommand.Flag("dir", "Cluster directory").Default(".").ExistingDir()
+	clusterDestroyCommand   = kingpin.Command("destroy", "Destroy an existing Tectonic cluster")
+	clusterDestroyDirFlag   = clusterDestroyCommand.Flag("dir", "Cluster directory").Default(".").ExistingDir()
+	clusterDestroyContOnErr = clusterDestroyCommand.Flag("continue-on-error", "Log errors, but attempt to continue cleaning up the cluster.  THIS MAY LEAK RESOURCES, because you may not have enough state left after a partial removal to be able to perform a second destroy.").Default("false").Bool()
 
 	convertCommand    = kingpin.Command("convert", "Convert a tfvars.json to a Tectonic config.yaml")
 	convertConfigFlag = convertCommand.Flag("config", "tfvars.json file").Required().ExistingFile()
@@ -34,7 +35,7 @@ func main() {
 	case clusterInstallCommand.FullCommand():
 		w = workflow.InstallWorkflow(*clusterInstallDirFlag)
 	case clusterDestroyCommand.FullCommand():
-		w = workflow.DestroyWorkflow(*clusterDestroyDirFlag)
+		w = workflow.DestroyWorkflow(*clusterDestroyDirFlag, *clusterDestroyContOnErr)
 	case convertCommand.FullCommand():
 		w = workflow.ConvertWorkflow(*convertConfigFlag)
 	}

@@ -1,6 +1,9 @@
 package workflow
 
-import "github.com/openshift/installer/installer/pkg/config"
+import (
+	log "github.com/Sirupsen/logrus"
+	"github.com/openshift/installer/installer/pkg/config"
+)
 
 // metadata is the state store of the current workflow execution.
 // It is meant to carry state for one step to another.
@@ -12,6 +15,7 @@ type metadata struct {
 	cluster        config.Cluster
 	configFilePath string
 	clusterDir     string
+	contOnErr      bool
 }
 
 // step is the entrypoint of a workflow step implementation.
@@ -28,11 +32,18 @@ type Workflow struct {
 
 // Execute runs all steps in order.
 func (w Workflow) Execute() error {
+	var firstError error
 	for _, step := range w.steps {
 		if err := step(&w.metadata); err != nil {
-			return err
+			if !w.metadata.contOnErr {
+				return err
+			}
+			if firstError == nil {
+				firstError = err
+			}
+			log.Warn(err)
 		}
 	}
 
-	return nil
+	return firstError
 }

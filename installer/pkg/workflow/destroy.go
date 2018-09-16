@@ -22,9 +22,12 @@ const (
 // DestroyWorkflow creates new instances of the 'destroy' workflow,
 // responsible for running the actions required to remove resources
 // of an existing cluster and clean up any remaining artefacts.
-func DestroyWorkflow(clusterDir string) Workflow {
+func DestroyWorkflow(clusterDir string, contOnErr bool) Workflow {
 	return Workflow{
-		metadata: metadata{clusterDir: clusterDir},
+		metadata: metadata{
+			clusterDir: clusterDir,
+			contOnErr:  contOnErr,
+		},
 		steps: []step{
 			readClusterConfigStep,
 			generateTerraformVariablesStep,
