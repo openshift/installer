@@ -23,3 +23,15 @@ variable "network_id" {
   type        = "string"
   description = "The ID of a network resource containing the bootstrap node's addresses."
 }
+
+variable "memory" {
+  type        = "string"
+  description = "The memory configured for the bootstrap instance."
+  default     = 2048
+}
+
+variable "cpus" {
+  type        = "string"
+  description = "The number of CPUs configured for the bootstrap instance."
+  default     = 2
+}
