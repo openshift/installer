@@ -1,4 +1,4 @@
-package templates
+package content
 
 const (
 	// TectonicSystemdContents is a service that runs tectonic on the masters.

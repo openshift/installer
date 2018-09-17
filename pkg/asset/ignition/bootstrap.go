@@ -13,7 +13,7 @@ import (
 	ignition "github.com/coreos/ignition/config/v2_2/types"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/ignition/templates"
+	"github.com/openshift/installer/pkg/asset/ignition/content"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
@@ -143,9 +143,9 @@ func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 
 	config.Systemd.Units = append(
 		config.Systemd.Units,
-		ignition.Unit{Name: "bootkube.service", Contents: templates.BootkubeSystemdContents},
-		ignition.Unit{Name: "tectonic.service", Contents: templates.TectonicSystemdContents, Enabled: util.BoolToPtr(true)},
-		ignition.Unit{Name: "kubelet.service", Contents: string(applyTemplateData(templates.KubeletSystemdContents, templateData)), Enabled: util.BoolToPtr(true)},
+		ignition.Unit{Name: "bootkube.service", Contents: content.BootkubeSystemdContents},
+		ignition.Unit{Name: "tectonic.service", Contents: content.TectonicSystemdContents, Enabled: util.BoolToPtr(true)},
+		ignition.Unit{Name: "kubelet.service", Contents: applyTemplateData(content.KubeletSystemdTemplate, templateData), Enabled: util.BoolToPtr(true)},
 	)
 
 	config.Passwd.Users = append(
@@ -220,7 +220,7 @@ func (a *bootstrap) addBootkubeFiles(config *ignition.Config, dependencies map[a
 		config.Storage.Files,
 		fileFromAsset("/opt/tectonic/auth/kubeconfig", 0400, dependencies[a.kubeconfig], 0),
 		fileFromAsset("/opt/tectonic/auth/kubeconfig-kubelet", 0400, dependencies[a.kubeconfigKubelet], 0),
-		fileFromBytes("/opt/tectonic/bootkube.sh", 0555, applyTemplateData(templates.BootkubeShFileContents, templateData)),
+		fileFromString("/opt/tectonic/bootkube.sh", 0555, applyTemplateData(content.BootkubeShFileTemplate, templateData)),
 	)
 }
 
@@ -228,7 +228,7 @@ func (a *bootstrap) addTectonicFiles(config *ignition.Config, dependencies map[a
 	// TODO (staebler) - missing manifests from tectonic module
 	config.Storage.Files = append(
 		config.Storage.Files,
-		fileFromBytes("/opt/tectonic/tectonic.sh", 0555, applyTemplateData(templates.TectonicShFileContents, templateData)),
+		fileFromString("/opt/tectonic/tectonic.sh", 0555, content.TectonicShFileContents),
 	)
 }
 
@@ -281,14 +281,10 @@ func getCloudProviderConfig(installConfig *types.InstallConfig) string {
 	return ""
 }
 
-func applyTemplateData(templateString string, templateData interface{}) []byte {
-	t, err := template.New("").Parse(templateString)
-	if err != nil {
-		panic(err)
-	}
+func applyTemplateData(template *template.Template, templateData interface{}) string {
 	buf := &bytes.Buffer{}
-	if err := t.Execute(buf, &templateData); err != nil {
+	if err := template.Execute(buf, templateData); err != nil {
 		panic(err)
 	}
-	return buf.Bytes()
+	return buf.String()
 }
