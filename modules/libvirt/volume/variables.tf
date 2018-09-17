@@ -1,4 +1,4 @@
-variable "coreos_qcow_path" {
-  description = "The path on disk to the coreos disk image"
+variable "image" {
+  description = "The URL of the OS disk image"
   type        = "string"
 }

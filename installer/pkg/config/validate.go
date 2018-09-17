@@ -19,10 +19,6 @@ const (
 	maxS3BucketNameLength = 63
 )
 
-var (
-	qcowMagic = []byte{'Q', 'F', 'I', 0xfb}
-)
-
 // ErrUnmatchedNodePool is returned when a nodePool was specified but not found in the nodePools list.
 type ErrUnmatchedNodePool struct {
 	name string
@@ -158,9 +154,6 @@ func (c *Cluster) validateLibvirt() []error {
 		}
 	}
 	if err := validate.PrefixError("libvirt uri", validate.NonEmpty(c.Libvirt.URI)); err != nil {
-		errs = append(errs, err)
-	}
-	if err := validate.PrefixError("libvirt imagePath is not a valid QCOW image", validate.FileHeader(c.Libvirt.QCOWImagePath, qcowMagic)); err != nil {
 		errs = append(errs, err)
 	}
 	if err := validate.PrefixError("libvirt network name", validate.NonEmpty(c.Libvirt.Network.Name)); err != nil {

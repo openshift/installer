@@ -18,9 +18,9 @@ variable "tectonic_libvirt_ip_range" {
   description = "IP range for the libvirt machines"
 }
 
-variable "tectonic_coreos_qcow_path" {
+variable "tectonic_os_image" {
   type        = "string"
-  description = "path to a Red Hat CoreOS qcow image"
+  description = "The URL of the OS disk image"
 }
 
 variable "tectonic_libvirt_bootstrap_ip" {

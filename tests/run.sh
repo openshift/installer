@@ -101,7 +101,7 @@ python <<-EOF >"${CLUSTER_NAME}.yaml"
 	        config['aws']['master']['iamRoleName'] = 'tf-tectonic-master-node'
 	        config['aws']['worker']['iamRoleName'] = 'tf-tectonic-worker-node'
 	elif '${BACKEND}' == 'libvirt':
-	    config['libvirt']['imagePath'] = '${IMAGE_PATH}'
+	    config['libvirt']['image'] = 'file://${IMAGE_PATH}'
 	yaml.safe_dump(config, sys.stdout)
 	EOF
 

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -444,21 +443,6 @@ func TestValidateIgnitionFiles(t *testing.T) {
 }
 
 func TestValidateLibvirt(t *testing.T) {
-	fValid, err := ioutil.TempFile("", "qcow")
-	if err != nil {
-		t.Fatalf("failed to create temporary file: %v", err)
-	}
-	if _, err := fValid.Write(qcowMagic); err != nil {
-		t.Fatalf("failed to write to temporary file: %v", err)
-	}
-	fValid.Close()
-	defer os.Remove(fValid.Name())
-	fInvalid, err := ioutil.TempFile("", "qcow")
-	if err != nil {
-		t.Fatalf("failed to create temporary file: %v", err)
-	}
-	fInvalid.Close()
-	defer os.Remove(fInvalid.Name())
 	cases := []struct {
 		cluster Cluster
 		err     bool
@@ -474,9 +458,9 @@ func TestValidateLibvirt(t *testing.T) {
 		{
 			cluster: Cluster{
 				Libvirt: libvirt.Libvirt{
-					Network:       libvirt.Network{},
-					QCOWImagePath: "",
-					URI:           "",
+					Network: libvirt.Network{},
+					Image:   "",
+					URI:     "",
 				},
 				Networking: defaultCluster.Networking,
 			},
@@ -490,23 +474,8 @@ func TestValidateLibvirt(t *testing.T) {
 						IfName:  libvirt.DefaultIfName,
 						IPRange: "10.0.1.0/24",
 					},
-					QCOWImagePath: fInvalid.Name(),
-					URI:           "baz",
-				},
-				Networking: defaultCluster.Networking,
-			},
-			err: true,
-		},
-		{
-			cluster: Cluster{
-				Libvirt: libvirt.Libvirt{
-					Network: libvirt.Network{
-						Name:    "tectonic",
-						IfName:  libvirt.DefaultIfName,
-						IPRange: "10.0.1.0/24",
-					},
-					QCOWImagePath: fValid.Name(),
-					URI:           "baz",
+					Image: "file:///foo",
+					URI:   "baz",
 				},
 				Networking: defaultCluster.Networking,
 			},
@@ -520,8 +489,8 @@ func TestValidateLibvirt(t *testing.T) {
 						IfName:  libvirt.DefaultIfName,
 						IPRange: "10.2.1.0/24",
 					},
-					QCOWImagePath: fValid.Name(),
-					URI:           "baz",
+					Image: "file:///foo",
+					URI:   "baz",
 				},
 				Networking: defaultCluster.Networking,
 			},
@@ -535,8 +504,8 @@ func TestValidateLibvirt(t *testing.T) {
 						IfName:  libvirt.DefaultIfName,
 						IPRange: "x",
 					},
-					QCOWImagePath: "foo",
-					URI:           "baz",
+					Image: "file:///foo",
+					URI:   "baz",
 				},
 				Networking: defaultCluster.Networking,
 			},
@@ -550,12 +519,12 @@ func TestValidateLibvirt(t *testing.T) {
 						IfName:  libvirt.DefaultIfName,
 						IPRange: "192.168.0.1/24",
 					},
-					QCOWImagePath: "foo",
-					URI:           "baz",
+					Image: "file:///foo",
+					URI:   "baz",
 				},
 				Networking: defaultCluster.Networking,
 			},
-			err: true,
+			err: false,
 		},
 	}
 

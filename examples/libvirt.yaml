@@ -19,7 +19,7 @@ libvirt:
     name: tectonic
     ifName: tt0
     ipRange: 192.168.124.0/24
-  imagePath: /path/to/image
+  image: http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz
 
 ca:
   # (optional) The content of the PEM-encoded CA certificate, used to generate Tectonic Console's server certificate.

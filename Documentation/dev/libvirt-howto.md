@@ -16,7 +16,9 @@ git clone https://github.com/openshift/installer.git
 cd installer
 ```
 
-#### 1.3 Download and prepare the operating system image
+#### 1.3 (Optional) Download and prepare the operating system image
+
+*By default, the installer will download the latest RHCOS image every time it is invoked. This may be problematic for users who create a large number of clusters or who have limited network bandwidth. The installer allows a local image to be used instead.*
 
 Download the latest RHCOS image (you will need access to the Red Hat internal build systems):
 
@@ -85,14 +87,14 @@ iptables -I INPUT -p tcp -s 192.168.124.0/24 -d 192.168.124.1 --dport 16509 \
 
 #### 1.7 Prepare the configuration file
 1. `cp examples/libvirt.yaml ./`
-1. Edit the configuration file:
+2. Edit the configuration file:
     1. Set an email and password in the `admin` section
-    1. Set a `baseDomain` (to `tt.testing`)
-    1. Set the `sshKey` in the `admin` section to the **contents** of an ssh key (e.g. `ssh-rsa AAAA...`)
-    1. Set the `imagePath` to the **absolute** path of the operating system image you downloaded
-    1. Set the `name` (e.g. test1)
-    1. Look at the `podCIDR` and `serviceCIDR` fields in the `networking` section. Make sure they don't conflict with anything important.
-    1. Set the `pullSecret` to your JSON pull secret.
+    2. Set a `baseDomain` (to `tt.testing`)
+    3. Set the `sshKey` in the `admin` section to the **contents** of an ssh key (e.g. `ssh-rsa AAAA...`)
+    4. Set the `name` (e.g. test1)
+    5. Look at the `podCIDR` and `serviceCIDR` fields in the `networking` section. Make sure they don't conflict with anything important.
+    6. Set the `pullSecret` to your JSON pull secret.
+    7. (Optional) Change the `image` to the file URL of the operating system image you downloaded (e.g. `file:///home/user/Downloads/rhcos.qcow`). This will allow the installer to re-use that image instead of having to download it every time.
 
 #### 1.8 Set up NetworkManager DNS overlay
 This step is optional, but useful for being able to resolve cluster-internal hostnames from your host.
