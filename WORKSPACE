@@ -1,6 +1,6 @@
 workspace(name = "installer")
 
-terrafom_version = "0.11.7"
+terrafom_version = "0.11.8"
 
 supported_platforms = [
     "linux",
