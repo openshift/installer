@@ -21,7 +21,6 @@ func InstallWorkflow(clusterDir string) Workflow {
 			generateIgnConfigStep,
 			installAssetsStep,
 			installInfraStep,
-			installBootstrapStep,
 		},
 	}
 }
@@ -32,13 +31,6 @@ func installAssetsStep(m *metadata) error {
 
 func installInfraStep(m *metadata) error {
 	return runInstallStep(m, infraStep)
-}
-
-func installBootstrapStep(m *metadata) error {
-	if !hasStateFile(m.clusterDir, bootstrapStep) {
-		return runInstallStep(m, bootstrapStep)
-	}
-	return nil
 }
 
 func runInstallStep(m *metadata, step string, extraArgs ...string) error {
