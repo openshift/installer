@@ -44,8 +44,8 @@ module "masters" {
 module "iam" {
   source = "../../../modules/aws/iam"
 
-  cluster_name     = "${var.tectonic_cluster_name}"
-  worker_iam_role  = "${var.tectonic_aws_worker_iam_role_name}"
+  cluster_name    = "${var.tectonic_cluster_name}"
+  worker_iam_role = "${var.tectonic_aws_worker_iam_role_name}"
 }
 
 module "dns" {
