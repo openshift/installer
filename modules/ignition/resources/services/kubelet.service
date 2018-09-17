@@ -28,6 +28,7 @@ ExecStart=/usr/bin/hyperkube \
     --cloud-provider=${cloud_provider} \
     --anonymous-auth=false \
     --cgroup-driver=systemd \
+    --serialize-image-pulls=false \
     ${cloud_provider_config} \
     ${debug_config} \
     ${node_taints_param} \
