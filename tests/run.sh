@@ -82,7 +82,7 @@ python <<-EOF >"${CLUSTER_NAME}.yaml"
 
 	import yaml
 
-	with open('examples/tectonic.${BACKEND}.yaml') as f:
+	with open('examples/${BACKEND}.yaml') as f:
 	    config = yaml.load(f)
 	config['name'] = '${CLUSTER_NAME}'
 	with open(os.path.expanduser(os.path.join('~', '.ssh', 'id_rsa.pub'))) as f:

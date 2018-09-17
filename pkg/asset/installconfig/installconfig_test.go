@@ -74,9 +74,7 @@ func TestInstallConfigGenerate(t *testing.T) {
 				"test-region",
 			},
 			expectedPlatformYaml: `  aws:
-    region: test-region
-    vpcCIDRBlock: ""
-    vpcID: ""`,
+    region: test-region`,
 		},
 		{
 			name: "libvirt",
@@ -86,11 +84,7 @@ func TestInstallConfigGenerate(t *testing.T) {
 			},
 			expectedPlatformYaml: `  libvirt:
     URI: test-uri
-    masterIPs: null
-    network:
-      if: ""
-      ipRange: ""
-      name: ""`,
+    network: {}`,
 		},
 	}
 	for _, tc := range cases {
@@ -174,7 +168,6 @@ metadata:
 networking:
   podCIDR: 10.2.0.0/16
   serviceCIDR: 10.3.0.0/16
-  type: ""
 platform:
 %s
 pullSecret: test-pull-secret

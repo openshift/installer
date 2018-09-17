@@ -15,6 +15,7 @@ go_library(
         "//installer/pkg/config/libvirt:go_default_library",
         "//installer/pkg/validate:go_default_library",
         "//pkg/rhcos:go_default_library",
+        "//pkg/types:go_default_library",
         "//vendor/github.com/Sirupsen/logrus:go_default_library",
         "//vendor/github.com/coreos/ignition/config/v2_2:go_default_library",
         "//vendor/github.com/coreos/tectonic-config/config/tectonic-network:go_default_library",
@@ -25,11 +26,16 @@ go_library(
 go_test(
     name = "go_default_test",
     size = "small",
-    srcs = ["validate_test.go"],
+    srcs = [
+        "parser_test.go",
+        "validate_test.go",
+    ],
     data = glob(["fixtures/**"]),
     embed = [":go_default_library"],
     deps = [
         "//installer/pkg/config/aws:go_default_library",
         "//installer/pkg/config/libvirt:go_default_library",
+        "//vendor/github.com/coreos/tectonic-config/config/tectonic-network:go_default_library",
+        "//vendor/github.com/stretchr/testify/assert:go_default_library",
     ],
 )

@@ -35,13 +35,13 @@ These instructions can be used for AWS:
 
 5. Edit Tectonic configuration file including the $CLUSTER_NAME
     ```sh
-    $EDITOR examples/tectonic.aws.yaml
+    $EDITOR examples/aws.yaml
     ```
 
 6. Prepare a local configuration.
     The structure behind the YAML input is described [here][godoc-InstallConfig].
     ```sh
-    tectonic init --config=examples/tectonic.aws.yaml
+    tectonic init --config=examples/aws.yaml
     ```
 
 7. Install Tectonic cluster
@@ -51,7 +51,7 @@ These instructions can be used for AWS:
 
 8. Visit `https://{$CLUSTER_NAME}-api.${BASE_DOMAIN}:6443/console/`.
     You may need to ignore a certificate warning if you did not configure a CA known to your browser.
-    Log in with the admin credentials you configured in `tectonic.aws.yaml`.
+    Log in with the admin credentials you configured in `aws.yaml`.
 
 9. Teardown Tectonic cluster
     ```sh
