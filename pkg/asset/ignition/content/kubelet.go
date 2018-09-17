@@ -1,9 +1,13 @@
-package templates
+package content
 
-const (
-	// KubeletSystemdContents is a service for running the kubelet on the
+import (
+	"text/template"
+)
+
+var (
+	// KubeletSystemdTemplate is a service for running the kubelet on the
 	// bootstrap nodes.
-	KubeletSystemdContents = `[Unit]
+	KubeletSystemdTemplate = template.Must(template.New("kubelet.service").Parse(`[Unit]
 Description=Kubernetes Kubelet
 Wants=rpc-statd.service
 
@@ -39,5 +43,5 @@ Restart=always
 RestartSec=10
 
 [Install]
-WantedBy=multi-user.target`
+WantedBy=multi-user.target`))
 )

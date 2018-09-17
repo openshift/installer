@@ -25,6 +25,11 @@ func fileFromAsset(path string, mode int, assetState *asset.State, contentIndex 
 	return fileFromBytes(path, mode, assetState.Contents[contentIndex].Data)
 }
 
+// fileFromString creates an ignition-config file with the given contents.
+func fileFromString(path string, mode int, contents string) ignition.File {
+	return fileFromBytes(path, mode, []byte(contents))
+}
+
 // fileFromAsset creates an ignition-config file with the given contents.
 func fileFromBytes(path string, mode int, contents []byte) ignition.File {
 	return ignition.File{

@@ -14,7 +14,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//pkg/asset:go_default_library",
-        "//pkg/asset/ignition/templates:go_default_library",
+        "//pkg/asset/ignition/content:go_default_library",
         "//pkg/asset/installconfig:go_default_library",
         "//pkg/asset/kubeconfig:go_default_library",
         "//pkg/asset/tls:go_default_library",
@@ -37,7 +37,7 @@ go_test(
     embed = [":go_default_library"],
     deps = [
         "//pkg/asset:go_default_library",
-        "//pkg/asset/ignition/templates:go_default_library",
+        "//pkg/asset/ignition/content:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
         "//vendor/github.com/vincent-petithory/dataurl:go_default_library",
     ],

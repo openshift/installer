@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/ignition/templates"
+	"github.com/openshift/installer/pkg/asset/ignition/content"
 )
 
 // TestBootstrapGenerate tests generating the bootstrap asset.
@@ -245,11 +245,11 @@ machines:
 		bootstrapState.Contents[0].Data,
 		systemdUnitAssertion{
 			name:     "bootkube.service",
-			contents: templates.BootkubeSystemdContents,
+			contents: content.BootkubeSystemdContents,
 		},
 		systemdUnitAssertion{
 			name:     "tectonic.service",
-			contents: templates.TectonicSystemdContents,
+			contents: content.TectonicSystemdContents,
 		},
 		systemdUnitAssertion{
 			name:     "kubelet.service",

@@ -1,4 +1,8 @@
-package templates
+package content
+
+import (
+	"text/template"
+)
 
 const (
 	// BootkubeSystemdContents is a service for running bootkube on the bootstrap
@@ -15,10 +19,12 @@ ExecStart=/opt/tectonic/bootkube.sh
 
 Restart=on-failure
 RestartSec=5s`
+)
 
-	// BootkubeShFileContents is a script file for running bootkube on the
+var (
+	// BootkubeShFileTemplate is a script file for running bootkube on the
 	// bootstrap nodes.
-	BootkubeShFileContents = `#!/usr/bin/env bash
+	BootkubeShFileTemplate = template.Must(template.New("bootkube.sh").Parse(`#!/usr/bin/env bash
 set -e
 
 mkdir --parents /etc/kubernetes/manifests/
@@ -137,5 +143,5 @@ podman run \
 	--network=host \
 	--entrypoint=/bootkube \
 	"{{.BootkubeImage}}" \
-	start --asset-dir=/assets`
+	start --asset-dir=/assets`))
 )
