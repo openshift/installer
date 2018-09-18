@@ -23,6 +23,7 @@ module "bootstrap" {
   bucket                      = "${aws_s3_bucket.tectonic.bucket}"
   cluster_name                = "${var.tectonic_cluster_name}"
   elbs                        = "${module.vpc.aws_lbs}"
+  elbs_length                 = "${module.vpc.aws_lbs_length}"
   iam_role                    = "${var.tectonic_aws_master_iam_role_name}"
   ignition                    = "${local.ignition_bootstrap}"
   subnet_id                   = "${module.vpc.master_subnet_ids[0]}"

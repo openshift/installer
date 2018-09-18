@@ -24,6 +24,10 @@ variable "elbs" {
   description = "Elastic load balancer IDs to attach to the bootstrap node."
 }
 
+variable "elbs_length" {
+  description = "The length of the 'elbs' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
+}
+
 variable "iam_role" {
   type        = "string"
   default     = ""

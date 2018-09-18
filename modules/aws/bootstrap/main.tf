@@ -121,7 +121,7 @@ resource "aws_instance" "bootstrap" {
 }
 
 resource "aws_elb_attachment" "bootstrap" {
-  count    = "${length(var.elbs)}"
+  count    = "${var.elbs_length}"
   elb      = "${var.elbs[count.index]}"
   instance = "${aws_instance.bootstrap.id}"
 }
