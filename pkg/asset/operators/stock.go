@@ -30,7 +30,7 @@ type StockImpl struct {
 	kubeCoreOperator       asset.Asset
 	networkOperator        asset.Asset
 	tnco                   asset.Asset
-	addon                  asset.Asset
+	addonOperator          asset.Asset
 }
 
 var _ Stock = (*StockImpl)(nil)
@@ -45,7 +45,7 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		installConfigAsset: stock.InstallConfig(),
 		directory:          rootDir,
 	}
-	s.addon = &kubeAddonOperator{
+	s.addonOperator = &kubeAddonOperator{
 		installConfigAsset: stock.InstallConfig(),
 		directory:          rootDir,
 	}
@@ -74,7 +74,7 @@ func (s *StockImpl) KubeCoreOperator() asset.Asset { return s.kubeCoreOperator }
 func (s *StockImpl) NetworkOperator() asset.Asset { return s.networkOperator }
 
 // KubeAddonOperator returns the addon operator asset object
-func (s *StockImpl) KubeAddonOperator() asset.Asset { return s.addon }
+func (s *StockImpl) KubeAddonOperator() asset.Asset { return s.addonOperator }
 
 // Tnco returns the tnc operator asset object
 func (s *StockImpl) Tnco() asset.Asset { return s.tnco }

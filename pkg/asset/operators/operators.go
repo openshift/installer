@@ -20,9 +20,10 @@ type genericData map[string]string
 // operators asset.
 func (o *operators) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		o.assetStock.ClusterVersionOperator(),
 		o.assetStock.KubeCoreOperator(),
 		o.assetStock.NetworkOperator(),
+		o.assetStock.Tnco(),
+		o.assetStock.KubeAddonOperator(),
 	}
 }
 
