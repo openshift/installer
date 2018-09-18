@@ -11,9 +11,9 @@ resource "libvirt_ignition" "bootstrap" {
 resource "libvirt_domain" "bootstrap" {
   name = "bootstrap"
 
-  memory = "2048"
+  memory = "${var.memory}"
 
-  vcpu = "2"
+  vcpu = "${var.cpus}"
 
   coreos_ignition = "${libvirt_ignition.bootstrap.id}"
 
