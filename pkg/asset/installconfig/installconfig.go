@@ -117,6 +117,11 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 	}, nil
 }
 
+// Name returns the human-friendly name of the asset.
+func (a installConfig) Name() string {
+	return "Install Config"
+}
+
 // GetInstallConfig returns the *types.InstallConfig from the parent asset map.
 func GetInstallConfig(installConfig asset.Asset, parents map[asset.Asset]*asset.State) (*types.InstallConfig, error) {
 	var cfg types.InstallConfig

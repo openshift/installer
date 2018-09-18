@@ -29,6 +29,11 @@ func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
 	}, nil
 }
 
+// Name returns the human-friendly name of the asset.
+func (a UserProvided) Name() string {
+	return a.Prompt
+}
+
 // QueryUser queries the user for input.
 func QueryUser(inputReader *bufio.Reader, prompt string) string {
 	for {

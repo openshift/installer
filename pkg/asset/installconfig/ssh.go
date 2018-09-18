@@ -112,3 +112,8 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 		},
 	}, nil
 }
+
+// Name returns the human-friendly name of the asset.
+func (a *sshPublicKey) Name() string {
+	return "SSH Key"
+}

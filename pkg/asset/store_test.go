@@ -29,6 +29,10 @@ func (a *testAsset) Generate(map[Asset]*State) (*State, error) {
 	return nil, nil
 }
 
+func (a *testAsset) Name() string {
+	return "Test Asset"
+}
+
 func newTestAsset(gl *generationLog, name string) *testAsset {
 	return &testAsset{
 		name:          name,

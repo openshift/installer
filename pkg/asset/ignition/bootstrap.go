@@ -166,6 +166,11 @@ func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 	}, nil
 }
 
+// Name returns the human-friendly name of the asset.
+func (a *bootstrap) Name() string {
+	return "Bootstrap Ignition Config"
+}
+
 // getTemplateData returns the data to use to execute bootstrap templates.
 func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootstrapTemplateData, error) {
 	clusterDNSIP, err := installconfig.ClusterDNSIP(installConfig)

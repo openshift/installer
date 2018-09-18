@@ -23,6 +23,10 @@ func (f fakeAsset) Generate(map[asset.Asset]*asset.State) (*asset.State, error) 
 	return nil, nil
 }
 
+func (f fakeAsset) Name() string {
+	return "Fake Asset"
+}
+
 func TestKubeconfigGenerate(t *testing.T) {
 	testDir, err := ioutil.TempDir(os.TempDir(), "kubeconfig_test")
 	if err != nil {

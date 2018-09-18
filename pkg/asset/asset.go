@@ -12,6 +12,9 @@ type Asset interface {
 
 	// Generate generates this asset given the states of its dependent assets.
 	Generate(map[Asset]*State) (*State, error)
+
+	// Name returns the human-friendly name of the asset.
+	Name() string
 }
 
 // GetDataByFilename searches the file in the asset.State.Contents, and returns its data.
