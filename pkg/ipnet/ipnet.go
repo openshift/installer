@@ -25,6 +25,26 @@ func (ipnet *IPNet) String() string {
 	return ipnet.IPNet.String()
 }
 
+// DeepCopyInto copies the receiver into out.  out must be non-nil.
+func (ipnet *IPNet) DeepCopyInto(out *IPNet) {
+	if ipnet == nil {
+		*out = *new(IPNet)
+	} else {
+		*out = *ipnet
+	}
+	return
+}
+
+// DeepCopy copies the receiver, creating a new IPNet.
+func (ipnet *IPNet) DeepCopy() *IPNet {
+	if ipnet == nil {
+		return nil
+	}
+	out := new(IPNet)
+	ipnet.DeepCopyInto(out)
+	return out
+}
+
 // MarshalJSON interface for an IPNet
 func (ipnet IPNet) MarshalJSON() (data []byte, err error) {
 	if reflect.DeepEqual(ipnet.IPNet, emptyIPNet) {
