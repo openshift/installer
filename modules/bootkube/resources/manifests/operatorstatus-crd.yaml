@@ -14,7 +14,7 @@ spec:
       # One and only one version must be marked as the storage version.
       storage: true
   # either Namespaced or Cluster
-  scope: Cluster
+  scope: Namespaced
   names:
     # plural name to be used in the URL: /apis/<group>/<version>/<plural>
     plural: operatorstatuses
