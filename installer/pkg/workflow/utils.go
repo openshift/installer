@@ -8,8 +8,8 @@ import (
 	"path"
 	"path/filepath"
 
-	"github.com/openshift/installer/installer/pkg/config"
 	configgenerator "github.com/openshift/installer/installer/pkg/config-generator"
+	"github.com/openshift/installer/pkg/types/config"
 )
 
 const (

@@ -2,7 +2,7 @@ package workflow
 
 import (
 	log "github.com/Sirupsen/logrus"
-	"github.com/openshift/installer/installer/pkg/config"
+	"github.com/openshift/installer/pkg/types/config"
 )
 
 // metadata is the state store of the current workflow execution.

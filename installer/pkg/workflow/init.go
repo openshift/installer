@@ -9,9 +9,9 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
-	"github.com/openshift/installer/installer/pkg/config"
 	configgenerator "github.com/openshift/installer/installer/pkg/config-generator"
 	"github.com/openshift/installer/installer/pkg/copy"
+	"github.com/openshift/installer/pkg/types/config"
 )
 
 const (

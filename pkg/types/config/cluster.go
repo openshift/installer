@@ -7,8 +7,8 @@ import (
 	"github.com/coreos/tectonic-config/config/tectonic-network"
 	"gopkg.in/yaml.v2"
 
-	"github.com/openshift/installer/installer/pkg/config/aws"
-	"github.com/openshift/installer/installer/pkg/config/libvirt"
+	"github.com/openshift/installer/pkg/types/config/aws"
+	"github.com/openshift/installer/pkg/types/config/libvirt"
 )
 
 const (
@@ -21,8 +21,6 @@ const (
 	PlatformAWS Platform = "aws"
 	// PlatformLibvirt is the platform for a cluster launched on libvirt.
 	PlatformLibvirt Platform = "libvirt"
-	// DefaultChannel is the default RHCOS channel for the cluster.
-	DefaultChannel = "tested"
 )
 
 // Platform indicates the target platform of the cluster.
@@ -71,22 +69,23 @@ var defaultCluster = Cluster{
 
 // Cluster defines the config for a cluster.
 type Cluster struct {
-	Admin           `json:",inline" yaml:"admin,omitempty"`
-	aws.AWS         `json:",inline" yaml:"aws,omitempty"`
-	BaseDomain      string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
-	CA              `json:",inline" yaml:"CA,omitempty"`
-	IgnitionMasters []string `json:"tectonic_ignition_masters,omitempty" yaml:"-"`
-	IgnitionWorker  string   `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
-	Internal        `json:",inline" yaml:"-"`
-	libvirt.Libvirt `json:",inline" yaml:"libvirt,omitempty"`
-	Master          `json:",inline" yaml:"master,omitempty"`
-	Name            string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
-	Networking      `json:",inline" yaml:"networking,omitempty"`
-	NodePools       `json:"-" yaml:"nodePools"`
-	Platform        Platform `json:"tectonic_platform" yaml:"platform,omitempty"`
-	PullSecret      string   `json:"tectonic_pull_secret,omitempty" yaml:"pullSecret,omitempty"`
-	PullSecretPath  string   `json:"-" yaml:"pullSecretPath,omitempty"` // Deprecated: remove after openshift/release is ported to pullSecret
-	Worker          `json:",inline" yaml:"worker,omitempty"`
+	Admin             `json:",inline" yaml:"admin,omitempty"`
+	aws.AWS           `json:",inline" yaml:"aws,omitempty"`
+	BaseDomain        string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
+	CA                `json:",inline" yaml:"CA,omitempty"`
+	IgnitionMasters   []string `json:"tectonic_ignition_masters,omitempty" yaml:"-"`
+	IgnitionWorker    string   `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
+	IgnitionBootstrap string   `json:"tectonic_ignition_bootstrap,omitempty" yaml:"-"`
+	Internal          `json:",inline" yaml:"-"`
+	libvirt.Libvirt   `json:",inline" yaml:"libvirt,omitempty"`
+	Master            `json:",inline" yaml:"master,omitempty"`
+	Name              string `json:"tectonic_cluster_name,omitempty" yaml:"name,omitempty"`
+	Networking        `json:",inline" yaml:"networking,omitempty"`
+	NodePools         `json:"-" yaml:"nodePools"`
+	Platform          Platform `json:"tectonic_platform" yaml:"platform,omitempty"`
+	PullSecret        string   `json:"tectonic_pull_secret,omitempty" yaml:"pullSecret,omitempty"`
+	PullSecretPath    string   `json:"-" yaml:"pullSecretPath,omitempty"` // Deprecated: remove after openshift/release is ported to pullSecret
+	Worker            `json:",inline" yaml:"worker,omitempty"`
 }
 
 // NodeCount will return the number of nodes specified in NodePools with matching names.

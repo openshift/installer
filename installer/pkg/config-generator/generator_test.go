@@ -7,8 +7,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/openshift/installer/installer/pkg/config"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/types/config"
 	"github.com/stretchr/testify/assert"
 )
 

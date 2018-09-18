@@ -19,10 +19,10 @@ import (
 	"github.com/ghodss/yaml"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/openshift/installer/installer/pkg/config"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/config"
 )
 
 const (
@@ -119,7 +119,7 @@ func (c *ConfigGenerator) maoConfig(clusterDir string) (*maoOperatorConfig, erro
 		if c.AWS.EC2AMIOverride != "" {
 			ami = c.AWS.EC2AMIOverride
 		} else {
-			ami, err = rhcos.AMI(config.DefaultChannel, c.Region)
+			ami, err = rhcos.AMI(rhcos.DefaultChannel, c.Region)
 			if err != nil {
 				return nil, fmt.Errorf("failed to lookup RHCOS AMI: %v", err)
 			}

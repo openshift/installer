@@ -8,13 +8,14 @@ go_library(
         "types.go",
         "validate.go",
     ],
-    importpath = "github.com/openshift/installer/installer/pkg/config",
+    importpath = "github.com/openshift/installer/pkg/types/config",
     visibility = ["//visibility:public"],
     deps = [
-        "//installer/pkg/config/aws:go_default_library",
-        "//installer/pkg/config/libvirt:go_default_library",
         "//installer/pkg/validate:go_default_library",
         "//pkg/rhcos:go_default_library",
+        "//pkg/types:go_default_library",
+        "//pkg/types/config/aws:go_default_library",
+        "//pkg/types/config/libvirt:go_default_library",
         "//vendor/github.com/Sirupsen/logrus:go_default_library",
         "//vendor/github.com/coreos/ignition/config/v2_2:go_default_library",
         "//vendor/github.com/coreos/tectonic-config/config/tectonic-network:go_default_library",
@@ -29,7 +30,7 @@ go_test(
     data = glob(["fixtures/**"]),
     embed = [":go_default_library"],
     deps = [
-        "//installer/pkg/config/aws:go_default_library",
-        "//installer/pkg/config/libvirt:go_default_library",
+        "//pkg/types/config/aws:go_default_library",
+        "//pkg/types/config/libvirt:go_default_library",
     ],
 )
