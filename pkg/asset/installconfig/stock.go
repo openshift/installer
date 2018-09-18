@@ -51,26 +51,26 @@ func (s *StockImpl) EstablishStock(directory string, inputReader *bufio.Reader) 
 	}
 	s.clusterID = &clusterID{}
 	s.emailAddress = &asset.UserProvided{
-		Prompt:      "Email Address:",
+		Prompt:      "Email Address",
 		InputReader: inputReader,
 	}
 	s.password = &asset.UserProvided{
-		Prompt:      "Password:",
+		Prompt:      "Password",
 		InputReader: inputReader,
 	}
 	s.sshKey = &sshPublicKey{
 		inputReader: inputReader,
 	}
 	s.baseDomain = &asset.UserProvided{
-		Prompt:      "Base Domain:",
+		Prompt:      "Base Domain",
 		InputReader: inputReader,
 	}
 	s.clusterName = &asset.UserProvided{
-		Prompt:      "Cluster Name:",
+		Prompt:      "Cluster Name",
 		InputReader: inputReader,
 	}
 	s.pullSecret = &asset.UserProvided{
-		Prompt:      "Pull Secret:",
+		Prompt:      "Pull Secret",
 		InputReader: inputReader,
 	}
 	s.platform = &Platform{InputReader: inputReader}

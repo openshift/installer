@@ -32,7 +32,7 @@ func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
 // QueryUser queries the user for input.
 func QueryUser(inputReader *bufio.Reader, prompt string) string {
 	for {
-		fmt.Println(prompt)
+		fmt.Printf("%s: ", prompt)
 		input, err := inputReader.ReadString('\n')
 		if err != nil && err != io.EOF {
 			fmt.Println("Could not understand response. Please retry.")
