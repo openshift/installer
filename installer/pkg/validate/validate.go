@@ -1,7 +1,6 @@
 package validate
 
 import (
-	"bytes"
 	"crypto/x509"
 	"encoding/json"
 	"encoding/pem"
@@ -468,20 +467,4 @@ func lastIP(cidr *net.IPNet) net.IP {
 		last = append(last, cidr.IP[i]|^cidr.Mask[i])
 	}
 	return last
-}
-
-// FileHeader validates that the file at the specified path begins with the given string.
-func FileHeader(path string, header []byte) error {
-	f, err := os.Open(path)
-	if err != nil {
-		return err
-	}
-	buf := make([]byte, len(header))
-	if _, err := f.Read(buf); err != nil {
-		return err
-	}
-	if !bytes.Equal(buf, header) {
-		return fmt.Errorf("file %q does not begin with %q", path, string(header))
-	}
-	return nil
 }

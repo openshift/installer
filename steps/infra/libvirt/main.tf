@@ -5,7 +5,7 @@ provider "libvirt" {
 module "libvirt_base_volume" {
   source = "../../../modules/libvirt/volume"
 
-  coreos_qcow_path = "${var.tectonic_coreos_qcow_path}"
+  image = "${var.tectonic_os_image}"
 }
 
 resource "libvirt_volume" "master" {

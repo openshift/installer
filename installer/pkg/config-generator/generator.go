@@ -248,10 +248,12 @@ func (c *ConfigGenerator) installConfig() (*types.InstallConfig, error) {
 			},
 		}
 		masterPlatform.Libvirt = &types.LibvirtMachinePoolPlatform{
-			QCOWImagePath: c.Libvirt.QCOWImagePath,
+			ImagePool:   "default",
+			ImageVolume: "coreos_base",
 		}
 		workerPlatform.Libvirt = &types.LibvirtMachinePoolPlatform{
-			QCOWImagePath: c.Libvirt.QCOWImagePath,
+			ImagePool:   "default",
+			ImageVolume: "coreos_base",
 		}
 	default:
 		return nil, fmt.Errorf("installconfig: invalid platform %s", c.Platform)

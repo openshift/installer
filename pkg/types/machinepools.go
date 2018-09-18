@@ -50,6 +50,10 @@ type EC2RootVolume struct {
 // LibvirtMachinePoolPlatform stores the configuration for a machine pool
 // installed on libvirt.
 type LibvirtMachinePoolPlatform struct {
-	// QCOWImagePath
-	QCOWImagePath string `json:"qcowImagePath"`
+	// ImagePool is the name of the libvirt storage pool to which the storage
+	// volume containing the OS image belongs.
+	ImagePool string `json:"imagePool"`
+	// ImageVolume is the name of the libvirt storage volume containing the OS
+	// image.
+	ImageVolume string `json:"imageVolume"`
 }

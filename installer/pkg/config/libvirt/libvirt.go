@@ -14,12 +14,12 @@ const (
 
 // Libvirt encompasses configuration specific to libvirt.
 type Libvirt struct {
-	URI           string `json:"tectonic_libvirt_uri,omitempty" yaml:"uri"`
-	QCOWImagePath string `json:"tectonic_coreos_qcow_path,omitempty" yaml:"imagePath"`
-	Network       `json:",inline" yaml:"network"`
-	MasterIPs     []string `json:"tectonic_libvirt_master_ips,omitempty" yaml:"masterIPs"`
-	WorkerIPs     []string `json:"tectonic_libvirt_worker_ips,omitempty" yaml:"workerIPs"`
-	BootstrapIP   string   `json:"tectonic_libvirt_bootstrap_ip,omitempty" yaml:"bootstrapIP"`
+	URI         string `json:"tectonic_libvirt_uri,omitempty" yaml:"uri"`
+	Image       string `json:"tectonic_os_image,omitempty" yaml:"image"`
+	Network     `json:",inline" yaml:"network"`
+	MasterIPs   []string `json:"tectonic_libvirt_master_ips,omitempty" yaml:"masterIPs"`
+	WorkerIPs   []string `json:"tectonic_libvirt_worker_ips,omitempty" yaml:"workerIPs"`
+	BootstrapIP string   `json:"tectonic_libvirt_bootstrap_ip,omitempty" yaml:"bootstrapIP"`
 }
 
 // Network describes a libvirt network configuration.
