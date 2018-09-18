@@ -8,8 +8,9 @@ import (
 
 // UserProvided generates an asset that is supplied by a user.
 type UserProvided struct {
-	InputReader *bufio.Reader
-	Prompt      string
+	InputReader  *bufio.Reader
+	DefaultValue string
+	Prompt       string
 }
 
 var _ Asset = (*UserProvided)(nil)
@@ -21,7 +22,7 @@ func (a *UserProvided) Dependencies() []Asset {
 
 // Generate queries for input from the user.
 func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
-	input := QueryUser(a.InputReader, a.Prompt)
+	input := QueryUser(a.InputReader, a.Prompt, a.DefaultValue)
 	return &State{
 		Contents: []Content{
 			{Data: []byte(input)},
@@ -30,7 +31,10 @@ func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
 }
 
 // QueryUser queries the user for input.
-func QueryUser(inputReader *bufio.Reader, prompt string) string {
+func QueryUser(inputReader *bufio.Reader, prompt, defaultValue string) string {
+	if defaultValue != "" {
+		prompt = fmt.Sprintf("%s [%s]", prompt, defaultValue)
+	}
 	for {
 		fmt.Println(prompt)
 		input, err := inputReader.ReadString('\n')
@@ -40,6 +44,9 @@ func QueryUser(inputReader *bufio.Reader, prompt string) string {
 		}
 		if input != "" && input[len(input)-1] == '\n' {
 			input = input[:len(input)-1]
+		}
+		if input == "" {
+			input = defaultValue
 		}
 		return input
 	}
