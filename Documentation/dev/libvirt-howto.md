@@ -152,10 +152,10 @@ Be sure to destroy, or else you will need to manually use virsh to clean up the 
 Some things you can do:
 
 ## Watch the bootstrap process
-The first master node, e.g. test1-master-0.tt.testing, runs the tectonic bootstrap process. You can watch it:
+The bootstrap node, e.g. test1-bootstrap.tt.testing, runs the tectonic bootstrap process. You can watch it:
 
 ```sh
-ssh core@$CLUSTER_NAME-master-0.$BASE_DOMAIN
+ssh core@$CLUSTER_NAME-bootstrap.$BASE_DOMAIN
 sudo journalctl -f -u bootkube -u tectonic
 ```
 You'll have to wait for etcd to reach quorum before this makes any progress.
