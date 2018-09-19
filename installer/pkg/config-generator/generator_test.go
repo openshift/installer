@@ -4,6 +4,7 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"testing"
 
@@ -167,5 +168,77 @@ func TestGenerateCert(t *testing.T) {
 		if err := os.Remove(certPath); err != nil {
 			t.Errorf("test case %d: failed to cleanup test certificate: %s, got %v", i, certPath, err)
 		}
+	}
+}
+
+func TestLibvirtURI(t *testing.T) {
+	escapedPKIPath := url.QueryEscape(libvirtPKIPath)
+
+	cases := []struct {
+		label    string
+		uri      string
+		network  string
+		expected string
+		err      error
+	}{
+		{
+			label:    "defaults",
+			uri:      "qemu:///system",
+			network:  "192.168.124.0/24",
+			expected: "qemu+tls://192.168.124.1/system?pkipath=" + escapedPKIPath,
+			err:      nil,
+		},
+		{
+			label:    "qemu-localhost",
+			uri:      "qemu://127.0.0.1/system",
+			network:  "192.168.124.0/24",
+			expected: "qemu+tls://192.168.124.1/system?pkipath=" + escapedPKIPath,
+			err:      nil,
+		},
+		{
+			label:    "custom-network",
+			uri:      "qemu:///system",
+			network:  "172.16.128.0/17",
+			expected: "qemu+tls://172.16.128.1/system?pkipath=" + escapedPKIPath,
+			err:      nil,
+		},
+		{
+			label:    "preserve-query",
+			uri:      "qemu:///system?foo=bar",
+			network:  "192.168.124.0/24",
+			expected: "qemu+tls://192.168.124.1/system?foo=bar&pkipath=" + escapedPKIPath,
+			err:      nil,
+		},
+		{
+			label:    "ssh-scheme",
+			uri:      "qemu+ssh://127.0.0.1/system",
+			network:  "192.168.124.0/24",
+			expected: "qemu+tls://192.168.124.1/system?pkipath=" + escapedPKIPath,
+			err:      nil,
+		},
+		{
+			label:    "bad-scheme",
+			uri:      "qemu+foo+bar:///system",
+			network:  "192.168.124.0/24",
+			expected: "",
+			err:      errBadLibvirtScheme,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.label, func(t *testing.T) {
+			uri, err := libvirtURI(tt.uri, tt.network)
+			if err != tt.err {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if uri == nil || err != nil {
+				return
+			}
+
+			if uri.String() != tt.expected {
+				t.Errorf("got %q, want %q", uri.String(), tt.expected)
+			}
+		})
 	}
 }

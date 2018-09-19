@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/url"
 	"path/filepath"
 	"strings"
 
@@ -37,7 +38,10 @@ const (
 	certificatesStrategy          = "userProvidedCA"
 	identityAPIService            = "tectonic-identity-api.tectonic-system.svc.cluster.local"
 	maoTargetNamespace            = "openshift-cluster-api"
+	libvirtPKIPath                = "/etc/pki/libvirt"
 )
+
+var errBadLibvirtScheme = errors.New("bad libvirt URI scheme")
 
 // ConfigGenerator defines the cluster config generation for a cluster.
 type ConfigGenerator struct {
@@ -136,9 +140,14 @@ func (c *ConfigGenerator) maoConfig(clusterDir string) (*maoOperatorConfig, erro
 		}
 
 	case config.PlatformLibvirt:
+		uri, err := libvirtURI(c.Libvirt.URI, c.Libvirt.IPRange)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create libvirt URI: %v", err)
+		}
+
 		cfg.Libvirt = &libvirtConfig{
+			URI:         uri.String(),
 			ClusterName: c.Name,
-			URI:         c.Libvirt.URI,
 			NetworkName: c.Libvirt.Network.Name,
 			IPRange:     c.Libvirt.IPRange,
 			Replicas:    c.NodeCount(c.Worker.NodePools),
@@ -518,4 +527,42 @@ func tectonicCloudProvider(platform config.Platform) string {
 		return "libvirt"
 	}
 	panic("invalid platform")
+}
+
+// Returns a libvirt URI given for the machine-api-operator given the
+// URI in the config and the cluster network in CIDR format.
+func libvirtURI(configURI, networkCIDR string) (*url.URL, error) {
+	_, ipNet, err := net.ParseCIDR(networkCIDR)
+	if err != nil {
+		return nil, err
+	}
+
+	gateway, err := cidr.Host(ipNet, 1)
+	if err != nil {
+		return nil, err
+	}
+
+	libvirtURI, err := url.Parse(configURI)
+	if err != nil {
+		return nil, err
+	}
+
+	// If there's a transport in the configured URI, replace it with
+	// TLS.  Otherwise, if there's none, explicityly add TLS.
+	scheme := strings.Split(libvirtURI.Scheme, "+")
+	switch len(scheme) {
+	case 1, 2: // Replace or add the transport.
+		libvirtURI.Scheme = scheme[0] + "+tls"
+
+	default:
+		return nil, errBadLibvirtScheme
+	}
+
+	query := libvirtURI.Query()
+	query.Set("pkipath", libvirtPKIPath)
+
+	libvirtURI.Host = gateway.String()
+	libvirtURI.RawQuery = query.Encode()
+
+	return libvirtURI, nil
 }
