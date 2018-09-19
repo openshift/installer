@@ -21,7 +21,7 @@ exec &> >(tee -ai "$CLUSTER_NAME.log")
 
 function destroy() {
   echo -e "\\e[34m Exiting... Destroying Tectonic...\\e[0m"
-  "${TECTONIC}" destroy --dir="${CLUSTER_NAME}"
+  "${TECTONIC}" destroy --dir="${CLUSTER_NAME}" --continue-on-error
   echo -e "\\e[36m Finished! Smoke test output:\\e[0m ${SMOKE_TEST_OUTPUT}"
   echo -e "\\e[34m So Long, and Thanks for All the Fish\\e[0m"
 }
