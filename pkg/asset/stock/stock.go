@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 
+	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
@@ -16,6 +17,7 @@ type Stock struct {
 	kubeconfigStock
 	tlsStock
 	ignitionStock
+	clusterStock
 }
 
 type installConfigStock struct {
@@ -34,6 +36,10 @@ type ignitionStock struct {
 	ignition.StockImpl
 }
 
+type clusterStock struct {
+	cluster.StockImpl
+}
+
 var _ installconfig.Stock = (*Stock)(nil)
 
 // EstablishStock establishes the stock of assets in the specified directory.
@@ -44,6 +50,7 @@ func EstablishStock(directory string) *Stock {
 	s.tlsStock.EstablishStock(directory, &s.installConfigStock)
 	s.kubeconfigStock.EstablishStock(directory, &s.installConfigStock, &s.tlsStock)
 	s.ignitionStock.EstablishStock(directory, s, s, s)
+	s.clusterStock.EstablishStock(directory, s, s)
 
 	return s
 }

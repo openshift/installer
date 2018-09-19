@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/openshift/installer/installer/pkg/config"
+	"github.com/openshift/installer/pkg/types/config"
 )
 
 // ConvertWorkflow creates new instances of the 'convert' workflow,

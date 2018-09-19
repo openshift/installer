@@ -9,7 +9,7 @@ import (
 
 	ignconfig "github.com/coreos/ignition/config/v2_2"
 	ignconfigtypes "github.com/coreos/ignition/config/v2_2/types"
-	"github.com/openshift/installer/installer/pkg/config"
+	"github.com/openshift/installer/pkg/types/config"
 	"github.com/vincent-petithory/dataurl"
 )
 

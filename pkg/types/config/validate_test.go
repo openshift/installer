@@ -4,8 +4,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/openshift/installer/installer/pkg/config/aws"
-	"github.com/openshift/installer/installer/pkg/config/libvirt"
+	"github.com/openshift/installer/pkg/types/config/aws"
+	"github.com/openshift/installer/pkg/types/config/libvirt"
 )
 
 func TestMissingNodePool(t *testing.T) {

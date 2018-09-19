@@ -4,9 +4,14 @@ import (
 	"fmt"
 )
 
+const (
+	// DefaultChannel is the default RHCOS channel for the cluster.
+	DefaultChannel = "tested"
+)
+
 // AMI calculates a Red Hat CoreOS AMI.
 func AMI(channel, region string) (ami string, err error) {
-	if channel != "tested" {
+	if channel != DefaultChannel {
 		return "", fmt.Errorf("channel %q is not yet supported", channel)
 	}
 

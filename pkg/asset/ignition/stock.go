@@ -7,7 +7,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/tls"
 )
 
-// Stock is the stock of InstallConfig assets that can be generated.
+// Stock is the stock of ignition assets that can be generated.
 type Stock interface {
 	// BootstrapIgnition is the asset that generates the bootstrap.ign ignition
 	// config file for the bootstrap node.

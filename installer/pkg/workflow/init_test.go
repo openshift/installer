@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/openshift/installer/installer/pkg/config"
+	"github.com/openshift/installer/pkg/types/config"
 )
 
 func initTestCluster(cfg string) (*config.Cluster, error) {
