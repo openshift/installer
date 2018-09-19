@@ -1,3 +1,9 @@
+locals {
+  libvirt_tls_ca_pem   = "${file("${var.tectonic_libvirt_tls_ca_path}")}"
+  libvirt_tls_cert_pem = "${file("${var.tectonic_libvirt_tls_cert_path}")}"
+  libvirt_tls_key_pem  = "${file("${var.tectonic_libvirt_tls_key_path}")}"
+}
+
 module assets_base {
   source = "../base"
 
@@ -20,4 +26,8 @@ module assets_base {
   tectonic_service_cidr         = "${var.tectonic_service_cidr}"
   tectonic_update_channel       = "${var.tectonic_update_channel}"
   tectonic_versions             = "${var.tectonic_versions}"
+
+  libvirt_tls_ca_pem   = "${local.libvirt_tls_ca_pem}"
+  libvirt_tls_cert_pem = "${local.libvirt_tls_cert_pem}"
+  libvirt_tls_key_pem  = "${local.libvirt_tls_key_pem}"
 }

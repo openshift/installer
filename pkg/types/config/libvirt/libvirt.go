@@ -16,10 +16,18 @@ const (
 type Libvirt struct {
 	URI         string `json:"tectonic_libvirt_uri,omitempty" yaml:"uri"`
 	Image       string `json:"tectonic_os_image,omitempty" yaml:"image"`
+	TLS         `json:",inline" yaml:"tls"`
 	Network     `json:",inline" yaml:"network"`
 	MasterIPs   []string `json:"tectonic_libvirt_master_ips,omitempty" yaml:"masterIPs"`
 	WorkerIPs   []string `json:"tectonic_libvirt_worker_ips,omitempty" yaml:"workerIPs"`
 	BootstrapIP string   `json:"tectonic_libvirt_bootstrap_ip,omitempty" yaml:"bootstrapIP"`
+}
+
+// TLS represents paths to TLS assets for libvirt clients.
+type TLS struct {
+	CAPath   string `json:"tectonic_libvirt_tls_ca_path,omitempty" yaml:"caPath"`
+	CertPath string `json:"tectonic_libvirt_tls_cert_path,omitempty" yaml:"certPath"`
+	KeyPath  string `json:"tectonic_libvirt_tls_key_path,omitempty" yaml:"keyPath"`
 }
 
 // Network describes a libvirt network configuration.

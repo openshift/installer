@@ -3,6 +3,21 @@ variable "tectonic_libvirt_uri" {
   description = "libvirt connection URI"
 }
 
+variable "tectonic_libvirt_tls_ca_path" {
+  type        = "string"
+  description = "path to the libvirt CA certificate"
+}
+
+variable "tectonic_libvirt_tls_cert_path" {
+  type        = "string"
+  description = "path to the libvirt client certificate"
+}
+
+variable "tectonic_libvirt_tls_key_path" {
+  type        = "string"
+  description = "path to the libvirt client private key"
+}
+
 variable "tectonic_libvirt_network_name" {
   type        = "string"
   description = "Name of the libvirt network to create"

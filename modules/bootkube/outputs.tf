@@ -26,5 +26,6 @@ output "ignition_file_id_list" {
       data.ignition_file.kubeconfig-kubelet.id,
     ),
     data.ignition_file.manifest_file_list.*.id,
+    data.ignition_file.libvirt_certs_secret.*.id,
   ))}"]
 }

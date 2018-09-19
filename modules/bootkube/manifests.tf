@@ -92,3 +92,32 @@ resource "local_file" "manifest_files" {
   filename = "./generated/manifests/${var.manifest_names[count.index]}"
   content  = "${data.template_file.manifest_file_list.*.rendered[count.index]}"
 }
+
+# Conditionally include the libvirt-certs secret.
+data "template_file" "libvirt_certs" {
+  template = "${file("${path.module}/resources/manifests/libvirt-certs-secret.yaml")}"
+
+  vars {
+    ca_cert     = "${base64encode(var.libvirt_tls_ca_pem)}"
+    client_cert = "${base64encode(var.libvirt_tls_cert_pem)}"
+    client_key  = "${base64encode(var.libvirt_tls_key_pem)}"
+  }
+}
+
+data "ignition_file" "libvirt_certs_secret" {
+  count      = "${var.libvirt_tls_cert_pem != "" ? 1 : 0}"
+  filesystem = "root"
+  mode       = "0644"
+
+  path = "/opt/tectonic/manifests/libvirt-certs-secret.yaml"
+
+  content {
+    content = "${data.template_file.libvirt_certs.rendered}"
+  }
+}
+
+resource "local_file" "libvirt_certs" {
+  count    = "${var.libvirt_tls_cert_pem != "" ? 1 : 0}"
+  filename = "./generated/manifests/libvirt-certs-secret.yaml"
+  content  = "${data.template_file.libvirt_certs.rendered}"
+}

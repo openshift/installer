@@ -52,6 +52,10 @@ module "bootkube" {
   etcd_endpoints = "${data.template_file.etcd_hostname_list.*.rendered}"
 
   worker_ign_config = "${var.aws_worker_ign_config}"
+
+  libvirt_tls_ca_pem   = "${var.libvirt_tls_ca_pem}"
+  libvirt_tls_cert_pem = "${var.libvirt_tls_cert_pem}"
+  libvirt_tls_key_pem  = "${var.libvirt_tls_key_pem}"
 }
 
 module "tectonic" {

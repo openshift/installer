@@ -12,3 +12,18 @@ variable "aws_worker_ign_config" {
   type    = "string"
   default = ""
 }
+
+variable "libvirt_tls_ca_pem" {
+  type    = "string"
+  default = ""
+}
+
+variable "libvirt_tls_cert_pem" {
+  type    = "string"
+  default = ""
+}
+
+variable "libvirt_tls_key_pem" {
+  type    = "string"
+  default = ""
+}

@@ -166,3 +166,21 @@ variable "worker_ign_config" {
   type        = "string"
   default     = ""
 }
+
+variable "libvirt_tls_ca_pem" {
+  type        = "string"
+  description = "The libvirt CA certificate in PEM format"
+  default     = ""
+}
+
+variable "libvirt_tls_cert_pem" {
+  type        = "string"
+  description = "The libvirt client certificate in PEM format"
+  default     = ""
+}
+
+variable "libvirt_tls_key_pem" {
+  type        = "string"
+  description = "The libvirt client private key in PEM format"
+  default     = ""
+}

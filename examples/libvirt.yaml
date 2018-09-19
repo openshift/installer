@@ -11,10 +11,11 @@ admin:
 baseDomain:
 
 libvirt:
-  # You must specify an IP address here that libvirtd is listening on,
-  # and that the cluster-api controller pod will be able to connect
-  # to.  Often 192.168.122.1 is the default for the virbr0 interface.
-  uri: qemu+tcp://192.168.122.1/system
+  uri: qemu:///system
+  tls:
+    caPath: /path/to/cacert.pem
+    certPath: /path/to/clientcert.pem
+    keyPath: /path/to/clientkey.pem
   network:
     name: tectonic
     ifName: tt0
