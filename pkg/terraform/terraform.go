@@ -1,4 +1,4 @@
-package workflow
+package terraform
 
 import (
 	"fmt"
@@ -20,7 +20,9 @@ func terraformExec(clusterDir string, args ...string) error {
 	return nil
 }
 
-func tfApply(clusterDir string, state string, templateDir string, extraArgs ...string) error {
+// Apply runs "terraform apply" with the given clusterDir, templateDir and extra args.
+// It outputs the tfstate file.
+func Apply(clusterDir string, state string, templateDir string, extraArgs ...string) error {
 	defaultArgs := []string{
 		"apply",
 		"-auto-approve",
@@ -31,7 +33,9 @@ func tfApply(clusterDir string, state string, templateDir string, extraArgs ...s
 	return terraformExec(clusterDir, args...)
 }
 
-func tfDestroy(clusterDir, state, templateDir string, extraArgs ...string) error {
+// Destroy runs "terraform destory" with the given clusterDir, templateDir, state file
+// and extra args.
+func Destroy(clusterDir, state, templateDir string, extraArgs ...string) error {
 	defaultArgs := []string{
 		"destroy",
 		"-force",
@@ -42,12 +46,14 @@ func tfDestroy(clusterDir, state, templateDir string, extraArgs ...string) error
 	return terraformExec(clusterDir, args...)
 }
 
-func tfInit(clusterDir, templateDir string) error {
+// Init runs "terraform init" with the given clusterDir and templateDir.
+func Init(clusterDir, templateDir string) error {
 	return terraformExec(clusterDir, "init", templateDir)
 }
 
-func hasStateFile(stateDir string, stateName string) bool {
-	stepStateFile := filepath.Join(stateDir, fmt.Sprintf("%s.tfstate", stateName))
+// HasStateFile returns true if the stateFile exists under stateDir.
+func HasStateFile(stateDir string, stateFile string) bool {
+	stepStateFile := filepath.Join(stateDir, fmt.Sprintf("%s.tfstate", stateFile))
 	_, err := os.Stat(stepStateFile)
 	return !os.IsNotExist(err)
 }

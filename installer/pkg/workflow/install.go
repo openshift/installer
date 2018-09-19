@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/openshift/installer/installer/pkg/config-generator"
+	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/types/config"
 )
 
@@ -41,10 +42,10 @@ func runInstallStep(m *metadata, step string, extraArgs ...string) error {
 	if err != nil {
 		return err
 	}
-	if err := tfInit(m.clusterDir, templateDir); err != nil {
+	if err := terraform.Init(m.clusterDir, templateDir); err != nil {
 		return err
 	}
-	return tfApply(m.clusterDir, step, templateDir, extraArgs...)
+	return terraform.Apply(m.clusterDir, step, templateDir, extraArgs...)
 }
 
 func generateIgnConfigStep(m *metadata) error {

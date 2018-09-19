@@ -7,6 +7,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/openshift/installer/pkg/terraform"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -127,7 +128,7 @@ func deleteWorkerMachineSet(client *clientset.Clientset) error {
 }
 
 func runDestroyStep(m *metadata, step string, extraArgs ...string) error {
-	if !hasStateFile(m.clusterDir, step) {
+	if !terraform.HasStateFile(m.clusterDir, step) {
 		// there is no statefile, therefore nothing to destroy for this step
 		return nil
 	}
@@ -136,7 +137,7 @@ func runDestroyStep(m *metadata, step string, extraArgs ...string) error {
 		return err
 	}
 
-	return tfDestroy(m.clusterDir, step, templateDir, extraArgs...)
+	return terraform.Destroy(m.clusterDir, step, templateDir, extraArgs...)
 }
 
 func buildClusterClient(kubeconfig string) (*clientset.Clientset, error) {
