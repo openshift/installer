@@ -85,6 +85,35 @@ iptables -I INPUT -p tcp -s 192.168.124.0/24 -d 192.168.124.1 --dport 16509 \
   -j ACCEPT -m comment --comment "Allow insecure libvirt clients"
 ```
 
+If using `firewalld`, simply optain the name of the existing active zone which
+can be used to integrate the appropriate source and ports to allow connections from
+the IP range used by your cluster nodes. An example is shown below.
+
+```console
+$ sudo firewall-cmd --get-active-zones
+FedoraWorkstation
+  interfaces: enp0s25 tun0
+```
+With the name of the active zone, include the source and port to allow connections
+from the IP range used by your cluster nodes. The default subnet is `192.168.124.0/24`
+unless otherwise specified.
+
+```sh
+sudo firewall-cmd --zone=FedoraWorkstation --add-source=192.168.124.0/24
+sudo firewall-cmd --zone=FedoraWorkstation --add-port=16509/tcp
+```
+
+Verification of the source and port can be done listing the zone
+
+```sh
+sudo firewall-cmd --zone=FedoraWorkstation --list-ports
+sudo firewall-cmd --zone=FedoraWorkstation --list-sources
+```
+
+NOTE: When the firewall rules are no longer needed, `firewalld --reload`
+will remove the changes made as they were not permanently added. For persistence,
+include the `--permanent` to the commands that add-source and add-port.
+
 #### 1.7 Prepare the configuration file
 1. `cp examples/libvirt.yaml ./`
 2. Edit the configuration file:
@@ -149,6 +178,13 @@ When you're done, destroy:
 tectonic destroy --dir=$CLUSTER_NAME
 ```
 Be sure to destroy, or else you will need to manually use virsh to clean up the leaked resources. The [`virsh-cleanup`](../../scripts/maintenance/virsh-cleanup) script may help with this, but note it will currently destroy *all* libvirt resources.
+
+With the cluster removed, you no longer need to allow libvirt nodes to reach your `libvirtd`. Restart
+`firewalld` to remove your temporary changes as follows:
+
+```sh
+sudo firewall-cmd --reload
+```
 
 # Exploring your cluster
 Some things you can do:
