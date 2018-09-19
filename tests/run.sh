@@ -66,7 +66,6 @@ aws)
   CONFIGURE_AWS_ROLES=False
   ;;
 libvirt)
-  [ -z ${IMAGE_PATH+x} ] && (echo "Please set libvirt IMAGE_PATH" >&2; exit 1)
   ;;
 *)
   echo "unrecognized backend: ${BACKEND}" >&2
@@ -100,8 +99,8 @@ python <<-EOF >"${CLUSTER_NAME}.yaml"
 	    if ${CONFIGURE_AWS_ROLES:-False}:
 	        config['aws']['master']['iamRoleName'] = 'tf-tectonic-master-node'
 	        config['aws']['worker']['iamRoleName'] = 'tf-tectonic-worker-node'
-	elif '${BACKEND}' == 'libvirt':
-	    config['libvirt']['image'] = 'file://${IMAGE_PATH}'
+	elif '${BACKEND}' == 'libvirt' and '${IMAGE_URL}':
+	    config['libvirt']['image'] = '${IMAGE_URL}'
 	yaml.safe_dump(config, sys.stdout)
 	EOF
 
