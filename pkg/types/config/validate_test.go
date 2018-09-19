@@ -351,7 +351,7 @@ func TestAWSEndpoints(t *testing.T) {
 	}
 }
 
-func TestTNCS3BucketNames(t *testing.T) {
+func TestS3BucketNames(t *testing.T) {
 	cases := []struct {
 		cluster Cluster
 		err     bool
@@ -395,7 +395,7 @@ func TestTNCS3BucketNames(t *testing.T) {
 	}
 
 	for i, c := range cases {
-		if err := c.cluster.validateTNCS3Bucket(); (err != nil) != c.err {
+		if err := c.cluster.validateS3Bucket(); (err != nil) != c.err {
 			no := "no"
 			if c.err {
 				no = "an"
