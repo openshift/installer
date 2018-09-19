@@ -38,25 +38,60 @@ func TestUnmarshal(t *testing.T) {
 			Mask: net.IPv4Mask(255, 255, 255, 0),
 		}},
 	} {
-		data, err := json.Marshal(ipNetIn)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		t.Run(string(data), func(t *testing.T) {
-			var ipNetOut *IPNet
-			err := json.Unmarshal(data, &ipNetOut)
+		t.Run(ipNetIn.String(), func(t *testing.T) {
+			data, err := json.Marshal(ipNetIn)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if ipNetIn == nil {
-				if ipNetOut != nil {
-					t.Fatalf("%v != %v", ipNetOut, ipNetIn)
-				}
-			} else if ipNetOut.String() != ipNetIn.String() {
+			var ipNetOut *IPNet
+			err = json.Unmarshal(data, &ipNetOut)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if ipNetOut.String() != ipNetIn.String() {
 				t.Fatalf("%v != %v", ipNetOut, ipNetIn)
 			}
+		})
+	}
+}
+
+func TestDeepCopy(t *testing.T) {
+	for _, ipNetIn := range []*IPNet{
+		{},
+		{IPNet: net.IPNet{
+			IP:   net.IP{192, 168, 0, 10},
+			Mask: net.IPv4Mask(255, 255, 255, 0),
+		}},
+	} {
+		t.Run(ipNetIn.String(), func(t *testing.T) {
+			t.Run("DeepCopyInto", func(t *testing.T) {
+				ipNetOut := &IPNet{IPNet: net.IPNet{
+					IP:   net.IP{10, 0, 0, 0},
+					Mask: net.IPv4Mask(255, 0, 0, 0),
+				}}
+
+				ipNetIn.DeepCopyInto(ipNetOut)
+				if ipNetOut.String() != ipNetIn.String() {
+					t.Fatalf("%v != %v", ipNetOut, ipNetIn)
+				}
+			})
+
+			t.Run("DeepCopy", func(t *testing.T) {
+				ipNetOut := ipNetIn.DeepCopy()
+				if ipNetOut.String() != ipNetIn.String() {
+					t.Fatalf("%v != %v", ipNetOut, ipNetIn)
+				}
+
+				ipNetIn.IPNet = net.IPNet{
+					IP:   net.IP{192, 168, 10, 10},
+					Mask: net.IPv4Mask(255, 255, 255, 255),
+				}
+				if ipNetOut.String() == ipNetIn.String() {
+					t.Fatalf("%v (%q) == %v (%q)", ipNetOut, ipNetOut.String(), ipNetIn, ipNetIn.String())
+				}
+			})
 		})
 	}
 }
