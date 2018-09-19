@@ -10,7 +10,6 @@ import (
 	yaml "gopkg.in/yaml.v2"
 
 	configgenerator "github.com/openshift/installer/installer/pkg/config-generator"
-	"github.com/openshift/installer/installer/pkg/copy"
 	"github.com/openshift/installer/pkg/types/config"
 )
 
@@ -93,6 +92,12 @@ func prepareWorspaceStep(m *metadata) error {
 		return err
 	}
 
+	if cluster.Platform == config.PlatformLibvirt {
+		if err := cluster.Libvirt.UseCachedImage(); err != nil {
+			return err
+		}
+	}
+
 	// generate clusterDir folder
 	clusterDir := filepath.Join(dir, cluster.Name)
 	m.clusterDir = clusterDir
@@ -106,7 +111,11 @@ func prepareWorspaceStep(m *metadata) error {
 
 	// put config file under the clusterDir folder
 	configFilePath := filepath.Join(clusterDir, configFileName)
-	if err := copy.Copy(m.configFilePath, configFilePath); err != nil {
+	configContent, err := yaml.Marshal(cluster)
+	if err != nil {
+		return err
+	}
+	if err := ioutil.WriteFile(configFilePath, configContent, 0666); err != nil {
 		return fmt.Errorf("failed to create cluster config at %q: %v", clusterDir, err)
 	}
 
