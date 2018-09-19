@@ -1,4 +1,4 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
 
 go_library(
     name = "go_default_library",
@@ -32,30 +32,5 @@ go_library(
         "//vendor/k8s.io/apiserver/pkg/endpoints/request:go_default_library",
         "//vendor/sigs.k8s.io/cluster-api/pkg/apis/cluster:go_default_library",
         "//vendor/sigs.k8s.io/cluster-api/pkg/apis/cluster/common:go_default_library",
-    ],
-)
-
-go_test(
-    name = "go_default_test",
-    srcs = [
-        "cluster_types_test.go",
-        "machine_types_test.go",
-        "machinedeployment_types_test.go",
-        "machineset_types_test.go",
-        "v1alpha1_suite_test.go",
-    ],
-    embed = [":go_default_library"],
-    importpath = "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1_test",
-    deps = [
-        "//vendor/github.com/kubernetes-incubator/apiserver-builder/pkg/test:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/apis/meta/v1:go_default_library",
-        "//vendor/k8s.io/apimachinery/pkg/util/intstr:go_default_library",
-        "//vendor/k8s.io/apiserver/pkg/endpoints/request:go_default_library",
-        "//vendor/sigs.k8s.io/cluster-api/pkg/apis:go_default_library",
-        "//vendor/sigs.k8s.io/cluster-api/pkg/apis/cluster:go_default_library",
-        "//vendor/sigs.k8s.io/cluster-api/pkg/apis/cluster/common:go_default_library",
-        "//vendor/sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1/testutil:go_default_library",
-        "//vendor/sigs.k8s.io/cluster-api/pkg/client/clientset_generated/clientset:go_default_library",
-        "//vendor/sigs.k8s.io/cluster-api/pkg/openapi:go_default_library",
     ],
 )
