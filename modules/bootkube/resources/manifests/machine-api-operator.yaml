@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
       - name: machine-api-operator
-        image: quay.io/coreos/machine-api-operator:b6a04c2
+        image: quay.io/coreos/machine-api-operator:6ce7a77
         command:
         - "/machine-api-operator"
         resources:
