@@ -13,6 +13,7 @@ import (
 var (
 	installConfigCommand   = kingpin.Command("install-config", "Generate the Install Config asset")
 	ignitionConfigsCommand = kingpin.Command("ignition-configs", "Generate the Ignition Config assets")
+	operatorsCommand       = kingpin.Command("operators", "Generate the Operator assets")
 
 	dirFlag  = kingpin.Flag("dir", "assets directory").Default(".").String()
 	logLevel = kingpin.Flag("log-level", "log level (e.g. \"debug\")").Default("warn").Enum("debug", "info", "warn", "error", "fatal", "panic")
@@ -32,6 +33,10 @@ func main() {
 			assetStock.BootstrapIgnition(),
 			assetStock.MasterIgnition(),
 			assetStock.WorkerIgnition(),
+		}
+	case operatorsCommand.FullCommand():
+		targetAssets = []asset.Asset{
+			assetStock.Operators(),
 		}
 	}
 
