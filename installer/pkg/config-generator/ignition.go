@@ -125,19 +125,13 @@ func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
 
 func (c *ConfigGenerator) getTNCURL(role string, query string) string {
 	var u string
-
-	// cloud platforms put this behind a load balancer which remaps ports;
-	// libvirt doesn't do that - use the tnc port directly
-	port := 80
-	if c.Platform == config.PlatformLibvirt {
-		port = 49500
-	}
+	port := 49500
 
 	if role == "master" || role == "worker" {
 		u = func() *url.URL {
 			return &url.URL{
 				Scheme:   "https",
-				Host:     fmt.Sprintf("%s-tnc.%s:%d", c.Name, c.BaseDomain, port),
+				Host:     fmt.Sprintf("%s-api.%s:%d", c.Name, c.BaseDomain, port),
 				Path:     fmt.Sprintf("/config/%s", role),
 				RawQuery: query,
 			}

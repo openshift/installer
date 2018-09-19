@@ -1,36 +1,3 @@
-resource "aws_elb" "tnc" {
-  count           = "${var.private_master_endpoints ? 1 : 0}"
-  name            = "${var.cluster_name}-tnc"
-  subnets         = ["${local.master_subnet_ids}"]
-  internal        = true
-  security_groups = ["${aws_security_group.tnc.id}"]
-
-  idle_timeout                = 3600
-  connection_draining         = true
-  connection_draining_timeout = 300
-
-  listener {
-    instance_port     = 49500
-    instance_protocol = "tcp"
-    lb_port           = 80
-    lb_protocol       = "tcp"
-  }
-
-  health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 3
-    target              = "TCP:49500"
-    interval            = 5
-  }
-
-  tags = "${merge(map(
-      "Name", "${var.cluster_name}-int",
-      "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "tectonicClusterID", "${var.cluster_id}"
-    ), var.extra_tags)}"
-}
-
 resource "aws_elb" "api_internal" {
   count           = "${var.private_master_endpoints ? 1 : 0}"
   name            = "${var.cluster_name}-int"
@@ -49,6 +16,13 @@ resource "aws_elb" "api_internal" {
     lb_protocol       = "tcp"
   }
 
+  listener {
+    instance_port     = 49500
+    instance_protocol = "tcp"
+    lb_port           = 49500
+    lb_protocol       = "tcp"
+  }
+
   health_check {
     healthy_threshold   = 2
     unhealthy_threshold = 2
@@ -56,6 +30,15 @@ resource "aws_elb" "api_internal" {
     target              = "SSL:6443"
     interval            = 5
   }
+
+  # TODO: we only have on health_check per ELB but need to check the following too
+  # health_check {
+  #   healthy_threshold   = 2
+  #   unhealthy_threshold = 2
+  #   timeout             = 3
+  #   target              = "TCP:49500"
+  #   interval            = 5
+  # }
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-int",

@@ -18,7 +18,6 @@ provider "aws" {
 module "masters" {
   source = "../../../modules/aws/master"
 
-  elb_tnc_id          = "${module.vpc.aws_elb_tnc_id}"
   elb_api_internal_id = "${module.vpc.aws_elb_api_internal_id}"
   elb_api_external_id = "${module.vpc.aws_elb_api_external_id}"
   elb_console_id      = "${module.vpc.aws_elb_console_id}"
@@ -51,9 +50,9 @@ module "iam" {
 module "dns" {
   source = "../../../modules/dns/route53"
 
-  api_external_elb_dns_name = "${module.vpc.aws_api_external_dns_name}"
+  api_external_elb_dns_name = "${module.vpc.aws_elb_api_external_dns_name}"
   api_external_elb_zone_id  = "${module.vpc.aws_elb_api_external_zone_id}"
-  api_internal_elb_dns_name = "${module.vpc.aws_api_internal_dns_name}"
+  api_internal_elb_dns_name = "${module.vpc.aws_elb_api_internal_dns_name}"
   api_internal_elb_zone_id  = "${module.vpc.aws_elb_api_internal_zone_id}"
   api_ip_addresses          = "${module.vpc.aws_lbs}"
   base_domain               = "${var.tectonic_base_domain}"
@@ -98,18 +97,6 @@ resource "aws_route53_record" "etcd_a_nodes" {
   zone_id = "${local.private_zone_id}"
   name    = "${var.tectonic_cluster_name}-etcd-${count.index}"
   records = ["${module.masters.ip_addresses[count.index]}"]
-}
-
-resource "aws_route53_record" "tectonic_tnc_a" {
-  zone_id = "${local.private_zone_id}"
-  name    = "${var.tectonic_cluster_name}-tnc.${var.tectonic_base_domain}"
-  type    = "A"
-
-  alias {
-    name                   = "${module.vpc.aws_elb_tnc_dns_name}"
-    zone_id                = "${module.vpc.aws_elb_tnc_zone_id}"
-    evaluate_target_health = true
-  }
 }
 
 resource "aws_route53_zone" "tectonic_int" {

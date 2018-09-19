@@ -80,7 +80,6 @@ resource "libvirt_domain" "master" {
 locals {
   "hostnames" = [
     "${var.tectonic_cluster_name}-api",
-    "${var.tectonic_cluster_name}-tnc",
   ]
 }
 

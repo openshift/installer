@@ -80,9 +80,9 @@ func genIPAddressesForOpenshiftAPIServerCertKey(cfg *types.InstallConfig) ([]net
 }
 
 func genDNSNamesForTNCCertKey(cfg *types.InstallConfig) ([]string, error) {
-	return []string{fmt.Sprintf("%s-tnc.%s", cfg.Name, cfg.BaseDomain)}, nil
+	return []string{fmt.Sprintf("%s-api.%s", cfg.Name, cfg.BaseDomain)}, nil
 }
 
 func genSubjectForTNCCertKey(cfg *types.InstallConfig) (pkix.Name, error) {
-	return pkix.Name{CommonName: fmt.Sprintf("%s-tnc.%s", cfg.Name, cfg.BaseDomain)}, nil
+	return pkix.Name{CommonName: fmt.Sprintf("%s-api.%s", cfg.Name, cfg.BaseDomain)}, nil
 }
