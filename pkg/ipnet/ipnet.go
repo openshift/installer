@@ -16,6 +16,15 @@ type IPNet struct {
 	net.IPNet
 }
 
+// String returns a CIDR serialization of the subnet, or an empty
+// string if the subnet is nil.
+func (ipnet *IPNet) String() string {
+	if ipnet == nil {
+		return ""
+	}
+	return ipnet.IPNet.String()
+}
+
 // MarshalJSON interface for an IPNet
 func (ipnet IPNet) MarshalJSON() (data []byte, err error) {
 	if reflect.DeepEqual(ipnet.IPNet, emptyIPNet) {

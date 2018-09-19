@@ -38,23 +38,19 @@ func TestUnmarshal(t *testing.T) {
 			Mask: net.IPv4Mask(255, 255, 255, 0),
 		}},
 	} {
-		data, err := json.Marshal(ipNetIn)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		t.Run(string(data), func(t *testing.T) {
-			var ipNetOut *IPNet
-			err := json.Unmarshal(data, &ipNetOut)
+		t.Run(ipNetIn.String(), func(t *testing.T) {
+			data, err := json.Marshal(ipNetIn)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			if ipNetIn == nil {
-				if ipNetOut != nil {
-					t.Fatalf("%v != %v", ipNetOut, ipNetIn)
-				}
-			} else if ipNetOut.String() != ipNetIn.String() {
+			var ipNetOut *IPNet
+			err = json.Unmarshal(data, &ipNetOut)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if ipNetOut.String() != ipNetIn.String() {
 				t.Fatalf("%v != %v", ipNetOut, ipNetIn)
 			}
 		})
