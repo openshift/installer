@@ -27,10 +27,12 @@ func (libvirt *Libvirt) UseCachedImage() (err error) {
 		return nil
 	}
 
-	baseCacheDir, err := os.UserCacheDir()
-	if err != nil {
-		return err
-	}
+	// FIXME: Use os.UserCacheDir() once we bump to Go 1.11
+	// baseCacheDir, err := os.UserCacheDir()
+	// if err != nil {
+	// 	return err
+	// }
+	baseCacheDir := filepath.Join(os.Getenv("HOME"), ".cache")
 
 	cacheDir := filepath.Join(baseCacheDir, "openshift-install", "libvirt")
 	err = os.MkdirAll(cacheDir, 0777)
