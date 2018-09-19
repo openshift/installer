@@ -32,6 +32,10 @@ func (f fakeInstallConfig) Generate(map[asset.Asset]*asset.State) (*asset.State,
 	}, nil
 }
 
+func (f fakeInstallConfig) Name() string {
+	return "Fake Install Config"
+}
+
 func TestCertKeyGenerate(t *testing.T) {
 	testDir, err := ioutil.TempDir(os.TempDir(), "certkey_test")
 	if err != nil {

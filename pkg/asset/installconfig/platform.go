@@ -17,7 +17,7 @@ const (
 
 var (
 	validPlatforms = []string{AWSPlatformType, LibvirtPlatformType}
-	platformPrompt = fmt.Sprintf("Platform (%s):", strings.Join(validPlatforms, ", "))
+	platformPrompt = fmt.Sprintf("Platform (%s)", strings.Join(validPlatforms, ", "))
 )
 
 // Platform is an asset that queries the user for the platform on which to install
@@ -54,6 +54,11 @@ func (a *Platform) Generate(map[asset.Asset]*asset.State) (*asset.State, error) 
 	}
 }
 
+// Name returns the human-friendly name of the asset.
+func (a *Platform) Name() string {
+	return "Platform"
+}
+
 func (a *Platform) queryUserForPlatform() string {
 	for {
 		input := asset.QueryUser(a.InputReader, platformPrompt)
@@ -70,7 +75,7 @@ func (a *Platform) queryUserForPlatform() string {
 func (a *Platform) awsPlatform() (*asset.State, error) {
 	return assetStateForStringContents(
 		AWSPlatformType,
-		asset.QueryUser(a.InputReader, "Region:"),
+		asset.QueryUser(a.InputReader, "Region"),
 	), nil
 }
 
@@ -78,7 +83,7 @@ func (a *Platform) libvirtPlatform() (*asset.State, error) {
 	return assetStateForStringContents(
 		LibvirtPlatformType,
 		// TODO(yifan): Set the default URI.
-		asset.QueryUser(a.InputReader, "URI:"),
+		asset.QueryUser(a.InputReader, "URI"),
 	), nil
 }
 

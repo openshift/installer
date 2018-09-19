@@ -16,6 +16,10 @@ func (a *testAsset) Generate(map[asset.Asset]*asset.State) (*asset.State, error)
 	return nil, nil
 }
 
+func (a *testAsset) Name() string {
+	return "Test Asset"
+}
+
 func stateWithContentsData(contentsData ...string) *asset.State {
 	state := &asset.State{
 		Contents: make([]asset.Content, len(contentsData)),

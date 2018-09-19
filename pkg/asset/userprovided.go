@@ -29,10 +29,15 @@ func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
 	}, nil
 }
 
+// Name returns the human-friendly name of the asset.
+func (a UserProvided) Name() string {
+	return a.Prompt
+}
+
 // QueryUser queries the user for input.
 func QueryUser(inputReader *bufio.Reader, prompt string) string {
 	for {
-		fmt.Println(prompt)
+		fmt.Printf("%s: ", prompt)
 		input, err := inputReader.ReadString('\n')
 		if err != nil && err != io.EOF {
 			fmt.Println("Could not understand response. Please retry.")

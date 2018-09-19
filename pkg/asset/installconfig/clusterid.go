@@ -23,3 +23,8 @@ func (a *clusterID) Generate(map[asset.Asset]*asset.State) (*asset.State, error)
 		},
 	}, nil
 }
+
+// Name returns the human-friendly name of the asset.
+func (a *clusterID) Name() string {
+	return "Cluster ID"
+}

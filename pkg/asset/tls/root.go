@@ -48,3 +48,8 @@ func (c *RootCA) Generate(parents map[asset.Asset]*asset.State) (*asset.State, e
 		},
 	}, nil
 }
+
+// Name returns the human-friendly name of the asset.
+func (c *RootCA) Name() string {
+	return "Root CA"
+}

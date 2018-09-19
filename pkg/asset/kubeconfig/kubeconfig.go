@@ -114,3 +114,8 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 		},
 	}, nil
 }
+
+// Name returns the human-friendly name of the asset.
+func (k *Kubeconfig) Name() string {
+	return "Kubeconfig"
+}

@@ -52,3 +52,8 @@ func (a *worker) Generate(dependencies map[asset.Asset]*asset.State) (*asset.Sta
 		}},
 	}, nil
 }
+
+// Name returns the human-friendly name of the asset.
+func (a *worker) Name() string {
+	return "Worker Ignition Config"
+}

@@ -136,6 +136,11 @@ func (c *CertKey) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 	}, nil
 }
 
+// Name returns the human-friendly name of the asset.
+func (c *CertKey) Name() string {
+	return fmt.Sprintf("Certificate (%s)", c.Subject.CommonName)
+}
+
 func parseCAFromAssetState(ca *asset.State) (*rsa.PrivateKey, *x509.Certificate, error) {
 	var key *rsa.PrivateKey
 	var cert *x509.Certificate

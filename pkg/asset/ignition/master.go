@@ -56,3 +56,8 @@ func (a *master) Generate(dependencies map[asset.Asset]*asset.State) (*asset.Sta
 
 	return state, nil
 }
+
+// Name returns the human-friendly name of the asset.
+func (a *master) Name() string {
+	return "Master Ignition Config(s)"
+}

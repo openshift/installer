@@ -11,6 +11,7 @@ go_library(
     ],
     importpath = "github.com/openshift/installer/pkg/asset",
     visibility = ["//visibility:public"],
+    deps = ["//vendor/github.com/Sirupsen/logrus:go_default_library"],
 )
 
 go_test(

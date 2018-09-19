@@ -46,3 +46,8 @@ func (k *KeyPair) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
 		},
 	}, nil
 }
+
+// Name returns the human-friendly name of the asset.
+func (k *KeyPair) Name() string {
+	return fmt.Sprintf("Key Pair (%s)", k.PubKeyFileName)
+}
