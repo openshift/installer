@@ -29,6 +29,7 @@ variable "manifest_names" {
     "updater/operators/tectonic-channel-operator.yaml",
     "updater/operators/tectonic-ingress-controller-operator.yaml",
     "updater/operators/tectonic-utility-operator.yaml",
+    "updater/operators/cluster-openshift-apiserver-operator.yaml",
     "updater/tectonic-channel-operator-config.yaml",
     "updater/tectonic-channel-operator-kind.yaml",
   ]
@@ -47,6 +48,7 @@ data "template_file" "manifest_file_list" {
     tectonic_alm_operator_image                = "${var.container_images["tectonic_alm_operator"]}"
     tectonic_ingress_controller_operator_image = "${var.container_images["tectonic_ingress_controller_operator"]}"
     tectonic_utility_operator_image            = "${var.container_images["tectonic_utility_operator"]}"
+    cluster_openshift_apiserver_operator_image = "${var.container_images["cluster_openshift_apiserver_operator"]}"
 
     config_reload_base_image      = "${var.container_base_images["config_reload"]}"
     addon_resizer_base_image      = "${var.container_base_images["addon_resizer"]}"

@@ -65,6 +65,7 @@ variable "tectonic_container_images" {
     hyperkube                            = "openshift/origin-node:latest"
     kube_core_renderer                   = "quay.io/coreos/kube-core-renderer-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85"
     kube_core_operator                   = "quay.io/coreos/kube-core-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85"
+    cluster_openshift_apiserver_operator = "openshift/origin-cluster-openshift-apiserver-operator:latest"
     tectonic_channel_operator            = "quay.io/coreos/tectonic-channel-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85"
     kube_addon_operator                  = "quay.io/coreos/kube-addon-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85"
     tectonic_alm_operator                = "quay.io/coreos/tectonic-alm-operator:v0.3.1"
