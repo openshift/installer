@@ -1,9 +1,6 @@
 package manifests
 
 import (
-	"crypto/rand"
-	"encoding/base64"
-	"errors"
 	"fmt"
 	"path/filepath"
 
@@ -14,6 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/rand"
 )
 
 // kubeAddonOperator generates the network-operator-*.yml files
@@ -72,32 +70,10 @@ func (kao *kubeAddonOperator) addonConfig() ([]byte, error) {
 	}
 	addonConfig.CloudProvider = tectonicCloudProvider(kao.installConfig.Platform)
 	addonConfig.ClusterConfig.APIServerURL = kao.getAPIServerURL()
-	registrySecret, err := generateRandomID(16)
-	if err != nil {
-		return nil, err
-	}
-	addonConfig.RegistryHTTPSecret = registrySecret
+	addonConfig.RegistryHTTPSecret = rand.String(16)
 	return yaml.Marshal(addonConfig)
 }
 
 func (kao *kubeAddonOperator) getAPIServerURL() string {
 	return fmt.Sprintf("https://%s-api.%s:6443", kao.installConfig.Name, kao.installConfig.BaseDomain)
-}
-
-// generateRandomID reproduce tf random_id behaviour
-// TODO: re-evaluate solution
-func generateRandomID(byteLength int) (string, error) {
-	bytes := make([]byte, byteLength)
-
-	n, err := rand.Reader.Read(bytes)
-	if n != byteLength {
-		return "", errors.New("generated insufficient random bytes")
-	}
-	if err != nil {
-		return "", err
-	}
-
-	b64Str := base64.RawURLEncoding.EncodeToString(bytes)
-
-	return b64Str, nil
 }
