@@ -30,22 +30,27 @@ func InstallWorkflow(clusterDir string) Workflow {
 }
 
 func installAssetsStep(m *metadata) error {
-	return runInstallStep(m, assetsStep)
+	return runInstallStep(m, terraform.AssetsStep)
 }
 
 func installInfraStep(m *metadata) error {
-	return runInstallStep(m, infraStep)
+	return runInstallStep(m, terraform.InfraStep)
 }
 
 func runInstallStep(m *metadata, step string, extraArgs ...string) error {
-	templateDir, err := findStepTemplates(step, m.cluster.Platform)
+	dir, err := baseLocation()
+	if err != nil {
+		return err
+	}
+	templateDir, err := terraform.FindStepTemplates(dir, step, m.cluster.Platform)
 	if err != nil {
 		return err
 	}
 	if err := terraform.Init(m.clusterDir, templateDir); err != nil {
 		return err
 	}
-	return terraform.Apply(m.clusterDir, step, templateDir, extraArgs...)
+	_, err = terraform.Apply(m.clusterDir, step, templateDir, extraArgs...)
+	return err
 }
 
 func generateIgnConfigStep(m *metadata) error {

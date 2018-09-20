@@ -40,11 +40,11 @@ func DestroyWorkflow(clusterDir string, contOnErr bool) Workflow {
 }
 
 func destroyAssetsStep(m *metadata) error {
-	return runDestroyStep(m, assetsStep)
+	return runDestroyStep(m, terraform.AssetsStep)
 }
 
 func destroyInfraStep(m *metadata) error {
-	return runDestroyStep(m, infraStep)
+	return runDestroyStep(m, terraform.InfraStep)
 }
 
 func destroyWorkersStep(m *metadata) error {
@@ -132,7 +132,13 @@ func runDestroyStep(m *metadata, step string, extraArgs ...string) error {
 		// there is no statefile, therefore nothing to destroy for this step
 		return nil
 	}
-	templateDir, err := findStepTemplates(step, m.cluster.Platform)
+
+	dir, err := baseLocation()
+	if err != nil {
+		return err
+	}
+
+	templateDir, err := terraform.FindStepTemplates(dir, step, m.cluster.Platform)
 	if err != nil {
 		return err
 	}

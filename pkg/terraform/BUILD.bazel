@@ -9,4 +9,5 @@ go_library(
     ],
     importpath = "github.com/openshift/installer/pkg/terraform",
     visibility = ["//visibility:public"],
+    deps = ["//pkg/types/config:go_default_library"],
 )
