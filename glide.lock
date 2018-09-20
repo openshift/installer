@@ -1,5 +1,5 @@
 hash: d6bf25b67ab333514303587db3945ca988e7d92ec02e474759687d94e331e2fc
-updated: 2018-09-03T17:24:54.201614+02:00
+updated: 2018-09-19T23:01:47.359616568-07:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -121,7 +121,6 @@ imports:
   - config/kube-addon
   - config/kube-core
   - config/tectonic-network
-  - config/tectonic-node-controller
   - config/tectonic-utility
 - name: github.com/davecgh/go-spew
   version: 782f4967f2dc4564575ca782fe2d04090b5faca8
