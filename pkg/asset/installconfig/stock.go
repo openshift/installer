@@ -1,7 +1,7 @@
 package installconfig
 
 import (
-	"bufio"
+	"github.com/AlecAivazis/survey"
 
 	"github.com/openshift/installer/pkg/asset"
 )
@@ -44,36 +44,49 @@ type StockImpl struct {
 }
 
 // EstablishStock establishes the stock of assets in the specified directory.
-func (s *StockImpl) EstablishStock(directory string, inputReader *bufio.Reader) {
+func (s *StockImpl) EstablishStock(directory string) {
 	s.installConfig = &installConfig{
 		assetStock: s,
 		directory:  directory,
 	}
 	s.clusterID = &clusterID{}
 	s.emailAddress = &asset.UserProvided{
-		Prompt:      "Email Address",
-		InputReader: inputReader,
+		AssetName: "Email Address",
+		Prompt: &survey.Input{
+			Message: "Email Address",
+			Help:    "The email address of the cluster administrator. This will be used to log in to the console.",
+		},
 	}
 	s.password = &asset.UserProvided{
-		Prompt:      "Password",
-		InputReader: inputReader,
-	}
-	s.sshKey = &sshPublicKey{
-		inputReader: inputReader,
+		AssetName: "Password",
+		Prompt: &survey.Password{
+			Message: "Password",
+			Help:    "The password of the cluster administrator. This will be used to log in to the console.",
+		},
 	}
 	s.baseDomain = &asset.UserProvided{
-		Prompt:      "Base Domain",
-		InputReader: inputReader,
+		AssetName: "Base Domain",
+		Prompt: &survey.Input{
+			Message: "Base Domain",
+			Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base.",
+		},
 	}
 	s.clusterName = &asset.UserProvided{
-		Prompt:      "Cluster Name",
-		InputReader: inputReader,
+		AssetName: "Cluster Name",
+		Prompt: &survey.Input{
+			Message: "Cluster Name",
+			Help:    "The name of the cluster. This will be used when generating sub-domains.",
+		},
 	}
 	s.pullSecret = &asset.UserProvided{
-		Prompt:      "Pull Secret",
-		InputReader: inputReader,
+		AssetName: "Pull Secret",
+		Prompt: &survey.Input{
+			Message: "Pull Secret",
+			Help:    "The container registry pull secret for this cluster.",
+		},
 	}
-	s.platform = &Platform{InputReader: inputReader}
+	s.platform = &Platform{}
+	s.sshKey = &sshPublicKey{}
 }
 
 // ClusterID is the asset that generates a UUID for the cluster.

@@ -1,9 +1,10 @@
 package installconfig
 
 import (
-	"bufio"
 	"fmt"
 	"strings"
+
+	"github.com/AlecAivazis/survey"
 
 	"github.com/openshift/installer/pkg/asset"
 )
@@ -17,7 +18,6 @@ const (
 
 var (
 	validPlatforms = []string{AWSPlatformType, LibvirtPlatformType}
-	platformPrompt = fmt.Sprintf("Platform (%s)", strings.Join(validPlatforms, ", "))
 )
 
 // Platform is an asset that queries the user for the platform on which to install
@@ -30,9 +30,7 @@ var (
 //
 // * Libvirt
 // Contents[1] is the URI.
-type Platform struct {
-	InputReader *bufio.Reader
-}
+type Platform struct{}
 
 var _ asset.Asset = (*Platform)(nil)
 
@@ -60,30 +58,60 @@ func (a *Platform) Name() string {
 }
 
 func (a *Platform) queryUserForPlatform() string {
-	for {
-		input := asset.QueryUser(a.InputReader, platformPrompt)
-		input = strings.ToLower(input)
-		for _, p := range validPlatforms {
-			if input == p {
-				return p
-			}
-		}
-		fmt.Println("Invalid platform")
-	}
+	var platform string
+	survey.AskOne(&survey.Select{
+		Message: "Platform",
+		Options: validPlatforms,
+	}, &platform, nil)
+
+	return platform
 }
 
 func (a *Platform) awsPlatform() (*asset.State, error) {
+	var region string
+	survey.AskOne(&survey.Select{
+		Message: "Region",
+		Help:    "The AWS region to be used for installation.",
+		Default: "us-east-1 (N. Virginia)",
+		Options: []string{
+			"us-east-2 (Ohio)",
+			"us-east-1 (N. Virginia)",
+			"us-west-1 (N. California)",
+			"us-west-2 (Oregon)",
+			"ap-south-1 (Mumbai)",
+			"ap-northeast-2 (Seoul)",
+			"ap-northeast-3 (Osaka-Local)",
+			"ap-southeast-1 (Singapore)",
+			"ap-southeast-2 (Sydney)",
+			"ap-northeast-1 (Tokyo)",
+			"ca-central-1 (Central)",
+			"cn-north-1 (Beijing)",
+			"cn-northwest-1 (Ningxia)",
+			"eu-central-1 (Frankfurt)",
+			"eu-west-1 (Ireland)",
+			"eu-west-2 (London)",
+			"eu-west-3 (Paris)",
+			"sa-east-1 (São Paulo)",
+		},
+	}, &region, nil)
+
 	return assetStateForStringContents(
 		AWSPlatformType,
-		asset.QueryUser(a.InputReader, "Region"),
+		strings.Split(region, " ")[0],
 	), nil
 }
 
 func (a *Platform) libvirtPlatform() (*asset.State, error) {
+	var uri string
+	survey.AskOne(&survey.Input{
+		Message: "URI",
+		Help:    "The libvirt connection URI to be used. This must be accessible from the running cluster.",
+		Default: "qemu+tcp://192.168.122.1/system",
+	}, &uri, nil)
+
 	return assetStateForStringContents(
 		LibvirtPlatformType,
-		// TODO(yifan): Set the default URI.
-		asset.QueryUser(a.InputReader, "URI"),
+		uri,
 	), nil
 }
 
