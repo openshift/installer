@@ -84,14 +84,22 @@ pkg_tar(
     strip_prefix = ".",
     deps = [
         ":cli_bin",
+        ":old_cli_bin",
         ":tf_bin",
     ],
 )
 
 pkg_tar(
-    name = "cli_bin",
+    name = "old_cli_bin",
     srcs = ["//installer/cmd/tectonic"],
-    mode = "0777",
+    mode = "0555",
+    package_dir = "installer",
+)
+
+pkg_tar(
+    name = "cli_bin",
+    srcs = ["//cmd/openshift-install"],
+    mode = "0555",
     package_dir = "installer",
 )
 
