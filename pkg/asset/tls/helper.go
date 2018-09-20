@@ -79,10 +79,10 @@ func genIPAddressesForOpenshiftAPIServerCertKey(cfg *types.InstallConfig) ([]net
 	return []net.IP{net.ParseIP(apiServerAddress)}, nil
 }
 
-func genDNSNamesForTNCCertKey(cfg *types.InstallConfig) ([]string, error) {
+func genDNSNamesForMCSCertKey(cfg *types.InstallConfig) ([]string, error) {
 	return []string{fmt.Sprintf("%s-api.%s", cfg.Name, cfg.BaseDomain)}, nil
 }
 
-func genSubjectForTNCCertKey(cfg *types.InstallConfig) (pkix.Name, error) {
+func genSubjectForMCSCertKey(cfg *types.InstallConfig) (pkix.Name, error) {
 	return pkix.Name{CommonName: fmt.Sprintf("%s-api.%s", cfg.Name, cfg.BaseDomain)}, nil
 }

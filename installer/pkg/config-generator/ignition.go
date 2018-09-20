@@ -100,7 +100,7 @@ func parseIgnFile(filePath string) (ignconfigtypes.Config, error) {
 
 func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role string, query string) {
 	appendBlock := ignconfigtypes.ConfigReference{
-		Source:       c.getTNCURL(role, query),
+		Source:       c.getMCSURL(role, query),
 		Verification: ignconfigtypes.Verification{Hash: nil},
 	}
 	ignCfg.Ignition.Config.Append = append(ignCfg.Ignition.Config.Append, appendBlock)
@@ -123,7 +123,7 @@ func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
 	ignCfg.Passwd.Users = append(ignCfg.Passwd.Users, userBlock)
 }
 
-func (c *ConfigGenerator) getTNCURL(role string, query string) string {
+func (c *ConfigGenerator) getMCSURL(role string, query string) string {
 	var u string
 	port := 49500
 

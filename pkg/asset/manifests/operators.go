@@ -34,7 +34,7 @@ type manifests struct {
 	apiServerProxyCertKey     asset.Asset
 	adminCertKey              asset.Asset
 	kubeletCertKey            asset.Asset
-	tncCertKey                asset.Asset
+	mcsCertKey                asset.Asset
 	serviceAccountKeyPair     asset.Asset
 	kubeconfig                asset.Asset
 }
@@ -70,7 +70,7 @@ func (o *manifests) Dependencies() []asset.Asset {
 		o.apiServerProxyCertKey,
 		o.adminCertKey,
 		o.kubeletCertKey,
-		o.tncCertKey,
+		o.mcsCertKey,
 		o.serviceAccountKeyPair,
 		o.kubeconfig,
 	}

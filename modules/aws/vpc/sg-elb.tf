@@ -28,7 +28,7 @@ resource "aws_security_group_rule" "api_ingress_console" {
   to_port     = 6443
 }
 
-resource "aws_security_group_rule" "tnc_ingress" {
+resource "aws_security_group_rule" "mcs_ingress" {
   type              = "ingress"
   security_group_id = "${aws_security_group.api.id}"
 

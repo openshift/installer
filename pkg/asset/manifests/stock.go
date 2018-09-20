@@ -56,7 +56,7 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock, tl
 		apiServerProxyCertKey:     tlsStock.APIServerProxyCertKey(),
 		adminCertKey:              tlsStock.AdminCertKey(),
 		kubeletCertKey:            tlsStock.KubeletCertKey(),
-		tncCertKey:                tlsStock.TNCCertKey(),
+		mcsCertKey:                tlsStock.MCSCertKey(),
 		serviceAccountKeyPair:     tlsStock.ServiceAccountKeyPair(),
 		kubeconfig:                kubeConfigStock.KubeconfigAdmin(),
 	}

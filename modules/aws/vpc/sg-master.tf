@@ -8,7 +8,7 @@ resource "aws_security_group" "master" {
     ), var.extra_tags)}"
 }
 
-resource "aws_security_group_rule" "master_tnc" {
+resource "aws_security_group_rule" "master_mcs" {
   type              = "ingress"
   security_group_id = "${aws_security_group.master.id}"
 
