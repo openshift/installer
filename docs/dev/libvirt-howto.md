@@ -203,7 +203,7 @@ sudo journalctl -f -u bootkube -u tectonic
 ```
 You'll have to wait for etcd to reach quorum before this makes any progress.
 
-## Inspect the cluster with kubectl
+### Inspect the cluster with kubectl
 You'll need a kubectl binary on your path.
 ```sh
 export KUBECONFIG="${PWD}/${CLUSTER_NAME}/generated/auth/kubeconfig"
@@ -219,11 +219,69 @@ master0# export KUBECONFIG=/var/opt/tectonic/auth/kubeconfig
 master0# kubectl get -n tectonic-system pods
 ```
 
-## Connect to the cluster console
+### Connect to the cluster console
 This will take ~30 minutes to be available. Simply go to `https://${CLUSTER_NAME}-api.${BASE_DOMAIN}:6443/console/` (e.g. `test1.tt.testing`) and log in using the credentials above.
 
 
-# Libvirt vs. AWS
-1. There isn't a load balancer. This means:
+
+## FAQ
+
+### Libvirt vs. AWS
+1. There isn't a load balancer on libvirt. This means:
     1. We need to manually remap ports that the loadbalancer would
-    2. Only the first server (e.g. master) is actually used. If you want to reach another, you have to manually update the domain name.
+
+## Troubleshooting
+If following the above steps hasn't quite worked, please review this section for well known issues.
+
+### SELinux might prevent access to image files
+Configuring the storage pool to store images in a path incompatible with the SELinux policies (e.g. your home directory) might lead to the following errors:
+
+```
+Error: Error applying plan:
+
+1 error(s) occurred:
+
+* libvirt_domain.etcd: 1 error(s) occurred:
+
+* libvirt_domain.etcd: Error creating libvirt domain: virError(Code=1, Domain=10, Message='internal error: process exited while connecting to monitor: 2018-07-30T22:52:54.865806Z qemu-kvm: -fw_cfg name=opt/com.coreos/config,file=/home/user/VirtualMachines/etcd.ign: can't load /home/user/VirtualMachines/etcd.ign')
+```
+
+[As described here][libvirt_selinux_issues] you can workaround by disabling SELinux, or store the images in a place well-known to work, e.g. by using the default pool.
+
+### Random domain creation errors due to libvirt race conditon
+Depending on your libvirt version you might encounter [a race condition][bugzilla_libvirt_race] leading to an error similar to:
+
+```
+* libvirt_domain.master.0: Error creating libvirt domain: virError(Code=43, Domain=19, Message='Network not found: no network with matching name 'tectonic'')
+```
+This is also being [tracked on the libvirt-terraform-provider][tfprovider_libvirt_race] but is likely not fixable on the client side, which is why you should upgrade libvirt to >=4.5 or a patched version, depending on your environment.
+
+### MacOS support currently broken
+* Support for libvirt on Mac OS [is currently broken and being worked on][brokenmacosissue201].
+
+### Error with firewall initialization on Arch Linux
+If you're on Arch Linux and get an error similar to
+
+```
+libvirt: “Failed to initialize a valid firewall backend”
+```
+
+or
+
+```
+error: Failed to start network default
+error: internal error: Failed to initialize a valid firewall backend
+```
+
+please check out [this thread on superuser][arch_firewall_superuser].
+
+### Github Issue Tracker
+You might find other reports of your problem in the [Issues tab for this repository][issues_libvirt] where we ask you to provide any additional information.
+If your issue is not reported, please do.
+
+[arch_firewall_superuser]: https://superuser.com/questions/1063240/libvirt-failed-to-initialize-a-valid-firewall-backend
+[brokenmacosissue201]: https://github.com/openshift/installer/issues/201
+[bugzilla_libvirt_race]: https://bugzilla.redhat.com/show_bug.cgi?id=1576464
+[issues_libvirt]: https://github.com/openshift/installer/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+libvirt
+[libvirt_selinux_issues]: https://github.com/dmacvicar/terraform-provider-libvirt/issues/142#issuecomment-409040151
+[tfprovider_libvirt_race]: https://github.com/dmacvicar/terraform-provider-libvirt/issues/402#issuecomment-419500064
