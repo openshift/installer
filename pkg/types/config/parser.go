@@ -1,9 +1,11 @@
 package config
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	"gopkg.in/yaml.v2"
 
@@ -32,7 +34,10 @@ func ParseConfig(data []byte) (*Cluster, error) {
 	}
 
 	if cluster.EC2AMIOverride == "" {
-		ami, err := rhcos.AMI(rhcos.DefaultChannel, cluster.AWS.Region)
+		ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+		defer cancel()
+
+		ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, cluster.AWS.Region)
 		if err != nil {
 			return nil, fmt.Errorf("failed to determine default AMI: %v", err)
 		}

@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"context"
 	"fmt"
 	"path/filepath"
 
@@ -111,7 +112,7 @@ func (mao *machineAPIOperator) maoConfig(dependencies map[asset.Asset]*asset.Sta
 	if mao.installConfig.Platform.AWS != nil {
 		var ami string
 
-		ami, err := rhcos.AMI(DefaultChannel, mao.installConfig.Platform.AWS.Region)
+		ami, err := rhcos.AMI(context.TODO(), DefaultChannel, mao.installConfig.Platform.AWS.Region)
 		if err != nil {
 			return "", fmt.Errorf("failed to lookup RHCOS AMI: %v", err)
 		}

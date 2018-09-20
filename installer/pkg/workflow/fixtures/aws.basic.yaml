@@ -2,6 +2,7 @@ admin:
   email: fake-email@example.com
   password: fake-password
 aws:
+  ec2AMIOverride: ami-0af8953af3ec06b7c
   master:
     ec2Type: m4.large
     rootVolume:

@@ -17,6 +17,7 @@ admin:
   email: test@coreos.com
   password: asd123
 aws:
+  ec2AMIOverride: ami-0af8953af3ec06b7c
   region: us-east-1
   sshKey: tectonic
   vpcCIDRBlock: 10.0.0.0/16
