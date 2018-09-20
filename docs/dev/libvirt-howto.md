@@ -62,28 +62,34 @@ polkit.addRule(function(action, subject) {
 EOF
 ```
 
-### 1.7 Configure libvirt to accept TCP connections
+### 1.7 Configure libvirt to accept TLS connections
 
 The Kubernetes [cluster-api](https://github.com/kubernetes-sigs/cluster-api)
 components drive deployment of worker machines.  The libvirt cluster-api
 provider will run inside the local cluster, and will need to connect back to
 the libvirt instance on the host machine to deploy workers.
 
-In order for this to work, you'll need to enable TCP connections for libvirt.
+In order for this to work, you'll need to enable TLS connections for libvirt.
+To do this, first generate the TLS assets:
 
-#### Configure libvirtd.conf
-To do this, first modify your `/etc/libvirt/libvirtd.conf` and set the
-following:
 ```
-listen_tls = 0
-listen_tcp = 1
-auth_tcp="none"
-tcp_port = "16509"
+$ go run ./hack/libvirt-ca/main.go --network="192.168.124.0/24" --out $HOME
 ```
 
-Note that authentication is not currently supported, but should be soon.
+You can omit the `--network` flag if you're using the default
+`192.168.124.0/24` network, and of course store the resulting
+certificates and keys wherever you like.
 
-#### Configure the service runner to pass `--listen` to libvirtd
+Next, modify your `/etc/libvirt/libvirtd.conf` and set the following:
+
+```
+listen_tls = 1
+tls_port = "16514"
+key_file = "/path/to/serverkey.pem"
+cert_file = "/path/to/servercert.pem"
+ca_file = "/path/to/cacert.pem"
+```
+
 In addition to the config, you'll have to pass an additional command-line
 argument to libvirtd. On Fedora, modify `/etc/sysconfig/libvirtd` and set:
 
@@ -98,49 +104,6 @@ libvirtd_opts="--listen"
 ```
 
 Next, restart libvirt: `systemctl restart libvirtd`
-
-#### Firewall
-Finally, if you have a firewall, you may have to allow connections to the
-libvirt daemon from the IP range used by your cluster nodes.
-
-#### Manual management
-The following example rule works for the suggested cluster ipRange of `192.168.124.0/24` and a libvirt *default* subnet of `192.168.122.0/24`, which might be different in your configuration:
-
-```
-iptables -I INPUT -p tcp -s 192.168.124.0/24 -d 192.168.122.1 --dport 16509 \
-  -j ACCEPT -m comment --comment "Allow insecure libvirt clients"
-```
-
-#### Firewalld
-
-If using `firewalld`, simply obtain the name of the existing active zone which
-can be used to integrate the appropriate source and ports to allow connections from
-the IP range used by your cluster nodes. An example is shown below.
-
-```console
-$ sudo firewall-cmd --get-active-zones
-FedoraWorkstation
-  interfaces: enp0s25 tun0
-```
-With the name of the active zone, include the source and port to allow connections
-from the IP range used by your cluster nodes. The default subnet is `192.168.124.0/24`
-unless otherwise specified.
-
-```sh
-sudo firewall-cmd --zone=FedoraWorkstation --add-source=192.168.124.0/24
-sudo firewall-cmd --zone=FedoraWorkstation --add-port=16509/tcp
-```
-
-Verification of the source and port can be done listing the zone
-
-```sh
-sudo firewall-cmd --zone=FedoraWorkstation --list-ports
-sudo firewall-cmd --zone=FedoraWorkstation --list-sources
-```
-
-NOTE: When the firewall rules are no longer needed, `sudo firewalld-cmd --reload`
-will remove the changes made as they were not permanently added. For persistence,
-add `--permanent` to the `firewall-cmd` commands and run them a second time.
 
 ### 1.8 Configure default libvirt storage pool
 
