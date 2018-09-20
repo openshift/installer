@@ -38,7 +38,7 @@ func installInfraStep(m *metadata) error {
 }
 
 func runInstallStep(m *metadata, step string, extraArgs ...string) error {
-	dir, err := baseLocation()
+	dir, err := terraform.BaseLocation()
 	if err != nil {
 		return err
 	}

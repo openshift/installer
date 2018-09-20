@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
-	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/terraform"
@@ -51,7 +49,7 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		terraform.BootstrapStep,
 	}
 
-	dir, err := baseLocation()
+	dir, err := terraform.BaseLocation()
 	if err != nil {
 		return nil, err
 	}
@@ -87,14 +85,4 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 	// TODO(yifan): Use the kubeconfig to verify the cluster is up.
 
 	return &result, nil
-}
-
-// baseLocation returns the parent dir of the terraform templates (steps, modules).
-// The manifests should live in the same dir as the installer executable.
-func baseLocation() (string, error) {
-	ex, err := os.Executable()
-	if err != nil {
-		return "", fmt.Errorf("undetermined location of own executable: %s", err)
-	}
-	return filepath.Dir(ex), nil
 }

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 
 	configgenerator "github.com/openshift/installer/installer/pkg/config-generator"
@@ -13,7 +12,6 @@ import (
 )
 
 const (
-	binaryPrefix     = "installer"
 	configFileName   = "config.yaml"
 	internalFileName = "internal.yaml"
 )
@@ -101,16 +99,4 @@ func readClusterConfigStep(m *metadata) error {
 	m.cluster = *cluster
 
 	return nil
-}
-
-func baseLocation() (string, error) {
-	ex, err := os.Executable()
-	if err != nil {
-		return "", fmt.Errorf("undetermined location of own executable: %s", err)
-	}
-	ex = path.Dir(ex)
-	if path.Base(ex) != binaryPrefix {
-		return "", fmt.Errorf("%s executable in unknown location: %s", path.Base(ex), err)
-	}
-	return path.Dir(ex), nil
 }

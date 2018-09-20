@@ -100,3 +100,19 @@ func FindStepTemplates(dir, stepName string, platform config.Platform) (string, 
 	}
 	return "", os.ErrNotExist
 }
+
+// BaseLocation returns the location of the parent directory of the binary
+// that has the terraform templates.
+// TODO(yifan): Get rid of this when moving off building with bazel.
+func BaseLocation() (string, error) {
+	ex, err := os.Executable()
+	if err != nil {
+		return "", fmt.Errorf("undetermined location of own executable: %s", err)
+	}
+	ex = filepath.Dir(ex)
+	// TODO(yifan): Hardcode the parent dir name for now.
+	if filepath.Base(ex) != "installer" {
+		return "", fmt.Errorf("%s executable in unknown location: %s", filepath.Base(ex), err)
+	}
+	return filepath.Dir(ex), nil
+}

@@ -133,7 +133,7 @@ func runDestroyStep(m *metadata, step string, extraArgs ...string) error {
 		return nil
 	}
 
-	dir, err := baseLocation()
+	dir, err := terraform.BaseLocation()
 	if err != nil {
 		return err
 	}
