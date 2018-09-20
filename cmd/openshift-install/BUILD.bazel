@@ -15,6 +15,10 @@ go_library(
 
 go_binary(
     name = "openshift-install",
+    out = "openshift-install",
     embed = [":go_default_library"],
+    # Use pure to build a pure-go binary.
+    # This has the nice side effect of making the binary statically linked.
+    pure = "on",
     visibility = ["//visibility:public"],
 )
