@@ -200,7 +200,6 @@ func (a *bootstrap) addBootstrapConfigFiles(config *ignition.Config, dependencie
 	// TODO (staebler) - missing the following from assets step
 	//     /opt/tectonic/manifests/cluster-config.yaml
 	//     /opt/tectonic/tectonic/cluster-config.yaml
-	//     /opt/tectonic/mcso-config.yaml
 	//     /opt/tectonic/kco-config.yaml
 	//     /etc/kubernetes/kubeconfig
 	//     /var/lib/kubelet/kubeconfig

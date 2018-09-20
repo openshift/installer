@@ -35,7 +35,6 @@ var (
 	defaultIgnoredManifests = []string{
 		"bootstrap",
 		"kco-config.yaml",
-		"mcso-config.yaml",
 		// TODO: temporary disabling this for OpenTonic
 		"tectonic/security/priviledged-scc-tectonic.yaml",
 	}
