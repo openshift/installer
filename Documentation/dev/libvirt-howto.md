@@ -85,7 +85,7 @@ iptables -I INPUT -p tcp -s 192.168.124.0/24 -d 192.168.124.1 --dport 16509 \
   -j ACCEPT -m comment --comment "Allow insecure libvirt clients"
 ```
 
-If using `firewalld`, simply optain the name of the existing active zone which
+If using `firewalld`, simply obtain the name of the existing active zone which
 can be used to integrate the appropriate source and ports to allow connections from
 the IP range used by your cluster nodes. An example is shown below.
 
@@ -110,7 +110,7 @@ sudo firewall-cmd --zone=FedoraWorkstation --list-ports
 sudo firewall-cmd --zone=FedoraWorkstation --list-sources
 ```
 
-NOTE: When the firewall rules are no longer needed, `firewalld --reload`
+NOTE: When the firewall rules are no longer needed, `sudo firewalld-cmd --reload`
 will remove the changes made as they were not permanently added. For persistence,
 include the `--permanent` to the commands that add-source and add-port.
 
