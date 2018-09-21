@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/terraform"
@@ -38,22 +39,25 @@ func (c *Cluster) Dependencies() []asset.Asset {
 
 // Generate launches the cluster and generates the terraform state file on disk.
 func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
+	dir, err := terraform.BaseLocation()
+	if err != nil {
+		return nil, err
+	}
+
 	state, ok := parents[c.tfvars]
 	if !ok {
 		return nil, fmt.Errorf("failed to get terraform.tfvar state in the parent asset states")
+	}
+
+	// Copy the terraform.tfvars to the working dir for the terraform.
+	if err := ioutil.WriteFile(filepath.Join(dir, state.Contents[0].Name), state.Contents[0].Data, 0600); err != nil {
+		return nil, fmt.Errorf("failed to write terraform.tfvars file: %v", err)
 	}
 
 	var tfvars config.Cluster
 	if err := json.Unmarshal(state.Contents[0].Data, &tfvars); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal terraform tfvars file: %v", err)
 	}
-
-	dir, err := terraform.BaseLocation()
-	if err != nil {
-		return nil, err
-	}
-
-	var result asset.State
 
 	templateDir, err := terraform.FindStepTemplates(dir, terraform.InfraStep, tfvars.Platform)
 	if err != nil {
@@ -75,12 +79,13 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		return nil, fmt.Errorf("failed to read tfstate file %q: %v", stateFile, err)
 	}
 
-	result.Contents = append(result.Contents, asset.Content{
-		Name: stateFileName,
-		Data: data,
-	})
-
 	// TODO(yifan): Use the kubeconfig to verify the cluster is up.
-
-	return &result, nil
+	return &asset.State{
+		Contents: []asset.Content{
+			{
+				Name: stateFileName,
+				Data: data,
+			},
+		},
+	}, nil
 }
