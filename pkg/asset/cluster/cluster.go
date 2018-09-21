@@ -10,6 +10,10 @@ import (
 	"github.com/openshift/installer/pkg/types/config"
 )
 
+const (
+	stateFileName = "terraform.state"
+)
+
 // Cluster uses the terraform executable to launch a cluster
 // with the given terraform tfvar and generated templates.
 type Cluster struct {
@@ -44,11 +48,6 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		return nil, fmt.Errorf("failed to unmarshal terraform tfvars file: %v", err)
 	}
 
-	steps := []string{
-		terraform.InfraStep,
-		terraform.BootstrapStep,
-	}
-
 	dir, err := terraform.BaseLocation()
 	if err != nil {
 		return nil, err
@@ -56,31 +55,30 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 
 	var result asset.State
 
-	for _, step := range steps {
-		templateDir, err := terraform.FindStepTemplates(dir, step, tfvars.Platform)
-		if err != nil {
-			return nil, err
-		}
-
-		if err := terraform.Init(c.rootDir, templateDir); err != nil {
-			return nil, err
-		}
-
-		stateFile, err := terraform.Apply(c.rootDir, step, templateDir)
-		if err != nil {
-			return nil, err
-		}
-
-		data, err := ioutil.ReadFile(stateFile)
-		if err != nil {
-			return nil, fmt.Errorf("failed to read tfstate file %q: %v", stateFile, err)
-		}
-
-		result.Contents = append(result.Contents, asset.Content{
-			Name: stateFile,
-			Data: data,
-		})
+	templateDir, err := terraform.FindStepTemplates(dir, terraform.InfraStep, tfvars.Platform)
+	if err != nil {
+		return nil, err
 	}
+
+	// This runs the terraform in the terraform template directory.
+	if err := terraform.Init(dir, templateDir); err != nil {
+		return nil, err
+	}
+
+	stateFile, err := terraform.Apply(dir, terraform.InfraStep, templateDir)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := ioutil.ReadFile(stateFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read tfstate file %q: %v", stateFile, err)
+	}
+
+	result.Contents = append(result.Contents, asset.Content{
+		Name: stateFileName,
+		Data: data,
+	})
 
 	// TODO(yifan): Use the kubeconfig to verify the cluster is up.
 

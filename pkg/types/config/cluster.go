@@ -143,10 +143,10 @@ func (c *Cluster) YAML() (string, error) {
 	return string(yaml), nil
 }
 
-// ConvertInstallConfigToTFVar converts the installconfig to the Cluster struct
+// ConvertInstallConfigToTFVars converts the installconfig to the Cluster struct
 // that represents the terraform.tfvar file.
 // TODO(yifan): Clean up the Cluster struct to trim unnecessary fields.
-func ConvertInstallConfigToTFVar(cfg *types.InstallConfig, bootstrapIgn string, masterIgns []string, workerIgn string) (*Cluster, error) {
+func ConvertInstallConfigToTFVars(cfg *types.InstallConfig, bootstrapIgn string, masterIgns []string, workerIgn string) (*Cluster, error) {
 	cluster := &Cluster{
 		Admin: Admin{
 			Email:    cfg.Admin.Email,
@@ -175,6 +175,8 @@ func ConvertInstallConfigToTFVar(cfg *types.InstallConfig, bootstrapIgn string, 
 	if cfg.Platform.AWS != nil {
 		cluster.Platform = PlatformAWS
 		cluster.AWS = aws.AWS{
+			Endpoints: aws.EndpointsAll,   // Default value for endpoints.
+			Profile:   aws.DefaultProfile, // Default value for profile.
 			Region:    cfg.Platform.AWS.Region,
 			ExtraTags: cfg.Platform.AWS.UserTags,
 			External: aws.External{

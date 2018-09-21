@@ -9,14 +9,14 @@ import (
 )
 
 const (
-	tfvarFilename  = "terraform.tfvar"
-	tfvarAssetName = "Terraform Variables"
+	tfvarsFilename  = "terraform.tfvars"
+	tfvarsAssetName = "Terraform Variables"
 )
 
 // TerraformVariables depends on InstallConfig and
 // Ignition to generate the terrafor.tfvars.
 type TerraformVariables struct {
-	// The Assets that this tfvar file depends.
+	// The Assets that this tfvars file depends.
 	installConfig     asset.Asset
 	bootstrapIgnition asset.Asset
 	masterIgnition    asset.Asset
@@ -27,7 +27,7 @@ var _ asset.Asset = (*TerraformVariables)(nil)
 
 // Name returns the human-friendly name of the asset.
 func (t *TerraformVariables) Name() string {
-	return tfvarAssetName
+	return tfvarsAssetName
 }
 
 // Dependencies returns the dependency of the TerraformVariable
@@ -35,7 +35,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 	return []asset.Asset{t.installConfig, t.bootstrapIgnition, t.masterIgnition, t.workerIgnition}
 }
 
-// Generate generates the terraform.tfvar file.
+// Generate generates the terraform.tfvars file.
 func (t *TerraformVariables) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
 	installCfg, err := installconfig.GetInstallConfig(t.installConfig, parents)
 	if err != nil {
@@ -59,7 +59,7 @@ func (t *TerraformVariables) Generate(parents map[asset.Asset]*asset.State) (*as
 		}
 	}
 
-	cluster, err := config.ConvertInstallConfigToTFVar(installCfg, contents[t.bootstrapIgnition][0], contents[t.masterIgnition], contents[t.workerIgnition][0])
+	cluster, err := config.ConvertInstallConfigToTFVars(installCfg, contents[t.bootstrapIgnition][0], contents[t.masterIgnition], contents[t.workerIgnition][0])
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (t *TerraformVariables) Generate(parents map[asset.Asset]*asset.State) (*as
 	return &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: tfvarFilename,
+				Name: tfvarsFilename,
 				Data: []byte(data),
 			},
 		},

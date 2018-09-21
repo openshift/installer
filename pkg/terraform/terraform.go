@@ -15,8 +15,6 @@ const (
 	// TODO(yifan) Remove this when removing the asset step.
 	AssetsStep = "assets"
 
-	// BootstrapStep is the name of the step that runs the bootstrap.
-	BootstrapStep = "bootstrap"
 	// InfraStep is the name of the step that sets up infra.
 	InfraStep = "infra"
 
