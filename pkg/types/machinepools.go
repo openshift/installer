@@ -52,8 +52,12 @@ type EC2RootVolume struct {
 type LibvirtMachinePoolPlatform struct {
 	// ImagePool is the name of the libvirt storage pool to which the storage
 	// volume containing the OS image belongs.
-	ImagePool string `json:"imagePool"`
+	ImagePool string `json:"imagePool,omitempty"`
 	// ImageVolume is the name of the libvirt storage volume containing the OS
 	// image.
-	ImageVolume string `json:"imageVolume"`
+	ImageVolume string `json:"imageVolume,omitempty"`
+
+	// Image is the URL to the OS image.
+	// E.g. "http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz"
+	Image string `json:"image"`
 }

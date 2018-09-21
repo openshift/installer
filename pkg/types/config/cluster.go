@@ -197,6 +197,7 @@ func ConvertInstallConfigToTFVars(cfg *types.InstallConfig, bootstrapIgn string,
 				IfName:  cfg.Platform.Libvirt.Network.IfName,
 				IPRange: cfg.Platform.Libvirt.Network.IPRange,
 			},
+			Image:     cfg.Platform.Libvirt.DefaultMachinePlatform.Image,
 			MasterIPs: masterIPs,
 		}
 	}
