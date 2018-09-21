@@ -1,7 +1,7 @@
 {
   "tectonic_admin_email": "fake-email@example.com",
   "tectonic_admin_password": "fake-password",
-  "tectonic_aws_ec2_ami_override": "ami-0af8953af3ec06b7c",
+  "tectonic_aws_ec2_ami_override": "ami-09b1c714bf5aaa535",
   "tectonic_aws_endpoints": "all",
   "tectonic_aws_master_ec2_type": "m4.large",
   "tectonic_aws_master_root_volume_iops": 100,
