@@ -3,9 +3,7 @@ package tls
 import (
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"io/ioutil"
 	"net"
-	"os"
 	"testing"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -37,13 +35,7 @@ func (f fakeInstallConfig) Name() string {
 }
 
 func TestCertKeyGenerate(t *testing.T) {
-	testDir, err := ioutil.TempDir(os.TempDir(), "certkey_test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(testDir)
-
-	root := &RootCA{rootDir: testDir}
+	root := &RootCA{}
 	rootState, err := root.Generate(nil)
 	if err != nil {
 		t.Fatal(err)
@@ -76,7 +68,6 @@ func TestCertKeyGenerate(t *testing.T) {
 		{
 			name: "simple ca",
 			certKey: &CertKey{
-				rootDir:       testDir,
 				installConfig: installConfig,
 				Subject:       pkix.Name{CommonName: "test0-ca", OrganizationalUnit: []string{"openshift"}},
 				KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -93,7 +84,6 @@ func TestCertKeyGenerate(t *testing.T) {
 		{
 			name: "more complicated ca",
 			certKey: &CertKey{
-				rootDir:        testDir,
 				installConfig:  installConfig,
 				Subject:        pkix.Name{CommonName: "test1-ca", OrganizationalUnit: []string{"openshift"}},
 				KeyUsages:      x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -115,7 +105,6 @@ func TestCertKeyGenerate(t *testing.T) {
 		{
 			name: "can't find parents",
 			certKey: &CertKey{
-				rootDir:        testDir,
 				installConfig:  installConfig,
 				Subject:        pkix.Name{CommonName: "test1-ca", OrganizationalUnit: []string{"openshift"}},
 				KeyUsages:      x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -144,11 +133,8 @@ func TestCertKeyGenerate(t *testing.T) {
 				t.Errorf("expect error %v, saw nil", err)
 			}
 
-			keyFileName := assetFilePath(testDir, tt.certKey.KeyFileName)
-			crtFileName := assetFilePath(testDir, tt.certKey.CertFileName)
-
-			assert.Equal(t, keyFileName, st.Contents[0].Name, "unexpected key file name")
-			assert.Equal(t, crtFileName, st.Contents[1].Name, "unexpected cert file name")
+			assert.Equal(t, assetFilePath(tt.certKey.KeyFileName), st.Contents[0].Name, "unexpected key file name")
+			assert.Equal(t, assetFilePath(tt.certKey.CertFileName), st.Contents[1].Name, "unexpected cert file name")
 
 			// Briefly check the certs.
 			certPool := x509.NewCertPool()

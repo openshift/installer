@@ -3,7 +3,6 @@ package manifests
 import (
 	"fmt"
 	"net"
-	"path/filepath"
 
 	"github.com/ghodss/yaml"
 
@@ -26,7 +25,6 @@ const (
 type kubeCoreOperator struct {
 	installConfigAsset asset.Asset
 	installConfig      *types.InstallConfig
-	directory          string
 }
 
 var _ asset.Asset = (*kubeCoreOperator)(nil)
@@ -65,7 +63,7 @@ func (kco *kubeCoreOperator) Generate(dependencies map[asset.Asset]*asset.State)
 	state := &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: filepath.Join(kco.directory, "kube-core-operator-config.yml"),
+				Name: "kube-core-operator-config.yml",
 				Data: data,
 			},
 		},

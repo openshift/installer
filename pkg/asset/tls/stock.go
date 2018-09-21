@@ -126,11 +126,10 @@ type StockImpl struct {
 
 var _ Stock = (*StockImpl)(nil)
 
-// EstablishStock establishes the stock of assets in the specified directory.
-func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
-	s.rootCA = &RootCA{rootDir: rootDir}
+// EstablishStock establishes the stock of assets.
+func (s *StockImpl) EstablishStock(stock installconfig.Stock) {
+	s.rootCA = &RootCA{}
 	s.kubeCA = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		Subject:       pkix.Name{CommonName: "kube-ca", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -143,7 +142,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.etcdCA = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		Subject:       pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -156,7 +154,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.aggregatorCA = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		Subject:       pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -169,7 +166,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.serviceServingCA = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		Subject:       pkix.Name{CommonName: "service-serving", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -182,7 +178,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.etcdClientCertKey = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		Subject:       pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment,
@@ -195,7 +190,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.adminCertKey = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		Subject:       pkix.Name{CommonName: "system:admin", Organization: []string{"system:masters"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
@@ -208,7 +202,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.ingressCertKey = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
@@ -223,7 +216,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.apiServerCertKey = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
@@ -239,7 +231,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.openshiftAPIServerCertKey = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
@@ -255,7 +246,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.apiServerProxyCertKey = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
@@ -268,7 +258,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.kubeletCertKey = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
@@ -281,7 +270,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.mcsCertKey = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		Validity:      ValidityTenYears,
@@ -294,7 +282,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.clusterAPIServerCertKey = &CertKey{
-		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		Subject:       pkix.Name{CommonName: "cluster-apiserver", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -308,7 +295,6 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 	}
 
 	s.serviceAccountKeyPair = &KeyPair{
-		rootDir:         rootDir,
 		PrivKeyFileName: ServiceAccountPrivateKeyName,
 		PubKeyFileName:  ServiceAccountPublicKeyName,
 	}

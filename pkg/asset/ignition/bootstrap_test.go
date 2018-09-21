@@ -46,7 +46,6 @@ machines:
 	kubeconfigAsset := &testAsset{"kubeconfig"}
 	kubeconfigKubeletAsset := &testAsset{"kubeconfig-kubelet"}
 	bootstrap := &bootstrap{
-		directory:                 "test-directory",
 		installConfig:             installConfigAsset,
 		rootCA:                    rootCAAsset,
 		etcdCA:                    etcdCAAsset,
@@ -89,7 +88,7 @@ machines:
 	bootstrapState, err := bootstrap.Generate(dependencies)
 	assert.NoError(t, err, "unexpected error generating bootstrap asset")
 	assert.Equal(t, 1, len(bootstrapState.Contents), "unexpected number of contents in bootstrap state")
-	assert.Equal(t, "test-directory/bootstrap.ign", bootstrapState.Contents[0].Name, "unexpected name for bootstrap ignition config")
+	assert.Equal(t, "bootstrap.ign", bootstrapState.Contents[0].Name, "unexpected name for bootstrap ignition config")
 
 	assertFilesInIgnitionConfig(
 		t,

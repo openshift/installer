@@ -45,15 +45,15 @@ type manifestsStock struct {
 
 var _ installconfig.Stock = (*Stock)(nil)
 
-// EstablishStock establishes the stock of assets in the specified directory.
-func EstablishStock(directory string) *Stock {
+// EstablishStock establishes the stock of assets.
+func EstablishStock() *Stock {
 	s := &Stock{}
-	s.installConfigStock.EstablishStock(directory)
-	s.tlsStock.EstablishStock(directory, &s.installConfigStock)
-	s.kubeconfigStock.EstablishStock(directory, &s.installConfigStock, &s.tlsStock)
-	s.ignitionStock.EstablishStock(directory, s, s, s)
-	s.clusterStock.EstablishStock(directory, s, s)
-	s.manifestsStock.EstablishStock(directory, &s.installConfigStock, s, s)
+	s.installConfigStock.EstablishStock()
+	s.tlsStock.EstablishStock(&s.installConfigStock)
+	s.kubeconfigStock.EstablishStock(&s.installConfigStock, &s.tlsStock)
+	s.ignitionStock.EstablishStock(s, s, s)
+	s.clusterStock.EstablishStock(s, s)
+	s.manifestsStock.EstablishStock(&s.installConfigStock, s, s)
 
 	return s
 }

@@ -21,7 +21,6 @@ const (
 // Kubeconfig implements the asset.Asset interface that generates
 // the admin kubeconfig and kubelet kubeconfig.
 type Kubeconfig struct {
-	rootDir       string
 	userName      string // admin or kubelet.
 	rootCA        asset.Asset
 	certKey       asset.Asset
@@ -108,7 +107,7 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 		Contents: []asset.Content{
 			{
 				// E.g. generated/auth/kubeconfig-admin.
-				Name: filepath.Join(k.rootDir, "auth", fmt.Sprintf("kubeconfig-%s", k.userName)),
+				Name: filepath.Join("auth", fmt.Sprintf("kubeconfig-%s", k.userName)),
 				Data: data,
 			},
 		},

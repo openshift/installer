@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path"
-	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -44,7 +43,6 @@ type bootstrapTemplateData struct {
 
 // bootstrap is an asset that generates the ignition config for bootstrap nodes.
 type bootstrap struct {
-	directory                 string
 	installConfig             asset.Asset
 	rootCA                    asset.Asset
 	etcdCA                    asset.Asset
@@ -69,13 +67,11 @@ var _ asset.Asset = (*bootstrap)(nil)
 
 // newBootstrap creates a new bootstrap asset.
 func newBootstrap(
-	directory string,
 	installConfigStock installconfig.Stock,
 	tlsStock tls.Stock,
 	kubeconfigStock kubeconfig.Stock,
 ) *bootstrap {
 	return &bootstrap{
-		directory:                 directory,
 		installConfig:             installConfigStock.InstallConfig(),
 		rootCA:                    tlsStock.RootCA(),
 		etcdCA:                    tlsStock.EtcdCA(),
@@ -160,7 +156,7 @@ func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 
 	return &asset.State{
 		Contents: []asset.Content{{
-			Name: filepath.Join(a.directory, "bootstrap.ign"),
+			Name: "bootstrap.ign",
 			Data: data,
 		}},
 	}, nil

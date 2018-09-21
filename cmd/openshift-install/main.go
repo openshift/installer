@@ -22,7 +22,7 @@ var (
 func main() {
 	command := kingpin.Parse()
 
-	assetStock := stock.EstablishStock(*dirFlag)
+	assetStock := stock.EstablishStock()
 
 	var targetAssets []asset.Asset
 	switch command {
@@ -55,7 +55,7 @@ func main() {
 			os.Exit(1)
 		}
 
-		if err := st.PersistToFile(); err != nil {
+		if err := st.PersistToFile(*dirFlag); err != nil {
 			log.Fatalf("failed to write target to disk: %v", err)
 			os.Exit(1)
 		}

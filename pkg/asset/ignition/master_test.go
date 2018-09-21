@@ -26,7 +26,6 @@ machines:
 	installConfigAsset := &testAsset{"install-config"}
 	rootCAAsset := &testAsset{"rootCA"}
 	master := &master{
-		directory:     "test-directory",
 		installConfig: installConfigAsset,
 		rootCA:        rootCAAsset,
 	}
@@ -37,9 +36,9 @@ machines:
 	masterState, err := master.Generate(dependencies)
 	assert.NoError(t, err, "unexpected error generating master asset")
 	expectedIgnitionConfigNames := []string{
-		"test-directory/master-0.ign",
-		"test-directory/master-1.ign",
-		"test-directory/master-2.ign",
+		"master-0.ign",
+		"master-1.ign",
+		"master-2.ign",
 	}
 	actualIgnitionConfigNames := make([]string, len(masterState.Contents))
 	for i, c := range masterState.Contents {

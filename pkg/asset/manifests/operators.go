@@ -12,15 +12,15 @@ import (
 )
 
 const (
-	keyIndex  = 0
-	certIndex = 1
+	keyIndex    = 0
+	certIndex   = 1
+	manifestDir = "manifests"
 )
 
 // manifests generates the dependent operator config.yaml files
 type manifests struct {
 	assetStock                Stock
 	installConfig             asset.Asset
-	directory                 string
 	rootCA                    asset.Asset
 	etcdCA                    asset.Asset
 	ingressCertKey            asset.Asset
@@ -110,15 +110,15 @@ func (o *manifests) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 	state := &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: filepath.Join(o.directory, "cluster-config.yaml"),
+				Name: "cluster-config.yaml",
 				Data: []byte(kubeSys),
 			},
 			{
-				Name: filepath.Join(o.directory, "tectonic-config.yaml"),
+				Name: "tectonic-config.yaml",
 				Data: []byte(tectonicSys),
 			},
 			{
-				Name: filepath.Join(o.directory, "mao-config.yaml"),
+				Name: "mao-config.yaml",
 				Data: mao.Data,
 			},
 		},
@@ -132,7 +132,6 @@ func (o *manifests) generateTemplateAssets(dependencies map[asset.Asset]*asset.S
 	if err != nil {
 		return nil
 	}
-	manifestDir := filepath.Join(o.directory, "manifests")
 	assetContents := make([]asset.Content, 0)
 	templateData := &templateData{
 		AggregatorCaCert:                string(dependencies[o.aggregatorCA].Contents[certIndex].Data),

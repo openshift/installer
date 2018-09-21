@@ -9,6 +9,9 @@ import (
 
 // Stock is the stock of operator assets that can be generated.
 type Stock interface {
+	// Manifests returns the cluster manifests
+	Manifests() asset.Asset
+
 	// ClusterVersionOperator returns the cvo asset object
 	ClusterVersionOperator() asset.Asset
 
@@ -37,12 +40,11 @@ type StockImpl struct {
 
 var _ Stock = (*StockImpl)(nil)
 
-// EstablishStock establishes the stock of assets in the specified directory.
-func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock, tlsStock tls.Stock, kubeConfigStock kubeconfig.Stock) {
+// EstablishStock establishes the stock of assets.
+func (s *StockImpl) EstablishStock(stock installconfig.Stock, tlsStock tls.Stock, kubeConfigStock kubeconfig.Stock) {
 	s.manifests = &manifests{
 		assetStock:                s,
 		installConfig:             stock.InstallConfig(),
-		directory:                 rootDir,
 		rootCA:                    tlsStock.RootCA(),
 		etcdCA:                    tlsStock.EtcdCA(),
 		ingressCertKey:            tlsStock.IngressCertKey(),
@@ -62,20 +64,16 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock, tl
 	}
 	s.kubeCoreOperator = &kubeCoreOperator{
 		installConfigAsset: stock.InstallConfig(),
-		directory:          rootDir,
 	}
 	s.addonOperator = &kubeAddonOperator{
 		installConfigAsset: stock.InstallConfig(),
-		directory:          rootDir,
 	}
 	s.networkOperator = &networkOperator{
 		installConfigAsset: stock.InstallConfig(),
-		directory:          rootDir,
 	}
 	s.mao = &machineAPIOperator{
 		installConfigAsset: stock.InstallConfig(),
 		aggregatorCA:       tlsStock.AggregatorCA(),
-		directory:          rootDir,
 	}
 	// TODO:
 	//s.clusterVersionOperator = &clusterVersionOperator{}

@@ -2,10 +2,7 @@ package installconfig
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
-	"os"
-	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -110,15 +107,8 @@ func TestInstallConfigGenerate(t *testing.T) {
 				platform:     &testAsset{},
 			}
 
-			dir, err := ioutil.TempDir("", "TestInstallConfigGenerate")
-			if err != nil {
-				t.Skipf("could not create temporary directory: %v", err)
-			}
-			defer os.RemoveAll(dir)
-
 			installConfig := &installConfig{
 				assetStock: stock,
-				directory:  dir,
 			}
 
 			states := map[asset.Asset]*asset.State{
@@ -155,9 +145,8 @@ func TestInstallConfigGenerate(t *testing.T) {
 			assert.NoError(t, err, "unexpected error generating asset")
 			assert.NotNil(t, state, "unexpected nil for asset state")
 
-			filename := filepath.Join(dir, "install-config.yml")
 			assert.Equal(t, 1, len(state.Contents), "unexpected number of contents in asset state")
-			assert.Equal(t, filename, state.Contents[0].Name, "unexpected filename in asset state")
+			assert.Equal(t, "install-config.yml", state.Contents[0].Name, "unexpected filename in asset state")
 
 			exp := fmt.Sprintf(`admin:
   email: test-email

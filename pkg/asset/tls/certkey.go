@@ -18,7 +18,6 @@ import (
 // signed by the parent CA.
 type CertKey struct {
 	installConfig asset.Asset
-	rootDir       string
 
 	// Common fields.
 	Subject      pkix.Name
@@ -125,11 +124,11 @@ func (c *CertKey) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 	return &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: assetFilePath(c.rootDir, c.KeyFileName),
+				Name: assetFilePath(c.KeyFileName),
 				Data: keyData,
 			},
 			{
-				Name: assetFilePath(c.rootDir, c.CertFileName),
+				Name: assetFilePath(c.CertFileName),
 				Data: certData,
 			},
 		},
