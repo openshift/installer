@@ -1,4 +1,4 @@
-package content
+package bootkube
 
 import (
 	"text/template"

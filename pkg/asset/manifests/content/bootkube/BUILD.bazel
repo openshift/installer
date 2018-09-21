@@ -27,6 +27,6 @@ go_library(
         "pull.go",
         "tectonic-network-operator.go",
     ],
-    importpath = "github.com/openshift/installer/pkg/asset/manifests/content",
+    importpath = "github.com/openshift/installer/pkg/asset/manifests/content/bootkube",
     visibility = ["//visibility:public"],
 )

@@ -1,4 +1,4 @@
-package content
+package bootkube
 
 const (
 	// IngressNamespace is the constant to represent contents of Ingress_Namespace.yaml file

@@ -1,4 +1,4 @@
-package content
+package bootkube
 
 const (
 	// TectonicNamespace is the constant to represent contents of Tectonic_Namespace.yaml file

@@ -1,4 +1,4 @@
-package content
+package bootkube
 
 const (
 	// MachineConfigOperator02Rbac is the constant to represent contents of manifest file machine-config-operator-02-rbac.yaml

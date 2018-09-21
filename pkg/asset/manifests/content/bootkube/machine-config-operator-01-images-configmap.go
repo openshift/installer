@@ -1,4 +1,4 @@
-package content
+package bootkube
 
 const (
 	// MachineConfigOperator01ImagesConfigmap is the constant to represent contents of Machine_ConfigOperator01ImagesConfigmap.yaml file

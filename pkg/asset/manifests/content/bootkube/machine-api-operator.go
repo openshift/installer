@@ -1,4 +1,4 @@
-package content
+package bootkube
 
 const (
 	// MachineAPIOperator is the constant to represent contents of Machine_Api_Operator.yaml file

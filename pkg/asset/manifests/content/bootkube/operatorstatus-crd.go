@@ -1,4 +1,4 @@
-package content
+package bootkube
 
 const (
 	// OperatorstatusCrd is the constant to represent contents of Operatorstatus_Crd.yaml file

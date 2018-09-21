@@ -1,6 +1,6 @@
 package manifests
 
-type templateData struct {
+type bootkubeTemplateData struct {
 	AggregatorCaCert                string
 	AggregatorCaKey                 string
 	ApiserverCert                   string

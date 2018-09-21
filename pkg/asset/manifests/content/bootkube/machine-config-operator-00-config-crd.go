@@ -1,4 +1,4 @@
-package content
+package bootkube
 
 const (
 	// MachineConfigOperator00ConfigCrd is the constant to represent contents of Machine_ConfigOperator00ConfigCrd.yaml file

@@ -1,4 +1,4 @@
-package content
+package bootkube
 
 const (
 	// AppVersionKind is the constant to represent contents of App_VersionKind.yaml file

@@ -1,4 +1,4 @@
-package content
+package bootkube
 
 const (
 	// OpenshiftMachineConfigOperator is the constant to represent contents of Openshift_MachineConfigOperator.yaml file

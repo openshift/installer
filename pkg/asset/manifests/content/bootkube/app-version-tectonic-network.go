@@ -1,13 +1,13 @@
-package content
+package bootkube
 
 const (
-	// AppVersionMao is the constant to represent contents of App_VersionMao.yaml file
-	AppVersionMao = `
+	// AppVersionTectonicNetwork is the constant to represent contents of App_VersionTectonicNetwork.yaml file
+	AppVersionTectonicNetwork = `
 apiVersion: tco.coreos.com/v1
 kind: AppVersion
 metadata:
-  name: machine-api
-  namespace: tectonic-system
+  name: tectonic-network
+  namespace: kube-system
   labels:
     managed-by-channel-operator: "true"
 spec:

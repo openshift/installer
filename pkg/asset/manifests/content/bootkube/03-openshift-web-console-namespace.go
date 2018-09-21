@@ -1,4 +1,4 @@
-package content
+package bootkube
 
 const (
 	// OpenshiftWebConsoleNamespace is the constant to represent contents of Openshift_WebConsoleNamespace.yaml file

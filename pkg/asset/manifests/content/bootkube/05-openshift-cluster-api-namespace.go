@@ -1,4 +1,4 @@
-package content
+package bootkube
 
 const (
 	// OpenshiftClusterAPINamespace is the constant to represent contents of Openshift_ClusterApiNamespace.yaml file
