@@ -1,6 +1,6 @@
 package manifests
 
-type templateData struct {
+type bootkubeTemplateData struct {
 	AggregatorCaCert                string
 	AggregatorCaKey                 string
 	ApiserverCert                   string
@@ -30,4 +30,18 @@ type templateData struct {
 	ServiceServingCaKey             string
 	TectonicNetworkOperatorImage    string
 	WorkerIgnConfig                 string
+}
+
+type tectonicTemplateData struct {
+	IngressCaCert                          string
+	IngressKind                            string
+	IngressStatusPassword                  string
+	IngressTLSBundle                       string
+	IngressTLSCert                         string
+	IngressTLSKey                          string
+	KubeAddonOperatorImage                 string
+	KubeCoreOperatorImage                  string
+	PullSecret                             string
+	TectonicIngressControllerOperatorImage string
+	TectonicVersion                        string
 }
