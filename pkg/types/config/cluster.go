@@ -166,6 +166,8 @@ func ConvertInstallConfigToTFVars(cfg *types.InstallConfig, bootstrapIgn string,
 			Type:        tectonicnetwork.NetworkType(cfg.Networking.Type),
 			ServiceCIDR: cfg.Networking.ServiceCIDR.String(),
 			PodCIDR:     cfg.Networking.PodCIDR.String(),
+			// TODO(yifan): Remove this when we drop the old installer binary.
+			MTU: "1480",
 		},
 		BaseDomain: cfg.BaseDomain,
 		Name:       cfg.Name,
@@ -246,6 +248,11 @@ func ConvertInstallConfigToTFVars(cfg *types.InstallConfig, bootstrapIgn string,
 			return nil, fmt.Errorf("unrecognized machine pool %q", m.Name)
 		}
 
+	}
+
+	// Validate the TFVars.
+	if err := cluster.ValidateAndLog(); err != nil {
+		return nil, err
 	}
 
 	return cluster, nil
