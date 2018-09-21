@@ -3,7 +3,6 @@ package installconfig
 import (
 	"fmt"
 	"net"
-	"path/filepath"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/ghodss/yaml"
@@ -23,7 +22,6 @@ var (
 // installConfig generates the install-config.yml file.
 type installConfig struct {
 	assetStock Stock
-	directory  string
 }
 
 var _ asset.Asset = (*installConfig)(nil)
@@ -110,7 +108,7 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 	return &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: filepath.Join(a.directory, "install-config.yml"),
+				Name: "install-config.yml",
 				Data: data,
 			},
 		},

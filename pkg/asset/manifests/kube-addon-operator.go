@@ -2,7 +2,6 @@ package manifests
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/ghodss/yaml"
 
@@ -18,7 +17,6 @@ import (
 type kubeAddonOperator struct {
 	installConfigAsset asset.Asset
 	installConfig      *types.InstallConfig
-	directory          string
 }
 
 var _ asset.Asset = (*kubeAddonOperator)(nil)
@@ -53,7 +51,7 @@ func (kao *kubeAddonOperator) Generate(dependencies map[asset.Asset]*asset.State
 	state := &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: filepath.Join(kao.directory, "kube-addon-operator-config.yml"),
+				Name: "kube-addon-operator-config.yml",
 				Data: addonConfig,
 			},
 		},

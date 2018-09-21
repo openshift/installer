@@ -2,8 +2,6 @@ package kubeconfig
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -28,12 +26,6 @@ func (f fakeAsset) Name() string {
 }
 
 func TestKubeconfigGenerate(t *testing.T) {
-	testDir, err := ioutil.TempDir(os.TempDir(), "kubeconfig_test")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer os.RemoveAll(testDir)
-
 	rootCA := fakeAsset(0)
 	adminCertKey := fakeAsset(1)
 	kubeletCertKey := fakeAsset(2)
@@ -205,7 +197,6 @@ users:
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			kubeconfig := &Kubeconfig{
-				rootDir:       testDir,
 				userName:      tt.userName,
 				rootCA:        rootCA,
 				certKey:       tt.certKey,
@@ -219,7 +210,7 @@ users:
 				t.Errorf("expect error %v, saw nil", tt.errString)
 			}
 
-			filename := filepath.Join(testDir, "auth", fmt.Sprintf("kubeconfig-%s", tt.userName))
+			filename := filepath.Join("auth", fmt.Sprintf("kubeconfig-%s", tt.userName))
 			assert.Equal(t, filename, st.Contents[0].Name, "unexpected filename")
 			assert.Equal(t, tt.expectedData, st.Contents[0].Data, "unexpected data in kubeconfig")
 		})

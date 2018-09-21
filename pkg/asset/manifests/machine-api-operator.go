@@ -2,7 +2,6 @@ package manifests
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -22,7 +21,6 @@ type machineAPIOperator struct {
 	installConfigAsset asset.Asset
 	installConfig      *types.InstallConfig
 	aggregatorCA       asset.Asset
-	directory          string
 }
 
 var _ asset.Asset = (*machineAPIOperator)(nil)
@@ -86,7 +84,7 @@ func (mao *machineAPIOperator) Generate(dependencies map[asset.Asset]*asset.Stat
 	state := &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: filepath.Join(mao.directory, "machine-api-operator-config.yml"),
+				Name: "machine-api-operator-config.yml",
 				Data: []byte(maoConfig),
 			},
 		},

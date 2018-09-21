@@ -14,8 +14,8 @@ const (
 	tlsDir = "tls"
 )
 
-func assetFilePath(rootDir, filename string) string {
-	return filepath.Join(rootDir, tlsDir, filename)
+func assetFilePath(filename string) string {
+	return filepath.Join(tlsDir, filename)
 }
 
 func getBaseAddress(cfg *types.InstallConfig) string {

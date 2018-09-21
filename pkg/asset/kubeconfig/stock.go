@@ -22,10 +22,9 @@ type StockImpl struct {
 
 var _ Stock = (*StockImpl)(nil)
 
-// EstablishStock establishes the stock of assets in the specified directory.
-func (s *StockImpl) EstablishStock(rootDir string, installConfigStock installconfig.Stock, tlsStock tls.Stock) {
+// EstablishStock establishes the stock of assets.
+func (s *StockImpl) EstablishStock(installConfigStock installconfig.Stock, tlsStock tls.Stock) {
 	s.kubeconfig = &Kubeconfig{
-		rootDir:       rootDir,
 		rootCA:        tlsStock.RootCA(),
 		certKey:       tlsStock.AdminCertKey(),
 		installConfig: installConfigStock.InstallConfig(),
@@ -33,7 +32,6 @@ func (s *StockImpl) EstablishStock(rootDir string, installConfigStock installcon
 	}
 
 	s.kubeconfigKubelet = &Kubeconfig{
-		rootDir:       rootDir,
 		rootCA:        tlsStock.RootCA(),
 		certKey:       tlsStock.KubeletCertKey(),
 		installConfig: installConfigStock.InstallConfig(),

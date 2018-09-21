@@ -19,10 +19,9 @@ type StockImpl struct {
 
 var _ Stock = (*StockImpl)(nil)
 
-// EstablishStock establishes the stock of assets in the specified directory.
-func (s *StockImpl) EstablishStock(rootDir string, installConfigStock installconfig.Stock, ignitionStock ignition.Stock) {
+// EstablishStock establishes the stock of assets.
+func (s *StockImpl) EstablishStock(installConfigStock installconfig.Stock, ignitionStock ignition.Stock) {
 	s.tfvars = &TerraformVariables{
-		rootDir:           rootDir,
 		installConfig:     installConfigStock.InstallConfig(),
 		bootstrapIgnition: ignitionStock.BootstrapIgnition(),
 		masterIgnition:    ignitionStock.MasterIgnition(),

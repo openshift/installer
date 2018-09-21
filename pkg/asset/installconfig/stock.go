@@ -43,11 +43,10 @@ type StockImpl struct {
 	platform      asset.Asset
 }
 
-// EstablishStock establishes the stock of assets in the specified directory.
-func (s *StockImpl) EstablishStock(directory string) {
+// EstablishStock establishes the stock of assets.
+func (s *StockImpl) EstablishStock() {
 	s.installConfig = &installConfig{
 		assetStock: s,
-		directory:  directory,
 	}
 	s.clusterID = &clusterID{}
 	s.emailAddress = &asset.UserProvided{

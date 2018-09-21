@@ -9,7 +9,6 @@ import (
 // KeyPair implements the Asset interface and
 // generates an RSA public/private key pair.
 type KeyPair struct {
-	rootDir         string
 	PrivKeyFileName string
 	PubKeyFileName  string
 }
@@ -36,11 +35,11 @@ func (k *KeyPair) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
 	return &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: assetFilePath(k.rootDir, k.PrivKeyFileName),
+				Name: assetFilePath(k.PrivKeyFileName),
 				Data: []byte(PrivateKeyToPem(key)),
 			},
 			{
-				Name: assetFilePath(k.rootDir, k.PubKeyFileName),
+				Name: assetFilePath(k.PubKeyFileName),
 				Data: []byte(pubkeyData),
 			},
 		},

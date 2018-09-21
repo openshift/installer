@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"path"
-	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -16,14 +14,13 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/content"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 )
 
 const (
-	// tlsCertDirectory is the directory on the bootstrap node to place the TLS
-	// assets.
-	tlsCertDirectory = "/opt/tectonic/tls"
+	rootDir = "/opt/tectonic"
 )
 
 // bootstrapTemplateData is the data to use to replace values in bootstrap
@@ -44,7 +41,6 @@ type bootstrapTemplateData struct {
 
 // bootstrap is an asset that generates the ignition config for bootstrap nodes.
 type bootstrap struct {
-	directory                 string
 	installConfig             asset.Asset
 	rootCA                    asset.Asset
 	etcdCA                    asset.Asset
@@ -63,19 +59,20 @@ type bootstrap struct {
 	serviceAccountKeyPair     asset.Asset
 	kubeconfig                asset.Asset
 	kubeconfigKubelet         asset.Asset
+	manifests                 asset.Asset
+	kubeCoreOperator          asset.Asset
 }
 
 var _ asset.Asset = (*bootstrap)(nil)
 
 // newBootstrap creates a new bootstrap asset.
 func newBootstrap(
-	directory string,
 	installConfigStock installconfig.Stock,
 	tlsStock tls.Stock,
 	kubeconfigStock kubeconfig.Stock,
+	manifestStock manifests.Stock,
 ) *bootstrap {
 	return &bootstrap{
-		directory:                 directory,
 		installConfig:             installConfigStock.InstallConfig(),
 		rootCA:                    tlsStock.RootCA(),
 		etcdCA:                    tlsStock.EtcdCA(),
@@ -94,6 +91,8 @@ func newBootstrap(
 		serviceAccountKeyPair:     tlsStock.ServiceAccountKeyPair(),
 		kubeconfig:                kubeconfigStock.KubeconfigAdmin(),
 		kubeconfigKubelet:         kubeconfigStock.KubeconfigKubelet(),
+		manifests:                 manifestStock.Manifests(),
+		kubeCoreOperator:          manifestStock.KubeCoreOperator(),
 	}
 }
 
@@ -118,6 +117,8 @@ func (a *bootstrap) Dependencies() []asset.Asset {
 		a.serviceAccountKeyPair,
 		a.kubeconfig,
 		a.kubeconfigKubelet,
+		a.manifests,
+		a.kubeCoreOperator,
 	}
 }
 
@@ -135,8 +136,7 @@ func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 
 	config := ignition.Config{}
 
-	a.addBootstrapConfigFiles(&config, dependencies)
-	a.addBootstrapCertFiles(&config, dependencies)
+	a.addBootstrapFiles(&config, dependencies)
 	a.addBootkubeFiles(&config, dependencies, templateData)
 	a.addTectonicFiles(&config, dependencies, templateData)
 	a.addTLSCertFiles(&config, dependencies)
@@ -160,7 +160,7 @@ func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 
 	return &asset.State{
 		Contents: []asset.Content{{
-			Name: filepath.Join(a.directory, "bootstrap.ign"),
+			Name: "bootstrap.ign",
 			Data: data,
 		}},
 	}, nil
@@ -196,35 +196,30 @@ func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 	}, nil
 }
 
-func (a *bootstrap) addBootstrapConfigFiles(config *ignition.Config, dependencies map[asset.Asset]*asset.State) {
-	// TODO (staebler) - missing the following from assets step
-	//     /opt/tectonic/manifests/cluster-config.yaml
-	//     /opt/tectonic/tectonic/cluster-config.yaml
-	//     /opt/tectonic/kco-config.yaml
-	//     /etc/kubernetes/kubeconfig
-	//     /var/lib/kubelet/kubeconfig
-}
-
-func (a *bootstrap) addBootstrapCertFiles(config *ignition.Config, dependencies map[asset.Asset]*asset.State) {
+func (a *bootstrap) addBootstrapFiles(config *ignition.Config, dependencies map[asset.Asset]*asset.State) {
 	config.Storage.Files = append(
 		config.Storage.Files,
-		fileFromAsset("/etc/ssl/etcd/ca.crt", 0444, dependencies[a.etcdCA], keyCertAssetCrtIndex),
-		fileFromAsset("/etc/ssl/etcd/root-ca.crt", 0444, dependencies[a.rootCA], keyCertAssetCrtIndex),
-
-		// ssl certs
-		fileFromAsset("/etc/ssl/certs/root_ca.pem", 0444, dependencies[a.rootCA], keyCertAssetKeyIndex),
-		fileFromAsset("/etc/ssl/certs/ingress_ca.pem", 0444, dependencies[a.ingressCertKey], keyCertAssetKeyIndex),
-		fileFromAsset("/etc/ssl/certs/etcd_ca.pem", 0444, dependencies[a.etcdCA], keyCertAssetKeyIndex),
+		fileFromBytes("/etc/kubernetes/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
+		fileFromBytes("/var/lib/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
+	)
+	config.Storage.Files = append(
+		config.Storage.Files,
+		filesFromContents(rootDir, 0644, dependencies[a.kubeCoreOperator].Contents)...,
 	)
 }
 
 func (a *bootstrap) addBootkubeFiles(config *ignition.Config, dependencies map[asset.Asset]*asset.State, templateData *bootstrapTemplateData) {
-	// TODO (staebler) - missing manifests from bootkube module
 	config.Storage.Files = append(
 		config.Storage.Files,
-		fileFromAsset("/opt/tectonic/auth/kubeconfig", 0400, dependencies[a.kubeconfig], 0),
-		fileFromAsset("/opt/tectonic/auth/kubeconfig-kubelet", 0400, dependencies[a.kubeconfigKubelet], 0),
 		fileFromString("/opt/tectonic/bootkube.sh", 0555, applyTemplateData(content.BootkubeShFileTemplate, templateData)),
+	)
+	config.Storage.Files = append(
+		config.Storage.Files,
+		filesFromContents(rootDir, 0600, dependencies[a.kubeconfig].Contents)...,
+	)
+	config.Storage.Files = append(
+		config.Storage.Files,
+		filesFromContents(rootDir, 0644, dependencies[a.manifests].Contents)...,
 	)
 }
 
@@ -237,40 +232,23 @@ func (a *bootstrap) addTectonicFiles(config *ignition.Config, dependencies map[a
 }
 
 func (a *bootstrap) addTLSCertFiles(config *ignition.Config, dependencies map[asset.Asset]*asset.State) {
-	for _, pair := range []struct {
-		key   string
-		crt   string
-		state *asset.State
-	}{
-		{"", "root-ca.crt", dependencies[a.rootCA]},
-		{"kube-ca.key", "kube-ca.crt", dependencies[a.kubeCA]},
-		{"aggregator-ca.key", "aggregator-ca.crt", dependencies[a.aggregatorCA]},
-		{"service-serving-ca.key", "service-serving-ca.crt", dependencies[a.serviceServingCA]},
-		{"etcd-client-ca.key", "etcd-client-ca.crt", dependencies[a.etcdCA]},
-		{"cluster-apiserver-ca.key", "cluster-apiserver-ca.crt", dependencies[a.clusterAPIServerCertKey]},
-
-		// etcd cert
-		{"etcd-client.key", "etcd-client.crt", dependencies[a.etcdClientCertKey]},
-
-		// kube certs
-		{"apiserver.key", "apiserver.crt", dependencies[a.apiServerCertKey]},
-		{"openshift-apiserver.key", "openshift-apiserver.crt", dependencies[a.openshiftAPIServerCertKey]},
-		{"apiserver-proxy.key", "apiserver-proxy.crt", dependencies[a.apiServerProxyCertKey]},
-		{"admin.key", "admin.crt", dependencies[a.adminCertKey]},
-		{"kubelet.key", "kubelet.crt", dependencies[a.kubeletCertKey]},
-
-		// mcs cert
-		{"mcs.key", "mcs.crt", dependencies[a.mcsCertKey]},
-
-		// service account cert
-		{"service-account.key", "service-account.crt", dependencies[a.serviceAccountKeyPair]},
+	for _, asset := range []asset.Asset{
+		a.rootCA,
+		a.kubeCA,
+		a.aggregatorCA,
+		a.serviceServingCA,
+		a.etcdCA,
+		a.clusterAPIServerCertKey,
+		a.etcdClientCertKey,
+		a.apiServerCertKey,
+		a.openshiftAPIServerCertKey,
+		a.apiServerProxyCertKey,
+		a.adminCertKey,
+		a.kubeletCertKey,
+		a.mcsCertKey,
+		a.serviceAccountKeyPair,
 	} {
-		if pair.key != "" {
-			config.Storage.Files = append(config.Storage.Files, fileFromAsset(path.Join(tlsCertDirectory, pair.key), 0600, pair.state, keyCertAssetKeyIndex))
-		}
-		if pair.crt != "" {
-			config.Storage.Files = append(config.Storage.Files, fileFromAsset(path.Join(tlsCertDirectory, pair.crt), 0644, pair.state, keyCertAssetCrtIndex))
-		}
+		config.Storage.Files = append(config.Storage.Files, filesFromContents(rootDir, 0600, dependencies[asset].Contents)...)
 	}
 }
 

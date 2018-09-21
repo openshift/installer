@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"fmt"
-	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -17,8 +16,6 @@ const (
 // TerraformVariables depends on InstallConfig and
 // Ignition to generate the terrafor.tfvars.
 type TerraformVariables struct {
-	// The root directory of the generated assets.
-	rootDir string
 	// The Assets that this tfvar file depends.
 	installConfig     asset.Asset
 	bootstrapIgnition asset.Asset
@@ -75,7 +72,7 @@ func (t *TerraformVariables) Generate(parents map[asset.Asset]*asset.State) (*as
 	return &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: filepath.Join(t.rootDir, tfvarFilename),
+				Name: tfvarFilename,
 				Data: []byte(data),
 			},
 		},

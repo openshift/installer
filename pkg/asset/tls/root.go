@@ -10,9 +10,7 @@ import (
 
 // RootCA contains the private key and the cert that's
 // self-signed as the root CA.
-type RootCA struct {
-	rootDir string
-}
+type RootCA struct{}
 
 var _ asset.Asset = (*CertKey)(nil)
 
@@ -38,11 +36,11 @@ func (c *RootCA) Generate(parents map[asset.Asset]*asset.State) (*asset.State, e
 	return &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: assetFilePath(c.rootDir, RootCAKeyName),
+				Name: assetFilePath(RootCAKeyName),
 				Data: []byte(PrivateKeyToPem(key)),
 			},
 			{
-				Name: assetFilePath(c.rootDir, RootCACertName),
+				Name: assetFilePath(RootCACertName),
 				Data: []byte(CertToPem(crt)),
 			},
 		},

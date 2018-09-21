@@ -19,16 +19,16 @@ type Content struct {
 
 // PersistToFile persists the data in the State to files. Each Content entry that
 // has a non-empty Name will be persisted to a file with that name.
-func (s *State) PersistToFile() error {
+func (s *State) PersistToFile(directory string) error {
 	for _, c := range s.Contents {
 		if c.Name == "" {
 			continue
 		}
-		dir := filepath.Dir(c.Name)
-		if err := os.MkdirAll(dir, 0755); err != nil {
+		path := filepath.Join(directory, c.Name)
+		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 			return err
 		}
-		if err := ioutil.WriteFile(c.Name, c.Data, 0644); err != nil {
+		if err := ioutil.WriteFile(path, c.Data, 0644); err != nil {
 			return err
 		}
 	}

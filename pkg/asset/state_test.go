@@ -46,14 +46,13 @@ func TestStatePersistToFile(t *testing.T) {
 			expectedFiles := map[string][]byte{}
 			for i, filename := range tc.filenames {
 				data := []byte(fmt.Sprintf("data%d", i))
+				state.Contents[i].Name = filename
 				state.Contents[i].Data = data
 				if filename != "" {
-					fullPath := filepath.Join(dir, filepath.FromSlash(filename))
-					state.Contents[i].Name = fullPath
-					expectedFiles[fullPath] = data
+					expectedFiles[filepath.Join(dir, filename)] = data
 				}
 			}
-			err = state.PersistToFile()
+			err = state.PersistToFile(dir)
 			assert.NoError(t, err, "unexpected error persisting state to file")
 			verifyFilesCreated(t, dir, expectedFiles)
 		})

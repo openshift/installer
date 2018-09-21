@@ -1,8 +1,6 @@
 package manifests
 
 import (
-	"path/filepath"
-
 	"github.com/ghodss/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -21,7 +19,6 @@ const (
 type networkOperator struct {
 	installConfigAsset asset.Asset
 	installConfig      *types.InstallConfig
-	directory          string
 }
 
 var _ asset.Asset = (*networkOperator)(nil)
@@ -60,11 +57,11 @@ func (no *networkOperator) Generate(dependencies map[asset.Asset]*asset.State) (
 	state := &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: filepath.Join(no.directory, "network-operator-config.yml"),
+				Name: "network-operator-config.yml",
 				Data: netConfig,
 			},
 			{
-				Name: filepath.Join(no.directory, "network-operator-manifests.yml"),
+				Name: "network-operator-manifests.yml",
 				Data: netManifest,
 			},
 		},

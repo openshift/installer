@@ -20,7 +20,6 @@ region: us-east
 	installConfigAsset := &testAsset{"install-config"}
 	rootCAAsset := &testAsset{"rootCA"}
 	worker := &worker{
-		directory:     "test-directory",
 		installConfig: installConfigAsset,
 		rootCA:        rootCAAsset,
 	}
@@ -31,5 +30,5 @@ region: us-east
 	workerState, err := worker.Generate(dependencies)
 	assert.NoError(t, err, "unexpected error generating worker asset")
 	assert.Equal(t, 1, len(workerState.Contents), "unexpected number of contents in worker state")
-	assert.Equal(t, "test-directory/worker.ign", workerState.Contents[0].Name, "unexpected name for worker ignition config")
+	assert.Equal(t, "worker.ign", workerState.Contents[0].Name, "unexpected name for worker ignition config")
 }
