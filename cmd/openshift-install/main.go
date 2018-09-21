@@ -37,6 +37,7 @@ func main() {
 	case manifestsCommand.FullCommand():
 		targetAssets = []asset.Asset{
 			assetStock.Manifests(),
+			assetStock.Tectonic(),
 		}
 	}
 

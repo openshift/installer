@@ -26,6 +26,9 @@ type Stock interface {
 
 	// Mao returns the machine api operator asset object
 	Mao() asset.Asset
+
+	// Tectonic returns the tectonic manfests asset object
+	Tectonic() asset.Asset
 }
 
 // StockImpl implements the Stock interface for manifests
@@ -36,6 +39,7 @@ type StockImpl struct {
 	networkOperator        asset.Asset
 	addonOperator          asset.Asset
 	mao                    asset.Asset
+	tectonic               asset.Asset
 }
 
 var _ Stock = (*StockImpl)(nil)
@@ -75,6 +79,11 @@ func (s *StockImpl) EstablishStock(stock installconfig.Stock, tlsStock tls.Stock
 		installConfigAsset: stock.InstallConfig(),
 		aggregatorCA:       tlsStock.AggregatorCA(),
 	}
+	s.tectonic = &tectonic{
+		installConfig:  stock.InstallConfig(),
+		ingressCertKey: tlsStock.IngressCertKey(),
+		kubeCA:         tlsStock.KubeCA(),
+	}
 	// TODO:
 	//s.clusterVersionOperator = &clusterVersionOperator{}
 }
@@ -96,3 +105,6 @@ func (s *StockImpl) KubeAddonOperator() asset.Asset { return s.addonOperator }
 
 // Mao returns the machine API operator asset object
 func (s *StockImpl) Mao() asset.Asset { return s.mao }
+
+// Tectonic returns the tectonic manifests asset object
+func (s *StockImpl) Tectonic() asset.Asset { return s.tectonic }

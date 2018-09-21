@@ -57,6 +57,7 @@ func (m *manifests) Dependencies() []asset.Asset {
 		m.assetStock.NetworkOperator(),
 		m.assetStock.KubeAddonOperator(),
 		m.assetStock.Mao(),
+		m.assetStock.Tectonic(),
 		m.rootCA,
 		m.etcdCA,
 		m.ingressCertKey,
@@ -70,7 +71,6 @@ func (m *manifests) Dependencies() []asset.Asset {
 		m.apiServerProxyCertKey,
 		m.adminCertKey,
 		m.kubeletCertKey,
-		m.tncCertKey,
 		m.serviceAccountKeyPair,
 		m.kubeconfig,
 	}
