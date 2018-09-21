@@ -27,12 +27,12 @@ resource "libvirt_volume" "master" {
 resource "libvirt_ignition" "master" {
   count   = "${var.tectonic_master_count}"
   name    = "master-${count.index}.ign"
-  content = "${file(format("%s/%s", path.cwd, var.tectonic_ignition_masters[count.index]))}"
+  content = "${var.ignition_masters[count.index]}"
 }
 
 resource "libvirt_ignition" "worker" {
   name    = "worker.ign"
-  content = "${file("${path.cwd}/${var.tectonic_ignition_worker}")}"
+  content = "${var.ignition_worker}"
 }
 
 resource "libvirt_network" "tectonic_net" {

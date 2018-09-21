@@ -32,8 +32,6 @@ func InitWorkflow(configFilePath string) Workflow {
 		metadata: metadata{configFilePath: configFilePath},
 		steps: []step{
 			prepareWorspaceStep,
-			readClusterConfigStep,
-			generateTerraformVariablesStep,
 		},
 	}
 }

@@ -15,11 +15,6 @@
   "tectonic_aws_worker_root_volume_size": 30,
   "tectonic_aws_worker_root_volume_type": "gp2",
   "tectonic_base_domain": "tectonic-ci.de",
-  "tectonic_ignition_masters": [
-    "master-0.ign",
-    "master-1.ign"
-  ],
-  "tectonic_ignition_worker": "worker.ign",
   "tectonic_libvirt_network_if": "osbr0",
   "tectonic_master_count": 2,
   "tectonic_cluster_name": "aws-basic",

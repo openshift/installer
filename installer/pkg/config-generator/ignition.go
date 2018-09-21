@@ -18,7 +18,8 @@ const (
 )
 
 // GenerateIgnConfig generates Ignition configs for the workers and masters.
-func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
+// It returns the content of the ignition files.
+func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) (masterIgns []string, workerIgn string, err error) {
 	var masters config.NodePool
 	var workers config.NodePool
 	for _, pool := range c.NodePools {
@@ -28,18 +29,18 @@ func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 		case "worker":
 			workers = pool
 		default:
-			return fmt.Errorf("unrecognized role: %s", pool.Name)
+			return nil, "", fmt.Errorf("unrecognized role: %s", pool.Name)
 		}
 	}
 
 	ca, err := ioutil.ReadFile(filepath.Join(clusterDir, caPath))
 	if err != nil {
-		return err
+		return nil, "", err
 	}
 
 	workerCfg, err := parseIgnFile(workers.IgnitionFile)
 	if err != nil {
-		return fmt.Errorf("failed to parse Ignition config for workers: %v", err)
+		return nil, "", fmt.Errorf("failed to parse Ignition config for workers: %v", err)
 	}
 
 	// XXX(crawford): The SSH key should only be added to the bootstrap
@@ -49,13 +50,15 @@ func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 	c.appendCertificateAuthority(&workerCfg, ca)
 	c.embedAppendBlock(&workerCfg, "worker", "")
 
-	if err = ignCfgToFile(workerCfg, filepath.Join(clusterDir, config.IgnitionPathWorker)); err != nil {
-		return err
+	ign, err := json.Marshal(&workerCfg)
+	if err != nil {
+		return nil, "", fmt.Errorf("failed to marshal worker ignition: %v", err)
 	}
+	workerIgn = string(ign)
 
 	masterCfg, err := parseIgnFile(masters.IgnitionFile)
 	if err != nil {
-		return fmt.Errorf("failed to parse Ignition config for masters: %v", err)
+		return nil, "", fmt.Errorf("failed to parse Ignition config for masters: %v", err)
 	}
 
 	for i := 0; i < masters.Count; i++ {
@@ -68,12 +71,14 @@ func (c *ConfigGenerator) GenerateIgnConfig(clusterDir string) error {
 		c.appendCertificateAuthority(&ignCfg, ca)
 		c.embedAppendBlock(&ignCfg, "master", fmt.Sprintf("etcd_index=%d", i))
 
-		if err = ignCfgToFile(ignCfg, filepath.Join(clusterDir, fmt.Sprintf(config.IgnitionPathMaster, i))); err != nil {
-			return err
+		masterIgn, err := json.Marshal(&ignCfg)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to marshal master ignition: %v", err)
 		}
+		masterIgns = append(masterIgns, string(masterIgn))
 	}
 
-	return nil
+	return masterIgns, workerIgn, nil
 }
 
 func parseIgnFile(filePath string) (ignconfigtypes.Config, error) {
@@ -138,13 +143,4 @@ func (c *ConfigGenerator) getMCSURL(role string, query string) string {
 		}().String()
 	}
 	return u
-}
-
-func ignCfgToFile(ignCfg ignconfigtypes.Config, filePath string) error {
-	data, err := json.MarshalIndent(&ignCfg, "", "  ")
-	if err != nil {
-		return err
-	}
-
-	return ioutil.WriteFile(filePath, data, 0666)
 }
