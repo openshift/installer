@@ -17,7 +17,6 @@ import (
 const (
 	generatedPath              = "generated"
 	kcoConfigFileName          = "kco-config.yaml"
-	tncoConfigFileName         = "tnco-config.yaml"
 	maoConfigFileName          = "mao-config.yaml"
 	kubeSystemPath             = "generated/manifests"
 	kubeSystemFileName         = "cluster-config.yaml"

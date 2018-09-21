@@ -41,7 +41,7 @@ machines:
 	apiServerProxyCertKeyAsset := &testAsset{"apiserver-proxy-ca"}
 	adminCertKeyAsset := &testAsset{"admin-ca"}
 	kubeletCertKeyAsset := &testAsset{"kubelet-ca"}
-	tncCertKeyAsset := &testAsset{"tnc-ca"}
+	mcsCertKeyAsset := &testAsset{"mcs-ca"}
 	serviceAccountKeyPairAsset := &testAsset{"service-account-ca"}
 	kubeconfigAsset := &testAsset{"kubeconfig"}
 	kubeconfigKubeletAsset := &testAsset{"kubeconfig-kubelet"}
@@ -61,7 +61,7 @@ machines:
 		apiServerProxyCertKey:     apiServerProxyCertKeyAsset,
 		adminCertKey:              adminCertKeyAsset,
 		kubeletCertKey:            kubeletCertKeyAsset,
-		tncCertKey:                tncCertKeyAsset,
+		mcsCertKey:                mcsCertKeyAsset,
 		serviceAccountKeyPair:     serviceAccountKeyPairAsset,
 		kubeconfig:                kubeconfigAsset,
 		kubeconfigKubelet:         kubeconfigKubeletAsset,
@@ -81,7 +81,7 @@ machines:
 		apiServerProxyCertKeyAsset:     stateWithContentsData("test-apiserver-proxy-cert-priv", "test-apiserver-proxy-cert-pub"),
 		adminCertKeyAsset:              stateWithContentsData("test-admin-cert-priv", "test-admin-cert-pub"),
 		kubeletCertKeyAsset:            stateWithContentsData("test-kubelet-cert-priv", "test-kubelet-cert-pub"),
-		tncCertKeyAsset:                stateWithContentsData("test-tnc-cert-priv", "test-tnc-cert-pub"),
+		mcsCertKeyAsset:                stateWithContentsData("test-mcs-cert-priv", "test-mcs-cert-pub"),
 		serviceAccountKeyPairAsset:     stateWithContentsData("test-service-account-cert-priv", "test-service-account-cert-pub"),
 		kubeconfigAsset:                stateWithContentsData("test-kubeconfig"),
 		kubeconfigKubeletAsset:         stateWithContentsData("test-kubeconfig-kubelet"),
@@ -223,12 +223,12 @@ machines:
 			data: "test-kubelet-cert-pub",
 		},
 		fileAssertion{
-			path: "/opt/tectonic/tls/tnc.key",
-			data: "test-tnc-cert-priv",
+			path: "/opt/tectonic/tls/mcs.key",
+			data: "test-mcs-cert-priv",
 		},
 		fileAssertion{
-			path: "/opt/tectonic/tls/tnc.crt",
-			data: "test-tnc-cert-pub",
+			path: "/opt/tectonic/tls/mcs.crt",
+			data: "test-mcs-cert-pub",
 		},
 		fileAssertion{
 			path: "/opt/tectonic/tls/service-account.key",

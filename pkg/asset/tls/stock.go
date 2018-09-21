@@ -57,10 +57,10 @@ const (
 	KubeletKeyName = "kubelet.key"
 	// KubeletCertName is the filename of the KubeletCert.
 	KubeletCertName = "kubelet.crt"
-	// TNCKeyName is the filename of the TNCKey.
-	TNCKeyName = "tnc.key"
-	// TNCCertName is the filename of the TNCCert.
-	TNCCertName = "tnc.crt"
+	// MCSKeyName is the filename of the MCSKey.
+	MCSKeyName = "mcs.key"
+	// MCSCertName is the filename of the MCSCert.
+	MCSCertName = "mcs.crt"
 	// ClusterAPIServerCAKeyName is the filename of the ClusterAPIServerCAKey.
 	ClusterAPIServerCAKeyName = "cluster-apiserver-ca.key"
 	// ClusterAPIServerCACertName is the filename of the ClusterAPIServerCACert.
@@ -97,8 +97,8 @@ type Stock interface {
 	APIServerProxyCertKey() asset.Asset
 	// KubeletCertKey is the asset that generates the kubelet key/cert pair.
 	KubeletCertKey() asset.Asset
-	// TNCCertKey is the asset that generates the TNC key/cert pair.
-	TNCCertKey() asset.Asset
+	// MCSCertKey is the asset that generates the MCS key/cert pair.
+	MCSCertKey() asset.Asset
 	// ClusterAPIServerCertKey is the asset that generates the cluster API server key/cert pair.
 	ClusterAPIServerCertKey() asset.Asset
 	// ServiceAccountKeyPair is the asset that generates the service-account public/private key pair.
@@ -119,7 +119,7 @@ type StockImpl struct {
 	openshiftAPIServerCertKey asset.Asset
 	apiServerProxyCertKey     asset.Asset
 	kubeletCertKey            asset.Asset
-	tncCertKey                asset.Asset
+	mcsCertKey                asset.Asset
 	clusterAPIServerCertKey   asset.Asset
 	serviceAccountKeyPair     asset.Asset
 }
@@ -280,17 +280,17 @@ func (s *StockImpl) EstablishStock(rootDir string, stock installconfig.Stock) {
 		ParentCA: s.kubeCA,
 	}
 
-	s.tncCertKey = &CertKey{
+	s.mcsCertKey = &CertKey{
 		rootDir:       rootDir,
 		installConfig: stock.InstallConfig(),
 		ExtKeyUsages:  []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		Validity:      ValidityTenYears,
-		KeyFileName:   TNCKeyName,
-		CertFileName:  TNCCertName,
+		KeyFileName:   MCSKeyName,
+		CertFileName:  MCSCertName,
 
 		ParentCA:    s.rootCA,
-		GenDNSNames: genDNSNamesForTNCCertKey,
-		GenSubject:  genSubjectForTNCCertKey,
+		GenDNSNames: genDNSNamesForMCSCertKey,
+		GenSubject:  genSubjectForMCSCertKey,
 	}
 
 	s.clusterAPIServerCertKey = &CertKey{
@@ -350,8 +350,8 @@ func (s *StockImpl) APIServerProxyCertKey() asset.Asset { return s.apiServerProx
 // KubeletCertKey is the asset that generates the kubelet key/cert pair.
 func (s *StockImpl) KubeletCertKey() asset.Asset { return s.kubeletCertKey }
 
-// TNCCertKey is the asset that generates the TNC key/cert pair.
-func (s *StockImpl) TNCCertKey() asset.Asset { return s.tncCertKey }
+// MCSCertKey is the asset that generates the MCS key/cert pair.
+func (s *StockImpl) MCSCertKey() asset.Asset { return s.mcsCertKey }
 
 // ClusterAPIServerCertKey is the asset that generates the cluster API server key/cert pair.
 func (s *StockImpl) ClusterAPIServerCertKey() asset.Asset { return s.clusterAPIServerCertKey }

@@ -240,7 +240,7 @@ func (c *ConfigGenerator) GenerateTLSConfig(clusterDir string) error {
 	}
 
 	// MachineConfigServer certs
-	mcsDomain := fmt.Sprintf("%s-tnc.%s", c.Name, c.BaseDomain)
+	mcsDomain := fmt.Sprintf("%s-api.%s", c.Name, c.BaseDomain)
 	cfg = &tls.CertCfg{
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		DNSNames:     []string{mcsDomain},

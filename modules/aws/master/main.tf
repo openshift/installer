@@ -112,12 +112,6 @@ resource "aws_instance" "master" {
   ), var.extra_tags)}"
 }
 
-resource "aws_elb_attachment" "masters_tnc" {
-  count    = "${var.private_endpoints ? var.instance_count : 0}"
-  elb      = "${var.elb_tnc_id}"
-  instance = "${aws_instance.master.*.id[count.index]}"
-}
-
 resource "aws_elb_attachment" "masters_internal" {
   count    = "${var.private_endpoints ? var.instance_count : 0}"
   elb      = "${var.elb_api_internal_id}"

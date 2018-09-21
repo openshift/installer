@@ -56,10 +56,6 @@ variable "public_endpoints" {
   default     = true
 }
 
-variable "elb_tnc_id" {
-  type = "string"
-}
-
 variable "elb_api_internal_id" {
   type = "string"
 }

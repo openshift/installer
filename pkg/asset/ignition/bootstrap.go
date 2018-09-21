@@ -59,7 +59,7 @@ type bootstrap struct {
 	apiServerProxyCertKey     asset.Asset
 	adminCertKey              asset.Asset
 	kubeletCertKey            asset.Asset
-	tncCertKey                asset.Asset
+	mcsCertKey                asset.Asset
 	serviceAccountKeyPair     asset.Asset
 	kubeconfig                asset.Asset
 	kubeconfigKubelet         asset.Asset
@@ -90,7 +90,7 @@ func newBootstrap(
 		apiServerProxyCertKey:     tlsStock.APIServerProxyCertKey(),
 		adminCertKey:              tlsStock.AdminCertKey(),
 		kubeletCertKey:            tlsStock.KubeletCertKey(),
-		tncCertKey:                tlsStock.TNCCertKey(),
+		mcsCertKey:                tlsStock.MCSCertKey(),
 		serviceAccountKeyPair:     tlsStock.ServiceAccountKeyPair(),
 		kubeconfig:                kubeconfigStock.KubeconfigAdmin(),
 		kubeconfigKubelet:         kubeconfigStock.KubeconfigKubelet(),
@@ -114,7 +114,7 @@ func (a *bootstrap) Dependencies() []asset.Asset {
 		a.apiServerProxyCertKey,
 		a.adminCertKey,
 		a.kubeletCertKey,
-		a.tncCertKey,
+		a.mcsCertKey,
 		a.serviceAccountKeyPair,
 		a.kubeconfig,
 		a.kubeconfigKubelet,
@@ -200,7 +200,6 @@ func (a *bootstrap) addBootstrapConfigFiles(config *ignition.Config, dependencie
 	// TODO (staebler) - missing the following from assets step
 	//     /opt/tectonic/manifests/cluster-config.yaml
 	//     /opt/tectonic/tectonic/cluster-config.yaml
-	//     /opt/tectonic/tnco-config.yaml
 	//     /opt/tectonic/kco-config.yaml
 	//     /etc/kubernetes/kubeconfig
 	//     /var/lib/kubelet/kubeconfig
@@ -260,8 +259,8 @@ func (a *bootstrap) addTLSCertFiles(config *ignition.Config, dependencies map[as
 		{"admin.key", "admin.crt", dependencies[a.adminCertKey]},
 		{"kubelet.key", "kubelet.crt", dependencies[a.kubeletCertKey]},
 
-		// tnc cert
-		{"tnc.key", "tnc.crt", dependencies[a.tncCertKey]},
+		// mcs cert
+		{"mcs.key", "mcs.crt", dependencies[a.mcsCertKey]},
 
 		// service account cert
 		{"service-account.key", "service-account.crt", dependencies[a.serviceAccountKeyPair]},

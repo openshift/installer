@@ -100,7 +100,7 @@ func parseIgnFile(filePath string) (ignconfigtypes.Config, error) {
 
 func (c *ConfigGenerator) embedAppendBlock(ignCfg *ignconfigtypes.Config, role string, query string) {
 	appendBlock := ignconfigtypes.ConfigReference{
-		Source:       c.getTNCURL(role, query),
+		Source:       c.getMCSURL(role, query),
 		Verification: ignconfigtypes.Verification{Hash: nil},
 	}
 	ignCfg.Ignition.Config.Append = append(ignCfg.Ignition.Config.Append, appendBlock)
@@ -123,21 +123,15 @@ func (c *ConfigGenerator) embedUserBlock(ignCfg *ignconfigtypes.Config) {
 	ignCfg.Passwd.Users = append(ignCfg.Passwd.Users, userBlock)
 }
 
-func (c *ConfigGenerator) getTNCURL(role string, query string) string {
+func (c *ConfigGenerator) getMCSURL(role string, query string) string {
 	var u string
-
-	// cloud platforms put this behind a load balancer which remaps ports;
-	// libvirt doesn't do that - use the tnc port directly
-	port := 80
-	if c.Platform == config.PlatformLibvirt {
-		port = 49500
-	}
+	port := 49500
 
 	if role == "master" || role == "worker" {
 		u = func() *url.URL {
 			return &url.URL{
 				Scheme:   "https",
-				Host:     fmt.Sprintf("%s-tnc.%s:%d", c.Name, c.BaseDomain, port),
+				Host:     fmt.Sprintf("%s-api.%s:%d", c.Name, c.BaseDomain, port),
 				Path:     fmt.Sprintf("/config/%s", role),
 				RawQuery: query,
 			}
