@@ -1,6 +1,7 @@
 package configgenerator
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/base64"
 	"encoding/hex"
@@ -119,7 +120,7 @@ func (c *ConfigGenerator) maoConfig(clusterDir string) (*maoOperatorConfig, erro
 		if c.AWS.EC2AMIOverride != "" {
 			ami = c.AWS.EC2AMIOverride
 		} else {
-			ami, err = rhcos.AMI(rhcos.DefaultChannel, c.Region)
+			ami, err = rhcos.AMI(context.TODO(), rhcos.DefaultChannel, c.Region)
 			if err != nil {
 				return nil, fmt.Errorf("failed to lookup RHCOS AMI: %v", err)
 			}

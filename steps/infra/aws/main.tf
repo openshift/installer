@@ -15,6 +15,26 @@ provider "aws" {
   }
 }
 
+module "bootstrap" {
+  source = "../../../modules/aws/bootstrap"
+
+  ami                         = "${var.tectonic_aws_ec2_ami_override}"
+  associate_public_ip_address = "${var.tectonic_aws_endpoints != "private"}"
+  bucket                      = "${aws_s3_bucket.tectonic.bucket}"
+  cluster_name                = "${var.tectonic_cluster_name}"
+  elbs                        = "${module.vpc.aws_lbs}"
+  elbs_length                 = "${module.vpc.aws_lbs_length}"
+  iam_role                    = "${var.tectonic_aws_master_iam_role_name}"
+  ignition                    = "${local.ignition_bootstrap}"
+  subnet_id                   = "${module.vpc.master_subnet_ids[0]}"
+  vpc_security_group_ids      = ["${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"]
+
+  tags = "${merge(map(
+      "Name", "${var.tectonic_cluster_name}-bootstrap",
+      "tectonicClusterID", "${var.tectonic_cluster_id}"
+    ), var.tectonic_aws_extra_tags)}"
+}
+
 module "masters" {
   source = "../../../modules/aws/master"
 

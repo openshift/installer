@@ -46,6 +46,10 @@ output "aws_lbs" {
   value = ["${compact(concat(aws_elb.api_internal.*.id, list(aws_elb.console.id), aws_elb.api_external.*.id))}"]
 }
 
+output "aws_lbs_length" {
+  value = "2"
+}
+
 output "aws_elb_api_external_dns_name" {
   value = "${element(concat(aws_elb.api_external.*.dns_name, list("")), 0)}"
 }
