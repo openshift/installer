@@ -13,11 +13,6 @@ import (
 )
 
 const (
-	// IgnitionPathMaster is the relative path to the ign master cfg from the tf working directory
-	// This is a format string so that the index can be populated later
-	IgnitionPathMaster = "master-%d.ign"
-	// IgnitionPathWorker is the relative path to the ign worker cfg from the tf working directory
-	IgnitionPathWorker = "worker.ign"
 	// PlatformAWS is the platform for a cluster launched on AWS.
 	PlatformAWS Platform = "aws"
 	// PlatformLibvirt is the platform for a cluster launched on libvirt.
@@ -75,14 +70,9 @@ type Cluster struct {
 	BaseDomain string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
 	CA         `json:",inline" yaml:"CA,omitempty"`
 
-	// Deprecated, will be removed soon.
-	IgnitionMasterPaths []string `json:"tectonic_ignition_masters,omitempty" yaml:"-"`
-	// Deprecated, will be removed soon.
-	IgnitionWorkerPath string `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
-
-	IgnitionBootstrap string   `json:"openshift_ignition_bootstrap,omitempty" yaml:"-"`
-	IgnitionMasters   []string `json:"openshift_ignition_master,omitempty" yaml:"-"`
-	IgnitionWorker    string   `json:"openshift_ignition_worker,omitempty" yaml:"-"`
+	IgnitionBootstrap string   `json:"ignition_bootstrap,omitempty" yaml:"-"`
+	IgnitionMasters   []string `json:"ignition_masters,omitempty" yaml:"-"`
+	IgnitionWorker    string   `json:"ignition_worker,omitempty" yaml:"-"`
 
 	Internal        `json:",inline" yaml:"-"`
 	libvirt.Libvirt `json:",inline" yaml:"libvirt,omitempty"`
@@ -116,13 +106,7 @@ func (c *Cluster) TFVars() (string, error) {
 	c.Master.Count = c.NodeCount(c.Master.NodePools)
 	c.Worker.Count = c.NodeCount(c.Worker.NodePools)
 
-	for i := 0; i < c.Master.Count; i++ {
-		c.IgnitionMasterPaths = append(c.IgnitionMasterPaths, fmt.Sprintf(IgnitionPathMaster, i))
-	}
-
-	c.IgnitionWorkerPath = IgnitionPathWorker
-
-	// fill in master ips
+	// Fill in master ips
 	if c.Platform == PlatformLibvirt {
 		if err := c.Libvirt.TFVars(c.Master.Count, c.Worker.Count); err != nil {
 			return "", err
