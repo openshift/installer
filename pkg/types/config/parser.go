@@ -33,7 +33,7 @@ func ParseConfig(data []byte) (*Cluster, error) {
 		cluster.PullSecret = string(data)
 	}
 
-	if cluster.EC2AMIOverride == "" {
+	if cluster.Platform == PlatformAWS && cluster.EC2AMIOverride == "" {
 		ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 		defer cancel()
 
