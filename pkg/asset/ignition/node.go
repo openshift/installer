@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"path/filepath"
 
 	ignition "github.com/coreos/ignition/config/v2_2/types"
 	"github.com/vincent-petithory/dataurl"
@@ -19,10 +20,14 @@ const (
 	keyCertAssetCrtIndex = 1
 )
 
-// fileFromAsset creates an ignition-config file with the contents from the
+// fileFromContents creates an ignition-config file with the contents from the
 // specified index in the specified asset state.
-func fileFromAsset(path string, mode int, assetState *asset.State, contentIndex int) ignition.File {
-	return fileFromBytes(path, mode, assetState.Contents[contentIndex].Data)
+func filesFromContents(pathPrefix string, mode int, contents []asset.Content) []ignition.File {
+	var files []ignition.File
+	for _, c := range contents {
+		files = append(files, fileFromBytes(filepath.Join(pathPrefix, c.Name), mode, c.Data))
+	}
+	return files
 }
 
 // fileFromString creates an ignition-config file with the given contents.
@@ -30,7 +35,7 @@ func fileFromString(path string, mode int, contents string) ignition.File {
 	return fileFromBytes(path, mode, []byte(contents))
 }
 
-// fileFromAsset creates an ignition-config file with the given contents.
+// fileFromBytes creates an ignition-config file with the given contents.
 func fileFromBytes(path string, mode int, contents []byte) ignition.File {
 	return ignition.File{
 		Node: ignition.Node{

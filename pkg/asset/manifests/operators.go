@@ -110,16 +110,12 @@ func (o *manifests) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 	state := &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: "cluster-config.yaml",
+				Name: filepath.Join(manifestDir, "cluster-config.yaml"),
 				Data: []byte(kubeSys),
 			},
 			{
-				Name: "tectonic-config.yaml",
+				Name: filepath.Join("tectonic", "cluster-config.yaml"),
 				Data: []byte(tectonicSys),
-			},
-			{
-				Name: "mao-config.yaml",
-				Data: mao.Data,
 			},
 		},
 	}

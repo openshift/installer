@@ -63,7 +63,7 @@ func (kco *kubeCoreOperator) Generate(dependencies map[asset.Asset]*asset.State)
 	state := &asset.State{
 		Contents: []asset.Content{
 			{
-				Name: "kube-core-operator-config.yml",
+				Name: "kco-config.yaml",
 				Data: data,
 			},
 		},

@@ -51,9 +51,9 @@ func EstablishStock() *Stock {
 	s.installConfigStock.EstablishStock()
 	s.tlsStock.EstablishStock(&s.installConfigStock)
 	s.kubeconfigStock.EstablishStock(&s.installConfigStock, &s.tlsStock)
-	s.ignitionStock.EstablishStock(s, s, s)
 	s.clusterStock.EstablishStock(s, s)
 	s.manifestsStock.EstablishStock(&s.installConfigStock, s, s)
+	s.ignitionStock.EstablishStock(s, s, s, s)
 
 	return s
 }

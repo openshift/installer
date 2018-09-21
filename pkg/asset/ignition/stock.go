@@ -4,6 +4,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
+	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/tls"
 )
 
@@ -32,8 +33,9 @@ func (s *StockImpl) EstablishStock(
 	installConfigStock installconfig.Stock,
 	tlsStock tls.Stock,
 	kubeconfigStock kubeconfig.Stock,
+	manifestStock manifests.Stock,
 ) {
-	s.boostrap = newBootstrap(installConfigStock, tlsStock, kubeconfigStock)
+	s.boostrap = newBootstrap(installConfigStock, tlsStock, kubeconfigStock, manifestStock)
 	s.master = newMaster(installConfigStock, tlsStock)
 	s.worker = newWorker(installConfigStock, tlsStock)
 }
