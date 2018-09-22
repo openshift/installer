@@ -1,6 +1,7 @@
 package libvirt
 
 import (
+	"compress/gzip"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -51,6 +52,16 @@ func (libvirt *Libvirt) UseCachedImage() (err error) {
 	}
 	defer resp.Body.Close()
 
+	var reader io.Reader
+	if strings.HasSuffix(libvirt.Image, ".gz") {
+		reader, err = gzip.NewReader(resp.Body)
+		if err != nil {
+			return err
+		}
+	} else {
+		reader = resp.Body
+	}
+
 	// FIXME: diskcache's diskv backend doesn't expose direct file access.
 	// We can write our own cache implementation to get around this,
 	// but for now just dump this into /tmp without cleanup.
@@ -60,7 +71,7 @@ func (libvirt *Libvirt) UseCachedImage() (err error) {
 	}
 	defer file.Close()
 
-	_, err = io.Copy(file, resp.Body)
+	_, err = io.Copy(file, reader)
 	if err != nil {
 		return err
 	}
