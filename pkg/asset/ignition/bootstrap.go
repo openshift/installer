@@ -193,7 +193,7 @@ func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 		CloudProvider:              getCloudProvider(installConfig),
 		CloudProviderConfig:        getCloudProviderConfig(installConfig),
 		DebugConfig:                "",
-		KubeCoreRenderImage:        "quay.io/coreos/kube-core-renderer-dev:436b1b4395ae54d866edc88864c9b01797cebac1",
+		KubeCoreRenderImage:        "quay.io/coreos/kube-core-renderer-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
 		MachineConfigOperatorImage: "docker.io/openshift/origin-machine-config-operator:v4.0.0",
 		EtcdCertSignerImage:        "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
 		EtcdctlImage:               "quay.io/coreos/etcd:v3.2.14",
@@ -207,7 +207,7 @@ func (a *bootstrap) addBootstrapFiles(config *ignition.Config, dependencies map[
 	config.Storage.Files = append(
 		config.Storage.Files,
 		fileFromBytes("/etc/kubernetes/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
-		fileFromBytes("/var/lib/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
+		fileFromBytes("/var/lib/kubelet/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
 	)
 	config.Storage.Files = append(
 		config.Storage.Files,

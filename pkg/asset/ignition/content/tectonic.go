@@ -101,27 +101,16 @@ kubectl create --filename ingress/pull.json
 
 echo "Creating operators..."
 kubectl create --filename security/priviledged-scc-tectonic.yaml
-kubectl create --filename updater/tectonic-channel-operator-kind.yaml
 kubectl create --filename updater/app-version-kind.yaml
 kubectl create --filename updater/migration-status-kind.yaml
 
-kubectl --namespace=tectonic-system get customresourcedefinition channeloperatorconfigs.tco.coreos.com
-kubectl create --filename updater/tectonic-channel-operator-config.yaml
-
 kubectl create --filename updater/operators/kube-core-operator.yaml
-kubectl create --filename updater/operators/tectonic-channel-operator.yaml
 kubectl create --filename updater/operators/kube-addon-operator.yaml
-kubectl create --filename updater/operators/tectonic-alm-operator.yaml
-kubectl create --filename updater/operators/tectonic-utility-operator.yaml
-kubectl create --filename updater/operators/tectonic-ingress-controller-operator.yaml
 
 kubectl --namespace=tectonic-system get customresourcedefinition appversions.tco.coreos.com
 kubectl create --filename updater/app_versions/app-version-tectonic-cluster.yaml
 kubectl create --filename updater/app_versions/app-version-kube-core.yaml
 kubectl create --filename updater/app_versions/app-version-kube-addon.yaml
-kubectl create --filename updater/app_versions/app-version-tectonic-alm.yaml
-kubectl create --filename updater/app_versions/app-version-tectonic-utility.yaml
-kubectl create --filename updater/app_versions/app-version-tectonic-ingress.yaml
 
 # Wait for Tectonic pods
 wait_for_pods tectonic-system
