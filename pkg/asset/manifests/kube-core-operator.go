@@ -2,7 +2,6 @@ package manifests
 
 import (
 	"fmt"
-	"net"
 	"strings"
 
 	"github.com/ghodss/yaml"
@@ -85,8 +84,7 @@ func (kco *kubeCoreOperator) coreConfig() (*kubecore.OperatorConfig, error) {
 	coreConfig.AuthConfig.OIDCGroupsClaim = authConfigOIDCGroupsClaim
 	coreConfig.AuthConfig.OIDCUsernameClaim = authConfigOIDCUsernameClaim
 
-	svcCidr := kco.installConfig.Networking.ServiceCIDR
-	ip, err := cidr.Host(&net.IPNet{IP: svcCidr.IP, Mask: svcCidr.Mask}, 10)
+	ip, err := cidr.Host(&kco.installConfig.Networking.ServiceCIDR.IPNet, 10)
 	if err != nil {
 		return nil, err
 	}
