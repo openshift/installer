@@ -37,6 +37,17 @@ type InstallConfig struct {
 	PullSecret string `json:"pullSecret"`
 }
 
+// MasterCount returns the number of replicas in the master machine pool,
+// defaulting to one if no machine pool was found.
+func (c *InstallConfig) MasterCount() int {
+	for _, m := range c.Machines {
+		if m.Name == "master" && m.Replicas != nil {
+			return int(*m.Replicas)
+		}
+	}
+	return 1
+}
+
 // Admin is the configuration for the admin user.
 type Admin struct {
 	// Email is the email address of the admin user.

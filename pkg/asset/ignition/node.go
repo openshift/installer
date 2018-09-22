@@ -51,17 +51,6 @@ func fileFromBytes(path string, mode int, contents []byte) ignition.File {
 	}
 }
 
-// masterCount determines the number of master nodes from the install config,
-// defaulting to one if it is unspecified.
-func masterCount(installConfig *types.InstallConfig) int {
-	for _, m := range installConfig.Machines {
-		if m.Name == "master" && m.Replicas != nil {
-			return int(*m.Replicas)
-		}
-	}
-	return 1
-}
-
 // pointerIgnitionConfig generates a config which references the remote config
 // served by the machine config server.
 func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string, query string) []byte {

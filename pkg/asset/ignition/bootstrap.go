@@ -184,7 +184,7 @@ func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 	if err != nil {
 		return nil, err
 	}
-	etcdEndpoints := make([]string, masterCount(installConfig))
+	etcdEndpoints := make([]string, installConfig.MasterCount())
 	for i := range etcdEndpoints {
 		etcdEndpoints[i] = fmt.Sprintf("https://%s-etcd-%d.%s:2379", installConfig.Name, i, installConfig.BaseDomain)
 	}
