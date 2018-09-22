@@ -137,7 +137,11 @@ func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 		return nil, err
 	}
 
-	config := ignition.Config{}
+	config := ignition.Config{
+		Ignition: ignition.Ignition{
+			Version: ignition.MaxVersion.String(),
+		},
+	}
 
 	a.addBootstrapFiles(&config, dependencies)
 	a.addBootkubeFiles(&config, dependencies, templateData)

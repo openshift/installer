@@ -67,6 +67,7 @@ func masterCount(installConfig *types.InstallConfig) int {
 func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string, query string) []byte {
 	data, err := json.Marshal(ignition.Config{
 		Ignition: ignition.Ignition{
+			Version: ignition.MaxVersion.String(),
 			Config: ignition.IgnitionConfig{
 				Append: []ignition.ConfigReference{{
 					Source: func() *url.URL {
@@ -86,6 +87,13 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 					}},
 				},
 			},
+		},
+		// XXX: Remove this once MCO supports injecting SSH keys.
+		Passwd: ignition.Passwd{
+			Users: []ignition.PasswdUser{{
+				Name:              "core",
+				SSHAuthorizedKeys: []ignition.SSHAuthorizedKey{ignition.SSHAuthorizedKey(installConfig.Admin.SSHKey)},
+			}},
 		},
 	})
 	if err != nil {
