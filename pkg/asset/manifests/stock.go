@@ -60,7 +60,6 @@ func (s *StockImpl) EstablishStock(stock installconfig.Stock, tlsStock tls.Stock
 		apiServerCertKey:          tlsStock.APIServerCertKey(),
 		openshiftAPIServerCertKey: tlsStock.OpenshiftAPIServerCertKey(),
 		apiServerProxyCertKey:     tlsStock.APIServerProxyCertKey(),
-		adminCertKey:              tlsStock.AdminCertKey(),
 		kubeletCertKey:            tlsStock.KubeletCertKey(),
 		mcsCertKey:                tlsStock.MCSCertKey(),
 		serviceAccountKeyPair:     tlsStock.ServiceAccountKeyPair(),

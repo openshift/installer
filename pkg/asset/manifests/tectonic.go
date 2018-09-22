@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"encoding/base64"
 	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -44,25 +45,22 @@ func (t *tectonic) Generate(dependencies map[asset.Asset]*asset.State) (*asset.S
 	if err != nil {
 		return nil, err
 	}
-	manifestDir := "tectonic"
-	assetContents := make([]asset.Content, 0)
-
 	ingressContents := dependencies[t.ingressCertKey].Contents
 	templateData := &tectonicTemplateData{
-		IngressCaCert:                          string(dependencies[t.kubeCA].Contents[certIndex].Data),
+		IngressCaCert:                          base64.StdEncoding.EncodeToString(dependencies[t.kubeCA].Contents[certIndex].Data),
 		IngressKind:                            "haproxy-router",
 		IngressStatusPassword:                  ic.Admin.Password, // FIXME: generate a new random one instead?
-		IngressTLSBundle:                       string(ingressContents[certIndex].Data),
-		IngressTLSCert:                         string(ingressContents[certIndex].Data),
-		IngressTLSKey:                          string(ingressContents[keyIndex].Data),
+		IngressTLSBundle:                       base64.StdEncoding.EncodeToString(ingressContents[certIndex].Data),
+		IngressTLSCert:                         base64.StdEncoding.EncodeToString(ingressContents[certIndex].Data),
+		IngressTLSKey:                          base64.StdEncoding.EncodeToString(ingressContents[keyIndex].Data),
 		KubeAddonOperatorImage:                 "quay.io/coreos/kube-addon-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
 		KubeCoreOperatorImage:                  "quay.io/coreos/kube-core-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
-		PullSecret:                             ic.PullSecret,
+		PullSecret:                             base64.StdEncoding.EncodeToString([]byte(ic.PullSecret)),
 		TectonicIngressControllerOperatorImage: "quay.io/coreos/tectonic-ingress-controller-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
 		TectonicVersion:                        "1.8.4-tectonic.2",
 	}
 
-	assetContentMap := map[string]string{
+	assetData := map[string][]byte{
 		// template files
 		"secrets/ingress-tls.yaml":                                    applyTemplateData(secrets.IngressTLS, templateData),
 		"secrets/ca-cert.yaml":                                        applyTemplateData(secrets.CaCert, templateData),
@@ -75,28 +73,26 @@ func (t *tectonic) Generate(dependencies map[asset.Asset]*asset.State) (*asset.S
 		"ingress/cluster-config.yaml":                                 applyTemplateData(ingress.ClusterConfig, templateData),
 
 		// constant files
-		"security/priviledged-scc-tectonic.yaml":                 security.PriviledgedSccTectonic,
-		"rbac/role-admin.yaml":                                   rbac.RoleAdmin,
-		"rbac/binding-admin.yaml":                                rbac.BindingAdmin,
-		"rbac/binding-discovery.yaml":                            rbac.BindingDiscovery,
-		"rbac/role-user.yaml":                                    rbac.RoleUser,
-		"updater/migration-status-kind.yaml":                     updater.MigrationStatusKind,
-		"updater/app_versions/app-version-kube-addon.yaml":       appversions.AppVersionKubeAddon,
-		"updater/app_versions/app-version-tectonic-ingress.yaml": appversions.AppVersionTectonicIngress,
-		"updater/app_versions/app-version-kube-core.yaml":        appversions.AppVersionKubeCore,
-		"updater/app-version-kind.yaml":                          updater.AppVersionKind,
-		"ingress/svc-account.yaml":                               ingress.SvcAccount,
+		"security/priviledged-scc-tectonic.yaml":                 []byte(security.PriviledgedSccTectonic),
+		"rbac/role-admin.yaml":                                   []byte(rbac.RoleAdmin),
+		"rbac/binding-admin.yaml":                                []byte(rbac.BindingAdmin),
+		"rbac/binding-discovery.yaml":                            []byte(rbac.BindingDiscovery),
+		"rbac/role-user.yaml":                                    []byte(rbac.RoleUser),
+		"updater/migration-status-kind.yaml":                     []byte(updater.MigrationStatusKind),
+		"updater/app_versions/app-version-kube-addon.yaml":       []byte(appversions.AppVersionKubeAddon),
+		"updater/app_versions/app-version-tectonic-ingress.yaml": []byte(appversions.AppVersionTectonicIngress),
+		"updater/app_versions/app-version-kube-core.yaml":        []byte(appversions.AppVersionKubeCore),
+		"updater/app-version-kind.yaml":                          []byte(updater.AppVersionKind),
+		"ingress/svc-account.yaml":                               []byte(ingress.SvcAccount),
 	}
 
-	for k, v := range assetContentMap {
-		assetContent := asset.Content{
-			Name: filepath.Join(manifestDir, k),
-			Data: []byte(v),
-		}
-		assetContents = append(assetContents, assetContent)
+	var assetContents []asset.Content
+	for name, data := range assetData {
+		assetContents = append(assetContents, asset.Content{
+			Name: filepath.Join("tectonic", name),
+			Data: data,
+		})
 	}
-	state := &asset.State{
-		Contents: assetContents,
-	}
-	return state, nil
+
+	return &asset.State{Contents: assetContents}, nil
 }
