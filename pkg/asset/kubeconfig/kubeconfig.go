@@ -47,12 +47,13 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 		return nil, err
 	}
 
-	var keyFilename, certFilename string
+	var keyFilename, certFilename, kubeconfigSuffix string
 	switch k.userName {
 	case KubeconfigUserNameAdmin:
 		keyFilename, certFilename = tls.AdminKeyName, tls.AdminCertName
 	case KubeconfigUserNameKubelet:
 		keyFilename, certFilename = tls.KubeletKeyName, tls.KubeletCertName
+		kubeconfigSuffix = fmt.Sprintf("-%s", KubeconfigUserNameKubelet)
 	}
 	clientKeyData, err := asset.GetDataByFilename(k.certKey, parents, keyFilename)
 	if err != nil {
@@ -107,7 +108,7 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 		Contents: []asset.Content{
 			{
 				// E.g. generated/auth/kubeconfig-admin.
-				Name: filepath.Join("auth", fmt.Sprintf("kubeconfig-%s", k.userName)),
+				Name: filepath.Join("auth", "kubeconfig"+kubeconfigSuffix),
 				Data: data,
 			},
 		},

@@ -2,7 +2,6 @@ package kubeconfig
 
 import (
 	"fmt"
-	"path/filepath"
 	"testing"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -210,8 +209,6 @@ users:
 				t.Errorf("expect error %v, saw nil", tt.errString)
 			}
 
-			filename := filepath.Join("auth", fmt.Sprintf("kubeconfig-%s", tt.userName))
-			assert.Equal(t, filename, st.Contents[0].Name, "unexpected filename")
 			assert.Equal(t, tt.expectedData, st.Contents[0].Data, "unexpected data in kubeconfig")
 		})
 	}
