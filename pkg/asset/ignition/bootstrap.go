@@ -260,6 +260,11 @@ func (a *bootstrap) addTLSCertFiles(config *ignition.Config, dependencies map[as
 	} {
 		config.Storage.Files = append(config.Storage.Files, filesFromContents(rootDir, 0600, dependencies[asset].Contents)...)
 	}
+
+	config.Storage.Files = append(
+		config.Storage.Files,
+		fileFromBytes("/etc/ssl/etcd/ca.crt", 0600, dependencies[a.etcdClientCertKey].Contents[tls.CertIndex].Data),
+	)
 }
 
 func getCloudProvider(installConfig *types.InstallConfig) string {
