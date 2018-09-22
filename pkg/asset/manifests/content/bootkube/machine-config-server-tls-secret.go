@@ -16,5 +16,5 @@ type: Opaque
 data:
   tls.crt: {{.McsTLSCert}}
   tls.key: {{.McsTLSKey}}
-  `))
+`))
 )

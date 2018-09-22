@@ -11,5 +11,5 @@ metadata:
   name: openshift-web-console
   labels:
     name: openshift-web-console
-    `
+`
 )

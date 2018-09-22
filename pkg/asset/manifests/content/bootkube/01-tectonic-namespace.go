@@ -10,5 +10,5 @@ metadata:
   labels: # network policy can only select by labels
     name: tectonic-system
     openshift.io/run-level: "1"
-    `
+`
 )

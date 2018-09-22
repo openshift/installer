@@ -10,5 +10,5 @@ metadata:
   labels:
     name: openshift-machine-config-operator
     openshift.io/run-level: "1"
-    `
+`
 )

@@ -11,5 +11,5 @@ metadata:
   labels:
     name: openshift-cluster-api
     openshift.io/run-level: "1"
-    `
+`
 )

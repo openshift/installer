@@ -56,6 +56,5 @@ spec:
           items:
           - key: mao-config
             path: config
-
-	    `
+`
 )

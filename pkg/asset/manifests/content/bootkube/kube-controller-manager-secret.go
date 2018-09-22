@@ -18,5 +18,5 @@ data:
   root-ca.crt: {{.RootCaCert}}
   kube-ca.crt: {{.KubeCaCert}}
   kube-ca.key: {{.KubeCaKey}}
-  `))
+`))
 )

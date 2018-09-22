@@ -13,5 +13,5 @@ spec:
   names:
     plural: "appversions"
     kind: "AppVersion"
-    `
+`
 )

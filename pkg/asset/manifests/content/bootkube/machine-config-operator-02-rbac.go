@@ -16,5 +16,5 @@ roleRef:
   kind: ClusterRole
   name: cluster-admin
   apiGroup: rbac.authorization.k8s.io
-  `
+`
 )

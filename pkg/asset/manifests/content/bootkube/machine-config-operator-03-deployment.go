@@ -64,5 +64,5 @@ spec:
       - name: root-ca
         hostPath:
           path: /etc/kubernetes/ca.crt
-	  `))
+`))
 )

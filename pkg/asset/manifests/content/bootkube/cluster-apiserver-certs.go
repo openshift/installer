@@ -19,5 +19,5 @@ metadata:
 data:
   tls.crt: {{.ClusterapiCaCert}}
   tls.key: {{.ClusterapiCaKey}}
-  `))
+`))
 )
