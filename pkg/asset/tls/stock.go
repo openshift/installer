@@ -18,9 +18,9 @@ const (
 	// KubeCACertName is the filename of the KubeCACert.
 	KubeCACertName = "kube-ca.crt"
 	// EtcdCAKeyName is the filename of the EtcdCAKey.
-	EtcdCAKeyName = "etcd-ca.key"
+	EtcdCAKeyName = "etcd-client-ca.key"
 	// EtcdCACertName is the filename of the EtcdCACert.
-	EtcdCACertName = "etcd-ca.crt"
+	EtcdCACertName = "etcd-client-ca.crt"
 	// AggregatorCAKeyName is the filename of the AggregatorCAKey.
 	AggregatorCAKeyName = "aggregator-ca.key"
 	// AggregatorCACertName is the filename of the AggregatorCACert.
@@ -58,9 +58,9 @@ const (
 	// KubeletCertName is the filename of the KubeletCert.
 	KubeletCertName = "kubelet.crt"
 	// MCSKeyName is the filename of the MCSKey.
-	MCSKeyName = "mcs.key"
+	MCSKeyName = "machine-config-server.key"
 	// MCSCertName is the filename of the MCSCert.
-	MCSCertName = "mcs.crt"
+	MCSCertName = "machine-config-server.crt"
 	// ClusterAPIServerCAKeyName is the filename of the ClusterAPIServerCAKey.
 	ClusterAPIServerCAKeyName = "cluster-apiserver-ca.key"
 	// ClusterAPIServerCACertName is the filename of the ClusterAPIServerCACert.
@@ -283,7 +283,7 @@ func (s *StockImpl) EstablishStock(stock installconfig.Stock) {
 
 	s.clusterAPIServerCertKey = &CertKey{
 		installConfig: stock.InstallConfig(),
-		Subject:       pkix.Name{CommonName: "cluster-apiserver", OrganizationalUnit: []string{"bootkube"}},
+		Subject:       pkix.Name{CommonName: "clusterapi.openshift-cluster-api.svc", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages:     x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
 		Validity:      ValidityTenYears,
 		KeyFileName:   ClusterAPIServerCAKeyName,
