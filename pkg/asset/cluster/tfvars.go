@@ -64,6 +64,12 @@ func (t *TerraformVariables) Generate(parents map[asset.Asset]*asset.State) (*as
 		return nil, err
 	}
 
+	if cluster.Platform == config.PlatformLibvirt {
+		if err := cluster.Libvirt.UseCachedImage(); err != nil {
+			return nil, err
+		}
+	}
+
 	data, err := cluster.TFVars()
 	if err != nil {
 		return nil, err
