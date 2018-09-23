@@ -80,16 +80,6 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 			},
 		},
 		PullSecret: pullSecret,
-		Machines: []types.MachinePool{
-			{
-				Name:     "master",
-				Replicas: func(x int64) *int64 { return &x }(3),
-			},
-			{
-				Name:     "worker",
-				Replicas: func(x int64) *int64 { return &x }(3),
-			},
-		},
 	}
 
 	platformState := dependencies[a.assetStock.Platform()]
@@ -101,7 +91,6 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 			Region:       region,
 			VPCCIDRBlock: defaultVPCCIDR,
 		}
-		// Set the default master and worker nodes to 3 for AWS.
 		installConfig.Machines = []types.MachinePool{
 			{
 				Name:     "master",
@@ -126,7 +115,6 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 				Image: defaultLibvirtImageURL,
 			},
 		}
-		// Set the default master and worker nodes to 1 for AWS.
 		installConfig.Machines = []types.MachinePool{
 			{
 				Name:     "master",
