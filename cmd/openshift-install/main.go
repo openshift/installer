@@ -14,6 +14,7 @@ var (
 	installConfigCommand   = kingpin.Command("install-config", "Generate the Install Config asset")
 	ignitionConfigsCommand = kingpin.Command("ignition-configs", "Generate the Ignition Config assets")
 	manifestsCommand       = kingpin.Command("manifests", "Generate the Kubernetes manifests")
+	clusterCommand         = kingpin.Command("cluster", "Create an OpenShift cluster")
 
 	dirFlag  = kingpin.Flag("dir", "assets directory").Default(".").String()
 	logLevel = kingpin.Flag("log-level", "log level (e.g. \"debug\")").Default("warn").Enum("debug", "info", "warn", "error", "fatal", "panic")
@@ -38,6 +39,12 @@ func main() {
 		targetAssets = []asset.Asset{
 			assetStock.Manifests(),
 			assetStock.Tectonic(),
+		}
+	case clusterCommand.FullCommand():
+		targetAssets = []asset.Asset{
+			assetStock.TFVars(),
+			assetStock.KubeconfigAdmin(),
+			assetStock.Cluster(),
 		}
 	}
 

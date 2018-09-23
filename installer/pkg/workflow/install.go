@@ -1,11 +1,15 @@
 package workflow
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path/filepath"
 
 	"github.com/openshift/installer/installer/pkg/config-generator"
+	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/types/config"
 )
 
 // InstallWorkflow creates new instances of the 'install' workflow,
@@ -26,27 +30,56 @@ func InstallWorkflow(clusterDir string) Workflow {
 }
 
 func installAssetsStep(m *metadata) error {
-	return runInstallStep(m, assetsStep)
+	return runInstallStep(m, terraform.AssetsStep)
 }
 
 func installInfraStep(m *metadata) error {
-	return runInstallStep(m, infraStep)
+	return runInstallStep(m, terraform.InfraStep)
 }
 
 func runInstallStep(m *metadata, step string, extraArgs ...string) error {
-	templateDir, err := findStepTemplates(step, m.cluster.Platform)
+	dir, err := terraform.BaseLocation()
 	if err != nil {
 		return err
 	}
-	if err := tfInit(m.clusterDir, templateDir); err != nil {
+	templateDir, err := terraform.FindStepTemplates(dir, step, m.cluster.Platform)
+	if err != nil {
 		return err
 	}
-	return tfApply(m.clusterDir, step, templateDir, extraArgs...)
+	if err := terraform.Init(m.clusterDir, templateDir); err != nil {
+		return err
+	}
+	_, err = terraform.Apply(m.clusterDir, step, templateDir, extraArgs...)
+	return err
 }
 
 func generateIgnConfigStep(m *metadata) error {
 	c := configgenerator.New(m.cluster)
-	return c.GenerateIgnConfig(m.clusterDir)
+	masterIgns, workerIgn, err := c.GenerateIgnConfig(m.clusterDir)
+	if err != nil {
+		return fmt.Errorf("failed to generate ignition configs: %v", err)
+	}
+
+	terraformVariablesFilePath := filepath.Join(m.clusterDir, terraformVariablesFileName)
+	data, err := ioutil.ReadFile(terraformVariablesFilePath)
+	if err != nil {
+		return fmt.Errorf("failed to read terraform.tfvars: %v", err)
+	}
+
+	var cluster config.Cluster
+	if err := json.Unmarshal(data, &cluster); err != nil {
+		return fmt.Errorf("failed to unmarshal terraform.tfvars: %v", err)
+	}
+
+	cluster.IgnitionMasters = masterIgns
+	cluster.IgnitionWorker = workerIgn
+
+	data, err = json.MarshalIndent(&cluster, "", "  ")
+	if err != nil {
+		return fmt.Errorf("failed to marshal terraform.tfvars: %v", err)
+	}
+
+	return ioutil.WriteFile(terraformVariablesFilePath, data, 0666)
 }
 
 func generateTLSConfigStep(m *metadata) error {

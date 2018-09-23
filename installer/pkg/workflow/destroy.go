@@ -7,6 +7,7 @@ import (
 	"time"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/openshift/installer/pkg/terraform"
 	"k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -39,11 +40,11 @@ func DestroyWorkflow(clusterDir string, contOnErr bool) Workflow {
 }
 
 func destroyAssetsStep(m *metadata) error {
-	return runDestroyStep(m, assetsStep)
+	return runDestroyStep(m, terraform.AssetsStep)
 }
 
 func destroyInfraStep(m *metadata) error {
-	return runDestroyStep(m, infraStep)
+	return runDestroyStep(m, terraform.InfraStep)
 }
 
 func destroyWorkersStep(m *metadata) error {
@@ -127,16 +128,22 @@ func deleteWorkerMachineSet(client *clientset.Clientset) error {
 }
 
 func runDestroyStep(m *metadata, step string, extraArgs ...string) error {
-	if !hasStateFile(m.clusterDir, step) {
+	if !terraform.HasStateFile(m.clusterDir, step) {
 		// there is no statefile, therefore nothing to destroy for this step
 		return nil
 	}
-	templateDir, err := findStepTemplates(step, m.cluster.Platform)
+
+	dir, err := terraform.BaseLocation()
 	if err != nil {
 		return err
 	}
 
-	return tfDestroy(m.clusterDir, step, templateDir, extraArgs...)
+	templateDir, err := terraform.FindStepTemplates(dir, step, m.cluster.Platform)
+	if err != nil {
+		return err
+	}
+
+	return terraform.Destroy(m.clusterDir, step, templateDir, extraArgs...)
 }
 
 func buildClusterClient(kubeconfig string) (*clientset.Clientset, error) {

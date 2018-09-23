@@ -13,11 +13,6 @@ import (
 )
 
 const (
-	// IgnitionPathMaster is the relative path to the ign master cfg from the tf working directory
-	// This is a format string so that the index can be populated later
-	IgnitionPathMaster = "master-%d.ign"
-	// IgnitionPathWorker is the relative path to the ign worker cfg from the tf working directory
-	IgnitionPathWorker = "worker.ign"
 	// PlatformAWS is the platform for a cluster launched on AWS.
 	PlatformAWS Platform = "aws"
 	// PlatformLibvirt is the platform for a cluster launched on libvirt.
@@ -75,14 +70,9 @@ type Cluster struct {
 	BaseDomain string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
 	CA         `json:",inline" yaml:"CA,omitempty"`
 
-	// Deprecated, will be removed soon.
-	IgnitionMasterPaths []string `json:"tectonic_ignition_masters,omitempty" yaml:"-"`
-	// Deprecated, will be removed soon.
-	IgnitionWorkerPath string `json:"tectonic_ignition_worker,omitempty" yaml:"-"`
-
-	IgnitionBootstrap string   `json:"openshift_ignition_bootstrap,omitempty" yaml:"-"`
-	IgnitionMasters   []string `json:"openshift_ignition_master,omitempty" yaml:"-"`
-	IgnitionWorker    string   `json:"openshift_ignition_worker,omitempty" yaml:"-"`
+	IgnitionBootstrap string   `json:"ignition_bootstrap,omitempty" yaml:"-"`
+	IgnitionMasters   []string `json:"ignition_masters,omitempty" yaml:"-"`
+	IgnitionWorker    string   `json:"ignition_worker,omitempty" yaml:"-"`
 
 	Internal        `json:",inline" yaml:"-"`
 	libvirt.Libvirt `json:",inline" yaml:"libvirt,omitempty"`
@@ -116,13 +106,7 @@ func (c *Cluster) TFVars() (string, error) {
 	c.Master.Count = c.NodeCount(c.Master.NodePools)
 	c.Worker.Count = c.NodeCount(c.Worker.NodePools)
 
-	for i := 0; i < c.Master.Count; i++ {
-		c.IgnitionMasterPaths = append(c.IgnitionMasterPaths, fmt.Sprintf(IgnitionPathMaster, i))
-	}
-
-	c.IgnitionWorkerPath = IgnitionPathWorker
-
-	// fill in master ips
+	// Fill in master ips
 	if c.Platform == PlatformLibvirt {
 		if err := c.Libvirt.TFVars(c.Master.Count, c.Worker.Count); err != nil {
 			return "", err
@@ -159,10 +143,10 @@ func (c *Cluster) YAML() (string, error) {
 	return string(yaml), nil
 }
 
-// ConvertInstallConfigToTFVar converts the installconfig to the Cluster struct
+// ConvertInstallConfigToTFVars converts the installconfig to the Cluster struct
 // that represents the terraform.tfvar file.
 // TODO(yifan): Clean up the Cluster struct to trim unnecessary fields.
-func ConvertInstallConfigToTFVar(cfg *types.InstallConfig, bootstrapIgn string, masterIgns []string, workerIgn string) (*Cluster, error) {
+func ConvertInstallConfigToTFVars(cfg *types.InstallConfig, bootstrapIgn string, masterIgns []string, workerIgn string) (*Cluster, error) {
 	cluster := &Cluster{
 		Admin: Admin{
 			Email:    cfg.Admin.Email,
@@ -182,6 +166,8 @@ func ConvertInstallConfigToTFVar(cfg *types.InstallConfig, bootstrapIgn string, 
 			Type:        tectonicnetwork.NetworkType(cfg.Networking.Type),
 			ServiceCIDR: cfg.Networking.ServiceCIDR.String(),
 			PodCIDR:     cfg.Networking.PodCIDR.String(),
+			// TODO(yifan): Remove this when we drop the old installer binary.
+			MTU: "1480",
 		},
 		BaseDomain: cfg.BaseDomain,
 		Name:       cfg.Name,
@@ -191,6 +177,8 @@ func ConvertInstallConfigToTFVar(cfg *types.InstallConfig, bootstrapIgn string, 
 	if cfg.Platform.AWS != nil {
 		cluster.Platform = PlatformAWS
 		cluster.AWS = aws.AWS{
+			Endpoints: aws.EndpointsAll,   // Default value for endpoints.
+			Profile:   aws.DefaultProfile, // Default value for profile.
 			Region:    cfg.Platform.AWS.Region,
 			ExtraTags: cfg.Platform.AWS.UserTags,
 			External: aws.External{
@@ -211,6 +199,7 @@ func ConvertInstallConfigToTFVar(cfg *types.InstallConfig, bootstrapIgn string, 
 				IfName:  cfg.Platform.Libvirt.Network.IfName,
 				IPRange: cfg.Platform.Libvirt.Network.IPRange,
 			},
+			Image:     cfg.Platform.Libvirt.DefaultMachinePlatform.Image,
 			MasterIPs: masterIPs,
 		}
 	}
@@ -259,6 +248,11 @@ func ConvertInstallConfigToTFVar(cfg *types.InstallConfig, bootstrapIgn string, 
 			return nil, fmt.Errorf("unrecognized machine pool %q", m.Name)
 		}
 
+	}
+
+	// Validate the TFVars.
+	if err := cluster.ValidateAndLog(); err != nil {
+		return nil, err
 	}
 
 	return cluster, nil

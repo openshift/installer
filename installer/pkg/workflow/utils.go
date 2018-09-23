@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path"
 	"path/filepath"
 
 	configgenerator "github.com/openshift/installer/installer/pkg/config-generator"
@@ -13,42 +12,9 @@ import (
 )
 
 const (
-	assetsStep       = "assets"
-	bootstrapStep    = "bootstrap"
-	binaryPrefix     = "installer"
 	configFileName   = "config.yaml"
-	infraStep        = "infra"
 	internalFileName = "internal.yaml"
-	stepsBaseDir     = "steps"
 )
-
-// returns the directory containing templates for a given step. If platform is
-// specified, it looks for a subdirectory with platform first, falling back if
-// there are no platform-specific templates for that step
-func findStepTemplates(stepName string, platform config.Platform) (string, error) {
-	base, err := baseLocation()
-	if err != nil {
-		return "", fmt.Errorf("error looking up step %s templates: %v", stepName, err)
-	}
-	stepDir := filepath.Join(base, stepsBaseDir, stepName)
-	for _, path := range []string{
-		filepath.Join(stepDir, string(platform)),
-		stepDir} {
-
-		stat, err := os.Stat(path)
-		if err != nil {
-			if os.IsNotExist(err) {
-				continue
-			}
-			return "", fmt.Errorf("invalid path for %q templates: %s", base, err)
-		}
-		if !stat.IsDir() {
-			return "", fmt.Errorf("invalid path for %q templates", base)
-		}
-		return path, nil
-	}
-	return "", os.ErrNotExist
-}
 
 func generateClusterConfigMaps(m *metadata) error {
 	clusterGeneratedPath := filepath.Join(m.clusterDir, generatedPath)
@@ -133,16 +99,4 @@ func readClusterConfigStep(m *metadata) error {
 	m.cluster = *cluster
 
 	return nil
-}
-
-func baseLocation() (string, error) {
-	ex, err := os.Executable()
-	if err != nil {
-		return "", fmt.Errorf("undetermined location of own executable: %s", err)
-	}
-	ex = path.Dir(ex)
-	if path.Base(ex) != binaryPrefix {
-		return "", fmt.Errorf("%s executable in unknown location: %s", path.Base(ex), err)
-	}
-	return path.Dir(ex), nil
 }

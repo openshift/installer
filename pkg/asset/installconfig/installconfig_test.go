@@ -1,7 +1,6 @@
 package installconfig
 
 import (
-	"fmt"
 	"net"
 	"testing"
 
@@ -60,122 +59,6 @@ func TestInstallConfigDependencies(t *testing.T) {
 		act[i] = a.name
 	}
 	assert.Equal(t, exp, act, "unexpected dependency")
-}
-
-func TestInstallConfigGenerate(t *testing.T) {
-	cases := []struct {
-		name                 string
-		platformContents     []string
-		expectedPlatformYaml string
-	}{
-		{
-			name: "aws",
-			platformContents: []string{
-				"aws",
-				"test-region",
-			},
-			expectedPlatformYaml: `  aws:
-    region: test-region
-    vpcCIDRBlock: ""
-    vpcID: ""`,
-		},
-		{
-			name: "libvirt",
-			platformContents: []string{
-				"libvirt",
-				"test-uri",
-			},
-			expectedPlatformYaml: `  libvirt:
-    URI: test-uri
-    masterIPs: null
-    network:
-      if: ""
-      ipRange: ""
-      name: ""`,
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			stock := &StockImpl{
-				clusterID:    &testAsset{},
-				emailAddress: &testAsset{},
-				password:     &testAsset{},
-				sshKey:       &testAsset{},
-				baseDomain:   &testAsset{},
-				clusterName:  &testAsset{},
-				pullSecret:   &testAsset{},
-				platform:     &testAsset{},
-			}
-
-			installConfig := &installConfig{
-				assetStock: stock,
-			}
-
-			states := map[asset.Asset]*asset.State{
-				stock.clusterID: {
-					Contents: []asset.Content{{Data: []byte("test-cluster-id")}},
-				},
-				stock.emailAddress: {
-					Contents: []asset.Content{{Data: []byte("test-email")}},
-				},
-				stock.password: {
-					Contents: []asset.Content{{Data: []byte("test-password")}},
-				},
-				stock.sshKey: {
-					Contents: []asset.Content{{Data: []byte("test-sshkey")}},
-				},
-				stock.baseDomain: {
-					Contents: []asset.Content{{Data: []byte("test-domain")}},
-				},
-				stock.clusterName: {
-					Contents: []asset.Content{{Data: []byte("test-cluster-name")}},
-				},
-				stock.pullSecret: {
-					Contents: []asset.Content{{Data: []byte("test-pull-secret")}},
-				},
-				stock.platform: {
-					Contents: make([]asset.Content, len(tc.platformContents)),
-				},
-			}
-			for i, c := range tc.platformContents {
-				states[stock.platform].Contents[i].Data = []byte(c)
-			}
-
-			state, err := installConfig.Generate(states)
-			assert.NoError(t, err, "unexpected error generating asset")
-			assert.NotNil(t, state, "unexpected nil for asset state")
-
-			assert.Equal(t, 1, len(state.Contents), "unexpected number of contents in asset state")
-			assert.Equal(t, "install-config.yml", state.Contents[0].Name, "unexpected filename in asset state")
-
-			exp := fmt.Sprintf(`admin:
-  email: test-email
-  password: test-password
-  sshKey: test-sshkey
-baseDomain: test-domain
-clusterID: test-cluster-id
-machines:
-- name: master
-  platform: {}
-  replicas: 3
-- name: worker
-  platform: {}
-  replicas: 3
-metadata:
-  creationTimestamp: null
-  name: test-cluster-name
-networking:
-  podCIDR: 10.2.0.0/16
-  serviceCIDR: 10.3.0.0/16
-  type: ""
-platform:
-%s
-pullSecret: test-pull-secret
-`, tc.expectedPlatformYaml)
-
-			assert.Equal(t, exp, string(state.Contents[0].Data), "unexpected data in install-config.yml")
-		})
-	}
 }
 
 // TestClusterDNSIP tests the ClusterDNSIP function.

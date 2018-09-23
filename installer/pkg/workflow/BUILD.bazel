@@ -5,10 +5,8 @@ go_library(
     srcs = [
         "convert.go",
         "destroy.go",
-        "executor.go",
         "init.go",
         "install.go",
-        "terraform.go",
         "utils.go",
         "workflow.go",
     ],
@@ -16,6 +14,7 @@ go_library(
     visibility = ["//visibility:public"],
     deps = [
         "//installer/pkg/config-generator:go_default_library",
+        "//pkg/terraform:go_default_library",
         "//pkg/types/config:go_default_library",
         "//vendor/github.com/Sirupsen/logrus:go_default_library",
         "//vendor/gopkg.in/yaml.v2:go_default_library",
