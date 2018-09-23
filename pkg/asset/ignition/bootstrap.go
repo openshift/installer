@@ -60,6 +60,7 @@ type bootstrap struct {
 	kubeconfig                asset.Asset
 	kubeconfigKubelet         asset.Asset
 	manifests                 asset.Asset
+	tectonic                  asset.Asset
 	kubeCoreOperator          asset.Asset
 }
 
@@ -92,6 +93,7 @@ func newBootstrap(
 		kubeconfig:                kubeconfigStock.KubeconfigAdmin(),
 		kubeconfigKubelet:         kubeconfigStock.KubeconfigKubelet(),
 		manifests:                 manifestStock.Manifests(),
+		tectonic:                  manifestStock.Tectonic(),
 		kubeCoreOperator:          manifestStock.KubeCoreOperator(),
 	}
 }
@@ -118,6 +120,7 @@ func (a *bootstrap) Dependencies() []asset.Asset {
 		a.kubeconfig,
 		a.kubeconfigKubelet,
 		a.manifests,
+		a.tectonic,
 		a.kubeCoreOperator,
 	}
 }
@@ -224,10 +227,13 @@ func (a *bootstrap) addBootkubeFiles(config *ignition.Config, dependencies map[a
 }
 
 func (a *bootstrap) addTectonicFiles(config *ignition.Config, dependencies map[asset.Asset]*asset.State, templateData *bootstrapTemplateData) {
-	// TODO (staebler) - missing manifests from tectonic module
 	config.Storage.Files = append(
 		config.Storage.Files,
 		fileFromString("/opt/tectonic/tectonic.sh", 0555, content.TectonicShFileContents),
+	)
+	config.Storage.Files = append(
+		config.Storage.Files,
+		filesFromContents(rootDir, 0644, dependencies[a.tectonic].Contents)...,
 	)
 }
 
