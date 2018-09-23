@@ -20,5 +20,5 @@ module assets_base {
   tectonic_service_cidr         = "${var.tectonic_service_cidr}"
   tectonic_update_channel       = "${var.tectonic_update_channel}"
   tectonic_versions             = "${var.tectonic_versions}"
-  aws_worker_ign_config         = "${file("worker.ign")}"
+  aws_worker_ign_config         = "${var.ignition_worker}"
 }
