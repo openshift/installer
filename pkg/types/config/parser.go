@@ -31,6 +31,7 @@ func ParseConfig(data []byte) (*Cluster, error) {
 			return nil, err
 		}
 		cluster.PullSecret = string(data)
+		cluster.PullSecretPath = ""
 	}
 
 	if cluster.Platform == PlatformAWS && cluster.EC2AMIOverride == "" {
