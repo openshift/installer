@@ -21,6 +21,7 @@ var (
 
 	defaultLibvirtNetworkIfName  = "tt0"
 	defaultLibvirtNetworkIPRange = "192.168.124.0/24"
+	defaultLibvirtImageURL       = "http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz"
 )
 
 // installConfig generates the install-config.yml file.
@@ -113,7 +114,6 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 		}
 	case LibvirtPlatformType:
 		uri := string(platformState.Contents[1].Data)
-		image := string(platformState.Contents[2].Data)
 
 		installConfig.Libvirt = &types.LibvirtPlatform{
 			URI: uri,
@@ -123,7 +123,7 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 				IPRange: defaultLibvirtNetworkIPRange,
 			},
 			DefaultMachinePlatform: &types.LibvirtMachinePoolPlatform{
-				Image: image,
+				Image: defaultLibvirtImageURL,
 			},
 		}
 		// Set the default master and worker nodes to 1 for AWS.
