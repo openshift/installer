@@ -25,6 +25,14 @@ func (a *sshPublicKey) Dependencies() []asset.Asset {
 
 // Generate generates the SSH public key asset.
 func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.State, err error) {
+	if value, ok := os.LookupEnv("OPENSHIFT_INSTALL_SSH_PUB_KEY"); ok {
+		return &asset.State{
+			Contents: []asset.Content{{
+				Data: []byte(value),
+			}},
+		}, nil
+	}
+
 	pubKeys := map[string][]byte{
 		none: {},
 	}

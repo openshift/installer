@@ -55,6 +55,7 @@ func (s *StockImpl) EstablishStock() {
 			Message: "Email Address",
 			Help:    "The email address of the cluster administrator. This will be used to log in to the console.",
 		},
+		EnvVarName: "OPENSHIFT_INSTALL_EMAIL_ADDRESS",
 	}
 	s.password = &asset.UserProvided{
 		AssetName: "Password",
@@ -62,6 +63,7 @@ func (s *StockImpl) EstablishStock() {
 			Message: "Password",
 			Help:    "The password of the cluster administrator. This will be used to log in to the console.",
 		},
+		EnvVarName: "OPENSHIFT_INSTALL_PASSWORD",
 	}
 	s.baseDomain = &asset.UserProvided{
 		AssetName: "Base Domain",
@@ -69,6 +71,7 @@ func (s *StockImpl) EstablishStock() {
 			Message: "Base Domain",
 			Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base.",
 		},
+		EnvVarName: "OPENSHIFT_INSTALL_BASE_DOMAIN",
 	}
 	s.clusterName = &asset.UserProvided{
 		AssetName: "Cluster Name",
@@ -76,6 +79,7 @@ func (s *StockImpl) EstablishStock() {
 			Message: "Cluster Name",
 			Help:    "The name of the cluster. This will be used when generating sub-domains.",
 		},
+		EnvVarName: "OPENSHIFT_INSTALL_CLUSTER_NAME",
 	}
 	s.pullSecret = &asset.UserProvided{
 		AssetName: "Pull Secret",
@@ -83,6 +87,7 @@ func (s *StockImpl) EstablishStock() {
 			Message: "Pull Secret",
 			Help:    "The container registry pull secret for this cluster.",
 		},
+		EnvVarName: "OPENSHIFT_INSTALL_PULL_SECRET",
 	}
 	s.platform = &Platform{}
 	s.sshKey = &sshPublicKey{}
