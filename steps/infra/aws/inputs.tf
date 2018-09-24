@@ -4,6 +4,10 @@ data "terraform_remote_state" "assets" {
   config {
     path = "${path.cwd}/assets.tfstate"
   }
+
+  defaults {
+    ignition_bootstrap = ""
+  }
 }
 
 locals {
