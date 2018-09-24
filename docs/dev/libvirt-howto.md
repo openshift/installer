@@ -247,6 +247,16 @@ FATA[0019] failed to run Terraform: exit status 1
 
 it is likely that your install configuration contains three backslashes after the protocol (i.e. `qemu+tcp:///...`), when it should only be two.
 
+### Init throws an `unsupported protocol scheme` error
+If you're seeing an error similar to
+
+```
+$ tectonic init --config ~/tectonic.libvirt.yaml
+FATA[0000] Get : unsupported protocol scheme ""
+```
+
+then you're probably missing the `file:///` in the value for `image:` in the install configuration.
+
 ### SELinux might prevent access to image files
 Configuring the storage pool to store images in a path incompatible with the SELinux policies (e.g. your home directory) might lead to the following errors:
 
