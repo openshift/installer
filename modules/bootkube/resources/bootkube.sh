@@ -3,6 +3,8 @@ set -e
 
 mkdir --parents /etc/kubernetes/manifests/
 
+echo "DO NOT MERGE ME"
+
 if [ ! -d kco-bootstrap ]
 then
 	echo "Rendering Kubernetes core manifests..."
