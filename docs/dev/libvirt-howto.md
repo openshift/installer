@@ -6,16 +6,38 @@ for operator development.
 ## 1. One-time setup
 It's expected that you will create and destroy clusters often in the course of development. These steps only need to be run once (or once per RHCOS update).
 
-### 1.1 Pick a name and ip range
+Before you begin, install the [build dependencies](dependencies.md).
+
+### 1.1 Install and Enable Libvirt
+On Fedora:
+
+```sh
+sudo dnf install libvirt-daemon
+```
+
+or on CentOS / RHEL:
+
+```sh
+sudo yum install libvirt-daemon
+```
+
+Then start libvirtd:
+
+```sh
+sudo systemctl start libvirtd
+sudo systemctl enable libvirtd
+```
+
+### 1.2 Pick a name and ip range
 In this example, we'll set the baseDomain to `tt.testing`, the name to `test1` and the ipRange to `192.168.124.0/24`
 
-### 1.2 Clone the repo
+### 1.3 Clone the repo
 ```sh
 git clone https://github.com/openshift/installer.git
 cd installer
 ```
 
-### 1.3 (Optional) Download and prepare the operating system image
+### 1.4 (Optional) Download and prepare the operating system image
 
 *By default, the installer will download the latest RHCOS image every time it is invoked. This may be problematic for users who create a large number of clusters or who have limited network bandwidth. The installer allows a local image to be used instead.*
 
@@ -25,10 +47,10 @@ Download the latest RHCOS image (you will need access to the Red Hat internal bu
 curl http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz | gunzip > rhcos-qemu.qcow2
 ```
 
-### 1.4 Get a pull secret
+### 1.5 Get a pull secret
 Go to https://account.coreos.com/ and obtain a Tectonic *pull secret*.
 
-### 1.5 Make sure you have permissions for `qemu:///system`
+### 1.6 Make sure you have permissions for `qemu:///system`
 You may want to grant yourself permissions to use libvirt as a non-root user. You could allow all users in the wheel group by doing the following:
 ```sh
 cat <<EOF >> /etc/polkit-1/rules.d/80-libvirt.rules
@@ -40,7 +62,7 @@ polkit.addRule(function(action, subject) {
 EOF
 ```
 
-### 1.6 Configure libvirt to accept TCP connections
+### 1.7 Configure libvirt to accept TCP connections
 
 The Kubernetes [cluster-api](https://github.com/kubernetes-sigs/cluster-api)
 components drive deployment of worker machines.  The libvirt cluster-api
@@ -118,9 +140,29 @@ sudo firewall-cmd --zone=FedoraWorkstation --list-sources
 
 NOTE: When the firewall rules are no longer needed, `sudo firewalld-cmd --reload`
 will remove the changes made as they were not permanently added. For persistence,
-include the `--permanent` to the commands that add-source and add-port.
+add `--permanent` to the `firewall-cmd` commands and run them a second time.
 
-### 1.7 Prepare the installer configuration file
+### 1.8 Configure default libvirt storage pool
+
+Check to see if a default storage pool has been defined in Libvirt by running
+`virsh --connect qemu:///system pool-list`.  If it does not exist, create it:
+
+```sh
+sudo virsh pool-define /dev/stdin <<EOF
+<pool type='dir'>
+  <name>default</name>
+  <target>
+    <path>/var/lib/libvirt/images</path>
+  </target>
+</pool>
+EOF
+
+sudo virsh pool-start default
+sudo virsh pool-autostart default
+```
+
+
+### 1.9 Prepare the installer configuration file
 1. `cp examples/libvirt.yaml ./`
 2. Edit the configuration file:
     1. Set an email and password in the `admin` section
@@ -132,9 +174,9 @@ include the `--permanent` to the commands that add-source and add-port.
     7. Ensure the `libvirt.uri` IP address matches your virbr0 interface IP address which belongs to the libvirt *default* network.
        If you're uncertain about the libvirt *default* subnet you should be able to see its address using the command `ip -4 a show dev virbr0` or by inspecting `virsh --connect qemu:///system net-dumpxml default`.
     8. Ensure the `libvirt.network.ipRange` does not overlap your virbr0 IP address
-    9. (Optional) Change the `image` to the file URL of the operating system image you downloaded (e.g. `file:///home/user/Downloads/rhcos.qcow`). This will allow the installer to re-use that image instead of having to download it every time.
+    9. (Optional) Change the `image` to the file URL of the operating system image you downloaded (e.g. `file:///home/user/Downloads/rhcos-qemu.qcow2`). This will allow the installer to re-use that image instead of having to download it every time.
 
-### 1.8 Set up NetworkManager DNS overlay
+### 1.10 Set up NetworkManager DNS overlay
 This step is optional, but useful for being able to resolve cluster-internal hostnames from your host.
 1. Edit `/etc/NetworkManager/NetworkManager.conf` and set `dns=dnsmasq` in section `[main]`
 2. Tell dnsmasq to use your cluster. The syntax is `server=/<baseDomain>/<firstIP>`.
@@ -146,14 +188,14 @@ This step is optional, but useful for being able to resolve cluster-internal hos
     ```
 3. `systemctl restart NetworkManager`
 
-### 1.9 Install the terraform provider
+### 1.11 Install the terraform provider
 1. Make sure you have the `virsh` binary installed: `sudo dnf install libvirt-client libvirt-devel`
 2. Install the libvirt terraform provider:
 ```sh
 GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-libvirt
 ```
 
-### 1.10 Cache terrafrom plugins (optional, but makes subsequent runs a bit faster)
+### 1.12 Cache terrafrom plugins (optional, but makes subsequent runs a bit faster)
 ```sh
 cat <<EOF > $HOME/.terraformrc
 plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"
@@ -175,7 +217,7 @@ alias tectonic="${PWD}/tectonic-dev/installer/tectonic"
 
 Initialize (the environment variables are a convenience):
 ```sh
-tectonic init --config=../libvirt.yaml
+tectonic init --config=libvirt.yaml
 export CLUSTER_NAME=<the cluster name>
 export BASE_DOMAIN=<the base domain>
 ```
