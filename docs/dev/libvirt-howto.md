@@ -28,7 +28,7 @@ curl http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest
 ### 1.4 Get a pull secret
 Go to https://account.coreos.com/ and obtain a Tectonic *pull secret*.
 
-#### 1.5 Make sure you have permisions for `qemu:///system`
+### 1.5 Make sure you have permissions for `qemu:///system`
 You may want to grant yourself permissions to use libvirt as a non-root user. You could allow all users in the wheel group by doing the following:
 ```sh
 cat <<EOF >> /etc/polkit-1/rules.d/80-libvirt.rules
@@ -78,14 +78,18 @@ libvirtd_opts="--listen"
 Next, restart libvirt: `systemctl restart libvirtd`
 
 #### Firewall
-Finally, if you have a firewall, you may have to allow connections from the IP
-range used by your cluster nodes.  If you're using the default subnet of
-`192.168.124.0/24`, something along these lines should work:
+Finally, if you have a firewall, you may have to allow connections to the
+libvirt daemon from the IP range used by your cluster nodes.
+
+#### Manual management
+The following example rule works for the suggested cluster ipRange of `192.168.124.0/24` and a libvirt *default* subnet of `192.168.122.0/24`, which might be different in your configuration:
 
 ```
-iptables -I INPUT -p tcp -s 192.168.124.0/24 -d 192.168.124.1 --dport 16509 \
+iptables -I INPUT -p tcp -s 192.168.124.0/24 -d 192.168.122.1 --dport 16509 \
   -j ACCEPT -m comment --comment "Allow insecure libvirt clients"
 ```
+
+#### Firewalld
 
 If using `firewalld`, simply obtain the name of the existing active zone which
 can be used to integrate the appropriate source and ports to allow connections from
@@ -125,7 +129,10 @@ include the `--permanent` to the commands that add-source and add-port.
     4. Set the `name` (e.g. test1)
     5. Look at the `podCIDR` and `serviceCIDR` fields in the `networking` section. Make sure they don't conflict with anything important.
     6. Set the `pullSecret` to your JSON pull secret.
-    7. (Optional) Change the `image` to the file URL of the operating system image you downloaded (e.g. `file:///home/user/Downloads/rhcos.qcow`). This will allow the installer to re-use that image instead of having to download it every time.
+    7. Ensure the `libvirt.uri` IP address matches your virbr0 interface IP address which belongs to the libvirt *default* network.
+       If you're uncertain about the libvirt *default* subnet you should be able to see its address using the command `ip -4 a show dev virbr0` or by inspecting `virsh --connect qemu:///system net-dumpxml default`.
+    8. Ensure the `libvirt.network.ipRange` does not overlap your virbr0 IP address
+    9. (Optional) Change the `image` to the file URL of the operating system image you downloaded (e.g. `file:///home/user/Downloads/rhcos.qcow`). This will allow the installer to re-use that image instead of having to download it every time.
 
 ### 1.8 Set up NetworkManager DNS overlay
 This step is optional, but useful for being able to resolve cluster-internal hostnames from your host.
