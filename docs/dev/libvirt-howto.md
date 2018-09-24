@@ -227,11 +227,25 @@ This will take ~30 minutes to be available. Simply go to `https://${CLUSTER_NAME
 ## FAQ
 
 ### Libvirt vs. AWS
-1. There isn't a load balancer on libvirt. This means:
-    1. We need to manually remap ports that the loadbalancer would
+1. There isn't a load balancer on libvirt.
 
 ## Troubleshooting
 If following the above steps hasn't quite worked, please review this section for well known issues.
+
+### Install throws an `Unable to resolve address 'localhost'` error
+
+If you're seeing an error similar to
+
+```
+Error: Error refreshing state: 1 error(s) occurred:
+
+* provider.libvirt: virError(Code=38, Domain=7, Message='Unable to resolve address 'localhost' service '-1': Servname not supported for ai_socktype')
+
+
+FATA[0019] failed to run Terraform: exit status 1
+```
+
+it is likely that your install configuration contains three backslashes after the protocol (i.e. `qemu+tcp:///...`), when it should only be two.
 
 ### SELinux might prevent access to image files
 Configuring the storage pool to store images in a path incompatible with the SELinux policies (e.g. your home directory) might lead to the following errors:
