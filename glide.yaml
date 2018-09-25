@@ -39,3 +39,4 @@ testImport:
   version: ^1.2.2
   subpackages:
   - assert
+- package: github.com/shurcooL/vfsgen
