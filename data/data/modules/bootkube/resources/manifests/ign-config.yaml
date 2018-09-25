@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: Secret
-metadata:
-  name: ignition-worker
-  namespace: openshift-cluster-api
-type: Opaque
-data:
-  userData: ${worker_ign_config}

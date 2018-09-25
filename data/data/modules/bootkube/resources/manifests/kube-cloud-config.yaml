@@ -1,8 +1,0 @@
-apiVersion: v1
-kind: Secret
-metadata:
-  name: kube-cloud-cfg
-  namespace: kube-system
-type: Opaque
-data:
-  config: ${base64encode(cloud_provider_config)}
