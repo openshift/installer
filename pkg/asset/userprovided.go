@@ -1,13 +1,16 @@
 package asset
 
 import (
+	"os"
+
 	"github.com/AlecAivazis/survey"
 )
 
 // UserProvided generates an asset that is supplied by a user.
 type UserProvided struct {
-	AssetName string
-	Prompt    survey.Prompt
+	AssetName  string
+	Prompt     survey.Prompt
+	EnvVarName string
 }
 
 var _ Asset = (*UserProvided)(nil)
@@ -20,7 +23,11 @@ func (a *UserProvided) Dependencies() []Asset {
 // Generate queries for input from the user.
 func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
 	var response string
-	survey.AskOne(a.Prompt, &response, survey.Required)
+	if value, ok := os.LookupEnv(a.EnvVarName); ok {
+		response = value
+	} else {
+		survey.AskOne(a.Prompt, &response, survey.Required)
+	}
 
 	return &State{
 		Contents: []Content{{
