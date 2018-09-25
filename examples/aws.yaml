@@ -143,6 +143,11 @@ aws:
 #
 # Note: This field MUST be set manually prior to creating the cluster.
 # This applies only to cloud platforms.
+#
+# For AWS, this must be a previously-existing public Route 53 zone.
+# You can check for any already in your account with:
+#
+#   $ aws route53 list-hosted-zones --query 'HostedZones[? !(Config.PrivateZone)].Name' --output text
 baseDomain:
 
 ca:
