@@ -123,7 +123,9 @@ include the `--permanent` to the commands that add-source and add-port.
     4. Set the `name` (e.g. test1)
     5. Look at the `podCIDR` and `serviceCIDR` fields in the `networking` section. Make sure they don't conflict with anything important.
     6. Set the `pullSecret` to your JSON pull secret.
-    7. (Optional) Change the `image` to the file URL of the operating system image you downloaded (e.g. `file:///home/user/Downloads/rhcos.qcow`). This will allow the installer to re-use that image instead of having to download it every time.
+    7. Ensure the libvirt.uri ip address matches your virbr0 interface ip address
+    8. Ensure the libvirt.network.iprange does not overlap your virbr0 ip address
+    9. (Optional) Change the `image` to the file URL of the operating system image you downloaded (e.g. `file:///home/user/Downloads/rhcos.qcow`). This will allow the installer to re-use that image instead of having to download it every time.
 
 #### 1.8 Set up NetworkManager DNS overlay
 This step is optional, but useful for being able to resolve cluster-internal hostnames from your host.
