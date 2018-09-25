@@ -4,17 +4,15 @@ go_library(
     name = "go_default_library",
     srcs = [
         "doc.go",
+        "metadata.go",
         "stock.go",
     ],
-    importpath = "github.com/openshift/installer/pkg/asset/stock",
+    importpath = "github.com/openshift/installer/pkg/asset/metadata",
     visibility = ["//visibility:public"],
     deps = [
+        "//pkg/asset:go_default_library",
         "//pkg/asset/cluster:go_default_library",
-        "//pkg/asset/ignition:go_default_library",
         "//pkg/asset/installconfig:go_default_library",
-        "//pkg/asset/kubeconfig:go_default_library",
-        "//pkg/asset/manifests:go_default_library",
-        "//pkg/asset/metadata:go_default_library",
-        "//pkg/asset/tls:go_default_library",
+        "//pkg/types:go_default_library",
     ],
 )

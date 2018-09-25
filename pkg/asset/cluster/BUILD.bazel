@@ -17,5 +17,6 @@ go_library(
         "//pkg/asset/kubeconfig:go_default_library",
         "//pkg/terraform:go_default_library",
         "//pkg/types/config:go_default_library",
+        "//vendor/github.com/sirupsen/logrus:go_default_library",
     ],
 )

@@ -1,7 +1,7 @@
 package asset
 
 import (
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 // Store is a store for the states of assets.
