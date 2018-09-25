@@ -7,6 +7,8 @@ import (
 	"os"
 	"path/filepath"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/types/config"
@@ -42,7 +44,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
 	dir, err := terraform.BaseLocation()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error finding baselocation for terraform: %v", err)
 	}
 
 	state, ok := parents[c.tfvars]
@@ -68,7 +70,7 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 
 	templateDir, err := terraform.FindStepTemplates(dir, terraform.InfraStep, tfvars.Platform)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error finding terraform templates: %v", err)
 	}
 
 	// This runs the terraform in a temp directory, the tfstate file will be returned
@@ -79,7 +81,8 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 
 	stateFile, err := terraform.Apply(tmpDir, terraform.InfraStep, templateDir)
 	if err != nil {
-		return nil, err
+		// we should try to fetch the terraform state file.
+		log.Errorf("terraform failed: %v", err)
 	}
 
 	data, err := ioutil.ReadFile(stateFile)

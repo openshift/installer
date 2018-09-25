@@ -6,6 +6,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests"
+	"github.com/openshift/installer/pkg/asset/metadata"
 	"github.com/openshift/installer/pkg/asset/tls"
 )
 
@@ -17,6 +18,7 @@ type Stock struct {
 	ignitionStock
 	clusterStock
 	manifestsStock
+	metadataStock
 }
 
 type installConfigStock struct {
@@ -43,6 +45,10 @@ type manifestsStock struct {
 	manifests.StockImpl
 }
 
+type metadataStock struct {
+	metadata.StockImpl
+}
+
 var _ installconfig.Stock = (*Stock)(nil)
 
 // EstablishStock establishes the stock of assets.
@@ -55,6 +61,6 @@ func EstablishStock() *Stock {
 	s.ignitionStock.EstablishStock(s, s, s, s)
 	s.clusterStock.EstablishStock(s, s, s)
 	s.manifestsStock.EstablishStock(&s.installConfigStock, s, s)
-
+	s.metadataStock.EstablishStock(s, s)
 	return s
 }
