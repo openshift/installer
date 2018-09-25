@@ -1,5 +1,5 @@
-hash: ce9cd1b451f26f3d1b56c385e9534aef2b2435276c4872eca5ca925435a276a3
-updated: 2018-09-21T09:26:44.565140695-07:00
+hash: 2c4b7376f073ee54146d225a63286b1f94961aab9f733354c6b5aeeb107ba710
+updated: 2018-09-25T12:42:08.741945969-07:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -18,7 +18,7 @@ imports:
   subpackages:
   - cidr
 - name: github.com/aws/aws-sdk-go
-  version: a93d31c26045c00c52f58dda4dcad02a3e622534
+  version: 0d5157217e4c72d0fc7fabad8e0501d3d5cb768d
   subpackages:
   - aws
   - aws/awserr
@@ -43,11 +43,21 @@ imports:
   - internal/shareddefaults
   - private/protocol
   - private/protocol/ec2query
+  - private/protocol/eventstream
+  - private/protocol/eventstream/eventstreamapi
   - private/protocol/query
   - private/protocol/query/queryutil
   - private/protocol/rest
+  - private/protocol/restxml
   - private/protocol/xml/xmlutil
+  - service/autoscaling
   - service/ec2
+  - service/elb
+  - service/iam
+  - service/route53
+  - service/s3
+  - service/s3/s3iface
+  - service/s3/s3manager
   - service/sts
 - name: github.com/beorn7/perks
   version: 3ac7bf7a47d159a033b107610db8a1b6575507a4
@@ -229,6 +239,8 @@ imports:
   version: bf9dde6d0d2c004a008c27aaee91170c786f6db8
 - name: github.com/imdario/mergo
   version: 6633656539c1639d9d78127b7d47c622b5d7b6dc
+- name: github.com/inconshreveable/mousetrap
+  version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
 - name: github.com/jmespath/go-jmespath
   version: c2b33e8439af944379acbdd9c3a5fe0bc44bd8a5
 - name: github.com/json-iterator/go
@@ -241,6 +253,8 @@ imports:
   version: 14201e804a58a140011a0044b15331f477535f91
   subpackages:
   - pkg/builders
+- name: github.com/libvirt/libvirt-go
+  version: d5e0adac44d4365a2d97e259f51ab76cc3c01b20
 - name: github.com/mailru/easyjson
   version: 2f5df55504ebc322e4d52d34df6a1f5b503bf26d
   subpackages:
@@ -263,6 +277,10 @@ imports:
   - flowrate
 - name: github.com/NYTimes/gziphandler
   version: 56545f4a5d46df9a6648819d1664c3a03a13ffdb
+- name: github.com/openshift/hive
+  version: 296cb990171c6da62e134f3590c120bd16ef4d43
+  subpackages:
+  - contrib/pkg/aws_tag_deprovision
 - name: github.com/pborman/uuid
   version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
 - name: github.com/peterbourgon/diskv
@@ -289,8 +307,10 @@ imports:
   version: 8a290539e2e8629dbc4e6bad948158f790ec31f4
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
-- name: github.com/Sirupsen/logrus
+- name: github.com/sirupsen/logrus
   version: 081307d9bc1364753142d5962fc1d795c742baaf
+- name: github.com/spf13/cobra
+  version: 7b2c5ac9fc04fc5efafb60700713d4fa609b777b
 - name: github.com/spf13/pflag
   version: e57e3eeb33f795204c1ca35f56c44f83227c6e66
 - name: github.com/ugorji/go

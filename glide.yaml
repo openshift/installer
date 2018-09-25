@@ -4,7 +4,7 @@ excludeDirs:
 import:
 - package: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
-- package: github.com/Sirupsen/logrus
+- package: github.com/sirupsen/logrus
   version: 081307d9bc1364753142d5962fc1d795c742baaf
 - package: gopkg.in/yaml.v2
   version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
@@ -28,6 +28,12 @@ import:
   version: 1.6.2
 - package: github.com/aws/aws-sdk-go
   version: ^1.15.39
+- package: github.com/libvirt/libvirt-go
+  version: ^v4.7.0
+- package: github.com/openshift/hive
+  version: 296cb990171c6da62e134f3590c120bd16ef4d43
+  subpackages:
+  - contrib/pkg/aws_tag_deprovision
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.2.2

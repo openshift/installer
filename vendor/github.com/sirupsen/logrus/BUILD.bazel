@@ -19,8 +19,8 @@ go_library(
         "text_formatter.go",
         "writer.go",
     ],
-    importmap = "installer/vendor/github.com/Sirupsen/logrus",
-    importpath = "github.com/Sirupsen/logrus",
+    importmap = "installer/vendor/github.com/sirupsen/logrus",
+    importpath = "github.com/sirupsen/logrus",
     visibility = ["//visibility:public"],
     deps = select({
         "@io_bazel_rules_go//go/platform:solaris": [
