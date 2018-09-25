@@ -10,9 +10,9 @@ import (
 	"github.com/openshift/installer/installer/pkg/validate"
 	"github.com/openshift/installer/pkg/types/config/aws"
 
-	log "github.com/Sirupsen/logrus"
 	ignconfig "github.com/coreos/ignition/config/v2_2"
 	"github.com/coreos/tectonic-config/config/tectonic-network"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
