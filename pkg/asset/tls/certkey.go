@@ -14,6 +14,16 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
+const (
+	// KeyIndex is the index into a CertKey asset's contents at which the key
+	// can be found.
+	KeyIndex = 0
+
+	// CertIndex is the index into a CertKey asset's contents at which the
+	// certificate can be found.
+	CertIndex = 1
+)
+
 // CertKey contains the private key and the cert that's
 // signed by the parent CA.
 type CertKey struct {

@@ -21,6 +21,7 @@ var (
 
 	defaultLibvirtNetworkIfName  = "tt0"
 	defaultLibvirtNetworkIPRange = "192.168.124.0/24"
+	defaultLibvirtImageURL       = "http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz"
 )
 
 // installConfig generates the install-config.yml file.
@@ -79,16 +80,6 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 			},
 		},
 		PullSecret: pullSecret,
-		Machines: []types.MachinePool{
-			{
-				Name:     "master",
-				Replicas: func(x int64) *int64 { return &x }(3),
-			},
-			{
-				Name:     "worker",
-				Replicas: func(x int64) *int64 { return &x }(3),
-			},
-		},
 	}
 
 	platformState := dependencies[a.assetStock.Platform()]
@@ -100,7 +91,6 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 			Region:       region,
 			VPCCIDRBlock: defaultVPCCIDR,
 		}
-		// Set the default master and worker nodes to 3 for AWS.
 		installConfig.Machines = []types.MachinePool{
 			{
 				Name:     "master",
@@ -113,7 +103,6 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 		}
 	case LibvirtPlatformType:
 		uri := string(platformState.Contents[1].Data)
-		image := string(platformState.Contents[2].Data)
 
 		installConfig.Libvirt = &types.LibvirtPlatform{
 			URI: uri,
@@ -123,10 +112,9 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 				IPRange: defaultLibvirtNetworkIPRange,
 			},
 			DefaultMachinePlatform: &types.LibvirtMachinePoolPlatform{
-				Image: image,
+				Image: defaultLibvirtImageURL,
 			},
 		}
-		// Set the default master and worker nodes to 1 for AWS.
 		installConfig.Machines = []types.MachinePool{
 			{
 				Name:     "master",

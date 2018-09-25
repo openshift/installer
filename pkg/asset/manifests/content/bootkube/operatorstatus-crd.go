@@ -27,5 +27,5 @@ spec:
     singular: operatorstatus
     # kind is normally the CamelCased singular type. Your resource manifests use this.
     kind: OperatorStatus
-    `
+`
 )

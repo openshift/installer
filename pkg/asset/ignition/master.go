@@ -43,11 +43,11 @@ func (a *master) Generate(dependencies map[asset.Asset]*asset.State) (*asset.Sta
 	}
 
 	state := &asset.State{
-		Contents: make([]asset.Content, masterCount(installConfig)),
+		Contents: make([]asset.Content, installConfig.MasterCount()),
 	}
 	for i := range state.Contents {
 		state.Contents[i].Name = fmt.Sprintf("master-%d.ign", i)
-		state.Contents[i].Data = pointerIgnitionConfig(installConfig, dependencies[a.rootCA].Contents[0].Data, "master", fmt.Sprintf("etcd_index=%d", i))
+		state.Contents[i].Data = pointerIgnitionConfig(installConfig, dependencies[a.rootCA].Contents[tls.CertIndex].Data, "master", fmt.Sprintf("etcd_index=%d", i))
 	}
 
 	return state, nil

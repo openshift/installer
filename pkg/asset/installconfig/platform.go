@@ -102,23 +102,16 @@ func (a *Platform) awsPlatform() (*asset.State, error) {
 }
 
 func (a *Platform) libvirtPlatform() (*asset.State, error) {
-	var uri, image string
+	var uri string
 	survey.AskOne(&survey.Input{
 		Message: "URI",
 		Help:    "The libvirt connection URI to be used. This must be accessible from the running cluster.",
 		Default: "qemu+tcp://192.168.122.1/system",
 	}, &uri, nil)
 
-	survey.AskOne(&survey.Input{
-		Message: "Image",
-		Help:    "The URL to the OS image.",
-		Default: "",
-	}, &image, nil)
-
 	return assetStateForStringContents(
 		LibvirtPlatformType,
 		uri,
-		image,
 	), nil
 }
 

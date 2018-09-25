@@ -52,7 +52,19 @@ func (ipnet *IPNet) UnmarshalJSON(b []byte) (err error) {
 	if err != nil {
 		return err
 	}
-	ipnet.IP = ip
+
+	// This check is needed in order to work around a strange quirk in the Go
+	// standard library. All of the addresses returned by net.ParseCIDR() are
+	// 16-byte addresses. This does _not_ imply that they are IPv6 addresses,
+	// which is what some libraries (e.g. github.com/apparentlymart/go-cidr)
+	// assume. By forcing the address to be the expected length, we can work
+	// around these bugs.
+	if ip.To4() != nil {
+		ipnet.IP = ip.To4()
+	} else {
+		ipnet.IP = ip
+	}
 	ipnet.Mask = net.Mask
+
 	return nil
 }

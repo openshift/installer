@@ -27,5 +27,5 @@ spec:
     singular: mcoconfig
     # kind is normally the CamelCased singular type. Your resource manifests use this.
     kind: MCOConfig
-    `
+`
 )

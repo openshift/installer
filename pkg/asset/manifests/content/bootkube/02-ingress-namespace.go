@@ -13,5 +13,5 @@ metadata:
     kubernetes.io/ingress.class: tectonic
     name: openshift-ingress
     openshift.io/run-level: "1"
-    `
+`
 )

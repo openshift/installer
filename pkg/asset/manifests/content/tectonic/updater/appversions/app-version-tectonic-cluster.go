@@ -20,5 +20,5 @@ spec:
 status:
   currentVersion: {{.TectonicVersion}}
   paused: false
- `))
+`))
 )

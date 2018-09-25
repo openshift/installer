@@ -43,7 +43,7 @@ func (a *worker) Generate(dependencies map[asset.Asset]*asset.State) (*asset.Sta
 	return &asset.State{
 		Contents: []asset.Content{{
 			Name: "worker.ign",
-			Data: pointerIgnitionConfig(installConfig, dependencies[a.rootCA].Contents[0].Data, "worker", ""),
+			Data: pointerIgnitionConfig(installConfig, dependencies[a.rootCA].Contents[tls.CertIndex].Data, "worker", ""),
 		}},
 	}, nil
 }

@@ -15,5 +15,5 @@ metadata:
 type: Opaque
 data:
   config: ""
-  `))
+`))
 )

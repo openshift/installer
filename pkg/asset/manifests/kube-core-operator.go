@@ -2,7 +2,7 @@ package manifests
 
 import (
 	"fmt"
-	"net"
+	"strings"
 
 	"github.com/ghodss/yaml"
 
@@ -84,8 +84,7 @@ func (kco *kubeCoreOperator) coreConfig() (*kubecore.OperatorConfig, error) {
 	coreConfig.AuthConfig.OIDCGroupsClaim = authConfigOIDCGroupsClaim
 	coreConfig.AuthConfig.OIDCUsernameClaim = authConfigOIDCUsernameClaim
 
-	svcCidr := kco.installConfig.Networking.ServiceCIDR
-	ip, err := cidr.Host(&net.IPNet{IP: svcCidr.IP, Mask: svcCidr.Mask}, 10)
+	ip, err := cidr.Host(&kco.installConfig.Networking.ServiceCIDR.IPNet, 10)
 	if err != nil {
 		return nil, err
 	}
@@ -99,7 +98,7 @@ func (kco *kubeCoreOperator) coreConfig() (*kubecore.OperatorConfig, error) {
 	coreConfig.NetworkConfig.ClusterCIDR = kco.installConfig.Networking.PodCIDR.String()
 	coreConfig.NetworkConfig.ServiceCIDR = kco.installConfig.Networking.ServiceCIDR.String()
 	coreConfig.NetworkConfig.AdvertiseAddress = networkConfigAdvertiseAddress
-	coreConfig.NetworkConfig.EtcdServers = kco.getEtcdServersURLs()
+	coreConfig.NetworkConfig.EtcdServers = strings.Join(kco.getEtcdServersURLs(), ",")
 
 	return &coreConfig, nil
 }
@@ -108,8 +107,12 @@ func (kco *kubeCoreOperator) getAPIServerURL() string {
 	return fmt.Sprintf("https://%s-api.%s:6443", kco.installConfig.Name, kco.installConfig.BaseDomain)
 }
 
-func (kco *kubeCoreOperator) getEtcdServersURLs() string {
-	return fmt.Sprintf("https://%s-etcd.%s:2379", kco.installConfig.Name, kco.installConfig.BaseDomain)
+func (kco *kubeCoreOperator) getEtcdServersURLs() []string {
+	var urls []string
+	for i := 0; i < kco.installConfig.MasterCount(); i++ {
+		urls = append(urls, fmt.Sprintf("https://%s-etcd-%d.%s:2379", kco.installConfig.Name, i, kco.installConfig.BaseDomain))
+	}
+	return urls
 }
 
 func (kco *kubeCoreOperator) getOicdIssuerURL() string {

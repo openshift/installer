@@ -137,7 +137,11 @@ func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 		return nil, err
 	}
 
-	config := ignition.Config{}
+	config := ignition.Config{
+		Ignition: ignition.Ignition{
+			Version: ignition.MaxVersion.String(),
+		},
+	}
 
 	a.addBootstrapFiles(&config, dependencies)
 	a.addBootkubeFiles(&config, dependencies, templateData)
@@ -180,7 +184,7 @@ func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 	if err != nil {
 		return nil, err
 	}
-	etcdEndpoints := make([]string, masterCount(installConfig))
+	etcdEndpoints := make([]string, installConfig.MasterCount())
 	for i := range etcdEndpoints {
 		etcdEndpoints[i] = fmt.Sprintf("https://%s-etcd-%d.%s:2379", installConfig.Name, i, installConfig.BaseDomain)
 	}
@@ -189,7 +193,7 @@ func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 		CloudProvider:              getCloudProvider(installConfig),
 		CloudProviderConfig:        getCloudProviderConfig(installConfig),
 		DebugConfig:                "",
-		KubeCoreRenderImage:        "quay.io/coreos/kube-core-renderer-dev:436b1b4395ae54d866edc88864c9b01797cebac1",
+		KubeCoreRenderImage:        "quay.io/coreos/kube-core-renderer-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
 		MachineConfigOperatorImage: "docker.io/openshift/origin-machine-config-operator:v4.0.0",
 		EtcdCertSignerImage:        "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
 		EtcdctlImage:               "quay.io/coreos/etcd:v3.2.14",
@@ -203,7 +207,7 @@ func (a *bootstrap) addBootstrapFiles(config *ignition.Config, dependencies map[
 	config.Storage.Files = append(
 		config.Storage.Files,
 		fileFromBytes("/etc/kubernetes/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
-		fileFromBytes("/var/lib/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
+		fileFromBytes("/var/lib/kubelet/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
 	)
 	config.Storage.Files = append(
 		config.Storage.Files,
@@ -256,6 +260,11 @@ func (a *bootstrap) addTLSCertFiles(config *ignition.Config, dependencies map[as
 	} {
 		config.Storage.Files = append(config.Storage.Files, filesFromContents(rootDir, 0600, dependencies[asset].Contents)...)
 	}
+
+	config.Storage.Files = append(
+		config.Storage.Files,
+		fileFromBytes("/etc/ssl/etcd/ca.crt", 0600, dependencies[a.etcdClientCertKey].Contents[tls.CertIndex].Data),
+	)
 }
 
 func getCloudProvider(installConfig *types.InstallConfig) string {

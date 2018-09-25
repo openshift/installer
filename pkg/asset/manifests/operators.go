@@ -3,6 +3,7 @@ package manifests
 
 import (
 	"bytes"
+	"encoding/base64"
 	"path/filepath"
 	"text/template"
 
@@ -32,7 +33,6 @@ type manifests struct {
 	apiServerCertKey          asset.Asset
 	openshiftAPIServerCertKey asset.Asset
 	apiServerProxyCertKey     asset.Asset
-	adminCertKey              asset.Asset
 	kubeletCertKey            asset.Asset
 	mcsCertKey                asset.Asset
 	serviceAccountKeyPair     asset.Asset
@@ -69,7 +69,7 @@ func (m *manifests) Dependencies() []asset.Asset {
 		m.apiServerCertKey,
 		m.openshiftAPIServerCertKey,
 		m.apiServerProxyCertKey,
-		m.adminCertKey,
+		m.mcsCertKey,
 		m.kubeletCertKey,
 		m.serviceAccountKeyPair,
 		m.kubeconfig,
@@ -104,8 +104,6 @@ func (m *manifests) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 		return nil, err
 	}
 
-	bootkubeContents := m.generateBootKubeManifests(dependencies)
-
 	state := &asset.State{
 		Contents: []asset.Content{
 			{
@@ -118,7 +116,7 @@ func (m *manifests) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 			},
 		},
 	}
-	state.Contents = append(state.Contents, bootkubeContents...)
+	state.Contents = append(state.Contents, m.generateBootKubeManifests(dependencies)...)
 	return state, nil
 }
 
@@ -127,111 +125,82 @@ func (m *manifests) generateBootKubeManifests(dependencies map[asset.Asset]*asse
 	if err != nil {
 		return nil
 	}
-	assetContents := make([]asset.Content, 0)
 	templateData := &bootkubeTemplateData{
-		AggregatorCaCert:                string(dependencies[m.aggregatorCA].Contents[certIndex].Data),
-		AggregatorCaKey:                 string(dependencies[m.aggregatorCA].Contents[keyIndex].Data),
-		ApiserverCert:                   string(dependencies[m.apiServerCertKey].Contents[certIndex].Data),
-		ApiserverKey:                    string(dependencies[m.apiServerCertKey].Contents[keyIndex].Data),
-		ApiserverProxyCert:              string(dependencies[m.apiServerProxyCertKey].Contents[certIndex].Data),
-		ApiserverProxyKey:               string(dependencies[m.apiServerProxyCertKey].Contents[keyIndex].Data),
+		AggregatorCaCert:                base64.StdEncoding.EncodeToString(dependencies[m.aggregatorCA].Contents[certIndex].Data),
+		AggregatorCaKey:                 base64.StdEncoding.EncodeToString(dependencies[m.aggregatorCA].Contents[keyIndex].Data),
+		ApiserverCert:                   base64.StdEncoding.EncodeToString(dependencies[m.apiServerCertKey].Contents[certIndex].Data),
+		ApiserverKey:                    base64.StdEncoding.EncodeToString(dependencies[m.apiServerCertKey].Contents[keyIndex].Data),
+		ApiserverProxyCert:              base64.StdEncoding.EncodeToString(dependencies[m.apiServerProxyCertKey].Contents[certIndex].Data),
+		ApiserverProxyKey:               base64.StdEncoding.EncodeToString(dependencies[m.apiServerProxyCertKey].Contents[keyIndex].Data),
 		Base64encodeCloudProviderConfig: "", // FIXME
-		ClusterapiCaCert:                string(dependencies[m.clusterAPIServerCertKey].Contents[certIndex].Data),
-		ClusterapiCaKey:                 string(dependencies[m.clusterAPIServerCertKey].Contents[keyIndex].Data),
-		EtcdCaCert:                      string(dependencies[m.etcdCA].Contents[certIndex].Data),
-		EtcdClientCert:                  string(dependencies[m.etcdClientCertKey].Contents[certIndex].Data),
-		EtcdClientKey:                   string(dependencies[m.etcdClientCertKey].Contents[keyIndex].Data),
-		KubeCaCert:                      string(dependencies[m.kubeCA].Contents[certIndex].Data),
-		KubeCaKey:                       string(dependencies[m.kubeCA].Contents[keyIndex].Data),
+		ClusterapiCaCert:                base64.StdEncoding.EncodeToString(dependencies[m.clusterAPIServerCertKey].Contents[certIndex].Data),
+		ClusterapiCaKey:                 base64.StdEncoding.EncodeToString(dependencies[m.clusterAPIServerCertKey].Contents[keyIndex].Data),
+		EtcdCaCert:                      base64.StdEncoding.EncodeToString(dependencies[m.etcdCA].Contents[certIndex].Data),
+		EtcdClientCert:                  base64.StdEncoding.EncodeToString(dependencies[m.etcdClientCertKey].Contents[certIndex].Data),
+		EtcdClientKey:                   base64.StdEncoding.EncodeToString(dependencies[m.etcdClientCertKey].Contents[keyIndex].Data),
+		KubeCaCert:                      base64.StdEncoding.EncodeToString(dependencies[m.kubeCA].Contents[certIndex].Data),
+		KubeCaKey:                       base64.StdEncoding.EncodeToString(dependencies[m.kubeCA].Contents[keyIndex].Data),
 		MachineConfigOperatorImage:      "docker.io/openshift/origin-machine-config-operator:v4.0.0",
-		McsTLSCert:                      string(dependencies[m.adminCertKey].Contents[certIndex].Data),
-		McsTLSKey:                       string(dependencies[m.adminCertKey].Contents[keyIndex].Data),
-		OidcCaCert:                      string(dependencies[m.kubeCA].Contents[certIndex].Data),
-		OpenshiftApiserverCert:          string(dependencies[m.openshiftAPIServerCertKey].Contents[certIndex].Data),
-		OpenshiftApiserverKey:           string(dependencies[m.openshiftAPIServerCertKey].Contents[keyIndex].Data),
-		OpenshiftLoopbackKubeconfig:     string(dependencies[m.kubeconfig].Contents[0].Data),
-		PullSecret:                      string(ic.PullSecret),
-		RootCaCert:                      string(dependencies[m.rootCA].Contents[certIndex].Data),
-		ServiceaccountKey:               string(dependencies[m.serviceAccountKeyPair].Contents[keyIndex].Data),
-		ServiceaccountPub:               string(dependencies[m.serviceAccountKeyPair].Contents[certIndex].Data),
-		ServiceServingCaCert:            string(dependencies[m.serviceServingCA].Contents[certIndex].Data),
-		ServiceServingCaKey:             string(dependencies[m.serviceServingCA].Contents[keyIndex].Data),
+		McsTLSCert:                      base64.StdEncoding.EncodeToString(dependencies[m.mcsCertKey].Contents[certIndex].Data),
+		McsTLSKey:                       base64.StdEncoding.EncodeToString(dependencies[m.mcsCertKey].Contents[keyIndex].Data),
+		OidcCaCert:                      base64.StdEncoding.EncodeToString(dependencies[m.kubeCA].Contents[certIndex].Data),
+		OpenshiftApiserverCert:          base64.StdEncoding.EncodeToString(dependencies[m.openshiftAPIServerCertKey].Contents[certIndex].Data),
+		OpenshiftApiserverKey:           base64.StdEncoding.EncodeToString(dependencies[m.openshiftAPIServerCertKey].Contents[keyIndex].Data),
+		OpenshiftLoopbackKubeconfig:     base64.StdEncoding.EncodeToString(dependencies[m.kubeconfig].Contents[0].Data),
+		PullSecret:                      base64.StdEncoding.EncodeToString([]byte(ic.PullSecret)),
+		RootCaCert:                      base64.StdEncoding.EncodeToString(dependencies[m.rootCA].Contents[certIndex].Data),
+		ServiceaccountKey:               base64.StdEncoding.EncodeToString(dependencies[m.serviceAccountKeyPair].Contents[keyIndex].Data),
+		ServiceaccountPub:               base64.StdEncoding.EncodeToString(dependencies[m.serviceAccountKeyPair].Contents[certIndex].Data),
+		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(dependencies[m.serviceServingCA].Contents[certIndex].Data),
+		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(dependencies[m.serviceServingCA].Contents[keyIndex].Data),
 		TectonicNetworkOperatorImage:    "quay.io/coreos/tectonic-network-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
 		WorkerIgnConfig:                 "", // FIXME: this means depending on ignition assets (risk of cyclical dependencies)
 	}
 
-	// belongs to machine api operator
-	data := applyTemplateData(bootkube.ClusterApiserverCerts, templateData)
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "cluster-apiserver-certs.yaml"), Data: []byte(data)})
+	assetData := map[string][]byte{
+		"cluster-apiserver-certs.yaml":               applyTemplateData(bootkube.ClusterApiserverCerts, templateData),
+		"ign-config.yaml":                            applyTemplateData(bootkube.IgnConfig, templateData),
+		"kube-apiserver-secret.yaml":                 applyTemplateData(bootkube.KubeApiserverSecret, templateData),
+		"kube-cloud-config.yaml":                     applyTemplateData(bootkube.KubeCloudConfig, templateData),
+		"kube-controller-manager-secret.yaml":        applyTemplateData(bootkube.KubeControllerManagerSecret, templateData),
+		"machine-config-operator-03-deployment.yaml": applyTemplateData(bootkube.MachineConfigOperator03Deployment, templateData),
+		"machine-config-server-tls-secret.yaml":      applyTemplateData(bootkube.MachineConfigServerTLSSecret, templateData),
+		"openshift-apiserver-secret.yaml":            applyTemplateData(bootkube.OpenshiftApiserverSecret, templateData),
+		"pull.json":                                  applyTemplateData(bootkube.Pull, templateData),
+		"tectonic-network-operator.yaml":             applyTemplateData(bootkube.TectonicNetworkOperator, templateData),
 
-	// machine api operator
-	data = applyTemplateData(bootkube.IgnConfig, templateData)
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "ign-config.yaml"), Data: []byte(data)})
+		"01-tectonic-namespace.yaml":                       []byte(bootkube.TectonicNamespace),
+		"02-ingress-namespace.yaml":                        []byte(bootkube.IngressNamespace),
+		"03-openshift-web-console-namespace.yaml":          []byte(bootkube.OpenshiftWebConsoleNamespace),
+		"04-openshift-machine-config-operator.yaml":        []byte(bootkube.OpenshiftMachineConfigOperator),
+		"05-openshift-cluster-api-namespace.yaml":          []byte(bootkube.OpenshiftClusterAPINamespace),
+		"openshift-machine-config-operator.yaml":           []byte(bootkube.OpenshiftMachineConfigOperator),
+		"openshift-cluster-api-namespace.yaml":             []byte(bootkube.OpenshiftClusterAPINamespace),
+		"app-version-kind.yaml":                            []byte(bootkube.AppVersionKind),
+		"app-version-mao.yaml":                             []byte(bootkube.AppVersionMao),
+		"app-version-tectonic-network.yaml":                []byte(bootkube.AppVersionTectonicNetwork),
+		"machine-api-operator.yaml":                        []byte(bootkube.MachineAPIOperator),
+		"machine-config-operator-00-config-crd.yaml":       []byte(bootkube.MachineConfigOperator00ConfigCrd),
+		"machine-config-operator-01-images-configmap.yaml": []byte(bootkube.MachineConfigOperator01ImagesConfigmap),
+		"machine-config-operator-02-rbac.yaml":             []byte(bootkube.MachineConfigOperator02Rbac),
+		"operatorstatus-crd.yaml":                          []byte(bootkube.OperatorstatusCrd),
+	}
 
-	// kco
-	data = applyTemplateData(bootkube.KubeApiserverSecret, templateData)
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "kube-apiserver-secret.yaml"), Data: []byte(data)})
+	var assetContents []asset.Content
+	for name, data := range assetData {
+		assetContents = append(assetContents, asset.Content{
+			Name: filepath.Join(manifestDir, name),
+			Data: data,
+		})
+	}
 
-	// kco
-	data = applyTemplateData(bootkube.KubeCloudConfig, templateData)
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "kube-cloud-config.yaml"), Data: []byte(data)})
-
-	// kco
-	data = applyTemplateData(bootkube.KubeControllerManagerSecret, templateData)
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "kube-controller-manager-secret.yaml"), Data: []byte(data)})
-
-	// mco
-	data = applyTemplateData(bootkube.MachineConfigOperator03Deployment, templateData)
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "machine-config-operator-03-deployment.yaml"), Data: []byte(data)})
-
-	// mco
-	data = applyTemplateData(bootkube.MachineConfigServerTLSSecret, templateData)
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "machine-config-server-tls-secret.yaml"), Data: []byte(data)})
-
-	// kube core
-	data = applyTemplateData(bootkube.OpenshiftApiserverSecret, templateData)
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "openshift-apiserver-secret.yaml"), Data: []byte(data)})
-
-	// common
-	data = applyTemplateData(bootkube.Pull, templateData)
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "pull.json"), Data: []byte(data)})
-
-	// network operator
-	data = applyTemplateData(bootkube.TectonicNetworkOperator, templateData)
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "tectonic-network-operator.yaml"), Data: []byte(data)})
-
-	// common
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "01-tectonic-namespace.yaml"), Data: []byte(bootkube.TectonicNamespace)})
-	// ingress
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "02-ingress-namespace.yaml"), Data: []byte(bootkube.IngressNamespace)})
-	// kao
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "03-openshift-web-console-namespace.yaml"), Data: []byte(bootkube.OpenshiftWebConsoleNamespace)})
-	// mco
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "openshift-machine-config-operator.yaml"), Data: []byte(bootkube.OpenshiftMachineConfigOperator)})
-	// machine api operator
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "openshift-cluster-api-namespace.yaml"), Data: []byte(bootkube.OpenshiftClusterAPINamespace)})
-	// common
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "app-version-kind.yaml"), Data: []byte(bootkube.AppVersionKind)})
-	// cmacine api operator
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "app-version-mao.yaml"), Data: []byte(bootkube.AppVersionMao)})
-	// network
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "app-version-tectonic-network.yaml"), Data: []byte(bootkube.AppVersionTectonicNetwork)})
-	// machine api operator
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "machine-api-operator.yaml"), Data: []byte(bootkube.MachineAPIOperator)})
-
-	// mco
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "machine-config-operator-00-config-crd.yaml"), Data: []byte(bootkube.MachineConfigOperator00ConfigCrd)})
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "machine-config-operator-01-images-configmap.yaml"), Data: []byte(bootkube.MachineConfigOperator01ImagesConfigmap)})
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "machine-config-operator-02-rbac.yaml"), Data: []byte(bootkube.MachineConfigOperator02Rbac)})
-	// common/cvo
-	assetContents = append(assetContents, asset.Content{Name: filepath.Join(manifestDir, "operatorstatus-crd.yaml"), Data: []byte(bootkube.OperatorstatusCrd)})
 	return assetContents
 }
 
-func applyTemplateData(template *template.Template, templateData interface{}) string {
+func applyTemplateData(template *template.Template, templateData interface{}) []byte {
 	buf := &bytes.Buffer{}
 	if err := template.Execute(buf, templateData); err != nil {
 		panic(err)
 	}
-	return buf.String()
+	return buf.Bytes()
 }

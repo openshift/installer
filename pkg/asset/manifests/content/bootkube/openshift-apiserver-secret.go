@@ -33,5 +33,5 @@ data:
   service-serving-ca.crt: {{.ServiceServingCaCert}}
   service-serving-ca.key: {{.ServiceServingCaKey}}
   kubeconfig: {{.OpenshiftLoopbackKubeconfig}}
-  `))
+`))
 )

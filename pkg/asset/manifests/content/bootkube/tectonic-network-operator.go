@@ -66,5 +66,5 @@ spec:
     rollingUpdate:
       maxUnavailable: 1
     type: RollingUpdate
-    `))
+`))
 )

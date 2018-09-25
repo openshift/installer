@@ -13,5 +13,5 @@ spec:
   names:
     plural: "migrationstatuses"
     kind: "MigrationStatus"
-    `
+`
 )
