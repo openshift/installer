@@ -1,12 +1,15 @@
 package config
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/coreos/tectonic-config/config/tectonic-network"
 	"gopkg.in/yaml.v2"
 
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/config/aws"
 	"github.com/openshift/installer/pkg/types/config/libvirt"
@@ -175,6 +178,13 @@ func ConvertInstallConfigToTFVars(cfg *types.InstallConfig, bootstrapIgn string,
 	}
 
 	if cfg.Platform.AWS != nil {
+		ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+		defer cancel()
+		ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, cluster.AWS.Region)
+		if err != nil {
+			return nil, fmt.Errorf("failed to determine default AMI: %v", err)
+		}
+
 		cluster.Platform = PlatformAWS
 		cluster.AWS = aws.AWS{
 			Endpoints: aws.EndpointsAll,   // Default value for endpoints.
@@ -184,7 +194,8 @@ func ConvertInstallConfigToTFVars(cfg *types.InstallConfig, bootstrapIgn string,
 			External: aws.External{
 				VPCID: cfg.Platform.AWS.VPCID,
 			},
-			VPCCIDRBlock: cfg.Platform.AWS.VPCCIDRBlock,
+			VPCCIDRBlock:   cfg.Platform.AWS.VPCCIDRBlock,
+			EC2AMIOverride: ami,
 		}
 	} else if cfg.Platform.Libvirt != nil {
 		cluster.Platform = PlatformLibvirt
