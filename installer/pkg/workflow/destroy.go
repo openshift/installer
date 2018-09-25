@@ -31,7 +31,6 @@ func DestroyWorkflow(clusterDir string, contOnErr bool) Workflow {
 		},
 		steps: []step{
 			readClusterConfigStep,
-			generateTerraformVariablesStep,
 			destroyWorkersStep,
 			destroyInfraStep,
 			destroyAssetsStep,
