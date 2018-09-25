@@ -1,9 +1,0 @@
-config_examples = glob(["*.yaml"])
-
-filegroup(
-    name = "config_examples",
-    srcs = config_examples,
-    visibility = ["//visibility:public"],
-)
-
-exports_files(config_examples)
