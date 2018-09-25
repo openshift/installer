@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -49,8 +50,14 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		return nil, fmt.Errorf("failed to get terraform.tfvar state in the parent asset states")
 	}
 
-	// Copy the terraform.tfvars to the working dir for the terraform.
-	if err := ioutil.WriteFile(filepath.Join(dir, state.Contents[0].Name), state.Contents[0].Data, 0600); err != nil {
+	// Copy the terraform.tfvars to a temp directory where the terraform will be invoked within.
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "openshift-install-")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp dir: %v", err)
+	}
+	defer os.RemoveAll(tmpDir)
+
+	if err := ioutil.WriteFile(filepath.Join(tmpDir, state.Contents[0].Name), state.Contents[0].Data, 0600); err != nil {
 		return nil, fmt.Errorf("failed to write terraform.tfvars file: %v", err)
 	}
 
@@ -64,12 +71,13 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		return nil, err
 	}
 
-	// This runs the terraform in the terraform template directory.
-	if err := terraform.Init(dir, templateDir); err != nil {
+	// This runs the terraform in a temp directory, the tfstate file will be returned
+	// to the asset store to persist it on the disk.
+	if err := terraform.Init(tmpDir, templateDir); err != nil {
 		return nil, err
 	}
 
-	stateFile, err := terraform.Apply(dir, terraform.InfraStep, templateDir)
+	stateFile, err := terraform.Apply(tmpDir, terraform.InfraStep, templateDir)
 	if err != nil {
 		return nil, err
 	}
