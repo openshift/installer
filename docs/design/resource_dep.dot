@@ -10,7 +10,7 @@ strict digraph resource {
     install_cfg [label="install config"];
     manifests [label="manifests"];
     ignition_configs [label="ignition configs"];
-    cluster [label="cluster"];
+    cluster_target [label="cluster"];
   }
 
   // User inputs.
@@ -79,11 +79,16 @@ strict digraph resource {
     kubeconfig_kubelet [label="kubeconfig-kubelet"];
   }
 
-
-  // Output after cluster launch
+  // Terraform tfvar file.
   {
     node [style=filled,color=gold];
-    terraform_state [label="*.tfstate"];
+    terraform_tfvars [label="terraform.tfvars"];
+  }
+
+  // cluster asset.
+  {
+    node [style=filled, color=lemonchiffon];
+    tfstate [label="terraform.state"];
   }
 
   // Dependencies
@@ -165,13 +170,16 @@ strict digraph resource {
   kubeconfig_kubelet -> bootstrap_ignition;
   kubeconfig_kubelet -> master_ignition;
 
-  bootstrap_ignition -> terraform_state;
-  master_ignition -> terraform_state;
-  worker_ignition -> terraform_state;
+  bootstrap_ignition -> terraform_tfvars;
+  master_ignition -> terraform_tfvars;
+  worker_ignition -> terraform_tfvars;
+  install_config -> terraform_tfvars;
+
+  terraform_tfvars -> tfstate;
+  kubeconfig_admin -> tfstate;
 
   // Targets
   install_config -> install_cfg;
-  install_config -> terraform_state;
 
   admin_bundle -> manifests;
   aggregator_ca_bundle -> manifests;
@@ -196,11 +204,11 @@ strict digraph resource {
 
   kubeconfig_kubelet -> manifests;
   kubeconfig_admin -> manifests;
-  kubeconfig_admin -> cluster;
 
   bootstrap_ignition -> ignition_configs;
   master_ignition -> ignition_configs;
   worker_ignition -> ignition_configs;
 
-  terraform_state -> cluster;  
+  kubeconfig_admin -> cluster_target;
+  tfstate -> cluster_target;
 }
