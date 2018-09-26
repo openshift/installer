@@ -11,11 +11,6 @@ variable "cluster_name" {
   type = "string"
 }
 
-variable "container_images" {
-  description = "Container images to use"
-  type        = "map"
-}
-
 variable "ec2_type" {
   type = "string"
 }
