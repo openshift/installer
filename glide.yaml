@@ -34,6 +34,8 @@ import:
   version: 296cb990171c6da62e134f3590c120bd16ef4d43
   subpackages:
   - contrib/pkg/aws_tag_deprovision
+- package: github.com/mholt/archiver
+  version: 2.1.0
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.2.2

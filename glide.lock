@@ -1,5 +1,5 @@
-hash: 2c4b7376f073ee54146d225a63286b1f94961aab9f733354c6b5aeeb107ba710
-updated: 2018-09-25T12:42:08.741945969-07:00
+hash: fb06a8b942d2a2a78a6e6a1b1308ee0440b2309880e735b1f00457fed54c00e0
+updated: 2018-09-25T17:17:31.134788088-07:00
 imports:
 - name: bitbucket.org/ww/goautoneg
   version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
@@ -18,7 +18,7 @@ imports:
   subpackages:
   - cidr
 - name: github.com/aws/aws-sdk-go
-  version: 0d5157217e4c72d0fc7fabad8e0501d3d5cb768d
+  version: cbd7ed8b82dac1de35d67e576f0b3faf215e1ae9
   subpackages:
   - aws
   - aws/awserr
@@ -170,6 +170,14 @@ imports:
   version: 782f4967f2dc4564575ca782fe2d04090b5faca8
   subpackages:
   - spew
+- name: github.com/dsnet/compress
+  version: cc9eb1d7ad760af14e8f918698f745e80377af4f
+  subpackages:
+  - bzip2
+  - bzip2/internal/sais
+  - internal
+  - internal/errors
+  - internal/prefix
 - name: github.com/elazarl/go-bindata-assetfs
   version: 3dcc96556217539f50599357fb481ac0dc7439b9
 - name: github.com/emicklei/go-restful
@@ -209,6 +217,8 @@ imports:
   - ptypes/duration
   - ptypes/struct
   - ptypes/timestamp
+- name: github.com/golang/snappy
+  version: 2e65f85255dbc3072edf28d6b5b8efc472979f5a
 - name: github.com/google/btree
   version: 7d79101e329e5a3adf994758c578dab82b90c017
 - name: github.com/google/gofuzz
@@ -271,10 +281,14 @@ imports:
   - pbutil
 - name: github.com/mgutz/ansi
   version: 9520e82c474b0a04dd04f8a40959027271bab992
+- name: github.com/mholt/archiver
+  version: de0d89e255e17c8d75a40122055763e743ab0593
 - name: github.com/mxk/go-flowrate
   version: cca7078d478f8520f85629ad7c68962d31ed7682
   subpackages:
   - flowrate
+- name: github.com/nwaples/rardecode
+  version: e06696f847aeda6f39a8f0b7cdff193b7690aef6
 - name: github.com/NYTimes/gziphandler
   version: 56545f4a5d46df9a6648819d1664c3a03a13ffdb
 - name: github.com/openshift/hive
@@ -285,6 +299,10 @@ imports:
   version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
 - name: github.com/peterbourgon/diskv
   version: 5f041e8faa004a95c88a202771f4cc3e991971e6
+- name: github.com/pierrec/lz4
+  version: 1f6e18d34f6790fc0afea6f13a5fe3d9ab1770af
+  subpackages:
+  - internal/xxh32
 - name: github.com/prometheus/client_golang
   version: e7e903064f5e9eb5da98208bae10b475d4db0f8c
   subpackages:
@@ -317,6 +335,12 @@ imports:
   version: ded73eae5db7e7a0ef6f55aace87a2873c5d2b74
   subpackages:
   - codec
+- name: github.com/ulikunitz/xz
+  version: 636d36a76670e6c700f22fd5f4588679ff2896c4
+  subpackages:
+  - internal/hash
+  - internal/xlog
+  - lzma
 - name: github.com/vincent-petithory/dataurl
   version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
 - name: go4.org
