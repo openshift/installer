@@ -14,7 +14,7 @@ import (
 // returns true, when the name should be handled.
 type filterFunc func(name string) bool
 
-// ClusterNamePrefixFilter returns true for name
+// ClusterNamePrefixFilter returns true for names
 // that are prefixed with clustername.
 // `clustername` cannot be empty.
 var ClusterNamePrefixFilter = func(clustername string) filterFunc {
@@ -27,7 +27,7 @@ var ClusterNamePrefixFilter = func(clustername string) filterFunc {
 }
 
 // AlwaysTrueFilter returns true for all
-// name except `default`.
+// names except `default`.
 var AlwaysTrueFilter = func() filterFunc {
 	return func(name string) bool {
 		if name == "default" {
