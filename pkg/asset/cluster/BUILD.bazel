@@ -11,6 +11,7 @@ go_library(
     importpath = "github.com/openshift/installer/pkg/asset/cluster",
     visibility = ["//visibility:public"],
     deps = [
+        "//data:go_default_library",
         "//pkg/asset:go_default_library",
         "//pkg/asset/ignition:go_default_library",
         "//pkg/asset/installconfig:go_default_library",
