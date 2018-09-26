@@ -8,10 +8,11 @@ ENV TERRAFORM_VERSION="0.11.8"
 ARG TERRAFORM_URL=https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
 
 RUN go build -o ./installer/tectonic ./installer/cmd/tectonic && \
+    go build -o ./installer/openshift-install ./cmd/openshift-install && \
     yum install -y unzip && \
     yum clean all && \
     curl -L ${TERRAFORM_URL} | funzip > ./installer/terraform && chmod +x ./installer/terraform && \
-    tar cvzf /opt/tectonic-dev.tar.gz ./installer/tectonic ./installer/terraform ./modules ./config.tf ./steps
+    tar cvzf /opt/tectonic-dev.tar.gz ./installer/openshift-install ./installer/tectonic ./installer/terraform ./modules ./config.tf ./steps
 
 FROM centos:7
 COPY --from=build /opt/tectonic-dev.tar.gz /tmp/tectonic-dev.tar.gz
