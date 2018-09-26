@@ -9,18 +9,10 @@ type Admin struct {
 	SSHKey   string `json:"tectonic_admin_ssh_key,omitempty" yaml:"sshKey,omitempty"`
 }
 
-// CA related config
-type CA struct {
-	RootCACertPath string `json:"-" yaml:"rootCACertPath,omitempty"`
-	RootCAKeyPath  string `json:"-" yaml:"rootCAKeyPath,omitempty"`
-	RootCAKeyAlg   string `json:"-" yaml:"rootCAKeyAlg,omitempty"`
-}
-
 // NodePool converts node pool related config.
 type NodePool struct {
-	Count        int    `json:"-" yaml:"count"`
-	Name         string `json:"-" yaml:"name"`
-	IgnitionFile string `json:"-" yaml:"ignitionFile"`
+	Count int    `json:"-" yaml:"count"`
+	Name  string `json:"-" yaml:"name"`
 }
 
 // NodePools converts node pools related config.

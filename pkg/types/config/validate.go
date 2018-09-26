@@ -3,14 +3,12 @@ package config
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"regexp"
 	"strings"
 
 	"github.com/openshift/installer/installer/pkg/validate"
 	"github.com/openshift/installer/pkg/types/config/aws"
 
-	ignconfig "github.com/coreos/ignition/config/v2_2"
 	"github.com/coreos/tectonic-config/config/tectonic-network"
 	log "github.com/sirupsen/logrus"
 )
@@ -75,12 +73,10 @@ func (e *ErrInvalidIgnConfig) Error() string {
 func (c *Cluster) Validate() []error {
 	var errs []error
 	errs = append(errs, c.validateNodePools()...)
-	errs = append(errs, c.validateIgnitionFiles()...)
 	errs = append(errs, c.validateNetworking()...)
 	errs = append(errs, c.validateAWS()...)
 	errs = append(errs, c.validatePullSecret()...)
 	errs = append(errs, c.validateLibvirt()...)
-	errs = append(errs, c.validateCA()...)
 	if err := validate.PrefixError("cluster name", validate.ClusterName(c.Name)); err != nil {
 		errs = append(errs, err)
 	}
@@ -258,41 +254,6 @@ func (c *Cluster) validatePullSecret() []error {
 	return errs
 }
 
-func (c *Cluster) validateIgnitionFiles() []error {
-	var errs []error
-	for _, n := range c.NodePools {
-		if n.IgnitionFile == "" {
-			continue
-		}
-
-		if err := validate.FileExists(n.IgnitionFile); err != nil {
-			errs = append(errs, err)
-			continue
-		}
-
-		if err := validateIgnitionConfig(n.IgnitionFile); err != nil {
-			errs = append(errs, err)
-		}
-	}
-	return errs
-}
-
-func validateIgnitionConfig(filePath string) error {
-	blob, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-
-	_, rpt, _ := ignconfig.Parse(blob)
-	if len(rpt.Entries) > 0 {
-		return &ErrInvalidIgnConfig{
-			filePath,
-			rpt.String(),
-		}
-	}
-	return nil
-}
-
 func (c *Cluster) validateNodePools() []error {
 	var errs []error
 	n := c.NodePools.Map()
@@ -351,59 +312,4 @@ func (c *Cluster) validateNoSharedNodePools() []error {
 		errs = append(errs, err)
 	}
 	return errs
-}
-
-func (c *Cluster) validateCA() []error {
-	var errs []error
-
-	switch {
-	case (c.CA.RootCACertPath == "") != (c.CA.RootCAKeyPath == ""):
-		errs = append(errs, fmt.Errorf("rootCACertPath and rootCAKeyPath must both be set or empty"))
-	case c.CA.RootCAKeyPath != "":
-		if err := validate.FileExists(c.CA.RootCAKeyPath); err != nil {
-			errs = append(errs, err)
-		}
-		if err := validateCAKey(c.CA.RootCAKeyPath); err != nil {
-			errs = append(errs, err)
-		}
-		fallthrough
-	case c.CA.RootCACertPath != "":
-		if err := validate.FileExists(c.CA.RootCACertPath); err != nil {
-			errs = append(errs, err)
-		}
-		if err := validateCACert(c.CA.RootCACertPath); err != nil {
-			errs = append(errs, err)
-		}
-	}
-	return errs
-}
-
-// validateCAKey validates ֿthe content of the private key file
-func validateCAKey(path string) error {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("failed to read private key file: %v", err)
-	}
-	pem := string(data)
-
-	// Validate that file content is a valid Key
-	if err := validate.PrivateKey(pem); err != nil {
-		return fmt.Errorf("invalid private key (%s): %v", path, err)
-	}
-	return nil
-}
-
-// validateCACert validates the content of the certificate file
-func validateCACert(path string) error {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return fmt.Errorf("failed to read certificate file: %v", err)
-	}
-	pem := string(data)
-
-	// Validate that file content is a valid certificate
-	if err := validate.Certificate(pem); err != nil {
-		return fmt.Errorf("invalid certificate (%s): %v", path, err)
-	}
-	return nil
 }

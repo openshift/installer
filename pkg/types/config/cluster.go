@@ -50,9 +50,6 @@ var defaultCluster = Cluster{
 		Region:       aws.DefaultRegion,
 		VPCCIDRBlock: aws.DefaultVPCCIDRBlock,
 	},
-	CA: CA{
-		RootCAKeyAlg: "RSA",
-	},
 	Libvirt: libvirt.Libvirt{
 		Network: libvirt.Network{
 			IfName: libvirt.DefaultIfName,
@@ -71,7 +68,6 @@ type Cluster struct {
 	Admin      `json:",inline" yaml:"admin,omitempty"`
 	aws.AWS    `json:",inline" yaml:"aws,omitempty"`
 	BaseDomain string `json:"tectonic_base_domain,omitempty" yaml:"baseDomain,omitempty"`
-	CA         `json:",inline" yaml:"CA,omitempty"`
 
 	IgnitionBootstrap string   `json:"ignition_bootstrap,omitempty" yaml:"-"`
 	IgnitionMasters   []string `json:"ignition_masters,omitempty" yaml:"-"`

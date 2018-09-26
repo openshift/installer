@@ -1,7 +1,6 @@
 package config
 
 import (
-	"os"
 	"testing"
 
 	"github.com/openshift/installer/pkg/types/config/aws"
@@ -402,43 +401,6 @@ func TestS3BucketNames(t *testing.T) {
 			}
 			t.Errorf("test case %d: expected %s error, got %v", i, no, err)
 		}
-	}
-}
-
-func TestValidateIgnitionFiles(t *testing.T) {
-	c := Cluster{
-		NodePools: NodePools{
-			{
-				Name:         "error: invalid path",
-				IgnitionFile: "do-not-exist.ign",
-			},
-			{
-				Name:         "error: invalid config",
-				IgnitionFile: "fixtures/invalid-ign.ign",
-			},
-			{
-				Name: "ok: no field",
-			},
-			{
-				Name:         "ok: empty field",
-				IgnitionFile: "",
-			},
-			{
-				Name:         "ok: valid config",
-				IgnitionFile: "fixtures/ign.ign",
-			},
-		},
-	}
-
-	errs := c.validateIgnitionFiles()
-	if len(errs) != 2 {
-		t.Errorf("expected: %d ignition errors, got: %d", 2, len(errs))
-	}
-	if !os.IsNotExist(errs[0]) {
-		t.Errorf("expected: notExistError, got: %v", errs[0])
-	}
-	if _, ok := errs[1].(*ErrInvalidIgnConfig); !ok {
-		t.Errorf("expected: ErrInvalidIgnConfig, got: %v", errs[1])
 	}
 }
 
