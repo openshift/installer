@@ -1,35 +1,37 @@
-package operators
+package tectonic
 
 import (
 	"text/template"
 )
 
 var (
-	// KubeAddonOperator  is the variable/constant representing the contents of the respective file
-	KubeAddonOperator = template.Must(template.New("kube-addon-operator.yaml").Parse(`
----
+	// KubeCoreOperator  is the variable/constant representing the contents of the respective file
+	KubeCoreOperator = template.Must(template.New("kube-core-00-operator.yaml").Parse(`
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: kube-addon-operator
-  namespace: tectonic-system
+  name: kube-core-operator
+  namespace: kube-system
   labels:
-    k8s-app: kube-addon-operator
+    k8s-app: kube-core-operator
     managed-by-channel-operator: "true"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      k8s-app: kube-addon-operator
+      k8s-app: kube-core-operator
   template:
     metadata:
       labels:
-        k8s-app: kube-addon-operator
-        tectonic-app-version-name: kube-addon
+        k8s-app: kube-core-operator
+        tectonic-app-version-name: kube-core
     spec:
       containers:
-        - name: kube-addon-operator
-          image: {{.KubeAddonOperatorImage}}
+        - name: kube-core-operator
+          image: {{.KubeCoreOperatorImage}}
+          imagePullPolicy: Always
+          args:
+            - --config=/etc/cluster-config/kco-config.yaml
           resources:
             limits:
               cpu: 20m
@@ -57,7 +59,7 @@ spec:
           configMap:
             name: cluster-config-v1
             items:
-              - key: addon-config
-                path: addon-config
+              - key: kco-config
+                path: kco-config.yaml
 `))
 )

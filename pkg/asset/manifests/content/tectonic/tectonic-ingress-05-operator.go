@@ -1,4 +1,4 @@
-package operators
+package tectonic
 
 import (
 	"text/template"
@@ -6,8 +6,7 @@ import (
 
 var (
 	// TectonicIngressControllerOperator  is the variable/constant representing the contents of the respective file
-	TectonicIngressControllerOperator = template.Must(template.New("tectonic-ingress-controller-operator.yaml").Parse(`
----
+	TectonicIngressControllerOperator = template.Must(template.New("tectonic-ingress-05-operator.yaml").Parse(`
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:

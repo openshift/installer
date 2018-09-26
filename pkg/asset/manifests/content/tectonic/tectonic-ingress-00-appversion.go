@@ -1,21 +1,22 @@
-package appversions
+package tectonic
 
 const (
-	// AppVersionKubeCore  is the variable/constant representing the contents of the respective file
-	AppVersionKubeCore = `
+	// AppVersionTectonicIngress  is the variable/constant representing the contents of the respective file
+	AppVersionTectonicIngress = `
 ---
 apiVersion: tco.coreos.com/v1
 kind: AppVersion
 metadata:
-  name: kube-core
+  name: tectonic-ingress
   namespace: tectonic-system
   labels:
     managed-by-channel-operator: "true"
 spec:
+  desiredVersion:
   paused: false
 status:
   paused: false
-upgradereq: 0
+upgradereq: 1
 upgradecomp: 0
 `
 )

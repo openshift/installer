@@ -7,13 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/manifests/content/tectonic/ingress"
-	"github.com/openshift/installer/pkg/asset/manifests/content/tectonic/rbac"
-	"github.com/openshift/installer/pkg/asset/manifests/content/tectonic/secrets"
-	"github.com/openshift/installer/pkg/asset/manifests/content/tectonic/security"
-	"github.com/openshift/installer/pkg/asset/manifests/content/tectonic/updater"
-	"github.com/openshift/installer/pkg/asset/manifests/content/tectonic/updater/appversions"
-	"github.com/openshift/installer/pkg/asset/manifests/content/tectonic/updater/operators"
+	content "github.com/openshift/installer/pkg/asset/manifests/content/tectonic"
 )
 
 // tectonic generates the dependent resource manifests for tectonic (as against bootkube)
@@ -62,29 +56,23 @@ func (t *tectonic) Generate(dependencies map[asset.Asset]*asset.State) (*asset.S
 	}
 
 	assetData := map[string][]byte{
-		// template files
-		"secrets/ingress-tls.yaml":                                    applyTemplateData(secrets.IngressTLS, templateData),
-		"secrets/ca-cert.yaml":                                        applyTemplateData(secrets.CaCert, templateData),
-		"secrets/pull.json":                                           applyTemplateData(secrets.Pull, templateData),
-		"updater/operators/tectonic-ingress-controller-operator.yaml": applyTemplateData(operators.TectonicIngressControllerOperator, templateData),
-		"updater/operators/kube-addon-operator.yaml":                  applyTemplateData(operators.KubeAddonOperator, templateData),
-		"updater/operators/kube-core-operator.yaml":                   applyTemplateData(operators.KubeCoreOperator, templateData),
-		"updater/app_versions/app-version-tectonic-cluster.yaml":      applyTemplateData(appversions.AppVersionTectonicCluster, templateData),
-		"ingress/pull.json":                                           applyTemplateData(ingress.Pull, templateData),
-		"ingress/cluster-config.yaml":                                 applyTemplateData(ingress.ClusterConfig, templateData),
-
-		// constant files
-		"security/priviledged-scc-tectonic.yaml":                 []byte(security.PriviledgedSccTectonic),
-		"rbac/role-admin.yaml":                                   []byte(rbac.RoleAdmin),
-		"rbac/binding-admin.yaml":                                []byte(rbac.BindingAdmin),
-		"rbac/binding-discovery.yaml":                            []byte(rbac.BindingDiscovery),
-		"rbac/role-user.yaml":                                    []byte(rbac.RoleUser),
-		"updater/migration-status-kind.yaml":                     []byte(updater.MigrationStatusKind),
-		"updater/app_versions/app-version-kube-addon.yaml":       []byte(appversions.AppVersionKubeAddon),
-		"updater/app_versions/app-version-tectonic-ingress.yaml": []byte(appversions.AppVersionTectonicIngress),
-		"updater/app_versions/app-version-kube-core.yaml":        []byte(appversions.AppVersionKubeCore),
-		"updater/app-version-kind.yaml":                          []byte(updater.AppVersionKind),
-		"ingress/svc-account.yaml":                               []byte(ingress.SvcAccount),
+		"99_binding-discovery.yaml":                  []byte(content.BindingDiscovery),
+		"99_kube-addon-00-appversion.yaml":           []byte(content.AppVersionKubeAddon),
+		"99_kube-addon-01-operator.yaml":             applyTemplateData(content.KubeAddonOperator, templateData),
+		"99_kube-core-00-appversion.yaml":            []byte(content.AppVersionKubeCore),
+		"99_kube-core-00-operator.yaml":              applyTemplateData(content.KubeCoreOperator, templateData),
+		"99_role-admin.yaml":                         []byte(content.RoleAdmin),
+		"99_role-user.yaml":                          []byte(content.RoleUser),
+		"99_tectonic-ingress-00-appversion.yaml":     []byte(content.AppVersionTectonicIngress),
+		"99_tectonic-ingress-01-cluster-config.yaml": applyTemplateData(content.ClusterConfigTectonicIngress, templateData),
+		"99_tectonic-ingress-02-tls.yaml":            applyTemplateData(content.TLSTectonicIngress, templateData),
+		"99_tectonic-ingress-03-pull.json":           applyTemplateData(content.PullTectonicIngress, templateData),
+		"99_tectonic-ingress-04-svc-account.yaml":    []byte(content.SvcAccountTectonicIngress),
+		"99_tectonic-ingress-05-operator.yaml":       applyTemplateData(content.TectonicIngressControllerOperator, templateData),
+		"99_tectonic-system-00-binding-admin.yaml":   []byte(content.BindingAdmin),
+		"99_tectonic-system-01-ca-cert.yaml":         applyTemplateData(content.CaCertTectonicSystem, templateData),
+		"99_tectonic-system-02-privileged-scc.yaml":  []byte(content.PriviledgedSccTectonicSystem),
+		"99_tectonic-system-03-pull.json":            applyTemplateData(content.PullTectonicSystem, templateData),
 	}
 
 	var assetContents []asset.Content

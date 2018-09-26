@@ -1,12 +1,12 @@
-package secrets
+package tectonic
 
 import (
 	"text/template"
 )
 
 var (
-	// IngressTLS  is the variable/constant representing the contents of the respective file
-	IngressTLS = template.Must(template.New("ingress-tls.yaml").Parse(`
+	// TLSTectonicIngress  is the variable/constant representing the contents of the respective file
+	TLSTectonicIngress = template.Must(template.New("tectonic-ingress-02-tls.yaml").Parse(`
 apiVersion: v1
 kind: Secret
 metadata:

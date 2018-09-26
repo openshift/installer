@@ -1,4 +1,4 @@
-package rbac
+package tectonic
 
 const (
 	// RoleAdmin  is the variable/constant representing the contents of the respective file

@@ -1,9 +1,8 @@
-package security
+package tectonic
 
 const (
-	// PriviledgedSccTectonic  is the variable/constant representing the contents of the respective file
-	PriviledgedSccTectonic = `
----
+	// PriviledgedSccTectonicSystem  is the variable/constant representing the contents of the respective file
+	PriviledgedSccTectonicSystem = `
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:

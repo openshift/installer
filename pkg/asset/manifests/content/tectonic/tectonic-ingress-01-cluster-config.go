@@ -1,12 +1,12 @@
-package ingress
+package tectonic
 
 import (
 	"text/template"
 )
 
 var (
-	// ClusterConfig  is the variable/constant representing the contents of the respective file
-	ClusterConfig = template.Must(template.New("cluster-config.yaml").Parse(`
+	// ClusterConfigTectonicIngress  is the variable/constant representing the contents of the respective file
+	ClusterConfigTectonicIngress = template.Must(template.New("tectonic-ingress-01-cluster-config.yaml").Parse(`
 apiVersion: v1
 kind: ConfigMap
 metadata:
