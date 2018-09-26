@@ -5,12 +5,6 @@ GitHub pull requests. This document outlines some of the conventions on
 development workflow, commit message formatting, contact points and other
 resources to make it easier to get your contribution accepted.
 
-# Tectonic Installer contributions
-
-Tectonic Installer provides specific guidelines for the modification of included Terraform modules. For more information, please see [Modifying Tectonic Installer][modify-installer].
-
-For more information on Terraform, please see the [Terraform Documentation][tf-doc].
-
 ## Certificate of Origin
 
 By contributing to this project you agree to the Developer Certificate of
@@ -91,9 +85,6 @@ second line is always blank, and other lines should be wrapped at 80 characters.
 This allows the message to be easier to read on GitHub as well as in various
 git tools.
 
-
-[modify-installer]: Documentation/contrib/modify-installer.md
-[tf-doc]: https://www.terraform.io/docs/index.html
 [golang-style]: https://github.com/golang/go/wiki/CodeReviewComments
 [disclosure]: https://coreos.com/security/disclosure/
 [new-issue]: https://github.com/openshift/installer/issues/new

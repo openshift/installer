@@ -177,7 +177,7 @@ When you're done, destroy:
 ```sh
 tectonic destroy --dir=$CLUSTER_NAME
 ```
-Be sure to destroy, or else you will need to manually use virsh to clean up the leaked resources. The [`virsh-cleanup`](../../scripts/maintenance/virsh-cleanup) script may help with this, but note it will currently destroy *all* libvirt resources.
+Be sure to destroy, or else you will need to manually use virsh to clean up the leaked resources. The [`virsh-cleanup`](../../scripts/maintenance/virsh-cleanup.sh) script may help with this, but note it will currently destroy *all* libvirt resources.
 
 With the cluster removed, you no longer need to allow libvirt nodes to reach your `libvirtd`. Restart
 `firewalld` to remove your temporary changes as follows:

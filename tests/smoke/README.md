@@ -1,12 +1,12 @@
-# Tectonic Smoke Tests
+# OpenShift Installer Smoke Tests
 
-This directory contains all smoke tests for Tectonic.
-The smoke tests are a set of Golang test files that perform minimal validation of a running Tectonic cluster.
+This directory contains all smoke tests for OpenShift Installer.
+The smoke tests are a set of Golang test files that perform minimal validation of a running OpenShift cluster.
 
 ## Getting Started
 
-The smoke tests assume a running Tectonic cluster, so before running any tests:
-1. create a Tectonic cluster; and
+The smoke tests assume a running OpenShift cluster, so before running any tests:
+1. create a OpenShift cluster; and
 2. download the cluster's kubeconfig to a known location.
 
 ## Running
