@@ -1,12 +1,15 @@
 package config
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"regexp"
+	"strconv"
 	"strings"
+	"unicode/utf8"
 
-	"github.com/openshift/installer/installer/pkg/validate"
 	"github.com/openshift/installer/pkg/types/config/aws"
 
 	"github.com/coreos/tectonic-config/config/tectonic-network"
@@ -77,16 +80,16 @@ func (c *Cluster) Validate() []error {
 	errs = append(errs, c.validateAWS()...)
 	errs = append(errs, c.validatePullSecret()...)
 	errs = append(errs, c.validateLibvirt()...)
-	if err := validate.PrefixError("cluster name", validate.ClusterName(c.Name)); err != nil {
+	if err := prefixError("cluster name", validateClusterName(c.Name)); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError("base domain", validate.DomainName(c.BaseDomain)); err != nil {
+	if err := prefixError("base domain", ValidateDomainName(c.BaseDomain)); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError("admin password", validate.NonEmpty(c.Admin.Password)); err != nil {
+	if err := prefixError("admin password", validateNonEmpty(c.Admin.Password)); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError("admin email", validate.Email(c.Admin.Email)); err != nil {
+	if err := prefixError("admin email", ValidateEmail(c.Admin.Email)); err != nil {
 		errs = append(errs, err)
 	}
 	return errs
@@ -104,14 +107,14 @@ func (c *Cluster) validateAWS() []error {
 	if err := c.validateS3Bucket(); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError("aws vpcCIDRBlock", validate.SubnetCIDR(c.AWS.VPCCIDRBlock)); err != nil {
+	if err := prefixError("aws vpcCIDRBlock", validateSubnetCIDR(c.AWS.VPCCIDRBlock)); err != nil {
 		errs = append(errs, err)
 	}
 	errs = append(errs, c.validateOverlapWithPodOrServiceCIDR(c.AWS.VPCCIDRBlock, "aws vpcCIDRBlock")...)
-	if err := validate.PrefixError("aws profile", validate.NonEmpty(c.AWS.Profile)); err != nil {
+	if err := prefixError("aws profile", validateNonEmpty(c.AWS.Profile)); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError("aws region", validate.NonEmpty(c.AWS.Region)); err != nil {
+	if err := prefixError("aws region", validateNonEmpty(c.AWS.Region)); err != nil {
 		errs = append(errs, err)
 	}
 	return errs
@@ -121,10 +124,10 @@ func (c *Cluster) validateAWS() []error {
 // overlap with the pod or service CIDRs of the cluster config.
 func (c *Cluster) validateOverlapWithPodOrServiceCIDR(cidr, name string) []error {
 	var errs []error
-	if err := validate.PrefixError(fmt.Sprintf("%s and podCIDR", name), validate.CIDRsDontOverlap(cidr, c.Networking.PodCIDR)); err != nil {
+	if err := prefixError(fmt.Sprintf("%s and podCIDR", name), validateCIDRsDontOverlap(cidr, c.Networking.PodCIDR)); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError(fmt.Sprintf("%s and serviceCIDR", name), validate.CIDRsDontOverlap(cidr, c.Networking.ServiceCIDR)); err != nil {
+	if err := prefixError(fmt.Sprintf("%s and serviceCIDR", name), validateCIDRsDontOverlap(cidr, c.Networking.ServiceCIDR)); err != nil {
 		errs = append(errs, err)
 	}
 	return errs
@@ -136,7 +139,7 @@ func (c *Cluster) validateLibvirt() []error {
 	if c.Platform != PlatformLibvirt {
 		return errs
 	}
-	if err := validate.PrefixError("libvirt network ipRange", validate.SubnetCIDR(c.Libvirt.Network.IPRange)); err != nil {
+	if err := prefixError("libvirt network ipRange", validateSubnetCIDR(c.Libvirt.Network.IPRange)); err != nil {
 		errs = append(errs, err)
 	}
 	if len(c.Libvirt.MasterIPs) > 0 {
@@ -144,18 +147,18 @@ func (c *Cluster) validateLibvirt() []error {
 			errs = append(errs, fmt.Errorf("length of masterIPs does't match master count"))
 		}
 		for i, ip := range c.Libvirt.MasterIPs {
-			if err := validate.PrefixError(fmt.Sprintf("libvirt masterIPs[%d] %q", i, ip), validate.IPv4(ip)); err != nil {
+			if err := prefixError(fmt.Sprintf("libvirt masterIPs[%d] %q", i, ip), validateIPv4(ip)); err != nil {
 				errs = append(errs, err)
 			}
 		}
 	}
-	if err := validate.PrefixError("libvirt uri", validate.NonEmpty(c.Libvirt.URI)); err != nil {
+	if err := prefixError("libvirt uri", validateNonEmpty(c.Libvirt.URI)); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError("libvirt network name", validate.NonEmpty(c.Libvirt.Network.Name)); err != nil {
+	if err := prefixError("libvirt network name", validateNonEmpty(c.Libvirt.Network.Name)); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError("libvirt network ifName", validate.NonEmpty(c.Libvirt.Network.IfName)); err != nil {
+	if err := prefixError("libvirt network ifName", validateNonEmpty(c.Libvirt.Network.IfName)); err != nil {
 		errs = append(errs, err)
 	}
 	errs = append(errs, c.validateOverlapWithPodOrServiceCIDR(c.Libvirt.Network.IPRange, "libvirt ipRange")...)
@@ -165,19 +168,19 @@ func (c *Cluster) validateLibvirt() []error {
 func (c *Cluster) validateNetworking() []error {
 	var errs []error
 	// https://en.wikipedia.org/wiki/Maximum_transmission_unit#MTUs_for_common_media
-	if err := validate.PrefixError("mtu", validate.IntRange(c.Networking.MTU, 68, 64*1024)); err != nil {
+	if err := prefixError("mtu", validateIntRange(c.Networking.MTU, 68, 64*1024)); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError("podCIDR", validate.SubnetCIDR(c.Networking.PodCIDR)); err != nil {
+	if err := prefixError("podCIDR", validateSubnetCIDR(c.Networking.PodCIDR)); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError("serviceCIDR", validate.SubnetCIDR(c.Networking.ServiceCIDR)); err != nil {
+	if err := prefixError("serviceCIDR", validateSubnetCIDR(c.Networking.ServiceCIDR)); err != nil {
 		errs = append(errs, err)
 	}
 	if err := c.validateNetworkType(); err != nil {
 		errs = append(errs, err)
 	}
-	if err := validate.PrefixError("pod and service CIDRs", validate.CIDRsDontOverlap(c.Networking.PodCIDR, c.Networking.ServiceCIDR)); err != nil {
+	if err := prefixError("pod and service CIDRs", validateCIDRsDontOverlap(c.Networking.PodCIDR, c.Networking.ServiceCIDR)); err != nil {
 		errs = append(errs, err)
 	}
 	return errs
@@ -248,7 +251,7 @@ func (c *Cluster) validateS3Bucket() error {
 
 func (c *Cluster) validatePullSecret() []error {
 	var errs []error
-	if err := validate.JSON([]byte(c.PullSecret)); err != nil {
+	if err := ValidateJSON([]byte(c.PullSecret)); err != nil {
 		errs = append(errs, err)
 	}
 	return errs
@@ -312,4 +315,252 @@ func (c *Cluster) validateNoSharedNodePools() []error {
 		errs = append(errs, err)
 	}
 	return errs
+}
+
+// ValidateDomainName checks if the given string is a valid domain name and returns an error if not.
+func ValidateDomainName(v string) error {
+	if err := validateNonEmpty(v); err != nil {
+		return err
+	}
+
+	split := strings.Split(v, ".")
+	for i, segment := range split {
+		// Trailing dot is OK
+		if len(segment) == 0 && i == len(split)-1 {
+			continue
+		}
+		if !isMatch("^[a-zA-Z0-9-]{1,63}$", segment) {
+			return errors.New("invalid domain name")
+		}
+	}
+	return nil
+}
+
+// ValidateEmail checks if the given string is a valid email address and returns an error if not.
+func ValidateEmail(v string) error {
+	if err := validateNonEmpty(v); err != nil {
+		return err
+	}
+
+	invalidError := errors.New("invalid email address")
+
+	split := strings.Split(v, "@")
+	if len(split) != 2 {
+		return invalidError
+	}
+	localPart := split[0]
+	domain := split[1]
+
+	if validateNonEmpty(localPart) != nil {
+		return invalidError
+	}
+
+	// No whitespace allowed in local-part
+	if isMatch(`\s`, localPart) {
+		return invalidError
+	}
+
+	return ValidateDomainName(domain)
+}
+
+// ValidateJSON validates that the given data is valid JSON.
+func ValidateJSON(data []byte) error {
+	var dummy interface{}
+	return json.Unmarshal(data, &dummy)
+}
+
+// prefixError wraps an error with a prefix or returns nil if there was no error.
+// This is useful for wrapping errors returned by generic error funcs like `validateNonEmpty` so that the error includes the offending field name.
+func prefixError(prefix string, err error) error {
+	if err != nil {
+		return fmt.Errorf("%s: %v", prefix, err)
+	}
+	return nil
+}
+
+func isMatch(re string, v string) bool {
+	return regexp.MustCompile(re).MatchString(v)
+}
+
+// validateClusterName checks if the given string is a valid name for a cluster and returns an error if not.
+func validateClusterName(v string) error {
+	if err := validateNonEmpty(v); err != nil {
+		return err
+	}
+
+	if length := utf8.RuneCountInString(v); length < 1 || length > 253 {
+		return errors.New("must be between 1 and 253 characters")
+	}
+
+	if strings.ToLower(v) != v {
+		return errors.New("must be lower case")
+	}
+
+	if !isMatch("^[a-z0-9-.]*$", v) {
+		return errors.New("only lower case alphanumeric [a-z0-9], dashes and dots are allowed")
+	}
+
+	isAlphaNum := regexp.MustCompile("^[a-z0-9]$").MatchString
+
+	// If we got this far, we know the string is ASCII and has at least one character
+	if !isAlphaNum(v[:1]) || !isAlphaNum(v[len(v)-1:]) {
+		return errors.New("must start and end with a lower case alphanumeric character [a-z0-9]")
+	}
+
+	for _, segment := range strings.Split(v, ".") {
+		// Each segment can have up to 63 characters
+		if utf8.RuneCountInString(segment) > 63 {
+			return errors.New("no segment between dots can be more than 63 characters")
+		}
+		if !isAlphaNum(segment[:1]) || !isAlphaNum(segment[len(segment)-1:]) {
+			return errors.New("segments between dots must start and end with a lower case alphanumeric character [a-z0-9]")
+		}
+	}
+
+	return nil
+}
+
+// validateNonEmpty checks if the given string contains at least one non-whitespace character and returns an error if not.
+func validateNonEmpty(v string) error {
+	if utf8.RuneCountInString(strings.TrimSpace(v)) == 0 {
+		return errors.New("cannot be empty")
+	}
+	return nil
+}
+
+// validateSubnetCIDR checks if the given string is a valid CIDR for a master nodes or worker nodes subnet and returns an error if not.
+func validateSubnetCIDR(v string) error {
+	if err := validateNonEmpty(v); err != nil {
+		return err
+	}
+
+	split := strings.Split(v, "/")
+
+	if len(split) == 1 {
+		return errors.New("must provide a CIDR netmask (eg, /24)")
+	}
+
+	if len(split) != 2 {
+		return errors.New("invalid IPv4 address")
+	}
+
+	ip := split[0]
+
+	if err := validateIPv4(ip); err != nil {
+		return errors.New("invalid IPv4 address")
+	}
+
+	if mask, err := strconv.Atoi(split[1]); err != nil || mask < 0 || mask > 32 {
+		return errors.New("invalid netmask size (must be between 0 and 32)")
+	}
+
+	// Catch any invalid CIDRs not caught by the checks above
+	if _, _, err := net.ParseCIDR(v); err != nil {
+		return errors.New("invalid CIDR")
+	}
+
+	if strings.HasPrefix(ip, "172.17.") {
+		return errors.New("overlaps with default Docker Bridge subnet (172.17.0.0/16)")
+	}
+
+	return nil
+}
+
+// validateCIDRsDontOverlap ensures two given CIDRs don't overlap
+// with one another. CIDR starting IPs are canonicalized
+// before being compared.
+func validateCIDRsDontOverlap(acidr, bcidr string) error {
+	_, a, err := net.ParseCIDR(acidr)
+	if err != nil {
+		return fmt.Errorf("invalid CIDR %q: %v", acidr, err)
+	}
+	if err := canonicalizeIP(&a.IP); err != nil {
+		return fmt.Errorf("invalid CIDR %q: %v", acidr, err)
+	}
+	_, b, err := net.ParseCIDR(bcidr)
+	if err != nil {
+		return fmt.Errorf("invalid CIDR %q: %v", bcidr, err)
+	}
+	if err := canonicalizeIP(&b.IP); err != nil {
+		return fmt.Errorf("invalid CIDR %q: %v", bcidr, err)
+	}
+	err = fmt.Errorf("%q and %q overlap", acidr, bcidr)
+	// IPs are of different families.
+	if len(a.IP) != len(b.IP) {
+		return nil
+	}
+	if a.Contains(b.IP) {
+		return err
+	}
+	if a.Contains(lastIP(b)) {
+		return err
+	}
+	if b.Contains(a.IP) {
+		return err
+	}
+	if b.Contains(lastIP(a)) {
+		return err
+	}
+	return nil
+}
+
+// validateIPv4 checks if the given string is a valid IP v4 address and returns an error if not.
+// Based on net.ParseIP.
+func validateIPv4(v string) error {
+	if err := validateNonEmpty(v); err != nil {
+		return err
+	}
+	if ip := net.ParseIP(v); ip == nil || !strings.Contains(v, ".") {
+		return errors.New("invalid IPv4 address")
+	}
+	return nil
+}
+
+// validateIntRange checks if the given string is a valid integer between `min` and `max` and returns an error if not.
+func validateIntRange(v string, min int, max int) error {
+	i, err := strconv.Atoi(v)
+	if err != nil {
+		return validateInt(v)
+	}
+	if i < min {
+		return fmt.Errorf("cannot be less than %v", min)
+	}
+	if i > max {
+		return fmt.Errorf("cannot be greater than %v", max)
+	}
+	return nil
+}
+
+// validateInt checks if the given string is a valid integer and returns an error if not.
+func validateInt(v string) error {
+	if err := validateNonEmpty(v); err != nil {
+		return err
+	}
+
+	if _, err := strconv.Atoi(v); err != nil {
+		return errors.New("invalid integer")
+	}
+	return nil
+}
+
+// canonicalizeIP ensures that the given IP is in standard form
+// and returns an error otherwise.
+func canonicalizeIP(ip *net.IP) error {
+	if ip.To4() != nil {
+		*ip = ip.To4()
+		return nil
+	}
+	if ip.To16() != nil {
+		*ip = ip.To16()
+		return nil
+	}
+	return fmt.Errorf("IP %q is of unknown type", ip)
+}
+
+func lastIP(cidr *net.IPNet) net.IP {
+	var last net.IP
+	for i := 0; i < len(cidr.IP); i++ {
+		last = append(last, cidr.IP[i]|^cidr.Mask[i])
+	}
+	return last
 }
