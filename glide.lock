@@ -1,8 +1,8 @@
-hash: 2c4b7376f073ee54146d225a63286b1f94961aab9f733354c6b5aeeb107ba710
-updated: 2018-09-25T12:42:08.741945969-07:00
+hash: 89c59afb258e5da417740d181008c08a7e0ac024c537b04b879cee13fe419fa3
+updated: 2018-09-25T21:12:26.59053433-07:00
 imports:
 - name: bitbucket.org/ww/goautoneg
-  version: 75cd24fc2f2c2a2088577d12123ddee5f54e0675
+  version: ""
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
 - name: github.com/AlecAivazis/survey
@@ -18,7 +18,7 @@ imports:
   subpackages:
   - cidr
 - name: github.com/aws/aws-sdk-go
-  version: 0d5157217e4c72d0fc7fabad8e0501d3d5cb768d
+  version: cbd7ed8b82dac1de35d67e576f0b3faf215e1ae9
   subpackages:
   - aws
   - aws/awserr
@@ -697,6 +697,8 @@ testImports:
   version: d8ed2627bdf02c080bf22230dbb337003b7aba2d
   subpackages:
   - difflib
+- name: github.com/shurcooL/vfsgen
+  version: 33ae1944be3fe078a54c597f107e0867da19c713
 - name: github.com/stretchr/testify
   version: f35b8ab0b5a2cef36673838d662e249dd9c94686
   subpackages:

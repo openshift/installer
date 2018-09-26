@@ -2,6 +2,7 @@ package cluster
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -9,6 +10,7 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/types/config"
@@ -42,11 +44,6 @@ func (c *Cluster) Dependencies() []asset.Asset {
 
 // Generate launches the cluster and generates the terraform state file on disk.
 func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
-	dir, err := terraform.BaseLocation()
-	if err != nil {
-		return nil, fmt.Errorf("error finding baselocation for terraform: %v", err)
-	}
-
 	state, ok := parents[c.tfvars]
 	if !ok {
 		return nil, fmt.Errorf("failed to get terraform.tfvar state in the parent asset states")
@@ -68,9 +65,22 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		return nil, fmt.Errorf("failed to unmarshal terraform tfvars file: %v", err)
 	}
 
-	templateDir, err := terraform.FindStepTemplates(dir, terraform.InfraStep, tfvars.Platform)
+	if err := data.Unpack(tmpDir); err != nil {
+		return nil, err
+	}
+
+	templateDir, err := terraform.FindStepTemplates(tmpDir, terraform.InfraStep, tfvars.Platform)
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, errors.New("infra step not found; set OPENSHIFT_INSTALL_DATA to point to the data directory")
+		}
 		return nil, fmt.Errorf("error finding terraform templates: %v", err)
+	}
+
+	// take advantage of the new installer only having one step.
+	err = os.Rename(filepath.Join(tmpDir, "config.tf"), filepath.Join(templateDir, "config.tf"))
+	if err != nil {
+		return nil, err
 	}
 
 	// This runs the terraform in a temp directory, the tfstate file will be returned
