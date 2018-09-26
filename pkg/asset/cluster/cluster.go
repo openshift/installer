@@ -1,12 +1,15 @@
 package cluster
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	"github.com/mholt/archiver"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -17,6 +20,8 @@ import (
 const (
 	stateFileName = "terraform.state"
 )
+
+var TemplateArchive = ""
 
 // Cluster uses the terraform executable to launch a cluster
 // with the given terraform tfvar and generated templates.
@@ -37,30 +42,38 @@ func (c *Cluster) Name() string {
 // Dependencies returns the direct dependency for launching
 // the cluster.
 func (c *Cluster) Dependencies() []asset.Asset {
-	return []asset.Asset{c.tfvars, c.kubeconfig}
+	return []asset.Asset{
+		c.tfvars,
+		c.kubeconfig,
+	}
 }
 
 // Generate launches the cluster and generates the terraform state file on disk.
 func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
-	dir, err := terraform.BaseLocation()
-	if err != nil {
-		return nil, fmt.Errorf("error finding baselocation for terraform: %v", err)
-	}
-
 	state, ok := parents[c.tfvars]
 	if !ok {
 		return nil, fmt.Errorf("failed to get terraform.tfvar state in the parent asset states")
 	}
 
-	// Copy the terraform.tfvars to a temp directory where the terraform will be invoked within.
+	// Create a temp directory in which Terraform will be invoked.
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "openshift-install-")
 	if err != nil {
 		return nil, fmt.Errorf("failed to create temp dir: %v", err)
 	}
 	defer os.RemoveAll(tmpDir)
 
+	// Copy the terraform.tfvars to the temp directory.
 	if err := ioutil.WriteFile(filepath.Join(tmpDir, state.Contents[0].Name), state.Contents[0].Data, 0600); err != nil {
 		return nil, fmt.Errorf("failed to write terraform.tfvars file: %v", err)
+	}
+
+	// Copy the Terraform templates into the temp directory.
+	compressedArchive, err := base64.StdEncoding.DecodeString(TemplateArchive)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decompress template archive: %v", err)
+	}
+	if err := archiver.TarGz.Read(bytes.NewBuffer(compressedArchive), tmpDir); err != nil {
+		return nil, err
 	}
 
 	var tfvars config.Cluster
@@ -68,7 +81,7 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		return nil, fmt.Errorf("failed to unmarshal terraform tfvars file: %v", err)
 	}
 
-	templateDir, err := terraform.FindStepTemplates(dir, terraform.InfraStep, tfvars.Platform)
+	templateDir, err := terraform.FindStepTemplates(tmpDir, terraform.InfraStep, tfvars.Platform)
 	if err != nil {
 		return nil, fmt.Errorf("error finding terraform templates: %v", err)
 	}
