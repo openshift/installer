@@ -10,7 +10,7 @@ TAGS=
 case "${MODE}" in
 release)
 	TAGS=release
-	go generate ./data
+	GOPATH="${PWD}/vendor:${GOPATH}" go generate ./data
 	;;
 dev)
 	;;
