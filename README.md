@@ -5,7 +5,7 @@
 After cloning this repository, the installer binary will need to be built by running the following:
 
 ```sh
-./build.sh
+hack/build.sh
 ```
 
 This will create `bin/openshift-install`. This binary can then be invoked to create an OpenShift cluster, like so:
