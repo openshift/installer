@@ -25,6 +25,8 @@ The installer accepts a number of environment variable that allow the interactiv
 * `OPENSHIFT_INSTALL_SSH_PUB_KEY`:
      The SSH public key used to access all nodes within the cluster (e.g. `ssh-rsa AAAA...`).
      This is optional.
+* `OPENSHIFT_INSTALL_SSH_PUB_KEY_PATH`:
+     As an alternative to `OPENSHIFT_INSTALL_SSH_PUB_KEY`, you can configure this variable with a path containing your SSH public key (e.g. `~/.ssh/id_rsa.pub`).
 
 ## Platform-Specific
 
