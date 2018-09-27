@@ -25,7 +25,7 @@ func (s *StoreImpl) Fetch(asset Asset) (*State, error) {
 }
 
 func (s *StoreImpl) fetch(asset Asset, indent string) (*State, error) {
-	logrus.Infof("%sFetching %s...", indent, asset.Name())
+	logrus.Debugf("%sFetching %s...", indent, asset.Name())
 	state, ok := s.assets[asset]
 	if ok {
 		logrus.Debugf("%sFound %s...", indent, asset.Name())

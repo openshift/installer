@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
@@ -73,6 +73,8 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		return nil, err
 	}
 
+	logrus.Infof("Using Terraform to create cluster...")
+
 	// This runs the terraform in a temp directory, the tfstate file will be returned
 	// to the asset store to persist it on the disk.
 	if err := terraform.Init(tmpDir); err != nil {
@@ -81,16 +83,18 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 
 	stateFile, err := terraform.Apply(tmpDir)
 	if err != nil {
-		// we should try to fetch the terraform state file.
-		log.Errorf("terraform failed: %v", err)
+		err = fmt.Errorf("terraform failed: %v", err)
 	}
 
-	data, err := ioutil.ReadFile(stateFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read tfstate file %q: %v", stateFile, err)
+	data, err2 := ioutil.ReadFile(stateFile)
+	if err2 != nil {
+		if err == nil {
+			err = err2
+		} else {
+			logrus.Errorf("Failed to read tfstate (%q): %v", stateFile, err2)
+		}
 	}
 
-	// TODO(yifan): Use the kubeconfig to verify the cluster is up.
 	return &asset.State{
 		Contents: []asset.Content{
 			{
@@ -98,5 +102,5 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 				Data: data,
 			},
 		},
-	}, nil
+	}, err
 }

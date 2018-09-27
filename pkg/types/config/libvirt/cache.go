@@ -11,6 +11,7 @@ import (
 
 	"github.com/gregjones/httpcache"
 	"github.com/gregjones/httpcache/diskcache"
+	"github.com/sirupsen/logrus"
 )
 
 // UseCachedImage leaves non-file:// image URIs unalterered.
@@ -27,6 +28,8 @@ func (libvirt *Libvirt) UseCachedImage() (err error) {
 	if strings.HasPrefix(libvirt.Image, "file://") {
 		return nil
 	}
+
+	logrus.Infof("Fetching OS image...")
 
 	// FIXME: Use os.UserCacheDir() once we bump to Go 1.11
 	// baseCacheDir, err := os.UserCacheDir()

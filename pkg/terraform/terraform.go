@@ -19,8 +19,9 @@ func terraformExec(clusterDir string, args ...string) error {
 	return nil
 }
 
-// Apply runs "terraform apply" in the given directory.
-// It returns the absolute path of the tfstate file.
+// Apply runs "terraform apply" in the given directory. It returns the absolute
+// path of the tfstate file, rooted in the specified directory, along with any
+// errors from Terraform.
 func Apply(dir string, extraArgs ...string) (string, error) {
 	stateFileName := "terraform.tfstate"
 	defaultArgs := []string{

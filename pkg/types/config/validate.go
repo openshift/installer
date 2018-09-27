@@ -13,7 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/types/config/aws"
 
 	"github.com/coreos/tectonic-config/config/tectonic-network"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -216,15 +216,11 @@ func (c *Cluster) validateNetworkType() error {
 // a single error for convenience.
 func (c *Cluster) ValidateAndLog() error {
 	if errs := c.Validate(); len(errs) != 0 {
-		s := ""
-		if len(errs) != 1 {
-			s = "s"
-		}
-		log.Errorf("Found %d error%s in the cluster definition:", len(errs), s)
+		logrus.Errorf("Found %d error(s) in the cluster definition:", len(errs))
 		for i, err := range errs {
-			log.Errorf("error %d: %v", i+1, err)
+			logrus.Errorf("  Error %d: %v", i+1, err)
 		}
-		return fmt.Errorf("found %d cluster definition error%s", len(errs), s)
+		return fmt.Errorf("found %d cluster definition error(s)", len(errs))
 	}
 	return nil
 }
