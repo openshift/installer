@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"io/ioutil"
 	"os"
 
 	"github.com/AlecAivazis/survey"
@@ -8,9 +9,10 @@ import (
 
 // UserProvided generates an asset that is supplied by a user.
 type UserProvided struct {
-	AssetName  string
-	Question   *survey.Question
-	EnvVarName string
+	AssetName      string
+	Question       *survey.Question
+	EnvVarName     string
+	PathEnvVarName string
 }
 
 var _ Asset = (*UserProvided)(nil)
@@ -23,15 +25,23 @@ func (a *UserProvided) Dependencies() []Asset {
 // Generate queries for input from the user.
 func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
 	var response string
+
 	if value, ok := os.LookupEnv(a.EnvVarName); ok {
 		response = value
-		if a.Question.Validate != nil {
-			if err := a.Question.Validate(response); err != nil {
-				return nil, err
-			}
+	} else if path, ok := os.LookupEnv(a.PathEnvVarName); ok {
+		value, err := ioutil.ReadFile(path)
+		if err != nil {
+			return nil, err
 		}
-	} else {
+		response = string(value)
+	}
+
+	if response == "" {
 		survey.AskOne(a.Question.Prompt, &response, a.Question.Validate)
+	} else if a.Question.Validate != nil {
+		if err := a.Question.Validate(response); err != nil {
+			return nil, err
+		}
 	}
 
 	return &State{

@@ -24,6 +24,20 @@ func (a *sshPublicKey) Dependencies() []asset.Asset {
 	return nil
 }
 
+func readSSHKey(path string) (key []byte, err error) {
+	key, err = ioutil.ReadFile(path)
+	if err != nil {
+		return key, err
+	}
+
+	err = validate.OpenSSHPublicKey(string(key))
+	if err != nil {
+		return key, err
+	}
+
+	return key, nil
+}
+
 // Generate generates the SSH public key asset.
 func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.State, err error) {
 	if value, ok := os.LookupEnv("OPENSHIFT_INSTALL_SSH_PUB_KEY"); ok {
@@ -39,30 +53,37 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 		}, nil
 	}
 
-	pubKeys := map[string][]byte{
-		none: {},
-	}
-	home := os.Getenv("HOME")
-	if home != "" {
-		paths, err := filepath.Glob(filepath.Join(home, ".ssh", "*.pub"))
+	pubKeys := map[string][]byte{}
+	if path, ok := os.LookupEnv("OPENSHIFT_INSTALL_SSH_PUB_KEY_PATH"); ok {
+		key, err := readSSHKey(path)
 		if err != nil {
 			return nil, err
 		}
-
-		for _, path := range paths {
-			pubKeyBytes, err := ioutil.ReadFile(path)
+		pubKeys[path] = key
+	} else {
+		pubKeys[none] = []byte{}
+		home := os.Getenv("HOME")
+		if home != "" {
+			paths, err := filepath.Glob(filepath.Join(home, ".ssh", "*.pub"))
 			if err != nil {
-				continue
+				return nil, err
 			}
-			pubKey := string(pubKeyBytes)
-
-			err = validate.OpenSSHPublicKey(pubKey)
-			if err != nil {
-				continue
+			for _, path := range paths {
+				key, err := readSSHKey(path)
+				if err != nil {
+					continue
+				}
+				pubKeys[path] = key
 			}
-
-			pubKeys[path] = pubKeyBytes
 		}
+	}
+
+	if len(pubKeys) == 1 {
+		return &asset.State{
+			Contents: []asset.Content{{
+				Data: []byte{},
+			}},
+		}, nil
 	}
 
 	var paths []string
