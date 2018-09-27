@@ -110,7 +110,8 @@ func (s *StockImpl) EstablishStock() {
 				return validate.JSON([]byte(ans.(string)))
 			}),
 		},
-		EnvVarName: "OPENSHIFT_INSTALL_PULL_SECRET",
+		EnvVarName:     "OPENSHIFT_INSTALL_PULL_SECRET",
+		PathEnvVarName: "OPENSHIFT_INSTALL_PULL_SECRET_PATH",
 	}
 	s.platform = &Platform{}
 	s.sshKey = &sshPublicKey{}
