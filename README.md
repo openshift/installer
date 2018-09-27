@@ -2,6 +2,8 @@
 
 ## Quick Start
 
+First, install all [build dependencies](docs/dev/dependencies.md).
+
 After cloning this repository, the installer binary will need to be built by running the following:
 
 ```sh

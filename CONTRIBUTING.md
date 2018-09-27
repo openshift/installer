@@ -19,6 +19,7 @@ Due to their public nature, GitHub and mailing lists are not appropriate places 
 ## Getting Started
 
 - Fork the repository on GitHub
+- Install [build dependencies](docs/dev/dependencies.md).
 - Read the [README](README.md) for build and test instructions
 - Play with the project, submit bugs, submit patches!
 

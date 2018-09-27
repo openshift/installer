@@ -1,5 +1,21 @@
 # Managing Dependencies
 
+## Build Dependencies
+
+The following dependencies must be installed on your system before you can build the installer.
+
+### Fedora
+
+```sh
+sudo dnf install golang-bin gcc-c++
+```
+
+### CentOS, RHEL
+
+```sh
+sudo yum install golang-bin gcc-c++
+```
+
 ## Go
 
 We follow a hard flattening approach; i.e. direct and inherited dependencies are installed in the base `vendor/`.
