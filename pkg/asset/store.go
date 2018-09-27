@@ -1,6 +1,8 @@
 package asset
 
 import (
+	"reflect"
+
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -9,49 +11,50 @@ import (
 type Store interface {
 	// Fetch retrieves the state of the given asset, generating it and its
 	// dependencies if necessary.
-	Fetch(Asset) (*State, error)
+	Fetch(Asset) error
 }
 
 // StoreImpl is the implementation of Store.
 type StoreImpl struct {
-	assets map[Asset]*State
+	assets map[reflect.Type]Asset
 }
 
 // Fetch retrieves the state of the given asset, generating it and its
 // dependencies if necessary.
-func (s *StoreImpl) Fetch(asset Asset) (*State, error) {
+func (s *StoreImpl) Fetch(asset Asset) error {
 	return s.fetch(asset, "")
 }
 
-func (s *StoreImpl) fetch(asset Asset, indent string) (*State, error) {
+func (s *StoreImpl) fetch(asset Asset, indent string) error {
 	logrus.Debugf("%sFetching %s...", indent, asset.Name())
-	state, ok := s.assets[asset]
+	storedAsset, ok := s.assets[reflect.TypeOf(asset)]
 	if ok {
 		logrus.Debugf("%sFound %s...", indent, asset.Name())
-		return state, nil
+		reflect.ValueOf(asset).Elem().Set(reflect.ValueOf(storedAsset).Elem())
+		return nil
 	}
 
 	dependencies := asset.Dependencies()
-	dependenciesStates := make(map[Asset]*State, len(dependencies))
+	parents := make(Parents, len(dependencies))
 	if len(dependencies) > 0 {
 		logrus.Debugf("%sGenerating dependencies of %s...", indent, asset.Name())
 	}
 	for _, d := range dependencies {
-		ds, err := s.fetch(d, indent+"  ")
+		err := s.fetch(d, indent+"  ")
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to fetch dependency for %s", asset.Name())
+			return errors.Wrapf(err, "failed to fetch dependency for %s", asset.Name())
 		}
-		dependenciesStates[d] = ds
+		parents.Add(d)
 	}
 
 	logrus.Debugf("%sGenerating %s...", indent, asset.Name())
-	state, err := asset.Generate(dependenciesStates)
+	err := asset.Generate(parents)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to generate asset %s", asset.Name())
+		return errors.Wrapf(err, "failed to generate asset %s", asset.Name())
 	}
 	if s.assets == nil {
-		s.assets = make(map[Asset]*State)
+		s.assets = make(map[reflect.Type]Asset)
 	}
-	s.assets[asset] = state
-	return state, nil
+	s.assets[reflect.TypeOf(asset)] = asset
+	return nil
 }

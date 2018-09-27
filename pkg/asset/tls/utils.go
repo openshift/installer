@@ -9,7 +9,7 @@ import (
 )
 
 // PrivateKeyToPem converts an rsa.PrivateKey object to pem string
-func PrivateKeyToPem(key *rsa.PrivateKey) string {
+func PrivateKeyToPem(key *rsa.PrivateKey) []byte {
 	keyInBytes := x509.MarshalPKCS1PrivateKey(key)
 	keyinPem := pem.EncodeToMemory(
 		&pem.Block{
@@ -17,36 +17,36 @@ func PrivateKeyToPem(key *rsa.PrivateKey) string {
 			Bytes: keyInBytes,
 		},
 	)
-	return string(keyinPem)
+	return keyinPem
 }
 
 // CertToPem converts an x509.Certificate object to a pem string
-func CertToPem(cert *x509.Certificate) string {
+func CertToPem(cert *x509.Certificate) []byte {
 	certInPem := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "CERTIFICATE",
 			Bytes: cert.Raw,
 		},
 	)
-	return string(certInPem)
+	return certInPem
 }
 
 // CSRToPem converts an x509.CertificateRequest to a pem string
-func CSRToPem(cert *x509.CertificateRequest) string {
+func CSRToPem(cert *x509.CertificateRequest) []byte {
 	certInPem := pem.EncodeToMemory(
 		&pem.Block{
 			Type:  "CERTIFICATE REQUEST",
 			Bytes: cert.Raw,
 		},
 	)
-	return string(certInPem)
+	return certInPem
 }
 
 // PublicKeyToPem converts an rsa.PublicKey object to pem string
-func PublicKeyToPem(key *rsa.PublicKey) (string, error) {
+func PublicKeyToPem(key *rsa.PublicKey) ([]byte, error) {
 	keyInBytes, err := x509.MarshalPKIXPublicKey(key)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to MarshalPKIXPublicKey")
+		return nil, errors.Wrap(err, "failed to MarshalPKIXPublicKey")
 	}
 	keyinPem := pem.EncodeToMemory(
 		&pem.Block{
@@ -54,17 +54,23 @@ func PublicKeyToPem(key *rsa.PublicKey) (string, error) {
 			Bytes: keyInBytes,
 		},
 	)
-	return string(keyinPem), nil
+	return keyinPem, nil
 }
 
 // PemToPrivateKey converts a data block to rsa.PrivateKey.
 func PemToPrivateKey(data []byte) (*rsa.PrivateKey, error) {
 	block, _ := pem.Decode(data)
+	if block == nil {
+		return nil, errors.Errorf("could not find a PEM block in the private key")
+	}
 	return x509.ParsePKCS1PrivateKey(block.Bytes)
 }
 
 // PemToCertificate converts a data block to x509.Certificate.
 func PemToCertificate(data []byte) (*x509.Certificate, error) {
 	block, _ := pem.Decode(data)
+	if block == nil {
+		return nil, errors.Errorf("could not find a PEM block in the certificate")
+	}
 	return x509.ParseCertificate(block.Bytes)
 }

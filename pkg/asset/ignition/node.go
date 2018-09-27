@@ -9,12 +9,12 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 )
 
-// FilesFromContents creates an ignition-config file with the contents from the
-// specified index in the specified asset state.
-func FilesFromContents(pathPrefix string, mode int, contents []asset.Content) []ignition.File {
+// FilesFromAsset creates ignition files for each of the files in the specified
+// asset.
+func FilesFromAsset(pathPrefix string, mode int, asset asset.WritableAsset) []ignition.File {
 	var files []ignition.File
-	for _, c := range contents {
-		files = append(files, FileFromBytes(filepath.Join(pathPrefix, c.Name), mode, c.Data))
+	for _, f := range asset.Files() {
+		files = append(files, FileFromBytes(filepath.Join(pathPrefix, f.Filename), mode, f.Data))
 	}
 	return files
 }

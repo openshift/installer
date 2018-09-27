@@ -10,14 +10,51 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestStatePersistToFile(t *testing.T) {
+type persistAsset struct{}
+
+func (a *persistAsset) Name() string {
+	return "persist-asset"
+}
+
+func (a *persistAsset) Dependencies() []Asset {
+	return []Asset{}
+}
+
+func (a *persistAsset) Generate(Parents) error {
+	return nil
+}
+
+type writablePersistAsset struct {
+	persistAsset
+	files []*File
+}
+
+func (a *writablePersistAsset) Files() []*File {
+	return a.files
+}
+
+func TestPersistToFileNonWritableAsset(t *testing.T) {
+	dir, err := ioutil.TempDir("", "TestStatePersistToFile")
+	if err != nil {
+		t.Skipf("could not create temporary directory: %v", err)
+	}
+	defer os.RemoveAll(dir)
+
+	asset := &persistAsset{}
+	expectedFiles := map[string][]byte{}
+	err = PersistToFile(asset, dir)
+	assert.NoError(t, err, "unexpected error persisting state to file")
+	verifyFilesCreated(t, dir, expectedFiles)
+}
+
+func TestPersistToFile(t *testing.T) {
 	cases := []struct {
 		name      string
 		filenames []string
 	}{
 		{
 			name:      "no files",
-			filenames: []string{""},
+			filenames: []string{},
 		},
 		{
 			name:      "single file",
@@ -40,19 +77,19 @@ func TestStatePersistToFile(t *testing.T) {
 			}
 			defer os.RemoveAll(dir)
 
-			state := &State{
-				Contents: make([]Content, len(tc.filenames)),
+			asset := &writablePersistAsset{
+				files: make([]*File, len(tc.filenames)),
 			}
 			expectedFiles := map[string][]byte{}
 			for i, filename := range tc.filenames {
 				data := []byte(fmt.Sprintf("data%d", i))
-				state.Contents[i].Name = filename
-				state.Contents[i].Data = data
-				if filename != "" {
-					expectedFiles[filepath.Join(dir, filename)] = data
+				asset.files[i] = &File{
+					Filename: filename,
+					Data:     data,
 				}
+				expectedFiles[filepath.Join(dir, filename)] = data
 			}
-			err = state.PersistToFile(dir)
+			err = PersistToFile(asset, dir)
 			assert.NoError(t, err, "unexpected error persisting state to file")
 			verifyFilesCreated(t, dir, expectedFiles)
 		})

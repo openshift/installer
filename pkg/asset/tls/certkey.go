@@ -1,165 +1,104 @@
 package tls
 
 import (
+	"bytes"
 	"crypto/rsa"
 	"crypto/x509"
-	"crypto/x509/pkix"
-	"fmt"
-	"net"
-	"path/filepath"
-	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/types"
-	"github.com/pkg/errors"
 )
+
+// AppendParentChoice dictates whether the parent's cert is to be added to the
+// cert.
+type AppendParentChoice bool
+
+const (
+	// AppendParent indicates that the parent's cert should be added.
+	AppendParent AppendParentChoice = true
+	// DoNotAppendParent indicates that the parent's cert should not be added.
+	DoNotAppendParent AppendParentChoice = false
+)
+
+// CertKeyInterface contains a private key and the associated cert.
+type CertKeyInterface interface {
+	// Cert returns the certificate.
+	Cert() []byte
+	// Key returns the private key.
+	Key() []byte
+}
 
 // CertKey contains the private key and the cert that's
 // signed by the parent CA.
 type CertKey struct {
-	installConfig asset.Asset
-
-	// Common fields.
-	Subject      pkix.Name
-	KeyUsages    x509.KeyUsage
-	ExtKeyUsages []x509.ExtKeyUsage
-	Validity     time.Duration
-	KeyFileName  string
-	CertFileName string
-	ParentCA     asset.Asset
-
-	IsCA         bool
-	AppendParent bool // Whether append the parent CA in the cert.
-
-	// Some certs might need to set Subject, DNSNames and IPAddresses.
-	GenDNSNames    func(*types.InstallConfig) ([]string, error)
-	GenIPAddresses func(*types.InstallConfig) ([]net.IP, error)
-	GenSubject     func(*types.InstallConfig) (pkix.Name, error)
+	cert  []byte
+	key   []byte
+	files []*asset.File
 }
 
-var _ asset.Asset = (*CertKey)(nil)
-
-// Dependencies returns the dependency of the the cert/key pair, which includes
-// the parent CA, and install config if it depends on the install config for
-// DNS names, etc.
-func (c *CertKey) Dependencies() []asset.Asset {
-	parents := []asset.Asset{c.ParentCA}
-
-	// Require the InstallConfig if we need additional info from install config.
-	if c.GenDNSNames != nil || c.GenIPAddresses != nil || c.GenSubject != nil {
-		parents = append(parents, c.installConfig)
-	}
-
-	return parents
+// Cert returns the certificate.
+func (c *CertKey) Cert() []byte {
+	return c.cert
 }
 
-// Generate generates the cert/key pair based on its dependencies.
-func (c *CertKey) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
-	cfg := &CertCfg{
-		Subject:      c.Subject,
-		KeyUsages:    c.KeyUsages,
-		ExtKeyUsages: c.ExtKeyUsages,
-		Validity:     c.Validity,
-		IsCA:         c.IsCA,
-	}
+// Key returns the private key.
+func (c *CertKey) Key() []byte {
+	return c.key
+}
 
-	if c.GenSubject != nil || c.GenDNSNames != nil || c.GenIPAddresses != nil {
-		installConfig, err := installconfig.GetInstallConfig(c.installConfig, parents)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
-		}
-
-		if c.GenSubject != nil {
-			cfg.Subject, err = c.GenSubject(installConfig)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to generate Subject")
-			}
-		}
-		if c.GenDNSNames != nil {
-			cfg.DNSNames, err = c.GenDNSNames(installConfig)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to generate DNSNames")
-			}
-		}
-		if c.GenIPAddresses != nil {
-			cfg.IPAddresses, err = c.GenIPAddresses(installConfig)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to generate IPAddresses")
-			}
-		}
-	}
-
+// Generate generates a cert/key pair signed by the specified parent CA.
+func (c *CertKey) Generate(
+	cfg *CertCfg,
+	parentCA CertKeyInterface,
+	filenameBase string,
+	appendParent AppendParentChoice,
+) error {
 	var key *rsa.PrivateKey
 	var crt *x509.Certificate
 	var err error
 
-	state, ok := parents[c.ParentCA]
-	if !ok {
-		return nil, errors.Errorf("failed to get parent CA %v in the parent asset states", c.ParentCA)
+	caKey, err := PemToPrivateKey(parentCA.Key())
+	if err != nil {
+		return errors.Wrap(err, "failed to parse rsa private key")
 	}
 
-	caKey, caCert, err := parseCAFromAssetState(state)
+	caCert, err := PemToCertificate(parentCA.Cert())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse CA from asset")
+		return errors.Wrap(err, "failed to parse x509 certificate")
 	}
 
 	key, crt, err = GenerateCert(caKey, caCert, cfg)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to generate cert/key pair")
+		return errors.Wrap(err, "failed to generate cert/key pair")
 	}
 
-	keyData := []byte(PrivateKeyToPem(key))
-	certData := []byte(CertToPem(crt))
-	if c.AppendParent {
-		certData = append(certData, '\n')
-		certData = append(certData, []byte(CertToPem(caCert))...)
+	c.key = PrivateKeyToPem(key)
+	c.cert = CertToPem(crt)
+
+	if appendParent {
+		c.cert = bytes.Join([][]byte{c.cert, CertToPem(caCert)}, []byte("\n"))
 	}
 
-	return &asset.State{
-		Contents: []asset.Content{
-			{
-				Name: assetFilePath(c.KeyFileName),
-				Data: keyData,
-			},
-			{
-				Name: assetFilePath(c.CertFileName),
-				Data: certData,
-			},
+	c.generateFiles(filenameBase)
+
+	return nil
+}
+
+// Files returns the files generated by the asset.
+func (c *CertKey) Files() []*asset.File {
+	return c.files
+}
+
+func (c *CertKey) generateFiles(filenameBase string) {
+	c.files = []*asset.File{
+		{
+			Filename: assetFilePath(filenameBase + ".key"),
+			Data:     c.key,
 		},
-	}, nil
-}
-
-// Name returns the human-friendly name of the asset.
-func (c *CertKey) Name() string {
-	return fmt.Sprintf("Certificate (%s)", c.Subject.CommonName)
-}
-
-func parseCAFromAssetState(ca *asset.State) (*rsa.PrivateKey, *x509.Certificate, error) {
-	var key *rsa.PrivateKey
-	var cert *x509.Certificate
-	var err error
-
-	if len(ca.Contents) != 2 {
-		return nil, nil, errors.Errorf("expected key and cert in the contents of CA, got: %v", ca)
+		{
+			Filename: assetFilePath(filenameBase + ".crt"),
+			Data:     c.cert,
+		},
 	}
-
-	for _, c := range ca.Contents {
-		switch filepath.Ext(c.Name) {
-		case ".key":
-			key, err = PemToPrivateKey(c.Data)
-			if err != nil {
-				return nil, nil, errors.Wrap(err, "failed to parse rsa private key")
-			}
-		case ".crt":
-			cert, err = PemToCertificate(c.Data)
-			if err != nil {
-				return nil, nil, errors.Wrap(err, "failed to parse x509 certificate")
-			}
-		default:
-			return nil, nil, errors.Errorf("unexpected content name: %v", c.Name)
-		}
-	}
-
-	return key, cert, nil
 }

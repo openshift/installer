@@ -19,56 +19,59 @@ const (
 	none = "<none>"
 )
 
-type sshPublicKey struct{}
+type sshPublicKey struct {
+	key string
+}
+
+var _ asset.Asset = (*sshPublicKey)(nil)
 
 // Dependencies returns no dependencies.
 func (a *sshPublicKey) Dependencies() []asset.Asset {
 	return nil
 }
 
-func readSSHKey(path string) (key []byte, err error) {
-	key, err = ioutil.ReadFile(path)
+func readSSHKey(path string) (string, error) {
+	keyAsBytes, err := ioutil.ReadFile(path)
 	if err != nil {
-		return key, err
+		return "", err
 	}
 
-	err = validateOpenSSHPublicKey(string(key))
+	key := string(keyAsBytes)
+
+	err = validateOpenSSHPublicKey(key)
 	if err != nil {
-		return key, err
+		return "", err
 	}
 
 	return key, nil
 }
 
 // Generate generates the SSH public key asset.
-func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.State, err error) {
+func (a *sshPublicKey) Generate(asset.Parents) error {
 	if value, ok := os.LookupEnv("OPENSHIFT_INSTALL_SSH_PUB_KEY"); ok {
 		if value != "" {
 			if err := validateOpenSSHPublicKey(value); err != nil {
-				return nil, errors.Wrap(err, "failed to validate public key")
+				return errors.Wrap(err, "failed to validate public key")
 			}
 		}
-		return &asset.State{
-			Contents: []asset.Content{{
-				Data: []byte(value),
-			}},
-		}, nil
+		a.key = value
+		return nil
 	}
 
-	pubKeys := map[string][]byte{}
+	pubKeys := map[string]string{}
 	if path, ok := os.LookupEnv("OPENSHIFT_INSTALL_SSH_PUB_KEY_PATH"); ok {
 		key, err := readSSHKey(path)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to read public key file")
+			return errors.Wrap(err, "failed to read public key file")
 		}
 		pubKeys[path] = key
 	} else {
-		pubKeys[none] = []byte{}
+		pubKeys[none] = ""
 		home := os.Getenv("HOME")
 		if home != "" {
 			paths, err := filepath.Glob(filepath.Join(home, ".ssh", "*.pub"))
 			if err != nil {
-				return nil, errors.Wrap(err, "failed to glob for public key files")
+				return errors.Wrap(err, "failed to glob for public key files")
 			}
 			for _, path := range paths {
 				key, err := readSSHKey(path)
@@ -82,12 +85,9 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 
 	if len(pubKeys) == 1 {
 		for _, value := range pubKeys {
-			return &asset.State{
-				Contents: []asset.Content{{
-					Data: value,
-				}},
-			}, nil
+			a.key = value
 		}
+		return nil
 	}
 
 	var paths []string
@@ -97,7 +97,7 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 	sort.Strings(paths)
 
 	var path string
-	err = survey.AskOne(&survey.Select{
+	if err := survey.AskOne(&survey.Select{
 		Message: "SSH Public Key",
 		Help:    "The SSH public key used to access all nodes within the cluster. This is optional.",
 		Options: paths,
@@ -109,20 +109,16 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 			return fmt.Errorf("invalid path %q", choice)
 		}
 		return nil
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "failed UserInput for SSH public key")
+	}); err != nil {
+		return errors.Wrap(err, "failed UserInput for SSH public key")
 	}
 
-	return &asset.State{
-		Contents: []asset.Content{{
-			Data: pubKeys[path],
-		}},
-	}, nil
+	a.key = pubKeys[path]
+	return nil
 }
 
 // Name returns the human-friendly name of the asset.
-func (a *sshPublicKey) Name() string {
+func (a sshPublicKey) Name() string {
 	return "SSH Key"
 }
 

@@ -1,8 +1,6 @@
 package installconfig
 
 import (
-	"encoding/json"
-	"fmt"
 	"net"
 
 	"github.com/apparentlymart/go-cidr/cidr"
@@ -15,54 +13,70 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
+const (
+	installConfigFilename = "install-config.yml"
+)
+
 var (
 	defaultServiceCIDR = parseCIDR("10.3.0.0/16")
 	defaultPodCIDR     = parseCIDR("10.2.0.0/16")
 )
 
-// installConfig generates the install-config.yml file.
-type installConfig struct {
-	assetStock Stock
+// InstallConfig generates the install-config.yml file.
+type InstallConfig struct {
+	Config *types.InstallConfig
+	file   *asset.File
 }
 
-var _ asset.Asset = (*installConfig)(nil)
+var _ asset.WritableAsset = (*InstallConfig)(nil)
 
 // Dependencies returns all of the dependencies directly needed by an
-// installConfig asset.
-func (a *installConfig) Dependencies() []asset.Asset {
+// InstallConfig asset.
+func (a *InstallConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		a.assetStock.ClusterID(),
-		a.assetStock.EmailAddress(),
-		a.assetStock.Password(),
-		a.assetStock.SSHKey(),
-		a.assetStock.BaseDomain(),
-		a.assetStock.ClusterName(),
-		a.assetStock.PullSecret(),
-		a.assetStock.Platform(),
+		&clusterID{},
+		&emailAddress{},
+		&password{},
+		&sshPublicKey{},
+		&baseDomain{},
+		&clusterName{},
+		&pullSecret{},
+		&platform{},
 	}
 }
 
 // Generate generates the install-config.yml file.
-func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
-	clusterID := string(dependencies[a.assetStock.ClusterID()].Contents[0].Data)
-	emailAddress := string(dependencies[a.assetStock.EmailAddress()].Contents[0].Data)
-	password := string(dependencies[a.assetStock.Password()].Contents[0].Data)
-	sshKey := string(dependencies[a.assetStock.SSHKey()].Contents[0].Data)
-	baseDomain := string(dependencies[a.assetStock.BaseDomain()].Contents[0].Data)
-	clusterName := string(dependencies[a.assetStock.ClusterName()].Contents[0].Data)
-	pullSecret := string(dependencies[a.assetStock.PullSecret()].Contents[0].Data)
+func (a *InstallConfig) Generate(parents asset.Parents) error {
+	clusterID := &clusterID{}
+	emailAddress := &emailAddress{}
+	password := &password{}
+	sshPublicKey := &sshPublicKey{}
+	baseDomain := &baseDomain{}
+	clusterName := &clusterName{}
+	pullSecret := &pullSecret{}
+	platform := &platform{}
+	parents.Get(
+		clusterID,
+		emailAddress,
+		password,
+		sshPublicKey,
+		baseDomain,
+		clusterName,
+		pullSecret,
+		platform,
+	)
 
-	installConfig := types.InstallConfig{
+	a.Config = &types.InstallConfig{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: clusterName,
+			Name: clusterName.clusterName,
 		},
-		ClusterID: clusterID,
+		ClusterID: clusterID.clusterID,
 		Admin: types.Admin{
-			Email:    emailAddress,
-			Password: password,
-			SSHKey:   sshKey,
+			Email:    emailAddress.emailAddress,
+			Password: password.password,
+			SSHKey:   sshPublicKey.key,
 		},
-		BaseDomain: baseDomain,
+		BaseDomain: baseDomain.baseDomain,
 		Networking: types.Networking{
 			// TODO(yifan): Flannel is the temporal default network type for now,
 			// Need to update it to the new types.
@@ -75,93 +89,56 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 				IPNet: defaultPodCIDR,
 			},
 		},
-		PullSecret: pullSecret,
+		PullSecret: pullSecret.pullSecret,
 	}
 
-	platformState := dependencies[a.assetStock.Platform()]
-	platform := string(platformState.Contents[0].Data)
-	switch platform {
-	case AWSPlatformType:
-		if err := json.Unmarshal(platformState.Contents[1].Data, &installConfig.AWS); err != nil {
-			return nil, err
-		}
-
-		installConfig.Machines = []types.MachinePool{
-			{
-				Name:     "master",
-				Replicas: func(x int64) *int64 { return &x }(3),
-			},
-			{
-				Name:     "worker",
-				Replicas: func(x int64) *int64 { return &x }(3),
-			},
-		}
-	case OpenStackPlatformType:
-		if err := json.Unmarshal(platformState.Contents[1].Data, &installConfig.OpenStack); err != nil {
-			return nil, err
-		}
-		installConfig.Machines = []types.MachinePool{
-			{
-				Name:     "master",
-				Replicas: func(x int64) *int64 { return &x }(3),
-			},
-			{
-				Name:     "worker",
-				Replicas: func(x int64) *int64 { return &x }(3),
-			},
-		}
-	case LibvirtPlatformType:
-		if err := json.Unmarshal(platformState.Contents[1].Data, &installConfig.Libvirt); err != nil {
-			return nil, err
-		}
-		installConfig.Libvirt.Network.Name = clusterName
-		installConfig.Machines = []types.MachinePool{
-			{
-				Name:     "master",
-				Replicas: func(x int64) *int64 { return &x }(1),
-			},
-			{
-				Name:     "worker",
-				Replicas: func(x int64) *int64 { return &x }(1),
-			},
-		}
+	numberOfMasters := int64(3)
+	numberOfWorkers := int64(3)
+	switch {
+	case platform.aws != nil:
+		a.Config.AWS = platform.aws
+	case platform.openstack != nil:
+		a.Config.OpenStack = platform.openstack
+	case platform.libvirt != nil:
+		a.Config.Libvirt = platform.libvirt
+		a.Config.Libvirt.Network.Name = clusterName.clusterName
+		numberOfMasters = 1
+		numberOfWorkers = 1
 	default:
-		return nil, fmt.Errorf("unknown platform type %q", platform)
+		panic("unknown platform type")
 	}
 
-	data, err := yaml.Marshal(installConfig)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to Marshal InstallConfig")
-	}
-
-	return &asset.State{
-		Contents: []asset.Content{
-			{
-				Name: "install-config.yml",
-				Data: data,
-			},
+	a.Config.Machines = []types.MachinePool{
+		{
+			Name:     "master",
+			Replicas: func(x int64) *int64 { return &x }(numberOfMasters),
 		},
-	}, nil
+		{
+			Name:     "worker",
+			Replicas: func(x int64) *int64 { return &x }(numberOfWorkers),
+		},
+	}
+
+	data, err := yaml.Marshal(a.Config)
+	if err != nil {
+		return errors.Wrap(err, "failed to Marshal InstallConfig")
+	}
+	a.file = &asset.File{
+		Filename: "install-config.yml",
+		Data:     data,
+	}
+
+	return nil
 }
 
 // Name returns the human-friendly name of the asset.
-func (a installConfig) Name() string {
+func (a *InstallConfig) Name() string {
 	return "Install Config"
 }
 
-// GetInstallConfig returns the *types.InstallConfig from the parent asset map.
-func GetInstallConfig(installConfig asset.Asset, parents map[asset.Asset]*asset.State) (*types.InstallConfig, error) {
-	var cfg types.InstallConfig
-
-	st, ok := parents[installConfig]
-	if !ok {
-		return nil, errors.Errorf("%T does not exist in parents", installConfig)
-	}
-
-	if err := yaml.Unmarshal(st.Contents[0].Data, &cfg); err != nil {
-		return nil, errors.Wrap(err, "failed to Unmarshal the installconfig")
-	}
-	return &cfg, nil
+// Files returns the files generated by the asset.
+func (a *InstallConfig) Files() []*asset.File {
+	return []*asset.File{a.file}
 }
 
 // ClusterDNSIP returns the string representation of the DNS server's IP

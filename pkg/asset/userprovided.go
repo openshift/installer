@@ -8,59 +8,43 @@ import (
 	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
-// UserProvided generates an asset that is supplied by a user.
-type UserProvided struct {
-	AssetName      string
-	Question       *survey.Question
-	EnvVarName     string
-	PathEnvVarName string
+// GenerateUserProvidedAsset queries for input from the user.
+func GenerateUserProvidedAsset(inputName string, question *survey.Question, envVarName string) (string, error) {
+	return generateUserProvidedAsset(inputName, question, envVarName, "")
 }
 
-var _ Asset = (*UserProvided)(nil)
-
-// Dependencies returns no dependencies.
-func (a *UserProvided) Dependencies() []Asset {
-	return []Asset{}
+// GenerateUserProvidedAssetForPath queries for input from the user. The input can
+// be read from a file specified in an environment variable.
+func GenerateUserProvidedAssetForPath(inputName string, question *survey.Question, envVarName, pathEnvVarName string) (string, error) {
+	return generateUserProvidedAsset(inputName, question, envVarName, pathEnvVarName)
 }
 
-// Generate queries for input from the user.
-func (a *UserProvided) Generate(map[Asset]*State) (state *State, err error) {
+func generateUserProvidedAsset(inputName string, question *survey.Question, envVarName, pathEnvVarName string) (response string, err error) {
 	defer func() {
 		if err != nil {
-			err = errors.Wrapf(err, "failed to acquire user-provided input %s", a.AssetName)
+			err = errors.Wrapf(err, "failed to acquire user-provided input %s", inputName)
 		}
 	}()
 
-	var response string
-
-	if value, ok := os.LookupEnv(a.EnvVarName); ok {
+	if value, ok := os.LookupEnv(envVarName); ok {
 		response = value
-	} else if path, ok := os.LookupEnv(a.PathEnvVarName); ok {
+	} else if path, ok := os.LookupEnv(pathEnvVarName); ok {
 		value, err := ioutil.ReadFile(path)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to read file from %s", a.PathEnvVarName)
+			return "", errors.Wrapf(err, "failed to read file from %s", pathEnvVarName)
 		}
 		response = string(value)
 	}
 
 	if response == "" {
-		if err := survey.Ask([]*survey.Question{a.Question}, &response); err != nil {
-			return nil, errors.Wrap(err, "failed to Ask")
+		if err := survey.Ask([]*survey.Question{question}, &response); err != nil {
+			return "", errors.Wrap(err, "failed to Ask")
 		}
-	} else if a.Question.Validate != nil {
-		if err := a.Question.Validate(response); err != nil {
-			return nil, errors.Wrap(err, "validation failed")
+	} else if question.Validate != nil {
+		if err := question.Validate(response); err != nil {
+			return "", errors.Wrap(err, "validation failed")
 		}
 	}
 
-	return &State{
-		Contents: []Content{{
-			Data: []byte(response),
-		}},
-	}, nil
-}
-
-// Name returns the human-friendly name of the asset.
-func (a *UserProvided) Name() string {
-	return a.AssetName
+	return response, nil
 }

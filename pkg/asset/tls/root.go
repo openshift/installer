@@ -10,9 +10,11 @@ import (
 
 // RootCA contains the private key and the cert that's
 // self-signed as the root CA.
-type RootCA struct{}
+type RootCA struct {
+	CertKey
+}
 
-var _ asset.Asset = (*CertKey)(nil)
+var _ asset.WritableAsset = (*RootCA)(nil)
 
 // Dependencies returns the dependency of the root-ca, which is empty.
 func (c *RootCA) Dependencies() []asset.Asset {
@@ -20,7 +22,7 @@ func (c *RootCA) Dependencies() []asset.Asset {
 }
 
 // Generate generates the root-ca key and cert pair.
-func (c *RootCA) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
+func (c *RootCA) Generate(parents asset.Parents) error {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -30,21 +32,15 @@ func (c *RootCA) Generate(parents map[asset.Asset]*asset.State) (*asset.State, e
 
 	key, crt, err := GenerateRootCertKey(cfg)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to generate RootCA")
+		return errors.Wrap(err, "failed to generate RootCA")
 	}
 
-	return &asset.State{
-		Contents: []asset.Content{
-			{
-				Name: assetFilePath("root-ca.key"),
-				Data: []byte(PrivateKeyToPem(key)),
-			},
-			{
-				Name: assetFilePath("root-ca.crt"),
-				Data: []byte(CertToPem(crt)),
-			},
-		},
-	}, nil
+	c.key = PrivateKeyToPem(key)
+	c.cert = CertToPem(crt)
+
+	c.generateFiles("root-ca")
+
+	return nil
 }
 
 // Name returns the human-friendly name of the asset.
