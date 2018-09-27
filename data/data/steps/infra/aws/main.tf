@@ -44,7 +44,6 @@ module "masters" {
   base_domain         = "${var.tectonic_base_domain}"
   cluster_id          = "${var.tectonic_cluster_id}"
   cluster_name        = "${var.tectonic_cluster_name}"
-  container_images    = "${var.tectonic_container_images}"
   ec2_type            = "${var.tectonic_aws_master_ec2_type}"
   extra_tags          = "${var.tectonic_aws_extra_tags}"
   instance_count      = "${var.tectonic_master_count}"
