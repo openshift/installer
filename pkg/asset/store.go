@@ -1,6 +1,8 @@
 package asset
 
 import (
+	"fmt"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -46,7 +48,7 @@ func (s *StoreImpl) fetch(asset Asset, indent string) (*State, error) {
 	logrus.Debugf("%sGenerating %s...", indent, asset.Name())
 	state, err := asset.Generate(dependenciesStates)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to generate asset %q: %v", asset.Name(), err)
 	}
 	if s.assets == nil {
 		s.assets = make(map[Asset]*State)
