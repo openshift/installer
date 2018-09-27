@@ -6,7 +6,7 @@ WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN hack/build.sh && hack/get-terraform.sh
 
-FROM scratch
+FROM centos:7
 COPY --from=build /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=build /go/src/github.com/openshift/installer/bin/terraform /bin/terraform
 USER 1000:1000
