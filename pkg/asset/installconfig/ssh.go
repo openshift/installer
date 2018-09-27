@@ -1,6 +1,7 @@
 package installconfig
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -26,6 +27,11 @@ func (a *sshPublicKey) Dependencies() []asset.Asset {
 // Generate generates the SSH public key asset.
 func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.State, err error) {
 	if value, ok := os.LookupEnv("OPENSHIFT_INSTALL_SSH_PUB_KEY"); ok {
+		if value != "" {
+			if err := validate.OpenSSHPublicKey(value); err != nil {
+				return nil, err
+			}
+		}
 		return &asset.State{
 			Contents: []asset.Content{{
 				Data: []byte(value),
@@ -68,10 +74,17 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 	var path string
 	survey.AskOne(&survey.Select{
 		Message: "SSH Public Key",
-		Help:    "The SSH key used to access all nodes within the cluster. This is optional.",
+		Help:    "The SSH public key used to access all nodes within the cluster. This is optional.",
 		Options: paths,
 		Default: none,
-	}, &path, nil)
+	}, &path, func(ans interface{}) error {
+		choice := ans.(string)
+		i := sort.SearchStrings(paths, choice)
+		if i == len(paths) || paths[i] != choice {
+			return fmt.Errorf("invalid path %q", choice)
+		}
+		return nil
+	})
 
 	return &asset.State{
 		Contents: []asset.Content{{

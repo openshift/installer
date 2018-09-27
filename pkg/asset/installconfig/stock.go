@@ -3,6 +3,7 @@ package installconfig
 import (
 	"github.com/AlecAivazis/survey"
 
+	"github.com/openshift/installer/installer/pkg/validate"
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -51,41 +52,63 @@ func (s *StockImpl) EstablishStock() {
 	s.clusterID = &clusterID{}
 	s.emailAddress = &asset.UserProvided{
 		AssetName: "Email Address",
-		Prompt: &survey.Input{
-			Message: "Email Address",
-			Help:    "The email address of the cluster administrator. This will be used to log in to the console.",
+		Question: &survey.Question{
+			Prompt: &survey.Input{
+				Message: "Email Address",
+				Help:    "The email address of the cluster administrator. This will be used to log in to the console.",
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				return validate.Email(ans.(string))
+			}),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_EMAIL_ADDRESS",
 	}
 	s.password = &asset.UserProvided{
 		AssetName: "Password",
-		Prompt: &survey.Password{
-			Message: "Password",
-			Help:    "The password of the cluster administrator. This will be used to log in to the console.",
+		Question: &survey.Question{
+			Prompt: &survey.Password{
+				Message: "Password",
+				Help:    "The password of the cluster administrator. This will be used to log in to the console.",
+			},
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_PASSWORD",
 	}
 	s.baseDomain = &asset.UserProvided{
 		AssetName: "Base Domain",
-		Prompt: &survey.Input{
-			Message: "Base Domain",
-			Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base.",
+		Question: &survey.Question{
+			Prompt: &survey.Input{
+				Message: "Base Domain",
+				Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base.",
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				return validate.DomainName(ans.(string))
+			}),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_BASE_DOMAIN",
 	}
 	s.clusterName = &asset.UserProvided{
 		AssetName: "Cluster Name",
-		Prompt: &survey.Input{
-			Message: "Cluster Name",
-			Help:    "The name of the cluster. This will be used when generating sub-domains.",
+		Question: &survey.Question{
+			Prompt: &survey.Input{
+				Message: "Cluster Name",
+				Help:    "The name of the cluster. This will be used when generating sub-domains.",
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				return validate.DomainName(ans.(string))
+			}),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_CLUSTER_NAME",
 	}
 	s.pullSecret = &asset.UserProvided{
 		AssetName: "Pull Secret",
-		Prompt: &survey.Input{
-			Message: "Pull Secret",
-			Help:    "The container registry pull secret for this cluster.",
+		Question: &survey.Question{
+			Prompt: &survey.Input{
+				Message: "Pull Secret",
+				Help:    "The container registry pull secret for this cluster.",
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				return validate.JSON([]byte(ans.(string)))
+			}),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_PULL_SECRET",
 	}
