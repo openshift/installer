@@ -3,6 +3,7 @@ package bootkube
 const (
 	// IngressNamespace is the constant to represent contents of Ingress_Namespace.yaml file
 	IngressNamespace = `
+---
 apiVersion: v1
 kind: Namespace
 metadata:

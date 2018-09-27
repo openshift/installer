@@ -1,6 +1,6 @@
 #!/bin/sh
 if [ "$IS_CONTAINER" != "" ]; then
-  yamllint --config-data "{extends: default, rules: {line-length: {level: warning, max: 120}}}" ./examples/ ./installer/
+  yamllint --config-data "{extends: default, rules: {line-length: {level: warning, max: 120}}}" .
 else
   podman run --rm \
     --env IS_CONTAINER=TRUE \

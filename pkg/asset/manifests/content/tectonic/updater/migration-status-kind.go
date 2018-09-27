@@ -3,6 +3,7 @@ package updater
 const (
 	// MigrationStatusKind  is the variable/constant representing the contents of the respective file
 	MigrationStatusKind = `
+---
 apiVersion: "apiextensions.k8s.io/v1beta1"
 kind: "CustomResourceDefinition"
 metadata:

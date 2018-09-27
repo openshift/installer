@@ -3,6 +3,7 @@ package security
 const (
 	// PriviledgedSccTectonic  is the variable/constant representing the contents of the respective file
 	PriviledgedSccTectonic = `
+---
 apiVersion: security.openshift.io/v1
 kind: SecurityContextConstraints
 metadata:
@@ -16,23 +17,23 @@ allowHostPID: true
 allowHostPorts: true
 allowPrivilegedContainer: true
 allowedCapabilities:
-- "*"
+  - "*"
 fsGroup:
   type: RunAsAny
 groups:
-- system:serviceaccounts:tectonic-system
-- system:serviceaccounts:openshift-ingress
+  - system:serviceaccounts:tectonic-system
+  - system:serviceaccounts:openshift-ingress
 readOnlyRootFilesystem: false
 runAsUser:
   type: RunAsAny
 seLinuxContext:
   type: RunAsAny
 seccompProfiles:
-- "*"
+  - "*"
 supplementalGroups:
   type: RunAsAny
 users: []
 volumes:
-- "*"
+  - "*"
 `
 )

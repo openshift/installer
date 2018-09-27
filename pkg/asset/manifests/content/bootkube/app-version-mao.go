@@ -3,6 +3,7 @@ package bootkube
 const (
 	// AppVersionMao is the constant to represent contents of App_VersionMao.yaml file
 	AppVersionMao = `
+---
 apiVersion: tco.coreos.com/v1
 kind: AppVersion
 metadata:
@@ -16,7 +17,7 @@ spec:
 status:
   currentVersion:
   paused: false
-upgradereq:  1
+upgradereq: 1
 upgradecomp: 0
 `
 )

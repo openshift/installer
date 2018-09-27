@@ -9,9 +9,9 @@ apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:
   name: default-account-openshift-machine-config-operator
 subjects:
-- kind: ServiceAccount
-  name: default
-  namespace: openshift-machine-config-operator
+  - kind: ServiceAccount
+    name: default
+    namespace: openshift-machine-config-operator
 roleRef:
   kind: ClusterRole
   name: cluster-admin
