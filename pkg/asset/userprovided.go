@@ -9,7 +9,7 @@ import (
 // UserProvided generates an asset that is supplied by a user.
 type UserProvided struct {
 	AssetName  string
-	Prompt     survey.Prompt
+	Question   *survey.Question
 	EnvVarName string
 }
 
@@ -25,8 +25,13 @@ func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
 	var response string
 	if value, ok := os.LookupEnv(a.EnvVarName); ok {
 		response = value
+		if a.Question.Validate != nil {
+			if err := a.Question.Validate(response); err != nil {
+				return nil, err
+			}
+		}
 	} else {
-		survey.AskOne(a.Prompt, &response, survey.Required)
+		survey.AskOne(a.Question.Prompt, &response, a.Question.Validate)
 	}
 
 	return &State{

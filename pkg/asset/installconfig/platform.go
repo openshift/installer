@@ -2,6 +2,8 @@ package installconfig
 
 import (
 	"fmt"
+	"net/url"
+	"sort"
 	"strings"
 
 	"github.com/AlecAivazis/survey"
@@ -18,6 +20,27 @@ const (
 
 var (
 	validPlatforms = []string{AWSPlatformType, LibvirtPlatformType}
+
+	validAWSRegions = map[string]string{
+		"ap-northeast-1": "Tokyo",
+		"ap-northeast-2": "Seoul",
+		"ap-northeast-3": "Osaka-Local",
+		"ap-south-1":     "Mumbai",
+		"ap-southeast-1": "Singapore",
+		"ap-southeast-2": "Sydney",
+		"ca-central-1":   "Central",
+		"cn-north-1":     "Beijing",
+		"cn-northwest-1": "Ningxia",
+		"eu-central-1":   "Frankfurt",
+		"eu-west-1":      "Ireland",
+		"eu-west-2":      "London",
+		"eu-west-3":      "Paris",
+		"sa-east-1":      "São Paulo",
+		"us-east-1":      "N. Virginia",
+		"us-east-2":      "Ohio",
+		"us-west-1":      "N. California",
+		"us-west-2":      "Oregon",
+	}
 )
 
 // Platform is an asset that queries the user for the platform on which to install
@@ -62,10 +85,21 @@ func (a *Platform) Name() string {
 }
 
 func (a *Platform) queryUserForPlatform() (string, error) {
+	sort.Strings(validPlatforms)
 	prompt := asset.UserProvided{
-		Prompt: &survey.Select{
-			Message: "Platform",
-			Options: validPlatforms,
+		Question: &survey.Question{
+			Prompt: &survey.Select{
+				Message: "Platform",
+				Options: validPlatforms,
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				choice := ans.(string)
+				i := sort.SearchStrings(validPlatforms, choice)
+				if i == len(validPlatforms) || validPlatforms[i] != choice {
+					return fmt.Errorf("invalid platform %q", choice)
+				}
+				return nil
+			}),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_PLATFORM",
 	}
@@ -79,31 +113,34 @@ func (a *Platform) queryUserForPlatform() (string, error) {
 }
 
 func (a *Platform) awsPlatform() (*asset.State, error) {
+	longRegions := make([]string, 0, len(validAWSRegions))
+	shortRegions := make([]string, 0, len(validAWSRegions))
+	for id, location := range validAWSRegions {
+		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", id, location))
+		shortRegions = append(shortRegions, id)
+	}
+	regionTransform := survey.TransformString(func(s string) string {
+		return strings.SplitN(s, " ", 2)[0]
+	})
+	sort.Strings(longRegions)
+	sort.Strings(shortRegions)
 	prompt := asset.UserProvided{
-		Prompt: &survey.Select{
-			Message: "Region",
-			Help:    "The AWS region to be used for installation.",
-			Default: "us-east-1 (N. Virginia)",
-			Options: []string{
-				"us-east-2 (Ohio)",
-				"us-east-1 (N. Virginia)",
-				"us-west-1 (N. California)",
-				"us-west-2 (Oregon)",
-				"ap-south-1 (Mumbai)",
-				"ap-northeast-2 (Seoul)",
-				"ap-northeast-3 (Osaka-Local)",
-				"ap-southeast-1 (Singapore)",
-				"ap-southeast-2 (Sydney)",
-				"ap-northeast-1 (Tokyo)",
-				"ca-central-1 (Central)",
-				"cn-north-1 (Beijing)",
-				"cn-northwest-1 (Ningxia)",
-				"eu-central-1 (Frankfurt)",
-				"eu-west-1 (Ireland)",
-				"eu-west-2 (London)",
-				"eu-west-3 (Paris)",
-				"sa-east-1 (São Paulo)",
+		Question: &survey.Question{
+			Prompt: &survey.Select{
+				Message: "Region",
+				Help:    "The AWS region to be used for installation.",
+				Default: "us-east-1 (N. Virginia)",
+				Options: longRegions,
 			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				choice := regionTransform(ans).(string)
+				i := sort.SearchStrings(shortRegions, choice)
+				if i == len(shortRegions) || shortRegions[i] != choice {
+					return fmt.Errorf("invalid region %q", choice)
+				}
+				return nil
+			}),
+			Transform: regionTransform,
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_AWS_REGION",
 	}
@@ -114,16 +151,29 @@ func (a *Platform) awsPlatform() (*asset.State, error) {
 
 	return assetStateForStringContents(
 		AWSPlatformType,
-		strings.Split(string(region.Contents[0].Data), " ")[0],
+		string(region.Contents[0].Data),
 	), nil
 }
 
 func (a *Platform) libvirtPlatform() (*asset.State, error) {
 	prompt := asset.UserProvided{
-		Prompt: &survey.Input{
-			Message: "URI",
-			Help:    "The libvirt connection URI to be used. This must be accessible from the running cluster.",
-			Default: "qemu+tcp://192.168.122.1/system",
+		Question: &survey.Question{
+			Prompt: &survey.Input{
+				Message: "URI",
+				Help:    "The libvirt connection URI to be used. This must be accessible from the running cluster.",
+				Default: "qemu+tcp://192.168.122.1/system",
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				value := ans.(string)
+				uri, err := url.Parse(value)
+				if err != nil {
+					return err
+				}
+				if uri.Scheme == "" {
+					return fmt.Errorf("invalid URI %q (no scheme)", value)
+				}
+				return nil
+			}),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_LIBVIRT_URI",
 	}
