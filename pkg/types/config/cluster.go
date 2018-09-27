@@ -180,7 +180,7 @@ func ConvertInstallConfigToTFVars(cfg *types.InstallConfig, bootstrapIgn string,
 	if cfg.Platform.AWS != nil {
 		ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 		defer cancel()
-		ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, cluster.AWS.Region)
+		ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, cfg.Platform.AWS.Region)
 		if err != nil {
 			return nil, fmt.Errorf("failed to determine default AMI: %v", err)
 		}
