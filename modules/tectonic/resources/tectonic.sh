@@ -92,6 +92,7 @@ kubectl create --filename updater/operators/kube-addon-operator.yaml
 kubectl create --filename updater/operators/tectonic-alm-operator.yaml
 kubectl create --filename updater/operators/tectonic-utility-operator.yaml
 kubectl create --filename updater/operators/tectonic-ingress-controller-operator.yaml
+kubectl create --filename updater/operators/cluster-openshift-apiserver-operator.yaml
 
 kubectl --namespace=tectonic-system get customresourcedefinition appversions.tco.coreos.com
 kubectl create --filename updater/app_versions/app-version-tectonic-cluster.yaml
