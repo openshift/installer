@@ -14,7 +14,7 @@ module "bootstrap" {
   addresses      = ["${var.tectonic_libvirt_bootstrap_ip}"]
   base_volume_id = "${module.libvirt_base_volume.coreos_base_volume_id}"
   cluster_name   = "${var.tectonic_cluster_name}"
-  ignition       = "${local.ignition_bootstrap}"
+  ignition       = "${var.ignition_bootstrap}"
   network_id     = "${libvirt_network.tectonic_net.id}"
 }
 
