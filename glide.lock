@@ -1,10 +1,8 @@
-hash: 89c59afb258e5da417740d181008c08a7e0ac024c537b04b879cee13fe419fa3
-updated: 2018-09-26T15:23:10.801068675-07:00
+hash: 5d4bcc984f1d19ed41a63a22ee4fd3d93f4c823708aa70f634958a9fc40d4a70
+updated: 2018-09-28T12:36:19.583316383-07:00
 imports:
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
-- name: github.com/AlecAivazis/survey
-  version: f30c5d1830c892f533140f29a1de89141dc217f5
 - name: github.com/alecthomas/template
   version: a0175ee3bccc567396460bf5acd36800cb10c49c
   subpackages:
@@ -16,7 +14,7 @@ imports:
   subpackages:
   - cidr
 - name: github.com/aws/aws-sdk-go
-  version: 85d9dfd77e6d694e83c3ac054141cb5e81eecc7f
+  version: a8ff9e4804fc89c994b731b1c057640ab2aecff3
   subpackages:
   - aws
   - aws/awserr
