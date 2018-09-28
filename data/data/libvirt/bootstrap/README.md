@@ -25,7 +25,7 @@ resource "libvirt_volume" "example" {
 }
 
 module "bootstrap" {
-  source = "github.com/openshift/installer//modules/libvirt/bootstrap"
+  source = "github.com/openshift/installer//data/data/libvirt/bootstrap"
 
   addresses      = ["192.168.0.1"]
   base_volume_id = "${libvirt_volume.example.id}"

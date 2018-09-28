@@ -8,11 +8,7 @@ import (
 )
 
 // Unpack unpacks the assets from this package into a target directory.
-func Unpack(dir string) (err error) {
-	return unpack(dir, ".")
-}
-
-func unpack(base string, uri string) (err error) {
+func Unpack(base string, uri string) (err error) {
 	file, err := Assets.Open(uri)
 	if err != nil {
 		return err
@@ -34,7 +30,7 @@ func unpack(base string, uri string) (err error) {
 
 		for _, childInfo := range children {
 			name := childInfo.Name()
-			err = unpack(filepath.Join(base, name), path.Join(uri, name))
+			err = Unpack(filepath.Join(base, name), path.Join(uri, name))
 			if err != nil {
 				return err
 			}

@@ -2,7 +2,6 @@ package cluster
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -65,31 +64,22 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		return nil, fmt.Errorf("failed to unmarshal terraform tfvars file: %v", err)
 	}
 
-	if err := data.Unpack(tmpDir); err != nil {
+	platform := string(tfvars.Platform)
+	if err := data.Unpack(tmpDir, platform); err != nil {
 		return nil, err
 	}
 
-	templateDir, err := terraform.FindStepTemplates(tmpDir, terraform.InfraStep, tfvars.Platform)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil, errors.New("infra step not found; set OPENSHIFT_INSTALL_DATA to point to the data directory")
-		}
-		return nil, fmt.Errorf("error finding terraform templates: %v", err)
-	}
-
-	// take advantage of the new installer only having one step.
-	err = os.Rename(filepath.Join(tmpDir, "config.tf"), filepath.Join(templateDir, "config.tf"))
-	if err != nil {
+	if err := data.Unpack(filepath.Join(tmpDir, "config.tf"), "config.tf"); err != nil {
 		return nil, err
 	}
 
 	// This runs the terraform in a temp directory, the tfstate file will be returned
 	// to the asset store to persist it on the disk.
-	if err := terraform.Init(tmpDir, templateDir); err != nil {
+	if err := terraform.Init(tmpDir); err != nil {
 		return nil, err
 	}
 
-	stateFile, err := terraform.Apply(tmpDir, terraform.InfraStep, templateDir)
+	stateFile, err := terraform.Apply(tmpDir)
 	if err != nil {
 		// we should try to fetch the terraform state file.
 		log.Errorf("terraform failed: %v", err)

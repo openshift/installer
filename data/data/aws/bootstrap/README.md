@@ -27,7 +27,7 @@ resource "aws_subnet" "example" {
 }
 
 module "bootstrap" {
-  source = "github.com/openshift/installer//modules/aws/bootstrap"
+  source = "github.com/openshift/installer//data/data/aws/bootstrap"
 
   ami            = "ami-0af8953af3ec06b7c"
   bucket         = "${aws_s3_bucket.example.id}"
