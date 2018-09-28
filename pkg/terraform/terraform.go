@@ -2,9 +2,7 @@ package terraform
 
 import (
 	"fmt"
-	"os"
 	"path"
-	"path/filepath"
 )
 
 func terraformExec(clusterDir string, args ...string) error {
@@ -21,29 +19,21 @@ func terraformExec(clusterDir string, args ...string) error {
 	return nil
 }
 
-// Apply runs "terraform apply" with the given clusterDir, templateDir and extra args.
+// Apply runs "terraform apply" in the given directory.
 // It returns the absolute path of the tfstate file.
-func Apply(clusterDir string, templateDir string, extraArgs ...string) (string, error) {
+func Apply(dir string, extraArgs ...string) (string, error) {
 	stateFileName := "terraform.tfstate"
 	defaultArgs := []string{
 		"apply",
 		"-auto-approve",
 		fmt.Sprintf("-state=%s", stateFileName),
 	}
-	extraArgs = append(extraArgs, templateDir)
 	args := append(defaultArgs, extraArgs...)
 
-	return path.Join(clusterDir, stateFileName), terraformExec(clusterDir, args...)
+	return path.Join(dir, stateFileName), terraformExec(dir, args...)
 }
 
-// Init runs "terraform init" with the given clusterDir and templateDir.
-func Init(clusterDir, templateDir string) error {
-	return terraformExec(clusterDir, "init", templateDir)
-}
-
-// HasStateFile returns true if the stateFile exists under stateDir.
-func HasStateFile(stateDir string, stateFile string) bool {
-	stepStateFile := filepath.Join(stateDir, fmt.Sprintf("%s.tfstate", stateFile))
-	_, err := os.Stat(stepStateFile)
-	return !os.IsNotExist(err)
+// Init runs "terraform init" in the given directory.
+func Init(dir string) error {
+	return terraformExec(dir, "init")
 }

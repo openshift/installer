@@ -15,13 +15,13 @@ func TestUnpack(t *testing.T) {
 	}
 	defer os.RemoveAll(path)
 
-	err = Unpack(path)
+	err = Unpack(path, ".")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	expected := "# Bootstrap Module"
-	content, err := ioutil.ReadFile(filepath.Join(path, "modules", "aws", "bootstrap", "README.md"))
+	content, err := ioutil.ReadFile(filepath.Join(path, "aws", "bootstrap", "README.md"))
 	if err != nil {
 		t.Fatal(err)
 	}

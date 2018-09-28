@@ -3,13 +3,13 @@ provider "libvirt" {
 }
 
 module "libvirt_base_volume" {
-  source = "../modules/libvirt/volume"
+  source = "./volume"
 
   image = "${var.tectonic_os_image}"
 }
 
 module "bootstrap" {
-  source = "../modules/libvirt/bootstrap"
+  source = "./bootstrap"
 
   addresses      = ["${var.tectonic_libvirt_bootstrap_ip}"]
   base_volume_id = "${module.libvirt_base_volume.coreos_base_volume_id}"
