@@ -7,6 +7,7 @@ import (
 var (
 	// TectonicIngressControllerOperator  is the variable/constant representing the contents of the respective file
 	TectonicIngressControllerOperator = template.Must(template.New("tectonic-ingress-controller-operator.yaml").Parse(`
+---
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
@@ -27,20 +28,20 @@ spec:
         tectonic-app-version-name: tectonic-ingress
     spec:
       containers:
-      - name: tectonic-ingress-controller-operator
-        image: {{.TectonicIngressControllerOperatorImage}}
-        resources:
-          limits:
-            cpu: 20m
-            memory: 50Mi
-          requests:
-            cpu: 20m
-            memory: 50Mi
-        volumeMounts:
-        - name: cluster-config
-          mountPath: /etc/cluster-config
+        - name: tectonic-ingress-controller-operator
+          image: {{.TectonicIngressControllerOperatorImage}}
+          resources:
+            limits:
+              cpu: 20m
+              memory: 50Mi
+            requests:
+              cpu: 20m
+              memory: 50Mi
+          volumeMounts:
+            - name: cluster-config
+              mountPath: /etc/cluster-config
       imagePullSecrets:
-      - name: coreos-pull-secret
+        - name: coreos-pull-secret
       nodeSelector:
         node-role.kubernetes.io/master: ""
       restartPolicy: Always
@@ -49,15 +50,15 @@ spec:
         runAsUser: 65534
       serviceAccount: tectonic-ingress-controller-operator
       tolerations:
-      - key: "node-role.kubernetes.io/master"
-        operator: "Exists"
-        effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/master"
+          operator: "Exists"
+          effect: "NoSchedule"
       volumes:
-      - name: cluster-config
-        configMap:
-          name: cluster-config-v1
-          items:
-          - key: ingress-config
-            path: ingress-config
+        - name: cluster-config
+          configMap:
+            name: cluster-config-v1
+            items:
+              - key: ingress-config
+                path: ingress-config
 `))
 )

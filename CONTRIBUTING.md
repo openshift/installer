@@ -40,7 +40,6 @@ For contributors who want to work up pull requests, the workflow is roughly:
     hack/go-lint.sh $(go list -f '{{ .ImportPath }}' ./...)
     hack/go-vet.sh ./...
     hack/shellcheck.sh
-    hack/test-bazel-build-tarball.sh
     hack/tf-fmt.sh -list -check
     hack/tf-lint.sh
     hack/yaml-lint.sh

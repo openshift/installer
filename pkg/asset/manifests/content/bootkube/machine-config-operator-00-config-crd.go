@@ -3,6 +3,7 @@ package bootkube
 const (
 	// MachineConfigOperator00ConfigCrd is the constant to represent contents of Machine_ConfigOperator00ConfigCrd.yaml file
 	MachineConfigOperator00ConfigCrd = `
+---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:

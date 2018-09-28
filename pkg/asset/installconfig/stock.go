@@ -3,8 +3,8 @@ package installconfig
 import (
 	"github.com/AlecAivazis/survey"
 
-	"github.com/openshift/installer/installer/pkg/validate"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/types/config"
 )
 
 // Stock is the stock of InstallConfig assets that can be generated.
@@ -58,7 +58,7 @@ func (s *StockImpl) EstablishStock() {
 				Help:    "The email address of the cluster administrator. This will be used to log in to the console.",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				return validate.Email(ans.(string))
+				return config.ValidateEmail(ans.(string))
 			}),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_EMAIL_ADDRESS",
@@ -81,7 +81,7 @@ func (s *StockImpl) EstablishStock() {
 				Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base.",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				return validate.DomainName(ans.(string))
+				return config.ValidateDomainName(ans.(string))
 			}),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_BASE_DOMAIN",
@@ -94,7 +94,7 @@ func (s *StockImpl) EstablishStock() {
 				Help:    "The name of the cluster. This will be used when generating sub-domains.",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				return validate.DomainName(ans.(string))
+				return config.ValidateDomainName(ans.(string))
 			}),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_CLUSTER_NAME",
@@ -107,7 +107,7 @@ func (s *StockImpl) EstablishStock() {
 				Help:    "The container registry pull secret for this cluster.",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				return validate.JSON([]byte(ans.(string)))
+				return config.ValidateJSON([]byte(ans.(string)))
 			}),
 		},
 		EnvVarName:     "OPENSHIFT_INSTALL_PULL_SECRET",

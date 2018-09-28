@@ -3,6 +3,7 @@ package updater
 const (
 	// AppVersionKind  is the variable/constant representing the contents of the respective file
 	AppVersionKind = `
+---
 apiVersion: "apiextensions.k8s.io/v1beta1"
 kind: "CustomResourceDefinition"
 metadata:

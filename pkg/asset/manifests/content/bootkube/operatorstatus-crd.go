@@ -3,6 +3,7 @@ package bootkube
 const (
 	// OperatorstatusCrd is the constant to represent contents of Operatorstatus_Crd.yaml file
 	OperatorstatusCrd = `
+---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:

@@ -3,6 +3,7 @@ package appversions
 const (
 	// AppVersionTectonicIngress  is the variable/constant representing the contents of the respective file
 	AppVersionTectonicIngress = `
+---
 apiVersion: tco.coreos.com/v1
 kind: AppVersion
 metadata:

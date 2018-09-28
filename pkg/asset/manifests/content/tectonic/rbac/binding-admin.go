@@ -3,6 +3,7 @@ package rbac
 const (
 	// BindingAdmin  is the variable/constant representing the contents of the respective file
 	BindingAdmin = `
+---
 kind: ClusterRoleBinding
 apiVersion: rbac.authorization.k8s.io/v1beta1
 metadata:

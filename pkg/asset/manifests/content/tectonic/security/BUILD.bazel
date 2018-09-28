@@ -1,8 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "go_default_library",
-    srcs = ["priviledged-scc-tectonic.go"],
-    importpath = "github.com/openshift/installer/pkg/asset/manifests/content/tectonic/security",
-    visibility = ["//visibility:public"],
-)

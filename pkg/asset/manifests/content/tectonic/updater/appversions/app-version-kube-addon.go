@@ -3,6 +3,7 @@ package appversions
 const (
 	// AppVersionKubeAddon  is the variable/constant representing the contents of the respective file
 	AppVersionKubeAddon = `
+---
 apiVersion: tco.coreos.com/v1
 kind: AppVersion
 metadata:

@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "go_default_library",
-    srcs = ["report.go"],
-    importmap = "installer/vendor/github.com/coreos/ignition/config/validate/report",
-    importpath = "github.com/coreos/ignition/config/validate/report",
-    visibility = ["//visibility:public"],
-)

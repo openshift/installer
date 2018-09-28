@@ -1,42 +1,43 @@
+---
 package: github.com/openshift/installer
 excludeDirs:
-- tests
+  - tests
 import:
-- package: github.com/ghodss/yaml
-  version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
-- package: github.com/sirupsen/logrus
-  version: 081307d9bc1364753142d5962fc1d795c742baaf
-- package: gopkg.in/yaml.v2
-  version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
-- package: gopkg.in/alecthomas/kingpin.v2
-  version: 947dcec5ba9c011838740e680966fd7087a71d0d
-- package: github.com/coreos/tectonic-config
-  version: 0d649ebfd3552dfa5c6cc2cf053e17ba924b7024
-- package: k8s.io/apimachinery
-  version: kubernetes-1.9.0
-- package: golang.org/x/crypto
-  version: df8d4716b3472e4a531c33cedbe537dae921a1a9
-- package: github.com/coreos/ignition
-  version: v0.26.0
-- package: github.com/vincent-petithory/dataurl
-  version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
-- package: sigs.k8s.io/cluster-api
-  version: 0.0.0-alpha.2
-  subpackages:
-  - pkg/client/clientset_generated/clientset
-- package: github.com/AlecAivazis/survey
-  version: 1.6.2
-- package: github.com/aws/aws-sdk-go
-  version: ^1.15.39
-- package: github.com/libvirt/libvirt-go
-  version: ^v4.7.0
-- package: github.com/openshift/hive
-  version: 296cb990171c6da62e134f3590c120bd16ef4d43
-  subpackages:
-  - contrib/pkg/aws_tag_deprovision
+  - package: github.com/ghodss/yaml
+    version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
+  - package: github.com/sirupsen/logrus
+    version: 081307d9bc1364753142d5962fc1d795c742baaf
+  - package: gopkg.in/yaml.v2
+    version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
+  - package: gopkg.in/alecthomas/kingpin.v2
+    version: 947dcec5ba9c011838740e680966fd7087a71d0d
+  - package: github.com/coreos/tectonic-config
+    version: 0d649ebfd3552dfa5c6cc2cf053e17ba924b7024
+  - package: k8s.io/apimachinery
+    version: kubernetes-1.9.0
+  - package: golang.org/x/crypto
+    version: df8d4716b3472e4a531c33cedbe537dae921a1a9
+  - package: github.com/coreos/ignition
+    version: v0.26.0
+  - package: github.com/vincent-petithory/dataurl
+    version: 9a301d65acbb728fcc3ace14f45f511a4cfeea9c
+  - package: sigs.k8s.io/cluster-api
+    version: 0.0.0-alpha.2
+    subpackages:
+      - pkg/client/clientset_generated/clientset
+  - package: github.com/AlecAivazis/survey
+    version: 1.6.2
+  - package: github.com/aws/aws-sdk-go
+    version: ^1.15.39
+  - package: github.com/libvirt/libvirt-go
+    version: ^v4.7.0
+  - package: github.com/openshift/hive
+    version: 296cb990171c6da62e134f3590c120bd16ef4d43
+    subpackages:
+      - contrib/pkg/aws_tag_deprovision
 testImport:
-- package: github.com/stretchr/testify
-  version: ^1.2.2
-  subpackages:
-  - assert
-- package: github.com/shurcooL/vfsgen
+  - package: github.com/stretchr/testify
+    version: ^1.2.2
+    subpackages:
+      - assert
+  - package: github.com/shurcooL/vfsgen
