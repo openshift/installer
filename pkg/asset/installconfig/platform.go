@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
+	"os"
 	"sort"
 	"strings"
 
@@ -161,6 +162,12 @@ func (a *Platform) awsPlatform() (*asset.State, error) {
 		return nil, err
 	}
 	platform.Region = string(region.Contents[0].Data)
+
+	if value, ok := os.LookupEnv("_CI_ONLY_STAY_AWAY_OPENSHIFT_INSTALL_AWS_USER_TAGS"); ok {
+		if err := json.Unmarshal([]byte(value), &platform.UserTags); err != nil {
+			return nil, fmt.Errorf("_CI_ONLY_STAY_AWAY_OPENSHIFT_INSTALL_AWS_USER_TAGS contains invalid JSON: %s (%v)", value, err)
+		}
+	}
 
 	data, err := json.Marshal(platform)
 	if err != nil {
