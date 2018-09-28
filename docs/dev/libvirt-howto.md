@@ -1,14 +1,13 @@
 # Libvirt HOWTO
 
-Tectonic has limited support for installing a Libvirt cluster. This is useful especially
-for operator development.
+Launching clusters via libvirt is especially useful for operator development.
 
-## 1. One-time setup
-It's expected that you will create and destroy clusters often in the course of development. These steps only need to be run once (or once per RHCOS update).
+## One-time setup
+It's expected that you will create and destroy clusters often in the course of development. These steps only need to be run once.
 
 Before you begin, install the [build dependencies](dependencies.md).
 
-### 1.1 Install and Enable Libvirt
+### Install and Enable Libvirt
 On Fedora:
 
 ```sh
@@ -28,29 +27,20 @@ sudo systemctl start libvirtd
 sudo systemctl enable libvirtd
 ```
 
-### 1.2 Pick a name and ip range
-In this example, we'll set the baseDomain to `tt.testing`, the name to `test1` and the ipRange to `192.168.124.0/24`
+### Pick names
 
-### 1.3 Clone the repo
+In this example, we'll set the base domain to `tt.testing` and the cluster name to `test1`.
+
+### Clone the project
 ```sh
 git clone https://github.com/openshift/installer.git
 cd installer
 ```
 
-### 1.4 (Optional) Download and prepare the operating system image
+### Get a pull secret
+Go to https://account.coreos.com/ and obtain a *pull secret*.
 
-*By default, the installer will download the latest RHCOS image every time it is invoked. This may be problematic for users who create a large number of clusters or who have limited network bandwidth. The installer allows a local image to be used instead.*
-
-Download the latest RHCOS image (you will need access to the Red Hat internal build systems):
-
-```sh
-curl http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz | gunzip > rhcos-qemu.qcow2
-```
-
-### 1.5 Get a pull secret
-Go to https://account.coreos.com/ and obtain a Tectonic *pull secret*.
-
-### 1.6 Make sure you have permissions for `qemu:///system`
+### Make sure you have permissions for `qemu:///system`
 You may want to grant yourself permissions to use libvirt as a non-root user. You could allow all users in the wheel group by doing the following:
 ```sh
 cat <<EOF >> /etc/polkit-1/rules.d/80-libvirt.rules
@@ -62,7 +52,7 @@ polkit.addRule(function(action, subject) {
 EOF
 ```
 
-### 1.7 Configure libvirt to accept TCP connections
+### Configure libvirt to accept TCP connections
 
 The Kubernetes [cluster-api](https://github.com/kubernetes-sigs/cluster-api)
 components drive deployment of worker machines.  The libvirt cluster-api
@@ -103,12 +93,14 @@ Next, restart libvirt: `systemctl restart libvirtd`
 Finally, if you have a firewall, you may have to allow connections to the
 libvirt daemon from the IP range used by your cluster nodes.
 
-#### Manual management
-The following example rule works for the suggested cluster ipRange of `192.168.124.0/24` and a libvirt *default* subnet of `192.168.122.0/24`, which might be different in your configuration:
+The following examples use the default cluster IP range of `192.168.124.0/24` (which is currently not configurable) and a libvirt `default` subnet of `192.168.122.0/24`, which might be different in your configuration.
+If you're uncertain about the libvirt *default* subnet you should be able to see its address using the command `ip -4 a show dev virbr0` or by inspecting `virsh --connect qemu:///system net-dumpxml default.
+Ensure the cluster IP range does not overlap your `virbr0` IP address.
 
-```
-iptables -I INPUT -p tcp -s 192.168.124.0/24 -d 192.168.122.1 --dport 16509 \
-  -j ACCEPT -m comment --comment "Allow insecure libvirt clients"
+#### iptables
+
+```sh
+iptables -I INPUT -p tcp -s 192.168.124.0/24 -d 192.168.122.1 --dport 16509 -j ACCEPT -m comment --comment "Allow insecure libvirt clients"
 ```
 
 #### Firewalld
@@ -123,8 +115,7 @@ FedoraWorkstation
   interfaces: enp0s25 tun0
 ```
 With the name of the active zone, include the source and port to allow connections
-from the IP range used by your cluster nodes. The default subnet is `192.168.124.0/24`
-unless otherwise specified.
+from the IP range used by your cluster nodes.
 
 ```sh
 sudo firewall-cmd --zone=FedoraWorkstation --add-source=192.168.124.0/24
@@ -142,7 +133,7 @@ NOTE: When the firewall rules are no longer needed, `sudo firewalld-cmd --reload
 will remove the changes made as they were not permanently added. For persistence,
 add `--permanent` to the `firewall-cmd` commands and run them a second time.
 
-### 1.8 Configure default libvirt storage pool
+### Configure default libvirt storage pool
 
 Check to see if a default storage pool has been defined in Libvirt by running
 `virsh --connect qemu:///system pool-list`.  If it does not exist, create it:
@@ -161,22 +152,8 @@ sudo virsh pool-start default
 sudo virsh pool-autostart default
 ```
 
+### Set up NetworkManager DNS overlay
 
-### 1.9 Prepare the installer configuration file
-1. `cp examples/libvirt.yaml ./`
-2. Edit the configuration file:
-    1. Set an email and password in the `admin` section
-    2. Set a `baseDomain` (to `tt.testing`)
-    3. Set the `sshKey` in the `admin` section to the **contents** of an ssh key (e.g. `ssh-rsa AAAA...`)
-    4. Set the `name` (e.g. test1)
-    5. Look at the `podCIDR` and `serviceCIDR` fields in the `networking` section. Make sure they don't conflict with anything important.
-    6. Set the `pullSecret` to your JSON pull secret.
-    7. Ensure the `libvirt.uri` IP address matches your virbr0 interface IP address which belongs to the libvirt *default* network.
-       If you're uncertain about the libvirt *default* subnet you should be able to see its address using the command `ip -4 a show dev virbr0` or by inspecting `virsh --connect qemu:///system net-dumpxml default`.
-    8. Ensure the `libvirt.network.ipRange` does not overlap your virbr0 IP address
-    9. (Optional) Change the `image` to the file URL of the operating system image you downloaded (e.g. `file:///home/user/Downloads/rhcos-qemu.qcow2`). This will allow the installer to re-use that image instead of having to download it every time.
-
-### 1.10 Set up NetworkManager DNS overlay
 This step is optional, but useful for being able to resolve cluster-internal hostnames from your host.
 1. Edit `/etc/NetworkManager/NetworkManager.conf` and set `dns=dnsmasq` in section `[main]`
 2. Tell dnsmasq to use your cluster. The syntax is `server=/<baseDomain>/<firstIP>`.
@@ -188,50 +165,42 @@ This step is optional, but useful for being able to resolve cluster-internal hos
     ```
 3. `systemctl restart NetworkManager`
 
-### 1.11 Install the terraform provider
+### Install the Terraform provider
+
 1. Make sure you have the `virsh` binary installed: `sudo dnf install libvirt-client libvirt-devel`
 2. Install the libvirt terraform provider:
 ```sh
 GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-libvirt
 ```
 
-### 1.12 Cache terrafrom plugins (optional, but makes subsequent runs a bit faster)
+### Cache Terrafrom plugins (optional, but makes subsequent runs a bit faster)
+
 ```sh
 cat <<EOF > $HOME/.terraformrc
 plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"
 EOF
 ```
 
-## 2. Build the installer
-Following the instructions in the root README:
+## Build and run the installer
+
+With [libvirt configured](#install-and-enable-libvirt), you can proceed with [the usual quick-start](../../README.md#quick-start).
+To avoid being prompted repeatedly, you can set [environment variables](../user/environent-variables.md) to reflect your libvirt choices.  For example, selecting libvirt, setting [our earlier name choices](#pick-names), [our pull secret](#get-a-pull-secret), and telling both the installer and the machine-API operator to contact `libvirtd` at [the usual libvirt IP](#firewall), you can use:
 
 ```sh
-bazel build tarball
+export OPENSHIFT_INSTALL_PLATFORM=libvirt
+export OPENSHIFT_INSTALL_BASE_DOMAIN=tt.testing
+export OPENSHIFT_INSTALL_CLUSTER_NAME=test1
+export OPENSHIFT_INSTALL_PULL_SECRET_PATH=path/to/your/pull-secret.json
+export OPENSHIFT_INSTALL_LIBVIRT_URI=qemu+tcp://192.168.122.1/system
 ```
 
-## 3. Create a cluster
-```sh
-tar -zxf bazel-bin/tectonic-dev.tar.gz
-alias tectonic="${PWD}/tectonic-dev/installer/tectonic"
-```
+## Cleanup
 
-Initialize (the environment variables are a convenience):
-```sh
-tectonic init --config=libvirt.yaml
-export CLUSTER_NAME=<the cluster name>
-export BASE_DOMAIN=<the base domain>
-```
+Be sure to destroy your cluster when you're done with it, or else you will need to manually use `virsh` to clean up the leaked resources.
+The [`virsh-cleanup`](../../scripts/maintenance/virsh-cleanup.sh) script may help with this, but note it will currently destroy *all* libvirt resources.
+We plan on adding `openshift-install destroy-cluster` support for libvirt in the near future.
 
-Install ($CLUSTER_NAME is `test1`):
-```sh
-tectonic install --dir=$CLUSTER_NAME
-```
-
-When you're done, destroy:
-```sh
-tectonic destroy --dir=$CLUSTER_NAME
-```
-Be sure to destroy, or else you will need to manually use virsh to clean up the leaked resources. The [`virsh-cleanup`](../../scripts/maintenance/virsh-cleanup.sh) script may help with this, but note it will currently destroy *all* libvirt resources.
+### Firewall
 
 With the cluster removed, you no longer need to allow libvirt nodes to reach your `libvirtd`. Restart
 `firewalld` to remove your temporary changes as follows:
@@ -240,38 +209,52 @@ With the cluster removed, you no longer need to allow libvirt nodes to reach you
 sudo firewall-cmd --reload
 ```
 
-## 4. Exploring your cluster
+## Exploring your cluster
+
 Some things you can do:
 
-### Watch the bootstrap process
-The bootstrap node, e.g. test1-bootstrap.tt.testing, runs the tectonic bootstrap process. You can watch it:
+### SSH access
+
+The bootstrap node, e.g. `test1-bootstrap.tt.testing`, runs the bootstrap process. You can watch it:
 
 ```sh
-ssh core@$CLUSTER_NAME-bootstrap.$BASE_DOMAIN
+ssh core@$OPENSHIFT_INSTALL_CLUSTER_NAME-bootstrap.$OPENSHIFT_INSTALL_BASE_DOMAIN
 sudo journalctl -f -u bootkube -u tectonic
 ```
+
 You'll have to wait for etcd to reach quorum before this makes any progress.
 
-### Inspect the cluster with kubectl
-You'll need a kubectl binary on your path.
+Using the domain names above will only work if you [set up the DNS overlay](#set-up-networkmanager-dns-overlay) or have otherwise configured your system to resolve cluster domain names.
+Alternatively, if you didn't set up DNS on the host, you can use:
+
 ```sh
-export KUBECONFIG="${PWD}/${CLUSTER_NAME}/generated/auth/kubeconfig"
+virsh domifaddr master0  # to get the master IP
+ssh core@$MASTER_IP
+```
+
+### Inspect the cluster with kubectl
+
+You'll need a `kubectl` binary on your path.
+If you launched the cluster with `openshift-install --dir "${DIR}" cluster`, you can use:
+
+```sh
+export KUBECONFIG="${DIR}/auth/kubeconfig"
 kubectl get -n tectonic-system pods
 ```
 
-Alternatively, if you didn't set up DNS on the host (or you want to
-do things from the node for other reasons), on the master you can
+If you didn't set `--dir`, you can use `KUBECONFIG=auth/kubeconfig`.
+
+Alternatively, you can run `kubectl` from the bootstrap or master nodes.
+[SSH in](#ssh-access), and run:
+
 ```sh
-host# virsh domifaddr master0  # to get the master IP
-host# ssh core@<ip of master>
-master0# export KUBECONFIG=/var/opt/tectonic/auth/kubeconfig
-master0# kubectl get -n tectonic-system pods
+export KUBECONFIG=/var/opt/tectonic/auth/kubeconfig
+kubectl get --all-namespaces pods
 ```
 
 ### Connect to the cluster console
-This will take ~30 minutes to be available. Simply go to `https://${CLUSTER_NAME}-api.${BASE_DOMAIN}:6443/console/` (e.g. `test1.tt.testing`) and log in using the credentials above.
 
-
+Visit `https://${OPENSHIFT_INSTALL_CLUSTER_NAME}-api.${OPENSHIFT_INSTALL_BASE_DOMAIN}:6443/console/` and log in using the admin credentials you configured when creating the cluster.
 
 ## FAQ
 
@@ -294,17 +277,7 @@ Error: Error refreshing state: 1 error(s) occurred:
 FATA[0019] failed to run Terraform: exit status 1
 ```
 
-it is likely that your install configuration contains three backslashes after the protocol (i.e. `qemu+tcp:///...`), when it should only be two.
-
-### Init throws an `unsupported protocol scheme` error
-If you're seeing an error similar to
-
-```
-$ tectonic init --config ~/tectonic.libvirt.yaml
-FATA[0000] Get : unsupported protocol scheme ""
-```
-
-then you're probably missing the `file:///` in the value for `image:` in the install configuration.
+it is likely that your install configuration contains three backslashes after the protocol (e.g. `qemu+tcp:///...`), when it should only be two.
 
 ### SELinux might prevent access to image files
 Configuring the storage pool to store images in a path incompatible with the SELinux policies (e.g. your home directory) might lead to the following errors:
