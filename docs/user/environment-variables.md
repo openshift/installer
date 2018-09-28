@@ -37,3 +37,7 @@ The installer accepts a number of environment variable that allow the interactiv
 * `OPENSHIFT_INSTALL_LIBVIRT_URI`:
     The libvirt connection URI to be used.
     This must be accessible from the running cluster.
+* `OPENSHIFT_INSTALL_LIBVIRT_IMAGE`:
+    The URI for the OS image.
+    For example it might be url like `http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz` or
+    a local file like `/tmp/openshift-install-853528428`.

@@ -199,32 +199,39 @@ func (a *Platform) libvirtPlatform() (*asset.State, error) {
 		},
 	}
 
-	prompt := asset.UserProvided{
+	uriPrompt := asset.UserProvided{
 		Question: &survey.Question{
 			Prompt: &survey.Input{
 				Message: "URI",
 				Help:    "The libvirt connection URI to be used. This must be accessible from the running cluster.",
 				Default: "qemu+tcp://192.168.122.1/system",
 			},
-			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				value := ans.(string)
-				uri, err := url.Parse(value)
-				if err != nil {
-					return err
-				}
-				if uri.Scheme == "" {
-					return fmt.Errorf("invalid URI %q (no scheme)", value)
-				}
-				return nil
-			}),
+			Validate: survey.ComposeValidators(survey.Required, uriValidator),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_LIBVIRT_URI",
 	}
-	uri, err := prompt.Generate(nil)
+	uri, err := uriPrompt.Generate(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	imagePrompt := asset.UserProvided{
+		Question: &survey.Question{
+			Prompt: &survey.Input{
+				Message: "Image",
+				Help:    "URI for the OS image.",
+				Default: platform.DefaultMachinePlatform.Image,
+			},
+			Validate: survey.ComposeValidators(survey.Required, uriValidator),
+		},
+		EnvVarName: "OPENSHIFT_INSTALL_LIBVIRT_IMAGE",
+	}
+	image, err := imagePrompt.Generate(nil)
 	if err != nil {
 		return nil, err
 	}
 	platform.URI = string(uri.Contents[0].Data)
+	platform.DefaultMachinePlatform.Image = string(image.Contents[0].Data)
 
 	data, err := json.Marshal(platform)
 	if err != nil {
@@ -243,4 +250,18 @@ func (a *Platform) libvirtPlatform() (*asset.State, error) {
 			},
 		},
 	}, nil
+}
+
+// uriValidator validates if the answer provided in prompt is a valid
+// url and has non-empty scheme.
+func uriValidator(ans interface{}) error {
+	value := ans.(string)
+	uri, err := url.Parse(value)
+	if err != nil {
+		return err
+	}
+	if uri.Scheme == "" {
+		return fmt.Errorf("invalid URI %q (no scheme)", value)
+	}
+	return nil
 }
