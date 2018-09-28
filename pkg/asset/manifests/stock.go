@@ -2,6 +2,7 @@ package manifests
 
 import (
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
@@ -45,7 +46,7 @@ type StockImpl struct {
 var _ Stock = (*StockImpl)(nil)
 
 // EstablishStock establishes the stock of assets.
-func (s *StockImpl) EstablishStock(stock installconfig.Stock, tlsStock tls.Stock, kubeConfigStock kubeconfig.Stock) {
+func (s *StockImpl) EstablishStock(stock installconfig.Stock, tlsStock tls.Stock, kubeConfigStock kubeconfig.Stock, machineStock machine.Stock) {
 	s.manifests = &manifests{
 		assetStock:                s,
 		installConfig:             stock.InstallConfig(),
@@ -64,6 +65,7 @@ func (s *StockImpl) EstablishStock(stock installconfig.Stock, tlsStock tls.Stock
 		mcsCertKey:                tlsStock.MCSCertKey(),
 		serviceAccountKeyPair:     tlsStock.ServiceAccountKeyPair(),
 		kubeconfig:                kubeConfigStock.KubeconfigAdmin(),
+		workerIgnition:            machineStock.WorkerIgnition(),
 	}
 	s.kubeCoreOperator = &kubeCoreOperator{
 		installConfigAsset: stock.InstallConfig(),

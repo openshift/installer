@@ -1,4 +1,4 @@
-package ignition
+package bootstrap
 
 import (
 	"bytes"
@@ -8,9 +8,10 @@ import (
 	"text/template"
 
 	"github.com/coreos/ignition/config/util"
-	ignition "github.com/coreos/ignition/config/v2_2/types"
+	igntypes "github.com/coreos/ignition/config/v2_2/types"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/content"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
@@ -137,9 +138,9 @@ func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 		return nil, err
 	}
 
-	config := ignition.Config{
-		Ignition: ignition.Ignition{
-			Version: ignition.MaxVersion.String(),
+	config := igntypes.Config{
+		Ignition: igntypes.Ignition{
+			Version: igntypes.MaxVersion.String(),
 		},
 	}
 
@@ -150,14 +151,14 @@ func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 
 	config.Systemd.Units = append(
 		config.Systemd.Units,
-		ignition.Unit{Name: "bootkube.service", Contents: content.BootkubeSystemdContents},
-		ignition.Unit{Name: "tectonic.service", Contents: content.TectonicSystemdContents, Enabled: util.BoolToPtr(true)},
-		ignition.Unit{Name: "kubelet.service", Contents: applyTemplateData(content.KubeletSystemdTemplate, templateData), Enabled: util.BoolToPtr(true)},
+		igntypes.Unit{Name: "bootkube.service", Contents: content.BootkubeSystemdContents},
+		igntypes.Unit{Name: "tectonic.service", Contents: content.TectonicSystemdContents, Enabled: util.BoolToPtr(true)},
+		igntypes.Unit{Name: "kubelet.service", Contents: applyTemplateData(content.KubeletSystemdTemplate, templateData), Enabled: util.BoolToPtr(true)},
 	)
 
 	config.Passwd.Users = append(
 		config.Passwd.Users,
-		ignition.PasswdUser{Name: "core", SSHAuthorizedKeys: []ignition.SSHAuthorizedKey{ignition.SSHAuthorizedKey(installConfig.Admin.SSHKey)}},
+		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(installConfig.Admin.SSHKey)}},
 	)
 
 	data, err := json.Marshal(config)
@@ -203,45 +204,45 @@ func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 	}, nil
 }
 
-func (a *bootstrap) addBootstrapFiles(config *ignition.Config, dependencies map[asset.Asset]*asset.State) {
+func (a *bootstrap) addBootstrapFiles(config *igntypes.Config, dependencies map[asset.Asset]*asset.State) {
 	config.Storage.Files = append(
 		config.Storage.Files,
-		fileFromBytes("/etc/kubernetes/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
-		fileFromBytes("/var/lib/kubelet/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
+		ignition.FileFromBytes("/etc/kubernetes/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
+		ignition.FileFromBytes("/var/lib/kubelet/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
 	)
 	config.Storage.Files = append(
 		config.Storage.Files,
-		filesFromContents(rootDir, 0644, dependencies[a.kubeCoreOperator].Contents)...,
-	)
-}
-
-func (a *bootstrap) addBootkubeFiles(config *ignition.Config, dependencies map[asset.Asset]*asset.State, templateData *bootstrapTemplateData) {
-	config.Storage.Files = append(
-		config.Storage.Files,
-		fileFromString("/opt/tectonic/bootkube.sh", 0555, applyTemplateData(content.BootkubeShFileTemplate, templateData)),
-	)
-	config.Storage.Files = append(
-		config.Storage.Files,
-		filesFromContents(rootDir, 0600, dependencies[a.kubeconfig].Contents)...,
-	)
-	config.Storage.Files = append(
-		config.Storage.Files,
-		filesFromContents(rootDir, 0644, dependencies[a.manifests].Contents)...,
+		ignition.FilesFromContents(rootDir, 0644, dependencies[a.kubeCoreOperator].Contents)...,
 	)
 }
 
-func (a *bootstrap) addTectonicFiles(config *ignition.Config, dependencies map[asset.Asset]*asset.State, templateData *bootstrapTemplateData) {
+func (a *bootstrap) addBootkubeFiles(config *igntypes.Config, dependencies map[asset.Asset]*asset.State, templateData *bootstrapTemplateData) {
 	config.Storage.Files = append(
 		config.Storage.Files,
-		fileFromString("/opt/tectonic/tectonic.sh", 0555, content.TectonicShFileContents),
+		ignition.FileFromString("/opt/tectonic/bootkube.sh", 0555, applyTemplateData(content.BootkubeShFileTemplate, templateData)),
 	)
 	config.Storage.Files = append(
 		config.Storage.Files,
-		filesFromContents(rootDir, 0644, dependencies[a.tectonic].Contents)...,
+		ignition.FilesFromContents(rootDir, 0600, dependencies[a.kubeconfig].Contents)...,
+	)
+	config.Storage.Files = append(
+		config.Storage.Files,
+		ignition.FilesFromContents(rootDir, 0644, dependencies[a.manifests].Contents)...,
 	)
 }
 
-func (a *bootstrap) addTLSCertFiles(config *ignition.Config, dependencies map[asset.Asset]*asset.State) {
+func (a *bootstrap) addTectonicFiles(config *igntypes.Config, dependencies map[asset.Asset]*asset.State, templateData *bootstrapTemplateData) {
+	config.Storage.Files = append(
+		config.Storage.Files,
+		ignition.FileFromString("/opt/tectonic/tectonic.sh", 0555, content.TectonicShFileContents),
+	)
+	config.Storage.Files = append(
+		config.Storage.Files,
+		ignition.FilesFromContents(rootDir, 0644, dependencies[a.tectonic].Contents)...,
+	)
+}
+
+func (a *bootstrap) addTLSCertFiles(config *igntypes.Config, dependencies map[asset.Asset]*asset.State) {
 	for _, asset := range []asset.Asset{
 		a.rootCA,
 		a.kubeCA,
@@ -258,12 +259,12 @@ func (a *bootstrap) addTLSCertFiles(config *ignition.Config, dependencies map[as
 		a.mcsCertKey,
 		a.serviceAccountKeyPair,
 	} {
-		config.Storage.Files = append(config.Storage.Files, filesFromContents(rootDir, 0600, dependencies[asset].Contents)...)
+		config.Storage.Files = append(config.Storage.Files, ignition.FilesFromContents(rootDir, 0600, dependencies[asset].Contents)...)
 	}
 
 	config.Storage.Files = append(
 		config.Storage.Files,
-		fileFromBytes("/etc/ssl/etcd/ca.crt", 0600, dependencies[a.etcdClientCertKey].Contents[tls.CertIndex].Data),
+		ignition.FileFromBytes("/etc/ssl/etcd/ca.crt", 0600, dependencies[a.etcdClientCertKey].Contents[tls.CertIndex].Data),
 	)
 }
 

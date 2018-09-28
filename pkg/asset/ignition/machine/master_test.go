@@ -1,4 +1,4 @@
-package ignition
+package machine
 
 import (
 	"testing"
