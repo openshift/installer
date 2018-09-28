@@ -2,7 +2,8 @@ package cluster
 
 import (
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/ignition"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 )
@@ -24,12 +25,12 @@ type StockImpl struct {
 var _ Stock = (*StockImpl)(nil)
 
 // EstablishStock establishes the stock of assets in the specified directory.
-func (s *StockImpl) EstablishStock(installConfigStock installconfig.Stock, ignitionStock ignition.Stock, kubeconfigStock kubeconfig.Stock) {
+func (s *StockImpl) EstablishStock(installConfigStock installconfig.Stock, bootstrapStock bootstrap.Stock, machineStock machine.Stock, kubeconfigStock kubeconfig.Stock) {
 	s.tfvars = &TerraformVariables{
 		installConfig:     installConfigStock.InstallConfig(),
-		bootstrapIgnition: ignitionStock.BootstrapIgnition(),
-		masterIgnition:    ignitionStock.MasterIgnition(),
-		workerIgnition:    ignitionStock.WorkerIgnition(),
+		bootstrapIgnition: bootstrapStock.BootstrapIgnition(),
+		masterIgnition:    machineStock.MasterIgnition(),
+		workerIgnition:    machineStock.WorkerIgnition(),
 	}
 
 	s.cluster = &Cluster{

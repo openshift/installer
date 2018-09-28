@@ -2,7 +2,8 @@ package stock
 
 import (
 	"github.com/openshift/installer/pkg/asset/cluster"
-	"github.com/openshift/installer/pkg/asset/ignition"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests"
@@ -15,7 +16,8 @@ type Stock struct {
 	installConfigStock
 	kubeconfigStock
 	tlsStock
-	ignitionStock
+	bootstrapStock
+	machineStock
 	clusterStock
 	manifestsStock
 	metadataStock
@@ -33,8 +35,12 @@ type kubeconfigStock struct {
 	kubeconfig.StockImpl
 }
 
-type ignitionStock struct {
-	ignition.StockImpl
+type bootstrapStock struct {
+	bootstrap.StockImpl
+}
+
+type machineStock struct {
+	machine.StockImpl
 }
 
 type clusterStock struct {
@@ -57,10 +63,10 @@ func EstablishStock() *Stock {
 	s.installConfigStock.EstablishStock()
 	s.tlsStock.EstablishStock(&s.installConfigStock)
 	s.kubeconfigStock.EstablishStock(&s.installConfigStock, &s.tlsStock)
+	s.machineStock.EstablishStock(s, s)
 	s.manifestsStock.EstablishStock(&s.installConfigStock, s, s)
-	s.ignitionStock.EstablishStock(s, s, s, s)
-	s.clusterStock.EstablishStock(s, s, s)
-	s.manifestsStock.EstablishStock(&s.installConfigStock, s, s)
+	s.bootstrapStock.EstablishStock(s, s, s, s)
+	s.clusterStock.EstablishStock(s, s, s, s)
 	s.metadataStock.EstablishStock(s, s)
 	return s
 }

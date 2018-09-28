@@ -1,4 +1,4 @@
-package ignition
+package machine
 
 import (
 	"github.com/openshift/installer/pkg/asset"
