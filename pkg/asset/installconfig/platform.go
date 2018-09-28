@@ -1,6 +1,7 @@
 package installconfig
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/url"
 	"sort"
@@ -9,6 +10,7 @@ import (
 	"github.com/AlecAivazis/survey"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/types"
 )
 
 const (
@@ -41,6 +43,12 @@ var (
 		"us-west-1":      "N. California",
 		"us-west-2":      "Oregon",
 	}
+
+	defaultVPCCIDR = "10.0.0.0/16"
+
+	defaultLibvirtNetworkIfName  = "tt0"
+	defaultLibvirtNetworkIPRange = "192.168.124.0/24"
+	defaultLibvirtImageURL       = "http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz"
 )
 
 // Platform is an asset that queries the user for the platform on which to install
@@ -113,6 +121,10 @@ func (a *Platform) queryUserForPlatform() (string, error) {
 }
 
 func (a *Platform) awsPlatform() (*asset.State, error) {
+	platform := &types.AWSPlatform{
+		VPCCIDRBlock: defaultVPCCIDR,
+	}
+
 	longRegions := make([]string, 0, len(validAWSRegions))
 	shortRegions := make([]string, 0, len(validAWSRegions))
 	for id, location := range validAWSRegions {
@@ -148,14 +160,38 @@ func (a *Platform) awsPlatform() (*asset.State, error) {
 	if err != nil {
 		return nil, err
 	}
+	platform.Region = string(region.Contents[0].Data)
 
-	return assetStateForStringContents(
-		AWSPlatformType,
-		string(region.Contents[0].Data),
-	), nil
+	data, err := json.Marshal(platform)
+	if err != nil {
+		return nil, err
+	}
+
+	return &asset.State{
+		Contents: []asset.Content{
+			{
+				Name: "platform",
+				Data: []byte(AWSPlatformType),
+			},
+			{
+				Name: "platform.json",
+				Data: data,
+			},
+		},
+	}, nil
 }
 
 func (a *Platform) libvirtPlatform() (*asset.State, error) {
+	platform := &types.LibvirtPlatform{
+		Network: types.LibvirtNetwork{
+			IfName:  defaultLibvirtNetworkIfName,
+			IPRange: defaultLibvirtNetworkIPRange,
+		},
+		DefaultMachinePlatform: &types.LibvirtMachinePoolPlatform{
+			Image: defaultLibvirtImageURL,
+		},
+	}
+
 	prompt := asset.UserProvided{
 		Question: &survey.Question{
 			Prompt: &survey.Input{
@@ -181,21 +217,23 @@ func (a *Platform) libvirtPlatform() (*asset.State, error) {
 	if err != nil {
 		return nil, err
 	}
+	platform.URI = string(uri.Contents[0].Data)
 
-	return assetStateForStringContents(
-		LibvirtPlatformType,
-		string(uri.Contents[0].Data),
-	), nil
-}
-
-func assetStateForStringContents(s ...string) *asset.State {
-	c := make([]asset.Content, len(s))
-	for i, d := range s {
-		c[i] = asset.Content{
-			Data: []byte(d),
-		}
+	data, err := json.Marshal(platform)
+	if err != nil {
+		return nil, err
 	}
+
 	return &asset.State{
-		Contents: c,
-	}
+		Contents: []asset.Content{
+			{
+				Name: "platform-type",
+				Data: []byte(LibvirtPlatformType),
+			},
+			{
+				Name: "platform.json",
+				Data: data,
+			},
+		},
+	}, nil
 }

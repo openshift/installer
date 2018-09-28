@@ -1,6 +1,7 @@
 package installconfig
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 
@@ -17,11 +18,6 @@ import (
 var (
 	defaultServiceCIDR = parseCIDR("10.3.0.0/16")
 	defaultPodCIDR     = parseCIDR("10.2.0.0/16")
-	defaultVPCCIDR     = "10.0.0.0/16"
-
-	defaultLibvirtNetworkIfName  = "tt0"
-	defaultLibvirtNetworkIPRange = "192.168.124.0/24"
-	defaultLibvirtImageURL       = "http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz"
 )
 
 // installConfig generates the install-config.yml file.
@@ -86,11 +82,10 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 	platform := string(platformState.Contents[0].Data)
 	switch platform {
 	case AWSPlatformType:
-		region := string(platformState.Contents[1].Data)
-		installConfig.AWS = &types.AWSPlatform{
-			Region:       region,
-			VPCCIDRBlock: defaultVPCCIDR,
+		if err := json.Unmarshal(platformState.Contents[1].Data, &installConfig.AWS); err != nil {
+			return nil, err
 		}
+
 		installConfig.Machines = []types.MachinePool{
 			{
 				Name:     "master",
@@ -102,19 +97,10 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 			},
 		}
 	case LibvirtPlatformType:
-		uri := string(platformState.Contents[1].Data)
-
-		installConfig.Libvirt = &types.LibvirtPlatform{
-			URI: uri,
-			Network: types.LibvirtNetwork{
-				Name:    clusterName,
-				IfName:  defaultLibvirtNetworkIfName,
-				IPRange: defaultLibvirtNetworkIPRange,
-			},
-			DefaultMachinePlatform: &types.LibvirtMachinePoolPlatform{
-				Image: defaultLibvirtImageURL,
-			},
+		if err := json.Unmarshal(platformState.Contents[1].Data, &installConfig.Libvirt); err != nil {
+			return nil, err
 		}
+		installConfig.Libvirt.Network.Name = clusterName
 		installConfig.Machines = []types.MachinePool{
 			{
 				Name:     "master",
