@@ -69,8 +69,8 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		return nil, err
 	}
 
-	templateDir, err := terraform.FindStepTemplates(tmpDir, terraform.InfraStep, tfvars.Platform)
-	if err != nil {
+	templateDir := filepath.Join(tmpDir, string(tfvars.Platform))
+ 	if _, err := os.Stat(templateDir); err != nil {
 		if os.IsNotExist(err) {
 			return nil, errors.New("infra step not found; set OPENSHIFT_INSTALL_DATA to point to the data directory")
 		}
@@ -89,7 +89,7 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		return nil, err
 	}
 
-	stateFile, err := terraform.Apply(tmpDir, terraform.InfraStep, templateDir)
+	stateFile, err := terraform.Apply(tmpDir, templateDir)
 	if err != nil {
 		// we should try to fetch the terraform state file.
 		log.Errorf("terraform failed: %v", err)

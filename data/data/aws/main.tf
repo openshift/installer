@@ -16,7 +16,7 @@ provider "aws" {
 }
 
 module "bootstrap" {
-  source = "../../../modules/aws/bootstrap"
+  source = "../modules/aws/bootstrap"
 
   ami                         = "${var.tectonic_aws_ec2_ami_override}"
   associate_public_ip_address = "${var.tectonic_aws_endpoints != "private"}"
@@ -36,7 +36,7 @@ module "bootstrap" {
 }
 
 module "masters" {
-  source = "../../../modules/aws/master"
+  source = "../modules/aws/master"
 
   elb_api_internal_id = "${module.vpc.aws_elb_api_internal_id}"
   elb_api_external_id = "${module.vpc.aws_elb_api_external_id}"
@@ -60,14 +60,14 @@ module "masters" {
 }
 
 module "iam" {
-  source = "../../../modules/aws/iam"
+  source = "../modules/aws/iam"
 
   cluster_name    = "${var.tectonic_cluster_name}"
   worker_iam_role = "${var.tectonic_aws_worker_iam_role_name}"
 }
 
 module "dns" {
-  source = "../../../modules/dns/route53"
+  source = "../modules/dns/route53"
 
   api_external_elb_dns_name = "${module.vpc.aws_elb_api_external_dns_name}"
   api_external_elb_zone_id  = "${module.vpc.aws_elb_api_external_zone_id}"
@@ -89,7 +89,7 @@ module "dns" {
 }
 
 module "vpc" {
-  source = "../../../modules/aws/vpc"
+  source = "../modules/aws/vpc"
 
   base_domain     = "${var.tectonic_base_domain}"
   cidr_block      = "${var.tectonic_aws_vpc_cidr_block}"
