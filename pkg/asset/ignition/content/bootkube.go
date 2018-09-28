@@ -29,6 +29,25 @@ set -e
 
 mkdir --parents /etc/kubernetes/manifests/
 
+MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-operator)
+echo "Found Machine Config Operator's image: $MACHINE_CONFIG_OPERATOR_IMAGE"
+
+if [ ! -d cvo-bootstrap ]
+then
+	echo "Rendering Cluster Version Operator Manifests..."
+
+	# shellcheck disable=SC2154
+	podman run \
+		--volume "$PWD:/assets:z" \
+		"{{.ReleaseImage}}" \
+		render \
+			--output-dir=/assets/cvo-bootstrap \
+			--release-image="{{.ReleaseImage}}"
+
+	cp --recursive cvo-bootstrap/manifests .
+	cp --recursive cvo-bootstrap/bootstrap/bootstrap-pod.yaml /etc/kubernetes/manifests/
+fi
+
 if [ ! -d kco-bootstrap ]
 then
 	echo "Rendering Kubernetes core manifests..."
@@ -54,7 +73,7 @@ then
 	podman run \
 		--user 0 \
 		--volume "$PWD:/assets:z" \
-		"{{.MachineConfigOperatorImage}}" \
+		"${MACHINE_CONFIG_OPERATOR_IMAGE}" \
 		bootstrap \
 			--etcd-ca=/assets/tls/etcd-client-ca.crt \
 			--root-ca=/assets/tls/root-ca.crt \
