@@ -37,6 +37,7 @@ type manifests struct {
 	mcsCertKey                asset.Asset
 	serviceAccountKeyPair     asset.Asset
 	kubeconfig                asset.Asset
+	workerIgnition            asset.Asset
 }
 
 var _ asset.Asset = (*manifests)(nil)
@@ -73,6 +74,7 @@ func (m *manifests) Dependencies() []asset.Asset {
 		m.kubeletCertKey,
 		m.serviceAccountKeyPair,
 		m.kubeconfig,
+		m.workerIgnition,
 	}
 }
 
@@ -154,7 +156,7 @@ func (m *manifests) generateBootKubeManifests(dependencies map[asset.Asset]*asse
 		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(dependencies[m.serviceServingCA].Contents[certIndex].Data),
 		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(dependencies[m.serviceServingCA].Contents[keyIndex].Data),
 		TectonicNetworkOperatorImage:    "quay.io/coreos/tectonic-network-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
-		WorkerIgnConfig:                 "", // FIXME: this means depending on ignition assets (risk of cyclical dependencies)
+		WorkerIgnConfig:                 base64.StdEncoding.EncodeToString(dependencies[m.workerIgnition].Contents[0].Data),
 	}
 
 	assetData := map[string][]byte{
