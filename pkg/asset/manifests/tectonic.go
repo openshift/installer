@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"bytes"
 	"encoding/base64"
 	"path/filepath"
 
@@ -50,7 +51,7 @@ func (t *tectonic) Generate(dependencies map[asset.Asset]*asset.State) (*asset.S
 		IngressCaCert:                          base64.StdEncoding.EncodeToString(dependencies[t.kubeCA].Contents[certIndex].Data),
 		IngressKind:                            "haproxy-router",
 		IngressStatusPassword:                  ic.Admin.Password, // FIXME: generate a new random one instead?
-		IngressTLSBundle:                       base64.StdEncoding.EncodeToString(ingressContents[certIndex].Data),
+		IngressTLSBundle:                       base64.StdEncoding.EncodeToString(bytes.Join([][]byte{ingressContents[certIndex].Data, ingressContents[keyIndex].Data}, []byte{})),
 		IngressTLSCert:                         base64.StdEncoding.EncodeToString(ingressContents[certIndex].Data),
 		IngressTLSKey:                          base64.StdEncoding.EncodeToString(ingressContents[keyIndex].Data),
 		KubeAddonOperatorImage:                 "quay.io/coreos/kube-addon-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
