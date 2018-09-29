@@ -25,7 +25,7 @@ module "bootstrap" {
   elbs                        = "${module.vpc.aws_lbs}"
   elbs_length                 = "${module.vpc.aws_lbs_length}"
   iam_role                    = "${var.tectonic_aws_master_iam_role_name}"
-  ignition                    = "${local.ignition_bootstrap}"
+  ignition                    = "${var.ignition_bootstrap}"
   subnet_id                   = "${module.vpc.master_subnet_ids[0]}"
   vpc_security_group_ids      = ["${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"]
 
