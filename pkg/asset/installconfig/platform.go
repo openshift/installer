@@ -202,7 +202,7 @@ func (a *Platform) libvirtPlatform() (*asset.State, error) {
 	uriPrompt := asset.UserProvided{
 		Question: &survey.Question{
 			Prompt: &survey.Input{
-				Message: "URI",
+				Message: "Libvirt Connection URI",
 				Help:    "The libvirt connection URI to be used. This must be accessible from the running cluster.",
 				Default: "qemu+tcp://192.168.122.1/system",
 			},
@@ -219,7 +219,7 @@ func (a *Platform) libvirtPlatform() (*asset.State, error) {
 		Question: &survey.Question{
 			Prompt: &survey.Input{
 				Message: "Image",
-				Help:    "URI for the OS image.",
+				Help:    "URI of the OS image.",
 				Default: platform.DefaultMachinePlatform.Image,
 			},
 			Validate: survey.ComposeValidators(survey.Required, uriValidator),
