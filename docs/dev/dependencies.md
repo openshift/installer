@@ -24,24 +24,29 @@ If you need support for [libvirt destroy](libvirt-howto#cleanup), you should als
 
 We follow a hard flattening approach; i.e. direct and inherited dependencies are installed in the base `vendor/`.
 
-Dependencies are managed with [glide](https://glide.sh/) but committed directly to the repository. If you don't have glide, install the latest release from [https://glide.sh/](https://glide.sh/). We require version 0.12 at a minimum.
+Dependencies are managed with [dep](https://golang.github.io/dep/) but committed directly to the repository. If you don't have dep, install the latest release from [Installation](https://golang.github.io/dep/docs/installation.html) link.
 
-The vendor directory is pruned using [glide-vc](https://github.com/sgotti/glide-vc). Follow the [installation instructions](https://github.com/sgotti/glide-vc#install) in the project's README.
+We require atleast following version for dep:
+
+```
+dep:
+ version     : v0.5.0
+ build date  : 2018-07-26
+ git hash    : 224a564
+ go version  : go1.10.3
+```
 
 To add a new dependency:
-- Edit the `glide.yaml` file to add your dependency.
-- Ensure you add a `version` field for the sha or tag you want to pin to.
+
+- Edit the `Gopkg.yaml` file to add your dependency.
+- Ensure you add a `version` field for the tag or the `revision` field for commit id you want to pin to.
 - Revendor the dependencies:
 
 ```sh
-rm glide.lock
-glide install --strip-vendor
-glide-vc --use-lock-file --no-tests --only-code
+dep ensure
 ```
 
-If it worked correctly it should:
-- Clone your new dep to the `/vendor` dir and check out the ref you specified.
-- Update `glide.lock` to include your new package, add any transitive dependencies and update its hash.
+This [guide](https://golang.github.io/dep/docs/daily-dep.html) a great source to learn more about using `dep` is .
 
 For the sake of your fellow reviewers, commit vendored code separately from any other changes.
 
