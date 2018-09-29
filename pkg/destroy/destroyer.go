@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	atd "github.com/openshift/hive/contrib/pkg/aws_tag_deprovision"
+	atd "github.com/openshift/hive/contrib/pkg/awstagdeprovision"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/metadata"

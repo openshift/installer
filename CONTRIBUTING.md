@@ -42,7 +42,6 @@ For contributors who want to work up pull requests, the workflow is roughly:
     hack/shellcheck.sh
     hack/tf-fmt.sh -list -check
     hack/tf-lint.sh
-    hack/yaml-lint.sh
     ```
 7. Submit a pull request to the original repository.
 8. The [repo](OWNERS) [owners](OWNERS_ALIASES) will respond to your issue promptly, following [the ususal Prow workflow][prow-review].

@@ -1,7 +1,7 @@
 package installconfig
 
 import (
-	"github.com/AlecAivazis/survey"
+	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/config"
