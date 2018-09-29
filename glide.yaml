@@ -28,12 +28,9 @@ import:
   version: ^1.15.39
 - package: github.com/libvirt/libvirt-go
   version: ^v4.7.0
-- package: github.com/openshift/hive
-  version: 296cb990171c6da62e134f3590c120bd16ef4d43
-  subpackages:
-  - contrib/pkg/aws_tag_deprovision
 - package: gopkg.in/AlecAivazis/survey.v1
   version: ^1.6.2
+- package: github.com/openshift/hive
 testImport:
 - package: github.com/stretchr/testify
   version: ^1.2.2

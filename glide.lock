@@ -1,5 +1,5 @@
-hash: 5d4bcc984f1d19ed41a63a22ee4fd3d93f4c823708aa70f634958a9fc40d4a70
-updated: 2018-09-28T12:36:19.583316383-07:00
+hash: 22392907eb1dfc2aa5ff36d81d713e9bd6089db2c2bb56f210eb537e81173b31
+updated: 2018-09-28T22:59:22.982077472-07:00
 imports:
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
@@ -131,9 +131,9 @@ imports:
 - name: github.com/mgutz/ansi
   version: 9520e82c474b0a04dd04f8a40959027271bab992
 - name: github.com/openshift/hive
-  version: 296cb990171c6da62e134f3590c120bd16ef4d43
+  version: a050d77562a1ae37fc2358e047edef10623fc6f7
   subpackages:
-  - contrib/pkg/aws_tag_deprovision
+  - contrib/pkg/awstagdeprovision
 - name: github.com/pborman/uuid
   version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
 - name: github.com/peterbourgon/diskv
