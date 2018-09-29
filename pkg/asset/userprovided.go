@@ -37,7 +37,7 @@ func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
 	}
 
 	if response == "" {
-		survey.AskOne(a.Question.Prompt, &response, a.Question.Validate)
+		survey.Ask([]*survey.Question{a.Question}, &response)
 	} else if a.Question.Validate != nil {
 		if err := a.Question.Validate(response); err != nil {
 			return nil, err
