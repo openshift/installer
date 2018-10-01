@@ -95,7 +95,7 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 	sort.Strings(paths)
 
 	var path string
-	survey.AskOne(&survey.Select{
+	err = survey.AskOne(&survey.Select{
 		Message: "SSH Public Key",
 		Help:    "The SSH public key used to access all nodes within the cluster. This is optional.",
 		Options: paths,
@@ -108,6 +108,9 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 		}
 		return nil
 	})
+	if err != nil {
+		return nil, err
+	}
 
 	return &asset.State{
 		Contents: []asset.Content{{
