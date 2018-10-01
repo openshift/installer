@@ -252,7 +252,7 @@ func (c *Cluster) validateS3Bucket() error {
 func (c *Cluster) validatePullSecret() []error {
 	var errs []error
 	if err := ValidateJSON([]byte(c.PullSecret)); err != nil {
-		errs = append(errs, err)
+		errs = append(errs, prefixError("pull secret", err))
 	}
 	return errs
 }
