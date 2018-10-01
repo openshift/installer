@@ -13,7 +13,7 @@ import:
 - package: github.com/coreos/tectonic-config
   version: 0d649ebfd3552dfa5c6cc2cf053e17ba924b7024
 - package: k8s.io/apimachinery
-  version: kubernetes-1.9.0
+  version: kubernetes-1.11.3
 - package: golang.org/x/crypto
   version: df8d4716b3472e4a531c33cedbe537dae921a1a9
 - package: github.com/coreos/ignition
@@ -37,3 +37,4 @@ testImport:
   subpackages:
   - assert
 - package: github.com/shurcooL/vfsgen
+- package: github.com/shurcooL/httpfs/vfsutil
