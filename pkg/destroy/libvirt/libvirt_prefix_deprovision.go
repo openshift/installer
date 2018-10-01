@@ -1,3 +1,5 @@
+// +build libvirt_destroy
+
 package libvirt
 
 import (
@@ -6,6 +8,8 @@ import (
 	"time"
 
 	libvirt "github.com/libvirt/libvirt-go"
+	"github.com/openshift/installer/pkg/destroy"
+	"github.com/openshift/installer/pkg/types"
 	log "github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
@@ -238,4 +242,20 @@ func deleteNetwork(conn *libvirt.Connect, filter filterFunc, logger log.FieldLog
 		logger.WithField("network", nName).Info("Deleted network")
 	}
 	return true, nil
+}
+
+// New returns libvirt Uninstaller from ClusterMetadata.
+func New(level log.Level, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+	return &ClusterUninstaller{
+		LibvirtURI: metadata.ClusterPlatformMetadata.Libvirt.URI,
+		Filter:     AlwaysTrueFilter(), //TODO: change to ClusterNamePrefixFilter when all resources are prefixed.
+		Logger: log.NewEntry(&log.Logger{
+			Out: os.Stdout,
+			Formatter: &log.TextFormatter{
+				FullTimestamp: true,
+			},
+			Hooks: make(log.LevelHooks),
+			Level: level,
+		}),
+	}, nil
 }

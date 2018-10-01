@@ -9,6 +9,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/stock"
 	"github.com/openshift/installer/pkg/destroy"
+	_ "github.com/openshift/installer/pkg/destroy/libvirt"
 )
 
 var (
@@ -77,7 +78,7 @@ func main() {
 			}
 		}
 	case destroyCommand.FullCommand():
-		destroyer, err := destroy.NewDestroyer(l, *dirFlag)
+		destroyer, err := destroy.New(l, *dirFlag)
 		if err != nil {
 			log.Fatalf("failed to create destroyer: %v", err)
 			os.Exit(1)

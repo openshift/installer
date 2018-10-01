@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 
-	atd "github.com/openshift/hive/contrib/pkg/awstagdeprovision"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/metadata"
@@ -20,60 +18,33 @@ type Destroyer interface {
 	Run() error
 }
 
-// NewDestroyer returns Destroyer based on `metadata.json` in `rootDir`.
-func NewDestroyer(level log.Level, rootDir string) (Destroyer, error) {
+// NewFunc is an interface for creating platform-specific destroyers.
+type NewFunc func(level log.Level, metadata *types.ClusterMetadata) (Destroyer, error)
+
+// Registry maps ClusterMetadata.Platform() to per-platform Destroyer creators.
+var Registry = make(map[string]NewFunc)
+
+// New returns a Destroyer based on `metadata.json` in `rootDir`.
+func New(level log.Level, rootDir string) (Destroyer, error) {
+	path := filepath.Join(rootDir, metadata.MetadataFilename)
 	raw, err := ioutil.ReadFile(filepath.Join(rootDir, metadata.MetadataFilename))
 	if err != nil {
 		return nil, err
 	}
 
-	var cmetadata types.ClusterMetadata
+	var cmetadata *types.ClusterMetadata
 	if err := json.Unmarshal(raw, &cmetadata); err != nil {
 		return nil, err
 	}
 
-	var ret Destroyer
-	switch {
-	case cmetadata.ClusterPlatformMetadata.AWS != nil:
-		ret = NewAWSDestroyer(level, &cmetadata)
-	case cmetadata.ClusterPlatformMetadata.Libvirt != nil:
-		// ret = NewLibvirtDestroyer(level, &cmetadata)
-		return nil, fmt.Errorf("libvirt destroyer is not yet supported")
-	default:
-		return nil, fmt.Errorf("couldn't find Destroyer for %q", metadata.MetadataFilename)
+	platform := cmetadata.Platform()
+	if platform == "" {
+		return nil, fmt.Errorf("no platform configured in %q", path)
 	}
-	return ret, nil
-}
 
-// // NewLibvirtDestroyer returns libvirt Uninstaller from ClusterMetadata.
-// func NewLibvirtDestroyer(level log.Level, metadata *types.ClusterMetadata) *lpd.ClusterUninstaller {
-// 	return &lpd.ClusterUninstaller{
-// 		LibvirtURI: metadata.ClusterPlatformMetadata.Libvirt.URI,
-// 		Filter:     lpd.AlwaysTrueFilter(), //TODO: change to ClusterNamePrefixFilter when all resources are prefixed.
-// 		Logger: log.NewEntry(&log.Logger{
-// 			Out: os.Stdout,
-// 			Formatter: &log.TextFormatter{
-// 				FullTimestamp: true,
-// 			},
-// 			Hooks: make(log.LevelHooks),
-// 			Level: level,
-// 		}),
-// 	}
-// }
-
-// NewAWSDestroyer returns aws Uninstaller from ClusterMetadata.
-func NewAWSDestroyer(level log.Level, metadata *types.ClusterMetadata) *atd.ClusterUninstaller {
-	return &atd.ClusterUninstaller{
-		Filters:     metadata.ClusterPlatformMetadata.AWS.Identifier,
-		Region:      metadata.ClusterPlatformMetadata.AWS.Region,
-		ClusterName: metadata.ClusterName,
-		Logger: log.NewEntry(&log.Logger{
-			Out: os.Stdout,
-			Formatter: &log.TextFormatter{
-				FullTimestamp: true,
-			},
-			Hooks: make(log.LevelHooks),
-			Level: level,
-		}),
+	creator, ok := Registry[platform]
+	if !ok {
+		return nil, fmt.Errorf("no destroyers registered for %q", platform)
 	}
+	return creator(level, cmetadata)
 }

@@ -13,6 +13,22 @@ type ClusterPlatformMetadata struct {
 	Libvirt *ClusterLibvirtPlatformMetadata `json:"libvirt,omitempty"`
 }
 
+// Platform returns a string representation of the platform
+// (e.g. "aws" if AWS is non-nil).  It returns an empty string if no
+// platform is configured.
+func (cpm *ClusterPlatformMetadata) Platform() string {
+	if cpm == nil {
+		return ""
+	}
+	if cpm.AWS != nil {
+		return "aws"
+	}
+	if cpm.Libvirt != nil {
+		return "libvirt"
+	}
+	return ""
+}
+
 // ClusterAWSPlatformMetadata contains AWS metadata.
 type ClusterAWSPlatformMetadata struct {
 	Region string `json:"region"`
