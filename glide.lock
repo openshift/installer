@@ -1,5 +1,5 @@
 hash: 4fbb3770393d922c429aed0f666379ffbfd3d78d204913f449dbf17cd53c4308
-updated: 2018-10-01T16:18:00.145445368+02:00
+updated: 2018-10-01T16:39:27.336083475-07:00
 imports:
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
@@ -10,11 +10,11 @@ imports:
 - name: github.com/alecthomas/units
   version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
 - name: github.com/apparentlymart/go-cidr
-  version: 1755c023625ec3a84979b90841a1ab067ed6c071
+  version: 2bd8b58cf4275aeb086ade613de226773e29e853
   subpackages:
   - cidr
 - name: github.com/aws/aws-sdk-go
-  version: a8ff9e4804fc89c994b731b1c057640ab2aecff3
+  version: 53e36ebb6b2c26d228ba9563d06caf306227f110
   subpackages:
   - aws
   - aws/awserr
@@ -94,10 +94,8 @@ imports:
   version: 7d79101e329e5a3adf994758c578dab82b90c017
 - name: github.com/google/gofuzz
   version: 44d81051d367757e1c7c6a5a86423ece9afcf63c
-- name: github.com/google/uuid
-  version: 9b3b1e0f5f99ae461456d768e7d301a7acdaa2d8
 - name: github.com/gregjones/httpcache
-  version: 9cad4c3443a7200dd6400aef47183728de563a38
+  version: 787624de3eb7bd915c329cba748687a3b22666a6
   subpackages:
   - diskcache
 - name: github.com/inconshreveable/mousetrap
@@ -115,11 +113,11 @@ imports:
 - name: github.com/mgutz/ansi
   version: 9520e82c474b0a04dd04f8a40959027271bab992
 - name: github.com/openshift/hive
-  version: b0a8dbfc6ba65176d7f162242b03077ced50af4c
+  version: 7b650f6de8f2185fa21aca9237c68a9aa8d86d61
   subpackages:
   - contrib/pkg/awstagdeprovision
 - name: github.com/pborman/uuid
-  version: 8b1b92947f46224e3b97bb1a3a5b0382be00d31e
+  version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
 - name: github.com/peterbourgon/diskv
   version: 5f041e8faa004a95c88a202771f4cc3e991971e6
 - name: github.com/sirupsen/logrus
@@ -147,7 +145,7 @@ imports:
   - lex/httplex
   - websocket
 - name: golang.org/x/sys
-  version: e4b3c5e9061176387e7cea65e4dc5853801f3fb7
+  version: 95c6576299259db960f6c5b9b69ea52422860fce
   subpackages:
   - unix
 - name: golang.org/x/text
@@ -194,7 +192,7 @@ imports:
   - pkg/watch
   - third_party/forked/golang/reflect
 - name: k8s.io/client-go
-  version: 78bf9020c4adf8a8be946e9f4724575fe30cf5a0
+  version: 78700dec6369ba22221b72770783300f143df150
   subpackages:
   - tools/clientcmd/api
   - tools/clientcmd/api/v1
