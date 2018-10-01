@@ -1,5 +1,5 @@
-hash: 4fbb3770393d922c429aed0f666379ffbfd3d78d204913f449dbf17cd53c4308
-updated: 2018-10-01T16:39:27.336083475-07:00
+hash: 79d11a0d5fd7c9068b246a5a0ca0e776a194e56014ab53560d905ff2a5910655
+updated: 2018-10-01T16:43:43.753289671-07:00
 imports:
 - name: github.com/ajeddeloh/go-json
   version: 73d058cf8437a1989030afe571eeab9f90eebbbd
@@ -104,6 +104,8 @@ imports:
   version: c2b33e8439af944379acbdd9c3a5fe0bc44bd8a5
 - name: github.com/kballard/go-shellquote
   version: 95032a82bc518f77982ea72343cc1ade730072f0
+- name: github.com/konsorten/go-windows-terminal-sequences
+  version: b729f2633dfe35f4d1d8a32385f6685610ce1cb5
 - name: github.com/libvirt/libvirt-go
   version: d5e0adac44d4365a2d97e259f51ab76cc3c01b20
 - name: github.com/mattn/go-colorable
@@ -121,7 +123,7 @@ imports:
 - name: github.com/peterbourgon/diskv
   version: 5f041e8faa004a95c88a202771f4cc3e991971e6
 - name: github.com/sirupsen/logrus
-  version: 081307d9bc1364753142d5962fc1d795c742baaf
+  version: a67f783a3814b8729bd2dac5780b5f78f8dbd64d
 - name: github.com/spf13/cobra
   version: 7b2c5ac9fc04fc5efafb60700713d4fa609b777b
 - name: github.com/spf13/pflag
@@ -134,6 +136,8 @@ imports:
   - errorutil
 - name: golang.org/x/crypto
   version: df8d4716b3472e4a531c33cedbe537dae921a1a9
+  subpackages:
+  - ssh/terminal
 - name: golang.org/x/net
   version: 1c05540f6879653db88113bc4a2b70aec4bd491f
   subpackages:
@@ -148,6 +152,7 @@ imports:
   version: 95c6576299259db960f6c5b9b69ea52422860fce
   subpackages:
   - unix
+  - windows
 - name: golang.org/x/text
   version: b19bf474d317b857955b12035d2c5acb57ce8b01
   subpackages:
