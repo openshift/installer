@@ -184,6 +184,12 @@ EOF
 ## Build and run the installer
 
 With [libvirt configured](#install-and-enable-libvirt), you can proceed with [the usual quick-start](../../README.md#quick-start).
+Set `TAGS` when building if you need `destroy-cluster` support for libvirt; this is not enabled by default because it requires [cgo][]:
+
+```sh
+TAGS=libvirt_destroy hack/build.sh
+```
+
 To avoid being prompted repeatedly, you can set [environment variables](../user/environment-variables.md) to reflect your libvirt choices.  For example, selecting libvirt, setting [our earlier name choices](#pick-names), [our pull secret](#get-a-pull-secret), and telling both the installer and the machine-API operator to contact `libvirtd` at [the usual libvirt IP](#firewall), you can use:
 
 ```sh
@@ -196,9 +202,13 @@ export OPENSHIFT_INSTALL_LIBVIRT_URI=qemu+tcp://192.168.122.1/system
 
 ## Cleanup
 
-Be sure to destroy your cluster when you're done with it, or else you will need to manually use `virsh` to clean up the leaked resources.
-The [`virsh-cleanup`](../../scripts/maintenance/virsh-cleanup.sh) script may help with this, but note it will currently destroy *all* libvirt resources.
-We plan on adding `openshift-install destroy-cluster` support for libvirt in the near future.
+If you compiled with `libvirt_destroy`, you can use:
+
+```sh
+openshift-install destroy-cluster
+```
+
+If you did not compile with `libvirt_destroy`, you can use [`virsh-cleanup.sh`](../../scripts/maintenance/virsh-cleanup.sh), but note it will currently destroy *all* libvirt resources.
 
 ### Firewall
 
@@ -328,6 +338,7 @@ If your issue is not reported, please do.
 [arch_firewall_superuser]: https://superuser.com/questions/1063240/libvirt-failed-to-initialize-a-valid-firewall-backend
 [brokenmacosissue201]: https://github.com/openshift/installer/issues/201
 [bugzilla_libvirt_race]: https://bugzilla.redhat.com/show_bug.cgi?id=1576464
+[cgo]: https://golang.org/cmd/cgo/
 [issues_libvirt]: https://github.com/openshift/installer/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+libvirt
 [libvirt_selinux_issues]: https://github.com/dmacvicar/terraform-provider-libvirt/issues/142#issuecomment-409040151
 [tfprovider_libvirt_race]: https://github.com/dmacvicar/terraform-provider-libvirt/issues/402#issuecomment-419500064
