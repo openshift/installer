@@ -12,7 +12,7 @@ export CGO_ENABLED=0
 case "${MODE}" in
 release)
 	TAGS="${TAGS} release"
-	GOPATH="${PWD}/vendor:$(go env GOPATH)" go generate ./data
+	go generate ./data
 	;;
 dev)
 	;;
