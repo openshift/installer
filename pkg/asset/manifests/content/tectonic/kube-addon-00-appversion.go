@@ -1,4 +1,4 @@
-package appversions
+package tectonic
 
 const (
 	// AppVersionKubeAddon  is the variable/constant representing the contents of the respective file

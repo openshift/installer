@@ -1,12 +1,12 @@
-package secrets
+package tectonic
 
 import (
 	"text/template"
 )
 
 var (
-	// Pull  is the variable/constant representing the contents of the respective file
-	Pull = template.Must(template.New("pull.json").Parse(`
+	// PullTectonicSystem  is the variable/constant representing the contents of the respective file
+	PullTectonicSystem = template.Must(template.New("tectonic-system-03-pull.json").Parse(`
 {
   "apiVersion": "v1",
   "kind": "Secret",

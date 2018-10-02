@@ -15,7 +15,6 @@ type bootkubeTemplateData struct {
 	EtcdClientKey                   string
 	KubeCaCert                      string
 	KubeCaKey                       string
-	MachineConfigOperatorImage      string
 	McsTLSCert                      string
 	McsTLSKey                       string
 	OidcCaCert                      string

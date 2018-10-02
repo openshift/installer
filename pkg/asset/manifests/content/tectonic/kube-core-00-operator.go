@@ -1,33 +1,37 @@
-package bootkube
+package tectonic
 
-const (
-	// MachineAPIOperator is the constant to represent contents of Machine_Api_Operator.yaml file
-	MachineAPIOperator = `
----
+import (
+	"text/template"
+)
+
+var (
+	// KubeCoreOperator  is the variable/constant representing the contents of the respective file
+	KubeCoreOperator = template.Must(template.New("kube-core-00-operator.yaml").Parse(`
 apiVersion: apps/v1beta2
 kind: Deployment
 metadata:
-  name: machine-api-operator
+  name: kube-core-operator
   namespace: kube-system
   labels:
-    k8s-app: machine-api-operator
+    k8s-app: kube-core-operator
     managed-by-channel-operator: "true"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      k8s-app: machine-api-operator
+      k8s-app: kube-core-operator
   template:
     metadata:
       labels:
-        k8s-app: machine-api-operator
-        tectonic-app-version-name: machine-api
+        k8s-app: kube-core-operator
+        tectonic-app-version-name: kube-core
     spec:
       containers:
-        - name: machine-api-operator
-          image: quay.io/coreos/machine-api-operator:b6a04c2
-          command:
-            - "/machine-api-operator"
+        - name: kube-core-operator
+          image: {{.KubeCoreOperatorImage}}
+          imagePullPolicy: Always
+          args:
+            - --config=/etc/cluster-config/kco-config.yaml
           resources:
             limits:
               cpu: 20m
@@ -37,7 +41,7 @@ spec:
               memory: 50Mi
           volumeMounts:
             - name: cluster-config
-              mountPath: /etc/mao-config
+              mountPath: /etc/cluster-config
       imagePullSecrets:
         - name: coreos-pull-secret
       nodeSelector:
@@ -55,7 +59,7 @@ spec:
           configMap:
             name: cluster-config-v1
             items:
-              - key: mao-config
-                path: config
-`
+              - key: kco-config
+                path: kco-config.yaml
+`))
 )

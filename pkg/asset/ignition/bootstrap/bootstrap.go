@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"strings"
 	"text/template"
 
 	"github.com/coreos/ignition/config/util"
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -21,23 +23,24 @@ import (
 )
 
 const (
-	rootDir = "/opt/tectonic"
+	rootDir             = "/opt/tectonic"
+	defaultReleaseImage = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
 )
 
 // bootstrapTemplateData is the data to use to replace values in bootstrap
 // template files.
 type bootstrapTemplateData struct {
-	ClusterDNSIP               string
-	CloudProvider              string
-	CloudProviderConfig        string
-	DebugConfig                string
-	KubeCoreRenderImage        string
-	MachineConfigOperatorImage string
-	EtcdCertSignerImage        string
-	EtcdctlImage               string
-	BootkubeImage              string
-	HyperkubeImage             string
-	EtcdCluster                string
+	BootkubeImage       string
+	CloudProvider       string
+	CloudProviderConfig string
+	ClusterDNSIP        string
+	DebugConfig         string
+	EtcdCertSignerImage string
+	EtcdCluster         string
+	EtcdctlImage        string
+	HyperkubeImage      string
+	KubeCoreRenderImage string
+	ReleaseImage        string
 }
 
 // bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -189,18 +192,25 @@ func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 	for i := range etcdEndpoints {
 		etcdEndpoints[i] = fmt.Sprintf("https://%s-etcd-%d.%s:2379", installConfig.Name, i, installConfig.BaseDomain)
 	}
+
+	releaseImage := defaultReleaseImage
+	if ri, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && ri != "" {
+		log.Warn("Found override for ReleaseImage. Please be warned, this is not advised")
+		releaseImage = ri
+	}
+
 	return &bootstrapTemplateData{
-		ClusterDNSIP:               clusterDNSIP,
-		CloudProvider:              getCloudProvider(installConfig),
-		CloudProviderConfig:        getCloudProviderConfig(installConfig),
-		DebugConfig:                "",
-		KubeCoreRenderImage:        "quay.io/coreos/kube-core-renderer-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
-		MachineConfigOperatorImage: "docker.io/openshift/origin-machine-config-operator:v4.0.0",
-		EtcdCertSignerImage:        "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
-		EtcdctlImage:               "quay.io/coreos/etcd:v3.2.14",
-		BootkubeImage:              "quay.io/coreos/bootkube:v0.10.0",
-		HyperkubeImage:             "openshift/origin-node:latest",
-		EtcdCluster:                strings.Join(etcdEndpoints, ","),
+		ClusterDNSIP:        clusterDNSIP,
+		CloudProvider:       getCloudProvider(installConfig),
+		CloudProviderConfig: getCloudProviderConfig(installConfig),
+		DebugConfig:         "",
+		KubeCoreRenderImage: "quay.io/coreos/kube-core-renderer-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
+		EtcdCertSignerImage: "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
+		EtcdctlImage:        "quay.io/coreos/etcd:v3.2.14",
+		BootkubeImage:       "quay.io/coreos/bootkube:v0.10.0",
+		ReleaseImage:        releaseImage,
+		HyperkubeImage:      "openshift/origin-node:latest",
+		EtcdCluster:         strings.Join(etcdEndpoints, ","),
 	}, nil
 }
 

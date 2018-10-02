@@ -80,39 +80,12 @@ wait_for_pods() {
 # Wait for Kubernetes pods
 wait_for_pods kube-system
 
-echo "Creating initial roles..."
-kubectl delete --filename rbac/role-admin.yaml
-
-kubectl create --filename ingress/svc-account.yaml
-kubectl create --filename rbac/role-admin.yaml
-kubectl create --filename rbac/role-user.yaml
-kubectl create --filename rbac/binding-admin.yaml
-kubectl create --filename rbac/binding-discovery.yaml
-
-echo "Creating cluster config for Tectonic..."
-kubectl create --filename cluster-config.yaml
-kubectl create --filename ingress/cluster-config.yaml
-
-echo "Creating Tectonic secrets..."
-kubectl create --filename secrets/pull.json
-kubectl create --filename secrets/ingress-tls.yaml
-kubectl create --filename secrets/ca-cert.yaml
-kubectl create --filename ingress/pull.json
-
-echo "Creating operators..."
-kubectl create --filename security/priviledged-scc-tectonic.yaml
-kubectl create --filename updater/app-version-kind.yaml
-kubectl create --filename updater/migration-status-kind.yaml
-
-kubectl create --filename updater/operators/kube-core-operator.yaml
-kubectl create --filename updater/operators/kube-addon-operator.yaml
-kubectl create --filename updater/operators/tectonic-ingress-controller-operator.yaml
-
-kubectl --namespace=tectonic-system get customresourcedefinition appversions.tco.coreos.com
-kubectl create --filename updater/app_versions/app-version-tectonic-cluster.yaml
-kubectl create --filename updater/app_versions/app-version-kube-core.yaml
-kubectl create --filename updater/app_versions/app-version-kube-addon.yaml
-kubectl create --filename updater/app_versions/app-version-tectonic-ingress.yaml
+for file in $(find . -type f -maxdepth 1)
+do
+	echo "Creating object from file: $file ..."
+	kubectl create --filename "$file"
+	echo "Done creating object from file: $file ..."
+done
 
 # Wait for Tectonic pods
 wait_for_pods tectonic-system

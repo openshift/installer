@@ -1,12 +1,12 @@
-package ingress
+package tectonic
 
 import (
 	"text/template"
 )
 
 var (
-	// Pull  is the variable/constant representing the contents of the respective file
-	Pull = template.Must(template.New("pull.json").Parse(`
+	// PullTectonicIngress  is the variable/constant representing the contents of the respective file
+	PullTectonicIngress = template.Must(template.New("tectonic-ingress-03-pull.json").Parse(`
 {
   "apiVersion": "v1",
   "kind": "Secret",

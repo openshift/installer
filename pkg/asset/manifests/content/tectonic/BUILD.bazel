@@ -1,0 +1,26 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_library")
+
+go_library(
+    name = "go_default_library",
+    srcs = [
+        "binding-discovery.go",
+        "kube-addon-00-appversion.go",
+        "kube-addon-01-operator.go",
+        "kube-core-00-appversion.go",
+        "kube-core-00-operator.go",
+        "role-admin.go",
+        "role-user.go",
+        "tectonic-ingress-00-appversion.go",
+        "tectonic-ingress-01-cluster-config.go",
+        "tectonic-ingress-02-tls.go",
+        "tectonic-ingress-03-pull.go",
+        "tectonic-ingress-04-svc-account.go",
+        "tectonic-ingress-05-operator.go",
+        "tectonic-system-00-binding-admin.go",
+        "tectonic-system-01-ca-cert.go",
+        "tectonic-system-02-privileged-scc.go",
+        "tectonic-system-03-pull.go",
+    ],
+    importpath = "github.com/openshift/installer/pkg/asset/manifests/content/tectonic",
+    visibility = ["//visibility:public"],
+)

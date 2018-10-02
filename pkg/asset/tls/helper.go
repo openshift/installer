@@ -49,6 +49,7 @@ func genDNSNamesForAPIServerCertKey(cfg *types.InstallConfig) ([]string, error) 
 		"kubernetes", "kubernetes.default",
 		"kubernetes.default.svc",
 		"kubernetes.default.svc.cluster.local",
+		"localhost",
 	}, nil
 }
 
@@ -57,7 +58,7 @@ func genIPAddressesForAPIServerCertKey(cfg *types.InstallConfig) ([]net.IP, erro
 	if err != nil {
 		return nil, err
 	}
-	return []net.IP{net.ParseIP(apiServerAddress)}, nil
+	return []net.IP{net.ParseIP(apiServerAddress), net.ParseIP("127.0.0.1")}, nil
 }
 
 func genDNSNamesForOpenshiftAPIServerCertKey(cfg *types.InstallConfig) ([]string, error) {
