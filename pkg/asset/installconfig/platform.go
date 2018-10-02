@@ -17,12 +17,14 @@ import (
 const (
 	// AWSPlatformType is used to install on AWS.
 	AWSPlatformType = "aws"
+	// OpenStackPlatformType is used to install on OpenStack.
+	OpenStackPlatformType = "openstack"
 	// LibvirtPlatformType is used to install of libvirt.
 	LibvirtPlatformType = "libvirt"
 )
 
 var (
-	validPlatforms = []string{AWSPlatformType, LibvirtPlatformType}
+	validPlatforms = []string{AWSPlatformType, OpenStackPlatformType, LibvirtPlatformType}
 
 	validAWSRegions = map[string]string{
 		"ap-northeast-1": "Tokyo",
@@ -81,6 +83,8 @@ func (a *Platform) Generate(map[asset.Asset]*asset.State) (*asset.State, error) 
 	switch platform {
 	case AWSPlatformType:
 		return a.awsPlatform()
+	case OpenStackPlatformType:
+		return a.openstackPlatform()
 	case LibvirtPlatformType:
 		return a.libvirtPlatform()
 	default:
@@ -186,6 +190,109 @@ func (a *Platform) awsPlatform() (*asset.State, error) {
 			},
 		},
 	}, nil
+}
+
+func (a *Platform) openstackPlatform() (*asset.State, error) {
+	platform := &types.OpenStackPlatform{
+		NetworkCIDRBlock: defaultVPCCIDR,
+	}
+	prompt := asset.UserProvided{
+		Question: &survey.Question{
+			Prompt: &survey.Select{
+				Message: "Region",
+				Help:    "The OpenStack region to be used for installation.",
+				Default: "regionOne",
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				//value := ans.(string)
+				//FIXME(shardy) add some validation here
+				return nil
+			}),
+		},
+		EnvVarName: "OPENSHIFT_INSTALL_OPENSTACK_REGION",
+	}
+	region, err := prompt.Generate(nil)
+	if err != nil {
+		return nil, err
+	}
+	platform.Region = string(region.Contents[0].Data)
+	prompt2 := asset.UserProvided{
+		Question: &survey.Question{
+			Prompt: &survey.Select{
+				Message: "Image",
+				Help:    "The OpenStack image to be used for installation.",
+				Default: "rhcos",
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				//value := ans.(string)
+				//FIXME(shardy) add some validation here
+				return nil
+			}),
+		},
+		EnvVarName: "OPENSHIFT_INSTALL_OPENSTACK_IMAGE",
+	}
+	image, err := prompt2.Generate(nil)
+	if err != nil {
+		return nil, err
+	}
+	platform.BaseImage = string(image.Contents[0].Data)
+	prompt3 := asset.UserProvided{
+		Question: &survey.Question{
+			Prompt: &survey.Select{
+				Message: "Cloud",
+				Help:    "The OpenStack cloud name from clouds.yaml.",
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				//value := ans.(string)
+				//FIXME(russellb) add some validation here
+				return nil
+			}),
+		},
+		EnvVarName: "OPENSHIFT_INSTALL_OPENSTACK_CLOUD",
+	}
+	cloud, err := prompt3.Generate(nil)
+	if err != nil {
+		return nil, err
+	}
+	platform.Cloud = string(cloud.Contents[0].Data)
+	prompt4 := asset.UserProvided{
+		Question: &survey.Question{
+			Prompt: &survey.Select{
+				Message: "ExternalNetwork",
+				Help:    "The OpenStack external network to be used for installation.",
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				//value := ans.(string)
+				//FIXME(shadower) add some validation here
+				return nil
+			}),
+		},
+		EnvVarName: "OPENSHIFT_INSTALL_OPENSTACK_EXTERNAL_NETWORK",
+	}
+	extNet, err := prompt4.Generate(nil)
+	if err != nil {
+		return nil, err
+	}
+	platform.ExternalNetwork = string(extNet.Contents[0].Data)
+
+	data, err := json.Marshal(platform)
+	if err != nil {
+		return nil, err
+	}
+
+	return &asset.State{
+		Contents: []asset.Content{
+			{
+				Name: "platform",
+				Data: []byte(OpenStackPlatformType),
+			},
+			{
+				Name: "platform.json",
+				Data: data,
+			},
+		},
+	}, nil
+
 }
 
 func (a *Platform) libvirtPlatform() (*asset.State, error) {

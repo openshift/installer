@@ -96,6 +96,20 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 				Replicas: func(x int64) *int64 { return &x }(3),
 			},
 		}
+	case OpenStackPlatformType:
+		if err := json.Unmarshal(platformState.Contents[1].Data, &installConfig.OpenStack); err != nil {
+			return nil, err
+		}
+		installConfig.Machines = []types.MachinePool{
+			{
+				Name:     "master",
+				Replicas: func(x int64) *int64 { return &x }(3),
+			},
+			{
+				Name:     "worker",
+				Replicas: func(x int64) *int64 { return &x }(3),
+			},
+		}
 	case LibvirtPlatformType:
 		if err := json.Unmarshal(platformState.Contents[1].Data, &installConfig.Libvirt); err != nil {
 			return nil, err

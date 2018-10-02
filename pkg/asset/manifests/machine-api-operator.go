@@ -30,11 +30,12 @@ var _ asset.Asset = (*machineAPIOperator)(nil)
 // TODO(enxebre): move up to github.com/coreos/tectonic-config (to install-config? /rchopra)
 type maoOperatorConfig struct {
 	metav1.TypeMeta `json:",inline"`
-	TargetNamespace string         `json:"targetNamespace"`
-	APIServiceCA    string         `json:"apiServiceCA"`
-	Provider        string         `json:"provider"`
-	AWS             *awsConfig     `json:"aws"`
-	Libvirt         *libvirtConfig `json:"libvirt"`
+	TargetNamespace string           `json:"targetNamespace"`
+	APIServiceCA    string           `json:"apiServiceCA"`
+	Provider        string           `json:"provider"`
+	AWS             *awsConfig       `json:"aws"`
+	Libvirt         *libvirtConfig   `json:"libvirt"`
+	OpenStack       *openstackConfig `json:"openstack"`
 }
 
 type libvirtConfig struct {
@@ -52,6 +53,13 @@ type awsConfig struct {
 	AvailabilityZone string `json:"availabilityZone"`
 	Image            string `json:"image"`
 	Replicas         int    `json:"replicas"`
+}
+
+type openstackConfig struct {
+	ClusterName string `json:"clusterName"`
+	ClusterID   string `json:"clusterID"`
+	Region      string `json:"region"`
+	Replicas    int    `json:"replicas"`
 }
 
 // Name returns a human friendly name for the operator
@@ -129,6 +137,13 @@ func (mao *machineAPIOperator) maoConfig(dependencies map[asset.Asset]*asset.Sta
 			URI:         mao.installConfig.Platform.Libvirt.URI,
 			NetworkName: mao.installConfig.Platform.Libvirt.Network.Name,
 			IPRange:     mao.installConfig.Platform.Libvirt.Network.IPRange,
+			Replicas:    int(*mao.installConfig.Machines[1].Replicas),
+		}
+	} else if mao.installConfig.Platform.OpenStack != nil {
+		cfg.OpenStack = &openstackConfig{
+			ClusterName: mao.installConfig.Name,
+			ClusterID:   mao.installConfig.ClusterID,
+			Region:      mao.installConfig.Platform.OpenStack.Region,
 			Replicas:    int(*mao.installConfig.Machines[1].Replicas),
 		}
 	} else {

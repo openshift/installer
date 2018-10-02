@@ -78,6 +78,7 @@ func (c *Cluster) Validate() []error {
 	errs = append(errs, c.validateNodePools()...)
 	errs = append(errs, c.validateNetworking()...)
 	errs = append(errs, c.validateAWS()...)
+	errs = append(errs, c.validateOpenStack()...)
 	errs = append(errs, c.validatePullSecret()...)
 	errs = append(errs, c.validateLibvirt()...)
 	if err := prefixError("cluster name", validateClusterName(c.Name)); err != nil {
@@ -116,6 +117,15 @@ func (c *Cluster) validateAWS() []error {
 	}
 	if err := prefixError("aws region", validateNonEmpty(c.AWS.Region)); err != nil {
 		errs = append(errs, err)
+	}
+	return errs
+}
+
+// validateOpenStack validates all fields specific to OpenStack.
+func (c *Cluster) validateOpenStack() []error {
+	var errs []error
+	if c.Platform != PlatformOpenStack {
+		return errs
 	}
 	return errs
 }
