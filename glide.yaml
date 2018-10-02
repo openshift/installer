@@ -5,7 +5,7 @@ import:
 - package: github.com/ghodss/yaml
   version: 73d445a93680fa1a78ae23a5839bad48f32ba1ee
 - package: github.com/sirupsen/logrus
-  version: 081307d9bc1364753142d5962fc1d795c742baaf
+  version: 1.1.0
 - package: gopkg.in/yaml.v2
   version: 53feefa2559fb8dfa8d81baad31be332c97d6c77
 - package: gopkg.in/alecthomas/kingpin.v2

@@ -7,6 +7,8 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+
+	"github.com/sirupsen/logrus"
 )
 
 // executor enables calling Terraform from Go, across platforms, with any
@@ -58,10 +60,14 @@ func (ex *executor) execute(clusterDir string, args ...string) error {
 	}
 
 	cmd := exec.Command(ex.binaryPath, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
 	cmd.Dir = clusterDir
+	if logrus.GetLevel() == logrus.DebugLevel {
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+	}
+
+	logrus.Debugf("Running %#v...", cmd)
 
 	// Start Terraform.
 	return cmd.Run()

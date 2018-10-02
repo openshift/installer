@@ -10,7 +10,7 @@ import (
 	libvirt "github.com/libvirt/libvirt-go"
 	"github.com/openshift/installer/pkg/destroy"
 	"github.com/openshift/installer/pkg/types"
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
@@ -44,13 +44,13 @@ var AlwaysTrueFilter = func() filterFunc {
 // deleteFunc type is the interface a function needs to implement to be called as a goroutine.
 // The (bool, error) return type mimics wait.ExponentialBackoff where the bool indicates successful
 // completion, and the error is for unrecoverable errors.
-type deleteFunc func(conn *libvirt.Connect, filter filterFunc, logger log.FieldLogger) (bool, error)
+type deleteFunc func(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) (bool, error)
 
 // ClusterUninstaller holds the various options for the cluster we want to delete.
 type ClusterUninstaller struct {
 	LibvirtURI string
 	Filter     filterFunc
-	Logger     log.FieldLogger
+	Logger     logrus.FieldLogger
 }
 
 // Run is the entrypoint to start the uninstall process
@@ -80,7 +80,7 @@ func (o *ClusterUninstaller) Run() error {
 	return nil
 }
 
-func deleteRunner(deleteFuncName string, dFunction deleteFunc, conn *libvirt.Connect, filter filterFunc, logger log.FieldLogger, channel chan string) {
+func deleteRunner(deleteFuncName string, dFunction deleteFunc, conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger, channel chan string) {
 	backoffSettings := wait.Backoff{
 		Duration: time.Second * 10,
 		Factor:   1.3,
@@ -108,7 +108,7 @@ func populateDeleteFuncs(funcs map[string]deleteFunc) {
 	funcs["deleteNetwork"] = deleteNetwork
 }
 
-func deleteDomains(conn *libvirt.Connect, filter filterFunc, logger log.FieldLogger) (bool, error) {
+func deleteDomains(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) (bool, error) {
 	logger.Debug("Deleting libvirt domains")
 	defer logger.Debugf("Exiting deleting libvirt domains")
 
@@ -143,7 +143,7 @@ func deleteDomains(conn *libvirt.Connect, filter filterFunc, logger log.FieldLog
 	return true, nil
 }
 
-func deleteVolumes(conn *libvirt.Connect, filter filterFunc, logger log.FieldLogger) (bool, error) {
+func deleteVolumes(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) (bool, error) {
 	logger.Debug("Deleting libvirt volumes")
 	defer logger.Debugf("Exiting deleting libvirt volumes")
 
@@ -209,7 +209,7 @@ func deleteVolumes(conn *libvirt.Connect, filter filterFunc, logger log.FieldLog
 	return true, nil
 }
 
-func deleteNetwork(conn *libvirt.Connect, filter filterFunc, logger log.FieldLogger) (bool, error) {
+func deleteNetwork(conn *libvirt.Connect, filter filterFunc, logger logrus.FieldLogger) (bool, error) {
 	logger.Debug("Deleting libvirt network")
 	defer logger.Debugf("Exiting deleting libvirt network")
 
@@ -245,17 +245,10 @@ func deleteNetwork(conn *libvirt.Connect, filter filterFunc, logger log.FieldLog
 }
 
 // New returns libvirt Uninstaller from ClusterMetadata.
-func New(level log.Level, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
 	return &ClusterUninstaller{
 		LibvirtURI: metadata.ClusterPlatformMetadata.Libvirt.URI,
 		Filter:     AlwaysTrueFilter(), //TODO: change to ClusterNamePrefixFilter when all resources are prefixed.
-		Logger: log.NewEntry(&log.Logger{
-			Out: os.Stdout,
-			Formatter: &log.TextFormatter{
-				FullTimestamp: true,
-			},
-			Hooks: make(log.LevelHooks),
-			Level: level,
-		}),
+		Logger:     logger,
 	}, nil
 }

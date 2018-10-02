@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/metadata"
 	"github.com/openshift/installer/pkg/types"
@@ -19,13 +19,13 @@ type Destroyer interface {
 }
 
 // NewFunc is an interface for creating platform-specific destroyers.
-type NewFunc func(level log.Level, metadata *types.ClusterMetadata) (Destroyer, error)
+type NewFunc func(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (Destroyer, error)
 
 // Registry maps ClusterMetadata.Platform() to per-platform Destroyer creators.
 var Registry = make(map[string]NewFunc)
 
 // New returns a Destroyer based on `metadata.json` in `rootDir`.
-func New(level log.Level, rootDir string) (Destroyer, error) {
+func New(logger logrus.FieldLogger, rootDir string) (Destroyer, error) {
 	path := filepath.Join(rootDir, metadata.MetadataFilename)
 	raw, err := ioutil.ReadFile(filepath.Join(rootDir, metadata.MetadataFilename))
 	if err != nil {
@@ -46,5 +46,5 @@ func New(level log.Level, rootDir string) (Destroyer, error) {
 	if !ok {
 		return nil, fmt.Errorf("no destroyers registered for %q", platform)
 	}
-	return creator(level, cmetadata)
+	return creator(logger, cmetadata)
 }

@@ -71,12 +71,12 @@ func Host(base *net.IPNet, num int) (net.IP, error) {
 	if numUint64 > maxHostNum {
 		return nil, fmt.Errorf("prefix of %d does not accommodate a host numbered %d", parentLen, num)
 	}
-	var bitlength int
-	if ip.To4() != nil {
-		bitlength = 32
-	} else {
-		bitlength = 128
-	}
+        var bitlength int
+        if ip.To4() != nil {
+              bitlength = 32
+        } else {
+              bitlength = 128
+        }
 	return insertNumIntoIP(ip, num, bitlength), nil
 }
 
@@ -129,11 +129,7 @@ func VerifyNoOverlap(subnets []*net.IPNet, CIDRBlock *net.IPNet) error {
 		if !CIDRBlock.Contains(firstLastIP[i][0]) || !CIDRBlock.Contains(firstLastIP[i][1]) {
 			return fmt.Errorf("%s does not fully contain %s", CIDRBlock.String(), s.String())
 		}
-		for j := 0; j < len(subnets); j++ {
-			if i == j {
-				continue
-			}
-
+		for j := i + 1; j < len(subnets); j++ {
 			first := firstLastIP[j][0]
 			last := firstLastIP[j][1]
 			if s.Contains(first) || s.Contains(last) {
