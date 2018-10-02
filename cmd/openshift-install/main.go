@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	log "github.com/sirupsen/logrus"
@@ -17,11 +18,14 @@ var (
 	ignitionConfigsCommand = kingpin.Command("ignition-configs", "Generate the Ignition Config assets")
 	manifestsCommand       = kingpin.Command("manifests", "Generate the Kubernetes manifests")
 	clusterCommand         = kingpin.Command("cluster", "Create an OpenShift cluster")
+	versionCommand         = kingpin.Command("version", "Print version information and exit")
 
 	destroyCommand = kingpin.Command("destroy-cluster", "Destroy an OpenShift cluster")
 
 	dirFlag  = kingpin.Flag("dir", "assets directory").Default(".").String()
 	logLevel = kingpin.Flag("log-level", "log level (e.g. \"debug\")").Default("warn").Enum("debug", "info", "warn", "error", "fatal", "panic")
+
+	version = "was not built correctly" // set in hack/build.sh
 )
 
 func main() {
@@ -32,6 +36,11 @@ func main() {
 		log.Fatalf("invalid log-level: %v", err)
 	}
 	log.SetLevel(l)
+
+	if command == versionCommand.FullCommand() {
+		fmt.Printf("%s %s\n", os.Args[0], version)
+		return
+	}
 
 	assetStock := stock.EstablishStock()
 
