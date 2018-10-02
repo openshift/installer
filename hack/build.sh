@@ -5,6 +5,7 @@ set -ex
 cd "$(dirname "$0")/.."
 
 MODE="${MODE:-release}"
+LDFLAGS="${LDFLAGS} -X main.version=$(git describe --always --abbrev=0 --dirty)"
 TAGS="${TAGS:-}"
 export CGO_ENABLED=0
 
@@ -25,4 +26,4 @@ then
 	export CGO_ENABLED=1
 fi
 
-go build -tags "${TAGS}" -o ./bin/openshift-install ./cmd/openshift-install
+go build -ldflags "${LDFLAGS}" -tags "${TAGS}" -o ./bin/openshift-install ./cmd/openshift-install
