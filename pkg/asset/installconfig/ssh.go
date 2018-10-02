@@ -81,11 +81,13 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 	}
 
 	if len(pubKeys) == 1 {
-		return &asset.State{
-			Contents: []asset.Content{{
-				Data: []byte{},
-			}},
-		}, nil
+		for _, value := range pubKeys {
+			return &asset.State{
+				Contents: []asset.Content{{
+					Data: value,
+				}},
+			}, nil
+		}
 	}
 
 	var paths []string
