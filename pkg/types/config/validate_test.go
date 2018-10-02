@@ -384,7 +384,7 @@ func TestS3BucketNames(t *testing.T) {
 				Name:       "foo",
 				BaseDomain: "example.com.",
 			},
-			err: true,
+			err: false,
 		},
 		{
 			cluster: Cluster{

@@ -132,7 +132,8 @@ resource "aws_route53_zone" "tectonic_int" {
 }
 
 resource "aws_s3_bucket" "tectonic" {
-  bucket = "${lower(var.tectonic_cluster_name)}.${var.tectonic_base_domain}"
+  # bucket name is cluster_name + base domain, minus the trailing dot, if one exists
+  bucket = "${lower(var.tectonic_cluster_name)}.${join(".",(compact(split(".",var.tectonic_base_domain))))}"
 
   acl = "private"
 

@@ -248,8 +248,9 @@ func (c *Cluster) validateAWSEndpoints() error {
 // matches the S3 bucket naming rules. Not all rules are checked
 // because Tectonic controls the generation of S3 bucket names, creating
 // buckets of the form: <cluster-name>.<domain-name>
+// If domain-name contains a trailing dot, it's removed from the bucket name.
 func (c *Cluster) validateS3Bucket() error {
-	bucket := fmt.Sprintf("%s.%s", c.Name, c.BaseDomain)
+	bucket := fmt.Sprintf("%s.%s", c.Name, strings.TrimRight(c.BaseDomain, "."))
 	if len(bucket) > maxS3BucketNameLength {
 		return fmt.Errorf("the S3 bucket name %q, generated from the cluster name and base domain, is too long; S3 bucket names must be less than 63 characters; please choose a shorter cluster name or base domain", bucket)
 	}
