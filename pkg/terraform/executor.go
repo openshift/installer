@@ -61,16 +61,24 @@ func (ex *executor) execute(clusterDir string, args ...string) error {
 
 	cmd := exec.Command(ex.binaryPath, args...)
 	cmd.Dir = clusterDir
+
+	logrus.Debugf("Running %#v...", cmd)
+
 	if logrus.GetLevel() == logrus.DebugLevel {
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
+		return cmd.Run()
 	}
 
-	logrus.Debugf("Running %#v...", cmd)
-
-	// Start Terraform.
-	return cmd.Run()
+	output, err := cmd.Output()
+	if err != nil {
+		exitError := err.(*exec.ExitError)
+		if len(exitError.Stderr) == 0 {
+			exitError.Stderr = output
+		}
+	}
+	return err
 }
 
 // Version gets the output of 'terrraform version'.
