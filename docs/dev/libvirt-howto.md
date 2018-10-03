@@ -244,15 +244,12 @@ ssh core@$MASTER_IP
 
 ### Inspect the cluster with kubectl
 
-You'll need a `kubectl` binary on your path.
-If you launched the cluster with `openshift-install --dir "${DIR}" cluster`, you can use:
+You'll need a `kubectl` binary on your path and [the kubeconfig from your `cluster` call](../../README.md#kubeconfig).
 
 ```sh
 export KUBECONFIG="${DIR}/auth/kubeconfig"
 kubectl get -n tectonic-system pods
 ```
-
-If you didn't set `--dir`, you can use `KUBECONFIG=auth/kubeconfig`.
 
 Alternatively, you can run `kubectl` from the bootstrap or master nodes.
 [SSH in](#ssh-access), and run:
@@ -261,10 +258,6 @@ Alternatively, you can run `kubectl` from the bootstrap or master nodes.
 export KUBECONFIG=/var/opt/tectonic/auth/kubeconfig
 kubectl get --all-namespaces pods
 ```
-
-### Connect to the cluster console
-
-Visit `https://${OPENSHIFT_INSTALL_CLUSTER_NAME}-api.${OPENSHIFT_INSTALL_BASE_DOMAIN}:6443/console/` and log in using the admin credentials you configured when creating the cluster.
 
 ## FAQ
 
