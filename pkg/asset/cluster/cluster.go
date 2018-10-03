@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -12,7 +11,6 @@ import (
 	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/terraform"
-	"github.com/openshift/installer/pkg/types/config"
 )
 
 const (
@@ -59,12 +57,7 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		return nil, errors.Wrap(err, "failed to write terraform.tfvars file")
 	}
 
-	var tfvars config.Cluster
-	if err := json.Unmarshal(state.Contents[0].Data, &tfvars); err != nil {
-		return nil, errors.Wrap(err, "failed to Unmarshal terraform.tfvars file")
-	}
-
-	platform := string(tfvars.Platform)
+	platform := string(state.Contents[1].Data)
 	if err := data.Unpack(tmpDir, platform); err != nil {
 		return nil, err
 	}

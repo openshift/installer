@@ -3,7 +3,7 @@ package cluster
 import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/types/config"
+	"github.com/openshift/installer/pkg/tfvars"
 	"github.com/pkg/errors"
 )
 
@@ -58,18 +58,7 @@ func (t *TerraformVariables) Generate(parents map[asset.Asset]*asset.State) (*as
 		}
 	}
 
-	cluster, err := config.ConvertInstallConfigToTFVars(installCfg, contents[t.bootstrapIgnition][0], contents[t.masterIgnition], contents[t.workerIgnition][0])
-	if err != nil {
-		return nil, err
-	}
-
-	if cluster.Platform == config.PlatformLibvirt {
-		if err := cluster.Libvirt.UseCachedImage(); err != nil {
-			return nil, err
-		}
-	}
-
-	data, err := cluster.TFVars()
+	data, err := tfvars.TFVars(installCfg, contents[t.bootstrapIgnition][0], contents[t.masterIgnition], contents[t.workerIgnition][0])
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get Tfvars")
 	}
@@ -79,6 +68,10 @@ func (t *TerraformVariables) Generate(parents map[asset.Asset]*asset.State) (*as
 			{
 				Name: tfvarsFilename,
 				Data: []byte(data),
+			},
+			{
+				Name: "platform",
+				Data: []byte(installCfg.Platform.Name()),
 			},
 		},
 	}, nil

@@ -71,6 +71,25 @@ type Platform struct {
 	OpenStack *OpenStackPlatform `json:"openstack,omitempty"`
 }
 
+// Name returns a string representation of the platform (e.g. "aws" if
+// AWS is non-nil).  It returns an empty string if no platform is
+// configured.
+func (p *Platform) Name() string {
+	if p == nil {
+		return ""
+	}
+	if p.AWS != nil {
+		return "aws"
+	}
+	if p.Libvirt != nil {
+		return "libvirt"
+	}
+	if p.OpenStack != nil {
+		return "openstack"
+	}
+	return ""
+}
+
 // Networking defines the pod network provider in the cluster.
 type Networking struct {
 	Type        NetworkType `json:"type"`
