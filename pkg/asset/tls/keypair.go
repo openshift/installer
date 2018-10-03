@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/pkg/errors"
 )
 
 // KeyPair implements the Asset interface and
@@ -24,12 +25,12 @@ func (k *KeyPair) Dependencies() []asset.Asset {
 func (k *KeyPair) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
 	key, err := PrivateKey()
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate private key: %v", err)
+		return nil, errors.Wrap(err, "failed to generate private key")
 	}
 
 	pubkeyData, err := PublicKeyToPem(&key.PublicKey)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get public key data: %v", err)
+		return nil, errors.Wrap(err, "failed to get public key data from private key")
 	}
 
 	return &asset.State{

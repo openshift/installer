@@ -8,10 +8,12 @@ import (
 	"time"
 
 	libvirt "github.com/libvirt/libvirt-go"
-	"github.com/openshift/installer/pkg/destroy"
-	"github.com/openshift/installer/pkg/types"
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
+
+	"github.com/openshift/installer/pkg/destroy"
+	"github.com/openshift/installer/pkg/types"
 )
 
 // filterFunc allows filtering based on names.
@@ -61,7 +63,7 @@ func (o *ClusterUninstaller) Run() error {
 
 	conn, err := libvirt.NewConnect(o.LibvirtURI)
 	if err != nil {
-		return err
+		return errors.Wrap(err, "failed to connect to Libvirt daemon")
 	}
 
 	// launch goroutines

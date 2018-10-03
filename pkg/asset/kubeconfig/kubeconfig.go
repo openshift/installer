@@ -5,10 +5,12 @@ import (
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
+	clientcmd "k8s.io/client-go/tools/clientcmd/api/v1"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
-	clientcmd "k8s.io/client-go/tools/clientcmd/api/v1"
 )
 
 const (
@@ -40,11 +42,9 @@ func (k *Kubeconfig) Dependencies() []asset.Asset {
 
 // Generate generates the kubeconfig.
 func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
-	var err error
-
 	caCertData, err := asset.GetDataByFilename(k.rootCA, parents, tls.RootCACertName)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get RootCA from parents")
 	}
 
 	var keyFilename, certFilename, kubeconfigSuffix string
@@ -57,15 +57,15 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 	}
 	clientKeyData, err := asset.GetDataByFilename(k.certKey, parents, keyFilename)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get client certificate from parents")
 	}
 	clientCertData, err := asset.GetDataByFilename(k.certKey, parents, certFilename)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get client key from parents")
 	}
 	installConfig, err := installconfig.GetInstallConfig(k.installConfig, parents)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
 	}
 
 	kubeconfig := clientcmd.Config{
@@ -101,7 +101,7 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 
 	data, err := yaml.Marshal(kubeconfig)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to Marshal kubeconfig")
 	}
 
 	return &asset.State{

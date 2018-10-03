@@ -7,7 +7,7 @@ import (
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/ghodss/yaml"
-
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -131,7 +131,7 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 
 	data, err := yaml.Marshal(installConfig)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to Marshal InstallConfig")
 	}
 
 	return &asset.State{
@@ -155,13 +155,12 @@ func GetInstallConfig(installConfig asset.Asset, parents map[asset.Asset]*asset.
 
 	st, ok := parents[installConfig]
 	if !ok {
-		return nil, fmt.Errorf("failed to find %T in parents", installConfig)
+		return nil, errors.Errorf("%T does not exist in parents", installConfig)
 	}
 
 	if err := yaml.Unmarshal(st.Contents[0].Data, &cfg); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal the installconfig: %v", err)
+		return nil, errors.Wrap(err, "failed to Unmarshal the installconfig")
 	}
-
 	return &cfg, nil
 }
 

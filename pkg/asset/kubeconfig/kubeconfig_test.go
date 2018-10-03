@@ -153,7 +153,7 @@ users:
 				adminCertKey:  adminCertState,
 				installConfig: installConfigState,
 			},
-			errString:    "failed to find kubeconfig.fakeAsset in parents",
+			errString:    "failed to get RootCA from parents: failed to find kubeconfig.fakeAsset in parents",
 			expectedData: nil,
 		},
 		{
@@ -165,7 +165,7 @@ users:
 				kubeletCertKey: kubeletCertState,
 				installConfig:  installConfigState,
 			},
-			errString:    "failed to find kubeconfig.fakeAsset in parents",
+			errString:    "failed to get client certificate from parents: failed to find kubeconfig.fakeAsset in parents",
 			expectedData: nil,
 		},
 		{
@@ -177,7 +177,7 @@ users:
 				adminCertKey:  adminCertState,
 				installConfig: installConfigState,
 			},
-			errString:    "failed to find kubeconfig.fakeAsset in parents",
+			errString:    "failed to get client certificate from parents: failed to find kubeconfig.fakeAsset in parents",
 			expectedData: nil,
 		},
 		{
@@ -188,7 +188,7 @@ users:
 				rootCA:       rootCAState,
 				adminCertKey: adminCertState,
 			},
-			errString:    "failed to find kubeconfig.fakeAsset in parents",
+			errString:    "failed to get InstallConfig from parents: kubeconfig.fakeAsset does not exist in parents",
 			expectedData: nil,
 		},
 	}

@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"path/filepath"
 
+	"github.com/pkg/errors"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	content "github.com/openshift/installer/pkg/asset/manifests/content/tectonic"
@@ -38,7 +40,7 @@ func (t *tectonic) Dependencies() []asset.Asset {
 func (t *tectonic) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
 	ic, err := installconfig.GetInstallConfig(t.installConfig, dependencies)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
 	}
 	ingressContents := dependencies[t.ingressCertKey].Contents
 	templateData := &tectonicTemplateData{

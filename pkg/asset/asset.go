@@ -1,8 +1,9 @@
 package asset
 
 import (
-	"fmt"
 	"path/filepath"
+
+	"github.com/pkg/errors"
 )
 
 // Asset used to install OpenShift.
@@ -22,7 +23,7 @@ type Asset interface {
 func GetDataByFilename(a Asset, parents map[Asset]*State, filename string) ([]byte, error) {
 	st, ok := parents[a]
 	if !ok {
-		return nil, fmt.Errorf("failed to find %T in parents", a)
+		return nil, errors.Errorf("failed to find %T in parents", a)
 	}
 
 	for _, c := range st.Contents {
@@ -30,5 +31,5 @@ func GetDataByFilename(a Asset, parents map[Asset]*State, filename string) ([]by
 			return c.Data, nil
 		}
 	}
-	return nil, fmt.Errorf("failed to find data in %v with filename == %q", st, filename)
+	return nil, errors.Errorf("failed to find data in %v with filename == %q", st, filename)
 }

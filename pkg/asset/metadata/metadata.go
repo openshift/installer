@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/pkg/errors"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
@@ -37,7 +39,7 @@ func (m *Metadata) Dependencies() []asset.Asset {
 func (m *Metadata) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
 	installCfg, err := installconfig.GetInstallConfig(m.installConfig, parents)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
 	}
 
 	cm := &types.ClusterMetadata{
@@ -68,7 +70,7 @@ func (m *Metadata) Generate(parents map[asset.Asset]*asset.State) (*asset.State,
 
 	data, err := json.Marshal(cm)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to Marshal ClusterMetadata")
 	}
 	return &asset.State{
 		Contents: []asset.Content{

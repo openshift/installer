@@ -2,6 +2,7 @@ package manifests
 
 import (
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -40,19 +41,19 @@ func (no *networkOperator) Dependencies() []asset.Asset {
 func (no *networkOperator) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
 	ic, err := installconfig.GetInstallConfig(no.installConfigAsset, dependencies)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
 	}
 	no.installConfig = ic
 
 	// installconfig is ready, we can create the core config from it now
 	netConfig, err := no.netConfig()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to create %s config from InstallConfig", no.Name())
 	}
 
 	netManifest, err := no.manifest()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to create %s manifests from InstallConfig", no.Name())
 	}
 	state := &asset.State{
 		Contents: []asset.Content{

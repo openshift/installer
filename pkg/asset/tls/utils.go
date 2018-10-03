@@ -4,6 +4,8 @@ import (
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
+
+	"github.com/pkg/errors"
 )
 
 // PrivateKeyToPem converts an rsa.PrivateKey object to pem string
@@ -44,7 +46,7 @@ func CSRToPem(cert *x509.CertificateRequest) string {
 func PublicKeyToPem(key *rsa.PublicKey) (string, error) {
 	keyInBytes, err := x509.MarshalPKIXPublicKey(key)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to MarshalPKIXPublicKey")
 	}
 	keyinPem := pem.EncodeToMemory(
 		&pem.Block{

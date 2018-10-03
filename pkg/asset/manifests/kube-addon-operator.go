@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
 
 	kubeaddon "github.com/coreos/tectonic-config/config/kube-addon"
 	"github.com/openshift/installer/pkg/asset"
@@ -38,14 +39,14 @@ func (kao *kubeAddonOperator) Dependencies() []asset.Asset {
 func (kao *kubeAddonOperator) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
 	ic, err := installconfig.GetInstallConfig(kao.installConfigAsset, dependencies)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
 	}
 	kao.installConfig = ic
 
 	// installconfig is ready, we can create the addon config from it now
 	addonConfig, err := kao.addonConfig()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to create %s config from InstallConfig", kao.Name())
 	}
 
 	state := &asset.State{

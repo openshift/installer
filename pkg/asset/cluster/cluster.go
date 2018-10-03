@@ -2,11 +2,11 @@ package cluster
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/data"
@@ -45,23 +45,23 @@ func (c *Cluster) Dependencies() []asset.Asset {
 func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
 	state, ok := parents[c.tfvars]
 	if !ok {
-		return nil, fmt.Errorf("failed to get terraform.tfvar state in the parent asset states")
+		return nil, errors.Errorf("failed to get terraform.tfvars from parent")
 	}
 
 	// Copy the terraform.tfvars to a temp directory where the terraform will be invoked within.
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "openshift-install-")
 	if err != nil {
-		return nil, fmt.Errorf("failed to create temp dir: %v", err)
+		return nil, errors.Wrap(err, "failed to create temp dir for terraform execution")
 	}
 	defer os.RemoveAll(tmpDir)
 
 	if err := ioutil.WriteFile(filepath.Join(tmpDir, state.Contents[0].Name), state.Contents[0].Data, 0600); err != nil {
-		return nil, fmt.Errorf("failed to write terraform.tfvars file: %v", err)
+		return nil, errors.Wrap(err, "failed to write terraform.tfvars file")
 	}
 
 	var tfvars config.Cluster
 	if err := json.Unmarshal(state.Contents[0].Data, &tfvars); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal terraform tfvars file: %v", err)
+		return nil, errors.Wrap(err, "failed to Unmarshal terraform.tfvars file")
 	}
 
 	platform := string(tfvars.Platform)
@@ -78,12 +78,12 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 	// This runs the terraform in a temp directory, the tfstate file will be returned
 	// to the asset store to persist it on the disk.
 	if err := terraform.Init(tmpDir); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to initialize terraform")
 	}
 
 	stateFile, err := terraform.Apply(tmpDir)
 	if err != nil {
-		err = fmt.Errorf("terraform failed: %v", err)
+		err = errors.Wrap(err, "failed to run terraform")
 	}
 
 	data, err2 := ioutil.ReadFile(stateFile)

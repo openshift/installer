@@ -1,8 +1,7 @@
 package asset
 
 import (
-	"fmt"
-
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -40,7 +39,7 @@ func (s *StoreImpl) fetch(asset Asset, indent string) (*State, error) {
 	for _, d := range dependencies {
 		ds, err := s.fetch(d, indent+"  ")
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "failed to fetch dependency for %s", asset.Name())
 		}
 		dependenciesStates[d] = ds
 	}
@@ -48,7 +47,7 @@ func (s *StoreImpl) fetch(asset Asset, indent string) (*State, error) {
 	logrus.Debugf("%sGenerating %s...", indent, asset.Name())
 	state, err := asset.Generate(dependenciesStates)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate asset %q: %v", asset.Name(), err)
+		return nil, errors.Wrapf(err, "failed to generate asset %s", asset.Name())
 	}
 	if s.assets == nil {
 		s.assets = make(map[Asset]*State)

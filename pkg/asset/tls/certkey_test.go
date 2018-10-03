@@ -118,7 +118,7 @@ func TestCertKeyGenerate(t *testing.T) {
 				GenDNSNames:    testGenDNSNames,
 				GenIPAddresses: testGenIPAddresses,
 			},
-			errString: "failed to get install config state in the parent asset states",
+			errString: "failed to get InstallConfig from parents: tls.fakeInstallConfig does not exist in parents",
 			parents:   nil,
 		},
 	}
