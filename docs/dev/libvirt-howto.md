@@ -93,14 +93,14 @@ Next, restart libvirt: `systemctl restart libvirtd`
 Finally, if you have a firewall, you may have to allow connections to the
 libvirt daemon from the IP range used by your cluster nodes.
 
-The following examples use the default cluster IP range of `192.168.124.0/24` (which is currently not configurable) and a libvirt `default` subnet of `192.168.122.0/24`, which might be different in your configuration.
+The following examples use the default cluster IP range of `192.168.126.0/24` (which is currently not configurable) and a libvirt `default` subnet of `192.168.124.0/24`, which might be different in your configuration.
 If you're uncertain about the libvirt *default* subnet you should be able to see its address using the command `ip -4 a show dev virbr0` or by inspecting `virsh --connect qemu:///system net-dumpxml default.
 Ensure the cluster IP range does not overlap your `virbr0` IP address.
 
 #### iptables
 
 ```sh
-iptables -I INPUT -p tcp -s 192.168.124.0/24 -d 192.168.122.1 --dport 16509 -j ACCEPT -m comment --comment "Allow insecure libvirt clients"
+iptables -I INPUT -p tcp -s 192.168.126.0/24 -d 192.168.124.1 --dport 16509 -j ACCEPT -m comment --comment "Allow insecure libvirt clients"
 ```
 
 #### Firewalld
@@ -118,7 +118,7 @@ With the name of the active zone, include the source and port to allow connectio
 from the IP range used by your cluster nodes.
 
 ```sh
-sudo firewall-cmd --zone=FedoraWorkstation --add-source=192.168.124.0/24
+sudo firewall-cmd --zone=FedoraWorkstation --add-source=192.168.126.0/24
 sudo firewall-cmd --zone=FedoraWorkstation --add-port=16509/tcp
 ```
 
@@ -161,7 +161,7 @@ This step is optional, but useful for being able to resolve cluster-internal hos
     For this example:
 
     ```sh
-    echo server=/tt.testing/192.168.124.1 | sudo tee /etc/NetworkManager/dnsmasq.d/tectonic.conf
+    echo server=/tt.testing/192.168.126.1 | sudo tee /etc/NetworkManager/dnsmasq.d/tectonic.conf
     ```
 3. `systemctl restart NetworkManager`
 
