@@ -7,23 +7,10 @@ If we can't reproduce a bug we might close your issue.
 If we're wrong, PLEASE feel free to reopen it and explain why.
 -->
 
-# Versions
-
-## Installer version:
+# Version
 
 ```console
 $ openshift-install version
-<your output here>
-```
-
-## Terraform version
-
-<!---
-If you are not running the latest version of Terraform, please try upgrading because your issue may have already been fixed.
--->
-
-```console
-$ terraform version
 <your output here>
 ```
 
