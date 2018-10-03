@@ -38,7 +38,7 @@ dep:
 
 To add a new dependency:
 
-- Edit the `Gopkg.yaml` file to add your dependency.
+- Edit the `Gopkg.toml` file to add your dependency.
 - Ensure you add a `version` field for the tag or the `revision` field for commit id you want to pin to.
 - Revendor the dependencies:
 
