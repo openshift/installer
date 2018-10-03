@@ -90,6 +90,8 @@ func (c *CertKey) Generate(parents map[string]*asset.State) (*asset.State, error
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate Subject: %v", err)
 			}
+			// assign it to the asset object also so that Name() can be generated correctly
+			c.Subject = cfg.Subject
 		}
 		if c.GenDNSNames != nil {
 			cfg.DNSNames, err = c.GenDNSNames(&installConfig)
