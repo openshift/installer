@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"os/exec"
 
 	"github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
@@ -11,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/stock"
 	"github.com/openshift/installer/pkg/destroy"
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
+	"github.com/openshift/installer/pkg/terraform"
 )
 
 var (
@@ -44,6 +46,15 @@ func main() {
 
 	if command == versionCommand.FullCommand() {
 		fmt.Printf("%s %s\n", os.Args[0], version)
+		terraformVersion, err := terraform.Version()
+		if err != nil {
+			exitError, ok := err.(*exec.ExitError)
+			if ok && len(exitError.Stderr) > 0 {
+				logrus.Error(string(exitError.Stderr))
+			}
+			logrus.Fatalf("Failed to calculate Terraform version: %v", err)
+		}
+		fmt.Println(terraformVersion)
 		return
 	}
 

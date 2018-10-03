@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/sirupsen/logrus"
 )
@@ -71,6 +72,24 @@ func (ex *executor) execute(clusterDir string, args ...string) error {
 
 	// Start Terraform.
 	return cmd.Run()
+}
+
+// Version gets the output of 'terrraform version'.
+func Version() (version string, err error) {
+	// Find the Terraform binary.
+	binPath, err := tfBinaryPath()
+	if err != nil {
+		return "", err
+	}
+
+	output, err := exec.Command(binPath, "version").Output()
+	if err != nil {
+		exitError := err.(*exec.ExitError)
+		if len(exitError.Stderr) == 0 {
+			exitError.Stderr = output
+		}
+	}
+	return strings.TrimRight(string(output), "\n"), err
 }
 
 // tfBinaryPath searches for a Terraform binary on disk:
