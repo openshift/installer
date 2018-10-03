@@ -284,6 +284,14 @@
   version = "v2.0.1"
 
 [[projects]]
+  digest = "1:5cf3f025cbee5951a4ee961de067c8a89fc95a5adabead774f82822efabab121"
+  name = "github.com/pkg/errors"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "645ef00459ed84a119197bfb8d8205042c6df63d"
+  version = "v0.8.0"
+
+[[projects]]
   digest = "1:0028cb19b2e4c3112225cd871870f2d9cf49b9b4276531f03438a88e94be86fe"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
@@ -496,6 +504,7 @@
     "github.com/libvirt/libvirt-go",
     "github.com/openshift/hive/contrib/pkg/awstagdeprovision",
     "github.com/pborman/uuid",
+    "github.com/pkg/errors",
     "github.com/shurcooL/vfsgen",
     "github.com/sirupsen/logrus",
     "github.com/stretchr/testify/assert",
