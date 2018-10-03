@@ -1,5 +1,11 @@
 # Openshift Installer
 
+## Supported Platforms
+
+* AWS
+* [Libvirt with KVM](docs/dev/libvirt-howto.md)
+* OpenStack (Experimental)
+
 ## Quick Start
 
 First, install all [build dependencies](docs/dev/dependencies.md).
