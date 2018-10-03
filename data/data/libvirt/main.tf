@@ -66,7 +66,7 @@ resource "libvirt_domain" "master" {
 
   name = "master${count.index}"
 
-  memory = "2048"
+  memory = "3072"
   vcpu   = "2"
 
   coreos_ignition = "${libvirt_ignition.master.*.id[count.index]}"
