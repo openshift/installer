@@ -12,13 +12,43 @@ import (
 
 const (
 	// DefaultChannel is the default RHCOS channel for the cluster.
-	DefaultChannel = "tested"
+	DefaultChannel = "alpha"
 )
 
 // AMI calculates a Red Hat CoreOS AMI.
 func AMI(ctx context.Context, channel, region string) (ami string, err error) {
-	if channel != DefaultChannel {
-		return "", fmt.Errorf("channel %q is not yet supported", channel)
+	filters := []*ec2.Filter{
+		{
+			Name:   aws.String("name"),
+			Values: aws.StringSlice([]string{"rhcos*"}),
+		},
+		{
+			Name:   aws.String("architecture"),
+			Values: aws.StringSlice([]string{"x86_64"}),
+		},
+		{
+			Name:   aws.String("virtualization-type"),
+			Values: aws.StringSlice([]string{"hvm"}),
+		},
+		{
+			Name:   aws.String("image-type"),
+			Values: aws.StringSlice([]string{"machine"}),
+		},
+		{
+			Name:   aws.String("owner-id"),
+			Values: aws.StringSlice([]string{"531415883065"}),
+		},
+		{
+			Name:   aws.String("state"),
+			Values: aws.StringSlice([]string{"available"}),
+		},
+	}
+
+	if channel != "" {
+		filters = append(filters, &ec2.Filter{
+			Name:   aws.String("tag:rhcos_tag"),
+			Values: aws.StringSlice([]string{channel}),
+		})
 	}
 
 	ssn := session.Must(session.NewSessionWithOptions(session.Options{
@@ -29,34 +59,8 @@ func AMI(ctx context.Context, channel, region string) (ami string, err error) {
 	}))
 
 	svc := ec2.New(ssn)
-
 	result, err := svc.DescribeImagesWithContext(ctx, &ec2.DescribeImagesInput{
-		Filters: []*ec2.Filter{
-			{
-				Name:   aws.String("name"),
-				Values: aws.StringSlice([]string{"rhcos*"}),
-			},
-			{
-				Name:   aws.String("architecture"),
-				Values: aws.StringSlice([]string{"x86_64"}),
-			},
-			{
-				Name:   aws.String("virtualization-type"),
-				Values: aws.StringSlice([]string{"hvm"}),
-			},
-			{
-				Name:   aws.String("image-type"),
-				Values: aws.StringSlice([]string{"machine"}),
-			},
-			{
-				Name:   aws.String("owner-id"),
-				Values: aws.StringSlice([]string{"531415883065"}),
-			},
-			{
-				Name:   aws.String("state"),
-				Values: aws.StringSlice([]string{"available"}),
-			},
-		},
+		Filters: filters,
 	})
 	if err != nil {
 		return "", err
@@ -80,7 +84,10 @@ func AMI(ctx context.Context, channel, region string) (ami string, err error) {
 	}
 
 	if image == nil {
-		return "", fmt.Errorf("no RHCOS AMIs found in %s", region)
+		if channel == "" {
+			return "", fmt.Errorf("no RHCOS AMIs found in %s", region)
+		}
+		return "", fmt.Errorf("no %s RHCOS AMIs found in %s", channel, region)
 	}
 
 	return *image.ImageId, nil
