@@ -50,9 +50,9 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 	kubeconfig := clientcmd.Config{
 		Clusters: []clientcmd.NamedCluster{
 			{
-				Name: installConfig.Name,
+				Name: installConfig.ObjectMeta.Name,
 				Cluster: clientcmd.Cluster{
-					Server: fmt.Sprintf("https://%s-api.%s:6443", installConfig.Name, installConfig.BaseDomain),
+					Server: fmt.Sprintf("https://%s-api.%s:6443", installConfig.ObjectMeta.Name, installConfig.BaseDomain),
 					CertificateAuthorityData: parents[k.rootCA].Contents[tls.CertIndex].Data,
 				},
 			},
@@ -70,7 +70,7 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 			{
 				Name: k.userName,
 				Context: clientcmd.Context{
-					Cluster:  installConfig.Name,
+					Cluster:  installConfig.ObjectMeta.Name,
 					AuthInfo: k.userName,
 				},
 			},

@@ -100,23 +100,23 @@ func (kco *kubeCoreOperator) coreConfig() ([]byte, error) {
 }
 
 func (kco *kubeCoreOperator) getAPIServerURL() string {
-	return fmt.Sprintf("https://%s-api.%s:6443", kco.installConfig.Name, kco.installConfig.BaseDomain)
+	return fmt.Sprintf("https://%s-api.%s:6443", kco.installConfig.ObjectMeta.Name, kco.installConfig.BaseDomain)
 }
 
 func (kco *kubeCoreOperator) getEtcdServersURLs() []string {
 	var urls []string
 	for i := 0; i < kco.installConfig.MasterCount(); i++ {
-		urls = append(urls, fmt.Sprintf("https://%s-etcd-%d.%s:2379", kco.installConfig.Name, i, kco.installConfig.BaseDomain))
+		urls = append(urls, fmt.Sprintf("https://%s-etcd-%d.%s:2379", kco.installConfig.ObjectMeta.Name, i, kco.installConfig.BaseDomain))
 	}
 	return urls
 }
 
 func (kco *kubeCoreOperator) getOicdIssuerURL() string {
-	return fmt.Sprintf("https://%s.%s/identity", kco.installConfig.Name, kco.installConfig.BaseDomain)
+	return fmt.Sprintf("https://%s.%s/identity", kco.installConfig.ObjectMeta.Name, kco.installConfig.BaseDomain)
 }
 
 func (kco *kubeCoreOperator) getBaseAddress() string {
-	return fmt.Sprintf("%s.%s", kco.installConfig.Name, kco.installConfig.BaseDomain)
+	return fmt.Sprintf("%s.%s", kco.installConfig.ObjectMeta.Name, kco.installConfig.BaseDomain)
 }
 
 // Converts a platform to the cloudProvider that k8s understands

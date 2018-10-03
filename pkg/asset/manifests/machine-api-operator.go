@@ -124,7 +124,7 @@ func (mao *machineAPIOperator) maoConfig(dependencies map[asset.Asset]*asset.Sta
 		}
 
 		cfg.AWS = &awsConfig{
-			ClusterName:      mao.installConfig.Name,
+			ClusterName:      mao.installConfig.ObjectMeta.Name,
 			ClusterID:        mao.installConfig.ClusterID,
 			Region:           mao.installConfig.Platform.AWS.Region,
 			AvailabilityZone: "",
@@ -133,7 +133,7 @@ func (mao *machineAPIOperator) maoConfig(dependencies map[asset.Asset]*asset.Sta
 		}
 	} else if mao.installConfig.Platform.Libvirt != nil {
 		cfg.Libvirt = &libvirtConfig{
-			ClusterName: mao.installConfig.Name,
+			ClusterName: mao.installConfig.ObjectMeta.Name,
 			URI:         mao.installConfig.Platform.Libvirt.URI,
 			NetworkName: mao.installConfig.Platform.Libvirt.Network.Name,
 			IPRange:     mao.installConfig.Platform.Libvirt.Network.IPRange,
@@ -141,7 +141,7 @@ func (mao *machineAPIOperator) maoConfig(dependencies map[asset.Asset]*asset.Sta
 		}
 	} else if mao.installConfig.Platform.OpenStack != nil {
 		cfg.OpenStack = &openstackConfig{
-			ClusterName: mao.installConfig.Name,
+			ClusterName: mao.installConfig.ObjectMeta.Name,
 			ClusterID:   mao.installConfig.ClusterID,
 			Region:      mao.installConfig.Platform.OpenStack.Region,
 			Replicas:    int(*mao.installConfig.Machines[1].Replicas),

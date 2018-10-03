@@ -22,7 +22,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 					Source: func() *url.URL {
 						return &url.URL{
 							Scheme:   "https",
-							Host:     fmt.Sprintf("%s-api.%s:49500", installConfig.Name, installConfig.BaseDomain),
+							Host:     fmt.Sprintf("%s-api.%s:49500", installConfig.ObjectMeta.Name, installConfig.BaseDomain),
 							Path:     fmt.Sprintf("/config/%s", role),
 							RawQuery: query,
 						}

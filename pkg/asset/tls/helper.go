@@ -19,7 +19,7 @@ func assetFilePath(filename string) string {
 }
 
 func getBaseAddress(cfg *types.InstallConfig) string {
-	return fmt.Sprintf("%s.%s", cfg.Name, cfg.BaseDomain)
+	return fmt.Sprintf("%s.%s", cfg.ObjectMeta.Name, cfg.BaseDomain)
 }
 
 func cidrhost(network net.IPNet, hostNum int) (string, error) {
@@ -45,7 +45,7 @@ func genDNSNamesForIngressCertKey(cfg *types.InstallConfig) ([]string, error) {
 
 func genDNSNamesForAPIServerCertKey(cfg *types.InstallConfig) ([]string, error) {
 	return []string{
-		fmt.Sprintf("%s-api.%s", cfg.Name, cfg.BaseDomain),
+		fmt.Sprintf("%s-api.%s", cfg.ObjectMeta.Name, cfg.BaseDomain),
 		"kubernetes", "kubernetes.default",
 		"kubernetes.default.svc",
 		"kubernetes.default.svc.cluster.local",
@@ -63,7 +63,7 @@ func genIPAddressesForAPIServerCertKey(cfg *types.InstallConfig) ([]net.IP, erro
 
 func genDNSNamesForOpenshiftAPIServerCertKey(cfg *types.InstallConfig) ([]string, error) {
 	return []string{
-		fmt.Sprintf("%s-api.%s", cfg.Name, cfg.BaseDomain),
+		fmt.Sprintf("%s-api.%s", cfg.ObjectMeta.Name, cfg.BaseDomain),
 		"openshift-apiserver",
 		"openshift-apiserver.kube-system",
 		"openshift-apiserver.kube-system.svc",
@@ -81,9 +81,9 @@ func genIPAddressesForOpenshiftAPIServerCertKey(cfg *types.InstallConfig) ([]net
 }
 
 func genDNSNamesForMCSCertKey(cfg *types.InstallConfig) ([]string, error) {
-	return []string{fmt.Sprintf("%s-api.%s", cfg.Name, cfg.BaseDomain)}, nil
+	return []string{fmt.Sprintf("%s-api.%s", cfg.ObjectMeta.Name, cfg.BaseDomain)}, nil
 }
 
 func genSubjectForMCSCertKey(cfg *types.InstallConfig) (pkix.Name, error) {
-	return pkix.Name{CommonName: fmt.Sprintf("%s-api.%s", cfg.Name, cfg.BaseDomain)}, nil
+	return pkix.Name{CommonName: fmt.Sprintf("%s-api.%s", cfg.ObjectMeta.Name, cfg.BaseDomain)}, nil
 }
