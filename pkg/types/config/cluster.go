@@ -3,10 +3,10 @@ package config
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/coreos/tectonic-config/config/tectonic-network"
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 
 	"github.com/openshift/installer/pkg/rhcos"
@@ -39,7 +39,7 @@ func (p *Platform) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	switch platform {
 	case PlatformAWS, PlatformLibvirt, PlatformOpenStack:
 	default:
-		return fmt.Errorf("invalid platform specified (%s); must be one of %s", platform, []Platform{PlatformAWS, PlatformLibvirt, PlatformOpenStack})
+		return errors.Errorf("invalid platform specified (%s); must be one of %s", platform, []Platform{PlatformAWS, PlatformLibvirt, PlatformOpenStack})
 	}
 
 	*p = platform
@@ -116,13 +116,13 @@ func (c *Cluster) TFVars() (string, error) {
 	// Fill in master ips
 	if c.Platform == PlatformLibvirt {
 		if err := c.Libvirt.TFVars(c.Master.Count, c.Worker.Count); err != nil {
-			return "", err
+			return "", errors.Wrap(err, "failed to create TFVars for libvirt platfrom")
 		}
 	}
 
 	data, err := json.MarshalIndent(&c, "", "  ")
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to marshal TFVars")
 	}
 
 	return string(data), nil
@@ -144,7 +144,7 @@ func (c *Cluster) YAML() (string, error) {
 
 	yaml, err := yaml.Marshal(c)
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to marshal config.Cluster")
 	}
 
 	return string(yaml), nil
@@ -186,7 +186,7 @@ func ConvertInstallConfigToTFVars(cfg *types.InstallConfig, bootstrapIgn string,
 		defer cancel()
 		ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, cfg.Platform.AWS.Region)
 		if err != nil {
-			return nil, fmt.Errorf("failed to determine default AMI: %v", err)
+			return nil, errors.Wrap(err, "failed to determine default AMI")
 		}
 
 		cluster.Platform = PlatformAWS
@@ -268,14 +268,14 @@ func ConvertInstallConfigToTFVars(cfg *types.InstallConfig, bootstrapIgn string,
 				}
 			}
 		default:
-			return nil, fmt.Errorf("unrecognized machine pool %q", m.Name)
+			return nil, errors.Errorf("unrecognized machine pool %q", m.Name)
 		}
 
 	}
 
 	// Validate the TFVars.
 	if err := cluster.ValidateAndLog(); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to validate TFVars")
 	}
 
 	return cluster, nil

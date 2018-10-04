@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/ghodss/yaml"
-
 	"github.com/apparentlymart/go-cidr/cidr"
 	kubecore "github.com/coreos/tectonic-config/config/kube-core"
+	"github.com/ghodss/yaml"
+	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -46,32 +47,28 @@ func (kco *kubeCoreOperator) Dependencies() []asset.Asset {
 func (kco *kubeCoreOperator) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
 	ic, err := installconfig.GetInstallConfig(kco.installConfigAsset, dependencies)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
 	}
 	kco.installConfig = ic
 
 	// installconfig is ready, we can create the core config from it now
 	coreConfig, err := kco.coreConfig()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to create %s config from InstallConfig", kco.Name())
 	}
 
-	data, err := yaml.Marshal(coreConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to marshal core config: %v", err)
-	}
 	state := &asset.State{
 		Contents: []asset.Content{
 			{
 				Name: "kco-config.yaml",
-				Data: data,
+				Data: coreConfig,
 			},
 		},
 	}
 	return state, nil
 }
 
-func (kco *kubeCoreOperator) coreConfig() (*kubecore.OperatorConfig, error) {
+func (kco *kubeCoreOperator) coreConfig() ([]byte, error) {
 	coreConfig := kubecore.OperatorConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: kubecore.APIVersion,
@@ -99,8 +96,7 @@ func (kco *kubeCoreOperator) coreConfig() (*kubecore.OperatorConfig, error) {
 	coreConfig.NetworkConfig.ServiceCIDR = kco.installConfig.Networking.ServiceCIDR.String()
 	coreConfig.NetworkConfig.AdvertiseAddress = networkConfigAdvertiseAddress
 	coreConfig.NetworkConfig.EtcdServers = strings.Join(kco.getEtcdServersURLs(), ",")
-
-	return &coreConfig, nil
+	return yaml.Marshal(coreConfig)
 }
 
 func (kco *kubeCoreOperator) getAPIServerURL() string {

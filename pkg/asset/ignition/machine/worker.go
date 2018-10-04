@@ -1,6 +1,8 @@
 package machine
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
@@ -37,7 +39,7 @@ func (a *worker) Dependencies() []asset.Asset {
 func (a *worker) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
 	installConfig, err := installconfig.GetInstallConfig(a.installConfig, dependencies)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
 	}
 
 	return &asset.State{

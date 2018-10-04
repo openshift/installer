@@ -1,14 +1,13 @@
 package terraform
 
 import (
-	"errors"
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
@@ -41,7 +40,7 @@ func newExecutor() (*executor, error) {
 	// Find the Terraform binary.
 	binPath, err := tfBinaryPath()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get Terraform binary's path")
 	}
 
 	ex.binaryPath = binPath
@@ -57,7 +56,7 @@ func (ex *executor) execute(clusterDir string, args ...string) error {
 	// Prepare Terraform command by setting up the command, configuration,
 	// and the working directory
 	if clusterDir == "" {
-		return fmt.Errorf("clusterDir is unset. Quitting")
+		return errors.Errorf("clusterDir is unset. Quitting")
 	}
 
 	cmd := exec.Command(ex.binaryPath, args...)

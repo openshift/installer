@@ -10,12 +10,12 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
-	"errors"
-	"fmt"
 	"math"
 	"math/big"
 	"net"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 const (
@@ -50,7 +50,7 @@ type rsaPublicKey struct {
 func PrivateKey() (*rsa.PrivateKey, error) {
 	rsaKey, err := rsa.GenerateKey(rand.Reader, keySize)
 	if err != nil {
-		return nil, fmt.Errorf("error generating RSA private key: %v", err)
+		return nil, errors.Wrap(err, "error generating RSA private key")
 	}
 
 	return rsaKey, nil
@@ -71,16 +71,16 @@ func SelfSignedCACert(cfg *CertCfg, key *rsa.PrivateKey) (*x509.Certificate, err
 	}
 	// verifies that the CN and/or OU for the cert is set
 	if len(cfg.Subject.CommonName) == 0 || len(cfg.Subject.OrganizationalUnit) == 0 {
-		return nil, fmt.Errorf("certification's subject is not set, or invalid")
+		return nil, errors.Errorf("certification's subject is not set, or invalid")
 	}
 	pub := key.Public()
 	cert.SubjectKeyId, err = generateSubjectKeyID(pub)
 	if err != nil {
-		return nil, fmt.Errorf("failed to set subject key identifier: %v", err)
+		return nil, errors.Wrap(err, "failed to set subject key identifier")
 	}
 	certBytes, err := x509.CreateCertificate(rand.Reader, &cert, &cert, key.Public(), key)
 	if err != nil {
-		return nil, fmt.Errorf("error creating certificate: %v", err)
+		return nil, errors.Wrap(err, "failed to create certificate")
 	}
 	return x509.ParseCertificate(certBytes)
 }
@@ -114,11 +114,11 @@ func SignedCertificate(
 	pub := caCert.PublicKey.(*rsa.PublicKey)
 	certTmpl.SubjectKeyId, err = generateSubjectKeyID(pub)
 	if err != nil {
-		return nil, fmt.Errorf("failed to set subject key identifier: %v", err)
+		return nil, errors.Wrap(err, "failed to set subject key identifier")
 	}
 	certBytes, err := x509.CreateCertificate(rand.Reader, &certTmpl, caCert, key.Public(), caKey)
 	if err != nil {
-		return nil, fmt.Errorf("error creating signed certificate: %v", err)
+		return nil, errors.Wrap(err, "failed to create x509 certificate")
 	}
 	return x509.ParseCertificate(certBytes)
 }
@@ -132,7 +132,7 @@ func generateSubjectKeyID(pub crypto.PublicKey) ([]byte, error) {
 	case *rsa.PublicKey:
 		publicKeyBytes, err = asn1.Marshal(rsaPublicKey{N: pub.N, E: pub.E})
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to Marshal ans1 public key")
 		}
 	case *ecdsa.PublicKey:
 		publicKeyBytes = elliptic.Marshal(pub.Curve, pub.X, pub.Y)
@@ -154,24 +154,24 @@ func GenerateCert(caKey *rsa.PrivateKey,
 	// create a private key
 	key, err := PrivateKey()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate private key: %v", err)
+		return nil, nil, errors.Wrap(err, "failed to generate private key")
 	}
 
 	// create a CSR
 	csrTmpl := x509.CertificateRequest{Subject: cfg.Subject, DNSNames: cfg.DNSNames, IPAddresses: cfg.IPAddresses}
 	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, &csrTmpl, key)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error creating certificate request: %v", err)
+		return nil, nil, errors.Wrap(err, "failed to create certificate request")
 	}
 	csr, err := x509.ParseCertificateRequest(csrBytes)
 	if err != nil {
-		return nil, nil, fmt.Errorf("error parsing certificate request: %v", err)
+		return nil, nil, errors.Wrap(err, "error parsing x509 certificate request")
 	}
 
 	// create a cert
 	cert, err := GenerateSignedCert(cfg, csr, key, caKey, caCert)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create a certificate: %v", err)
+		return nil, nil, errors.Wrap(err, "failed to create a signed certificate")
 	}
 	return key, cert, nil
 }
@@ -180,7 +180,7 @@ func GenerateCert(caKey *rsa.PrivateKey,
 func GenerateRootCA(key *rsa.PrivateKey, cfg *CertCfg) (*x509.Certificate, error) {
 	cert, err := SelfSignedCACert(cfg, key)
 	if err != nil {
-		return nil, fmt.Errorf("error generating self signed certificate: %v", err)
+		return nil, errors.Wrap(err, "failed to generate self signed certificate")
 	}
 	return cert, nil
 }
@@ -193,7 +193,7 @@ func GenerateSignedCert(cfg *CertCfg,
 	caCert *x509.Certificate) (*x509.Certificate, error) {
 	cert, err := SignedCertificate(cfg, csr, key, caCert, caKey)
 	if err != nil {
-		return nil, fmt.Errorf("error signing certificate: %v", err)
+		return nil, errors.Wrap(err, "failed to create a signed certificate")
 	}
 	return cert, nil
 }
@@ -202,13 +202,12 @@ func GenerateSignedCert(cfg *CertCfg,
 func GenerateRootCertKey(cfg *CertCfg) (*rsa.PrivateKey, *x509.Certificate, error) {
 	key, err := PrivateKey()
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to generate private key: %v", err)
+		return nil, nil, errors.Wrap(err, "failed to generate private key")
 	}
 
 	crt, err := GenerateRootCA(key, cfg)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create a certificate: %v", err)
+		return nil, nil, errors.Wrap(err, "failed to create root CA certificate")
 	}
-
 	return key, crt, nil
 }

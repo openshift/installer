@@ -2,11 +2,10 @@ package config
 
 import (
 	"context"
-	"errors"
-	"fmt"
 	"io/ioutil"
 	"time"
 
+	"github.com/pkg/errors"
 	"gopkg.in/yaml.v2"
 
 	"github.com/openshift/installer/pkg/rhcos"
@@ -17,7 +16,7 @@ func ParseConfig(data []byte) (*Cluster, error) {
 	cluster := defaultCluster
 
 	if err := yaml.Unmarshal(data, &cluster); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to unmarshal to config.Cluster")
 	}
 
 	// Deprecated: remove after openshift/release is ported to pullSecret
@@ -28,7 +27,7 @@ func ParseConfig(data []byte) (*Cluster, error) {
 
 		data, err := ioutil.ReadFile(cluster.PullSecretPath)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to read PullSecretPath")
 		}
 		cluster.PullSecret = string(data)
 		cluster.PullSecretPath = ""
@@ -40,7 +39,7 @@ func ParseConfig(data []byte) (*Cluster, error) {
 
 		ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, cluster.AWS.Region)
 		if err != nil {
-			return nil, fmt.Errorf("failed to determine default AMI: %v", err)
+			return nil, errors.Wrap(err, "failed to determine default AMI")
 		}
 		cluster.EC2AMIOverride = ami
 	}
@@ -52,7 +51,7 @@ func ParseConfig(data []byte) (*Cluster, error) {
 func ParseConfigFile(path string) (*Cluster, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to read file")
 	}
 
 	return ParseConfig(data)
@@ -63,7 +62,7 @@ func ParseInternal(data []byte) (*Internal, error) {
 	internal := &Internal{}
 
 	if err := yaml.Unmarshal(data, internal); err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to unmarshal to config.Internal")
 	}
 
 	return internal, nil
@@ -73,7 +72,7 @@ func ParseInternal(data []byte) (*Internal, error) {
 func ParseInternalFile(path string) (*Internal, error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to read file")
 	}
 
 	return ParseInternal(data)

@@ -2,12 +2,12 @@ package manifests
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -80,14 +80,14 @@ func (mao *machineAPIOperator) Dependencies() []asset.Asset {
 func (mao *machineAPIOperator) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
 	ic, err := installconfig.GetInstallConfig(mao.installConfigAsset, dependencies)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
 	}
 	mao.installConfig = ic
 
 	// installconfig is ready, we can create the mao config from it now
 	maoConfig, err := mao.maoConfig(dependencies)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to create %s config from InstallConfig", mao.Name())
 	}
 
 	state := &asset.State{
@@ -120,7 +120,7 @@ func (mao *machineAPIOperator) maoConfig(dependencies map[asset.Asset]*asset.Sta
 
 		ami, err := rhcos.AMI(context.TODO(), DefaultChannel, mao.installConfig.Platform.AWS.Region)
 		if err != nil {
-			return "", fmt.Errorf("failed to lookup RHCOS AMI: %v", err)
+			return "", errors.Wrapf(err, "failed to get AMI for %s config", mao.Name())
 		}
 
 		cfg.AWS = &awsConfig{
@@ -147,7 +147,7 @@ func (mao *machineAPIOperator) maoConfig(dependencies map[asset.Asset]*asset.Sta
 			Replicas:    int(*mao.installConfig.Machines[1].Replicas),
 		}
 	} else {
-		return "", fmt.Errorf("unknown provider for machine-api-operator")
+		return "", errors.Errorf("unknown provider for machine-api-operator")
 	}
 
 	return marshalYAML(cfg)

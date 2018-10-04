@@ -3,18 +3,20 @@ package terraform
 import (
 	"fmt"
 	"path"
+
+	"github.com/pkg/errors"
 )
 
 func terraformExec(clusterDir string, args ...string) error {
 	// Create an executor
 	ex, err := newExecutor()
 	if err != nil {
-		return fmt.Errorf("could not create Terraform executor: %s", err)
+		return errors.Wrap(err, "failed to create Terraform executor")
 	}
 
 	err = ex.execute(clusterDir, args...)
 	if err != nil {
-		return fmt.Errorf("failed to run Terraform: %s", err)
+		return errors.Wrap(err, "failed to execute Terraform")
 	}
 	return nil
 }

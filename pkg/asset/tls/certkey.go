@@ -9,9 +9,10 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/ghodss/yaml"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -74,33 +75,27 @@ func (c *CertKey) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 	}
 
 	if c.GenSubject != nil || c.GenDNSNames != nil || c.GenIPAddresses != nil {
-		state, ok := parents[c.installConfig]
-		if !ok {
-			return nil, fmt.Errorf("failed to get install config state in the parent asset states")
+		installConfig, err := installconfig.GetInstallConfig(c.installConfig, parents)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
 		}
 
-		var installConfig types.InstallConfig
-		if err := yaml.Unmarshal(state.Contents[0].Data, &installConfig); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal install config: %v", err)
-		}
-
-		var err error
 		if c.GenSubject != nil {
-			cfg.Subject, err = c.GenSubject(&installConfig)
+			cfg.Subject, err = c.GenSubject(installConfig)
 			if err != nil {
-				return nil, fmt.Errorf("failed to generate Subject: %v", err)
+				return nil, errors.Wrap(err, "failed to generate Subject")
 			}
 		}
 		if c.GenDNSNames != nil {
-			cfg.DNSNames, err = c.GenDNSNames(&installConfig)
+			cfg.DNSNames, err = c.GenDNSNames(installConfig)
 			if err != nil {
-				return nil, fmt.Errorf("failed to generate DNSNames: %v", err)
+				return nil, errors.Wrap(err, "failed to generate DNSNames")
 			}
 		}
 		if c.GenIPAddresses != nil {
-			cfg.IPAddresses, err = c.GenIPAddresses(&installConfig)
+			cfg.IPAddresses, err = c.GenIPAddresses(installConfig)
 			if err != nil {
-				return nil, fmt.Errorf("failed to generate IPAddresses: %v", err)
+				return nil, errors.Wrap(err, "failed to generate IPAddresses")
 			}
 		}
 	}
@@ -111,17 +106,17 @@ func (c *CertKey) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 
 	state, ok := parents[c.ParentCA]
 	if !ok {
-		return nil, fmt.Errorf("failed to get parent CA %v in the parent asset states", c.ParentCA)
+		return nil, errors.Errorf("failed to get parent CA %v in the parent asset states", c.ParentCA)
 	}
 
 	caKey, caCert, err := parseCAFromAssetState(state)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse CA from asset: %v", err)
+		return nil, errors.Wrap(err, "failed to parse CA from asset")
 	}
 
 	key, crt, err = GenerateCert(caKey, caCert, cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate cert/key pair: %v", err)
+		return nil, errors.Wrap(err, "failed to generate cert/key pair")
 	}
 
 	keyData := []byte(PrivateKeyToPem(key))
@@ -156,7 +151,7 @@ func parseCAFromAssetState(ca *asset.State) (*rsa.PrivateKey, *x509.Certificate,
 	var err error
 
 	if len(ca.Contents) != 2 {
-		return nil, nil, fmt.Errorf("expect key and cert in the contents of CA, got: %v", ca)
+		return nil, nil, errors.Errorf("expected key and cert in the contents of CA, got: %v", ca)
 	}
 
 	for _, c := range ca.Contents {
@@ -164,15 +159,15 @@ func parseCAFromAssetState(ca *asset.State) (*rsa.PrivateKey, *x509.Certificate,
 		case ".key":
 			key, err = PemToPrivateKey(c.Data)
 			if err != nil {
-				return nil, nil, fmt.Errorf("failed to parse rsa private key: %v", err)
+				return nil, nil, errors.Wrap(err, "failed to parse rsa private key")
 			}
 		case ".crt":
 			cert, err = PemToCertificate(c.Data)
 			if err != nil {
-				return nil, nil, fmt.Errorf("failed to parse x509 certificate: %v", err)
+				return nil, nil, errors.Wrap(err, "failed to parse x509 certificate")
 			}
 		default:
-			return nil, nil, fmt.Errorf("unexpected content name: %v", c.Name)
+			return nil, nil, errors.Errorf("unexpected content name: %v", c.Name)
 		}
 	}
 

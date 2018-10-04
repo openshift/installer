@@ -10,6 +10,7 @@ import (
 
 	"github.com/coreos/ignition/config/util"
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -133,12 +134,12 @@ func (a *bootstrap) Dependencies() []asset.Asset {
 func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
 	installConfig, err := installconfig.GetInstallConfig(a.installConfig, dependencies)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
 	}
 
 	templateData, err := a.getTemplateData(installConfig)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get bootstrap templates")
 	}
 
 	config := igntypes.Config{
@@ -166,7 +167,7 @@ func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 
 	data, err := json.Marshal(config)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to Marshal Ignition config")
 	}
 
 	return &asset.State{
@@ -186,7 +187,7 @@ func (a *bootstrap) Name() string {
 func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootstrapTemplateData, error) {
 	clusterDNSIP, err := installconfig.ClusterDNSIP(installConfig)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get ClusterDNSIP from InstallConfig")
 	}
 	etcdEndpoints := make([]string, installConfig.MasterCount())
 	for i := range etcdEndpoints {

@@ -1,11 +1,10 @@
 package cluster
 
 import (
-	"fmt"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/types/config"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -39,7 +38,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 func (t *TerraformVariables) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
 	installCfg, err := installconfig.GetInstallConfig(t.installConfig, parents)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get install config state in the parent asset states")
+		return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
 	}
 
 	contents := map[asset.Asset][]string{}
@@ -51,7 +50,7 @@ func (t *TerraformVariables) Generate(parents map[asset.Asset]*asset.State) (*as
 	} {
 		state, ok := parents[ign]
 		if !ok {
-			return nil, fmt.Errorf("failed to get the ignition state for %v in the parent asset states", ign)
+			return nil, errors.Errorf("failed to get the ignition state for %v in the parent asset states", ign)
 		}
 
 		for _, content := range state.Contents {
@@ -72,7 +71,7 @@ func (t *TerraformVariables) Generate(parents map[asset.Asset]*asset.State) (*as
 
 	data, err := cluster.TFVars()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to get Tfvars")
 	}
 
 	return &asset.State{

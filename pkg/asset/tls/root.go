@@ -3,9 +3,9 @@ package tls
 import (
 	"crypto/x509"
 	"crypto/x509/pkix"
-	"fmt"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/pkg/errors"
 )
 
 // RootCA contains the private key and the cert that's
@@ -30,7 +30,7 @@ func (c *RootCA) Generate(parents map[asset.Asset]*asset.State) (*asset.State, e
 
 	key, crt, err := GenerateRootCertKey(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate RootCA %v", err)
+		return nil, errors.Wrap(err, "failed to generate RootCA")
 	}
 
 	return &asset.State{

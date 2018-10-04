@@ -2,10 +2,10 @@ package destroy
 
 import (
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset/metadata"
@@ -29,22 +29,22 @@ func New(logger logrus.FieldLogger, rootDir string) (Destroyer, error) {
 	path := filepath.Join(rootDir, metadata.MetadataFilename)
 	raw, err := ioutil.ReadFile(filepath.Join(rootDir, metadata.MetadataFilename))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to read %s file", metadata.MetadataFilename)
 	}
 
 	var cmetadata *types.ClusterMetadata
 	if err := json.Unmarshal(raw, &cmetadata); err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to Unmarshal data from %s file to types.ClusterMetadata", metadata.MetadataFilename)
 	}
 
 	platform := cmetadata.Platform()
 	if platform == "" {
-		return nil, fmt.Errorf("no platform configured in %q", path)
+		return nil, errors.Errorf("no platform configured in %q", path)
 	}
 
 	creator, ok := Registry[platform]
 	if !ok {
-		return nil, fmt.Errorf("no destroyers registered for %q", platform)
+		return nil, errors.Errorf("no destroyers registered for %q", platform)
 	}
 	return creator(logger, cmetadata)
 }

@@ -1,7 +1,6 @@
 package installconfig
 
 import (
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -45,7 +45,7 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 	if value, ok := os.LookupEnv("OPENSHIFT_INSTALL_SSH_PUB_KEY"); ok {
 		if value != "" {
 			if err := validateOpenSSHPublicKey(value); err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "failed to validate public key")
 			}
 		}
 		return &asset.State{
@@ -59,7 +59,7 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 	if path, ok := os.LookupEnv("OPENSHIFT_INSTALL_SSH_PUB_KEY_PATH"); ok {
 		key, err := readSSHKey(path)
 		if err != nil {
-			return nil, err
+			return nil, errors.Wrap(err, "failed to read public key file")
 		}
 		pubKeys[path] = key
 	} else {
@@ -68,7 +68,7 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 		if home != "" {
 			paths, err := filepath.Glob(filepath.Join(home, ".ssh", "*.pub"))
 			if err != nil {
-				return nil, err
+				return nil, errors.Wrap(err, "failed to glob for public key files")
 			}
 			for _, path := range paths {
 				key, err := readSSHKey(path)
@@ -111,7 +111,7 @@ func (a *sshPublicKey) Generate(map[asset.Asset]*asset.State) (state *asset.Stat
 		return nil
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed UserInput for SSH public key")
 	}
 
 	return &asset.State{

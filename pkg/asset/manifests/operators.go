@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"text/template"
 
+	"github.com/pkg/errors"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/content/bootkube"
@@ -95,7 +97,7 @@ func (m *manifests) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 		"mao-config":     string(mao.Data),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create kube-system/cluster-config-v1 configmap")
 	}
 
 	// addon goes to openshift system
@@ -103,7 +105,7 @@ func (m *manifests) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 		"addon-config": string(addon.Data),
 	})
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "failed to create tectonic-system/cluster-config-v1 configmap")
 	}
 
 	state := &asset.State{

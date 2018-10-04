@@ -93,7 +93,7 @@ func main() {
 		for _, asset := range targetAssets {
 			st, err := assetStore.Fetch(asset)
 			if err != nil {
-				logrus.Fatalf("Failed to generate asset: %v", err)
+				logrus.Fatalf("Failed to generate %s: %v", asset.Name(), err)
 			}
 
 			if err := st.PersistToFile(*dirFlag); err != nil {

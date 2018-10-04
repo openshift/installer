@@ -8,6 +8,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -100,6 +101,7 @@ func (a *Platform) Name() string {
 func (a *Platform) queryUserForPlatform() (string, error) {
 	sort.Strings(validPlatforms)
 	prompt := asset.UserProvided{
+		AssetName: "Platform",
 		Question: &survey.Question{
 			Prompt: &survey.Select{
 				Message: "Platform",
@@ -109,7 +111,7 @@ func (a *Platform) queryUserForPlatform() (string, error) {
 				choice := ans.(string)
 				i := sort.SearchStrings(validPlatforms, choice)
 				if i == len(validPlatforms) || validPlatforms[i] != choice {
-					return fmt.Errorf("invalid platform %q", choice)
+					return errors.Errorf("invalid platform %q", choice)
 				}
 				return nil
 			}),
@@ -142,6 +144,7 @@ func (a *Platform) awsPlatform() (*asset.State, error) {
 	sort.Strings(longRegions)
 	sort.Strings(shortRegions)
 	prompt := asset.UserProvided{
+		AssetName: "AWS Region",
 		Question: &survey.Question{
 			Prompt: &survey.Select{
 				Message: "Region",
@@ -153,7 +156,7 @@ func (a *Platform) awsPlatform() (*asset.State, error) {
 				choice := regionTransform(ans).(string)
 				i := sort.SearchStrings(shortRegions, choice)
 				if i == len(shortRegions) || shortRegions[i] != choice {
-					return fmt.Errorf("invalid region %q", choice)
+					return errors.Errorf("invalid region %q", choice)
 				}
 				return nil
 			}),
@@ -169,13 +172,13 @@ func (a *Platform) awsPlatform() (*asset.State, error) {
 
 	if value, ok := os.LookupEnv("_CI_ONLY_STAY_AWAY_OPENSHIFT_INSTALL_AWS_USER_TAGS"); ok {
 		if err := json.Unmarshal([]byte(value), &platform.UserTags); err != nil {
-			return nil, fmt.Errorf("_CI_ONLY_STAY_AWAY_OPENSHIFT_INSTALL_AWS_USER_TAGS contains invalid JSON: %s (%v)", value, err)
+			return nil, errors.Wrapf(err, "_CI_ONLY_STAY_AWAY_OPENSHIFT_INSTALL_AWS_USER_TAGS contains invalid JSON: %s", value)
 		}
 	}
 
 	data, err := json.Marshal(platform)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to Marshal %s platform", AWSPlatformType)
 	}
 
 	return &asset.State{
@@ -197,6 +200,7 @@ func (a *Platform) openstackPlatform() (*asset.State, error) {
 		NetworkCIDRBlock: defaultVPCCIDR,
 	}
 	prompt := asset.UserProvided{
+		AssetName: "OpenStack Region",
 		Question: &survey.Question{
 			Prompt: &survey.Select{
 				Message: "Region",
@@ -217,6 +221,7 @@ func (a *Platform) openstackPlatform() (*asset.State, error) {
 	}
 	platform.Region = string(region.Contents[0].Data)
 	prompt2 := asset.UserProvided{
+		AssetName: "OpenStack Image",
 		Question: &survey.Question{
 			Prompt: &survey.Select{
 				Message: "Image",
@@ -237,6 +242,7 @@ func (a *Platform) openstackPlatform() (*asset.State, error) {
 	}
 	platform.BaseImage = string(image.Contents[0].Data)
 	prompt3 := asset.UserProvided{
+		AssetName: "OpenStack Cloud",
 		Question: &survey.Question{
 			Prompt: &survey.Select{
 				Message: "Cloud",
@@ -256,6 +262,7 @@ func (a *Platform) openstackPlatform() (*asset.State, error) {
 	}
 	platform.Cloud = string(cloud.Contents[0].Data)
 	prompt4 := asset.UserProvided{
+		AssetName: "OpenStack External Network",
 		Question: &survey.Question{
 			Prompt: &survey.Select{
 				Message: "ExternalNetwork",
@@ -277,7 +284,7 @@ func (a *Platform) openstackPlatform() (*asset.State, error) {
 
 	data, err := json.Marshal(platform)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to Marshal %s platform", OpenStackPlatformType)
 	}
 
 	return &asset.State{
@@ -307,6 +314,7 @@ func (a *Platform) libvirtPlatform() (*asset.State, error) {
 	}
 
 	uriPrompt := asset.UserProvided{
+		AssetName: "Libvirt Connection URI",
 		Question: &survey.Question{
 			Prompt: &survey.Input{
 				Message: "Libvirt Connection URI",
@@ -323,6 +331,7 @@ func (a *Platform) libvirtPlatform() (*asset.State, error) {
 	}
 
 	imagePrompt := asset.UserProvided{
+		AssetName: "Libvirt Image",
 		Question: &survey.Question{
 			Prompt: &survey.Input{
 				Message: "Image",
@@ -342,7 +351,7 @@ func (a *Platform) libvirtPlatform() (*asset.State, error) {
 
 	data, err := json.Marshal(platform)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to Marshal %s platform", LibvirtPlatformType)
 	}
 
 	return &asset.State{

@@ -2,12 +2,12 @@ package rhcos
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
+	"github.com/pkg/errors"
 )
 
 const (
@@ -18,7 +18,7 @@ const (
 // AMI calculates a Red Hat CoreOS AMI.
 func AMI(ctx context.Context, channel, region string) (ami string, err error) {
 	if channel != DefaultChannel {
-		return "", fmt.Errorf("channel %q is not yet supported", channel)
+		return "", errors.Errorf("channel %q is not yet supported", channel)
 	}
 
 	ssn := session.Must(session.NewSessionWithOptions(session.Options{
@@ -59,7 +59,7 @@ func AMI(ctx context.Context, channel, region string) (ami string, err error) {
 		},
 	})
 	if err != nil {
-		return "", err
+		return "", errors.Wrap(err, "failed to describe AMIs")
 	}
 
 	var image *ec2.Image
@@ -70,7 +70,7 @@ func AMI(ctx context.Context, channel, region string) (ami string, err error) {
 		}
 		nextCreated, err := time.Parse(time.RFC3339, *nextImage.CreationDate)
 		if err != nil {
-			return "", err
+			return "", errors.Wrap(err, "failed to parse AMIs CreationDate to time.RFC3339")
 		}
 
 		if image == nil || nextCreated.After(created) {
@@ -80,7 +80,7 @@ func AMI(ctx context.Context, channel, region string) (ami string, err error) {
 	}
 
 	if image == nil {
-		return "", fmt.Errorf("no RHCOS AMIs found in %s", region)
+		return "", errors.Errorf("no RHCOS AMIs found in %s", region)
 	}
 
 	return *image.ImageId, nil
