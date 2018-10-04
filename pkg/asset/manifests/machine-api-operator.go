@@ -13,8 +13,6 @@ import (
 
 const (
 	maoTargetNamespace = "openshift-cluster-api"
-	// DefaultChannel is the default RHCOS channel for the cluster.
-	DefaultChannel = "tested"
 )
 
 // machineAPIOperator generates the network-operator-*.yml files
@@ -118,7 +116,7 @@ func (mao *machineAPIOperator) maoConfig(dependencies map[asset.Asset]*asset.Sta
 	if mao.installConfig.Platform.AWS != nil {
 		var ami string
 
-		ami, err := rhcos.AMI(context.TODO(), DefaultChannel, mao.installConfig.Platform.AWS.Region)
+		ami, err := rhcos.AMI(context.TODO(), rhcos.DefaultChannel, mao.installConfig.Platform.AWS.Region)
 		if err != nil {
 			return "", fmt.Errorf("failed to lookup RHCOS AMI: %v", err)
 		}
