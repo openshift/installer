@@ -36,7 +36,7 @@ func (a *master) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ignition config for the master asset.
-func (a *master) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
+func (a *master) Generate(dependencies map[string]*asset.State) (*asset.State, error) {
 	installConfig, err := installconfig.GetInstallConfig(a.installConfig, dependencies)
 	if err != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (a *master) Generate(dependencies map[asset.Asset]*asset.State) (*asset.Sta
 	}
 	for i := range state.Contents {
 		state.Contents[i].Name = fmt.Sprintf("master-%d.ign", i)
-		state.Contents[i].Data = pointerIgnitionConfig(installConfig, dependencies[a.rootCA].Contents[tls.CertIndex].Data, "master", fmt.Sprintf("etcd_index=%d", i))
+		state.Contents[i].Data = pointerIgnitionConfig(installConfig, dependencies[a.rootCA.Name()].Contents[tls.CertIndex].Data, "master", fmt.Sprintf("etcd_index=%d", i))
 	}
 
 	return state, nil

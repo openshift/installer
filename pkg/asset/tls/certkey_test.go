@@ -19,7 +19,7 @@ func (f fakeInstallConfig) Dependencies() []asset.Asset {
 	return nil
 }
 
-func (f fakeInstallConfig) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
+func (f fakeInstallConfig) Generate(map[string]*asset.State) (*asset.State, error) {
 	return &asset.State{
 		Contents: []asset.Content{
 			{
@@ -63,7 +63,7 @@ func TestCertKeyGenerate(t *testing.T) {
 		name      string
 		certKey   *CertKey
 		errString string
-		parents   map[asset.Asset]*asset.State
+		parents   map[string]*asset.State
 	}{
 		{
 			name: "simple ca",
@@ -77,8 +77,8 @@ func TestCertKeyGenerate(t *testing.T) {
 				IsCA:          true,
 				ParentCA:      root,
 			},
-			parents: map[asset.Asset]*asset.State{
-				root: rootState,
+			parents: map[string]*asset.State{
+				root.Name(): rootState,
 			},
 		},
 		{
@@ -97,9 +97,9 @@ func TestCertKeyGenerate(t *testing.T) {
 				GenDNSNames:    testGenDNSNames,
 				GenIPAddresses: testGenIPAddresses,
 			},
-			parents: map[asset.Asset]*asset.State{
-				root:          rootState,
-				installConfig: installConfigState,
+			parents: map[string]*asset.State{
+				root.Name():          rootState,
+				installConfig.Name(): installConfigState,
 			},
 		},
 		{

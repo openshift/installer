@@ -79,13 +79,13 @@ func (m *manifests) Dependencies() []asset.Asset {
 }
 
 // Generate generates the respective operator config.yml files
-func (m *manifests) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
+func (m *manifests) Generate(dependencies map[string]*asset.State) (*asset.State, error) {
 	//cvo := dependencies[m.assetStock.ClusterVersionOperator()].Contents[0]
-	kco := dependencies[m.assetStock.KubeCoreOperator()].Contents[0]
-	no := dependencies[m.assetStock.NetworkOperator()].Contents[0]
-	addon := dependencies[m.assetStock.KubeAddonOperator()].Contents[0]
-	mao := dependencies[m.assetStock.Mao()].Contents[0]
-	installConfig := dependencies[m.installConfig].Contents[0]
+	kco := dependencies[m.assetStock.KubeCoreOperator().Name()].Contents[0]
+	no := dependencies[m.assetStock.NetworkOperator().Name()].Contents[0]
+	addon := dependencies[m.assetStock.KubeAddonOperator().Name()].Contents[0]
+	mao := dependencies[m.assetStock.Mao().Name()].Contents[0]
+	installConfig := dependencies[m.installConfig.Name()].Contents[0]
 
 	// kco+no+mao go to kube-system config map
 	kubeSys, err := configMap("kube-system", "cluster-config-v1", genericData{
@@ -122,40 +122,40 @@ func (m *manifests) Generate(dependencies map[asset.Asset]*asset.State) (*asset.
 	return state, nil
 }
 
-func (m *manifests) generateBootKubeManifests(dependencies map[asset.Asset]*asset.State) []asset.Content {
+func (m *manifests) generateBootKubeManifests(dependencies map[string]*asset.State) []asset.Content {
 	ic, err := installconfig.GetInstallConfig(m.installConfig, dependencies)
 	if err != nil {
 		return nil
 	}
 	templateData := &bootkubeTemplateData{
-		AggregatorCaCert:                base64.StdEncoding.EncodeToString(dependencies[m.aggregatorCA].Contents[certIndex].Data),
-		AggregatorCaKey:                 base64.StdEncoding.EncodeToString(dependencies[m.aggregatorCA].Contents[keyIndex].Data),
-		ApiserverCert:                   base64.StdEncoding.EncodeToString(dependencies[m.apiServerCertKey].Contents[certIndex].Data),
-		ApiserverKey:                    base64.StdEncoding.EncodeToString(dependencies[m.apiServerCertKey].Contents[keyIndex].Data),
-		ApiserverProxyCert:              base64.StdEncoding.EncodeToString(dependencies[m.apiServerProxyCertKey].Contents[certIndex].Data),
-		ApiserverProxyKey:               base64.StdEncoding.EncodeToString(dependencies[m.apiServerProxyCertKey].Contents[keyIndex].Data),
+		AggregatorCaCert:                base64.StdEncoding.EncodeToString(dependencies[m.aggregatorCA.Name()].Contents[certIndex].Data),
+		AggregatorCaKey:                 base64.StdEncoding.EncodeToString(dependencies[m.aggregatorCA.Name()].Contents[keyIndex].Data),
+		ApiserverCert:                   base64.StdEncoding.EncodeToString(dependencies[m.apiServerCertKey.Name()].Contents[certIndex].Data),
+		ApiserverKey:                    base64.StdEncoding.EncodeToString(dependencies[m.apiServerCertKey.Name()].Contents[keyIndex].Data),
+		ApiserverProxyCert:              base64.StdEncoding.EncodeToString(dependencies[m.apiServerProxyCertKey.Name()].Contents[certIndex].Data),
+		ApiserverProxyKey:               base64.StdEncoding.EncodeToString(dependencies[m.apiServerProxyCertKey.Name()].Contents[keyIndex].Data),
 		Base64encodeCloudProviderConfig: "", // FIXME
-		ClusterapiCaCert:                base64.StdEncoding.EncodeToString(dependencies[m.clusterAPIServerCertKey].Contents[certIndex].Data),
-		ClusterapiCaKey:                 base64.StdEncoding.EncodeToString(dependencies[m.clusterAPIServerCertKey].Contents[keyIndex].Data),
-		EtcdCaCert:                      base64.StdEncoding.EncodeToString(dependencies[m.etcdCA].Contents[certIndex].Data),
-		EtcdClientCert:                  base64.StdEncoding.EncodeToString(dependencies[m.etcdClientCertKey].Contents[certIndex].Data),
-		EtcdClientKey:                   base64.StdEncoding.EncodeToString(dependencies[m.etcdClientCertKey].Contents[keyIndex].Data),
-		KubeCaCert:                      base64.StdEncoding.EncodeToString(dependencies[m.kubeCA].Contents[certIndex].Data),
-		KubeCaKey:                       base64.StdEncoding.EncodeToString(dependencies[m.kubeCA].Contents[keyIndex].Data),
-		McsTLSCert:                      base64.StdEncoding.EncodeToString(dependencies[m.mcsCertKey].Contents[certIndex].Data),
-		McsTLSKey:                       base64.StdEncoding.EncodeToString(dependencies[m.mcsCertKey].Contents[keyIndex].Data),
-		OidcCaCert:                      base64.StdEncoding.EncodeToString(dependencies[m.kubeCA].Contents[certIndex].Data),
-		OpenshiftApiserverCert:          base64.StdEncoding.EncodeToString(dependencies[m.openshiftAPIServerCertKey].Contents[certIndex].Data),
-		OpenshiftApiserverKey:           base64.StdEncoding.EncodeToString(dependencies[m.openshiftAPIServerCertKey].Contents[keyIndex].Data),
-		OpenshiftLoopbackKubeconfig:     base64.StdEncoding.EncodeToString(dependencies[m.kubeconfig].Contents[0].Data),
+		ClusterapiCaCert:                base64.StdEncoding.EncodeToString(dependencies[m.clusterAPIServerCertKey.Name()].Contents[certIndex].Data),
+		ClusterapiCaKey:                 base64.StdEncoding.EncodeToString(dependencies[m.clusterAPIServerCertKey.Name()].Contents[keyIndex].Data),
+		EtcdCaCert:                      base64.StdEncoding.EncodeToString(dependencies[m.etcdCA.Name()].Contents[certIndex].Data),
+		EtcdClientCert:                  base64.StdEncoding.EncodeToString(dependencies[m.etcdClientCertKey.Name()].Contents[certIndex].Data),
+		EtcdClientKey:                   base64.StdEncoding.EncodeToString(dependencies[m.etcdClientCertKey.Name()].Contents[keyIndex].Data),
+		KubeCaCert:                      base64.StdEncoding.EncodeToString(dependencies[m.kubeCA.Name()].Contents[certIndex].Data),
+		KubeCaKey:                       base64.StdEncoding.EncodeToString(dependencies[m.kubeCA.Name()].Contents[keyIndex].Data),
+		McsTLSCert:                      base64.StdEncoding.EncodeToString(dependencies[m.mcsCertKey.Name()].Contents[certIndex].Data),
+		McsTLSKey:                       base64.StdEncoding.EncodeToString(dependencies[m.mcsCertKey.Name()].Contents[keyIndex].Data),
+		OidcCaCert:                      base64.StdEncoding.EncodeToString(dependencies[m.kubeCA.Name()].Contents[certIndex].Data),
+		OpenshiftApiserverCert:          base64.StdEncoding.EncodeToString(dependencies[m.openshiftAPIServerCertKey.Name()].Contents[certIndex].Data),
+		OpenshiftApiserverKey:           base64.StdEncoding.EncodeToString(dependencies[m.openshiftAPIServerCertKey.Name()].Contents[keyIndex].Data),
+		OpenshiftLoopbackKubeconfig:     base64.StdEncoding.EncodeToString(dependencies[m.kubeconfig.Name()].Contents[0].Data),
 		PullSecret:                      base64.StdEncoding.EncodeToString([]byte(ic.PullSecret)),
-		RootCaCert:                      base64.StdEncoding.EncodeToString(dependencies[m.rootCA].Contents[certIndex].Data),
-		ServiceaccountKey:               base64.StdEncoding.EncodeToString(dependencies[m.serviceAccountKeyPair].Contents[keyIndex].Data),
-		ServiceaccountPub:               base64.StdEncoding.EncodeToString(dependencies[m.serviceAccountKeyPair].Contents[certIndex].Data),
-		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(dependencies[m.serviceServingCA].Contents[certIndex].Data),
-		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(dependencies[m.serviceServingCA].Contents[keyIndex].Data),
+		RootCaCert:                      base64.StdEncoding.EncodeToString(dependencies[m.rootCA.Name()].Contents[certIndex].Data),
+		ServiceaccountKey:               base64.StdEncoding.EncodeToString(dependencies[m.serviceAccountKeyPair.Name()].Contents[keyIndex].Data),
+		ServiceaccountPub:               base64.StdEncoding.EncodeToString(dependencies[m.serviceAccountKeyPair.Name()].Contents[certIndex].Data),
+		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(dependencies[m.serviceServingCA.Name()].Contents[certIndex].Data),
+		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(dependencies[m.serviceServingCA.Name()].Contents[keyIndex].Data),
 		TectonicNetworkOperatorImage:    "quay.io/coreos/tectonic-network-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
-		WorkerIgnConfig:                 base64.StdEncoding.EncodeToString(dependencies[m.workerIgnition].Contents[0].Data),
+		WorkerIgnConfig:                 base64.StdEncoding.EncodeToString(dependencies[m.workerIgnition.Name()].Contents[0].Data),
 		CVOClusterID:                    ic.ClusterID,
 	}
 

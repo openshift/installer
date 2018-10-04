@@ -1,6 +1,7 @@
 package machine
 
 import (
+	"fmt"
 	"github.com/openshift/installer/pkg/asset"
 )
 
@@ -12,12 +13,12 @@ func (a *testAsset) Dependencies() []asset.Asset {
 	return []asset.Asset{}
 }
 
-func (a *testAsset) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
+func (a *testAsset) Generate(map[string]*asset.State) (*asset.State, error) {
 	return nil, nil
 }
 
 func (a *testAsset) Name() string {
-	return "Test Asset"
+	return fmt.Sprintf("Test Asset (%s)", a.name)
 }
 
 func stateWithContentsData(contentsData ...string) *asset.State {

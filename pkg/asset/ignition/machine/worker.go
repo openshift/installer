@@ -34,7 +34,7 @@ func (a *worker) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ignition config for the worker asset.
-func (a *worker) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
+func (a *worker) Generate(dependencies map[string]*asset.State) (*asset.State, error) {
 	installConfig, err := installconfig.GetInstallConfig(a.installConfig, dependencies)
 	if err != nil {
 		return nil, err
@@ -43,7 +43,7 @@ func (a *worker) Generate(dependencies map[asset.Asset]*asset.State) (*asset.Sta
 	return &asset.State{
 		Contents: []asset.Content{{
 			Name: "worker.ign",
-			Data: pointerIgnitionConfig(installConfig, dependencies[a.rootCA].Contents[tls.CertIndex].Data, "worker", ""),
+			Data: pointerIgnitionConfig(installConfig, dependencies[a.rootCA.Name()].Contents[tls.CertIndex].Data, "worker", ""),
 		}},
 	}, nil
 }

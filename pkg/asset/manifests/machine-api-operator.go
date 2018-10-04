@@ -77,7 +77,7 @@ func (mao *machineAPIOperator) Dependencies() []asset.Asset {
 }
 
 // Generate generates the network-operator-config.yml and network-operator-manifest.yml files
-func (mao *machineAPIOperator) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
+func (mao *machineAPIOperator) Generate(dependencies map[string]*asset.State) (*asset.State, error) {
 	ic, err := installconfig.GetInstallConfig(mao.installConfigAsset, dependencies)
 	if err != nil {
 		return nil, err
@@ -101,7 +101,7 @@ func (mao *machineAPIOperator) Generate(dependencies map[asset.Asset]*asset.Stat
 	return state, nil
 }
 
-func (mao *machineAPIOperator) maoConfig(dependencies map[asset.Asset]*asset.State) (string, error) {
+func (mao *machineAPIOperator) maoConfig(dependencies map[string]*asset.State) (string, error) {
 	cfg := maoOperatorConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -111,7 +111,7 @@ func (mao *machineAPIOperator) maoConfig(dependencies map[asset.Asset]*asset.Sta
 		TargetNamespace: maoTargetNamespace,
 	}
 
-	ca := dependencies[mao.aggregatorCA].Contents[certIndex].Data
+	ca := dependencies[mao.aggregatorCA.Name()].Contents[certIndex].Data
 	cfg.APIServiceCA = string(ca)
 	cfg.Provider = tectonicCloudProvider(mao.installConfig.Platform)
 

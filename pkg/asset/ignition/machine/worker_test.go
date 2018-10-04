@@ -23,9 +23,9 @@ region: us-east
 		installConfig: installConfigAsset,
 		rootCA:        rootCAAsset,
 	}
-	dependencies := map[asset.Asset]*asset.State{
-		installConfigAsset: stateWithContentsData(installConfig),
-		rootCAAsset:        stateWithContentsData("test-rootCA-priv", "test-rootCA-pub"),
+	dependencies := map[string]*asset.State{
+		installConfigAsset.Name(): stateWithContentsData(installConfig),
+		rootCAAsset.Name():        stateWithContentsData("test-rootCA-priv", "test-rootCA-pub"),
 	}
 	workerState, err := worker.Generate(dependencies)
 	assert.NoError(t, err, "unexpected error generating worker asset")

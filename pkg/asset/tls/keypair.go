@@ -21,7 +21,7 @@ func (k *KeyPair) Dependencies() []asset.Asset {
 }
 
 // Generate generates the rsa private / public key pair.
-func (k *KeyPair) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
+func (k *KeyPair) Generate(map[string]*asset.State) (*asset.State, error) {
 	key, err := PrivateKey()
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate private key: %v", err)

@@ -130,7 +130,7 @@ func (a *bootstrap) Dependencies() []asset.Asset {
 }
 
 // Generate generates the ignition config for the bootstrap asset.
-func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
+func (a *bootstrap) Generate(dependencies map[string]*asset.State) (*asset.State, error) {
 	installConfig, err := installconfig.GetInstallConfig(a.installConfig, dependencies)
 	if err != nil {
 		return nil, err
@@ -214,45 +214,45 @@ func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 	}, nil
 }
 
-func (a *bootstrap) addBootstrapFiles(config *igntypes.Config, dependencies map[asset.Asset]*asset.State) {
+func (a *bootstrap) addBootstrapFiles(config *igntypes.Config, dependencies map[string]*asset.State) {
 	config.Storage.Files = append(
 		config.Storage.Files,
-		ignition.FileFromBytes("/etc/kubernetes/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
-		ignition.FileFromBytes("/var/lib/kubelet/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
+		ignition.FileFromBytes("/etc/kubernetes/kubeconfig", 0600, dependencies[a.kubeconfigKubelet.Name()].Contents[0].Data),
+		ignition.FileFromBytes("/var/lib/kubelet/kubeconfig", 0600, dependencies[a.kubeconfigKubelet.Name()].Contents[0].Data),
 	)
 	config.Storage.Files = append(
 		config.Storage.Files,
-		ignition.FilesFromContents(rootDir, 0644, dependencies[a.kubeCoreOperator].Contents)...,
+		ignition.FilesFromContents(rootDir, 0644, dependencies[a.kubeCoreOperator.Name()].Contents)...,
 	)
 }
 
-func (a *bootstrap) addBootkubeFiles(config *igntypes.Config, dependencies map[asset.Asset]*asset.State, templateData *bootstrapTemplateData) {
+func (a *bootstrap) addBootkubeFiles(config *igntypes.Config, dependencies map[string]*asset.State, templateData *bootstrapTemplateData) {
 	config.Storage.Files = append(
 		config.Storage.Files,
 		ignition.FileFromString("/opt/tectonic/bootkube.sh", 0555, applyTemplateData(content.BootkubeShFileTemplate, templateData)),
 	)
 	config.Storage.Files = append(
 		config.Storage.Files,
-		ignition.FilesFromContents(rootDir, 0600, dependencies[a.kubeconfig].Contents)...,
+		ignition.FilesFromContents(rootDir, 0600, dependencies[a.kubeconfig.Name()].Contents)...,
 	)
 	config.Storage.Files = append(
 		config.Storage.Files,
-		ignition.FilesFromContents(rootDir, 0644, dependencies[a.manifests].Contents)...,
+		ignition.FilesFromContents(rootDir, 0644, dependencies[a.manifests.Name()].Contents)...,
 	)
 }
 
-func (a *bootstrap) addTectonicFiles(config *igntypes.Config, dependencies map[asset.Asset]*asset.State, templateData *bootstrapTemplateData) {
+func (a *bootstrap) addTectonicFiles(config *igntypes.Config, dependencies map[string]*asset.State, templateData *bootstrapTemplateData) {
 	config.Storage.Files = append(
 		config.Storage.Files,
 		ignition.FileFromString("/opt/tectonic/tectonic.sh", 0555, content.TectonicShFileContents),
 	)
 	config.Storage.Files = append(
 		config.Storage.Files,
-		ignition.FilesFromContents(rootDir, 0644, dependencies[a.tectonic].Contents)...,
+		ignition.FilesFromContents(rootDir, 0644, dependencies[a.tectonic.Name()].Contents)...,
 	)
 }
 
-func (a *bootstrap) addTLSCertFiles(config *igntypes.Config, dependencies map[asset.Asset]*asset.State) {
+func (a *bootstrap) addTLSCertFiles(config *igntypes.Config, dependencies map[string]*asset.State) {
 	for _, asset := range []asset.Asset{
 		a.rootCA,
 		a.kubeCA,
@@ -269,12 +269,12 @@ func (a *bootstrap) addTLSCertFiles(config *igntypes.Config, dependencies map[as
 		a.mcsCertKey,
 		a.serviceAccountKeyPair,
 	} {
-		config.Storage.Files = append(config.Storage.Files, ignition.FilesFromContents(rootDir, 0600, dependencies[asset].Contents)...)
+		config.Storage.Files = append(config.Storage.Files, ignition.FilesFromContents(rootDir, 0600, dependencies[asset.Name()].Contents)...)
 	}
 
 	config.Storage.Files = append(
 		config.Storage.Files,
-		ignition.FileFromBytes("/etc/ssl/etcd/ca.crt", 0600, dependencies[a.etcdClientCertKey].Contents[tls.CertIndex].Data),
+		ignition.FileFromBytes("/etc/ssl/etcd/ca.crt", 0600, dependencies[a.etcdClientCertKey.Name()].Contents[tls.CertIndex].Data),
 	)
 }
 

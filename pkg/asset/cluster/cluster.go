@@ -42,8 +42,8 @@ func (c *Cluster) Dependencies() []asset.Asset {
 }
 
 // Generate launches the cluster and generates the terraform state file on disk.
-func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
-	state, ok := parents[c.tfvars]
+func (c *Cluster) Generate(parents map[string]*asset.State) (*asset.State, error) {
+	state, ok := parents[c.tfvars.Name()]
 	if !ok {
 		return nil, fmt.Errorf("failed to get terraform.tfvar state in the parent asset states")
 	}

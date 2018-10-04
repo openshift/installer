@@ -16,7 +16,7 @@ func (f fakeAsset) Dependencies() []asset.Asset {
 	return nil
 }
 
-func (f fakeAsset) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
+func (f fakeAsset) Generate(map[string]*asset.State) (*asset.State, error) {
 	return nil, nil
 }
 
@@ -85,7 +85,7 @@ metadata:
 		name         string
 		userName     string
 		certKey      asset.Asset
-		parents      map[asset.Asset]*asset.State
+		parents      map[string]*asset.State
 		errString    string
 		expectedData []byte
 	}{
@@ -93,10 +93,10 @@ metadata:
 			name:     "admin kubeconfig",
 			userName: "admin",
 			certKey:  adminCertKey,
-			parents: map[asset.Asset]*asset.State{
-				rootCA:        rootCAState,
-				adminCertKey:  adminCertState,
-				installConfig: installConfigState,
+			parents: map[string]*asset.State{
+				rootCA.Name():        rootCAState,
+				adminCertKey.Name():  adminCertState,
+				installConfig.Name(): installConfigState,
 			},
 			expectedData: []byte(`clusters:
 - cluster:
@@ -121,10 +121,10 @@ users:
 			name:     "kubelet kubeconfig",
 			userName: "kubelet",
 			certKey:  kubeletCertKey,
-			parents: map[asset.Asset]*asset.State{
-				rootCA:         rootCAState,
-				kubeletCertKey: kubeletCertState,
-				installConfig:  installConfigState,
+			parents: map[string]*asset.State{
+				rootCA.Name():         rootCAState,
+				kubeletCertKey.Name(): kubeletCertState,
+				installConfig.Name():  installConfigState,
 			},
 			expectedData: []byte(`clusters:
 - cluster:
@@ -149,9 +149,9 @@ users:
 			name:     "no root ca",
 			userName: "admin", // No root ca in parents.
 			certKey:  adminCertKey,
-			parents: map[asset.Asset]*asset.State{
-				adminCertKey:  adminCertState,
-				installConfig: installConfigState,
+			parents: map[string]*asset.State{
+				adminCertKey.Name():  adminCertState,
+				installConfig.Name(): installConfigState,
 			},
 			errString:    "failed to find kubeconfig.fakeAsset in parents",
 			expectedData: nil,
@@ -160,10 +160,10 @@ users:
 			name:     "no admin certs",
 			userName: "admin", // No admin cert in parents.
 			certKey:  adminCertKey,
-			parents: map[asset.Asset]*asset.State{
-				rootCA:         rootCAState,
-				kubeletCertKey: kubeletCertState,
-				installConfig:  installConfigState,
+			parents: map[string]*asset.State{
+				rootCA.Name():         rootCAState,
+				kubeletCertKey.Name(): kubeletCertState,
+				installConfig.Name():  installConfigState,
 			},
 			errString:    "failed to find kubeconfig.fakeAsset in parents",
 			expectedData: nil,
@@ -172,10 +172,10 @@ users:
 			name:     "no kubelet certs",
 			userName: "kubelet", // No kubelet cert in parents.
 			certKey:  kubeletCertKey,
-			parents: map[asset.Asset]*asset.State{
-				rootCA:        rootCAState,
-				adminCertKey:  adminCertState,
-				installConfig: installConfigState,
+			parents: map[string]*asset.State{
+				rootCA.Name():        rootCAState,
+				adminCertKey.Name():  adminCertState,
+				installConfig.Name(): installConfigState,
 			},
 			errString:    "failed to find kubeconfig.fakeAsset in parents",
 			expectedData: nil,
@@ -184,9 +184,9 @@ users:
 			name:     "no install config",
 			userName: "admin", // No install config in parents.
 			certKey:  adminCertKey,
-			parents: map[asset.Asset]*asset.State{
-				rootCA:       rootCAState,
-				adminCertKey: adminCertState,
+			parents: map[string]*asset.State{
+				rootCA.Name():       rootCAState,
+				adminCertKey.Name(): adminCertState,
 			},
 			errString:    "failed to find kubeconfig.fakeAsset in parents",
 			expectedData: nil,

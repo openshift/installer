@@ -43,14 +43,14 @@ func (a *installConfig) Dependencies() []asset.Asset {
 }
 
 // Generate generates the install-config.yml file.
-func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
-	clusterID := string(dependencies[a.assetStock.ClusterID()].Contents[0].Data)
-	emailAddress := string(dependencies[a.assetStock.EmailAddress()].Contents[0].Data)
-	password := string(dependencies[a.assetStock.Password()].Contents[0].Data)
-	sshKey := string(dependencies[a.assetStock.SSHKey()].Contents[0].Data)
-	baseDomain := string(dependencies[a.assetStock.BaseDomain()].Contents[0].Data)
-	clusterName := string(dependencies[a.assetStock.ClusterName()].Contents[0].Data)
-	pullSecret := string(dependencies[a.assetStock.PullSecret()].Contents[0].Data)
+func (a *installConfig) Generate(dependencies map[string]*asset.State) (*asset.State, error) {
+	clusterID := string(dependencies[a.assetStock.ClusterID().Name()].Contents[0].Data)
+	emailAddress := string(dependencies[a.assetStock.EmailAddress().Name()].Contents[0].Data)
+	password := string(dependencies[a.assetStock.Password().Name()].Contents[0].Data)
+	sshKey := string(dependencies[a.assetStock.SSHKey().Name()].Contents[0].Data)
+	baseDomain := string(dependencies[a.assetStock.BaseDomain().Name()].Contents[0].Data)
+	clusterName := string(dependencies[a.assetStock.ClusterName().Name()].Contents[0].Data)
+	pullSecret := string(dependencies[a.assetStock.PullSecret().Name()].Contents[0].Data)
 
 	installConfig := types.InstallConfig{
 		ObjectMeta: metav1.ObjectMeta{
@@ -78,7 +78,7 @@ func (a *installConfig) Generate(dependencies map[asset.Asset]*asset.State) (*as
 		PullSecret: pullSecret,
 	}
 
-	platformState := dependencies[a.assetStock.Platform()]
+	platformState := dependencies[a.assetStock.Platform().Name()]
 	platform := string(platformState.Contents[0].Data)
 	switch platform {
 	case AWSPlatformType:
@@ -150,10 +150,10 @@ func (a installConfig) Name() string {
 }
 
 // GetInstallConfig returns the *types.InstallConfig from the parent asset map.
-func GetInstallConfig(installConfig asset.Asset, parents map[asset.Asset]*asset.State) (*types.InstallConfig, error) {
+func GetInstallConfig(installConfig asset.Asset, parents map[string]*asset.State) (*types.InstallConfig, error) {
 	var cfg types.InstallConfig
 
-	st, ok := parents[installConfig]
+	st, ok := parents[installConfig.Name()]
 	if !ok {
 		return nil, fmt.Errorf("failed to find %T in parents", installConfig)
 	}

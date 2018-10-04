@@ -16,7 +16,7 @@ func (a *clusterID) Dependencies() []asset.Asset {
 }
 
 // Generate generates a new UUID
-func (a *clusterID) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
+func (a *clusterID) Generate(map[string]*asset.State) (*asset.State, error) {
 	return &asset.State{
 		Contents: []asset.Content{
 			{Data: []byte(uuid.New())},

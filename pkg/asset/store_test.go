@@ -24,7 +24,7 @@ func (a *testAsset) Dependencies() []Asset {
 	return a.dependencies
 }
 
-func (a *testAsset) Generate(map[Asset]*State) (*State, error) {
+func (a *testAsset) Generate(map[string]*State) (*State, error) {
 	a.generationLog.logGeneration(a)
 	return nil, nil
 }

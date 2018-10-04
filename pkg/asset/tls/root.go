@@ -20,7 +20,7 @@ func (c *RootCA) Dependencies() []asset.Asset {
 }
 
 // Generate generates the root-ca key and cert pair.
-func (c *RootCA) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
+func (c *RootCA) Generate(parents map[string]*asset.State) (*asset.State, error) {
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,

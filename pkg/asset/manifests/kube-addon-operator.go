@@ -35,7 +35,7 @@ func (kao *kubeAddonOperator) Dependencies() []asset.Asset {
 }
 
 // Generate generates the network-operator-config.yml and network-operator-manifest.yml files
-func (kao *kubeAddonOperator) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
+func (kao *kubeAddonOperator) Generate(dependencies map[string]*asset.State) (*asset.State, error) {
 	ic, err := installconfig.GetInstallConfig(kao.installConfigAsset, dependencies)
 	if err != nil {
 		return nil, err

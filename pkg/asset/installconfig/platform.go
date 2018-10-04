@@ -74,7 +74,7 @@ func (a *Platform) Dependencies() []asset.Asset {
 }
 
 // Generate queries for input from the user.
-func (a *Platform) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
+func (a *Platform) Generate(map[string]*asset.State) (*asset.State, error) {
 	platform, err := a.queryUserForPlatform()
 	if err != nil {
 		return nil, err

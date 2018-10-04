@@ -23,7 +23,7 @@ func (a *UserProvided) Dependencies() []Asset {
 }
 
 // Generate queries for input from the user.
-func (a *UserProvided) Generate(map[Asset]*State) (*State, error) {
+func (a *UserProvided) Generate(map[string]*State) (*State, error) {
 	var response string
 
 	if value, ok := os.LookupEnv(a.EnvVarName); ok {
