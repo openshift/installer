@@ -51,7 +51,7 @@ var (
 	defaultVPCCIDR = "10.0.0.0/16"
 
 	defaultLibvirtNetworkIfName  = "tt0"
-	defaultLibvirtNetworkIPRange = "192.168.124.0/24"
+	defaultLibvirtNetworkIPRange = "192.168.126.0/24"
 	defaultLibvirtImageURL       = "http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz"
 )
 
