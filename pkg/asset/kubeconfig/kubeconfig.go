@@ -42,27 +42,6 @@ func (k *Kubeconfig) Dependencies() []asset.Asset {
 
 // Generate generates the kubeconfig.
 func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
-	caCertData, err := asset.GetDataByFilename(k.rootCA, parents, tls.RootCACertName)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get RootCA from parents")
-	}
-
-	var keyFilename, certFilename, kubeconfigSuffix string
-	switch k.userName {
-	case KubeconfigUserNameAdmin:
-		keyFilename, certFilename = tls.AdminKeyName, tls.AdminCertName
-	case KubeconfigUserNameKubelet:
-		keyFilename, certFilename = tls.KubeletKeyName, tls.KubeletCertName
-		kubeconfigSuffix = fmt.Sprintf("-%s", KubeconfigUserNameKubelet)
-	}
-	clientKeyData, err := asset.GetDataByFilename(k.certKey, parents, keyFilename)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get client certificate from parents")
-	}
-	clientCertData, err := asset.GetDataByFilename(k.certKey, parents, certFilename)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get client key from parents")
-	}
 	installConfig, err := installconfig.GetInstallConfig(k.installConfig, parents)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
@@ -74,7 +53,7 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 				Name: installConfig.Name,
 				Cluster: clientcmd.Cluster{
 					Server: fmt.Sprintf("https://%s-api.%s:6443", installConfig.Name, installConfig.BaseDomain),
-					CertificateAuthorityData: caCertData,
+					CertificateAuthorityData: parents[k.rootCA].Contents[tls.CertIndex].Data,
 				},
 			},
 		},
@@ -82,8 +61,8 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 			{
 				Name: k.userName,
 				AuthInfo: clientcmd.AuthInfo{
-					ClientCertificateData: clientCertData,
-					ClientKeyData:         clientKeyData,
+					ClientCertificateData: parents[k.certKey].Contents[tls.CertIndex].Data,
+					ClientKeyData:         parents[k.certKey].Contents[tls.KeyIndex].Data,
 				},
 			},
 		},
@@ -104,11 +83,18 @@ func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.Stat
 		return nil, errors.Wrap(err, "failed to Marshal kubeconfig")
 	}
 
+	var kubeconfigName string
+	switch k.userName {
+	case KubeconfigUserNameAdmin:
+		kubeconfigName = "kubeconfig"
+	default:
+		kubeconfigName = fmt.Sprintf("kubeconfig-%s", k.userName)
+	}
+
 	return &asset.State{
 		Contents: []asset.Content{
 			{
-				// E.g. generated/auth/kubeconfig-admin.
-				Name: filepath.Join("auth", "kubeconfig"+kubeconfigSuffix),
+				Name: filepath.Join("auth", kubeconfigName),
 				Data: data,
 			},
 		},
