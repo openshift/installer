@@ -32,6 +32,9 @@ mkdir --parents /etc/kubernetes/manifests/
 MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-operator)
 echo "Found Machine Config Operator's image: $MACHINE_CONFIG_OPERATOR_IMAGE"
 
+KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-apiserver-operator)
+KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-controller-manager-operator)
+
 if [ ! -d cvo-bootstrap ]
 then
 	echo "Rendering Cluster Version Operator Manifests..."
@@ -63,6 +66,46 @@ then
 	cp --recursive kco-bootstrap/bootstrap-configs /etc/kubernetes/bootstrap-configs
 	cp --recursive kco-bootstrap/bootstrap-manifests .
 	cp --recursive kco-bootstrap/manifests .
+fi
+
+if [ ! -d kube-apiserver-bootstrap ]
+then
+	echo "Rendering Kubernetes API server core manifests..."
+
+	# shellcheck disable=SC2154
+	podman run \
+		--volume "$PWD:/assets:z" \
+		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-kube-apiserver-operator render \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/kube-apiserver-bootstrap \
+		--config-override-file=/usr/share/bootkube/manifests/config/config-overrides.yaml \
+		--config-output-file=/assets/kube-apiserver-bootstrap/config
+
+	# TODO: copy the bootstrap manifests to replace kube-core-operator
+	cp --recursive kube-apiserver-bootstrap/manifests/openshift-kube-apiserver-ns.yaml manifests/00_openshift-kube-apiserver-ns.yaml
+	cp --recursive kube-apiserver-bootstrap/manifests/secret-* manifests/
+	cp --recursive kube-apiserver-bootstrap/manifests/configmap-* manifests/
+fi
+
+if [ ! -d kube-controller-manager-bootstrap ]
+then
+	echo "Rendering Kubernetes Controller Manager core manifests..."
+
+	# shellcheck disable=SC2154
+	podman run \
+		--volume "$PWD:/assets:z" \
+		"${KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-kube-controller-manager-operator render \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
+		--config-override-file=/usr/share/bootkube/manifests/config/config-overrides.yaml \
+		--config-output-file=/assets/kube-controller-manager-bootstrap/config
+
+	# TODO: copy the bootstrap manifests to replace kube-core-operator
+	cp --recursive kube-controller-manager-bootstrap/manifests/openshift-kube-controller-manager-ns.yaml manifests/00_openshift-kube-controller-manager-ns.yaml
+	cp --recursive kube-controller-manager-bootstrap/manifests/secret-* manifests/
+	cp --recursive kube-controller-manager-bootstrap/manifests/configmap-* manifests/
 fi
 
 if [ ! -d mco-bootstrap ]
