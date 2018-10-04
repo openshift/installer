@@ -312,6 +312,18 @@ Depending on your libvirt version you might encounter [a race condition][bugzill
 ```
 This is also being [tracked on the libvirt-terraform-provider][tfprovider_libvirt_race] but is likely not fixable on the client side, which is why you should upgrade libvirt to >=4.5 or a patched version, depending on your environment.
 
+### `Error creating libvirt volume for Ignition worker.ign`
+On rerunning install command, `bin/openshift-install cluster --log-level=debug`, even after doing a `cluster-destroy`, following error is shown:
+```
+* module.libvirt_base_volume.libvirt_volume.coreos_base: 1 error(s) occurred:
+
+* libvirt_volume.coreos_base: storage volume 'coreos_base' already exists
+* libvirt_ignition.worker: 1 error(s) occurred:
+
+* libvirt_ignition.worker: Error creating libvirt volume for Ignition worker.ign: virError(Code=90, Domain=18, Message='storage volume 'worker.ign' exists already')
+```
+Run cleanup script, ` sudo ./scripts/maintenance/virsh-cleanup.sh`, before running ``bin/openshift-install cluster`
+
 ### MacOS support currently broken
 * Support for libvirt on Mac OS [is currently broken and being worked on][brokenmacosissue201].
 
