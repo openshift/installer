@@ -9,13 +9,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 )
 
-const (
-	// keyCertAssetKeyIndex is the index of the private key in a key-pair asset.
-	keyCertAssetKeyIndex = 0
-	// keyCertAssetCrtIndex is the index of the public key in a key-pair asset.
-	keyCertAssetCrtIndex = 1
-)
-
 // FilesFromContents creates an ignition-config file with the contents from the
 // specified index in the specified asset state.
 func FilesFromContents(pathPrefix string, mode int, contents []asset.Content) []ignition.File {
