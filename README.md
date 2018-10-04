@@ -10,7 +10,7 @@
 
 First, install all [build dependencies](docs/dev/dependencies.md).
 
-After cloning this repository, the installer binary will need to be built by running the following:
+After cloning this repository into your `GOPATH`, build the installer binary with:
 
 ```sh
 hack/build.sh
