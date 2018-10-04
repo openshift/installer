@@ -15,7 +15,7 @@ type Store interface {
 
 // StoreImpl is the implementation of Store.
 type StoreImpl struct {
-	assets map[Asset]*State
+	assets map[string]*State
 }
 
 // Fetch retrieves the state of the given asset, generating it and its
@@ -26,14 +26,14 @@ func (s *StoreImpl) Fetch(asset Asset) (*State, error) {
 
 func (s *StoreImpl) fetch(asset Asset, indent string) (*State, error) {
 	logrus.Debugf("%sFetching %s...", indent, asset.Name())
-	state, ok := s.assets[asset]
+	state, ok := s.assets[asset.Name()]
 	if ok {
 		logrus.Debugf("%sFound %s...", indent, asset.Name())
 		return state, nil
 	}
 
 	dependencies := asset.Dependencies()
-	dependenciesStates := make(map[Asset]*State, len(dependencies))
+	dependenciesStates := make(map[string]*State, len(dependencies))
 	if len(dependencies) > 0 {
 		logrus.Debugf("%sGenerating dependencies of %s...", indent, asset.Name())
 	}
@@ -42,7 +42,7 @@ func (s *StoreImpl) fetch(asset Asset, indent string) (*State, error) {
 		if err != nil {
 			return nil, err
 		}
-		dependenciesStates[d] = ds
+		dependenciesStates[d.Name()] = ds
 	}
 
 	logrus.Debugf("%sGenerating %s...", indent, asset.Name())
@@ -51,8 +51,8 @@ func (s *StoreImpl) fetch(asset Asset, indent string) (*State, error) {
 		return nil, fmt.Errorf("failed to generate asset %q: %v", asset.Name(), err)
 	}
 	if s.assets == nil {
-		s.assets = make(map[Asset]*State)
+		s.assets = make(map[string]*State)
 	}
-	s.assets[asset] = state
+	s.assets[asset.Name()] = state
 	return state, nil
 }

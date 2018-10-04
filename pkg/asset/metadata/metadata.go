@@ -34,7 +34,7 @@ func (m *Metadata) Dependencies() []asset.Asset {
 }
 
 // Generate generates the metadata.yaml file.
-func (m *Metadata) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
+func (m *Metadata) Generate(parents map[string]*asset.State) (*asset.State, error) {
 	installCfg, err := installconfig.GetInstallConfig(m.installConfig, parents)
 	if err != nil {
 		return nil, err

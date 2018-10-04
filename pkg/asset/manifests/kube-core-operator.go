@@ -43,7 +43,7 @@ func (kco *kubeCoreOperator) Dependencies() []asset.Asset {
 }
 
 // Generate generates the kube-core-operator-config.yml files
-func (kco *kubeCoreOperator) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
+func (kco *kubeCoreOperator) Generate(dependencies map[string]*asset.State) (*asset.State, error) {
 	ic, err := installconfig.GetInstallConfig(kco.installConfigAsset, dependencies)
 	if err != nil {
 		return nil, err

@@ -64,7 +64,7 @@ func (c *CertKey) Dependencies() []asset.Asset {
 }
 
 // Generate generates the cert/key pair based on its dependencies.
-func (c *CertKey) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
+func (c *CertKey) Generate(parents map[string]*asset.State) (*asset.State, error) {
 	cfg := &CertCfg{
 		Subject:      c.Subject,
 		KeyUsages:    c.KeyUsages,
@@ -74,7 +74,7 @@ func (c *CertKey) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 	}
 
 	if c.GenSubject != nil || c.GenDNSNames != nil || c.GenIPAddresses != nil {
-		state, ok := parents[c.installConfig]
+		state, ok := parents[c.installConfig.Name()]
 		if !ok {
 			return nil, fmt.Errorf("failed to get install config state in the parent asset states")
 		}
@@ -90,6 +90,8 @@ func (c *CertKey) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 			if err != nil {
 				return nil, fmt.Errorf("failed to generate Subject: %v", err)
 			}
+			// assign it to the asset object also so that Name() can be generated correctly
+			c.Subject = cfg.Subject
 		}
 		if c.GenDNSNames != nil {
 			cfg.DNSNames, err = c.GenDNSNames(&installConfig)
@@ -109,7 +111,7 @@ func (c *CertKey) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 	var crt *x509.Certificate
 	var err error
 
-	state, ok := parents[c.ParentCA]
+	state, ok := parents[c.ParentCA.Name()]
 	if !ok {
 		return nil, fmt.Errorf("failed to get parent CA %v in the parent asset states", c.ParentCA)
 	}

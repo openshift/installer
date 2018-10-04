@@ -35,14 +35,14 @@ func (t *tectonic) Dependencies() []asset.Asset {
 }
 
 // Generate generates the respective operator config.yml files
-func (t *tectonic) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
+func (t *tectonic) Generate(dependencies map[string]*asset.State) (*asset.State, error) {
 	ic, err := installconfig.GetInstallConfig(t.installConfig, dependencies)
 	if err != nil {
 		return nil, err
 	}
-	ingressContents := dependencies[t.ingressCertKey].Contents
+	ingressContents := dependencies[t.ingressCertKey.Name()].Contents
 	templateData := &tectonicTemplateData{
-		IngressCaCert:                          base64.StdEncoding.EncodeToString(dependencies[t.kubeCA].Contents[certIndex].Data),
+		IngressCaCert:                          base64.StdEncoding.EncodeToString(dependencies[t.kubeCA.Name()].Contents[certIndex].Data),
 		IngressKind:                            "haproxy-router",
 		IngressStatusPassword:                  ic.Admin.Password, // FIXME: generate a new random one instead?
 		IngressTLSBundle:                       base64.StdEncoding.EncodeToString(bytes.Join([][]byte{ingressContents[certIndex].Data, ingressContents[keyIndex].Data}, []byte{})),

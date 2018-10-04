@@ -19,7 +19,7 @@ func (a *testAsset) Dependencies() []asset.Asset {
 	return []asset.Asset{}
 }
 
-func (a *testAsset) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
+func (a *testAsset) Generate(map[string]*asset.State) (*asset.State, error) {
 	return nil, nil
 }
 

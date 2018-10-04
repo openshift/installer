@@ -39,7 +39,7 @@ func (k *Kubeconfig) Dependencies() []asset.Asset {
 }
 
 // Generate generates the kubeconfig.
-func (k *Kubeconfig) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
+func (k *Kubeconfig) Generate(parents map[string]*asset.State) (*asset.State, error) {
 	var err error
 
 	caCertData, err := asset.GetDataByFilename(k.rootCA, parents, tls.RootCACertName)

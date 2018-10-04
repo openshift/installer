@@ -36,7 +36,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 }
 
 // Generate generates the terraform.tfvars file.
-func (t *TerraformVariables) Generate(parents map[asset.Asset]*asset.State) (*asset.State, error) {
+func (t *TerraformVariables) Generate(parents map[string]*asset.State) (*asset.State, error) {
 	installCfg, err := installconfig.GetInstallConfig(t.installConfig, parents)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get install config state in the parent asset states")
@@ -49,7 +49,7 @@ func (t *TerraformVariables) Generate(parents map[asset.Asset]*asset.State) (*as
 		t.masterIgnition,
 		t.workerIgnition,
 	} {
-		state, ok := parents[ign]
+		state, ok := parents[ign.Name()]
 		if !ok {
 			return nil, fmt.Errorf("failed to get the ignition state for %v in the parent asset states", ign)
 		}

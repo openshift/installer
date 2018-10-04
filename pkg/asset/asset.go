@@ -11,7 +11,7 @@ type Asset interface {
 	Dependencies() []Asset
 
 	// Generate generates this asset given the states of its dependent assets.
-	Generate(map[Asset]*State) (*State, error)
+	Generate(map[string]*State) (*State, error)
 
 	// Name returns the human-friendly name of the asset.
 	Name() string
@@ -19,8 +19,8 @@ type Asset interface {
 
 // GetDataByFilename searches the file in the asset.State.Contents, and returns its data.
 // filename is the base name of the file.
-func GetDataByFilename(a Asset, parents map[Asset]*State, filename string) ([]byte, error) {
-	st, ok := parents[a]
+func GetDataByFilename(a Asset, parents map[string]*State, filename string) ([]byte, error) {
+	st, ok := parents[a.Name()]
 	if !ok {
 		return nil, fmt.Errorf("failed to find %T in parents", a)
 	}
