@@ -156,6 +156,7 @@ func (m *manifests) generateBootKubeManifests(dependencies map[asset.Asset]*asse
 		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(dependencies[m.serviceServingCA].Contents[keyIndex].Data),
 		TectonicNetworkOperatorImage:    "quay.io/coreos/tectonic-network-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
 		WorkerIgnConfig:                 base64.StdEncoding.EncodeToString(dependencies[m.workerIgnition].Contents[0].Data),
+		CVOClusterID:                    ic.ClusterID,
 	}
 
 	assetData := map[string][]byte{
@@ -168,6 +169,7 @@ func (m *manifests) generateBootKubeManifests(dependencies map[asset.Asset]*asse
 		"openshift-apiserver-secret.yaml":       applyTemplateData(bootkube.OpenshiftApiserverSecret, templateData),
 		"pull.json":                             applyTemplateData(bootkube.Pull, templateData),
 		"tectonic-network-operator.yaml":        applyTemplateData(bootkube.TectonicNetworkOperator, templateData),
+		"cvo-overrides.yaml":                    applyTemplateData(bootkube.CVOOverrides, templateData),
 
 		"01-tectonic-namespace.yaml":                       []byte(bootkube.TectonicNamespace),
 		"02-ingress-namespace.yaml":                        []byte(bootkube.IngressNamespace),

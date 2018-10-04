@@ -29,6 +29,7 @@ type bootkubeTemplateData struct {
 	ServiceServingCaKey             string
 	TectonicNetworkOperatorImage    string
 	WorkerIgnConfig                 string
+	CVOClusterID                    string
 }
 
 type tectonicTemplateData struct {
