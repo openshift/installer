@@ -2,17 +2,17 @@ provider "libvirt" {
   uri = "${var.tectonic_libvirt_uri}"
 }
 
-module "libvirt_base_volume" {
-  source = "./volume"
-
-  image = "${var.tectonic_os_image}"
+resource "libvirt_volume" "base" {
+  name   = "coreos_base"
+  source = "${var.tectonic_os_image}"
+  size   = 17179869184
 }
 
 module "bootstrap" {
   source = "./bootstrap"
 
   addresses      = ["${var.tectonic_libvirt_bootstrap_ip}"]
-  base_volume_id = "${module.libvirt_base_volume.coreos_base_volume_id}"
+  base_volume_id = "${libvirt_volume.base.id}"
   cluster_name   = "${var.tectonic_cluster_name}"
   ignition       = "${var.ignition_bootstrap}"
   network_id     = "${libvirt_network.tectonic_net.id}"
@@ -21,7 +21,7 @@ module "bootstrap" {
 resource "libvirt_volume" "master" {
   count          = "${var.tectonic_master_count}"
   name           = "master${count.index}"
-  base_volume_id = "${module.libvirt_base_volume.coreos_base_volume_id}"
+  base_volume_id = "${libvirt_volume.base.id}"
 }
 
 resource "libvirt_ignition" "master" {
