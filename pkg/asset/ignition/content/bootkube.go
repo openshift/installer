@@ -34,6 +34,7 @@ echo "Found Machine Config Operator's image: $MACHINE_CONFIG_OPERATOR_IMAGE"
 
 KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-apiserver-operator)
 KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-controller-manager-operator)
+KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-scheduler-operator)
 
 if [ ! -d cvo-bootstrap ]
 then
@@ -106,6 +107,26 @@ then
 	cp --recursive kube-controller-manager-bootstrap/manifests/openshift-kube-controller-manager-ns.yaml manifests/00_openshift-kube-controller-manager-ns.yaml
 	cp --recursive kube-controller-manager-bootstrap/manifests/secret-* manifests/
 	cp --recursive kube-controller-manager-bootstrap/manifests/configmap-* manifests/
+fi
+
+if [ ! -d kube-scheduler-bootstrap ]
+then
+        echo "Rendering Kubernetes Scheduler core manifests..."
+
+        # shellcheck disable=SC2154
+        podman run \
+                --volume "$PWD:/assets:z" \
+                "${KUBE_SCHEDULER_OPERATOR_IMAGE}" \
+                /usr/bin/cluster-kube-scheduler-operator render \
+                --asset-input-dir=/assets/tls \
+                --asset-output-dir=/assets/kube-scheduler-bootstrap \
+                --config-override-file=/usr/share/bootkube/manifests/config/config-overrides.yaml \
+                --config-output-file=/assets/kube-scheduler-bootstrap/config
+
+        # TODO: copy the bootstrap manifests to replace kube-core-operator
+        cp --recursive kube-scheduler-bootstrap/manifests/openshift-kube-scheduler-ns.yaml manifests/00_openshift-kube-scheduler-ns.yaml
+        cp --recursive kube-scheduler-bootstrap/manifests/secret-* manifests/
+        cp --recursive kube-scheduler-bootstrap/manifests/configmap-* manifests/
 fi
 
 if [ ! -d mco-bootstrap ]
