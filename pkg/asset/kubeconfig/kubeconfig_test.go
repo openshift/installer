@@ -1,7 +1,6 @@
 package kubeconfig
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -86,7 +85,6 @@ metadata:
 		userName     string
 		certKey      asset.Asset
 		parents      map[asset.Asset]*asset.State
-		errString    string
 		expectedData []byte
 	}{
 		{
@@ -145,52 +143,6 @@ users:
     client-key-data: VEhJUyBJUyBLVUJFTEVUIEtFWSBEQVRB
 `),
 		},
-		{
-			name:     "no root ca",
-			userName: "admin", // No root ca in parents.
-			certKey:  adminCertKey,
-			parents: map[asset.Asset]*asset.State{
-				adminCertKey:  adminCertState,
-				installConfig: installConfigState,
-			},
-			errString:    "failed to get RootCA from parents: failed to find kubeconfig.fakeAsset in parents",
-			expectedData: nil,
-		},
-		{
-			name:     "no admin certs",
-			userName: "admin", // No admin cert in parents.
-			certKey:  adminCertKey,
-			parents: map[asset.Asset]*asset.State{
-				rootCA:         rootCAState,
-				kubeletCertKey: kubeletCertState,
-				installConfig:  installConfigState,
-			},
-			errString:    "failed to get client certificate from parents: failed to find kubeconfig.fakeAsset in parents",
-			expectedData: nil,
-		},
-		{
-			name:     "no kubelet certs",
-			userName: "kubelet", // No kubelet cert in parents.
-			certKey:  kubeletCertKey,
-			parents: map[asset.Asset]*asset.State{
-				rootCA:        rootCAState,
-				adminCertKey:  adminCertState,
-				installConfig: installConfigState,
-			},
-			errString:    "failed to get client certificate from parents: failed to find kubeconfig.fakeAsset in parents",
-			expectedData: nil,
-		},
-		{
-			name:     "no install config",
-			userName: "admin", // No install config in parents.
-			certKey:  adminCertKey,
-			parents: map[asset.Asset]*asset.State{
-				rootCA:       rootCAState,
-				adminCertKey: adminCertState,
-			},
-			errString:    "failed to get InstallConfig from parents: kubeconfig.fakeAsset does not exist in parents",
-			expectedData: nil,
-		},
 	}
 
 	for _, tt := range tests {
@@ -202,14 +154,10 @@ users:
 				installConfig: installConfig,
 			}
 			st, err := kubeconfig.Generate(tt.parents)
-			if err != nil {
-				assert.EqualErrorf(t, err, tt.errString, fmt.Sprintf("expected %v, saw %v", tt.errString, err))
-				return
-			} else if tt.errString != "" {
-				t.Errorf("expect error %v, saw nil", tt.errString)
+			assert.Nil(t, err)
+			if assert.NotNil(t, st) {
+				assert.Equal(t, tt.expectedData, st.Contents[0].Data, "unexpected data in kubeconfig")
 			}
-
-			assert.Equal(t, tt.expectedData, st.Contents[0].Data, "unexpected data in kubeconfig")
 		})
 	}
 
