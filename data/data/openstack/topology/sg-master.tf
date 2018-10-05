@@ -2,15 +2,6 @@ resource "openstack_networking_secgroup_v2" "master" {
   name = "master"
 }
 
-resource "openstack_networking_secgroup_rule_v2" "master_egress" {
-  direction         = "egress"
-  ethertype         = "IPv4"
-  port_range_min    = 0
-  port_range_max    = 0
-  remote_ip_prefix  = "0.0.0.0/0"
-  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
-}
-
 resource "openstack_networking_secgroup_rule_v2" "master_mcs" {
   direction         = "ingress"
   ethertype         = "IPv4"
