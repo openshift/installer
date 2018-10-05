@@ -1,12 +1,16 @@
 package manifests
 
 import (
+	"bufio"
 	"encoding/base64"
+	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -16,6 +20,7 @@ import (
 
 const (
 	tectonicManifestDir = "tectonic"
+	openStackCredsFile  = "/etc/openstack/clouds.yaml"
 )
 
 var (
@@ -57,10 +62,37 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 	master := &machines.Master{}
 	addon := &kubeAddonOperator{}
 	dependencies.Get(installConfig, clusterk8sio, worker, master, addon)
+	var cloudCreds cloudCredsSecretData
+	platform := installConfig.Config.Platform.Name()
+	switch platform {
+	case "aws":
+		p := credentials.SharedCredentialsProvider{}
+		creds, err := p.Retrieve()
+		if err != nil {
+			return err
+		}
+		cloudCreds = cloudCredsSecretData{
+			AWS: &AwsCredsSecretData{
+				Base64encodeAccessKeyID:     base64.StdEncoding.EncodeToString([]byte(creds.AccessKeyID)),
+				Base64encodeSecretAccessKey: base64.StdEncoding.EncodeToString([]byte(creds.SecretAccessKey)),
+			},
+		}
+	case "openstack":
+		credsEncoded, err := credsFileEncode(openStackCredsFile)
+		if err != nil {
+			return err
+		}
+		cloudCreds = cloudCredsSecretData{
+			OpenStack: &OpenStackCredsSecretData{
+				Base64encodeCloudCreds: credsEncoded,
+			},
+		}
+	}
 
 	templateData := &tectonicTemplateData{
 		KubeAddonOperatorImage: "quay.io/coreos/kube-addon-operator-dev:70cae49142ff69e83ed7b41fa81a585b02cdea7d",
 		PullSecret:             base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+		CloudCreds:             cloudCreds,
 	}
 
 	assetData := map[string][]byte{
@@ -76,6 +108,12 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 		"99_role-user.yaml":                                      []byte(content.RoleUser),
 		"99_tectonic-system-00-binding-admin.yaml":               []byte(content.BindingAdmin),
 		"99_tectonic-system-02-pull.json":                        applyTemplateData(content.PullTectonicSystem, templateData),
+	}
+
+	switch platform {
+	case "aws", "openstack":
+		assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(content.CloudCredsSecret, templateData)
+		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(content.RoleCloudCredsSecretReader, templateData)
 	}
 
 	// addon goes to openshift system
@@ -135,4 +173,15 @@ func (t *Tectonic) Load(f asset.FileFetcher) (bool, error) {
 
 	t.FileList, t.TectonicConfig = fileList, tectonicConfig
 	return true, nil
+}
+
+// credsFileEncode returns contents of a file as base64 encoded string
+func credsFileEncode(credsFile string) (string, error) {
+	f, _ := os.Open(credsFile)
+	reader := bufio.NewReader(f)
+	credsData, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return "", err
+	}
+	return base64.StdEncoding.EncodeToString(credsData), nil
 }

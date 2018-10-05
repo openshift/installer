@@ -38,6 +38,8 @@ The installer accepts a number of environment variable that allow the interactiv
 
 ## Platform-Specific
 
+* `AWS_PROFILE`:
+     The AWS profile that corresponds to value in `${HOME}/.aws/credentials`.  If not provided, the default is "default".
 * `OPENSHIFT_INSTALL_AWS_REGION`:
     The AWS region to be used for installation.
 * `OPENSHIFT_INSTALL_LIBVIRT_URI`:
