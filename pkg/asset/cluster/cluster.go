@@ -85,7 +85,7 @@ func (c *Cluster) Generate(parents asset.Parents) error {
 		if err == nil {
 			err = err2
 		} else {
-			logrus.Errorf("Failed to read tfstate (%q): %v", stateFile, err2)
+			logrus.Errorf("Failed to read tfstate: %v", err2)
 		}
 	}
 
