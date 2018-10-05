@@ -64,23 +64,23 @@ func main() {
 		return
 	}
 
-	var targetAssets []asset.Asset
+	var targetAssets []asset.WritableAsset
 	switch command {
 	case installConfigCommand.FullCommand():
-		targetAssets = []asset.Asset{&installconfig.InstallConfig{}}
+		targetAssets = []asset.WritableAsset{&installconfig.InstallConfig{}}
 	case ignitionConfigsCommand.FullCommand():
-		targetAssets = []asset.Asset{
+		targetAssets = []asset.WritableAsset{
 			&bootstrap.Bootstrap{},
 			&machine.Master{},
 			&machine.Worker{},
 		}
 	case manifestsCommand.FullCommand():
-		targetAssets = []asset.Asset{
+		targetAssets = []asset.WritableAsset{
 			&manifests.Manifests{},
 			&manifests.Tectonic{},
 		}
 	case clusterCommand.FullCommand():
-		targetAssets = []asset.Asset{
+		targetAssets = []asset.WritableAsset{
 			&cluster.TerraformVariables{},
 			&kubeconfig.Admin{},
 			&cluster.Cluster{},

@@ -37,13 +37,9 @@ type File struct {
 }
 
 // PersistToFile writes all of the files of the specified asset into the specified
-// directory. If the asset is not a WritableAsset, then no files will be written.
-func PersistToFile(asset Asset, directory string) error {
-	writableAsset, ok := asset.(WritableAsset)
-	if !ok {
-		return nil
-	}
-	for _, f := range writableAsset.Files() {
+// directory.
+func PersistToFile(asset WritableAsset, directory string) error {
+	for _, f := range asset.Files() {
 		path := filepath.Join(directory, f.Filename)
 		if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 			return errors.Wrap(err, "failed to create dir")

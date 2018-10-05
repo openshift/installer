@@ -33,20 +33,6 @@ func (a *writablePersistAsset) Files() []*File {
 	return a.files
 }
 
-func TestPersistToFileNonWritableAsset(t *testing.T) {
-	dir, err := ioutil.TempDir("", "TestStatePersistToFile")
-	if err != nil {
-		t.Skipf("could not create temporary directory: %v", err)
-	}
-	defer os.RemoveAll(dir)
-
-	asset := &persistAsset{}
-	expectedFiles := map[string][]byte{}
-	err = PersistToFile(asset, dir)
-	assert.NoError(t, err, "unexpected error persisting state to file")
-	verifyFilesCreated(t, dir, expectedFiles)
-}
-
 func TestPersistToFile(t *testing.T) {
 	cases := []struct {
 		name      string
