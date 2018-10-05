@@ -55,5 +55,8 @@ overrides:
   namespace: openshift-cluster-dns-operator
   name: cluster-dns-operator
   unmanaged: true
+- kind: APIService                    # packages.apps.redhat.com fails to start properly
+  name: v1alpha1.packages.apps.redhat.com
+  unmanaged: true
 `))
 )
