@@ -84,7 +84,7 @@ func (c *Cluster) Generate(parents map[asset.Asset]*asset.State) (*asset.State, 
 		if err == nil {
 			err = err2
 		} else {
-			logrus.Errorf("Failed to read tfstate (%q): %v", stateFile, err2)
+			logrus.Errorf("Failed to read tfstate: %v", err2)
 		}
 	}
 
