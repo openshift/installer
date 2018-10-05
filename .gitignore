@@ -1,18 +1,1 @@
-
-# non-default terraform ignores
-.terraformrc
-config.tfvars
-terraform.tfvars
-
-*.aci
-id_rsa*
-pull-secret.json
-ssh-key.pem
-tectonic-*.tar.gz
-config.yaml
-
 bin/
-bin_test/
-matchbox/
-/contrib/govcloud/vpn.conf
-tectonic-dev
