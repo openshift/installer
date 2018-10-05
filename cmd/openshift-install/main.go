@@ -9,7 +9,13 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/stock"
+	"github.com/openshift/installer/pkg/asset/cluster"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
+	"github.com/openshift/installer/pkg/asset/ignition/machine"
+	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/kubeconfig"
+	"github.com/openshift/installer/pkg/asset/manifests"
+	"github.com/openshift/installer/pkg/asset/metadata"
 	"github.com/openshift/installer/pkg/destroy"
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
 	"github.com/openshift/installer/pkg/terraform"
@@ -58,29 +64,27 @@ func main() {
 		return
 	}
 
-	assetStock := stock.EstablishStock()
-
-	var targetAssets []asset.Asset
+	var targetAssets []asset.WritableAsset
 	switch command {
 	case installConfigCommand.FullCommand():
-		targetAssets = []asset.Asset{assetStock.InstallConfig()}
+		targetAssets = []asset.WritableAsset{&installconfig.InstallConfig{}}
 	case ignitionConfigsCommand.FullCommand():
-		targetAssets = []asset.Asset{
-			assetStock.BootstrapIgnition(),
-			assetStock.MasterIgnition(),
-			assetStock.WorkerIgnition(),
+		targetAssets = []asset.WritableAsset{
+			&bootstrap.Bootstrap{},
+			&machine.Master{},
+			&machine.Worker{},
 		}
 	case manifestsCommand.FullCommand():
-		targetAssets = []asset.Asset{
-			assetStock.Manifests(),
-			assetStock.Tectonic(),
+		targetAssets = []asset.WritableAsset{
+			&manifests.Manifests{},
+			&manifests.Tectonic{},
 		}
 	case clusterCommand.FullCommand():
-		targetAssets = []asset.Asset{
-			assetStock.TFVars(),
-			assetStock.KubeconfigAdmin(),
-			assetStock.Cluster(),
-			assetStock.Metadata(),
+		targetAssets = []asset.WritableAsset{
+			&cluster.TerraformVariables{},
+			&kubeconfig.Admin{},
+			&cluster.Cluster{},
+			&metadata.Metadata{},
 		}
 	}
 
@@ -90,14 +94,14 @@ func main() {
 		manifestsCommand.FullCommand(),
 		clusterCommand.FullCommand():
 		assetStore := &asset.StoreImpl{}
-		for _, asset := range targetAssets {
-			st, err := assetStore.Fetch(asset)
+		for _, a := range targetAssets {
+			err := assetStore.Fetch(a)
 			if err != nil {
-				logrus.Fatalf("Failed to generate %s: %v", asset.Name(), err)
+				logrus.Fatalf("Failed to generate %s: %v", a.Name(), err)
 			}
 
-			if err := st.PersistToFile(*dirFlag); err != nil {
-				logrus.Fatalf("Failed to write asset (%s) to disk: %v", asset.Name(), err)
+			if err := asset.PersistToFile(a, *dirFlag); err != nil {
+				logrus.Fatalf("Failed to write asset (%s) to disk: %v", a.Name(), err)
 			}
 		}
 	case destroyCommand.FullCommand():

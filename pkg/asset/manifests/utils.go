@@ -1,7 +1,8 @@
 package manifests
 
 import (
-	"github.com/ghodss/yaml"
+	"fmt"
+
 	"github.com/openshift/installer/pkg/types"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -18,8 +19,8 @@ type metadata struct {
 	Namespace string `json:"namespace,omitempty"`
 }
 
-func configMap(namespace, name string, data genericData) (string, error) {
-	configurationObject := configurationObject{
+func configMap(namespace, name string, data genericData) *configurationObject {
+	return &configurationObject{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "ConfigMap",
@@ -30,21 +31,6 @@ func configMap(namespace, name string, data genericData) (string, error) {
 		},
 		Data: data,
 	}
-
-	str, err := marshalYAML(configurationObject)
-	if err != nil {
-		return "", err
-	}
-	return str, nil
-}
-
-func marshalYAML(obj interface{}) (string, error) {
-	data, err := yaml.Marshal(&obj)
-	if err != nil {
-		return "", err
-	}
-
-	return string(data), nil
 }
 
 // Converts a platform to the cloudProvider that k8s understands
@@ -56,4 +42,8 @@ func tectonicCloudProvider(platform types.Platform) string {
 		return "libvirt"
 	}
 	return ""
+}
+
+func getAPIServerURL(ic *types.InstallConfig) string {
+	return fmt.Sprintf("https://%s-api.%s:6443", ic.ObjectMeta.Name, ic.BaseDomain)
 }

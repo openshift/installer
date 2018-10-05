@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -10,33 +11,70 @@ type generationLog struct {
 	log []string
 }
 
-func (l *generationLog) logGeneration(a *testAsset) {
-	l.log = append(l.log, a.name)
+func (l *generationLog) logGeneration(a Asset) {
+	l.log = append(l.log, a.Name())
 }
 
-type testAsset struct {
+type testStoreAsset interface {
+	Asset
+	SetDependencies([]Asset)
+}
+
+type testStoreAssetImpl struct {
 	name          string
 	dependencies  []Asset
 	generationLog *generationLog
 }
 
-func (a *testAsset) Dependencies() []Asset {
+func (a *testStoreAssetImpl) Dependencies() []Asset {
 	return a.dependencies
 }
 
-func (a *testAsset) Generate(map[Asset]*State) (*State, error) {
+func (a *testStoreAssetImpl) Generate(Parents) error {
 	a.generationLog.logGeneration(a)
-	return nil, nil
+	return nil
 }
 
-func (a *testAsset) Name() string {
-	return "Test Asset"
+func (a *testStoreAssetImpl) Name() string {
+	return a.name
 }
 
-func newTestAsset(gl *generationLog, name string) *testAsset {
-	return &testAsset{
+func (a *testStoreAssetImpl) SetDependencies(dependencies []Asset) {
+	a.dependencies = dependencies
+}
+
+type testStoreAssetA struct {
+	testStoreAssetImpl
+}
+
+type testStoreAssetB struct {
+	testStoreAssetImpl
+}
+
+type testStoreAssetC struct {
+	testStoreAssetImpl
+}
+
+type testStoreAssetD struct {
+	testStoreAssetImpl
+}
+
+func newTestStoreAsset(gl *generationLog, name string) testStoreAsset {
+	ta := testStoreAssetImpl{
 		name:          name,
 		generationLog: gl,
+	}
+	switch name {
+	case "a":
+		return &testStoreAssetA{ta}
+	case "b":
+		return &testStoreAssetB{ta}
+	case "c":
+		return &testStoreAssetC{ta}
+	case "d":
+		return &testStoreAssetD{ta}
+	default:
+		return nil
 	}
 }
 
@@ -156,24 +194,24 @@ func TestStoreFetch(t *testing.T) {
 				log: []string{},
 			}
 			store := &StoreImpl{
-				assets: map[Asset]*State{},
+				assets: Parents{},
 			}
-			assets := make(map[string]*testAsset, len(tc.assets))
+			assets := make(map[string]testStoreAsset, len(tc.assets))
 			for name := range tc.assets {
-				assets[name] = newTestAsset(gl, name)
+				assets[name] = newTestStoreAsset(gl, name)
 			}
 			for name, deps := range tc.assets {
 				dependencies := make([]Asset, len(deps))
 				for i, d := range deps {
 					dependencies[i] = assets[d]
 				}
-				assets[name].dependencies = dependencies
+				assets[name].SetDependencies(dependencies)
 			}
 			for _, assetName := range tc.existingAssets {
 				asset := assets[assetName]
-				store.assets[asset] = nil
+				store.assets[reflect.TypeOf(asset)] = asset
 			}
-			_, err := store.Fetch(assets[tc.target])
+			err := store.Fetch(assets[tc.target])
 			assert.NoError(t, err, "error fetching asset")
 			assert.EqualValues(t, tc.expectedGenerationLog, gl.log)
 		})

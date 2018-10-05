@@ -3,99 +3,62 @@ package kubeconfig
 import (
 	"testing"
 
-	"github.com/openshift/installer/pkg/asset"
 	"github.com/stretchr/testify/assert"
+
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/types"
 )
 
-type fakeAsset int
-
-var _ asset.Asset = fakeAsset(0)
-
-func (f fakeAsset) Dependencies() []asset.Asset {
-	return nil
+type testCertKey struct {
+	key  string
+	cert string
 }
 
-func (f fakeAsset) Generate(map[asset.Asset]*asset.State) (*asset.State, error) {
-	return nil, nil
+func (t *testCertKey) Key() []byte {
+	return []byte(t.key)
 }
 
-func (f fakeAsset) Name() string {
-	return "Fake Asset"
+func (t *testCertKey) Cert() []byte {
+	return []byte(t.cert)
 }
 
 func TestKubeconfigGenerate(t *testing.T) {
-	rootCA := fakeAsset(0)
-	adminCertKey := fakeAsset(1)
-	kubeletCertKey := fakeAsset(2)
-	installConfig := fakeAsset(3)
-
-	rootCAState := &asset.State{
-		Contents: []asset.Content{
-			{
-				Name: "root-ca.key",
-				Data: []byte("THIS IS ROOT CA KEY DATA"),
-			},
-			{
-				Name: "root-ca.crt",
-				Data: []byte("THIS IS ROOT CA CERT DATA"),
-			},
-		},
+	rootCA := &testCertKey{
+		key:  "THIS IS ROOT CA KEY DATA",
+		cert: "THIS IS ROOT CA CERT DATA",
 	}
 
-	adminCertState := &asset.State{
-		Contents: []asset.Content{
-			{
-				Name: "admin.key",
-				Data: []byte("THIS IS ADMIN KEY DATA"),
-			},
-			{
-				Name: "admin.crt",
-				Data: []byte("THIS IS ADMIN CERT DATA"),
-			},
-		},
+	adminCert := &testCertKey{
+		key:  "THIS IS ADMIN KEY DATA",
+		cert: "THIS IS ADMIN CERT DATA",
 	}
 
-	kubeletCertState := &asset.State{
-		Contents: []asset.Content{
-			{
-				Name: "kubelet.key",
-				Data: []byte("THIS IS KUBELET KEY DATA"),
-			},
-			{
-				Name: "kubelet.crt",
-				Data: []byte("THIS IS KUBELET CERT DATA"),
-			},
-		},
+	kubeletCert := &testCertKey{
+		key:  "THIS IS KUBELET KEY DATA",
+		cert: "THIS IS KUBELET CERT DATA",
 	}
 
-	installConfigState := &asset.State{
-		Contents: []asset.Content{
-			{
-				Name: "installconfig.yaml",
-				Data: []byte(`baseDomain: test.example.com
-metadata:
-  name: test-cluster-name
-`),
-			},
+	installConfig := &types.InstallConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-cluster-name",
 		},
+		BaseDomain: "test.example.com",
 	}
 
 	tests := []struct {
 		name         string
 		userName     string
-		certKey      asset.Asset
-		parents      map[asset.Asset]*asset.State
+		filename     string
+		clientCert   tls.CertKeyInterface
 		expectedData []byte
 	}{
 		{
-			name:     "admin kubeconfig",
-			userName: "admin",
-			certKey:  adminCertKey,
-			parents: map[asset.Asset]*asset.State{
-				rootCA:        rootCAState,
-				adminCertKey:  adminCertState,
-				installConfig: installConfigState,
-			},
+			name:       "admin kubeconfig",
+			userName:   "admin",
+			filename:   "kubeconfig",
+			clientCert: adminCert,
 			expectedData: []byte(`clusters:
 - cluster:
     certificate-authority-data: VEhJUyBJUyBST09UIENBIENFUlQgREFUQQ==
@@ -116,14 +79,10 @@ users:
 `),
 		},
 		{
-			name:     "kubelet kubeconfig",
-			userName: "kubelet",
-			certKey:  kubeletCertKey,
-			parents: map[asset.Asset]*asset.State{
-				rootCA:         rootCAState,
-				kubeletCertKey: kubeletCertState,
-				installConfig:  installConfigState,
-			},
+			name:       "kubelet kubeconfig",
+			userName:   "kubelet",
+			filename:   "kubeconfig-kubelet",
+			clientCert: kubeletCert,
 			expectedData: []byte(`clusters:
 - cluster:
     certificate-authority-data: VEhJUyBJUyBST09UIENBIENFUlQgREFUQQ==
@@ -147,17 +106,13 @@ users:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			kubeconfig := &Kubeconfig{
-				userName:      tt.userName,
-				rootCA:        rootCA,
-				certKey:       tt.certKey,
-				installConfig: installConfig,
-			}
-			st, err := kubeconfig.Generate(tt.parents)
-			assert.Nil(t, err)
-			if assert.NotNil(t, st) {
-				assert.Equal(t, tt.expectedData, st.Contents[0].Data, "unexpected data in kubeconfig")
-			}
+			kc := &kubeconfig{}
+			err := kc.generate(rootCA, tt.clientCert, installConfig, tt.userName, tt.filename)
+			assert.NoError(t, err, "unexpected error generating config")
+			actualFiles := kc.Files()
+			assert.Equal(t, 1, len(actualFiles), "unexpected number of files generated")
+			assert.Equal(t, "auth/"+tt.filename, actualFiles[0].Filename, "unexpected file name generated")
+			assert.Equal(t, tt.expectedData, actualFiles[0].Data, "unexpected config")
 		})
 	}
 

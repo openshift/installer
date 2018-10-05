@@ -44,147 +44,98 @@ type bootstrapTemplateData struct {
 	ReleaseImage        string
 }
 
-// bootstrap is an asset that generates the ignition config for bootstrap nodes.
-type bootstrap struct {
-	installConfig             asset.Asset
-	rootCA                    asset.Asset
-	etcdCA                    asset.Asset
-	ingressCertKey            asset.Asset
-	kubeCA                    asset.Asset
-	aggregatorCA              asset.Asset
-	serviceServingCA          asset.Asset
-	clusterAPIServerCertKey   asset.Asset
-	etcdClientCertKey         asset.Asset
-	apiServerCertKey          asset.Asset
-	openshiftAPIServerCertKey asset.Asset
-	apiServerProxyCertKey     asset.Asset
-	adminCertKey              asset.Asset
-	kubeletCertKey            asset.Asset
-	mcsCertKey                asset.Asset
-	serviceAccountKeyPair     asset.Asset
-	kubeconfig                asset.Asset
-	kubeconfigKubelet         asset.Asset
-	manifests                 asset.Asset
-	tectonic                  asset.Asset
-	kubeCoreOperator          asset.Asset
+// Bootstrap is an asset that generates the ignition config for bootstrap nodes.
+type Bootstrap struct {
+	config *igntypes.Config
+	file   *asset.File
 }
 
-var _ asset.Asset = (*bootstrap)(nil)
+var _ asset.WritableAsset = (*Bootstrap)(nil)
 
-// newBootstrap creates a new bootstrap asset.
-func newBootstrap(
-	installConfigStock installconfig.Stock,
-	tlsStock tls.Stock,
-	kubeconfigStock kubeconfig.Stock,
-	manifestStock manifests.Stock,
-) *bootstrap {
-	return &bootstrap{
-		installConfig:             installConfigStock.InstallConfig(),
-		rootCA:                    tlsStock.RootCA(),
-		etcdCA:                    tlsStock.EtcdCA(),
-		ingressCertKey:            tlsStock.IngressCertKey(),
-		kubeCA:                    tlsStock.KubeCA(),
-		aggregatorCA:              tlsStock.AggregatorCA(),
-		serviceServingCA:          tlsStock.ServiceServingCA(),
-		clusterAPIServerCertKey:   tlsStock.ClusterAPIServerCertKey(),
-		etcdClientCertKey:         tlsStock.EtcdClientCertKey(),
-		apiServerCertKey:          tlsStock.APIServerCertKey(),
-		openshiftAPIServerCertKey: tlsStock.OpenshiftAPIServerCertKey(),
-		apiServerProxyCertKey:     tlsStock.APIServerProxyCertKey(),
-		adminCertKey:              tlsStock.AdminCertKey(),
-		kubeletCertKey:            tlsStock.KubeletCertKey(),
-		mcsCertKey:                tlsStock.MCSCertKey(),
-		serviceAccountKeyPair:     tlsStock.ServiceAccountKeyPair(),
-		kubeconfig:                kubeconfigStock.KubeconfigAdmin(),
-		kubeconfigKubelet:         kubeconfigStock.KubeconfigKubelet(),
-		manifests:                 manifestStock.Manifests(),
-		tectonic:                  manifestStock.Tectonic(),
-		kubeCoreOperator:          manifestStock.KubeCoreOperator(),
-	}
-}
-
-// Dependencies returns the assets on which the bootstrap asset depends.
-func (a *bootstrap) Dependencies() []asset.Asset {
+// Dependencies returns the assets on which the Bootstrap asset depends.
+func (a *Bootstrap) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		a.installConfig,
-		a.rootCA,
-		a.etcdCA,
-		a.ingressCertKey,
-		a.kubeCA,
-		a.aggregatorCA,
-		a.serviceServingCA,
-		a.clusterAPIServerCertKey,
-		a.etcdClientCertKey,
-		a.apiServerCertKey,
-		a.openshiftAPIServerCertKey,
-		a.apiServerProxyCertKey,
-		a.adminCertKey,
-		a.kubeletCertKey,
-		a.mcsCertKey,
-		a.serviceAccountKeyPair,
-		a.kubeconfig,
-		a.kubeconfigKubelet,
-		a.manifests,
-		a.tectonic,
-		a.kubeCoreOperator,
+		&installconfig.InstallConfig{},
+		&tls.RootCA{},
+		&tls.EtcdCA{},
+		&tls.IngressCertKey{},
+		&tls.KubeCA{},
+		&tls.AggregatorCA{},
+		&tls.ServiceServingCA{},
+		&tls.ClusterAPIServerCertKey{},
+		&tls.EtcdClientCertKey{},
+		&tls.APIServerCertKey{},
+		&tls.OpenshiftAPIServerCertKey{},
+		&tls.APIServerProxyCertKey{},
+		&tls.AdminCertKey{},
+		&tls.KubeletCertKey{},
+		&tls.MCSCertKey{},
+		&tls.ServiceAccountKeyPair{},
+		&kubeconfig.Admin{},
+		&kubeconfig.Kubelet{},
+		&manifests.Manifests{},
+		&manifests.Tectonic{},
+		&manifests.KubeCoreOperator{},
 	}
 }
 
-// Generate generates the ignition config for the bootstrap asset.
-func (a *bootstrap) Generate(dependencies map[asset.Asset]*asset.State) (*asset.State, error) {
-	installConfig, err := installconfig.GetInstallConfig(a.installConfig, dependencies)
+// Generate generates the ignition config for the Bootstrap asset.
+func (a *Bootstrap) Generate(dependencies asset.Parents) error {
+	installConfig := &installconfig.InstallConfig{}
+	dependencies.Get(installConfig)
+
+	templateData, err := a.getTemplateData(installConfig.Config)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get InstallConfig from parents")
+		return errors.Wrap(err, "failed to get bootstrap templates")
 	}
 
-	templateData, err := a.getTemplateData(installConfig)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get bootstrap templates")
-	}
-
-	config := igntypes.Config{
+	a.config = &igntypes.Config{
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
 		},
 	}
 
-	a.addBootstrapFiles(&config, dependencies)
-	a.addBootkubeFiles(&config, dependencies, templateData)
-	a.addTectonicFiles(&config, dependencies, templateData)
-	a.addTLSCertFiles(&config, dependencies)
+	a.addBootstrapFiles(dependencies)
+	a.addBootkubeFiles(dependencies, templateData)
+	a.addTectonicFiles(dependencies, templateData)
+	a.addTLSCertFiles(dependencies)
 
-	config.Systemd.Units = append(
-		config.Systemd.Units,
+	a.config.Systemd.Units = append(
+		a.config.Systemd.Units,
 		igntypes.Unit{Name: "bootkube.service", Contents: content.BootkubeSystemdContents},
 		igntypes.Unit{Name: "tectonic.service", Contents: content.TectonicSystemdContents, Enabled: util.BoolToPtr(true)},
 		igntypes.Unit{Name: "kubelet.service", Contents: applyTemplateData(content.KubeletSystemdTemplate, templateData), Enabled: util.BoolToPtr(true)},
 	)
 
-	config.Passwd.Users = append(
-		config.Passwd.Users,
-		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(installConfig.Admin.SSHKey)}},
+	a.config.Passwd.Users = append(
+		a.config.Passwd.Users,
+		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(installConfig.Config.Admin.SSHKey)}},
 	)
 
-	data, err := json.Marshal(config)
+	data, err := json.Marshal(a.config)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to Marshal Ignition config")
+		return errors.Wrap(err, "failed to Marshal Ignition config")
+	}
+	a.file = &asset.File{
+		Filename: "bootstrap.ign",
+		Data:     data,
 	}
 
-	return &asset.State{
-		Contents: []asset.Content{{
-			Name: "bootstrap.ign",
-			Data: data,
-		}},
-	}, nil
+	return nil
 }
 
 // Name returns the human-friendly name of the asset.
-func (a *bootstrap) Name() string {
+func (a *Bootstrap) Name() string {
 	return "Bootstrap Ignition Config"
 }
 
+// Files returns the files generated by the asset.
+func (a *Bootstrap) Files() []*asset.File {
+	return []*asset.File{a.file}
+}
+
 // getTemplateData returns the data to use to execute bootstrap templates.
-func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootstrapTemplateData, error) {
+func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootstrapTemplateData, error) {
 	clusterDNSIP, err := installconfig.ClusterDNSIP(installConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get ClusterDNSIP from InstallConfig")
@@ -215,67 +166,81 @@ func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 	}, nil
 }
 
-func (a *bootstrap) addBootstrapFiles(config *igntypes.Config, dependencies map[asset.Asset]*asset.State) {
-	config.Storage.Files = append(
-		config.Storage.Files,
-		ignition.FileFromBytes("/etc/kubernetes/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
-		ignition.FileFromBytes("/var/lib/kubelet/kubeconfig", 0600, dependencies[a.kubeconfigKubelet].Contents[0].Data),
+func (a *Bootstrap) addBootstrapFiles(dependencies asset.Parents) {
+	kubeletKubeconfig := &kubeconfig.Kubelet{}
+	kubeCoreOperator := &manifests.KubeCoreOperator{}
+	dependencies.Get(kubeletKubeconfig, kubeCoreOperator)
+
+	a.config.Storage.Files = append(
+		a.config.Storage.Files,
+		ignition.FileFromBytes("/etc/kubernetes/kubeconfig", 0600, kubeletKubeconfig.Files()[0].Data),
+		ignition.FileFromBytes("/var/lib/kubelet/kubeconfig", 0600, kubeletKubeconfig.Files()[0].Data),
 	)
-	config.Storage.Files = append(
-		config.Storage.Files,
-		ignition.FilesFromContents(rootDir, 0644, dependencies[a.kubeCoreOperator].Contents)...,
+	a.config.Storage.Files = append(
+		a.config.Storage.Files,
+		ignition.FilesFromAsset(rootDir, 0644, kubeCoreOperator)...,
 	)
 }
 
-func (a *bootstrap) addBootkubeFiles(config *igntypes.Config, dependencies map[asset.Asset]*asset.State, templateData *bootstrapTemplateData) {
-	config.Storage.Files = append(
-		config.Storage.Files,
+func (a *Bootstrap) addBootkubeFiles(dependencies asset.Parents, templateData *bootstrapTemplateData) {
+	adminKubeconfig := &kubeconfig.Admin{}
+	manifests := &manifests.Manifests{}
+	dependencies.Get(adminKubeconfig, manifests)
+
+	a.config.Storage.Files = append(
+		a.config.Storage.Files,
 		ignition.FileFromString("/opt/tectonic/bootkube.sh", 0555, applyTemplateData(content.BootkubeShFileTemplate, templateData)),
 	)
-	config.Storage.Files = append(
-		config.Storage.Files,
-		ignition.FilesFromContents(rootDir, 0600, dependencies[a.kubeconfig].Contents)...,
+	a.config.Storage.Files = append(
+		a.config.Storage.Files,
+		ignition.FilesFromAsset(rootDir, 0600, adminKubeconfig)...,
 	)
-	config.Storage.Files = append(
-		config.Storage.Files,
-		ignition.FilesFromContents(rootDir, 0644, dependencies[a.manifests].Contents)...,
+	a.config.Storage.Files = append(
+		a.config.Storage.Files,
+		ignition.FilesFromAsset(rootDir, 0644, manifests)...,
 	)
 }
 
-func (a *bootstrap) addTectonicFiles(config *igntypes.Config, dependencies map[asset.Asset]*asset.State, templateData *bootstrapTemplateData) {
-	config.Storage.Files = append(
-		config.Storage.Files,
+func (a *Bootstrap) addTectonicFiles(dependencies asset.Parents, templateData *bootstrapTemplateData) {
+	tectonic := &manifests.Tectonic{}
+	dependencies.Get(tectonic)
+
+	a.config.Storage.Files = append(
+		a.config.Storage.Files,
 		ignition.FileFromString("/opt/tectonic/tectonic.sh", 0555, content.TectonicShFileContents),
 	)
-	config.Storage.Files = append(
-		config.Storage.Files,
-		ignition.FilesFromContents(rootDir, 0644, dependencies[a.tectonic].Contents)...,
+	a.config.Storage.Files = append(
+		a.config.Storage.Files,
+		ignition.FilesFromAsset(rootDir, 0644, tectonic)...,
 	)
 }
 
-func (a *bootstrap) addTLSCertFiles(config *igntypes.Config, dependencies map[asset.Asset]*asset.State) {
-	for _, asset := range []asset.Asset{
-		a.rootCA,
-		a.kubeCA,
-		a.aggregatorCA,
-		a.serviceServingCA,
-		a.etcdCA,
-		a.clusterAPIServerCertKey,
-		a.etcdClientCertKey,
-		a.apiServerCertKey,
-		a.openshiftAPIServerCertKey,
-		a.apiServerProxyCertKey,
-		a.adminCertKey,
-		a.kubeletCertKey,
-		a.mcsCertKey,
-		a.serviceAccountKeyPair,
+func (a *Bootstrap) addTLSCertFiles(dependencies asset.Parents) {
+	for _, asset := range []asset.WritableAsset{
+		&tls.RootCA{},
+		&tls.KubeCA{},
+		&tls.AggregatorCA{},
+		&tls.ServiceServingCA{},
+		&tls.EtcdCA{},
+		&tls.ClusterAPIServerCertKey{},
+		&tls.EtcdClientCertKey{},
+		&tls.APIServerCertKey{},
+		&tls.OpenshiftAPIServerCertKey{},
+		&tls.APIServerProxyCertKey{},
+		&tls.AdminCertKey{},
+		&tls.KubeletCertKey{},
+		&tls.MCSCertKey{},
+		&tls.ServiceAccountKeyPair{},
 	} {
-		config.Storage.Files = append(config.Storage.Files, ignition.FilesFromContents(rootDir, 0600, dependencies[asset].Contents)...)
+		dependencies.Get(asset)
+		a.config.Storage.Files = append(a.config.Storage.Files, ignition.FilesFromAsset(rootDir, 0600, asset)...)
 	}
 
-	config.Storage.Files = append(
-		config.Storage.Files,
-		ignition.FileFromBytes("/etc/ssl/etcd/ca.crt", 0600, dependencies[a.etcdClientCertKey].Contents[tls.CertIndex].Data),
+	etcdClientCertKey := &tls.EtcdClientCertKey{}
+	dependencies.Get(etcdClientCertKey)
+	a.config.Storage.Files = append(
+		a.config.Storage.Files,
+		ignition.FileFromBytes("/etc/ssl/etcd/ca.crt", 0600, etcdClientCertKey.Cert()),
 	)
 }
 

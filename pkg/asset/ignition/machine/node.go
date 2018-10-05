@@ -1,7 +1,6 @@
 package machine
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/url"
 
@@ -13,8 +12,8 @@ import (
 
 // pointerIgnitionConfig generates a config which references the remote config
 // served by the machine config server.
-func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string, query string) []byte {
-	data, err := json.Marshal(ignition.Config{
+func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string, query string) *ignition.Config {
+	return &ignition.Config{
 		Ignition: ignition.Ignition{
 			Version: ignition.MaxVersion.String(),
 			Config: ignition.IgnitionConfig{
@@ -44,9 +43,5 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 				SSHAuthorizedKeys: []ignition.SSHAuthorizedKey{ignition.SSHAuthorizedKey(installConfig.Admin.SSHKey)},
 			}},
 		},
-	})
-	if err != nil {
-		panic(fmt.Sprintf("Failed to marshal pointer Ignition config: %v", err))
 	}
-	return data
 }
