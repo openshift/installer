@@ -202,7 +202,7 @@ func (a *Platform) openstackPlatform() (*asset.State, error) {
 	prompt := asset.UserProvided{
 		AssetName: "OpenStack Region",
 		Question: &survey.Question{
-			Prompt: &survey.Select{
+			Prompt: &survey.Input{
 				Message: "Region",
 				Help:    "The OpenStack region to be used for installation.",
 				Default: "regionOne",
@@ -223,7 +223,7 @@ func (a *Platform) openstackPlatform() (*asset.State, error) {
 	prompt2 := asset.UserProvided{
 		AssetName: "OpenStack Image",
 		Question: &survey.Question{
-			Prompt: &survey.Select{
+			Prompt: &survey.Input{
 				Message: "Image",
 				Help:    "The OpenStack image to be used for installation.",
 				Default: "rhcos",
@@ -244,7 +244,9 @@ func (a *Platform) openstackPlatform() (*asset.State, error) {
 	prompt3 := asset.UserProvided{
 		AssetName: "OpenStack Cloud",
 		Question: &survey.Question{
-			Prompt: &survey.Select{
+			//TODO(russellb) - We could open clouds.yaml here and read the list of defined clouds
+			//and then use survey.Select to let the user choose one.
+			Prompt: &survey.Input{
 				Message: "Cloud",
 				Help:    "The OpenStack cloud name from clouds.yaml.",
 			},
@@ -264,7 +266,7 @@ func (a *Platform) openstackPlatform() (*asset.State, error) {
 	prompt4 := asset.UserProvided{
 		AssetName: "OpenStack External Network",
 		Question: &survey.Question{
-			Prompt: &survey.Select{
+			Prompt: &survey.Input{
 				Message: "ExternalNetwork",
 				Help:    "The OpenStack external network to be used for installation.",
 			},
