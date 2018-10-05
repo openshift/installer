@@ -15,7 +15,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests"
-	"github.com/openshift/installer/pkg/asset/metadata"
 )
 
 type target struct {
@@ -55,7 +54,7 @@ var targets = []target{{
 		Short: "Create an OpenShift cluster",
 		Long:  "",
 	},
-	assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}, &metadata.Metadata{}},
+	assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}},
 }}
 
 func newTargetsCmd() []*cobra.Command {
@@ -76,11 +75,20 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 				if exitError, ok := errors.Cause(err).(*exec.ExitError); ok && len(exitError.Stderr) > 0 {
 					logrus.Error(strings.Trim(string(exitError.Stderr), "\n"))
 				}
-				return errors.Wrapf(err, "failed to generate %s", a.Name())
+				err = errors.Wrapf(err, "failed to generate %s", a.Name())
 			}
 
-			if err := asset.PersistToFile(a, rootOpts.dir); err != nil {
-				return errors.Wrapf(err, "failed to write asset (%s) to disk", a.Name())
+			if err2 := asset.PersistToFile(a, rootOpts.dir); err2 != nil {
+				err2 = errors.Wrapf(err2, "failed to write asset (%s) to disk", a.Name())
+				if err != nil {
+					logrus.Error(err2)
+					return err
+				}
+				return err2
+			}
+
+			if err != nil {
+				return err
 			}
 		}
 		return nil
