@@ -47,10 +47,10 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 		IngressTLSBundle:                       base64.StdEncoding.EncodeToString(bytes.Join([][]byte{ingressCertKey.Cert(), ingressCertKey.Key()}, []byte{})),
 		IngressTLSCert:                         base64.StdEncoding.EncodeToString(ingressCertKey.Cert()),
 		IngressTLSKey:                          base64.StdEncoding.EncodeToString(ingressCertKey.Key()),
-		KubeAddonOperatorImage:                 "quay.io/coreos/kube-addon-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
-		KubeCoreOperatorImage:                  "quay.io/coreos/kube-core-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
+		KubeAddonOperatorImage:                 "quay.io/coreos/kube-addon-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
+		KubeCoreOperatorImage:                  "quay.io/coreos/kube-core-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
 		PullSecret:                             base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
-		TectonicIngressControllerOperatorImage: "quay.io/coreos/tectonic-ingress-controller-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
+		TectonicIngressControllerOperatorImage: "quay.io/coreos/tectonic-ingress-controller-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
 		TectonicVersion:                        "1.8.4-tectonic.2",
 	}
 
@@ -70,8 +70,8 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 		"99_tectonic-ingress-05-operator.yaml":       applyTemplateData(content.TectonicIngressControllerOperator, templateData),
 		"99_tectonic-system-00-binding-admin.yaml":   []byte(content.BindingAdmin),
 		"99_tectonic-system-01-ca-cert.yaml":         applyTemplateData(content.CaCertTectonicSystem, templateData),
-		"99_tectonic-system-02-privileged-scc.yaml":  []byte(content.PriviledgedSccTectonicSystem),
-		"99_tectonic-system-03-pull.json":            applyTemplateData(content.PullTectonicSystem, templateData),
+		"99_tectonic-system-02-pull.json":            applyTemplateData(content.PullTectonicSystem, templateData),
+		"99_tectonic-system-03-privileged-scc.yaml":  []byte(content.PriviledgedSccTectonicSystem),
 	}
 
 	t.files = make([]*asset.File, 0, len(assetData))

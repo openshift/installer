@@ -103,7 +103,7 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 			Data:     kubeSysConfigData,
 		},
 		{
-			Filename: filepath.Join("tectonic", "cluster-config.yaml"),
+			Filename: filepath.Join("tectonic", "00_cluster-config.yaml"),
 			Data:     tectonicConfigData,
 		},
 	}
@@ -178,7 +178,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		ServiceaccountPub:               base64.StdEncoding.EncodeToString(serviceAccountKeyPair.Public()),
 		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(serviceServingCA.Cert()),
 		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(serviceServingCA.Key()),
-		TectonicNetworkOperatorImage:    "quay.io/coreos/tectonic-network-operator-dev:3b6952f5a1ba89bb32dd0630faddeaf2779c9a85",
+		TectonicNetworkOperatorImage:    "quay.io/coreos/tectonic-network-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
 		WorkerIgnConfig:                 base64.StdEncoding.EncodeToString(workerIgnition.Files()[0].Data),
 		CVOClusterID:                    installConfig.Config.ClusterID,
 	}
