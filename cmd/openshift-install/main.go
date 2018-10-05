@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/alecthomas/kingpin.v2"
 
@@ -56,7 +58,7 @@ func main() {
 		if err != nil {
 			exitError, ok := err.(*exec.ExitError)
 			if ok && len(exitError.Stderr) > 0 {
-				logrus.Error(string(exitError.Stderr))
+				logrus.Error(strings.Trim(string(exitError.Stderr), "\n"))
 			}
 			logrus.Fatalf("Failed to calculate Terraform version: %v", err)
 		}
@@ -97,6 +99,9 @@ func main() {
 		for _, a := range targetAssets {
 			err := assetStore.Fetch(a)
 			if err != nil {
+				if exitError, ok := errors.Cause(err).(*exec.ExitError); ok && len(exitError.Stderr) > 0 {
+					logrus.Error(strings.Trim(string(exitError.Stderr), "\n"))
+				}
 				logrus.Fatalf("Failed to generate %s: %v", a.Name(), err)
 			}
 
