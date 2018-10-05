@@ -1,9 +1,0 @@
-{
-  "ignition": { "version": "2.2.0" },
-  "systemd": {
-    "units": [{
-      "name": "example.service",
-      "contents": "[Service]\nType=oneshot\nExecStart=/usr/bin/echo Hello World\n\n[Install]\nWantedBy=multi-user.target"
-    }]
-  }
-}

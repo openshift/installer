@@ -74,5 +74,5 @@ func (kao *kubeAddonOperator) addonConfig() ([]byte, error) {
 }
 
 func (kao *kubeAddonOperator) getAPIServerURL() string {
-	return fmt.Sprintf("https://%s-api.%s:6443", kao.installConfig.Name, kao.installConfig.BaseDomain)
+	return fmt.Sprintf("https://%s-api.%s:6443", kao.installConfig.ObjectMeta.Name, kao.installConfig.BaseDomain)
 }

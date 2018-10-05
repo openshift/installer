@@ -4,7 +4,7 @@ import (
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/types/config"
+	"github.com/openshift/installer/pkg/validate"
 )
 
 // Stock is the stock of InstallConfig assets that can be generated.
@@ -58,7 +58,7 @@ func (s *StockImpl) EstablishStock() {
 				Help:    "The email address of the cluster administrator. This will be used to log in to the console.",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				return config.ValidateEmail(ans.(string))
+				return validate.Email(ans.(string))
 			}),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_EMAIL_ADDRESS",
@@ -81,7 +81,7 @@ func (s *StockImpl) EstablishStock() {
 				Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base.\n\nFor AWS, this must be a previously-existing public Route 53 zone.  You can check for any already in your account with:\n\n  $ aws route53 list-hosted-zones --query 'HostedZones[? !(Config.PrivateZone)].Name' --output text",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				return config.ValidateDomainName(ans.(string))
+				return validate.DomainName(ans.(string))
 			}),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_BASE_DOMAIN",
@@ -94,7 +94,7 @@ func (s *StockImpl) EstablishStock() {
 				Help:    "The name of the cluster. This will be used when generating sub-domains.",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				return config.ValidateDomainName(ans.(string))
+				return validate.ClusterName(ans.(string))
 			}),
 		},
 		EnvVarName: "OPENSHIFT_INSTALL_CLUSTER_NAME",
@@ -107,7 +107,7 @@ func (s *StockImpl) EstablishStock() {
 				Help:    "The container registry pull secret for this cluster.",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				return config.ValidateJSON([]byte(ans.(string)))
+				return validate.JSON([]byte(ans.(string)))
 			}),
 		},
 		EnvVarName:     "OPENSHIFT_INSTALL_PULL_SECRET",

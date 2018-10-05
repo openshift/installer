@@ -191,7 +191,7 @@ func (a *bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 	}
 	etcdEndpoints := make([]string, installConfig.MasterCount())
 	for i := range etcdEndpoints {
-		etcdEndpoints[i] = fmt.Sprintf("https://%s-etcd-%d.%s:2379", installConfig.Name, i, installConfig.BaseDomain)
+		etcdEndpoints[i] = fmt.Sprintf("https://%s-etcd-%d.%s:2379", installConfig.ObjectMeta.Name, i, installConfig.BaseDomain)
 	}
 
 	releaseImage := defaultReleaseImage

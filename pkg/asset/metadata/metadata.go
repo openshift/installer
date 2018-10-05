@@ -43,7 +43,7 @@ func (m *Metadata) Generate(parents map[asset.Asset]*asset.State) (*asset.State,
 	}
 
 	cm := &types.ClusterMetadata{
-		ClusterName: installCfg.Name,
+		ClusterName: installCfg.ObjectMeta.Name,
 	}
 	switch {
 	case installCfg.Platform.AWS != nil:
