@@ -31,7 +31,7 @@ var (
 	BootkubeShFileTemplate = template.Must(template.New("bootkube.sh").Parse(`#!/usr/bin/env bash
 set -e
 
-mkdir --parents /etc/kubernetes/manifests/
+mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
 MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-operator)
 MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-controller)
@@ -57,22 +57,7 @@ then
 	cp --recursive cvo-bootstrap/manifests .
 fi
 
-if [ ! -d kco-bootstrap ]
-then
-	echo "Rendering Kubernetes core manifests..."
-
-	# shellcheck disable=SC2154
-	podman run \
-		--volume "$PWD:/assets:z" \
-		--volume /etc/kubernetes:/etc/kubernetes:z \
-		"{{.KubeCoreRenderImage}}" \
-		--config=/assets/kco-config.yaml \
-		--output=/assets/kco-bootstrap
-
-	cp --recursive kco-bootstrap/bootstrap-configs /etc/kubernetes/bootstrap-configs
-	cp --recursive kco-bootstrap/bootstrap-manifests .
-	cp --recursive kco-bootstrap/manifests .
-fi
+mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -d kube-apiserver-bootstrap ]
 then
@@ -84,14 +69,14 @@ then
 		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-apiserver-operator render \
 		--manifest-etcd-serving-ca=etcd-client-ca.crt \
+		--manifest-etcd-server-urls={{.EtcdCluster}} \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
 		--config-output-file=/assets/kube-apiserver-bootstrap/config
 
-	# TODO: copy the bootstrap manifests to replace kube-core-operator
-	cp --recursive kube-apiserver-bootstrap/manifests/00_openshift-kube-apiserver-ns.yaml manifests/00_openshift-kube-apiserver-ns.yaml
-	cp --recursive kube-apiserver-bootstrap/manifests/secret-* manifests/
-	cp --recursive kube-apiserver-bootstrap/manifests/configmap-* manifests/
+	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
+	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	cp kube-apiserver-bootstrap/manifests/* manifests/
 fi
 
 if [ ! -d kube-controller-manager-bootstrap ]
@@ -107,9 +92,9 @@ then
 		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
 		--config-output-file=/assets/kube-controller-manager-bootstrap/config
 
-	# TODO: copy the bootstrap manifests to replace kube-core-operator
-	cp --recursive kube-controller-manager-bootstrap/manifests/00_openshift-kube-controller-manager-ns.yaml manifests/00_openshift-kube-controller-manager-ns.yaml
-	cp --recursive kube-controller-manager-bootstrap/manifests/configmap-* manifests/
+	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
+	cp kube-controller-manager-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	cp kube-controller-manager-bootstrap/manifests/* manifests/
 fi
 
 if [ ! -d kube-scheduler-bootstrap ]
@@ -125,9 +110,9 @@ then
 		--asset-output-dir=/assets/kube-scheduler-bootstrap \
 		--config-output-file=/assets/kube-scheduler-bootstrap/config
 
-	# TODO: copy the bootstrap manifests to replace kube-core-operator
-	cp --recursive kube-scheduler-bootstrap/manifests/00_openshift-kube-scheduler-ns.yaml manifests/00_openshift-kube-scheduler-ns.yaml
-	cp --recursive kube-scheduler-bootstrap/manifests/configmap-* manifests/
+	cp kube-scheduler-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-scheduler-config.yaml
+	cp kube-scheduler-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	cp kube-scheduler-bootstrap/manifests/* manifests/
 fi
 
 if [ ! -d mco-bootstrap ]
@@ -152,8 +137,8 @@ then
 	# 1. read the controller config rendered by MachineConfigOperator
 	# 2. read the default MachineConfigPools rendered by MachineConfigOperator
 	# 3. read any additional MachineConfigs that are needed for the default MachineConfigPools.
-	mkdir --parents /etc/mcc/bootstrap/
-	cp --recursive mco-bootstrap/manifests /etc/mcc/bootstrap/manifests
+	mkdir --parents /etc/mcc/bootstrap/manifests /etc/kubernetes/manifests/
+	cp mco-bootstrap/manifests/* /etc/mcc/bootstrap/manifests/
 	cp mco-bootstrap/machineconfigoperator-bootstrap-pod.yaml /etc/kubernetes/manifests/
 
 	# /etc/ssl/mcs/tls.{crt, key} are locations for MachineConfigServer's tls assets.

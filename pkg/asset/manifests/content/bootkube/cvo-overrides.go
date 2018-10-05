@@ -20,18 +20,6 @@ channel: fast
 clusterID: {{.CVOClusterID}}
 overrides:
 - kind: Deployment                    # this conflicts with kube-core-operator
-  namespace: openshift-core-operators
-  name: openshift-cluster-kube-apiserver-operator
-  unmanaged: true
-- kind: Deployment                    # this conflicts with kube-core-operator
-  namespace: openshift-core-operators
-  name: openshift-cluster-kube-scheduler-operator
-  unmanaged: true
-- kind: Deployment                    # this conflicts with kube-core-operator
-  namespace: openshift-core-operators
-  name: openshift-cluster-kube-controller-manager-operator
-  unmanaged: true
-- kind: Deployment                    # this conflicts with kube-core-operator
   namespace: openshift-cluster-network-operator
   name: cluster-network-operator
   unmanaged: true
