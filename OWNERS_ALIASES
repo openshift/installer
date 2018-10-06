@@ -13,3 +13,8 @@ aliases:
     - yifan-gu
   installer-reviewers:
     - vikramsk
+  openstack-approvers:
+    - flaper87
+    - tomassedovic
+    - hardys
+    - russellb
