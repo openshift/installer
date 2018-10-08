@@ -74,7 +74,6 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&kubeconfig.Kubelet{},
 		&manifests.Manifests{},
 		&manifests.Tectonic{},
-		&manifests.KubeCoreOperator{},
 	}
 }
 
@@ -170,17 +169,12 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 
 func (a *Bootstrap) addBootstrapFiles(dependencies asset.Parents) {
 	kubeletKubeconfig := &kubeconfig.Kubelet{}
-	kubeCoreOperator := &manifests.KubeCoreOperator{}
-	dependencies.Get(kubeletKubeconfig, kubeCoreOperator)
+	dependencies.Get(kubeletKubeconfig)
 
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
 		ignition.FileFromBytes("/etc/kubernetes/kubeconfig", 0600, kubeletKubeconfig.Files()[0].Data),
 		ignition.FileFromBytes("/var/lib/kubelet/kubeconfig", 0600, kubeletKubeconfig.Files()[0].Data),
-	)
-	a.Config.Storage.Files = append(
-		a.Config.Storage.Files,
-		ignition.FilesFromAsset(rootDir, 0644, kubeCoreOperator)...,
 	)
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
