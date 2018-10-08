@@ -39,7 +39,6 @@ type bootstrapTemplateData struct {
 	EtcdCertSignerImage string
 	EtcdCluster         string
 	EtcdctlImage        string
-	HyperkubeImage      string
 	ReleaseImage        string
 }
 
@@ -162,7 +161,6 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 		EtcdctlImage:        "quay.io/coreos/etcd:v3.2.14",
 		BootkubeImage:       "quay.io/coreos/bootkube:v0.10.0",
 		ReleaseImage:        releaseImage,
-		HyperkubeImage:      "openshift/origin-node:latest",
 		EtcdCluster:         strings.Join(etcdEndpoints, ","),
 	}, nil
 }
