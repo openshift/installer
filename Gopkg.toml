@@ -41,10 +41,6 @@ ignored = ["github.com/openshift/installer/tests*"]
   branch = "master"
   name = "github.com/vincent-petithory/dataurl"
 
-[[constraint]]
-  name = "gopkg.in/alecthomas/kingpin.v2"
-  version = "2.2.6"
-
 [[override]]
   name = "k8s.io/apimachinery"
   version = "kubernetes-1.11.3"
