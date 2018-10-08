@@ -4,6 +4,7 @@ package manifests
 import (
 	"bytes"
 	"encoding/base64"
+	"fmt"
 	"path/filepath"
 	"text/template"
 
@@ -151,6 +152,11 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		workerIgnition,
 	)
 
+	etcdEndpointHostnames := make([]string, installConfig.Config.MasterCount())
+	for i := range etcdEndpointHostnames {
+		etcdEndpointHostnames[i] = fmt.Sprintf("%s-etcd-%d", installConfig.Config.ObjectMeta.Name, i)
+	}
+
 	templateData := &bootkubeTemplateData{
 		AggregatorCaCert:                base64.StdEncoding.EncodeToString(aggregatorCA.Cert()),
 		AggregatorCaKey:                 base64.StdEncoding.EncodeToString(aggregatorCA.Key()),
@@ -181,6 +187,8 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		TectonicNetworkOperatorImage:    "quay.io/coreos/tectonic-network-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
 		WorkerIgnConfig:                 base64.StdEncoding.EncodeToString(workerIgnition.Files()[0].Data),
 		CVOClusterID:                    installConfig.Config.ClusterID,
+		EtcdEndpointHostnames:           etcdEndpointHostnames,
+		EtcdEndpointDNSSuffix:           installConfig.Config.BaseDomain,
 	}
 
 	assetData := map[string][]byte{
@@ -194,6 +202,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"pull.json":                             applyTemplateData(bootkube.Pull, templateData),
 		"tectonic-network-operator.yaml":        applyTemplateData(bootkube.TectonicNetworkOperator, templateData),
 		"cvo-overrides.yaml":                    applyTemplateData(bootkube.CVOOverrides, templateData),
+		"etcd-service-endpoints.yaml":           applyTemplateData(bootkube.EtcdServiceEndpointsKubeSystem, templateData),
 
 		"01-tectonic-namespace.yaml":                       []byte(bootkube.TectonicNamespace),
 		"02-ingress-namespace.yaml":                        []byte(bootkube.IngressNamespace),
@@ -204,6 +213,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"app-version-mao.yaml":                             []byte(bootkube.AppVersionMao),
 		"app-version-tectonic-network.yaml":                []byte(bootkube.AppVersionTectonicNetwork),
 		"machine-config-operator-01-images-configmap.yaml": []byte(bootkube.MachineConfigOperator01ImagesConfigmap),
+		"etcd-service.yaml":                                []byte(bootkube.EtcdServiceKubeSystem),
 		"operatorstatus-crd.yaml":                          []byte(bootkube.OperatorstatusCrd),
 	}
 
