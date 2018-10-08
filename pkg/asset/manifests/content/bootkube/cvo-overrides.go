@@ -32,14 +32,6 @@ overrides:
   name: openshift-cluster-kube-controller-manager-operator
   unmanaged: true
 - kind: Deployment                    # this conflicts with kube-core-operator
-  namespace: openshift-core-operators
-  name: openshift-cluster-openshift-apiserver-operator
-  unmanaged: true
-- kind: Deployment                    # this conflicts with kube-core-operator
-  namespace: openshift-core-operators
-  name: openshift-cluster-openshift-controller-manager-operator
-  unmanaged: true
-- kind: Deployment                    # this conflicts with kube-core-operator
   namespace: openshift-cluster-network-operator
   name: cluster-network-operator
   unmanaged: true
