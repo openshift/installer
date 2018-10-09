@@ -42,6 +42,7 @@ type bootstrapTemplateData struct {
 	HyperkubeImage      string
 	KubeCoreRenderImage string
 	ReleaseImage        string
+	FirstEtcdHost       string
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -151,6 +152,11 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 		releaseImage = ri
 	}
 
+	firstEtcdHost := ""
+	if len(etcdEndpoints) > 0 {
+		firstEtcdHost = etcdEndpoints[0]
+	}
+
 	return &bootstrapTemplateData{
 		ClusterDNSIP:        clusterDNSIP,
 		CloudProvider:       getCloudProvider(installConfig),
@@ -163,6 +169,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 		ReleaseImage:        releaseImage,
 		HyperkubeImage:      "openshift/origin-node:latest",
 		EtcdCluster:         strings.Join(etcdEndpoints, ","),
+		FirstEtcdHost:       firstEtcdHost,
 	}, nil
 }
 

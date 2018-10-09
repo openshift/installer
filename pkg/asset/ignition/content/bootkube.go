@@ -81,7 +81,8 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
 		--config-override-file=/usr/share/bootkube/manifests/config/config-overrides.yaml \
-		--config-output-file=/assets/kube-apiserver-bootstrap/config
+		--config-output-file=/assets/kube-apiserver-bootstrap/config \
+		--temporary-never-use-in-production-create-etcd-endpoints=$(getent ahostsv4 {{ .FirstEtcdHost }} | head -n1 | awk '{ print $1 }')
 
 	# TODO: copy the bootstrap manifests to replace kube-core-operator
 	cp --recursive kube-apiserver-bootstrap/manifests/openshift-kube-apiserver-ns.yaml manifests/00_openshift-kube-apiserver-ns.yaml
