@@ -27,6 +27,11 @@ var (
 	BootkubeShFileTemplate = template.Must(template.New("bootkube.sh").Parse(`#!/usr/bin/env bash
 set -e
 
+error_trap() {
+  echo "ERROR: bootkube.sh on line $(caller)"
+}
+trap error_trap ERR
+
 mkdir --parents /etc/kubernetes/manifests/
 
 MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-operator)
@@ -166,6 +171,9 @@ fi
 # See https://github.com/kubernetes/kubernetes/issues/43292
 
 echo "Starting etcd certificate signer..."
+
+# Remove error_trap
+trap - ERR
 
 trap "podman rm --force etcd-signer" ERR
 
