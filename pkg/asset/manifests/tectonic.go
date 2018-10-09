@@ -71,7 +71,6 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 		"99_tectonic-system-00-binding-admin.yaml":   []byte(content.BindingAdmin),
 		"99_tectonic-system-01-ca-cert.yaml":         applyTemplateData(content.CaCertTectonicSystem, templateData),
 		"99_tectonic-system-02-pull.json":            applyTemplateData(content.PullTectonicSystem, templateData),
-		"99_tectonic-system-03-privileged-scc.yaml":  []byte(content.PriviledgedSccTectonicSystem),
 	}
 
 	t.files = make([]*asset.File, 0, len(assetData))
