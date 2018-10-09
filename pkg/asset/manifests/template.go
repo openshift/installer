@@ -30,6 +30,8 @@ type bootkubeTemplateData struct {
 	TectonicNetworkOperatorImage    string
 	WorkerIgnConfig                 string
 	CVOClusterID                    string
+	EtcdEndpointHostnames           []string
+	EtcdEndpointDNSSuffix           string
 }
 
 type tectonicTemplateData struct {
