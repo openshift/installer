@@ -121,8 +121,8 @@ The following graph shows the relationship between the various assets that the i
 
 ![Image depicting the resource dependency graph](resource_dep.svg)
 
-This graph is generated from the [source](resource_dep.dot) using the following command:
+This graph is generated from the using the following command:
 
 ```sh
-dot -Tsvg resource_dep.dot -o ./resource_dep.svg
+bin/openshift-install graph | dot -Tsvg >docs/design/resource_dep.svg
 ```
