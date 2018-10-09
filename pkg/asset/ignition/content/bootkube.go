@@ -80,6 +80,7 @@ then
 		--volume "$PWD:/assets:z" \
 		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-apiserver-operator render \
+		--manifest-etcd-serving-ca=etcd-client-ca.crt \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
 		--config-override-file=/usr/share/bootkube/manifests/config/config-overrides.yaml \
