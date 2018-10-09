@@ -52,3 +52,7 @@ ignored = ["github.com/openshift/installer/tests*"]
 [[constraint]]
   name = "github.com/pkg/errors"
   version = "0.8.0"
+
+[[constraint]]
+  name = "github.com/awalterschulze/gographviz"
+  version = "2.0.0"

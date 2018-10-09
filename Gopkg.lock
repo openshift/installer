@@ -16,6 +16,21 @@
   revision = "2bd8b58cf4275aeb086ade613de226773e29e853"
 
 [[projects]]
+  digest = "1:19c2dd79ebd83f79c358ed8890f7ff9f10060268f9051f39f5ea65c74045b59f"
+  name = "github.com/awalterschulze/gographviz"
+  packages = [
+    ".",
+    "ast",
+    "internal/errors",
+    "internal/lexer",
+    "internal/parser",
+    "internal/token",
+  ]
+  pruneopts = "NUT"
+  revision = "c84395e536e1a1199093a4e6253d1bee99e4cd2a"
+  version = "v2.0"
+
+[[projects]]
   digest = "1:06aeb1ae6ecd7695cddddb9a203df3fbb818c2d9864f8ac8f6fb372a8ef8f00c"
   name = "github.com/aws/aws-sdk-go"
   packages = [
@@ -463,6 +478,7 @@
   analyzer-version = 1
   input-imports = [
     "github.com/apparentlymart/go-cidr/cidr",
+    "github.com/awalterschulze/gographviz",
     "github.com/aws/aws-sdk-go/aws",
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/ec2",
