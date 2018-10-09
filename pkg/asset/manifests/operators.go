@@ -216,7 +216,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"app-version-tectonic-network.yaml":                []byte(bootkube.AppVersionTectonicNetwork),
 		"machine-config-operator-01-images-configmap.yaml": []byte(bootkube.MachineConfigOperator01ImagesConfigmap),
 		"etcd-service.yaml":                                []byte(bootkube.EtcdServiceKubeSystem),
-		"operatorstatus-crd.yaml":                          []byte(bootkube.OperatorstatusCrd),
 	}
 
 	files := make([]*asset.File, 0, len(assetData))
