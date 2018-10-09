@@ -17,8 +17,7 @@ WorkingDirectory=/opt/tectonic
 
 ExecStart=/opt/tectonic/bootkube.sh
 
-Restart=on-failure
-RestartSec=5s`
+Restart=no`
 )
 
 var (
