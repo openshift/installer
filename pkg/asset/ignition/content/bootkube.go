@@ -49,7 +49,6 @@ then
 			--release-image="{{.ReleaseImage}}"
 
 	cp --recursive cvo-bootstrap/manifests .
-	cp --recursive cvo-bootstrap/bootstrap/bootstrap-pod.yaml /etc/kubernetes/manifests/
 fi
 
 if [ ! -d kco-bootstrap ]
