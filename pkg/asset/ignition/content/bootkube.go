@@ -172,6 +172,9 @@ fi
 
 echo "Starting etcd certificate signer..."
 
+# Remove error_trap
+trap - ERR
+
 trap "podman rm --force etcd-signer" ERR
 
 # shellcheck disable=SC2154
