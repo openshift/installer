@@ -18,40 +18,53 @@ import (
 	"github.com/openshift/installer/pkg/asset/metadata"
 )
 
-func newInstallConfigCmd() *cobra.Command {
-	return &cobra.Command{
+type target struct {
+	name    string
+	command *cobra.Command
+	assets  []asset.WritableAsset
+}
+
+var targets = []target{{
+	name: "Install Config",
+	command: &cobra.Command{
 		Use:   "install-config",
 		Short: "Generates the Install Config asset",
 		Long:  "",
-		RunE:  runTargetCmd(&installconfig.InstallConfig{}),
-	}
-}
-
-func newIgnitionConfigsCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "ignition-configs",
-		Short: "Generates the Ignition Config asset",
-		Long:  "",
-		RunE:  runTargetCmd(&bootstrap.Bootstrap{}, &machine.Master{}, &machine.Worker{}),
-	}
-}
-
-func newManifestsCmd() *cobra.Command {
-	return &cobra.Command{
+	},
+	assets: []asset.WritableAsset{&installconfig.InstallConfig{}},
+}, {
+	name: "Manifests",
+	command: &cobra.Command{
 		Use:   "manifests",
 		Short: "Generates the Kubernetes manifests",
 		Long:  "",
-		RunE:  runTargetCmd(&manifests.Manifests{}, &manifests.Tectonic{}),
-	}
-}
-
-func newClusterCmd() *cobra.Command {
-	return &cobra.Command{
+	},
+	assets: []asset.WritableAsset{&manifests.Manifests{}, &manifests.Tectonic{}},
+}, {
+	name: "Ignition Configs",
+	command: &cobra.Command{
+		Use:   "ignition-configs",
+		Short: "Generates the Ignition Config asset",
+		Long:  "",
+	},
+	assets: []asset.WritableAsset{&bootstrap.Bootstrap{}, &machine.Master{}, &machine.Worker{}},
+}, {
+	name: "Cluster",
+	command: &cobra.Command{
 		Use:   "cluster",
 		Short: "Create an OpenShift cluster",
 		Long:  "",
-		RunE:  runTargetCmd(&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}, &metadata.Metadata{}),
+	},
+	assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}, &metadata.Metadata{}},
+}}
+
+func newTargetsCmd() []*cobra.Command {
+	var cmds []*cobra.Command
+	for _, t := range targets {
+		t.command.RunE = runTargetCmd(t.assets...)
+		cmds = append(cmds, t.command)
 	}
+	return cmds
 }
 
 func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) error {

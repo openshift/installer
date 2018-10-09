@@ -15,11 +15,16 @@ var (
 
 func main() {
 	rootCmd := newRootCmd()
-	subCmds := []*cobra.Command{
-		newInstallConfigCmd(), newIgnitionConfigsCmd(), newManifestsCmd(), newClusterCmd(),
+
+	var subCmds []*cobra.Command
+	for _, cmd := range newTargetsCmd() {
+		subCmds = append(subCmds, cmd)
+	}
+	subCmds = append(subCmds,
 		newDestroyCmd(),
 		newVersionCmd(),
-	}
+		newGraphCmd(),
+	)
 	for _, subCmd := range subCmds {
 		rootCmd.AddCommand(subCmd)
 	}
