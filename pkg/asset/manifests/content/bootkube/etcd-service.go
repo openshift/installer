@@ -9,15 +9,14 @@ kind: Service
 metadata:
   name: etcd
   namespace: kube-system
+  labels:
+    # this label is used to indicate that it should be scaped by prometheus
+    k8s-app: etcd
 spec:
   clusterIP: None
   ports:
   - name: etcd
     port: 2379
-    protocol: TCP
-  - name: legacy-etcd
-    port: 4001
-    targetPort: 2379
     protocol: TCP
 `
 )
