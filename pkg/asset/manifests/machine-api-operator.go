@@ -48,11 +48,12 @@ type libvirtConfig struct {
 }
 
 type awsConfig struct {
-	ClusterName      string `json:"clusterName"`
-	ClusterID        string `json:"clusterID"`
-	Region           string `json:"region"`
 	AvailabilityZone string `json:"availabilityZone"`
+	ClusterID        string `json:"clusterID"`
+	ClusterName      string `json:"clusterName"`
 	Image            string `json:"image"`
+	InstanceType     string `json:"instanceType"`
+	Region           string `json:"region"`
 	Replicas         int    `json:"replicas"`
 }
 
@@ -109,6 +110,7 @@ func (mao *machineAPIOperator) Generate(dependencies asset.Parents) error {
 			AvailabilityZone: "",
 			Image:            ami,
 			Replicas:         int(*installConfig.Config.Machines[1].Replicas),
+			InstanceType:     installConfig.Config.Machines[1].Platform.AWS.InstanceType,
 		}
 	case installConfig.Config.Platform.Libvirt != nil:
 		mao.config.Libvirt = &libvirtConfig{
