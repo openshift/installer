@@ -31,17 +31,20 @@ const (
 // bootstrapTemplateData is the data to use to replace values in bootstrap
 // template files.
 type bootstrapTemplateData struct {
-	BootkubeImage       string
-	CloudProvider       string
-	CloudProviderConfig string
-	ClusterDNSIP        string
-	DebugConfig         string
-	EtcdCertSignerImage string
-	EtcdCluster         string
-	EtcdctlImage        string
-	HyperkubeImage      string
-	KubeCoreRenderImage string
-	ReleaseImage        string
+	BootkubeImage                             string
+	CloudProvider                             string
+	CloudProviderConfig                       string
+	ClusterDNSIP                              string
+	ClusterKubeApiserverOperatorImage         string
+	ClusterKubeControllerManagerOperatorImage string
+	ClusterKubeSchedulerOperatorImage         string
+	DebugConfig                               string
+	EtcdCertSignerImage                       string
+	EtcdCluster                               string
+	EtcdctlImage                              string
+	HyperkubeImage                            string
+	KubeCoreRenderImage                       string
+	ReleaseImage                              string
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -146,23 +149,44 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 	}
 
 	releaseImage := defaultReleaseImage
-	if ri, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && ri != "" {
+	if override, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && override != "" {
 		log.Warn("Found override for ReleaseImage. Please be warned, this is not advised")
-		releaseImage = ri
+		releaseImage = override
+	}
+
+	clusterKubeApiserverOperatorImage := ""
+	if override, ok := os.LookupEnv("OPENSHIFT_INSTALL_KUBE_APISERVER_OPERATOR_IMAGE_OVERRIDE"); ok && override != "" {
+		log.Warn("Found override for cluster-kube-apiserver-operator. Please be warned, this is not advised")
+		clusterKubeApiserverOperatorImage = override
+	}
+
+	clusterKubeControllerManagerOperatorImage := ""
+	if override, ok := os.LookupEnv("OPENSHIFT_INSTALL_KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE_OVERRIDE"); ok && override != "" {
+		log.Warn("Found override for cluster-kube-controller-manager-operator. Please be warned, this is not advised")
+		clusterKubeControllerManagerOperatorImage = override
+	}
+
+	clusterKubeSchedulerOperatorImage := ""
+	if override, ok := os.LookupEnv("OPENSHIFT_INSTALL_KUBE_SCHEDULER_OPERATOR_IMAGE_OVERRIDE"); ok && override != "" {
+		log.Warn("Found override for cluster-kube-scheduler-operator. Please be warned, this is not advised")
+		clusterKubeSchedulerOperatorImage = override
 	}
 
 	return &bootstrapTemplateData{
-		ClusterDNSIP:        clusterDNSIP,
-		CloudProvider:       getCloudProvider(installConfig),
-		CloudProviderConfig: getCloudProviderConfig(installConfig),
-		DebugConfig:         "",
-		KubeCoreRenderImage: "quay.io/coreos/kube-core-renderer-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
-		EtcdCertSignerImage: "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
-		EtcdctlImage:        "quay.io/coreos/etcd:v3.2.14",
-		BootkubeImage:       "quay.io/coreos/bootkube:v0.10.0",
-		ReleaseImage:        releaseImage,
-		HyperkubeImage:      "openshift/origin-node:latest",
-		EtcdCluster:         strings.Join(etcdEndpoints, ","),
+		ClusterDNSIP:                              clusterDNSIP,
+		CloudProvider:                             getCloudProvider(installConfig),
+		CloudProviderConfig:                       getCloudProviderConfig(installConfig),
+		DebugConfig:                               "",
+		KubeCoreRenderImage:                       "quay.io/coreos/kube-core-renderer-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
+		EtcdCertSignerImage:                       "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
+		EtcdctlImage:                              "quay.io/coreos/etcd:v3.2.14",
+		BootkubeImage:                             "quay.io/coreos/bootkube:v0.10.0",
+		ClusterKubeApiserverOperatorImage:         clusterKubeApiserverOperatorImage,
+		ClusterKubeControllerManagerOperatorImage: clusterKubeControllerManagerOperatorImage,
+		ClusterKubeSchedulerOperatorImage:         clusterKubeSchedulerOperatorImage,
+		ReleaseImage:                              releaseImage,
+		HyperkubeImage:                            "openshift/origin-node:latest",
+		EtcdCluster:                               strings.Join(etcdEndpoints, ","),
 	}, nil
 }
 
