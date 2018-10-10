@@ -205,17 +205,16 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"cvo-overrides.yaml":                    applyTemplateData(bootkube.CVOOverrides, templateData),
 		"etcd-service-endpoints.yaml":           applyTemplateData(bootkube.EtcdServiceEndpointsKubeSystem, templateData),
 
-		"01-tectonic-namespace.yaml":                       []byte(bootkube.TectonicNamespace),
-		"02-ingress-namespace.yaml":                        []byte(bootkube.IngressNamespace),
-		"03-openshift-web-console-namespace.yaml":          []byte(bootkube.OpenshiftWebConsoleNamespace),
-		"04-openshift-machine-config-operator.yaml":        []byte(bootkube.OpenshiftMachineConfigOperator),
-		"05-openshift-cluster-api-namespace.yaml":          []byte(bootkube.OpenshiftClusterAPINamespace),
-		"09-openshift-service-signer-namespace.yaml":       []byte(bootkube.OpenshiftServiceCertSignerNamespace),
-		"app-version-kind.yaml":                            []byte(bootkube.AppVersionKind),
-		"app-version-mao.yaml":                             []byte(bootkube.AppVersionMao),
-		"app-version-tectonic-network.yaml":                []byte(bootkube.AppVersionTectonicNetwork),
-		"machine-config-operator-01-images-configmap.yaml": []byte(bootkube.MachineConfigOperator01ImagesConfigmap),
-		"etcd-service.yaml":                                []byte(bootkube.EtcdServiceKubeSystem),
+		"01-tectonic-namespace.yaml":                 []byte(bootkube.TectonicNamespace),
+		"02-ingress-namespace.yaml":                  []byte(bootkube.IngressNamespace),
+		"03-openshift-web-console-namespace.yaml":    []byte(bootkube.OpenshiftWebConsoleNamespace),
+		"04-openshift-machine-config-operator.yaml":  []byte(bootkube.OpenshiftMachineConfigOperator),
+		"05-openshift-cluster-api-namespace.yaml":    []byte(bootkube.OpenshiftClusterAPINamespace),
+		"09-openshift-service-signer-namespace.yaml": []byte(bootkube.OpenshiftServiceCertSignerNamespace),
+		"app-version-kind.yaml":                      []byte(bootkube.AppVersionKind),
+		"app-version-mao.yaml":                       []byte(bootkube.AppVersionMao),
+		"app-version-tectonic-network.yaml":          []byte(bootkube.AppVersionTectonicNetwork),
+		"etcd-service.yaml":                          []byte(bootkube.EtcdServiceKubeSystem),
 	}
 
 	files := make([]*asset.File, 0, len(assetData))

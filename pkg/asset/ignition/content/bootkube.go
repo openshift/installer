@@ -30,7 +30,9 @@ set -e
 mkdir --parents /etc/kubernetes/manifests/
 
 MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-operator)
-echo "Found Machine Config Operator's image: $MACHINE_CONFIG_OPERATOR_IMAGE"
+MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-controller)
+MACHINE_CONFIG_SERVER_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-server)
+MACHINE_CONFIG_DAEMON_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-daemon)
 
 KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-apiserver-operator)
 KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-controller-manager-operator)
@@ -143,7 +145,9 @@ then
 			--root-ca=/assets/tls/root-ca.crt \
 			--config-file=/assets/manifests/cluster-config.yaml \
 			--dest-dir=/assets/mco-bootstrap \
-			--images-json-configmap=/assets/manifests/machine-config-operator-01-images-configmap.yaml
+			--machine-config-controller-image=${MACHINE_CONFIG_CONTROLLER_IMAGE} \
+			--machine-config-server-image=${MACHINE_CONFIG_SERVER_IMAGE} \
+			--machine-config-daemon-image=${MACHINE_CONFIG_DAEMON_IMAGE} \
 
 	# Bootstrap MachineConfigController uses /etc/mcc/bootstrap/manifests/ dir to
 	# 1. read the controller config rendered by MachineConfigOperator
