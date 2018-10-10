@@ -212,7 +212,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"05-openshift-cluster-api-namespace.yaml":    []byte(bootkube.OpenshiftClusterAPINamespace),
 		"09-openshift-service-signer-namespace.yaml": []byte(bootkube.OpenshiftServiceCertSignerNamespace),
 		"app-version-kind.yaml":                      []byte(bootkube.AppVersionKind),
-		"app-version-mao.yaml":                       []byte(bootkube.AppVersionMao),
 		"app-version-tectonic-network.yaml":          []byte(bootkube.AppVersionTectonicNetwork),
 		"etcd-service.yaml":                          []byte(bootkube.EtcdServiceKubeSystem),
 	}
