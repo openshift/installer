@@ -29,6 +29,7 @@ func Apply(dir string, extraArgs ...string) (string, error) {
 	defaultArgs := []string{
 		"apply",
 		"-auto-approve",
+		"-input=false",
 		"-no-color",
 		fmt.Sprintf("-state=%s", stateFileName),
 	}
@@ -39,5 +40,5 @@ func Apply(dir string, extraArgs ...string) (string, error) {
 
 // Init runs "terraform init" in the given directory.
 func Init(dir string) error {
-	return terraformExec(dir, "init", "-no-color")
+	return terraformExec(dir, "init", "-input=false", "-no-color")
 }
