@@ -2,7 +2,8 @@ package content
 
 const (
 	// TectonicSystemdContents is a service that runs tectonic on the masters.
-	TectonicSystemdContents = `[Unit]
+	TectonicSystemdContents = `
+[Unit]
 Description=Bootstrap a Tectonic cluster
 Wants=bootkube.service
 After=bootkube.service
@@ -16,7 +17,8 @@ Restart=on-failure
 RestartSec=5s
 
 [Install]
-WantedBy=multi-user.target`
+WantedBy=multi-user.target
+`
 
 	// TectonicShFileContents is a script file for running tectonic on bootstrap
 	// nodes.
@@ -90,5 +92,6 @@ done
 # Wait for Tectonic pods
 wait_for_pods tectonic-system
 
-echo "Tectonic installation is done"`
+echo "Tectonic installation is done"
+`
 )
