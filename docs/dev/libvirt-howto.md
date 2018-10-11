@@ -129,7 +129,7 @@ sudo firewall-cmd --zone=FedoraWorkstation --list-ports
 sudo firewall-cmd --zone=FedoraWorkstation --list-sources
 ```
 
-NOTE: When the firewall rules are no longer needed, `sudo firewalld-cmd --reload`
+NOTE: When the firewall rules are no longer needed, `sudo firewall-cmd --reload`
 will remove the changes made as they were not permanently added. For persistence,
 add `--permanent` to the `firewall-cmd` commands and run them a second time.
 
