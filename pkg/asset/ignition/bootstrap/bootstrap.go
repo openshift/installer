@@ -15,7 +15,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
-	"github.com/openshift/installer/pkg/asset/ignition/content"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/content"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests"
