@@ -41,6 +41,8 @@ func newRootCmd() *cobra.Command {
 		Short:             "Creates OpenShift clusters",
 		Long:              "",
 		PersistentPreRunE: runRootCmd,
+		SilenceErrors:     true,
+		SilenceUsage:      true,
 	}
 	cmd.PersistentFlags().StringVar(&rootOpts.dir, "dir", ".", "assets directory")
 	cmd.PersistentFlags().StringVar(&rootOpts.logLevel, "log-level", "info", "log level (e.g. \"debug | info | warn | error\")")

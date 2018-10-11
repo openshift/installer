@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift/installer/pkg/asset/metadata"
+	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -26,15 +26,15 @@ var Registry = make(map[string]NewFunc)
 
 // New returns a Destroyer based on `metadata.json` in `rootDir`.
 func New(logger logrus.FieldLogger, rootDir string) (Destroyer, error) {
-	path := filepath.Join(rootDir, metadata.MetadataFilename)
-	raw, err := ioutil.ReadFile(filepath.Join(rootDir, metadata.MetadataFilename))
+	path := filepath.Join(rootDir, cluster.MetadataFilename)
+	raw, err := ioutil.ReadFile(filepath.Join(rootDir, cluster.MetadataFilename))
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read %s file", metadata.MetadataFilename)
+		return nil, errors.Wrapf(err, "failed to read %s file", cluster.MetadataFilename)
 	}
 
 	var cmetadata *types.ClusterMetadata
 	if err := json.Unmarshal(raw, &cmetadata); err != nil {
-		return nil, errors.Wrapf(err, "failed to Unmarshal data from %s file to types.ClusterMetadata", metadata.MetadataFilename)
+		return nil, errors.Wrapf(err, "failed to Unmarshal data from %s file to types.ClusterMetadata", cluster.MetadataFilename)
 	}
 
 	platform := cmetadata.Platform()
