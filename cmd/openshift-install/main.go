@@ -57,7 +57,6 @@ func runRootCmd(cmd *cobra.Command, args []string) error {
 	level, err := logrus.ParseLevel(rootOpts.logLevel)
 	if err != nil {
 		return errors.Wrap(err, "invalid log-level")
-
 	}
 	logrus.SetLevel(level)
 	return nil
