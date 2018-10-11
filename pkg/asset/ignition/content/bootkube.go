@@ -34,9 +34,13 @@ MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --rm {{.ReleaseImage}} image machin
 MACHINE_CONFIG_SERVER_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-server)
 MACHINE_CONFIG_DAEMON_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-daemon)
 
-KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-apiserver-operator)
-KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-controller-manager-operator)
-KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-scheduler-operator)
+KUBE_APISERVER_OPERATOR_IMAGE="{{.ClusterKubeApiserverOperatorImage}}"
+KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE="{{.ClusterKubeControllerManagerOperatorImage}}"
+KUBE_SCHEDULER_OPERATOR_IMAGE="{{.ClusterKubeSchedulerOperatorImage}}"
+
+KUBE_APISERVER_OPERATOR_IMAGE=${KUBE_APISERVER_OPERATOR_IMAGE:-$(podman run --rm {{.ReleaseImage}} image cluster-kube-apiserver-operator)}
+KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=${KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE:-$(podman run --rm {{.ReleaseImage}} image cluster-kube-controller-manager-operator)}
+KUBE_SCHEDULER_OPERATOR_IMAGE=${KUBE_SCHEDULER_OPERATOR_IMAGE:-$(podman run --rm {{.ReleaseImage}} image cluster-kube-scheduler-operator)}
 
 if [ ! -d cvo-bootstrap ]
 then
