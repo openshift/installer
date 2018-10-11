@@ -7,7 +7,7 @@ import (
 )
 
 type clusterID struct {
-	clusterID string
+	ClusterID string
 }
 
 var _ asset.Asset = (*clusterID)(nil)
@@ -19,7 +19,7 @@ func (a *clusterID) Dependencies() []asset.Asset {
 
 // Generate generates a new UUID
 func (a *clusterID) Generate(asset.Parents) error {
-	a.clusterID = uuid.New()
+	a.ClusterID = uuid.New()
 	return nil
 }
 

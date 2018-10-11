@@ -8,7 +8,7 @@ import (
 )
 
 type emailAddress struct {
-	emailAddress string
+	EmailAddress string
 }
 
 var _ asset.Asset = (*emailAddress)(nil)
@@ -33,7 +33,7 @@ func (a *emailAddress) Generate(asset.Parents) error {
 		},
 		"OPENSHIFT_INSTALL_EMAIL_ADDRESS",
 	)
-	a.emailAddress = email
+	a.EmailAddress = email
 	return err
 }
 

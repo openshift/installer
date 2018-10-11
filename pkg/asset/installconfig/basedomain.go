@@ -8,7 +8,7 @@ import (
 )
 
 type baseDomain struct {
-	baseDomain string
+	BaseDomain string
 }
 
 var _ asset.Asset = (*baseDomain)(nil)
@@ -33,7 +33,7 @@ func (a *baseDomain) Generate(asset.Parents) error {
 		},
 		"OPENSHIFT_INSTALL_BASE_DOMAIN",
 	)
-	a.baseDomain = bd
+	a.BaseDomain = bd
 	return err
 }
 

@@ -35,8 +35,8 @@ func (c *RootCA) Generate(parents asset.Parents) error {
 		return errors.Wrap(err, "failed to generate RootCA")
 	}
 
-	c.key = PrivateKeyToPem(key)
-	c.cert = CertToPem(crt)
+	c.KeyRaw = PrivateKeyToPem(key)
+	c.CertRaw = CertToPem(crt)
 
 	c.generateFiles("root-ca")
 

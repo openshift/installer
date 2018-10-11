@@ -58,9 +58,9 @@ var (
 // Platform is an asset that queries the user for the platform on which to install
 // the cluster.
 type platform struct {
-	aws       *types.AWSPlatform
-	openstack *types.OpenStackPlatform
-	libvirt   *types.LibvirtPlatform
+	AWS       *types.AWSPlatform
+	Openstack *types.OpenStackPlatform
+	Libvirt   *types.LibvirtPlatform
 }
 
 var _ asset.Asset = (*platform)(nil)
@@ -83,19 +83,19 @@ func (a *platform) Generate(asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		a.aws = aws
+		a.AWS = aws
 	case OpenStackPlatformType:
 		openstack, err := a.openstackPlatform()
 		if err != nil {
 			return err
 		}
-		a.openstack = openstack
+		a.Openstack = openstack
 	case LibvirtPlatformType:
 		libvirt, err := a.libvirtPlatform()
 		if err != nil {
 			return err
 		}
-		a.libvirt = libvirt
+		a.Libvirt = libvirt
 	default:
 		return fmt.Errorf("unknown platform type %q", platform)
 	}

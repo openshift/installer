@@ -7,7 +7,7 @@ import (
 )
 
 type password struct {
-	password string
+	Password string
 }
 
 var _ asset.Asset = (*password)(nil)
@@ -29,7 +29,7 @@ func (a *password) Generate(asset.Parents) error {
 		},
 		"OPENSHIFT_INSTALL_PASSWORD",
 	)
-	a.password = p
+	a.Password = p
 	return err
 }
 

@@ -8,7 +8,7 @@ import (
 )
 
 type pullSecret struct {
-	pullSecret string
+	PullSecret string
 }
 
 var _ asset.Asset = (*pullSecret)(nil)
@@ -34,7 +34,7 @@ func (a *pullSecret) Generate(asset.Parents) error {
 		"OPENSHIFT_INSTALL_PULL_SECRET",
 		"OPENSHIFT_INSTALL_PULL_SECRET_PATH",
 	)
-	a.pullSecret = s
+	a.PullSecret = s
 	return err
 }
 
