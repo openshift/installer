@@ -8,7 +8,7 @@ import (
 )
 
 type clusterName struct {
-	clusterName string
+	ClusterName string
 }
 
 var _ asset.Asset = (*clusterName)(nil)
@@ -33,7 +33,7 @@ func (a *clusterName) Generate(asset.Parents) error {
 		},
 		"OPENSHIFT_INSTALL_CLUSTER_NAME",
 	)
-	a.clusterName = n
+	a.ClusterName = n
 	return err
 }
 

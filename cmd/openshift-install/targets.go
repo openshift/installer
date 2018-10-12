@@ -69,6 +69,10 @@ func newTargetsCmd() []*cobra.Command {
 func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		assetStore := &asset.StoreImpl{}
+		err := assetStore.Load(rootOpts.dir)
+		if err != nil {
+			logrus.Errorf("Could not load assets from state file: %v", err)
+		}
 		for _, a := range targets {
 			err := assetStore.Fetch(a)
 			if err != nil {
@@ -90,6 +94,11 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 			if err != nil {
 				return err
 			}
+		}
+		err = assetStore.Save(rootOpts.dir)
+		if err != nil {
+			errors.Wrapf(err, "failed to write to state file")
+			return err
 		}
 		return nil
 	}

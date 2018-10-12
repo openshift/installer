@@ -20,7 +20,7 @@ const (
 )
 
 type sshPublicKey struct {
-	key string
+	Key string
 }
 
 var _ asset.Asset = (*sshPublicKey)(nil)
@@ -54,7 +54,7 @@ func (a *sshPublicKey) Generate(asset.Parents) error {
 				return errors.Wrap(err, "failed to validate public key")
 			}
 		}
-		a.key = value
+		a.Key = value
 		return nil
 	}
 
@@ -85,7 +85,7 @@ func (a *sshPublicKey) Generate(asset.Parents) error {
 
 	if len(pubKeys) == 1 {
 		for _, value := range pubKeys {
-			a.key = value
+			a.Key = value
 		}
 		return nil
 	}
@@ -113,7 +113,7 @@ func (a *sshPublicKey) Generate(asset.Parents) error {
 		return errors.Wrap(err, "failed UserInput for SSH public key")
 	}
 
-	a.key = pubKeys[path]
+	a.Key = pubKeys[path]
 	return nil
 }
 

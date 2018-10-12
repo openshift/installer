@@ -26,11 +26,11 @@ func (a *persistAsset) Generate(Parents) error {
 
 type writablePersistAsset struct {
 	persistAsset
-	files []*File
+	FileList []*File
 }
 
 func (a *writablePersistAsset) Files() []*File {
-	return a.files
+	return a.FileList
 }
 
 func TestPersistToFile(t *testing.T) {
@@ -64,12 +64,12 @@ func TestPersistToFile(t *testing.T) {
 			defer os.RemoveAll(dir)
 
 			asset := &writablePersistAsset{
-				files: make([]*File, len(tc.filenames)),
+				FileList: make([]*File, len(tc.filenames)),
 			}
 			expectedFiles := map[string][]byte{}
 			for i, filename := range tc.filenames {
 				data := []byte(fmt.Sprintf("data%d", i))
-				asset.files[i] = &File{
+				asset.FileList[i] = &File{
 					Filename: filename,
 					Data:     data,
 				}
