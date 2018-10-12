@@ -17,6 +17,8 @@ After=kubelet.service
 WorkingDirectory=/opt/tectonic
 
 ExecStart=/opt/tectonic/bootkube.sh
+# Workaround for https://github.com/opencontainers/runc/pull/1807
+ExecStartPost=/usr/bin/touch /opt/tectonic/.bootkube.done
 
 Restart=on-failure
 RestartSec=5s
