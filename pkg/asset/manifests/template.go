@@ -35,13 +35,6 @@ type bootkubeTemplateData struct {
 }
 
 type tectonicTemplateData struct {
-	IngressCaCert                          string
-	IngressKind                            string
-	IngressStatusPassword                  string
-	IngressTLSBundle                       string
-	IngressTLSCert                         string
-	IngressTLSKey                          string
-	KubeAddonOperatorImage                 string
-	PullSecret                             string
-	TectonicIngressControllerOperatorImage string
+	KubeAddonOperatorImage string
+	PullSecret             string
 }
