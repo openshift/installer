@@ -56,33 +56,7 @@ Terraform has similar standards, and you can run `terraform fmt` to rewrite Terr
 
 ## Commit Message Format
 
-We follow a rough convention for commit messages that is designed to answer two
-questions: what changed and why. The subject line should feature the what and
-the body of the commit should describe the why.
-
-```
-scripts: add the test-cluster command
-
-this uses tmux to set up a test cluster that you can easily kill and
-start for debugging.
-
-Fixes #38
-```
-
-The format can be described more formally as follows:
-
-```
-<subsystem>: <what changed>
-<BLANK LINE>
-<why this change was made>
-<BLANK LINE>
-<footer>
-```
-
-The first line is the subject and should be no longer than 70 characters, the
-second line is always blank, and other lines should be wrapped at 80 characters.
-This allows the message to be easier to read on GitHub as well as in various
-git tools.
+Write [good commit messages](https://chris.beams.io/posts/git-commit/) consistent with [Kubernetes Guidelines](https://github.com/kubernetes/community/tree/master/contributors/guide#code-review).
 
 [golang-style]: https://github.com/golang/go/wiki/CodeReviewComments
 [disclosure]: https://coreos.com/security/disclosure/
