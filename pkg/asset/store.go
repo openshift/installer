@@ -113,7 +113,7 @@ func (s *StoreImpl) fetch(asset Asset, indent string) error {
 	logrus.Debugf("%sLooking up asset from state file: %s", indent, reflect.TypeOf(asset).String())
 	ok, err := s.GetStateAsset(asset)
 	if err != nil {
-		return errors.Wrapf(err, "failed to unmarshal asset '%s' from state file '%s'", asset.Name(), stateFileName)
+		return errors.Wrapf(err, "failed to unmarshal asset %q from state file %q", asset.Name(), stateFileName)
 	}
 	if ok {
 		logrus.Debugf("%sAsset found in state file", indent)
