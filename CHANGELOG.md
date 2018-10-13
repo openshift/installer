@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
     ```console
     $ openshift-install --dir=example manifests
-    $ $EDITOR emacs example/manifests/cluster-config.yaml
+    $ $EDITOR example/manifests/cluster-config.yaml
     $ openshift-install --dir=example install-config
     ```
 
