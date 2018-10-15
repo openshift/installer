@@ -48,6 +48,21 @@ func (c *InstallConfig) MasterCount() int {
 	return 1
 }
 
+// Tags returns tags which should be added to resources created for
+// the cluster.  This includes both installer- and user-specified tags.
+func (c *InstallConfig) Tags() (tags map[string]string) {
+	tags = make(map[string]string)
+	tags["tectonicClusterID"] = c.ClusterID
+
+	if c.Platform.AWS != nil {
+		for key, value := range c.Platform.AWS.UserTags {
+			tags[key] = value
+		}
+	}
+
+	return tags
+}
+
 // Admin is the configuration for the admin user.
 type Admin struct {
 	// Email is the email address of the admin user.
