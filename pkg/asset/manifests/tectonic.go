@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/machines"
 	content "github.com/openshift/installer/pkg/asset/manifests/content/tectonic"
 	"github.com/openshift/installer/pkg/asset/tls"
 )
@@ -30,6 +31,8 @@ func (t *Tectonic) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&tls.IngressCertKey{},
 		&tls.KubeCA{},
+		&machines.ClusterK8sIO{},
+		&machines.Worker{},
 	}
 }
 
@@ -38,7 +41,9 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	ingressCertKey := &tls.IngressCertKey{}
 	kubeCA := &tls.KubeCA{}
-	dependencies.Get(installConfig, ingressCertKey, kubeCA)
+	clusterk8sio := &machines.ClusterK8sIO{}
+	worker := &machines.Worker{}
+	dependencies.Get(installConfig, ingressCertKey, kubeCA, clusterk8sio, worker)
 
 	templateData := &tectonicTemplateData{
 		IngressCaCert:                          base64.StdEncoding.EncodeToString(kubeCA.Cert()),
@@ -55,22 +60,25 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 	}
 
 	assetData := map[string][]byte{
-		"99_binding-discovery.yaml":                  []byte(content.BindingDiscovery),
-		"99_kube-addon-00-appversion.yaml":           []byte(content.AppVersionKubeAddon),
-		"99_kube-addon-01-operator.yaml":             applyTemplateData(content.KubeAddonOperator, templateData),
-		"99_kube-core-00-appversion.yaml":            []byte(content.AppVersionKubeCore),
-		"99_kube-core-00-operator.yaml":              applyTemplateData(content.KubeCoreOperator, templateData),
-		"99_role-admin.yaml":                         []byte(content.RoleAdmin),
-		"99_role-user.yaml":                          []byte(content.RoleUser),
-		"99_tectonic-ingress-00-appversion.yaml":     []byte(content.AppVersionTectonicIngress),
-		"99_tectonic-ingress-01-cluster-config.yaml": applyTemplateData(content.ClusterConfigTectonicIngress, templateData),
-		"99_tectonic-ingress-02-tls.yaml":            applyTemplateData(content.TLSTectonicIngress, templateData),
-		"99_tectonic-ingress-03-pull.json":           applyTemplateData(content.PullTectonicIngress, templateData),
-		"99_tectonic-ingress-04-svc-account.yaml":    []byte(content.SvcAccountTectonicIngress),
-		"99_tectonic-ingress-05-operator.yaml":       applyTemplateData(content.TectonicIngressControllerOperator, templateData),
-		"99_tectonic-system-00-binding-admin.yaml":   []byte(content.BindingAdmin),
-		"99_tectonic-system-01-ca-cert.yaml":         applyTemplateData(content.CaCertTectonicSystem, templateData),
-		"99_tectonic-system-02-pull.json":            applyTemplateData(content.PullTectonicSystem, templateData),
+		"99_binding-discovery.yaml":                             []byte(content.BindingDiscovery),
+		"99_kube-addon-00-appversion.yaml":                      []byte(content.AppVersionKubeAddon),
+		"99_kube-addon-01-operator.yaml":                        applyTemplateData(content.KubeAddonOperator, templateData),
+		"99_kube-core-00-appversion.yaml":                       []byte(content.AppVersionKubeCore),
+		"99_kube-core-00-operator.yaml":                         applyTemplateData(content.KubeCoreOperator, templateData),
+		"99_openshift-cluster-api_cluster.yaml":                 clusterk8sio.Raw,
+		"99_openshift-cluster-api_worker-machineset.yaml":       worker.MachineSetRaw,
+		"99_openshift-cluster-api_worker-user-data-secret.yaml": worker.UserDataSecretRaw,
+		"99_role-admin.yaml":                                    []byte(content.RoleAdmin),
+		"99_role-user.yaml":                                     []byte(content.RoleUser),
+		"99_tectonic-ingress-00-appversion.yaml":                []byte(content.AppVersionTectonicIngress),
+		"99_tectonic-ingress-01-cluster-config.yaml":            applyTemplateData(content.ClusterConfigTectonicIngress, templateData),
+		"99_tectonic-ingress-02-tls.yaml":                       applyTemplateData(content.TLSTectonicIngress, templateData),
+		"99_tectonic-ingress-03-pull.json":                      applyTemplateData(content.PullTectonicIngress, templateData),
+		"99_tectonic-ingress-04-svc-account.yaml":               []byte(content.SvcAccountTectonicIngress),
+		"99_tectonic-ingress-05-operator.yaml":                  applyTemplateData(content.TectonicIngressControllerOperator, templateData),
+		"99_tectonic-system-00-binding-admin.yaml":              []byte(content.BindingAdmin),
+		"99_tectonic-system-01-ca-cert.yaml":                    applyTemplateData(content.CaCertTectonicSystem, templateData),
+		"99_tectonic-system-02-pull.json":                       applyTemplateData(content.PullTectonicSystem, templateData),
 	}
 
 	t.FileList = make([]*asset.File, 0, len(assetData))
