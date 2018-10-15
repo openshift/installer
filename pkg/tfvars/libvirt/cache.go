@@ -151,12 +151,23 @@ func cacheImage(reader io.Reader, imagePath string) (err error) {
 	if err != nil {
 		return err
 	}
-	defer file.Close()
+	closed := false
+	defer func() {
+		if !closed {
+			file.Close()
+		}
+	}()
 
 	_, err = io.Copy(file, reader)
 	if err != nil {
 		return err
 	}
+
+	err = file.Close()
+	if err != nil {
+		return err
+	}
+	closed = true
 
 	return os.Rename(tempPath, imagePath)
 }
