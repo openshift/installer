@@ -7,14 +7,6 @@ EOF
   default = "1.0"
 }
 
-variable "tectonic_aws_profile" {
-  description = <<EOF
-(optional) This declares the AWS credentials profile to use.
-EOF
-
-  type = "string"
-}
-
 variable "tectonic_aws_master_ec2_type" {
   type        = "string"
   description = "Instance size for the master node(s). Example: `t2.medium`."

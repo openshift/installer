@@ -92,8 +92,7 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn string, masterIgns []string, 
 		}
 
 		config.AWS = aws.AWS{
-			Endpoints: aws.EndpointsAll,   // Default value for endpoints.
-			Profile:   aws.DefaultProfile, // Default value for profile.
+			Endpoints: aws.EndpointsAll, // Default value for endpoints.
 			Region:    cfg.Platform.AWS.Region,
 			ExtraTags: cfg.Platform.AWS.UserTags,
 			External: aws.External{

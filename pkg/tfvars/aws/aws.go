@@ -12,8 +12,6 @@ const (
 	EndpointsPublic Endpoints = "public"
 	// DefaultVPCCIDRBlock is the default CIDR range for an AWS VPC.
 	DefaultVPCCIDRBlock = "10.0.0.0/16"
-	// DefaultProfile is the default AWS credentials profile to use.
-	DefaultProfile = "default"
 	// DefaultRegion is the default AWS region for the cluster.
 	DefaultRegion = "us-east-1"
 )
@@ -26,7 +24,6 @@ type AWS struct {
 	ExtraTags      map[string]string `json:"tectonic_aws_extra_tags,omitempty" yaml:"extraTags,omitempty"`
 	InstallerRole  string            `json:"tectonic_aws_installer_role,omitempty" yaml:"installerRole,omitempty"`
 	Master         `json:",inline" yaml:"master,omitempty"`
-	Profile        string `json:"tectonic_aws_profile,omitempty" yaml:"profile,omitempty"`
 	Region         string `json:"tectonic_aws_region,omitempty" yaml:"region,omitempty"`
 	VPCCIDRBlock   string `json:"tectonic_aws_vpc_cidr_block,omitempty" yaml:"vpcCIDRBlock,omitempty"`
 	Worker         `json:",inline" yaml:"worker,omitempty"`
