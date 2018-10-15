@@ -31,7 +31,7 @@ func main() {
 
 	if err := rootCmd.Execute(); err != nil {
 		cause := errors.Cause(err)
-		logrus.Fatalf("Error executing openshift-intall: %v", cause)
+		logrus.Fatalf("Error executing openshift-install: %v", cause)
 	}
 }
 
