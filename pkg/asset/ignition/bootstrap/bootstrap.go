@@ -15,7 +15,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
-	"github.com/openshift/installer/pkg/asset/ignition/content"
+	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/content"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests"
@@ -103,7 +103,8 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	a.Config.Systemd.Units = append(
 		a.Config.Systemd.Units,
 		igntypes.Unit{Name: "bootkube.service", Contents: content.BootkubeSystemdContents},
-		igntypes.Unit{Name: "tectonic.service", Contents: content.TectonicSystemdContents, Enabled: util.BoolToPtr(true)},
+		igntypes.Unit{Name: "tectonic.service", Contents: content.TectonicSystemdContents},
+		igntypes.Unit{Name: "progress.service", Contents: content.ReportSystemdContents, Enabled: util.BoolToPtr(true)},
 		igntypes.Unit{Name: "kubelet.service", Contents: applyTemplateData(content.KubeletSystemdTemplate, templateData), Enabled: util.BoolToPtr(true)},
 	)
 
@@ -182,6 +183,10 @@ func (a *Bootstrap) addBootstrapFiles(dependencies asset.Parents) {
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
 		ignition.FilesFromAsset(rootDir, 0644, kubeCoreOperator)...,
+	)
+	a.Config.Storage.Files = append(
+		a.Config.Storage.Files,
+		ignition.FileFromString("/opt/tectonic/report-progress.sh", 0555, content.ReportShFileContents),
 	)
 }
 

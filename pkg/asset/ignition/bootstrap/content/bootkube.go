@@ -7,7 +7,8 @@ import (
 const (
 	// BootkubeSystemdContents is a service for running bootkube on the bootstrap
 	// nodes
-	BootkubeSystemdContents = `[Unit]
+	BootkubeSystemdContents = `
+[Unit]
 Description=Bootstrap a Kubernetes cluster
 Wants=kubelet.service
 After=kubelet.service
@@ -16,9 +17,12 @@ After=kubelet.service
 WorkingDirectory=/opt/tectonic
 
 ExecStart=/opt/tectonic/bootkube.sh
+# Workaround for https://github.com/opencontainers/runc/pull/1807
+ExecStartPost=/usr/bin/touch /opt/tectonic/.bootkube.done
 
 Restart=on-failure
-RestartSec=5s`
+RestartSec=5s
+`
 )
 
 var (
@@ -113,22 +117,22 @@ fi
 
 if [ ! -d kube-scheduler-bootstrap ]
 then
-        echo "Rendering Kubernetes Scheduler core manifests..."
+	echo "Rendering Kubernetes Scheduler core manifests..."
 
-        # shellcheck disable=SC2154
-        podman run \
-                --volume "$PWD:/assets:z" \
-                "${KUBE_SCHEDULER_OPERATOR_IMAGE}" \
-                /usr/bin/cluster-kube-scheduler-operator render \
-                --asset-input-dir=/assets/tls \
-                --asset-output-dir=/assets/kube-scheduler-bootstrap \
-                --config-override-file=/usr/share/bootkube/manifests/config/config-overrides.yaml \
-                --config-output-file=/assets/kube-scheduler-bootstrap/config
+	# shellcheck disable=SC2154
+	podman run \
+		--volume "$PWD:/assets:z" \
+		"${KUBE_SCHEDULER_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-kube-scheduler-operator render \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/kube-scheduler-bootstrap \
+		--config-override-file=/usr/share/bootkube/manifests/config/config-overrides.yaml \
+		--config-output-file=/assets/kube-scheduler-bootstrap/config
 
-        # TODO: copy the bootstrap manifests to replace kube-core-operator
-        cp --recursive kube-scheduler-bootstrap/manifests/00_openshift-kube-scheduler-ns.yaml manifests/00_openshift-kube-scheduler-ns.yaml
-        cp --recursive kube-scheduler-bootstrap/manifests/secret-* manifests/
-        cp --recursive kube-scheduler-bootstrap/manifests/configmap-* manifests/
+	# TODO: copy the bootstrap manifests to replace kube-core-operator
+	cp --recursive kube-scheduler-bootstrap/manifests/00_openshift-kube-scheduler-ns.yaml manifests/00_openshift-kube-scheduler-ns.yaml
+	cp --recursive kube-scheduler-bootstrap/manifests/secret-* manifests/
+	cp --recursive kube-scheduler-bootstrap/manifests/configmap-* manifests/
 fi
 
 if [ ! -d mco-bootstrap ]
@@ -230,5 +234,6 @@ podman run \
 	--network=host \
 	--entrypoint=/bootkube \
 	"{{.BootkubeImage}}" \
-	start --asset-dir=/assets`))
+	start --asset-dir=/assets
+`))
 )
