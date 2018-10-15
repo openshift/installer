@@ -6,7 +6,6 @@ locals {
 
 provider "aws" {
   region  = "${var.tectonic_aws_region}"
-  profile = "${var.tectonic_aws_profile}"
   version = "1.8.0"
 
   assume_role {
