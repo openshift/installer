@@ -34,7 +34,7 @@ TIMESTAMP="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
 
 echo "Reporting install progress..."
 
-oc --config="$KUBECONFIG" create <<EOF
+oc --config="$KUBECONFIG" create -f - <<EOF
 apiVersion: v1
 kind: Event
 metadata:
