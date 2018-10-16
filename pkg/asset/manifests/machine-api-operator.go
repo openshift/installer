@@ -108,7 +108,7 @@ func (mao *machineAPIOperator) Generate(dependencies asset.Parents) error {
 			Region:           installConfig.Config.Platform.AWS.Region,
 			AvailabilityZone: "",
 			Image:            ami,
-			Replicas:         int(*installConfig.Config.Machines[1].Replicas),
+			Replicas:         0, // setting replicas to 0 so that MAO doesn't create competing MachineSets
 		}
 	case installConfig.Config.Platform.Libvirt != nil:
 		mao.Config.Libvirt = &libvirtConfig{
@@ -116,14 +116,14 @@ func (mao *machineAPIOperator) Generate(dependencies asset.Parents) error {
 			URI:         installConfig.Config.Platform.Libvirt.URI,
 			NetworkName: installConfig.Config.Platform.Libvirt.Network.Name,
 			IPRange:     installConfig.Config.Platform.Libvirt.Network.IPRange,
-			Replicas:    int(*installConfig.Config.Machines[1].Replicas),
+			Replicas:    0, // setting replicas to 0 so that MAO doesn't create competing MachineSets
 		}
 	case installConfig.Config.Platform.OpenStack != nil:
 		mao.Config.OpenStack = &openstackConfig{
 			ClusterName: installConfig.Config.ObjectMeta.Name,
 			ClusterID:   installConfig.Config.ClusterID,
 			Region:      installConfig.Config.Platform.OpenStack.Region,
-			Replicas:    int(*installConfig.Config.Machines[1].Replicas),
+			Replicas:    0, // setting replicas to 0 so that MAO doesn't create competing MachineSets
 		}
 	default:
 		return errors.Errorf("unknown provider for machine-api-operator")
