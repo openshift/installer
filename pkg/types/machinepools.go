@@ -11,6 +11,11 @@ type MachinePool struct {
 
 	// Platform is configuration for machine pool specific to the platfrom.
 	Platform MachinePoolPlatform `json:"platform"`
+
+	// CertificateAuthorities is a slice of additional PEM-encoded
+	// certificates to add to machines (in addition to the system
+	// authorities).
+	CertificateAuthorities []string `json:"certificateAuthorities,omitempty"`
 }
 
 // MachinePoolPlatform is the platform-specific configuration for a machine

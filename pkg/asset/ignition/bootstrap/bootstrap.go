@@ -12,6 +12,7 @@ import (
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/vincent-petithory/dataurl"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -112,6 +113,21 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 		a.Config.Passwd.Users,
 		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(installConfig.Config.Admin.SSHKey)}},
 	)
+
+	authorities := installConfig.Config.DefaultCertificateAuthorities
+	if len(authorities) > 0 {
+		certificateAuthorities := make([]igntypes.CaReference, 0, len(authorities))
+		for _, certificateAuthority := range authorities {
+			certificateAuthorities = append(certificateAuthorities, igntypes.CaReference{
+				Source: dataurl.EncodeBytes([]byte(certificateAuthority)),
+			})
+		}
+		a.Config.Ignition.Security = igntypes.Security{
+			TLS: igntypes.TLS{
+				CertificateAuthorities: certificateAuthorities,
+			},
+		}
+	}
 
 	data, err := json.Marshal(a.Config)
 	if err != nil {

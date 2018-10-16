@@ -29,6 +29,12 @@ type InstallConfig struct {
 	// Machines is the list of MachinePools that need to be installed.
 	Machines []MachinePool `json:"machines"`
 
+	// DefaultCertificateAuthorities is the default slice of additional
+	// PEM-encoded certificated to add to machines (in addition to the
+	// system authorities) when MachinePool.CertificateAuthorities is
+	// empty.
+	DefaultCertificateAuthorities []string `json:"defaultCertificateAuthorities,omitempty"`
+
 	// Platform is the configuration for the specific platform upon which to
 	// perform the installation.
 	Platform `json:"platform"`

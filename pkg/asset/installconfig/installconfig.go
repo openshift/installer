@@ -2,6 +2,7 @@ package installconfig
 
 import (
 	"net"
+	"os"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/ghodss/yaml"
@@ -106,6 +107,11 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		numberOfWorkers = 1
 	default:
 		panic("unknown platform type")
+	}
+
+	certificateAuthority := os.Getenv("_FIXME_OPENSHIFT_INSTALL_CERTIFICATE_AUTHORITY")
+	if certificateAuthority != "" {
+		a.Config.DefaultCertificateAuthorities = []string{certificateAuthority}
 	}
 
 	a.Config.Machines = []types.MachinePool{

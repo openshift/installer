@@ -13,6 +13,20 @@ import (
 // pointerIgnitionConfig generates a config which references the remote config
 // served by the machine config server.
 func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string, query string) *ignition.Config {
+	certificateAuthorities := []ignition.CaReference{{
+		Source: dataurl.EncodeBytes(rootCA),
+	}}
+
+	authorities := []string{} // FIXME: set from installConfig.Machines[*].CertificateAuthorities
+	if len(authorities) == 0 {
+		authorities = installConfig.DefaultCertificateAuthorities
+	}
+	for _, certificateAuthority := range authorities {
+		certificateAuthorities = append(certificateAuthorities, ignition.CaReference{
+			Source: dataurl.EncodeBytes([]byte(certificateAuthority)),
+		})
+	}
+
 	return &ignition.Config{
 		Ignition: ignition.Ignition{
 			Version: ignition.MaxVersion.String(),
@@ -30,9 +44,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			},
 			Security: ignition.Security{
 				TLS: ignition.TLS{
-					CertificateAuthorities: []ignition.CaReference{{
-						Source: dataurl.EncodeBytes(rootCA),
-					}},
+					CertificateAuthorities: certificateAuthorities,
 				},
 			},
 		},
