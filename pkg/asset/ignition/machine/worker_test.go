@@ -27,7 +27,8 @@ func TestWorkerGenerate(t *testing.T) {
 			},
 			Platform: types.Platform{
 				AWS: &types.AWSPlatform{
-					Region: "us-east",
+					Region:       "us-east",
+					InstanceType: "m4.large",
 				},
 			},
 		},
