@@ -109,7 +109,6 @@ then
 
 	# TODO: copy the bootstrap manifests to replace kube-core-operator
 	cp --recursive kube-controller-manager-bootstrap/manifests/00_openshift-kube-controller-manager-ns.yaml manifests/00_openshift-kube-controller-manager-ns.yaml
-	cp --recursive kube-controller-manager-bootstrap/manifests/secret-* manifests/
 	cp --recursive kube-controller-manager-bootstrap/manifests/configmap-* manifests/
 fi
 
@@ -128,7 +127,6 @@ then
 
 	# TODO: copy the bootstrap manifests to replace kube-core-operator
 	cp --recursive kube-scheduler-bootstrap/manifests/00_openshift-kube-scheduler-ns.yaml manifests/00_openshift-kube-scheduler-ns.yaml
-	cp --recursive kube-scheduler-bootstrap/manifests/secret-* manifests/
 	cp --recursive kube-scheduler-bootstrap/manifests/configmap-* manifests/
 fi
 
