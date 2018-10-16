@@ -86,13 +86,13 @@ func (s *StoreImpl) Save(dir string) error {
 	return nil
 }
 
-func (s *StoreImpl) fetch(asset Asset, indent string) error {
+func (s *StoreImpl) fetch(asset Asset, indent string) (err error) {
 	logrus.Debugf("%sFetching %s...", indent, asset.Name())
 	storedAsset, ok := s.assets[reflect.TypeOf(asset)]
 	if ok {
 		logrus.Debugf("%sFound %s...", indent, asset.Name())
 		reflect.ValueOf(asset).Elem().Set(reflect.ValueOf(storedAsset).Elem())
-		return nil
+		return err
 	}
 
 	dependencies := asset.Dependencies()
@@ -101,7 +101,7 @@ func (s *StoreImpl) fetch(asset Asset, indent string) error {
 		logrus.Debugf("%sGenerating dependencies of %s...", indent, asset.Name())
 	}
 	for _, d := range dependencies {
-		err := s.fetch(d, indent+"  ")
+		err = s.fetch(d, indent+"  ")
 		if err != nil {
 			return errors.Wrapf(err, "failed to fetch dependency for %s", asset.Name())
 		}
@@ -111,7 +111,7 @@ func (s *StoreImpl) fetch(asset Asset, indent string) error {
 	// Before generating the asset, look if we have it all ready in the state file
 	// if yes, then use it instead
 	logrus.Debugf("%sLooking up asset from state file: %s", indent, reflect.TypeOf(asset).String())
-	ok, err := s.GetStateAsset(asset)
+	ok, err = s.GetStateAsset(asset)
 	if err != nil {
 		return errors.Wrapf(err, "failed to unmarshal asset %q from state file %q", asset.Name(), stateFileName)
 	}
@@ -119,7 +119,7 @@ func (s *StoreImpl) fetch(asset Asset, indent string) error {
 		logrus.Debugf("%sAsset found in state file", indent)
 	} else {
 		logrus.Debugf("%sAsset not found in state file. Generating %s...", indent, asset.Name())
-		err := asset.Generate(parents)
+		err = asset.Generate(parents)
 		if err != nil {
 			return errors.Wrapf(err, "failed to generate asset %s", asset.Name())
 		}
@@ -128,5 +128,12 @@ func (s *StoreImpl) fetch(asset Asset, indent string) error {
 		s.assets = make(map[reflect.Type]Asset)
 	}
 	s.assets[reflect.TypeOf(asset)] = asset
-	return nil
+
+	// whether we generate the asset, or pick it up from the disk, or get it from state file,
+	// we call 'Apply' if the asset is targetable
+	if target, ok := asset.(TargetableAsset); ok {
+		err = target.Apply(parents)
+	}
+
+	return err
 }

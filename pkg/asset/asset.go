@@ -28,6 +28,14 @@ type WritableAsset interface {
 	Files() []*File
 }
 
+// TargetableAsset is a WritableAsset that has an Apply logic to it
+type TargetableAsset interface {
+	WritableAsset
+
+	// Apply performs any real time actions that the asset wants to do
+	Apply(Parents) error
+}
+
 // File is a file for an Asset.
 type File struct {
 	// Filename is the name of the file.

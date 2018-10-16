@@ -31,7 +31,7 @@ type Cluster struct {
 	FileList []*asset.File
 }
 
-var _ asset.WritableAsset = (*Cluster)(nil)
+var _ asset.TargetableAsset = (*Cluster)(nil)
 
 // Name returns the human-friendly name of the asset.
 func (c *Cluster) Name() string {
@@ -54,23 +54,6 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	terraformVariables := &TerraformVariables{}
 	adminKubeconfig := &kubeconfig.Admin{}
 	parents.Get(installConfig, terraformVariables, adminKubeconfig)
-
-	// Copy the terraform.tfvars to a temp directory where the terraform will be invoked within.
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "openshift-install-")
-	if err != nil {
-		return errors.Wrap(err, "failed to create temp dir for terraform execution")
-	}
-	defer os.RemoveAll(tmpDir)
-
-	terraformVariablesFile := terraformVariables.Files()[0]
-	if err := ioutil.WriteFile(filepath.Join(tmpDir, terraformVariablesFile.Filename), terraformVariablesFile.Data, 0600); err != nil {
-		return errors.Wrap(err, "failed to write terraform.tfvars file")
-	}
-
-	platform := terraformVariables.Platform
-	if err := data.Unpack(tmpDir, platform); err != nil {
-		return err
-	}
 
 	metadata := &types.ClusterMetadata{
 		ClusterName: installConfig.Config.ObjectMeta.Name,
@@ -116,10 +99,36 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		return fmt.Errorf("no known platform")
 	}
 
-	if err := data.Unpack(filepath.Join(tmpDir, "config.tf"), "config.tf"); err != nil {
+	return err
+}
+
+// Apply performs the actual action of creating the cluster
+func (c *Cluster) Apply(parents asset.Parents) (err error) {
+	installConfig := &installconfig.InstallConfig{}
+	terraformVariables := &TerraformVariables{}
+	adminKubeconfig := &kubeconfig.Admin{}
+	parents.Get(installConfig, terraformVariables, adminKubeconfig)
+
+	// Copy the terraform.tfvars to a temp directory where the terraform will be invoked within.
+	tmpDir, err := ioutil.TempDir(os.TempDir(), "openshift-install-")
+	if err != nil {
+		return errors.Wrap(err, "failed to create temp dir for terraform execution")
+	}
+	defer os.RemoveAll(tmpDir)
+
+	terraformVariablesFile := terraformVariables.Files()[0]
+	if err := ioutil.WriteFile(filepath.Join(tmpDir, terraformVariablesFile.Filename), terraformVariablesFile.Data, 0600); err != nil {
+		return errors.Wrap(err, "failed to write terraform.tfvars file")
+	}
+
+	platform := terraformVariables.Platform
+	if err := data.Unpack(tmpDir, platform); err != nil {
 		return err
 	}
 
+	if err := data.Unpack(filepath.Join(tmpDir, "config.tf"), "config.tf"); err != nil {
+		return err
+	}
 	logrus.Infof("Using Terraform to create cluster...")
 
 	// This runs the terraform in a temp directory, the tfstate file will be returned
