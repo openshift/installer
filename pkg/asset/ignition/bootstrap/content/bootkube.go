@@ -86,7 +86,6 @@ then
 		--manifest-etcd-serving-ca=etcd-client-ca.crt \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
-		--config-override-file=/usr/share/bootkube/manifests/config/config-overrides.yaml \
 		--config-output-file=/assets/kube-apiserver-bootstrap/config
 
 	# TODO: copy the bootstrap manifests to replace kube-core-operator
@@ -106,7 +105,6 @@ then
 		/usr/bin/cluster-kube-controller-manager-operator render \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
-		--config-override-file=/usr/share/bootkube/manifests/config/config-overrides.yaml \
 		--config-output-file=/assets/kube-controller-manager-bootstrap/config
 
 	# TODO: copy the bootstrap manifests to replace kube-core-operator
@@ -126,7 +124,6 @@ then
 		/usr/bin/cluster-kube-scheduler-operator render \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-scheduler-bootstrap \
-		--config-override-file=/usr/share/bootkube/manifests/config/config-overrides.yaml \
 		--config-output-file=/assets/kube-scheduler-bootstrap/config
 
 	# TODO: copy the bootstrap manifests to replace kube-core-operator
