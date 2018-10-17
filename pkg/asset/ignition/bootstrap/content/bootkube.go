@@ -121,6 +121,12 @@ then
 	cp kube-scheduler-bootstrap/manifests/* manifests/
 fi
 
+# TODO: Remove this when checkpointer, kube-proxy and kube-dns are properly rendered by corresponding operators.
+echo "Installing temporary bootstrap manifests..."
+cp pod-checkpointer-operator-bootstrap/* manifests/
+cp kube-proxy-operator-bootstrap/* manifests/
+cp kube-dns-operator-bootstrap/* manifests/
+
 if [ ! -d mco-bootstrap ]
 then
 	echo "Rendering MCO manifests..."

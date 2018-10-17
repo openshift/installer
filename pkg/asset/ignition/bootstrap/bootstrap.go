@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -94,6 +95,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 
 	a.addBootstrapFiles(dependencies)
 	a.addBootkubeFiles(dependencies, templateData)
+	a.addTemporaryBootkubeFiles(templateData)
 	a.addTectonicFiles(dependencies, templateData)
 	a.addTLSCertFiles(dependencies)
 
@@ -196,6 +198,36 @@ func (a *Bootstrap) addBootkubeFiles(dependencies asset.Parents, templateData *b
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
 		ignition.FilesFromAsset(rootDir, 0644, manifests)...,
+	)
+}
+
+func (a *Bootstrap) addTemporaryBootkubeFiles(templateData *bootstrapTemplateData) {
+	podCheckpointerBootstrapDir := filepath.Join(rootDir, "pod-checkpointer-operator-bootstrap")
+	for name, data := range content.PodCheckpointerBootkubeManifests {
+		a.Config.Storage.Files = append(
+			a.Config.Storage.Files,
+			ignition.FileFromString(filepath.Join(podCheckpointerBootstrapDir, name), 0644, data),
+		)
+	}
+
+	kubeProxyBootstrapDir := filepath.Join(rootDir, "kube-proxy-operator-bootstrap")
+	for name, data := range content.KubeProxyBootkubeManifests {
+		a.Config.Storage.Files = append(
+			a.Config.Storage.Files,
+			ignition.FileFromString(filepath.Join(kubeProxyBootstrapDir, name), 0644, data),
+		)
+	}
+
+	kubeDNSBootstrapDir := filepath.Join(rootDir, "kube-dns-operator-bootstrap")
+	for name, data := range content.KubeDNSBootkubeManifests {
+		a.Config.Storage.Files = append(
+			a.Config.Storage.Files,
+			ignition.FileFromString(filepath.Join(kubeDNSBootstrapDir, name), 0644, data),
+		)
+	}
+	a.Config.Storage.Files = append(
+		a.Config.Storage.Files,
+		ignition.FileFromString(filepath.Join(kubeDNSBootstrapDir, "kube-dns-svc.yaml"), 0644, applyTemplateData(content.BootkubeKubeDNSService, templateData)),
 	)
 }
 
