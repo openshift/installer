@@ -96,7 +96,8 @@ resource "aws_instance" "master" {
   tags = "${merge(map(
       "Name", "${var.cluster_name}-master-${count.index}",
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "clusterid", "${var.cluster_name}"
     ), var.extra_tags)}"
 
   root_block_device {
