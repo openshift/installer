@@ -137,6 +137,11 @@ type OpenStackPlatform struct {
 	// Region specifies the OpenStack region where the cluster will be created.
 	Region string `json:"region"`
 
+	// DefaultMachinePlatform is the default configuration used when
+	// installing on OpenStack for machine pools which do not define their own
+	// platform configuration.
+	DefaultMachinePlatform *OpenStackMachinePoolPlatform `json:"defaultMachinePlatform,omitempty"`
+
 	// VPCID specifies the vpc to associate with the cluster.
 	// If empty, new vpc will be created.
 	// +optional
