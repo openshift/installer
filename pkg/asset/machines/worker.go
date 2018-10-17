@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
+	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -21,6 +22,12 @@ import (
 func defaultAWSMachinePoolPlatform() types.AWSMachinePoolPlatform {
 	return types.AWSMachinePoolPlatform{
 		InstanceType: "t2.medium",
+	}
+}
+
+func defaultOpenStackMachinePoolPlatform() types.OpenStackMachinePoolPlatform {
+	return types.OpenStackMachinePoolPlatform{
+		FlavorName: "m1.medium",
 	}
 }
 
@@ -103,6 +110,24 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			Platform:    *ic.Platform.Libvirt,
 		}
 		w.MachineSetRaw = applyTemplateData(libvirt.WorkerMachineSetTmpl, config)
+	case "openstack":
+		config := openstack.Config{
+			ClusterName: ic.ObjectMeta.Name,
+			Replicas:    numOfWorkers,
+			Image:       ic.Platform.OpenStack.BaseImage,
+			Region:      ic.Platform.OpenStack.Region,
+			Machine:     defaultOpenStackMachinePoolPlatform(),
+		}
+
+		tags := map[string]string{
+			"tectonicClusterID": ic.ClusterID,
+		}
+		config.Tags = tags
+
+		config.Machine.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
+		config.Machine.Set(pool.Platform.OpenStack)
+
+		w.MachineSetRaw = applyTemplateData(openstack.WorkerMachineSetTmpl, config)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
