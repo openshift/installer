@@ -27,6 +27,8 @@ resource "aws_subnet" "worker_subnet" {
     cidrsubnet(local.new_worker_cidr_range, 3, count.index),
   )}"
 
+  availability_zone = "${local.new_worker_subnet_azs[count.index]}"
+
   tags = "${merge(map(
     "Name", "${var.cluster_name}-worker-${local.new_worker_subnet_azs[count.index]}",
     "kubernetes.io/cluster/${var.cluster_name}","shared",
