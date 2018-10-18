@@ -21,11 +21,16 @@ type Asset interface {
 }
 
 // WritableAsset is an Asset that has files that can be written to disk.
+// It can also be loaded from disk.
 type WritableAsset interface {
 	Asset
 
 	// Files returns the files to write.
 	Files() []*File
+
+	// Load returns the on-disk asset if it exists.
+	// The asset object should be changed only when it's loaded successfully.
+	Load(FileFetcher) (found bool, err error)
 }
 
 // File is a file for an Asset.
