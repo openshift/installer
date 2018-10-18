@@ -183,6 +183,7 @@ func (a *Bootstrap) addBootstrapFiles(dependencies asset.Parents) {
 }
 
 func (a *Bootstrap) addBootkubeFiles(dependencies asset.Parents, templateData *bootstrapTemplateData) {
+	bootkubeConfigOverridesDir := filepath.Join(rootDir, "bootkube-config-overrides")
 	adminKubeconfig := &kubeconfig.Admin{}
 	manifests := &manifests.Manifests{}
 	dependencies.Get(adminKubeconfig, manifests)
@@ -191,6 +192,12 @@ func (a *Bootstrap) addBootkubeFiles(dependencies asset.Parents, templateData *b
 		a.Config.Storage.Files,
 		ignition.FileFromString("/opt/tectonic/bootkube.sh", 0555, applyTemplateData(content.BootkubeShFileTemplate, templateData)),
 	)
+	for _, o := range content.BootkubeConfigOverrides {
+		a.Config.Storage.Files = append(
+			a.Config.Storage.Files,
+			ignition.FileFromString(filepath.Join(bootkubeConfigOverridesDir, o.Name()), 0600, applyTemplateData(o, templateData)),
+		)
+	}
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
 		ignition.FilesFromAsset(rootDir, 0600, adminKubeconfig)...,

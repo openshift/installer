@@ -76,7 +76,8 @@ then
 		--manifest-image=${OPENSHIFT_HYPERSHIFT_IMAGE} \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
-		--config-output-file=/assets/kube-apiserver-bootstrap/config
+		--config-output-file=/assets/kube-apiserver-bootstrap/config \
+		--config-override-files=/assets/bootkube-config-overrides/kube-apiserver-config-overrides.yaml
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -95,7 +96,8 @@ then
 		--manifest-image=${OPENSHIFT_HYPERKUBE_IMAGE} \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
-		--config-output-file=/assets/kube-controller-manager-bootstrap/config
+		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
+		--config-override-files=/assets/bootkube-config-overrides/kube-controller-manager-config-overrides.yaml
 
 	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
 	cp kube-controller-manager-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -227,5 +229,32 @@ podman run \
 	--entrypoint=/bootkube \
 	"{{.BootkubeImage}}" \
 	start --asset-dir=/assets
+`))
+)
+
+var (
+	// BootkubeConfigOverrides contains the configuration override files passed to the render commands of the components.
+	// These are supposed to be customized by the installer where the config differs from the operator render default.
+	BootkubeConfigOverrides = []*template.Template{
+		KubeApiserverConfigOverridesTemplate,
+		KubeControllerManagerConfigOverridesTemplate,
+	}
+)
+
+var (
+	// KubeApiserverConfigOverridesTemplate are overrides that the installer passes to the default config of the
+	// kube-apiserver rendered by the cluster-kube-apiserver-operator.
+	KubeApiserverConfigOverridesTemplate = template.Must(template.New("kube-apiserver-config-overrides.yaml").Parse(`
+apiVersion: kubecontrolplane.config.openshift.io/v1
+kind: KubeAPIServerConfig
+kubeletClientInfo:
+  ca: "" # kubelet uses self-signed serving certs. TODO: fix kubelet pki
+`))
+
+	// KubeControllerManagerConfigOverridesTemplate are overrides that the installer passes to the default config of the
+	// kube-controller-manager rendered by the cluster-kube-controller-manager-operator.
+	KubeControllerManagerConfigOverridesTemplate = template.Must(template.New("kube-controller-manager-config-overrides.yaml").Parse(`
+apiVersion: kubecontrolplane.config.openshift.io/v1
+kind: KubeControllerManagerConfig
 `))
 )
