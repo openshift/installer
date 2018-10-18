@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -39,8 +40,6 @@ type bootstrapTemplateData struct {
 	EtcdCertSignerImage string
 	EtcdCluster         string
 	EtcdctlImage        string
-	HyperkubeImage      string
-	KubeCoreRenderImage string
 	ReleaseImage        string
 }
 
@@ -75,7 +74,6 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&kubeconfig.Kubelet{},
 		&manifests.Manifests{},
 		&manifests.Tectonic{},
-		&manifests.KubeCoreOperator{},
 	}
 }
 
@@ -97,6 +95,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 
 	a.addBootstrapFiles(dependencies)
 	a.addBootkubeFiles(dependencies, templateData)
+	a.addTemporaryBootkubeFiles(templateData)
 	a.addTectonicFiles(dependencies, templateData)
 	a.addTLSCertFiles(dependencies)
 
@@ -160,20 +159,17 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 		CloudProvider:       getCloudProvider(installConfig),
 		CloudProviderConfig: getCloudProviderConfig(installConfig),
 		DebugConfig:         "",
-		KubeCoreRenderImage: "quay.io/coreos/kube-core-renderer-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
 		EtcdCertSignerImage: "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
 		EtcdctlImage:        "quay.io/coreos/etcd:v3.2.14",
 		BootkubeImage:       "quay.io/coreos/bootkube:v0.10.0",
 		ReleaseImage:        releaseImage,
-		HyperkubeImage:      "openshift/origin-node:latest",
 		EtcdCluster:         strings.Join(etcdEndpoints, ","),
 	}, nil
 }
 
 func (a *Bootstrap) addBootstrapFiles(dependencies asset.Parents) {
 	kubeletKubeconfig := &kubeconfig.Kubelet{}
-	kubeCoreOperator := &manifests.KubeCoreOperator{}
-	dependencies.Get(kubeletKubeconfig, kubeCoreOperator)
+	dependencies.Get(kubeletKubeconfig)
 
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
@@ -182,15 +178,12 @@ func (a *Bootstrap) addBootstrapFiles(dependencies asset.Parents) {
 	)
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
-		ignition.FilesFromAsset(rootDir, 0644, kubeCoreOperator)...,
-	)
-	a.Config.Storage.Files = append(
-		a.Config.Storage.Files,
 		ignition.FileFromString("/opt/tectonic/report-progress.sh", 0555, content.ReportShFileContents),
 	)
 }
 
 func (a *Bootstrap) addBootkubeFiles(dependencies asset.Parents, templateData *bootstrapTemplateData) {
+	bootkubeConfigOverridesDir := filepath.Join(rootDir, "bootkube-config-overrides")
 	adminKubeconfig := &kubeconfig.Admin{}
 	manifests := &manifests.Manifests{}
 	dependencies.Get(adminKubeconfig, manifests)
@@ -199,6 +192,12 @@ func (a *Bootstrap) addBootkubeFiles(dependencies asset.Parents, templateData *b
 		a.Config.Storage.Files,
 		ignition.FileFromString("/opt/tectonic/bootkube.sh", 0555, applyTemplateData(content.BootkubeShFileTemplate, templateData)),
 	)
+	for _, o := range content.BootkubeConfigOverrides {
+		a.Config.Storage.Files = append(
+			a.Config.Storage.Files,
+			ignition.FileFromString(filepath.Join(bootkubeConfigOverridesDir, o.Name()), 0600, applyTemplateData(o, templateData)),
+		)
+	}
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
 		ignition.FilesFromAsset(rootDir, 0600, adminKubeconfig)...,
@@ -206,6 +205,36 @@ func (a *Bootstrap) addBootkubeFiles(dependencies asset.Parents, templateData *b
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
 		ignition.FilesFromAsset(rootDir, 0644, manifests)...,
+	)
+}
+
+func (a *Bootstrap) addTemporaryBootkubeFiles(templateData *bootstrapTemplateData) {
+	podCheckpointerBootstrapDir := filepath.Join(rootDir, "pod-checkpointer-operator-bootstrap")
+	for name, data := range content.PodCheckpointerBootkubeManifests {
+		a.Config.Storage.Files = append(
+			a.Config.Storage.Files,
+			ignition.FileFromString(filepath.Join(podCheckpointerBootstrapDir, name), 0644, data),
+		)
+	}
+
+	kubeProxyBootstrapDir := filepath.Join(rootDir, "kube-proxy-operator-bootstrap")
+	for name, data := range content.KubeProxyBootkubeManifests {
+		a.Config.Storage.Files = append(
+			a.Config.Storage.Files,
+			ignition.FileFromString(filepath.Join(kubeProxyBootstrapDir, name), 0644, data),
+		)
+	}
+
+	kubeDNSBootstrapDir := filepath.Join(rootDir, "kube-dns-operator-bootstrap")
+	for name, data := range content.KubeDNSBootkubeManifests {
+		a.Config.Storage.Files = append(
+			a.Config.Storage.Files,
+			ignition.FileFromString(filepath.Join(kubeDNSBootstrapDir, name), 0644, data),
+		)
+	}
+	a.Config.Storage.Files = append(
+		a.Config.Storage.Files,
+		ignition.FileFromString(filepath.Join(kubeDNSBootstrapDir, "kube-dns-svc.yaml"), 0644, applyTemplateData(content.BootkubeKubeDNSService, templateData)),
 	)
 }
 
