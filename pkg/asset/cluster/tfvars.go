@@ -17,8 +17,7 @@ const (
 // TerraformVariables depends on InstallConfig and
 // Ignition to generate the terrafor.tfvars.
 type TerraformVariables struct {
-	Platform string
-	File     *asset.File
+	File *asset.File
 }
 
 var _ asset.WritableAsset = (*TerraformVariables)(nil)
@@ -45,8 +44,6 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	master := &machine.Master{}
 	worker := &machine.Worker{}
 	parents.Get(installConfig, bootstrap, master, worker)
-
-	t.Platform = installConfig.Config.Platform.Name()
 
 	bootstrapIgn := string(bootstrap.Files()[0].Data)
 
@@ -76,4 +73,15 @@ func (t *TerraformVariables) Files() []*asset.File {
 		return []*asset.File{t.File}
 	}
 	return []*asset.File{}
+}
+
+// Load reads the terraform.tfvars from disk.
+func (t *TerraformVariables) Load(f asset.FileFetcher) (found bool, err error) {
+	file := f.FetchByName(tfvarsFilename)
+	if file == nil {
+		return false, nil
+	}
+
+	t.File = file
+	return true, nil
 }

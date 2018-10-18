@@ -11,6 +11,10 @@ import (
 	"github.com/openshift/installer/pkg/asset/tls"
 )
 
+const (
+	workerIgnFilename = "worker.ign"
+)
+
 // Worker is an asset that generates the ignition config for worker nodes.
 type Worker struct {
 	Config *igntypes.Config
@@ -40,7 +44,7 @@ func (a *Worker) Generate(dependencies asset.Parents) error {
 		return errors.Wrap(err, "failed to get InstallConfig from parents")
 	}
 	a.File = &asset.File{
-		Filename: "worker.ign",
+		Filename: workerIgnFilename,
 		Data:     data,
 	}
 
@@ -58,4 +62,20 @@ func (a *Worker) Files() []*asset.File {
 		return []*asset.File{a.File}
 	}
 	return []*asset.File{}
+}
+
+// Load returns the worker ignitions from disk.
+func (a *Worker) Load(f asset.FileFetcher) (found bool, err error) {
+	file := f.FetchByName(workerIgnFilename)
+	if file == nil {
+		return false, nil
+	}
+
+	config := &igntypes.Config{}
+	if err := json.Unmarshal(file.Data, config); err != nil {
+		return false, errors.Wrapf(err, "failed to unmarshal")
+	}
+
+	a.File, a.Config = file, config
+	return true, nil
 }

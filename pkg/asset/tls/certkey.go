@@ -102,3 +102,8 @@ func (c *CertKey) generateFiles(filenameBase string) {
 		},
 	}
 }
+
+// Load is a no-op because TLS assets are not written to disk.
+func (c *CertKey) Load(asset.FileFetcher) (bool, error) {
+	return false, nil
+}

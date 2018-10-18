@@ -25,8 +25,9 @@ import (
 )
 
 const (
-	rootDir             = "/opt/tectonic"
-	defaultReleaseImage = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
+	rootDir              = "/opt/tectonic"
+	defaultReleaseImage  = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
+	bootstrapIgnFilename = "bootstrap.ign"
 )
 
 // bootstrapTemplateData is the data to use to replace values in bootstrap
@@ -117,7 +118,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 		return errors.Wrap(err, "failed to Marshal Ignition config")
 	}
 	a.File = &asset.File{
-		Filename: "bootstrap.ign",
+		Filename: bootstrapIgnFilename,
 		Data:     data,
 	}
 
@@ -298,4 +299,20 @@ func applyTemplateData(template *template.Template, templateData interface{}) st
 		panic(err)
 	}
 	return buf.String()
+}
+
+// Load returns the bootstrap ignition from disk.
+func (a *Bootstrap) Load(f asset.FileFetcher) (found bool, err error) {
+	file := f.FetchByName(bootstrapIgnFilename)
+	if file == nil {
+		return false, nil
+	}
+
+	config := &igntypes.Config{}
+	if err := json.Unmarshal(file.Data, config); err != nil {
+		return false, errors.Wrapf(err, "failed to unmarshal")
+	}
+
+	a.File, a.Config = file, config
+	return true, nil
 }
