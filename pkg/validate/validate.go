@@ -12,28 +12,6 @@ import (
 	"unicode/utf8"
 )
 
-const (
-	maxS3BucketNameLength = 63
-)
-
-// S3Bucket does some basic validation to ensure that the S3 bucket
-// matches the S3 bucket naming rules. Not all rules are checked
-// because Tectonic controls the generation of S3 bucket names, creating
-// buckets of the form: <cluster-name>.<domain-name>
-// If domain-name contains a trailing dot, it's removed from the bucket name.
-func S3Bucket(name string) error {
-	if len(name) < 3 {
-		return fmt.Errorf("the S3 bucket name %q is too short; S3 bucket names must contain at least three characters", name)
-	}
-	if len(name) > maxS3BucketNameLength {
-		return fmt.Errorf("the S3 bucket name %q is too long; S3 bucket names must be less than 63 characters", name)
-	}
-	if !regexp.MustCompile("^[a-z0-9][a-z0-9-.]{1,61}[a-z0-9]$").MatchString(name) {
-		return fmt.Errorf("invalid characters in S3 bucket name: %q", name)
-	}
-	return nil
-}
-
 // DomainName checks if the given string is a valid domain name and returns an error if not.
 func DomainName(v string) error {
 	if err := nonEmpty(v); err != nil {

@@ -10,7 +10,7 @@ variable "associate_public_ip_address" {
 
 variable "bucket" {
   type        = "string"
-  description = "The S3 bucket name for bootstrap ignition file."
+  description = "The S3 bucket name or ID for bootstrap ignition file."
 }
 
 variable "cluster_name" {
