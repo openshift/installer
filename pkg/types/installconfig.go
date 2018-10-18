@@ -142,11 +142,6 @@ type OpenStackPlatform struct {
 	// platform configuration.
 	DefaultMachinePlatform *OpenStackMachinePoolPlatform `json:"defaultMachinePlatform,omitempty"`
 
-	// VPCID specifies the vpc to associate with the cluster.
-	// If empty, new vpc will be created.
-	// +optional
-	VPCID string `json:"vpcID"`
-
 	// NetworkCIDRBlock
 	// +optional
 	NetworkCIDRBlock string `json:"NetworkCIDRBlock"`
