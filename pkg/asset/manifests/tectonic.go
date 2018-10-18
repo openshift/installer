@@ -63,8 +63,6 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 		"99_binding-discovery.yaml":                             []byte(content.BindingDiscovery),
 		"99_kube-addon-00-appversion.yaml":                      []byte(content.AppVersionKubeAddon),
 		"99_kube-addon-01-operator.yaml":                        applyTemplateData(content.KubeAddonOperator, templateData),
-		"99_kube-core-00-appversion.yaml":                       []byte(content.AppVersionKubeCore),
-		"99_kube-core-00-operator.yaml":                         applyTemplateData(content.KubeCoreOperator, templateData),
 		"99_openshift-cluster-api_cluster.yaml":                 clusterk8sio.Raw,
 		"99_openshift-cluster-api_worker-machineset.yaml":       worker.MachineSetRaw,
 		"99_openshift-cluster-api_worker-user-data-secret.yaml": worker.UserDataSecretRaw,

@@ -44,7 +44,6 @@ func (m *Manifests) Name() string {
 func (m *Manifests) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&KubeCoreOperator{},
 		&networkOperator{},
 		&kubeAddonOperator{},
 		&machineAPIOperator{},
@@ -70,16 +69,14 @@ func (m *Manifests) Dependencies() []asset.Asset {
 
 // Generate generates the respective operator config.yml files
 func (m *Manifests) Generate(dependencies asset.Parents) error {
-	kco := &KubeCoreOperator{}
 	no := &networkOperator{}
 	addon := &kubeAddonOperator{}
 	mao := &machineAPIOperator{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(kco, no, addon, mao, installConfig)
+	dependencies.Get(no, addon, mao, installConfig)
 
-	// kco+no+mao go to kube-system config map
+	// no+mao go to kube-system config map
 	m.KubeSysConfig = configMap("kube-system", "cluster-config-v1", genericData{
-		"kco-config":     string(kco.Files()[0].Data),
 		"network-config": string(no.Files()[0].Data),
 		"install-config": string(installConfig.Files()[0].Data),
 		"mao-config":     string(mao.Files()[0].Data),
