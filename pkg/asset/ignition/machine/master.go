@@ -3,7 +3,6 @@ package machine
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	"github.com/pkg/errors"
@@ -67,7 +66,10 @@ func (a *Master) Files() []*asset.File {
 
 // Load returns the master ignitions from disk.
 func (a *Master) Load(f asset.FileFetcher) (found bool, err error) {
-	fileList := f.FetchByPattern(regexp.MustCompile(`^(master-(0|([1-9]\d*))\.ign)$`))
+	fileList, err := f.FetchByPattern("master-[0-9]*.ign")
+	if err != nil {
+		return false, nil
+	}
 	if len(fileList) == 0 {
 		return false, nil
 	}

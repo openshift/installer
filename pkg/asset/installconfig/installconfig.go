@@ -2,6 +2,7 @@ package installconfig
 
 import (
 	"net"
+	"os"
 
 	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/ghodss/yaml"
@@ -162,9 +163,12 @@ func parseCIDR(s string) net.IPNet {
 
 // Load returns the installconfig from disk.
 func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
-	file := f.FetchByName(installConfigFilename)
-	if file == nil {
-		return false, nil
+	file, err := f.FetchByName(installConfigFilename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
 	}
 
 	config := &types.InstallConfig{}

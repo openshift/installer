@@ -159,8 +159,13 @@ func (c *Cluster) Files() []*asset.File {
 // Load returns error if the tfstate file is already on-disk, because we want to
 // prevent user from accidentally re-launching the cluster.
 func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
-	if f.FetchByName(stateFileName) != nil {
-		return true, fmt.Errorf("%q already exisits", stateFileName)
+	_, err = f.FetchByName(stateFileName)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
 	}
-	return false, nil
+
+	return true, fmt.Errorf("%q already exisits.  There may already be a running cluster", stateFileName)
 }

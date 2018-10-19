@@ -63,8 +63,8 @@ type File struct {
 // to read specific file(s) from disk.
 type FileFetcher interface {
     // FetchByName returns the file with the given name.
-    FetchByName(string) *File
-    // FetchByPattern returns the files whose name match the given regexp.
+    FetchByName(string) (*File, error)
+    // FetchByPattern returns the files whose name match the given glob.
     FetchByPattern(*regexp.Regexp) ([]*File, error)
 }
 ```

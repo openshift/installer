@@ -2,83 +2,56 @@ package asset
 
 import (
 	"io/ioutil"
-	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 )
 
 // FileFetcher fetches the asset files from disk.
 type FileFetcher interface {
 	// FetchByName returns the file with the given name.
-	FetchByName(string) *File
-	// FetchByPattern returns the files whose name match the given regexp.
-	FetchByPattern(*regexp.Regexp) []*File
+	FetchByName(string) (*File, error)
+	// FetchByPattern returns the files whose name match the given glob.
+	FetchByPattern(pattern string) ([]*File, error)
 }
 
 type fileFetcher struct {
-	onDiskAssets map[string][]byte
-}
-
-func newFileFetcher(clusterDir string) (*fileFetcher, error) {
-	fileMap := make(map[string][]byte)
-
-	// Don't bother if the clusterDir is not created yet because that
-	// means there's no assets generated yet.
-	_, err := os.Stat(clusterDir)
-	if err != nil && os.IsNotExist(err) {
-		return &fileFetcher{}, nil
-	}
-
-	if err := filepath.Walk(clusterDir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-
-		if info.IsDir() {
-			return nil
-		}
-
-		filename, err := filepath.Rel(clusterDir, path)
-		if err != nil {
-			return err
-		}
-
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-
-		fileMap[filename] = data
-		return nil
-	}); err != nil {
-		return nil, err
-	}
-	return &fileFetcher{onDiskAssets: fileMap}, nil
+	directory string
 }
 
 // FetchByName returns the file with the given name.
-func (f *fileFetcher) FetchByName(name string) *File {
-	data, ok := f.onDiskAssets[name]
-	if !ok {
-		return nil
+func (f *fileFetcher) FetchByName(name string) (*File, error) {
+	data, err := ioutil.ReadFile(filepath.Join(f.directory, name))
+	if err != nil {
+		return nil, err
 	}
-	return &File{Filename: name, Data: data}
+	return &File{Filename: name, Data: data}, nil
 }
 
 // FetchByPattern returns the files whose name match the given regexp.
-func (f *fileFetcher) FetchByPattern(re *regexp.Regexp) []*File {
-	var files []*File
+func (f *fileFetcher) FetchByPattern(pattern string) (files []*File, err error) {
+	matches, err := filepath.Glob(filepath.Join(f.directory, pattern))
+	if err != nil {
+		return nil, err
+	}
 
-	for filename, data := range f.onDiskAssets {
-		if re.MatchString(filename) {
-			files = append(files, &File{
-				Filename: filename,
-				Data:     data,
-			})
+	files = make([]*File, 0, len(matches))
+	for _, path := range matches {
+		data, err := ioutil.ReadFile(path)
+		if err != nil {
+			return nil, err
 		}
+
+		filename, err := filepath.Rel(f.directory, path)
+		if err != nil {
+			return nil, err
+		}
+
+		files = append(files, &File{
+			Filename: filename,
+			Data:     data,
+		})
 	}
 
 	sort.Slice(files, func(i, j int) bool { return files[i].Filename < files[j].Filename })
-	return files
+	return files, nil
 }
