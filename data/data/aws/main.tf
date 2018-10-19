@@ -19,7 +19,7 @@ module "bootstrap" {
 
   ami                         = "${var.tectonic_aws_ec2_ami_override}"
   associate_public_ip_address = "${var.tectonic_aws_endpoints != "private"}"
-  bucket                      = "${aws_s3_bucket.tectonic.bucket}"
+  bucket                      = "${aws_s3_bucket.bootstrap.id}"
   cluster_name                = "${var.tectonic_cluster_name}"
   elbs                        = "${module.vpc.aws_lbs}"
   elbs_length                 = "${module.vpc.aws_lbs_length}"
@@ -130,10 +130,7 @@ resource "aws_route53_zone" "tectonic_int" {
     ), var.tectonic_aws_extra_tags)}"
 }
 
-resource "aws_s3_bucket" "tectonic" {
-  # bucket name is cluster_name + base domain, minus the trailing dot, if one exists
-  bucket = "${lower(var.tectonic_cluster_name)}.${join(".",(compact(split(".",var.tectonic_base_domain))))}"
-
+resource "aws_s3_bucket" "bootstrap" {
   acl = "private"
 
   tags = "${merge(map(

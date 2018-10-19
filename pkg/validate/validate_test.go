@@ -10,46 +10,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestS3BucketNames(t *testing.T) {
-	cases := []struct {
-		name string
-		err  *regexp.Regexp
-	}{
-		{
-			name: "a.example.com",
-		},
-		{
-			name: "",
-			err:  regexp.MustCompile("^the S3 bucket name \"\" is too short; S3 bucket names must contain at least three characters$"),
-		},
-		{
-			name: ".a.example.com",
-			err:  regexp.MustCompile("^invalid characters in S3 bucket name: \".a.example.com\"$"),
-		},
-		{
-			name: "a.example.com.",
-			err:  regexp.MustCompile("^invalid characters in S3 bucket name: \"a.example.com.\"$"),
-		},
-		{
-			name: "a.012345678901234567890123456789012345678901234567890123456789.com",
-			err:  regexp.MustCompile("^the S3 bucket name \"a.012345678901234567890123456789012345678901234567890123456789.com\" is too long; S3 bucket names must be less than 63 characters$"),
-		},
-	}
-
-	for _, testCase := range cases {
-		t.Run(testCase.name, func(t *testing.T) {
-			err := S3Bucket(testCase.name)
-			if testCase.err == nil {
-				if err != nil {
-					t.Fatal(err)
-				}
-			} else {
-				assert.Regexp(t, testCase.err, err)
-			}
-		})
-	}
-}
-
 func TestLastIP(t *testing.T) {
 	cases := []struct {
 		in  net.IPNet
