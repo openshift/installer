@@ -21,8 +21,6 @@ import (
 const (
 	// MetadataFilename is name of the file where clustermetadata is stored.
 	MetadataFilename = "metadata.json"
-
-	stateFileName = "terraform.tfstate"
 )
 
 // Cluster uses the terraform executable to launch a cluster
@@ -136,7 +134,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	data, err2 := ioutil.ReadFile(stateFile)
 	if err2 == nil {
 		c.FileList = append(c.FileList, &asset.File{
-			Filename: stateFileName,
+			Filename: terraform.StateFileName,
 			Data:     data,
 		})
 	} else {
@@ -159,7 +157,7 @@ func (c *Cluster) Files() []*asset.File {
 // Load returns error if the tfstate file is already on-disk, because we want to
 // prevent user from accidentally re-launching the cluster.
 func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
-	_, err = f.FetchByName(stateFileName)
+	_, err = f.FetchByName(terraform.StateFileName)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
@@ -167,5 +165,5 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 		return false, err
 	}
 
-	return true, fmt.Errorf("%q already exisits.  There may already be a running cluster", stateFileName)
+	return true, fmt.Errorf("%q already exisits.  There may already be a running cluster", terraform.StateFileName)
 }

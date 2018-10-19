@@ -7,6 +7,11 @@ import (
 	"github.com/pkg/errors"
 )
 
+const (
+	// StateFileName is the default name for Terraform state files.
+	StateFileName string = "terraform.tfstate"
+)
+
 func terraformExec(clusterDir string, args ...string) error {
 	// Create an executor
 	ex, err := newExecutor()
@@ -25,17 +30,16 @@ func terraformExec(clusterDir string, args ...string) error {
 // path of the tfstate file, rooted in the specified directory, along with any
 // errors from Terraform.
 func Apply(dir string, extraArgs ...string) (string, error) {
-	stateFileName := "terraform.tfstate"
 	defaultArgs := []string{
 		"apply",
 		"-auto-approve",
 		"-input=false",
 		"-no-color",
-		fmt.Sprintf("-state=%s", stateFileName),
+		fmt.Sprintf("-state=%s", StateFileName),
 	}
 	args := append(defaultArgs, extraArgs...)
 
-	return path.Join(dir, stateFileName), terraformExec(dir, args...)
+	return path.Join(dir, StateFileName), terraformExec(dir, args...)
 }
 
 // Init runs "terraform init" in the given directory.
