@@ -18,14 +18,12 @@ func (l *generationLog) logGeneration(a Asset) {
 type testStoreAsset interface {
 	Asset
 	SetDependencies([]Asset)
-	SetDirty(bool)
 }
 
 type testStoreAssetImpl struct {
 	name          string
 	dependencies  []Asset
 	generationLog *generationLog
-	dirty         bool
 }
 
 func (a *testStoreAssetImpl) Dependencies() []Asset {
@@ -43,17 +41,6 @@ func (a *testStoreAssetImpl) Name() string {
 
 func (a *testStoreAssetImpl) SetDependencies(dependencies []Asset) {
 	a.dependencies = dependencies
-}
-
-func (a *testStoreAssetImpl) SetDirty(dirty bool) {
-	a.dirty = dirty
-}
-func (a *testStoreAssetImpl) Files() []*File {
-	return []*File{{Filename: a.name}}
-}
-
-func (a *testStoreAssetImpl) Load(FileFetcher) (bool, error) {
-	return a.dirty, nil
 }
 
 type testStoreAssetA struct {
@@ -207,7 +194,7 @@ func TestStoreFetch(t *testing.T) {
 				log: []string{},
 			}
 			store := &StoreImpl{
-				assets: make(map[reflect.Type]assetState),
+				assets: Parents{},
 			}
 			assets := make(map[string]testStoreAsset, len(tc.assets))
 			for name := range tc.assets {
@@ -222,108 +209,11 @@ func TestStoreFetch(t *testing.T) {
 			}
 			for _, assetName := range tc.existingAssets {
 				asset := assets[assetName]
-				store.assets[reflect.TypeOf(asset)] = assetState{asset: asset}
+				store.assets[reflect.TypeOf(asset)] = asset
 			}
 			err := store.Fetch(assets[tc.target])
 			assert.NoError(t, err, "error fetching asset")
 			assert.EqualValues(t, tc.expectedGenerationLog, gl.log)
-		})
-	}
-}
-
-func TestStoreFetchDirty(t *testing.T) {
-	cases := []struct {
-		name                  string
-		assets                map[string][]string
-		dirtyAssets           []string
-		target                string
-		expectedGenerationLog []string
-		expectedDirty         bool
-	}{
-		{
-			name: "no dirty assets",
-			assets: map[string][]string{
-				"a": {"b"},
-				"b": {},
-			},
-			dirtyAssets:           nil,
-			target:                "a",
-			expectedGenerationLog: []string{"b", "a"},
-			expectedDirty:         false,
-		},
-		{
-			name: "dirty asset causes re-generation",
-			assets: map[string][]string{
-				"a": {"b"},
-				"b": {},
-			},
-			dirtyAssets:           []string{"a"},
-			target:                "a",
-			expectedGenerationLog: []string{"b"},
-			expectedDirty:         true,
-		},
-		{
-			name: "dirty dependent asset causes re-generation",
-			assets: map[string][]string{
-				"a": {"b"},
-				"b": {},
-			},
-			dirtyAssets:           []string{"b"},
-			target:                "a",
-			expectedGenerationLog: []string{"a"},
-			expectedDirty:         true,
-		},
-		{
-			name: "dirty dependents invalidate all its children",
-			assets: map[string][]string{
-				"a": {"b", "c"},
-				"b": {"d"},
-				"c": {"d"},
-				"d": {},
-			},
-			dirtyAssets:           []string{"d"},
-			target:                "a",
-			expectedGenerationLog: []string{"b", "c", "a"},
-			expectedDirty:         true,
-		},
-		{
-			name: "re-generate when both parents and childre are dirty",
-			assets: map[string][]string{
-				"a": {"b"},
-				"b": {},
-			},
-			dirtyAssets:           []string{"a", "b"},
-			target:                "a",
-			expectedGenerationLog: []string{"a"},
-			expectedDirty:         true,
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			gl := &generationLog{
-				log: []string{},
-			}
-			store := &StoreImpl{
-				assets: make(map[reflect.Type]assetState),
-			}
-			assets := make(map[string]testStoreAsset, len(tc.assets))
-			for name := range tc.assets {
-				assets[name] = newTestStoreAsset(gl, name)
-			}
-			for name, deps := range tc.assets {
-				dependencies := make([]Asset, len(deps))
-				for i, d := range deps {
-					dependencies[i] = assets[d]
-				}
-				assets[name].SetDependencies(dependencies)
-			}
-			for _, name := range tc.dirtyAssets {
-				assets[name].SetDirty(true)
-			}
-			dirty, err := store.fetch(assets[tc.target], "")
-			assert.NoError(t, err, "unexpected error")
-			assert.EqualValues(t, tc.expectedGenerationLog, gl.log)
-			assert.Equal(t, tc.expectedDirty, dirty)
 		})
 	}
 }

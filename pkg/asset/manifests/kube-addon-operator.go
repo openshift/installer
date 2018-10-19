@@ -11,10 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/rand"
 )
 
-const (
-	kaoCfgFilename = "kube-addon-operator-config.yml"
-)
-
 // kubeAddonOperator generates the network-operator-*.yml files
 type kubeAddonOperator struct {
 	Config *kubeaddon.OperatorConfig
@@ -59,7 +55,7 @@ func (kao *kubeAddonOperator) Generate(dependencies asset.Parents) error {
 	}
 
 	kao.File = &asset.File{
-		Filename: kaoCfgFilename,
+		Filename: "kube-addon-operator-config.yml",
 		Data:     data,
 	}
 
@@ -72,9 +68,4 @@ func (kao *kubeAddonOperator) Files() []*asset.File {
 		return []*asset.File{kao.File}
 	}
 	return []*asset.File{}
-}
-
-// Load is a no-op because kube-addon-operator manifest is not written to disk.
-func (kao *kubeAddonOperator) Load(asset.FileFetcher) (bool, error) {
-	return false, nil
 }

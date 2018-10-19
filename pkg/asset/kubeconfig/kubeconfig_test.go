@@ -57,7 +57,7 @@ func TestKubeconfigGenerate(t *testing.T) {
 		{
 			name:       "admin kubeconfig",
 			userName:   "admin",
-			filename:   "auth/kubeconfig",
+			filename:   "kubeconfig",
 			clientCert: adminCert,
 			expectedData: []byte(`clusters:
 - cluster:
@@ -81,7 +81,7 @@ users:
 		{
 			name:       "kubelet kubeconfig",
 			userName:   "kubelet",
-			filename:   "auth/kubeconfig-kubelet",
+			filename:   "kubeconfig-kubelet",
 			clientCert: kubeletCert,
 			expectedData: []byte(`clusters:
 - cluster:
@@ -111,7 +111,7 @@ users:
 			assert.NoError(t, err, "unexpected error generating config")
 			actualFiles := kc.Files()
 			assert.Equal(t, 1, len(actualFiles), "unexpected number of files generated")
-			assert.Equal(t, tt.filename, actualFiles[0].Filename, "unexpected file name generated")
+			assert.Equal(t, "auth/"+tt.filename, actualFiles[0].Filename, "unexpected file name generated")
 			assert.Equal(t, tt.expectedData, actualFiles[0].Data, "unexpected config")
 		})
 	}
