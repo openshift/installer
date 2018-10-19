@@ -27,7 +27,7 @@ items:
 - apiVersion: cluster.k8s.io/v1alpha1
   kind: Machine
   metadata:
-    name: {{$c.ClusterName}}-master-{{$index}}
+    name: master{{$index}}
     namespace: openshift-cluster-api
     labels:
       sigs.k8s.io/cluster-api-cluster: {{$c.ClusterName}}
