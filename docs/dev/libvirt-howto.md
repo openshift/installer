@@ -184,7 +184,7 @@ EOF
 ## Build and run the installer
 
 With [libvirt configured](#install-and-enable-libvirt), you can proceed with [the usual quick-start](../../README.md#quick-start).
-Set `TAGS` when building if you need `destroy-cluster` support for libvirt; this is not enabled by default because it requires [cgo][]:
+Set `TAGS` when building if you need `destroy cluster` support for libvirt; this is not enabled by default because it requires [cgo][]:
 
 ```sh
 TAGS=libvirt_destroy hack/build.sh
@@ -205,7 +205,7 @@ export OPENSHIFT_INSTALL_LIBVIRT_URI=qemu+tcp://192.168.122.1/system
 If you compiled with `libvirt_destroy`, you can use:
 
 ```sh
-openshift-install destroy-cluster
+openshift-install destroy cluster
 ```
 
 If you did not compile with `libvirt_destroy`, you can use [`virsh-cleanup.sh`](../../scripts/maintenance/virsh-cleanup.sh), but note it will currently destroy *all* libvirt resources.
