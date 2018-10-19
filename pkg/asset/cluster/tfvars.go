@@ -12,7 +12,8 @@ import (
 )
 
 const (
-	tfvarsFilename  = "terraform.tfvars"
+	// TfVarsFileName is the filename for Terraform variables.
+	TfVarsFileName  = "terraform.tfvars"
 	tfvarsAssetName = "Terraform Variables"
 )
 
@@ -62,7 +63,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		return errors.Wrap(err, "failed to get Tfvars")
 	}
 	t.File = &asset.File{
-		Filename: tfvarsFilename,
+		Filename: TfVarsFileName,
 		Data:     data,
 	}
 
@@ -79,7 +80,7 @@ func (t *TerraformVariables) Files() []*asset.File {
 
 // Load reads the terraform.tfvars from disk.
 func (t *TerraformVariables) Load(f asset.FileFetcher) (found bool, err error) {
-	file, err := f.FetchByName(tfvarsFilename)
+	file, err := f.FetchByName(TfVarsFileName)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil

@@ -22,6 +22,7 @@ func main() {
 	}
 	subCmds = append(subCmds,
 		newDestroyCmd(),
+		newLegacyDestroyClusterCmd(),
 		newVersionCmd(),
 		newGraphCmd(),
 	)

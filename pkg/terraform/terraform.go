@@ -2,8 +2,9 @@ package terraform
 
 import (
 	"fmt"
-	"path"
+	"path/filepath"
 
+	"github.com/openshift/installer/data"
 	"github.com/pkg/errors"
 )
 
@@ -26,10 +27,16 @@ func terraformExec(clusterDir string, args ...string) error {
 	return nil
 }
 
-// Apply runs "terraform apply" in the given directory. It returns the absolute
-// path of the tfstate file, rooted in the specified directory, along with any
-// errors from Terraform.
-func Apply(dir string, extraArgs ...string) (string, error) {
+// Apply unpacks the platform-specific Terraform modules into the
+// given directory and then runs 'terraform init' and 'terraform
+// apply'.  It returns the absolute path of the tfstate file, rooted
+// in the specified directory, along with any errors from Terraform.
+func Apply(dir string, platform string, extraArgs ...string) (path string, err error) {
+	err = unpackAndInit(dir, platform)
+	if err != nil {
+		return "", err
+	}
+
 	defaultArgs := []string{
 		"apply",
 		"-auto-approve",
@@ -39,10 +46,57 @@ func Apply(dir string, extraArgs ...string) (string, error) {
 	}
 	args := append(defaultArgs, extraArgs...)
 
-	return path.Join(dir, StateFileName), terraformExec(dir, args...)
+	return filepath.Join(dir, StateFileName), terraformExec(dir, args...)
 }
 
-// Init runs "terraform init" in the given directory.
-func Init(dir string) error {
-	return terraformExec(dir, "init", "-input=false", "-no-color")
+// Destroy unpacks the platform-specific Terraform modules into the
+// given directory and then runs 'terraform init' and 'terraform
+// destroy'.
+func Destroy(dir string, platform string, extraArgs ...string) (err error) {
+	err = unpackAndInit(dir, platform)
+	if err != nil {
+		return err
+	}
+
+	defaultArgs := []string{
+		"destroy",
+		"-auto-approve",
+		"-no-color",
+		fmt.Sprintf("-state=%s", StateFileName),
+	}
+	args := append(defaultArgs, extraArgs...)
+
+	return terraformExec(dir, args...)
+}
+
+// unpack unpacks the platform-specific Terraform modules into the
+// given directory.
+func unpack(dir string, platform string) (err error) {
+	err = data.Unpack(dir, platform)
+	if err != nil {
+		return err
+	}
+
+	err = data.Unpack(filepath.Join(dir, "config.tf"), "config.tf")
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// unpackAndInit unpacks the platform-specific Terraform modules into
+// the given directory and then runs 'terraform init'.
+func unpackAndInit(dir string, platform string) (err error) {
+	err = unpack(dir, platform)
+	if err != nil {
+		return errors.Wrap(err, "failed to unpack Terraform modules")
+	}
+
+	err = terraformExec(dir, "init", "-input=false", "-no-color")
+	if err != nil {
+		return errors.Wrap(err, "failed to initialize Terraform")
+	}
+
+	return nil
 }

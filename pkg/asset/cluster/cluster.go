@@ -10,7 +10,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
@@ -19,8 +18,8 @@ import (
 )
 
 const (
-	// MetadataFilename is name of the file where clustermetadata is stored.
-	MetadataFilename = "metadata.json"
+	// metadataFileName is name of the file where clustermetadata is stored.
+	metadataFileName = "metadata.json"
 )
 
 // Cluster uses the terraform executable to launch a cluster
@@ -65,11 +64,6 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		return errors.Wrap(err, "failed to write terraform.tfvars file")
 	}
 
-	platform := installConfig.Config.Platform.Name()
-	if err := data.Unpack(tmpDir, platform); err != nil {
-		return err
-	}
-
 	metadata := &types.ClusterMetadata{
 		ClusterName: installConfig.Config.ObjectMeta.Name,
 	}
@@ -77,7 +71,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	defer func() {
 		if data, err2 := json.Marshal(metadata); err2 == nil {
 			c.FileList = append(c.FileList, &asset.File{
-				Filename: MetadataFilename,
+				Filename: metadataFileName,
 				Data:     data,
 			})
 		} else {
@@ -114,19 +108,8 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		return fmt.Errorf("no known platform")
 	}
 
-	if err := data.Unpack(filepath.Join(tmpDir, "config.tf"), "config.tf"); err != nil {
-		return err
-	}
-
 	logrus.Infof("Using Terraform to create cluster...")
-
-	// This runs the terraform in a temp directory, the tfstate file will be returned
-	// to the asset store to persist it on the disk.
-	if err := terraform.Init(tmpDir); err != nil {
-		return errors.Wrap(err, "failed to initialize terraform")
-	}
-
-	stateFile, err := terraform.Apply(tmpDir)
+	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name())
 	if err != nil {
 		err = errors.Wrap(err, "failed to run terraform")
 	}
@@ -166,4 +149,18 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 	}
 
 	return true, fmt.Errorf("%q already exisits.  There may already be a running cluster", terraform.StateFileName)
+}
+
+// LoadMetadata loads the cluster metadata from an asset directory.
+func LoadMetadata(dir string) (cmetadata *types.ClusterMetadata, err error) {
+	raw, err := ioutil.ReadFile(filepath.Join(dir, metadataFileName))
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to read %s file", metadataFileName)
+	}
+
+	if err = json.Unmarshal(raw, &cmetadata); err != nil {
+		return nil, errors.Wrapf(err, "failed to Unmarshal data from %s file to types.ClusterMetadata", metadataFileName)
+	}
+
+	return cmetadata, err
 }

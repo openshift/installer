@@ -53,5 +53,5 @@ export KUBECONFIG="${DIR}/auth/kubeconfig"
 Destroy the cluster and release associated resources with:
 
 ```sh
-openshift-install destroy-cluster
+openshift-install destroy cluster
 ```

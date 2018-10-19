@@ -6,14 +6,36 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/openshift/installer/pkg/destroy"
+	"github.com/openshift/installer/pkg/destroy/bootstrap"
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
 )
 
 func newDestroyCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "destroy",
+		Short: "Destroy part of an OpenShift cluster",
+		Long:  "",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+	}
+	cmd.AddCommand(newDestroyBootstrapCmd())
+	cmd.AddCommand(newDestroyClusterCmd())
+	return cmd
+}
+
+func newLegacyDestroyClusterCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "destroy-cluster",
+		Short: "DEPRECATED: Use 'destroy cluster' instead.",
+		RunE:  runDestroyCmd,
+	}
+}
+
+func newDestroyClusterCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "cluster",
 		Short: "Destroy an OpenShift cluster",
-		Long:  "",
 		RunE:  runDestroyCmd,
 	}
 }
@@ -28,4 +50,14 @@ func runDestroyCmd(cmd *cobra.Command, args []string) error {
 
 	}
 	return nil
+}
+
+func newDestroyBootstrapCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "bootstrap",
+		Short: "Destroy the bootstrap resources",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return bootstrap.Destroy(rootOpts.dir)
+		},
+	}
 }
