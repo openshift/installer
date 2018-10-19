@@ -89,8 +89,13 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	case installConfig.Config.Platform.AWS != nil:
 		metadata.ClusterPlatformMetadata.AWS = &types.ClusterAWSPlatformMetadata{
 			Region: installConfig.Config.Platform.AWS.Region,
-			Identifier: map[string]string{
-				"tectonicClusterID": installConfig.Config.ClusterID,
+			Identifier: []map[string]string{
+				{
+					"tectonicClusterID": installConfig.Config.ClusterID,
+				},
+				{
+					fmt.Sprintf("kubernetes.io/cluster/%s", installConfig.Config.ObjectMeta.Name): "owned",
+				},
 			},
 		}
 	case installConfig.Config.Platform.OpenStack != nil:
