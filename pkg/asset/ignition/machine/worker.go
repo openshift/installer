@@ -2,6 +2,7 @@ package machine
 
 import (
 	"encoding/json"
+	"os"
 
 	igntypes "github.com/coreos/ignition/config/v2_2/types"
 	"github.com/pkg/errors"
@@ -66,9 +67,12 @@ func (a *Worker) Files() []*asset.File {
 
 // Load returns the worker ignitions from disk.
 func (a *Worker) Load(f asset.FileFetcher) (found bool, err error) {
-	file := f.FetchByName(workerIgnFilename)
-	if file == nil {
-		return false, nil
+	file, err := f.FetchByName(workerIgnFilename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
 	}
 
 	config := &igntypes.Config{}

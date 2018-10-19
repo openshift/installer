@@ -1,6 +1,8 @@
 package cluster
 
 import (
+	"os"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
@@ -77,9 +79,12 @@ func (t *TerraformVariables) Files() []*asset.File {
 
 // Load reads the terraform.tfvars from disk.
 func (t *TerraformVariables) Load(f asset.FileFetcher) (found bool, err error) {
-	file := f.FetchByName(tfvarsFilename)
-	if file == nil {
-		return false, nil
+	file, err := f.FetchByName(tfvarsFilename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
 	}
 
 	t.File = file

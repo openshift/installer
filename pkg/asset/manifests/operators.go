@@ -6,7 +6,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"path/filepath"
-	"regexp"
 	"text/template"
 
 	"github.com/ghodss/yaml"
@@ -222,8 +221,10 @@ func applyTemplateData(template *template.Template, templateData interface{}) []
 
 // Load returns the manifests asset from disk.
 func (m *Manifests) Load(f asset.FileFetcher) (bool, error) {
-	re := fmt.Sprintf(`^%s\%c.*`, manifestDir, filepath.Separator) // e.g. `^manifests\/.*`
-	fileList := f.FetchByPattern(regexp.MustCompile(re))
+	fileList, err := f.FetchByPattern(filepath.Join(manifestDir, "*"))
+	if err != nil {
+		return false, err
+	}
 	if len(fileList) == 0 {
 		return false, nil
 	}

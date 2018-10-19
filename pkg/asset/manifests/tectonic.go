@@ -3,9 +3,7 @@ package manifests
 import (
 	"bytes"
 	"encoding/base64"
-	"fmt"
 	"path/filepath"
-	"regexp"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -127,8 +125,10 @@ func (t *Tectonic) Files() []*asset.File {
 
 // Load returns the tectonic asset from disk.
 func (t *Tectonic) Load(f asset.FileFetcher) (bool, error) {
-	re := fmt.Sprintf(`^%s\%c.*`, tectonicManifestDir, filepath.Separator) // e.g. `^tectonic\/.*`
-	fileList := f.FetchByPattern(regexp.MustCompile(re))
+	fileList, err := f.FetchByPattern(filepath.Join(tectonicManifestDir, "*"))
+	if err != nil {
+		return false, err
+	}
 	if len(fileList) == 0 {
 		return false, nil
 	}

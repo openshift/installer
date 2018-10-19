@@ -303,9 +303,12 @@ func applyTemplateData(template *template.Template, templateData interface{}) st
 
 // Load returns the bootstrap ignition from disk.
 func (a *Bootstrap) Load(f asset.FileFetcher) (found bool, err error) {
-	file := f.FetchByName(bootstrapIgnFilename)
-	if file == nil {
-		return false, nil
+	file, err := f.FetchByName(bootstrapIgnFilename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
 	}
 
 	config := &igntypes.Config{}

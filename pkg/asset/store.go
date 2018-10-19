@@ -46,13 +46,8 @@ type StoreImpl struct {
 
 // NewStore returns an asset store that implements the Store interface.
 func NewStore(dir string) (Store, error) {
-	ff, err := newFileFetcher(dir)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create file fetcher from dir %q", dir)
-	}
-
 	store := &StoreImpl{
-		fileFetcher: ff,
+		fileFetcher: &fileFetcher{directory: dir},
 		assets:      make(map[reflect.Type]assetState),
 	}
 

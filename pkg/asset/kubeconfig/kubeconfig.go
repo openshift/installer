@@ -2,6 +2,7 @@ package kubeconfig
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -79,9 +80,12 @@ func (k *kubeconfig) Files() []*asset.File {
 
 // load returns the kubeconfig from disk.
 func (k *kubeconfig) load(f asset.FileFetcher, name string) (found bool, err error) {
-	file := f.FetchByName(name)
-	if file == nil {
-		return false, nil
+	file, err := f.FetchByName(name)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
 	}
 
 	config := &clientcmd.Config{}
