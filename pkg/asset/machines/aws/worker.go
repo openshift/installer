@@ -7,10 +7,16 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-// Config is used to generate the machine.
-type Config struct {
+// WorkerConfig is used to generate the worker machineset.
+type WorkerConfig struct {
+	Replicas int64
+	MachineConfig
+}
+
+// MachineConfig contains fields common to worker and master
+// machine configurations
+type MachineConfig struct {
 	ClusterName string
-	Replicas    int64
 	AMIID       string
 	Tags        map[string]string
 	Region      string

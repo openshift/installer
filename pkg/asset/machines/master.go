@@ -1,10 +1,8 @@
 package machines
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"text/template"
 	"time"
 
 	"github.com/pkg/errors"
@@ -19,72 +17,61 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-func defaultAWSMachinePoolPlatform() types.AWSMachinePoolPlatform {
-	return types.AWSMachinePoolPlatform{
-		InstanceType: "t2.medium",
-	}
+// Master generates the machines for the `master` machine pool.
+type Master struct {
+	MachinesRaw        []byte
+	UserDataSecretsRaw []byte
 }
 
-func defaultOpenStackMachinePoolPlatform() types.OpenStackMachinePoolPlatform {
-	return types.OpenStackMachinePoolPlatform{
-		FlavorName: "m1.medium",
-	}
-}
+var _ asset.Asset = (*Master)(nil)
 
-// Worker generates the machinesets for `worker` machine pool.
-type Worker struct {
-	MachineSetRaw     []byte
-	UserDataSecretRaw []byte
-}
-
-var _ asset.Asset = (*Worker)(nil)
-
-// Name returns a human friendly name for the Worker Asset.
-func (w *Worker) Name() string {
-	return "Worker Machines"
+// Name returns a human friendly name for the Master Asset.
+func (m *Master) Name() string {
+	return "Master Machines"
 }
 
 // Dependencies returns all of the dependencies directly needed by the
-// Worker asset
-func (w *Worker) Dependencies() []asset.Asset {
+// Master asset
+func (m *Master) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&machine.Worker{},
+		&machine.Master{},
 	}
 }
 
-// Generate generates the Worker asset.
-func (w *Worker) Generate(dependencies asset.Parents) error {
+// Generate generates the Master asset.
+func (m *Master) Generate(dependencies asset.Parents) error {
 	installconfig := &installconfig.InstallConfig{}
-	wign := &machine.Worker{}
-	dependencies.Get(installconfig, wign)
+	mign := &machine.Master{}
+	dependencies.Get(installconfig, mign)
+
+	userDataContent := map[string][]byte{}
+	for i, file := range mign.FileList {
+		userDataContent[fmt.Sprintf("master-user-data-%d", i)] = file.Data
+	}
 
 	var err error
-	userDataMap := map[string][]byte{"worker-user-data": wign.File.Data}
-	w.UserDataSecretRaw, err = userDataList(userDataMap)
+	m.UserDataSecretsRaw, err = userDataList(userDataContent)
 	if err != nil {
-		return errors.Wrap(err, "failed to create user-data secret for worker machines")
+		return errors.Wrap(err, "failed to create user-data secrets for master machines")
 	}
 
 	ic := installconfig.Config
-	pool := workerPool(ic.Machines)
-	numOfWorkers := int64(0)
+	pool := masterPool(ic.Machines)
+	numOfMasters := int64(0)
 	if pool.Replicas != nil {
-		numOfWorkers = *pool.Replicas
+		numOfMasters = *pool.Replicas
 	}
 
 	switch ic.Platform.Name() {
 	case "aws":
-		config := aws.WorkerConfig{}
+		config := aws.MasterConfig{}
 		config.ClusterName = ic.ObjectMeta.Name
-		config.Replicas = numOfWorkers
 		config.Region = ic.Platform.AWS.Region
 		config.Machine = defaultAWSMachinePoolPlatform()
 
 		tags := map[string]string{
 			"tectonicClusterID": ic.ClusterID,
-			// Info: https://github.com/openshift/cluster-api-provider-aws/issues/73
-			// fmt.Sprintf("kubernetes.io/cluster/%s", ic.ObjectMeta.Name): "owned",
 		}
 		for k, v := range ic.Platform.AWS.UserTags {
 			tags[k] = v
@@ -101,19 +88,36 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to determine default AMI")
 		}
 		config.AMIID = ami
+		azs, err := aws.AvailabilityZones(config.Region)
+		if err != nil {
+			return errors.Wrap(err, "failed to fetch availability zones")
+		}
 
-		w.MachineSetRaw = applyTemplateData(aws.WorkerMachineSetTmpl, config)
+		for i := 0; i < int(numOfMasters); i++ {
+			azIndex := i % len(azs)
+			config.Instances = append(config.Instances, aws.MasterInstance{AvailabilityZone: azs[azIndex]})
+		}
+
+		m.MachinesRaw = applyTemplateData(aws.MasterMachineTmpl, config)
 	case "libvirt":
-		config := libvirt.Config{
+		instances := []string{}
+		for i := 0; i < int(numOfMasters); i++ {
+			instances = append(instances, fmt.Sprintf("master-%d", i))
+		}
+		config := libvirt.MasterConfig{
 			ClusterName: ic.ObjectMeta.Name,
-			Replicas:    numOfWorkers,
+			Instances:   instances,
 			Platform:    *ic.Platform.Libvirt,
 		}
-		w.MachineSetRaw = applyTemplateData(libvirt.WorkerMachineSetTmpl, config)
+		m.MachinesRaw = applyTemplateData(libvirt.MasterMachinesTmpl, config)
 	case "openstack":
-		config := openstack.Config{
+		instances := []string{}
+		for i := 0; i < int(numOfMasters); i++ {
+			instances = append(instances, fmt.Sprintf("master-%d", i))
+		}
+		config := openstack.MasterConfig{
 			ClusterName: ic.ObjectMeta.Name,
-			Replicas:    numOfWorkers,
+			Instances:   instances,
 			Image:       ic.Platform.OpenStack.BaseImage,
 			Region:      ic.Platform.OpenStack.Region,
 			Machine:     defaultOpenStackMachinePoolPlatform(),
@@ -127,26 +131,18 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		config.Machine.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 		config.Machine.Set(pool.Platform.OpenStack)
 
-		w.MachineSetRaw = applyTemplateData(openstack.WorkerMachineSetTmpl, config)
+		m.MachinesRaw = applyTemplateData(openstack.MasterMachinesTmpl, config)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
 	return nil
 }
 
-func workerPool(pools []types.MachinePool) types.MachinePool {
+func masterPool(pools []types.MachinePool) types.MachinePool {
 	for idx, pool := range pools {
-		if pool.Name == "worker" {
+		if pool.Name == "master" {
 			return pools[idx]
 		}
 	}
 	return types.MachinePool{}
-}
-
-func applyTemplateData(template *template.Template, templateData interface{}) []byte {
-	buf := &bytes.Buffer{}
-	if err := template.Execute(buf, templateData); err != nil {
-		panic(err)
-	}
-	return buf.Bytes()
 }
