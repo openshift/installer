@@ -10,7 +10,7 @@ The following dependencies must be installed on your system before you can build
 sudo dnf install golang-bin gcc-c++
 ```
 
-If you need support for [libvirt destroy](libvirt-howto#cleanup), you should also install `libvirt-devel`.
+If you need support for [libvirt destroy](libvirt-howto.md#cleanup), you should also install `libvirt-devel`.
 
 ### CentOS, RHEL
 
@@ -18,7 +18,7 @@ If you need support for [libvirt destroy](libvirt-howto#cleanup), you should als
 sudo yum install golang-bin gcc-c++
 ```
 
-If you need support for [libvirt destroy](libvirt-howto#cleanup), you should also install `libvirt-devel`.
+If you need support for [libvirt destroy](libvirt-howto.md#cleanup), you should also install `libvirt-devel`.
 
 ## Go
 
