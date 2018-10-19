@@ -56,7 +56,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	parents.Get(installConfig, terraformVariables, adminKubeconfig)
 
 	// Copy the terraform.tfvars to a temp directory where the terraform will be invoked within.
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "openshift-install-")
+	tmpDir, err := ioutil.TempDir("", "openshift-install-")
 	if err != nil {
 		return errors.Wrap(err, "failed to create temp dir for terraform execution")
 	}
