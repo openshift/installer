@@ -124,7 +124,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		return errors.Wrap(err, "failed to Marshal InstallConfig")
 	}
 	a.File = &asset.File{
-		Filename: "install-config.yml",
+		Filename: installConfigFilename,
 		Data:     data,
 	}
 
@@ -158,4 +158,20 @@ func ClusterDNSIP(installConfig *types.InstallConfig) (string, error) {
 func parseCIDR(s string) net.IPNet {
 	_, cidr, _ := net.ParseCIDR(s)
 	return *cidr
+}
+
+// Load returns the installconfig from disk.
+func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
+	file := f.FetchByName(installConfigFilename)
+	if file == nil {
+		return false, nil
+	}
+
+	config := &types.InstallConfig{}
+	if err := yaml.Unmarshal(file.Data, config); err != nil {
+		return false, errors.Wrapf(err, "failed to unmarshal")
+	}
+
+	a.File, a.Config = file, config
+	return true, nil
 }

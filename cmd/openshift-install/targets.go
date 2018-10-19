@@ -68,18 +68,18 @@ func newTargetsCmd() []*cobra.Command {
 
 func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		assetStore := &asset.StoreImpl{}
-		err := assetStore.Load(rootOpts.dir)
+		assetStore, err := asset.NewStore(rootOpts.dir)
 		if err != nil {
-			logrus.Errorf("Could not load assets from state file: %v", err)
+			return errors.Wrapf(err, "failed to create asset store")
 		}
+
 		for _, a := range targets {
 			err := assetStore.Fetch(a)
 			if err != nil {
 				if exitError, ok := errors.Cause(err).(*exec.ExitError); ok && len(exitError.Stderr) > 0 {
 					logrus.Error(strings.Trim(string(exitError.Stderr), "\n"))
 				}
-				err = errors.Wrapf(err, "failed to generate %s", a.Name())
+				err = errors.Wrapf(err, "failed to fetch %s", a.Name())
 			}
 
 			if err2 := asset.PersistToFile(a, rootOpts.dir); err2 != nil {
@@ -95,11 +95,15 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 				return err
 			}
 		}
-		err = assetStore.Save(rootOpts.dir)
-		if err != nil {
-			errors.Wrapf(err, "failed to write to state file")
-			return err
+
+		if err := assetStore.Save(rootOpts.dir); err != nil {
+			return errors.Wrapf(err, "failed to write to state file")
 		}
+
+		if err := assetStore.Purge(targets); err != nil {
+			return errors.Wrapf(err, "failed to delete existing on-disk files")
+		}
+
 		return nil
 	}
 }

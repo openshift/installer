@@ -1,9 +1,15 @@
 package kubeconfig
 
 import (
+	"path/filepath"
+
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
+)
+
+var (
+	kubeconfigAdminPath = filepath.Join("auth", "kubeconfig")
 )
 
 // Admin is the asset for the admin kubeconfig.
@@ -34,11 +40,16 @@ func (k *Admin) Generate(parents asset.Parents) error {
 		adminCertKey,
 		installConfig.Config,
 		"admin",
-		"kubeconfig",
+		kubeconfigAdminPath,
 	)
 }
 
 // Name returns the human-friendly name of the asset.
 func (k *Admin) Name() string {
 	return "Kubeconfig Admin"
+}
+
+// Load returns the kubeconfig from disk.
+func (k *Admin) Load(f asset.FileFetcher) (found bool, err error) {
+	return k.load(f, kubeconfigAdminPath)
 }

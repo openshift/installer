@@ -33,6 +33,10 @@ func (a *writablePersistAsset) Files() []*File {
 	return a.FileList
 }
 
+func (a *writablePersistAsset) Load(FileFetcher) (bool, error) {
+	return false, nil
+}
+
 func TestPersistToFile(t *testing.T) {
 	cases := []struct {
 		name      string

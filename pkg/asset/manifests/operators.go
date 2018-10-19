@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"path/filepath"
+	"regexp"
 	"text/template"
 
 	"github.com/ghodss/yaml"
@@ -23,14 +24,17 @@ const (
 	manifestDir = "manifests"
 )
 
+var (
+	kubeSysConfigPath = filepath.Join(manifestDir, "cluster-config.yaml")
+
+	_ asset.WritableAsset = (*Manifests)(nil)
+)
+
 // Manifests generates the dependent operator config.yaml files
 type Manifests struct {
-	KubeSysConfig  *configurationObject
-	TectonicConfig *configurationObject
-	FileList       []*asset.File
+	KubeSysConfig *configurationObject
+	FileList      []*asset.File
 }
-
-var _ asset.WritableAsset = (*Manifests)(nil)
 
 type genericData map[string]string
 
@@ -45,9 +49,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
 		&networkOperator{},
-		&kubeAddonOperator{},
 		&machineAPIOperator{},
-		&Tectonic{},
 		&tls.RootCA{},
 		&tls.EtcdCA{},
 		&tls.IngressCertKey{},
@@ -70,10 +72,9 @@ func (m *Manifests) Dependencies() []asset.Asset {
 // Generate generates the respective operator config.yml files
 func (m *Manifests) Generate(dependencies asset.Parents) error {
 	no := &networkOperator{}
-	addon := &kubeAddonOperator{}
 	mao := &machineAPIOperator{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(no, addon, mao, installConfig)
+	dependencies.Get(no, mao, installConfig)
 
 	// no+mao go to kube-system config map
 	m.KubeSysConfig = configMap("kube-system", "cluster-config-v1", genericData{
@@ -86,23 +87,10 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 		return errors.Wrap(err, "failed to create kube-system/cluster-config-v1 configmap")
 	}
 
-	// addon goes to openshift system
-	m.TectonicConfig = configMap("tectonic-system", "cluster-config-v1", genericData{
-		"addon-config": string(addon.Files()[0].Data),
-	})
-	tectonicConfigData, err := yaml.Marshal(m.TectonicConfig)
-	if err != nil {
-		return errors.Wrap(err, "failed to create tectonic-system/cluster-config-v1 configmap")
-	}
-
 	m.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(manifestDir, "cluster-config.yaml"),
+			Filename: kubeSysConfigPath,
 			Data:     kubeSysConfigData,
-		},
-		{
-			Filename: filepath.Join("tectonic", "00_cluster-config.yaml"),
-			Data:     tectonicConfigData,
 		},
 	}
 	m.FileList = append(m.FileList, m.generateBootKubeManifests(dependencies)...)
@@ -230,4 +218,33 @@ func applyTemplateData(template *template.Template, templateData interface{}) []
 		panic(err)
 	}
 	return buf.Bytes()
+}
+
+// Load returns the manifests asset from disk.
+func (m *Manifests) Load(f asset.FileFetcher) (bool, error) {
+	re := fmt.Sprintf(`^%s\%c.*`, manifestDir, filepath.Separator) // e.g. `^manifests\/.*`
+	fileList := f.FetchByPattern(regexp.MustCompile(re))
+	if len(fileList) == 0 {
+		return false, nil
+	}
+
+	kubeSysConfig := &configurationObject{}
+	var found bool
+	for _, file := range fileList {
+		if file.Filename == kubeSysConfigPath {
+			if err := yaml.Unmarshal(file.Data, kubeSysConfig); err != nil {
+				return false, errors.Wrapf(err, "failed to unmarshal cluster-config.yaml")
+			}
+			found = true
+		}
+	}
+
+	if !found {
+		return false, nil
+
+	}
+
+	m.FileList, m.KubeSysConfig = fileList, kubeSysConfig
+
+	return true, nil
 }
