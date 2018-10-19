@@ -77,7 +77,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	case "aws":
 		config := aws.WorkerConfig{}
 		config.ClusterName = ic.ObjectMeta.Name
-		config.Replicas = numOfWorkers
 		config.Region = ic.Platform.AWS.Region
 		config.Machine = defaultAWSMachinePoolPlatform()
 
@@ -102,7 +101,20 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 		config.AMIID = ami
 
-		w.MachineSetRaw = applyTemplateData(aws.WorkerMachineSetTmpl, config)
+		azs, err := aws.AvailabilityZones(config.Region)
+		if err != nil {
+			return errors.Wrap(err, "failed to fetch availability zones")
+		}
+		numOfAZs := int64(len(azs))
+		for idx, az := range azs {
+			replicas := numOfWorkers / numOfAZs
+			if int64(idx) < numOfWorkers%numOfAZs {
+				replicas++
+			}
+			config.Instances = append(config.Instances, aws.WorkerMachinesetInstance{Replicas: replicas, AvailabilityZone: az})
+		}
+
+		w.MachineSetRaw = applyTemplateData(aws.WorkerMachineSetsTmpl, config)
 	case "libvirt":
 		config := libvirt.Config{
 			ClusterName: ic.ObjectMeta.Name,
