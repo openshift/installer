@@ -45,5 +45,4 @@ type tectonicTemplateData struct {
 	KubeCoreOperatorImage                  string
 	PullSecret                             string
 	TectonicIngressControllerOperatorImage string
-	TectonicVersion                        string
 }
