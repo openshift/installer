@@ -111,11 +111,10 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:7b66b274b356ceef90428bb165f05f3a04fddd69e0a6c14ef43686ae14e2422e"
+  digest = "1:3f74b3c0cc3e70631a87355e7265fcf84d0d65f4b75dc6eb9d55e942a5ca0a05"
   name = "github.com/coreos/tectonic-config"
   packages = [
     "config/kube-addon",
-    "config/kube-core",
     "config/tectonic-network",
   ]
   pruneopts = "NUT"
@@ -485,7 +484,6 @@
     "github.com/coreos/ignition/config/util",
     "github.com/coreos/ignition/config/v2_2/types",
     "github.com/coreos/tectonic-config/config/kube-addon",
-    "github.com/coreos/tectonic-config/config/kube-core",
     "github.com/coreos/tectonic-config/config/tectonic-network",
     "github.com/ghodss/yaml",
     "github.com/gregjones/httpcache",
