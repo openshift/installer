@@ -69,7 +69,6 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 		IngressTLSCert:                         base64.StdEncoding.EncodeToString(ingressCertKey.Cert()),
 		IngressTLSKey:                          base64.StdEncoding.EncodeToString(ingressCertKey.Key()),
 		KubeAddonOperatorImage:                 "quay.io/coreos/kube-addon-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
-		KubeCoreOperatorImage:                  "quay.io/coreos/kube-core-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
 		PullSecret:                             base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
 		TectonicIngressControllerOperatorImage: "quay.io/coreos/tectonic-ingress-controller-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
 		TectonicVersion:                        "1.8.4-tectonic.2",

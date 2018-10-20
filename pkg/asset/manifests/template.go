@@ -42,7 +42,6 @@ type tectonicTemplateData struct {
 	IngressTLSCert                         string
 	IngressTLSKey                          string
 	KubeAddonOperatorImage                 string
-	KubeCoreOperatorImage                  string
 	PullSecret                             string
 	TectonicIngressControllerOperatorImage string
 	TectonicVersion                        string
