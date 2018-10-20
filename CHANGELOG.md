@@ -4,6 +4,44 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.3.0 - 2018-10-22
+
+### Added
+
+- Asset state is loaded from the install directory, allowing for a [staged
+  install](docs/user/overview.md#multiple-invocations).
+- A new `openshift-install destroy bootstrap` command destroys the
+  bootstrap resources.  Ideally, this would be safe to run after the
+  new `bootstrap-complete` event is pushed to the `kube-system`
+  namespace, but there is currently a bug causing that event to be
+  pushed too early.  For now, you're on your own figuring out when to
+  call this command.
+
+    For consistency, the old `destroy-cluster` has been deprecated in
+    favor of `openshift-install destroy cluster`.
+
+- The installer creates worker `MachineSet`s, instead of leaving that to
+  [the machine-API operator][machine-api-operator].
+- Creates master `Machine`s and tags masters to be picked up by the
+  [AWS cluster-API provider][cluster-api-provider-aws].
+
+### Changed
+
+- The installer now respects the `AWS_PROFILE` environment variable
+  when launching AWS clusters.
+- Worker subnets are now created in the appropriate availability zone
+  for AWS clusters.
+- Use the released hyperkube and hypershift instead of hard-coded
+  images.
+- Lots of changes to keep up with the advancing release image, as
+  OpenShift operators are added to control various cluster components.
+- Lots of internal cleanup and minor fixes.
+
+### Removed
+
+- The Tectonic kube-core operator, which has been replaced by
+  OpenShift operators.
+
 ## 0.2.0 - 2018-10-12
 
 ### Added
@@ -12,12 +50,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
     install like:
 
     ```console
-    $ openshift-install --dir=example manifests
-    $ $EDITOR example/manifests/cluster-config.yaml
     $ openshift-install --dir=example install-config
+    $ openshift-install --dir=example cluster
     ```
 
-    which creates a cluster with a customized `cluster-config.yaml`.
+    which creates a cluster using the same data given in the
+    install-config (including the same random cluster ID, etc.).
 - [The kube-apiserver][kube-apiserver-operator] and
   [kube-controller-manager][kube-controller-manager-operator]
   operators are called to render additional cluster manifests.
@@ -98,10 +136,12 @@ installer and follow along as it guides you through the process.
 The `tectonic` command and tarball distribution are gone.  Please use
 the new `openshift-install` command instead.
 
+[cluster-api-provider-aws]: https://github.com/openshift/cluster-api-provider-aws
 [cluster-version-operator]: https://github.com/openshift/cluster-version-operator
 [dot]: https://www.graphviz.org/doc/info/lang.html
 [kube-apiserver-operator]: https://github.com/openshift/cluster-kube-apiserver-operator
 [kube-controller-manager-operator]: https://github.com/openshift/cluster-kube-controller-manager-operator
+[machine-api-operator]: https://github.com/openshift/machine-api-operator
 [machine-config-operator]: https://github.com/openshift/machine-config-operator
 [Prometheus]: https://github.com/prometheus/prometheus
 [service-serving-cert-signer]: https://github.com/openshift/service-serving-cert-signer
