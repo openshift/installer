@@ -40,10 +40,15 @@ func Destroy(dir string) (err error) {
 	logrus.Infof("Using Terraform to destroy bootstrap resources...")
 	err = terraform.Destroy(tempDir, platform, "-target=module.bootstrap")
 	if err != nil {
-		err = errors.Wrap(err, "failed to run terraform")
+		return errors.Wrap(err, "failed to run terraform")
 	}
 
-	return os.Rename(filepath.Join(dir, terraform.StateFileName), filepath.Join(tempDir, terraform.StateFileName))
+	tempStateFilePath := filepath.Join(dir, terraform.StateFileName+".new")
+	err = copy(filepath.Join(tempDir, terraform.StateFileName), tempStateFilePath)
+	if err != nil {
+		return errors.Wrapf(err, "failed to copy %s from the temporary directory", terraform.StateFileName)
+	}
+	return os.Rename(tempStateFilePath, filepath.Join(dir, terraform.StateFileName))
 }
 
 func copy(from string, to string) error {
