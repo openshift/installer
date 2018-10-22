@@ -35,7 +35,6 @@ const (
 type bootstrapTemplateData struct {
 	BootkubeImage       string
 	ClusterDNSIP        string
-	DebugConfig         string
 	EtcdCertSignerImage string
 	EtcdCluster         string
 	EtcdctlImage        string
@@ -95,7 +94,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	a.addBootstrapFiles(dependencies)
 	a.addBootkubeFiles(dependencies, templateData)
 	a.addTemporaryBootkubeFiles(templateData)
-	a.addTectonicFiles(dependencies, templateData)
+	a.addTectonicFiles(dependencies)
 	a.addTLSCertFiles(dependencies)
 
 	a.Config.Systemd.Units = append(
@@ -103,7 +102,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 		igntypes.Unit{Name: "bootkube.service", Contents: content.BootkubeSystemdContents},
 		igntypes.Unit{Name: "tectonic.service", Contents: content.TectonicSystemdContents},
 		igntypes.Unit{Name: "progress.service", Contents: content.ReportSystemdContents, Enabled: util.BoolToPtr(true)},
-		igntypes.Unit{Name: "kubelet.service", Contents: applyTemplateData(content.KubeletSystemdTemplate, templateData), Enabled: util.BoolToPtr(true)},
+		igntypes.Unit{Name: "kubelet.service", Contents: content.KubeletSystemdContents, Enabled: util.BoolToPtr(true)},
 	)
 
 	a.Config.Passwd.Users = append(
@@ -155,7 +154,6 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 
 	return &bootstrapTemplateData{
 		ClusterDNSIP:        clusterDNSIP,
-		DebugConfig:         "",
 		EtcdCertSignerImage: "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
 		EtcdctlImage:        "quay.io/coreos/etcd:v3.2.14",
 		BootkubeImage:       "quay.io/coreos/bootkube:v0.10.0",
@@ -234,7 +232,7 @@ func (a *Bootstrap) addTemporaryBootkubeFiles(templateData *bootstrapTemplateDat
 	)
 }
 
-func (a *Bootstrap) addTectonicFiles(dependencies asset.Parents, templateData *bootstrapTemplateData) {
+func (a *Bootstrap) addTectonicFiles(dependencies asset.Parents) {
 	tectonic := &manifests.Tectonic{}
 	dependencies.Get(tectonic)
 

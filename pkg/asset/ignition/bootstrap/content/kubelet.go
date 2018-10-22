@@ -1,13 +1,9 @@
 package content
 
-import (
-	"text/template"
-)
-
 var (
-	// KubeletSystemdTemplate is a service for running the kubelet on the
+	// KubeletSystemdContents is a service for running the kubelet on the
 	// bootstrap nodes.
-	KubeletSystemdTemplate = template.Must(template.New("kubelet.service").Parse(`
+	KubeletSystemdContents = `
 [Unit]
 Description=Kubernetes Kubelet
 Wants=rpc-statd.service
@@ -33,12 +29,11 @@ ExecStart=/usr/bin/hyperkube \
     --anonymous-auth=false \
     --cgroup-driver=systemd \
     --serialize-image-pulls=false \
-    {{.DebugConfig}} \
 
 Restart=always
 RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
-`))
+`
 )
