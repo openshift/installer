@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 
@@ -57,13 +58,33 @@ var targets = []target{{
 	assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}},
 }}
 
+// Deprecated: Use 'create' subcommands instead.
 func newTargetsCmd() []*cobra.Command {
 	var cmds []*cobra.Command
 	for _, t := range targets {
-		t.command.RunE = runTargetCmd(t.assets...)
-		cmds = append(cmds, t.command)
+		cmd := *t.command
+		cmd.Short = fmt.Sprintf("DEPRECATED: USE 'create %s' instead.", cmd.Use)
+		cmd.RunE = runTargetCmd(t.assets...)
+		cmds = append(cmds, &cmd)
 	}
 	return cmds
+}
+
+func newCreateCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create",
+		Short: "Create part of an OpenShift cluster",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			return cmd.Help()
+		},
+	}
+
+	for _, t := range targets {
+		t.command.RunE = runTargetCmd(t.assets...)
+		cmd.AddCommand(t.command)
+	}
+
+	return cmd
 }
 
 func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) error {

@@ -19,7 +19,7 @@ hack/build.sh
 This will create `bin/openshift-install`. This binary can then be invoked to create an OpenShift cluster, like so:
 
 ```sh
-bin/openshift-install cluster
+bin/openshift-install create cluster
 ```
 
 The installer requires the terraform binary either alongside openshift-install or in `$PATH`.
@@ -41,8 +41,8 @@ Log in using the admin credentials you configured when creating the cluster.
 
 #### Kubeconfig
 
-You can also use the admin kubeconfig which `openshift-install cluster` placed under `--dir` (which defaults to `.`) in `auth/kubeconfig`.
-If you launched the cluster with `openshift-install --dir "${DIR}" cluster`, you can use:
+You can also use the admin kubeconfig which `openshift-install create cluster` placed under `--dir` (which defaults to `.`) in `auth/kubeconfig`.
+If you launched the cluster with `openshift-install --dir "${DIR}" create cluster`, you can use:
 
 ```sh
 export KUBECONFIG="${DIR}/auth/kubeconfig"

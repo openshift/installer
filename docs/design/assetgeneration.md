@@ -72,10 +72,10 @@ After being loaded and consumed by a children asset, the existing on-disk asset 
 E.g.
 
 ```shell
-$ openshift-install install-config
+$ openshift-install create install-config
 # Generate install-config.yml
 
-$ openshift-install manifests
+$ openshift-install create manifests
 # Generate manifests/ and tectonic/ dir, also remove install-config.yml
 ```
 
