@@ -45,6 +45,38 @@ polkit.addRule(function(action, subject) {
 EOF
 ```
 
+### Enable IP Forwarding
+
+Libvirt creates a bridged connection to the host machine, but in order for the
+network bridge to work IP forwarding needs to be enabled. The following command
+will tell you if forwarding is enabled:
+
+```sh
+sysctl net.ipv4.ip_forward
+```
+
+If the command output is:
+
+```sh
+net.ipv4.ip_forward = 0
+```
+
+then forwarding is disabled and proceed with the rest of this section. If IP
+forwarding is enabled then skip the rest of this section.
+
+To enable IP forwarding for the current boot:
+
+```sh
+sysctl net.ipv4.ip_forward=1
+```
+
+or to persist the setting across reboots (recommended):
+
+```sh
+echo "net.ipv4.ip_forward = 1" | sudo tee /etc/sysctl.d/99-ipforward.conf
+sudo sysctl -p /etc/sysctl.d/99-ipforward.conf
+```
+
 ### Configure libvirt to accept TCP connections
 
 The Kubernetes [cluster-api](https://github.com/kubernetes-sigs/cluster-api)
