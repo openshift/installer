@@ -1,0 +1,4 @@
+apiVersion: kubecontrolplane.config.openshift.io/v1
+kind: KubeAPIServerConfig
+kubeletClientInfo:
+  ca: "" # kubelet uses self-signed serving certs. TODO: fix kubelet pki
