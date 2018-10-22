@@ -11,7 +11,7 @@ Before you begin, install the [build dependencies](dependencies.md).
 On Fedora, CentOS/RHEL:
 
 ```sh
-sudo yum install libvirt-daemon
+sudo yum install libvirt libvirt-devel
 ```
 
 Then start libvirtd:
