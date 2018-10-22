@@ -231,9 +231,11 @@ Using the domain names above will only work if you [set up the DNS overlay](#set
 Alternatively, if you didn't set up DNS on the host, you can use:
 
 ```sh
-virsh domifaddr master0  # to get the master IP
+virsh -c "${OPENSHIFT_INSTALL_LIBVIRT_URI}" domifaddr master0  # to get the master IP
 ssh core@$MASTER_IP
 ```
+
+Here `OPENSHIFT_INSTALL_LIBVIRT_URI` is the libvirt connection URI which you [passed to the installer](#build-and-run-the-installer).
 
 ### Inspect the cluster with kubectl
 
