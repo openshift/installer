@@ -8,13 +8,7 @@ It's expected that you will create and destroy clusters often in the course of d
 Before you begin, install the [build dependencies](dependencies.md).
 
 ### Install and Enable Libvirt
-On Fedora:
-
-```sh
-sudo dnf install libvirt-daemon
-```
-
-or on CentOS / RHEL:
+On Fedora, CentOS/RHEL:
 
 ```sh
 sudo yum install libvirt-daemon
@@ -23,8 +17,7 @@ sudo yum install libvirt-daemon
 Then start libvirtd:
 
 ```sh
-sudo systemctl start libvirtd
-sudo systemctl enable libvirtd
+sudo systemctl enable --now libvirtd
 ```
 
 ### Pick names

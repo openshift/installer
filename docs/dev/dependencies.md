@@ -4,15 +4,7 @@
 
 The following dependencies must be installed on your system before you can build the installer.
 
-### Fedora
-
-```sh
-sudo dnf install golang-bin gcc-c++
-```
-
-If you need support for [libvirt destroy](libvirt-howto.md#cleanup), you should also install `libvirt-devel`.
-
-### CentOS, RHEL
+### Fedora, CentOS, RHEL
 
 ```sh
 sudo yum install golang-bin gcc-c++
