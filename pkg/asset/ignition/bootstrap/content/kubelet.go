@@ -20,9 +20,6 @@ EnvironmentFile=-/etc/kubernetes/kubelet-env
 
 ExecStart=/usr/bin/hyperkube \
   kubelet \
-    --bootstrap-kubeconfig=/etc/kubernetes/kubeconfig \
-    --kubeconfig=/var/lib/kubelet/kubeconfig \
-    --rotate-certificates \
     --container-runtime=remote \
     --container-runtime-endpoint=/var/run/crio/crio.sock \
     --runtime-request-timeout=${KUBELET_RUNTIME_REQUEST_TIMEOUT} \
@@ -30,17 +27,12 @@ ExecStart=/usr/bin/hyperkube \
     --exit-on-lock-contention \
     --pod-manifest-path=/etc/kubernetes/manifests \
     --allow-privileged \
-    --node-labels=node-role.kubernetes.io/bootstrap \
-    --register-with-taints=node-role.kubernetes.io/bootstrap=:NoSchedule \
     --minimum-container-ttl-duration=6m0s \
-    --cluster-dns={{.ClusterDNSIP}} \
     --cluster-domain=cluster.local \
     --client-ca-file=/etc/kubernetes/ca.crt \
-    --cloud-provider={{.CloudProvider}} \
     --anonymous-auth=false \
     --cgroup-driver=systemd \
     --serialize-image-pulls=false \
-    {{.CloudProviderConfig}} \
     {{.DebugConfig}} \
 
 Restart=always

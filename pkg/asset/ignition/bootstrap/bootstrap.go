@@ -34,8 +34,6 @@ const (
 // template files.
 type bootstrapTemplateData struct {
 	BootkubeImage       string
-	CloudProvider       string
-	CloudProviderConfig string
 	ClusterDNSIP        string
 	DebugConfig         string
 	EtcdCertSignerImage string
@@ -157,8 +155,6 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 
 	return &bootstrapTemplateData{
 		ClusterDNSIP:        clusterDNSIP,
-		CloudProvider:       getCloudProvider(installConfig),
-		CloudProviderConfig: getCloudProviderConfig(installConfig),
 		DebugConfig:         "",
 		EtcdCertSignerImage: "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
 		EtcdctlImage:        "quay.io/coreos/etcd:v3.2.14",
@@ -175,7 +171,6 @@ func (a *Bootstrap) addBootstrapFiles(dependencies asset.Parents) {
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
 		ignition.FileFromBytes("/etc/kubernetes/kubeconfig", 0600, kubeletKubeconfig.Files()[0].Data),
-		ignition.FileFromBytes("/var/lib/kubelet/kubeconfig", 0600, kubeletKubeconfig.Files()[0].Data),
 	)
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
@@ -280,17 +275,6 @@ func (a *Bootstrap) addTLSCertFiles(dependencies asset.Parents) {
 		a.Config.Storage.Files,
 		ignition.FileFromBytes("/etc/ssl/etcd/ca.crt", 0600, etcdClientCertKey.Cert()),
 	)
-}
-
-func getCloudProvider(installConfig *types.InstallConfig) string {
-	if installConfig.AWS != nil {
-		return "aws"
-	}
-	return ""
-}
-
-func getCloudProviderConfig(installConfig *types.InstallConfig) string {
-	return ""
 }
 
 func applyTemplateData(template *template.Template, templateData interface{}) string {
