@@ -29,14 +29,14 @@ spec:
   replicas: {{.Replicas}}
   selector:
     matchLabels:
-      sigs.k8s.io/cluster-api-machineset: worker
+      sigs.k8s.io/cluster-api-machineset: {{.ClusterName}}-worker-0
       sigs.k8s.io/cluster-api-cluster: {{.ClusterName}}
       sigs.k8s.io/cluster-api-machine-role: worker
       sigs.k8s.io/cluster-api-machine-type: worker
   template:
     metadata:
       labels:
-        sigs.k8s.io/cluster-api-machineset: worker
+        sigs.k8s.io/cluster-api-machineset: {{.ClusterName}}-worker-0
         sigs.k8s.io/cluster-api-cluster: {{.ClusterName}}
         sigs.k8s.io/cluster-api-machine-role: worker
         sigs.k8s.io/cluster-api-machine-type: worker

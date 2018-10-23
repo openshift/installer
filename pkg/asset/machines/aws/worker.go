@@ -53,12 +53,12 @@ items:
     replicas: {{$instance.Replicas}}
     selector:
       matchLabels:
-        sigs.k8s.io/cluster-api-machineset: worker
+        sigs.k8s.io/cluster-api-machineset: {{$c.ClusterName}}-worker-{{$index}}
         sigs.k8s.io/cluster-api-cluster: {{$c.ClusterName}}
     template:
       metadata:
         labels:
-          sigs.k8s.io/cluster-api-machineset: worker
+          sigs.k8s.io/cluster-api-machineset: {{$c.ClusterName}}-worker-{{$index}}
           sigs.k8s.io/cluster-api-cluster: {{$c.ClusterName}}
           sigs.k8s.io/cluster-api-machine-role: worker
           sigs.k8s.io/cluster-api-machine-type: worker
