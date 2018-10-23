@@ -19,7 +19,7 @@ hack/build.sh
 This will create `bin/openshift-install`. This binary can then be invoked to create an OpenShift cluster, like so:
 
 ```sh
-bin/openshift-install create cluster
+bin/openshift-install cluster
 ```
 
 The installer requires the terraform binary either alongside openshift-install or in `$PATH`.
