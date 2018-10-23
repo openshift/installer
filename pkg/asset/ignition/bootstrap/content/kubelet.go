@@ -17,7 +17,7 @@ EnvironmentFile=-/etc/kubernetes/kubelet-env
 ExecStart=/usr/bin/hyperkube \
   kubelet \
     --container-runtime=remote \
-    --container-runtime-endpoint=/var/run/crio/crio.sock \
+    --container-runtime-endpoint=unix:///var/run/crio/crio.sock \
     --runtime-request-timeout=${KUBELET_RUNTIME_REQUEST_TIMEOUT} \
     --lock-file=/var/run/lock/kubelet.lock \
     --exit-on-lock-contention \
