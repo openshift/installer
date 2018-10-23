@@ -75,7 +75,8 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
 		--config-output-file=/assets/kube-apiserver-bootstrap/config \
-		--config-override-files=/assets/bootkube-config-overrides/kube-apiserver-config-overrides.yaml
+		--config-override-files=/assets/bootkube-config-overrides/kube-apiserver-config-overrides.yaml \
+		--disable-phase-2
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -224,7 +225,7 @@ podman run \
 	--network=host \
 	--entrypoint=/bootkube \
 	"{{.BootkubeImage}}" \
-	start --asset-dir=/assets
+	start --asset-dir=/assets --required-pods kube-system/pod-checkpointer,openshift-kube-apiserver/openshift-kube-apiserver,kube-system/kube-scheduler,kube-system/kube-controller-manager
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/tectonic/.bootkube.done
