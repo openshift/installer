@@ -39,7 +39,7 @@ overrides:
   name: v1alpha1.packages.apps.redhat.com
   unmanaged: true
 - kind: Deployment                    # still testing this new component
-  namespace: openshift-pod-checkpointer
+  namespace: kube-system
   name: pod-checkpointer-operator
   unmanaged: true
 `))
