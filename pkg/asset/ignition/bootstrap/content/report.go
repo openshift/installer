@@ -14,7 +14,7 @@ After=bootkube.service tectonic.service
 # Workaround for https://github.com/systemd/systemd/issues/1312 and https://github.com/opencontainers/runc/pull/1807
 ExecStartPre=/usr/bin/test -f /opt/tectonic/.bootkube.done
 ExecStartPre=/usr/bin/test -f /opt/tectonic/.tectonic.done
-ExecStart=/opt/tectonic/report-progress.sh /opt/tectonic/auth/kubeconfig bootstrap-complete "cluster bootstrapping has completed"
+ExecStart=/usr/local/bin/report-progress.sh /opt/tectonic/auth/kubeconfig bootstrap-complete "cluster bootstrapping has completed"
 
 Restart=on-failure
 RestartSec=5s

@@ -172,7 +172,7 @@ func (a *Bootstrap) addBootstrapFiles(dependencies asset.Parents) {
 	)
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
-		ignition.FileFromString("/opt/tectonic/report-progress.sh", 0555, content.ReportShFileContents),
+		ignition.FileFromString("/usr/local/bin/report-progress.sh", 0555, content.ReportShFileContents),
 	)
 }
 
@@ -184,7 +184,7 @@ func (a *Bootstrap) addBootkubeFiles(dependencies asset.Parents, templateData *b
 
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
-		ignition.FileFromString("/opt/tectonic/bootkube.sh", 0555, applyTemplateData(content.BootkubeShFileTemplate, templateData)),
+		ignition.FileFromString("/usr/local/bin/bootkube.sh", 0555, applyTemplateData(content.BootkubeShFileTemplate, templateData)),
 	)
 	for _, o := range content.BootkubeConfigOverrides {
 		a.Config.Storage.Files = append(
@@ -238,7 +238,7 @@ func (a *Bootstrap) addTectonicFiles(dependencies asset.Parents) {
 
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
-		ignition.FileFromString("/opt/tectonic/tectonic.sh", 0555, content.TectonicShFileContents),
+		ignition.FileFromString("/usr/local/bin/tectonic.sh", 0555, content.TectonicShFileContents),
 	)
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
