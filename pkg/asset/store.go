@@ -81,7 +81,7 @@ func (s *StoreImpl) load(dir string) error {
 	}
 	err = json.Unmarshal(data, &assets)
 	if err != nil {
-		return errors.Wrapf(err, "failed to unmarshal state file %s", path)
+		return errors.Wrapf(err, "failed to unmarshal state file %q", path)
 	}
 	s.stateFileAssets = assets
 	return nil
@@ -91,7 +91,7 @@ func (s *StoreImpl) load(dir string) error {
 func (s *StoreImpl) LoadAssetFromState(asset Asset) error {
 	bytes, ok := s.stateFileAssets[reflect.TypeOf(asset).String()]
 	if !ok {
-		return errors.Errorf("asset %s is not found in the state file", asset.Name())
+		return errors.Errorf("asset %q is not found in the state file", asset.Name())
 	}
 	return json.Unmarshal(bytes, asset)
 }
@@ -127,7 +127,7 @@ func (s *StoreImpl) Save(dir string) error {
 // dependencies if necessary.
 // It returns dirty if the asset or any of its parents is loaded from on-disk files.
 func (s *StoreImpl) fetch(asset Asset, indent string) (dirty bool, err error) {
-	logrus.Debugf("%sFetching %s...", indent, asset.Name())
+	logrus.Debugf("%sFetching %q...", indent, asset.Name())
 
 	// Return immediately if the asset is found in the cache,
 	// this is because we are doing a depth-first-search, it's guaranteed
@@ -135,7 +135,7 @@ func (s *StoreImpl) fetch(asset Asset, indent string) (dirty bool, err error) {
 	// to worry about invalidating anything in the cache.
 	storedAsset, ok := s.assets[reflect.TypeOf(asset)]
 	if ok {
-		logrus.Debugf("%sFound %s...", indent, asset.Name())
+		logrus.Debugf("%sFound %q...", indent, asset.Name())
 		reflect.ValueOf(asset).Elem().Set(reflect.ValueOf(storedAsset.asset).Elem())
 		return storedAsset.dirty, nil
 	}
@@ -143,14 +143,14 @@ func (s *StoreImpl) fetch(asset Asset, indent string) (dirty bool, err error) {
 	dependencies := asset.Dependencies()
 	parents := make(Parents, len(dependencies))
 	if len(dependencies) > 0 {
-		logrus.Debugf("%sGenerating dependencies of %s...", indent, asset.Name())
+		logrus.Debugf("%sGenerating dependencies of %q...", indent, asset.Name())
 	}
 
 	var anyParentsDirty bool
 	for _, d := range dependencies {
 		dt, err := s.fetch(d, indent+"  ")
 		if err != nil {
-			return false, errors.Wrapf(err, "failed to fetch dependency for %s", asset.Name())
+			return false, errors.Wrapf(err, "failed to fetch dependency for %q", asset.Name())
 		}
 		if dt {
 			anyParentsDirty = true
@@ -159,20 +159,20 @@ func (s *StoreImpl) fetch(asset Asset, indent string) (dirty bool, err error) {
 	}
 
 	// Try to find the asset from the state file.
-	logrus.Debugf("%sLooking up asset from state file: %s", indent, reflect.TypeOf(asset).String())
+	logrus.Debugf("%sLooking up asset from state file: %q", indent, reflect.TypeOf(asset).String())
 	foundInStateFile := s.IsAssetInState(asset)
 
 	// Try to load from on-disk files first.
 	var foundOnDisk bool
 	as, ok := asset.(WritableAsset)
 	if ok {
-		logrus.Debugf("%sLooking up asset %s from disk", indent, asset.Name())
+		logrus.Debugf("%sLooking up asset %q from disk", indent, asset.Name())
 		foundOnDisk, err = as.Load(s.fileFetcher)
 		if err != nil {
-			return false, errors.Wrapf(err, "unexpected error when loading asset %s", asset.Name())
+			return false, errors.Wrapf(err, "unexpected error when loading asset %q", asset.Name())
 		}
 		if foundOnDisk {
-			logrus.Debugf("%sFound %s on disk...", indent, asset.Name())
+			logrus.Debugf("%sFound %q on disk...", indent, asset.Name())
 			s.onDiskAssets = append(s.onDiskAssets, as)
 		}
 	}
@@ -182,30 +182,30 @@ func (s *StoreImpl) fetch(asset Asset, indent string) (dirty bool, err error) {
 	switch {
 	case anyParentsDirty && foundOnDisk:
 		// TODO(yifan): We should check the content to make sure there's no conflict.
-		logrus.Warningf("%sBoth parent assets and current asset %s are on disk, Re-generating ...", indent, asset.Name())
+		logrus.Warningf("%sBoth parent assets and current asset %q are on disk, Re-generating ...", indent, asset.Name())
 		if err := asset.Generate(parents); err != nil {
-			return dirty, errors.Wrapf(err, "failed to generate asset %s", asset.Name())
+			return dirty, errors.Wrapf(err, "failed to generate asset %q", asset.Name())
 		}
 	case anyParentsDirty:
 		if foundInStateFile {
-			logrus.Warningf("%sRe-generating %s...", indent, asset.Name())
+			logrus.Warningf("%sRe-generating %q...", indent, asset.Name())
 		} else {
-			logrus.Debugf("%sGenerating %s...", indent, asset.Name())
+			logrus.Debugf("%sGenerating %q...", indent, asset.Name())
 		}
 		if err := asset.Generate(parents); err != nil {
-			return dirty, errors.Wrapf(err, "failed to generate asset %s", asset.Name())
+			return dirty, errors.Wrapf(err, "failed to generate asset %q", asset.Name())
 		}
 	case foundOnDisk:
-		logrus.Debugf("%sUsing on-disk asset %s", indent, asset.Name())
+		logrus.Debugf("%sUsing on-disk asset %q", indent, asset.Name())
 	default: // !anyParentsDirty && !foundOnDisk
 		if foundInStateFile {
 			if err := s.LoadAssetFromState(asset); err != nil {
-				return dirty, errors.Wrapf(err, "failed to load asset from state file %s", asset.Name())
+				return dirty, errors.Wrapf(err, "failed to load asset from state file %q", asset.Name())
 			}
 		} else {
-			logrus.Debugf("%sAsset %s not found in state file. Generating ...", indent, asset.Name())
+			logrus.Debugf("%sAsset %q not found in state file. Generating ...", indent, asset.Name())
 			if err := asset.Generate(parents); err != nil {
-				return dirty, errors.Wrapf(err, "failed to generate asset %s", asset.Name())
+				return dirty, errors.Wrapf(err, "failed to generate asset %q", asset.Name())
 			}
 		}
 	}
