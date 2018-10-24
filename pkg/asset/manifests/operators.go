@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/content/bootkube"
@@ -64,7 +63,6 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&tls.KubeletCertKey{},
 		&tls.ServiceAccountKeyPair{},
 		&kubeconfig.Admin{},
-		&machine.Worker{},
 	}
 }
 
@@ -117,7 +115,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	rootCA := &tls.RootCA{}
 	serviceAccountKeyPair := &tls.ServiceAccountKeyPair{}
 	serviceServingCA := &tls.ServiceServingCA{}
-	workerIgnition := &machine.Worker{}
 	dependencies.Get(
 		installConfig,
 		aggregatorCA,
@@ -133,7 +130,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		rootCA,
 		serviceAccountKeyPair,
 		serviceServingCA,
-		workerIgnition,
 	)
 
 	etcdEndpointHostnames := make([]string, installConfig.Config.MasterCount())
@@ -169,7 +165,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(serviceServingCA.Cert()),
 		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(serviceServingCA.Key()),
 		TectonicNetworkOperatorImage:    "quay.io/coreos/tectonic-network-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
-		WorkerIgnConfig:                 base64.StdEncoding.EncodeToString(workerIgnition.Files()[0].Data),
 		CVOClusterID:                    installConfig.Config.ClusterID,
 		EtcdEndpointHostnames:           etcdEndpointHostnames,
 		EtcdEndpointDNSSuffix:           installConfig.Config.BaseDomain,
@@ -177,7 +172,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 
 	assetData := map[string][]byte{
 		"cluster-apiserver-certs.yaml":          applyTemplateData(bootkube.ClusterApiserverCerts, templateData),
-		"ign-config.yaml":                       applyTemplateData(bootkube.IgnConfig, templateData),
 		"kube-apiserver-secret.yaml":            applyTemplateData(bootkube.KubeApiserverSecret, templateData),
 		"kube-cloud-config.yaml":                applyTemplateData(bootkube.KubeCloudConfig, templateData),
 		"kube-controller-manager-secret.yaml":   applyTemplateData(bootkube.KubeControllerManagerSecret, templateData),
