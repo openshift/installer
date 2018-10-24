@@ -38,6 +38,7 @@ type assetState struct {
 
 // StoreImpl is the implementation of Store.
 type StoreImpl struct {
+	directory       string
 	assets          map[reflect.Type]assetState
 	stateFileAssets map[string]json.RawMessage
 	fileFetcher     *fileFetcher
@@ -47,6 +48,7 @@ type StoreImpl struct {
 // NewStore returns an asset store that implements the Store interface.
 func NewStore(dir string) (Store, error) {
 	store := &StoreImpl{
+		directory:   dir,
 		fileFetcher: &fileFetcher{directory: dir},
 		assets:      make(map[reflect.Type]assetState),
 	}
@@ -234,7 +236,7 @@ func (s *StoreImpl) Purge(excluded []WritableAsset) error {
 	for _, asset := range toPurge {
 		logrus.Debugf("Purging asset %q", asset.Name())
 		for _, f := range asset.Files() {
-			if err := os.Remove(f.Filename); err != nil {
+			if err := os.Remove(filepath.Join(s.directory, f.Filename)); err != nil {
 				return errors.Wrapf(err, "failed to remove file %q", f.Filename)
 			}
 		}
