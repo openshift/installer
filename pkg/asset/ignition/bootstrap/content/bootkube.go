@@ -15,6 +15,7 @@ After=kubelet.service
 
 [Service]
 WorkingDirectory=/opt/tectonic
+RemainAfterExit=true
 ExecStart=/opt/tectonic/bootkube.sh
 
 Restart=on-failure
@@ -188,7 +189,6 @@ podman run \
 echo "Waiting for etcd cluster..."
 
 # Wait for the etcd cluster to come up.
-set +e
 # shellcheck disable=SC2154,SC2086
 until podman run \
 		--rm \
@@ -208,7 +208,6 @@ do
 	echo "etcdctl failed. Retrying in 5 seconds..."
 	sleep 5
 done
-set -e
 
 echo "etcd cluster up. Killing etcd certificate signer..."
 

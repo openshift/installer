@@ -10,6 +10,7 @@ After=bootkube.service
 
 [Service]
 WorkingDirectory=/opt/tectonic/tectonic
+RemainAfterExit=true
 ExecStart=/opt/tectonic/tectonic.sh /opt/tectonic/auth/kubeconfig
 
 Restart=on-failure
