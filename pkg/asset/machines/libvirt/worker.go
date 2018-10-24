@@ -43,7 +43,7 @@ spec:
     spec:
       providerConfig:
         value:
-          apiVersion: libvirtproviderconfig/v1alpha1
+          apiVersion: libvirtproviderconfig.k8s.io/v1alpha1
           kind: LibvirtMachineProviderConfig
           domainMemory: 2048
           domainVcpu: 2
