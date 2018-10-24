@@ -41,9 +41,6 @@ git clone https://github.com/openshift/installer.git
 cd installer
 ```
 
-### Get a pull secret
-Go to https://account.coreos.com/ and obtain a *pull secret*.
-
 ### Make sure you have permissions for `qemu:///system`
 You may want to grant yourself permissions to use libvirt as a non-root user. You could allow all users in the wheel group by doing the following:
 ```sh
@@ -226,13 +223,12 @@ Set `TAGS` when building if you need `destroy cluster` support for libvirt; this
 TAGS=libvirt_destroy hack/build.sh
 ```
 
-To avoid being prompted repeatedly, you can set [environment variables](../user/environment-variables.md) to reflect your libvirt choices.  For example, selecting libvirt, setting [our earlier name choices](#pick-names), [our pull secret](#get-a-pull-secret), and telling both the installer and the machine-API operator to contact `libvirtd` at [the usual libvirt IP](#firewall), you can use:
+To avoid being prompted repeatedly, you can set [environment variables](../user/environment-variables.md) to reflect your libvirt choices.  For example, selecting libvirt, setting [our earlier name choices](#pick-names), and telling both the installer and the machine-API operator to contact `libvirtd` at [the usual libvirt IP](#firewall), you can use:
 
 ```sh
 export OPENSHIFT_INSTALL_PLATFORM=libvirt
 export OPENSHIFT_INSTALL_BASE_DOMAIN=tt.testing
 export OPENSHIFT_INSTALL_CLUSTER_NAME=test1
-export OPENSHIFT_INSTALL_PULL_SECRET_PATH=path/to/your/pull-secret.json
 export OPENSHIFT_INSTALL_LIBVIRT_URI=qemu+tcp://192.168.122.1/system
 ```
 
