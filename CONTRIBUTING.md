@@ -12,9 +12,10 @@ Origin (DCO). This document was created by the Linux Kernel community and is a
 simple statement that you, as a contributor, have the legal right to make the
 contribution. See the [DCO](DCO) file for details.
 
-##  Reporting a security vulnerability
+## Security Response
 
-Due to their public nature, GitHub and mailing lists are not appropriate places for reporting vulnerabilities. Please refer to CoreOS's [security disclosure][disclosure] process when reporting issues that may be security related.
+If you've found a security issue that you'd like to disclose confidentially, please contact Red Hat's Product Security team.
+Details [here][security].
 
 ## Getting Started
 
@@ -88,3 +89,4 @@ git tools.
 [disclosure]: https://coreos.com/security/disclosure/
 [new-issue]: https://github.com/openshift/installer/issues/new
 [prow-review]: https://github.com/kubernetes/community/blob/master/contributors/guide/owners.md#the-code-review-process
+[security]: https://access.redhat.com/security/team/contact
