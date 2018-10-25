@@ -23,10 +23,6 @@ overrides:
   namespace: openshift-cluster-network-operator
   name: cluster-network-operator
   unmanaged: true
-- kind: Deployment                    # this conflicts with tectonic-ingress-controller-operator
-  namespace: openshift-ingress-operator
-  name: ingress-operator
-  unmanaged: true
 - kind: ServiceAccount                # missing run level 0 on the namespace and has 0000_08
   namespace: openshift-cluster-dns-operator
   name: cluster-dns-operator

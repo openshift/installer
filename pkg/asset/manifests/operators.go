@@ -184,7 +184,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"etcd-service-endpoints.yaml":           applyTemplateData(bootkube.EtcdServiceEndpointsKubeSystem, templateData),
 
 		"01-tectonic-namespace.yaml":                 []byte(bootkube.TectonicNamespace),
-		"02-ingress-namespace.yaml":                  []byte(bootkube.IngressNamespace),
 		"03-openshift-web-console-namespace.yaml":    []byte(bootkube.OpenshiftWebConsoleNamespace),
 		"04-openshift-machine-config-operator.yaml":  []byte(bootkube.OpenshiftMachineConfigOperator),
 		"05-openshift-cluster-api-namespace.yaml":    []byte(bootkube.OpenshiftClusterAPINamespace),

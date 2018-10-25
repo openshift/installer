@@ -1,7 +1,6 @@
 package manifests
 
 import (
-	"bytes"
 	"encoding/base64"
 	"path/filepath"
 
@@ -53,24 +52,15 @@ func (t *Tectonic) Dependencies() []asset.Asset {
 // Generate generates the respective operator config.yml files
 func (t *Tectonic) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	ingressCertKey := &tls.IngressCertKey{}
-	kubeCA := &tls.KubeCA{}
 	clusterk8sio := &machines.ClusterK8sIO{}
 	worker := &machines.Worker{}
 	master := &machines.Master{}
 	addon := &kubeAddonOperator{}
-	dependencies.Get(installConfig, ingressCertKey, kubeCA, clusterk8sio, worker, master, addon)
+	dependencies.Get(installConfig, clusterk8sio, worker, master, addon)
 
 	templateData := &tectonicTemplateData{
-		IngressCaCert:                          base64.StdEncoding.EncodeToString(kubeCA.Cert()),
-		IngressKind:                            "haproxy-router",
-		IngressStatusPassword:                  installConfig.Config.Admin.Password, // FIXME: generate a new random one instead?
-		IngressTLSBundle:                       base64.StdEncoding.EncodeToString(bytes.Join([][]byte{ingressCertKey.Cert(), ingressCertKey.Key()}, []byte{})),
-		IngressTLSCert:                         base64.StdEncoding.EncodeToString(ingressCertKey.Cert()),
-		IngressTLSKey:                          base64.StdEncoding.EncodeToString(ingressCertKey.Key()),
-		KubeAddonOperatorImage:                 "quay.io/coreos/kube-addon-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
-		PullSecret:                             base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
-		TectonicIngressControllerOperatorImage: "quay.io/coreos/tectonic-ingress-controller-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
+		KubeAddonOperatorImage: "quay.io/coreos/kube-addon-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
+		PullSecret:             base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
 	}
 
 	assetData := map[string][]byte{
@@ -84,14 +74,7 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 		"99_openshift-cluster-api_worker-user-data-secret.yaml":  worker.UserDataSecretRaw,
 		"99_role-admin.yaml":                                     []byte(content.RoleAdmin),
 		"99_role-user.yaml":                                      []byte(content.RoleUser),
-		"99_tectonic-ingress-00-appversion.yaml":                 []byte(content.AppVersionTectonicIngress),
-		"99_tectonic-ingress-01-cluster-config.yaml":             applyTemplateData(content.ClusterConfigTectonicIngress, templateData),
-		"99_tectonic-ingress-02-tls.yaml":                        applyTemplateData(content.TLSTectonicIngress, templateData),
-		"99_tectonic-ingress-03-pull.json":                       applyTemplateData(content.PullTectonicIngress, templateData),
-		"99_tectonic-ingress-04-svc-account.yaml":                []byte(content.SvcAccountTectonicIngress),
-		"99_tectonic-ingress-05-operator.yaml":                   applyTemplateData(content.TectonicIngressControllerOperator, templateData),
 		"99_tectonic-system-00-binding-admin.yaml":               []byte(content.BindingAdmin),
-		"99_tectonic-system-01-ca-cert.yaml":                     applyTemplateData(content.CaCertTectonicSystem, templateData),
 		"99_tectonic-system-02-pull.json":                        applyTemplateData(content.PullTectonicSystem, templateData),
 	}
 
