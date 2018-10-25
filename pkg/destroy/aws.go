@@ -8,8 +8,13 @@ import (
 
 // NewAWS returns an AWS destroyer from ClusterMetadata.
 func NewAWS(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (Destroyer, error) {
+	filters := make([]atd.AWSFilter, 0, len(metadata.ClusterPlatformMetadata.AWS.Identifier))
+	for _, filter := range metadata.ClusterPlatformMetadata.AWS.Identifier {
+		filters = append(filters, filter)
+	}
+
 	return &atd.ClusterUninstaller{
-		Filters:     metadata.ClusterPlatformMetadata.AWS.Identifier,
+		Filters:     filters,
 		Region:      metadata.ClusterPlatformMetadata.AWS.Region,
 		ClusterName: metadata.ClusterName,
 		Logger:      logger,
