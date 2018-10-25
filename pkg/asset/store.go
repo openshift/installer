@@ -187,6 +187,19 @@ func (s *StoreImpl) fetch(asset Asset, indent string) (bool, error) {
 		if err := asset.Generate(parents); err != nil {
 			return false, errors.Wrapf(err, "failed to generate asset %q", asset.Name())
 		}
+	} else if foundInStateFile && foundOnDisk {
+		logrus.Debugf("%sLoading %q from both state file and target directory", indent, asset.Name())
+
+		stateAsset := reflect.New(reflect.TypeOf(asset).Elem()).Interface().(Asset)
+		if err := s.LoadAssetFromState(stateAsset); err != nil {
+			return false, errors.Wrapf(err, "failed to load asset %q from state file", asset.Name())
+		}
+
+		// If the on-disk asset is the same as the one in the state file, there
+		// is no need to consider the one on disk and to mark the asset dirty.
+		if reflect.DeepEqual(stateAsset, asset) {
+			foundOnDisk = false
+		}
 	} else if foundInStateFile {
 		logrus.Debugf("%sLoading %q from state file", indent, asset.Name())
 		if err := s.LoadAssetFromState(asset); err != nil {
