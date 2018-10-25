@@ -9,6 +9,7 @@ Description=Kubernetes Kubelet
 Wants=rpc-statd.service
 
 [Service]
+Type=notify
 ExecStartPre=/bin/mkdir --parents /etc/kubernetes/manifests
 ExecStartPre=/usr/bin/bash -c "gawk '/certificate-authority-data/ {print $2}' /etc/kubernetes/kubeconfig | base64 --decode > /etc/kubernetes/ca.crt"
 Environment=KUBELET_RUNTIME_REQUEST_TIMEOUT=10m
