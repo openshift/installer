@@ -141,17 +141,3 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 
 	return true, fmt.Errorf("%q already exists.  There may already be a running cluster", terraform.StateFileName)
 }
-
-// LoadMetadata loads the cluster metadata from an asset directory.
-func LoadMetadata(dir string) (cmetadata *types.ClusterMetadata, err error) {
-	raw, err := ioutil.ReadFile(filepath.Join(dir, metadataFileName))
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to read %s file", metadataFileName)
-	}
-
-	if err = json.Unmarshal(raw, &cmetadata); err != nil {
-		return nil, errors.Wrapf(err, "failed to Unmarshal data from %s file to types.ClusterMetadata", metadataFileName)
-	}
-
-	return cmetadata, err
-}

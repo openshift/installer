@@ -6,15 +6,15 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
 
 // Destroy uses Terraform to remove bootstrap resources.
 func Destroy(dir string) (err error) {
-	metadata, err := cluster.LoadMetadata(dir)
+	metadata, err := types.LoadClusterMetadata(dir)
 	if err != nil {
 		return err
 	}
@@ -24,7 +24,7 @@ func Destroy(dir string) (err error) {
 		return errors.New("no platform configured in metadata")
 	}
 
-	copyNames := []string{terraform.StateFileName, cluster.TfVarsFileName}
+	copyNames := []string{terraform.StateFileName, "terraform.tfvars"}
 
 	if platform == "libvirt" {
 		err = ioutil.WriteFile(filepath.Join(dir, "disable-bootstrap.auto.tfvars"), []byte(`{

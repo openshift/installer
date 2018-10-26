@@ -1,6 +1,10 @@
 package types
 
 import (
+	"encoding/json"
+	"io/ioutil"
+	"path/filepath"
+
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -37,4 +41,18 @@ func (cpm *ClusterPlatformMetadata) Platform() string {
 		return "openstack"
 	}
 	return ""
+}
+
+// LoadClusterMetadata loads the cluster metadata from an asset directory.
+func LoadClusterMetadata(dir string) (cmetadata *ClusterMetadata, err error) {
+	raw, err := ioutil.ReadFile(filepath.Join(dir, "metadata.json"))
+	if err != nil {
+		return nil, err
+	}
+
+	if err = json.Unmarshal(raw, &cmetadata); err != nil {
+		return nil, err
+	}
+
+	return cmetadata, err
 }

@@ -4,7 +4,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
-	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -22,7 +21,7 @@ var Registry = make(map[string]NewFunc)
 
 // New returns a Destroyer based on `metadata.json` in `rootDir`.
 func New(logger logrus.FieldLogger, rootDir string) (Destroyer, error) {
-	metadata, err := cluster.LoadMetadata(rootDir)
+	metadata, err := types.LoadClusterMetadata(rootDir)
 	if err != nil {
 		return nil, err
 	}
