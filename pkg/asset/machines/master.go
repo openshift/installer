@@ -19,8 +19,8 @@ import (
 
 // Master generates the machines for the `master` machine pool.
 type Master struct {
-	MachinesRaw        []byte
-	UserDataSecretsRaw []byte
+	MachinesRaw       []byte
+	UserDataSecretRaw []byte
 }
 
 var _ asset.Asset = (*Master)(nil)
@@ -45,15 +45,11 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	mign := &machine.Master{}
 	dependencies.Get(installconfig, mign)
 
-	userDataContent := map[string][]byte{}
-	for i, file := range mign.FileList {
-		userDataContent[fmt.Sprintf("master-user-data-%d", i)] = file.Data
-	}
-
 	var err error
-	m.UserDataSecretsRaw, err = userDataList(userDataContent)
+	userDataMap := map[string][]byte{"master-user-data": mign.File.Data}
+	m.UserDataSecretRaw, err = userDataList(userDataMap)
 	if err != nil {
-		return errors.Wrap(err, "failed to create user-data secrets for master machines")
+		return errors.Wrap(err, "failed to create user-data secret for worker machines")
 	}
 
 	ic := installconfig.Config

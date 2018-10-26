@@ -38,7 +38,7 @@ func (a *Master) Generate(dependencies asset.Parents) error {
 	rootCA := &tls.RootCA{}
 	dependencies.Get(installConfig, rootCA)
 
-	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master", "")
+	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
 
 	data, err := json.Marshal(a.Config)
 	if err != nil {

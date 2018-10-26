@@ -55,9 +55,7 @@ func TestMasterGenerate(t *testing.T) {
 	err = master.Generate(parents)
 	assert.NoError(t, err, "unexpected error generating master asset")
 	expectedIgnitionConfigNames := []string{
-		"master-0.ign",
-		"master-1.ign",
-		"master-2.ign",
+		"master.ign",
 	}
 	actualFiles := master.Files()
 	actualIgnitionConfigNames := make([]string, len(actualFiles))

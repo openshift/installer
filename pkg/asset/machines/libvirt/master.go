@@ -40,7 +40,7 @@ items:
         kind: LibvirtMachineProviderConfig
         domainMemory: 2048
         domainVcpu: 2
-        ignKey: /var/lib/libvirt/images/master-{{$index}}.ign
+        ignKey: /var/lib/libvirt/images/master.ign
         volume:
           poolName: default
           baseVolumeID: /var/lib/libvirt/images/coreos_base
