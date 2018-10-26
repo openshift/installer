@@ -27,6 +27,9 @@ func (cpm *ClusterPlatformMetadata) Platform() string {
 	if cpm.Libvirt != nil {
 		return "libvirt"
 	}
+	if cpm.OpenStack != nil {
+		return "openstack"
+	}
 	return ""
 }
 
