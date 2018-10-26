@@ -2,14 +2,6 @@
 
 
 [[projects]]
-  branch = "go15"
-  digest = "1:8dab0033e231d02909f00a501a1f1ac01e63fd267dcb374a5de71b99ba1ee74f"
-  name = "github.com/ajeddeloh/go-json"
-  packages = ["."]
-  pruneopts = "NUT"
-  revision = "6a2fe990e08303c82d966297ddb29a58678a4783"
-
-[[projects]]
   digest = "1:1929b21a34400d463a99336f8e2908d2a154dc525c52411a8d99bb519942dc4c"
   name = "github.com/apparentlymart/go-cidr"
   packages = ["cidr"]
@@ -100,14 +92,12 @@
   version = "v18"
 
 [[projects]]
-  digest = "1:1a216755b1570c329bada24deac0032f487c1a5b7c690963c96ad2da9b8c3ec9"
+  digest = "1:3e8408e6f735040cb09c32e4989c401c676756257986bb33c77cbac2e4084009"
   name = "github.com/coreos/ignition"
   packages = [
     "config/shared/errors",
     "config/shared/validations",
-    "config/util",
     "config/v2_2/types",
-    "config/v2_3_experimental/types",
     "config/validate/report",
   ]
   pruneopts = "NUT"
@@ -129,6 +119,17 @@
   pruneopts = "NUT"
   revision = "0ca9ea5df5451ffdf184b4428c902747c2c11cd7"
   version = "v1.0.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:87d71aae554a7a897c98539533a950e6ad390ff7f2e99c00a478a4277a445f74"
+  name = "github.com/go-log/log"
+  packages = [
+    ".",
+    "print",
+  ]
+  pruneopts = "NUT"
+  revision = "9635bc1e124b13d79978db4673fc713d4e30954c"
 
 [[projects]]
   digest = "1:8679b8a64f3613e9749c5640c3535c83399b8e69f67ce54d91dc73f6d77373af"
@@ -479,14 +480,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:91ed6116b126ec7fa7b9f9460356ee6b3005e5ed320b8e85510937f44d3d62d5"
-  name = "go4.org"
-  packages = ["errorutil"]
-  pruneopts = "NUT"
-  revision = "417644f6feb5ed3a356ca5d6d8e3a3fac7dfd33f"
-
-[[projects]]
-  branch = "master"
   digest = "1:3f3a05ae0b95893d90b9b3b5afdb79a9b3d96e4e36e099d841ae602e4aca0da8"
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
@@ -806,9 +799,10 @@
     "github.com/aws/aws-sdk-go/aws",
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/ec2",
-    "github.com/coreos/ignition/config/util",
     "github.com/coreos/ignition/config/v2_2/types",
     "github.com/ghodss/yaml",
+    "github.com/go-log/log",
+    "github.com/go-log/log/print",
     "github.com/gophercloud/gophercloud/openstack/compute/v2/servers",
     "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers",
     "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups",
@@ -840,7 +834,6 @@
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/util/net",
-    "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/kubernetes",
