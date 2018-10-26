@@ -38,5 +38,9 @@ overrides:
   namespace: kube-system
   name: pod-checkpointer-operator
   unmanaged: true
+- kind: Deployment                    # still testing this new component
+  namespace: openshift-pod-checkpointer
+  name: pod-checkpointer-operator
+  unmanaged: true
 `))
 )
