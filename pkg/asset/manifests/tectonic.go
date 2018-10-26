@@ -59,7 +59,7 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 	dependencies.Get(installConfig, clusterk8sio, worker, master, addon)
 
 	templateData := &tectonicTemplateData{
-		KubeAddonOperatorImage: "quay.io/coreos/kube-addon-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
+		KubeAddonOperatorImage: "quay.io/coreos/kube-addon-operator-dev:70cae49142ff69e83ed7b41fa81a585b02cdea7d",
 		PullSecret:             base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
 	}
 
