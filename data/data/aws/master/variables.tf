@@ -93,6 +93,6 @@ variable "kubeconfig_content" {
   default = ""
 }
 
-variable "user_data_igns" {
-  type = "list"
+variable "user_data_ign" {
+  type = "string"
 }

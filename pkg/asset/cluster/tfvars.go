@@ -50,15 +50,10 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 	bootstrapIgn := string(bootstrap.Files()[0].Data)
 
-	masterFiles := master.Files()
-	masterIgns := make([]string, len(masterFiles))
-	for i, f := range masterFiles {
-		masterIgns[i] = string(f.Data)
-	}
-
+	masterIgn := string(master.Files()[0].Data)
 	workerIgn := string(worker.Files()[0].Data)
 
-	data, err := tfvars.TFVars(installConfig.Config, bootstrapIgn, masterIgns, workerIgn)
+	data, err := tfvars.TFVars(installConfig.Config, bootstrapIgn, masterIgn, workerIgn)
 	if err != nil {
 		return errors.Wrap(err, "failed to get Tfvars")
 	}

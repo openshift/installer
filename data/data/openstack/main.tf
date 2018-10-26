@@ -46,7 +46,7 @@ module "masters" {
   instance_count = "${var.tectonic_master_count}"
   master_sg_ids  = "${concat(var.tectonic_openstack_master_extra_sg_ids, list(module.topology.master_sg_id))}"
   subnet_ids     = "${module.topology.master_subnet_ids}"
-  user_data_igns = ["${var.ignition_masters}"]
+  user_data_ign  = "${var.ignition_master}"
 }
 
 # TODO(shadower) add a dns module here

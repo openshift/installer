@@ -25,9 +25,8 @@ resource "libvirt_volume" "master" {
 }
 
 resource "libvirt_ignition" "master" {
-  count   = "${var.tectonic_master_count}"
-  name    = "master-${count.index}.ign"
-  content = "${var.ignition_masters[count.index]}"
+  name    = "master.ign"
+  content = "${var.ignition_master}"
 }
 
 resource "libvirt_ignition" "worker" {
