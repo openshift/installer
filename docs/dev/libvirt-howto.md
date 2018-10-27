@@ -195,7 +195,7 @@ This step is optional, but useful for being able to resolve cluster-internal hos
 1. Make sure you have the `virsh` binary installed: `sudo dnf install libvirt-client libvirt-devel`
 2. Install the libvirt terraform provider:
 ```sh
-GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-libvirt
+GOBIN=~/.terraform.d/plugins go get -u github.com/abhinavdahiya/terraform-provider-libvirt
 ```
 
 ### Cache Terrafrom plugins (optional, but makes subsequent runs a bit faster)
