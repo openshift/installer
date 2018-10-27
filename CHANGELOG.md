@@ -254,8 +254,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 The `openshift-install` command.  This moves us to the new
 install-config approach with [asset
-generation](docs/design/assetgeneration.md) in Go instead of in
-Terraform.  Terraform is still used to push the assets out to
+generation](docs/user/overview.md#asset-generation) in Go instead of
+in Terraform.  Terraform is still used to push the assets out to
 resources on the backing platform (AWS, libvirt, or OpenStack), but
 that push happens in a single Terraform invocation instead of in
 multiple steps.  This makes installation faster, because more
