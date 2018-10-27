@@ -117,6 +117,14 @@ resource "aws_route53_record" "etcd_a_nodes" {
   records = ["${module.masters.ip_addresses[count.index]}"]
 }
 
+resource "aws_route53_record" "etcd_cluster" {
+  type    = "SRV"
+  ttl     = "60"
+  zone_id = "${local.private_zone_id}"
+  name    = "_etcd-server-ssl._tcp"
+  records = ["${formatlist("0 10 2380 %s", aws_route53_record.etcd_a_nodes.*.fqdn)}"]
+}
+
 resource "aws_route53_zone" "tectonic_int" {
   count         = "${local.private_endpoints ? "${var.tectonic_aws_external_private_zone == "" ? 1 : 0 }" : 0}"
   vpc_id        = "${module.vpc.vpc_id}"
