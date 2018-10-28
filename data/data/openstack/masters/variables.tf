@@ -28,6 +28,6 @@ variable "subnet_ids" {
   type = "list"
 }
 
-variable "user_data_igns" {
-  type = "list"
+variable "user_data_ign" {
+  type = "string"
 }

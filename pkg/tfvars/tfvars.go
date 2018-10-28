@@ -21,9 +21,9 @@ type config struct {
 	Masters    int    `json:"tectonic_master_count,omitempty"`
 	Workers    int    `json:"tectonic_worker_count,omitempty"`
 
-	IgnitionBootstrap string   `json:"ignition_bootstrap,omitempty"`
-	IgnitionMasters   []string `json:"ignition_masters,omitempty"`
-	IgnitionWorker    string   `json:"ignition_worker,omitempty"`
+	IgnitionBootstrap string `json:"ignition_bootstrap,omitempty"`
+	IgnitionMaster    string `json:"ignition_master,omitempty"`
+	IgnitionWorker    string `json:"ignition_worker,omitempty"`
 
 	aws.AWS             `json:",inline"`
 	libvirt.Libvirt     `json:",inline"`
@@ -32,13 +32,13 @@ type config struct {
 
 // TFVars converts the InstallConfig and Ignition content to
 // terraform.tfvar JSON.
-func TFVars(cfg *types.InstallConfig, bootstrapIgn string, masterIgns []string, workerIgn string) ([]byte, error) {
+func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn, workerIgn string) ([]byte, error) {
 	config := &config{
 		ClusterID:  cfg.ClusterID,
 		Name:       cfg.ObjectMeta.Name,
 		BaseDomain: cfg.BaseDomain,
 
-		IgnitionMasters:   masterIgns,
+		IgnitionMaster:    masterIgn,
 		IgnitionWorker:    workerIgn,
 		IgnitionBootstrap: bootstrapIgn,
 	}

@@ -12,7 +12,7 @@ import (
 
 // pointerIgnitionConfig generates a config which references the remote config
 // served by the machine config server.
-func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string, query string) *ignition.Config {
+func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string) *ignition.Config {
 	return &ignition.Config{
 		Ignition: ignition.Ignition{
 			Version: ignition.MaxVersion.String(),
@@ -20,10 +20,9 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 				Append: []ignition.ConfigReference{{
 					Source: func() *url.URL {
 						return &url.URL{
-							Scheme:   "https",
-							Host:     fmt.Sprintf("%s-api.%s:49500", installConfig.ObjectMeta.Name, installConfig.BaseDomain),
-							Path:     fmt.Sprintf("/config/%s", role),
-							RawQuery: query,
+							Scheme: "https",
+							Host:   fmt.Sprintf("%s-api.%s:49500", installConfig.ObjectMeta.Name, installConfig.BaseDomain),
+							Path:   fmt.Sprintf("/config/%s", role),
 						}
 					}().String(),
 				}},

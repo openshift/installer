@@ -55,7 +55,7 @@ module "masters" {
   root_volume_type    = "${var.tectonic_aws_master_root_volume_type}"
   subnet_ids          = "${module.vpc.master_subnet_ids}"
   ec2_ami             = "${var.tectonic_aws_ec2_ami_override}"
-  user_data_igns      = ["${var.ignition_masters}"]
+  user_data_ign       = "${var.ignition_master}"
 }
 
 module "iam" {

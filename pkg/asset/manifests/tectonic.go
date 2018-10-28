@@ -96,18 +96,18 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 	}
 
 	assetData := map[string][]byte{
-		"99_binding-discovery.yaml":                              []byte(content.BindingDiscovery),
-		"99_kube-addon-00-appversion.yaml":                       []byte(content.AppVersionKubeAddon),
-		"99_kube-addon-01-operator.yaml":                         applyTemplateData(content.KubeAddonOperator, templateData),
-		"99_openshift-cluster-api_cluster.yaml":                  clusterk8sio.Raw,
-		"99_openshift-cluster-api_master-machines.yaml":          master.MachinesRaw,
-		"99_openshift-cluster-api_master-user-data-secrets.yaml": master.UserDataSecretsRaw,
-		"99_openshift-cluster-api_worker-machineset.yaml":        worker.MachineSetRaw,
-		"99_openshift-cluster-api_worker-user-data-secret.yaml":  worker.UserDataSecretRaw,
-		"99_role-admin.yaml":                                     []byte(content.RoleAdmin),
-		"99_role-user.yaml":                                      []byte(content.RoleUser),
-		"99_tectonic-system-00-binding-admin.yaml":               []byte(content.BindingAdmin),
-		"99_tectonic-system-02-pull.json":                        applyTemplateData(content.PullTectonicSystem, templateData),
+		"99_binding-discovery.yaml":                             []byte(content.BindingDiscovery),
+		"99_kube-addon-00-appversion.yaml":                      []byte(content.AppVersionKubeAddon),
+		"99_kube-addon-01-operator.yaml":                        applyTemplateData(content.KubeAddonOperator, templateData),
+		"99_openshift-cluster-api_cluster.yaml":                 clusterk8sio.Raw,
+		"99_openshift-cluster-api_master-machines.yaml":         master.MachinesRaw,
+		"99_openshift-cluster-api_master-user-data-secret.yaml": master.UserDataSecretRaw,
+		"99_openshift-cluster-api_worker-machineset.yaml":       worker.MachineSetRaw,
+		"99_openshift-cluster-api_worker-user-data-secret.yaml": worker.UserDataSecretRaw,
+		"99_role-admin.yaml":                                    []byte(content.RoleAdmin),
+		"99_role-user.yaml":                                     []byte(content.RoleUser),
+		"99_tectonic-system-00-binding-admin.yaml":              []byte(content.BindingAdmin),
+		"99_tectonic-system-02-pull.json":                       applyTemplateData(content.PullTectonicSystem, templateData),
 	}
 
 	switch platform {

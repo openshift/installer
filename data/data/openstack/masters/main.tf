@@ -14,7 +14,7 @@ resource "openstack_compute_instance_v2" "master_conf" {
   flavor_id       = "${data.openstack_compute_flavor_v2.masters_flavor.id}"
   image_id        = "${data.openstack_images_image_v2.masters_img.id}"
   security_groups = ["${var.master_sg_ids}"]
-  user_data       = "${var.user_data_igns[count.index]}"
+  user_data       = "${var.user_data_ign}"
 
   network = {
     port = "${var.subnet_ids[count.index]}"
