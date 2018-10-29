@@ -105,6 +105,7 @@ func populateDeleteFuncs(funcs map[string]deleteFunc) {
 	funcs["deleteSubnets"] = deleteSubnets
 	funcs["deleteS3Buckets"] = deleteS3Buckets
 	funcs["deleteRoute53"] = deleteRoute53
+	funcs["deletePVs"] = deletePVs
 }
 
 // Run is the entrypoint to start the uninstall process
@@ -232,8 +233,8 @@ func filterLBsByVPC(lbs []*elb.LoadBalancerDescription, vpc *ec2.Vpc, logger log
 // deleteLBs finds all load balancers under the provided VPC and attempts to delete them
 // returns bool representing whether it has completed its work (ie no LBs left to delete)
 func deleteLBs(vpc *ec2.Vpc, awsSession *session.Session, logger log.FieldLogger) bool {
-	logger.Debugf("Deleting load balancers (%s)", vpc.VpcId)
-	defer logger.Debugf("Exiting deleting load balancers (%s)", vpc.VpcId)
+	logger.Debugf("Deleting load balancers (%s)", *vpc.VpcId)
+	defer logger.Debugf("Exiting deleting load balancers (%s)", *vpc.VpcId)
 	elbClient := elb.New(awsSession)
 
 	describeLoadBalancersInput := elb.DescribeLoadBalancersInput{}
@@ -703,7 +704,7 @@ func deleteIAMresources(session *session.Session, filter AWSFilter, clusterName 
 	return true, nil
 }
 
-// deleteInstances will find any running instances that match the given filter and terminate them
+// deleteInstances will find any running/pending instances that match the given filter and terminate them
 // and any instance profiles attached to the instance(s)
 func deleteInstances(session *session.Session, filter AWSFilter, clusterName string, logger log.FieldLogger) (bool, error) {
 	logger.Debugf("Deleting instances (%s)", filter)
@@ -715,23 +716,15 @@ func deleteInstances(session *session.Session, filter AWSFilter, clusterName str
 	describeInstancesInput := ec2.DescribeInstancesInput{}
 	describeInstancesInput.Filters = createEC2Filters(filter)
 
-	// only fetch instances in 'running' state since they take a while to really get cleaned up
+	// only fetch instances in 'running|pending' state since 'terminated' ones take a while to really get cleaned up
 	describeInstancesInput.Filters = append(describeInstancesInput.Filters, &ec2.Filter{
 		Name:   aws.String("instance-state-name"),
-		Values: []*string{aws.String("running")},
+		Values: []*string{aws.String("running"), aws.String("pending")},
 	})
 
-	for {
-		results, err := ec2Client.DescribeInstances(&describeInstancesInput)
-		if err != nil {
-			logger.Debugf("error listing instances: %v", err)
-			return false, nil
-		}
-
-		if len(results.Reservations) == 0 {
-			break
-		}
-
+	instancesFound := false
+	err := ec2Client.DescribeInstancesPages(&describeInstancesInput, func(results *ec2.DescribeInstancesOutput, lastPage bool) bool {
+		instancesFound = instancesFound || len(results.Reservations) > 0
 		for _, reservation := range results.Reservations {
 			for _, instance := range reservation.Instances {
 				// first delete any instance profiles (they are not tagged)
@@ -745,7 +738,7 @@ func deleteInstances(session *session.Session, filter AWSFilter, clusterName str
 
 				// now delete the instance
 				logger.Debugf("deleting instance: %v", *instance.InstanceId)
-				_, err = ec2Client.TerminateInstances(&ec2.TerminateInstancesInput{
+				_, err := ec2Client.TerminateInstances(&ec2.TerminateInstancesInput{
 					InstanceIds: []*string{instance.InstanceId},
 				})
 				if err != nil {
@@ -757,10 +750,14 @@ func deleteInstances(session *session.Session, filter AWSFilter, clusterName str
 			}
 		}
 
+		return lastPage
+	})
+	if err != nil {
+		logger.Debugf("error describing instances: %v", err)
 		return false, nil
 	}
 
-	return true, nil
+	return !instancesFound, nil
 }
 
 // deleteSecurityGroupRules will attempt to delete all the rules defined in the given security group
@@ -1319,4 +1316,40 @@ func deleteRoute53(session *session.Session, filters AWSFilter, clusterName stri
 	}
 	// all done deleting r53 entries/zones
 	return true, nil
+}
+
+// deletePVs will find PVs based on provided filters and delete them
+func deletePVs(session *session.Session, filters AWSFilter, clusterName string, logger log.FieldLogger) (bool, error) {
+
+	logger.Debugf("Deleting PVs (%s)", filters)
+	defer logger.Debugf("Exiting deleting PVs (%s)", filters)
+
+	ec2Client := getEC2Client(session)
+	describeVolumesInput := ec2.DescribeVolumesInput{}
+	describeVolumesInput.Filters = createEC2Filters(filters)
+
+	results, err := ec2Client.DescribeVolumes(&describeVolumesInput)
+	if err != nil {
+		logger.Debugf("error listing volumes: %v", err)
+		return false, nil
+	}
+
+	if len(results.Volumes) == 0 {
+		// nothing to delete, we must be done
+		return true, nil
+	}
+
+	for _, vol := range results.Volumes {
+		logger.Debugf("deleting volume: %v", *vol.VolumeId)
+		_, err := ec2Client.DeleteVolume(&ec2.DeleteVolumeInput{
+			VolumeId: vol.VolumeId,
+		})
+		if err != nil {
+			logger.Debugf("error deleting volume: %v", err)
+		} else {
+			logger.WithField("id", *vol.VolumeId).Info("Deleted Volume")
+		}
+	}
+
+	return false, nil
 }

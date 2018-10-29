@@ -258,12 +258,11 @@
   revision = "9520e82c474b0a04dd04f8a40959027271bab992"
 
 [[projects]]
-  branch = "master"
-  digest = "1:e5d01b6d6775d42489688591a99bfffadaa4574294abff146a1bb2d6f9e1a5e9"
+  digest = "1:52cea75b92e043814e4aad64e3372d71c8e8535cb51fcc39240f3e84ac8109cd"
   name = "github.com/openshift/hive"
   packages = ["contrib/pkg/awstagdeprovision"]
   pruneopts = "NUT"
-  revision = "0089a8d1b661e1dae325a279412f9ad1f4507fee"
+  revision = "ef6beb7b14eddb889a97cffc9d1a1d997da47ca7"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
@@ -501,6 +500,7 @@
     "github.com/apparentlymart/go-cidr/cidr",
     "github.com/awalterschulze/gographviz",
     "github.com/aws/aws-sdk-go/aws",
+    "github.com/aws/aws-sdk-go/aws/credentials",
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/ec2",
     "github.com/coreos/ignition/config/util",
