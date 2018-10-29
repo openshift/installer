@@ -146,7 +146,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		KubeCaKey:                       base64.StdEncoding.EncodeToString(kubeCA.Key()),
 		McsTLSCert:                      base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:                       base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
-		OidcCaCert:                      base64.StdEncoding.EncodeToString(kubeCA.Cert()),
 		OpenshiftApiserverCert:          base64.StdEncoding.EncodeToString(openshiftAPIServerCertKey.Cert()),
 		OpenshiftApiserverKey:           base64.StdEncoding.EncodeToString(openshiftAPIServerCertKey.Key()),
 		OpenshiftLoopbackKubeconfig:     base64.StdEncoding.EncodeToString(adminKubeconfig.Files()[0].Data),

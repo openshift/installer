@@ -31,7 +31,6 @@ type bootkubeTemplateData struct {
 	KubeCaKey                       string
 	McsTLSCert                      string
 	McsTLSKey                       string
-	OidcCaCert                      string
 	OpenshiftApiserverCert          string
 	OpenshiftApiserverKey           string
 	OpenshiftLoopbackKubeconfig     string

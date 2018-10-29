@@ -27,7 +27,6 @@ data:
   etcd-client-ca.crt: {{.EtcdCaCert}}
   etcd-client.crt: {{.EtcdClientCert}}
   etcd-client.key: {{.EtcdClientKey}}
-  oidc-ca.crt: {{.OidcCaCert}}
   service-serving-ca.crt: {{.ServiceServingCaCert}}
   service-serving-ca.key: {{.ServiceServingCaKey}}
   kubeconfig: {{.OpenshiftLoopbackKubeconfig}}
