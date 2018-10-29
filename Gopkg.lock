@@ -210,6 +210,14 @@
   revision = "0b12d6b5"
 
 [[projects]]
+  digest = "1:8e36686e8b139f8fe240c1d5cf3a145bc675c22ff8e707857cdd3ae17b00d728"
+  name = "github.com/json-iterator/go"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "1624edc4454b8682399def8740d46db5e4362ba4"
+  version = "v1.1.5"
+
+[[projects]]
   branch = "master"
   digest = "1:cf68a79fd02ab0f6942b9567d03d054b6568212fcc22de2a4afdefd096923749"
   name = "github.com/kballard/go-shellquote"
@@ -256,6 +264,30 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "9520e82c474b0a04dd04f8a40959027271bab992"
+
+[[projects]]
+  digest = "1:2f42fa12d6911c7b7659738758631bec870b7e9b4c6be5444f963cdcfccc191f"
+  name = "github.com/modern-go/concurrent"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94"
+  version = "1.0.3"
+
+[[projects]]
+  digest = "1:c6aca19413b13dc59c220ad7430329e2ec454cc310bc6d8de2c7e2b93c18a0f6"
+  name = "github.com/modern-go/reflect2"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
+  version = "1.0.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:ecab5b2db663af56e3a35db582345f81035d2dd194ecf15cee1cc742d573471b"
+  name = "github.com/openshift/cluster-api-provider-libvirt"
+  packages = ["pkg/apis/libvirtproviderconfig/v1alpha1"]
+  pruneopts = "NUT"
+  revision = "7bc9474fb3572fe1bc06565f4d4abada2438f3ed"
 
 [[projects]]
   digest = "1:52cea75b92e043814e4aad64e3372d71c8e8535cb51fcc39240f3e84ac8109cd"
@@ -452,20 +484,36 @@
   version = "v2.2.1"
 
 [[projects]]
-  digest = "1:b20a21815244073c3a801d5343ef631ce3072af4c2cf4949508f643dcb2a6a9b"
+  branch = "master"
+  digest = "1:0d3595936f27c9faff84f2ce2f4c6b6f00383c57391010ace2031fe0a0ceb311"
+  name = "k8s.io/api"
+  packages = ["core/v1"]
+  pruneopts = "NUT"
+  revision = "9fcf73cc980bd64f38a4f721a7371b0ebb72e1ff"
+
+[[projects]]
+  digest = "1:7d8008e86851d9698576f1e3f5dccd9f7a1f93c7560f2fbed226f0bc27015b3f"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/resource",
     "pkg/apis/meta/v1",
+    "pkg/apis/meta/v1/unstructured",
+    "pkg/apis/meta/v1/validation",
     "pkg/conversion",
     "pkg/conversion/queryparams",
     "pkg/fields",
     "pkg/labels",
     "pkg/runtime",
     "pkg/runtime/schema",
+    "pkg/runtime/serializer",
+    "pkg/runtime/serializer/json",
+    "pkg/runtime/serializer/protobuf",
+    "pkg/runtime/serializer/recognizer",
+    "pkg/runtime/serializer/versioning",
     "pkg/selection",
     "pkg/types",
     "pkg/util/errors",
+    "pkg/util/framer",
     "pkg/util/intstr",
     "pkg/util/json",
     "pkg/util/net",
@@ -475,6 +523,7 @@
     "pkg/util/validation",
     "pkg/util/validation/field",
     "pkg/util/wait",
+    "pkg/util/yaml",
     "pkg/watch",
     "third_party/forked/golang/reflect",
   ]
@@ -492,6 +541,34 @@
   pruneopts = "NUT"
   revision = "78700dec6369ba22221b72770783300f143df150"
   version = "v6.0.0"
+
+[[projects]]
+  branch = "master"
+  digest = "1:a040a17df839b73c811d0554f4c74cd90e473a869f301da6d42df24097f1a89d"
+  name = "sigs.k8s.io/cluster-api"
+  packages = [
+    "pkg/apis/cluster/common",
+    "pkg/apis/cluster/v1alpha1",
+  ]
+  pruneopts = "NUT"
+  revision = "6fe3ecb17bdcdf096ede34104af87f79c2e90e68"
+
+[[projects]]
+  branch = "master"
+  digest = "1:a1da1a685ef4da6fe452d5640316885e9f05a8c8a654e317abaf7b403891c429"
+  name = "sigs.k8s.io/cluster-api-provider-aws"
+  packages = ["pkg/apis/awsproviderconfig/v1alpha1"]
+  pruneopts = "NUT"
+  revision = "d3e61ce1a4db761b978db22bc5a266090dc3571f"
+  source = "https://github.com/openshift/cluster-api-provider-aws.git"
+
+[[projects]]
+  digest = "1:84a8609383bec11b71d52dd813f33f1d16614b91966940bdc2aa79bea864fa25"
+  name = "sigs.k8s.io/controller-runtime"
+  packages = ["pkg/runtime/scheme"]
+  pruneopts = "NUT"
+  revision = "5fd1e9e9fac5261e9ad9d47c375afc014fc31d21"
+  version = "v0.1.7"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -511,6 +588,7 @@
     "github.com/gregjones/httpcache",
     "github.com/gregjones/httpcache/diskcache",
     "github.com/libvirt/libvirt-go",
+    "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
     "github.com/openshift/hive/contrib/pkg/awstagdeprovision",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
@@ -521,10 +599,14 @@
     "github.com/vincent-petithory/dataurl",
     "golang.org/x/sys/unix",
     "gopkg.in/AlecAivazis/survey.v1",
+    "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
+    "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/util/rand",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/client-go/tools/clientcmd/api/v1",
+    "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1",
+    "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

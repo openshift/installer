@@ -50,6 +50,19 @@ ignored = ["github.com/openshift/installer/tests*"]
   version = "6.0.0"
 
 [[constraint]]
+  name = "sigs.k8s.io/cluster-api"
+  branch = "master"
+
+[[constraint]]
+  name = "sigs.k8s.io/cluster-api-provider-aws"
+  source = "https://github.com/openshift/cluster-api-provider-aws.git"
+  branch = "master"
+
+[[constraint]]
+  name = "github.com/openshift/cluster-api-provider-libvirt"
+  branch = "master"
+
+[[constraint]]
   name = "github.com/pkg/errors"
   version = "0.8.0"
 
