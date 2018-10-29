@@ -47,14 +47,12 @@ func (m *Manifests) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
 		&networkOperator{},
-		&machineAPIOperator{},
 		&tls.RootCA{},
 		&tls.EtcdCA{},
 		&tls.IngressCertKey{},
 		&tls.KubeCA{},
 		&tls.AggregatorCA{},
 		&tls.ServiceServingCA{},
-		&tls.ClusterAPIServerCertKey{},
 		&tls.EtcdClientCertKey{},
 		&tls.APIServerCertKey{},
 		&tls.OpenshiftAPIServerCertKey{},
@@ -69,15 +67,13 @@ func (m *Manifests) Dependencies() []asset.Asset {
 // Generate generates the respective operator config.yml files
 func (m *Manifests) Generate(dependencies asset.Parents) error {
 	no := &networkOperator{}
-	mao := &machineAPIOperator{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(no, mao, installConfig)
+	dependencies.Get(no, installConfig)
 
 	// no+mao go to kube-system config map
 	m.KubeSysConfig = configMap("kube-system", "cluster-config-v1", genericData{
 		"network-config": string(no.Files()[0].Data),
 		"install-config": string(installConfig.Files()[0].Data),
-		"mao-config":     string(mao.Files()[0].Data),
 	})
 	kubeSysConfigData, err := yaml.Marshal(m.KubeSysConfig)
 	if err != nil {
@@ -105,7 +101,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	aggregatorCA := &tls.AggregatorCA{}
 	apiServerCertKey := &tls.APIServerCertKey{}
 	apiServerProxyCertKey := &tls.APIServerProxyCertKey{}
-	clusterAPIServerCertKey := &tls.ClusterAPIServerCertKey{}
 	etcdCA := &tls.EtcdCA{}
 	etcdClientCertKey := &tls.EtcdClientCertKey{}
 	kubeCA := &tls.KubeCA{}
@@ -120,7 +115,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		aggregatorCA,
 		apiServerCertKey,
 		apiServerProxyCertKey,
-		clusterAPIServerCertKey,
 		etcdCA,
 		etcdClientCertKey,
 		kubeCA,
@@ -145,8 +139,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		ApiserverProxyCert:              base64.StdEncoding.EncodeToString(apiServerProxyCertKey.Cert()),
 		ApiserverProxyKey:               base64.StdEncoding.EncodeToString(apiServerProxyCertKey.Key()),
 		Base64encodeCloudProviderConfig: "", // FIXME
-		ClusterapiCaCert:                base64.StdEncoding.EncodeToString(clusterAPIServerCertKey.Cert()),
-		ClusterapiCaKey:                 base64.StdEncoding.EncodeToString(clusterAPIServerCertKey.Key()),
 		EtcdCaCert:                      base64.StdEncoding.EncodeToString(etcdCA.Cert()),
 		EtcdClientCert:                  base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
 		EtcdClientKey:                   base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
@@ -171,7 +163,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	}
 
 	assetData := map[string][]byte{
-		"cluster-apiserver-certs.yaml":          applyTemplateData(bootkube.ClusterApiserverCerts, templateData),
 		"kube-apiserver-secret.yaml":            applyTemplateData(bootkube.KubeApiserverSecret, templateData),
 		"kube-cloud-config.yaml":                applyTemplateData(bootkube.KubeCloudConfig, templateData),
 		"kube-controller-manager-secret.yaml":   applyTemplateData(bootkube.KubeControllerManagerSecret, templateData),

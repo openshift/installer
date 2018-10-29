@@ -24,8 +24,6 @@ type bootkubeTemplateData struct {
 	ApiserverProxyCert              string
 	ApiserverProxyKey               string
 	Base64encodeCloudProviderConfig string
-	ClusterapiCaCert                string
-	ClusterapiCaKey                 string
 	EtcdCaCert                      string
 	EtcdClientCert                  string
 	EtcdClientKey                   string
