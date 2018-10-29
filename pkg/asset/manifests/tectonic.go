@@ -7,10 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 
-	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -66,8 +66,10 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
 	case "aws":
-		p := credentials.SharedCredentialsProvider{}
-		creds, err := p.Retrieve()
+		ssn := session.Must(session.NewSessionWithOptions(session.Options{
+			SharedConfigState: session.SharedConfigEnable,
+		}))
+		creds, err := ssn.Config.Credentials.Get()
 		if err != nil {
 			return err
 		}
