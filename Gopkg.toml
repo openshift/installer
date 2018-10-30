@@ -43,11 +43,11 @@ ignored = ["github.com/openshift/installer/tests*"]
 
 [[override]]
   name = "k8s.io/apimachinery"
-  version = "kubernetes-1.11.3"
+  version = "kubernetes-1.12.2"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/client-go"
-  version = "6.0.0"
+  version = "9.0.0"
 
 [[constraint]]
   name = "sigs.k8s.io/cluster-api"
