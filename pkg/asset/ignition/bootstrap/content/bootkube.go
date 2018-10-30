@@ -43,6 +43,8 @@ KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-
 OPENSHIFT_HYPERSHIFT_IMAGE=$(podman run --rm {{.ReleaseImage}} image hypershift)
 OPENSHIFT_HYPERKUBE_IMAGE=$(podman run --rm {{.ReleaseImage}} image hyperkube)
 
+mkdir --parents ./{bootstrap-manifests,manifests}
+
 if [ ! -d cvo-bootstrap ]
 then
 	echo "Rendering Cluster Version Operator Manifests..."
@@ -55,10 +57,9 @@ then
 			--output-dir=/assets/cvo-bootstrap \
 			--release-image="{{.ReleaseImage}}"
 
-	cp --recursive cvo-bootstrap/manifests .
+	cp cvo-bootstrap/bootstrap/* bootstrap-manifests/
+	cp cvo-bootstrap/manifests/* manifests/
 fi
-
-mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -d kube-apiserver-bootstrap ]
 then
@@ -75,7 +76,8 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
 		--config-output-file=/assets/kube-apiserver-bootstrap/config \
-		--config-override-files=/assets/bootkube-config-overrides/kube-apiserver-config-overrides.yaml
+		--config-override-files=/assets/bootkube-config-overrides/kube-apiserver-config-overrides.yaml \
+		--disable-phase-2
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -224,7 +226,7 @@ podman run \
 	--network=host \
 	--entrypoint=/bootkube \
 	"{{.BootkubeImage}}" \
-	start --asset-dir=/assets
+	start --asset-dir=/assets --required-pods kube-system/pod-checkpointer,openshift-kube-apiserver/openshift-kube-apiserver,kube-system/kube-scheduler,kube-system/kube-controller-manager,openshift-cluster-version/cluster-version-operator
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/tectonic/.bootkube.done
