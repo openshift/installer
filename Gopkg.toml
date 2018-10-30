@@ -47,7 +47,7 @@ ignored = ["github.com/openshift/installer/tests*"]
 
 [[constraint]]
   name = "k8s.io/client-go"
-  version = "6.0.0"
+  version = "8.0.0"
 
 [[constraint]]
   name = "github.com/pkg/errors"
