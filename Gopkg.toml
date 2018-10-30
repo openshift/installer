@@ -50,6 +50,17 @@ ignored = ["github.com/openshift/installer/tests*"]
   version = "6.0.0"
 
 [[constraint]]
+  name = "sigs.k8s.io/cluster-api"
+  branch = "master"
+[[constraint]]
+  name = "sigs.k8s.io/cluster-api-provider-aws"
+  source = "https://github.com/openshift/cluster-api-provider-aws.git"
+  branch = "master"
+[[constraint]]
+  name = "github.com/openshift/cluster-api-provider-libvirt"
+  branch = "master"
+
+[[constraint]]
   name = "github.com/pkg/errors"
   version = "0.8.0"
 
@@ -60,3 +71,7 @@ ignored = ["github.com/openshift/installer/tests*"]
 [[constraint]]
   name = "github.com/openshift/hive"
   revision = "8c7844d9b61c35f53bab561f5ce4d879fef86ec6"
+
+[[constraint]]
+  name = "k8s.io/utils"
+  revision = "4c3feeb576b06ef8fea769809bd3db5e5e78dc23"
