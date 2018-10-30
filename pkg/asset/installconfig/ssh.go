@@ -5,14 +5,13 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
-	"strings"
 
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/validate"
 )
 
 const (
@@ -38,7 +37,7 @@ func readSSHKey(path string) (string, error) {
 
 	key := string(keyAsBytes)
 
-	err = validateOpenSSHPublicKey(key)
+	err = validate.SSHPublicKey(key)
 	if err != nil {
 		return "", err
 	}
@@ -50,7 +49,7 @@ func readSSHKey(path string) (string, error) {
 func (a *sshPublicKey) Generate(asset.Parents) error {
 	if value, ok := os.LookupEnv("OPENSHIFT_INSTALL_SSH_PUB_KEY"); ok {
 		if value != "" {
-			if err := validateOpenSSHPublicKey(value); err != nil {
+			if err := validate.SSHPublicKey(value); err != nil {
 				return errors.Wrap(err, "failed to validate public key")
 			}
 		}
@@ -120,38 +119,4 @@ func (a *sshPublicKey) Generate(asset.Parents) error {
 // Name returns the human-friendly name of the asset.
 func (a sshPublicKey) Name() string {
 	return "SSH Key"
-}
-
-// validateOpenSSHPublicKey checks if the given string is a valid OpenSSH public key and returns an error if not.
-// Ignores leading and trailing whitespace.
-func validateOpenSSHPublicKey(v string) error {
-	trimmed := strings.TrimSpace(v)
-
-	// Don't let users hang themselves
-	if isMatch(`-BEGIN [\w-]+ PRIVATE KEY-`, trimmed) {
-		return errors.New("invalid SSH public key (appears to be a private key)")
-	}
-
-	if strings.Contains(trimmed, "\n") {
-		return errors.New("invalid SSH public key (should not contain any newline characters)")
-	}
-
-	invalidError := errors.New("invalid SSH public key")
-
-	keyParts := regexp.MustCompile(`\s+`).Split(trimmed, -1)
-	if len(keyParts) < 2 {
-		return invalidError
-	}
-
-	keyType := keyParts[0]
-	keyBase64 := keyParts[1]
-	if !isMatch(`^[\w-]+$`, keyType) || !isMatch(`^[A-Za-z0-9+\/]+={0,2}$`, keyBase64) {
-		return invalidError
-	}
-
-	return nil
-}
-
-func isMatch(re string, v string) bool {
-	return regexp.MustCompile(re).MatchString(v)
 }

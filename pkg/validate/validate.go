@@ -232,3 +232,33 @@ func lastIP(cidr *net.IPNet) net.IP {
 	}
 	return last
 }
+
+// SSHPublicKey checks if the given string is a valid OpenSSH public key
+// and returns an error if not.
+func SSHPublicKey(v string) error {
+	trimmed := strings.TrimSpace(v)
+
+	// Don't let users hang themselves
+	if isMatch(`-BEGIN [\w-]+ PRIVATE KEY-`, trimmed) {
+		return errors.New("invalid SSH public key (appears to be a private key)")
+	}
+
+	if strings.Contains(trimmed, "\n") {
+		return errors.New("invalid SSH public key (should not contain any newline characters)")
+	}
+
+	invalidError := errors.New("invalid SSH public key")
+
+	keyParts := regexp.MustCompile(`\s+`).Split(trimmed, -1)
+	if len(keyParts) < 2 {
+		return invalidError
+	}
+
+	keyType := keyParts[0]
+	keyBase64 := keyParts[1]
+	if !isMatch(`^[\w-]+$`, keyType) || !isMatch(`^[A-Za-z0-9+\/]+={0,2}$`, keyBase64) {
+		return invalidError
+	}
+
+	return nil
+}
