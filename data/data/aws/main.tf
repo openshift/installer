@@ -74,7 +74,6 @@ module "dns" {
   api_internal_elb_zone_id  = "${module.vpc.aws_elb_api_internal_zone_id}"
   api_ip_addresses          = "${module.vpc.aws_lbs}"
   base_domain               = "${var.tectonic_base_domain}"
-  cluster_id                = "${var.tectonic_cluster_id}"
   cluster_name              = "${var.tectonic_cluster_name}"
   console_elb_dns_name      = "${module.vpc.aws_console_dns_name}"
   console_elb_zone_id       = "${module.vpc.aws_elb_console_zone_id}"

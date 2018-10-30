@@ -1,8 +1,3 @@
-variable "cluster_id" {
-  description = "Cluster ID"
-  type        = "string"
-}
-
 variable "cluster_name" {
   description = "The name of the cluster"
   type        = "string"
