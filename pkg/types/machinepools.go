@@ -26,9 +26,34 @@ type MachinePoolPlatform struct {
 	OpenStack *OpenStackMachinePoolPlatform `json:"openstack,omitempty"`
 }
 
+// Name returns a string representation of the platform (e.g. "aws" if
+// AWS is non-nil).  It returns an empty string if no platform is
+// configured.
+func (p *MachinePoolPlatform) Name() string {
+	if p == nil {
+		return ""
+	}
+	if p.AWS != nil {
+		return PlatformNameAWS
+	}
+	if p.Libvirt != nil {
+		return PlatformNameLibvirt
+	}
+	if p.OpenStack != nil {
+		return PlatformNameOpenstack
+	}
+	return ""
+}
+
 // AWSMachinePoolPlatform stores the configuration for a machine pool
 // installed on AWS.
 type AWSMachinePoolPlatform struct {
+	// Zones is list of availability zones that can be used.
+	Zones []string `json:"zones,omitempty"`
+
+	// AMIID defines the AMI that should be used.
+	AMIID string `json:"amiID,omitempty"`
+
 	// InstanceType defines the ec2 instance type.
 	// eg. m4-large
 	InstanceType string `json:"type"`
@@ -47,6 +72,12 @@ func (a *AWSMachinePoolPlatform) Set(required *AWSMachinePoolPlatform) {
 		return
 	}
 
+	if len(required.Zones) > 0 {
+		a.Zones = required.Zones
+	}
+	if required.AMIID != "" {
+		a.AMIID = required.AMIID
+	}
 	if required.InstanceType != "" {
 		a.InstanceType = required.InstanceType
 	}

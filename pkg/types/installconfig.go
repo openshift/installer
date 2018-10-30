@@ -7,6 +7,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// PlatformNameAWS is name for AWS platform.
+	PlatformNameAWS string = "aws"
+	// PlatformNameOpenstack is name for Openstack platform.
+	PlatformNameOpenstack string = "openstack"
+	// PlatformNameLibvirt is name for Libvirt platform.
+	PlatformNameLibvirt string = "libvirt"
+)
+
 // InstallConfig is the configuration for an OpenShift install.
 type InstallConfig struct {
 	// +optional
@@ -79,13 +88,13 @@ func (p *Platform) Name() string {
 		return ""
 	}
 	if p.AWS != nil {
-		return "aws"
+		return PlatformNameAWS
 	}
 	if p.Libvirt != nil {
-		return "libvirt"
+		return PlatformNameLibvirt
 	}
 	if p.OpenStack != nil {
-		return "openstack"
+		return PlatformNameOpenstack
 	}
 	return ""
 }

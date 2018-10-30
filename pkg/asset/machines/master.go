@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
@@ -54,59 +58,56 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 	ic := installconfig.Config
 	pool := masterPool(ic.Machines)
-	numOfMasters := int64(0)
-	if pool.Replicas != nil {
-		numOfMasters = *pool.Replicas
-	}
-
 	switch ic.Platform.Name() {
 	case "aws":
-		config := aws.MasterConfig{}
-		config.ClusterName = ic.ObjectMeta.Name
-		config.Region = ic.Platform.AWS.Region
-		config.Machine = defaultAWSMachinePoolPlatform()
-
-		tags := map[string]string{
-			"tectonicClusterID": ic.ClusterID,
+		mpool := defaultAWSMachinePoolPlatform()
+		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.AWS)
+		if mpool.AMIID == "" {
+			ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+			defer cancel()
+			ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, ic.Platform.AWS.Region)
+			if err != nil {
+				return errors.Wrap(err, "failed to determine default AMI")
+			}
+			mpool.AMIID = ami
 		}
-		for k, v := range ic.Platform.AWS.UserTags {
-			tags[k] = v
+		if len(mpool.Zones) == 0 {
+			azs, err := aws.AvailabilityZones(ic.Platform.AWS.Region)
+			if err != nil {
+				return errors.Wrap(err, "failed to fetch availability zones")
+			}
+			mpool.Zones = azs
 		}
-		config.Tags = tags
-
-		config.Machine.Set(ic.Platform.AWS.DefaultMachinePlatform)
-		config.Machine.Set(pool.Platform.AWS)
-
-		ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
-		defer cancel()
-		ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, config.Region)
+		pool.Platform.AWS = &mpool
+		machines, err := aws.Machines(ic, &pool, "master", "master-user-data")
 		if err != nil {
-			return errors.Wrap(err, "failed to determine default AMI")
+			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		config.AMIID = ami
-		azs, err := aws.AvailabilityZones(config.Region)
+
+		list := listFromMachines(machines)
+		raw, err := yaml.Marshal(list)
 		if err != nil {
-			return errors.Wrap(err, "failed to fetch availability zones")
+			return errors.Wrap(err, "failed to marshal")
 		}
-
-		for i := 0; i < int(numOfMasters); i++ {
-			azIndex := i % len(azs)
-			config.Instances = append(config.Instances, aws.MasterInstance{AvailabilityZone: azs[azIndex]})
-		}
-
-		m.MachinesRaw = applyTemplateData(aws.MasterMachineTmpl, config)
+		m.MachinesRaw = raw
 	case "libvirt":
-		instances := []string{}
-		for i := 0; i < int(numOfMasters); i++ {
-			instances = append(instances, fmt.Sprintf("master-%d", i))
+		machines, err := libvirt.Machines(ic, &pool, "master", "master-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		config := libvirt.MasterConfig{
-			ClusterName: ic.ObjectMeta.Name,
-			Instances:   instances,
-			Platform:    *ic.Platform.Libvirt,
+
+		list := listFromMachines(machines)
+		raw, err := yaml.Marshal(list)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal")
 		}
-		m.MachinesRaw = applyTemplateData(libvirt.MasterMachinesTmpl, config)
+		m.MachinesRaw = raw
 	case "openstack":
+		numOfMasters := int64(0)
+		if pool.Replicas != nil {
+			numOfMasters = *pool.Replicas
+		}
 		instances := []string{}
 		for i := 0; i < int(numOfMasters); i++ {
 			instances = append(instances, fmt.Sprintf("master-%d", i))
@@ -141,4 +142,17 @@ func masterPool(pools []types.MachinePool) types.MachinePool {
 		}
 	}
 	return types.MachinePool{}
+}
+
+func listFromMachines(objs []clusterapi.Machine) *metav1.List {
+	list := &metav1.List{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "List",
+		},
+	}
+	for idx := range objs {
+		list.Items = append(list.Items, runtime.RawExtension{Object: &objs[idx]})
+	}
+	return list
 }
