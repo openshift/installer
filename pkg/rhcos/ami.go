@@ -34,7 +34,7 @@ func AMI(ctx context.Context, channel, region string) (ami string, err error) {
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("name"),
-				Values: aws.StringSlice([]string{"rhcos*"}),
+				Values: aws.StringSlice([]string{"redhat-coreos-*"}),
 			},
 			{
 				Name:   aws.String("architecture"),
