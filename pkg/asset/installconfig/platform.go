@@ -1,6 +1,7 @@
 package installconfig
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/url"
@@ -12,6 +13,7 @@ import (
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 )
 
@@ -52,7 +54,6 @@ var (
 
 	defaultLibvirtNetworkIfName  = "tt0"
 	defaultLibvirtNetworkIPRange = "192.168.126.0/24"
-	defaultLibvirtImageURL       = "http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz"
 )
 
 // Platform is an asset that queries the user for the platform on which to install
@@ -288,13 +289,24 @@ func (a *platform) libvirtPlatform() (*types.LibvirtPlatform, error) {
 		return nil, err
 	}
 
+	// TODO: Ideally, this would live inside of a closure which is passed to
+	//       asset.GenerateUserProvidedAsset and only called if the environment
+	//       variable isn't present. As this exists, it ruins the abstraction.
+	var qcowImage string
+	if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_LIBVIRT_IMAGE"); !ok {
+		qcowImage, err = rhcos.QEMU(context.TODO(), rhcos.DefaultChannel)
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to fetch QEMU image URL")
+		}
+	}
+
 	image, err := asset.GenerateUserProvidedAsset(
 		"Libvirt Image",
 		&survey.Question{
 			Prompt: &survey.Input{
 				Message: "Image",
 				Help:    "URI of the OS image.",
-				Default: defaultLibvirtImageURL,
+				Default: qcowImage,
 			},
 			Validate: survey.ComposeValidators(survey.Required, uriValidator),
 		},
