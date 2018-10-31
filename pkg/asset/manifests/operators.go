@@ -50,6 +50,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&tls.IngressCertKey{},
 		&tls.KubeCA{},
 		&tls.ServiceServingCA{},
+		&tls.EtcdClientCertKey{},
 		&tls.MCSCertKey{},
 		&tls.KubeletCertKey{},
 	}
@@ -91,10 +92,12 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	installConfig := &installconfig.InstallConfig{}
 	kubeCA := &tls.KubeCA{}
 	mcsCertKey := &tls.MCSCertKey{}
+	etcdClientCertKey := &tls.EtcdClientCertKey{}
 	rootCA := &tls.RootCA{}
 	serviceServingCA := &tls.ServiceServingCA{}
 	dependencies.Get(
 		installConfig,
+		etcdClientCertKey,
 		kubeCA,
 		mcsCertKey,
 		rootCA,
@@ -108,6 +111,8 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 
 	templateData := &bootkubeTemplateData{
 		Base64encodeCloudProviderConfig: "", // FIXME
+		EtcdClientCert:                  base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
+		EtcdClientKey:                   base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
 		KubeCaCert:                      base64.StdEncoding.EncodeToString(kubeCA.Cert()),
 		KubeCaKey:                       base64.StdEncoding.EncodeToString(kubeCA.Key()),
 		McsTLSCert:                      base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
@@ -130,6 +135,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"tectonic-network-operator.yaml":        applyTemplateData(bootkube.TectonicNetworkOperator, templateData),
 		"cvo-overrides.yaml":                    applyTemplateData(bootkube.CVOOverrides, templateData),
 		"etcd-service-endpoints.yaml":           applyTemplateData(bootkube.EtcdServiceEndpointsKubeSystem, templateData),
+		"kube-system-secret-etcd-client.yaml":   applyTemplateData(bootkube.KubeSystemSecretEtcdClient, templateData),
 
 		"01-tectonic-namespace.yaml":                 []byte(bootkube.TectonicNamespace),
 		"03-openshift-web-console-namespace.yaml":    []byte(bootkube.OpenshiftWebConsoleNamespace),

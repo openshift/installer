@@ -18,6 +18,8 @@ type cloudCredsSecretData struct {
 
 type bootkubeTemplateData struct {
 	Base64encodeCloudProviderConfig string
+	EtcdClientCert                  string
+	EtcdClientKey                   string
 	KubeCaCert                      string
 	KubeCaKey                       string
 	McsTLSCert                      string
