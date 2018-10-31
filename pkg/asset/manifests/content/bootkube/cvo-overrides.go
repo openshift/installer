@@ -34,13 +34,5 @@ overrides:
 - kind: APIService                    # packages.apps.redhat.com fails to start properly
   name: v1alpha1.packages.apps.redhat.com
   unmanaged: true
-- kind: Deployment                    # still testing this new component
-  namespace: kube-system
-  name: pod-checkpointer-operator
-  unmanaged: true
-- kind: Deployment                    # still testing this new component
-  namespace: openshift-pod-checkpointer
-  name: pod-checkpointer-operator
-  unmanaged: true
 `))
 )
