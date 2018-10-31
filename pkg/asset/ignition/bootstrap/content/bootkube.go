@@ -76,8 +76,7 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
 		--config-output-file=/assets/kube-apiserver-bootstrap/config \
-		--config-override-files=/assets/bootkube-config-overrides/kube-apiserver-config-overrides.yaml \
-		--disable-phase-2
+		--config-override-files=/assets/bootkube-config-overrides/kube-apiserver-config-overrides.yaml
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
