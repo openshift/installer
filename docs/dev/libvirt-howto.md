@@ -7,6 +7,9 @@ It's expected that you will create and destroy clusters often in the course of d
 
 Before you begin, install the [build dependencies](dependencies.md).
 
+### Enable BIOS settings are enabled related with virtualization
+Make sure you have already enable `Intel VT and AMD-V virtualization hardware extensions in BIOS settings`.
+
 ### Install and Enable Libvirt
 On Fedora, CentOS/RHEL:
 
