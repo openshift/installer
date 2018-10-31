@@ -162,11 +162,8 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	}
 
 	assetData := map[string][]byte{
-		"kube-apiserver-secret.yaml":            applyTemplateData(bootkube.KubeApiserverSecret, templateData),
 		"kube-cloud-config.yaml":                applyTemplateData(bootkube.KubeCloudConfig, templateData),
-		"kube-controller-manager-secret.yaml":   applyTemplateData(bootkube.KubeControllerManagerSecret, templateData),
 		"machine-config-server-tls-secret.yaml": applyTemplateData(bootkube.MachineConfigServerTLSSecret, templateData),
-		"openshift-apiserver-secret.yaml":       applyTemplateData(bootkube.OpenshiftApiserverSecret, templateData),
 		"openshift-service-signer-secret.yaml":  applyTemplateData(bootkube.OpenshiftServiceCertSignerSecret, templateData),
 		"pull.json":                             applyTemplateData(bootkube.Pull, templateData),
 		"tectonic-network-operator.yaml":        applyTemplateData(bootkube.TectonicNetworkOperator, templateData),
