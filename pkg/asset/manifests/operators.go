@@ -13,7 +13,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/manifests/content/bootkube"
+	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
 	"github.com/openshift/installer/pkg/asset/tls"
 )
 
@@ -25,6 +25,12 @@ var (
 	kubeSysConfigPath = filepath.Join(manifestDir, "cluster-config.yaml")
 
 	_ asset.WritableAsset = (*Manifests)(nil)
+
+	customTmplFuncs = template.FuncMap{
+		"add": func(i, j int) int {
+			return i + j
+		},
+	}
 )
 
 // Manifests generates the dependent operator config.yaml files
@@ -54,6 +60,27 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&tls.EtcdClientCertKey{},
 		&tls.MCSCertKey{},
 		&tls.KubeletCertKey{},
+
+		&bootkube.KubeCloudConfig{},
+		&bootkube.MachineConfigServerTLSSecret{},
+		&bootkube.OpenshiftServiceCertSignerSecret{},
+		&bootkube.Pull{},
+		&bootkube.TectonicNetworkOperator{},
+		&bootkube.CVOOverrides{},
+		&bootkube.LegacyCVOOverrides{},
+		&bootkube.EtcdServiceEndpointsKubeSystem{},
+		&bootkube.KubeSystemConfigmapEtcdServingCA{},
+		&bootkube.KubeSystemConfigmapRootCA{},
+		&bootkube.KubeSystemSecretEtcdClient{},
+
+		&bootkube.TectonicNamespace{},
+		&bootkube.OpenshiftWebConsoleNamespace{},
+		&bootkube.OpenshiftMachineConfigOperator{},
+		&bootkube.OpenshiftClusterAPINamespace{},
+		&bootkube.OpenshiftServiceCertSignerNamespace{},
+		&bootkube.AppVersionKind{},
+		&bootkube.AppVersionTectonicNetwork{},
+		&bootkube.EtcdServiceKubeSystem{},
 	}
 }
 
@@ -131,27 +158,68 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		EtcdEndpointDNSSuffix:           installConfig.Config.BaseDomain,
 	}
 
-	assetData := map[string][]byte{
-		"kube-cloud-config.yaml":                     applyTemplateData(bootkube.KubeCloudConfig, templateData),
-		"machine-config-server-tls-secret.yaml":      applyTemplateData(bootkube.MachineConfigServerTLSSecret, templateData),
-		"openshift-service-signer-secret.yaml":       applyTemplateData(bootkube.OpenshiftServiceCertSignerSecret, templateData),
-		"pull.json":                                  applyTemplateData(bootkube.Pull, templateData),
-		"tectonic-network-operator.yaml":             applyTemplateData(bootkube.TectonicNetworkOperator, templateData),
-		"cvo-overrides.yaml":                         applyTemplateData(bootkube.CVOOverrides, templateData),
-		"legacy-cvo-overrides.yaml":                  applyTemplateData(bootkube.LegacyCVOOverrides, templateData),
-		"etcd-service-endpoints.yaml":                applyTemplateData(bootkube.EtcdServiceEndpointsKubeSystem, templateData),
-		"kube-system-configmap-etcd-serving-ca.yaml": applyTemplateData(bootkube.KubeSystemConfigmapEtcdServingCA, templateData),
-		"kube-system-configmap-root-ca.yaml":         applyTemplateData(bootkube.KubeSystemConfigmapRootCA, templateData),
-		"kube-system-secret-etcd-client.yaml":        applyTemplateData(bootkube.KubeSystemSecretEtcdClient, templateData),
+	kubeCloudConfig := &bootkube.KubeCloudConfig{}
+	machineConfigServerTLSSecret := &bootkube.MachineConfigServerTLSSecret{}
+	openshiftServiceCertSignerSecret := &bootkube.OpenshiftServiceCertSignerSecret{}
+	pull := &bootkube.Pull{}
+	tectonicNetworkOperator := &bootkube.TectonicNetworkOperator{}
+	cVOOverrides := &bootkube.CVOOverrides{}
+	legacyCVOOverrides := &bootkube.LegacyCVOOverrides{}
+	etcdServiceEndpointsKubeSystem := &bootkube.EtcdServiceEndpointsKubeSystem{}
+	kubeSystemConfigmapEtcdServingCA := &bootkube.KubeSystemConfigmapEtcdServingCA{}
+	kubeSystemConfigmapRootCA := &bootkube.KubeSystemConfigmapRootCA{}
+	kubeSystemSecretEtcdClient := &bootkube.KubeSystemSecretEtcdClient{}
 
-		"01-tectonic-namespace.yaml":                 []byte(bootkube.TectonicNamespace),
-		"03-openshift-web-console-namespace.yaml":    []byte(bootkube.OpenshiftWebConsoleNamespace),
-		"04-openshift-machine-config-operator.yaml":  []byte(bootkube.OpenshiftMachineConfigOperator),
-		"05-openshift-cluster-api-namespace.yaml":    []byte(bootkube.OpenshiftClusterAPINamespace),
-		"09-openshift-service-signer-namespace.yaml": []byte(bootkube.OpenshiftServiceCertSignerNamespace),
-		"app-version-kind.yaml":                      []byte(bootkube.AppVersionKind),
-		"app-version-tectonic-network.yaml":          []byte(bootkube.AppVersionTectonicNetwork),
-		"etcd-service.yaml":                          []byte(bootkube.EtcdServiceKubeSystem),
+	tectonicNamespace := &bootkube.TectonicNamespace{}
+	openshiftWebConsoleNamespace := &bootkube.OpenshiftWebConsoleNamespace{}
+	openshiftMachineConfigOperator := &bootkube.OpenshiftMachineConfigOperator{}
+	openshiftClusterAPINamespace := &bootkube.OpenshiftClusterAPINamespace{}
+	openshiftServiceCertSignerNamespace := &bootkube.OpenshiftServiceCertSignerNamespace{}
+	appVersionKind := &bootkube.AppVersionKind{}
+	appVersionTectonicNetwork := &bootkube.AppVersionTectonicNetwork{}
+	etcdServiceKubeSystem := &bootkube.EtcdServiceKubeSystem{}
+	dependencies.Get(
+		kubeCloudConfig,
+		machineConfigServerTLSSecret,
+		openshiftServiceCertSignerSecret,
+		pull,
+		tectonicNetworkOperator,
+		cVOOverrides,
+		legacyCVOOverrides,
+		etcdServiceEndpointsKubeSystem,
+		kubeSystemConfigmapEtcdServingCA,
+		kubeSystemConfigmapRootCA,
+		kubeSystemSecretEtcdClient,
+		tectonicNamespace,
+		openshiftWebConsoleNamespace,
+		openshiftMachineConfigOperator,
+		openshiftClusterAPINamespace,
+		openshiftServiceCertSignerNamespace,
+		appVersionKind,
+		appVersionTectonicNetwork,
+		etcdServiceKubeSystem,
+	)
+	assetData := map[string][]byte{
+		"kube-cloud-config.yaml":                     applyTemplateData(kubeCloudConfig.Files()[0].Data, templateData),
+		"machine-config-server-tls-secret.yaml":      applyTemplateData(machineConfigServerTLSSecret.Files()[0].Data, templateData),
+		"openshift-service-signer-secret.yaml":       applyTemplateData(openshiftServiceCertSignerSecret.Files()[0].Data, templateData),
+		"pull.json":                                  applyTemplateData(pull.Files()[0].Data, templateData),
+		"tectonic-network-operator.yaml":             applyTemplateData(tectonicNetworkOperator.Files()[0].Data, templateData),
+		"cvo-overrides.yaml":                         applyTemplateData(cVOOverrides.Files()[0].Data, templateData),
+		"legacy-cvo-overrides.yaml":                  applyTemplateData(legacyCVOOverrides.Files()[0].Data, templateData),
+		"etcd-service-endpoints.yaml":                applyTemplateData(etcdServiceEndpointsKubeSystem.Files()[0].Data, templateData),
+		"kube-system-configmap-etcd-serving-ca.yaml": applyTemplateData(kubeSystemConfigmapEtcdServingCA.Files()[0].Data, templateData),
+		"kube-system-configmap-root-ca.yaml":         applyTemplateData(kubeSystemConfigmapRootCA.Files()[0].Data, templateData),
+		"kube-system-secret-etcd-client.yaml":        applyTemplateData(kubeSystemSecretEtcdClient.Files()[0].Data, templateData),
+
+		"01-tectonic-namespace.yaml":                 []byte(tectonicNamespace.Files()[0].Data),
+		"03-openshift-web-console-namespace.yaml":    []byte(openshiftWebConsoleNamespace.Files()[0].Data),
+		"04-openshift-machine-config-operator.yaml":  []byte(openshiftMachineConfigOperator.Files()[0].Data),
+		"05-openshift-cluster-api-namespace.yaml":    []byte(openshiftClusterAPINamespace.Files()[0].Data),
+		"09-openshift-service-signer-namespace.yaml": []byte(openshiftServiceCertSignerNamespace.Files()[0].Data),
+		"app-version-kind.yaml":                      []byte(appVersionKind.Files()[0].Data),
+		"app-version-tectonic-network.yaml":          []byte(appVersionTectonicNetwork.Files()[0].Data),
+		"etcd-service.yaml":                          []byte(etcdServiceKubeSystem.Files()[0].Data),
 	}
 
 	files := make([]*asset.File, 0, len(assetData))
@@ -165,7 +233,8 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	return files
 }
 
-func applyTemplateData(template *template.Template, templateData interface{}) []byte {
+func applyTemplateData(data []byte, templateData interface{}) []byte {
+	template := template.Must(template.New("template").Funcs(customTmplFuncs).Parse(string(data)))
 	buf := &bytes.Buffer{}
 	if err := template.Execute(buf, templateData); err != nil {
 		panic(err)

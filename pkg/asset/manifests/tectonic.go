@@ -14,7 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
-	content "github.com/openshift/installer/pkg/asset/manifests/content/tectonic"
+	"github.com/openshift/installer/pkg/asset/templates/content/tectonic"
 	"github.com/openshift/installer/pkg/asset/tls"
 )
 
@@ -51,6 +51,16 @@ func (t *Tectonic) Dependencies() []asset.Asset {
 		&machines.Worker{},
 		&machines.Master{},
 		&kubeAddonOperator{},
+
+		&tectonic.BindingDiscovery{},
+		&tectonic.AppVersionKubeAddon{},
+		&tectonic.KubeAddonOperator{},
+		&tectonic.RoleAdmin{},
+		&tectonic.RoleUser{},
+		&tectonic.BindingAdmin{},
+		&tectonic.PullTectonicSystem{},
+		&tectonic.CloudCredsSecret{},
+		&tectonic.RoleCloudCredsSecretReader{},
 	}
 }
 
@@ -97,25 +107,44 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 		CloudCreds:             cloudCreds,
 	}
 
+	bindingDiscovery := &tectonic.BindingDiscovery{}
+	appVersionKubeAddon := &tectonic.AppVersionKubeAddon{}
+	kubeAddonOperator := &tectonic.KubeAddonOperator{}
+	roleAdmin := &tectonic.RoleAdmin{}
+	roleUser := &tectonic.RoleUser{}
+	bindingAdmin := &tectonic.BindingAdmin{}
+	pullTectonicSystem := &tectonic.PullTectonicSystem{}
+	cloudCredsSecret := &tectonic.CloudCredsSecret{}
+	roleCloudCredsSecretReader := &tectonic.RoleCloudCredsSecretReader{}
+	dependencies.Get(
+		bindingDiscovery,
+		appVersionKubeAddon,
+		kubeAddonOperator,
+		roleAdmin,
+		roleUser,
+		bindingAdmin,
+		pullTectonicSystem,
+		cloudCredsSecret,
+		roleCloudCredsSecretReader)
 	assetData := map[string][]byte{
-		"99_binding-discovery.yaml":                             []byte(content.BindingDiscovery),
-		"99_kube-addon-00-appversion.yaml":                      []byte(content.AppVersionKubeAddon),
-		"99_kube-addon-01-operator.yaml":                        applyTemplateData(content.KubeAddonOperator, templateData),
+		"99_binding-discovery.yaml":                             []byte(bindingDiscovery.Files()[0].Data),
+		"99_kube-addon-00-appversion.yaml":                      []byte(appVersionKubeAddon.Files()[0].Data),
+		"99_kube-addon-01-operator.yaml":                        applyTemplateData(kubeAddonOperator.Files()[0].Data, templateData),
 		"99_openshift-cluster-api_cluster.yaml":                 clusterk8sio.Raw,
 		"99_openshift-cluster-api_master-machines.yaml":         master.MachinesRaw,
 		"99_openshift-cluster-api_master-user-data-secret.yaml": master.UserDataSecretRaw,
 		"99_openshift-cluster-api_worker-machineset.yaml":       worker.MachineSetRaw,
 		"99_openshift-cluster-api_worker-user-data-secret.yaml": worker.UserDataSecretRaw,
-		"99_role-admin.yaml":                                    []byte(content.RoleAdmin),
-		"99_role-user.yaml":                                     []byte(content.RoleUser),
-		"99_tectonic-system-00-binding-admin.yaml":              []byte(content.BindingAdmin),
-		"99_tectonic-system-02-pull.json":                       applyTemplateData(content.PullTectonicSystem, templateData),
+		"99_role-admin.yaml":                                    []byte(roleAdmin.Files()[0].Data),
+		"99_role-user.yaml":                                     []byte(roleUser.Files()[0].Data),
+		"99_tectonic-system-00-binding-admin.yaml":              []byte(bindingAdmin.Files()[0].Data),
+		"99_tectonic-system-02-pull.json":                       applyTemplateData(pullTectonicSystem.Files()[0].Data, templateData),
 	}
 
 	switch platform {
 	case "aws", "openstack":
-		assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(content.CloudCredsSecret, templateData)
-		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(content.RoleCloudCredsSecretReader, templateData)
+		assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
+		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
 	}
 
 	// addon goes to openshift system
