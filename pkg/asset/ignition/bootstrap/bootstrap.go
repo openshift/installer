@@ -200,14 +200,6 @@ func (a *Bootstrap) addBootkubeFiles(dependencies asset.Parents, templateData *b
 }
 
 func (a *Bootstrap) addTemporaryBootkubeFiles(templateData *bootstrapTemplateData) {
-	podCheckpointerBootstrapDir := filepath.Join(rootDir, "pod-checkpointer-operator-bootstrap")
-	for name, data := range content.PodCheckpointerBootkubeManifests {
-		a.Config.Storage.Files = append(
-			a.Config.Storage.Files,
-			ignition.FileFromString(filepath.Join(podCheckpointerBootstrapDir, name), 0644, data),
-		)
-	}
-
 	kubeProxyBootstrapDir := filepath.Join(rootDir, "kube-proxy-operator-bootstrap")
 	for name, data := range content.KubeProxyBootkubeManifests {
 		a.Config.Storage.Files = append(

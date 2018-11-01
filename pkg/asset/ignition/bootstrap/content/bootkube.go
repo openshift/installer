@@ -122,9 +122,8 @@ then
 	cp kube-scheduler-bootstrap/manifests/* manifests/
 fi
 
-# TODO: Remove this when checkpointer, kube-proxy and kube-dns are properly rendered by corresponding operators.
+# TODO: Remove this when kube-proxy and kube-dns are properly rendered by corresponding operators.
 echo "Installing temporary bootstrap manifests..."
-cp pod-checkpointer-operator-bootstrap/* manifests/
 cp kube-proxy-operator-bootstrap/* manifests/
 cp kube-dns-operator-bootstrap/* manifests/
 
@@ -225,7 +224,7 @@ podman run \
 	--network=host \
 	--entrypoint=/bootkube \
 	"{{.BootkubeImage}}" \
-	start --asset-dir=/assets --required-pods kube-system/pod-checkpointer,openshift-kube-apiserver/openshift-kube-apiserver,kube-system/kube-scheduler,kube-system/kube-controller-manager,openshift-cluster-version/cluster-version-operator
+	start --asset-dir=/assets --required-pods openshift-kube-apiserver/openshift-kube-apiserver,kube-system/kube-scheduler,kube-system/kube-controller-manager,openshift-cluster-version/cluster-version-operator
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/tectonic/.bootkube.done
