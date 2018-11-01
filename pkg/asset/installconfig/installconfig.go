@@ -4,7 +4,6 @@ import (
 	"net"
 	"os"
 
-	"github.com/apparentlymart/go-cidr/cidr"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -143,17 +142,6 @@ func (a *InstallConfig) Files() []*asset.File {
 		return []*asset.File{a.File}
 	}
 	return []*asset.File{}
-}
-
-// ClusterDNSIP returns the string representation of the DNS server's IP
-// address.
-func ClusterDNSIP(installConfig *types.InstallConfig) (string, error) {
-	ip, err := cidr.Host(&installConfig.ServiceCIDR.IPNet, 10)
-	if err != nil {
-		return "", err
-	}
-
-	return ip.String(), nil
 }
 
 func parseCIDR(s string) net.IPNet {

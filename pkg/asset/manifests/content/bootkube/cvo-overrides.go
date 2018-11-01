@@ -25,14 +25,6 @@ spec:
     namespace: openshift-cluster-network-operator
     name: cluster-network-operator
     unmanaged: true
-  - kind: ServiceAccount                # missing run level 0 on the namespace and has 0000_08
-    namespace: openshift-cluster-dns-operator
-    name: cluster-dns-operator
-    unmanaged: true
-  - kind: Deployment                    # this conflicts with kube-core-operator
-    namespace: openshift-cluster-dns-operator
-    name: cluster-dns-operator
-    unmanaged: true
   - kind: APIService                    # packages.apps.redhat.com fails to start properly
     name: v1alpha1.packages.apps.redhat.com
     unmanaged: true
@@ -55,14 +47,6 @@ overrides:
 - kind: Deployment                    # this conflicts with kube-core-operator
   namespace: openshift-cluster-network-operator
   name: cluster-network-operator
-  unmanaged: true
-- kind: ServiceAccount                # missing run level 0 on the namespace and has 0000_08
-  namespace: openshift-cluster-dns-operator
-  name: cluster-dns-operator
-  unmanaged: true
-- kind: Deployment                    # this conflicts with kube-core-operator
-  namespace: openshift-cluster-dns-operator
-  name: cluster-dns-operator
   unmanaged: true
 - kind: APIService                    # packages.apps.redhat.com fails to start properly
   name: v1alpha1.packages.apps.redhat.com

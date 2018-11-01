@@ -123,10 +123,9 @@ then
 	cp kube-scheduler-bootstrap/manifests/* manifests/
 fi
 
-# TODO: Remove this when kube-proxy and kube-dns are properly rendered by corresponding operators.
+# TODO: Remove this when kube-proxy is properly rendered by corresponding operator.
 echo "Installing temporary bootstrap manifests..."
 cp kube-proxy-operator-bootstrap/* manifests/
-cp kube-dns-operator-bootstrap/* manifests/
 
 if [ ! -d mco-bootstrap ]
 then
