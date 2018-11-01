@@ -7,8 +7,16 @@ It's expected that you will create and destroy clusters often in the course of d
 
 Before you begin, install the [build dependencies](dependencies.md).
 
-### Enable BIOS settings are enabled related with virtualization
-Make sure you have already enable `Intel VT and AMD-V virtualization hardware extensions in BIOS settings`.
+### Enable KVM
+
+Make sure you have KVM enabled by checking for the device:
+
+```console
+$ ls -l /dev/kvm 
+crw-rw-rw-+ 1 root kvm 10, 232 Oct 31 09:22 /dev/kvm
+```
+
+If it is missing, try some of the ideas [here][kvm-install].
 
 ### Install and Enable Libvirt
 On Fedora, CentOS/RHEL:
@@ -365,3 +373,4 @@ If your issue is not reported, please do.
 [issues_libvirt]: https://github.com/openshift/installer/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+libvirt
 [libvirt_selinux_issues]: https://github.com/dmacvicar/terraform-provider-libvirt/issues/142#issuecomment-409040151
 [tfprovider_libvirt_race]: https://github.com/dmacvicar/terraform-provider-libvirt/issues/402#issuecomment-419500064
+[kvm-install]: http://www.linux-kvm.org/page/FAQ#Preparing_to_use_KVM
