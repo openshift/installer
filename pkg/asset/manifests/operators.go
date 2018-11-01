@@ -13,7 +13,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests/content/bootkube"
 	"github.com/openshift/installer/pkg/asset/tls"
 )
@@ -48,19 +47,11 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&networkOperator{},
 		&tls.RootCA{},
-		&tls.EtcdCA{},
 		&tls.IngressCertKey{},
 		&tls.KubeCA{},
-		&tls.AggregatorCA{},
 		&tls.ServiceServingCA{},
-		&tls.EtcdClientCertKey{},
-		&tls.APIServerCertKey{},
-		&tls.OpenshiftAPIServerCertKey{},
-		&tls.APIServerProxyCertKey{},
 		&tls.MCSCertKey{},
 		&tls.KubeletCertKey{},
-		&tls.ServiceAccountKeyPair{},
-		&kubeconfig.Admin{},
 	}
 }
 
@@ -98,31 +89,15 @@ func (m *Manifests) Files() []*asset.File {
 
 func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*asset.File {
 	installConfig := &installconfig.InstallConfig{}
-	aggregatorCA := &tls.AggregatorCA{}
-	apiServerCertKey := &tls.APIServerCertKey{}
-	apiServerProxyCertKey := &tls.APIServerProxyCertKey{}
-	etcdCA := &tls.EtcdCA{}
-	etcdClientCertKey := &tls.EtcdClientCertKey{}
 	kubeCA := &tls.KubeCA{}
 	mcsCertKey := &tls.MCSCertKey{}
-	openshiftAPIServerCertKey := &tls.OpenshiftAPIServerCertKey{}
-	adminKubeconfig := &kubeconfig.Admin{}
 	rootCA := &tls.RootCA{}
-	serviceAccountKeyPair := &tls.ServiceAccountKeyPair{}
 	serviceServingCA := &tls.ServiceServingCA{}
 	dependencies.Get(
 		installConfig,
-		aggregatorCA,
-		apiServerCertKey,
-		apiServerProxyCertKey,
-		etcdCA,
-		etcdClientCertKey,
 		kubeCA,
 		mcsCertKey,
-		openshiftAPIServerCertKey,
-		adminKubeconfig,
 		rootCA,
-		serviceAccountKeyPair,
 		serviceServingCA,
 	)
 
@@ -132,27 +107,13 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	}
 
 	templateData := &bootkubeTemplateData{
-		AggregatorCaCert:                base64.StdEncoding.EncodeToString(aggregatorCA.Cert()),
-		AggregatorCaKey:                 base64.StdEncoding.EncodeToString(aggregatorCA.Key()),
-		ApiserverCert:                   base64.StdEncoding.EncodeToString(apiServerCertKey.Cert()),
-		ApiserverKey:                    base64.StdEncoding.EncodeToString(apiServerCertKey.Key()),
-		ApiserverProxyCert:              base64.StdEncoding.EncodeToString(apiServerProxyCertKey.Cert()),
-		ApiserverProxyKey:               base64.StdEncoding.EncodeToString(apiServerProxyCertKey.Key()),
 		Base64encodeCloudProviderConfig: "", // FIXME
-		EtcdCaCert:                      base64.StdEncoding.EncodeToString(etcdCA.Cert()),
-		EtcdClientCert:                  base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
-		EtcdClientKey:                   base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
 		KubeCaCert:                      base64.StdEncoding.EncodeToString(kubeCA.Cert()),
 		KubeCaKey:                       base64.StdEncoding.EncodeToString(kubeCA.Key()),
 		McsTLSCert:                      base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:                       base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
-		OpenshiftApiserverCert:          base64.StdEncoding.EncodeToString(openshiftAPIServerCertKey.Cert()),
-		OpenshiftApiserverKey:           base64.StdEncoding.EncodeToString(openshiftAPIServerCertKey.Key()),
-		OpenshiftLoopbackKubeconfig:     base64.StdEncoding.EncodeToString(adminKubeconfig.Files()[0].Data),
 		PullSecret:                      base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
 		RootCaCert:                      base64.StdEncoding.EncodeToString(rootCA.Cert()),
-		ServiceaccountKey:               base64.StdEncoding.EncodeToString(serviceAccountKeyPair.Private()),
-		ServiceaccountPub:               base64.StdEncoding.EncodeToString(serviceAccountKeyPair.Public()),
 		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(serviceServingCA.Cert()),
 		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(serviceServingCA.Key()),
 		TectonicNetworkOperatorImage:    "quay.io/coreos/tectonic-network-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
