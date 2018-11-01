@@ -17,27 +17,13 @@ type cloudCredsSecretData struct {
 }
 
 type bootkubeTemplateData struct {
-	AggregatorCaCert                string
-	AggregatorCaKey                 string
-	ApiserverCert                   string
-	ApiserverKey                    string
-	ApiserverProxyCert              string
-	ApiserverProxyKey               string
 	Base64encodeCloudProviderConfig string
-	EtcdCaCert                      string
-	EtcdClientCert                  string
-	EtcdClientKey                   string
 	KubeCaCert                      string
 	KubeCaKey                       string
 	McsTLSCert                      string
 	McsTLSKey                       string
-	OpenshiftApiserverCert          string
-	OpenshiftApiserverKey           string
-	OpenshiftLoopbackKubeconfig     string
 	PullSecret                      string
 	RootCaCert                      string
-	ServiceaccountKey               string
-	ServiceaccountPub               string
 	ServiceServingCaCert            string
 	ServiceServingCaKey             string
 	TectonicNetworkOperatorImage    string
