@@ -18,7 +18,8 @@ var KubeDNSBootkubeManifests = map[string]string{
 }
 
 // BootkubeKubeDNSService is a template for kube-dns service.
-var BootkubeKubeDNSService = template.Must(template.New("bootkube.sh").Parse(`
+var (
+	BootkubeKubeDNSService = template.Must(template.New("bootkube.sh").Parse(`
 apiVersion: v1
 kind: Service
 metadata:
@@ -42,6 +43,17 @@ spec:
     protocol: TCP
     targetPort: 53
 `))
+
+	BootkubeKubeProxyKubeConfig = template.Must(template.New("kube-proxy-kubeconfig").Parse(`
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kube-proxy-kubeconfig
+  namespace: kube-system
+data:
+  kubeconfig: {{ .AdminKubeConfigBase64 }}
+`))
+)
 
 const (
 	bootkubeKubeSystemRBACRoleBinding = `
@@ -122,7 +134,7 @@ spec:
       - name: kubeconfig
         secret:
           defaultMode: 420
-          secretName: controller-manager-kubeconfig
+          secretName: kube-proxy-kubeconfig
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 1
