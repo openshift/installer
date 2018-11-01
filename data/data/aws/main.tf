@@ -6,7 +6,7 @@ locals {
 
 provider "aws" {
   region  = "${var.tectonic_aws_region}"
-  version = "1.8.0"
+  version = "1.39.0"
 
   assume_role {
     role_arn     = "${var.tectonic_aws_installer_role == "" ? "" : "${var.tectonic_aws_installer_role}"}"
