@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -33,12 +34,13 @@ const (
 // bootstrapTemplateData is the data to use to replace values in bootstrap
 // template files.
 type bootstrapTemplateData struct {
-	BootkubeImage       string
-	ClusterDNSIP        string
-	EtcdCertSignerImage string
-	EtcdCluster         string
-	EtcdctlImage        string
-	ReleaseImage        string
+	BootkubeImage         string
+	ClusterDNSIP          string
+	EtcdCertSignerImage   string
+	EtcdCluster           string
+	EtcdctlImage          string
+	ReleaseImage          string
+	AdminKubeConfigBase64 string
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -75,9 +77,10 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 // Generate generates the ignition config for the Bootstrap asset.
 func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	adminKubeConfig := &kubeconfig.Admin{}
+	dependencies.Get(installConfig, adminKubeConfig)
 
-	templateData, err := a.getTemplateData(installConfig.Config)
+	templateData, err := a.getTemplateData(installConfig.Config, adminKubeConfig.File.Data)
 	if err != nil {
 		return errors.Wrap(err, "failed to get bootstrap templates")
 	}
@@ -133,7 +136,7 @@ func (a *Bootstrap) Files() []*asset.File {
 }
 
 // getTemplateData returns the data to use to execute bootstrap templates.
-func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootstrapTemplateData, error) {
+func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, adminKubeConfig []byte) (*bootstrapTemplateData, error) {
 	clusterDNSIP, err := installconfig.ClusterDNSIP(installConfig)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get ClusterDNSIP from InstallConfig")
@@ -150,12 +153,13 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 	}
 
 	return &bootstrapTemplateData{
-		ClusterDNSIP:        clusterDNSIP,
-		EtcdCertSignerImage: "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
-		EtcdctlImage:        "quay.io/coreos/etcd:v3.2.14",
-		BootkubeImage:       "quay.io/coreos/bootkube:v0.14.0",
-		ReleaseImage:        releaseImage,
-		EtcdCluster:         strings.Join(etcdEndpoints, ","),
+		ClusterDNSIP:          clusterDNSIP,
+		EtcdCertSignerImage:   "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
+		EtcdctlImage:          "quay.io/coreos/etcd:v3.2.14",
+		BootkubeImage:         "quay.io/coreos/bootkube:v0.14.0",
+		ReleaseImage:          releaseImage,
+		EtcdCluster:           strings.Join(etcdEndpoints, ","),
+		AdminKubeConfigBase64: base64.StdEncoding.EncodeToString(adminKubeConfig),
 	}, nil
 }
 
@@ -207,6 +211,10 @@ func (a *Bootstrap) addTemporaryBootkubeFiles(templateData *bootstrapTemplateDat
 			ignition.FileFromString(filepath.Join(kubeProxyBootstrapDir, name), 0644, data),
 		)
 	}
+	a.Config.Storage.Files = append(
+		a.Config.Storage.Files,
+		ignition.FileFromString(filepath.Join(kubeProxyBootstrapDir, "kube-proxy-kubeconfig.yaml"), 0644, applyTemplateData(content.BootkubeKubeProxyKubeConfig, templateData)),
+	)
 
 	kubeDNSBootstrapDir := filepath.Join(rootDir, "kube-dns-operator-bootstrap")
 	for name, data := range content.KubeDNSBootkubeManifests {
