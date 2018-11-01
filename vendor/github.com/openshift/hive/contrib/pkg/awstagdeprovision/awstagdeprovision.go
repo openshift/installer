@@ -29,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
+	"github.com/aws/aws-sdk-go/service/elbv2"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/s3"
@@ -266,6 +267,106 @@ func deleteLBs(vpc *ec2.Vpc, awsSession *session.Session, logger log.FieldLogger
 	return false
 }
 
+// filterV2LBsByVPC will find all the load balancers in the provided list that are under the provided VPC
+func filterV2LBsByVPC(lbs []*elbv2.LoadBalancer, vpc *ec2.Vpc, logger log.FieldLogger) []*elbv2.LoadBalancer {
+	filteredLBs := []*elbv2.LoadBalancer{}
+
+	for _, lb := range lbs {
+		if *lb.VpcId == *vpc.VpcId {
+			filteredLBs = append(filteredLBs, lb)
+		}
+	}
+
+	return filteredLBs
+}
+
+func deleteV2LBs(vpc *ec2.Vpc, awsSession *session.Session, logger log.FieldLogger) bool {
+	logger.Debugf("Deleting V2 load balancers (%s)", *vpc.VpcId)
+	defer logger.Debugf("Exiting deleting V2 load balancers (%s)", *vpc.VpcId)
+	elbv2Client := elbv2.New(awsSession)
+
+	total := 0
+	filteredLBs := []*elbv2.LoadBalancer{}
+	if err := elbv2Client.DescribeLoadBalancersPages(&elbv2.DescribeLoadBalancersInput{}, func(results *elbv2.DescribeLoadBalancersOutput, lastPage bool) bool {
+		total += len(results.LoadBalancers)
+		filteredLBs = append(filteredLBs, filterV2LBsByVPC(results.LoadBalancers, vpc, logger)...)
+		return lastPage
+	}); err != nil {
+		logger.Errorf("Error listing V2 load balancers: %v", err)
+		return false
+	}
+	logger.Debugf("from %d total V2 load balancers, %d scheduled for deletion", total, len(filteredLBs))
+
+	if len(filteredLBs) == 0 {
+		// no items left to delete
+		// see if we can delete target groups.
+		return deleteTargetGroups(vpc, awsSession, logger)
+	}
+
+	for _, lb := range filteredLBs {
+		logger.Debugf("Deleting V2 load balancer: %v", *lb.LoadBalancerName)
+		_, err := elbv2Client.DeleteLoadBalancer(&elbv2.DeleteLoadBalancerInput{
+			LoadBalancerArn: lb.LoadBalancerArn,
+		})
+		if err != nil {
+			logger.Debugf("Error deleting V2 load balancer %v: %v", *lb.LoadBalancerName, err)
+		} else {
+			logger.WithField("name", *lb.LoadBalancerName).Info("Deleted load balancer")
+		}
+	}
+	// cleanup target groups
+	return deleteTargetGroups(vpc, awsSession, logger)
+}
+
+// filterTargetGroupsByVPC will find all the target groups in the provided list that are under the provided VPC
+func filterTargetGroupsByVPC(tgs []*elbv2.TargetGroup, vpc *ec2.Vpc, logger log.FieldLogger) []*elbv2.TargetGroup {
+	filteredTGs := []*elbv2.TargetGroup{}
+
+	for _, tg := range tgs {
+		if *tg.VpcId == *vpc.VpcId {
+			filteredTGs = append(filteredTGs, tg)
+		}
+	}
+
+	return filteredTGs
+}
+
+func deleteTargetGroups(vpc *ec2.Vpc, awsSession *session.Session, logger log.FieldLogger) bool {
+	logger.Debugf("Deleting target groups (%s)", *vpc.VpcId)
+	defer logger.Debugf("Exiting deleting target groups (%s)", *vpc.VpcId)
+	elbv2Client := elbv2.New(awsSession)
+
+	total := 0
+	filteredTGs := []*elbv2.TargetGroup{}
+	if err := elbv2Client.DescribeTargetGroupsPages(&elbv2.DescribeTargetGroupsInput{}, func(results *elbv2.DescribeTargetGroupsOutput, lastPage bool) bool {
+		total += len(results.TargetGroups)
+		filteredTGs = append(filteredTGs, filterTargetGroupsByVPC(results.TargetGroups, vpc, logger)...)
+		return lastPage
+	}); err != nil {
+		logger.Errorf("Error listing target groups: %v", err)
+		return false
+	}
+	logger.Debugf("from %d total target groups, %d scheduled for deletion", total, len(filteredTGs))
+
+	if len(filteredTGs) == 0 {
+		// no items left to delete
+		return true
+	}
+
+	for _, tg := range filteredTGs {
+		logger.Debugf("Deleting target groups: %v", *tg.TargetGroupName)
+		_, err := elbv2Client.DeleteTargetGroup(&elbv2.DeleteTargetGroupInput{
+			TargetGroupArn: tg.TargetGroupArn,
+		})
+		if err != nil {
+			logger.Debugf("Error deleting target groups %v: %v", *tg.TargetGroupName, err)
+		} else {
+			logger.WithField("name", *tg.TargetGroupName).Info("Deleted target group")
+		}
+	}
+	return false
+}
+
 // rtHasMainAssociation will check whether a given route table has an association marked 'Main'
 func rtHasMainAssociation(rt *ec2.RouteTable) bool {
 	for _, association := range rt.Associations {
@@ -348,8 +449,9 @@ func deleteVPCs(awsSession *session.Session, filters AWSFilter, clusterName stri
 
 		for _, vpc := range results.Vpcs {
 			// first delete any Load Balancers under this VPC (not all of them are tagged)
-			complete := deleteLBs(vpc, awsSession, logger)
-			if !complete {
+			v1lbcomplete := deleteLBs(vpc, awsSession, logger)
+			v2lbcomplete := deleteV2LBs(vpc, awsSession, logger)
+			if !v1lbcomplete || !v2lbcomplete {
 				logger.Debugf("not finished deleting load balancers, will need to retry")
 				return false, nil
 			}
