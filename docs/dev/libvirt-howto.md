@@ -290,10 +290,10 @@ kubectl get -n tectonic-system pods
 ```
 
 Alternatively, you can run `kubectl` from the bootstrap or master nodes.
-[SSH in](#ssh-access), and run:
+Use `scp` or similar to transfer your local `${DIR}/auth/kubeconfig`, then [SSH in](#ssh-access) and run:
 
 ```sh
-export KUBECONFIG=/var/opt/tectonic/auth/kubeconfig
+export KUBECONFIG=/where/you/put/your/kubeconfig
 kubectl get --all-namespaces pods
 ```
 
