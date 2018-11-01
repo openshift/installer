@@ -6,10 +6,6 @@ output "master_subnet_ids" {
   value = "${local.master_subnet_ids}"
 }
 
-output "worker_subnet_ids" {
-  value = "${local.worker_subnet_ids}"
-}
-
 output "etcd_sg_id" {
   value = "${element(concat(aws_security_group.etcd.*.id, list("")), 0)}"
 }
@@ -30,46 +26,34 @@ output "console_sg_id" {
   value = "${aws_security_group.console.id}"
 }
 
-output "aws_elb_api_external_id" {
-  value = "${aws_elb.api_external.0.id}"
+output "aws_lb_private_target_group_arns" {
+  value = "${compact(concat(aws_lb_target_group.api_internal.*.arn, aws_lb_target_group.services.*.arn))}"
 }
 
-output "aws_elb_api_internal_id" {
-  value = "${aws_elb.api_internal.0.id}"
+output "aws_lb_private_target_group_arns_length" {
+  value = "${var.private_master_endpoints ? 2 : 0}"
 }
 
-output "aws_elb_console_id" {
-  value = "${aws_elb.console.id}"
+output "aws_lb_public_target_group_arns" {
+  value = "${compact(concat(aws_lb_target_group.api_external.*.arn))}"
 }
 
-output "aws_lbs" {
-  value = ["${compact(concat(aws_elb.api_internal.*.id, list(aws_elb.console.id), aws_elb.api_external.*.id))}"]
+output "aws_lb_public_target_group_arns_length" {
+  value = "${var.public_master_endpoints ? 1 : 0}"
 }
 
-output "aws_lbs_length" {
-  value = "2"
+output "aws_lb_api_external_dns_name" {
+  value = "${element(concat(aws_lb.api_external.*.dns_name, list("")), 0)}"
 }
 
-output "aws_elb_api_external_dns_name" {
-  value = "${element(concat(aws_elb.api_external.*.dns_name, list("")), 0)}"
+output "aws_lb_api_external_zone_id" {
+  value = "${element(concat(aws_lb.api_external.*.zone_id, list("")), 0)}"
 }
 
-output "aws_elb_api_external_zone_id" {
-  value = "${element(concat(aws_elb.api_external.*.zone_id, list("")), 0)}"
+output "aws_lb_api_internal_dns_name" {
+  value = "${element(concat(aws_lb.api_internal.*.dns_name, list("")), 0)}"
 }
 
-output "aws_elb_api_internal_dns_name" {
-  value = "${element(concat(aws_elb.api_internal.*.dns_name, list("")), 0)}"
-}
-
-output "aws_elb_api_internal_zone_id" {
-  value = "${element(concat(aws_elb.api_internal.*.zone_id, list("")), 0)}"
-}
-
-output "aws_console_dns_name" {
-  value = "${aws_elb.console.dns_name}"
-}
-
-output "aws_elb_console_zone_id" {
-  value = "${aws_elb.console.zone_id}"
+output "aws_lb_api_internal_zone_id" {
+  value = "${element(concat(aws_lb.api_internal.*.zone_id, list("")), 0)}"
 }

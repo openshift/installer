@@ -46,21 +46,29 @@ variable "private_endpoints" {
   default     = true
 }
 
+variable "private_target_group_arns" {
+  type        = "list"
+  default     = []
+  description = "The list of target group ARNs for the private load balancer."
+}
+
+variable "private_target_group_arns_length" {
+  description = "The length of the 'private_target_group_arns' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
+}
+
 variable "public_endpoints" {
   description = "If set to true, public-facing ingress resources are created."
   default     = true
 }
 
-variable "elb_api_internal_id" {
-  type = "string"
+variable "public_target_group_arns" {
+  type        = "list"
+  default     = []
+  description = "The list of target group ARNs for the public load balancer."
 }
 
-variable "elb_api_external_id" {
-  type = "string"
-}
-
-variable "elb_console_id" {
-  type = "string"
+variable "public_target_group_arns_length" {
+  description = "The length of the 'public_target_group_arns' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
 }
 
 variable "root_volume_iops" {

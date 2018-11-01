@@ -1,118 +1,140 @@
-resource "aws_elb" "api_internal" {
-  count           = "${var.private_master_endpoints ? 1 : 0}"
-  name            = "${var.cluster_name}-int"
-  subnets         = ["${local.master_subnet_ids}"]
-  internal        = true
-  security_groups = ["${aws_security_group.api.id}"]
+resource "aws_lb" "api_internal" {
+  count = "${var.private_master_endpoints ? 1 : 0}"
 
-  idle_timeout                = 3600
-  connection_draining         = true
-  connection_draining_timeout = 300
-
-  listener {
-    instance_port     = 6443
-    instance_protocol = "tcp"
-    lb_port           = 6443
-    lb_protocol       = "tcp"
-  }
-
-  listener {
-    instance_port     = 49500
-    instance_protocol = "tcp"
-    lb_port           = 49500
-    lb_protocol       = "tcp"
-  }
-
-  health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 3
-    target              = "SSL:6443"
-    interval            = 5
-  }
-
-  # TODO: we only have on health_check per ELB but need to check the following too
-  # health_check {
-  #   healthy_threshold   = 2
-  #   unhealthy_threshold = 2
-  #   timeout             = 3
-  #   target              = "TCP:49500"
-  #   interval            = 5
-  # }
+  name                             = "${var.cluster_name}-int"
+  load_balancer_type               = "network"
+  subnets                          = ["${local.master_subnet_ids}"]
+  internal                         = true
+  enable_cross_zone_load_balancing = true
+  idle_timeout                     = 3600
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}-int",
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
       "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
-resource "aws_elb" "api_external" {
-  count           = "${var.public_master_endpoints ? 1 : 0}"
-  name            = "${var.cluster_name}-ext"
-  subnets         = ["${local.master_subnet_ids}"]
-  internal        = false
-  security_groups = ["${aws_security_group.api.id}"]
+resource "aws_lb" "api_external" {
+  count = "${var.public_master_endpoints ? 1 : 0}"
 
-  idle_timeout                = 3600
-  connection_draining         = true
-  connection_draining_timeout = 300
-
-  listener {
-    instance_port     = 6443
-    instance_protocol = "tcp"
-    lb_port           = 6443
-    lb_protocol       = "tcp"
-  }
-
-  health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 3
-    target              = "SSL:6443"
-    interval            = 5
-  }
+  name                             = "${var.cluster_name}-ext"
+  load_balancer_type               = "network"
+  subnets                          = ["${local.master_subnet_ids}"]
+  internal                         = false
+  enable_cross_zone_load_balancing = true
+  idle_timeout                     = 3600
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}-api-external",
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
       "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
-resource "aws_elb" "console" {
-  name            = "${var.cluster_name}-con"
-  subnets         = ["${local.master_subnet_ids}"]
-  internal        = "${var.public_master_endpoints ? false : true}"
-  security_groups = ["${aws_security_group.console.id}"]
+resource "aws_lb_target_group" "api_internal" {
+  count = "${var.private_master_endpoints ? 1 : 0}"
 
-  idle_timeout = 3600
+  name     = "${var.cluster_name}-api-int"
+  protocol = "TCP"
+  port     = 6443
+  vpc_id   = "${local.vpc_id}"
 
-  listener {
-    instance_port     = 32001
-    instance_protocol = "tcp"
-    lb_port           = 80
-    lb_protocol       = "tcp"
-  }
-
-  listener {
-    instance_port     = 32000
-    instance_protocol = "tcp"
-    lb_port           = 443
-    lb_protocol       = "tcp"
-  }
-
-  health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 3
-    target              = "HTTP:32002/healthz"
-    interval            = 5
-  }
+  target_type = "ip"
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}-console",
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
       "tectonicClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
+
+  health_check {
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+    interval            = 10
+    port                = 6443
+    protocol            = "TCP"
+  }
+}
+
+resource "aws_lb_target_group" "api_external" {
+  count = "${var.public_master_endpoints ? 1 : 0}"
+
+  name     = "${var.cluster_name}-api-ext"
+  protocol = "TCP"
+  port     = 6443
+  vpc_id   = "${local.vpc_id}"
+
+  target_type = "ip"
+
+  tags = "${merge(map(
+      "kubernetes.io/cluster/${var.cluster_name}", "owned",
+      "tectonicClusterID", "${var.cluster_id}"
+    ), var.extra_tags)}"
+
+  health_check {
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+    interval            = 10
+    port                = 6443
+    protocol            = "TCP"
+  }
+}
+
+resource "aws_lb_target_group" "services" {
+  name     = "${var.cluster_name}-services"
+  protocol = "TCP"
+  port     = 49500
+  vpc_id   = "${local.vpc_id}"
+
+  target_type = "ip"
+
+  tags = "${merge(map(
+      "kubernetes.io/cluster/${var.cluster_name}", "owned",
+      "tectonicClusterID", "${var.cluster_id}"
+    ), var.extra_tags)}"
+
+  health_check {
+    healthy_threshold   = 3
+    unhealthy_threshold = 3
+    interval            = 10
+    port                = 49500
+    protocol            = "TCP"
+  }
+}
+
+resource "aws_lb_listener" "api_internal_api" {
+  count = "${var.private_master_endpoints ? 1 : 0}"
+
+  load_balancer_arn = "${aws_lb.api_internal.arn}"
+  protocol          = "TCP"
+  port              = "6443"
+
+  default_action {
+    target_group_arn = "${aws_lb_target_group.api_internal.arn}"
+    type             = "forward"
+  }
+}
+
+resource "aws_lb_listener" "api_internal_services" {
+  count = "${var.private_master_endpoints ? 1 : 0}"
+
+  load_balancer_arn = "${aws_lb.api_internal.arn}"
+  protocol          = "TCP"
+  port              = "49500"
+
+  default_action {
+    target_group_arn = "${aws_lb_target_group.services.arn}"
+    type             = "forward"
+  }
+}
+
+resource "aws_lb_listener" "api_external_api" {
+  count = "${var.public_master_endpoints ? 1 : 0}"
+
+  load_balancer_arn = "${aws_lb.api_external.arn}"
+  protocol          = "TCP"
+  port              = "6443"
+
+  default_action {
+    target_group_arn = "${aws_lb_target_group.api_external.arn}"
+    type             = "forward"
+  }
 }

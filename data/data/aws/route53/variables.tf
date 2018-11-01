@@ -43,11 +43,6 @@ variable "worker_public_ips_enabled" {
   default     = true
 }
 
-variable "api_ip_addresses" {
-  description = "List of string IPs for k8s API"
-  type        = "list"
-}
-
 variable "extra_tags" {
   type        = "map"
   description = "Extra tags to be applied to created resources."
@@ -95,32 +90,22 @@ variable "private_zone_id" {
   type        = "string"
 }
 
-variable "api_external_elb_dns_name" {
-  description = "External API's ELB DNS name"
+variable "api_external_lb_dns_name" {
+  description = "External API's LB DNS name"
   type        = "string"
 }
 
-variable "api_external_elb_zone_id" {
-  description = "External API's ELB Zone ID"
+variable "api_external_lb_zone_id" {
+  description = "External API's LB Zone ID"
   type        = "string"
 }
 
-variable "api_internal_elb_dns_name" {
-  description = "Internal API's ELB DNS name"
+variable "api_internal_lb_dns_name" {
+  description = "Internal API's LB DNS name"
   type        = "string"
 }
 
-variable "api_internal_elb_zone_id" {
-  description = "Internal API's ELB Zone ID"
-  type        = "string"
-}
-
-variable "console_elb_dns_name" {
-  description = "Console's ELB DNS name"
-  type        = "string"
-}
-
-variable "console_elb_zone_id" {
-  description = "Console's ELB Zone ID"
+variable "api_internal_lb_zone_id" {
+  description = "Internal API's LB Zone ID"
   type        = "string"
 }
