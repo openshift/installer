@@ -117,14 +117,6 @@ resource "aws_route53_record" "etcd_a_nodes" {
   records = ["${module.masters.ip_addresses[count.index]}"]
 }
 
-resource "aws_route53_record" "etcd_cluster_old_srvs" {
-  type    = "SRV"
-  ttl     = "60"
-  zone_id = "${local.private_zone_id}"
-  name    = "_etcd-server-ssl._tcp"
-  records = ["${formatlist("0 10 2380 %s", aws_route53_record.etcd_a_nodes.*.fqdn)}"]
-}
-
 resource "aws_route53_record" "etcd_cluster" {
   type    = "SRV"
   ttl     = "60"
