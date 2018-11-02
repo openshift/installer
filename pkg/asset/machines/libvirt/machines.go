@@ -17,7 +17,8 @@ func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDa
 	if configPlatform := config.Platform.Name(); configPlatform != types.PlatformNameLibvirt {
 		return nil, fmt.Errorf("non-Libvirt configuration: %q", configPlatform)
 	}
-	if poolPlatform := pool.Platform.Name(); poolPlatform != types.PlatformNameLibvirt {
+	// FIXME: empty is a valid case for Libvirt as we don't use it.
+	if poolPlatform := pool.Platform.Name(); poolPlatform != "" && poolPlatform != types.PlatformNameLibvirt {
 		return nil, fmt.Errorf("non-Libvirt machine-pool: %q", poolPlatform)
 	}
 	clustername := config.ObjectMeta.Name
