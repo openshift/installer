@@ -33,7 +33,7 @@
   version = "v2.0"
 
 [[projects]]
-  digest = "1:411db86425d0d68cbb9bb92f28b62ccfb8d6351d9ed94676a8c424d3ed4af808"
+  digest = "1:dd4af183c1fe3338de611e659960135e31bbd70eb03e2a193145397dc2f43bc0"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -80,8 +80,8 @@
     "service/sts",
   ]
   pruneopts = "NUT"
-  revision = "c446a547f59665b7ce54ac57bd8f8b04e5179563"
-  version = "v1.15.62"
+  revision = "97a47d14fbb0744966b484d5b089cdc9814b493b"
+  version = "v1.15.67"
 
 [[projects]]
   digest = "1:0ef770954bca104ee99b3b6b7f9b240605ac03517d9f98cbc1893daa03f3c038"
@@ -92,12 +92,12 @@
   version = "v0.2.0"
 
 [[projects]]
-  digest = "1:2ed7e62c94645be6b47be0911035fbabaa6271b20138d3643488716b5c6cad41"
+  digest = "1:027c348e13b5f924c925aebf0d2932545644c78da3f43cc82327220286084539"
   name = "github.com/coreos/go-systemd"
   packages = ["unit"]
   pruneopts = "NUT"
-  revision = "39ca1b05acc7ad1220e09f133283b8859a8b71ab"
-  version = "v17"
+  revision = "9002847aa1425fb6ac49077c0a630b3b67e0fbfd"
+  version = "v18"
 
 [[projects]]
   digest = "1:1a216755b1570c329bada24deac0032f487c1a5b7c690963c96ad2da9b8c3ec9"
@@ -211,6 +211,14 @@
   revision = "0b12d6b5"
 
 [[projects]]
+  digest = "1:8e36686e8b139f8fe240c1d5cf3a145bc675c22ff8e707857cdd3ae17b00d728"
+  name = "github.com/json-iterator/go"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "1624edc4454b8682399def8740d46db5e4362ba4"
+  version = "v1.1.5"
+
+[[projects]]
   branch = "master"
   digest = "1:cf68a79fd02ab0f6942b9567d03d054b6568212fcc22de2a4afdefd096923749"
   name = "github.com/kballard/go-shellquote"
@@ -257,6 +265,30 @@
   packages = ["."]
   pruneopts = "NUT"
   revision = "9520e82c474b0a04dd04f8a40959027271bab992"
+
+[[projects]]
+  digest = "1:2f42fa12d6911c7b7659738758631bec870b7e9b4c6be5444f963cdcfccc191f"
+  name = "github.com/modern-go/concurrent"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94"
+  version = "1.0.3"
+
+[[projects]]
+  digest = "1:c6aca19413b13dc59c220ad7430329e2ec454cc310bc6d8de2c7e2b93c18a0f6"
+  name = "github.com/modern-go/reflect2"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
+  version = "1.0.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:b5875601953e2887f2fb469fde65c530bf33ae7439f10a67793ee8491305506c"
+  name = "github.com/openshift/cluster-api-provider-libvirt"
+  packages = ["pkg/apis/libvirtproviderconfig/v1alpha1"]
+  pruneopts = "NUT"
+  revision = "437b1012ea0bf4c6a1189e42ff3755933689eeb4"
 
 [[projects]]
   digest = "1:14f70ac5f181ccb012cddc7c72ac28709497155340b2fad822bd15d9a8722d93"
@@ -322,12 +354,12 @@
   revision = "a97a25d856cadfe6481325baeb35a70d6723ca0c"
 
 [[projects]]
-  digest = "1:ecf78eacf406c42f07f66d6b79fda24d2b92dc711bfd0760d0c931678f9621fe"
+  digest = "1:d848e2bdc690ea54c4b49894b67a05db318a97ee6561879b814c2c1f82f61406"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   pruneopts = "NUT"
-  revision = "ad15b42461921f1fb3529b058c6786c6a45d5162"
-  version = "v1.1.1"
+  revision = "bcd833dfe83d3cebad139e4a29ed79cb2318bf95"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:343d44e06621142ab09ae0c76c1799104cdfddd3ffb445d78b1adf8dc3ffaf3d"
@@ -375,11 +407,11 @@
   name = "golang.org/x/crypto"
   packages = ["ssh/terminal"]
   pruneopts = "NUT"
-  revision = "74cb1d3d52f4c01cbfb44c1b50d204462f3124c7"
+  revision = "4d3f4d9ffa16a13f451c3b2999e9c49e9750bf06"
 
 [[projects]]
   branch = "master"
-  digest = "1:04ef33ed36e580e861a8f5389683c35975a964ccf78541c1dd0f66bb86391a0f"
+  digest = "1:90ebbaed1f037ba83cc2c1963cce42af56deab5cda72c63ae132a0473e019908"
   name = "golang.org/x/net"
   packages = [
     "http/httpguts",
@@ -388,18 +420,18 @@
     "idna",
   ]
   pruneopts = "NUT"
-  revision = "9b4f9f5ad5197c79fd623a3638e70d8b26cef344"
+  revision = "c10e9556a7bc0e7c942242b606f0acf024ad5d6a"
 
 [[projects]]
   branch = "master"
-  digest = "1:f017a02adcf35db6cd8847f49811247058dad1c3702ff68f4baeaa488b7ecce6"
+  digest = "1:3bcf6eb3757db3e22c41d212f886b86d0f940f86e1af85b13cd31122ac341193"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
   ]
   pruneopts = "NUT"
-  revision = "5cd93ef61a7c8f0f858690154eb6de2e69415fa1"
+  revision = "9b800f95dbbc54abff0acf7ee32d88ba4e328c89"
 
 [[projects]]
   digest = "1:e7071ed636b5422cc51c0e3a6cebc229d6c9fffc528814b519a980641422d619"
@@ -425,7 +457,7 @@
   version = "v0.3.0"
 
 [[projects]]
-  digest = "1:41147ed90b063df283fc4c694cc3f9fb4524a4b1a16d065237b928ee127647e5"
+  digest = "1:3f36ff57a1033b3e4eb2c03c311b23c9da6890fd94ddd56dc05c57b4214eb782"
   name = "gopkg.in/AlecAivazis/survey.v1"
   packages = [
     ".",
@@ -433,8 +465,8 @@
     "terminal",
   ]
   pruneopts = "NUT"
-  revision = "f30c5d1830c892f533140f29a1de89141dc217f5"
-  version = "v1.6.2"
+  revision = "0be4439d90f533f1ea2e0adddd5b1a405e6f5559"
+  version = "v1.6.3"
 
 [[projects]]
   digest = "1:2d1fbdc6777e5408cabeb02bf336305e724b925ff4546ded0fa8715a7267922a"
@@ -453,20 +485,36 @@
   version = "v2.2.1"
 
 [[projects]]
-  digest = "1:b20a21815244073c3a801d5343ef631ce3072af4c2cf4949508f643dcb2a6a9b"
+  branch = "master"
+  digest = "1:7d9e8047d43bbe91e072e0b591e22032318e21a95ffddcfbf196cdaf87ae03f4"
+  name = "k8s.io/api"
+  packages = ["core/v1"]
+  pruneopts = "NUT"
+  revision = "7c111c89a854dfd8ba47d0bfdbe352bc85951011"
+
+[[projects]]
+  digest = "1:7d8008e86851d9698576f1e3f5dccd9f7a1f93c7560f2fbed226f0bc27015b3f"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/resource",
     "pkg/apis/meta/v1",
+    "pkg/apis/meta/v1/unstructured",
+    "pkg/apis/meta/v1/validation",
     "pkg/conversion",
     "pkg/conversion/queryparams",
     "pkg/fields",
     "pkg/labels",
     "pkg/runtime",
     "pkg/runtime/schema",
+    "pkg/runtime/serializer",
+    "pkg/runtime/serializer/json",
+    "pkg/runtime/serializer/protobuf",
+    "pkg/runtime/serializer/recognizer",
+    "pkg/runtime/serializer/versioning",
     "pkg/selection",
     "pkg/types",
     "pkg/util/errors",
+    "pkg/util/framer",
     "pkg/util/intstr",
     "pkg/util/json",
     "pkg/util/net",
@@ -476,6 +524,7 @@
     "pkg/util/validation",
     "pkg/util/validation/field",
     "pkg/util/wait",
+    "pkg/util/yaml",
     "pkg/watch",
     "third_party/forked/golang/reflect",
   ]
@@ -494,6 +543,41 @@
   revision = "78700dec6369ba22221b72770783300f143df150"
   version = "v6.0.0"
 
+[[projects]]
+  digest = "1:ff54706d46de40c865b5fcfc4bde1087c02510cd12e0150de8e405ab427d9907"
+  name = "k8s.io/utils"
+  packages = ["pointer"]
+  pruneopts = "NUT"
+  revision = "4c3feeb576b06ef8fea769809bd3db5e5e78dc23"
+
+[[projects]]
+  branch = "master"
+  digest = "1:a040a17df839b73c811d0554f4c74cd90e473a869f301da6d42df24097f1a89d"
+  name = "sigs.k8s.io/cluster-api"
+  packages = [
+    "pkg/apis/cluster/common",
+    "pkg/apis/cluster/v1alpha1",
+  ]
+  pruneopts = "NUT"
+  revision = "fee897706a82938117591515fbd4e85e667299a7"
+
+[[projects]]
+  branch = "master"
+  digest = "1:14833e88e9193430014238507ee22eb650952caa5b70611babab520380cfcbc8"
+  name = "sigs.k8s.io/cluster-api-provider-aws"
+  packages = ["pkg/apis/awsproviderconfig/v1alpha1"]
+  pruneopts = "NUT"
+  revision = "24d07d04fe7fa31597bf75f45d4cd41d0e4b2b94"
+  source = "https://github.com/openshift/cluster-api-provider-aws.git"
+
+[[projects]]
+  digest = "1:84a8609383bec11b71d52dd813f33f1d16614b91966940bdc2aa79bea864fa25"
+  name = "sigs.k8s.io/controller-runtime"
+  packages = ["pkg/runtime/scheme"]
+  pruneopts = "NUT"
+  revision = "5fd1e9e9fac5261e9ad9d47c375afc014fc31d21"
+  version = "v0.1.7"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -511,6 +595,7 @@
     "github.com/gregjones/httpcache",
     "github.com/gregjones/httpcache/diskcache",
     "github.com/libvirt/libvirt-go",
+    "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
     "github.com/openshift/hive/contrib/pkg/awstagdeprovision",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
@@ -521,10 +606,16 @@
     "github.com/vincent-petithory/dataurl",
     "golang.org/x/sys/unix",
     "gopkg.in/AlecAivazis/survey.v1",
+    "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
+    "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/util/rand",
+    "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/client-go/tools/clientcmd/api/v1",
+    "k8s.io/utils/pointer",
+    "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1",
+    "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

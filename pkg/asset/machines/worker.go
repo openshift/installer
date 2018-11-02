@@ -7,7 +7,11 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
@@ -68,61 +72,56 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 
 	ic := installconfig.Config
 	pool := workerPool(ic.Machines)
-	numOfWorkers := int64(0)
-	if pool.Replicas != nil {
-		numOfWorkers = *pool.Replicas
-	}
-
 	switch ic.Platform.Name() {
 	case "aws":
-		config := aws.WorkerConfig{}
-		config.ClusterName = ic.ObjectMeta.Name
-		config.Region = ic.Platform.AWS.Region
-		config.Machine = defaultAWSMachinePoolPlatform()
-
-		tags := map[string]string{
-			"tectonicClusterID": ic.ClusterID,
-			// Info: https://github.com/openshift/cluster-api-provider-aws/issues/73
-			// fmt.Sprintf("kubernetes.io/cluster/%s", ic.ObjectMeta.Name): "owned",
-		}
-		for k, v := range ic.Platform.AWS.UserTags {
-			tags[k] = v
-		}
-		config.Tags = tags
-
-		config.Machine.Set(ic.Platform.AWS.DefaultMachinePlatform)
-		config.Machine.Set(pool.Platform.AWS)
-
-		ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
-		defer cancel()
-		ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, config.Region)
-		if err != nil {
-			return errors.Wrap(err, "failed to determine default AMI")
-		}
-		config.AMIID = ami
-
-		azs, err := aws.AvailabilityZones(config.Region)
-		if err != nil {
-			return errors.Wrap(err, "failed to fetch availability zones")
-		}
-		numOfAZs := int64(len(azs))
-		for idx, az := range azs {
-			replicas := numOfWorkers / numOfAZs
-			if int64(idx) < numOfWorkers%numOfAZs {
-				replicas++
+		mpool := defaultAWSMachinePoolPlatform()
+		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.AWS)
+		if mpool.AMIID == "" {
+			ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
+			defer cancel()
+			ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, ic.Platform.AWS.Region)
+			if err != nil {
+				return errors.Wrap(err, "failed to determine default AMI")
 			}
-			config.Instances = append(config.Instances, aws.WorkerMachinesetInstance{Replicas: replicas, AvailabilityZone: az})
+			mpool.AMIID = ami
+		}
+		if len(mpool.Zones) == 0 {
+			azs, err := aws.AvailabilityZones(ic.Platform.AWS.Region)
+			if err != nil {
+				return errors.Wrap(err, "failed to fetch availability zones")
+			}
+			mpool.Zones = azs
+		}
+		pool.Platform.AWS = &mpool
+		sets, err := aws.MachineSets(ic, &pool, "worker", "worker-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create worker machine objects")
 		}
 
-		w.MachineSetRaw = applyTemplateData(aws.WorkerMachineSetsTmpl, config)
-	case "libvirt":
-		config := libvirt.Config{
-			ClusterName: ic.ObjectMeta.Name,
-			Replicas:    numOfWorkers,
-			Platform:    *ic.Platform.Libvirt,
+		list := listFromMachineSets(sets)
+		raw, err := yaml.Marshal(list)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal")
 		}
-		w.MachineSetRaw = applyTemplateData(libvirt.WorkerMachineSetTmpl, config)
+		w.MachineSetRaw = raw
+	case "libvirt":
+		sets, err := libvirt.MachineSets(ic, &pool, "worker", "worker-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create worker machine objects")
+		}
+
+		list := listFromMachineSets(sets)
+		raw, err := yaml.Marshal(list)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal")
+		}
+		w.MachineSetRaw = raw
 	case "openstack":
+		numOfWorkers := int64(0)
+		if pool.Replicas != nil {
+			numOfWorkers = *pool.Replicas
+		}
 		config := openstack.Config{
 			ClusterName: ic.ObjectMeta.Name,
 			Replicas:    numOfWorkers,
@@ -161,4 +160,17 @@ func applyTemplateData(template *template.Template, templateData interface{}) []
 		panic(err)
 	}
 	return buf.Bytes()
+}
+
+func listFromMachineSets(objs []clusterapi.MachineSet) *metav1.List {
+	list := &metav1.List{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "List",
+		},
+	}
+	for idx := range objs {
+		list.Items = append(list.Items, runtime.RawExtension{Object: &objs[idx]})
+	}
+	return list
 }
