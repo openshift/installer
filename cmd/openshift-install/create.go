@@ -164,8 +164,9 @@ func destroyBootstrap(ctx context.Context, directory string) (err error) {
 		if err == nil {
 			logrus.Infof("API %s up", version)
 			cancel()
+		} else {
+			logrus.Debugf("API not up yet: %s", err)
 		}
-		logrus.Debugf("API not up yet: %s", err)
 	}, 2*time.Second, apiContext.Done())
 
 	events := client.CoreV1().Events("kube-system")
