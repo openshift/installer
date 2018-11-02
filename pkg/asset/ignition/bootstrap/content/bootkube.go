@@ -12,10 +12,10 @@ const (
 Description=Bootstrap a Kubernetes cluster
 Wants=kubelet.service
 After=kubelet.service
+ConditionPathExists=!/opt/tectonic/.bootkube.done
 
 [Service]
 WorkingDirectory=/opt/tectonic
-RemainAfterExit=true
 ExecStart=/usr/local/bin/bootkube.sh
 
 Restart=on-failure
