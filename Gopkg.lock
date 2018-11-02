@@ -33,7 +33,7 @@
   version = "v2.0"
 
 [[projects]]
-  digest = "1:35b6e283beb90a7f3554057fe98780224a594bf73b15be705cfad9db8ad43a58"
+  digest = "1:411db86425d0d68cbb9bb92f28b62ccfb8d6351d9ed94676a8c424d3ed4af808"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -71,6 +71,7 @@
     "service/autoscaling",
     "service/ec2",
     "service/elb",
+    "service/elbv2",
     "service/iam",
     "service/route53",
     "service/s3",
@@ -258,11 +259,11 @@
   revision = "9520e82c474b0a04dd04f8a40959027271bab992"
 
 [[projects]]
-  digest = "1:52cea75b92e043814e4aad64e3372d71c8e8535cb51fcc39240f3e84ac8109cd"
+  digest = "1:14f70ac5f181ccb012cddc7c72ac28709497155340b2fad822bd15d9a8722d93"
   name = "github.com/openshift/hive"
   packages = ["contrib/pkg/awstagdeprovision"]
   pruneopts = "NUT"
-  revision = "ef6beb7b14eddb889a97cffc9d1a1d997da47ca7"
+  revision = "8c7844d9b61c35f53bab561f5ce4d879fef86ec6"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
@@ -500,7 +501,6 @@
     "github.com/apparentlymart/go-cidr/cidr",
     "github.com/awalterschulze/gographviz",
     "github.com/aws/aws-sdk-go/aws",
-    "github.com/aws/aws-sdk-go/aws/credentials",
     "github.com/aws/aws-sdk-go/aws/session",
     "github.com/aws/aws-sdk-go/service/ec2",
     "github.com/coreos/ignition/config/util",

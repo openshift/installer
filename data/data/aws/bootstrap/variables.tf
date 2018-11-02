@@ -18,16 +18,6 @@ variable "cluster_name" {
   description = "The name of the cluster."
 }
 
-variable "elbs" {
-  type        = "list"
-  default     = []
-  description = "Elastic load balancer IDs to attach to the bootstrap node."
-}
-
-variable "elbs_length" {
-  description = "The length of the 'elbs' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
-}
-
 variable "iam_role" {
   type        = "string"
   default     = ""
@@ -43,6 +33,26 @@ variable "instance_type" {
   type        = "string"
   default     = "t2.medium"
   description = "The EC2 instance type for the bootstrap node."
+}
+
+variable "private_target_group_arns" {
+  type        = "list"
+  default     = []
+  description = "The list of target group ARNs for the private load balancer."
+}
+
+variable "private_target_group_arns_length" {
+  description = "The length of the 'private_target_group_arns' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
+}
+
+variable "public_target_group_arns" {
+  type        = "list"
+  default     = []
+  description = "The list of target group ARNs for the public load balancer."
+}
+
+variable "public_target_group_arns_length" {
+  description = "The length of the 'public_target_group_arns' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
 }
 
 variable "subnet_id" {

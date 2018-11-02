@@ -59,4 +59,4 @@ ignored = ["github.com/openshift/installer/tests*"]
 
 [[constraint]]
   name = "github.com/openshift/hive"
-  revision = "ef6beb7b14eddb889a97cffc9d1a1d997da47ca7"
+  revision = "8c7844d9b61c35f53bab561f5ce4d879fef86ec6"

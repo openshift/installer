@@ -120,8 +120,16 @@ resource "aws_instance" "bootstrap" {
   volume_tags = "${var.tags}"
 }
 
-resource "aws_elb_attachment" "bootstrap" {
-  count    = "${var.elbs_length}"
-  elb      = "${var.elbs[count.index]}"
-  instance = "${aws_instance.bootstrap.id}"
+resource "aws_lb_target_group_attachment" "public" {
+  count = "${var.public_target_group_arns_length}"
+
+  target_group_arn = "${var.public_target_group_arns[count.index]}"
+  target_id        = "${aws_instance.bootstrap.private_ip}"
+}
+
+resource "aws_lb_target_group_attachment" "private" {
+  count = "${var.private_target_group_arns_length}"
+
+  target_group_arn = "${var.private_target_group_arns[count.index]}"
+  target_id        = "${aws_instance.bootstrap.private_ip}"
 }
