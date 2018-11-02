@@ -96,7 +96,8 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
 		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
-		--config-override-files=/assets/bootkube-config-overrides/kube-controller-manager-config-overrides.yaml
+		--config-override-files=/assets/bootkube-config-overrides/kube-controller-manager-config-overrides.yaml \
+		--disable-phase-2
 
 	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
 	cp kube-controller-manager-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -224,7 +225,7 @@ podman run \
 	--network=host \
 	--entrypoint=/bootkube \
 	"{{.BootkubeImage}}" \
-	start --asset-dir=/assets --required-pods openshift-kube-apiserver/openshift-kube-apiserver,kube-system/kube-scheduler,kube-system/kube-controller-manager,openshift-cluster-version/cluster-version-operator
+	start --asset-dir=/assets --required-pods openshift-kube-apiserver/openshift-kube-apiserver,kube-system/kube-scheduler,openshift-kube-controller-manager/openshift-kube-controller-manager,openshift-cluster-version/cluster-version-operator
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/tectonic/.bootkube.done
