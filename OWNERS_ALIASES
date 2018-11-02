@@ -10,7 +10,6 @@ aliases:
     - staebler
     - steveeJ
     - wking
-    - yifan-gu
   installer-reviewers:
     - vikramsk
   openstack-approvers:
