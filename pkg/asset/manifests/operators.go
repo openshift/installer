@@ -134,6 +134,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"pull.json":                             applyTemplateData(bootkube.Pull, templateData),
 		"tectonic-network-operator.yaml":        applyTemplateData(bootkube.TectonicNetworkOperator, templateData),
 		"cvo-overrides.yaml":                    applyTemplateData(bootkube.CVOOverrides, templateData),
+		"legacy-cvo-overrides.yaml":             applyTemplateData(bootkube.LegacyCVOOverrides, templateData),
 		"etcd-service-endpoints.yaml":           applyTemplateData(bootkube.EtcdServiceEndpointsKubeSystem, templateData),
 		"kube-system-secret-etcd-client.yaml":   applyTemplateData(bootkube.KubeSystemSecretEtcdClient, templateData),
 
