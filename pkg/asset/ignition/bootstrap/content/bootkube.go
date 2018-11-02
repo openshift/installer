@@ -199,7 +199,7 @@ until podman run \
 		--volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
 		"{{.EtcdctlImage}}" \
 		/usr/local/bin/etcdctl \
-		--dial-timeout=10m \
+		--dial-timeout=1m \
 		--cacert=/opt/tectonic/tls/etcd-client-ca.crt \
 		--cert=/opt/tectonic/tls/etcd-client.crt \
 		--key=/opt/tectonic/tls/etcd-client.key \
