@@ -34,41 +34,58 @@ type target struct {
 	assets  []asset.WritableAsset
 }
 
-var targets = []target{{
-	name: "Install Config",
-	command: &cobra.Command{
-		Use:   "install-config",
-		Short: "Generates the Install Config asset",
-		Long:  "",
-	},
-	assets: []asset.WritableAsset{&installconfig.InstallConfig{}},
-}, {
-	name: "Manifests",
-	command: &cobra.Command{
-		Use:   "manifests",
-		Short: "Generates the Kubernetes manifests",
-		Long:  "",
-	},
-	assets: []asset.WritableAsset{&manifests.Manifests{}, &manifests.Tectonic{}},
-}, {
-	name: "Ignition Configs",
-	command: &cobra.Command{
-		Use:   "ignition-configs",
-		Short: "Generates the Ignition Config asset",
-		Long:  "",
-	},
-	assets: []asset.WritableAsset{&bootstrap.Bootstrap{}, &machine.Master{}, &machine.Worker{}},
-}, {
-	name: "Cluster",
-	command: &cobra.Command{
-		Use:   "cluster",
-		Short: "Create an OpenShift cluster",
-		PostRunE: func(_ *cobra.Command, _ []string) error {
-			return destroyBootstrap(context.Background(), rootOpts.dir)
+// each target is a variable to preserve the order when creating subcommands and still
+// allow other functions to directly access each target individually.
+var (
+	installConfigTarget = target{
+		name: "Install Config",
+		command: &cobra.Command{
+			Use:   "install-config",
+			Short: "Generates the Install Config asset",
+			// FIXME: add longer descriptions for our commands with examples for better UX.
+			// Long:  "",
 		},
-	},
-	assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}},
-}}
+		assets: []asset.WritableAsset{&installconfig.InstallConfig{}},
+	}
+
+	manifestsTarget = target{
+		name: "Manifests",
+		command: &cobra.Command{
+			Use:   "manifests",
+			Short: "Generates the Kubernetes manifests",
+			// FIXME: add longer descriptions for our commands with examples for better UX.
+			// Long:  "",
+		},
+		assets: []asset.WritableAsset{&manifests.Manifests{}, &manifests.Tectonic{}},
+	}
+
+	ignitionConfigsTarget = target{
+		name: "Ignition Configs",
+		command: &cobra.Command{
+			Use:   "ignition-configs",
+			Short: "Generates the Ignition Config asset",
+			// FIXME: add longer descriptions for our commands with examples for better UX.
+			// Long:  "",
+		},
+		assets: []asset.WritableAsset{&bootstrap.Bootstrap{}, &machine.Master{}, &machine.Worker{}},
+	}
+
+	clusterTarget = target{
+		name: "Cluster",
+		command: &cobra.Command{
+			Use:   "cluster",
+			Short: "Create an OpenShift cluster",
+			// FIXME: add longer descriptions for our commands with examples for better UX.
+			// Long:  "",
+			PostRunE: func(_ *cobra.Command, _ []string) error {
+				return destroyBootstrap(context.Background(), rootOpts.dir)
+			},
+		},
+		assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}},
+	}
+
+	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
+)
 
 // Deprecated: Use 'create' subcommands instead.
 func newTargetsCmd() []*cobra.Command {
@@ -128,15 +145,6 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 				return err
 			}
 		}
-
-		if err := assetStore.Save(rootOpts.dir); err != nil {
-			return errors.Wrapf(err, "failed to write to state file")
-		}
-
-		if err := assetStore.Purge(targets); err != nil {
-			return errors.Wrapf(err, "failed to delete existing on-disk files")
-		}
-
 		return nil
 	}
 }

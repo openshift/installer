@@ -5,6 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/destroy"
 	"github.com/openshift/installer/pkg/destroy/bootstrap"
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
@@ -48,6 +49,16 @@ func runDestroyCmd(cmd *cobra.Command, args []string) error {
 	if err := destroyer.Run(); err != nil {
 		return errors.Wrap(err, "Failed to destroy cluster")
 
+	}
+
+	store, err := asset.NewStore(rootOpts.dir)
+	if err != nil {
+		return errors.Wrapf(err, "failed to create asset store")
+	}
+	for _, asset := range clusterTarget.assets {
+		if err := store.Destroy(asset); err != nil {
+			return errors.Wrapf(err, "failed to destroy asset %q", asset.Name())
+		}
 	}
 	return nil
 }
