@@ -7,10 +7,10 @@ const (
 Description=Bootstrap a Tectonic cluster
 Wants=bootkube.service
 After=bootkube.service
+ConditionPathExists=!/opt/tectonic/.tectonic.done
 
 [Service]
 WorkingDirectory=/opt/tectonic/tectonic
-RemainAfterExit=true
 ExecStart=/usr/local/bin/tectonic.sh /opt/tectonic/auth/kubeconfig
 
 Restart=on-failure
