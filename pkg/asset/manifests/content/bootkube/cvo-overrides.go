@@ -15,7 +15,7 @@ apiVersion: config.openshift.io/v1
 kind: ClusterVersion
 metadata:
   namespace: openshift-cluster-version
-  name: cluster-version-operator
+  name: version
 spec:
   upstream: http://localhost:8080/graph
   channel: fast
