@@ -30,26 +30,6 @@ variable "instance_type" {
   description = "The EC2 instance type for the bootstrap node."
 }
 
-variable "private_target_group_arns" {
-  type        = "list"
-  default     = []
-  description = "The list of target group ARNs for the private load balancer."
-}
-
-variable "private_target_group_arns_length" {
-  description = "The length of the 'private_target_group_arns' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
-}
-
-variable "public_target_group_arns" {
-  type        = "list"
-  default     = []
-  description = "The list of target group ARNs for the public load balancer."
-}
-
-variable "public_target_group_arns_length" {
-  description = "The length of the 'public_target_group_arns' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
-}
-
 variable "subnet_id" {
   type        = "string"
   description = "The subnet ID for the bootstrap node."
@@ -59,6 +39,16 @@ variable "tags" {
   type        = "map"
   default     = {}
   description = "AWS tags to be applied to created resources."
+}
+
+variable "target_group_arns" {
+  type        = "list"
+  default     = []
+  description = "The list of target group ARNs for the load balancer."
+}
+
+variable "target_group_arns_length" {
+  description = "The length of the 'target_group_arns' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
 }
 
 variable "volume_iops" {

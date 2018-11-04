@@ -17,17 +17,15 @@ provider "aws" {
 module "bootstrap" {
   source = "./bootstrap"
 
-  ami                              = "${var.tectonic_aws_ec2_ami_override}"
-  associate_public_ip_address      = "${var.tectonic_aws_endpoints != "private"}"
-  cluster_name                     = "${var.tectonic_cluster_name}"
-  public_target_group_arns         = "${module.vpc.aws_lb_public_target_group_arns}"
-  public_target_group_arns_length  = "${module.vpc.aws_lb_public_target_group_arns_length}"
-  private_target_group_arns        = "${module.vpc.aws_lb_private_target_group_arns}"
-  private_target_group_arns_length = "${module.vpc.aws_lb_private_target_group_arns_length}"
-  iam_role                         = "${var.tectonic_aws_master_iam_role_name}"
-  ignition                         = "${var.ignition_bootstrap}"
-  subnet_id                        = "${module.vpc.master_subnet_ids[0]}"
-  vpc_security_group_ids           = ["${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"]
+  ami                         = "${var.tectonic_aws_ec2_ami_override}"
+  associate_public_ip_address = "${var.tectonic_aws_endpoints != "private"}"
+  cluster_name                = "${var.tectonic_cluster_name}"
+  iam_role                    = "${var.tectonic_aws_master_iam_role_name}"
+  ignition                    = "${var.ignition_bootstrap}"
+  subnet_id                   = "${module.vpc.master_subnet_ids[0]}"
+  target_group_arns           = "${module.vpc.aws_lb_target_group_arns}"
+  target_group_arns_length    = "${module.vpc.aws_lb_target_group_arns_length}"
+  vpc_security_group_ids      = ["${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"]
 
   tags = "${merge(map(
       "Name", "${var.tectonic_cluster_name}-bootstrap",
@@ -38,26 +36,23 @@ module "bootstrap" {
 module "masters" {
   source = "./master"
 
-  public_target_group_arns         = "${module.vpc.aws_lb_public_target_group_arns}"
-  public_target_group_arns_length  = "${module.vpc.aws_lb_public_target_group_arns_length}"
-  private_target_group_arns        = "${module.vpc.aws_lb_private_target_group_arns}"
-  private_target_group_arns_length = "${module.vpc.aws_lb_private_target_group_arns_length}"
-  base_domain                      = "${var.tectonic_base_domain}"
-  cluster_id                       = "${var.tectonic_cluster_id}"
-  cluster_name                     = "${var.tectonic_cluster_name}"
-  ec2_type                         = "${var.tectonic_aws_master_ec2_type}"
-  extra_tags                       = "${var.tectonic_aws_extra_tags}"
-  instance_count                   = "${var.tectonic_master_count}"
-  master_iam_role                  = "${var.tectonic_aws_master_iam_role_name}"
-  master_sg_ids                    = "${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"
-  private_endpoints                = "${local.private_endpoints}"
-  public_endpoints                 = "${local.public_endpoints}"
-  root_volume_iops                 = "${var.tectonic_aws_master_root_volume_iops}"
-  root_volume_size                 = "${var.tectonic_aws_master_root_volume_size}"
-  root_volume_type                 = "${var.tectonic_aws_master_root_volume_type}"
-  subnet_ids                       = "${module.vpc.master_subnet_ids}"
-  ec2_ami                          = "${var.tectonic_aws_ec2_ami_override}"
-  user_data_ign                    = "${var.ignition_master}"
+  base_domain              = "${var.tectonic_base_domain}"
+  cluster_id               = "${var.tectonic_cluster_id}"
+  cluster_name             = "${var.tectonic_cluster_name}"
+  ec2_type                 = "${var.tectonic_aws_master_ec2_type}"
+  extra_tags               = "${var.tectonic_aws_extra_tags}"
+  instance_count           = "${var.tectonic_master_count}"
+  master_iam_role          = "${var.tectonic_aws_master_iam_role_name}"
+  master_sg_ids            = "${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"
+  public_endpoints         = "${local.public_endpoints}"
+  root_volume_iops         = "${var.tectonic_aws_master_root_volume_iops}"
+  root_volume_size         = "${var.tectonic_aws_master_root_volume_size}"
+  root_volume_type         = "${var.tectonic_aws_master_root_volume_type}"
+  subnet_ids               = "${module.vpc.master_subnet_ids}"
+  target_group_arns        = "${module.vpc.aws_lb_target_group_arns}"
+  target_group_arns_length = "${module.vpc.aws_lb_target_group_arns_length}"
+  ec2_ami                  = "${var.tectonic_aws_ec2_ami_override}"
+  user_data_ign            = "${var.ignition_master}"
 }
 
 module "iam" {

@@ -11,6 +11,11 @@ variable "cluster_name" {
   type = "string"
 }
 
+variable "dns_server_ip" {
+  type    = "string"
+  default = ""
+}
+
 variable "ec2_type" {
   type = "string"
 }
@@ -30,6 +35,11 @@ variable "instance_count" {
   type = "string"
 }
 
+variable "kubeconfig_content" {
+  type    = "string"
+  default = ""
+}
+
 variable "master_iam_role" {
   type        = "string"
   default     = ""
@@ -41,34 +51,9 @@ variable "master_sg_ids" {
   description = "The security group IDs to be applied to the master nodes."
 }
 
-variable "private_endpoints" {
-  description = "If set to true, private-facing ingress resources are created."
-  default     = true
-}
-
-variable "private_target_group_arns" {
-  type        = "list"
-  default     = []
-  description = "The list of target group ARNs for the private load balancer."
-}
-
-variable "private_target_group_arns_length" {
-  description = "The length of the 'private_target_group_arns' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
-}
-
 variable "public_endpoints" {
   description = "If set to true, public-facing ingress resources are created."
   default     = true
-}
-
-variable "public_target_group_arns" {
-  type        = "list"
-  default     = []
-  description = "The list of target group ARNs for the public load balancer."
-}
-
-variable "public_target_group_arns_length" {
-  description = "The length of the 'public_target_group_arns' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
 }
 
 variable "root_volume_iops" {
@@ -91,14 +76,14 @@ variable "subnet_ids" {
   type = "list"
 }
 
-variable "dns_server_ip" {
-  type    = "string"
-  default = ""
+variable "target_group_arns" {
+  type        = "list"
+  default     = []
+  description = "The list of target group ARNs for the load balancer."
 }
 
-variable "kubeconfig_content" {
-  type    = "string"
-  default = ""
+variable "target_group_arns_length" {
+  description = "The length of the 'target_group_arns' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
 }
 
 variable "user_data_ign" {

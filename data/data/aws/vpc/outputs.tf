@@ -26,20 +26,12 @@ output "console_sg_id" {
   value = "${aws_security_group.console.id}"
 }
 
-output "aws_lb_private_target_group_arns" {
-  value = "${compact(concat(aws_lb_target_group.api_internal.*.arn, aws_lb_target_group.services.*.arn))}"
+output "aws_lb_target_group_arns" {
+  value = "${compact(concat(aws_lb_target_group.api_internal.*.arn, aws_lb_target_group.services.*.arn, aws_lb_target_group.api_external.*.arn))}"
 }
 
-output "aws_lb_private_target_group_arns_length" {
-  value = "${var.private_master_endpoints ? 2 : 0}"
-}
-
-output "aws_lb_public_target_group_arns" {
-  value = "${compact(concat(aws_lb_target_group.api_external.*.arn))}"
-}
-
-output "aws_lb_public_target_group_arns_length" {
-  value = "${var.public_master_endpoints ? 1 : 0}"
+output "aws_lb_target_group_arns_length" {
+  value = "${(var.private_master_endpoints ? 2 : 0) + (var.public_master_endpoints ? 1 : 0)}"
 }
 
 output "aws_lb_api_external_dns_name" {
