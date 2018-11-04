@@ -19,7 +19,6 @@ module "bootstrap" {
 
   ami                              = "${var.tectonic_aws_ec2_ami_override}"
   associate_public_ip_address      = "${var.tectonic_aws_endpoints != "private"}"
-  bucket                           = "${aws_s3_bucket.bootstrap.id}"
   cluster_name                     = "${var.tectonic_cluster_name}"
   public_target_group_arns         = "${module.vpc.aws_lb_public_target_group_arns}"
   public_target_group_arns_length  = "${module.vpc.aws_lb_public_target_group_arns_length}"
@@ -135,18 +134,4 @@ resource "aws_route53_zone" "tectonic_int" {
       "KubernetesCluster", "${var.tectonic_cluster_name}",
       "tectonicClusterID", "${var.tectonic_cluster_id}"
     ), var.tectonic_aws_extra_tags)}"
-}
-
-resource "aws_s3_bucket" "bootstrap" {
-  acl = "private"
-
-  tags = "${merge(map(
-      "Name", "${var.tectonic_cluster_name}-tectonic",
-      "KubernetesCluster", "${var.tectonic_cluster_name}",
-      "tectonicClusterID", "${var.tectonic_cluster_id}"
-    ), var.tectonic_aws_extra_tags)}"
-
-  lifecycle {
-    ignore_changes = ["*"]
-  }
 }

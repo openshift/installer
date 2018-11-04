@@ -1,5 +1,15 @@
+resource "aws_s3_bucket" "ignition" {
+  acl = "private"
+
+  tags = "${var.tags}"
+
+  lifecycle {
+    ignore_changes = ["*"]
+  }
+}
+
 resource "aws_s3_bucket_object" "ignition" {
-  bucket  = "${var.bucket}"
+  bucket  = "${aws_s3_bucket.ignition.id}"
   key     = "bootstrap.ign"
   content = "${var.ignition}"
   acl     = "private"
@@ -15,7 +25,7 @@ resource "aws_s3_bucket_object" "ignition" {
 
 data "ignition_config" "redirect" {
   replace {
-    source = "s3://${var.bucket}/bootstrap.ign"
+    source = "s3://${aws_s3_bucket.ignition.id}/bootstrap.ign"
   }
 }
 

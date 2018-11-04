@@ -8,11 +8,6 @@ variable "associate_public_ip_address" {
   description = "If set to true, public-facing ingress resources are created."
 }
 
-variable "bucket" {
-  type        = "string"
-  description = "The S3 bucket name or ID for bootstrap ignition file."
-}
-
 variable "cluster_name" {
   type        = "string"
   description = "The name of the cluster."
