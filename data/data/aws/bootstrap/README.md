@@ -12,9 +12,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "aws_s3_bucket" "example" {
-}
-
 resource "aws_vpc" "example" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -30,7 +27,6 @@ module "bootstrap" {
   source = "github.com/openshift/installer//data/data/aws/bootstrap"
 
   ami            = "ami-0af8953af3ec06b7c"
-  bucket         = "${aws_s3_bucket.example.id}"
   cluster_name   = "my-cluster"
   ignition       = "{\"ignition\": {\"version\": \"2.2.0\"}}",
   subnet_id      = "${aws_subnet.example.id}"
