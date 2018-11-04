@@ -90,22 +90,15 @@ resource "libvirt_domain" "master" {
   }
 }
 
-locals {
-  "hostnames" = [
-    "${var.tectonic_cluster_name}-api",
-  ]
-}
-
 data "libvirt_network_dns_host_template" "bootstrap" {
-  count    = "${length(local.hostnames)}"
   ip       = "${var.tectonic_libvirt_bootstrap_ip}"
-  hostname = "${local.hostnames[count.index]}"
+  hostname = "${var.tectonic_cluster_name}-api"
 }
 
 data "libvirt_network_dns_host_template" "masters" {
-  count    = "${var.tectonic_master_count * length(local.hostnames)}"
-  ip       = "${var.tectonic_libvirt_master_ips[count.index / length(local.hostnames)]}"
-  hostname = "${local.hostnames[count.index % length(local.hostnames)]}"
+  count    = "${var.tectonic_master_count}"
+  ip       = "${var.tectonic_libvirt_master_ips[count.index]}"
+  hostname = "${var.tectonic_cluster_name}-api"
 }
 
 data "libvirt_network_dns_host_template" "etcds" {
