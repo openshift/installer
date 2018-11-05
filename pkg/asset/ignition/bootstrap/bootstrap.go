@@ -35,7 +35,6 @@ const (
 // template files.
 type bootstrapTemplateData struct {
 	BootkubeImage         string
-	ClusterDNSIP          string
 	EtcdCertSignerImage   string
 	EtcdCluster           string
 	EtcdctlImage          string
@@ -137,10 +136,6 @@ func (a *Bootstrap) Files() []*asset.File {
 
 // getTemplateData returns the data to use to execute bootstrap templates.
 func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, adminKubeConfig []byte) (*bootstrapTemplateData, error) {
-	clusterDNSIP, err := installconfig.ClusterDNSIP(installConfig)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to get ClusterDNSIP from InstallConfig")
-	}
 	etcdEndpoints := make([]string, installConfig.MasterCount())
 	for i := range etcdEndpoints {
 		etcdEndpoints[i] = fmt.Sprintf("https://%s-etcd-%d.%s:2379", installConfig.ObjectMeta.Name, i, installConfig.BaseDomain)
@@ -153,7 +148,6 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, adminKub
 	}
 
 	return &bootstrapTemplateData{
-		ClusterDNSIP:          clusterDNSIP,
 		EtcdCertSignerImage:   "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
 		EtcdctlImage:          "quay.io/coreos/etcd:v3.2.14",
 		BootkubeImage:         "quay.io/coreos/bootkube:v0.14.0",
@@ -214,18 +208,6 @@ func (a *Bootstrap) addTemporaryBootkubeFiles(templateData *bootstrapTemplateDat
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
 		ignition.FileFromString(filepath.Join(kubeProxyBootstrapDir, "kube-proxy-kubeconfig.yaml"), 0644, applyTemplateData(content.BootkubeKubeProxyKubeConfig, templateData)),
-	)
-
-	kubeDNSBootstrapDir := filepath.Join(rootDir, "kube-dns-operator-bootstrap")
-	for name, data := range content.KubeDNSBootkubeManifests {
-		a.Config.Storage.Files = append(
-			a.Config.Storage.Files,
-			ignition.FileFromString(filepath.Join(kubeDNSBootstrapDir, name), 0644, data),
-		)
-	}
-	a.Config.Storage.Files = append(
-		a.Config.Storage.Files,
-		ignition.FileFromString(filepath.Join(kubeDNSBootstrapDir, "kube-dns-svc.yaml"), 0644, applyTemplateData(content.BootkubeKubeDNSService, templateData)),
 	)
 }
 
