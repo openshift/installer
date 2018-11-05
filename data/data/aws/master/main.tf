@@ -113,16 +113,9 @@ resource "aws_instance" "master" {
   ), var.extra_tags)}"
 }
 
-resource "aws_lb_target_group_attachment" "public" {
-  count = "${var.public_endpoints ? var.instance_count * var.public_target_group_arns_length : 0}"
+resource "aws_lb_target_group_attachment" "master" {
+  count = "${var.instance_count * var.target_group_arns_length}"
 
-  target_group_arn = "${var.public_target_group_arns[count.index % var.public_target_group_arns_length]}"
-  target_id        = "${aws_instance.master.*.private_ip[count.index / var.public_target_group_arns_length]}"
-}
-
-resource "aws_lb_target_group_attachment" "private" {
-  count = "${var.private_endpoints ? var.instance_count * var.private_target_group_arns_length : 0}"
-
-  target_group_arn = "${var.private_target_group_arns[count.index % var.private_target_group_arns_length]}"
-  target_id        = "${aws_instance.master.*.private_ip[count.index / var.private_target_group_arns_length]}"
+  target_group_arn = "${var.target_group_arns[count.index % var.target_group_arns_length]}"
+  target_id        = "${aws_instance.master.*.private_ip[count.index / var.target_group_arns_length]}"
 }
