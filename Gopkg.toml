@@ -79,3 +79,7 @@ ignored = ["github.com/openshift/installer/tests*"]
 [[constraint]]
   name = "github.com/openshift/cluster-network-operator"
   revision = "fb8b55a1072436a51b153de9acf5bf5525efcf83"
+
+[[constraint]]
+  name = "github.com/gophercloud/utils"
+  revision = "34f5991525d116b3832e0d9409492274f1c06bda"
