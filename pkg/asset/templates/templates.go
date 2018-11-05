@@ -27,7 +27,6 @@ func (m *Templates) Dependencies() []asset.Asset {
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftServiceCertSignerSecret{},
 		&bootkube.Pull{},
-		&bootkube.TectonicNetworkOperator{},
 		&bootkube.CVOOverrides{},
 		&bootkube.LegacyCVOOverrides{},
 		&bootkube.EtcdServiceEndpointsKubeSystem{},
@@ -40,7 +39,6 @@ func (m *Templates) Dependencies() []asset.Asset {
 		&bootkube.OpenshiftClusterAPINamespace{},
 		&bootkube.OpenshiftServiceCertSignerNamespace{},
 		&bootkube.AppVersionKind{},
-		&bootkube.AppVersionTectonicNetwork{},
 		&bootkube.EtcdServiceKubeSystem{},
 		&tectonic.BindingDiscovery{},
 		&tectonic.AppVersionKubeAddon{},
@@ -60,7 +58,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	machineConfigServerTLSSecret := &bootkube.MachineConfigServerTLSSecret{}
 	openshiftServiceCertSignerSecret := &bootkube.OpenshiftServiceCertSignerSecret{}
 	pull := &bootkube.Pull{}
-	tectonicNetworkOperator := &bootkube.TectonicNetworkOperator{}
 	cVOOverrides := &bootkube.CVOOverrides{}
 	legacyCVOOverrides := &bootkube.LegacyCVOOverrides{}
 	etcdServiceEndpointsKubeSystem := &bootkube.EtcdServiceEndpointsKubeSystem{}
@@ -73,7 +70,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	openshiftClusterAPINamespace := &bootkube.OpenshiftClusterAPINamespace{}
 	openshiftServiceCertSignerNamespace := &bootkube.OpenshiftServiceCertSignerNamespace{}
 	appVersionKind := &bootkube.AppVersionKind{}
-	appVersionTectonicNetwork := &bootkube.AppVersionTectonicNetwork{}
 	etcdServiceKubeSystem := &bootkube.EtcdServiceKubeSystem{}
 
 	bindingDiscovery := &tectonic.BindingDiscovery{}
@@ -91,7 +87,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 		machineConfigServerTLSSecret,
 		openshiftServiceCertSignerSecret,
 		pull,
-		tectonicNetworkOperator,
 		cVOOverrides,
 		legacyCVOOverrides,
 		etcdServiceEndpointsKubeSystem,
@@ -104,7 +99,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 		openshiftClusterAPINamespace,
 		openshiftServiceCertSignerNamespace,
 		appVersionKind,
-		appVersionTectonicNetwork,
 		etcdServiceKubeSystem,
 		bindingDiscovery,
 		appVersionKubeAddon,
@@ -121,7 +115,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, machineConfigServerTLSSecret.Files()...)
 	m.FileList = append(m.FileList, openshiftServiceCertSignerSecret.Files()...)
 	m.FileList = append(m.FileList, pull.Files()...)
-	m.FileList = append(m.FileList, tectonicNetworkOperator.Files()...)
 	m.FileList = append(m.FileList, cVOOverrides.Files()...)
 	m.FileList = append(m.FileList, legacyCVOOverrides.Files()...)
 	m.FileList = append(m.FileList, etcdServiceEndpointsKubeSystem.Files()...)
@@ -134,7 +127,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, openshiftClusterAPINamespace.Files()...)
 	m.FileList = append(m.FileList, openshiftServiceCertSignerNamespace.Files()...)
 	m.FileList = append(m.FileList, appVersionKind.Files()...)
-	m.FileList = append(m.FileList, appVersionTectonicNetwork.Files()...)
 	m.FileList = append(m.FileList, etcdServiceKubeSystem.Files()...)
 
 	m.FileList = append(m.FileList, bindingDiscovery.Files()...)

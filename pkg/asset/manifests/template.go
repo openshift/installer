@@ -29,7 +29,6 @@ type bootkubeTemplateData struct {
 	RootCaCert                      string
 	ServiceServingCaCert            string
 	ServiceServingCaKey             string
-	TectonicNetworkOperatorImage    string
 	WorkerIgnConfig                 string
 	CVOClusterID                    string
 	EtcdEndpointHostnames           []string
