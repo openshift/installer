@@ -33,15 +33,10 @@ func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDa
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	numOfAZs := int64(len(azs))
 	var machines []clusterapi.Machine
-	for idx := range azs {
-		replicas := int32(total / numOfAZs)
-		if int64(idx) < total%numOfAZs {
-			replicas++
-		}
-
-		provider, err := provider(config.ClusterID, clustername, platform, mpool, idx, role, userDataSecret)
+	for idx := int64(0); idx < total; idx++ {
+		azIndex := int(idx) % len(azs)
+		provider, err := provider(config.ClusterID, clustername, platform, mpool, azIndex, role, userDataSecret)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
