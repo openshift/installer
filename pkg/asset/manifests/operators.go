@@ -47,6 +47,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&networkOperator{},
 		&tls.RootCA{},
+		&tls.EtcdCA{},
 		&tls.IngressCertKey{},
 		&tls.KubeCA{},
 		&tls.ServiceServingCA{},
@@ -90,6 +91,7 @@ func (m *Manifests) Files() []*asset.File {
 
 func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*asset.File {
 	installConfig := &installconfig.InstallConfig{}
+	etcdCA := &tls.EtcdCA{}
 	kubeCA := &tls.KubeCA{}
 	mcsCertKey := &tls.MCSCertKey{}
 	etcdClientCertKey := &tls.EtcdClientCertKey{}
@@ -97,6 +99,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	serviceServingCA := &tls.ServiceServingCA{}
 	dependencies.Get(
 		installConfig,
+		etcdCA,
 		etcdClientCertKey,
 		kubeCA,
 		mcsCertKey,
@@ -111,6 +114,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 
 	templateData := &bootkubeTemplateData{
 		Base64encodeCloudProviderConfig: "", // FIXME
+		EtcdCaCert:                      base64.StdEncoding.EncodeToString(etcdCA.Cert()),
 		EtcdClientCert:                  base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
 		EtcdClientKey:                   base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
 		KubeCaCert:                      base64.StdEncoding.EncodeToString(kubeCA.Cert()),
@@ -128,15 +132,16 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	}
 
 	assetData := map[string][]byte{
-		"kube-cloud-config.yaml":                applyTemplateData(bootkube.KubeCloudConfig, templateData),
-		"machine-config-server-tls-secret.yaml": applyTemplateData(bootkube.MachineConfigServerTLSSecret, templateData),
-		"openshift-service-signer-secret.yaml":  applyTemplateData(bootkube.OpenshiftServiceCertSignerSecret, templateData),
-		"pull.json":                             applyTemplateData(bootkube.Pull, templateData),
-		"tectonic-network-operator.yaml":        applyTemplateData(bootkube.TectonicNetworkOperator, templateData),
-		"cvo-overrides.yaml":                    applyTemplateData(bootkube.CVOOverrides, templateData),
-		"legacy-cvo-overrides.yaml":             applyTemplateData(bootkube.LegacyCVOOverrides, templateData),
-		"etcd-service-endpoints.yaml":           applyTemplateData(bootkube.EtcdServiceEndpointsKubeSystem, templateData),
-		"kube-system-secret-etcd-client.yaml":   applyTemplateData(bootkube.KubeSystemSecretEtcdClient, templateData),
+		"kube-cloud-config.yaml":                     applyTemplateData(bootkube.KubeCloudConfig, templateData),
+		"machine-config-server-tls-secret.yaml":      applyTemplateData(bootkube.MachineConfigServerTLSSecret, templateData),
+		"openshift-service-signer-secret.yaml":       applyTemplateData(bootkube.OpenshiftServiceCertSignerSecret, templateData),
+		"pull.json":                                  applyTemplateData(bootkube.Pull, templateData),
+		"tectonic-network-operator.yaml":             applyTemplateData(bootkube.TectonicNetworkOperator, templateData),
+		"cvo-overrides.yaml":                         applyTemplateData(bootkube.CVOOverrides, templateData),
+		"legacy-cvo-overrides.yaml":                  applyTemplateData(bootkube.LegacyCVOOverrides, templateData),
+		"etcd-service-endpoints.yaml":                applyTemplateData(bootkube.EtcdServiceEndpointsKubeSystem, templateData),
+		"kube-system-configmap-etcd-serving-ca.yaml": applyTemplateData(bootkube.KubeSystemConfigmapEtcdServingCA, templateData),
+		"kube-system-secret-etcd-client.yaml":        applyTemplateData(bootkube.KubeSystemSecretEtcdClient, templateData),
 
 		"01-tectonic-namespace.yaml":                 []byte(bootkube.TectonicNamespace),
 		"03-openshift-web-console-namespace.yaml":    []byte(bootkube.OpenshiftWebConsoleNamespace),
