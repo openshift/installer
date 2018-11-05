@@ -138,22 +138,27 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		etcdEndpointHostnames[i] = fmt.Sprintf("%s-etcd-%d", installConfig.Config.ObjectMeta.Name, i)
 	}
 
+	platformConfig, err := yaml.Marshal(installConfig.Config.Platform)
+	if err != nil {
+		panic(err)
+	}
+
 	templateData := &bootkubeTemplateData{
-		Base64encodeCloudProviderConfig: "", // FIXME
-		EtcdCaCert:                      string(etcdCA.Cert()),
-		EtcdClientCert:                  base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
-		EtcdClientKey:                   base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
-		KubeCaCert:                      base64.StdEncoding.EncodeToString(kubeCA.Cert()),
-		KubeCaKey:                       base64.StdEncoding.EncodeToString(kubeCA.Key()),
-		McsTLSCert:                      base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
-		McsTLSKey:                       base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
-		PullSecret:                      base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
-		RootCaCert:                      string(rootCA.Cert()),
-		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(serviceServingCA.Cert()),
-		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(serviceServingCA.Key()),
-		CVOClusterID:                    installConfig.Config.ClusterID,
-		EtcdEndpointHostnames:           etcdEndpointHostnames,
-		EtcdEndpointDNSSuffix:           installConfig.Config.BaseDomain,
+		CloudProviderConfig:   string(platformConfig),
+		EtcdCaCert:            string(etcdCA.Cert()),
+		EtcdClientCert:        base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
+		EtcdClientKey:         base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
+		KubeCaCert:            base64.StdEncoding.EncodeToString(kubeCA.Cert()),
+		KubeCaKey:             base64.StdEncoding.EncodeToString(kubeCA.Key()),
+		McsTLSCert:            base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
+		McsTLSKey:             base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
+		PullSecret:            base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+		RootCaCert:            string(rootCA.Cert()),
+		ServiceServingCaCert:  base64.StdEncoding.EncodeToString(serviceServingCA.Cert()),
+		ServiceServingCaKey:   base64.StdEncoding.EncodeToString(serviceServingCA.Key()),
+		CVOClusterID:          installConfig.Config.ClusterID,
+		EtcdEndpointHostnames: etcdEndpointHostnames,
+		EtcdEndpointDNSSuffix: installConfig.Config.BaseDomain,
 	}
 
 	kubeCloudConfig := &bootkube.KubeCloudConfig{}

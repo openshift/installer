@@ -1,5 +1,9 @@
 package openstack
 
+import (
+	"github.com/gophercloud/utils/openstack/clientconfig"
+)
+
 // Platform stores all the global configuration that all
 // machinesets use.
 type Platform struct {
@@ -22,6 +26,9 @@ type Platform struct {
 	// Cloud
 	// Name of OpenStack cloud to use from clouds.yaml
 	Cloud string `json:"cloud"`
+
+	// Cloud config instance
+	CloudConfig *clientconfig.Cloud
 
 	// ExternalNetwork
 	// The OpenStack external network to be used for installation.

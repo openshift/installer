@@ -17,22 +17,22 @@ type cloudCredsSecretData struct {
 }
 
 type bootkubeTemplateData struct {
-	Base64encodeCloudProviderConfig string
-	EtcdCaCert                      string
-	EtcdClientCert                  string
-	EtcdClientKey                   string
-	KubeCaCert                      string
-	KubeCaKey                       string
-	McsTLSCert                      string
-	McsTLSKey                       string
-	PullSecret                      string
-	RootCaCert                      string
-	ServiceServingCaCert            string
-	ServiceServingCaKey             string
-	WorkerIgnConfig                 string
-	CVOClusterID                    string
-	EtcdEndpointHostnames           []string
-	EtcdEndpointDNSSuffix           string
+	CloudProviderConfig   string
+	EtcdCaCert            string
+	EtcdClientCert        string
+	EtcdClientKey         string
+	KubeCaCert            string
+	KubeCaKey             string
+	McsTLSCert            string
+	McsTLSKey             string
+	PullSecret            string
+	RootCaCert            string
+	ServiceServingCaCert  string
+	ServiceServingCaKey   string
+	WorkerIgnConfig       string
+	CVOClusterID          string
+	EtcdEndpointHostnames []string
+	EtcdEndpointDNSSuffix string
 }
 
 type tectonicTemplateData struct {
