@@ -14,7 +14,7 @@ $ openshift-install version
 <your output here>
 ```
 
-# Platform (aws|libvirt|openshift):
+# Platform (aws|libvirt|openstack):
 
 Enter text here.
 
