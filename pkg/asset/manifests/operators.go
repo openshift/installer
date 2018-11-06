@@ -141,6 +141,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"legacy-cvo-overrides.yaml":                  applyTemplateData(bootkube.LegacyCVOOverrides, templateData),
 		"etcd-service-endpoints.yaml":                applyTemplateData(bootkube.EtcdServiceEndpointsKubeSystem, templateData),
 		"kube-system-configmap-etcd-serving-ca.yaml": applyTemplateData(bootkube.KubeSystemConfigmapEtcdServingCA, templateData),
+		"kube-system-configmap-root-ca.yaml":         applyTemplateData(bootkube.KubeSystemConfigmapRootCA, templateData),
 		"kube-system-secret-etcd-client.yaml":        applyTemplateData(bootkube.KubeSystemSecretEtcdClient, templateData),
 
 		"01-tectonic-namespace.yaml":                 []byte(bootkube.TectonicNamespace),
