@@ -1,7 +1,6 @@
 package libvirt
 
 import (
-	"compress/gzip"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -76,16 +75,7 @@ func (libvirt *Libvirt) UseCachedImage() (err error) {
 			return err
 		}
 
-		var reader io.Reader
-		if strings.HasSuffix(libvirt.Image, ".gz") {
-			reader, err = gzip.NewReader(resp.Body)
-			if err != nil {
-				return err
-			}
-		} else {
-			reader = resp.Body
-		}
-		err = cacheImage(reader, imagePath)
+		err = cacheImage(resp.Body, imagePath)
 		if err != nil {
 			return err
 		}
