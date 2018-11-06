@@ -96,8 +96,7 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
 		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
-		--config-override-files=/assets/bootkube-config-overrides/kube-controller-manager-config-overrides.yaml \
-		--disable-phase-2
+		--config-override-files=/assets/bootkube-config-overrides/kube-controller-manager-config-overrides.yaml
 
 	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
 	cp kube-controller-manager-bootstrap/bootstrap-manifests/* bootstrap-manifests/
