@@ -3,5 +3,6 @@
 
 approvers:
   - installer-approvers
+  - openstack-approvers
 reviewers:
   - installer-reviewers
