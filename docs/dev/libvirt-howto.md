@@ -2,6 +2,14 @@
 
 Launching clusters via libvirt is especially useful for operator development.
 
+## Automated Setup
+Ansible can complete all of the steps below to automate this process.
+All you need is `sudo`. Run this from the root of the repository. 
+
+```sh
+$ ansible-playbook -i localhost, hack/ocp_libvirt_setup.yaml -K -c local
+```
+
 ## One-time setup
 It's expected that you will create and destroy clusters often in the course of development. These steps only need to be run once.
 
@@ -124,50 +132,6 @@ libvirtd_opts="--listen"
 ```
 
 Next, restart libvirt: `systemctl restart libvirtd`
-
-#### Firewall
-Finally, if you have a firewall, you may have to allow connections to the
-libvirt daemon from the IP range used by your cluster nodes.
-
-The following examples use the default cluster IP range of `192.168.126.0/24` (which is currently not configurable) and a libvirt `default` subnet of `192.168.124.0/24`, which might be different in your configuration.
-If you're uncertain about the libvirt *default* subnet you should be able to see its address using the command `ip -4 a show dev virbr0` or by inspecting `virsh --connect qemu:///system net-dumpxml default.
-Ensure the cluster IP range does not overlap your `virbr0` IP address.
-
-#### iptables
-
-```sh
-iptables -I INPUT -p tcp -s 192.168.126.0/24 -d 192.168.124.1 --dport 16509 -j ACCEPT -m comment --comment "Allow insecure libvirt clients"
-```
-
-#### Firewalld
-
-If using `firewalld`, simply obtain the name of the existing active zone which
-can be used to integrate the appropriate source and ports to allow connections from
-the IP range used by your cluster nodes. An example is shown below.
-
-```console
-$ sudo firewall-cmd --get-active-zones
-FedoraWorkstation
-  interfaces: enp0s25 tun0
-```
-With the name of the active zone, include the source and port to allow connections
-from the IP range used by your cluster nodes.
-
-```sh
-sudo firewall-cmd --zone=FedoraWorkstation --add-source=192.168.126.0/24
-sudo firewall-cmd --zone=FedoraWorkstation --add-port=16509/tcp
-```
-
-Verification of the source and port can be done listing the zone
-
-```sh
-sudo firewall-cmd --zone=FedoraWorkstation --list-ports
-sudo firewall-cmd --zone=FedoraWorkstation --list-sources
-```
-
-NOTE: When the firewall rules are no longer needed, `sudo firewall-cmd --reload`
-will remove the changes made as they were not permanently added. For persistence,
-add `--permanent` to the `firewall-cmd` commands and run them a second time.
 
 ### Configure default libvirt storage pool
 

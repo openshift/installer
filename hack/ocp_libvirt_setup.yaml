@@ -1,0 +1,218 @@
+---
+- hosts: all
+
+  vars:
+    kvm_device_path: "/dev/kvm"
+    hypervisor_packages:
+      - 'golang'
+      - 'libvirt'
+      - 'libvirt-devel'
+      - 'libselinux-python'
+      - 'libvirt-client'
+      - 'python-netaddr'
+    libvirt_settings:
+      - {name: 'listen_tls', val: 0}
+      - {name: 'listen_tcp', val: 1}
+      - {name: 'auth_tcp', val: "'none'"}
+      - {name: 'tcp_port', val: "'16509'"}
+    cluster:
+      - {domain_name: "tt.testing", cluster_cidr: "192.168.126.0/24", dns_server: "192.168.126.1"}
+    terraform_version: "0.11.8"
+
+  tasks:
+  - block: 
+      - name: Ensure KVM Device Exsists
+        stat:
+          path: "{{ kvm_device_path }}"
+        register: stat_result
+
+      - fail:
+          msg: >
+               Your system does not have KVM enabled 
+               (device {{ kvm_device_path }} is missing).
+        when: stat_result.stat.exists == False
+
+  - block:
+    - name: Install Packages
+      package:
+        name: "{{ hypervisor_packages }}"
+        state: present
+
+    become: yes
+
+  - block:
+    - name: Open Libvirt for wheel access
+      copy:
+        #src: files/80-libvirt.rules 
+        content: |
+          polkit.addRule(function(action, subject) {
+            if (action.id == "org.libvirt.unix.manage" && subject.local && subject.active && subject.isInGroup("wheel")) {
+                return polkit.Result.YES;
+            }
+          });
+        dest: /etc/polkit-1/rules.d/80-libvirt.rules
+        owner: root 
+        group: root
+        mode: 0644
+
+    - name: Setup IP Forwarding
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        sysctl_set: yes
+        state: present
+        reload: yes
+
+    - block:
+      - name: Ensure Libvirt is Configured for ... 
+        ini_file:
+          path: /etc/libvirt/libvirtd.conf
+          section: 
+          option: "{{ item.name }}" 
+          value: "{{ item.val }}" 
+          mode: 0644
+          owner: root
+          backup: yes
+        loop: "{{ libvirt_settings }}"
+
+      - name: Ensure Libvirt is Configured to LISTEN
+        ini_file:
+          path: /etc/sysconfig/libvirtd
+          section: 
+          option: "LIBVIRTD_ARGS" 
+          value: "--listen" 
+          mode: 0644
+          owner: root
+          backup: yes
+        when: ansible_distribution == 'Fedora'
+
+      - fail:
+          msg: "This was designed to work on Fedora (please file a PR)"
+        when: ansible_distribution != 'Fedora'
+
+    - name: "Restart and Enable libvirtd" 
+      systemd:
+        name: "libvirtd"
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+
+    become: yes
+
+  ### Make sure Libvirt Networks don't conflict with 192.168.126.0/24
+  - block: 
+    - name: Get Libvirt Networks
+      virt_net:
+        command: list_nets
+      register: libvirt_networks
+
+    - debug:
+        var: libvirt_networks.list_nets
+
+    - name: Get Libvirt Network XML
+      virt_net: 
+        command: get_xml
+        name: "{{ item }}" 
+      loop: "{{ libvirt_networks.list_nets }}"
+      register: libvirt_networks_xml
+
+    - name: Get data
+      xml:
+        xmlstring: "{{ item.get_xml }}"
+        xpath: /network/ip
+        content: attribute
+        attribute: address
+      register: ip_address
+      loop: "{{ libvirt_networks_xml.results }}"
+
+    - set_fact:
+        net_masks: "{{ item.matches.0.ip.address.split('.')[0:3] | join('.')}}.0/{{ item.matches.0.ip.netmask }}"
+      loop: "{{ ip_address.results }}" 
+      register: libvirt_netmasks
+
+    - fail:
+        msg: "Net Mask {{ item }} confilcts with {{ cluster.cluster_cidr }}"
+      when: item == cluster.0.cluster_cidr 
+      loop: "{{ libvirt_netmasks.results | map(attribute='ansible_facts.net_masks') | list | ipaddr('net') }}"
+
+    become: yes
+
+  ### Confirm that Storage Pool is defined
+  - block:     ### This should fail here if the pool is not defined 
+    - virt_pool:
+        command: status
+        name: "default"
+      register: storage_pool
+
+  - block: 
+    - name: Enable dnsmasq dns for NetworkManager
+      ini_file:
+        path: /etc/NetworkManager/NetworkManager.conf
+        section: "main" 
+        option: "dns" 
+        value: "dnsmasq" 
+        mode: 0644
+        owner: root
+        backup: yes
+
+    - name: Creating dnsmasq conf file (empty)
+      copy:
+        content: ""
+        dest: "/etc/NetworkManager/dnsmasq.d/{{ item.domain_name }}.conf"
+        force: no
+        owner: root
+        mode: 0644
+      loop: "{{ cluster }}"
+
+    - name: Creating dnsmasq conf file (populated) 
+      lineinfile:
+        path: "/etc/NetworkManager/dnsmasq.d/{{ item.domain_name }}.conf"
+        regexp: '^server='
+        line: 'server=/{{ item.domain_name }}/{{ item.dns_server }}'
+        owner: root
+        group: root
+        mode: 0644
+      loop: "{{ cluster }}"
+
+    - name: "Restart and Enable libvirtd" 
+      systemd:
+        name: "NetworkManager"
+        state: restarted
+        enabled: yes
+        daemon_reload: yes
+
+    become: yes
+
+  - block:
+    - name: Get OS (var)
+      shell: "/usr/bin/go env GOOS"
+      register: GOOS_VAR
+
+    - name: Get Arch (var)  
+      shell: "/usr/bin/go env GOARCH"
+      register: GOARCH_VAR
+
+    - name: Creates directory ~/.local/bin
+      file: 
+        path: "{{ lookup('env', 'HOME') }}/.local/bin/"
+        state: directory
+
+    - name: "Install Terraform"
+      unarchive:
+        src: "https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_{{ GOOS_VAR.stdout }}_{{ GOARCH_VAR.stdout }}.zip"
+        dest: "{{ lookup('env', 'HOME') }}/.local/bin/"
+        remote_src: yes
+
+    - name: Make Terraform Executable
+      file:
+        path: "{{ lookup('env', 'HOME') }}/.local/bin/terraform"
+        state: touch
+        mode: "+x"
+
+    - name: Install and Setup libvirt Terraform Provider 
+      shell: "GOBIN={{ lookup ('env', 'HOME') }}/.terraform.d/plugins /usr/bin/go get -u github.com/dmacvicar/terraform-provider-libvirt"
+
+    - name: Configure Terraform plugin-cache
+      copy:
+        content: 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"'
+        dest: "{{ lookup('env','HOME') }}/.terraformrc"
