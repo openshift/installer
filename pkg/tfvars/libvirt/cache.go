@@ -44,13 +44,14 @@ func (libvirt *Libvirt) UseCachedImage() (err error) {
 		return err
 	}
 
+	// Get the etag with HEAD
 	cache := diskcache.New(httpCacheDir)
 	transport := httpcache.NewTransport(cache)
-	resp, err := transport.Client().Get(libvirt.Image)
+	resp, err := transport.Client().Head(libvirt.Image)
 	if err != nil {
 		return err
 	}
-	if resp.StatusCode != 200 {
+	if !(resp.StatusCode == 200 || resp.StatusCode == 304) {
 		return fmt.Errorf("%s while getting %s", resp.Status, libvirt.Image)
 	}
 	defer resp.Body.Close()
@@ -74,6 +75,15 @@ func (libvirt *Libvirt) UseCachedImage() (err error) {
 		if !os.IsNotExist(err) {
 			return err
 		}
+
+		resp, err := transport.Client().Get(libvirt.Image)
+		if err != nil {
+			return err
+		}
+		if resp.StatusCode != 200 {
+			return fmt.Errorf("%s while getting %s", resp.Status, libvirt.Image)
+		}
+		defer resp.Body.Close()
 
 		err = cacheImage(resp.Body, imagePath)
 		if err != nil {
