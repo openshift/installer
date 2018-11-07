@@ -150,14 +150,17 @@ func cacheImage(reader io.Reader, imagePath string) (err error) {
 
 	buf := make([]byte, 1024)
 	for {
-		_, err := reader.Read(buf)
+		nr,err := reader.Read(buf)
 		if err != nil {
 			if err == io.EOF {
 				break
 			}
 			return err
 		}
-		file.Write(buf)
+		_, err = file.Write(buf[:nr])
+		if err != nil {
+			return err
+		}
 	}
 
 	err = file.Close()
