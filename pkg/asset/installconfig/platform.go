@@ -289,31 +289,17 @@ func (a *platform) libvirtPlatform() (*types.LibvirtPlatform, error) {
 		return nil, err
 	}
 
-	// TODO: Ideally, this would live inside of a closure which is passed to
-	//       asset.GenerateUserProvidedAsset and only called if the environment
-	//       variable isn't present. As this exists, it ruins the abstraction.
-	var qcowImage string
-	if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_LIBVIRT_IMAGE"); !ok {
+	qcowImage, ok := os.LookupEnv("OPENSHIFT_INSTALL_LIBVIRT_IMAGE")
+	if ok {
+		err = validURI(qcowImage)
+		if err != nil {
+			return nil, errors.Wrap(err, "resolve OPENSHIFT_INSTALL_LIBVIRT_IMAGE")
+		}
+	} else {
 		qcowImage, err = rhcos.QEMU(context.TODO(), rhcos.DefaultChannel)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to fetch QEMU image URL")
 		}
-	}
-
-	image, err := asset.GenerateUserProvidedAsset(
-		"Libvirt Image",
-		&survey.Question{
-			Prompt: &survey.Input{
-				Message: "Image",
-				Help:    "URI of the OS image.",
-				Default: qcowImage,
-			},
-			Validate: survey.ComposeValidators(survey.Required, uriValidator),
-		},
-		"OPENSHIFT_INSTALL_LIBVIRT_IMAGE",
-	)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to Marshal %s platform", LibvirtPlatformType)
 	}
 
 	return &types.LibvirtPlatform{
@@ -322,7 +308,7 @@ func (a *platform) libvirtPlatform() (*types.LibvirtPlatform, error) {
 			IPRange: defaultLibvirtNetworkIPRange,
 		},
 		DefaultMachinePlatform: &types.LibvirtMachinePoolPlatform{
-			Image: image,
+			Image: qcowImage,
 		},
 		URI: uri,
 	}, nil
@@ -331,13 +317,17 @@ func (a *platform) libvirtPlatform() (*types.LibvirtPlatform, error) {
 // uriValidator validates if the answer provided in prompt is a valid
 // url and has non-empty scheme.
 func uriValidator(ans interface{}) error {
-	value := ans.(string)
-	uri, err := url.Parse(value)
+	return validURI(ans.(string))
+}
+
+// validURI validates if the URI is a valid URI with a non-empty scheme.
+func validURI(uri string) error {
+	parsed, err := url.Parse(uri)
 	if err != nil {
 		return err
 	}
-	if uri.Scheme == "" {
-		return fmt.Errorf("invalid URI %q (no scheme)", value)
+	if parsed.Scheme == "" {
+		return fmt.Errorf("invalid URI %q (no scheme)", uri)
 	}
 	return nil
 }

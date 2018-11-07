@@ -47,5 +47,7 @@ The installer accepts a number of environment variable that allow the interactiv
     This must be accessible from the running cluster.
 * `OPENSHIFT_INSTALL_LIBVIRT_IMAGE`:
     The URI for the OS image.
-    For example it might be url like `http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz` or
-    a local file like `file:///tmp/openshift-install-853528428`.
+    For example it might be a URI like `https://example.com/rhcos-qemu.qcow2` or a local file like `file:///tmp/redhat-coreos-maipo-47.78-qemu.qcow2`.
+
+    **Warning**: you should only set this if you're testing RHCOS releases.
+    Most users should allow the installer to choose the OS image.
