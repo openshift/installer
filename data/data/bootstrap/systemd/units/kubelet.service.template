@@ -1,9 +1,3 @@
-package content
-
-var (
-	// KubeletSystemdContents is a service for running the kubelet on the
-	// bootstrap nodes.
-	KubeletSystemdContents = `
 [Unit]
 Description=Kubernetes Kubelet
 Wants=rpc-statd.service
@@ -36,5 +30,3 @@ RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
-`
-)

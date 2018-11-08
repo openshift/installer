@@ -5,7 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -15,9 +18,9 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
+	"github.com/openshift/installer/data"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
-	"github.com/openshift/installer/pkg/asset/ignition/bootstrap/content"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests"
@@ -90,19 +93,15 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 		},
 	}
 
-	a.addBootstrapFiles(dependencies)
-	a.addBootkubeFiles(dependencies, templateData)
-	a.addTemporaryBootkubeFiles(templateData)
-	a.addTectonicFiles(dependencies)
-	a.addTLSCertFiles(dependencies)
-
-	a.Config.Systemd.Units = append(
-		a.Config.Systemd.Units,
-		igntypes.Unit{Name: "bootkube.service", Contents: content.BootkubeSystemdContents},
-		igntypes.Unit{Name: "tectonic.service", Contents: content.TectonicSystemdContents},
-		igntypes.Unit{Name: "progress.service", Contents: content.ReportSystemdContents, Enabled: util.BoolToPtr(true)},
-		igntypes.Unit{Name: "kubelet.service", Contents: content.KubeletSystemdContents, Enabled: util.BoolToPtr(true)},
-	)
+	err = a.addStorageFiles("/", "bootstrap/files", templateData)
+	if err != nil {
+		return err
+	}
+	err = a.addSystemdUnits("bootstrap/systemd/units", templateData)
+	if err != nil {
+		return err
+	}
+	a.addParentFiles(dependencies)
 
 	a.Config.Passwd.Users = append(
 		a.Config.Passwd.Users,
@@ -157,75 +156,141 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, adminKub
 	}, nil
 }
 
-func (a *Bootstrap) addBootstrapFiles(dependencies asset.Parents) {
-	kubeletKubeconfig := &kubeconfig.Kubelet{}
-	dependencies.Get(kubeletKubeconfig)
+func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *bootstrapTemplateData) (err error) {
+	file, err := data.Assets.Open(uri)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
-	a.Config.Storage.Files = append(
-		a.Config.Storage.Files,
-		ignition.FileFromBytes("/etc/kubernetes/kubeconfig", 0600, kubeletKubeconfig.Files()[0].Data),
-	)
-	a.Config.Storage.Files = append(
-		a.Config.Storage.Files,
-		ignition.FileFromString("/usr/local/bin/report-progress.sh", 0555, content.ReportShFileContents),
-	)
+	info, err := file.Stat()
+	if err != nil {
+		return err
+	}
+
+	if info.IsDir() {
+		children, err := file.Readdir(0)
+		if err != nil {
+			return err
+		}
+		file.Close()
+
+		for _, childInfo := range children {
+			name := childInfo.Name()
+			err = a.addStorageFiles(path.Join(base, name), path.Join(uri, name), templateData)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	name := info.Name()
+	_, data, err := readFile(name, file, templateData)
+	if err != nil {
+		return err
+	}
+
+	var mode int
+	if path.Base(path.Dir(uri)) == "bin" {
+		mode = 0555
+	} else {
+		mode = 0600
+	}
+	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), mode, data)
+	a.Config.Storage.Files = append(a.Config.Storage.Files, ign)
+
+	return nil
 }
 
-func (a *Bootstrap) addBootkubeFiles(dependencies asset.Parents, templateData *bootstrapTemplateData) {
-	bootkubeConfigOverridesDir := filepath.Join(rootDir, "bootkube-config-overrides")
-	adminKubeconfig := &kubeconfig.Admin{}
-	manifests := &manifests.Manifests{}
-	dependencies.Get(adminKubeconfig, manifests)
-
-	a.Config.Storage.Files = append(
-		a.Config.Storage.Files,
-		ignition.FileFromString("/usr/local/bin/bootkube.sh", 0555, applyTemplateData(content.BootkubeShFileTemplate, templateData)),
-	)
-	for _, o := range content.BootkubeConfigOverrides {
-		a.Config.Storage.Files = append(
-			a.Config.Storage.Files,
-			ignition.FileFromString(filepath.Join(bootkubeConfigOverridesDir, o.Name()), 0600, applyTemplateData(o, templateData)),
-		)
+func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateData) (err error) {
+	enabled := map[string]bool{
+		"progress.service": true,
+		"kubelet.service":  true,
 	}
+
+	directory, err := data.Assets.Open(uri)
+	if err != nil {
+		return err
+	}
+	defer directory.Close()
+
+	children, err := directory.Readdir(0)
+	if err != nil {
+		return err
+	}
+
+	for _, childInfo := range children {
+		name := childInfo.Name()
+		file, err := data.Assets.Open(path.Join(uri, name))
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		name, data, err := readFile(name, file, templateData)
+		if err != nil {
+			return err
+		}
+
+		unit := igntypes.Unit{Name: name, Contents: string(data)}
+		if _, ok := enabled[name]; ok {
+			unit.Enabled = util.BoolToPtr(true)
+		}
+		a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
+	}
+
+	return nil
+}
+
+// Read data from the string reader, and, if the name ends with
+// '.template', strip that extension from the name and render the
+// template.
+func readFile(name string, reader io.Reader, templateData interface{}) (finalName string, data []byte, err error) {
+	data, err = ioutil.ReadAll(reader)
+	if err != nil {
+		return name, []byte{}, err
+	}
+
+	if filepath.Ext(name) == ".template" {
+		name = strings.TrimSuffix(name, ".template")
+		tmpl := template.New(name)
+		tmpl, err := tmpl.Parse(string(data))
+		if err != nil {
+			return name, data, err
+		}
+		stringData := applyTemplateData(tmpl, templateData)
+		data = []byte(stringData)
+	}
+
+	return name, data, nil
+}
+
+func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
+	adminKubeconfig := &kubeconfig.Admin{}
+	kubeletKubeconfig := &kubeconfig.Kubelet{}
+	mfsts := &manifests.Manifests{}
+	tectonic := &manifests.Tectonic{}
+	dependencies.Get(adminKubeconfig, kubeletKubeconfig, mfsts, tectonic)
+
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
 		ignition.FilesFromAsset(rootDir, 0600, adminKubeconfig)...,
 	)
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
-		ignition.FilesFromAsset(rootDir, 0644, manifests)...,
+		ignition.FileFromBytes("/etc/kubernetes/kubeconfig", 0600, kubeletKubeconfig.Files()[0].Data),
+		ignition.FileFromBytes("/var/lib/kubelet/kubeconfig", 0600, kubeletKubeconfig.Files()[0].Data),
 	)
-}
-
-func (a *Bootstrap) addTemporaryBootkubeFiles(templateData *bootstrapTemplateData) {
-	kubeProxyBootstrapDir := filepath.Join(rootDir, "kube-proxy-operator-bootstrap")
-	for name, data := range content.KubeProxyBootkubeManifests {
-		a.Config.Storage.Files = append(
-			a.Config.Storage.Files,
-			ignition.FileFromString(filepath.Join(kubeProxyBootstrapDir, name), 0644, data),
-		)
-	}
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
-		ignition.FileFromString(filepath.Join(kubeProxyBootstrapDir, "kube-proxy-kubeconfig.yaml"), 0644, applyTemplateData(content.BootkubeKubeProxyKubeConfig, templateData)),
-	)
-}
-
-func (a *Bootstrap) addTectonicFiles(dependencies asset.Parents) {
-	tectonic := &manifests.Tectonic{}
-	dependencies.Get(tectonic)
-
-	a.Config.Storage.Files = append(
-		a.Config.Storage.Files,
-		ignition.FileFromString("/usr/local/bin/tectonic.sh", 0555, content.TectonicShFileContents),
+		ignition.FilesFromAsset(rootDir, 0644, mfsts)...,
 	)
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
 		ignition.FilesFromAsset(rootDir, 0644, tectonic)...,
 	)
-}
 
-func (a *Bootstrap) addTLSCertFiles(dependencies asset.Parents) {
 	for _, asset := range []asset.WritableAsset{
 		&tls.RootCA{},
 		&tls.KubeCA{},

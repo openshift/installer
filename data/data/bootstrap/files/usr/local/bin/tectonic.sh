@@ -1,25 +1,4 @@
-package content
-
-const (
-	// TectonicSystemdContents is a service that runs tectonic on the masters.
-	TectonicSystemdContents = `
-[Unit]
-Description=Bootstrap a Tectonic cluster
-Wants=bootkube.service
-After=bootkube.service
-ConditionPathExists=!/opt/tectonic/.tectonic.done
-
-[Service]
-WorkingDirectory=/opt/tectonic/tectonic
-ExecStart=/usr/local/bin/tectonic.sh /opt/tectonic/auth/kubeconfig
-
-Restart=on-failure
-RestartSec=5s
-`
-
-	// TectonicShFileContents is a script file for running tectonic on bootstrap
-	// nodes.
-	TectonicShFileContents = `#!/usr/bin/env bash
+#!/usr/bin/env bash
 set -e
 
 KUBECONFIG="$1"
@@ -93,5 +72,3 @@ wait_for_pods tectonic-system
 touch /opt/tectonic/.tectonic.done
 
 echo "Tectonic installation is done"
-`
-)

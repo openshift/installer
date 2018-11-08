@@ -1,0 +1,13 @@
+# Adjust the target to match the gopkg.in/yaml.v2 style used in the
+# Kubernetes ecosystem.
+
+extends: default
+
+rules:
+  document-start:
+    present: false
+  indentation:
+    indent-sequences: false
+  line-length:
+    level: warning
+    max: 120

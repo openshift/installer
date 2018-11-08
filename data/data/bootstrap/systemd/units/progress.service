@@ -1,0 +1,17 @@
+[Unit]
+Description=Report the completion of the cluster bootstrap process
+# Workaround for https://github.com/systemd/systemd/issues/1312
+Wants=bootkube.service tectonic.service
+After=bootkube.service tectonic.service
+
+[Service]
+# Workaround for https://github.com/systemd/systemd/issues/1312 and https://github.com/opencontainers/runc/pull/1807
+ExecStartPre=/usr/bin/test -f /opt/tectonic/.bootkube.done
+ExecStartPre=/usr/bin/test -f /opt/tectonic/.tectonic.done
+ExecStart=/usr/local/bin/report-progress.sh /opt/tectonic/auth/kubeconfig bootstrap-complete "cluster bootstrapping has completed"
+
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
