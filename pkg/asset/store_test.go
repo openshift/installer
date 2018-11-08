@@ -9,85 +9,136 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type generationLog struct {
-	log []string
+var (
+	// It is unfortunate that these need to be global variables. However, the
+	// asset store creates new assets by type, so the tests cannot store behavior
+	// state in the assets themselves.
+	generationLog []string
+	dependencies  map[reflect.Type][]Asset
+	onDiskAssets  map[reflect.Type]bool
+)
+
+func clearAssetBehaviors() {
+	generationLog = []string{}
+	dependencies = map[reflect.Type][]Asset{}
+	onDiskAssets = map[reflect.Type]bool{}
 }
 
-func (l *generationLog) logGeneration(a Asset) {
-	l.log = append(l.log, a.Name())
+func dependenciesTestStoreAsset(a Asset) []Asset {
+	return dependencies[reflect.TypeOf(a)]
 }
 
-type testStoreAsset interface {
-	Asset
-	SetDependencies([]Asset)
-	SetDirty(bool)
-}
-
-type testStoreAssetImpl struct {
-	name          string
-	dependencies  []Asset
-	generationLog *generationLog
-	dirty         bool
-}
-
-func (a *testStoreAssetImpl) Dependencies() []Asset {
-	return a.dependencies
-}
-
-func (a *testStoreAssetImpl) Generate(Parents) error {
-	a.generationLog.logGeneration(a)
+func generateTestStoreAsset(a Asset) error {
+	generationLog = append(generationLog, a.Name())
 	return nil
 }
 
-func (a *testStoreAssetImpl) Name() string {
-	return a.name
+func fileTestStoreAsset(a Asset) []*File {
+	return []*File{{Filename: a.Name()}}
 }
 
-func (a *testStoreAssetImpl) SetDependencies(dependencies []Asset) {
-	a.dependencies = dependencies
+func loadTestStoreAsset(a Asset) (bool, error) {
+	return onDiskAssets[reflect.TypeOf(a)], nil
 }
 
-func (a *testStoreAssetImpl) SetDirty(dirty bool) {
-	a.dirty = dirty
-}
-func (a *testStoreAssetImpl) Files() []*File {
-	return []*File{{Filename: a.name}}
+type testStoreAssetA struct{}
+
+func (a *testStoreAssetA) Name() string {
+	return "a"
 }
 
-func (a *testStoreAssetImpl) Load(FileFetcher) (bool, error) {
-	return a.dirty, nil
+func (a *testStoreAssetA) Dependencies() []Asset {
+	return dependenciesTestStoreAsset(a)
 }
 
-type testStoreAssetA struct {
-	testStoreAssetImpl
+func (a *testStoreAssetA) Generate(Parents) error {
+	return generateTestStoreAsset(a)
 }
 
-type testStoreAssetB struct {
-	testStoreAssetImpl
+func (a *testStoreAssetA) Files() []*File {
+	return fileTestStoreAsset(a)
 }
 
-type testStoreAssetC struct {
-	testStoreAssetImpl
+func (a *testStoreAssetA) Load(FileFetcher) (bool, error) {
+	return loadTestStoreAsset(a)
 }
 
-type testStoreAssetD struct {
-	testStoreAssetImpl
+type testStoreAssetB struct{}
+
+func (a *testStoreAssetB) Name() string {
+	return "b"
 }
 
-func newTestStoreAsset(gl *generationLog, name string) testStoreAsset {
-	ta := testStoreAssetImpl{
-		name:          name,
-		generationLog: gl,
-	}
+func (a *testStoreAssetB) Dependencies() []Asset {
+	return dependenciesTestStoreAsset(a)
+}
+
+func (a *testStoreAssetB) Generate(Parents) error {
+	return generateTestStoreAsset(a)
+}
+
+func (a *testStoreAssetB) Files() []*File {
+	return fileTestStoreAsset(a)
+}
+
+func (a *testStoreAssetB) Load(FileFetcher) (bool, error) {
+	return loadTestStoreAsset(a)
+}
+
+type testStoreAssetC struct{}
+
+func (a *testStoreAssetC) Name() string {
+	return "c"
+}
+
+func (a *testStoreAssetC) Dependencies() []Asset {
+	return dependenciesTestStoreAsset(a)
+}
+
+func (a *testStoreAssetC) Generate(Parents) error {
+	return generateTestStoreAsset(a)
+}
+
+func (a *testStoreAssetC) Files() []*File {
+	return fileTestStoreAsset(a)
+}
+
+func (a *testStoreAssetC) Load(FileFetcher) (bool, error) {
+	return loadTestStoreAsset(a)
+}
+
+type testStoreAssetD struct{}
+
+func (a *testStoreAssetD) Name() string {
+	return "d"
+}
+
+func (a *testStoreAssetD) Dependencies() []Asset {
+	return dependenciesTestStoreAsset(a)
+}
+
+func (a *testStoreAssetD) Generate(Parents) error {
+	return generateTestStoreAsset(a)
+}
+
+func (a *testStoreAssetD) Files() []*File {
+	return fileTestStoreAsset(a)
+}
+
+func (a *testStoreAssetD) Load(FileFetcher) (bool, error) {
+	return loadTestStoreAsset(a)
+}
+
+func newTestStoreAsset(name string) Asset {
 	switch name {
 	case "a":
-		return &testStoreAssetA{ta}
+		return &testStoreAssetA{}
 	case "b":
-		return &testStoreAssetB{ta}
+		return &testStoreAssetB{}
 	case "c":
-		return &testStoreAssetC{ta}
+		return &testStoreAssetC{}
 	case "d":
-		return &testStoreAssetD{ta}
+		return &testStoreAssetD{}
 	default:
 		return nil
 	}
@@ -205,9 +256,7 @@ func TestStoreFetch(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			gl := &generationLog{
-				log: []string{},
-			}
+			clearAssetBehaviors()
 			dir, err := ioutil.TempDir("", "TestStoreFetch")
 			if err != nil {
 				t.Fatalf("failed to create temporary directory: %v", err)
@@ -215,92 +264,95 @@ func TestStoreFetch(t *testing.T) {
 			defer os.RemoveAll(dir)
 			store := &StoreImpl{
 				directory: dir,
-				assets:    make(map[reflect.Type]assetState),
+				assets:    map[reflect.Type]*assetState{},
 			}
-			assets := make(map[string]testStoreAsset, len(tc.assets))
+			assets := make(map[string]Asset, len(tc.assets))
 			for name := range tc.assets {
-				assets[name] = newTestStoreAsset(gl, name)
+				assets[name] = newTestStoreAsset(name)
 			}
 			for name, deps := range tc.assets {
-				dependencies := make([]Asset, len(deps))
+				dependenciesOfAsset := make([]Asset, len(deps))
 				for i, d := range deps {
-					dependencies[i] = assets[d]
+					dependenciesOfAsset[i] = assets[d]
 				}
-				assets[name].SetDependencies(dependencies)
+				dependencies[reflect.TypeOf(assets[name])] = dependenciesOfAsset
 			}
 			for _, assetName := range tc.existingAssets {
 				asset := assets[assetName]
-				store.assets[reflect.TypeOf(asset)] = assetState{asset: asset}
+				store.assets[reflect.TypeOf(asset)] = &assetState{
+					asset:  asset,
+					source: generatedSource,
+				}
 			}
 			err = store.Fetch(assets[tc.target])
 			assert.NoError(t, err, "error fetching asset")
-			assert.EqualValues(t, tc.expectedGenerationLog, gl.log)
+			assert.EqualValues(t, tc.expectedGenerationLog, generationLog)
 		})
 	}
 }
 
-func TestStoreFetchDirty(t *testing.T) {
+func TestStoreFetchOnDiskAssets(t *testing.T) {
 	cases := []struct {
 		name                  string
 		assets                map[string][]string
-		dirtyAssets           []string
+		onDiskAssets          []string
 		target                string
 		expectedGenerationLog []string
 		expectedDirty         bool
 	}{
 		{
-			name: "no dirty assets",
+			name: "no on-disk assets",
 			assets: map[string][]string{
 				"a": {"b"},
 				"b": {},
 			},
-			dirtyAssets:           nil,
+			onDiskAssets:          nil,
 			target:                "a",
 			expectedGenerationLog: []string{"b", "a"},
 			expectedDirty:         false,
 		},
 		{
-			name: "dirty asset causes re-generation",
+			name: "on-disk asset does not need dependent generation",
 			assets: map[string][]string{
 				"a": {"b"},
 				"b": {},
 			},
-			dirtyAssets:           []string{"a"},
+			onDiskAssets:          []string{"a"},
 			target:                "a",
-			expectedGenerationLog: []string{"b"},
-			expectedDirty:         true,
+			expectedGenerationLog: []string{},
+			expectedDirty:         false,
 		},
 		{
-			name: "dirty dependent asset causes re-generation",
+			name: "on-disk dependent asset causes re-generation",
 			assets: map[string][]string{
 				"a": {"b"},
 				"b": {},
 			},
-			dirtyAssets:           []string{"b"},
+			onDiskAssets:          []string{"b"},
 			target:                "a",
 			expectedGenerationLog: []string{"a"},
 			expectedDirty:         true,
 		},
 		{
-			name: "dirty dependents invalidate all its children",
+			name: "on-disk dependents invalidate all its children",
 			assets: map[string][]string{
 				"a": {"b", "c"},
 				"b": {"d"},
 				"c": {"d"},
 				"d": {},
 			},
-			dirtyAssets:           []string{"d"},
+			onDiskAssets:          []string{"d"},
 			target:                "a",
 			expectedGenerationLog: []string{"b", "c", "a"},
 			expectedDirty:         true,
 		},
 		{
-			name: "re-generate when both parents and childre are dirty",
+			name: "re-generate when both parents and children are on-disk",
 			assets: map[string][]string{
 				"a": {"b"},
 				"b": {},
 			},
-			dirtyAssets:           []string{"a", "b"},
+			onDiskAssets:          []string{"a", "b"},
 			target:                "a",
 			expectedGenerationLog: []string{"a"},
 			expectedDirty:         true,
@@ -308,30 +360,28 @@ func TestStoreFetchDirty(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			gl := &generationLog{
-				log: []string{},
-			}
+			clearAssetBehaviors()
 			store := &StoreImpl{
-				assets: make(map[reflect.Type]assetState),
+				assets: map[reflect.Type]*assetState{},
 			}
-			assets := make(map[string]testStoreAsset, len(tc.assets))
+			assets := make(map[string]Asset, len(tc.assets))
 			for name := range tc.assets {
-				assets[name] = newTestStoreAsset(gl, name)
+				assets[name] = newTestStoreAsset(name)
 			}
 			for name, deps := range tc.assets {
-				dependencies := make([]Asset, len(deps))
+				dependenciesOfAsset := make([]Asset, len(deps))
 				for i, d := range deps {
-					dependencies[i] = assets[d]
+					dependenciesOfAsset[i] = assets[d]
 				}
-				assets[name].SetDependencies(dependencies)
+				dependencies[reflect.TypeOf(assets[name])] = dependenciesOfAsset
 			}
-			for _, name := range tc.dirtyAssets {
-				assets[name].SetDirty(true)
+			for _, name := range tc.onDiskAssets {
+				onDiskAssets[reflect.TypeOf(assets[name])] = true
 			}
-			dirty, err := store.fetch(assets[tc.target], "")
+			err := store.fetch(assets[tc.target], "")
 			assert.NoError(t, err, "unexpected error")
-			assert.EqualValues(t, tc.expectedGenerationLog, gl.log)
-			assert.Equal(t, tc.expectedDirty, dirty)
+			assert.EqualValues(t, tc.expectedGenerationLog, generationLog)
+			assert.Equal(t, tc.expectedDirty, store.assets[reflect.TypeOf(assets[tc.target])].anyParentsDirty)
 		})
 	}
 }
