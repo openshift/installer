@@ -153,7 +153,7 @@ func (c *Cluster) Load(f asset.FileFetcher) (found bool, err error) {
 		return false, err
 	}
 
-	return true, fmt.Errorf("%q already exisits.  There may already be a running cluster", terraform.StateFileName)
+	return true, fmt.Errorf("%q already exists.  There may already be a running cluster", terraform.StateFileName)
 }
 
 // LoadMetadata loads the cluster metadata from an asset directory.
