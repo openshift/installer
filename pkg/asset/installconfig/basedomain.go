@@ -25,7 +25,7 @@ func (a *baseDomain) Generate(asset.Parents) error {
 		&survey.Question{
 			Prompt: &survey.Input{
 				Message: "Base Domain",
-				Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base.\n\nFor AWS, this must be a previously-existing public Route 53 zone.  You can check for any already in your account with:\n\n  $ aws route53 list-hosted-zones --query 'HostedZones[? !(Config.PrivateZone)].Name' --output text",
+				Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name.\n\nFor AWS, this must be a previously-existing public Route 53 zone.  You can check for any already in your account with:\n\n  $ aws route53 list-hosted-zones --query 'HostedZones[? !(Config.PrivateZone)].Name' --output text",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
 				return validate.DomainName(ans.(string))

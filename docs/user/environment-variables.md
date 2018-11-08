@@ -5,7 +5,8 @@ The installer accepts a number of environment variable that allow the interactiv
 ## General
 
 * `OPENSHIFT_INSTALL_BASE_DOMAIN`:
-    The base domain of the cluster. All DNS records will be sub-domains of this base.
+    The base domain of the cluster.
+    All DNS records will be sub-domains of this base and will also include the cluster name.
 
     For AWS, this must be a previously-existing public Route 53 zone.  You can check for any already in your account with:
 
