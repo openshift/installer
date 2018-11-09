@@ -26,10 +26,22 @@ func (c *Cache) Get(key string) (resp []byte, ok bool) {
 	return resp, true
 }
 
+// GetReader streams data from the cache.
+func (c *Cache) GetReader(key string) (reader io.ReadCloser, err error) {
+	key = keyToFilename(key)
+	return c.d.ReadStream(key, true) // FIXME: what direct value do we want?
+}
+
 // Set saves a response to the cache as key
 func (c *Cache) Set(key string, resp []byte) {
 	key = keyToFilename(key)
 	c.d.WriteStream(key, bytes.NewReader(resp), true)
+}
+
+// SetReader streams data into the cache.
+func (c *Cache) SetReader(key string, input io.Reader) (err error) {
+	key = keyToFilename(key)
+	return c.d.WriteStream(key, input, true)
 }
 
 // Delete removes the response with key from the cache
