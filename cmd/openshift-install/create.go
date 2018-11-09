@@ -78,7 +78,11 @@ var (
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 			PostRunE: func(_ *cobra.Command, _ []string) error {
-				return destroyBootstrap(context.Background(), rootOpts.dir)
+				err := destroyBootstrap(context.Background(), rootOpts.dir)
+				if err != nil {
+					return err
+				}
+				return logComplete(rootOpts.dir)
 			},
 		},
 		assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}},
@@ -216,4 +220,16 @@ func destroyBootstrap(ctx context.Context, directory string) (err error) {
 
 	logrus.Info("Destroying the bootstrap resources...")
 	return destroybootstrap.Destroy(rootOpts.dir)
+}
+
+// logComplete prints info upon completion
+func logComplete(directory string) error {
+	absDir, err := filepath.Abs(directory)
+	if err != nil {
+		return err
+	}
+	kubeconfig := filepath.Join(absDir, "auth", "kubeconfig")
+	logrus.Infof("Install complete! Run 'export KUBECONFIG=%s' to manage your cluster.", kubeconfig)
+	logrus.Info("After exporting your kubeconfig, run 'oc -h' for a list of OpenShift client commands.")
+	return nil
 }
