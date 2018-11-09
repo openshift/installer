@@ -22,6 +22,11 @@ ignored = ["github.com/openshift/installer/tests*"]
   name = "github.com/coreos/tectonic-config"
 
 [[constraint]]
+  name = "github.com/gregjones/httpcache"
+  source = "https://github.com/wking/httpcache"
+  revision = "8d10353503cd5426136ad4880b523785bb76e8c7"
+
+[[constraint]]
   name = "github.com/libvirt/libvirt-go"
   version = "4.7.0"
 
