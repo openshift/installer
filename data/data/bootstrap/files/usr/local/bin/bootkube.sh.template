@@ -88,7 +88,9 @@ then
 		--manifest-image=${OPENSHIFT_HYPERKUBE_IMAGE} \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-scheduler-bootstrap \
-		--config-output-file=/assets/kube-scheduler-bootstrap/config
+		--config-output-file=/assets/kube-scheduler-bootstrap/config \
+		--config-override-files=/assets/bootkube-config-overrides/kube-scheduler-config-overrides.yaml \
+		--disable-phase-2
 
 	cp kube-scheduler-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-scheduler-config.yaml
 	cp kube-scheduler-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -196,7 +198,7 @@ podman run \
 	--network=host \
 	--entrypoint=/bootkube \
 	"{{.BootkubeImage}}" \
-	start --asset-dir=/assets --required-pods openshift-kube-apiserver/openshift-kube-apiserver,kube-system/kube-scheduler,openshift-kube-controller-manager/openshift-kube-controller-manager,openshift-cluster-version/cluster-version-operator
+	start --asset-dir=/assets --required-pods openshift-kube-apiserver/openshift-kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/openshift-kube-controller-manager,openshift-cluster-version/cluster-version-operator
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/tectonic/.bootkube.done
