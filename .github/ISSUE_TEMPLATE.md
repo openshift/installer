@@ -21,6 +21,7 @@ Enter text here.
 # What happened?
 
 Enter text here.
+See [the troubleshooting documentation](https://github.com/openshift/installer/blob/master/docs/user/troubleshooting.md) for ideas about what information to collect.
 
 # What you expected to happen?
 
