@@ -25,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests"
+	"github.com/openshift/installer/pkg/asset/templates"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 )
 
@@ -59,6 +60,16 @@ var (
 		assets: []asset.WritableAsset{&manifests.Manifests{}, &manifests.Tectonic{}},
 	}
 
+	manifestTemplatesTarget = target{
+		name: "Manifest templates",
+		command: &cobra.Command{
+			Use:   "manifest-templates",
+			Short: "Generates the unrendered Kubernetes manifest templates",
+			Long:  "",
+		},
+		assets: []asset.WritableAsset{&templates.Templates{}},
+	}
+
 	ignitionConfigsTarget = target{
 		name: "Ignition Configs",
 		command: &cobra.Command{
@@ -88,7 +99,7 @@ var (
 		assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}},
 	}
 
-	targets = []target{installConfigTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
+	targets = []target{installConfigTarget, manifestTemplatesTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
 )
 
 // Deprecated: Use 'create' subcommands instead.
