@@ -80,7 +80,7 @@ If an older version of Red Hat CoreOS is in use, it will need to be updated. Try
 
 During the bootstrap process, the Kubelet may emit errors like the following:
 
-```sh
+```
 Error signing CSR provided in request from agent: error parsing profile: invalid organization
 ```
 
