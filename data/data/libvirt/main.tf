@@ -91,6 +91,7 @@ resource "libvirt_domain" "master" {
 }
 
 data "libvirt_network_dns_host_template" "bootstrap" {
+  count    = "${var.bootstrap_dns ? 1 : 0}"
   ip       = "${var.tectonic_libvirt_bootstrap_ip}"
   hostname = "${var.tectonic_cluster_name}-api"
 }

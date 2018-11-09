@@ -24,13 +24,26 @@ func Destroy(dir string) (err error) {
 		return errors.New("no platform configured in metadata")
 	}
 
+	copyNames := []string{terraform.StateFileName, cluster.TfVarsFileName}
+
+	if platform == "libvirt" {
+		err = ioutil.WriteFile(filepath.Join(dir, "disable-bootstrap.auto.tfvars"), []byte(`{
+  "bootstrap_dns": false
+}
+`), 0666)
+		if err != nil {
+			return err
+		}
+		copyNames = append(copyNames, "disable-bootstrap.auto.tfvars")
+	}
+
 	tempDir, err := ioutil.TempDir("", "openshift-install-")
 	if err != nil {
 		return errors.Wrap(err, "failed to create temporary directory for Terraform execution")
 	}
 	defer os.RemoveAll(tempDir)
 
-	for _, filename := range []string{terraform.StateFileName, cluster.TfVarsFileName} {
+	for _, filename := range copyNames {
 		err = copy(filepath.Join(dir, filename), filepath.Join(tempDir, filename))
 		if err != nil {
 			return errors.Wrapf(err, "failed to copy %s to the temporary directory", filename)
@@ -38,9 +51,16 @@ func Destroy(dir string) (err error) {
 	}
 
 	logrus.Infof("Using Terraform to destroy bootstrap resources...")
+	if platform == "libvirt" {
+		_, err = terraform.Apply(tempDir, platform)
+		if err != nil {
+			return errors.Wrap(err, "Terraform apply")
+		}
+	}
+
 	err = terraform.Destroy(tempDir, platform, "-target=module.bootstrap")
 	if err != nil {
-		return errors.Wrap(err, "failed to run terraform")
+		return errors.Wrap(err, "Terraform destroy")
 	}
 
 	tempStateFilePath := filepath.Join(dir, terraform.StateFileName+".new")
