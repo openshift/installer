@@ -24,7 +24,6 @@ type RetryWatcher struct {
 	watcherFunc         WatcherFunc
 	resultChan          chan watch.Event
 	stopChan            chan struct{}
-	doneChan            chan struct{}
 }
 
 // Until is from https://github.com/kubernetes/kubernetes/pull/50102.
@@ -38,7 +37,6 @@ func NewRetryWatcher(initialResourceVersion string, watcherFunc WatcherFunc) *Re
 		lastResourceVersion: initialResourceVersion,
 		watcherFunc:         watcherFunc,
 		stopChan:            make(chan struct{}),
-		doneChan:            make(chan struct{}),
 		resultChan:          make(chan watch.Event, 0),
 	}
 	go rw.receive()
@@ -133,7 +131,7 @@ func (rw *RetryWatcher) doReceive() bool {
 }
 
 func (rw *RetryWatcher) receive() {
-	defer close(rw.doneChan)
+	defer close(rw.resultChan)
 
 	for {
 		select {
@@ -157,9 +155,4 @@ func (rw *RetryWatcher) ResultChan() <-chan watch.Event {
 // Stop is from https://github.com/kubernetes/kubernetes/pull/50102.
 func (rw *RetryWatcher) Stop() {
 	close(rw.stopChan)
-}
-
-// Done is from https://github.com/kubernetes/kubernetes/pull/50102.
-func (rw *RetryWatcher) Done() <-chan struct{} {
-	return rw.doneChan
 }

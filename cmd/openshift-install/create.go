@@ -200,10 +200,21 @@ func destroyBootstrap(ctx context.Context, directory string) (err error) {
 		eventContext,
 		"",
 		func(sinceResourceVersion string) (watch.Interface, error) {
-			return events.Watch(metav1.ListOptions{
-				Watch:           true,
-				ResourceVersion: sinceResourceVersion,
-			})
+			for {
+				watcher, err := events.Watch(metav1.ListOptions{
+					ResourceVersion: sinceResourceVersion,
+				})
+				if err == nil {
+					return watcher, nil
+				}
+				select {
+				case <-eventContext.Done():
+					return watcher, err
+				default:
+					logrus.Warningf("Failed to connect events watcher: %s", err)
+					time.Sleep(2 * time.Second)
+				}
+			}
 		},
 		func(watchEvent watch.Event) (bool, error) {
 			event, ok := watchEvent.Object.(*corev1.Event)
