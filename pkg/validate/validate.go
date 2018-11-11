@@ -64,15 +64,6 @@ func JSON(data []byte) error {
 	return json.Unmarshal(data, &dummy)
 }
 
-// prefixError wraps an error with a prefix or returns nil if there was no error.
-// This is useful for wrapping errors returned by generic error funcs like `nonEmpty` so that the error includes the offending field name.
-func prefixError(prefix string, err error) error {
-	if err != nil {
-		return fmt.Errorf("%s: %v", prefix, err)
-	}
-	return nil
-}
-
 func isMatch(re string, v string) bool {
 	return regexp.MustCompile(re).MatchString(v)
 }
