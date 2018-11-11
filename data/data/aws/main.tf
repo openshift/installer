@@ -75,7 +75,6 @@ module "dns" {
   elb_alias_enabled        = true
   master_count             = "${var.master_count}"
   private_zone_id          = "${local.private_zone_id}"
-  external_vpc_id          = "${module.vpc.vpc_id}"
   extra_tags               = "${var.aws_extra_tags}"
   private_endpoints        = "${local.private_endpoints}"
   public_endpoints         = "${local.public_endpoints}"
@@ -84,12 +83,11 @@ module "dns" {
 module "vpc" {
   source = "./vpc"
 
-  base_domain     = "${var.base_domain}"
-  cidr_block      = "${var.aws_vpc_cidr_block}"
-  cluster_id      = "${var.cluster_id}"
-  cluster_name    = "${var.cluster_name}"
-  external_vpc_id = "${var.aws_external_vpc_id}"
-  region          = "${var.aws_region}"
+  base_domain  = "${var.base_domain}"
+  cidr_block   = "${var.aws_vpc_cidr_block}"
+  cluster_id   = "${var.cluster_id}"
+  cluster_name = "${var.cluster_name}"
+  region       = "${var.aws_region}"
 
   external_master_subnet_ids = "${compact(var.aws_external_master_subnet_ids)}"
   external_worker_subnet_ids = "${compact(var.aws_external_worker_subnet_ids)}"

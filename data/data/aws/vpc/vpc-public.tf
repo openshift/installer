@@ -1,5 +1,4 @@
 resource "aws_internet_gateway" "igw" {
-  count  = "${local.external_vpc_mode ? 0 : 1}"
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
@@ -11,7 +10,6 @@ resource "aws_internet_gateway" "igw" {
 }
 
 resource "aws_route_table" "default" {
-  count  = "${var.external_vpc_id == "" ? 1 : 0}"
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
@@ -23,13 +21,11 @@ resource "aws_route_table" "default" {
 }
 
 resource "aws_main_route_table_association" "main_vpc_routes" {
-  count          = "${local.external_vpc_mode ? 0 : 1}"
   vpc_id         = "${data.aws_vpc.cluster_vpc.id}"
   route_table_id = "${aws_route_table.default.id}"
 }
 
 resource "aws_route" "igw_route" {
-  count                  = "${local.external_vpc_mode ? 0 : 1}"
   destination_cidr_block = "0.0.0.0/0"
   route_table_id         = "${aws_route_table.default.id}"
   gateway_id             = "${aws_internet_gateway.igw.id}"

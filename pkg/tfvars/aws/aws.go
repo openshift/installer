@@ -21,7 +21,7 @@ type AWS struct {
 	InstallerRole  string            `json:"aws_installer_role,omitempty"`
 	Master         `json:",inline"`
 	Region         string `json:"aws_region,omitempty"`
-	VPCCIDRBlock   string `json:"aws_vpc_cidr_block,omitempty"`
+	VPCCIDRBlock   string `json:"aws_vpc_cidr_block"`
 	Worker         `json:",inline"`
 }
 
@@ -29,7 +29,6 @@ type AWS struct {
 type External struct {
 	MasterSubnetIDs []string `json:"aws_external_master_subnet_ids,omitempty"`
 	PrivateZone     string   `json:"aws_external_private_zone,omitempty"`
-	VPCID           string   `json:"aws_external_vpc_id,omitempty"`
 	WorkerSubnetIDs []string `json:"aws_external_worker_subnet_ids,omitempty"`
 }
 

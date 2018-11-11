@@ -14,10 +14,6 @@ variable "cluster_name" {
   type = "string"
 }
 
-variable "external_vpc_id" {
-  type = "string"
-}
-
 variable "external_master_subnet_ids" {
   type = "list"
 }

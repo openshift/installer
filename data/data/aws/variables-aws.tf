@@ -41,19 +41,6 @@ This should not overlap with any other networks, such as a private datacenter co
 EOF
 }
 
-variable "aws_external_vpc_id" {
-  type = "string"
-
-  description = <<EOF
-(optional) ID of an existing VPC to launch nodes into.
-If unset a new VPC is created.
-
-Example: `vpc-123456`
-EOF
-
-  default = ""
-}
-
 variable "aws_endpoints" {
   description = <<EOF
 (optional) If set to "all", the default, then both public and private ingress resources (ELB, A-records) will be created.

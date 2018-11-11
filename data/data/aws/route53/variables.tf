@@ -60,17 +60,6 @@ EOF
   default = false
 }
 
-variable "external_vpc_id" {
-  type = "string"
-
-  description = <<EOF
-ID of an existing VPC to launch nodes into.
-If unset a new VPC is created.
-
-Example: `vpc-123456`
-EOF
-}
-
 variable "private_endpoints" {
   description = <<EOF
 If set to true, create private-facing ingress resources (ELB, A-records).
