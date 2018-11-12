@@ -35,7 +35,7 @@ resource "libvirt_ignition" "worker" {
 }
 
 resource "libvirt_network" "tectonic_net" {
-  name = "${var.tectonic_libvirt_network_name}"
+  name = "${var.tectonic_cluster_name}"
 
   mode   = "nat"
   bridge = "${var.tectonic_libvirt_network_if}"

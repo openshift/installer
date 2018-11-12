@@ -109,7 +109,6 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn, workerIgn string)
 		config.Libvirt = libvirt.Libvirt{
 			URI: cfg.Platform.Libvirt.URI,
 			Network: libvirt.Network{
-				Name:    cfg.Platform.Libvirt.Network.Name,
 				IfName:  cfg.Platform.Libvirt.Network.IfName,
 				IPRange: cfg.Platform.Libvirt.Network.IPRange,
 			},

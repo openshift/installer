@@ -24,7 +24,6 @@ type Libvirt struct {
 
 // Network describes a libvirt network configuration.
 type Network struct {
-	Name    string `json:"tectonic_libvirt_network_name,omitempty" yaml:"name"`
 	IfName  string `json:"tectonic_libvirt_network_if,omitempty" yaml:"ifName"`
 	IPRange string `json:"tectonic_libvirt_ip_range,omitempty" yaml:"ipRange"`
 }

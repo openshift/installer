@@ -8,11 +8,6 @@ variable "tectonic_libvirt_uri" {
   description = "libvirt connection URI"
 }
 
-variable "tectonic_libvirt_network_name" {
-  type        = "string"
-  description = "Name of the libvirt network to create"
-}
-
 variable "tectonic_libvirt_network_if" {
   type        = "string"
   description = "The name of the bridge to use"

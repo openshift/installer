@@ -32,7 +32,7 @@ func MachineSets(config *types.InstallConfig, pool *types.MachinePool, role, use
 		total = *pool.Replicas
 	}
 
-	provider := provider(platform, pool.Name)
+	provider := provider(clustername, platform, pool.Name)
 	name := fmt.Sprintf("%s-%s-%d", clustername, pool.Name, 0)
 	mset := clusterapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{

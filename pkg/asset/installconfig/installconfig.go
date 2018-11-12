@@ -104,7 +104,6 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		a.Config.OpenStack = platform.OpenStack
 	case platform.Libvirt != nil:
 		a.Config.Libvirt = platform.Libvirt
-		a.Config.Libvirt.Network.Name = clusterName.ClusterName
 		numberOfMasters = 1
 		numberOfWorkers = 1
 	default:
