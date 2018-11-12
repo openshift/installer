@@ -47,7 +47,7 @@ func (t *Tectonic) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&tls.IngressCertKey{},
 		&tls.KubeCA{},
-		&machines.ClusterK8sIO{},
+		&ClusterK8sIO{},
 		&machines.Worker{},
 		&machines.Master{},
 		&kubeAddonOperator{},
@@ -67,7 +67,7 @@ func (t *Tectonic) Dependencies() []asset.Asset {
 // Generate generates the respective operator config.yml files
 func (t *Tectonic) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	clusterk8sio := &machines.ClusterK8sIO{}
+	clusterk8sio := &ClusterK8sIO{}
 	worker := &machines.Worker{}
 	master := &machines.Master{}
 	addon := &kubeAddonOperator{}

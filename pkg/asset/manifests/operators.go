@@ -51,7 +51,7 @@ func (m *Manifests) Name() string {
 func (m *Manifests) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&networkOperator{},
+		&Networking{},
 		&tls.RootCA{},
 		&tls.EtcdCA{},
 		&tls.IngressCertKey{},
@@ -65,7 +65,6 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftServiceCertSignerSecret{},
 		&bootkube.Pull{},
-		&bootkube.TectonicNetworkOperator{},
 		&bootkube.CVOOverrides{},
 		&bootkube.LegacyCVOOverrides{},
 		&bootkube.EtcdServiceEndpointsKubeSystem{},
@@ -79,20 +78,18 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.OpenshiftClusterAPINamespace{},
 		&bootkube.OpenshiftServiceCertSignerNamespace{},
 		&bootkube.AppVersionKind{},
-		&bootkube.AppVersionTectonicNetwork{},
 		&bootkube.EtcdServiceKubeSystem{},
 	}
 }
 
 // Generate generates the respective operator config.yml files
 func (m *Manifests) Generate(dependencies asset.Parents) error {
-	no := &networkOperator{}
+	network := &Networking{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(no, installConfig)
+	dependencies.Get(installConfig, network)
 
-	// no+mao go to kube-system config map
+	// mao go to kube-system config map
 	m.KubeSysConfig = configMap("kube-system", "cluster-config-v1", genericData{
-		"network-config": string(no.Files()[0].Data),
 		"install-config": string(installConfig.Files()[0].Data),
 	})
 	kubeSysConfigData, err := yaml.Marshal(m.KubeSysConfig)
@@ -107,6 +104,8 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 		},
 	}
 	m.FileList = append(m.FileList, m.generateBootKubeManifests(dependencies)...)
+
+	m.FileList = append(m.FileList, network.Files()...)
 
 	return nil
 }
@@ -152,7 +151,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		RootCaCert:                      base64.StdEncoding.EncodeToString(rootCA.Cert()),
 		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(serviceServingCA.Cert()),
 		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(serviceServingCA.Key()),
-		TectonicNetworkOperatorImage:    "quay.io/coreos/tectonic-network-operator-dev:375423a332f2c12b79438fc6a6da6e448e28ec0f",
 		CVOClusterID:                    installConfig.Config.ClusterID,
 		EtcdEndpointHostnames:           etcdEndpointHostnames,
 		EtcdEndpointDNSSuffix:           installConfig.Config.BaseDomain,
@@ -162,7 +160,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	machineConfigServerTLSSecret := &bootkube.MachineConfigServerTLSSecret{}
 	openshiftServiceCertSignerSecret := &bootkube.OpenshiftServiceCertSignerSecret{}
 	pull := &bootkube.Pull{}
-	tectonicNetworkOperator := &bootkube.TectonicNetworkOperator{}
 	cVOOverrides := &bootkube.CVOOverrides{}
 	legacyCVOOverrides := &bootkube.LegacyCVOOverrides{}
 	etcdServiceEndpointsKubeSystem := &bootkube.EtcdServiceEndpointsKubeSystem{}
@@ -176,14 +173,12 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	openshiftClusterAPINamespace := &bootkube.OpenshiftClusterAPINamespace{}
 	openshiftServiceCertSignerNamespace := &bootkube.OpenshiftServiceCertSignerNamespace{}
 	appVersionKind := &bootkube.AppVersionKind{}
-	appVersionTectonicNetwork := &bootkube.AppVersionTectonicNetwork{}
 	etcdServiceKubeSystem := &bootkube.EtcdServiceKubeSystem{}
 	dependencies.Get(
 		kubeCloudConfig,
 		machineConfigServerTLSSecret,
 		openshiftServiceCertSignerSecret,
 		pull,
-		tectonicNetworkOperator,
 		cVOOverrides,
 		legacyCVOOverrides,
 		etcdServiceEndpointsKubeSystem,
@@ -196,7 +191,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		openshiftClusterAPINamespace,
 		openshiftServiceCertSignerNamespace,
 		appVersionKind,
-		appVersionTectonicNetwork,
 		etcdServiceKubeSystem,
 	)
 	assetData := map[string][]byte{
@@ -204,7 +198,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"machine-config-server-tls-secret.yaml":      applyTemplateData(machineConfigServerTLSSecret.Files()[0].Data, templateData),
 		"openshift-service-signer-secret.yaml":       applyTemplateData(openshiftServiceCertSignerSecret.Files()[0].Data, templateData),
 		"pull.json":                                  applyTemplateData(pull.Files()[0].Data, templateData),
-		"tectonic-network-operator.yaml":             applyTemplateData(tectonicNetworkOperator.Files()[0].Data, templateData),
 		"cvo-overrides.yaml":                         applyTemplateData(cVOOverrides.Files()[0].Data, templateData),
 		"legacy-cvo-overrides.yaml":                  applyTemplateData(legacyCVOOverrides.Files()[0].Data, templateData),
 		"etcd-service-endpoints.yaml":                applyTemplateData(etcdServiceEndpointsKubeSystem.Files()[0].Data, templateData),
@@ -218,7 +211,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"05-openshift-cluster-api-namespace.yaml":    []byte(openshiftClusterAPINamespace.Files()[0].Data),
 		"09-openshift-service-signer-namespace.yaml": []byte(openshiftServiceCertSignerNamespace.Files()[0].Data),
 		"app-version-kind.yaml":                      []byte(appVersionKind.Files()[0].Data),
-		"app-version-tectonic-network.yaml":          []byte(appVersionTectonicNetwork.Files()[0].Data),
 		"etcd-service.yaml":                          []byte(etcdServiceKubeSystem.Files()[0].Data),
 	}
 

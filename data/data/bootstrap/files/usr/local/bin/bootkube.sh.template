@@ -97,10 +97,6 @@ then
 	cp kube-scheduler-bootstrap/manifests/* manifests/
 fi
 
-# TODO: Remove this when manifest-overrides is empty.
-echo "Installing temporary bootstrap manifests..."
-cp manifest-overrides/* manifests/
-
 if [ ! -d mco-bootstrap ]
 then
 	echo "Rendering MCO manifests..."

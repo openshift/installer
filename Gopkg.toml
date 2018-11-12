@@ -75,3 +75,7 @@ ignored = ["github.com/openshift/installer/tests*"]
 [[constraint]]
   name = "k8s.io/utils"
   revision = "4c3feeb576b06ef8fea769809bd3db5e5e78dc23"
+
+[[constraint]]
+  name = "github.com/openshift/cluster-network-operator"
+  revision = "fb8b55a1072436a51b153de9acf5bf5525efcf83"

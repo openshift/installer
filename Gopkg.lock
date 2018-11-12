@@ -116,12 +116,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3f74b3c0cc3e70631a87355e7265fcf84d0d65f4b75dc6eb9d55e942a5ca0a05"
+  digest = "1:e0598aa66452b995d5437173dc4a1f5d59a1420ba06b58fcc7c8a32520962bed"
   name = "github.com/coreos/tectonic-config"
-  packages = [
-    "config/kube-addon",
-    "config/tectonic-network",
-  ]
+  packages = ["config/kube-addon"]
   pruneopts = "NUT"
   revision = "0d649ebfd3552dfa5c6cc2cf053e17ba924b7024"
 
@@ -334,6 +331,13 @@
   packages = ["pkg/apis/libvirtproviderconfig/v1alpha1"]
   pruneopts = "NUT"
   revision = "437b1012ea0bf4c6a1189e42ff3755933689eeb4"
+
+[[projects]]
+  digest = "1:f9c1fc8da2b44ba323ec3b338f0da9f375e26c787bc3a6ea241f9cb3f191cb62"
+  name = "github.com/openshift/cluster-network-operator"
+  packages = ["pkg/apis/networkoperator/v1"]
+  pruneopts = "NUT"
+  revision = "fb8b55a1072436a51b153de9acf5bf5525efcf83"
 
 [[projects]]
   digest = "1:14f70ac5f181ccb012cddc7c72ac28709497155340b2fad822bd15d9a8722d93"
@@ -771,12 +775,12 @@
     "github.com/coreos/ignition/config/util",
     "github.com/coreos/ignition/config/v2_2/types",
     "github.com/coreos/tectonic-config/config/kube-addon",
-    "github.com/coreos/tectonic-config/config/tectonic-network",
     "github.com/ghodss/yaml",
     "github.com/gregjones/httpcache",
     "github.com/gregjones/httpcache/diskcache",
     "github.com/libvirt/libvirt-go",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
+    "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1",
     "github.com/openshift/hive/contrib/pkg/awstagdeprovision",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",

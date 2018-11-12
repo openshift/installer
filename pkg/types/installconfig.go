@@ -3,6 +3,7 @@ package types
 import (
 	"net"
 
+	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -101,20 +102,21 @@ func (p *Platform) Name() string {
 
 // Networking defines the pod network provider in the cluster.
 type Networking struct {
-	Type        NetworkType `json:"type"`
+	// Type is the network type to install
+	Type netopv1.NetworkType `json:"type"`
+
+	// ServiceCIDR is the ip block from which to assign service IPs
 	ServiceCIDR ipnet.IPNet `json:"serviceCIDR"`
-	PodCIDR     ipnet.IPNet `json:"podCIDR"`
+
+	// ClusterNetworks is the IP address space from which to assign pod IPs.
+	ClusterNetworks []netopv1.ClusterNetwork `json:"clusterNetworks,omitempty"`
+
+	// PodCIDR is deprecated (and badly named; it should have always
+	// been called ClusterCIDR. If no ClusterNetworks are specified,
+	// we will fall back to the PodCIDR
+	// TODO(cdc) remove this.
+	PodCIDR *ipnet.IPNet `json:"podCIDR,omitempty"`
 }
-
-// NetworkType defines the pod network provider in the cluster.
-type NetworkType string
-
-const (
-	// NetworkTypeOpenshiftSDN is used to install with SDN.
-	NetworkTypeOpenshiftSDN NetworkType = "openshift-sdn"
-	// NetworkTypeOpenshiftOVN is used to install with OVN.
-	NetworkTypeOpenshiftOVN NetworkType = "openshift-ovn"
-)
 
 // AWSPlatform stores all the global configuration that
 // all machinesets use.
