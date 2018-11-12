@@ -15,11 +15,11 @@ import (
 
 // Machines returns a list of machines for a machinepool.
 func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]clusterapi.Machine, error) {
-	if configPlatform := config.Platform.Name(); configPlatform != types.PlatformNameLibvirt {
+	if configPlatform := config.Platform.Name(); configPlatform != libvirt.Name {
 		return nil, fmt.Errorf("non-Libvirt configuration: %q", configPlatform)
 	}
 	// FIXME: empty is a valid case for Libvirt as we don't use it.
-	if poolPlatform := pool.Platform.Name(); poolPlatform != "" && poolPlatform != types.PlatformNameLibvirt {
+	if poolPlatform := pool.Platform.Name(); poolPlatform != "" && poolPlatform != libvirt.Name {
 		return nil, fmt.Errorf("non-Libvirt machine-pool: %q", poolPlatform)
 	}
 	clustername := config.ObjectMeta.Name

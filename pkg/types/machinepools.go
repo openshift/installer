@@ -40,13 +40,13 @@ func (p *MachinePoolPlatform) Name() string {
 		return ""
 	}
 	if p.AWS != nil {
-		return PlatformNameAWS
+		return aws.Name
 	}
 	if p.Libvirt != nil {
-		return PlatformNameLibvirt
+		return libvirt.Name
 	}
 	if p.OpenStack != nil {
-		return PlatformNameOpenstack
+		return openstack.Name
 	}
 	return ""
 }

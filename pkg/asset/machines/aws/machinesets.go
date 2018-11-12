@@ -9,15 +9,16 @@ import (
 	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/pkg/errors"
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
 func MachineSets(config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]clusterapi.MachineSet, error) {
-	if configPlatform := config.Platform.Name(); configPlatform != types.PlatformNameAWS {
+	if configPlatform := config.Platform.Name(); configPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS configuration: %q", configPlatform)
 	}
-	if poolPlatform := pool.Platform.Name(); poolPlatform != types.PlatformNameAWS {
+	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
 	clustername := config.ObjectMeta.Name
