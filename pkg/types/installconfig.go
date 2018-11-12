@@ -1,10 +1,11 @@
 package types
 
 import (
-	"net"
-
 	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
+	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/libvirt"
+	"github.com/openshift/installer/pkg/types/openstack"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -72,13 +73,13 @@ type Admin struct {
 // the installation. Only one of the platform configuration should be set.
 type Platform struct {
 	// AWS is the configuration used when installing on AWS.
-	AWS *AWSPlatform `json:"aws,omitempty"`
+	AWS *aws.Platform `json:"aws,omitempty"`
 
 	// Libvirt is the configuration used when installing on libvirt.
-	Libvirt *LibvirtPlatform `json:"libvirt,omitempty"`
+	Libvirt *libvirt.Platform `json:"libvirt,omitempty"`
 
 	// OpenStack is the configuration used when installing on OpenStack.
-	OpenStack *OpenStackPlatform `json:"openstack,omitempty"`
+	OpenStack *openstack.Platform `json:"openstack,omitempty"`
 }
 
 // Name returns a string representation of the platform (e.g. "aws" if
@@ -116,86 +117,4 @@ type Networking struct {
 	// we will fall back to the PodCIDR
 	// TODO(cdc) remove this.
 	PodCIDR *ipnet.IPNet `json:"podCIDR,omitempty"`
-}
-
-// AWSPlatform stores all the global configuration that
-// all machinesets use.
-type AWSPlatform struct {
-	// Region specifies the AWS region where the cluster will be created.
-	Region string `json:"region"`
-
-	// UserTags specifies additional tags for AWS resources created for the cluster.
-	UserTags map[string]string `json:"userTags,omitempty"`
-
-	// DefaultMachinePlatform is the default configuration used when
-	// installing on AWS for machine pools which do not define their own
-	// platform configuration.
-	DefaultMachinePlatform *AWSMachinePoolPlatform `json:"defaultMachinePlatform,omitempty"`
-
-	// VPCID specifies the vpc to associate with the cluster.
-	// If empty, new vpc will be created.
-	// +optional
-	VPCID string `json:"vpcID"`
-
-	// VPCCIDRBlock
-	// +optional
-	VPCCIDRBlock string `json:"vpcCIDRBlock"`
-}
-
-// OpenStackPlatform stores all the global configuration that
-// all machinesets use.
-type OpenStackPlatform struct {
-	// Region specifies the OpenStack region where the cluster will be created.
-	Region string `json:"region"`
-
-	// DefaultMachinePlatform is the default configuration used when
-	// installing on OpenStack for machine pools which do not define their own
-	// platform configuration.
-	DefaultMachinePlatform *OpenStackMachinePoolPlatform `json:"defaultMachinePlatform,omitempty"`
-
-	// NetworkCIDRBlock
-	// +optional
-	NetworkCIDRBlock string `json:"NetworkCIDRBlock"`
-
-	// BaseImage
-	// Name of image to use from OpenStack cloud
-	BaseImage string `json:"baseImage"`
-
-	// Cloud
-	// Name of OpenStack cloud to use from clouds.yaml
-	Cloud string `json:"cloud"`
-
-	// ExternalNetwork
-	// The OpenStack external network to be used for installation.
-	ExternalNetwork string `json:"externalNetwork"`
-}
-
-// LibvirtPlatform stores all the global configuration that
-// all machinesets use.
-type LibvirtPlatform struct {
-	// URI is the identifier for the libvirtd connection.  It must be
-	// reachable from both the host (where the installer is run) and the
-	// cluster (where the cluster-API controller pod will be running).
-	URI string `json:"URI"`
-
-	// DefaultMachinePlatform is the default configuration used when
-	// installing on AWS for machine pools which do not define their own
-	// platform configuration.
-	DefaultMachinePlatform *LibvirtMachinePoolPlatform `json:"defaultMachinePlatform,omitempty"`
-
-	// Network
-	Network LibvirtNetwork `json:"network"`
-
-	// MasterIPs
-	MasterIPs []net.IP `json:"masterIPs"`
-}
-
-// LibvirtNetwork is the configuration of the libvirt network.
-type LibvirtNetwork struct {
-	// Name is the name of the nework.
-	Name string `json:"name"`
-	// IfName is the name of the network interface.
-	IfName string `json:"if"`
-	// IPRange is the range of IPs to use.
-	IPRange string `json:"ipRange"`
 }

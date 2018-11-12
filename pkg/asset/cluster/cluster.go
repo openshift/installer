@@ -15,6 +15,9 @@ import (
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/libvirt"
+	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 const (
@@ -87,7 +90,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	switch {
 	case installConfig.Config.Platform.AWS != nil:
-		metadata.ClusterPlatformMetadata.AWS = &types.ClusterAWSPlatformMetadata{
+		metadata.ClusterPlatformMetadata.AWS = &aws.Metadata{
 			Region: installConfig.Config.Platform.AWS.Region,
 			Identifier: []map[string]string{
 				{
@@ -99,14 +102,14 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 			},
 		}
 	case installConfig.Config.Platform.OpenStack != nil:
-		metadata.ClusterPlatformMetadata.OpenStack = &types.ClusterOpenStackPlatformMetadata{
+		metadata.ClusterPlatformMetadata.OpenStack = &openstack.Metadata{
 			Region: installConfig.Config.Platform.OpenStack.Region,
 			Identifier: map[string]string{
 				"tectonicClusterID": installConfig.Config.ClusterID,
 			},
 		}
 	case installConfig.Config.Platform.Libvirt != nil:
-		metadata.ClusterPlatformMetadata.Libvirt = &types.ClusterLibvirtPlatformMetadata{
+		metadata.ClusterPlatformMetadata.Libvirt = &libvirt.Metadata{
 			URI: installConfig.Config.Platform.Libvirt.URI,
 		}
 	default:

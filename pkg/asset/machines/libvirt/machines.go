@@ -10,6 +10,7 @@ import (
 	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/libvirt"
 )
 
 // Machines returns a list of machines for a machinepool.
@@ -60,7 +61,7 @@ func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDa
 	return machines, nil
 }
 
-func provider(platform *types.LibvirtPlatform, name string) *libvirtprovider.LibvirtMachineProviderConfig {
+func provider(platform *libvirt.Platform, name string) *libvirtprovider.LibvirtMachineProviderConfig {
 	return &libvirtprovider.LibvirtMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "libvirtproviderconfig.k8s.io/v1alpha1",

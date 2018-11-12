@@ -14,6 +14,7 @@ import (
 	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
 )
 
 // Machines returns a list of machines for a machinepool.
@@ -68,7 +69,7 @@ func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDa
 	return machines, nil
 }
 
-func provider(clusterID, clusterName string, platform *types.AWSPlatform, mpool *types.AWSMachinePoolPlatform, azIdx int, role, userDataSecret string) (*awsprovider.AWSMachineProviderConfig, error) {
+func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.MachinePool, azIdx int, role, userDataSecret string) (*awsprovider.AWSMachineProviderConfig, error) {
 	az := mpool.Zones[azIdx]
 	tags, err := tagsFromUserTags(clusterID, clusterName, platform.UserTags)
 	if err != nil {
