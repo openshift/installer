@@ -2,17 +2,18 @@ provider "libvirt" {
   uri = "${var.tectonic_libvirt_uri}"
 }
 
-module "libvirt_base_volume" {
+module "volume" {
   source = "./volume"
 
-  image = "${var.tectonic_os_image}"
+  cluster_name = "${var.tectonic_cluster_name}"
+  image        = "${var.tectonic_os_image}"
 }
 
 module "bootstrap" {
   source = "./bootstrap"
 
   addresses      = ["${var.tectonic_libvirt_bootstrap_ip}"]
-  base_volume_id = "${module.libvirt_base_volume.coreos_base_volume_id}"
+  base_volume_id = "${module.volume.coreos_base_volume_id}"
   cluster_name   = "${var.tectonic_cluster_name}"
   ignition       = "${var.ignition_bootstrap}"
   network_id     = "${libvirt_network.tectonic_net.id}"
@@ -20,17 +21,17 @@ module "bootstrap" {
 
 resource "libvirt_volume" "master" {
   count          = "${var.tectonic_master_count}"
-  name           = "master${count.index}"
-  base_volume_id = "${module.libvirt_base_volume.coreos_base_volume_id}"
+  name           = "${var.tectonic_cluster_name}-master-${count.index}"
+  base_volume_id = "${module.volume.coreos_base_volume_id}"
 }
 
 resource "libvirt_ignition" "master" {
-  name    = "master.ign"
+  name    = "${var.tectonic_cluster_name}-master.ign"
   content = "${var.ignition_master}"
 }
 
 resource "libvirt_ignition" "worker" {
-  name    = "worker.ign"
+  name    = "${var.tectonic_cluster_name}-worker.ign"
   content = "${var.ignition_worker}"
 }
 
@@ -67,7 +68,7 @@ resource "libvirt_network" "tectonic_net" {
 resource "libvirt_domain" "master" {
   count = "${var.tectonic_master_count}"
 
-  name = "master${count.index}"
+  name = "${var.tectonic_cluster_name}-master-${count.index}"
 
   memory = "3072"
   vcpu   = "2"

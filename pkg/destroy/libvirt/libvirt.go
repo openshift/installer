@@ -209,7 +209,7 @@ func deleteNetwork(conn *libvirt.Connect, filter filterFunc, logger logrus.Field
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
 	return &ClusterUninstaller{
 		LibvirtURI: metadata.ClusterPlatformMetadata.Libvirt.URI,
-		Filter:     AlwaysTrueFilter(), //TODO: change to ClusterNamePrefixFilter when all resources are prefixed.
+		Filter:     ClusterNamePrefixFilter(metadata.ClusterName),
 		Logger:     logger,
 	}, nil
 }
