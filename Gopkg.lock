@@ -209,6 +209,30 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:3f5485f5f0ea50de409c25414eaf4154bd54b2fa9ef03fc4a0a278967daac906"
+  name = "github.com/gophercloud/gophercloud"
+  packages = [
+    ".",
+    "openstack",
+    "openstack/identity/v2/tenants",
+    "openstack/identity/v2/tokens",
+    "openstack/identity/v3/tokens",
+    "openstack/utils",
+    "pagination",
+  ]
+  pruneopts = "NUT"
+  revision = "0e69bafe1d790b820cef859dd0126893bdbd53ad"
+
+[[projects]]
+  branch = "master"
+  digest = "1:df12b635fdefd90b1d139a70c45716896552051589b004021c745dcbaf0dad96"
+  name = "github.com/gophercloud/utils"
+  packages = ["openstack/clientconfig"]
+  pruneopts = "NUT"
+  revision = "34f5991525d116b3832e0d9409492274f1c06bda"
+
+[[projects]]
+  branch = "master"
   digest = "1:7fdf3223c7372d1ced0b98bf53457c5e89d89aecbad9a77ba9fcc6e01f9e5621"
   name = "github.com/gregjones/httpcache"
   packages = [
@@ -776,6 +800,7 @@
     "github.com/coreos/ignition/config/v2_2/types",
     "github.com/coreos/tectonic-config/config/kube-addon",
     "github.com/ghodss/yaml",
+    "github.com/gophercloud/utils/openstack/clientconfig",
     "github.com/gregjones/httpcache",
     "github.com/gregjones/httpcache/diskcache",
     "github.com/libvirt/libvirt-go",

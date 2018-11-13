@@ -1,16 +1,14 @@
 package manifests
 
 import (
-	"bufio"
 	"encoding/base64"
-	"io/ioutil"
-	"os"
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 
+	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
@@ -20,7 +18,6 @@ import (
 
 const (
 	tectonicManifestDir = "tectonic"
-	openStackCredsFile  = "/etc/openstack/clouds.yaml"
 )
 
 var (
@@ -90,10 +87,17 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 			},
 		}
 	case "openstack":
-		credsEncoded, err := credsFileEncode(openStackCredsFile)
+		clouds, err := clientconfig.LoadCloudsYAML()
 		if err != nil {
 			return err
 		}
+
+		marshalled, err := yaml.Marshal(clouds)
+		if err != nil {
+			return err
+		}
+
+		credsEncoded := base64.StdEncoding.EncodeToString(marshalled)
 		cloudCreds = cloudCredsSecretData{
 			OpenStack: &OpenStackCredsSecretData{
 				Base64encodeCloudCreds: credsEncoded,
@@ -204,15 +208,4 @@ func (t *Tectonic) Load(f asset.FileFetcher) (bool, error) {
 
 	t.FileList, t.TectonicConfig = fileList, tectonicConfig
 	return true, nil
-}
-
-// credsFileEncode returns contents of a file as base64 encoded string
-func credsFileEncode(credsFile string) (string, error) {
-	f, _ := os.Open(credsFile)
-	reader := bufio.NewReader(f)
-	credsData, err := ioutil.ReadAll(reader)
-	if err != nil {
-		return "", err
-	}
-	return base64.StdEncoding.EncodeToString(credsData), nil
 }
