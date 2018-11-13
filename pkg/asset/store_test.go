@@ -1,6 +1,8 @@
 package asset
 
 import (
+	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 
@@ -206,8 +208,14 @@ func TestStoreFetch(t *testing.T) {
 			gl := &generationLog{
 				log: []string{},
 			}
+			dir, err := ioutil.TempDir("", "TestStoreFetch")
+			if err != nil {
+				t.Fatalf("failed to create temporary directory: %v", err)
+			}
+			defer os.RemoveAll(dir)
 			store := &StoreImpl{
-				assets: make(map[reflect.Type]assetState),
+				directory: dir,
+				assets:    make(map[reflect.Type]assetState),
 			}
 			assets := make(map[string]testStoreAsset, len(tc.assets))
 			for name := range tc.assets {
@@ -224,7 +232,7 @@ func TestStoreFetch(t *testing.T) {
 				asset := assets[assetName]
 				store.assets[reflect.TypeOf(asset)] = assetState{asset: asset}
 			}
-			err := store.Fetch(assets[tc.target])
+			err = store.Fetch(assets[tc.target])
 			assert.NoError(t, err, "error fetching asset")
 			assert.EqualValues(t, tc.expectedGenerationLog, gl.log)
 		})
