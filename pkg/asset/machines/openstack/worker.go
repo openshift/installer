@@ -4,7 +4,7 @@ package openstack
 import (
 	"text/template"
 
-	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 // Config is used to generate the machine.
@@ -14,7 +14,7 @@ type Config struct {
 	Image       string
 	Tags        map[string]string
 	Region      string
-	Machine     types.OpenStackMachinePoolPlatform
+	Machine     openstack.MachinePool
 }
 
 // WorkerMachineSetTmpl is template for worker machineset.

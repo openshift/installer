@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
 )
 
 // TestMasterGenerate tests generating the master asset.
@@ -31,7 +32,7 @@ func TestMasterGenerate(t *testing.T) {
 				},
 			},
 			Platform: types.Platform{
-				AWS: &types.AWSPlatform{
+				AWS: &aws.Platform{
 					Region: "us-east",
 				},
 			},

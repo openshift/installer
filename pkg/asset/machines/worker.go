@@ -21,16 +21,18 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
+	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 )
 
-func defaultAWSMachinePoolPlatform() types.AWSMachinePoolPlatform {
-	return types.AWSMachinePoolPlatform{
+func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
+	return awstypes.MachinePool{
 		InstanceType: "t2.medium",
 	}
 }
 
-func defaultOpenStackMachinePoolPlatform() types.OpenStackMachinePoolPlatform {
-	return types.OpenStackMachinePoolPlatform{
+func defaultOpenStackMachinePoolPlatform() openstacktypes.MachinePool {
+	return openstacktypes.MachinePool{
 		FlavorName: "m1.medium",
 	}
 }

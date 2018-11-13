@@ -15,6 +15,9 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/libvirt"
+	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 const (
@@ -58,11 +61,7 @@ var (
 
 // Platform is an asset that queries the user for the platform on which to install
 // the cluster.
-type platform struct {
-	AWS       *types.AWSPlatform
-	Openstack *types.OpenStackPlatform
-	Libvirt   *types.LibvirtPlatform
-}
+type platform types.Platform
 
 var _ asset.Asset = (*platform)(nil)
 
@@ -90,7 +89,7 @@ func (a *platform) Generate(asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		a.Openstack = openstack
+		a.OpenStack = openstack
 	case LibvirtPlatformType:
 		libvirt, err := a.libvirtPlatform()
 		if err != nil {
@@ -131,7 +130,7 @@ func (a *platform) queryUserForPlatform() (string, error) {
 	)
 }
 
-func (a *platform) awsPlatform() (*types.AWSPlatform, error) {
+func (a *platform) awsPlatform() (*aws.Platform, error) {
 	longRegions := make([]string, 0, len(validAWSRegions))
 	shortRegions := make([]string, 0, len(validAWSRegions))
 	for id, location := range validAWSRegions {
@@ -175,14 +174,14 @@ func (a *platform) awsPlatform() (*types.AWSPlatform, error) {
 		}
 	}
 
-	return &types.AWSPlatform{
+	return &aws.Platform{
 		VPCCIDRBlock: defaultVPCCIDR,
 		Region:       region,
 		UserTags:     userTags,
 	}, nil
 }
 
-func (a *platform) openstackPlatform() (*types.OpenStackPlatform, error) {
+func (a *platform) openstackPlatform() (*openstack.Platform, error) {
 	region, err := asset.GenerateUserProvidedAsset(
 		"OpenStack Region",
 		&survey.Question{
@@ -263,7 +262,7 @@ func (a *platform) openstackPlatform() (*types.OpenStackPlatform, error) {
 		return nil, errors.Wrapf(err, "failed to Marshal %s platform", OpenStackPlatformType)
 	}
 
-	return &types.OpenStackPlatform{
+	return &openstack.Platform{
 		NetworkCIDRBlock: defaultVPCCIDR,
 		Region:           region,
 		BaseImage:        image,
@@ -272,7 +271,7 @@ func (a *platform) openstackPlatform() (*types.OpenStackPlatform, error) {
 	}, nil
 }
 
-func (a *platform) libvirtPlatform() (*types.LibvirtPlatform, error) {
+func (a *platform) libvirtPlatform() (*libvirt.Platform, error) {
 	uri, err := asset.GenerateUserProvidedAsset(
 		"Libvirt Connection URI",
 		&survey.Question{
@@ -302,12 +301,12 @@ func (a *platform) libvirtPlatform() (*types.LibvirtPlatform, error) {
 		}
 	}
 
-	return &types.LibvirtPlatform{
-		Network: types.LibvirtNetwork{
+	return &libvirt.Platform{
+		Network: libvirt.Network{
 			IfName:  defaultLibvirtNetworkIfName,
 			IPRange: defaultLibvirtNetworkIPRange,
 		},
-		DefaultMachinePlatform: &types.LibvirtMachinePoolPlatform{
+		DefaultMachinePlatform: &libvirt.MachinePool{
 			Image: qcowImage,
 		},
 		URI: uri,

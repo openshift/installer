@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
 )
 
 // TestWorkerGenerate tests generating the worker asset.
@@ -26,7 +27,7 @@ func TestWorkerGenerate(t *testing.T) {
 				},
 			},
 			Platform: types.Platform{
-				AWS: &types.AWSPlatform{
+				AWS: &aws.Platform{
 					Region: "us-east",
 				},
 			},

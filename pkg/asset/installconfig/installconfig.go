@@ -100,8 +100,8 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	switch {
 	case platform.AWS != nil:
 		a.Config.AWS = platform.AWS
-	case platform.Openstack != nil:
-		a.Config.OpenStack = platform.Openstack
+	case platform.OpenStack != nil:
+		a.Config.OpenStack = platform.OpenStack
 	case platform.Libvirt != nil:
 		a.Config.Libvirt = platform.Libvirt
 		a.Config.Libvirt.Network.Name = clusterName.ClusterName
