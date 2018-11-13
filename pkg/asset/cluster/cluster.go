@@ -11,13 +11,13 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/cluster/aws"
+	"github.com/openshift/installer/pkg/asset/cluster/libvirt"
+	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/types"
-	"github.com/openshift/installer/pkg/types/aws"
-	"github.com/openshift/installer/pkg/types/libvirt"
-	"github.com/openshift/installer/pkg/types/openstack"
 )
 
 const (
@@ -90,28 +90,11 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	switch {
 	case installConfig.Config.Platform.AWS != nil:
-		metadata.ClusterPlatformMetadata.AWS = &aws.Metadata{
-			Region: installConfig.Config.Platform.AWS.Region,
-			Identifier: []map[string]string{
-				{
-					"tectonicClusterID": installConfig.Config.ClusterID,
-				},
-				{
-					fmt.Sprintf("kubernetes.io/cluster/%s", installConfig.Config.ObjectMeta.Name): "owned",
-				},
-			},
-		}
+		metadata.ClusterPlatformMetadata.AWS = aws.Metadata(installConfig.Config)
 	case installConfig.Config.Platform.OpenStack != nil:
-		metadata.ClusterPlatformMetadata.OpenStack = &openstack.Metadata{
-			Region: installConfig.Config.Platform.OpenStack.Region,
-			Identifier: map[string]string{
-				"tectonicClusterID": installConfig.Config.ClusterID,
-			},
-		}
+		metadata.ClusterPlatformMetadata.OpenStack = openstack.Metadata(installConfig.Config)
 	case installConfig.Config.Platform.Libvirt != nil:
-		metadata.ClusterPlatformMetadata.Libvirt = &libvirt.Metadata{
-			URI: installConfig.Config.Platform.Libvirt.URI,
-		}
+		metadata.ClusterPlatformMetadata.Libvirt = libvirt.Metadata(installConfig.Config)
 	default:
 		return fmt.Errorf("no known platform")
 	}
