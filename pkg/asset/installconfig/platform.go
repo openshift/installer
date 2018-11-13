@@ -20,18 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
-const (
-	// AWSPlatformType is used to install on AWS.
-	AWSPlatformType = "aws"
-	// OpenStackPlatformType is used to install on OpenStack.
-	OpenStackPlatformType = "openstack"
-	// LibvirtPlatformType is used to install of libvirt.
-	LibvirtPlatformType = "libvirt"
-)
-
 var (
-	validPlatforms = []string{AWSPlatformType, OpenStackPlatformType, LibvirtPlatformType}
-
 	validAWSRegions = map[string]string{
 		"ap-northeast-1": "Tokyo",
 		"ap-northeast-2": "Seoul",
@@ -78,19 +67,19 @@ func (a *platform) Generate(asset.Parents) error {
 	}
 
 	switch platform {
-	case AWSPlatformType:
+	case aws.Name:
 		aws, err := a.awsPlatform()
 		if err != nil {
 			return err
 		}
 		a.AWS = aws
-	case OpenStackPlatformType:
+	case openstack.Name:
 		openstack, err := a.openstackPlatform()
 		if err != nil {
 			return err
 		}
 		a.OpenStack = openstack
-	case LibvirtPlatformType:
+	case libvirt.Name:
 		libvirt, err := a.libvirtPlatform()
 		if err != nil {
 			return err
@@ -109,18 +98,17 @@ func (a *platform) Name() string {
 }
 
 func (a *platform) queryUserForPlatform() (string, error) {
-	sort.Strings(validPlatforms)
 	return asset.GenerateUserProvidedAsset(
 		"Platform",
 		&survey.Question{
 			Prompt: &survey.Select{
 				Message: "Platform",
-				Options: validPlatforms,
+				Options: types.PlatformNames,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
 				choice := ans.(string)
-				i := sort.SearchStrings(validPlatforms, choice)
-				if i == len(validPlatforms) || validPlatforms[i] != choice {
+				i := sort.SearchStrings(types.PlatformNames, choice)
+				if i == len(types.PlatformNames) || types.PlatformNames[i] != choice {
 					return errors.Errorf("invalid platform %q", choice)
 				}
 				return nil
@@ -259,7 +247,7 @@ func (a *platform) openstackPlatform() (*openstack.Platform, error) {
 		"OPENSHIFT_INSTALL_OPENSTACK_EXTERNAL_NETWORK",
 	)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to Marshal %s platform", OpenStackPlatformType)
+		return nil, errors.Wrapf(err, "failed to Marshal %s platform", openstack.Name)
 	}
 
 	return &openstack.Platform{

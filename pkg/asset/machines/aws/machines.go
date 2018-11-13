@@ -19,10 +19,10 @@ import (
 
 // Machines returns a list of machines for a machinepool.
 func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]clusterapi.Machine, error) {
-	if configPlatform := config.Platform.Name(); configPlatform != types.PlatformNameAWS {
+	if configPlatform := config.Platform.Name(); configPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS configuration: %q", configPlatform)
 	}
-	if poolPlatform := pool.Platform.Name(); poolPlatform != types.PlatformNameAWS {
+	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
 	clustername := config.ObjectMeta.Name
