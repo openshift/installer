@@ -111,6 +111,7 @@ then
 			--root-ca=/assets/tls/root-ca.crt \
 			--config-file=/assets/manifests/cluster-config.yaml \
 			--dest-dir=/assets/mco-bootstrap \
+			--pull-secret=/assets/manifests/pull.json \
 			--machine-config-controller-image=${MACHINE_CONFIG_CONTROLLER_IMAGE} \
 			--machine-config-server-image=${MACHINE_CONFIG_SERVER_IMAGE} \
 			--machine-config-daemon-image=${MACHINE_CONFIG_DAEMON_IMAGE} \
