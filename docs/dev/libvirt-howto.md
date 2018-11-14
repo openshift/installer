@@ -19,7 +19,7 @@ crw-rw-rw-+ 1 root kvm 10, 232 Oct 31 09:22 /dev/kvm
 If it is missing, try some of the ideas [here][kvm-install].
 
 ### Install and Enable Libvirt
-On Fedora or RHEL systems with QEMU(2.9+):
+On Fedora or RHEL systems with QEMU(2.4+):
 
 ```sh
 sudo yum install libvirt libvirt-devel
