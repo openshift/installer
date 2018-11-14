@@ -4,7 +4,7 @@ Unfortunately, there will always be some cases where OpenShift fails to install 
 
 ## Common Failures
 
-### No Workers Nodes Created
+### No Worker Nodes Created
 
 The installer doesn't provision worker nodes directly, like it does with master nodes. Instead, the cluster relies on the Machine API Operator, which is able to scale up and down nodes on supported platforms. If more than fifteen to twenty minutes (depending on the speed of the cluster's Internet connection) have elapsed without any workers, the Machine API Operator needs to be investigated.
 
@@ -89,3 +89,59 @@ This is safe to ignore and merely indicates that the etcd bootstrapping is still
 ### Installer Fails to Create Resources
 
 The easiest way to get more debugging information from the installer is to increase the logging level. This can be done by adding `--log-level=debug` to the command line arguments. Of course, this cannot be retroactively applied, so it won't help to debug an installation that has already failed. The installation will have to be attempted again.
+
+## Generic Troubleshooting
+
+Here are some ideas if none of the [common failures](#common-failures) match your symptoms.
+For other generic troubleshooting, see [the Kubernetes documentation][kubernetes-debug].
+
+### Check for Pending or Crashing Pods
+
+This is the generic version of the [*No Worker Nodes Created*](#no-worker-nodes-created) troubleshooting procedure.
+
+```console
+$ oc --config=${INSTALL_DIR}/auth/kubeconfig get pods --all-namespaces
+NAMESPACE                              NAME                                                              READY     STATUS              RESTARTS   AGE
+kube-system                            etcd-member-wking-master-0                                        1/1       Running             0          46s
+openshift-cluster-api                  machine-api-operator-586bd5b6b9-bxq9s                             0/1       Pending             0          1m
+openshift-cluster-dns-operator         cluster-dns-operator-7f4f6866b9-kzth5                             0/1       Pending             0          2m
+...
+```
+
+You can investigate any pods listed as `Pending` with:
+
+```sh
+oc --config=${INSTALL_DIR}/auth/kubeconfig describe -n openshift-cluster-api pod/machine-api-operator-586bd5b6b9-bxq9s
+```
+
+which may show events with warnings like:
+
+```
+Warning  FailedScheduling  1m (x10 over 1m)  default-scheduler  0/1 nodes are available: 1 node(s) had taints that the pod didn't tolerate.
+```
+
+You can get the image used for a crashing pod with:
+
+```console
+$ oc --config=${INSTALL_DIR}/auth/kubeconfig get pod -o "jsonpath={range .status.containerStatuses[*]}{.name}{'\t'}{.state}{'\t'}{.image}{'\n'}{end}" -n openshift-cluster-api machine-api-operator-586bd5b6b9-bxq9s
+machine-api-operator	map[running:map[startedAt:2018-11-13T19:04:50Z]]	registry.svc.ci.openshift.org/openshift/origin-v4.0-20181113175638@sha256:c97d0b53b98d07053090f3c9563cfd8277587ce94f8c2400b33e246aa08332c7
+```
+
+And you can see where that image comes from with:
+
+```console
+$ oc adm release info registry.svc.ci.openshift.org/openshift/origin-release:v4.0-20181113175638 --commits
+Name:      v4.0-20181113175638
+Digest:    sha256:58196e73cc7bbc16346483d824fb694bf1a73d517fe13f6b5e589a7e0e1ccb5b
+Created:   2018-11-13 09:56:46 -0800 PST
+OS/Arch:   linux/amd64
+Manifests: 121
+
+Images:
+  NAME                  REPO                                               COMMIT
+  ...
+  machine-api-operator  https://github.com/openshift/machine-api-operator  e681e121e15d2243739ad68978113a07aa35c6ae
+  ...
+```
+
+[kubernetes-debug]: https://kubernetes.io/docs/tasks/debug-application-cluster/
