@@ -12,7 +12,7 @@ sudo yum install golang-bin gcc-c++
 
 If you need support for [libvirt destroy](libvirt-howto.md#cleanup), you should also install `libvirt-devel`.
 
-## Go
+### Go
 
 We follow a hard flattening approach; i.e. direct and inherited dependencies are installed in the base `vendor/`.
 
