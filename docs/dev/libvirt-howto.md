@@ -130,7 +130,7 @@ Finally, if you have a firewall, you may have to allow connections to the
 libvirt daemon from the IP range used by your cluster nodes.
 
 The following examples use the default cluster IP range of `192.168.126.0/24` (which is currently not configurable) and a libvirt `default` subnet of `192.168.124.0/24`, which might be different in your configuration.
-If you're uncertain about the libvirt *default* subnet you should be able to see its address using the command `ip -4 a show dev virbr0` or by inspecting `virsh --connect qemu:///system net-dumpxml default.
+If you're uncertain about the libvirt *default* subnet you should be able to see its address using the command `ip -4 a show dev virbr0` or by inspecting `virsh --connect qemu:///system net-dumpxml default`.
 Ensure the cluster IP range does not overlap your `virbr0` IP address.
 
 #### iptables
