@@ -286,7 +286,7 @@ You'll need a `kubectl` binary on your path and [the kubeconfig from your `clust
 
 ```sh
 export KUBECONFIG="${DIR}/auth/kubeconfig"
-kubectl get -n tectonic-system pods
+kubectl get --all-namespaces pods
 ```
 
 Alternatively, you can run `kubectl` from the bootstrap or master nodes.
