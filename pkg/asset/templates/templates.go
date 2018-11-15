@@ -33,20 +33,12 @@ func (m *Templates) Dependencies() []asset.Asset {
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.KubeSystemSecretEtcdClient{},
-		&bootkube.TectonicNamespace{},
 		&bootkube.OpenshiftWebConsoleNamespace{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.OpenshiftClusterAPINamespace{},
 		&bootkube.OpenshiftServiceCertSignerNamespace{},
-		&bootkube.AppVersionKind{},
 		&bootkube.EtcdServiceKubeSystem{},
 		&tectonic.BindingDiscovery{},
-		&tectonic.AppVersionKubeAddon{},
-		&tectonic.KubeAddonOperator{},
-		&tectonic.RoleAdmin{},
-		&tectonic.RoleUser{},
-		&tectonic.BindingAdmin{},
-		&tectonic.PullTectonicSystem{},
 		&tectonic.CloudCredsSecret{},
 		&tectonic.RoleCloudCredsSecretReader{},
 	}
@@ -64,21 +56,13 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	kubeSystemConfigmapEtcdServingCA := &bootkube.KubeSystemConfigmapEtcdServingCA{}
 	kubeSystemConfigmapRootCA := &bootkube.KubeSystemConfigmapRootCA{}
 	kubeSystemSecretEtcdClient := &bootkube.KubeSystemSecretEtcdClient{}
-	tectonicNamespace := &bootkube.TectonicNamespace{}
 	openshiftWebConsoleNamespace := &bootkube.OpenshiftWebConsoleNamespace{}
 	openshiftMachineConfigOperator := &bootkube.OpenshiftMachineConfigOperator{}
 	openshiftClusterAPINamespace := &bootkube.OpenshiftClusterAPINamespace{}
 	openshiftServiceCertSignerNamespace := &bootkube.OpenshiftServiceCertSignerNamespace{}
-	appVersionKind := &bootkube.AppVersionKind{}
 	etcdServiceKubeSystem := &bootkube.EtcdServiceKubeSystem{}
 
 	bindingDiscovery := &tectonic.BindingDiscovery{}
-	appVersionKubeAddon := &tectonic.AppVersionKubeAddon{}
-	kubeAddonOperator := &tectonic.KubeAddonOperator{}
-	roleAdmin := &tectonic.RoleAdmin{}
-	roleUser := &tectonic.RoleUser{}
-	bindingAdmin := &tectonic.BindingAdmin{}
-	pullTectonicSystem := &tectonic.PullTectonicSystem{}
 	cloudCredsSecret := &tectonic.CloudCredsSecret{}
 	roleCloudCredsSecretReader := &tectonic.RoleCloudCredsSecretReader{}
 
@@ -93,20 +77,12 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 		kubeSystemConfigmapEtcdServingCA,
 		kubeSystemConfigmapRootCA,
 		kubeSystemSecretEtcdClient,
-		tectonicNamespace,
 		openshiftWebConsoleNamespace,
 		openshiftMachineConfigOperator,
 		openshiftClusterAPINamespace,
 		openshiftServiceCertSignerNamespace,
-		appVersionKind,
 		etcdServiceKubeSystem,
 		bindingDiscovery,
-		appVersionKubeAddon,
-		kubeAddonOperator,
-		roleAdmin,
-		roleUser,
-		bindingAdmin,
-		pullTectonicSystem,
 		cloudCredsSecret,
 		roleCloudCredsSecretReader)
 
@@ -121,21 +97,13 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, kubeSystemConfigmapEtcdServingCA.Files()...)
 	m.FileList = append(m.FileList, kubeSystemConfigmapRootCA.Files()...)
 	m.FileList = append(m.FileList, kubeSystemSecretEtcdClient.Files()...)
-	m.FileList = append(m.FileList, tectonicNamespace.Files()...)
 	m.FileList = append(m.FileList, openshiftWebConsoleNamespace.Files()...)
 	m.FileList = append(m.FileList, openshiftMachineConfigOperator.Files()...)
 	m.FileList = append(m.FileList, openshiftClusterAPINamespace.Files()...)
 	m.FileList = append(m.FileList, openshiftServiceCertSignerNamespace.Files()...)
-	m.FileList = append(m.FileList, appVersionKind.Files()...)
 	m.FileList = append(m.FileList, etcdServiceKubeSystem.Files()...)
 
 	m.FileList = append(m.FileList, bindingDiscovery.Files()...)
-	m.FileList = append(m.FileList, appVersionKubeAddon.Files()...)
-	m.FileList = append(m.FileList, kubeAddonOperator.Files()...)
-	m.FileList = append(m.FileList, roleAdmin.Files()...)
-	m.FileList = append(m.FileList, roleUser.Files()...)
-	m.FileList = append(m.FileList, bindingAdmin.Files()...)
-	m.FileList = append(m.FileList, pullTectonicSystem.Files()...)
 	m.FileList = append(m.FileList, cloudCredsSecret.Files()...)
 	m.FileList = append(m.FileList, roleCloudCredsSecretReader.Files()...)
 

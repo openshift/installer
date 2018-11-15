@@ -36,7 +36,5 @@ type bootkubeTemplateData struct {
 }
 
 type tectonicTemplateData struct {
-	KubeAddonOperatorImage string
-	PullSecret             string
-	CloudCreds             cloudCredsSecretData
+	CloudCreds cloudCredsSecretData
 }
