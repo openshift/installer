@@ -118,24 +118,24 @@ resource "aws_security_group_rule" "master_ingress_flannel_from_worker" {
   to_port   = 4789
 }
 
-resource "aws_security_group_rule" "master_ingress_node_exporter" {
+resource "aws_security_group_rule" "master_ingress_internal" {
   type              = "ingress"
   security_group_id = "${aws_security_group.master.id}"
 
   protocol  = "tcp"
-  from_port = 9100
-  to_port   = 9100
+  from_port = 9000
+  to_port   = 9990
   self      = true
 }
 
-resource "aws_security_group_rule" "master_ingress_node_exporter_from_worker" {
+resource "aws_security_group_rule" "master_ingress_internal_from_worker" {
   type                     = "ingress"
   security_group_id        = "${aws_security_group.master.id}"
   source_security_group_id = "${aws_security_group.worker.id}"
 
   protocol  = "tcp"
-  from_port = 9100
-  to_port   = 9100
+  from_port = 9000
+  to_port   = 9990
 }
 
 resource "aws_security_group_rule" "master_ingress_kubelet_insecure" {

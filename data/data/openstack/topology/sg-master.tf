@@ -90,21 +90,21 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_flannel_from_wo
   security_group_id = "${openstack_networking_secgroup_v2.master.id}"
 }
 
-resource "openstack_networking_secgroup_rule_v2" "master_ingress_node_exporter" {
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
-  port_range_min    = 9100
-  port_range_max    = 9100
+  port_range_min    = 9000
+  port_range_max    = 9999
   security_group_id = "${openstack_networking_secgroup_v2.master.id}"
 }
 
-resource "openstack_networking_secgroup_rule_v2" "master_ingress_node_exporter_from_worker" {
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_internal_from_worker" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
-  port_range_min    = 9100
-  port_range_max    = 9100
+  port_range_min    = 9000
+  port_range_max    = 9999
   remote_group_id   = "${openstack_networking_secgroup_v2.worker.id}"
   security_group_id = "${openstack_networking_secgroup_v2.master.id}"
 }
