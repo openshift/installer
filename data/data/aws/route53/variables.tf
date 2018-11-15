@@ -25,11 +25,6 @@ variable "worker_ip_addresses" {
   default     = []
 }
 
-variable "extra_tags" {
-  type        = "map"
-  description = "Extra tags to be applied to created resources."
-}
-
 // AWS specific internal zone variables
 
 variable "private_zone_id" {

@@ -63,7 +63,6 @@ module "dns" {
   cluster_name             = "${var.cluster_name}"
   master_count             = "${var.master_count}"
   private_zone_id          = "${local.private_zone_id}"
-  extra_tags               = "${var.aws_extra_tags}"
 }
 
 module "vpc" {
