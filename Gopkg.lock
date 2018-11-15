@@ -115,14 +115,6 @@
   version = "v0.26.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:e0598aa66452b995d5437173dc4a1f5d59a1420ba06b58fcc7c8a32520962bed"
-  name = "github.com/coreos/tectonic-config"
-  packages = ["config/kube-addon"]
-  pruneopts = "NUT"
-  revision = "0d649ebfd3552dfa5c6cc2cf053e17ba924b7024"
-
-[[projects]]
   digest = "1:ffe9824d294da03b391f44e1ae8281281b4afc1bdaa9588c9097785e3af10cec"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
@@ -224,7 +216,6 @@
   revision = "0e69bafe1d790b820cef859dd0126893bdbd53ad"
 
 [[projects]]
-  branch = "master"
   digest = "1:df12b635fdefd90b1d139a70c45716896552051589b004021c745dcbaf0dad96"
   name = "github.com/gophercloud/utils"
   packages = ["openstack/clientconfig"]
@@ -635,7 +626,7 @@
   revision = "7c111c89a854dfd8ba47d0bfdbe352bc85951011"
 
 [[projects]]
-  digest = "1:6f470287ef14e234c58e3ad27ff96a850bdc8283cae42e242f2ba5ce67e6b475"
+  digest = "1:db1a4cd5c12f340d0779da16d2d5ae2419b1a470d010fc988e5e345b8c7f494c"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/errors",
@@ -669,7 +660,6 @@
     "pkg/util/json",
     "pkg/util/naming",
     "pkg/util/net",
-    "pkg/util/rand",
     "pkg/util/runtime",
     "pkg/util/sets",
     "pkg/util/validation",
@@ -798,7 +788,6 @@
     "github.com/aws/aws-sdk-go/service/ec2",
     "github.com/coreos/ignition/config/util",
     "github.com/coreos/ignition/config/v2_2/types",
-    "github.com/coreos/tectonic-config/config/kube-addon",
     "github.com/ghodss/yaml",
     "github.com/gophercloud/utils/openstack/clientconfig",
     "github.com/gregjones/httpcache",
@@ -820,11 +809,12 @@
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",
-    "k8s.io/apimachinery/pkg/util/rand",
+    "k8s.io/apimachinery/pkg/util/net",
     "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/kubernetes",
+    "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/clientcmd",
     "k8s.io/client-go/tools/clientcmd/api/v1",
     "k8s.io/client-go/tools/watch",

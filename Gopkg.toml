@@ -18,10 +18,6 @@ ignored = ["github.com/openshift/installer/tests*"]
   version = "0.26.0"
 
 [[constraint]]
-  branch = "master"
-  name = "github.com/coreos/tectonic-config"
-
-[[constraint]]
   name = "github.com/libvirt/libvirt-go"
   version = "4.7.0"
 
