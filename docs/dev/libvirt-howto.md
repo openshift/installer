@@ -42,7 +42,8 @@ cd installer
 ```
 
 ### Get a pull secret
-Go to https://account.coreos.com/ and obtain a *pull secret*.
+
+Go to https://account.coreos.com/ and login using Google auth. Signup for tectonic on https://account.coreos.com/  and that should enable you to download pull secret.
 
 ### Make sure you have permissions for `qemu:///system`
 You may want to grant yourself permissions to use libvirt as a non-root user. You could allow all users in the wheel group by doing the following:
