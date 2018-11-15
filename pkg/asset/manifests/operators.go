@@ -72,12 +72,10 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.KubeSystemSecretEtcdClient{},
 
-		&bootkube.TectonicNamespace{},
 		&bootkube.OpenshiftWebConsoleNamespace{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.OpenshiftClusterAPINamespace{},
 		&bootkube.OpenshiftServiceCertSignerNamespace{},
-		&bootkube.AppVersionKind{},
 		&bootkube.EtcdServiceKubeSystem{},
 	}
 }
@@ -167,12 +165,10 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	kubeSystemConfigmapRootCA := &bootkube.KubeSystemConfigmapRootCA{}
 	kubeSystemSecretEtcdClient := &bootkube.KubeSystemSecretEtcdClient{}
 
-	tectonicNamespace := &bootkube.TectonicNamespace{}
 	openshiftWebConsoleNamespace := &bootkube.OpenshiftWebConsoleNamespace{}
 	openshiftMachineConfigOperator := &bootkube.OpenshiftMachineConfigOperator{}
 	openshiftClusterAPINamespace := &bootkube.OpenshiftClusterAPINamespace{}
 	openshiftServiceCertSignerNamespace := &bootkube.OpenshiftServiceCertSignerNamespace{}
-	appVersionKind := &bootkube.AppVersionKind{}
 	etcdServiceKubeSystem := &bootkube.EtcdServiceKubeSystem{}
 	dependencies.Get(
 		kubeCloudConfig,
@@ -185,12 +181,10 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		kubeSystemConfigmapEtcdServingCA,
 		kubeSystemConfigmapRootCA,
 		kubeSystemSecretEtcdClient,
-		tectonicNamespace,
 		openshiftWebConsoleNamespace,
 		openshiftMachineConfigOperator,
 		openshiftClusterAPINamespace,
 		openshiftServiceCertSignerNamespace,
-		appVersionKind,
 		etcdServiceKubeSystem,
 	)
 	assetData := map[string][]byte{
@@ -205,12 +199,10 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"kube-system-configmap-root-ca.yaml":         applyTemplateData(kubeSystemConfigmapRootCA.Files()[0].Data, templateData),
 		"kube-system-secret-etcd-client.yaml":        applyTemplateData(kubeSystemSecretEtcdClient.Files()[0].Data, templateData),
 
-		"01-tectonic-namespace.yaml":                 []byte(tectonicNamespace.Files()[0].Data),
 		"03-openshift-web-console-namespace.yaml":    []byte(openshiftWebConsoleNamespace.Files()[0].Data),
 		"04-openshift-machine-config-operator.yaml":  []byte(openshiftMachineConfigOperator.Files()[0].Data),
 		"05-openshift-cluster-api-namespace.yaml":    []byte(openshiftClusterAPINamespace.Files()[0].Data),
 		"09-openshift-service-signer-namespace.yaml": []byte(openshiftServiceCertSignerNamespace.Files()[0].Data),
-		"app-version-kind.yaml":                      []byte(appVersionKind.Files()[0].Data),
 		"etcd-service.yaml":                          []byte(etcdServiceKubeSystem.Files()[0].Data),
 	}
 

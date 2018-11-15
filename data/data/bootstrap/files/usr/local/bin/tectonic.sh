@@ -65,9 +65,6 @@ do
 	echo "Done creating object from file: $file ..."
 done
 
-# Wait for Tectonic pods
-wait_for_pods tectonic-system
-
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/tectonic/.tectonic.done
 
