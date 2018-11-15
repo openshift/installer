@@ -8,7 +8,9 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -53,6 +55,26 @@ func Platform() (*aws.Platform, error) {
 	regionTransform := survey.TransformString(func(s string) string {
 		return strings.SplitN(s, " ", 2)[0]
 	})
+
+	defaultRegion := "us-east-1"
+	_, ok := validAWSRegions[defaultRegion]
+	if !ok {
+		panic(fmt.Sprintf("installer bug: invalid default AWS region %q", defaultRegion))
+	}
+
+	ssn := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+	defaultRegionPointer := ssn.Config.Region
+	if defaultRegionPointer != nil {
+		_, ok := validAWSRegions[*defaultRegionPointer]
+		if ok {
+			defaultRegion = *defaultRegionPointer
+		} else {
+			logrus.Warnf("Unrecognized AWS region %q, defaulting to %s", *defaultRegionPointer, defaultRegion)
+		}
+	}
+
 	sort.Strings(longRegions)
 	sort.Strings(shortRegions)
 	region, err := asset.GenerateUserProvidedAsset(
@@ -61,7 +83,7 @@ func Platform() (*aws.Platform, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The AWS region to be used for installation.",
-				Default: "us-east-1 (N. Virginia)",
+				Default: fmt.Sprintf("%s (%s)", defaultRegion, validAWSRegions[defaultRegion]),
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
