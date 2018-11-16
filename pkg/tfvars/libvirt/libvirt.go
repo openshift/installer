@@ -14,18 +14,18 @@ const (
 
 // Libvirt encompasses configuration specific to libvirt.
 type Libvirt struct {
-	URI         string `json:"tectonic_libvirt_uri,omitempty" yaml:"uri"`
-	Image       string `json:"tectonic_os_image,omitempty" yaml:"image"`
-	Network     `json:",inline" yaml:"network"`
-	MasterIPs   []string `json:"tectonic_libvirt_master_ips,omitempty" yaml:"masterIPs"`
-	WorkerIPs   []string `json:"tectonic_libvirt_worker_ips,omitempty" yaml:"workerIPs"`
-	BootstrapIP string   `json:"tectonic_libvirt_bootstrap_ip,omitempty" yaml:"bootstrapIP"`
+	URI         string `json:"tectonic_libvirt_uri,omitempty"`
+	Image       string `json:"tectonic_os_image,omitempty"`
+	Network     `json:",inline"`
+	MasterIPs   []string `json:"tectonic_libvirt_master_ips,omitempty"`
+	WorkerIPs   []string `json:"tectonic_libvirt_worker_ips,omitempty"`
+	BootstrapIP string   `json:"tectonic_libvirt_bootstrap_ip,omitempty"`
 }
 
 // Network describes a libvirt network configuration.
 type Network struct {
-	IfName  string `json:"tectonic_libvirt_network_if,omitempty" yaml:"ifName"`
-	IPRange string `json:"tectonic_libvirt_ip_range,omitempty" yaml:"ipRange"`
+	IfName  string `json:"tectonic_libvirt_network_if,omitempty"`
+	IPRange string `json:"tectonic_libvirt_ip_range,omitempty"`
 }
 
 // TFVars fills in computed Terraform variables.
