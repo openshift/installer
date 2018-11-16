@@ -84,7 +84,7 @@ resource "aws_instance" "master" {
   user_data            = "${var.user_data_ign}"
 
   vpc_security_group_ids      = ["${var.master_sg_ids}"]
-  associate_public_ip_address = "${var.public_endpoints}"
+  associate_public_ip_address = true
 
   lifecycle {
     # Ignore changes in the AMI which force recreation of the resource. This

@@ -3,11 +3,6 @@ variable "ami" {
   description = "The AMI ID for the bootstrap node."
 }
 
-variable "associate_public_ip_address" {
-  default     = false
-  description = "If set to true, public-facing ingress resources are created."
-}
-
 variable "cluster_name" {
   type        = "string"
   description = "The name of the cluster."

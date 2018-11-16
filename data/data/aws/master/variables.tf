@@ -51,11 +51,6 @@ variable "master_sg_ids" {
   description = "The security group IDs to be applied to the master nodes."
 }
 
-variable "public_endpoints" {
-  description = "If set to true, public-facing ingress resources are created."
-  default     = true
-}
-
 variable "root_volume_iops" {
   type        = "string"
   default     = "100"
