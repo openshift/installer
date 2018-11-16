@@ -15,6 +15,8 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
+	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers"
+	"github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -105,6 +107,7 @@ func populateDeleteFuncs(funcs map[string]deleteFunc) {
 	funcs["deleteRouters"] = deleteRouters
 	funcs["deleteSubnets"] = deleteSubnets
 	funcs["deleteNetworks"] = deleteNetworks
+	funcs["deleteContainers"] = deleteContainers
 }
 
 // filterObjects will do client-side filtering given an appropriately filled out
@@ -409,6 +412,70 @@ func deleteNetworks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.
 		}
 	}
 	return len(allNetworks) == 0, nil
+}
+
+func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+	logger.Debug("Deleting openstack containers")
+	defer logger.Debugf("Exiting deleting openstack containers")
+
+	conn, err := clientconfig.NewServiceClient("object-store", opts)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+	listOpts := containers.ListOpts{Full: false}
+
+	allPages, err := containers.List(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	allContainers, err := containers.ExtractNames(allPages)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+	for _, container := range allContainers {
+		metadata, err := containers.Get(conn, container, nil).ExtractMetadata()
+		if err != nil {
+			logger.Fatalf("%v", err)
+			os.Exit(1)
+		}
+		for key, val := range filter {
+			// Swift mangles the case so tectonicClusterID becomes
+			// Tectonicclusterid in the X-Container-Meta- HEAD output
+			titlekey := strings.Title(strings.ToLower(key))
+			if metadata[titlekey] == val {
+				listOpts := objects.ListOpts{Full: false}
+				allPages, err := objects.List(conn, container, listOpts).AllPages()
+				if err != nil {
+					logger.Fatalf("%v", err)
+					os.Exit(1)
+				}
+				allObjects, err := objects.ExtractNames(allPages)
+				if err != nil {
+					logger.Fatalf("%v", err)
+					os.Exit(1)
+				}
+				for _, object := range allObjects {
+					logger.Debugf("Deleting object: %+v\n", object)
+					_, err = objects.Delete(conn, container, object, nil).Extract()
+					if err != nil {
+						logger.Fatalf("%v", err)
+						os.Exit(1)
+					}
+				}
+				logger.Debugf("Deleting container: %+v\n", container)
+				_, err = containers.Delete(conn, container).Extract()
+				if err != nil {
+					logger.Fatalf("%v", err)
+					os.Exit(1)
+				}
+			}
+		}
+	}
+	return true, nil
 }
 
 // New returns an OpenStack destroyer from ClusterMetadata.
