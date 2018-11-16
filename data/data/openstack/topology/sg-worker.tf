@@ -1,5 +1,6 @@
 resource "openstack_networking_secgroup_v2" "worker" {
   name = "worker"
+  tags = ["${format("tectonicClusterID=%s", var.cluster_id)}"]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "worker_ingress_icmp" {
