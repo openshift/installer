@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/ghodss/yaml"
@@ -27,6 +28,7 @@ var (
 	_ asset.WritableAsset = (*Manifests)(nil)
 
 	customTmplFuncs = template.FuncMap{
+		"indent": indent,
 		"add": func(i, j int) int {
 			return i + j
 		},
@@ -138,7 +140,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 
 	templateData := &bootkubeTemplateData{
 		Base64encodeCloudProviderConfig: "", // FIXME
-		EtcdCaCert:                      base64.StdEncoding.EncodeToString(etcdCA.Cert()),
+		EtcdCaCert:                      string(etcdCA.Cert()),
 		EtcdClientCert:                  base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
 		EtcdClientKey:                   base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
 		KubeCaCert:                      base64.StdEncoding.EncodeToString(kubeCA.Cert()),
@@ -146,7 +148,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		McsTLSCert:                      base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:                       base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
 		PullSecret:                      base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
-		RootCaCert:                      base64.StdEncoding.EncodeToString(rootCA.Cert()),
+		RootCaCert:                      string(rootCA.Cert()),
 		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(serviceServingCA.Cert()),
 		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(serviceServingCA.Key()),
 		CVOClusterID:                    installConfig.Config.ClusterID,
@@ -255,4 +257,9 @@ func (m *Manifests) Load(f asset.FileFetcher) (bool, error) {
 	m.FileList, m.KubeSysConfig = fileList, kubeSysConfig
 
 	return true, nil
+}
+
+func indent(indention int, v string) string {
+	newline := "\n" + strings.Repeat(" ", indention)
+	return strings.Replace(v, "\n", newline, -1)
 }
