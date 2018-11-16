@@ -201,7 +201,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ad26de5429bd2d4dec5ba169e758795db2f6b054a3fd15dee10b029a5f371992"
+  digest = "1:56c12cdd01d62ed0836da8d8756f7331b3544dd0dd023f1ab1db69c204776a1c"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
@@ -218,6 +218,9 @@
     "openstack/networking/v2/networks",
     "openstack/networking/v2/ports",
     "openstack/networking/v2/subnets",
+    "openstack/objectstorage/v1/accounts",
+    "openstack/objectstorage/v1/containers",
+    "openstack/objectstorage/v1/objects",
     "openstack/utils",
     "pagination",
   ]
@@ -804,6 +807,8 @@
     "github.com/gophercloud/gophercloud/openstack/networking/v2/networks",
     "github.com/gophercloud/gophercloud/openstack/networking/v2/ports",
     "github.com/gophercloud/gophercloud/openstack/networking/v2/subnets",
+    "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers",
+    "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects",
     "github.com/gophercloud/utils/openstack/clientconfig",
     "github.com/gregjones/httpcache",
     "github.com/gregjones/httpcache/diskcache",
