@@ -49,44 +49,6 @@ If set to "public", then only create public-facing ingress resources (ELB, A-rec
 EOF
 }
 
-variable "aws_external_private_zone" {
-  default = ""
-
-  description = <<EOF
-(optional) If set, the given Route53 zone ID will be used as the internal (private) zone.
-This zone will be used to create etcd DNS records as well as internal API and internal Ingress records.
-If set, no additional private zone will be created.
-
-Example: `"Z1ILINNUJGTAO1"`
-EOF
-}
-
-variable "aws_external_master_subnet_ids" {
-  type = "list"
-
-  description = <<EOF
-(optional) List of subnet IDs within an existing VPC to deploy master nodes into.
-Required to use an existing VPC, not applicable otherwise.
-
-Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
-EOF
-
-  default = []
-}
-
-variable "aws_external_worker_subnet_ids" {
-  type = "list"
-
-  description = <<EOF
-(optional) List of subnet IDs within an existing VPC to deploy worker nodes into.
-Required to use an existing VPC, not applicable otherwise.
-
-Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
-EOF
-
-  default = []
-}
-
 variable "aws_extra_tags" {
   type = "map"
 

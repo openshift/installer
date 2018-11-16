@@ -1,7 +1,7 @@
 locals {
   private_endpoints = "${var.aws_endpoints == "public" ? false : true}"
   public_endpoints  = "${var.aws_endpoints == "private" ? false : true}"
-  private_zone_id   = "${var.aws_external_private_zone != "" ? var.aws_external_private_zone : join("", aws_route53_zone.int.*.zone_id)}"
+  private_zone_id   = "${join("", aws_route53_zone.int.*.zone_id)}"
 }
 
 provider "aws" {
@@ -89,9 +89,7 @@ module "vpc" {
   cluster_name = "${var.cluster_name}"
   region       = "${var.aws_region}"
 
-  external_master_subnet_ids = "${compact(var.aws_external_master_subnet_ids)}"
-  external_worker_subnet_ids = "${compact(var.aws_external_worker_subnet_ids)}"
-  extra_tags                 = "${var.aws_extra_tags}"
+  extra_tags = "${var.aws_extra_tags}"
 
   // empty map subnet_configs will have the vpc module creating subnets in all availabile AZs
   new_master_subnet_configs = "${var.aws_master_custom_subnets}"
@@ -119,7 +117,7 @@ resource "aws_route53_record" "etcd_cluster" {
 }
 
 resource "aws_route53_zone" "int" {
-  count         = "${local.private_endpoints ? "${var.aws_external_private_zone == "" ? 1 : 0 }" : 0}"
+  count         = "${local.private_endpoints ? 1 : 0}"
   vpc_id        = "${module.vpc.vpc_id}"
   name          = "${var.base_domain}"
   force_destroy = true

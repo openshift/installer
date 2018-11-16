@@ -15,12 +15,12 @@ locals {
   new_worker_az_count = "${length(local.new_worker_subnet_azs)}"
   new_master_az_count = "${length(local.new_master_subnet_azs)}"
 
-  // The base set of ids needs to build rest of vpc data sources
+  // The VPC ID to use to build the rest of the vpc data sources
   vpc_id = "${aws_vpc.new_vpc.id}"
 
   // When referencing the _ids arrays or data source arrays via count = , always use the *_count variable rather than taking the length of the list
-  worker_subnet_ids   = ["${coalescelist(aws_subnet.worker_subnet.*.id,var.external_worker_subnet_ids)}"]
-  master_subnet_ids   = ["${coalescelist(aws_subnet.master_subnet.*.id,var.external_master_subnet_ids)}"]
+  worker_subnet_ids   = "${aws_subnet.worker_subnet.*.id}"
+  master_subnet_ids   = "${aws_subnet.master_subnet.*.id}"
   worker_subnet_count = "${local.new_worker_az_count}"
   master_subnet_count = "${local.new_master_az_count}"
 }

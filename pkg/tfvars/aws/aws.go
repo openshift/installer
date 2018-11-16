@@ -14,22 +14,14 @@ const (
 
 // AWS converts AWS related config.
 type AWS struct {
-	EC2AMIOverride string    `json:"aws_ec2_ami_override,omitempty"`
-	Endpoints      Endpoints `json:"aws_endpoints,omitempty"`
-	External       `json:",inline"`
+	EC2AMIOverride string            `json:"aws_ec2_ami_override,omitempty"`
+	Endpoints      Endpoints         `json:"aws_endpoints,omitempty"`
 	ExtraTags      map[string]string `json:"aws_extra_tags,omitempty"`
 	InstallerRole  string            `json:"aws_installer_role,omitempty"`
 	Master         `json:",inline"`
 	Region         string `json:"aws_region,omitempty"`
 	VPCCIDRBlock   string `json:"aws_vpc_cidr_block"`
 	Worker         `json:",inline"`
-}
-
-// External converts external related config.
-type External struct {
-	MasterSubnetIDs []string `json:"aws_external_master_subnet_ids,omitempty"`
-	PrivateZone     string   `json:"aws_external_private_zone,omitempty"`
-	WorkerSubnetIDs []string `json:"aws_external_worker_subnet_ids,omitempty"`
 }
 
 // Master converts master related config.
