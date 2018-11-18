@@ -32,16 +32,6 @@ variable "extra_tags" {
   default     = {}
 }
 
-variable "new_master_subnet_configs" {
-  description = "{az_name = new_subnet_cidr}: Empty map means create new subnets in all availability zones in region with generated cidrs"
-  type        = "map"
-}
-
-variable "new_worker_subnet_configs" {
-  description = "{az_name = new_subnet_cidr}: Empty map means create new subnets in all availability zones in region with generated cidrs"
-  type        = "map"
-}
-
 variable "private_master_endpoints" {
   description = "If set to true, private-facing ingress resources are created."
   default     = true

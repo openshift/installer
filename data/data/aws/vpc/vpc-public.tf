@@ -37,10 +37,7 @@ resource "aws_subnet" "master_subnet" {
   count  = "${local.new_master_az_count}"
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
-  cidr_block = "${lookup(var.new_master_subnet_configs,
-    local.new_master_subnet_azs[count.index],
-    cidrsubnet(local.new_master_cidr_range, 3, count.index),
-  )}"
+  cidr_block = "${cidrsubnet(local.new_master_cidr_range, 3, count.index)}"
 
   availability_zone = "${local.new_master_subnet_azs[count.index]}"
 

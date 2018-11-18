@@ -22,10 +22,7 @@ resource "aws_subnet" "worker_subnet" {
 
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
-  cidr_block = "${lookup(var.new_worker_subnet_configs,
-    local.new_worker_subnet_azs[count.index],
-    cidrsubnet(local.new_worker_cidr_range, 3, count.index),
-  )}"
+  cidr_block = "${cidrsubnet(local.new_worker_cidr_range, 3, count.index)}"
 
   availability_zone = "${local.new_worker_subnet_azs[count.index]}"
 

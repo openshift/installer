@@ -11,8 +11,8 @@ locals {
   external_vpc_mode = "${var.external_vpc_id != ""}"
 
   // List of possible AZs for each type of subnet
-  new_worker_subnet_azs = ["${coalescelist(keys(var.new_worker_subnet_configs), data.aws_availability_zones.azs.names)}"]
-  new_master_subnet_azs = ["${coalescelist(keys(var.new_master_subnet_configs), data.aws_availability_zones.azs.names)}"]
+  new_worker_subnet_azs = ["${data.aws_availability_zones.azs.names}"]
+  new_master_subnet_azs = ["${data.aws_availability_zones.azs.names}"]
 
   // How many AZs to create worker and master subnets in (always zero if external_vpc_mode)
   new_worker_az_count = "${local.external_vpc_mode ? 0 : length(local.new_worker_subnet_azs)}"
