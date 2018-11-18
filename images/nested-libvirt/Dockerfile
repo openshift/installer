@@ -4,8 +4,10 @@ FROM openshift/origin-release:golang-1.10 AS build
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
 RUN hack/build.sh && hack/get-terraform.sh
+RUN cd ../ && git clone https://github.com/openshift/origin && cd origin && make WHAT=cmd/openshift-tests
 
 FROM centos:7
+COPY --from=build /go/src/github.com/openshift/origin/_output/local/bin/linux/amd64/openshift-tests /bin/openshift-tests
 COPY --from=build /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 COPY --from=build /go/src/github.com/openshift/installer/bin/terraform /bin/terraform
 COPY --from=build /go/src/github.com/openshift/installer/images/nested-libvirt/google-cloud-sdk.repo /etc/yum.repos.d/google-cloud-sdk.repo
