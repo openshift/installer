@@ -51,8 +51,3 @@ variable "public_master_endpoints" {
   description = "If set to true, public-facing ingress resources are created."
   default     = true
 }
-
-variable "depends_on" {
-  default = []
-  type    = "list"
-}
