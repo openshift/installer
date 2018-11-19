@@ -199,7 +199,7 @@ variable "tectonic_aws_region" {
   description = "The target AWS region for the cluster."
 }
 
-variable ":ectonic_aws_installer_role" {
+variable "tectonic_aws_installer_role" {
   type    = "string"
   default = ""
 

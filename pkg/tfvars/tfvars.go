@@ -56,8 +56,7 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn, workerIgn string)
 			config.Masters += replicas
 			if m.Platform.AWS != nil {
 				config.AWS.Master = aws.Master{
-					EC2Type:     m.Platform.AWS.InstanceType,
-					IAMRoleName: m.Platform.AWS.IAMRoleName,
+					EC2Type: m.Platform.AWS.InstanceType,
 					MasterRootVolume: aws.MasterRootVolume{
 						IOPS: m.Platform.AWS.EC2RootVolume.IOPS,
 						Size: m.Platform.AWS.EC2RootVolume.Size,
@@ -69,8 +68,7 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn, workerIgn string)
 			config.Workers += replicas
 			if m.Platform.AWS != nil {
 				config.AWS.Worker = aws.Worker{
-					EC2Type:     m.Platform.AWS.InstanceType,
-					IAMRoleName: m.Platform.AWS.IAMRoleName,
+					EC2Type: m.Platform.AWS.InstanceType,
 					WorkerRootVolume: aws.WorkerRootVolume{
 						IOPS: m.Platform.AWS.EC2RootVolume.IOPS,
 						Size: m.Platform.AWS.EC2RootVolume.Size,

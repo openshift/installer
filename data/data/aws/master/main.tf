@@ -6,9 +6,9 @@ resource "aws_instance" "master" {
   count = "${var.instance_count}"
   ami   = "${var.ec2_ami}"
 
-  instance_type        = "${var.ec2_type}"
-  subnet_id            = "${element(var.subnet_ids, count.index)}"
-  user_data            = "${var.user_data_ign}"
+  instance_type = "${var.ec2_type}"
+  subnet_id     = "${element(var.subnet_ids, count.index)}"
+  user_data     = "${var.user_data_ign}"
 
   vpc_security_group_ids      = ["${var.master_sg_ids}"]
   associate_public_ip_address = "${var.public_endpoints}"

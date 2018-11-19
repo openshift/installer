@@ -42,7 +42,6 @@ type Master struct {
 	CustomSubnets    map[string]string `json:"tectonic_aws_master_custom_subnets,omitempty"`
 	EC2Type          string            `json:"tectonic_aws_master_ec2_type,omitempty"`
 	ExtraSGIDs       []string          `json:"tectonic_aws_master_extra_sg_ids,omitempty"`
-	IAMRoleName      string            `json:"tectonic_aws_master_iam_role_name,omitempty"`
 	MasterRootVolume `json:",inline"`
 }
 
@@ -58,7 +57,6 @@ type Worker struct {
 	CustomSubnets    map[string]string `json:"tectonic_aws_worker_custom_subnets,omitempty"`
 	EC2Type          string            `json:"tectonic_aws_worker_ec2_type,omitempty"`
 	ExtraSGIDs       []string          `json:"tectonic_aws_worker_extra_sg_ids,omitempty"`
-	IAMRoleName      string            `json:"tectonic_aws_worker_iam_role_name,omitempty"`
 	LoadBalancers    []string          `json:"tectonic_aws_worker_load_balancers,omitempty"`
 	WorkerRootVolume `json:",inline"`
 }

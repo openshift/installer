@@ -20,7 +20,6 @@ module "bootstrap" {
   ami                         = "${var.tectonic_aws_ec2_ami_override}"
   associate_public_ip_address = "${var.tectonic_aws_endpoints != "private"}"
   cluster_name                = "${var.tectonic_cluster_name}"
-  iam_role                    = "${var.tectonic_aws_master_iam_role_name}"
   ignition                    = "${var.ignition_bootstrap}"
   subnet_id                   = "${module.vpc.master_subnet_ids[0]}"
   target_group_arns           = "${module.vpc.aws_lb_target_group_arns}"

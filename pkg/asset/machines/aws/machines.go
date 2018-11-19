@@ -9,7 +9,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/sets"
-	"k8s.io/utils/pointer"
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1"
 	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
@@ -80,11 +79,10 @@ func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.
 			APIVersion: "aws.cluster.k8s.io/v1alpha1",
 			Kind:       "AWSMachineProviderConfig",
 		},
-		InstanceType:       mpool.InstanceType,
-		AMI:                awsprovider.AWSResourceReference{ID: &mpool.AMIID},
-		Tags:               tags,
-		IAMInstanceProfile: &awsprovider.AWSResourceReference{ID: pointer.StringPtr(fmt.Sprintf("%s-%s-profile", clusterName, role))},
-		UserDataSecret:     &corev1.LocalObjectReference{Name: userDataSecret},
+		InstanceType:   mpool.InstanceType,
+		AMI:            awsprovider.AWSResourceReference{ID: &mpool.AMIID},
+		Tags:           tags,
+		UserDataSecret: &corev1.LocalObjectReference{Name: userDataSecret},
 		Subnet: awsprovider.AWSResourceReference{
 			Filters: []awsprovider.Filter{{
 				Name:   "tag:Name",
