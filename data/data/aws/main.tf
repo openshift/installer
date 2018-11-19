@@ -42,7 +42,6 @@ module "masters" {
   ec2_type                 = "${var.tectonic_aws_master_ec2_type}"
   extra_tags               = "${var.tectonic_aws_extra_tags}"
   instance_count           = "${var.tectonic_master_count}"
-  master_iam_role          = "${var.tectonic_aws_master_iam_role_name}"
   master_sg_ids            = "${concat(var.tectonic_aws_master_extra_sg_ids, list(module.vpc.master_sg_id))}"
   public_endpoints         = "${local.public_endpoints}"
   root_volume_iops         = "${var.tectonic_aws_master_root_volume_iops}"
@@ -53,13 +52,6 @@ module "masters" {
   target_group_arns_length = "${module.vpc.aws_lb_target_group_arns_length}"
   ec2_ami                  = "${var.tectonic_aws_ec2_ami_override}"
   user_data_ign            = "${var.ignition_master}"
-}
-
-module "iam" {
-  source = "./iam"
-
-  cluster_name    = "${var.tectonic_cluster_name}"
-  worker_iam_role = "${var.tectonic_aws_worker_iam_role_name}"
 }
 
 module "dns" {
