@@ -125,6 +125,7 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn, workerIgn string)
 		config.OpenStack = openstack.OpenStack{
 			Region:           cfg.Platform.OpenStack.Region,
 			NetworkCIDRBlock: cfg.Platform.OpenStack.NetworkCIDRBlock,
+			BaseImage:        cfg.Platform.OpenStack.BaseImage,
 		}
 		config.OpenStack.Credentials.Cloud = cfg.Platform.OpenStack.Cloud
 		config.OpenStack.ExternalNetwork = cfg.Platform.OpenStack.ExternalNetwork
