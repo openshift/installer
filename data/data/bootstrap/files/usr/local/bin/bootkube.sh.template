@@ -3,6 +3,11 @@ set -e
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
+if ! podman inspect {{.ReleaseImage}} &>/dev/null; then
+    echo "Pulling release image..."
+    podman pull {{.ReleaseImage}}
+fi
+
 MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-operator)
 MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-controller)
 MACHINE_CONFIG_SERVER_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-server)
