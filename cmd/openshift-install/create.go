@@ -133,6 +133,12 @@ func newCreateCmd() *cobra.Command {
 
 func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+		cleanup, err := setupFileHook(rootOpts.dir)
+		if err != nil {
+			return errors.Wrap(err, "failed to setup logging hook")
+		}
+		defer cleanup()
+
 		assetStore, err := asset.NewStore(rootOpts.dir)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create asset store")
@@ -167,6 +173,12 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 // FIXME: pulling the kubeconfig and metadata out of the root
 // directory is a bit cludgy when we already have them in memory.
 func destroyBootstrap(ctx context.Context, directory string) (err error) {
+	cleanup, err := setupFileHook(rootOpts.dir)
+	if err != nil {
+		return errors.Wrap(err, "failed to setup logging hook")
+	}
+	defer cleanup()
+
 	logrus.Info("Waiting for bootstrap completion...")
 	config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(directory, "auth", "kubeconfig"))
 	if err != nil {

@@ -88,7 +88,7 @@ This is safe to ignore and merely indicates that the etcd bootstrapping is still
 
 ### Installer Fails to Create Resources
 
-The easiest way to get more debugging information from the installer is to increase the logging level. This can be done by adding `--log-level=debug` to the command line arguments. Of course, this cannot be retroactively applied, so it won't help to debug an installation that has already failed. The installation will have to be attempted again.
+The easiest way to get more debugging information from the installer is to check the log file (`.openshift-install.log`) in the install directory. Regardless of the logging level specified, the installer will write its logs in case they need to be inspected retroactively.
 
 ## Generic Troubleshooting
 
