@@ -24,7 +24,7 @@ resource "aws_subnet" "example" {
 }
 
 module "bootstrap" {
-  source = "github.com/openshift/installer//data/data/aws/bootstrap"
+  source = "github.com/openshift/installer//data/data/terraform/aws/bootstrap"
 
   ami            = "ami-0af8953af3ec06b7c"
   cluster_name   = "my-cluster"

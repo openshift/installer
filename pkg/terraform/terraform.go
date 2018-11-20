@@ -2,6 +2,7 @@ package terraform
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
 
 	"github.com/openshift/installer/data"
@@ -72,12 +73,12 @@ func Destroy(dir string, platform string, extraArgs ...string) (err error) {
 // unpack unpacks the platform-specific Terraform modules into the
 // given directory.
 func unpack(dir string, platform string) (err error) {
-	err = data.Unpack(dir, platform)
+	err = data.Unpack(dir, path.Join("terraform", platform))
 	if err != nil {
 		return err
 	}
 
-	err = data.Unpack(filepath.Join(dir, "config.tf"), "config.tf")
+	err = data.Unpack(filepath.Join(dir, "config.tf"), path.Join("terraform", "config.tf"))
 	if err != nil {
 		return err
 	}
