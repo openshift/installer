@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/password"
+	"github.com/openshift/installer/pkg/iam"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -102,6 +103,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	switch {
 	case installConfig.Config.Platform.AWS != nil:
+		iam.RunPermissionsCheck()
 		metadata.ClusterPlatformMetadata.AWS = aws.Metadata(installConfig.Config)
 	case installConfig.Config.Platform.OpenStack != nil:
 		metadata.ClusterPlatformMetadata.OpenStack = openstack.Metadata(installConfig.Config)
