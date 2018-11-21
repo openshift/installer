@@ -4,10 +4,11 @@ metadata:
   name: etcd
   namespace: kube-system
   labels:
-    # this label is used to indicate that it should be scaped by prometheus
+    # this label is used to indicate that it should be scraped by prometheus
     k8s-app: etcd
 spec:
-  clusterIP: None
+  selector:
+    k8s-app: etcd
   ports:
   - name: etcd
     port: 2379

@@ -69,7 +69,6 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.Pull{},
 		&bootkube.CVOOverrides{},
 		&bootkube.LegacyCVOOverrides{},
-		&bootkube.EtcdServiceEndpointsKubeSystem{},
 		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
@@ -164,7 +163,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	pull := &bootkube.Pull{}
 	cVOOverrides := &bootkube.CVOOverrides{}
 	legacyCVOOverrides := &bootkube.LegacyCVOOverrides{}
-	etcdServiceEndpointsKubeSystem := &bootkube.EtcdServiceEndpointsKubeSystem{}
 	hostEtcdServiceEndpointsKubeSystem := &bootkube.HostEtcdServiceEndpointsKubeSystem{}
 	kubeSystemConfigmapEtcdServingCA := &bootkube.KubeSystemConfigmapEtcdServingCA{}
 	kubeSystemConfigmapRootCA := &bootkube.KubeSystemConfigmapRootCA{}
@@ -183,7 +181,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		pull,
 		cVOOverrides,
 		legacyCVOOverrides,
-		etcdServiceEndpointsKubeSystem,
 		hostEtcdServiceEndpointsKubeSystem,
 		kubeSystemConfigmapEtcdServingCA,
 		kubeSystemConfigmapRootCA,
@@ -202,7 +199,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"pull.json":                                  applyTemplateData(pull.Files()[0].Data, templateData),
 		"cvo-overrides.yaml":                         applyTemplateData(cVOOverrides.Files()[0].Data, templateData),
 		"legacy-cvo-overrides.yaml":                  applyTemplateData(legacyCVOOverrides.Files()[0].Data, templateData),
-		"etcd-service-endpoints.yaml":                applyTemplateData(etcdServiceEndpointsKubeSystem.Files()[0].Data, templateData),
 		"host-etcd-service-endpoints.yaml":           applyTemplateData(hostEtcdServiceEndpointsKubeSystem.Files()[0].Data, templateData),
 		"kube-system-configmap-etcd-serving-ca.yaml": applyTemplateData(kubeSystemConfigmapEtcdServingCA.Files()[0].Data, templateData),
 		"kube-system-configmap-root-ca.yaml":         applyTemplateData(kubeSystemConfigmapRootCA.Files()[0].Data, templateData),
