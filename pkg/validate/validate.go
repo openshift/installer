@@ -73,40 +73,7 @@ func isMatch(re string, v string) bool {
 
 // ClusterName checks if the given string is a valid name for a cluster and returns an error if not.
 func ClusterName(v string) error {
-	if err := nonEmpty(v); err != nil {
-		return err
-	}
-
-	if length := utf8.RuneCountInString(v); length < 1 || length > 253 {
-		return errors.New("must be between 1 and 253 characters")
-	}
-
-	if strings.ToLower(v) != v {
-		return errors.New("must be lower case")
-	}
-
-	if !isMatch("^[a-z0-9-.]*$", v) {
-		return errors.New("only lower case alphanumeric [a-z0-9], dashes and dots are allowed")
-	}
-
-	isAlphaNum := regexp.MustCompile("^[a-z0-9]$").MatchString
-
-	// If we got this far, we know the string is ASCII and has at least one character
-	if !isAlphaNum(v[:1]) || !isAlphaNum(v[len(v)-1:]) {
-		return errors.New("must start and end with a lower case alphanumeric character [a-z0-9]")
-	}
-
-	for _, segment := range strings.Split(v, ".") {
-		// Each segment can have up to 63 characters
-		if utf8.RuneCountInString(segment) > 63 {
-			return errors.New("no segment between dots can be more than 63 characters")
-		}
-		if !isAlphaNum(segment[:1]) || !isAlphaNum(segment[len(segment)-1:]) {
-			return errors.New("segments between dots must start and end with a lower case alphanumeric character [a-z0-9]")
-		}
-	}
-
-	return nil
+	return validateSubdomain(v)
 }
 
 // nonEmpty checks if the given string contains at least one non-whitespace character and returns an error if not.

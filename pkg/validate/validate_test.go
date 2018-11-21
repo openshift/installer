@@ -90,39 +90,43 @@ func TestNonEmpty(t *testing.T) {
 }
 
 func TestClusterName(t *testing.T) {
-	const charsMsg = "only lower case alphanumeric [a-z0-9], dashes and dots are allowed"
-	const lengthMsg = "must be between 1 and 253 characters"
-	const segmentLengthMsg = "no segment between dots can be more than 63 characters"
-	const startEndCharMsg = "must start and end with a lower case alphanumeric character [a-z0-9]"
-	const segmentStartEndCharMsg = "segments between dots must start and end with a lower case alphanumeric character [a-z0-9]"
-
 	maxSizeName := strings.Repeat("123456789.", 25) + "123"
-	maxSizeSegment := strings.Repeat("1234567890", 6) + "123"
 
-	tests := []test{
-		{"", emptyMsg},
-		{" ", emptyMsg},
-		{"a", ""},
-		{"A", caseMsg},
-		{"abc D", caseMsg},
-		{"1", ""},
-		{".", startEndCharMsg},
-		{"a.", startEndCharMsg},
-		{".a", startEndCharMsg},
-		{"a.a", ""},
-		{"-a", startEndCharMsg},
-		{"a-", startEndCharMsg},
-		{"a.-a", segmentStartEndCharMsg},
-		{"a-.a", segmentStartEndCharMsg},
-		{"a%a", charsMsg},
-		{"日本語", charsMsg},
-		{"a日本語a", charsMsg},
-		{maxSizeName, ""},
-		{maxSizeName + "a", lengthMsg},
-		{maxSizeSegment + ".abc", ""},
-		{maxSizeSegment + "a.abc", segmentLengthMsg},
+	cases := []struct {
+		name        string
+		clusterName string
+		valid       bool
+	}{
+		{"empty", "", false},
+		{"only whitespace", " ", false},
+		{"single lowercase", "a", true},
+		{"single uppercase", "A", false},
+		{"contains whitespace", "abc D", false},
+		{"single number", "1", true},
+		{"single dot", ".", false},
+		{"ends with dot", "a.", false},
+		{"starts with dot", ".a", false},
+		{"multiple labels", "a.a", true},
+		{"starts with dash", "-a", false},
+		{"ends with dash", "a-", false},
+		{"label starts with dash", "a.-a", false},
+		{"label ends with dash", "a-.a", false},
+		{"invalid percent", "a%a", false},
+		{"only non-ascii", "日本語", false},
+		{"contains non-ascii", "a日本語a", false},
+		{"max size", maxSizeName, true},
+		{"too long", maxSizeName + "a", false},
 	}
-	runTests(t, "ClusterName", ClusterName, tests)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ClusterName(tc.clusterName)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
 }
 
 func TestIPv4(t *testing.T) {
