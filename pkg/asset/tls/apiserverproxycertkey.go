@@ -29,7 +29,7 @@ func (a *APIServerProxyCertKey) Generate(dependencies asset.Parents) error {
 	dependencies.Get(aggregatorCA)
 
 	cfg := &CertCfg{
-		Subject:      pkix.Name{CommonName: "kube-apiserver-proxy", Organization: []string{"kube-master"}},
+		Subject:      pkix.Name{CommonName: "system:kube-apiserver-proxy", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Validity:     ValidityTenYears,
@@ -40,5 +40,5 @@ func (a *APIServerProxyCertKey) Generate(dependencies asset.Parents) error {
 
 // Name returns the human-friendly name of the asset.
 func (a *APIServerProxyCertKey) Name() string {
-	return "Certificate (kube-apiserver-proxy)"
+	return "Certificate (system:kube-apiserver-proxy)"
 }
