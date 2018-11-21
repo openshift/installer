@@ -53,6 +53,7 @@ func (m *Manifests) Name() string {
 func (m *Manifests) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		&Ingress{},
 		&Networking{},
 		&tls.RootCA{},
 		&tls.EtcdCA{},
@@ -85,9 +86,10 @@ func (m *Manifests) Dependencies() []asset.Asset {
 
 // Generate generates the respective operator config.yml files
 func (m *Manifests) Generate(dependencies asset.Parents) error {
+	ingress := &Ingress{}
 	network := &Networking{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig, network)
+	dependencies.Get(installConfig, ingress, network)
 
 	// mao go to kube-system config map
 	m.KubeSysConfig = configMap("kube-system", "cluster-config-v1", genericData{
@@ -106,6 +108,7 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	}
 	m.FileList = append(m.FileList, m.generateBootKubeManifests(dependencies)...)
 
+	m.FileList = append(m.FileList, ingress.Files()...)
 	m.FileList = append(m.FileList, network.Files()...)
 
 	return nil
