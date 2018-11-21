@@ -80,3 +80,7 @@ ignored = ["github.com/openshift/installer/tests*"]
 [[constraint]]
   name = "github.com/gophercloud/utils"
   revision = "34f5991525d116b3832e0d9409492274f1c06bda"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/openshift/api"
