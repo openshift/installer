@@ -10,25 +10,28 @@ import (
 	"strconv"
 	"strings"
 	"unicode/utf8"
+
+	k8serrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
+
+func validateSubdomain(v string) error {
+	validationMessages := validation.IsDNS1123Subdomain(v)
+	if len(validationMessages) == 0 {
+		return nil
+	}
+
+	errs := make([]error, len(validationMessages))
+	for i, m := range validationMessages {
+		errs[i] = errors.New(m)
+	}
+	return k8serrors.NewAggregate(errs)
+}
 
 // DomainName checks if the given string is a valid domain name and returns an error if not.
 func DomainName(v string) error {
-	if err := nonEmpty(v); err != nil {
-		return err
-	}
-
-	split := strings.Split(v, ".")
-	for i, segment := range split {
-		// Trailing dot is OK
-		if len(segment) == 0 && i == len(split)-1 {
-			continue
-		}
-		if !isMatch("^[a-zA-Z0-9-]{1,63}$", segment) {
-			return errors.New("invalid domain name")
-		}
-	}
-	return nil
+	// Trailing dot is OK
+	return validateSubdomain(strings.TrimSuffix(v, "."))
 }
 
 // Email checks if the given string is a valid email address and returns an error if not.

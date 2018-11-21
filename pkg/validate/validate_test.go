@@ -171,32 +171,44 @@ func TestSubnetCIDR(t *testing.T) {
 }
 
 func TestDomainName(t *testing.T) {
-	tests := []test{
-		{"", emptyMsg},
-		{" ", emptyMsg},
-		{"a", ""},
-		{".", invalidDomainMsg},
-		{"日本語", invalidDomainMsg},
-		{"日本語.com", invalidDomainMsg},
-		{"abc.日本語.com", invalidDomainMsg},
-		{"a日本語a.com", invalidDomainMsg},
-		{"abc", ""},
-		{"ABC", ""},
-		{"ABC123", ""},
-		{"ABC123.COM123", ""},
-		{"1", ""},
-		{"0.0", ""},
-		{"1.2.3.4", ""},
-		{"1.2.3.4.", ""},
-		{"abc.", ""},
-		{"abc.com", ""},
-		{"abc.com.", ""},
-		{"a.b.c.d.e.f", ""},
-		{".abc", invalidDomainMsg},
-		{".abc.com", invalidDomainMsg},
-		{".abc.com", invalidDomainMsg},
+	cases := []struct {
+		domain string
+		valid  bool
+	}{
+		{"", false},
+		{" ", false},
+		{"a", true},
+		{".", false},
+		{"日本語", false},
+		{"日本語.com", false},
+		{"abc.日本語.com", false},
+		{"a日本語a.com", false},
+		{"abc", true},
+		{"ABC", false},
+		{"ABC123", false},
+		{"ABC123.COM123", false},
+		{"1", true},
+		{"0.0", true},
+		{"1.2.3.4", true},
+		{"1.2.3.4.", true},
+		{"abc.", true},
+		{"abc.com", true},
+		{"abc.com.", true},
+		{"a.b.c.d.e.f", true},
+		{".abc", false},
+		{".abc.com", false},
+		{".abc.com", false},
 	}
-	runTests(t, "DomainName", DomainName, tests)
+	for _, tc := range cases {
+		t.Run(tc.domain, func(t *testing.T) {
+			err := DomainName(tc.domain)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
 }
 
 func TestEmail(t *testing.T) {
@@ -214,10 +226,7 @@ func TestEmail(t *testing.T) {
 		{"ア@abc.com", ""},
 		{"中文@abc.com", ""},
 		{"a@abc.com", ""},
-		{"a@ABC.com", ""},
 		{"a@123.com", ""},
-		{"a@日本語.com", invalidDomainMsg},
-		{"a@.com", invalidDomainMsg},
 		{"@abc.com", invalidMsg},
 	}
 	runTests(t, "Email", Email, tests)
