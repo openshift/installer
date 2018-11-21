@@ -9,17 +9,17 @@ import (
 
 // Libvirt encompasses configuration specific to libvirt.
 type Libvirt struct {
-	URI         string `json:"tectonic_libvirt_uri,omitempty"`
-	Image       string `json:"tectonic_os_image,omitempty"`
+	URI         string `json:"libvirt_uri,omitempty"`
+	Image       string `json:"os_image,omitempty"`
 	Network     `json:",inline"`
-	MasterIPs   []string `json:"tectonic_libvirt_master_ips,omitempty"`
-	BootstrapIP string   `json:"tectonic_libvirt_bootstrap_ip,omitempty"`
+	MasterIPs   []string `json:"libvirt_master_ips,omitempty"`
+	BootstrapIP string   `json:"libvirt_bootstrap_ip,omitempty"`
 }
 
 // Network describes a libvirt network configuration.
 type Network struct {
-	IfName  string `json:"tectonic_libvirt_network_if,omitempty"`
-	IPRange string `json:"tectonic_libvirt_ip_range,omitempty"`
+	IfName  string `json:"libvirt_network_if,omitempty"`
+	IPRange string `json:"libvirt_ip_range,omitempty"`
 }
 
 // TFVars fills in computed Terraform variables.

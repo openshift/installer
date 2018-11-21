@@ -1,4 +1,4 @@
-variable "tectonic_aws_config_version" {
+variable "aws_config_version" {
   description = <<EOF
 (internal) This declares the version of the AWS configuration variables.
 It has no impact on generated assets but declares the version contract of the configuration.
@@ -7,7 +7,7 @@ EOF
   default = "1.0"
 }
 
-variable "tectonic_aws_master_ec2_type" {
+variable "aws_master_ec2_type" {
   type        = "string"
   description = "Instance size for the master node(s). Example: `m4.large`."
 
@@ -15,13 +15,13 @@ variable "tectonic_aws_master_ec2_type" {
   default = "m4.large"
 }
 
-variable "tectonic_aws_ec2_ami_override" {
+variable "aws_ec2_ami_override" {
   type        = "string"
   description = "(optional) AMI override for all nodes. Example: `ami-foobar123`."
   default     = ""
 }
 
-variable "tectonic_aws_master_extra_sg_ids" {
+variable "aws_master_extra_sg_ids" {
   description = <<EOF
 (optional) List of additional security group IDs for master nodes.
 
@@ -41,7 +41,7 @@ This should not overlap with any other networks, such as a private datacenter co
 EOF
 }
 
-variable "tectonic_aws_external_vpc_id" {
+variable "aws_external_vpc_id" {
   type = "string"
 
   description = <<EOF
@@ -54,7 +54,7 @@ EOF
   default = ""
 }
 
-variable "tectonic_aws_endpoints" {
+variable "aws_endpoints" {
   description = <<EOF
 (optional) If set to "all", the default, then both public and private ingress resources (ELB, A-records) will be created.
 If set to "private", then only create private-facing ingress resources (ELB, A-records). No public-facing ingress resources will be created.
@@ -62,7 +62,7 @@ If set to "public", then only create public-facing ingress resources (ELB, A-rec
 EOF
 }
 
-variable "tectonic_aws_external_private_zone" {
+variable "aws_external_private_zone" {
   default = ""
 
   description = <<EOF
@@ -74,7 +74,7 @@ Example: `"Z1ILINNUJGTAO1"`
 EOF
 }
 
-variable "tectonic_aws_external_master_subnet_ids" {
+variable "aws_external_master_subnet_ids" {
   type = "list"
 
   description = <<EOF
@@ -87,7 +87,7 @@ EOF
   default = []
 }
 
-variable "tectonic_aws_external_worker_subnet_ids" {
+variable "aws_external_worker_subnet_ids" {
   type = "list"
 
   description = <<EOF
@@ -100,7 +100,7 @@ EOF
   default = []
 }
 
-variable "tectonic_aws_extra_tags" {
+variable "aws_extra_tags" {
   type = "map"
 
   description = <<EOF
@@ -112,19 +112,19 @@ EOF
   default = {}
 }
 
-variable "tectonic_aws_master_root_volume_type" {
+variable "aws_master_root_volume_type" {
   type        = "string"
   default     = "gp2"
   description = "The type of volume for the root block device of master nodes."
 }
 
-variable "tectonic_aws_master_root_volume_size" {
+variable "aws_master_root_volume_size" {
   type        = "string"
   default     = "120"
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
-variable "tectonic_aws_master_root_volume_iops" {
+variable "aws_master_root_volume_iops" {
   type    = "string"
   default = "400"
 
@@ -134,7 +134,7 @@ Ignored if the volume type is not io1.
 EOF
 }
 
-variable "tectonic_aws_master_custom_subnets" {
+variable "aws_master_custom_subnets" {
   type    = "map"
   default = {}
 
@@ -146,7 +146,7 @@ Example:
 EOF
 }
 
-variable "tectonic_aws_worker_custom_subnets" {
+variable "aws_worker_custom_subnets" {
   type    = "map"
   default = {}
 
@@ -157,12 +157,12 @@ Example: `{ eu-west-1a = "10.0.64.0/20", eu-west-1b = "10.0.80.0/20" }`
 EOF
 }
 
-variable "tectonic_aws_region" {
+variable "aws_region" {
   type        = "string"
   description = "The target AWS region for the cluster."
 }
 
-variable "tectonic_aws_installer_role" {
+variable "aws_installer_role" {
   type    = "string"
   default = ""
 
@@ -175,7 +175,7 @@ Example:
 EOF
 }
 
-variable "tectonic_aws_master_iam_role_name" {
+variable "aws_master_iam_role_name" {
   type    = "string"
   default = ""
 
@@ -189,7 +189,7 @@ Example:
 EOF
 }
 
-variable "tectonic_aws_worker_iam_role_name" {
+variable "aws_worker_iam_role_name" {
   type    = "string"
   default = ""
 
