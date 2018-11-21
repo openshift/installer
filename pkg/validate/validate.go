@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -219,4 +220,16 @@ func lastIP(cidr *net.IPNet) net.IP {
 func SSHPublicKey(v string) error {
 	_, _, _, _, err := ssh.ParseAuthorizedKey([]byte(v))
 	return err
+}
+
+// URI validates if the URI is a valid absolute URI.
+func URI(uri string) error {
+	parsed, err := url.Parse(uri)
+	if err != nil {
+		return err
+	}
+	if !parsed.IsAbs() {
+		return fmt.Errorf("invalid URI %q (no scheme)", uri)
+	}
+	return nil
 }

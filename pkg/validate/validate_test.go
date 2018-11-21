@@ -384,3 +384,32 @@ func TestSSHPublicKey(t *testing.T) {
 		})
 	}
 }
+
+func TestURI(t *testing.T) {
+	cases := []struct {
+		name  string
+		uri   string
+		valid bool
+	}{
+		{
+			name:  "valid",
+			uri:   "https://example.com",
+			valid: true,
+		},
+		{
+			name:  "missing scheme",
+			uri:   "example.com",
+			valid: false,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := URI(tc.uri)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
