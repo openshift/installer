@@ -20,14 +20,9 @@ var (
 func main() {
 	rootCmd := newRootCmd()
 
-	for _, cmd := range newTargetsCmd() {
-		rootCmd.AddCommand(cmd)
-	}
-
 	for _, subCmd := range []*cobra.Command{
 		newCreateCmd(),
 		newDestroyCmd(),
-		newLegacyDestroyClusterCmd(),
 		newVersionCmd(),
 		newGraphCmd(),
 	} {

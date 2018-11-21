@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -101,18 +100,6 @@ var (
 
 	targets = []target{installConfigTarget, manifestTemplatesTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
 )
-
-// Deprecated: Use 'create' subcommands instead.
-func newTargetsCmd() []*cobra.Command {
-	var cmds []*cobra.Command
-	for _, t := range targets {
-		cmd := *t.command
-		cmd.Short = fmt.Sprintf("DEPRECATED: USE 'create %s' instead.", cmd.Use)
-		cmd.RunE = runTargetCmd(t.assets...)
-		cmds = append(cmds, &cmd)
-	}
-	return cmds
-}
 
 func newCreateCmd() *cobra.Command {
 	cmd := &cobra.Command{
