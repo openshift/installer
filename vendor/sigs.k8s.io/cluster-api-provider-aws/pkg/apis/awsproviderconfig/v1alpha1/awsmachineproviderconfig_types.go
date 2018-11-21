@@ -133,9 +133,9 @@ type AWSMachineProviderConfig struct {
 	// Placement specifies where to create the instance in AWS
 	Placement Placement `json:"placement"`
 
-	// LoadBalancerNames is the names of the load balancers to which the new instance
+	// LoadBalancers is the set of load balancers to which the new instance
 	// should be added once it is created.
-	LoadBalancerNames []string `json:"loadBalancerIds"`
+	LoadBalancers []LoadBalancerReference `json:"loadBalancers"`
 }
 
 // AWSResourceReference is a reference to a specific AWS resource by ID, ARN, or filters.
@@ -187,6 +187,23 @@ type AWSMachineProviderConfigList struct {
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []AWSMachineProviderConfig `json:"items"`
 }
+
+// LoadBalancerReference is a reference to a load balancer on AWS.
+type LoadBalancerReference struct {
+	Name string              `json:"name"`
+	Type AWSLoadBalancerType `json:"type"`
+}
+
+// AWSLoadBalancerType is the type of LoadBalancer to use when registering
+// an instance with load balancers specified in LoadBalancerNames
+type AWSLoadBalancerType string
+
+// Possible values for AWSLoadBalancerType. Add to this list as other types
+// of load balancer are supported by the actuator.
+const (
+	ClassicLoadBalancerType AWSLoadBalancerType = "classic" // AWS classic ELB
+	NetworkLoadBalancerType AWSLoadBalancerType = "network" // AWS Network Load Balancer (NLB)
+)
 
 func init() {
 	SchemeBuilder.Register(&AWSMachineProviderConfig{}, &AWSMachineProviderConfigList{}, &AWSMachineProviderStatus{})

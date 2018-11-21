@@ -84,6 +84,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
+		aws.ConfigMasters(machines, ic.ObjectMeta.Name)
 
 		list := listFromMachines(machines)
 		raw, err := yaml.Marshal(list)
