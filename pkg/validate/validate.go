@@ -61,10 +61,29 @@ func Email(v string) error {
 	return DomainName(domain)
 }
 
-// JSON validates that the given data is valid JSON.
-func JSON(data []byte) error {
-	var dummy interface{}
-	return json.Unmarshal(data, &dummy)
+type imagePullSecret struct {
+	Auths map[string]map[string]interface{} `json:"auths"`
+}
+
+// ImagePullSecret checks if the given string is a valid image pull secret and returns an error if not.
+func ImagePullSecret(secret string) error {
+	var s imagePullSecret
+	err := json.Unmarshal([]byte(secret), &s)
+	if err != nil {
+		return err
+	}
+	if len(s.Auths) == 0 {
+		return fmt.Errorf("auths required")
+	}
+	errs := []error{}
+	for d, a := range s.Auths {
+		_, authPresent := a["auth"]
+		_, credsStorePresnet := a["credsStore"]
+		if !authPresent && !credsStorePresnet {
+			errs = append(errs, fmt.Errorf("%q requires either auth or credsStore", d))
+		}
+	}
+	return k8serrors.NewAggregate(errs)
 }
 
 func isMatch(re string, v string) bool {

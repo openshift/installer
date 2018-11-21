@@ -282,6 +282,70 @@ func TestCIDRsDontOverlap(t *testing.T) {
 	}
 }
 
+func TestImagePullSecret(t *testing.T) {
+	cases := []struct {
+		name   string
+		secret string
+		valid  bool
+	}{
+		{
+			name:   "single entry with auth",
+			secret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+			valid:  true,
+		},
+		{
+			name:   "single entry with credsStore",
+			secret: `{"auths":{"example.com":{"credsStore":"creds store value"}}}`,
+			valid:  true,
+		},
+		{
+			name:   "empty",
+			secret: `{}`,
+			valid:  false,
+		},
+		{
+			name:   "no auths",
+			secret: `{"not-auths":{"example.com":{"auth":"authorization value"}}}`,
+			valid:  false,
+		},
+		{
+			name:   "no auth or credsStore",
+			secret: `{"auths":{"example.com":{"unrequired-field":"value"}}}`,
+			valid:  false,
+		},
+		{
+			name:   "additional fields",
+			secret: `{"auths":{"example.com":{"auth":"authorization value","other-field":"other field value"}}}`,
+			valid:  true,
+		},
+		{
+			name:   "no entries",
+			secret: `{"auths":{}}`,
+			valid:  false,
+		},
+		{
+			name:   "multiple valid entries",
+			secret: `{"auths":{"example.com":{"auth":"authorization value"},"other-example.com":{"auth":"other auth value"}}}`,
+			valid:  true,
+		},
+		{
+			name:   "mix of valid and invalid entries",
+			secret: `{"auths":{"example.com":{"auth":"authorization value"},"other-example.com":{"unrequired-field":"value"}}}`,
+			valid:  false,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := ImagePullSecret(tc.secret)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
+}
+
 func TestOpenSSHPublicKey(t *testing.T) {
 	const invalidMsg = "invalid SSH public key"
 	const multiLineMsg = "invalid SSH public key (should not contain any newline characters)"
