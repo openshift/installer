@@ -41,6 +41,7 @@ func runGraphCmd(cmd *cobra.Command, args []string) error {
 	g.SetName("G")
 	g.SetDir(true)
 	g.SetStrict(true)
+	g.AddAttr("G", string(gographviz.RankDir), "LR")
 
 	installerAssets := installerassets.New()
 	err := installerAssets.Read(ctx, rootOpts.dir, installerassets.GetDefault, print.New(logrus.StandardLogger()))
