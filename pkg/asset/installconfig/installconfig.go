@@ -19,8 +19,8 @@ const (
 )
 
 var (
-	defaultServiceCIDR      = parseCIDR("10.3.0.0/16")
-	defaultClusterCIDR      = "10.2.0.0/16"
+	defaultServiceCIDR      = parseCIDR("172.30.0.0/16")
+	defaultClusterCIDR      = "10.128.0.0/14"
 	defaultHostSubnetLength = 9 // equivalent to a /23 per node
 )
 
