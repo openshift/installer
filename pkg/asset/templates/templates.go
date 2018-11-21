@@ -30,6 +30,7 @@ func (m *Templates) Dependencies() []asset.Asset {
 		&bootkube.CVOOverrides{},
 		&bootkube.LegacyCVOOverrides{},
 		&bootkube.EtcdServiceEndpointsKubeSystem{},
+		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.KubeSystemSecretEtcdClient{},
