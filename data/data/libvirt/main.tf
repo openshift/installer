@@ -16,7 +16,7 @@ module "bootstrap" {
   base_volume_id = "${module.volume.coreos_base_volume_id}"
   cluster_name   = "${var.cluster_name}"
   ignition       = "${var.ignition_bootstrap}"
-  network_id     = "${libvirt_network.tectonic_net.id}"
+  network_id     = "${libvirt_network.net.id}"
 }
 
 resource "libvirt_volume" "master" {
@@ -30,7 +30,7 @@ resource "libvirt_ignition" "master" {
   content = "${var.ignition_master}"
 }
 
-resource "libvirt_network" "tectonic_net" {
+resource "libvirt_network" "net" {
   name = "${var.cluster_name}"
 
   mode   = "nat"
@@ -79,7 +79,7 @@ resource "libvirt_domain" "master" {
   }
 
   network_interface {
-    network_id = "${libvirt_network.tectonic_net.id}"
+    network_id = "${libvirt_network.net.id}"
     hostname   = "${var.cluster_name}-master-${count.index}"
     addresses  = ["${var.libvirt_master_ips[count.index]}"]
   }
