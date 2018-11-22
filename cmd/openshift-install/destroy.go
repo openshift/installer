@@ -26,14 +26,6 @@ func newDestroyCmd() *cobra.Command {
 	return cmd
 }
 
-func newLegacyDestroyClusterCmd() *cobra.Command {
-	return &cobra.Command{
-		Use:   "destroy-cluster",
-		Short: "DEPRECATED: Use 'destroy cluster' instead.",
-		RunE:  runDestroyCmd,
-	}
-}
-
 func newDestroyClusterCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "cluster",
