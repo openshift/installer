@@ -27,7 +27,7 @@ provider "openstack" {
 module "bootstrap" {
   source = "./bootstrap"
 
-  swift_container   = "${openstack_objectstorage_container_v1.tectonic.name}"
+  swift_container   = "${openstack_objectstorage_container_v1.container.name}"
   cluster_name      = "${var.cluster_name}"
   cluster_id        = "${var.cluster_id}"
   image_name        = "${var.openstack_base_image}"
@@ -62,7 +62,7 @@ module "topology" {
   masters_count              = "${var.master_count}"
 }
 
-resource "openstack_objectstorage_container_v1" "tectonic" {
+resource "openstack_objectstorage_container_v1" "container" {
   name = "${lower(var.cluster_name)}.${var.base_domain}"
 
   metadata = "${merge(map(
