@@ -57,7 +57,7 @@ var (
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 		},
-		assets: []asset.WritableAsset{&manifests.Manifests{}, &manifests.Tectonic{}},
+		assets: []asset.WritableAsset{&manifests.Manifests{}, &manifests.Openshift{}},
 	}
 
 	manifestTemplatesTarget = target{

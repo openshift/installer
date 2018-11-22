@@ -35,7 +35,7 @@ type bootkubeTemplateData struct {
 	EtcdEndpointDNSSuffix           string
 }
 
-type tectonicTemplateData struct {
+type openshiftTemplateData struct {
 	CloudCreds                   cloudCredsSecretData
 	Base64EncodedKubeadminPwHash string
 }

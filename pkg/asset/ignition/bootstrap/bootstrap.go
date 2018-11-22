@@ -72,7 +72,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&kubeconfig.Admin{},
 		&kubeconfig.Kubelet{},
 		&manifests.Manifests{},
-		&manifests.Tectonic{},
+		&manifests.Openshift{},
 	}
 }
 
@@ -281,8 +281,8 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	adminKubeconfig := &kubeconfig.Admin{}
 	kubeletKubeconfig := &kubeconfig.Kubelet{}
 	mfsts := &manifests.Manifests{}
-	tectonic := &manifests.Tectonic{}
-	dependencies.Get(adminKubeconfig, kubeletKubeconfig, mfsts, tectonic)
+	openshiftManifests := &manifests.Openshift{}
+	dependencies.Get(adminKubeconfig, kubeletKubeconfig, mfsts, openshiftManifests)
 
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
@@ -299,7 +299,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	)
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
-		ignition.FilesFromAsset(rootDir, 0644, tectonic)...,
+		ignition.FilesFromAsset(rootDir, 0644, openshiftManifests)...,
 	)
 
 	for _, asset := range []asset.WritableAsset{
