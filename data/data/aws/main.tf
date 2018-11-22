@@ -1,7 +1,7 @@
 locals {
   private_endpoints = "${var.aws_endpoints == "public" ? false : true}"
   public_endpoints  = "${var.aws_endpoints == "private" ? false : true}"
-  private_zone_id   = "${var.aws_external_private_zone != "" ? var.aws_external_private_zone : join("", aws_route53_zone.tectonic_int.*.zone_id)}"
+  private_zone_id   = "${var.aws_external_private_zone != "" ? var.aws_external_private_zone : join("", aws_route53_zone.int.*.zone_id)}"
 }
 
 provider "aws" {
@@ -10,7 +10,7 @@ provider "aws" {
 
   assume_role {
     role_arn     = "${var.aws_installer_role == "" ? "" : "${var.aws_installer_role}"}"
-    session_name = "TECTONIC_INSTALLER_${var.cluster_name}"
+    session_name = "OPENSHIFT_INSTALLER_${var.cluster_name}"
   }
 }
 
@@ -118,14 +118,14 @@ resource "aws_route53_record" "etcd_cluster" {
   records = ["${formatlist("0 10 2380 %s", aws_route53_record.etcd_a_nodes.*.fqdn)}"]
 }
 
-resource "aws_route53_zone" "tectonic_int" {
+resource "aws_route53_zone" "int" {
   count         = "${local.private_endpoints ? "${var.aws_external_private_zone == "" ? 1 : 0 }" : 0}"
   vpc_id        = "${module.vpc.vpc_id}"
   name          = "${var.base_domain}"
   force_destroy = true
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}_tectonic_int",
+      "Name", "${var.cluster_name}_int",
       "KubernetesCluster", "${var.cluster_name}",
       "tectonicClusterID", "${var.cluster_id}"
     ), var.aws_extra_tags)}"

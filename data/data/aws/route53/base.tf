@@ -3,17 +3,17 @@ locals {
   private_endpoints_count = "${var.private_endpoints ? 1 : 0}"
 }
 
-data "aws_route53_zone" "tectonic" {
+data "aws_route53_zone" "base" {
   name = "${var.base_domain}"
 }
 
 locals {
-  public_zone_id = "${join("", data.aws_route53_zone.tectonic.*.zone_id)}"
+  public_zone_id = "${join("", data.aws_route53_zone.base.*.zone_id)}"
 
   zone_id = "${var.private_endpoints ? var.private_zone_id : local.public_zone_id}"
 }
 
-resource "aws_route53_record" "tectonic_api_external" {
+resource "aws_route53_record" "api_external" {
   count = "${var.elb_alias_enabled ? local.public_endpoints_count : 0}"
 
   zone_id = "${local.public_zone_id}"
@@ -27,7 +27,7 @@ resource "aws_route53_record" "tectonic_api_external" {
   }
 }
 
-resource "aws_route53_record" "tectonic_api_internal" {
+resource "aws_route53_record" "api_internal" {
   count = "${var.elb_alias_enabled ? local.private_endpoints_count : 0}"
 
   zone_id = "${var.private_zone_id}"

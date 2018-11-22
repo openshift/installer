@@ -32,7 +32,7 @@ EOF
   default = []
 }
 
-variable "tectonic_aws_vpc_cidr_block" {
+variable "aws_vpc_cidr_block" {
   type = "string"
 
   description = <<EOF
@@ -167,11 +167,11 @@ variable "aws_installer_role" {
   default = ""
 
   description = <<EOF
-(optional) Name of IAM role to use to access AWS in order to deploy the Tectonic Cluster.
+(optional) Name of IAM role to use to access AWS in order to deploy the OpenShift Cluster.
 The name is also the full role's ARN.
 
 Example:
- * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
+ * Role ARN  = arn:aws:iam::123456789012:role/openshift-installer
 EOF
 }
 
@@ -184,8 +184,8 @@ variable "aws_master_iam_role_name" {
 The name is also the last part of a role's ARN.
 
 Example:
- * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
- * Role Name = tectonic-installer
+ * Role ARN  = arn:aws:iam::123456789012:role/openshift-installer
+ * Role Name = openshift-installer
 EOF
 }
 
@@ -198,7 +198,7 @@ variable "aws_worker_iam_role_name" {
 The name is also the last part of a role's ARN.
 
 Example:
- * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
- * Role Name = tectonic-installer
+ * Role ARN  = arn:aws:iam::123456789012:role/openshift-installer
+ * Role Name = openshift-installer
 EOF
 }
