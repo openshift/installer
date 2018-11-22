@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	rootDir              = "/opt/tectonic"
+	rootDir              = "/opt/openshift"
 	defaultReleaseImage  = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
 	bootstrapIgnFilename = "bootstrap.ign"
 )

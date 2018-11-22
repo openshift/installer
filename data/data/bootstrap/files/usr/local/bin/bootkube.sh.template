@@ -64,7 +64,7 @@ then
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
 		--config-output-file=/assets/kube-apiserver-bootstrap/config \
 		--config-override-files=/assets/bootkube-config-overrides/kube-apiserver-config-overrides.yaml \
-		--cluster-config-file=/assets/tectonic/99_openshift-cluster-api_cluster.yaml
+		--cluster-config-file=/assets/openshift/99_openshift-cluster-api_cluster.yaml
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -85,7 +85,7 @@ then
 		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
 		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
 		--config-override-files=/assets/bootkube-config-overrides/kube-controller-manager-config-overrides.yaml \
-		--cluster-config-file=/assets/tectonic/99_openshift-cluster-api_cluster.yaml
+		--cluster-config-file=/assets/openshift/99_openshift-cluster-api_cluster.yaml
 
 	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
 	cp kube-controller-manager-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -160,14 +160,14 @@ trap "podman rm --force etcd-signer" ERR
 podman run \
 	--name etcd-signer \
 	--detach \
-	--volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
+	--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
 	--network host \
 	"{{.EtcdCertSignerImage}}" \
 	serve \
-	--cacrt=/opt/tectonic/tls/etcd-client-ca.crt \
-	--cakey=/opt/tectonic/tls/etcd-client-ca.key \
-	--servcrt=/opt/tectonic/tls/apiserver.crt \
-	--servkey=/opt/tectonic/tls/apiserver.key \
+	--cacrt=/opt/openshift/tls/etcd-client-ca.crt \
+	--cakey=/opt/openshift/tls/etcd-client-ca.key \
+	--servcrt=/opt/openshift/tls/apiserver.crt \
+	--servkey=/opt/openshift/tls/apiserver.key \
 	--address=0.0.0.0:6443 \
 	--csrdir=/tmp \
 	--peercertdur=26280h \
@@ -182,13 +182,13 @@ until podman run \
 		--network host \
 		--name etcdctl \
 		--env ETCDCTL_API=3 \
-		--volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
+		--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
 		"{{.EtcdctlImage}}" \
 		/usr/local/bin/etcdctl \
 		--dial-timeout=10m \
-		--cacert=/opt/tectonic/tls/etcd-client-ca.crt \
-		--cert=/opt/tectonic/tls/etcd-client.crt \
-		--key=/opt/tectonic/tls/etcd-client.key \
+		--cacert=/opt/openshift/tls/etcd-client-ca.crt \
+		--cert=/opt/openshift/tls/etcd-client.crt \
+		--key=/opt/openshift/tls/etcd-client.key \
 		--endpoints={{.EtcdCluster}} \
 		endpoint health
 do
@@ -213,4 +213,4 @@ podman run \
 	start --asset-dir=/assets --required-pods openshift-kube-apiserver/openshift-kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/openshift-kube-controller-manager,openshift-cluster-version/cluster-version-operator
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
-touch /opt/tectonic/.bootkube.done
+touch /opt/openshift/.bootkube.done

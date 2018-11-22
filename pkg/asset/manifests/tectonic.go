@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	tectonicManifestDir = "tectonic"
+	openshiftManifestDir = "openshift"
 )
 
 var (
@@ -127,7 +127,7 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 	t.FileList = []*asset.File{}
 	for name, data := range assetData {
 		t.FileList = append(t.FileList, &asset.File{
-			Filename: filepath.Join(tectonicManifestDir, name),
+			Filename: filepath.Join(openshiftManifestDir, name),
 			Data:     data,
 		})
 	}
@@ -142,7 +142,7 @@ func (t *Tectonic) Files() []*asset.File {
 
 // Load returns the tectonic asset from disk.
 func (t *Tectonic) Load(f asset.FileFetcher) (bool, error) {
-	fileList, err := f.FetchByPattern(filepath.Join(tectonicManifestDir, "*"))
+	fileList, err := f.FetchByPattern(filepath.Join(openshiftManifestDir, "*"))
 	if err != nil {
 		return false, err
 	}
