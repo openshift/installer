@@ -36,12 +36,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
-- For consistency with 0.3.0's `destroy`, the the old
-  `install-config`, `manifests`, `ignition-configs`, and `cluster`
-  commands have been pushed down under a new `create` subcommand.  For
-  example, you should now use `openshift-install create cluster`
-  instead of `openshift-install cluster`.  The old commands are
-  deprecated.
 - The `create cluster` subcommand now waits for the
   `bootstrap-complete` event and automatically removes the bootstrap
   assets after receiving it.  This means that after `create cluster`
@@ -89,7 +83,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - On AWS and OpenStack, the default network CIDRs have changed to
   172.30.0.0/16 for services and 10.128.0.0/14 for the cluster, to be
   consistent with previous versions of OpenStack.
- - The bootstrap kubelet is no longer part of the production cluster.
+- The bootstrap kubelet is no longer part of the production cluster.
   This reduces complexity and keeps production pods off of the
   temporary bootstrap node.
 - [The cluster-version operator][cluster-version-operator] now runs in
