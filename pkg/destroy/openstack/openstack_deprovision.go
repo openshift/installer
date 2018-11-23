@@ -235,8 +235,8 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 		logger.Debugf("Deleting Port: %+v", port.ID)
 		err = ports.Delete(conn, port.ID).ExtractErr()
 		if err != nil {
-			logger.Fatalf("%v", err)
-			os.Exit(1)
+			// This can fail when port is still in use so return/retry
+			return false, nil
 		}
 	}
 	return len(allPorts) == 0, nil
