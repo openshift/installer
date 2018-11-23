@@ -20,6 +20,11 @@ resource "openstack_compute_instance_v2" "master_conf" {
     port = "${var.subnet_ids[count.index]}"
   }
 
+  #network = {
+  #  name = "openshift"
+  #  fixed_ip_v4 = "10.3.0.${count.index == 0? 1: count.index + 2}"
+  #}
+
   metadata {
     Name              = "${var.cluster_name}-master"
     owned             = "kubernetes.io/cluster/${var.cluster_name}"
