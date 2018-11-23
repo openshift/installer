@@ -222,3 +222,24 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_services_from_c
   remote_group_id   = "${openstack_networking_secgroup_v2.console.id}"
   security_group_id = "${openstack_networking_secgroup_v2.master.id}"
 }
+
+# NOTE(shadower): open up DNS SG on the bootstrap node so the masters can talk to it
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_udp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "udp"
+  port_range_min    = 53
+  port_range_max    = 53
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_dns_tcp" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 53
+  port_range_max    = 53
+  remote_ip_prefix  = "0.0.0.0/0"
+  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+}

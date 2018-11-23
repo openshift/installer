@@ -31,3 +31,7 @@ variable "subnet_ids" {
 variable "user_data_ign" {
   type = "string"
 }
+
+variable "service_vm_fixed_ip" {
+  type = "string"
+}
