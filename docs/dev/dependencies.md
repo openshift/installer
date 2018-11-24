@@ -4,11 +4,37 @@
 
 The following dependencies must be installed on your system before you can build the installer.
 
-### Fedora, CentOS, RHEL
+### Fedora
 
 ```sh
 sudo yum install golang-bin gcc-c++
 ```
+
+### CentOS 7
+
+```sh
+sudo yum-config-manager --enable extras
+sudo yum install -y centos-release-scl
+sudo yum install -y go-toolset-7-golang-bin gcc-c++
+# open a shell where Go 1.10 from SCL is in PATH
+scl enable go-toolset-7 bash
+```
+
+### Red Hat Enterprise Linux 7
+
+You need to install [go-toolset-1.10](https://access.redhat.com/documentation/en-us/red_hat_developer_tools/2018.4/html/using_go_toolset/).
+
+```sh
+sudo yum-config-manager --enable rhel-7-server-devtools-rpms
+sudo yum-config-manager --enable rhel-server-rhscl-8-rpms
+sudo yum install -y go-toolset-1.10-golang-bin gcc-c++
+# open a shell where Go 1.10 from SCL is in PATH
+scl enable go-toolset-1.10 bash
+```
+
+Note: If you have a `workstation` variant of RHEL, then reporitory name is `rhel-7-workstation-devtools-rpms` as documented in the link above.
+
+### libvirt
 
 If you need support for [libvirt destroy](libvirt/README.md#cleanup), you should also install `libvirt-devel`.
 
