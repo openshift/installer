@@ -29,7 +29,6 @@ func (m *Templates) Dependencies() []asset.Asset {
 		&bootkube.Pull{},
 		&bootkube.CVOOverrides{},
 		&bootkube.LegacyCVOOverrides{},
-		&bootkube.EtcdServiceEndpointsKubeSystem{},
 		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
@@ -54,7 +53,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	pull := &bootkube.Pull{}
 	cVOOverrides := &bootkube.CVOOverrides{}
 	legacyCVOOverrides := &bootkube.LegacyCVOOverrides{}
-	etcdServiceEndpointsKubeSystem := &bootkube.EtcdServiceEndpointsKubeSystem{}
 	hostEtcdServiceEndpointsKubeSystem := &bootkube.HostEtcdServiceEndpointsKubeSystem{}
 	kubeSystemConfigmapEtcdServingCA := &bootkube.KubeSystemConfigmapEtcdServingCA{}
 	kubeSystemConfigmapRootCA := &bootkube.KubeSystemConfigmapRootCA{}
@@ -77,7 +75,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 		pull,
 		cVOOverrides,
 		legacyCVOOverrides,
-		etcdServiceEndpointsKubeSystem,
 		hostEtcdServiceEndpointsKubeSystem,
 		kubeSystemConfigmapEtcdServingCA,
 		kubeSystemConfigmapRootCA,
@@ -99,7 +96,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, pull.Files()...)
 	m.FileList = append(m.FileList, cVOOverrides.Files()...)
 	m.FileList = append(m.FileList, legacyCVOOverrides.Files()...)
-	m.FileList = append(m.FileList, etcdServiceEndpointsKubeSystem.Files()...)
 	m.FileList = append(m.FileList, hostEtcdServiceEndpointsKubeSystem.Files()...)
 	m.FileList = append(m.FileList, kubeSystemConfigmapEtcdServingCA.Files()...)
 	m.FileList = append(m.FileList, kubeSystemConfigmapRootCA.Files()...)
