@@ -1,4 +1,4 @@
-package tectonic
+package openshift
 
 import (
 	"os"
@@ -33,7 +33,7 @@ func (t *KubeadminPasswordSecret) Name() string {
 // Generate generates the actual files by this asset
 func (t *KubeadminPasswordSecret) Generate(parents asset.Parents) error {
 	t.fileName = kubeadminPasswordSecretFileName
-	data, err := content.GetTectonicTemplate(t.fileName)
+	data, err := content.GetOpenshiftTemplate(t.fileName)
 	if err != nil {
 		return err
 	}

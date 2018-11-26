@@ -12,7 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/password"
-	"github.com/openshift/installer/pkg/asset/templates/content/tectonic"
+	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 )
 
 const (
@@ -43,10 +43,10 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&machines.Master{},
 		&password.KubeadminPassword{},
 
-		&tectonic.BindingDiscovery{},
-		&tectonic.CloudCredsSecret{},
-		&tectonic.KubeadminPasswordSecret{},
-		&tectonic.RoleCloudCredsSecretReader{},
+		&openshift.BindingDiscovery{},
+		&openshift.CloudCredsSecret{},
+		&openshift.KubeadminPasswordSecret{},
+		&openshift.RoleCloudCredsSecretReader{},
 	}
 }
 
@@ -99,10 +99,10 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		Base64EncodedKubeadminPwHash: base64.StdEncoding.EncodeToString(kubeadminPassword.PasswordHash),
 	}
 
-	bindingDiscovery := &tectonic.BindingDiscovery{}
-	cloudCredsSecret := &tectonic.CloudCredsSecret{}
-	kubeadminPasswordSecret := &tectonic.KubeadminPasswordSecret{}
-	roleCloudCredsSecretReader := &tectonic.RoleCloudCredsSecretReader{}
+	bindingDiscovery := &openshift.BindingDiscovery{}
+	cloudCredsSecret := &openshift.CloudCredsSecret{}
+	kubeadminPasswordSecret := &openshift.KubeadminPasswordSecret{}
+	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
 	dependencies.Get(
 		bindingDiscovery,
 		cloudCredsSecret,
