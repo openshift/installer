@@ -243,14 +243,15 @@ func destroyBootstrap(ctx context.Context, directory string) (err error) {
 	return destroybootstrap.Destroy(rootOpts.dir)
 }
 
-// logComplete prints info upon completion
+// logComplete prints info and suggestions to manage installed cluster
 func logComplete(directory string) error {
 	absDir, err := filepath.Abs(directory)
 	if err != nil {
 		return err
 	}
 	kubeconfig := filepath.Join(absDir, "auth", "kubeconfig")
-	logrus.Infof("Install complete! Run 'export KUBECONFIG=%s' to manage your cluster.", kubeconfig)
-	logrus.Info("After exporting your kubeconfig, run 'oc -h' for a list of OpenShift client commands.")
+	logrus.Infof("Install complete! Run 'export KUBECONFIG=%s' to manage the cluster.", kubeconfig)
+	logrus.Info("Wait for workers to become ready. Run 'oc get nodes -w' to watch for workers coming up.")
+	logrus.Info("Run 'oc -h' for a list of OpenShift client commands.")
 	return nil
 }
