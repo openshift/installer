@@ -20,6 +20,8 @@ KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-
 OPENSHIFT_HYPERSHIFT_IMAGE=$(podman run --rm {{.ReleaseImage}} image hypershift)
 OPENSHIFT_HYPERKUBE_IMAGE=$(podman run --rm {{.ReleaseImage}} image hyperkube)
 
+CLUSTER_BOOTSTRAP_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-bootstrap)
+
 mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -d cvo-bootstrap ]
@@ -191,7 +193,7 @@ echo "etcd cluster up. Killing etcd certificate signer..."
 podman rm --force etcd-signer
 rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
 
-echo "Starting bootkube..."
+echo "Starting cluster-bootstrap..."
 
 # shellcheck disable=SC2154
 podman run \
@@ -199,8 +201,7 @@ podman run \
 	--volume "$PWD:/assets:z" \
 	--volume /etc/kubernetes:/etc/kubernetes:z \
 	--network=host \
-	--entrypoint=/bootkube \
-	"{{.BootkubeImage}}" \
+	"${CLUSTER_BOOTSTRAP_IMAGE}" \
 	start --asset-dir=/assets --required-pods openshift-kube-apiserver/openshift-kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/openshift-kube-controller-manager,openshift-cluster-version/cluster-version-operator
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
