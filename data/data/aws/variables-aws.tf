@@ -9,8 +9,10 @@ EOF
 
 variable "tectonic_aws_master_ec2_type" {
   type        = "string"
-  description = "Instance size for the master node(s). Example: `t2.medium`."
-  default     = "t2.medium"
+  description = "Instance size for the master node(s). Example: `t3.medium`."
+
+  # FIXME: get this wired up to the machine default
+  default = "t3.medium"
 }
 
 variable "tectonic_aws_ec2_ami_override" {
