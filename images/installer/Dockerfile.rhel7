@@ -1,0 +1,40 @@
+# It builds an image containing only the openshift-install and terraform binaries.
+
+FROM rhel7:latest as builder
+
+USER root
+ENV GOPATH="/go"
+ENV PATH="$PATH:$GOPATH/bin:/usr/local/go/bin"
+ENV INSTALLERDIR="$GOPATH/src/github.com/openshift/installer"
+ENV GOVERSION="1.10"
+
+# Packages and binaries requisites
+RUN yum-config-manager --enable rhel-7-server-devtools-rpms && \
+    yum install gcc-c++ git go-toolset-${GOVERSION}-golang-bin -y && \
+    yum clean all
+
+# Clone the repo
+RUN mkdir -p $GOPATH/{src,bin,pkg} && \
+    mkdir -p $GOPATH/src/github.com/openshift/ && \
+    git clone https://github.com/openshift/installer.git $INSTALLERDIR
+
+# Terraform
+RUN cd $INSTALLERDIR && \
+    hack/get-terraform.sh && \
+    mv $INSTALLERDIR/bin/terraform /bin/terraform
+
+# OpenShift installer
+RUN cd $INSTALLERDIR && \
+    scl enable go-toolset-1.10 hack/build.sh && \
+    mv $INSTALLERDIR/bin/openshift-install /bin/openshift-install && \
+    chmod a+x /bin/openshift-install
+
+
+FROM rhel7-minimal:latest
+COPY --from=builder /bin/terraform /bin/openshift-install /bin/
+RUN mkdir /output && chown 1000:1000 /output
+USER 1000:1000
+ENV PATH /bin
+ENV HOME /output
+WORKDIR /output
+ENTRYPOINT ["/bin/openshift-install"]
