@@ -327,8 +327,8 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 				logger.Debugf("Removing Subnet %v from Router %v\n", IP.SubnetID, router.ID)
 				_, err = routers.RemoveInterface(conn, router.ID, removeOpts).Extract()
 				if err != nil {
-					logger.Fatalf("%v", err)
-					os.Exit(1)
+					// This can fail when subnet is still in use
+					return false, nil
 				}
 			}
 		}
