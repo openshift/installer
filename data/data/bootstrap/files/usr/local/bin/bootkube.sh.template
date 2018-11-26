@@ -15,7 +15,10 @@ KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-
 OPENSHIFT_HYPERSHIFT_IMAGE=$(podman run --rm {{.ReleaseImage}} image hypershift)
 OPENSHIFT_HYPERKUBE_IMAGE=$(podman run --rm {{.ReleaseImage}} image hyperkube)
 
-BOOTSHIFT_IMAGE=$(podman run --rm {{.ReleaseImage}} image bootshift)
+
+# TODO: remove comment when bootshift is referenced by the release image
+# BOOTSHIFT_IMAGE=$(podman run --rm {{.ReleaseImage}} image bootshift)
+BOOTSHIFT_IMAGE=docker.io/sttts/bootshift:latest
 
 mkdir --parents ./{bootstrap-manifests,manifests}
 
