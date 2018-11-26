@@ -15,6 +15,8 @@ KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-
 OPENSHIFT_HYPERSHIFT_IMAGE=$(podman run --rm {{.ReleaseImage}} image hypershift)
 OPENSHIFT_HYPERKUBE_IMAGE=$(podman run --rm {{.ReleaseImage}} image hyperkube)
 
+BOOTSHIFT_IMAGE=$(podman run --rm {{.ReleaseImage}} image bootshift)
+
 mkdir --parents ./{bootstrap-manifests,manifests}
 
 if [ ! -d cvo-bootstrap ]
@@ -194,8 +196,7 @@ podman run \
 	--volume "$PWD:/assets:z" \
 	--volume /etc/kubernetes:/etc/kubernetes:z \
 	--network=host \
-	--entrypoint=/bootkube \
-	"{{.BootkubeImage}}" \
+	"${BOOTSHIFT_IMAGE}" \
 	start --asset-dir=/assets --required-pods openshift-kube-apiserver/openshift-kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/openshift-kube-controller-manager,openshift-cluster-version/cluster-version-operator
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807

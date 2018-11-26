@@ -37,7 +37,6 @@ const (
 // bootstrapTemplateData is the data to use to replace values in bootstrap
 // template files.
 type bootstrapTemplateData struct {
-	BootkubeImage         string
 	EtcdCertSignerImage   string
 	EtcdCluster           string
 	EtcdctlImage          string
@@ -149,7 +148,6 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, adminKub
 	return &bootstrapTemplateData{
 		EtcdCertSignerImage:   "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
 		EtcdctlImage:          "quay.io/coreos/etcd:v3.2.14",
-		BootkubeImage:         "quay.io/coreos/bootkube:v0.14.0",
 		ReleaseImage:          releaseImage,
 		EtcdCluster:           strings.Join(etcdEndpoints, ","),
 		AdminKubeConfigBase64: base64.StdEncoding.EncodeToString(adminKubeConfig),
