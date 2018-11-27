@@ -104,12 +104,6 @@ data "libvirt_network_dns_host_template" "etcds" {
   hostname = "${var.tectonic_cluster_name}-etcd-${count.index}"
 }
 
-data "libvirt_network_dns_host_template" "workers" {
-  count    = "${var.tectonic_worker_count}"
-  ip       = "${var.tectonic_libvirt_worker_ips[count.index]}"
-  hostname = "${var.tectonic_cluster_name}"
-}
-
 data "libvirt_network_dns_srv_template" "etcd_cluster" {
   count    = "${var.tectonic_master_count}"
   service  = "etcd-server-ssl"
