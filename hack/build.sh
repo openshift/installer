@@ -28,6 +28,10 @@ export CGO_ENABLED=0
 case "${MODE}" in
 release)
 	TAGS="${TAGS} release"
+	if test -n "${OPENSHIFT_INSTALL_RELEASE_IMAGE}"
+	then
+		LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/asset/ignition/bootstrap.defaultReleaseImage=${OPENSHIFT_INSTALL_RELEASE_IMAGE}"
+	fi
 	if test "${SKIP_GENERATION}" != y
 	then
 		go generate ./data

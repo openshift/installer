@@ -30,8 +30,11 @@ import (
 
 const (
 	rootDir              = "/opt/tectonic"
-	defaultReleaseImage  = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
 	bootstrapIgnFilename = "bootstrap.ign"
+)
+
+var (
+	defaultReleaseImage = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
 )
 
 // bootstrapTemplateData is the data to use to replace values in bootstrap
