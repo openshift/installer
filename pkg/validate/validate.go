@@ -8,13 +8,40 @@ import (
 	"net"
 	"net/url"
 	"regexp"
-	"strconv"
 	"strings"
 	"unicode/utf8"
 
+	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"golang.org/x/crypto/ssh"
 	k8serrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation"
+)
+
+var (
+	dockerBridgeCIDR = func() *net.IPNet {
+		_, cidr, _ := net.ParseCIDR("172.17.0.0/16")
+		return cidr
+	}()
+
+	// ValidNetworkTypes is a collection of the valid network types.
+	ValidNetworkTypes = map[netopv1.NetworkType]bool{
+		netopv1.NetworkTypeOpenshiftSDN:  true,
+		netopv1.NetworkTypeOVNKubernetes: true,
+		netopv1.NetworkTypeCalico:        true,
+		netopv1.NetworkTypeKuryr:         true,
+	}
+
+	// ValidNetworkTypeValues is a slice filled with the valid network types as
+	// strings.
+	ValidNetworkTypeValues = func() []string {
+		validValues := make([]string, len(ValidNetworkTypes))
+		i := 0
+		for t := range ValidNetworkTypes {
+			validValues[i] = string(t)
+			i++
+		}
+		return validValues
+	}()
 )
 
 func validateSubdomain(v string) error {
@@ -105,80 +132,23 @@ func nonEmpty(v string) error {
 	return nil
 }
 
-// SubnetCIDR checks if the given string is a valid CIDR for a master nodes or worker nodes subnet and returns an error if not.
-func SubnetCIDR(v string) error {
-	if err := nonEmpty(v); err != nil {
-		return err
+// SubnetCIDR checks if the given IP net is a valid CIDR for a master nodes or worker nodes subnet and returns an error if not.
+func SubnetCIDR(cidr *net.IPNet) error {
+	if cidr.IP.To4() == nil {
+		return errors.New("must use IPv4")
 	}
-
-	split := strings.Split(v, "/")
-
-	if len(split) == 1 {
-		return errors.New("must provide a CIDR netmask (eg, /24)")
+	if cidr.IP.IsUnspecified() {
+		return errors.New("address must be specified")
 	}
-
-	if len(split) != 2 {
-		return errors.New("invalid IPv4 address")
+	if DoCIDRsOverlap(cidr, dockerBridgeCIDR) {
+		return fmt.Errorf("overlaps with default Docker Bridge subnet (%v)", cidr.String())
 	}
-
-	ip := split[0]
-
-	if err := IPv4(ip); err != nil {
-		return errors.New("invalid IPv4 address")
-	}
-
-	if mask, err := strconv.Atoi(split[1]); err != nil || mask < 0 || mask > 32 {
-		return errors.New("invalid netmask size (must be between 0 and 32)")
-	}
-
-	// Catch any invalid CIDRs not caught by the checks above
-	if _, _, err := net.ParseCIDR(v); err != nil {
-		return errors.New("invalid CIDR")
-	}
-
-	if strings.HasPrefix(ip, "172.17.") {
-		return errors.New("overlaps with default Docker Bridge subnet (172.17.0.0/16)")
-	}
-
 	return nil
 }
 
-// CIDRsDontOverlap ensures two given CIDRs don't overlap
-// with one another. CIDR starting IPs are canonicalized
-// before being compared.
-func CIDRsDontOverlap(acidr, bcidr string) error {
-	_, a, err := net.ParseCIDR(acidr)
-	if err != nil {
-		return fmt.Errorf("invalid CIDR %q: %v", acidr, err)
-	}
-	if err := canonicalizeIP(&a.IP); err != nil {
-		return fmt.Errorf("invalid CIDR %q: %v", acidr, err)
-	}
-	_, b, err := net.ParseCIDR(bcidr)
-	if err != nil {
-		return fmt.Errorf("invalid CIDR %q: %v", bcidr, err)
-	}
-	if err := canonicalizeIP(&b.IP); err != nil {
-		return fmt.Errorf("invalid CIDR %q: %v", bcidr, err)
-	}
-	err = fmt.Errorf("%q and %q overlap", acidr, bcidr)
-	// IPs are of different families.
-	if len(a.IP) != len(b.IP) {
-		return nil
-	}
-	if a.Contains(b.IP) {
-		return err
-	}
-	if a.Contains(lastIP(b)) {
-		return err
-	}
-	if b.Contains(a.IP) {
-		return err
-	}
-	if b.Contains(lastIP(a)) {
-		return err
-	}
-	return nil
+// DoCIDRsOverlap returns true if one of the CIDRs is a subset of the other.
+func DoCIDRsOverlap(acidr, bcidr *net.IPNet) bool {
+	return acidr.Contains(bcidr.IP) || bcidr.Contains(acidr.IP)
 }
 
 // IPv4 checks if the given string is a valid IP v4 address and returns an error if not.

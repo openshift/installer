@@ -7,14 +7,18 @@ import (
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/validate"
 )
 
 const (
-	defaultNetworkIfName  = "tt0"
-	defaultNetworkIPRange = "192.168.126.0/24"
+	defaultNetworkIfName = "tt0"
+)
+
+var (
+	defaultNetworkIPRange = ipnet.MustParseCIDR("192.168.126.0/24")
 )
 
 // Platform collects libvirt-specific configuration.
@@ -42,7 +46,7 @@ func Platform() (*libvirt.Platform, error) {
 	return &libvirt.Platform{
 		Network: libvirt.Network{
 			IfName:  defaultNetworkIfName,
-			IPRange: defaultNetworkIPRange,
+			IPRange: *defaultNetworkIPRange,
 		},
 		DefaultMachinePlatform: &libvirt.MachinePool{
 			Image: qcowImage,

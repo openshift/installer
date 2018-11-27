@@ -3,7 +3,6 @@ package validate
 import (
 	"fmt"
 	"net"
-	"regexp"
 	"strings"
 	"testing"
 
@@ -144,34 +143,36 @@ func TestIPv4(t *testing.T) {
 }
 
 func TestSubnetCIDR(t *testing.T) {
-	const netmaskSizeMsg = "invalid netmask size (must be between 0 and 32)"
-
-	tests := []test{
-		{"", emptyMsg},
-		{" ", emptyMsg},
-		{"/16", invalidIPMsg},
-		{"0.0.0.0/0", ""},
-		{"0.0.0.0/32", ""},
-		{"1.2.3.4", noCIDRNetmaskMsg},
-		{"1.2.3.", noCIDRNetmaskMsg},
-		{"1.2.3.4.", noCIDRNetmaskMsg},
-		{"1.2.3.4/0", ""},
-		{"1.2.3.4/1", ""},
-		{"1.2.3.4/31", ""},
-		{"1.2.3.4/32", ""},
-		{"1.2.3./16", invalidIPMsg},
-		{"1.2.3.4./16", invalidIPMsg},
-		{"1.2.3.4/33", netmaskSizeMsg},
-		{"1.2.3.4/-1", netmaskSizeMsg},
-		{"1.2.3.4/abc", netmaskSizeMsg},
-		{"172.17.1.2", noCIDRNetmaskMsg},
-		{"172.17.1.2/", netmaskSizeMsg},
-		{"172.17.1.2/33", netmaskSizeMsg},
-		{"172.17.1.2/20", "overlaps with default Docker Bridge subnet (172.17.0.0/16)"},
-		{"255.255.255.255/1", ""},
-		{"255.255.255.255/32", ""},
+	cases := []struct {
+		cidr  string
+		valid bool
+	}{
+		{"0.0.0.0/32", false},
+		{"1.2.3.4/0", false},
+		{"1.2.3.4/1", false},
+		{"1.2.3.4/31", true},
+		{"1.2.3.4/32", true},
+		{"0:0:0:0:0:1:102:304/116", false},
+		{"0:0:0:0:0:ffff:102:304/116", true},
+		{"172.17.1.2/20", false},
+		{"172.17.1.2/8", false},
+		{"255.255.255.255/1", false},
+		{"255.255.255.255/32", true},
 	}
-	runTests(t, "SubnetCIDR", SubnetCIDR, tests)
+	for _, tc := range cases {
+		t.Run(tc.cidr, func(t *testing.T) {
+			_, cidr, err := net.ParseCIDR(tc.cidr)
+			if err != nil {
+				t.Fatalf("could not parse cidr: %v", err)
+			}
+			err = SubnetCIDR(cidr)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+			}
+		})
+	}
 }
 
 func TestDomainName(t *testing.T) {
@@ -236,48 +237,45 @@ func TestEmail(t *testing.T) {
 	runTests(t, "Email", Email, tests)
 }
 
-func TestCIDRsDontOverlap(t *testing.T) {
+func TestDoCIDRsOverlap(t *testing.T) {
 	cases := []struct {
-		a   string
-		b   string
-		err *regexp.Regexp
+		a       string
+		b       string
+		overlap bool
 	}{
 		{
-			a:   "192.168.0.0/24",
-			b:   "192.168.0.0/24",
-			err: regexp.MustCompile("^\"192.168.0.0/24\" and \"192.168.0.0/24\" overlap$"),
+			a:       "192.168.0.0/30",
+			b:       "192.168.0.3/30",
+			overlap: true,
 		},
 		{
-			a:   "192.168.0.0/24",
-			b:   "192.168.0.3/24",
-			err: regexp.MustCompile("^\"192.168.0.0/24\" and \"192.168.0.3/24\" overlap$"),
+			a:       "192.168.0.0/30",
+			b:       "192.168.0.4/30",
+			overlap: false,
 		},
 		{
-			a:   "192.168.0.0/30",
-			b:   "192.168.0.3/30",
-			err: regexp.MustCompile("^\"192.168.0.0/30\" and \"192.168.0.3/30\" overlap$"),
+			a:       "192.168.0.0/29",
+			b:       "192.168.0.4/30",
+			overlap: true,
 		},
 		{
-			a: "192.168.0.0/30",
-			b: "192.168.0.4/30",
-		},
-		{
-			a:   "0.0.0.0/0",
-			b:   "192.168.0.0/24",
-			err: regexp.MustCompile("^\"0.0.0.0/0\" and \"192.168.0.0/24\" overlap$"),
+			a:       "0.0.0.0/0",
+			b:       "192.168.0.0/24",
+			overlap: true,
 		},
 	}
-
-	for _, testCase := range cases {
-		t.Run(fmt.Sprintf("%s %s", testCase.a, testCase.b), func(t *testing.T) {
-			err := CIDRsDontOverlap(testCase.a, testCase.b)
-			if testCase.err == nil {
-				if err != nil {
-					t.Fatal(err)
-				}
-			} else {
-				assert.Regexp(t, testCase.err, err)
+	for _, tc := range cases {
+		t.Run(fmt.Sprintf("%s %s", tc.a, tc.b), func(t *testing.T) {
+			_, a, err := net.ParseCIDR(tc.a)
+			if err != nil {
+				t.Fatalf("could not parse cidr %q: %v", tc.a, err)
 			}
+			_, b, err := net.ParseCIDR(tc.b)
+			if err != nil {
+				t.Fatalf("could not parse cidr %q: %v", tc.b, err)
+			}
+			actual := DoCIDRsOverlap(a, b)
+			assert.Equal(t, tc.overlap, actual)
 		})
 	}
 }

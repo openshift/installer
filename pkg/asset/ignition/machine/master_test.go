@@ -1,7 +1,6 @@
 package machine
 
 import (
-	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -24,12 +23,7 @@ func TestMasterGenerate(t *testing.T) {
 			},
 			BaseDomain: "test-domain",
 			Networking: types.Networking{
-				ServiceCIDR: ipnet.IPNet{
-					IPNet: func(s string) net.IPNet {
-						_, cidr, _ := net.ParseCIDR(s)
-						return *cidr
-					}("10.0.1.0/24"),
-				},
+				ServiceCIDR: *ipnet.MustParseCIDR("10.0.1.0/24"),
 			},
 			Platform: types.Platform{
 				AWS: &aws.Platform{

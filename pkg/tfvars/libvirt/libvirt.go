@@ -18,8 +18,8 @@ type Libvirt struct {
 
 // Network describes a libvirt network configuration.
 type Network struct {
-	IfName  string `json:"libvirt_network_if,omitempty"`
-	IPRange string `json:"libvirt_ip_range,omitempty"`
+	IfName  string `json:"libvirt_network_if"`
+	IPRange string `json:"libvirt_ip_range"`
 }
 
 // TFVars fills in computed Terraform variables.

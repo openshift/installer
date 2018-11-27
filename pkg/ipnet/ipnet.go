@@ -70,3 +70,22 @@ func (ipnet *IPNet) UnmarshalJSON(b []byte) (err error) {
 
 	return nil
 }
+
+// ParseCIDR parses a CIDR from its string representation.
+func ParseCIDR(s string) (*IPNet, error) {
+	_, cidr, err := net.ParseCIDR(s)
+	if err != nil {
+		return nil, err
+	}
+	return &IPNet{IPNet: *cidr}, nil
+}
+
+// MustParseCIDR parses a CIDR from its string representation. If the parse fails,
+// the function will panic.
+func MustParseCIDR(s string) *IPNet {
+	cidr, err := ParseCIDR(s)
+	if err != nil {
+		panic(err)
+	}
+	return cidr
+}

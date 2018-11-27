@@ -12,11 +12,12 @@ import (
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
-const (
-	defaultVPCCIDR = "10.0.0.0/16"
+var (
+	defaultNetworkCIDR = ipnet.MustParseCIDR("10.0.0.0/16")
 )
 
 // Read the valid cloud names from the clouds.yaml
@@ -235,7 +236,7 @@ func Platform() (*openstack.Platform, error) {
 	}
 
 	return &openstack.Platform{
-		NetworkCIDRBlock: defaultVPCCIDR,
+		NetworkCIDRBlock: *defaultNetworkCIDR,
 		Region:           region,
 		BaseImage:        image,
 		Cloud:            cloud,
