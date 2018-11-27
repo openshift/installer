@@ -504,11 +504,18 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:001a4e7a40e50ff2ef32e2556bca50c4f77daa457db3ac6afc8bea9bb2122cfb"
+  digest = "1:bf004bff766c8754f1c9b1e0a1ac6f253cd8e98fac385a33a9e9bd70325b72a8"
   name = "golang.org/x/crypto"
   packages = [
     "bcrypt",
     "blowfish",
+    "curve25519",
+    "ed25519",
+    "ed25519/internal/edwards25519",
+    "internal/chacha20",
+    "internal/subtle",
+    "poly1305",
+    "ssh",
     "ssh/terminal",
   ]
   pruneopts = "NUT"
@@ -859,6 +866,7 @@
     "github.com/stretchr/testify/assert",
     "github.com/vincent-petithory/dataurl",
     "golang.org/x/crypto/bcrypt",
+    "golang.org/x/crypto/ssh",
     "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/sys/unix",
     "gopkg.in/AlecAivazis/survey.v1",
