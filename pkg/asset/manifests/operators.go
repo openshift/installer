@@ -68,7 +68,6 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.OpenshiftServiceCertSignerSecret{},
 		&bootkube.Pull{},
 		&bootkube.CVOOverrides{},
-		&bootkube.LegacyCVOOverrides{},
 		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
@@ -162,7 +161,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	openshiftServiceCertSignerSecret := &bootkube.OpenshiftServiceCertSignerSecret{}
 	pull := &bootkube.Pull{}
 	cVOOverrides := &bootkube.CVOOverrides{}
-	legacyCVOOverrides := &bootkube.LegacyCVOOverrides{}
 	hostEtcdServiceEndpointsKubeSystem := &bootkube.HostEtcdServiceEndpointsKubeSystem{}
 	kubeSystemConfigmapEtcdServingCA := &bootkube.KubeSystemConfigmapEtcdServingCA{}
 	kubeSystemConfigmapRootCA := &bootkube.KubeSystemConfigmapRootCA{}
@@ -180,7 +178,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		openshiftServiceCertSignerSecret,
 		pull,
 		cVOOverrides,
-		legacyCVOOverrides,
 		hostEtcdServiceEndpointsKubeSystem,
 		kubeSystemConfigmapEtcdServingCA,
 		kubeSystemConfigmapRootCA,
@@ -198,7 +195,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"openshift-service-signer-secret.yaml":       applyTemplateData(openshiftServiceCertSignerSecret.Files()[0].Data, templateData),
 		"pull.json":                                  applyTemplateData(pull.Files()[0].Data, templateData),
 		"cvo-overrides.yaml":                         applyTemplateData(cVOOverrides.Files()[0].Data, templateData),
-		"legacy-cvo-overrides.yaml":                  applyTemplateData(legacyCVOOverrides.Files()[0].Data, templateData),
 		"host-etcd-service-endpoints.yaml":           applyTemplateData(hostEtcdServiceEndpointsKubeSystem.Files()[0].Data, templateData),
 		"kube-system-configmap-etcd-serving-ca.yaml": applyTemplateData(kubeSystemConfigmapEtcdServingCA.Files()[0].Data, templateData),
 		"kube-system-configmap-root-ca.yaml":         applyTemplateData(kubeSystemConfigmapRootCA.Files()[0].Data, templateData),
