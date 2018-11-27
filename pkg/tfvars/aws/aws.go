@@ -55,17 +55,6 @@ type MasterRootVolume struct {
 
 // Worker converts worker related config.
 type Worker struct {
-	CustomSubnets    map[string]string `json:"tectonic_aws_worker_custom_subnets,omitempty"`
-	EC2Type          string            `json:"tectonic_aws_worker_ec2_type,omitempty"`
-	ExtraSGIDs       []string          `json:"tectonic_aws_worker_extra_sg_ids,omitempty"`
-	IAMRoleName      string            `json:"tectonic_aws_worker_iam_role_name,omitempty"`
-	LoadBalancers    []string          `json:"tectonic_aws_worker_load_balancers,omitempty"`
-	WorkerRootVolume `json:",inline"`
-}
-
-// WorkerRootVolume converts worker rool volume related config.
-type WorkerRootVolume struct {
-	IOPS int    `json:"tectonic_aws_worker_root_volume_iops,omitempty"`
-	Size int    `json:"tectonic_aws_worker_root_volume_size,omitempty"`
-	Type string `json:"tectonic_aws_worker_root_volume_type,omitempty"`
+	CustomSubnets map[string]string `json:"tectonic_aws_worker_custom_subnets,omitempty"`
+	IAMRoleName   string            `json:"tectonic_aws_worker_iam_role_name,omitempty"`
 }
