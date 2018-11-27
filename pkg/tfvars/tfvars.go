@@ -23,7 +23,6 @@ type config struct {
 
 	IgnitionBootstrap string `json:"ignition_bootstrap,omitempty"`
 	IgnitionMaster    string `json:"ignition_master,omitempty"`
-	IgnitionWorker    string `json:"ignition_worker,omitempty"`
 
 	aws.AWS             `json:",inline"`
 	libvirt.Libvirt     `json:",inline"`
@@ -32,14 +31,13 @@ type config struct {
 
 // TFVars converts the InstallConfig and Ignition content to
 // terraform.tfvar JSON.
-func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn, workerIgn string) ([]byte, error) {
+func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, error) {
 	config := &config{
 		ClusterID:  cfg.ClusterID,
 		Name:       cfg.ObjectMeta.Name,
 		BaseDomain: cfg.BaseDomain,
 
 		IgnitionMaster:    masterIgn,
-		IgnitionWorker:    workerIgn,
 		IgnitionBootstrap: bootstrapIgn,
 	}
 
