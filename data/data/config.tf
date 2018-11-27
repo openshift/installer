@@ -12,16 +12,6 @@ This applies only to cloud platforms.
 EOF
 }
 
-variable "tectonic_worker_count" {
-  type    = "string"
-  default = "3"
-
-  description = <<EOF
-The number of worker nodes to be created.
-This applies only to cloud platforms.
-EOF
-}
-
 variable "tectonic_base_domain" {
   type = "string"
 
