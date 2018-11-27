@@ -31,7 +31,7 @@ func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDa
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider := provider(clustername, platform, pool.Name)
+	provider := provider(clustername, platform, userDataSecret)
 	var machines []clusterapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		machine := clusterapi.Machine{
@@ -61,7 +61,7 @@ func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDa
 	return machines, nil
 }
 
-func provider(clusterName string, platform *libvirt.Platform, name string) *libvirtprovider.LibvirtMachineProviderConfig {
+func provider(clusterName string, platform *libvirt.Platform, userDataSecret string) *libvirtprovider.LibvirtMachineProviderConfig {
 	return &libvirtprovider.LibvirtMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "libvirtproviderconfig.k8s.io/v1alpha1",
@@ -69,7 +69,9 @@ func provider(clusterName string, platform *libvirt.Platform, name string) *libv
 		},
 		DomainMemory: 2048,
 		DomainVcpu:   2,
-		IgnKey:       fmt.Sprintf("/var/lib/libvirt/images/%s-%s.ign", clusterName, name),
+		Ignition: &libvirtprovider.Ignition{
+			UserDataSecret: userDataSecret,
+		},
 		Volume: &libvirtprovider.Volume{
 			PoolName:     "default",
 			BaseVolumeID: fmt.Sprintf("/var/lib/libvirt/images/%s-base", clusterName),
