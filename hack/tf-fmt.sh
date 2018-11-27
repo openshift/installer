@@ -12,6 +12,6 @@ else
     --env IS_CONTAINER=TRUE \
     --volume "${PWD}:${PWD}:z" \
     --workdir "${PWD}" \
-    quay.io/coreos/terraform-alpine:v0.11.8 \
+    quay.io/coreos/terraform-alpine:v0.11.10 \
     ./hack/tf-fmt.sh
 fi
