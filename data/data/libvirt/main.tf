@@ -30,11 +30,6 @@ resource "libvirt_ignition" "master" {
   content = "${var.ignition_master}"
 }
 
-resource "libvirt_ignition" "worker" {
-  name    = "${var.tectonic_cluster_name}-worker.ign"
-  content = "${var.ignition_worker}"
-}
-
 resource "libvirt_network" "tectonic_net" {
   name = "${var.tectonic_cluster_name}"
 
