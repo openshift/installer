@@ -375,11 +375,11 @@
   revision = "fb8b55a1072436a51b153de9acf5bf5525efcf83"
 
 [[projects]]
-  digest = "1:14f70ac5f181ccb012cddc7c72ac28709497155340b2fad822bd15d9a8722d93"
+  digest = "1:c2edaeee2250d3886f1e2223a8c6698498ecdc467a72949888f89dc1dde89045"
   name = "github.com/openshift/hive"
   packages = ["contrib/pkg/awstagdeprovision"]
   pruneopts = "NUT"
-  revision = "8c7844d9b61c35f53bab561f5ce4d879fef86ec6"
+  revision = "2349f175d3e4fc6542dec79add881a59f2d7b1b8"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
@@ -839,10 +839,12 @@
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",
+    "k8s.io/apimachinery/pkg/util/net",
     "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/kubernetes",
+    "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/clientcmd",
     "k8s.io/client-go/tools/clientcmd/api/v1",
     "k8s.io/client-go/tools/watch",
