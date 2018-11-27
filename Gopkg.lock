@@ -353,11 +353,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b5875601953e2887f2fb469fde65c530bf33ae7439f10a67793ee8491305506c"
+  digest = "1:2a801f8e2e0d98ee3221f6e82522e8965240dd98cb97cdacf9410c651af8bf7e"
   name = "github.com/openshift/cluster-api-provider-libvirt"
   packages = ["pkg/apis/libvirtproviderconfig/v1alpha1"]
   pruneopts = "NUT"
-  revision = "437b1012ea0bf4c6a1189e42ff3755933689eeb4"
+  revision = "223f16433e235d5b4fce8f332abc6abcd50acaf4"
 
 [[projects]]
   digest = "1:f9c1fc8da2b44ba323ec3b338f0da9f375e26c787bc3a6ea241f9cb3f191cb62"
@@ -823,6 +823,7 @@
     "github.com/spf13/cobra",
     "github.com/stretchr/testify/assert",
     "github.com/vincent-petithory/dataurl",
+    "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/sys/unix",
     "gopkg.in/AlecAivazis/survey.v1",
     "k8s.io/api/core/v1",
