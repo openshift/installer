@@ -12,7 +12,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/templates/content/tectonic"
-	"github.com/openshift/installer/pkg/asset/tls"
 )
 
 const (
@@ -38,8 +37,6 @@ func (t *Tectonic) Name() string {
 func (t *Tectonic) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&tls.IngressCertKey{},
-		&tls.KubeCA{},
 		&ClusterK8sIO{},
 		&machines.Worker{},
 		&machines.Master{},
