@@ -73,7 +73,7 @@ func (ing *Ingress) Generate(dependencies asset.Parents) error {
 
 	ing.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, ingCrdFilename),
+			Filename: filepath.Join(manifestDir, ingCrdFilename),
 			Data:     []byte(crdData),
 		},
 		{
@@ -92,7 +92,7 @@ func (ing *Ingress) Files() []*asset.File {
 
 // Load loads the already-rendered files back from disk.
 func (ing *Ingress) Load(f asset.FileFetcher) (bool, error) {
-	crdFile, err := f.FetchByName(ingCrdFilename)
+	crdFile, err := f.FetchByName(filepath.Join(manifestDir, ingCrdFilename))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
