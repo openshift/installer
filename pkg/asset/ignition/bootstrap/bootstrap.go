@@ -29,11 +29,14 @@ import (
 
 const (
 	rootDir              = "/opt/openshift"
-	defaultReleaseImage  = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
 	bootstrapIgnFilename = "bootstrap.ign"
 	etcdCertSignerImage  = "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6"
 	etcdctlImage         = "quay.io/coreos/etcd:v3.2.14"
 	ignitionUser         = "core"
+)
+
+var t(
+	defaultReleaseImage = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
 )
 
 // bootstrapTemplateData is the data to use to replace values in bootstrap
