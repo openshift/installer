@@ -8,10 +8,6 @@ spec:
   channel: fast
   clusterID: {{.CVOClusterID}}
   overrides:
-  - kind: Deployment                    # this conflicts with kube-core-operator
-    namespace: openshift-cluster-network-operator
-    name: cluster-network-operator
-    unmanaged: true
   - kind: APIService                    # packages.apps.redhat.com fails to start properly
     name: v1alpha1.packages.apps.redhat.com
     unmanaged: true
