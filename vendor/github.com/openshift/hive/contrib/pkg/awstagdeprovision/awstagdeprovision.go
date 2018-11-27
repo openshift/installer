@@ -1157,7 +1157,8 @@ func deleteS3Buckets(session *session.Session, filter AWSFilter, clusterName str
 
 		awsObjects, err := bucketsToAWSObjects(results.Buckets, s3Client, logger)
 		if err != nil {
-			return false, fmt.Errorf("error converting buckets to internal objects: %v", err)
+			logger.Debugf("error converting s3 buckets to native AWS objects: %v", err)
+			return false, nil
 		}
 
 		filteredObjects := filterObjects(awsObjects, filter)
@@ -1381,7 +1382,7 @@ func deleteRoute53(session *session.Session, filters AWSFilter, clusterName stri
 		awsZones, err := r53ZonesToAWSObjects(allZones.HostedZones, r53Client)
 		if err != nil {
 			logger.Debugf("error converting r53Zones to native AWS objects: %v", err)
-			return false, fmt.Errorf("error converting route53 zones to internal AWS objects: %v", err)
+			return false, nil
 		}
 
 		filteredZones := filterObjects(awsZones, filters)
