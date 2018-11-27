@@ -76,7 +76,7 @@ $ openshift-install create install-config
 # Generate install-config.yml
 
 $ openshift-install create manifests
-# Generate manifests/ and tectonic/ dir, also remove install-config.yml
+# Generate manifests/ and openshift/ dir, also remove install-config.yml
 ```
 
 ## Target generation

@@ -194,7 +194,7 @@ This step is optional, but useful for being able to resolve cluster-internal hos
     For this example:
 
     ```sh
-    echo server=/tt.testing/192.168.126.1 | sudo tee /etc/NetworkManager/dnsmasq.d/tectonic.conf
+    echo server=/tt.testing/192.168.126.1 | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
     ```
 3. `systemctl restart NetworkManager`
 
@@ -261,7 +261,7 @@ The bootstrap node, e.g. `test1-bootstrap.tt.testing`, runs the bootstrap proces
 
 ```sh
 ssh core@$OPENSHIFT_INSTALL_CLUSTER_NAME-bootstrap.$OPENSHIFT_INSTALL_BASE_DOMAIN
-sudo journalctl -f -u bootkube -u tectonic
+sudo journalctl -f -u bootkube -u openshift
 ```
 
 You'll have to wait for etcd to reach quorum before this makes any progress.
@@ -335,7 +335,7 @@ Error: Error applying plan:
 Depending on your libvirt version you might encounter [a race condition][bugzilla_libvirt_race] leading to an error similar to:
 
 ```
-* libvirt_domain.master.0: Error creating libvirt domain: virError(Code=43, Domain=19, Message='Network not found: no network with matching name 'tectonic'')
+* libvirt_domain.master.0: Error creating libvirt domain: virError(Code=43, Domain=19, Message='Network not found: no network with matching name 'test1'')
 ```
 This is also being [tracked on the libvirt-terraform-provider][tfprovider_libvirt_race] but is likely not fixable on the client side, which is why you should upgrade libvirt to >=4.5 or a patched version, depending on your environment.
 
