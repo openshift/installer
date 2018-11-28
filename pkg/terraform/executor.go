@@ -64,7 +64,7 @@ func (ex *executor) execute(clusterDir string, args ...string) error {
 
 	logrus.Debugf("Running %#v...", cmd)
 
-	if logrus.GetLevel() == logrus.DebugLevel {
+	if true || logrus.GetLevel() == logrus.DebugLevel {
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
