@@ -235,8 +235,7 @@ func destroyBootstrap(ctx context.Context, directory string) (err error) {
 		},
 	)
 	if err != nil {
-		logrus.Error(errors.Wrap(err, "waiting for bootstrap-complete"))
-		return nil
+		return errors.Wrap(err, "waiting for bootstrap-complete")
 	}
 
 	logrus.Info("Destroying the bootstrap resources...")
