@@ -11,9 +11,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
+var (
 	// DefaultChannel is the default RHCOS channel for the cluster.
 	DefaultChannel = "maipo"
+
+	// buildName is the name of the build in the channel that will be picked up
+	// empty string means the first one in the build list (latest) will be used
+	buildName = ""
 
 	baseURL = "https://releases-rhcos.svc.ci.openshift.org/storage/releases"
 )
@@ -33,9 +37,13 @@ type metadata struct {
 }
 
 func fetchLatestMetadata(ctx context.Context, channel string) (metadata, error) {
-	build, err := fetchLatestBuild(ctx, channel)
-	if err != nil {
-		return metadata{}, errors.Wrap(err, "failed to fetch latest build")
+	build := buildName
+	var err error
+	if build == "" {
+		build, err = fetchLatestBuild(ctx, channel)
+		if err != nil {
+			return metadata{}, errors.Wrap(err, "failed to fetch latest build")
+		}
 	}
 
 	url := fmt.Sprintf("%s/%s/%s/meta.json", baseURL, channel, build)
@@ -48,7 +56,7 @@ func fetchLatestMetadata(ctx context.Context, channel string) (metadata, error) 
 	client := &http.Client{}
 	resp, err := client.Do(req.WithContext(ctx))
 	if err != nil {
-		return metadata{}, errors.Wrap(err, "failed to fetch metadata")
+		return metadata{}, errors.Wrapf(err, "failed to fetch metadata for build %s", build)
 	}
 	defer resp.Body.Close()
 

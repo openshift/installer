@@ -35,7 +35,7 @@ const (
 	ignitionUser         = "core"
 )
 
-var t(
+var (
 	defaultReleaseImage = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
 )
 

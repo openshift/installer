@@ -43,6 +43,10 @@ release)
 	then
 		LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/asset/ignition/bootstrap.defaultReleaseImage=${RELEASE_IMAGE}"
 	fi
+	if test -n "${RHCOS_BUILD_NAME}"
+	then
+		LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/rhcos.buildName=${RHCOS_BUILD_NAME}"
+	fi
 	if test "${SKIP_GENERATION}" != y
 	then
 		go generate ./data
