@@ -7,9 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"regexp"
 	"strings"
-	"unicode/utf8"
 
 	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"golang.org/x/crypto/ssh"
@@ -63,33 +61,6 @@ func DomainName(v string) error {
 	return validateSubdomain(strings.TrimSuffix(v, "."))
 }
 
-// Email checks if the given string is a valid email address and returns an error if not.
-func Email(v string) error {
-	if err := nonEmpty(v); err != nil {
-		return err
-	}
-
-	invalidError := errors.New("invalid email address")
-
-	split := strings.Split(v, "@")
-	if len(split) != 2 {
-		return invalidError
-	}
-	localPart := split[0]
-	domain := split[1]
-
-	if nonEmpty(localPart) != nil {
-		return invalidError
-	}
-
-	// No whitespace allowed in local-part
-	if isMatch(`\s`, localPart) {
-		return invalidError
-	}
-
-	return DomainName(domain)
-}
-
 type imagePullSecret struct {
 	Auths map[string]map[string]interface{} `json:"auths"`
 }
@@ -115,21 +86,9 @@ func ImagePullSecret(secret string) error {
 	return k8serrors.NewAggregate(errs)
 }
 
-func isMatch(re string, v string) bool {
-	return regexp.MustCompile(re).MatchString(v)
-}
-
 // ClusterName checks if the given string is a valid name for a cluster and returns an error if not.
 func ClusterName(v string) error {
 	return validateSubdomain(v)
-}
-
-// nonEmpty checks if the given string contains at least one non-whitespace character and returns an error if not.
-func nonEmpty(v string) error {
-	if utf8.RuneCountInString(strings.TrimSpace(v)) == 0 {
-		return errors.New("cannot be empty")
-	}
-	return nil
 }
 
 // SubnetCIDR checks if the given IP net is a valid CIDR for a master nodes or worker nodes subnet and returns an error if not.
@@ -149,40 +108,6 @@ func SubnetCIDR(cidr *net.IPNet) error {
 // DoCIDRsOverlap returns true if one of the CIDRs is a subset of the other.
 func DoCIDRsOverlap(acidr, bcidr *net.IPNet) bool {
 	return acidr.Contains(bcidr.IP) || bcidr.Contains(acidr.IP)
-}
-
-// IPv4 checks if the given string is a valid IP v4 address and returns an error if not.
-// Based on net.ParseIP.
-func IPv4(v string) error {
-	if err := nonEmpty(v); err != nil {
-		return err
-	}
-	if ip := net.ParseIP(v); ip == nil || !strings.Contains(v, ".") {
-		return errors.New("invalid IPv4 address")
-	}
-	return nil
-}
-
-// canonicalizeIP ensures that the given IP is in standard form
-// and returns an error otherwise.
-func canonicalizeIP(ip *net.IP) error {
-	if ip.To4() != nil {
-		*ip = ip.To4()
-		return nil
-	}
-	if ip.To16() != nil {
-		*ip = ip.To16()
-		return nil
-	}
-	return fmt.Errorf("IP %q is of unknown type", ip)
-}
-
-func lastIP(cidr *net.IPNet) net.IP {
-	var last net.IP
-	for i := 0; i < len(cidr.IP); i++ {
-		last = append(last, cidr.IP[i]|^cidr.Mask[i])
-	}
-	return last
 }
 
 // SSHPublicKey checks if the given string is a valid SSH public key

@@ -9,85 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestLastIP(t *testing.T) {
-	cases := []struct {
-		in  net.IPNet
-		out net.IP
-	}{
-		{
-			in: net.IPNet{
-				IP:   net.ParseIP("192.168.0.0").To4(),
-				Mask: net.CIDRMask(24, 32),
-			},
-			out: net.ParseIP("192.168.0.255"),
-		},
-		{
-			in: net.IPNet{
-				IP:   net.ParseIP("192.168.0.0").To4(),
-				Mask: net.CIDRMask(22, 32),
-			},
-			out: net.ParseIP("192.168.3.255"),
-		},
-		{
-			in: net.IPNet{
-				IP:   net.ParseIP("192.168.0.0").To4(),
-				Mask: net.CIDRMask(32, 32),
-			},
-			out: net.ParseIP("192.168.0.0"),
-		},
-		{
-			in: net.IPNet{
-				IP:   net.ParseIP("0.0.0.0").To4(),
-				Mask: net.CIDRMask(0, 32),
-			},
-			out: net.ParseIP("255.255.255.255"),
-		},
-	}
-
-	var out net.IP
-	for i, c := range cases {
-		if out = lastIP(&c.in); out.String() != c.out.String() {
-			t.Errorf("test case %d: expected %s but got %s", i, c.out, out)
-		}
-	}
-}
-
-const caseMsg = "must be lower case"
-const emptyMsg = "cannot be empty"
-const invalidDomainMsg = "invalid domain name"
-const invalidHostMsg = "invalid host (must be a domain name or IP address)"
-const invalidIPMsg = "invalid IPv4 address"
-const invalidIntMsg = "invalid integer"
-const invalidPortMsg = "invalid port number"
-const noCIDRNetmaskMsg = "must provide a CIDR netmask (eg, /24)"
-
-type test struct {
-	in       string
-	expected string
-}
-
-type validator func(string) error
-
-func runTests(t *testing.T, funcName string, fn validator, tests []test) {
-	for _, test := range tests {
-		err := fn(test.in)
-		if (err == nil && test.expected != "") || (err != nil && err.Error() != test.expected) {
-			t.Errorf("For %s(%q), expected %q, got %q", funcName, test.in, test.expected, err)
-		}
-	}
-}
-
-func TestNonEmpty(t *testing.T) {
-	tests := []test{
-		{"", emptyMsg},
-		{" ", emptyMsg},
-		{"a", ""},
-		{".", ""},
-		{"日本語", ""},
-	}
-	runTests(t, "NonEmpty", nonEmpty, tests)
-}
-
 func TestClusterName(t *testing.T) {
 	maxSizeName := strings.Repeat("123456789.", 25) + "123"
 
@@ -126,20 +47,6 @@ func TestClusterName(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestIPv4(t *testing.T) {
-	tests := []test{
-		{"", emptyMsg},
-		{" ", emptyMsg},
-		{"0.0.0.0", ""},
-		{"1.2.3.4", ""},
-		{"1.2.3.", invalidIPMsg},
-		{"1.2.3.4.", invalidIPMsg},
-		{"1.2.3.a", invalidIPMsg},
-		{"255.255.255.255", ""},
-	}
-	runTests(t, "IPv4", IPv4, tests)
 }
 
 func TestSubnetCIDR(t *testing.T) {
@@ -214,27 +121,6 @@ func TestDomainName(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestEmail(t *testing.T) {
-	const invalidMsg = "invalid email address"
-	tests := []test{
-		{"", emptyMsg},
-		{" ", emptyMsg},
-		{"a", invalidMsg},
-		{".", invalidMsg},
-		{"日本語", invalidMsg},
-		{"a@abc.com", ""},
-		{"A@abc.com", ""},
-		{"1@abc.com", ""},
-		{"a.B.1.あ@abc.com", ""},
-		{"ア@abc.com", ""},
-		{"中文@abc.com", ""},
-		{"a@abc.com", ""},
-		{"a@123.com", ""},
-		{"@abc.com", invalidMsg},
-	}
-	runTests(t, "Email", Email, tests)
 }
 
 func TestDoCIDRsOverlap(t *testing.T) {
