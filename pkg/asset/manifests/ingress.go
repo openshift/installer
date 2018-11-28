@@ -53,7 +53,7 @@ func (ing *Ingress) Generate(dependencies asset.Parents) error {
 			Kind:       "Ingress",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "default",
+			Name: "cluster",
 			// not namespaced
 		},
 		Spec: configv1.IngressSpec{
