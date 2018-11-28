@@ -55,6 +55,18 @@ wait_for_pods() {
 	set -e
 }
 
+# This is a temporary hack to set up development clusters with allowAll idp, please remove once the default idp is worked out for 4.0
+set_up_allow_all_idp() {
+    echo "Configuring cluster with allowAll identity-provider..."
+    set -x
+    url=$(oc --config="$KUBECONFIG" status | grep -o 'https.*')
+    cat > /tmp/idp-config-patch << EOF
+{"spec":{"unsupportedConfigOverrides":{"oauthConfig":{"identityProviders":[{"challenge":true,"login":true,"name":"anypassword","provider":{"apiVersion":"v1","kind":"AllowAllPasswordIdentityProvider"}}],"masterCA":"/etc/kubernetes/static-pod-resources/configmaps/kubelet-serving-ca/ca-bundle.crt","masterPublicURL":"${url}","masterURL":"${url}"}}}}
+EOF
+    oc --config="$KUBECONFIG" patch clusterversions.config.openshift.io/version -p '{"spec":{"overrides": [{"kind": "Deployment","name": "openshift-cluster-kube-apiserver-operator","unmanaged": true}]}}' --type merge
+    oc --config="$KUBECONFIG" patch kubeapiserveroperatorconfig/instance -p "$(cat /tmp/idp-config-patch)" --type merge
+}
+
 # Wait for Kubernetes pods
 wait_for_pods kube-system
 
@@ -64,6 +76,9 @@ do
 	kubectl create --filename "$file"
 	echo "Done creating object from file: $file ..."
 done
+
+# Again, temporary hack, please remove once official default idp is configured
+set_up_allow_all_idp
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/tectonic/.tectonic.done
