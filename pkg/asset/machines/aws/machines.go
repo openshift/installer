@@ -101,6 +101,22 @@ func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.
 	}, nil
 }
 
+func machineClass(clusterID, clusterName string, platform *aws.Platform, mpool *aws.MachinePool, azIdx int, role, userDataSecret string) (*clusterapi.MachineClass, error) {
+	providerConfig, err := provider(clusterID, clusterName, platform, mpool, azIdx, role, userDataSecret)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to create AWSMachineProviderConfig")
+	}
+	return &clusterapi.MachineClass{
+		ObjectMeta: metav1.ObjectMeta{
+			Namespace: "openshift-cluster-api",
+			Name:      fmt.Sprintf("%s-%s-%s", clusterName, role, mpool.Zones[azIdx]),
+		},
+		ProviderConfig: runtime.RawExtension{
+			Object: providerConfig,
+		},
+	}, nil
+}
+
 func tagsFromUserTags(clusterID, clusterName string, usertags map[string]string) ([]awsprovider.TagSpecification, error) {
 	tags := []awsprovider.TagSpecification{
 		{Name: "tectonicClusterID", Value: clusterID},

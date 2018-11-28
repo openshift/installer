@@ -106,6 +106,7 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 		"99_openshift-cluster-api_cluster.yaml":                 clusterk8sio.Raw,
 		"99_openshift-cluster-api_master-machines.yaml":         master.MachinesRaw,
 		"99_openshift-cluster-api_master-user-data-secret.yaml": master.UserDataSecretRaw,
+		"99_openshift-cluster-api_worker-machineclass.yaml":     worker.MachineClassRaw,
 		"99_openshift-cluster-api_worker-machineset.yaml":       worker.MachineSetRaw,
 		"99_openshift-cluster-api_worker-user-data-secret.yaml": worker.UserDataSecretRaw,
 	}

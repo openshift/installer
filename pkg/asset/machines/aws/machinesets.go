@@ -5,16 +5,15 @@ import (
 	"fmt"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
-	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]clusterapi.MachineSet, error) {
+func MachineSets(config *types.InstallConfig, pool *types.MachinePool, role string) ([]clusterapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS configuration: %q", configPlatform)
 	}
@@ -22,7 +21,6 @@ func MachineSets(config *types.InstallConfig, pool *types.MachinePool, role, use
 		return nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
 	clustername := config.ObjectMeta.Name
-	platform := config.Platform.AWS
 	mpool := pool.Platform.AWS
 	azs := mpool.Zones
 
@@ -38,10 +36,6 @@ func MachineSets(config *types.InstallConfig, pool *types.MachinePool, role, use
 			replicas++
 		}
 
-		provider, err := provider(config.ClusterID, clustername, platform, mpool, idx, role, userDataSecret)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to create provider")
-		}
 		name := fmt.Sprintf("%s-%s-%s", clustername, pool.Name, az)
 		mset := clusterapi.MachineSet{
 			TypeMeta: metav1.TypeMeta{
@@ -76,7 +70,15 @@ func MachineSets(config *types.InstallConfig, pool *types.MachinePool, role, use
 					},
 					Spec: clusterapi.MachineSpec{
 						ProviderConfig: clusterapi.ProviderConfig{
-							Value: &runtime.RawExtension{Object: provider},
+							ValueFrom: &clusterapi.ProviderConfigSource{
+								MachineClass: &clusterapi.MachineClassRef{
+									ObjectReference: &corev1.ObjectReference{
+										Kind:      "MachineClass",
+										Name:      fmt.Sprintf("%s-%s-%s", clustername, role, az),
+										Namespace: "openshift-cluster-api",
+									},
+								},
+							},
 						},
 						// we don't need to set Versions, because we control those via cluster operators.
 					},

@@ -39,6 +39,7 @@ func defaultOpenStackMachinePoolPlatform() openstacktypes.MachinePool {
 
 // Worker generates the machinesets for `worker` machine pool.
 type Worker struct {
+	MachineClassRaw   []byte
 	MachineSetRaw     []byte
 	UserDataSecretRaw []byte
 }
@@ -96,17 +97,28 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		sets, err := aws.MachineSets(ic, &pool, "worker", "worker-user-data")
+		sets, err := aws.MachineSets(ic, &pool, "worker")
 		if err != nil {
 			return errors.Wrap(err, "failed to create worker machine objects")
 		}
 
-		list := listFromMachineSets(sets)
-		raw, err := yaml.Marshal(list)
+		machineSetlist := listFromMachineSets(sets)
+		machineSetRaw, err := yaml.Marshal(machineSetlist)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
 		}
-		w.MachineSetRaw = raw
+		w.MachineSetRaw = machineSetRaw
+
+		classes, err := aws.MachineClasses(ic, &pool, "worker", "worker-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create worker machine objects")
+		}
+		machineClasslist := listFromMachineClasses(classes)
+		machineClassRaw, err := yaml.Marshal(machineClasslist)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal")
+		}
+		w.MachineClassRaw = machineClassRaw
 	case "libvirt":
 		sets, err := libvirt.MachineSets(ic, &pool, "worker", "worker-user-data")
 		if err != nil {
@@ -165,6 +177,19 @@ func applyTemplateData(template *template.Template, templateData interface{}) []
 }
 
 func listFromMachineSets(objs []clusterapi.MachineSet) *metav1.List {
+	list := &metav1.List{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "List",
+		},
+	}
+	for idx := range objs {
+		list.Items = append(list.Items, runtime.RawExtension{Object: &objs[idx]})
+	}
+	return list
+}
+
+func listFromMachineClasses(objs []clusterapi.MachineClass) *metav1.List {
 	list := &metav1.List{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
