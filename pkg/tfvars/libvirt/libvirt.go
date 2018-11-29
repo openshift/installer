@@ -1,49 +1,50 @@
+// Package libvirt contains libvirt-specific Terraform-variable logic.
 package libvirt
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 
 	"github.com/apparentlymart/go-cidr/cidr"
+	"github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1"
+	"github.com/pkg/errors"
 )
 
-// Libvirt encompasses configuration specific to libvirt.
-type Libvirt struct {
-	URI         string `json:"libvirt_uri,omitempty"`
-	Image       string `json:"os_image,omitempty"`
-	Network     `json:",inline"`
+type config struct {
+	URI         string   `json:"libvirt_uri,omitempty"`
+	Image       string   `json:"os_image,omitempty"`
+	IfName      string   `json:"libvirt_network_if"`
 	MasterIPs   []string `json:"libvirt_master_ips,omitempty"`
 	BootstrapIP string   `json:"libvirt_bootstrap_ip,omitempty"`
 }
 
-// Network describes a libvirt network configuration.
-type Network struct {
-	IfName string `json:"libvirt_network_if"`
-}
-
-// TFVars fills in computed Terraform variables.
-func (l *Libvirt) TFVars(machineCIDR *net.IPNet, masterCount int) error {
-	if l.BootstrapIP == "" {
-		ip, err := cidr.Host(machineCIDR, 10)
-		if err != nil {
-			return fmt.Errorf("failed to generate bootstrap IP: %v", err)
-		}
-		l.BootstrapIP = ip.String()
+// TFVars generates libvirt-specific Terraform variables.
+func TFVars(masterConfig *v1alpha1.LibvirtMachineProviderConfig, osImage string, machineCIDR *net.IPNet, bridge string, masterCount int) ([]byte, error) {
+	bootstrapIP, err := cidr.Host(machineCIDR, 10)
+	if err != nil {
+		return nil, errors.Errorf("failed to generate bootstrap IP: %v", err)
 	}
 
-	if len(l.MasterIPs) > 0 {
-		if len(l.MasterIPs) != masterCount {
-			return fmt.Errorf("length of MasterIPs doesn't match master count")
-		}
-	} else {
-		if ips, err := generateIPs("master", machineCIDR, masterCount, 11); err == nil {
-			l.MasterIPs = ips
-		} else {
-			return err
-		}
+	masterIPs, err := generateIPs("master", machineCIDR, masterCount, 11)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	osImage, err = cachedImage(osImage)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to use cached libvirt image")
+	}
+
+	cfg := &config{
+		URI:         masterConfig.URI,
+		Image:       osImage,
+		IfName:      bridge,
+		BootstrapIP: bootstrapIP.String(),
+		MasterIPs:   masterIPs,
+	}
+
+	return json.MarshalIndent(cfg, "", "  ")
 }
 
 func generateIPs(name string, network *net.IPNet, count int, offset int) ([]string, error) {

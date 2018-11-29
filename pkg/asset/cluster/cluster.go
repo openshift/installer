@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -66,9 +67,12 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 	defer os.RemoveAll(tmpDir)
 
-	terraformVariablesFile := terraformVariables.Files()[0]
-	if err := ioutil.WriteFile(filepath.Join(tmpDir, terraformVariablesFile.Filename), terraformVariablesFile.Data, 0600); err != nil {
-		return errors.Wrap(err, "failed to write terraform.tfvars file")
+	extraArgs := []string{}
+	for _, file := range terraformVariables.Files() {
+		if err := ioutil.WriteFile(filepath.Join(tmpDir, file.Filename), file.Data, 0600); err != nil {
+			return err
+		}
+		extraArgs = append(extraArgs, fmt.Sprintf("-var-file=%s", filepath.Join(tmpDir, file.Filename)))
 	}
 
 	c.FileList = []*asset.File{
@@ -79,7 +83,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	logrus.Infof("Creating cluster...")
-	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name())
+	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name(), extraArgs...)
 	if err != nil {
 		err = errors.Wrap(err, "failed to create cluster")
 	}
