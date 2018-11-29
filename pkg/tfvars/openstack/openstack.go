@@ -1,12 +1,5 @@
 package openstack
 
-const (
-	// DefaultNetworkCIDRBlock is the default CIDR range for an OpenStack network.
-	DefaultNetworkCIDRBlock = "10.0.0.0/16"
-	// DefaultRegion is the default OpenStack region for the cluster.
-	DefaultRegion = "regionOne"
-)
-
 // OpenStack converts OpenStack related config.
 type OpenStack struct {
 	BaseImage        string `json:"tectonic_openstack_base_image,omitempty"`
