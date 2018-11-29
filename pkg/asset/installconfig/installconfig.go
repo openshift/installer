@@ -37,8 +37,6 @@ var _ asset.WritableAsset = (*InstallConfig)(nil)
 func (a *InstallConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&clusterID{},
-		&emailAddress{},
-		&password{},
 		&sshPublicKey{},
 		&baseDomain{},
 		&clusterName{},
@@ -50,8 +48,6 @@ func (a *InstallConfig) Dependencies() []asset.Asset {
 // Generate generates the install-config.yml file.
 func (a *InstallConfig) Generate(parents asset.Parents) error {
 	clusterID := &clusterID{}
-	emailAddress := &emailAddress{}
-	password := &password{}
 	sshPublicKey := &sshPublicKey{}
 	baseDomain := &baseDomain{}
 	clusterName := &clusterName{}
@@ -59,8 +55,6 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	platform := &platform{}
 	parents.Get(
 		clusterID,
-		emailAddress,
-		password,
 		sshPublicKey,
 		baseDomain,
 		clusterName,
@@ -72,12 +66,8 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterName.ClusterName,
 		},
-		ClusterID: clusterID.ClusterID,
-		Admin: types.Admin{
-			Email:    emailAddress.EmailAddress,
-			Password: password.Password,
-			SSHKey:   sshPublicKey.Key,
-		},
+		ClusterID:  clusterID.ClusterID,
+		SSHKey:     sshPublicKey.Key,
 		BaseDomain: baseDomain.BaseDomain,
 		Networking: types.Networking{
 			Type: "OpenshiftSDN",
