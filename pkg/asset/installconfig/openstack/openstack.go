@@ -7,6 +7,7 @@ import (
 
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/regions"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
@@ -96,6 +97,36 @@ func getImageNames(cloud string) ([]string, error) {
 	return imageNames, nil
 }
 
+func getNetworkNames(cloud string) ([]string, error) {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
+	}
+
+	conn, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	listOpts := networks.ListOpts{}
+	allPages, err := networks.List(conn, listOpts).AllPages()
+	if err != nil {
+		return nil, err
+	}
+
+	allNetworks, err := networks.ExtractNetworks(allPages)
+	if err != nil {
+		return nil, err
+	}
+
+	networkNames := make([]string, len(allNetworks))
+	for x, network := range allNetworks {
+		networkNames[x] = network.Name
+	}
+
+	sort.Strings(networkNames)
+	return networkNames, nil
+}
+
 // Platform collects OpenStack-specific configuration.
 func Platform() (*openstack.Platform, error) {
 	cloudNames, err := getCloudNames()
@@ -181,16 +212,24 @@ func Platform() (*openstack.Platform, error) {
 		return nil, err
 	}
 
+	networkNames, err := getNetworkNames(cloud)
+	if err != nil {
+		return nil, err
+	}
 	extNet, err := asset.GenerateUserProvidedAsset(
 		"OpenStack External Network",
 		&survey.Question{
-			Prompt: &survey.Input{
+			Prompt: &survey.Select{
 				Message: "ExternalNetwork",
-				Help:    "The OpenStack external network to be used for installation.",
+				Help:    "The OpenStack external network name to be used for installation.",
+				Options: networkNames,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				//value := ans.(string)
-				//FIXME(shadower) add some validation here
+				value := ans.(string)
+				i := sort.SearchStrings(networkNames, value)
+				if i == len(networkNames) || networkNames[i] != value {
+					return errors.Errorf("invalid network name %q, should be one of %+v", value, strings.Join(networkNames, ", "))
+				}
 				return nil
 			}),
 		},
