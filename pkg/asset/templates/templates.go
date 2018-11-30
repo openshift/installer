@@ -40,6 +40,7 @@ func (m *Templates) Dependencies() []asset.Asset {
 		&bootkube.HostEtcdServiceKubeSystem{},
 		&tectonic.BindingDiscovery{},
 		&tectonic.CloudCredsSecret{},
+		&tectonic.KubeadminPasswordSecret{},
 		&tectonic.RoleCloudCredsSecretReader{},
 	}
 }
@@ -64,6 +65,7 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 
 	bindingDiscovery := &tectonic.BindingDiscovery{}
 	cloudCredsSecret := &tectonic.CloudCredsSecret{}
+	kubeadminPasswordSecret := &tectonic.KubeadminPasswordSecret{}
 	roleCloudCredsSecretReader := &tectonic.RoleCloudCredsSecretReader{}
 
 	dependencies.Get(
@@ -84,6 +86,7 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 		hostEtcdServiceKubeSystem,
 		bindingDiscovery,
 		cloudCredsSecret,
+		kubeadminPasswordSecret,
 		roleCloudCredsSecretReader)
 
 	m.FileList = []*asset.File{}
@@ -105,6 +108,7 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 
 	m.FileList = append(m.FileList, bindingDiscovery.Files()...)
 	m.FileList = append(m.FileList, cloudCredsSecret.Files()...)
+	m.FileList = append(m.FileList, kubeadminPasswordSecret.Files()...)
 	m.FileList = append(m.FileList, roleCloudCredsSecretReader.Files()...)
 
 	return nil

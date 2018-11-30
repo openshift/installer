@@ -29,7 +29,7 @@ If you don't have [terraform](https://www.terraform.io/), run the following to c
 hack/get-terraform.sh
 ```
 
-The installer will show a series of prompts for user-specific information (e.g. admin password) and use reasonable defaults for everything else. In non-interactive contexts, prompts can be bypassed by providing appropriately-named environment variables. Refer to the [user documentation](docs/user) for more information.
+The installer will show a series of prompts for user-specific information and use reasonable defaults for everything else. In non-interactive contexts, prompts can be bypassed by providing appropriately-named environment variables. Refer to the [user documentation](docs/user) for more information.
 
 ### Connect to the cluster
 

@@ -20,12 +20,6 @@ The installer accepts a number of environment variable that allow the interactiv
 
      For libvirt, choose a name that is unique enough to be used as a prefix during cluster deletion.
      For example, if you use `demo` as your cluster name, `openshift-install destroy cluster` may destroy all domains, networks, pools, and volumes that begin with `demo`.
-* `OPENSHIFT_INSTALL_EMAIL_ADDRESS`:
-     The email address of the cluster administrator.
-     This will be used to log in to the console.
-* `OPENSHIFT_INSTALL_PASSWORD`:
-     The password of the cluster administrator.
-     This will be used to log in to the console.
 * `OPENSHIFT_INSTALL_PLATFORM`:
      The platform onto which the cluster will be installed.
      Valid values are `aws` and `libvirt`.
