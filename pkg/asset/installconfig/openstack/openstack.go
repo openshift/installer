@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/regions"
+	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
@@ -65,6 +66,36 @@ func getRegionNames(cloud string) ([]string, error) {
 	return regionNames, nil
 }
 
+func getImageNames(cloud string) ([]string, error) {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
+	}
+
+	conn, err := clientconfig.NewServiceClient("image", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	listOpts := images.ListOpts{}
+	allPages, err := images.List(conn, listOpts).AllPages()
+	if err != nil {
+		return nil, err
+	}
+
+	allImages, err := images.ExtractImages(allPages)
+	if err != nil {
+		return nil, err
+	}
+
+	imageNames := make([]string, len(allImages))
+	for x, image := range allImages {
+		imageNames[x] = image.Name
+	}
+
+	sort.Strings(imageNames)
+	return imageNames, nil
+}
+
 // Platform collects OpenStack-specific configuration.
 func Platform() (*openstack.Platform, error) {
 	cloudNames, err := getCloudNames()
@@ -122,17 +153,25 @@ func Platform() (*openstack.Platform, error) {
 		return nil, err
 	}
 
+	imageNames, err := getImageNames(cloud)
+	if err != nil {
+		return nil, err
+	}
 	image, err := asset.GenerateUserProvidedAsset(
 		"OpenStack Image",
 		&survey.Question{
-			Prompt: &survey.Input{
+			Prompt: &survey.Select{
 				Message: "Image",
-				Help:    "The OpenStack image to be used for installation.",
+				Help:    "The OpenStack image name to be used for installation.",
 				Default: "rhcos",
+				Options: imageNames,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				//value := ans.(string)
-				//FIXME(shardy) add some validation here
+				value := ans.(string)
+				i := sort.SearchStrings(imageNames, value)
+				if i == len(imageNames) || imageNames[i] != value {
+					return errors.Errorf("invalid image name %q, should be one of %+v", value, strings.Join(imageNames, ", "))
+				}
 				return nil
 			}),
 		},
