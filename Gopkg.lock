@@ -201,16 +201,18 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:56c12cdd01d62ed0836da8d8756f7331b3544dd0dd023f1ab1db69c204776a1c"
+  digest = "1:067c66a818c9c510f13c0f75363b65d80e640a64c4bda0f8a819b615ea3806d2"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
+    "internal",
     "openstack",
     "openstack/compute/v2/flavors",
     "openstack/compute/v2/images",
     "openstack/compute/v2/servers",
     "openstack/identity/v2/tenants",
     "openstack/identity/v2/tokens",
+    "openstack/identity/v3/regions",
     "openstack/identity/v3/tokens",
     "openstack/networking/v2/extensions/layer3/routers",
     "openstack/networking/v2/extensions/security/groups",
@@ -810,6 +812,7 @@
     "github.com/coreos/ignition/config/v2_2/types",
     "github.com/ghodss/yaml",
     "github.com/gophercloud/gophercloud/openstack/compute/v2/servers",
+    "github.com/gophercloud/gophercloud/openstack/identity/v3/regions",
     "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers",
     "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups",
     "github.com/gophercloud/gophercloud/openstack/networking/v2/networks",
@@ -839,12 +842,10 @@
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",
-    "k8s.io/apimachinery/pkg/util/net",
     "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/kubernetes",
-    "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/clientcmd",
     "k8s.io/client-go/tools/clientcmd/api/v1",
     "k8s.io/client-go/tools/watch",
