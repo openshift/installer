@@ -2,6 +2,10 @@
 package openstack
 
 import (
+	"sort"
+	"strings"
+
+	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
@@ -13,8 +17,52 @@ const (
 	defaultVPCCIDR = "10.0.0.0/16"
 )
 
+// Read the valid cloud names from the clouds.yaml
+func getCloudNames() ([]string, error) {
+	clouds, err := clientconfig.LoadCloudsYAML()
+	if err != nil {
+		return nil, err
+	}
+	i := 0
+	cloudNames := make([]string, len(clouds))
+	for k := range clouds {
+		cloudNames[i] = k
+		i++
+	}
+	// Sort cloudNames so we can use sort.SearchStrings
+	sort.Strings(cloudNames)
+	return cloudNames, nil
+}
+
 // Platform collects OpenStack-specific configuration.
 func Platform() (*openstack.Platform, error) {
+	cloudNames, err := getCloudNames()
+	if err != nil {
+		return nil, err
+	}
+	cloud, err := asset.GenerateUserProvidedAsset(
+		"OpenStack Cloud",
+		&survey.Question{
+			Prompt: &survey.Select{
+				Message: "Cloud",
+				Help:    "The OpenStack cloud name from clouds.yaml.",
+				Options: cloudNames,
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				value := ans.(string)
+				i := sort.SearchStrings(cloudNames, value)
+				if i == len(cloudNames) || cloudNames[i] != value {
+					return errors.Errorf("invalid cloud name %q, should be one of %+v", value, strings.Join(cloudNames, ", "))
+				}
+				return nil
+			}),
+		},
+		"OPENSHIFT_INSTALL_OPENSTACK_CLOUD",
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	region, err := asset.GenerateUserProvidedAsset(
 		"OpenStack Region",
 		&survey.Question{
@@ -50,27 +98,6 @@ func Platform() (*openstack.Platform, error) {
 			}),
 		},
 		"OPENSHIFT_INSTALL_OPENSTACK_IMAGE",
-	)
-	if err != nil {
-		return nil, err
-	}
-
-	cloud, err := asset.GenerateUserProvidedAsset(
-		"OpenStack Cloud",
-		&survey.Question{
-			//TODO(russellb) - We could open clouds.yaml here and read the list of defined clouds
-			//and then use survey.Select to let the user choose one.
-			Prompt: &survey.Input{
-				Message: "Cloud",
-				Help:    "The OpenStack cloud name from clouds.yaml.",
-			},
-			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				//value := ans.(string)
-				//FIXME(russellb) add some validation here
-				return nil
-			}),
-		},
-		"OPENSHIFT_INSTALL_OPENSTACK_CLOUD",
 	)
 	if err != nil {
 		return nil, err
