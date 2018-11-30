@@ -4,7 +4,9 @@ package openstack
 import (
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
+	"sort"
 
+	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -55,18 +57,28 @@ func Platform() (*openstack.Platform, error) {
 		return nil, err
 	}
 
+	cloudConfigs, err := clientconfig.LoadCloudsYAML()
+	if err != nil {
+		return nil, err
+	}
+	cloudOptions := make([]string, 0, len(cloudConfigs))
+	for cloudName := range cloudConfigs {
+		cloudOptions := append(cloudOptions, cloudName)
+	}
 	cloud, err := asset.GenerateUserProvidedAsset(
 		"OpenStack Cloud",
 		&survey.Question{
-			//TODO(russellb) - We could open clouds.yaml here and read the list of defined clouds
-			//and then use survey.Select to let the user choose one.
-			Prompt: &survey.Input{
+			Prompt: &survey.Select{
 				Message: "Cloud",
 				Help:    "The OpenStack cloud name from clouds.yaml.",
+				Options: cloudOptions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				//value := ans.(string)
-				//FIXME(russellb) add some validation here
+				choice := ans.(string)
+				i := sort.SearchStrings(cloudOptions, choice)
+				if i == len(cloudOptions) || cloudOptions[i] != choice {
+					return errors.Errorf("Cloud %s not present in clouds.yaml", choice)
+				}
 				return nil
 			}),
 		},
