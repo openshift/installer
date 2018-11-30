@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/gophercloud/gophercloud/openstack/identity/v3/regions"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
@@ -32,6 +33,36 @@ func getCloudNames() ([]string, error) {
 	// Sort cloudNames so we can use sort.SearchStrings
 	sort.Strings(cloudNames)
 	return cloudNames, nil
+}
+
+func getRegionNames(cloud string) ([]string, error) {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
+	}
+
+	conn, err := clientconfig.NewServiceClient("identity", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	listOpts := regions.ListOpts{}
+	allPages, err := regions.List(conn, listOpts).AllPages()
+	if err != nil {
+		return nil, err
+	}
+
+	allRegions, err := regions.ExtractRegions(allPages)
+	if err != nil {
+		return nil, err
+	}
+
+	regionNames := make([]string, len(allRegions))
+	for x, region := range allRegions {
+		regionNames[x] = region.ID
+	}
+
+	sort.Strings(regionNames)
+	return regionNames, nil
 }
 
 // Platform collects OpenStack-specific configuration.
@@ -63,17 +94,25 @@ func Platform() (*openstack.Platform, error) {
 		return nil, err
 	}
 
+	regionNames, err := getRegionNames(cloud)
+	if err != nil {
+		return nil, err
+	}
 	region, err := asset.GenerateUserProvidedAsset(
 		"OpenStack Region",
 		&survey.Question{
-			Prompt: &survey.Input{
+			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The OpenStack region to be used for installation.",
 				Default: "regionOne",
+				Options: regionNames,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				//value := ans.(string)
-				//FIXME(shardy) add some validation here
+				value := ans.(string)
+				i := sort.SearchStrings(regionNames, value)
+				if i == len(regionNames) || regionNames[i] != value {
+					return errors.Errorf("invalid region name %q, should be one of %+v", value, strings.Join(regionNames, ", "))
+				}
 				return nil
 			}),
 		},
