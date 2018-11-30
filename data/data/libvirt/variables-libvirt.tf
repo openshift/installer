@@ -32,8 +32,3 @@ variable "tectonic_libvirt_master_ips" {
   type        = "list"
   description = "the list of desired master ips. Must match tectonic_master_count"
 }
-
-variable "tectonic_libvirt_worker_ips" {
-  type        = "list"
-  description = "the list of desired worker ips. Must match tectonic_worker_count"
-}

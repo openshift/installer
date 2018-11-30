@@ -19,7 +19,6 @@ type config struct {
 	Name       string `json:"tectonic_cluster_name,omitempty"`
 	BaseDomain string `json:"tectonic_base_domain,omitempty"`
 	Masters    int    `json:"tectonic_master_count,omitempty"`
-	Workers    int    `json:"tectonic_worker_count,omitempty"`
 
 	IgnitionBootstrap string `json:"ignition_bootstrap,omitempty"`
 	IgnitionMaster    string `json:"ignition_master,omitempty"`
@@ -42,15 +41,15 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 	}
 
 	for _, m := range cfg.Machines {
-		var replicas int
-		if m.Replicas == nil {
-			replicas = 1
-		} else {
-			replicas = int(*m.Replicas)
-		}
-
 		switch m.Name {
 		case "master":
+			var replicas int
+			if m.Replicas == nil {
+				replicas = 1
+			} else {
+				replicas = int(*m.Replicas)
+			}
+
 			config.Masters += replicas
 			if m.Platform.AWS != nil {
 				config.AWS.Master = aws.Master{
@@ -64,16 +63,9 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 				}
 			}
 		case "worker":
-			config.Workers += replicas
 			if m.Platform.AWS != nil {
 				config.AWS.Worker = aws.Worker{
-					EC2Type:     m.Platform.AWS.InstanceType,
 					IAMRoleName: m.Platform.AWS.IAMRoleName,
-					WorkerRootVolume: aws.WorkerRootVolume{
-						IOPS: m.Platform.AWS.EC2RootVolume.IOPS,
-						Size: m.Platform.AWS.EC2RootVolume.Size,
-						Type: m.Platform.AWS.EC2RootVolume.Type,
-					},
 				}
 			}
 		default:
@@ -113,7 +105,7 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 			Image:     cfg.Platform.Libvirt.DefaultMachinePlatform.Image,
 			MasterIPs: masterIPs,
 		}
-		if err := config.Libvirt.TFVars(config.Masters, config.Workers); err != nil {
+		if err := config.Libvirt.TFVars(config.Masters); err != nil {
 			return nil, errors.Wrap(err, "failed to insert libvirt variables")
 		}
 		if err := config.Libvirt.UseCachedImage(); err != nil {

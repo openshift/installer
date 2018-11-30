@@ -9,14 +9,10 @@ EOF
 
 variable "tectonic_aws_master_ec2_type" {
   type        = "string"
-  description = "Instance size for the master node(s). Example: `t2.medium`."
-  default     = "t2.medium"
-}
+  description = "Instance size for the master node(s). Example: `t3.medium`."
 
-variable "tectonic_aws_worker_ec2_type" {
-  type        = "string"
-  description = "Instance size for the worker node(s). Example: `t2.medium`."
-  default     = "t2.medium"
+  # FIXME: get this wired up to the machine default
+  default = "t3.medium"
 }
 
 variable "tectonic_aws_ec2_ami_override" {
@@ -28,17 +24,6 @@ variable "tectonic_aws_ec2_ami_override" {
 variable "tectonic_aws_master_extra_sg_ids" {
   description = <<EOF
 (optional) List of additional security group IDs for master nodes.
-
-Example: `["sg-51530134", "sg-b253d7cc"]`
-EOF
-
-  type    = "list"
-  default = []
-}
-
-variable "tectonic_aws_worker_extra_sg_ids" {
-  description = <<EOF
-(optional) List of additional security group IDs for worker nodes.
 
 Example: `["sg-51530134", "sg-b253d7cc"]`
 EOF
@@ -149,28 +134,6 @@ Ignored if the volume type is not io1.
 EOF
 }
 
-variable "tectonic_aws_worker_root_volume_type" {
-  type        = "string"
-  default     = "gp2"
-  description = "The type of volume for the root block device of worker nodes."
-}
-
-variable "tectonic_aws_worker_root_volume_size" {
-  type        = "string"
-  default     = "30"
-  description = "The size of the volume in gigabytes for the root block device of worker nodes."
-}
-
-variable "tectonic_aws_worker_root_volume_iops" {
-  type    = "string"
-  default = "100"
-
-  description = <<EOF
-The amount of provisioned IOPS for the root block device of worker nodes.
-Ignored if the volume type is not io1.
-EOF
-}
-
 variable "tectonic_aws_master_custom_subnets" {
   type    = "map"
   default = {}
@@ -237,18 +200,5 @@ The name is also the last part of a role's ARN.
 Example:
  * Role ARN  = arn:aws:iam::123456789012:role/tectonic-installer
  * Role Name = tectonic-installer
-EOF
-}
-
-variable "tectonic_aws_worker_load_balancers" {
-  type    = "list"
-  default = []
-
-  description = <<EOF
-(optional) List of ELBs to attach all worker instances to.
-This is useful for exposing NodePort services via load-balancers managed separately from the cluster.
-
-Example:
- * `["ingress-nginx"]`
 EOF
 }

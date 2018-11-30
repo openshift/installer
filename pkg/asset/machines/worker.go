@@ -27,7 +27,7 @@ import (
 
 func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
 	return awstypes.MachinePool{
-		InstanceType: "t2.medium",
+		InstanceType: "t3.medium",
 	}
 }
 

@@ -53,7 +53,6 @@ resource "libvirt_network" "tectonic_net" {
       data.libvirt_network_dns_host_template.bootstrap.*.rendered,
       data.libvirt_network_dns_host_template.masters.*.rendered,
       data.libvirt_network_dns_host_template.etcds.*.rendered,
-      data.libvirt_network_dns_host_template.workers.*.rendered,
     ))}"]
   }]
 
@@ -102,12 +101,6 @@ data "libvirt_network_dns_host_template" "etcds" {
   count    = "${var.tectonic_master_count}"
   ip       = "${var.tectonic_libvirt_master_ips[count.index]}"
   hostname = "${var.tectonic_cluster_name}-etcd-${count.index}"
-}
-
-data "libvirt_network_dns_host_template" "workers" {
-  count    = "${var.tectonic_worker_count}"
-  ip       = "${var.tectonic_libvirt_worker_ips[count.index]}"
-  hostname = "${var.tectonic_cluster_name}"
 }
 
 data "libvirt_network_dns_srv_template" "etcd_cluster" {
