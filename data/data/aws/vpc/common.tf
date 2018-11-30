@@ -30,38 +30,8 @@ locals {
 }
 
 # all data sources should be input variable-agnostic and used as canonical source for querying "state of resources" and building outputs
-# (ie: we don't want "data.aws_subnet.external-worker" and "data.aws_subnet.worker". just "data.aws_subnet.worker" used everwhere for list of worker subnets for any valid input var state)
+# (ie: we don't want "aws.new_vpc" and "data.aws_vpc.cluster_vpc", just "data.aws_vpc.cluster_vpc" used everwhere).
 
 data "aws_vpc" "cluster_vpc" {
   id = "${local.vpc_id}"
-}
-
-data "aws_subnet" "worker" {
-  count  = "${local.worker_subnet_count}"
-  id     = "${local.worker_subnet_ids[count.index]}"
-  vpc_id = "${local.vpc_id}"
-}
-
-data "aws_subnet" "master" {
-  count  = "${local.master_subnet_count}"
-  id     = "${local.master_subnet_ids[count.index]}"
-  vpc_id = "${local.vpc_id}"
-}
-
-data "aws_route_table" "worker" {
-  count = "${local.worker_subnet_count}"
-
-  filter = {
-    name   = "association.subnet-id"
-    values = ["${list(local.worker_subnet_ids[count.index])}"]
-  }
-}
-
-data "aws_route_table" "master" {
-  count = "${local.master_subnet_count}"
-
-  filter = {
-    name   = "association.subnet-id"
-    values = ["${list(local.master_subnet_ids[count.index])}"]
-  }
 }
