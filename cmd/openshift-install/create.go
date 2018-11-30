@@ -139,6 +139,11 @@ func createCluster(ctx context.Context, assets *assets.Assets, directory string)
 	stateFile, err := terraform.Apply(tmpDir, platform)
 	if err != nil {
 		err = errors.Wrap(err, "run Terraform")
+
+		err2 := terraform.Destroy(tmpDir, platform)
+		if err2 != nil {
+			logrus.Errorf("Destroying failed resources: %v", err)
+		}
 	}
 
 	if stateFile != "" {
