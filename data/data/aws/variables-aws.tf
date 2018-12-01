@@ -120,13 +120,13 @@ variable "tectonic_aws_master_root_volume_type" {
 
 variable "tectonic_aws_master_root_volume_size" {
   type        = "string"
-  default     = "30"
+  default     = "120"
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
 variable "tectonic_aws_master_root_volume_iops" {
   type    = "string"
-  default = "100"
+  default = "400"
 
   description = <<EOF
 The amount of provisioned IOPS for the root block device of master nodes.
