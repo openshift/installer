@@ -1,12 +1,14 @@
 package terraform
 
 import (
+	"bytes"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
 	"strings"
 
+	"github.com/openshift/installer/pkg/lineprinter"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 )
@@ -59,24 +61,22 @@ func (ex *executor) execute(clusterDir string, args ...string) error {
 		return errors.Errorf("clusterDir is unset. Quitting")
 	}
 
+	trimmer := &lineprinter.Trimmer{WrappedPrint: logrus.StandardLogger().Debug}
+	linePrinter := &lineprinter.LinePrinter{Print: trimmer.Print}
+	defer linePrinter.Close()
+
+	stderr := &bytes.Buffer{}
+
 	cmd := exec.Command(ex.binaryPath, args...)
 	cmd.Dir = clusterDir
+	cmd.Stdout = linePrinter
+	cmd.Stderr = stderr
 
 	logrus.Debugf("Running %#v...", cmd)
-
-	if logrus.GetLevel() == logrus.DebugLevel {
-		cmd.Stdin = os.Stdin
-		cmd.Stdout = os.Stdout
-		cmd.Stderr = os.Stderr
-		return cmd.Run()
-	}
-
-	output, err := cmd.Output()
+	err := cmd.Run()
 	if err != nil {
 		exitError := err.(*exec.ExitError)
-		if len(exitError.Stderr) == 0 {
-			exitError.Stderr = output
-		}
+		exitError.Stderr = stderr.Bytes()
 	}
 	return err
 }
