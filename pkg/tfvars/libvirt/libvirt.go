@@ -7,11 +7,6 @@ import (
 	"github.com/apparentlymart/go-cidr/cidr"
 )
 
-const (
-	// DefaultIfName is the default interface name for libvirt.
-	DefaultIfName = "osbr0"
-)
-
 // Libvirt encompasses configuration specific to libvirt.
 type Libvirt struct {
 	URI         string `json:"tectonic_libvirt_uri,omitempty"`
