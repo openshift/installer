@@ -31,7 +31,7 @@ The installer accepts a number of environment variable that allow the interactiv
      Valid values are `aws` and `libvirt`.
 * `OPENSHIFT_INSTALL_PULL_SECRET`:
      The container registry pull secret for this cluster (e.g. `{"auths": {...}}`).
-     You can generate these secrets with the `podman login` command.
+     You can get this secret from [try.openshift.com](https://try.openshift.com).
 * `OPENSHIFT_INSTALL_PULL_SECRET_PATH`:
      As an alternative to `OPENSHIFT_INSTALL_SSH_PUB_KEY`, you can configure this variable with a path containing your pull secret.
 * `OPENSHIFT_INSTALL_SSH_PUB_KEY`:
