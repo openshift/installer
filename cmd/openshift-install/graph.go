@@ -154,7 +154,10 @@ func addNodes(ctx context.Context, g *gographviz.Graph, asset *assets.Asset, get
 		}
 
 		parentName := fmt.Sprintf("%q", parent.Name)
-		g.AddEdge(parentName, assetName, true, nil)
+		attrs := map[string]string{
+			string(gographviz.Tooltip): fmt.Sprintf("\"%s -> %s\"", parent.Name, asset.Name),
+		}
+		g.AddEdge(parentName, assetName, true, attrs)
 	}
 
 	return nil
