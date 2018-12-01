@@ -67,7 +67,7 @@ resource "libvirt_domain" "master" {
   memory = "3072"
   vcpu   = "2"
 
-  coreos_ignition = "${libvirt_ignition.master.*.id[count.index]}"
+  coreos_ignition = "${libvirt_ignition.master.id}"
 
   disk {
     volume_id = "${element(libvirt_volume.master.*.id, count.index)}"
