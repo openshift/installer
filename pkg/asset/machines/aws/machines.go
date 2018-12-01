@@ -77,7 +77,7 @@ func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.
 	}
 	return &awsprovider.AWSMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "aws.cluster.k8s.io/v1alpha1",
+			APIVersion: "awsproviderconfig.k8s.io/v1alpha1",
 			Kind:       "AWSMachineProviderConfig",
 		},
 		InstanceType:       mpool.InstanceType,
