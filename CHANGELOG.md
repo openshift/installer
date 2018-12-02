@@ -4,6 +4,75 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.5.0 - 2018-12-03
+
+### Added
+
+- We now push the ingress custom resource defintion and initial
+  configuration, allowing the ingress operator to configure itself
+  without referencing the deprecated `cluster-config-v1` resource.
+
+### Changed
+
+- Pull secret documentation now points to
+  [try.openshift.com](https://try.openshift.com) for pull-secret
+  acquisition, instead of pointing at `account.coreos.com`.  Users
+  will need to update their pull secrets.
+- If the automatic bootstrap teardown (which landed in 0.4.0) times
+  out waiting for the `bootstrap-complete` event, the installer exits
+  with a non-zero exit code.  We had ignored watcher timeouts in 0.4.0
+  due to concerns about watcher robustness, but the current watcher
+  code has been reliable in our continuous integration testing.
+- The hard-coded `quay.io/coreos/bootkube` dependency has been
+  replaced by the new [cluster-bootstrap][] image, which is referenced
+  from the release image.
+- The etcd service now uses [selectors][kube-selector] to determine
+  the pods it exposes, and the explict etcd endpoints object is gone
+  (replaced by the one Kubernetes maintains based on the selector).
+- On AWS, both masters and worker have moved from t2.medium nodes
+  m4.large nodes (more on AWS instance types
+  [here][aws-instance-types] to address CPU and memory constraints.
+- On AWS, master volume size has been bumped from 30 GiB to 120 GiB to
+  increase our baseline performance from on [gp2's sliding IOPS
+  scale][aws-ebs-gp2-iops] from the 100 IOPS floor up to 360 IOPS.
+  Volume information is not currently supported by [the cluster-API
+  AWS provider's
+  `AWSMachineProviderConfig`][cluster-api-provider-aws-012575c1-AWSMachineProviderConfig],
+  so this change is currently limited to masters created by the
+  installer.
+- On Openstack, we now validate cloud, region, and image-name user
+  input instead of blindly accepting entries.
+- On libvirt, we pass Ignition information for masters and workers via
+  secrets instead of passing a libvirt volume path.  This makes the
+  libvirt approach consistent with how we already handle AWS and
+  OpenStack.
+- Lots of internal cleanup, especially around trimming dead code.
+
+### Fixed
+
+- The `.openshift_install.log` addition from 0.4.0 removed Terraform
+  output from `--log-level=debug`.  We've fixed that in 0.5.0; now
+  `.openshift_install.log` will always contain the full Terraform
+  output, while standard error returns to containing the Terraform
+  output if and only if `--log-level=debug` or higher.
+- On AWS teardown, errors retrieving tags for S3 buckets and Route 53
+  zones are no longer fatal.  This allows the teardown code to
+  continue it's exponential backoff and try to remove the bucket or
+  zone later.  It avoids some resource leaks we were seeing due to AWS
+  rate limiting on those tag lookups as many simultaneous CI jobs
+  searched for Route 53 zones with their cluster's tags.  We'll still
+  hit those rate limits, but they no longer cause us to give up on
+  reaping resources.
+- On AWS, we've removed some unused data blocks, fixing occasional
+  errors like:
+
+        data.aws_route_table.worker.1: Your query returned no results.
+
+- On OpenStack, similar retry-during-teardown changes were made for
+  removing ports and for removing subnets from routers.
+- On libvirt, Terraform no longer errors out when launching clusters
+  configured for more than one master, fixing a bug from 0.4.0.
+
 ## 0.4.0 - 2018-11-22
 
 ### Added
@@ -277,16 +346,21 @@ installer and follow along as it guides you through the process.
 The `tectonic` command and tarball distribution are gone.  Please use
 the new `openshift-install` command instead.
 
+[aws-ebs-gp2-iops]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html#EBSVolumeTypes_gp2
 [aws-elb]: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/introduction.html
 [aws-elb-latency]: https://github.com/openshift/installer/pull/594#issue-227786691
+[aws-instance-types]: https://aws.amazon.com/ec2/instance-types/
 [aws-nlb]: https://docs.aws.amazon.com/elasticloadbalancing/latest/network/introduction.html
 [checkpointer-operator]: https://github.com/openshift/pod-checkpointer-operator
 [cluster-api-provider-aws]: https://github.com/openshift/cluster-api-provider-aws
+[cluster-api-provider-aws-012575c1-AWSMachineProviderConfig]: https://github.com/openshift/cluster-api-provider-aws/blob/012575c1c8d758f81c979b0b2354950a2193ec1a/pkg/apis/awsproviderconfig/v1alpha1/awsmachineproviderconfig_types.go#L86-L139
+[cluster-bootstrap]: https://github.com/openshift/cluster-bootstrap
 [cluster-version-operator]: https://github.com/openshift/cluster-version-operator
 [dot]: https://www.graphviz.org/doc/info/lang.html
 [ingress-operator]: https://github.com/openshift/cluster-ingress-operator
 [kube-apiserver-operator]: https://github.com/openshift/cluster-kube-apiserver-operator
 [kube-controller-manager-operator]: https://github.com/openshift/cluster-kube-controller-manager-operator
+[kube-selector]: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
 [machine-api-operator]: https://github.com/openshift/machine-api-operator
 [machine-config-operator]: https://github.com/openshift/machine-config-operator
 [Prometheus]: https://github.com/prometheus/prometheus
