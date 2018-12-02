@@ -33,9 +33,15 @@ type metadata struct {
 }
 
 func fetchLatestMetadata(ctx context.Context, channel string) (metadata, error) {
-	build, err := fetchLatestBuild(ctx, channel)
-	if err != nil {
-		return metadata{}, errors.Wrap(err, "failed to fetch latest build")
+	var build string
+	var err error
+	if channel == DefaultChannel {
+		build = "47.165"
+	} else {
+		build, err = fetchLatestBuild(ctx, channel)
+		if err != nil {
+			return metadata{}, errors.Wrap(err, "failed to fetch latest build")
+		}
 	}
 
 	url := fmt.Sprintf("%s/%s/%s/meta.json", baseURL, channel, build)
