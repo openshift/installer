@@ -129,7 +129,34 @@ func Platform() (*openstack.Platform, error) {
 		},
 	}, &extNet)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to Marshal %s platform", openstack.Name)
+		return nil, err
+	}
+
+	flavorNames, err := validValuesFetcher.GetFlavorNames(cloud)
+	if err != nil {
+		return nil, err
+	}
+	sort.Strings(flavorNames)
+	var flavor string
+	err = survey.Ask([]*survey.Question{
+		{
+			Prompt: &survey.Select{
+				Message: "FlavorName",
+				Help:    "The OpenStack compute flavor to use for servers. A flavor with at least 4 GB RAM is recommended.",
+				Options: flavorNames,
+			},
+			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
+				value := ans.(string)
+				i := sort.SearchStrings(flavorNames, value)
+				if i == len(flavorNames) || flavorNames[i] != value {
+					return errors.Errorf("invalid flavor name %q, should be one of %+v", value, strings.Join(flavorNames, ", "))
+				}
+				return nil
+			}),
+		},
+	}, &flavor)
+	if err != nil {
+		return nil, err
 	}
 
 	return &openstack.Platform{
@@ -138,5 +165,6 @@ func Platform() (*openstack.Platform, error) {
 		BaseImage:        image,
 		Cloud:            cloud,
 		ExternalNetwork:  extNet,
+		FlavorName:       flavor,
 	}, nil
 }

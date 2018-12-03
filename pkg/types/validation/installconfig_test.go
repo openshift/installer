@@ -259,6 +259,7 @@ func TestValidateInstallConfig(t *testing.T) {
 						BaseImage:        "test-image",
 						Cloud:            "test-cloud",
 						ExternalNetwork:  "test-network",
+						FlavorName:       "test-flavor",
 					},
 				}
 				return c
@@ -287,6 +288,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			fetcher.EXPECT().GetRegionNames(gomock.Any()).Return([]string{"test-region"}, nil).AnyTimes()
 			fetcher.EXPECT().GetImageNames(gomock.Any()).Return([]string{"test-image"}, nil).AnyTimes()
 			fetcher.EXPECT().GetNetworkNames(gomock.Any()).Return([]string{"test-network"}, nil).AnyTimes()
+			fetcher.EXPECT().GetFlavorNames(gomock.Any()).Return([]string{"test-flavor"}, nil).AnyTimes()
 
 			err := ValidateInstallConfig(tc.installConfig, fetcher).ToAggregate()
 			if tc.valid {

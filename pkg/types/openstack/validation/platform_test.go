@@ -20,6 +20,7 @@ func validPlatform() *openstack.Platform {
 		BaseImage:        "test-image",
 		Cloud:            "test-cloud",
 		ExternalNetwork:  "test-network",
+		FlavorName:       "test-flavor",
 	}
 }
 
@@ -31,6 +32,7 @@ func TestValidatePlatform(t *testing.T) {
 		noRegions  bool
 		noImages   bool
 		noNetworks bool
+		noFlavors  bool
 		valid      bool
 	}{
 		{
@@ -107,6 +109,12 @@ func TestValidatePlatform(t *testing.T) {
 			noNetworks: true,
 			valid:      false,
 		},
+		{
+			name:      "flavors fetch failure",
+			platform:  validPlatform(),
+			noFlavors: true,
+			valid:     false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -146,6 +154,15 @@ func TestValidatePlatform(t *testing.T) {
 			} else {
 				fetcher.EXPECT().GetNetworkNames(tc.platform.Cloud).
 					Return([]string{"test-network"}, nil).
+					MaxTimes(1)
+			}
+			if tc.noFlavors {
+				fetcher.EXPECT().GetFlavorNames(tc.platform.Cloud).
+					Return(nil, errors.New("no flavors")).
+					MaxTimes(1)
+			} else {
+				fetcher.EXPECT().GetFlavorNames(tc.platform.Cloud).
+					Return([]string{"test-flavor"}, nil).
 					MaxTimes(1)
 			}
 			err := ValidatePlatform(tc.platform, field.NewPath("test-path"), fetcher).ToAggregate()

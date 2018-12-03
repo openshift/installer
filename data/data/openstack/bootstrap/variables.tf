@@ -24,7 +24,6 @@ variable "ignition" {
 
 variable "flavor_name" {
   type        = "string"
-  default     = "m1.medium"
   description = "The Nova flavor for the bootstrap node."
 }
 

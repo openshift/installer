@@ -31,9 +31,9 @@ func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
 	}
 }
 
-func defaultOpenStackMachinePoolPlatform() openstacktypes.MachinePool {
+func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePool {
 	return openstacktypes.MachinePool{
-		FlavorName: "m1.medium",
+		FlavorName: flavor,
 	}
 }
 
@@ -130,7 +130,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			Replicas:    numOfWorkers,
 			Image:       ic.Platform.OpenStack.BaseImage,
 			Region:      ic.Platform.OpenStack.Region,
-			Machine:     defaultOpenStackMachinePoolPlatform(),
+			Machine:     defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName),
 		}
 
 		tags := map[string]string{

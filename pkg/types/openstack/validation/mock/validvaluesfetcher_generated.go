@@ -34,6 +34,7 @@ func (m *MockValidValuesFetcher) EXPECT() *MockValidValuesFetcherMockRecorder {
 
 // GetCloudNames mocks base method
 func (m *MockValidValuesFetcher) GetCloudNames() ([]string, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetCloudNames")
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
@@ -42,11 +43,13 @@ func (m *MockValidValuesFetcher) GetCloudNames() ([]string, error) {
 
 // GetCloudNames indicates an expected call of GetCloudNames
 func (mr *MockValidValuesFetcherMockRecorder) GetCloudNames() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCloudNames", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetCloudNames))
 }
 
 // GetRegionNames mocks base method
 func (m *MockValidValuesFetcher) GetRegionNames(cloud string) ([]string, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetRegionNames", cloud)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
@@ -55,11 +58,13 @@ func (m *MockValidValuesFetcher) GetRegionNames(cloud string) ([]string, error) 
 
 // GetRegionNames indicates an expected call of GetRegionNames
 func (mr *MockValidValuesFetcherMockRecorder) GetRegionNames(cloud interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRegionNames", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetRegionNames), cloud)
 }
 
 // GetImageNames mocks base method
 func (m *MockValidValuesFetcher) GetImageNames(cloud string) ([]string, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetImageNames", cloud)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
@@ -68,11 +73,13 @@ func (m *MockValidValuesFetcher) GetImageNames(cloud string) ([]string, error) {
 
 // GetImageNames indicates an expected call of GetImageNames
 func (mr *MockValidValuesFetcherMockRecorder) GetImageNames(cloud interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetImageNames", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetImageNames), cloud)
 }
 
 // GetNetworkNames mocks base method
 func (m *MockValidValuesFetcher) GetNetworkNames(cloud string) ([]string, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetNetworkNames", cloud)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
@@ -81,5 +88,21 @@ func (m *MockValidValuesFetcher) GetNetworkNames(cloud string) ([]string, error)
 
 // GetNetworkNames indicates an expected call of GetNetworkNames
 func (mr *MockValidValuesFetcherMockRecorder) GetNetworkNames(cloud interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetNetworkNames", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetNetworkNames), cloud)
+}
+
+// GetFlavorNames mocks base method
+func (m *MockValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetFlavorNames", cloud)
+	ret0, _ := ret[0].([]string)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetFlavorNames indicates an expected call of GetFlavorNames
+func (mr *MockValidValuesFetcherMockRecorder) GetFlavorNames(cloud interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFlavorNames", reflect.TypeOf((*MockValidValuesFetcher)(nil).GetFlavorNames), cloud)
 }
