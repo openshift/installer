@@ -40,6 +40,7 @@ type bootstrapTemplateData struct {
 	EtcdCertSignerImage   string
 	EtcdCluster           string
 	EtcdctlImage          string
+	PullSecret            string
 	ReleaseImage          string
 	AdminKubeConfigBase64 string
 }
@@ -148,6 +149,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, adminKub
 	return &bootstrapTemplateData{
 		EtcdCertSignerImage:   "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
 		EtcdctlImage:          "quay.io/coreos/etcd:v3.2.14",
+		PullSecret:            installConfig.PullSecret,
 		ReleaseImage:          releaseImage,
 		EtcdCluster:           strings.Join(etcdEndpoints, ","),
 		AdminKubeConfigBase64: base64.StdEncoding.EncodeToString(adminKubeConfig),
