@@ -25,7 +25,7 @@ type bootkubeTemplateData struct {
 	KubeCaKey                       string
 	McsTLSCert                      string
 	McsTLSKey                       string
-	PullSecret                      string
+	PullSecretBase64                string
 	RootCaCert                      string
 	ServiceServingCaCert            string
 	ServiceServingCaKey             string

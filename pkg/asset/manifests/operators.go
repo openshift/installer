@@ -150,7 +150,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		KubeCaKey:                       base64.StdEncoding.EncodeToString(kubeCA.Key()),
 		McsTLSCert:                      base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:                       base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
-		PullSecret:                      base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+		PullSecretBase64:                base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
 		RootCaCert:                      string(rootCA.Cert()),
 		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(serviceServingCA.Cert()),
 		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(serviceServingCA.Key()),
