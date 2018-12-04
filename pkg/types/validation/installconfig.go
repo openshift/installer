@@ -54,7 +54,7 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	for i, cn := range n.ClusterNetworks {
 		allErrs = append(allErrs, validateClusterNetwork(&cn, fldPath.Child("clusterNetworks").Index(i), &n.ServiceCIDR.IPNet)...)
 	}
-	if !n.PodCIDR.IPNet.IP.IsUnspecified() {
+	if n.PodCIDR != nil {
 		if err := validate.SubnetCIDR(&n.PodCIDR.IPNet); err != nil {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("podCIDR"), n.PodCIDR, err.Error()))
 		}
@@ -62,10 +62,10 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("podCIDR"), n.PodCIDR, "podCIDR must not overlap with serviceCIDR"))
 		}
 	}
-	if len(n.ClusterNetworks) == 0 && n.PodCIDR.IPNet.IP.IsUnspecified() {
+	if len(n.ClusterNetworks) == 0 && n.PodCIDR == nil {
 		allErrs = append(allErrs, field.Invalid(fldPath, n, "either clusterNetworks or podCIDR is required"))
 	}
-	if len(n.ClusterNetworks) != 0 && !n.PodCIDR.IPNet.IP.IsUnspecified() {
+	if len(n.ClusterNetworks) != 0 && n.PodCIDR != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("podCIDR"), n.PodCIDR, "cannot use podCIDR when clusterNetworks is used"))
 	}
 	return allErrs
@@ -74,28 +74,34 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 func validateClusterNetwork(cn *netopv1.ClusterNetwork, fldPath *field.Path, serviceCIDR *net.IPNet) field.ErrorList {
 	allErrs := field.ErrorList{}
 	_, cidr, err := net.ParseCIDR(cn.CIDR)
-	if err != nil {
+	if err == nil {
+		if validate.DoCIDRsOverlap(cidr, serviceCIDR) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR, "cluster network CIDR must not overlap with serviceCIDR"))
+		}
+		if ones, bits := cidr.Mask.Size(); cn.HostSubnetLength > uint32(bits-ones) {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostSubnetLength"), cn.HostSubnetLength, "cluster network host subnet length must not be greater than CIDR length"))
+		}
+	} else {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR, err.Error()))
-	}
-	if validate.DoCIDRsOverlap(cidr, serviceCIDR) {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR, "cluster network CIDR must not overlap with serviceCIDR"))
-	}
-	if cn.HostSubnetLength <= 0 {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostSubnetLength"), cn.HostSubnetLength, "cluster network host subnet length must be positive"))
-	}
-	if _, bits := cidr.Mask.Size(); cn.HostSubnetLength > uint32(bits) {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostSubnetLength"), cn.HostSubnetLength, "cluster network host subnet lenght must not be greater than CIDR length"))
 	}
 	return allErrs
 }
 
 func validateMachinePools(pools []types.MachinePool, fldPath *field.Path, platform string) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if len(pools) != 2 {
-		allErrs = append(allErrs, field.Required(fldPath, "must have a single 'master' and a single 'worker' machine pool"))
-	}
+	poolNames := map[string]bool{}
 	for i, p := range pools {
+		if poolNames[p.Name] {
+			allErrs = append(allErrs, field.Duplicate(fldPath.Index(i), p))
+		}
+		poolNames[p.Name] = true
 		allErrs = append(allErrs, ValidateMachinePool(&p, fldPath.Index(i), platform)...)
+	}
+	if !poolNames["master"] {
+		allErrs = append(allErrs, field.Required(fldPath, "must specify a machine pool with a name of 'master'"))
+	}
+	if !poolNames["worker"] {
+		allErrs = append(allErrs, field.Required(fldPath, "must specify a machine pool with a name of 'worker'"))
 	}
 	return allErrs
 }
@@ -109,7 +115,7 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path) field.Error
 		} else {
 			activePlatform = n
 		}
-		validation(fldPath.Child(n))
+		allErrs = append(allErrs, validation(fldPath.Child(n))...)
 	}
 	if platform.AWS != nil {
 		validate(aws.Name, platform.AWS, func(f *field.Path) field.ErrorList { return awsvalidation.ValidatePlatform(platform.AWS, f) })
@@ -121,6 +127,9 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path) field.Error
 		validate(openstack.Name, platform.OpenStack, func(f *field.Path) field.ErrorList {
 			return openstackvalidation.ValidatePlatform(platform.OpenStack, f)
 		})
+	}
+	if activePlatform == "" {
+		allErrs = append(allErrs, field.Invalid(fldPath, platform, "must specify one of the platforms"))
 	}
 	return allErrs
 }

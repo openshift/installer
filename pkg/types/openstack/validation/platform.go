@@ -10,6 +10,9 @@ import (
 // ValidatePlatform checks that the specified platform is valid.
 func ValidatePlatform(p *openstack.Platform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+	if p.Region == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "must specfify region"))
+	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
@@ -18,6 +21,12 @@ func ValidatePlatform(p *openstack.Platform, fldPath *field.Path) field.ErrorLis
 	}
 	if err := validate.URI(p.BaseImage); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("baseImage"), p.BaseImage, err.Error()))
+	}
+	if p.Cloud == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("cloud"), "must specify cloud"))
+	}
+	if p.ExternalNetwork == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("externalNetwork"), "must specify external network"))
 	}
 	return allErrs
 }
