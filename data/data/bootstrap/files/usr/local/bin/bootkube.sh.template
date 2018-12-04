@@ -8,19 +8,27 @@ if ! podman inspect {{.ReleaseImage}} &>/dev/null; then
     podman pull {{.ReleaseImage}}
 fi
 
-MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-operator)
-MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-controller)
-MACHINE_CONFIG_SERVER_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-server)
-MACHINE_CONFIG_DAEMON_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-daemon)
+# convert the release image pull spec to an "absolute" form if a digest is available - this is
+# safe to resolve after the actions above because podman will not pull the image once it is 
+# locally available
+if ! release=$( podman inspect {{.ReleaseImage}} -f '{{"{{"}} index .RepoDigests 0 {{"}}"}}' ) || [[ -z "${release}" ]]; then
+	echo "Warning: Could not resolve release image to pull by digest" 2>&1
+	release="{{.ReleaseImage}}"
+fi
 
-KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-apiserver-operator)
-KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-controller-manager-operator)
-KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-scheduler-operator)
+MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --rm ${release} image machine-config-operator)
+MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --rm ${release} image machine-config-controller)
+MACHINE_CONFIG_SERVER_IMAGE=$(podman run --rm ${release} image machine-config-server)
+MACHINE_CONFIG_DAEMON_IMAGE=$(podman run --rm ${release} image machine-config-daemon)
 
-OPENSHIFT_HYPERSHIFT_IMAGE=$(podman run --rm {{.ReleaseImage}} image hypershift)
-OPENSHIFT_HYPERKUBE_IMAGE=$(podman run --rm {{.ReleaseImage}} image hyperkube)
+KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-apiserver-operator)
+KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-controller-manager-operator)
+KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-scheduler-operator)
 
-CLUSTER_BOOTSTRAP_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-bootstrap)
+OPENSHIFT_HYPERSHIFT_IMAGE=$(podman run --rm ${release} image hypershift)
+OPENSHIFT_HYPERKUBE_IMAGE=$(podman run --rm ${release} image hyperkube)
+
+CLUSTER_BOOTSTRAP_IMAGE=$(podman run --rm ${release} image cluster-bootstrap)
 
 mkdir --parents ./{bootstrap-manifests,manifests}
 
@@ -31,10 +39,10 @@ then
 	# shellcheck disable=SC2154
 	podman run \
 		--volume "$PWD:/assets:z" \
-		"{{.ReleaseImage}}" \
+		"${release}" \
 		render \
 			--output-dir=/assets/cvo-bootstrap \
-			--release-image="{{.ReleaseImage}}"
+			--release-image="${release}"
 
 	cp cvo-bootstrap/bootstrap/* bootstrap-manifests/
 	cp cvo-bootstrap/manifests/* manifests/
