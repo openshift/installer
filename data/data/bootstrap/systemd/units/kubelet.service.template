@@ -22,6 +22,7 @@ ExecStart=/usr/bin/hyperkube \
     --anonymous-auth=false \
     --cgroup-driver=systemd \
     --serialize-image-pulls=false \
+    --v=2 \
 
 Restart=always
 RestartSec=10
