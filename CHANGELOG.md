@@ -31,7 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   (replaced by the one Kubernetes maintains based on the selector).
 - On AWS, both masters and worker have moved from t2.medium nodes
   m4.large nodes (more on AWS instance types
-  [here][aws-instance-types] to address CPU and memory constraints.
+  [here][aws-instance-types]) to address CPU and memory constraints.
 - On AWS, master volume size has been bumped from 30 GiB to 120 GiB to
   increase our baseline performance from on [gp2's sliding IOPS
   scale][aws-ebs-gp2-iops] from the 100 IOPS floor up to 360 IOPS.
