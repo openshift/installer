@@ -64,7 +64,7 @@ resource "libvirt_domain" "master" {
 
   name = "${var.tectonic_cluster_name}-master-${count.index}"
 
-  memory = "3072"
+  memory = "4096"
   vcpu   = "2"
 
   coreos_ignition = "${libvirt_ignition.master.id}"
