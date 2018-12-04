@@ -33,9 +33,6 @@ type InstallConfig struct {
 
 	metav1.ObjectMeta `json:"metadata"`
 
-	// ClusterID is the ID of the cluster.
-	ClusterID string `json:"clusterID"`
-
 	// SSHKey is the public ssh key to provide access to instances.
 	SSHKey string `json:"sshKey"`
 

@@ -10,6 +10,7 @@ import (
 // regarding the cluster that was created by installer.
 type ClusterMetadata struct {
 	ClusterName             string `json:"clusterName"`
+	ClusterID               string `json:"clusterID"`
 	ClusterPlatformMetadata `json:",inline"`
 }
 

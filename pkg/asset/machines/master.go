@@ -42,6 +42,7 @@ func (m *Master) Name() string {
 // Master asset
 func (m *Master) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
 		&machine.Master{},
 	}
@@ -49,9 +50,10 @@ func (m *Master) Dependencies() []asset.Asset {
 
 // Generate generates the Master asset.
 func (m *Master) Generate(dependencies asset.Parents) error {
+	clusterID := &installconfig.ClusterID{}
 	installconfig := &installconfig.InstallConfig{}
 	mign := &machine.Master{}
-	dependencies.Get(installconfig, mign)
+	dependencies.Get(clusterID, installconfig, mign)
 
 	var err error
 	userDataMap := map[string][]byte{"master-user-data": mign.File.Data}
@@ -84,7 +86,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		machines, err := aws.Machines(ic, &pool, "master", "master-user-data")
+		machines, err := aws.Machines(clusterID.ClusterID, ic, &pool, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -97,7 +99,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		m.MachinesRaw = raw
 	case libvirttypes.Name:
-		machines, err := libvirt.Machines(ic, &pool, "master", "master-user-data")
+		machines, err := libvirt.Machines(clusterID.ClusterID, ic, &pool, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -128,7 +130,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 
 		tags := map[string]string{
-			"openshiftClusterID": ic.ClusterID,
+			"openshiftClusterID": clusterID.ClusterID,
 		}
 		config.Tags = tags
 

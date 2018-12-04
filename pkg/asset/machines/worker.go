@@ -65,6 +65,7 @@ func (w *Worker) Name() string {
 // Worker asset
 func (w *Worker) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
 		&machine.Worker{},
 	}
@@ -72,9 +73,10 @@ func (w *Worker) Dependencies() []asset.Asset {
 
 // Generate generates the Worker asset.
 func (w *Worker) Generate(dependencies asset.Parents) error {
-	installconfig := &installconfig.InstallConfig{}
+	clusterID := &installconfig.ClusterID{}
+	installConfig := &installconfig.InstallConfig{}
 	wign := &machine.Worker{}
-	dependencies.Get(installconfig, wign)
+	dependencies.Get(clusterID, installConfig, wign)
 
 	var err error
 	userDataMap := map[string][]byte{"worker-user-data": wign.File.Data}
@@ -83,7 +85,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		return errors.Wrap(err, "failed to create user-data secret for worker machines")
 	}
 
-	ic := installconfig.Config
+	ic := installConfig.Config
 	pool := workerPool(ic.Machines)
 	switch ic.Platform.Name() {
 	case awstypes.Name:
@@ -107,7 +109,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		sets, err := aws.MachineSets(ic, &pool, "worker", "worker-user-data")
+		sets, err := aws.MachineSets(clusterID.ClusterID, ic, &pool, "worker", "worker-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create worker machine objects")
 		}
@@ -119,7 +121,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 		w.MachineSetRaw = raw
 	case libvirttypes.Name:
-		sets, err := libvirt.MachineSets(ic, &pool, "worker", "worker-user-data")
+		sets, err := libvirt.MachineSets(clusterID.ClusterID, ic, &pool, "worker", "worker-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create worker machine objects")
 		}
@@ -146,7 +148,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 
 		tags := map[string]string{
-			"openshiftClusterID": ic.ClusterID,
+			"openshiftClusterID": clusterID.ClusterID,
 		}
 		config.Tags = tags
 

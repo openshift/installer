@@ -14,7 +14,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]clusterapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]clusterapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS configuration: %q", configPlatform)
 	}
@@ -38,7 +38,7 @@ func MachineSets(config *types.InstallConfig, pool *types.MachinePool, role, use
 			replicas++
 		}
 
-		provider, err := provider(config.ClusterID, clustername, platform, mpool, idx, role, userDataSecret)
+		provider, err := provider(clusterID, clustername, platform, mpool, idx, role, userDataSecret)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
