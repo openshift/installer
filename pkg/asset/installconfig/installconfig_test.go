@@ -104,8 +104,8 @@ metadata:
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			fetcher := mock.NewMockFileFetcher(mockCtrl)
-			fetcher.EXPECT().FetchByName(installConfigFilename).
+			fileFetcher := mock.NewMockFileFetcher(mockCtrl)
+			fileFetcher.EXPECT().FetchByName(installConfigFilename).
 				Return(
 					&asset.File{
 						Filename: "test-filename",
@@ -114,7 +114,7 @@ metadata:
 				)
 
 			ic := &InstallConfig{}
-			found, err := ic.Load(fetcher)
+			found, err := ic.Load(fileFetcher)
 			assert.Equal(t, tc.expectedFound, found, "unexpected found value returned from Load")
 			if tc.expectedError {
 				assert.Error(t, err, "expected error from Load")

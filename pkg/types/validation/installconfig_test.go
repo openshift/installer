@@ -3,6 +3,7 @@ package validation
 import (
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -12,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/openstack/validation/mock"
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -254,9 +256,9 @@ func TestValidateInstallConfig(t *testing.T) {
 					OpenStack: &openstack.Platform{
 						Region:           "test-region",
 						NetworkCIDRBlock: *ipnet.MustParseCIDR("10.0.0.0/16"),
-						BaseImage:        "https://example.com/rhcos-qemu.qcow2",
+						BaseImage:        "test-image",
 						Cloud:            "test-cloud",
-						ExternalNetwork:  "test-ext-net",
+						ExternalNetwork:  "test-network",
 					},
 				}
 				return c
@@ -277,7 +279,16 @@ func TestValidateInstallConfig(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateInstallConfig(tc.installConfig).ToAggregate()
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			fetcher := mock.NewMockValidValuesFetcher(mockCtrl)
+			fetcher.EXPECT().GetCloudNames().Return([]string{"test-cloud"}, nil).AnyTimes()
+			fetcher.EXPECT().GetRegionNames(gomock.Any()).Return([]string{"test-region"}, nil).AnyTimes()
+			fetcher.EXPECT().GetImageNames(gomock.Any()).Return([]string{"test-image"}, nil).AnyTimes()
+			fetcher.EXPECT().GetNetworkNames(gomock.Any()).Return([]string{"test-network"}, nil).AnyTimes()
+
+			err := ValidateInstallConfig(tc.installConfig, fetcher).ToAggregate()
 			if tc.valid {
 				assert.NoError(t, err)
 			} else {

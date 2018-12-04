@@ -1,6 +1,8 @@
 package validation
 
 import (
+	"errors"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -8,10 +10,32 @@ import (
 )
 
 // ValidatePlatform checks that the specified platform is valid.
-func ValidatePlatform(p *openstack.Platform, fldPath *field.Path) field.ErrorList {
+func ValidatePlatform(p *openstack.Platform, fldPath *field.Path, fetcher ValidValuesFetcher) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if p.Region == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("region"), "must specfify region"))
+	validClouds, err := fetcher.GetCloudNames()
+	if err != nil {
+		allErrs = append(allErrs, field.InternalError(fldPath.Child("cloud"), errors.New("could not retrieve valid clouds")))
+	} else if !isValidValue(p.Cloud, validClouds) {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("cloud"), p.Cloud, validClouds))
+	} else {
+		validRegions, err := fetcher.GetRegionNames(p.Cloud)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(fldPath.Child("region"), errors.New("could not retrieve valid regions")))
+		} else if !isValidValue(p.Region, validRegions) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, validRegions))
+		}
+		validImages, err := fetcher.GetImageNames(p.Cloud)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(fldPath.Child("baseImage"), errors.New("could not retrieve valid images")))
+		} else if !isValidValue(p.BaseImage, validImages) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("baseImage"), p.BaseImage, validImages))
+		}
+		validNetworks, err := fetcher.GetNetworkNames(p.Cloud)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(fldPath.Child("externalNetwork"), errors.New("could not retrieve valid networks")))
+		} else if !isValidValue(p.ExternalNetwork, validNetworks) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("externalNetwork"), p.ExternalNetwork, validNetworks))
+		}
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
@@ -19,14 +43,14 @@ func ValidatePlatform(p *openstack.Platform, fldPath *field.Path) field.ErrorLis
 	if err := validate.SubnetCIDR(&p.NetworkCIDRBlock.IPNet); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("NetworkCIDRBlock"), p.NetworkCIDRBlock, err.Error()))
 	}
-	if err := validate.URI(p.BaseImage); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("baseImage"), p.BaseImage, err.Error()))
-	}
-	if p.Cloud == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("cloud"), "must specify cloud"))
-	}
-	if p.ExternalNetwork == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("externalNetwork"), "must specify external network"))
-	}
 	return allErrs
+}
+
+func isValidValue(s string, validValues []string) bool {
+	for _, v := range validValues {
+		if s == v {
+			return true
+		}
+	}
+	return false
 }

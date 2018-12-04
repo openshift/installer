@@ -18,7 +18,7 @@ import (
 )
 
 // ValidateInstallConfig checks that the specified install config is valid.
-func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
+func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if c.ObjectMeta.Name == "" {
 		allErrs = append(allErrs, field.Required(field.NewPath("metadata", "name"), "cluster name required"))
@@ -36,7 +36,7 @@ func ValidateInstallConfig(c *types.InstallConfig) field.ErrorList {
 	}
 	allErrs = append(allErrs, validateNetworking(&c.Networking, field.NewPath("networking"))...)
 	allErrs = append(allErrs, validateMachinePools(c.Machines, field.NewPath("machines"), c.Platform.Name())...)
-	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"))...)
+	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"), openStackValidValuesFetcher)...)
 	if err := validate.ImagePullSecret(c.PullSecret); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))
 	}
@@ -106,7 +106,7 @@ func validateMachinePools(pools []types.MachinePool, fldPath *field.Path, platfo
 	return allErrs
 }
 
-func validatePlatform(platform *types.Platform, fldPath *field.Path) field.ErrorList {
+func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher) field.ErrorList {
 	allErrs := field.ErrorList{}
 	activePlatform := ""
 	validate := func(n string, value interface{}, validation func(*field.Path) field.ErrorList) {
@@ -125,7 +125,7 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path) field.Error
 	}
 	if platform.OpenStack != nil {
 		validate(openstack.Name, platform.OpenStack, func(f *field.Path) field.ErrorList {
-			return openstackvalidation.ValidatePlatform(platform.OpenStack, f)
+			return openstackvalidation.ValidatePlatform(platform.OpenStack, f, openStackValidValuesFetcher)
 		})
 	}
 	if activePlatform == "" {

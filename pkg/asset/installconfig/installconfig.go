@@ -12,6 +12,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
 	"github.com/openshift/installer/pkg/types/validation"
 )
 
@@ -157,7 +158,7 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 		return false, errors.Wrapf(err, "failed to unmarshal")
 	}
 
-	if err := validation.ValidateInstallConfig(config).ToAggregate(); err != nil {
+	if err := validation.ValidateInstallConfig(config, openstackvalidation.NewValidValuesFetcher()).ToAggregate(); err != nil {
 		return false, errors.Wrapf(err, "invalid %q file", installConfigFilename)
 	}
 
