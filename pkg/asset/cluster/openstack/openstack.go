@@ -8,12 +8,12 @@ import (
 )
 
 // Metadata converts an install configuration to OpenStack metadata.
-func Metadata(config *types.InstallConfig) *openstack.Metadata {
+func Metadata(clusterID string, config *types.InstallConfig) *openstack.Metadata {
 	return &openstack.Metadata{
 		Region: config.Platform.OpenStack.Region,
 		Cloud:  config.Platform.OpenStack.Cloud,
 		Identifier: map[string]string{
-			"openshiftClusterID": config.ClusterID,
+			"openshiftClusterID": clusterID,
 		},
 	}
 }

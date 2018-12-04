@@ -9,12 +9,12 @@ import (
 )
 
 // Metadata converts an install configuration to AWS metadata.
-func Metadata(config *types.InstallConfig) *aws.Metadata {
+func Metadata(clusterID string, config *types.InstallConfig) *aws.Metadata {
 	return &aws.Metadata{
 		Region: config.Platform.AWS.Region,
 		Identifier: []map[string]string{
 			{
-				"openshiftClusterID": config.ClusterID,
+				"openshiftClusterID": clusterID,
 			},
 			{
 				fmt.Sprintf("kubernetes.io/cluster/%s", config.ObjectMeta.Name): "owned",

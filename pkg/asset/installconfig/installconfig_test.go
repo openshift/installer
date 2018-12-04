@@ -22,7 +22,6 @@ func validInstallConfig() *types.InstallConfig {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-cluster",
 		},
-		ClusterID:  "test-cluster-id",
 		BaseDomain: "test-domain",
 		Networking: types.Networking{
 			Type:        "OpenshiftSDN",

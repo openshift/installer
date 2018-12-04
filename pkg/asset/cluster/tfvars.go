@@ -34,6 +34,7 @@ func (t *TerraformVariables) Name() string {
 // Dependencies returns the dependency of the TerraformVariable
 func (t *TerraformVariables) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
 		new(rhcos.Image),
 		&bootstrap.Bootstrap{},
@@ -43,16 +44,17 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 
 // Generate generates the terraform.tfvars file.
 func (t *TerraformVariables) Generate(parents asset.Parents) error {
+	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	bootstrap := &bootstrap.Bootstrap{}
 	master := &machine.Master{}
 	rhcosImage := new(rhcos.Image)
-	parents.Get(installConfig, bootstrap, master, rhcosImage)
+	parents.Get(clusterID, installConfig, bootstrap, master, rhcosImage)
 
 	bootstrapIgn := string(bootstrap.Files()[0].Data)
 	masterIgn := string(master.Files()[0].Data)
 
-	data, err := tfvars.TFVars(installConfig.Config, string(*rhcosImage), bootstrapIgn, masterIgn)
+	data, err := tfvars.TFVars(clusterID.ClusterID, installConfig.Config, string(*rhcosImage), bootstrapIgn, masterIgn)
 	if err != nil {
 		return errors.Wrap(err, "failed to get Tfvars")
 	}

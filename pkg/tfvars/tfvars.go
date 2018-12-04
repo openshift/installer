@@ -28,9 +28,9 @@ type config struct {
 
 // TFVars converts the InstallConfig and Ignition content to
 // terraform.tfvar JSON.
-func TFVars(cfg *types.InstallConfig, osImage, bootstrapIgn, masterIgn string) ([]byte, error) {
+func TFVars(clusterID string, cfg *types.InstallConfig, osImage, bootstrapIgn, masterIgn string) ([]byte, error) {
 	config := &config{
-		ClusterID:   cfg.ClusterID,
+		ClusterID:   clusterID,
 		Name:        cfg.ObjectMeta.Name,
 		BaseDomain:  cfg.BaseDomain,
 		MachineCIDR: cfg.Networking.MachineCIDR.String(),
