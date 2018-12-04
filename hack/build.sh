@@ -2,7 +2,7 @@
 
 set -ex
 
-version() { echo "$@" | gawk -F. '{ printf("%03d%03d%03d\n", $1,$2,$3); }'; }
+version() { IFS="."; printf "%03d%03d%03d\\n" $@; }
 
 average_go_version=1.10
 current_go_version=$(go version | cut -d " " -f 3)
