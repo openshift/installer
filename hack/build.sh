@@ -25,6 +25,11 @@ TAGS="${TAGS:-}"
 OUTPUT="${OUTPUT:-bin/openshift-install}"
 export CGO_ENABLED=0
 
+if [ ! -x data/data/bin/terraform ]
+then
+	(hack/get-terraform.sh)
+fi
+
 case "${MODE}" in
 release)
 	TAGS="${TAGS} release"

@@ -1,2 +1,3 @@
 /bin/
 .openshift-install.log
+/data/data/bin/

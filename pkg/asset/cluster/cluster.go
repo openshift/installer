@@ -111,10 +111,10 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		return fmt.Errorf("no known platform")
 	}
 
-	logrus.Infof("Using Terraform to create cluster...")
+	logrus.Infof("Creating cluster...")
 	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name())
 	if err != nil {
-		err = errors.Wrap(err, "failed to run terraform")
+		err = errors.Wrap(err, "failed to create cluster")
 	}
 
 	data, err2 := ioutil.ReadFile(stateFile)
@@ -131,7 +131,6 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		}
 	}
 
-	// TODO(yifan): Use the kubeconfig to verify the cluster is up.
 	return err
 }
 

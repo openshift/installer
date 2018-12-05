@@ -38,6 +38,10 @@ func Unpack(base string, uri string) (err error) {
 		return nil
 	}
 
+	if err := os.MkdirAll(filepath.Dir(base), 0777); err != nil {
+		return err
+	}
+
 	out, err := os.OpenFile(base, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
 	if err != nil {
 		return err

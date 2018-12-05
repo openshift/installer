@@ -25,7 +25,7 @@ fi &&
 TERRAFORM_VERSION="0.11.8" &&
 TERRAFORM_URL="https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_${OS}_${ARCH}.zip" &&
 echo "pulling ${TERRAFORM_URL}" >&2 &&
-cd "$(dirname "$0")/.." &&
+cd "$(dirname "$0")/../data/data" &&
 mkdir -p bin &&
 curl -L "${TERRAFORM_URL}" | "${FUNZIP}" >bin/terraform &&
 chmod +x bin/terraform

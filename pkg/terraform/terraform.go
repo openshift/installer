@@ -2,6 +2,7 @@ package terraform
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/openshift/installer/data"
@@ -10,17 +11,12 @@ import (
 
 const (
 	// StateFileName is the default name for Terraform state files.
-	StateFileName string = "terraform.tfstate"
+	StateFileName  string = "terraform.tfstate"
+	executablePath string = "bin/terraform"
 )
 
 func terraformExec(clusterDir string, args ...string) error {
-	// Create an executor
-	ex, err := newExecutor()
-	if err != nil {
-		return errors.Wrap(err, "failed to create Terraform executor")
-	}
-
-	err = ex.execute(clusterDir, args...)
+	err := Execute(clusterDir, args...)
 	if err != nil {
 		return errors.Wrap(err, "failed to execute Terraform")
 	}
@@ -91,6 +87,16 @@ func unpackAndInit(dir string, platform string) (err error) {
 	err = unpack(dir, platform)
 	if err != nil {
 		return errors.Wrap(err, "failed to unpack Terraform modules")
+	}
+
+	err = data.Unpack(filepath.Join(dir, executablePath), filepath.FromSlash(executablePath))
+	if err != nil {
+		return errors.Wrap(err, "failed to unpack Terraform binary")
+	}
+
+	err = os.Chmod(filepath.Join(dir, executablePath), 0555)
+	if err != nil {
+		return errors.Wrap(err, "failed to make Terraform binary executable")
 	}
 
 	err = terraformExec(dir, "init", "-input=false", "-no-color")
