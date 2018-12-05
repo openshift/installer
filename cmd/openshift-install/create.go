@@ -166,7 +166,6 @@ func destroyBootstrap(ctx context.Context, directory string) (err error) {
 	}
 	defer cleanup()
 
-	logrus.Info("Waiting for bootstrap completion...")
 	config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(directory, "auth", "kubeconfig"))
 	if err != nil {
 		return errors.Wrap(err, "loading kubeconfig")
@@ -179,21 +178,41 @@ func destroyBootstrap(ctx context.Context, directory string) (err error) {
 
 	discovery := client.Discovery()
 
-	apiContext, cancel := context.WithTimeout(ctx, 30*time.Minute)
+	apiTimeout := 30 * time.Minute
+	logrus.Infof("Waiting %v for the Kubernetes API...", apiTimeout)
+	apiContext, cancel := context.WithTimeout(ctx, apiTimeout)
 	defer cancel()
+	// Poll quickly so we notice changes, but only log when the response
+	// changes (because that's interesting) or when we've seen 15 of the
+	// same errors in a row (to show we're still alive).
+	logDownsample := 15
+	silenceRemaining := logDownsample
+	previousErrorSuffix := ""
 	wait.Until(func() {
 		version, err := discovery.ServerVersion()
 		if err == nil {
 			logrus.Infof("API %s up", version)
 			cancel()
 		} else {
-			logrus.Debugf("API not up yet: %s", err)
+			silenceRemaining--
+			chunks := strings.Split(err.Error(), ":")
+			errorSuffix := chunks[len(chunks)-1]
+			if previousErrorSuffix != errorSuffix {
+				logrus.Debugf("Still waiting for the Kubernetes API: %v", err)
+				previousErrorSuffix = errorSuffix
+				silenceRemaining = logDownsample
+			} else if silenceRemaining == 0 {
+				logrus.Debugf("Still waiting for the Kubernetes API: %v", err)
+				silenceRemaining = logDownsample
+			}
 		}
 	}, 2*time.Second, apiContext.Done())
 
 	events := client.CoreV1().Events("kube-system")
 
-	eventContext, cancel := context.WithTimeout(ctx, 30*time.Minute)
+	eventTimeout := 30 * time.Minute
+	logrus.Infof("Waiting %v for the bootstrap-complete event...", eventTimeout)
+	eventContext, cancel := context.WithTimeout(ctx, eventTimeout)
 	defer cancel()
 	_, err = Until(
 		eventContext,
