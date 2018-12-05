@@ -66,6 +66,6 @@ do
 done
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
-touch /opt/tectonic/.tectonic.done
+touch /opt/openshift/.openshift.done
 
-echo "Tectonic installation is done"
+echo "OpenShift installation is done"

@@ -9,9 +9,9 @@ import (
 
 const (
 	// TemplateDir is the target directory for all template assets' files
-	TemplateDir     = "templates"
-	bootkubeDataDir = "manifests/bootkube/"
-	tectonicDataDir = "manifests/tectonic/"
+	TemplateDir      = "templates"
+	bootkubeDataDir  = "manifests/bootkube/"
+	openshiftDataDir = "manifests/openshift/"
 )
 
 // GetBootkubeTemplate returns the contents of the file in bootkube data dir
@@ -19,9 +19,9 @@ func GetBootkubeTemplate(uri string) ([]byte, error) {
 	return getFileContents(path.Join(bootkubeDataDir, uri))
 }
 
-// GetTectonicTemplate returns the contents of the file in tectonic data dir
-func GetTectonicTemplate(uri string) ([]byte, error) {
-	return getFileContents(path.Join(tectonicDataDir, uri))
+// GetOpenshiftTemplate returns the contents of the file in openshift data dir
+func GetOpenshiftTemplate(uri string) ([]byte, error) {
+	return getFileContents(path.Join(openshiftDataDir, uri))
 }
 
 // getFileContents the content of the given URI, assuming that it's a file

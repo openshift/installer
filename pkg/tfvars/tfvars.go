@@ -15,10 +15,10 @@ import (
 )
 
 type config struct {
-	ClusterID  string `json:"tectonic_cluster_id,omitempty"`
-	Name       string `json:"tectonic_cluster_name,omitempty"`
-	BaseDomain string `json:"tectonic_base_domain,omitempty"`
-	Masters    int    `json:"tectonic_master_count,omitempty"`
+	ClusterID  string `json:"cluster_id,omitempty"`
+	Name       string `json:"cluster_name,omitempty"`
+	BaseDomain string `json:"base_domain,omitempty"`
+	Masters    int    `json:"master_count,omitempty"`
 
 	IgnitionBootstrap string `json:"ignition_bootstrap,omitempty"`
 	IgnitionMaster    string `json:"ignition_master,omitempty"`

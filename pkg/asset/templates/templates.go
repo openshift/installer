@@ -4,7 +4,7 @@ package templates
 import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
-	"github.com/openshift/installer/pkg/asset/templates/content/tectonic"
+	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 )
 
 var _ asset.WritableAsset = (*Templates)(nil)
@@ -38,10 +38,10 @@ func (m *Templates) Dependencies() []asset.Asset {
 		&bootkube.OpenshiftServiceCertSignerNamespace{},
 		&bootkube.EtcdServiceKubeSystem{},
 		&bootkube.HostEtcdServiceKubeSystem{},
-		&tectonic.BindingDiscovery{},
-		&tectonic.CloudCredsSecret{},
-		&tectonic.KubeadminPasswordSecret{},
-		&tectonic.RoleCloudCredsSecretReader{},
+		&openshift.BindingDiscovery{},
+		&openshift.CloudCredsSecret{},
+		&openshift.KubeadminPasswordSecret{},
+		&openshift.RoleCloudCredsSecretReader{},
 	}
 }
 
@@ -63,10 +63,10 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	etcdServiceKubeSystem := &bootkube.EtcdServiceKubeSystem{}
 	hostEtcdServiceKubeSystem := &bootkube.HostEtcdServiceKubeSystem{}
 
-	bindingDiscovery := &tectonic.BindingDiscovery{}
-	cloudCredsSecret := &tectonic.CloudCredsSecret{}
-	kubeadminPasswordSecret := &tectonic.KubeadminPasswordSecret{}
-	roleCloudCredsSecretReader := &tectonic.RoleCloudCredsSecretReader{}
+	bindingDiscovery := &openshift.BindingDiscovery{}
+	cloudCredsSecret := &openshift.CloudCredsSecret{}
+	kubeadminPasswordSecret := &openshift.KubeadminPasswordSecret{}
+	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
 
 	dependencies.Get(
 		kubeCloudConfig,

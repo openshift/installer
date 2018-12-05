@@ -1,10 +1,10 @@
-variable "tectonic_openstack_base_image" {
+variable "openstack_base_image" {
   type        = "string"
   default     = "rhcos"
   description = "Name of the base image to use for the nodes."
 }
 
-variable "tectonic_openstack_credentials_auth_url" {
+variable "openstack_credentials_auth_url" {
   type    = "string"
   default = ""
 
@@ -13,7 +13,7 @@ required if cloud is not specified) The Identity authentication URL. If omitted,
 EOF
 }
 
-variable "tectonic_openstack_credentials_cert" {
+variable "openstack_credentials_cert" {
   type    = "string"
   default = ""
 
@@ -22,7 +22,7 @@ Specify client certificate file for SSL client authentication. You can specify e
 EOF
 }
 
-variable "tectonic_openstack_credentials_cloud" {
+variable "openstack_credentials_cloud" {
   type    = "string"
   default = ""
 
@@ -31,7 +31,7 @@ required if auth_url is not specified) An entry in a clouds.yaml file. See the O
 EOF
 }
 
-variable "tectonic_openstack_credentials_domain_id" {
+variable "openstack_credentials_domain_id" {
   type    = "string"
   default = ""
 
@@ -40,7 +40,7 @@ The ID of the Domain to scope to (Identity v3). If omitted, the OS_DOMAIN_ID env
 EOF
 }
 
-variable "tectonic_openstack_credentials_domain_name" {
+variable "openstack_credentials_domain_name" {
   type    = "string"
   default = ""
 
@@ -49,7 +49,7 @@ The Name of the Domain to scope to (Identity v3). If omitted, the following envi
 EOF
 }
 
-variable "tectonic_openstack_credentials_endpoint_type" {
+variable "openstack_credentials_endpoint_type" {
   type    = "string"
   default = "public"
 
@@ -58,7 +58,7 @@ Specify which type of endpoint to use from the service catalog. It can be set us
 EOF
 }
 
-variable "tectonic_openstack_credentials_insecure" {
+variable "openstack_credentials_insecure" {
   default = false
 
   description = <<EOF
@@ -66,7 +66,7 @@ Trust self-signed SSL certificates. If omitted, the OS_INSECURE environment vari
 EOF
 }
 
-variable "tectonic_openstack_credentials_key" {
+variable "openstack_credentials_key" {
   type    = "string"
   default = ""
 
@@ -75,7 +75,7 @@ Specify client private key file for SSL client authentication. You can specify e
 EOF
 }
 
-variable "tectonic_openstack_credentials_password" {
+variable "openstack_credentials_password" {
   type    = "string"
   default = ""
 
@@ -84,7 +84,7 @@ The Password to login with. If omitted, the OS_PASSWORD environment variable is 
 EOF
 }
 
-variable "tectonic_openstack_credentials_project_domain_id" {
+variable "openstack_credentials_project_domain_id" {
   type    = "string"
   default = ""
 
@@ -93,7 +93,7 @@ The domain ID where the project is located If omitted, the OS_PROJECT_DOMAIN_ID 
 EOF
 }
 
-variable "tectonic_openstack_credentials_project_domain_name" {
+variable "openstack_credentials_project_domain_name" {
   type    = "string"
   default = ""
 
@@ -102,7 +102,7 @@ The domain name where the project is located. If omitted, the OS_PROJECT_DOMAIN_
 EOF
 }
 
-variable "tectonic_openstack_credentials_region" {
+variable "openstack_credentials_region" {
   type    = "string"
   default = ""
 
@@ -111,7 +111,7 @@ The region of the OpenStack cloud to use. If omitted, the OS_REGION_NAME environ
 EOF
 }
 
-variable "tectonic_openstack_credentials_swauth" {
+variable "openstack_credentials_swauth" {
   default = false
 
   description = <<EOF
@@ -119,7 +119,7 @@ Set to true to authenticate against Swauth, a Swift-native authentication system
 EOF
 }
 
-variable "tectonic_openstack_credentials_tenant_id" {
+variable "openstack_credentials_tenant_id" {
   type    = "string"
   default = ""
 
@@ -128,7 +128,7 @@ The ID of the Tenant (Identity v2) or Project (Identity v3) to login with. If om
 EOF
 }
 
-variable "tectonic_openstack_credentials_tenant_name" {
+variable "openstack_credentials_tenant_name" {
   type    = "string"
   default = ""
 
@@ -137,7 +137,7 @@ The Name of the Tenant (Identity v2) or Project (Identity v3) to login with. If 
 EOF
 }
 
-variable "tectonic_openstack_credentials_token" {
+variable "openstack_credentials_token" {
   type    = "string"
   default = ""
 
@@ -146,7 +146,7 @@ Required if not using user_name and password) A token is an expiring, temporary 
 EOF
 }
 
-variable "tectonic_openstack_credentials_use_octavia" {
+variable "openstack_credentials_use_octavia" {
   default = false
 
   description = <<EOF
@@ -154,7 +154,7 @@ If set to true, API requests will go the Load Balancer service (Octavia) instead
 EOF
 }
 
-variable "tectonic_openstack_credentials_user_domain_id" {
+variable "openstack_credentials_user_domain_id" {
   type    = "string"
   default = ""
 
@@ -163,7 +163,7 @@ The domain ID where the user is located. If omitted, the OS_USER_DOMAIN_ID envir
 EOF
 }
 
-variable "tectonic_openstack_credentials_user_domain_name" {
+variable "openstack_credentials_user_domain_name" {
   type    = "string"
   default = ""
 
@@ -172,7 +172,7 @@ The domain name where the user is located. If omitted, the OS_USER_DOMAIN_NAME e
 EOF
 }
 
-variable "tectonic_openstack_credentials_user_id" {
+variable "openstack_credentials_user_id" {
   type    = "string"
   default = ""
 
@@ -181,7 +181,7 @@ The User ID to login with. If omitted, the OS_USER_ID environment variable is us
 EOF
 }
 
-variable "tectonic_openstack_credentials_user_name" {
+variable "openstack_credentials_user_name" {
   type    = "string"
   default = ""
 
@@ -190,7 +190,7 @@ The Username to login with. If omitted, the OS_USERNAME environment variable is 
 EOF
 }
 
-variable "tectonic_openstack_external_master_subnet_ids" {
+variable "openstack_external_master_subnet_ids" {
   type    = "list"
   default = []
 
@@ -202,7 +202,7 @@ Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
 EOF
 }
 
-variable "tectonic_openstack_external_network" {
+variable "openstack_external_network" {
   type    = "string"
   default = ""
 
@@ -212,7 +212,7 @@ Floating IP access to the deployed nodes.
 EOF
 }
 
-variable "tectonic_openstack_extra_tags" {
+variable "openstack_extra_tags" {
   type    = "map"
   default = {}
 
@@ -223,7 +223,7 @@ Example: `{ "key" = "value", "foo" = "bar" }`
 EOF
 }
 
-variable "tectonic_openstack_master_extra_sg_ids" {
+variable "openstack_master_extra_sg_ids" {
   type    = "list"
   default = []
 
@@ -234,18 +234,18 @@ Example: `["sg-51530134", "sg-b253d7cc"]`
 EOF
 }
 
-variable "tectonic_openstack_master_flavor_name" {
+variable "openstack_master_flavor_name" {
   type        = "string"
   default     = "m1.medium"
   description = "Instance size for the master node(s). Example: `m1.medium`."
 }
 
-variable "tectonic_openstack_region" {
+variable "openstack_region" {
   type        = "string"
   description = "The target OpenStack region for the cluster."
 }
 
-variable "tectonic_openstack_network_cidr_block" {
+variable "openstack_network_cidr_block" {
   type = "string"
 
   description = <<EOF
