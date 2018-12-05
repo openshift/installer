@@ -129,6 +129,44 @@ resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_insecur
   security_group_id = "${openstack_networking_secgroup_v2.master.id}"
 }
 
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 10251
+  port_range_max    = 10251
+  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_scheduler_from_worker" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 10251
+  port_range_max    = 10251
+  remote_group_id   = "${openstack_networking_secgroup_v2.worker.id}"
+  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller_manager" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 10252
+  port_range_max    = 10252
+  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+}
+
+resource "openstack_networking_secgroup_rule_v2" "master_ingress_kube_controller_manager_from_worker" {
+  direction         = "ingress"
+  ethertype         = "IPv4"
+  protocol          = "tcp"
+  port_range_min    = 10252
+  port_range_max    = 10252
+  remote_group_id   = "${openstack_networking_secgroup_v2.worker.id}"
+  security_group_id = "${openstack_networking_secgroup_v2.master.id}"
+}
+
 resource "openstack_networking_secgroup_rule_v2" "master_ingress_kubelet_secure" {
   direction         = "ingress"
   ethertype         = "IPv4"
