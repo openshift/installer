@@ -3,8 +3,8 @@
 ## Supported Platforms
 
 * AWS
-* [Libvirt with KVM](docs/dev/libvirt-howto.md)
-* OpenStack (Experimental)
+* [Libvirt with KVM](docs/dev/libvirt-howto.md) (development only)
+* OpenStack (experimental)
 
 ## Quick Start
 
