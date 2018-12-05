@@ -29,8 +29,8 @@ type InstallConfig struct {
 	// ClusterID is the ID of the cluster.
 	ClusterID string `json:"clusterID"`
 
-	// Admin is the configuration for the admin user.
-	Admin Admin `json:"admin"`
+	// SSHKey is the public ssh key to provide access to instances.
+	SSHKey string `json:"sshKey"`
 
 	// BaseDomain is the base domain to which the cluster should belong.
 	BaseDomain string `json:"baseDomain"`
@@ -58,16 +58,6 @@ func (c *InstallConfig) MasterCount() int {
 		}
 	}
 	return 1
-}
-
-// Admin is the configuration for the admin user.
-type Admin struct {
-	// Email is the email address of the admin user.
-	Email string `json:"email"`
-	// Password is the password of the admin user.
-	Password string `json:"password"`
-	// SSHKey to use for the access to compute instances.
-	SSHKey string `json:"sshKey,omitempty"`
 }
 
 // Platform is the configuration for the specific platform upon which to perform

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io/ioutil"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -268,7 +269,12 @@ func logComplete(directory string) error {
 		return err
 	}
 	kubeconfig := filepath.Join(absDir, "auth", "kubeconfig")
-	logrus.Infof("Install complete! Run 'export KUBECONFIG=%s' to manage your cluster.", kubeconfig)
-	logrus.Info("After exporting your kubeconfig, run 'oc -h' for a list of OpenShift client commands.")
+	pwFile := filepath.Join(absDir, "auth", "kubeadmin-password")
+	pw, err := ioutil.ReadFile(pwFile)
+	if err != nil {
+		return err
+	}
+	logrus.Infof("kubeadmin user password: %s", pw)
+	logrus.Infof("Install complete! The kubeconfig is located here: %s", kubeconfig)
 	return nil
 }

@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
+	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/templates/content/tectonic"
 )
 
@@ -40,9 +41,11 @@ func (t *Tectonic) Dependencies() []asset.Asset {
 		&ClusterK8sIO{},
 		&machines.Worker{},
 		&machines.Master{},
+		&password.KubeadminPassword{},
 
 		&tectonic.BindingDiscovery{},
 		&tectonic.CloudCredsSecret{},
+		&tectonic.KubeadminPasswordSecret{},
 		&tectonic.RoleCloudCredsSecretReader{},
 	}
 }
@@ -50,10 +53,11 @@ func (t *Tectonic) Dependencies() []asset.Asset {
 // Generate generates the respective operator config.yml files
 func (t *Tectonic) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
+	kubeadminPassword := &password.KubeadminPassword{}
 	clusterk8sio := &ClusterK8sIO{}
 	worker := &machines.Worker{}
 	master := &machines.Master{}
-	dependencies.Get(installConfig, clusterk8sio, worker, master)
+	dependencies.Get(installConfig, clusterk8sio, worker, master, kubeadminPassword)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -91,18 +95,22 @@ func (t *Tectonic) Generate(dependencies asset.Parents) error {
 	}
 
 	templateData := &tectonicTemplateData{
-		CloudCreds: cloudCreds,
+		CloudCreds:                   cloudCreds,
+		Base64EncodedKubeadminPwHash: base64.StdEncoding.EncodeToString(kubeadminPassword.PasswordHash),
 	}
 
 	bindingDiscovery := &tectonic.BindingDiscovery{}
 	cloudCredsSecret := &tectonic.CloudCredsSecret{}
+	kubeadminPasswordSecret := &tectonic.KubeadminPasswordSecret{}
 	roleCloudCredsSecretReader := &tectonic.RoleCloudCredsSecretReader{}
 	dependencies.Get(
 		bindingDiscovery,
 		cloudCredsSecret,
+		kubeadminPasswordSecret,
 		roleCloudCredsSecretReader)
 	assetData := map[string][]byte{
 		"99_binding-discovery.yaml":                             []byte(bindingDiscovery.Files()[0].Data),
+		"99_kubeadmin-password-secret.yaml":                     applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
 		"99_openshift-cluster-api_cluster.yaml":                 clusterk8sio.Raw,
 		"99_openshift-cluster-api_master-machines.yaml":         master.MachinesRaw,
 		"99_openshift-cluster-api_master-user-data-secret.yaml": master.UserDataSecretRaw,

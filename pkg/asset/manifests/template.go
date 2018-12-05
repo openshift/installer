@@ -36,5 +36,6 @@ type bootkubeTemplateData struct {
 }
 
 type tectonicTemplateData struct {
-	CloudCreds cloudCredsSecretData
+	CloudCreds                   cloudCredsSecretData
+	Base64EncodedKubeadminPwHash string
 }

@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
+	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/types"
 )
@@ -23,6 +24,11 @@ import (
 const (
 	// metadataFileName is name of the file where clustermetadata is stored.
 	metadataFileName = "metadata.json"
+)
+
+var (
+	// kubeadminPasswordPath is the path where kubeadmin user password is stored.
+	kubeadminPasswordPath = filepath.Join("auth", "kubeadmin-password")
 )
 
 // Cluster uses the terraform executable to launch a cluster
@@ -45,6 +51,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&TerraformVariables{},
 		&kubeconfig.Admin{},
+		&password.KubeadminPassword{},
 	}
 }
 
@@ -53,7 +60,8 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	installConfig := &installconfig.InstallConfig{}
 	terraformVariables := &TerraformVariables{}
 	adminKubeconfig := &kubeconfig.Admin{}
-	parents.Get(installConfig, terraformVariables, adminKubeconfig)
+	kubeadminPassword := &password.KubeadminPassword{}
+	parents.Get(installConfig, terraformVariables, adminKubeconfig, kubeadminPassword)
 
 	// Copy the terraform.tfvars to a temp directory where the terraform will be invoked within.
 	tmpDir, err := ioutil.TempDir("", "openshift-install-")
@@ -85,6 +93,10 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 				logrus.Error(err2)
 			}
 		}
+		c.FileList = append(c.FileList, &asset.File{
+			Filename: kubeadminPasswordPath,
+			Data:     []byte(kubeadminPassword.Password),
+		})
 		// serialize metadata and stuff it into c.FileList
 	}()
 
