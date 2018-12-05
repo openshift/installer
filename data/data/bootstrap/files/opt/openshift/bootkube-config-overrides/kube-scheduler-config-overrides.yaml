@@ -1,2 +1,0 @@
-apiVersion: componentconfig/v1alpha1
-kind: KubeSchedulerConfiguration
