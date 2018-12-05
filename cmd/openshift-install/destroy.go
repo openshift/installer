@@ -30,18 +30,20 @@ func newDestroyClusterCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "cluster",
 		Short: "Destroy an OpenShift cluster",
-		RunE:  runDestroyCmd,
+		Run: func(_ *cobra.Command, _ []string) {
+			cleanup := setupFileHook(rootOpts.dir)
+			defer cleanup()
+
+			err := runDestroyCmd(rootOpts.dir)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+		},
 	}
 }
 
-func runDestroyCmd(cmd *cobra.Command, args []string) error {
-	cleanup, err := setupFileHook(rootOpts.dir)
-	if err != nil {
-		return errors.Wrap(err, "failed to setup logging hook")
-	}
-	defer cleanup()
-
-	destroyer, err := destroy.New(logrus.StandardLogger(), rootOpts.dir)
+func runDestroyCmd(directory string) error {
+	destroyer, err := destroy.New(logrus.StandardLogger(), directory)
 	if err != nil {
 		return errors.Wrap(err, "Failed while preparing to destroy cluster")
 	}
@@ -49,7 +51,7 @@ func runDestroyCmd(cmd *cobra.Command, args []string) error {
 		return errors.Wrap(err, "Failed to destroy cluster")
 	}
 
-	store, err := asset.NewStore(rootOpts.dir)
+	store, err := asset.NewStore(directory)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create asset store")
 	}
@@ -65,8 +67,14 @@ func newDestroyBootstrapCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "bootstrap",
 		Short: "Destroy the bootstrap resources",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return bootstrap.Destroy(rootOpts.dir)
+		Run: func(cmd *cobra.Command, args []string) {
+			cleanup := setupFileHook(rootOpts.dir)
+			defer cleanup()
+
+			err := bootstrap.Destroy(rootOpts.dir)
+			if err != nil {
+				logrus.Fatal(err)
+			}
 		},
 	}
 }
