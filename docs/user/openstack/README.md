@@ -274,6 +274,18 @@ api VM:
 
 * `openstack server delete <cluster name>-api`
 
+## Disambiguating the External Network
+
+The installer assumes that the name of the external network is unique.  In case
+there is more than one network with the same name as the desired external
+network, it’s possible to provide a UUID to specify which network should be
+used.
+
+```
+$ env TF_VAR_openstack_external_network_id="6a32627e-d98d-40d8-9324-5da7cf1452fc" \
+> bin/openshift-install create cluster
+```
+
 ## Troubleshooting
 
 See the [troubleshooting installer issues in OpenStack](./troubleshooting.md) guide.

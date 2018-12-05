@@ -68,12 +68,13 @@ module "masters" {
 module "topology" {
   source = "./topology"
 
-  cidr_block       = "${var.machine_cidr}"
-  cluster_id       = "${var.cluster_id}"
-  external_network = "${var.openstack_external_network}"
-  masters_count    = "${var.master_count}"
-  lb_floating_ip   = "${var.openstack_lb_floating_ip}"
-  trunk_support    = "${var.openstack_trunk_support}"
+  cidr_block          = "${var.machine_cidr}"
+  cluster_id          = "${var.cluster_id}"
+  external_network    = "${var.openstack_external_network}"
+  external_network_id = "${var.openstack_external_network_id}"
+  masters_count       = "${var.master_count}"
+  lb_floating_ip      = "${var.openstack_lb_floating_ip}"
+  trunk_support       = "${var.openstack_trunk_support}"
 }
 
 resource "openstack_objectstorage_container_v1" "container" {
