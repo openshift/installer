@@ -7,6 +7,12 @@ variable "cluster_id" {
 }
 
 variable "external_network" {
+  description = "Name of the external network providing Floating IP addresses."
+  type        = "string"
+  default     = ""
+}
+
+variable "external_network_id" {
   description = "UUID of the external network providing Floating IP addresses."
   type        = "string"
   default     = ""

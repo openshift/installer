@@ -17,7 +17,7 @@ type Platform struct {
 	Cloud string `json:"cloud"`
 
 	// ExternalNetwork
-	// The OpenStack external network to be used for installation.
+	// The OpenStack external network name to be used for installation.
 	ExternalNetwork string `json:"externalNetwork"`
 
 	// FlavorName
