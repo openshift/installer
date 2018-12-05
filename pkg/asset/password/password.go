@@ -65,7 +65,7 @@ func (a *KubeadminPassword) generateRandomPasswordHash(length int) error {
 	if a.Password == "" {
 		a.Password = string(pw)
 	}
-	bytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	bytes, err := bcrypt.GenerateFromPassword([]byte(a.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
