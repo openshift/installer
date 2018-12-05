@@ -64,8 +64,8 @@ resource "libvirt_domain" "master" {
 
   name = "${var.cluster_name}-master-${count.index}"
 
-  memory = "3072"
-  vcpu   = "2"
+  memory = "${var.libvirt_master_memory}"
+  vcpu   = "${var.libvirt_master_vcpu}"
 
   coreos_ignition = "${libvirt_ignition.master.id}"
 
