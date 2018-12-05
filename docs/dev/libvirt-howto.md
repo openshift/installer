@@ -22,7 +22,7 @@ If it is missing, try some of the ideas [here][kvm-install].
 On Fedora, CentOS/RHEL:
 
 ```sh
-sudo yum install libvirt libvirt-devel
+sudo yum install libvirt libvirt-devel libvirt-daemon-kvm qemu-kvm
 ```
 
 Then start libvirtd:
