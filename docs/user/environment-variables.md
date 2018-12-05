@@ -36,10 +36,15 @@ The installer accepts a number of environment variable that allow the interactiv
 
 ## Platform-Specific
 
+### AWS
+
 * `AWS_PROFILE`:
      The AWS profile that corresponds to value in `${HOME}/.aws/credentials`.  If not provided, the default is "default".
 * `OPENSHIFT_INSTALL_AWS_REGION`:
     The AWS region to be used for installation.
+
+### libvirt
+
 * `OPENSHIFT_INSTALL_LIBVIRT_URI`:
     The libvirt connection URI to be used.
     This must be accessible from the running cluster.
@@ -49,3 +54,14 @@ The installer accepts a number of environment variable that allow the interactiv
 
     **Warning**: you should only set this if you're testing RHCOS releases.
     Most users should allow the installer to choose the OS image.
+
+### OpenStack
+
+* `OPENSHIFT_INSTALL_OPENSTACK_CLOUD`:
+     The OpenStack cloud name from `clouds.yaml` (typically ${HOME}/.config/openstack/clouds.yaml`).
+* `OPENSHIFT_INSTALL_OPENSTACK_REGION`:
+     The OpenStack region to be used for installation. For example, `regionOne`.
+* `OPENSHIFT_INSTALL_OPENSTACK_IMAGE`:
+     The OpenStack image name to be used for installation.
+* `OPENSHIFT_INSTALL_OPENSTACK_EXTERNAL_NETWORK`:
+     The OpenStack external network name to be used for installation.
