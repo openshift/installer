@@ -68,7 +68,6 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftServiceCertSignerSecret{},
 		&bootkube.Pull{},
-		&bootkube.CVOOverrides{},
 		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
@@ -154,7 +153,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		RootCaCert:                      string(rootCA.Cert()),
 		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(serviceServingCA.Cert()),
 		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(serviceServingCA.Key()),
-		CVOClusterID:                    installConfig.Config.ClusterID,
 		EtcdEndpointHostnames:           etcdEndpointHostnames,
 		EtcdEndpointDNSSuffix:           installConfig.Config.BaseDomain,
 	}
@@ -163,7 +161,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	machineConfigServerTLSSecret := &bootkube.MachineConfigServerTLSSecret{}
 	openshiftServiceCertSignerSecret := &bootkube.OpenshiftServiceCertSignerSecret{}
 	pull := &bootkube.Pull{}
-	cVOOverrides := &bootkube.CVOOverrides{}
 	hostEtcdServiceEndpointsKubeSystem := &bootkube.HostEtcdServiceEndpointsKubeSystem{}
 	kubeSystemConfigmapEtcdServingCA := &bootkube.KubeSystemConfigmapEtcdServingCA{}
 	kubeSystemConfigmapRootCA := &bootkube.KubeSystemConfigmapRootCA{}
@@ -180,7 +177,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		machineConfigServerTLSSecret,
 		openshiftServiceCertSignerSecret,
 		pull,
-		cVOOverrides,
 		hostEtcdServiceEndpointsKubeSystem,
 		kubeSystemConfigmapEtcdServingCA,
 		kubeSystemConfigmapRootCA,
@@ -197,7 +193,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"machine-config-server-tls-secret.yaml":      applyTemplateData(machineConfigServerTLSSecret.Files()[0].Data, templateData),
 		"openshift-service-signer-secret.yaml":       applyTemplateData(openshiftServiceCertSignerSecret.Files()[0].Data, templateData),
 		"pull.json":                                  applyTemplateData(pull.Files()[0].Data, templateData),
-		"cvo-overrides.yaml":                         applyTemplateData(cVOOverrides.Files()[0].Data, templateData),
 		"host-etcd-service-endpoints.yaml":           applyTemplateData(hostEtcdServiceEndpointsKubeSystem.Files()[0].Data, templateData),
 		"kube-system-configmap-etcd-serving-ca.yaml": applyTemplateData(kubeSystemConfigmapEtcdServingCA.Files()[0].Data, templateData),
 		"kube-system-configmap-root-ca.yaml":         applyTemplateData(kubeSystemConfigmapRootCA.Files()[0].Data, templateData),

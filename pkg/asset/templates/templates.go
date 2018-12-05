@@ -27,7 +27,6 @@ func (m *Templates) Dependencies() []asset.Asset {
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftServiceCertSignerSecret{},
 		&bootkube.Pull{},
-		&bootkube.CVOOverrides{},
 		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
@@ -51,7 +50,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	machineConfigServerTLSSecret := &bootkube.MachineConfigServerTLSSecret{}
 	openshiftServiceCertSignerSecret := &bootkube.OpenshiftServiceCertSignerSecret{}
 	pull := &bootkube.Pull{}
-	cVOOverrides := &bootkube.CVOOverrides{}
 	hostEtcdServiceEndpointsKubeSystem := &bootkube.HostEtcdServiceEndpointsKubeSystem{}
 	kubeSystemConfigmapEtcdServingCA := &bootkube.KubeSystemConfigmapEtcdServingCA{}
 	kubeSystemConfigmapRootCA := &bootkube.KubeSystemConfigmapRootCA{}
@@ -73,7 +71,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 		machineConfigServerTLSSecret,
 		openshiftServiceCertSignerSecret,
 		pull,
-		cVOOverrides,
 		hostEtcdServiceEndpointsKubeSystem,
 		kubeSystemConfigmapEtcdServingCA,
 		kubeSystemConfigmapRootCA,
@@ -94,7 +91,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, machineConfigServerTLSSecret.Files()...)
 	m.FileList = append(m.FileList, openshiftServiceCertSignerSecret.Files()...)
 	m.FileList = append(m.FileList, pull.Files()...)
-	m.FileList = append(m.FileList, cVOOverrides.Files()...)
 	m.FileList = append(m.FileList, hostEtcdServiceEndpointsKubeSystem.Files()...)
 	m.FileList = append(m.FileList, kubeSystemConfigmapEtcdServingCA.Files()...)
 	m.FileList = append(m.FileList, kubeSystemConfigmapRootCA.Files()...)
