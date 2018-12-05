@@ -217,6 +217,10 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 			}
 		}
 	}, 2*time.Second, apiContext.Done())
+	err = apiContext.Err()
+	if err != nil && err != context.Canceled {
+		return errors.Wrap(err, "waiting for Kubernetes API")
+	}
 
 	events := client.CoreV1().Events("kube-system")
 
