@@ -63,7 +63,6 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
 		--config-output-file=/assets/kube-apiserver-bootstrap/config \
-		--config-override-files=/assets/bootkube-config-overrides/kube-apiserver-config-overrides.yaml \
 		--cluster-config-file=/assets/tectonic/99_openshift-cluster-api_cluster.yaml
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
@@ -84,7 +83,6 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
 		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
-		--config-override-files=/assets/bootkube-config-overrides/kube-controller-manager-config-overrides.yaml \
 		--cluster-config-file=/assets/tectonic/99_openshift-cluster-api_cluster.yaml
 
 	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
@@ -105,7 +103,6 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-scheduler-bootstrap \
 		--config-output-file=/assets/kube-scheduler-bootstrap/config \
-		--config-override-files=/assets/bootkube-config-overrides/kube-scheduler-config-overrides.yaml \
 		--disable-phase-2
 
 	cp kube-scheduler-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-scheduler-config.yaml
