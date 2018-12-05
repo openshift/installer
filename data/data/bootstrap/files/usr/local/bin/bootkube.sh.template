@@ -21,7 +21,8 @@ MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --rm ${release} image machine-confi
 MACHINE_CONFIG_SERVER_IMAGE=$(podman run --rm ${release} image machine-config-server)
 MACHINE_CONFIG_DAEMON_IMAGE=$(podman run --rm ${release} image machine-config-daemon)
 
-CLUSTER_BOOTSTRAP_IMAGE=$(podman run --rm ${release} image cluster-bootstrap)
+CLUSTER_BOOTSTRAP_IMAGE=docker.io/sttts/cluster-bootstrap:latest
+# TODO: reactive $(podman run --rm ${release} image cluster-bootstrap)
 
 if [ ! -d mco-bootstrap ]
 then
