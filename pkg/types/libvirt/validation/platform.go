@@ -13,6 +13,9 @@ func ValidatePlatform(p *libvirt.Platform, fldPath *field.Path) field.ErrorList 
 	if err := validate.URI(p.URI); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("uri"), p.URI, err.Error()))
 	}
+	if err := validate.URI(p.Image); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("image"), p.Image, err.Error()))
+	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}

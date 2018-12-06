@@ -98,7 +98,7 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 			Network: libvirt.Network{
 				IfName: cfg.Platform.Libvirt.Network.IfName,
 			},
-			Image:     cfg.Platform.Libvirt.DefaultMachinePlatform.Image,
+			Image:     cfg.Platform.Libvirt.Image,
 			MasterIPs: masterIPs,
 		}
 		if err := config.Libvirt.TFVars(&cfg.Networking.MachineCIDR.IPNet, config.Masters); err != nil {

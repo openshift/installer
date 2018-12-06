@@ -11,7 +11,8 @@ import (
 
 func validPlatform() *libvirt.Platform {
 	return &libvirt.Platform{
-		URI: "qemu+tcp://192.168.122.1/system",
+		URI:   "qemu+tcp://192.168.122.1/system",
+		Image: "https://example.com/rhcos-qemu.qcow2",
 		Network: libvirt.Network{
 			IfName: "tt0",
 		},
@@ -39,6 +40,15 @@ func TestValidatePlatform(t *testing.T) {
 			valid: false,
 		},
 		{
+			name: "invalid image",
+			platform: func() *libvirt.Platform {
+				p := validPlatform()
+				p.Image = "bad-image"
+				return p
+			}(),
+			valid: false,
+		},
+		{
 			name: "missing interface name",
 			platform: func() *libvirt.Platform {
 				p := validPlatform()
@@ -55,17 +65,6 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			valid: true,
-		},
-		{
-			name: "invalid machine pool",
-			platform: func() *libvirt.Platform {
-				p := validPlatform()
-				p.DefaultMachinePlatform = &libvirt.MachinePool{
-					Image: "bad-image",
-				}
-				return p
-			}(),
-			valid: false,
 		},
 	}
 	for _, tc := range cases {

@@ -97,6 +97,10 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		m.MachinesRaw = raw
 	case libvirttypes.Name:
+		mpool := defaultLibvirtMachinePoolPlatform()
+		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.Libvirt)
+		pool.Platform.Libvirt = &mpool
 		machines, err := libvirt.Machines(ic, &pool, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")

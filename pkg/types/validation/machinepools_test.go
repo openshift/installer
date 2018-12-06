@@ -82,19 +82,6 @@ func TestValidateMachinePool(t *testing.T) {
 			valid:    true,
 		},
 		{
-			name: "invalid libvirt",
-			pool: &types.MachinePool{
-				Name: "master",
-				Platform: types.MachinePoolPlatform{
-					Libvirt: &libvirt.MachinePool{
-						Image: "bad-image",
-					},
-				},
-			},
-			platform: "libvirt",
-			valid:    false,
-		},
-		{
 			name: "valid openstack",
 			pool: &types.MachinePool{
 				Name: "master",
