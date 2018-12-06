@@ -22,7 +22,7 @@ If it is missing, try some of the ideas [here][kvm-install].
 On Fedora, CentOS/RHEL:
 
 ```sh
-sudo yum install libvirt libvirt-devel libvirt-daemon-kvm qemu-kvm
+sudo yum -y install libvirt libvirt-devel libvirt-daemon-kvm qemu-kvm
 ```
 
 Then start libvirtd:
@@ -200,7 +200,7 @@ This step is optional, but useful for being able to resolve cluster-internal hos
 
 ### Install the Terraform provider
 
-1. Make sure you have the `virsh` binary installed: `sudo dnf install libvirt-client libvirt-devel`
+1. Make sure you have the `virsh` binary installed: `sudo yum -y install libvirt-client libvirt-devel`
 2. Install the libvirt terraform provider:
 ```sh
 GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-libvirt

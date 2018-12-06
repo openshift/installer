@@ -7,10 +7,10 @@ The following dependencies must be installed on your system before you can build
 ### Fedora, CentOS, RHEL
 
 ```sh
-sudo yum install golang-bin gcc-c++
+sudo yum -y install golang-bin gcc-c++
 ```
 
-If you need support for [libvirt destroy](libvirt-howto.md#cleanup), you should also install `libvirt-devel`.
+If you need support for [libvirt destroy](libvirt-howto.md#cleanup), you should also install `sudo yum -y install libvirt-devel`.
 
 ### Go
 
@@ -21,6 +21,7 @@ Dependencies are managed with [dep](https://golang.github.io/dep/) but committed
 We require atleast following version for dep:
 
 ```
+$ dep version
 dep:
  version     : v0.5.0
  build date  : 2018-07-26
