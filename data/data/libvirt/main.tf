@@ -17,6 +17,8 @@ module "bootstrap" {
   cluster_name   = "${var.cluster_name}"
   ignition       = "${var.ignition_bootstrap}"
   network_id     = "${libvirt_network.net.id}"
+  network_id     = "${libvirt_network.tectonic_net.id}"
+  ssh_key        = "${var.ssh_key}"
 }
 
 resource "libvirt_volume" "master" {
@@ -59,6 +61,18 @@ resource "libvirt_network" "net" {
   autostart = true
 }
 
+data "template_file" "user_data" {
+  template = "${file("${path.module}/user-data.tpl")}"
+  vars {
+    ssh_authorized_keys = "${var.ssh_key}"
+  }
+}
+
+resource "libvirt_cloudinit_disk" "commoninit" {
+  name           = "commoninit.iso"
+  user_data      = "${data.template_file.user_data.rendered}"
+}
+
 resource "libvirt_domain" "master" {
   count = "${var.master_count}"
 
@@ -68,7 +82,7 @@ resource "libvirt_domain" "master" {
   vcpu   = "${var.libvirt_master_vcpu}"
 
   coreos_ignition = "${libvirt_ignition.master.id}"
-
+  cloudinit = "${libvirt_cloudinit_disk.commoninit.id}"
   disk {
     volume_id = "${element(libvirt_volume.master.*.id, count.index)}"
   }

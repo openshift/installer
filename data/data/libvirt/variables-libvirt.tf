@@ -48,3 +48,8 @@ variable "libvirt_master_vcpu" {
   description = "CPUs allocated to masters"
   default     = "2"
 }
+
+variable "ssh_key" {
+  type        = "string"
+  description = "ssh public key"
+}

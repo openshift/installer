@@ -8,6 +8,18 @@ resource "libvirt_ignition" "bootstrap" {
   content = "${var.ignition}"
 }
 
+data "template_file" "user_data" {
+  template = "${file("${path.module}/user-data.tpl")}"
+  vars {
+    ssh_authorized_keys = "${var.ssh_key}"
+  }
+}
+
+resource "libvirt_cloudinit_disk" "commoninit" {
+  name           = "commoninit.iso"
+  user_data      = "${data.template_file.user_data.rendered}"
+}
+
 resource "libvirt_domain" "bootstrap" {
   name = "${var.cluster_name}-bootstrap"
 

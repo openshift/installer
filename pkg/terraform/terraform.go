@@ -3,7 +3,7 @@ package terraform
 import (
 	"fmt"
 	"path/filepath"
-
+	//"os"
 	"github.com/openshift/installer/data"
 	"github.com/pkg/errors"
 )
@@ -36,7 +36,7 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 	if err != nil {
 		return "", err
 	}
-
+	//os.Exit(3)
 	defaultArgs := []string{
 		"apply",
 		"-auto-approve",
@@ -97,6 +97,5 @@ func unpackAndInit(dir string, platform string) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "failed to initialize Terraform")
 	}
-
 	return nil
 }
