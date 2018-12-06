@@ -17,7 +17,6 @@ module "bootstrap" {
   cluster_name   = "${var.cluster_name}"
   ignition       = "${var.ignition_bootstrap}"
   network_id     = "${libvirt_network.net.id}"
-  network_id     = "${libvirt_network.tectonic_net.id}"
   ssh_key        = "${var.ssh_key}"
 }
 
@@ -69,7 +68,7 @@ data "template_file" "user_data" {
 }
 
 resource "libvirt_cloudinit_disk" "commoninit" {
-  name           = "commoninit.iso"
+  name           = "${var.cluster_name}-master-init.iso"
   user_data      = "${data.template_file.user_data.rendered}"
 }
 

@@ -14,8 +14,6 @@ type Libvirt struct {
 	Network     `json:",inline"`
 	MasterIPs   []string `json:"libvirt_master_ips,omitempty"`
 	BootstrapIP string   `json:"libvirt_bootstrap_ip,omitempty"`
-	MasterIPs   []string `json:"tectonic_libvirt_master_ips,omitempty"`
-	BootstrapIP string   `json:"tectonic_libvirt_bootstrap_ip,omitempty"`
 	SSHKey string `json:"ssh_key,omitempty"`
 }
 
