@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
@@ -16,8 +17,10 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
@@ -89,11 +92,22 @@ var (
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 			PostRunE: func(_ *cobra.Command, _ []string) error {
-				err := destroyBootstrap(context.Background(), rootOpts.dir)
+				ctx := context.Background()
+				config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(rootOpts.dir, "auth", "kubeconfig"))
+				if err != nil {
+					return errors.Wrap(err, "loading kubeconfig")
+				}
+
+				err = destroyBootstrap(ctx, config, rootOpts.dir)
 				if err != nil {
 					return err
 				}
-				return logComplete(rootOpts.dir)
+				consoleURL, err := waitForConsole(ctx, config, rootOpts.dir)
+				if err != nil {
+					return err
+				}
+
+				return logComplete(rootOpts.dir, consoleURL)
 			},
 		},
 		assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}},
@@ -160,17 +174,12 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 
 // FIXME: pulling the kubeconfig and metadata out of the root
 // directory is a bit cludgy when we already have them in memory.
-func destroyBootstrap(ctx context.Context, directory string) (err error) {
+func destroyBootstrap(ctx context.Context, config *rest.Config, directory string) (err error) {
 	cleanup, err := setupFileHook(rootOpts.dir)
 	if err != nil {
 		return errors.Wrap(err, "failed to setup logging hook")
 	}
 	defer cleanup()
-
-	config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(directory, "auth", "kubeconfig"))
-	if err != nil {
-		return errors.Wrap(err, "loading kubeconfig")
-	}
 
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
@@ -262,8 +271,62 @@ func destroyBootstrap(ctx context.Context, directory string) (err error) {
 	return destroybootstrap.Destroy(rootOpts.dir)
 }
 
+// waitForconsole returns the console URL from the route 'console' in namespace openshift-console
+func waitForConsole(ctx context.Context, config *rest.Config, directory string) (string, error) {
+	url := ""
+	// Need to keep these updated if they change
+	consoleNamespace := "openshift-console"
+	consoleRouteName := "console"
+	rc, err := routeclient.NewForConfig(config)
+	if err != nil {
+		return "", errors.Wrap(err, "creating a route client")
+	}
+
+	consoleRouteTimeout := 10 * time.Minute
+	logrus.Infof("Waiting %v for the openshift-console route to be created...", consoleRouteTimeout)
+	consoleRouteContext, cancel := context.WithTimeout(ctx, consoleRouteTimeout)
+	defer cancel()
+	// Poll quickly but only log when the response
+	// when we've seen 15 of the same errors or output of
+	// no route in a row (to show we're still alive).
+	logDownsample := 15
+	silenceRemaining := logDownsample
+	wait.Until(func() {
+		consoleRoutes, err := rc.RouteV1().Routes(consoleNamespace).List(metav1.ListOptions{})
+		if err == nil && len(consoleRoutes.Items) > 0 {
+			for _, route := range consoleRoutes.Items {
+				logrus.Debugf("Route found in openshift-console namespace: %s\n", route.Name)
+				if route.Name == consoleRouteName {
+					url = fmt.Sprintf("https://%s", route.Spec.Host)
+				}
+			}
+			logrus.Debug("OpenShift console route is created")
+			cancel()
+		} else if err != nil {
+			silenceRemaining--
+			if silenceRemaining == 0 {
+				logrus.Debugf("Still waiting for the console route: %v", err)
+				silenceRemaining = logDownsample
+			}
+		} else if len(consoleRoutes.Items) == 0 {
+			silenceRemaining--
+			if silenceRemaining == 0 {
+				logrus.Debug("Still waiting for the console route...")
+				silenceRemaining = logDownsample
+			}
+		}
+	}, 2*time.Second, consoleRouteContext.Done())
+	if err != nil {
+		return "", errors.Wrap(err, "waiting for console route to be created")
+	}
+	if url == "" {
+		return url, errors.Wrap(err, "could not obtain openshift-console URL from route")
+	}
+	return url, nil
+}
+
 // logComplete prints info upon completion
-func logComplete(directory string) error {
+func logComplete(directory, consoleURL string) error {
 	absDir, err := filepath.Abs(directory)
 	if err != nil {
 		return err
@@ -274,7 +337,10 @@ func logComplete(directory string) error {
 	if err != nil {
 		return err
 	}
-	logrus.Infof("kubeadmin user password: %s", pw)
-	logrus.Infof("Install complete! The kubeconfig is located here: %s", kubeconfig)
+	logrus.Info("Install complete!")
+	logrus.Infof("Run 'export KUBECONFIG=%s' to manage the cluster with 'oc', the OpenShift CLI.", kubeconfig)
+	logrus.Infof("The cluster is ready when 'oc login -u kubeadmin -p %s' succeeds (wait a few minutes).", pw)
+	logrus.Infof("Access the OpenShift web-console here: %s", consoleURL)
+	logrus.Infof("Login to the console with user: kubeadmin, password: %s", pw)
 	return nil
 }
