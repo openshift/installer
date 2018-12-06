@@ -16,17 +16,19 @@ Clone this repository to `src/github.com/openshift/installer` in your [GOPATH](h
 hack/build.sh
 ```
 
-This will create `bin/openshift-install`. This binary can then be invoked to create an OpenShift cluster, like so:
-
-```sh
-bin/openshift-install create cluster
-```
+This will create `bin/openshift-install`.
 
 The installer requires the terraform binary either alongside openshift-install or in `$PATH`.
 If you don't have [terraform](https://www.terraform.io/), run the following to create `bin/terraform`:
 
 ```sh
 hack/get-terraform.sh
+```
+
+Now run the `openshift-install` binary to create an OpenShift cluster, like so:
+
+```sh
+bin/openshift-install create cluster
 ```
 
 The installer will show a series of prompts for user-specific information and use reasonable defaults for everything else. In non-interactive contexts, prompts can be bypassed by providing appropriately-named environment variables. Refer to the [user documentation](docs/user) for more information.
