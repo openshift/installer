@@ -24,8 +24,15 @@ then
 fi &&
 TERRAFORM_VERSION="0.11.8" &&
 TERRAFORM_URL="https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_${OS}_${ARCH}.zip" &&
-echo "pulling ${TERRAFORM_URL}" >&2 &&
-cd "$(dirname "$0")/../data/data" &&
-mkdir -p bin &&
-curl -L "${TERRAFORM_URL}" | "${FUNZIP}" >bin/terraform &&
-chmod +x bin/terraform
+TERRAFORM_BINARY=".cache/terraform_${TERRAFORM_VERSION}_${OS}_${ARCH}"
+cd "$(dirname "$0")/.." &&
+if [ ! -x "${TERRAFORM_BINARY}" ]
+then
+	echo "pulling ${TERRAFORM_URL}" >&2 &&
+	mkdir -p "$(dirname "${TERRAFORM_BINARY}")" &&
+	curl -L "${TERRAFORM_URL}" | "${FUNZIP}" >"${TERRAFORM_BINARY}" &&
+	chmod +x "${TERRAFORM_BINARY}"
+fi &&
+mkdir -p data/data/bin &&
+rm -f data/data/bin/terraform &&
+ln -s "../../../${TERRAFORM_BINARY}" data/data/bin/terraform
