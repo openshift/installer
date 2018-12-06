@@ -20,20 +20,6 @@ func TestValidateMachinePool(t *testing.T) {
 			pool:  &libvirt.MachinePool{},
 			valid: true,
 		},
-		{
-			name: "valid image",
-			pool: &libvirt.MachinePool{
-				Image: "https://example.com/rhcos-qemu.qcow2",
-			},
-			valid: true,
-		},
-		{
-			name: "invalid image",
-			pool: &libvirt.MachinePool{
-				Image: "bad-image",
-			},
-			valid: false,
-		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

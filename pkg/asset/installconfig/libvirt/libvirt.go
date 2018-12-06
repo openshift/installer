@@ -49,10 +49,8 @@ func Platform() (*libvirt.Platform, error) {
 		Network: libvirt.Network{
 			IfName: defaultNetworkIfName,
 		},
-		DefaultMachinePlatform: &libvirt.MachinePool{
-			Image: qcowImage,
-		},
-		URI: uri,
+		Image: qcowImage,
+		URI:   uri,
 	}, nil
 }
 

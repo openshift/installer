@@ -12,6 +12,10 @@ type Platform struct {
 	// cluster (where the cluster-API controller pod will be running).
 	URI string `json:"URI"`
 
+	// Image is the URL to the OS image.
+	// E.g. "http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz"
+	Image string `json:"image"`
+
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on libvirt for machine pools which do not define their
 	// own platform configuration.

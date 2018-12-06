@@ -33,6 +33,10 @@ func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
 	}
 }
 
+func defaultLibvirtMachinePoolPlatform() libvirttypes.MachinePool {
+	return libvirttypes.MachinePool{}
+}
+
 func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePool {
 	return openstacktypes.MachinePool{
 		FlavorName: flavor,
@@ -119,6 +123,10 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 		w.MachineSetRaw = raw
 	case libvirttypes.Name:
+		mpool := defaultLibvirtMachinePoolPlatform()
+		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.Libvirt)
+		pool.Platform.Libvirt = &mpool
 		sets, err := libvirt.MachineSets(ic, &pool, "worker", "worker-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create worker machine objects")
