@@ -32,7 +32,6 @@ func (m *Templates) Dependencies() []asset.Asset {
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.KubeSystemSecretEtcdClient{},
-		&bootkube.OpenshiftWebConsoleNamespace{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.OpenshiftClusterAPINamespace{},
 		&bootkube.OpenshiftServiceCertSignerNamespace{},
@@ -56,7 +55,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	kubeSystemConfigmapEtcdServingCA := &bootkube.KubeSystemConfigmapEtcdServingCA{}
 	kubeSystemConfigmapRootCA := &bootkube.KubeSystemConfigmapRootCA{}
 	kubeSystemSecretEtcdClient := &bootkube.KubeSystemSecretEtcdClient{}
-	openshiftWebConsoleNamespace := &bootkube.OpenshiftWebConsoleNamespace{}
 	openshiftMachineConfigOperator := &bootkube.OpenshiftMachineConfigOperator{}
 	openshiftClusterAPINamespace := &bootkube.OpenshiftClusterAPINamespace{}
 	openshiftServiceCertSignerNamespace := &bootkube.OpenshiftServiceCertSignerNamespace{}
@@ -78,7 +76,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 		kubeSystemConfigmapEtcdServingCA,
 		kubeSystemConfigmapRootCA,
 		kubeSystemSecretEtcdClient,
-		openshiftWebConsoleNamespace,
 		openshiftMachineConfigOperator,
 		openshiftClusterAPINamespace,
 		openshiftServiceCertSignerNamespace,
@@ -99,7 +96,6 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, kubeSystemConfigmapEtcdServingCA.Files()...)
 	m.FileList = append(m.FileList, kubeSystemConfigmapRootCA.Files()...)
 	m.FileList = append(m.FileList, kubeSystemSecretEtcdClient.Files()...)
-	m.FileList = append(m.FileList, openshiftWebConsoleNamespace.Files()...)
 	m.FileList = append(m.FileList, openshiftMachineConfigOperator.Files()...)
 	m.FileList = append(m.FileList, openshiftClusterAPINamespace.Files()...)
 	m.FileList = append(m.FileList, openshiftServiceCertSignerNamespace.Files()...)
