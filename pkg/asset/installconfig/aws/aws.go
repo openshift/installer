@@ -5,9 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
+	"text/template"
 
+	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -65,6 +69,18 @@ func Platform() (*aws.Platform, error) {
 	ssn := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))
+	ssn.Config.Credentials = credentials.NewChainCredentials([]credentials.Provider{
+		&credentials.EnvProvider{},
+		&credentials.SharedCredentialsProvider{},
+	})
+	_, err := ssn.Config.Credentials.Get()
+	if err == credentials.ErrNoValidProvidersFoundInChain {
+		err = getCredentials()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	defaultRegionPointer := ssn.Config.Region
 	if defaultRegionPointer != nil {
 		_, ok := validAWSRegions[*defaultRegionPointer]
@@ -114,4 +130,62 @@ func Platform() (*aws.Platform, error) {
 		Region:       region,
 		UserTags:     userTags,
 	}, nil
+}
+
+func getCredentials() error {
+	keyID, err := asset.GenerateUserProvidedAsset(
+		"AWS Access Key ID",
+		&survey.Question{
+			Prompt: &survey.Input{
+				Message: "AWS Access Key ID",
+				Help:    "The AWS access key ID to use for installation (this is not your username).\nhttps://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
+			},
+		},
+		"",
+	)
+	if err != nil {
+		return err
+	}
+
+	secretKey, err := asset.GenerateUserProvidedAsset(
+		"AWS Access Key ID",
+		&survey.Question{
+			Prompt: &survey.Password{
+				Message: "AWS Secret Access Key",
+				Help:    "The AWS secret access key corresponding to your access key ID (this is not your password).",
+			},
+		},
+		"",
+	)
+	if err != nil {
+		return err
+	}
+
+	tmpl, err := template.New("aws-credentials").Parse(`# Created by openshift-install
+# https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html
+[default]
+aws_access_key_id={{.KeyID}}
+aws_secret_access_key={{.SecretKey}}
+`)
+	if err != nil {
+		return err
+	}
+
+	path := defaults.SharedCredentialsFilename()
+	logrus.Infof("Writing AWS credentials to %q (https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html)", path)
+	err = os.MkdirAll(filepath.Dir(path), 0700)
+	if err != nil {
+		return err
+	}
+
+	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	return tmpl.Execute(file, map[string]string{
+		"KeyID":     keyID,
+		"SecretKey": secretKey,
+	})
 }
