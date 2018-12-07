@@ -6,25 +6,23 @@ import (
 
 	"github.com/openshift/installer/data"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+
+	"github.com/openshift/installer/pkg/lineprinter"
+	texec "github.com/openshift/installer/pkg/terraform/exec"
 )
 
 const (
 	// StateFileName is the default name for Terraform state files.
 	StateFileName string = "terraform.tfstate"
+
+	// VarFileName is the default name for Terraform var file.
+	VarFileName string = "terraform.tfvars"
 )
 
-func terraformExec(clusterDir string, args ...string) error {
-	// Create an executor
-	ex, err := newExecutor()
-	if err != nil {
-		return errors.Wrap(err, "failed to create Terraform executor")
-	}
-
-	err = ex.execute(clusterDir, args...)
-	if err != nil {
-		return errors.Wrap(err, "failed to execute Terraform")
-	}
-	return nil
+// Version gets the output of 'terrraform version'.
+func Version() (version string, err error) {
+	return texec.Version(), nil
 }
 
 // Apply unpacks the platform-specific Terraform modules into the
@@ -38,15 +36,27 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 	}
 
 	defaultArgs := []string{
-		"apply",
 		"-auto-approve",
 		"-input=false",
-		"-no-color",
-		fmt.Sprintf("-state=%s", StateFileName),
+		fmt.Sprintf("-state=%s", filepath.Join(dir, StateFileName)),
+		fmt.Sprintf("-state-out=%s", filepath.Join(dir, StateFileName)),
+		fmt.Sprintf("-var-file=%s", filepath.Join(dir, VarFileName)),
 	}
 	args := append(defaultArgs, extraArgs...)
+	args = append(args, dir)
+	sf := filepath.Join(dir, StateFileName)
 
-	return filepath.Join(dir, StateFileName), terraformExec(dir, args...)
+	tDebug := &lineprinter.Trimmer{WrappedPrint: logrus.Debug}
+	tError := &lineprinter.Trimmer{WrappedPrint: logrus.Error}
+	lpDebug := &lineprinter.LinePrinter{Print: tDebug.Print}
+	lpError := &lineprinter.LinePrinter{Print: tError.Print}
+	defer lpDebug.Close()
+	defer lpError.Close()
+
+	if exitCode := texec.Apply(dir, args, lpDebug, lpError); exitCode != 0 {
+		return sf, errors.New("failed to apply using terraform")
+	}
+	return sf, nil
 }
 
 // Destroy unpacks the platform-specific Terraform modules into the
@@ -59,14 +69,26 @@ func Destroy(dir string, platform string, extraArgs ...string) (err error) {
 	}
 
 	defaultArgs := []string{
-		"destroy",
 		"-auto-approve",
-		"-no-color",
-		fmt.Sprintf("-state=%s", StateFileName),
+		"-input=false",
+		fmt.Sprintf("-state=%s", filepath.Join(dir, StateFileName)),
+		fmt.Sprintf("-state-out=%s", filepath.Join(dir, StateFileName)),
+		fmt.Sprintf("-var-file=%s", filepath.Join(dir, VarFileName)),
 	}
 	args := append(defaultArgs, extraArgs...)
+	args = append(args, dir)
 
-	return terraformExec(dir, args...)
+	tDebug := &lineprinter.Trimmer{WrappedPrint: logrus.Debug}
+	tError := &lineprinter.Trimmer{WrappedPrint: logrus.Error}
+	lpDebug := &lineprinter.LinePrinter{Print: tDebug.Print}
+	lpError := &lineprinter.LinePrinter{Print: tError.Print}
+	defer lpDebug.Close()
+	defer lpError.Close()
+
+	if exitCode := texec.Destroy(dir, args, lpDebug, lpError); exitCode != 0 {
+		return errors.New("failed to destroy using terraform")
+	}
+	return nil
 }
 
 // unpack unpacks the platform-specific Terraform modules into the
@@ -93,10 +115,15 @@ func unpackAndInit(dir string, platform string) (err error) {
 		return errors.Wrap(err, "failed to unpack Terraform modules")
 	}
 
-	err = terraformExec(dir, "init", "-input=false", "-no-color")
-	if err != nil {
-		return errors.Wrap(err, "failed to initialize Terraform")
-	}
+	tDebug := &lineprinter.Trimmer{WrappedPrint: logrus.Debug}
+	tError := &lineprinter.Trimmer{WrappedPrint: logrus.Error}
+	lpDebug := &lineprinter.LinePrinter{Print: tDebug.Print}
+	lpError := &lineprinter.LinePrinter{Print: tError.Print}
+	defer lpDebug.Close()
+	defer lpError.Close()
 
+	if exitCode := texec.Init(dir, []string{dir}, lpDebug, lpError); exitCode != 0 {
+		return errors.New("failed to initialize Terraform")
+	}
 	return nil
 }
