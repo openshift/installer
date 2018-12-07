@@ -6,7 +6,7 @@ locals {
 resource "openstack_networking_network_v2" "openshift-private" {
   name           = "openshift"
   admin_state_up = "true"
-  tags           = ["tectonicClusterID=${var.cluster_id}", "openshiftClusterID=${var.cluster_id}"]
+  tags           = ["openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_subnet_v2" "masters" {
@@ -14,7 +14,7 @@ resource "openstack_networking_subnet_v2" "masters" {
   cidr       = "${local.new_master_cidr_range}"
   ip_version = 4
   network_id = "${openstack_networking_network_v2.openshift-private.id}"
-  tags       = ["tectonicClusterID=${var.cluster_id}", "openshiftClusterID=${var.cluster_id}"]
+  tags       = ["openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_subnet_v2" "workers" {
@@ -22,7 +22,7 @@ resource "openstack_networking_subnet_v2" "workers" {
   cidr       = "${local.new_worker_cidr_range}"
   ip_version = 4
   network_id = "${openstack_networking_network_v2.openshift-private.id}"
-  tags       = ["tectonicClusterID=${var.cluster_id}", "openshiftClusterID=${var.cluster_id}"]
+  tags       = ["openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_port_v2" "masters" {
@@ -32,7 +32,7 @@ resource "openstack_networking_port_v2" "masters" {
   admin_state_up     = "true"
   network_id         = "${openstack_networking_network_v2.openshift-private.id}"
   security_group_ids = ["${openstack_networking_secgroup_v2.master.id}"]
-  tags               = ["tectonicClusterID=${var.cluster_id}", "openshiftClusterID=${var.cluster_id}"]
+  tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {
     "subnet_id" = "${openstack_networking_subnet_v2.masters.id}"
@@ -45,7 +45,7 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
   admin_state_up     = "true"
   network_id         = "${openstack_networking_network_v2.openshift-private.id}"
   security_group_ids = ["${openstack_networking_secgroup_v2.master.id}"]
-  tags               = ["tectonicClusterID=${var.cluster_id}", "openshiftClusterID=${var.cluster_id}"]
+  tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {
     "subnet_id" = "${openstack_networking_subnet_v2.masters.id}"
@@ -58,7 +58,7 @@ resource "openstack_networking_port_v2" "lb_port" {
   admin_state_up     = "true"
   network_id         = "${openstack_networking_network_v2.openshift-private.id}"
   security_group_ids = ["${openstack_networking_secgroup_v2.api.id}"]
-  tags               = ["${format("tectonicClusterID=%s", var.cluster_id)}"]
+  tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {
     "subnet_id" = "${openstack_networking_subnet_v2.masters.id}"
@@ -74,7 +74,7 @@ resource "openstack_networking_router_v2" "openshift-external-router" {
   name                = "openshift-external-router"
   admin_state_up      = true
   external_network_id = "${data.openstack_networking_network_v2.external_network.id}"
-  tags                = ["tectonicClusterID=${var.cluster_id}", "openshiftClusterID=${var.cluster_id}"]
+  tags                = ["openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_router_interface_v2" "masters_router_interface" {
