@@ -35,7 +35,7 @@ The installer will show a series of prompts for user-specific information and us
 
 #### Console
 
-Shortly after the `cluster` command completes, the OpenShift console will come up at `https://${OPENSHIFT_INSTALL_CLUSTER_NAME}-api.${OPENSHIFT_INSTALL_BASE_DOMAIN}:6443/console/`.
+Shortly after the `cluster` command completes, the OpenShift console will come up at `https://console-openshift-console.apps.${OPENSHIFT_INSTALL_CLUSTER_NAME}.${OPENSHIFT_INSTALL_BASE_DOMAIN}:6443`.
 You may need to ignore a certificate warning if you did not configure a certificate authority known to your browser.
 Log in using the admin credentials you configured when creating the cluster.
 
