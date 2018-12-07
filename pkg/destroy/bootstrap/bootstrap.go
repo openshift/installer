@@ -9,7 +9,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // Destroy uses Terraform to remove bootstrap resources.
@@ -50,7 +49,6 @@ func Destroy(dir string) (err error) {
 		}
 	}
 
-	logrus.Infof("Using Terraform to destroy bootstrap resources...")
 	if platform == "libvirt" {
 		_, err = terraform.Apply(tempDir, platform)
 		if err != nil {
