@@ -5,7 +5,8 @@ resource "aws_route_table" "private_routes" {
   tags = "${merge(map(
       "Name","${var.cluster_name}-private-${local.new_worker_subnet_azs[count.index]}",
       "kubernetes.io/cluster/${var.cluster_name}", "shared",
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
@@ -34,6 +35,7 @@ resource "aws_subnet" "worker_subnet" {
     "kubernetes.io/cluster/${var.cluster_name}","shared",
     "kubernetes.io/role/internal-elb", "",
     "tectonicClusterID", "${var.cluster_id}",
+    "openshiftClusterID", "${var.cluster_id}"
     ),
     var.extra_tags)}"
 }

@@ -17,6 +17,9 @@ func Metadata(config *types.InstallConfig) *aws.Metadata {
 				"tectonicClusterID": config.ClusterID,
 			},
 			{
+				"openshiftClusterID": config.ClusterID,
+			},
+			{
 				fmt.Sprintf("kubernetes.io/cluster/%s", config.ObjectMeta.Name): "owned",
 			},
 		},

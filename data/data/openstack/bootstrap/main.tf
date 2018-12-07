@@ -41,6 +41,7 @@ resource "openstack_compute_instance_v2" "bootstrap" {
     Name = "${var.cluster_name}-bootstrap"
 
     # "kubernetes.io/cluster/${var.cluster_name}" = "owned"
-    tectonicClusterID = "${var.cluster_id}"
+    tectonicClusterID  = "${var.cluster_id}"
+    openshiftClusterID = "${var.cluster_id}"
   }
 }

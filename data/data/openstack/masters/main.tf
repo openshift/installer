@@ -21,8 +21,9 @@ resource "openstack_compute_instance_v2" "master_conf" {
   }
 
   metadata {
-    Name              = "${var.cluster_name}-master"
-    owned             = "kubernetes.io/cluster/${var.cluster_name}"
-    tectonicClusterID = "${var.cluster_id}"
+    Name               = "${var.cluster_name}-master"
+    owned              = "kubernetes.io/cluster/${var.cluster_name}"
+    tectonicClusterID  = "${var.cluster_id}"
+    openshiftClusterID = "${var.cluster_id}"
   }
 }

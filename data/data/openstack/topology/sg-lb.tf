@@ -1,6 +1,6 @@
 resource "openstack_networking_secgroup_v2" "mcs" {
   name = "mcs"
-  tags = ["${format("tectonicClusterID=%s", var.cluster_id)}"]
+  tags = ["tectonicClusterID=${var.cluster_id}", "openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "mcs_https" {
@@ -15,7 +15,7 @@ resource "openstack_networking_secgroup_rule_v2" "mcs_https" {
 
 resource "openstack_networking_secgroup_v2" "api" {
   name = "api"
-  tags = ["${format("tectonicClusterID=%s", var.cluster_id)}"]
+  tags = ["tectonicClusterID=${var.cluster_id}", "openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "api_https" {
@@ -30,7 +30,7 @@ resource "openstack_networking_secgroup_rule_v2" "api_https" {
 
 resource "openstack_networking_secgroup_v2" "console" {
   name = "console"
-  tags = ["${format("tectonicClusterID=%s", var.cluster_id)}"]
+  tags = ["tectonicClusterID=${var.cluster_id}", "openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "console_http" {

@@ -13,7 +13,8 @@ func Metadata(config *types.InstallConfig) *openstack.Metadata {
 		Region: config.Platform.OpenStack.Region,
 		Cloud:  config.Platform.OpenStack.Cloud,
 		Identifier: map[string]string{
-			"tectonicClusterID": config.ClusterID,
+			"tectonicClusterID":  config.ClusterID,
+			"openshiftClusterID": config.ClusterID,
 		},
 	}
 }

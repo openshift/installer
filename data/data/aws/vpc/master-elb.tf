@@ -10,7 +10,8 @@ resource "aws_lb" "api_internal" {
 
   tags = "${merge(map(
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
@@ -26,7 +27,8 @@ resource "aws_lb" "api_external" {
 
   tags = "${merge(map(
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
@@ -42,7 +44,8 @@ resource "aws_lb_target_group" "api_internal" {
 
   tags = "${merge(map(
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 
   health_check {
@@ -66,7 +69,8 @@ resource "aws_lb_target_group" "api_external" {
 
   tags = "${merge(map(
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 
   health_check {
@@ -88,7 +92,8 @@ resource "aws_lb_target_group" "services" {
 
   tags = "${merge(map(
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 
   health_check {
