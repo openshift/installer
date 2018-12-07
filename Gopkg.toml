@@ -84,3 +84,7 @@ ignored = ["github.com/openshift/installer/tests*"]
 [[constraint]]
   branch = "master"
   name = "github.com/openshift/api"
+
+[[constraint]]
+  name = "github.com/openshift/client-go"
+  revision = "1fa528d3be060e4c7178eb69e76d37cf7e699e3c"
