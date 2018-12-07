@@ -41,6 +41,12 @@ release)
 	TAGS="${TAGS} release"
 	if test "${SKIP_GENERATION}" != y
 	then
+		if ! $(go list github.com/shurcooL/vfsgen &> /dev/null);
+		then
+			echo "cannot find github.com/shurcooL/vfsgen, needed by 'go generate ./data'"
+			echo "maybe run 'go get github.com/shurcooL/vfsgen' and retry"
+			exit 1
+		fi
 		go generate ./data
 	fi
 	;;
