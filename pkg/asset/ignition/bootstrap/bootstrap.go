@@ -32,6 +32,9 @@ const (
 	rootDir              = "/opt/openshift"
 	defaultReleaseImage  = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
 	bootstrapIgnFilename = "bootstrap.ign"
+	etcdCertSignerImage  = "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6"
+	etcdctlImage         = "quay.io/coreos/etcd:v3.2.14"
+	ignitionUser         = "core"
 )
 
 // bootstrapTemplateData is the data to use to replace values in bootstrap
@@ -147,8 +150,8 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, adminKub
 	}
 
 	return &bootstrapTemplateData{
-		EtcdCertSignerImage:   "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
-		EtcdctlImage:          "quay.io/coreos/etcd:v3.2.14",
+		EtcdCertSignerImage:   etcdCertSignerImage,
+		EtcdctlImage:          etcdctlImage,
 		PullSecret:            installConfig.PullSecret,
 		ReleaseImage:          releaseImage,
 		EtcdCluster:           strings.Join(etcdEndpoints, ","),
@@ -205,8 +208,8 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 	}
 	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), mode, data)
 	if filename == ".bash_history" {
-		ign.User = &igntypes.NodeUser{Name: "core"}
-		ign.Group = &igntypes.NodeGroup{Name: "core"}
+		ign.User = &igntypes.NodeUser{Name: ignitionUser}
+		ign.Group = &igntypes.NodeGroup{Name: ignitionUser}
 	}
 	ign.Append = appendToFile
 	a.Config.Storage.Files = append(a.Config.Storage.Files, ign)
