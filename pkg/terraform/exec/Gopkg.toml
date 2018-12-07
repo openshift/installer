@@ -1,0 +1,36 @@
+[[constraint]]
+  branch = "master"
+  name = "github.com/hashicorp/go-plugin"
+
+[[constraint]]
+  name = "github.com/hashicorp/logutils"
+  version = "1.0.0"
+
+[[constraint]]
+  name = "github.com/hashicorp/terraform"
+  version = "0.11.10"
+
+[[constraint]]
+  name = "github.com/mitchellh/cli"
+  version = "1.0.0"
+
+[[override]]
+  revision = "232e45548389bd9357411a6922a07c5fd4068bda"
+  name = "golang.org/x/oauth2"
+
+[[override]]
+  revision = "cc9d70694ef317c2e6443e20b7927363d69c8b1e"
+  name = "github.com/hashicorp/go-slug"
+
+[[override]]
+  revision = "4080a521c6ea4872f38bae658ac17b774eefcfe1"
+  name = "github.com/terraform-providers/terraform-provider-openstack"
+
+[[override]]
+  revision = "v1.14.31"
+  name = "github.com/aws/aws-sdk-go"
+
+[prune]
+  go-tests = true
+  unused-packages = true
+  non-go = true

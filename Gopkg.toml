@@ -1,4 +1,7 @@
-ignored = ["github.com/openshift/installer/tests*"]
+ignored = [
+  "github.com/openshift/installer/tests*",
+  "github.com/openshift/installer/pkg/terraform/exec*"
+]
 
 [prune]
   non-go = true
