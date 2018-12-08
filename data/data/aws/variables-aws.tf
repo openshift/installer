@@ -120,7 +120,7 @@ variable "aws_master_root_volume_type" {
 
 variable "aws_master_root_volume_size" {
   type        = "string"
-  default     = "120"
+  default     = "500"
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
