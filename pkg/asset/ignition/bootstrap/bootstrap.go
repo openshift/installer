@@ -30,7 +30,7 @@ import (
 
 const (
 	rootDir              = "/opt/openshift"
-	defaultReleaseImage  = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
+	defaultReleaseImage  = "quay.io/openshift-release-dev/ocp-release:4.0.0-4"
 	bootstrapIgnFilename = "bootstrap.ign"
 )
 
@@ -141,7 +141,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, adminKub
 	}
 
 	releaseImage := defaultReleaseImage
-	if ri, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && ri != "" {
+	if ri, ok := os.LookupEnv("_OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && ri != "" {
 		logrus.Warn("Found override for ReleaseImage. Please be warned, this is not advised")
 		releaseImage = ri
 	}
