@@ -82,6 +82,7 @@ resource "aws_instance" "master" {
   instance_type        = "${var.ec2_type}"
   subnet_id            = "${element(var.subnet_ids, count.index)}"
   user_data            = "${var.user_data_ign}"
+  ebs_optimized        = true
 
   vpc_security_group_ids      = ["${var.master_sg_ids}"]
   associate_public_ip_address = "${var.public_endpoints}"
