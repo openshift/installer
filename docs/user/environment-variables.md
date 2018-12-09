@@ -27,7 +27,7 @@ The installer accepts a number of environment variable that allow the interactiv
      The container registry pull secret for this cluster (e.g. `{"auths": {...}}`).
      You can get this secret from [try.openshift.com](https://try.openshift.com).
 * `OPENSHIFT_INSTALL_PULL_SECRET_PATH`:
-     As an alternative to `OPENSHIFT_INSTALL_SSH_PUB_KEY`, you can configure this variable with a path containing your pull secret.
+     As an alternative to `OPENSHIFT_INSTALL_PULL_SECRET`, you can configure this variable with a path containing your pull secret.
 * `OPENSHIFT_INSTALL_SSH_PUB_KEY`:
      The SSH public key used to access all nodes within the cluster (e.g. `ssh-rsa AAAA...`).
      This is optional.
