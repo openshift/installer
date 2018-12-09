@@ -295,7 +295,7 @@ func waitForConsole(ctx context.Context, config *rest.Config, directory string) 
 		consoleRoutes, err := rc.RouteV1().Routes(consoleNamespace).List(metav1.ListOptions{})
 		if err == nil && len(consoleRoutes.Items) > 0 {
 			for _, route := range consoleRoutes.Items {
-				logrus.Debugf("Route found in openshift-console namespace: %s\n", route.Name)
+				logrus.Debugf("Route found in openshift-console namespace: %s", route.Name)
 				if route.Name == consoleRouteName {
 					url = fmt.Sprintf("https://%s", route.Spec.Host)
 				}
