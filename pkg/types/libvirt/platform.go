@@ -22,4 +22,7 @@ type Platform struct {
 
 	// MasterIPs
 	MasterIPs []net.IP `json:"masterIPs"`
+
+	// BYO
+	BYO bool `json:"byo"`
 }

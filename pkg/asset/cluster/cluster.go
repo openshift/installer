@@ -112,8 +112,13 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	logrus.Infof("Using Terraform to create cluster...")
-	// stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name())
-	stateFile, err := terraform.Apply(tmpDir, "libvirt_byo")
+	var platformName string
+	if installConfig.Config.Platform.Libvirt.BYO {
+		platformName = "libvirt_byo"
+	} else {
+		platformName = installConfig.Config.Platform.Name()
+	}
+	stateFile, err := terraform.Apply(tmpDir, platformName)
 	if err != nil {
 		err = errors.Wrap(err, "failed to run terraform")
 	}

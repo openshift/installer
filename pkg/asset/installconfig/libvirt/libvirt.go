@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"strconv"
 
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
@@ -51,6 +52,15 @@ func Platform() (*libvirt.Platform, error) {
 		}
 	}
 
+   byo_raw, ok := os.LookupEnv("OPENSHIFT_INSTALL_BYO")
+   byo := false
+   if ok {
+		   byo, err = strconv.ParseBool(byo_raw)
+		   if err != nil {
+			   return nil, errors.Wrap(err, "unable to parse boolean for OPENSHIFT_INSTALL_BYO")
+		   }
+	}
+
 	return &libvirt.Platform{
 		Network: libvirt.Network{
 			IfName:  defaultNetworkIfName,
@@ -60,6 +70,7 @@ func Platform() (*libvirt.Platform, error) {
 			Image: qcowImage,
 		},
 		URI: uri,
+		BYO: byo,
 	}, nil
 }
 
