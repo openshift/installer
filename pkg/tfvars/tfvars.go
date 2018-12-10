@@ -76,9 +76,13 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 	if cfg.Platform.AWS != nil {
 		ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
 		defer cancel()
-		ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, cfg.Platform.AWS.Region)
+		rhcosBuild, err := rhcos.FetchBuild(ctx, rhcos.DefaultChannel)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to determine default AMI")
+			return nil, err
+		}
+		ami, err := rhcos.AMI(rhcosBuild, cfg.Platform.AWS.Region)
+		if err != nil {
+			return nil, err
 		}
 
 		config.AWS = aws.AWS{
@@ -97,13 +101,25 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 		for i, ip := range cfg.Platform.Libvirt.MasterIPs {
 			masterIPs[i] = ip.String()
 		}
+
+		// Do an on-demand fetch if the image isn't specified (e.g. user
+		// is reusing an install config)
+		qemuImage := cfg.Platform.Libvirt.DefaultMachinePlatform.Image
+		if qemuImage == "" {
+			rhcosBuild, err := rhcos.FetchBuild(context.TODO(), rhcos.DefaultChannel)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to fetch QEMU image URL")
+			}
+			qemuImage = rhcos.QEMU(rhcosBuild)
+		}
+
 		config.Libvirt = libvirt.Libvirt{
 			URI: cfg.Platform.Libvirt.URI,
 			Network: libvirt.Network{
 				IfName:  cfg.Platform.Libvirt.Network.IfName,
 				IPRange: cfg.Platform.Libvirt.Network.IPRange.String(),
 			},
-			Image:     cfg.Platform.Libvirt.DefaultMachinePlatform.Image,
+			Image:     qemuImage,
 			MasterIPs: masterIPs,
 		}
 		if err := config.Libvirt.TFVars(config.Masters); err != nil {

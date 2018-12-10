@@ -11,6 +11,7 @@ import (
 type Libvirt struct {
 	URI         string `json:"libvirt_uri,omitempty"`
 	Image       string `json:"os_image,omitempty"`
+	ImageDesc   string `json:"os_image_desc,omitempty"`
 	Network     `json:",inline"`
 	MasterIPs   []string `json:"libvirt_master_ips,omitempty"`
 	BootstrapIP string   `json:"libvirt_bootstrap_ip,omitempty"`

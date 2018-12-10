@@ -13,6 +13,8 @@ type MachinePool struct {
 	// Image is the URL to the OS image.
 	// E.g. "http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz"
 	Image string `json:"image"`
+	// Metadata string describing the image
+	ImageDescription string `json:"imageDescription,omitempty"`
 }
 
 // Set sets the values from `required` to `a`.
@@ -29,5 +31,8 @@ func (l *MachinePool) Set(required *MachinePool) {
 	}
 	if required.Image != "" {
 		l.Image = required.Image
+	}
+	if required.ImageDescription != "" {
+		l.ImageDescription = required.ImageDescription
 	}
 }

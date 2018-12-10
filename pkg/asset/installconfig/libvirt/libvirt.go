@@ -38,10 +38,11 @@ func Platform() (*libvirt.Platform, error) {
 		return nil, err
 	}
 
-	qcowImage, err := rhcos.QEMU(context.TODO(), rhcos.DefaultChannel)
+	rhcosBuild, err := rhcos.FetchBuild(context.TODO(), rhcos.DefaultChannel)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to fetch QEMU image URL")
 	}
+	qcowImage := rhcos.QEMU(rhcosBuild)
 
 	return &libvirt.Platform{
 		Network: libvirt.Network{
@@ -49,7 +50,7 @@ func Platform() (*libvirt.Platform, error) {
 			IPRange: *defaultNetworkIPRange,
 		},
 		DefaultMachinePlatform: &libvirt.MachinePool{
-			Image: qcowImage,
+			Image:            qcowImage,
 		},
 		URI: uri,
 	}, nil

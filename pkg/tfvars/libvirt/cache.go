@@ -28,7 +28,7 @@ func (libvirt *Libvirt) UseCachedImage() (err error) {
 		return nil
 	}
 
-	logrus.Infof("Fetching OS image: %s", filepath.Base(libvirt.Image))
+	logrus.Infof("Fetching qemu URL: %s", filepath.Base(libvirt.Image))
 
 	// FIXME: Use os.UserCacheDir() once we bump to Go 1.11
 	// baseCacheDir, err := os.UserCacheDir()
