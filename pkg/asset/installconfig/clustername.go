@@ -31,7 +31,6 @@ func (a *clusterName) Generate(asset.Parents) error {
 				return validate.DomainName(ans.(string))
 			}),
 		},
-		"OPENSHIFT_INSTALL_CLUSTER_NAME",
 	)
 	a.ClusterName = n
 	return err

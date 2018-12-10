@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"os"
 
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
@@ -32,23 +31,14 @@ func Platform() (*libvirt.Platform, error) {
 			},
 			Validate: survey.ComposeValidators(survey.Required, uriValidator),
 		},
-		"OPENSHIFT_INSTALL_LIBVIRT_URI",
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	qcowImage, ok := os.LookupEnv("OPENSHIFT_INSTALL_LIBVIRT_IMAGE")
-	if ok {
-		err = validURI(qcowImage)
-		if err != nil {
-			return nil, errors.Wrap(err, "resolve OPENSHIFT_INSTALL_LIBVIRT_IMAGE")
-		}
-	} else {
-		qcowImage, err = rhcos.QEMU(context.TODO(), rhcos.DefaultChannel)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to fetch QEMU image URL")
-		}
+	qcowImage, err := rhcos.QEMU(context.TODO(), rhcos.DefaultChannel)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch QEMU image URL")
 	}
 
 	return &libvirt.Platform{

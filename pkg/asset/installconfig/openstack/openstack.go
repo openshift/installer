@@ -150,7 +150,6 @@ func Platform() (*openstack.Platform, error) {
 				return nil
 			}),
 		},
-		"OPENSHIFT_INSTALL_OPENSTACK_CLOUD",
 	)
 	if err != nil {
 		return nil, err
@@ -178,7 +177,6 @@ func Platform() (*openstack.Platform, error) {
 				return nil
 			}),
 		},
-		"OPENSHIFT_INSTALL_OPENSTACK_REGION",
 	)
 	if err != nil {
 		return nil, err
@@ -206,7 +204,6 @@ func Platform() (*openstack.Platform, error) {
 				return nil
 			}),
 		},
-		"OPENSHIFT_INSTALL_OPENSTACK_IMAGE",
 	)
 	if err != nil {
 		return nil, err
@@ -233,7 +230,6 @@ func Platform() (*openstack.Platform, error) {
 				return nil
 			}),
 		},
-		"OPENSHIFT_INSTALL_OPENSTACK_EXTERNAL_NETWORK",
 	)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to Marshal %s platform", openstack.Name)

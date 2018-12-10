@@ -80,6 +80,5 @@ func (a *platform) queryUserForPlatform() (string, error) {
 				return nil
 			}),
 		},
-		"OPENSHIFT_INSTALL_PLATFORM",
 	)
 }

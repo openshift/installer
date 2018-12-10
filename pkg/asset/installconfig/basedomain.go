@@ -31,7 +31,6 @@ func (a *baseDomain) Generate(asset.Parents) error {
 				return validate.DomainName(ans.(string))
 			}),
 		},
-		"OPENSHIFT_INSTALL_BASE_DOMAIN",
 	)
 	a.BaseDomain = bd
 	return err

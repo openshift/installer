@@ -2,7 +2,6 @@
 package aws
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -112,23 +111,14 @@ func Platform() (*aws.Platform, error) {
 			}),
 			Transform: regionTransform,
 		},
-		"OPENSHIFT_INSTALL_AWS_REGION",
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	userTags := map[string]string{}
-	if value, ok := os.LookupEnv("_CI_ONLY_STAY_AWAY_OPENSHIFT_INSTALL_AWS_USER_TAGS"); ok {
-		if err := json.Unmarshal([]byte(value), &userTags); err != nil {
-			return nil, errors.Wrapf(err, "_CI_ONLY_STAY_AWAY_OPENSHIFT_INSTALL_AWS_USER_TAGS contains invalid JSON: %s", value)
-		}
-	}
-
 	return &aws.Platform{
 		VPCCIDRBlock: defaultVPCCIDR,
 		Region:       region,
-		UserTags:     userTags,
 	}, nil
 }
 
@@ -141,7 +131,6 @@ func getCredentials() error {
 				Help:    "The AWS access key ID to use for installation (this is not your username).\nhttps://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
 			},
 		},
-		"",
 	)
 	if err != nil {
 		return err
@@ -155,7 +144,6 @@ func getCredentials() error {
 				Help:    "The AWS secret access key corresponding to your access key ID (this is not your password).",
 			},
 		},
-		"",
 	)
 	if err != nil {
 		return err

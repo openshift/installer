@@ -31,7 +31,6 @@ func (a *emailAddress) Generate(asset.Parents) error {
 				return validate.Email(ans.(string))
 			}),
 		},
-		"OPENSHIFT_INSTALL_EMAIL_ADDRESS",
 	)
 	a.EmailAddress = email
 	return err

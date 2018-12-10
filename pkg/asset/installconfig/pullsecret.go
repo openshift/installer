@@ -20,7 +20,7 @@ func (a *pullSecret) Dependencies() []asset.Asset {
 
 // Generate queries for the pull secret from the user.
 func (a *pullSecret) Generate(asset.Parents) error {
-	s, err := asset.GenerateUserProvidedAssetForPath(
+	s, err := asset.GenerateUserProvidedAsset(
 		a.Name(),
 		&survey.Question{
 			Prompt: &survey.Input{
@@ -31,8 +31,6 @@ func (a *pullSecret) Generate(asset.Parents) error {
 				return validate.JSON([]byte(ans.(string)))
 			}),
 		},
-		"OPENSHIFT_INSTALL_PULL_SECRET",
-		"OPENSHIFT_INSTALL_PULL_SECRET_PATH",
 	)
 	a.PullSecret = s
 	return err
