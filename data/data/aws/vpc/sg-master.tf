@@ -138,6 +138,46 @@ resource "aws_security_group_rule" "master_ingress_internal_from_worker" {
   to_port   = 9990
 }
 
+resource "aws_security_group_rule" "master_ingress_kube_scheduler" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.master.id}"
+
+  protocol  = "tcp"
+  from_port = 10251
+  to_port   = 10251
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_kube_scheduler_from_worker" {
+  type                     = "ingress"
+  security_group_id        = "${aws_security_group.master.id}"
+  source_security_group_id = "${aws_security_group.worker.id}"
+
+  protocol  = "tcp"
+  from_port = 10251
+  to_port   = 10251
+}
+
+resource "aws_security_group_rule" "master_ingress_kube_controller_manager" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.master.id}"
+
+  protocol  = "tcp"
+  from_port = 10252
+  to_port   = 10252
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_kube_controller_manager_from_worker" {
+  type                     = "ingress"
+  security_group_id        = "${aws_security_group.master.id}"
+  source_security_group_id = "${aws_security_group.worker.id}"
+
+  protocol  = "tcp"
+  from_port = 10252
+  to_port   = 10252
+}
+
 resource "aws_security_group_rule" "master_ingress_kubelet_insecure" {
   type              = "ingress"
   security_group_id = "${aws_security_group.master.id}"
