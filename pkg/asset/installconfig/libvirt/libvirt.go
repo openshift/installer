@@ -52,13 +52,13 @@ func Platform() (*libvirt.Platform, error) {
 		}
 	}
 
-   byo_raw, ok := os.LookupEnv("OPENSHIFT_INSTALL_BYO")
-   byo := false
-   if ok {
-		   byo, err = strconv.ParseBool(byo_raw)
-		   if err != nil {
-			   return nil, errors.Wrap(err, "unable to parse boolean for OPENSHIFT_INSTALL_BYO")
-		   }
+	byo_raw, ok := os.LookupEnv("OPENSHIFT_INSTALL_BYO")
+	byo := false
+	if ok {
+		byo, err = strconv.ParseBool(byo_raw)
+		if err != nil {
+			return nil, errors.Wrap(err, "unable to parse boolean for OPENSHIFT_INSTALL_BYO")
+		}
 	}
 
 	return &libvirt.Platform{

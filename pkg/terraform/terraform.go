@@ -3,7 +3,7 @@ package terraform
 import (
 	"fmt"
 	"path/filepath"
-	"os"
+	//"os"
 	"github.com/openshift/installer/data"
 	"github.com/pkg/errors"
 )
@@ -36,7 +36,7 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 	if err != nil {
 		return "", err
 	}
-	os.Exit(3)
+	//os.Exit(3)
 	defaultArgs := []string{
 		"apply",
 		"-auto-approve",
