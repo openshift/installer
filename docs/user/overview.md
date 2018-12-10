@@ -38,7 +38,7 @@ The following targets can be created by the installer:
 - `install-config` - The install config contains the main parameters for the installation process. This configuration provides the user with more options than the interactive prompts and comes pre-populated with default values.
 - `manifests` - This target outputs all of the Kubernetes manifests that will be installed on the cluster.
 - `ignition-configs` - These are the three Ignition Configs for the bootstrap, master, and worker machines.
-- `cluster` - This target provisions the cluster by invoking a locally-installed Terraform.
+- `cluster` - This target provisions the cluster and its associated infrastructure.
 
 The following targets can be destroyed by the installer:
 
