@@ -111,6 +111,9 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 		if err := config.Libvirt.UseCachedImage(); err != nil {
 			return nil, errors.Wrap(err, "failed to use cached libvirt image")
 		}
+		if err := config.Libvirt.TFVarsBYO(cfg.SSHKey); err != nil {
+			return nil, errors.Wrap(err, "Unable to add ssh public key to tfvars")
+		}
 	} else if cfg.Platform.OpenStack != nil {
 		config.OpenStack = openstack.OpenStack{
 			Region:           cfg.Platform.OpenStack.Region,

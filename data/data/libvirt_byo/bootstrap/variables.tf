@@ -23,3 +23,8 @@ variable "network_id" {
   type        = "string"
   description = "The ID of a network resource containing the bootstrap node's addresses."
 }
+
+variable "ssh_key" {
+  type        = "string"
+  description = "ssh public key"
+}
