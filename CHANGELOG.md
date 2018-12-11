@@ -4,6 +4,62 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Changed
+
+- On AWS and OpenStack, master ports 10251 (scheduler) and 10252
+  (controller manager) have been opened to access from all machines.
+  This allows Prometheus (which runs on the worker nodes) to scrape
+  all machines for metrics.
+- On AWS, the installer and subsequent cluster will now tag resources
+  it creates with `openshiftClusterID`.  `tectonicClusterID` is
+  deprecated.
+
+## 0.6.0 - 2018-12-09
+
+### Added
+
+- We now push a `kubeadmin` user (with an internally-generated
+  password) into the cluster for the new [bootstrap identity
+  provider][bootstrap-identity-provider].  This gives users a way to
+  access the web console, Prometheus, etc. without needing to
+  configure a full-fledged identity provider or install `oc`.  The
+  `create cluster` subcommand now blocks until the web-console route
+  is available and then exits after printing instructions for using
+  the new credentials.
+- The installer binary now includes Terraform so there is no longer a
+  need to separately download and install it.
+
+### Changed
+
+- The SSH public key configuration has moved a level up in the install
+  config, now that the `admin` structure has been removed.
+- `build.sh` now checks to make sure you have a new enough `go`,
+  instead of erroring out partway through the build.
+- We now resolve the update payload to a digest on the bootstrap node,
+  so [the cluster-version-operator][cluster-version-operator] can
+  figure out exactly which image we used.
+- Creation logging has been overhauled to increase it's
+  signal-to-noise while waiting for the Kubernetes API to come up.
+- On AWS, the installer will now prompt you for an access key and
+  secret if it cannot find your AWS credentials in the usual places.
+- On AWS, the installer will look at `AWS_DEFAULT_REGION` and in other
+  usual places when picking a default for the region prompt.  You
+  still have to set `OPENSHIFT_INSTALL_AWS_REGION` if you want to skip
+  the prompt entirely.
+- On libvirt, we've bumped masters from 3 GiB of memory to 4 GiB to
+  address out-of-memory issues we had been seeing at 3 GiB.
+- Lots of doc and internal cleanup and minor fixes.
+
+### Removed
+
+- The old admin username and password inputs have been removed.  They
+  weren't being used anyway, and their intended role has been replaced
+  by the newly-added `kubeadmin` user and bootstrap identity provider.
+- The old `openshift-web-console` namespace is gone.  The new console
+  is in the `openshift-console` namespace.
+
 ## 0.5.0 - 2018-12-03
 
 ### Added
@@ -351,6 +407,7 @@ the new `openshift-install` command instead.
 [aws-elb-latency]: https://github.com/openshift/installer/pull/594#issue-227786691
 [aws-instance-types]: https://aws.amazon.com/ec2/instance-types/
 [aws-nlb]: https://docs.aws.amazon.com/elasticloadbalancing/latest/network/introduction.html
+[bootstrap-identity-provider]: https://github.com/openshift/origin/pull/21580
 [checkpointer-operator]: https://github.com/openshift/pod-checkpointer-operator
 [cluster-api-provider-aws]: https://github.com/openshift/cluster-api-provider-aws
 [cluster-api-provider-aws-012575c1-AWSMachineProviderConfig]: https://github.com/openshift/cluster-api-provider-aws/blob/012575c1c8d758f81c979b0b2354950a2193ec1a/pkg/apis/awsproviderconfig/v1alpha1/awsmachineproviderconfig_types.go#L86-L139
