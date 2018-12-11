@@ -1,7 +1,6 @@
 package manifests
 
 import (
-	"os"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
@@ -22,7 +21,6 @@ var (
 
 // DNS generates the cluster-dns-*.yml files.
 type DNS struct {
-	config   *configv1.DNS
 	FileList []*asset.File
 }
 
@@ -46,7 +44,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(installConfig)
 
-	d.config = &configv1.DNS{
+	config := &configv1.DNS{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: configv1.SchemeGroupVersion.String(),
 			Kind:       "DNS",
@@ -60,7 +58,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		},
 	}
 
-	configData, err := yaml.Marshal(d.config)
+	configData, err := yaml.Marshal(config)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s manifests from InstallConfig", d.Name())
 	}
@@ -91,31 +89,5 @@ func (d *DNS) Files() []*asset.File {
 
 // Load loads the already-rendered files back from disk.
 func (d *DNS) Load(f asset.FileFetcher) (bool, error) {
-	crdFile, err := f.FetchByName(filepath.Join(manifestDir, dnsCrdFilename))
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	cfgFile, err := f.FetchByName(dnsCfgFilename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-
-		return false, err
-	}
-
-	dnsConfig := &configv1.DNS{}
-	if err := yaml.Unmarshal(cfgFile.Data, dnsConfig); err != nil {
-		return false, errors.Wrapf(err, "failed to unmarshal %s", dnsCfgFilename)
-	}
-
-	fileList := []*asset.File{crdFile, cfgFile}
-
-	d.FileList, d.config = fileList, dnsConfig
-
-	return true, nil
+	return false, nil
 }
