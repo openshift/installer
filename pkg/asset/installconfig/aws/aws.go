@@ -16,7 +16,6 @@ import (
 	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
-	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
@@ -92,9 +91,10 @@ func Platform() (*aws.Platform, error) {
 
 	sort.Strings(longRegions)
 	sort.Strings(shortRegions)
-	region, err := asset.GenerateUserProvidedAsset(
-		"AWS Region",
-		&survey.Question{
+
+	var region string
+	err = survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The AWS region to be used for installation.",
@@ -111,7 +111,7 @@ func Platform() (*aws.Platform, error) {
 			}),
 			Transform: regionTransform,
 		},
-	)
+	}, &region)
 	if err != nil {
 		return nil, err
 	}
@@ -123,28 +123,28 @@ func Platform() (*aws.Platform, error) {
 }
 
 func getCredentials() error {
-	keyID, err := asset.GenerateUserProvidedAsset(
-		"AWS Access Key ID",
-		&survey.Question{
+	var keyID string
+	err := survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Input{
 				Message: "AWS Access Key ID",
 				Help:    "The AWS access key ID to use for installation (this is not your username).\nhttps://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
 			},
 		},
-	)
+	}, keyID)
 	if err != nil {
 		return err
 	}
 
-	secretKey, err := asset.GenerateUserProvidedAsset(
-		"AWS Access Key ID",
-		&survey.Question{
+	var secretKey string
+	err = survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Password{
 				Message: "AWS Secret Access Key",
 				Help:    "The AWS secret access key corresponding to your access key ID (this is not your password).",
 			},
 		},
-	)
+	}, &secretKey)
 	if err != nil {
 		return err
 	}

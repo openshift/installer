@@ -20,9 +20,8 @@ func (a *emailAddress) Dependencies() []asset.Asset {
 
 // Generate queries for the email address from the user.
 func (a *emailAddress) Generate(asset.Parents) error {
-	email, err := asset.GenerateUserProvidedAsset(
-		a.Name(),
-		&survey.Question{
+	return survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Input{
 				Message: "Email Address",
 				Help:    "The email address of the cluster administrator. This will be used to log in to the console.",
@@ -31,9 +30,7 @@ func (a *emailAddress) Generate(asset.Parents) error {
 				return validate.Email(ans.(string))
 			}),
 		},
-	)
-	a.EmailAddress = email
-	return err
+	}, &a.EmailAddress)
 }
 
 // Name returns the human-friendly name of the asset.

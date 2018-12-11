@@ -20,9 +20,8 @@ func (a *baseDomain) Dependencies() []asset.Asset {
 
 // Generate queries for the base domain from the user.
 func (a *baseDomain) Generate(asset.Parents) error {
-	bd, err := asset.GenerateUserProvidedAsset(
-		a.Name(),
-		&survey.Question{
+	return survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Input{
 				Message: "Base Domain",
 				Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name.\n\nFor AWS, this must be a previously-existing public Route 53 zone.  You can check for any already in your account with:\n\n  $ aws route53 list-hosted-zones --query 'HostedZones[? !(Config.PrivateZone)].Name' --output text",
@@ -31,9 +30,7 @@ func (a *baseDomain) Generate(asset.Parents) error {
 				return validate.DomainName(ans.(string))
 			}),
 		},
-	)
-	a.BaseDomain = bd
-	return err
+	}, &a.BaseDomain)
 }
 
 // Name returns the human-friendly name of the asset.

@@ -9,7 +9,6 @@ import (
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
-	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/libvirt"
 )
@@ -21,9 +20,9 @@ const (
 
 // Platform collects libvirt-specific configuration.
 func Platform() (*libvirt.Platform, error) {
-	uri, err := asset.GenerateUserProvidedAsset(
-		"Libvirt Connection URI",
-		&survey.Question{
+	var uri string
+	err := survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Input{
 				Message: "Libvirt Connection URI",
 				Help:    "The libvirt connection URI to be used. This must be accessible from the running cluster.",
@@ -31,7 +30,7 @@ func Platform() (*libvirt.Platform, error) {
 			},
 			Validate: survey.ComposeValidators(survey.Required, uriValidator),
 		},
-	)
+	}, &uri)
 	if err != nil {
 		return nil, err
 	}
