@@ -82,7 +82,7 @@ func Platform() (*aws.Platform, error) {
 	}
 
 	defaultRegionPointer := ssn.Config.Region
-	if defaultRegionPointer != nil {
+	if defaultRegionPointer != nil && *defaultRegionPointer != "" {
 		_, ok := validAWSRegions[*defaultRegionPointer]
 		if ok {
 			defaultRegion = *defaultRegionPointer
