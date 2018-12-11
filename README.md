@@ -1,4 +1,4 @@
-# Openshift Installer
+# OpenShift Installer
 
 ## Supported Platforms
 
