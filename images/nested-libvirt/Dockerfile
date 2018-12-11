@@ -3,7 +3,7 @@
 FROM openshift/origin-release:golang-1.10 AS build
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
-RUN hack/build.sh && hack/get-terraform.sh
+RUN hack/build.sh
 
 FROM centos:7
 COPY --from=build /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
