@@ -23,7 +23,6 @@ var (
 
 // Ingress generates the cluster-ingress-*.yml files.
 type Ingress struct {
-	config   *configv1.Ingress
 	FileList []*asset.File
 }
 
@@ -47,7 +46,7 @@ func (ing *Ingress) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(installConfig)
 
-	ing.config = &configv1.Ingress{
+	config := &configv1.Ingress{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: configv1.SchemeGroupVersion.String(),
 			Kind:       "Ingress",
@@ -61,7 +60,7 @@ func (ing *Ingress) Generate(dependencies asset.Parents) error {
 		},
 	}
 
-	configData, err := yaml.Marshal(ing.config)
+	configData, err := yaml.Marshal(config)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s manifests from InstallConfig", ing.Name())
 	}
@@ -116,7 +115,7 @@ func (ing *Ingress) Load(f asset.FileFetcher) (bool, error) {
 
 	fileList := []*asset.File{crdFile, cfgFile}
 
-	ing.FileList, ing.config = fileList, ingressConfig
+	ing.FileList = fileList
 
 	return true, nil
 }

@@ -48,7 +48,7 @@ spec:
 
 // Networking generates the cluster-network-*.yml files.
 type Networking struct {
-	config   *netopv1.NetworkConfig
+	Config   *netopv1.NetworkConfig
 	FileList []*asset.File
 }
 
@@ -104,7 +104,7 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 		}
 	}
 
-	no.config = &netopv1.NetworkConfig{
+	no.Config = &netopv1.NetworkConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: netopv1.SchemeGroupVersion.String(),
 			Kind:       "NetworkConfig",
@@ -121,7 +121,7 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 		},
 	}
 
-	configData, err := yaml.Marshal(no.config)
+	configData, err := yaml.Marshal(no.Config)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s manifests from InstallConfig", no.Name())
 	}
@@ -149,19 +149,19 @@ func (no *Networking) Files() []*asset.File {
 // object. This is called by ClusterK8sIO, which captures generalized cluster
 // state but shouldn't need to be fully networking aware.
 func (no *Networking) ClusterNetwork() (*clusterv1a1.ClusterNetworkingConfig, error) {
-	if no.config == nil {
+	if no.Config == nil {
 		// should be unreachable.
 		return nil, errors.Errorf("ClusterNetwork called before initialization")
 	}
 
 	pods := []string{}
-	for _, cn := range no.config.Spec.ClusterNetworks {
+	for _, cn := range no.Config.Spec.ClusterNetworks {
 		pods = append(pods, cn.CIDR)
 	}
 
 	cn := &clusterv1a1.ClusterNetworkingConfig{
 		Services: clusterv1a1.NetworkRanges{
-			CIDRBlocks: []string{no.config.Spec.ServiceNetwork},
+			CIDRBlocks: []string{no.Config.Spec.ServiceNetwork},
 		},
 		Pods: clusterv1a1.NetworkRanges{
 			CIDRBlocks: pods,
@@ -196,7 +196,7 @@ func (no *Networking) Load(f asset.FileFetcher) (bool, error) {
 
 	fileList := []*asset.File{crdFile, cfgFile}
 
-	no.FileList, no.config = fileList, netConfig
+	no.FileList, no.Config = fileList, netConfig
 
 	return true, nil
 }
