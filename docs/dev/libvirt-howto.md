@@ -187,7 +187,7 @@ sudo virsh pool-autostart default
 
 ### Set up NetworkManager DNS overlay
 
-This step is optional, but useful for being able to resolve cluster-internal hostnames from your host.
+This step allows installer and users to resolve cluster-internal hostnames from your host.
 1. Edit `/etc/NetworkManager/NetworkManager.conf` and set `dns=dnsmasq` in section `[main]`
 2. Tell dnsmasq to use your cluster. The syntax is `server=/<baseDomain>/<firstIP>`.
 
