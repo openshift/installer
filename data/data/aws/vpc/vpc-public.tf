@@ -5,7 +5,8 @@ resource "aws_internet_gateway" "igw" {
   tags = "${merge(map(
       "Name", "${var.cluster_name}-igw",
       "kubernetes.io/cluster/${var.cluster_name}", "shared",
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
@@ -17,6 +18,7 @@ resource "aws_route_table" "default" {
       "Name", "${var.cluster_name}-public",
       "kubernetes.io/cluster/${var.cluster_name}", "shared",
       "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
@@ -47,7 +49,8 @@ resource "aws_subnet" "master_subnet" {
   tags = "${merge(map(
     "Name", "${var.cluster_name}-master-${local.new_master_subnet_azs[count.index]}",
       "kubernetes.io/cluster/${var.cluster_name}", "shared",
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 
@@ -62,7 +65,8 @@ resource "aws_eip" "nat_eip" {
   vpc   = true
 
   tags = "${merge(map(
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 
   # Terraform does not declare an explicit dependency towards the internet gateway.
@@ -77,6 +81,7 @@ resource "aws_nat_gateway" "nat_gw" {
   subnet_id     = "${aws_subnet.master_subnet.*.id[count.index]}"
 
   tags = "${merge(map(
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }

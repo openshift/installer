@@ -29,7 +29,8 @@ module "bootstrap" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-bootstrap",
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.aws_extra_tags)}"
 }
 
@@ -127,6 +128,7 @@ resource "aws_route53_zone" "int" {
   tags = "${merge(map(
       "Name", "${var.cluster_name}_int",
       "KubernetesCluster", "${var.cluster_name}",
-      "tectonicClusterID", "${var.cluster_id}"
+      "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.aws_extra_tags)}"
 }

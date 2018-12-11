@@ -104,6 +104,7 @@ func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.
 func tagsFromUserTags(clusterID, clusterName string, usertags map[string]string) ([]awsprovider.TagSpecification, error) {
 	tags := []awsprovider.TagSpecification{
 		{Name: "tectonicClusterID", Value: clusterID},
+		{Name: "openshiftClusterID", Value: clusterID},
 		{Name: fmt.Sprintf("kubernetes.io/cluster/%s", clusterName), Value: "owned"},
 	}
 	forbiddenTags := sets.NewString()

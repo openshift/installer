@@ -46,7 +46,7 @@ type deleteFunc func(opts *clientconfig.ClientOpts, filter Filter, logger logrus
 type ClusterUninstaller struct {
 	// Cloud is the cloud name as set in clouds.yml
 	Cloud string
-	// Filter contains the tectonicClusterID to filter tags
+	// Filter contains the openshiftClusterID to filter tags
 	Filter Filter
 	Logger logrus.FieldLogger
 }
@@ -443,8 +443,8 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 			os.Exit(1)
 		}
 		for key, val := range filter {
-			// Swift mangles the case so tectonicClusterID becomes
-			// Tectonicclusterid in the X-Container-Meta- HEAD output
+			// Swift mangles the case so openshiftClusterID becomes
+			// Openshiftclusterid in the X-Container-Meta- HEAD output
 			titlekey := strings.Title(strings.ToLower(key))
 			if metadata[titlekey] == val {
 				listOpts := objects.ListOpts{Full: false}

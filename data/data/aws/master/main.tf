@@ -97,6 +97,7 @@ resource "aws_instance" "master" {
       "Name", "${var.cluster_name}-master-${count.index}",
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
       "tectonicClusterID", "${var.cluster_id}",
+      "openshiftClusterID", "${var.cluster_id}",
       "clusterid", "${var.cluster_name}"
     ), var.extra_tags)}"
 
@@ -109,7 +110,8 @@ resource "aws_instance" "master" {
   volume_tags = "${merge(map(
     "Name", "${var.cluster_name}-master-${count.index}-vol",
     "kubernetes.io/cluster/${var.cluster_name}", "owned",
-    "tectonicClusterID", "${var.cluster_id}"
+    "tectonicClusterID", "${var.cluster_id}",
+    "openshiftClusterID", "${var.cluster_id}"
   ), var.extra_tags)}"
 }
 
