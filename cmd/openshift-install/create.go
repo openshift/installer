@@ -76,7 +76,7 @@ var (
 			Short: "Generates the unrendered Kubernetes manifest templates",
 			Long:  "",
 		},
-		assets: []asset.WritableAsset{&templates.Templates{}},
+		assets: templates.Templates,
 	}
 
 	ignitionConfigsTarget = target{
