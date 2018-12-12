@@ -9,10 +9,10 @@ EOF
 
 variable "aws_master_ec2_type" {
   type        = "string"
-  description = "Instance size for the master node(s). Example: `t3.medium`."
+  description = "Instance size for the master node(s). Example: `m4.large`."
 
   # FIXME: get this wired up to the machine default
-  default = "t3.medium"
+  default = "m4.large"
 }
 
 variable "aws_ec2_ami_override" {
