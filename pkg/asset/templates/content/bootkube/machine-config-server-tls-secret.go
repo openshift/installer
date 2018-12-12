@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*MachineConfigServerTLSSecret)(nil)
 
 // MachineConfigServerTLSSecret is the constant to represent contents of machine_configservertlssecret.yaml.template file
 type MachineConfigServerTLSSecret struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *MachineConfigServerTLSSecret) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *MachineConfigServerTLSSecret) Generate(parents asset.Parents) error {
-	t.fileName = machineConfigServerTLSSecretFileName
-	data, err := content.GetBootkubeTemplate(t.fileName)
+	fileName := machineConfigServerTLSSecretFileName
+	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

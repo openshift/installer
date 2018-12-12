@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*OpenshiftMachineConfigOperator)(nil)
 
 // OpenshiftMachineConfigOperator is the constant to represent contents of Openshift_MachineConfigOperator.yaml file
 type OpenshiftMachineConfigOperator struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *OpenshiftMachineConfigOperator) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *OpenshiftMachineConfigOperator) Generate(parents asset.Parents) error {
-	t.fileName = openshiftMachineConfigOperatorFileName
-	data, err := content.GetBootkubeTemplate(t.fileName)
+	fileName := openshiftMachineConfigOperatorFileName
+	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

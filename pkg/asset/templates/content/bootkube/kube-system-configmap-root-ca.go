@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*KubeSystemConfigmapRootCA)(nil)
 
 // KubeSystemConfigmapRootCA is the constant to represent contents of kube-system-configmap-root-ca.yaml.template file.
 type KubeSystemConfigmapRootCA struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *KubeSystemConfigmapRootCA) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *KubeSystemConfigmapRootCA) Generate(parents asset.Parents) error {
-	t.fileName = kubeSystemConfigmapRootCAFileName
-	data, err := content.GetBootkubeTemplate(t.fileName)
+	fileName := kubeSystemConfigmapRootCAFileName
+	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

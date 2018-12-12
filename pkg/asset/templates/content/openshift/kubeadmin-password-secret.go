@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*KubeadminPasswordSecret)(nil)
 
 // KubeadminPasswordSecret is the constant to represent contents of kubeadmin-password-secret.yaml.template file
 type KubeadminPasswordSecret struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *KubeadminPasswordSecret) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *KubeadminPasswordSecret) Generate(parents asset.Parents) error {
-	t.fileName = kubeadminPasswordSecretFileName
-	data, err := content.GetOpenshiftTemplate(t.fileName)
+	fileName := kubeadminPasswordSecretFileName
+	data, err := content.GetOpenshiftTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

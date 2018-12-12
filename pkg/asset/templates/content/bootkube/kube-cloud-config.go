@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*KubeCloudConfig)(nil)
 
 // KubeCloudConfig is the constant to represent contents of kube_cloudconfig.yaml file
 type KubeCloudConfig struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *KubeCloudConfig) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *KubeCloudConfig) Generate(parents asset.Parents) error {
-	t.fileName = kubeCloudConfigFileName
-	data, err := content.GetBootkubeTemplate(t.fileName)
+	fileName := kubeCloudConfigFileName
+	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

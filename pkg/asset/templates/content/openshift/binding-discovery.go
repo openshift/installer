@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*BindingDiscovery)(nil)
 
 // BindingDiscovery  is the variable/constant representing the contents of the respective file
 type BindingDiscovery struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *BindingDiscovery) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *BindingDiscovery) Generate(parents asset.Parents) error {
-	t.fileName = bindingDiscoveryFileName
-	data, err := content.GetOpenshiftTemplate(t.fileName)
+	fileName := bindingDiscoveryFileName
+	data, err := content.GetOpenshiftTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}
