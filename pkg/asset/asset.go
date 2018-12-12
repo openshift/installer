@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -94,4 +95,9 @@ func isDirEmpty(name string) (bool, error) {
 		return true, nil
 	}
 	return false, err // Either not empty or error, suits both cases
+}
+
+// SortFiles sorts the specified files by file name.
+func SortFiles(files []*File) {
+	sort.Slice(files, func(i, j int) bool { return files[i].Filename < files[j].Filename })
 }

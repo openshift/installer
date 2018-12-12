@@ -3,7 +3,6 @@ package store
 import (
 	"io/ioutil"
 	"path/filepath"
-	"sort"
 
 	"github.com/openshift/installer/pkg/asset"
 )
@@ -46,6 +45,5 @@ func (f *fileFetcher) FetchByPattern(pattern string) (files []*asset.File, err e
 		})
 	}
 
-	sort.Slice(files, func(i, j int) bool { return files[i].Filename < files[j].Filename })
 	return files, nil
 }
