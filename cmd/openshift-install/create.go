@@ -91,23 +91,31 @@ var (
 			Short: "Create an OpenShift cluster",
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
-			PostRunE: func(_ *cobra.Command, _ []string) error {
+			PostRun: func(_ *cobra.Command, _ []string) {
 				ctx := context.Background()
+
+				cleanup := setupFileHook(rootOpts.dir)
+				defer cleanup()
+
 				config, err := clientcmd.BuildConfigFromFlags("", filepath.Join(rootOpts.dir, "auth", "kubeconfig"))
 				if err != nil {
-					return errors.Wrap(err, "loading kubeconfig")
+					logrus.Fatal(errors.Wrap(err, "loading kubeconfig"))
 				}
 
 				err = destroyBootstrap(ctx, config, rootOpts.dir)
 				if err != nil {
-					return err
-				}
-				consoleURL, err := waitForConsole(ctx, config, rootOpts.dir)
-				if err != nil {
-					return err
+					logrus.Fatal(err)
 				}
 
-				return logComplete(rootOpts.dir, consoleURL)
+				consoleURL, err := waitForConsole(ctx, config, rootOpts.dir)
+				if err != nil {
+					logrus.Fatal(err)
+				}
+
+				err = logComplete(rootOpts.dir, consoleURL)
+				if err != nil {
+					logrus.Fatal(err)
+				}
 			},
 		},
 		assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}},
@@ -126,22 +134,16 @@ func newCreateCmd() *cobra.Command {
 	}
 
 	for _, t := range targets {
-		t.command.RunE = runTargetCmd(t.assets...)
+		t.command.Run = runTargetCmd(t.assets...)
 		cmd.AddCommand(t.command)
 	}
 
 	return cmd
 }
 
-func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		cleanup, err := setupFileHook(rootOpts.dir)
-		if err != nil {
-			return errors.Wrap(err, "failed to setup logging hook")
-		}
-		defer cleanup()
-
-		assetStore, err := asset.NewStore(rootOpts.dir)
+func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
+	runner := func(directory string) error {
+		assetStore, err := asset.NewStore(directory)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create asset store")
 		}
@@ -155,7 +157,7 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 				err = errors.Wrapf(err, "failed to fetch %s", a.Name())
 			}
 
-			if err2 := asset.PersistToFile(a, rootOpts.dir); err2 != nil {
+			if err2 := asset.PersistToFile(a, directory); err2 != nil {
 				err2 = errors.Wrapf(err2, "failed to write asset (%s) to disk", a.Name())
 				if err != nil {
 					logrus.Error(err2)
@@ -170,17 +172,21 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 		}
 		return nil
 	}
+
+	return func(cmd *cobra.Command, args []string) {
+		cleanup := setupFileHook(rootOpts.dir)
+		defer cleanup()
+
+		err := runner(rootOpts.dir)
+		if err != nil {
+			logrus.Fatal(err)
+		}
+	}
 }
 
 // FIXME: pulling the kubeconfig and metadata out of the root
 // directory is a bit cludgy when we already have them in memory.
 func destroyBootstrap(ctx context.Context, config *rest.Config, directory string) (err error) {
-	cleanup, err := setupFileHook(rootOpts.dir)
-	if err != nil {
-		return errors.Wrap(err, "failed to setup logging hook")
-	}
-	defer cleanup()
-
 	client, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return errors.Wrap(err, "creating a Kubernetes client")
@@ -217,6 +223,10 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 			}
 		}
 	}, 2*time.Second, apiContext.Done())
+	err = apiContext.Err()
+	if err != nil && err != context.Canceled {
+		return errors.Wrap(err, "waiting for Kubernetes API")
+	}
 
 	events := client.CoreV1().Events("kube-system")
 
