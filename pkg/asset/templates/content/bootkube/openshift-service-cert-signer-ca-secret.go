@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*OpenshiftServiceCertSignerSecret)(nil)
 
 // OpenshiftServiceCertSignerSecret is the constant to represent the contents of openshift-service-signer-secret.yaml.template
 type OpenshiftServiceCertSignerSecret struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *OpenshiftServiceCertSignerSecret) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *OpenshiftServiceCertSignerSecret) Generate(parents asset.Parents) error {
-	t.fileName = openshiftServiceCertSignerSecretFileName
-	data, err := content.GetBootkubeTemplate(t.fileName)
+	fileName := openshiftServiceCertSignerSecretFileName
+	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

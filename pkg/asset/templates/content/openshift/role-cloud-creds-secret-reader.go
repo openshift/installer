@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*RoleCloudCredsSecretReader)(nil)
 
 // RoleCloudCredsSecretReader is the variable to represent contents of corresponding file
 type RoleCloudCredsSecretReader struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *RoleCloudCredsSecretReader) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *RoleCloudCredsSecretReader) Generate(parents asset.Parents) error {
-	t.fileName = roleCloudCredsSecretReaderFileName
-	data, err := content.GetOpenshiftTemplate(t.fileName)
+	fileName := roleCloudCredsSecretReaderFileName
+	data, err := content.GetOpenshiftTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

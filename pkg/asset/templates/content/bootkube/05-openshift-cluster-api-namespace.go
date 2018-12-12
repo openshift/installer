@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*OpenshiftClusterAPINamespace)(nil)
 
 // OpenshiftClusterAPINamespace is the constant to represent contents of Openshift_ClusterApiNamespace.yaml file
 type OpenshiftClusterAPINamespace struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *OpenshiftClusterAPINamespace) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *OpenshiftClusterAPINamespace) Generate(parents asset.Parents) error {
-	t.fileName = openshiftClusterAPINamespaceFileName
-	data, err := content.GetBootkubeTemplate(t.fileName)
+	fileName := openshiftClusterAPINamespaceFileName
+	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

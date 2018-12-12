@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*KubeSystemConfigmapEtcdServingCA)(nil)
 
 // KubeSystemConfigmapEtcdServingCA is the constant to represent contents of kube-system-configmap-etcd-serving-ca.yaml.template file.
 type KubeSystemConfigmapEtcdServingCA struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *KubeSystemConfigmapEtcdServingCA) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *KubeSystemConfigmapEtcdServingCA) Generate(parents asset.Parents) error {
-	t.fileName = kubeSystemConfigmapEtcdServingCAFileName
-	data, err := content.GetBootkubeTemplate(t.fileName)
+	fileName := kubeSystemConfigmapEtcdServingCAFileName
+	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

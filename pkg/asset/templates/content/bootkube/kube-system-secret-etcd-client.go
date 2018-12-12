@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*KubeSystemSecretEtcdClient)(nil)
 
 // KubeSystemSecretEtcdClient is the constant to represent contents of kube-system-secret-etcd-client.yaml.template file.
 type KubeSystemSecretEtcdClient struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *KubeSystemSecretEtcdClient) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *KubeSystemSecretEtcdClient) Generate(parents asset.Parents) error {
-	t.fileName = kubeSystemSecretEtcdClientFileName
-	data, err := content.GetBootkubeTemplate(t.fileName)
+	fileName := kubeSystemSecretEtcdClientFileName
+	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

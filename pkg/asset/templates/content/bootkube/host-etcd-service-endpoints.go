@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*HostEtcdServiceEndpointsKubeSystem)(nil)
 
 // HostEtcdServiceEndpointsKubeSystem is the constant to represent contents of etcd-service-endpoints.yaml.template file.
 type HostEtcdServiceEndpointsKubeSystem struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *HostEtcdServiceEndpointsKubeSystem) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *HostEtcdServiceEndpointsKubeSystem) Generate(parents asset.Parents) error {
-	t.fileName = hostEtcdServiceEndpointsKubeSystemFileName
-	data, err := content.GetBootkubeTemplate(t.fileName)
+	fileName := hostEtcdServiceEndpointsKubeSystemFileName
+	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

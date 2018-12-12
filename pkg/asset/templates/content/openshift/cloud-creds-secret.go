@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*CloudCredsSecret)(nil)
 
 // CloudCredsSecret is the constant to represent contents of corresponding yaml file
 type CloudCredsSecret struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *CloudCredsSecret) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *CloudCredsSecret) Generate(parents asset.Parents) error {
-	t.fileName = cloudCredsSecretFileName
-	data, err := content.GetOpenshiftTemplate(t.fileName)
+	fileName := cloudCredsSecretFileName
+	data, err := content.GetOpenshiftTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}
