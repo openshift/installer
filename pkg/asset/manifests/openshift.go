@@ -146,5 +146,6 @@ func (o *Openshift) Load(f asset.FileFetcher) (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	o.FileList = fileList
 	return len(fileList) > 0, nil
 }
