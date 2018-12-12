@@ -63,10 +63,9 @@ func (a *platform) Name() string {
 	return "Platform"
 }
 
-func (a *platform) queryUserForPlatform() (string, error) {
-	return asset.GenerateUserProvidedAsset(
-		"Platform",
-		&survey.Question{
+func (a *platform) queryUserForPlatform() (platform string, err error) {
+	err = survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Select{
 				Message: "Platform",
 				Options: types.PlatformNames,
@@ -80,6 +79,6 @@ func (a *platform) queryUserForPlatform() (string, error) {
 				return nil
 			}),
 		},
-		"OPENSHIFT_INSTALL_PLATFORM",
-	)
+	}, &platform)
+	return
 }

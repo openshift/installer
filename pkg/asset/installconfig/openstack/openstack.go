@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
-	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -133,9 +132,9 @@ func Platform() (*openstack.Platform, error) {
 	if err != nil {
 		return nil, err
 	}
-	cloud, err := asset.GenerateUserProvidedAsset(
-		"OpenStack Cloud",
-		&survey.Question{
+	var cloud string
+	err = survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Select{
 				Message: "Cloud",
 				Help:    "The OpenStack cloud name from clouds.yaml.",
@@ -150,8 +149,7 @@ func Platform() (*openstack.Platform, error) {
 				return nil
 			}),
 		},
-		"OPENSHIFT_INSTALL_OPENSTACK_CLOUD",
-	)
+	}, &cloud)
 	if err != nil {
 		return nil, err
 	}
@@ -160,9 +158,9 @@ func Platform() (*openstack.Platform, error) {
 	if err != nil {
 		return nil, err
 	}
-	region, err := asset.GenerateUserProvidedAsset(
-		"OpenStack Region",
-		&survey.Question{
+	var region string
+	err = survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The OpenStack region to be used for installation.",
@@ -178,8 +176,7 @@ func Platform() (*openstack.Platform, error) {
 				return nil
 			}),
 		},
-		"OPENSHIFT_INSTALL_OPENSTACK_REGION",
-	)
+	}, &region)
 	if err != nil {
 		return nil, err
 	}
@@ -188,9 +185,9 @@ func Platform() (*openstack.Platform, error) {
 	if err != nil {
 		return nil, err
 	}
-	image, err := asset.GenerateUserProvidedAsset(
-		"OpenStack Image",
-		&survey.Question{
+	var image string
+	err = survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Select{
 				Message: "Image",
 				Help:    "The OpenStack image name to be used for installation.",
@@ -206,8 +203,7 @@ func Platform() (*openstack.Platform, error) {
 				return nil
 			}),
 		},
-		"OPENSHIFT_INSTALL_OPENSTACK_IMAGE",
-	)
+	}, &image)
 	if err != nil {
 		return nil, err
 	}
@@ -216,9 +212,9 @@ func Platform() (*openstack.Platform, error) {
 	if err != nil {
 		return nil, err
 	}
-	extNet, err := asset.GenerateUserProvidedAsset(
-		"OpenStack External Network",
-		&survey.Question{
+	var extNet string
+	err = survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Select{
 				Message: "ExternalNetwork",
 				Help:    "The OpenStack external network name to be used for installation.",
@@ -233,8 +229,7 @@ func Platform() (*openstack.Platform, error) {
 				return nil
 			}),
 		},
-		"OPENSHIFT_INSTALL_OPENSTACK_EXTERNAL_NETWORK",
-	)
+	}, &extNet)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to Marshal %s platform", openstack.Name)
 	}

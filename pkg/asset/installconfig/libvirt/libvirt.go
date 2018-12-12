@@ -5,12 +5,10 @@ import (
 	"context"
 	"fmt"
 	"net/url"
-	"os"
 
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
-	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/libvirt"
 )
@@ -22,9 +20,9 @@ const (
 
 // Platform collects libvirt-specific configuration.
 func Platform() (*libvirt.Platform, error) {
-	uri, err := asset.GenerateUserProvidedAsset(
-		"Libvirt Connection URI",
-		&survey.Question{
+	var uri string
+	err := survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Input{
 				Message: "Libvirt Connection URI",
 				Help:    "The libvirt connection URI to be used. This must be accessible from the running cluster.",
@@ -32,23 +30,14 @@ func Platform() (*libvirt.Platform, error) {
 			},
 			Validate: survey.ComposeValidators(survey.Required, uriValidator),
 		},
-		"OPENSHIFT_INSTALL_LIBVIRT_URI",
-	)
+	}, &uri)
 	if err != nil {
 		return nil, err
 	}
 
-	qcowImage, ok := os.LookupEnv("OPENSHIFT_INSTALL_LIBVIRT_IMAGE")
-	if ok {
-		err = validURI(qcowImage)
-		if err != nil {
-			return nil, errors.Wrap(err, "resolve OPENSHIFT_INSTALL_LIBVIRT_IMAGE")
-		}
-	} else {
-		qcowImage, err = rhcos.QEMU(context.TODO(), rhcos.DefaultChannel)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to fetch QEMU image URL")
-		}
+	qcowImage, err := rhcos.QEMU(context.TODO(), rhcos.DefaultChannel)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to fetch QEMU image URL")
 	}
 
 	return &libvirt.Platform{

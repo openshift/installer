@@ -20,9 +20,8 @@ func (a *pullSecret) Dependencies() []asset.Asset {
 
 // Generate queries for the pull secret from the user.
 func (a *pullSecret) Generate(asset.Parents) error {
-	s, err := asset.GenerateUserProvidedAssetForPath(
-		a.Name(),
-		&survey.Question{
+	return survey.Ask([]*survey.Question{
+		{
 			Prompt: &survey.Input{
 				Message: "Pull Secret",
 				Help:    "The container registry pull secret for this cluster, as a single line of JSON (e.g. {\"auths\": {...}}).\n\nYou can get this secret from https://try.openshift.com",
@@ -31,11 +30,7 @@ func (a *pullSecret) Generate(asset.Parents) error {
 				return validate.JSON([]byte(ans.(string)))
 			}),
 		},
-		"OPENSHIFT_INSTALL_PULL_SECRET",
-		"OPENSHIFT_INSTALL_PULL_SECRET_PATH",
-	)
-	a.PullSecret = s
-	return err
+	}, &a.PullSecret)
 }
 
 // Name returns the human-friendly name of the asset.

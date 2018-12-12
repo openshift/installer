@@ -223,15 +223,6 @@ Set `TAGS` when building if you need `destroy cluster` support for libvirt; this
 TAGS=libvirt_destroy hack/build.sh
 ```
 
-To avoid being prompted repeatedly, you can set [environment variables](../user/environment-variables.md) to reflect your libvirt choices.  For example, selecting libvirt, setting [our earlier name choices](#pick-names), and telling both the installer and the machine-API operator to contact `libvirtd` at [the usual libvirt IP](#firewall), you can use:
-
-```sh
-export OPENSHIFT_INSTALL_PLATFORM=libvirt
-export OPENSHIFT_INSTALL_BASE_DOMAIN=tt.testing
-export OPENSHIFT_INSTALL_CLUSTER_NAME=test1
-export OPENSHIFT_INSTALL_LIBVIRT_URI=qemu+tcp://192.168.122.1/system
-```
-
 ## Cleanup
 
 If you compiled with `libvirt_destroy`, you can use:
