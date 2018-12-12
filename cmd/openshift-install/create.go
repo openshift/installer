@@ -32,6 +32,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests"
+	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/asset/templates"
 	"github.com/openshift/installer/pkg/asset/tls"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
@@ -154,7 +155,7 @@ func newCreateCmd() *cobra.Command {
 
 func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
 	runner := func(directory string) error {
-		assetStore, err := asset.NewStore(directory)
+		assetStore, err := assetstore.NewStore(directory)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create asset store")
 		}

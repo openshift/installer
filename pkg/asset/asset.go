@@ -58,9 +58,9 @@ func PersistToFile(asset WritableAsset, directory string) error {
 	return nil
 }
 
-// deleteAssetFromDisk removes all the files for asset from disk.
+// DeleteAssetFromDisk removes all the files for asset from disk.
 // this is function is not safe for calling concurrently on the same directory.
-func deleteAssetFromDisk(asset WritableAsset, directory string) error {
+func DeleteAssetFromDisk(asset WritableAsset, directory string) error {
 	logrus.Debugf("Purging asset %q from disk", asset.Name())
 	for _, f := range asset.Files() {
 		path := filepath.Join(directory, f.Filename)
