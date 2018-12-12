@@ -111,6 +111,10 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		m.MachinesRaw = raw
 	case nonetypes.Name:
+		// This is needed to ensure that roundtrip generate-load tests pass when
+		// comparing this value. Otherwise, generate will use a nil value while
+		// load will use an empty byte slice.
+		m.MachinesRaw = []byte{}
 	case openstacktypes.Name:
 		mpool := defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName)
 		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
