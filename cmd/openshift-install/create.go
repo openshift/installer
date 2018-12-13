@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
@@ -151,9 +150,6 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 		for _, a := range targets {
 			err := assetStore.Fetch(a)
 			if err != nil {
-				if exitError, ok := errors.Cause(err).(*exec.ExitError); ok && len(exitError.Stderr) > 0 {
-					logrus.Error(strings.Trim(string(exitError.Stderr), "\n"))
-				}
 				err = errors.Wrapf(err, "failed to fetch %s", a.Name())
 			}
 
