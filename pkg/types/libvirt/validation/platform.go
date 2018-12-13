@@ -16,8 +16,12 @@ func ValidatePlatform(p *libvirt.Platform, fldPath *field.Path) field.ErrorList 
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
 	}
-	if p.Network.IfName == "" {
-		allErrs = append(allErrs, field.Required(fldPath.Child("network").Child("if"), p.Network.IfName))
+	if p.Network != nil {
+		if p.Network.IfName == "" {
+			allErrs = append(allErrs, field.Required(fldPath.Child("network").Child("if"), p.Network.IfName))
+		}
+	} else {
+		allErrs = append(allErrs, field.Required(fldPath.Child("network"), "network is required"))
 	}
 	return allErrs
 }
