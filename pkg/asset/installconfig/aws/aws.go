@@ -131,7 +131,7 @@ func getCredentials() error {
 				Help:    "The AWS access key ID to use for installation (this is not your username).\nhttps://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html",
 			},
 		},
-	}, keyID)
+	}, &keyID)
 	if err != nil {
 		return err
 	}
