@@ -7,20 +7,10 @@ import (
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
-	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/libvirt"
+	libvirtdefaults "github.com/openshift/installer/pkg/types/libvirt/defaults"
 	"github.com/openshift/installer/pkg/validate"
-)
-
-const (
-	defaultNetworkIfName = "tt0"
-)
-
-var (
-	// DefaultMachineCIDR is the libvirt default IP address space from
-	// which to assign machine IPs.
-	DefaultMachineCIDR = ipnet.MustParseCIDR("192.168.126.0/24")
 )
 
 // Platform collects libvirt-specific configuration.
@@ -31,7 +21,7 @@ func Platform() (*libvirt.Platform, error) {
 			Prompt: &survey.Input{
 				Message: "Libvirt Connection URI",
 				Help:    "The libvirt connection URI to be used. This must be accessible from the running cluster.",
-				Default: "qemu+tcp://192.168.122.1/system",
+				Default: libvirtdefaults.DefaultURI,
 			},
 			Validate: survey.ComposeValidators(survey.Required, uriValidator),
 		},
@@ -40,20 +30,25 @@ func Platform() (*libvirt.Platform, error) {
 		return nil, err
 	}
 
-	qcowImage, err := rhcos.QEMU(context.TODO(), rhcos.DefaultChannel)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch QEMU image URL")
-	}
-
 	return &libvirt.Platform{
-		Network: libvirt.Network{
-			IfName: defaultNetworkIfName,
-		},
-		DefaultMachinePlatform: &libvirt.MachinePool{
-			Image: qcowImage,
-		},
 		URI: uri,
 	}, nil
+}
+
+// SetLatestImage sets the image to use to the latest image.
+func SetLatestImage(p *libvirt.Platform) error {
+	if p.DefaultMachinePlatform == nil {
+		p.DefaultMachinePlatform = &libvirt.MachinePool{}
+	}
+	if p.DefaultMachinePlatform.Image != "" {
+		return nil
+	}
+	qcowImage, err := rhcos.QEMU(context.TODO(), rhcos.DefaultChannel)
+	if err != nil {
+		return errors.Wrap(err, "failed to fetch QEMU image URL")
+	}
+	p.DefaultMachinePlatform.Image = qcowImage
+	return nil
 }
 
 // uriValidator validates if the answer provided in prompt is a valid

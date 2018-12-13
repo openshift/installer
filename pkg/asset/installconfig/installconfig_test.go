@@ -5,7 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"github.com/ghodss/yaml"
 	"github.com/golang/mock/gomock"
 	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"github.com/stretchr/testify/assert"
@@ -13,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 )
@@ -22,27 +22,7 @@ func validInstallConfig() *types.InstallConfig {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-cluster",
 		},
-		ClusterID:  "test-cluster-id",
 		BaseDomain: "test-domain",
-		Networking: types.Networking{
-			Type:        "OpenshiftSDN",
-			MachineCIDR: *defaultMachineCIDR,
-			ServiceCIDR: *defaultServiceCIDR,
-			ClusterNetworks: []netopv1.ClusterNetwork{
-				{
-					CIDR:             "192.168.1.0/24",
-					HostSubnetLength: 4,
-				},
-			},
-		},
-		Machines: []types.MachinePool{
-			{
-				Name: "master",
-			},
-			{
-				Name: "worker",
-			},
-		},
 		Platform: types.Platform{
 			AWS: &aws.Platform{
 				Region: "us-east-1",
@@ -63,13 +43,51 @@ func TestInstallConfigLoad(t *testing.T) {
 	}{
 		{
 			name: "valid InstallConfig",
-			data: func() string {
-				ic := validInstallConfig()
-				data, _ := yaml.Marshal(ic)
-				return string(data)
-			}(),
-			expectedFound:  true,
-			expectedConfig: validInstallConfig(),
+			data: `
+metadata:
+  name: test-cluster
+clusterID: test-cluster-id
+baseDomain: test-domain
+platform:
+  aws:
+    region: us-east-1
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				ClusterID:  "test-cluster-id",
+				BaseDomain: "test-domain",
+				Networking: &types.Networking{
+					MachineCIDR: ipnet.MustParseCIDR("10.0.0.0/16"),
+					Type:        "OpenshiftSDN",
+					ServiceCIDR: ipnet.MustParseCIDR("172.30.0.0/16"),
+					ClusterNetworks: []netopv1.ClusterNetwork{
+						{
+							CIDR:             "10.128.0.0/14",
+							HostSubnetLength: 9,
+						},
+					},
+				},
+				Machines: []types.MachinePool{
+					{
+						Name:     "master",
+						Replicas: func(x int64) *int64 { return &x }(3),
+					},
+					{
+						Name:     "worker",
+						Replicas: func(x int64) *int64 { return &x }(3),
+					},
+				},
+				Platform: types.Platform{
+					AWS: &aws.Platform{
+						Region: "us-east-1",
+					},
+				},
+				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+			},
 		},
 		{
 			name: "invalid InstallConfig",
@@ -125,12 +143,10 @@ metadata:
 				assert.NoError(t, err, "unexpected error from Load")
 			}
 			if tc.expectedFound {
+				assert.Equal(t, tc.expectedConfig, ic.Config, "unexpected Config in InstallConfig")
 				assert.Equal(t, "test-filename", ic.File.Filename, "unexpected File.Filename in InstallConfig")
 				assert.Equal(t, tc.data, string(ic.File.Data), "unexpected File.Data in InstallConfig")
-			} else {
-				assert.Nil(t, ic.File, "expected File in InstallConfig to be nil")
 			}
-			assert.Equal(t, tc.expectedConfig, ic.Config, "unexpected Config in InstallConfig")
 		})
 	}
 }

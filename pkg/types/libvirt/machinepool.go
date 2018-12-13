@@ -12,7 +12,7 @@ type MachinePool struct {
 
 	// Image is the URL to the OS image.
 	// E.g. "http://aos-ostree.rhev-ci-vms.eng.rdu2.redhat.com/rhcos/images/cloud/latest/rhcos-qemu.qcow2.gz"
-	Image string `json:"image"`
+	Image string `json:"image,omitempty"`
 }
 
 // Set sets the values from `required` to `a`.
