@@ -251,7 +251,7 @@ Some things you can do:
 The bootstrap node, e.g. `test1-bootstrap.tt.testing`, runs the bootstrap process. You can watch it:
 
 ```sh
-ssh core@$OPENSHIFT_INSTALL_CLUSTER_NAME-bootstrap.$OPENSHIFT_INSTALL_BASE_DOMAIN
+ssh "core@${CLUSTER_NAME}-bootstrap.${BASE_DOMAIN}"
 sudo journalctl -f -u bootkube -u openshift
 ```
 
@@ -261,11 +261,11 @@ Using the domain names above will only work if you [set up the DNS overlay](#set
 Alternatively, if you didn't set up DNS on the host, you can use:
 
 ```sh
-virsh -c "${OPENSHIFT_INSTALL_LIBVIRT_URI}" domifaddr "${OPENSHIFT_INSTALL_CLUSTER_NAME}-master-0"  # to get the master IP
+virsh -c "${LIBVIRT_URI}" domifaddr "${CLUSTER_NAME}-master-0"  # to get the master IP
 ssh core@$MASTER_IP
 ```
 
-Here `OPENSHIFT_INSTALL_LIBVIRT_URI` is the libvirt connection URI which you [passed to the installer](#build-and-run-the-installer).
+Here `LIBVIRT_URI` is the libvirt connection URI which you [passed to the installer](../../README.md#quick-start).
 
 ### Inspect the cluster with kubectl
 
