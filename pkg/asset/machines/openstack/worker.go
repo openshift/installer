@@ -15,6 +15,7 @@ type Config struct {
 	Tags        map[string]string
 	Region      string
 	Machine     openstack.MachinePool
+	Trunk       bool
 }
 
 // WorkerMachineSetTmpl is template for worker machineset.
@@ -68,6 +69,7 @@ spec:
                 - "{{.ClusterName}}_worker_sg"
           userDataSecret:
             name: worker-user-data
+          trunk: {{.Trunk}}
       versions:
         kubelet: ""
         controlPlane: ""

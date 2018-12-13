@@ -26,4 +26,8 @@ type Platform struct {
 	// FlavorName
 	// The OpenStack compute flavor to use for servers.
 	FlavorName string `json:"computeFlavor"`
+
+	// TrunkSupport
+	// Whether OpenStack ports can be trunked
+	TrunkSupport string `json:"trunkSupport"`
 }

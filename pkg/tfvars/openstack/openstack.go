@@ -9,6 +9,7 @@ type OpenStack struct {
 	ExtraTags       map[string]string `json:"openstack_extra_tags,omitempty"`
 	Master          `json:",inline"`
 	Region          string `json:"openstack_region,omitempty"`
+	TrunkSupport    string `json:"openstack_trunk_support,omitempty"`
 }
 
 // External converts external related config.

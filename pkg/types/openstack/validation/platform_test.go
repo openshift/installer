@@ -31,6 +31,7 @@ func TestValidatePlatform(t *testing.T) {
 		noImages   bool
 		noNetworks bool
 		noFlavors  bool
+		noNetExts  bool
 		valid      bool
 	}{
 		{
@@ -113,6 +114,12 @@ func TestValidatePlatform(t *testing.T) {
 			noFlavors: true,
 			valid:     false,
 		},
+		{
+			name:      "network extensions fetch failure",
+			platform:  validPlatform(),
+			noNetExts: true,
+			valid:     false,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -163,6 +170,16 @@ func TestValidatePlatform(t *testing.T) {
 					Return([]string{"test-flavor"}, nil).
 					MaxTimes(1)
 			}
+			if tc.noNetExts {
+				fetcher.EXPECT().GetNetworkExtensionsAliases(tc.platform.Cloud).
+					Return(nil, errors.New("no network extensions")).
+					MaxTimes(1)
+			} else {
+				fetcher.EXPECT().GetNetworkExtensionsAliases(tc.platform.Cloud).
+					Return([]string{"trunk"}, nil).
+					MaxTimes(1)
+			}
+
 			err := ValidatePlatform(tc.platform, field.NewPath("test-path"), fetcher).ToAggregate()
 			if tc.valid {
 				assert.NoError(t, err)

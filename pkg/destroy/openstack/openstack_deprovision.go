@@ -13,6 +13,7 @@ import (
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers"
 	sg "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/trunks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/ports"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/subnets"
@@ -103,6 +104,7 @@ func deleteRunner(deleteFuncName string, dFunction deleteFunc, opts *clientconfi
 // goroutines.
 func populateDeleteFuncs(funcs map[string]deleteFunc) {
 	funcs["deleteServers"] = deleteServers
+	funcs["deleteTrunks"] = deleteTrunks
 	funcs["deletePorts"] = deletePorts
 	funcs["deleteSecurityGroups"] = deleteSecurityGroups
 	funcs["deleteRouters"] = deleteRouters
@@ -501,6 +503,42 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 		}
 	}
 	return true, nil
+}
+
+func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.FieldLogger) (bool, error) {
+	logger.Debug("Deleting openstack trunks")
+	defer logger.Debugf("Exiting deleting openstack trunks")
+
+	conn, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	tags := filterTags(filter)
+	listOpts := trunks.ListOpts{
+		TagsAny: strings.Join(tags, ","),
+	}
+	allPages, err := trunks.List(conn, listOpts).AllPages()
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+
+	allTrunks, err := trunks.ExtractTrunks(allPages)
+	if err != nil {
+		logger.Fatalf("%v", err)
+		os.Exit(1)
+	}
+	for _, trunk := range allTrunks {
+		logger.Debugf("Deleting Trunk: %+v", trunk.ID)
+		err = trunks.Delete(conn, trunk.ID).ExtractErr()
+		if err != nil {
+			// This can fail when the trunk is still in use so return/retry
+			return false, nil
+		}
+	}
+	return len(allTrunks) == 0, nil
 }
 
 // New returns an OpenStack destroyer from ClusterMetadata.
