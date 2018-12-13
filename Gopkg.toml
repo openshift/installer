@@ -70,7 +70,7 @@ ignored = [
 
 [[constraint]]
   name = "github.com/openshift/hive"
-  revision = "2349f175d3e4fc6542dec79add881a59f2d7b1b8"
+  revision = "802db5420da6a88f034fc2501081e2ab12e8463e"
 
 [[constraint]]
   name = "k8s.io/utils"
