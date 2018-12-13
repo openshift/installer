@@ -191,7 +191,7 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 	discovery := client.Discovery()
 
 	apiTimeout := 30 * time.Minute
-	logrus.Infof("Waiting %v for the Kubernetes API...", apiTimeout)
+	logrus.Infof("Waiting up to %v for the Kubernetes API...", apiTimeout)
 	apiContext, cancel := context.WithTimeout(ctx, apiTimeout)
 	defer cancel()
 	// Poll quickly so we notice changes, but only log when the response
@@ -227,7 +227,7 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 	events := client.CoreV1().Events("kube-system")
 
 	eventTimeout := 30 * time.Minute
-	logrus.Infof("Waiting %v for the bootstrap-complete event...", eventTimeout)
+	logrus.Infof("Waiting up to %v for the bootstrap-complete event...", eventTimeout)
 	eventContext, cancel := context.WithTimeout(ctx, eventTimeout)
 	defer cancel()
 	_, err = Until(
@@ -289,7 +289,7 @@ func waitForConsole(ctx context.Context, config *rest.Config, directory string) 
 	}
 
 	consoleRouteTimeout := 10 * time.Minute
-	logrus.Infof("Waiting %v for the openshift-console route to be created...", consoleRouteTimeout)
+	logrus.Infof("Waiting up to %v for the openshift-console route to be created...", consoleRouteTimeout)
 	consoleRouteContext, cancel := context.WithTimeout(ctx, consoleRouteTimeout)
 	defer cancel()
 	// Poll quickly but only log when the response
