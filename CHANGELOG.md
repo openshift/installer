@@ -8,7 +8,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- We now validate install-config when loading it during [staged
+  installs](docs/user/overview.md#multiple-invocations).  Previously
+  we only validated that input when it was entered into the wizard or
+  via environment variables.  This also leads to some changes in which
+  values are considered valid:
+
+    - Base domains may no longer contain uppercase letters.
+    - Cluster names may now be longer than 63 characters, although as
+      specified in [RFC 1123][rfc-1123-s2.1] host software may not
+      support names longer than 63 characters.
+    - Pull secrets require more content (e.g. it must contain an
+      `auths` property).  Previously we only required pull secrets to
+      be valid JSON.
+    - SSH public keys must be parsable with
+      [`ParseAuthorizedKey`][ssh.ParseAuthorizedKey].  Previously we
+      had our own logic that was not as well developed.
+
+- We've added `images/installer/Dockerfile.ci.rhel7` for building
+  installer images on a RHEL base.
 - On AWS, we now create [an S3 endpoint][aws-s3-endpoint] for the VPC.
+- We've added OpenStack documentation.
 
 ### Changed
 
@@ -34,6 +54,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - On OpenStack, only the OpenStack `clouds` entry is marshalled into
   the `openstack-creds` secret.  Previously we had injected the host's
   entire cloud configuration.
+- On OpenStack, there is now a service VM to provide DNS and load
+  balancing for the OpenShift cluster.  The service VM will eventually
+  be removed, but for now its a convenient hack to get usable clusters
+  on OpenStack.
 - On libvirt, we now document host DNS configuration as required,
   because too many users were skipping that step and then reporting
   errors with Kubernetes API detection when the install-host failed to
@@ -53,6 +77,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   minutes of failed event-listener connections before failing this
   case.  We've also fixed similar timeout detection for the code that
   waits for the OpenShift console route.
+- On OpenStack, we've fixed a bug in router deletion:
+
+        FATAL Expected HTTP response code [202 204] when accessing [DELETE https://osp-xxxxx:13696/v2.0/routers/52093478-dcf1-4bcc-9a2c-dbb1e42da880], but got 409 instead
+        {"NeutronError": {"message": "Router 52093478-dcf1-4bcc-9a2c-dbb1e42da880 still has ports", "type": "RouterInUse", "detail": ""}}
+
 - On libvirt, we've fixed a bug introduced in 0.6.0 and are now back
   to removing the bootstrap node from round-robin DNS when we destroy
   the bootstrap resources.
@@ -63,6 +92,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   gone.  Instead, users who want to skip the wizard are encouraged to
   [provide their own
   install-config](docs/user/tips-and-tricks.md#reusing-an-install-config).
+- On AWS, the option to install a cluster into an existing VPC is
+  gone.  Users who would have previously done this can use [VPC
+  peering][aws-vpc-peering].
 
 ## 0.6.0 - 2018-12-09
 
@@ -456,6 +488,7 @@ the new `openshift-install` command instead.
 [aws-instance-types]: https://aws.amazon.com/ec2/instance-types/
 [aws-nlb]: https://docs.aws.amazon.com/elasticloadbalancing/latest/network/introduction.html
 [aws-s3-endpoint]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints-s3.html
+[aws-vpc-peering]: https://docs.aws.amazon.com/vpc/latest/peering/what-is-vpc-peering.html
 [bootstrap-identity-provider]: https://github.com/openshift/origin/pull/21580
 [checkpointer-operator]: https://github.com/openshift/pod-checkpointer-operator
 [cluster-api-provider-aws]: https://github.com/openshift/cluster-api-provider-aws
@@ -470,6 +503,8 @@ the new `openshift-install` command instead.
 [machine-api-operator]: https://github.com/openshift/machine-api-operator
 [machine-config-operator]: https://github.com/openshift/machine-config-operator
 [Prometheus]: https://github.com/prometheus/prometheus
+[ssh.ParseAuthorizedKey]: https://godoc.org/golang.org/x/crypto/ssh#ParseAuthorizedKey
 [registry-operator]: https://github.com/openshift/cluster-image-registry-operator
+[rfc-1123-s2.1]: https://tools.ietf.org/html/rfc1123#section-2
 [rhcos-pipeline]: https://releases-rhcos.svc.ci.openshift.org/storage/releases/maipo/builds.json
 [service-serving-cert-signer]: https://github.com/openshift/service-serving-cert-signer
