@@ -472,6 +472,8 @@ func deleteContainers(opts *clientconfig.ClientOpts, filter Filter, logger logru
 					logger.Fatalf("%v", err)
 					os.Exit(1)
 				}
+				// If a metadata key matched, we're done so break from the loop
+				break
 			}
 		}
 	}
