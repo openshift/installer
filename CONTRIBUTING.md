@@ -44,6 +44,7 @@ For contributors who want to work up pull requests, the workflow is roughly:
     hack/tf-fmt.sh -list -check
     hack/tf-lint.sh
     hack/yaml-lint.sh
+    hack/go-test.sh
     ```
 7. Submit a pull request to the original repository.
 8. The [repo](OWNERS) [owners](OWNERS_ALIASES) will respond to your issue promptly, following [the ususal Prow workflow][prow-review].
@@ -85,6 +86,21 @@ The first line is the subject and should be no longer than 70 characters, the
 second line is always blank, and other lines should be wrapped at 80 characters.
 This allows the message to be easier to read on GitHub as well as in various
 git tools.
+
+## Generating Test Mocks
+
+Some unit tests use mocks that are generated with gomock. If the underlying interface for a mock changes, then the mock will need to be regenerated. Use the following to regenerate all of the mocks under the pkg package.
+
+```
+go generate ./pkg/...
+```
+
+This requires gomock and mockgen. These can be installed by running the following.
+
+```
+go get -u github.com/golang/mock/gomock
+go get -u github.com/golang/mock/mockgen
+```
 
 [golang-style]: https://github.com/golang/go/wiki/CodeReviewComments
 [disclosure]: https://coreos.com/security/disclosure/
