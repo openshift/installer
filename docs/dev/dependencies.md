@@ -20,7 +20,8 @@ Dependencies are managed with [dep](https://golang.github.io/dep/) but committed
 
 We require atleast following version for dep:
 
-```
+```console
+$ dep version
 dep:
  version     : v0.5.0
  build date  : 2018-07-26
