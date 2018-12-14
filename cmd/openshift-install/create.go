@@ -319,7 +319,6 @@ func waitForConsole(ctx context.Context, config *rest.Config, directory string) 
 			if silenceRemaining == 0 {
 				logrus.Debug("Still waiting for the console route...")
 				silenceRemaining = logDownsample
-				err = errors.New("no routes found in openshift-console namespace")
 			}
 		}
 	}, 2*time.Second, consoleRouteContext.Done())
