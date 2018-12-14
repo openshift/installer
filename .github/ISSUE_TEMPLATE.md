@@ -24,6 +24,7 @@ Enter text here.
 
 Enter text here.
 See [the troubleshooting documentation](https://github.com/openshift/installer/blob/master/docs/user/troubleshooting.md) for ideas about what information to collect.
+For example, if the installer [fails to create resources](https://github.com/openshift/installer/blob/master/docs/user/troubleshooting.md#installer-fails-to-create-resources), attach the relevant portions of your `.openshift_install.log`.
 
 # What you expected to happen?
 
