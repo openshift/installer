@@ -4,10 +4,26 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## 0.7.0 - 2018-12-14
+
+### Added
+
+- On AWS, we now create [an S3 endpoint][aws-s3-endpoint] for the VPC.
 
 ### Changed
 
+- The pull-secret prompt now masks the input to avoid leaking it to
+  shoulder surfers and similar.
+- The pull-secret prompt's help now points to
+  [cloud.openshift.com](https://cloud.openshift.com/clusters/install#pull-secret)
+  instead of [try.openshift.com](https://try.openshift.com).  This
+  should make it easier to find the pull secret without digging
+  through a page of introductory content.
+- The initial kubeconfig inserted on master nodes used to have `admin`
+  privileges, but only for 30 minutes.  Now it has role bindings that
+  allow it to create and receive automatic approval for certificate
+  signing requests, but it does not have additional privileges beyond
+  that.
 - On AWS and OpenStack, master ports 10251 (scheduler) and 10252
   (controller manager) have been opened to access from all machines.
   This allows Prometheus (which runs on the worker nodes) to scrape
@@ -15,6 +31,38 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - On AWS, the installer and subsequent cluster will now tag resources
   it creates with `openshiftClusterID`.  `tectonicClusterID` is
   deprecated.
+- On OpenStack, only the OpenStack `clouds` entry is marshalled into
+  the `openstack-creds` secret.  Previously we had injected the host's
+  entire cloud configuration.
+- On libvirt, we now document host DNS configuration as required,
+  because too many users were skipping that step and then reporting
+  errors with Kubernetes API detection when the install-host failed to
+  resolve the cluster domain name while waiting for the
+  `bootstrap-complete` event.
+- Lots of doc and internal cleanup and minor fixes.
+
+### Fixed
+
+- Fixed OpenShift manifest loading during [staged
+  installs](docs/user/overview.md#multiple-invocations).  The
+  installer had been ignoring changes to those files since 0.4.0.
+- Fixed `you must pass a pointer as the target of a Write operation`
+  errors introduced in 0.6.0 for the AWS access key ID prompt.
+- When `create cluster` times out waiting for the Kubernetes API, we
+  now exit immediately.  Previously we'd wait through another 30
+  minutes of failed event-listener connections before failing this
+  case.  We've also fixed similar timeout detection for the code that
+  waits for the OpenShift console route.
+- On libvirt, we've fixed a bug introduced in 0.6.0 and are now back
+  to removing the bootstrap node from round-robin DNS when we destroy
+  the bootstrap resources.
+
+### Removed
+
+- The user-facing `OPENSHIFT_INSTALL_*` environment variables are
+  gone.  Instead, users who want to skip the wizard are encouraged to
+  [provide their own
+  install-config](docs/user/tips-and-tricks.md#reusing-an-install-config).
 
 ## 0.6.0 - 2018-12-09
 
@@ -407,6 +455,7 @@ the new `openshift-install` command instead.
 [aws-elb-latency]: https://github.com/openshift/installer/pull/594#issue-227786691
 [aws-instance-types]: https://aws.amazon.com/ec2/instance-types/
 [aws-nlb]: https://docs.aws.amazon.com/elasticloadbalancing/latest/network/introduction.html
+[aws-s3-endpoint]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-endpoints-s3.html
 [bootstrap-identity-provider]: https://github.com/openshift/origin/pull/21580
 [checkpointer-operator]: https://github.com/openshift/pod-checkpointer-operator
 [cluster-api-provider-aws]: https://github.com/openshift/cluster-api-provider-aws
