@@ -109,7 +109,7 @@ resource "aws_instance" "bootstrap" {
   subnet_id                   = "${var.subnet_id}"
   user_data                   = "${data.ignition_config.redirect.rendered}"
   vpc_security_group_ids      = ["${var.vpc_security_group_ids}"]
-  associate_public_ip_address = "${var.associate_public_ip_address}"
+  associate_public_ip_address = true
 
   lifecycle {
     # Ignore changes in the AMI which force recreation of the resource. This

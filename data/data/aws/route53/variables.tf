@@ -50,41 +50,6 @@ variable "extra_tags" {
 
 // AWS specific internal zone variables
 
-variable "elb_alias_enabled" {
-  description = <<EOF
-(optional) Whether to create an aliased record set to ELB endpoints.
-Refer to http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/resource-record-sets-choosing-alias-non-alias.html
-for additional information.
-EOF
-
-  default = false
-}
-
-variable "external_vpc_id" {
-  type = "string"
-
-  description = <<EOF
-ID of an existing VPC to launch nodes into.
-If unset a new VPC is created.
-
-Example: `vpc-123456`
-EOF
-}
-
-variable "private_endpoints" {
-  description = <<EOF
-If set to true, create private-facing ingress resources (ELB, A-records).
-If set to false, no private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone.
-EOF
-}
-
-variable "public_endpoints" {
-  description = <<EOF
-If set to true, create public-facing ingress resources (ELB, A-records).
-If set to false, no public-facing ingress resources will be created.
-EOF
-}
-
 variable "private_zone_id" {
   description = "Route53 Private Zone ID"
   type        = "string"

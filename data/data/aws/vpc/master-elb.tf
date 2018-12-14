@@ -1,6 +1,4 @@
 resource "aws_lb" "api_internal" {
-  count = "${var.private_master_endpoints ? 1 : 0}"
-
   name                             = "${var.cluster_name}-int"
   load_balancer_type               = "network"
   subnets                          = ["${local.master_subnet_ids}"]
@@ -16,8 +14,6 @@ resource "aws_lb" "api_internal" {
 }
 
 resource "aws_lb" "api_external" {
-  count = "${var.public_master_endpoints ? 1 : 0}"
-
   name                             = "${var.cluster_name}-ext"
   load_balancer_type               = "network"
   subnets                          = ["${local.master_subnet_ids}"]
@@ -33,8 +29,6 @@ resource "aws_lb" "api_external" {
 }
 
 resource "aws_lb_target_group" "api_internal" {
-  count = "${var.private_master_endpoints ? 1 : 0}"
-
   name     = "${var.cluster_name}-api-int"
   protocol = "TCP"
   port     = 6443
@@ -58,8 +52,6 @@ resource "aws_lb_target_group" "api_internal" {
 }
 
 resource "aws_lb_target_group" "api_external" {
-  count = "${var.public_master_endpoints ? 1 : 0}"
-
   name     = "${var.cluster_name}-api-ext"
   protocol = "TCP"
   port     = 6443
@@ -106,8 +98,6 @@ resource "aws_lb_target_group" "services" {
 }
 
 resource "aws_lb_listener" "api_internal_api" {
-  count = "${var.private_master_endpoints ? 1 : 0}"
-
   load_balancer_arn = "${aws_lb.api_internal.arn}"
   protocol          = "TCP"
   port              = "6443"
@@ -119,8 +109,6 @@ resource "aws_lb_listener" "api_internal_api" {
 }
 
 resource "aws_lb_listener" "api_internal_services" {
-  count = "${var.private_master_endpoints ? 1 : 0}"
-
   load_balancer_arn = "${aws_lb.api_internal.arn}"
   protocol          = "TCP"
   port              = "49500"

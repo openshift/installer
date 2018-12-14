@@ -21,17 +21,6 @@ variable "aws_ec2_ami_override" {
   default     = ""
 }
 
-variable "aws_master_extra_sg_ids" {
-  description = <<EOF
-(optional) List of additional security group IDs for master nodes.
-
-Example: `["sg-51530134", "sg-b253d7cc"]`
-EOF
-
-  type    = "list"
-  default = []
-}
-
 variable "aws_vpc_cidr_block" {
   type = "string"
 
@@ -39,65 +28,6 @@ variable "aws_vpc_cidr_block" {
 Block of IP addresses used by the VPC.
 This should not overlap with any other networks, such as a private datacenter connected via Direct Connect.
 EOF
-}
-
-variable "aws_external_vpc_id" {
-  type = "string"
-
-  description = <<EOF
-(optional) ID of an existing VPC to launch nodes into.
-If unset a new VPC is created.
-
-Example: `vpc-123456`
-EOF
-
-  default = ""
-}
-
-variable "aws_endpoints" {
-  description = <<EOF
-(optional) If set to "all", the default, then both public and private ingress resources (ELB, A-records) will be created.
-If set to "private", then only create private-facing ingress resources (ELB, A-records). No public-facing ingress resources will be created.
-If set to "public", then only create public-facing ingress resources (ELB, A-records). No private-facing ingress resources will be provisioned and all DNS records will be created in the public Route53 zone.
-EOF
-}
-
-variable "aws_external_private_zone" {
-  default = ""
-
-  description = <<EOF
-(optional) If set, the given Route53 zone ID will be used as the internal (private) zone.
-This zone will be used to create etcd DNS records as well as internal API and internal Ingress records.
-If set, no additional private zone will be created.
-
-Example: `"Z1ILINNUJGTAO1"`
-EOF
-}
-
-variable "aws_external_master_subnet_ids" {
-  type = "list"
-
-  description = <<EOF
-(optional) List of subnet IDs within an existing VPC to deploy master nodes into.
-Required to use an existing VPC, not applicable otherwise.
-
-Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
-EOF
-
-  default = []
-}
-
-variable "aws_external_worker_subnet_ids" {
-  type = "list"
-
-  description = <<EOF
-(optional) List of subnet IDs within an existing VPC to deploy worker nodes into.
-Required to use an existing VPC, not applicable otherwise.
-
-Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
-EOF
-
-  default = []
 }
 
 variable "aws_extra_tags" {
@@ -134,45 +64,9 @@ Ignored if the volume type is not io1.
 EOF
 }
 
-variable "aws_master_custom_subnets" {
-  type    = "map"
-  default = {}
-
-  description = <<EOF
-(optional) This configures master availability zones and their corresponding subnet CIDRs directly.
-
-Example:
-`{ eu-west-1a = "10.0.0.0/20", eu-west-1b = "10.0.16.0/20" }`
-EOF
-}
-
-variable "aws_worker_custom_subnets" {
-  type    = "map"
-  default = {}
-
-  description = <<EOF
-(optional) This configures worker availability zones and their corresponding subnet CIDRs directly.
-
-Example: `{ eu-west-1a = "10.0.64.0/20", eu-west-1b = "10.0.80.0/20" }`
-EOF
-}
-
 variable "aws_region" {
   type        = "string"
   description = "The target AWS region for the cluster."
-}
-
-variable "aws_installer_role" {
-  type    = "string"
-  default = ""
-
-  description = <<EOF
-(optional) Name of IAM role to use to access AWS in order to deploy the OpenShift Cluster.
-The name is also the full role's ARN.
-
-Example:
- * Role ARN  = arn:aws:iam::123456789012:role/openshift-installer
-EOF
 }
 
 variable "aws_master_iam_role_name" {

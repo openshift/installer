@@ -14,12 +14,6 @@ type Platform struct {
 	// platform configuration.
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
-	// VPCID specifies the vpc to associate with the cluster.
-	// If empty, new vpc will be created.
-	// +optional
-	VPCID string `json:"vpcID"`
-
 	// VPCCIDRBlock
-	// +optional
 	VPCCIDRBlock string `json:"vpcCIDRBlock"`
 }
