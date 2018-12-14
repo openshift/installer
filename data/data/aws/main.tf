@@ -89,6 +89,7 @@ module "vpc" {
   cluster_id      = "${var.cluster_id}"
   cluster_name    = "${var.cluster_name}"
   external_vpc_id = "${var.aws_external_vpc_id}"
+  region          = "${var.aws_region}"
 
   external_master_subnet_ids = "${compact(var.aws_external_master_subnet_ids)}"
   external_worker_subnet_ids = "${compact(var.aws_external_worker_subnet_ids)}"

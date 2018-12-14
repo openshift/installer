@@ -16,3 +16,9 @@ resource "aws_vpc" "new_vpc" {
       "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
+
+resource "aws_vpc_endpoint" "s3" {
+  vpc_id          = "${aws_vpc.new_vpc.id}"
+  service_name    = "com.amazonaws.${var.region}.s3"
+  route_table_ids = ["${concat(aws_route_table.private_routes.*.id, aws_route_table.default.*.id)}"]
+}

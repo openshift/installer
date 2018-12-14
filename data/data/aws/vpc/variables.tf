@@ -51,3 +51,8 @@ variable "public_master_endpoints" {
   description = "If set to true, public-facing ingress resources are created."
   default     = true
 }
+
+variable "region" {
+  type        = "string"
+  description = "The target AWS region for the cluster."
+}

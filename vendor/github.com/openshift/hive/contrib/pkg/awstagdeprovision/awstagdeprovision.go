@@ -377,6 +377,34 @@ func rtHasMainAssociation(rt *ec2.RouteTable) bool {
 	return false
 }
 
+// deleteVPCEndpoints will find all VPC endpoints associated with the passed in VPC and attempt to delete them
+func deleteVPCEndpoints(vpc *ec2.Vpc, ec2Client *ec2.EC2, logger log.FieldLogger) error {
+	describeEndpointsInput := ec2.DescribeVpcEndpointsInput{}
+	describeEndpointsInput.Filters = []*ec2.Filter{
+		{
+			Name:   aws.String("vpc-id"),
+			Values: []*string{vpc.VpcId},
+		},
+	}
+
+	results, err := ec2Client.DescribeVpcEndpoints(&describeEndpointsInput)
+	if err != nil {
+		logger.Debugf("error describing VPC endpoints: %v", err)
+		return err
+	}
+	for _, ep := range results.VpcEndpoints {
+		_, err := ec2Client.DeleteVpcEndpoints(&ec2.DeleteVpcEndpointsInput{
+			VpcEndpointIds: []*string{ep.VpcEndpointId},
+		})
+		if err != nil {
+			logger.Debugf("error deleting VPC endpoint: %v", err)
+			return err
+		}
+		logger.WithField("id", *ep.VpcEndpointId).Info("Deleted VPC endpoint")
+	}
+	return nil
+}
+
 // deleteRouteTablesWithVPC will attempt to delete all route tables associated with a given VPC
 func deleteRouteTablesWithVPC(vpc *ec2.Vpc, ec2Client *ec2.EC2, logger log.FieldLogger) error {
 	var anyError error
@@ -397,12 +425,6 @@ func deleteRouteTablesWithVPC(vpc *ec2.Vpc, ec2Client *ec2.EC2, logger log.Field
 		err := disassociateRouteTable(rt, ec2Client, logger)
 		if err != nil {
 			logger.Debugf("error disassociating from route table: %v", err)
-			return err
-		}
-
-		err = deleteRoutesFromTable(rt, ec2Client, logger)
-		if err != nil {
-			logger.Debugf("error deleting routes from route table: %v", err)
 			return err
 		}
 
@@ -456,8 +478,15 @@ func deleteVPCs(awsSession *session.Session, filters AWSFilter, clusterName stri
 				return false, nil
 			}
 
+			// next delete any VPC endpoints associated with the VPC (they are not taggable)
+			err := deleteVPCEndpoints(vpc, ec2Client, logger)
+			if err != nil {
+				logger.Debugf("error deleting VPC endpoint: %v", err)
+				return false, nil
+			}
+
 			// next delete route tables associated with the VPC (not all of them are tagged)
-			err := deleteRouteTablesWithVPC(vpc, ec2Client, logger)
+			err = deleteRouteTablesWithVPC(vpc, ec2Client, logger)
 			if err != nil {
 				logger.Debugf("error deleting route tables: %v", err)
 				return false, nil
@@ -1014,28 +1043,6 @@ func disassociateRouteTable(rt *ec2.RouteTable, ec2Client *ec2.EC2, logger log.F
 		}
 	}
 
-	return nil
-}
-
-// deleteRoutesFromTable will attempt to remove all routes defined in a given route table
-func deleteRoutesFromTable(rt *ec2.RouteTable, ec2Client *ec2.EC2, logger log.FieldLogger) error {
-	for _, route := range rt.Routes {
-		// can't delete the 'local' route
-		if route.GatewayId != nil && *route.GatewayId == "local" {
-			continue
-		}
-		logger.Debugf("deleting route %v from RT %v", *route.DestinationCidrBlock, *rt.RouteTableId)
-		_, err := ec2Client.DeleteRoute(&ec2.DeleteRouteInput{
-			RouteTableId:         rt.RouteTableId,
-			DestinationCidrBlock: route.DestinationCidrBlock,
-		})
-		if err != nil {
-			logger.Debugf("error deleting route from route table: %v", err)
-			return err
-		}
-
-		logger.Infof("Deleted route %v from route table %v", *route.DestinationCidrBlock, *rt.RouteTableId)
-	}
 	return nil
 }
 

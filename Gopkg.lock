@@ -392,11 +392,11 @@
   revision = "fb8b55a1072436a51b153de9acf5bf5525efcf83"
 
 [[projects]]
-  digest = "1:c2edaeee2250d3886f1e2223a8c6698498ecdc467a72949888f89dc1dde89045"
+  digest = "1:fff47662f79ac206b6c6c466afb79f0458fbdf1390f527cad9255e07f8de1369"
   name = "github.com/openshift/hive"
   packages = ["contrib/pkg/awstagdeprovision"]
   pruneopts = "NUT"
-  revision = "2349f175d3e4fc6542dec79add881a59f2d7b1b8"
+  revision = "802db5420da6a88f034fc2501081e2ab12e8463e"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
