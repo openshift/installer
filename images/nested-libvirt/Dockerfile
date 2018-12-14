@@ -7,7 +7,6 @@ RUN hack/build.sh
 
 FROM centos:7
 COPY --from=build /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
-COPY --from=build /go/src/github.com/openshift/installer/bin/terraform /bin/terraform
 COPY --from=build /go/src/github.com/openshift/installer/images/nested-libvirt/google-cloud-sdk.repo /etc/yum.repos.d/google-cloud-sdk.repo
 COPY --from=build /go/src/github.com/openshift/installer/images/nested-libvirt/mock-nss.sh /bin/mock-nss.sh
 
