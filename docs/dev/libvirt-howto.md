@@ -206,7 +206,7 @@ This step allows installer and users to resolve cluster-internal hostnames from 
 GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-libvirt
 ```
 
-### Cache Terrafrom plugins (optional, but makes subsequent runs a bit faster)
+### Cache Terraform plugins (optional, but makes subsequent runs a bit faster)
 
 ```sh
 cat <<EOF > $HOME/.terraformrc
