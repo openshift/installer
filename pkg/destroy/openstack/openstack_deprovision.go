@@ -335,8 +335,8 @@ func deleteRouters(opts *clientconfig.ClientOpts, filter Filter, logger logrus.F
 		logger.Debugf("Deleting Router: %+v\n", router.ID)
 		err = routers.Delete(conn, router.ID).ExtractErr()
 		if err != nil {
-			logger.Fatalf("%v", err)
-			os.Exit(1)
+			// This can fail when port is still in use
+			return false, nil
 		}
 	}
 	return len(allRouters) == 0, nil
