@@ -24,29 +24,46 @@ provider "openstack" {
   version             = ">=1.6.0"
 }
 
-module "bootstrap" {
-  source = "./bootstrap"
+module "lb" {
+  source = "./lb"
 
   swift_container   = "${openstack_objectstorage_container_v1.container.name}"
   cluster_name      = "${var.cluster_name}"
   cluster_id        = "${var.cluster_id}"
+  cluster_domain    = "${var.base_domain}"
   image_name        = "${var.openstack_base_image}"
   flavor_name       = "${var.openstack_master_flavor_name}"
   ignition          = "${var.ignition_bootstrap}"
-  bootstrap_port_id = "${module.topology.bootstrap_port_id}"
+  lb_port_id        = "${module.topology.lb_port_id}"
+  master_ips        = "${module.topology.master_ips}"
+  master_port_names = "${module.topology.master_port_names}"
+}
+
+module "bootstrap" {
+  source = "./bootstrap"
+
+  swift_container     = "${openstack_objectstorage_container_v1.container.name}"
+  cluster_name        = "${var.cluster_name}"
+  cluster_id          = "${var.cluster_id}"
+  image_name          = "${var.openstack_base_image}"
+  flavor_name         = "${var.openstack_master_flavor_name}"
+  ignition            = "${var.ignition_bootstrap}"
+  bootstrap_port_id   = "${module.topology.bootstrap_port_id}"
+  service_vm_fixed_ip = "${module.topology.service_vm_fixed_ip}"
 }
 
 module "masters" {
   source = "./masters"
 
-  base_image     = "${var.openstack_base_image}"
-  cluster_id     = "${var.cluster_id}"
-  cluster_name   = "${var.cluster_name}"
-  flavor_name    = "${var.openstack_master_flavor_name}"
-  instance_count = "${var.master_count}"
-  master_sg_ids  = "${concat(var.openstack_master_extra_sg_ids, list(module.topology.master_sg_id))}"
-  subnet_ids     = "${module.topology.master_subnet_ids}"
-  user_data_ign  = "${var.ignition_master}"
+  base_image          = "${var.openstack_base_image}"
+  cluster_id          = "${var.cluster_id}"
+  cluster_name        = "${var.cluster_name}"
+  flavor_name         = "${var.openstack_master_flavor_name}"
+  instance_count      = "${var.master_count}"
+  master_sg_ids       = "${concat(var.openstack_master_extra_sg_ids, list(module.topology.master_sg_id))}"
+  subnet_ids          = "${module.topology.master_subnet_ids}"
+  user_data_ign       = "${var.ignition_master}"
+  service_vm_fixed_ip = "${module.topology.service_vm_fixed_ip}"
 }
 
 # TODO(shadower) add a dns module here
