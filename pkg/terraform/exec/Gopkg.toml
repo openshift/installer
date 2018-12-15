@@ -1,3 +1,12 @@
+ignored = [
+  "github.com/openshift/installer/pkg/terraform/exec/plugins*"
+]
+
+[prune]
+  go-tests = true
+  unused-packages = true
+  non-go = true
+
 [[constraint]]
   branch = "master"
   name = "github.com/hashicorp/go-plugin"
@@ -8,7 +17,7 @@
 
 [[constraint]]
   name = "github.com/hashicorp/terraform"
-  version = "0.11.10"
+  revision = "v0.11.10"
 
 [[constraint]]
   name = "github.com/mitchellh/cli"
@@ -29,8 +38,3 @@
 [[override]]
   revision = "v1.14.31"
   name = "github.com/aws/aws-sdk-go"
-
-[prune]
-  go-tests = true
-  unused-packages = true
-  non-go = true
