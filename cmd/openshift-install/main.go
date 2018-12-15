@@ -3,11 +3,15 @@ package main
 import (
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"golang.org/x/crypto/ssh/terminal"
+
+	"github.com/openshift/installer/pkg/terraform/exec/plugins"
 )
 
 var (
@@ -18,6 +22,19 @@ var (
 )
 
 func main() {
+	if len(os.Args) > 0 {
+		base := filepath.Base(os.Args[0])
+		cname := strings.TrimSuffix(base, filepath.Ext(base))
+		if pluginRunner, ok := plugins.KnownPlugins[cname]; ok {
+			pluginRunner()
+			return
+		}
+	}
+
+	installerMain()
+}
+
+func installerMain() {
 	rootCmd := newRootCmd()
 
 	for _, subCmd := range []*cobra.Command{
