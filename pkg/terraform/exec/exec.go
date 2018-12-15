@@ -53,9 +53,11 @@ func runner(cmd string, dir string, args []string, stdout, stderr io.Writer) int
 	sdCh, cancel := makeShutdownCh()
 	defer cancel()
 
+	pluginDirs := globalPluginDirs(stderr)
+	pluginDirs = append(pluginDirs, filepath.Join(dir, "plugins"))
 	meta := command.Meta{
 		Color:            false,
-		GlobalPluginDirs: globalPluginDirs(stderr),
+		GlobalPluginDirs: pluginDirs,
 		Ui: &cli.BasicUi{
 			Writer:      stdout,
 			ErrorWriter: stderr,
