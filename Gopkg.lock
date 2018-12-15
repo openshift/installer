@@ -530,8 +530,7 @@
   revision = "4d3f4d9ffa16a13f451c3b2999e9c49e9750bf06"
 
 [[projects]]
-  branch = "master"
-  digest = "1:f80175f9ba0c0aededce5a82fe2e1018043f067d4dedd3402a34523fedd3b738"
+  digest = "1:122db8a20246abd128a496d22b6c35d3c648de20e3445e583b370c86c2d96d53"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -542,7 +541,7 @@
     "idna",
   ]
   pruneopts = "NUT"
-  revision = "c10e9556a7bc0e7c942242b606f0acf024ad5d6a"
+  revision = "891ebc4b82d6e74f468c533b06f983c7be918a96"
 
 [[projects]]
   branch = "master"
