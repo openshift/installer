@@ -2,7 +2,9 @@ package terraform
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/openshift/installer/data"
 	"github.com/pkg/errors"
@@ -10,6 +12,7 @@ import (
 
 	"github.com/openshift/installer/pkg/lineprinter"
 	texec "github.com/openshift/installer/pkg/terraform/exec"
+	"github.com/openshift/installer/pkg/terraform/exec/plugins"
 )
 
 const (
@@ -115,6 +118,10 @@ func unpackAndInit(dir string, platform string) (err error) {
 		return errors.Wrap(err, "failed to unpack Terraform modules")
 	}
 
+	if err := setupEmbeddedPlugins(dir); err != nil {
+		return errors.Wrap(err, "failed to setup embedded terraform plugins")
+	}
+
 	tDebug := &lineprinter.Trimmer{WrappedPrint: logrus.Debug}
 	tError := &lineprinter.Trimmer{WrappedPrint: logrus.Error}
 	lpDebug := &lineprinter.LinePrinter{Print: tDebug.Print}
@@ -124,6 +131,33 @@ func unpackAndInit(dir string, platform string) (err error) {
 
 	if exitCode := texec.Init(dir, []string{dir}, lpDebug, lpError); exitCode != 0 {
 		return errors.New("failed to initialize Terraform")
+	}
+	return nil
+}
+
+func setupEmbeddedPlugins(dir string) error {
+	execPath, err := os.Executable()
+	if err != nil {
+		return errors.Wrap(err, "failed to find path for the executable")
+	}
+
+	pdir := filepath.Join(dir, "plugins")
+	if err := os.MkdirAll(pdir, 0777); err != nil {
+		return err
+	}
+	for name := range plugins.KnownPlugins {
+		dst := filepath.Join(pdir, name)
+		if runtime.GOOS == "windows" {
+			dst = fmt.Sprintf("%s.exe", dst)
+		}
+		if _, err := os.Stat(dst); err == nil {
+			// stat succeeded, the plugin already exists.
+			continue
+		}
+		logrus.Debugf("Symlinking plugin %s src: %q dst: %q", name, execPath, dst)
+		if err := os.Symlink(execPath, dst); err != nil {
+			return err
+		}
 	}
 	return nil
 }
