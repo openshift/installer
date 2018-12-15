@@ -77,7 +77,7 @@ func provider(clusterName string, platform *libvirt.Platform, userDataSecret str
 			BaseVolumeID: fmt.Sprintf("/var/lib/libvirt/images/%s-base", clusterName),
 		},
 		NetworkInterfaceName:    clusterName,
-		NetworkInterfaceAddress: platform.Network.IPRange,
+		NetworkInterfaceAddress: platform.Network.IPRange.String(),
 		Autostart:               false,
 		URI:                     platform.URI,
 	}

@@ -150,6 +150,14 @@
   revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
+  digest = "1:b60efdeb75d3c0ceed88783ac2495256aba3491a537d0f31401202579fd62a94"
+  name = "github.com/golang/mock"
+  packages = ["gomock"]
+  pruneopts = "NUT"
+  revision = "51421b967af1f557f93a59e0057aaf15ca02e29c"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:63ccdfbd20f7ccd2399d0647a7d100b122f79c13bb83da9660b1598396fd9f62"
   name = "github.com/golang/protobuf"
   packages = [
@@ -504,11 +512,18 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:001a4e7a40e50ff2ef32e2556bca50c4f77daa457db3ac6afc8bea9bb2122cfb"
+  digest = "1:bf004bff766c8754f1c9b1e0a1ac6f253cd8e98fac385a33a9e9bd70325b72a8"
   name = "golang.org/x/crypto"
   packages = [
     "bcrypt",
     "blowfish",
+    "curve25519",
+    "ed25519",
+    "ed25519/internal/edwards25519",
+    "internal/chacha20",
+    "internal/subtle",
+    "poly1305",
+    "ssh",
     "ssh/terminal",
   ]
   pruneopts = "NUT"
@@ -832,6 +847,7 @@
     "github.com/coreos/ignition/config/util",
     "github.com/coreos/ignition/config/v2_2/types",
     "github.com/ghodss/yaml",
+    "github.com/golang/mock/gomock",
     "github.com/gophercloud/gophercloud/openstack/compute/v2/servers",
     "github.com/gophercloud/gophercloud/openstack/identity/v3/regions",
     "github.com/gophercloud/gophercloud/openstack/imageservice/v2/images",
@@ -859,6 +875,7 @@
     "github.com/stretchr/testify/assert",
     "github.com/vincent-petithory/dataurl",
     "golang.org/x/crypto/bcrypt",
+    "golang.org/x/crypto/ssh",
     "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/sys/unix",
     "gopkg.in/AlecAivazis/survey.v1",
@@ -867,7 +884,10 @@
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",
+    "k8s.io/apimachinery/pkg/util/errors",
     "k8s.io/apimachinery/pkg/util/sets",
+    "k8s.io/apimachinery/pkg/util/validation",
+    "k8s.io/apimachinery/pkg/util/validation/field",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/kubernetes",

@@ -53,10 +53,10 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 // EC2RootVolume defines the storage for an ec2 instance.
 type EC2RootVolume struct {
-	// IOPS defines the iops for the instance.
+	// IOPS defines the iops for the storage.
 	IOPS int `json:"iops"`
-	// Size defines the size of the instance.
+	// Size defines the size of the storage.
 	Size int `json:"size"`
-	// Type defines the type of the instance.
+	// Type defines the type of the storage.
 	Type string `json:"type"`
 }

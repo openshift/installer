@@ -82,9 +82,14 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 		}
 
 		config.AWS = aws.AWS{
-			Region:         cfg.Platform.AWS.Region,
-			ExtraTags:      cfg.Platform.AWS.UserTags,
-			VPCCIDRBlock:   cfg.Platform.AWS.VPCCIDRBlock,
+			Region:    cfg.Platform.AWS.Region,
+			ExtraTags: cfg.Platform.AWS.UserTags,
+			VPCCIDRBlock: func() string {
+				if cfg.Platform.AWS.VPCCIDRBlock == nil {
+					return ""
+				}
+				return cfg.Platform.AWS.VPCCIDRBlock.String()
+			}(),
 			EC2AMIOverride: ami,
 		}
 	} else if cfg.Platform.Libvirt != nil {
@@ -96,7 +101,7 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 			URI: cfg.Platform.Libvirt.URI,
 			Network: libvirt.Network{
 				IfName:  cfg.Platform.Libvirt.Network.IfName,
-				IPRange: cfg.Platform.Libvirt.Network.IPRange,
+				IPRange: cfg.Platform.Libvirt.Network.IPRange.String(),
 			},
 			Image:     cfg.Platform.Libvirt.DefaultMachinePlatform.Image,
 			MasterIPs: masterIPs,
@@ -110,7 +115,7 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 	} else if cfg.Platform.OpenStack != nil {
 		config.OpenStack = openstack.OpenStack{
 			Region:           cfg.Platform.OpenStack.Region,
-			NetworkCIDRBlock: cfg.Platform.OpenStack.NetworkCIDRBlock,
+			NetworkCIDRBlock: cfg.Platform.OpenStack.NetworkCIDRBlock.String(),
 			BaseImage:        cfg.Platform.OpenStack.BaseImage,
 		}
 		config.OpenStack.Credentials.Cloud = cfg.Platform.OpenStack.Cloud

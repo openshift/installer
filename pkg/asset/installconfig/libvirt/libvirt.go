@@ -3,19 +3,22 @@ package libvirt
 
 import (
 	"context"
-	"fmt"
-	"net/url"
 
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
+	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/libvirt"
+	"github.com/openshift/installer/pkg/validate"
 )
 
 const (
-	defaultNetworkIfName  = "tt0"
-	defaultNetworkIPRange = "192.168.126.0/24"
+	defaultNetworkIfName = "tt0"
+)
+
+var (
+	defaultNetworkIPRange = ipnet.MustParseCIDR("192.168.126.0/24")
 )
 
 // Platform collects libvirt-specific configuration.
@@ -43,7 +46,7 @@ func Platform() (*libvirt.Platform, error) {
 	return &libvirt.Platform{
 		Network: libvirt.Network{
 			IfName:  defaultNetworkIfName,
-			IPRange: defaultNetworkIPRange,
+			IPRange: *defaultNetworkIPRange,
 		},
 		DefaultMachinePlatform: &libvirt.MachinePool{
 			Image: qcowImage,
@@ -55,17 +58,5 @@ func Platform() (*libvirt.Platform, error) {
 // uriValidator validates if the answer provided in prompt is a valid
 // url and has non-empty scheme.
 func uriValidator(ans interface{}) error {
-	return validURI(ans.(string))
-}
-
-// validURI validates if the URI is a valid URI with a non-empty scheme.
-func validURI(uri string) error {
-	parsed, err := url.Parse(uri)
-	if err != nil {
-		return err
-	}
-	if parsed.Scheme == "" {
-		return fmt.Errorf("invalid URI %q (no scheme)", uri)
-	}
-	return nil
+	return validate.URI(ans.(string))
 }
