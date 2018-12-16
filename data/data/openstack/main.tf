@@ -85,7 +85,6 @@ resource "openstack_objectstorage_container_v1" "container" {
   metadata = "${merge(map(
       "Name", "${var.cluster_name}-ignition-master",
       "KubernetesCluster", "${var.cluster_name}",
-      "tectonicClusterID", "${var.cluster_id}",
       "openshiftClusterID", "${var.cluster_id}"
     ), var.openstack_extra_tags)}"
 }

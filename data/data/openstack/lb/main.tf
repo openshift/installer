@@ -116,7 +116,6 @@ resource "openstack_compute_instance_v2" "load_balancer" {
     Name = "${var.cluster_name}-bootstrap"
 
     # "kubernetes.io/cluster/${var.cluster_name}" = "owned"
-    tectonicClusterID  = "${var.cluster_id}"
     openshiftClusterID = "${var.cluster_id}"
   }
 }

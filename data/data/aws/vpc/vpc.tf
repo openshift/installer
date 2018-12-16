@@ -11,7 +11,6 @@ resource "aws_vpc" "new_vpc" {
   tags = "${merge(map(
       "Name", "${var.cluster_name}.${var.base_domain}",
       "kubernetes.io/cluster/${var.cluster_name}", "shared",
-      "tectonicClusterID", "${var.cluster_id}",
       "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }

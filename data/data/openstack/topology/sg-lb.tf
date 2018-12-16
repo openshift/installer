@@ -1,6 +1,6 @@
 resource "openstack_networking_secgroup_v2" "api" {
   name = "api"
-  tags = ["tectonicClusterID=${var.cluster_id}", "openshiftClusterID=${var.cluster_id}"]
+  tags = ["openshiftClusterID=${var.cluster_id}"]
 }
 
 resource "openstack_networking_secgroup_rule_v2" "api_mcs" {

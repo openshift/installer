@@ -14,9 +14,6 @@ func Metadata(config *types.InstallConfig) *aws.Metadata {
 		Region: config.Platform.AWS.Region,
 		Identifier: []map[string]string{
 			{
-				"tectonicClusterID": config.ClusterID,
-			},
-			{
 				"openshiftClusterID": config.ClusterID,
 			},
 			{

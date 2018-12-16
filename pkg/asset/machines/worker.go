@@ -133,7 +133,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 
 		tags := map[string]string{
-			"tectonicClusterID":  ic.ClusterID,
 			"openshiftClusterID": ic.ClusterID,
 		}
 		config.Tags = tags
