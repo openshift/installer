@@ -53,7 +53,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	userDataMap := map[string][]byte{"master-user-data": mign.File.Data}
 	m.UserDataSecretRaw, err = userDataList(userDataMap)
 	if err != nil {
-		return errors.Wrap(err, "failed to create user-data secret for worker machines")
+		return errors.Wrap(err, "failed to create user-data secret for master machines")
 	}
 
 	ic := installconfig.Config
