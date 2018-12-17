@@ -42,7 +42,7 @@ func (a *Master) Generate(dependencies asset.Parents) error {
 
 	data, err := json.Marshal(a.Config)
 	if err != nil {
-		return errors.Wrap(err, "failed to get InstallConfig from parents")
+		return errors.Wrap(err, "failed to marshal Ignition config")
 	}
 	a.File = &asset.File{
 		Filename: masterIgnFilename,
