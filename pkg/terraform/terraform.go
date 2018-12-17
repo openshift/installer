@@ -23,7 +23,7 @@ const (
 	VarFileName string = "terraform.tfvars"
 )
 
-// Version gets the output of 'terrraform version'.
+// Version gets the output of 'terraform version'.
 func Version() (version string, err error) {
 	return texec.Version(), nil
 }
@@ -57,7 +57,7 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 	defer lpError.Close()
 
 	if exitCode := texec.Apply(dir, args, lpDebug, lpError); exitCode != 0 {
-		return sf, errors.New("failed to apply using terraform")
+		return sf, errors.New("failed to apply using Terraform")
 	}
 	return sf, nil
 }
@@ -89,7 +89,7 @@ func Destroy(dir string, platform string, extraArgs ...string) (err error) {
 	defer lpError.Close()
 
 	if exitCode := texec.Destroy(dir, args, lpDebug, lpError); exitCode != 0 {
-		return errors.New("failed to destroy using terraform")
+		return errors.New("failed to destroy using Terraform")
 	}
 	return nil
 }
@@ -119,7 +119,7 @@ func unpackAndInit(dir string, platform string) (err error) {
 	}
 
 	if err := setupEmbeddedPlugins(dir); err != nil {
-		return errors.Wrap(err, "failed to setup embedded terraform plugins")
+		return errors.Wrap(err, "failed to setup embedded Terraform plugins")
 	}
 
 	tDebug := &lineprinter.Trimmer{WrappedPrint: logrus.Debug}
