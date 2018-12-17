@@ -112,6 +112,9 @@ metadata:
 						Data:     []byte(tc.data)},
 					tc.fetchError,
 				)
+			fileFetcher.EXPECT().FetchByName(deprecatedInstallConfigFilename).
+				Return(nil, &os.PathError{Err: os.ErrNotExist}).
+				AnyTimes()
 
 			ic := &InstallConfig{}
 			found, err := ic.Load(fileFetcher)
@@ -128,6 +131,110 @@ metadata:
 				assert.Nil(t, ic.File, "expected File in InstallConfig to be nil")
 			}
 			assert.Equal(t, tc.expectedConfig, ic.Config, "unexpected Config in InstallConfig")
+		})
+	}
+}
+
+func TestFetchInstallConfigFile(t *testing.T) {
+	cases := []struct {
+		name                         string
+		installConfigFile            *asset.File
+		installConfigError           error
+		deprecatedInstallConfigFile  *asset.File
+		deprecatedInstallConfigError error
+		expectedFile                 *asset.File
+		expectedError                error
+	}{
+		{
+			name: "no files",
+		},
+		{
+			name: "only new file",
+			installConfigFile: &asset.File{
+				Filename: installConfigFilename,
+				Data:     []byte("test-data"),
+			},
+			expectedFile: &asset.File{
+				Filename: installConfigFilename,
+				Data:     []byte("test-data"),
+			},
+		},
+		{
+			name:               "only deprecated file",
+			installConfigError: &os.PathError{Err: os.ErrNotExist},
+			deprecatedInstallConfigFile: &asset.File{
+				Filename: deprecatedInstallConfigFilename,
+				Data:     []byte("test-data"),
+			},
+			expectedFile: &asset.File{
+				Filename: installConfigFilename,
+				Data:     []byte("test-data"),
+			},
+		},
+		{
+			name: "both files",
+			installConfigFile: &asset.File{
+				Filename: installConfigFilename,
+				Data:     []byte("test-data"),
+			},
+			deprecatedInstallConfigFile: &asset.File{
+				Filename: deprecatedInstallConfigFilename,
+				Data:     []byte("deprecated-test-data"),
+			},
+			expectedFile: &asset.File{
+				Filename: installConfigFilename,
+				Data:     []byte("test-data"),
+			},
+		},
+		{
+			name:               "error reading new file",
+			installConfigError: errors.New("test-error"),
+			deprecatedInstallConfigFile: &asset.File{
+				Filename: deprecatedInstallConfigFilename,
+				Data:     []byte("deprecated-test-data"),
+			},
+			expectedError: errors.New("test-error"),
+		},
+		{
+			name:                         "error reading deprecated file",
+			installConfigError:           &os.PathError{Err: os.ErrNotExist},
+			deprecatedInstallConfigError: errors.New("test-error"),
+			expectedError:                errors.New("test-error"),
+		},
+		{
+			name:                         "error reading both files",
+			installConfigError:           errors.New("test-error-new"),
+			deprecatedInstallConfigError: errors.New("test-error-deprecated"),
+			expectedError:                errors.New("test-error-new"),
+		},
+		{
+			name: "new file with error reading deprecated file",
+			installConfigFile: &asset.File{
+				Filename: installConfigFilename,
+				Data:     []byte("test-data"),
+			},
+			deprecatedInstallConfigError: errors.New("test-error"),
+			expectedFile: &asset.File{
+				Filename: installConfigFilename,
+				Data:     []byte("test-data"),
+			},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockCtrl := gomock.NewController(t)
+			defer mockCtrl.Finish()
+
+			fileFetcher := mock.NewMockFileFetcher(mockCtrl)
+			fileFetcher.EXPECT().FetchByName(installConfigFilename).
+				Return(tc.installConfigFile, tc.installConfigError)
+			fileFetcher.EXPECT().FetchByName(deprecatedInstallConfigFilename).
+				Return(tc.deprecatedInstallConfigFile, tc.deprecatedInstallConfigError).
+				AnyTimes()
+
+			file, err := fetchInstallConfigFile(fileFetcher)
+			assert.Equal(t, tc.expectedFile, file, "unexpected file")
+			assert.Equal(t, tc.expectedError, err, "unexpected error")
 		})
 	}
 }
