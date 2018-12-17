@@ -3,8 +3,7 @@ locals {
 }
 
 provider "aws" {
-  region  = "${var.aws_region}"
-  version = "1.39.0"
+  region = "${var.aws_region}"
 }
 
 module "bootstrap" {
