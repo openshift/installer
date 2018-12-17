@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/servers"
+	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers"
 	sg "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
@@ -232,6 +233,28 @@ func deletePorts(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fie
 		os.Exit(1)
 	}
 	for _, port := range allPorts {
+		listOpts := floatingips.ListOpts{
+			PortID: port.ID,
+		}
+		allPages, err := floatingips.List(conn, listOpts).AllPages()
+		if err != nil {
+			logger.Fatalf("%v", err)
+			os.Exit(1)
+		}
+		allFIPs, err := floatingips.ExtractFloatingIPs(allPages)
+		if err != nil {
+			logger.Fatalf("%v", err)
+			os.Exit(1)
+		}
+		for _, fip := range allFIPs {
+			logger.Debugf("Deleting Floating IP: %+v", fip.ID)
+			err = floatingips.Delete(conn, fip.ID).ExtractErr()
+			if err != nil {
+				logger.Fatalf("%v", err)
+				os.Exit(1)
+			}
+		}
+
 		logger.Debugf("Deleting Port: %+v", port.ID)
 		err = ports.Delete(conn, port.ID).ExtractErr()
 		if err != nil {
