@@ -13,12 +13,6 @@ variable "master_count" {
   type        = "string"
 }
 
-variable "worker_count" {
-  description = "The number of workers"
-  type        = "string"
-  default     = "0"
-}
-
 variable "master_ip_addresses" {
   description = "List of string IPs for masters"
   type        = "list"
@@ -29,18 +23,6 @@ variable "worker_ip_addresses" {
   description = "List of string IPs for workers"
   type        = "list"
   default     = []
-}
-
-variable "worker_public_ips" {
-  description = "(optional) List of string public IPs for workers"
-  type        = "list"
-  default     = []
-}
-
-// hack: worker_public_ips_enabled is a workaround for https://github.com/hashicorp/terraform/issues/10857
-variable "worker_public_ips_enabled" {
-  description = "Worker nodes have public IPs assigned. worker_public_ips must be provided if true."
-  default     = true
 }
 
 variable "extra_tags" {
