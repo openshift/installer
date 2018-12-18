@@ -124,7 +124,11 @@ func unpackAndInit(dir string, platform string) (err error) {
 	defer lpDebug.Close()
 	defer lpError.Close()
 
-	if exitCode := texec.Init(dir, []string{dir}, lpDebug, lpError); exitCode != 0 {
+	args := []string{
+		"-get-plugins=false",
+	}
+	args = append(args, dir)
+	if exitCode := texec.Init(dir, args, lpDebug, lpError); exitCode != 0 {
 		return errors.New("failed to initialize Terraform")
 	}
 	return nil
