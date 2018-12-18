@@ -91,3 +91,7 @@ ignored = [
 [[constraint]]
   name = "github.com/openshift/client-go"
   revision = "1fa528d3be060e4c7178eb69e76d37cf7e699e3c"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/gophercloud/gophercloud"
