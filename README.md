@@ -22,7 +22,10 @@ This will create `bin/openshift-install`. This binary can then be invoked to cre
 bin/openshift-install create cluster
 ```
 
-The installer will show a series of prompts for user-specific information and use reasonable defaults for everything else. In non-interactive contexts, prompts can be bypassed by providing appropriately-named environment variables. Refer to the [user documentation](docs/user) for more information.
+The installer will show a series of prompts for user-specific information and use reasonable defaults for everything else.
+In non-interactive contexts, prompts can be bypassed by [providing an `install-config.yaml`](docs/user/overview.md#multiple-invocations).
+
+If you have trouble, refer to [the troubleshooting guide](docs/user/troubleshooting.md).
 
 ### Connect to the cluster
 
