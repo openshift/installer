@@ -198,21 +198,6 @@ This step allows installer and users to resolve cluster-internal hostnames from 
     ```
 3. `systemctl restart NetworkManager`
 
-### Install the Terraform provider
-
-1. Make sure you have the `virsh` binary installed: `sudo dnf install libvirt-client libvirt-devel`
-2. Install the libvirt terraform provider:
-```sh
-GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-libvirt
-```
-
-### Cache Terraform plugins (optional, but makes subsequent runs a bit faster)
-
-```sh
-cat <<EOF > $HOME/.terraformrc
-plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"
-EOF
-```
 
 ## Build and run the installer
 
