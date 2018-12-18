@@ -9,6 +9,7 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/autoscaling"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -1192,16 +1193,27 @@ func deleteS3Buckets(session *session.Session, filter AWSFilter, clusterName str
 }
 
 // r53ZonesToAWSObjects will create a list of awsObjectsWithTags for the provided list of route53.HostedZone s
-func r53ZonesToAWSObjects(zones []*route53.HostedZone, r53Client *route53.Route53) ([]awsObjectWithTags, error) {
+func r53ZonesToAWSObjects(zones []*route53.HostedZone, r53Client *route53.Route53, logger log.FieldLogger) ([]awsObjectWithTags, error) {
 	zonesAsAWSObjects := []awsObjectWithTags{}
 
+	var result *route53.ListTagsForResourceOutput
+	var err error
 	for _, zone := range zones {
-		result, err := r53Client.ListTagsForResource(&route53.ListTagsForResourceInput{
-			ResourceType: aws.String("hostedzone"),
-			ResourceId:   zone.Id,
-		})
-		if err != nil {
-			return zonesAsAWSObjects, err
+		for {
+			result, err = r53Client.ListTagsForResource(&route53.ListTagsForResourceInput{
+				ResourceType: aws.String("hostedzone"),
+				ResourceId:   zone.Id,
+			})
+			if err != nil {
+				if request.IsErrorThrottle(err) {
+					logger.Debugf("sleeping before trying to resolve tags for zone %s: %v", zone.Id, err)
+					time.Sleep(time.Second)
+					continue
+				}
+				return zonesAsAWSObjects, err
+			}
+
+			break
 		}
 
 		tagsToMap, err := tagsToMap(result.ResourceTagSet.Tags)
@@ -1370,7 +1382,7 @@ func deleteRoute53(session *session.Session, filters AWSFilter, clusterName stri
 			return false, nil
 		}
 
-		awsZones, err := r53ZonesToAWSObjects(allZones.HostedZones, r53Client)
+		awsZones, err := r53ZonesToAWSObjects(allZones.HostedZones, r53Client, logger)
 		if err != nil {
 			logger.Debugf("error converting r53Zones to native AWS objects: %v", err)
 			return false, nil
