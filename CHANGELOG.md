@@ -138,7 +138,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - The user-facing `OPENSHIFT_INSTALL_*` environment variables are
   gone.  Instead, users who want to skip the wizard are encouraged to
   [provide their own
-  install-config](docs/user/tips-and-tricks.md#reusing-an-install-config).
+  install-config](docs/user/overview.md#multiple-invocations).
 - On AWS, the option to install a cluster into an existing VPC is
   gone.  Users who would have previously done this can use [VPC
   peering][aws-vpc-peering].
