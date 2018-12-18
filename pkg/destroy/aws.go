@@ -1,7 +1,7 @@
 package destroy
 
 import (
-	aws "github.com/openshift/installer/pkg/destroy/aws"
+	"github.com/openshift/installer/pkg/destroy/aws"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/sirupsen/logrus"
 )
