@@ -23,11 +23,6 @@ const (
 	VarFileName string = "terraform.tfvars"
 )
 
-// Version gets the output of 'terraform version'.
-func Version() (version string, err error) {
-	return texec.Version(), nil
-}
-
 // Apply unpacks the platform-specific Terraform modules into the
 // given directory and then runs 'terraform init' and 'terraform
 // apply'.  It returns the absolute path of the tfstate file, rooted
