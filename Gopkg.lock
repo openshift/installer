@@ -401,13 +401,6 @@
   revision = "fb8b55a1072436a51b153de9acf5bf5525efcf83"
 
 [[projects]]
-  digest = "1:fff47662f79ac206b6c6c466afb79f0458fbdf1390f527cad9255e07f8de1369"
-  name = "github.com/openshift/hive"
-  packages = ["contrib/pkg/awstagdeprovision"]
-  pruneopts = "NUT"
-  revision = "802db5420da6a88f034fc2501081e2ab12e8463e"
-
-[[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
   name = "github.com/pborman/uuid"
   packages = ["."]
@@ -841,10 +834,18 @@
     "github.com/apparentlymart/go-cidr/cidr",
     "github.com/awalterschulze/gographviz",
     "github.com/aws/aws-sdk-go/aws",
+    "github.com/aws/aws-sdk-go/aws/awserr",
     "github.com/aws/aws-sdk-go/aws/credentials",
     "github.com/aws/aws-sdk-go/aws/defaults",
     "github.com/aws/aws-sdk-go/aws/session",
+    "github.com/aws/aws-sdk-go/service/autoscaling",
     "github.com/aws/aws-sdk-go/service/ec2",
+    "github.com/aws/aws-sdk-go/service/elb",
+    "github.com/aws/aws-sdk-go/service/elbv2",
+    "github.com/aws/aws-sdk-go/service/iam",
+    "github.com/aws/aws-sdk-go/service/route53",
+    "github.com/aws/aws-sdk-go/service/s3",
+    "github.com/aws/aws-sdk-go/service/s3/s3manager",
     "github.com/coreos/ignition/config/util",
     "github.com/coreos/ignition/config/v2_2/types",
     "github.com/ghodss/yaml",
@@ -868,7 +869,6 @@
     "github.com/openshift/client-go/route/clientset/versioned",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
     "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1",
-    "github.com/openshift/hive/contrib/pkg/awstagdeprovision",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
     "github.com/shurcooL/vfsgen",
