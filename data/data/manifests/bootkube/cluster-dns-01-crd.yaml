@@ -1,0 +1,16 @@
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+metadata:
+  name: dnses.config.openshift.io
+spec:
+  group: config.openshift.io
+  names:
+    kind: DNS
+    listKind: DNSList
+    plural: dnses
+    singular: dns
+  scope: Cluster
+  versions:
+  - name: v1
+    served: true
+    storage: true
