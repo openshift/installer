@@ -69,10 +69,6 @@ ignored = [
   version = "2.0.0"
 
 [[constraint]]
-  name = "github.com/openshift/hive"
-  revision = "802db5420da6a88f034fc2501081e2ab12e8463e"
-
-[[constraint]]
   name = "k8s.io/utils"
   revision = "4c3feeb576b06ef8fea769809bd3db5e5e78dc23"
 
