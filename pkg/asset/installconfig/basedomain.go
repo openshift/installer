@@ -4,7 +4,10 @@ import (
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/validate"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 type baseDomain struct {
@@ -15,16 +18,30 @@ var _ asset.Asset = (*baseDomain)(nil)
 
 // Dependencies returns no dependencies.
 func (a *baseDomain) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{
+		&platform{},
+	}
 }
 
 // Generate queries for the base domain from the user.
-func (a *baseDomain) Generate(asset.Parents) error {
+func (a *baseDomain) Generate(parents asset.Parents) error {
+	platform := &platform{}
+	parents.Get(platform)
+
+	if platform.AWS != nil {
+		var err error
+		a.BaseDomain, err = aws.GetBaseDomain()
+		if !aws.IsForbidden(errors.Cause(err)) {
+			return err
+		}
+		logrus.Error(err)
+	}
+
 	return survey.Ask([]*survey.Question{
 		{
 			Prompt: &survey.Input{
 				Message: "Base Domain",
-				Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name.\n\nFor AWS, this must be a previously-existing public Route 53 zone.  You can check for any already in your account with:\n\n  $ aws route53 list-hosted-zones --query 'HostedZones[? !(Config.PrivateZone)].Name' --output text",
+				Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name.",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
 				return validate.DomainName(ans.(string))

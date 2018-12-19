@@ -43,19 +43,9 @@ func Platform() (*aws.Platform, error) {
 		panic(fmt.Sprintf("installer bug: invalid default AWS region %q", defaultRegion))
 	}
 
-	ssn := session.Must(session.NewSessionWithOptions(session.Options{
-		SharedConfigState: session.SharedConfigEnable,
-	}))
-	ssn.Config.Credentials = credentials.NewChainCredentials([]credentials.Provider{
-		&credentials.EnvProvider{},
-		&credentials.SharedCredentialsProvider{},
-	})
-	_, err := ssn.Config.Credentials.Get()
-	if err == credentials.ErrNoValidProvidersFoundInChain {
-		err = getCredentials()
-		if err != nil {
-			return nil, err
-		}
+	ssn, err := getSession()
+	if err != nil {
+		return nil, err
 	}
 
 	defaultRegionPointer := ssn.Config.Region
@@ -99,6 +89,25 @@ func Platform() (*aws.Platform, error) {
 		VPCCIDRBlock: defaultVPCCIDR,
 		Region:       region,
 	}, nil
+}
+
+func getSession() (*session.Session, error) {
+	ssn := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+	ssn.Config.Credentials = credentials.NewChainCredentials([]credentials.Provider{
+		&credentials.EnvProvider{},
+		&credentials.SharedCredentialsProvider{},
+	})
+	_, err := ssn.Config.Credentials.Get()
+	if err == credentials.ErrNoValidProvidersFoundInChain {
+		err = getCredentials()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return ssn, nil
 }
 
 func getCredentials() error {
