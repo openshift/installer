@@ -162,6 +162,16 @@ func (LeaderElection) SwaggerDoc() map[string]string {
 	return map_LeaderElection
 }
 
+var map_LocalSecretReference = map[string]string{
+	"":     "LocalSecretReference references a secret within the local namespace",
+	"name": "Name of the secret in the local namespace",
+	"key":  "Key selects a specific key within the local secret. Must be a valid secret key.",
+}
+
+func (LocalSecretReference) SwaggerDoc() map[string]string {
+	return map_LocalSecretReference
+}
+
 var map_NamedCertificate = map[string]string{
 	"":      "NamedCertificate specifies a certificate/key, and the names it should be served for",
 	"names": "Names is a list of DNS names this certificate should be used to secure A name can be a normal DNS name, or can contain leading wildcard segments.",
