@@ -288,7 +288,7 @@ func waitForConsole(ctx context.Context, config *rest.Config, directory string) 
 		return "", errors.Wrap(err, "creating a route client")
 	}
 
-	consoleRouteTimeout := 10 * time.Minute
+	consoleRouteTimeout := 20 * time.Minute
 	logrus.Infof("Waiting up to %v for the openshift-console route to be created...", consoleRouteTimeout)
 	consoleRouteContext, cancel := context.WithTimeout(ctx, consoleRouteTimeout)
 	defer cancel()
