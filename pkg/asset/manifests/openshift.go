@@ -46,6 +46,8 @@ func (o *Openshift) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
 		&ClusterK8sIO{},
+		&Authentication{},
+		&OAuth{},
 		&machines.Worker{},
 		&machines.Master{},
 		&password.KubeadminPassword{},
@@ -62,9 +64,11 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	kubeadminPassword := &password.KubeadminPassword{}
 	clusterk8sio := &ClusterK8sIO{}
+	authentication := &Authentication{}
+	oauth := &OAuth{}
 	worker := &machines.Worker{}
 	master := &machines.Master{}
-	dependencies.Get(installConfig, clusterk8sio, worker, master, kubeadminPassword)
+	dependencies.Get(installConfig, clusterk8sio, authentication, oauth, worker, master, kubeadminPassword)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -143,6 +147,8 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			Data:     data,
 		})
 	}
+	o.FileList = append(o.FileList, authentication.Files()...)
+	o.FileList = append(o.FileList, oauth.Files()...)
 
 	return nil
 }
