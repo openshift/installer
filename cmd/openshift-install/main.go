@@ -23,6 +23,7 @@ func main() {
 	for _, subCmd := range []*cobra.Command{
 		newCreateCmd(),
 		newDestroyCmd(),
+		newViewCmd(),
 		newVersionCmd(),
 		newGraphCmd(),
 	} {

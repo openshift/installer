@@ -24,6 +24,18 @@ type Store interface {
 	// Destroy removes the asset from all its internal state and also from
 	// disk if possible.
 	Destroy(Asset) error
+
+	// Load retrieves the given asset from on-disk or the state file, without
+	// generating it or its dependencies. Load will retrieve the dependencies
+	// from on-disk or the state file, as well.
+	Load(Asset) (bool, error)
+
+	// GetAllFiles gets the names of all the files for all of the assets in the
+	// store.
+	GetAllFiles() []string
+
+	// GetFile gets the file with the specified name from an asset in the store.
+	GetFile(string) *File
 }
 
 // assetSource indicates from where the asset was fetched
@@ -339,6 +351,45 @@ func (s *StoreImpl) purge(excluded WritableAsset) error {
 			return err
 		}
 		assetState.presentOnDisk = false
+	}
+	return nil
+}
+
+// Load retrieves the given asset from on-disk or the state file, without
+// generating it or its dependencies. Load will retrieve the dependencies
+// from on-disk or the state file, as well.
+func (s *StoreImpl) Load(asset Asset) (bool, error) {
+	state, err := s.load(asset, "")
+	if err != nil {
+		return false, err
+	}
+	return state.source != unfetched, nil
+}
+
+// GetAllFiles gets the names of all the files for all of the assets in the
+// store.
+func (s *StoreImpl) GetAllFiles() []string {
+	files := []string{}
+	for _, a := range s.assets {
+		if wa, isWritable := a.asset.(WritableAsset); isWritable {
+			for _, f := range wa.Files() {
+				files = append(files, f.Filename)
+			}
+		}
+	}
+	return files
+}
+
+// GetFile gets the file with the specified name from an asset in the store.
+func (s *StoreImpl) GetFile(filename string) *File {
+	for _, a := range s.assets {
+		if wa, isWritable := a.asset.(WritableAsset); isWritable {
+			for _, f := range wa.Files() {
+				if f.Filename == filename {
+					return f
+				}
+			}
+		}
 	}
 	return nil
 }
