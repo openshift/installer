@@ -9,8 +9,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"runtime"
 
 	"github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/logutils"
@@ -51,8 +49,11 @@ func runner(cmd string, dir string, args []string, stdout, stderr io.Writer) int
 	sdCh, cancel := makeShutdownCh()
 	defer cancel()
 
-	pluginDirs := globalPluginDirs(stderr)
-	pluginDirs = append(pluginDirs, filepath.Join(dir, "plugins"))
+	pluginDirs, err := globalPluginDirs(dir)
+	if err != nil {
+		fmt.Fprintf(stderr, "Error discovering plugin directories for Terraform: %v", err)
+		return 1
+	}
 	meta := command.Meta{
 		Color:            false,
 		GlobalPluginDirs: pluginDirs,
@@ -122,19 +123,4 @@ func makeShutdownCh() (<-chan struct{}, func()) {
 	}()
 
 	return resultCh, func() { signal.Reset(handle...) }
-}
-
-func globalPluginDirs(stderr io.Writer) []string {
-	var ret []string
-	// Look in ~/.terraform.d/plugins/ , or its equivalent on non-UNIX
-	dir, err := configDir()
-	if err != nil {
-		fmt.Fprintf(stderr, "Error finding global config directory: %s", err)
-	} else {
-		machineDir := fmt.Sprintf("%s_%s", runtime.GOOS, runtime.GOARCH)
-		ret = append(ret, filepath.Join(dir, "plugins"))
-		ret = append(ret, filepath.Join(dir, "plugins", machineDir))
-	}
-
-	return ret
 }
