@@ -18,6 +18,7 @@ import (
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/aws/validation"
 )
 
 var (
@@ -26,9 +27,9 @@ var (
 
 // Platform collects AWS-specific configuration.
 func Platform() (*aws.Platform, error) {
-	longRegions := make([]string, 0, len(aws.ValidRegions))
-	shortRegions := make([]string, 0, len(aws.ValidRegions))
-	for id, location := range aws.ValidRegions {
+	longRegions := make([]string, 0, len(validation.Regions))
+	shortRegions := make([]string, 0, len(validation.Regions))
+	for id, location := range validation.Regions {
 		longRegions = append(longRegions, fmt.Sprintf("%s (%s)", id, location))
 		shortRegions = append(shortRegions, id)
 	}
@@ -37,7 +38,7 @@ func Platform() (*aws.Platform, error) {
 	})
 
 	defaultRegion := "us-east-1"
-	_, ok := aws.ValidRegions[defaultRegion]
+	_, ok := validation.Regions[defaultRegion]
 	if !ok {
 		panic(fmt.Sprintf("installer bug: invalid default AWS region %q", defaultRegion))
 	}
@@ -59,7 +60,7 @@ func Platform() (*aws.Platform, error) {
 
 	defaultRegionPointer := ssn.Config.Region
 	if defaultRegionPointer != nil && *defaultRegionPointer != "" {
-		_, ok := aws.ValidRegions[*defaultRegionPointer]
+		_, ok := validation.Regions[*defaultRegionPointer]
 		if ok {
 			defaultRegion = *defaultRegionPointer
 		} else {
@@ -76,7 +77,7 @@ func Platform() (*aws.Platform, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The AWS region to be used for installation.",
-				Default: fmt.Sprintf("%s (%s)", defaultRegion, aws.ValidRegions[defaultRegion]),
+				Default: fmt.Sprintf("%s (%s)", defaultRegion, validation.Regions[defaultRegion]),
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
