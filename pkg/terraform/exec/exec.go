@@ -3,7 +3,6 @@ package exec
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,7 +16,6 @@ import (
 	"github.com/hashicorp/logutils"
 	"github.com/hashicorp/terraform/command"
 	"github.com/hashicorp/terraform/helper/logging"
-	"github.com/hashicorp/terraform/version"
 	"github.com/mitchellh/cli"
 )
 
@@ -53,9 +51,11 @@ func runner(cmd string, dir string, args []string, stdout, stderr io.Writer) int
 	sdCh, cancel := makeShutdownCh()
 	defer cancel()
 
+	pluginDirs := globalPluginDirs(stderr)
+	pluginDirs = append(pluginDirs, filepath.Join(dir, "plugins"))
 	meta := command.Meta{
 		Color:            false,
-		GlobalPluginDirs: globalPluginDirs(stderr),
+		GlobalPluginDirs: pluginDirs,
 		Ui: &cli.BasicUi{
 			Writer:      stdout,
 			ErrorWriter: stderr,
@@ -101,17 +101,6 @@ func Destroy(datadir string, args []string, stdout, stderr io.Writer) int {
 // Init is wrapper around `terraform init` subcommand.
 func Init(datadir string, args []string, stdout, stderr io.Writer) int {
 	return runner("init", datadir, args, stdout, stderr)
-}
-
-// Version is a wrapper around `terraform version` subcommand.
-// Comapared to other wrappers this only supports subset of the `terraform version` options.
-func Version() string {
-	var versionString bytes.Buffer
-	fmt.Fprintf(&versionString, "Terraform v%s", version.Version)
-	if version.Prerelease != "" {
-		fmt.Fprintf(&versionString, "-%s", version.Prerelease)
-	}
-	return versionString.String()
 }
 
 // makeShutdownCh creates an interrupt listener and returns a channel.

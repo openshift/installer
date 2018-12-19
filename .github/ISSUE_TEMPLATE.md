@@ -12,8 +12,6 @@ If we're wrong, PLEASE feel free to reopen it and explain why.
 ```console
 $ openshift-install version
 <your output here>
-$ ~/.terraform.d/plugins/terraform-provider-libvirt -version  # only needed if you're using libvirt
-<your output here>
 ```
 
 # Platform (aws|libvirt|openstack):

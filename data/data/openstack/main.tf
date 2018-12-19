@@ -21,7 +21,6 @@ provider "openstack" {
   user_domain_name    = "${var.openstack_credentials_user_domain_name}"
   user_id             = "${var.openstack_credentials_user_id}"
   user_name           = "${var.openstack_credentials_user_name}"
-  version             = ">=1.6.0"
 }
 
 module "lb" {
