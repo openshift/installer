@@ -82,6 +82,12 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name())
 	if err != nil {
 		err = errors.Wrap(err, "failed to create cluster")
+		if stateFile == "" {
+			return err
+		}
+		// Store the error from the apply, but continue with the
+		// generation so that the Terraform state file is recovered from
+		// the temporary directory.
 	}
 
 	data, err2 := ioutil.ReadFile(stateFile)
@@ -90,12 +96,10 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 			Filename: terraform.StateFileName,
 			Data:     data,
 		})
+	} else if err == nil {
+		err = err2
 	} else {
-		if err == nil {
-			err = err2
-		} else {
-			logrus.Errorf("Failed to read tfstate: %v", err2)
-		}
+		logrus.Errorf("Failed to read tfstate: %v", err2)
 	}
 
 	return err
