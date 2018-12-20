@@ -39,9 +39,11 @@ func ValidateMachinePool(p *types.MachinePool, fldPath *field.Path, platform str
 	if !validMachinePoolNames[p.Name] {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), p.Name, validMachinePoolNameValues))
 	}
-	if p.Replicas != nil {
-		if *p.Replicas <= 0 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), p.Replicas, "number of replicas must be positive"))
+	if p.Name == "master" {
+		if p.Replicas != nil {
+			if *p.Replicas <= 0 {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), p.Replicas, "number of master replicas must not be greater than zero."))
+			}
 		}
 	}
 	allErrs = append(allErrs, validateMachinePoolPlatform(&p.Platform, fldPath.Child("platform"), platform)...)
