@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"sort"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -27,6 +28,7 @@ var (
 			validValues[i] = n
 			i++
 		}
+		sort.Strings(validValues)
 		return validValues
 	}()
 )

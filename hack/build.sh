@@ -59,7 +59,7 @@ dev)
 	exit 1
 esac
 
-if (echo "${TAGS}" | grep -q 'libvirt_destroy')
+if (echo "${TAGS}" | grep -q 'libvirt')
 then
 	export CGO_ENABLED=1
 fi

@@ -1,6 +1,8 @@
 package validation
 
 import (
+	"sort"
+
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/aws"
@@ -39,6 +41,7 @@ var (
 			validValues[i] = r
 			i++
 		}
+		sort.Strings(validValues)
 		return validValues
 	}()
 )

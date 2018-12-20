@@ -14,7 +14,6 @@ var (
 	// alphabetical order.
 	PlatformNames = []string{
 		aws.Name,
-		libvirt.Name,
 		openstack.Name,
 	}
 )

@@ -202,21 +202,21 @@ This step allows installer and users to resolve cluster-internal hostnames from 
 ## Build and run the installer
 
 With [libvirt configured](#install-and-enable-libvirt), you can proceed with [the usual quick-start](../../README.md#quick-start).
-Set `TAGS` when building if you need `destroy cluster` support for libvirt; this is not enabled by default because it requires [cgo][]:
+Set `TAGS=libvirt` to add support for libvirt; this is not enabled by default because libvirt is [development only](../../README.md#supported-platforms).
 
 ```sh
-TAGS=libvirt_destroy hack/build.sh
+TAGS=libvirt hack/build.sh
 ```
 
 ## Cleanup
 
-If you compiled with `libvirt_destroy`, you can use:
+To remove resources associated with your cluster, run:
 
 ```sh
 openshift-install destroy cluster
 ```
 
-If you did not compile with `libvirt_destroy`, you can use [`virsh-cleanup.sh`](../../scripts/maintenance/virsh-cleanup.sh), but note it will currently destroy *all* libvirt resources.
+You can also use [`virsh-cleanup.sh`](../../scripts/maintenance/virsh-cleanup.sh), but note that it will currently destroy *all* libvirt resources.
 
 ### Firewall
 
@@ -341,7 +341,6 @@ If your issue is not reported, please do.
 [arch_firewall_superuser]: https://superuser.com/questions/1063240/libvirt-failed-to-initialize-a-valid-firewall-backend
 [brokenmacosissue201]: https://github.com/openshift/installer/issues/201
 [bugzilla_libvirt_race]: https://bugzilla.redhat.com/show_bug.cgi?id=1576464
-[cgo]: https://golang.org/cmd/cgo/
 [issues_libvirt]: https://github.com/openshift/installer/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+libvirt
 [libvirt_selinux_issues]: https://github.com/dmacvicar/terraform-provider-libvirt/issues/142#issuecomment-409040151
 [tfprovider_libvirt_race]: https://github.com/dmacvicar/terraform-provider-libvirt/issues/402#issuecomment-419500064
