@@ -15,7 +15,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster/libvirt"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/openshift/installer/pkg/types"
@@ -50,7 +49,6 @@ func (c *Cluster) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
 		&TerraformVariables{},
-		&kubeconfig.Admin{},
 		&password.KubeadminPassword{},
 	}
 }
@@ -59,9 +57,8 @@ func (c *Cluster) Dependencies() []asset.Asset {
 func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	installConfig := &installconfig.InstallConfig{}
 	terraformVariables := &TerraformVariables{}
-	adminKubeconfig := &kubeconfig.Admin{}
 	kubeadminPassword := &password.KubeadminPassword{}
-	parents.Get(installConfig, terraformVariables, adminKubeconfig, kubeadminPassword)
+	parents.Get(installConfig, terraformVariables, kubeadminPassword)
 
 	// Copy the terraform.tfvars to a temp directory where the terraform will be invoked within.
 	tmpDir, err := ioutil.TempDir("", "openshift-install-")
@@ -131,7 +128,6 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		}
 	}
 
-	// TODO(yifan): Use the kubeconfig to verify the cluster is up.
 	return err
 }
 
