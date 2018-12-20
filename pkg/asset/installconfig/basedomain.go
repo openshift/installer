@@ -1,13 +1,14 @@
 package installconfig
 
 import (
+	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig/aws"
 	"github.com/openshift/installer/pkg/validate"
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 type baseDomain struct {
@@ -31,7 +32,8 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 	if platform.AWS != nil {
 		var err error
 		a.BaseDomain, err = aws.GetBaseDomain()
-		if !aws.IsForbidden(errors.Cause(err)) {
+		cause := errors.Cause(err)
+		if !(aws.IsForbidden(cause) || request.IsErrorThrottle(cause)) {
 			return err
 		}
 		logrus.Error(err)
