@@ -96,9 +96,12 @@ resource "aws_route53_record" "etcd_cluster" {
 }
 
 resource "aws_route53_zone" "int" {
-  vpc_id        = "${module.vpc.vpc_id}"
   name          = "${var.base_domain}"
   force_destroy = true
+
+  vpc {
+    vpc_id = "${module.vpc.vpc_id}"
+  }
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}_int",
