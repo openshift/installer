@@ -28,7 +28,7 @@ var (
 	defaultHostSubnetLength = 9 // equivalent to a /23 per node
 )
 
-// InstallConfig generates the install-config.yml file.
+// InstallConfig generates the install-config.yaml file.
 type InstallConfig struct {
 	Config *types.InstallConfig `json:"config"`
 	File   *asset.File          `json:"file"`
@@ -49,7 +49,7 @@ func (a *InstallConfig) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the install-config.yml file.
+// Generate generates the install-config.yaml file.
 func (a *InstallConfig) Generate(parents asset.Parents) error {
 	clusterID := &clusterID{}
 	sshPublicKey := &sshPublicKey{}
