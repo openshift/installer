@@ -73,6 +73,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&tls.KubeletCertKey{},
 		&tls.MCSCertKey{},
 		&tls.ServiceAccountKeyPair{},
+		&tls.JournalCertKey{},
 		&kubeconfig.Admin{},
 		&kubeconfig.Kubelet{},
 		&manifests.Manifests{},
@@ -219,9 +220,10 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 }
 
 func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateData) (err error) {
-	enabled := map[string]bool{
-		"progress.service": true,
-		"kubelet.service":  true,
+	enabled := map[string]struct{}{
+		"progress.service":                {},
+		"kubelet.service":                 {},
+		"systemd-journal-gatewayd.socket": {},
 	}
 
 	directory, err := data.Assets.Open(uri)
@@ -369,6 +371,10 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	rootCA := &tls.RootCA{}
 	dependencies.Get(rootCA)
 	a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
+
+	journal := &tls.JournalCertKey{}
+	dependencies.Get(journal)
+	a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "systemd-journal-gateway", 0600, journal)...)
 }
 
 func applyTemplateData(template *template.Template, templateData interface{}) string {

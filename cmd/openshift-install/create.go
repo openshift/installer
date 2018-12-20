@@ -28,6 +28,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/templates"
+	"github.com/openshift/installer/pkg/asset/tls"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 )
 
@@ -117,7 +118,7 @@ var (
 				}
 			},
 		},
-		assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &cluster.Cluster{}},
+		assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &tls.JournalCertKey{}, &cluster.Cluster{}},
 	}
 
 	targets = []target{installConfigTarget, manifestTemplatesTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
