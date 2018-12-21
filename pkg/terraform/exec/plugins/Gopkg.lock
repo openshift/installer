@@ -199,12 +199,11 @@
   version = "v1.1.1"
 
 [[projects]]
-  digest = "1:ca3102cf764b03e3a79f7cc0762567ea29f8f65959c7f5d20c15f795287506ee"
+  digest = "1:e101085bd88d5999c0cc346c222d4afb3aebc169c23f3126fa8987fb92badaec"
   name = "github.com/dmacvicar/terraform-provider-libvirt"
   packages = ["libvirt"]
   pruneopts = "NUT"
-  revision = "d5e60df0007a7f861af6e0282a4c1b3f9be3da23"
-  version = "v0.5.1"
+  revision = "2ad0228349b2d3b487a2ada25d1a0eb40d73b7d1"
 
 [[projects]]
   digest = "1:54d36727a1d852a38be8b8dbcfbae6aa99130d793d63dabc865f150b690144af"
