@@ -35,6 +35,7 @@ func (m *MockFileFetcher) EXPECT() *MockFileFetcherMockRecorder {
 
 // FetchByName mocks base method
 func (m *MockFileFetcher) FetchByName(arg0 string) (*asset.File, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FetchByName", arg0)
 	ret0, _ := ret[0].(*asset.File)
 	ret1, _ := ret[1].(error)
@@ -43,11 +44,13 @@ func (m *MockFileFetcher) FetchByName(arg0 string) (*asset.File, error) {
 
 // FetchByName indicates an expected call of FetchByName
 func (mr *MockFileFetcherMockRecorder) FetchByName(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchByName", reflect.TypeOf((*MockFileFetcher)(nil).FetchByName), arg0)
 }
 
 // FetchByPattern mocks base method
 func (m *MockFileFetcher) FetchByPattern(pattern string) ([]*asset.File, error) {
+	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FetchByPattern", pattern)
 	ret0, _ := ret[0].([]*asset.File)
 	ret1, _ := ret[1].(error)
@@ -56,5 +59,6 @@ func (m *MockFileFetcher) FetchByPattern(pattern string) ([]*asset.File, error) 
 
 // FetchByPattern indicates an expected call of FetchByPattern
 func (mr *MockFileFetcherMockRecorder) FetchByPattern(pattern interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FetchByPattern", reflect.TypeOf((*MockFileFetcher)(nil).FetchByPattern), pattern)
 }

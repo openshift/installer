@@ -91,15 +91,8 @@ git tools.
 
 Some unit tests use mocks that are generated with gomock. If the underlying interface for a mock changes, then the mock will need to be regenerated. Use the following to regenerate all of the mocks under the pkg package.
 
-```
-go generate ./pkg/...
-```
-
-This requires gomock and mockgen. These can be installed by running the following.
-
-```
-go get -u github.com/golang/mock/gomock
-go get -u github.com/golang/mock/mockgen
+```sh
+hack/go-genmock.sh
 ```
 
 [golang-style]: https://github.com/golang/go/wiki/CodeReviewComments
