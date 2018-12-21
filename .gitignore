@@ -1,2 +1,11 @@
 /bin/
-.openshift_install.log
+/.project
+/.vscode
+/.settings
+*.swp
+.vimrc
+.DS_Store
+.idea
+.project
+*.go~
+.envrc
