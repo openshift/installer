@@ -8,7 +8,7 @@ Start by creating an install config and saving it in a cluster-agnostic location
 
 ```console
 openshift-install create install-config --dir=initial
-mv initial/install-config.yml .
+mv initial/install-config.yaml .
 rm -rf initial
 ```
 
@@ -16,7 +16,7 @@ Future clusters can then be created by copying that install config into the targ
 
 ```console
 mkdir cluster-0
-cp install-config.yml cluster-0/
+cp install-config.yaml cluster-0/
 openshift-install create cluster --dir=cluster-0
 ```
 
