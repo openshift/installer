@@ -100,7 +100,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create worker machine objects")
 		}
-		aws.ConfigWorkers(sets)
 
 		list := listFromMachineSets(sets)
 		raw, err := yaml.Marshal(list)

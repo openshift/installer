@@ -6,8 +6,6 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/utils/pointer"
-	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1"
 	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
 	"github.com/openshift/installer/pkg/types"
@@ -89,15 +87,4 @@ func MachineSets(config *types.InstallConfig, pool *types.MachinePool, role, use
 	}
 
 	return machinesets, nil
-}
-
-// ConfigWorkers sets the PublicIP flag for the given machine sets.
-//
-// Deprecated: We'll remove this once the e2e tests no longer require
-// worker SSH access.
-func ConfigWorkers(machineSets []clusterapi.MachineSet) {
-	for _, machineSet := range machineSets {
-		providerConfig := machineSet.Spec.Template.Spec.ProviderConfig.Value.Object.(*awsprovider.AWSMachineProviderConfig)
-		providerConfig.PublicIP = pointer.BoolPtr(true)
-	}
 }
