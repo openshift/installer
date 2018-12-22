@@ -1,4 +1,4 @@
-// +build libvirt_destroy
+// +build libvirt
 
 package plugins
 

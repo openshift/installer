@@ -3,6 +3,8 @@ package validation
 import (
 	"fmt"
 	"net"
+	"sort"
+	"strings"
 
 	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -108,12 +110,14 @@ func validateMachinePools(pools []types.MachinePool, fldPath *field.Path, platfo
 
 func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher) field.ErrorList {
 	allErrs := field.ErrorList{}
-	activePlatform := ""
+	activePlatform := platform.Name()
+	i := sort.SearchStrings(types.PlatformNames, activePlatform)
+	if i == len(types.PlatformNames) || types.PlatformNames[i] != activePlatform {
+		allErrs = append(allErrs, field.Invalid(fldPath, platform, fmt.Sprintf("must specify one of the platforms (%s)", strings.Join(types.PlatformNames, ", "))))
+	}
 	validate := func(n string, value interface{}, validation func(*field.Path) field.ErrorList) {
-		if activePlatform != "" {
+		if n != activePlatform {
 			allErrs = append(allErrs, field.Invalid(fldPath, platform, fmt.Sprintf("must only specify a single type of platform; cannot use both %q and %q", activePlatform, n)))
-		} else {
-			activePlatform = n
 		}
 		allErrs = append(allErrs, validation(fldPath.Child(n))...)
 	}
@@ -127,9 +131,6 @@ func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackVa
 		validate(openstack.Name, platform.OpenStack, func(f *field.Path) field.ErrorList {
 			return openstackvalidation.ValidatePlatform(platform.OpenStack, f, openStackValidValuesFetcher)
 		})
-	}
-	if activePlatform == "" {
-		allErrs = append(allErrs, field.Invalid(fldPath, platform, "must specify one of the platforms"))
 	}
 	return allErrs
 }

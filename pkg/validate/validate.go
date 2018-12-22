@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"sort"
 	"strings"
 
 	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
@@ -38,6 +39,7 @@ var (
 			validValues[i] = string(t)
 			i++
 		}
+		sort.Strings(validValues)
 		return validValues
 	}()
 )
