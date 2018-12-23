@@ -4,6 +4,53 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.8.0 - 2018-12-23
+
+### Added
+
+- The installer binary now includes all required Terraform plugins, so
+  there is no longer a need to separately download and install them.
+  This will be most noticeable on libvirt, where users used to be
+  required to install the libvirt plugin manually.  This avoids issues
+  with mismatched plugin versions (which we saw sometimes on libvirt)
+  and network-connectivity issues during `create cluster` invocations
+  (which we saw sometimes on all platforms).
+- The configured base domain is now pushed into the cluster's
+  `config.openshift.io` as a DNS custom resource.
+
+### Changed
+
+- `install-config.yml` is now `install-config.yaml` to align with our
+  usual YAML extension.  `install-config.yml` is deprecated, and
+  support for it will be removed completely in the next release.
+- On AWS, we now use a select widget for the base-domain wizard
+  prompt, making it easier to choose an existing public zone.
+- On AWS, Route 53 rate limits during `cluster destroy` are now less
+  disruptive, reducing the AWS request load in busy accounts.
+- On OpenStack, the HAProxy configuration no longer hard-codes the
+  cluster name and base domain.
+- On OpenStack, the 0.7.0 fix for:
+
+        FATAL Expected HTTP response code [202 204] when accessing [DELETE https://osp-xxxxx:13696/v2.0/routers/52093478-dcf1-4bcc-9a2c-dbb1e42da880], but got 409 instead
+        {"NeutronError": {"message": "Router 52093478-dcf1-4bcc-9a2c-dbb1e42da880 still has ports", "type": "RouterInUse", "detail": ""}}
+
+    was incorrect and has been reverted.  We'll land a real fix for
+    this issue in future work.
+- On OpenStack, the service VM from 0.7.0 now has a floating IP
+  address.
+- All libvirt functionality is behind `TAGS=libvirt` now.  Previously
+  installer builds with `TAGS=libvirt_destroy` included all libvirt
+  functionality, while builds without that tag would include `create
+  cluster` but not `destroy cluster` functionality.  With the change,
+  all users using the installer with libvirt clusters will need to set
+  the new build tag.
+- Lots of doc and internal cleanup and minor fixes.
+
+### Removed
+
+- On AWS and OpenStack, the `tectonicClusterID` tag which was
+  deprecated in 0.7.0 has been removed.
+
 ## 0.7.0 - 2018-12-14
 
 ### Added
@@ -48,9 +95,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   (controller manager) have been opened to access from all machines.
   This allows Prometheus (which runs on the worker nodes) to scrape
   all machines for metrics.
-- On AWS, the installer and subsequent cluster will now tag resources
-  it creates with `openshiftClusterID`.  `tectonicClusterID` is
-  deprecated.
+- On AWS and OpenStack, the installer and subsequent cluster will now
+  tag resources it creates with `openshiftClusterID`.
+  `tectonicClusterID` is deprecated.
 - On OpenStack, only the OpenStack `clouds` entry is marshalled into
   the `openstack-creds` secret.  Previously we had injected the host's
   entire cloud configuration.
