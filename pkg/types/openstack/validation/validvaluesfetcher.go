@@ -12,4 +12,6 @@ type ValidValuesFetcher interface {
 	GetImageNames(cloud string) ([]string, error)
 	// GetNetworkNames gets the valid network names.
 	GetNetworkNames(cloud string) ([]string, error)
+	// GetFlavorNames gets the valid flavor names.
+	GetFlavorNames(cloud string) ([]string, error)
 }

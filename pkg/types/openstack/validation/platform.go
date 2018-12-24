@@ -36,6 +36,12 @@ func ValidatePlatform(p *openstack.Platform, fldPath *field.Path, fetcher ValidV
 		} else if !isValidValue(p.ExternalNetwork, validNetworks) {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("externalNetwork"), p.ExternalNetwork, validNetworks))
 		}
+		validFlavors, err := fetcher.GetFlavorNames(p.Cloud)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(fldPath.Child("computeFlavor"), errors.New("could not retrieve valid flavors")))
+		} else if !isValidValue(p.FlavorName, validFlavors) {
+			allErrs = append(allErrs, field.NotSupported(fldPath.Child("computeFlavor"), p.FlavorName, validFlavors))
+		}
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)

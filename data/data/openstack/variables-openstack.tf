@@ -236,7 +236,6 @@ EOF
 
 variable "openstack_master_flavor_name" {
   type        = "string"
-  default     = "m1.medium"
   description = "Instance size for the master node(s). Example: `m1.medium`."
 }
 

@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/regions"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
@@ -117,4 +118,34 @@ func (f realValidValuesFetcher) GetNetworkNames(cloud string) ([]string, error) 
 	}
 
 	return networkNames, nil
+}
+
+// GetFlavorNames gets a list of valid flavor names.
+func (f realValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
+	}
+
+	conn, err := clientconfig.NewServiceClient("compute", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	listOpts := flavors.ListOpts{}
+	allPages, err := flavors.ListDetail(conn, listOpts).AllPages()
+	if err != nil {
+		return nil, err
+	}
+
+	allFlavors, err := flavors.ExtractFlavors(allPages)
+	if err != nil {
+		return nil, err
+	}
+
+	flavorNames := make([]string, len(allFlavors))
+	for i, flavor := range allFlavors {
+		flavorNames[i] = flavor.Name
+	}
+
+	return flavorNames, nil
 }

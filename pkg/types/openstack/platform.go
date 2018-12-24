@@ -29,4 +29,8 @@ type Platform struct {
 	// ExternalNetwork
 	// The OpenStack external network to be used for installation.
 	ExternalNetwork string `json:"externalNetwork"`
+
+	// FlavorName
+	// The OpenStack compute flavor to use for servers.
+	FlavorName string `json:"computeFlavor"`
 }
