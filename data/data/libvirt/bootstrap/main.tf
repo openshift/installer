@@ -26,6 +26,10 @@ resource "libvirt_domain" "bootstrap" {
     target_port = 0
   }
 
+  cpu {
+    mode = "host-passthrough"
+  }
+
   network_interface {
     network_id = "${var.network_id}"
     hostname   = "${var.cluster_name}-bootstrap"
