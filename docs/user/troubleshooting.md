@@ -50,9 +50,9 @@ sudo crictl pods --name=etcd-member
 
 If no pods are shown, etcd will need to be [investigated](#etcd-is-not-running).
 
-### Unable to SSH into Master Nodes
+### Unable to access the Master Nodes via ssh
 
-In order to SSH into the master nodes as user `core`, it is necessary to include an administrator's SSH key during the installation. When asked by the installation wizzard for the ssh-key, make sure you define the absolute path to your key. This key will be added to the core user's authorized_keys file. If installed in aws you will not see this key attached to your instance as a keypair in the aws console. 
+In order to ssh into the master nodes as user **core**, it is necessary to include an administrator's SSH key during the installation. When asked by the installation wizard for the ssh-key, make sure you select your ssh-key from the wizard prompt ( ~/.ssh/*.pub ). This key will be added to the **core** user's **authorized_keys** file. If installed in AWS you will **not** see this key attached to your instance as a keypair in the AWS console. 
 
 If SSH authentication is failing, ensure that the proper SSH key is being used.
 
