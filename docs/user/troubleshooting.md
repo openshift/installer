@@ -34,7 +34,7 @@ oc --config=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-cluster-api log
 
 When the Kubernetes API is unavailable, the master nodes will need to checked to ensure that they are running the correct components. This requires SSH access so it is necessary to include an administrator's SSH key during the installation.
 
-If SSH access to the master nodes isn't available, that will need to be [investigated next](#unable-to-ssh-into-master-node).
+If SSH access to the master nodes isn't available, that will need to be [investigated next](#unable-to-ssh-into-master-nodes).
 
 The first thing to check is to make sure that etcd is running on each of the masters. The etcd logs can be viewed by running the following on each master node:
 
