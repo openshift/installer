@@ -52,7 +52,7 @@ If no pods are shown, etcd will need to be [investigated](#etcd-is-not-running).
 
 ### Unable to access the Master Nodes via SSH 
 
-In order to ssh into the master nodes as user **core**, it is necessary to include an administrator's ssh-key during the installation. When asked by the installation wizard for the ssh-key, make sure you select your ssh-key from the wizard prompt ( ~/.ssh/*.pub ). This key will be added to the **core** user's **authorized_keys** file. If installed in AWS you will **not** see this key attached to your instance as a keypair in the AWS console. 
+In order to ssh into the master nodes as user **core**, it is necessary to include an administrator's ssh-key during the installation. When asked by the installation wizard for the ssh-key, make sure you select your ssh-key from the wizard prompt **~/.ssh/*.pub**. This key will be added to the **core** user's **authorized_keys** file. If installed in AWS you will **not** see this key attached to your instance as a keypair in the AWS console. 
 
 If SSH authentication is failing, ensure that the proper SSH key is being used.
 
