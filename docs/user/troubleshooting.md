@@ -52,7 +52,11 @@ If no pods are shown, etcd will need to be [investigated](#etcd-is-not-running).
 
 ### Unable to access the Master Nodes via SSH 
 
-In order to ssh into the master nodes as user **core**, it is necessary to include an administrator's ssh-key during the installation. When asked by the installation wizard for the ssh-key, make sure you select your ssh-key from the wizard prompt **~/.ssh/*.pub**. This key will be added to the **core** user's **authorized_keys** file. If installed in AWS you will **not** see this key attached to your instance as a keypair in the AWS console. 
+In order to SSH into the master nodes as user `core`, it is necessary to include an administrator's ssh-key during the installation. When asked by the installation wizard for the ssh-key, make sure you select your ssh-key from the wizard prompt `~/.ssh/*.pub`. This key will be added to the `core` user's `authorized_keys` file. The public key is placed in authorized_keys by Ignition and is not configured via platform-specific approaches like [AWS key pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html). To verify if you added the correct ssh key during installation you can use thefollowing command
+
+```sh
+oc get configmap -n kube-system cluster-config-v1 -o yaml | grep ssh-rsa
+```
 
 If SSH authentication is failing, ensure that the proper SSH key is being used.
 
