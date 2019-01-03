@@ -50,9 +50,9 @@ sudo crictl pods --name=etcd-member
 
 If no pods are shown, etcd will need to be [investigated](#etcd-is-not-running).
 
-### Unable to access the Master Nodes via SSH 
+### Unable to SSH into Master Nodes
 
-In order to SSH into the master nodes as user `core`, it is necessary to include an administrator's ssh-key during the installation. When asked by the installation wizard for the ssh-key, make sure you select your ssh-key from the wizard prompt `~/.ssh/*.pub`. This key will be added to the `core` user's `authorized_keys` file. The public key is placed in authorized_keys by Ignition and is not configured via platform-specific approaches like [AWS key pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html). To verify if you added the correct ssh-key during installation you can use thefollowing command:
+In order to SSH into the master nodes as user `core`, it is necessary to include an administrator's SSH key during the installation. The selected key, if any, will be added to the `core` user's `~/.ssh/authorized_keys` via [Ignition](https://github.com/coreos/ignition) and is not configured via platform-specific approaches like [AWS key pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html). You can verify the configured SSH key with:
 
 ```sh
 oc get configmap -o "jsonpath={.data['install-config']}" -n kube-system cluster-config-v1 | grep -A1 sshKey
