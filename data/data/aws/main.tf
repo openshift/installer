@@ -70,7 +70,7 @@ module "vpc" {
   source = "./vpc"
 
   base_domain  = "${var.base_domain}"
-  cidr_block   = "${var.aws_vpc_cidr_block}"
+  cidr_block   = "${var.machine_cidr}"
   cluster_id   = "${var.cluster_id}"
   cluster_name = "${var.cluster_name}"
   region       = "${var.aws_region}"

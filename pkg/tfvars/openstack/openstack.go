@@ -2,14 +2,13 @@ package openstack
 
 // OpenStack converts OpenStack related config.
 type OpenStack struct {
-	BaseImage        string `json:"openstack_base_image,omitempty"`
-	Credentials      `json:",inline"`
-	External         `json:",inline"`
-	ExternalNetwork  string            `json:"openstack_external_network,omitempty"`
-	ExtraTags        map[string]string `json:"openstack_extra_tags,omitempty"`
-	Master           `json:",inline"`
-	Region           string `json:"openstack_region,omitempty"`
-	NetworkCIDRBlock string `json:"openstack_network_cidr_block,omitempty"`
+	BaseImage       string `json:"openstack_base_image,omitempty"`
+	Credentials     `json:",inline"`
+	External        `json:",inline"`
+	ExternalNetwork string            `json:"openstack_external_network,omitempty"`
+	ExtraTags       map[string]string `json:"openstack_extra_tags,omitempty"`
+	Master          `json:",inline"`
+	Region          string `json:"openstack_region,omitempty"`
 }
 
 // External converts external related config.

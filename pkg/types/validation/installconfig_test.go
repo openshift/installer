@@ -25,7 +25,8 @@ func validInstallConfig() *types.InstallConfig {
 		BaseDomain: "test-domain",
 		Networking: types.Networking{
 			Type:        "OpenshiftSDN",
-			ServiceCIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
+			MachineCIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
+			ServiceCIDR: *ipnet.MustParseCIDR("172.30.0.0/16"),
 			ClusterNetworks: []netopv1.ClusterNetwork{
 				{
 					CIDR:             "192.168.1.0/24",
@@ -127,10 +128,10 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "overlapping cluster network cidr",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.ClusterNetworks[0].CIDR = "10.0.0.0/24"
+				c.Networking.ClusterNetworks[0].CIDR = "172.30.0.0/24"
 				return c
 			}(),
-			expectedError: `^networking\.clusterNetworks\[0]\.cidr: Invalid value: "10\.0\.0\.0/24": cluster network CIDR must not overlap with serviceCIDR$`,
+			expectedError: `^networking\.clusterNetworks\[0]\.cidr: Invalid value: "172\.30\.0\.0/24": cluster network CIDR must not overlap with serviceCIDR$`,
 		},
 		{
 			name: "cluster network host subnet length too large",
@@ -206,7 +207,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt = &libvirt.Platform{}
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(0x[0-9a-f]*\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must only specify a single type of platform; cannot use both "aws" and "libvirt", platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value, platform\.libvirt\.network\.ipRange: Invalid value: ipnet\.IPNet{IPNet:net\.IPNet{IP:net\.IP\(nil\), Mask:net\.IPMask\(nil\)}}: must use IPv4]$`,
+			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(0x[0-9a-f]*\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must only specify a single type of platform; cannot use both "aws" and "libvirt", platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value]$`,
 		},
 		{
 			name: "invalid aws platform",
@@ -227,8 +228,7 @@ func TestValidateInstallConfig(t *testing.T) {
 					Libvirt: &libvirt.Platform{
 						URI: "qemu+tcp://192.168.122.1/system",
 						Network: libvirt.Network{
-							IfName:  "tt0",
-							IPRange: *ipnet.MustParseCIDR("10.0.0.0/16"),
+							IfName: "tt0",
 						},
 					},
 				}
@@ -245,7 +245,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value, platform\.libvirt\.network\.ipRange: Invalid value: ipnet\.IPNet{IPNet:net\.IPNet{IP:net\.IP\(nil\), Mask:net\.IPMask\(nil\)}}: must use IPv4]$`,
+			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value]$`,
 		},
 		{
 			name: "valid openstack platform",
@@ -253,12 +253,11 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Platform = types.Platform{
 					OpenStack: &openstack.Platform{
-						Region:           "test-region",
-						NetworkCIDRBlock: *ipnet.MustParseCIDR("10.0.0.0/16"),
-						BaseImage:        "test-image",
-						Cloud:            "test-cloud",
-						ExternalNetwork:  "test-network",
-						FlavorName:       "test-flavor",
+						Region:          "test-region",
+						BaseImage:       "test-image",
+						Cloud:           "test-cloud",
+						ExternalNetwork: "test-network",
+						FlavorName:      "test-flavor",
 					},
 				}
 				return c
@@ -273,7 +272,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^\[platform\.openstack\.cloud: Unsupported value: "": supported values: "test-cloud", platform\.openstack\.NetworkCIDRBlock: Invalid value: ipnet\.IPNet{IPNet:net\.IPNet{IP:net\.IP\(nil\), Mask:net\.IPMask\(nil\)}}: must use IPv4]$`,
+			expectedError: `^platform\.openstack\.cloud: Unsupported value: "": supported values: "test-cloud"$`,
 		},
 	}
 	for _, tc := range cases {

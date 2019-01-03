@@ -18,19 +18,13 @@ type Libvirt struct {
 
 // Network describes a libvirt network configuration.
 type Network struct {
-	IfName  string `json:"libvirt_network_if"`
-	IPRange string `json:"libvirt_ip_range"`
+	IfName string `json:"libvirt_network_if"`
 }
 
 // TFVars fills in computed Terraform variables.
-func (l *Libvirt) TFVars(masterCount int) error {
-	_, network, err := net.ParseCIDR(l.Network.IPRange)
-	if err != nil {
-		return fmt.Errorf("failed to parse libvirt network ipRange: %v", err)
-	}
-
+func (l *Libvirt) TFVars(machineCIDR *net.IPNet, masterCount int) error {
 	if l.BootstrapIP == "" {
-		ip, err := cidr.Host(network, 10)
+		ip, err := cidr.Host(machineCIDR, 10)
 		if err != nil {
 			return fmt.Errorf("failed to generate bootstrap IP: %v", err)
 		}
@@ -42,7 +36,7 @@ func (l *Libvirt) TFVars(masterCount int) error {
 			return fmt.Errorf("length of MasterIPs doesn't match master count")
 		}
 	} else {
-		if ips, err := generateIPs("master", network, masterCount, 11); err == nil {
+		if ips, err := generateIPs("master", machineCIDR, masterCount, 11); err == nil {
 			l.MasterIPs = ips
 		} else {
 			return err

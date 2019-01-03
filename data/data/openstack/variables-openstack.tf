@@ -243,12 +243,3 @@ variable "openstack_region" {
   type        = "string"
   description = "The target OpenStack region for the cluster."
 }
-
-variable "openstack_network_cidr_block" {
-  type = "string"
-
-  description = <<EOF
-Block of IP addresses used by the VPC.
-This should not overlap with any other networks, such as a private datacenter connected via Direct Connect.
-EOF
-}

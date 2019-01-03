@@ -70,7 +70,7 @@ module "masters" {
 module "topology" {
   source = "./topology"
 
-  cidr_block                 = "${var.openstack_network_cidr_block}"
+  cidr_block                 = "${var.machine_cidr}"
   cluster_id                 = "${var.cluster_id}"
   cluster_name               = "${var.cluster_name}"
   external_master_subnet_ids = "${compact(var.openstack_external_master_subnet_ids)}"

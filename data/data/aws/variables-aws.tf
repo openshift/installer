@@ -21,15 +21,6 @@ variable "aws_ec2_ami_override" {
   default     = ""
 }
 
-variable "aws_vpc_cidr_block" {
-  type = "string"
-
-  description = <<EOF
-Block of IP addresses used by the VPC.
-This should not overlap with any other networks, such as a private datacenter connected via Direct Connect.
-EOF
-}
-
 variable "aws_extra_tags" {
   type = "map"
 

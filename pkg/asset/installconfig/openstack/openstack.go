@@ -8,13 +8,8 @@ import (
 	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
-	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
-)
-
-var (
-	defaultNetworkCIDR = ipnet.MustParseCIDR("10.0.0.0/16")
 )
 
 // Platform collects OpenStack-specific configuration.
@@ -160,11 +155,10 @@ func Platform() (*openstack.Platform, error) {
 	}
 
 	return &openstack.Platform{
-		NetworkCIDRBlock: *defaultNetworkCIDR,
-		Region:           region,
-		BaseImage:        image,
-		Cloud:            cloud,
-		ExternalNetwork:  extNet,
-		FlavorName:       flavor,
+		Region:          region,
+		BaseImage:       image,
+		Cloud:           cloud,
+		ExternalNetwork: extNet,
+		FlavorName:      flavor,
 	}, nil
 }

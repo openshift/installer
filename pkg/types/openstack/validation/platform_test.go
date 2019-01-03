@@ -8,19 +8,17 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/openstack/validation/mock"
 )
 
 func validPlatform() *openstack.Platform {
 	return &openstack.Platform{
-		Region:           "test-region",
-		NetworkCIDRBlock: *ipnet.MustParseCIDR("10.0.0.0/16"),
-		BaseImage:        "test-image",
-		Cloud:            "test-cloud",
-		ExternalNetwork:  "test-network",
-		FlavorName:       "test-flavor",
+		Region:          "test-region",
+		BaseImage:       "test-image",
+		Cloud:           "test-cloud",
+		ExternalNetwork: "test-network",
+		FlavorName:      "test-flavor",
 	}
 }
 

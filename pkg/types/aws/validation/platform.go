@@ -6,7 +6,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/aws"
-	"github.com/openshift/installer/pkg/validate"
 )
 
 var (
@@ -54,11 +53,6 @@ func ValidatePlatform(p *aws.Platform, fldPath *field.Path) field.ErrorList {
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
-	}
-	if p.VPCCIDRBlock != nil {
-		if err := validate.SubnetCIDR(&p.VPCCIDRBlock.IPNet); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("vpcCIDRBlock"), p.VPCCIDRBlock, err.Error()))
-		}
 	}
 	return allErrs
 }

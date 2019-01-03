@@ -16,13 +16,8 @@ import (
 	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
-	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/aws/validation"
-)
-
-var (
-	defaultVPCCIDR = ipnet.MustParseCIDR("10.0.0.0/16")
 )
 
 // Platform collects AWS-specific configuration.
@@ -86,8 +81,7 @@ func Platform() (*aws.Platform, error) {
 	}
 
 	return &aws.Platform{
-		VPCCIDRBlock: defaultVPCCIDR,
-		Region:       region,
+		Region: region,
 	}, nil
 }
 

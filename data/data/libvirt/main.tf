@@ -39,7 +39,7 @@ resource "libvirt_network" "net" {
   domain = "${var.base_domain}"
 
   addresses = [
-    "${var.libvirt_ip_range}",
+    "${var.machine_cidr}",
   ]
 
   dns = [{

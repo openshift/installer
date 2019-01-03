@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
@@ -47,22 +46,6 @@ func TestValidatePlatform(t *testing.T) {
 						IOPS: -10,
 					},
 				},
-			},
-			valid: false,
-		},
-		{
-			name: "valid CIDR",
-			platform: &aws.Platform{
-				Region:       "us-east-1",
-				VPCCIDRBlock: ipnet.MustParseCIDR("192.168.0.0/16"),
-			},
-			valid: true,
-		},
-		{
-			name: "invalid CIDR",
-			platform: &aws.Platform{
-				Region:       "us-east-1",
-				VPCCIDRBlock: ipnet.MustParseCIDR("0.0.0.0/16"),
 			},
 			valid: false,
 		},

@@ -19,8 +19,5 @@ func ValidatePlatform(p *libvirt.Platform, fldPath *field.Path) field.ErrorList 
 	if p.Network.IfName == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("network").Child("if"), p.Network.IfName))
 	}
-	if err := validate.SubnetCIDR(&p.Network.IPRange.IPNet); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("network").Child("ipRange"), p.Network.IPRange, err.Error()))
-	}
 	return allErrs
 }

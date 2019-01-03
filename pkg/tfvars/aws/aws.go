@@ -6,7 +6,6 @@ type AWS struct {
 	ExtraTags      map[string]string `json:"aws_extra_tags,omitempty"`
 	Master         `json:",inline"`
 	Region         string `json:"aws_region,omitempty"`
-	VPCCIDRBlock   string `json:"aws_vpc_cidr_block"`
 	Worker         `json:",inline"`
 }
 
