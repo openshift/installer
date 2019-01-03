@@ -66,7 +66,24 @@ data "ignition_user" "core" {
   name = "core"
 }
 
-data "ignition_config" "config" {
+resource "openstack_objectstorage_object_v1" "lb_ignition" {
+  container_name = "${var.swift_container}"
+  name           = "load-balancer.ign"
+  content        = "${var.ignition}"
+}
+
+resource "openstack_objectstorage_tempurl_v1" "lb_ignition_tmpurl" {
+  container = "${var.swift_container}"
+  method    = "get"
+  object    = "${openstack_objectstorage_object_v1.lb_ignition.name}"
+  ttl       = 3600
+}
+
+data "ignition_config" "lb_redirect" {
+  append {
+    source = "${openstack_objectstorage_tempurl_v1.lb_ignition_tmpurl.url}"
+  }
+
   files = [
     "${data.ignition_file.haproxy_conf.id}",
     "${data.ignition_file.openshift_hosts.id}",
@@ -80,25 +97,6 @@ data "ignition_config" "config" {
   users = [
     "${data.ignition_user.core.id}",
   ]
-}
-
-resource "openstack_objectstorage_object_v1" "lb_ignition" {
-  container_name = "${var.swift_container}"
-  name           = "load-balancer.ign"
-  content        = "${data.ignition_config.config.rendered}"
-}
-
-resource "openstack_objectstorage_tempurl_v1" "lb_ignition_tmpurl" {
-  container = "${var.swift_container}"
-  method    = "get"
-  object    = "${openstack_objectstorage_object_v1.lb_ignition.name}"
-  ttl       = 3600
-}
-
-data "ignition_config" "lb_redirect" {
-  replace {
-    source = "${openstack_objectstorage_tempurl_v1.lb_ignition_tmpurl.url}"
-  }
 }
 
 resource "openstack_compute_instance_v2" "load_balancer" {
