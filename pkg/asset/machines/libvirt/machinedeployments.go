@@ -4,6 +4,9 @@ package libvirt
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/cluster-api/pkg/apis/cluster/common"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
@@ -13,8 +16,8 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 )
 
-// MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]clusterapi.MachineSet, error) {
+// MachineDeployments returns a list of machineDeployments for a machinepool.
+func MachineDeployments(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]clusterapi.MachineDeployment, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != libvirt.Name {
 		return nil, fmt.Errorf("non-Libvirt configuration: %q", configPlatform)
 	}
@@ -34,10 +37,14 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 
 	provider := provider(clustername, config.Networking.MachineCIDR.String(), platform, userDataSecret)
 	name := fmt.Sprintf("%s-%s-%d", clustername, pool.Name, 0)
-	mset := clusterapi.MachineSet{
+	// Rolling machines one by one
+	maxSurge := intstr.FromInt(1)
+	maxUnavailable := intstr.FromInt(0)
+	minReadySeconds := int32(0)
+	mdep := clusterapi.MachineDeployment{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "cluster.k8s.io/v1alpha1",
-			Kind:       "MachineSet",
+			Kind:       "MachineDeployment",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: "openshift-cluster-api",
@@ -48,7 +55,15 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 				"sigs.k8s.io/cluster-api-machine-type": role,
 			},
 		},
-		Spec: clusterapi.MachineSetSpec{
+		Spec: clusterapi.MachineDeploymentSpec{
+			MinReadySeconds: &minReadySeconds,
+			Strategy: &clusterapi.MachineDeploymentStrategy{
+				Type: common.RollingUpdateMachineDeploymentStrategyType,
+				RollingUpdate: &clusterapi.MachineRollingUpdateDeployment{
+					MaxSurge:       &maxSurge,
+					MaxUnavailable: &maxUnavailable,
+				},
+			},
 			Replicas: pointer.Int32Ptr(int32(total)),
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
@@ -75,5 +90,5 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		},
 	}
 
-	return []clusterapi.MachineSet{mset}, nil
+	return []clusterapi.MachineDeployment{mdep}, nil
 }

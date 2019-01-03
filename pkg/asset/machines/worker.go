@@ -108,12 +108,13 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		sets, err := aws.MachineSets(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+
+		mdeps, err := aws.MachineDeployments(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create worker machine objects")
 		}
 
-		list := listFromMachineSets(sets)
+		list := listFromMachineDeployments(mdeps)
 		raw, err := yaml.Marshal(list)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
@@ -124,12 +125,12 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Libvirt)
 		pool.Platform.Libvirt = &mpool
-		sets, err := libvirt.MachineSets(clusterID.ClusterID, ic, &pool, "worker", "worker-user-data")
+		mdeps, err := libvirt.MachineDeployments(clusterID.ClusterID, ic, &pool, "worker", "worker-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create worker machine objects")
 		}
 
-		list := listFromMachineSets(sets)
+		list := listFromMachineDeployments(mdeps)
 		raw, err := yaml.Marshal(list)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
@@ -183,7 +184,7 @@ func applyTemplateData(template *template.Template, templateData interface{}) []
 	return buf.Bytes()
 }
 
-func listFromMachineSets(objs []clusterapi.MachineSet) *metav1.List {
+func listFromMachineDeployments(objs []clusterapi.MachineDeployment) *metav1.List {
 	list := &metav1.List{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",

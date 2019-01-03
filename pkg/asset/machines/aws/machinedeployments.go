@@ -4,6 +4,9 @@ package aws
 import (
 	"fmt"
 
+	"k8s.io/apimachinery/pkg/util/intstr"
+	"sigs.k8s.io/cluster-api/pkg/apis/cluster/common"
+
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
@@ -13,8 +16,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]clusterapi.MachineSet, error) {
+// MachineDeployments returns a list of machineDeployments for a machinepool.
+func MachineDeployments(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]clusterapi.MachineDeployment, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS configuration: %q", configPlatform)
 	}
@@ -31,7 +34,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		total = *pool.Replicas
 	}
 	numOfAZs := int64(len(azs))
-	var machinesets []clusterapi.MachineSet
+	var machineDeployments []clusterapi.MachineDeployment
 	for idx, az := range azs {
 		replicas := int32(total / numOfAZs)
 		if int64(idx) < total%numOfAZs {
@@ -43,10 +46,14 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
 		name := fmt.Sprintf("%s-%s-%s", clustername, pool.Name, az)
-		mset := clusterapi.MachineSet{
+		// Rolling machines one by one
+		maxSurge := intstr.FromInt(1)
+		maxUnavailable := intstr.FromInt(0)
+		minReadySeconds := int32(0)
+		mdep := clusterapi.MachineDeployment{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "cluster.k8s.io/v1alpha1",
-				Kind:       "MachineSet",
+				Kind:       "MachineDeployment",
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "openshift-cluster-api",
@@ -57,21 +64,29 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 					"sigs.k8s.io/cluster-api-machine-type": role,
 				},
 			},
-			Spec: clusterapi.MachineSetSpec{
+			Spec: clusterapi.MachineDeploymentSpec{
+				MinReadySeconds: &minReadySeconds,
+				Strategy: &clusterapi.MachineDeploymentStrategy{
+					Type: common.RollingUpdateMachineDeploymentStrategyType,
+					RollingUpdate: &clusterapi.MachineRollingUpdateDeployment{
+						MaxSurge:       &maxSurge,
+						MaxUnavailable: &maxUnavailable,
+					},
+				},
 				Replicas: &replicas,
 				Selector: metav1.LabelSelector{
 					MatchLabels: map[string]string{
-						"sigs.k8s.io/cluster-api-machineset": name,
-						"sigs.k8s.io/cluster-api-cluster":    clustername,
+						"sigs.k8s.io/cluster-api-machinedeployment": name,
+						"sigs.k8s.io/cluster-api-cluster":           clustername,
 					},
 				},
 				Template: clusterapi.MachineTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							"sigs.k8s.io/cluster-api-machineset":   name,
-							"sigs.k8s.io/cluster-api-cluster":      clustername,
-							"sigs.k8s.io/cluster-api-machine-role": role,
-							"sigs.k8s.io/cluster-api-machine-type": role,
+							"sigs.k8s.io/cluster-api-machinedeployment": name,
+							"sigs.k8s.io/cluster-api-cluster":           clustername,
+							"sigs.k8s.io/cluster-api-machine-role":      role,
+							"sigs.k8s.io/cluster-api-machine-type":      role,
 						},
 					},
 					Spec: clusterapi.MachineSpec{
@@ -83,8 +98,8 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 				},
 			},
 		}
-		machinesets = append(machinesets, mset)
+		machineDeployments = append(machineDeployments, mdep)
 	}
 
-	return machinesets, nil
+	return machineDeployments, nil
 }
