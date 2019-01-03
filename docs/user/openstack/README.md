@@ -24,6 +24,34 @@ The installer assumes the following about the OpenStack cloud you run against:
   * For example: `openstack quota set --secgroups 100 --secgroup-rules 1000
     openshift`
 
+* You should add the following records to the DNS server that provides service
+  to your cluster (typically that's the one that the Neutron dns forwards to):
+
+      Dnsmasq example with three masters
+      ==================================
+
+      service-host=_etcd-server-ssl._tcp.CLUSTER_NAME.DOMAIN_NAME,CLUSTER_NAME-etcd-0.DOMAIN_NAME,2380,0,10
+      service-host=_etcd-server-ssl._tcp.CLUSTER_NAME.DOMAIN_NAME,CLUSTER_NAME-etcd-1.DOMAIN_NAME,2380,0,10
+      service-host=_etcd-server-ssl._tcp.CLUSTER_NAME.DOMAIN_NAME,CLUSTER_NAME-etcd-2.DOMAIN_NAME,2380,0,10
+      cname=CLUSTER_NAME-etcd-0,CLUSTER_NAME-master-0
+      cname=CLUSTER_NAME-etcd-1,CLUSTER_NAME-master-1
+      cname=CLUSTER_NAME-etcd-2,CLUSTER_NAME-master-2
+
+      Bind example with three masters
+      ===============================
+
+      ;                                SVC.PROTO.NAME   TTL    CLASS  PRIORITY WEIGHT PORT                           TARGET
+      _etcd-server-ssl._tcp.CLUSTER_NAME.DOMAIN_NAME.    IN      SRV         0     10 2380  CLUSTER_NAME-etcd-0.DOMAIN_NAME
+                                                         IN      SRV         0     10 2380  CLUSTER_NAME-etcd-1.DOMAIN_NAME
+                                                         IN      SRV         0     10 2380  CLUSTER_NAME-etcd-2.DOMAIN_NAME
+
+      $ORIGIN DOMAIN_NAME.
+      ;              NAME    TTL   CLASS                            CANONICAL_NAME
+      CLUSTER_NAME-etcd-0     IN   CNAME        CLUSTER_NAME-master-0.DOMAIN_NAME.
+      CLUSTER_NAME-etcd-1     IN   CNAME        CLUSTER_NAME-master-1.DOMAIN_NAME.
+      CLUSTER_NAME-etcd-2     IN   CNAME        CLUSTER_NAME-master-2.DOMAIN_NAME.
+
+
 ## Current Expected Behavior
 
 As mentioned, OpenStack support is still experimental.  The installer will
