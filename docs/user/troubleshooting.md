@@ -55,10 +55,8 @@ If no pods are shown, etcd will need to be [investigated](#etcd-is-not-running).
 In order to SSH into the master nodes as user `core`, it is necessary to include an administrator's ssh-key during the installation. When asked by the installation wizard for the ssh-key, make sure you select your ssh-key from the wizard prompt `~/.ssh/*.pub`. This key will be added to the `core` user's `authorized_keys` file. The public key is placed in authorized_keys by Ignition and is not configured via platform-specific approaches like [AWS key pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html). To verify if you added the correct ssh-key during installation you can use thefollowing command:
 
 ```sh
-oc get configmap -n kube-system cluster-config-v1 -o yaml | grep ssh-rsa
+oc get configmap -o "jsonpath={.data['install-config']}" -n kube-system cluster-config-v1 | grep -A1 sshKey
 ```
-
-If SSH authentication is failing, ensure that the proper SSH key is being used.
 
 If SSH isn't able to connect to the nodes, they may be waiting on the bootstrap node before they can boot. The initial set of master nodes fetch their boot configuration (the Ignition Config) from the bootstrap node and will not complete until they successfully do so. Check the console output of the nodes to determine if they have successfully booted or if they are waiting for Ignition to fetch the remote config.
 
