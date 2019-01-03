@@ -1206,7 +1206,7 @@ func r53ZonesToAWSObjects(zones []*route53.HostedZone, r53Client *route53.Route5
 			})
 			if err != nil {
 				if request.IsErrorThrottle(err) {
-					logger.Debugf("sleeping before trying to resolve tags for zone %s: %v", zone.Id, err)
+					logger.Debugf("sleeping before trying to resolve tags for zone %s: %v", *zone.Id, err)
 					time.Sleep(time.Second)
 					continue
 				}
