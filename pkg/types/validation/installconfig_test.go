@@ -197,7 +197,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, openstack\)$`,
+			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(nil\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\)$`,
 		},
 		{
 			name: "multiple platforms",
@@ -206,7 +206,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt = &libvirt.Platform{}
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(0x[0-9a-f]*\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must only specify a single type of platform; cannot use both "aws" and "libvirt", platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value, platform\.libvirt\.network\.ipRange: Invalid value: ipnet\.IPNet{IPNet:net\.IPNet{IP:net\.IP\(nil\), Mask:net\.IPMask\(nil\)}}: must use IPv4]$`,
+			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(0x[0-9a-f]*\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must only specify a single type of platform; cannot use both "aws" and "libvirt", platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value, platform\.libvirt\.network\.ipRange: Invalid value: ipnet\.IPNet{IPNet:net\.IPNet{IP:net\.IP\(nil\), Mask:net\.IPMask\(nil\)}}: must use IPv4]$`,
 		},
 		{
 			name: "invalid aws platform",
@@ -234,7 +234,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, openstack\)$`,
+			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\)$`,
 		},
 		{
 			name: "invalid libvirt platform",
@@ -245,7 +245,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, openstack\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value, platform\.libvirt\.network\.ipRange: Invalid value: ipnet\.IPNet{IPNet:net\.IPNet{IP:net\.IP\(nil\), Mask:net\.IPMask\(nil\)}}: must use IPv4]$`,
+			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value, platform\.libvirt\.network\.ipRange: Invalid value: ipnet\.IPNet{IPNet:net\.IPNet{IP:net\.IP\(nil\), Mask:net\.IPMask\(nil\)}}: must use IPv4]$`,
 		},
 		{
 			name: "valid openstack platform",

@@ -22,6 +22,8 @@ import (
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -75,7 +77,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	ic := installconfig.Config
 	pool := workerPool(ic.Machines)
 	switch ic.Platform.Name() {
-	case "aws":
+	case awstypes.Name:
 		mpool := defaultAWSMachinePoolPlatform()
 		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.AWS)
@@ -107,7 +109,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to marshal")
 		}
 		w.MachineSetRaw = raw
-	case "libvirt":
+	case libvirttypes.Name:
 		sets, err := libvirt.MachineSets(ic, &pool, "worker", "worker-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create worker machine objects")
@@ -119,7 +121,8 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to marshal")
 		}
 		w.MachineSetRaw = raw
-	case "openstack":
+	case nonetypes.Name:
+	case openstacktypes.Name:
 		numOfWorkers := int64(0)
 		if pool.Replicas != nil {
 			numOfWorkers = *pool.Replicas

@@ -111,9 +111,13 @@ func validateMachinePools(pools []types.MachinePool, fldPath *field.Path, platfo
 func validatePlatform(platform *types.Platform, fldPath *field.Path, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher) field.ErrorList {
 	allErrs := field.ErrorList{}
 	activePlatform := platform.Name()
-	i := sort.SearchStrings(types.PlatformNames, activePlatform)
-	if i == len(types.PlatformNames) || types.PlatformNames[i] != activePlatform {
-		allErrs = append(allErrs, field.Invalid(fldPath, platform, fmt.Sprintf("must specify one of the platforms (%s)", strings.Join(types.PlatformNames, ", "))))
+	platforms := make([]string, len(types.PlatformNames))
+	copy(platforms, types.PlatformNames)
+	platforms = append(platforms, types.HiddenPlatformNames...)
+	sort.Strings(platforms)
+	i := sort.SearchStrings(platforms, activePlatform)
+	if i == len(platforms) || platforms[i] != activePlatform {
+		allErrs = append(allErrs, field.Invalid(fldPath, platform, fmt.Sprintf("must specify one of the platforms (%s)", strings.Join(platforms, ", "))))
 	}
 	validate := func(n string, value interface{}, validation func(*field.Path) field.ErrorList) {
 		if n != activePlatform {

@@ -63,6 +63,10 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	kubeadminPassword := &password.KubeadminPassword{}
 	parents.Get(installConfig, terraformVariables, adminKubeconfig, kubeadminPassword)
 
+	if installConfig.Config.Platform.None != nil {
+		return errors.New("cluster cannot be created with platform set to 'none'")
+	}
+
 	// Copy the terraform.tfvars to a temp directory where the terraform will be invoked within.
 	tmpDir, err := ioutil.TempDir("", "openshift-install-")
 	if err != nil {
@@ -103,10 +107,10 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	switch {
 	case installConfig.Config.Platform.AWS != nil:
 		metadata.ClusterPlatformMetadata.AWS = aws.Metadata(installConfig.Config)
-	case installConfig.Config.Platform.OpenStack != nil:
-		metadata.ClusterPlatformMetadata.OpenStack = openstack.Metadata(installConfig.Config)
 	case installConfig.Config.Platform.Libvirt != nil:
 		metadata.ClusterPlatformMetadata.Libvirt = libvirt.Metadata(installConfig.Config)
+	case installConfig.Config.Platform.OpenStack != nil:
+		metadata.ClusterPlatformMetadata.OpenStack = openstack.Metadata(installConfig.Config)
 	default:
 		return fmt.Errorf("no known platform")
 	}
