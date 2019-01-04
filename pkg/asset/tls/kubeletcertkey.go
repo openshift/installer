@@ -29,9 +29,7 @@ func (a *KubeletCertKey) Generate(dependencies asset.Parents) error {
 	dependencies.Get(kubeCA)
 
 	cfg := &CertCfg{
-		// system:masters is a hack to get the kubelet up without kube-core
-		// TODO(node): make kubelet bootstrapping secure with minimal permissions eventually switching to system:node:* CommonName
-		Subject:      pkix.Name{CommonName: "system:serviceaccount:kube-system:default", Organization: []string{"system:serviceaccounts:kube-system", "system:masters"}},
+		Subject:      pkix.Name{CommonName: "system:serviceaccount:openshift-machine-config-operator:node-bootstrapper", Organization: []string{"system:serviceaccounts:openshift-machine-config-operator"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth},
 		Validity:     ValidityThirtyMinutes,

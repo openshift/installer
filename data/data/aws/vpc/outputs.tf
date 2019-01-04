@@ -7,7 +7,7 @@ output "master_subnet_ids" {
 }
 
 output "etcd_sg_id" {
-  value = "${element(concat(aws_security_group.etcd.*.id, list("")), 0)}"
+  value = "${aws_security_group.etcd.id}"
 }
 
 output "master_sg_id" {
@@ -31,21 +31,22 @@ output "aws_lb_target_group_arns" {
 }
 
 output "aws_lb_target_group_arns_length" {
-  value = "${(var.private_master_endpoints ? 2 : 0) + (var.public_master_endpoints ? 1 : 0)}"
+  // 2 for private endpoints and 1 for public endpoints
+  value = "3"
 }
 
 output "aws_lb_api_external_dns_name" {
-  value = "${element(concat(aws_lb.api_external.*.dns_name, list("")), 0)}"
+  value = "${aws_lb.api_external.dns_name}"
 }
 
 output "aws_lb_api_external_zone_id" {
-  value = "${element(concat(aws_lb.api_external.*.zone_id, list("")), 0)}"
+  value = "${aws_lb.api_external.zone_id}"
 }
 
 output "aws_lb_api_internal_dns_name" {
-  value = "${element(concat(aws_lb.api_internal.*.dns_name, list("")), 0)}"
+  value = "${aws_lb.api_internal.dns_name}"
 }
 
 output "aws_lb_api_internal_zone_id" {
-  value = "${element(concat(aws_lb.api_internal.*.zone_id, list("")), 0)}"
+  value = "${aws_lb.api_internal.zone_id}"
 }

@@ -150,6 +150,14 @@
   revision = "23def4e6c14b4da8ac2ed8007337bc5eb5007998"
 
 [[projects]]
+  digest = "1:b60efdeb75d3c0ceed88783ac2495256aba3491a537d0f31401202579fd62a94"
+  name = "github.com/golang/mock"
+  packages = ["gomock"]
+  pruneopts = "NUT"
+  revision = "51421b967af1f557f93a59e0057aaf15ca02e29c"
+  version = "v1.2.0"
+
+[[projects]]
   digest = "1:63ccdfbd20f7ccd2399d0647a7d100b122f79c13bb83da9660b1598396fd9f62"
   name = "github.com/golang/protobuf"
   packages = [
@@ -201,19 +209,35 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3f5485f5f0ea50de409c25414eaf4154bd54b2fa9ef03fc4a0a278967daac906"
+  digest = "1:fa54599c286d2e349f4d64a10fe2259aeb6598a8d96e98a5878df22cf5e4ba41"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
+    "internal",
     "openstack",
+    "openstack/compute/v2/flavors",
+    "openstack/compute/v2/images",
+    "openstack/compute/v2/servers",
     "openstack/identity/v2/tenants",
     "openstack/identity/v2/tokens",
+    "openstack/identity/v3/regions",
     "openstack/identity/v3/tokens",
+    "openstack/imageservice/v2/images",
+    "openstack/networking/v2/extensions/layer3/floatingips",
+    "openstack/networking/v2/extensions/layer3/routers",
+    "openstack/networking/v2/extensions/security/groups",
+    "openstack/networking/v2/extensions/security/rules",
+    "openstack/networking/v2/networks",
+    "openstack/networking/v2/ports",
+    "openstack/networking/v2/subnets",
+    "openstack/objectstorage/v1/accounts",
+    "openstack/objectstorage/v1/containers",
+    "openstack/objectstorage/v1/objects",
     "openstack/utils",
     "pagination",
   ]
   pruneopts = "NUT"
-  revision = "0e69bafe1d790b820cef859dd0126893bdbd53ad"
+  revision = "3a7818a07cfc862267a0b03635075a444c92dcda"
 
 [[projects]]
   digest = "1:df12b635fdefd90b1d139a70c45716896552051589b004021c745dcbaf0dad96"
@@ -340,12 +364,33 @@
   version = "1.0.1"
 
 [[projects]]
+  digest = "1:68214731af5ff5a3bfab4d28571578e5522bc4f667ad1232745d7b4189ccb442"
+  name = "github.com/openshift/api"
+  packages = [
+    "config/v1",
+    "route/v1",
+  ]
+  pruneopts = "NUT"
+  revision = "8241b16bb46fe9bd7aebbbce92d7af84fb71be7f"
+
+[[projects]]
+  digest = "1:6b1540f37963c713da08d8463791201d8469e8c755ed66a0b54ee424b15ea401"
+  name = "github.com/openshift/client-go"
+  packages = [
+    "route/clientset/versioned",
+    "route/clientset/versioned/scheme",
+    "route/clientset/versioned/typed/route/v1",
+  ]
+  pruneopts = "NUT"
+  revision = "1fa528d3be060e4c7178eb69e76d37cf7e699e3c"
+
+[[projects]]
   branch = "master"
-  digest = "1:b5875601953e2887f2fb469fde65c530bf33ae7439f10a67793ee8491305506c"
+  digest = "1:2a801f8e2e0d98ee3221f6e82522e8965240dd98cb97cdacf9410c651af8bf7e"
   name = "github.com/openshift/cluster-api-provider-libvirt"
   packages = ["pkg/apis/libvirtproviderconfig/v1alpha1"]
   pruneopts = "NUT"
-  revision = "437b1012ea0bf4c6a1189e42ff3755933689eeb4"
+  revision = "223f16433e235d5b4fce8f332abc6abcd50acaf4"
 
 [[projects]]
   digest = "1:f9c1fc8da2b44ba323ec3b338f0da9f375e26c787bc3a6ea241f9cb3f191cb62"
@@ -353,13 +398,6 @@
   packages = ["pkg/apis/networkoperator/v1"]
   pruneopts = "NUT"
   revision = "fb8b55a1072436a51b153de9acf5bf5525efcf83"
-
-[[projects]]
-  digest = "1:14f70ac5f181ccb012cddc7c72ac28709497155340b2fad822bd15d9a8722d93"
-  name = "github.com/openshift/hive"
-  packages = ["contrib/pkg/awstagdeprovision"]
-  pruneopts = "NUT"
-  revision = "8c7844d9b61c35f53bab561f5ce4d879fef86ec6"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
@@ -467,15 +505,25 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3f3a05ae0b95893d90b9b3b5afdb79a9b3d96e4e36e099d841ae602e4aca0da8"
+  digest = "1:bf004bff766c8754f1c9b1e0a1ac6f253cd8e98fac385a33a9e9bd70325b72a8"
   name = "golang.org/x/crypto"
-  packages = ["ssh/terminal"]
+  packages = [
+    "bcrypt",
+    "blowfish",
+    "curve25519",
+    "ed25519",
+    "ed25519/internal/edwards25519",
+    "internal/chacha20",
+    "internal/subtle",
+    "poly1305",
+    "ssh",
+    "ssh/terminal",
+  ]
   pruneopts = "NUT"
   revision = "4d3f4d9ffa16a13f451c3b2999e9c49e9750bf06"
 
 [[projects]]
-  branch = "master"
-  digest = "1:f80175f9ba0c0aededce5a82fe2e1018043f067d4dedd3402a34523fedd3b738"
+  digest = "1:122db8a20246abd128a496d22b6c35d3c648de20e3445e583b370c86c2d96d53"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -486,7 +534,7 @@
     "idna",
   ]
   pruneopts = "NUT"
-  revision = "c10e9556a7bc0e7c942242b606f0acf024ad5d6a"
+  revision = "891ebc4b82d6e74f468c533b06f983c7be918a96"
 
 [[projects]]
   branch = "master"
@@ -762,11 +810,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:14833e88e9193430014238507ee22eb650952caa5b70611babab520380cfcbc8"
+  digest = "1:70e659b4cad21aaf34189b548b3c050783713330972b54fe30959f2b43b0ef78"
   name = "sigs.k8s.io/cluster-api-provider-aws"
   packages = ["pkg/apis/awsproviderconfig/v1alpha1"]
   pruneopts = "NUT"
-  revision = "24d07d04fe7fa31597bf75f45d4cd41d0e4b2b94"
+  revision = "e6986093d1fbac2084c50b04fe2f78125ffca582"
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
 
 [[projects]]
@@ -784,18 +832,42 @@
     "github.com/apparentlymart/go-cidr/cidr",
     "github.com/awalterschulze/gographviz",
     "github.com/aws/aws-sdk-go/aws",
+    "github.com/aws/aws-sdk-go/aws/awserr",
+    "github.com/aws/aws-sdk-go/aws/credentials",
+    "github.com/aws/aws-sdk-go/aws/defaults",
+    "github.com/aws/aws-sdk-go/aws/request",
     "github.com/aws/aws-sdk-go/aws/session",
+    "github.com/aws/aws-sdk-go/service/autoscaling",
     "github.com/aws/aws-sdk-go/service/ec2",
+    "github.com/aws/aws-sdk-go/service/elb",
+    "github.com/aws/aws-sdk-go/service/elbv2",
+    "github.com/aws/aws-sdk-go/service/iam",
+    "github.com/aws/aws-sdk-go/service/route53",
+    "github.com/aws/aws-sdk-go/service/s3",
+    "github.com/aws/aws-sdk-go/service/s3/s3manager",
     "github.com/coreos/ignition/config/util",
     "github.com/coreos/ignition/config/v2_2/types",
     "github.com/ghodss/yaml",
+    "github.com/golang/mock/gomock",
+    "github.com/gophercloud/gophercloud/openstack/compute/v2/servers",
+    "github.com/gophercloud/gophercloud/openstack/identity/v3/regions",
+    "github.com/gophercloud/gophercloud/openstack/imageservice/v2/images",
+    "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/floatingips",
+    "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/layer3/routers",
+    "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions/security/groups",
+    "github.com/gophercloud/gophercloud/openstack/networking/v2/networks",
+    "github.com/gophercloud/gophercloud/openstack/networking/v2/ports",
+    "github.com/gophercloud/gophercloud/openstack/networking/v2/subnets",
+    "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers",
+    "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects",
     "github.com/gophercloud/utils/openstack/clientconfig",
     "github.com/gregjones/httpcache",
     "github.com/gregjones/httpcache/diskcache",
     "github.com/libvirt/libvirt-go",
+    "github.com/openshift/api/config/v1",
+    "github.com/openshift/client-go/route/clientset/versioned",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
     "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1",
-    "github.com/openshift/hive/contrib/pkg/awstagdeprovision",
     "github.com/pborman/uuid",
     "github.com/pkg/errors",
     "github.com/shurcooL/vfsgen",
@@ -803,14 +875,20 @@
     "github.com/spf13/cobra",
     "github.com/stretchr/testify/assert",
     "github.com/vincent-petithory/dataurl",
+    "golang.org/x/crypto/bcrypt",
+    "golang.org/x/crypto/ssh",
+    "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/sys/unix",
     "gopkg.in/AlecAivazis/survey.v1",
+    "gopkg.in/yaml.v2",
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/runtime",
-    "k8s.io/apimachinery/pkg/util/net",
+    "k8s.io/apimachinery/pkg/util/errors",
     "k8s.io/apimachinery/pkg/util/sets",
+    "k8s.io/apimachinery/pkg/util/validation",
+    "k8s.io/apimachinery/pkg/util/validation/field",
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/kubernetes",

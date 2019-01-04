@@ -14,6 +14,7 @@ type LibvirtMachineProviderConfig struct {
 	DomainMemory             int        `json:"domainMemory"`
 	DomainVcpu               int        `json:"domainVcpu"`
 	IgnKey                   string     `json:"ignKey"`
+	Ignition                 *Ignition  `json:"ignition"`
 	CloudInit                *CloudInit `json:"cloudInit"`
 	Volume                   *Volume    `json:"volume"`
 	NetworkInterfaceName     string     `json:"networkInterfaceName"`
@@ -24,8 +25,13 @@ type LibvirtMachineProviderConfig struct {
 	URI                      string     `json:"uri"`
 }
 
+// Ignition contains location of ignition to be run during bootstrapping
+type Ignition struct {
+	// Ignition config to be run during bootstrapping
+	UserDataSecret string `json:"userDataSecret"`
+}
+
 // CloudInit contains location of user data to be run during bootstrapping
-// with ISO image with a cloud-init file running the user data
 type CloudInit struct {
 	// Bash script to be run during bootstrapping
 	UserDataSecret string `json:"userDataSecret"`

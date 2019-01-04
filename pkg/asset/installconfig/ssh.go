@@ -47,38 +47,21 @@ func readSSHKey(path string) (string, error) {
 
 // Generate generates the SSH public key asset.
 func (a *sshPublicKey) Generate(asset.Parents) error {
-	if value, ok := os.LookupEnv("OPENSHIFT_INSTALL_SSH_PUB_KEY"); ok {
-		if value != "" {
-			if err := validate.SSHPublicKey(value); err != nil {
-				return errors.Wrap(err, "failed to validate public key")
-			}
-		}
-		a.Key = value
-		return nil
+	pubKeys := map[string]string{
+		none: "",
 	}
-
-	pubKeys := map[string]string{}
-	if path, ok := os.LookupEnv("OPENSHIFT_INSTALL_SSH_PUB_KEY_PATH"); ok {
-		key, err := readSSHKey(path)
+	home := os.Getenv("HOME")
+	if home != "" {
+		paths, err := filepath.Glob(filepath.Join(home, ".ssh", "*.pub"))
 		if err != nil {
-			return errors.Wrap(err, "failed to read public key file")
+			return errors.Wrap(err, "failed to glob for public key files")
 		}
-		pubKeys[path] = key
-	} else {
-		pubKeys[none] = ""
-		home := os.Getenv("HOME")
-		if home != "" {
-			paths, err := filepath.Glob(filepath.Join(home, ".ssh", "*.pub"))
+		for _, path := range paths {
+			key, err := readSSHKey(path)
 			if err != nil {
-				return errors.Wrap(err, "failed to glob for public key files")
+				continue
 			}
-			for _, path := range paths {
-				key, err := readSSHKey(path)
-				if err != nil {
-					continue
-				}
-				pubKeys[path] = key
-			}
+			pubKeys[path] = key
 		}
 	}
 

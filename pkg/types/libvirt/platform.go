@@ -21,5 +21,5 @@ type Platform struct {
 	Network Network `json:"network"`
 
 	// MasterIPs
-	MasterIPs []net.IP `json:"masterIPs"`
+	MasterIPs []net.IP `json:"masterIPs,omitempty"`
 }

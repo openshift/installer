@@ -77,7 +77,7 @@ func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.
 	}
 	return &awsprovider.AWSMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "aws.cluster.k8s.io/v1alpha1",
+			APIVersion: "awsproviderconfig.k8s.io/v1alpha1",
 			Kind:       "AWSMachineProviderConfig",
 		},
 		InstanceType:       mpool.InstanceType,
@@ -103,7 +103,7 @@ func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.
 
 func tagsFromUserTags(clusterID, clusterName string, usertags map[string]string) ([]awsprovider.TagSpecification, error) {
 	tags := []awsprovider.TagSpecification{
-		{Name: "tectonicClusterID", Value: clusterID},
+		{Name: "openshiftClusterID", Value: clusterID},
 		{Name: fmt.Sprintf("kubernetes.io/cluster/%s", clusterName), Value: "owned"},
 	}
 	forbiddenTags := sets.NewString()
@@ -117,4 +117,22 @@ func tagsFromUserTags(clusterID, clusterName string, usertags map[string]string)
 		tags = append(tags, awsprovider.TagSpecification{Name: k, Value: v})
 	}
 	return tags, nil
+}
+
+// ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
+func ConfigMasters(machines []clusterapi.Machine, clusterName string) {
+	for _, machine := range machines {
+		providerConfig := machine.Spec.ProviderConfig.Value.Object.(*awsprovider.AWSMachineProviderConfig)
+		providerConfig.PublicIP = pointer.BoolPtr(true)
+		providerConfig.LoadBalancers = []awsprovider.LoadBalancerReference{
+			{
+				Name: fmt.Sprintf("%s-ext", clusterName),
+				Type: awsprovider.NetworkLoadBalancerType,
+			},
+			{
+				Name: fmt.Sprintf("%s-int", clusterName),
+				Type: awsprovider.NetworkLoadBalancerType,
+			},
+		}
+	}
 }

@@ -14,9 +14,9 @@ const (
 
 var _ asset.WritableAsset = (*CVOOverrides)(nil)
 
-// CVOOverrides is the constant to represent contents of cvo-override.yaml.template file
-// This is a gate to prevent CVO from installing these operators which is conflicting
-// with already owned resources by tectonic-operators.
+// CVOOverrides is an asset that generates the cvo-override.yaml.template file.
+// This is a gate to prevent CVO from installing these operators which conflict
+// with resources already owned by other operators.
 // This files can be dropped when the overrides list becomes empty.
 type CVOOverrides struct {
 	fileName string

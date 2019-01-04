@@ -10,6 +10,7 @@ cd "$(dirname "$0")"
 
 TAG="${1}"
 
+git tag -sm "version ${TAG}" "${TAG}"
 ./build.sh # ensure freshly-generated data
 for GOOS in darwin linux
 do
@@ -18,4 +19,3 @@ do
 	GOOS="${GOOS}" GOARCH="${GOARCH}" OUTPUT="${OUTPUT}" SKIP_GENERATION=y ./build.sh
 done
 (cd ../bin && sha256sum openshift-install-*)
-git tag -sm "version ${TAG}" "${TAG}"

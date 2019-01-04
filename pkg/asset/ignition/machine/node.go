@@ -39,7 +39,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 		Passwd: ignition.Passwd{
 			Users: []ignition.PasswdUser{{
 				Name:              "core",
-				SSHAuthorizedKeys: []ignition.SSHAuthorizedKey{ignition.SSHAuthorizedKey(installConfig.Admin.SSHKey)},
+				SSHAuthorizedKeys: []ignition.SSHAuthorizedKey{ignition.SSHAuthorizedKey(installConfig.SSHKey)},
 			}},
 		},
 	}

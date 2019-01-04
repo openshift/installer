@@ -324,7 +324,7 @@ func (s *StoreImpl) load(asset Asset, indent string) (*assetState, error) {
 }
 
 // purge deletes the on-disk assets that are consumed already.
-// E.g., install-config.yml will be deleted after fetching 'manifests'.
+// E.g., install-config.yaml will be deleted after fetching 'manifests'.
 // The target asset is excluded.
 func (s *StoreImpl) purge(excluded WritableAsset) error {
 	for _, assetState := range s.assets {

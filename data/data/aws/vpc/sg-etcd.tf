@@ -4,7 +4,7 @@ resource "aws_security_group" "etcd" {
   tags = "${merge(map(
       "Name", "${var.cluster_name}_etcd_sg",
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "tectonicClusterID", "${var.cluster_id}"
+      "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
 }
 

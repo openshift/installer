@@ -1,15 +1,14 @@
 # This Dockerfile is a used by CI to publish openshift/origin-v4.0:installer
-# It builds an image containing only the openshift-install and terraform binaries.
+# It builds an image containing only the openshift-install.
 
-FROM openshift/origin-release:golang-1.10 AS build
+FROM registry.svc.ci.openshift.org/openshift/release:golang-1.10 AS builder
 WORKDIR /go/src/github.com/openshift/installer
 COPY . .
-RUN hack/build.sh && hack/get-terraform.sh
+RUN hack/build.sh
 
 
-FROM centos:7
-COPY --from=build /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
-COPY --from=build /go/src/github.com/openshift/installer/bin/terraform /bin/terraform
+FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:base
+COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
 RUN mkdir /output && chown 1000:1000 /output
 USER 1000:1000
 ENV PATH /bin

@@ -12,8 +12,6 @@ If we're wrong, PLEASE feel free to reopen it and explain why.
 ```console
 $ openshift-install version
 <your output here>
-$ ~/.terraform.d/plugins/terraform-provider-libvirt -version  # only needed if you're using libvirt
-<your output here>
 ```
 
 # Platform (aws|libvirt|openstack):
@@ -24,6 +22,7 @@ Enter text here.
 
 Enter text here.
 See [the troubleshooting documentation](https://github.com/openshift/installer/blob/master/docs/user/troubleshooting.md) for ideas about what information to collect.
+For example, if the installer [fails to create resources](https://github.com/openshift/installer/blob/master/docs/user/troubleshooting.md#installer-fails-to-create-resources), attach the relevant portions of your `.openshift_install.log`.
 
 # What you expected to happen?
 

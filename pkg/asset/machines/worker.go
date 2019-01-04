@@ -27,13 +27,13 @@ import (
 
 func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
 	return awstypes.MachinePool{
-		InstanceType: "t2.medium",
+		InstanceType: "m4.large",
 	}
 }
 
-func defaultOpenStackMachinePoolPlatform() openstacktypes.MachinePool {
+func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePool {
 	return openstacktypes.MachinePool{
-		FlavorName: "m1.medium",
+		FlavorName: flavor,
 	}
 }
 
@@ -129,11 +129,11 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			Replicas:    numOfWorkers,
 			Image:       ic.Platform.OpenStack.BaseImage,
 			Region:      ic.Platform.OpenStack.Region,
-			Machine:     defaultOpenStackMachinePoolPlatform(),
+			Machine:     defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName),
 		}
 
 		tags := map[string]string{
-			"tectonicClusterID": ic.ClusterID,
+			"openshiftClusterID": ic.ClusterID,
 		}
 		config.Tags = tags
 

@@ -4,4 +4,5 @@ metadata:
   name: root-ca
   namespace: kube-system
 data:
-  ca.crt: {{.RootCaCert}}
+  ca.crt: |
+    {{.RootCaCert | indent 4}}

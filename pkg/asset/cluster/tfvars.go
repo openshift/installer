@@ -36,7 +36,6 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
-		&machine.Worker{},
 	}
 }
 
@@ -45,15 +44,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	bootstrap := &bootstrap.Bootstrap{}
 	master := &machine.Master{}
-	worker := &machine.Worker{}
-	parents.Get(installConfig, bootstrap, master, worker)
+	parents.Get(installConfig, bootstrap, master)
 
 	bootstrapIgn := string(bootstrap.Files()[0].Data)
 
 	masterIgn := string(master.Files()[0].Data)
-	workerIgn := string(worker.Files()[0].Data)
 
-	data, err := tfvars.TFVars(installConfig.Config, bootstrapIgn, masterIgn, workerIgn)
+	data, err := tfvars.TFVars(installConfig.Config, bootstrapIgn, masterIgn)
 	if err != nil {
 		return errors.Wrap(err, "failed to get Tfvars")
 	}

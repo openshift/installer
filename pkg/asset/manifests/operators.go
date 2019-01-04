@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/ghodss/yaml"
@@ -27,6 +28,7 @@ var (
 	_ asset.WritableAsset = (*Manifests)(nil)
 
 	customTmplFuncs = template.FuncMap{
+		"indent": indent,
 		"add": func(i, j int) int {
 			return i + j
 		},
@@ -51,6 +53,8 @@ func (m *Manifests) Name() string {
 func (m *Manifests) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		&Ingress{},
+		&DNS{},
 		&Networking{},
 		&tls.RootCA{},
 		&tls.EtcdCA{},
@@ -66,25 +70,26 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.OpenshiftServiceCertSignerSecret{},
 		&bootkube.Pull{},
 		&bootkube.CVOOverrides{},
-		&bootkube.LegacyCVOOverrides{},
-		&bootkube.EtcdServiceEndpointsKubeSystem{},
+		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.KubeSystemSecretEtcdClient{},
 
-		&bootkube.OpenshiftWebConsoleNamespace{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.OpenshiftClusterAPINamespace{},
 		&bootkube.OpenshiftServiceCertSignerNamespace{},
 		&bootkube.EtcdServiceKubeSystem{},
+		&bootkube.HostEtcdServiceKubeSystem{},
 	}
 }
 
 // Generate generates the respective operator config.yml files
 func (m *Manifests) Generate(dependencies asset.Parents) error {
+	ingress := &Ingress{}
+	dns := &DNS{}
 	network := &Networking{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig, network)
+	dependencies.Get(installConfig, ingress, dns, network)
 
 	// mao go to kube-system config map
 	m.KubeSysConfig = configMap("kube-system", "cluster-config-v1", genericData{
@@ -103,6 +108,8 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	}
 	m.FileList = append(m.FileList, m.generateBootKubeManifests(dependencies)...)
 
+	m.FileList = append(m.FileList, ingress.Files()...)
+	m.FileList = append(m.FileList, dns.Files()...)
 	m.FileList = append(m.FileList, network.Files()...)
 
 	return nil
@@ -138,15 +145,15 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 
 	templateData := &bootkubeTemplateData{
 		Base64encodeCloudProviderConfig: "", // FIXME
-		EtcdCaCert:                      base64.StdEncoding.EncodeToString(etcdCA.Cert()),
+		EtcdCaCert:                      string(etcdCA.Cert()),
 		EtcdClientCert:                  base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
 		EtcdClientKey:                   base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
 		KubeCaCert:                      base64.StdEncoding.EncodeToString(kubeCA.Cert()),
 		KubeCaKey:                       base64.StdEncoding.EncodeToString(kubeCA.Key()),
 		McsTLSCert:                      base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:                       base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
-		PullSecret:                      base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
-		RootCaCert:                      base64.StdEncoding.EncodeToString(rootCA.Cert()),
+		PullSecretBase64:                base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
+		RootCaCert:                      string(rootCA.Cert()),
 		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(serviceServingCA.Cert()),
 		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(serviceServingCA.Key()),
 		CVOClusterID:                    installConfig.Config.ClusterID,
@@ -159,33 +166,31 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	openshiftServiceCertSignerSecret := &bootkube.OpenshiftServiceCertSignerSecret{}
 	pull := &bootkube.Pull{}
 	cVOOverrides := &bootkube.CVOOverrides{}
-	legacyCVOOverrides := &bootkube.LegacyCVOOverrides{}
-	etcdServiceEndpointsKubeSystem := &bootkube.EtcdServiceEndpointsKubeSystem{}
+	hostEtcdServiceEndpointsKubeSystem := &bootkube.HostEtcdServiceEndpointsKubeSystem{}
 	kubeSystemConfigmapEtcdServingCA := &bootkube.KubeSystemConfigmapEtcdServingCA{}
 	kubeSystemConfigmapRootCA := &bootkube.KubeSystemConfigmapRootCA{}
 	kubeSystemSecretEtcdClient := &bootkube.KubeSystemSecretEtcdClient{}
 
-	openshiftWebConsoleNamespace := &bootkube.OpenshiftWebConsoleNamespace{}
 	openshiftMachineConfigOperator := &bootkube.OpenshiftMachineConfigOperator{}
 	openshiftClusterAPINamespace := &bootkube.OpenshiftClusterAPINamespace{}
 	openshiftServiceCertSignerNamespace := &bootkube.OpenshiftServiceCertSignerNamespace{}
 	etcdServiceKubeSystem := &bootkube.EtcdServiceKubeSystem{}
+	hostEtcdServiceKubeSystem := &bootkube.HostEtcdServiceKubeSystem{}
 	dependencies.Get(
 		kubeCloudConfig,
 		machineConfigServerTLSSecret,
 		openshiftServiceCertSignerSecret,
 		pull,
 		cVOOverrides,
-		legacyCVOOverrides,
-		etcdServiceEndpointsKubeSystem,
+		hostEtcdServiceEndpointsKubeSystem,
 		kubeSystemConfigmapEtcdServingCA,
 		kubeSystemConfigmapRootCA,
 		kubeSystemSecretEtcdClient,
-		openshiftWebConsoleNamespace,
 		openshiftMachineConfigOperator,
 		openshiftClusterAPINamespace,
 		openshiftServiceCertSignerNamespace,
 		etcdServiceKubeSystem,
+		hostEtcdServiceKubeSystem,
 	)
 	assetData := map[string][]byte{
 		"kube-cloud-config.yaml":                     applyTemplateData(kubeCloudConfig.Files()[0].Data, templateData),
@@ -193,17 +198,16 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"openshift-service-signer-secret.yaml":       applyTemplateData(openshiftServiceCertSignerSecret.Files()[0].Data, templateData),
 		"pull.json":                                  applyTemplateData(pull.Files()[0].Data, templateData),
 		"cvo-overrides.yaml":                         applyTemplateData(cVOOverrides.Files()[0].Data, templateData),
-		"legacy-cvo-overrides.yaml":                  applyTemplateData(legacyCVOOverrides.Files()[0].Data, templateData),
-		"etcd-service-endpoints.yaml":                applyTemplateData(etcdServiceEndpointsKubeSystem.Files()[0].Data, templateData),
+		"host-etcd-service-endpoints.yaml":           applyTemplateData(hostEtcdServiceEndpointsKubeSystem.Files()[0].Data, templateData),
 		"kube-system-configmap-etcd-serving-ca.yaml": applyTemplateData(kubeSystemConfigmapEtcdServingCA.Files()[0].Data, templateData),
 		"kube-system-configmap-root-ca.yaml":         applyTemplateData(kubeSystemConfigmapRootCA.Files()[0].Data, templateData),
 		"kube-system-secret-etcd-client.yaml":        applyTemplateData(kubeSystemSecretEtcdClient.Files()[0].Data, templateData),
 
-		"03-openshift-web-console-namespace.yaml":    []byte(openshiftWebConsoleNamespace.Files()[0].Data),
 		"04-openshift-machine-config-operator.yaml":  []byte(openshiftMachineConfigOperator.Files()[0].Data),
 		"05-openshift-cluster-api-namespace.yaml":    []byte(openshiftClusterAPINamespace.Files()[0].Data),
 		"09-openshift-service-signer-namespace.yaml": []byte(openshiftServiceCertSignerNamespace.Files()[0].Data),
 		"etcd-service.yaml":                          []byte(etcdServiceKubeSystem.Files()[0].Data),
+		"host-etcd-service.yaml":                     []byte(hostEtcdServiceKubeSystem.Files()[0].Data),
 	}
 
 	files := make([]*asset.File, 0, len(assetData))
@@ -255,4 +259,9 @@ func (m *Manifests) Load(f asset.FileFetcher) (bool, error) {
 	m.FileList, m.KubeSysConfig = fileList, kubeSysConfig
 
 	return true, nil
+}
+
+func indent(indention int, v string) string {
+	newline := "\n" + strings.Repeat(" ", indention)
+	return strings.Replace(v, "\n", newline, -1)
 }

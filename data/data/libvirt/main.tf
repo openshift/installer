@@ -1,50 +1,45 @@
 provider "libvirt" {
-  uri = "${var.tectonic_libvirt_uri}"
+  uri = "${var.libvirt_uri}"
 }
 
 module "volume" {
   source = "./volume"
 
-  cluster_name = "${var.tectonic_cluster_name}"
-  image        = "${var.tectonic_os_image}"
+  cluster_name = "${var.cluster_name}"
+  image        = "${var.os_image}"
 }
 
 module "bootstrap" {
   source = "./bootstrap"
 
-  addresses      = ["${var.tectonic_libvirt_bootstrap_ip}"]
+  addresses      = ["${var.libvirt_bootstrap_ip}"]
   base_volume_id = "${module.volume.coreos_base_volume_id}"
-  cluster_name   = "${var.tectonic_cluster_name}"
+  cluster_name   = "${var.cluster_name}"
   ignition       = "${var.ignition_bootstrap}"
-  network_id     = "${libvirt_network.tectonic_net.id}"
+  network_id     = "${libvirt_network.net.id}"
 }
 
 resource "libvirt_volume" "master" {
-  count          = "${var.tectonic_master_count}"
-  name           = "${var.tectonic_cluster_name}-master-${count.index}"
+  count          = "${var.master_count}"
+  name           = "${var.cluster_name}-master-${count.index}"
   base_volume_id = "${module.volume.coreos_base_volume_id}"
 }
 
 resource "libvirt_ignition" "master" {
-  name    = "${var.tectonic_cluster_name}-master.ign"
+  name    = "${var.cluster_name}-master.ign"
   content = "${var.ignition_master}"
 }
 
-resource "libvirt_ignition" "worker" {
-  name    = "${var.tectonic_cluster_name}-worker.ign"
-  content = "${var.ignition_worker}"
-}
-
-resource "libvirt_network" "tectonic_net" {
-  name = "${var.tectonic_cluster_name}"
+resource "libvirt_network" "net" {
+  name = "${var.cluster_name}"
 
   mode   = "nat"
-  bridge = "${var.tectonic_libvirt_network_if}"
+  bridge = "${var.libvirt_network_if}"
 
-  domain = "${var.tectonic_base_domain}"
+  domain = "${var.base_domain}"
 
   addresses = [
-    "${var.tectonic_libvirt_ip_range}",
+    "${var.libvirt_ip_range}",
   ]
 
   dns = [{
@@ -58,7 +53,6 @@ resource "libvirt_network" "tectonic_net" {
       data.libvirt_network_dns_host_template.bootstrap.*.rendered,
       data.libvirt_network_dns_host_template.masters.*.rendered,
       data.libvirt_network_dns_host_template.etcds.*.rendered,
-      data.libvirt_network_dns_host_template.workers.*.rendered,
     ))}"]
   }]
 
@@ -66,14 +60,14 @@ resource "libvirt_network" "tectonic_net" {
 }
 
 resource "libvirt_domain" "master" {
-  count = "${var.tectonic_master_count}"
+  count = "${var.master_count}"
 
-  name = "${var.tectonic_cluster_name}-master-${count.index}"
+  name = "${var.cluster_name}-master-${count.index}"
 
-  memory = "3072"
-  vcpu   = "2"
+  memory = "${var.libvirt_master_memory}"
+  vcpu   = "${var.libvirt_master_vcpu}"
 
-  coreos_ignition = "${libvirt_ignition.master.*.id[count.index]}"
+  coreos_ignition = "${libvirt_ignition.master.id}"
 
   disk {
     volume_id = "${element(libvirt_volume.master.*.id, count.index)}"
@@ -85,42 +79,36 @@ resource "libvirt_domain" "master" {
   }
 
   network_interface {
-    network_id = "${libvirt_network.tectonic_net.id}"
-    hostname   = "${var.tectonic_cluster_name}-master-${count.index}"
-    addresses  = ["${var.tectonic_libvirt_master_ips[count.index]}"]
+    network_id = "${libvirt_network.net.id}"
+    hostname   = "${var.cluster_name}-master-${count.index}"
+    addresses  = ["${var.libvirt_master_ips[count.index]}"]
   }
 }
 
 data "libvirt_network_dns_host_template" "bootstrap" {
   count    = "${var.bootstrap_dns ? 1 : 0}"
-  ip       = "${var.tectonic_libvirt_bootstrap_ip}"
-  hostname = "${var.tectonic_cluster_name}-api"
+  ip       = "${var.libvirt_bootstrap_ip}"
+  hostname = "${var.cluster_name}-api"
 }
 
 data "libvirt_network_dns_host_template" "masters" {
-  count    = "${var.tectonic_master_count}"
-  ip       = "${var.tectonic_libvirt_master_ips[count.index]}"
-  hostname = "${var.tectonic_cluster_name}-api"
+  count    = "${var.master_count}"
+  ip       = "${var.libvirt_master_ips[count.index]}"
+  hostname = "${var.cluster_name}-api"
 }
 
 data "libvirt_network_dns_host_template" "etcds" {
-  count    = "${var.tectonic_master_count}"
-  ip       = "${var.tectonic_libvirt_master_ips[count.index]}"
-  hostname = "${var.tectonic_cluster_name}-etcd-${count.index}"
-}
-
-data "libvirt_network_dns_host_template" "workers" {
-  count    = "${var.tectonic_worker_count}"
-  ip       = "${var.tectonic_libvirt_worker_ips[count.index]}"
-  hostname = "${var.tectonic_cluster_name}"
+  count    = "${var.master_count}"
+  ip       = "${var.libvirt_master_ips[count.index]}"
+  hostname = "${var.cluster_name}-etcd-${count.index}"
 }
 
 data "libvirt_network_dns_srv_template" "etcd_cluster" {
-  count    = "${var.tectonic_master_count}"
+  count    = "${var.master_count}"
   service  = "etcd-server-ssl"
   protocol = "tcp"
-  domain   = "${var.tectonic_cluster_name}.${var.tectonic_base_domain}"
+  domain   = "${var.cluster_name}.${var.base_domain}"
   port     = 2380
   weight   = 10
-  target   = "${var.tectonic_cluster_name}-etcd-${count.index}.${var.tectonic_base_domain}"
+  target   = "${var.cluster_name}-etcd-${count.index}.${var.base_domain}"
 }

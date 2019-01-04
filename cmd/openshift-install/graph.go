@@ -41,7 +41,7 @@ func runGraphCmd(cmd *cobra.Command, args []string) error {
 		string(gographviz.Style): "filled",
 	}
 	for _, t := range targets {
-		name := fmt.Sprintf(`"Target %s"`, t.name)
+		name := fmt.Sprintf("%q", fmt.Sprintf("Target %s", t.name))
 		g.AddNode("G", name, tNodeAttr)
 		for _, dep := range t.assets {
 			addEdge(g, name, dep)
@@ -65,8 +65,7 @@ func runGraphCmd(cmd *cobra.Command, args []string) error {
 }
 
 func addEdge(g *gographviz.Graph, parent string, asset asset.Asset) {
-	elem := reflect.TypeOf(asset).Elem()
-	name := fmt.Sprintf(`"%s"`, elem.Name())
+	name := fmt.Sprintf("%q", reflect.TypeOf(asset).Elem())
 
 	if !g.IsNode(name) {
 		logrus.Debugf("adding node %s", name)

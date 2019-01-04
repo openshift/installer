@@ -22,7 +22,7 @@ If it is missing, try some of the ideas [here][kvm-install].
 On Fedora, CentOS/RHEL:
 
 ```sh
-sudo yum install libvirt libvirt-devel
+sudo yum install libvirt libvirt-devel libvirt-daemon-kvm qemu-kvm
 ```
 
 Then start libvirtd:
@@ -40,9 +40,6 @@ In this example, we'll set the base domain to `tt.testing` and the cluster name 
 git clone https://github.com/openshift/installer.git
 cd installer
 ```
-
-### Get a pull secret
-Go to https://account.coreos.com/ and obtain a *pull secret*.
 
 ### Make sure you have permissions for `qemu:///system`
 You may want to grant yourself permissions to use libvirt as a non-root user. You could allow all users in the wheel group by doing the following:
@@ -190,61 +187,36 @@ sudo virsh pool-autostart default
 
 ### Set up NetworkManager DNS overlay
 
-This step is optional, but useful for being able to resolve cluster-internal hostnames from your host.
+This step allows installer and users to resolve cluster-internal hostnames from your host.
 1. Edit `/etc/NetworkManager/NetworkManager.conf` and set `dns=dnsmasq` in section `[main]`
 2. Tell dnsmasq to use your cluster. The syntax is `server=/<baseDomain>/<firstIP>`.
 
     For this example:
 
     ```sh
-    echo server=/tt.testing/192.168.126.1 | sudo tee /etc/NetworkManager/dnsmasq.d/tectonic.conf
+    echo server=/tt.testing/192.168.126.1 | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
     ```
 3. `systemctl restart NetworkManager`
 
-### Install the Terraform provider
-
-1. Make sure you have the `virsh` binary installed: `sudo dnf install libvirt-client libvirt-devel`
-2. Install the libvirt terraform provider:
-```sh
-GOBIN=~/.terraform.d/plugins go get -u github.com/dmacvicar/terraform-provider-libvirt
-```
-
-### Cache Terrafrom plugins (optional, but makes subsequent runs a bit faster)
-
-```sh
-cat <<EOF > $HOME/.terraformrc
-plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"
-EOF
-```
 
 ## Build and run the installer
 
 With [libvirt configured](#install-and-enable-libvirt), you can proceed with [the usual quick-start](../../README.md#quick-start).
-Set `TAGS` when building if you need `destroy cluster` support for libvirt; this is not enabled by default because it requires [cgo][]:
+Set `TAGS=libvirt` to add support for libvirt; this is not enabled by default because libvirt is [development only](../../README.md#supported-platforms).
 
 ```sh
-TAGS=libvirt_destroy hack/build.sh
-```
-
-To avoid being prompted repeatedly, you can set [environment variables](../user/environment-variables.md) to reflect your libvirt choices.  For example, selecting libvirt, setting [our earlier name choices](#pick-names), [our pull secret](#get-a-pull-secret), and telling both the installer and the machine-API operator to contact `libvirtd` at [the usual libvirt IP](#firewall), you can use:
-
-```sh
-export OPENSHIFT_INSTALL_PLATFORM=libvirt
-export OPENSHIFT_INSTALL_BASE_DOMAIN=tt.testing
-export OPENSHIFT_INSTALL_CLUSTER_NAME=test1
-export OPENSHIFT_INSTALL_PULL_SECRET_PATH=path/to/your/pull-secret.json
-export OPENSHIFT_INSTALL_LIBVIRT_URI=qemu+tcp://192.168.122.1/system
+TAGS=libvirt hack/build.sh
 ```
 
 ## Cleanup
 
-If you compiled with `libvirt_destroy`, you can use:
+To remove resources associated with your cluster, run:
 
 ```sh
 openshift-install destroy cluster
 ```
 
-If you did not compile with `libvirt_destroy`, you can use [`virsh-cleanup.sh`](../../scripts/maintenance/virsh-cleanup.sh), but note it will currently destroy *all* libvirt resources.
+You can also use [`virsh-cleanup.sh`](../../scripts/maintenance/virsh-cleanup.sh), but note that it will currently destroy *all* libvirt resources.
 
 ### Firewall
 
@@ -264,8 +236,8 @@ Some things you can do:
 The bootstrap node, e.g. `test1-bootstrap.tt.testing`, runs the bootstrap process. You can watch it:
 
 ```sh
-ssh core@$OPENSHIFT_INSTALL_CLUSTER_NAME-bootstrap.$OPENSHIFT_INSTALL_BASE_DOMAIN
-sudo journalctl -f -u bootkube -u tectonic
+ssh "core@${CLUSTER_NAME}-bootstrap.${BASE_DOMAIN}"
+sudo journalctl -f -u bootkube -u openshift
 ```
 
 You'll have to wait for etcd to reach quorum before this makes any progress.
@@ -274,11 +246,11 @@ Using the domain names above will only work if you [set up the DNS overlay](#set
 Alternatively, if you didn't set up DNS on the host, you can use:
 
 ```sh
-virsh -c "${OPENSHIFT_INSTALL_LIBVIRT_URI}" domifaddr "${OPENSHIFT_INSTALL_CLUSTER_NAME}-master-0"  # to get the master IP
+virsh -c "${LIBVIRT_URI}" domifaddr "${CLUSTER_NAME}-master-0"  # to get the master IP
 ssh core@$MASTER_IP
 ```
 
-Here `OPENSHIFT_INSTALL_LIBVIRT_URI` is the libvirt connection URI which you [passed to the installer](#build-and-run-the-installer).
+Here `LIBVIRT_URI` is the libvirt connection URI which you [passed to the installer](../../README.md#quick-start).
 
 ### Inspect the cluster with kubectl
 
@@ -339,7 +311,7 @@ Error: Error applying plan:
 Depending on your libvirt version you might encounter [a race condition][bugzilla_libvirt_race] leading to an error similar to:
 
 ```
-* libvirt_domain.master.0: Error creating libvirt domain: virError(Code=43, Domain=19, Message='Network not found: no network with matching name 'tectonic'')
+* libvirt_domain.master.0: Error creating libvirt domain: virError(Code=43, Domain=19, Message='Network not found: no network with matching name 'test1'')
 ```
 This is also being [tracked on the libvirt-terraform-provider][tfprovider_libvirt_race] but is likely not fixable on the client side, which is why you should upgrade libvirt to >=4.5 or a patched version, depending on your environment.
 
@@ -369,7 +341,6 @@ If your issue is not reported, please do.
 [arch_firewall_superuser]: https://superuser.com/questions/1063240/libvirt-failed-to-initialize-a-valid-firewall-backend
 [brokenmacosissue201]: https://github.com/openshift/installer/issues/201
 [bugzilla_libvirt_race]: https://bugzilla.redhat.com/show_bug.cgi?id=1576464
-[cgo]: https://golang.org/cmd/cgo/
 [issues_libvirt]: https://github.com/openshift/installer/issues?utf8=%E2%9C%93&q=is%3Aissue+is%3Aopen+libvirt
 [libvirt_selinux_issues]: https://github.com/dmacvicar/terraform-provider-libvirt/issues/142#issuecomment-409040151
 [tfprovider_libvirt_race]: https://github.com/dmacvicar/terraform-provider-libvirt/issues/402#issuecomment-419500064

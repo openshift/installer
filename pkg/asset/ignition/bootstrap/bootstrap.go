@@ -2,7 +2,6 @@ package bootstrap
 
 import (
 	"bytes"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -29,20 +28,25 @@ import (
 )
 
 const (
-	rootDir              = "/opt/tectonic"
-	defaultReleaseImage  = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
+	rootDir              = "/opt/openshift"
 	bootstrapIgnFilename = "bootstrap.ign"
+	etcdCertSignerImage  = "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6"
+	etcdctlImage         = "quay.io/coreos/etcd:v3.2.14"
+	ignitionUser         = "core"
+)
+
+var (
+	defaultReleaseImage = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
 )
 
 // bootstrapTemplateData is the data to use to replace values in bootstrap
 // template files.
 type bootstrapTemplateData struct {
-	BootkubeImage         string
-	EtcdCertSignerImage   string
-	EtcdCluster           string
-	EtcdctlImage          string
-	ReleaseImage          string
-	AdminKubeConfigBase64 string
+	EtcdCertSignerImage string
+	EtcdCluster         string
+	EtcdctlImage        string
+	PullSecret          string
+	ReleaseImage        string
 }
 
 // Bootstrap is an asset that generates the ignition config for bootstrap nodes.
@@ -72,17 +76,16 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&kubeconfig.Admin{},
 		&kubeconfig.Kubelet{},
 		&manifests.Manifests{},
-		&manifests.Tectonic{},
+		&manifests.Openshift{},
 	}
 }
 
 // Generate generates the ignition config for the Bootstrap asset.
 func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	adminKubeConfig := &kubeconfig.Admin{}
-	dependencies.Get(installConfig, adminKubeConfig)
+	dependencies.Get(installConfig)
 
-	templateData, err := a.getTemplateData(installConfig.Config, adminKubeConfig.File.Data)
+	templateData, err := a.getTemplateData(installConfig.Config)
 	if err != nil {
 		return errors.Wrap(err, "failed to get bootstrap templates")
 	}
@@ -105,7 +108,7 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 
 	a.Config.Passwd.Users = append(
 		a.Config.Passwd.Users,
-		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(installConfig.Config.Admin.SSHKey)}},
+		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(installConfig.Config.SSHKey)}},
 	)
 
 	data, err := json.Marshal(a.Config)
@@ -134,7 +137,7 @@ func (a *Bootstrap) Files() []*asset.File {
 }
 
 // getTemplateData returns the data to use to execute bootstrap templates.
-func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, adminKubeConfig []byte) (*bootstrapTemplateData, error) {
+func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootstrapTemplateData, error) {
 	etcdEndpoints := make([]string, installConfig.MasterCount())
 	for i := range etcdEndpoints {
 		etcdEndpoints[i] = fmt.Sprintf("https://%s-etcd-%d.%s:2379", installConfig.ObjectMeta.Name, i, installConfig.BaseDomain)
@@ -147,12 +150,11 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig, adminKub
 	}
 
 	return &bootstrapTemplateData{
-		EtcdCertSignerImage:   "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6",
-		EtcdctlImage:          "quay.io/coreos/etcd:v3.2.14",
-		BootkubeImage:         "quay.io/coreos/bootkube:v0.14.0",
-		ReleaseImage:          releaseImage,
-		EtcdCluster:           strings.Join(etcdEndpoints, ","),
-		AdminKubeConfigBase64: base64.StdEncoding.EncodeToString(adminKubeConfig),
+		EtcdCertSignerImage: etcdCertSignerImage,
+		EtcdctlImage:        etcdctlImage,
+		PullSecret:          installConfig.PullSecret,
+		ReleaseImage:        releaseImage,
+		EtcdCluster:         strings.Join(etcdEndpoints, ","),
 	}, nil
 }
 
@@ -205,8 +207,8 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 	}
 	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), mode, data)
 	if filename == ".bash_history" {
-		ign.User = &igntypes.NodeUser{Name: "core"}
-		ign.Group = &igntypes.NodeGroup{Name: "core"}
+		ign.User = &igntypes.NodeUser{Name: ignitionUser}
+		ign.Group = &igntypes.NodeGroup{Name: ignitionUser}
 	}
 	ign.Append = appendToFile
 	a.Config.Storage.Files = append(a.Config.Storage.Files, ign)
@@ -278,31 +280,22 @@ func readFile(name string, reader io.Reader, templateData interface{}) (finalNam
 }
 
 func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
-	adminKubeconfig := &kubeconfig.Admin{}
-	kubeletKubeconfig := &kubeconfig.Kubelet{}
 	mfsts := &manifests.Manifests{}
-	tectonic := &manifests.Tectonic{}
-	dependencies.Get(adminKubeconfig, kubeletKubeconfig, mfsts, tectonic)
+	openshiftManifests := &manifests.Openshift{}
+	dependencies.Get(mfsts, openshiftManifests)
 
-	a.Config.Storage.Files = append(
-		a.Config.Storage.Files,
-		ignition.FilesFromAsset(rootDir, 0600, adminKubeconfig)...,
-	)
-	a.Config.Storage.Files = append(
-		a.Config.Storage.Files,
-		ignition.FileFromBytes("/etc/kubernetes/kubeconfig", 0600, kubeletKubeconfig.Files()[0].Data),
-		ignition.FileFromBytes("/var/lib/kubelet/kubeconfig", 0600, kubeletKubeconfig.Files()[0].Data),
-	)
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
 		ignition.FilesFromAsset(rootDir, 0644, mfsts)...,
 	)
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
-		ignition.FilesFromAsset(rootDir, 0644, tectonic)...,
+		ignition.FilesFromAsset(rootDir, 0644, openshiftManifests)...,
 	)
 
 	for _, asset := range []asset.WritableAsset{
+		&kubeconfig.Admin{},
+		&kubeconfig.Kubelet{},
 		&tls.RootCA{},
 		&tls.KubeCA{},
 		&tls.AggregatorCA{},
@@ -319,13 +312,6 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		dependencies.Get(asset)
 		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, 0600, asset)...)
 	}
-
-	etcdClientCertKey := &tls.EtcdClientCertKey{}
-	dependencies.Get(etcdClientCertKey)
-	a.Config.Storage.Files = append(
-		a.Config.Storage.Files,
-		ignition.FileFromBytes("/etc/ssl/etcd/ca.crt", 0600, etcdClientCertKey.Cert()),
-	)
 }
 
 func applyTemplateData(template *template.Template, templateData interface{}) string {

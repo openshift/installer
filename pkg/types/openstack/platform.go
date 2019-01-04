@@ -1,5 +1,9 @@
 package openstack
 
+import (
+	"github.com/openshift/installer/pkg/ipnet"
+)
+
 // Platform stores all the global configuration that all
 // machinesets use.
 type Platform struct {
@@ -12,8 +16,7 @@ type Platform struct {
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
 	// NetworkCIDRBlock
-	// +optional
-	NetworkCIDRBlock string `json:"NetworkCIDRBlock"`
+	NetworkCIDRBlock ipnet.IPNet `json:"NetworkCIDRBlock"`
 
 	// BaseImage
 	// Name of image to use from OpenStack cloud
@@ -26,4 +29,8 @@ type Platform struct {
 	// ExternalNetwork
 	// The OpenStack external network to be used for installation.
 	ExternalNetwork string `json:"externalNetwork"`
+
+	// FlavorName
+	// The OpenStack compute flavor to use for servers.
+	FlavorName string `json:"computeFlavor"`
 }

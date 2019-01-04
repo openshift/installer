@@ -12,8 +12,31 @@ resource "openstack_objectstorage_tempurl_v1" "ignition_tmpurl" {
 }
 
 data "ignition_config" "redirect" {
-  replace {
+  append {
     source = "${openstack_objectstorage_tempurl_v1.ignition_tmpurl.url}"
+  }
+
+  files = [
+    "${data.ignition_file.bootstrap_ifcfg.id}",
+  ]
+}
+
+data "ignition_file" "bootstrap_ifcfg" {
+  filesystem = "root"
+  mode       = "420"                                       // 0644
+  path       = "/etc/sysconfig/network-scripts/ifcfg-eth0"
+
+  content {
+    content = <<EOF
+DEVICE="eth0"
+BOOTPROTO="dhcp"
+ONBOOT="yes"
+TYPE="Ethernet"
+PERSISTENT_DHCLIENT="yes"
+DNS1="${var.service_vm_fixed_ip}"
+PEERDNS="no"
+NM_CONTROLLED="yes"
+EOF
   }
 }
 
@@ -41,6 +64,6 @@ resource "openstack_compute_instance_v2" "bootstrap" {
     Name = "${var.cluster_name}-bootstrap"
 
     # "kubernetes.io/cluster/${var.cluster_name}" = "owned"
-    tectonicClusterID = "${var.cluster_id}"
+    openshiftClusterID = "${var.cluster_id}"
   }
 }

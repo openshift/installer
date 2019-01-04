@@ -1,4 +1,7 @@
-ignored = ["github.com/openshift/installer/tests*"]
+ignored = [
+  "github.com/openshift/installer/tests*",
+  "github.com/openshift/installer/pkg/terraform/exec*"
+]
 
 [prune]
   non-go = true
@@ -27,7 +30,7 @@ ignored = ["github.com/openshift/installer/tests*"]
 
 [[constraint]]
   name = "github.com/sirupsen/logrus"
-  version = "1.1.0"
+  version = "1.2.0"
 
 [[constraint]]
   name = "github.com/stretchr/testify"
@@ -52,6 +55,7 @@ ignored = ["github.com/openshift/installer/tests*"]
   name = "sigs.k8s.io/cluster-api-provider-aws"
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
   branch = "master"
+
 [[constraint]]
   name = "github.com/openshift/cluster-api-provider-libvirt"
   branch = "master"
@@ -65,10 +69,6 @@ ignored = ["github.com/openshift/installer/tests*"]
   version = "2.0.0"
 
 [[constraint]]
-  name = "github.com/openshift/hive"
-  revision = "8c7844d9b61c35f53bab561f5ce4d879fef86ec6"
-
-[[constraint]]
   name = "k8s.io/utils"
   revision = "4c3feeb576b06ef8fea769809bd3db5e5e78dc23"
 
@@ -79,3 +79,15 @@ ignored = ["github.com/openshift/installer/tests*"]
 [[constraint]]
   name = "github.com/gophercloud/utils"
   revision = "34f5991525d116b3832e0d9409492274f1c06bda"
+
+[[constraint]]
+  name = "github.com/openshift/api"
+  revision = "8241b16bb46fe9bd7aebbbce92d7af84fb71be7f"
+
+[[constraint]]
+  name = "github.com/openshift/client-go"
+  revision = "1fa528d3be060e4c7178eb69e76d37cf7e699e3c"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/gophercloud/gophercloud"

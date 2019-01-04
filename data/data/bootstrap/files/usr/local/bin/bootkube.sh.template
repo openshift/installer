@@ -3,17 +3,32 @@ set -e
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
-MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-operator)
-MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-controller)
-MACHINE_CONFIG_SERVER_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-server)
-MACHINE_CONFIG_DAEMON_IMAGE=$(podman run --rm {{.ReleaseImage}} image machine-config-daemon)
+if ! podman inspect {{.ReleaseImage}} &>/dev/null; then
+    echo "Pulling release image..."
+    podman pull {{.ReleaseImage}}
+fi
 
-KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-apiserver-operator)
-KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-controller-manager-operator)
-KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --rm {{.ReleaseImage}} image cluster-kube-scheduler-operator)
+# convert the release image pull spec to an "absolute" form if a digest is available - this is
+# safe to resolve after the actions above because podman will not pull the image once it is 
+# locally available
+if ! release=$( podman inspect {{.ReleaseImage}} -f '{{"{{"}} index .RepoDigests 0 {{"}}"}}' ) || [[ -z "${release}" ]]; then
+	echo "Warning: Could not resolve release image to pull by digest" 2>&1
+	release="{{.ReleaseImage}}"
+fi
 
-OPENSHIFT_HYPERSHIFT_IMAGE=$(podman run --rm {{.ReleaseImage}} image hypershift)
-OPENSHIFT_HYPERKUBE_IMAGE=$(podman run --rm {{.ReleaseImage}} image hyperkube)
+MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --rm ${release} image machine-config-operator)
+MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --rm ${release} image machine-config-controller)
+MACHINE_CONFIG_SERVER_IMAGE=$(podman run --rm ${release} image machine-config-server)
+MACHINE_CONFIG_DAEMON_IMAGE=$(podman run --rm ${release} image machine-config-daemon)
+
+KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-apiserver-operator)
+KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-controller-manager-operator)
+KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-scheduler-operator)
+
+OPENSHIFT_HYPERSHIFT_IMAGE=$(podman run --rm ${release} image hypershift)
+OPENSHIFT_HYPERKUBE_IMAGE=$(podman run --rm ${release} image hyperkube)
+
+CLUSTER_BOOTSTRAP_IMAGE=$(podman run --rm ${release} image cluster-bootstrap)
 
 mkdir --parents ./{bootstrap-manifests,manifests}
 
@@ -24,13 +39,15 @@ then
 	# shellcheck disable=SC2154
 	podman run \
 		--volume "$PWD:/assets:z" \
-		"{{.ReleaseImage}}" \
+		"${release}" \
 		render \
 			--output-dir=/assets/cvo-bootstrap \
-			--release-image="{{.ReleaseImage}}"
+			--release-image="${release}"
 
 	cp cvo-bootstrap/bootstrap/* bootstrap-manifests/
 	cp cvo-bootstrap/manifests/* manifests/
+	## FIXME: CVO should use `/etc/kubernetes/bootstrap-secrets/kubeconfig` instead
+	cp auth/kubeconfig /etc/kubernetes/kubeconfig
 fi
 
 if [ ! -d kube-apiserver-bootstrap ]
@@ -48,7 +65,7 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-apiserver-bootstrap \
 		--config-output-file=/assets/kube-apiserver-bootstrap/config \
-		--config-override-files=/assets/bootkube-config-overrides/kube-apiserver-config-overrides.yaml
+		--cluster-config-file=/assets/openshift/99_openshift-cluster-api_cluster.yaml
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -68,8 +85,7 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-controller-manager-bootstrap \
 		--config-output-file=/assets/kube-controller-manager-bootstrap/config \
-		--config-override-files=/assets/bootkube-config-overrides/kube-controller-manager-config-overrides.yaml \
-		--cluster-config-file=/assets/tectonic/99_openshift-cluster-api_cluster.yaml
+		--cluster-config-file=/assets/openshift/99_openshift-cluster-api_cluster.yaml
 
 	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
 	cp kube-controller-manager-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -89,7 +105,6 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-scheduler-bootstrap \
 		--config-output-file=/assets/kube-scheduler-bootstrap/config \
-		--config-override-files=/assets/bootkube-config-overrides/kube-scheduler-config-overrides.yaml \
 		--disable-phase-2
 
 	cp kube-scheduler-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-scheduler-config.yaml
@@ -111,6 +126,7 @@ then
 			--root-ca=/assets/tls/root-ca.crt \
 			--config-file=/assets/manifests/cluster-config.yaml \
 			--dest-dir=/assets/mco-bootstrap \
+			--pull-secret=/assets/manifests/pull.json \
 			--machine-config-controller-image=${MACHINE_CONFIG_CONTROLLER_IMAGE} \
 			--machine-config-server-image=${MACHINE_CONFIG_SERVER_IMAGE} \
 			--machine-config-daemon-image=${MACHINE_CONFIG_DAEMON_IMAGE} \
@@ -119,9 +135,12 @@ then
 	# 1. read the controller config rendered by MachineConfigOperator
 	# 2. read the default MachineConfigPools rendered by MachineConfigOperator
 	# 3. read any additional MachineConfigs that are needed for the default MachineConfigPools.
-	mkdir --parents /etc/mcc/bootstrap/manifests /etc/kubernetes/manifests/
-	cp mco-bootstrap/manifests/* /etc/mcc/bootstrap/manifests/
-	cp mco-bootstrap/machineconfigoperator-bootstrap-pod.yaml /etc/kubernetes/manifests/
+	mkdir --parents /etc/mcc/bootstrap /etc/mcs/bootstrap /etc/kubernetes/manifests
+	cp mco-bootstrap/bootstrap/manifests/* /etc/mcc/bootstrap/
+	cp openshift/* /etc/mcc/bootstrap/
+	cp auth/kubeconfig-kubelet /etc/mcs/kubeconfig
+	cp mco-bootstrap/bootstrap/machineconfigoperator-bootstrap-pod.yaml /etc/kubernetes/manifests/
+	cp mco-bootstrap/manifests/* manifests/
 
 	# /etc/ssl/mcs/tls.{crt, key} are locations for MachineConfigServer's tls assets.
 	mkdir --parents /etc/ssl/mcs/
@@ -143,14 +162,14 @@ trap "podman rm --force etcd-signer" ERR
 podman run \
 	--name etcd-signer \
 	--detach \
-	--volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
+	--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
 	--network host \
 	"{{.EtcdCertSignerImage}}" \
 	serve \
-	--cacrt=/opt/tectonic/tls/etcd-client-ca.crt \
-	--cakey=/opt/tectonic/tls/etcd-client-ca.key \
-	--servcrt=/opt/tectonic/tls/apiserver.crt \
-	--servkey=/opt/tectonic/tls/apiserver.key \
+	--cacrt=/opt/openshift/tls/etcd-client-ca.crt \
+	--cakey=/opt/openshift/tls/etcd-client-ca.key \
+	--servcrt=/opt/openshift/tls/apiserver.crt \
+	--servkey=/opt/openshift/tls/apiserver.key \
 	--address=0.0.0.0:6443 \
 	--csrdir=/tmp \
 	--peercertdur=26280h \
@@ -165,13 +184,13 @@ until podman run \
 		--network host \
 		--name etcdctl \
 		--env ETCDCTL_API=3 \
-		--volume /opt/tectonic/tls:/opt/tectonic/tls:ro,z \
+		--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
 		"{{.EtcdctlImage}}" \
 		/usr/local/bin/etcdctl \
 		--dial-timeout=10m \
-		--cacert=/opt/tectonic/tls/etcd-client-ca.crt \
-		--cert=/opt/tectonic/tls/etcd-client.crt \
-		--key=/opt/tectonic/tls/etcd-client.key \
+		--cacert=/opt/openshift/tls/etcd-client-ca.crt \
+		--cert=/opt/openshift/tls/etcd-client.crt \
+		--key=/opt/openshift/tls/etcd-client.key \
 		--endpoints={{.EtcdCluster}} \
 		endpoint health
 do
@@ -184,7 +203,7 @@ echo "etcd cluster up. Killing etcd certificate signer..."
 podman rm --force etcd-signer
 rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
 
-echo "Starting bootkube..."
+echo "Starting cluster-bootstrap..."
 
 # shellcheck disable=SC2154
 podman run \
@@ -192,9 +211,8 @@ podman run \
 	--volume "$PWD:/assets:z" \
 	--volume /etc/kubernetes:/etc/kubernetes:z \
 	--network=host \
-	--entrypoint=/bootkube \
-	"{{.BootkubeImage}}" \
+	"${CLUSTER_BOOTSTRAP_IMAGE}" \
 	start --asset-dir=/assets --required-pods openshift-kube-apiserver/openshift-kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/openshift-kube-controller-manager,openshift-cluster-version/cluster-version-operator
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
-touch /opt/tectonic/.bootkube.done
+touch /opt/openshift/.bootkube.done

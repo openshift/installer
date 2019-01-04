@@ -40,7 +40,7 @@ func (a *APIServerCertKey) Generate(dependencies asset.Parents) error {
 	}
 
 	cfg := &CertCfg{
-		Subject:      pkix.Name{CommonName: "kube-apiserver", Organization: []string{"kube-master"}},
+		Subject:      pkix.Name{CommonName: "system:kube-apiserver", Organization: []string{"kube-master"}},
 		KeyUsages:    x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature,
 		ExtKeyUsages: []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		Validity:     ValidityTenYears,

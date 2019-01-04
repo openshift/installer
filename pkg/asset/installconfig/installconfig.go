@@ -6,25 +6,29 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
+	"github.com/openshift/installer/pkg/types/validation"
 )
 
 const (
-	installConfigFilename = "install-config.yml"
+	installConfigFilename           = "install-config.yaml"
+	deprecatedInstallConfigFilename = "install-config.yml"
 )
 
 var (
-	defaultServiceCIDR      = parseCIDR("10.3.0.0/16")
-	defaultClusterCIDR      = "10.2.0.0/16"
+	defaultServiceCIDR      = parseCIDR("172.30.0.0/16")
+	defaultClusterCIDR      = "10.128.0.0/14"
 	defaultHostSubnetLength = 9 // equivalent to a /23 per node
 )
 
-// InstallConfig generates the install-config.yml file.
+// InstallConfig generates the install-config.yaml file.
 type InstallConfig struct {
 	Config *types.InstallConfig `json:"config"`
 	File   *asset.File          `json:"file"`
@@ -37,8 +41,6 @@ var _ asset.WritableAsset = (*InstallConfig)(nil)
 func (a *InstallConfig) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&clusterID{},
-		&emailAddress{},
-		&password{},
 		&sshPublicKey{},
 		&baseDomain{},
 		&clusterName{},
@@ -47,11 +49,9 @@ func (a *InstallConfig) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the install-config.yml file.
+// Generate generates the install-config.yaml file.
 func (a *InstallConfig) Generate(parents asset.Parents) error {
 	clusterID := &clusterID{}
-	emailAddress := &emailAddress{}
-	password := &password{}
 	sshPublicKey := &sshPublicKey{}
 	baseDomain := &baseDomain{}
 	clusterName := &clusterName{}
@@ -59,8 +59,6 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	platform := &platform{}
 	parents.Get(
 		clusterID,
-		emailAddress,
-		password,
 		sshPublicKey,
 		baseDomain,
 		clusterName,
@@ -72,12 +70,8 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterName.ClusterName,
 		},
-		ClusterID: clusterID.ClusterID,
-		Admin: types.Admin{
-			Email:    emailAddress.EmailAddress,
-			Password: password.Password,
-			SSHKey:   sshPublicKey.Key,
-		},
+		ClusterID:  clusterID.ClusterID,
+		SSHKey:     sshPublicKey.Key,
 		BaseDomain: baseDomain.BaseDomain,
 		Networking: types.Networking{
 			Type: "OpenshiftSDN",
@@ -153,11 +147,8 @@ func parseCIDR(s string) net.IPNet {
 
 // Load returns the installconfig from disk.
 func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
-	file, err := f.FetchByName(installConfigFilename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
+	file, err := fetchInstallConfigFile(f)
+	if file == nil {
 		return false, err
 	}
 
@@ -166,6 +157,28 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 		return false, errors.Wrapf(err, "failed to unmarshal")
 	}
 
+	if err := validation.ValidateInstallConfig(config, openstackvalidation.NewValidValuesFetcher()).ToAggregate(); err != nil {
+		return false, errors.Wrapf(err, "invalid %q file", installConfigFilename)
+	}
+
 	a.File, a.Config = file, config
 	return true, nil
+}
+
+func fetchInstallConfigFile(f asset.FileFetcher) (*asset.File, error) {
+	names := []string{installConfigFilename, deprecatedInstallConfigFilename}
+	for i, name := range names {
+		file, err := f.FetchByName(name)
+		if err == nil {
+			if i != 0 {
+				logrus.Warnf("Using deprecated %s file. Use %s instead.", name, names[0])
+				file.Filename = names[0]
+			}
+			return file, nil
+		}
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+	}
+	return nil, nil
 }

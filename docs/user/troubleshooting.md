@@ -88,7 +88,7 @@ This is safe to ignore and merely indicates that the etcd bootstrapping is still
 
 ### Installer Fails to Create Resources
 
-The easiest way to get more debugging information from the installer is to increase the logging level. This can be done by adding `--log-level=debug` to the command line arguments. Of course, this cannot be retroactively applied, so it won't help to debug an installation that has already failed. The installation will have to be attempted again.
+The easiest way to get more debugging information from the installer is to check the log file (`.openshift_install.log`) in the install directory. Regardless of the logging level specified, the installer will write its logs in case they need to be inspected retroactively.
 
 ## Generic Troubleshooting
 
@@ -143,5 +143,112 @@ Images:
   machine-api-operator  https://github.com/openshift/machine-api-operator  e681e121e15d2243739ad68978113a07aa35c6ae
   ...
 ```
+
+### One or more nodes are never Ready (Network / CNI issues)
+
+You might see that one or more nodes are never ready, e.g
+
+```console
+$ kubectl get nodes
+NAME                           STATUS     ROLES     AGE       VERSION
+ip-10-0-27-9.ec2.internal      NotReady   master    29m       v1.11.0+d4cacc0
+...
+```
+
+This usually means that, for whatever reason, networking is not available on the node. You can confirm this by looking at the detailed output of the node:
+
+```console
+$ kubectl describe node ip-10-0-27-9.ec2.internal
+ ... (lots of output skipped)
+'runtime network not ready: NetworkReady=false reason:NetworkPluginNotReady message:Network plugin returns error: cni config uninitialized'
+```
+
+The first thing to determine is the status of the SDN. The SDN deploys three daemonsets:
+- *sdn-controller*, a control-plane component
+- *sdn*, the node-level networking daemon
+- *ovs*, the OpenVSwitch management daemon
+
+All 3 must be healthy (though only a single `sdn-controller` needs to be running). `sdn` and `ovs` must be running on every node, and DESIRED should equal AVAILABLE. On a healthy 2-node cluster you would see:
+
+```console
+$ kubectl -n openshift-sdn get daemonsets
+NAME             DESIRED   CURRENT   READY   UP-TO-DATE   AVAILABLE   NODE SELECTOR                     AGE
+ovs              2         2         2       2            2           beta.kubernetes.io/os=linux       2h
+sdn              2         2         2       2            2           beta.kubernetes.io/os=linux       2h
+sdn-controller   1         1         1       1            1           node-role.kubernetes.io/master=   2h
+```
+
+If, instead, you get a diferent error message:
+
+```console
+$ kubectl -n openshift-sdn get daemonsets
+No resources found.
+```
+
+This means the network-operator didn't run. Skip ahead [to that section](#debugging-the-cluster-network-operator). Otherwise, let's debug the SDN.
+
+#### Debugging the openshift-sdn
+
+On the NotReady node, you need to find out which pods, if any, are in a bad state. Be sure to substitute in the correct `spec.nodeName` (or just remove it).
+
+```console
+$ kubectl -n openshift-sdn get pod --field-selector "spec.nodeName=ip-10-0-27-9.ec2.internal"
+NAME                   READY   STATUS             RESTARTS   AGE
+ovs-dk8bh              1/1     Running            1          52m
+sdn-8nl47              1/1     CrashLoopBackoff   3          52m
+```
+
+Then, retrieve the logs for the SDN (and the OVS pod, if that is failed):
+
+```sh
+kubectl -n openshift-sdn logs sdn-8nl47
+```
+
+Some common error messages:
+- `Cannot fetch default cluster network`:  This means the `sdn-controller` has failed to run to completion. Retrieve its logs with `kubectl -n openshift-sdn logs -l app=sdn-controller`.
+- `warning: Another process is currently listening on the CNI socket, waiting 15s`: Something has gone wrong, and multiple SDN processes are running. SSH to the node in question, capture the out of `ps -faux`. If you just need the cluster up, reboot the node.
+- Error messages about ovs or OpenVSwitch: Check that the `ovs-*` pod on the same node is healthy. Retrieve its logs with `kubectl -n openshift-sdn logs ovs-<name>`. Rebooting the node should fix it.
+- Any indication that the control plane is unavailable: Check to make sure the apiserver is reachable from the node. You may be able to find useful information via `journalctl -f -u kubelet`.
+
+If you think it's a misconfiguration, file a [network operator](https://github.com/openshift/cluster-network-operator) issue. RH employees can also try #forum-sdn.
+
+#### Debugging the cluster-network-operator
+The cluster network operator is responsible for deploying the networking components. It does this in response to a special object created by the installer.
+
+From a deployment perspective, the network operator is often the "canary in the coal mine." It runs very early in the installation process, after the master nodes have come up but before the bootstrap control plane has been torn down. It can be indicative of more subtle installer issues, such as long delays in bringing up master nodes or apiserver communication issues. Nevertheless, it can have other bugs.
+
+First, determine that the network configuration exists:
+
+```console
+$ kubectl get networkconfigs.networkoperator.openshift.io default -oyaml
+...
+spec:
+  additionalNetworks: null
+  clusterNetworks:
+  - cidr: 10.2.0.0/16
+    hostSubnetLength: 9
+  defaultNetwork:
+    openshiftSDNConfig:
+      mode: Networkpolicy
+    otherConfig: null
+    type: OpenshiftSDN
+  serviceNetwork: 10.3.0.0/16
+```
+
+If it doesn't exist, the installer didn't create it. You'll have to run `openshift-install create manifests` to determine why.
+
+Next, check that the network-operator is running:
+
+```sh
+kubectl -n openshift-cluster-network-operator get pods
+```
+
+And retrieve the logs. Note that, on multi-master systems, the operator will perform leader election and all other operators will sleep:
+
+```sh
+kubectl -n openshift-cluster-network-operator logs -l "k8s-app=cluster-network-operator"
+```
+
+If appropriate, file a [network operator](https://github.com/openshift/cluster-network-operator) issue. RH employees can also try #forum-sdn.
 
 [kubernetes-debug]: https://kubernetes.io/docs/tasks/debug-application-cluster/

@@ -2,6 +2,7 @@
 package bootstrap
 
 import (
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -9,7 +10,6 @@ import (
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/terraform"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 // Destroy uses Terraform to remove bootstrap resources.
@@ -27,14 +27,14 @@ func Destroy(dir string) (err error) {
 	copyNames := []string{terraform.StateFileName, cluster.TfVarsFileName}
 
 	if platform == "libvirt" {
-		err = ioutil.WriteFile(filepath.Join(dir, "disable-bootstrap.auto.tfvars"), []byte(`{
+		err = ioutil.WriteFile(filepath.Join(dir, "disable-bootstrap.tfvars"), []byte(`{
   "bootstrap_dns": false
 }
 `), 0666)
 		if err != nil {
 			return err
 		}
-		copyNames = append(copyNames, "disable-bootstrap.auto.tfvars")
+		copyNames = append(copyNames, "disable-bootstrap.tfvars")
 	}
 
 	tempDir, err := ioutil.TempDir("", "openshift-install-")
@@ -50,9 +50,8 @@ func Destroy(dir string) (err error) {
 		}
 	}
 
-	logrus.Infof("Using Terraform to destroy bootstrap resources...")
 	if platform == "libvirt" {
-		_, err = terraform.Apply(tempDir, platform)
+		_, err = terraform.Apply(tempDir, platform, fmt.Sprintf("-var-file=%s", filepath.Join(tempDir, "disable-bootstrap.tfvars")))
 		if err != nil {
 			return errors.Wrap(err, "Terraform apply")
 		}

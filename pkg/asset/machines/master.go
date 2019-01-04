@@ -53,7 +53,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	userDataMap := map[string][]byte{"master-user-data": mign.File.Data}
 	m.UserDataSecretRaw, err = userDataList(userDataMap)
 	if err != nil {
-		return errors.Wrap(err, "failed to create user-data secret for worker machines")
+		return errors.Wrap(err, "failed to create user-data secret for master machines")
 	}
 
 	ic := installconfig.Config
@@ -84,6 +84,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
+		aws.ConfigMasters(machines, ic.ObjectMeta.Name)
 
 		list := listFromMachines(machines)
 		raw, err := yaml.Marshal(list)
@@ -117,11 +118,11 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			Instances:   instances,
 			Image:       ic.Platform.OpenStack.BaseImage,
 			Region:      ic.Platform.OpenStack.Region,
-			Machine:     defaultOpenStackMachinePoolPlatform(),
+			Machine:     defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName),
 		}
 
 		tags := map[string]string{
-			"tectonicClusterID": ic.ClusterID,
+			"openshiftClusterID": ic.ClusterID,
 		}
 		config.Tags = tags
 

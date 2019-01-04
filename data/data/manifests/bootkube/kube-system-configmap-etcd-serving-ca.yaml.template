@@ -5,4 +5,4 @@ metadata:
   namespace: kube-system
 data:
   ca-bundle.crt: |
-    {{.EtcdCaCert}}
+    {{.EtcdCaCert | indent 4}}
