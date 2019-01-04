@@ -7,34 +7,6 @@ data "openstack_compute_flavor_v2" "bootstrap_flavor" {
   name = "${var.flavor_name}"
 }
 
-data "ignition_systemd_unit" "haproxy_unit" {
-  name    = "bootkube-haproxy.service"
-  enabled = true
-
-  content = <<EOF
-[Unit]
-Description=Load balancer for the OpenShift services
-
-[Service]
-ExecStartPre=/sbin/setenforce 0
-ExecStart=/bin/podman run --name haproxy --rm -ti --net=host -v /etc/haproxy:/usr/local/etc/haproxy:ro docker.io/library/haproxy:1.7
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-EOF
-}
-
-data "ignition_file" "haproxy_conf" {
-  filesystem = "root"
-  path       = "/etc/haproxy/haproxy.cfg"
-
-  source {
-    source = "data:,listen%20${var.cluster_name}-api-80%0D%0A%20%20%20%20bind%200.0.0.0%3A80%0D%0A%20%20%20%20mode%20tcp%0D%0A%20%20%20%20stats%20enable%0D%0A%20%20%20%20stats%20uri%20%2Fhaproxy%3Fstatus%0D%0A%20%20%20%20balance%20roundrobin%0D%0A%20%20%20%20server%20${var.cluster_name}-bootstrap%20${var.cluster_name}-bootstrap.${var.cluster_domain}%3A80%20check%0D%0A%20%20%20%20server%20${var.cluster_name}-master-0%20${var.cluster_name}-master-0.${var.cluster_domain}%3A80%20check%0D%0A%20%20%20%20server%20${var.cluster_name}-master-1%20${var.cluster_name}-master-1.${var.cluster_domain}%3A80%20check%0D%0A%20%20%20%20server%20${var.cluster_name}-master-2%20${var.cluster_name}-master-2.${var.cluster_domain}%3A80%20check%0D%0A%0D%0Alisten%20${var.cluster_name}-api-6443%0D%0A%20%20%20%20bind%200.0.0.0%3A6443%0D%0A%20%20%20%20mode%20tcp%0D%0A%20%20%20%20stats%20enable%0D%0A%20%20%20%20stats%20uri%20%2Fhaproxy%3Fstatus%0D%0A%20%20%20%20balance%20roundrobin%0D%0A%20%20%20%20server%20${var.cluster_name}-bootstrap%20${var.cluster_name}-bootstrap.${var.cluster_domain}%3A6443%20check%0D%0A%20%20%20%20server%20${var.cluster_name}-master-0%20${var.cluster_name}-master-0.${var.cluster_domain}%3A6443%20check%0D%0A%20%20%20%20server%20${var.cluster_name}-master-1%20${var.cluster_name}-master-1.${var.cluster_domain}%3A6443%20check%0D%0A%20%20%20%20server%20${var.cluster_name}-master-2%20${var.cluster_name}-master-2.${var.cluster_domain}%3A6443%20check%0D%0A%0D%0Alisten%20${var.cluster_name}-api-443%0D%0A%20%20%20%20bind%200.0.0.0%3A443%0D%0A%20%20%20%20mode%20tcp%0D%0A%20%20%20%20stats%20enable%0D%0A%20%20%20%20stats%20uri%20%2Fhaproxy%3Fstatus%0D%0A%20%20%20%20balance%20roundrobin%0D%0A%20%20%20%20server%20${var.cluster_name}-bootstrap%20${var.cluster_name}-bootstrap.${var.cluster_domain}%3A443%20check%0D%0A%20%20%20%20server%20${var.cluster_name}-master-0%20${var.cluster_name}-master-0.${var.cluster_domain}%3A443%20check%0D%0A%20%20%20%20server%20${var.cluster_name}-master-1%20${var.cluster_name}-master-1.${var.cluster_domain}%3A443%20check%0D%0A%20%20%20%20server%20${var.cluster_name}-master-2%20${var.cluster_name}-master-2.${var.cluster_domain}%3A443%20check%0D%0A%0D%0Alisten%20${var.cluster_name}-api-49500%0D%0A%20%20%20%20bind%200.0.0.0%3A49500%0D%0A%20%20%20%20mode%20tcp%0D%0A%20%20%20%20stats%20enable%0D%0A%20%20%20%20stats%20uri%20%2Fhaproxy%3Fstatus%0D%0A%20%20%20%20balance%20roundrobin%0D%0A%20%20%20%20server%20${var.cluster_name}-bootstrap%20${var.cluster_name}-bootstrap.${var.cluster_domain}%3A49500%20check%0D%0A%20%20%20%20server%20${var.cluster_name}-master-0%20${var.cluster_name}-master-0.${var.cluster_domain}%3A49500%20check%0D%0A%20%20%20%20server%20${var.cluster_name}-master-1%20${var.cluster_name}-master-1.${var.cluster_domain}%3A49500%20check%0D%0A%20%20%20%20server%20${var.cluster_name}-master-2%20${var.cluster_name}-master-2.${var.cluster_domain}%3A49500%20check"
-  }
-}
-
 data "ignition_file" "openshift_hosts" {
   filesystem = "root"
   mode       = "420"                  // 0644
@@ -68,12 +40,10 @@ data "ignition_user" "core" {
 
 data "ignition_config" "config" {
   files = [
-    "${data.ignition_file.haproxy_conf.id}",
     "${data.ignition_file.openshift_hosts.id}",
   ]
 
   systemd = [
-    "${data.ignition_systemd_unit.haproxy_unit.id}",
     "${data.ignition_systemd_unit.local_dns.id}",
   ]
 
