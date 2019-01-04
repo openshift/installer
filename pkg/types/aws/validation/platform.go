@@ -16,13 +16,13 @@ var (
 	Regions = map[string]string{
 		"ap-northeast-1": "Tokyo",
 		"ap-northeast-2": "Seoul",
-		"ap-northeast-3": "Osaka-Local",
+		// "ap-northeast-3": "Osaka-Local",  Not supported by RHCOS yet
 		"ap-south-1":     "Mumbai",
 		"ap-southeast-1": "Singapore",
 		"ap-southeast-2": "Sydney",
 		"ca-central-1":   "Central",
-		"cn-north-1":     "Beijing",
-		"cn-northwest-1": "Ningxia",
+		// "cn-north-1":     "Beijing",  Not supported by RHCOS yet
+		// "cn-northwest-1": "Ningxia",  Not supported by RHCOS yet
 		"eu-central-1":   "Frankfurt",
 		"eu-west-1":      "Ireland",
 		"eu-west-2":      "London",
