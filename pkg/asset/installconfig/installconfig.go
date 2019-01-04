@@ -94,12 +94,14 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	switch {
 	case platform.AWS != nil:
 		a.Config.AWS = platform.AWS
-	case platform.OpenStack != nil:
-		a.Config.OpenStack = platform.OpenStack
 	case platform.Libvirt != nil:
 		a.Config.Libvirt = platform.Libvirt
 		numberOfMasters = 1
 		numberOfWorkers = 1
+	case platform.None != nil:
+		a.Config.None = platform.None
+	case platform.OpenStack != nil:
+		a.Config.OpenStack = platform.OpenStack
 	default:
 		panic("unknown platform type")
 	}
