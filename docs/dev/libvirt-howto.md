@@ -196,7 +196,7 @@ This step allows installer and users to resolve cluster-internal hostnames from 
     ```sh
     echo server=/tt.testing/192.168.126.1 | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
     ```
-3. `systemctl restart NetworkManager`
+3. Reload NetworkManager to pick up the `dns` configuration change: `sudo systemctl reload NetworkManager`
 
 
 ## Build and run the installer
