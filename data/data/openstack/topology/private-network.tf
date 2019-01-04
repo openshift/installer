@@ -70,9 +70,11 @@ data "openstack_networking_network_v2" "external_network" {
   external = true
 }
 
-resource "openstack_networking_floatingip_v2" "lb_fip" {
+# For now we are just putting the floating IP on the first master
+# node until we have a proper load balancing solution.
+resource "openstack_networking_floatingip_v2" "master_0_fip" {
   pool    = "${var.external_network}"
-  port_id = "${openstack_networking_port_v2.lb_port.id}"
+  port_id = "${openstack_networking_port_v2.masters.0.id}"
 }
 
 resource "openstack_networking_router_v2" "openshift-external-router" {
