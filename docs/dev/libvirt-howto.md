@@ -12,7 +12,7 @@ Before you begin, install the [build dependencies](dependencies.md).
 Make sure you have KVM enabled by checking for the device:
 
 ```console
-$ ls -l /dev/kvm 
+$ ls -l /dev/kvm
 crw-rw-rw-+ 1 root kvm 10, 232 Oct 31 09:22 /dev/kvm
 ```
 
@@ -40,6 +40,14 @@ In this example, we'll set the base domain to `tt.testing` and the cluster name 
 git clone https://github.com/openshift/installer.git
 cd installer
 ```
+
+You will need to build the openshift-install binary with libvirt support enabled:
+```sh
+export TAGS=libvirt
+hack/build.sh
+```
+
+The compiled binary will be placed in bin/
 
 ### Make sure you have permissions for `qemu:///system`
 You may want to grant yourself permissions to use libvirt as a non-root user. You could allow all users in the wheel group by doing the following:
