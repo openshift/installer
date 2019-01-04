@@ -15,7 +15,7 @@ import (
 )
 
 const (
-	none = "<none>"
+	noSSHKey = "<none>"
 )
 
 type sshPublicKey struct {
@@ -48,7 +48,7 @@ func readSSHKey(path string) (string, error) {
 // Generate generates the SSH public key asset.
 func (a *sshPublicKey) Generate(asset.Parents) error {
 	pubKeys := map[string]string{
-		none: "",
+		noSSHKey: "",
 	}
 	home := os.Getenv("HOME")
 	if home != "" {
@@ -83,7 +83,7 @@ func (a *sshPublicKey) Generate(asset.Parents) error {
 		Message: "SSH Public Key",
 		Help:    "The SSH public key used to access all nodes within the cluster. This is optional.",
 		Options: paths,
-		Default: none,
+		Default: noSSHKey,
 	}, &path, func(ans interface{}) error {
 		choice := ans.(string)
 		i := sort.SearchStrings(paths, choice)

@@ -19,6 +19,10 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
+	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
+	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 )
 
 // Master generates the machines for the `master` machine pool.
@@ -59,7 +63,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	ic := installconfig.Config
 	pool := masterPool(ic.Machines)
 	switch ic.Platform.Name() {
-	case "aws":
+	case awstypes.Name:
 		mpool := defaultAWSMachinePoolPlatform()
 		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.AWS)
@@ -92,7 +96,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to marshal")
 		}
 		m.MachinesRaw = raw
-	case "libvirt":
+	case libvirttypes.Name:
 		machines, err := libvirt.Machines(ic, &pool, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
@@ -104,7 +108,8 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to marshal")
 		}
 		m.MachinesRaw = raw
-	case "openstack":
+	case nonetypes.Name:
+	case openstacktypes.Name:
 		numOfMasters := int64(0)
 		if pool.Replicas != nil {
 			numOfMasters = *pool.Replicas

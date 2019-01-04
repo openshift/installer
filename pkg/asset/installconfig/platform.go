@@ -14,6 +14,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/libvirt"
+	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
@@ -41,13 +42,15 @@ func (a *platform) Generate(asset.Parents) error {
 		if err != nil {
 			return err
 		}
-	case openstack.Name:
-		a.OpenStack, err = openstackconfig.Platform()
+	case libvirt.Name:
+		a.Libvirt, err = libvirtconfig.Platform()
 		if err != nil {
 			return err
 		}
-	case libvirt.Name:
-		a.Libvirt, err = libvirtconfig.Platform()
+	case none.Name:
+		a.None = &none.Platform{}
+	case openstack.Name:
+		a.OpenStack, err = openstackconfig.Platform()
 		if err != nil {
 			return err
 		}

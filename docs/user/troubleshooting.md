@@ -34,7 +34,7 @@ oc --config=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-cluster-api log
 
 When the Kubernetes API is unavailable, the master nodes will need to checked to ensure that they are running the correct components. This requires SSH access so it is necessary to include an administrator's SSH key during the installation.
 
-If SSH access to the master nodes isn't available, that will need to be [investigated next](#unable-to-ssh-into-master-node).
+If SSH access to the master nodes isn't available, that will need to be [investigated next](#unable-to-ssh-into-master-nodes).
 
 The first thing to check is to make sure that etcd is running on each of the masters. The etcd logs can be viewed by running the following on each master node:
 
@@ -52,7 +52,11 @@ If no pods are shown, etcd will need to be [investigated](#etcd-is-not-running).
 
 ### Unable to SSH into Master Nodes
 
-In order to SSH into the master nodes, it is necessary to include an administrator's SSH key during the installation. If SSH authentication is failing, ensure that the proper SSH key is being used.
+In order to SSH into the master nodes as user `core`, it is necessary to include an administrator's SSH key during the installation. The selected key, if any, will be added to the `core` user's `~/.ssh/authorized_keys` via [Ignition](https://github.com/coreos/ignition) and is not configured via platform-specific approaches like [AWS key pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html). You can verify the configured SSH key with:
+
+```sh
+oc get configmap -o "jsonpath={.data['install-config']}" -n kube-system cluster-config-v1 | grep -A1 sshKey
+```
 
 If SSH isn't able to connect to the nodes, they may be waiting on the bootstrap node before they can boot. The initial set of master nodes fetch their boot configuration (the Ignition Config) from the bootstrap node and will not complete until they successfully do so. Check the console output of the nodes to determine if they have successfully booted or if they are waiting for Ignition to fetch the remote config.
 

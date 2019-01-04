@@ -78,6 +78,10 @@ resource "libvirt_domain" "master" {
     target_port = 0
   }
 
+  cpu {
+    mode = "host-passthrough"
+  }
+
   network_interface {
     network_id = "${libvirt_network.net.id}"
     hostname   = "${var.cluster_name}-master-${count.index}"
