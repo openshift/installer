@@ -36,7 +36,10 @@ The OpenShift Installer operates on the notion of creating and destroying target
 The following targets can be created by the installer:
 
 - `install-config` - The install config contains the main parameters for the installation process. This configuration provides the user with more options than the interactive prompts and comes pre-populated with default values.
+- `manifest-templates` - These are the unrendered Kubernetes manifest templates that feed the `manifests` target.
+    This target is [unstable](versioning.md).
 - `manifests` - This target outputs all of the Kubernetes manifests that will be installed on the cluster.
+    This target is [unstable](versioning.md).
 - `ignition-configs` - These are the three Ignition Configs for the bootstrap, master, and worker machines.
 - `cluster` - This target provisions the cluster and its associated infrastructure.
 
@@ -47,6 +50,38 @@ The following targets can be destroyed by the installer:
 
 ### Multiple Invocations
 
-In order to allow users to customize their installation, the installer can be invoked multiple times. The state is stored in a hidden file in the target directory and contains all of the intermediate artifacts. This allows the installer to pause during the installation and wait for the user to modify intermediate artifacts.
+In order to allow users to customize their installation, the installer can be invoked multiple times. The state is stored in a hidden file in the asset directory and contains all of the intermediate artifacts. This allows the installer to pause during the installation and wait for the user to modify intermediate artifacts.
 
-For example, if changes to the install config were desired (e.g. the number of worker machines to create), the user would first invoke the installer with the `install-config` target: `openshift-install create install-config`. After prompting the user for the base parameters, the installer writes the install config into the target directory. The user can then make the desired modifications to the install config and invoke the installer with the `cluster` target: `openshift-install create cluster`. The installer will consume the install config from disk, removing it from the target directory, and proceed to create a cluster using the provided configuration.
+For example, you can create an install config and save it in a cluster-agnostic location:
+
+```sh
+openshift-install --dir=initial create install-config
+mv initial/install-config.yaml .
+rm -rf initial
+```
+
+You can use the saved install-config for future clusters by copying it that install config into the asset directory and then invoking the installer:
+
+```sh
+mkdir cluster-0
+cp install-config.yaml cluster-0/
+openshift-install --dir=cluster-0 create cluster
+```
+
+Supplying a previously-generated install-config like this is [explicitly part of the stable API](versioning.md).
+
+You can also edit the assets in the asset directory during a single run.
+For example, you can adjust [the cluster-version operator's configuration][cluster-version]:
+
+```sh
+mkdir cluster-1
+cp install-config.yaml cluster-1/
+openshift-install --dir=cluster-1 create manifests  # warning: this target is unstable
+"${EDITOR}" cluster-1/manifests/cvo-overrides.yaml
+openshift-install --dir=cluster-1 create cluster
+```
+
+As the unstable warning suggests, the presence of `manifests` and the names and content of its output [is an unstable API](versioning.md).
+It is occasionally useful to make alterations like this as one-off changes, but don't expect them to work on subsequent installer releases.
+
+[cluster-version]: https://github.com/openshift/cluster-version-operator/blob/master/docs/dev/clusterversion.md
