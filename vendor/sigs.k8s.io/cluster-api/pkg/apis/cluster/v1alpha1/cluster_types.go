@@ -29,6 +29,7 @@ const ClusterFinalizer = "cluster.cluster.k8s.io"
 // +genclient
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 
+/// [Cluster]
 // Cluster is the Schema for the clusters API
 // +k8s:openapi-gen=true
 // +kubebuilder:subresource:status
@@ -40,6 +41,9 @@ type Cluster struct {
 	Status ClusterStatus `json:"status,omitempty"`
 }
 
+/// [Cluster]
+
+/// [ClusterSpec]
 // ClusterSpec defines the desired state of Cluster
 type ClusterSpec struct {
 	// Cluster network configuration
@@ -50,27 +54,36 @@ type ClusterSpec struct {
 	// their own versioned API types that should be
 	// serialized/deserialized from this field.
 	// +optional
-	ProviderConfig ProviderConfig `json:"providerConfig,omitempty"`
+	ProviderSpec ProviderSpec `json:"providerSpec,omitempty"`
 }
 
+/// [ClusterSpec]
+
+/// [ClusterNetworkingConfig]
 // ClusterNetworkingConfig specifies the different networking
 // parameters for a cluster.
 type ClusterNetworkingConfig struct {
 	// The network ranges from which service VIPs are allocated.
 	Services NetworkRanges `json:"services"`
 
-	// The network ranges from which POD networks are allocated.
+	// The network ranges from which Pod networks are allocated.
 	Pods NetworkRanges `json:"pods"`
 
 	// Domain name for services.
 	ServiceDomain string `json:"serviceDomain"`
 }
 
+/// [ClusterNetworkingConfig]
+
+/// [NetworkRanges]
 // NetworkRanges represents ranges of network addresses.
 type NetworkRanges struct {
 	CIDRBlocks []string `json:"cidrBlocks"`
 }
 
+/// [NetworkRanges]
+
+/// [ClusterStatus]
 // ClusterStatus defines the observed state of Cluster
 type ClusterStatus struct {
 	// APIEndpoint represents the endpoint to communicate with the IP.
@@ -100,6 +113,9 @@ type ClusterStatus struct {
 	ProviderStatus *runtime.RawExtension `json:"providerStatus,omitempty"`
 }
 
+/// [ClusterStatus]
+
+/// [APIEndpoint]
 // APIEndpoint represents a reachable Kubernetes API endpoint.
 type APIEndpoint struct {
 	// The hostname on which the API server is serving.
@@ -108,6 +124,8 @@ type APIEndpoint struct {
 	// The port on which the API server is serving.
 	Port int `json:"port"`
 }
+
+/// [APIEndpoint]
 
 func (o *Cluster) Validate() field.ErrorList {
 	errors := field.ErrorList{}

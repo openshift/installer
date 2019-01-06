@@ -15,6 +15,9 @@ type FloatingIP struct {
 	// ID is the unique identifier for the floating IP instance.
 	ID string `json:"id"`
 
+	// Description for the floating IP instance.
+	Description string `json:"description"`
+
 	// FloatingNetworkID is the UUID of the external network where the floating
 	// IP is to be created.
 	FloatingNetworkID string `json:"floating_network_id"`

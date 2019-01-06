@@ -51,6 +51,9 @@ type Router struct {
 	// unique.
 	Name string `json:"name"`
 
+	// Description for the router.
+	Description string `json:"description"`
+
 	// ID is the unique identifier for the router.
 	ID string `json:"id"`
 

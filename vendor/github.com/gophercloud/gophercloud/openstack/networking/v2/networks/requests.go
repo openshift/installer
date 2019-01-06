@@ -19,6 +19,7 @@ type ListOptsBuilder interface {
 type ListOpts struct {
 	Status       string `q:"status"`
 	Name         string `q:"name"`
+	Description  string `q:"description"`
 	AdminStateUp *bool  `q:"admin_state_up"`
 	TenantID     string `q:"tenant_id"`
 	ProjectID    string `q:"project_id"`
@@ -73,6 +74,7 @@ type CreateOptsBuilder interface {
 type CreateOpts struct {
 	AdminStateUp          *bool    `json:"admin_state_up,omitempty"`
 	Name                  string   `json:"name,omitempty"`
+	Description           string   `json:"description,omitempty"`
 	Shared                *bool    `json:"shared,omitempty"`
 	TenantID              string   `json:"tenant_id,omitempty"`
 	ProjectID             string   `json:"project_id,omitempty"`
@@ -109,9 +111,10 @@ type UpdateOptsBuilder interface {
 
 // UpdateOpts represents options used to update a network.
 type UpdateOpts struct {
-	AdminStateUp *bool  `json:"admin_state_up,omitempty"`
-	Name         string `json:"name,omitempty"`
-	Shared       *bool  `json:"shared,omitempty"`
+	AdminStateUp *bool   `json:"admin_state_up,omitempty"`
+	Name         string  `json:"name,omitempty"`
+	Description  *string `json:"description,omitempty"`
+	Shared       *bool   `json:"shared,omitempty"`
 }
 
 // ToNetworkUpdateMap builds a request body from UpdateOpts.

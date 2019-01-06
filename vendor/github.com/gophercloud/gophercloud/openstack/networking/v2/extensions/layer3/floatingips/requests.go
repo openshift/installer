@@ -12,6 +12,7 @@ import (
 // either `asc' or `desc'. Marker and Limit are used for pagination.
 type ListOpts struct {
 	ID                string `q:"id"`
+	Description       string `q:"description"`
 	FloatingNetworkID string `q:"floating_network_id"`
 	PortID            string `q:"port_id"`
 	FixedIP           string `q:"fixed_ip_address"`
@@ -54,6 +55,7 @@ type CreateOptsBuilder interface {
 // resource. The only required fields are FloatingNetworkID and PortID which
 // refer to the external network and internal port respectively.
 type CreateOpts struct {
+	Description       string `json:"description,omitempty"`
 	FloatingNetworkID string `json:"floating_network_id" required:"true"`
 	FloatingIP        string `json:"floating_ip_address,omitempty"`
 	PortID            string `json:"port_id,omitempty"`
@@ -120,7 +122,8 @@ type UpdateOptsBuilder interface {
 // linked to. To associate the floating IP with a new internal port, provide its
 // ID. To disassociate the floating IP from all ports, provide an empty string.
 type UpdateOpts struct {
-	PortID *string `json:"port_id"`
+	Description *string `json:"description,omitempty"`
+	PortID      *string `json:"port_id"`
 }
 
 // ToFloatingIPUpdateMap allows UpdateOpts to satisfy the UpdateOptsBuilder

@@ -68,6 +68,9 @@ type Subnet struct {
 	// Human-readable name for the subnet. Might not be unique.
 	Name string `json:"name"`
 
+	// Description for the subnet.
+	Description string `json:"description"`
+
 	// IP version, either `4' or `6'.
 	IPVersion int `json:"ip_version"`
 

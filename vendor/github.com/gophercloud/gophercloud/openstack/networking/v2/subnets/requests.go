@@ -18,6 +18,7 @@ type ListOptsBuilder interface {
 // `asc' or `desc'. Marker and Limit are used for pagination.
 type ListOpts struct {
 	Name            string `q:"name"`
+	Description     string `q:"description"`
 	EnableDHCP      *bool  `q:"enable_dhcp"`
 	NetworkID       string `q:"network_id"`
 	TenantID        string `q:"tenant_id"`
@@ -88,6 +89,9 @@ type CreateOpts struct {
 
 	// Name is a human-readable name of the subnet.
 	Name string `json:"name,omitempty"`
+
+	// Description of the subnet.
+	Description string `json:"description,omitempty"`
 
 	// The UUID of the project who owns the Subnet. Only administrative users
 	// can specify a project UUID other than their own.
@@ -166,6 +170,9 @@ type UpdateOptsBuilder interface {
 type UpdateOpts struct {
 	// Name is a human-readable name of the subnet.
 	Name string `json:"name,omitempty"`
+
+	// Description of the subnet.
+	Description *string `json:"description,omitempty"`
 
 	// AllocationPools are IP Address pools that will be available for DHCP.
 	AllocationPools []AllocationPool `json:"allocation_pools,omitempty"`
