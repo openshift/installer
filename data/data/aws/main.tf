@@ -57,6 +57,10 @@ module "iam" {
 
   cluster_name    = "${var.cluster_name}"
   worker_iam_role = "${var.aws_worker_iam_role_name}"
+
+  tags = "${merge(map(
+      "kubernetes.io/cluster/${var.cluster_name}", "owned",
+    ), local.tags)}"
 }
 
 module "dns" {
