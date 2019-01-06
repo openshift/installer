@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.9.0 - 2019-01-05
+
+### Added
+
+- There is a new `none` platform for bring-your-own infrastructure
+  users who want to generate Ignition configurations.  The new
+  platform is mostly undocumented; users will usually interact with it
+  via [OpenShift Ansible][openshift-ansible].
+
+### Changed
+
+- On OpenStack, there's no longer a default flavor, because flavor
+  names are not standardized.  Instead, there's a new prompt to choose
+  among flavors supported by the target OpenStack implementation.
+- On libvirt, we now use the host-passthrough CPU type, which should
+  improve performance for some use-cases.
+- Some doc and internal cleanup and minor fixes.
+
 ## 0.8.0 - 2018-12-23
 
 ### Added
@@ -549,6 +567,7 @@ the new `openshift-install` command instead.
 [kube-selector]: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
 [machine-api-operator]: https://github.com/openshift/machine-api-operator
 [machine-config-operator]: https://github.com/openshift/machine-config-operator
+[openshift-ansible]: https://github.com/openshift/openshift-ansible
 [Prometheus]: https://github.com/prometheus/prometheus
 [ssh.ParseAuthorizedKey]: https://godoc.org/golang.org/x/crypto/ssh#ParseAuthorizedKey
 [registry-operator]: https://github.com/openshift/cluster-image-registry-operator
