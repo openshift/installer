@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.9.1 - 2019-01-07
+
+### Changed
+
+- Bumped the pinned RHCOS from 47.245 to 47.249 to fix a bug where
+  Ignition was run on every boot (when it should only run on the first
+  boot).
+
 ## 0.9.0 - 2019-01-05
 
 ### Added
