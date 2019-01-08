@@ -68,6 +68,9 @@ cp install-config.yaml cluster-0/
 openshift-install --dir=cluster-0 create cluster
 ```
 
+**Note**: After upgrading the installer, we recommend that you regenerate your `install-config.yaml` 
+templates to deploy corresponding RHCOS updates.
+
 Supplying a previously-generated install-config like this is [explicitly part of the stable API](versioning.md).
 
 You can also edit the assets in the asset directory during a single run.
