@@ -13,7 +13,6 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
-	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 )
@@ -27,7 +26,8 @@ func validInstallConfig() *types.InstallConfig {
 		BaseDomain: "test-domain",
 		Networking: types.Networking{
 			Type:        "OpenshiftSDN",
-			ServiceCIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
+			MachineCIDR: *defaultMachineCIDR,
+			ServiceCIDR: *defaultServiceCIDR,
 			ClusterNetworks: []netopv1.ClusterNetwork{
 				{
 					CIDR:             "192.168.1.0/24",

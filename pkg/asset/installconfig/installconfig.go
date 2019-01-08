@@ -1,7 +1,6 @@
 package installconfig
 
 import (
-	"net"
 	"os"
 
 	"github.com/ghodss/yaml"
@@ -11,6 +10,7 @@ import (
 
 	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig/libvirt"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
@@ -23,7 +23,8 @@ const (
 )
 
 var (
-	defaultServiceCIDR      = parseCIDR("172.30.0.0/16")
+	defaultMachineCIDR      = ipnet.MustParseCIDR("10.0.0.0/16")
+	defaultServiceCIDR      = ipnet.MustParseCIDR("172.30.0.0/16")
 	defaultClusterCIDR      = "10.128.0.0/14"
 	defaultHostSubnetLength = 9 // equivalent to a /23 per node
 )
@@ -74,11 +75,9 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		SSHKey:     sshPublicKey.Key,
 		BaseDomain: baseDomain.BaseDomain,
 		Networking: types.Networking{
-			Type: "OpenshiftSDN",
-
-			ServiceCIDR: ipnet.IPNet{
-				IPNet: defaultServiceCIDR,
-			},
+			Type:        "OpenshiftSDN",
+			MachineCIDR: *defaultMachineCIDR,
+			ServiceCIDR: *defaultServiceCIDR,
 			ClusterNetworks: []netopv1.ClusterNetwork{
 				{
 					CIDR:             defaultClusterCIDR,
@@ -96,6 +95,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		a.Config.AWS = platform.AWS
 	case platform.Libvirt != nil:
 		a.Config.Libvirt = platform.Libvirt
+		a.Config.Networking.MachineCIDR = *libvirt.DefaultMachineCIDR
 		numberOfMasters = 1
 		numberOfWorkers = 1
 	case platform.None != nil:
@@ -140,11 +140,6 @@ func (a *InstallConfig) Files() []*asset.File {
 		return []*asset.File{a.File}
 	}
 	return []*asset.File{}
-}
-
-func parseCIDR(s string) net.IPNet {
-	_, cidr, _ := net.ParseCIDR(s)
-	return *cidr
 }
 
 // Load returns the installconfig from disk.

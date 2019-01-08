@@ -13,11 +13,6 @@ variable "libvirt_network_if" {
   description = "The name of the bridge to use"
 }
 
-variable "libvirt_ip_range" {
-  type        = "string"
-  description = "IP range for the libvirt machines"
-}
-
 variable "os_image" {
   type        = "string"
   description = "The URL of the OS disk image"

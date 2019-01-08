@@ -2,6 +2,14 @@ terraform {
   required_version = ">= 0.10.7"
 }
 
+variable "machine_cidr" {
+  type = "string"
+
+  description = <<EOF
+The IP address space from which to assign machine IPs.
+EOF
+}
+
 variable "master_count" {
   type    = "string"
   default = "1"

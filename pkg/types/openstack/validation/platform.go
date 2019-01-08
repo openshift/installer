@@ -6,7 +6,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types/openstack"
-	"github.com/openshift/installer/pkg/validate"
 )
 
 // ValidatePlatform checks that the specified platform is valid.
@@ -45,9 +44,6 @@ func ValidatePlatform(p *openstack.Platform, fldPath *field.Path, fetcher ValidV
 	}
 	if p.DefaultMachinePlatform != nil {
 		allErrs = append(allErrs, ValidateMachinePool(p.DefaultMachinePlatform, fldPath.Child("defaultMachinePlatform"))...)
-	}
-	if err := validate.SubnetCIDR(&p.NetworkCIDRBlock.IPNet); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("NetworkCIDRBlock"), p.NetworkCIDRBlock, err.Error()))
 	}
 	return allErrs
 }

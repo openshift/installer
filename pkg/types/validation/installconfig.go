@@ -50,6 +50,9 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	if !validate.ValidNetworkTypes[n.Type] {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("type"), n.Type, validate.ValidNetworkTypeValues))
 	}
+	if err := validate.SubnetCIDR(&n.MachineCIDR.IPNet); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("machineCIDR"), n.MachineCIDR, err.Error()))
+	}
 	if err := validate.SubnetCIDR(&n.ServiceCIDR.IPNet); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceCIDR"), n.ServiceCIDR, err.Error()))
 	}

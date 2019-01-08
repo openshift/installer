@@ -108,10 +108,13 @@ func (p *Platform) Name() string {
 
 // Networking defines the pod network provider in the cluster.
 type Networking struct {
+	// MachineCIDR is the IP address space from which to assign machine IPs.
+	MachineCIDR ipnet.IPNet `json:"machineCIDR"`
+
 	// Type is the network type to install
 	Type netopv1.NetworkType `json:"type"`
 
-	// ServiceCIDR is the ip block from which to assign service IPs
+	// ServiceCIDR is the IP address space from which to assign service IPs.
 	ServiceCIDR ipnet.IPNet `json:"serviceCIDR"`
 
 	// ClusterNetworks is the IP address space from which to assign pod IPs.

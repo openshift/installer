@@ -1,9 +1,5 @@
 package openstack
 
-import (
-	"github.com/openshift/installer/pkg/ipnet"
-)
-
 // Platform stores all the global configuration that all
 // machinesets use.
 type Platform struct {
@@ -14,9 +10,6 @@ type Platform struct {
 	// installing on OpenStack for machine pools which do not define their own
 	// platform configuration.
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
-
-	// NetworkCIDRBlock
-	NetworkCIDRBlock ipnet.IPNet `json:"NetworkCIDRBlock"`
 
 	// BaseImage
 	// Name of image to use from OpenStack cloud

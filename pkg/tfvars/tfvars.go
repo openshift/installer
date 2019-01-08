@@ -15,10 +15,11 @@ import (
 )
 
 type config struct {
-	ClusterID  string `json:"cluster_id,omitempty"`
-	Name       string `json:"cluster_name,omitempty"`
-	BaseDomain string `json:"base_domain,omitempty"`
-	Masters    int    `json:"master_count,omitempty"`
+	ClusterID   string `json:"cluster_id,omitempty"`
+	Name        string `json:"cluster_name,omitempty"`
+	BaseDomain  string `json:"base_domain,omitempty"`
+	MachineCIDR string `json:"machine_cidr"`
+	Masters     int    `json:"master_count,omitempty"`
 
 	IgnitionBootstrap string `json:"ignition_bootstrap,omitempty"`
 	IgnitionMaster    string `json:"ignition_master,omitempty"`
@@ -32,9 +33,10 @@ type config struct {
 // terraform.tfvar JSON.
 func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, error) {
 	config := &config{
-		ClusterID:  cfg.ClusterID,
-		Name:       cfg.ObjectMeta.Name,
-		BaseDomain: cfg.BaseDomain,
+		ClusterID:   cfg.ClusterID,
+		Name:        cfg.ObjectMeta.Name,
+		BaseDomain:  cfg.BaseDomain,
+		MachineCIDR: cfg.Networking.MachineCIDR.String(),
 
 		IgnitionMaster:    masterIgn,
 		IgnitionBootstrap: bootstrapIgn,
@@ -82,14 +84,8 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 		}
 
 		config.AWS = aws.AWS{
-			Region:    cfg.Platform.AWS.Region,
-			ExtraTags: cfg.Platform.AWS.UserTags,
-			VPCCIDRBlock: func() string {
-				if cfg.Platform.AWS.VPCCIDRBlock == nil {
-					return ""
-				}
-				return cfg.Platform.AWS.VPCCIDRBlock.String()
-			}(),
+			Region:         cfg.Platform.AWS.Region,
+			ExtraTags:      cfg.Platform.AWS.UserTags,
 			EC2AMIOverride: ami,
 		}
 	} else if cfg.Platform.Libvirt != nil {
@@ -100,13 +96,12 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 		config.Libvirt = libvirt.Libvirt{
 			URI: cfg.Platform.Libvirt.URI,
 			Network: libvirt.Network{
-				IfName:  cfg.Platform.Libvirt.Network.IfName,
-				IPRange: cfg.Platform.Libvirt.Network.IPRange.String(),
+				IfName: cfg.Platform.Libvirt.Network.IfName,
 			},
 			Image:     cfg.Platform.Libvirt.DefaultMachinePlatform.Image,
 			MasterIPs: masterIPs,
 		}
-		if err := config.Libvirt.TFVars(config.Masters); err != nil {
+		if err := config.Libvirt.TFVars(&cfg.Networking.MachineCIDR.IPNet, config.Masters); err != nil {
 			return nil, errors.Wrap(err, "failed to insert libvirt variables")
 		}
 		if err := config.Libvirt.UseCachedImage(); err != nil {
@@ -114,9 +109,8 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 		}
 	} else if cfg.Platform.OpenStack != nil {
 		config.OpenStack = openstack.OpenStack{
-			Region:           cfg.Platform.OpenStack.Region,
-			NetworkCIDRBlock: cfg.Platform.OpenStack.NetworkCIDRBlock.String(),
-			BaseImage:        cfg.Platform.OpenStack.BaseImage,
+			Region:    cfg.Platform.OpenStack.Region,
+			BaseImage: cfg.Platform.OpenStack.BaseImage,
 		}
 		config.OpenStack.Credentials.Cloud = cfg.Platform.OpenStack.Cloud
 		config.OpenStack.ExternalNetwork = cfg.Platform.OpenStack.ExternalNetwork

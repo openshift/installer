@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
-	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/libvirt"
 )
 
@@ -14,8 +13,7 @@ func validPlatform() *libvirt.Platform {
 	return &libvirt.Platform{
 		URI: "qemu+tcp://192.168.122.1/system",
 		Network: libvirt.Network{
-			IfName:  "tt0",
-			IPRange: *ipnet.MustParseCIDR("10.0.0.0/16"),
+			IfName: "tt0",
 		},
 	}
 }
@@ -45,15 +43,6 @@ func TestValidatePlatform(t *testing.T) {
 			platform: func() *libvirt.Platform {
 				p := validPlatform()
 				p.Network.IfName = ""
-				return p
-			}(),
-			valid: false,
-		},
-		{
-			name: "missing ip range",
-			platform: func() *libvirt.Platform {
-				p := validPlatform()
-				p.Network.IPRange = ipnet.IPNet{}
 				return p
 			}(),
 			valid: false,

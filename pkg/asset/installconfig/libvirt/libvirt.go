@@ -18,7 +18,9 @@ const (
 )
 
 var (
-	defaultNetworkIPRange = ipnet.MustParseCIDR("192.168.126.0/24")
+	// DefaultMachineCIDR is the libvirt default IP address space from
+	// which to assign machine IPs.
+	DefaultMachineCIDR = ipnet.MustParseCIDR("192.168.126.0/24")
 )
 
 // Platform collects libvirt-specific configuration.
@@ -45,8 +47,7 @@ func Platform() (*libvirt.Platform, error) {
 
 	return &libvirt.Platform{
 		Network: libvirt.Network{
-			IfName:  defaultNetworkIfName,
-			IPRange: *defaultNetworkIPRange,
+			IfName: defaultNetworkIfName,
 		},
 		DefaultMachinePlatform: &libvirt.MachinePool{
 			Image: qcowImage,
