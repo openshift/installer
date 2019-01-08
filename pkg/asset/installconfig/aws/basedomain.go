@@ -48,7 +48,7 @@ func GetBaseDomain() (string, error) {
 			break
 		}
 
-		input.Marker = response.Marker
+		input.Marker = response.NextMarker
 	}
 
 	publicZones := make([]string, 0, len(publicZoneMap))
