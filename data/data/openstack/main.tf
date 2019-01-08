@@ -60,7 +60,7 @@ module "masters" {
   flavor_name         = "${var.openstack_master_flavor_name}"
   instance_count      = "${var.master_count}"
   master_sg_ids       = "${concat(var.openstack_master_extra_sg_ids, list(module.topology.master_sg_id))}"
-  subnet_ids          = "${module.topology.master_subnet_ids}"
+  master_port_ids     = "${module.topology.master_port_ids}"
   user_data_ign       = "${var.ignition_master}"
   service_vm_fixed_ip = "${module.topology.service_vm_fixed_ip}"
 }
@@ -70,12 +70,12 @@ module "masters" {
 module "topology" {
   source = "./topology"
 
-  cidr_block                 = "${var.machine_cidr}"
-  cluster_id                 = "${var.cluster_id}"
-  cluster_name               = "${var.cluster_name}"
-  external_master_subnet_ids = "${compact(var.openstack_external_master_subnet_ids)}"
-  external_network           = "${var.openstack_external_network}"
-  masters_count              = "${var.master_count}"
+  cidr_block       = "${var.machine_cidr}"
+  cluster_id       = "${var.cluster_id}"
+  cluster_name     = "${var.cluster_name}"
+  external_network = "${var.openstack_external_network}"
+  masters_count    = "${var.master_count}"
+  trunk_support    = "${var.openstack_trunk_support}"
 }
 
 resource "openstack_objectstorage_container_v1" "container" {

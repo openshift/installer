@@ -124,6 +124,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			Image:       ic.Platform.OpenStack.BaseImage,
 			Region:      ic.Platform.OpenStack.Region,
 			Machine:     defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName),
+			Trunk:       trunkSupportBoolean(ic.Platform.OpenStack.TrunkSupport),
 		}
 
 		tags := map[string]string{

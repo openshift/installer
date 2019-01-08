@@ -1,9 +1,11 @@
 package validation
 
 import (
+	"github.com/gophercloud/gophercloud/openstack/common/extensions"
 	"github.com/gophercloud/gophercloud/openstack/compute/v2/flavors"
 	"github.com/gophercloud/gophercloud/openstack/identity/v3/regions"
 	"github.com/gophercloud/gophercloud/openstack/imageservice/v2/images"
+	netext "github.com/gophercloud/gophercloud/openstack/networking/v2/extensions"
 	"github.com/gophercloud/gophercloud/openstack/networking/v2/networks"
 	"github.com/gophercloud/utils/openstack/clientconfig"
 )
@@ -148,4 +150,32 @@ func (f realValidValuesFetcher) GetFlavorNames(cloud string) ([]string, error) {
 	}
 
 	return flavorNames, nil
+}
+
+func (f realValidValuesFetcher) GetNetworkExtensionsAliases(cloud string) ([]string, error) {
+	opts := &clientconfig.ClientOpts{
+		Cloud: cloud,
+	}
+
+	conn, err := clientconfig.NewServiceClient("network", opts)
+	if err != nil {
+		return nil, err
+	}
+
+	allPages, err := netext.List(conn).AllPages()
+	if err != nil {
+		return nil, err
+	}
+
+	allExts, err := extensions.ExtractExtensions(allPages)
+	if err != nil {
+		return nil, err
+	}
+
+	extAliases := make([]string, len(allExts))
+	for i, ext := range allExts {
+		extAliases[i] = ext.Alias
+	}
+
+	return extAliases, err
 }

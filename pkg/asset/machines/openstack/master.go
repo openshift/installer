@@ -15,6 +15,7 @@ type MasterConfig struct {
 	Tags        map[string]string
 	Region      string
 	Machine     openstack.MachinePool
+	Trunk       bool
 }
 
 // MasterMachinesTmpl is the template for master machines.
@@ -63,6 +64,7 @@ items:
               - "{{$c.ClusterName}}_master_sg"
         userDataSecret:
           name: master-user-data
+        trunk: {{$c.Trunk}}
     versions:
       kubelet: ""
       controlPlane: ""

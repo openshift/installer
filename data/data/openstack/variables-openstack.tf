@@ -190,18 +190,6 @@ The Username to login with. If omitted, the OS_USERNAME environment variable is 
 EOF
 }
 
-variable "openstack_external_master_subnet_ids" {
-  type    = "list"
-  default = []
-
-  description = <<EOF
-(optional) List of subnet IDs within an existing VPC to deploy master nodes into.
-Required to use an existing VPC, not applicable otherwise.
-
-Example: `["subnet-111111", "subnet-222222", "subnet-333333"]`
-EOF
-}
-
 variable "openstack_external_network" {
   type    = "string"
   default = ""
@@ -242,4 +230,12 @@ variable "openstack_master_flavor_name" {
 variable "openstack_region" {
   type        = "string"
   description = "The target OpenStack region for the cluster."
+}
+
+variable "openstack_trunk_support" {
+  type = "string"
+
+  description = <<EOF
+Contains 0 if the OpenStack Neutron trunk extension is disabled and 1 if it is enabled.
+EOF
 }

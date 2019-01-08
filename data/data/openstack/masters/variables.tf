@@ -24,8 +24,9 @@ variable "master_sg_ids" {
   description = "The security group IDs to be applied to the master nodes."
 }
 
-variable "subnet_ids" {
-  type = "list"
+variable "master_port_ids" {
+  type        = "list"
+  description = "List of port ids for the master nodes"
 }
 
 variable "user_data_ign" {
