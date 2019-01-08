@@ -42,6 +42,7 @@ func installerMain() {
 		newDestroyCmd(),
 		newVersionCmd(),
 		newGraphCmd(),
+		newCompletionCmd(),
 	} {
 		rootCmd.AddCommand(subCmd)
 	}
