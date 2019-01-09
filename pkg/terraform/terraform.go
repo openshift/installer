@@ -5,10 +5,14 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
+	"github.com/gosuri/uiprogress"
+	"github.com/gosuri/uiprogress/util/strutil"
 	"github.com/openshift/installer/data"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/openshift/installer/pkg/lineprinter"
 	texec "github.com/openshift/installer/pkg/terraform/exec"
@@ -51,10 +55,41 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 	defer lpDebug.Close()
 	defer lpError.Close()
 
-	if exitCode := texec.Apply(dir, args, lpDebug, lpError); exitCode != 0 {
+	progressCh := make(chan texec.Progress)
+	defer close(progressCh)
+	if terminal.IsTerminal(int(os.Stdout.Fd())) {
+		go reportProgress(progressCh)
+	}
+
+	if exitCode := texec.ApplyWithProgress(dir, args, lpDebug, lpError, progressCh); exitCode != 0 {
 		return sf, errors.New("failed to apply using Terraform")
 	}
 	return sf, nil
+}
+
+func reportProgress(progressCh <-chan texec.Progress) {
+	uiprogress.Start()
+	var bar *uiprogress.Bar
+	started := time.Now()
+	elapsedPrepend := func(_ *uiprogress.Bar) string {
+		return strutil.PadLeft(strutil.PrettyTime(time.Since(started)), 5, ' ')
+	}
+	for p := range progressCh {
+		// add the bar when total becomes non-zero
+		if bar == nil && p.Total > 0 {
+			bar = uiprogress.AddBar(p.Total)
+			bar.TimeStarted = time.Now()
+			bar.AppendCompleted()
+			bar.PrependFunc(elapsedPrepend)
+		}
+		// update bar when it has been initialized
+		if bar != nil {
+			done := p.Added + p.Changed + p.Removed
+			bar.Total = p.Total
+			bar.Set(done)
+		}
+	}
+	uiprogress.Stop()
 }
 
 // Destroy unpacks the platform-specific Terraform modules into the
