@@ -14,8 +14,8 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
-// TestMasterGenerate tests generating the master asset.
-func TestMasterGenerate(t *testing.T) {
+// TestControlPlaneGenerate tests generating the control plane asset.
+func TestControlPlaneGenerate(t *testing.T) {
 	installConfig := &installconfig.InstallConfig{
 		Config: &types.InstallConfig{
 			ObjectMeta: metav1.ObjectMeta{
@@ -32,7 +32,7 @@ func TestMasterGenerate(t *testing.T) {
 			},
 			Machines: []types.MachinePool{
 				{
-					Name:     "master",
+					Name:     "controlplane",
 					Replicas: func(x int64) *int64 { return &x }(3),
 				},
 			},
@@ -46,16 +46,16 @@ func TestMasterGenerate(t *testing.T) {
 	parents := asset.Parents{}
 	parents.Add(installConfig, rootCA)
 
-	master := &Master{}
-	err = master.Generate(parents)
-	assert.NoError(t, err, "unexpected error generating master asset")
+	controlPlane := &ControlPlane{}
+	err = controlPlane.Generate(parents)
+	assert.NoError(t, err, "unexpected error generating control plane asset")
 	expectedIgnitionConfigNames := []string{
-		"master.ign",
+		"controlplane.ign",
 	}
-	actualFiles := master.Files()
+	actualFiles := controlPlane.Files()
 	actualIgnitionConfigNames := make([]string, len(actualFiles))
 	for i, f := range actualFiles {
 		actualIgnitionConfigNames[i] = f.Filename
 	}
-	assert.Equal(t, expectedIgnitionConfigNames, actualIgnitionConfigNames, "unexpected names for master ignition configs")
+	assert.Equal(t, expectedIgnitionConfigNames, actualIgnitionConfigNames, "unexpected names for control plane ignition configs")
 }

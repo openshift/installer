@@ -7,20 +7,20 @@ type OpenStack struct {
 	External        `json:",inline"`
 	ExternalNetwork string            `json:"openstack_external_network,omitempty"`
 	ExtraTags       map[string]string `json:"openstack_extra_tags,omitempty"`
-	Master          `json:",inline"`
+	ControlPlane    `json:",inline"`
 	Region          string `json:"openstack_region,omitempty"`
 	TrunkSupport    string `json:"openstack_trunk_support,omitempty"`
 }
 
 // External converts external related config.
 type External struct {
-	MasterSubnetIDs []string `json:"openstack_external_master_subnet_ids,omitempty"`
+	ControlPlaneSubnetIDs []string `json:"openstack_external_controlplane_subnet_ids,omitempty"`
 }
 
-// Master converts master related config.
-type Master struct {
-	FlavorName string   `json:"openstack_master_flavor_name,omitempty"`
-	ExtraSGIDs []string `json:"openstack_master_extra_sg_ids,omitempty"`
+// ControlPlane converts control plane related config.
+type ControlPlane struct {
+	FlavorName string   `json:"openstack_controlplane_flavor_name,omitempty"`
+	ExtraSGIDs []string `json:"openstack_controlplane_extra_sg_ids,omitempty"`
 }
 
 // Credentials converts credentials related config.

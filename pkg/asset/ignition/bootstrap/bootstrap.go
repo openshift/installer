@@ -138,7 +138,7 @@ func (a *Bootstrap) Files() []*asset.File {
 
 // getTemplateData returns the data to use to execute bootstrap templates.
 func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootstrapTemplateData, error) {
-	etcdEndpoints := make([]string, installConfig.MasterCount())
+	etcdEndpoints := make([]string, installConfig.ControlPlaneCount())
 	for i := range etcdEndpoints {
 		etcdEndpoints[i] = fmt.Sprintf("https://%s-etcd-%d.%s:2379", installConfig.ObjectMeta.Name, i, installConfig.BaseDomain)
 	}

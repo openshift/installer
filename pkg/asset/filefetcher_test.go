@@ -79,20 +79,20 @@ func TestFetchByPattern(t *testing.T) {
 	defer os.RemoveAll(tempDir)
 
 	files := map[string][]byte{
-		"master-0.ign":   []byte("some data 0"),
-		"master-1.ign":   []byte("some data 1"),
-		"master-2.ign":   []byte("some data 2"),
-		"master-10.ign":  []byte("some data 3"),
-		"master-20.ign":  []byte("some data 4"),
-		"master-00.ign":  []byte("some data 5"),
-		"master-01.ign":  []byte("some data 6"),
-		"amaster-0.ign":  []byte("some data 7"),
-		"master-.ign":    []byte("some data 8"),
-		"master-.igni":   []byte("some data 9"),
-		"master-.ignign": []byte("some data 10"),
-		"manifests/0":    []byte("some data 11"),
-		"manifests/some": []byte("some data 12"),
-		"amanifests/a":   []byte("some data 13"),
+		"controlplane-0.ign":   []byte("some data 0"),
+		"controlplane-1.ign":   []byte("some data 1"),
+		"controlplane-2.ign":   []byte("some data 2"),
+		"controlplane-10.ign":  []byte("some data 3"),
+		"controlplane-20.ign":  []byte("some data 4"),
+		"controlplane-00.ign":  []byte("some data 5"),
+		"controlplane-01.ign":  []byte("some data 6"),
+		"acontrolplane-0.ign":  []byte("some data 7"),
+		"controlplane-.ign":    []byte("some data 8"),
+		"controlplane-.igni":   []byte("some data 9"),
+		"controlplane-.ignign": []byte("some data 10"),
+		"manifests/0":          []byte("some data 11"),
+		"manifests/some":       []byte("some data 12"),
+		"amanifests/a":         []byte("some data 13"),
 	}
 
 	for path, data := range files {
@@ -113,34 +113,34 @@ func TestFetchByPattern(t *testing.T) {
 		expectFiles []*File
 	}{
 		{
-			input: "master-[0-9]*.ign",
+			input: "controlplane-[0-9]*.ign",
 			expectFiles: []*File{
 				{
-					Filename: "master-0.ign",
+					Filename: "controlplane-0.ign",
 					Data:     []byte("some data 0"),
 				},
 				{
-					Filename: "master-00.ign",
+					Filename: "controlplane-00.ign",
 					Data:     []byte("some data 5"),
 				},
 				{
-					Filename: "master-01.ign",
+					Filename: "controlplane-01.ign",
 					Data:     []byte("some data 6"),
 				},
 				{
-					Filename: "master-1.ign",
+					Filename: "controlplane-1.ign",
 					Data:     []byte("some data 1"),
 				},
 				{
-					Filename: "master-10.ign",
+					Filename: "controlplane-10.ign",
 					Data:     []byte("some data 3"),
 				},
 				{
-					Filename: "master-2.ign",
+					Filename: "controlplane-2.ign",
 					Data:     []byte("some data 2"),
 				},
 				{
-					Filename: "master-20.ign",
+					Filename: "controlplane-20.ign",
 					Data:     []byte("some data 4"),
 				},
 			},

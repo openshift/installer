@@ -1,6 +1,6 @@
 locals {
-  new_master_cidr_range = "${cidrsubnet(var.cidr_block, 1, 0)}"
-  new_worker_cidr_range = "${cidrsubnet(var.cidr_block, 1, 1)}"
+  new_controlplane_cidr_range = "${cidrsubnet(var.cidr_block, 1, 0)}"
+  new_compute_cidr_range = "${cidrsubnet(var.cidr_block, 1, 1)}"
 }
 
 resource "openstack_networking_network_v2" "openshift-private" {
@@ -9,43 +9,43 @@ resource "openstack_networking_network_v2" "openshift-private" {
   tags           = ["openshiftClusterID=${var.cluster_id}"]
 }
 
-resource "openstack_networking_subnet_v2" "masters" {
-  name       = "masters"
-  cidr       = "${local.new_master_cidr_range}"
+resource "openstack_networking_subnet_v2" "controlplane" {
+  name       = "controlplane"
+  cidr       = "${local.new_controlplane_cidr_range}"
   ip_version = 4
   network_id = "${openstack_networking_network_v2.openshift-private.id}"
   tags       = ["openshiftClusterID=${var.cluster_id}"]
 }
 
-resource "openstack_networking_subnet_v2" "workers" {
-  name       = "worker"
-  cidr       = "${local.new_worker_cidr_range}"
+resource "openstack_networking_subnet_v2" "compute" {
+  name       = "compute"
+  cidr       = "${local.new_compute_cidr_range}"
   ip_version = 4
   network_id = "${openstack_networking_network_v2.openshift-private.id}"
   tags       = ["openshiftClusterID=${var.cluster_id}"]
 }
 
-resource "openstack_networking_port_v2" "masters" {
-  name  = "master-port-${count.index}"
-  count = "${var.masters_count}"
+resource "openstack_networking_port_v2" "controlplane" {
+  name  = "controlplane-port-${count.index}"
+  count = "${var.controlplane_count}"
 
   admin_state_up     = "true"
   network_id         = "${openstack_networking_network_v2.openshift-private.id}"
-  security_group_ids = ["${openstack_networking_secgroup_v2.master.id}"]
+  security_group_ids = ["${openstack_networking_secgroup_v2.controlplane.id}"]
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {
-    "subnet_id" = "${openstack_networking_subnet_v2.masters.id}"
+    "subnet_id" = "${openstack_networking_subnet_v2.controlplane.id}"
   }
 }
 
-resource "openstack_networking_trunk_v2" "masters" {
-  name  = "master-trunk-${count.index}"
-  count = "${var.trunk_support ? var.masters_count : 0}"
+resource "openstack_networking_trunk_v2" "controlplane" {
+  name  = "controlplane-trunk-${count.index}"
+  count = "${var.trunk_support ? var.controlplane_count : 0}"
   tags  = ["openshiftClusterID=${var.cluster_id}"]
 
   admin_state_up = "true"
-  port_id        = "${openstack_networking_port_v2.masters.*.id[count.index]}"
+  port_id        = "${openstack_networking_port_v2.controlplane.*.id[count.index]}"
 }
 
 resource "openstack_networking_port_v2" "bootstrap_port" {
@@ -53,11 +53,11 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
 
   admin_state_up     = "true"
   network_id         = "${openstack_networking_network_v2.openshift-private.id}"
-  security_group_ids = ["${openstack_networking_secgroup_v2.master.id}"]
+  security_group_ids = ["${openstack_networking_secgroup_v2.controlplane.id}"]
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {
-    "subnet_id" = "${openstack_networking_subnet_v2.masters.id}"
+    "subnet_id" = "${openstack_networking_subnet_v2.controlplane.id}"
   }
 }
 
@@ -70,7 +70,7 @@ resource "openstack_networking_port_v2" "lb_port" {
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {
-    "subnet_id" = "${openstack_networking_subnet_v2.masters.id}"
+    "subnet_id" = "${openstack_networking_subnet_v2.controlplane.id}"
   }
 }
 
@@ -91,12 +91,12 @@ resource "openstack_networking_router_v2" "openshift-external-router" {
   tags                = ["openshiftClusterID=${var.cluster_id}"]
 }
 
-resource "openstack_networking_router_interface_v2" "masters_router_interface" {
+resource "openstack_networking_router_interface_v2" "controlplane_router_interface" {
   router_id = "${openstack_networking_router_v2.openshift-external-router.id}"
-  subnet_id = "${openstack_networking_subnet_v2.masters.id}"
+  subnet_id = "${openstack_networking_subnet_v2.controlplane.id}"
 }
 
-resource "openstack_networking_router_interface_v2" "workers_router_interface" {
+resource "openstack_networking_router_interface_v2" "compute_router_interface" {
   router_id = "${openstack_networking_router_v2.openshift-external-router.id}"
-  subnet_id = "${openstack_networking_subnet_v2.workers.id}"
+  subnet_id = "${openstack_networking_subnet_v2.compute.id}"
 }

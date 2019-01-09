@@ -18,15 +18,15 @@ variable "instance_count" {
   type = "string"
 }
 
-variable "master_sg_ids" {
+variable "controlplane_sg_ids" {
   type        = "list"
   default     = ["default"]
-  description = "The security group IDs to be applied to the master nodes."
+  description = "The security group IDs to be applied to the control plane nodes."
 }
 
-variable "master_port_ids" {
+variable "controlplane_port_ids" {
   type        = "list"
-  description = "List of port ids for the master nodes"
+  description = "List of port ids for the control plane nodes"
 }
 
 variable "user_data_ign" {

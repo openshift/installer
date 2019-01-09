@@ -80,7 +80,7 @@ var (
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 		},
-		assets: []asset.WritableAsset{&bootstrap.Bootstrap{}, &machine.Master{}, &machine.Worker{}},
+		assets: []asset.WritableAsset{&bootstrap.Bootstrap{}, &machine.ControlPlane{}, &machine.Compute{}},
 	}
 
 	clusterTarget = target{

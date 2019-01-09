@@ -2,20 +2,20 @@ output "vpc_id" {
   value = "${data.aws_vpc.cluster_vpc.id}"
 }
 
-output "master_subnet_ids" {
-  value = "${local.master_subnet_ids}"
+output "controlplane_subnet_ids" {
+  value = "${local.controlplane_subnet_ids}"
 }
 
 output "etcd_sg_id" {
   value = "${aws_security_group.etcd.id}"
 }
 
-output "master_sg_id" {
-  value = "${aws_security_group.master.id}"
+output "controlplane_sg_id" {
+  value = "${aws_security_group.controlplane.id}"
 }
 
-output "worker_sg_id" {
-  value = "${aws_security_group.worker.id}"
+output "compute_sg_id" {
+  value = "${aws_security_group.compute.id}"
 }
 
 output "api_sg_id" {

@@ -2,23 +2,23 @@ locals {
   arn = "aws"
 }
 
-resource "aws_iam_instance_profile" "worker" {
-  name = "${var.cluster_name}-worker-profile"
+resource "aws_iam_instance_profile" "compute" {
+  name = "${var.cluster_name}-compute-profile"
 
-  role = "${var.worker_iam_role == "" ?
-    join("|", aws_iam_role.worker_role.*.name) :
-    join("|", data.aws_iam_role.worker_role.*.name)
+  role = "${var.compute_iam_role == "" ?
+    join("|", aws_iam_role.compute_role.*.name) :
+    join("|", data.aws_iam_role.compute_role.*.name)
   }"
 }
 
-data "aws_iam_role" "worker_role" {
-  count = "${var.worker_iam_role == "" ? 0 : 1}"
-  name  = "${var.worker_iam_role}"
+data "aws_iam_role" "compute_role" {
+  count = "${var.compute_iam_role == "" ? 0 : 1}"
+  name  = "${var.compute_iam_role}"
 }
 
-resource "aws_iam_role" "worker_role" {
-  count = "${var.worker_iam_role == "" ? 1 : 0}"
-  name  = "${var.cluster_name}-worker-role"
+resource "aws_iam_role" "compute_role" {
+  count = "${var.compute_iam_role == "" ? 1 : 0}"
+  name  = "${var.cluster_name}-compute-role"
   path  = "/"
 
   assume_role_policy = <<EOF
@@ -38,10 +38,10 @@ resource "aws_iam_role" "worker_role" {
 EOF
 }
 
-resource "aws_iam_role_policy" "worker_policy" {
-  count = "${var.worker_iam_role == "" ? 1 : 0}"
-  name  = "${var.cluster_name}_worker_policy"
-  role  = "${aws_iam_role.worker_role.id}"
+resource "aws_iam_role_policy" "compute_policy" {
+  count = "${var.compute_iam_role == "" ? 1 : 0}"
+  name  = "${var.cluster_name}_compute_policy"
+  role  = "${aws_iam_role.compute_role.id}"
 
   policy = <<EOF
 {

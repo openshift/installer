@@ -40,15 +40,15 @@ variable "kubeconfig_content" {
   default = ""
 }
 
-variable "master_iam_role" {
+variable "controlplane_iam_role" {
   type        = "string"
   default     = ""
-  description = "IAM role to use for the instance profiles of master nodes."
+  description = "IAM role to use for the instance profiles of control plane nodes."
 }
 
-variable "master_sg_ids" {
+variable "controlplane_sg_ids" {
   type        = "list"
-  description = "The security group IDs to be applied to the master nodes."
+  description = "The security group IDs to be applied to the control plane nodes."
 }
 
 variable "root_volume_iops" {

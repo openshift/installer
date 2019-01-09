@@ -2,23 +2,23 @@ locals {
   arn = "aws"
 }
 
-resource "aws_iam_instance_profile" "master" {
-  name = "${var.cluster_name}-master-profile"
+resource "aws_iam_instance_profile" "controlplane" {
+  name = "${var.cluster_name}-controlplane-profile"
 
-  role = "${var.master_iam_role == "" ?
-    join("|", aws_iam_role.master_role.*.name) :
-    join("|", data.aws_iam_role.master_role.*.name)
+  role = "${var.controlplane_iam_role == "" ?
+    join("|", aws_iam_role.controlplane_role.*.name) :
+    join("|", data.aws_iam_role.controlplane_role.*.name)
   }"
 }
 
-data "aws_iam_role" "master_role" {
-  count = "${var.master_iam_role == "" ? 0 : 1}"
-  name  = "${var.master_iam_role}"
+data "aws_iam_role" "controlplane_role" {
+  count = "${var.controlplane_iam_role == "" ? 0 : 1}"
+  name  = "${var.controlplane_iam_role}"
 }
 
-resource "aws_iam_role" "master_role" {
-  count = "${var.master_iam_role == "" ? 1 : 0}"
-  name  = "${var.cluster_name}-master-role"
+resource "aws_iam_role" "controlplane_role" {
+  count = "${var.controlplane_iam_role == "" ? 1 : 0}"
+  name  = "${var.cluster_name}-controlplane-role"
   path  = "/"
 
   assume_role_policy = <<EOF
@@ -38,10 +38,10 @@ resource "aws_iam_role" "master_role" {
 EOF
 }
 
-resource "aws_iam_role_policy" "master_policy" {
-  count = "${var.master_iam_role == "" ? 1 : 0}"
-  name  = "${var.cluster_name}_master_policy"
-  role  = "${aws_iam_role.master_role.id}"
+resource "aws_iam_role_policy" "controlplane_policy" {
+  count = "${var.controlplane_iam_role == "" ? 1 : 0}"
+  name  = "${var.cluster_name}_controlplane_policy"
+  role  = "${aws_iam_role.controlplane_role.id}"
 
   policy = <<EOF
 {
@@ -74,16 +74,16 @@ resource "aws_iam_role_policy" "master_policy" {
 EOF
 }
 
-resource "aws_instance" "master" {
+resource "aws_instance" "controlplane" {
   count = "${var.instance_count}"
   ami   = "${var.ec2_ami}"
 
-  iam_instance_profile = "${aws_iam_instance_profile.master.name}"
+  iam_instance_profile = "${aws_iam_instance_profile.controlplane.name}"
   instance_type        = "${var.ec2_type}"
   subnet_id            = "${element(var.subnet_ids, count.index)}"
   user_data            = "${var.user_data_ign}"
 
-  vpc_security_group_ids      = ["${var.master_sg_ids}"]
+  vpc_security_group_ids      = ["${var.controlplane_sg_ids}"]
   associate_public_ip_address = true
 
   lifecycle {
@@ -94,7 +94,7 @@ resource "aws_instance" "master" {
   }
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}-master-${count.index}",
+      "Name", "${var.cluster_name}-controlplane-${count.index}",
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
       "openshiftClusterID", "${var.cluster_id}",
       "clusterid", "${var.cluster_name}"
@@ -107,15 +107,15 @@ resource "aws_instance" "master" {
   }
 
   volume_tags = "${merge(map(
-    "Name", "${var.cluster_name}-master-${count.index}-vol",
+    "Name", "${var.cluster_name}-controlplane-${count.index}-vol",
     "kubernetes.io/cluster/${var.cluster_name}", "owned",
     "openshiftClusterID", "${var.cluster_id}"
   ), var.extra_tags)}"
 }
 
-resource "aws_lb_target_group_attachment" "master" {
+resource "aws_lb_target_group_attachment" "controlplane" {
   count = "${var.instance_count * var.target_group_arns_length}"
 
   target_group_arn = "${var.target_group_arns[count.index % var.target_group_arns_length]}"
-  target_id        = "${aws_instance.master.*.private_ip[count.index / var.target_group_arns_length]}"
+  target_id        = "${aws_instance.controlplane.*.private_ip[count.index / var.target_group_arns_length]}"
 }

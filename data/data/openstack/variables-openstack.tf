@@ -211,20 +211,20 @@ Example: `{ "key" = "value", "foo" = "bar" }`
 EOF
 }
 
-variable "openstack_master_extra_sg_ids" {
+variable "openstack_controlplane_extra_sg_ids" {
   type    = "list"
   default = []
 
   description = <<EOF
-(optional) List of additional security group IDs for master nodes.
+(optional) List of additional security group IDs for control plane nodes.
 
 Example: `["sg-51530134", "sg-b253d7cc"]`
 EOF
 }
 
-variable "openstack_master_flavor_name" {
+variable "openstack_controlplane_flavor_name" {
   type        = "string"
-  description = "Instance size for the master node(s). Example: `m1.medium`."
+  description = "Instance size for the control plane node(s). Example: `m1.medium`."
 }
 
 variable "openstack_region" {

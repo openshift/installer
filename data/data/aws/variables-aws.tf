@@ -7,9 +7,9 @@ EOF
   default = "1.0"
 }
 
-variable "aws_master_ec2_type" {
+variable "aws_controlplane_ec2_type" {
   type        = "string"
-  description = "Instance size for the master node(s). Example: `m4.large`."
+  description = "Instance size for the control plane node(s). Example: `m4.large`."
 
   # FIXME: get this wired up to the machine default
   default = "m4.large"
@@ -33,24 +33,24 @@ EOF
   default = {}
 }
 
-variable "aws_master_root_volume_type" {
+variable "aws_controlplane_root_volume_type" {
   type        = "string"
   default     = "gp2"
-  description = "The type of volume for the root block device of master nodes."
+  description = "The type of volume for the root block device of control plane nodes."
 }
 
-variable "aws_master_root_volume_size" {
+variable "aws_controlplane_root_volume_size" {
   type        = "string"
   default     = "120"
-  description = "The size of the volume in gigabytes for the root block device of master nodes."
+  description = "The size of the volume in gigabytes for the root block device of control plane nodes."
 }
 
-variable "aws_master_root_volume_iops" {
+variable "aws_controlplane_root_volume_iops" {
   type    = "string"
   default = "400"
 
   description = <<EOF
-The amount of provisioned IOPS for the root block device of master nodes.
+The amount of provisioned IOPS for the root block device of control plane nodes.
 Ignored if the volume type is not io1.
 EOF
 }
@@ -60,12 +60,12 @@ variable "aws_region" {
   description = "The target AWS region for the cluster."
 }
 
-variable "aws_master_iam_role_name" {
+variable "aws_controlplane_iam_role_name" {
   type    = "string"
   default = ""
 
   description = <<EOF
-(optional) Name of IAM role to use for the instance profiles of master nodes.
+(optional) Name of IAM role to use for the instance profiles of control plane nodes.
 The name is also the last part of a role's ARN.
 
 Example:
@@ -74,12 +74,12 @@ Example:
 EOF
 }
 
-variable "aws_worker_iam_role_name" {
+variable "aws_compute_iam_role_name" {
   type    = "string"
   default = ""
 
   description = <<EOF
-(optional) Name of IAM role to use for the instance profiles of worker nodes.
+(optional) Name of IAM role to use for the instance profiles of compute nodes.
 The name is also the last part of a role's ARN.
 
 Example:

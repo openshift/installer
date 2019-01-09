@@ -18,30 +18,30 @@ type Config struct {
 	Trunk       bool
 }
 
-// WorkerMachineSetTmpl is template for worker machineset.
-var WorkerMachineSetTmpl = template.Must(template.New("openstack-worker-machineset").Parse(`
+// ComputeMachineSetTmpl is template for compute machineset.
+var ComputeMachineSetTmpl = template.Must(template.New("openstack-compute-machineset").Parse(`
 apiVersion: cluster.k8s.io/v1alpha1
 kind: MachineSet
 metadata:
-  name: {{.ClusterName}}-worker-0
+  name: {{.ClusterName}}-compute-0
   namespace: openshift-cluster-api
   labels:
     sigs.k8s.io/cluster-api-cluster: {{.ClusterName}}
-    sigs.k8s.io/cluster-api-machine-role: worker
-    sigs.k8s.io/cluster-api-machine-type: worker
+    sigs.k8s.io/cluster-api-machine-role: compute
+    sigs.k8s.io/cluster-api-machine-type: compute
 spec:
   replicas: {{.Replicas}}
   selector:
     matchLabels:
-      sigs.k8s.io/cluster-api-machineset: {{.ClusterName}}-worker-0
+      sigs.k8s.io/cluster-api-machineset: {{.ClusterName}}-compute-0
       sigs.k8s.io/cluster-api-cluster: {{.ClusterName}}
   template:
     metadata:
       labels:
-        sigs.k8s.io/cluster-api-machineset: {{.ClusterName}}-worker-0
+        sigs.k8s.io/cluster-api-machineset: {{.ClusterName}}-compute-0
         sigs.k8s.io/cluster-api-cluster: {{.ClusterName}}
-        sigs.k8s.io/cluster-api-machine-role: worker
-        sigs.k8s.io/cluster-api-machine-type: worker
+        sigs.k8s.io/cluster-api-machine-role: compute
+        sigs.k8s.io/cluster-api-machine-type: compute
     spec:
       providerSpec:
         value:
@@ -56,7 +56,7 @@ spec:
             filters:
             - name: "tag:Name"
               values:
-              - "{{.ClusterName}}-worker-*"
+              - "{{.ClusterName}}-compute-*"
           tags:
 {{- range $key,$value := .Tags}}
             - name: "{{$key}}"
@@ -66,9 +66,9 @@ spec:
             - filters:
               - name: "tag:Name"
                 values:
-                - "{{.ClusterName}}_worker_sg"
+                - "{{.ClusterName}}_compute_sg"
           userDataSecret:
-            name: worker-user-data
+            name: compute-user-data
           trunk: {{.Trunk}}
       versions:
         kubelet: ""

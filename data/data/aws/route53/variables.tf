@@ -8,19 +8,19 @@ variable "base_domain" {
   type        = "string"
 }
 
-variable "master_count" {
-  description = "The number of masters"
+variable "controlplane_count" {
+  description = "The number of control plane nodes"
   type        = "string"
 }
 
-variable "master_ip_addresses" {
-  description = "List of string IPs for masters"
+variable "controlplane_ip_addresses" {
+  description = "List of string IPs for control plane nodes"
   type        = "list"
   default     = []
 }
 
-variable "worker_ip_addresses" {
-  description = "List of string IPs for workers"
+variable "compute_ip_addresses" {
+  description = "List of string IPs for compute nodes"
   type        = "list"
   default     = []
 }

@@ -23,23 +23,23 @@ variable "libvirt_bootstrap_ip" {
   description = "the desired bootstrap ip"
 }
 
-variable "libvirt_master_ips" {
+variable "libvirt_controlplane_ips" {
   type        = "list"
-  description = "the list of desired master ips. Must match master_count"
+  description = "the list of desired control plane ips. Must match controlplane_count"
 }
 
 # It's definitely recommended to bump this if you can.
-variable "libvirt_master_memory" {
+variable "libvirt_controlplane_memory" {
   type        = "string"
-  description = "RAM in MiB allocated to masters"
+  description = "RAM in MiB allocated to control planes nodes"
   default     = "4096"
 }
 
 # At some point this one is likely to default to the number
 # of physical cores you have.  See also
 # https://pagure.io/standard-test-roles/pull-request/223
-variable "libvirt_master_vcpu" {
+variable "libvirt_controlplane_vcpu" {
   type        = "string"
-  description = "CPUs allocated to masters"
+  description = "CPUs allocated to control planes nodes"
   default     = "2"
 }

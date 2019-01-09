@@ -11,12 +11,12 @@ module "bootstrap" {
 
   ami                      = "${var.aws_ec2_ami_override}"
   cluster_name             = "${var.cluster_name}"
-  iam_role                 = "${var.aws_master_iam_role_name}"
+  iam_role                 = "${var.aws_controlplane_iam_role_name}"
   ignition                 = "${var.ignition_bootstrap}"
-  subnet_id                = "${module.vpc.master_subnet_ids[0]}"
+  subnet_id                = "${module.vpc.controlplane_subnet_ids[0]}"
   target_group_arns        = "${module.vpc.aws_lb_target_group_arns}"
   target_group_arns_length = "${module.vpc.aws_lb_target_group_arns_length}"
-  vpc_security_group_ids   = "${list(module.vpc.master_sg_id)}"
+  vpc_security_group_ids   = "${list(module.vpc.controlplane_sg_id)}"
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-bootstrap",
@@ -24,32 +24,32 @@ module "bootstrap" {
     ), var.aws_extra_tags)}"
 }
 
-module "masters" {
-  source = "./master"
+module "controlplane" {
+  source = "./controlplane"
 
   base_domain              = "${var.base_domain}"
   cluster_id               = "${var.cluster_id}"
   cluster_name             = "${var.cluster_name}"
-  ec2_type                 = "${var.aws_master_ec2_type}"
+  ec2_type                 = "${var.aws_controlplane_ec2_type}"
   extra_tags               = "${var.aws_extra_tags}"
-  instance_count           = "${var.master_count}"
-  master_iam_role          = "${var.aws_master_iam_role_name}"
-  master_sg_ids            = "${list(module.vpc.master_sg_id)}"
-  root_volume_iops         = "${var.aws_master_root_volume_iops}"
-  root_volume_size         = "${var.aws_master_root_volume_size}"
-  root_volume_type         = "${var.aws_master_root_volume_type}"
-  subnet_ids               = "${module.vpc.master_subnet_ids}"
+  instance_count           = "${var.controlplane_count}"
+  controlplane_iam_role    = "${var.aws_controlplane_iam_role_name}"
+  controlplane_sg_ids      = "${list(module.vpc.controlplane_sg_id)}"
+  root_volume_iops         = "${var.aws_controlplane_root_volume_iops}"
+  root_volume_size         = "${var.aws_controlplane_root_volume_size}"
+  root_volume_type         = "${var.aws_controlplane_root_volume_type}"
+  subnet_ids               = "${module.vpc.controlplane_subnet_ids}"
   target_group_arns        = "${module.vpc.aws_lb_target_group_arns}"
   target_group_arns_length = "${module.vpc.aws_lb_target_group_arns_length}"
   ec2_ami                  = "${var.aws_ec2_ami_override}"
-  user_data_ign            = "${var.ignition_master}"
+  user_data_ign            = "${var.ignition_controlplane}"
 }
 
 module "iam" {
   source = "./iam"
 
-  cluster_name    = "${var.cluster_name}"
-  worker_iam_role = "${var.aws_worker_iam_role_name}"
+  cluster_name     = "${var.cluster_name}"
+  compute_iam_role = "${var.aws_compute_iam_role_name}"
 }
 
 module "dns" {
@@ -61,7 +61,7 @@ module "dns" {
   api_internal_lb_zone_id  = "${module.vpc.aws_lb_api_internal_zone_id}"
   base_domain              = "${var.base_domain}"
   cluster_name             = "${var.cluster_name}"
-  master_count             = "${var.master_count}"
+  controlplane_count       = "${var.controlplane_count}"
   private_zone_id          = "${local.private_zone_id}"
   extra_tags               = "${var.aws_extra_tags}"
 }
@@ -79,12 +79,12 @@ module "vpc" {
 }
 
 resource "aws_route53_record" "etcd_a_nodes" {
-  count   = "${var.master_count}"
+  count   = "${var.controlplane_count}"
   type    = "A"
   ttl     = "60"
   zone_id = "${local.private_zone_id}"
   name    = "${var.cluster_name}-etcd-${count.index}"
-  records = ["${module.masters.ip_addresses[count.index]}"]
+  records = ["${module.controlplane.ip_addresses[count.index]}"]
 }
 
 resource "aws_route53_record" "etcd_cluster" {

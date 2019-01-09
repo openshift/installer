@@ -102,11 +102,11 @@ func validateMachinePools(pools []types.MachinePool, fldPath *field.Path, platfo
 		poolNames[p.Name] = true
 		allErrs = append(allErrs, ValidateMachinePool(&p, fldPath.Index(i), platform)...)
 	}
-	if !poolNames["master"] {
-		allErrs = append(allErrs, field.Required(fldPath, "must specify a machine pool with a name of 'master'"))
+	if !poolNames["controlplane"] {
+		allErrs = append(allErrs, field.Required(fldPath, "must specify a machine pool with a name of 'controlplane'"))
 	}
-	if !poolNames["worker"] {
-		allErrs = append(allErrs, field.Required(fldPath, "must specify a machine pool with a name of 'worker'"))
+	if !poolNames["compute"] {
+		allErrs = append(allErrs, field.Required(fldPath, "must specify a machine pool with a name of 'compute'"))
 	}
 	return allErrs
 }

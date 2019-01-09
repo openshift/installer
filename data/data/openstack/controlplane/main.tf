@@ -1,28 +1,28 @@
-data "openstack_images_image_v2" "masters_img" {
+data "openstack_images_image_v2" "controlplane_img" {
   name        = "${var.base_image}"
   most_recent = true
 }
 
-data "openstack_compute_flavor_v2" "masters_flavor" {
+data "openstack_compute_flavor_v2" "controlplane_flavor" {
   name = "${var.flavor_name}"
 }
 
-data "ignition_config" "master_ignition_config" {
+data "ignition_config" "controlplane_ignition_config" {
   append {
     source = "data:text/plain;charset=utf-8;base64,${base64encode(var.user_data_ign)}"
   }
 
   files = [
-    "${data.ignition_file.master_ifcfg.id}",
-    "${data.ignition_file.master_hacks_script.id}",
+    "${data.ignition_file.controlplane_ifcfg.id}",
+    "${data.ignition_file.controlplane_hacks_script.id}",
   ]
 
   systemd = [
-    "${data.ignition_systemd_unit.master_hacks_service.id}",
+    "${data.ignition_systemd_unit.controlplane_hacks_service.id}",
   ]
 }
 
-data "ignition_file" "master_ifcfg" {
+data "ignition_file" "controlplane_ifcfg" {
   filesystem = "root"
   mode       = "420"                                       // 0644
   path       = "/etc/sysconfig/network-scripts/ifcfg-eth0"
@@ -41,7 +41,7 @@ EOF
   }
 }
 
-data "ignition_file" "master_hacks_script" {
+data "ignition_file" "controlplane_hacks_script" {
   filesystem = "root"
   mode       = "493"           // 0755
   path       = "/opt/hacks.sh"
@@ -59,7 +59,7 @@ EOF
   }
 }
 
-data "ignition_systemd_unit" "master_hacks_service" {
+data "ignition_systemd_unit" "controlplane_hacks_service" {
   name = "hacks.service"
 
   content = <<EOF
@@ -77,21 +77,21 @@ WantedBy=multi-user.target
 EOF
 }
 
-resource "openstack_compute_instance_v2" "master_conf" {
-  name  = "${var.cluster_name}-master-${count.index}"
+resource "openstack_compute_instance_v2" "controlplane_conf" {
+  name  = "${var.cluster_name}-controlplane-${count.index}"
   count = "${var.instance_count}"
 
-  flavor_id       = "${data.openstack_compute_flavor_v2.masters_flavor.id}"
-  image_id        = "${data.openstack_images_image_v2.masters_img.id}"
-  security_groups = ["${var.master_sg_ids}"]
-  user_data       = "${data.ignition_config.master_ignition_config.rendered}"
+  flavor_id       = "${data.openstack_compute_flavor_v2.controlplane_flavor.id}"
+  image_id        = "${data.openstack_images_image_v2.controlplane_img.id}"
+  security_groups = ["${var.controlplane_sg_ids}"]
+  user_data       = "${data.ignition_config.controlplane_ignition_config.rendered}"
 
   network = {
-    port = "${var.master_port_ids[count.index]}"
+    port = "${var.controlplane_port_ids[count.index]}"
   }
 
   metadata {
-    Name               = "${var.cluster_name}-master"
+    Name               = "${var.cluster_name}-controlplane"
     owned              = "kubernetes.io/cluster/${var.cluster_name}"
     openshiftClusterID = "${var.cluster_id}"
   }

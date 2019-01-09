@@ -37,10 +37,10 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		Machines: []types.MachinePool{
 			{
-				Name: "master",
+				Name: "controlplane",
 			},
 			{
-				Name: "worker",
+				Name: "compute",
 			},
 		},
 		Platform: types.Platform{

@@ -15,14 +15,14 @@ import (
 )
 
 type config struct {
-	ClusterID   string `json:"cluster_id,omitempty"`
-	Name        string `json:"cluster_name,omitempty"`
-	BaseDomain  string `json:"base_domain,omitempty"`
-	MachineCIDR string `json:"machine_cidr"`
-	Masters     int    `json:"master_count,omitempty"`
+	ClusterID    string `json:"cluster_id,omitempty"`
+	Name         string `json:"cluster_name,omitempty"`
+	BaseDomain   string `json:"base_domain,omitempty"`
+	MachineCIDR  string `json:"machine_cidr"`
+	ControlPlane int    `json:"controlplane_count,omitempty"`
 
-	IgnitionBootstrap string `json:"ignition_bootstrap,omitempty"`
-	IgnitionMaster    string `json:"ignition_master,omitempty"`
+	IgnitionBootstrap    string `json:"ignition_bootstrap,omitempty"`
+	IgnitionControlPlane string `json:"ignition_controlplane,omitempty"`
 
 	aws.AWS             `json:",inline"`
 	libvirt.Libvirt     `json:",inline"`
@@ -31,20 +31,20 @@ type config struct {
 
 // TFVars converts the InstallConfig and Ignition content to
 // terraform.tfvar JSON.
-func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, error) {
+func TFVars(cfg *types.InstallConfig, bootstrapIgn, controlPlaneIgn string) ([]byte, error) {
 	config := &config{
 		ClusterID:   cfg.ClusterID,
 		Name:        cfg.ObjectMeta.Name,
 		BaseDomain:  cfg.BaseDomain,
 		MachineCIDR: cfg.Networking.MachineCIDR.String(),
 
-		IgnitionMaster:    masterIgn,
-		IgnitionBootstrap: bootstrapIgn,
+		IgnitionControlPlane: controlPlaneIgn,
+		IgnitionBootstrap:    bootstrapIgn,
 	}
 
 	for _, m := range cfg.Machines {
 		switch m.Name {
-		case "master":
+		case "controlplane":
 			var replicas int
 			if m.Replicas == nil {
 				replicas = 1
@@ -52,21 +52,21 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 				replicas = int(*m.Replicas)
 			}
 
-			config.Masters += replicas
+			config.ControlPlane += replicas
 			if m.Platform.AWS != nil {
-				config.AWS.Master = aws.Master{
+				config.AWS.ControlPlane = aws.ControlPlane{
 					EC2Type:     m.Platform.AWS.InstanceType,
 					IAMRoleName: m.Platform.AWS.IAMRoleName,
-					MasterRootVolume: aws.MasterRootVolume{
+					ControlPlaneRootVolume: aws.ControlPlaneRootVolume{
 						IOPS: m.Platform.AWS.EC2RootVolume.IOPS,
 						Size: m.Platform.AWS.EC2RootVolume.Size,
 						Type: m.Platform.AWS.EC2RootVolume.Type,
 					},
 				}
 			}
-		case "worker":
+		case "compute":
 			if m.Platform.AWS != nil {
-				config.AWS.Worker = aws.Worker{
+				config.AWS.Compute = aws.Compute{
 					IAMRoleName: m.Platform.AWS.IAMRoleName,
 				}
 			}
@@ -89,19 +89,19 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 			EC2AMIOverride: ami,
 		}
 	} else if cfg.Platform.Libvirt != nil {
-		masterIPs := make([]string, len(cfg.Platform.Libvirt.MasterIPs))
-		for i, ip := range cfg.Platform.Libvirt.MasterIPs {
-			masterIPs[i] = ip.String()
+		controlPlaneIPs := make([]string, len(cfg.Platform.Libvirt.ControlPlaneIPs))
+		for i, ip := range cfg.Platform.Libvirt.ControlPlaneIPs {
+			controlPlaneIPs[i] = ip.String()
 		}
 		config.Libvirt = libvirt.Libvirt{
 			URI: cfg.Platform.Libvirt.URI,
 			Network: libvirt.Network{
 				IfName: cfg.Platform.Libvirt.Network.IfName,
 			},
-			Image:     cfg.Platform.Libvirt.DefaultMachinePlatform.Image,
-			MasterIPs: masterIPs,
+			Image:           cfg.Platform.Libvirt.DefaultMachinePlatform.Image,
+			ControlPlaneIPs: controlPlaneIPs,
 		}
-		if err := config.Libvirt.TFVars(&cfg.Networking.MachineCIDR.IPNet, config.Masters); err != nil {
+		if err := config.Libvirt.TFVars(&cfg.Networking.MachineCIDR.IPNet, config.ControlPlane); err != nil {
 			return nil, errors.Wrap(err, "failed to insert libvirt variables")
 		}
 		if err := config.Libvirt.UseCachedImage(); err != nil {
@@ -114,7 +114,7 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 		}
 		config.OpenStack.Credentials.Cloud = cfg.Platform.OpenStack.Cloud
 		config.OpenStack.ExternalNetwork = cfg.Platform.OpenStack.ExternalNetwork
-		config.OpenStack.Master.FlavorName = cfg.Platform.OpenStack.FlavorName
+		config.OpenStack.ControlPlane.FlavorName = cfg.Platform.OpenStack.FlavorName
 		config.OpenStack.TrunkSupport = cfg.Platform.OpenStack.TrunkSupport
 	}
 

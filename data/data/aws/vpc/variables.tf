@@ -20,12 +20,12 @@ variable "extra_tags" {
   default     = {}
 }
 
-variable "private_master_endpoints" {
+variable "private_controlplane_endpoints" {
   description = "If set to true, private-facing ingress resources are created."
   default     = true
 }
 
-variable "public_master_endpoints" {
+variable "public_controlplane_endpoints" {
   description = "If set to true, public-facing ingress resources are created."
   default     = true
 }

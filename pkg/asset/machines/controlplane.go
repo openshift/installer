@@ -1,10 +1,8 @@
 package machines
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"text/template"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -27,64 +25,43 @@ import (
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 )
 
-func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
-	return awstypes.MachinePool{
-		InstanceType: "m4.large",
-	}
-}
-
-func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePool {
-	return openstacktypes.MachinePool{
-		FlavorName: flavor,
-	}
-}
-
-func trunkSupportBoolean(trunkSupport string) (result bool) {
-	if trunkSupport == "1" {
-		result = true
-	} else {
-		result = false
-	}
-	return
-}
-
-// Worker generates the machinesets for `worker` machine pool.
-type Worker struct {
-	MachineSetRaw     []byte
+// ControlPlane generates the machines for the `controlplane` machine pool.
+type ControlPlane struct {
+	MachinesRaw       []byte
 	UserDataSecretRaw []byte
 }
 
-var _ asset.Asset = (*Worker)(nil)
+var _ asset.Asset = (*ControlPlane)(nil)
 
-// Name returns a human friendly name for the Worker Asset.
-func (w *Worker) Name() string {
-	return "Worker Machines"
+// Name returns a human friendly name for the ControlPlane Asset.
+func (m *ControlPlane) Name() string {
+	return "Control Plane Machines"
 }
 
 // Dependencies returns all of the dependencies directly needed by the
-// Worker asset
-func (w *Worker) Dependencies() []asset.Asset {
+// ControlPlane asset
+func (m *ControlPlane) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&machine.Worker{},
+		&machine.ControlPlane{},
 	}
 }
 
-// Generate generates the Worker asset.
-func (w *Worker) Generate(dependencies asset.Parents) error {
+// Generate generates the ControlPlane asset.
+func (m *ControlPlane) Generate(dependencies asset.Parents) error {
 	installconfig := &installconfig.InstallConfig{}
-	wign := &machine.Worker{}
-	dependencies.Get(installconfig, wign)
+	mign := &machine.ControlPlane{}
+	dependencies.Get(installconfig, mign)
 
 	var err error
-	userDataMap := map[string][]byte{"worker-user-data": wign.File.Data}
-	w.UserDataSecretRaw, err = userDataList(userDataMap)
+	userDataMap := map[string][]byte{"controlplane-user-data": mign.File.Data}
+	m.UserDataSecretRaw, err = userDataList(userDataMap)
 	if err != nil {
-		return errors.Wrap(err, "failed to create user-data secret for worker machines")
+		return errors.Wrap(err, "failed to create user-data secret for control plane machines")
 	}
 
 	ic := installconfig.Config
-	pool := workerPool(ic.Machines)
+	pool := controlPlanePool(ic.Machines)
 	switch ic.Platform.Name() {
 	case awstypes.Name:
 		mpool := defaultAWSMachinePoolPlatform()
@@ -107,38 +84,43 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		sets, err := aws.MachineSets(ic, &pool, "worker", "worker-user-data")
+		machines, err := aws.Machines(ic, &pool, "controlplane", "controlplane-user-data")
 		if err != nil {
-			return errors.Wrap(err, "failed to create worker machine objects")
+			return errors.Wrap(err, "failed to create control plane machine objects")
 		}
+		aws.ConfigControlPlane(machines, ic.ObjectMeta.Name)
 
-		list := listFromMachineSets(sets)
+		list := listFromMachines(machines)
 		raw, err := yaml.Marshal(list)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
 		}
-		w.MachineSetRaw = raw
+		m.MachinesRaw = raw
 	case libvirttypes.Name:
-		sets, err := libvirt.MachineSets(ic, &pool, "worker", "worker-user-data")
+		machines, err := libvirt.Machines(ic, &pool, "controlplane", "controlplane-user-data")
 		if err != nil {
-			return errors.Wrap(err, "failed to create worker machine objects")
+			return errors.Wrap(err, "failed to create control plane machine objects")
 		}
 
-		list := listFromMachineSets(sets)
+		list := listFromMachines(machines)
 		raw, err := yaml.Marshal(list)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
 		}
-		w.MachineSetRaw = raw
+		m.MachinesRaw = raw
 	case nonetypes.Name:
 	case openstacktypes.Name:
-		numOfWorkers := int64(0)
+		numOfControlPlane := int64(0)
 		if pool.Replicas != nil {
-			numOfWorkers = *pool.Replicas
+			numOfControlPlane = *pool.Replicas
 		}
-		config := openstack.Config{
+		instances := []string{}
+		for i := 0; i < int(numOfControlPlane); i++ {
+			instances = append(instances, fmt.Sprintf("controlplane-%d", i))
+		}
+		config := openstack.ControlPlaneConfig{
 			ClusterName: ic.ObjectMeta.Name,
-			Replicas:    numOfWorkers,
+			Instances:   instances,
 			Image:       ic.Platform.OpenStack.BaseImage,
 			Region:      ic.Platform.OpenStack.Region,
 			Machine:     defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName),
@@ -153,31 +135,23 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		config.Machine.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 		config.Machine.Set(pool.Platform.OpenStack)
 
-		w.MachineSetRaw = applyTemplateData(openstack.WorkerMachineSetTmpl, config)
+		m.MachinesRaw = applyTemplateData(openstack.ControlPlaneMachinesTmpl, config)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
 	return nil
 }
 
-func workerPool(pools []types.MachinePool) types.MachinePool {
+func controlPlanePool(pools []types.MachinePool) types.MachinePool {
 	for idx, pool := range pools {
-		if pool.Name == "worker" {
+		if pool.Name == "controlplane" {
 			return pools[idx]
 		}
 	}
 	return types.MachinePool{}
 }
 
-func applyTemplateData(template *template.Template, templateData interface{}) []byte {
-	buf := &bytes.Buffer{}
-	if err := template.Execute(buf, templateData); err != nil {
-		panic(err)
-	}
-	return buf.Bytes()
-}
-
-func listFromMachineSets(objs []clusterapi.MachineSet) *metav1.List {
+func listFromMachines(objs []clusterapi.Machine) *metav1.List {
 	list := &metav1.List{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",

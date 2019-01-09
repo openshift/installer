@@ -22,7 +22,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "minimal",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name: "controlplane",
 			},
 			platform: "aws",
 			valid:    true,
@@ -38,7 +38,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "invalid replicas",
 			pool: &types.MachinePool{
-				Name:     "master",
+				Name:     "controlplane",
 				Replicas: func(x int64) *int64 { return &x }(-1),
 			},
 			platform: "aws",
@@ -47,7 +47,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "valid aws",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name: "controlplane",
 				Platform: types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{},
 				},
@@ -58,7 +58,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "invalid aws",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name: "controlplane",
 				Platform: types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{
 						EC2RootVolume: aws.EC2RootVolume{
@@ -73,7 +73,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "valid libvirt",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name: "controlplane",
 				Platform: types.MachinePoolPlatform{
 					Libvirt: &libvirt.MachinePool{},
 				},
@@ -84,7 +84,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "invalid libvirt",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name: "controlplane",
 				Platform: types.MachinePoolPlatform{
 					Libvirt: &libvirt.MachinePool{
 						Image: "bad-image",
@@ -97,7 +97,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "valid openstack",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name: "controlplane",
 				Platform: types.MachinePoolPlatform{
 					OpenStack: &openstack.MachinePool{},
 				},
@@ -108,7 +108,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "mis-matched platform",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name: "controlplane",
 				Platform: types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{},
 				},
@@ -119,7 +119,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "multiple platforms",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name: "controlplane",
 				Platform: types.MachinePoolPlatform{
 					AWS:     &aws.MachinePool{},
 					Libvirt: &libvirt.MachinePool{},

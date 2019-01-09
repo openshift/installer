@@ -36,10 +36,10 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		Machines: []types.MachinePool{
 			{
-				Name: "master",
+				Name: "controlplane",
 			},
 			{
-				Name: "worker",
+				Name: "compute",
 			},
 		},
 		Platform: types.Platform{
@@ -144,41 +144,41 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.clusterNetworks\[0]\.hostSubnetLength: Invalid value: 0x9: cluster network host subnet length must not be greater than CIDR length$`,
 		},
 		{
-			name: "missing master machine pool",
+			name: "missing controlplane machine pool",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Machines = []types.MachinePool{
 					{
-						Name: "worker",
+						Name: "compute",
 					},
 				}
 				return c
 			}(),
-			expectedError: `^machines: Required value: must specify a machine pool with a name of 'master'$`,
+			expectedError: `^machines: Required value: must specify a machine pool with a name of 'controlplane'$`,
 		},
 		{
-			name: "missing worker machine pool",
+			name: "missing compute machine pool",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Machines = []types.MachinePool{
 					{
-						Name: "master",
+						Name: "controlplane",
 					},
 				}
 				return c
 			}(),
-			expectedError: `^machines: Required value: must specify a machine pool with a name of 'worker'$`,
+			expectedError: `^machines: Required value: must specify a machine pool with a name of 'compute'$`,
 		},
 		{
 			name: "duplicate machine pool",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Machines = append(c.Machines, types.MachinePool{
-					Name: "master",
+					Name: "controlplane",
 				})
 				return c
 			}(),
-			expectedError: `^machines\[2]: Duplicate value: types\.MachinePool{Name:"master", Replicas:\(\*int64\)\(nil\), Platform:types\.MachinePoolPlatform{AWS:\(\*aws\.MachinePool\)\(nil\), Libvirt:\(\*libvirt\.MachinePool\)\(nil\), OpenStack:\(\*openstack\.MachinePool\)\(nil\)}}$`,
+			expectedError: `^machines\[2]: Duplicate value: types\.MachinePool{Name:"controlplane", Replicas:\(\*int64\)\(nil\), Platform:types\.MachinePoolPlatform{AWS:\(\*aws\.MachinePool\)\(nil\), Libvirt:\(\*libvirt\.MachinePool\)\(nil\), OpenStack:\(\*openstack\.MachinePool\)\(nil\)}}$`,
 		},
 		{
 			name: "invalid machine pool",
@@ -189,7 +189,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				})
 				return c
 			}(),
-			expectedError: `^machines\[2]\.name: Unsupported value: "other": supported values: "master", "worker"$`,
+			expectedError: `^machines\[2]\.name: Unsupported value: "other": supported values: "compute", "controlplane"$`,
 		},
 		{
 			name: "missing platform",

@@ -138,7 +138,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		serviceServingCA,
 	)
 
-	etcdEndpointHostnames := make([]string, installConfig.Config.MasterCount())
+	etcdEndpointHostnames := make([]string, installConfig.Config.ControlPlaneCount())
 	for i := range etcdEndpointHostnames {
 		etcdEndpointHostnames[i] = fmt.Sprintf("%s-etcd-%d", installConfig.Config.ObjectMeta.Name, i)
 	}

@@ -29,7 +29,7 @@ type bootkubeTemplateData struct {
 	RootCaCert                      string
 	ServiceServingCaCert            string
 	ServiceServingCaKey             string
-	WorkerIgnConfig                 string
+	ComputeIgnConfig                string
 	CVOClusterID                    string
 	EtcdEndpointHostnames           []string
 	EtcdEndpointDNSSuffix           string

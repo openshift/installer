@@ -16,7 +16,7 @@ variable "external_network" {
   default     = ""
 }
 
-variable "masters_count" {
+variable "controlplane_count" {
   type = "string"
 }
 

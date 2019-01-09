@@ -34,7 +34,7 @@ func (c *ClusterK8sIO) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the Worker asset.
+// Generate generates the Compute asset.
 func (c *ClusterK8sIO) Generate(dependencies asset.Parents) error {
 	installconfig := &installconfig.InstallConfig{}
 	dependencies.Get(installconfig)

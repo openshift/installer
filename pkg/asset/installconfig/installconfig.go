@@ -88,16 +88,16 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		PullSecret: pullSecret.PullSecret,
 	}
 
-	numberOfMasters := int64(3)
-	numberOfWorkers := int64(3)
+	numberOfControlPlane := int64(3)
+	numberOfCompute := int64(3)
 	switch {
 	case platform.AWS != nil:
 		a.Config.AWS = platform.AWS
 	case platform.Libvirt != nil:
 		a.Config.Libvirt = platform.Libvirt
 		a.Config.Networking.MachineCIDR = *libvirt.DefaultMachineCIDR
-		numberOfMasters = 1
-		numberOfWorkers = 1
+		numberOfControlPlane = 1
+		numberOfCompute = 1
 	case platform.None != nil:
 		a.Config.None = platform.None
 	case platform.OpenStack != nil:
@@ -108,12 +108,12 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 
 	a.Config.Machines = []types.MachinePool{
 		{
-			Name:     "master",
-			Replicas: func(x int64) *int64 { return &x }(numberOfMasters),
+			Name:     "controlplane",
+			Replicas: func(x int64) *int64 { return &x }(numberOfControlPlane),
 		},
 		{
-			Name:     "worker",
-			Replicas: func(x int64) *int64 { return &x }(numberOfWorkers),
+			Name:     "compute",
+			Replicas: func(x int64) *int64 { return &x }(numberOfCompute),
 		},
 	}
 

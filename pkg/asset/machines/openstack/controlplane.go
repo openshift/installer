@@ -7,8 +7,8 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
-// MasterConfig is used to generate the machine.
-type MasterConfig struct {
+// ControlPlaneConfig is used to generate the machine.
+type ControlPlaneConfig struct {
 	ClusterName string
 	Instances   []string
 	Image       string
@@ -18,8 +18,8 @@ type MasterConfig struct {
 	Trunk       bool
 }
 
-// MasterMachinesTmpl is the template for master machines.
-var MasterMachinesTmpl = template.Must(template.New("openstack-master-machines").Parse(`
+// ControlPlaneMachinesTmpl is the template for control plane machines.
+var ControlPlaneMachinesTmpl = template.Must(template.New("openstack-controlplane-machines").Parse(`
 {{- $c := . -}}
 kind: List
 apiVersion: v1
@@ -31,12 +31,12 @@ items:
 - apiVersion: cluster.k8s.io/v1alpha1
   kind: Machine
   metadata:
-    name: {{$c.ClusterName}}-master-{{$index}}
+    name: {{$c.ClusterName}}-controlplane-{{$index}}
     namespace: openshift-cluster-api
     labels:
       sigs.k8s.io/cluster-api-cluster: {{$c.ClusterName}}
-      sigs.k8s.io/cluster-api-machine-role: master
-      sigs.k8s.io/cluster-api-machine-type: master
+      sigs.k8s.io/cluster-api-machine-role: controlplane
+      sigs.k8s.io/cluster-api-machine-type: controlplane
   spec:
     providerSpec:
       value:
@@ -51,7 +51,7 @@ items:
           filters:
           - name: "tag:Name"
             values:
-            - "{{$c.ClusterName}}-master-*"
+            - "{{$c.ClusterName}}-controlplane-*"
         tags:
 {{- range $key,$value := $c.Tags}}
           - name: "{{$key}}"
@@ -61,9 +61,9 @@ items:
           - filters:
             - name: "tag:Name"
               values:
-              - "{{$c.ClusterName}}_master_sg"
+              - "{{$c.ClusterName}}_controlplane_sg"
         userDataSecret:
-          name: master-user-data
+          name: controlplane-user-data
         trunk: {{$c.Trunk}}
     versions:
       kubelet: ""

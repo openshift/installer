@@ -20,6 +20,6 @@ type Platform struct {
 	// Network
 	Network Network `json:"network"`
 
-	// MasterIPs
-	MasterIPs []net.IP `json:"masterIPs,omitempty"`
+	// ControlPlaneIPs
+	ControlPlaneIPs []net.IP `json:"controlPlaneIPs,omitempty"`
 }

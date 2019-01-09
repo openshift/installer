@@ -29,16 +29,16 @@ resource "aws_route" "igw_route" {
   gateway_id             = "${aws_internet_gateway.igw.id}"
 }
 
-resource "aws_subnet" "master_subnet" {
+resource "aws_subnet" "controlplane_subnet" {
   count  = "${local.new_az_count}"
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
-  cidr_block = "${cidrsubnet(local.new_master_cidr_range, 3, count.index)}"
+  cidr_block = "${cidrsubnet(local.new_controlplane_cidr_range, 3, count.index)}"
 
   availability_zone = "${local.new_subnet_azs[count.index]}"
 
   tags = "${merge(map(
-    "Name", "${var.cluster_name}-master-${local.new_subnet_azs[count.index]}",
+    "Name", "${var.cluster_name}-controlplane-${local.new_subnet_azs[count.index]}",
       "kubernetes.io/cluster/${var.cluster_name}", "shared",
       "openshiftClusterID", "${var.cluster_id}"
     ), var.extra_tags)}"
@@ -47,7 +47,7 @@ resource "aws_subnet" "master_subnet" {
 resource "aws_route_table_association" "route_net" {
   count          = "${local.new_az_count}"
   route_table_id = "${aws_route_table.default.id}"
-  subnet_id      = "${aws_subnet.master_subnet.*.id[count.index]}"
+  subnet_id      = "${aws_subnet.controlplane_subnet.*.id[count.index]}"
 }
 
 resource "aws_eip" "nat_eip" {
@@ -67,7 +67,7 @@ resource "aws_eip" "nat_eip" {
 resource "aws_nat_gateway" "nat_gw" {
   count         = "${local.new_az_count}"
   allocation_id = "${aws_eip.nat_eip.*.id[count.index]}"
-  subnet_id     = "${aws_subnet.master_subnet.*.id[count.index]}"
+  subnet_id     = "${aws_subnet.controlplane_subnet.*.id[count.index]}"
 
   tags = "${merge(map(
       "openshiftClusterID", "${var.cluster_id}"

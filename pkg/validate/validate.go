@@ -93,7 +93,7 @@ func ClusterName(v string) error {
 	return validateSubdomain(v)
 }
 
-// SubnetCIDR checks if the given IP net is a valid CIDR for a master nodes or worker nodes subnet and returns an error if not.
+// SubnetCIDR checks if the given IP net is a valid CIDR for a control plane nodes or compute nodes subnet and returns an error if not.
 func SubnetCIDR(cidr *net.IPNet) error {
 	if cidr.IP.To4() == nil {
 		return errors.New("must use IPv4")

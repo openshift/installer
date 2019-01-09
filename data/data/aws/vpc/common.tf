@@ -17,10 +17,10 @@ locals {
   vpc_id = "${aws_vpc.new_vpc.id}"
 
   // When referencing the _ids arrays or data source arrays via count = , always use the *_count variable rather than taking the length of the list
-  worker_subnet_ids   = "${aws_subnet.worker_subnet.*.id}"
-  master_subnet_ids   = "${aws_subnet.master_subnet.*.id}"
-  worker_subnet_count = "${local.new_az_count}"
-  master_subnet_count = "${local.new_az_count}"
+  compute_subnet_ids        = "${aws_subnet.compute_subnet.*.id}"
+  controlplane_subnet_ids   = "${aws_subnet.controlplane_subnet.*.id}"
+  compute_subnet_count      = "${local.new_az_count}"
+  controlplane_subnet_count = "${local.new_az_count}"
 }
 
 # all data sources should be input variable-agnostic and used as canonical source for querying "state of resources" and building outputs

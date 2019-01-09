@@ -1,7 +1,7 @@
 resource "aws_lb" "api_internal" {
   name                             = "${var.cluster_name}-int"
   load_balancer_type               = "network"
-  subnets                          = ["${local.master_subnet_ids}"]
+  subnets                          = ["${local.controlplane_subnet_ids}"]
   internal                         = true
   enable_cross_zone_load_balancing = true
   idle_timeout                     = 3600
@@ -15,7 +15,7 @@ resource "aws_lb" "api_internal" {
 resource "aws_lb" "api_external" {
   name                             = "${var.cluster_name}-ext"
   load_balancer_type               = "network"
-  subnets                          = ["${local.master_subnet_ids}"]
+  subnets                          = ["${local.controlplane_subnet_ids}"]
   internal                         = false
   enable_cross_zone_load_balancing = true
   idle_timeout                     = 3600
@@ -115,7 +115,7 @@ resource "aws_lb_listener" "api_internal_services" {
 }
 
 resource "aws_lb_listener" "api_external_api" {
-  count = "${var.public_master_endpoints ? 1 : 0}"
+  count = "${var.public_controlplane_endpoints ? 1 : 0}"
 
   load_balancer_arn = "${aws_lb.api_external.arn}"
   protocol          = "TCP"

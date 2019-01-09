@@ -9,11 +9,11 @@ import (
 
 // Libvirt encompasses configuration specific to libvirt.
 type Libvirt struct {
-	URI         string `json:"libvirt_uri,omitempty"`
-	Image       string `json:"os_image,omitempty"`
-	Network     `json:",inline"`
-	MasterIPs   []string `json:"libvirt_master_ips,omitempty"`
-	BootstrapIP string   `json:"libvirt_bootstrap_ip,omitempty"`
+	URI             string `json:"libvirt_uri,omitempty"`
+	Image           string `json:"os_image,omitempty"`
+	Network         `json:",inline"`
+	ControlPlaneIPs []string `json:"libvirt_controlplane_ips,omitempty"`
+	BootstrapIP     string   `json:"libvirt_bootstrap_ip,omitempty"`
 }
 
 // Network describes a libvirt network configuration.
@@ -22,7 +22,7 @@ type Network struct {
 }
 
 // TFVars fills in computed Terraform variables.
-func (l *Libvirt) TFVars(machineCIDR *net.IPNet, masterCount int) error {
+func (l *Libvirt) TFVars(machineCIDR *net.IPNet, controlPlaneCount int) error {
 	if l.BootstrapIP == "" {
 		ip, err := cidr.Host(machineCIDR, 10)
 		if err != nil {
@@ -31,13 +31,13 @@ func (l *Libvirt) TFVars(machineCIDR *net.IPNet, masterCount int) error {
 		l.BootstrapIP = ip.String()
 	}
 
-	if len(l.MasterIPs) > 0 {
-		if len(l.MasterIPs) != masterCount {
-			return fmt.Errorf("length of MasterIPs doesn't match master count")
+	if len(l.ControlPlaneIPs) > 0 {
+		if len(l.ControlPlaneIPs) != controlPlaneCount {
+			return fmt.Errorf("length of ControlPlaneIPs doesn't match control plane count")
 		}
 	} else {
-		if ips, err := generateIPs("master", machineCIDR, masterCount, 11); err == nil {
-			l.MasterIPs = ips
+		if ips, err := generateIPs("controlplane", machineCIDR, controlPlaneCount, 11); err == nil {
+			l.ControlPlaneIPs = ips
 		} else {
 			return err
 		}

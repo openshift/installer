@@ -1,8 +1,10 @@
 package machines
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"text/template"
 	"time"
 
 	"github.com/ghodss/yaml"
@@ -25,43 +27,64 @@ import (
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 )
 
-// Master generates the machines for the `master` machine pool.
-type Master struct {
-	MachinesRaw       []byte
+func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
+	return awstypes.MachinePool{
+		InstanceType: "m4.large",
+	}
+}
+
+func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePool {
+	return openstacktypes.MachinePool{
+		FlavorName: flavor,
+	}
+}
+
+func trunkSupportBoolean(trunkSupport string) (result bool) {
+	if trunkSupport == "1" {
+		result = true
+	} else {
+		result = false
+	}
+	return
+}
+
+// Compute generates the machinesets for `compute` machine pool.
+type Compute struct {
+	MachineSetRaw     []byte
 	UserDataSecretRaw []byte
 }
 
-var _ asset.Asset = (*Master)(nil)
+var _ asset.Asset = (*Compute)(nil)
 
-// Name returns a human friendly name for the Master Asset.
-func (m *Master) Name() string {
-	return "Master Machines"
+// Name returns a human friendly name for the Compute Asset.
+func (w *Compute) Name() string {
+	return "Compute Machines"
 }
 
 // Dependencies returns all of the dependencies directly needed by the
-// Master asset
-func (m *Master) Dependencies() []asset.Asset {
+// Compute asset
+func (w *Compute) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&machine.Master{},
+		&machine.Compute{},
 	}
 }
 
-// Generate generates the Master asset.
-func (m *Master) Generate(dependencies asset.Parents) error {
+// Generate generates the Compute asset.
+func (w *Compute) Generate(dependencies asset.Parents) error {
 	installconfig := &installconfig.InstallConfig{}
-	mign := &machine.Master{}
-	dependencies.Get(installconfig, mign)
+	wign := &machine.Compute{}
+	dependencies.Get(installconfig, wign)
 
 	var err error
-	userDataMap := map[string][]byte{"master-user-data": mign.File.Data}
-	m.UserDataSecretRaw, err = userDataList(userDataMap)
+	userDataMap := map[string][]byte{"compute-user-data": wign.File.Data}
+	w.UserDataSecretRaw, err = userDataList(userDataMap)
 	if err != nil {
-		return errors.Wrap(err, "failed to create user-data secret for master machines")
+		return errors.Wrap(err, "failed to create user-data secret for compute machines")
 	}
 
 	ic := installconfig.Config
-	pool := masterPool(ic.Machines)
+	pool := computePool(ic.Machines)
 	switch ic.Platform.Name() {
 	case awstypes.Name:
 		mpool := defaultAWSMachinePoolPlatform()
@@ -84,43 +107,38 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		machines, err := aws.Machines(ic, &pool, "master", "master-user-data")
+		sets, err := aws.MachineSets(ic, &pool, "compute", "compute-user-data")
 		if err != nil {
-			return errors.Wrap(err, "failed to create master machine objects")
+			return errors.Wrap(err, "failed to create compute machine objects")
 		}
-		aws.ConfigMasters(machines, ic.ObjectMeta.Name)
 
-		list := listFromMachines(machines)
+		list := listFromMachineSets(sets)
 		raw, err := yaml.Marshal(list)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
 		}
-		m.MachinesRaw = raw
+		w.MachineSetRaw = raw
 	case libvirttypes.Name:
-		machines, err := libvirt.Machines(ic, &pool, "master", "master-user-data")
+		sets, err := libvirt.MachineSets(ic, &pool, "compute", "compute-user-data")
 		if err != nil {
-			return errors.Wrap(err, "failed to create master machine objects")
+			return errors.Wrap(err, "failed to create compute machine objects")
 		}
 
-		list := listFromMachines(machines)
+		list := listFromMachineSets(sets)
 		raw, err := yaml.Marshal(list)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
 		}
-		m.MachinesRaw = raw
+		w.MachineSetRaw = raw
 	case nonetypes.Name:
 	case openstacktypes.Name:
-		numOfMasters := int64(0)
+		numCompute := int64(0)
 		if pool.Replicas != nil {
-			numOfMasters = *pool.Replicas
+			numCompute = *pool.Replicas
 		}
-		instances := []string{}
-		for i := 0; i < int(numOfMasters); i++ {
-			instances = append(instances, fmt.Sprintf("master-%d", i))
-		}
-		config := openstack.MasterConfig{
+		config := openstack.Config{
 			ClusterName: ic.ObjectMeta.Name,
-			Instances:   instances,
+			Replicas:    numCompute,
 			Image:       ic.Platform.OpenStack.BaseImage,
 			Region:      ic.Platform.OpenStack.Region,
 			Machine:     defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName),
@@ -135,23 +153,31 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		config.Machine.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 		config.Machine.Set(pool.Platform.OpenStack)
 
-		m.MachinesRaw = applyTemplateData(openstack.MasterMachinesTmpl, config)
+		w.MachineSetRaw = applyTemplateData(openstack.ComputeMachineSetTmpl, config)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
 	return nil
 }
 
-func masterPool(pools []types.MachinePool) types.MachinePool {
+func computePool(pools []types.MachinePool) types.MachinePool {
 	for idx, pool := range pools {
-		if pool.Name == "master" {
+		if pool.Name == "compute" {
 			return pools[idx]
 		}
 	}
 	return types.MachinePool{}
 }
 
-func listFromMachines(objs []clusterapi.Machine) *metav1.List {
+func applyTemplateData(template *template.Template, templateData interface{}) []byte {
+	buf := &bytes.Buffer{}
+	if err := template.Execute(buf, templateData); err != nil {
+		panic(err)
+	}
+	return buf.Bytes()
+}
+
+func listFromMachineSets(objs []clusterapi.MachineSet) *metav1.List {
 	list := &metav1.List{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",

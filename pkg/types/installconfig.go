@@ -56,11 +56,12 @@ type InstallConfig struct {
 	PullSecret string `json:"pullSecret"`
 }
 
-// MasterCount returns the number of replicas in the master machine pool,
+// ControlPlaneCount returns the number of replicas in the control plane machine pool,
 // defaulting to one if no machine pool was found.
-func (c *InstallConfig) MasterCount() int {
+func (c *InstallConfig) ControlPlaneCount() int {
+	// SELFNOTE CHANGE TO CONTROL PLANE IN CONFIG
 	for _, m := range c.Machines {
-		if m.Name == "master" && m.Replicas != nil {
+		if m.Name == "controlplane" && m.Replicas != nil {
 			return int(*m.Replicas)
 		}
 	}

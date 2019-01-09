@@ -10,12 +10,12 @@ The IP address space from which to assign machine IPs.
 EOF
 }
 
-variable "master_count" {
+variable "controlplane_count" {
   type    = "string"
   default = "1"
 
   description = <<EOF
-The number of master nodes to be created.
+The number of control plane nodes to be created.
 This applies only to cloud platforms.
 EOF
 }
@@ -45,7 +45,7 @@ Note: This field MUST be set manually prior to creating the cluster.
 EOF
 }
 
-variable "ignition_master" {
+variable "ignition_controlplane" {
   type    = "string"
   default = ""
 

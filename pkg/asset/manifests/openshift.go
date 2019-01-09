@@ -46,8 +46,8 @@ func (o *Openshift) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
 		&ClusterK8sIO{},
-		&machines.Worker{},
-		&machines.Master{},
+		&machines.Compute{},
+		&machines.ControlPlane{},
 		&password.KubeadminPassword{},
 
 		&openshift.BindingDiscovery{},
@@ -62,9 +62,9 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	kubeadminPassword := &password.KubeadminPassword{}
 	clusterk8sio := &ClusterK8sIO{}
-	worker := &machines.Worker{}
-	master := &machines.Master{}
-	dependencies.Get(installConfig, clusterk8sio, worker, master, kubeadminPassword)
+	compute := &machines.Compute{}
+	controlplane := &machines.ControlPlane{}
+	dependencies.Get(installConfig, clusterk8sio, compute, controlplane, kubeadminPassword)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -121,13 +121,13 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		kubeadminPasswordSecret,
 		roleCloudCredsSecretReader)
 	assetData := map[string][]byte{
-		"99_binding-discovery.yaml":                             []byte(bindingDiscovery.Files()[0].Data),
-		"99_kubeadmin-password-secret.yaml":                     applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
-		"99_openshift-cluster-api_cluster.yaml":                 clusterk8sio.Raw,
-		"99_openshift-cluster-api_master-machines.yaml":         master.MachinesRaw,
-		"99_openshift-cluster-api_master-user-data-secret.yaml": master.UserDataSecretRaw,
-		"99_openshift-cluster-api_worker-machineset.yaml":       worker.MachineSetRaw,
-		"99_openshift-cluster-api_worker-user-data-secret.yaml": worker.UserDataSecretRaw,
+		"99_binding-discovery.yaml":                                   []byte(bindingDiscovery.Files()[0].Data),
+		"99_kubeadmin-password-secret.yaml":                           applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
+		"99_openshift-cluster-api_cluster.yaml":                       clusterk8sio.Raw,
+		"99_openshift-cluster-api_controlplane-machines.yaml":         controlplane.MachinesRaw,
+		"99_openshift-cluster-api_controlplane-user-data-secret.yaml": controlplane.UserDataSecretRaw,
+		"99_openshift-cluster-api_compute-machineset.yaml":            compute.MachineSetRaw,
+		"99_openshift-cluster-api_compute-user-data-secret.yaml":      compute.UserDataSecretRaw,
 	}
 
 	switch platform {

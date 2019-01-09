@@ -17,8 +17,8 @@ import (
 
 var (
 	validMachinePoolNames = map[string]bool{
-		"master": true,
-		"worker": true,
+		"controlplane": true,
+		"compute":      true,
 	}
 
 	validMachinePoolNameValues = func() []string {

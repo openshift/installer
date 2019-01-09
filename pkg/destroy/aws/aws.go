@@ -738,7 +738,7 @@ func deleteInstanceProfile(instanceProfileID *string, iamClient *iam.IAM, logger
 	return nil
 }
 
-// tryDeleteRoleProfileByName attempts to delete roles and profiles with given name ($CLUSTER_NAME-bootstrap|master|worker-role|profile)
+// tryDeleteRoleProfileByName attempts to delete roles and profiles with given name ($CLUSTER_NAME-bootstrap|controlplane|compute-role|profile)
 func tryDeleteRoleProfileByName(roleName string, profileName string, session *session.Session, logger log.FieldLogger) error {
 	logger.Debugf("deleting role: %s", roleName)
 	describeRoleInput := iam.GetRoleInput{}
@@ -800,16 +800,16 @@ func tryDeleteRoleProfileByName(roleName string, profileName string, session *se
 }
 
 // deleteIAMresources will delete any IAM resources created by the installer that are not associated with a running instance
-// Currently openshift/installer creates 3 roles per cluster, 1 for master|worker|bootstrap and identified by the
+// Currently openshift/installer creates 3 roles per cluster, 1 for controlplane|compute|bootstrap and identified by the
 // cluster name used to install the cluster.
 func deleteIAMresources(session *session.Session, filter Filter, clusterName string, logger log.FieldLogger) (bool, error) {
 	logger.Debugf("Deleting IAM resources (%s)", filter)
 	defer logger.Debugf("Exiting deleting IAM resources (%s)", filter)
-	installerType := []string{"master", "worker", "bootstrap"}
+	installerType := []string{"controlplane", "compute", "bootstrap"}
 	for _, t := range installerType {
 		// Naming of IAM resources expected from https://github.com/openshift/installer as follows:
-		// $CLUSTER_NAME-master-role     $CLUSTER_NAME-worker-role    $CLUSTER_NAME-bootstrap-role
-		// $CLUSTER_NAME-master-profile  $CLUSTER_NAME-worker-profile $CLUSTER_NAME-bootstrap-profile
+		// $CLUSTER_NAME-controlplane-role     $CLUSTER_NAME-compute-role    $CLUSTER_NAME-bootstrap-role
+		// $CLUSTER_NAME-controlplane-profile  $CLUSTER_NAME-compute-profile $CLUSTER_NAME-bootstrap-profile
 		roleName := fmt.Sprintf("%s-%s-role", clusterName, t)
 		instanceProfileName := fmt.Sprintf("%s-%s-profile", clusterName, t)
 		if err := tryDeleteRoleProfileByName(roleName, instanceProfileName, session, logger); err != nil {
