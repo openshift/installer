@@ -54,6 +54,9 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	)
 
 	a.Config = &types.InstallConfig{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1beta1",
+		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: clusterName.ClusterName,
 		},
