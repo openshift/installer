@@ -1,6 +1,6 @@
 locals {
-  new_worker_cidr_range = "${cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block,1,1)}"
-  new_master_cidr_range = "${cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block,1,0)}"
+  new_private_cidr_range = "${cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block,1,1)}"
+  new_master_cidr_range  = "${cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block,1,0)}"
 }
 
 resource "aws_vpc" "new_vpc" {
