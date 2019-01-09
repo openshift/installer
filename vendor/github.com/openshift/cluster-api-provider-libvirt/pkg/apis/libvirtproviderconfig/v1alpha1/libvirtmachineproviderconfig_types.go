@@ -5,6 +5,15 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+// Annotation constants
+const (
+	// ClusterIDLabel is the label that a machineset must have to identify the
+	// cluster to which it belongs.
+	ClusterIDLabel   = "sigs.k8s.io/cluster-api-cluster"
+	MachineRoleLabel = "sigs.k8s.io/cluster-api-machine-role"
+	MachineTypeLabel = "sigs.k8s.io/cluster-api-machine-type"
+)
+
 // LibvirtMachineProviderConfig is the type that will be embedded in a Machine.Spec.ProviderConfig field
 // for an Libvirt instance.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

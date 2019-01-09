@@ -389,11 +389,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2a801f8e2e0d98ee3221f6e82522e8965240dd98cb97cdacf9410c651af8bf7e"
+  digest = "1:0889fa501ce44d01602f3721bbc52529bfe35469410b34d117c45916d43b1b22"
   name = "github.com/openshift/cluster-api-provider-libvirt"
   packages = ["pkg/apis/libvirtproviderconfig/v1alpha1"]
   pruneopts = "NUT"
-  revision = "223f16433e235d5b4fce8f332abc6abcd50acaf4"
+  revision = "da6aa0a3931761842527816a79f1072129f2cea3"
 
 [[projects]]
   digest = "1:f9c1fc8da2b44ba323ec3b338f0da9f375e26c787bc3a6ea241f9cb3f191cb62"
@@ -794,6 +794,14 @@
   version = "v9.0.0"
 
 [[projects]]
+  digest = "1:9cc257b3c9ff6a0158c9c661ab6eebda1fe8a4a4453cd5c4044dc9a2ebfb992b"
+  name = "k8s.io/klog"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "a5bc97fbc634d635061f3146511332c7e313a55a"
+  version = "v0.1.0"
+
+[[projects]]
   digest = "1:ff54706d46de40c865b5fcfc4bde1087c02510cd12e0150de8e405ab427d9907"
   name = "k8s.io/utils"
   packages = ["pointer"]
@@ -802,22 +810,22 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a040a17df839b73c811d0554f4c74cd90e473a869f301da6d42df24097f1a89d"
+  digest = "1:032b67ae5a3cd593171814b4f6e659831d4de7885e4aedae9dfb9f2b89d612c0"
   name = "sigs.k8s.io/cluster-api"
   packages = [
     "pkg/apis/cluster/common",
     "pkg/apis/cluster/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "fee897706a82938117591515fbd4e85e667299a7"
+  revision = "59a129bbcaf29aa4354da68a7a8acd2085e4a43a"
 
 [[projects]]
   branch = "master"
-  digest = "1:70e659b4cad21aaf34189b548b3c050783713330972b54fe30959f2b43b0ef78"
+  digest = "1:8c0b41a3bc962842dffadd9e4c2d027fbc410a814995e669c9684beaa010821a"
   name = "sigs.k8s.io/cluster-api-provider-aws"
   packages = ["pkg/apis/awsproviderconfig/v1alpha1"]
   pruneopts = "NUT"
-  revision = "e6986093d1fbac2084c50b04fe2f78125ffca582"
+  revision = "67b2fa68f05c1972b069e3bccf4c29884511bf82"
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
 
 [[projects]]

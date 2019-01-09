@@ -38,7 +38,7 @@ items:
       sigs.k8s.io/cluster-api-machine-role: master
       sigs.k8s.io/cluster-api-machine-type: master
   spec:
-    providerConfig:
+    providerSpec:
       value:
         apiVersion: openstack.cluster.k8s.io/v1alpha1
         kind: OpenStackMachineProviderConfig
