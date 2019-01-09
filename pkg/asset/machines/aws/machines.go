@@ -56,7 +56,7 @@ func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDa
 				},
 			},
 			Spec: clusterapi.MachineSpec{
-				ProviderConfig: clusterapi.ProviderConfig{
+				ProviderSpec: clusterapi.ProviderSpec{
 					Value: &runtime.RawExtension{Object: provider},
 				},
 				// we don't need to set Versions, because we control those via operators.
@@ -122,9 +122,9 @@ func tagsFromUserTags(clusterID, clusterName string, usertags map[string]string)
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
 func ConfigMasters(machines []clusterapi.Machine, clusterName string) {
 	for _, machine := range machines {
-		providerConfig := machine.Spec.ProviderConfig.Value.Object.(*awsprovider.AWSMachineProviderConfig)
-		providerConfig.PublicIP = pointer.BoolPtr(true)
-		providerConfig.LoadBalancers = []awsprovider.LoadBalancerReference{
+		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
+		providerSpec.PublicIP = pointer.BoolPtr(true)
+		providerSpec.LoadBalancers = []awsprovider.LoadBalancerReference{
 			{
 				Name: fmt.Sprintf("%s-ext", clusterName),
 				Type: awsprovider.NetworkLoadBalancerType,

@@ -75,7 +75,7 @@ func MachineSets(config *types.InstallConfig, pool *types.MachinePool, role, use
 						},
 					},
 					Spec: clusterapi.MachineSpec{
-						ProviderConfig: clusterapi.ProviderConfig{
+						ProviderSpec: clusterapi.ProviderSpec{
 							Value: &runtime.RawExtension{Object: provider},
 						},
 						// we don't need to set Versions, because we control those via cluster operators.

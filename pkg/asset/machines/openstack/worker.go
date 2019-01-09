@@ -43,7 +43,7 @@ spec:
         sigs.k8s.io/cluster-api-machine-role: worker
         sigs.k8s.io/cluster-api-machine-type: worker
     spec:
-      providerConfig:
+      providerSpec:
         value:
           apiVersion: openstack.cluster.k8s.io/v1alpha1
           kind: OpenStackMachineProviderConfig
