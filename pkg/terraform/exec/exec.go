@@ -9,11 +9,13 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"time"
 
 	"github.com/hashicorp/go-plugin"
 	"github.com/hashicorp/logutils"
 	"github.com/hashicorp/terraform/command"
 	"github.com/hashicorp/terraform/helper/logging"
+	"github.com/hashicorp/terraform/terraform"
 	"github.com/mitchellh/cli"
 )
 
@@ -32,6 +34,10 @@ var commands = map[string]cmdFunc{
 }
 
 func runner(cmd string, dir string, args []string, stdout, stderr io.Writer) int {
+	return runnerWithHooks(cmd, dir, args, stdout, stderr, nil)
+}
+
+func runnerWithHooks(cmd string, dir string, args []string, stdout, stderr io.Writer, hooks []terraform.Hook) int {
 	lf := ioutil.Discard
 	if level := logging.LogLevel(); level != "" {
 		lf = &logutils.LevelFilter{
@@ -63,6 +69,7 @@ func runner(cmd string, dir string, args []string, stdout, stderr io.Writer) int
 		},
 
 		OverrideDataDir: dir,
+		ExtraHooks:      hooks,
 
 		ShutdownCh: sdCh,
 	}
@@ -92,6 +99,29 @@ func runner(cmd string, dir string, args []string, stdout, stderr io.Writer) int
 // Apply is wrapper around `terraform apply` subcommand.
 func Apply(datadir string, args []string, stdout, stderr io.Writer) int {
 	return runner("apply", datadir, args, stdout, stderr)
+}
+
+// ApplyWithProgress is wrapper around `terraform apply` subcommand with progress tracking capability.
+func ApplyWithProgress(datadir string, args []string, stdout, stderr io.Writer, progressCh chan<- Progress) int {
+	countH := &CountHook{}
+	trkticker := time.NewTicker(1 * time.Second)
+	quitTrk := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case <-trkticker.C:
+				select {
+				case progressCh <- progressFromCountHook(countH):
+				default:
+				}
+			case <-quitTrk:
+				trkticker.Stop()
+				return
+			}
+		}
+	}()
+	defer close(quitTrk)
+	return runnerWithHooks("apply", datadir, args, stdout, stderr, []terraform.Hook{countH})
 }
 
 // Destroy is wrapper around `terraform destroy` subcommand.
