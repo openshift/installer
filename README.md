@@ -4,7 +4,7 @@
 
 * AWS
 * [Libvirt with KVM](docs/dev/libvirt-howto.md) (development only)
-* OpenStack (experimental)
+* [OpenStack (experimental)](docs/user/openstack/README.md)
 
 ## Quick Start
 
