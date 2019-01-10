@@ -46,7 +46,7 @@ module "masters" {
   root_volume_iops         = "${var.aws_master_root_volume_iops}"
   root_volume_size         = "${var.aws_master_root_volume_size}"
   root_volume_type         = "${var.aws_master_root_volume_type}"
-  subnet_ids               = "${module.vpc.public_subnet_ids}"
+  subnet_ids               = "${module.vpc.private_subnet_ids}"
   target_group_arns        = "${module.vpc.aws_lb_target_group_arns}"
   target_group_arns_length = "${module.vpc.aws_lb_target_group_arns_length}"
   ec2_ami                  = "${var.aws_ec2_ami_override}"

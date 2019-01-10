@@ -85,8 +85,7 @@ resource "aws_instance" "master" {
   subnet_id            = "${element(var.subnet_ids, count.index)}"
   user_data            = "${var.user_data_ign}"
 
-  vpc_security_group_ids      = ["${var.master_sg_ids}"]
-  associate_public_ip_address = true
+  vpc_security_group_ids = ["${var.master_sg_ids}"]
 
   lifecycle {
     # Ignore changes in the AMI which force recreation of the resource. This
