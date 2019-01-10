@@ -44,7 +44,8 @@ resource "aws_lb_target_group" "api_internal" {
     unhealthy_threshold = 3
     interval            = 10
     port                = 6443
-    protocol            = "TCP"
+    protocol            = "HTTPS"
+    path                = "/healthz"
   }
 }
 
@@ -66,7 +67,8 @@ resource "aws_lb_target_group" "api_external" {
     unhealthy_threshold = 3
     interval            = 10
     port                = 6443
-    protocol            = "TCP"
+    protocol            = "HTTPS"
+    path                = "/healthz"
   }
 }
 
@@ -88,7 +90,8 @@ resource "aws_lb_target_group" "services" {
     unhealthy_threshold = 3
     interval            = 10
     port                = 49500
-    protocol            = "TCP"
+    protocol            = "HTTPS"
+    path                = "/healthz"
   }
 }
 
