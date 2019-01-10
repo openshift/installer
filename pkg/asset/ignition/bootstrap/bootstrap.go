@@ -350,7 +350,6 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	for _, asset := range []asset.WritableAsset{
 		&kubeconfig.Admin{},
 		&kubeconfig.Kubelet{},
-		&tls.RootCA{},
 		&tls.KubeCA{},
 		&tls.AggregatorCA{},
 		&tls.ServiceServingCA{},
@@ -366,6 +365,10 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		dependencies.Get(asset)
 		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "root", 0600, asset)...)
 	}
+
+	rootCA := &tls.RootCA{}
+	dependencies.Get(rootCA)
+	a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
 }
 
 func applyTemplateData(template *template.Template, templateData interface{}) string {

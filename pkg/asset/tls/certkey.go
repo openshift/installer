@@ -90,6 +90,11 @@ func (c *CertKey) Files() []*asset.File {
 	return c.FileList
 }
 
+// CertFile returns the certificate file.
+func (c *CertKey) CertFile() *asset.File {
+	return c.FileList[1]
+}
+
 func (c *CertKey) generateFiles(filenameBase string) {
 	c.FileList = []*asset.File{
 		{
