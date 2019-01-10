@@ -18,9 +18,9 @@ locals {
 
   // When referencing the _ids arrays or data source arrays via count = , always use the *_count variable rather than taking the length of the list
   private_subnet_ids   = "${aws_subnet.private_subnet.*.id}"
-  master_subnet_ids    = "${aws_subnet.master_subnet.*.id}"
+  public_subnet_ids    = "${aws_subnet.public_subnet.*.id}"
   private_subnet_count = "${local.new_az_count}"
-  master_subnet_count  = "${local.new_az_count}"
+  public_subnet_count  = "${local.new_az_count}"
 }
 
 # all data sources should be input variable-agnostic and used as canonical source for querying "state of resources" and building outputs
