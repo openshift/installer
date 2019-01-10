@@ -207,7 +207,7 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 	} else {
 		mode = 0600
 	}
-	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), mode, data)
+	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
 	if filename == ".bash_history" {
 		ign.User = &igntypes.NodeUser{Name: ignitionUser}
 		ign.Group = &igntypes.NodeGroup{Name: ignitionUser}
@@ -340,11 +340,11 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
-		ignition.FilesFromAsset(rootDir, 0644, mfsts)...,
+		ignition.FilesFromAsset(rootDir, "root", 0644, mfsts)...,
 	)
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
-		ignition.FilesFromAsset(rootDir, 0644, openshiftManifests)...,
+		ignition.FilesFromAsset(rootDir, "root", 0644, openshiftManifests)...,
 	)
 
 	for _, asset := range []asset.WritableAsset{
@@ -364,7 +364,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		&tls.ServiceAccountKeyPair{},
 	} {
 		dependencies.Get(asset)
-		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, 0600, asset)...)
+		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "root", 0600, asset)...)
 	}
 }
 
