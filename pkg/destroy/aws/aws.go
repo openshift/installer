@@ -64,7 +64,6 @@ type ClusterUninstaller struct {
 	// will match resources with (a:b and c:d) or d:e.
 	Filters     []Filter // filter(s) we will be searching for
 	Logger      log.FieldLogger
-	LogLevel    string
 	Region      string
 	ClusterName string
 }
