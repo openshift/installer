@@ -90,6 +90,7 @@ func populateDeleteFuncs(funcs map[string]deleteFunc) {
 	funcs["deleteS3Buckets"] = deleteS3Buckets
 	funcs["deleteRoute53"] = deleteRoute53
 	funcs["deletePVs"] = deletePVs
+	funcs["deleteUsers"] = deleteUsers
 }
 
 // Run is the entrypoint to start the uninstall process
@@ -192,6 +193,10 @@ func tagsToMap(tags interface{}) (map[string]string, error) {
 			x[*tag.Key] = *tag.Value
 		}
 	case []*route53.Tag:
+		for _, tag := range v {
+			x[*tag.Key] = *tag.Value
+		}
+	case []*iam.Tag:
 		for _, tag := range v {
 			x[*tag.Key] = *tag.Value
 		}
@@ -497,6 +502,11 @@ func deleteVPCs(awsSession *session.Session, filters Filter, clusterName string,
 // getEC2Client is just a wrapper for creating an EC2 client
 func getEC2Client(awsSession *session.Session) *ec2.EC2 {
 	return ec2.New(awsSession)
+}
+
+// getIAMClient is a wrapper for creating an AWS IAM client.
+func getIAMClient(awsSession *session.Session) *iam.IAM {
+	return iam.New(awsSession)
 }
 
 // deleteNATGateways will attempt to delete all NAT Gateways that match the provided filters
@@ -1457,4 +1467,120 @@ func deletePVs(session *session.Session, filters Filter, clusterName string, log
 	}
 
 	return false, nil
+}
+
+// deleteUsers will find users created by the cloud credential operator and delete them.
+func deleteUsers(session *session.Session, filters Filter, clusterName string, logger logrus.FieldLogger) (bool, error) {
+
+	logger.Debugf("Deleting users (%s)", filters)
+	defer logger.Debugf("Exiting deleting users (%s)", filters)
+
+	iamClient := getIAMClient(session)
+
+	listUsersInput := iam.ListUsersInput{}
+
+	for {
+		allUsers, err := iamClient.ListUsers(&listUsersInput)
+		if err != nil {
+			logger.WithError(err).Debug("error listing all users")
+			return false, nil
+		}
+		logger.Debugf("Found %d users", len(allUsers.Users))
+
+		awsUsers, err := usersToAWSObjects(allUsers.Users, iamClient, logger)
+		if err != nil {
+			logger.Debugf("error converting users to native AWS objects: %v", err)
+			return false, nil
+		}
+
+		filteredUsers := filterObjects(awsUsers, filters)
+		logger.Debugf("from %d total users, %d match filters", len(awsUsers), len(filteredUsers))
+		if len(filteredUsers) == 0 {
+			break
+		}
+
+		for _, user := range filteredUsers {
+			uLog := logger.WithField("user", user.Name)
+
+			// list user policies:
+			policiesOut, err := iamClient.ListUserPolicies(&iam.ListUserPoliciesInput{UserName: aws.String(user.Name)})
+			if err != nil {
+				uLog.WithError(err).Debug("error listing user policies")
+				return false, nil
+			}
+
+			// delete any user policies:
+			for _, policy := range policiesOut.PolicyNames {
+				_, err = iamClient.DeleteUserPolicy(&iam.DeleteUserPolicyInput{
+					UserName:   aws.String(user.Name),
+					PolicyName: policy,
+				})
+				if err != nil {
+					uLog.WithError(err).WithField("policy", *policy).Debug("error deleting user policy")
+					return false, nil
+				}
+				uLog.WithField("policy", *policy).Debug("deleted user policy")
+			}
+
+			// list access keys:
+			allUserKeys, err := iamClient.ListAccessKeys(&iam.ListAccessKeysInput{UserName: aws.String(user.Name)})
+			if err != nil {
+				uLog.WithError(err).Error("error listing all access keys for user")
+				return false, err
+			}
+
+			// delete access keys:
+			for _, kmd := range allUserKeys.AccessKeyMetadata {
+				akLog := uLog.WithFields(logrus.Fields{
+					"accessKeyID": *kmd.AccessKeyId,
+				})
+				akLog.Info("deleting access key")
+				_, err := iamClient.DeleteAccessKey(&iam.DeleteAccessKeyInput{AccessKeyId: kmd.AccessKeyId, UserName: aws.String(user.Name)})
+				if err != nil {
+					akLog.WithError(err).Error("error deleting access key")
+					return false, err
+				}
+			}
+
+			// delete user:
+			_, err = iamClient.DeleteUser(&iam.DeleteUserInput{
+				UserName: aws.String(user.Name),
+			})
+			if err != nil {
+				uLog.WithError(err).Debug("error deleting user")
+			}
+			uLog.Info("user deleted")
+		}
+
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// usersToAWSObjects will create a list of awsObjectsWithTags for the provided list of users.
+func usersToAWSObjects(users []*iam.User, iamClient *iam.IAM, logger logrus.FieldLogger) ([]awsObjectWithTags, error) {
+	usersAsAWSObjects := []awsObjectWithTags{}
+
+	for _, user := range users {
+
+		// Unfortunately the ListUsers Users do not have tags populated, so we need to query each:
+		userOut, err := iamClient.GetUser(&iam.GetUserInput{UserName: user.UserName})
+		if err != nil {
+			return usersAsAWSObjects, err
+		}
+
+		tagsToMap, err := tagsToMap(userOut.User.Tags)
+		if err != nil {
+			return usersAsAWSObjects, err
+		}
+
+		usersAsAWSObjects = append(usersAsAWSObjects, awsObjectWithTags{
+			Name: *user.UserName,
+			Tags: tagsToMap,
+		})
+
+	}
+
+	return usersAsAWSObjects, nil
 }
