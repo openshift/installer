@@ -104,10 +104,16 @@ func deleteDomainsSinglePass(conn *libvirt.Connect, filter filterFunc, logger lo
 		}
 
 		nothingToDelete = false
-		if err := domain.Destroy(); err != nil {
-			return false, errors.Wrapf(err, "destroy domain %q", dName)
+		dState, _, err := domain.GetState()
+		if err != nil {
+			return false, errors.Wrapf(err, "get domain state %d", dName)
 		}
 
+		if dState != libvirt.DOMAIN_SHUTOFF && dState != libvirt.DOMAIN_SHUTDOWN {
+			if err := domain.Destroy(); err != nil {
+				return false, errors.Wrapf(err, "destroy domain %q", dName)
+			}
+		}
 		if err := domain.Undefine(); err != nil {
 			return false, errors.Wrapf(err, "undefine domain %q", dName)
 		}
