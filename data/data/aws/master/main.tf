@@ -95,10 +95,8 @@ resource "aws_instance" "master" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-master-${count.index}",
-      "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "openshiftClusterID", "${var.cluster_id}",
       "clusterid", "${var.cluster_name}"
-    ), var.extra_tags)}"
+    ), var.tags)}"
 
   root_block_device {
     volume_type = "${var.root_volume_type}"
@@ -108,9 +106,7 @@ resource "aws_instance" "master" {
 
   volume_tags = "${merge(map(
     "Name", "${var.cluster_name}-master-${count.index}-vol",
-    "kubernetes.io/cluster/${var.cluster_name}", "owned",
-    "openshiftClusterID", "${var.cluster_id}"
-  ), var.extra_tags)}"
+  ), var.tags)}"
 }
 
 resource "aws_lb_target_group_attachment" "master" {

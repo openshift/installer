@@ -3,9 +3,7 @@ resource "aws_security_group" "etcd" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}_etcd_sg",
-      "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "openshiftClusterID", "${var.cluster_id}"
-    ), var.extra_tags)}"
+    ), var.tags)}"
 }
 
 resource "aws_security_group_rule" "etcd_egress" {

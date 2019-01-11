@@ -1,5 +1,9 @@
 locals {
   private_zone_id = "${aws_route53_zone.int.zone_id}"
+
+  tags = "${merge(map(
+      "openshiftClusterID", "${var.cluster_id}"
+    ), var.aws_extra_tags)}"
 }
 
 provider "aws" {
@@ -20,18 +24,21 @@ module "bootstrap" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}-bootstrap",
-      "openshiftClusterID", "${var.cluster_id}"
-    ), var.aws_extra_tags)}"
+    ), local.tags)}"
 }
 
 module "masters" {
   source = "./master"
 
-  base_domain              = "${var.base_domain}"
-  cluster_id               = "${var.cluster_id}"
-  cluster_name             = "${var.cluster_name}"
-  ec2_type                 = "${var.aws_master_ec2_type}"
-  extra_tags               = "${var.aws_extra_tags}"
+  base_domain  = "${var.base_domain}"
+  cluster_id   = "${var.cluster_id}"
+  cluster_name = "${var.cluster_name}"
+  ec2_type     = "${var.aws_master_ec2_type}"
+
+  tags = "${merge(map(
+      "kubernetes.io/cluster/${var.cluster_name}", "owned",
+    ), local.tags)}"
+
   instance_count           = "${var.master_count}"
   master_iam_role          = "${var.aws_master_iam_role_name}"
   master_sg_ids            = "${list(module.vpc.master_sg_id)}"
@@ -74,7 +81,9 @@ module "vpc" {
   cluster_name = "${var.cluster_name}"
   region       = "${var.aws_region}"
 
-  extra_tags = "${var.aws_extra_tags}"
+  tags = "${merge(map(
+      "kubernetes.io/cluster/${var.cluster_name}", "owned",
+    ), local.tags)}"
 }
 
 resource "aws_route53_record" "etcd_a_nodes" {
@@ -104,7 +113,6 @@ resource "aws_route53_zone" "int" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}_int",
-      "KubernetesCluster", "${var.cluster_name}",
-      "openshiftClusterID", "${var.cluster_id}"
-    ), var.aws_extra_tags)}"
+      "kubernetes.io/cluster/${var.cluster_name}", "owned",
+    ), local.tags)}"
 }
