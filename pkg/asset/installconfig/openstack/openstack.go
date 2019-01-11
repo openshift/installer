@@ -72,34 +72,6 @@ func Platform() (*openstack.Platform, error) {
 		return nil, err
 	}
 
-	imageNames, err := validValuesFetcher.GetImageNames(cloud)
-	if err != nil {
-		return nil, err
-	}
-	sort.Strings(imageNames)
-	var image string
-	err = survey.Ask([]*survey.Question{
-		{
-			Prompt: &survey.Select{
-				Message: "Image",
-				Help:    "The OpenStack image name to be used for installation.",
-				Default: "rhcos",
-				Options: imageNames,
-			},
-			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				value := ans.(string)
-				i := sort.SearchStrings(imageNames, value)
-				if i == len(imageNames) || imageNames[i] != value {
-					return errors.Errorf("invalid image name %q, should be one of %+v", value, strings.Join(imageNames, ", "))
-				}
-				return nil
-			}),
-		},
-	}, &image)
-	if err != nil {
-		return nil, err
-	}
-
 	networkNames, err := validValuesFetcher.GetNetworkNames(cloud)
 	if err != nil {
 		return nil, err
@@ -169,7 +141,6 @@ func Platform() (*openstack.Platform, error) {
 
 	return &openstack.Platform{
 		Region:          region,
-		BaseImage:       image,
 		Cloud:           cloud,
 		ExternalNetwork: extNet,
 		FlavorName:      flavor,
