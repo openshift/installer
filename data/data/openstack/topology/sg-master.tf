@@ -9,7 +9,7 @@ resource "openstack_networking_secgroup_rule_v2" "master_mcs" {
   protocol          = "tcp"
   port_range_min    = 49500
   port_range_max    = 49500
-  remote_ip_prefix  = "0.0.0.0/0"
+  remote_ip_prefix  = "${var.cidr_block}"
   security_group_id = "${openstack_networking_secgroup_v2.master.id}"
 }
 
