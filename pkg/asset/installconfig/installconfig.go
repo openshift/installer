@@ -5,7 +5,6 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
@@ -18,8 +17,7 @@ import (
 )
 
 const (
-	installConfigFilename           = "install-config.yaml"
-	deprecatedInstallConfigFilename = "install-config.yml"
+	installConfigFilename = "install-config.yaml"
 )
 
 var (
@@ -144,8 +142,11 @@ func (a *InstallConfig) Files() []*asset.File {
 
 // Load returns the installconfig from disk.
 func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
-	file, err := fetchInstallConfigFile(f)
-	if file == nil {
+	file, err := f.FetchByName(installConfigFilename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
 		return false, err
 	}
 
@@ -160,22 +161,4 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 
 	a.File, a.Config = file, config
 	return true, nil
-}
-
-func fetchInstallConfigFile(f asset.FileFetcher) (*asset.File, error) {
-	names := []string{installConfigFilename, deprecatedInstallConfigFilename}
-	for i, name := range names {
-		file, err := f.FetchByName(name)
-		if err == nil {
-			if i != 0 {
-				logrus.Warnf("Using deprecated %s file. Use %s instead.", name, names[0])
-				file.Filename = names[0]
-			}
-			return file, nil
-		}
-		if !os.IsNotExist(err) {
-			return nil, err
-		}
-	}
-	return nil, nil
 }
