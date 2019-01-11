@@ -24,10 +24,10 @@ clusterapi-manager-controllers-774dc4557-nx5xq   3/3       Running   0          
 machine-api-operator-7894d8f85-lq2ts             1/1       Running   0          4h
 ```
 
-The logs for the machine-controller container within the `clusterapi-manager-controllers` pod need to be checked to determine why the workers haven't been created. That can be done with the following (the exact name of the pod will need to be substituted):
+The logs for the machine-controller container within the `clusterapi-manager-controllers` pod need to be checked to determine why the workers haven't been created.
 
 ```sh
-oc --config=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-cluster-api logs clusterapi-manager-controllers-774dc4557-nx5xq --container=machine-controller
+oc --config=${INSTALL_DIR}/auth/kubeconfig -n openshift-cluster-api logs deploy/clusterapi-manager-controllers --container=machine-controller
 ```
 
 ### Kubernetes API is Unavailable
