@@ -28,7 +28,6 @@ func TestValidatePlatform(t *testing.T) {
 		platform   *openstack.Platform
 		noClouds   bool
 		noRegions  bool
-		noImages   bool
 		noNetworks bool
 		noFlavors  bool
 		noNetExts  bool
@@ -141,15 +140,6 @@ func TestValidatePlatform(t *testing.T) {
 			} else {
 				fetcher.EXPECT().GetRegionNames(tc.platform.Cloud).
 					Return([]string{"test-region"}, nil).
-					MaxTimes(1)
-			}
-			if tc.noImages {
-				fetcher.EXPECT().GetImageNames(tc.platform.Cloud).
-					Return(nil, errors.New("no images")).
-					MaxTimes(1)
-			} else {
-				fetcher.EXPECT().GetImageNames(tc.platform.Cloud).
-					Return([]string{"test-image"}, nil).
 					MaxTimes(1)
 			}
 			if tc.noNetworks {
