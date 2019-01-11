@@ -77,6 +77,9 @@ because there are no nodes available.
 **NOTE** The worker nodes are still a WIP
 
 ### Workarounds
+
+#### External DNS
+
 While deploying the cluster, the installer will hang trying to reach the API as
 the node running the installer cannot resolve the service VM (the cluster
 should still come up successfully within the isolated network). As a temporary
@@ -99,6 +102,35 @@ DEBUG Still waiting for the console route: the server is currently unable to
 handle the request (get routes.route.openshift.io)
 ...
 FATAL waiting for openshift-console URL: context deadline exceeded
+```
+
+#### Create the openstack-credentials Secret
+
+This is necessary for creating the worker nodes and scaling the cluster. The
+actuator needs to have access to the OpenStack credentials. They are being read
+from an Kubernetes Secret object.
+
+This is a post-deployment operation: it should be done after the bootstrap node
+has been removed by the installer.
+
+1. Create a file called `secret.yaml` with the following contents:
+
+```
+$ cat << EOF > secret.yaml
+apiVersion: v1
+data:
+  clouds.yaml: $(cat $HOME/.config/openstack/clouds.yaml | base64 -w0)
+kind: Secret
+metadata:
+  name: openstack-credentials
+type: Opaque
+EOF
+```
+
+2. Add the Secret to the cluster:
+
+```
+$ oc create -n openshift-cluster-api -f secret.yaml
 ```
 
 ## Using an External Load Balancer
