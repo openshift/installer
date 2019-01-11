@@ -15,7 +15,6 @@ import (
 func validPlatform() *openstack.Platform {
 	return &openstack.Platform{
 		Region:          "test-region",
-		BaseImage:       "test-image",
 		Cloud:           "test-cloud",
 		ExternalNetwork: "test-network",
 		FlavorName:      "test-flavor",
@@ -43,15 +42,6 @@ func TestValidatePlatform(t *testing.T) {
 			platform: func() *openstack.Platform {
 				p := validPlatform()
 				p.Region = ""
-				return p
-			}(),
-			valid: false,
-		},
-		{
-			name: "invalid base image",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.BaseImage = "bad-image"
 				return p
 			}(),
 			valid: false,
@@ -94,12 +84,6 @@ func TestValidatePlatform(t *testing.T) {
 			platform:  validPlatform(),
 			noRegions: true,
 			valid:     false,
-		},
-		{
-			name:     "images fetch failure",
-			platform: validPlatform(),
-			noImages: true,
-			valid:    false,
 		},
 		{
 			name:       "networks fetch failure",

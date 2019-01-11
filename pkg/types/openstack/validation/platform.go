@@ -23,12 +23,6 @@ func ValidatePlatform(p *openstack.Platform, fldPath *field.Path, fetcher ValidV
 		} else if !isValidValue(p.Region, validRegions) {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("region"), p.Region, validRegions))
 		}
-		validImages, err := fetcher.GetImageNames(p.Cloud)
-		if err != nil {
-			allErrs = append(allErrs, field.InternalError(fldPath.Child("baseImage"), errors.New("could not retrieve valid images")))
-		} else if !isValidValue(p.BaseImage, validImages) {
-			allErrs = append(allErrs, field.NotSupported(fldPath.Child("baseImage"), p.BaseImage, validImages))
-		}
 		validNetworks, err := fetcher.GetNetworkNames(p.Cloud)
 		if err != nil {
 			allErrs = append(allErrs, field.InternalError(fldPath.Child("externalNetwork"), errors.New("could not retrieve valid networks")))

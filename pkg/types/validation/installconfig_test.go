@@ -207,7 +207,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt = &libvirt.Platform{}
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(0x[0-9a-f]*\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must only specify a single type of platform; cannot use both "aws" and "libvirt", platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform.libvirt.image: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value]$`,
+			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(0x[0-9a-f]*\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must only specify a single type of platform; cannot use both "aws" and "libvirt", platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value]$`,
 		},
 		{
 			name: "invalid aws platform",
@@ -226,8 +226,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Platform = types.Platform{
 					Libvirt: &libvirt.Platform{
-						URI:   "qemu+tcp://192.168.122.1/system",
-						Image: "https://example.com/test-image",
+						URI: "qemu+tcp://192.168.122.1/system",
 						Network: libvirt.Network{
 							IfName: "tt0",
 						},
@@ -246,7 +245,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform.libvirt.image: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value]$`,
+			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value]$`,
 		},
 		{
 			name: "valid openstack platform",
@@ -255,7 +254,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{
 					OpenStack: &openstack.Platform{
 						Region:          "test-region",
-						BaseImage:       "test-image",
 						Cloud:           "test-cloud",
 						ExternalNetwork: "test-network",
 						FlavorName:      "test-flavor",

@@ -11,8 +11,7 @@ import (
 
 func validPlatform() *libvirt.Platform {
 	return &libvirt.Platform{
-		URI:   "qemu+tcp://192.168.122.1/system",
-		Image: "https://example.com/rhcos-qemu.qcow2",
+		URI: "qemu+tcp://192.168.122.1/system",
 		Network: libvirt.Network{
 			IfName: "tt0",
 		},
@@ -35,15 +34,6 @@ func TestValidatePlatform(t *testing.T) {
 			platform: func() *libvirt.Platform {
 				p := validPlatform()
 				p.URI = "bad-uri"
-				return p
-			}(),
-			valid: false,
-		},
-		{
-			name: "invalid image",
-			platform: func() *libvirt.Platform {
-				p := validPlatform()
-				p.Image = "bad-image"
 				return p
 			}(),
 			valid: false,
