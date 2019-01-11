@@ -73,6 +73,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&tls.KubeletCertKey{},
 		&tls.MCSCertKey{},
 		&tls.ServiceAccountKeyPair{},
+		&tls.JournalCertKey{},
 		&kubeconfig.Admin{},
 		&kubeconfig.Kubelet{},
 		&manifests.Manifests{},
@@ -175,7 +176,9 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 		if err != nil {
 			return err
 		}
-		file.Close()
+		if err = file.Close(); err != nil {
+			return err
+		}
 
 		for _, childInfo := range children {
 			name := childInfo.Name()
@@ -205,7 +208,7 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 	} else {
 		mode = 0600
 	}
-	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), mode, data)
+	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
 	if filename == ".bash_history" {
 		ign.User = &igntypes.NodeUser{Name: ignitionUser}
 		ign.Group = &igntypes.NodeGroup{Name: ignitionUser}
@@ -217,9 +220,10 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 }
 
 func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateData) (err error) {
-	enabled := map[string]bool{
-		"progress.service": true,
-		"kubelet.service":  true,
+	enabled := map[string]struct{}{
+		"progress.service":                {},
+		"kubelet.service":                 {},
+		"systemd-journal-gatewayd.socket": {},
 	}
 
 	directory, err := data.Assets.Open(uri)
@@ -234,23 +238,75 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 	}
 
 	for _, childInfo := range children {
-		name := childInfo.Name()
-		file, err := data.Assets.Open(path.Join(uri, name))
+		dir := path.Join(uri, childInfo.Name())
+		file, err := data.Assets.Open(dir)
 		if err != nil {
 			return err
 		}
 		defer file.Close()
 
-		name, data, err := readFile(name, file, templateData)
+		info, err := file.Stat()
 		if err != nil {
 			return err
 		}
 
-		unit := igntypes.Unit{Name: name, Contents: string(data)}
-		if _, ok := enabled[name]; ok {
-			unit.Enabled = util.BoolToPtr(true)
+		if info.IsDir() {
+			if dir := info.Name(); !strings.HasSuffix(dir, ".d") {
+				logrus.Tracef("Ignoring internal asset directory %q while looking for systemd drop-ins", dir)
+				continue
+			}
+
+			children, err := file.Readdir(0)
+			if err != nil {
+				return err
+			}
+			if err = file.Close(); err != nil {
+				return err
+			}
+
+			dropins := []igntypes.SystemdDropin{}
+			for _, childInfo := range children {
+				file, err := data.Assets.Open(path.Join(dir, childInfo.Name()))
+				if err != nil {
+					return err
+				}
+				defer file.Close()
+
+				childName, contents, err := readFile(childInfo.Name(), file, templateData)
+				if err != nil {
+					return err
+				}
+
+				dropins = append(dropins, igntypes.SystemdDropin{
+					Name:     childName,
+					Contents: string(contents),
+				})
+			}
+
+			name := strings.TrimSuffix(childInfo.Name(), ".d")
+			unit := igntypes.Unit{
+				Name:    name,
+				Dropins: dropins,
+			}
+			if _, ok := enabled[name]; ok {
+				unit.Enabled = util.BoolToPtr(true)
+			}
+			a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
+		} else {
+			name, contents, err := readFile(childInfo.Name(), file, templateData)
+			if err != nil {
+				return err
+			}
+
+			unit := igntypes.Unit{
+				Name:     name,
+				Contents: string(contents),
+			}
+			if _, ok := enabled[name]; ok {
+				unit.Enabled = util.BoolToPtr(true)
+			}
+			a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
 		}
-		a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
 	}
 
 	return nil
@@ -286,17 +342,16 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
-		ignition.FilesFromAsset(rootDir, 0644, mfsts)...,
+		ignition.FilesFromAsset(rootDir, "root", 0644, mfsts)...,
 	)
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
-		ignition.FilesFromAsset(rootDir, 0644, openshiftManifests)...,
+		ignition.FilesFromAsset(rootDir, "root", 0644, openshiftManifests)...,
 	)
 
 	for _, asset := range []asset.WritableAsset{
 		&kubeconfig.Admin{},
 		&kubeconfig.Kubelet{},
-		&tls.RootCA{},
 		&tls.KubeCA{},
 		&tls.AggregatorCA{},
 		&tls.ServiceServingCA{},
@@ -310,8 +365,16 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		&tls.ServiceAccountKeyPair{},
 	} {
 		dependencies.Get(asset)
-		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, 0600, asset)...)
+		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "root", 0600, asset)...)
 	}
+
+	rootCA := &tls.RootCA{}
+	dependencies.Get(rootCA)
+	a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
+
+	journal := &tls.JournalCertKey{}
+	dependencies.Get(journal)
+	a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "systemd-journal-gateway", 0600, journal)...)
 }
 
 func applyTemplateData(template *template.Template, templateData interface{}) string {

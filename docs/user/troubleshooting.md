@@ -66,11 +66,10 @@ Master nodes waiting for Ignition is indicative of problems on the bootstrap nod
 
 If the bootstrap node isn't available, first double check that it hasn't been automatically removed by the installer. If it's not being created in the first place, the installer will need to be [troubleshot](#installer-fails-to-create-resources).
 
-After using SSH to access the bootstrap node, the most important thing to look at is `bootkube.service`. The logs can be viewed with the following command:
+The most important thing to look at on the bootstrap node is `bootkube.service`. The logs can be viewed in two different ways:
 
-```sh
-journalctl --unit=bootkube.service
-```
+1. If SSH is available, the following command can be run on the bootstrap node: `journalctl --unit=bootkube.service`
+2. Regardless of whether or not SSH is available, the following command can be run: `curl --insecure --cert ${INSTALL_DIR}/tls/journal-gatewayd.crt --key ${INSTALL_DIR}/tls/journal-gatewayd.key 'https://${BOOTSTRAP_IP}:19531/entries?follow&_SYSTEMD_UNIT=bootkube.service'`
 
 ### etcd Is Not Running
 
