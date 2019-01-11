@@ -2,10 +2,8 @@ package machines
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"text/template"
-	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -19,7 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
-	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
@@ -70,6 +68,7 @@ func (w *Worker) Name() string {
 func (w *Worker) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		new(rhcos.Image),
 		&machine.Worker{},
 	}
 }
@@ -77,8 +76,9 @@ func (w *Worker) Dependencies() []asset.Asset {
 // Generate generates the Worker asset.
 func (w *Worker) Generate(dependencies asset.Parents) error {
 	installconfig := &installconfig.InstallConfig{}
+	rhcosImage := new(rhcos.Image)
 	wign := &machine.Worker{}
-	dependencies.Get(installconfig, wign)
+	dependencies.Get(installconfig, rhcosImage, wign)
 
 	var err error
 	userDataMap := map[string][]byte{"worker-user-data": wign.File.Data}
@@ -94,15 +94,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		mpool := defaultAWSMachinePoolPlatform()
 		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.AWS)
-		if mpool.AMIID == "" {
-			ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
-			defer cancel()
-			ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, ic.Platform.AWS.Region)
-			if err != nil {
-				return errors.Wrap(err, "failed to determine default AMI")
-			}
-			mpool.AMIID = ami
-		}
 		if len(mpool.Zones) == 0 {
 			azs, err := aws.AvailabilityZones(ic.Platform.AWS.Region)
 			if err != nil {
@@ -111,7 +102,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		sets, err := aws.MachineSets(ic, &pool, "worker", "worker-user-data")
+		sets, err := aws.MachineSets(ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create worker machine objects")
 		}
@@ -147,7 +138,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		config := openstack.Config{
 			ClusterName: ic.ObjectMeta.Name,
 			Replicas:    numOfWorkers,
-			Image:       ic.Platform.OpenStack.BaseImage,
+			Image:       string(*rhcosImage),
 			Region:      ic.Platform.OpenStack.Region,
 			Machine:     defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName),
 			Trunk:       trunkSupportBoolean(ic.Platform.OpenStack.TrunkSupport),

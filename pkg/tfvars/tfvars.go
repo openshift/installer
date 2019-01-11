@@ -2,11 +2,8 @@
 package tfvars
 
 import (
-	"context"
 	"encoding/json"
-	"time"
 
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/tfvars/aws"
 	"github.com/openshift/installer/pkg/tfvars/libvirt"
 	"github.com/openshift/installer/pkg/tfvars/openstack"
@@ -31,7 +28,7 @@ type config struct {
 
 // TFVars converts the InstallConfig and Ignition content to
 // terraform.tfvar JSON.
-func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, error) {
+func TFVars(cfg *types.InstallConfig, osImage, bootstrapIgn, masterIgn string) ([]byte, error) {
 	config := &config{
 		ClusterID:   cfg.ClusterID,
 		Name:        cfg.ObjectMeta.Name,
@@ -76,17 +73,10 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 	}
 
 	if cfg.Platform.AWS != nil {
-		ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
-		defer cancel()
-		ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, cfg.Platform.AWS.Region)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to determine default AMI")
-		}
-
 		config.AWS = aws.AWS{
 			Region:         cfg.Platform.AWS.Region,
 			ExtraTags:      cfg.Platform.AWS.UserTags,
-			EC2AMIOverride: ami,
+			EC2AMIOverride: osImage,
 		}
 	} else if cfg.Platform.Libvirt != nil {
 		masterIPs := make([]string, len(cfg.Platform.Libvirt.MasterIPs))
@@ -98,7 +88,7 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 			Network: libvirt.Network{
 				IfName: cfg.Platform.Libvirt.Network.IfName,
 			},
-			Image:     cfg.Platform.Libvirt.Image,
+			Image:     osImage,
 			MasterIPs: masterIPs,
 		}
 		if err := config.Libvirt.TFVars(&cfg.Networking.MachineCIDR.IPNet, config.Masters); err != nil {
@@ -110,7 +100,7 @@ func TFVars(cfg *types.InstallConfig, bootstrapIgn, masterIgn string) ([]byte, e
 	} else if cfg.Platform.OpenStack != nil {
 		config.OpenStack = openstack.OpenStack{
 			Region:    cfg.Platform.OpenStack.Region,
-			BaseImage: cfg.Platform.OpenStack.BaseImage,
+			BaseImage: osImage,
 		}
 		config.OpenStack.Credentials.Cloud = cfg.Platform.OpenStack.Cloud
 		config.OpenStack.ExternalNetwork = cfg.Platform.OpenStack.ExternalNetwork

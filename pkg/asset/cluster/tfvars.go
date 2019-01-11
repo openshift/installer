@@ -7,6 +7,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/tfvars"
 	"github.com/pkg/errors"
 )
@@ -34,6 +35,7 @@ func (t *TerraformVariables) Name() string {
 func (t *TerraformVariables) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		new(rhcos.Image),
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
 	}
@@ -44,13 +46,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	bootstrap := &bootstrap.Bootstrap{}
 	master := &machine.Master{}
-	parents.Get(installConfig, bootstrap, master)
+	rhcosImage := new(rhcos.Image)
+	parents.Get(installConfig, bootstrap, master, rhcosImage)
 
 	bootstrapIgn := string(bootstrap.Files()[0].Data)
-
 	masterIgn := string(master.Files()[0].Data)
 
-	data, err := tfvars.TFVars(installConfig.Config, bootstrapIgn, masterIgn)
+	data, err := tfvars.TFVars(installConfig.Config, string(*rhcosImage), bootstrapIgn, masterIgn)
 	if err != nil {
 		return errors.Wrap(err, "failed to get Tfvars")
 	}

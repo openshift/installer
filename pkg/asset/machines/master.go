@@ -1,9 +1,7 @@
 package machines
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -17,7 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/aws"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
-	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
@@ -43,6 +41,7 @@ func (m *Master) Name() string {
 func (m *Master) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		new(rhcos.Image),
 		&machine.Master{},
 	}
 }
@@ -50,8 +49,9 @@ func (m *Master) Dependencies() []asset.Asset {
 // Generate generates the Master asset.
 func (m *Master) Generate(dependencies asset.Parents) error {
 	installconfig := &installconfig.InstallConfig{}
+	rhcosImage := new(rhcos.Image)
 	mign := &machine.Master{}
-	dependencies.Get(installconfig, mign)
+	dependencies.Get(installconfig, rhcosImage, mign)
 
 	var err error
 	userDataMap := map[string][]byte{"master-user-data": mign.File.Data}
@@ -67,15 +67,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool := defaultAWSMachinePoolPlatform()
 		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.AWS)
-		if mpool.AMIID == "" {
-			ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
-			defer cancel()
-			ami, err := rhcos.AMI(ctx, rhcos.DefaultChannel, ic.Platform.AWS.Region)
-			if err != nil {
-				return errors.Wrap(err, "failed to determine default AMI")
-			}
-			mpool.AMIID = ami
-		}
 		if len(mpool.Zones) == 0 {
 			azs, err := aws.AvailabilityZones(ic.Platform.AWS.Region)
 			if err != nil {
@@ -84,7 +75,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		machines, err := aws.Machines(ic, &pool, "master", "master-user-data")
+		machines, err := aws.Machines(ic, &pool, string(*rhcosImage), "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -125,7 +116,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		config := openstack.MasterConfig{
 			ClusterName: ic.ObjectMeta.Name,
 			Instances:   instances,
-			Image:       ic.Platform.OpenStack.BaseImage,
+			Image:       string(*rhcosImage),
 			Region:      ic.Platform.OpenStack.Region,
 			Machine:     defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName),
 			Trunk:       trunkSupportBoolean(ic.Platform.OpenStack.TrunkSupport),
