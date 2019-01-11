@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/none"
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -30,6 +31,61 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 	}
+}
+
+func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
+	sshPublicKey := &sshPublicKey{}
+	baseDomain := &baseDomain{"test-domain"}
+	clusterName := &clusterName{"test-cluster"}
+	pullSecret := &pullSecret{`{"auths":{"example.com":{"auth":"authorization value"}}}`}
+	platform := &platform{
+		None: &none.Platform{},
+	}
+	installConfig := &InstallConfig{}
+	parents := asset.Parents{}
+	parents.Add(
+		sshPublicKey,
+		baseDomain,
+		clusterName,
+		pullSecret,
+		platform,
+	)
+	if err := installConfig.Generate(parents); err != nil {
+		t.Errorf("unexpected error generating install config: %v", err)
+	}
+	expected := &types.InstallConfig{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "test-cluster",
+		},
+		ClusterID:  installConfig.Config.ClusterID,
+		BaseDomain: "test-domain",
+		Networking: &types.Networking{
+			MachineCIDR: ipnet.MustParseCIDR("10.0.0.0/16"),
+			Type:        "OpenshiftSDN",
+			ServiceCIDR: ipnet.MustParseCIDR("172.30.0.0/16"),
+			ClusterNetworks: []netopv1.ClusterNetwork{
+				{
+					CIDR:             "10.128.0.0/14",
+					HostSubnetLength: 9,
+				},
+			},
+		},
+		Machines: []types.MachinePool{
+			{
+				Name:     "master",
+				Replicas: func(x int64) *int64 { return &x }(3),
+			},
+			{
+				Name:     "worker",
+				Replicas: func(x int64) *int64 { return &x }(3),
+			},
+		},
+		Platform: types.Platform{
+			None: &none.Platform{},
+		},
+		PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+	}
+	assert.Equal(t, expected, installConfig.Config, "unexpected config generated")
 }
 
 func TestInstallConfigLoad(t *testing.T) {
@@ -126,7 +182,7 @@ metadata:
 			fileFetcher.EXPECT().FetchByName(installConfigFilename).
 				Return(
 					&asset.File{
-						Filename: "test-filename",
+						Filename: installConfigFilename,
 						Data:     []byte(tc.data)},
 					tc.fetchError,
 				)
@@ -144,8 +200,6 @@ metadata:
 			}
 			if tc.expectedFound {
 				assert.Equal(t, tc.expectedConfig, ic.Config, "unexpected Config in InstallConfig")
-				assert.Equal(t, "test-filename", ic.File.Filename, "unexpected File.Filename in InstallConfig")
-				assert.Equal(t, tc.data, string(ic.File.Data), "unexpected File.Data in InstallConfig")
 			}
 		})
 	}

@@ -70,17 +70,6 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.None = platform.None
 	a.Config.OpenStack = platform.OpenStack
 
-	data, err := yaml.Marshal(a.Config)
-	if err != nil {
-		return errors.Wrap(err, "failed to Marshal InstallConfig")
-	}
-	a.File = &asset.File{
-		Filename: installConfigFilename,
-		Data:     data,
-	}
-
-	// Apply the defaults *after* marshaling into yaml so that the defaults
-	// are omitted from the on-disk representation of the asset.
 	if err := a.setDefaults(); err != nil {
 		return errors.Wrapf(err, "failed to set defaults for install config")
 	}
@@ -89,6 +78,14 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 		return errors.Wrap(err, "invalid install config")
 	}
 
+	data, err := yaml.Marshal(a.Config)
+	if err != nil {
+		return errors.Wrap(err, "failed to Marshal InstallConfig")
+	}
+	a.File = &asset.File{
+		Filename: installConfigFilename,
+		Data:     data,
+	}
 	return nil
 }
 
@@ -111,7 +108,6 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 	if file == nil {
 		return false, err
 	}
-	a.File = file
 
 	config := &types.InstallConfig{}
 	if err := yaml.Unmarshal(file.Data, config); err != nil {
@@ -125,6 +121,15 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 
 	if err := validation.ValidateInstallConfig(a.Config, openstackvalidation.NewValidValuesFetcher()).ToAggregate(); err != nil {
 		return false, errors.Wrapf(err, "invalid %q file", installConfigFilename)
+	}
+
+	data, err := yaml.Marshal(a.Config)
+	if err != nil {
+		return false, errors.Wrap(err, "failed to Marshal InstallConfig")
+	}
+	a.File = &asset.File{
+		Filename: installConfigFilename,
+		Data:     data,
 	}
 
 	return true, nil
