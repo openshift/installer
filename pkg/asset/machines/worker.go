@@ -67,6 +67,7 @@ func (w *Worker) Name() string {
 // Worker asset
 func (w *Worker) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
 		new(rhcos.Image),
 		&machine.Worker{},
@@ -75,10 +76,11 @@ func (w *Worker) Dependencies() []asset.Asset {
 
 // Generate generates the Worker asset.
 func (w *Worker) Generate(dependencies asset.Parents) error {
+	clusterID := &installconfig.ClusterID{}
 	installconfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
 	wign := &machine.Worker{}
-	dependencies.Get(installconfig, rhcosImage, wign)
+	dependencies.Get(clusterID, installconfig, rhcosImage, wign)
 
 	var err error
 	userDataMap := map[string][]byte{"worker-user-data": wign.File.Data}
@@ -102,7 +104,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		sets, err := aws.MachineSets(ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+		sets, err := aws.MachineSets(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create worker machine objects")
 		}
@@ -118,7 +120,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Libvirt)
 		pool.Platform.Libvirt = &mpool
-		sets, err := libvirt.MachineSets(ic, &pool, "worker", "worker-user-data")
+		sets, err := libvirt.MachineSets(clusterID.ClusterID, ic, &pool, "worker", "worker-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create worker machine objects")
 		}
@@ -145,7 +147,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 
 		tags := map[string]string{
-			"openshiftClusterID": ic.ClusterID,
+			"openshiftClusterID": clusterID.ClusterID,
 		}
 		config.Tags = tags
 

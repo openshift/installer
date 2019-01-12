@@ -25,9 +25,6 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	if c.ObjectMeta.Name == "" {
 		allErrs = append(allErrs, field.Required(field.NewPath("metadata", "name"), "cluster name required"))
 	}
-	if c.ClusterID == "" {
-		allErrs = append(allErrs, field.Required(field.NewPath("clusterID"), "cluster ID required"))
-	}
 	if c.SSHKey != "" {
 		if err := validate.SSHPublicKey(c.SSHKey); err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, err.Error()))

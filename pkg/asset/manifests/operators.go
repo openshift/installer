@@ -52,6 +52,7 @@ func (m *Manifests) Name() string {
 // Manifests asset.
 func (m *Manifests) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
 		&Ingress{},
 		&DNS{},
@@ -124,6 +125,7 @@ func (m *Manifests) Files() []*asset.File {
 }
 
 func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*asset.File {
+	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	etcdCA := &tls.EtcdCA{}
 	kubeCA := &tls.KubeCA{}
@@ -132,6 +134,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	rootCA := &tls.RootCA{}
 	serviceServingCA := &tls.ServiceServingCA{}
 	dependencies.Get(
+		clusterID,
 		installConfig,
 		etcdCA,
 		etcdClientCertKey,
@@ -159,7 +162,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		RootCaCert:                      string(rootCA.Cert()),
 		ServiceServingCaCert:            base64.StdEncoding.EncodeToString(serviceServingCA.Cert()),
 		ServiceServingCaKey:             base64.StdEncoding.EncodeToString(serviceServingCA.Key()),
-		CVOClusterID:                    installConfig.Config.ClusterID,
+		CVOClusterID:                    clusterID.ClusterID,
 		EtcdEndpointHostnames:           etcdEndpointHostnames,
 		EtcdEndpointDNSSuffix:           installConfig.Config.BaseDomain,
 	}

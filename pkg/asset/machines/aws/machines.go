@@ -18,7 +18,7 @@ import (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]clusterapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]clusterapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS configuration: %q", configPlatform)
 	}
@@ -37,7 +37,7 @@ func Machines(config *types.InstallConfig, pool *types.MachinePool, osImage, rol
 	var machines []clusterapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		azIndex := int(idx) % len(azs)
-		provider, err := provider(config.ClusterID, clustername, platform, mpool, osImage, azIndex, role, userDataSecret)
+		provider, err := provider(clusterID, clustername, platform, mpool, osImage, azIndex, role, userDataSecret)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}

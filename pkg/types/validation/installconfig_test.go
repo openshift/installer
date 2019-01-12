@@ -21,7 +21,6 @@ func validInstallConfig() *types.InstallConfig {
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-cluster",
 		},
-		ClusterID:  "test-cluster-id",
 		BaseDomain: "test-domain",
 		Networking: types.Networking{
 			Type:        "OpenshiftSDN",
@@ -69,15 +68,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^metadata.name: Required value: cluster name required$`,
-		},
-		{
-			name: "missing cluster ID",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.ClusterID = ""
-				return c
-			}(),
-			expectedError: `^clusterID: Required value: cluster ID required$`,
 		},
 		{
 			name: "invalid ssh key",

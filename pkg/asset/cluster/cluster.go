@@ -47,6 +47,7 @@ func (c *Cluster) Name() string {
 // the cluster.
 func (c *Cluster) Dependencies() []asset.Asset {
 	return []asset.Asset{
+		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
 		&TerraformVariables{},
 		&password.KubeadminPassword{},
@@ -55,10 +56,11 @@ func (c *Cluster) Dependencies() []asset.Asset {
 
 // Generate launches the cluster and generates the terraform state file on disk.
 func (c *Cluster) Generate(parents asset.Parents) (err error) {
+	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	terraformVariables := &TerraformVariables{}
 	kubeadminPassword := &password.KubeadminPassword{}
-	parents.Get(installConfig, terraformVariables, kubeadminPassword)
+	parents.Get(clusterID, installConfig, terraformVariables, kubeadminPassword)
 
 	if installConfig.Config.Platform.None != nil {
 		return errors.New("cluster cannot be created with platform set to 'none'")
@@ -78,6 +80,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	metadata := &types.ClusterMetadata{
 		ClusterName: installConfig.Config.ObjectMeta.Name,
+		ClusterID:   clusterID.ClusterID,
 	}
 
 	defer func() {
@@ -103,11 +106,11 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 
 	switch {
 	case installConfig.Config.Platform.AWS != nil:
-		metadata.ClusterPlatformMetadata.AWS = aws.Metadata(installConfig.Config)
+		metadata.ClusterPlatformMetadata.AWS = aws.Metadata(clusterID.ClusterID, installConfig.Config)
 	case installConfig.Config.Platform.Libvirt != nil:
 		metadata.ClusterPlatformMetadata.Libvirt = libvirt.Metadata(installConfig.Config)
 	case installConfig.Config.Platform.OpenStack != nil:
-		metadata.ClusterPlatformMetadata.OpenStack = openstack.Metadata(installConfig.Config)
+		metadata.ClusterPlatformMetadata.OpenStack = openstack.Metadata(clusterID.ClusterID, installConfig.Config)
 	default:
 		return fmt.Errorf("no known platform")
 	}
