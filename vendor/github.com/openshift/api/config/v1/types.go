@@ -12,6 +12,14 @@ type ConfigMapReference struct {
 	Key string `json:"filename,omitempty"`
 }
 
+// LocalSecretReference references a secret within the local namespace
+type LocalSecretReference struct {
+	// Name of the secret in the local namespace
+	Name string `json:"name"`
+	// Key selects a specific key within the local secret. Must be a valid secret key.
+	Key string `json:"key,omitempty"`
+}
+
 // HTTPServingInfo holds configuration for serving HTTP
 type HTTPServingInfo struct {
 	// ServingInfo is the HTTP serving information
@@ -244,12 +252,8 @@ type ClientConnectionOverrides struct {
 	Burst int32 `json:"burst"`
 }
 
-// +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
-
 // GenericControllerConfig provides information to configure a controller
 type GenericControllerConfig struct {
-	metav1.TypeMeta `json:",inline"`
-
 	// ServingInfo is the HTTP serving information for the controller's endpoints
 	ServingInfo HTTPServingInfo `json:"servingInfo,omitempty"`
 

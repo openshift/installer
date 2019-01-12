@@ -55,6 +55,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&Ingress{},
 		&DNS{},
+		&Infrastructure{},
 		&Networking{},
 		&tls.RootCA{},
 		&tls.EtcdCA{},
@@ -88,8 +89,9 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	ingress := &Ingress{}
 	dns := &DNS{}
 	network := &Networking{}
+	infra := &Infrastructure{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig, ingress, dns, network)
+	dependencies.Get(installConfig, ingress, dns, network, infra)
 
 	// mao go to kube-system config map
 	m.KubeSysConfig = configMap("kube-system", "cluster-config-v1", genericData{
@@ -111,6 +113,7 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, ingress.Files()...)
 	m.FileList = append(m.FileList, dns.Files()...)
 	m.FileList = append(m.FileList, network.Files()...)
+	m.FileList = append(m.FileList, infra.Files()...)
 
 	return nil
 }

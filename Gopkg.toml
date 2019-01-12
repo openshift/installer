@@ -82,7 +82,7 @@ ignored = [
 
 [[constraint]]
   name = "github.com/openshift/api"
-  revision = "8241b16bb46fe9bd7aebbbce92d7af84fb71be7f"
+  revision = "aab033bae2a129607f4fb277c3777b2eabb08601"
 
 [[constraint]]
   name = "github.com/openshift/client-go"

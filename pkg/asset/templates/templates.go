@@ -41,6 +41,7 @@ func (m *Templates) Dependencies() []asset.Asset {
 		&openshift.CloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
 		&openshift.RoleCloudCredsSecretReader{},
+		&openshift.InfrastructureCRD{},
 	}
 }
 
@@ -65,6 +66,7 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	cloudCredsSecret := &openshift.CloudCredsSecret{}
 	kubeadminPasswordSecret := &openshift.KubeadminPasswordSecret{}
 	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
+	infrastructure := &openshift.InfrastructureCRD{}
 
 	dependencies.Get(
 		kubeCloudConfig,
@@ -84,7 +86,8 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 		bindingDiscovery,
 		cloudCredsSecret,
 		kubeadminPasswordSecret,
-		roleCloudCredsSecretReader)
+		roleCloudCredsSecretReader,
+		infrastructure)
 
 	m.FileList = []*asset.File{}
 	m.FileList = append(m.FileList, kubeCloudConfig.Files()...)
@@ -106,6 +109,7 @@ func (m *Templates) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, cloudCredsSecret.Files()...)
 	m.FileList = append(m.FileList, kubeadminPasswordSecret.Files()...)
 	m.FileList = append(m.FileList, roleCloudCredsSecretReader.Files()...)
+	m.FileList = append(m.FileList, infrastructure.Files()...)
 
 	return nil
 }
