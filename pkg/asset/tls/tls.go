@@ -24,9 +24,9 @@ const (
 	// ValidityTenYears sets the validity of a cert to 10 years.
 	ValidityTenYears = time.Hour * 24 * 365 * 10
 
-	// ValidityThirtyMinutes sets the validity of a cert to 30 minutes.
+	// ValidityOneDay sets the validity of a cert to 24 hours.
 	// This is for the kubelet bootstrap.
-	ValidityThirtyMinutes = time.Minute * 30
+	ValidityOneDay = time.Hour * 24
 )
 
 // CertCfg contains all needed fields to configure a new certificate
