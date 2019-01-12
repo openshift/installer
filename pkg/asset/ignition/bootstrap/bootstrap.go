@@ -31,7 +31,7 @@ const (
 	rootDir              = "/opt/openshift"
 	bootstrapIgnFilename = "bootstrap.ign"
 	etcdCertSignerImage  = "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6"
-	etcdctlImage         = "quay.io/coreos/etcd:v3.2.14"
+	etcdctlImage         = "quay.io/coreos/etcd:v3.3.10"
 	ignitionUser         = "core"
 )
 
