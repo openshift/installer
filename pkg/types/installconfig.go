@@ -34,16 +34,20 @@ type InstallConfig struct {
 	metav1.ObjectMeta `json:"metadata"`
 
 	// SSHKey is the public ssh key to provide access to instances.
-	SSHKey string `json:"sshKey"`
+	// +optional
+	SSHKey string `json:"sshKey,omitempty"`
 
 	// BaseDomain is the base domain to which the cluster should belong.
 	BaseDomain string `json:"baseDomain"`
 
 	// Networking defines the pod network provider in the cluster.
-	Networking `json:"networking"`
+	*Networking `json:"networking,omitempty"`
 
 	// Machines is the list of MachinePools that need to be installed.
-	Machines []MachinePool `json:"machines"`
+	// +optional
+	// Default on AWS and OpenStack is 3 masters and 3 workers.
+	// Default on Libvirt is 1 master and 1 worker.
+	Machines []MachinePool `json:"machines,omitempty"`
 
 	// Platform is the configuration for the specific platform upon which to
 	// perform the installation.
@@ -68,9 +72,11 @@ func (c *InstallConfig) MasterCount() int {
 // the installation. Only one of the platform configuration should be set.
 type Platform struct {
 	// AWS is the configuration used when installing on AWS.
+	// +optional
 	AWS *aws.Platform `json:"aws,omitempty"`
 
 	// Libvirt is the configuration used when installing on libvirt.
+	// +optional
 	Libvirt *libvirt.Platform `json:"libvirt,omitempty"`
 
 	// None is the empty configuration used when installing on an unsupported
@@ -78,6 +84,7 @@ type Platform struct {
 	None *none.Platform `json:"none,omitempty"`
 
 	// OpenStack is the configuration used when installing on OpenStack.
+	// +optional
 	OpenStack *openstack.Platform `json:"openstack,omitempty"`
 }
 
@@ -106,20 +113,32 @@ func (p *Platform) Name() string {
 // Networking defines the pod network provider in the cluster.
 type Networking struct {
 	// MachineCIDR is the IP address space from which to assign machine IPs.
-	MachineCIDR ipnet.IPNet `json:"machineCIDR"`
+	// +optional
+	// Default is 10.0.0.0/16 for all platforms other than Libvirt.
+	// For Libvirt, the default is 192.168.126.0/24.
+	MachineCIDR *ipnet.IPNet `json:"machineCIDR,omitempty"`
 
 	// Type is the network type to install
-	Type netopv1.NetworkType `json:"type"`
+	// +optional
+	// Default is OpenshiftSDN.
+	Type netopv1.NetworkType `json:"type,omitempty"`
 
 	// ServiceCIDR is the IP address space from which to assign service IPs.
-	ServiceCIDR ipnet.IPNet `json:"serviceCIDR"`
+	// +optional
+	// Default is 172.30.0.0/16.
+	ServiceCIDR *ipnet.IPNet `json:"serviceCIDR,omitempty"`
 
 	// ClusterNetworks is the IP address space from which to assign pod IPs.
+	// +optional
+	// Default is a single cluster network with a CIDR of 10.128.0.0/14
+	// and a host subnet length of 9. The default is only applicable if PodCIDR
+	// is not present.
 	ClusterNetworks []netopv1.ClusterNetwork `json:"clusterNetworks,omitempty"`
 
 	// PodCIDR is deprecated (and badly named; it should have always
 	// been called ClusterCIDR. If no ClusterNetworks are specified,
 	// we will fall back to the PodCIDR
 	// TODO(cdc) remove this.
+	// +optional
 	PodCIDR *ipnet.IPNet `json:"podCIDR,omitempty"`
 }

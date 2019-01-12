@@ -22,8 +22,8 @@ func TestMasterGenerate(t *testing.T) {
 				Name: "test-cluster",
 			},
 			BaseDomain: "test-domain",
-			Networking: types.Networking{
-				ServiceCIDR: *ipnet.MustParseCIDR("10.0.1.0/24"),
+			Networking: &types.Networking{
+				ServiceCIDR: ipnet.MustParseCIDR("10.0.1.0/24"),
 			},
 			Platform: types.Platform{
 				AWS: &aws.Platform{

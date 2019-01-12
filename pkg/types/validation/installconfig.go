@@ -33,7 +33,11 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	if err := validate.DomainName(c.BaseDomain); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("baseDomain"), c.BaseDomain, err.Error()))
 	}
-	allErrs = append(allErrs, validateNetworking(&c.Networking, field.NewPath("networking"))...)
+	if c.Networking != nil {
+		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"))...)
+	} else {
+		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
+	}
 	allErrs = append(allErrs, validateMachinePools(c.Machines, field.NewPath("machines"), c.Platform.Name())...)
 	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"), openStackValidValuesFetcher)...)
 	if err := validate.ImagePullSecret(c.PullSecret); err != nil {

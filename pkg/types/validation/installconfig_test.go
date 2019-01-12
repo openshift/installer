@@ -22,10 +22,10 @@ func validInstallConfig() *types.InstallConfig {
 			Name: "test-cluster",
 		},
 		BaseDomain: "test-domain",
-		Networking: types.Networking{
+		Networking: &types.Networking{
 			Type:        "OpenshiftSDN",
-			MachineCIDR: *ipnet.MustParseCIDR("10.0.0.0/16"),
-			ServiceCIDR: *ipnet.MustParseCIDR("172.30.0.0/16"),
+			MachineCIDR: ipnet.MustParseCIDR("10.0.0.0/16"),
+			ServiceCIDR: ipnet.MustParseCIDR("172.30.0.0/16"),
 			ClusterNetworks: []netopv1.ClusterNetwork{
 				{
 					CIDR:             "192.168.1.0/24",
@@ -42,12 +42,26 @@ func validInstallConfig() *types.InstallConfig {
 			},
 		},
 		Platform: types.Platform{
-			AWS: &aws.Platform{
-				Region: "us-east-1",
-			},
+			AWS: validAWSPlatform(),
 		},
 		PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
 	}
+}
+
+func validAWSPlatform() *aws.Platform {
+	return &aws.Platform{
+		Region: "us-east-1",
+	}
+}
+
+func validLibvirtPlatform() *libvirt.Platform {
+	return &libvirt.Platform{
+		URI: "qemu+tcp://192.168.122.1/system",
+		Network: &libvirt.Network{
+			IfName: "tt0",
+		},
+	}
+
 }
 
 func TestValidateInstallConfig(t *testing.T) {
@@ -88,6 +102,15 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^baseDomain: Invalid value: "\.bad-domain\.": a DNS-1123 subdomain must consist of lower case alphanumeric characters, '-' or '\.', and must start and end with an alphanumeric character \(e\.g\. 'example\.com', regex used for validation is '\[a-z0-9]\(\[-a-z0-9]\*\[a-z0-9]\)\?\(\\\.\[a-z0-9]\(\[-a-z0-9]\*\[a-z0-9]\)\?\)\*'\)$`,
 		},
 		{
+			name: "missing networking",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking = nil
+				return c
+			}(),
+			expectedError: `^networking: Required value: networking is required$`,
+		},
+		{
 			name: "invalid network type",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -100,7 +123,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid service cidr",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.ServiceCIDR = ipnet.IPNet{}
+				c.Networking.ServiceCIDR = &ipnet.IPNet{}
 				return c
 			}(),
 			expectedError: `^networking\.serviceCIDR: Invalid value: ipnet\.IPNet{IPNet:net\.IPNet{IP:net\.IP\(nil\), Mask:net\.IPMask\(nil\)}}: must use IPv4$`,
@@ -194,10 +217,10 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "multiple platforms",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Platform.Libvirt = &libvirt.Platform{}
+				c.Platform.Libvirt = validLibvirtPlatform()
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(0x[0-9a-f]*\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must only specify a single type of platform; cannot use both "aws" and "libvirt", platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value]$`,
+			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(0x[0-9a-f]*\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must only specify a single type of platform; cannot use both "aws" and "libvirt"$`,
 		},
 		{
 			name: "invalid aws platform",
@@ -215,12 +238,7 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{
-					Libvirt: &libvirt.Platform{
-						URI: "qemu+tcp://192.168.122.1/system",
-						Network: libvirt.Network{
-							IfName: "tt0",
-						},
-					},
+					Libvirt: validLibvirtPlatform(),
 				}
 				return c
 			}(),
@@ -231,11 +249,12 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
 				c.Platform = types.Platform{
-					Libvirt: &libvirt.Platform{},
+					Libvirt: validLibvirtPlatform(),
 				}
+				c.Platform.Libvirt.URI = ""
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\), platform\.libvirt\.network\.if: Required value]$`,
+			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
 		},
 		{
 			name: "valid openstack platform",

@@ -4,19 +4,9 @@ package libvirt
 import (
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
-	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/libvirt"
+	libvirtdefaults "github.com/openshift/installer/pkg/types/libvirt/defaults"
 	"github.com/openshift/installer/pkg/validate"
-)
-
-const (
-	defaultNetworkIfName = "tt0"
-)
-
-var (
-	// DefaultMachineCIDR is the libvirt default IP address space from
-	// which to assign machine IPs.
-	DefaultMachineCIDR = ipnet.MustParseCIDR("192.168.126.0/24")
 )
 
 // Platform collects libvirt-specific configuration.
@@ -27,7 +17,7 @@ func Platform() (*libvirt.Platform, error) {
 			Prompt: &survey.Input{
 				Message: "Libvirt Connection URI",
 				Help:    "The libvirt connection URI to be used. This must be accessible from the running cluster.",
-				Default: "qemu+tcp://192.168.122.1/system",
+				Default: libvirtdefaults.DefaultURI,
 			},
 			Validate: survey.ComposeValidators(survey.Required, uriValidator),
 		},
@@ -37,9 +27,6 @@ func Platform() (*libvirt.Platform, error) {
 	}
 
 	return &libvirt.Platform{
-		Network: libvirt.Network{
-			IfName: defaultNetworkIfName,
-		},
 		URI: uri,
 	}, nil
 }
