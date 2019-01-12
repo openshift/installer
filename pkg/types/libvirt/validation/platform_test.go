@@ -56,17 +56,6 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			valid: true,
 		},
-		{
-			name: "invalid machine pool",
-			platform: func() *libvirt.Platform {
-				p := validPlatform()
-				p.DefaultMachinePlatform = &libvirt.MachinePool{
-					Image: "bad-image",
-				}
-				return p
-			}(),
-			valid: false,
-		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

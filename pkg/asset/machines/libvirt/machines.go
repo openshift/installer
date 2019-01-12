@@ -18,14 +18,11 @@ func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDa
 	if configPlatform := config.Platform.Name(); configPlatform != libvirt.Name {
 		return nil, fmt.Errorf("non-Libvirt configuration: %q", configPlatform)
 	}
-	// FIXME: empty is a valid case for Libvirt as we don't use it.
-	if poolPlatform := pool.Platform.Name(); poolPlatform != "" && poolPlatform != libvirt.Name {
+	if poolPlatform := pool.Platform.Name(); poolPlatform != libvirt.Name {
 		return nil, fmt.Errorf("non-Libvirt machine-pool: %q", poolPlatform)
 	}
 	clustername := config.ObjectMeta.Name
 	platform := config.Platform.Libvirt
-	// FIXME: libvirt actuator does not support any options from machinepool.
-	// mpool := pool.Platform.Libvirt
 
 	total := int64(1)
 	if pool.Replicas != nil {

@@ -15,7 +15,6 @@ import (
 func validPlatform() *openstack.Platform {
 	return &openstack.Platform{
 		Region:          "test-region",
-		BaseImage:       "test-image",
 		Cloud:           "test-cloud",
 		ExternalNetwork: "test-network",
 		FlavorName:      "test-flavor",
@@ -28,7 +27,6 @@ func TestValidatePlatform(t *testing.T) {
 		platform   *openstack.Platform
 		noClouds   bool
 		noRegions  bool
-		noImages   bool
 		noNetworks bool
 		noFlavors  bool
 		noNetExts  bool
@@ -44,15 +42,6 @@ func TestValidatePlatform(t *testing.T) {
 			platform: func() *openstack.Platform {
 				p := validPlatform()
 				p.Region = ""
-				return p
-			}(),
-			valid: false,
-		},
-		{
-			name: "invalid base image",
-			platform: func() *openstack.Platform {
-				p := validPlatform()
-				p.BaseImage = "bad-image"
 				return p
 			}(),
 			valid: false,
@@ -97,12 +86,6 @@ func TestValidatePlatform(t *testing.T) {
 			valid:     false,
 		},
 		{
-			name:     "images fetch failure",
-			platform: validPlatform(),
-			noImages: true,
-			valid:    false,
-		},
-		{
 			name:       "networks fetch failure",
 			platform:   validPlatform(),
 			noNetworks: true,
@@ -141,15 +124,6 @@ func TestValidatePlatform(t *testing.T) {
 			} else {
 				fetcher.EXPECT().GetRegionNames(tc.platform.Cloud).
 					Return([]string{"test-region"}, nil).
-					MaxTimes(1)
-			}
-			if tc.noImages {
-				fetcher.EXPECT().GetImageNames(tc.platform.Cloud).
-					Return(nil, errors.New("no images")).
-					MaxTimes(1)
-			} else {
-				fetcher.EXPECT().GetImageNames(tc.platform.Cloud).
-					Return([]string{"test-image"}, nil).
 					MaxTimes(1)
 			}
 			if tc.noNetworks {

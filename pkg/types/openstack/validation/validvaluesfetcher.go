@@ -8,8 +8,6 @@ type ValidValuesFetcher interface {
 	GetCloudNames() ([]string, error)
 	// GetRegionNames gets the valid region names.
 	GetRegionNames(cloud string) ([]string, error)
-	// GetImageNames gets the valid image names.
-	GetImageNames(cloud string) ([]string, error)
 	// GetNetworkNames gets the valid network names.
 	GetNetworkNames(cloud string) ([]string, error)
 	// GetFlavorNames gets the valid flavor names.

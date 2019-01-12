@@ -18,7 +18,7 @@ import (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]clusterapi.Machine, error) {
+func Machines(config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]clusterapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS configuration: %q", configPlatform)
 	}
@@ -37,7 +37,7 @@ func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDa
 	var machines []clusterapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		azIndex := int(idx) % len(azs)
-		provider, err := provider(config.ClusterID, clustername, platform, mpool, azIndex, role, userDataSecret)
+		provider, err := provider(config.ClusterID, clustername, platform, mpool, osImage, azIndex, role, userDataSecret)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -69,8 +69,9 @@ func Machines(config *types.InstallConfig, pool *types.MachinePool, role, userDa
 	return machines, nil
 }
 
-func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.MachinePool, azIdx int, role, userDataSecret string) (*awsprovider.AWSMachineProviderConfig, error) {
+func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.MachinePool, osImage string, azIdx int, role, userDataSecret string) (*awsprovider.AWSMachineProviderConfig, error) {
 	az := mpool.Zones[azIdx]
+	amiID := osImage
 	tags, err := tagsFromUserTags(clusterID, clusterName, platform.UserTags)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create awsprovider.TagSpecifications from UserTags")
@@ -81,7 +82,7 @@ func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.
 			Kind:       "AWSMachineProviderConfig",
 		},
 		InstanceType:       mpool.InstanceType,
-		AMI:                awsprovider.AWSResourceReference{ID: &mpool.AMIID},
+		AMI:                awsprovider.AWSResourceReference{ID: &amiID},
 		Tags:               tags,
 		IAMInstanceProfile: &awsprovider.AWSResourceReference{ID: pointer.StringPtr(fmt.Sprintf("%s-%s-profile", clusterName, role))},
 		UserDataSecret:     &corev1.LocalObjectReference{Name: userDataSecret},

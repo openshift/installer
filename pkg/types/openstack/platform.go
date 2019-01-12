@@ -11,10 +11,6 @@ type Platform struct {
 	// platform configuration.
 	DefaultMachinePlatform *MachinePool `json:"defaultMachinePlatform,omitempty"`
 
-	// BaseImage
-	// Name of image to use from OpenStack cloud
-	BaseImage string `json:"baseImage"`
-
 	// Cloud
 	// Name of OpenStack cloud to use from clouds.yaml
 	Cloud string `json:"cloud"`

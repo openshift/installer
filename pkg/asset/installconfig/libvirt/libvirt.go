@@ -2,13 +2,9 @@
 package libvirt
 
 import (
-	"context"
-
-	"github.com/pkg/errors"
 	survey "gopkg.in/AlecAivazis/survey.v1"
 
 	"github.com/openshift/installer/pkg/ipnet"
-	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/validate"
 )
@@ -40,17 +36,9 @@ func Platform() (*libvirt.Platform, error) {
 		return nil, err
 	}
 
-	qcowImage, err := rhcos.QEMU(context.TODO(), rhcos.DefaultChannel)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to fetch QEMU image URL")
-	}
-
 	return &libvirt.Platform{
 		Network: libvirt.Network{
 			IfName: defaultNetworkIfName,
-		},
-		DefaultMachinePlatform: &libvirt.MachinePool{
-			Image: qcowImage,
 		},
 		URI: uri,
 	}, nil
