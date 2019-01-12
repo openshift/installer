@@ -20,12 +20,6 @@ variable "ec2_type" {
   type = "string"
 }
 
-variable "extra_tags" {
-  description = "Extra AWS tags to be applied to created resources."
-  type        = "map"
-  default     = {}
-}
-
 variable "ec2_ami" {
   type    = "string"
   default = ""
@@ -69,6 +63,12 @@ variable "root_volume_type" {
 
 variable "subnet_ids" {
   type = "list"
+}
+
+variable "tags" {
+  type        = "map"
+  default     = {}
+  description = "AWS tags to be applied to created resources."
 }
 
 variable "target_group_arns" {

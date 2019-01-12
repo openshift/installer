@@ -10,9 +10,7 @@ resource "aws_vpc" "new_vpc" {
 
   tags = "${merge(map(
       "Name", "${var.cluster_name}.${var.base_domain}",
-      "kubernetes.io/cluster/${var.cluster_name}", "shared",
-      "openshiftClusterID", "${var.cluster_id}"
-    ), var.extra_tags)}"
+    ), var.tags)}"
 }
 
 resource "aws_vpc_endpoint" "s3" {

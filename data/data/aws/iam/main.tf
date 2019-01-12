@@ -36,6 +36,8 @@ resource "aws_iam_role" "worker_role" {
     ]
 }
 EOF
+
+  tags = "${var.tags}"
 }
 
 resource "aws_iam_role_policy" "worker_policy" {

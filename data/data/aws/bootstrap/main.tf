@@ -63,6 +63,8 @@ resource "aws_iam_role" "bootstrap" {
     ]
 }
 EOF
+
+  tags = "${var.tags}"
 }
 
 resource "aws_iam_role_policy" "bootstrap" {

@@ -4,9 +4,7 @@ resource "aws_route_table" "private_routes" {
 
   tags = "${merge(map(
       "Name","${var.cluster_name}-private-${local.new_subnet_azs[count.index]}",
-      "kubernetes.io/cluster/${var.cluster_name}", "shared",
-      "openshiftClusterID", "${var.cluster_id}"
-    ), var.extra_tags)}"
+    ), var.tags)}"
 }
 
 resource "aws_route" "to_nat_gw" {
@@ -27,12 +25,9 @@ resource "aws_subnet" "worker_subnet" {
   availability_zone = "${local.new_subnet_azs[count.index]}"
 
   tags = "${merge(map(
-    "Name", "${var.cluster_name}-worker-${local.new_subnet_azs[count.index]}",
-    "kubernetes.io/cluster/${var.cluster_name}","shared",
-    "kubernetes.io/role/internal-elb", "",
-    "openshiftClusterID", "${var.cluster_id}"
-    ),
-    var.extra_tags)}"
+      "Name", "${var.cluster_name}-worker-${local.new_subnet_azs[count.index]}",
+      "kubernetes.io/role/internal-elb", "",
+    ), var.tags)}"
 }
 
 resource "aws_route_table_association" "worker_routing" {

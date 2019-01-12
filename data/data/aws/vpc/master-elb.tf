@@ -6,10 +6,7 @@ resource "aws_lb" "api_internal" {
   enable_cross_zone_load_balancing = true
   idle_timeout                     = 3600
 
-  tags = "${merge(map(
-      "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "openshiftClusterID", "${var.cluster_id}"
-    ), var.extra_tags)}"
+  tags = "${var.tags}"
 }
 
 resource "aws_lb" "api_external" {
@@ -20,10 +17,7 @@ resource "aws_lb" "api_external" {
   enable_cross_zone_load_balancing = true
   idle_timeout                     = 3600
 
-  tags = "${merge(map(
-      "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "openshiftClusterID", "${var.cluster_id}"
-    ), var.extra_tags)}"
+  tags = "${var.tags}"
 }
 
 resource "aws_lb_target_group" "api_internal" {
@@ -34,10 +28,7 @@ resource "aws_lb_target_group" "api_internal" {
 
   target_type = "ip"
 
-  tags = "${merge(map(
-      "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "openshiftClusterID", "${var.cluster_id}"
-    ), var.extra_tags)}"
+  tags = "${var.tags}"
 
   health_check {
     healthy_threshold   = 3
@@ -57,10 +48,7 @@ resource "aws_lb_target_group" "api_external" {
 
   target_type = "ip"
 
-  tags = "${merge(map(
-      "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "openshiftClusterID", "${var.cluster_id}"
-    ), var.extra_tags)}"
+  tags = "${var.tags}"
 
   health_check {
     healthy_threshold   = 3
@@ -80,10 +68,7 @@ resource "aws_lb_target_group" "services" {
 
   target_type = "ip"
 
-  tags = "${merge(map(
-      "kubernetes.io/cluster/${var.cluster_name}", "owned",
-      "openshiftClusterID", "${var.cluster_id}"
-    ), var.extra_tags)}"
+  tags = "${var.tags}"
 
   health_check {
     healthy_threshold   = 3
