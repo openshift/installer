@@ -73,6 +73,9 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 							"sigs.k8s.io/cluster-api-machine-role": role,
 							"sigs.k8s.io/cluster-api-machine-type": role,
 						},
+						Annotations: map[string]string{
+							"openshift.io/drain-node": "True",
+						},
 					},
 					Spec: clusterapi.MachineSpec{
 						ProviderSpec: clusterapi.ProviderSpec{
