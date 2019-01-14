@@ -11,7 +11,7 @@ The installer doesn't provision worker nodes directly, like it does with master 
 The status of the Machine API Operator can be checked by running the following command from the machine used to install the cluster:
 
 ```sh
-oc --config=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-cluster-api get pods
+oc --config=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-cluster-api get deployments
 ```
 
 If the API is unavailable, that will need to be [investigated first](#kubernetes-api-is-unavailable).
@@ -19,15 +19,16 @@ If the API is unavailable, that will need to be [investigated first](#kubernetes
 The previous command should yield output similar to the following:
 
 ```
-NAME                                             READY     STATUS    RESTARTS   AGE
-clusterapi-manager-controllers-774dc4557-nx5xq   3/3       Running   0          4h
-machine-api-operator-7894d8f85-lq2ts             1/1       Running   0          4h
+NAME                             DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+cluster-autoscaler-operator      1         1         1            1           1d
+clusterapi-manager-controllers   1         1         1            1           1d
+machine-api-operator             1         1         1            1           1d
 ```
 
-The logs for the machine-controller container within the `clusterapi-manager-controllers` pod need to be checked to determine why the workers haven't been created. That can be done with the following (the exact name of the pod will need to be substituted):
+Check the machine controller logs with the following command.
 
 ```sh
-oc --config=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-cluster-api logs clusterapi-manager-controllers-774dc4557-nx5xq --container=machine-controller
+oc --config=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-cluster-api logs deployments/clusterapi-manager-controllers --container=machine-controller
 ```
 
 ### Kubernetes API is Unavailable
