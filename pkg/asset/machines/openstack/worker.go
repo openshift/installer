@@ -9,6 +9,7 @@ import (
 
 // Config is used to generate the machine.
 type Config struct {
+	CloudName   string
 	ClusterName string
 	Replicas    int64
 	Image       string
@@ -23,7 +24,7 @@ var WorkerMachineSetTmpl = template.Must(template.New("openstack-worker-machines
 apiVersion: cluster.k8s.io/v1alpha1
 kind: MachineSet
 metadata:
-  name: {{.ClusterName}}-worker-0
+  name: {{.ClusterName}}-worker
   namespace: openshift-cluster-api
   labels:
     sigs.k8s.io/cluster-api-cluster: {{.ClusterName}}
@@ -33,12 +34,12 @@ spec:
   replicas: {{.Replicas}}
   selector:
     matchLabels:
-      sigs.k8s.io/cluster-api-machineset: {{.ClusterName}}-worker-0
+      sigs.k8s.io/cluster-api-machineset: {{.ClusterName}}-worker
       sigs.k8s.io/cluster-api-cluster: {{.ClusterName}}
   template:
     metadata:
       labels:
-        sigs.k8s.io/cluster-api-machineset: {{.ClusterName}}-worker-0
+        sigs.k8s.io/cluster-api-machineset: {{.ClusterName}}-worker
         sigs.k8s.io/cluster-api-cluster: {{.ClusterName}}
         sigs.k8s.io/cluster-api-machine-role: worker
         sigs.k8s.io/cluster-api-machine-type: worker
@@ -47,30 +48,23 @@ spec:
         value:
           apiVersion: openstack.cluster.k8s.io/v1alpha1
           kind: OpenStackMachineProviderConfig
-          image:
-            id: {{.Image}}
+          cloudName: {{.CloudName}}
+          cloudsSecret: "openstack-credentials"
+          image: {{.Image}}
           flavor: {{.Machine.FlavorName}}
           placement:
             region: {{.Region}}
-          subnet:
-            filters:
-            - name: "tag:Name"
-              values:
-              - "{{.ClusterName}}-worker-*"
-          tags:
+          networks:
 {{- range $key,$value := .Tags}}
-            - name: "{{$key}}"
-              value: "{{$value}}"
+          - filter:
+              tags: "{{$key}}={{$value}}"
 {{- end}}
           securityGroups:
-            - filters:
-              - name: "tag:Name"
-                values:
-                - "{{.ClusterName}}_worker_sg"
+            - worker
           userDataSecret:
             name: worker-user-data
           trunk: {{.Trunk}}
       versions:
-        kubelet: ""
+        kubelet: "v1.11.0"
         controlPlane: ""
 `))

@@ -9,6 +9,7 @@ import (
 
 // MasterConfig is used to generate the machine.
 type MasterConfig struct {
+	CloudName   string
 	ClusterName string
 	Instances   []string
 	Image       string
@@ -42,31 +43,24 @@ items:
       value:
         apiVersion: openstack.cluster.k8s.io/v1alpha1
         kind: OpenStackMachineProviderConfig
-        image:
-          id: {{$c.Image}}
+        cloudName: {{$c.CloudName}}
+        cloudsSecret: "openstack-credentials"
+        image: {{$c.Image}}
         flavor: {{$c.Machine.FlavorName}}
         placement:
           region: {{$c.Region}}
-        subnet:
-          filters:
-          - name: "tag:Name"
-            values:
-            - "{{$c.ClusterName}}-master-*"
-        tags:
+        networks:
 {{- range $key,$value := $c.Tags}}
-          - name: "{{$key}}"
-            value: "{{$value}}"
+        - filter:
+            tags: "{{$key}}={{$value}}"
 {{- end}}
         securityGroups:
-          - filters:
-            - name: "tag:Name"
-              values:
-              - "{{$c.ClusterName}}_master_sg"
+          - master
         userDataSecret:
           name: master-user-data
         trunk: {{$c.Trunk}}
     versions:
-      kubelet: ""
+      kubelet: "v1.11.0"
       controlPlane: ""
 {{- end -}}
 `))

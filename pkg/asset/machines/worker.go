@@ -138,6 +138,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			numOfWorkers = *pool.Replicas
 		}
 		config := openstack.Config{
+			CloudName:   ic.Platform.OpenStack.Cloud,
 			ClusterName: ic.ObjectMeta.Name,
 			Replicas:    numOfWorkers,
 			Image:       string(*rhcosImage),

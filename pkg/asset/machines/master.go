@@ -116,6 +116,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			instances = append(instances, fmt.Sprintf("master-%d", i))
 		}
 		config := openstack.MasterConfig{
+			CloudName:   ic.Platform.OpenStack.Cloud,
 			ClusterName: ic.ObjectMeta.Name,
 			Instances:   instances,
 			Image:       string(*rhcosImage),
