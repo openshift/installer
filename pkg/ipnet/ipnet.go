@@ -50,7 +50,7 @@ func (ipnet *IPNet) UnmarshalJSON(b []byte) (err error) {
 		return errors.Wrap(err, "failed to Unmarshal string")
 	}
 
-	ip, net, err := net.ParseCIDR(cidr)
+	_, net, err := net.ParseCIDR(cidr)
 	if err != nil {
 		return errors.Wrap(err, "failed to Parse cidr string to net.IPNet")
 	}
@@ -61,7 +61,7 @@ func (ipnet *IPNet) UnmarshalJSON(b []byte) (err error) {
 	// which is what some libraries (e.g. github.com/apparentlymart/go-cidr)
 	// assume. By forcing the address to be the expected length, we can work
 	// around these bugs.
-	if ip.To4() != nil {
+	if ip := net.IP; ip.To4() != nil {
 		ipnet.IP = ip.To4()
 	} else {
 		ipnet.IP = ip
