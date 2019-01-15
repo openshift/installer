@@ -60,6 +60,11 @@ func runDestroyCmd(directory string) error {
 			return errors.Wrapf(err, "failed to destroy asset %q", asset.Name())
 		}
 	}
+	for _, asset := range installConfigTarget.assets {
+		if err := store.Destroy(asset); err != nil {
+			return errors.Wrapf(err, "failed to destroy asset %q", asset.Name())
+		}
+	}
 	return nil
 }
 
