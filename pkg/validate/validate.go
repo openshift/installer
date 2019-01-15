@@ -7,10 +7,8 @@ import (
 	"fmt"
 	"net"
 	"net/url"
-	"sort"
 	"strings"
 
-	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"golang.org/x/crypto/ssh"
 	k8serrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/validation"
@@ -20,27 +18,6 @@ var (
 	dockerBridgeCIDR = func() *net.IPNet {
 		_, cidr, _ := net.ParseCIDR("172.17.0.0/16")
 		return cidr
-	}()
-
-	// ValidNetworkTypes is a collection of the valid network types.
-	ValidNetworkTypes = map[netopv1.NetworkType]bool{
-		netopv1.NetworkTypeOpenshiftSDN:  true,
-		netopv1.NetworkTypeOVNKubernetes: true,
-		netopv1.NetworkTypeCalico:        true,
-		netopv1.NetworkTypeKuryr:         true,
-	}
-
-	// ValidNetworkTypeValues is a slice filled with the valid network types as
-	// strings.
-	ValidNetworkTypeValues = func() []string {
-		validValues := make([]string, len(ValidNetworkTypes))
-		i := 0
-		for t := range ValidNetworkTypes {
-			validValues[i] = string(t)
-			i++
-		}
-		sort.Strings(validValues)
-		return validValues
 	}()
 )
 

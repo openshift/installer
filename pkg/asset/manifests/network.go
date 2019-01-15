@@ -1,16 +1,18 @@
 package manifests
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 
-	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1a1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 )
@@ -20,35 +22,18 @@ var (
 	noCfgFilename = filepath.Join(manifestDir, "cluster-network-02-config.yml")
 )
 
-const (
-
-	// We need to manually create our CRD first, so we can create the
-	// configuration instance of it.
-	// Other operators have their CRD created by the CVO, but we manually
-	// create our operator's configuration in the installer.
-	netConfigCRD = `
-apiVersion: apiextensions.k8s.io/v1beta1
-kind: CustomResourceDefinition
-metadata:
-  name: networkconfigs.networkoperator.openshift.io
-spec:
-  group: networkoperator.openshift.io
-  names:
-    kind: NetworkConfig
-    listKind: NetworkConfigList
-    plural: networkconfigs
-    singular: networkconfig
-  scope: Cluster
-  versions:
-    - name: v1
-      served: true
-      storage: true
-`
-)
+// We need to manually create our CRDs first, so we can create the
+// configuration instance of it in the installer. Other operators have
+// their CRD created by the CVO, but we need to create the corresponding
+// CRs in the installer, so we need the CRD to be there.
+// The first CRD is the high-level Network.config.openshift.io object,
+// which is stable ahd minimal. Administrators can override configure the
+// network in a more detailed manner with the operator-specific CR, which
+// also needs to be done before the installer is run, so we provide both.
 
 // Networking generates the cluster-network-*.yml files.
 type Networking struct {
-	config   *netopv1.NetworkConfig
+	config   *configv1.Network
 	FileList []*asset.File
 }
 
@@ -64,60 +49,44 @@ func (no *Networking) Name() string {
 func (no *Networking) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		&openshift.NetworkCRDs{},
 	}
 }
 
 // Generate generates the network operator config and its CRD.
 func (no *Networking) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	crds := &openshift.NetworkCRDs{}
+	dependencies.Get(installConfig, crds)
 
 	netConfig := installConfig.Config.Networking
 
-	// determine pod address space.
-	// This can go away when we get rid of PodCIDR
-	// entirely in favor of ClusterNetworks
-	var clusterNets []netopv1.ClusterNetwork
+	clusterNet := []configv1.ClusterNetworkEntry{}
 	if len(netConfig.ClusterNetworks) > 0 {
-		clusterNets = netConfig.ClusterNetworks
-	} else if !netConfig.PodCIDR.IPNet.IP.IsUnspecified() {
-		clusterNets = []netopv1.ClusterNetwork{
-			{
-				CIDR:             netConfig.PodCIDR.String(),
-				HostSubnetLength: 9,
-			},
+		for _, net := range netConfig.ClusterNetworks {
+			_, size := net.CIDR.Mask.Size()
+			clusterNet = append(clusterNet, configv1.ClusterNetworkEntry{
+				CIDR:       net.CIDR.String(),
+				HostPrefix: uint32(size) - uint32(net.HostSubnetLength),
+			})
 		}
 	} else {
-		return errors.Errorf("Either PodCIDR or ClusterNetworks must be specified")
+		return errors.Errorf("ClusterNetworks must be specified")
 	}
 
-	defaultNet := netopv1.DefaultNetworkDefinition{
-		Type: netConfig.Type,
-	}
-
-	// Add any network-specific configuration defaults here.
-	switch netConfig.Type {
-	case netopv1.NetworkTypeOpenshiftSDN:
-		defaultNet.OpenshiftSDNConfig = &netopv1.OpenshiftSDNConfig{
-			// Default to network policy, operator provides all other defaults.
-			Mode: netopv1.SDNModePolicy,
-		}
-	}
-
-	no.config = &netopv1.NetworkConfig{
+	no.config = &configv1.Network{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: netopv1.SchemeGroupVersion.String(),
-			Kind:       "NetworkConfig",
+			APIVersion: configv1.SchemeGroupVersion.String(),
+			Kind:       "Network",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "default",
+			Name: "cluster",
 			// not namespaced
 		},
-
-		Spec: netopv1.NetworkConfigSpec{
-			ServiceNetwork:  netConfig.ServiceCIDR.String(),
-			ClusterNetworks: clusterNets,
-			DefaultNetwork:  defaultNet,
+		Spec: configv1.NetworkSpec{
+			ClusterNetwork: clusterNet,
+			ServiceNetwork: []string{netConfig.ServiceCIDR.String()},
+			NetworkType:    netConfig.Type,
 		},
 	}
 
@@ -126,10 +95,15 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 		return errors.Wrapf(err, "failed to create %s manifests from InstallConfig", no.Name())
 	}
 
+	crdContents := ""
+	for _, crdFile := range crds.Files() {
+		crdContents = fmt.Sprintf("%s\n---\n%s", crdContents, crdFile.Data)
+	}
+
 	no.FileList = []*asset.File{
 		{
 			Filename: noCrdFilename,
-			Data:     []byte(netConfigCRD),
+			Data:     []byte(crdContents),
 		},
 		{
 			Filename: noCfgFilename,
@@ -155,13 +129,13 @@ func (no *Networking) ClusterNetwork() (*clusterv1a1.ClusterNetworkingConfig, er
 	}
 
 	pods := []string{}
-	for _, cn := range no.config.Spec.ClusterNetworks {
+	for _, cn := range no.config.Spec.ClusterNetwork {
 		pods = append(pods, cn.CIDR)
 	}
 
 	cn := &clusterv1a1.ClusterNetworkingConfig{
 		Services: clusterv1a1.NetworkRanges{
-			CIDRBlocks: []string{no.config.Spec.ServiceNetwork},
+			CIDRBlocks: no.config.Spec.ServiceNetwork,
 		},
 		Pods: clusterv1a1.NetworkRanges{
 			CIDRBlocks: pods,
@@ -189,7 +163,7 @@ func (no *Networking) Load(f asset.FileFetcher) (bool, error) {
 		return false, err
 	}
 
-	netConfig := &netopv1.NetworkConfig{}
+	netConfig := &configv1.Network{}
 	if err := yaml.Unmarshal(cfgFile.Data, netConfig); err != nil {
 		return false, errors.Wrapf(err, "failed to unmarshal %s", noCfgFilename)
 	}

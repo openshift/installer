@@ -6,7 +6,6 @@ import (
 	"sort"
 	"strings"
 
-	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -58,8 +57,8 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 
 func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if !validate.ValidNetworkTypes[n.Type] {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("type"), n.Type, validate.ValidNetworkTypeValues))
+	if n.Type == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("type"), "network provider type required"))
 	}
 	if err := validate.SubnetCIDR(&n.MachineCIDR.IPNet); err != nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("machineCIDR"), n.MachineCIDR, err.Error()))
@@ -70,35 +69,22 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	for i, cn := range n.ClusterNetworks {
 		allErrs = append(allErrs, validateClusterNetwork(&cn, fldPath.Child("clusterNetworks").Index(i), &n.ServiceCIDR.IPNet)...)
 	}
-	if n.PodCIDR != nil {
-		if err := validate.SubnetCIDR(&n.PodCIDR.IPNet); err != nil {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("podCIDR"), n.PodCIDR, err.Error()))
-		}
-		if validate.DoCIDRsOverlap(&n.ServiceCIDR.IPNet, &n.PodCIDR.IPNet) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("podCIDR"), n.PodCIDR, "podCIDR must not overlap with serviceCIDR"))
-		}
-	}
-	if len(n.ClusterNetworks) == 0 && n.PodCIDR == nil {
-		allErrs = append(allErrs, field.Invalid(fldPath, n, "either clusterNetworks or podCIDR is required"))
-	}
-	if len(n.ClusterNetworks) != 0 && n.PodCIDR != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("podCIDR"), n.PodCIDR, "cannot use podCIDR when clusterNetworks is used"))
+	if len(n.ClusterNetworks) == 0 {
+		allErrs = append(allErrs, field.Required(fldPath.Child("clusterNetworks"), "cluster network required"))
 	}
 	return allErrs
 }
 
-func validateClusterNetwork(cn *netopv1.ClusterNetwork, fldPath *field.Path, serviceCIDR *net.IPNet) field.ErrorList {
+func validateClusterNetwork(cn *types.ClusterNetworkEntry, fldPath *field.Path, serviceCIDR *net.IPNet) field.ErrorList {
 	allErrs := field.ErrorList{}
-	_, cidr, err := net.ParseCIDR(cn.CIDR)
-	if err == nil {
-		if validate.DoCIDRsOverlap(cidr, serviceCIDR) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR, "cluster network CIDR must not overlap with serviceCIDR"))
-		}
-		if ones, bits := cidr.Mask.Size(); cn.HostSubnetLength > uint32(bits-ones) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("hostSubnetLength"), cn.HostSubnetLength, "cluster network host subnet length must not be greater than CIDR length"))
-		}
-	} else {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR, err.Error()))
+	if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, serviceCIDR) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.String(), "cluster network CIDR must not overlap with serviceCIDR"))
+	}
+	if cn.HostSubnetLength < 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostSubnetLength"), cn.HostSubnetLength, "hostSubnetLength must be positive"))
+	}
+	if ones, bits := cn.CIDR.Mask.Size(); cn.HostSubnetLength > int32(bits-ones) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("hostSubnetLength"), cn.HostSubnetLength, "cluster network host subnet must not be larger than CIDR "+cn.CIDR.String()))
 	}
 	return allErrs
 }

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -66,11 +65,11 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 		BaseDomain: "test-domain",
 		Networking: &types.Networking{
 			MachineCIDR: ipnet.MustParseCIDR("10.0.0.0/16"),
-			Type:        "OpenshiftSDN",
+			Type:        "OpenShiftSDN",
 			ServiceCIDR: ipnet.MustParseCIDR("172.30.0.0/16"),
-			ClusterNetworks: []netopv1.ClusterNetwork{
+			ClusterNetworks: []types.ClusterNetworkEntry{
 				{
-					CIDR:             "10.128.0.0/14",
+					CIDR:             *ipnet.MustParseCIDR("10.128.0.0/14"),
 					HostSubnetLength: 9,
 				},
 			},
@@ -125,11 +124,11 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				BaseDomain: "test-domain",
 				Networking: &types.Networking{
 					MachineCIDR: ipnet.MustParseCIDR("10.0.0.0/16"),
-					Type:        "OpenshiftSDN",
+					Type:        "OpenShiftSDN",
 					ServiceCIDR: ipnet.MustParseCIDR("172.30.0.0/16"),
-					ClusterNetworks: []netopv1.ClusterNetwork{
+					ClusterNetworks: []types.ClusterNetworkEntry{
 						{
-							CIDR:             "10.128.0.0/14",
+							CIDR:             *ipnet.MustParseCIDR("10.128.0.0/14"),
 							HostSubnetLength: 9,
 						},
 					},

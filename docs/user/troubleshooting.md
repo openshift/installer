@@ -224,19 +224,18 @@ From a deployment perspective, the network operator is often the "canary in the 
 First, determine that the network configuration exists:
 
 ```console
-$ kubectl get networkconfigs.networkoperator.openshift.io default -oyaml
-...
+$ kubectl get network.config.openshift.io cluster -oyaml
+apiVersion: config.openshift.io/v1
+kind: Network
+metadata:
+  name: cluster
 spec:
-  additionalNetworks: null
-  clusterNetworks:
-  - cidr: 10.2.0.0/16
-    hostSubnetLength: 9
-  defaultNetwork:
-    openshiftSDNConfig:
-      mode: Networkpolicy
-    otherConfig: null
-    type: OpenshiftSDN
-  serviceNetwork: 10.3.0.0/16
+  serviceNetwork:
+  - 172.30.0.0/16
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  networkType: OpenShiftSDN
 ```
 
 If it doesn't exist, the installer didn't create it. You'll have to run `openshift-install create manifests` to determine why.

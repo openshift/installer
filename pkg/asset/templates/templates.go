@@ -42,6 +42,7 @@ func (m *Templates) Dependencies() []asset.Asset {
 		&openshift.KubeadminPasswordSecret{},
 		&openshift.RoleCloudCredsSecretReader{},
 		&openshift.InfrastructureCRD{},
+		&openshift.NetworkCRDs{},
 	}
 }
 
