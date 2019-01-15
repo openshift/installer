@@ -48,7 +48,7 @@ enough to store the ignition config files, so they are served by swift instead.
 `openstack image create --container-format=bare --disk-format=qcow2 --file redhat-coreos-${RHCOSVERSION}-openstack.qcow2 redhat-coreos-${RHCOSVERSION}`
 
 **NOTE:** Depending on your OpenStack environment you can upload the RHCOS image
-as `raw` or `qcow2`. See [https://docs.openstack.org/image-guide/image-formats.html](Disk and container formats for images) for more information.
+as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/image-formats.html) for more information.
 
 * The public network should be created by the OSP admin. Verify the name/ID of the 'External' network:
 ```
@@ -246,6 +246,9 @@ api VM:
 
 * `openstack server delete <cluster name>-api`
 
+## Troubleshooting
+
+See the [troubleshooting installer issues in OpenStack](./troubleshooting.md) guide.
 
 ## Reporting Issues
 
