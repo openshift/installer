@@ -93,13 +93,17 @@ func ClusterName(v string) error {
 	return validateSubdomain(v)
 }
 
-// SubnetCIDR checks if the given IP net is a valid CIDR for a master nodes or worker nodes subnet and returns an error if not.
+// SubnetCIDR checks if the given IP net is a valid CIDR.
 func SubnetCIDR(cidr *net.IPNet) error {
 	if cidr.IP.To4() == nil {
 		return errors.New("must use IPv4")
 	}
 	if cidr.IP.IsUnspecified() {
 		return errors.New("address must be specified")
+	}
+	nip := cidr.IP.Mask(cidr.Mask)
+	if nip.String() != cidr.IP.String() {
+		return fmt.Errorf("invalid network address. got %s, expecting %s", cidr.String(), (&net.IPNet{IP: nip, Mask: cidr.Mask}).String())
 	}
 	if DoCIDRsOverlap(cidr, dockerBridgeCIDR) {
 		return fmt.Errorf("overlaps with default Docker Bridge subnet (%v)", cidr.String())

@@ -129,7 +129,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Networking.ServiceCIDR = &ipnet.IPNet{}
 				return c
 			}(),
-			expectedError: `^networking\.serviceCIDR: Invalid value: ipnet\.IPNet{IPNet:net\.IPNet{IP:net\.IP\(nil\), Mask:net\.IPMask\(nil\)}}: must use IPv4$`,
+			expectedError: `^networking\.serviceCIDR: Invalid value: "<nil>": must use IPv4$`,
 		},
 		{
 			name: "invalid cluster network cidr",
