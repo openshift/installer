@@ -58,8 +58,14 @@ to be created.
 
 ## Instance Limits
 
-By default, a cluster will create 6 nodes (3 masters and 3 workers). Currently, these are m4.large and within a new
-account's default limit. If you intend to start with a higher number of workers, enable autoscaling and large workloads
+By default, a cluster will create:
+
+* One m4.large bootstrap machine (removed after install)
+* Three m4.xlarge master nodes.
+* Three m4.large worker nodes.
+
+Currently, these instance type counts are within a new account's default limit.
+If you intend to start with a higher number of workers, enable autoscaling and large workloads
 or a different instance type, please ensure you have the necessary remaining instance count within the instance type's
 limit to satisfy the need. If not, please ask AWS to increase the limit via a support case.
 

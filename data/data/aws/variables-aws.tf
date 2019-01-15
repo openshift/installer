@@ -12,7 +12,7 @@ variable "aws_master_ec2_type" {
   description = "Instance size for the master node(s). Example: `m4.large`."
 
   # FIXME: get this wired up to the machine default
-  default = "m4.large"
+  default = "m4.xlarge"
 }
 
 variable "aws_ec2_ami_override" {
