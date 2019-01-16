@@ -11,6 +11,7 @@ import (
 
 	"github.com/gregjones/httpcache"
 	"github.com/gregjones/httpcache/diskcache"
+	"github.com/peterbourgon/diskv"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/unix"
 )
@@ -44,7 +45,10 @@ func (libvirt *Libvirt) UseCachedImage() (err error) {
 		return err
 	}
 
-	cache := diskcache.New(httpCacheDir)
+	cache := diskcache.NewWithDiskv(diskv.New(diskv.Options{
+		BasePath:     httpCacheDir,
+		CacheSizeMax: 0, // This stops the diskcache from caching the resp in memory.
+	}))
 	transport := httpcache.NewTransport(cache)
 	resp, err := transport.Client().Get(libvirt.Image)
 	if err != nil {
