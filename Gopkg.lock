@@ -883,6 +883,7 @@
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
     "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1",
     "github.com/pborman/uuid",
+    "github.com/peterbourgon/diskv",
     "github.com/pkg/errors",
     "github.com/shurcooL/vfsgen",
     "github.com/sirupsen/logrus",
