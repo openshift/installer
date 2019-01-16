@@ -26,7 +26,12 @@ import (
 )
 
 func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
-	return awstypes.MachinePool{}
+	return awstypes.MachinePool{
+		EC2RootVolume: awstypes.EC2RootVolume{
+			Type: "gp2",
+			Size: 32,
+		},
+	}
 }
 
 func defaultLibvirtMachinePoolPlatform() libvirttypes.MachinePool {
