@@ -34,20 +34,22 @@ const (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // AWSMachineProviderStatus is the type that will be embedded in a Machine.Status.ProviderStatus field.
-// It containsk AWS-specific status information.
+// It contains AWS-specific status information.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type AWSMachineProviderStatus struct {
 	metav1.TypeMeta `json:",inline"`
 
 	// InstanceID is the instance ID of the machine created in AWS
-	InstanceID *string `json:"instanceId"`
+	// +optional
+	InstanceID *string `json:"instanceId,omitempty"`
 
 	// InstanceState is the state of the AWS instance for this machine
-	InstanceState *string `json:"instanceState"`
+	// +optional
+	InstanceState *string `json:"instanceState,omitempty"`
 
 	// Conditions is a set of conditions associated with the Machine to indicate
 	// errors or other status
-	Conditions []AWSMachineProviderCondition `json:"conditions"`
+	Conditions []AWSMachineProviderCondition `json:"conditions,omitempty"`
 }
 
 // AWSMachineProviderConditionType is a valid value for AWSMachineProviderCondition.Type
@@ -68,16 +70,16 @@ type AWSMachineProviderCondition struct {
 	Status corev1.ConditionStatus `json:"status"`
 	// LastProbeTime is the last time we probed the condition.
 	// +optional
-	LastProbeTime metav1.Time `json:"lastProbeTime"`
+	LastProbeTime metav1.Time `json:"lastProbeTime,omitempty"`
 	// LastTransitionTime is the last time the condition transitioned from one status to another.
 	// +optional
-	LastTransitionTime metav1.Time `json:"lastTransitionTime"`
+	LastTransitionTime metav1.Time `json:"lastTransitionTime,omitempty"`
 	// Reason is a unique, one-word, CamelCase reason for the condition's last transition.
 	// +optional
-	Reason string `json:"reason"`
+	Reason string `json:"reason,omitempty"`
 	// Message is a human-readable message indicating details about last transition.
 	// +optional
-	Message string `json:"message"`
+	Message string `json:"message,omitempty"`
 }
 
 // +genclient
@@ -99,21 +101,21 @@ type AWSMachineProviderConfig struct {
 	// added by default by the actuator. These tags are additive. The actuator will ensure
 	// these tags are present, but will not remove any other tags that may exist on the
 	// instance.
-	Tags []TagSpecification `json:"tags"`
+	Tags []TagSpecification `json:"tags,omitempty"`
 
 	// IAMInstanceProfile is a reference to an IAM role to assign to the instance
-	IAMInstanceProfile *AWSResourceReference `json:"iamInstanceProfile"`
+	IAMInstanceProfile *AWSResourceReference `json:"iamInstanceProfile,omitempty"`
 
 	// UserDataSecret contains a local reference to a secret that contains the
 	// UserData to apply to the instance
-	UserDataSecret *corev1.LocalObjectReference `json:"userDataSecret"`
+	UserDataSecret *corev1.LocalObjectReference `json:"userDataSecret,omitempty"`
 
 	// CredentialsSecret is a reference to the secret with AWS credentials. Otherwise, defaults to permissions
 	// provided by attached IAM role where the actuator is running.
-	CredentialsSecret *corev1.LocalObjectReference `json:"credentialsSecret"`
+	CredentialsSecret *corev1.LocalObjectReference `json:"credentialsSecret,omitempty"`
 
 	// KeyName is the name of the KeyPair to use for SSH
-	KeyName *string `json:"keyName"`
+	KeyName *string `json:"keyName,omitempty"`
 
 	// DeviceIndex is the index of the device on the instance for the network interface attachment.
 	// Defaults to 0.
@@ -125,7 +127,7 @@ type AWSMachineProviderConfig struct {
 
 	// SecurityGroups is an array of references to security groups that should be applied to the
 	// instance.
-	SecurityGroups []AWSResourceReference `json:"securityGroups"`
+	SecurityGroups []AWSResourceReference `json:"securityGroups,omitempty"`
 
 	// Subnet is a reference to the subnet to use for this instance
 	Subnet AWSResourceReference `json:"subnet"`
@@ -135,7 +137,81 @@ type AWSMachineProviderConfig struct {
 
 	// LoadBalancers is the set of load balancers to which the new instance
 	// should be added once it is created.
-	LoadBalancers []LoadBalancerReference `json:"loadBalancers"`
+	LoadBalancers []LoadBalancerReference `json:"loadBalancers,omitempty"`
+
+	// BlockDevices is the set of block device mapping associated to this instance
+	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/block-device-mapping-concepts.html
+	BlockDevices []BlockDeviceMappingSpec `json:"blockDevices,omitempty"`
+}
+
+// BlockDeviceMappingSpec describes a block device mapping
+type BlockDeviceMappingSpec struct {
+
+	// The device name exposed to the machine (for example, /dev/sdh or xvdh).
+	DeviceName *string `json:"deviceName,omitempty"`
+
+	// Parameters used to automatically set up EBS volumes when the machine is
+	// launched.
+	EBS *EBSBlockDeviceSpec `json:"ebs,omitempty"`
+
+	// Suppresses the specified device included in the block device mapping of the
+	// AMI.
+	NoDevice *string `json:"noDevice,omitempty"`
+
+	// The virtual device name (ephemeralN). Machine store volumes are numbered
+	// starting from 0. An machine type with 2 available machine store volumes
+	// can specify mappings for ephemeral0 and ephemeral1.The number of available
+	// machine store volumes depends on the machine type. After you connect to
+	// the machine, you must mount the volume.
+	//
+	// Constraints: For M3 machines, you must specify machine store volumes in
+	// the block device mapping for the machine. When you launch an M3 machine,
+	// we ignore any machine store volumes specified in the block device mapping
+	// for the AMI.
+	VirtualName *string `json:"virtualName,omitempty"`
+}
+
+// EBSBlockDeviceSpec describes a block device for an EBS volume.
+// https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/EbsBlockDevice
+type EBSBlockDeviceSpec struct {
+
+	// Indicates whether the EBS volume is deleted on machine termination.
+	DeleteOnTermination *bool `json:"deleteOnTermination,omitempty"`
+
+	// Indicates whether the EBS volume is encrypted. Encrypted Amazon EBS volumes
+	// may only be attached to machines that support Amazon EBS encryption.
+	Encrypted *bool `json:"encrypted,omitempty"`
+
+	// The number of I/O operations per second (IOPS) that the volume supports.
+	// For io1, this represents the number of IOPS that are provisioned for the
+	// volume. For gp2, this represents the baseline performance of the volume and
+	// the rate at which the volume accumulates I/O credits for bursting. For more
+	// information about General Purpose SSD baseline performance, I/O credits,
+	// and bursting, see Amazon EBS Volume Types (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html)
+	// in the Amazon Elastic Compute Cloud User Guide.
+	//
+	// Constraint: Range is 100-20000 IOPS for io1 volumes and 100-10000 IOPS for
+	// gp2 volumes.
+	//
+	// Condition: This parameter is required for requests to create io1 volumes;
+	// it is not used in requests to create gp2, st1, sc1, or standard volumes.
+	Iops *int64 `json:"iops,omitempty"`
+
+	// The size of the volume, in GiB.
+	//
+	// Constraints: 1-16384 for General Purpose SSD (gp2), 4-16384 for Provisioned
+	// IOPS SSD (io1), 500-16384 for Throughput Optimized HDD (st1), 500-16384 for
+	// Cold HDD (sc1), and 1-1024 for Magnetic (standard) volumes. If you specify
+	// a snapshot, the volume size must be equal to or larger than the snapshot
+	// size.
+	//
+	// Default: If you're creating the volume from a snapshot and don't specify
+	// a volume size, the default is the snapshot size.
+	VolumeSize *int64 `json:"volumeSize,omitempty"`
+
+	// The volume type: gp2, io1, st1, sc1, or standard.
+	// Default: standard
+	VolumeType *string `json:"volumeType,omitempty"`
 }
 
 // AWSResourceReference is a reference to a specific AWS resource by ID, ARN, or filters.
@@ -143,22 +219,24 @@ type AWSMachineProviderConfig struct {
 // a validation error.
 type AWSResourceReference struct {
 	// ID of resource
-	ID *string `json:"id"`
+	// +optional
+	ID *string `json:"id,omitempty"`
 
 	// ARN of resource
-	ARN *string `json:"arn"`
+	// +optional
+	ARN *string `json:"arn,omitempty"`
 
 	// Filters is a set of filters used to identify a resource
-	Filters []Filter `json:"filters"`
+	Filters []Filter `json:"filters,omitempty"`
 }
 
 // Placement indicates where to create the instance in AWS
 type Placement struct {
 	// Region is the region to use to create the instance
-	Region string `json:"region"`
+	Region string `json:"region,omitempty"`
 
 	// AvailabilityZone is the availability zone of the instance
-	AvailabilityZone string `json:"availabilityZone"`
+	AvailabilityZone string `json:"availabilityZone,omitempty"`
 }
 
 // Filter is a filter used to identify an AWS resource
@@ -167,7 +245,7 @@ type Filter struct {
 	Name string `json:"name"`
 
 	// Values includes one or more filter values. Filter values are case-sensitive.
-	Values []string `json:"values"`
+	Values []string `json:"values,omitempty"`
 }
 
 // TagSpecification is the name/value pair for a tag
