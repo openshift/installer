@@ -57,9 +57,14 @@ Each cluster creates 10 distinct security groups. The default limit of 2,500 for
 to be created.
 
 ## Instance Limits
+By default, a cluster will create:
 
-By default, a cluster will create 6 nodes (3 masters and 3 workers). Currently, these are m4.large and within a new
-account's default limit. If you intend to start with a higher number of workers, enable autoscaling and large workloads
+* One m5.large bootstrap machine (removed after install)
+* Three m5.xlarge master nodes.
+* Three m5.large worker nodes.
+
+Currently, these instance type counts are within a new account's default limit.
+If you intend to start with a higher number of workers, enable autoscaling and large workloads
 or a different instance type, please ensure you have the necessary remaining instance count within the instance type's
 limit to satisfy the need. If not, please ask AWS to increase the limit via a support case.
 
