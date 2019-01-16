@@ -24,6 +24,10 @@ type Store interface {
 	// Destroy removes the asset from all its internal state and also from
 	// disk if possible.
 	Destroy(Asset) error
+
+	// DestroyState removes everything from the internal state and the internal
+	// state file
+	DestroyState() error
 }
 
 // assetSource indicates from where the asset was fetched
@@ -113,6 +117,20 @@ func (s *StoreImpl) Destroy(asset Asset) error {
 	delete(s.assets, reflect.TypeOf(asset))
 	delete(s.stateFileAssets, reflect.TypeOf(asset).String())
 	return s.saveStateFile()
+}
+
+// DestroyState removes the state file from disk
+func (s *StoreImpl) DestroyState() error {
+	s.stateFileAssets = nil
+	path := filepath.Join(s.directory, stateFileName)
+	err := os.Remove(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 // loadStateFile retrieves the state from the state file present in the given directory
