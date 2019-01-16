@@ -25,7 +25,7 @@ For examples of loading/evaluating the completions see:
   # Installing bash completion on Linux
   ## Load the openshift-install completion code for bash into the current shell
       source <(openshift-install completion bash)
-  ## Write bash completion code to a file and source if from .bash_profile
+  ## Write bash completion code to a file and source it from .bash_profile
       openshift-install completion bash > ~/.openshift-install/completion.bash.inc
       printf "
         # Kubectl shell completion
