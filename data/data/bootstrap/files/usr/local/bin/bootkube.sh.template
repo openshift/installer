@@ -9,7 +9,7 @@ if ! podman inspect {{.ReleaseImage}} &>/dev/null; then
 fi
 
 # convert the release image pull spec to an "absolute" form if a digest is available - this is
-# safe to resolve after the actions above because podman will not pull the image once it is 
+# safe to resolve after the actions above because podman will not pull the image once it is
 # locally available
 if ! release=$( podman inspect {{.ReleaseImage}} -f '{{"{{"}} index .RepoDigests 0 {{"}}"}}' ) || [[ -z "${release}" ]]; then
 	echo "Warning: Could not resolve release image to pull by digest" 2>&1
@@ -104,8 +104,7 @@ then
 		--manifest-image=${OPENSHIFT_HYPERKUBE_IMAGE} \
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/kube-scheduler-bootstrap \
-		--config-output-file=/assets/kube-scheduler-bootstrap/config \
-		--disable-phase-2
+		--config-output-file=/assets/kube-scheduler-bootstrap/config
 
 	cp kube-scheduler-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-scheduler-config.yaml
 	cp kube-scheduler-bootstrap/bootstrap-manifests/* bootstrap-manifests/
