@@ -13,12 +13,32 @@ data "ignition_config" "master_ignition_config" {
   }
 
   files = [
+    "${data.ignition_file.master_ifcfg.id}",
     "${data.ignition_file.master_hacks_script.id}",
   ]
 
   systemd = [
     "${data.ignition_systemd_unit.master_hacks_service.id}",
   ]
+}
+
+data "ignition_file" "master_ifcfg" {
+  filesystem = "root"
+  mode       = "420"                                       // 0644
+  path       = "/etc/sysconfig/network-scripts/ifcfg-eth0"
+
+  content {
+    content = <<EOF
+DEVICE="eth0"
+BOOTPROTO="dhcp"
+ONBOOT="yes"
+TYPE="Ethernet"
+PERSISTENT_DHCLIENT="yes"
+DNS1="${var.service_vm_fixed_ip}"
+PEERDNS="no"
+NM_CONTROLLED="yes"
+EOF
+  }
 }
 
 data "ignition_file" "master_hacks_script" {

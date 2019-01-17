@@ -35,6 +35,33 @@ data "ignition_file" "haproxy_conf" {
   }
 }
 
+data "ignition_file" "openshift_hosts" {
+  filesystem = "root"
+  mode       = "420"                  // 0644
+  path       = "/etc/openshift-hosts"
+
+  content {
+    content = <<EOF
+${replace(join("\n", formatlist("%s ${var.cluster_name}-etcd-%s.${var.cluster_domain}", var.master_ips, var.master_port_names)), "master-port-", "")}
+EOF
+  }
+}
+
+data "ignition_systemd_unit" "local_dns" {
+  name = "local-dns.service"
+
+  content = <<EOF
+[Unit]
+Description=Internal DNS server for running OpenShift on OpenStack
+
+[Service]
+ExecStart=/bin/podman run --name bootstrap-dns --rm -t -i -p 53:53/tcp -p 53:53/udp -v /etc/openshift-hosts:/etc/openshift-hosts:z --cap-add=NET_ADMIN docker.io/andyshinn/dnsmasq:latest --keep-in-foreground --log-facility=- --log-queries --no-resolv --addn-hosts=/etc/openshift-hosts --server=10.0.0.2 ${replace(join(" ", formatlist("--srv-host=_etcd-server-ssl._tcp.${var.cluster_name}.${var.cluster_domain},${var.cluster_name}-etcd-%s.${var.cluster_domain},2380,0,10", var.master_port_names)), "master-port-", "")}
+
+[Install]
+WantedBy=multi-user.target
+EOF
+}
+
 data "ignition_user" "core" {
   name = "core"
 }
@@ -59,10 +86,12 @@ data "ignition_config" "lb_redirect" {
 
   files = [
     "${data.ignition_file.haproxy_conf.id}",
+    "${data.ignition_file.openshift_hosts.id}",
   ]
 
   systemd = [
     "${data.ignition_systemd_unit.haproxy_unit.id}",
+    "${data.ignition_systemd_unit.local_dns.id}",
   ]
 
   users = [
