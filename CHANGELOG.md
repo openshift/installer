@@ -317,7 +317,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- We now push the ingress custom resource defintion and initial
+- We now push the ingress custom resource definition and initial
   configuration, allowing the ingress operator to configure itself
   without referencing the deprecated `cluster-config-v1` resource.
 
@@ -425,7 +425,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   available, to allow users to manually trigger bootstrap deletion if
   the automatic removal fails for whatever reason.
 - On AWS, bootstrap deletion now also removes the S3 bucket used for
-  the bootstrap node's Igntition configuration.
+  the bootstrap node's Ignition configuration.
 - Asset state is preserved even while moving backwards through [a
   staged install](docs/user/overview.md#multiple-invocations).  For
   example:

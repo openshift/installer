@@ -180,7 +180,7 @@ sdn              2         2         2       2            2           beta.kuber
 sdn-controller   1         1         1       1            1           node-role.kubernetes.io/master=   2h
 ```
 
-If, instead, you get a diferent error message:
+If, instead, you get a different error message:
 
 ```console
 $ kubectl -n openshift-sdn get daemonsets
