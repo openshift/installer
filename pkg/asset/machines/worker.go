@@ -26,9 +26,7 @@ import (
 )
 
 func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
-	return awstypes.MachinePool{
-		InstanceType: "m4.large",
-	}
+	return awstypes.MachinePool{}
 }
 
 func defaultLibvirtMachinePoolPlatform() libvirttypes.MachinePool {
@@ -94,6 +92,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	switch ic.Platform.Name() {
 	case awstypes.Name:
 		mpool := defaultAWSMachinePoolPlatform()
+		mpool.InstanceType = "m4.large"
 		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.AWS)
 		if len(mpool.Zones) == 0 {
