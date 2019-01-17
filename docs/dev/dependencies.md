@@ -18,7 +18,7 @@ We follow a hard flattening approach; i.e. direct and inherited dependencies are
 
 Dependencies are managed with [dep](https://golang.github.io/dep/) but committed directly to the repository. If you don't have dep, install the latest release from [Installation](https://golang.github.io/dep/docs/installation.html) link.
 
-We require atleast following version for dep:
+We require at least following version for dep:
 
 ```console
 $ dep version
