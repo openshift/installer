@@ -7,6 +7,8 @@ data "aws_availability_zones" "azs" {}
 
 // Only reference data sources which are gauranteed to exist at any time (above) in this locals{} block
 locals {
+  lb_base_name = "${replace(var.cluster_name, "/[^A-Za-z0-9-]/", "-")}"
+
   // List of possible AZs for each type of subnet
   new_subnet_azs = "${data.aws_availability_zones.azs.names}"
 

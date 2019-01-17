@@ -1,5 +1,5 @@
 resource "aws_lb" "api_internal" {
-  name                             = "${var.cluster_name}-int"
+  name                             = "${local.lb_base_name}-int"
   load_balancer_type               = "network"
   subnets                          = ["${local.master_subnet_ids}"]
   internal                         = true
@@ -10,7 +10,7 @@ resource "aws_lb" "api_internal" {
 }
 
 resource "aws_lb" "api_external" {
-  name                             = "${var.cluster_name}-ext"
+  name                             = "${local.lb_base_name}-ext"
   load_balancer_type               = "network"
   subnets                          = ["${local.master_subnet_ids}"]
   internal                         = false
@@ -21,7 +21,7 @@ resource "aws_lb" "api_external" {
 }
 
 resource "aws_lb_target_group" "api_internal" {
-  name     = "${var.cluster_name}-api-int"
+  name     = "${local.lb_base_name}-api-int"
   protocol = "TCP"
   port     = 6443
   vpc_id   = "${local.vpc_id}"
@@ -41,7 +41,7 @@ resource "aws_lb_target_group" "api_internal" {
 }
 
 resource "aws_lb_target_group" "api_external" {
-  name     = "${var.cluster_name}-api-ext"
+  name     = "${local.lb_base_name}-api-ext"
   protocol = "TCP"
   port     = 6443
   vpc_id   = "${local.vpc_id}"
@@ -61,7 +61,7 @@ resource "aws_lb_target_group" "api_external" {
 }
 
 resource "aws_lb_target_group" "services" {
-  name     = "${var.cluster_name}-services"
+  name     = "${local.lb_base_name}-services"
   protocol = "TCP"
   port     = 49500
   vpc_id   = "${local.vpc_id}"
