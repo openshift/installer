@@ -81,7 +81,16 @@ func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.
 			APIVersion: "awsproviderconfig.k8s.io/v1alpha1",
 			Kind:       "AWSMachineProviderConfig",
 		},
-		InstanceType:       mpool.InstanceType,
+		InstanceType: mpool.InstanceType,
+		BlockDevices: []awsprovider.BlockDeviceMappingSpec{
+			{
+				EBS: &awsprovider.EBSBlockDeviceSpec{
+					VolumeType: pointer.StringPtr(mpool.Type),
+					VolumeSize: pointer.Int64Ptr(int64(mpool.Size)),
+					Iops:       pointer.Int64Ptr(int64(mpool.IOPS)),
+				},
+			},
+		},
 		AMI:                awsprovider.AWSResourceReference{ID: &amiID},
 		Tags:               tags,
 		IAMInstanceProfile: &awsprovider.AWSResourceReference{ID: pointer.StringPtr(fmt.Sprintf("%s-%s-profile", clusterName, role))},

@@ -821,11 +821,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8c0b41a3bc962842dffadd9e4c2d027fbc410a814995e669c9684beaa010821a"
+  digest = "1:5ade82a27c5ca576a8aa699320fea3ae5a4d47c95e6a2212191ea31e4c49f27c"
   name = "sigs.k8s.io/cluster-api-provider-aws"
   packages = ["pkg/apis/awsproviderconfig/v1alpha1"]
   pruneopts = "NUT"
-  revision = "67b2fa68f05c1972b069e3bccf4c29884511bf82"
+  revision = "97771a0fe7762b34e80e05c7412f464dcdbbb3e7"
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
 
 [[projects]]
