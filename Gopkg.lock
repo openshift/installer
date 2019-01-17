@@ -254,6 +254,25 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:b87f828d0392f61272dbfd2f5f5d39cdad674a4b604441e3fc4119c2e98ac92d"
+  name = "github.com/gosuri/uilive"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "ac356e6e42cd31fcef8e6aec13ae9ed6fe87713e"
+
+[[projects]]
+  branch = "master"
+  digest = "1:6c06757b3d18f3f8f91087586d9e93c132c5147e62cefbcbb4b15f0bc9424c76"
+  name = "github.com/gosuri/uiprogress"
+  packages = [
+    ".",
+    "util/strutil",
+  ]
+  pruneopts = "NUT"
+  revision = "d0567a9d84a1c40dd7568115ea66f4887bf57b33"
+
+[[projects]]
+  branch = "master"
   digest = "1:7fdf3223c7372d1ced0b98bf53457c5e89d89aecbad9a77ba9fcc6e01f9e5621"
   name = "github.com/gregjones/httpcache"
   packages = [
@@ -911,6 +930,8 @@
     "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/containers",
     "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects",
     "github.com/gophercloud/utils/openstack/clientconfig",
+    "github.com/gosuri/uiprogress",
+    "github.com/gosuri/uiprogress/util/strutil",
     "github.com/gregjones/httpcache",
     "github.com/gregjones/httpcache/diskcache",
     "github.com/libvirt/libvirt-go",
