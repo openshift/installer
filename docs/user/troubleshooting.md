@@ -53,11 +53,9 @@ If no pods are shown, etcd will need to be [investigated](#etcd-is-not-running).
 
 ### Unable to SSH into Master Nodes
 
-In order to SSH into the master nodes as user `core`, it is necessary to include an administrator's SSH key during the installation. The selected key, if any, will be added to the `core` user's `~/.ssh/authorized_keys` via [Ignition](https://github.com/coreos/ignition) and is not configured via platform-specific approaches like [AWS key pairs](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html). You can verify the configured SSH key with:
-
-```sh
-oc get configmap -o "jsonpath={.data['install-config']}" -n kube-system cluster-config-v1 | grep -A1 sshKey
-```
+In order to SSH into the master nodes as user `core`, it is necessary to include an administrator's SSH key during the installation.
+The selected key, if any, will be added to the `core` user's `~/.ssh/authorized_keys` via [Ignition](https://github.com/coreos/ignition) and is not configured via platform-specific approaches like [AWS key pairs][aws-key-pairs].
+See [here][machine-config-daemon-ssh-keys] for information about managing SSH keys via the machine-config daemon.
 
 If SSH isn't able to connect to the nodes, they may be waiting on the bootstrap node before they can boot. The initial set of master nodes fetch their boot configuration (the Ignition Config) from the bootstrap node and will not complete until they successfully do so. Check the console output of the nodes to determine if they have successfully booted or if they are waiting for Ignition to fetch the remote config.
 
@@ -255,4 +253,6 @@ kubectl -n openshift-cluster-network-operator logs -l "k8s-app=cluster-network-o
 
 If appropriate, file a [network operator](https://github.com/openshift/cluster-network-operator) issue. RH employees can also try #forum-sdn.
 
+[aws-key-pairs]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html
 [kubernetes-debug]: https://kubernetes.io/docs/tasks/debug-application-cluster/
+[machine-config-daemon-ssh-keys]: https://github.com/openshift/machine-config-operator/blob/master/docs/Update-SSHKeys.md
