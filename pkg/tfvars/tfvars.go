@@ -73,11 +73,9 @@ func TFVars(clusterID string, cfg *types.InstallConfig, osImage, bootstrapIgn, m
 	}
 
 	if cfg.Platform.AWS != nil {
-		config.AWS = aws.AWS{
-			Region:         cfg.Platform.AWS.Region,
-			ExtraTags:      cfg.Platform.AWS.UserTags,
-			EC2AMIOverride: osImage,
-		}
+		config.AWS.Region = cfg.Platform.AWS.Region
+		config.AWS.ExtraTags = cfg.Platform.AWS.UserTags
+		config.AWS.EC2AMIOverride = osImage
 	} else if cfg.Platform.Libvirt != nil {
 		masterIPs := make([]string, len(cfg.Platform.Libvirt.MasterIPs))
 		for i, ip := range cfg.Platform.Libvirt.MasterIPs {
