@@ -258,17 +258,17 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 			}
 
 			if watchEvent.Type == watch.Error {
-				logrus.Debugf("error %s: %s", event.Name, event.Message)
+				logrus.Infof("error %s: %s", event.Name, event.Message)
 				return false, nil
 			}
 
 			if watchEvent.Type == watch.Modified {
-				logrus.Debugf("modified %s: %s", event.Name, event.Message)
+				logrus.Infof("modified %s: %s", event.Name, event.Message)
 				return false, nil
 			}
 
 			if watchEvent.Type == watch.Deleted {
-				logrus.Debugf("deleted %s: %s", event.Name, event.Message)
+				logrus.Infof("deleted %s: %s", event.Name, event.Message)
 				return false, nil
 			}
 
