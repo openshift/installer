@@ -1,26 +1,38 @@
 #!/usr/bin/env bash
-set -e
 
 KUBECONFIG="${1}"
 NAME="${2}"
 MESSAGE="${3}"
-TIMESTAMP="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+
+wait_for_existance() {
+	while [ ! -e "${1}" ]
+	do
+		sleep 5
+	done
+}
+
+echo "Waiting for bootstrap to complete..."
+wait_for_existance /opt/openshift/.bootkube.done
+wait_for_existance /opt/openshift/.openshift.done
 
 echo "Reporting install progress..."
-
-oc --config="$KUBECONFIG" create -f - <<EOF
-apiVersion: v1
-kind: Event
-metadata:
-  name: "${NAME}"
-  namespace: kube-system
-involvedObject:
-  namespace: kube-system
-message: "${MESSAGE}"
-firstTimestamp: "${TIMESTAMP}"
-lastTimestamp: "${TIMESTAMP}"
-count: 1
-source:
-  component: cluster
-  host: $(hostname)
+timestamp="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+while ! oc --config="$KUBECONFIG" create -f - <<-EOF
+	apiVersion: v1
+	kind: Event
+	metadata:
+	  name: "${NAME}"
+	  namespace: kube-system
+	involvedObject:
+	  namespace: kube-system
+	message: "${MESSAGE}"
+	firstTimestamp: "${timestamp}"
+	lastTimestamp: "${timestamp}"
+	count: 1
+	source:
+	  component: cluster
+	  host: $(hostname)
 EOF
+do
+	sleep 5
+done

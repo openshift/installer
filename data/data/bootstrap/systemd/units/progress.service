@@ -5,9 +5,6 @@ Wants=bootkube.service openshift.service
 After=bootkube.service openshift.service
 
 [Service]
-# Workaround for https://github.com/systemd/systemd/issues/1312 and https://github.com/opencontainers/runc/pull/1807
-ExecStartPre=/usr/bin/test -f /opt/openshift/.bootkube.done
-ExecStartPre=/usr/bin/test -f /opt/openshift/.openshift.done
 ExecStart=/usr/local/bin/report-progress.sh /opt/openshift/auth/kubeconfig bootstrap-complete "cluster bootstrapping has completed"
 
 Restart=on-failure
