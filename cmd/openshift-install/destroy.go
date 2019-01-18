@@ -60,6 +60,12 @@ func runDestroyCmd(directory string) error {
 			return errors.Wrapf(err, "failed to destroy asset %q", asset.Name())
 		}
 	}
+	// delete the state file as well
+	err = store.DestroyState()
+	if err != nil {
+		return errors.Wrap(err, "failed to remove state file")
+	}
+
 	return nil
 }
 
