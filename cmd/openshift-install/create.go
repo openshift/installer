@@ -225,7 +225,7 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 		return errors.Wrap(err, "waiting for Kubernetes API")
 	}
 
-	events := client.CoreV1().Events("kube-system")
+	events := client.CoreV1().Events("")
 
 	eventTimeout := 30 * time.Minute
 	logrus.Infof("Waiting up to %v for the bootstrap-complete event...", eventTimeout)
