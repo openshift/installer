@@ -81,7 +81,7 @@ var (
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 		},
-		assets: []asset.WritableAsset{&bootstrap.Bootstrap{}, &machine.Master{}, &machine.Worker{}, &kubeconfig.Admin{}},
+		assets: []asset.WritableAsset{&bootstrap.Bootstrap{}, &machine.Master{}, &machine.Worker{}, &kubeconfig.Admin{}, &cluster.Metadata{}},
 	}
 
 	clusterTarget = target{
@@ -118,7 +118,7 @@ var (
 				}
 			},
 		},
-		assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &tls.JournalCertKey{}, &cluster.Cluster{}},
+		assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &tls.JournalCertKey{}, &cluster.Metadata{}, &cluster.Cluster{}},
 	}
 
 	targets = []target{installConfigTarget, manifestTemplatesTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
