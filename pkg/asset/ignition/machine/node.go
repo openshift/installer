@@ -35,12 +35,5 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 				},
 			},
 		},
-		// XXX: Remove this once MCO supports injecting SSH keys.
-		Passwd: ignition.Passwd{
-			Users: []ignition.PasswdUser{{
-				Name:              "core",
-				SSHAuthorizedKeys: []ignition.SSHAuthorizedKey{ignition.SSHAuthorizedKey(installConfig.SSHKey)},
-			}},
-		},
 	}
 }
