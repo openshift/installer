@@ -64,6 +64,11 @@ variable "volume_type" {
   description = "The volume type for the bootstrap node's root volume."
 }
 
+variable "vpc_id" {
+  type        = "string"
+  description = "VPC ID is used to create resources like security group rules for bootstrap machine."
+}
+
 variable "vpc_security_group_ids" {
   type        = "list"
   default     = []

@@ -20,6 +20,7 @@ module "bootstrap" {
   subnet_id                = "${module.vpc.master_subnet_ids[0]}"
   target_group_arns        = "${module.vpc.aws_lb_target_group_arns}"
   target_group_arns_length = "${module.vpc.aws_lb_target_group_arns_length}"
+  vpc_id                   = "${module.vpc.vpc_id}"
   vpc_security_group_ids   = "${list(module.vpc.master_sg_id)}"
 
   tags = "${merge(map(
