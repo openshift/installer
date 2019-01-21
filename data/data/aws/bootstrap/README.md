@@ -30,6 +30,7 @@ module "bootstrap" {
   cluster_name   = "my-cluster"
   ignition       = "{\"ignition\": {\"version\": \"2.2.0\"}}",
   subnet_id      = "${aws_subnet.example.id}"
+  vpc_id         = "${aws_vpc.example.id}"
 }
 ```
 

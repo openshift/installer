@@ -110,7 +110,7 @@ resource "aws_instance" "bootstrap" {
   instance_type               = "${var.instance_type}"
   subnet_id                   = "${var.subnet_id}"
   user_data                   = "${data.ignition_config.redirect.rendered}"
-  vpc_security_group_ids      = ["${var.vpc_security_group_ids}"]
+  vpc_security_group_ids      = ["${var.vpc_security_group_ids}", "${aws_security_group.bootstrap.id}"]
   associate_public_ip_address = true
 
   lifecycle {
@@ -137,4 +137,32 @@ resource "aws_lb_target_group_attachment" "bootstrap" {
 
   target_group_arn = "${var.target_group_arns[count.index]}"
   target_id        = "${aws_instance.bootstrap.private_ip}"
+}
+
+resource "aws_security_group" "bootstrap" {
+  vpc_id = "${var.vpc_id}"
+
+  tags = "${merge(map(
+      "Name", "${var.cluster_name}_bootstrap_sg",
+    ), var.tags)}"
+}
+
+resource "aws_security_group_rule" "bootstrap_journald_gateway" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.bootstrap.id}"
+
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  from_port   = 19531
+  to_port     = 19531
+}
+
+resource "aws_security_group_rule" "bootstrap_kubelet_secure" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.bootstrap.id}"
+
+  protocol    = "tcp"
+  cidr_blocks = ["0.0.0.0/0"]
+  from_port   = 10250
+  to_port     = 10250
 }
