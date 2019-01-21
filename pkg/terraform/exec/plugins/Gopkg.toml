@@ -17,6 +17,10 @@ ignored = [
   version = "1.52.0"
 
 [[constraint]]
+  name = "github.com/terraform-providers/terraform-provider-google"
+  version = "1.20.0"
+
+[[constraint]]
   name = "github.com/terraform-providers/terraform-provider-ignition"
   version = "1.0.1"
 

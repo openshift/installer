@@ -38,3 +38,7 @@ ignored = [
 [[override]]
   revision = "v1.14.31"
   name = "github.com/aws/aws-sdk-go"
+
+[[constraint]]
+  name = "github.com/terraform-providers/terraform-provider-google"
+  version = "1.20.0"

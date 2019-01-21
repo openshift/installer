@@ -2,15 +2,20 @@
 
 
 [[projects]]
-  digest = "1:c7931499c1ea384e8ddb3d48cb60ecda4136eb84ca8db0b358c5781f5863b9d5"
+  digest = "1:b6f2695c7ff369b54376f691ac329cf3c29189c96aa4bc9c5b733401e886fe2d"
   name = "cloud.google.com/go"
   packages = [
+    "bigtable",
+    "bigtable/internal/gax",
+    "bigtable/internal/option",
     "compute/metadata",
     "iam",
     "internal",
     "internal/optional",
     "internal/trace",
     "internal/version",
+    "longrunning",
+    "longrunning/autogen",
     "storage",
   ]
   pruneopts = "NUT"
@@ -373,7 +378,7 @@
   version = "v1.39.2"
 
 [[projects]]
-  digest = "1:381fdad8817f7dc3e36a62441e87b29251fcf216d93d39a244fda414ce9f1feb"
+  digest = "1:5e3833a6f460617ccb377a4fe65d93f9a1fd7e6fb2ea82a94ae56146d42fe01f"
   name = "github.com/golang/protobuf"
   packages = [
     "proto",
@@ -381,6 +386,7 @@
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
+    "ptypes/empty",
     "ptypes/timestamp",
     "ptypes/wrappers",
   ]
@@ -1009,6 +1015,14 @@
   revision = "5bf94b69c6b68ee1b541973bb8e1144db23a194b"
 
 [[projects]]
+  digest = "1:232ab5b495f4faf58aea3d1c25042d6a557f4267d340b880d196864181a1d339"
+  name = "github.com/stoewer/go-strcase"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "9f4628dc69009a239427f342caccb0047c7aea01"
+  version = "v1.0.2"
+
+[[projects]]
   digest = "1:58752107b48e9f8925373932d47e6b8368b1398f8847ed0990d4739b469b61d5"
   name = "github.com/svanharmelen/jsonapi"
   packages = ["."]
@@ -1023,6 +1037,18 @@
   pruneopts = "NUT"
   revision = "73b3cdaead124418307a9229873d96e91865461b"
   version = "v1.29.0"
+
+[[projects]]
+  digest = "1:20de0f4a798f6698879e02e092d76e74b29da582cf3bd710ed93d5bfb9f17a2e"
+  name = "github.com/terraform-providers/terraform-provider-google"
+  packages = [
+    ".",
+    "google",
+    "version",
+  ]
+  pruneopts = "NUT"
+  revision = "104bbbe70e6d4c9a713afb9c1adc512f85f5857d"
+  version = "v1.20.0"
 
 [[projects]]
   digest = "1:f754cc985ae2db20427d2a939b6d00cac6b3e8716d8706af3bf0d221388f4492"
@@ -1082,13 +1108,14 @@
   revision = "49fa5e03c418f95f78684c91e155af06aa901a32"
 
 [[projects]]
-  digest = "1:f2805adeca595d7dbd25173b57f83daaa79f44d43475263c4e34b05020eac9a7"
+  digest = "1:d5d481cbc5ac153e21efaa65b382b8b464ddc1f089a640ff17479a2fe29a7b9e"
   name = "go.opencensus.io"
   packages = [
     ".",
     "exemplar",
     "internal",
     "internal/tagencoding",
+    "plugin/ocgrpc",
     "plugin/ochttp",
     "plugin/ochttp/propagation/b3",
     "plugin/ochttp/propagation/tracecontext",
@@ -1219,18 +1246,49 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:74e0d2eb5d663304fd724f6bcd322a2472fd79e29cc936cc6da226ee61233e1a"
+  digest = "1:4058ff69b9a3313ed3c9b8ecc61cb897278359ecf7e61cd675d61f3ad603c5a7"
   name = "google.golang.org/api"
   packages = [
+    "appengine/v1",
+    "bigquery/v2",
+    "cloudbilling/v1",
+    "cloudbuild/v1",
+    "cloudfunctions/v1",
+    "cloudiot/v1",
+    "cloudkms/v1",
+    "cloudresourcemanager/v1",
+    "cloudresourcemanager/v2beta1",
+    "composer/v1",
+    "compute/v0.beta",
+    "compute/v1",
+    "container/v1",
+    "container/v1beta1",
+    "dataflow/v1b3",
+    "dataproc/v1",
+    "dns/v1",
+    "dns/v1beta2",
+    "file/v1beta1",
     "gensupport",
     "googleapi",
     "googleapi/internal/uritemplates",
     "googleapi/transport",
+    "iam/v1",
     "internal",
     "iterator",
+    "logging/v2",
     "option",
+    "pubsub/v1",
+    "redis/v1beta1",
+    "runtimeconfig/v1beta1",
+    "servicemanagement/v1",
+    "serviceusage/v1beta1",
+    "sourcerepo/v1",
+    "spanner/v1",
+    "sqladmin/v1beta4",
     "storage/v1",
     "support/bundler",
+    "transport",
+    "transport/grpc",
     "transport/http",
     "transport/http/internal/propagation",
   ]
@@ -1238,7 +1296,7 @@
   revision = "1a5ef82f9af45ef51c486291ef2b0a16d82fdb95"
 
 [[projects]]
-  digest = "1:b63b351b57e64ae8aec1af030dc5e74a2676fcda62102f006ae4411fac1b04c8"
+  digest = "1:b400989fa9ecf8f825e9092d41c9779444afeda5d5ce7f5c9d4a9ca9d05c949c"
   name = "google.golang.org/appengine"
   packages = [
     ".",
@@ -1249,7 +1307,9 @@
     "internal/log",
     "internal/modules",
     "internal/remote_api",
+    "internal/socket",
     "internal/urlfetch",
+    "socket",
     "urlfetch",
   ]
   pruneopts = "NUT"
@@ -1258,19 +1318,23 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:a7d48ca460ca1b4f6ccd8c95502443afa05df88aee84de7dbeb667a8754e8fa6"
+  digest = "1:919def2c06d4700acfffdca102f912ec76fae5f026535934f921654d19e89cd8"
   name = "google.golang.org/genproto"
   packages = [
     "googleapis/api/annotations",
+    "googleapis/bigtable/admin/v2",
+    "googleapis/bigtable/v2",
     "googleapis/iam/v1",
+    "googleapis/longrunning",
     "googleapis/rpc/code",
     "googleapis/rpc/status",
+    "protobuf/field_mask",
   ]
   pruneopts = "NUT"
   revision = "bd91e49a0898e27abb88c339b432fa53d7497ac0"
 
 [[projects]]
-  digest = "1:3f21220da2c9af37c32adb314f1c609a6bf8548d5801bf43b95386af19c148bd"
+  digest = "1:fa809316d42a479da0f99af4ef14bff48bc2ce40ff147755b47d0cca150be3e9"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -1282,6 +1346,7 @@
     "connectivity",
     "credentials",
     "credentials/internal",
+    "credentials/oauth",
     "encoding",
     "encoding/proto",
     "grpclog",
@@ -1326,8 +1391,8 @@
     "github.com/hashicorp/logutils",
     "github.com/hashicorp/terraform/command",
     "github.com/hashicorp/terraform/helper/logging",
-    "github.com/hashicorp/terraform/version",
     "github.com/mitchellh/cli",
+    "github.com/terraform-providers/terraform-provider-google",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
