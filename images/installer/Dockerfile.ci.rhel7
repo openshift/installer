@@ -15,3 +15,8 @@ ENV PATH /bin
 ENV HOME /output
 WORKDIR /output
 ENTRYPOINT ["/bin/openshift-install"]
+
+LABEL License= \
+      io.k8s.description="The OpenShift Installer installs OpenShift clusters." \
+      io.k8s.display-name="OpenShift Installer" \
+      summary="The OpenShift Installer installs OpenShift clusters."
