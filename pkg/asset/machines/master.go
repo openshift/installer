@@ -109,33 +109,23 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		m.MachinesRaw = raw
 	case nonetypes.Name:
 	case openstacktypes.Name:
-		numOfMasters := int64(0)
-		if pool.Replicas != nil {
-			numOfMasters = *pool.Replicas
+		mpool := defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName)
+		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.OpenStack)
+		pool.Platform.OpenStack = &mpool
+
+		machines, err := openstack.Machines(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		instances := []string{}
-		for i := 0; i < int(numOfMasters); i++ {
-			instances = append(instances, fmt.Sprintf("master-%d", i))
-		}
-		config := openstack.MasterConfig{
-			CloudName:   ic.Platform.OpenStack.Cloud,
-			ClusterName: ic.ObjectMeta.Name,
-			Instances:   instances,
-			Image:       string(*rhcosImage),
-			Region:      ic.Platform.OpenStack.Region,
-			Machine:     defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName),
-			Trunk:       trunkSupportBoolean(ic.Platform.OpenStack.TrunkSupport),
+		openstack.ConfigMasters(machines, ic.ObjectMeta.Name)
+
+		list := listFromMachines(machines)
+		m.MachinesRaw, err = yaml.Marshal(list)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal")
 		}
 
-		tags := map[string]string{
-			"openshiftClusterID": clusterID.ClusterID,
-		}
-		config.Tags = tags
-
-		config.Machine.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
-		config.Machine.Set(pool.Platform.OpenStack)
-
-		m.MachinesRaw = applyTemplateData(openstack.MasterMachinesTmpl, config)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
