@@ -7,6 +7,8 @@ resource "aws_lb" "api_internal" {
   idle_timeout                     = 3600
 
   tags = "${var.tags}"
+
+  depends_on = ["aws_internet_gateway.igw"]
 }
 
 resource "aws_lb" "api_external" {
@@ -18,6 +20,8 @@ resource "aws_lb" "api_external" {
   idle_timeout                     = 3600
 
   tags = "${var.tags}"
+
+  depends_on = ["aws_internet_gateway.igw"]
 }
 
 resource "aws_lb_target_group" "api_internal" {
