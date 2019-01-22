@@ -44,15 +44,6 @@ func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePo
 	}
 }
 
-func trunkSupportBoolean(trunkSupport string) (result bool) {
-	if trunkSupport == "1" {
-		result = true
-	} else {
-		result = false
-	}
-	return
-}
-
 // Worker generates the machinesets for `worker` machine pool.
 type Worker struct {
 	MachineSetRaw     []byte
@@ -137,29 +128,21 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		w.MachineSetRaw = raw
 	case nonetypes.Name:
 	case openstacktypes.Name:
-		numOfWorkers := int64(0)
-		if pool.Replicas != nil {
-			numOfWorkers = *pool.Replicas
-		}
-		config := openstack.Config{
-			CloudName:   ic.Platform.OpenStack.Cloud,
-			ClusterName: ic.ObjectMeta.Name,
-			Replicas:    numOfWorkers,
-			Image:       string(*rhcosImage),
-			Region:      ic.Platform.OpenStack.Region,
-			Machine:     defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName),
-			Trunk:       trunkSupportBoolean(ic.Platform.OpenStack.TrunkSupport),
+		mpool := defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName)
+		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.OpenStack)
+		pool.Platform.OpenStack = &mpool
+
+		sets, err := openstack.MachineSets(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create master machine objects")
 		}
 
-		tags := map[string]string{
-			"openshiftClusterID": clusterID.ClusterID,
+		list := listFromMachineSets(sets)
+		w.MachineSetRaw, err = yaml.Marshal(list)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal")
 		}
-		config.Tags = tags
-
-		config.Machine.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
-		config.Machine.Set(pool.Platform.OpenStack)
-
-		w.MachineSetRaw = applyTemplateData(openstack.WorkerMachineSetTmpl, config)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
