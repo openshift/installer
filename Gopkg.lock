@@ -637,8 +637,7 @@
   version = "v2.2.1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:0d75918dda9605a696935f5e40d1f83fc07f08c4d1a02e77c45dfb7b7a8e63ee"
+  digest = "1:4485f6050feae6844efd79bce3f5b35e5ed4a21dd79ef6a2dbbee263531cea09"
   name = "k8s.io/api"
   packages = [
     "admissionregistration/v1alpha1",
@@ -674,7 +673,8 @@
     "storage/v1beta1",
   ]
   pruneopts = "NUT"
-  revision = "7c111c89a854dfd8ba47d0bfdbe352bc85951011"
+  revision = "d1dc89ebaebe945edbeff52a79f50c791a59ff87"
+  version = "kubernetes-1.12.2"
 
 [[projects]]
   digest = "1:db1a4cd5c12f340d0779da16d2d5ae2419b1a470d010fc988e5e345b8c7f494c"
@@ -829,12 +829,29 @@
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
 
 [[projects]]
+  branch = "master"
+  digest = "1:fcc276bfa3e1e3f8bda1249073912cebf9373996d24a9ffe988ad284c1cf65e3"
+  name = "sigs.k8s.io/cluster-api-provider-openstack"
+  packages = ["pkg/apis/openstackproviderconfig/v1alpha1"]
+  pruneopts = "NUT"
+  revision = "21aacd5415cc635214db986259cb2f0b0839a138"
+  source = "https://github.com/kubernetes-sigs/cluster-api-provider-openstack.git"
+
+[[projects]]
   digest = "1:84a8609383bec11b71d52dd813f33f1d16614b91966940bdc2aa79bea864fa25"
   name = "sigs.k8s.io/controller-runtime"
   packages = ["pkg/runtime/scheme"]
   pruneopts = "NUT"
   revision = "5fd1e9e9fac5261e9ad9d47c375afc014fc31d21"
   version = "v0.1.7"
+
+[[projects]]
+  digest = "1:8730e0150dfb2b7e173890c8b9868e7a273082ef8e39f4940e3506a481cf895c"
+  name = "sigs.k8s.io/yaml"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "fd68e9863619f6ec2fdd8625fe1f02e7c877e480"
+  version = "v1.1.0"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -912,6 +929,7 @@
     "k8s.io/client-go/tools/watch",
     "k8s.io/utils/pointer",
     "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1",
+    "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1",
     "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1",
   ]
   solver-name = "gps-cdcl"

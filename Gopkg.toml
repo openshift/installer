@@ -41,6 +41,10 @@ ignored = [
   name = "github.com/vincent-petithory/dataurl"
 
 [[override]]
+  name = "k8s.io/api"
+  version = "kubernetes-1.12.2"
+
+[[override]]
   name = "k8s.io/apimachinery"
   version = "kubernetes-1.12.2"
 
@@ -91,3 +95,8 @@ ignored = [
 [[constraint]]
   branch = "master"
   name = "github.com/gophercloud/gophercloud"
+
+[[constraint]]
+  branch = "master"
+  name = "sigs.k8s.io/cluster-api-provider-openstack"
+  source = "https://github.com/kubernetes-sigs/cluster-api-provider-openstack.git"
