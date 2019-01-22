@@ -15,7 +15,7 @@ type Destroyer interface {
 }
 
 // NewFunc is an interface for creating platform-specific destroyers.
-type NewFunc func(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (Destroyer, error)
+type NewFunc func(logger logrus.FieldLogger, metadata *types.ClusterMetadata, rootDir string) (Destroyer, error)
 
 // Registry maps ClusterMetadata.Platform() to per-platform Destroyer creators.
 var Registry = make(map[string]NewFunc)
@@ -36,5 +36,5 @@ func New(logger logrus.FieldLogger, rootDir string) (Destroyer, error) {
 	if !ok {
 		return nil, errors.Errorf("no destroyers registered for %q", platform)
 	}
-	return creator(logger, metadata)
+	return creator(logger, metadata, rootDir)
 }

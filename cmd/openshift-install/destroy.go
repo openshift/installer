@@ -8,6 +8,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/destroy"
 	"github.com/openshift/installer/pkg/destroy/bootstrap"
+	_ "github.com/openshift/installer/pkg/destroy/google"
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
 	_ "github.com/openshift/installer/pkg/destroy/openstack"
 )

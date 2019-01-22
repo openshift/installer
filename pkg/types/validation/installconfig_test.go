@@ -194,7 +194,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				})
 				return c
 			}(),
-			expectedError: `^machines\[2]: Duplicate value: types\.MachinePool{Name:"master", Replicas:\(\*int64\)\(nil\), Platform:types\.MachinePoolPlatform{AWS:\(\*aws\.MachinePool\)\(nil\), Libvirt:\(\*libvirt\.MachinePool\)\(nil\), OpenStack:\(\*openstack\.MachinePool\)\(nil\)}}$`,
+			expectedError: `^machines\[2]: Duplicate value: types\.MachinePool{Name:"master", Replicas:\(\*int64\)\(nil\), Platform:types\.MachinePoolPlatform{AWS:\(\*aws\.MachinePool\)\(nil\), GCP:\(\*google\.MachinePool\)\(nil\), Libvirt:\(\*libvirt\.MachinePool\)\(nil\), OpenStack:\(\*openstack\.MachinePool\)\(nil\)}}$`,
 		},
 		{
 			name: "invalid machine pool",
@@ -214,7 +214,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(nil\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\)$`,
+			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), GCP:\(\*google\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(nil\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, google, none, openstack\)$`,
 		},
 		{
 			name: "multiple platforms",
@@ -223,7 +223,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt = validLibvirtPlatform()
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(0x[0-9a-f]*\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must only specify a single type of platform; cannot use both "aws" and "libvirt"$`,
+			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(0x[0-9a-f]*\), GCP:\(\*google\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must only specify a single type of platform; cannot use both "aws" and "libvirt"$`,
 		},
 		{
 			name: "invalid aws platform",
@@ -245,7 +245,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\)$`,
+			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), GCP:\(\*google\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, google, none, openstack\)$`,
 		},
 		{
 			name: "invalid libvirt platform",
@@ -257,7 +257,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt.URI = ""
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
+			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), GCP:\(\*google\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, google, none, openstack\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
 		},
 		{
 			name: "valid openstack platform",

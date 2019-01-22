@@ -13,11 +13,13 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/aws"
+	"github.com/openshift/installer/pkg/asset/machines/google"
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	gcptypes "github.com/openshift/installer/pkg/types/google"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -74,7 +76,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if len(mpool.Zones) == 0 {
 			azs, err := aws.AvailabilityZones(ic.Platform.AWS.Region)
 			if err != nil {
-				return errors.Wrap(err, "failed to fetch availability zones")
+				return errors.Wrap(err, "failed to fetch zones")
 			}
 			mpool.Zones = azs
 		}
@@ -84,6 +86,33 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		aws.ConfigMasters(machines, ic.ObjectMeta.Name)
+
+		list := listFromMachines(machines)
+		raw, err := yaml.Marshal(list)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal")
+		}
+		m.MachinesRaw = raw
+
+	case gcptypes.Name:
+		mpool := defaultGCPMachinePoolPlatform()
+		mpool.InstanceType = "n1-standard-2"
+		mpool.RootVolume.Size = 120
+		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.GCP)
+		if len(mpool.Zones) == 0 {
+			azs, err := google.Zones(ic.Platform.GCP.Region)
+			if err != nil {
+				return errors.Wrap(err, "failed to fetch availability zones")
+			}
+			mpool.Zones = azs
+		}
+		pool.Platform.GCP = &mpool
+		machines, err := google.Machines(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create master machine objects")
+		}
+		google.ConfigMasters(machines, ic.ObjectMeta.Name)
 
 		list := listFromMachines(machines)
 		raw, err := yaml.Marshal(list)

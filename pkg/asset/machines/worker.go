@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"text/template"
 
+	"github.com/openshift/installer/pkg/asset/machines/google"
+
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	gcptypes "github.com/openshift/installer/pkg/types/google"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -29,6 +32,15 @@ func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
 	return awstypes.MachinePool{
 		EC2RootVolume: awstypes.EC2RootVolume{
 			Type: "gp2",
+			Size: 32,
+		},
+	}
+}
+
+func defaultGCPMachinePoolPlatform() gcptypes.MachinePool {
+	return gcptypes.MachinePool{
+		RootVolume: gcptypes.RootVolume{
+			Type: "pd-standard",
 			Size: 32,
 		},
 	}
@@ -119,6 +131,32 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to marshal")
 		}
 		w.MachineSetRaw = raw
+
+	case gcptypes.Name:
+		mpool := defaultGCPMachinePoolPlatform()
+		mpool.InstanceType = "n1-standard-2"
+		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.GCP)
+		if len(mpool.Zones) == 0 {
+			azs, err := google.Zones(ic.Platform.GCP.Region)
+			if err != nil {
+				return errors.Wrap(err, "failed to fetch zones")
+			}
+			mpool.Zones = azs
+		}
+		pool.Platform.GCP = &mpool
+		sets, err := google.MachineSets(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+		if err != nil {
+			return errors.Wrap(err, "failed to create worker machine objects")
+		}
+
+		list := listFromMachineSets(sets)
+		raw, err := yaml.Marshal(list)
+		if err != nil {
+			return errors.Wrap(err, "failed to marshal")
+		}
+		w.MachineSetRaw = raw
+
 	case libvirttypes.Name:
 		mpool := defaultLibvirtMachinePoolPlatform()
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)

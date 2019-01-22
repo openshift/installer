@@ -542,7 +542,7 @@ func deleteTrunks(opts *clientconfig.ClientOpts, filter Filter, logger logrus.Fi
 }
 
 // New returns an OpenStack destroyer from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata, _ string) (destroy.Destroyer, error) {
 	return &ClusterUninstaller{
 		Cloud:  metadata.ClusterPlatformMetadata.OpenStack.Cloud,
 		Filter: metadata.ClusterPlatformMetadata.OpenStack.Identifier,

@@ -9,6 +9,8 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	awsvalidation "github.com/openshift/installer/pkg/types/aws/validation"
+	"github.com/openshift/installer/pkg/types/google"
+	gcpvalidation "github.com/openshift/installer/pkg/types/google/validation"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	libvirtvalidation "github.com/openshift/installer/pkg/types/libvirt/validation"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -60,6 +62,9 @@ func validateMachinePoolPlatform(p *types.MachinePoolPlatform, fldPath *field.Pa
 	}
 	if p.AWS != nil {
 		validate(aws.Name, p.AWS, func(f *field.Path) field.ErrorList { return awsvalidation.ValidateMachinePool(p.AWS, f) })
+	}
+	if p.GCP != nil {
+		validate(google.Name, p.GCP, func(f *field.Path) field.ErrorList { return gcpvalidation.ValidateMachinePool(p.GCP, f) })
 	}
 	if p.Libvirt != nil {
 		validate(libvirt.Name, p.Libvirt, func(f *field.Path) field.ErrorList { return libvirtvalidation.ValidateMachinePool(p.Libvirt, f) })

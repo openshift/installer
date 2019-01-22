@@ -212,7 +212,7 @@ func deleteNetwork(conn *libvirt.Connect, filter filterFunc, logger logrus.Field
 }
 
 // New returns libvirt Uninstaller from ClusterMetadata.
-func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
+func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata, _ string) (destroy.Destroyer, error) {
 	return &ClusterUninstaller{
 		LibvirtURI: metadata.ClusterPlatformMetadata.Libvirt.URI,
 		Filter:     ClusterNamePrefixFilter(metadata.ClusterName),

@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster/aws"
+	"github.com/openshift/installer/pkg/asset/cluster/google"
 	"github.com/openshift/installer/pkg/asset/cluster/libvirt"
 	"github.com/openshift/installer/pkg/asset/cluster/openstack"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -57,6 +58,8 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 	switch {
 	case installConfig.Config.Platform.AWS != nil:
 		metadata.ClusterPlatformMetadata.AWS = aws.Metadata(clusterID.ClusterID, installConfig.Config)
+	case installConfig.Config.Platform.GCP != nil:
+		metadata.ClusterPlatformMetadata.GCP = google.Metadata(clusterID.ClusterID, installConfig.Config)
 	case installConfig.Config.Platform.Libvirt != nil:
 		metadata.ClusterPlatformMetadata.Libvirt = libvirt.Metadata(installConfig.Config)
 	case installConfig.Config.Platform.OpenStack != nil:

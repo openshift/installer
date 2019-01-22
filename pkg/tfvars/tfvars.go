@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/openshift/installer/pkg/tfvars/aws"
+	"github.com/openshift/installer/pkg/tfvars/google"
 	"github.com/openshift/installer/pkg/tfvars/libvirt"
 	"github.com/openshift/installer/pkg/tfvars/openstack"
 	"github.com/openshift/installer/pkg/types"
@@ -22,6 +23,7 @@ type config struct {
 	IgnitionMaster    string `json:"ignition_master,omitempty"`
 
 	aws.AWS             `json:",inline"`
+	google.GCP          `json:",inline"`
 	libvirt.Libvirt     `json:",inline"`
 	openstack.OpenStack `json:",inline"`
 }
@@ -61,6 +63,15 @@ func TFVars(clusterID string, cfg *types.InstallConfig, osImage, bootstrapIgn, m
 					},
 				}
 			}
+			if m.Platform.GCP != nil {
+				config.GCP.Master = google.Master{
+					InstanceType: m.Platform.GCP.InstanceType,
+					MasterRootVolume: google.MasterRootVolume{
+						Size: m.Platform.GCP.RootVolume.Size,
+						Type: m.Platform.GCP.RootVolume.Type,
+					},
+				}
+			}
 		case "worker":
 			if m.Platform.AWS != nil {
 				config.AWS.Worker = aws.Worker{
@@ -76,6 +87,10 @@ func TFVars(clusterID string, cfg *types.InstallConfig, osImage, bootstrapIgn, m
 		config.AWS.Region = cfg.Platform.AWS.Region
 		config.AWS.ExtraTags = cfg.Platform.AWS.UserTags
 		config.AWS.EC2AMIOverride = osImage
+	} else if cfg.Platform.GCP != nil {
+		config.GCP.Region = cfg.Platform.GCP.Region
+		config.GCP.ExtraLabels = cfg.Platform.GCP.UserTags
+		config.GCP.ImageNameOverride = osImage
 	} else if cfg.Platform.Libvirt != nil {
 		masterIPs := make([]string, len(cfg.Platform.Libvirt.MasterIPs))
 		for i, ip := range cfg.Platform.Libvirt.MasterIPs {

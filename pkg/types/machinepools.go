@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/google"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -25,6 +26,9 @@ type MachinePoolPlatform struct {
 	// AWS is the configuration used when installing on AWS.
 	AWS *aws.MachinePool `json:"aws,omitempty"`
 
+	// GCP is the configuration used when installing on GCP.
+	GCP *google.MachinePool `json:"google,omitempty"`
+
 	// Libvirt is the configuration used when installing on libvirt.
 	Libvirt *libvirt.MachinePool `json:"libvirt,omitempty"`
 
@@ -41,6 +45,9 @@ func (p *MachinePoolPlatform) Name() string {
 	}
 	if p.AWS != nil {
 		return aws.Name
+	}
+	if p.GCP != nil {
+		return google.Name
 	}
 	if p.Libvirt != nil {
 		return libvirt.Name

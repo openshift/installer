@@ -75,7 +75,11 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	}
 
 	logrus.Infof("Creating cluster...")
-	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name())
+	platform := installConfig.Config.Platform.Name()
+	if platform == "google" {
+		platform = "google"
+	}
+	stateFile, err := terraform.Apply(tmpDir, platform)
 	if err != nil {
 		err = errors.Wrap(err, "failed to create cluster")
 	}

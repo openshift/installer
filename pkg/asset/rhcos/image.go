@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/google"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -56,6 +57,8 @@ func (i *Image) Generate(p asset.Parents) error {
 	switch config.Platform.Name() {
 	case aws.Name:
 		osimage, err = rhcos.AMI(ctx, rhcos.DefaultChannel, config.Platform.AWS.Region)
+	case google.Name:
+		osimage = "projects/openshift-gce-devel/global/images/redhat-coreos-maipo-47-254"
 	case libvirt.Name:
 		osimage, err = rhcos.QEMU(ctx, rhcos.DefaultChannel)
 	case openstack.Name:

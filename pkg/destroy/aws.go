@@ -7,7 +7,7 @@ import (
 )
 
 // NewAWS returns an AWS destroyer from ClusterMetadata.
-func NewAWS(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (Destroyer, error) {
+func NewAWS(logger logrus.FieldLogger, metadata *types.ClusterMetadata, _ string) (Destroyer, error) {
 	filters := make([]aws.Filter, 0, len(metadata.ClusterPlatformMetadata.AWS.Identifier))
 	for _, filter := range metadata.ClusterPlatformMetadata.AWS.Identifier {
 		filters = append(filters, filter)

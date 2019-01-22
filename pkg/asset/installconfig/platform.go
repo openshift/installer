@@ -9,10 +9,12 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/google"
 	libvirtconfig "github.com/openshift/installer/pkg/asset/installconfig/libvirt"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/google"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -44,6 +46,11 @@ func (a *platform) Generate(asset.Parents) error {
 		}
 	case libvirt.Name:
 		a.Libvirt, err = libvirtconfig.Platform()
+		if err != nil {
+			return err
+		}
+	case google.Name:
+		a.GCP, err = gcpconfig.Platform()
 		if err != nil {
 			return err
 		}

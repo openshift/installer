@@ -4,6 +4,7 @@ import (
 	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/google"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -16,6 +17,7 @@ var (
 	// platforms presented to the user in the interactive wizard.
 	PlatformNames = []string{
 		aws.Name,
+		google.Name,
 	}
 	// HiddenPlatformNames is a slice with all the
 	// hidden-but-supported platform names. This list isn't presented
@@ -75,6 +77,9 @@ type Platform struct {
 	// +optional
 	AWS *aws.Platform `json:"aws,omitempty"`
 
+	// GCP is the configuration used when installing on GCP.
+	GCP *google.Platform `json:"google,omitempty"`
+
 	// Libvirt is the configuration used when installing on libvirt.
 	// +optional
 	Libvirt *libvirt.Platform `json:"libvirt,omitempty"`
@@ -97,6 +102,9 @@ func (p *Platform) Name() string {
 	}
 	if p.AWS != nil {
 		return aws.Name
+	}
+	if p.GCP != nil {
+		return google.Name
 	}
 	if p.Libvirt != nil {
 		return libvirt.Name

@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/google"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -17,6 +18,7 @@ type ClusterMetadata struct {
 // ClusterPlatformMetadata contains metadata for platfrom.
 type ClusterPlatformMetadata struct {
 	AWS       *aws.Metadata       `json:"aws,omitempty"`
+	GCP       *google.Metadata    `json:"google,omitempty"`
 	OpenStack *openstack.Metadata `json:"openstack,omitempty"`
 	Libvirt   *libvirt.Metadata   `json:"libvirt,omitempty"`
 }
@@ -30,6 +32,9 @@ func (cpm *ClusterPlatformMetadata) Platform() string {
 	}
 	if cpm.AWS != nil {
 		return "aws"
+	}
+	if cpm.GCP != nil {
+		return "google"
 	}
 	if cpm.Libvirt != nil {
 		return "libvirt"
