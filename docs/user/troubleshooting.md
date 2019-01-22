@@ -2,6 +2,8 @@
 
 Unfortunately, there will always be some cases where OpenShift fails to install properly. In these events, it is helpful to understand the likely failure modes as well as how to troubleshoot the failure.
 
+If you have a Red Hat subscription for OpenShift, see [here][access-article] for support.
+
 ## Common Failures
 
 ### No Worker Nodes Created
@@ -253,6 +255,7 @@ kubectl -n openshift-cluster-network-operator logs -l "k8s-app=cluster-network-o
 
 If appropriate, file a [network operator](https://github.com/openshift/cluster-network-operator) issue. RH employees can also try #forum-sdn.
 
+[access-article]: https://access.redhat.com/articles/3780981#debugging-an-install-1
 [aws-key-pairs]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html
 [kubernetes-debug]: https://kubernetes.io/docs/tasks/debug-application-cluster/
 [machine-config-daemon-ssh-keys]: https://github.com/openshift/machine-config-operator/blob/master/docs/Update-SSHKeys.md
