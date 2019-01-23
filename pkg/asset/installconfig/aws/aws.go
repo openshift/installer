@@ -38,7 +38,7 @@ func Platform() (*aws.Platform, error) {
 		panic(fmt.Sprintf("installer bug: invalid default AWS region %q", defaultRegion))
 	}
 
-	ssn, err := getSession()
+	ssn, err := GetSession()
 	if err != nil {
 		return nil, err
 	}
@@ -85,7 +85,9 @@ func Platform() (*aws.Platform, error) {
 	}, nil
 }
 
-func getSession() (*session.Session, error) {
+// GetSession returns an AWS session by checking credentials
+// and, if no creds are found, asks for them and stores them on disk in a config file
+func GetSession() (*session.Session, error) {
 	ssn := session.Must(session.NewSessionWithOptions(session.Options{
 		SharedConfigState: session.SharedConfigEnable,
 	}))

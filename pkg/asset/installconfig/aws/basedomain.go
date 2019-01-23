@@ -22,7 +22,7 @@ func IsForbidden(err error) bool {
 // GetBaseDomain returns a base domain chosen from among the account's
 // public routes.
 func GetBaseDomain() (string, error) {
-	session, err := getSession()
+	session, err := GetSession()
 	if err != nil {
 		return "", err
 	}
