@@ -53,6 +53,14 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 			name:    "ignition configs",
 			targets: targets.IgnitionConfigs,
 		},
+		{
+			name:    "node configs",
+			targets: targets.NodeConfig,
+		},
+		{
+			name:    "pre-cluster",
+			targets: targets.PreCluster,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

@@ -46,11 +46,24 @@ var (
 		&openshift.RoleCloudCredsSecretReader{},
 	}
 
-	// IgnitionConfigs are the ignition-configs targeted assets.
+	// IgnitionConfigs are the (deprecated) ignition-configs targeted assets.
 	IgnitionConfigs = []asset.WritableAsset{
 		&kubeconfig.Admin{},
 		&machine.Master{},
 		&machine.Worker{},
+		&bootstrap.Bootstrap{},
+		&cluster.Metadata{},
+	}
+
+	// NodeConfig are the node-config targeted assets.
+	NodeConfig = []asset.WritableAsset{
+		&machine.Master{},
+		&machine.Worker{},
+	}
+
+	// PreCluster are the pre-cluster targeted assets.
+	PreCluster = []asset.WritableAsset{
+		&kubeconfig.Admin{},
 		&bootstrap.Bootstrap{},
 		&cluster.Metadata{},
 	}

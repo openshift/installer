@@ -38,9 +38,10 @@ The following targets can be created by the installer:
 - `install-config` - The install config contains the main parameters for the installation process. This configuration provides the user with more options than the interactive prompts and comes pre-populated with default values.
 - `manifest-templates` - These are the unrendered Kubernetes manifest templates that feed the `manifests` target.
     This target is [unstable](versioning.md).
+- `node-config` - These are the Ignition Configs for the master and worker machines.
 - `manifests` - This target outputs all of the Kubernetes manifests that will be installed on the cluster.
     This target is [unstable](versioning.md).
-- `ignition-configs` - These are the three Ignition Configs for the bootstrap, master, and worker machines.
+- `pre-cluster` - These are all the finalized assets needed to create the cluster--the Ignition Config for the bootstrap, the kubeconfig, and the metadata for identifying the cluster resources.
 - `cluster` - This target provisions the cluster and its associated infrastructure.
 
 The following targets can be destroyed by the installer:
