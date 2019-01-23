@@ -32,12 +32,13 @@ module "masters" {
 
   tags = "${local.tags}"
 
+  availability_zones       = "${var.aws_master_availability_zones}"
+  az_to_subnet_id          = "${module.vpc.az_to_private_subnet_id}"
   instance_count           = "${var.master_count}"
   master_sg_ids            = "${list(module.vpc.master_sg_id)}"
   root_volume_iops         = "${var.aws_master_root_volume_iops}"
   root_volume_size         = "${var.aws_master_root_volume_size}"
   root_volume_type         = "${var.aws_master_root_volume_type}"
-  subnet_ids               = "${module.vpc.private_subnet_ids}"
   target_group_arns        = "${module.vpc.aws_lb_target_group_arns}"
   target_group_arns_length = "${module.vpc.aws_lb_target_group_arns_length}"
   ec2_ami                  = "${aws_ami_copy.main.id}"

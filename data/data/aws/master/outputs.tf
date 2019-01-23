@@ -1,7 +1,3 @@
-output "subnet_ids" {
-  value = "${var.subnet_ids}"
-}
-
 output "cluster_id" {
   value = "${var.cluster_id}"
 }

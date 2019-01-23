@@ -107,9 +107,11 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		if err != nil {
 			return err
 		}
-		data, err = awstfvars.TFVars(
-			masters[0].Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig),
-		)
+		masterConfigs := make([]*awsprovider.AWSMachineProviderConfig, len(masters))
+		for i, m := range masters {
+			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
+		}
+		data, err := awstfvars.TFVars(masterConfigs)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}
