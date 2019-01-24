@@ -139,7 +139,7 @@ This documents how to shift from the API VM load balancer, which is
 intended for initial cluster deployment and not highly available, to an
 external load balancer.
 
-The load balancer must serve ports 6443, 443, and 80 to any users of
+The load balancer must serve ports 8443, 443, and 80 to any users of
 the system.  Port 49500 is for serving ignition startup configurations
 to the OpenShift nodes and should not be reachable outside of the cluster.
 
@@ -154,23 +154,23 @@ Once complete you can see your floating IPs using:
 * `openstack server list`
 
 These floating IPs can then be used by the load balancer to access
-the cluster.  An example haproxy configuration for port 6443 is below.
+the cluster.  An example haproxy configuration for port 8443 is below.
 The other port configurations are identical.
 
 ```
-listen <cluster name>-api-6443
-    bind 0.0.0.0:6443
+listen <cluster name>-api-8443
+    bind 0.0.0.0:8443
     mode tcp
     balance roundrobin
-    server <cluster name>-master-2 <floating ip>:6443 check
-    server <cluster name>-master-0 <floating ip>:6443 check
-    server <cluster name>-master-1 <floating ip>:6443 check
+    server <cluster name>-master-2 <floating ip>:8443 check
+    server <cluster name>-master-0 <floating ip>:8443 check
+    server <cluster name>-master-1 <floating ip>:8443 check
 ```
 
 The next step is to allow network access from the load balancer network
 to the master nodes:
 
-* `openstack security group rule create master --remote-ip <load balancer CIDR> --ingress --protocol tcp --dst-port 6443`
+* `openstack security group rule create master --remote-ip <load balancer CIDR> --ingress --protocol tcp --dst-port 8443`
 * `openstack security group rule create master --remote-ip <load balancer CIDR> --ingress --protocol tcp --dst-port 443`
 * `openstack security group rule create master --remote-ip <load balancer CIDR> --ingress --protocol tcp --dst-port 80`
 
@@ -189,7 +189,7 @@ DNS solution. It's best to test this configuration before removing
 the API. The following curl command is an example of how
 to check functionality:
 
-`curl https://<loadbalancer-ip>:6443/version --insecure`
+`curl https://<loadbalancer-ip>:8443/version --insecure`
 
 Result:
 

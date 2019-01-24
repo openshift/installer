@@ -62,7 +62,7 @@ func TestKubeconfigGenerate(t *testing.T) {
 			expectedData: []byte(`clusters:
 - cluster:
     certificate-authority-data: VEhJUyBJUyBST09UIENBIENFUlQgREFUQQ==
-    server: https://test-cluster-name-api.test.example.com:6443
+    server: https://test-cluster-name-api.test.example.com:8443
   name: test-cluster-name
 contexts:
 - context:
@@ -86,7 +86,7 @@ users:
 			expectedData: []byte(`clusters:
 - cluster:
     certificate-authority-data: VEhJUyBJUyBST09UIENBIENFUlQgREFUQQ==
-    server: https://test-cluster-name-api.test.example.com:6443
+    server: https://test-cluster-name-api.test.example.com:8443
   name: test-cluster-name
 contexts:
 - context:

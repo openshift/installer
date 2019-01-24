@@ -27,7 +27,7 @@ resource "aws_lb" "api_external" {
 resource "aws_lb_target_group" "api_internal" {
   name     = "${var.cluster_name}-api-int"
   protocol = "TCP"
-  port     = 6443
+  port     = 8443
   vpc_id   = "${local.vpc_id}"
 
   target_type = "ip"
@@ -38,7 +38,7 @@ resource "aws_lb_target_group" "api_internal" {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     interval            = 10
-    port                = 6443
+    port                = 8443
     protocol            = "HTTPS"
     path                = "/healthz"
   }
@@ -47,7 +47,7 @@ resource "aws_lb_target_group" "api_internal" {
 resource "aws_lb_target_group" "api_external" {
   name     = "${var.cluster_name}-api-ext"
   protocol = "TCP"
-  port     = 6443
+  port     = 8443
   vpc_id   = "${local.vpc_id}"
 
   target_type = "ip"
@@ -58,7 +58,7 @@ resource "aws_lb_target_group" "api_external" {
     healthy_threshold   = 3
     unhealthy_threshold = 3
     interval            = 10
-    port                = 6443
+    port                = 8443
     protocol            = "HTTPS"
     path                = "/healthz"
   }
@@ -87,7 +87,7 @@ resource "aws_lb_target_group" "services" {
 resource "aws_lb_listener" "api_internal_api" {
   load_balancer_arn = "${aws_lb.api_internal.arn}"
   protocol          = "TCP"
-  port              = "6443"
+  port              = "8443"
 
   default_action {
     target_group_arn = "${aws_lb_target_group.api_internal.arn}"
@@ -111,7 +111,7 @@ resource "aws_lb_listener" "api_external_api" {
 
   load_balancer_arn = "${aws_lb.api_external.arn}"
   protocol          = "TCP"
-  port              = "6443"
+  port              = "8443"
 
   default_action {
     target_group_arn = "${aws_lb_target_group.api_external.arn}"

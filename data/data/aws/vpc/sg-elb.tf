@@ -22,8 +22,8 @@ resource "aws_security_group_rule" "api_ingress_console" {
 
   protocol    = "tcp"
   cidr_blocks = ["0.0.0.0/0"]
-  from_port   = 6443
-  to_port     = 6443
+  from_port   = 8443
+  to_port     = 8443
 }
 
 resource "aws_security_group_rule" "mcs_ingress" {

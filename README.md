@@ -38,7 +38,7 @@ INFO Waiting 10m0s for the openshift-console route to be created...
 INFO Install complete!
 INFO Run 'export KUBECONFIG=/path/to/auth/kubeconfig' to manage the cluster with 'oc', the OpenShift CLI.
 INFO The cluster is ready when 'oc login -u kubeadmin -p 5char-5char-5char-5char' succeeds (wait a few minutes).
-INFO Access the OpenShift web-console here: https://console-openshift-console.apps.${CLUSTER_NAME}.${BASE_DOMAIN}:6443
+INFO Access the OpenShift web-console here: https://console-openshift-console.apps.${CLUSTER_NAME}.${BASE_DOMAIN}:8443
 INFO Login to the console with user: kubeadmin, password: 5char-5char-5char-5char
 ```
 

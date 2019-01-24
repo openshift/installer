@@ -34,5 +34,5 @@ func configMap(namespace, name string, data genericData) *configurationObject {
 }
 
 func getAPIServerURL(ic *types.InstallConfig) string {
-	return fmt.Sprintf("https://%s-api.%s:6443", ic.ObjectMeta.Name, ic.BaseDomain)
+	return fmt.Sprintf("https://%s-api.%s:8443", ic.ObjectMeta.Name, ic.BaseDomain)
 }

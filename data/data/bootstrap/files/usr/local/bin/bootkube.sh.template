@@ -169,7 +169,7 @@ podman run \
 	--cakey=/opt/openshift/tls/etcd-client-ca.key \
 	--servcrt=/opt/openshift/tls/apiserver.crt \
 	--servkey=/opt/openshift/tls/apiserver.key \
-	--address=0.0.0.0:6443 \
+	--address=0.0.0.0:8443 \
 	--csrdir=/tmp \
 	--peercertdur=26280h \
 	--servercertdur=26280h

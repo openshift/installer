@@ -17,8 +17,8 @@ resource "openstack_networking_secgroup_rule_v2" "api_https" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
-  port_range_min    = 6443
-  port_range_max    = 6443
+  port_range_min    = 8443
+  port_range_max    = 8443
   remote_ip_prefix  = "0.0.0.0/0"
   security_group_id = "${openstack_networking_secgroup_v2.api.id}"
 }
