@@ -54,25 +54,25 @@ func installerMain() {
 
 func newRootCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:               "openshift-install",
-		Short:             "Creates OpenShift clusters",
-		Long:              "",
-		PersistentPreRunE: runRootCmd,
-		SilenceErrors:     true,
-		SilenceUsage:      true,
+		Use:              "openshift-install",
+		Short:            "Creates OpenShift clusters",
+		Long:             "",
+		PersistentPreRun: runRootCmd,
+		SilenceErrors:    true,
+		SilenceUsage:     true,
 	}
 	cmd.PersistentFlags().StringVar(&rootOpts.dir, "dir", ".", "assets directory")
 	cmd.PersistentFlags().StringVar(&rootOpts.logLevel, "log-level", "info", "log level (e.g. \"debug | info | warn | error\")")
 	return cmd
 }
 
-func runRootCmd(cmd *cobra.Command, args []string) error {
+func runRootCmd(cmd *cobra.Command, args []string) {
 	logrus.SetOutput(ioutil.Discard)
 	logrus.SetLevel(logrus.TraceLevel)
 
 	level, err := logrus.ParseLevel(rootOpts.logLevel)
 	if err != nil {
-		return errors.Wrap(err, "invalid log-level")
+		level = logrus.InfoLevel
 	}
 
 	logrus.AddHook(newFileHook(os.Stderr, level, &logrus.TextFormatter{
@@ -86,5 +86,7 @@ func runRootCmd(cmd *cobra.Command, args []string) error {
 		DisableLevelTruncation: true,
 	}))
 
-	return nil
+	if err != nil {
+		logrus.Fatal(errors.Wrap(err, "invalid log-level"))
+	}
 }
