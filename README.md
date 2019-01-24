@@ -53,3 +53,26 @@ openshift-install destroy cluster
 Note that you almost certainly also want to clean up the installer state files too, including `auth/`, `terraform.tfstate`, etc.
 The best thing to do is always pass the `--dir` argument to `install` and `destroy`.
 And if you want to reinstall from scratch, `rm -rf` the asset directory beforehand.
+
+
+### Troubleshouting installation
+
+```Cleanup``` step *should* tear down everything created during the previous installation, however sometimes the installer may report error messages like the ones below:
+
+``` 
+ERROR Error: Error applying plan:
+ERROR
+ERROR 3 errors occurred:
+ERROR     * module.bootstrap.aws_iam_instance_profile.bootstrap: 1 error occurred:
+ERROR     * aws_iam_instance_profile.bootstrap: Error creating IAM instance profile test-bootstrap-profile: 
+
+FATAL failed to fetch Cluster: failed to generate asset "Cluster": failed to create cluster: failed to apply using Terraform 
+``` 
+This happens when the installer tries to create an IAM instance profile with a name that matches an existing instance profile. This usually means that IAM instance profiles from a previous installation by the user didn't get deleted during an earlier cluster teardown.
+
+To fix this problem it is necessary to delete conflicting IAM profiles and retry. 
+To delete problematic IAM profiles follow [list-instance-profiles](https://docs.aws.amazon.com/cli/latest/reference/iam/list-instance-profiles.html) and [delete-instance-profile](https://docs.aws.amazon.com/cli/latest/reference/iam/delete-instance-profile.html) which can be summarized to 
+```
+$ aws iam list-instance-profiles | grep USER
+$ aws iam delete-instance-profile --instance-profile-name PROFILE_NAME
+``` 
