@@ -50,6 +50,7 @@ func newCompletionCmd() *cobra.Command {
 		Use:     "bash",
 		Short:   "Outputs the bash shell completions",
 		Example: completionExampleBash,
+		Args:    cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return cmd.Root().GenBashCompletion(os.Stdout)
 		},

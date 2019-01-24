@@ -16,6 +16,7 @@ func newVersionCmd() *cobra.Command {
 		Use:   "version",
 		Short: "Print version information",
 		Long:  "",
+		Args:  cobra.ExactArgs(0),
 		RunE:  runVersionCmd,
 	}
 }

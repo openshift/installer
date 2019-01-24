@@ -24,6 +24,7 @@ func newGraphCmd() *cobra.Command {
 		Use:   "graph",
 		Short: "Outputs the internal dependency graph for installer",
 		Long:  "",
+		Args:  cobra.ExactArgs(0),
 		RunE:  runGraphCmd,
 	}
 	cmd.PersistentFlags().StringVar(&graphOpts.outputFile, "output-file", "", "file where the graph is written, if empty prints the graph to Stdout.")
