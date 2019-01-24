@@ -76,7 +76,7 @@ $ openshift-install create install-config
 # Generate install-config.yaml
 
 $ openshift-install create manifests
-# Generate manifests/ and openshift/ dir, also remove install-config.yaml
+# Generate manifests/ and post-pod-manifests/ directories, also remove install-config.yaml
 ```
 
 ## Target generation

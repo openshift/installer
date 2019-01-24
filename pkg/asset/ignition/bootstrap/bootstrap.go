@@ -221,7 +221,7 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 
 func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateData) (err error) {
 	enabled := map[string]struct{}{
-		"progress.service":                {},
+		"bootkube.service":                {},
 		"kubelet.service":                 {},
 		"systemd-journal-gatewayd.socket": {},
 	}

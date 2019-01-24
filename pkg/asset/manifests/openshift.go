@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	openshiftManifestDir = "openshift"
+	openshiftManifestDir = "post-pod-manifests"
 )
 
 var (

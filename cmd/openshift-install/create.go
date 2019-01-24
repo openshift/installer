@@ -229,7 +229,7 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 	events := client.CoreV1().Events("kube-system")
 
 	eventTimeout := 30 * time.Minute
-	logrus.Infof("Waiting up to %v for the bootstrap-complete event...", eventTimeout)
+	logrus.Infof("Waiting up to %v for the bootstrap-success event...", eventTimeout)
 	eventContext, cancel := context.WithTimeout(ctx, eventTimeout)
 	defer cancel()
 	_, err = Until(
@@ -268,11 +268,11 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 			}
 
 			logrus.Debugf("added %s: %s", event.Name, event.Message)
-			return event.Name == "bootstrap-complete", nil
+			return event.Name == "bootstrap-success", nil
 		},
 	)
 	if err != nil {
-		return errors.Wrap(err, "waiting for bootstrap-complete")
+		return errors.Wrap(err, "waiting for bootstrap-success")
 	}
 
 	logrus.Info("Destroying the bootstrap resources...")
