@@ -4,6 +4,59 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.10.1 - 2019-01-22
+
+### Changed
+
+- `create ignition-configs` now also writes `metadata.json` to the
+  asset directory, which allows [Hive][] to more reliably destroy
+  clusters.
+- `destroy cluster` now removes `.openshift_install_state.json` on
+  success, clearing the way for future `create cluster` runs in the
+  same asset directory.
+- On AWS, we now default to m4.xlarge masters.  The increased CPU
+  reduces etcd latencies, which in turn helps with cluster stability.
+- On AWS, the bootstrap machine has a new security-group allowing
+  journald-gateway and kubelet access, for easier debugging when
+  bootstrapping fails.
+- Several doc and internal cleanups.
+
+### Removed
+
+- The SSH public key is no longer inserted in the pointer Ignition
+  configurations, now that authorized public keys are [managed by the
+  machine-config daemon][machine-config-daemon-ssh-keys].
+
+### Fixed
+
+- On AWS, the cluster-API provider now supports configuring machine
+  volumes, so `rootVolume` settings in `install-config.yaml` will be
+  respected.
+- On AWS, the generated Terraform variables no longer clobber master
+  instance type and root volume configuration set via
+  `install-config.yaml`.  You can now use:
+
+    ```yaml
+    machines:
+    - name: master
+      platform:
+        aws:
+          type: m5.large
+          rootVolume:
+            iops: 3000
+            size: 220
+            type: io1
+      replicas: 3
+    - name: worker
+      ...
+    ```
+
+    and similar to successfully customize your master machines.
+- On AWS, `delete cluster` has been adjusted to use more efficient
+  tag-based lookup and fix several bugs due to previously-missing
+  pagination.  This should address some issues we had been seeing with
+  leaking AWS resources despite `delete cluster` claiming success.
+
 ## 0.10.0 - 2019-01-15
 
 ### Added
@@ -669,12 +722,14 @@ the new `openshift-install` command instead.
 [cluster-bootstrap]: https://github.com/openshift/cluster-bootstrap
 [cluster-version-operator]: https://github.com/openshift/cluster-version-operator
 [dot]: https://www.graphviz.org/doc/info/lang.html
+[Hive]: https://github.com/openshift/hive/
 [ingress-operator]: https://github.com/openshift/cluster-ingress-operator
 [kube-apiserver-operator]: https://github.com/openshift/cluster-kube-apiserver-operator
 [kube-controller-manager-operator]: https://github.com/openshift/cluster-kube-controller-manager-operator
 [kube-selector]: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/#label-selectors
 [machine-api-operator]: https://github.com/openshift/machine-api-operator
 [machine-config-operator]: https://github.com/openshift/machine-config-operator
+[machine-config-daemon-ssh-keys]: https://github.com/openshift/machine-config-operator/blob/master/docs/Update-SSHKeys.md
 [openshift-ansible]: https://github.com/openshift/openshift-ansible
 [Prometheus]: https://github.com/prometheus/prometheus
 [ssh.ParseAuthorizedKey]: https://godoc.org/golang.org/x/crypto/ssh#ParseAuthorizedKey
