@@ -13,12 +13,17 @@ import (
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
+	clientwatch "k8s.io/client-go/tools/watch"
 
+	configv1 "github.com/openshift/api/config/v1"
+	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/cluster"
@@ -30,6 +35,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/templates"
 	"github.com/openshift/installer/pkg/asset/tls"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
+	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 )
 
 type target struct {
@@ -104,6 +110,10 @@ var (
 
 				err = destroyBootstrap(ctx, config, rootOpts.dir)
 				if err != nil {
+					logrus.Fatal(err)
+				}
+
+				if err := waitForInitializedCluster(ctx, config); err != nil {
 					logrus.Fatal(err)
 				}
 
@@ -278,7 +288,50 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 	return destroybootstrap.Destroy(rootOpts.dir)
 }
 
-// waitForconsole returns the console URL from the route 'console' in namespace openshift-console
+// waitForInitializedCluster watches the ClusterVersion waiting for confirmation
+// that the cluster has been initialized.
+func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
+	timeout := 30 * time.Minute
+	logrus.Infof("Waiting up to %v for the cluster to initialize...", timeout)
+	cc, err := configclient.NewForConfig(config)
+	if err != nil {
+		return errors.Wrap(err, "failed to create a config client")
+	}
+	clusterVersionContext, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	_, err = clientwatch.UntilWithSync(
+		clusterVersionContext,
+		cache.NewListWatchFromClient(cc.ConfigV1().RESTClient(), "clusterversions", "", fields.OneTermEqualSelector("metadata.name", "version")),
+		&configv1.ClusterVersion{},
+		nil,
+		func(event watch.Event) (bool, error) {
+			switch event.Type {
+			case watch.Added, watch.Modified:
+				cv, ok := event.Object.(*configv1.ClusterVersion)
+				if !ok {
+					logrus.Warnf("Expected a ClusterVersion object but got a %q object instead", event.Object.GetObjectKind().GroupVersionKind())
+					return false, nil
+				}
+				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) {
+					logrus.Debug("Cluster is initialized")
+					return true, nil
+				}
+				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorFailing) {
+					logrus.Debugf("Still waiting for the cluster to initialize: %v",
+						cov1helpers.FindStatusCondition(cv.Status.Conditions, configv1.OperatorFailing).Message)
+					return false, nil
+				}
+			}
+			logrus.Debug("Still waiting for the cluster to initialize...")
+			return false, nil
+		},
+	)
+
+	return errors.Wrap(err, "failed to initialize the cluster")
+}
+
+// waitForConsole returns the console URL from the route 'console' in namespace openshift-console
 func waitForConsole(ctx context.Context, config *rest.Config, directory string) (string, error) {
 	url := ""
 	// Need to keep these updated if they change
