@@ -370,25 +370,30 @@
   version = "1.0.1"
 
 [[projects]]
-  digest = "1:ae6f25905d1386e85891d65085f12afb7d8729a4153211cf11f0a19b5e17bf3e"
+  branch = "master"
+  digest = "1:bc5beeb231c43286b9f51c52d85fbc6e4b4d9b540ff2a3f39b57c3d5b3733210"
   name = "github.com/openshift/api"
   packages = [
     "config/v1",
     "route/v1",
   ]
   pruneopts = "NUT"
-  revision = "aab033bae2a129607f4fb277c3777b2eabb08601"
+  revision = "ae9a3391d2d18df1c8ab76dc0738884f18a71138"
 
 [[projects]]
-  digest = "1:6b1540f37963c713da08d8463791201d8469e8c755ed66a0b54ee424b15ea401"
+  branch = "master"
+  digest = "1:ba4a703e7b8e2f26d071083cc1238b1cbabd99f7bcfc8e3891d4042ce8761691"
   name = "github.com/openshift/client-go"
   packages = [
+    "config/clientset/versioned",
+    "config/clientset/versioned/scheme",
+    "config/clientset/versioned/typed/config/v1",
     "route/clientset/versioned",
     "route/clientset/versioned/scheme",
     "route/clientset/versioned/typed/route/v1",
   ]
   pruneopts = "NUT"
-  revision = "1fa528d3be060e4c7178eb69e76d37cf7e699e3c"
+  revision = "f9132806c9914790e15f10d8c5d1e7a03408d7b2"
 
 [[projects]]
   branch = "master"
@@ -882,6 +887,7 @@
     "github.com/gregjones/httpcache/diskcache",
     "github.com/libvirt/libvirt-go",
     "github.com/openshift/api/config/v1",
+    "github.com/openshift/client-go/config/clientset/versioned",
     "github.com/openshift/client-go/route/clientset/versioned",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
     "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1",
