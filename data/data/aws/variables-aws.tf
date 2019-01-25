@@ -10,9 +10,6 @@ EOF
 variable "aws_master_ec2_type" {
   type        = "string"
   description = "Instance size for the master node(s). Example: `m4.large`."
-
-  # FIXME: get this wired up to the machine default
-  default = "m4.xlarge"
 }
 
 variable "aws_ec2_ami_override" {
@@ -35,19 +32,16 @@ EOF
 
 variable "aws_master_root_volume_type" {
   type        = "string"
-  default     = "gp2"
   description = "The type of volume for the root block device of master nodes."
 }
 
 variable "aws_master_root_volume_size" {
   type        = "string"
-  default     = "120"
   description = "The size of the volume in gigabytes for the root block device of master nodes."
 }
 
 variable "aws_master_root_volume_iops" {
-  type    = "string"
-  default = "400"
+  type = "string"
 
   description = <<EOF
 The amount of provisioned IOPS for the root block device of master nodes.
