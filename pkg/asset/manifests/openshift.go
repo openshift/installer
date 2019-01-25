@@ -6,14 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws/session"
-
-	// TODO(flaper87): Migrate to ghodss asap
-	// This yaml is currently used only by the OpenStack
-	// clouds serialization. We're working on migrating
-	// clientconfig out of go-yaml. We'll use it here
-	// until that happens.
-	// https://github.com/openshift/installer/pull/854
-	goyaml "gopkg.in/yaml.v2"
+	"github.com/ghodss/yaml"
 
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/asset"
@@ -94,7 +87,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			osmachine.CloudName: cloud,
 		}
 
-		marshalled, err := goyaml.Marshal(clouds)
+		marshalled, err := yaml.Marshal(clouds)
 		if err != nil {
 			return err
 		}
