@@ -410,6 +410,8 @@ func deleteEC2(session *session.Session, arn arn.ARN, logger logrus.FieldLogger)
 	logger = logger.WithField("id", id)
 
 	switch resourceType {
+	case "dhcp-options":
+		return deleteEC2DHCPOptions(client, id, logger)
 	case "elastic-ip":
 		return deleteEC2ElasticIP(client, id, logger)
 	case "instance":
@@ -431,6 +433,21 @@ func deleteEC2(session *session.Session, arn arn.ARN, logger logrus.FieldLogger)
 	default:
 		return errors.Errorf("unrecognized EC2 resource type %s", resourceType)
 	}
+}
+
+func deleteEC2DHCPOptions(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
+	_, err := client.DeleteDhcpOptions(&ec2.DeleteDhcpOptionsInput{
+		DhcpOptionsId: &id,
+	})
+	if err != nil {
+		if err.(awserr.Error).Code() == "InvalidDhcpOptionsID.NotFound" {
+			return nil
+		}
+		return err
+	}
+
+	logger.Info("Deleted")
+	return nil
 }
 
 func deleteEC2ElasticIP(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
