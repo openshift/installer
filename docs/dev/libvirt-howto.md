@@ -19,6 +19,10 @@ crw-rw-rw-+ 1 root kvm 10, 232 Oct 31 09:22 /dev/kvm
 If it is missing, try some of the ideas [here][kvm-install].
 
 ### Install and Enable Libvirt
+On CentOS 7, first enable the
+[kvm-common](http://mirror.centos.org/centos/7/virt/x86_64/kvm-common/)
+repository to ensure you get a new enough version of qemu-kvm.
+
 On Fedora, CentOS/RHEL:
 
 ```sh
