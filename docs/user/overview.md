@@ -50,7 +50,7 @@ The following targets can be destroyed by the installer:
 
 ### Multiple Invocations
 
-In order to allow users to customize their installation, the installer can be invoked multiple times. The state is stored in a hidden file in the asset directory and contains all of the intermediate artifacts. This allows the installer to pause during the installation and wait for the user to modify intermediate artifacts.
+In order to allow users to [customize their installation](customization.md), the installer can be invoked multiple times. The state is stored in a hidden file in the asset directory and contains all of the intermediate artifacts. This allows the installer to pause during the installation and wait for the user to modify intermediate artifacts.
 
 For example, you can create an install config and save it in a cluster-agnostic location:
 
