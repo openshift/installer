@@ -134,6 +134,7 @@ func newCreateCmd() *cobra.Command {
 	}
 
 	for _, t := range targets {
+		t.command.Args = cobra.ExactArgs(0)
 		t.command.Run = runTargetCmd(t.assets...)
 		cmd.AddCommand(t.command)
 	}

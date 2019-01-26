@@ -30,6 +30,7 @@ func newDestroyClusterCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "cluster",
 		Short: "Destroy an OpenShift cluster",
+		Args:  cobra.ExactArgs(0),
 		Run: func(_ *cobra.Command, _ []string) {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
@@ -73,6 +74,7 @@ func newDestroyBootstrapCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "bootstrap",
 		Short: "Destroy the bootstrap resources",
+		Args:  cobra.ExactArgs(0),
 		Run: func(cmd *cobra.Command, args []string) {
 			cleanup := setupFileHook(rootOpts.dir)
 			defer cleanup()
