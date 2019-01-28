@@ -4,6 +4,55 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.11.0 - 2019-01-27
+
+### Added
+
+- On AWS, the installer creates [DHCP options][aws-dhcp-options] for
+  the VPC to support internal unqualified-hostname resolution.  This
+  works around some limitations with `oc rsh` and Kubernetes node
+  registration in the face of inappropriate default DHCP options.  And
+  because [the AWS `domain-name` logic is
+  region-specific][aws-dhcp-options], there is no single DHCP options
+  configuration that provides internal unqualified-hostname resolution
+  for multiple regions.
+
+### Changed
+
+- On AWS, the installer now prompts for missing credentials even if
+  you supplied an `install-config.yaml`.  Previously, only the
+  install-config wizard would prompt.
+- On OpenStack, the developer-only internal DNS server which was
+  removed in 0.10.0 has been restored, because the approach taken in
+  0.10.0 broke etcd cluster formation for some users.
+- Several doc and internal cleanups.
+
+### Fixed
+
+- `openshift-install` has improved error handling for various invalid
+  command lines.  It now errors when additional positional arguments
+  are passed to commands that do not take positional arguments
+  (previously those commands silently ignored the presence of
+  positional arguments).  And it logs an error and exits 1 when an
+  invalid value is provided to --log-level (previously it exited 1 but
+  did not write to the standard error stream).
+- The slow-input issues for the install-config wizard have been fixed.
+- On AWS, `destroy cluster` fixed a bug in the 0.10.1 refactor which
+  could lead to leaked resources and a claim of successful deletion if
+  a call to get tagged resources failed (for example, because the
+  caller lacked the `tag:GetResources` permission).
+- On AWS, a new explicit dependency in the Terraform modules prevents
+  errors like:
+
+        * module.vpc.aws_lb.api_external: 1 error occurred:
+        * aws_lb.api_external: Error creating Application Load Balancer: InvalidSubnet: VPC vpc-0765c67bbc82a1b7d has no internet gateway
+        status code: 400, request id: 5a...d5
+
+- On libvirt, the installer no longer holds the OS image in memory
+  after it has been written to disk.  Ideally it would stream the OS
+  image to disk instead of ever holding it in memory, but this fix
+  mitigates our current in-memory buffering.
+
 ## 0.10.1 - 2019-01-22
 
 ### Changed
@@ -708,6 +757,7 @@ installer and follow along as it guides you through the process.
 The `tectonic` command and tarball distribution are gone.  Please use
 the new `openshift-install` command instead.
 
+[aws-dhcp-options]: https://docs.aws.amazon.com/vpc/latest/userguide/VPC_DHCP_Options.html
 [aws-ebs-gp2-iops]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html#EBSVolumeTypes_gp2
 [aws-elb]: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/introduction.html
 [aws-elb-latency]: https://github.com/openshift/installer/pull/594#issue-227786691
