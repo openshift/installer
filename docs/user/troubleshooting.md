@@ -55,6 +55,11 @@ If no pods are shown, etcd will need to be [investigated](#etcd-is-not-running).
 
 ### Unable to SSH into Master Nodes
 
+For added security, SSH isn't available from the Internet by default. There are several options for enabling this functionality:
+
+- Create a bastion host that is accessible from the Internet and has access to the cluster. If the bootstrap machine hasn't been automatically destroyed yet, it can double as a temporary bastion host since it is given a public IP address.
+- Configure network peering or a VPN to allow remote access to the private network.
+
 In order to SSH into the master nodes as user `core`, it is necessary to include an administrator's SSH key during the installation.
 The selected key, if any, will be added to the `core` user's `~/.ssh/authorized_keys` via [Ignition](https://github.com/coreos/ignition) and is not configured via platform-specific approaches like [AWS key pairs][aws-key-pairs].
 See [here][machine-config-daemon-ssh-keys] for information about managing SSH keys via the machine-config daemon.
