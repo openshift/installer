@@ -16,6 +16,7 @@ import (
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
+	"k8s.io/utils/pointer"
 )
 
 func defaultInstallConfig() *types.InstallConfig {
@@ -192,7 +193,10 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultInstallConfig()
-				c.Machines = []types.MachinePool{{Name: "test-machine"}}
+				c.Machines = []types.MachinePool{{
+					Name:     "test-machine",
+					Replicas: pointer.Int64Ptr(0),
+				}}
 				return c
 			}(),
 		},

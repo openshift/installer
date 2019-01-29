@@ -12,8 +12,7 @@ type MachinePool struct {
 	Name string `json:"name"`
 
 	// Replicas is the count of machines for this machine pool.
-	// Default is 1.
-	Replicas *int64 `json:"replicas"`
+	Replicas *int64 `json:"replicas,omitempty"`
 
 	// Platform is configuration for machine pool specific to the platfrom.
 	Platform MachinePoolPlatform `json:"platform"`
