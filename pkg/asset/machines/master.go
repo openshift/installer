@@ -72,7 +72,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	case awstypes.Name:
 		mpool := defaultAWSMachinePoolPlatform()
 		mpool.InstanceType = "m4.xlarge"
-		mpool.EC2RootVolume.Size = 120
 		mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.AWS)
 		if len(mpool.Zones) == 0 {
