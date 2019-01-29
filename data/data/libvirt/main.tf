@@ -90,7 +90,7 @@ resource "libvirt_domain" "master" {
 }
 
 data "libvirt_network_dns_host_template" "bootstrap" {
-  count    = "${var.bootstrap_dns ? 1 : 0}"
+  count    = "${var.bootstrap_load_balancer_targets ? 1 : 0}"
   ip       = "${var.libvirt_bootstrap_ip}"
   hostname = "${var.cluster_name}-api"
 }

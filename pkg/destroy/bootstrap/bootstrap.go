@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/terraform"
@@ -24,17 +25,12 @@ func Destroy(dir string) (err error) {
 		return errors.New("no platform configured in metadata")
 	}
 
-	copyNames := []string{terraform.StateFileName, cluster.TfVarsFileName}
-
-	if platform == "libvirt" {
-		err = ioutil.WriteFile(filepath.Join(dir, "disable-bootstrap.tfvars"), []byte(`{
-  "bootstrap_dns": false
+	err = ioutil.WriteFile(filepath.Join(dir, "disable-bootstrap-load-balancer-targets.tfvars"), []byte(`{
+  "bootstrap_load_balancer_targets": false
 }
 `), 0666)
-		if err != nil {
-			return err
-		}
-		copyNames = append(copyNames, "disable-bootstrap.tfvars")
+	if err != nil {
+		return err
 	}
 
 	tempDir, err := ioutil.TempDir("", "openshift-install-")
@@ -43,19 +39,23 @@ func Destroy(dir string) (err error) {
 	}
 	defer os.RemoveAll(tempDir)
 
-	for _, filename := range copyNames {
+	for _, filename := range []string{
+		terraform.StateFileName,
+		cluster.TfVarsFileName,
+		"disable-bootstrap-load-balancer-targets.tfvars",
+	} {
 		err = copy(filepath.Join(dir, filename), filepath.Join(tempDir, filename))
 		if err != nil {
 			return errors.Wrapf(err, "failed to copy %s to the temporary directory", filename)
 		}
 	}
 
-	if platform == "libvirt" {
-		_, err = terraform.Apply(tempDir, platform, fmt.Sprintf("-var-file=%s", filepath.Join(tempDir, "disable-bootstrap.tfvars")))
-		if err != nil {
-			return errors.Wrap(err, "Terraform apply")
-		}
+	_, err = terraform.Apply(tempDir, platform, fmt.Sprintf("-var-file=%s", filepath.Join(tempDir, "disable-bootstrap-load-balancer-targets.tfvars")))
+	if err != nil {
+		return errors.Wrap(err, "Terraform apply")
 	}
+
+	time.Sleep(10 * time.Second)
 
 	err = terraform.Destroy(tempDir, platform, "-target=module.bootstrap")
 	if err != nil {

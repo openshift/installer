@@ -2,6 +2,11 @@ terraform {
   required_version = ">= 0.10.7"
 }
 
+variable "bootstrap_load_balancer_targets" {
+  default     = true
+  description = "Whether to include load-balancer targets for the bootstrap machine."
+}
+
 variable "machine_cidr" {
   type = "string"
 

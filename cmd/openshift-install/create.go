@@ -275,6 +275,9 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 		return errors.Wrap(err, "waiting for bootstrap-success")
 	}
 
+	logrus.Info("Waiting 30 seconds for the production control-plane to enter the load balancer")
+	time.Sleep(30*time.Second)
+
 	logrus.Info("Destroying the bootstrap resources...")
 	return destroybootstrap.Destroy(rootOpts.dir)
 }

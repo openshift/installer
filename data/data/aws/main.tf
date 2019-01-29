@@ -18,8 +18,8 @@ module "bootstrap" {
   iam_role                 = "${var.aws_master_iam_role_name}"
   ignition                 = "${var.ignition_bootstrap}"
   subnet_id                = "${module.vpc.master_subnet_ids[0]}"
-  target_group_arns        = "${module.vpc.aws_lb_target_group_arns}"
-  target_group_arns_length = "${module.vpc.aws_lb_target_group_arns_length}"
+  target_group_arns        = "${var.bootstrap_load_balancer_targets ? module.vpc.aws_lb_target_group_arns : []}"
+  target_group_arns_length = "${var.bootstrap_load_balancer_targets ? module.vpc.aws_lb_target_group_arns_length : 0}"
   vpc_id                   = "${module.vpc.vpc_id}"
   vpc_security_group_ids   = "${list(module.vpc.master_sg_id)}"
 
