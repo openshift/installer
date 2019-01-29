@@ -84,6 +84,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		}
 	case "openstack":
 		opts := new(clientconfig.ClientOpts)
+		opts.Cloud = installConfig.Config.Platform.OpenStack.Cloud
 		cloud, err := clientconfig.GetCloudFromYAML(opts)
 		if err != nil {
 			return err
