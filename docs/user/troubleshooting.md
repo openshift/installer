@@ -244,13 +244,13 @@ If it doesn't exist, the installer didn't create it. You'll have to run `openshi
 Next, check that the network-operator is running:
 
 ```sh
-kubectl -n openshift-cluster-network-operator get pods
+kubectl -n openshift-network-operator get pods
 ```
 
 And retrieve the logs. Note that, on multi-master systems, the operator will perform leader election and all other operators will sleep:
 
 ```sh
-kubectl -n openshift-cluster-network-operator logs -l "k8s-app=cluster-network-operator"
+kubectl -n openshift-network-operator logs -l "name=network-operator"
 ```
 
 If appropriate, file a [network operator](https://github.com/openshift/cluster-network-operator) issue. RH employees can also try #forum-sdn.
