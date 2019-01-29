@@ -411,6 +411,14 @@
   revision = "fb8b55a1072436a51b153de9acf5bf5525efcf83"
 
 [[projects]]
+  branch = "master"
+  digest = "1:a32828cebfa63f79265d9062005c23f3c737def9e8a956ddd5dc3fd5f4caffe6"
+  name = "github.com/openshift/library-go"
+  packages = ["pkg/config/clusteroperator/v1helpers"]
+  pruneopts = "NUT"
+  revision = "4b9f6ceb6598ebd4dd6c9385ef024abf7a18159b"
+
+[[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
   name = "github.com/pborman/uuid"
   packages = ["."]
@@ -684,9 +692,10 @@
   revision = "7c111c89a854dfd8ba47d0bfdbe352bc85951011"
 
 [[projects]]
-  digest = "1:db1a4cd5c12f340d0779da16d2d5ae2419b1a470d010fc988e5e345b8c7f494c"
+  digest = "1:059e5dfce6269a3e87f2df7edab3075f17efb4d1d17c1b4d8530cac5f0af7b9c"
   name = "k8s.io/apimachinery"
   packages = [
+    "pkg/api/equality",
     "pkg/api/errors",
     "pkg/api/meta",
     "pkg/api/resource",
@@ -891,6 +900,7 @@
     "github.com/openshift/client-go/route/clientset/versioned",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
     "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1",
+    "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers",
     "github.com/pborman/uuid",
     "github.com/peterbourgon/diskv",
     "github.com/pkg/errors",
@@ -908,6 +918,7 @@
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
+    "k8s.io/apimachinery/pkg/fields",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/util/errors",
     "k8s.io/apimachinery/pkg/util/sets",
@@ -917,6 +928,7 @@
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/rest",
+    "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
     "k8s.io/client-go/tools/clientcmd/api/v1",
     "k8s.io/client-go/tools/watch",
