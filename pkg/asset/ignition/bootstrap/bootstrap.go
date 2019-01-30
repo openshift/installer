@@ -76,7 +76,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&tls.JournalCertKey{},
 		&kubeconfig.Admin{},
 		&kubeconfig.Kubelet{},
-		&machines.Master{},
+		&machines.ControlPlane{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 	}
@@ -349,7 +349,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	for _, asset := range []asset.WritableAsset{
 		&kubeconfig.Admin{},
 		&kubeconfig.Kubelet{},
-		&machines.Master{},
+		&machines.ControlPlane{},
 		&tls.KubeCA{},
 		&tls.AggregatorCA{},
 		&tls.EtcdCA{},

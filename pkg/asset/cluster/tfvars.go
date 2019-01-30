@@ -59,7 +59,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		new(rhcos.Image),
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
-		&machines.Master{},
+		&machines.ControlPlane{},
 	}
 }
 
@@ -69,15 +69,15 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
-	mastersAsset := &machines.Master{}
+	controlPlaneAsset := &machines.ControlPlane{}
 	rhcosImage := new(rhcos.Image)
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, rhcosImage)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, controlPlaneAsset, rhcosImage)
 
 	bootstrapIgn := string(bootstrapIgnAsset.Files()[0].Data)
 	masterIgn := string(masterIgnAsset.Files()[0].Data)
 
-	masters := mastersAsset.Machines()
-	masterCount := len(masters)
+	controlPlaneMachines := controlPlaneAsset.Machines()
+	controlPlaneCount := len(controlPlaneMachines)
 	data, err := tfvars.TFVars(
 		clusterID.ClusterID,
 		installConfig.Config.ObjectMeta.Name,
@@ -85,7 +85,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		&installConfig.Config.Networking.MachineCIDR.IPNet,
 		bootstrapIgn,
 		masterIgn,
-		masterCount,
+		controlPlaneCount,
 	)
 	if err != nil {
 		return errors.Wrap(err, "failed to get Terraform variables")
@@ -97,18 +97,18 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		},
 	}
 
-	if masterCount == 0 {
-		return errors.Errorf("master slice cannot be empty")
+	if controlPlaneCount == 0 {
+		return errors.Errorf("controlPlane slice cannot be empty")
 	}
 
 	switch platform := installConfig.Config.Platform.Name(); platform {
 	case aws.Name:
-		masters, err := mastersAsset.StructuredMachines()
+		machines, err := controlPlaneAsset.StructuredMachines()
 		if err != nil {
 			return err
 		}
 		data, err = awstfvars.TFVars(
-			masters[0].Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig),
+			machines[0].Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig),
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
@@ -118,16 +118,16 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case libvirt.Name:
-		masters, err := mastersAsset.StructuredMachines()
+		machines, err := controlPlaneAsset.StructuredMachines()
 		if err != nil {
 			return err
 		}
 		data, err = libvirttfvars.TFVars(
-			masters[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
+			machines[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
 			string(*rhcosImage),
 			&installConfig.Config.Networking.MachineCIDR.IPNet,
 			installConfig.Config.Platform.Libvirt.Network.IfName,
-			masterCount,
+			controlPlaneCount,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
@@ -138,12 +138,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		})
 	case none.Name:
 	case openstack.Name:
-		masters, err := mastersAsset.StructuredMachines()
+		machines, err := controlPlaneAsset.StructuredMachines()
 		if err != nil {
 			return err
 		}
 		data, err = openstacktfvars.TFVars(
-			masters[0].Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec),
+			machines[0].Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec),
 			installConfig.Config.Platform.OpenStack.Region,
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
 			installConfig.Config.Platform.OpenStack.LbFloatingIP,

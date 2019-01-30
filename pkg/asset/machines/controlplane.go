@@ -29,31 +29,31 @@ import (
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 )
 
-// Master generates the machines for the `master` machine pool.
-type Master struct {
+// ControlPlane generates the machines for the control-plane machine pool.
+type ControlPlane struct {
 	FileList []*asset.File
 }
 
 var (
 	directory = "openshift"
 
-	// MasterMachineFileName is the format string for constucting the master Machine filenames.
-	MasterMachineFileName = "99_openshift-cluster-api_master-machines-%s.yaml"
+	// ControlPlaneMachineFileName is the format string for constucting the control-plane Machine filenames.
+	ControlPlaneMachineFileName = "99_openshift-cluster-api_control-plane-machines-%s.yaml"
 
-	// MasterUserDataFileName is the filename used for the master user-data secret.
-	MasterUserDataFileName = "99_openshift-cluster-api_master-user-data-secret.yaml"
+	// ControlPlaneUserDataFileName is the filename used for the control-plane user-data secret.
+	ControlPlaneUserDataFileName = "99_openshift-cluster-api_control-plane-user-data-secret.yaml"
 
-	_ asset.WritableAsset = (*Master)(nil)
+	_ asset.WritableAsset = (*ControlPlane)(nil)
 )
 
-// Name returns a human friendly name for the Master Asset.
-func (m *Master) Name() string {
-	return "Master Machines"
+// Name returns a human friendly name for the Control Plane Asset.
+func (a *ControlPlane) Name() string {
+	return "Control Plane Machines"
 }
 
 // Dependencies returns all of the dependencies directly needed by the
-// Master asset
-func (m *Master) Dependencies() []asset.Asset {
+// ControlPlane asset
+func (a *ControlPlane) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.ClusterID{},
 		// PlatformCredsCheck just checks the creds (and asks, if needed)
@@ -66,8 +66,8 @@ func (m *Master) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the Master asset.
-func (m *Master) Generate(dependencies asset.Parents) error {
+// Generate generates the ControlPlane asset.
+func (a *ControlPlane) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installconfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
@@ -92,9 +92,9 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		machines, err = aws.Machines(clusterID.ClusterID, ic, pool, string(*rhcosImage), "master", "master-user-data")
+		machines, err = aws.Machines(clusterID.ClusterID, ic, pool, string(*rhcosImage), "master", "control-plane-user-data")
 		if err != nil {
-			return errors.Wrap(err, "failed to create master machine objects")
+			return errors.Wrap(err, "failed to create control plane machine objects")
 		}
 		aws.ConfigMasters(machines, ic.ObjectMeta.Name)
 	case libvirttypes.Name:
@@ -102,9 +102,9 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Libvirt)
 		pool.Platform.Libvirt = &mpool
-		machines, err = libvirt.Machines(clusterID.ClusterID, ic, pool, "master", "master-user-data")
+		machines, err = libvirt.Machines(clusterID.ClusterID, ic, pool, "master", "control-plane-user-data")
 		if err != nil {
-			return errors.Wrap(err, "failed to create master machine objects")
+			return errors.Wrap(err, "failed to create control plane machine objects")
 		}
 	case nonetypes.Name:
 		return nil
@@ -114,41 +114,41 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(pool.Platform.OpenStack)
 		pool.Platform.OpenStack = &mpool
 
-		machines, err = openstack.Machines(clusterID.ClusterID, ic, pool, string(*rhcosImage), "master", "master-user-data")
+		machines, err = openstack.Machines(clusterID.ClusterID, ic, pool, string(*rhcosImage), "master", "control-plane-user-data")
 		if err != nil {
-			return errors.Wrap(err, "failed to create master machine objects")
+			return errors.Wrap(err, "failed to create control plane machine objects")
 		}
 		openstack.ConfigMasters(machines, ic.ObjectMeta.Name)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
 
-	userDataMap := map[string][]byte{"master-user-data": mign.File.Data}
+	userDataMap := map[string][]byte{"control-plane-user-data": mign.File.Data}
 	data, err := userDataList(userDataMap)
 	if err != nil {
-		return errors.Wrap(err, "failed to create user-data secret for master machines")
+		return errors.Wrap(err, "failed to create user-data secret for control plane machines")
 	}
 
-	m.FileList = []*asset.File{{
-		Filename: filepath.Join(directory, MasterUserDataFileName),
+	a.FileList = []*asset.File{{
+		Filename: filepath.Join(directory, ControlPlaneUserDataFileName),
 		Data:     data,
 	}}
 
 	count := len(machines)
 	if count == 0 {
-		return errors.New("at least one master machine must be configured")
+		return errors.New("at least one control plane machine must be configured")
 	}
 
 	padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", count)))
 	for i, machine := range machines {
 		data, err := yaml.Marshal(machine)
 		if err != nil {
-			return errors.Wrapf(err, "marshal master %d", i)
+			return errors.Wrapf(err, "marshal control plane %d", i)
 		}
 
 		padded := fmt.Sprintf(padFormat, i)
-		m.FileList = append(m.FileList, &asset.File{
-			Filename: filepath.Join(directory, fmt.Sprintf(MasterMachineFileName, padded)),
+		a.FileList = append(a.FileList, &asset.File{
+			Filename: filepath.Join(directory, fmt.Sprintf(ControlPlaneMachineFileName, padded)),
 			Data:     data,
 		})
 	}
@@ -157,39 +157,39 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 }
 
 // Files returns the files generated by the asset.
-func (m *Master) Files() []*asset.File {
-	return m.FileList
+func (a *ControlPlane) Files() []*asset.File {
+	return a.FileList
 }
 
 // Load reads the asset files from disk.
-func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
-	file, err := f.FetchByName(filepath.Join(directory, MasterUserDataFileName))
+func (a *ControlPlane) Load(f asset.FileFetcher) (found bool, err error) {
+	file, err := f.FetchByName(filepath.Join(directory, ControlPlaneUserDataFileName))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
 		}
 		return false, err
 	}
-	m.FileList = []*asset.File{file}
+	a.FileList = []*asset.File{file}
 
-	fileList, err := f.FetchByPattern(filepath.Join(directory, fmt.Sprintf(MasterMachineFileName, "*")))
+	fileList, err := f.FetchByPattern(filepath.Join(directory, fmt.Sprintf(ControlPlaneMachineFileName, "*")))
 	if err != nil {
 		return true, err
 	}
 
 	if len(fileList) == 0 {
-		return true, errors.Errorf("master machine manifests are required if you also provide %s", file.Filename)
+		return true, errors.Errorf("control plane machine manifests are required if you also provide %s", file.Filename)
 	}
 
-	m.FileList = append(m.FileList, fileList...)
+	a.FileList = append(a.FileList, fileList...)
 	return true, nil
 }
 
-// Machines returns master Machine manifest YAML.
-func (m *Master) Machines() [][]byte {
+// Machines returns control plane Machine manifest YAML.
+func (a *ControlPlane) Machines() [][]byte {
 	machines := [][]byte{}
-	userData := filepath.Join(directory, MasterUserDataFileName)
-	for _, file := range m.FileList {
+	userData := filepath.Join(directory, ControlPlaneUserDataFileName)
+	for _, file := range a.FileList {
 		if file.Filename == userData {
 			continue
 		}
@@ -198,8 +198,8 @@ func (m *Master) Machines() [][]byte {
 	return machines
 }
 
-// StructuredMachines returns master Machine manifest structures.
-func (m *Master) StructuredMachines() ([]machineapi.Machine, error) {
+// StructuredMachines returns control plane Machine manifest structures.
+func (a *ControlPlane) StructuredMachines() ([]machineapi.Machine, error) {
 	scheme := runtime.NewScheme()
 	awsapi.AddToScheme(scheme)
 	libvirtapi.AddToScheme(scheme)
@@ -211,16 +211,16 @@ func (m *Master) StructuredMachines() ([]machineapi.Machine, error) {
 	)
 
 	machines := []machineapi.Machine{}
-	for i, data := range m.Machines() {
+	for i, data := range a.Machines() {
 		machine := &machineapi.Machine{}
 		err := yaml.Unmarshal(data, &machine)
 		if err != nil {
-			return machines, errors.Wrapf(err, "unmarshal master %d", i)
+			return machines, errors.Wrapf(err, "unmarshal control plane %d", i)
 		}
 
 		obj, _, err := decoder.Decode(machine.Spec.ProviderSpec.Value.Raw, nil, nil)
 		if err != nil {
-			return machines, errors.Wrapf(err, "unmarshal master %d", i)
+			return machines, errors.Wrapf(err, "unmarshal control plane %d", i)
 		}
 
 		machine.Spec.ProviderSpec.Value = &runtime.RawExtension{Object: obj}

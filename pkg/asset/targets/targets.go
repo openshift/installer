@@ -22,7 +22,7 @@ var (
 
 	// Manifests are the manifests targeted assets.
 	Manifests = []asset.WritableAsset{
-		&machines.Master{},
+		&machines.ControlPlane{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 	}

@@ -7,9 +7,13 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/cluster"
+	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/targets"
 )
 
@@ -33,6 +37,7 @@ const userProvidedAssets = `{
 }`
 
 func TestCreatedAssetsAreNotDirty(t *testing.T) {
+	logrus.SetLevel(logrus.DebugLevel)
 	cases := []struct {
 		name    string
 		targets []asset.WritableAsset
@@ -86,19 +91,17 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 				t.Fatalf("failed to create new asset store: %v", err)
 			}
 
-			exists := struct{}{}
-			emptyAssets := map[string]struct{}{
-				"Master Machines": exists, // no files for the 'none' platform
-				"Metadata":        exists, // read-only
+			emptyAssets := map[reflect.Type]bool{
+				reflect.TypeOf(&machines.ControlPlane{}): true, // no files for the 'none' platform
+				reflect.TypeOf(&cluster.Metadata{}):      true, // read-only
 			}
 			for _, a := range tc.targets {
-				name := a.Name()
 				newAsset := reflect.New(reflect.TypeOf(a).Elem()).Interface().(asset.WritableAsset)
 				if err := newAssetStore.Fetch(newAsset); err != nil {
 					t.Fatalf("failed to fetch %q in new store: %v", a.Name(), err)
 				}
-				assetState := newAssetStore.assets[reflect.TypeOf(a)]
-				if _, ok := emptyAssets[name]; !ok {
+				if _, ok := emptyAssets[reflect.TypeOf(a)]; !ok {
+					assetState := newAssetStore.assets[reflect.TypeOf(a)]
 					assert.Truef(t, assetState.presentOnDisk, "asset %q was not found on disk", a.Name())
 				}
 			}

@@ -42,22 +42,22 @@ func defaultOpenStackMachinePoolPlatform(flavor string) openstacktypes.MachinePo
 	}
 }
 
-// Worker generates the machinesets for `worker` machine pool.
-type Worker struct {
+// Compute generates the machinesets for compute machine pools.
+type Compute struct {
 	MachineSetRaw     []byte
 	UserDataSecretRaw []byte
 }
 
-var _ asset.Asset = (*Worker)(nil)
+var _ asset.Asset = (*Compute)(nil)
 
-// Name returns a human friendly name for the Worker Asset.
-func (w *Worker) Name() string {
-	return "Worker Machines"
+// Name returns a human friendly name for the Compute Asset.
+func (a *Compute) Name() string {
+	return "Compute Machines"
 }
 
 // Dependencies returns all of the dependencies directly needed by the
-// Worker asset
-func (w *Worker) Dependencies() []asset.Asset {
+// Compute asset
+func (a *Compute) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.ClusterID{},
 		// PlatformCredsCheck just checks the creds (and asks, if needed)
@@ -70,8 +70,8 @@ func (w *Worker) Dependencies() []asset.Asset {
 	}
 }
 
-// Generate generates the Worker asset.
-func (w *Worker) Generate(dependencies asset.Parents) error {
+// Generate generates the Compute asset.
+func (a *Compute) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installconfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
@@ -79,10 +79,10 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	dependencies.Get(clusterID, installconfig, rhcosImage, wign)
 
 	var err error
-	userDataMap := map[string][]byte{"worker-user-data": wign.File.Data}
-	w.UserDataSecretRaw, err = userDataList(userDataMap)
+	userDataMap := map[string][]byte{"compute-user-data": wign.File.Data}
+	a.UserDataSecretRaw, err = userDataList(userDataMap)
 	if err != nil {
-		return errors.Wrap(err, "failed to create user-data secret for worker machines")
+		return errors.Wrap(err, "failed to create user-data secret for compute machines")
 	}
 
 	machineSets := []runtime.Object{}
@@ -103,9 +103,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				mpool.Zones = azs
 			}
 			pool.Platform.AWS = &mpool
-			sets, err := aws.MachineSets(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+			sets, err := aws.MachineSets(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "worker", "compute-user-data")
 			if err != nil {
-				return errors.Wrap(err, "failed to create worker machine objects")
+				return errors.Wrap(err, "failed to create compute machine objects")
 			}
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
@@ -115,9 +115,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Libvirt)
 			pool.Platform.Libvirt = &mpool
-			sets, err := libvirt.MachineSets(clusterID.ClusterID, ic, &pool, "worker", "worker-user-data")
+			sets, err := libvirt.MachineSets(clusterID.ClusterID, ic, &pool, "worker", "compute-user-data")
 			if err != nil {
-				return errors.Wrap(err, "failed to create worker machine objects")
+				return errors.Wrap(err, "failed to create compute machine objects")
 			}
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
@@ -129,9 +129,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(pool.Platform.OpenStack)
 			pool.Platform.OpenStack = &mpool
 
-			sets, err := openstack.MachineSets(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+			sets, err := openstack.MachineSets(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "worker", "compute-user-data")
 			if err != nil {
-				return errors.Wrap(err, "failed to create master machine objects")
+				return errors.Wrap(err, "failed to create compute machine objects")
 			}
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
@@ -155,7 +155,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	if err != nil {
 		return errors.Wrap(err, "failed to marshal")
 	}
-	w.MachineSetRaw = raw
+	a.MachineSetRaw = raw
 
 	return nil
 }
