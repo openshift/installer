@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"k8s.io/utils/pointer"
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -15,7 +16,6 @@ import (
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
 	"github.com/openshift/installer/pkg/types/openstack"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
-	"k8s.io/utils/pointer"
 )
 
 func defaultInstallConfig() *types.InstallConfig {
@@ -31,14 +31,14 @@ func defaultInstallConfig() *types.InstallConfig {
 				},
 			},
 		},
-		Machines: []types.MachinePool{
-			{
-				Name:     "master",
-				Replicas: func(x int64) *int64 { return &x }(3),
-			},
+		ControlPlane: &types.MachinePool{
+			Name:     "master",
+			Replicas: pointer.Int64Ptr(3),
+		},
+		Compute: []types.MachinePool{
 			{
 				Name:     "worker",
-				Replicas: func(x int64) *int64 { return &x }(3),
+				Replicas: pointer.Int64Ptr(3),
 			},
 		},
 	}
@@ -56,10 +56,8 @@ func defaultLibvirtInstallConfig() *types.InstallConfig {
 	c.Networking.MachineCIDR = libvirtdefaults.DefaultMachineCIDR
 	c.Platform.Libvirt = &libvirt.Platform{}
 	libvirtdefaults.SetPlatformDefaults(c.Platform.Libvirt)
-	for i, m := range c.Machines {
-		m.Replicas = func(x int64) *int64 { return &x }(1)
-		c.Machines[i] = m
-	}
+	c.ControlPlane.Replicas = pointer.Int64Ptr(1)
+	c.Compute[0].Replicas = pointer.Int64Ptr(1)
 	return c
 }
 
@@ -172,16 +170,18 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			}(),
 		},
 		{
-			name: "Machines present",
+			name: "Compute present",
 			config: &types.InstallConfig{
-				Machines: []types.MachinePool{{Name: "test-machine"}},
+				Compute: []types.MachinePool{{Name: "test-compute"}},
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultInstallConfig()
-				c.Machines = []types.MachinePool{{
-					Name:     "test-machine",
-					Replicas: pointer.Int64Ptr(0),
-				}}
+				c.Compute = []types.MachinePool{
+					{
+						Name:     "test-compute",
+						Replicas: pointer.Int64Ptr(3),
+					},
+				}
 				return c
 			}(),
 		},

@@ -8,6 +8,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/mock"
@@ -74,14 +75,14 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 				},
 			},
 		},
-		Machines: []types.MachinePool{
-			{
-				Name:     "master",
-				Replicas: func(x int64) *int64 { return &x }(3),
-			},
+		ControlPlane: &types.MachinePool{
+			Name:     "master",
+			Replicas: pointer.Int64Ptr(3),
+		},
+		Compute: []types.MachinePool{
 			{
 				Name:     "worker",
-				Replicas: func(x int64) *int64 { return &x }(3),
+				Replicas: pointer.Int64Ptr(3),
 			},
 		},
 		Platform: types.Platform{
@@ -133,14 +134,14 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 						},
 					},
 				},
-				Machines: []types.MachinePool{
-					{
-						Name:     "master",
-						Replicas: func(x int64) *int64 { return &x }(3),
-					},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64Ptr(3),
+				},
+				Compute: []types.MachinePool{
 					{
 						Name:     "worker",
-						Replicas: func(x int64) *int64 { return &x }(3),
+						Replicas: pointer.Int64Ptr(3),
 					},
 				},
 				Platform: types.Platform{

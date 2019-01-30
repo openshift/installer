@@ -7,6 +7,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/pointer"
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -36,12 +37,14 @@ func validInstallConfig() *types.InstallConfig {
 				},
 			},
 		},
-		Machines: []types.MachinePool{
+		ControlPlane: &types.MachinePool{
+			Name:     "master",
+			Replicas: pointer.Int64Ptr(3),
+		},
+		Compute: []types.MachinePool{
 			{
-				Name: "master",
-			},
-			{
-				Name: "worker",
+				Name:     "worker",
+				Replicas: pointer.Int64Ptr(3),
 			},
 		},
 		Platform: types.Platform{
@@ -161,52 +164,112 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.clusterNetworks\[0]\.hostSubnetLength: Invalid value: 9: cluster network host subnet must not be larger than CIDR 192.168.1.0/24$`,
 		},
 		{
-			name: "missing master machine pool",
+			name: "missing control plane",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Machines = []types.MachinePool{
+				c.ControlPlane = nil
+				return c
+			}(),
+			expectedError: `^controlPlane: Required value: controlPlane is required$`,
+		},
+		{
+			name: "control plane with 0 replicas",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ControlPlane.Replicas = pointer.Int64Ptr(0)
+				return c
+			}(),
+			expectedError: `^controlPlane.replicas: Invalid value: 0: number of control plane replicas must be positive$`,
+		},
+		{
+			name: "invalid control plane",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.ControlPlane.Replicas = nil
+				return c
+			}(),
+			expectedError: `^controlPlane.replicas: Required value: replicas is required$`,
+		},
+		{
+			name: "missing compute",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute = nil
+				return c
+			}(),
+			expectedError: `^compute: Required value: there must be at least one compute machine pool$`,
+		},
+		{
+			name: "empty compute",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute = []types.MachinePool{}
+				return c
+			}(),
+			expectedError: `^compute: Required value: there must be at least one compute machine pool$`,
+		},
+		{
+			name: "duplicate compute",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Compute = []types.MachinePool{
 					{
-						Name: "worker",
+						Name:     "worker",
+						Replicas: pointer.Int64Ptr(1),
+					},
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64Ptr(2),
 					},
 				}
 				return c
 			}(),
-			expectedError: `^machines: Required value: must specify a machine pool with a name of 'master'$`,
+			expectedError: `^compute\[1\]\.name: Duplicate value: "worker"$`,
 		},
 		{
-			name: "missing worker machine pool",
+			name: "compute with invalid name",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Machines = []types.MachinePool{
+				c.Compute = []types.MachinePool{
 					{
-						Name: "master",
+						Name:     "bad-name",
+						Replicas: pointer.Int64Ptr(1),
 					},
 				}
 				return c
 			}(),
-			expectedError: `^machines: Required value: must specify a machine pool with a name of 'worker'$`,
+			expectedError: `^compute\[0\]\.name: Unsupported value: "bad-name": supported values: "worker"$`,
 		},
 		{
-			name: "duplicate machine pool",
+			name: "no compute replicas",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Machines = append(c.Machines, types.MachinePool{
-					Name: "master",
-				})
+				c.Compute = []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64Ptr(0),
+					},
+				}
 				return c
 			}(),
-			expectedError: `^machines\[2]: Duplicate value: types\.MachinePool{Name:"master", Replicas:\(\*int64\)\(nil\), Platform:types\.MachinePoolPlatform{AWS:\(\*aws\.MachinePool\)\(nil\), Libvirt:\(\*libvirt\.MachinePool\)\(nil\), OpenStack:\(\*openstack\.MachinePool\)\(nil\)}}$`,
+			expectedError: `^compute\[0\]\.replicas: Invalid value: 0: at least one compute machine pool must have a positive replicas count$`,
 		},
 		{
-			name: "invalid machine pool",
+			name: "invalid compute",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Machines = append(c.Machines, types.MachinePool{
-					Name: "other",
-				})
+				c.Compute = []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64Ptr(3),
+						Platform: types.MachinePoolPlatform{
+							OpenStack: &openstack.MachinePool{},
+						},
+					},
+				}
 				return c
 			}(),
-			expectedError: `^machines\[2]\.name: Unsupported value: "other": supported values: "master", "worker"$`,
+			expectedError: `^compute\[0\]\.platform.openstack: Invalid value: openstack.MachinePool{FlavorName:""}: cannot specify "openstack" for machine pool when cluster is using "aws"$`,
 		},
 		{
 			name: "missing platform",

@@ -7,7 +7,6 @@ import (
 	libvirtdefaults "github.com/openshift/installer/pkg/types/libvirt/defaults"
 	nonedefaults "github.com/openshift/installer/pkg/types/none/defaults"
 	openstackdefaults "github.com/openshift/installer/pkg/types/openstack/defaults"
-	"k8s.io/utils/pointer"
 )
 
 var (
@@ -43,39 +42,27 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 			},
 		}
 	}
-	numberOfMasters := int64(3)
-	numberOfWorkers := int64(3)
+	defaultReplicaCount := int64(3)
 	if c.Platform.Libvirt != nil {
-		numberOfMasters = 1
-		numberOfWorkers = 1
+		defaultReplicaCount = 1
 	}
-	if len(c.Machines) == 0 {
-		c.Machines = []types.MachinePool{
-			{
-				Name:     "master",
-				Replicas: &numberOfMasters,
-			},
+	if c.ControlPlane == nil {
+		c.ControlPlane = &types.MachinePool{
+			Replicas: &defaultReplicaCount,
+		}
+	}
+	c.ControlPlane.Name = "master"
+	if len(c.Compute) == 0 {
+		c.Compute = []types.MachinePool{
 			{
 				Name:     "worker",
-				Replicas: &numberOfWorkers,
+				Replicas: &defaultReplicaCount,
 			},
 		}
-	} else {
-		for i := range c.Machines {
-			switch c.Machines[i].Name {
-			case "master":
-				if c.Machines[i].Replicas == nil {
-					c.Machines[i].Replicas = &numberOfMasters
-				}
-			case "worker":
-				if c.Machines[i].Replicas == nil {
-					c.Machines[i].Replicas = &numberOfWorkers
-				}
-			default:
-				if c.Machines[i].Replicas == nil {
-					c.Machines[i].Replicas = pointer.Int64Ptr(0)
-				}
-			}
+	}
+	for i, p := range c.Compute {
+		if p.Replicas == nil {
+			c.Compute[i].Replicas = &defaultReplicaCount
 		}
 	}
 	switch {
