@@ -9,6 +9,11 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
+const (
+	// InstallConfigVersion is the version supported by this package.
+	InstallConfigVersion = "v1beta2"
+)
+
 var (
 	// PlatformNames is a slice with all the visibly-supported
 	// platform names in alphabetical order. This is the list of

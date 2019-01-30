@@ -8,12 +8,6 @@ variable "cluster_name" {
   description = "The name of the cluster."
 }
 
-variable "iam_role" {
-  type        = "string"
-  default     = ""
-  description = "The name of the IAM role to assign to the bootstrap node."
-}
-
 variable "ignition" {
   type        = "string"
   description = "The content of the bootstrap ignition file."

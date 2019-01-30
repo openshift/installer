@@ -18,7 +18,7 @@ import (
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1beta1",
+			APIVersion: types.InstallConfigVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-cluster",
