@@ -38,6 +38,7 @@ export CGO_ENABLED=0
 
 case "${MODE}" in
 release)
+	LDFLAGS="${LDFLAGS} -s -w"
 	TAGS="${TAGS} release"
 	if test -n "${RELEASE_IMAGE}"
 	then
