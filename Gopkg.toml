@@ -10,7 +10,7 @@ ignored = [
 
 [[constraint]]
   name = "gopkg.in/AlecAivazis/survey.v1"
-  revision = "49e2fbe5917c359f48b5e50062df01fb5554daf8"
+  version = "1.8.1"
 
 [[constraint]]
   name = "github.com/aws/aws-sdk-go"
