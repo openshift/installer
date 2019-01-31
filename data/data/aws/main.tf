@@ -80,6 +80,7 @@ module "vpc" {
   tags = "${local.tags}"
 }
 
+# AWS permission: ec2:CopyImage
 resource "aws_ami_copy" "main" {
   name              = "${var.cluster_id}-master"
   source_ami_id     = "${var.aws_ami}"

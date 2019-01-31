@@ -292,7 +292,7 @@ func (search *iamRoleSearch) arns() ([]string, error) {
 
 	arns := []string{}
 	var lastError error
-	err := search.client.ListRolesPages(
+	err := search.client.ListRolesPages( // AWS permission: iam:ListRoles
 		&iam.ListRolesInput{},
 		func(results *iam.ListRolesOutput, lastPage bool) bool {
 			for _, role := range results.Roles {
@@ -301,7 +301,7 @@ func (search *iamRoleSearch) arns() ([]string, error) {
 				}
 
 				// Unfortunately role.Tags is empty from ListRoles, so we need to query each one
-				response, err := search.client.GetRole(&iam.GetRoleInput{RoleName: role.RoleName})
+				response, err := search.client.GetRole(&iam.GetRoleInput{RoleName: role.RoleName}) // AWS permission: iam:GetRole
 				if err != nil {
 					if err.(awserr.Error).Code() == iam.ErrCodeNoSuchEntityException {
 						search.unmatched[*role.Arn] = exists
@@ -349,7 +349,7 @@ func (search *iamUserSearch) arns() ([]string, error) {
 
 	arns := []string{}
 	var lastError error
-	err := search.client.ListUsersPages(
+	err := search.client.ListUsersPages( // AWS permission: iam:ListUsers
 		&iam.ListUsersInput{},
 		func(results *iam.ListUsersOutput, lastPage bool) bool {
 			for _, user := range results.Users {
@@ -358,7 +358,7 @@ func (search *iamUserSearch) arns() ([]string, error) {
 				}
 
 				// Unfortunately user.Tags is empty from ListUsers, so we need to query each one
-				response, err := search.client.GetUser(&iam.GetUserInput{UserName: aws.String(*user.UserName)})
+				response, err := search.client.GetUser(&iam.GetUserInput{UserName: aws.String(*user.UserName)}) // AWS permission: iam:GetUser
 				if err != nil {
 					if err.(awserr.Error).Code() == iam.ErrCodeNoSuchEntityException {
 						search.unmatched[*user.Arn] = exists
@@ -395,7 +395,7 @@ func (search *iamUserSearch) arns() ([]string, error) {
 // getSharedHostedZone will find the ID of the non-Terraform-managed public route53 zone given the
 // Terraform-managed zone's privateID.
 func getSharedHostedZone(client *route53.Route53, privateID string, logger logrus.FieldLogger) (string, error) {
-	response, err := client.GetHostedZone(&route53.GetHostedZoneInput{
+	response, err := client.GetHostedZone(&route53.GetHostedZoneInput{ // AWS permission: route53:GetHostedZone
 		Id: aws.String(privateID),
 	})
 	if err != nil {
@@ -445,7 +445,7 @@ func findPublicRoute53(client *route53.Route53, dnsName string, logger logrus.Fi
 	}
 	for i := 0; true; i++ {
 		logger.Debugf("listing AWS hosted zones %q (page %d)", dnsName, i)
-		list, err := client.ListHostedZonesByName(request)
+		list, err := client.ListHostedZonesByName(request) // AWS permission: route53:ListHostedZonesByName
 		if err != nil {
 			return "", err
 		}
@@ -533,7 +533,7 @@ func deleteEC2(session *session.Session, arn arn.ARN, filter Filter, logger logr
 }
 
 func deleteEC2DHCPOptions(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteDhcpOptions(&ec2.DeleteDhcpOptionsInput{
+	_, err := client.DeleteDhcpOptions(&ec2.DeleteDhcpOptionsInput{ // AWS permission: ec2:DeleteDhcpOptions
 		DhcpOptionsId: &id,
 	})
 	if err != nil {
@@ -550,7 +550,7 @@ func deleteEC2DHCPOptions(client *ec2.EC2, id string, logger logrus.FieldLogger)
 func deleteEC2Image(client *ec2.EC2, id string, filter Filter, logger logrus.FieldLogger) error {
 	// tag the snapshots used by the AMI so that the snapshots are matched
 	// by the filter and deleted
-	response, err := client.DescribeImages(&ec2.DescribeImagesInput{
+	response, err := client.DescribeImages(&ec2.DescribeImagesInput{ // AWS permission: ec2:DescribeImages
 		ImageIds: []*string{&id},
 	})
 	if err != nil {
@@ -567,7 +567,7 @@ func deleteEC2Image(client *ec2.EC2, id string, filter Filter, logger logrus.Fie
 			}
 		}
 	}
-	_, err = client.CreateTags(&ec2.CreateTagsInput{
+	_, err = client.CreateTags(&ec2.CreateTagsInput{ // AWS permission: ec2:CreateTags
 		Resources: snapshots,
 		Tags:      tagsForFilter(filter),
 	})
@@ -575,7 +575,7 @@ func deleteEC2Image(client *ec2.EC2, id string, filter Filter, logger logrus.Fie
 		err = errors.Wrapf(err, "tagging snapshots for %s", id)
 	}
 
-	_, err = client.DeregisterImage(&ec2.DeregisterImageInput{
+	_, err = client.DeregisterImage(&ec2.DeregisterImageInput{ // AWS permission: ec2:DeregisterImage
 		ImageId: &id,
 	})
 	if err != nil {
@@ -590,7 +590,7 @@ func deleteEC2Image(client *ec2.EC2, id string, filter Filter, logger logrus.Fie
 }
 
 func deleteEC2ElasticIP(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.ReleaseAddress(&ec2.ReleaseAddressInput{
+	_, err := client.ReleaseAddress(&ec2.ReleaseAddressInput{ // AWS permission: ec2:ReleaseAddress
 		AllocationId: aws.String(id),
 	})
 	if err != nil {
@@ -605,7 +605,7 @@ func deleteEC2ElasticIP(client *ec2.EC2, id string, logger logrus.FieldLogger) e
 }
 
 func deleteEC2Instance(ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger logrus.FieldLogger) error {
-	response, err := ec2Client.DescribeInstances(&ec2.DescribeInstancesInput{
+	response, err := ec2Client.DescribeInstances(&ec2.DescribeInstancesInput{ // AWS permission: ec2:DescribeInstances
 		InstanceIds: []*string{aws.String(id)},
 	})
 	if err != nil {
@@ -633,7 +633,7 @@ func deleteEC2Instance(ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger
 				}
 			}
 
-			_, err := ec2Client.TerminateInstances(&ec2.TerminateInstancesInput{
+			_, err := ec2Client.TerminateInstances(&ec2.TerminateInstancesInput{ // AWS permission: ec2:TerminateInstances
 				InstanceIds: []*string{instance.InstanceId},
 			})
 			if err != nil {
@@ -668,7 +668,7 @@ func (o *ClusterUninstaller) deleteUntaggedResources(awsSession *session.Session
 }
 
 func deleteEC2InternetGateway(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	response, err := client.DescribeInternetGateways(&ec2.DescribeInternetGatewaysInput{
+	response, err := client.DescribeInternetGateways(&ec2.DescribeInternetGatewaysInput{ // AWS permission: ec2:DescribeInternetGateways
 		InternetGatewayIds: []*string{aws.String(id)},
 	})
 	if err != nil {
@@ -681,7 +681,7 @@ func deleteEC2InternetGateway(client *ec2.EC2, id string, logger logrus.FieldLog
 				logger.Warn("gateway does not have a VPC ID")
 				continue
 			}
-			_, err := client.DetachInternetGateway(&ec2.DetachInternetGatewayInput{
+			_, err := client.DetachInternetGateway(&ec2.DetachInternetGatewayInput{ // AWS permission: ec2:DetachInternetGateway
 				InternetGatewayId: gateway.InternetGatewayId,
 				VpcId:             vpc.VpcId,
 			})
@@ -693,7 +693,7 @@ func deleteEC2InternetGateway(client *ec2.EC2, id string, logger logrus.FieldLog
 		}
 	}
 
-	_, err = client.DeleteInternetGateway(&ec2.DeleteInternetGatewayInput{
+	_, err = client.DeleteInternetGateway(&ec2.DeleteInternetGatewayInput{ // AWS permission: ec2:DeleteInternetGateway
 		InternetGatewayId: &id,
 	})
 	if err != nil {
@@ -705,7 +705,7 @@ func deleteEC2InternetGateway(client *ec2.EC2, id string, logger logrus.FieldLog
 }
 
 func deleteEC2NATGateway(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteNatGateway(&ec2.DeleteNatGatewayInput{
+	_, err := client.DeleteNatGateway(&ec2.DeleteNatGatewayInput{ // AWS permission: ec2:DeleteNatGateway
 		NatGatewayId: aws.String(id),
 	})
 	if err != nil {
@@ -721,7 +721,7 @@ func deleteEC2NATGateway(client *ec2.EC2, id string, logger logrus.FieldLogger) 
 
 func deleteEC2NATGatewaysByVPC(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeNatGatewaysPages(
+	err := client.DescribeNatGatewaysPages( // AWS permission: ec2:DescribeNatGateways
 		&ec2.DescribeNatGatewaysInput{
 			Filter: []*ec2.Filter{
 				{
@@ -755,7 +755,7 @@ func deleteEC2NATGatewaysByVPC(client *ec2.EC2, vpc string, failFast bool, logge
 }
 
 func deleteEC2RouteTable(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	response, err := client.DescribeRouteTables(&ec2.DescribeRouteTablesInput{
+	response, err := client.DescribeRouteTables(&ec2.DescribeRouteTablesInput{ // AWS permission: ec2:DescribeRouteTables
 		RouteTableIds: []*string{aws.String(id)},
 	})
 	if err != nil {
@@ -783,7 +783,7 @@ func deleteEC2RouteTableObject(client *ec2.EC2, table *ec2.RouteTable, logger lo
 			hasMain = true
 			continue
 		}
-		_, err := client.DisassociateRouteTable(&ec2.DisassociateRouteTableInput{
+		_, err := client.DisassociateRouteTable(&ec2.DisassociateRouteTableInput{ // AWS permission: ec2:DisassociateRouteTable
 			AssociationId: association.RouteTableAssociationId,
 		})
 		if err != nil {
@@ -798,7 +798,7 @@ func deleteEC2RouteTableObject(client *ec2.EC2, table *ec2.RouteTable, logger lo
 		return nil
 	}
 
-	_, err := client.DeleteRouteTable(&ec2.DeleteRouteTableInput{
+	_, err := client.DeleteRouteTable(&ec2.DeleteRouteTableInput{ // AWS permission: ec2:DeleteRouteTable
 		RouteTableId: table.RouteTableId,
 	})
 	if err != nil {
@@ -811,7 +811,7 @@ func deleteEC2RouteTableObject(client *ec2.EC2, table *ec2.RouteTable, logger lo
 
 func deleteEC2RouteTablesByVPC(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeRouteTablesPages(
+	err := client.DescribeRouteTablesPages( // AWS permission: ec2:DescribeRouteTables
 		&ec2.DescribeRouteTablesInput{
 			Filters: []*ec2.Filter{
 				{
@@ -845,7 +845,7 @@ func deleteEC2RouteTablesByVPC(client *ec2.EC2, vpc string, failFast bool, logge
 }
 
 func deleteEC2SecurityGroup(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	response, err := client.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{
+	response, err := client.DescribeSecurityGroups(&ec2.DescribeSecurityGroupsInput{ // AWS permission: ec2:DescribeSecurityGroups
 		GroupIds: []*string{aws.String(id)},
 	})
 	if err != nil {
@@ -857,7 +857,7 @@ func deleteEC2SecurityGroup(client *ec2.EC2, id string, logger logrus.FieldLogge
 
 	for _, group := range response.SecurityGroups {
 		if len(group.IpPermissions) > 0 {
-			_, err := client.RevokeSecurityGroupIngress(&ec2.RevokeSecurityGroupIngressInput{
+			_, err := client.RevokeSecurityGroupIngress(&ec2.RevokeSecurityGroupIngressInput{ // AWS permission: ec2:RevokeSecurityGroupIngress
 				GroupId:       group.GroupId,
 				IpPermissions: group.IpPermissions,
 			})
@@ -868,7 +868,7 @@ func deleteEC2SecurityGroup(client *ec2.EC2, id string, logger logrus.FieldLogge
 		}
 
 		if len(group.IpPermissionsEgress) > 0 {
-			_, err := client.RevokeSecurityGroupEgress(&ec2.RevokeSecurityGroupEgressInput{
+			_, err := client.RevokeSecurityGroupEgress(&ec2.RevokeSecurityGroupEgressInput{ // AWS permission: ec2:RevokeSecurityGroupEgress
 				GroupId:       group.GroupId,
 				IpPermissions: group.IpPermissionsEgress,
 			})
@@ -879,7 +879,7 @@ func deleteEC2SecurityGroup(client *ec2.EC2, id string, logger logrus.FieldLogge
 		}
 	}
 
-	_, err = client.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{
+	_, err = client.DeleteSecurityGroup(&ec2.DeleteSecurityGroupInput{ // AWS permission: ec2:DeleteSecurityGroup
 		GroupId: aws.String(id),
 	})
 	if err != nil {
@@ -894,7 +894,7 @@ func deleteEC2SecurityGroup(client *ec2.EC2, id string, logger logrus.FieldLogge
 }
 
 func deleteEC2Snapshot(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteSnapshot(&ec2.DeleteSnapshotInput{
+	_, err := client.DeleteSnapshot(&ec2.DeleteSnapshotInput{ // AWS permission: ec2:DeleteSnapshot
 		SnapshotId: &id,
 	})
 	if err != nil {
@@ -909,7 +909,7 @@ func deleteEC2Snapshot(client *ec2.EC2, id string, logger logrus.FieldLogger) er
 }
 
 func deleteEC2NetworkInterface(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteNetworkInterface(&ec2.DeleteNetworkInterfaceInput{
+	_, err := client.DeleteNetworkInterface(&ec2.DeleteNetworkInterfaceInput{ // AWS permission: ec2:DeleteNetworkInterface
 		NetworkInterfaceId: aws.String(id),
 	})
 	if err != nil {
@@ -925,7 +925,7 @@ func deleteEC2NetworkInterface(client *ec2.EC2, id string, logger logrus.FieldLo
 
 func deleteEC2NetworkInterfaceByVPC(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeNetworkInterfacesPages(
+	err := client.DescribeNetworkInterfacesPages( // AWS permission: ec2:DescribeNetworkInterfaces
 		&ec2.DescribeNetworkInterfacesInput{
 			Filters: []*ec2.Filter{
 				{
@@ -959,7 +959,7 @@ func deleteEC2NetworkInterfaceByVPC(client *ec2.EC2, vpc string, failFast bool, 
 }
 
 func deleteEC2Subnet(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteSubnet(&ec2.DeleteSubnetInput{
+	_, err := client.DeleteSubnet(&ec2.DeleteSubnetInput{ // AWS permission: ec2:DeleteSubnet
 		SubnetId: aws.String(id),
 	})
 	if err != nil {
@@ -974,7 +974,7 @@ func deleteEC2Subnet(client *ec2.EC2, id string, logger logrus.FieldLogger) erro
 }
 
 func deleteEC2Volume(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteVolume(&ec2.DeleteVolumeInput{
+	_, err := client.DeleteVolume(&ec2.DeleteVolumeInput{ // AWS permission: ec2:DeleteVolume
 		VolumeId: aws.String(id),
 	})
 	if err != nil {
@@ -1013,7 +1013,7 @@ func deleteEC2VPC(ec2Client *ec2.EC2, elbClient *elb.ELB, elbv2Client *elbv2.ELB
 		}
 	}
 
-	_, err := ec2Client.DeleteVpc(&ec2.DeleteVpcInput{
+	_, err := ec2Client.DeleteVpc(&ec2.DeleteVpcInput{ // AWS permission: ec2:DeleteVpc
 		VpcId: aws.String(id),
 	})
 	if err != nil {
@@ -1025,7 +1025,7 @@ func deleteEC2VPC(ec2Client *ec2.EC2, elbClient *elb.ELB, elbv2Client *elbv2.ELB
 }
 
 func deleteEC2VPCEndpoint(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteVpcEndpoints(&ec2.DeleteVpcEndpointsInput{
+	_, err := client.DeleteVpcEndpoints(&ec2.DeleteVpcEndpointsInput{ // AWS permission: ec2:DeleteVpcEndpoints
 		VpcEndpointIds: []*string{aws.String(id)},
 	})
 	if err != nil {
@@ -1037,7 +1037,7 @@ func deleteEC2VPCEndpoint(client *ec2.EC2, id string, logger logrus.FieldLogger)
 }
 
 func deleteEC2VPCEndpointsByVPC(client *ec2.EC2, vpc string, failFast bool, logger logrus.FieldLogger) error {
-	response, err := client.DescribeVpcEndpoints(&ec2.DescribeVpcEndpointsInput{
+	response, err := client.DescribeVpcEndpoints(&ec2.DescribeVpcEndpointsInput{ // AWS permission: ec2:DescribeVpcEndpoints
 		Filters: []*ec2.Filter{
 			{
 				Name:   aws.String("vpc-id"),
@@ -1094,7 +1094,7 @@ func deleteElasticLoadBalancing(session *session.Session, arn arn.ARN, logger lo
 }
 
 func deleteElasticLoadBalancerClassic(client *elb.ELB, name string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteLoadBalancer(&elb.DeleteLoadBalancerInput{
+	_, err := client.DeleteLoadBalancer(&elb.DeleteLoadBalancerInput{ // AWS permission: elasticloadbalancing:DeleteLoadBalancer
 		LoadBalancerName: aws.String(name),
 	})
 	if err != nil {
@@ -1107,7 +1107,7 @@ func deleteElasticLoadBalancerClassic(client *elb.ELB, name string, logger logru
 
 func deleteElasticLoadBalancerClassicByVPC(client *elb.ELB, vpc string, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeLoadBalancersPages(
+	err := client.DescribeLoadBalancersPages( // AWS permission elb:DescribeLoadBalancers
 		&elb.DescribeLoadBalancersInput{},
 		func(results *elb.DescribeLoadBalancersOutput, lastPage bool) bool {
 			for _, lb := range results.LoadBalancerDescriptions {
@@ -1142,7 +1142,7 @@ func deleteElasticLoadBalancerClassicByVPC(client *elb.ELB, vpc string, logger l
 }
 
 func deleteElasticLoadBalancerTargetGroup(client *elbv2.ELBV2, arn arn.ARN, logger logrus.FieldLogger) error {
-	_, err := client.DeleteTargetGroup(&elbv2.DeleteTargetGroupInput{
+	_, err := client.DeleteTargetGroup(&elbv2.DeleteTargetGroupInput{ // AWS permission: elasticloadbalancing:DeleteTargetGroup
 		TargetGroupArn: aws.String(arn.String()),
 	})
 	if err != nil {
@@ -1155,7 +1155,7 @@ func deleteElasticLoadBalancerTargetGroup(client *elbv2.ELBV2, arn arn.ARN, logg
 
 func deleteElasticLoadBalancerTargetGroupsByVPC(client *elbv2.ELBV2, vpc string, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeTargetGroupsPages(
+	err := client.DescribeTargetGroupsPages( // AWS permission: elasticloadbalancing:DescribeTargetGroup
 		&elbv2.DescribeTargetGroupsInput{},
 		func(results *elbv2.DescribeTargetGroupsOutput, lastPage bool) bool {
 			for _, group := range results.TargetGroups {
@@ -1197,7 +1197,7 @@ func deleteElasticLoadBalancerTargetGroupsByVPC(client *elbv2.ELBV2, vpc string,
 }
 
 func deleteElasticLoadBalancerV2(client *elbv2.ELBV2, arn arn.ARN, logger logrus.FieldLogger) error {
-	_, err := client.DeleteLoadBalancer(&elbv2.DeleteLoadBalancerInput{
+	_, err := client.DeleteLoadBalancer(&elbv2.DeleteLoadBalancerInput{ // AWS permission: elasticloadbalancing:DeleteLoadBalancer
 		LoadBalancerArn: aws.String(arn.String()),
 	})
 	if err != nil {
@@ -1210,7 +1210,7 @@ func deleteElasticLoadBalancerV2(client *elbv2.ELBV2, arn arn.ARN, logger logrus
 
 func deleteElasticLoadBalancerV2ByVPC(client *elbv2.ELBV2, vpc string, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.DescribeLoadBalancersPages(
+	err := client.DescribeLoadBalancersPages( // AWS permission: elasticloadbalancing:DescribeLoadBalancers
 		&elbv2.DescribeLoadBalancersInput{},
 		func(results *elbv2.DescribeLoadBalancersOutput, lastPage bool) bool {
 			for _, lb := range results.LoadBalancers {
@@ -1273,7 +1273,7 @@ func deleteIAM(session *session.Session, arn arn.ARN, logger logrus.FieldLogger)
 }
 
 func deleteIAMInstanceProfileByName(client *iam.IAM, name *string, logger logrus.FieldLogger) error {
-	_, err := client.DeleteInstanceProfile(&iam.DeleteInstanceProfileInput{
+	_, err := client.DeleteInstanceProfile(&iam.DeleteInstanceProfileInput{ // AWS permission: iam:DeleteInstanceProfile
 		InstanceProfileName: name,
 	})
 	if err != nil {
@@ -1296,7 +1296,7 @@ func deleteIAMInstanceProfile(client *iam.IAM, profileARN arn.ARN, logger logrus
 		return errors.Errorf("%s ARN passed to deleteIAMInstanceProfile: %s", resourceType, profileARN.String())
 	}
 
-	response, err := client.GetInstanceProfile(&iam.GetInstanceProfileInput{
+	response, err := client.GetInstanceProfile(&iam.GetInstanceProfileInput{ // AWS permission: iam:GetInstanceProfile
 		InstanceProfileName: &name,
 	})
 	if err != nil {
@@ -1308,7 +1308,7 @@ func deleteIAMInstanceProfile(client *iam.IAM, profileARN arn.ARN, logger logrus
 	profile := response.InstanceProfile
 
 	for _, role := range profile.Roles {
-		_, err = client.RemoveRoleFromInstanceProfile(&iam.RemoveRoleFromInstanceProfileInput{
+		_, err = client.RemoveRoleFromInstanceProfile(&iam.RemoveRoleFromInstanceProfileInput{ // AWS permission: iam:RemoveRoleFromInstanceProfile
 			InstanceProfileName: profile.InstanceProfileName,
 			RoleName:            role.RoleName,
 		})
@@ -1338,11 +1338,11 @@ func deleteIAMRole(client *iam.IAM, roleARN arn.ARN, logger logrus.FieldLogger) 
 	}
 
 	var lastError error
-	err = client.ListRolePoliciesPages(
+	err = client.ListRolePoliciesPages( // AWS permission: iam:ListRolePolicies
 		&iam.ListRolePoliciesInput{RoleName: &name},
 		func(results *iam.ListRolePoliciesOutput, lastPage bool) bool {
 			for _, policy := range results.PolicyNames {
-				_, err := client.DeleteRolePolicy(&iam.DeleteRolePolicyInput{
+				_, err := client.DeleteRolePolicy(&iam.DeleteRolePolicyInput{ // AWS permission: iam:DeleteRolePolicy
 					RoleName:   &name,
 					PolicyName: policy,
 				})
@@ -1366,7 +1366,7 @@ func deleteIAMRole(client *iam.IAM, roleARN arn.ARN, logger logrus.FieldLogger) 
 		return errors.Wrap(err, "listing IAM role policies")
 	}
 
-	err = client.ListInstanceProfilesForRolePages(
+	err = client.ListInstanceProfilesForRolePages( // AWS permission: iam:ListInstanceProfilesForRole
 		&iam.ListInstanceProfilesForRoleInput{RoleName: &name},
 		func(results *iam.ListInstanceProfilesForRoleOutput, lastPage bool) bool {
 			for _, profile := range results.InstanceProfiles {
@@ -1399,7 +1399,7 @@ func deleteIAMRole(client *iam.IAM, roleARN arn.ARN, logger logrus.FieldLogger) 
 		return errors.Wrap(err, "listing IAM instance profiles")
 	}
 
-	_, err = client.DeleteRole(&iam.DeleteRoleInput{RoleName: &name})
+	_, err = client.DeleteRole(&iam.DeleteRoleInput{RoleName: &name}) // AWS permission: iam:DeleteRole
 	if err != nil {
 		return err
 	}
@@ -1410,11 +1410,11 @@ func deleteIAMRole(client *iam.IAM, roleARN arn.ARN, logger logrus.FieldLogger) 
 
 func deleteIAMUser(client *iam.IAM, id string, logger logrus.FieldLogger) error {
 	var lastError error
-	err := client.ListUserPoliciesPages(
+	err := client.ListUserPoliciesPages( // AWS permission: iam:ListUserPolicies
 		&iam.ListUserPoliciesInput{UserName: &id},
 		func(results *iam.ListUserPoliciesOutput, lastPage bool) bool {
 			for _, policy := range results.PolicyNames {
-				_, err := client.DeleteUserPolicy(&iam.DeleteUserPolicyInput{
+				_, err := client.DeleteUserPolicy(&iam.DeleteUserPolicyInput{ // AWS permission: iam:DeleteUserPolicy
 					UserName:   &id,
 					PolicyName: policy,
 				})
@@ -1438,11 +1438,11 @@ func deleteIAMUser(client *iam.IAM, id string, logger logrus.FieldLogger) error 
 		return errors.Wrap(err, "listing IAM user policies")
 	}
 
-	err = client.ListAccessKeysPages(
+	err = client.ListAccessKeysPages( // AWS permission: iam:ListAccessKeys
 		&iam.ListAccessKeysInput{UserName: &id},
 		func(results *iam.ListAccessKeysOutput, lastPage bool) bool {
 			for _, key := range results.AccessKeyMetadata {
-				_, err := client.DeleteAccessKey(&iam.DeleteAccessKeyInput{
+				_, err := client.DeleteAccessKey(&iam.DeleteAccessKeyInput{ // AWS permission: iam:DeleteAccessKey
 					UserName:    &id,
 					AccessKeyId: key.AccessKeyId,
 				})
@@ -1465,7 +1465,7 @@ func deleteIAMUser(client *iam.IAM, id string, logger logrus.FieldLogger) error 
 		return errors.Wrap(err, "listing IAM access keys")
 	}
 
-	_, err = client.DeleteUser(&iam.DeleteUserInput{
+	_, err = client.DeleteUser(&iam.DeleteUserInput{ // AWS permission: iam:DeleteUser
 		UserName: &id,
 	})
 	if err != nil {
@@ -1500,7 +1500,7 @@ func deleteRoute53(session *session.Session, arn arn.ARN, logger logrus.FieldLog
 
 	sharedEntries := map[string]*route53.ResourceRecordSet{}
 	if len(sharedZoneID) != 0 {
-		err = client.ListResourceRecordSetsPages(
+		err = client.ListResourceRecordSetsPages( // AWS permission: route53:ListResourceRecordSets
 			&route53.ListResourceRecordSetsInput{HostedZoneId: aws.String(sharedZoneID)},
 			func(results *route53.ListResourceRecordSetsOutput, lastPage bool) bool {
 				for _, recordSet := range results.ResourceRecordSets {
@@ -1519,7 +1519,7 @@ func deleteRoute53(session *session.Session, arn arn.ARN, logger logrus.FieldLog
 	}
 
 	var lastError error
-	err = client.ListResourceRecordSetsPages(
+	err = client.ListResourceRecordSetsPages( // AWS permission: route53:ListResourceRecordSets
 		&route53.ListResourceRecordSetsInput{HostedZoneId: aws.String(id)},
 		func(results *route53.ListResourceRecordSetsOutput, lastPage bool) bool {
 			for _, recordSet := range results.ResourceRecordSets {
@@ -1558,7 +1558,7 @@ func deleteRoute53(session *session.Session, arn arn.ARN, logger logrus.FieldLog
 		return err
 	}
 
-	_, err = client.DeleteHostedZone(&route53.DeleteHostedZoneInput{
+	_, err = client.DeleteHostedZone(&route53.DeleteHostedZoneInput{ // AWS permission: route53:DeleteHostedZone
 		Id: aws.String(id),
 	})
 	if err != nil {
@@ -1571,7 +1571,7 @@ func deleteRoute53(session *session.Session, arn arn.ARN, logger logrus.FieldLog
 
 func deleteRoute53RecordSet(client *route53.Route53, zoneID string, recordSet *route53.ResourceRecordSet, logger logrus.FieldLogger) error {
 	logger = logger.WithField("record set", fmt.Sprintf("%s %s", *recordSet.Type, *recordSet.Name))
-	_, err := client.ChangeResourceRecordSets(&route53.ChangeResourceRecordSetsInput{
+	_, err := client.ChangeResourceRecordSets(&route53.ChangeResourceRecordSetsInput{ // AWS permission: route53:ChangeResourceRecordSets
 		HostedZoneId: aws.String(zoneID),
 		ChangeBatch: &route53.ChangeBatch{
 			Changes: []*route53.Change{
@@ -1596,13 +1596,13 @@ func deleteS3(session *session.Session, arn arn.ARN, logger logrus.FieldLogger) 
 	iter := s3manager.NewDeleteListIterator(client, &s3.ListObjectsInput{
 		Bucket: aws.String(arn.Resource),
 	})
-	err := s3manager.NewBatchDeleteWithClient(client).Delete(aws.BackgroundContext(), iter)
+	err := s3manager.NewBatchDeleteWithClient(client).Delete(aws.BackgroundContext(), iter) // AWS permission: s3:DeleteObject
 	if err != nil {
 		return err
 	}
 	logger.Debug("Emptied")
 
-	_, err = client.DeleteBucket(&s3.DeleteBucketInput{
+	_, err = client.DeleteBucket(&s3.DeleteBucketInput{ // AWS permission: s3:DeleteBucket
 		Bucket: aws.String(arn.Resource),
 	})
 	if err != nil {
