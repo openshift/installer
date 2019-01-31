@@ -156,13 +156,3 @@ resource "aws_security_group_rule" "bootstrap_journald_gateway" {
   from_port   = 19531
   to_port     = 19531
 }
-
-resource "aws_security_group_rule" "bootstrap_kubelet_secure" {
-  type              = "ingress"
-  security_group_id = "${aws_security_group.bootstrap.id}"
-
-  protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
-  from_port   = 10250
-  to_port     = 10250
-}
