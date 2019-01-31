@@ -1,6 +1,8 @@
 package types
 
 import (
+	"fmt"
+
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -62,6 +64,11 @@ type InstallConfig struct {
 
 	// PullSecret is the secret to use when pulling images.
 	PullSecret string `json:"pullSecret"`
+}
+
+// ClusterDomain returns the DNS domain that all records for a cluster must belong to.
+func (c *InstallConfig) ClusterDomain() string {
+	return fmt.Sprintf("%s.%s", c.ObjectMeta.Name, c.BaseDomain)
 }
 
 // Platform is the configuration for the specific platform upon which to perform
