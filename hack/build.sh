@@ -47,6 +47,10 @@ release)
 	then
 		LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/rhcos.buildName=${RHCOS_BUILD_NAME}"
 	fi
+	if test -n "${RHCOS_BUILD_URL}"
+	then
+		LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/rhcos.baseURL=${RHCOS_BUILD_URL}"
+	fi
 	if test "${SKIP_GENERATION}" != y
 	then
 		go generate ./data

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -21,6 +22,13 @@ var (
 
 	baseURL = "https://releases-rhcos.svc.ci.openshift.org/storage/releases"
 )
+
+func init() {
+	if or, ok := os.LookupEnv("OPENSHIFT_INSTALL_COREOS_IMAGE_URL"); ok && or != "" {
+		logrus.Warn("Found override for OS BASE URL. Untrusted repository will be used. This is not advised")
+		baseURL = or
+	}
+}
 
 type metadata struct {
 	AMIs []struct {
