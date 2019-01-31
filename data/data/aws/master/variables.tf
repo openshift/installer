@@ -1,8 +1,3 @@
-variable "base_domain" {
-  type        = "string"
-  description = "Domain on which the ELB records will be created"
-}
-
 variable "cluster_id" {
   type = "string"
 }
