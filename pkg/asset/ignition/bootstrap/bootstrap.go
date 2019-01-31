@@ -209,10 +209,6 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 		mode = 0600
 	}
 	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
-	if filename == ".bash_history" {
-		ign.User = &igntypes.NodeUser{Name: ignitionUser}
-		ign.Group = &igntypes.NodeGroup{Name: ignitionUser}
-	}
 	ign.Append = appendToFile
 	a.Config.Storage.Files = append(a.Config.Storage.Files, ign)
 
