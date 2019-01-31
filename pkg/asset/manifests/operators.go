@@ -142,7 +142,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 
 	etcdEndpointHostnames := make([]string, *installConfig.Config.ControlPlane.Replicas)
 	for i := range etcdEndpointHostnames {
-		etcdEndpointHostnames[i] = fmt.Sprintf("%s-etcd-%d", installConfig.Config.ObjectMeta.Name, i)
+		etcdEndpointHostnames[i] = fmt.Sprintf("etcd-%d", i)
 	}
 
 	templateData := &bootkubeTemplateData{
@@ -158,7 +158,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		RootCaCert:                      string(rootCA.Cert()),
 		CVOClusterID:                    clusterID.ClusterID,
 		EtcdEndpointHostnames:           etcdEndpointHostnames,
-		EtcdEndpointDNSSuffix:           installConfig.Config.BaseDomain,
+		EtcdEndpointDNSSuffix:           installConfig.Config.ClusterDomain(),
 	}
 
 	kubeCloudConfig := &bootkube.KubeCloudConfig{}

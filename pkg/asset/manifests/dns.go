@@ -65,7 +65,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			// not namespaced
 		},
 		Spec: configv1.DNSSpec{
-			BaseDomain: installConfig.Config.BaseDomain,
+			BaseDomain: installConfig.Config.ClusterDomain(),
 		},
 	}
 
