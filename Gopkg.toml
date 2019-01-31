@@ -91,4 +91,4 @@ ignored = [
 [[constraint]]
   branch = "master"
   name = "sigs.k8s.io/cluster-api-provider-openstack"
-  source = "https://github.com/kubernetes-sigs/cluster-api-provider-openstack.git"
+  source = "https://github.com/openshift/cluster-api-provider-openstack.git"
