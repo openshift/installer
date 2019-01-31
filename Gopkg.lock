@@ -851,8 +851,8 @@
   name = "sigs.k8s.io/cluster-api-provider-openstack"
   packages = ["pkg/apis/openstackproviderconfig/v1alpha1"]
   pruneopts = "NUT"
-  revision = "21aacd5415cc635214db986259cb2f0b0839a138"
-  source = "https://github.com/kubernetes-sigs/cluster-api-provider-openstack.git"
+  revision = "581696acc2e79f9cc1755a9cb1d8b6d512298883"
+  source = "https://github.com/openshift/cluster-api-provider-openstack.git"
 
 [[projects]]
   digest = "1:84a8609383bec11b71d52dd813f33f1d16614b91966940bdc2aa79bea864fa25"
