@@ -3,19 +3,22 @@ package aws
 
 import (
 	"encoding/json"
+	"fmt"
 
+	"github.com/openshift/installer/pkg/types/aws/defaults"
 	"github.com/pkg/errors"
 	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 )
 
 type config struct {
-	EC2AMIOverride string            `json:"aws_ec2_ami_override,omitempty"`
-	ExtraTags      map[string]string `json:"aws_extra_tags,omitempty"`
-	EC2Type        string            `json:"aws_master_ec2_type,omitempty"`
-	IOPS           int64             `json:"aws_master_root_volume_iops"`
-	Size           int64             `json:"aws_master_root_volume_size,omitempty"`
-	Type           string            `json:"aws_master_root_volume_type,omitempty"`
-	Region         string            `json:"aws_region,omitempty"`
+	EC2AMIOverride        string            `json:"aws_ec2_ami_override,omitempty"`
+	ExtraTags             map[string]string `json:"aws_extra_tags,omitempty"`
+	BootstrapInstanceType string            `json:"aws_bootstrap_instance_type,omitempty"`
+	MasterInstanceType    string            `json:"aws_master_instance_type,omitempty"`
+	IOPS                  int64             `json:"aws_master_root_volume_iops"`
+	Size                  int64             `json:"aws_master_root_volume_size,omitempty"`
+	Type                  string            `json:"aws_master_root_volume_type,omitempty"`
+	Region                string            `json:"aws_region,omitempty"`
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
@@ -46,13 +49,16 @@ func TFVars(masterConfig *v1beta1.AWSMachineProviderConfig) ([]byte, error) {
 		return nil, errors.New("EBS IOPS must be configured for the io1 root volume")
 	}
 
+	instanceClass := defaults.InstanceClass(masterConfig.Placement.Region)
+
 	cfg := &config{
-		Region:         masterConfig.Placement.Region,
-		ExtraTags:      tags,
-		EC2AMIOverride: *masterConfig.AMI.ID,
-		EC2Type:        masterConfig.InstanceType,
-		Size:           *rootVolume.EBS.VolumeSize,
-		Type:           *rootVolume.EBS.VolumeType,
+		Region:                masterConfig.Placement.Region,
+		ExtraTags:             tags,
+		EC2AMIOverride:        *masterConfig.AMI.ID,
+		BootstrapInstanceType: fmt.Sprintf("%s.large", instanceClass),
+		MasterInstanceType:    masterConfig.InstanceType,
+		Size:                  *rootVolume.EBS.VolumeSize,
+		Type:                  *rootVolume.EBS.VolumeType,
 	}
 
 	if rootVolume.EBS.Iops != nil {

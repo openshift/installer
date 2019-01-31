@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -70,6 +71,12 @@ func (w *Worker) Dependencies() []asset.Asset {
 	}
 }
 
+func awsDefaultWorkerMachineType(installconfig *installconfig.InstallConfig) string {
+	region := installconfig.Config.Platform.AWS.Region
+	instanceClass := awsdefaults.InstanceClass(region)
+	return fmt.Sprintf("%s.large", instanceClass)
+}
+
 // Generate generates the Worker asset.
 func (w *Worker) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
@@ -92,7 +99,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		switch ic.Platform.Name() {
 		case awstypes.Name:
 			mpool := defaultAWSMachinePoolPlatform()
-			mpool.InstanceType = "m4.large"
+			mpool.InstanceType = awsDefaultWorkerMachineType(installconfig)
 			mpool.Set(ic.Platform.AWS.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.AWS)
 			if len(mpool.Zones) == 0 {

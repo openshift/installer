@@ -71,7 +71,7 @@ resource "aws_instance" "master" {
   ami   = "${var.ec2_ami}"
 
   iam_instance_profile = "${aws_iam_instance_profile.master.name}"
-  instance_type        = "${var.ec2_type}"
+  instance_type        = "${var.instance_type}"
   subnet_id            = "${element(var.subnet_ids, count.index)}"
   user_data            = "${var.user_data_ign}"
 
