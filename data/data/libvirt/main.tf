@@ -1,3 +1,7 @@
+locals {
+  cluster_domain = "${var.cluster_name}.${var.base_domain}"
+}
+
 provider "libvirt" {
   uri = "${var.libvirt_uri}"
 }
@@ -36,7 +40,7 @@ resource "libvirt_network" "net" {
   mode   = "nat"
   bridge = "${var.libvirt_network_if}"
 
-  domain = "${var.base_domain}"
+  domain = "${local.cluster_domain}"
 
   addresses = [
     "${var.machine_cidr}",
@@ -92,27 +96,27 @@ resource "libvirt_domain" "master" {
 data "libvirt_network_dns_host_template" "bootstrap" {
   count    = "${var.bootstrap_dns ? 1 : 0}"
   ip       = "${var.libvirt_bootstrap_ip}"
-  hostname = "${var.cluster_name}-api"
+  hostname = "api.${local.cluster_domain}"
 }
 
 data "libvirt_network_dns_host_template" "masters" {
   count    = "${var.master_count}"
   ip       = "${var.libvirt_master_ips[count.index]}"
-  hostname = "${var.cluster_name}-api"
+  hostname = "api.${local.cluster_domain}"
 }
 
 data "libvirt_network_dns_host_template" "etcds" {
   count    = "${var.master_count}"
   ip       = "${var.libvirt_master_ips[count.index]}"
-  hostname = "${var.cluster_name}-etcd-${count.index}"
+  hostname = "etcd-${count.index}.${local.cluster_domain}"
 }
 
 data "libvirt_network_dns_srv_template" "etcd_cluster" {
   count    = "${var.master_count}"
   service  = "etcd-server-ssl"
   protocol = "tcp"
-  domain   = "${var.cluster_name}.${var.base_domain}"
+  domain   = "${local.cluster_domain}"
   port     = 2380
   weight   = 10
-  target   = "${var.cluster_name}-etcd-${count.index}.${var.base_domain}"
+  target   = "etcd-${count.index}.${local.cluster_domain}"
 }
