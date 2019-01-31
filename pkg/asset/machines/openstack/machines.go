@@ -15,7 +15,10 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
-const cloudsSecret = "openstack-credentials"
+const (
+	cloudsSecret          = "openstack-credentials"
+	cloudsSecretNamespace = "kube-system"
+)
 
 // Machines returns a list of machines for a machinepool.
 func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]clusterapi.Machine, error) {
@@ -81,7 +84,7 @@ func provider(clusterID, clusterName string, platform *openstack.Platform, mpool
 		},*/
 		Image:          osImage,
 		CloudName:      platform.Cloud,
-		CloudsSecret:   &corev1.SecretReference{Name: cloudsSecret},
+		CloudsSecret:   &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		UserDataSecret: &corev1.SecretReference{Name: userDataSecret},
 		Networks: []openstackprovider.NetworkParam{
 			{
