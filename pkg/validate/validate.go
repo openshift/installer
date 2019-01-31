@@ -28,6 +28,7 @@ var (
 		netopv1.NetworkTypeOVNKubernetes: true,
 		netopv1.NetworkTypeCalico:        true,
 		netopv1.NetworkTypeKuryr:         true,
+		netopv1.NetworkTypeRaw:           true,
 	}
 
 	// ValidNetworkTypeValues is a slice filled with the valid network types as
