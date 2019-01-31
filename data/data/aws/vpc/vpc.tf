@@ -1,6 +1,8 @@
 locals {
   new_private_cidr_range = "${cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block,1,1)}"
   new_public_cidr_range  = "${cidrsubnet(data.aws_vpc.cluster_vpc.cidr_block,1,0)}"
+
+  cluster_domain = "${var.cluster_name}.${var.base_domain}"
 }
 
 resource "aws_vpc" "new_vpc" {
@@ -9,7 +11,7 @@ resource "aws_vpc" "new_vpc" {
   enable_dns_support   = true
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}.${var.base_domain}",
+      "Name", "${local.cluster_domain}",
     ), var.tags)}"
 }
 
