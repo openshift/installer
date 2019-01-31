@@ -16,8 +16,15 @@ import (
 )
 
 const (
+	// TODO(flaper87): We're choosing to hardcode these values to make
+	// the environment more predictable. We expect there to a secret
+	// named `openstack-credentials` and a cloud named `openstack` in
+	// the clouds file stored in this secret.
 	cloudsSecret          = "openstack-credentials"
 	cloudsSecretNamespace = "kube-system"
+
+	// CloudName is a constant containing the name of the cloud used in the internal cloudsSecret
+	CloudName = "openstack"
 )
 
 // Machines returns a list of machines for a machinepool.
@@ -83,7 +90,7 @@ func provider(clusterID, clusterName string, platform *openstack.Platform, mpool
 			Size:       pointer.Int64Ptr(int64(mpool.Size)),
 		},*/
 		Image:          osImage,
-		CloudName:      platform.Cloud,
+		CloudName:      CloudName,
 		CloudsSecret:   &corev1.SecretReference{Name: cloudsSecret, Namespace: cloudsSecretNamespace},
 		UserDataSecret: &corev1.SecretReference{Name: userDataSecret},
 		Networks: []openstackprovider.NetworkParam{

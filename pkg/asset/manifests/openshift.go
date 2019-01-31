@@ -18,6 +18,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
+	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
 )
@@ -91,7 +92,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		}
 		clouds := make(map[string]map[string]*clientconfig.Cloud)
 		clouds["clouds"] = map[string]*clientconfig.Cloud{
-			"openstack": cloud,
+			osmachine.CloudName: cloud,
 		}
 
 		marshalled, err := yaml.Marshal(clouds)
