@@ -3,7 +3,7 @@
 package versioned
 
 import (
-	routev1 "github.com/openshift/client-go/route/clientset/versioned/typed/route/v1"
+	configv1 "github.com/openshift/client-go/config/clientset/versioned/typed/config/v1"
 	discovery "k8s.io/client-go/discovery"
 	rest "k8s.io/client-go/rest"
 	flowcontrol "k8s.io/client-go/util/flowcontrol"
@@ -11,27 +11,27 @@ import (
 
 type Interface interface {
 	Discovery() discovery.DiscoveryInterface
-	RouteV1() routev1.RouteV1Interface
+	ConfigV1() configv1.ConfigV1Interface
 	// Deprecated: please explicitly pick a version if possible.
-	Route() routev1.RouteV1Interface
+	Config() configv1.ConfigV1Interface
 }
 
 // Clientset contains the clients for groups. Each group has exactly one
 // version included in a Clientset.
 type Clientset struct {
 	*discovery.DiscoveryClient
-	routeV1 *routev1.RouteV1Client
+	configV1 *configv1.ConfigV1Client
 }
 
-// RouteV1 retrieves the RouteV1Client
-func (c *Clientset) RouteV1() routev1.RouteV1Interface {
-	return c.routeV1
+// ConfigV1 retrieves the ConfigV1Client
+func (c *Clientset) ConfigV1() configv1.ConfigV1Interface {
+	return c.configV1
 }
 
-// Deprecated: Route retrieves the default version of RouteClient.
+// Deprecated: Config retrieves the default version of ConfigClient.
 // Please explicitly pick a version.
-func (c *Clientset) Route() routev1.RouteV1Interface {
-	return c.routeV1
+func (c *Clientset) Config() configv1.ConfigV1Interface {
+	return c.configV1
 }
 
 // Discovery retrieves the DiscoveryClient
@@ -50,7 +50,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 	}
 	var cs Clientset
 	var err error
-	cs.routeV1, err = routev1.NewForConfig(&configShallowCopy)
+	cs.configV1, err = configv1.NewForConfig(&configShallowCopy)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +66,7 @@ func NewForConfig(c *rest.Config) (*Clientset, error) {
 // panics if there is an error in the config.
 func NewForConfigOrDie(c *rest.Config) *Clientset {
 	var cs Clientset
-	cs.routeV1 = routev1.NewForConfigOrDie(c)
+	cs.configV1 = configv1.NewForConfigOrDie(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClientForConfigOrDie(c)
 	return &cs
@@ -75,7 +75,7 @@ func NewForConfigOrDie(c *rest.Config) *Clientset {
 // New creates a new Clientset for the given RESTClient.
 func New(c rest.Interface) *Clientset {
 	var cs Clientset
-	cs.routeV1 = routev1.New(c)
+	cs.configV1 = configv1.New(c)
 
 	cs.DiscoveryClient = discovery.NewDiscoveryClient(c)
 	return &cs

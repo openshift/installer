@@ -21,8 +21,9 @@ type Build struct {
 type BuildSpec struct {
 	// AdditionalTrustedCA is a reference to a ConfigMap containing additional CAs that
 	// should be trusted for image pushes and pulls during builds.
+	// The namespace for this config map is openshift-config.
 	// +optional
-	AdditionalTrustedCA ConfigMapReference `json:"additionalTrustedCA,omitempty"`
+	AdditionalTrustedCA ConfigMapNameReference `json:"additionalTrustedCA,omitempty"`
 	// BuildDefaults controls the default information for Builds
 	// +optional
 	BuildDefaults BuildDefaults `json:"buildDefaults,omitempty"`
@@ -38,14 +39,14 @@ type BuildDefaults struct {
 	// Values can be overrode by setting the `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment variables
 	// in the build config's strategy.
 	// +optional
-	DefaultProxy *ProxyConfig `json:"defaultProxy,omitempty"`
+	DefaultProxy *ProxySpec `json:"defaultProxy,omitempty"`
 
 	// GitProxy contains the proxy settings for git operations only. If set, this will override
 	// any Proxy settings for all git commands, such as git clone.
 	//
 	// Values that are not set here will be inherited from DefaultProxy.
 	// +optional
-	GitProxy *ProxyConfig `json:"gitProxy,omitempty"`
+	GitProxy *ProxySpec `json:"gitProxy,omitempty"`
 
 	// Env is a set of default environment variables that will be applied to the
 	// build if the specified variables do not exist on the build
@@ -61,6 +62,10 @@ type BuildDefaults struct {
 	// Resources defines resource requirements to execute the build.
 	// +optional
 	Resources corev1.ResourceRequirements `json:"resources,omitempty"`
+
+	// RegistriesConfig controls the registries allowed for image pull and push.
+	// +optional
+	RegistriesConfig RegistriesConfig `json:"registriesConfig,omitempty"`
 }
 
 type ImageLabel struct {
@@ -72,19 +77,26 @@ type ImageLabel struct {
 	Value string `json:"value,omitempty"`
 }
 
-// ProxyConfig defines what proxies to use for an operation
-type ProxyConfig struct {
-	// HttpProxy is the URL of the proxy for HTTP requests
+type RegistriesConfig struct {
+	// SearchRegistries lists the registries to search for images if an image repository is not specified in an image pull spec.
+	//
+	// If this is not set, builds will search Docker Hub (docker.io) when a repository is not specified.
+	// Setting this to an empty list will require all builds to fully qualify their image pull specs.
 	// +optional
-	HTTPProxy string `json:"httpProxy,omitempty"`
-
-	// HttpsProxy is the URL of the proxy for HTTPS requests
+	SearchRegistries *[]string `json:"searchRegistries,omitempty"`
+	// InsecureRegistries are registries which do not have a valid SSL certificate or only support HTTP connections.
 	// +optional
-	HTTPSProxy string `json:"httpsProxy,omitempty"`
-
-	// NoProxy is the list of domains for which the proxy should not be used
+	InsecureRegistries []string `json:"insecureRegistries,omitempty"`
+	// BlockedRegistries are blacklisted from image pull/push. All other registries are allowed.
+	//
+	// Only one of BlockedRegistries or AllowedRegistries may be set.
 	// +optional
-	NoProxy string `json:"noProxy,omitempty"`
+	BlockedRegistries []string `json:"blockedRegistries,omitempty"`
+	// AllowedRegistries are whitelisted for image pull/push. All other registries are blocked.
+	//
+	// Only one of BlockedRegistries or AllowedRegistries may be set.
+	// +optional
+	AllowedRegistries []string `json:"allowedRegistries,omitempty"`
 }
 
 type BuildOverrides struct {
@@ -96,7 +108,7 @@ type BuildOverrides struct {
 
 	// NodeSelector is a selector which must be true for the build pod to fit on a node
 	// +optional
-	NodeSelector metav1.LabelSelector `json:"nodeSelector,omitempty"`
+	NodeSelector map[string]string `json:"nodeSelector,omitempty"`
 
 	// Tolerations is a list of Tolerations that will override any existing
 	// tolerations set on a build pod.

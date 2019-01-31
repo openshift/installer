@@ -36,13 +36,43 @@ type ClusterOperatorStatus struct {
 	// +patchStrategy=merge
 	Conditions []ClusterOperatorStatusCondition `json:"conditions"  patchStrategy:"merge" patchMergeKey:"type"`
 
-	// version indicates which version of the operator updated the current
-	// status object.
-	Version string `json:"version"`
+	// versions is a slice of operand version tuples.  Operators which manage multiple operands will have multiple
+	// entries in the array.  If an operator is Available, it must have at least one entry.  You must report the version of
+	// the operator itself with the name "operator".
+	Versions []OperandVersion `json:"versions"`
+
+	// relatedObjects is a list of objects that are "interesting" or related to this operator.  Common uses are:
+	// 1. the detailed resource driving the operator
+	// 2. operator namespaces
+	// 3. operand namespaces
+	RelatedObjects []ObjectReference `json:"relatedObjects"`
 
 	// extension contains any additional status information specific to the
 	// operator which owns this status object.
 	Extension runtime.RawExtension `json:"extension,omitempty"`
+}
+
+type OperandVersion struct {
+	// name is the name of the particular operand this version is for.  It usually matches container images, not operators.
+	Name string `json:"name"`
+
+	// version indicates which version of a particular operand is currently being manage.  It must always match the Available
+	// condition.  If 1.0.0 is Available, then this must indicate 1.0.0 even if the operator is trying to rollout
+	// 1.1.0
+	Version string `json:"version"`
+}
+
+// ObjectReference contains enough information to let you inspect or modify the referred object.
+type ObjectReference struct {
+	// group of the referent.
+	Group string `json:"group"`
+	// resource of the referent.
+	Resource string `json:"resource"`
+	// namespace of the referent.
+	// +optional
+	Namespace string `json:"namespace,omitempty"`
+	// name of the referent.
+	Name string `json:"name"`
 }
 
 type ConditionStatus string

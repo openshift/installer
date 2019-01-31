@@ -370,25 +370,30 @@
   version = "1.0.1"
 
 [[projects]]
-  digest = "1:ae6f25905d1386e85891d65085f12afb7d8729a4153211cf11f0a19b5e17bf3e"
+  branch = "master"
+  digest = "1:bc5beeb231c43286b9f51c52d85fbc6e4b4d9b540ff2a3f39b57c3d5b3733210"
   name = "github.com/openshift/api"
   packages = [
     "config/v1",
     "route/v1",
   ]
   pruneopts = "NUT"
-  revision = "aab033bae2a129607f4fb277c3777b2eabb08601"
+  revision = "ae9a3391d2d18df1c8ab76dc0738884f18a71138"
 
 [[projects]]
-  digest = "1:6b1540f37963c713da08d8463791201d8469e8c755ed66a0b54ee424b15ea401"
+  branch = "master"
+  digest = "1:ba4a703e7b8e2f26d071083cc1238b1cbabd99f7bcfc8e3891d4042ce8761691"
   name = "github.com/openshift/client-go"
   packages = [
+    "config/clientset/versioned",
+    "config/clientset/versioned/scheme",
+    "config/clientset/versioned/typed/config/v1",
     "route/clientset/versioned",
     "route/clientset/versioned/scheme",
     "route/clientset/versioned/typed/route/v1",
   ]
   pruneopts = "NUT"
-  revision = "1fa528d3be060e4c7178eb69e76d37cf7e699e3c"
+  revision = "f9132806c9914790e15f10d8c5d1e7a03408d7b2"
 
 [[projects]]
   branch = "master"
@@ -404,6 +409,14 @@
   packages = ["pkg/apis/networkoperator/v1"]
   pruneopts = "NUT"
   revision = "fb8b55a1072436a51b153de9acf5bf5525efcf83"
+
+[[projects]]
+  branch = "master"
+  digest = "1:a32828cebfa63f79265d9062005c23f3c737def9e8a956ddd5dc3fd5f4caffe6"
+  name = "github.com/openshift/library-go"
+  packages = ["pkg/config/clusteroperator/v1helpers"]
+  pruneopts = "NUT"
+  revision = "4b9f6ceb6598ebd4dd6c9385ef024abf7a18159b"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
@@ -680,9 +693,10 @@
   version = "kubernetes-1.12.2"
 
 [[projects]]
-  digest = "1:db1a4cd5c12f340d0779da16d2d5ae2419b1a470d010fc988e5e345b8c7f494c"
+  digest = "1:059e5dfce6269a3e87f2df7edab3075f17efb4d1d17c1b4d8530cac5f0af7b9c"
   name = "k8s.io/apimachinery"
   packages = [
+    "pkg/api/equality",
     "pkg/api/errors",
     "pkg/api/meta",
     "pkg/api/resource",
@@ -900,9 +914,11 @@
     "github.com/gregjones/httpcache/diskcache",
     "github.com/libvirt/libvirt-go",
     "github.com/openshift/api/config/v1",
+    "github.com/openshift/client-go/config/clientset/versioned",
     "github.com/openshift/client-go/route/clientset/versioned",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
     "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1",
+    "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers",
     "github.com/pborman/uuid",
     "github.com/peterbourgon/diskv",
     "github.com/pkg/errors",
@@ -920,6 +936,7 @@
     "k8s.io/api/core/v1",
     "k8s.io/apimachinery/pkg/api/errors",
     "k8s.io/apimachinery/pkg/apis/meta/v1",
+    "k8s.io/apimachinery/pkg/fields",
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/util/errors",
     "k8s.io/apimachinery/pkg/util/sets",
@@ -929,6 +946,7 @@
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/kubernetes",
     "k8s.io/client-go/rest",
+    "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
     "k8s.io/client-go/tools/clientcmd/api/v1",
     "k8s.io/client-go/tools/watch",
