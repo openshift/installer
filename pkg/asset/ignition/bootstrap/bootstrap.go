@@ -78,6 +78,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&kubeconfig.Kubelet{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
+		&manifests.UserManifests{},
 	}
 }
 
@@ -334,7 +335,8 @@ func readFile(name string, reader io.Reader, templateData interface{}) (finalNam
 func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	mfsts := &manifests.Manifests{}
 	openshiftManifests := &manifests.Openshift{}
-	dependencies.Get(mfsts, openshiftManifests)
+	userManifests := &manifests.UserManifests{}
+	dependencies.Get(mfsts, openshiftManifests, userManifests)
 
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
@@ -343,6 +345,10 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	a.Config.Storage.Files = append(
 		a.Config.Storage.Files,
 		ignition.FilesFromAsset(rootDir, "root", 0644, openshiftManifests)...,
+	)
+	a.Config.Storage.Files = append(
+		a.Config.Storage.Files,
+		ignition.FilesFromAsset(rootDir, "root", 0644, userManifests)...,
 	)
 
 	for _, asset := range []asset.WritableAsset{
