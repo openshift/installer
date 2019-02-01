@@ -33,7 +33,7 @@
   version = "v2.0"
 
 [[projects]]
-  digest = "1:71aeaefbdd3162ffed6eb308354f677b71a5527fceecfe644391775601ccd673"
+  digest = "1:6847720f71c531763d731817bba9ea5563937dc2aa284670d6b4cdb181b29ab4"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -76,6 +76,7 @@
     "service/elb",
     "service/elbv2",
     "service/iam",
+    "service/iam/iamiface",
     "service/resourcegroupstaggingapi",
     "service/route53",
     "service/s3",
@@ -394,6 +395,19 @@
   ]
   pruneopts = "NUT"
   revision = "9ecec62d3c9792a6b712bc1aefdb8ae10826fa14"
+
+[[projects]]
+  branch = "master"
+  digest = "1:af1e2473c2f486475a443cb284779c8dfd7fe0df8f7b597577b2d42d47713749"
+  name = "github.com/openshift/cloud-credential-operator"
+  packages = [
+    "pkg/apis/cloudcredential/v1beta1",
+    "pkg/aws",
+    "pkg/controller/assets",
+    "pkg/controller/utils",
+  ]
+  pruneopts = "NUT"
+  revision = "0798caf39368f3cfb506eb126dbbeee5e738846c"
 
 [[projects]]
   digest = "1:35a1d3d1166a3a74d696180e74d6fd0e5179747d2626ca4586bdc9ca45641544"
@@ -756,10 +770,11 @@
   version = "kubernetes-1.12.2"
 
 [[projects]]
-  digest = "1:08027a07c9a263deb5f51fcc801996e7d453b1ed1318c6c5eb7affd084bff3a9"
+  digest = "1:d4077b20d8ba3b64ff57af190a5aee42167d7cd6f3788ad0d67bdc7b427f4697"
   name = "k8s.io/client-go"
   packages = [
     "discovery",
+    "dynamic",
     "kubernetes",
     "kubernetes/scheme",
     "kubernetes/typed/admissionregistration/v1alpha1",
@@ -800,6 +815,7 @@
     "plugin/pkg/client/auth/exec",
     "rest",
     "rest/watch",
+    "restmapper",
     "tools/auth",
     "tools/cache",
     "tools/clientcmd",
@@ -873,9 +889,13 @@
   source = "https://github.com/openshift/cluster-api-provider-openstack.git"
 
 [[projects]]
-  digest = "1:84a8609383bec11b71d52dd813f33f1d16614b91966940bdc2aa79bea864fa25"
+  digest = "1:9b89872389bed1e6647547b868c3f9fa813f8adf098ba0984bc672e4b78ae235"
   name = "sigs.k8s.io/controller-runtime"
-  packages = ["pkg/runtime/scheme"]
+  packages = [
+    "pkg/client",
+    "pkg/client/apiutil",
+    "pkg/runtime/scheme",
+  ]
   pruneopts = "NUT"
   revision = "12d98582e72927b6cd0123e2b4e819f9341ce62c"
   version = "v0.1.10"
@@ -934,6 +954,8 @@
     "github.com/openshift/api/config/v1",
     "github.com/openshift/client-go/config/clientset/versioned",
     "github.com/openshift/client-go/route/clientset/versioned",
+    "github.com/openshift/cloud-credential-operator/pkg/aws",
+    "github.com/openshift/cloud-credential-operator/pkg/controller/utils",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
     "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1",
