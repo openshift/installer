@@ -7,17 +7,16 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"text/template"
 
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/aws/validation"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	survey "gopkg.in/AlecAivazis/survey.v1"
-
-	"github.com/openshift/installer/pkg/types/aws"
-	"github.com/openshift/installer/pkg/types/aws/validation"
+	ini "gopkg.in/ini.v1"
 )
 
 // Platform collects AWS-specific configuration.
@@ -133,16 +132,6 @@ func getCredentials() error {
 		return err
 	}
 
-	tmpl, err := template.New("aws-credentials").Parse(`# Created by openshift-install
-# https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html
-[{{.Profile}}]
-aws_access_key_id={{.KeyID}}
-aws_secret_access_key={{.SecretKey}}
-`)
-	if err != nil {
-		return err
-	}
-
 	path := defaults.SharedCredentialsFilename()
 	logrus.Infof("Writing AWS credentials to %q (https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html)", path)
 	err = os.MkdirAll(filepath.Dir(path), 0700)
@@ -150,20 +139,39 @@ aws_secret_access_key={{.SecretKey}}
 		return err
 	}
 
-	file, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	creds, err := ini.Load(path)
 	if err != nil {
-		return err
+		if os.IsNotExist(err) {
+			creds = ini.Empty()
+			creds.Section("").Comment = "https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html"
+		} else {
+			return err
+		}
 	}
-	defer file.Close()
 
 	profile := os.Getenv("AWS_PROFILE")
 	if profile == "" {
 		profile = "default"
 	}
 
-	return tmpl.Execute(file, map[string]string{
-		"KeyID":     keyID,
-		"Profile":   profile,
-		"SecretKey": secretKey,
-	})
+	creds.Section(profile).Key("aws_access_key_id").SetValue(keyID)
+	creds.Section(profile).Key("aws_secret_access_key").SetValue(secretKey)
+
+	tempPath := path + ".tmp"
+	file, err := os.OpenFile(tempPath, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0600)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	_, err = creds.WriteTo(file)
+	if err != nil {
+		err2 := os.Remove(tempPath)
+		if err2 != nil {
+			logrus.Error(errors.Wrap(err2, "failed to remove partially-written credentials file"))
+		}
+		return err
+	}
+
+	return os.Rename(tempPath, path)
 }
