@@ -31,7 +31,6 @@ module "bootstrap" {
 module "masters" {
   source = "./master"
 
-  base_domain  = "${var.base_domain}"
   cluster_id   = "${var.cluster_id}"
   cluster_name = "${var.cluster_name}"
   ec2_type     = "${var.aws_master_ec2_type}"
