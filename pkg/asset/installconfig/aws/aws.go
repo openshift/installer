@@ -135,7 +135,7 @@ func getCredentials() error {
 
 	tmpl, err := template.New("aws-credentials").Parse(`# Created by openshift-install
 # https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html
-[default]
+[{{.Profile}}]
 aws_access_key_id={{.KeyID}}
 aws_secret_access_key={{.SecretKey}}
 `)
@@ -156,8 +156,14 @@ aws_secret_access_key={{.SecretKey}}
 	}
 	defer file.Close()
 
+	profile := os.Getenv("AWS_PROFILE")
+	if profile == "" {
+		profile = "default"
+	}
+
 	return tmpl.Execute(file, map[string]string{
 		"KeyID":     keyID,
+		"Profile":   profile,
 		"SecretKey": secretKey,
 	})
 }
