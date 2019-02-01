@@ -33,7 +33,7 @@
   version = "v2.0"
 
 [[projects]]
-  digest = "1:6847720f71c531763d731817bba9ea5563937dc2aa284670d6b4cdb181b29ab4"
+  digest = "1:ef55f87a8efa6ed704f2477bd6ca696780ff56340d84cd4fc473b04134a03f1e"
   name = "github.com/aws/aws-sdk-go"
   packages = [
     "aws",
@@ -77,6 +77,7 @@
     "service/elbv2",
     "service/iam",
     "service/iam/iamiface",
+    "service/pricing",
     "service/resourcegroupstaggingapi",
     "service/route53",
     "service/s3",
@@ -926,6 +927,7 @@
     "github.com/aws/aws-sdk-go/service/elb",
     "github.com/aws/aws-sdk-go/service/elbv2",
     "github.com/aws/aws-sdk-go/service/iam",
+    "github.com/aws/aws-sdk-go/service/pricing",
     "github.com/aws/aws-sdk-go/service/resourcegroupstaggingapi",
     "github.com/aws/aws-sdk-go/service/route53",
     "github.com/aws/aws-sdk-go/service/s3",
