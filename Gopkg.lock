@@ -396,6 +396,18 @@
   revision = "a7448c816a2ac09a48321432daa7303eb6ff92c9"
 
 [[projects]]
+  digest = "1:5543d01772b4474e08f1554ea53cf3eb12660deed37470888cfc1cd66748cab0"
+  name = "github.com/openshift/cluster-api"
+  packages = [
+    "pkg/apis/cluster/common",
+    "pkg/apis/cluster/v1alpha1",
+    "pkg/apis/machine/common",
+    "pkg/apis/machine/v1beta1",
+  ]
+  pruneopts = "NUT"
+  revision = "91fca585a85b163ddfd119fd09c128c9feadddca"
+
+[[projects]]
   branch = "master"
   digest = "1:0889fa501ce44d01602f3721bbc52529bfe35469410b34d117c45916d43b1b22"
   name = "github.com/openshift/cluster-api-provider-libvirt"
@@ -828,22 +840,21 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:032b67ae5a3cd593171814b4f6e659831d4de7885e4aedae9dfb9f2b89d612c0"
+  digest = "1:b23a1b4063d7b3b60ad82fab0cb72b5048da29f880a3761b4e390cb659a0b11f"
   name = "sigs.k8s.io/cluster-api"
   packages = [
     "pkg/apis/cluster/common",
     "pkg/apis/cluster/v1alpha1",
   ]
   pruneopts = "NUT"
-  revision = "59a129bbcaf29aa4354da68a7a8acd2085e4a43a"
+  revision = "ef6f8fc12d32fc1646f231f6e39dbef59ad2e4dd"
 
 [[projects]]
-  branch = "master"
-  digest = "1:5ade82a27c5ca576a8aa699320fea3ae5a4d47c95e6a2212191ea31e4c49f27c"
+  digest = "1:b03dcb1c1d57b36333b0fa402ea776f65ba3b25afce00049fe6497f047aa56f6"
   name = "sigs.k8s.io/cluster-api-provider-aws"
   packages = ["pkg/apis/awsproviderconfig/v1alpha1"]
   pruneopts = "NUT"
-  revision = "97771a0fe7762b34e80e05c7412f464dcdbbb3e7"
+  revision = "9a983a5c6c12b27169c57e4c8948cb554e4d6b6c"
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
 
 [[projects]]
@@ -860,8 +871,8 @@
   name = "sigs.k8s.io/controller-runtime"
   packages = ["pkg/runtime/scheme"]
   pruneopts = "NUT"
-  revision = "5fd1e9e9fac5261e9ad9d47c375afc014fc31d21"
-  version = "v0.1.7"
+  revision = "12d98582e72927b6cd0123e2b4e819f9341ce62c"
+  version = "v0.1.10"
 
 [[projects]]
   digest = "1:8730e0150dfb2b7e173890c8b9868e7a273082ef8e39f4940e3506a481cf895c"
@@ -918,6 +929,8 @@
     "github.com/openshift/client-go/config/clientset/versioned",
     "github.com/openshift/client-go/route/clientset/versioned",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
+    "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1",
+    "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1",
     "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers",
     "github.com/pborman/uuid",
     "github.com/peterbourgon/diskv",
@@ -954,7 +967,6 @@
     "k8s.io/utils/pointer",
     "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1",
     "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1",
-    "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

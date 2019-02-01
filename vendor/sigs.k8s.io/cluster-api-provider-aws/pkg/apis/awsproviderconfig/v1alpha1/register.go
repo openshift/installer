@@ -28,10 +28,10 @@ import (
 	"bytes"
 	"fmt"
 
+	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	clusterv1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/scheme"
 )
 
@@ -74,7 +74,7 @@ func NewCodec() (*AWSProviderConfigCodec, error) {
 }
 
 // DecodeProviderSpec deserialises an object from the provider config
-func (codec *AWSProviderConfigCodec) DecodeProviderSpec(providerSpec *clusterv1.ProviderSpec, out runtime.Object) error {
+func (codec *AWSProviderConfigCodec) DecodeProviderSpec(providerSpec *machinev1.ProviderSpec, out runtime.Object) error {
 	if providerSpec.Value != nil {
 		_, _, err := codec.decoder.Decode(providerSpec.Value.Raw, nil, out)
 		if err != nil {
@@ -85,12 +85,12 @@ func (codec *AWSProviderConfigCodec) DecodeProviderSpec(providerSpec *clusterv1.
 }
 
 // EncodeProviderSpec serialises an object to the provider config
-func (codec *AWSProviderConfigCodec) EncodeProviderSpec(in runtime.Object) (*clusterv1.ProviderSpec, error) {
+func (codec *AWSProviderConfigCodec) EncodeProviderSpec(in runtime.Object) (*machinev1.ProviderSpec, error) {
 	var buf bytes.Buffer
 	if err := codec.encoder.Encode(in, &buf); err != nil {
 		return nil, fmt.Errorf("encoding failed: %v", err)
 	}
-	return &clusterv1.ProviderSpec{
+	return &machinev1.ProviderSpec{
 		Value: &runtime.RawExtension{Raw: buf.Bytes()},
 	}, nil
 }
