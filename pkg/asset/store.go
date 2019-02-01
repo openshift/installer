@@ -297,8 +297,11 @@ func (s *StoreImpl) load(asset Asset, indent string) (*assetState, error) {
 
 			// If the on-disk asset is the same as the one in the state file, there
 			// is no need to consider the one on disk and to mark the asset dirty.
-			onDiskMatchesStateFile = reflect.DeepEqual(onDiskAsset, stateFileAsset)
-			if onDiskMatchesStateFile {
+			// DeepEqual does not always work because the asset may have private fields populated by 'Load'
+			onDiskData, _ := json.Marshal(onDiskAsset)
+			stateFileData, _ := json.Marshal(stateFileAsset)
+			if string(onDiskData) == string(stateFileData) {
+				onDiskMatchesStateFile = true
 				logrus.Debugf("%sOn-disk %q matches asset in state file", indent, asset.Name())
 			}
 		}
