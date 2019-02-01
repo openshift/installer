@@ -404,13 +404,6 @@
   revision = "da6aa0a3931761842527816a79f1072129f2cea3"
 
 [[projects]]
-  digest = "1:f9c1fc8da2b44ba323ec3b338f0da9f375e26c787bc3a6ea241f9cb3f191cb62"
-  name = "github.com/openshift/cluster-network-operator"
-  packages = ["pkg/apis/networkoperator/v1"]
-  pruneopts = "NUT"
-  revision = "fb8b55a1072436a51b153de9acf5bf5525efcf83"
-
-[[projects]]
   branch = "master"
   digest = "1:a32828cebfa63f79265d9062005c23f3c737def9e8a956ddd5dc3fd5f4caffe6"
   name = "github.com/openshift/library-go"
@@ -917,7 +910,6 @@
     "github.com/openshift/client-go/config/clientset/versioned",
     "github.com/openshift/client-go/route/clientset/versioned",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
-    "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1",
     "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers",
     "github.com/pborman/uuid",
     "github.com/peterbourgon/diskv",

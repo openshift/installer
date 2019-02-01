@@ -1,8 +1,6 @@
 package defaults
 
 import (
-	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
-
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
@@ -15,8 +13,9 @@ import (
 var (
 	defaultMachineCIDR      = ipnet.MustParseCIDR("10.0.0.0/16")
 	defaultServiceCIDR      = ipnet.MustParseCIDR("172.30.0.0/16")
-	defaultClusterCIDR      = "10.128.0.0/14"
+	defaultClusterCIDR      = ipnet.MustParseCIDR("10.128.0.0/14")
 	defaultHostSubnetLength = 9 // equivalent to a /23 per node
+	defaultNetworkPlugin    = "OpenShiftSDN"
 )
 
 // SetInstallConfigDefaults sets the defaults for the install config.
@@ -31,16 +30,16 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		}
 	}
 	if c.Networking.Type == "" {
-		c.Networking.Type = netopv1.NetworkTypeOpenshiftSDN
+		c.Networking.Type = defaultNetworkPlugin
 	}
 	if c.Networking.ServiceCIDR == nil {
 		c.Networking.ServiceCIDR = defaultServiceCIDR
 	}
-	if len(c.Networking.ClusterNetworks) == 0 && c.Networking.PodCIDR == nil {
-		c.Networking.ClusterNetworks = []netopv1.ClusterNetwork{
+	if len(c.Networking.ClusterNetworks) == 0 {
+		c.Networking.ClusterNetworks = []types.ClusterNetworkEntry{
 			{
-				CIDR:             defaultClusterCIDR,
-				HostSubnetLength: uint32(defaultHostSubnetLength),
+				CIDR:             *defaultClusterCIDR,
+				HostSubnetLength: int32(defaultHostSubnetLength),
 			},
 		}
 	}

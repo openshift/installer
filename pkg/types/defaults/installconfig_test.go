@@ -3,7 +3,6 @@ package defaults
 import (
 	"testing"
 
-	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/ipnet"
@@ -23,12 +22,12 @@ func defaultInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		Networking: &types.Networking{
 			MachineCIDR: defaultMachineCIDR,
-			Type:        netopv1.NetworkTypeOpenshiftSDN,
+			Type:        defaultNetworkPlugin,
 			ServiceCIDR: defaultServiceCIDR,
-			ClusterNetworks: []netopv1.ClusterNetwork{
+			ClusterNetworks: []types.ClusterNetworkEntry{
 				{
-					CIDR:             defaultClusterCIDR,
-					HostSubnetLength: uint32(defaultHostSubnetLength),
+					CIDR:             *defaultClusterCIDR,
+					HostSubnetLength: int32(defaultHostSubnetLength),
 				},
 			},
 		},
@@ -127,12 +126,12 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			name: "Networking types present",
 			config: &types.InstallConfig{
 				Networking: &types.Networking{
-					Type: netopv1.NetworkType("test-networking-type"),
+					Type: "test-networking-type",
 				},
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultInstallConfig()
-				c.Networking.Type = netopv1.NetworkType("test-networking-type")
+				c.Networking.Type = "test-networking-type"
 				return c
 			}(),
 		},
@@ -153,9 +152,9 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			name: "Cluster Networks present",
 			config: &types.InstallConfig{
 				Networking: &types.Networking{
-					ClusterNetworks: []netopv1.ClusterNetwork{
+					ClusterNetworks: []types.ClusterNetworkEntry{
 						{
-							CIDR:             "test-cidr",
+							CIDR:             *ipnet.MustParseCIDR("8.8.0.0/18"),
 							HostSubnetLength: 10,
 						},
 					},
@@ -163,26 +162,12 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultInstallConfig()
-				c.Networking.ClusterNetworks = []netopv1.ClusterNetwork{
+				c.Networking.ClusterNetworks = []types.ClusterNetworkEntry{
 					{
-						CIDR:             "test-cidr",
+						CIDR:             *ipnet.MustParseCIDR("8.8.0.0/18"),
 						HostSubnetLength: 10,
 					},
 				}
-				return c
-			}(),
-		},
-		{
-			name: "Pod CIDR present",
-			config: &types.InstallConfig{
-				Networking: &types.Networking{
-					PodCIDR: ipnet.MustParseCIDR("1.2.3.4/8"),
-				},
-			},
-			expected: func() *types.InstallConfig {
-				c := defaultInstallConfig()
-				c.Networking.ClusterNetworks = nil
-				c.Networking.PodCIDR = ipnet.MustParseCIDR("1.2.3.4/8")
 				return c
 			}(),
 		},

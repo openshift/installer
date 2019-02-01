@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -26,12 +25,12 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		BaseDomain: "test-domain",
 		Networking: &types.Networking{
-			Type:        "OpenshiftSDN",
+			Type:        "OpenShiftSDN",
 			MachineCIDR: ipnet.MustParseCIDR("10.0.0.0/16"),
 			ServiceCIDR: ipnet.MustParseCIDR("172.30.0.0/16"),
-			ClusterNetworks: []netopv1.ClusterNetwork{
+			ClusterNetworks: []types.ClusterNetworkEntry{
 				{
-					CIDR:             "192.168.1.0/24",
+					CIDR:             *ipnet.MustParseCIDR("192.168.1.0/24"),
 					HostSubnetLength: 4,
 				},
 			},
@@ -117,10 +116,10 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid network type",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.Type = "bad-type"
+				c.Networking.Type = ""
 				return c
 			}(),
-			expectedError: `^networking.type: Unsupported value: "bad-type": supported values: "Calico", "Kuryr", "OVNKubernetes", "OpenshiftSDN"$`,
+			expectedError: `^networking.type: Required value: network provider type required$`,
 		},
 		{
 			name: "invalid service cidr",
@@ -132,32 +131,23 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^networking\.serviceCIDR: Invalid value: ipnet\.IPNet{IPNet:net\.IPNet{IP:net\.IP\(nil\), Mask:net\.IPMask\(nil\)}}: must use IPv4$`,
 		},
 		{
-			name: "invalid cluster network cidr",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Networking.ClusterNetworks[0].CIDR = "bad-cidr"
-				return c
-			}(),
-			expectedError: `^networking\.clusterNetworks\[0]\.cidr: Invalid value: "bad-cidr": invalid CIDR address: bad-cidr$`,
-		},
-		{
 			name: "overlapping cluster network cidr",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.ClusterNetworks[0].CIDR = "172.30.0.0/24"
+				c.Networking.ClusterNetworks[0].CIDR = *ipnet.MustParseCIDR("172.30.2.0/24")
 				return c
 			}(),
-			expectedError: `^networking\.clusterNetworks\[0]\.cidr: Invalid value: "172\.30\.0\.0/24": cluster network CIDR must not overlap with serviceCIDR$`,
+			expectedError: `^networking\.clusterNetworks\[0]\.cidr: Invalid value: "172\.30\.2\.0/24": cluster network CIDR must not overlap with serviceCIDR$`,
 		},
 		{
 			name: "cluster network host subnet length too large",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.ClusterNetworks[0].CIDR = "192.168.1.0/24"
+				c.Networking.ClusterNetworks[0].CIDR = *ipnet.MustParseCIDR("192.168.1.0/24")
 				c.Networking.ClusterNetworks[0].HostSubnetLength = 9
 				return c
 			}(),
-			expectedError: `^networking\.clusterNetworks\[0]\.hostSubnetLength: Invalid value: 0x9: cluster network host subnet length must not be greater than CIDR length$`,
+			expectedError: `^networking\.clusterNetworks\[0]\.hostSubnetLength: Invalid value: 9: cluster network host subnet must not be larger than CIDR 192.168.1.0/24$`,
 		},
 		{
 			name: "missing master machine pool",

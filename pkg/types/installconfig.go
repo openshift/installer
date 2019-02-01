@@ -1,7 +1,6 @@
 package types
 
 import (
-	netopv1 "github.com/openshift/cluster-network-operator/pkg/apis/networkoperator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/libvirt"
@@ -120,8 +119,8 @@ type Networking struct {
 
 	// Type is the network type to install
 	// +optional
-	// Default is OpenshiftSDN.
-	Type netopv1.NetworkType `json:"type,omitempty"`
+	// Default is OpenShiftSDN.
+	Type string `json:"type,omitempty"`
 
 	// ServiceCIDR is the IP address space from which to assign service IPs.
 	// +optional
@@ -133,12 +132,16 @@ type Networking struct {
 	// Default is a single cluster network with a CIDR of 10.128.0.0/14
 	// and a host subnet length of 9. The default is only applicable if PodCIDR
 	// is not present.
-	ClusterNetworks []netopv1.ClusterNetwork `json:"clusterNetworks,omitempty"`
+	ClusterNetworks []ClusterNetworkEntry `json:"clusterNetworks,omitempty"`
+}
 
-	// PodCIDR is deprecated (and badly named; it should have always
-	// been called ClusterCIDR. If no ClusterNetworks are specified,
-	// we will fall back to the PodCIDR
-	// TODO(cdc) remove this.
-	// +optional
-	PodCIDR *ipnet.IPNet `json:"podCIDR,omitempty"`
+// ClusterNetworkEntry is a single IP address block for pod IP blocks. IP blocks
+// are allocated with size 2^HostSubnetLength.
+type ClusterNetworkEntry struct {
+	// The IP block address pool
+	CIDR ipnet.IPNet `json:"cidr"`
+
+	// The size of blocks to allocate from the larger pool.
+	// This is the length in bits - so a 9 here will allocate a /23.
+	HostSubnetLength int32 `json:"hostSubnetLength"`
 }
