@@ -47,18 +47,14 @@ type ClusterUninstaller struct {
 	//   }
 	//
 	// will match resources with (a:b and c:d) or d:e.
-	Filters     []Filter // filter(s) we will be searching for
-	Logger      logrus.FieldLogger
-	Region      string
-	ClusterName string
+	Filters []Filter // filter(s) we will be searching for
+	Logger  logrus.FieldLogger
+	Region  string
 }
 
 func (o *ClusterUninstaller) validate() error {
 	if len(o.Filters) == 0 {
 		return errors.Errorf("you must specify at least one tag filter")
-	}
-	if len(o.ClusterName) == 0 {
-		return errors.Errorf("you must specify cluster-name")
 	}
 	return nil
 }

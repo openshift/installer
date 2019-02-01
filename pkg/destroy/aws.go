@@ -14,10 +14,9 @@ func NewAWS(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (Destroy
 	}
 
 	return &aws.ClusterUninstaller{
-		Filters:     filters,
-		Region:      metadata.ClusterPlatformMetadata.AWS.Region,
-		ClusterName: metadata.ClusterName,
-		Logger:      logger,
+		Filters: filters,
+		Region:  metadata.ClusterPlatformMetadata.AWS.Region,
+		Logger:  logger,
 	}, nil
 }
 
