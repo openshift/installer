@@ -6,6 +6,7 @@ import (
 	"text/template"
 
 	"github.com/ghodss/yaml"
+	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -124,7 +125,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create worker machine objects")
 		}
 
-		list := listFromMachineSets(sets)
+		list := listFromMachineDeprecated(sets)
 		raw, err := yaml.Marshal(list)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
@@ -146,7 +147,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 
-		list := listFromMachineSets(sets)
+		list := listFromMachineDeprecated(sets)
 		w.MachineSetRaw, err = yaml.Marshal(list)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
@@ -174,7 +175,20 @@ func applyTemplateData(template *template.Template, templateData interface{}) []
 	return buf.Bytes()
 }
 
-func listFromMachineSets(objs []clusterapi.MachineSet) *metav1.List {
+func listFromMachineSets(objs []machineapi.MachineSet) *metav1.List {
+	list := &metav1.List{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "List",
+		},
+	}
+	for idx := range objs {
+		list.Items = append(list.Items, runtime.RawExtension{Object: &objs[idx]})
+	}
+	return list
+}
+
+func listFromMachineDeprecated(objs []clusterapi.MachineSet) *metav1.List {
 	list := &metav1.List{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",

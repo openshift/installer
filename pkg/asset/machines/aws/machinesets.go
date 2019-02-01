@@ -4,9 +4,9 @@ package aws
 import (
 	"fmt"
 
+	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -14,7 +14,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]clusterapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS configuration: %q", configPlatform)
 	}
@@ -31,7 +31,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		total = *pool.Replicas
 	}
 	numOfAZs := int64(len(azs))
-	var machinesets []clusterapi.MachineSet
+	var machinesets []machineapi.MachineSet
 	for idx, az := range azs {
 		replicas := int32(total / numOfAZs)
 		if int64(idx) < total%numOfAZs {
@@ -43,9 +43,9 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
 		name := fmt.Sprintf("%s-%s-%s", clustername, pool.Name, az)
-		mset := clusterapi.MachineSet{
+		mset := machineapi.MachineSet{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "cluster.k8s.io/v1alpha1",
+				APIVersion: "machine.openshift.io/v1beta1",
 				Kind:       "MachineSet",
 			},
 			ObjectMeta: metav1.ObjectMeta{
@@ -57,7 +57,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 					"sigs.k8s.io/cluster-api-machine-type": role,
 				},
 			},
-			Spec: clusterapi.MachineSetSpec{
+			Spec: machineapi.MachineSetSpec{
 				Replicas: &replicas,
 				Selector: metav1.LabelSelector{
 					MatchLabels: map[string]string{
@@ -65,7 +65,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 						"sigs.k8s.io/cluster-api-cluster":    clustername,
 					},
 				},
-				Template: clusterapi.MachineTemplateSpec{
+				Template: machineapi.MachineTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
 							"sigs.k8s.io/cluster-api-machineset":   name,
@@ -74,8 +74,8 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 							"sigs.k8s.io/cluster-api-machine-type": role,
 						},
 					},
-					Spec: clusterapi.MachineSpec{
-						ProviderSpec: clusterapi.ProviderSpec{
+					Spec: machineapi.MachineSpec{
+						ProviderSpec: machineapi.ProviderSpec{
 							Value: &runtime.RawExtension{Object: provider},
 						},
 						// we don't need to set Versions, because we control those via cluster operators.
