@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -22,6 +23,11 @@ var (
 )
 
 func main() {
+	// This attempts to configure glog (used by vendored Kubernetes code) not
+	// to log anything. Nobody likes you, glog. Go away.
+	flag.CommandLine.Parse([]string{})
+	flag.CommandLine.Set("stderrthreshold", "4")
+
 	if len(os.Args) > 0 {
 		base := filepath.Base(os.Args[0])
 		cname := strings.TrimSuffix(base, filepath.Ext(base))
