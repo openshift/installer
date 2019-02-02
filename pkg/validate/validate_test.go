@@ -51,32 +51,32 @@ func TestClusterName(t *testing.T) {
 
 func TestSubnetCIDR(t *testing.T) {
 	cases := []struct {
-		cidr  string
-		valid bool
+		cidr   string
+		expErr string
 	}{
-		{"0.0.0.0/32", false},
-		{"1.2.3.4/0", false},
-		{"1.2.3.4/1", false},
-		{"1.2.3.4/31", true},
-		{"1.2.3.4/32", true},
-		{"0:0:0:0:0:1:102:304/116", false},
-		{"0:0:0:0:0:ffff:102:304/116", true},
-		{"172.17.1.2/20", false},
-		{"172.17.1.2/8", false},
-		{"255.255.255.255/1", false},
-		{"255.255.255.255/32", true},
+		{"0.0.0.0/32", "address must be specified"},
+		{"1.2.3.4/0", "invalid network address. got 1.2.3.4/0, expecting 0.0.0.0/0"},
+		{"1.2.3.4/1", "invalid network address. got 1.2.3.4/1, expecting 0.0.0.0/1"},
+		{"1.2.3.4/31", ""},
+		{"1.2.3.4/32", ""},
+		{"0:0:0:0:0:1:102:304/116", "must use IPv4"},
+		{"0:0:0:0:0:ffff:102:304/116", "invalid network address. got 1.2.3.4/20, expecting 1.2.0.0/20"},
+		{"172.17.0.0/20", "overlaps with default Docker Bridge subnet (172.17.0.0/20)"},
+		{"172.0.0.0/8", "overlaps with default Docker Bridge subnet (172.0.0.0/8)"},
+		{"255.255.255.255/1", "invalid network address. got 255.255.255.255/1, expecting 128.0.0.0/1"},
+		{"255.255.255.255/32", ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.cidr, func(t *testing.T) {
-			_, cidr, err := net.ParseCIDR(tc.cidr)
+			ip, cidr, err := net.ParseCIDR(tc.cidr)
 			if err != nil {
 				t.Fatalf("could not parse cidr: %v", err)
 			}
-			err = SubnetCIDR(cidr)
-			if tc.valid {
-				assert.NoError(t, err)
+			err = SubnetCIDR(&net.IPNet{IP: ip, Mask: cidr.Mask})
+			if tc.expErr != "" {
+				assert.EqualError(t, err, tc.expErr)
 			} else {
-				assert.Error(t, err)
+				assert.NoError(t, err)
 			}
 		})
 	}

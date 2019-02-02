@@ -61,10 +61,10 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 		allErrs = append(allErrs, field.Required(fldPath.Child("type"), "network provider type required"))
 	}
 	if err := validate.SubnetCIDR(&n.MachineCIDR.IPNet); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("machineCIDR"), n.MachineCIDR, err.Error()))
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("machineCIDR"), n.MachineCIDR.String(), err.Error()))
 	}
 	if err := validate.SubnetCIDR(&n.ServiceCIDR.IPNet); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceCIDR"), n.ServiceCIDR, err.Error()))
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceCIDR"), n.ServiceCIDR.String(), err.Error()))
 	}
 	for i, cn := range n.ClusterNetworks {
 		allErrs = append(allErrs, validateClusterNetwork(&cn, fldPath.Child("clusterNetworks").Index(i), &n.ServiceCIDR.IPNet)...)
