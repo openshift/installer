@@ -32,21 +32,12 @@ data "ignition_config" "redirect" {
 resource "aws_iam_instance_profile" "bootstrap" {
   name = "${var.cluster_name}-bootstrap-profile"
 
-  role = "${var.iam_role == "" ?
-    join("|", aws_iam_role.bootstrap.*.name) :
-    join("|", data.aws_iam_role.bootstrap.*.name)
-  }"
-}
-
-data "aws_iam_role" "bootstrap" {
-  count = "${var.iam_role == "" ? 0 : 1}"
-  name  = "${var.iam_role}"
+  role = "${aws_iam_role.bootstrap.name}"
 }
 
 resource "aws_iam_role" "bootstrap" {
-  count = "${var.iam_role == "" ? 1 : 0}"
-  name  = "${var.cluster_name}-bootstrap-role"
-  path  = "/"
+  name = "${var.cluster_name}-bootstrap-role"
+  path = "/"
 
   assume_role_policy = <<EOF
 {
@@ -68,9 +59,8 @@ EOF
 }
 
 resource "aws_iam_role_policy" "bootstrap" {
-  count = "${var.iam_role == "" ? 1 : 0}"
-  name  = "${var.cluster_name}-bootstrap-policy"
-  role  = "${aws_iam_role.bootstrap.id}"
+  name = "${var.cluster_name}-bootstrap-policy"
+  role = "${aws_iam_role.bootstrap.id}"
 
   policy = <<EOF
 {

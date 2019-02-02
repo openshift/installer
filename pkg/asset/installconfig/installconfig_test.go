@@ -20,7 +20,7 @@ import (
 func validInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1beta1",
+			APIVersion: types.InstallConfigVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-cluster",
@@ -57,7 +57,7 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 	}
 	expected := &types.InstallConfig{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1beta1",
+			APIVersion: types.InstallConfigVersion,
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "test-cluster",
@@ -104,7 +104,7 @@ func TestInstallConfigLoad(t *testing.T) {
 		{
 			name: "valid InstallConfig",
 			data: `
-apiVersion: v1beta1
+apiVersion: v1beta2
 metadata:
   name: test-cluster
 baseDomain: test-domain
@@ -116,7 +116,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 			expectedFound: true,
 			expectedConfig: &types.InstallConfig{
 				TypeMeta: metav1.TypeMeta{
-					APIVersion: "v1beta1",
+					APIVersion: types.InstallConfigVersion,
 				},
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "test-cluster",

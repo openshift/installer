@@ -29,12 +29,6 @@ variable "kubeconfig_content" {
   default = ""
 }
 
-variable "master_iam_role" {
-  type        = "string"
-  default     = ""
-  description = "IAM role to use for the instance profiles of master nodes."
-}
-
 variable "master_sg_ids" {
   type        = "list"
   description = "The security group IDs to be applied to the master nodes."

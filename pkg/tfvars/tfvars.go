@@ -52,8 +52,7 @@ func TFVars(clusterID string, cfg *types.InstallConfig, osImage, bootstrapIgn, m
 			config.Masters += replicas
 			if m.Platform.AWS != nil {
 				config.AWS.Master = aws.Master{
-					EC2Type:     m.Platform.AWS.InstanceType,
-					IAMRoleName: m.Platform.AWS.IAMRoleName,
+					EC2Type: m.Platform.AWS.InstanceType,
 					MasterRootVolume: aws.MasterRootVolume{
 						IOPS: m.Platform.AWS.EC2RootVolume.IOPS,
 						Size: m.Platform.AWS.EC2RootVolume.Size,
@@ -61,14 +60,6 @@ func TFVars(clusterID string, cfg *types.InstallConfig, osImage, bootstrapIgn, m
 					},
 				}
 			}
-		case "worker":
-			if m.Platform.AWS != nil {
-				config.AWS.Worker = aws.Worker{
-					IAMRoleName: m.Platform.AWS.IAMRoleName,
-				}
-			}
-		default:
-			return nil, errors.Errorf("unrecognized machine pool %q", m.Name)
 		}
 	}
 

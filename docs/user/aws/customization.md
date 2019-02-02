@@ -2,7 +2,6 @@
 
 The following options are available when using AWS:
 
-- `machines.platform.aws.iamRoleName` - the IAM role that will be assigned to the machines of this pool
 - `machines.platform.aws.rootVolume.iops` - the reserved IOPS of the root volume
 - `machines.platform.aws.rootVolume.size` - the size (in GiB) of the root volume
 - `machines.platform.aws.rootVolume.type` - the storage type of the root volume
@@ -29,7 +28,6 @@ machines:
 - name: worker
   platform:
     aws:
-      iamRoleName: elastictranscoder-access
       rootVolume:
         iops: 4000
         size: 500

@@ -18,18 +18,14 @@ import (
 	"github.com/openshift/installer/pkg/validate"
 )
 
-const (
-	installConfigVersion = "v1beta1"
-)
-
 // ValidateInstallConfig checks that the specified install config is valid.
 func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if c.TypeMeta.APIVersion == "" {
 		return field.ErrorList{field.Required(field.NewPath("apiVersion"), "install-config version required")}
 	}
-	if c.TypeMeta.APIVersion != installConfigVersion {
-		return field.ErrorList{field.Invalid(field.NewPath("apiVersion"), c.TypeMeta.APIVersion, fmt.Sprintf("install-config version must be %q", installConfigVersion))}
+	if c.TypeMeta.APIVersion != types.InstallConfigVersion && c.TypeMeta.APIVersion != "v1beta1" { // FIXME: v1beta1 is a temporary hack to get CI across the transition
+		return field.ErrorList{field.Invalid(field.NewPath("apiVersion"), c.TypeMeta.APIVersion, fmt.Sprintf("install-config version must be %q", types.InstallConfigVersion))}
 	}
 	if c.ObjectMeta.Name == "" {
 		allErrs = append(allErrs, field.Required(field.NewPath("metadata", "name"), "cluster name required"))

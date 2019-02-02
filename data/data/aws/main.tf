@@ -15,7 +15,6 @@ module "bootstrap" {
 
   ami                      = "${var.aws_ec2_ami_override}"
   cluster_name             = "${var.cluster_name}"
-  iam_role                 = "${var.aws_master_iam_role_name}"
   ignition                 = "${var.ignition_bootstrap}"
   subnet_id                = "${module.vpc.master_subnet_ids[0]}"
   target_group_arns        = "${module.vpc.aws_lb_target_group_arns}"
@@ -40,7 +39,6 @@ module "masters" {
     ), local.tags)}"
 
   instance_count           = "${var.master_count}"
-  master_iam_role          = "${var.aws_master_iam_role_name}"
   master_sg_ids            = "${list(module.vpc.master_sg_id)}"
   root_volume_iops         = "${var.aws_master_root_volume_iops}"
   root_volume_size         = "${var.aws_master_root_volume_size}"
@@ -55,8 +53,7 @@ module "masters" {
 module "iam" {
   source = "./iam"
 
-  cluster_name    = "${var.cluster_name}"
-  worker_iam_role = "${var.aws_worker_iam_role_name}"
+  cluster_name = "${var.cluster_name}"
 
   tags = "${merge(map(
       "kubernetes.io/cluster/${var.cluster_name}", "owned",
