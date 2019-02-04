@@ -2,6 +2,13 @@
 
 Launching clusters via libvirt is especially useful for operator development.
 
+## Ansible role
+
+For environments managed via ansible, there is a
+[role](https://github.com/dhellmann/ansible-openshift-libvirt) to
+implement the system configuration steps below. The installer source
+code is not downloaded or built automatically.
+
 ## One-time setup
 It's expected that you will create and destroy clusters often in the course of development. These steps only need to be run once.
 
