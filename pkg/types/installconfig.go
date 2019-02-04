@@ -135,8 +135,7 @@ type Networking struct {
 	// ClusterNetworks is the IP address space from which to assign pod IPs.
 	// +optional
 	// Default is a single cluster network with a CIDR of 10.128.0.0/14
-	// and a host subnet length of 9. The default is only applicable if PodCIDR
-	// is not present.
+	// and a host subnet length of 9.
 	ClusterNetworks []ClusterNetworkEntry `json:"clusterNetworks,omitempty"`
 }
 
