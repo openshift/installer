@@ -2,7 +2,6 @@ package manifests
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
@@ -33,7 +32,7 @@ var (
 
 // Networking generates the cluster-network-*.yml files.
 type Networking struct {
-	config   *configv1.Network
+	Config   *configv1.Network
 	FileList []*asset.File
 }
 
@@ -74,7 +73,7 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 		return errors.Errorf("ClusterNetworks must be specified")
 	}
 
-	no.config = &configv1.Network{
+	no.Config = &configv1.Network{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: configv1.SchemeGroupVersion.String(),
 			Kind:       "Network",
@@ -90,7 +89,7 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 		},
 	}
 
-	configData, err := yaml.Marshal(no.config)
+	configData, err := yaml.Marshal(no.Config)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create %s manifests from InstallConfig", no.Name())
 	}
@@ -123,19 +122,19 @@ func (no *Networking) Files() []*asset.File {
 // object. This is called by ClusterK8sIO, which captures generalized cluster
 // state but shouldn't need to be fully networking aware.
 func (no *Networking) ClusterNetwork() (*clusterv1a1.ClusterNetworkingConfig, error) {
-	if no.config == nil {
+	if no.Config == nil {
 		// should be unreachable.
 		return nil, errors.Errorf("ClusterNetwork called before initialization")
 	}
 
 	pods := []string{}
-	for _, cn := range no.config.Spec.ClusterNetwork {
+	for _, cn := range no.Config.Spec.ClusterNetwork {
 		pods = append(pods, cn.CIDR)
 	}
 
 	cn := &clusterv1a1.ClusterNetworkingConfig{
 		Services: clusterv1a1.NetworkRanges{
-			CIDRBlocks: no.config.Spec.ServiceNetwork,
+			CIDRBlocks: no.Config.Spec.ServiceNetwork,
 		},
 		Pods: clusterv1a1.NetworkRanges{
 			CIDRBlocks: pods,
@@ -144,33 +143,7 @@ func (no *Networking) ClusterNetwork() (*clusterv1a1.ClusterNetworkingConfig, er
 	return cn, nil
 }
 
-// Load loads the already-rendered files back from disk.
+// Load returns false since this asset is not written to disk by the installer.
 func (no *Networking) Load(f asset.FileFetcher) (bool, error) {
-	crdFile, err := f.FetchByName(noCrdFilename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-		return false, err
-	}
-
-	cfgFile, err := f.FetchByName(noCfgFilename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			return false, nil
-		}
-
-		return false, err
-	}
-
-	netConfig := &configv1.Network{}
-	if err := yaml.Unmarshal(cfgFile.Data, netConfig); err != nil {
-		return false, errors.Wrapf(err, "failed to unmarshal %s", noCfgFilename)
-	}
-
-	fileList := []*asset.File{crdFile, cfgFile}
-
-	no.FileList, no.config = fileList, netConfig
-
-	return true, nil
+	return false, nil
 }

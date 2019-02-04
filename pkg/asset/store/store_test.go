@@ -1,4 +1,4 @@
-package asset
+package store
 
 import (
 	"io/ioutil"
@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/openshift/installer/pkg/asset"
 )
 
 var (
@@ -14,30 +16,30 @@ var (
 	// asset store creates new assets by type, so the tests cannot store behavior
 	// state in the assets themselves.
 	generationLog []string
-	dependencies  map[reflect.Type][]Asset
+	dependencies  map[reflect.Type][]asset.Asset
 	onDiskAssets  map[reflect.Type]bool
 )
 
 func clearAssetBehaviors() {
 	generationLog = []string{}
-	dependencies = map[reflect.Type][]Asset{}
+	dependencies = map[reflect.Type][]asset.Asset{}
 	onDiskAssets = map[reflect.Type]bool{}
 }
 
-func dependenciesTestStoreAsset(a Asset) []Asset {
+func dependenciesTestStoreAsset(a asset.Asset) []asset.Asset {
 	return dependencies[reflect.TypeOf(a)]
 }
 
-func generateTestStoreAsset(a Asset) error {
+func generateTestStoreAsset(a asset.Asset) error {
 	generationLog = append(generationLog, a.Name())
 	return nil
 }
 
-func fileTestStoreAsset(a Asset) []*File {
-	return []*File{{Filename: a.Name()}}
+func fileTestStoreAsset(a asset.Asset) []*asset.File {
+	return []*asset.File{{Filename: a.Name()}}
 }
 
-func loadTestStoreAsset(a Asset) (bool, error) {
+func loadTestStoreAsset(a asset.Asset) (bool, error) {
 	return onDiskAssets[reflect.TypeOf(a)], nil
 }
 
@@ -47,19 +49,19 @@ func (a *testStoreAssetA) Name() string {
 	return "a"
 }
 
-func (a *testStoreAssetA) Dependencies() []Asset {
+func (a *testStoreAssetA) Dependencies() []asset.Asset {
 	return dependenciesTestStoreAsset(a)
 }
 
-func (a *testStoreAssetA) Generate(Parents) error {
+func (a *testStoreAssetA) Generate(asset.Parents) error {
 	return generateTestStoreAsset(a)
 }
 
-func (a *testStoreAssetA) Files() []*File {
+func (a *testStoreAssetA) Files() []*asset.File {
 	return fileTestStoreAsset(a)
 }
 
-func (a *testStoreAssetA) Load(FileFetcher) (bool, error) {
+func (a *testStoreAssetA) Load(asset.FileFetcher) (bool, error) {
 	return loadTestStoreAsset(a)
 }
 
@@ -69,19 +71,19 @@ func (a *testStoreAssetB) Name() string {
 	return "b"
 }
 
-func (a *testStoreAssetB) Dependencies() []Asset {
+func (a *testStoreAssetB) Dependencies() []asset.Asset {
 	return dependenciesTestStoreAsset(a)
 }
 
-func (a *testStoreAssetB) Generate(Parents) error {
+func (a *testStoreAssetB) Generate(asset.Parents) error {
 	return generateTestStoreAsset(a)
 }
 
-func (a *testStoreAssetB) Files() []*File {
+func (a *testStoreAssetB) Files() []*asset.File {
 	return fileTestStoreAsset(a)
 }
 
-func (a *testStoreAssetB) Load(FileFetcher) (bool, error) {
+func (a *testStoreAssetB) Load(asset.FileFetcher) (bool, error) {
 	return loadTestStoreAsset(a)
 }
 
@@ -91,19 +93,19 @@ func (a *testStoreAssetC) Name() string {
 	return "c"
 }
 
-func (a *testStoreAssetC) Dependencies() []Asset {
+func (a *testStoreAssetC) Dependencies() []asset.Asset {
 	return dependenciesTestStoreAsset(a)
 }
 
-func (a *testStoreAssetC) Generate(Parents) error {
+func (a *testStoreAssetC) Generate(asset.Parents) error {
 	return generateTestStoreAsset(a)
 }
 
-func (a *testStoreAssetC) Files() []*File {
+func (a *testStoreAssetC) Files() []*asset.File {
 	return fileTestStoreAsset(a)
 }
 
-func (a *testStoreAssetC) Load(FileFetcher) (bool, error) {
+func (a *testStoreAssetC) Load(asset.FileFetcher) (bool, error) {
 	return loadTestStoreAsset(a)
 }
 
@@ -113,23 +115,23 @@ func (a *testStoreAssetD) Name() string {
 	return "d"
 }
 
-func (a *testStoreAssetD) Dependencies() []Asset {
+func (a *testStoreAssetD) Dependencies() []asset.Asset {
 	return dependenciesTestStoreAsset(a)
 }
 
-func (a *testStoreAssetD) Generate(Parents) error {
+func (a *testStoreAssetD) Generate(asset.Parents) error {
 	return generateTestStoreAsset(a)
 }
 
-func (a *testStoreAssetD) Files() []*File {
+func (a *testStoreAssetD) Files() []*asset.File {
 	return fileTestStoreAsset(a)
 }
 
-func (a *testStoreAssetD) Load(FileFetcher) (bool, error) {
+func (a *testStoreAssetD) Load(asset.FileFetcher) (bool, error) {
 	return loadTestStoreAsset(a)
 }
 
-func newTestStoreAsset(name string) Asset {
+func newTestStoreAsset(name string) asset.Asset {
 	switch name {
 	case "a":
 		return &testStoreAssetA{}
@@ -262,16 +264,16 @@ func TestStoreFetch(t *testing.T) {
 				t.Fatalf("failed to create temporary directory: %v", err)
 			}
 			defer os.RemoveAll(dir)
-			store := &StoreImpl{
+			store := &storeImpl{
 				directory: dir,
 				assets:    map[reflect.Type]*assetState{},
 			}
-			assets := make(map[string]Asset, len(tc.assets))
+			assets := make(map[string]asset.Asset, len(tc.assets))
 			for name := range tc.assets {
 				assets[name] = newTestStoreAsset(name)
 			}
 			for name, deps := range tc.assets {
-				dependenciesOfAsset := make([]Asset, len(deps))
+				dependenciesOfAsset := make([]asset.Asset, len(deps))
 				for i, d := range deps {
 					dependenciesOfAsset[i] = assets[d]
 				}
@@ -361,15 +363,15 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			clearAssetBehaviors()
-			store := &StoreImpl{
+			store := &storeImpl{
 				assets: map[reflect.Type]*assetState{},
 			}
-			assets := make(map[string]Asset, len(tc.assets))
+			assets := make(map[string]asset.Asset, len(tc.assets))
 			for name := range tc.assets {
 				assets[name] = newTestStoreAsset(name)
 			}
 			for name, deps := range tc.assets {
-				dependenciesOfAsset := make([]Asset, len(deps))
+				dependenciesOfAsset := make([]asset.Asset, len(deps))
 				for i, d := range deps {
 					dependenciesOfAsset[i] = assets[d]
 				}

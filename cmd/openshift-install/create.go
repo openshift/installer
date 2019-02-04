@@ -26,14 +26,8 @@ import (
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/cluster"
-	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
-	"github.com/openshift/installer/pkg/asset/ignition/machine"
-	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/kubeconfig"
-	"github.com/openshift/installer/pkg/asset/manifests"
-	"github.com/openshift/installer/pkg/asset/templates"
-	"github.com/openshift/installer/pkg/asset/tls"
+	assetstore "github.com/openshift/installer/pkg/asset/store"
+	targetassets "github.com/openshift/installer/pkg/asset/targets"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 )
@@ -55,7 +49,7 @@ var (
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 		},
-		assets: []asset.WritableAsset{&installconfig.InstallConfig{}},
+		assets: targetassets.InstallConfig,
 	}
 
 	manifestsTarget = target{
@@ -66,7 +60,7 @@ var (
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 		},
-		assets: []asset.WritableAsset{&manifests.Manifests{}, &manifests.Openshift{}},
+		assets: targetassets.Manifests,
 	}
 
 	manifestTemplatesTarget = target{
@@ -76,7 +70,7 @@ var (
 			Short: "Generates the unrendered Kubernetes manifest templates",
 			Long:  "",
 		},
-		assets: []asset.WritableAsset{&templates.Templates{}},
+		assets: targetassets.ManifestTemplates,
 	}
 
 	ignitionConfigsTarget = target{
@@ -87,7 +81,7 @@ var (
 			// FIXME: add longer descriptions for our commands with examples for better UX.
 			// Long:  "",
 		},
-		assets: []asset.WritableAsset{&bootstrap.Bootstrap{}, &machine.Master{}, &machine.Worker{}, &kubeconfig.Admin{}, &cluster.Metadata{}},
+		assets: targetassets.IgnitionConfigs,
 	}
 
 	clusterTarget = target{
@@ -128,7 +122,7 @@ var (
 				}
 			},
 		},
-		assets: []asset.WritableAsset{&cluster.TerraformVariables{}, &kubeconfig.Admin{}, &tls.JournalCertKey{}, &cluster.Metadata{}, &cluster.Cluster{}},
+		assets: targetassets.Cluster,
 	}
 
 	targets = []target{installConfigTarget, manifestTemplatesTarget, manifestsTarget, ignitionConfigsTarget, clusterTarget}
@@ -154,7 +148,7 @@ func newCreateCmd() *cobra.Command {
 
 func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
 	runner := func(directory string) error {
-		assetStore, err := asset.NewStore(directory)
+		assetStore, err := assetstore.NewStore(directory)
 		if err != nil {
 			return errors.Wrapf(err, "failed to create asset store")
 		}

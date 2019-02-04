@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*HostEtcdServiceKubeSystem)(nil)
 
 // HostEtcdServiceKubeSystem is the constant to represent contents of etcd-service.yaml file
 type HostEtcdServiceKubeSystem struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *HostEtcdServiceKubeSystem) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *HostEtcdServiceKubeSystem) Generate(parents asset.Parents) error {
-	t.fileName = hostEtcdServiceKubeSystemFileName
-	data, err := content.GetBootkubeTemplate(t.fileName)
+	fileName := hostEtcdServiceKubeSystemFileName
+	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

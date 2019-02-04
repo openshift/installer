@@ -16,7 +16,6 @@ var _ asset.WritableAsset = (*OpenshiftServiceCertSignerNamespace)(nil)
 
 // OpenshiftServiceCertSignerNamespace is the constant to represent the contents of 09-openshift-service-signer-namespace.yaml
 type OpenshiftServiceCertSignerNamespace struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -32,14 +31,14 @@ func (t *OpenshiftServiceCertSignerNamespace) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *OpenshiftServiceCertSignerNamespace) Generate(parents asset.Parents) error {
-	t.fileName = openshiftServiceCertSignerNamespaceFileName
-	data, err := content.GetBootkubeTemplate(t.fileName)
+	fileName := openshiftServiceCertSignerNamespaceFileName
+	data, err := content.GetBootkubeTemplate(fileName)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, fileName),
 			Data:     []byte(data),
 		},
 	}

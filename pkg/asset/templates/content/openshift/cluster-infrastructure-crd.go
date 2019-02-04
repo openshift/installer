@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	infraCRDfilename = "cluster-infrastructure-crd.yaml"
+	infraCRDFilename = "cluster-infrastructure-crd.yaml"
 )
 
 var _ asset.WritableAsset = (*InfrastructureCRD)(nil)
@@ -17,7 +17,6 @@ var _ asset.WritableAsset = (*InfrastructureCRD)(nil)
 // InfrastructureCRD is the custom resource definition for the openshift/api
 // Infrastructure type.
 type InfrastructureCRD struct {
-	fileName string
 	FileList []*asset.File
 }
 
@@ -33,14 +32,13 @@ func (t *InfrastructureCRD) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *InfrastructureCRD) Generate(parents asset.Parents) error {
-	t.fileName = infraCRDfilename
-	data, err := content.GetOpenshiftTemplate(t.fileName)
+	data, err := content.GetOpenshiftTemplate(infraCRDFilename)
 	if err != nil {
 		return err
 	}
 	t.FileList = []*asset.File{
 		{
-			Filename: filepath.Join(content.TemplateDir, t.fileName),
+			Filename: filepath.Join(content.TemplateDir, infraCRDFilename),
 			Data:     []byte(data),
 		},
 	}
@@ -54,7 +52,7 @@ func (t *InfrastructureCRD) Files() []*asset.File {
 
 // Load returns the asset from disk.
 func (t *InfrastructureCRD) Load(f asset.FileFetcher) (bool, error) {
-	file, err := f.FetchByName(filepath.Join(content.TemplateDir, infraCRDfilename))
+	file, err := f.FetchByName(filepath.Join(content.TemplateDir, infraCRDFilename))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil

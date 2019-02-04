@@ -1,4 +1,4 @@
-package asset
+package store
 
 import (
 	"io/ioutil"
@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/openshift/installer/pkg/asset"
 )
 
 func TestFetchByName(t *testing.T) {
@@ -14,7 +16,7 @@ func TestFetchByName(t *testing.T) {
 		name       string
 		files      map[string][]byte
 		input      string
-		expectFile *File
+		expectFile *asset.File
 	}{
 		{
 			name:       "input doesn't match",
@@ -26,7 +28,7 @@ func TestFetchByName(t *testing.T) {
 			name:  "with contents",
 			files: map[string][]byte{"foo.bar": []byte("some data")},
 			input: "foo.bar",
-			expectFile: &File{
+			expectFile: &asset.File{
 				Filename: "foo.bar",
 				Data:     []byte("some data"),
 			},
@@ -35,7 +37,7 @@ func TestFetchByName(t *testing.T) {
 			name:  "match one file",
 			files: map[string][]byte{"foo.bar": []byte("some data")},
 			input: "foo.bar",
-			expectFile: &File{
+			expectFile: &asset.File{
 				Filename: "foo.bar",
 				Data:     []byte("some data"),
 			},
@@ -110,11 +112,11 @@ func TestFetchByPattern(t *testing.T) {
 	}
 	tests := []struct {
 		input       string
-		expectFiles []*File
+		expectFiles []*asset.File
 	}{
 		{
 			input: "master-[0-9]*.ign",
-			expectFiles: []*File{
+			expectFiles: []*asset.File{
 				{
 					Filename: "master-0.ign",
 					Data:     []byte("some data 0"),
@@ -147,7 +149,7 @@ func TestFetchByPattern(t *testing.T) {
 		},
 		{
 			input: filepath.Join("manifests", "*"),
-			expectFiles: []*File{
+			expectFiles: []*asset.File{
 				{
 					Filename: "manifests/0",
 					Data:     []byte("some data 11"),

@@ -116,6 +116,8 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, network.Files()...)
 	m.FileList = append(m.FileList, infra.Files()...)
 
+	asset.SortFiles(m.FileList)
+
 	return nil
 }
 
@@ -263,6 +265,8 @@ func (m *Manifests) Load(f asset.FileFetcher) (bool, error) {
 	}
 
 	m.FileList, m.KubeSysConfig = fileList, kubeSysConfig
+
+	asset.SortFiles(m.FileList)
 
 	return true, nil
 }

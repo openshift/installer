@@ -5,7 +5,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/openshift/installer/pkg/asset"
+	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/destroy"
 	"github.com/openshift/installer/pkg/destroy/bootstrap"
 	_ "github.com/openshift/installer/pkg/destroy/libvirt"
@@ -52,7 +52,7 @@ func runDestroyCmd(directory string) error {
 		return errors.Wrap(err, "Failed to destroy cluster")
 	}
 
-	store, err := asset.NewStore(directory)
+	store, err := assetstore.NewStore(directory)
 	if err != nil {
 		return errors.Wrapf(err, "failed to create asset store")
 	}

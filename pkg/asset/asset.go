@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -58,9 +59,9 @@ func PersistToFile(asset WritableAsset, directory string) error {
 	return nil
 }
 
-// deleteAssetFromDisk removes all the files for asset from disk.
+// DeleteAssetFromDisk removes all the files for asset from disk.
 // this is function is not safe for calling concurrently on the same directory.
-func deleteAssetFromDisk(asset WritableAsset, directory string) error {
+func DeleteAssetFromDisk(asset WritableAsset, directory string) error {
 	logrus.Debugf("Purging asset %q from disk", asset.Name())
 	for _, f := range asset.Files() {
 		path := filepath.Join(directory, f.Filename)
@@ -94,4 +95,9 @@ func isDirEmpty(name string) (bool, error) {
 		return true, nil
 	}
 	return false, err // Either not empty or error, suits both cases
+}
+
+// SortFiles sorts the specified files by file name.
+func SortFiles(files []*File) {
+	sort.Slice(files, func(i, j int) bool { return files[i].Filename < files[j].Filename })
 }

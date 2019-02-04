@@ -146,6 +146,8 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		})
 	}
 
+	asset.SortFiles(o.FileList)
+
 	return nil
 }
 
@@ -161,5 +163,6 @@ func (o *Openshift) Load(f asset.FileFetcher) (bool, error) {
 		return false, err
 	}
 	o.FileList = fileList
+	asset.SortFiles(o.FileList)
 	return len(fileList) > 0, nil
 }
