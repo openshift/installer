@@ -201,6 +201,15 @@ echo "etcd cluster up. Killing etcd certificate signer..."
 
 podman rm --force etcd-signer
 rm --force /etc/kubernetes/manifests/machineconfigoperator-bootstrap-pod.yaml
+# Copy the bootstrap MCs to inject into the target cluster
+# Yes this is a brutal hack, need to improve the MCC bootstrap above
+# 9a so we're after 99 - should change the others to 50- or something?
+for x in /etc/mcs/bootstrap/machine-configs/*.yaml; do
+    bn=$(basename $x)
+    (echo 'apiVersion: machineconfiguration.openshift.io/v1'
+     echo 'kind: MachineConfig'
+     python -c 'import sys,yaml; d=yaml.load(open(sys.argv[1])); del d["metadata"]["ownerReferences"]; yaml.dump(d, sys.stdout)' $x) > /opt/openshift/openshift/9a-${bn}
+done
 
 echo "Starting cluster-bootstrap..."
 
