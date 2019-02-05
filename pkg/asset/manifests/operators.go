@@ -70,6 +70,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.KubeCloudConfig{},
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftServiceCertSignerSecret{},
+		&bootkube.OpenshiftServiceCASignerSecret{},
 		&bootkube.Pull{},
 		&bootkube.CVOOverrides{},
 		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
@@ -80,6 +81,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.OpenshiftClusterAPINamespace{},
 		&bootkube.OpenshiftServiceCertSignerNamespace{},
+		&bootkube.OpenshiftServiceCAOperatorNamespace{},
 		&bootkube.EtcdServiceKubeSystem{},
 		&bootkube.HostEtcdServiceKubeSystem{},
 	}
@@ -172,6 +174,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	kubeCloudConfig := &bootkube.KubeCloudConfig{}
 	machineConfigServerTLSSecret := &bootkube.MachineConfigServerTLSSecret{}
 	openshiftServiceCertSignerSecret := &bootkube.OpenshiftServiceCertSignerSecret{}
+	openshiftServiceCASignerSecret := &bootkube.OpenshiftServiceCASignerSecret{}
 	pull := &bootkube.Pull{}
 	cVOOverrides := &bootkube.CVOOverrides{}
 	hostEtcdServiceEndpointsKubeSystem := &bootkube.HostEtcdServiceEndpointsKubeSystem{}
@@ -182,12 +185,14 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	openshiftMachineConfigOperator := &bootkube.OpenshiftMachineConfigOperator{}
 	openshiftClusterAPINamespace := &bootkube.OpenshiftClusterAPINamespace{}
 	openshiftServiceCertSignerNamespace := &bootkube.OpenshiftServiceCertSignerNamespace{}
+	openshiftServiceCAOperatorNamespace := &bootkube.OpenshiftServiceCAOperatorNamespace{}
 	etcdServiceKubeSystem := &bootkube.EtcdServiceKubeSystem{}
 	hostEtcdServiceKubeSystem := &bootkube.HostEtcdServiceKubeSystem{}
 	dependencies.Get(
 		kubeCloudConfig,
 		machineConfigServerTLSSecret,
 		openshiftServiceCertSignerSecret,
+		openshiftServiceCASignerSecret,
 		pull,
 		cVOOverrides,
 		hostEtcdServiceEndpointsKubeSystem,
@@ -197,6 +202,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		openshiftMachineConfigOperator,
 		openshiftClusterAPINamespace,
 		openshiftServiceCertSignerNamespace,
+		openshiftServiceCAOperatorNamespace,
 		etcdServiceKubeSystem,
 		hostEtcdServiceKubeSystem,
 	)
@@ -204,6 +210,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"kube-cloud-config.yaml":                     applyTemplateData(kubeCloudConfig.Files()[0].Data, templateData),
 		"machine-config-server-tls-secret.yaml":      applyTemplateData(machineConfigServerTLSSecret.Files()[0].Data, templateData),
 		"openshift-service-signer-secret.yaml":       applyTemplateData(openshiftServiceCertSignerSecret.Files()[0].Data, templateData),
+		"openshift-service-ca-signer-secret.yaml":    applyTemplateData(openshiftServiceCASignerSecret.Files()[0].Data, templateData),
 		"pull.json":                                  applyTemplateData(pull.Files()[0].Data, templateData),
 		"cvo-overrides.yaml":                         applyTemplateData(cVOOverrides.Files()[0].Data, templateData),
 		"host-etcd-service-endpoints.yaml":           applyTemplateData(hostEtcdServiceEndpointsKubeSystem.Files()[0].Data, templateData),
@@ -211,11 +218,12 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		"kube-system-configmap-root-ca.yaml":         applyTemplateData(kubeSystemConfigmapRootCA.Files()[0].Data, templateData),
 		"kube-system-secret-etcd-client.yaml":        applyTemplateData(kubeSystemSecretEtcdClient.Files()[0].Data, templateData),
 
-		"04-openshift-machine-config-operator.yaml":  []byte(openshiftMachineConfigOperator.Files()[0].Data),
-		"05-openshift-cluster-api-namespace.yaml":    []byte(openshiftClusterAPINamespace.Files()[0].Data),
-		"09-openshift-service-signer-namespace.yaml": []byte(openshiftServiceCertSignerNamespace.Files()[0].Data),
-		"etcd-service.yaml":                          []byte(etcdServiceKubeSystem.Files()[0].Data),
-		"host-etcd-service.yaml":                     []byte(hostEtcdServiceKubeSystem.Files()[0].Data),
+		"04-openshift-machine-config-operator.yaml":       []byte(openshiftMachineConfigOperator.Files()[0].Data),
+		"05-openshift-cluster-api-namespace.yaml":         []byte(openshiftClusterAPINamespace.Files()[0].Data),
+		"09-openshift-service-signer-namespace.yaml":      []byte(openshiftServiceCertSignerNamespace.Files()[0].Data),
+		"09-openshift-service-ca-operator-namespace.yaml": []byte(openshiftServiceCAOperatorNamespace.Files()[0].Data),
+		"etcd-service.yaml":                               []byte(etcdServiceKubeSystem.Files()[0].Data),
+		"host-etcd-service.yaml":                          []byte(hostEtcdServiceKubeSystem.Files()[0].Data),
 	}
 
 	files := make([]*asset.File, 0, len(assetData))
