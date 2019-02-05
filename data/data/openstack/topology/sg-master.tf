@@ -7,8 +7,8 @@ resource "openstack_networking_secgroup_rule_v2" "master_mcs" {
   direction         = "ingress"
   ethertype         = "IPv4"
   protocol          = "tcp"
-  port_range_min    = 49500
-  port_range_max    = 49500
+  port_range_min    = 22623
+  port_range_max    = 22623
   remote_ip_prefix  = "${var.cidr_block}"
   security_group_id = "${openstack_networking_secgroup_v2.master.id}"
 }

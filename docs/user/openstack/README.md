@@ -158,7 +158,7 @@ intended for initial cluster deployment and not highly available, to an
 external load balancer.
 
 The load balancer must serve ports 6443, 443, and 80 to any users of
-the system.  Port 49500 is for serving ignition startup configurations
+the system.  Port 22623 is for serving ignition startup configurations
 to the OpenShift nodes and should not be reachable outside of the cluster.
 
 The first step is to add floating IPs to all the master nodes:
@@ -229,7 +229,7 @@ Another useful thing to check is that the ignition configurations are
 only available from within the deployment. The following command should
 only succeed from a node in the OpenShift cluster:
 
-* `curl https://<loadbalancer ip>:49500/config/master --insecure`
+* `curl https://<loadbalancer ip>:22623/config/master --insecure`
 
 Now that the DNS and load balancer has been moved, we can take down the existing
 api VM:
