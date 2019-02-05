@@ -21,6 +21,8 @@ MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --rm ${release} image machine-confi
 MACHINE_CONFIG_SERVER_IMAGE=$(podman run --rm ${release} image machine-config-server)
 MACHINE_CONFIG_DAEMON_IMAGE=$(podman run --rm ${release} image machine-config-daemon)
 MACHINE_CONFIG_OSCONTENT=$(podman run --rm ${release} image machine-os-content)
+MACHINE_CONFIG_ETCD_IMAGE=$(podman run --rm ${release} image etcd)
+MACHINE_CONFIG_SETUP_ETCD_ENV_IMAGE=$(podman run --rm ${release} image setup-etcd-environment)
 
 KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-apiserver-operator)
 KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-controller-manager-operator)
@@ -127,6 +129,8 @@ then
 			--config-file=/assets/manifests/cluster-config.yaml \
 			--dest-dir=/assets/mco-bootstrap \
 			--pull-secret=/assets/manifests/pull.json \
+			--etcd-image=${MACHINE_CONFIG_ETCD_IMAGE} \
+			--setup-etcd-env-image=${MACHINE_CONFIG_SETUP_ETCD_ENV_IMAGE} \
 			--machine-config-controller-image=${MACHINE_CONFIG_CONTROLLER_IMAGE} \
 			--machine-config-server-image=${MACHINE_CONFIG_SERVER_IMAGE} \
 			--machine-config-daemon-image=${MACHINE_CONFIG_DAEMON_IMAGE} \
