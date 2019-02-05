@@ -145,7 +145,7 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 	}
 
 	releaseImage := defaultReleaseImage
-	if ri, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && ri != "" {
+	if ri, ok := os.LookupEnv("_OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && ri != "" {
 		logrus.Warn("Found override for ReleaseImage. Please be warned, this is not advised")
 		releaseImage = ri
 	}
