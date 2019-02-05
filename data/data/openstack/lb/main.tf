@@ -68,14 +68,48 @@ data "ignition_file" "haproxy_watcher_script" {
   }
 }
 
-data "ignition_file" "openshift_hosts" {
+data "ignition_file" "corefile" {
   filesystem = "root"
-  mode       = "420"                  // 0644
-  path       = "/etc/openshift-hosts"
+  mode       = "420"                   // 0644
+  path       = "/etc/coredns/Corefile"
 
   content {
     content = <<EOF
-${replace(join("\n", formatlist("%s ${var.cluster_name}-etcd-%s.${var.cluster_domain}", var.master_ips, var.master_port_names)), "master-port-", "")}
+. {
+    log
+    errors
+    reload 10s
+    file /etc/coredns/db.${var.cluster_domain} _etcd-server-ssl._tcp.${var.cluster_name}.${var.cluster_domain} {
+    }
+
+${replace(join("\n", formatlist("file /etc/coredns/db.${var.cluster_domain} ${var.cluster_name}-etcd-%s.${var.cluster_domain} {\nupstream /etc/resolv.conf\n}\n", var.master_port_names)), "master-port-", "")}
+
+    forward . /etc/resolv.conf {
+    }
+}
+EOF
+  }
+}
+
+data "ignition_file" "coredb" {
+  filesystem = "root"
+  mode       = "420"                                   // 0644
+  path       = "/etc/coredns/db.${var.cluster_domain}"
+
+  content {
+    content = <<EOF
+$ORIGIN ${var.cluster_domain}.
+@    3600 IN SOA host-10-0-0-2.${var.cluster_domain}. hostmaster (
+                                2017042752 ; serial
+                                7200       ; refresh (2 hours)
+                                3600       ; retry (1 hour)
+                                1209600    ; expire (2 weeks)
+                                3600       ; minimum (1 hour)
+                                )
+
+${replace(join("\n", formatlist("${var.cluster_name}-etcd-%s  IN  CNAME  ${var.cluster_name}-master-%s", var.master_port_names, var.master_port_names)), "master-port-", "")}
+
+${replace(join("\n", formatlist("_etcd-server-ssl._tcp.${var.cluster_name}  8640  IN  SRV  0  10  2380   ${var.cluster_name}-etcd-%s.${var.cluster_domain}.", var.master_port_names)), "master-port-", "")}
 EOF
   }
 }
@@ -85,10 +119,10 @@ data "ignition_systemd_unit" "local_dns" {
 
   content = <<EOF
 [Unit]
-Description=Internal DNS server for running OpenShift on OpenStack
+Description=Internal DNS serving the required OpenShift records
 
 [Service]
-ExecStart=/bin/podman run --rm -t -i -p 53:53/tcp -p 53:53/udp -v /etc/openshift-hosts:/etc/openshift-hosts:z --cap-add=NET_ADMIN docker.io/andyshinn/dnsmasq:latest --keep-in-foreground --log-facility=- --log-queries --no-resolv --addn-hosts=/etc/openshift-hosts --server=10.0.0.2 ${replace(join(" ", formatlist("--srv-host=_etcd-server-ssl._tcp.${var.cluster_name}.${var.cluster_domain},${var.cluster_name}-etcd-%s.${var.cluster_domain},2380,0,10", var.master_port_names)), "master-port-", "")}
+ExecStart=/bin/podman run --rm -i -t -m 128m --net host --cap-add=NET_ADMIN -v /etc/coredns:/etc/coredns:Z openshift/origin-coredns:v4.0 -conf /etc/coredns/Corefile
 Restart=always
 RestartSec=10
 
@@ -121,7 +155,8 @@ data "ignition_config" "lb_redirect" {
 
   files = [
     "${data.ignition_file.haproxy_watcher_script.id}",
-    "${data.ignition_file.openshift_hosts.id}",
+    "${data.ignition_file.corefile.id}",
+    "${data.ignition_file.coredb.id}",
   ]
 
   systemd = [
