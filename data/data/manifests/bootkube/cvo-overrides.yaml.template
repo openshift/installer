@@ -4,6 +4,6 @@ metadata:
   namespace: openshift-cluster-version
   name: version
 spec:
-  upstream: http://localhost:8080/graph
+  upstream: https://api.openshift.com/api/upgrades_info/v1/graph
   channel: fast
   clusterID: {{.CVOClusterID}}
