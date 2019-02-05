@@ -26,16 +26,17 @@ provider "openstack" {
 module "lb" {
   source = "./lb"
 
-  swift_container   = "${openstack_objectstorage_container_v1.container.name}"
-  cluster_name      = "${var.cluster_name}"
-  cluster_id        = "${var.cluster_id}"
-  cluster_domain    = "${var.base_domain}"
-  image_name        = "${var.openstack_base_image}"
-  flavor_name       = "${var.openstack_master_flavor_name}"
-  ignition          = "${var.ignition_bootstrap}"
-  lb_port_id        = "${module.topology.lb_port_id}"
-  master_ips        = "${module.topology.master_ips}"
-  master_port_names = "${module.topology.master_port_names}"
+  swift_container        = "${openstack_objectstorage_container_v1.container.name}"
+  cluster_name           = "${var.cluster_name}"
+  cluster_id             = "${var.cluster_id}"
+  cluster_domain         = "${var.base_domain}"
+  image_name             = "${var.openstack_base_image}"
+  flavor_name            = "${var.openstack_master_flavor_name}"
+  ignition               = "${var.ignition_bootstrap}"
+  lb_port_id             = "${module.topology.lb_port_id}"
+  master_ips             = "${module.topology.master_ips}"
+  master_port_names      = "${module.topology.master_port_names}"
+  service_vm_floating_ip = "${module.topology.service_vm_floating_ip}"
 }
 
 module "bootstrap" {
