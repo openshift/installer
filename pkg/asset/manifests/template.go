@@ -27,8 +27,6 @@ type bootkubeTemplateData struct {
 	McsTLSKey                       string
 	PullSecretBase64                string
 	RootCaCert                      string
-	ServiceServingCaCert            string
-	ServiceServingCaKey             string
 	WorkerIgnConfig                 string
 	CVOClusterID                    string
 	EtcdEndpointHostnames           []string
