@@ -53,12 +53,13 @@ ignored = [
   version = "9.0.0"
 
 [[constraint]]
-  name = "sigs.k8s.io/cluster-api"
-  branch = "master"
+  name = "github.com/openshift/cluster-api"
+  revision = "91fca585a85b163ddfd119fd09c128c9feadddca"
+
 [[constraint]]
   name = "sigs.k8s.io/cluster-api-provider-aws"
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
-  branch = "master"
+  revision = "9a983a5c6c12b27169c57e4c8948cb554e4d6b6c"
 
 [[constraint]]
   name = "github.com/openshift/cluster-api-provider-libvirt"

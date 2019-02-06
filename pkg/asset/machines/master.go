@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ghodss/yaml"
+	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -104,7 +105,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 
-		list := listFromMachines(machines)
+		list := listFromMachinesDeprecated(machines)
 		raw, err := yaml.Marshal(list)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
@@ -127,7 +128,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		}
 		openstack.ConfigMasters(machines, ic.ObjectMeta.Name)
 
-		list := listFromMachines(machines)
+		list := listFromMachinesDeprecated(machines)
 		m.MachinesRaw, err = yaml.Marshal(list)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
@@ -148,7 +149,20 @@ func masterPool(pools []types.MachinePool) types.MachinePool {
 	return types.MachinePool{}
 }
 
-func listFromMachines(objs []clusterapi.Machine) *metav1.List {
+func listFromMachines(objs []machineapi.Machine) *metav1.List {
+	list := &metav1.List{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: "v1",
+			Kind:       "List",
+		},
+	}
+	for idx := range objs {
+		list.Items = append(list.Items, runtime.RawExtension{Object: &objs[idx]})
+	}
+	return list
+}
+
+func listFromMachinesDeprecated(objs []clusterapi.Machine) *metav1.List {
 	list := &metav1.List{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",

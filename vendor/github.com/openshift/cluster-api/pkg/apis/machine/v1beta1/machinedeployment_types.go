@@ -14,12 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
-	"sigs.k8s.io/cluster-api/pkg/apis/cluster/common"
+
+	"github.com/openshift/cluster-api/pkg/apis/machine/common"
 )
 
 /// [MachineDeploymentSpec]
