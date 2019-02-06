@@ -122,7 +122,7 @@ resource "aws_security_group_rule" "master_ingress_internal" {
 
   protocol  = "tcp"
   from_port = 9000
-  to_port   = 9990
+  to_port   = 9999
   self      = true
 }
 
@@ -133,7 +133,7 @@ resource "aws_security_group_rule" "master_ingress_internal_from_worker" {
 
   protocol  = "tcp"
   from_port = 9000
-  to_port   = 9990
+  to_port   = 9999
 }
 
 resource "aws_security_group_rule" "master_ingress_kube_scheduler" {
