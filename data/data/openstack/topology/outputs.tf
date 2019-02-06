@@ -18,6 +18,10 @@ output "service_vm_fixed_ip" {
   value = "${openstack_networking_port_v2.lb_port.all_fixed_ips[0]}"
 }
 
+output "service_vm_floating_ip" {
+  value = "${openstack_networking_floatingip_v2.lb_fip.address}"
+}
+
 output "master_sg_id" {
   value = "${openstack_networking_secgroup_v2.master.id}"
 }

@@ -79,14 +79,29 @@ data "ignition_file" "corefile" {
     log
     errors
     reload 10s
+
+    file /etc/coredns/db.${var.cluster_domain} ${var.cluster_name}-api.${var.cluster_domain} {
+    }
+
     file /etc/coredns/db.${var.cluster_domain} _etcd-server-ssl._tcp.${var.cluster_name}.${var.cluster_domain} {
     }
 
-${replace(join("\n", formatlist("file /etc/coredns/db.${var.cluster_domain} ${var.cluster_name}-etcd-%s.${var.cluster_domain} {\nupstream /etc/resolv.conf\n}\n", var.master_port_names)), "master-port-", "")}
+${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} ${var.cluster_name}-etcd-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "master-port-", "")}
 
     forward . /etc/resolv.conf {
     }
 }
+
+${var.cluster_name}.${var.cluster_domain} {
+    log
+    errors
+    reload 10s
+
+    file /etc/coredns/db.${var.cluster_domain} {
+        upstream /etc/resolv.conf
+    }
+}
+
 EOF
   }
 }
@@ -99,13 +114,16 @@ data "ignition_file" "coredb" {
   content {
     content = <<EOF
 $ORIGIN ${var.cluster_domain}.
-@    3600 IN SOA host-10-0-0-2.${var.cluster_domain}. hostmaster (
+@    3600 IN SOA host-${var.cluster_name}.${var.cluster_domain}. hostmaster (
                                 2017042752 ; serial
                                 7200       ; refresh (2 hours)
                                 3600       ; retry (1 hour)
                                 1209600    ; expire (2 weeks)
                                 3600       ; minimum (1 hour)
                                 )
+
+${var.cluster_name}-api  IN  A  ${var.service_vm_floating_ip}
+*.apps.${var.cluster_name}  IN  A  ${var.service_vm_floating_ip}
 
 ${replace(join("\n", formatlist("${var.cluster_name}-etcd-%s  IN  CNAME  ${var.cluster_name}-master-%s", var.master_port_names, var.master_port_names)), "master-port-", "")}
 
