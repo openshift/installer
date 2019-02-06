@@ -21,7 +21,7 @@ module "bootstrap" {
 
 resource "libvirt_volume" "master" {
   count          = "${var.master_count}"
-  name           = "${var.cluster_name}-master-${count.index}"
+  name           = "${var.cluster_name}-${var.master_machine_pool_name}-${count.index}"
   base_volume_id = "${module.volume.coreos_base_volume_id}"
 }
 
@@ -62,7 +62,7 @@ resource "libvirt_network" "net" {
 resource "libvirt_domain" "master" {
   count = "${var.master_count}"
 
-  name = "${var.cluster_name}-master-${count.index}"
+  name = "${var.cluster_name}-${var.master_machine_pool_name}-${count.index}"
 
   memory = "${var.libvirt_master_memory}"
   vcpu   = "${var.libvirt_master_vcpu}"
@@ -84,7 +84,7 @@ resource "libvirt_domain" "master" {
 
   network_interface {
     network_id = "${libvirt_network.net.id}"
-    hostname   = "${var.cluster_name}-master-${count.index}"
+    hostname   = "${var.cluster_name}-${var.master_machine_pool_name}-${count.index}"
     addresses  = ["${var.libvirt_master_ips[count.index]}"]
   }
 }

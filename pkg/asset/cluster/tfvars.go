@@ -86,6 +86,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		bootstrapIgn,
 		masterIgn,
 		controlPlaneCount,
+		installConfig.Config.ControlPlane.Name,
 	)
 	if err != nil {
 		return errors.Wrap(err, "failed to get Terraform variables")

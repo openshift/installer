@@ -20,6 +20,11 @@ This applies only to cloud platforms.
 EOF
 }
 
+variable "master_machine_pool_name" {
+  type = "string"
+  description = "The name of the machine pool to create for the control plane"
+}
+
 variable "base_domain" {
   type = "string"
 

@@ -38,7 +38,7 @@ func validInstallConfig() *types.InstallConfig {
 			},
 		},
 		ControlPlane: &types.MachinePool{
-			Name:     "master",
+			Name:     "control-plane",
 			Replicas: pointer.Int64Ptr(3),
 		},
 		Compute: []types.MachinePool{

@@ -29,6 +29,10 @@ variable "kubeconfig_content" {
   default = ""
 }
 
+variable "machine_pool_name" {
+  type = "string"
+}
+
 variable "master_sg_ids" {
   type        = "list"
   description = "The security group IDs to be applied to the master nodes."

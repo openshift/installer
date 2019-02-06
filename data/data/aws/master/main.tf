@@ -3,13 +3,13 @@ locals {
 }
 
 resource "aws_iam_instance_profile" "master" {
-  name = "${var.cluster_name}-master-profile"
+  name = "${var.cluster_name}-${var.machine_pool_name}-profile"
 
   role = "${aws_iam_role.master_role.name}"
 }
 
 resource "aws_iam_role" "master_role" {
-  name = "${var.cluster_name}-master-role"
+  name = "${var.cluster_name}-${var.machine_pool_name}-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -32,7 +32,7 @@ EOF
 }
 
 resource "aws_iam_role_policy" "master_policy" {
-  name = "${var.cluster_name}_master_policy"
+  name = "${var.cluster_name}_${var.machine_pool_name}_policy"
   role = "${aws_iam_role.master_role.id}"
 
   policy = <<EOF
@@ -85,7 +85,7 @@ resource "aws_instance" "master" {
   }
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}-master-${count.index}",
+      "Name", "${var.cluster_name}-${var.machine_pool_name}-${count.index}",
       "clusterid", "${var.cluster_name}"
     ), var.tags)}"
 
@@ -96,7 +96,7 @@ resource "aws_instance" "master" {
   }
 
   volume_tags = "${merge(map(
-    "Name", "${var.cluster_name}-master-${count.index}-vol",
+    "Name", "${var.cluster_name}-${var.machine_pool_name}-${count.index}-vol",
   ), var.tags)}"
 }
 

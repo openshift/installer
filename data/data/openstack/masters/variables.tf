@@ -18,6 +18,10 @@ variable "instance_count" {
   type = "string"
 }
 
+variable "machine_pool_name" {
+  type = "string"
+}
+
 variable "master_sg_ids" {
   type        = "list"
   default     = ["default"]

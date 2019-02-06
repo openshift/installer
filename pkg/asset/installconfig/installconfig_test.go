@@ -76,7 +76,7 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 			},
 		},
 		ControlPlane: &types.MachinePool{
-			Name:     "master",
+			Name:     "control-plane",
 			Replicas: pointer.Int64Ptr(3),
 		},
 		Compute: []types.MachinePool{
@@ -135,7 +135,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 					},
 				},
 				ControlPlane: &types.MachinePool{
-					Name:     "master",
+					Name:     "control-plane",
 					Replicas: pointer.Int64Ptr(3),
 				},
 				Compute: []types.MachinePool{

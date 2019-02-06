@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	masterPoolName = "master"
+	controlPlanePoolName = "control-plane"
 )
 
 // ClusterDomain returns the cluster domain for a cluster with the specified
@@ -116,8 +116,8 @@ func validateClusterNetwork(cn *types.ClusterNetworkEntry, fldPath *field.Path, 
 
 func validateControlPlane(pool *types.MachinePool, fldPath *field.Path, platform string) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if pool.Name != masterPoolName {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{masterPoolName}))
+	if pool.Name != controlPlanePoolName {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{controlPlanePoolName}))
 	}
 	if pool.Replicas != nil && *pool.Replicas == 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))

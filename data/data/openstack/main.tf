@@ -60,6 +60,7 @@ module "masters" {
   cluster_name        = "${var.cluster_name}"
   flavor_name         = "${var.openstack_master_flavor_name}"
   instance_count      = "${var.master_count}"
+  machine_pool_name   = "${var.master_machine_pool_name}"
   master_sg_ids       = "${concat(var.openstack_master_extra_sg_ids, list(module.topology.master_sg_id))}"
   master_port_ids     = "${module.topology.master_port_ids}"
   user_data_ign       = "${var.ignition_master}"

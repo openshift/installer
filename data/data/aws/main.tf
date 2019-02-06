@@ -39,6 +39,7 @@ module "masters" {
     ), local.tags)}"
 
   instance_count           = "${var.master_count}"
+  machine_pool_name        = "${var.master_machine_pool_name}"
   master_sg_ids            = "${list(module.vpc.master_sg_id)}"
   root_volume_iops         = "${var.aws_master_root_volume_iops}"
   root_volume_size         = "${var.aws_master_root_volume_size}"

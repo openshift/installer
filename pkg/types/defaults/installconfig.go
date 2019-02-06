@@ -51,7 +51,7 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 			Replicas: &defaultReplicaCount,
 		}
 	}
-	c.ControlPlane.Name = "master"
+	c.ControlPlane.Name = "control-plane"
 	if len(c.Compute) == 0 {
 		c.Compute = []types.MachinePool{
 			{
