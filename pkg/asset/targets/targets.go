@@ -61,7 +61,7 @@ var (
 		&cluster.TerraformVariables{},
 		&kubeconfig.Admin{},
 		&tls.JournalCertKey{},
-		&cluster.Cluster{},
 		&cluster.Metadata{},
+		&cluster.Cluster{},
 	}
 )
