@@ -63,7 +63,7 @@ ignored = [
 
 [[constraint]]
   name = "github.com/openshift/cluster-api-provider-libvirt"
-  branch = "master"
+  revision = "c23986b36a2521cd69ac22d7adb74a22bca9f7aa"
 
 [[constraint]]
   name = "github.com/pkg/errors"

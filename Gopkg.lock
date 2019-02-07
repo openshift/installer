@@ -396,11 +396,9 @@
   revision = "a7448c816a2ac09a48321432daa7303eb6ff92c9"
 
 [[projects]]
-  digest = "1:5543d01772b4474e08f1554ea53cf3eb12660deed37470888cfc1cd66748cab0"
+  digest = "1:35a1d3d1166a3a74d696180e74d6fd0e5179747d2626ca4586bdc9ca45641544"
   name = "github.com/openshift/cluster-api"
   packages = [
-    "pkg/apis/cluster/common",
-    "pkg/apis/cluster/v1alpha1",
     "pkg/apis/machine/common",
     "pkg/apis/machine/v1beta1",
   ]
@@ -408,12 +406,11 @@
   revision = "91fca585a85b163ddfd119fd09c128c9feadddca"
 
 [[projects]]
-  branch = "master"
-  digest = "1:0889fa501ce44d01602f3721bbc52529bfe35469410b34d117c45916d43b1b22"
+  digest = "1:46e54b01e18842945bd92e687a237d891fbc5ee3224f460eb47b55454837862f"
   name = "github.com/openshift/cluster-api-provider-libvirt"
   packages = ["pkg/apis/libvirtproviderconfig/v1alpha1"]
   pruneopts = "NUT"
-  revision = "da6aa0a3931761842527816a79f1072129f2cea3"
+  revision = "c23986b36a2521cd69ac22d7adb74a22bca9f7aa"
 
 [[projects]]
   branch = "master"
@@ -929,7 +926,6 @@
     "github.com/openshift/client-go/config/clientset/versioned",
     "github.com/openshift/client-go/route/clientset/versioned",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
-    "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1",
     "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1",
     "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers",
     "github.com/pborman/uuid",
@@ -967,6 +963,7 @@
     "k8s.io/utils/pointer",
     "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1",
     "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1",
+    "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
