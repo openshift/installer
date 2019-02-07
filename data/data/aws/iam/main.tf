@@ -43,13 +43,6 @@ resource "aws_iam_role_policy" "worker_policy" {
       "Effect": "Allow",
       "Action": "ec2:Describe*",
       "Resource": "*"
-    },
-    {
-      "Action" : [
-        "s3:GetObject"
-      ],
-      "Resource": "arn:${local.arn}:s3:::*",
-      "Effect": "Allow"
     }
   ]
 }
