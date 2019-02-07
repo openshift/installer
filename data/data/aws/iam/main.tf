@@ -45,21 +45,6 @@ resource "aws_iam_role_policy" "worker_policy" {
       "Resource": "*"
     },
     {
-      "Effect": "Allow",
-      "Action": "ec2:AttachVolume",
-      "Resource": "*"
-    },
-    {
-      "Effect": "Allow",
-      "Action": "ec2:DetachVolume",
-      "Resource": "*"
-    },
-    {
-      "Action": "elasticloadbalancing:*",
-      "Resource": "*",
-      "Effect": "Allow"
-    },
-    {
       "Action" : [
         "s3:GetObject"
       ],
