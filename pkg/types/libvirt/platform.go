@@ -1,9 +1,5 @@
 package libvirt
 
-import (
-	"net"
-)
-
 // Platform stores all the global configuration that all
 // machinesets use.
 type Platform struct {
@@ -24,8 +20,4 @@ type Platform struct {
 	// Network
 	// +optional
 	Network *Network `json:"network,omitempty"`
-
-	// MasterIPs
-	// +optional
-	MasterIPs []net.IP `json:"masterIPs,omitempty"`
 }

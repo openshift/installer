@@ -38,7 +38,6 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 		"-input=false",
 		fmt.Sprintf("-state=%s", filepath.Join(dir, StateFileName)),
 		fmt.Sprintf("-state-out=%s", filepath.Join(dir, StateFileName)),
-		fmt.Sprintf("-var-file=%s", filepath.Join(dir, VarFileName)),
 	}
 	args := append(defaultArgs, extraArgs...)
 	args = append(args, dir)
@@ -71,7 +70,6 @@ func Destroy(dir string, platform string, extraArgs ...string) (err error) {
 		"-input=false",
 		fmt.Sprintf("-state=%s", filepath.Join(dir, StateFileName)),
 		fmt.Sprintf("-state-out=%s", filepath.Join(dir, StateFileName)),
-		fmt.Sprintf("-var-file=%s", filepath.Join(dir, VarFileName)),
 	}
 	args := append(defaultArgs, extraArgs...)
 	args = append(args, dir)

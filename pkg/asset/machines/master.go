@@ -3,11 +3,8 @@ package machines
 import (
 	"fmt"
 
-	"github.com/ghodss/yaml"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -26,8 +23,9 @@ import (
 
 // Master generates the machines for the `master` machine pool.
 type Master struct {
-	MachinesRaw       []byte
-	UserDataSecretRaw []byte
+	Machines           []machineapi.Machine
+	MachinesDeprecated []clusterapi.Machine
+	UserDataSecretRaw  []byte
 }
 
 var _ asset.Asset = (*Master)(nil)
@@ -83,57 +81,36 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		machines, err := aws.Machines(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
+		m.Machines, err = aws.Machines(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		aws.ConfigMasters(machines, ic.ObjectMeta.Name)
-
-		list := listFromMachines(machines)
-		raw, err := yaml.Marshal(list)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal")
-		}
-		m.MachinesRaw = raw
+		aws.ConfigMasters(m.Machines, ic.ObjectMeta.Name)
 	case libvirttypes.Name:
 		mpool := defaultLibvirtMachinePoolPlatform()
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Libvirt)
 		pool.Platform.Libvirt = &mpool
-		machines, err := libvirt.Machines(clusterID.ClusterID, ic, &pool, "master", "master-user-data")
+		m.MachinesDeprecated, err = libvirt.Machines(clusterID.ClusterID, ic, &pool, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-
-		list := listFromMachinesDeprecated(machines)
-		raw, err := yaml.Marshal(list)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal")
-		}
-		m.MachinesRaw = raw
 	case nonetypes.Name:
 		// This is needed to ensure that roundtrip generate-load tests pass when
 		// comparing this value. Otherwise, generate will use a nil value while
-		// load will use an empty byte slice.
-		m.MachinesRaw = []byte{}
+		// load will use an empty slice.
+		m.Machines = []machineapi.Machine{}
 	case openstacktypes.Name:
 		mpool := defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName)
 		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.OpenStack)
 		pool.Platform.OpenStack = &mpool
 
-		machines, err := openstack.Machines(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
+		m.MachinesDeprecated, err = openstack.Machines(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		openstack.ConfigMasters(machines, ic.ObjectMeta.Name)
-
-		list := listFromMachinesDeprecated(machines)
-		m.MachinesRaw, err = yaml.Marshal(list)
-		if err != nil {
-			return errors.Wrap(err, "failed to marshal")
-		}
-
+		openstack.ConfigMasters(m.MachinesDeprecated, ic.ObjectMeta.Name)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
@@ -147,30 +124,4 @@ func masterPool(pools []types.MachinePool) types.MachinePool {
 		}
 	}
 	return types.MachinePool{}
-}
-
-func listFromMachines(objs []machineapi.Machine) *metav1.List {
-	list := &metav1.List{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "List",
-		},
-	}
-	for idx := range objs {
-		list.Items = append(list.Items, runtime.RawExtension{Object: &objs[idx]})
-	}
-	return list
-}
-
-func listFromMachinesDeprecated(objs []clusterapi.Machine) *metav1.List {
-	list := &metav1.List{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "List",
-		},
-	}
-	for idx := range objs {
-		list.Items = append(list.Items, runtime.RawExtension{Object: &objs[idx]})
-	}
-	return list
 }

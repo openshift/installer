@@ -6,9 +6,11 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/pkg/errors"
 )
 
@@ -24,9 +26,10 @@ func Destroy(dir string) (err error) {
 		return errors.New("no platform configured in metadata")
 	}
 
-	copyNames := []string{terraform.StateFileName, cluster.TfVarsFileName}
+	tfPlatformVarsFileName := fmt.Sprintf(cluster.TfPlatformVarsFileName, platform)
+	copyNames := []string{terraform.StateFileName, cluster.TfVarsFileName, tfPlatformVarsFileName}
 
-	if platform == "libvirt" {
+	if platform == libvirt.Name {
 		err = ioutil.WriteFile(filepath.Join(dir, "disable-bootstrap.tfvars"), []byte(`{
   "bootstrap_dns": false
 }
@@ -43,21 +46,31 @@ func Destroy(dir string) (err error) {
 	}
 	defer os.RemoveAll(tempDir)
 
+	extraArgs := []string{}
 	for _, filename := range copyNames {
-		err = copy(filepath.Join(dir, filename), filepath.Join(tempDir, filename))
+		sourcePath := filepath.Join(dir, filename)
+		targetPath := filepath.Join(tempDir, filename)
+		err = copy(sourcePath, targetPath)
 		if err != nil {
+			if os.IsNotExist(err) && err.(*os.PathError).Path == sourcePath && filename == tfPlatformVarsFileName {
+				continue // platform may not need platform-specific Terraform variables
+			}
 			return errors.Wrapf(err, "failed to copy %s to the temporary directory", filename)
+		}
+		if strings.HasSuffix(filename, ".tfvars") {
+			extraArgs = append(extraArgs, fmt.Sprintf("-var-file=%s", targetPath))
 		}
 	}
 
-	if platform == "libvirt" {
-		_, err = terraform.Apply(tempDir, platform, fmt.Sprintf("-var-file=%s", filepath.Join(tempDir, "disable-bootstrap.tfvars")))
+	if platform == libvirt.Name {
+		_, err = terraform.Apply(tempDir, platform, extraArgs...)
 		if err != nil {
 			return errors.Wrap(err, "Terraform apply")
 		}
 	}
 
-	err = terraform.Destroy(tempDir, platform, "-target=module.bootstrap")
+	extraArgs = append(extraArgs, "-target=module.bootstrap")
+	err = terraform.Destroy(tempDir, platform, extraArgs...)
 	if err != nil {
 		return errors.Wrap(err, "Terraform destroy")
 	}
