@@ -4,6 +4,80 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.12.0 - 2019-02-05
+
+### Changed
+
+- We now wait for [`ClusterVersion`][ClusterVersion] to report all
+  operators as available before returning from `create cluster`.
+- We now configure the network operator via
+  `networks.config.openshift.io` and reserve
+  `networkconfigs.networkoperator.openshift.io` for lower-level
+  configuration (although we still generate it as well).
+- We now set `apiServerURL` and `etcdDiscoveryDomain` in
+  `infrastructures.config.openshift.io`.
+- Release binaries are now stripped, which dramatically reduces their
+  size.  Builds with `MODE=dev` remain unstripped if you want to
+  attach a debugger.
+- On AWS, `destroy cluster` no longer depends directly on the cluster
+  name (although it still depends on the cluster name indirectly via
+  the `kubernetes.io/cluster/{name}` tag).  This makes it easier to
+  reconstruct `metadata.json` for `destroy cluster` if you
+  accidentally removed the file before destroying your cluster.
+- On AWS, the default worker MachineSets have been bumped to 120 GiB
+  volumes to increase our baseline performance from on [gp2's sliding
+  IOPS scale][aws-ebs-gp2-iops].  The new default worker volumes match
+  our master bump from 0.5.0.
+- On OpenStack, the HAProxy configuration on the service VM is
+  dynamically updated as masters and workers are added and removed.
+  This supports console access, among other things.
+- Several doc and internal cleanups.
+
+### Fixed
+
+- We no longer write distracting `ERROR: logging before flag.Parse...`
+  messages from our underlying Kubernetes libraries.
+- On loading `install-config.yaml`, we now error on CIDRs whose IP is
+  not at the beginning of the masked subnet.  For example, we now
+  error for `192.168.126.10/24`, since the beginning of that subnet is
+  `192.168.126.0`.
+- On loading `install-config.yaml`, we now fill in defaults for
+  `replicas` when it is unset or explicitly `null`.
+- We have fixed some issues with round-tripping assets between the
+  installer and the asset directory which lead to the reloaded assets
+  being falsely identified as dirty and rebuilt.
+- On OpenStack, a new security rule exposes port 443 to allow
+  OpenShift web-console access.
+- On OpenStack, credentials secret generation now respects the install
+  configuration's `cloud` value, and the secret name has been updated
+  from `openstack-creds` to `openstack-credentials`.
+- On OpenStack, the `local-dns` service will now restart on failure
+  (e.g. when the initial image pull fails) and it no longer sets the
+  name of the container (so we can always re-run it without running
+  into duplicate name issues).
+
+### Removed
+
+- On loading `install-config.yaml`, the installer no longer restricts
+  `networking.type` to a known value.  If the network operator sees an
+  unrecognized type, it assumes the user is configurating networking
+  and doesn't react.
+- We no longer seed `~core/.bash_history` on the bootstrap node, as
+  part of becoming less opinionated about which users are present on
+  the underlying operating system.
+- On AWS, the `iamRoleName` machine-pool property is gone, and the
+  `podCIDR` networking property (deprecated in 0.4.0) is gone.  The
+  install-config version has been bumped from `v1beta1` to `v1beta2`.
+  All users, regardless of platform, will need to update any saved
+  `install-config.yaml` to use the new version.  IAM roles are being
+  replaced by [the credentials operator][credential-operator], and
+  while we still create IAM roles for our master, worker, and
+  bootstrap machines, we're removing the user-facing property now to
+  avoid making this breaking change later.
+- On AWS, the bootstrap machine security group allowing kubelet access
+  (added in 0.10.1) has been removed.  Static pod logs should soon be
+  available from journald (although they aren't yet).
+
 ## 0.11.0 - 2019-01-27
 
 ### Added
@@ -101,10 +175,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
     ```
 
     and similar to successfully customize your master machines.
-- On AWS, `delete cluster` has been adjusted to use more efficient
+- On AWS, `destroy cluster` has been adjusted to use more efficient
   tag-based lookup and fix several bugs due to previously-missing
   pagination.  This should address some issues we had been seeing with
-  leaking AWS resources despite `delete cluster` claiming success.
+  leaking AWS resources despite `destroy cluster` claiming success.
 
 ## 0.10.0 - 2019-01-15
 
@@ -561,8 +635,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   cluster-API provider][cluster-api-provider-aws] will be attached to
   the load balancers.
 - On AWS and OpenStack, the default network CIDRs have changed to
-  172.30.0.0/16 for services and 10.128.0.0/14 for the cluster, to be
-  consistent with previous versions of OpenStack.
+  `172.30.0.0/16` for services and `10.128.0.0/14` for the cluster, to
+  be consistent with previous versions of OpenStack.
 - The bootstrap kubelet is no longer part of the production cluster.
   This reduces complexity and keeps production pods off of the
   temporary bootstrap node.
@@ -771,6 +845,8 @@ the new `openshift-install` command instead.
 [cluster-api-provider-aws-012575c1-AWSMachineProviderConfig]: https://github.com/openshift/cluster-api-provider-aws/blob/012575c1c8d758f81c979b0b2354950a2193ec1a/pkg/apis/awsproviderconfig/v1alpha1/awsmachineproviderconfig_types.go#L86-L139
 [cluster-bootstrap]: https://github.com/openshift/cluster-bootstrap
 [cluster-version-operator]: https://github.com/openshift/cluster-version-operator
+[ClusterVersion]: https://github.com/openshift/cluster-version-operator/blob/master/docs/dev/clusterversion.md
+[credential-operator]: https://github.com/openshift/cloud-credential-operator
 [dot]: https://www.graphviz.org/doc/info/lang.html
 [Hive]: https://github.com/openshift/hive/
 [ingress-operator]: https://github.com/openshift/cluster-ingress-operator
