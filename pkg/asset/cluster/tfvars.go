@@ -117,7 +117,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		})
 	case libvirt.Name:
 		data, err = libvirttfvars.TFVars(
-			mastersAsset.MachinesDeprecated[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
+			mastersAsset.Machines[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
 			string(*rhcosImage),
 			&installConfig.Config.Networking.MachineCIDR.IPNet,
 			installConfig.Config.Platform.Libvirt.Network.IfName,

@@ -125,7 +125,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create worker machine objects")
 		}
 
-		list := listFromMachineDeprecated(sets)
+		list := listFromMachineSets(sets)
 		raw, err := yaml.Marshal(list)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
@@ -147,7 +147,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 
-		list := listFromMachineDeprecated(sets)
+		list := listFromMachineSetsDeprecated(sets)
 		w.MachineSetRaw, err = yaml.Marshal(list)
 		if err != nil {
 			return errors.Wrap(err, "failed to marshal")
@@ -188,7 +188,7 @@ func listFromMachineSets(objs []machineapi.MachineSet) *metav1.List {
 	return list
 }
 
-func listFromMachineDeprecated(objs []clusterapi.MachineSet) *metav1.List {
+func listFromMachineSetsDeprecated(objs []clusterapi.MachineSet) *metav1.List {
 	list := &metav1.List{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
