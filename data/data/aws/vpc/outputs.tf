@@ -10,12 +10,8 @@ output "private_subnet_ids" {
   value = "${local.private_subnet_ids}"
 }
 
-output "master_sg_id" {
-  value = "${aws_security_group.master.id}"
-}
-
-output "worker_sg_id" {
-  value = "${aws_security_group.worker.id}"
+output "control_plane_sg_id" {
+  value = "${aws_security_group.control_plane.id}"
 }
 
 output "api_sg_id" {

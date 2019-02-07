@@ -25,7 +25,7 @@ variable "libvirt_bootstrap_ip" {
 
 variable "libvirt_master_ips" {
   type        = "list"
-  description = "the list of desired master ips. Must match master_count"
+  description = "the list of desired master ips. Must match control_plane_count"
 }
 
 # It's definitely recommended to bump this if you can.

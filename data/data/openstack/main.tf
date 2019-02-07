@@ -59,11 +59,11 @@ module "masters" {
   cluster_id          = "${var.cluster_id}"
   cluster_name        = "${var.cluster_name}"
   flavor_name         = "${var.openstack_master_flavor_name}"
-  instance_count      = "${var.master_count}"
-  machine_pool_name   = "${var.master_machine_pool_name}"
+  instance_count      = "${var.control_plane_count}"
+  machine_pool_name   = "${var.control_plane_machine_pool_name}"
   master_sg_ids       = "${concat(var.openstack_master_extra_sg_ids, list(module.topology.master_sg_id))}"
   master_port_ids     = "${module.topology.master_port_ids}"
-  user_data_ign       = "${var.ignition_master}"
+  user_data_ign       = "${var.ignition_control_plane}"
   service_vm_fixed_ip = "${module.topology.service_vm_fixed_ip}"
 }
 
@@ -76,7 +76,7 @@ module "topology" {
   cluster_id       = "${var.cluster_id}"
   cluster_name     = "${var.cluster_name}"
   external_network = "${var.openstack_external_network}"
-  masters_count    = "${var.master_count}"
+  masters_count    = "${var.control_plane_count}"
   lb_floating_ip   = "${var.openstack_lb_floating_ip}"
   trunk_support    = "${var.openstack_trunk_support}"
 }

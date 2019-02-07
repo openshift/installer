@@ -107,8 +107,6 @@ resource "aws_lb_listener" "api_internal_services" {
 }
 
 resource "aws_lb_listener" "api_external_api" {
-  count = "${var.public_master_endpoints ? 1 : 0}"
-
   load_balancer_arn = "${aws_lb.api_external.arn}"
   protocol          = "TCP"
   port              = "6443"

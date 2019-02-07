@@ -33,9 +33,9 @@ variable "machine_pool_name" {
   type = "string"
 }
 
-variable "master_sg_ids" {
+variable "control_plane_sg_ids" {
   type        = "list"
-  description = "The security group IDs to be applied to the master nodes."
+  description = "The security group IDs to be applied to the control plane nodes."
 }
 
 variable "root_volume_iops" {

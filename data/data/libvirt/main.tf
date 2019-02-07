@@ -20,14 +20,14 @@ module "bootstrap" {
 }
 
 resource "libvirt_volume" "master" {
-  count          = "${var.master_count}"
-  name           = "${var.cluster_name}-${var.master_machine_pool_name}-${count.index}"
+  count          = "${var.control_plane_count}"
+  name           = "${var.cluster_name}-${var.control_plane_machine_pool_name}-${count.index}"
   base_volume_id = "${module.volume.coreos_base_volume_id}"
 }
 
 resource "libvirt_ignition" "master" {
   name    = "${var.cluster_name}-master.ign"
-  content = "${var.ignition_master}"
+  content = "${var.ignition_control_plane}"
 }
 
 resource "libvirt_network" "net" {
@@ -60,9 +60,9 @@ resource "libvirt_network" "net" {
 }
 
 resource "libvirt_domain" "master" {
-  count = "${var.master_count}"
+  count = "${var.control_plane_count}"
 
-  name = "${var.cluster_name}-${var.master_machine_pool_name}-${count.index}"
+  name = "${var.cluster_name}-${var.control_plane_machine_pool_name}-${count.index}"
 
   memory = "${var.libvirt_master_memory}"
   vcpu   = "${var.libvirt_master_vcpu}"
@@ -84,7 +84,7 @@ resource "libvirt_domain" "master" {
 
   network_interface {
     network_id = "${libvirt_network.net.id}"
-    hostname   = "${var.cluster_name}-${var.master_machine_pool_name}-${count.index}"
+    hostname   = "${var.cluster_name}-${var.control_plane_machine_pool_name}-${count.index}"
     addresses  = ["${var.libvirt_master_ips[count.index]}"]
   }
 }
@@ -96,19 +96,19 @@ data "libvirt_network_dns_host_template" "bootstrap" {
 }
 
 data "libvirt_network_dns_host_template" "masters" {
-  count    = "${var.master_count}"
+  count    = "${var.control_plane_count}"
   ip       = "${var.libvirt_master_ips[count.index]}"
   hostname = "${var.cluster_name}-api"
 }
 
 data "libvirt_network_dns_host_template" "etcds" {
-  count    = "${var.master_count}"
+  count    = "${var.control_plane_count}"
   ip       = "${var.libvirt_master_ips[count.index]}"
   hostname = "${var.cluster_name}-etcd-${count.index}"
 }
 
 data "libvirt_network_dns_srv_template" "etcd_cluster" {
-  count    = "${var.master_count}"
+  count    = "${var.control_plane_count}"
   service  = "etcd-server-ssl"
   protocol = "tcp"
   domain   = "${var.cluster_name}.${var.base_domain}"

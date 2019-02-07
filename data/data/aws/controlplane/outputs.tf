@@ -7,5 +7,5 @@ output "cluster_id" {
 }
 
 output "ip_addresses" {
-  value = "${aws_instance.master.*.private_ip}"
+  value = "${aws_instance.control_plane.*.private_ip}"
 }

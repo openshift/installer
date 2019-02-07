@@ -11,25 +11,25 @@ import (
 type config struct {
 	EC2AMIOverride string            `json:"aws_ec2_ami_override,omitempty"`
 	ExtraTags      map[string]string `json:"aws_extra_tags,omitempty"`
-	EC2Type        string            `json:"aws_master_ec2_type,omitempty"`
-	IOPS           int64             `json:"aws_master_root_volume_iops"`
-	Size           int64             `json:"aws_master_root_volume_size,omitempty"`
-	Type           string            `json:"aws_master_root_volume_type,omitempty"`
+	EC2Type        string            `json:"aws_control_plane_ec2_type,omitempty"`
+	IOPS           int64             `json:"aws_control_plane_root_volume_iops"`
+	Size           int64             `json:"aws_control_plane_root_volume_size,omitempty"`
+	Type           string            `json:"aws_control_plane_root_volume_type,omitempty"`
 	Region         string            `json:"aws_region,omitempty"`
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
-func TFVars(masterConfig *v1beta1.AWSMachineProviderConfig) ([]byte, error) {
-	tags := make(map[string]string, len(masterConfig.Tags))
-	for _, tag := range masterConfig.Tags {
+func TFVars(controlPlaneConfig *v1beta1.AWSMachineProviderConfig) ([]byte, error) {
+	tags := make(map[string]string, len(controlPlaneConfig.Tags))
+	for _, tag := range controlPlaneConfig.Tags {
 		tags[tag.Name] = tag.Value
 	}
 
-	if len(masterConfig.BlockDevices) == 0 {
+	if len(controlPlaneConfig.BlockDevices) == 0 {
 		return nil, errors.New("block device slice cannot be empty")
 	}
 
-	rootVolume := masterConfig.BlockDevices[0]
+	rootVolume := controlPlaneConfig.BlockDevices[0]
 	if rootVolume.EBS == nil {
 		return nil, errors.New("EBS information must be configured for the root volume")
 	}
@@ -47,10 +47,10 @@ func TFVars(masterConfig *v1beta1.AWSMachineProviderConfig) ([]byte, error) {
 	}
 
 	cfg := &config{
-		Region:         masterConfig.Placement.Region,
+		Region:         controlPlaneConfig.Placement.Region,
 		ExtraTags:      tags,
-		EC2AMIOverride: *masterConfig.AMI.ID,
-		EC2Type:        masterConfig.InstanceType,
+		EC2AMIOverride: *controlPlaneConfig.AMI.ID,
+		EC2Type:        controlPlaneConfig.InstanceType,
 		Size:           *rootVolume.EBS.VolumeSize,
 		Type:           *rootVolume.EBS.VolumeType,
 	}

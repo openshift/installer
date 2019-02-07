@@ -10,18 +10,18 @@ The IP address space from which to assign machine IPs.
 EOF
 }
 
-variable "master_count" {
+variable "control_plane_count" {
   type    = "string"
   default = "1"
 
   description = <<EOF
-The number of master nodes to be created.
+The number of control plane nodes to be created.
 This applies only to cloud platforms.
 EOF
 }
 
-variable "master_machine_pool_name" {
-  type = "string"
+variable "control_plane_machine_pool_name" {
+  type        = "string"
   description = "The name of the machine pool to create for the control plane"
 }
 
@@ -50,7 +50,7 @@ Note: This field MUST be set manually prior to creating the cluster.
 EOF
 }
 
-variable "ignition_master" {
+variable "ignition_control_plane" {
   type    = "string"
   default = ""
 

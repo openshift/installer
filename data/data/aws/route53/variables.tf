@@ -8,23 +8,6 @@ variable "base_domain" {
   type        = "string"
 }
 
-variable "master_count" {
-  description = "The number of masters"
-  type        = "string"
-}
-
-variable "master_ip_addresses" {
-  description = "List of string IPs for masters"
-  type        = "list"
-  default     = []
-}
-
-variable "worker_ip_addresses" {
-  description = "List of string IPs for workers"
-  type        = "list"
-  default     = []
-}
-
 // AWS specific internal zone variables
 
 variable "private_zone_id" {

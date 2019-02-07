@@ -7,9 +7,9 @@ EOF
   default = "1.0"
 }
 
-variable "aws_master_ec2_type" {
+variable "aws_control_plane_ec2_type" {
   type        = "string"
-  description = "Instance size for the master node(s). Example: `m4.large`."
+  description = "Instance size for the control plane node(s). Example: `m4.large`."
 }
 
 variable "aws_ec2_ami_override" {
@@ -30,21 +30,21 @@ EOF
   default = {}
 }
 
-variable "aws_master_root_volume_type" {
+variable "aws_control_plane_root_volume_type" {
   type        = "string"
-  description = "The type of volume for the root block device of master nodes."
+  description = "The type of volume for the root block device of control plane nodes."
 }
 
-variable "aws_master_root_volume_size" {
+variable "aws_control_plane_root_volume_size" {
   type        = "string"
-  description = "The size of the volume in gigabytes for the root block device of master nodes."
+  description = "The size of the volume in gigabytes for the root block device of control plane nodes."
 }
 
-variable "aws_master_root_volume_iops" {
+variable "aws_control_plane_root_volume_iops" {
   type = "string"
 
   description = <<EOF
-The amount of provisioned IOPS for the root block device of master nodes.
+The amount of provisioned IOPS for the root block device of control plane nodes.
 Ignored if the volume type is not io1.
 EOF
 }
