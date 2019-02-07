@@ -55,7 +55,7 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 	if len(c.Compute) == 0 {
 		c.Compute = []types.MachinePool{
 			{
-				Name:     "worker",
+				Name:     "compute",
 				Replicas: &defaultReplicaCount,
 			},
 		}

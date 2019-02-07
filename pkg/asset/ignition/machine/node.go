@@ -12,7 +12,7 @@ import (
 
 // pointerIgnitionConfig generates a config which references the remote config
 // served by the machine config server.
-func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string) *ignition.Config {
+func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role types.MachineRole) *ignition.Config {
 	return &ignition.Config{
 		Ignition: ignition.Ignition{
 			Version: ignition.MaxVersion.String(),
@@ -22,7 +22,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 						return &url.URL{
 							Scheme: "https",
 							Host:   fmt.Sprintf("%s-api.%s:22623", installConfig.ObjectMeta.Name, installConfig.BaseDomain),
-							Path:   fmt.Sprintf("/config/%s", role),
+							Path:   fmt.Sprintf("/config/%s", machineConfigOperatorMachineRole(role)),
 						}
 					}().String(),
 				}},
@@ -35,5 +35,16 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 				},
 			},
 		},
+	}
+}
+
+func machineConfigOperatorMachineRole(role types.MachineRole) string {
+	switch role {
+	case types.ControlPlaneMachineRole:
+		return "master"
+	case types.ComputeMachineRole:
+		return "worker"
+	default:
+		return ""
 	}
 }

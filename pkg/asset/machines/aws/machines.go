@@ -18,7 +18,7 @@ import (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage string, role types.MachineRole, userDataSecret string) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS configuration: %q", configPlatform)
 	}
@@ -51,8 +51,8 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				Name:      fmt.Sprintf("%s-%s-%d", clustername, pool.Name, idx),
 				Labels: map[string]string{
 					"sigs.k8s.io/cluster-api-cluster":      clustername,
-					"sigs.k8s.io/cluster-api-machine-role": role,
-					"sigs.k8s.io/cluster-api-machine-type": role,
+					"sigs.k8s.io/cluster-api-machine-role": clusterAPIMachineRole(role),
+					"sigs.k8s.io/cluster-api-machine-type": clusterAPIMachineRole(role),
 				},
 			},
 			Spec: machineapi.MachineSpec{
@@ -69,7 +69,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.MachinePool, osImage string, azIdx int, role, userDataSecret string) (*awsprovider.AWSMachineProviderConfig, error) {
+func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.MachinePool, osImage string, azIdx int, role types.MachineRole, userDataSecret string) (*awsprovider.AWSMachineProviderConfig, error) {
 	az := mpool.Zones[azIdx]
 	amiID := osImage
 	tags, err := tagsFromUserTags(clusterID, clusterName, platform.UserTags)
@@ -144,5 +144,16 @@ func ConfigMasters(machines []machineapi.Machine, clusterName string) {
 				Type: awsprovider.NetworkLoadBalancerType,
 			},
 		}
+	}
+}
+
+func clusterAPIMachineRole(role types.MachineRole) string {
+	switch role {
+	case types.ControlPlaneMachineRole:
+		return "master"
+	case types.ComputeMachineRole:
+		return "worker"
+	default:
+		return ""
 	}
 }

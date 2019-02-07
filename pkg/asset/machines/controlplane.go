@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
@@ -62,7 +63,7 @@ func (a *ControlPlane) Dependencies() []asset.Asset {
 		&installconfig.PlatformCredsCheck{},
 		&installconfig.InstallConfig{},
 		new(rhcos.Image),
-		&machine.Master{},
+		&machine.ControlPlane{},
 	}
 }
 
@@ -71,8 +72,8 @@ func (a *ControlPlane) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installconfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
-	mign := &machine.Master{}
-	dependencies.Get(clusterID, installconfig, rhcosImage, mign)
+	cpign := &machine.ControlPlane{}
+	dependencies.Get(clusterID, installconfig, rhcosImage, cpign)
 
 	var err error
 	machines := []machineapi.Machine{}
@@ -92,7 +93,7 @@ func (a *ControlPlane) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		machines, err = aws.Machines(clusterID.ClusterID, ic, pool, string(*rhcosImage), "master", "control-plane-user-data")
+		machines, err = aws.Machines(clusterID.ClusterID, ic, pool, string(*rhcosImage), types.ControlPlaneMachineRole, "control-plane-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create control plane machine objects")
 		}
@@ -123,7 +124,7 @@ func (a *ControlPlane) Generate(dependencies asset.Parents) error {
 		return fmt.Errorf("invalid Platform")
 	}
 
-	userDataMap := map[string][]byte{"control-plane-user-data": mign.File.Data}
+	userDataMap := map[string][]byte{"control-plane-user-data": cpign.File.Data}
 	data, err := userDataList(userDataMap)
 	if err != nil {
 		return errors.Wrap(err, "failed to create user-data secret for control plane machines")

@@ -9,8 +9,8 @@ import (
 // MachinePool is a pool of machines to be installed.
 type MachinePool struct {
 	// Name is the name of the machine pool.
-	// For the control plane machine pool, the name will always be "master".
-	// For the compute machine pools, the only valid name is "worker".
+	// For the control plane machine pool, the name will always be "control-plane".
+	// For the compute machine pools, the only valid name is "compute".
 	Name string `json:"name"`
 
 	// Replicas is the count of machines for this machine pool.

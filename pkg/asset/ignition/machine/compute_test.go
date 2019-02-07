@@ -13,8 +13,8 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
-// TestWorkerGenerate tests generating the worker asset.
-func TestWorkerGenerate(t *testing.T) {
+// TestComputeGenerate tests generating the compute asset.
+func TestComputeGenerate(t *testing.T) {
 	installConfig := &installconfig.InstallConfig{
 		Config: &types.InstallConfig{
 			Networking: &types.Networking{
@@ -35,11 +35,11 @@ func TestWorkerGenerate(t *testing.T) {
 	parents := asset.Parents{}
 	parents.Add(installConfig, rootCA)
 
-	worker := &Worker{}
-	err = worker.Generate(parents)
-	assert.NoError(t, err, "unexpected error generating worker asset")
+	compute := &Compute{}
+	err = compute.Generate(parents)
+	assert.NoError(t, err, "unexpected error generating compute asset")
 
-	actualFiles := worker.Files()
-	assert.Equal(t, 1, len(actualFiles), "unexpected number of files in worker state")
-	assert.Equal(t, "worker.ign", actualFiles[0].Filename, "unexpected name for worker ignition config")
+	actualFiles := compute.Files()
+	assert.Equal(t, 1, len(actualFiles), "unexpected number of files in compute state")
+	assert.Equal(t, "compute.ign", actualFiles[0].Filename, "unexpected name for compute ignition config")
 }

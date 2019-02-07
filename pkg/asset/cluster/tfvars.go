@@ -58,7 +58,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		new(rhcos.Image),
 		&bootstrap.Bootstrap{},
-		&machine.Master{},
+		&machine.ControlPlane{},
 		&machines.ControlPlane{},
 	}
 }
@@ -68,13 +68,13 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
-	masterIgnAsset := &machine.Master{}
+	controlPlaneIgnAsset := &machine.ControlPlane{}
 	controlPlaneAsset := &machines.ControlPlane{}
 	rhcosImage := new(rhcos.Image)
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, controlPlaneAsset, rhcosImage)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, controlPlaneIgnAsset, controlPlaneAsset, rhcosImage)
 
 	bootstrapIgn := string(bootstrapIgnAsset.Files()[0].Data)
-	masterIgn := string(masterIgnAsset.Files()[0].Data)
+	controlPlaneIgn := string(controlPlaneIgnAsset.Files()[0].Data)
 
 	controlPlaneMachines := controlPlaneAsset.Machines()
 	controlPlaneCount := len(controlPlaneMachines)
@@ -84,7 +84,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		installConfig.Config.BaseDomain,
 		&installConfig.Config.Networking.MachineCIDR.IPNet,
 		bootstrapIgn,
-		masterIgn,
+		controlPlaneIgn,
 		controlPlaneCount,
 		installConfig.Config.ControlPlane.Name,
 	)

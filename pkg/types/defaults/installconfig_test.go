@@ -37,7 +37,7 @@ func defaultInstallConfig() *types.InstallConfig {
 		},
 		Compute: []types.MachinePool{
 			{
-				Name:     "worker",
+				Name:     "compute",
 				Replicas: pointer.Int64Ptr(3),
 			},
 		},

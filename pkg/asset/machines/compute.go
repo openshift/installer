@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines/libvirt"
 	"github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/rhcos"
+	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
@@ -66,7 +67,7 @@ func (a *Compute) Dependencies() []asset.Asset {
 		&installconfig.PlatformCredsCheck{},
 		&installconfig.InstallConfig{},
 		new(rhcos.Image),
-		&machine.Worker{},
+		&machine.Compute{},
 	}
 }
 
@@ -75,11 +76,11 @@ func (a *Compute) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installconfig := &installconfig.InstallConfig{}
 	rhcosImage := new(rhcos.Image)
-	wign := &machine.Worker{}
-	dependencies.Get(clusterID, installconfig, rhcosImage, wign)
+	cign := &machine.Compute{}
+	dependencies.Get(clusterID, installconfig, rhcosImage, cign)
 
 	var err error
-	userDataMap := map[string][]byte{"compute-user-data": wign.File.Data}
+	userDataMap := map[string][]byte{"compute-user-data": cign.File.Data}
 	a.UserDataSecretRaw, err = userDataList(userDataMap)
 	if err != nil {
 		return errors.Wrap(err, "failed to create user-data secret for compute machines")
@@ -103,7 +104,7 @@ func (a *Compute) Generate(dependencies asset.Parents) error {
 				mpool.Zones = azs
 			}
 			pool.Platform.AWS = &mpool
-			sets, err := aws.MachineSets(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "worker", "compute-user-data")
+			sets, err := aws.MachineSets(clusterID.ClusterID, ic, &pool, string(*rhcosImage), types.ComputeMachineRole, "compute-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create compute machine objects")
 			}

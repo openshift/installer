@@ -132,8 +132,8 @@ func validateCompute(pools []types.MachinePool, fldPath *field.Path, platform st
 	foundPositiveReplicas := false
 	for i, p := range pools {
 		poolFldPath := fldPath.Index(i)
-		if p.Name != "worker" {
-			allErrs = append(allErrs, field.NotSupported(poolFldPath.Child("name"), p.Name, []string{"worker"}))
+		if p.Name != "compute" {
+			allErrs = append(allErrs, field.NotSupported(poolFldPath.Child("name"), p.Name, []string{"compute"}))
 		}
 		if poolNames[p.Name] {
 			allErrs = append(allErrs, field.Duplicate(poolFldPath.Child("name"), p.Name))

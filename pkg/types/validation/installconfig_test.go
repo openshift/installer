@@ -43,7 +43,7 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		Compute: []types.MachinePool{
 			{
-				Name:     "worker",
+				Name:     "compute",
 				Replicas: pointer.Int64Ptr(3),
 			},
 		},
@@ -221,17 +221,17 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Compute = []types.MachinePool{
 					{
-						Name:     "worker",
+						Name:     "compute",
 						Replicas: pointer.Int64Ptr(1),
 					},
 					{
-						Name:     "worker",
+						Name:     "compute",
 						Replicas: pointer.Int64Ptr(2),
 					},
 				}
 				return c
 			}(),
-			expectedError: `^compute\[1\]\.name: Duplicate value: "worker"$`,
+			expectedError: `^compute\[1\]\.name: Duplicate value: "compute"$`,
 		},
 		{
 			name: "no compute replicas",
@@ -239,7 +239,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Compute = []types.MachinePool{
 					{
-						Name:     "worker",
+						Name:     "compute",
 						Replicas: pointer.Int64Ptr(0),
 					},
 				}
@@ -252,7 +252,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c := validInstallConfig()
 				c.Compute = []types.MachinePool{
 					{
-						Name:     "worker",
+						Name:     "compute",
 						Replicas: pointer.Int64Ptr(3),
 						Platform: types.MachinePoolPlatform{
 							OpenStack: &openstack.MachinePool{},

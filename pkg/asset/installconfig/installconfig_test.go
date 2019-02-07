@@ -81,7 +81,7 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 		},
 		Compute: []types.MachinePool{
 			{
-				Name:     "worker",
+				Name:     "compute",
 				Replicas: pointer.Int64Ptr(3),
 			},
 		},
@@ -140,7 +140,7 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				},
 				Compute: []types.MachinePool{
 					{
-						Name:     "worker",
+						Name:     "compute",
 						Replicas: pointer.Int64Ptr(3),
 					},
 				},
