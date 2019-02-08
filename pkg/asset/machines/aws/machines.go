@@ -129,8 +129,8 @@ func tagsFromUserTags(clusterID, clusterName string, usertags map[string]string)
 	return tags, nil
 }
 
-// ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
-func ConfigMasters(machines []machineapi.Machine, clusterName string) {
+// ConfigControlPlane sets the PublicIP flag and assigns a set of load balancers to the given machines
+func ConfigControlPlane(machines []machineapi.Machine, clusterName string) {
 	for _, machine := range machines {
 		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
 		providerSpec.PublicIP = pointer.BoolPtr(true)

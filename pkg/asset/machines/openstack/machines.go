@@ -106,8 +106,8 @@ func provider(clusterID, clusterName string, platform *openstack.Platform, mpool
 	}, nil
 }
 
-// ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
-func ConfigMasters(machines []machineapi.Machine, clusterName string) {
+// ConfigControlPlane sets the PublicIP flag and assigns a set of load balancers to the given machines
+func ConfigControlPlane(machines []machineapi.Machine, clusterName string) {
 	/*for _, machine := range machines {
 		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec)
 	}*/

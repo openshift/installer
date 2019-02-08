@@ -97,7 +97,7 @@ func (a *ControlPlane) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create control plane machine objects")
 		}
-		aws.ConfigMasters(machines, ic.ObjectMeta.Name)
+		aws.ConfigControlPlane(machines, ic.ObjectMeta.Name)
 	case libvirttypes.Name:
 		mpool := defaultLibvirtMachinePoolPlatform()
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
@@ -119,7 +119,7 @@ func (a *ControlPlane) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create control plane machine objects")
 		}
-		openstack.ConfigMasters(machines, ic.ObjectMeta.Name)
+		openstack.ConfigControlPlane(machines, ic.ObjectMeta.Name)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
