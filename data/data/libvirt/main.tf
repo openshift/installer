@@ -19,14 +19,14 @@ module "bootstrap" {
   network_id     = "${libvirt_network.net.id}"
 }
 
-resource "libvirt_volume" "master" {
+resource "libvirt_volume" "control_plane" {
   count          = "${var.control_plane_count}"
   name           = "${var.cluster_name}-${var.control_plane_machine_pool_name}-${count.index}"
   base_volume_id = "${module.volume.coreos_base_volume_id}"
 }
 
-resource "libvirt_ignition" "master" {
-  name    = "${var.cluster_name}-master.ign"
+resource "libvirt_ignition" "control_plane" {
+  name    = "${var.cluster_name}-${var.control_plane_machine_pool_name}.ign"
   content = "${var.ignition_control_plane}"
 }
 
@@ -51,7 +51,7 @@ resource "libvirt_network" "net" {
 
     hosts = ["${flatten(list(
       data.libvirt_network_dns_host_template.bootstrap.*.rendered,
-      data.libvirt_network_dns_host_template.masters.*.rendered,
+      data.libvirt_network_dns_host_template.control_plane.*.rendered,
       data.libvirt_network_dns_host_template.etcds.*.rendered,
     ))}"]
   }]
@@ -59,18 +59,18 @@ resource "libvirt_network" "net" {
   autostart = true
 }
 
-resource "libvirt_domain" "master" {
+resource "libvirt_domain" "control_plane" {
   count = "${var.control_plane_count}"
 
   name = "${var.cluster_name}-${var.control_plane_machine_pool_name}-${count.index}"
 
-  memory = "${var.libvirt_master_memory}"
-  vcpu   = "${var.libvirt_master_vcpu}"
+  memory = "${var.libvirt_control_plane_memory}"
+  vcpu   = "${var.libvirt_control_plane_vcpu}"
 
-  coreos_ignition = "${libvirt_ignition.master.id}"
+  coreos_ignition = "${libvirt_ignition.control_plane.id}"
 
   disk {
-    volume_id = "${element(libvirt_volume.master.*.id, count.index)}"
+    volume_id = "${element(libvirt_volume.control_plane.*.id, count.index)}"
   }
 
   console {
@@ -85,7 +85,7 @@ resource "libvirt_domain" "master" {
   network_interface {
     network_id = "${libvirt_network.net.id}"
     hostname   = "${var.cluster_name}-${var.control_plane_machine_pool_name}-${count.index}"
-    addresses  = ["${var.libvirt_master_ips[count.index]}"]
+    addresses  = ["${var.libvirt_control_plane_ips[count.index]}"]
   }
 }
 
@@ -95,15 +95,15 @@ data "libvirt_network_dns_host_template" "bootstrap" {
   hostname = "${var.cluster_name}-api"
 }
 
-data "libvirt_network_dns_host_template" "masters" {
+data "libvirt_network_dns_host_template" "control_plane" {
   count    = "${var.control_plane_count}"
-  ip       = "${var.libvirt_master_ips[count.index]}"
+  ip       = "${var.libvirt_control_plane_ips[count.index]}"
   hostname = "${var.cluster_name}-api"
 }
 
 data "libvirt_network_dns_host_template" "etcds" {
   count    = "${var.control_plane_count}"
-  ip       = "${var.libvirt_master_ips[count.index]}"
+  ip       = "${var.libvirt_control_plane_ips[count.index]}"
   hostname = "${var.cluster_name}-etcd-${count.index}"
 }
 

@@ -12,21 +12,21 @@ import (
 )
 
 type config struct {
-	URI         string   `json:"libvirt_uri,omitempty"`
-	Image       string   `json:"os_image,omitempty"`
-	IfName      string   `json:"libvirt_network_if"`
-	MasterIPs   []string `json:"libvirt_master_ips,omitempty"`
-	BootstrapIP string   `json:"libvirt_bootstrap_ip,omitempty"`
+	URI             string   `json:"libvirt_uri,omitempty"`
+	Image           string   `json:"os_image,omitempty"`
+	IfName          string   `json:"libvirt_network_if"`
+	ControlPlaneIPs []string `json:"libvirt_control_plane_ips,omitempty"`
+	BootstrapIP     string   `json:"libvirt_bootstrap_ip,omitempty"`
 }
 
 // TFVars generates libvirt-specific Terraform variables.
-func TFVars(masterConfig *v1alpha1.LibvirtMachineProviderConfig, osImage string, machineCIDR *net.IPNet, bridge string, masterCount int) ([]byte, error) {
+func TFVars(controlPlaneConfig *v1alpha1.LibvirtMachineProviderConfig, osImage string, machineCIDR *net.IPNet, bridge string, controlPlaneCount int) ([]byte, error) {
 	bootstrapIP, err := cidr.Host(machineCIDR, 10)
 	if err != nil {
 		return nil, errors.Errorf("failed to generate bootstrap IP: %v", err)
 	}
 
-	masterIPs, err := generateIPs("master", machineCIDR, masterCount, 11)
+	controlPlaneIPs, err := generateIPs("control plane", machineCIDR, controlPlaneCount, 11)
 	if err != nil {
 		return nil, err
 	}
@@ -37,11 +37,11 @@ func TFVars(masterConfig *v1alpha1.LibvirtMachineProviderConfig, osImage string,
 	}
 
 	cfg := &config{
-		URI:         masterConfig.URI,
-		Image:       osImage,
-		IfName:      bridge,
-		BootstrapIP: bootstrapIP.String(),
-		MasterIPs:   masterIPs,
+		URI:             controlPlaneConfig.URI,
+		Image:           osImage,
+		IfName:          bridge,
+		BootstrapIP:     bootstrapIP.String(),
+		ControlPlaneIPs: controlPlaneIPs,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")
