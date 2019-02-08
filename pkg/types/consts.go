@@ -9,3 +9,27 @@ const (
 	// ComputeMachineRole is used for machines that run work loads
 	ComputeMachineRole MachineRole = "compute"
 )
+
+// ClusterAPIMachineRole returns the machine role used by clusterapi.
+func (r MachineRole) ClusterAPIMachineRole() string {
+	switch r {
+	case ControlPlaneMachineRole:
+		return "master"
+	case ComputeMachineRole:
+		return "worker"
+	default:
+		return ""
+	}
+}
+
+// MachineConfigOperatorMachineRole returns the machine role used by machine-config-operator.
+func (r MachineRole) MachineConfigOperatorMachineRole() string {
+	switch r {
+	case ControlPlaneMachineRole:
+		return "master"
+	case ComputeMachineRole:
+		return "worker"
+	default:
+		return ""
+	}
+}

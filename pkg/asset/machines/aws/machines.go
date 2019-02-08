@@ -51,8 +51,8 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				Name:      fmt.Sprintf("%s-%s-%d", clustername, pool.Name, idx),
 				Labels: map[string]string{
 					"sigs.k8s.io/cluster-api-cluster":      clustername,
-					"sigs.k8s.io/cluster-api-machine-role": clusterAPIMachineRole(role),
-					"sigs.k8s.io/cluster-api-machine-type": clusterAPIMachineRole(role),
+					"sigs.k8s.io/cluster-api-machine-role": role.ClusterAPIMachineRole(),
+					"sigs.k8s.io/cluster-api-machine-type": role.ClusterAPIMachineRole(),
 				},
 			},
 			Spec: machineapi.MachineSpec{
@@ -144,16 +144,5 @@ func ConfigMasters(machines []machineapi.Machine, clusterName string) {
 				Type: awsprovider.NetworkLoadBalancerType,
 			},
 		}
-	}
-}
-
-func clusterAPIMachineRole(role types.MachineRole) string {
-	switch role {
-	case types.ControlPlaneMachineRole:
-		return "master"
-	case types.ComputeMachineRole:
-		return "worker"
-	default:
-		return ""
 	}
 }

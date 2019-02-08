@@ -14,7 +14,7 @@ import (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role types.MachineRole, userDataSecret string) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != libvirt.Name {
 		return nil, fmt.Errorf("non-Libvirt configuration: %q", configPlatform)
 	}
@@ -41,8 +41,8 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				Name:      fmt.Sprintf("%s-%s-%d", clustername, pool.Name, idx),
 				Labels: map[string]string{
 					"sigs.k8s.io/cluster-api-cluster":      clustername,
-					"sigs.k8s.io/cluster-api-machine-role": role,
-					"sigs.k8s.io/cluster-api-machine-type": role,
+					"sigs.k8s.io/cluster-api-machine-role": role.ClusterAPIMachineRole(),
+					"sigs.k8s.io/cluster-api-machine-type": role.ClusterAPIMachineRole(),
 				},
 			},
 			Spec: machineapi.MachineSpec{

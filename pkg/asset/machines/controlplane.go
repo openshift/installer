@@ -103,7 +103,7 @@ func (a *ControlPlane) Generate(dependencies asset.Parents) error {
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Libvirt)
 		pool.Platform.Libvirt = &mpool
-		machines, err = libvirt.Machines(clusterID.ClusterID, ic, pool, "master", "control-plane-user-data")
+		machines, err = libvirt.Machines(clusterID.ClusterID, ic, pool, types.ControlPlaneMachineRole, "control-plane-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create control plane machine objects")
 		}
@@ -115,7 +115,7 @@ func (a *ControlPlane) Generate(dependencies asset.Parents) error {
 		mpool.Set(pool.Platform.OpenStack)
 		pool.Platform.OpenStack = &mpool
 
-		machines, err = openstack.Machines(clusterID.ClusterID, ic, pool, string(*rhcosImage), "master", "control-plane-user-data")
+		machines, err = openstack.Machines(clusterID.ClusterID, ic, pool, string(*rhcosImage), types.ControlPlaneMachineRole, "control-plane-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create control plane machine objects")
 		}

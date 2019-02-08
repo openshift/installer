@@ -116,7 +116,7 @@ func (a *Compute) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Libvirt)
 			pool.Platform.Libvirt = &mpool
-			sets, err := libvirt.MachineSets(clusterID.ClusterID, ic, &pool, "worker", "compute-user-data")
+			sets, err := libvirt.MachineSets(clusterID.ClusterID, ic, &pool, types.ComputeMachineRole, "compute-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create compute machine objects")
 			}
@@ -130,7 +130,7 @@ func (a *Compute) Generate(dependencies asset.Parents) error {
 			mpool.Set(pool.Platform.OpenStack)
 			pool.Platform.OpenStack = &mpool
 
-			sets, err := openstack.MachineSets(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "worker", "compute-user-data")
+			sets, err := openstack.MachineSets(clusterID.ClusterID, ic, &pool, string(*rhcosImage), types.ComputeMachineRole, "compute-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create compute machine objects")
 			}

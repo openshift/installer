@@ -28,7 +28,7 @@ const (
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.Machine, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage string, role types.MachineRole, userDataSecret string) ([]machineapi.Machine, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
@@ -60,8 +60,8 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				Name:      fmt.Sprintf("%s-%s-%d", clustername, pool.Name, idx),
 				Labels: map[string]string{
 					"sigs.k8s.io/cluster-api-cluster":      clustername,
-					"sigs.k8s.io/cluster-api-machine-role": role,
-					"sigs.k8s.io/cluster-api-machine-type": role,
+					"sigs.k8s.io/cluster-api-machine-role": role.ClusterAPIMachineRole(),
+					"sigs.k8s.io/cluster-api-machine-type": role.ClusterAPIMachineRole(),
 				},
 			},
 			Spec: machineapi.MachineSpec{
@@ -78,7 +78,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID, clusterName string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string) (*openstackprovider.OpenstackProviderSpec, error) {
+func provider(clusterID, clusterName string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role types.MachineRole, userDataSecret string) (*openstackprovider.OpenstackProviderSpec, error) {
 	return &openstackprovider.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "openstackproviderconfig.k8s.io/v1alpha1",
@@ -101,7 +101,7 @@ func provider(clusterID, clusterName string, platform *openstack.Platform, mpool
 			},
 		},
 		AvailabilityZone: az,
-		SecurityGroups:   []string{role},
+		SecurityGroups:   []string{string(role)},
 		// TODO(flaper87): Trunk support missing. Need to add it back
 	}, nil
 }

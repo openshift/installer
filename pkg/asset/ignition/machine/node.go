@@ -22,7 +22,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 						return &url.URL{
 							Scheme: "https",
 							Host:   fmt.Sprintf("%s-api.%s:22623", installConfig.ObjectMeta.Name, installConfig.BaseDomain),
-							Path:   fmt.Sprintf("/config/%s", machineConfigOperatorMachineRole(role)),
+							Path:   fmt.Sprintf("/config/%s", role.MachineConfigOperatorMachineRole()),
 						}
 					}().String(),
 				}},
@@ -35,16 +35,5 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 				},
 			},
 		},
-	}
-}
-
-func machineConfigOperatorMachineRole(role types.MachineRole) string {
-	switch role {
-	case types.ControlPlaneMachineRole:
-		return "master"
-	case types.ComputeMachineRole:
-		return "worker"
-	default:
-		return ""
 	}
 }

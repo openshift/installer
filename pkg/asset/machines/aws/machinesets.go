@@ -53,8 +53,8 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 				Name:      name,
 				Labels: map[string]string{
 					"sigs.k8s.io/cluster-api-cluster":      clustername,
-					"sigs.k8s.io/cluster-api-machine-role": clusterAPIMachineRole(role),
-					"sigs.k8s.io/cluster-api-machine-type": clusterAPIMachineRole(role),
+					"sigs.k8s.io/cluster-api-machine-role": role.ClusterAPIMachineRole(),
+					"sigs.k8s.io/cluster-api-machine-type": role.ClusterAPIMachineRole(),
 				},
 			},
 			Spec: machineapi.MachineSetSpec{
@@ -70,8 +70,8 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 						Labels: map[string]string{
 							"sigs.k8s.io/cluster-api-machineset":   name,
 							"sigs.k8s.io/cluster-api-cluster":      clustername,
-							"sigs.k8s.io/cluster-api-machine-role": clusterAPIMachineRole(role),
-							"sigs.k8s.io/cluster-api-machine-type": clusterAPIMachineRole(role),
+							"sigs.k8s.io/cluster-api-machine-role": role.ClusterAPIMachineRole(),
+							"sigs.k8s.io/cluster-api-machine-type": role.ClusterAPIMachineRole(),
 						},
 					},
 					Spec: machineapi.MachineSpec{
