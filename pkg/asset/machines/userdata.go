@@ -20,7 +20,7 @@ items:
   kind: Secret
   metadata:
     name: {{$name}}
-    namespace: openshift-cluster-api
+    namespace: openshift-machine-api
   type: Opaque
   data:
     userData: {{$content}}
