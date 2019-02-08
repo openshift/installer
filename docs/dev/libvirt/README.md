@@ -1,6 +1,9 @@
 # Libvirt HOWTO
 
-Launching clusters via libvirt is especially useful for operator development.
+The libvirt backend for the installer is maintained for development; it is not a production use case.
+
+It is particularly useful for debugging issues related to the operating system and bootstrapping, as one has much easier access to debugging information than in a cloud.
+You also avoid incurring costs for running in a cloud.
 
 ## One-time setup
 It's expected that you will create and destroy clusters often in the course of development. These steps only need to be run once.
@@ -216,9 +219,24 @@ Set `TAGS=libvirt` to add support for libvirt; this is not enabled by default be
 TAGS=libvirt hack/build.sh
 ```
 
-## Run the installer
+## Running the installer
 
-With [libvirt configured](#install-and-enable-libvirt), you can proceed with [the usual quick-start](../../../README.md#quick-start).
+Now, most of the [the usual quick-start](../../../README.md#quick-start) applies.
+However, the current amount of RAM and CPU allocated to the master is commonly too small for a reliable installation.
+You can configure this via environment variables.  At the time of this writing, at least 8GB is recommended
+for the master:
+
+```sh
+env TF_VAR_libvirt_master_memory=8192 ./bin/openshift-install ...
+```
+
+The default is 2 cores, but if you have more than that it's recommended to configure it, e.g.:
+
+```sh
+env TF_VAR_libvirt_master_memory=8192 TF_VAR_libvirt_master_vcpu=4 ./bin/openshift-install ...
+```
+
+These defaults may change, but part of the idea of the libvirt backend is we'd like it to be useful for developers running it on a common laptop configuration with e.g. 2 cores and 16GB of RAM.
 
 ## Cleanup
 
