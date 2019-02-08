@@ -26,17 +26,17 @@ provider "openstack" {
 module "service" {
   source = "./service"
 
-  swift_container   = "${openstack_objectstorage_container_v1.container.name}"
-  cluster_name      = "${var.cluster_name}"
-  cluster_id        = "${var.cluster_id}"
-  cluster_domain    = "${var.base_domain}"
-  image_name        = "${var.openstack_base_image}"
-  flavor_name       = "${var.openstack_master_flavor_name}"
-  ignition          = "${var.ignition_bootstrap}"
-  lb_floating_ip    = "${var.openstack_lb_floating_ip}"
-  service_port_id   = "${module.topology.service_port_id}"
-  master_ips        = "${module.topology.master_ips}"
-  master_port_names = "${module.topology.master_port_names}"
+  swift_container          = "${openstack_objectstorage_container_v1.container.name}"
+  cluster_name             = "${var.cluster_name}"
+  cluster_id               = "${var.cluster_id}"
+  cluster_domain           = "${var.base_domain}"
+  image_name               = "${var.openstack_base_image}"
+  flavor_name              = "${var.openstack_control_plane_flavor_name}"
+  ignition                 = "${var.ignition_bootstrap}"
+  lb_floating_ip           = "${var.openstack_lb_floating_ip}"
+  service_port_id          = "${module.topology.service_port_id}"
+  control_plane_ips        = "${module.topology.contol_plane_ips}"
+  control_plane_port_names = "${module.topology.control_plane_port_names}"
 }
 
 module "bootstrap" {
@@ -46,25 +46,25 @@ module "bootstrap" {
   cluster_name        = "${var.cluster_name}"
   cluster_id          = "${var.cluster_id}"
   image_name          = "${var.openstack_base_image}"
-  flavor_name         = "${var.openstack_master_flavor_name}"
+  flavor_name         = "${var.openstack_control_plane_flavor_name}"
   ignition            = "${var.ignition_bootstrap}"
   bootstrap_port_id   = "${module.topology.bootstrap_port_id}"
   service_vm_fixed_ip = "${module.topology.service_vm_fixed_ip}"
 }
 
-module "masters" {
-  source = "./masters"
+module "control_plane" {
+  source = "./controlplane"
 
-  base_image          = "${var.openstack_base_image}"
-  cluster_id          = "${var.cluster_id}"
-  cluster_name        = "${var.cluster_name}"
-  flavor_name         = "${var.openstack_master_flavor_name}"
-  instance_count      = "${var.control_plane_count}"
-  machine_pool_name   = "${var.control_plane_machine_pool_name}"
-  master_sg_ids       = "${concat(var.openstack_master_extra_sg_ids, list(module.topology.master_sg_id))}"
-  master_port_ids     = "${module.topology.master_port_ids}"
-  user_data_ign       = "${var.ignition_control_plane}"
-  service_vm_fixed_ip = "${module.topology.service_vm_fixed_ip}"
+  base_image             = "${var.openstack_base_image}"
+  cluster_id             = "${var.cluster_id}"
+  cluster_name           = "${var.cluster_name}"
+  flavor_name            = "${var.openstack_control_plane_flavor_name}"
+  instance_count         = "${var.control_plane_count}"
+  machine_pool_name      = "${var.control_plane_machine_pool_name}"
+  control_plane_sg_ids   = "${concat(var.openstack_control_plane_extra_sg_ids, list(module.topology.control_plane_sg_id))}"
+  control_plane_port_ids = "${module.topology.control_plane_port_ids}"
+  user_data_ign          = "${var.ignition_control_plane}"
+  service_vm_fixed_ip    = "${module.topology.service_vm_fixed_ip}"
 }
 
 # TODO(shadower) add a dns module here
@@ -72,20 +72,20 @@ module "masters" {
 module "topology" {
   source = "./topology"
 
-  cidr_block       = "${var.machine_cidr}"
-  cluster_id       = "${var.cluster_id}"
-  cluster_name     = "${var.cluster_name}"
-  external_network = "${var.openstack_external_network}"
-  masters_count    = "${var.control_plane_count}"
-  lb_floating_ip   = "${var.openstack_lb_floating_ip}"
-  trunk_support    = "${var.openstack_trunk_support}"
+  cidr_block          = "${var.machine_cidr}"
+  cluster_id          = "${var.cluster_id}"
+  cluster_name        = "${var.cluster_name}"
+  external_network    = "${var.openstack_external_network}"
+  control_plane_count = "${var.control_plane_count}"
+  lb_floating_ip      = "${var.openstack_lb_floating_ip}"
+  trunk_support       = "${var.openstack_trunk_support}"
 }
 
 resource "openstack_objectstorage_container_v1" "container" {
   name = "${lower(var.cluster_name)}.${var.base_domain}"
 
   metadata = "${merge(map(
-      "Name", "${var.cluster_name}-ignition-master",
+      "Name", "${var.cluster_name}-ignition-control-plane",
       "KubernetesCluster", "${var.cluster_name}",
       "openshiftClusterID", "${var.cluster_id}"
     ), var.openstack_extra_tags)}"

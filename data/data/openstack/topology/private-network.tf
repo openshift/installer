@@ -26,13 +26,13 @@ resource "openstack_networking_subnet_v2" "nodes" {
   dns_nameservers = ["${openstack_networking_port_v2.service_port.all_fixed_ips[0]}"]
 }
 
-resource "openstack_networking_port_v2" "masters" {
-  name  = "master-port-${count.index}"
-  count = "${var.masters_count}"
+resource "openstack_networking_port_v2" "control_plane" {
+  name  = "control-plane-port-${count.index}"
+  count = "${var.control_plane_count}"
 
   admin_state_up     = "true"
   network_id         = "${openstack_networking_network_v2.openshift-private.id}"
-  security_group_ids = ["${openstack_networking_secgroup_v2.master.id}"]
+  security_group_ids = ["${openstack_networking_secgroup_v2.control_plane.id}"]
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {
@@ -40,13 +40,13 @@ resource "openstack_networking_port_v2" "masters" {
   }
 }
 
-resource "openstack_networking_trunk_v2" "masters" {
-  name  = "master-trunk-${count.index}"
-  count = "${var.trunk_support ? var.masters_count : 0}"
+resource "openstack_networking_trunk_v2" "control_plane" {
+  name  = "control-plane-trunk-${count.index}"
+  count = "${var.trunk_support ? var.control_plane_count : 0}"
   tags  = ["openshiftClusterID=${var.cluster_id}"]
 
   admin_state_up = "true"
-  port_id        = "${openstack_networking_port_v2.masters.*.id[count.index]}"
+  port_id        = "${openstack_networking_port_v2.control_plane.*.id[count.index]}"
 }
 
 resource "openstack_networking_port_v2" "bootstrap_port" {
@@ -54,7 +54,7 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
 
   admin_state_up     = "true"
   network_id         = "${openstack_networking_network_v2.openshift-private.id}"
-  security_group_ids = ["${openstack_networking_secgroup_v2.master.id}"]
+  security_group_ids = ["${openstack_networking_secgroup_v2.control_plane.id}"]
   tags               = ["openshiftClusterID=${var.cluster_id}"]
 
   fixed_ip {

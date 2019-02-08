@@ -71,41 +71,41 @@ set -x
 
 export KUBECONFIG=/opt/openshift/auth/kubeconfig
 TEMPLATE="{{range .items}}{{\$name:=.metadata.name}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{if eq .status \"True\" }}{{\$name}}{{end}}{{end}}{{end}} {{end}}"
-MASTERS=$(oc get nodes -l node-role.kubernetes.io/master -ogo-template="$TEMPLATE")
-WORKERS=$(oc get nodes -l node-role.kubernetes.io/worker -ogo-template="$TEMPLATE")
+CONTROL_PLANE=$(oc get nodes -l node-role.kubernetes.io/master -ogo-template="$TEMPLATE")
+COMPUTE=$(oc get nodes -l node-role.kubernetes.io/worker -ogo-template="$TEMPLATE")
 
-if [[ $MASTERS -eq "" ]];
+if [[ $CONTROL_PLANE -eq "" ]];
 then
-    MASTER_LINES="
+    CONTROL_PLANE_LINES="
     server ${var.cluster_name}-bootstrap-22623 ${var.cluster_name}-bootstrap.${var.cluster_domain} check port 22623
     server ${var.cluster_name}-bootstrap-6443 ${var.cluster_name}-bootstrap.${var.cluster_domain} check port 6443"
-    MASTERS="${var.cluster_name}-master-0 ${var.cluster_name}-master-1 ${var.cluster_name}-master-2"
+    CONTROL_PLANE="${var.cluster_name}-control-plane-0 ${var.cluster_name}-control-plane-1 ${var.cluster_name}-control-plane-2"
 fi
 
-for master in $MASTERS;
+for node in $CONTROL_PLANE;
 do
-    MASTER_LINES="$MASTER_LINES
-    server $master $master.${var.cluster_domain} check port 6443"
+    CONTROL_PLANE_LINES="$CONTROL_PLANE_LINES
+    server $node $node.${var.cluster_domain} check port 6443"
 done
 
-for worker in $WORKERS;
+for node in $COMPUTE;
 do
-    WORKER_LINES="$WORKER_LINES
-    server $worker $worker.${var.cluster_domain} check port 443"
+    COMPUTE_LINES="$COMPUTE_LINES
+    server $node $node.${var.cluster_domain} check port 443"
 done
 
 cat > /etc/haproxy/haproxy.cfg.new << EOF
-listen ${var.cluster_name}-api-masters
+listen ${var.cluster_name}-api-control-plane
     bind 0.0.0.0:6443
     bind 0.0.0.0:22623
     mode tcp
-    balance roundrobin$MASTER_LINES
+    balance roundrobin$CONTROL_PLANE_LINES
 
-listen ${var.cluster_name}-api-workers
+listen ${var.cluster_name}-api-compute
     bind 0.0.0.0:80
     bind 0.0.0.0:443
     mode tcp
-    balance roundrobin$WORKER_LINES
+    balance roundrobin$COMPUTE_LINES
 EOF
 
 
@@ -140,7 +140,7 @@ ${length(var.lb_floating_ip) == 0 ? "" : "    file /etc/coredns/db.${var.cluster
     file /etc/coredns/db.${var.cluster_domain} _etcd-server-ssl._tcp.${var.cluster_name}.${var.cluster_domain} {
     }
 
-${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} ${var.cluster_name}-etcd-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "master-port-", "")}
+${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} ${var.cluster_name}-etcd-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.control_plane_port_names)), "control-plane-port-", "")}
 
     forward . /etc/resolv.conf {
     }
@@ -179,9 +179,9 @@ $ORIGIN ${var.cluster_domain}.
 ${length(var.lb_floating_ip) == 0 ? "" : "${var.cluster_name}-api  IN  A  ${var.lb_floating_ip}"}
 ${length(var.lb_floating_ip) == 0 ? "" : "*.apps.${var.cluster_name}  IN  A  ${var.lb_floating_ip}"}
 
-${replace(join("\n", formatlist("${var.cluster_name}-etcd-%s  IN  CNAME  ${var.cluster_name}-master-%s", var.master_port_names, var.master_port_names)), "master-port-", "")}
+${replace(join("\n", formatlist("${var.cluster_name}-etcd-%s  IN  CNAME  ${var.cluster_name}-control-plane-%s", var.control_plane_port_names, var.control_plane_port_names)), "control-plane-port-", "")}
 
-${replace(join("\n", formatlist("_etcd-server-ssl._tcp.${var.cluster_name}  8640  IN  SRV  0  10  2380   ${var.cluster_name}-etcd-%s.${var.cluster_domain}.", var.master_port_names)), "master-port-", "")}
+${replace(join("\n", formatlist("_etcd-server-ssl._tcp.${var.cluster_name}  8640  IN  SRV  0  10  2380   ${var.cluster_name}-etcd-%s.${var.cluster_domain}.", var.control_plane_port_names)), "control-plane-port-", "")}
 EOF
   }
 }

@@ -38,11 +38,11 @@ variable "service_port_id" {
   description = "The subnet ID for the bootstrap node."
 }
 
-variable "master_ips" {
+variable "control_plane_ips" {
   type = "list"
 }
 
-variable "master_port_names" {
+variable "control_plane_port_names" {
   type = "list"
 }
 
