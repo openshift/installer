@@ -3,7 +3,9 @@
 data "aws_region" "current" {}
 
 // Fetch a list of available AZs
-data "aws_availability_zones" "azs" {}
+data "aws_availability_zones" "azs" {
+  state = "available"
+}
 
 // Only reference data sources which are gauranteed to exist at any time (above) in this locals{} block
 locals {
