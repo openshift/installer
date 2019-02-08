@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/pkg/errors"
-	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1"
+	"sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 )
 
 type config struct {
@@ -19,7 +19,7 @@ type config struct {
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
-func TFVars(masterConfig *v1alpha1.AWSMachineProviderConfig) ([]byte, error) {
+func TFVars(masterConfig *v1beta1.AWSMachineProviderConfig) ([]byte, error) {
 	tags := make(map[string]string, len(masterConfig.Tags))
 	for _, tag := range masterConfig.Tags {
 		tags[tag.Name] = tag.Value
