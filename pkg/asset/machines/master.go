@@ -91,7 +91,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Libvirt)
 		pool.Platform.Libvirt = &mpool
-		m.MachinesDeprecated, err = libvirt.Machines(clusterID.ClusterID, ic, &pool, "master", "master-user-data")
+		m.Machines, err = libvirt.Machines(clusterID.ClusterID, ic, &pool, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}

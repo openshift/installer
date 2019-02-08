@@ -14,7 +14,7 @@ const (
 	MachineTypeLabel = "sigs.k8s.io/cluster-api-machine-type"
 )
 
-// LibvirtMachineProviderConfig is the type that will be embedded in a Machine.Spec.ProviderConfig field
+// LibvirtMachineProviderConfig is the type that will be embedded in a Machine.Spec.ProviderSpec field
 // for an Libvirt instance.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type LibvirtMachineProviderConfig struct {
@@ -55,7 +55,7 @@ type Volume struct {
 	VolumeName   string `json:"volumeName"`
 }
 
-// LibvirtClusterProviderConfig is the type that will be embedded in a Cluster.Spec.ProviderConfig field.
+// LibvirtClusterProviderConfig is the type that will be embedded in a Cluster.Spec.ProviderSpec field.
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object
 type LibvirtClusterProviderConfig struct {
 	metav1.TypeMeta `json:",inline"`

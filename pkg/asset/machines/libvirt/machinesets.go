@@ -4,17 +4,17 @@ package libvirt
 import (
 	"fmt"
 
+	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/utils/pointer"
-	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/libvirt"
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]clusterapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]machineapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != libvirt.Name {
 		return nil, fmt.Errorf("non-Libvirt configuration: %q", configPlatform)
 	}
@@ -34,7 +34,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 
 	provider := provider(clustername, config.Networking.MachineCIDR.String(), platform, userDataSecret)
 	name := fmt.Sprintf("%s-%s-%d", clustername, pool.Name, 0)
-	mset := clusterapi.MachineSet{
+	mset := machineapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "cluster.k8s.io/v1alpha1",
 			Kind:       "MachineSet",
@@ -48,7 +48,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 				"sigs.k8s.io/cluster-api-machine-type": role,
 			},
 		},
-		Spec: clusterapi.MachineSetSpec{
+		Spec: machineapi.MachineSetSpec{
 			Replicas: pointer.Int32Ptr(int32(total)),
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
@@ -56,7 +56,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 					"sigs.k8s.io/cluster-api-cluster":    clustername,
 				},
 			},
-			Template: clusterapi.MachineTemplateSpec{
+			Template: machineapi.MachineTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						"sigs.k8s.io/cluster-api-machineset":   name,
@@ -65,8 +65,8 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 						"sigs.k8s.io/cluster-api-machine-type": role,
 					},
 				},
-				Spec: clusterapi.MachineSpec{
-					ProviderSpec: clusterapi.ProviderSpec{
+				Spec: machineapi.MachineSpec{
+					ProviderSpec: machineapi.ProviderSpec{
 						Value: &runtime.RawExtension{Object: provider},
 					},
 					// we don't need to set Versions, because we control those via cluster operators.
@@ -75,5 +75,5 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		},
 	}
 
-	return []clusterapi.MachineSet{mset}, nil
+	return []machineapi.MachineSet{mset}, nil
 }
