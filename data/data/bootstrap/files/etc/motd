@@ -1,4 +1,4 @@
-This is the bootstrap node; it will be destroyed when the master is fully up.
+This is the bootstrap node; it will be destroyed when the control plane is fully up.
 
 The primary service is "bootkube.service". To watch its status, run e.g.
 
