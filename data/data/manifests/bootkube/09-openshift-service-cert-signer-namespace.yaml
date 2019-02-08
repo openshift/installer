@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  # This is the namespace used to hold the service-serving-cert-signer.
-  name: openshift-service-cert-signer
-  labels:
-    openshift.io/run-level: "1"
