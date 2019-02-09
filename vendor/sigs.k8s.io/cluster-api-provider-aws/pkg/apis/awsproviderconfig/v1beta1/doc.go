@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Package v1alpha1 contains API Schema definitions for the awsproviderconfig v1alpha1 API group
+// Package v1beta1 contains API Schema definitions for the awsproviderconfig v1beta1 API group
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
 // +k8s:conversion-gen=sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig
 // +k8s:defaulter-gen=TypeMeta
-// +groupName=awsproviderconfig.k8s.io
-package v1alpha1
+// +groupName=awsproviderconfig.openshift.io
+package v1beta1
