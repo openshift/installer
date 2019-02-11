@@ -9,10 +9,12 @@ import (
 )
 
 var (
-	kubeconfigAdminPath = filepath.Join("auth", "kubeconfig")
+	kubeconfigAdminPath       = filepath.Join("auth", "kubeconfig")
+	kubeconfigAdminClientPath = filepath.Join("auth", "kubeconfig-admin")
 )
 
 // Admin is the asset for the admin kubeconfig.
+// [DEPRECATED]
 type Admin struct {
 	kubeconfig
 }
@@ -52,4 +54,46 @@ func (k *Admin) Name() string {
 // Load returns the kubeconfig from disk.
 func (k *Admin) Load(f asset.FileFetcher) (found bool, err error) {
 	return k.load(f, kubeconfigAdminPath)
+}
+
+// AdminClient is the asset for the admin kubeconfig.
+type AdminClient struct {
+	kubeconfig
+}
+
+var _ asset.WritableAsset = (*AdminClient)(nil)
+
+// Dependencies returns the dependency of the kubeconfig.
+func (k *AdminClient) Dependencies() []asset.Asset {
+	return []asset.Asset{
+		&tls.AdminKubeConfigClientCertKey{},
+		&tls.AdminKubeConfigCABundle{},
+		&installconfig.InstallConfig{},
+	}
+}
+
+// Generate generates the kubeconfig.
+func (k *AdminClient) Generate(parents asset.Parents) error {
+	ca := &tls.AdminKubeConfigCABundle{}
+	clientCertKey := &tls.AdminKubeConfigClientCertKey{}
+	installConfig := &installconfig.InstallConfig{}
+	parents.Get(ca, clientCertKey, installConfig)
+
+	return k.kubeconfig.generate(
+		ca,
+		clientCertKey,
+		installConfig.Config,
+		"admin",
+		kubeconfigAdminClientPath,
+	)
+}
+
+// Name returns the human-friendly name of the asset.
+func (k *AdminClient) Name() string {
+	return "Kubeconfig Admin Client"
+}
+
+// Load returns the kubeconfig from disk.
+func (k *AdminClient) Load(f asset.FileFetcher) (found bool, err error) {
+	return k.load(f, kubeconfigAdminClientPath)
 }
