@@ -58,8 +58,10 @@ func (o *Openshift) Dependencies() []asset.Asset {
 
 		&openshift.BindingDiscovery{},
 		&openshift.CloudCredsSecret{},
+		&openshift.DeprecatedCloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
 		&openshift.RoleCloudCredsSecretReader{},
+		&openshift.DeprecatedRoleCloudCredsSecretReader{},
 	}
 }
 
@@ -119,8 +121,10 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	}
 
 	bindingDiscovery := &openshift.BindingDiscovery{}
+	deprecatedCloudCredsSecret := &openshift.DeprecatedCloudCredsSecret{}
 	cloudCredsSecret := &openshift.CloudCredsSecret{}
 	kubeadminPasswordSecret := &openshift.KubeadminPasswordSecret{}
+	deprecatedRoleCloudCredsSecretReader := &openshift.DeprecatedRoleCloudCredsSecretReader{}
 	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
 	dependencies.Get(
 		bindingDiscovery,
@@ -152,7 +156,9 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	switch platform {
 	case "aws", "openstack":
 		assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
+		assetData["99_deprecated-cloud-creds-secret.yaml"] = applyTemplateData(deprecatedCloudCredsSecret.Files()[0].Data, templateData)
 		assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
+		assetData["99_deprecated-role-cloud-creds-secret-reader.yaml"] = applyTemplateData(deprecatedRoleCloudCredsSecretReader.Files()[0].Data, templateData)
 	}
 
 	o.FileList = []*asset.File{}

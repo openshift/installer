@@ -40,8 +40,10 @@ var (
 		&bootkube.HostEtcdServiceKubeSystem{},
 		&openshift.BindingDiscovery{},
 		&openshift.CloudCredsSecret{},
+		&openshift.DeprecatedCloudCredsSecret{},
 		&openshift.KubeadminPasswordSecret{},
 		&openshift.RoleCloudCredsSecretReader{},
+		&openshift.DeprecatedRoleCloudCredsSecretReader{},
 	}
 
 	// IgnitionConfigs are the ignition-configs targeted assets.
