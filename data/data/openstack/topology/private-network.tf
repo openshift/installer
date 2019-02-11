@@ -23,7 +23,7 @@ resource "openstack_networking_subnet_v2" "nodes" {
   ip_version      = 4
   network_id      = "${openstack_networking_network_v2.openshift-private.id}"
   tags            = ["openshiftClusterID=${var.cluster_id}"]
-  dns_nameservers = ["${openstack_networking_port_v2.lb_port.all_fixed_ips[0]}"]
+  dns_nameservers = ["${openstack_networking_port_v2.service_port.all_fixed_ips[0]}"]
 }
 
 resource "openstack_networking_port_v2" "masters" {
@@ -62,8 +62,8 @@ resource "openstack_networking_port_v2" "bootstrap_port" {
   }
 }
 
-resource "openstack_networking_port_v2" "lb_port" {
-  name = "lb-port"
+resource "openstack_networking_port_v2" "service_port" {
+  name = "service-port"
 
   admin_state_up     = "true"
   network_id         = "${openstack_networking_network_v2.openshift-private.id}"
@@ -80,9 +80,9 @@ data "openstack_networking_network_v2" "external_network" {
   external = true
 }
 
-resource "openstack_networking_floatingip_v2" "lb_fip" {
+resource "openstack_networking_floatingip_v2" "service_fip" {
   pool    = "${var.external_network}"
-  port_id = "${openstack_networking_port_v2.lb_port.id}"
+  port_id = "${openstack_networking_port_v2.service_port.id}"
 }
 
 resource "openstack_networking_router_v2" "openshift-external-router" {
