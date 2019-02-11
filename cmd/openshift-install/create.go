@@ -295,6 +295,8 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	clusterVersionContext, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
+	var clusterVersion *configv1.ClusterVersion
+
 	_, err = clientwatch.UntilWithSync(
 		clusterVersionContext,
 		cache.NewListWatchFromClient(cc.ConfigV1().RESTClient(), "clusterversions", "", fields.OneTermEqualSelector("metadata.name", "version")),
@@ -308,6 +310,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 					logrus.Warnf("Expected a ClusterVersion object but got a %q object instead", event.Object.GetObjectKind().GroupVersionKind())
 					return false, nil
 				}
+				clusterVersion = cv
 				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorAvailable) {
 					logrus.Debug("Cluster is initialized")
 					return true, nil
@@ -322,6 +325,13 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 			return false, nil
 		},
 	)
+
+	// If we timed out and the CVO failed, print out the failure message
+	if err != nil && clusterVersion != nil {
+		if cov1helpers.IsStatusConditionTrue(clusterVersion.Status.Conditions, configv1.OperatorFailing) {
+			err = errors.New(cov1helpers.FindStatusCondition(clusterVersion.Status.Conditions, configv1.OperatorFailing).Message)
+		}
+	}
 
 	return errors.Wrap(err, "failed to initialize the cluster")
 }
