@@ -14,7 +14,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]machineapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*machineapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS configuration: %q", configPlatform)
 	}
@@ -31,7 +31,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		total = *pool.Replicas
 	}
 	numOfAZs := int64(len(azs))
-	var machinesets []machineapi.MachineSet
+	var machinesets []*machineapi.MachineSet
 	for idx, az := range azs {
 		replicas := int32(total / numOfAZs)
 		if int64(idx) < total%numOfAZs {
@@ -43,7 +43,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
 		name := fmt.Sprintf("%s-%s-%s", clustername, pool.Name, az)
-		mset := machineapi.MachineSet{
+		mset := &machineapi.MachineSet{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "machine.openshift.io/v1beta1",
 				Kind:       "MachineSet",
