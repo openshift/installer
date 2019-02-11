@@ -60,11 +60,8 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&Networking{},
 		&tls.RootCA{},
 		&tls.EtcdCA{},
-		&tls.IngressCertKey{},
-		&tls.KubeCA{},
 		&tls.EtcdClientCertKey{},
 		&tls.MCSCertKey{},
-		&tls.KubeletCertKey{},
 
 		&bootkube.KubeCloudConfig{},
 		&bootkube.MachineConfigServerTLSSecret{},
@@ -126,7 +123,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
 	etcdCA := &tls.EtcdCA{}
-	kubeCA := &tls.KubeCA{}
 	mcsCertKey := &tls.MCSCertKey{}
 	etcdClientCertKey := &tls.EtcdClientCertKey{}
 	rootCA := &tls.RootCA{}
@@ -135,7 +131,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		installConfig,
 		etcdCA,
 		etcdClientCertKey,
-		kubeCA,
 		mcsCertKey,
 		rootCA,
 	)
@@ -150,8 +145,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		EtcdCaCert:                      string(etcdCA.Cert()),
 		EtcdClientCert:                  base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
 		EtcdClientKey:                   base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
-		KubeCaCert:                      base64.StdEncoding.EncodeToString(kubeCA.Cert()),
-		KubeCaKey:                       base64.StdEncoding.EncodeToString(kubeCA.Key()),
 		McsTLSCert:                      base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:                       base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
 		PullSecretBase64:                base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
