@@ -13,6 +13,13 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
+func validMachinePool() *types.MachinePool {
+	return &types.MachinePool{
+		Name:     "test-pool",
+		Replicas: pointer.Int64Ptr(1),
+	}
+}
+
 func TestValidateMachinePool(t *testing.T) {
 	cases := []struct {
 		name     string
@@ -21,105 +28,105 @@ func TestValidateMachinePool(t *testing.T) {
 		valid    bool
 	}{
 		{
-			name: "minimal",
-			pool: &types.MachinePool{
-				Name:     "master",
-				Replicas: pointer.Int64Ptr(1),
-			},
+			name:     "minimal",
+			pool:     validMachinePool(),
 			platform: "aws",
 			valid:    true,
 		},
 		{
 			name: "missing replicas",
-			pool: &types.MachinePool{
-				Name: "master",
-			},
+			pool: func() *types.MachinePool {
+				p := validMachinePool()
+				p.Replicas = nil
+				return p
+			}(),
 			platform: "aws",
 			valid:    false,
 		},
 		{
 			name: "invalid replicas",
-			pool: &types.MachinePool{
-				Name:     "master",
-				Replicas: func(x int64) *int64 { return &x }(-1),
-			},
+			pool: func() *types.MachinePool {
+				p := validMachinePool()
+				p.Replicas = pointer.Int64Ptr(-1)
+				return p
+			}(),
 			platform: "aws",
 			valid:    false,
 		},
 		{
 			name: "valid aws",
-			pool: &types.MachinePool{
-				Name:     "master",
-				Replicas: pointer.Int64Ptr(1),
-				Platform: types.MachinePoolPlatform{
+			pool: func() *types.MachinePool {
+				p := validMachinePool()
+				p.Platform = types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{},
-				},
-			},
+				}
+				return p
+			}(),
 			platform: "aws",
 			valid:    true,
 		},
 		{
 			name: "invalid aws",
-			pool: &types.MachinePool{
-				Name:     "master",
-				Replicas: pointer.Int64Ptr(1),
-				Platform: types.MachinePoolPlatform{
+			pool: func() *types.MachinePool {
+				p := validMachinePool()
+				p.Platform = types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{
 						EC2RootVolume: aws.EC2RootVolume{
 							IOPS: -10,
 						},
 					},
-				},
-			},
+				}
+				return p
+			}(),
 			platform: "aws",
 			valid:    false,
 		},
 		{
 			name: "valid libvirt",
-			pool: &types.MachinePool{
-				Name:     "master",
-				Replicas: pointer.Int64Ptr(1),
-				Platform: types.MachinePoolPlatform{
+			pool: func() *types.MachinePool {
+				p := validMachinePool()
+				p.Platform = types.MachinePoolPlatform{
 					Libvirt: &libvirt.MachinePool{},
-				},
-			},
+				}
+				return p
+			}(),
 			platform: "libvirt",
 			valid:    true,
 		},
 		{
 			name: "valid openstack",
-			pool: &types.MachinePool{
-				Name:     "master",
-				Replicas: pointer.Int64Ptr(1),
-				Platform: types.MachinePoolPlatform{
+			pool: func() *types.MachinePool {
+				p := validMachinePool()
+				p.Platform = types.MachinePoolPlatform{
 					OpenStack: &openstack.MachinePool{},
-				},
-			},
+				}
+				return p
+			}(),
 			platform: "openstack",
 			valid:    true,
 		},
 		{
 			name: "mis-matched platform",
-			pool: &types.MachinePool{
-				Name:     "master",
-				Replicas: pointer.Int64Ptr(1),
-				Platform: types.MachinePoolPlatform{
+			pool: func() *types.MachinePool {
+				p := validMachinePool()
+				p.Platform = types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{},
-				},
-			},
+				}
+				return p
+			}(),
 			platform: "libvirt",
 			valid:    false,
 		},
 		{
 			name: "multiple platforms",
-			pool: &types.MachinePool{
-				Name:     "master",
-				Replicas: pointer.Int64Ptr(1),
-				Platform: types.MachinePoolPlatform{
+			pool: func() *types.MachinePool {
+				p := validMachinePool()
+				p.Platform = types.MachinePoolPlatform{
 					AWS:     &aws.MachinePool{},
 					Libvirt: &libvirt.MachinePool{},
-				},
-			},
+				}
+				return p
+			}(),
 			platform: "aws",
 			valid:    false,
 		},

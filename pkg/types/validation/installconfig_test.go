@@ -206,7 +206,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Compute = nil
 				return c
 			}(),
-			expectedError: `^compute: Required value: there must be at least one compute machine pool$`,
 		},
 		{
 			name: "empty compute",
@@ -215,7 +214,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Compute = []types.MachinePool{}
 				return c
 			}(),
-			expectedError: `^compute: Required value: there must be at least one compute machine pool$`,
 		},
 		{
 			name: "duplicate compute",
@@ -236,20 +234,6 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `^compute\[1\]\.name: Duplicate value: "worker"$`,
 		},
 		{
-			name: "compute with invalid name",
-			installConfig: func() *types.InstallConfig {
-				c := validInstallConfig()
-				c.Compute = []types.MachinePool{
-					{
-						Name:     "bad-name",
-						Replicas: pointer.Int64Ptr(1),
-					},
-				}
-				return c
-			}(),
-			expectedError: `^compute\[0\]\.name: Unsupported value: "bad-name": supported values: "worker"$`,
-		},
-		{
 			name: "no compute replicas",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -261,7 +245,6 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^compute\[0\]\.replicas: Invalid value: 0: at least one compute machine pool must have a positive replicas count$`,
 		},
 		{
 			name: "invalid compute",

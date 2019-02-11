@@ -19,6 +19,10 @@ import (
 	"github.com/openshift/installer/pkg/validate"
 )
 
+const (
+	masterPoolName = "master"
+)
+
 // ClusterDomain returns the cluster domain for a cluster with the specified
 // base domain and cluster name.
 func ClusterDomain(baseDomain, clusterName string) string {
@@ -112,8 +116,8 @@ func validateClusterNetwork(cn *types.ClusterNetworkEntry, fldPath *field.Path, 
 
 func validateControlPlane(pool *types.MachinePool, fldPath *field.Path, platform string) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if pool.Name != "master" {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{"master"}))
+	if pool.Name != masterPoolName {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{masterPoolName}))
 	}
 	if pool.Replicas != nil && *pool.Replicas == 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
@@ -140,12 +144,8 @@ func validateCompute(pools []types.MachinePool, fldPath *field.Path, platform st
 		}
 		allErrs = append(allErrs, ValidateMachinePool(&p, poolFldPath, platform)...)
 	}
-	if len(pools) > 0 {
-		if !foundPositiveReplicas {
-			allErrs = append(allErrs, field.Invalid(fldPath.Index(0).Child("replicas"), pools[0].Replicas, "at least one compute machine pool must have a positive replicas count"))
-		}
-	} else {
-		allErrs = append(allErrs, field.Required(fldPath, "there must be at least one compute machine pool"))
+	if !foundPositiveReplicas {
+		logrus.Warnf("There are no compute nodes specified. The cluster will not fully initialize without compute nodes.")
 	}
 	return allErrs
 }
