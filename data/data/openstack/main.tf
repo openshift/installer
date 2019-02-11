@@ -23,8 +23,8 @@ provider "openstack" {
   user_name           = "${var.openstack_credentials_user_name}"
 }
 
-module "lb" {
-  source = "./lb"
+module "service" {
+  source = "./service"
 
   swift_container        = "${openstack_objectstorage_container_v1.container.name}"
   cluster_name           = "${var.cluster_name}"
