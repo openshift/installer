@@ -352,7 +352,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 	defer cancel()
 
 	var clusterVersion *configv1.ClusterVersion
-
+	lastProgressingMessage := ""
 	_, err = clientwatch.UntilWithSync(
 		clusterVersionContext,
 		cache.NewListWatchFromClient(cc.ConfigV1().RESTClient(), "clusterversions", "", fields.OneTermEqualSelector("metadata.name", "version")),
@@ -376,7 +376,14 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 						cov1helpers.FindStatusCondition(cv.Status.Conditions, configv1.OperatorFailing).Message)
 					return false, nil
 				}
+				if progressingCond := cov1helpers.FindStatusCondition(cv.Status.Conditions, configv1.OperatorProgressing); progressingCond != nil {
+					if progressingCond.Message != lastProgressingMessage {
+						logrus.Info(progressingCond.Message)
+						lastProgressingMessage = progressingCond.Message
+					}
+				}
 			}
+
 			logrus.Debug("Still waiting for the cluster to initialize...")
 			return false, nil
 		},
