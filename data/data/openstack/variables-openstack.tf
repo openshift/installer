@@ -222,6 +222,15 @@ Example: `["sg-51530134", "sg-b253d7cc"]`
 EOF
 }
 
+variable "openstack_lb_floating_ip" {
+  type    = "string"
+  default = ""
+
+  description = <<EOF
+(optional) Existing Floating IP to attach to the load balancer created by the installer.
+EOF
+}
+
 variable "openstack_master_flavor_name" {
   type        = "string"
   description = "Instance size for the master node(s). Example: `m1.medium`."

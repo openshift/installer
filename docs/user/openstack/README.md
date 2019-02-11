@@ -60,6 +60,75 @@ openstack network list --long -c ID -c Name -c "Router Type"
 +--------------------------------------+----------------+-------------+
 ```
 
+## OpenShift API Access
+
+All the OpenShift nodes are created in an OpenStack tenant network and as such, can't be accessed directly. The installer does not create any floating IP addresses.
+
+However, the installer does need access to the OpenShift's API as it is being deployed.
+
+There are two ways you can handle this.
+
+### Bring Your Own Cluster IP
+
+We recommend you create a floating IP address ahead of time, add the
+API record to your own DNS and let the installer use that address.
+
+First, create the floating IP:
+
+    $ openstack floating ip create <external network>
+
+Note the actual IP address. We will use `10.19.115.117` throughout this document.
+
+Next, add the `<cluster name>-api.<cluster domain>` and `*.apps.<cluster name>-api.<cluster domain>` name records pointing to that floating IP to your DNS:
+
+    ostest-api.shiftstack.com IN A 10.19.115.117
+    *.apps.ostest.shiftstack.com  IN  A  10.19.115.117
+
+If you don't have a DNS server under your control, you finish the installation by adding the following to your `/etc/hosts`:
+
+    10.19.115.117 ostest-api.shiftstack.com
+    10.19.115.117 console-openshift-console.apps.ostest.shiftstack.com
+
+**NOTE:** *this will make the API accessible only to you. This is fine for your own testing (and it is enough for the installation to succeed), but it is not enough for a production deployment.*
+
+Finally, add the floating IP address to `install-config.yaml`.
+
+It should be under `platform.openstack.lbFloatingIP`. For example:
+
+```yaml
+apiVersion: v1beta2
+baseDomain: shiftstack.com
+clusterID:  3f47f546-c010-4c46-895c-c8fce6cf0451
+# ...
+platform:
+  openstack:
+    cloud:            standalone
+    externalNetwork:  public
+    region:           regionOne
+    computeFlavor:    m1.medium
+    lbFloatingIP:     "10.19.115.117"
+```
+
+This will let you do a fully unattended end to end deployment.
+
+
+### No Floating IP
+
+If you don't want to pre-create a floating IP address, you will still want to create the API DNS record or the installer will fail waiting for the API.
+
+Without the floating IP, you won't know the right IP address of the server ahead of time, so you will have to wait for it to come up and create the DNS records then:
+
+    $ watch openstack server list
+
+Wait for the `<cluster name>-api` server comes up and you can make your changes then.
+
+**WARNING:** The installer will fail if it can't reach the bootstrap OpenShift API in 30 minutes.
+
+Even if the installer times out, the OpenShift cluster should still come up. Once the bootstrapping process is in place, it should all run to completion.
+
+So you should be able to deploy OpenShift without any floating IP addresses and DNS records and create everything yourself after the cluster is up.
+
+
 ## Current Expected Behavior
 
 As mentioned, OpenStack support is still experimental. Currently:
@@ -68,13 +137,11 @@ As mentioned, OpenStack support is still experimental. Currently:
 * Deploys a instance used as a 'service VM' that hosts a load balancer for the
 OpenShift API and as an internal DNS for the instances
 * Deploys a bootstrap instance to bootstrap the OpenShift cluster
-* Deploys 3 master nodes
 * Once the masters are deployed, the bootstrap instance is destroyed
+* Deploys 3 master nodes
+* The OpenShift UI is served at `https://<cluster name>-api.<cluster domain>` (but you need to create that DNS record yourself)
 
-The installer fails to end gracefully as the openshift-console is not deployed
-because there are no nodes available.
-
-**NOTE** The worker nodes are still a WIP
+The installer should finish successfully, though it is still undergoing development and things might break from time to time.
 
 ### Workarounds
 
@@ -120,35 +187,6 @@ INFO Run 'export KUBECONFIG=/home/thomas/go/src/github.com/openshift/installer/o
 INFO The cluster is ready when 'oc login -u kubeadmin -p siDhh-STMU3-hWDPW-jM4co' succeeds (wait a few minutes).
 INFO Access the OpenShift web-console here: https://console-openshift-console.apps.ostest.shiftstack.com
 INFO Login to the console with user: kubeadmin, password: siDhh-STMU3-hWDPW-jM4co
-```
-
-#### Create the openstack-credentials Secret
-
-This is necessary for creating the worker nodes and scaling the cluster. The
-actuator needs to have access to the OpenStack credentials. They are being read
-from an Kubernetes Secret object.
-
-This is a post-deployment operation: it should be done after the bootstrap node
-has been removed by the installer.
-
-1. Create a file called `secret.yaml` with the following contents:
-
-```
-$ cat << EOF > secret.yaml
-apiVersion: v1
-data:
-  clouds.yaml: $(cat $HOME/.config/openstack/clouds.yaml | base64 -w0)
-kind: Secret
-metadata:
-  name: openstack-credentials
-type: Opaque
-EOF
-```
-
-2. Add the Secret to the cluster:
-
-```
-$ oc create -n openshift-machine-api -f secret.yaml
 ```
 
 ## Using an External Load Balancer

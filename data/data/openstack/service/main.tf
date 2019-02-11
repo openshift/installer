@@ -134,8 +134,8 @@ data "ignition_file" "corefile" {
     errors
     reload 10s
 
-    file /etc/coredns/db.${var.cluster_domain} ${var.cluster_name}-api.${var.cluster_domain} {
-    }
+${length(var.lb_floating_ip) == 0 ? "" : "    file /etc/coredns/db.${var.cluster_domain} ${var.cluster_name}-api.${var.cluster_domain} {\n    }\n"}
+
 
     file /etc/coredns/db.${var.cluster_domain} _etcd-server-ssl._tcp.${var.cluster_name}.${var.cluster_domain} {
     }
@@ -176,8 +176,8 @@ $ORIGIN ${var.cluster_domain}.
                                 3600       ; minimum (1 hour)
                                 )
 
-${var.cluster_name}-api  IN  A  ${var.service_vm_floating_ip}
-*.apps.${var.cluster_name}  IN  A  ${var.service_vm_floating_ip}
+${length(var.lb_floating_ip) == 0 ? "" : "${var.cluster_name}-api  IN  A  ${var.lb_floating_ip}"}
+${length(var.lb_floating_ip) == 0 ? "" : "*.apps.${var.cluster_name}  IN  A  ${var.lb_floating_ip}"}
 
 ${replace(join("\n", formatlist("${var.cluster_name}-etcd-%s  IN  CNAME  ${var.cluster_name}-master-%s", var.master_port_names, var.master_port_names)), "master-port-", "")}
 
