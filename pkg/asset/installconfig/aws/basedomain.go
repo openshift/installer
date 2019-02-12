@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/pkg/errors"
@@ -77,4 +78,31 @@ func GetBaseDomain() (string, error) {
 	}
 
 	return domain, nil
+}
+
+// GetPublicZone returns a public route53 zone that matches the name.
+func GetPublicZone(name string) (*route53.HostedZone, error) {
+	var res *route53.HostedZone
+	f := func(resp *route53.ListHostedZonesOutput, lastPage bool) (shouldContinue bool) {
+		for idx, zone := range resp.HostedZones {
+			if zone.Config != nil && !aws.BoolValue(zone.Config.PrivateZone) && strings.TrimSuffix(aws.StringValue(zone.Name), ".") == strings.TrimSuffix(name, ".") {
+				res = resp.HostedZones[idx]
+				return false
+			}
+		}
+		return !lastPage
+	}
+
+	session, err := GetSession()
+	if err != nil {
+		return nil, errors.Wrap(err, "getting AWS session")
+	}
+	client := route53.New(session)
+	if err := client.ListHostedZonesPages(&route53.ListHostedZonesInput{}, f); err != nil {
+		return nil, errors.Wrap(err, "listing hosted zones")
+	}
+	if res == nil {
+		return nil, errors.Errorf("No public route53 zone found matching name %q", name)
+	}
+	return res, nil
 }
