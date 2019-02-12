@@ -105,7 +105,7 @@ following:
 listen_tls = 0
 listen_tcp = 1
 auth_tcp="none"
-tcp_port = "16509"
+tcp_port="16509"
 ```
 
 Note that authentication is not currently supported, but should be soon.
@@ -190,6 +190,13 @@ sudo virsh pool-autostart default
 ```
 
 ### Set up NetworkManager DNS overlay
+
+Make sure you have NetworkManager enabled:
+
+```sh
+sudo yum install NetworkManager
+sudo systemctl enable --now NetworkManager
+```
 
 This step allows installer and users to resolve cluster-internal hostnames from your host.
 1. Tell NetworkManager to use `dnsmasq`:
