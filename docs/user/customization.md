@@ -39,7 +39,7 @@ An example `worker.ign` is shown below. It has been modified to increase the HTT
     "version": "2.2.0",
     "config": {
       "append": [{
-        "source": "https://test-cluster-api.example.com:49500/config/worker"
+        "source": "https://test-cluster-api.example.com:22623/config/worker"
       }]
     },
     "security": {
