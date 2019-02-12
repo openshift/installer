@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
@@ -12,6 +13,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -116,6 +118,10 @@ var (
 					logrus.Fatal(err)
 				}
 
+				if err = addRouterCAToClusterCA(config, rootOpts.dir); err != nil {
+					logrus.Fatal(err)
+				}
+
 				err = logComplete(rootOpts.dir, consoleURL)
 				if err != nil {
 					logrus.Fatal(err)
@@ -184,6 +190,56 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 			logrus.Fatal(err)
 		}
 	}
+}
+
+// addRouterCAToClusterCA adds router CA to cluster CA in kubeconfig
+func addRouterCAToClusterCA(config *rest.Config, directory string) (err error) {
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return errors.Wrap(err, "creating a Kubernetes client")
+	}
+
+	// Configmap may not exist. log and accept not-found errors with configmap.
+	caConfigMap, err := client.CoreV1().ConfigMaps("openshift-config-managed").Get("router-ca", metav1.GetOptions{})
+	if err != nil {
+		if apierrors.IsNotFound(err) {
+			logrus.Infof("router-ca resource not found in cluster, perhaps you are not using default router CA")
+			return nil
+		}
+		return errors.Wrap(err, "fetching router-ca configmap from openshift-config-managed namespace")
+	}
+
+	routerCrtBytes := []byte(caConfigMap.Data["ca-bundle.crt"])
+	kubeconfig := filepath.Join(directory, "auth", "kubeconfig")
+	kconfig, err := clientcmd.LoadFromFile(kubeconfig)
+	if err != nil {
+		return errors.Wrap(err, "loading kubeconfig")
+	}
+
+	if kconfig == nil || len(kconfig.Clusters) == 0 {
+		return errors.New("kubeconfig is missing expected data")
+	}
+
+	for _, c := range kconfig.Clusters {
+		clusterCABytes := c.CertificateAuthorityData
+		if len(clusterCABytes) == 0 {
+			return errors.New("kubeconfig CertificateAuthorityData not found")
+		}
+		certPool := x509.NewCertPool()
+		if !certPool.AppendCertsFromPEM(clusterCABytes) {
+			return errors.New("cluster CA found in kubeconfig not valid PEM format")
+		}
+		if !certPool.AppendCertsFromPEM(routerCrtBytes) {
+			return errors.New("ca-bundle.crt from router-ca configmap not valid PEM format")
+		}
+
+		newCA := append(routerCrtBytes, clusterCABytes...)
+		c.CertificateAuthorityData = newCA
+	}
+	if err := clientcmd.WriteToFile(*kconfig, kubeconfig); err != nil {
+		return errors.Wrap(err, "writing kubeconfig")
+	}
+	return nil
 }
 
 // FIXME: pulling the kubeconfig and metadata out of the root
