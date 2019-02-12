@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
+	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
@@ -75,6 +76,7 @@ func (a *Bootstrap) Dependencies() []asset.Asset {
 		&tls.JournalCertKey{},
 		&kubeconfig.Admin{},
 		&kubeconfig.Kubelet{},
+		&machines.Master{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 	}
@@ -347,6 +349,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	for _, asset := range []asset.WritableAsset{
 		&kubeconfig.Admin{},
 		&kubeconfig.Kubelet{},
+		&machines.Master{},
 		&tls.KubeCA{},
 		&tls.AggregatorCA{},
 		&tls.EtcdCA{},

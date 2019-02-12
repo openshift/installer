@@ -2,11 +2,13 @@ package machines
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 
+	"github.com/ghodss/yaml"
+	libvirtapi "github.com/openshift/cluster-api-provider-libvirt/pkg/apis"
+	libvirtprovider "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1"
 	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
-	"github.com/pkg/errors"
-	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
@@ -19,16 +21,32 @@ import (
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer"
+	awsapi "sigs.k8s.io/cluster-api-provider-aws/pkg/apis"
+	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
+	openstackapi "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
+	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
+	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 )
 
 // Master generates the machines for the `master` machine pool.
 type Master struct {
-	Machines           []machineapi.Machine
-	MachinesDeprecated []clusterapi.Machine
-	UserDataSecretRaw  []byte
+	FileList []*asset.File
 }
 
-var _ asset.Asset = (*Master)(nil)
+var (
+	directory = "openshift"
+
+	// MasterMachineFileName is the format string for constucting the master Machine filenames.
+	MasterMachineFileName = "99_openshift-cluster-api_master-machines-%s.yaml"
+
+	// MasterUserDataFileName is the filename used for the master user-data secret.
+	MasterUserDataFileName = "99_openshift-cluster-api_master-user-data-secret.yaml"
+
+	_ asset.WritableAsset = (*Master)(nil)
+)
 
 // Name returns a human friendly name for the Master Asset.
 func (m *Master) Name() string {
@@ -59,12 +77,8 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	dependencies.Get(clusterID, installconfig, rhcosImage, mign)
 
 	var err error
-	userDataMap := map[string][]byte{"master-user-data": mign.File.Data}
-	m.UserDataSecretRaw, err = userDataList(userDataMap)
-	if err != nil {
-		return errors.Wrap(err, "failed to create user-data secret for master machines")
-	}
-
+	machines := []machineapi.Machine{}
+	machinesDeprecated := []clusterapi.Machine{}
 	ic := installconfig.Config
 	pool := masterPool(ic.Machines)
 	switch ic.Platform.Name() {
@@ -81,40 +95,178 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		m.Machines, err = aws.Machines(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
+		machines, err = aws.Machines(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		aws.ConfigMasters(m.Machines, ic.ObjectMeta.Name)
+		aws.ConfigMasters(machines, ic.ObjectMeta.Name)
 	case libvirttypes.Name:
 		mpool := defaultLibvirtMachinePoolPlatform()
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Libvirt)
 		pool.Platform.Libvirt = &mpool
-		m.Machines, err = libvirt.Machines(clusterID.ClusterID, ic, &pool, "master", "master-user-data")
+		machines, err = libvirt.Machines(clusterID.ClusterID, ic, &pool, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 	case nonetypes.Name:
-		// This is needed to ensure that roundtrip generate-load tests pass when
-		// comparing this value. Otherwise, generate will use a nil value while
-		// load will use an empty slice.
-		m.Machines = []machineapi.Machine{}
+		return nil
 	case openstacktypes.Name:
 		mpool := defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName)
 		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.OpenStack)
 		pool.Platform.OpenStack = &mpool
 
-		m.MachinesDeprecated, err = openstack.Machines(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
+		machinesDeprecated, err = openstack.Machines(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		openstack.ConfigMasters(m.MachinesDeprecated, ic.ObjectMeta.Name)
+		openstack.ConfigMasters(machinesDeprecated, ic.ObjectMeta.Name)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
+
+	userDataMap := map[string][]byte{"master-user-data": mign.File.Data}
+	data, err := userDataList(userDataMap)
+	if err != nil {
+		return errors.Wrap(err, "failed to create user-data secret for master machines")
+	}
+
+	m.FileList = []*asset.File{{
+		Filename: filepath.Join(directory, MasterUserDataFileName),
+		Data:     data,
+	}}
+
+	machinesAll := []runtime.Object{}
+	for _, machine := range machines {
+		machinesAll = append(machinesAll, &machine)
+	}
+	for _, machine := range machinesDeprecated {
+		machinesAll = append(machinesAll, &machine)
+	}
+
+	count := len(machinesAll)
+	if count == 0 {
+		return errors.New("at least one master machine must be configured")
+	}
+
+	padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", count)))
+	for i, machine := range machinesAll {
+		data, err := yaml.Marshal(machine)
+		if err != nil {
+			return errors.Wrapf(err, "marshal master %d", i)
+		}
+
+		padded := fmt.Sprintf(padFormat, i)
+		m.FileList = append(m.FileList, &asset.File{
+			Filename: filepath.Join(directory, fmt.Sprintf(MasterMachineFileName, padded)),
+			Data:     data,
+		})
+	}
+
 	return nil
+}
+
+// Files returns the files generated by the asset.
+func (m *Master) Files() []*asset.File {
+	return m.FileList
+}
+
+// Load reads the asset files from disk.
+func (m *Master) Load(f asset.FileFetcher) (found bool, err error) {
+	file, err := f.FetchByName(filepath.Join(directory, MasterUserDataFileName))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+	m.FileList = []*asset.File{file}
+
+	fileList, err := f.FetchByPattern(filepath.Join(directory, fmt.Sprintf(MasterMachineFileName, "*")))
+	if err != nil {
+		return true, err
+	}
+
+	if len(fileList) == 0 {
+		return true, errors.Errorf("master machine manifests are required if you also provide %s", file.Filename)
+	}
+
+	m.FileList = append(m.FileList, fileList...)
+	return true, nil
+}
+
+// Machines returns master Machine manifest YAML.
+func (m *Master) Machines() [][]byte {
+	machines := [][]byte{}
+	userData := filepath.Join(directory, MasterUserDataFileName)
+	for _, file := range m.FileList {
+		if file.Filename == userData {
+			continue
+		}
+		machines = append(machines, file.Data)
+	}
+	return machines
+}
+
+// StructuredMachines returns master Machine manifest structures.
+func (m *Master) StructuredMachines() ([]machineapi.Machine, error) {
+	scheme := runtime.NewScheme()
+	awsapi.AddToScheme(scheme)
+	libvirtapi.AddToScheme(scheme)
+	openstackapi.AddToScheme(scheme)
+	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
+		awsprovider.SchemeGroupVersion,
+		libvirtprovider.SchemeGroupVersion,
+		openstackprovider.SchemeGroupVersion,
+	)
+
+	machines := []machineapi.Machine{}
+	for i, data := range m.Machines() {
+		machine := &machineapi.Machine{}
+		err := yaml.Unmarshal(data, &machine)
+		if err != nil {
+			return machines, errors.Wrapf(err, "unmarshal master %d", i)
+		}
+
+		obj, _, err := decoder.Decode(machine.Spec.ProviderSpec.Value.Raw, nil, nil)
+		if err != nil {
+			return machines, errors.Wrapf(err, "unmarshal master %d", i)
+		}
+
+		machine.Spec.ProviderSpec.Value = &runtime.RawExtension{Object: obj}
+		machines = append(machines, *machine)
+	}
+
+	return machines, nil
+}
+
+// StructuredMachinesDeprecated returns master Machine manifest structures.
+func (m *Master) StructuredMachinesDeprecated() ([]clusterapi.Machine, error) {
+	scheme := runtime.NewScheme()
+	openstackapi.AddToScheme(scheme)
+	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
+		openstackprovider.SchemeGroupVersion,
+	)
+
+	machines := []clusterapi.Machine{}
+	for i, data := range m.Machines() {
+		machine := &clusterapi.Machine{}
+		err := yaml.Unmarshal(data, &machine)
+		if err != nil {
+			return machines, errors.Wrapf(err, "unmarshal master %d", i)
+		}
+
+		obj, _, err := decoder.Decode(machine.Spec.ProviderSpec.Value.Raw, nil, nil)
+		if err != nil {
+			return machines, errors.Wrapf(err, "unmarshal master %d", i)
+		}
+
+		machine.Spec.ProviderSpec.Value = &runtime.RawExtension{Object: obj}
+		machines = append(machines, *machine)
+	}
+
+	return machines, nil
 }
 
 func masterPool(pools []types.MachinePool) types.MachinePool {

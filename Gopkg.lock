@@ -406,9 +406,12 @@
   revision = "91fca585a85b163ddfd119fd09c128c9feadddca"
 
 [[projects]]
-  digest = "1:46e54b01e18842945bd92e687a237d891fbc5ee3224f460eb47b55454837862f"
+  digest = "1:64f129e3a0f9d8419e57ab6b65cceedc136d6dc5bcd9398545890bd4217bf6f2"
   name = "github.com/openshift/cluster-api-provider-libvirt"
-  packages = ["pkg/apis/libvirtproviderconfig/v1alpha1"]
+  packages = [
+    "pkg/apis",
+    "pkg/apis/libvirtproviderconfig/v1alpha1",
+  ]
   pruneopts = "NUT"
   revision = "c23986b36a2521cd69ac22d7adb74a22bca9f7aa"
 
@@ -847,18 +850,24 @@
   revision = "ef6f8fc12d32fc1646f231f6e39dbef59ad2e4dd"
 
 [[projects]]
-  digest = "1:b03dcb1c1d57b36333b0fa402ea776f65ba3b25afce00049fe6497f047aa56f6"
+  digest = "1:3981a97e1e569cbbaaab702d2b44adfac402e923a2bb0984ef5fad93bcbf8c79"
   name = "sigs.k8s.io/cluster-api-provider-aws"
-  packages = ["pkg/apis/awsproviderconfig/v1alpha1"]
+  packages = [
+    "pkg/apis",
+    "pkg/apis/awsproviderconfig/v1beta1",
+  ]
   pruneopts = "NUT"
-  revision = "9a983a5c6c12b27169c57e4c8948cb554e4d6b6c"
+  revision = "15fe4b4ea5636f8516c238490fc6a85d44161181"
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
 
 [[projects]]
   branch = "master"
-  digest = "1:fcc276bfa3e1e3f8bda1249073912cebf9373996d24a9ffe988ad284c1cf65e3"
+  digest = "1:53e688169eb9b22a6a6d1d69f8987e85331bb185e3f3691ef4182e18f6bdd3a0"
   name = "sigs.k8s.io/cluster-api-provider-openstack"
-  packages = ["pkg/apis/openstackproviderconfig/v1alpha1"]
+  packages = [
+    "pkg/apis",
+    "pkg/apis/openstackproviderconfig/v1alpha1",
+  ]
   pruneopts = "NUT"
   revision = "581696acc2e79f9cc1755a9cb1d8b6d512298883"
   source = "https://github.com/openshift/cluster-api-provider-openstack.git"
@@ -925,6 +934,7 @@
     "github.com/openshift/api/config/v1",
     "github.com/openshift/client-go/config/clientset/versioned",
     "github.com/openshift/client-go/route/clientset/versioned",
+    "github.com/openshift/cluster-api-provider-libvirt/pkg/apis",
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
     "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1",
     "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers",
@@ -948,6 +958,7 @@
     "k8s.io/apimachinery/pkg/apis/meta/v1",
     "k8s.io/apimachinery/pkg/fields",
     "k8s.io/apimachinery/pkg/runtime",
+    "k8s.io/apimachinery/pkg/runtime/serializer",
     "k8s.io/apimachinery/pkg/util/errors",
     "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/validation",
@@ -961,7 +972,9 @@
     "k8s.io/client-go/tools/clientcmd/api/v1",
     "k8s.io/client-go/tools/watch",
     "k8s.io/utils/pointer",
-    "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1",
+    "sigs.k8s.io/cluster-api-provider-aws/pkg/apis",
+    "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1",
+    "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis",
     "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1",
     "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1",
   ]

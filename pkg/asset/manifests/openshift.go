@@ -2,6 +2,7 @@ package manifests
 
 import (
 	"encoding/base64"
+	"fmt"
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -14,18 +15,13 @@ import (
 	// https://github.com/openshift/installer/pull/854
 	goyaml "gopkg.in/yaml.v2"
 
-	"github.com/ghodss/yaml"
 	"github.com/gophercloud/utils/openstack/clientconfig"
-	machineapi "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	osmachine "github.com/openshift/installer/pkg/asset/machines/openstack"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
-	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 )
 
 const (
@@ -53,7 +49,6 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&installconfig.InstallConfig{},
 		&ClusterK8sIO{},
 		&machines.Worker{},
-		&machines.Master{},
 		&password.KubeadminPassword{},
 
 		&openshift.BindingDiscovery{},
@@ -69,8 +64,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	kubeadminPassword := &password.KubeadminPassword{}
 	clusterk8sio := &ClusterK8sIO{}
 	worker := &machines.Worker{}
-	master := &machines.Master{}
-	dependencies.Get(installConfig, clusterk8sio, worker, master, kubeadminPassword)
+	dependencies.Get(installConfig, clusterk8sio, worker, kubeadminPassword)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -128,23 +122,10 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		kubeadminPasswordSecret,
 		roleCloudCredsSecretReader)
 
-	var masterMachines []byte
-	var err error
-	if master.Machines != nil {
-		masterMachines, err = listFromMachines(master.Machines)
-	} else {
-		masterMachines, err = listFromMachinesDeprecated(master.MachinesDeprecated)
-	}
-	if err != nil {
-		return err
-	}
-
 	assetData := map[string][]byte{
 		"99_binding-discovery.yaml":                             []byte(bindingDiscovery.Files()[0].Data),
 		"99_kubeadmin-password-secret.yaml":                     applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
 		"99_openshift-cluster-api_cluster.yaml":                 clusterk8sio.Raw,
-		"99_openshift-cluster-api_master-machines.yaml":         masterMachines,
-		"99_openshift-cluster-api_master-user-data-secret.yaml": master.UserDataSecretRaw,
 		"99_openshift-cluster-api_worker-machineset.yaml":       worker.MachineSetRaw,
 		"99_openshift-cluster-api_worker-user-data-secret.yaml": worker.UserDataSecretRaw,
 	}
@@ -179,35 +160,25 @@ func (o *Openshift) Load(f asset.FileFetcher) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	o.FileList = fileList
+
+	masterMachinePattern := fmt.Sprintf(machines.MasterMachineFileName, "*")
+	for _, file := range fileList {
+		filename := filepath.Base(file.Filename)
+		if filename == machines.MasterUserDataFileName {
+			continue
+		}
+
+		matched, err := filepath.Match(masterMachinePattern, filename)
+		if err != nil {
+			return true, err
+		}
+		if matched {
+			continue
+		}
+
+		o.FileList = append(o.FileList, file)
+	}
+
 	asset.SortFiles(o.FileList)
-	return len(fileList) > 0, nil
-}
-
-func listFromMachines(objs []machineapi.Machine) ([]byte, error) {
-	list := &metav1.List{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "List",
-		},
-	}
-	for idx := range objs {
-		list.Items = append(list.Items, runtime.RawExtension{Object: &objs[idx]})
-	}
-
-	return yaml.Marshal(list)
-}
-
-func listFromMachinesDeprecated(objs []clusterapi.Machine) ([]byte, error) {
-	list := &metav1.List{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: "v1",
-			Kind:       "List",
-		},
-	}
-	for idx := range objs {
-		list.Items = append(list.Items, runtime.RawExtension{Object: &objs[idx]})
-	}
-
-	return yaml.Marshal(list)
+	return len(o.FileList) > 0, nil
 }

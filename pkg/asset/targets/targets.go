@@ -7,6 +7,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/kubeconfig"
+	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
 	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
@@ -21,6 +22,7 @@ var (
 
 	// Manifests are the manifests targeted assets.
 	Manifests = []asset.WritableAsset{
+		&machines.Master{},
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 	}

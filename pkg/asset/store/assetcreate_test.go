@@ -86,14 +86,19 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 				t.Fatalf("failed to create new asset store: %v", err)
 			}
 
+			exists := struct{}{}
+			emptyAssets := map[string]struct{}{
+				"Master Machines": exists, // no files for the 'none' platform
+				"Metadata":        exists, // read-only
+			}
 			for _, a := range tc.targets {
+				name := a.Name()
 				newAsset := reflect.New(reflect.TypeOf(a).Elem()).Interface().(asset.WritableAsset)
 				if err := newAssetStore.Fetch(newAsset); err != nil {
 					t.Fatalf("failed to fetch %q in new store: %v", a.Name(), err)
 				}
 				assetState := newAssetStore.assets[reflect.TypeOf(a)]
-				// Make an exception for metadata. It's files are read-only.
-				if a.Name() != "Metadata" {
+				if _, ok := emptyAssets[name]; !ok {
 					assert.Truef(t, assetState.presentOnDisk, "asset %q was not found on disk", a.Name())
 				}
 			}

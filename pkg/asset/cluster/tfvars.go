@@ -21,7 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1alpha1"
+	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
 )
 
@@ -76,10 +76,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	bootstrapIgn := string(bootstrapIgnAsset.Files()[0].Data)
 	masterIgn := string(masterIgnAsset.Files()[0].Data)
 
-	masterCount := len(mastersAsset.Machines)
-	if mastersAsset.Machines == nil {
-		masterCount = len(mastersAsset.MachinesDeprecated)
-	}
+	masters := mastersAsset.Machines()
+	masterCount := len(masters)
 	data, err := tfvars.TFVars(
 		clusterID.ClusterID,
 		installConfig.Config.ObjectMeta.Name,
@@ -105,8 +103,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 
 	switch platform := installConfig.Config.Platform.Name(); platform {
 	case aws.Name:
+		masters, err := mastersAsset.StructuredMachines()
+		if err != nil {
+			return err
+		}
 		data, err = awstfvars.TFVars(
-			mastersAsset.Machines[0].Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig),
+			masters[0].Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig),
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
@@ -116,8 +118,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case libvirt.Name:
+		masters, err := mastersAsset.StructuredMachines()
+		if err != nil {
+			return err
+		}
 		data, err = libvirttfvars.TFVars(
-			mastersAsset.Machines[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
+			masters[0].Spec.ProviderSpec.Value.Object.(*libvirtprovider.LibvirtMachineProviderConfig),
 			string(*rhcosImage),
 			&installConfig.Config.Networking.MachineCIDR.IPNet,
 			installConfig.Config.Platform.Libvirt.Network.IfName,
@@ -132,8 +138,12 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		})
 	case none.Name:
 	case openstack.Name:
+		masters, err := mastersAsset.StructuredMachinesDeprecated()
+		if err != nil {
+			return err
+		}
 		data, err = openstacktfvars.TFVars(
-			mastersAsset.MachinesDeprecated[0].Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec),
+			masters[0].Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec),
 			installConfig.Config.Platform.OpenStack.Region,
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
 			installConfig.Config.Platform.OpenStack.TrunkSupport,
