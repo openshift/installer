@@ -86,16 +86,6 @@ resource "aws_security_group_rule" "worker_ingress_flannel" {
   self      = true
 }
 
-resource "aws_security_group_rule" "worker_ingress_flannel_from_etcd" {
-  type                     = "ingress"
-  security_group_id        = "${aws_security_group.worker.id}"
-  source_security_group_id = "${aws_security_group.etcd.id}"
-
-  protocol  = "udp"
-  from_port = 4789
-  to_port   = 4789
-}
-
 resource "aws_security_group_rule" "worker_ingress_flannel_from_master" {
   type                     = "ingress"
   security_group_id        = "${aws_security_group.worker.id}"
@@ -184,14 +174,4 @@ resource "aws_security_group_rule" "worker_ingress_services_from_console" {
   protocol  = "tcp"
   from_port = 30000
   to_port   = 32767
-}
-
-resource "aws_security_group_rule" "etcd_ingress_from_etcd" {
-  type                     = "ingress"
-  security_group_id        = "${aws_security_group.etcd.id}"
-  source_security_group_id = "${aws_security_group.etcd.id}"
-
-  protocol  = "tcp"
-  from_port = 0
-  to_port   = 65535
 }
