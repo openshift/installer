@@ -153,22 +153,22 @@ data "ignition_user" "core" {
   name = "core"
 }
 
-resource "openstack_objectstorage_object_v1" "lb_ignition" {
+resource "openstack_objectstorage_object_v1" "service_ignition" {
   container_name = "${var.swift_container}"
   name           = "load-balancer.ign"
   content        = "${var.ignition}"
 }
 
-resource "openstack_objectstorage_tempurl_v1" "lb_ignition_tmpurl" {
+resource "openstack_objectstorage_tempurl_v1" "service_ignition_tmpurl" {
   container = "${var.swift_container}"
   method    = "get"
-  object    = "${openstack_objectstorage_object_v1.lb_ignition.name}"
+  object    = "${openstack_objectstorage_object_v1.service_ignition.name}"
   ttl       = 3600
 }
 
-data "ignition_config" "lb_redirect" {
+data "ignition_config" "service_redirect" {
   append {
-    source = "${openstack_objectstorage_tempurl_v1.lb_ignition_tmpurl.url}"
+    source = "${openstack_objectstorage_tempurl_v1.service_ignition_tmpurl.url}"
   }
 
   files = [
@@ -194,10 +194,10 @@ resource "openstack_compute_instance_v2" "load_balancer" {
   flavor_id = "${data.openstack_compute_flavor_v2.bootstrap_flavor.id}"
   image_id  = "${data.openstack_images_image_v2.bootstrap_image.id}"
 
-  user_data = "${data.ignition_config.lb_redirect.rendered}"
+  user_data = "${data.ignition_config.service_redirect.rendered}"
 
   network {
-    port = "${var.lb_port_id}"
+    port = "${var.service_port_id}"
   }
 
   metadata {

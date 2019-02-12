@@ -33,7 +33,7 @@ variable "flavor_name" {
   description = "The Nova flavor for the bootstrap node."
 }
 
-variable "lb_port_id" {
+variable "service_port_id" {
   type        = "string"
   description = "The subnet ID for the bootstrap node."
 }
