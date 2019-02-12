@@ -76,7 +76,7 @@ resource "aws_security_group_rule" "worker_ingress_heapster_from_master" {
   to_port   = 4194
 }
 
-resource "aws_security_group_rule" "worker_ingress_flannel" {
+resource "aws_security_group_rule" "worker_ingress_vxlan" {
   type              = "ingress"
   security_group_id = "${aws_security_group.worker.id}"
 
@@ -86,7 +86,7 @@ resource "aws_security_group_rule" "worker_ingress_flannel" {
   self      = true
 }
 
-resource "aws_security_group_rule" "worker_ingress_flannel_from_master" {
+resource "aws_security_group_rule" "worker_ingress_vxlan_from_master" {
   type                     = "ingress"
   security_group_id        = "${aws_security_group.worker.id}"
   source_security_group_id = "${aws_security_group.master.id}"
