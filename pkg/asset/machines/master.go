@@ -138,11 +138,12 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 	}}
 
 	machinesAll := []runtime.Object{}
-	for _, machine := range machines {
-		machinesAll = append(machinesAll, &machine)
+	for i := range machines {
+		machinesAll = append(machinesAll, &machines[i])
 	}
-	for _, machine := range machinesDeprecated {
-		machinesAll = append(machinesAll, &machine)
+
+	for i := range machinesDeprecated {
+		machinesAll = append(machinesAll, &machinesDeprecated[i])
 	}
 
 	count := len(machinesAll)
