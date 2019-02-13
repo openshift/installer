@@ -28,7 +28,6 @@ import (
 	awsprovider "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1"
 	openstackapi "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis"
 	openstackprovider "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1"
-	clusterapi "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
 )
 
 // Master generates the machines for the `master` machine pool.
@@ -78,7 +77,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 
 	var err error
 	machines := []machineapi.Machine{}
-	machinesDeprecated := []clusterapi.Machine{}
 	ic := installconfig.Config
 	pool := masterPool(ic.Machines)
 	switch ic.Platform.Name() {
@@ -117,11 +115,11 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(pool.Platform.OpenStack)
 		pool.Platform.OpenStack = &mpool
 
-		machinesDeprecated, err = openstack.Machines(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
+		machines, err = openstack.Machines(clusterID.ClusterID, ic, &pool, string(*rhcosImage), "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		openstack.ConfigMasters(machinesDeprecated, ic.ObjectMeta.Name)
+		openstack.ConfigMasters(machines, ic.ObjectMeta.Name)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}
@@ -137,22 +135,13 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		Data:     data,
 	}}
 
-	machinesAll := []runtime.Object{}
-	for i := range machines {
-		machinesAll = append(machinesAll, &machines[i])
-	}
-
-	for i := range machinesDeprecated {
-		machinesAll = append(machinesAll, &machinesDeprecated[i])
-	}
-
-	count := len(machinesAll)
+	count := len(machines)
 	if count == 0 {
 		return errors.New("at least one master machine must be configured")
 	}
 
 	padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", count)))
-	for i, machine := range machinesAll {
+	for i, machine := range machines {
 		data, err := yaml.Marshal(machine)
 		if err != nil {
 			return errors.Wrapf(err, "marshal master %d", i)
@@ -225,34 +214,6 @@ func (m *Master) StructuredMachines() ([]machineapi.Machine, error) {
 	machines := []machineapi.Machine{}
 	for i, data := range m.Machines() {
 		machine := &machineapi.Machine{}
-		err := yaml.Unmarshal(data, &machine)
-		if err != nil {
-			return machines, errors.Wrapf(err, "unmarshal master %d", i)
-		}
-
-		obj, _, err := decoder.Decode(machine.Spec.ProviderSpec.Value.Raw, nil, nil)
-		if err != nil {
-			return machines, errors.Wrapf(err, "unmarshal master %d", i)
-		}
-
-		machine.Spec.ProviderSpec.Value = &runtime.RawExtension{Object: obj}
-		machines = append(machines, *machine)
-	}
-
-	return machines, nil
-}
-
-// StructuredMachinesDeprecated returns master Machine manifest structures.
-func (m *Master) StructuredMachinesDeprecated() ([]clusterapi.Machine, error) {
-	scheme := runtime.NewScheme()
-	openstackapi.AddToScheme(scheme)
-	decoder := serializer.NewCodecFactory(scheme).UniversalDecoder(
-		openstackprovider.SchemeGroupVersion,
-	)
-
-	machines := []clusterapi.Machine{}
-	for i, data := range m.Machines() {
-		machine := &clusterapi.Machine{}
 		err := yaml.Unmarshal(data, &machine)
 		if err != nil {
 			return machines, errors.Wrapf(err, "unmarshal master %d", i)
