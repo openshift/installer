@@ -6,10 +6,6 @@ output "master_subnet_ids" {
   value = "${local.master_subnet_ids}"
 }
 
-output "etcd_sg_id" {
-  value = "${aws_security_group.etcd.id}"
-}
-
 output "master_sg_id" {
   value = "${aws_security_group.master.id}"
 }
