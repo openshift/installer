@@ -161,9 +161,9 @@ ${length(var.lb_floating_ip) == 0 ? "" : "    file /etc/coredns/db.${var.cluster
         upstream /etc/resolv.conf
     }
 
-${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} master-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "master-port-", "")}
+${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} master-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "${var.cluster_id}-master-port-", "")}
 
-${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} etcd-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "master-port-", "")}
+${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} etcd-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "${var.cluster_id}-master-port-", "")}
 
 
     forward . /etc/resolv.conf {
@@ -204,10 +204,10 @@ ${length(var.lb_floating_ip) == 0 ? "" : "api  IN  A  ${var.lb_floating_ip}"}
 ${length(var.lb_floating_ip) == 0 ? "" : "*.apps  IN  A  ${var.lb_floating_ip}"}
 
 bootstrap.${var.cluster_domain}  IN  A  ${var.bootstrap_ip}
-${replace(join("\n", formatlist("master-%s  IN  A %s", var.master_port_names, var.master_ips)), "master-port-", "")}
+${replace(join("\n", formatlist("master-%s  IN  A %s", var.master_port_names, var.master_ips)), "${var.cluster_id}-master-port-", "")}
 
-${replace(join("\n", formatlist("etcd-%s  IN  A  %s", var.master_port_names, var.master_ips)), "master-port-", "")}
-${replace(join("\n", formatlist("_etcd-server-ssl._tcp  8640  IN  SRV  0  10  2380   etcd-%s.${var.cluster_domain}.", var.master_port_names)), "master-port-", "")}
+${replace(join("\n", formatlist("etcd-%s  IN  A  %s", var.master_port_names, var.master_ips)), "${var.cluster_id}-master-port-", "")}
+${replace(join("\n", formatlist("_etcd-server-ssl._tcp  8640  IN  SRV  0  10  2380   etcd-%s.${var.cluster_domain}.", var.master_port_names)), "${var.cluster_id}-master-port-", "")}
 EOF
   }
 }

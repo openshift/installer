@@ -1,5 +1,5 @@
 resource "openstack_networking_secgroup_v2" "worker" {
-  name = "worker"
+  name = "${var.cluster_id}-worker"
   tags = ["openshiftClusterID=${var.cluster_id}"]
 }
 
