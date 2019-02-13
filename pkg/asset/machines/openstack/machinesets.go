@@ -46,7 +46,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			Kind:       "MachineSet",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Namespace: "openshift-cluster-api",
+			Namespace: "openshift-machine-api",
 			Name:      name,
 			Labels: map[string]string{
 				"sigs.k8s.io/cluster-api-cluster":      clustername,
