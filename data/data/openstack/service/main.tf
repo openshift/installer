@@ -63,8 +63,62 @@ data "ignition_file" "haproxy_watcher_script" {
   mode       = "489"                               // 0755
   path       = "/usr/local/bin/haproxy-watcher.sh"
 
-  source {
-    source = "data:,%23%21%2Fbin%2Fbash%0A%0Aset%20-x%0A%0Aexport%20KUBECONFIG%3D%2Fopt%2Fopenshift%2Fauth%2Fkubeconfig%0ATEMPLATE%3D%22%7B%7Brange%20.items%7D%7D%7B%7B%5C%24name%3A%3D.metadata.name%7D%7D%7B%7Brange%20.status.conditions%7D%7D%7B%7Bif%20eq%20.type%20%5C%22Ready%5C%22%7D%7D%7B%7Bif%20eq%20.status%20%5C%22True%5C%22%20%7D%7D%7B%7B%5C%24name%7D%7D%7B%7Bend%7D%7D%7B%7Bend%7D%7D%7B%7Bend%7D%7D%20%7B%7Bend%7D%7D%22%0AMASTERS%3D%24%28oc%20get%20nodes%20-l%20node-role.kubernetes.io%2Fmaster%20-ogo-template%3D%22%24TEMPLATE%22%29%0AWORKERS%3D%24%28oc%20get%20nodes%20-l%20node-role.kubernetes.io%2Fworker%20-ogo-template%3D%22%24TEMPLATE%22%29%0A%0Aif%20%5B%5B%20%24MASTERS%20-eq%20%22%22%20%5D%5D%3B%0Athen%0A%20%20%20%20MASTER_LINES%3D%22%0A%20%20%20%20server%20${var.cluster_name}-bootstrap-22623%20${var.cluster_name}-bootstrap.${var.cluster_domain}%20check%20port%2049500%0A%20%20%20%20server%20${var.cluster_name}-bootstrap-6443%20${var.cluster_name}-bootstrap.${var.cluster_domain}%20check%20port%206443%22%0A%20%20%20%20MASTERS%3D%22${var.cluster_name}-master-0%20${var.cluster_name}-master-1%20${var.cluster_name}-master-2%22%0Afi%0A%0Afor%20master%20in%20%24MASTERS%3B%0Ado%0A%20%20%20%20MASTER_LINES%3D%22%24MASTER_LINES%0A%20%20%20%20server%20%24master%20%24master.${var.cluster_domain}%20check%20port%206443%22%0Adone%0A%0Afor%20worker%20in%20%24WORKERS%3B%0Ado%0A%20%20%20%20WORKER_LINES%3D%22%24WORKER_LINES%0A%20%20%20%20server%20%24worker%20%24worker.${var.cluster_domain}%20check%20port%20443%22%0Adone%0A%0Acat%20%3E%20%2Fetc%2Fhaproxy%2Fhaproxy.cfg.new%20%3C%3C%20EOF%0Alisten%20${var.cluster_name}-api-masters%0A%20%20%20%20bind%200.0.0.0%3A6443%0A%20%20%20%20bind%200.0.0.0%3A49500%0A%20%20%20%20mode%20tcp%0A%20%20%20%20balance%20roundrobin%24MASTER_LINES%0A%0Alisten%20${var.cluster_name}-api-workers%0A%20%20%20%20bind%200.0.0.0%3A80%0A%20%20%20%20bind%200.0.0.0%3A443%0A%20%20%20%20mode%20tcp%0A%20%20%20%20balance%20roundrobin%24WORKER_LINES%0AEOF%0A%0A%0Amkdir%20-p%20%2Fetc%2Fhaproxy%0ACHANGED%3D%24%28diff%20%2Fetc%2Fhaproxy%2Fhaproxy.cfg%20%2Fetc%2Fhaproxy%2Fhaproxy.cfg.new%29%0A%0Aif%20%5B%5B%20%21%20-f%20%2Fetc%2Fhaproxy%2Fhaproxy.cfg%20%5D%5D%20%7C%7C%20%5B%5B%20%21%20%24CHANGED%20-eq%20%22%22%20%5D%5D%3B%0Athen%0A%20%20%20%20cp%20%2Fetc%2Fhaproxy%2Fhaproxy.cfg%20%2Fetc%2Fhaproxy%2Fhaproxy.cfg.backup%20%7C%7C%20true%0A%20%20%20%20cp%20%2Fetc%2Fhaproxy%2Fhaproxy.cfg.new%20%2Fetc%2Fhaproxy%2Fhaproxy.cfg%0A%20%20%20%20systemctl%20restart%20haproxy%0Afi%0A"
+  content {
+    content = <<TFEOF
+#!/bin/bash
+
+set -x
+
+export KUBECONFIG=/opt/openshift/auth/kubeconfig
+TEMPLATE="{{range .items}}{{\$name:=.metadata.name}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{if eq .status \"True\" }}{{\$name}}{{end}}{{end}}{{end}} {{end}}"
+MASTERS=$(oc get nodes -l node-role.kubernetes.io/master -ogo-template="$TEMPLATE")
+WORKERS=$(oc get nodes -l node-role.kubernetes.io/worker -ogo-template="$TEMPLATE")
+
+if [[ $MASTERS -eq "" ]];
+then
+    MASTER_LINES="
+    server ${var.cluster_name}-bootstrap-22623 ${var.cluster_name}-bootstrap.${var.cluster_domain} check port 22623
+    server ${var.cluster_name}-bootstrap-6443 ${var.cluster_name}-bootstrap.${var.cluster_domain} check port 6443"
+    MASTERS="${var.cluster_name}-master-0 ${var.cluster_name}-master-1 ${var.cluster_name}-master-2"
+fi
+
+for master in $MASTERS;
+do
+    MASTER_LINES="$MASTER_LINES
+    server $master $master.${var.cluster_domain} check port 6443"
+done
+
+for worker in $WORKERS;
+do
+    WORKER_LINES="$WORKER_LINES
+    server $worker $worker.${var.cluster_domain} check port 443"
+done
+
+cat > /etc/haproxy/haproxy.cfg.new << EOF
+listen ${var.cluster_name}-api-masters
+    bind 0.0.0.0:6443
+    bind 0.0.0.0:22623
+    mode tcp
+    balance roundrobin$MASTER_LINES
+
+listen ${var.cluster_name}-api-workers
+    bind 0.0.0.0:80
+    bind 0.0.0.0:443
+    mode tcp
+    balance roundrobin$WORKER_LINES
+EOF
+
+
+mkdir -p /etc/haproxy
+CHANGED=$(diff /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.new)
+
+if [[ ! -f /etc/haproxy/haproxy.cfg ]] || [[ ! $CHANGED -eq "" ]];
+then
+    cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.backup || true
+    cp /etc/haproxy/haproxy.cfg.new /etc/haproxy/haproxy.cfg
+    systemctl restart haproxy
+fi
+TFEOF
   }
 }
 
