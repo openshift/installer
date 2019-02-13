@@ -33,7 +33,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	for idx := int64(0); idx < total; idx++ {
 		machine := machineapi.Machine{
 			TypeMeta: metav1.TypeMeta{
-				APIVersion: "cluster.k8s.io/v1alpha1",
+				APIVersion: "machine.openshift.io/v1beta1",
 				Kind:       "Machine",
 			},
 			ObjectMeta: metav1.ObjectMeta{
