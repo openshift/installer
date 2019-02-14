@@ -487,6 +487,9 @@ func deleteEC2Instance(ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger
 		},
 	})
 	if err != nil {
+		if err.(awserr.Error).Code() == "InvalidInstanceID.NotFound" {
+			return nil
+		}
 		return err
 	}
 
