@@ -65,6 +65,8 @@ func setupFileHook(baseDir string) func() {
 		DisableLevelTruncation: false,
 	}))
 
+	logrus.Debugf("OpenShift Installer %s", version)
+
 	return func() {
 		logfile.Close()
 		logrus.StandardLogger().ReplaceHooks(originalHooks)
