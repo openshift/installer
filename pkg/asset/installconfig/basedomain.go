@@ -46,7 +46,7 @@ func (a *baseDomain) Generate(parents asset.Parents) error {
 				Help:    "The base domain of the cluster. All DNS records will be sub-domains of this base and will also include the cluster name.",
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
-				return validate.DomainName(ans.(string))
+				return validate.DomainName(ans.(string), true)
 			}),
 		},
 	}, &a.BaseDomain)
