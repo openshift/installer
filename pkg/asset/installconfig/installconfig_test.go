@@ -105,7 +105,7 @@ func TestInstallConfigLoad(t *testing.T) {
 		{
 			name: "valid InstallConfig",
 			data: `
-apiVersion: v1beta2
+apiVersion: v1beta3
 metadata:
   name: test-cluster
 baseDomain: test-domain

@@ -11,7 +11,7 @@ import (
 
 const (
 	// InstallConfigVersion is the version supported by this package.
-	InstallConfigVersion = "v1beta2"
+	InstallConfigVersion = "v1beta3"
 )
 
 var (

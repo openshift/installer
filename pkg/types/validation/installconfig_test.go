@@ -81,6 +81,15 @@ func TestValidateInstallConfig(t *testing.T) {
 			installConfig: validInstallConfig(),
 		},
 		{
+			name: "invalid version",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.APIVersion = "bad-version"
+				return c
+			}(),
+			expectedError: fmt.Sprintf(`^apiVersion: Invalid value: "bad-version": install-config version must be %q`, types.InstallConfigVersion),
+		},
+		{
 			name: "invalid name",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
