@@ -1,3 +1,7 @@
+locals {
+  cluster_domain = "${var.cluster_name}.${var.base_domain}"
+}
+
 provider "openstack" {
   auth_url            = "${var.openstack_credentials_auth_url}"
   cert                = "${var.openstack_credentials_cert}"
@@ -81,7 +85,7 @@ module "topology" {
 }
 
 resource "openstack_objectstorage_container_v1" "container" {
-  name = "${lower(var.cluster_name)}.${var.base_domain}"
+  name = "${local.cluster_domain}"
 
   metadata = "${merge(map(
       "Name", "${var.cluster_name}-ignition-master",

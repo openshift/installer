@@ -19,7 +19,7 @@ variable "cluster_id" {
 
 variable "cluster_domain" {
   type        = "string"
-  description = "The domain name of the cluster."
+  description = "The domain name of the cluster. All DNS records must be under this domain."
 }
 
 variable "ignition" {
