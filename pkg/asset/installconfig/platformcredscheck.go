@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/pkg/errors"
 )
 
 // PlatformCredsCheck is an asset that checks the platform credentials, asks for them or errors out if invalid
@@ -35,7 +36,14 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 	platform := ic.Config.Platform.Name()
 	switch platform {
 	case aws.Name:
-		_, err = awsconfig.GetSession()
+		ssn, err := awsconfig.GetSession()
+		if err != nil {
+			return errors.Wrap(err, "creating AWS session")
+		}
+		err = awsconfig.ValidateCreds(ssn)
+		if err != nil {
+			return errors.Wrap(err, "validate AWS credentials")
+		}
 	case libvirt.Name:
 	case none.Name:
 	case openstack.Name:
