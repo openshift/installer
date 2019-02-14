@@ -9,14 +9,12 @@ import (
 )
 
 const (
-	netCRDfilename   = "cluster-network-crd.yaml"
 	netopCRDfilename = "cluster-networkconfig-crd.yaml"
 )
 
 var _ asset.WritableAsset = (*NetworkCRDs)(nil)
 
 // NetworkCRDs is the custom resource definitions for the network operator types:
-// - Network.config.openshift.io
 // - NetworkConfig.networkoperator.openshift.io
 type NetworkCRDs struct {
 	FileList []*asset.File
@@ -34,16 +32,14 @@ func (t *NetworkCRDs) Name() string {
 
 // Generate generates the actual files by this asset
 func (t *NetworkCRDs) Generate(parents asset.Parents) error {
-	for _, filename := range []string{netCRDfilename, netopCRDfilename} {
-		data, err := content.GetOpenshiftTemplate(filename)
-		if err != nil {
-			return err
-		}
-		t.FileList = append(t.FileList, &asset.File{
-			Filename: filepath.Join(content.TemplateDir, filename),
-			Data:     []byte(data),
-		})
+	data, err := content.GetOpenshiftTemplate(netopCRDfilename)
+	if err != nil {
+		return err
 	}
+	t.FileList = append(t.FileList, &asset.File{
+		Filename: filepath.Join(content.TemplateDir, netopCRDfilename),
+		Data:     []byte(data),
+	})
 	return nil
 }
 
@@ -54,16 +50,14 @@ func (t *NetworkCRDs) Files() []*asset.File {
 
 // Load returns the asset from disk.
 func (t *NetworkCRDs) Load(f asset.FileFetcher) (bool, error) {
-	for _, filename := range []string{netCRDfilename, netopCRDfilename} {
-		file, err := f.FetchByName(filepath.Join(content.TemplateDir, filename))
-		if err != nil {
-			if os.IsNotExist(err) {
-				return false, nil
-			}
-			return false, err
+	file, err := f.FetchByName(filepath.Join(content.TemplateDir, netopCRDfilename))
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
 		}
-		t.FileList = append(t.FileList, file)
+		return false, err
 	}
+	t.FileList = append(t.FileList, file)
 
 	return true, nil
 }

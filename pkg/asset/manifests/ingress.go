@@ -7,16 +7,13 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/templates/content"
-
-	configv1 "github.com/openshift/api/config/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
-	ingCrdFilename = "cluster-ingress-01-crd.yaml"
 	ingCfgFilename = filepath.Join(manifestDir, "cluster-ingress-02-config.yml")
 )
 
@@ -64,16 +61,7 @@ func (ing *Ingress) Generate(dependencies asset.Parents) error {
 		return errors.Wrapf(err, "failed to create %s manifests from InstallConfig", ing.Name())
 	}
 
-	crdData, err := content.GetBootkubeTemplate(ingCrdFilename)
-	if err != nil {
-		return err
-	}
-
 	ing.FileList = []*asset.File{
-		{
-			Filename: filepath.Join(manifestDir, ingCrdFilename),
-			Data:     []byte(crdData),
-		},
 		{
 			Filename: ingCfgFilename,
 			Data:     configData,

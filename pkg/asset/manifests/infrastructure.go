@@ -6,11 +6,9 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/templates/content/openshift"
-
-	configv1 "github.com/openshift/api/config/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/pkg/types/aws"
@@ -41,15 +39,13 @@ func (*Infrastructure) Name() string {
 func (*Infrastructure) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&openshift.InfrastructureCRD{},
 	}
 }
 
 // Generate generates the Infrastructure config and its CRD.
 func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	infra := &openshift.InfrastructureCRD{}
-	dependencies.Get(installConfig, infra)
+	dependencies.Get(installConfig)
 
 	var platform configv1.PlatformType
 	switch installConfig.Config.Platform.Name() {
@@ -87,10 +83,6 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 	}
 
 	i.FileList = []*asset.File{
-		{
-			Filename: infraCrdFilename,
-			Data:     []byte(infra.Files()[0].Data),
-		},
 		{
 			Filename: infraCfgFilename,
 			Data:     configData,
