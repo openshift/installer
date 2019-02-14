@@ -24,6 +24,7 @@ MACHINE_CONFIG_OSCONTENT=$(podman run --rm ${release} image machine-os-content)
 MACHINE_CONFIG_ETCD_IMAGE=$(podman run --rm ${release} image etcd)
 MACHINE_CONFIG_SETUP_ETCD_ENV_IMAGE=$(podman run --rm ${release} image setup-etcd-environment)
 
+CONFIG_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-config-operator)
 KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-apiserver-operator)
 KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-controller-manager-operator)
 KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-scheduler-operator)
@@ -51,6 +52,23 @@ then
 	cp cvo-bootstrap/manifests/* manifests/
 	## FIXME: CVO should use `/etc/kubernetes/bootstrap-secrets/kubeconfig` instead
 	cp auth/kubeconfig /etc/kubernetes/kubeconfig
+fi
+
+if [ ! -d config-bootstrap ]
+then
+	echo "Rendering cluster config manifests..."
+
+	# shellcheck disable=SC2154
+	podman run \
+		--volume "$PWD:/assets:z" \
+		"${CONFIG_OPERATOR_IMAGE}" \
+		/usr/bin/cluster-config-operator render \
+		--config-output-file=/assets/config-bootstrap/config \
+		--asset-input-dir=/assets/tls \
+		--asset-output-dir=/assets/config-bootstrap
+
+	cp config-bootstrap/bootstrap-manifests/* bootstrap-manifests/
+	cp config-bootstrap/manifests/* manifests/
 fi
 
 if [ ! -d kube-apiserver-bootstrap ]
