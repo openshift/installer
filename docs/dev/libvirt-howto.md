@@ -192,7 +192,12 @@ sudo virsh pool-autostart default
 ### Set up NetworkManager DNS overlay
 
 This step allows installer and users to resolve cluster-internal hostnames from your host.
-1. Edit `/etc/NetworkManager/NetworkManager.conf` and set `dns=dnsmasq` in section `[main]`
+1. Tell NetworkManager to use `dnsmasq`:
+
+    ```sh
+    echo -e "[main]\ndns=dnsmasq" | sudo tee /etc/NetworkManager/conf.d/openshift.conf
+    ```
+
 2. Tell dnsmasq to use your cluster. The syntax is `server=/<baseDomain>/<firstIP>`.
 
     For this example:
