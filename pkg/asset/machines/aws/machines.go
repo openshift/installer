@@ -98,7 +98,7 @@ func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.
 		Subnet: awsprovider.AWSResourceReference{
 			Filters: []awsprovider.Filter{{
 				Name:   "tag:Name",
-				Values: []string{fmt.Sprintf("%s-%s-%s", clusterName, role, az)},
+				Values: []string{fmt.Sprintf("%s-private-%s", clusterName, az)},
 			}},
 		},
 		Placement: awsprovider.Placement{Region: platform.Region, AvailabilityZone: az},

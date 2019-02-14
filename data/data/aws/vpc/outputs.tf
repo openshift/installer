@@ -2,8 +2,12 @@ output "vpc_id" {
   value = "${data.aws_vpc.cluster_vpc.id}"
 }
 
-output "master_subnet_ids" {
-  value = "${local.master_subnet_ids}"
+output "public_subnet_ids" {
+  value = "${local.public_subnet_ids}"
+}
+
+output "private_subnet_ids" {
+  value = "${local.private_subnet_ids}"
 }
 
 output "master_sg_id" {
