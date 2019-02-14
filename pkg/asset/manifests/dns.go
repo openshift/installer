@@ -14,7 +14,6 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
-	"github.com/openshift/installer/pkg/asset/templates/content"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
@@ -22,7 +21,6 @@ import (
 )
 
 var (
-	dnsCrdFilename = "cluster-dns-01-crd.yaml"
 	dnsCfgFilename = filepath.Join(manifestDir, "cluster-dns-02-config.yml")
 )
 
@@ -93,16 +91,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		return errors.Wrapf(err, "failed to create %s manifests from InstallConfig", d.Name())
 	}
 
-	crdData, err := content.GetBootkubeTemplate(dnsCrdFilename)
-	if err != nil {
-		return err
-	}
-
 	d.FileList = []*asset.File{
-		{
-			Filename: filepath.Join(manifestDir, dnsCrdFilename),
-			Data:     []byte(crdData),
-		},
 		{
 			Filename: dnsCfgFilename,
 			Data:     configData,
