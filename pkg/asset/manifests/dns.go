@@ -1,17 +1,24 @@
 package manifests
 
 import (
+	"fmt"
 	"path/filepath"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
 
-	"github.com/openshift/installer/pkg/asset"
-	"github.com/openshift/installer/pkg/asset/installconfig"
-	"github.com/openshift/installer/pkg/asset/templates/content"
-
 	configv1 "github.com/openshift/api/config/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig"
+	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	"github.com/openshift/installer/pkg/asset/templates/content"
+	awstypes "github.com/openshift/installer/pkg/types/aws"
+	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
+	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 )
 
 var (
@@ -36,13 +43,19 @@ func (*DNS) Name() string {
 func (*DNS) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		&installconfig.ClusterID{},
+		// PlatformCredsCheck just checks the creds (and asks, if needed)
+		// We do not actually use it in this asset directly, hence
+		// it is put in the dependencies but not fetched in Generate
+		&installconfig.PlatformCredsCheck{},
 	}
 }
 
 // Generate generates the DNS config and its CRD.
 func (d *DNS) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig)
+	clusterID := &installconfig.ClusterID{}
+	dependencies.Get(installConfig, clusterID)
 
 	config := &configv1.DNS{
 		TypeMeta: metav1.TypeMeta{
@@ -56,6 +69,23 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		Spec: configv1.DNSSpec{
 			BaseDomain: installConfig.Config.BaseDomain,
 		},
+	}
+
+	switch installConfig.Config.Platform.Name() {
+	case awstypes.Name:
+		zone, err := icaws.GetPublicZone(installConfig.Config.BaseDomain)
+		if err != nil {
+			return errors.Wrapf(err, "getting public zone for %q", installConfig.Config.BaseDomain)
+		}
+		config.Spec.PublicZone = &configv1.DNSZone{ID: strings.TrimPrefix(*zone.Id, "/hostedzone/")}
+		config.Spec.PrivateZone = &configv1.DNSZone{Tags: map[string]string{
+			"openshiftClusterID":                                                          clusterID.ClusterID,
+			fmt.Sprintf("kubernetes.io/cluster/%s", installConfig.Config.ObjectMeta.Name): "owned",
+			"Name": fmt.Sprintf("%s_int", installConfig.Config.ObjectMeta.Name),
+		}}
+	case libvirttypes.Name, openstacktypes.Name, nonetypes.Name:
+	default:
+		return errors.New("invalid Platform")
 	}
 
 	configData, err := yaml.Marshal(config)

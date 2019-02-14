@@ -18,6 +18,7 @@ type ConfigV1Interface interface {
 	ClusterVersionsGetter
 	ConsolesGetter
 	DNSsGetter
+	FeaturesGetter
 	ImagesGetter
 	InfrastructuresGetter
 	IngressesGetter
@@ -25,6 +26,7 @@ type ConfigV1Interface interface {
 	OAuthsGetter
 	ProjectsGetter
 	ProxiesGetter
+	RegistriesGetter
 	SchedulingsGetter
 }
 
@@ -61,6 +63,10 @@ func (c *ConfigV1Client) DNSs() DNSInterface {
 	return newDNSs(c)
 }
 
+func (c *ConfigV1Client) Features() FeaturesInterface {
+	return newFeatures(c)
+}
+
 func (c *ConfigV1Client) Images() ImageInterface {
 	return newImages(c)
 }
@@ -87,6 +93,10 @@ func (c *ConfigV1Client) Projects() ProjectInterface {
 
 func (c *ConfigV1Client) Proxies() ProxyInterface {
 	return newProxies(c)
+}
+
+func (c *ConfigV1Client) Registries() RegistryInterface {
+	return newRegistries(c)
 }
 
 func (c *ConfigV1Client) Schedulings() SchedulingInterface {

@@ -371,18 +371,18 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:ae9992fdcc8206d78c543c882d0ea1a2868347a3e329fc226f136ea05eff434b"
+  digest = "1:d7711fea8a09123909cd82d50158f891d369086cf92ce99830fe0203f357b015"
   name = "github.com/openshift/api"
   packages = [
     "config/v1",
     "route/v1",
   ]
   pruneopts = "NUT"
-  revision = "f0c444ba17f2feb5015bde621e91df8e6326d19f"
+  revision = "abd194123b1ba2dcf9fd383f995c0082c81a8e6a"
 
 [[projects]]
   branch = "master"
-  digest = "1:f14315ee148ce5612462c90f629707ac3f5484444636c75209077c17599a0f96"
+  digest = "1:25ef9f9b8f53d2408e9fc561da877afe66016115a36e56ac4d5402bbbb2bef28"
   name = "github.com/openshift/client-go"
   packages = [
     "config/clientset/versioned",
@@ -393,7 +393,7 @@
     "route/clientset/versioned/typed/route/v1",
   ]
   pruneopts = "NUT"
-  revision = "a7448c816a2ac09a48321432daa7303eb6ff92c9"
+  revision = "9ecec62d3c9792a6b712bc1aefdb8ae10826fa14"
 
 [[projects]]
   digest = "1:35a1d3d1166a3a74d696180e74d6fd0e5179747d2626ca4586bdc9ca45641544"
