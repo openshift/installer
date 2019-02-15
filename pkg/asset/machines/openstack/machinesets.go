@@ -14,7 +14,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]clusterapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string) ([]*clusterapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack configuration: %q", configPlatform)
 	}
@@ -31,7 +31,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	}
 
 	// TODO(flaper87): Add support for availability zones
-	var machinesets []clusterapi.MachineSet
+	var machinesets []*clusterapi.MachineSet
 	az := ""
 	provider, err := provider(clusterID, clustername, platform, mpool, osImage, az, role, userDataSecret)
 	if err != nil {
@@ -40,7 +40,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	// TODO(flaper87): Implement AZ support sometime soon
 	//name := fmt.Sprintf("%s-%s-%s", clustername, pool.Name, az)
 	name := fmt.Sprintf("%s-%s", clustername, pool.Name)
-	mset := clusterapi.MachineSet{
+	mset := &clusterapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
 			Kind:       "MachineSet",

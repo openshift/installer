@@ -14,7 +14,7 @@ import (
 )
 
 // MachineSets returns a list of machinesets for a machinepool.
-func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]machineapi.MachineSet, error) {
+func MachineSets(clusterID string, config *types.InstallConfig, pool *types.MachinePool, role, userDataSecret string) ([]*machineapi.MachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != libvirt.Name {
 		return nil, fmt.Errorf("non-Libvirt configuration: %q", configPlatform)
 	}
@@ -34,7 +34,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 
 	provider := provider(clustername, config.Networking.MachineCIDR.String(), platform, userDataSecret)
 	name := fmt.Sprintf("%s-%s-%d", clustername, pool.Name, 0)
-	mset := machineapi.MachineSet{
+	mset := &machineapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "cluster.k8s.io/v1alpha1",
 			Kind:       "MachineSet",
@@ -75,5 +75,5 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 		},
 	}
 
-	return []machineapi.MachineSet{mset}, nil
+	return []*machineapi.MachineSet{mset}, nil
 }
