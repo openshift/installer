@@ -146,6 +146,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			masters[0].Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec),
 			installConfig.Config.Platform.OpenStack.Region,
 			installConfig.Config.Platform.OpenStack.ExternalNetwork,
+			installConfig.Config.Platform.OpenStack.LbFloatingIP,
 			installConfig.Config.Platform.OpenStack.TrunkSupport,
 		)
 		if err != nil {

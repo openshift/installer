@@ -80,9 +80,10 @@ data "openstack_networking_network_v2" "external_network" {
   external = true
 }
 
-resource "openstack_networking_floatingip_v2" "service_fip" {
-  pool    = "${var.external_network}"
-  port_id = "${openstack_networking_port_v2.service_port.id}"
+resource "openstack_networking_floatingip_associate_v2" "service_fip" {
+  count       = "${length(var.lb_floating_ip) == 0 ? 0 : 1}"
+  port_id     = "${openstack_networking_port_v2.service_port.id}"
+  floating_ip = "${var.lb_floating_ip}"
 }
 
 resource "openstack_networking_router_v2" "openshift-external-router" {

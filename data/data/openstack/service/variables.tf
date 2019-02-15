@@ -46,6 +46,6 @@ variable "master_port_names" {
   type = "list"
 }
 
-variable "service_vm_floating_ip" {
+variable "lb_floating_ip" {
   type = "string"
 }

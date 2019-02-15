@@ -16,6 +16,12 @@ variable "external_network" {
   default     = ""
 }
 
+variable "lb_floating_ip" {
+  description = "(optional) Existing floating IP address to attach to the load balancer created by the installer."
+  type        = "string"
+  default     = ""
+}
+
 variable "masters_count" {
   type = "string"
 }

@@ -24,6 +24,10 @@ type Platform struct {
 	// The OpenStack compute flavor to use for servers.
 	FlavorName string `json:"computeFlavor"`
 
+	// LbFloatingIP
+	// Existing Floating IP to associate with the OpenStack load balancer.
+	LbFloatingIP string `json:"lbFloatingIP"`
+
 	// TrunkSupport
 	// Whether OpenStack ports can be trunked
 	TrunkSupport string `json:"trunkSupport"`
