@@ -2,7 +2,6 @@ package validation
 
 import (
 	"fmt"
-	"sort"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -15,34 +14,15 @@ import (
 	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
 )
 
-var (
-	validMachinePoolNames = map[string]bool{
-		"master": true,
-		"worker": true,
-	}
-
-	validMachinePoolNameValues = func() []string {
-		validValues := make([]string, len(validMachinePoolNames))
-		i := 0
-		for n := range validMachinePoolNames {
-			validValues[i] = n
-			i++
-		}
-		sort.Strings(validValues)
-		return validValues
-	}()
-)
-
 // ValidateMachinePool checks that the specified machine pool is valid.
 func ValidateMachinePool(p *types.MachinePool, fldPath *field.Path, platform string) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if !validMachinePoolNames[p.Name] {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), p.Name, validMachinePoolNameValues))
-	}
 	if p.Replicas != nil {
-		if *p.Replicas <= 0 {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), p.Replicas, "number of replicas must be positive"))
+		if *p.Replicas < 0 {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), p.Replicas, "number of replicas must not be negative"))
 		}
+	} else {
+		allErrs = append(allErrs, field.Required(fldPath.Child("replicas"), "replicas is required"))
 	}
 	allErrs = append(allErrs, validateMachinePoolPlatform(&p.Platform, fldPath.Child("platform"), platform)...)
 	return allErrs

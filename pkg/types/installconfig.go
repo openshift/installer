@@ -11,7 +11,7 @@ import (
 
 const (
 	// InstallConfigVersion is the version supported by this package.
-	InstallConfigVersion = "v1beta2"
+	InstallConfigVersion = "v1beta3"
 )
 
 var (
@@ -47,11 +47,14 @@ type InstallConfig struct {
 	// Networking defines the pod network provider in the cluster.
 	*Networking `json:"networking,omitempty"`
 
-	// Machines is the list of MachinePools that need to be installed.
+	// ControlPlane is the configuration for the machines that comprise the
+	// control plane.
 	// +optional
-	// Default on AWS and OpenStack is 3 masters and 3 workers.
-	// Default on Libvirt is 1 master and 1 worker.
-	Machines []MachinePool `json:"machines,omitempty"`
+	ControlPlane *MachinePool `json:"controlPlane,omitempty"`
+
+	// Compute is the list of compute MachinePools that need to be installed.
+	// +optional
+	Compute []MachinePool `json:"compute,omitempty"`
 
 	// Platform is the configuration for the specific platform upon which to
 	// perform the installation.
@@ -59,17 +62,6 @@ type InstallConfig struct {
 
 	// PullSecret is the secret to use when pulling images.
 	PullSecret string `json:"pullSecret"`
-}
-
-// MasterCount returns the number of replicas in the master machine pool,
-// defaulting to one if no machine pool was found.
-func (c *InstallConfig) MasterCount() int {
-	for _, m := range c.Machines {
-		if m.Name == "master" && m.Replicas != nil {
-			return int(*m.Replicas)
-		}
-	}
-	return 1
 }
 
 // Platform is the configuration for the specific platform upon which to perform

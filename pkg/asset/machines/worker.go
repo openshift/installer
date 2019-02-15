@@ -89,7 +89,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	}
 
 	ic := installconfig.Config
-	pool := workerPool(ic.Machines)
+	pool := workerPool(ic.Compute)
 	switch ic.Platform.Name() {
 	case awstypes.Name:
 		mpool := defaultAWSMachinePoolPlatform()

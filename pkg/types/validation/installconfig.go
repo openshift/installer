@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -30,7 +31,12 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	if c.TypeMeta.APIVersion == "" {
 		return field.ErrorList{field.Required(field.NewPath("apiVersion"), "install-config version required")}
 	}
-	if c.TypeMeta.APIVersion != types.InstallConfigVersion && c.TypeMeta.APIVersion != "v1beta1" { // FIXME: v1beta1 is a temporary hack to get CI across the transition
+	switch v := c.APIVersion; v {
+	case types.InstallConfigVersion:
+		// Current version
+	case "v1beta1", "v1beta2":
+		logrus.Warnf("install-config.yaml is using a deprecated version %q. The expected version is %q.", v, types.InstallConfigVersion)
+	default:
 		return field.ErrorList{field.Invalid(field.NewPath("apiVersion"), c.TypeMeta.APIVersion, fmt.Sprintf("install-config version must be %q", types.InstallConfigVersion))}
 	}
 	if c.SSHKey != "" {
@@ -57,7 +63,12 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
-	allErrs = append(allErrs, validateMachinePools(c.Machines, field.NewPath("machines"), c.Platform.Name())...)
+	if c.ControlPlane != nil {
+		allErrs = append(allErrs, validateControlPlane(c.ControlPlane, field.NewPath("controlPlane"), c.Platform.Name())...)
+	} else {
+		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
+	}
+	allErrs = append(allErrs, validateCompute(c.Compute, field.NewPath("compute"), c.Platform.Name())...)
 	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"), openStackValidValuesFetcher)...)
 	if err := validate.ImagePullSecret(c.PullSecret); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))
@@ -99,21 +110,42 @@ func validateClusterNetwork(cn *types.ClusterNetworkEntry, fldPath *field.Path, 
 	return allErrs
 }
 
-func validateMachinePools(pools []types.MachinePool, fldPath *field.Path, platform string) field.ErrorList {
+func validateControlPlane(pool *types.MachinePool, fldPath *field.Path, platform string) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if pool.Name != "master" {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{"master"}))
+	}
+	if pool.Replicas != nil && *pool.Replicas == 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
+	}
+	allErrs = append(allErrs, ValidateMachinePool(pool, fldPath, platform)...)
+	return allErrs
+}
+
+func validateCompute(pools []types.MachinePool, fldPath *field.Path, platform string) field.ErrorList {
 	allErrs := field.ErrorList{}
 	poolNames := map[string]bool{}
+	foundPositiveReplicas := false
 	for i, p := range pools {
+		poolFldPath := fldPath.Index(i)
+		if p.Name != "worker" {
+			allErrs = append(allErrs, field.NotSupported(poolFldPath.Child("name"), p.Name, []string{"worker"}))
+		}
 		if poolNames[p.Name] {
-			allErrs = append(allErrs, field.Duplicate(fldPath.Index(i), p))
+			allErrs = append(allErrs, field.Duplicate(poolFldPath.Child("name"), p.Name))
 		}
 		poolNames[p.Name] = true
-		allErrs = append(allErrs, ValidateMachinePool(&p, fldPath.Index(i), platform)...)
+		if p.Replicas != nil && *p.Replicas > 0 {
+			foundPositiveReplicas = true
+		}
+		allErrs = append(allErrs, ValidateMachinePool(&p, poolFldPath, platform)...)
 	}
-	if !poolNames["master"] {
-		allErrs = append(allErrs, field.Required(fldPath, "must specify a machine pool with a name of 'master'"))
-	}
-	if !poolNames["worker"] {
-		allErrs = append(allErrs, field.Required(fldPath, "must specify a machine pool with a name of 'worker'"))
+	if len(pools) > 0 {
+		if !foundPositiveReplicas {
+			allErrs = append(allErrs, field.Invalid(fldPath.Index(0).Child("replicas"), pools[0].Replicas, "at least one compute machine pool must have a positive replicas count"))
+		}
+	} else {
+		allErrs = append(allErrs, field.Required(fldPath, "there must be at least one compute machine pool"))
 	}
 	return allErrs
 }

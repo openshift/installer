@@ -5,6 +5,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/pointer"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
@@ -22,15 +23,16 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "minimal",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name:     "master",
+				Replicas: pointer.Int64Ptr(1),
 			},
 			platform: "aws",
 			valid:    true,
 		},
 		{
-			name: "invalid name",
+			name: "missing replicas",
 			pool: &types.MachinePool{
-				Name: "bad-name",
+				Name: "master",
 			},
 			platform: "aws",
 			valid:    false,
@@ -47,7 +49,8 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "valid aws",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name:     "master",
+				Replicas: pointer.Int64Ptr(1),
 				Platform: types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{},
 				},
@@ -58,7 +61,8 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "invalid aws",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name:     "master",
+				Replicas: pointer.Int64Ptr(1),
 				Platform: types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{
 						EC2RootVolume: aws.EC2RootVolume{
@@ -73,7 +77,8 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "valid libvirt",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name:     "master",
+				Replicas: pointer.Int64Ptr(1),
 				Platform: types.MachinePoolPlatform{
 					Libvirt: &libvirt.MachinePool{},
 				},
@@ -84,7 +89,8 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "valid openstack",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name:     "master",
+				Replicas: pointer.Int64Ptr(1),
 				Platform: types.MachinePoolPlatform{
 					OpenStack: &openstack.MachinePool{},
 				},
@@ -95,7 +101,8 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "mis-matched platform",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name:     "master",
+				Replicas: pointer.Int64Ptr(1),
 				Platform: types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{},
 				},
@@ -106,7 +113,8 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "multiple platforms",
 			pool: &types.MachinePool{
-				Name: "master",
+				Name:     "master",
+				Replicas: pointer.Int64Ptr(1),
 				Platform: types.MachinePoolPlatform{
 					AWS:     &aws.MachinePool{},
 					Libvirt: &libvirt.MachinePool{},
