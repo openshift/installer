@@ -12,7 +12,7 @@ type config struct {
 	EC2AMIOverride string            `json:"aws_ec2_ami_override,omitempty"`
 	ExtraTags      map[string]string `json:"aws_extra_tags,omitempty"`
 	EC2Type        string            `json:"aws_master_ec2_type,omitempty"`
-	IOPS           int64             `json:"aws_master_root_volume_iops,omitempty"`
+	IOPS           int64             `json:"aws_master_root_volume_iops"`
 	Size           int64             `json:"aws_master_root_volume_size,omitempty"`
 	Type           string            `json:"aws_master_root_volume_type,omitempty"`
 	Region         string            `json:"aws_region,omitempty"`
