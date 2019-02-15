@@ -18,6 +18,12 @@ import (
 	"github.com/openshift/installer/pkg/validate"
 )
 
+// ClusterDomain returns the cluster domain for a cluster with the specified
+// base domain and cluster name.
+func ClusterDomain(baseDomain, clusterName string) string {
+	return fmt.Sprintf("%s.%s", clusterName, baseDomain)
+}
+
 // ValidateInstallConfig checks that the specified install config is valid.
 func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher openstackvalidation.ValidValuesFetcher) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -27,16 +33,24 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	if c.TypeMeta.APIVersion != types.InstallConfigVersion && c.TypeMeta.APIVersion != "v1beta1" { // FIXME: v1beta1 is a temporary hack to get CI across the transition
 		return field.ErrorList{field.Invalid(field.NewPath("apiVersion"), c.TypeMeta.APIVersion, fmt.Sprintf("install-config version must be %q", types.InstallConfigVersion))}
 	}
-	if c.ObjectMeta.Name == "" {
-		allErrs = append(allErrs, field.Required(field.NewPath("metadata", "name"), "cluster name required"))
-	}
 	if c.SSHKey != "" {
 		if err := validate.SSHPublicKey(c.SSHKey); err != nil {
 			allErrs = append(allErrs, field.Invalid(field.NewPath("sshKey"), c.SSHKey, err.Error()))
 		}
 	}
-	if err := validate.DomainName(c.BaseDomain); err != nil {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("baseDomain"), c.BaseDomain, err.Error()))
+	nameErr := validate.DomainName(c.ObjectMeta.Name, false)
+	if nameErr != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, nameErr.Error()))
+	}
+	baseDomainErr := validate.DomainName(c.BaseDomain, true)
+	if baseDomainErr != nil {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("baseDomain"), c.BaseDomain, baseDomainErr.Error()))
+	}
+	if nameErr == nil && baseDomainErr == nil {
+		clusterDomain := ClusterDomain(c.BaseDomain, c.ObjectMeta.Name)
+		if err := validate.DomainName(clusterDomain, true); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("baseDomain"), clusterDomain, err.Error()))
+		}
 	}
 	if c.Networking != nil {
 		allErrs = append(allErrs, validateNetworking(c.Networking, field.NewPath("networking"))...)

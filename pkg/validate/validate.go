@@ -35,9 +35,11 @@ func validateSubdomain(v string) error {
 }
 
 // DomainName checks if the given string is a valid domain name and returns an error if not.
-func DomainName(v string) error {
-	// Trailing dot is OK
-	return validateSubdomain(strings.TrimSuffix(v, "."))
+func DomainName(v string, acceptTrailingDot bool) error {
+	if acceptTrailingDot {
+		v = strings.TrimSuffix(v, ".")
+	}
+	return validateSubdomain(v)
 }
 
 type imagePullSecret struct {
