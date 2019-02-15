@@ -148,7 +148,7 @@ EOF
 2. Add the Secret to the cluster:
 
 ```
-$ oc create -n openshift-cluster-api -f secret.yaml
+$ oc create -n openshift-machine-api -f secret.yaml
 ```
 
 ## Using an External Load Balancer

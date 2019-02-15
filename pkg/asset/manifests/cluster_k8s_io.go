@@ -53,7 +53,7 @@ func (c *ClusterK8sIO) Generate(dependencies asset.Parents) error {
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      installconfig.Config.ObjectMeta.Name,
-			Namespace: "openshift-cluster-api",
+			Namespace: "openshift-machine-api",
 		},
 		Spec: clusterv1a1.ClusterSpec{
 			ClusterNetwork: *clusterNet,

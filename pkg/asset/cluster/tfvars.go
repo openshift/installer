@@ -138,7 +138,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		})
 	case none.Name:
 	case openstack.Name:
-		masters, err := mastersAsset.StructuredMachinesDeprecated()
+		masters, err := mastersAsset.StructuredMachines()
 		if err != nil {
 			return err
 		}

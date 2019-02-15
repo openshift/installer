@@ -42,7 +42,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 	name := fmt.Sprintf("%s-%s", clustername, pool.Name)
 	mset := clusterapi.MachineSet{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.k8s.io/v1alpha1",
+			APIVersion: "machine.openshift.io/v1beta1",
 			Kind:       "MachineSet",
 		},
 		ObjectMeta: metav1.ObjectMeta{
