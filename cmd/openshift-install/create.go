@@ -199,17 +199,15 @@ func addRouterCAToClusterCA(config *rest.Config, directory string) (err error) {
 		return errors.Wrap(err, "creating a Kubernetes client")
 	}
 
-	// Configmap may not exist. log and accept not-found errors with configmap.
-	caConfigMap, err := client.CoreV1().ConfigMaps("openshift-config-managed").Get("router-ca", metav1.GetOptions{})
+	routerCASecret, err := client.CoreV1().Secrets("openshift-ingress-operator").Get("router-ca", metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
-			logrus.Infof("router-ca resource not found in cluster, perhaps you are not using default router CA")
-			return nil
+			return errors.New("router CA secret not found in openshift-ingress-operator namespace")
 		}
-		return errors.Wrap(err, "fetching router-ca configmap from openshift-config-managed namespace")
+		return errors.Wrap(err, "fetching router-ca secret from openshift-ingress-operator namespace")
 	}
 
-	routerCrtBytes := []byte(caConfigMap.Data["ca-bundle.crt"])
+	routerCrtBytes := routerCASecret.Data["tls.crt"]
 	kubeconfig := filepath.Join(directory, "auth", "kubeconfig")
 	kconfig, err := clientcmd.LoadFromFile(kubeconfig)
 	if err != nil {
