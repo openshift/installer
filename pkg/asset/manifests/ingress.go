@@ -52,7 +52,7 @@ func (ing *Ingress) Generate(dependencies asset.Parents) error {
 			// not namespaced
 		},
 		Spec: configv1.IngressSpec{
-			Domain: fmt.Sprintf("apps.%s.%s", installConfig.Config.ObjectMeta.Name, installConfig.Config.BaseDomain),
+			Domain: fmt.Sprintf("apps.%s", installConfig.Config.ClusterDomain()),
 		},
 	}
 

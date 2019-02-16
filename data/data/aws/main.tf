@@ -1,6 +1,8 @@
 locals {
   private_zone_id = "${aws_route53_zone.int.zone_id}"
 
+  cluster_domain = "${var.cluster_name}.${var.base_domain}"
+
   tags = "${merge(map(
       "openshiftClusterID", "${var.cluster_id}"
     ), var.aws_extra_tags)}"
@@ -92,7 +94,7 @@ resource "aws_route53_record" "etcd_a_nodes" {
   type    = "A"
   ttl     = "60"
   zone_id = "${local.private_zone_id}"
-  name    = "${var.cluster_name}-etcd-${count.index}"
+  name    = "etcd-${count.index}.${local.cluster_domain}"
   records = ["${module.masters.ip_addresses[count.index]}"]
 }
 
@@ -100,12 +102,12 @@ resource "aws_route53_record" "etcd_cluster" {
   type    = "SRV"
   ttl     = "60"
   zone_id = "${local.private_zone_id}"
-  name    = "_etcd-server-ssl._tcp.${var.cluster_name}"
+  name    = "_etcd-server-ssl._tcp"
   records = ["${formatlist("0 10 2380 %s", aws_route53_record.etcd_a_nodes.*.fqdn)}"]
 }
 
 resource "aws_route53_zone" "int" {
-  name          = "${var.base_domain}"
+  name          = "${local.cluster_domain}"
   force_destroy = true
 
   vpc {

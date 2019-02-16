@@ -134,19 +134,19 @@ data "ignition_file" "corefile" {
     errors
     reload 10s
 
-${length(var.lb_floating_ip) == 0 ? "" : "    file /etc/coredns/db.${var.cluster_domain} ${var.cluster_name}-api.${var.cluster_domain} {\n    }\n"}
+${length(var.lb_floating_ip) == 0 ? "" : "    file /etc/coredns/db.${var.cluster_domain} api.${var.cluster_domain} {\n    }\n"}
 
 
-    file /etc/coredns/db.${var.cluster_domain} _etcd-server-ssl._tcp.${var.cluster_name}.${var.cluster_domain} {
+    file /etc/coredns/db.${var.cluster_domain} _etcd-server-ssl._tcp.${var.cluster_domain} {
     }
 
-${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} ${var.cluster_name}-etcd-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "master-port-", "")}
+${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} etcd-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "master-port-", "")}
 
     forward . /etc/resolv.conf {
     }
 }
 
-${var.cluster_name}.${var.cluster_domain} {
+${var.cluster_domain} {
     log
     errors
     reload 10s
@@ -168,7 +168,7 @@ data "ignition_file" "coredb" {
   content {
     content = <<EOF
 $ORIGIN ${var.cluster_domain}.
-@    3600 IN SOA host-${var.cluster_name}.${var.cluster_domain}. hostmaster (
+@    3600 IN SOA host.${var.cluster_domain}. hostmaster (
                                 2017042752 ; serial
                                 7200       ; refresh (2 hours)
                                 3600       ; retry (1 hour)
@@ -176,12 +176,12 @@ $ORIGIN ${var.cluster_domain}.
                                 3600       ; minimum (1 hour)
                                 )
 
-${length(var.lb_floating_ip) == 0 ? "" : "${var.cluster_name}-api  IN  A  ${var.lb_floating_ip}"}
-${length(var.lb_floating_ip) == 0 ? "" : "*.apps.${var.cluster_name}  IN  A  ${var.lb_floating_ip}"}
+${length(var.lb_floating_ip) == 0 ? "" : "api  IN  A  ${var.lb_floating_ip}"}
+${length(var.lb_floating_ip) == 0 ? "" : "*.apps  IN  A  ${var.lb_floating_ip}"}
 
-${replace(join("\n", formatlist("${var.cluster_name}-etcd-%s  IN  CNAME  ${var.cluster_name}-master-%s", var.master_port_names, var.master_port_names)), "master-port-", "")}
+${replace(join("\n", formatlist("etcd-%s  IN  CNAME  master-%s", var.master_port_names, var.master_port_names)), "master-port-", "")}
 
-${replace(join("\n", formatlist("_etcd-server-ssl._tcp.${var.cluster_name}  8640  IN  SRV  0  10  2380   ${var.cluster_name}-etcd-%s.${var.cluster_domain}.", var.master_port_names)), "master-port-", "")}
+${replace(join("\n", formatlist("_etcd-server-ssl._tcp.${var.cluster_domain}  8640  IN  SRV  0  10  2380   etcd-%s.${var.cluster_domain}.", var.master_port_names)), "master-port-", "")}
 EOF
   }
 }

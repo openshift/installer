@@ -348,21 +348,47 @@ func getSharedHostedZone(client *route53.Route53, privateID string, logger logru
 		logger.WithField("hosted zone", privateName).Warn("could not determine whether hosted zone is private")
 	}
 
+	domain := privateName
+	parents := []string{domain}
+	for {
+		idx := strings.Index(domain, ".")
+		if idx == -1 {
+			break
+		}
+		if len(domain[idx+1:]) > 0 {
+			parents = append(parents, domain[idx+1:])
+		}
+		domain = domain[idx+1:]
+	}
+
+	for _, p := range parents {
+		sZone, err := findPublicRoute53(client, p, logger)
+		if err != nil {
+			return "", err
+		}
+		if sZone != "" {
+			return sZone, nil
+		}
+	}
+	return "", nil
+}
+
+// findPublicRoute53 finds a public route53 zone matching the dnsName.
+// It returns "", when no public route53 zone could be found.
+func findPublicRoute53(client *route53.Route53, dnsName string, logger logrus.FieldLogger) (string, error) {
 	request := &route53.ListHostedZonesByNameInput{
-		DNSName: aws.String(privateName),
+		DNSName: aws.String(dnsName),
 	}
 	for i := 0; true; i++ {
-		logger.Debugf("listing AWS hosted zones (page %d)", i)
+		logger.Debugf("listing AWS hosted zones %q (page %d)", dnsName, i)
 		list, err := client.ListHostedZonesByName(request)
 		if err != nil {
 			return "", err
 		}
 
 		for _, zone := range list.HostedZones {
-			if *zone.Id == privateID {
-				continue
-			}
-			if *zone.Name != privateName {
+			if *zone.Name != dnsName {
+				// No name after this can match dnsName
 				return "", nil
 			}
 			if zone.Config == nil || zone.Config.PrivateZone == nil {
@@ -381,7 +407,6 @@ func getSharedHostedZone(client *route53.Route53, privateID string, logger logru
 
 		break
 	}
-
 	return "", nil
 }
 
