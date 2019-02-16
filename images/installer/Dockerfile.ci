@@ -9,7 +9,8 @@ RUN hack/build.sh
 
 FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:base
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
-RUN mkdir /output && chown 1000:1000 /output
+RUN yum install -y util-linux gzip && yum clean all && rm -rf /var/cache/yum/* && \
+    mkdir /output && chown 1000:1000 /output
 USER 1000:1000
 ENV PATH /bin
 ENV HOME /output
