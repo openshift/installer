@@ -1,3 +1,7 @@
+locals {
+  cluster_domain = "${var.cluster_name}.${var.base_domain}"
+}
+
 provider "openstack" {
   auth_url            = "${var.openstack_credentials_auth_url}"
   cert                = "${var.openstack_credentials_cert}"
@@ -28,7 +32,7 @@ module "service" {
 
   swift_container   = "${openstack_objectstorage_container_v1.container.name}"
   cluster_id        = "${var.cluster_id}"
-  cluster_domain    = "${var.cluster_domain}"
+  cluster_domain    = "${local.cluster_domain}"
   image_name        = "${var.openstack_base_image}"
   flavor_name       = "${var.openstack_master_flavor_name}"
   ignition          = "${var.ignition_bootstrap}"
