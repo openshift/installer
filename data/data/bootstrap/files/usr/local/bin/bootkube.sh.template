@@ -144,6 +144,7 @@ then
 		bootstrap \
 			--etcd-ca=/assets/tls/etcd-client-ca.crt \
 			--root-ca=/assets/tls/root-ca.crt \
+			--kube-ca=/assets/tls/kube-ca.crt \
 			--config-file=/assets/manifests/cluster-config.yaml \
 			--dest-dir=/assets/mco-bootstrap \
 			--pull-secret=/assets/manifests/pull.json \
