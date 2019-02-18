@@ -39,9 +39,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 				Namespace: "openshift-machine-api",
 				Name:      fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
 				Labels: map[string]string{
-					"sigs.k8s.io/cluster-api-cluster":      clusterID,
-					"sigs.k8s.io/cluster-api-machine-role": role,
-					"sigs.k8s.io/cluster-api-machine-type": role,
+					"machine.openshift.io/cluster-api-cluster":      clusterID,
+					"machine.openshift.io/cluster-api-machine-role": role,
+					"machine.openshift.io/cluster-api-machine-type": role,
 				},
 			},
 			Spec: machineapi.MachineSpec{
