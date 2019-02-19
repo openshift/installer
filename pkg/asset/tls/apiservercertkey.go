@@ -54,7 +54,7 @@ func (a *APIServerCertKey) Generate(dependencies asset.Parents) error {
 		IPAddresses: []net.IP{net.ParseIP(apiServerAddress), net.ParseIP("127.0.0.1")},
 	}
 
-	return a.CertKey.Generate(cfg, kubeCA, "apiserver", AppendParent)
+	return a.CertKey.Generate(cfg, kubeCA, "apiserver", DoNotAppendParent)
 }
 
 // Name returns the human-friendly name of the asset.
