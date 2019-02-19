@@ -12,7 +12,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
-	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -290,48 +289,13 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 
 	eventTimeout := 30 * time.Minute
 	logrus.Infof("Waiting up to %v for the bootstrap-complete event...", eventTimeout)
-	eventContext, cancel := context.WithTimeout(ctx, eventTimeout)
-	defer cancel()
-	_, err = Until(
-		eventContext,
-		"",
-		func(sinceResourceVersion string) (watch.Interface, error) {
-			for {
-				watcher, err := events.Watch(metav1.ListOptions{
-					ResourceVersion: sinceResourceVersion,
-				})
-				if err == nil {
-					return watcher, nil
-				}
-				select {
-				case <-eventContext.Done():
-					return watcher, err
-				default:
-					logrus.Warningf("Failed to connect events watcher: %s", err)
-					time.Sleep(2 * time.Second)
-				}
-			}
-		},
-		func(watchEvent watch.Event) (bool, error) {
-			event, ok := watchEvent.Object.(*corev1.Event)
-			if !ok {
-				return false, nil
-			}
-
-			if watchEvent.Type == watch.Error {
-				logrus.Debugf("error %s: %s", event.Name, event.Message)
-				return false, nil
-			}
-
-			if watchEvent.Type != watch.Added {
-				return false, nil
-			}
-
-			logrus.Debugf("added %s: %s", event.Name, event.Message)
-			return event.Name == "bootstrap-complete", nil
-		},
-	)
-	if err != nil {
+	if err := wait.PollImmediate(time.Second, eventTimeout, func() (done bool, err error) {
+		if _, err := events.Get("bootstrap-complete", metav1.GetOptions{}); err == nil {
+			return true, nil
+		}
+		logrus.Warningf("Failed to get bootstrap-complete event: %s", err)
+		return false, nil
+	}); err != nil {
 		return errors.Wrap(err, "waiting for bootstrap-complete")
 	}
 
