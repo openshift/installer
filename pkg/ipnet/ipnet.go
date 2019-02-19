@@ -50,9 +50,21 @@ func (ipnet *IPNet) UnmarshalJSON(b []byte) (err error) {
 		return errors.Wrap(err, "failed to Unmarshal string")
 	}
 
-	ip, net, err := net.ParseCIDR(cidr)
+	parsedIPNet, err := ParseCIDR(cidr)
 	if err != nil {
 		return errors.Wrap(err, "failed to Parse cidr string to net.IPNet")
+	}
+
+	*ipnet = *parsedIPNet
+
+	return nil
+}
+
+// ParseCIDR parses a CIDR from its string representation.
+func ParseCIDR(s string) (*IPNet, error) {
+	ip, cidr, err := net.ParseCIDR(s)
+	if err != nil {
+		return nil, err
 	}
 
 	// This check is needed in order to work around a strange quirk in the Go
@@ -62,22 +74,15 @@ func (ipnet *IPNet) UnmarshalJSON(b []byte) (err error) {
 	// assume. By forcing the address to be the expected length, we can work
 	// around these bugs.
 	if ip.To4() != nil {
-		ipnet.IP = ip.To4()
-	} else {
-		ipnet.IP = ip
+		ip = ip.To4()
 	}
-	ipnet.Mask = net.Mask
 
-	return nil
-}
-
-// ParseCIDR parses a CIDR from its string representation.
-func ParseCIDR(s string) (*IPNet, error) {
-	_, cidr, err := net.ParseCIDR(s)
-	if err != nil {
-		return nil, err
-	}
-	return &IPNet{IPNet: *cidr}, nil
+	return &IPNet{
+		IPNet: net.IPNet{
+			IP:   ip,
+			Mask: cidr.Mask,
+		},
+	}, nil
 }
 
 // MustParseCIDR parses a CIDR from its string representation. If the parse fails,

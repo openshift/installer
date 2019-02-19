@@ -157,10 +157,10 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid service cidr",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.ServiceCIDR = &ipnet.IPNet{}
+				c.Networking.ServiceCIDR = ipnet.MustParseCIDR("10.0.128.0/16")
 				return c
 			}(),
-			expectedError: `^networking\.serviceCIDR: Invalid value: "<nil>": must use IPv4$`,
+			expectedError: `^networking\.serviceCIDR: Invalid value: \"10\.0\.128\.0/16\": invalid network address. got 10\.0\.128\.0/16, expecting 10\.0\.0\.0/16$`,
 		},
 		{
 			name: "missing machine cidr",
@@ -175,21 +175,19 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid machine cidr",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.MachineCIDR = &ipnet.IPNet{}
+				c.Networking.MachineCIDR = ipnet.MustParseCIDR("10.0.128.0/16")
 				return c
 			}(),
-			expectedError: `^networking\.machineCIDR: Invalid value: "<nil>": must use IPv4$`,
+			expectedError: `^networking\.machineCIDR: Invalid value: \"10\.0\.128\.0/16\": invalid network address. got 10\.0\.128\.0/16, expecting 10\.0\.0\.0/16$`,
 		},
 		{
 			name: "invalid cluster network cidr",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.ClusterNetworks = []types.ClusterNetworkEntry{
-					{},
-				}
+				c.Networking.ClusterNetworks = []types.ClusterNetworkEntry{{CIDR: *ipnet.MustParseCIDR("10.0.128.0/16")}}
 				return c
 			}(),
-			expectedError: `^networking\.clusterNetworks\[0]\.cidr: Invalid value: "<nil>": must use IPv4$`,
+			expectedError: `^networking\.clusterNetworks\[0]\.cidr: Invalid value: \"10\.0\.128\.0/16\": invalid network address. got 10\.0\.128\.0/16, expecting 10\.0\.0\.0/16$`,
 		},
 		{
 			name: "overlapping cluster network cidr",
