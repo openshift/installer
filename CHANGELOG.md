@@ -4,6 +4,112 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.13.0 - 2019-02-19
+
+### Added
+
+- When cluster-creation times out waiting for cluster-version
+  completion, the installer now logs the last failing-operator
+  message (if any).
+- The installer now invokes the [cluster-config
+  operator][cluster-config-operator] on the bootstrap machine to
+  generate `config.openshift.io` custom resource definitions.
+
+### Changed
+
+- The install-config version has been bumped from `v1beta2` to
+  `v1beta3`.  All users will need to update any saved
+  `install-config.yaml` to use the new schema.
+
+    - `machines` has been split into `controlPlane` and `compute`.
+      Multiple compute pools are now supported (previously, only a
+      single `worker` pool was supported).  Every compute pool will
+      use the same Ignition configuration.  The installer will warn
+      about but allow configurations where there are zero compute
+      replicas.
+
+    - On libvirt, the `masterIPs` property has been removed, since you
+      cannot configure master IPs via the libvirt machine API
+      provider.
+
+    - On OpenStack, there is also a new `lbFloatingIP` property, which
+      allows you to provide an IP address to be used by the load
+      balancer.  This allows you to create local DNS entries ahead of
+      time before calling `create cluster`.
+
+- Cluster domain names have been adjusted so that the cluster lives
+  entirely within a per-cluster subdomain.  This keeps split-horizon
+  DNS from masking other clusters with the same base domain.
+- The cluster-version update URL has been changed from the dummy
+  `http://localhost:8080/graph` to the functioning
+  `https://api.openshift.com/api/upgrades_info/v1/graph` and the
+  channel has been changed from `fast` to `stable-4.0`, to opt
+  clusters in to 4.0 upgrades.
+- Machine-API resources have been moved from `cluster.k8s.io` to
+  `machine.openshift.io` to clarify our divergence from the upstream
+  types while they are unstable.  The `openshift-cluster-api`
+  namespace has been replaced with `openshift-machine-api` as well.
+- The installer now uses etcd and OS images referenced by the update
+  payload when configuring the machine-config operator.
+- The Kubernetes certificate authority is now self-signed, decoupling
+  its chain of trust from the root certificate authority.
+- The installer no longer creates a service-serving certificate
+  authority.  The certificate authority is now created by the
+  [service-CA operator][service-ca-operator].
+- On AWS, the worker IAM role permissions were reduced to a smaller
+  set required for kubelet initialization.
+- On AWS, the worker security group has been expanded to allow ports
+  9000-9999 for for host network services.  This matches the approach
+  we have been using for masters since 0.4.0.  The master security
+  group has also been adjusted to fix a 9990 -> 9999 typo from 0.4.0.
+- Several doc and internal cleanups and minor fixes.
+
+### Fixed
+
+- The router certificate authority is appended to the admin
+  `kubeconfig` to fix the OAuth flow behind `oc login`.
+- The installer now verifies cluster names supplied via
+  `install-config.yaml` (it previously only validated cluster names
+  provided via the install-config wizard).
+- Terraform variables are now generated from master machine
+  configurations instead of from the install configuration.  This
+  allows them to reflect changes made by editing master machine
+  configurations during [staged
+  installs](docs/user/overview.md#multiple-invocations).
+- `metadata.json` is generated before the Terraform invocation, fixing
+  a bug introduced in 0.12.0 which made it hard to clean up after
+  failed Terraform creation.
+- The machine-config server has moved its Ignition-config
+  service from port 49500 to 22623 to avoid the dynamic-port range
+  starting at [49152][rfc-6335-s6].
+- When the installer prompts for AWS credentials, it now respects
+  `AWS_PROFILE` and will update an existing credentials file instead
+  of erroring out.
+- On AWS, the installer now verifies that the user-supplied
+  credentials have sufficient permissions for creating a cluster.
+  Previously, permissions issues would surface as Terraform errors or
+  broken cluster functionality after a nominally successful install.
+- On AWS, the `destroy cluster` implementation is now more robust:
+    - The destroy code now checks for `nil` before dereferencing,
+      avoiding panics when removing internet gateways which had not
+      yet been associated with a VPC, and in other similar cases.
+    - The destoy code now treats already-deleted instances as
+      successfully deleted, instead of looping forever while trying to
+      delete them.
+- On OpenStack, the HAProxy configuration on the service VM now only
+  balances ports 80 and 443 across compute nodes (it used to also
+  balance them across control-plane nodes).
+- On OpenStack, the service VM now uses CoreDNS instead of dnsmasq.
+  And it now includes records for `*.apps.{cluster-domain}` and the
+  Kubernetes API.
+- On OpenStack, the service VM has been moved to its own subnet.
+
+### Removed
+
+- On AWS, control-plane nodes have been moved to private subnets and
+  no longer have public IPs.  Use a VPN or bastion host if you need
+  SSH access to them.
+
 ## 0.12.0 - 2019-02-05
 
 ### Changed
@@ -844,6 +950,7 @@ the new `openshift-install` command instead.
 [cluster-api-provider-aws]: https://github.com/openshift/cluster-api-provider-aws
 [cluster-api-provider-aws-012575c1-AWSMachineProviderConfig]: https://github.com/openshift/cluster-api-provider-aws/blob/012575c1c8d758f81c979b0b2354950a2193ec1a/pkg/apis/awsproviderconfig/v1alpha1/awsmachineproviderconfig_types.go#L86-L139
 [cluster-bootstrap]: https://github.com/openshift/cluster-bootstrap
+[cluster-config-operator]: https://github.com/openshift/cluster-config-operator
 [cluster-version-operator]: https://github.com/openshift/cluster-version-operator
 [ClusterVersion]: https://github.com/openshift/cluster-version-operator/blob/master/docs/dev/clusterversion.md
 [credential-operator]: https://github.com/openshift/cloud-credential-operator
@@ -858,8 +965,10 @@ the new `openshift-install` command instead.
 [machine-config-daemon-ssh-keys]: https://github.com/openshift/machine-config-operator/blob/master/docs/Update-SSHKeys.md
 [openshift-ansible]: https://github.com/openshift/openshift-ansible
 [Prometheus]: https://github.com/prometheus/prometheus
+[service-ca-operator]: https://github.com/openshift/service-ca-operator
 [ssh.ParseAuthorizedKey]: https://godoc.org/golang.org/x/crypto/ssh#ParseAuthorizedKey
 [registry-operator]: https://github.com/openshift/cluster-image-registry-operator
 [rfc-1123-s2.1]: https://tools.ietf.org/html/rfc1123#section-2
+[rfc-6335-s6]: https://tools.ietf.org/html/rfc6335#section-6
 [rhcos-pipeline]: https://releases-rhcos.svc.ci.openshift.org/storage/releases/maipo/builds.json
 [service-serving-cert-signer]: https://github.com/openshift/service-serving-cert-signer
