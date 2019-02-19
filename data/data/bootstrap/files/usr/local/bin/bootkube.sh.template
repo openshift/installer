@@ -67,7 +67,6 @@ then
 		--asset-input-dir=/assets/tls \
 		--asset-output-dir=/assets/config-bootstrap
 
-	cp config-bootstrap/bootstrap-manifests/* bootstrap-manifests/
 	cp config-bootstrap/manifests/* manifests/
 fi
 
