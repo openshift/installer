@@ -205,6 +205,12 @@ This step allows installer and users to resolve cluster-internal hostnames from 
     ```sh
     echo server=/tt.testing/192.168.126.1 | sudo tee /etc/NetworkManager/dnsmasq.d/openshift.conf
     ```
+
+    Bump the maximum number of DNS requests:
+    ```sh
+    echo dns-forward-max=1000 | sudo tee -a /etc/NetworkManager/dnsmasq.d/openshift.conf
+    ```
+
 3. Reload NetworkManager to pick up the `dns` configuration change: `sudo systemctl reload NetworkManager`
 
 
@@ -242,10 +248,10 @@ Some things you can do:
 
 ### SSH access
 
-The bootstrap node, e.g. `test1-bootstrap.tt.testing`, runs the bootstrap process. You can watch it:
+The bootstrap node, e.g. `test1-bootstrap.test1.tt.testing`, runs the bootstrap process. You can watch it:
 
 ```sh
-ssh "core@${CLUSTER_NAME}-bootstrap.${BASE_DOMAIN}"
+ssh "core@${CLUSTER_NAME}-bootstrap.${CLUSTER_NAME}.${BASE_DOMAIN}"
 sudo journalctl -f -u bootkube -u openshift
 ```
 
