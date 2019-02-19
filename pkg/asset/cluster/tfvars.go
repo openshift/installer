@@ -56,6 +56,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.ClusterID{},
 		&installconfig.InstallConfig{},
+		&installconfig.UniqueClusterName{},
 		new(rhcos.Image),
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
@@ -67,11 +68,12 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
 	installConfig := &installconfig.InstallConfig{}
+	uniqueClusterName := &installconfig.UniqueClusterName{}
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
 	mastersAsset := &machines.Master{}
 	rhcosImage := new(rhcos.Image)
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, rhcosImage)
+	parents.Get(clusterID, installConfig, uniqueClusterName, bootstrapIgnAsset, masterIgnAsset, mastersAsset, rhcosImage)
 
 	bootstrapIgn := string(bootstrapIgnAsset.Files()[0].Data)
 	masterIgn := string(masterIgnAsset.Files()[0].Data)
@@ -109,6 +111,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		}
 		data, err = awstfvars.TFVars(
 			masters[0].Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig),
+			uniqueClusterName.ClusterName,
 		)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)

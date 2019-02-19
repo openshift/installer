@@ -78,11 +78,12 @@ module "dns" {
 module "vpc" {
   source = "./vpc"
 
-  base_domain  = "${var.base_domain}"
-  cidr_block   = "${var.machine_cidr}"
-  cluster_id   = "${var.cluster_id}"
-  cluster_name = "${var.cluster_name}"
-  region       = "${var.aws_region}"
+  base_domain         = "${var.base_domain}"
+  cidr_block          = "${var.machine_cidr}"
+  cluster_id          = "${var.cluster_id}"
+  cluster_name        = "${var.cluster_name}"
+  region              = "${var.aws_region}"
+  unique_cluster_name = "${var.aws_unique_cluster_name}"
 
   tags = "${merge(map(
       "kubernetes.io/cluster/${var.cluster_name}", "owned",

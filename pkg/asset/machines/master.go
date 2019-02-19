@@ -61,6 +61,7 @@ func (m *Master) Dependencies() []asset.Asset {
 		// it is put in the dependencies but not fetched in Generate
 		&installconfig.PlatformCredsCheck{},
 		&installconfig.InstallConfig{},
+		&installconfig.UniqueClusterName{},
 		new(rhcos.Image),
 		&machine.Master{},
 	}
@@ -69,14 +70,15 @@ func (m *Master) Dependencies() []asset.Asset {
 // Generate generates the Master asset.
 func (m *Master) Generate(dependencies asset.Parents) error {
 	clusterID := &installconfig.ClusterID{}
-	installconfig := &installconfig.InstallConfig{}
+	installConfig := &installconfig.InstallConfig{}
+	uniqueClusterName := &installconfig.UniqueClusterName{}
 	rhcosImage := new(rhcos.Image)
 	mign := &machine.Master{}
-	dependencies.Get(clusterID, installconfig, rhcosImage, mign)
+	dependencies.Get(clusterID, installConfig, uniqueClusterName, rhcosImage, mign)
 
 	var err error
 	machines := []machineapi.Machine{}
-	ic := installconfig.Config
+	ic := installConfig.Config
 	pool := ic.ControlPlane
 	switch ic.Platform.Name() {
 	case awstypes.Name:
@@ -96,7 +98,7 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		aws.ConfigMasters(machines, ic.ObjectMeta.Name)
+		aws.ConfigMasters(machines, uniqueClusterName.ClusterName)
 	case libvirttypes.Name:
 		mpool := defaultLibvirtMachinePoolPlatform()
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)

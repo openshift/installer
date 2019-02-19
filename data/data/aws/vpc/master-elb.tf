@@ -1,5 +1,5 @@
 resource "aws_lb" "api_internal" {
-  name                             = "${var.cluster_name}-int"
+  name                             = "${var.unique_cluster_name}-int"
   load_balancer_type               = "network"
   subnets                          = ["${local.private_subnet_ids}"]
   internal                         = true
@@ -12,7 +12,7 @@ resource "aws_lb" "api_internal" {
 }
 
 resource "aws_lb" "api_external" {
-  name                             = "${var.cluster_name}-ext"
+  name                             = "${var.unique_cluster_name}-ext"
   load_balancer_type               = "network"
   subnets                          = ["${local.public_subnet_ids}"]
   internal                         = false

@@ -130,17 +130,17 @@ func tagsFromUserTags(clusterID, clusterName string, usertags map[string]string)
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
-func ConfigMasters(machines []machineapi.Machine, clusterName string) {
+func ConfigMasters(machines []machineapi.Machine, uniqueClusterName string) {
 	for _, machine := range machines {
 		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
 		providerSpec.PublicIP = pointer.BoolPtr(true)
 		providerSpec.LoadBalancers = []awsprovider.LoadBalancerReference{
 			{
-				Name: fmt.Sprintf("%s-ext", clusterName),
+				Name: fmt.Sprintf("%s-ext", uniqueClusterName),
 				Type: awsprovider.NetworkLoadBalancerType,
 			},
 			{
-				Name: fmt.Sprintf("%s-int", clusterName),
+				Name: fmt.Sprintf("%s-int", uniqueClusterName),
 				Type: awsprovider.NetworkLoadBalancerType,
 			},
 		}

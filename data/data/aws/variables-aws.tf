@@ -53,3 +53,8 @@ variable "aws_region" {
   type        = "string"
   description = "The target AWS region for the cluster."
 }
+
+variable "aws_unique_cluster_name" {
+  type        = "string"
+  description = "The cluster name trimmed down and made unique"
+}

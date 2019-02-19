@@ -34,3 +34,8 @@ variable "tags" {
   default     = {}
   description = "AWS tags to be applied to created resources."
 }
+
+variable "unique_cluster_name" {
+  type        = "string"
+  description = "cluster name that has been trimmed and made unique"
+}

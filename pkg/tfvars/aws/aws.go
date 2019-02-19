@@ -9,17 +9,18 @@ import (
 )
 
 type config struct {
-	EC2AMIOverride string            `json:"aws_ec2_ami_override,omitempty"`
-	ExtraTags      map[string]string `json:"aws_extra_tags,omitempty"`
-	EC2Type        string            `json:"aws_master_ec2_type,omitempty"`
-	IOPS           int64             `json:"aws_master_root_volume_iops"`
-	Size           int64             `json:"aws_master_root_volume_size,omitempty"`
-	Type           string            `json:"aws_master_root_volume_type,omitempty"`
-	Region         string            `json:"aws_region,omitempty"`
+	EC2AMIOverride    string            `json:"aws_ec2_ami_override,omitempty"`
+	ExtraTags         map[string]string `json:"aws_extra_tags,omitempty"`
+	EC2Type           string            `json:"aws_master_ec2_type,omitempty"`
+	IOPS              int64             `json:"aws_master_root_volume_iops"`
+	Size              int64             `json:"aws_master_root_volume_size,omitempty"`
+	Type              string            `json:"aws_master_root_volume_type,omitempty"`
+	Region            string            `json:"aws_region,omitempty"`
+	UniqueClusterName string            `json:"aws_unique_cluster_name"`
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
-func TFVars(masterConfig *v1beta1.AWSMachineProviderConfig) ([]byte, error) {
+func TFVars(masterConfig *v1beta1.AWSMachineProviderConfig, uniqueClusterName string) ([]byte, error) {
 	tags := make(map[string]string, len(masterConfig.Tags))
 	for _, tag := range masterConfig.Tags {
 		tags[tag.Name] = tag.Value
@@ -47,12 +48,13 @@ func TFVars(masterConfig *v1beta1.AWSMachineProviderConfig) ([]byte, error) {
 	}
 
 	cfg := &config{
-		Region:         masterConfig.Placement.Region,
-		ExtraTags:      tags,
-		EC2AMIOverride: *masterConfig.AMI.ID,
-		EC2Type:        masterConfig.InstanceType,
-		Size:           *rootVolume.EBS.VolumeSize,
-		Type:           *rootVolume.EBS.VolumeType,
+		Region:            masterConfig.Placement.Region,
+		ExtraTags:         tags,
+		EC2AMIOverride:    *masterConfig.AMI.ID,
+		EC2Type:           masterConfig.InstanceType,
+		Size:              *rootVolume.EBS.VolumeSize,
+		Type:              *rootVolume.EBS.VolumeType,
+		UniqueClusterName: uniqueClusterName,
 	}
 
 	if rootVolume.EBS.Iops != nil {
