@@ -36,9 +36,11 @@ CLUSTER_BOOTSTRAP_IMAGE=$(podman run --rm ${release} image cluster-bootstrap)
 
 mkdir --parents ./{bootstrap-manifests,manifests}
 
-if [ ! -d cvo-bootstrap ]
+if [ ! -f cvo-bootstrap.done ]
 then
 	echo "Rendering Cluster Version Operator Manifests..."
+
+	rm -rf cvo-bootstrap
 
 	# shellcheck disable=SC2154
 	podman run \
@@ -52,11 +54,15 @@ then
 	cp cvo-bootstrap/manifests/* manifests/
 	## FIXME: CVO should use `/etc/kubernetes/bootstrap-secrets/kubeconfig` instead
 	cp auth/kubeconfig /etc/kubernetes/kubeconfig
+
+	touch cvo-bootstrap.done
 fi
 
-if [ ! -d config-bootstrap ]
+if [ ! -f config-bootstrap.done ]
 then
 	echo "Rendering cluster config manifests..."
+
+	rm -rf config-bootstrap
 
 	# shellcheck disable=SC2154
 	podman run \
@@ -68,11 +74,15 @@ then
 		--asset-output-dir=/assets/config-bootstrap
 
 	cp config-bootstrap/manifests/* manifests/
+
+	touch config-bootstrap.done
 fi
 
-if [ ! -d kube-apiserver-bootstrap ]
+if [ ! -f kube-apiserver-bootstrap.done ]
 then
 	echo "Rendering Kubernetes API server core manifests..."
+
+	rm -rf kube-apiserver-bootstrap
 
 	# shellcheck disable=SC2154
 	podman run \
@@ -90,11 +100,15 @@ then
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
 	cp kube-apiserver-bootstrap/manifests/* manifests/
+
+	touch kube-apiserver-bootstrap.done
 fi
 
-if [ ! -d kube-controller-manager-bootstrap ]
+if [ ! -f kube-controller-manager-bootstrap.done ]
 then
 	echo "Rendering Kubernetes Controller Manager core manifests..."
+
+	rm -rf kube-controller-manager-bootstrap
 
 	# shellcheck disable=SC2154
 	podman run \
@@ -110,11 +124,15 @@ then
 	cp kube-controller-manager-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-controller-manager-config.yaml
 	cp kube-controller-manager-bootstrap/bootstrap-manifests/* bootstrap-manifests/
 	cp kube-controller-manager-bootstrap/manifests/* manifests/
+
+	touch kube-controller-manager-bootstrap.done
 fi
 
-if [ ! -d kube-scheduler-bootstrap ]
+if [ ! -f kube-scheduler-bootstrap.done ]
 then
 	echo "Rendering Kubernetes Scheduler core manifests..."
+
+	rm -rf kube-scheduler-bootstrap
 
 	# shellcheck disable=SC2154
 	podman run \
@@ -129,11 +147,15 @@ then
 	cp kube-scheduler-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-scheduler-config.yaml
 	cp kube-scheduler-bootstrap/bootstrap-manifests/* bootstrap-manifests/
 	cp kube-scheduler-bootstrap/manifests/* manifests/
+
+	touch kube-scheduler-bootstrap.done
 fi
 
-if [ ! -d mco-bootstrap ]
+if [ ! -f mco-bootstrap.done ]
 then
 	echo "Rendering MCO manifests..."
+
+	rm -rf mco-bootstrap
 
 	# shellcheck disable=SC2154
 	podman run \
@@ -168,6 +190,8 @@ then
 	mkdir --parents /etc/ssl/mcs/
 	cp tls/machine-config-server.crt /etc/ssl/mcs/tls.crt
 	cp tls/machine-config-server.key /etc/ssl/mcs/tls.key
+
+	touch mco-bootstrap.done
 fi
 
 # We originally wanted to run the etcd cert signer as
