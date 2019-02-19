@@ -42,6 +42,10 @@ variable "master_port_names" {
   type = "list"
 }
 
+variable "bootstrap_ip" {
+  type = "string"
+}
+
 variable "lb_floating_ip" {
   type = "string"
 }
