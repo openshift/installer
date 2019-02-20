@@ -34,12 +34,12 @@ This applies only to cloud platforms.
 EOF
 }
 
-variable "cluster_name" {
+variable "cluster_domain" {
   type = "string"
 
   description = <<EOF
-The name of the cluster.
-If used in a cloud-environment, this will be prepended to `base_domain` resulting in the URL to the OpenShift console.
+The domain of the cluster.
+All the records for the cluster are created under this domain.
 
 Note: This field MUST be set manually prior to creating the cluster.
 EOF
