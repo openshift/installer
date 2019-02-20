@@ -60,7 +60,7 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 	case installConfig.Config.Platform.Libvirt != nil:
 		metadata.ClusterPlatformMetadata.Libvirt = libvirt.Metadata(installConfig.Config)
 	case installConfig.Config.Platform.OpenStack != nil:
-		metadata.ClusterPlatformMetadata.OpenStack = openstack.Metadata(clusterID.UUID, installConfig.Config)
+		metadata.ClusterPlatformMetadata.OpenStack = openstack.Metadata(clusterID.HumanID, installConfig.Config)
 	default:
 		return errors.Errorf("no known platform")
 	}

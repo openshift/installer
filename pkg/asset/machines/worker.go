@@ -136,7 +136,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(pool.Platform.OpenStack)
 			pool.Platform.OpenStack = &mpool
 
-			sets, err := openstack.MachineSets(clusterID.UUID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+			sets, err := openstack.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create master machine objects")
 			}

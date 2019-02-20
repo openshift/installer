@@ -121,11 +121,11 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(pool.Platform.OpenStack)
 		pool.Platform.OpenStack = &mpool
 
-		machines, err = openstack.Machines(clusterID.UUID, ic, pool, string(*rhcosImage), "master", "master-user-data")
+		machines, err = openstack.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		openstack.ConfigMasters(machines, ic.ObjectMeta.Name)
+		openstack.ConfigMasters(machines, clusterID.InfraID)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}

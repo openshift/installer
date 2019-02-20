@@ -35,7 +35,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if poolPlatform := pool.Platform.Name(); poolPlatform != openstack.Name {
 		return nil, fmt.Errorf("non-OpenStack machine-pool: %q", poolPlatform)
 	}
-	clustername := config.ObjectMeta.Name
 	platform := config.Platform.OpenStack
 	mpool := pool.Platform.OpenStack
 
@@ -46,7 +45,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		az := ""
-		provider, err := provider(clusterID, clustername, platform, mpool, osImage, az, role, userDataSecret)
+		provider, err := provider(clusterID, platform, mpool, osImage, az, role, userDataSecret)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -57,9 +56,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "openshift-machine-api",
-				Name:      fmt.Sprintf("%s-%s-%d", clustername, pool.Name, idx),
+				Name:      fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
 				Labels: map[string]string{
-					"sigs.k8s.io/cluster-api-cluster":      clustername,
+					"sigs.k8s.io/cluster-api-cluster":      clusterID,
 					"sigs.k8s.io/cluster-api-machine-role": role,
 					"sigs.k8s.io/cluster-api-machine-type": role,
 				},
@@ -78,7 +77,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID, clusterName string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string) (*openstackprovider.OpenstackProviderSpec, error) {
+func provider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string) (*openstackprovider.OpenstackProviderSpec, error) {
 	return &openstackprovider.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "openstackproviderconfig.k8s.io/v1alpha1",
@@ -107,7 +106,7 @@ func provider(clusterID, clusterName string, platform *openstack.Platform, mpool
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
-func ConfigMasters(machines []machineapi.Machine, clusterName string) {
+func ConfigMasters(machines []machineapi.Machine, clusterID string) {
 	/*for _, machine := range machines {
 		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*openstackprovider.OpenstackProviderSpec)
 	}*/
