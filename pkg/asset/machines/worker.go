@@ -110,7 +110,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 				mpool.Zones = azs
 			}
 			pool.Platform.AWS = &mpool
-			sets, err := aws.MachineSets(clusterID.UUID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
+			sets, err := aws.MachineSets(clusterID.InfraID, ic, &pool, string(*rhcosImage), "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}

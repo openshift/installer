@@ -56,7 +56,7 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 
 	switch {
 	case installConfig.Config.Platform.AWS != nil:
-		metadata.ClusterPlatformMetadata.AWS = aws.Metadata(clusterID.UUID, installConfig.Config)
+		metadata.ClusterPlatformMetadata.AWS = aws.Metadata(clusterID.HumanID, installConfig.Config)
 	case installConfig.Config.Platform.Libvirt != nil:
 		metadata.ClusterPlatformMetadata.Libvirt = libvirt.Metadata(installConfig.Config)
 	case installConfig.Config.Platform.OpenStack != nil:

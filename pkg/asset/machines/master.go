@@ -99,11 +99,11 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		machines, err = aws.Machines(clusterID.UUID, ic, pool, string(*rhcosImage), "master", "master-user-data")
+		machines, err = aws.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		aws.ConfigMasters(machines, ic.ObjectMeta.Name)
+		aws.ConfigMasters(machines, clusterID.InfraID)
 	case libvirttypes.Name:
 		mpool := defaultLibvirtMachinePoolPlatform()
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
