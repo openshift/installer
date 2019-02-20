@@ -51,7 +51,7 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 
 	metadata := &types.ClusterMetadata{
 		ClusterName: installConfig.Config.ObjectMeta.Name,
-		ClusterID:   clusterID.UUID,
+		ClusterID:   clusterID.HumanID,
 	}
 
 	switch {

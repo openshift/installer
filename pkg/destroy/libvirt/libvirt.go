@@ -17,15 +17,15 @@ import (
 // returns true, when the name should be handled.
 type filterFunc func(name string) bool
 
-// ClusterNamePrefixFilter returns true for names
-// that are prefixed with clustername.
-// `clustername` cannot be empty.
-var ClusterNamePrefixFilter = func(clustername string) filterFunc {
-	if clustername == "" {
-		panic("clustername cannot be empty")
+// ClusterIDPrefixFilter returns true for names
+// that are prefixed with clusterid.
+// `clusterid` cannot be empty.
+var ClusterIDPrefixFilter = func(clusterid string) filterFunc {
+	if clusterid == "" {
+		panic("clusterid cannot be empty")
 	}
 	return func(name string) bool {
-		return strings.HasPrefix(name, clustername)
+		return strings.HasPrefix(name, clusterid)
 	}
 }
 
@@ -215,7 +215,7 @@ func deleteNetwork(conn *libvirt.Connect, filter filterFunc, logger logrus.Field
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (destroy.Destroyer, error) {
 	return &ClusterUninstaller{
 		LibvirtURI: metadata.ClusterPlatformMetadata.Libvirt.URI,
-		Filter:     ClusterNamePrefixFilter(metadata.ClusterName),
+		Filter:     ClusterIDPrefixFilter(metadata.ClusterID),
 		Logger:     logger,
 	}, nil
 }

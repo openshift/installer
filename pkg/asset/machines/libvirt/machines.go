@@ -21,14 +21,13 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if poolPlatform := pool.Platform.Name(); poolPlatform != libvirt.Name {
 		return nil, fmt.Errorf("non-Libvirt machine-pool: %q", poolPlatform)
 	}
-	clustername := config.ObjectMeta.Name
 	platform := config.Platform.Libvirt
 
 	total := int64(1)
 	if pool.Replicas != nil {
 		total = *pool.Replicas
 	}
-	provider := provider(clustername, config.Networking.MachineCIDR.String(), platform, userDataSecret)
+	provider := provider(clusterID, config.Networking.MachineCIDR.String(), platform, userDataSecret)
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		machine := machineapi.Machine{
@@ -38,9 +37,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "openshift-machine-api",
-				Name:      fmt.Sprintf("%s-%s-%d", clustername, pool.Name, idx),
+				Name:      fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
 				Labels: map[string]string{
-					"sigs.k8s.io/cluster-api-cluster":      clustername,
+					"sigs.k8s.io/cluster-api-cluster":      clusterID,
 					"sigs.k8s.io/cluster-api-machine-role": role,
 					"sigs.k8s.io/cluster-api-machine-type": role,
 				},
@@ -58,7 +57,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterName string, networkInterfaceAddress string, platform *libvirt.Platform, userDataSecret string) *libvirtprovider.LibvirtMachineProviderConfig {
+func provider(clusterID string, networkInterfaceAddress string, platform *libvirt.Platform, userDataSecret string) *libvirtprovider.LibvirtMachineProviderConfig {
 	return &libvirtprovider.LibvirtMachineProviderConfig{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "libvirtproviderconfig.k8s.io/v1alpha1",
@@ -71,9 +70,9 @@ func provider(clusterName string, networkInterfaceAddress string, platform *libv
 		},
 		Volume: &libvirtprovider.Volume{
 			PoolName:     "default",
-			BaseVolumeID: fmt.Sprintf("/var/lib/libvirt/images/%s-base", clusterName),
+			BaseVolumeID: fmt.Sprintf("/var/lib/libvirt/images/%s-base", clusterID),
 		},
-		NetworkInterfaceName:    clusterName,
+		NetworkInterfaceName:    clusterID,
 		NetworkInterfaceAddress: networkInterfaceAddress,
 		Autostart:               false,
 		URI:                     platform.URI,

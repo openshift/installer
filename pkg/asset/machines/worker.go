@@ -122,7 +122,7 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 			mpool.Set(pool.Platform.Libvirt)
 			pool.Platform.Libvirt = &mpool
-			sets, err := libvirt.MachineSets(clusterID.UUID, ic, &pool, "worker", "worker-user-data")
+			sets, err := libvirt.MachineSets(clusterID.InfraID, ic, &pool, "worker", "worker-user-data")
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
