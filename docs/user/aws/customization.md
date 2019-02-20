@@ -15,7 +15,7 @@ The following options are available when using AWS:
 An example `install-config.yaml` is shown below. This configuration has been modified to show the customization that is possible via the install config.
 
 ```yaml
-apiVersion: v1beta1
+apiVersion: v1beta3
 baseDomain: example.com
 controlPlane:
   name: master
