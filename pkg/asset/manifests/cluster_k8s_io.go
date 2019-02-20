@@ -29,18 +29,16 @@ func (c *ClusterK8sIO) Name() string {
 // ClusterK8sIO asset
 func (c *ClusterK8sIO) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&installconfig.InstallConfig{},
+		&installconfig.ClusterID{},
 		&Networking{},
 	}
 }
 
 // Generate generates the Worker asset.
 func (c *ClusterK8sIO) Generate(dependencies asset.Parents) error {
-	installconfig := &installconfig.InstallConfig{}
-	dependencies.Get(installconfig)
-
+	clusterID := &installconfig.ClusterID{}
 	net := &Networking{}
-	dependencies.Get(net)
+	dependencies.Get(clusterID, net)
 	clusterNet, err := net.ClusterNetwork()
 	if err != nil {
 		return errors.Wrapf(err, "Could not generate ClusterNetworkingConfig")
@@ -52,7 +50,7 @@ func (c *ClusterK8sIO) Generate(dependencies asset.Parents) error {
 			Kind:       "Cluster",
 		},
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      installconfig.Config.ObjectMeta.Name,
+			Name:      clusterID.InfraID,
 			Namespace: "openshift-machine-api",
 		},
 		Spec: clusterv1a1.ClusterSpec{
