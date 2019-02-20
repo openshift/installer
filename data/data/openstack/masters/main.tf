@@ -14,7 +14,7 @@ data "ignition_config" "master_ignition_config" {
 }
 
 resource "openstack_compute_instance_v2" "master_conf" {
-  name  = "${var.cluster_name}-master-${count.index}"
+  name  = "${var.cluster_id}-master-${count.index}"
   count = "${var.instance_count}"
 
   flavor_id       = "${data.openstack_compute_flavor_v2.masters_flavor.id}"
@@ -27,8 +27,9 @@ resource "openstack_compute_instance_v2" "master_conf" {
   }
 
   metadata {
-    Name               = "${var.cluster_name}-master"
-    owned              = "kubernetes.io/cluster/${var.cluster_name}"
+    Name = "${var.cluster_id}-master"
+
+    # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
     openshiftClusterID = "${var.cluster_id}"
   }
 }

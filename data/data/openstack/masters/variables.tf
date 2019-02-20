@@ -3,11 +3,8 @@ variable "base_image" {
 }
 
 variable "cluster_id" {
-  type = "string"
-}
-
-variable "cluster_name" {
-  type = "string"
+  type        = "string"
+  description = "The identifier for the cluster."
 }
 
 variable "flavor_name" {

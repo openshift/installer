@@ -50,7 +50,7 @@ data "openstack_compute_flavor_v2" "bootstrap_flavor" {
 }
 
 resource "openstack_compute_instance_v2" "bootstrap" {
-  name      = "${var.cluster_name}-bootstrap"
+  name      = "${var.cluster_id}-bootstrap"
   flavor_id = "${data.openstack_compute_flavor_v2.bootstrap_flavor.id}"
   image_id  = "${data.openstack_images_image_v2.bootstrap_image.id}"
 
@@ -61,9 +61,9 @@ resource "openstack_compute_instance_v2" "bootstrap" {
   }
 
   metadata {
-    Name = "${var.cluster_name}-bootstrap"
+    Name = "${var.cluster_id}-bootstrap"
 
-    # "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
     openshiftClusterID = "${var.cluster_id}"
   }
 }
