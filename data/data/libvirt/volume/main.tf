@@ -1,4 +1,4 @@
 resource "libvirt_volume" "coreos_base" {
-  name   = "${var.cluster_name}-base"
+  name   = "${var.cluster_id}-base"
   source = "${var.image}"
 }

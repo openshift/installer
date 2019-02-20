@@ -1,6 +1,6 @@
-variable "cluster_name" {
+variable "cluster_id" {
   type        = "string"
-  description = "The name of the cluster."
+  description = "The identifier for the cluster."
 }
 
 variable "image" {

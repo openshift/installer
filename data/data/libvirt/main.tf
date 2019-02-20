@@ -9,8 +9,8 @@ provider "libvirt" {
 module "volume" {
   source = "./volume"
 
-  cluster_name = "${var.cluster_name}"
-  image        = "${var.os_image}"
+  cluster_id = "${var.cluster_id}"
+  image      = "${var.os_image}"
 }
 
 module "bootstrap" {
@@ -18,24 +18,24 @@ module "bootstrap" {
 
   addresses      = ["${var.libvirt_bootstrap_ip}"]
   base_volume_id = "${module.volume.coreos_base_volume_id}"
-  cluster_name   = "${var.cluster_name}"
+  cluster_id     = "${var.cluster_id}"
   ignition       = "${var.ignition_bootstrap}"
   network_id     = "${libvirt_network.net.id}"
 }
 
 resource "libvirt_volume" "master" {
   count          = "${var.master_count}"
-  name           = "${var.cluster_name}-master-${count.index}"
+  name           = "${var.cluster_id}-master-${count.index}"
   base_volume_id = "${module.volume.coreos_base_volume_id}"
 }
 
 resource "libvirt_ignition" "master" {
-  name    = "${var.cluster_name}-master.ign"
+  name    = "${var.cluster_id}-master.ign"
   content = "${var.ignition_master}"
 }
 
 resource "libvirt_network" "net" {
-  name = "${var.cluster_name}"
+  name = "${var.cluster_id}"
 
   mode   = "nat"
   bridge = "${var.libvirt_network_if}"
@@ -66,7 +66,7 @@ resource "libvirt_network" "net" {
 resource "libvirt_domain" "master" {
   count = "${var.master_count}"
 
-  name = "${var.cluster_name}-master-${count.index}"
+  name = "${var.cluster_id}-master-${count.index}"
 
   memory = "${var.libvirt_master_memory}"
   vcpu   = "${var.libvirt_master_vcpu}"
@@ -88,7 +88,7 @@ resource "libvirt_domain" "master" {
 
   network_interface {
     network_id = "${libvirt_network.net.id}"
-    hostname   = "${var.cluster_name}-master-${count.index}"
+    hostname   = "${var.cluster_id}-master-${count.index}"
     addresses  = ["${var.libvirt_master_ips[count.index]}"]
   }
 }

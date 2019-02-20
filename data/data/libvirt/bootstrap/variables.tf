@@ -9,9 +9,9 @@ variable "base_volume_id" {
   description = "The ID of the base volume for the bootstrap node."
 }
 
-variable "cluster_name" {
+variable "cluster_id" {
   type        = "string"
-  description = "The name of the cluster."
+  description = "The identifier for the cluster."
 }
 
 variable "ignition" {
