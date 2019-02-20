@@ -17,14 +17,16 @@ An example `install-config.yaml` is shown below. This configuration has been mod
 ```yaml
 apiVersion: v1beta1
 baseDomain: example.com
-machines:
-- name: master
+controlPlane:
+  name: master
   platform:
     aws:
       zones:
       - us-west-2a
       - us-west-2b
+      type: m5.xlarge
   replicas: 3
+compute:
 - name: worker
   platform:
     aws:
