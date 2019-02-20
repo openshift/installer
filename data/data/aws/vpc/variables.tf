@@ -6,14 +6,6 @@ variable "cluster_id" {
   type = "string"
 }
 
-variable "base_domain" {
-  type = "string"
-}
-
-variable "cluster_name" {
-  type = "string"
-}
-
 variable "private_master_endpoints" {
   description = "If set to true, private-facing ingress resources are created."
   default     = true

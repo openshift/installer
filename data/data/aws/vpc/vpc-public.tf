@@ -2,16 +2,16 @@ resource "aws_internet_gateway" "igw" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}-igw",
-    ), var.tags)}"
+    "Name", "${var.cluster_id}-igw",
+  ), var.tags)}"
 }
 
 resource "aws_route_table" "default" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}-public",
-    ), var.tags)}"
+    "Name", "${var.cluster_id}-public",
+  ), var.tags)}"
 }
 
 resource "aws_main_route_table_association" "main_vpc_routes" {
@@ -34,8 +34,8 @@ resource "aws_subnet" "public_subnet" {
   availability_zone = "${local.new_subnet_azs[count.index]}"
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}-public-${local.new_subnet_azs[count.index]}",
-    ), var.tags)}"
+    "Name", "${var.cluster_id}-public-${local.new_subnet_azs[count.index]}",
+  ), var.tags)}"
 }
 
 resource "aws_route_table_association" "route_net" {
@@ -48,7 +48,9 @@ resource "aws_eip" "nat_eip" {
   count = "${local.new_az_count}"
   vpc   = true
 
-  tags = "${var.tags}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-eip-${local.new_subnet_azs[count.index]}",
+  ), var.tags)}"
 
   # Terraform does not declare an explicit dependency towards the internet gateway.
   # this can cause the internet gateway to be deleted/detached before the EIPs.
@@ -61,5 +63,7 @@ resource "aws_nat_gateway" "nat_gw" {
   allocation_id = "${aws_eip.nat_eip.*.id[count.index]}"
   subnet_id     = "${aws_subnet.public_subnet.*.id[count.index]}"
 
-  tags = "${var.tags}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-nat-${local.new_subnet_azs[count.index]}",
+  ), var.tags)}"
 }

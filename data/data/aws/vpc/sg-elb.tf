@@ -2,8 +2,8 @@ resource "aws_security_group" "api" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}_api_sg",
-    ), var.tags)}"
+    "Name", "${var.cluster_id}-api-sg",
+  ), var.tags)}"
 }
 
 resource "aws_security_group_rule" "api_egress" {
@@ -40,7 +40,7 @@ resource "aws_security_group" "console" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}_console_sg",
+      "Name", "${var.cluster_id}-console-sg",
     ), var.tags)}"
 }
 

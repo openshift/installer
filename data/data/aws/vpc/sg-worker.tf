@@ -2,7 +2,7 @@ resource "aws_security_group" "worker" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}_worker_sg",
+      "Name", "${var.cluster_id}-worker-sg",
     ), var.tags)}"
 }
 

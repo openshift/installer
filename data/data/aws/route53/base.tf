@@ -1,18 +1,23 @@
-data "aws_route53_zone" "base" {
+data "aws_route53_zone" "public" {
   name = "${var.base_domain}"
 }
 
-locals {
-  public_zone_id = "${data.aws_route53_zone.base.zone_id}"
+resource "aws_route53_zone" "int" {
+  name          = "${var.cluster_domain}"
+  force_destroy = true
 
-  zone_id = "${var.private_zone_id}"
+  vpc {
+    vpc_id = "${var.vpc_id}"
+  }
 
-  cluster_domain = "${var.cluster_name}.${var.base_domain}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-int",
+  ), var.tags)}"
 }
 
 resource "aws_route53_record" "api_external" {
-  zone_id = "${local.public_zone_id}"
-  name    = "api.${local.cluster_domain}"
+  zone_id = "${data.aws_route53_zone.public.zone_id}"
+  name    = "api.${var.cluster_domain}"
   type    = "A"
 
   alias {
@@ -23,8 +28,8 @@ resource "aws_route53_record" "api_external" {
 }
 
 resource "aws_route53_record" "api_internal" {
-  zone_id = "${var.private_zone_id}"
-  name    = "api.${local.cluster_domain}"
+  zone_id = "${aws_route53_zone.int.zone_id}"
+  name    = "api.${var.cluster_domain}"
   type    = "A"
 
   alias {
@@ -32,4 +37,21 @@ resource "aws_route53_record" "api_internal" {
     zone_id                = "${var.api_internal_lb_zone_id}"
     evaluate_target_health = true
   }
+}
+
+resource "aws_route53_record" "etcd_a_nodes" {
+  count   = "${var.etcd_count}"
+  type    = "A"
+  ttl     = "60"
+  zone_id = "${aws_route53_zone.int.zone_id}"
+  name    = "etcd-${count.index}.${var.cluster_domain}"
+  records = ["${var.etcd_ip_addresses[count.index]}"]
+}
+
+resource "aws_route53_record" "etcd_cluster" {
+  type    = "SRV"
+  ttl     = "60"
+  zone_id = "${aws_route53_zone.int.zone_id}"
+  name    = "_etcd-server-ssl._tcp"
+  records = ["${formatlist("0 10 2380 %s", aws_route53_record.etcd_a_nodes.*.fqdn)}"]
 }

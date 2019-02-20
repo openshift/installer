@@ -27,7 +27,7 @@ module "bootstrap" {
   source = "github.com/openshift/installer//data/data/aws/bootstrap"
 
   ami            = "ami-0af8953af3ec06b7c"
-  cluster_name   = "my-cluster"
+  cluster_id     = "my-cluster"
   ignition       = "{\"ignition\": {\"version\": \"2.2.0\"}}",
   subnet_id      = "${aws_subnet.example.id}"
   vpc_id         = "${aws_vpc.example.id}"

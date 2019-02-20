@@ -2,8 +2,8 @@ resource "aws_security_group" "master" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}_master_sg",
-    ), var.tags)}"
+    "Name", "${var.cluster_id}-master-sg",
+  ), var.tags)}"
 }
 
 resource "aws_security_group_rule" "master_mcs" {

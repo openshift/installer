@@ -3,8 +3,8 @@ resource "aws_route_table" "private_routes" {
   vpc_id = "${data.aws_vpc.cluster_vpc.id}"
 
   tags = "${merge(map(
-      "Name","${var.cluster_name}-private-${local.new_subnet_azs[count.index]}",
-    ), var.tags)}"
+    "Name","${var.cluster_id}-private-${local.new_subnet_azs[count.index]}",
+  ), var.tags)}"
 }
 
 resource "aws_route" "to_nat_gw" {
@@ -25,9 +25,9 @@ resource "aws_subnet" "private_subnet" {
   availability_zone = "${local.new_subnet_azs[count.index]}"
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}-private-${local.new_subnet_azs[count.index]}",
-      "kubernetes.io/role/internal-elb", "",
-    ), var.tags)}"
+    "Name", "${var.cluster_id}-private-${local.new_subnet_azs[count.index]}",
+    "kubernetes.io/role/internal-elb", "",
+  ), var.tags)}"
 }
 
 resource "aws_route_table_association" "private_routing" {
