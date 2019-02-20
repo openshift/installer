@@ -32,7 +32,7 @@ variable "libvirt_master_ips" {
 variable "libvirt_master_memory" {
   type        = "string"
   description = "RAM in MiB allocated to masters"
-  default     = "4096"
+  default     = "6144"
 }
 
 # At some point this one is likely to default to the number
@@ -41,5 +41,5 @@ variable "libvirt_master_memory" {
 variable "libvirt_master_vcpu" {
   type        = "string"
   description = "CPUs allocated to masters"
-  default     = "2"
+  default     = "4"
 }
