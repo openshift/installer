@@ -13,7 +13,7 @@ import (
 // This file was originally in pkg/assets/machines, but is now in
 // /manifests due to an import loop.
 
-// ClusterK8sIO generates the `Cluster.cluster.k8s.io/v1alpha1` object.
+// ClusterK8sIO generates the `Cluster.machine.openshift.io/v1beta1` object.
 type ClusterK8sIO struct {
 	Raw []byte
 }
@@ -22,7 +22,7 @@ var _ asset.Asset = (*ClusterK8sIO)(nil)
 
 // Name returns a human friendly name for the ClusterK8sIO Asset.
 func (c *ClusterK8sIO) Name() string {
-	return "Cluster.cluster.k8s.io/v1alpha1"
+	return "Cluster.machine.openshift.io/v1beta1"
 }
 
 // Dependencies returns all of the dependencies directly needed by the
@@ -48,7 +48,7 @@ func (c *ClusterK8sIO) Generate(dependencies asset.Parents) error {
 
 	cluster := clusterv1a1.Cluster{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "cluster.k8s.io/v1alpha1",
+			APIVersion: "machine.openshift.io/v1beta1",
 			Kind:       "Cluster",
 		},
 		ObjectMeta: metav1.ObjectMeta{
