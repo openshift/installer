@@ -24,7 +24,7 @@ var _ asset.WritableAsset = (*Admin)(nil)
 // Dependencies returns the dependency of the kubeconfig.
 func (k *Admin) Dependencies() []asset.Asset {
 	return []asset.Asset{
-		&tls.KubeCA{},
+		&tls.KubeAPIServerCompleteCABundle{},
 		&tls.AdminCertKey{},
 		&installconfig.InstallConfig{},
 	}
@@ -32,13 +32,13 @@ func (k *Admin) Dependencies() []asset.Asset {
 
 // Generate generates the kubeconfig.
 func (k *Admin) Generate(parents asset.Parents) error {
-	kubeCA := &tls.KubeCA{}
+	kasCABundle := &tls.KubeAPIServerCompleteCABundle{}
 	adminCertKey := &tls.AdminCertKey{}
 	installConfig := &installconfig.InstallConfig{}
-	parents.Get(kubeCA, adminCertKey, installConfig)
+	parents.Get(kasCABundle, adminCertKey, installConfig)
 
 	return k.kubeconfig.generate(
-		kubeCA,
+		kasCABundle,
 		adminCertKey,
 		installConfig.Config,
 		"admin",
