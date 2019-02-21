@@ -42,11 +42,7 @@ release)
 	TAGS="${TAGS} release"
 	if test -n "${RELEASE_IMAGE}"
 	then
-		LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/asset/ignition/bootstrap.defaultReleaseImage=${RELEASE_IMAGE}"
-	fi
-	if test -n "${RHCOS_BUILD_NAME}"
-	then
-		LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/rhcos.buildName=${RHCOS_BUILD_NAME}"
+		LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/asset/release.defaultImage=${RELEASE_IMAGE}"
 	fi
 	if test "${SKIP_GENERATION}" != y
 	then

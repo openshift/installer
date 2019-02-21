@@ -3,15 +3,15 @@ package rhcos
 
 import (
 	"context"
-	"os"
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	releaseasset "github.com/openshift/installer/pkg/asset/release"
 	"github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/rhcos/release"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
@@ -30,34 +30,35 @@ func (i *Image) Name() string {
 	return "Image"
 }
 
-// Dependencies returns no dependencies.
+// Dependencies returns the assets on which the Image asset depends.
 func (i *Image) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
+		new(releaseasset.Image),
 	}
 }
 
 // Generate the RHCOS image location.
 func (i *Image) Generate(p asset.Parents) error {
-	if oi, ok := os.LookupEnv("OPENSHIFT_INSTALL_OS_IMAGE_OVERRIDE"); ok && oi != "" {
-		logrus.Warn("Found override for OS Image. Please be warned, this is not advised")
-		*i = Image(oi)
-		return nil
-	}
-
 	ic := &installconfig.InstallConfig{}
-	p.Get(ic)
+	releaseImage := new(releaseasset.Image)
+	p.Get(ic, releaseImage)
 	config := ic.Config
 
+	ctx := context.TODO()
+	build, err := release.RHCOSBuild(ctx, string(*releaseImage), []byte(ic.Config.PullSecret))
+	if err != nil {
+		return err
+	}
+
 	var osimage string
-	var err error
-	ctx, cancel := context.WithTimeout(context.TODO(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	switch config.Platform.Name() {
 	case aws.Name:
-		osimage, err = rhcos.AMI(ctx, rhcos.DefaultChannel, config.Platform.AWS.Region)
+		osimage, err = rhcos.AMI(ctx, rhcos.DefaultChannel, build, config.Platform.AWS.Region)
 	case libvirt.Name:
-		osimage, err = rhcos.QEMU(ctx, rhcos.DefaultChannel)
+		osimage, err = rhcos.QEMU(ctx, rhcos.DefaultChannel, build)
 	case openstack.Name:
 		osimage = "rhcos"
 	case none.Name:
