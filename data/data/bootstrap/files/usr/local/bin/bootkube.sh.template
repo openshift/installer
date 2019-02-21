@@ -239,3 +239,4 @@ podman run \
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
+echo "bootkube.service complete"
