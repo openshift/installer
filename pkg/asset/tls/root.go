@@ -5,13 +5,12 @@ import (
 	"crypto/x509/pkix"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/pkg/errors"
 )
 
 // RootCA contains the private key and the cert that's
 // self-signed as the root CA.
 type RootCA struct {
-	CertKey
+	SelfSignedCertKey
 }
 
 var _ asset.WritableAsset = (*RootCA)(nil)
@@ -30,17 +29,7 @@ func (c *RootCA) Generate(parents asset.Parents) error {
 		IsCA:      true,
 	}
 
-	key, crt, err := GenerateRootCertKey(cfg)
-	if err != nil {
-		return errors.Wrap(err, "failed to generate RootCA")
-	}
-
-	c.KeyRaw = PrivateKeyToPem(key)
-	c.CertRaw = CertToPem(crt)
-
-	c.generateFiles("root-ca")
-
-	return nil
+	return c.SelfSignedCertKey.Generate(cfg, "root-ca")
 }
 
 // Name returns the human-friendly name of the asset.

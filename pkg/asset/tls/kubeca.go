@@ -5,12 +5,12 @@ import (
 	"crypto/x509/pkix"
 
 	"github.com/openshift/installer/pkg/asset"
-	"github.com/pkg/errors"
 )
 
 // KubeCA is the asset that generates the kube-ca key/cert pair.
+// [DEPRECATED]
 type KubeCA struct {
-	CertKey
+	SelfSignedCertKey
 }
 
 var _ asset.Asset = (*KubeCA)(nil)
@@ -32,17 +32,7 @@ func (a *KubeCA) Generate(dependencies asset.Parents) error {
 		IsCA:      true,
 	}
 
-	key, crt, err := GenerateRootCertKey(cfg)
-	if err != nil {
-		return errors.Wrap(err, "failed to generate Kube CA")
-	}
-
-	a.KeyRaw = PrivateKeyToPem(key)
-	a.CertRaw = CertToPem(crt)
-
-	a.generateFiles("kube-ca")
-
-	return nil
+	return a.SelfSignedCertKey.Generate(cfg, "kube-ca")
 }
 
 // Name returns the human-friendly name of the asset.

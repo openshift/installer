@@ -21,8 +21,6 @@ type bootkubeTemplateData struct {
 	EtcdCaCert                      string
 	EtcdClientCert                  string
 	EtcdClientKey                   string
-	KubeCaCert                      string
-	KubeCaKey                       string
 	McsTLSCert                      string
 	McsTLSKey                       string
 	PullSecretBase64                string

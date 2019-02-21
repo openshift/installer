@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func TestSelfSignedCACert(t *testing.T) {
+func TestSelfSignedCertificate(t *testing.T) {
 	key, err := PrivateKey()
 	if err != nil {
 		t.Fatalf("Failed to generate Private Key: %v", err)
@@ -50,7 +50,7 @@ func TestSelfSignedCACert(t *testing.T) {
 		},
 	}
 	for i, c := range cases {
-		if _, err := SelfSignedCACert(c.cfg, key); (err != nil) != c.err {
+		if _, err := SelfSignedCertificate(c.cfg, key); (err != nil) != c.err {
 			no := "no"
 			if c.err {
 				no = "an"

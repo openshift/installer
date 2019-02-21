@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCertKeyGenerate(t *testing.T) {
+func TestSignedCertKeyGenerate(t *testing.T) {
 	tests := []struct {
 		name         string
 		certCfg      *CertCfg
@@ -48,7 +48,7 @@ func TestCertKeyGenerate(t *testing.T) {
 			err := rootCA.Generate(nil)
 			assert.NoError(t, err, "failed to generate root CA")
 
-			certKey := &CertKey{}
+			certKey := &SignedCertKey{}
 			err = certKey.Generate(tt.certCfg, rootCA, tt.filenameBase, tt.appendParent)
 			if err != nil {
 				assert.EqualErrorf(t, err, tt.errString, tt.name)

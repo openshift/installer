@@ -10,7 +10,7 @@ import (
 
 // MCSCertKey is the asset that generates the MCS key/cert pair.
 type MCSCertKey struct {
-	CertKey
+	SignedCertKey
 }
 
 var _ asset.Asset = (*MCSCertKey)(nil)
@@ -27,9 +27,9 @@ func (a *MCSCertKey) Dependencies() []asset.Asset {
 
 // Generate generates the cert/key pair based on its dependencies.
 func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
-	rootCA := &RootCA{}
+	ca := &RootCA{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(rootCA, installConfig)
+	dependencies.Get(ca, installConfig)
 
 	hostname := apiAddress(installConfig.Config)
 
@@ -40,7 +40,7 @@ func (a *MCSCertKey) Generate(dependencies asset.Parents) error {
 		DNSNames:     []string{hostname},
 	}
 
-	return a.CertKey.Generate(cfg, rootCA, "machine-config-server", DoNotAppendParent)
+	return a.SignedCertKey.Generate(cfg, ca, "machine-config-server", DoNotAppendParent)
 }
 
 // Name returns the human-friendly name of the asset.

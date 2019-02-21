@@ -21,12 +21,14 @@ import (
 const (
 	keySize = 2048
 
-	// ValidityTenYears sets the validity of a cert to 10 years.
-	ValidityTenYears = time.Hour * 24 * 365 * 10
-
 	// ValidityOneDay sets the validity of a cert to 24 hours.
-	// This is for the kubelet bootstrap.
 	ValidityOneDay = time.Hour * 24
+
+	// ValidityOneYear sets the validity of a cert to 1 year.
+	ValidityOneYear = ValidityOneDay * 365
+
+	// ValidityTenYears sets the validity of a cert to 10 years.
+	ValidityTenYears = ValidityOneYear * 10
 )
 
 // CertCfg contains all needed fields to configure a new certificate
@@ -56,17 +58,19 @@ func PrivateKey() (*rsa.PrivateKey, error) {
 	return rsaKey, nil
 }
 
-// SelfSignedCACert Creates a self signed CA certificate
-func SelfSignedCACert(cfg *CertCfg, key *rsa.PrivateKey) (*x509.Certificate, error) {
-	var err error
-
+// SelfSignedCertificate creates a self signed certificate
+func SelfSignedCertificate(cfg *CertCfg, key *rsa.PrivateKey) (*x509.Certificate, error) {
+	serial, err := rand.Int(rand.Reader, new(big.Int).SetInt64(math.MaxInt64))
+	if err != nil {
+		return nil, err
+	}
 	cert := x509.Certificate{
 		BasicConstraintsValid: true,
 		IsCA:         cfg.IsCA,
 		KeyUsage:     cfg.KeyUsages,
 		NotAfter:     time.Now().Add(cfg.Validity),
 		NotBefore:    time.Now(),
-		SerialNumber: new(big.Int).SetInt64(0),
+		SerialNumber: serial,
 		Subject:      cfg.Subject,
 	}
 	// verifies that the CN and/or OU for the cert is set
@@ -144,11 +148,8 @@ func generateSubjectKeyID(pub crypto.PublicKey) ([]byte, error) {
 	return hash[:], nil
 }
 
-// GenerateCert creates a key, csr & a signed cert
-// This is useful for apiserver and openshift-apiser cert which will be
-// authenticated by the kubeconfig using root-ca.
-func GenerateCert(caKey *rsa.PrivateKey,
-	caCert *x509.Certificate,
+// GenerateSignedCertificate generate a key and cert defined by CertCfg and signed by CA.
+func GenerateSignedCertificate(caKey *rsa.PrivateKey, caCert *x509.Certificate,
 	cfg *CertCfg) (*rsa.PrivateKey, *x509.Certificate, error) {
 
 	// create a private key
@@ -169,45 +170,23 @@ func GenerateCert(caKey *rsa.PrivateKey,
 	}
 
 	// create a cert
-	cert, err := GenerateSignedCert(cfg, csr, key, caKey, caCert)
+	cert, err := SignedCertificate(cfg, csr, key, caCert, caKey)
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to create a signed certificate")
 	}
 	return key, cert, nil
 }
 
-// GenerateRootCA creates and returns the root CA
-func GenerateRootCA(key *rsa.PrivateKey, cfg *CertCfg) (*x509.Certificate, error) {
-	cert, err := SelfSignedCACert(cfg, key)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to generate self signed certificate")
-	}
-	return cert, nil
-}
-
-// GenerateSignedCert generates a signed certificate.
-func GenerateSignedCert(cfg *CertCfg,
-	csr *x509.CertificateRequest,
-	key *rsa.PrivateKey,
-	caKey *rsa.PrivateKey,
-	caCert *x509.Certificate) (*x509.Certificate, error) {
-	cert, err := SignedCertificate(cfg, csr, key, caCert, caKey)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to create a signed certificate")
-	}
-	return cert, nil
-}
-
-// GenerateRootCertKey generates a root key/cert pair.
-func GenerateRootCertKey(cfg *CertCfg) (*rsa.PrivateKey, *x509.Certificate, error) {
+// GenerateSelfSignedCertificate generates a key/cert pair defined by CertCfg.
+func GenerateSelfSignedCertificate(cfg *CertCfg) (*rsa.PrivateKey, *x509.Certificate, error) {
 	key, err := PrivateKey()
 	if err != nil {
 		return nil, nil, errors.Wrap(err, "failed to generate private key")
 	}
 
-	crt, err := GenerateRootCA(key, cfg)
+	crt, err := SelfSignedCertificate(cfg, key)
 	if err != nil {
-		return nil, nil, errors.Wrap(err, "failed to create root CA certificate")
+		return nil, nil, errors.Wrap(err, "failed to create self-signed certificate")
 	}
 	return key, crt, nil
 }

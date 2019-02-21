@@ -10,7 +10,7 @@ import (
 // JournalCertKey is the asset that generates the key/cert pair that is used to
 // authenticate with journal-gatewayd on the bootstrap node.
 type JournalCertKey struct {
-	CertKey
+	SignedCertKey
 }
 
 var _ asset.WritableAsset = (*JournalCertKey)(nil)
@@ -36,7 +36,7 @@ func (a *JournalCertKey) Generate(dependencies asset.Parents) error {
 		Validity:     ValidityTenYears,
 	}
 
-	return a.CertKey.Generate(cfg, ca, "journal-gatewayd", DoNotAppendParent)
+	return a.SignedCertKey.Generate(cfg, ca, "journal-gatewayd", DoNotAppendParent)
 }
 
 // Name returns the human-friendly name of the asset.

@@ -9,10 +9,12 @@ import (
 )
 
 var (
-	kubeconfigKubeletPath = filepath.Join("auth", "kubeconfig-kubelet")
+	kubeconfigKubeletPath       = filepath.Join("auth", "kubeconfig-kubelet")
+	kubeconfigKubeletClientPath = filepath.Join("auth", "kubeconfig-kubelet-client")
 )
 
 // Kubelet is the asset for the kubelet kubeconfig.
+// [DEPRECATED]
 type Kubelet struct {
 	kubeconfig
 }
@@ -51,5 +53,47 @@ func (k *Kubelet) Name() string {
 
 // Load is a no-op because kubelet kubeconfig is not written to disk.
 func (k *Kubelet) Load(asset.FileFetcher) (bool, error) {
+	return false, nil
+}
+
+// KubeletClient is the asset for the kubelet kubeconfig.
+type KubeletClient struct {
+	kubeconfig
+}
+
+var _ asset.WritableAsset = (*KubeletClient)(nil)
+
+// Dependencies returns the dependency of the kubeconfig.
+func (k *KubeletClient) Dependencies() []asset.Asset {
+	return []asset.Asset{
+		&tls.KubeletClientCABundle{},
+		&tls.KubeletClientCertKey{},
+		&installconfig.InstallConfig{},
+	}
+}
+
+// Generate generates the kubeconfig.
+func (k *KubeletClient) Generate(parents asset.Parents) error {
+	ca := &tls.KubeletClientCABundle{}
+	clientcertkey := &tls.KubeletClientCertKey{}
+	installConfig := &installconfig.InstallConfig{}
+	parents.Get(ca, clientcertkey, installConfig)
+
+	return k.kubeconfig.generate(
+		ca,
+		clientcertkey,
+		installConfig.Config,
+		"kubelet",
+		kubeconfigKubeletClientPath,
+	)
+}
+
+// Name returns the human-friendly name of the asset.
+func (k *KubeletClient) Name() string {
+	return "Kubeconfig Kubelet Client"
+}
+
+// Load is a no-op because kubelet kubeconfig is not written to disk.
+func (k *KubeletClient) Load(asset.FileFetcher) (bool, error) {
 	return false, nil
 }
