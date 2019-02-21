@@ -2,6 +2,22 @@
 
 
 [[projects]]
+  digest = "1:5d72bbcc9c8667b11c3dc3cbe681c5a6f71e5096744c0bf7726ab5c6425d5dc4"
+  name = "github.com/BurntSushi/toml"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "3012a1dbe2e4bd1391d42b32f0577cb7bbc7f005"
+  version = "v0.3.1"
+
+[[projects]]
+  digest = "1:2be791e7b333ff7c06f8fb3dc18a7d70580e9399dbdffd352621d067ff260b6e"
+  name = "github.com/Microsoft/go-winio"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "1a8911d1ed007260465c3bfbbc785ac6915a0bb8"
+  version = "v0.4.12"
+
+[[projects]]
   branch = "go15"
   digest = "1:8dab0033e231d02909f00a501a1f1ac01e63fd267dcb374a5de71b99ba1ee74f"
   name = "github.com/ajeddeloh/go-json"
@@ -90,6 +106,43 @@
   version = "v1.16.14"
 
 [[projects]]
+  digest = "1:b13f9ba0f57f8019fcfaf689501c2de5fd75483893c67a1daafe83ce4c8b8797"
+  name = "github.com/containers/image"
+  packages = [
+    "docker",
+    "docker/policyconfiguration",
+    "docker/reference",
+    "image",
+    "manifest",
+    "pkg/blobinfocache",
+    "pkg/docker/config",
+    "pkg/strslice",
+    "pkg/sysregistriesv2",
+    "pkg/tlsclientconfig",
+    "signature",
+    "transports",
+    "types",
+    "version",
+  ]
+  pruneopts = "NUT"
+  revision = "1ec44148eb9b0bd57fd7b220c12257cccd528663"
+  version = "v1.5"
+
+[[projects]]
+  digest = "1:0cb40a9bb09df22701fc6ee4f0ec8767d6ee58056743fbaadb93a22ff0c5b7ec"
+  name = "github.com/containers/storage"
+  packages = [
+    "pkg/fileutils",
+    "pkg/homedir",
+    "pkg/idtools",
+    "pkg/mount",
+    "pkg/system",
+  ]
+  pruneopts = "NUT"
+  revision = "3d342550da009a8035d663b7aa38d01b4b2ff8bf"
+  version = "v1.11"
+
+[[projects]]
   digest = "1:0ef770954bca104ee99b3b6b7f9b240605ac03517d9f98cbc1893daa03f3c038"
   name = "github.com/coreos/go-semver"
   packages = ["semver"]
@@ -127,6 +180,74 @@
   pruneopts = "NUT"
   revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
   version = "v1.1.1"
+
+[[projects]]
+  digest = "1:7c4c61d621213d6b869ca1d5467259805571756d682e727fff611f6ed3319f39"
+  name = "github.com/docker/distribution"
+  packages = [
+    ".",
+    "digestset",
+    "reference",
+    "registry/api/errcode",
+    "registry/api/v2",
+    "registry/client",
+    "registry/client/auth/challenge",
+    "registry/client/transport",
+    "registry/storage/cache",
+    "registry/storage/cache/memory",
+  ]
+  pruneopts = "NUT"
+  revision = "2461543d988979529609e8cb6fca9ca190dc48da"
+  version = "v2.7.1"
+
+[[projects]]
+  digest = "1:49eaa87d01d77f968b114c9876b10d6caa068a951d6a087ff23bdad7db3fe924"
+  name = "github.com/docker/docker"
+  packages = [
+    "api/types/versions",
+    "pkg/homedir",
+  ]
+  pruneopts = "NUT"
+  revision = "092cba3727bb9b4a2f0e922cd6c0f93ea270e363"
+  version = "v1.13.1"
+
+[[projects]]
+  digest = "1:8866486038791fe65ea1abf660041423954b1f3fb99ea6a0ad8424422e943458"
+  name = "github.com/docker/docker-credential-helpers"
+  packages = [
+    "client",
+    "credentials",
+  ]
+  pruneopts = "NUT"
+  revision = "5241b46610f2491efdf9d1c85f1ddf5b02f6d962"
+  version = "v0.6.1"
+
+[[projects]]
+  digest = "1:fa48577bef2273772c34dbb94ce515b1bf2c4c9ca532d8ab541da423599bec94"
+  name = "github.com/docker/go-connections"
+  packages = [
+    "sockets",
+    "tlsconfig",
+  ]
+  pruneopts = "NUT"
+  revision = "7395e3f8aa162843a74ed6d48e79627d9792ac55"
+  version = "v0.4.0"
+
+[[projects]]
+  digest = "1:4340101f42556a9cb2f7a360a0e95a019bfef6247d92e6c4c46f2433cf86a482"
+  name = "github.com/docker/go-units"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "47565b4f722fb6ceae66b95f853feed578a4a51c"
+  version = "v0.3.3"
+
+[[projects]]
+  branch = "master"
+  digest = "1:ce43438a8204a4259b4461153a392bc3e504bef7e4785a8192344f002c7bd935"
+  name = "github.com/docker/libtrust"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "aabc10ec26b754e797f9028f4589c5b7bd90dc20"
 
 [[projects]]
   digest = "1:81466b4218bf6adddac2572a30ac733a9255919bc2f470b4827a317bd4ee1756"
@@ -256,6 +377,14 @@
   revision = "3b35bcb43167f6d8080fa824c480f04b60311b51"
 
 [[projects]]
+  digest = "1:f9c7b395f10bd6d881b1f2d71715906b4481a04e46870cdd2647d50caa3358c2"
+  name = "github.com/gorilla/mux"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "a7962380ca08b5a188038c69871b8d3fbdf31e89"
+  version = "v1.7.0"
+
+[[projects]]
   branch = "master"
   digest = "1:7fdf3223c7372d1ced0b98bf53457c5e89d89aecbad9a77ba9fcc6e01f9e5621"
   name = "github.com/gregjones/httpcache"
@@ -373,11 +502,41 @@
   version = "1.0.1"
 
 [[projects]]
+  digest = "1:e0cc8395ea893c898ff5eb0850f4d9851c1f57c78c232304a026379a47a552d0"
+  name = "github.com/opencontainers/go-digest"
+  packages = ["."]
+  pruneopts = "NUT"
+  revision = "279bed98673dd5bef374d3b6e4b09e2af76183bf"
+  version = "v1.0.0-rc1"
+
+[[projects]]
+  digest = "1:11db38d694c130c800d0aefb502fb02519e514dc53d9804ce51d1ad25ec27db6"
+  name = "github.com/opencontainers/image-spec"
+  packages = [
+    "specs-go",
+    "specs-go/v1",
+  ]
+  pruneopts = "NUT"
+  revision = "d60099175f88c47cd379c4738d158884749ed235"
+  version = "v1.0.1"
+
+[[projects]]
+  digest = "1:918dbd46ad099418ce9760291bb156ebf23d441aad4cb682dd9bf09e2d3c0c7b"
+  name = "github.com/opencontainers/runc"
+  packages = ["libcontainer/user"]
+  pruneopts = "NUT"
+  revision = "baf6536d6259209c3edfa2b22237af82942d3dfa"
+  version = "v0.1.1"
+
+[[projects]]
   branch = "master"
-  digest = "1:6e6aad4c378d1fd14b3b686d59c06c9d82b0f8c2c4a284ee39ed075f41e97397"
+  digest = "1:dc4e664504ea07bca25b11b85dc2aabd1ad775a98754ef83a421fb821957a681"
   name = "github.com/openshift/api"
   packages = [
     "config/v1",
+    "image/docker10",
+    "image/dockerpre012",
+    "image/v1",
     "route/v1",
   ]
   pruneopts = "NUT"
@@ -547,16 +706,23 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:bf004bff766c8754f1c9b1e0a1ac6f253cd8e98fac385a33a9e9bd70325b72a8"
+  digest = "1:a2b78d08d49ea6ce660fe2e3decd534055f787dba4e83fdd75340e73104797aa"
   name = "golang.org/x/crypto"
   packages = [
     "bcrypt",
     "blowfish",
+    "cast5",
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
     "internal/chacha20",
     "internal/subtle",
+    "openpgp",
+    "openpgp/armor",
+    "openpgp/elgamal",
+    "openpgp/errors",
+    "openpgp/packet",
+    "openpgp/s2k",
     "poly1305",
     "ssh",
     "ssh/terminal",
@@ -565,7 +731,7 @@
   revision = "4d3f4d9ffa16a13f451c3b2999e9c49e9750bf06"
 
 [[projects]]
-  digest = "1:122db8a20246abd128a496d22b6c35d3c648de20e3445e583b370c86c2d96d53"
+  digest = "1:030e06fbad295228c68246e856b0495aaaf44c2360e0b61b12eae1c6d99f5875"
   name = "golang.org/x/net"
   packages = [
     "context",
@@ -574,6 +740,8 @@
     "http2",
     "http2/hpack",
     "idna",
+    "internal/socks",
+    "proxy",
   ]
   pruneopts = "NUT"
   revision = "891ebc4b82d6e74f468c533b06f983c7be918a96"
@@ -935,8 +1103,15 @@
     "github.com/aws/aws-sdk-go/service/route53",
     "github.com/aws/aws-sdk-go/service/s3",
     "github.com/aws/aws-sdk-go/service/s3/s3manager",
+    "github.com/containers/image/docker",
+    "github.com/containers/image/image",
+    "github.com/containers/image/pkg/blobinfocache",
+    "github.com/containers/image/signature",
+    "github.com/containers/image/transports",
+    "github.com/containers/image/types",
     "github.com/coreos/ignition/config/util",
     "github.com/coreos/ignition/config/v2_2/types",
+    "github.com/docker/distribution/reference",
     "github.com/ghodss/yaml",
     "github.com/golang/mock/gomock",
     "github.com/gophercloud/gophercloud/openstack/common/extensions",
@@ -958,6 +1133,7 @@
     "github.com/gregjones/httpcache/diskcache",
     "github.com/libvirt/libvirt-go",
     "github.com/openshift/api/config/v1",
+    "github.com/openshift/api/image/v1",
     "github.com/openshift/client-go/config/clientset/versioned",
     "github.com/openshift/client-go/route/clientset/versioned",
     "github.com/openshift/cloud-credential-operator/pkg/aws",
@@ -994,7 +1170,6 @@
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/kubernetes",
-    "k8s.io/client-go/kubernetes/typed/core/v1",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",

@@ -1,6 +1,9 @@
 ignored = [
-  "github.com/openshift/installer/tests*",
-  "github.com/openshift/installer/pkg/terraform/exec*"
+  "github.com/boltdb/*",
+  "github.com/docker/distribution/metrics",
+  "github.com/mtrmac/gpgme",
+  "github.com/openshift/installer/pkg/terraform/exec*",
+  "github.com/openshift/installer/tests*"
 ]
 
 [prune]

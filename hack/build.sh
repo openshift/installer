@@ -32,7 +32,7 @@ fi
 
 MODE="${MODE:-release}"
 LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/version.Raw=$(git describe --always --abbrev=40 --dirty)"
-TAGS="${TAGS:-}"
+TAGS="${TAGS:-} containers_image_openpgp"
 OUTPUT="${OUTPUT:-bin/openshift-install}"
 export CGO_ENABLED=0
 
