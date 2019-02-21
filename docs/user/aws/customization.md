@@ -15,16 +15,18 @@ The following options are available when using AWS:
 An example `install-config.yaml` is shown below. This configuration has been modified to show the customization that is possible via the install config.
 
 ```yaml
-apiVersion: v1beta1
+apiVersion: v1beta3
 baseDomain: example.com
-machines:
-- name: master
+controlPlane:
+  name: master
   platform:
     aws:
       zones:
       - us-west-2a
       - us-west-2b
+      type: m5.xlarge
   replicas: 3
+compute:
 - name: worker
   platform:
     aws:
