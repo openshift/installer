@@ -95,7 +95,7 @@ update_cfg_and_restart() {
 if [[ $MASTERS -eq "" ]];
 then
 cat > /etc/haproxy/haproxy.cfg.new << EOF
-listen ${var.cluster_name}-api-masters
+listen ${var.cluster_id}-api-masters
     bind 0.0.0.0:6443
     bind 0.0.0.0:22623
     mode tcp
