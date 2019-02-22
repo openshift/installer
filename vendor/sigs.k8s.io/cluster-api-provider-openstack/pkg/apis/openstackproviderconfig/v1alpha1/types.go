@@ -27,8 +27,10 @@ import (
 // OpenstackProviderSpec is the type that will be embedded in a Machine.Spec.ProviderSpec field
 // for an OpenStack Instance. It is used by the Openstack machine actuator to create a single machine instance.
 // TODO(cglaubitz): We might consider to change this to OpenstackMachineProviderSpec
+// +k8s:openapi-gen=true
 type OpenstackProviderSpec struct {
-	metav1.TypeMeta `json:",inline"`
+	metav1.TypeMeta   `json:",inline"`
+	metav1.ObjectMeta `json:"metadata,omitempty"`
 
 	// The name of the secret containing the openstack credentials
 	CloudsSecret *corev1.SecretReference `json:"cloudsSecret"`
@@ -63,6 +65,9 @@ type OpenstackProviderSpec struct {
 	// The name of the secret containing the user data (startup script in most cases)
 	UserDataSecret *corev1.SecretReference `json:"userDataSecret,omitempty"`
 
+	// Whether the server instance is created on a trunk port or not.
+	Trunk bool `json:"trunk,omitempty"`
+
 	RootVolume RootVolume `json:"root_volume,omitempty"`
 }
 
@@ -73,6 +78,8 @@ type NetworkParam struct {
 	FixedIp string `json:"fixed_ip,omitempty"`
 	// Filters for optional network query
 	Filter Filter `json:"filter,omitempty"`
+	// Subnet within a network to use
+	Subnets []SubnetParam `json:"subnets,omitempty"`
 }
 
 type Filter struct {
@@ -93,6 +100,37 @@ type Filter struct {
 	NotTagsAny   string `json:"not-tags-any,omitempty"`
 }
 
+type SubnetParam struct {
+	// The UUID of the network. Required if you omit the port attribute.
+	UUID string `json:"uuid,omitempty"`
+
+	// Filters for optional network query
+	Filter SubnetFilter `json:"filter,omitempty"`
+}
+
+type SubnetFilter struct {
+	Name            string `json:"name,omitempty"`
+	EnableDHCP      *bool  `json:"enable_dhcp,omitempty"`
+	NetworkID       string `json:"network_id,omitempty"`
+	TenantID        string `json:"tenant_id,omitempty"`
+	ProjectID       string `json:"project_id,omitempty"`
+	IPVersion       int    `json:"ip_version,omitempty"`
+	GatewayIP       string `json:"gateway_ip,omitempty"`
+	CIDR            string `json:"cidr,omitempty"`
+	IPv6AddressMode string `json:"ipv6_address_mode,omitempty"`
+	IPv6RAMode      string `json:"ipv6_ra_mode,omitempty"`
+	ID              string `json:"id,omitempty"`
+	SubnetPoolID    string `json:"subnetpool_id,omitempty"`
+	Limit           int    `json:"limit,omitempty"`
+	Marker          string `json:"marker,omitempty"`
+	SortKey         string `json:"sort_key,omitempty"`
+	SortDir         string `json:"sort_dir,omitempty"`
+	Tags            string `json:"tags,omitempty"`
+	TagsAny         string `json:"tags-any,omitempty"`
+	NotTags         string `json:"not-tags,omitempty"`
+	NotTagsAny      string `json:"not-tags-any,omitempty"`
+}
+
 type RootVolume struct {
 	VolumeType string `json:"volumeType"`
 	Size       int    `json:"diskSize,omitempty"`
@@ -111,9 +149,17 @@ type OpenstackClusterProviderSpec struct {
 	// network, a subnet with NodeCIDR, and a router connected to this subnet.
 	// If you leave this empty, no network will be created.
 	NodeCIDR string `json:"nodeCidr,omitempty"`
+	// DNSNameservers is the list of nameservers for OpenStack Subnet being created.
+	DNSNameservers []string `json:"dnsNameservers,omitempty"`
 	// ExternalNetworkID is the ID of an external OpenStack Network. This is necessary
 	// to get public internet to the VMs.
 	ExternalNetworkID string `json:"externalNetworkId,omitempty"`
+
+	// ManagedSecurityGroups defines that kubernetes manages the OpenStack security groups
+	// for now, that means that we'll create two security groups, one allowing SSH
+	// and API access from everywhere, and another one that allows all traffic to/from
+	// machines belonging to that group. In the future, we could make this more flexible.
+	ManagedSecurityGroups bool `json:"managedSecurityGroups"`
 }
 
 // +genclient
@@ -135,6 +181,15 @@ type OpenstackClusterProviderStatus struct {
 	// Network contains all information about the created OpenStack Network.
 	// It includes Subnets and Router.
 	Network *Network `json:"network,omitempty"`
+
+	// ControlPlaneSecurityGroups contains all the information about the OpenStack
+	// Security Group that needs to be applied to control plane nodes.
+	// TODO: Maybe instead of two properties, we add a property to the group?
+	ControlPlaneSecurityGroup *SecurityGroup `json:"controlPlaneSecurityGroup,omitempty"`
+
+	// GlobalSecurityGroup contains all the information about the OpenStack Security
+	// Group that needs to be applied to all nodes, both control plane and worker nodes.
+	GlobalSecurityGroup *SecurityGroup `json:"globalSecurityGroup,omitempty"`
 }
 
 // Network represents basic information about the associated OpenStach Neutron Network
