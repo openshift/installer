@@ -17,6 +17,10 @@ support additional clusters, you must open a support case with AWS.
 Each cluster creates its own VPC. The default limit of VPCs per region is 5 and will allow 5 clusters. To have more
 than 5 clusters, you will need to increase this limit.
 
+Each cluster also creates a VPC Gateway Endpoint for a stable connection to S3. The default limit of VPC Gateway 
+Endpoints per region is 20 and will allow 20 clusters. To have more than 20 clusters, you will need to increase this 
+limit.
+
 ## Elastic Network Interfaces (ENI)
 
 The default installation creates 21 + the number of availability zones of ENIs (e.g. us-east-1 = 21 + 6 = 27 ENIs).
