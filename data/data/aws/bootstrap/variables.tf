@@ -67,3 +67,8 @@ variable "vpc_security_group_ids" {
   default     = []
   description = "VPC security group IDs for the bootstrap node."
 }
+
+variable "bootstrap_dns" {
+  default     = true
+  description = "Whether to include DNS entries for the bootstrap node or not."
+}

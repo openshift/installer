@@ -291,6 +291,16 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 	events := client.CoreV1().Events("kube-system")
 
 	eventTimeout := 30 * time.Minute
+	logrus.Infof("Waiting up to %v for the bootstrap-success event...", eventTimeout)
+	if err := waitForEvent(ctx, events, "bootstrap-success", eventTimeout); err != nil {
+		return err
+	}
+
+	logrus.Info("Taking bootstrap node out of service...")
+	if err := destroybootstrap.Disable(rootOpts.dir); err != nil {
+		return errors.Wrap(err, "taking bootstrap out of service")
+	}
+
 	logrus.Infof("Waiting up to %v for the bootstrap-complete event...", eventTimeout)
 	if err := waitForEvent(ctx, events, "bootstrap-complete", eventTimeout); err != nil {
 		return err

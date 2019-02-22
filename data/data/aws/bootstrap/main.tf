@@ -131,7 +131,7 @@ resource "aws_instance" "bootstrap" {
 }
 
 resource "aws_lb_target_group_attachment" "bootstrap" {
-  count = "${var.target_group_arns_length}"
+  count = "${var.bootstrap_dns ? var.target_group_arns_length : 0}"
 
   target_group_arn = "${var.target_group_arns[count.index]}"
   target_id        = "${aws_instance.bootstrap.private_ip}"

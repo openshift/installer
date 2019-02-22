@@ -14,8 +14,17 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Disable uses Terraform to disable bootstrap resources, i.e. unregister from load balancer
+func Disable(dir string) (err error) {
+	return update(dir, false)
+}
+
 // Destroy uses Terraform to remove bootstrap resources.
 func Destroy(dir string) (err error) {
+	return update(dir, true)
+}
+
+func update(dir string, destroy bool) (err error) {
 	metadata, err := cluster.LoadMetadata(dir)
 	if err != nil {
 		return err
@@ -29,16 +38,14 @@ func Destroy(dir string) (err error) {
 	tfPlatformVarsFileName := fmt.Sprintf(cluster.TfPlatformVarsFileName, platform)
 	copyNames := []string{terraform.StateFileName, cluster.TfVarsFileName, tfPlatformVarsFileName}
 
-	if platform == libvirt.Name {
-		err = ioutil.WriteFile(filepath.Join(dir, "disable-bootstrap.tfvars"), []byte(`{
+	err = ioutil.WriteFile(filepath.Join(dir, "disable-bootstrap.tfvars"), []byte(`{
   "bootstrap_dns": false
 }
 `), 0666)
-		if err != nil {
-			return err
-		}
-		copyNames = append(copyNames, "disable-bootstrap.tfvars")
+	if err != nil {
+		return err
 	}
+	copyNames = append(copyNames, "disable-bootstrap.tfvars")
 
 	tempDir, err := ioutil.TempDir("", "openshift-install-")
 	if err != nil {
@@ -62,10 +69,13 @@ func Destroy(dir string) (err error) {
 		}
 	}
 
-	if platform == libvirt.Name {
+	if !destroy || platform == libvirt.Name {
 		_, err = terraform.Apply(tempDir, platform, extraArgs...)
 		if err != nil {
 			return errors.Wrap(err, "Terraform apply")
+		}
+		if !destroy {
+			return
 		}
 	}
 
