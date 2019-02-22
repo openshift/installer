@@ -7,6 +7,8 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/openshift/installer/pkg/version"
 )
 
 type fileHook struct {
@@ -65,7 +67,7 @@ func setupFileHook(baseDir string) func() {
 		DisableLevelTruncation: false,
 	}))
 
-	logrus.Debugf("OpenShift Installer %s", version)
+	logrus.Debugf(version.String)
 
 	return func() {
 		logfile.Close()

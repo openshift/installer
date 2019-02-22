@@ -5,10 +5,8 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-)
 
-var (
-	version = "was not built correctly" // set in hack/build.sh
+	"github.com/openshift/installer/pkg/version"
 )
 
 func newVersionCmd() *cobra.Command {
@@ -22,6 +20,6 @@ func newVersionCmd() *cobra.Command {
 }
 
 func runVersionCmd(cmd *cobra.Command, args []string) error {
-	fmt.Printf("%s %s\n", os.Args[0], version)
+	fmt.Printf("%s %s\n", os.Args[0], version.Raw)
 	return nil
 }
