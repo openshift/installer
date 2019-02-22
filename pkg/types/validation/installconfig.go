@@ -85,14 +85,22 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 	if n.Type == "" {
 		allErrs = append(allErrs, field.Required(fldPath.Child("type"), "network provider type required"))
 	}
-	if err := validate.SubnetCIDR(&n.MachineCIDR.IPNet); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("machineCIDR"), n.MachineCIDR.String(), err.Error()))
+	if n.MachineCIDR != nil {
+		if err := validate.SubnetCIDR(&n.MachineCIDR.IPNet); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("machineCIDR"), n.MachineCIDR.String(), err.Error()))
+		}
+	} else {
+		allErrs = append(allErrs, field.Required(fldPath.Child("machineCIDR"), "a machine CIDR is required"))
 	}
-	if err := validate.SubnetCIDR(&n.ServiceCIDR.IPNet); err != nil {
-		allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceCIDR"), n.ServiceCIDR.String(), err.Error()))
-	}
-	for i, cn := range n.ClusterNetworks {
-		allErrs = append(allErrs, validateClusterNetwork(&cn, fldPath.Child("clusterNetworks").Index(i), &n.ServiceCIDR.IPNet)...)
+	if n.ServiceCIDR != nil {
+		if err := validate.SubnetCIDR(&n.ServiceCIDR.IPNet); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("serviceCIDR"), n.ServiceCIDR.String(), err.Error()))
+		}
+		for i, cn := range n.ClusterNetworks {
+			allErrs = append(allErrs, validateClusterNetwork(&cn, fldPath.Child("clusterNetworks").Index(i), &n.ServiceCIDR.IPNet)...)
+		}
+	} else {
+		allErrs = append(allErrs, field.Required(fldPath.Child("serviceCIDR"), "a service CIDR is required"))
 	}
 	if len(n.ClusterNetworks) == 0 {
 		allErrs = append(allErrs, field.Required(fldPath.Child("clusterNetworks"), "cluster network required"))
@@ -102,6 +110,9 @@ func validateNetworking(n *types.Networking, fldPath *field.Path) field.ErrorLis
 
 func validateClusterNetwork(cn *types.ClusterNetworkEntry, fldPath *field.Path, serviceCIDR *net.IPNet) field.ErrorList {
 	allErrs := field.ErrorList{}
+	if err := validate.SubnetCIDR(&cn.CIDR.IPNet); err != nil {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.IPNet.String(), err.Error()))
+	}
 	if validate.DoCIDRsOverlap(&cn.CIDR.IPNet, serviceCIDR) {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("cidr"), cn.CIDR.String(), "cluster network CIDR must not overlap with serviceCIDR"))
 	}
