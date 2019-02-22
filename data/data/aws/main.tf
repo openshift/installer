@@ -16,6 +16,7 @@ module "bootstrap" {
   source = "./bootstrap"
 
   ami                      = "${var.aws_ec2_ami_override}"
+  instance_type            = "${var.aws_bootstrap_instance_type}"
   cluster_name             = "${var.cluster_name}"
   ignition                 = "${var.ignition_bootstrap}"
   subnet_id                = "${module.vpc.public_subnet_ids[0]}"
@@ -32,9 +33,9 @@ module "bootstrap" {
 module "masters" {
   source = "./master"
 
-  cluster_id   = "${var.cluster_id}"
-  cluster_name = "${var.cluster_name}"
-  ec2_type     = "${var.aws_master_ec2_type}"
+  cluster_id    = "${var.cluster_id}"
+  cluster_name  = "${var.cluster_name}"
+  instance_type = "${var.aws_master_instance_type}"
 
   tags = "${merge(map(
       "kubernetes.io/cluster/${var.cluster_name}", "owned",

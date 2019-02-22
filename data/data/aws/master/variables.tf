@@ -11,7 +11,7 @@ variable "dns_server_ip" {
   default = ""
 }
 
-variable "ec2_type" {
+variable "instance_type" {
   type = "string"
 }
 

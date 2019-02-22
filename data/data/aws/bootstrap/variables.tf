@@ -15,8 +15,7 @@ variable "ignition" {
 
 variable "instance_type" {
   type        = "string"
-  default     = "m4.large"
-  description = "The EC2 instance type for the bootstrap node."
+  description = "The instance type of the bootstrap node."
 }
 
 variable "subnet_id" {

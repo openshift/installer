@@ -7,9 +7,14 @@ EOF
   default = "1.0"
 }
 
-variable "aws_master_ec2_type" {
+variable "aws_bootstrap_instance_type" {
   type        = "string"
-  description = "Instance size for the master node(s). Example: `m4.large`."
+  description = "Instance type for the bootstrap node. Example: `m4.large`."
+}
+
+variable "aws_master_instance_type" {
+  type        = "string"
+  description = "Instance type for the master node(s). Example: `m4.large`."
 }
 
 variable "aws_ec2_ami_override" {
