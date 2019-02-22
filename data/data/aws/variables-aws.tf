@@ -17,10 +17,9 @@ variable "aws_master_instance_type" {
   description = "Instance type for the master node(s). Example: `m4.large`."
 }
 
-variable "aws_ec2_ami_override" {
+variable "aws_ami" {
   type        = "string"
-  description = "(optional) AMI override for all nodes. Example: `ami-foobar123`."
-  default     = ""
+  description = "AMI for all nodes.  An encrypted copy of this AMI will be used.  Example: `ami-foobar123`."
 }
 
 variable "aws_extra_tags" {

@@ -33,6 +33,11 @@ INFO Access the OpenShift web-console here: https://console-openshift-console.ap
 INFO Login to the console with user: kubeadmin, password: XXXX
 ```
 
+This creates an encrypted AMI for the bootstrap and control-plane machines.
+The encrypted AMI is [copied][encrypted-copy] from the AMI configured in the control-plane machine-API provider spec, which is RHCOS by default.
+The encryption uses the default EBS key for your target account and region (`aws kms describe-key --key-id alias/aws/ebs`).
+The encrypted AMI is deregistered by `destroy cluster`.
+
 ### Running Cluster
 
 In Route53, there will be a new, private hosted zone (for internal lookups):
@@ -56,3 +61,4 @@ The OpenShift console is available via the kubeadmin login provided by the insta
 ![OpenShift web console](images/install_console.png)
 
 [cloud-install]: https://cloud.openshift.com/clusters/install
+[encrypted-copy]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/AMIEncryption.html#create-ami-encrypted-root-snapshot
