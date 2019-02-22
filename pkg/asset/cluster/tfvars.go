@@ -79,8 +79,8 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	masters := mastersAsset.Machines()
 	masterCount := len(masters)
 	data, err := tfvars.TFVars(
-		clusterID.ClusterID,
-		installConfig.Config.ObjectMeta.Name,
+		clusterID.InfraID,
+		installConfig.Config.ClusterDomain(),
 		installConfig.Config.BaseDomain,
 		&installConfig.Config.Networking.MachineCIDR.IPNet,
 		bootstrapIgn,

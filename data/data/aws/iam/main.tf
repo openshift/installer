@@ -3,13 +3,13 @@ locals {
 }
 
 resource "aws_iam_instance_profile" "worker" {
-  name = "${var.cluster_name}-worker-profile"
+  name = "${var.cluster_id}-worker-profile"
 
   role = "${aws_iam_role.worker_role.name}"
 }
 
 resource "aws_iam_role" "worker_role" {
-  name = "${var.cluster_name}-worker-role"
+  name = "${var.cluster_id}-worker-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -28,11 +28,13 @@ resource "aws_iam_role" "worker_role" {
 }
 EOF
 
-  tags = "${var.tags}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-worker-role",
+  ), var.tags)}"
 }
 
 resource "aws_iam_role_policy" "worker_policy" {
-  name = "${var.cluster_name}_worker_policy"
+  name = "${var.cluster_id}-worker-policy"
   role = "${aws_iam_role.worker_role.id}"
 
   policy = <<EOF

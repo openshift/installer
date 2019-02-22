@@ -1,7 +1,9 @@
 resource "aws_s3_bucket" "ignition" {
   acl = "private"
 
-  tags = "${var.tags}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-bootstrap",
+  ), var.tags)}"
 
   lifecycle {
     ignore_changes = ["*"]
@@ -16,7 +18,9 @@ resource "aws_s3_bucket_object" "ignition" {
 
   server_side_encryption = "AES256"
 
-  tags = "${var.tags}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-bootstrap",
+  ), var.tags)}"
 
   lifecycle {
     ignore_changes = ["*"]
@@ -30,13 +34,13 @@ data "ignition_config" "redirect" {
 }
 
 resource "aws_iam_instance_profile" "bootstrap" {
-  name = "${var.cluster_name}-bootstrap-profile"
+  name = "${var.cluster_id}-bootstrap-profile"
 
   role = "${aws_iam_role.bootstrap.name}"
 }
 
 resource "aws_iam_role" "bootstrap" {
-  name = "${var.cluster_name}-bootstrap-role"
+  name = "${var.cluster_id}-bootstrap-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -55,11 +59,13 @@ resource "aws_iam_role" "bootstrap" {
 }
 EOF
 
-  tags = "${var.tags}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-bootstrap-role",
+  ), var.tags)}"
 }
 
 resource "aws_iam_role_policy" "bootstrap" {
-  name = "${var.cluster_name}-bootstrap-policy"
+  name = "${var.cluster_id}-bootstrap-policy"
   role = "${aws_iam_role.bootstrap.id}"
 
   policy = <<EOF
@@ -110,7 +116,7 @@ resource "aws_instance" "bootstrap" {
   }
 
   tags = "${merge(map(
-    "kubernetes.io/cluster/${var.cluster_name}", "owned",
+    "Name", "${var.cluster_id}-bootstrap",
   ), var.tags)}"
 
   root_block_device {
@@ -119,7 +125,9 @@ resource "aws_instance" "bootstrap" {
     iops        = "${var.volume_type == "io1" ? var.volume_iops : 0}"
   }
 
-  volume_tags = "${var.tags}"
+  volume_tags = "${merge(map(
+    "Name", "${var.cluster_id}-bootstrap-vol",
+  ), var.tags)}"
 }
 
 resource "aws_lb_target_group_attachment" "bootstrap" {
@@ -133,8 +141,8 @@ resource "aws_security_group" "bootstrap" {
   vpc_id = "${var.vpc_id}"
 
   tags = "${merge(map(
-      "Name", "${var.cluster_name}_bootstrap_sg",
-    ), var.tags)}"
+    "Name", "${var.cluster_id}-bootstrap-sg",
+  ), var.tags)}"
 }
 
 resource "aws_security_group_rule" "bootstrap_journald_gateway" {

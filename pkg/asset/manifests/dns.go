@@ -77,9 +77,8 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 		}
 		config.Spec.PublicZone = &configv1.DNSZone{ID: strings.TrimPrefix(*zone.Id, "/hostedzone/")}
 		config.Spec.PrivateZone = &configv1.DNSZone{Tags: map[string]string{
-			"openshiftClusterID":                                                          clusterID.ClusterID,
-			fmt.Sprintf("kubernetes.io/cluster/%s", installConfig.Config.ObjectMeta.Name): "owned",
-			"Name": fmt.Sprintf("%s_int", installConfig.Config.ObjectMeta.Name),
+			fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned",
+			"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
 		}}
 	case libvirttypes.Name, openstacktypes.Name, nonetypes.Name:
 	default:

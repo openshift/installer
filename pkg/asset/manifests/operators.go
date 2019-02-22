@@ -149,7 +149,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		McsTLSKey:                       base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
 		PullSecretBase64:                base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
 		RootCaCert:                      string(rootCA.Cert()),
-		CVOClusterID:                    clusterID.ClusterID,
+		CVOClusterID:                    clusterID.UUID,
 		EtcdEndpointHostnames:           etcdEndpointHostnames,
 		EtcdEndpointDNSSuffix:           installConfig.Config.ClusterDomain(),
 	}

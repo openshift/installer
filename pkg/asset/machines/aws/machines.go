@@ -25,7 +25,6 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	if poolPlatform := pool.Platform.Name(); poolPlatform != aws.Name {
 		return nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
 	}
-	clustername := config.ObjectMeta.Name
 	platform := config.Platform.AWS
 	mpool := pool.Platform.AWS
 	azs := mpool.Zones
@@ -37,7 +36,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		azIndex := int(idx) % len(azs)
-		provider, err := provider(clusterID, clustername, platform, mpool, osImage, azIndex, role, userDataSecret)
+		provider, err := provider(clusterID, platform, mpool, osImage, azIndex, role, userDataSecret)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -48,9 +47,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			},
 			ObjectMeta: metav1.ObjectMeta{
 				Namespace: "openshift-machine-api",
-				Name:      fmt.Sprintf("%s-%s-%d", clustername, pool.Name, idx),
+				Name:      fmt.Sprintf("%s-%s-%d", clusterID, pool.Name, idx),
 				Labels: map[string]string{
-					"sigs.k8s.io/cluster-api-cluster":      clustername,
+					"sigs.k8s.io/cluster-api-cluster":      clusterID,
 					"sigs.k8s.io/cluster-api-machine-role": role,
 					"sigs.k8s.io/cluster-api-machine-type": role,
 				},
@@ -69,10 +68,10 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.MachinePool, osImage string, azIdx int, role, userDataSecret string) (*awsprovider.AWSMachineProviderConfig, error) {
+func provider(clusterID string, platform *aws.Platform, mpool *aws.MachinePool, osImage string, azIdx int, role, userDataSecret string) (*awsprovider.AWSMachineProviderConfig, error) {
 	az := mpool.Zones[azIdx]
 	amiID := osImage
-	tags, err := tagsFromUserTags(clusterID, clusterName, platform.UserTags)
+	tags, err := tagsFromUserTags(clusterID, platform.UserTags)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create awsprovider.TagSpecifications from UserTags")
 	}
@@ -93,28 +92,27 @@ func provider(clusterID, clusterName string, platform *aws.Platform, mpool *aws.
 		},
 		AMI:                awsprovider.AWSResourceReference{ID: &amiID},
 		Tags:               tags,
-		IAMInstanceProfile: &awsprovider.AWSResourceReference{ID: pointer.StringPtr(fmt.Sprintf("%s-%s-profile", clusterName, role))},
+		IAMInstanceProfile: &awsprovider.AWSResourceReference{ID: pointer.StringPtr(fmt.Sprintf("%s-%s-profile", clusterID, role))},
 		UserDataSecret:     &corev1.LocalObjectReference{Name: userDataSecret},
 		Subnet: awsprovider.AWSResourceReference{
 			Filters: []awsprovider.Filter{{
 				Name:   "tag:Name",
-				Values: []string{fmt.Sprintf("%s-private-%s", clusterName, az)},
+				Values: []string{fmt.Sprintf("%s-private-%s", clusterID, az)},
 			}},
 		},
 		Placement: awsprovider.Placement{Region: platform.Region, AvailabilityZone: az},
 		SecurityGroups: []awsprovider.AWSResourceReference{{
 			Filters: []awsprovider.Filter{{
 				Name:   "tag:Name",
-				Values: []string{fmt.Sprintf("%s_%s_sg", clusterName, role)},
+				Values: []string{fmt.Sprintf("%s-%s-sg", clusterID, role)},
 			}},
 		}},
 	}, nil
 }
 
-func tagsFromUserTags(clusterID, clusterName string, usertags map[string]string) ([]awsprovider.TagSpecification, error) {
+func tagsFromUserTags(clusterID string, usertags map[string]string) ([]awsprovider.TagSpecification, error) {
 	tags := []awsprovider.TagSpecification{
-		{Name: "openshiftClusterID", Value: clusterID},
-		{Name: fmt.Sprintf("kubernetes.io/cluster/%s", clusterName), Value: "owned"},
+		{Name: fmt.Sprintf("kubernetes.io/cluster/%s", clusterID), Value: "owned"},
 	}
 	forbiddenTags := sets.NewString()
 	for idx := range tags {
@@ -130,17 +128,16 @@ func tagsFromUserTags(clusterID, clusterName string, usertags map[string]string)
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
-func ConfigMasters(machines []machineapi.Machine, clusterName string) {
+func ConfigMasters(machines []machineapi.Machine, clusterID string) {
 	for _, machine := range machines {
 		providerSpec := machine.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
-		providerSpec.PublicIP = pointer.BoolPtr(true)
 		providerSpec.LoadBalancers = []awsprovider.LoadBalancerReference{
 			{
-				Name: fmt.Sprintf("%s-ext", clusterName),
+				Name: fmt.Sprintf("%s-ext", clusterID),
 				Type: awsprovider.NetworkLoadBalancerType,
 			},
 			{
-				Name: fmt.Sprintf("%s-int", clusterName),
+				Name: fmt.Sprintf("%s-int", clusterID),
 				Type: awsprovider.NetworkLoadBalancerType,
 			},
 		}

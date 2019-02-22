@@ -722,7 +722,7 @@
   version = "kubernetes-1.12.2"
 
 [[projects]]
-  digest = "1:059e5dfce6269a3e87f2df7edab3075f17efb4d1d17c1b4d8530cac5f0af7b9c"
+  digest = "1:1d9e0a73ae1dc34374ba327cc87a2af9fce547190762d5018bff695238e9175d"
   name = "k8s.io/apimachinery"
   packages = [
     "pkg/api/equality",
@@ -757,6 +757,7 @@
     "pkg/util/json",
     "pkg/util/naming",
     "pkg/util/net",
+    "pkg/util/rand",
     "pkg/util/runtime",
     "pkg/util/sets",
     "pkg/util/validation",
@@ -984,6 +985,7 @@
     "k8s.io/apimachinery/pkg/runtime",
     "k8s.io/apimachinery/pkg/runtime/serializer",
     "k8s.io/apimachinery/pkg/util/errors",
+    "k8s.io/apimachinery/pkg/util/rand",
     "k8s.io/apimachinery/pkg/util/sets",
     "k8s.io/apimachinery/pkg/util/validation",
     "k8s.io/apimachinery/pkg/util/validation/field",

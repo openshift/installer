@@ -1,38 +1,44 @@
 resource "aws_lb" "api_internal" {
-  name                             = "${var.cluster_name}-int"
+  name                             = "${var.cluster_id}-int"
   load_balancer_type               = "network"
   subnets                          = ["${local.private_subnet_ids}"]
   internal                         = true
   enable_cross_zone_load_balancing = true
   idle_timeout                     = 3600
 
-  tags = "${var.tags}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-int",
+  ), var.tags)}"
 
   depends_on = ["aws_internet_gateway.igw"]
 }
 
 resource "aws_lb" "api_external" {
-  name                             = "${var.cluster_name}-ext"
+  name                             = "${var.cluster_id}-ext"
   load_balancer_type               = "network"
   subnets                          = ["${local.public_subnet_ids}"]
   internal                         = false
   enable_cross_zone_load_balancing = true
   idle_timeout                     = 3600
 
-  tags = "${var.tags}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-ext",
+  ), var.tags)}"
 
   depends_on = ["aws_internet_gateway.igw"]
 }
 
 resource "aws_lb_target_group" "api_internal" {
-  name     = "${var.cluster_name}-api-int"
+  name     = "${var.cluster_id}-aint"
   protocol = "TCP"
   port     = 6443
   vpc_id   = "${local.vpc_id}"
 
   target_type = "ip"
 
-  tags = "${var.tags}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-aint",
+  ), var.tags)}"
 
   health_check {
     healthy_threshold   = 3
@@ -45,14 +51,16 @@ resource "aws_lb_target_group" "api_internal" {
 }
 
 resource "aws_lb_target_group" "api_external" {
-  name     = "${var.cluster_name}-api-ext"
+  name     = "${var.cluster_id}-aext"
   protocol = "TCP"
   port     = 6443
   vpc_id   = "${local.vpc_id}"
 
   target_type = "ip"
 
-  tags = "${var.tags}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-aext",
+  ), var.tags)}"
 
   health_check {
     healthy_threshold   = 3
@@ -65,14 +73,16 @@ resource "aws_lb_target_group" "api_external" {
 }
 
 resource "aws_lb_target_group" "services" {
-  name     = "${var.cluster_name}-services"
+  name     = "${var.cluster_id}-sint"
   protocol = "TCP"
   port     = 22623
   vpc_id   = "${local.vpc_id}"
 
   target_type = "ip"
 
-  tags = "${var.tags}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-sint",
+  ), var.tags)}"
 
   health_check {
     healthy_threshold   = 3

@@ -3,13 +3,13 @@ locals {
 }
 
 resource "aws_iam_instance_profile" "master" {
-  name = "${var.cluster_name}-master-profile"
+  name = "${var.cluster_id}-master-profile"
 
   role = "${aws_iam_role.master_role.name}"
 }
 
 resource "aws_iam_role" "master_role" {
-  name = "${var.cluster_name}-master-role"
+  name = "${var.cluster_id}-master-role"
   path = "/"
 
   assume_role_policy = <<EOF
@@ -28,11 +28,13 @@ resource "aws_iam_role" "master_role" {
 }
 EOF
 
-  tags = "${var.tags}"
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-master-role",
+  ), var.tags)}"
 }
 
 resource "aws_iam_role_policy" "master_policy" {
-  name = "${var.cluster_name}_master_policy"
+  name = "${var.cluster_id}-master-policy"
   role = "${aws_iam_role.master_role.id}"
 
   policy = <<EOF
@@ -84,10 +86,11 @@ resource "aws_instance" "master" {
     ignore_changes = ["ami"]
   }
 
+  # `clusterid` is required for machine-api
   tags = "${merge(map(
-      "Name", "${var.cluster_name}-master-${count.index}",
-      "clusterid", "${var.cluster_name}"
-    ), var.tags)}"
+    "Name", "${var.cluster_id}-master-${count.index}",
+    "clusterid", "${var.cluster_id}",
+  ), var.tags)}"
 
   root_block_device {
     volume_type = "${var.root_volume_type}"
@@ -96,7 +99,7 @@ resource "aws_instance" "master" {
   }
 
   volume_tags = "${merge(map(
-    "Name", "${var.cluster_name}-master-${count.index}-vol",
+    "Name", "${var.cluster_id}-master-${count.index}-vol",
   ), var.tags)}"
 }
 

@@ -77,9 +77,9 @@ WORKERS=$(oc get nodes -l node-role.kubernetes.io/worker -ogo-template="$TEMPLAT
 if [[ $MASTERS -eq "" ]];
 then
     MASTER_LINES="
-    server ${var.cluster_name}-bootstrap-22623 ${var.cluster_name}-bootstrap.${var.cluster_domain} check port 22623
-    server ${var.cluster_name}-bootstrap-6443 ${var.cluster_name}-bootstrap.${var.cluster_domain} check port 6443"
-    MASTERS="${var.cluster_name}-master-0 ${var.cluster_name}-master-1 ${var.cluster_name}-master-2"
+    server ${var.cluster_id}-bootstrap-22623 ${var.cluster_id}-bootstrap.${var.cluster_domain} check port 22623
+    server ${var.cluster_id}-bootstrap-6443 ${var.cluster_id}-bootstrap.${var.cluster_domain} check port 6443"
+    MASTERS="${var.cluster_id}-master-0 ${var.cluster_id}-master-1 ${var.cluster_id}-master-2"
 fi
 
 for master in $MASTERS;
@@ -95,13 +95,13 @@ do
 done
 
 cat > /etc/haproxy/haproxy.cfg.new << EOF
-listen ${var.cluster_name}-api-masters
+listen ${var.cluster_id}-api-masters
     bind 0.0.0.0:6443
     bind 0.0.0.0:22623
     mode tcp
     balance roundrobin$MASTER_LINES
 
-listen ${var.cluster_name}-api-workers
+listen ${var.cluster_id}-api-workers
     bind 0.0.0.0:80
     bind 0.0.0.0:443
     mode tcp
@@ -244,7 +244,7 @@ data "ignition_config" "service_redirect" {
 }
 
 resource "openstack_compute_instance_v2" "load_balancer" {
-  name      = "${var.cluster_name}-api"
+  name      = "${var.cluster_id}-api"
   flavor_id = "${data.openstack_compute_flavor_v2.bootstrap_flavor.id}"
   image_id  = "${data.openstack_images_image_v2.bootstrap_image.id}"
 
@@ -255,9 +255,9 @@ resource "openstack_compute_instance_v2" "load_balancer" {
   }
 
   metadata {
-    Name = "${var.cluster_name}-bootstrap"
+    Name = "${var.cluster_id}-bootstrap"
 
-    # "kubernetes.io/cluster/${var.cluster_name}" = "owned"
+    # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
     openshiftClusterID = "${var.cluster_id}"
   }
 }

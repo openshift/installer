@@ -2,15 +2,6 @@ variable "cluster_id" {
   type = "string"
 }
 
-variable "cluster_name" {
-  type = "string"
-}
-
-variable "dns_server_ip" {
-  type    = "string"
-  default = ""
-}
-
 variable "instance_type" {
   type = "string"
 }

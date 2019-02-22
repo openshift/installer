@@ -99,17 +99,17 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			mpool.Zones = azs
 		}
 		pool.Platform.AWS = &mpool
-		machines, err = aws.Machines(clusterID.ClusterID, ic, pool, string(*rhcosImage), "master", "master-user-data")
+		machines, err = aws.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		aws.ConfigMasters(machines, ic.ObjectMeta.Name)
+		aws.ConfigMasters(machines, clusterID.InfraID)
 	case libvirttypes.Name:
 		mpool := defaultLibvirtMachinePoolPlatform()
 		mpool.Set(ic.Platform.Libvirt.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.Libvirt)
 		pool.Platform.Libvirt = &mpool
-		machines, err = libvirt.Machines(clusterID.ClusterID, ic, pool, "master", "master-user-data")
+		machines, err = libvirt.Machines(clusterID.InfraID, ic, pool, "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -121,11 +121,11 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		mpool.Set(pool.Platform.OpenStack)
 		pool.Platform.OpenStack = &mpool
 
-		machines, err = openstack.Machines(clusterID.ClusterID, ic, pool, string(*rhcosImage), "master", "master-user-data")
+		machines, err = openstack.Machines(clusterID.InfraID, ic, pool, string(*rhcosImage), "master", "master-user-data")
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-		openstack.ConfigMasters(machines, ic.ObjectMeta.Name)
+		openstack.ConfigMasters(machines, clusterID.InfraID)
 	default:
 		return fmt.Errorf("invalid Platform")
 	}

@@ -1,15 +1,15 @@
 resource "libvirt_volume" "bootstrap" {
-  name           = "${var.cluster_name}-bootstrap"
+  name           = "${var.cluster_id}-bootstrap"
   base_volume_id = "${var.base_volume_id}"
 }
 
 resource "libvirt_ignition" "bootstrap" {
-  name    = "${var.cluster_name}-bootstrap.ign"
+  name    = "${var.cluster_id}-bootstrap.ign"
   content = "${var.ignition}"
 }
 
 resource "libvirt_domain" "bootstrap" {
-  name = "${var.cluster_name}-bootstrap"
+  name = "${var.cluster_id}-bootstrap"
 
   memory = "2048"
 
@@ -32,7 +32,7 @@ resource "libvirt_domain" "bootstrap" {
 
   network_interface {
     network_id = "${var.network_id}"
-    hostname   = "${var.cluster_name}-bootstrap"
+    hostname   = "${var.cluster_id}-bootstrap"
     addresses  = "${var.addresses}"
   }
 }

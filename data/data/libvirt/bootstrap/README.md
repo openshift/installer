@@ -29,7 +29,7 @@ module "bootstrap" {
 
   addresses      = ["192.168.0.1"]
   base_volume_id = "${libvirt_volume.example.id}"
-  cluster_name   = "my-cluster"
+  cluster_id     = "my-cluster"
   ignition       = "{\"ignition\": {\"version\": \"2.2.0\"}}",
   network_id     = "${libvirt_network.example.id}"
 }

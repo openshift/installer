@@ -9,8 +9,12 @@ import (
 // ClusterMetadata contains information
 // regarding the cluster that was created by installer.
 type ClusterMetadata struct {
-	ClusterName             string `json:"clusterName"`
-	ClusterID               string `json:"clusterID"`
+	// clusterName is the name for the cluster.
+	ClusterName string `json:"clusterName"`
+	// clusterID is a globally unique ID that is used to identify an Openshift cluster.
+	ClusterID string `json:"clusterID"`
+	// infraID is an ID that is used to identify cloud resources created by the installer.
+	InfraID                 string `json:"infraID"`
 	ClusterPlatformMetadata `json:",inline"`
 }
 
