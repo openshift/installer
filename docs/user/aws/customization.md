@@ -46,7 +46,7 @@ networking:
     hostSubnetLength: 9
   machineCIDR: 10.0.0.0/16
   serviceCIDR: 172.30.0.0/16
-  type: OpenshiftSDN
+  type: OpenShiftSDN
 platform:
   aws:
     region: us-west-2
