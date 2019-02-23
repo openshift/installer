@@ -53,8 +53,13 @@ the new VPC. If you intend to create more than 20 clusters, you will need to req
 
 ## Security Groups
 
-Each cluster creates 10 distinct security groups. The default limit of 2,500 for new accounts allows for many clusters
-to be created.
+Each cluster creates 4 distinct security groups. The default limit of 2,500 for new accounts allows for many clusters
+to be created. The three security groups created by the default install are:
+
+  1. VPC default
+  1. Master
+  1. Worker
+  1. Router/Ingress
 
 ## Instance Limits
 

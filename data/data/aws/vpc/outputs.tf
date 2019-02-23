@@ -18,14 +18,6 @@ output "worker_sg_id" {
   value = "${aws_security_group.worker.id}"
 }
 
-output "api_sg_id" {
-  value = "${aws_security_group.api.id}"
-}
-
-output "console_sg_id" {
-  value = "${aws_security_group.console.id}"
-}
-
 output "aws_lb_target_group_arns" {
   value = "${compact(concat(aws_lb_target_group.api_internal.*.arn, aws_lb_target_group.services.*.arn, aws_lb_target_group.api_external.*.arn))}"
 }

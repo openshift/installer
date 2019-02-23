@@ -11,7 +11,7 @@ resource "aws_security_group_rule" "master_mcs" {
   security_group_id = "${aws_security_group.master.id}"
 
   protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
+  cidr_blocks = ["${data.aws_vpc.cluster_vpc.cidr_block}"]
   from_port   = 22623
   to_port     = 22623
 }
@@ -41,19 +41,9 @@ resource "aws_security_group_rule" "master_ingress_ssh" {
   security_group_id = "${aws_security_group.master.id}"
 
   protocol    = "tcp"
-  cidr_blocks = ["0.0.0.0/0"]
+  cidr_blocks = ["${data.aws_vpc.cluster_vpc.cidr_block}"]
   from_port   = 22
   to_port     = 22
-}
-
-resource "aws_security_group_rule" "master_ingress_http" {
-  type              = "ingress"
-  security_group_id = "${aws_security_group.master.id}"
-
-  protocol    = "tcp"
-  cidr_blocks = ["${data.aws_vpc.cluster_vpc.cidr_block}"]
-  from_port   = 80
-  to_port     = 80
 }
 
 resource "aws_security_group_rule" "master_ingress_https" {
@@ -63,27 +53,7 @@ resource "aws_security_group_rule" "master_ingress_https" {
   protocol    = "tcp"
   cidr_blocks = ["${data.aws_vpc.cluster_vpc.cidr_block}"]
   from_port   = 6443
-  to_port     = 6445
-}
-
-resource "aws_security_group_rule" "master_ingress_heapster" {
-  type              = "ingress"
-  security_group_id = "${aws_security_group.master.id}"
-
-  protocol  = "tcp"
-  from_port = 4194
-  to_port   = 4194
-  self      = true
-}
-
-resource "aws_security_group_rule" "master_ingress_heapster_from_worker" {
-  type                     = "ingress"
-  security_group_id        = "${aws_security_group.master.id}"
-  source_security_group_id = "${aws_security_group.worker.id}"
-
-  protocol  = "tcp"
-  from_port = 4194
-  to_port   = 4194
+  to_port     = 6443
 }
 
 resource "aws_security_group_rule" "master_ingress_vxlan" {
@@ -166,33 +136,13 @@ resource "aws_security_group_rule" "master_ingress_kube_controller_manager_from_
   to_port   = 10252
 }
 
-resource "aws_security_group_rule" "master_ingress_kubelet_insecure" {
-  type              = "ingress"
-  security_group_id = "${aws_security_group.master.id}"
-
-  protocol  = "tcp"
-  from_port = 10250
-  to_port   = 10250
-  self      = true
-}
-
-resource "aws_security_group_rule" "master_ingress_kubelet_insecure_from_worker" {
-  type                     = "ingress"
-  security_group_id        = "${aws_security_group.master.id}"
-  source_security_group_id = "${aws_security_group.worker.id}"
-
-  protocol  = "tcp"
-  from_port = 10250
-  to_port   = 10250
-}
-
 resource "aws_security_group_rule" "master_ingress_kubelet_secure" {
   type              = "ingress"
   security_group_id = "${aws_security_group.master.id}"
 
   protocol  = "tcp"
-  from_port = 10255
-  to_port   = 10255
+  from_port = 10250
+  to_port   = 10250
   self      = true
 }
 
@@ -202,8 +152,8 @@ resource "aws_security_group_rule" "master_ingress_kubelet_secure_from_worker" {
   source_security_group_id = "${aws_security_group.worker.id}"
 
   protocol  = "tcp"
-  from_port = 10255
-  to_port   = 10255
+  from_port = 10250
+  to_port   = 10250
 }
 
 resource "aws_security_group_rule" "master_ingress_etcd" {
@@ -234,14 +184,4 @@ resource "aws_security_group_rule" "master_ingress_services" {
   from_port = 30000
   to_port   = 32767
   self      = true
-}
-
-resource "aws_security_group_rule" "master_ingress_services_from_console" {
-  type                     = "ingress"
-  security_group_id        = "${aws_security_group.master.id}"
-  source_security_group_id = "${aws_security_group.console.id}"
-
-  protocol  = "tcp"
-  from_port = 30000
-  to_port   = 32767
 }
