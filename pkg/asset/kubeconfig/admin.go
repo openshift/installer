@@ -67,14 +67,14 @@ var _ asset.WritableAsset = (*AdminClient)(nil)
 func (k *AdminClient) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&tls.AdminKubeConfigClientCertKey{},
-		&tls.AdminKubeConfigCABundle{},
+		&tls.KubeAPIServerCompleteCABundle{},
 		&installconfig.InstallConfig{},
 	}
 }
 
 // Generate generates the kubeconfig.
 func (k *AdminClient) Generate(parents asset.Parents) error {
-	ca := &tls.AdminKubeConfigCABundle{}
+	ca := &tls.KubeAPIServerCompleteCABundle{}
 	clientCertKey := &tls.AdminKubeConfigClientCertKey{}
 	installConfig := &installconfig.InstallConfig{}
 	parents.Get(ca, clientCertKey, installConfig)

@@ -85,9 +85,6 @@ var _ asset.Asset = (*AdminKubeConfigCABundle)(nil)
 func (a *AdminKubeConfigCABundle) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&AdminKubeConfigSignerCertKey{},
-		&KubeAPIServerLBSignerCertKey{},
-		&KubeAPIServerLocalhostSignerCertKey{},
-		&KubeAPIServerServiceNetworkSignerCertKey{},
 	}
 }
 

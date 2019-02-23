@@ -454,3 +454,36 @@ func (a *KubeAPIServerLBServerCertKey) Generate(dependencies asset.Parents) erro
 func (a *KubeAPIServerLBServerCertKey) Name() string {
 	return "Certificate (kube-apiserver-lb-server)"
 }
+
+// KubeAPIServerCompleteCABundle is the asset the generates the kube-apiserver-complete-server-ca-bundle,
+// which contains all the certs that are valid to confirm the kube-apiserver identity.
+type KubeAPIServerCompleteCABundle struct {
+	CertBundle
+}
+
+var _ asset.Asset = (*KubeAPIServerCompleteCABundle)(nil)
+
+// Dependencies returns the dependency of the cert bundle.
+func (a *KubeAPIServerCompleteCABundle) Dependencies() []asset.Asset {
+	return []asset.Asset{
+		&KubeCA{}, // TODO this should be removed once the KAS no longer serves with it
+		&KubeAPIServerLocalhostCABundle{},
+		&KubeAPIServerServiceNetworkCABundle{},
+		&KubeAPIServerLBCABundle{},
+	}
+}
+
+// Generate generates the cert bundle based on its dependencies.
+func (a *KubeAPIServerCompleteCABundle) Generate(deps asset.Parents) error {
+	var certs []CertInterface
+	for _, asset := range a.Dependencies() {
+		deps.Get(asset)
+		certs = append(certs, asset.(CertInterface))
+	}
+	return a.CertBundle.Generate("kube-apiserver-complete-server-ca-bundle", certs...)
+}
+
+// Name returns the human-friendly name of the asset.
+func (a *KubeAPIServerCompleteCABundle) Name() string {
+	return "Certificate (kube-apiserver-complete-server-ca-bundle)"
+}
