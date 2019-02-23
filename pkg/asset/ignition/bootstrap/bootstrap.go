@@ -62,7 +62,6 @@ var _ asset.WritableAsset = (*Bootstrap)(nil)
 func (a *Bootstrap) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&kubeconfig.Admin{},
 		&kubeconfig.AdminClient{},
 		&kubeconfig.Kubelet{},
 		&kubeconfig.KubeletClient{},
@@ -373,7 +372,6 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	}
 
 	for _, asset := range []asset.WritableAsset{
-		&kubeconfig.Admin{},
 		&kubeconfig.AdminClient{},
 		&kubeconfig.Kubelet{},
 		&kubeconfig.KubeletClient{},
