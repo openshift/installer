@@ -5,7 +5,7 @@ mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests
 
 if ! podman inspect {{.ReleaseImage}} &>/dev/null; then
     echo "Pulling release image..."
-    podman pull {{.ReleaseImage}}
+    podman pull --quiet {{.ReleaseImage}}
 fi
 
 # convert the release image pull spec to an "absolute" form if a digest is available - this is
@@ -16,23 +16,23 @@ if ! release=$( podman inspect {{.ReleaseImage}} -f '{{"{{"}} index .RepoDigests
 	release="{{.ReleaseImage}}"
 fi
 
-MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --rm ${release} image machine-config-operator)
-MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --rm ${release} image machine-config-controller)
-MACHINE_CONFIG_SERVER_IMAGE=$(podman run --rm ${release} image machine-config-server)
-MACHINE_CONFIG_DAEMON_IMAGE=$(podman run --rm ${release} image machine-config-daemon)
-MACHINE_CONFIG_OSCONTENT=$(podman run --rm ${release} image machine-os-content)
-MACHINE_CONFIG_ETCD_IMAGE=$(podman run --rm ${release} image etcd)
-MACHINE_CONFIG_SETUP_ETCD_ENV_IMAGE=$(podman run --rm ${release} image setup-etcd-environment)
+MACHINE_CONFIG_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image machine-config-operator)
+MACHINE_CONFIG_CONTROLLER_IMAGE=$(podman run --quiet --rm ${release} image machine-config-controller)
+MACHINE_CONFIG_SERVER_IMAGE=$(podman run --quiet --rm ${release} image machine-config-server)
+MACHINE_CONFIG_DAEMON_IMAGE=$(podman run --quiet --rm ${release} image machine-config-daemon)
+MACHINE_CONFIG_OSCONTENT=$(podman run --quiet --rm ${release} image machine-os-content)
+MACHINE_CONFIG_ETCD_IMAGE=$(podman run --quiet --rm ${release} image etcd)
+MACHINE_CONFIG_SETUP_ETCD_ENV_IMAGE=$(podman run --quiet --rm ${release} image setup-etcd-environment)
 
-CONFIG_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-config-operator)
-KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-apiserver-operator)
-KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-controller-manager-operator)
-KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --rm ${release} image cluster-kube-scheduler-operator)
+CONFIG_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-config-operator)
+KUBE_APISERVER_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-kube-apiserver-operator)
+KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-kube-controller-manager-operator)
+KUBE_SCHEDULER_OPERATOR_IMAGE=$(podman run --quiet --rm ${release} image cluster-kube-scheduler-operator)
 
-OPENSHIFT_HYPERSHIFT_IMAGE=$(podman run --rm ${release} image hypershift)
-OPENSHIFT_HYPERKUBE_IMAGE=$(podman run --rm ${release} image hyperkube)
+OPENSHIFT_HYPERSHIFT_IMAGE=$(podman run --quiet --rm ${release} image hypershift)
+OPENSHIFT_HYPERKUBE_IMAGE=$(podman run --quiet --rm ${release} image hyperkube)
 
-CLUSTER_BOOTSTRAP_IMAGE=$(podman run --rm ${release} image cluster-bootstrap)
+CLUSTER_BOOTSTRAP_IMAGE=$(podman run --quiet --rm ${release} image cluster-bootstrap)
 
 mkdir --parents ./{bootstrap-manifests,manifests}
 
@@ -42,6 +42,7 @@ then
 
 	# shellcheck disable=SC2154
 	podman run \
+		--quiet \
 		--volume "$PWD:/assets:z" \
 		"${release}" \
 		render \
@@ -60,6 +61,7 @@ then
 
 	# shellcheck disable=SC2154
 	podman run \
+		--quiet \
 		--volume "$PWD:/assets:z" \
 		"${CONFIG_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-config-operator render \
@@ -76,6 +78,7 @@ then
 
 	# shellcheck disable=SC2154
 	podman run \
+		--quiet \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_APISERVER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-apiserver-operator render \
@@ -98,6 +101,7 @@ then
 
 	# shellcheck disable=SC2154
 	podman run \
+		--quiet \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_CONTROLLER_MANAGER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-controller-manager-operator render \
@@ -118,6 +122,7 @@ then
 
 	# shellcheck disable=SC2154
 	podman run \
+		--quiet \
 		--volume "$PWD:/assets:z" \
 		"${KUBE_SCHEDULER_OPERATOR_IMAGE}" \
 		/usr/bin/cluster-kube-scheduler-operator render \
@@ -137,6 +142,7 @@ then
 
 	# shellcheck disable=SC2154
 	podman run \
+		--quiet \
 		--user 0 \
 		--volume "$PWD:/assets:z" \
 		"${MACHINE_CONFIG_OPERATOR_IMAGE}" \
@@ -183,6 +189,7 @@ trap "podman rm --force etcd-signer" ERR
 
 # shellcheck disable=SC2154
 podman run \
+	--quiet \
 	--name etcd-signer \
 	--detach \
 	--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
@@ -203,6 +210,7 @@ echo "Waiting for etcd cluster..."
 # Wait for the etcd cluster to come up.
 # shellcheck disable=SC2154,SC2086
 until podman run \
+		--quiet \
 		--rm \
 		--network host \
 		--name etcdctl \
@@ -230,6 +238,7 @@ echo "Starting cluster-bootstrap..."
 
 # shellcheck disable=SC2154
 podman run \
+	--quiet \
 	--rm \
 	--volume "$PWD:/assets:z" \
 	--volume /etc/kubernetes:/etc/kubernetes:z \
