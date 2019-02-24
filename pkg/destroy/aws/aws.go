@@ -7,6 +7,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/elb"
@@ -18,6 +19,8 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+
+	"github.com/openshift/installer/pkg/version"
 )
 
 var (
@@ -73,6 +76,10 @@ func (o *ClusterUninstaller) Run() error {
 	if err != nil {
 		return err
 	}
+	awsSession.Handlers.Build.PushBackNamed(request.NamedHandler{
+		Name: "openshiftInstaller.OpenshiftInstallerUserAgentHandler",
+		Fn:   request.MakeAddToUserAgentHandler("OpenShift/4.x Destroyer", version.Raw),
+	})
 
 	tagClients := []*resourcegroupstaggingapi.ResourceGroupsTaggingAPI{
 		resourcegroupstaggingapi.New(awsSession),
