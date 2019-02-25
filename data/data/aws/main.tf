@@ -52,8 +52,8 @@ module "iam" {
   tags = "${local.tags}"
 }
 
-module "dns" {
-  source = "./route53"
+module "dns-api" {
+  source = "./route53/api"
 
   api_external_lb_dns_name = "${module.vpc.aws_lb_api_external_dns_name}"
   api_external_lb_zone_id  = "${module.vpc.aws_lb_api_external_zone_id}"
@@ -62,10 +62,18 @@ module "dns" {
   base_domain              = "${var.base_domain}"
   cluster_domain           = "${var.cluster_domain}"
   cluster_id               = "${var.cluster_id}"
-  etcd_count               = "${var.master_count}"
-  etcd_ip_addresses        = "${module.masters.ip_addresses}"
   tags                     = "${local.tags}"
   vpc_id                   = "${module.vpc.vpc_id}"
+}
+
+module "dns-etcd" {
+  source = "./route53/etcd"
+
+  zone_id        = "${module.dns-api.int_zone_id}"
+  cluster_domain = "${var.cluster_domain}"
+
+  etcd_count        = "${var.master_count}"
+  etcd_ip_addresses = "${module.masters.ip_addresses}"
 }
 
 module "vpc" {
