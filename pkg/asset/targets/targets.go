@@ -48,7 +48,7 @@ var (
 
 	// IgnitionConfigs are the ignition-configs targeted assets.
 	IgnitionConfigs = []asset.WritableAsset{
-		&kubeconfig.Admin{},
+		&kubeconfig.AdminClient{},
 		&machine.Master{},
 		&machine.Worker{},
 		&bootstrap.Bootstrap{},
@@ -58,7 +58,7 @@ var (
 	// Cluster are the cluster targeted assets.
 	Cluster = []asset.WritableAsset{
 		&cluster.TerraformVariables{},
-		&kubeconfig.Admin{},
+		&kubeconfig.AdminClient{},
 		&tls.JournalCertKey{},
 		&cluster.Metadata{},
 		&cluster.Cluster{},
