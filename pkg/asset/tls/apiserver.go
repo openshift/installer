@@ -504,6 +504,7 @@ func (a *KubeAPIServerCompleteClientCABundle) Dependencies() []asset.Asset {
 		&KubeletClientCABundle{},               // signed kubelet certs
 		&KubeControlPlaneCABundle{},            // controller-manager, scheduler
 		&KubeAPIServerToKubeletClientCertKey{}, // kube-apiserver to kubelet (kubelet piggy-backs on KAS client-ca)
+		&KubeletBootstrapCABundle{},            // used to create the kubelet kubeconfig files that are used to create CSRs
 	}
 }
 
