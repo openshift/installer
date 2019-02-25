@@ -10,7 +10,7 @@ import (
 // AggregatorCA is the asset that generates the aggregator-ca key/cert pair.
 // [DEPRECATED]
 type AggregatorCA struct {
-	SignedCertKey
+	SelfSignedCertKey
 }
 
 var _ asset.Asset = (*AggregatorCA)(nil)
@@ -19,16 +19,11 @@ var _ asset.Asset = (*AggregatorCA)(nil)
 // the parent CA, and install config if it depends on the install config for
 // DNS names, etc.
 func (a *AggregatorCA) Dependencies() []asset.Asset {
-	return []asset.Asset{
-		&RootCA{},
-	}
+	return []asset.Asset{}
 }
 
 // Generate generates the cert/key pair based on its dependencies.
 func (a *AggregatorCA) Generate(dependencies asset.Parents) error {
-	rootCA := &RootCA{}
-	dependencies.Get(rootCA)
-
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "aggregator", OrganizationalUnit: []string{"bootkube"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -36,7 +31,7 @@ func (a *AggregatorCA) Generate(dependencies asset.Parents) error {
 		IsCA:      true,
 	}
 
-	return a.SignedCertKey.Generate(cfg, rootCA, "aggregator-ca", DoNotAppendParent)
+	return a.SelfSignedCertKey.Generate(cfg, "aggregator-ca")
 }
 
 // Name returns the human-friendly name of the asset.
