@@ -14,10 +14,11 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
-func validMachinePool() *types.MachinePool {
+func validMachinePool(name string) *types.MachinePool {
 	return &types.MachinePool{
-		Name:     "test-pool",
-		Replicas: pointer.Int64Ptr(1),
+		Name:           name,
+		Replicas:       pointer.Int64Ptr(1),
+		Hyperthreading: types.HyperthreadingDisabled,
 	}
 }
 
@@ -31,14 +32,14 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name:     "minimal",
 			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
-			pool:     validMachinePool(),
+			pool:     validMachinePool("test-name"),
 			valid:    true,
 		},
 		{
 			name:     "missing replicas",
 			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Replicas = nil
 				return p
 			}(),
@@ -48,7 +49,7 @@ func TestValidateMachinePool(t *testing.T) {
 			name:     "invalid replicas",
 			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Replicas = pointer.Int64Ptr(-1)
 				return p
 			}(),
@@ -58,7 +59,7 @@ func TestValidateMachinePool(t *testing.T) {
 			name:     "valid aws",
 			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{},
 				}
@@ -70,7 +71,7 @@ func TestValidateMachinePool(t *testing.T) {
 			name:     "invalid aws",
 			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{
 						EC2RootVolume: aws.EC2RootVolume{
@@ -86,7 +87,7 @@ func TestValidateMachinePool(t *testing.T) {
 			name:     "valid azure",
 			platform: &types.Platform{Azure: &azure.Platform{Region: "eastus"}},
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{},
 				}
@@ -98,7 +99,7 @@ func TestValidateMachinePool(t *testing.T) {
 			name:     "valid libvirt",
 			platform: &types.Platform{Libvirt: &libvirt.Platform{}},
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					Libvirt: &libvirt.MachinePool{},
 				}
@@ -110,7 +111,7 @@ func TestValidateMachinePool(t *testing.T) {
 			name:     "valid openstack",
 			platform: &types.Platform{OpenStack: &openstack.Platform{}},
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					OpenStack: &openstack.MachinePool{},
 				}
@@ -122,7 +123,7 @@ func TestValidateMachinePool(t *testing.T) {
 			name:     "mis-matched platform",
 			platform: &types.Platform{Libvirt: &libvirt.Platform{}},
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{},
 				}
@@ -134,7 +135,7 @@ func TestValidateMachinePool(t *testing.T) {
 			name:     "multiple platforms",
 			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					AWS:     &aws.MachinePool{},
 					Libvirt: &libvirt.MachinePool{},

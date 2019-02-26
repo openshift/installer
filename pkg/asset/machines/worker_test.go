@@ -19,15 +19,114 @@ func TestWorkerGenerate(t *testing.T) {
 	cases := []struct {
 		name                  string
 		key                   string
+		hyperthreading        types.HyperthreadingMode
 		expectedMachineConfig string
 	}{
 		{
-			name: "no key",
+			name:           "no key hyperthreading enabled",
+			hyperthreading: types.HyperthreadingEnabled,
 		},
 		{
-			name: "key present",
-			key:  "ssh-rsa: dummy-key",
+			name:           "key present hyperthreading enabled",
+			key:            "ssh-rsa: dummy-key",
+			hyperthreading: types.HyperthreadingEnabled,
 			expectedMachineConfig: `---
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  creationTimestamp: null
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: 99-worker-ssh
+spec:
+  config:
+    ignition:
+      config: {}
+      security:
+        tls: {}
+      timeouts: {}
+      version: 2.2.0
+    networkd: {}
+    passwd:
+      users:
+      - name: core
+        sshAuthorizedKeys:
+        - 'ssh-rsa: dummy-key'
+    storage: {}
+    systemd: {}
+  osImageURL: ""
+`,
+		},
+		{
+			name:           "no key hyperthreading disabled",
+			hyperthreading: types.HyperthreadingDisabled,
+			expectedMachineConfig: `---
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  creationTimestamp: null
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: 99-worker-disable-hyperthreading
+spec:
+  config:
+    ignition:
+      config: {}
+      security:
+        tls: {}
+      timeouts: {}
+      version: 2.2.0
+    networkd: {}
+    passwd: {}
+    storage:
+      files:
+      - contents:
+          source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
+          verification: {}
+        filesystem: root
+        mode: 384
+        path: /etc/pivot/kernel-args
+        user:
+          name: root
+    systemd: {}
+  osImageURL: ""
+`,
+		},
+		{
+			name:           "key present hyperthreading disabled",
+			key:            "ssh-rsa: dummy-key",
+			hyperthreading: types.HyperthreadingDisabled,
+			expectedMachineConfig: `---
+apiVersion: machineconfiguration.openshift.io/v1
+kind: MachineConfig
+metadata:
+  creationTimestamp: null
+  labels:
+    machineconfiguration.openshift.io/role: worker
+  name: 99-worker-disable-hyperthreading
+spec:
+  config:
+    ignition:
+      config: {}
+      security:
+        tls: {}
+      timeouts: {}
+      version: 2.2.0
+    networkd: {}
+    passwd: {}
+    storage:
+      files:
+      - contents:
+          source: data:text/plain;charset=utf-8;base64,QUREIG5vc210
+          verification: {}
+        filesystem: root
+        mode: 384
+        path: /etc/pivot/kernel-args
+        user:
+          name: root
+    systemd: {}
+  osImageURL: ""
+---
 apiVersion: machineconfiguration.openshift.io/v1
 kind: MachineConfig
 metadata:
@@ -77,7 +176,8 @@ spec:
 						},
 						Compute: []types.MachinePool{
 							{
-								Replicas: pointer.Int64Ptr(1),
+								Replicas:       pointer.Int64Ptr(1),
+								Hyperthreading: tc.hyperthreading,
 								Platform: types.MachinePoolPlatform{
 									AWS: &awstypes.MachinePool{
 										Zones: []string{"us-east-1a"},

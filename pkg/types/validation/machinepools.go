@@ -16,6 +16,21 @@ import (
 	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
 )
 
+var (
+	validHyperthreadingModes = map[types.HyperthreadingMode]bool{
+		types.HyperthreadingDisabled: true,
+		types.HyperthreadingEnabled:  true,
+	}
+
+	validHyperthreadingModeValues = func() []string {
+		v := make([]string, 0, len(validHyperthreadingModes))
+		for m := range validHyperthreadingModes {
+			v = append(v, string(m))
+		}
+		return v
+	}()
+)
+
 // ValidateMachinePool checks that the specified machine pool is valid.
 func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -25,6 +40,9 @@ func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath
 		}
 	} else {
 		allErrs = append(allErrs, field.Required(fldPath.Child("replicas"), "replicas is required"))
+	}
+	if !validHyperthreadingModes[p.Hyperthreading] {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("hyperthreading"), p.Hyperthreading, validHyperthreadingModeValues))
 	}
 	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, fldPath.Child("platform"))...)
 	return allErrs

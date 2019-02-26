@@ -76,13 +76,15 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 			},
 		},
 		ControlPlane: &types.MachinePool{
-			Name:     "master",
-			Replicas: pointer.Int64Ptr(3),
+			Name:           "master",
+			Replicas:       pointer.Int64Ptr(3),
+			Hyperthreading: types.HyperthreadingEnabled,
 		},
 		Compute: []types.MachinePool{
 			{
-				Name:     "worker",
-				Replicas: pointer.Int64Ptr(3),
+				Name:           "worker",
+				Replicas:       pointer.Int64Ptr(3),
+				Hyperthreading: types.HyperthreadingEnabled,
 			},
 		},
 		Platform: types.Platform{
@@ -135,13 +137,15 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 					},
 				},
 				ControlPlane: &types.MachinePool{
-					Name:     "master",
-					Replicas: pointer.Int64Ptr(3),
+					Name:           "master",
+					Replicas:       pointer.Int64Ptr(3),
+					Hyperthreading: types.HyperthreadingEnabled,
 				},
 				Compute: []types.MachinePool{
 					{
-						Name:     "worker",
-						Replicas: pointer.Int64Ptr(3),
+						Name:           "worker",
+						Replicas:       pointer.Int64Ptr(3),
+						Hyperthreading: types.HyperthreadingEnabled,
 					},
 				},
 				Platform: types.Platform{
@@ -214,13 +218,15 @@ network:
 					},
 				},
 				ControlPlane: &types.MachinePool{
-					Name:     "master",
-					Replicas: pointer.Int64Ptr(3),
+					Name:           "master",
+					Replicas:       pointer.Int64Ptr(3),
+					Hyperthreading: types.HyperthreadingEnabled,
 				},
 				Compute: []types.MachinePool{
 					{
-						Name:     "worker",
-						Replicas: pointer.Int64Ptr(3),
+						Name:           "worker",
+						Replicas:       pointer.Int64Ptr(3),
+						Hyperthreading: types.HyperthreadingEnabled,
 					},
 				},
 				Platform: types.Platform{

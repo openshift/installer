@@ -44,28 +44,16 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 			},
 		}
 	}
-	defaultReplicaCount := int64(3)
-	if c.Platform.Libvirt != nil {
-		defaultReplicaCount = 1
-	}
 	if c.ControlPlane == nil {
-		c.ControlPlane = &types.MachinePool{
-			Replicas: &defaultReplicaCount,
-		}
+		c.ControlPlane = &types.MachinePool{}
 	}
 	c.ControlPlane.Name = "master"
+	SetMachinePoolDefaults(c.ControlPlane, c.Platform.Name())
 	if len(c.Compute) == 0 {
-		c.Compute = []types.MachinePool{
-			{
-				Name:     "worker",
-				Replicas: &defaultReplicaCount,
-			},
-		}
+		c.Compute = []types.MachinePool{{Name: "worker"}}
 	}
-	for i, p := range c.Compute {
-		if p.Replicas == nil {
-			c.Compute[i].Replicas = &defaultReplicaCount
-		}
+	for i := range c.Compute {
+		SetMachinePoolDefaults(&c.Compute[i], c.Platform.Name())
 	}
 	switch {
 	case c.Platform.AWS != nil:
