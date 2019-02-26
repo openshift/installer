@@ -881,17 +881,6 @@
   revision = "4c3feeb576b06ef8fea769809bd3db5e5e78dc23"
 
 [[projects]]
-  branch = "master"
-  digest = "1:b23a1b4063d7b3b60ad82fab0cb72b5048da29f880a3761b4e390cb659a0b11f"
-  name = "sigs.k8s.io/cluster-api"
-  packages = [
-    "pkg/apis/cluster/common",
-    "pkg/apis/cluster/v1alpha1",
-  ]
-  pruneopts = "NUT"
-  revision = "ef6f8fc12d32fc1646f231f6e39dbef59ad2e4dd"
-
-[[projects]]
   digest = "1:3981a97e1e569cbbaaab702d2b44adfac402e923a2bb0984ef5fad93bcbf8c79"
   name = "sigs.k8s.io/cluster-api-provider-aws"
   packages = [
