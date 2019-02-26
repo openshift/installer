@@ -37,14 +37,7 @@ For contributors who want to work up pull requests, the workflow is roughly:
 6. We run a number of linters and tests on each pull request.
     You may wish to run these locally before submitting your pull request:
     ```sh
-    hack/go-fmt.sh .
-    hack/go-lint.sh $(go list -f '{{ .ImportPath }}' ./...)
-    hack/go-vet.sh ./...
-    hack/shellcheck.sh
-    hack/tf-fmt.sh -list -check
-    hack/tf-lint.sh
-    hack/yaml-lint.sh
-    hack/go-test.sh
+    make verify
     ```
 7. Submit a pull request to the original repository.
 8. The [repo](OWNERS) [owners](OWNERS_ALIASES) will respond to your issue promptly, following [the ususal Prow workflow][prow-review].

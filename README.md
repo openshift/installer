@@ -13,7 +13,7 @@ First, install all [build dependencies](docs/dev/dependencies.md).
 Clone this repository to `src/github.com/openshift/installer` in your [GOPATH](https://golang.org/cmd/go/#hdr-GOPATH_environment_variable). Then build the `openshift-install` binary with:
 
 ```sh
-hack/build.sh
+make
 ```
 
 This will create `bin/openshift-install`. This binary can then be invoked to create an OpenShift cluster, like so:
