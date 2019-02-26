@@ -38,8 +38,6 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	switch v := c.APIVersion; v {
 	case types.InstallConfigVersion:
 		// Current version
-	case "v1beta2":
-		logrus.Warnf("install-config.yaml is using a deprecated version %q. The expected version is %q.", v, types.InstallConfigVersion)
 	default:
 		return field.ErrorList{field.Invalid(field.NewPath("apiVersion"), c.TypeMeta.APIVersion, fmt.Sprintf("install-config version must be %q", types.InstallConfigVersion))}
 	}
