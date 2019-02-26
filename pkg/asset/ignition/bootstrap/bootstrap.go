@@ -32,7 +32,6 @@ const (
 	rootDir              = "/opt/openshift"
 	bootstrapIgnFilename = "bootstrap.ign"
 	etcdCertSignerImage  = "quay.io/coreos/kube-etcd-signer-server:678cc8e6841e2121ebfdb6e2db568fce290b67d6"
-	etcdctlImage         = "quay.io/coreos/etcd:v3.3.10"
 	ignitionUser         = "core"
 )
 
@@ -45,7 +44,6 @@ var (
 type bootstrapTemplateData struct {
 	EtcdCertSignerImage string
 	EtcdCluster         string
-	EtcdctlImage        string
 	PullSecret          string
 	ReleaseImage        string
 }
@@ -182,7 +180,6 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 
 	return &bootstrapTemplateData{
 		EtcdCertSignerImage: etcdCertSignerImage,
-		EtcdctlImage:        etcdctlImage,
 		PullSecret:          installConfig.PullSecret,
 		ReleaseImage:        releaseImage,
 		EtcdCluster:         strings.Join(etcdEndpoints, ","),

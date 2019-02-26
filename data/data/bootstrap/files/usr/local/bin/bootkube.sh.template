@@ -240,8 +240,8 @@ until podman run \
 		--name etcdctl \
 		--env ETCDCTL_API=3 \
 		--volume /opt/openshift/tls:/opt/openshift/tls:ro,z \
-		"{{.EtcdctlImage}}" \
-		/usr/local/bin/etcdctl \
+		--entrypoint etcdctl \
+		"${MACHINE_CONFIG_ETCD_IMAGE}" \
 		--dial-timeout=10m \
 		--cacert=/opt/openshift/tls/etcd-client-ca.crt \
 		--cert=/opt/openshift/tls/etcd-client.crt \
