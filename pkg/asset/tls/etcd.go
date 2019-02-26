@@ -10,7 +10,7 @@ import (
 // EtcdCA is the asset that generates the etcd-ca key/cert pair.
 // [DEPRECATED]
 type EtcdCA struct {
-	SignedCertKey
+	SelfSignedCertKey
 }
 
 var _ asset.Asset = (*EtcdCA)(nil)
@@ -19,16 +19,11 @@ var _ asset.Asset = (*EtcdCA)(nil)
 // the parent CA, and install config if it depends on the install config for
 // DNS names, etc.
 func (a *EtcdCA) Dependencies() []asset.Asset {
-	return []asset.Asset{
-		&RootCA{},
-	}
+	return []asset.Asset{}
 }
 
 // Generate generates the cert/key pair based on its dependencies.
 func (a *EtcdCA) Generate(dependencies asset.Parents) error {
-	rootCA := &RootCA{}
-	dependencies.Get(rootCA)
-
 	cfg := &CertCfg{
 		Subject:   pkix.Name{CommonName: "etcd", OrganizationalUnit: []string{"etcd"}},
 		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
@@ -36,7 +31,7 @@ func (a *EtcdCA) Generate(dependencies asset.Parents) error {
 		IsCA:      true,
 	}
 
-	return a.SignedCertKey.Generate(cfg, rootCA, "etcd-client-ca", DoNotAppendParent)
+	return a.SelfSignedCertKey.Generate(cfg, "etcd-client-ca")
 }
 
 // Name returns the human-friendly name of the asset.
