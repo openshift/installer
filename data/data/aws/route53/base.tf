@@ -23,7 +23,7 @@ resource "aws_route53_record" "api_external" {
   alias {
     name                   = "${var.api_external_lb_dns_name}"
     zone_id                = "${var.api_external_lb_zone_id}"
-    evaluate_target_health = true
+    evaluate_target_health = false
   }
 }
 
@@ -35,7 +35,7 @@ resource "aws_route53_record" "api_internal" {
   alias {
     name                   = "${var.api_internal_lb_dns_name}"
     zone_id                = "${var.api_internal_lb_zone_id}"
-    evaluate_target_health = true
+    evaluate_target_health = false
   }
 }
 
