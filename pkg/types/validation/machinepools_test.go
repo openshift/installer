@@ -13,10 +13,11 @@ import (
 	"github.com/openshift/installer/pkg/types/openstack"
 )
 
-func validMachinePool() *types.MachinePool {
+func validMachinePool(name string) *types.MachinePool {
 	return &types.MachinePool{
-		Name:     "test-pool",
-		Replicas: pointer.Int64Ptr(1),
+		Name:           name,
+		Replicas:       pointer.Int64Ptr(1),
+		Hyperthreading: types.HyperthreadingDisabled,
 	}
 }
 
@@ -29,14 +30,14 @@ func TestValidateMachinePool(t *testing.T) {
 	}{
 		{
 			name:     "minimal",
-			pool:     validMachinePool(),
+			pool:     validMachinePool("test-name"),
 			platform: "aws",
 			valid:    true,
 		},
 		{
 			name: "missing replicas",
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Replicas = nil
 				return p
 			}(),
@@ -46,7 +47,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "invalid replicas",
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Replicas = pointer.Int64Ptr(-1)
 				return p
 			}(),
@@ -56,7 +57,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "valid aws",
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{},
 				}
@@ -68,7 +69,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "invalid aws",
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{
 						EC2RootVolume: aws.EC2RootVolume{
@@ -84,7 +85,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "valid libvirt",
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					Libvirt: &libvirt.MachinePool{},
 				}
@@ -96,7 +97,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "valid openstack",
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					OpenStack: &openstack.MachinePool{},
 				}
@@ -108,7 +109,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "mis-matched platform",
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					AWS: &aws.MachinePool{},
 				}
@@ -120,7 +121,7 @@ func TestValidateMachinePool(t *testing.T) {
 		{
 			name: "multiple platforms",
 			pool: func() *types.MachinePool {
-				p := validMachinePool()
+				p := validMachinePool("test-name")
 				p.Platform = types.MachinePoolPlatform{
 					AWS:     &aws.MachinePool{},
 					Libvirt: &libvirt.MachinePool{},

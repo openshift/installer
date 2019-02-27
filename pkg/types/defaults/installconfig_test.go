@@ -31,16 +31,8 @@ func defaultInstallConfig() *types.InstallConfig {
 				},
 			},
 		},
-		ControlPlane: &types.MachinePool{
-			Name:     "master",
-			Replicas: pointer.Int64Ptr(3),
-		},
-		Compute: []types.MachinePool{
-			{
-				Name:     "worker",
-				Replicas: pointer.Int64Ptr(3),
-			},
-		},
+		ControlPlane: defaultMachinePool("master"),
+		Compute:      []types.MachinePool{*defaultMachinePool("worker")},
 	}
 }
 
@@ -170,18 +162,20 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			}(),
 		},
 		{
+			name: "control plane present",
+			config: &types.InstallConfig{
+				ControlPlane: &types.MachinePool{},
+			},
+			expected: defaultInstallConfig(),
+		},
+		{
 			name: "Compute present",
 			config: &types.InstallConfig{
 				Compute: []types.MachinePool{{Name: "test-compute"}},
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultInstallConfig()
-				c.Compute = []types.MachinePool{
-					{
-						Name:     "test-compute",
-						Replicas: pointer.Int64Ptr(3),
-					},
-				}
+				c.Compute = []types.MachinePool{*defaultMachinePool("test-compute")}
 				return c
 			}(),
 		},
