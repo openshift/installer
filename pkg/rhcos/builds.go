@@ -40,10 +40,7 @@ func fetchLatestMetadata(ctx context.Context, channel string) (metadata, error) 
 	build := buildName
 	var err error
 	if build == "" {
-		build, err = fetchLatestBuild(ctx, channel)
-		if err != nil {
-			return metadata{}, errors.Wrap(err, "failed to fetch latest build")
-		}
+		build = "47.334"
 	}
 
 	url := fmt.Sprintf("%s/%s/%s/meta.json", baseURL, channel, build)
