@@ -195,7 +195,7 @@ func ValidateCreds(ssn *session.Session) error {
 	}
 
 	// Check whether we can do an installation
-	logger := logrus.New()
+	logger := logrus.StandardLogger()
 	canInstall, err := credvalidator.CheckPermissionsAgainstActions(client, installPermissions, logger)
 	if err != nil {
 		return errors.Wrap(err, "checking install permissions")
