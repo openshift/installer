@@ -115,11 +115,9 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 		roleCloudCredsSecretReader)
 
 	assetData := map[string][]byte{
-		"99_binding-discovery.yaml":                             []byte(bindingDiscovery.Files()[0].Data),
-		"99_kubeadmin-password-secret.yaml":                     applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
-		"99_openshift-cluster-api_cluster.yaml":                 clusterk8sio.Raw,
-		"99_openshift-cluster-api_worker-machineset.yaml":       worker.MachineSetRaw,
-		"99_openshift-cluster-api_worker-user-data-secret.yaml": worker.UserDataSecretRaw,
+		"99_binding-discovery.yaml":             []byte(bindingDiscovery.Files()[0].Data),
+		"99_kubeadmin-password-secret.yaml":     applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
+		"99_openshift-cluster-api_cluster.yaml": clusterk8sio.Raw,
 	}
 
 	switch platform {
@@ -135,6 +133,7 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 			Data:     data,
 		})
 	}
+	o.FileList = append(o.FileList, worker.Files()...)
 
 	asset.SortFiles(o.FileList)
 
