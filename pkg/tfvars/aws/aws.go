@@ -11,7 +11,7 @@ import (
 )
 
 type config struct {
-	EC2AMIOverride        string            `json:"aws_ec2_ami_override,omitempty"`
+	AMI                   string            `json:"aws_ami"`
 	ExtraTags             map[string]string `json:"aws_extra_tags,omitempty"`
 	BootstrapInstanceType string            `json:"aws_bootstrap_instance_type,omitempty"`
 	MasterInstanceType    string            `json:"aws_master_instance_type,omitempty"`
@@ -52,9 +52,9 @@ func TFVars(masterConfig *v1beta1.AWSMachineProviderConfig) ([]byte, error) {
 	instanceClass := defaults.InstanceClass(masterConfig.Placement.Region)
 
 	cfg := &config{
-		Region:                masterConfig.Placement.Region,
-		ExtraTags:             tags,
-		EC2AMIOverride:        *masterConfig.AMI.ID,
+		Region:    masterConfig.Placement.Region,
+		ExtraTags: tags,
+		AMI:       *masterConfig.AMI.ID,
 		BootstrapInstanceType: fmt.Sprintf("%s.large", instanceClass),
 		MasterInstanceType:    masterConfig.InstanceType,
 		Size:                  *rootVolume.EBS.VolumeSize,

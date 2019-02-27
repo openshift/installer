@@ -455,6 +455,8 @@ func deleteEC2(session *session.Session, arn arn.ARN, logger logrus.FieldLogger)
 		return deleteEC2DHCPOptions(client, id, logger)
 	case "elastic-ip":
 		return deleteEC2ElasticIP(client, id, logger)
+	case "image":
+		return deleteEC2Image(client, id, logger)
 	case "instance":
 		return deleteEC2Instance(client, iam.New(session), id, logger)
 	case "internet-gateway":
@@ -482,6 +484,21 @@ func deleteEC2DHCPOptions(client *ec2.EC2, id string, logger logrus.FieldLogger)
 	})
 	if err != nil {
 		if err.(awserr.Error).Code() == "InvalidDhcpOptionsID.NotFound" {
+			return nil
+		}
+		return err
+	}
+
+	logger.Info("Deleted")
+	return nil
+}
+
+func deleteEC2Image(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
+	_, err := client.DeregisterImage(&ec2.DeregisterImageInput{
+		ImageId: &id,
+	})
+	if err != nil {
+		if err.(awserr.Error).Code() == "InvalidAMIID.NotFound" {
 			return nil
 		}
 		return err

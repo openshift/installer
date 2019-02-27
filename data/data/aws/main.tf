@@ -11,7 +11,7 @@ provider "aws" {
 module "bootstrap" {
   source = "./bootstrap"
 
-  ami                      = "${var.aws_ec2_ami_override}"
+  ami                      = "${aws_ami_copy.main.id}"
   instance_type            = "${var.aws_bootstrap_instance_type}"
   cluster_id               = "${var.cluster_id}"
   ignition                 = "${var.ignition_bootstrap}"
@@ -40,7 +40,7 @@ module "masters" {
   subnet_ids               = "${module.vpc.private_subnet_ids}"
   target_group_arns        = "${module.vpc.aws_lb_target_group_arns}"
   target_group_arns_length = "${module.vpc.aws_lb_target_group_arns_length}"
-  ec2_ami                  = "${var.aws_ec2_ami_override}"
+  ec2_ami                  = "${aws_ami_copy.main.id}"
   user_data_ign            = "${var.ignition_master}"
 }
 
@@ -76,4 +76,17 @@ module "vpc" {
   region     = "${var.aws_region}"
 
   tags = "${local.tags}"
+}
+
+resource "aws_ami_copy" "main" {
+  name              = "${var.cluster_id}-master"
+  source_ami_id     = "${var.aws_ami}"
+  source_ami_region = "${var.aws_region}"
+  encrypted         = true
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-master",
+    "sourceAMI", "${var.aws_ami}",
+    "sourceRegion", "${var.aws_region}",
+  ), local.tags)}"
 }
