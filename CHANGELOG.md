@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## 0.13.0 - 2019-02-19
+## 0.13.0 - 2019-02-26
 
 ### Added
 
@@ -27,11 +27,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
       use the same Ignition configuration.  The installer will warn
       about but allow configurations where there are zero compute
       replicas.
-
     - On libvirt, the `masterIPs` property has been removed, since you
       cannot configure master IPs via the libvirt machine API
       provider.
-
     - On OpenStack, there is also a new `lbFloatingIP` property, which
       allows you to provide an IP address to be used by the load
       balancer.  This allows you to create local DNS entries ahead of
@@ -51,8 +49,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   namespace has been replaced with `openshift-machine-api` as well.
 - The installer now uses etcd and OS images referenced by the update
   payload when configuring the machine-config operator.
-- The Kubernetes certificate authority is now self-signed, decoupling
-  its chain of trust from the root certificate authority.
+- The etcd, aggregator, and other certificate authorities are now
+  self-signed, decoupling their chains of trust from the root
+  certificate authority.
 - The installer no longer creates a service-serving certificate
   authority.  The certificate authority is now created by the
   [service-CA operator][service-ca-operator].
@@ -62,15 +61,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   9000-9999 for for host network services.  This matches the approach
   we have been using for masters since 0.4.0.  The master security
   group has also been adjusted to fix a 9990 -> 9999 typo from 0.4.0.
+- On libvirt, the default compute nodes have been bumped from 2 to 4
+  GiB of memory and the control-plane nodes have been bumped from 4 to
+  6 GiB of memory and 2 to 4 vCPUs.
 - Several doc and internal cleanups and minor fixes.
 
 ### Fixed
 
 - The router certificate authority is appended to the admin
   `kubeconfig` to fix the OAuth flow behind `oc login`.
-- The installer now verifies cluster names supplied via
-  `install-config.yaml` (it previously only validated cluster names
-  provided via the install-config wizard).
+- The `install-config.yaml` validation is now more robust, with the
+  installer:
+
+    - Validating cluster names (it previously only validated cluster
+      names provided via the install-config wizard).
+    - Validating `networking.clusterNetworks[].cidr` and explicitly
+      checking for `nil` `machineCIDR` and `serviceCIDR`.
+
 - Terraform variables are now generated from master machine
   configurations instead of from the install configuration.  This
   allows them to reflect changes made by editing master machine
@@ -85,17 +92,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - When the installer prompts for AWS credentials, it now respects
   `AWS_PROFILE` and will update an existing credentials file instead
   of erroring out.
+- On AWS, the default [instance types][aws-instance-types] now depend
+  on the selected region, with regions that do not support m4 types
+  falling back to m5.
 - On AWS, the installer now verifies that the user-supplied
   credentials have sufficient permissions for creating a cluster.
   Previously, permissions issues would surface as Terraform errors or
   broken cluster functionality after a nominally successful install.
-- On AWS, the `destroy cluster` implementation is now more robust:
+- On AWS, the `destroy cluster` implementation is now more robust,
+  fixing several bugs from 0.10.1:
+
     - The destroy code now checks for `nil` before dereferencing,
       avoiding panics when removing internet gateways which had not
       yet been associated with a VPC, and in other similar cases.
     - The destoy code now treats already-deleted instances as
       successfully deleted, instead of looping forever while trying to
       delete them.
+    - The destroy code now treats a non-existant public DNS zone as
+      success, instead of looping forever while trying to delete
+      records from it.
+
+- On AWS and OpenStack, there is a new infra ID that is a uniqified,
+  possibly-abbreviated form of the cluster name.  The infra ID is used
+  to name and tag cluster resources, allowing for multiple clusters
+  that share the same cluster name in a single account without naming
+  conflicts (beyond DNS conflicts if both clusters also share the same
+  base domain).
 - On OpenStack, the HAProxy configuration on the service VM now only
   balances ports 80 and 443 across compute nodes (it used to also
   balance them across control-plane nodes).
