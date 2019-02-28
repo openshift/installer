@@ -20,6 +20,7 @@ var installPermissions = []string{
 	"ec2:AttachInternetGateway",
 	"ec2:AuthorizeSecurityGroupEgress",
 	"ec2:AuthorizeSecurityGroupIngress",
+	"ec2:CopyImage",
 	"ec2:CreateDhcpOptions",
 	"ec2:CreateInternetGateway",
 	"ec2:CreateNatGateway",
