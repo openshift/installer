@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.13.1 - 2019-02-28
+
+### Changed
+
+- The aggregator and etcd-client certificate authorities are now
+  self-signed authorities decoupled from the root certificate
+  authority, continuing the transition begun in 0.13.0.
+- On AWS, Route 53 A records for the API load balancer no longer use
+  health checks.
+- On AWS, the security group configuration has been simplified, with
+  several stale rules being removed.
+
+### Fixed
+
+- When rendering manifests before pushing them to the cluster, the
+  bootstrap machine now correctly cleans up broken renders before
+  re-rendering.
+- The bootstrap machine now uses an `etcdctl` referenced from the
+  release image, instead of hard-coding its own version.
+
+### Removed
+
+- The nominal install-config compatibility with `v1beta1` and
+  `v1beta2` has been removed, so the installer will error out if
+  provided with an older `install-config.yaml`.  `v1beta1` was
+  deprecated in 0.12.0 and `v1beta2` was deprecated in 0.13.0.  In
+  both cases, the installer would ignore removed properties but not
+  error out.
+
 ## 0.13.0 - 2019-02-26
 
 ### Added
