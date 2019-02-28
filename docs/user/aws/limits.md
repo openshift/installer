@@ -70,17 +70,17 @@ to be created. The security groups which exist after the default install are:
 By default, a cluster will create:
 
 * One m4.large bootstrap machine (removed after install)
-* Three m4.xlarge master nodes.
-* Three m4.large worker nodes.
+* Three m4.xlarge control plane nodes.
+* Three m4.large compute nodes.
 
 Currently, these instance type counts are within a new account's default limit.
-If you intend to start with a higher number of workers, enable autoscaling and large workloads
+If you intend to start with a higher number of compute nodes, enable autoscaling and large workloads
 or a different instance type, please ensure you have the necessary remaining instance count within the instance type's
 limit to satisfy the need. If not, please ask AWS to increase the limit via a support case.
 
 ## Elastic Load Balancing (ELB/NLB)
 
-By default, each cluster will create 2 network load balancers for the master API server (1 internal, 1 external) and a
+By default, each cluster will create 2 network load balancers for the API server (1 internal, 1 external) and a
 single classic elastic load balancer for the router. Additional Kubernetes LoadBalancer Service objects will create
 additional [load balancers][load-balancing].
 

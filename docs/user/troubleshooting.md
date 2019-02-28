@@ -6,9 +6,9 @@ If you have a Red Hat subscription for OpenShift, see [here][access-article] for
 
 ## Common Failures
 
-### No Worker Nodes Created
+### No Compute Nodes Created
 
-The installer doesn't provision worker nodes directly, like it does with master nodes. Instead, the cluster relies on the Machine API Operator, which is able to scale up and down nodes on supported platforms. If more than fifteen to twenty minutes (depending on the speed of the cluster's Internet connection) have elapsed without any workers, the Machine API Operator needs to be investigated.
+The installer doesn't provision compute nodes directly, like it does with control plane nodes. Instead, the cluster relies on the Machine API Operator, which is able to scale up and down nodes on supported platforms. If more than fifteen to twenty minutes (depending on the speed of the cluster's Internet connection) have elapsed without any compute nodes, the Machine API Operator needs to be investigated.
 
 The status of the Machine API Operator can be checked by running the following command from the machine used to install the cluster:
 
@@ -35,11 +35,11 @@ oc --config=${INSTALL_DIR}/auth/kubeconfig --namespace=openshift-machine-api log
 
 ### Kubernetes API is Unavailable
 
-When the Kubernetes API is unavailable, the master nodes will need to checked to ensure that they are running the correct components. This requires SSH access so it is necessary to include an administrator's SSH key during the installation.
+When the Kubernetes API is unavailable, the control plane nodes will need to checked to ensure that they are running the correct components. This requires SSH access so it is necessary to include an administrator's SSH key during the installation.
 
-If SSH access to the master nodes isn't available, that will need to be [investigated next](#unable-to-ssh-into-master-nodes).
+If SSH access to the control plane nodes isn't available, that will need to be [investigated next](#unable-to-ssh-into-control-plane-nodes).
 
-The first thing to check is to make sure that etcd is running on each of the masters. The etcd logs can be viewed by running the following on each master node:
+The first thing to check is to make sure that etcd is running on each of the control plane node. The etcd logs can be viewed by running the following on each control plane node:
 
 ```sh
 sudo crictl logs $(sudo crictl ps --pod=$(sudo crictl pods --name=etcd-member --quiet) --quiet)
@@ -53,20 +53,20 @@ sudo crictl pods --name=etcd-member
 
 If no pods are shown, etcd will need to be [investigated](#etcd-is-not-running).
 
-### Unable to SSH into Master Nodes
+### Unable to SSH into Control Plane Nodes
 
 For added security, SSH isn't available from the Internet by default. There are several options for enabling this functionality:
 
 - Create a bastion host that is accessible from the Internet and has access to the cluster. If the bootstrap machine hasn't been automatically destroyed yet, it can double as a temporary bastion host since it is given a public IP address.
 - Configure network peering or a VPN to allow remote access to the private network.
 
-In order to SSH into the master nodes as user `core`, it is necessary to include an administrator's SSH key during the installation.
+In order to SSH into the control plane nodes as user `core`, it is necessary to include an administrator's SSH key during the installation.
 The selected key, if any, will be added to the `core` user's `~/.ssh/authorized_keys` via [Ignition](https://github.com/coreos/ignition) and is not configured via platform-specific approaches like [AWS key pairs][aws-key-pairs].
 See [here][machine-config-daemon-ssh-keys] for information about managing SSH keys via the machine-config daemon.
 
-If SSH isn't able to connect to the nodes, they may be waiting on the bootstrap node before they can boot. The initial set of master nodes fetch their boot configuration (the Ignition Config) from the bootstrap node and will not complete until they successfully do so. Check the console output of the nodes to determine if they have successfully booted or if they are waiting for Ignition to fetch the remote config.
+If SSH isn't able to connect to the nodes, they may be waiting on the bootstrap node before they can boot. The initial set of control plane nodes fetch their boot configuration (the Ignition Config) from the bootstrap node and will not complete until they successfully do so. Check the console output of the nodes to determine if they have successfully booted or if they are waiting for Ignition to fetch the remote config.
 
-Master nodes waiting for Ignition is indicative of problems on the bootstrap node. SSH into the bootstrap node to [investigate further](#troubleshooting-the-bootstrap-node).
+Control plane nodes waiting for Ignition is indicative of problems on the bootstrap node. SSH into the bootstrap node to [investigate further](#troubleshooting-the-bootstrap-node).
 
 ### Troubleshooting the Bootstrap Node
 
@@ -106,7 +106,7 @@ For other generic troubleshooting, see [the Kubernetes documentation][kubernetes
 
 ### Check for Pending or Crashing Pods
 
-This is the generic version of the [*No Worker Nodes Created*](#no-worker-nodes-created) troubleshooting procedure.
+This is the generic version of the [*No Compute Nodes Created*](#no-compute-nodes-created) troubleshooting procedure.
 
 ```console
 $ oc --config=${INSTALL_DIR}/auth/kubeconfig get pods --all-namespaces
@@ -224,7 +224,7 @@ If you think it's a misconfiguration, file a [network operator](https://github.c
 #### Debugging the cluster-network-operator
 The cluster network operator is responsible for deploying the networking components. It does this in response to a special object created by the installer.
 
-From a deployment perspective, the network operator is often the "canary in the coal mine." It runs very early in the installation process, after the master nodes have come up but before the bootstrap control plane has been torn down. It can be indicative of more subtle installer issues, such as long delays in bringing up master nodes or apiserver communication issues. Nevertheless, it can have other bugs.
+From a deployment perspective, the network operator is often the "canary in the coal mine." It runs very early in the installation process, after the control plane nodes have come up but before the bootstrap control plane has been torn down. It can be indicative of more subtle installer issues, such as long delays in bringing up control plane nodes or apiserver communication issues. Nevertheless, it can have other bugs.
 
 First, determine that the network configuration exists:
 
@@ -251,7 +251,7 @@ Next, check that the network-operator is running:
 kubectl -n openshift-network-operator get pods
 ```
 
-And retrieve the logs. Note that, on multi-master systems, the operator will perform leader election and all other operators will sleep:
+And retrieve the logs. Note that, on HA control planes, the operator will perform leader election and all other operators will sleep:
 
 ```sh
 kubectl -n openshift-network-operator logs -l "name=network-operator"

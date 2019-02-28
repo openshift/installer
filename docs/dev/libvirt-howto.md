@@ -92,9 +92,9 @@ sudo sysctl -p /etc/sysctl.d/99-ipforward.conf
 ### Configure libvirt to accept TCP connections
 
 The Kubernetes [cluster-api](https://github.com/kubernetes-sigs/cluster-api)
-components drive deployment of worker machines.  The libvirt cluster-api
+components drive deployment of compute machines.  The libvirt cluster-api
 provider will run inside the local cluster, and will need to connect back to
-the libvirt instance on the host machine to deploy workers.
+the libvirt instance on the host machine to deploy compute machines.
 
 In order for this to work, you'll need to enable TCP connections for libvirt.
 
@@ -255,8 +255,8 @@ Using the domain names above will only work if you [set up the DNS overlay](#set
 Alternatively, if you didn't set up DNS on the host, you can use:
 
 ```sh
-virsh -c "${LIBVIRT_URI}" domifaddr "${CLUSTER_NAME}-master-0"  # to get the master IP
-ssh core@$MASTER_IP
+virsh -c "${LIBVIRT_URI}" domifaddr "${CLUSTER_NAME}-master-0"  # to get the control plane machine's IP
+ssh core@$CONTROL_PLANE_IP
 ```
 
 Here `LIBVIRT_URI` is the libvirt connection URI which you [passed to the installer](../../README.md#quick-start).
@@ -270,7 +270,7 @@ export KUBECONFIG="${DIR}/auth/kubeconfig"
 kubectl get --all-namespaces pods
 ```
 
-Alternatively, you can run `kubectl` from the bootstrap or master nodes.
+Alternatively, you can run `kubectl` from the bootstrap or control plane machines.
 Use `scp` or similar to transfer your local `${DIR}/auth/kubeconfig`, then [SSH in](#ssh-access) and run:
 
 ```sh

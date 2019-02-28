@@ -31,7 +31,7 @@ The `manifest-templates` target will output the unrendered manifest templates in
 
 In rare circumstances, certain modifications to the bootstrap and other machines may be necessary. The installer provides the "ignition-configs" target, which allows arbitrary modification to the [Ignition Configs][ignition] used to boot these machines. Note that there is currently no validation on the modifications that are made, so it is possible that the changes will result in a non-functioning cluster.
 
-An example `worker.ign` is shown below. It has been modified to increase the HTTP timeouts used when fetching the generated worker config from the cluster. This isn't likely to be useful, but it does demonstrate what is possible.
+An example `worker.ign` is shown below. It has been modified to increase the HTTP timeouts used when fetching the generated compute machine config from the cluster. This isn't likely to be useful, but it does demonstrate what is possible.
 
 ```json ignition
 {
