@@ -15,6 +15,7 @@ type config struct {
 	ExtraTags             map[string]string `json:"aws_extra_tags,omitempty"`
 	BootstrapInstanceType string            `json:"aws_bootstrap_instance_type,omitempty"`
 	MasterInstanceType    string            `json:"aws_master_instance_type,omitempty"`
+	AvailabilityZones     []string          `json:"aws_master_availability_zones"`
 	IOPS                  int64             `json:"aws_master_root_volume_iops"`
 	Size                  int64             `json:"aws_master_root_volume_size,omitempty"`
 	Type                  string            `json:"aws_master_root_volume_type,omitempty"`
@@ -22,10 +23,17 @@ type config struct {
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
-func TFVars(masterConfig *v1beta1.AWSMachineProviderConfig) ([]byte, error) {
+func TFVars(masterConfigs []*v1beta1.AWSMachineProviderConfig) ([]byte, error) {
+	masterConfig := masterConfigs[0]
+
 	tags := make(map[string]string, len(masterConfig.Tags))
 	for _, tag := range masterConfig.Tags {
 		tags[tag.Name] = tag.Value
+	}
+
+	availabilityZones := make([]string, len(masterConfigs))
+	for i, c := range masterConfigs {
+		availabilityZones[i] = c.Placement.AvailabilityZone
 	}
 
 	if len(masterConfig.BlockDevices) == 0 {
@@ -52,9 +60,10 @@ func TFVars(masterConfig *v1beta1.AWSMachineProviderConfig) ([]byte, error) {
 	instanceClass := defaults.InstanceClass(masterConfig.Placement.Region)
 
 	cfg := &config{
-		Region:    masterConfig.Placement.Region,
-		ExtraTags: tags,
-		AMI:       *masterConfig.AMI.ID,
+		Region:                masterConfig.Placement.Region,
+		ExtraTags:             tags,
+		AMI:                   *masterConfig.AMI.ID,
+		AvailabilityZones:     availabilityZones,
 		BootstrapInstanceType: fmt.Sprintf("%s.large", instanceClass),
 		MasterInstanceType:    masterConfig.InstanceType,
 		Size:                  *rootVolume.EBS.VolumeSize,

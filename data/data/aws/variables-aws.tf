@@ -57,3 +57,8 @@ variable "aws_region" {
   type        = "string"
   description = "The target AWS region for the cluster."
 }
+
+variable "aws_master_availability_zones" {
+  type        = "list"
+  description = "The availability zones in which to create the masters. The length of this list must match master_count."
+}

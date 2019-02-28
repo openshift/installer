@@ -2,6 +2,10 @@ output "vpc_id" {
   value = "${data.aws_vpc.cluster_vpc.id}"
 }
 
+output "az_to_private_subnet_id" {
+  value = "${zipmap(local.new_subnet_azs, local.private_subnet_ids)}"
+}
+
 output "public_subnet_ids" {
   value = "${local.public_subnet_ids}"
 }

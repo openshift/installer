@@ -74,7 +74,7 @@ resource "aws_instance" "master" {
 
   iam_instance_profile = "${aws_iam_instance_profile.master.name}"
   instance_type        = "${var.instance_type}"
-  subnet_id            = "${element(var.subnet_ids, count.index)}"
+  subnet_id            = "${var.az_to_subnet_id[var.availability_zones[count.index]]}"
   user_data            = "${var.user_data_ign}"
 
   vpc_security_group_ids = ["${var.master_sg_ids}"]
