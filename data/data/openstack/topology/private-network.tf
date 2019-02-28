@@ -76,8 +76,9 @@ resource "openstack_networking_port_v2" "service_port" {
 }
 
 data "openstack_networking_network_v2" "external_network" {
-  name     = "${var.external_network}"
-  external = true
+  name       = "${var.external_network}"
+  network_id = "${var.external_network_id}"
+  external   = true
 }
 
 resource "openstack_networking_floatingip_associate_v2" "service_fip" {
