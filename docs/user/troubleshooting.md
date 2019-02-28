@@ -99,6 +99,237 @@ This is safe to ignore and merely indicates that the etcd bootstrapping is still
 
 The easiest way to get more debugging information from the installer is to check the log file (`.openshift_install.log`) in the install directory. Regardless of the logging level specified, the installer will write its logs in case they need to be inspected retroactively.
 
+### Installer Fails to Initialize the Cluster
+
+The installer uses the [cluster-version-operator] to create all the components of an OpenShift cluster. When the installer fails to initialize the cluster, the most important information can be fetched by looking at the [ClusterVersion][clusterversion] and [ClusterOperator][clusteroperator] objects:
+
+1. Inspecting the `ClusterVersion` object.
+
+    ```console
+    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusterversion -oyaml
+    apiVersion: config.openshift.io/v1
+    kind: ClusterVersion
+    metadata:
+      creationTimestamp: 2019-02-27T22:24:21Z
+      generation: 1
+      name: version
+      resourceVersion: "19927"
+      selfLink: /apis/config.openshift.io/v1/clusterversions/version
+      uid: 6e0f4cf8-3ade-11e9-9034-0a923b47ded4
+    spec:
+      channel: stable-4.0
+      clusterID: 5ec312f9-f729-429d-a454-61d4906896ca
+      upstream: https://api.openshift.com/api/upgrades_info/v1/graph
+    status:
+      availableUpdates: null
+      conditions:
+      - lastTransitionTime: 2019-02-27T22:50:30Z
+        message: Done applying 4.0.0-0.alpha-2019-02-27-131049
+        status: "True"
+        type: Available
+      - lastTransitionTime: 2019-02-27T22:50:30Z
+        status: "False"
+        type: Failing
+      - lastTransitionTime: 2019-02-27T22:50:30Z
+        message: Cluster version is 4.0.0-0.alpha-2019-02-27-131049
+        status: "False"
+        type: Progressing
+      - lastTransitionTime: 2019-02-27T22:24:31Z
+        message: 'Unable to retrieve available updates: unknown version 4.0.0-0.alpha-2019-02-27-131049'
+        reason: RemoteFailed
+        status: "False"
+        type: RetrievedUpdates
+      desired:
+        image: registry.svc.ci.openshift.org/openshift/origin-release@sha256:91e6f754975963e7db1a9958075eb609ad226968623939d262d1cf45e9dbc39a
+        version: 4.0.0-0.alpha-2019-02-27-131049
+      history:
+      - completionTime: 2019-02-27T22:50:30Z
+        image: registry.svc.ci.openshift.org/openshift/origin-release@sha256:91e6f754975963e7db1a9958075eb609ad226968623939d262d1cf45e9dbc39a
+        startedTime: 2019-02-27T22:24:31Z
+        state: Completed
+        version: 4.0.0-0.alpha-2019-02-27-131049
+      observedGeneration: 1
+      versionHash: Wa7as_ik1qE=
+    ```
+
+    Some of most important [conditions][cluster-operator-conditions] to take note are `Failing`, `Available` and `Progressing`. You can look at the conditions using:
+
+    ```console
+    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusterversion version -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'
+    Available True Done applying 4.0.0-0.alpha-2019-02-26-194020
+    Failing False
+    Progressing False Cluster version is 4.0.0-0.alpha-2019-02-26-194020
+    RetrievedUpdates False Unable to retrieve available updates: unknown version 4.0.0-0.alpha-2019-02-26-194020
+    ```
+
+2. Inspecting the `ClusterOperator` object.
+
+    You can get the status of all the cluster operators:
+
+    ```console
+    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator
+    NAME                                  VERSION   AVAILABLE   PROGRESSING   FAILING   SINCE
+    cluster-autoscaler                              True        False         False     17m
+    cluster-storage-operator                        True        False         False     10m
+    console                                         True        False         False     7m21s
+    dns                                             True        False         False     31m
+    image-registry                                  True        False         False     9m58s
+    ingress                                         True        False         False     10m
+    kube-apiserver                                  True        False         False     28m
+    kube-controller-manager                         True        False         False     21m
+    kube-scheduler                                  True        False         False     25m
+    machine-api                                     True        False         False     17m
+    machine-config                                  True        False         False     17m
+    marketplace-operator                            True        False         False     10m
+    monitoring                                      True        False         False     8m23s
+    network                                         True        False         False     13m
+    node-tuning                                     True        False         False     11m
+    openshift-apiserver                             True        False         False     15m
+    openshift-authentication                        True        False         False     20m
+    openshift-cloud-credential-operator             True        False         False     18m
+    openshift-controller-manager                    True        False         False     10m
+    openshift-samples                               True        False         False     8m42s
+    operator-lifecycle-manager                      True        False         False     17m
+    service-ca                                      True        False         False     30m
+    ```
+
+    To get detailed information on why an individual cluster operator is `Failing` or not yet `Available`, you can check the status of that individual operator, for example `monitoring`:
+
+    ```console
+    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator monitoring -oyaml
+    apiVersion: config.openshift.io/v1
+    kind: ClusterOperator
+    metadata:
+      creationTimestamp: 2019-02-27T22:47:04Z
+      generation: 1
+      name: monitoring
+      resourceVersion: "24677"
+      selfLink: /apis/config.openshift.io/v1/clusteroperators/monitoring
+      uid: 9a6a5ef9-3ae1-11e9-bad4-0a97b6ba9358
+    spec: {}
+    status:
+      conditions:
+      - lastTransitionTime: 2019-02-27T22:49:10Z
+        message: Successfully rolled out the stack.
+        status: "True"
+        type: Available
+      - lastTransitionTime: 2019-02-27T22:49:10Z
+        status: "False"
+        type: Progressing
+      - lastTransitionTime: 2019-02-27T22:49:10Z
+        status: "False"
+        type: Failing
+      extension: null
+      relatedObjects: null
+      version: ""
+    ```
+
+    Again, the cluster operators also publish [conditions][cluster-operator-conditions] like `Failing`, `Available` and `Progressing` that can help user provide information on the current state of the operator:
+
+    ```console
+    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator monitoring -o=jsonpath='{range .status.conditions[*]}{.type}{" "}{.status}{" "}{.message}{"\n"}{end}'
+    Available True Successfully rolled out the stack
+    Progressing False
+    Failing False
+    ```
+
+    Each clusteroperator also publishes the list of objects owned by the cluster operator. To get that information:
+
+    ```console
+    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator kube-apiserver -o=jsonpath='{.status.relatedObjects}'
+    [map[resource:kubeapiservers group:operator.openshift.io name:cluster] map[group: name:openshift-config resource:namespaces] map[group: name:openshift-config-managed resource:namespaces] map[group: name:openshift-kube-apiserver-operator resource:namespaces] map[group: name:openshift-kube-apiserver resource:namespaces]]
+    ```
+
+**NOTE:** Failing to initialize the cluster is usually not a fatal failure in terms of cluster creation as the user can look at the failures from `ClusterOperator` to debug failures for a cluster operator and take actions which can allow `cluster-version-operator` to make progress.
+
+### Installer Fails to Fetch Console URL
+
+The installer fetches the URL for OpenShift console using the [route][route-object] in `openshift-console` namespace. If the installer fails the fetch the URL for the console:
+
+1. Check if the console router is `Available` or `Failing`
+
+    ```console
+    $ oc --config=${INSTALL_DIR}/auth/kubeconfig get clusteroperator console -oyaml
+    apiVersion: config.openshift.io/v1
+    kind: ClusterOperator
+    metadata:
+      creationTimestamp: 2019-02-27T22:46:57Z
+      generation: 1
+      name: console
+      resourceVersion: "19682"
+      selfLink: /apis/config.openshift.io/v1/clusteroperators/console
+      uid: 960364aa-3ae1-11e9-bad4-0a97b6ba9358
+    spec: {}
+    status:
+      conditions:
+      - lastTransitionTime: 2019-02-27T22:46:58Z
+        status: "False"
+        type: Failing
+      - lastTransitionTime: 2019-02-27T22:50:12Z
+        status: "False"
+        type: Progressing
+      - lastTransitionTime: 2019-02-27T22:50:12Z
+        status: "True"
+        type: Available
+      - lastTransitionTime: 2019-02-27T22:46:57Z
+        status: "True"
+        type: Upgradeable
+      extension: null
+      relatedObjects:
+      - group: operator.openshift.io
+        name: cluster
+        resource: consoles
+      - group: config.openshift.io
+        name: cluster
+        resource: consoles
+      - group: oauth.openshift.io
+        name: console
+        resource: oauthclients
+      - group: ""
+        name: openshift-console-operator
+        resource: namespaces
+      - group: ""
+        name: openshift-console
+        resource: namespaces
+      versions: null
+    ```
+
+2. Manually get the URL for `console`
+
+  ```console
+  $ oc --config=${INSTALL_DIR}/auth/kubeconfig get route console -n openshift-console -o=jsonpath='{.spec.host}'
+  console-openshift-console.apps.adahiya-1.devcluster.openshift.com
+  ```
+
+### Installer Fails to Add Route CA to Kubeconfig
+
+The installer adds the CA certificate for the router to the list of trusted client certificate authorities in `${INSTALL_DIR}/auth/kubeconfig`. If the installer fails to add the router CA to `kubeconfig`, you can fetch the router CA from the cluster using:
+
+```console
+$ oc --config=${INSTALL_DIR}/auth/kubeconfig get configmaps router-ca -n openshift-config-managed -o=jsonpath='{.data.ca-bundle\.crt}'
+-----BEGIN CERTIFICATE-----
+MIIC/TCCAeWgAwIBAgIBATANBgkqhkiG9w0BAQsFADAuMSwwKgYDVQQDDCNjbHVz
+dGVyLWluZ3Jlc3Mtb3BlcmF0b3JAMTU1MTMwNzU4OTAeFw0xOTAyMjcyMjQ2Mjha
+Fw0yMTAyMjYyMjQ2MjlaMC4xLDAqBgNVBAMMI2NsdXN0ZXItaW5ncmVzcy1vcGVy
+YXRvckAxNTUxMzA3NTg5MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA
+uCA4fQ+2YXoXSUL4h/mcvJfrgpBfKBW5hfB8NcgXeCYiQPnCKblH1sEQnI3VC5Pk
+2OfNCF3PUlfm4i8CHC95a7nCkRjmJNg1gVrWCvS/ohLgnO0BvszSiRLxIpuo3C4S
+EVqqvxValHcbdAXWgZLQoYZXV7RMz8yZjl5CfhDaaItyBFj3GtIJkXgUwp/5sUfI
+LDXW8MM6AXfuG+kweLdLCMm3g8WLLfLBLvVBKB+4IhIH7ll0buOz04RKhnYN+Ebw
+tcvFi55vwuUCWMnGhWHGEQ8sWm/wLnNlOwsUz7S1/sW8nj87GFHzgkaVM9EOnoNI
+gKhMBK9ItNzjrP6dgiKBCQIDAQABoyYwJDAOBgNVHQ8BAf8EBAMCAqQwEgYDVR0T
+AQH/BAgwBgEB/wIBADANBgkqhkiG9w0BAQsFAAOCAQEAq+vi0sFKudaZ9aUQMMha
+CeWx9CZvZBblnAWT/61UdpZKpFi4eJ2d33lGcfKwHOi2NP/iSKQBebfG0iNLVVPz
+vwLbSG1i9R9GLdAbnHpPT9UG6fLaDIoKpnKiBfGENfxeiq5vTln2bAgivxrVlyiq
++MdDXFAWb6V4u2xh6RChI7akNsS3oU9PZ9YOs5e8vJp2YAEphht05X0swA+X8V8T
+C278FFifpo0h3Q0Dbv8Rfn4UpBEtN4KkLeS+JeT+0o2XOsFZp7Uhr9yFIodRsnNo
+H/Uwmab28ocNrGNiEVaVH6eTTQeeZuOdoQzUbClElpVmkrNGY0M42K0PvOQ/e7+y
+AQ==
+-----END CERTIFICATE-----
+```
+
+You can then **prepend** that certificate to `client-certificate-authority-data` field in your `${INSTALL_DIR}/auth/kubeconfig`.
+
 ## Generic Troubleshooting
 
 Here are some ideas if none of the [common failures](#common-failures) match your symptoms.
@@ -263,3 +494,7 @@ If appropriate, file a [network operator](https://github.com/openshift/cluster-n
 [aws-key-pairs]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html
 [kubernetes-debug]: https://kubernetes.io/docs/tasks/debug-application-cluster/
 [machine-config-daemon-ssh-keys]: https://github.com/openshift/machine-config-operator/blob/master/docs/Update-SSHKeys.md
+[cluster-version-operator]: https://github.com/openshift/cluster-version-operator/blob/master/README.md
+[clusterversion]: https://github.com/openshift/cluster-version-operator/blob/master/docs/dev/clusterversion.md
+[clusteroperator]: https://github.com/openshift/cluster-version-operator/blob/master/docs/dev/clusteroperator.md
+[cluster-operator-conditions]: https://github.com/openshift/cluster-version-operator/blob/master/docs/dev/clusteroperator.md#conditions
