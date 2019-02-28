@@ -32,6 +32,7 @@ var installPermissions = []string{
 	"ec2:CreateVpc",
 	"ec2:CreateVpcEndpoint",
 	"ec2:CreateVolume",
+	"ec2:DeregisterImage",
 	"ec2:DescribeAccountAttributes",
 	"ec2:DescribeAddresses",
 	"ec2:DescribeAvailabilityZones",
