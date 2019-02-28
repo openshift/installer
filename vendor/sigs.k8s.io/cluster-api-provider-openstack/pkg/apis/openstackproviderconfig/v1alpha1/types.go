@@ -60,7 +60,7 @@ type OpenstackProviderSpec struct {
 	AvailabilityZone string `json:"availabilityZone,omitempty"`
 
 	// The names of the security groups to assign to the instance
-	SecurityGroups []string `json:"securityGroups,omitempty"`
+	SecurityGroups []SecurityGroupParam `json:"securityGroups,omitempty"`
 
 	// The name of the secret containing the user data (startup script in most cases)
 	UserDataSecret *corev1.SecretReference `json:"userDataSecret,omitempty"`
@@ -69,6 +69,30 @@ type OpenstackProviderSpec struct {
 	Trunk bool `json:"trunk,omitempty"`
 
 	RootVolume RootVolume `json:"root_volume,omitempty"`
+}
+
+type SecurityGroupParam struct {
+	// Security Group UID
+	UUID string `json:"uuid,omitempty"`
+	// Security Group name
+	Name string `json:"name,omitempty"`
+	// Filters used to query security groups in openstack
+	Filter SecurityGroupFilter `json:"filter,omitempty"`
+}
+
+type SecurityGroupFilter struct {
+	ID         string `json:"id,omitempty"`
+	Name       string `json:"name,omitempty"`
+	TenantID   string `json:"tenant_id,omitempty"`
+	ProjectID  string `json:"project_id,omitempty"`
+	Limit      int    `json:"limit,omitempty"`
+	Marker     string `json:"marker,omitempty"`
+	SortKey    string `json:"sort_key,omitempty"`
+	SortDir    string `json:"sort_dir,omitempty"`
+	Tags       string `json:"tags,omitempty"`
+	TagsAny    string `json:"tags-any,omitempty"`
+	NotTags    string `json:"not-tags,omitempty"`
+	NotTagsAny string `json:"not-tags-any,omitempty"`
 }
 
 type NetworkParam struct {
