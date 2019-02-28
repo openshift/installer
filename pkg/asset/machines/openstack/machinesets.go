@@ -48,26 +48,26 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 			Namespace: "openshift-machine-api",
 			Name:      name,
 			Labels: map[string]string{
-				"sigs.k8s.io/cluster-api-cluster":      clusterID,
-				"sigs.k8s.io/cluster-api-machine-role": role,
-				"sigs.k8s.io/cluster-api-machine-type": role,
+				"machine.openshift.io/cluster-api-cluster":      clusterID,
+				"machine.openshift.io/cluster-api-machine-role": role,
+				"machine.openshift.io/cluster-api-machine-type": role,
 			},
 		},
 		Spec: clusterapi.MachineSetSpec{
 			Replicas: &total,
 			Selector: metav1.LabelSelector{
 				MatchLabels: map[string]string{
-					"sigs.k8s.io/cluster-api-machineset": name,
-					"sigs.k8s.io/cluster-api-cluster":    clusterID,
+					"machine.openshift.io/cluster-api-machineset": name,
+					"machine.openshift.io/cluster-api-cluster":    clusterID,
 				},
 			},
 			Template: clusterapi.MachineTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
-						"sigs.k8s.io/cluster-api-machineset":   name,
-						"sigs.k8s.io/cluster-api-cluster":      clusterID,
-						"sigs.k8s.io/cluster-api-machine-role": role,
-						"sigs.k8s.io/cluster-api-machine-type": role,
+						"machine.openshift.io/cluster-api-machineset":   name,
+						"machine.openshift.io/cluster-api-cluster":      clusterID,
+						"machine.openshift.io/cluster-api-machine-role": role,
+						"machine.openshift.io/cluster-api-machine-type": role,
 					},
 				},
 				Spec: clusterapi.MachineSpec{
