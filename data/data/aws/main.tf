@@ -15,7 +15,7 @@ module "bootstrap" {
   instance_type            = "${var.aws_bootstrap_instance_type}"
   cluster_id               = "${var.cluster_id}"
   ignition                 = "${var.ignition_bootstrap}"
-  subnet_id                = "${module.vpc.az_to_private_subnet_id[var.aws_master_availability_zones[0]]}"
+  subnet_id                = "${module.vpc.az_to_public_subnet_id[var.aws_master_availability_zones[0]]}"
   target_group_arns        = "${module.vpc.aws_lb_target_group_arns}"
   target_group_arns_length = "${module.vpc.aws_lb_target_group_arns_length}"
   vpc_id                   = "${module.vpc.vpc_id}"
