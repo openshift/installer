@@ -18,4 +18,8 @@ do
 	OUTPUT="bin/openshift-install-${GOOS}-${GOARCH}"
 	GOOS="${GOOS}" GOARCH="${GOARCH}" OUTPUT="${OUTPUT}" SKIP_GENERATION=y ./build.sh
 done
-(cd ../bin && sha256sum openshift-install-*)
+(
+	cd ../bin
+	sha256sum openshift-install-* >release.sha256
+	gpg --output release.sha256.sig --detach-sig release.sha256
+)
