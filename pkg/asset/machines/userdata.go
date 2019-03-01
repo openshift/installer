@@ -23,6 +23,7 @@ items:
     namespace: openshift-machine-api
   type: Opaque
   data:
+    disableTemplating: "dHJ1ZQo="
     userData: {{$content}}
 {{- end}}
 `))

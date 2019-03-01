@@ -24,7 +24,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 	"sigs.k8s.io/yaml"
 
-	clusterv1 "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1"
+	clusterv1 "github.com/openshift/cluster-api/pkg/apis/cluster/v1alpha1"
+	machinev1 "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/runtime/scheme"
 )
 
@@ -67,7 +68,7 @@ func ClusterStatusFromProviderStatus(extension *runtime.RawExtension) (*Openstac
 
 // This is the same as ClusterSpecFromProviderSpec but we
 // expect there to be a specific Spec type for Machines soon
-func MachineSpecFromProviderSpec(providerSpec clusterv1.ProviderSpec) (*OpenstackProviderSpec, error) {
+func MachineSpecFromProviderSpec(providerSpec machinev1.ProviderSpec) (*OpenstackProviderSpec, error) {
 	if providerSpec.Value == nil {
 		return nil, errors.New("no such providerSpec found in manifest")
 	}

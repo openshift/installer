@@ -78,6 +78,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 }
 
 func provider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string) (*openstackprovider.OpenstackProviderSpec, error) {
+
 	return &openstackprovider.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "openstackproviderconfig.k8s.io/v1alpha1",
@@ -94,8 +95,13 @@ func provider(clusterID string, platform *openstack.Platform, mpool *openstack.M
 		UserDataSecret: &corev1.SecretReference{Name: userDataSecret},
 		Networks: []openstackprovider.NetworkParam{
 			{
-				Filter: openstackprovider.Filter{
-					Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
+				Subnets: []openstackprovider.SubnetParam{
+					{
+						Filter: openstackprovider.SubnetFilter{
+							Name: "nodes",
+							Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
+						},
+					},
 				},
 			},
 		},

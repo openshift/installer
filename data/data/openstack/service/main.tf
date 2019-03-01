@@ -69,29 +69,55 @@ data "ignition_file" "haproxy_watcher_script" {
 
 set -x
 
+# NOTE(flaper87): We're doing this here for now
+# because our current vendored verison for terraform
+# doesn't support appending to an ignition_file. This
+# is coming in 2.3
+grep -qxF "127.0.0.1 api.${var.cluster_domain}" /etc/hosts || echo "127.0.0.1 api.${var.cluster_domain}" | sudo tee -a /etc/hosts
+
+mkdir -p /etc/haproxy
 export KUBECONFIG=/opt/openshift/auth/kubeconfig
-TEMPLATE="{{range .items}}{{\$name:=.metadata.name}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{if eq .status \"True\" }}{{\$name}}{{end}}{{end}}{{end}} {{end}}"
+TEMPLATE="{{range .items}}{{\$addresses:=.status.addresses}}{{range .status.conditions}}{{if eq .type \"Ready\"}}{{if eq .status \"True\" }}{{range \$addresses}}{{if eq .type \"InternalIP\"}}{{.address}}{{end}}{{end}}{{end}}{{end}}{{end}} {{end}}"
 MASTERS=$(oc get nodes -l node-role.kubernetes.io/master -ogo-template="$TEMPLATE")
 WORKERS=$(oc get nodes -l node-role.kubernetes.io/worker -ogo-template="$TEMPLATE")
 
+update_cfg_and_restart() {
+    CHANGED=$(diff /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.new)
+    
+    if [[ ! -f /etc/haproxy/haproxy.cfg ]] || [[ ! $CHANGED -eq "" ]];
+    then
+        cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.backup || true
+        cp /etc/haproxy/haproxy.cfg.new /etc/haproxy/haproxy.cfg
+        systemctl restart haproxy
+    fi
+}
+
 if [[ $MASTERS -eq "" ]];
 then
-    MASTER_LINES="
-    server ${var.cluster_id}-bootstrap-22623 ${var.cluster_id}-bootstrap.${var.cluster_domain} check port 22623
-    server ${var.cluster_id}-bootstrap-6443 ${var.cluster_id}-bootstrap.${var.cluster_domain} check port 6443"
-    MASTERS="${var.cluster_id}-master-0 ${var.cluster_id}-master-1 ${var.cluster_id}-master-2"
+cat > /etc/haproxy/haproxy.cfg.new << EOF
+listen ${var.cluster_id}-api-masters
+    bind 0.0.0.0:6443
+    bind 0.0.0.0:22623
+    mode tcp
+    balance roundrobin
+    server bootstrap-22623 ${var.bootstrap_ip} check port 22623
+    server bootstrap-6443 ${var.bootstrap_ip} check port 6443
+    ${replace(join("\n    ", formatlist("server master-%s %s check port 6443", var.master_port_names, var.master_ips)), "master-port-", "")}
+EOF
+    update_cfg_and_restart
+    exit 0
 fi
 
 for master in $MASTERS;
 do
     MASTER_LINES="$MASTER_LINES
-    server $master $master.${var.cluster_domain} check port 6443"
+    server $master $master check port 6443"
 done
 
 for worker in $WORKERS;
 do
     WORKER_LINES="$WORKER_LINES
-    server $worker $worker.${var.cluster_domain} check port 443"
+    server $worker $worker check port 443"
 done
 
 cat > /etc/haproxy/haproxy.cfg.new << EOF
@@ -108,16 +134,7 @@ listen ${var.cluster_id}-api-workers
     balance roundrobin$WORKER_LINES
 EOF
 
-
-mkdir -p /etc/haproxy
-CHANGED=$(diff /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.new)
-
-if [[ ! -f /etc/haproxy/haproxy.cfg ]] || [[ ! $CHANGED -eq "" ]];
-then
-    cp /etc/haproxy/haproxy.cfg /etc/haproxy/haproxy.cfg.backup || true
-    cp /etc/haproxy/haproxy.cfg.new /etc/haproxy/haproxy.cfg
-    systemctl restart haproxy
-fi
+update_cfg_and_restart
 TFEOF
   }
 }
@@ -140,7 +157,14 @@ ${length(var.lb_floating_ip) == 0 ? "" : "    file /etc/coredns/db.${var.cluster
     file /etc/coredns/db.${var.cluster_domain} _etcd-server-ssl._tcp.${var.cluster_domain} {
     }
 
+    file /etc/coredns/db.${var.cluster_domain} bootstrap.${var.cluster_domain} {
+        upstream /etc/resolv.conf
+    }
+
+${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} master-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "master-port-", "")}
+
 ${replace(join("\n", formatlist("    file /etc/coredns/db.${var.cluster_domain} etcd-%s.${var.cluster_domain} {\n    upstream /etc/resolv.conf\n    }\n", var.master_port_names)), "master-port-", "")}
+
 
     forward . /etc/resolv.conf {
     }
@@ -179,9 +203,11 @@ $ORIGIN ${var.cluster_domain}.
 ${length(var.lb_floating_ip) == 0 ? "" : "api  IN  A  ${var.lb_floating_ip}"}
 ${length(var.lb_floating_ip) == 0 ? "" : "*.apps  IN  A  ${var.lb_floating_ip}"}
 
-${replace(join("\n", formatlist("etcd-%s  IN  CNAME  master-%s", var.master_port_names, var.master_port_names)), "master-port-", "")}
+bootstrap.${var.cluster_domain}  IN  A  ${var.bootstrap_ip}
+${replace(join("\n", formatlist("master-%s  IN  A %s", var.master_port_names, var.master_ips)), "master-port-", "")}
 
-${replace(join("\n", formatlist("_etcd-server-ssl._tcp.${var.cluster_domain}  8640  IN  SRV  0  10  2380   etcd-%s.${var.cluster_domain}.", var.master_port_names)), "master-port-", "")}
+${replace(join("\n", formatlist("etcd-%s  IN  A  %s", var.master_port_names, var.master_ips)), "master-port-", "")}
+${replace(join("\n", formatlist("_etcd-server-ssl._tcp  8640  IN  SRV  0  10  2380   etcd-%s.${var.cluster_domain}.", var.master_port_names)), "master-port-", "")}
 EOF
   }
 }
