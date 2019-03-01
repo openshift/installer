@@ -71,7 +71,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.OpenStack = platform.OpenStack
 
 	if err := a.setDefaults(); err != nil {
-		return errors.Wrapf(err, "failed to set defaults for install config")
+		return errors.Wrap(err, "failed to set defaults for install config")
 	}
 
 	if err := validation.ValidateInstallConfig(a.Config, openstackvalidation.NewValidValuesFetcher()).ToAggregate(); err != nil {
@@ -114,12 +114,12 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 
 	config := &types.InstallConfig{}
 	if err := yaml.Unmarshal(file.Data, config); err != nil {
-		return false, errors.Wrapf(err, "failed to unmarshal")
+		return false, errors.Wrap(err, "failed to unmarshal")
 	}
 	a.Config = config
 
 	if err := a.setDefaults(); err != nil {
-		return false, errors.Wrapf(err, "failed to set defaults for install config")
+		return false, errors.Wrap(err, "failed to set defaults for install config")
 	}
 
 	if err := validation.ValidateInstallConfig(a.Config, openstackvalidation.NewValidValuesFetcher()).ToAggregate(); err != nil {

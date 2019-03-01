@@ -156,7 +156,7 @@ func runTargetCmd(targets ...asset.WritableAsset) func(cmd *cobra.Command, args 
 	runner := func(directory string) error {
 		assetStore, err := assetstore.NewStore(directory)
 		if err != nil {
-			return errors.Wrapf(err, "failed to create asset store")
+			return errors.Wrap(err, "failed to create asset store")
 		}
 
 		for _, a := range targets {
