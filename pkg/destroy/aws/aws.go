@@ -144,7 +144,7 @@ func (o *ClusterUninstaller) Run() error {
 					},
 				)
 				if err != nil {
-					err = errors.Wrapf(err, "get tagged resources")
+					err = errors.Wrap(err, "get tagged resources")
 					o.Logger.Info(err)
 					matched = true
 					loopError = err

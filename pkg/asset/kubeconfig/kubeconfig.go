@@ -90,7 +90,7 @@ func (k *kubeconfig) load(f asset.FileFetcher, name string) (found bool, err err
 
 	config := &clientcmd.Config{}
 	if err := yaml.Unmarshal(file.Data, config); err != nil {
-		return false, errors.Wrapf(err, "failed to unmarshal")
+		return false, errors.Wrap(err, "failed to unmarshal")
 	}
 
 	k.File, k.Config = file, config

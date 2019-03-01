@@ -41,7 +41,7 @@ func (c *ClusterK8sIO) Generate(dependencies asset.Parents) error {
 	dependencies.Get(clusterID, net)
 	clusterNet, err := net.ClusterNetwork()
 	if err != nil {
-		return errors.Wrapf(err, "Could not generate ClusterNetworkingConfig")
+		return errors.Wrap(err, "failed to generate ClusterNetworkingConfig")
 	}
 
 	cluster := clusterv1a1.Cluster{

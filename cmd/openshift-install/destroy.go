@@ -54,7 +54,7 @@ func runDestroyCmd(directory string) error {
 
 	store, err := assetstore.NewStore(directory)
 	if err != nil {
-		return errors.Wrapf(err, "failed to create asset store")
+		return errors.Wrap(err, "failed to create asset store")
 	}
 	for _, asset := range clusterTarget.assets {
 		if err := store.Destroy(asset); err != nil {

@@ -77,7 +77,7 @@ func (a *Worker) Load(f asset.FileFetcher) (found bool, err error) {
 
 	config := &igntypes.Config{}
 	if err := json.Unmarshal(file.Data, config); err != nil {
-		return false, errors.Wrapf(err, "failed to unmarshal")
+		return false, errors.Wrap(err, "failed to unmarshal")
 	}
 
 	a.File, a.Config = file, config

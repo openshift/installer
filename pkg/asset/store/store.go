@@ -77,10 +77,10 @@ func (s *storeImpl) Fetch(a asset.Asset) error {
 		return err
 	}
 	if err := s.saveStateFile(); err != nil {
-		return errors.Wrapf(err, "failed to save state")
+		return errors.Wrap(err, "failed to save state")
 	}
 	if wa, ok := a.(asset.WritableAsset); ok {
-		return errors.Wrapf(s.purge(wa), "failed to purge asset")
+		return errors.Wrap(s.purge(wa), "failed to purge asset")
 	}
 	return nil
 }
