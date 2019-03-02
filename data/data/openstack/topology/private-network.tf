@@ -3,6 +3,12 @@ locals {
   service_cidr_block = "${cidrsubnet(var.cidr_block, 1, 1)}"
 }
 
+data "openstack_networking_network_v2" "external_network" {
+  name       = "${var.external_network}"
+  network_id = "${var.external_network_id}"
+  external   = true
+}
+
 resource "openstack_networking_network_v2" "openshift-private" {
   name           = "${var.cluster_id}-openshift"
   admin_state_up = "true"
@@ -10,11 +16,12 @@ resource "openstack_networking_network_v2" "openshift-private" {
 }
 
 resource "openstack_networking_subnet_v2" "service" {
-  name       = "${var.cluster_id}-service"
-  cidr       = "${local.service_cidr_block}"
-  ip_version = 4
-  network_id = "${openstack_networking_network_v2.openshift-private.id}"
-  tags       = ["openshiftClusterID=${var.cluster_id}"]
+  name            = "${var.cluster_id}-service"
+  cidr            = "${local.service_cidr_block}"
+  ip_version      = 4
+  network_id      = "${openstack_networking_network_v2.openshift-private.id}"
+  tags            = ["openshiftClusterID=${var.cluster_id}"]
+  dns_nameservers = ["128.31.24.12", "128.31.24.11"]
 }
 
 resource "openstack_networking_subnet_v2" "nodes" {
@@ -73,12 +80,6 @@ resource "openstack_networking_port_v2" "service_port" {
   fixed_ip {
     "subnet_id" = "${openstack_networking_subnet_v2.service.id}"
   }
-}
-
-data "openstack_networking_network_v2" "external_network" {
-  name       = "${var.external_network}"
-  network_id = "${var.external_network_id}"
-  external   = true
 }
 
 resource "openstack_networking_floatingip_associate_v2" "service_fip" {
