@@ -6,6 +6,10 @@ output "az_to_private_subnet_id" {
   value = "${zipmap(local.new_subnet_azs, local.private_subnet_ids)}"
 }
 
+output "az_to_public_subnet_id" {
+  value = "${zipmap(local.new_subnet_azs, local.public_subnet_ids)}"
+}
+
 output "public_subnet_ids" {
   value = "${local.public_subnet_ids}"
 }
