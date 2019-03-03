@@ -16,6 +16,8 @@ type ClusterMetadata struct {
 	// infraID is an ID that is used to identify cloud resources created by the installer.
 	InfraID                 string `json:"infraID"`
 	ClusterPlatformMetadata `json:",inline"`
+	// Bring your own terraform platform deployment
+	BYO bool `json:"byo,omitempty"`
 }
 
 // ClusterPlatformMetadata contains metadata for platfrom.

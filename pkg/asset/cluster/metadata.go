@@ -53,6 +53,7 @@ func (m *Metadata) Generate(parents asset.Parents) (err error) {
 		ClusterName: installConfig.Config.ObjectMeta.Name,
 		ClusterID:   clusterID.UUID,
 		InfraID:     clusterID.InfraID,
+		BYO:         installConfig.Config.BYO,
 	}
 
 	switch {

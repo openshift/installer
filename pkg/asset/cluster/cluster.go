@@ -2,17 +2,16 @@ package cluster
 
 import (
 	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/byo"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/password"
 	"github.com/openshift/installer/pkg/terraform"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
+	"io/ioutil"
+	"os"
+	"path/filepath"
 )
 
 var (
@@ -45,6 +44,7 @@ func (c *Cluster) Dependencies() []asset.Asset {
 		&installconfig.PlatformCredsCheck{},
 		&TerraformVariables{},
 		&password.KubeadminPassword{},
+		&byo.Deployment{},
 	}
 }
 
@@ -54,7 +54,8 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 	installConfig := &installconfig.InstallConfig{}
 	terraformVariables := &TerraformVariables{}
 	kubeadminPassword := &password.KubeadminPassword{}
-	parents.Get(clusterID, installConfig, terraformVariables, kubeadminPassword)
+	byoDeployment := &byo.Deployment{}
+	parents.Get(clusterID, installConfig, terraformVariables, kubeadminPassword, byoDeployment)
 
 	if installConfig.Config.Platform.None != nil {
 		return errors.New("cluster cannot be created with platform set to 'none'")
@@ -82,8 +83,25 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		},
 	}
 
+	c.FileList = append(c.FileList, byoDeployment.Files()...)
+	for _, file := range byoDeployment.Files() {
+		// create path if not exists
+		path := filepath.Dir(filepath.Join(tmpDir, file.Filename))
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			err = os.MkdirAll(path, os.ModePerm)
+			if err != nil {
+				return err
+			}
+		}
+
+		// write the file
+		if err := ioutil.WriteFile(filepath.Join(tmpDir, file.Filename), file.Data, 0700); err != nil {
+			return err
+		}
+	}
+
 	logrus.Infof("Creating cluster...")
-	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name(), extraArgs...)
+	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name(), installConfig.Config.BYO, extraArgs...)
 	if err != nil {
 		err = errors.Wrap(err, "failed to create cluster")
 		if stateFile == "" {

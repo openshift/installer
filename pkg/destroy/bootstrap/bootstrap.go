@@ -3,6 +3,7 @@ package bootstrap
 
 import (
 	"fmt"
+	"github.com/openshift/installer/pkg/asset/byo"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -46,11 +47,46 @@ func Destroy(dir string) (err error) {
 	}
 	defer os.RemoveAll(tempDir)
 
+	if metadata.BYO {
+		copyNames = append(copyNames, "main.tf", fmt.Sprintf("variables-%s.tf", metadata.Platform()))
+
+		var byoFiles []string
+		modules, err := filepath.Glob(filepath.Join(dir, "**/*.tf"))
+		if err != nil {
+			return err
+		}
+		byoFiles = append(byoFiles, modules...)
+
+		plugins, err := filepath.Glob(filepath.Join(dir, byo.PluginsDir, "**/*"))
+		if err != nil {
+			return err
+		}
+		byoFiles = append(byoFiles, plugins...)
+
+		for _, filename := range byoFiles {
+			copyNames = append(copyNames, strings.Replace(filename, filepath.ToSlash(dir), "", 1))
+		}
+	}
+
 	extraArgs := []string{}
 	for _, filename := range copyNames {
 		sourcePath := filepath.Join(dir, filename)
 		targetPath := filepath.Join(tempDir, filename)
-		err = copy(sourcePath, targetPath)
+
+		path := filepath.Dir(targetPath)
+		if _, err := os.Stat(path); os.IsNotExist(err) {
+			err = os.MkdirAll(path, os.ModePerm)
+			if err != nil {
+				return err
+			}
+		}
+
+		perm := 0666
+		if strings.HasPrefix(filename, filepath.FromSlash("/plugins/")) {
+			perm = 0755
+		}
+
+		err = copy(sourcePath, targetPath, perm)
 		if err != nil {
 			if os.IsNotExist(err) && err.(*os.PathError).Path == sourcePath && filename == tfPlatformVarsFileName {
 				continue // platform may not need platform-specific Terraform variables
@@ -63,31 +99,31 @@ func Destroy(dir string) (err error) {
 	}
 
 	if platform == libvirt.Name {
-		_, err = terraform.Apply(tempDir, platform, extraArgs...)
+		_, err = terraform.Apply(tempDir, platform, metadata.BYO, extraArgs...)
 		if err != nil {
 			return errors.Wrap(err, "Terraform apply")
 		}
 	}
 
 	extraArgs = append(extraArgs, "-target=module.bootstrap")
-	err = terraform.Destroy(tempDir, platform, extraArgs...)
+	err = terraform.Destroy(tempDir, platform, metadata.BYO, extraArgs...)
 	if err != nil {
 		return errors.Wrap(err, "Terraform destroy")
 	}
 
 	tempStateFilePath := filepath.Join(dir, terraform.StateFileName+".new")
-	err = copy(filepath.Join(tempDir, terraform.StateFileName), tempStateFilePath)
+	err = copy(filepath.Join(tempDir, terraform.StateFileName), tempStateFilePath, 0666)
 	if err != nil {
 		return errors.Wrapf(err, "failed to copy %s from the temporary directory", terraform.StateFileName)
 	}
 	return os.Rename(tempStateFilePath, filepath.Join(dir, terraform.StateFileName))
 }
 
-func copy(from string, to string) error {
+func copy(from string, to string, perm int) error {
 	data, err := ioutil.ReadFile(from)
 	if err != nil {
 		return err
 	}
 
-	return ioutil.WriteFile(to, data, 0666)
+	return ioutil.WriteFile(to, data, os.FileMode(perm))
 }

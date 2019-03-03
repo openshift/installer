@@ -27,8 +27,8 @@ const (
 // given directory and then runs 'terraform init' and 'terraform
 // apply'.  It returns the absolute path of the tfstate file, rooted
 // in the specified directory, along with any errors from Terraform.
-func Apply(dir string, platform string, extraArgs ...string) (path string, err error) {
-	err = unpackAndInit(dir, platform)
+func Apply(dir string, platform string, byo bool, extraArgs ...string) (path string, err error) {
+	err = unpackAndInit(dir, platform, byo)
 	if err != nil {
 		return "", err
 	}
@@ -59,8 +59,8 @@ func Apply(dir string, platform string, extraArgs ...string) (path string, err e
 // Destroy unpacks the platform-specific Terraform modules into the
 // given directory and then runs 'terraform init' and 'terraform
 // destroy'.
-func Destroy(dir string, platform string, extraArgs ...string) (err error) {
-	err = unpackAndInit(dir, platform)
+func Destroy(dir string, platform string, byo bool, extraArgs ...string) (err error) {
+	err = unpackAndInit(dir, platform, byo)
 	if err != nil {
 		return err
 	}
@@ -89,10 +89,13 @@ func Destroy(dir string, platform string, extraArgs ...string) (err error) {
 
 // unpack unpacks the platform-specific Terraform modules into the
 // given directory.
-func unpack(dir string, platform string) (err error) {
-	err = data.Unpack(dir, platform)
-	if err != nil {
-		return err
+func unpack(dir string, platform string, byo bool) (err error) {
+
+	if !byo {
+		err = data.Unpack(dir, platform,)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = data.Unpack(filepath.Join(dir, "config.tf"), "config.tf")
@@ -105,8 +108,8 @@ func unpack(dir string, platform string) (err error) {
 
 // unpackAndInit unpacks the platform-specific Terraform modules into
 // the given directory and then runs 'terraform init'.
-func unpackAndInit(dir string, platform string) (err error) {
-	err = unpack(dir, platform)
+func unpackAndInit(dir string, platform string, byo bool) (err error) {
+	err = unpack(dir, platform, byo)
 	if err != nil {
 		return errors.Wrap(err, "failed to unpack Terraform modules")
 	}

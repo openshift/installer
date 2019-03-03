@@ -62,6 +62,9 @@ type InstallConfig struct {
 	// perform the installation.
 	Platform `json:"platform"`
 
+	// Bring your own terraform platform deployment
+	BYO bool `json:"byo,omitempty"`
+
 	// PullSecret is the secret to use when pulling images.
 	PullSecret string `json:"pullSecret"`
 }

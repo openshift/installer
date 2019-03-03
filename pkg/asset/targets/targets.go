@@ -2,6 +2,7 @@ package targets
 
 import (
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/byo"
 	"github.com/openshift/installer/pkg/asset/cluster"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/ignition/machine"
@@ -63,6 +64,7 @@ var (
 		&kubeconfig.AdminClient{},
 		&tls.JournalCertKey{},
 		&cluster.Metadata{},
+		&byo.Deployment{},
 		&cluster.Cluster{},
 	}
 )
