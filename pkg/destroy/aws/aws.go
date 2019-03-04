@@ -480,6 +480,8 @@ func deleteEC2(session *session.Session, arn arn.ARN, filter Filter, logger logr
 		return deleteEC2SecurityGroup(client, id, logger)
 	case "snapshot":
 		return deleteEC2Snapshot(client, id, logger)
+	case "network-interface":
+		return deleteEC2NetworkInterface(client, id, logger)
 	case "subnet":
 		return deleteEC2Subnet(client, id, logger)
 	case "volume":
@@ -796,6 +798,21 @@ func deleteEC2Snapshot(client *ec2.EC2, id string, logger logrus.FieldLogger) er
 	})
 	if err != nil {
 		if err.(awserr.Error).Code() == "InvalidSnapshotID.NotFound" {
+			return nil
+		}
+		return err
+	}
+
+	logger.Info("Deleted")
+	return nil
+}
+
+func deleteEC2NetworkInterface(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
+	_, err := client.DeleteNetworkInterface(&ec2.DeleteNetworkInterfaceInput{
+		NetworkInterfaceId: aws.String(id),
+	})
+	if err != nil {
+		if err.(awserr.Error).Code() == "InvalidNetworkInterfaceID.NotFound" {
 			return nil
 		}
 		return err
