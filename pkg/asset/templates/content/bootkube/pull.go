@@ -9,12 +9,12 @@ import (
 )
 
 const (
-	pullFileName = "pull.yaml.template"
+	pullFileName = "pull.json.template"
 )
 
 var _ asset.WritableAsset = (*Pull)(nil)
 
-// Pull is the constant to represent contents of pull.yaml.template file
+// Pull is the constant to represent contents of pull.json.template file
 type Pull struct {
 	FileList []*asset.File
 }
