@@ -79,14 +79,6 @@ The most important thing to look at on the bootstrap node is `bootkube.service`.
 
 ### etcd Is Not Running
 
-etcd is started and managed by the Kubelet as a static pod. This requires a newer Kubelet which started shipping with version 47.29 of Red Hat CoreOS. The OS version can be checked using the following command:
-
-```sh
-grep OSTREE_VERSION /etc/os-release
-```
-
-If an older version of Red Hat CoreOS is in use, it will need to be updated. Try using the version suggested by the OpenShift Installer.
-
 During the bootstrap process, the Kubelet may emit errors like the following:
 
 ```
