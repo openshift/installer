@@ -61,6 +61,8 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&tls.RootCA{},
 		&tls.EtcdCA{},
 		&tls.EtcdClientCertKey{},
+		&tls.EtcdMetricsCABundle{},
+		&tls.EtcdMetricsSignerClientCertKey{},
 		&tls.MCSCertKey{},
 
 		&bootkube.KubeCloudConfig{},
@@ -71,6 +73,8 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.KubeSystemSecretEtcdClient{},
+		&bootkube.OpenshiftConfigSecretEtcdMetricsClient{},
+		&bootkube.OpenshiftConfigConfigmapEtcdMetricsServingCA{},
 
 		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.EtcdServiceKubeSystem{},
@@ -125,12 +129,16 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	etcdCA := &tls.EtcdCA{}
 	mcsCertKey := &tls.MCSCertKey{}
 	etcdClientCertKey := &tls.EtcdClientCertKey{}
+	etcdMetricsCABundle := &tls.EtcdMetricsCABundle{}
+	etcdMetricsSignerClientCertKey := &tls.EtcdMetricsSignerClientCertKey{}
 	rootCA := &tls.RootCA{}
 	dependencies.Get(
 		clusterID,
 		installConfig,
 		etcdCA,
 		etcdClientCertKey,
+		etcdMetricsCABundle,
+		etcdMetricsSignerClientCertKey,
 		mcsCertKey,
 		rootCA,
 	)
@@ -145,6 +153,9 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		EtcdCaCert:                      string(etcdCA.Cert()),
 		EtcdClientCert:                  base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
 		EtcdClientKey:                   base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
+		EtcdMetricsCaCert:               string(etcdMetricsCABundle.Cert()),
+		EtcdMetricsClientCert:           base64.StdEncoding.EncodeToString(etcdMetricsSignerClientCertKey.Cert()),
+		EtcdMetricsClientKey:            base64.StdEncoding.EncodeToString(etcdMetricsSignerClientCertKey.Key()),
 		McsTLSCert:                      base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:                       base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
 		PullSecretBase64:                base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
@@ -162,6 +173,8 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	kubeSystemConfigmapEtcdServingCA := &bootkube.KubeSystemConfigmapEtcdServingCA{}
 	kubeSystemConfigmapRootCA := &bootkube.KubeSystemConfigmapRootCA{}
 	kubeSystemSecretEtcdClient := &bootkube.KubeSystemSecretEtcdClient{}
+	openshiftConfigSecretEtcdMetricsClient := &bootkube.OpenshiftConfigSecretEtcdMetricsClient{}
+	openshiftConfigConfigmapEtcdMetricsServingCA := &bootkube.OpenshiftConfigConfigmapEtcdMetricsServingCA{}
 
 	openshiftMachineConfigOperator := &bootkube.OpenshiftMachineConfigOperator{}
 	etcdServiceKubeSystem := &bootkube.EtcdServiceKubeSystem{}
@@ -175,19 +188,23 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		kubeSystemConfigmapEtcdServingCA,
 		kubeSystemConfigmapRootCA,
 		kubeSystemSecretEtcdClient,
+		openshiftConfigSecretEtcdMetricsClient,
+		openshiftConfigConfigmapEtcdMetricsServingCA,
 		openshiftMachineConfigOperator,
 		etcdServiceKubeSystem,
 		hostEtcdServiceKubeSystem,
 	)
 	assetData := map[string][]byte{
-		"kube-cloud-config.yaml":                     applyTemplateData(kubeCloudConfig.Files()[0].Data, templateData),
-		"machine-config-server-tls-secret.yaml":      applyTemplateData(machineConfigServerTLSSecret.Files()[0].Data, templateData),
-		"pull.json":                                  applyTemplateData(pull.Files()[0].Data, templateData),
-		"cvo-overrides.yaml":                         applyTemplateData(cVOOverrides.Files()[0].Data, templateData),
-		"host-etcd-service-endpoints.yaml":           applyTemplateData(hostEtcdServiceEndpointsKubeSystem.Files()[0].Data, templateData),
-		"kube-system-configmap-etcd-serving-ca.yaml": applyTemplateData(kubeSystemConfigmapEtcdServingCA.Files()[0].Data, templateData),
-		"kube-system-configmap-root-ca.yaml":         applyTemplateData(kubeSystemConfigmapRootCA.Files()[0].Data, templateData),
-		"kube-system-secret-etcd-client.yaml":        applyTemplateData(kubeSystemSecretEtcdClient.Files()[0].Data, templateData),
+		"kube-cloud-config.yaml":                                  applyTemplateData(kubeCloudConfig.Files()[0].Data, templateData),
+		"machine-config-server-tls-secret.yaml":                   applyTemplateData(machineConfigServerTLSSecret.Files()[0].Data, templateData),
+		"pull.json":                                               applyTemplateData(pull.Files()[0].Data, templateData),
+		"cvo-overrides.yaml":                                      applyTemplateData(cVOOverrides.Files()[0].Data, templateData),
+		"host-etcd-service-endpoints.yaml":                        applyTemplateData(hostEtcdServiceEndpointsKubeSystem.Files()[0].Data, templateData),
+		"kube-system-configmap-etcd-serving-ca.yaml":              applyTemplateData(kubeSystemConfigmapEtcdServingCA.Files()[0].Data, templateData),
+		"kube-system-configmap-root-ca.yaml":                      applyTemplateData(kubeSystemConfigmapRootCA.Files()[0].Data, templateData),
+		"kube-system-secret-etcd-client.yaml":                     applyTemplateData(kubeSystemSecretEtcdClient.Files()[0].Data, templateData),
+		"openshift-config-secret-etcd-metrics-client.yaml":        applyTemplateData(openshiftConfigSecretEtcdMetricsClient.Files()[0].Data, templateData),
+		"openshift-config-configmap-etcd-metrics-serving-ca.yaml": applyTemplateData(openshiftConfigConfigmapEtcdMetricsServingCA.Files()[0].Data, templateData),
 
 		"04-openshift-machine-config-operator.yaml": []byte(openshiftMachineConfigOperator.Files()[0].Data),
 		"etcd-service.yaml":                         []byte(etcdServiceKubeSystem.Files()[0].Data),
