@@ -7,7 +7,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// QEMU fetches the URL of the latest Red Hat CoreOS release.
+// QEMU fetches the URL of the latest Red Hat Enterprise Linux CoreOS release.
 func QEMU(ctx context.Context, channel string) (string, error) {
 	meta, err := fetchLatestMetadata(ctx, channel)
 	if err != nil {
