@@ -65,13 +65,13 @@ func TestInstallConfigGenerate_FillsInDefaults(t *testing.T) {
 		},
 		BaseDomain: "test-domain",
 		Networking: &types.Networking{
-			MachineCIDR: ipnet.MustParseCIDR("10.0.0.0/16"),
-			Type:        "OpenShiftSDN",
-			ServiceCIDR: ipnet.MustParseCIDR("172.30.0.0/16"),
-			ClusterNetworks: []types.ClusterNetworkEntry{
+			MachineCIDR:    ipnet.MustParseCIDR("10.0.0.0/16"),
+			NetworkType:    "OpenShiftSDN",
+			ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+			ClusterNetwork: []types.ClusterNetworkEntry{
 				{
-					CIDR:             *ipnet.MustParseCIDR("10.128.0.0/14"),
-					HostSubnetLength: 9,
+					CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+					HostPrefix: 23,
 				},
 			},
 		},
@@ -124,13 +124,13 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 				},
 				BaseDomain: "test-domain",
 				Networking: &types.Networking{
-					MachineCIDR: ipnet.MustParseCIDR("10.0.0.0/16"),
-					Type:        "OpenShiftSDN",
-					ServiceCIDR: ipnet.MustParseCIDR("172.30.0.0/16"),
-					ClusterNetworks: []types.ClusterNetworkEntry{
+					MachineCIDR:    ipnet.MustParseCIDR("10.0.0.0/16"),
+					NetworkType:    "OpenShiftSDN",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
 						{
-							CIDR:             *ipnet.MustParseCIDR("10.128.0.0/14"),
-							HostSubnetLength: 9,
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
 						},
 					},
 				},

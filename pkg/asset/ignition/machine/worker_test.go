@@ -18,7 +18,7 @@ func TestWorkerGenerate(t *testing.T) {
 	installConfig := &installconfig.InstallConfig{
 		Config: &types.InstallConfig{
 			Networking: &types.Networking{
-				ServiceCIDR: ipnet.MustParseCIDR("10.0.1.0/24"),
+				ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("10.0.1.0/24")},
 			},
 			Platform: types.Platform{
 				AWS: &aws.Platform{

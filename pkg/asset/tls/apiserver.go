@@ -34,7 +34,7 @@ func (a *APIServerCertKey) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(kubeCA, installConfig)
 
-	apiServerAddress, err := cidrhost(installConfig.Config.Networking.ServiceCIDR.IPNet, 1)
+	apiServerAddress, err := cidrhost(installConfig.Config.Networking.ServiceNetwork[0].IPNet, 1)
 	if err != nil {
 		return errors.Wrap(err, "failed to get API Server address from InstallConfig")
 	}
@@ -331,7 +331,7 @@ func (a *KubeAPIServerServiceNetworkServerCertKey) Generate(dependencies asset.P
 	ca := &KubeAPIServerServiceNetworkSignerCertKey{}
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(ca, installConfig)
-	serviceAddress, err := cidrhost(installConfig.Config.Networking.ServiceCIDR.IPNet, 1)
+	serviceAddress, err := cidrhost(installConfig.Config.Networking.ServiceNetwork[0].IPNet, 1)
 	if err != nil {
 		return errors.Wrap(err, "failed to get service address for kube-apiserver from InstallConfig")
 	}

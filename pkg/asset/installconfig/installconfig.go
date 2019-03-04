@@ -9,6 +9,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/conversion"
 	"github.com/openshift/installer/pkg/types/defaults"
 	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
 	"github.com/openshift/installer/pkg/types/validation"
@@ -118,6 +119,9 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 	}
 	a.Config = config
 
+	// Upconvert any deprecated fields
+	a.convert()
+
 	if err := a.setDefaults(); err != nil {
 		return false, errors.Wrap(err, "failed to set defaults for install config")
 	}
@@ -141,4 +145,10 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 func (a *InstallConfig) setDefaults() error {
 	defaults.SetInstallConfigDefaults(a.Config)
 	return nil
+}
+
+// convert converts possibly older versions of the install config to
+// the current version, relocating deprecated fields.
+func (a *InstallConfig) convert() {
+	conversion.ConvertInstallConfig(a.Config)
 }

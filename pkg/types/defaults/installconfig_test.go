@@ -21,13 +21,13 @@ import (
 func defaultInstallConfig() *types.InstallConfig {
 	return &types.InstallConfig{
 		Networking: &types.Networking{
-			MachineCIDR: defaultMachineCIDR,
-			Type:        defaultNetworkPlugin,
-			ServiceCIDR: defaultServiceCIDR,
-			ClusterNetworks: []types.ClusterNetworkEntry{
+			MachineCIDR:    defaultMachineCIDR,
+			NetworkType:    defaultNetworkType,
+			ServiceNetwork: []ipnet.IPNet{*defaultServiceNetwork},
+			ClusterNetwork: []types.ClusterNetworkEntry{
 				{
-					CIDR:             *defaultClusterCIDR,
-					HostSubnetLength: int32(defaultHostSubnetLength),
+					CIDR:       *defaultClusterNetwork,
+					HostPrefix: int32(defaultHostPrefix),
 				},
 			},
 		},
@@ -124,46 +124,46 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			name: "Networking types present",
 			config: &types.InstallConfig{
 				Networking: &types.Networking{
-					Type: "test-networking-type",
+					NetworkType: "test-networking-type",
 				},
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultInstallConfig()
-				c.Networking.Type = "test-networking-type"
+				c.Networking.NetworkType = "test-networking-type"
 				return c
 			}(),
 		},
 		{
-			name: "Service CIDR present",
+			name: "Service network present",
 			config: &types.InstallConfig{
 				Networking: &types.Networking{
-					ServiceCIDR: ipnet.MustParseCIDR("1.2.3.4/8"),
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("1.2.3.4/8")},
 				},
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultInstallConfig()
-				c.Networking.ServiceCIDR = ipnet.MustParseCIDR("1.2.3.4/8")
+				c.Networking.ServiceNetwork[0] = *ipnet.MustParseCIDR("1.2.3.4/8")
 				return c
 			}(),
 		},
 		{
-			name: "Cluster Networks present",
+			name: "Cluster network present",
 			config: &types.InstallConfig{
 				Networking: &types.Networking{
-					ClusterNetworks: []types.ClusterNetworkEntry{
+					ClusterNetwork: []types.ClusterNetworkEntry{
 						{
-							CIDR:             *ipnet.MustParseCIDR("8.8.0.0/18"),
-							HostSubnetLength: 10,
+							CIDR:       *ipnet.MustParseCIDR("8.8.0.0/18"),
+							HostPrefix: 22,
 						},
 					},
 				},
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultInstallConfig()
-				c.Networking.ClusterNetworks = []types.ClusterNetworkEntry{
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
 					{
-						CIDR:             *ipnet.MustParseCIDR("8.8.0.0/18"),
-						HostSubnetLength: 10,
+						CIDR:       *ipnet.MustParseCIDR("8.8.0.0/18"),
+						HostPrefix: 22,
 					},
 				}
 				return c
