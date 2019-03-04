@@ -45,7 +45,7 @@ enough to store the ignition config files, so they are served by swift instead.
   values. For example (as an OpenStack admin) `openstack quota set --secgroups 100 --secgroup-rules 1000 <project>`
 
 * The installer requires a proper RHCOS image in the OpenStack cluster or project:
-`openstack image create --container-format=bare --disk-format=qcow2 --file redhat-coreos-${RHCOSVERSION}-openstack.qcow2 redhat-coreos-${RHCOSVERSION}`
+`openstack image create --container-format=bare --disk-format=qcow2 --file rhcos-${RHCOSVERSION}-openstack.qcow2 rhcos-${RHCOSVERSION}`
 
 **NOTE:** Depending on your OpenStack environment you can upload the RHCOS image
 as `raw` or `qcow2`. See [Disk and container formats for images](https://docs.openstack.org/image-guide/image-formats.html) for more information.
