@@ -13,3 +13,6 @@ spec:
   - name: etcd
     port: 2379
     protocol: TCP
+  - name: etcd-metrics
+    port: 9979
+    protocol: TCP
