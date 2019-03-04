@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// AMI fetches the HVM AMI ID of the latest Red Hat CoreOS release.
+// AMI fetches the HVM AMI ID of the latest Red Hat Enterprise Linux CoreOS release.
 func AMI(ctx context.Context, channel, region string) (string, error) {
 	meta, err := fetchLatestMetadata(ctx, channel)
 	if err != nil {
