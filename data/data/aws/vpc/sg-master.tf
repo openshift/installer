@@ -96,6 +96,26 @@ resource "aws_security_group_rule" "master_ingress_internal_from_worker" {
   to_port   = 9999
 }
 
+resource "aws_security_group_rule" "master_ingress_internal_udp" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.master.id}"
+
+  protocol  = "udp"
+  from_port = 9000
+  to_port   = 9999
+  self      = true
+}
+
+resource "aws_security_group_rule" "master_ingress_internal_from_worker_udp" {
+  type                     = "ingress"
+  security_group_id        = "${aws_security_group.master.id}"
+  source_security_group_id = "${aws_security_group.worker.id}"
+
+  protocol  = "udp"
+  from_port = 9000
+  to_port   = 9999
+}
+
 resource "aws_security_group_rule" "master_ingress_kube_scheduler" {
   type              = "ingress"
   security_group_id = "${aws_security_group.master.id}"
