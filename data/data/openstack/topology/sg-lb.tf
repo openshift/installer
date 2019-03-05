@@ -1,5 +1,5 @@
 resource "openstack_networking_secgroup_v2" "api" {
-  name = "api"
+  name = "${var.cluster_id}-api"
   tags = ["openshiftClusterID=${var.cluster_id}"]
 }
 
