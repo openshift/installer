@@ -13,7 +13,9 @@ import (
 
 const (
 	// InstallConfigVersion is the version supported by this package.
-	InstallConfigVersion = "v1beta3"
+	// If you bump this, you must also update the list of convertable values in
+	// pkg/conversion/installconfig.go
+	InstallConfigVersion = "v1beta4"
 )
 
 var (

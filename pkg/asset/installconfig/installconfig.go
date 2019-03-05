@@ -120,7 +120,9 @@ func (a *InstallConfig) Load(f asset.FileFetcher) (found bool, err error) {
 	a.Config = config
 
 	// Upconvert any deprecated fields
-	a.convert()
+	if err := a.convert(); err != nil {
+		return false, errors.Wrap(err, "failed to upconvert install config")
+	}
 
 	if err := a.setDefaults(); err != nil {
 		return false, errors.Wrap(err, "failed to set defaults for install config")
@@ -149,6 +151,6 @@ func (a *InstallConfig) setDefaults() error {
 
 // convert converts possibly older versions of the install config to
 // the current version, relocating deprecated fields.
-func (a *InstallConfig) convert() {
-	conversion.ConvertInstallConfig(a.Config)
+func (a *InstallConfig) convert() error {
+	return conversion.ConvertInstallConfig(a.Config)
 }

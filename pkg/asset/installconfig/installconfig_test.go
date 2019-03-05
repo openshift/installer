@@ -105,7 +105,7 @@ func TestInstallConfigLoad(t *testing.T) {
 		{
 			name: "valid InstallConfig",
 			data: `
-apiVersion: v1beta3
+apiVersion: v1beta4
 metadata:
   name: test-cluster
 baseDomain: test-domain
@@ -178,6 +178,58 @@ metadata:
 			name:          "error fetching file",
 			fetchError:    errors.New("fetch failed"),
 			expectedError: true,
+		},
+		{
+			name: "old valid InstallConfig",
+			data: `
+apiVersion: v1beta3
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+platform:
+  aws:
+    region: us-east-1
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+network:
+  type: OpenShiftSDN
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				BaseDomain: "test-domain",
+				Networking: &types.Networking{
+					MachineCIDR:    ipnet.MustParseCIDR("10.0.0.0/16"),
+					NetworkType:    "OpenShiftSDN",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: pointer.Int64Ptr(3),
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:     "worker",
+						Replicas: pointer.Int64Ptr(3),
+					},
+				},
+				Platform: types.Platform{
+					AWS: &aws.Platform{
+						Region: "us-east-1",
+					},
+				},
+				PullSecret: `{"auths":{"example.com":{"auth":"authorization value"}}}`,
+			},
 		},
 	}
 	for _, tc := range cases {

@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -16,16 +17,30 @@ func TestConvertInstallConfig(t *testing.T) {
 		expected *types.InstallConfig
 	}{
 		{
-			name:     "empty",
-			config:   &types.InstallConfig{},
-			expected: &types.InstallConfig{},
+			name: "empty",
+			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+			},
+			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+			},
 		},
 		{
 			name: "empty networking",
 			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
 				Networking: &types.Networking{},
 			},
 			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
 				Networking: &types.Networking{},
 			},
 		},
@@ -33,6 +48,9 @@ func TestConvertInstallConfig(t *testing.T) {
 			// all deprecated fields
 			name: "old networking",
 			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: "v1beta3",
+				},
 				Networking: &types.Networking{
 					MachineCIDR:           ipnet.MustParseCIDR("1.1.1.1/24"),
 					DeprecatedType:        "foo",
@@ -46,6 +64,9 @@ func TestConvertInstallConfig(t *testing.T) {
 				},
 			},
 			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
 				Networking: &types.Networking{
 					MachineCIDR:    ipnet.MustParseCIDR("1.1.1.1/24"),
 					NetworkType:    "foo",
@@ -76,6 +97,9 @@ func TestConvertInstallConfig(t *testing.T) {
 		{
 			name: "new networking",
 			config: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
 				Networking: &types.Networking{
 					MachineCIDR:    ipnet.MustParseCIDR("1.1.1.1/24"),
 					NetworkType:    "foo",
@@ -89,6 +113,9 @@ func TestConvertInstallConfig(t *testing.T) {
 				},
 			},
 			expected: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
 				Networking: &types.Networking{
 					MachineCIDR:    ipnet.MustParseCIDR("1.1.1.1/24"),
 					NetworkType:    "foo",
@@ -106,7 +133,10 @@ func TestConvertInstallConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			ConvertInstallConfig(tc.config)
+			err := ConvertInstallConfig(tc.config)
+			if err != nil {
+				t.Fatal("unexpected error", err)
+			}
 			assert.Equal(t, tc.expected, tc.config, "unexpected install config")
 		})
 	}

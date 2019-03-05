@@ -3,12 +3,25 @@ package conversion
 import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/pkg/errors"
 )
 
 // ConvertInstallConfig is modeled after the k8s conversion schemes, which is
 // how deprecated values are upconverted.
-func ConvertInstallConfig(config *types.InstallConfig) {
+// This updates the APIVersion to reflect the fact that we've internally
+// upconverted.
+func ConvertInstallConfig(config *types.InstallConfig) error {
+	// check that the version is convertible
+	switch config.APIVersion {
+	case types.InstallConfigVersion, "v1beta3":
+		// works
+	default:
+		return errors.Errorf("cannot upconvert from version %s", config.APIVersion)
+	}
 	ConvertNetworking(config)
+
+	config.APIVersion = types.InstallConfigVersion
+	return nil
 }
 
 // ConvertNetworking upconverts deprecated fields in networking
