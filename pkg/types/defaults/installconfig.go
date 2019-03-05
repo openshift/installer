@@ -10,11 +10,11 @@ import (
 )
 
 var (
-	defaultMachineCIDR      = ipnet.MustParseCIDR("10.0.0.0/16")
-	defaultServiceCIDR      = ipnet.MustParseCIDR("172.30.0.0/16")
-	defaultClusterCIDR      = ipnet.MustParseCIDR("10.128.0.0/14")
-	defaultHostSubnetLength = 9 // equivalent to a /23 per node
-	defaultNetworkPlugin    = "OpenShiftSDN"
+	defaultMachineCIDR    = ipnet.MustParseCIDR("10.0.0.0/16")
+	defaultServiceNetwork = ipnet.MustParseCIDR("172.30.0.0/16")
+	defaultClusterNetwork = ipnet.MustParseCIDR("10.128.0.0/14")
+	defaultHostPrefix     = 23
+	defaultNetworkType    = "OpenShiftSDN"
 )
 
 // SetInstallConfigDefaults sets the defaults for the install config.
@@ -28,17 +28,17 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 			c.Networking.MachineCIDR = libvirtdefaults.DefaultMachineCIDR
 		}
 	}
-	if c.Networking.Type == "" {
-		c.Networking.Type = defaultNetworkPlugin
+	if c.Networking.NetworkType == "" {
+		c.Networking.NetworkType = defaultNetworkType
 	}
-	if c.Networking.ServiceCIDR == nil {
-		c.Networking.ServiceCIDR = defaultServiceCIDR
+	if len(c.Networking.ServiceNetwork) == 0 {
+		c.Networking.ServiceNetwork = []ipnet.IPNet{*defaultServiceNetwork}
 	}
-	if len(c.Networking.ClusterNetworks) == 0 {
-		c.Networking.ClusterNetworks = []types.ClusterNetworkEntry{
+	if len(c.Networking.ClusterNetwork) == 0 {
+		c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
 			{
-				CIDR:             *defaultClusterCIDR,
-				HostSubnetLength: int32(defaultHostSubnetLength),
+				CIDR:       *defaultClusterNetwork,
+				HostPrefix: int32(defaultHostPrefix),
 			},
 		}
 	}

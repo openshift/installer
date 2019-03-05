@@ -61,16 +61,20 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 	netConfig := installConfig.Config.Networking
 
 	clusterNet := []configv1.ClusterNetworkEntry{}
-	if len(netConfig.ClusterNetworks) > 0 {
-		for _, net := range netConfig.ClusterNetworks {
-			_, size := net.CIDR.Mask.Size()
+	if len(netConfig.ClusterNetwork) > 0 {
+		for _, net := range netConfig.ClusterNetwork {
 			clusterNet = append(clusterNet, configv1.ClusterNetworkEntry{
 				CIDR:       net.CIDR.String(),
-				HostPrefix: uint32(size) - uint32(net.HostSubnetLength),
+				HostPrefix: uint32(net.HostPrefix),
 			})
 		}
 	} else {
 		return errors.Errorf("ClusterNetworks must be specified")
+	}
+
+	serviceNet := []string{}
+	for _, sn := range netConfig.ServiceNetwork {
+		serviceNet = append(serviceNet, sn.String())
 	}
 
 	no.Config = &configv1.Network{
@@ -84,8 +88,8 @@ func (no *Networking) Generate(dependencies asset.Parents) error {
 		},
 		Spec: configv1.NetworkSpec{
 			ClusterNetwork: clusterNet,
-			ServiceNetwork: []string{netConfig.ServiceCIDR.String()},
-			NetworkType:    netConfig.Type,
+			ServiceNetwork: serviceNet,
+			NetworkType:    netConfig.NetworkType,
 		},
 	}
 

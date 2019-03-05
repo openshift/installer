@@ -13,7 +13,9 @@ import (
 
 const (
 	// InstallConfigVersion is the version supported by this package.
-	InstallConfigVersion = "v1beta3"
+	// If you bump this, you must also update the list of convertable values in
+	// pkg/conversion/installconfig.go
+	InstallConfigVersion = "v1beta4"
 )
 
 var (
@@ -121,21 +123,35 @@ type Networking struct {
 	// For Libvirt, the default is 192.168.126.0/24.
 	MachineCIDR *ipnet.IPNet `json:"machineCIDR,omitempty"`
 
-	// Type is the network type to install
+	// NetworkType is the type of network to install.
 	// +optional
 	// Default is OpenShiftSDN.
-	Type string `json:"type,omitempty"`
+	NetworkType string `json:"networkType,omitempty"`
 
-	// ServiceCIDR is the IP address space from which to assign service IPs.
+	// ClusterNetwork is the IP address pool to use for pod IPs.
 	// +optional
-	// Default is 172.30.0.0/16.
-	ServiceCIDR *ipnet.IPNet `json:"serviceCIDR,omitempty"`
+	// Default is 10.128.0.0/14 and a host prefix of /23
+	ClusterNetwork []ClusterNetworkEntry `json:"clusterNetwork,omitempty"`
 
-	// ClusterNetworks is the IP address space from which to assign pod IPs.
+	// ServiceNetwork is the IP address pool to use for service IPs.
 	// +optional
-	// Default is a single cluster network with a CIDR of 10.128.0.0/14
-	// and a host subnet length of 9.
-	ClusterNetworks []ClusterNetworkEntry `json:"clusterNetworks,omitempty"`
+	// Default is 172.30.0.0/16
+	// NOTE: currently only one entry is supported.
+	ServiceNetwork []ipnet.IPNet `json:"serviceNetwork,omitempty"`
+
+	// Deprected types, scheduled to be removed
+
+	// Deprecated name for NetworkType
+	// +optional
+	DeprecatedType string `json:"type,omitempty"`
+
+	// Depcreated name for ServiceNetwork
+	// +optional
+	DeprecatedServiceCIDR *ipnet.IPNet `json:"serviceCIDR,omitempty"`
+
+	// Deprecated name for ClusterNetwork
+	// +optional
+	DeprecatedClusterNetworks []ClusterNetworkEntry `json:"clusterNetworks,omitempty"`
 }
 
 // ClusterNetworkEntry is a single IP address block for pod IP blocks. IP blocks
@@ -144,7 +160,11 @@ type ClusterNetworkEntry struct {
 	// The IP block address pool
 	CIDR ipnet.IPNet `json:"cidr"`
 
+	// HostPrefix is the prefix size to allocate to each node from the CIDR.
+	// For example, 24 would allocate 2^8=256 adresses to each node.
+	HostPrefix int32 `json:"hostPrefix"`
+
 	// The size of blocks to allocate from the larger pool.
 	// This is the length in bits - so a 9 here will allocate a /23.
-	HostSubnetLength int32 `json:"hostSubnetLength"`
+	DeprecatedHostSubnetLength int32 `json:"hostSubnetLength,omitempty"`
 }

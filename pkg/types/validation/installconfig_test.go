@@ -27,13 +27,13 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		BaseDomain: "test-domain",
 		Networking: &types.Networking{
-			Type:        "OpenShiftSDN",
-			MachineCIDR: ipnet.MustParseCIDR("10.0.0.0/16"),
-			ServiceCIDR: ipnet.MustParseCIDR("172.30.0.0/16"),
-			ClusterNetworks: []types.ClusterNetworkEntry{
+			NetworkType:    "OpenShiftSDN",
+			MachineCIDR:    ipnet.MustParseCIDR("10.0.0.0/16"),
+			ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+			ClusterNetwork: []types.ClusterNetworkEntry{
 				{
-					CIDR:             *ipnet.MustParseCIDR("192.168.1.0/24"),
-					HostSubnetLength: 4,
+					CIDR:       *ipnet.MustParseCIDR("192.168.1.0/24"),
+					HostPrefix: 28,
 				},
 			},
 		},
@@ -139,28 +139,51 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid network type",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.Type = ""
+				c.Networking.NetworkType = ""
 				return c
 			}(),
-			expectedError: `^networking.type: Required value: network provider type required$`,
+			expectedError: `^networking.networkType: Required value: network provider type required$`,
 		},
 		{
-			name: "missing service cidr",
+			name: "missing service network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.ServiceCIDR = nil
+				c.Networking.ServiceNetwork = nil
 				return c
 			}(),
-			expectedError: `^networking\.serviceCIDR: Required value: a service CIDR is required$`,
+			expectedError: `^networking\.serviceNetwork: Required value: a service network is required$`,
 		},
 		{
-			name: "invalid service cidr",
+			name: "invalid service network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.ServiceCIDR = ipnet.MustParseCIDR("10.0.128.0/16")
+				c.Networking.ServiceNetwork[0] = *ipnet.MustParseCIDR("13.0.128.0/16")
 				return c
 			}(),
-			expectedError: `^networking\.serviceCIDR: Invalid value: \"10\.0\.128\.0/16\": invalid network address. got 10\.0\.128\.0/16, expecting 10\.0\.0\.0/16$`,
+			expectedError: `^networking\.serviceNetwork\[0\]: Invalid value: "13\.0\.128\.0/16": invalid network address. got 13\.0\.128\.0/16, expecting 13\.0\.0\.0/16$`,
+		},
+		{
+			name: "overlapping service network and machine cidr",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.ServiceNetwork[0] = *ipnet.MustParseCIDR("10.0.2.0/24")
+				return c
+			}(),
+			expectedError: `^networking\.serviceNetwork\[0\]: Invalid value: "10\.0\.2\.0/24": service network must not overlap with machineCIDR$`,
+		},
+		{
+			name: "overlapping service network and service network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.ServiceNetwork = []ipnet.IPNet{
+					*ipnet.MustParseCIDR("13.0.0.0/16"),
+					*ipnet.MustParseCIDR("13.0.2.0/24"),
+				}
+
+				return c
+			}(),
+			// also triggers the only-one-service-network validation
+			expectedError: `^\[networking\.serviceNetwork\[1\]: Invalid value: "13\.0\.2\.0/24": service network must not overlap with service network 0, networking\.serviceNetwork: Invalid value: "13\.0\.0\.0/16, 13\.0\.2\.0/24": only one service network can be specified]$`,
 		},
 		{
 			name: "missing machine cidr",
@@ -175,38 +198,59 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "invalid machine cidr",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.MachineCIDR = ipnet.MustParseCIDR("10.0.128.0/16")
+				c.Networking.MachineCIDR = ipnet.MustParseCIDR("11.0.128.0/16")
 				return c
 			}(),
-			expectedError: `^networking\.machineCIDR: Invalid value: \"10\.0\.128\.0/16\": invalid network address. got 10\.0\.128\.0/16, expecting 10\.0\.0\.0/16$`,
+			expectedError: `^networking\.machineCIDR: Invalid value: "11\.0\.128\.0/16": invalid network address. got 11\.0\.128\.0/16, expecting 11\.0\.0\.0/16$`,
 		},
 		{
-			name: "invalid cluster network cidr",
+			name: "invalid cluster network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.ClusterNetworks = []types.ClusterNetworkEntry{{CIDR: *ipnet.MustParseCIDR("10.0.128.0/16")}}
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{{CIDR: *ipnet.MustParseCIDR("12.0.128.0/16"), HostPrefix: 23}}
 				return c
 			}(),
-			expectedError: `^networking\.clusterNetworks\[0]\.cidr: Invalid value: \"10\.0\.128\.0/16\": invalid network address. got 10\.0\.128\.0/16, expecting 10\.0\.0\.0/16$`,
+			expectedError: `^networking\.clusterNetwork\[0]\.cidr: Invalid value: "12\.0\.128\.0/16": invalid network address. got 12\.0\.128\.0/16, expecting 12\.0\.0\.0/16$`,
 		},
 		{
-			name: "overlapping cluster network cidr",
+			name: "overlapping cluster network and machine cidr",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.ClusterNetworks[0].CIDR = *ipnet.MustParseCIDR("172.30.2.0/24")
+				c.Networking.ClusterNetwork[0].CIDR = *ipnet.MustParseCIDR("10.0.3.0/24")
 				return c
 			}(),
-			expectedError: `^networking\.clusterNetworks\[0]\.cidr: Invalid value: "172\.30\.2\.0/24": cluster network CIDR must not overlap with serviceCIDR$`,
+			expectedError: `^networking\.clusterNetwork\[0]\.cidr: Invalid value: "10\.0\.3\.0/24": cluster network must not overlap with machine CIDR$`,
 		},
 		{
-			name: "cluster network host subnet length too large",
+			name: "overlapping cluster network and service network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking.ClusterNetworks[0].CIDR = *ipnet.MustParseCIDR("192.168.1.0/24")
-				c.Networking.ClusterNetworks[0].HostSubnetLength = 9
+				c.Networking.ClusterNetwork[0].CIDR = *ipnet.MustParseCIDR("172.30.2.0/24")
 				return c
 			}(),
-			expectedError: `^networking\.clusterNetworks\[0]\.hostSubnetLength: Invalid value: 9: cluster network host subnet must not be larger than CIDR 192.168.1.0/24$`,
+			expectedError: `^networking\.clusterNetwork\[0]\.cidr: Invalid value: "172\.30\.2\.0/24": cluster network must not overlap with service network 0$`,
+		},
+		{
+			name: "overlapping cluster network and cluster network",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.ClusterNetwork = []types.ClusterNetworkEntry{
+					{CIDR: *ipnet.MustParseCIDR("12.0.0.0/16"), HostPrefix: 23},
+					{CIDR: *ipnet.MustParseCIDR("12.0.3.0/24"), HostPrefix: 25},
+				}
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetwork\[1]\.cidr: Invalid value: "12\.0\.3\.0/24": cluster network must not overlap with cluster network 0$`,
+		},
+		{
+			name: "cluster network host prefix too large",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Networking.ClusterNetwork[0].CIDR = *ipnet.MustParseCIDR("192.168.1.0/24")
+				c.Networking.ClusterNetwork[0].HostPrefix = 23
+				return c
+			}(),
+			expectedError: `^networking\.clusterNetwork\[0]\.hostPrefix: Invalid value: 23: cluster network host subnetwork prefix must not be larger size than CIDR 192.168.1.0/24$`,
 		},
 		{
 			name: "missing control plane",
