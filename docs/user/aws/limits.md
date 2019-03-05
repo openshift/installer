@@ -82,11 +82,15 @@ limit to satisfy the need. If not, please ask AWS to increase the limit via a su
 
 By default, each cluster will create 2 network load balancers for the master API server (1 internal, 1 external) and a
 single classic elastic load balancer for the router. Additional Kubernetes LoadBalancer Service objects will create
-additional [load balancers][load-balancing].
+additional [load balancers][load-balancing].  The default classic load balancer limit is
+[20 per region][classic-load-balancer-limits] and the default network load balancer limit is also
+[20 per region][network-load-balancer-limits].
 
 [availability-zones]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-regions-availability-zones.html
 [az-map]: https://aws.amazon.com/about-aws/global-infrastructure/
+[classic-load-balancer-limits]: https://docs.aws.amazon.com/elasticloadbalancing/latest/classic/elb-limits.html
 [elastic-ip]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html
 [load-balancing]: https://aws.amazon.com/elasticloadbalancing/
 [nat-gateways]: https://docs.aws.amazon.com/vpc/latest/userguide/vpc-nat-gateway.html
+[network-load-balancer-limits]: https://docs.aws.amazon.com/elasticloadbalancing/latest/network/load-balancer-limits.html
 [service-limits]: https://docs.aws.amazon.com/general/latest/gr/aws_service_limits.html
