@@ -98,7 +98,7 @@ func provider(clusterID string, platform *openstack.Platform, mpool *openstack.M
 				Subnets: []openstackprovider.SubnetParam{
 					{
 						Filter: openstackprovider.SubnetFilter{
-							Name: "nodes",
+							Name: fmt.Sprintf("%s-nodes", clusterID),
 							Tags: fmt.Sprintf("%s=%s", "openshiftClusterID", clusterID),
 						},
 					},
