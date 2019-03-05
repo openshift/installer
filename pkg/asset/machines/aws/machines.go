@@ -94,6 +94,7 @@ func provider(clusterID string, platform *aws.Platform, mpool *aws.MachinePool, 
 		Tags:               tags,
 		IAMInstanceProfile: &awsprovider.AWSResourceReference{ID: pointer.StringPtr(fmt.Sprintf("%s-%s-profile", clusterID, role))},
 		UserDataSecret:     &corev1.LocalObjectReference{Name: userDataSecret},
+		CredentialsSecret:  &corev1.LocalObjectReference{Name: "aws-cloud-credentials"},
 		Subnet: awsprovider.AWSResourceReference{
 			Filters: []awsprovider.Filter{{
 				Name:   "tag:Name",
