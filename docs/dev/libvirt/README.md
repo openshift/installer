@@ -289,6 +289,40 @@ kubectl get --all-namespaces pods
 ## Troubleshooting
 If following the above steps hasn't quite worked, please review this section for well known issues.
 
+### Console doesn't come up
+In case of libvirt there is no wildcard DNS resolution and console depends on the route which is created by auth operator ([Issue #1007](https://github.com/openshift/installer/issues/1007)).
+To make it work we need to first create the manifests and edit the `domain` for ingress config, before directly creating the cluster.
+
+- Add another domain entry in the openshift.conf which used by dnsmasq.
+Here `tt.testing` is the domain which I choose when running the installer.
+Here the IP in the address belong to one of the worker node.
+```console
+$ cat /etc/NetworkManager/dnsmasq.d/openshift.conf
+server=/tt.testing/192.168.126.1
+address=/.apps.tt.testing/192.168.126.51
+```
+
+- Make sure you restart the NetworkManager after change in the openshift.conf
+```console
+$ sudo systemctl restart NetworkManager
+```
+
+- Create the manifests
+```console
+$ openshift-install --dir $INSTALL_DIR create manifests
+```
+
+- Domain entry for cluster-ingress-02-config.yml file should be following (here domain is what your created initially)
+```console
+$ grep domain $INSTALL_DIR/manifests/cluster-ingress-02-config.yml
+domain: apps.tt.testing
+```
+
+- Start the installer to create the cluster
+```console
+$ openshift-install --dir $INSTALL_DIR create cluster
+```
+
 ### Install throws an `Unable to resolve address 'localhost'` error
 
 If you're seeing an error similar to
