@@ -3,6 +3,7 @@ package aws
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
@@ -19,6 +20,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"k8s.io/apimachinery/pkg/util/wait"
 
 	"github.com/openshift/installer/pkg/version"
 )
@@ -108,90 +110,92 @@ func (o *ClusterUninstaller) Run() error {
 		logger:  o.Logger,
 	}
 
-	var loopError error
-	for len(tagClients) > 0 || loopError != nil {
-		loopError = nil
-		nextTagClients := tagClients[:0]
-		for _, tagClient := range tagClients {
-			matched := false
-			for _, filter := range o.Filters {
-				o.Logger.Debugf("search for and delete matching resources by tag in %s matching %#+v", tagClientNames[tagClient], filter)
-				tagFilters := make([]*resourcegroupstaggingapi.TagFilter, 0, len(filter))
-				for key, value := range filter {
-					tagFilters = append(tagFilters, &resourcegroupstaggingapi.TagFilter{
-						Key:    aws.String(key),
-						Values: []*string{aws.String(value)},
-					})
-				}
-				err = tagClient.GetResourcesPages(
-					&resourcegroupstaggingapi.GetResourcesInput{TagFilters: tagFilters},
-					func(results *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
-						for _, resource := range results.ResourceTagMappingList {
-							arn := *resource.ResourceARN
-							if _, ok := deleted[arn]; !ok {
-								matched = true
-								err := deleteARN(awsSession, arn, filter, o.Logger)
-								if err != nil {
-									err = errors.Wrapf(err, "deleting %s", arn)
-									o.Logger.Debug(err)
-									continue
+	return wait.PollImmediateInfinite(
+		time.Second*10,
+		func() (done bool, err error) {
+			var loopError error
+			nextTagClients := tagClients[:0]
+			for _, tagClient := range tagClients {
+				matched := false
+				for _, filter := range o.Filters {
+					o.Logger.Debugf("search for and delete matching resources by tag in %s matching %#+v", tagClientNames[tagClient], filter)
+					tagFilters := make([]*resourcegroupstaggingapi.TagFilter, 0, len(filter))
+					for key, value := range filter {
+						tagFilters = append(tagFilters, &resourcegroupstaggingapi.TagFilter{
+							Key:    aws.String(key),
+							Values: []*string{aws.String(value)},
+						})
+					}
+					err = tagClient.GetResourcesPages(
+						&resourcegroupstaggingapi.GetResourcesInput{TagFilters: tagFilters},
+						func(results *resourcegroupstaggingapi.GetResourcesOutput, lastPage bool) bool {
+							for _, resource := range results.ResourceTagMappingList {
+								arn := *resource.ResourceARN
+								if _, ok := deleted[arn]; !ok {
+									matched = true
+									err := deleteARN(awsSession, arn, filter, o.Logger)
+									if err != nil {
+										err = errors.Wrapf(err, "deleting %s", arn)
+										o.Logger.Debug(err)
+										continue
+									}
+									deleted[arn] = exists
 								}
-								deleted[arn] = exists
 							}
-						}
 
-						return !lastPage
-					},
-				)
-				if err != nil {
-					err = errors.Wrap(err, "get tagged resources")
-					o.Logger.Info(err)
-					matched = true
-					loopError = err
+							return !lastPage
+						},
+					)
+					if err != nil {
+						err = errors.Wrap(err, "get tagged resources")
+						o.Logger.Info(err)
+						matched = true
+						loopError = err
+					}
+				}
+
+				if matched {
+					nextTagClients = append(nextTagClients, tagClient)
+				} else {
+					o.Logger.Debugf("no deletions from %s, removing client", tagClientNames[tagClient])
+				}
+			}
+			tagClients = nextTagClients
+
+			o.Logger.Debug("search for IAM roles")
+			arns, err := iamRoleSearch.arns()
+			if err != nil {
+				o.Logger.Info(err)
+				loopError = err
+			}
+
+			o.Logger.Debug("search for IAM users")
+			userARNs, err := iamUserSearch.arns()
+			if err != nil {
+				o.Logger.Info(err)
+				loopError = err
+			}
+			arns = append(arns, userARNs...)
+
+			if len(arns) > 0 {
+				o.Logger.Debug("delete IAM roles and users")
+			}
+			for _, arn := range arns {
+				if _, ok := deleted[arn]; !ok {
+					err = deleteARN(awsSession, arn, nil, o.Logger)
+					if err != nil {
+						err = errors.Wrapf(err, "deleting %s", arn)
+						o.Logger.Debug(err)
+						loopError = err
+						continue
+					}
+					deleted[arn] = exists
 				}
 			}
 
-			if matched {
-				nextTagClients = append(nextTagClients, tagClient)
-			} else {
-				o.Logger.Debugf("no deletions from %s, removing client", tagClientNames[tagClient])
-			}
-		}
-		tagClients = nextTagClients
-
-		o.Logger.Debug("search for IAM roles")
-		arns, err := iamRoleSearch.arns()
-		if err != nil {
-			o.Logger.Info(err)
-			loopError = err
-		}
-
-		o.Logger.Debug("search for IAM users")
-		userARNs, err := iamUserSearch.arns()
-		if err != nil {
-			o.Logger.Info(err)
-			loopError = err
-		}
-		arns = append(arns, userARNs...)
-
-		if len(arns) > 0 {
-			o.Logger.Debug("delete IAM roles and users")
-		}
-		for _, arn := range arns {
-			if _, ok := deleted[arn]; !ok {
-				err = deleteARN(awsSession, arn, nil, o.Logger)
-				if err != nil {
-					err = errors.Wrapf(err, "deleting %s", arn)
-					o.Logger.Debug(err)
-					loopError = err
-					continue
-				}
-				deleted[arn] = exists
-			}
-		}
-	}
-
-	return nil
+			return len(tagClients) == 0 && loopError == nil, nil
+		},
+	)
 }
 
 func splitSlash(name string, input string) (base string, suffix string, err error) {
