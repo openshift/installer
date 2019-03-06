@@ -20,7 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	ccv1beta1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1beta1"
+	minterv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
 )
 
 // UpdateConditionCheck tests whether a condition should be updated from the
@@ -46,9 +46,9 @@ func UpdateConditionNever(_, _, _, _ string) bool {
 	return false
 }
 
-// FindCredentialsRequestCondition finds in the cluster the condition that has the
-// specified condition type. If none exists, then returns nil.
-func FindCredentialsRequestCondition(conditions []ccv1beta1.CredentialsRequestCondition, conditionType ccv1beta1.CredentialsRequestConditionType) *ccv1beta1.CredentialsRequestCondition {
+// FindCredentialsRequestCondition iterates all conditions on a CredentialsRequest looking for the
+// specified condition type. If none exists nil will be returned.
+func FindCredentialsRequestCondition(conditions []minterv1.CredentialsRequestCondition, conditionType minterv1.CredentialsRequestConditionType) *minterv1.CredentialsRequestCondition {
 	for i, condition := range conditions {
 		if condition.Type == conditionType {
 			return &conditions[i]
@@ -77,20 +77,20 @@ func shouldUpdateCondition(
 // 1) Requested status is different than existing status.
 // 2) The updateConditionCheck function returns true.
 func SetCredentialsRequestCondition(
-	conditions []ccv1beta1.CredentialsRequestCondition,
-	conditionType ccv1beta1.CredentialsRequestConditionType,
+	conditions []minterv1.CredentialsRequestCondition,
+	conditionType minterv1.CredentialsRequestConditionType,
 	status corev1.ConditionStatus,
 	reason string,
 	message string,
 	updateConditionCheck UpdateConditionCheck,
-) []ccv1beta1.CredentialsRequestCondition {
+) []minterv1.CredentialsRequestCondition {
 	now := metav1.Now()
 	existingCondition := FindCredentialsRequestCondition(conditions, conditionType)
 	if existingCondition == nil {
 		if status == corev1.ConditionTrue {
 			conditions = append(
 				conditions,
-				ccv1beta1.CredentialsRequestCondition{
+				minterv1.CredentialsRequestCondition{
 					Type:               conditionType,
 					Status:             status,
 					Reason:             reason,

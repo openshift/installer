@@ -5,9 +5,8 @@ import (
 
 	log "github.com/sirupsen/logrus"
 
-	ccv1beta1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1beta1"
+	minterv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
 	ccaws "github.com/openshift/cloud-credential-operator/pkg/aws"
-	"github.com/openshift/cloud-credential-operator/pkg/controller/assets"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/iam"
@@ -19,17 +18,78 @@ import (
 // credMintingActions is a list of AWS verbs needed to run in the mode where the
 // cloud-credential-operator can mint new creds to satisfy CredentialRequest CRDs
 var (
-	CredMintingActions = []string{
+	credMintingActions = []string{
 		"iam:CreateAccessKey",
 		"iam:CreateUser",
 		"iam:DeleteAccessKey",
 		"iam:DeleteUser",
 		"iam:DeleteUserPolicy",
 		"iam:GetUser",
+		"iam:GetUserPolicy",
 		"iam:ListAccessKeys",
 		"iam:PutUserPolicy",
 		"iam:TagUser",
 		"iam:SimulatePrincipalPolicy", // needed so we can verify the above list of course
+	}
+
+	credPassthroughActions = []string{
+		// so we can query whether we have the below list of creds
+		"iam:GetUser",
+		"iam:SimulatePrincipalPolicy",
+
+		// openshift-ingress
+		"elasticloadbalancing:DescribeLoadBalancers",
+		"route53:ListHostedZones",
+		"route53:ChangeResourceRecordSets",
+		"tag:GetResources",
+
+		// openshift-image-registry
+		"s3:CreateBucket",
+		"s3:DeleteBucket",
+		"s3:PutBucketTagging",
+		"s3:GetBucketTagging",
+		"s3:PutEncryptionConfiguration",
+		"s3:GetEncryptionConfiguration",
+		"s3:PutLifecycleConfiguration",
+		"s3:GetLifecycleConfiguration",
+		"s3:GetBucketLocation",
+		"s3:ListBucket",
+		"s3:HeadBucket",
+		"s3:GetObject",
+		"s3:PutObject",
+		"s3:DeleteObject",
+		"s3:ListBucketMultipartUploads",
+		"s3:AbortMultipartUpload",
+
+		// openshift-cluster-api
+		"ec2:DescribeImages",
+		"ec2:DescribeVpcs",
+		"ec2:DescribeSubnets",
+		"ec2:DescribeAvailabilityZones",
+		"ec2:DescribeSecurityGroups",
+		"ec2:RunInstances",
+		"ec2:DescribeInstances",
+		"ec2:TerminateInstances",
+		"elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+		"elasticloadbalancing:DescribeLoadBalancers",
+		"elasticloadbalancing:DescribeTargetGroups",
+		"elasticloadbalancing:RegisterTargets",
+		"ec2:DescribeVpcs",
+		"ec2:DescribeSubnets",
+		"ec2:DescribeAvailabilityZones",
+		"ec2:DescribeSecurityGroups",
+		"ec2:RunInstances",
+		"ec2:DescribeInstances",
+		"ec2:TerminateInstances",
+		"elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+		"elasticloadbalancing:DescribeLoadBalancers",
+		"elasticloadbalancing:DescribeTargetGroups",
+		"elasticloadbalancing:RegisterTargets",
+
+		// iam-ro
+		"iam:GetUser",
+		"iam:GetUserPolicy",
+		"iam:ListAccessKeys",
 	}
 
 	credentailRequestScheme = runtime.NewScheme()
@@ -37,19 +97,19 @@ var (
 )
 
 func init() {
-	if err := ccv1beta1.AddToScheme(credentailRequestScheme); err != nil {
+	if err := minterv1.AddToScheme(credentailRequestScheme); err != nil {
 		panic(err)
 	}
 }
 
 // CheckCloudCredCreation will see whether we have enough permissions to create new sub-creds
 func CheckCloudCredCreation(awsClient ccaws.Client, logger log.FieldLogger) (bool, error) {
-	return CheckPermissionsAgainstActions(awsClient, CredMintingActions, logger)
+	return CheckPermissionsAgainstActions(awsClient, credMintingActions, logger)
 }
 
 // CheckPermissionsUsingQueryClient will use queryClient to query whether the credentials in targetClient can perform the actions
 // listed in the statementEntries. queryClient will need iam:GetUser and iam:SimulatePrincipalPolicy
-func CheckPermissionsUsingQueryClient(queryClient, targetClient ccaws.Client, statementEntries []ccv1beta1.StatementEntry, logger log.FieldLogger) (bool, error) {
+func CheckPermissionsUsingQueryClient(queryClient, targetClient ccaws.Client, statementEntries []minterv1.StatementEntry, logger log.FieldLogger) (bool, error) {
 	targetUsername, err := targetClient.GetUser(nil)
 	if err != nil {
 		return false, fmt.Errorf("error querying current username: %v", err)
@@ -70,7 +130,7 @@ func CheckPermissionsUsingQueryClient(queryClient, targetClient ccaws.Client, st
 		return false, fmt.Errorf("error simulating policy: %v", err)
 	}
 
-	// Either they are all allowed and we reutrn 'true', or it's a failure
+	// Either they are all allowed and we return 'true', or it's a failure
 	allClear := true
 	for _, result := range results.EvaluationResults {
 		if *result.EvalDecision != "allowed" {
@@ -92,7 +152,7 @@ func CheckPermissionsUsingQueryClient(queryClient, targetClient ccaws.Client, st
 
 // CheckPermissionsAgainstStatementList will test to see whether the list of actions in the provided
 // list of StatementEntries can work with the credentials used by the passed-in awsClient
-func CheckPermissionsAgainstStatementList(awsClient ccaws.Client, statementEntries []ccv1beta1.StatementEntry, logger log.FieldLogger) (bool, error) {
+func CheckPermissionsAgainstStatementList(awsClient ccaws.Client, statementEntries []minterv1.StatementEntry, logger log.FieldLogger) (bool, error) {
 	return CheckPermissionsUsingQueryClient(awsClient, awsClient, statementEntries, logger)
 }
 
@@ -100,7 +160,7 @@ func CheckPermissionsAgainstStatementList(awsClient ccaws.Client, statementEntri
 // awsClient creds have sufficient permissions to perform the actions.
 // Will return true/false indicating whether the permissions are sufficient.
 func CheckPermissionsAgainstActions(awsClient ccaws.Client, actionList []string, logger log.FieldLogger) (bool, error) {
-	statementList := []ccv1beta1.StatementEntry{
+	statementList := []minterv1.StatementEntry{
 		{
 			Action:   actionList,
 			Resource: "*",
@@ -112,43 +172,26 @@ func CheckPermissionsAgainstActions(awsClient ccaws.Client, actionList []string,
 }
 
 // CheckCloudCredPassthrough will see if the provided creds are good enough to pass through
-// to other components as-is based on the generated list of permissions needed from the static
-// manifests in the repo
+// to other components as-is based on the static list of permissions needed by the various
+// users of CredentialsRequests
+// TODO: move away from static list (to dynamic passthrough validation?)
 func CheckCloudCredPassthrough(awsClient ccaws.Client, logger log.FieldLogger) (bool, error) {
-	statementList := []ccv1beta1.StatementEntry{}
-
-	// Read in the static assets containing all the needed CredentialRequests/permissions
-	assetList := assets.AssetNames()
-	for _, oneAsset := range assetList {
-		crBytes, err := assets.Asset(oneAsset)
-		if err != nil {
-			return false, fmt.Errorf("error parsing CredentialRequest object: %v", err)
-		}
-
-		statements, err := getCredentialRequestStatements(crBytes)
-		if err != nil {
-			return false, fmt.Errorf("error processing CredentialRequest: %v", err)
-		}
-
-		statementList = append(statementList, statements...)
-	}
-
-	return CheckPermissionsAgainstStatementList(awsClient, statementList, logger)
+	return CheckPermissionsAgainstActions(awsClient, credPassthroughActions, logger)
 }
 
-func readCredentialRequest(cr []byte) (*ccv1beta1.CredentialsRequest, error) {
+func readCredentialRequest(cr []byte) (*minterv1.CredentialsRequest, error) {
 
-	newObj, err := runtime.Decode(credentialRequestCodec.UniversalDecoder(ccv1beta1.SchemeGroupVersion), cr)
+	newObj, err := runtime.Decode(credentialRequestCodec.UniversalDecoder(minterv1.SchemeGroupVersion), cr)
 	if err != nil {
 		return nil, fmt.Errorf("error decoding credentialrequest: %v", err)
 	}
-	return newObj.(*ccv1beta1.CredentialsRequest), nil
+	return newObj.(*minterv1.CredentialsRequest), nil
 }
 
-func getCredentialRequestStatements(crBytes []byte) ([]ccv1beta1.StatementEntry, error) {
-	statementList := []ccv1beta1.StatementEntry{}
+func getCredentialRequestStatements(crBytes []byte) ([]minterv1.StatementEntry, error) {
+	statementList := []minterv1.StatementEntry{}
 
-	awsCodec, err := ccv1beta1.NewCodec()
+	awsCodec, err := minterv1.NewCodec()
 	if err != nil {
 		return statementList, fmt.Errorf("error creating credentialrequest codec: %v", err)
 	}
@@ -158,7 +201,7 @@ func getCredentialRequestStatements(crBytes []byte) ([]ccv1beta1.StatementEntry,
 		return statementList, err
 	}
 
-	awsSpec, err := awsCodec.DecodeProviderSpec(cr.Spec.ProviderSpec, &ccv1beta1.AWSProviderSpec{})
+	awsSpec, err := awsCodec.DecodeProviderSpec(cr.Spec.ProviderSpec, &minterv1.AWSProviderSpec{})
 	if err != nil {
 		return statementList, fmt.Errorf("error decoding spec.ProviderSpec: %v", err)
 	}

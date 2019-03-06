@@ -27,9 +27,11 @@ import (
 
 	awssdk "github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/iam/iamiface"
+	"github.com/openshift/cloud-credential-operator/version"
 )
 
 const (
@@ -118,6 +120,10 @@ func NewClient(accessKeyID, secretAccessKey []byte) (Client, error) {
 	if err != nil {
 		return nil, err
 	}
+	s.Handlers.Build.PushBackNamed(request.NamedHandler{
+		Name: "openshift.io/cloud-credential-operator",
+		Fn:   request.MakeAddToUserAgentHandler("openshift.io cloud-credential-operator", version.Version),
+	})
 
 	return &awsClient{
 		iamClient: iam.New(s),
