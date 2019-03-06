@@ -32,12 +32,17 @@ func ec2Client(region string) (*ec2.EC2, error) {
 }
 
 func fetchAvailabilityZones(client *ec2.EC2, region string) ([]string, error) {
-	zoneFilter := &ec2.Filter{
-		Name:   aws.String("region-name"),
-		Values: []*string{aws.String(region)},
-	}
 	req := &ec2.DescribeAvailabilityZonesInput{
-		Filters: []*ec2.Filter{zoneFilter},
+		Filters: []*ec2.Filter{
+			{
+				Name:   aws.String("region-name"),
+				Values: []*string{aws.String(region)},
+			},
+			{
+				Name:   aws.String("state"),
+				Values: []*string{aws.String("available")},
+			},
+		},
 	}
 	resp, err := client.DescribeAvailabilityZones(req)
 	if err != nil {
