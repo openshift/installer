@@ -4,6 +4,50 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## 0.14.0 - 2019-03-05
+
+### Changed
+
+- A new, long-lived, self-signed certificate authority has been added
+  to sign kubelet certificate-signing requests.  This works around the
+  current lack of certificate rotation in the machine-config operator.
+- Machine(Set) labels have been migrated from
+  `sigs.k8s.io/cluster-api-...` to `machine.openshift.io`, continuing
+  the transition begun in 0.13.0.
+- On AWS, control-plane nodes are now based on encrypted AMIs.  These
+  AMIs are copied into the target account from unencrypted, public
+  AMIs provided by Red Hat.  To support the copy and post-cluster
+  cleanup, the installer requires the following additional AWS
+  credentials: ec2:CopyImage, ec2:DeregisterImage, and
+  ec2:DeleteSnapshot.  0.14.0 doesn't actually clean up the snapshots
+  associated with the copied AMIs yet, but we have a fix for that
+  landed for the next release.  In the meantime, you should manually
+  prune your snapshots after destroying a cluster.
+- On AWS, the security-group simplification from 0.13.1 accidentially
+  removed global SSH access to the bootstrap machine.  We've fixed
+  that with this release.  Unfortunately, this release also moves the
+  bootstrap machine into the same subnet as the first control-plane
+  node, and since 0.13.0, control-plane nodes are in private subnets.
+  So SSH access to the bootstrap machine from outside the cluster is
+  still broken, but we've landed a fix to get it working again in the
+  next release.  In the meantime, you can set up a SSH bastion or
+  debug pod if you need SSH access to cluster machines.
+
+- On OpenStack, the Machine(Set)s have been updated to track provider
+  changes.  For example, the `SecurityGroups` schema has changed, as
+  has the schema for selecting subnets.
+
+- Several doc and internal cleanups.
+
+### Fixed
+
+- On AWS, we now respect the availability zones configured in the
+  control-plane Machine manifests, which are in turn fed by the
+  install-config (previously control-plane nodes were always striped
+  over zones regardless of the configuration).
+- On AWS, the credentials-checking logic now uses the standard logger
+  instead of creating its own custom logger.
+
 ## 0.13.1 - 2019-02-28
 
 ### Changed
