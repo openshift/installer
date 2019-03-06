@@ -31,7 +31,7 @@ func (k *kubeconfig) generate(
 			{
 				Name: installConfig.ObjectMeta.Name,
 				Cluster: clientcmd.Cluster{
-					Server: fmt.Sprintf("https://api.%s:6443", installConfig.ClusterDomain()),
+					Server: fmt.Sprintf("https://api.%s:443", installConfig.ClusterDomain()),
 					CertificateAuthorityData: ca.Cert(),
 				},
 			},

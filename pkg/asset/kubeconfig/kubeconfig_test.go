@@ -62,7 +62,7 @@ func TestKubeconfigGenerate(t *testing.T) {
 			expectedData: []byte(`clusters:
 - cluster:
     certificate-authority-data: VEhJUyBJUyBST09UIENBIENFUlQgREFUQQ==
-    server: https://api.test-cluster-name.test.example.com:6443
+    server: https://api.test-cluster-name.test.example.com:443
   name: test-cluster-name
 contexts:
 - context:
@@ -86,7 +86,7 @@ users:
 			expectedData: []byte(`clusters:
 - cluster:
     certificate-authority-data: VEhJUyBJUyBST09UIENBIENFUlQgREFUQQ==
-    server: https://api.test-cluster-name.test.example.com:6443
+    server: https://api.test-cluster-name.test.example.com:443
   name: test-cluster-name
 contexts:
 - context:
@@ -112,7 +112,7 @@ users:
 			actualFiles := kc.Files()
 			assert.Equal(t, 1, len(actualFiles), "unexpected number of files generated")
 			assert.Equal(t, tt.filename, actualFiles[0].Filename, "unexpected file name generated")
-			assert.Equal(t, tt.expectedData, actualFiles[0].Data, "unexpected config")
+			assert.Equal(t, string(tt.expectedData), string(actualFiles[0].Data), "unexpected config")
 		})
 	}
 

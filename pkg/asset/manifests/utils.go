@@ -34,7 +34,7 @@ func configMap(namespace, name string, data genericData) *configurationObject {
 }
 
 func getAPIServerURL(ic *types.InstallConfig) string {
-	return fmt.Sprintf("https://api.%s:6443", ic.ClusterDomain())
+	return fmt.Sprintf("https://api.%s:443", ic.ClusterDomain())
 }
 
 func getEtcdDiscoveryDomain(ic *types.InstallConfig) string {
