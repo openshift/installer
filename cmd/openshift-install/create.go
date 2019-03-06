@@ -16,11 +16,9 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
-	corev1client "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
@@ -288,11 +286,9 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 		return errors.Wrap(err, "waiting for Kubernetes API")
 	}
 
-	events := client.CoreV1().Events("kube-system")
-
 	eventTimeout := 30 * time.Minute
 	logrus.Infof("Waiting up to %v for the bootstrap-complete event...", eventTimeout)
-	if err := waitForEvent(ctx, events, "bootstrap-complete", eventTimeout); err != nil {
+	if err := waitForEvent(ctx, client.CoreV1().RESTClient(), "bootstrap-complete", eventTimeout); err != nil {
 		return err
 	}
 
@@ -300,43 +296,31 @@ func destroyBootstrap(ctx context.Context, config *rest.Config, directory string
 	return destroybootstrap.Destroy(rootOpts.dir)
 }
 
-// waitForEvent watches the events, waits for the event of the given name and prints out all other events on the way.
-func waitForEvent(ctx context.Context, client corev1client.EventInterface, name string, timeout time.Duration) error {
+// waitForEvent watches the events in the kube-system namespace, waits
+// for the event of the given name, and prints out all other events on
+// the way.
+func waitForEvent(ctx context.Context, client cache.Getter, name string, timeout time.Duration) error {
 	waitCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
+	resource := "events"
+	namespace := "kube-system"
+
 	_, err := clientwatch.UntilWithSync(
 		waitCtx,
-		&cache.ListWatch{ListFunc: func(options metav1.ListOptions) (runtime.Object, error) {
-			ret, err := client.List(options)
-			if err != nil {
-				logrus.Debugf("Failed to list events: %s", err)
-			}
-			return ret, err
-		}, WatchFunc: func(options metav1.ListOptions) (watch.Interface, error) {
-			ret, err := client.Watch(options)
-			if err != nil {
-				logrus.Debugf("Failed to watch events: %s", err)
-			}
-			return ret, err
-		}},
+		cache.NewListWatchFromClient(client, resource, namespace, fields.Everything()),
 		&corev1.Event{},
 		nil,
 		func(event watch.Event) (bool, error) {
 			ev, ok := event.Object.(*corev1.Event)
 			if !ok {
-				logrus.Warnf("Expected an core/v1.Event object but got a %q object instead", event.Object.GetObjectKind().GroupVersionKind())
+				logrus.Warnf("Expected a core/v1.Event object but got a %q object instead", event.Object.GetObjectKind().GroupVersionKind())
 				return false, nil
 			}
 
-			switch event.Type {
-			case watch.Added, watch.Modified:
-				logrus.Debugf("added %s: %s", ev.Name, ev.Message)
-				return ev.Name == name, nil
-			case watch.Error:
-				logrus.Debugf("error %s: %s", ev.Name, ev.Message)
-			}
-			return false, nil
+			logrus.Debugf("%s %s: %s", strings.ToLower(string(event.Type)), ev.Name, ev.Message)
+			found := ev.Name == name && (event.Type == watch.Added || event.Type == watch.Modified)
+			return found, nil
 		},
 	)
 
