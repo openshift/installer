@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/templates/content/bootkube"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/types"
 )
 
 const (
@@ -91,9 +92,13 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	dependencies.Get(installConfig, ingress, dns, network, infra)
 
+	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
+	if err != nil {
+		return errors.Wrap(err, "failed to redact install-config")
+	}
 	// mao go to kube-system config map
 	m.KubeSysConfig = configMap("kube-system", "cluster-config-v1", genericData{
-		"install-config": string(installConfig.Files()[0].Data),
+		"install-config": string(redactedConfig),
 	})
 	kubeSysConfigData, err := yaml.Marshal(m.KubeSysConfig)
 	if err != nil {
@@ -262,6 +267,11 @@ func (m *Manifests) Load(f asset.FileFetcher) (bool, error) {
 	asset.SortFiles(m.FileList)
 
 	return true, nil
+}
+
+func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
+	config.PullSecret = ""
+	return yaml.Marshal(config)
 }
 
 func indent(indention int, v string) string {
