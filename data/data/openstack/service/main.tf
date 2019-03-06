@@ -204,6 +204,7 @@ ${length(var.lb_floating_ip) == 0 ? "" : "api  IN  A  ${var.lb_floating_ip}"}
 ${length(var.lb_floating_ip) == 0 ? "" : "*.apps  IN  A  ${var.lb_floating_ip}"}
 
 bootstrap.${var.cluster_domain}  IN  A  ${var.bootstrap_ip}
+${replace(join("\n", formatlist("%s  IN  A %s", var.master_port_names, var.master_ips)), "port-", "")}
 ${replace(join("\n", formatlist("master-%s  IN  A %s", var.master_port_names, var.master_ips)), "${var.cluster_id}-master-port-", "")}
 
 ${replace(join("\n", formatlist("etcd-%s  IN  A  %s", var.master_port_names, var.master_ips)), "${var.cluster_id}-master-port-", "")}
@@ -229,6 +230,18 @@ WantedBy=multi-user.target
 EOF
 }
 
+data "ignition_file" "hostname" {
+  filesystem = "root"
+  mode       = "420"           // 0644
+  path       = "/etc/hostname"
+
+  content {
+    content = <<EOF
+${var.cluster_id}-api.${var.cluster_domain}
+EOF
+  }
+}
+
 data "ignition_user" "core" {
   name = "core"
 }
@@ -252,6 +265,7 @@ data "ignition_config" "service_redirect" {
   }
 
   files = [
+    "${data.ignition_file.hostname.id}",
     "${data.ignition_file.haproxy_watcher_script.id}",
     "${data.ignition_file.corefile.id}",
     "${data.ignition_file.coredb.id}",
@@ -281,7 +295,8 @@ resource "openstack_compute_instance_v2" "load_balancer" {
   }
 
   metadata {
-    Name = "${var.cluster_id}-bootstrap"
+    Name     = "${var.cluster_id}-api"
+    Hostname = "${var.cluster_id}-api.${var.cluster_domain}"
 
     # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
     openshiftClusterID = "${var.cluster_id}"

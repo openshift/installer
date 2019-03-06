@@ -44,6 +44,7 @@ module "bootstrap" {
 
   swift_container     = "${openstack_objectstorage_container_v1.container.name}"
   cluster_id          = "${var.cluster_id}"
+  cluster_domain      = "${var.cluster_domain}"
   image_name          = "${var.openstack_base_image}"
   flavor_name         = "${var.openstack_master_flavor_name}"
   ignition            = "${var.ignition_bootstrap}"
@@ -56,6 +57,7 @@ module "masters" {
 
   base_image          = "${var.openstack_base_image}"
   cluster_id          = "${var.cluster_id}"
+  cluster_domain      = "${var.cluster_domain}"
   flavor_name         = "${var.openstack_master_flavor_name}"
   instance_count      = "${var.master_count}"
   master_sg_ids       = "${concat(var.openstack_master_extra_sg_ids, list(module.topology.master_sg_id))}"
