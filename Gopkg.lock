@@ -882,6 +882,14 @@
   source = "https://github.com/openshift/cluster-api-provider-aws.git"
 
 [[projects]]
+  digest = "1:1fce76994e3e784e26a36958ddc023e270d84a1f371553928dfef20e83f603cb"
+  name = "sigs.k8s.io/cluster-api-provider-azure"
+  packages = ["pkg/apis/azureprovider/v1alpha1"]
+  pruneopts = "NUT"
+  revision = "6cef53ed62edb88529c2d3a6204e58d0e419c273"
+  version = "v0.1.0-alpha.1"
+
+[[projects]]
   branch = "master"
   digest = "1:55b6b7044d6e27db021b0e645e6c135958815a27bde5e5167e52e85888f8569e"
   name = "sigs.k8s.io/cluster-api-provider-openstack"
@@ -1002,6 +1010,7 @@
     "k8s.io/utils/pointer",
     "sigs.k8s.io/cluster-api-provider-aws/pkg/apis",
     "sigs.k8s.io/cluster-api-provider-aws/pkg/apis/awsproviderconfig/v1beta1",
+    "sigs.k8s.io/cluster-api-provider-azure/pkg/apis/azureprovider/v1alpha1",
     "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis",
     "sigs.k8s.io/cluster-api-provider-openstack/pkg/apis/openstackproviderconfig/v1alpha1",
     "sigs.k8s.io/cluster-api/pkg/apis/cluster/v1alpha1",

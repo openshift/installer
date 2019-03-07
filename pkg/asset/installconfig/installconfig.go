@@ -4,15 +4,14 @@ import (
 	"os"
 
 	"github.com/ghodss/yaml"
-	"github.com/pkg/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/conversion"
 	"github.com/openshift/installer/pkg/types/defaults"
 	openstackvalidation "github.com/openshift/installer/pkg/types/openstack/validation"
 	"github.com/openshift/installer/pkg/types/validation"
+	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -70,6 +69,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.Libvirt = platform.Libvirt
 	a.Config.None = platform.None
 	a.Config.OpenStack = platform.OpenStack
+	a.Config.Azure = platform.Azure
 
 	if err := a.setDefaults(); err != nil {
 		return errors.Wrap(err, "failed to set defaults for install config")

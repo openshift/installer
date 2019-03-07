@@ -5,6 +5,7 @@ import (
 
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -24,6 +25,7 @@ var (
 	// platforms presented to the user in the interactive wizard.
 	PlatformNames = []string{
 		aws.Name,
+		azure.Name,
 	}
 	// HiddenPlatformNames is a slice with all the
 	// hidden-but-supported platform names. This list isn't presented
@@ -91,6 +93,10 @@ type Platform struct {
 	// OpenStack is the configuration used when installing on OpenStack.
 	// +optional
 	OpenStack *openstack.Platform `json:"openstack,omitempty"`
+
+	// OpenStack is the configuration used when installing on OpenStack.
+	// +optional
+	Azure *azure.Platform `json:"azure,omitempty"`
 }
 
 // Name returns a string representation of the platform (e.g. "aws" if
@@ -111,6 +117,9 @@ func (p *Platform) Name() string {
 	}
 	if p.OpenStack != nil {
 		return openstack.Name
+	}
+	if p.Azure != nil {
+		return azure.Name
 	}
 	return ""
 }

@@ -6,18 +6,17 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
-	"github.com/pkg/errors"
-
 	configv1 "github.com/openshift/api/config/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icaws "github.com/openshift/installer/pkg/asset/installconfig/aws"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -80,7 +79,7 @@ func (d *DNS) Generate(dependencies asset.Parents) error {
 			fmt.Sprintf("kubernetes.io/cluster/%s", clusterID.InfraID): "owned",
 			"Name": fmt.Sprintf("%s-int", clusterID.InfraID),
 		}}
-	case libvirttypes.Name, openstacktypes.Name, nonetypes.Name:
+	case libvirttypes.Name, openstacktypes.Name, nonetypes.Name, azuretypes.Name:
 	default:
 		return errors.New("invalid Platform")
 	}

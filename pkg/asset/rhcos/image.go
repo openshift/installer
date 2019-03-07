@@ -6,16 +6,16 @@ import (
 	"os"
 	"time"
 
-	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
-
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 )
 
 // Image is location of RHCOS image.
@@ -60,6 +60,8 @@ func (i *Image) Generate(p asset.Parents) error {
 		osimage, err = rhcos.QEMU(ctx, rhcos.DefaultChannel)
 	case openstack.Name:
 		osimage = "rhcos"
+	case azure.Name:
+		osimage = "RedHat:osa:osa_311:311.82.20190222"
 	case none.Name:
 	default:
 		return errors.New("invalid Platform")

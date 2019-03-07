@@ -4,17 +4,16 @@ import (
 	"path/filepath"
 
 	"github.com/ghodss/yaml"
-	"github.com/pkg/errors"
-
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/pkg/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var (
@@ -57,6 +56,8 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		platform = configv1.LibvirtPlatform
 	case openstack.Name:
 		platform = configv1.OpenStackPlatform
+	case azure.Name:
+		platform = configv1.AzurePlatform
 	default:
 		platform = configv1.NonePlatform
 	}

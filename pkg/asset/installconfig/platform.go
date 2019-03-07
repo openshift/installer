@@ -4,18 +4,19 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/pkg/errors"
-	survey "gopkg.in/AlecAivazis/survey.v1"
-
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	libvirtconfig "github.com/openshift/installer/pkg/asset/installconfig/libvirt"
 	openstackconfig "github.com/openshift/installer/pkg/asset/installconfig/openstack"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/pkg/errors"
+	survey "gopkg.in/AlecAivazis/survey.v1"
 )
 
 // Platform is an asset that queries the user for the platform on which to install
@@ -44,6 +45,11 @@ func (a *platform) Generate(asset.Parents) error {
 		}
 	case libvirt.Name:
 		a.Libvirt, err = libvirtconfig.Platform()
+		if err != nil {
+			return err
+		}
+	case azure.Name:
+		a.Azure, err = azureconfig.Platform()
 		if err != nil {
 			return err
 		}

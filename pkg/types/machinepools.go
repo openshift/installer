@@ -2,6 +2,7 @@ package types
 
 import (
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
 )
@@ -31,6 +32,9 @@ type MachinePoolPlatform struct {
 
 	// OpenStack is the configuration used when installing on OpenStack.
 	OpenStack *openstack.MachinePool `json:"openstack,omitempty"`
+
+	// Azure is the configuration used when installing on OpenStack.
+	Azure *azure.MachinePool `json:"azure,omitempty"`
 }
 
 // Name returns a string representation of the platform (e.g. "aws" if
@@ -48,6 +52,9 @@ func (p *MachinePoolPlatform) Name() string {
 	}
 	if p.OpenStack != nil {
 		return openstack.Name
+	}
+	if p.Azure != nil {
+		return azure.Name
 	}
 	return ""
 }
