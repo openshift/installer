@@ -17,6 +17,7 @@ data "ignition_config" "redirect" {
   }
 
   files = [
+    "${data.ignition_file.hostname.id}",
     "${data.ignition_file.bootstrap_ifcfg.id}",
   ]
 }
@@ -36,6 +37,18 @@ PERSISTENT_DHCLIENT="yes"
 DNS1="${var.service_vm_fixed_ip}"
 PEERDNS="no"
 NM_CONTROLLED="yes"
+EOF
+  }
+}
+
+data "ignition_file" "hostname" {
+  filesystem = "root"
+  mode       = "420"           // 0644
+  path       = "/etc/hostname"
+
+  content {
+    content = <<EOF
+${var.cluster_id}-bootstrap.${var.cluster_domain}
 EOF
   }
 }
