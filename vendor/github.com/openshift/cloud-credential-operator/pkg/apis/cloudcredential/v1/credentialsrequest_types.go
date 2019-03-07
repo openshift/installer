@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1beta1
+package v1
 
 import (
 	corev1 "k8s.io/api/core/v1"
@@ -66,7 +66,8 @@ type CredentialsRequestStatus struct {
 	ProviderStatus *runtime.RawExtension `json:"providerStatus,omitempty"`
 
 	// Conditions includes detailed status for the CredentialsRequest
-	Conditions []CredentialsRequestCondition `json:"conditions"`
+	// +optional
+	Conditions []CredentialsRequestCondition `json:"conditions,omitempty"`
 }
 
 // +genclient
@@ -123,7 +124,7 @@ const (
 	// CredentialsProvisionFailure is true whenver there has been an issue while trying
 	// to provision the credentials (either passthrough or minting). Error message will
 	// be stored directly in the condition message.
-	CredentialsProvisionFailure CredentialsRequestConditionType = "CredentialsGrantFailure"
+	CredentialsProvisionFailure CredentialsRequestConditionType = "CredentialsProvisionFailure"
 	// CredentialsDeprovisionFailure is true whenever there is an error when trying
 	// to clean up any previously-created cloud resources
 	CredentialsDeprovisionFailure CredentialsRequestConditionType = "CredentialsDeprovisionFailure"

@@ -400,16 +400,16 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:af1e2473c2f486475a443cb284779c8dfd7fe0df8f7b597577b2d42d47713749"
+  digest = "1:feb52434ddfdf3589906278bc611ecf89b3bf799133a1eea0ed7abc4dcd46f71"
   name = "github.com/openshift/cloud-credential-operator"
   packages = [
-    "pkg/apis/cloudcredential/v1beta1",
+    "pkg/apis/cloudcredential/v1",
     "pkg/aws",
-    "pkg/controller/assets",
     "pkg/controller/utils",
+    "version",
   ]
   pruneopts = "NUT"
-  revision = "0798caf39368f3cfb506eb126dbbeee5e738846c"
+  revision = "4ea04acadeb3e5d069ac10a39a2398c4a1beb495"
 
 [[projects]]
   digest = "1:5543d01772b4474e08f1554ea53cf3eb12660deed37470888cfc1cd66748cab0"
