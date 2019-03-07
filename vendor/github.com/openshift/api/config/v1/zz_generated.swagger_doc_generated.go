@@ -335,12 +335,11 @@ func (Build) SwaggerDoc() map[string]string {
 }
 
 var map_BuildDefaults = map[string]string{
-	"defaultProxy":     "DefaultProxy contains the default proxy settings for all build operations, including image pull/push and source download.\n\nValues can be overrode by setting the `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment variables in the build config's strategy.",
-	"gitProxy":         "GitProxy contains the proxy settings for git operations only. If set, this will override any Proxy settings for all git commands, such as git clone.\n\nValues that are not set here will be inherited from DefaultProxy.",
-	"env":              "Env is a set of default environment variables that will be applied to the build if the specified variables do not exist on the build",
-	"imageLabels":      "ImageLabels is a list of docker labels that are applied to the resulting image. User can override a default label by providing a label with the same name in their Build/BuildConfig.",
-	"resources":        "Resources defines resource requirements to execute the build.",
-	"registriesConfig": "RegistriesConfig controls the registries allowed for image pull and push.",
+	"defaultProxy": "DefaultProxy contains the default proxy settings for all build operations, including image pull/push and source download.\n\nValues can be overrode by setting the `HTTP_PROXY`, `HTTPS_PROXY`, and `NO_PROXY` environment variables in the build config's strategy.",
+	"gitProxy":     "GitProxy contains the proxy settings for git operations only. If set, this will override any Proxy settings for all git commands, such as git clone.\n\nValues that are not set here will be inherited from DefaultProxy.",
+	"env":          "Env is a set of default environment variables that will be applied to the build if the specified variables do not exist on the build",
+	"imageLabels":  "ImageLabels is a list of docker labels that are applied to the resulting image. User can override a default label by providing a label with the same name in their Build/BuildConfig.",
+	"resources":    "Resources defines resource requirements to execute the build.",
 }
 
 func (BuildDefaults) SwaggerDoc() map[string]string {
@@ -382,16 +381,6 @@ var map_ImageLabel = map[string]string{
 
 func (ImageLabel) SwaggerDoc() map[string]string {
 	return map_ImageLabel
-}
-
-var map_RegistriesConfig = map[string]string{
-	"insecureRegistries": "InsecureRegistries are registries which do not have a valid SSL certificate or only support HTTP connections.",
-	"blockedRegistries":  "BlockedRegistries are blacklisted from image pull/push. All other registries are allowed.\n\nOnly one of BlockedRegistries or AllowedRegistries may be set.",
-	"allowedRegistries":  "AllowedRegistries are whitelisted for image pull/push. All other registries are blocked.\n\nOnly one of BlockedRegistries or AllowedRegistries may be set.",
-}
-
-func (RegistriesConfig) SwaggerDoc() map[string]string {
-	return map_RegistriesConfig
 }
 
 var map_ClusterOperator = map[string]string{
@@ -575,7 +564,7 @@ func (ConsoleList) SwaggerDoc() map[string]string {
 }
 
 var map_ConsoleStatus = map[string]string{
-	"publicHostname": "The hostname for the console. This will match the host for the route that is created for the console.",
+	"consoleURL": "The URL for the console. This will be derived from the host for the route that is created for the console.",
 }
 
 func (ConsoleStatus) SwaggerDoc() map[string]string {
@@ -621,6 +610,33 @@ func (DNSZone) SwaggerDoc() map[string]string {
 	return map_DNSZone
 }
 
+var map_Features = map[string]string{
+	"":         "Features holds cluster-wide information about feature gates.  The canonical name is `cluster`",
+	"metadata": "Standard object's metadata.",
+	"spec":     "spec holds user settable values for configuration",
+	"status":   "status holds observed values from the cluster. They may not be overridden.",
+}
+
+func (Features) SwaggerDoc() map[string]string {
+	return map_Features
+}
+
+var map_FeaturesList = map[string]string{
+	"metadata": "Standard object's metadata.",
+}
+
+func (FeaturesList) SwaggerDoc() map[string]string {
+	return map_FeaturesList
+}
+
+var map_FeaturesSpec = map[string]string{
+	"featureSet": "featureSet changes the list of features in the cluster.  The default is empty.  Be very careful adjusting this setting. Turning on or off features may cause irreversible changes in your cluster which cannot be undone.",
+}
+
+func (FeaturesSpec) SwaggerDoc() map[string]string {
+	return map_FeaturesSpec
+}
+
 var map_Image = map[string]string{
 	"":         "Image holds cluster-wide information about how to handle images.  The canonical name is `cluster`",
 	"metadata": "Standard object's metadata.",
@@ -643,7 +659,8 @@ func (ImageList) SwaggerDoc() map[string]string {
 var map_ImageSpec = map[string]string{
 	"allowedRegistriesForImport": "AllowedRegistriesForImport limits the container image registries that normal users may import images from. Set this list to the registries that you trust to contain valid Docker images and that you want applications to be able to import from. Users with permission to create Images or ImageStreamMappings via the API are not affected by this policy - typically only administrators or system integrations will have those permissions.",
 	"externalRegistryHostnames":  "externalRegistryHostnames provides the hostnames for the default external image registry. The external hostname should be set only when the image registry is exposed externally. The first value is used in 'publicDockerImageRepository' field in ImageStreams. The value must be in \"hostname[:port]\" format.",
-	"additionalTrustedCA":        "AdditionalTrustedCA is a reference to a ConfigMap containing additional CAs that should be trusted during imagestream import. The namespace for this config map is openshift-config.",
+	"additionalTrustedCA":        "AdditionalTrustedCA is a reference to a ConfigMap containing additional CAs that should be trusted during imagestream import, pod image pull, and imageregistry pullthrough. The namespace for this config map is openshift-config.",
+	"registrySources":            "RegistrySources contains configuration that determines how the container runtime should treat individual registries when accessing images for builds+pods. (e.g. whether or not to allow insecure access).  It does not contain configuration for the internal cluster registry.",
 }
 
 func (ImageSpec) SwaggerDoc() map[string]string {
@@ -667,6 +684,17 @@ var map_RegistryLocation = map[string]string{
 
 func (RegistryLocation) SwaggerDoc() map[string]string {
 	return map_RegistryLocation
+}
+
+var map_RegistrySources = map[string]string{
+	"":                   "RegistrySources holds cluster-wide information about how to handle the registries config.",
+	"insecureRegistries": "InsecureRegistries are registries which do not have a valid SSL certificate or only support HTTP connections.",
+	"blockedRegistries":  "BlockedRegistries are blacklisted from image pull/push. All other registries are allowed.\n\nOnly one of BlockedRegistries or AllowedRegistries may be set.",
+	"allowedRegistries":  "AllowedRegistries are whitelisted for image pull/push. All other registries are blocked.\n\nOnly one of BlockedRegistries or AllowedRegistries may be set.",
+}
+
+func (RegistrySources) SwaggerDoc() map[string]string {
+	return map_RegistrySources
 }
 
 var map_Infrastructure = map[string]string{
@@ -1084,59 +1112,31 @@ func (ProxySpec) SwaggerDoc() map[string]string {
 	return map_ProxySpec
 }
 
-var map_Registry = map[string]string{
-	"":         "Registry holds cluster-wide information about how to handle the registries config.  The canonical name is `cluster`",
-	"metadata": "Standard object's metadata.",
-	"spec":     "spec holds user settable values for configuration",
-}
-
-func (Registry) SwaggerDoc() map[string]string {
-	return map_Registry
-}
-
-var map_RegistryList = map[string]string{
-	"metadata": "Standard object's metadata.",
-}
-
-func (RegistryList) SwaggerDoc() map[string]string {
-	return map_RegistryList
-}
-
-var map_RegistrySpec = map[string]string{
-	"insecureRegistries": "InsecureRegistries are registries which do not have a valid SSL certificate or only support HTTP connections.",
-	"blockedRegistries":  "BlockedRegistries are blacklisted from image pull/push. All other registries are allowed.\n\nOnly one of BlockedRegistries or AllowedRegistries may be set.",
-	"allowedRegistries":  "AllowedRegistries are whitelisted for image pull/push. All other registries are blocked.\n\nOnly one of BlockedRegistries or AllowedRegistries may be set.",
-}
-
-func (RegistrySpec) SwaggerDoc() map[string]string {
-	return map_RegistrySpec
-}
-
-var map_Scheduling = map[string]string{
-	"":         "Scheduling holds cluster-wide information about Scheduling.  The canonical name is `cluster`",
+var map_Scheduler = map[string]string{
+	"":         "Scheduler holds cluster-wide information about Scheduler.  The canonical name is `cluster`",
 	"metadata": "Standard object's metadata.",
 	"spec":     "spec holds user settable values for configuration",
 	"status":   "status holds observed values from the cluster. They may not be overridden.",
 }
 
-func (Scheduling) SwaggerDoc() map[string]string {
-	return map_Scheduling
+func (Scheduler) SwaggerDoc() map[string]string {
+	return map_Scheduler
 }
 
-var map_SchedulingList = map[string]string{
+var map_SchedulerList = map[string]string{
 	"metadata": "Standard object's metadata.",
 }
 
-func (SchedulingList) SwaggerDoc() map[string]string {
-	return map_SchedulingList
+func (SchedulerList) SwaggerDoc() map[string]string {
+	return map_SchedulerList
 }
 
-var map_SchedulingSpec = map[string]string{
+var map_SchedulerSpec = map[string]string{
 	"policy": "policy is a reference to a ConfigMap containing scheduler policy which has user specified predicates and priorities. If this ConfigMap is not available scheduler will default to use DefaultAlgorithmProvider. The namespace for this configmap is openshift-config.",
 }
 
-func (SchedulingSpec) SwaggerDoc() map[string]string {
-	return map_SchedulingSpec
+func (SchedulerSpec) SwaggerDoc() map[string]string {
+	return map_SchedulerSpec
 }
 
 // AUTO-GENERATED FUNCTIONS END HERE

@@ -60,10 +60,8 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ProjectList{},
 		&Proxy{},
 		&ProxyList{},
-		&Registry{},
-		&RegistryList{},
-		&Scheduling{},
-		&SchedulingList{},
+		&Scheduler{},
+		&SchedulerList{},
 	)
 	metav1.AddToGroupVersion(scheme, GroupVersion)
 	return nil
