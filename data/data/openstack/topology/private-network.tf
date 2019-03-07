@@ -21,7 +21,7 @@ resource "openstack_networking_subnet_v2" "service" {
   ip_version      = 4
   network_id      = "${openstack_networking_network_v2.openshift-private.id}"
   tags            = ["openshiftClusterID=${var.cluster_id}"]
-  dns_nameservers = ["128.31.24.12", "128.31.24.11"]
+  dns_nameservers = ["1.1.1.1", "208.67.222.222"]
 }
 
 resource "openstack_networking_subnet_v2" "nodes" {
