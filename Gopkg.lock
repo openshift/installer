@@ -374,18 +374,18 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:d7711fea8a09123909cd82d50158f891d369086cf92ce99830fe0203f357b015"
+  digest = "1:6e6aad4c378d1fd14b3b686d59c06c9d82b0f8c2c4a284ee39ed075f41e97397"
   name = "github.com/openshift/api"
   packages = [
     "config/v1",
     "route/v1",
   ]
   pruneopts = "NUT"
-  revision = "abd194123b1ba2dcf9fd383f995c0082c81a8e6a"
+  revision = "600a5519d1ec56e02c20f42b43888db560bdcb7e"
 
 [[projects]]
   branch = "master"
-  digest = "1:25ef9f9b8f53d2408e9fc561da877afe66016115a36e56ac4d5402bbbb2bef28"
+  digest = "1:add2f77f1d84edeaa1ca8c7d7d5b7ecf87e48ad979aa478e71c3277e142d6484"
   name = "github.com/openshift/client-go"
   packages = [
     "config/clientset/versioned",
@@ -396,7 +396,7 @@
     "route/clientset/versioned/typed/route/v1",
   ]
   pruneopts = "NUT"
-  revision = "9ecec62d3c9792a6b712bc1aefdb8ae10826fa14"
+  revision = "2d89985ca24a8307e4b5db2574a62d3e6c2444b4"
 
 [[projects]]
   branch = "master"
@@ -994,6 +994,7 @@
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/kubernetes",
+    "k8s.io/client-go/kubernetes/typed/core/v1",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",
