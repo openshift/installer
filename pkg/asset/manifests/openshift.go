@@ -131,6 +131,9 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 
 	o.FileList = []*asset.File{}
 	for name, data := range assetData {
+		if len(data) == 0 {
+			continue
+		}
 		o.FileList = append(o.FileList, &asset.File{
 			Filename: filepath.Join(openshiftManifestDir, name),
 			Data:     data,
