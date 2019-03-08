@@ -93,7 +93,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 	}
 
 	machineSets := []runtime.Object{}
-
 	ic := installconfig.Config
 	for _, pool := range ic.Compute {
 		switch ic.Platform.Name() {
@@ -148,6 +147,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		}
 	}
 
+	if len(machineSets) == 0 {
+		return nil
+	}
 	list := &metav1.List{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
@@ -163,7 +165,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		return errors.Wrap(err, "failed to marshal")
 	}
 	w.MachineSetRaw = raw
-
 	return nil
 }
 
