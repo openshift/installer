@@ -34,6 +34,8 @@ type bootkubeTemplateData struct {
 	EtcdSignerClientCert            string
 	EtcdSignerClientKey             string
 	EtcdSignerKey                   string
+	EtcdMetricsServerCert           string
+	EtcdMetricsServerKey            string
 	McsTLSCert                      string
 	McsTLSKey                       string
 	PullSecretBase64                string

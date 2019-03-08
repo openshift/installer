@@ -66,6 +66,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&tls.EtcdClientCertKey{},
 		&tls.EtcdMetricsCABundle{},
 		&tls.EtcdMetricsSignerClientCertKey{},
+		&tls.EtcdMetricsSignerServerCertKey{},
 		&tls.MCSCertKey{},
 
 		&bootkube.CVOOverrides{},
@@ -81,6 +82,8 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.KubeSystemSecretEtcdSigner{},
 		&bootkube.KubeSystemSecretEtcdSignerClient{},
 		&bootkube.MachineConfigServerTLSSecret{},
+		&bootkube.KubeSystemSecretEtcdMetricsServer{},
+		&bootkube.OpenshiftConfigSecretEtcdMetricsClient{},
 		&bootkube.OpenshiftConfigConfigmapEtcdMetricsServingCA{},
 		&bootkube.OpenshiftConfigSecretEtcdMetricsClient{},
 		&bootkube.OpenshiftMachineConfigOperator{},
@@ -137,6 +140,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	etcdClientCertKey := &tls.EtcdClientCertKey{}
 	etcdMetricsCABundle := &tls.EtcdMetricsCABundle{}
 	etcdMetricsSignerClientCertKey := &tls.EtcdMetricsSignerClientCertKey{}
+	etcdMetricsSignerServerCertKey := &tls.EtcdMetricsSignerServerCertKey{}
 	rootCA := &tls.RootCA{}
 	etcdSignerCertKey := &tls.EtcdSignerCertKey{}
 	etcdCABundle := &tls.EtcdCABundle{}
@@ -151,6 +155,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		etcdClientCertKey,
 		etcdMetricsCABundle,
 		etcdMetricsSignerClientCertKey,
+		etcdMetricsSignerServerCertKey,
 		mcsCertKey,
 		rootCA,
 	)
@@ -178,6 +183,8 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		EtcdSignerClientCert:            base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Cert()),
 		EtcdSignerClientKey:             base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Key()),
 		EtcdSignerKey:                   base64.StdEncoding.EncodeToString(etcdSignerCertKey.Key()),
+		EtcdMetricsServerCert:           base64.StdEncoding.EncodeToString(etcdMetricsSignerServerCertKey.Cert()),
+		EtcdMetricsServerKey:            base64.StdEncoding.EncodeToString(etcdMetricsSignerServerCertKey.Key()),
 		McsTLSCert:                      base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:                       base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
 		PullSecretBase64:                base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
@@ -195,6 +202,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.KubeSystemSecretEtcdClient{},
+		&bootkube.KubeSystemSecretEtcdMetricsServer{},
 		&bootkube.KubeSystemSecretEtcdClientCADeprecated{},
 		&bootkube.KubeSystemSecretEtcdSigner{},
 		&bootkube.KubeSystemSecretEtcdSignerClient{},

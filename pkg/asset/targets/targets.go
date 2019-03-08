@@ -37,6 +37,7 @@ var (
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.KubeSystemSecretEtcdClient{},
+		&bootkube.KubeSystemSecretEtcdMetricsServer{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.EtcdServiceKubeSystem{},
 		&bootkube.HostEtcdServiceKubeSystem{},
