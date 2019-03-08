@@ -108,7 +108,7 @@ func provider(clusterID string, platform *openstack.Platform, mpool *openstack.M
 		AvailabilityZone: az,
 		SecurityGroups: []openstackprovider.SecurityGroupParam{
 			{
-				Name: role,
+				Name: fmt.Sprintf("%s-%s", clusterID, role),
 			},
 		},
 		// TODO(flaper87): Trunk support missing. Need to add it back
