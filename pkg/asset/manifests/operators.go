@@ -60,25 +60,31 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&Networking{},
 		&tls.RootCA{},
 		&tls.EtcdCA{},
+		&tls.EtcdSignerCertKey{},
+		&tls.EtcdCABundle{},
+		&tls.EtcdSignerClientCertKey{},
 		&tls.EtcdClientCertKey{},
 		&tls.EtcdMetricsCABundle{},
 		&tls.EtcdMetricsSignerClientCertKey{},
 		&tls.MCSCertKey{},
 
-		&bootkube.KubeCloudConfig{},
-		&bootkube.MachineConfigServerTLSSecret{},
-		&bootkube.Pull{},
 		&bootkube.CVOOverrides{},
+		&bootkube.EtcdServiceKubeSystem{},
 		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
+		&bootkube.HostEtcdServiceKubeSystem{},
+		&bootkube.KubeCloudConfig{},
+		&bootkube.KubeSystemConfigmapEtcdCA{},
 		&bootkube.KubeSystemConfigmapEtcdServingCA{},
 		&bootkube.KubeSystemConfigmapRootCA{},
 		&bootkube.KubeSystemSecretEtcdClient{},
-		&bootkube.OpenshiftConfigSecretEtcdMetricsClient{},
+		&bootkube.KubeSystemSecretEtcdClientCADeprecated{},
+		&bootkube.KubeSystemSecretEtcdSigner{},
+		&bootkube.KubeSystemSecretEtcdSignerClient{},
+		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftConfigConfigmapEtcdMetricsServingCA{},
-
+		&bootkube.OpenshiftConfigSecretEtcdMetricsClient{},
 		&bootkube.OpenshiftMachineConfigOperator{},
-		&bootkube.EtcdServiceKubeSystem{},
-		&bootkube.HostEtcdServiceKubeSystem{},
+		&bootkube.Pull{},
 	}
 }
 
@@ -132,10 +138,16 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 	etcdMetricsCABundle := &tls.EtcdMetricsCABundle{}
 	etcdMetricsSignerClientCertKey := &tls.EtcdMetricsSignerClientCertKey{}
 	rootCA := &tls.RootCA{}
+	etcdSignerCertKey := &tls.EtcdSignerCertKey{}
+	etcdCABundle := &tls.EtcdCABundle{}
+	etcdSignerClientCertKey := &tls.EtcdSignerClientCertKey{}
 	dependencies.Get(
 		clusterID,
 		installConfig,
 		etcdCA,
+		etcdSignerCertKey,
+		etcdCABundle,
+		etcdSignerClientCertKey,
 		etcdClientCertKey,
 		etcdMetricsCABundle,
 		etcdMetricsSignerClientCertKey,
@@ -150,75 +162,56 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 
 	templateData := &bootkubeTemplateData{
 		Base64encodeCloudProviderConfig: "", // FIXME
+		CVOClusterID:                    clusterID.UUID,
+		EtcdCaBundle:                    base64.StdEncoding.EncodeToString(etcdCABundle.Cert()),
 		EtcdCaCert:                      string(etcdCA.Cert()),
+		EtcdClientCaCert:                base64.StdEncoding.EncodeToString(etcdCA.Cert()),
+		EtcdClientCaKey:                 base64.StdEncoding.EncodeToString(etcdCA.Key()),
 		EtcdClientCert:                  base64.StdEncoding.EncodeToString(etcdClientCertKey.Cert()),
 		EtcdClientKey:                   base64.StdEncoding.EncodeToString(etcdClientCertKey.Key()),
+		EtcdEndpointDNSSuffix:           installConfig.Config.ClusterDomain(),
+		EtcdEndpointHostnames:           etcdEndpointHostnames,
 		EtcdMetricsCaCert:               string(etcdMetricsCABundle.Cert()),
 		EtcdMetricsClientCert:           base64.StdEncoding.EncodeToString(etcdMetricsSignerClientCertKey.Cert()),
 		EtcdMetricsClientKey:            base64.StdEncoding.EncodeToString(etcdMetricsSignerClientCertKey.Key()),
+		EtcdSignerCert:                  base64.StdEncoding.EncodeToString(etcdSignerCertKey.Cert()),
+		EtcdSignerClientCert:            base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Cert()),
+		EtcdSignerClientKey:             base64.StdEncoding.EncodeToString(etcdSignerClientCertKey.Key()),
+		EtcdSignerKey:                   base64.StdEncoding.EncodeToString(etcdSignerCertKey.Key()),
 		McsTLSCert:                      base64.StdEncoding.EncodeToString(mcsCertKey.Cert()),
 		McsTLSKey:                       base64.StdEncoding.EncodeToString(mcsCertKey.Key()),
 		PullSecretBase64:                base64.StdEncoding.EncodeToString([]byte(installConfig.Config.PullSecret)),
 		RootCaCert:                      string(rootCA.Cert()),
-		CVOClusterID:                    clusterID.UUID,
-		EtcdEndpointHostnames:           etcdEndpointHostnames,
-		EtcdEndpointDNSSuffix:           installConfig.Config.ClusterDomain(),
 	}
 
-	kubeCloudConfig := &bootkube.KubeCloudConfig{}
-	machineConfigServerTLSSecret := &bootkube.MachineConfigServerTLSSecret{}
-	pull := &bootkube.Pull{}
-	cVOOverrides := &bootkube.CVOOverrides{}
-	hostEtcdServiceEndpointsKubeSystem := &bootkube.HostEtcdServiceEndpointsKubeSystem{}
-	kubeSystemConfigmapEtcdServingCA := &bootkube.KubeSystemConfigmapEtcdServingCA{}
-	kubeSystemConfigmapRootCA := &bootkube.KubeSystemConfigmapRootCA{}
-	kubeSystemSecretEtcdClient := &bootkube.KubeSystemSecretEtcdClient{}
-	openshiftConfigSecretEtcdMetricsClient := &bootkube.OpenshiftConfigSecretEtcdMetricsClient{}
-	openshiftConfigConfigmapEtcdMetricsServingCA := &bootkube.OpenshiftConfigConfigmapEtcdMetricsServingCA{}
-
-	openshiftMachineConfigOperator := &bootkube.OpenshiftMachineConfigOperator{}
-	etcdServiceKubeSystem := &bootkube.EtcdServiceKubeSystem{}
-	hostEtcdServiceKubeSystem := &bootkube.HostEtcdServiceKubeSystem{}
-	dependencies.Get(
-		kubeCloudConfig,
-		machineConfigServerTLSSecret,
-		pull,
-		cVOOverrides,
-		hostEtcdServiceEndpointsKubeSystem,
-		kubeSystemConfigmapEtcdServingCA,
-		kubeSystemConfigmapRootCA,
-		kubeSystemSecretEtcdClient,
-		openshiftConfigSecretEtcdMetricsClient,
-		openshiftConfigConfigmapEtcdMetricsServingCA,
-		openshiftMachineConfigOperator,
-		etcdServiceKubeSystem,
-		hostEtcdServiceKubeSystem,
-	)
-	assetData := map[string][]byte{
-		"kube-cloud-config.yaml":                                  applyTemplateData(kubeCloudConfig.Files()[0].Data, templateData),
-		"machine-config-server-tls-secret.yaml":                   applyTemplateData(machineConfigServerTLSSecret.Files()[0].Data, templateData),
-		"pull.json":                                               applyTemplateData(pull.Files()[0].Data, templateData),
-		"cvo-overrides.yaml":                                      applyTemplateData(cVOOverrides.Files()[0].Data, templateData),
-		"host-etcd-service-endpoints.yaml":                        applyTemplateData(hostEtcdServiceEndpointsKubeSystem.Files()[0].Data, templateData),
-		"kube-system-configmap-etcd-serving-ca.yaml":              applyTemplateData(kubeSystemConfigmapEtcdServingCA.Files()[0].Data, templateData),
-		"kube-system-configmap-root-ca.yaml":                      applyTemplateData(kubeSystemConfigmapRootCA.Files()[0].Data, templateData),
-		"kube-system-secret-etcd-client.yaml":                     applyTemplateData(kubeSystemSecretEtcdClient.Files()[0].Data, templateData),
-		"openshift-config-secret-etcd-metrics-client.yaml":        applyTemplateData(openshiftConfigSecretEtcdMetricsClient.Files()[0].Data, templateData),
-		"openshift-config-configmap-etcd-metrics-serving-ca.yaml": applyTemplateData(openshiftConfigConfigmapEtcdMetricsServingCA.Files()[0].Data, templateData),
-
-		"04-openshift-machine-config-operator.yaml": []byte(openshiftMachineConfigOperator.Files()[0].Data),
-		"etcd-service.yaml":                         []byte(etcdServiceKubeSystem.Files()[0].Data),
-		"host-etcd-service.yaml":                    []byte(hostEtcdServiceKubeSystem.Files()[0].Data),
+	files := []*asset.File{}
+	for _, a := range []asset.WritableAsset{
+		&bootkube.CVOOverrides{},
+		&bootkube.EtcdServiceKubeSystem{},
+		&bootkube.HostEtcdServiceEndpointsKubeSystem{},
+		&bootkube.HostEtcdServiceKubeSystem{},
+		&bootkube.KubeCloudConfig{},
+		&bootkube.KubeSystemConfigmapEtcdCA{},
+		&bootkube.KubeSystemConfigmapEtcdServingCA{},
+		&bootkube.KubeSystemConfigmapRootCA{},
+		&bootkube.KubeSystemSecretEtcdClient{},
+		&bootkube.KubeSystemSecretEtcdClientCADeprecated{},
+		&bootkube.KubeSystemSecretEtcdSigner{},
+		&bootkube.KubeSystemSecretEtcdSignerClient{},
+		&bootkube.MachineConfigServerTLSSecret{},
+		&bootkube.OpenshiftConfigConfigmapEtcdMetricsServingCA{},
+		&bootkube.OpenshiftConfigSecretEtcdMetricsClient{},
+		&bootkube.OpenshiftMachineConfigOperator{},
+		&bootkube.Pull{},
+	} {
+		dependencies.Get(a)
+		for _, f := range a.Files() {
+			files = append(files, &asset.File{
+				Filename: filepath.Join(manifestDir, strings.TrimSuffix(filepath.Base(f.Filename), ".template")),
+				Data:     applyTemplateData(f.Data, templateData),
+			})
+		}
 	}
-
-	files := make([]*asset.File, 0, len(assetData))
-	for name, data := range assetData {
-		files = append(files, &asset.File{
-			Filename: filepath.Join(manifestDir, name),
-			Data:     data,
-		})
-	}
-
 	return files
 }
 
