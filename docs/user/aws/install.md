@@ -12,7 +12,7 @@ Step 3: Download the Installer.
 ? SSH Public Key /home/user_id/.ssh/id_rsa.pub
 ? Platform aws
 ? Region us-east-1
-? Base Domain openshiftcorp.com
+? Base Domain example.com
 ? Cluster Name test
 ? Pull Secret [? for help]
 ```
@@ -21,15 +21,16 @@ Step 3: Download the Installer.
 
 ```console
 [~]$ openshift-install-linux-amd64 create cluster
-INFO Waiting up to 30m0s for the Kubernetes API...
+INFO Waiting up to 30m0s for the Kubernetes API at https://api.test.example.com:6443...
 INFO API v1.11.0+85a0623 up
 INFO Waiting up to 30m0s for the bootstrap-complete event...
 INFO Destroying the bootstrap resources...
+INTO Waiting up to 30m0s for the cluster at https://api.test.example.com:6443 to initialize...
 INFO Waiting up to 10m0s for the openshift-console route to be created...
 INFO Install complete!
 INFO Run 'export KUBECONFIG=/home/user/auth/kubeconfig' to manage the cluster with 'oc', the OpenShift CLI.
 INFO The cluster is ready when 'oc login -u kubeadmin -p XXXX' succeeds (wait a few minutes).
-INFO Access the OpenShift web-console here: https://console-openshift-console.apps.test.openshiftcorp.com
+INFO Access the OpenShift web-console here: https://console-openshift-console.apps.test.example.com
 INFO Login to the console with user: kubeadmin, password: XXXX
 ```
 
