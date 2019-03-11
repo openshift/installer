@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -22,6 +23,15 @@ var (
 	baseURL = "https://releases-rhcos.svc.ci.openshift.org/storage/releases"
 )
 
+// getChannel returns a named "channel" which is just a subdirectory with
+// builds.json as defined by coreos-assembler
+func getChannel() string {
+	if channel, ok := os.LookupEnv("OPENSHIFT_INSTALL_OS_CHANNEL"); ok && channel != "" {
+		return channel
+	}
+	return DefaultChannel
+}
+
 type metadata struct {
 	AMIs []struct {
 		HVM  string `json:"hvm"`
@@ -36,9 +46,10 @@ type metadata struct {
 	OSTreeVersion string `json:"ostree-version"`
 }
 
-func fetchLatestMetadata(ctx context.Context, channel string) (metadata, error) {
+func fetchLatestMetadata(ctx context.Context) (metadata, error) {
 	build := buildName
 	var err error
+	channel := getChannel()
 	if build == "" {
 		build, err = fetchLatestBuild(ctx, channel)
 		if err != nil {
