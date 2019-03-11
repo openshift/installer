@@ -1,37 +1,36 @@
 # Bootstrap Module
 
-This [Terraform][] [module][] manages [libvirt][] resources only needed during cluster bootstrapping.
-It uses [implicit provider inheritance][implicit-provider-inheritance] to access the [libvirt provider][libvirt-provider].
+This [Terraform][] [module][] manages [AWS][] resources only needed during cluster bootstrapping.
+It uses [implicit provider inheritance][implicit-provider-inheritance] to access the [AWS provider][AWS-provider].
 
 ## Example
 
 Set up a `main.tf` with:
 
 ```hcl
-provider "libvirt" {
-  uri = "qemu:///system"
+provider "aws" {
+  region = "us-east-1"
 }
 
-resource "libvirt_network" "example" {
-  name   = "example"
-  mode   = "none"
-  domain = "example.com"
-  addresses = ["192.168.0.0/24"]
+resource "aws_vpc" "example" {
+  cidr_block           = "10.0.0.0/16"
+  enable_dns_hostnames = true
+  enable_dns_support   = true
 }
 
-resource "libvirt_volume" "example" {
-  name   = "example"
-  source = "file:///path/to/example.qcow2"
+resource "aws_subnet" "example" {
+  vpc_id     = "${aws_vpc.example.id}"
+  cidr_block = "${aws_vpc.example.cidr_block}"
 }
 
 module "bootstrap" {
-  source = "github.com/openshift/installer//data/data/libvirt/bootstrap"
+  source = "github.com/openshift/installer//data/data/aws/bootstrap"
 
-  addresses      = ["192.168.0.1"]
-  base_volume_id = "${libvirt_volume.example.id}"
+  ami            = "ami-0af8953af3ec06b7c"
   cluster_id     = "my-cluster"
   ignition       = "{\"ignition\": {\"version\": \"2.2.0\"}}",
-  network_id     = "${libvirt_network.example.id}"
+  subnet_id      = "${aws_subnet.example.id}"
+  vpc_id         = "${aws_vpc.example.id}"
 }
 ```
 
@@ -42,8 +41,8 @@ $ terraform init
 $ terraform plan
 ```
 
-[libvirt]: https://libvirt.org/
-[libvirt-provider]: https://github.com/dmacvicar/terraform-provider-libvirt
+[AWS]: https://aws.amazon.com/
+[AWS-provider]: https://www.terraform.io/docs/providers/aws/
 [implicit-provider-inheritance]: https://www.terraform.io/docs/modules/usage.html#implicit-provider-inheritance
 [module]: https://www.terraform.io/docs/modules/
 [Terraform]: https://www.terraform.io/

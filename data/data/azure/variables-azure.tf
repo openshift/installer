@@ -1,45 +1,60 @@
-variable "bootstrap_dns" {
-  default     = true
-  description = "Whether to include DNS entries for the bootstrap node or not."
+variable "azure_config_version" {
+  description = <<EOF
+(internal) This declares the version of the AWS configuration variables.
+It has no impact on generated assets but declares the version contract of the configuration.
+EOF
+
+  default = "0.1"
 }
 
-variable "libvirt_uri" {
+variable "azure_rg_name" {
   type        = "string"
-  description = "libvirt connection URI"
+  description = "Resource group name for the deployment."
 }
 
-variable "libvirt_network_if" {
+variable "azure_bootstrap_vm_type" {
   type        = "string"
-  description = "The name of the bridge to use"
+  description = "Instance type for the bootstrap node. Example: `Standard_DS4_v3`."
 }
 
-variable "os_image" {
+variable "azure_master_vm_type" {
   type        = "string"
-  description = "The URL of the OS disk image"
+  description = "Instance type for the master node(s). Example: `Standard_DS4_v3`."
 }
 
-variable "libvirt_bootstrap_ip" {
+variable "azure_vm_image" {
   type        = "string"
-  description = "the desired bootstrap ip"
+  description = "VM Image for all nodes  Example: `image-foobar123`."
 }
 
-variable "libvirt_master_ips" {
+variable "azure_extra_tags" {
+  type = "map"
+
+  description = <<EOF
+(optional) Extra Azure tags to be applied to created resources.
+
+Example: `{ "key" = "value", "foo" = "bar" }`
+EOF
+
+  default = {}
+}
+
+variable "azure_master_root_volume_type" {
+  type        = "string"
+  description = "The type of volume for the root block device of master nodes."
+}
+
+variable "azure_master_root_volume_size" {
+  type        = "string"
+  description = "The size of the volume in gigabytes for the root block device of master nodes."
+}
+
+variable "azure_region" {
+  type        = "string"
+  description = "The target AWS region for the cluster."
+}
+
+variable "azure_master_availability_zones" {
   type        = "list"
-  description = "the list of desired master ips. Must match master_count"
-}
-
-# It's definitely recommended to bump this if you can.
-variable "libvirt_master_memory" {
-  type        = "string"
-  description = "RAM in MiB allocated to masters"
-  default     = "6144"
-}
-
-# At some point this one is likely to default to the number
-# of physical cores you have.  See also
-# https://pagure.io/standard-test-roles/pull-request/223
-variable "libvirt_master_vcpu" {
-  type        = "string"
-  description = "CPUs allocated to masters"
-  default     = "4"
+  description = "The availability zones in which to create the masters. The length of this list must match master_count."
 }
