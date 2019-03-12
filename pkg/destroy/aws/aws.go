@@ -572,14 +572,6 @@ func deleteEC2ElasticIP(client *ec2.EC2, id string, logger logrus.FieldLogger) e
 func deleteEC2Instance(ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger logrus.FieldLogger) error {
 	response, err := ec2Client.DescribeInstances(&ec2.DescribeInstancesInput{
 		InstanceIds: []*string{aws.String(id)},
-
-		// only fetch instances in 'running|pending' state since 'terminated' ones take a while to really get cleaned up
-		Filters: []*ec2.Filter{
-			{
-				Name:   aws.String("instance-state-name"),
-				Values: []*string{aws.String("running"), aws.String("pending")},
-			},
-		},
 	})
 	if err != nil {
 		if err.(awserr.Error).Code() == "InvalidInstanceID.NotFound" {
@@ -590,6 +582,10 @@ func deleteEC2Instance(ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger
 
 	for _, reservation := range response.Reservations {
 		for _, instance := range reservation.Instances {
+			// Skip 'terminated' instances since they take a while to really get cleaned up
+			if *instance.State.Name == "terminated" {
+				continue
+			}
 			if instance.IamInstanceProfile != nil {
 				parsed, err := arn.Parse(*instance.IamInstanceProfile.Arn)
 				if err != nil {
