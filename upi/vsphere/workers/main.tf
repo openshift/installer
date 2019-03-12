@@ -24,7 +24,7 @@ data "vsphere_virtual_machine" "template" {
 
 resource "vsphere_virtual_machine" "vm" {
   count            = "${var.instance_count}"
-  name             = "master-${count.index + 1}"
+  name             = "worker-${count.index + 1}"
   resource_pool_id = "${var.resource_pool_id}"
   datastore_id     = "${data.vsphere_datastore.datastore.id}"
   num_cpus         = "${var.num_cpus}"
@@ -62,12 +62,12 @@ resource "vsphere_virtual_machine" "vm" {
 
     customize {
       linux_options {
-        host_name = "master-${count.index + 1}"
+        host_name = "worker-${count.index + 1}"
         domain    = "${var.vm_base_domain}"
       }
 
       network_interface {
-        ipv4_address = "${element(var.master_ips, count.index)}"
+        ipv4_address = "${element(var.worker_ips, count.index)}"
         ipv4_netmask = "${element(split("/", var.machine_cidr), 1)}"
       }
 

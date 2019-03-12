@@ -1,37 +1,11 @@
-variable "bootstrap_ip" {
-  type        = "string"
-  description = "The IP address in the machine_cidr to apply to the bootstrap."
-}
-
-variable "master_ips" {
-  type        = "list"
-  description = "The IP addresses in the machine_cidr to apply to the masters."
-}
-
 variable "worker_ips" {
   type        = "list"
-  description = "The IP addresses in the machine_cidr to apply to the masters."
+  description = "The IP addresses in the machine_cidr to apply to the workers."
 }
 
 variable "cluster_id" {
   type        = "string"
   description = "This cluster id must be of max length 27 and must have only alphanumeric or hyphen characters."
-}
-
-variable "vsphere_server" {
-  type        = "string"
-  description = "This is the vSphere server for the environment."
-}
-
-variable "vsphere_user" {
-  type        = "string"
-  default     = "administrator@vcenter.local"
-  description = "vSphere server user for the environment."
-}
-
-variable "vsphere_password" {
-  type        = "string"
-  description = "vSphere server password"
 }
 
 variable "vsphere_cluster" {
@@ -49,13 +23,7 @@ variable "vsphere_datastore" {
   description = "This is the vSphere server for the environment."
 }
 
-variable "master_count" {
-  type        = "string"
-  description = "The number of instances of a VM to deploy."
-  default     = 3
-}
-
-variable "worker_instance_count" {
+variable "instance_count" {
   type        = "string"
   description = "The number of instances of a VM to deploy."
   default     = 3
@@ -78,9 +46,9 @@ variable "machine_cidr" {
   description = "This is the public network netmask."
 }
 
-variable "vsphere_resource_pool" {
+variable "resource_pool_id" {
   type        = "string"
-  description = "The resource pool for provisioning VMs."
+  description = "The resource pool ID created previously."
 }
 
 variable "vm_base_domain" {

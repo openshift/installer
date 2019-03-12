@@ -8,30 +8,30 @@ It uses [implicit provider inheritance][implicit-provider-inheritance] to access
 Set up a `main.tf` with:
 
 ```hcl
-provider "aws" {
-  region = "us-east-1"
-}
+provider "vsphere" {
+  user           = "administrator@vsphere.local"
+  password       = "password"
+  vsphere_server 	 = "vcsa.vmware.example.com"
 
-resource "aws_vpc" "example" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
-}
-
-resource "aws_subnet" "example" {
-  vpc_id     = "${aws_vpc.example.id}"
-  cidr_block = "${aws_vpc.example.cidr_block}"
+  # If you have a self-signed cert
+  allow_unverified_ssl = true
 }
 
 module "bootstrap" {
-  source = "github.com/openshift/installer//data/data/aws/bootstrap"
+  source = "./bootstrap"
 
-  ami            = "ami-0af8953af3ec06b7c"
-  cluster_id     = "my-cluster"
-  ignition       = "{\"ignition\": {\"version\": \"2.2.0\"}}",
-  subnet_id      = "${aws_subnet.example.id}"
-  vpc_id         = "${aws_vpc.example.id}"
+  bootstrap_ip       = "10.0.0.1"
+  cluster_id         = "my-cluster"
+  machine_cidr       = "10.0.0.0/24"
+  vsphere_cluster    = "vsphere-cluster"
+  vsphere_datacenter = "vsphere-datacenter"
+  vsphere_datastore  = "vsphere-datastore"
+  resource_pool_id   = "vsphere-pool-id"
+  vm_base_domain     = "vmware.example.com"
+  vm_network         = "VM Network"
+  vm_template        = "rhocs-template"
 }
+
 ```
 
 Then run:

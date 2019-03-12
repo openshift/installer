@@ -1,19 +1,19 @@
 data "vsphere_datacenter" "dc" {
-  name = "${var.datacenter}"
+  name = "${var.vsphere_datacenter}"
 }
 
 data "vsphere_compute_cluster" "compute_cluster" {
-  name          = "${var.cluster}"
+  name          = "${var.vsphere_cluster}"
   datacenter_id = "${data.vsphere_datacenter.dc.id}"
 }
 
 data "vsphere_datastore" "datastore" {
-  name          = "${var.datastore}"
+  name          = "${var.vsphere_datastore}"
   datacenter_id = "${data.vsphere_datacenter.dc.id}"
 }
 
 data "vsphere_network" "network" {
-  name          = "${var.vm_private_network}"
+  name          = "${var.vm_network}"
   datacenter_id = "${data.vsphere_datacenter.dc.id}"
 }
 
@@ -22,14 +22,9 @@ data "vsphere_virtual_machine" "template" {
   datacenter_id = "${data.vsphere_datacenter.dc.id}"
 }
 
-resource "vsphere_resource_pool" "resource_pool" {
-  name                    = "${var.resource_pool}"
-  parent_resource_pool_id = "${data.vsphere_compute_cluster.compute_cluster.resource_pool_id}"
-}
-
 resource "vsphere_virtual_machine" "vm" {
-  name             = "bootstrap-0"
-  resource_pool_id = "${vsphere_resource_pool.resource_pool.id}"
+  name             = "bootstrap-${var.cluster_id}"
+  resource_pool_id = "${var.resource_pool_id}"
   datastore_id     = "${data.vsphere_datastore.datastore.id}"
   num_cpus         = "${var.num_cpus}"
   memory           = "${var.memory}"
@@ -51,16 +46,16 @@ resource "vsphere_virtual_machine" "vm" {
 
     customize {
       linux_options {
-        host_name = "ocp${count.index + 1}"
-        domain    = "vmware.devcluster.openshift.com"
+        host_name = "bootstrap-${var.cluster_id}"
+        domain    = "${var.vm_base_domain}"
       }
 
       network_interface {
-        ipv4_address = "139.178.89.${130 + count.index}"
-        ipv4_netmask = 25
+        ipv4_address = "${var.bootstrap_ip}"
+        ipv4_netmask = "${element(split("/", var.machine_cidr), 1)}"
       }
 
-      ipv4_gateway = "139.178.89.129"
+      ipv4_gateway = "${cidrhost(var.machine_cidr,1)}"
     }
   }
 }
