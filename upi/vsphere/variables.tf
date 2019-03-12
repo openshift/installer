@@ -83,6 +83,11 @@ variable "vsphere_resource_pool" {
   description = "The resource pool for provisioning VMs."
 }
 
+variable "base_domain" {
+  type        = "string"
+  description = "The base DNS zone to add the sub zone to."
+}
+
 variable "vm_base_domain" {
   type        = "string"
   description = "The base DNS name to be added to VMs."

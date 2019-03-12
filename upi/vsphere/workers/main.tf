@@ -23,7 +23,7 @@ data "vsphere_virtual_machine" "template" {
 }
 
 resource "vsphere_virtual_machine" "vm" {
-  count            = "${var.instance_count}"
+  count            = "${var.worker_count}"
   name             = "worker-${count.index + 1}"
   resource_pool_id = "${var.resource_pool_id}"
   datastore_id     = "${data.vsphere_datastore.datastore.id}"

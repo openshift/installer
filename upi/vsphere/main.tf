@@ -31,6 +31,7 @@ module "bootstrap" {
 module "masters" {
   source = "./masters"
 
+  master_count       = "${var.master_count}"
   master_ips         = "${var.master_ips}"
   cluster_id         = "${var.cluster_id}"
   machine_cidr       = "${var.machine_cidr}"
@@ -46,6 +47,7 @@ module "masters" {
 module "workers" {
   source = "./workers"
 
+  worker_count       = "${var.master_count}"
   worker_ips         = "${var.worker_ips}"
   cluster_id         = "${var.cluster_id}"
   machine_cidr       = "${var.machine_cidr}"
@@ -56,4 +58,14 @@ module "workers" {
   vm_base_domain     = "${var.vm_base_domain}"
   vm_network         = "${var.vm_network}"
   vm_template        = "${var.vm_template}"
+}
+
+module "dns" {
+  source = "./route53"
+
+  base_domain       = "${var.base_domain}"
+  cluster_domain    = "${var.vm_base_domain}"
+  cluster_id        = "${var.cluster_id}"
+  etcd_count        = "${var.master_count}"
+  etcd_ip_addresses = "${var.master_ips}"
 }

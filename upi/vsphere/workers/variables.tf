@@ -1,6 +1,6 @@
 variable "worker_ips" {
   type        = "list"
-  description = "The IP addresses in the machine_cidr to apply to the workers."
+  description = "The IP addresses in the machine_cidr to apply to the workers. NOTE: This MUST match the worker_count."
 }
 
 variable "cluster_id" {
@@ -23,9 +23,9 @@ variable "vsphere_datastore" {
   description = "This is the vSphere server for the environment."
 }
 
-variable "instance_count" {
+variable "worker_count" {
   type        = "string"
-  description = "The number of instances of a VM to deploy."
+  description = "The number of worker instances of a VM to deploy."
   default     = 3
 }
 
