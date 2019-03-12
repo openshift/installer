@@ -2,6 +2,8 @@
 
 set -ex
 
+RHCOS_BUILD_NAME="${RHCOS_BUILD_NAME:-400.7.20190306.0}"
+
 # shellcheck disable=SC2068
 version() { IFS="."; printf "%03d%03d%03d\\n" $@; unset IFS;}
 
