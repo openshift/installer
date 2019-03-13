@@ -33,7 +33,7 @@ then
 fi
 
 MODE="${MODE:-release}"
-LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/version.Raw=$(git describe --always --abbrev=40 --dirty)"
+LDFLAGS="${LDFLAGS} -X github.com/openshift/installer/pkg/version.Raw=$(git describe --always --abbrev=40 --dirty) -X github.com/openshift/installer/pkg/version.Commit=$(git rev-parse --verify 'HEAD^{commit}')"
 TAGS="${TAGS:-}"
 OUTPUT="${OUTPUT:-bin/openshift-install}"
 export CGO_ENABLED=0

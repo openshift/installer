@@ -11,4 +11,8 @@ var (
 
 	// String is the human-friendly representation of the version.
 	String = fmt.Sprintf("OpenShift Installer %s", Raw)
+
+	// Commit is the commit hash from which the installer was built.
+	// Set in hack/build.sh.
+	Commit = ""
 )

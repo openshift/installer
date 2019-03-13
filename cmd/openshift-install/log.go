@@ -68,6 +68,9 @@ func setupFileHook(baseDir string) func() {
 	}))
 
 	logrus.Debugf(version.String)
+	if version.Commit != "" {
+		logrus.Debugf("Built from commit %s", version.Commit)
+	}
 
 	return func() {
 		logfile.Close()
