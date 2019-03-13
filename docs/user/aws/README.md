@@ -4,7 +4,7 @@ This document is a guide for preparing a new AWS account for use with OpenShift.
 will help prepare an account to create a single cluster and provide insight for adjustments which may be
 needed for additional clusters.
 
-Follow along with the steps and links below to configure your AWS cluster:
+Follow along with the steps and links below to configure your AWS account and provision an OpenShift cluster:
 
 1. [Route53](route53.md)
 2. [Limits](limits.md)

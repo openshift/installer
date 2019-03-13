@@ -1,9 +1,15 @@
 # Cluster Installation
 
-At this point, you are ready to perform the OpenShift installation outlined [here][cloud-install] and begin at
-Step 3: Download the Installer.
+At this point, you are ready to perform the OpenShift installation. You have two choices for installing your cluster on
+AWS, Installer-Provided Infrastructure (IPI) or User-Provided Infrastructure (UPI). See below for an example of an
+IPI install.
 
-## Example
+To see a guided example of a UPI install, please see [Install: User-Provided Infrastructure](install_upi.md)
+
+## Example: Installer-Provided Infrastructure (IPI)
+
+The steps for performing an IPI-based install are outlined [here][cloud-install]. Following this guide you may begin at
+Step 3: Download the Installer.
 
 ### Create Configuration
 
@@ -33,11 +39,6 @@ INFO Access the OpenShift web-console here: https://console-openshift-console.ap
 INFO Login to the console with user: kubeadmin, password: XXXX
 ```
 
-This creates an encrypted AMI for the bootstrap and control-plane machines.
-The encrypted AMI is [copied][encrypted-copy] from the AMI configured in the control-plane machine-API provider spec, which is RHCOS by default.
-The encryption uses the default EBS key for your target account and region (`aws kms describe-key --key-id alias/aws/ebs`).
-The encrypted AMI is deregistered by `destroy cluster`.
-
 ### Running Cluster
 
 In Route53, there will be a new, private hosted zone (for internal lookups):
@@ -47,6 +48,13 @@ In Route53, there will be a new, private hosted zone (for internal lookups):
 In EC2, there will be 6 running instances:
 
 ![EC2 instances after install](images/install_nodes.png)
+
+The installation creates an encrypted AMI for the bootstrap and control-plane machines.
+The encrypted AMI is [copied][encrypted-copy] from the AMI configured in the control-plane machine-API provider spec,
+which is RHCOS by default.
+The encryption uses the default EBS key for your target account and region
+(`aws kms describe-key --key-id alias/aws/ebs`).
+The encrypted AMI is deregistered by `destroy cluster`.
 
 The relationship of the EC2 instances, elastic load balancers (ELBs) and Route53 hosted zones is as depicted:
 
