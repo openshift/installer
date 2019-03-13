@@ -52,9 +52,10 @@ type ClusterUninstaller struct {
 	//   }
 	//
 	// will match resources with (a:b and c:d) or d:e.
-	Filters []Filter // filter(s) we will be searching for
-	Logger  logrus.FieldLogger
-	Region  string
+	Filters   []Filter // filter(s) we will be searching for
+	Logger    logrus.FieldLogger
+	Region    string
+	ClusterID string
 }
 
 func (o *ClusterUninstaller) validate() error {
@@ -110,7 +111,7 @@ func (o *ClusterUninstaller) Run() error {
 		logger:  o.Logger,
 	}
 
-	return wait.PollImmediateInfinite(
+	err = wait.PollImmediateInfinite(
 		time.Second*10,
 		func() (done bool, err error) {
 			var loopError error
@@ -196,6 +197,16 @@ func (o *ClusterUninstaller) Run() error {
 			return len(tagClients) == 0 && loopError == nil, nil
 		},
 	)
+	if err != nil {
+		return err
+	}
+
+	o.Logger.Debug("search for untaggable resources")
+	if err := o.deleteUntaggedResources(awsSession); err != nil {
+		o.Logger.Debug(err)
+		return err
+	}
+	return nil
 }
 
 func splitSlash(name string, input string) (base string, suffix string, err error) {
@@ -607,6 +618,26 @@ func deleteEC2Instance(ec2Client *ec2.EC2, iamClient *iam.IAM, id string, logger
 
 			logger.Info("Deleted")
 		}
+	}
+	return nil
+}
+
+// This is a bit of hack. Some objects, like Instance Profiles, can not be tagged in AWS.
+// We "normally" find those objects by their relation to other objects. We have found,
+// however, that people regularly delete all of their instances and roles outside of
+// openshift-install destroy cluster. This means that we are unable to find the Instance
+// Profiles.
+//
+// This code is a place to find specific objects like this which might be dangling.
+func (o *ClusterUninstaller) deleteUntaggedResources(awsSession *session.Session) error {
+	iamClient := iam.New(awsSession)
+	masterProfile := fmt.Sprintf("%s-master-profile", o.ClusterID)
+	if err := deleteIAMInstanceProfileByName(iamClient, &masterProfile, o.Logger); err != nil {
+		return err
+	}
+	workerProfile := fmt.Sprintf("%s-worker-profile", o.ClusterID)
+	if err := deleteIAMInstanceProfileByName(iamClient, &workerProfile, o.Logger); err != nil {
+		return err
 	}
 
 	return nil
@@ -1128,12 +1159,25 @@ func deleteIAM(session *session.Session, arn arn.ARN, logger logrus.FieldLogger)
 	}
 }
 
+func deleteIAMInstanceProfileByName(client *iam.IAM, name *string, logger logrus.FieldLogger) error {
+	_, err := client.DeleteInstanceProfile(&iam.DeleteInstanceProfileInput{
+		InstanceProfileName: name,
+	})
+	if err != nil {
+		if err.(awserr.Error).Code() == iam.ErrCodeNoSuchEntityException {
+			return nil
+		}
+		return err
+	}
+	logger.WithField("name", name).Info("Deleted")
+	return err
+}
+
 func deleteIAMInstanceProfile(client *iam.IAM, profileARN arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, name, err := splitSlash("resource", profileARN.Resource)
 	if err != nil {
 		return err
 	}
-	logger = logger.WithField("name", name)
 
 	if resourceType != "instance-profile" {
 		return errors.Errorf("%s ARN passed to deleteIAMInstanceProfile: %s", resourceType, profileARN.String())
@@ -1158,17 +1202,13 @@ func deleteIAMInstanceProfile(client *iam.IAM, profileARN arn.ARN, logger logrus
 		if err != nil {
 			return errors.Wrapf(err, "dissociating %s", *role.RoleName)
 		}
-		logger.WithField("role", *role.RoleName).Info("Disassociated")
+		logger.WithField("name", name).WithField("role", *role.RoleName).Info("Disassociated")
 	}
 
-	_, err = client.DeleteInstanceProfile(&iam.DeleteInstanceProfileInput{
-		InstanceProfileName: profile.InstanceProfileName,
-	})
-	if err != nil {
+	if err := deleteIAMInstanceProfileByName(client, profile.InstanceProfileName, logger); err != nil {
 		return err
 	}
 
-	logger.Info("Deleted")
 	return nil
 }
 
