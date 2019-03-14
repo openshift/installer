@@ -82,7 +82,7 @@ func (c *Cluster) Generate(parents asset.Parents) (err error) {
 		},
 	}
 
-	logrus.Infof("Creating cluster...")
+	logrus.Infof("Creating infrastructure resources...")
 	stateFile, err := terraform.Apply(tmpDir, installConfig.Config.Platform.Name(), extraArgs...)
 	if err != nil {
 		err = errors.Wrap(err, "failed to create cluster")
