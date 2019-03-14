@@ -55,7 +55,7 @@ variable "master_count" {
   default     = 3
 }
 
-variable "worker_instance_count" {
+variable "worker_count" {
   type        = "string"
   description = "The number of instances of a VM to deploy."
   default     = 3

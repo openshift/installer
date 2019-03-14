@@ -29,7 +29,7 @@ resource "vsphere_virtual_machine" "vm" {
   datastore_id     = "${data.vsphere_datastore.datastore.id}"
   num_cpus         = "${var.num_cpus}"
   memory           = "${var.memory}"
-  guest_id         = "rhel7_64Guest"
+  guest_id         = "other26xLinux64Guest"
   annotation       = "${var.cluster_id}"
 
   network_interface {
@@ -59,19 +59,11 @@ resource "vsphere_virtual_machine" "vm" {
 
   clone {
     template_uuid = "${data.vsphere_virtual_machine.template.id}"
+  }
 
-    customize {
-      linux_options {
-        host_name = "worker-${count.index + 1}"
-        domain    = "${var.vm_base_domain}"
-      }
-
-      network_interface {
-        ipv4_address = "${element(var.worker_ips, count.index)}"
-        ipv4_netmask = "${element(split("/", var.machine_cidr), 1)}"
-      }
-
-      ipv4_gateway = "${cidrhost(var.machine_cidr,1)}"
+  vapp {
+    properties {
+      "guestinfo.coreos.config.data" = "${var.worker_ign_config}"
     }
   }
 }

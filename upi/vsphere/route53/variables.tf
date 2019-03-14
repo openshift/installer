@@ -14,6 +14,18 @@ variable "etcd_ip_addresses" {
   default     = []
 }
 
+variable "bootstrap_ip" {
+  description = "List of string IPs for worker machines."
+  type        = "list"
+  default     = []
+}
+
+variable "worker_ips" {
+  description = "List of string IPs for worker machines."
+  type        = "list"
+  default     = []
+}
+
 variable "base_domain" {
   description = "The base domain used for public records."
   type        = "string"

@@ -23,12 +23,12 @@ data "vsphere_virtual_machine" "template" {
 }
 
 resource "vsphere_virtual_machine" "vm" {
-  name             = "bootstrap-${var.cluster_id}"
+  name             = "bootstrap"
   resource_pool_id = "${var.resource_pool_id}"
   datastore_id     = "${data.vsphere_datastore.datastore.id}"
   num_cpus         = "${var.num_cpus}"
   memory           = "${var.memory}"
-  guest_id         = "rhel7_64Guest"
+  guest_id         = "other26xLinux64Guest"
 
   network_interface {
     network_id = "${data.vsphere_network.network.id}"
@@ -43,19 +43,11 @@ resource "vsphere_virtual_machine" "vm" {
 
   clone {
     template_uuid = "${data.vsphere_virtual_machine.template.id}"
+  }
 
-    customize {
-      linux_options {
-        host_name = "bootstrap-${var.cluster_id}"
-        domain    = "${var.vm_base_domain}"
-      }
-
-      network_interface {
-        ipv4_address = "${var.bootstrap_ip}"
-        ipv4_netmask = "${element(split("/", var.machine_cidr), 1)}"
-      }
-
-      ipv4_gateway = "${cidrhost(var.machine_cidr,1)}"
+  vapp {
+    properties {
+      "guestinfo.coreos.config.data" = "${var.bootstrap_ign_config}"
     }
   }
 }

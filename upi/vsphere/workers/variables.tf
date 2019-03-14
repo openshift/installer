@@ -1,3 +1,8 @@
+variable "worker_ign_config" {
+  type        = "string"
+  description = "The worker ignition configuration with added IP address and hostname."
+}
+
 variable "worker_ips" {
   type        = "list"
   description = "The IP addresses in the machine_cidr to apply to the workers. NOTE: This MUST match the worker_count."

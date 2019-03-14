@@ -1,0 +1,16 @@
+bootstrap_ip="10.0.0.1"
+master_ips= ["10.0.0.2", "10.0.0.3", "10.0.0.4"]
+worker_ips= ["10.0.0.5", "10.0.0.6", "10.0.0.7"]
+cluster_id="my-cluster"
+vsphere_server="vcsa.vmware.example.com"
+vsphere_user="administrator@vsphere.local"
+vsphere_password="password"
+vsphere_cluster="vsphere-cluster" 
+vsphere_datacenter="vsphere-datcenter" 
+vsphere_datastore="vsphere-datastore" 
+vsphere_resource_pool="vsphere-resource-pool"
+base_domain="example.com"
+vm_base_domain="vmware.example.com"
+vm_network="VM Network"
+vm_template="RHOCS-template"
+machine_cidr="10.0.0.0/24"

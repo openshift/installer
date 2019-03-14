@@ -5,6 +5,31 @@ provider "vsphere" {
   allow_unverified_ssl = true
 }
 
+module "network" {
+  source = "./network"
+
+  # TODO Pass in and check the base domain and cluster domain to look for A records
+  # TODO Compute the number of instances to pass in to for # of IPs
+  machine_cidr = "${var.machine_cidr}"
+
+  master_count   = "${var.master_count}"
+  worker_count   = "${var.worker_count}"
+  base_domain    = "${var.base_domain}"
+  cluster_domain = "${var.vm_base_domain}"
+}
+
+module "dns" {
+  source = "./route53"
+
+  base_domain       = "${var.base_domain}"
+  bootstrap_ip      = "${module.network.bootstrap_ip}"
+  cluster_domain    = "${var.vm_base_domain}"
+  cluster_id        = "${var.cluster_id}"
+  etcd_count        = "${var.master_count}"
+  etcd_ip_addresses = "${module.network.master_ips}"
+  worker_ips        = "${module.network.worker_ips}"
+}
+
 module "resource_pool" {
   source = "./resource_pool"
 
@@ -13,10 +38,11 @@ module "resource_pool" {
   vsphere_resource_pool = "${var.vsphere_resource_pool}"
 }
 
+/*
 module "bootstrap" {
   source = "./bootstrap"
 
-  bootstrap_ip       = "${var.bootstrap_ip}"
+  bootstrap_ip       = "${module.network.bootstrap_ip}" 
   cluster_id         = "${var.cluster_id}"
   machine_cidr       = "${var.machine_cidr}"
   vsphere_cluster    = "${var.vsphere_cluster}"
@@ -28,11 +54,12 @@ module "bootstrap" {
   vm_template        = "${var.vm_template}"
 }
 
+
 module "masters" {
   source = "./masters"
 
   master_count       = "${var.master_count}"
-  master_ips         = "${var.master_ips}"
+  master_ips         = "${module.network.master_ips}"
   cluster_id         = "${var.cluster_id}"
   machine_cidr       = "${var.machine_cidr}"
   vsphere_cluster    = "${var.vsphere_cluster}"
@@ -47,8 +74,8 @@ module "masters" {
 module "workers" {
   source = "./workers"
 
-  worker_count       = "${var.master_count}"
-  worker_ips         = "${var.worker_ips}"
+  worker_count       = "${var.worker_count}"
+  worker_ips         = "${module.network.worker_ips}"
   cluster_id         = "${var.cluster_id}"
   machine_cidr       = "${var.machine_cidr}"
   vsphere_cluster    = "${var.vsphere_cluster}"
@@ -59,13 +86,5 @@ module "workers" {
   vm_network         = "${var.vm_network}"
   vm_template        = "${var.vm_template}"
 }
+*/
 
-module "dns" {
-  source = "./route53"
-
-  base_domain       = "${var.base_domain}"
-  cluster_domain    = "${var.vm_base_domain}"
-  cluster_id        = "${var.cluster_id}"
-  etcd_count        = "${var.master_count}"
-  etcd_ip_addresses = "${var.master_ips}"
-}
