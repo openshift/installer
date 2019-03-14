@@ -3,6 +3,11 @@ variable "vm_size" {
   description = "The SKU ID for the bootstrap node."
 }
 
+variable "nsg_id" {
+  type  = "string"
+  description = "The NSG attached to the subnet"
+}
+
 variable "region" {
   type        = "string"
   description = "The region for the deployment."
@@ -23,14 +28,14 @@ variable "ignition" {
   description = "The content of the bootstrap ignition file."
 }
 
-variable "instance_type" {
-  type        = "string"
-  description = "The instance type of the bootstrap node."
-}
-
 variable "subnet_id" {
   type        = "string"
   description = "The subnet ID for the bootstrap node."
+}
+
+variable "elb_backend_pool_id" {
+  type        = "string"
+  description ="The external load balancer bakend pool id. used to attached NICs"
 }
 
 variable "tags" {
@@ -45,10 +50,6 @@ variable "target_group_arns" {
   description = "The list of target group ARNs for the load balancer."
 }
 
-variable "target_group_arns_length" {
-  description = "The length of the 'target_group_arns' variable, to work around https://github.com/hashicorp/terraform/issues/12570."
-}
-
 variable "volume_iops" {
   type        = "string"
   default     = "100"
@@ -59,21 +60,4 @@ variable "volume_size" {
   type        = "string"
   default     = "30"
   description = "The volume size (in gibibytes) for the bootstrap node's root volume."
-}
-
-variable "volume_type" {
-  type        = "string"
-  default     = "gp2"
-  description = "The volume type for the bootstrap node's root volume."
-}
-
-variable "vpc_id" {
-  type        = "string"
-  description = "VPC ID is used to create resources like security group rules for bootstrap machine."
-}
-
-variable "vpc_security_group_ids" {
-  type        = "list"
-  default     = []
-  description = "VPC security group IDs for the bootstrap node."
 }

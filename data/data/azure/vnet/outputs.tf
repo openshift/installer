@@ -1,17 +1,17 @@
 output "vnet_id" {
-  value = "${data.azure_vnet.cluster_vnet.id}"
+  value = "${local.vnet_id}"
 }
 
 output "cluster-pip" {
   value = "${azurerm_public_ip.cluster_public_ip.ip_address}"
 }
 
-output "public_subnet_ids" {
-  value = "${local.public_subnet_ids}"
+output "public_subnet_id" {
+  value = "${local.subnet_ids}"
 }
 
-output "private_subnet_ids" {
-  value = "${local.private_subnet_ids}"
+output "lb_backend_pool_id" {
+  value="${local.lb_backend_pool_id}"
 }
 
 output "master_nsg_id" {
