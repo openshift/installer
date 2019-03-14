@@ -81,7 +81,7 @@ module "topology" {
 }
 
 resource "openstack_objectstorage_container_v1" "container" {
-  name = "${var.cluster_domain}"
+  name = "${var.cluster_id}"
 
   # "kubernetes.io/cluster/${var.cluster_id}" = "owned"
   metadata = "${merge(map(
