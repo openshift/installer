@@ -16,6 +16,7 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
@@ -370,7 +371,7 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 }
 
 // waitForConsole returns the console URL from the route 'console' in namespace openshift-console
-func waitForConsole(ctx context.Context, config *rest.Config, directory string) (string, error) {
+func waitForConsole(ctx context.Context, config *rest.Config, directory string, oneShot bool) (string, error) {
 	url := ""
 	// Need to keep these updated if they change
 	consoleNamespace := "openshift-console"
@@ -381,9 +382,13 @@ func waitForConsole(ctx context.Context, config *rest.Config, directory string) 
 	}
 
 	consoleRouteTimeout := 10 * time.Minute
-	logrus.Infof("Waiting up to %v for the openshift-console route to be created...", consoleRouteTimeout)
 	consoleRouteContext, cancel := context.WithTimeout(ctx, consoleRouteTimeout)
 	defer cancel()
+	if oneShot {
+		logrus.Infof("Checking for the %s route...", consoleNamespace)
+	} else {
+		logrus.Infof("Waiting up to %v for the %s route to be created...", consoleRouteTimeout, consoleNamespace)
+	}
 	// Poll quickly but only log when the response
 	// when we've seen 15 of the same errors or output of
 	// no route in a row (to show we're still alive).
@@ -393,39 +398,40 @@ func waitForConsole(ctx context.Context, config *rest.Config, directory string) 
 		consoleRoutes, err := rc.RouteV1().Routes(consoleNamespace).List(metav1.ListOptions{})
 		if err == nil && len(consoleRoutes.Items) > 0 {
 			for _, route := range consoleRoutes.Items {
-				logrus.Debugf("Route found in openshift-console namespace: %s", route.Name)
+				logrus.Debugf("Route found in %s namespace: %s", consoleNamespace, route.Name)
 				if route.Name == consoleRouteName {
 					url = fmt.Sprintf("https://%s", route.Spec.Host)
 				}
 			}
 			logrus.Debug("OpenShift console route is created")
 			cancel()
-		} else if err != nil {
-			silenceRemaining--
-			if silenceRemaining == 0 {
-				logrus.Debugf("Still waiting for the console route: %v", err)
-				silenceRemaining = logDownsample
+			return
+		}
+		silenceRemaining--
+		if silenceRemaining == 0 {
+			silenceRemaining = logDownsample
+			if err == nil {
+				logrus.Debugf("Still waiting for the %s route...", consoleRouteName)
+			} else {
+				logrus.Debugf("Still waiting for the %s route: %v", consoleRouteName, err)
 			}
-		} else if len(consoleRoutes.Items) == 0 {
-			silenceRemaining--
-			if silenceRemaining == 0 {
-				logrus.Debug("Still waiting for the console route...")
-				silenceRemaining = logDownsample
-			}
+		}
+		if oneShot {
+			cancel()
 		}
 	}, 2*time.Second, consoleRouteContext.Done())
 	err = consoleRouteContext.Err()
 	if err != nil && err != context.Canceled {
-		return url, errors.Wrap(err, "waiting for openshift-console URL")
+		return url, errors.Wrapf(err, "waiting for the %s route", consoleNamespace)
 	}
 	if url == "" {
-		return url, errors.New("could not get openshift-console URL")
+		return url, errors.Errorf("could not get the %s route", consoleNamespace)
 	}
 	return url, nil
 }
 
 // logComplete prints info upon completion
-func logComplete(directory, consoleURL string) error {
+func logComplete(config *rest.Config, directory, consoleURL string, complete bool) error {
 	absDir, err := filepath.Abs(directory)
 	if err != nil {
 		return err
@@ -436,26 +442,36 @@ func logComplete(directory, consoleURL string) error {
 	if err != nil {
 		return err
 	}
-	logrus.Info("Install complete!")
+	if complete {
+		logrus.Info("Install complete!")
+	}
 	logrus.Infof("To access the cluster as the system:admin user when using 'oc', run 'export KUBECONFIG=%s'", kubeconfig)
-	logrus.Infof("Access the OpenShift web-console here: %s", consoleURL)
-	logrus.Infof("Login to the console with user: kubeadmin, password: %s", pw)
+	if consoleURL != "" {
+		logrus.Infof("Access the OpenShift web-console here: %s", consoleURL)
+		logrus.Infof("Login to the console with user: kubeadmin, password: %s", pw)
+	}
 	return nil
 }
 
 func waitForInstallComplete(ctx context.Context, config *rest.Config, directory string) error {
-	if err := waitForInitializedCluster(ctx, config); err != nil {
-		return err
+	errs := []error{}
+	err := waitForInitializedCluster(ctx, config)
+	if err != nil {
+		errs = append(errs, err)
 	}
 
-	consoleURL, err := waitForConsole(ctx, config, rootOpts.dir)
+	consoleURL, err := waitForConsole(ctx, config, rootOpts.dir, err != nil)
 	if err != nil {
-		return err
+		errs = append(errs, err)
 	}
 
 	if err = addRouterCAToClusterCA(config, rootOpts.dir); err != nil {
-		return err
+		errs = append(errs, err)
 	}
 
-	return logComplete(rootOpts.dir, consoleURL)
+	if err = logComplete(config, rootOpts.dir, consoleURL, utilerrors.NewAggregate(errs) == nil); err != nil {
+		errs = append(errs, err)
+	}
+
+	return utilerrors.NewAggregate(errs)
 }
