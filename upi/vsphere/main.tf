@@ -42,7 +42,7 @@ module "resource_pool" {
 module "bootstrap" {
   source = "./bootstrap"
 
-  bootstrap_ip       = "${module.network.bootstrap_ip}" 
+  bootstrap_ip       = "${module.network.bootstrap_ip}"
   cluster_id         = "${var.cluster_id}"
   machine_cidr       = "${var.machine_cidr}"
   vsphere_cluster    = "${var.vsphere_cluster}"
