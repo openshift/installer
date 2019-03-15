@@ -35,6 +35,42 @@ resource "aws_route53_record" "api_internal" {
   records        = ["${var.etcd_ip_addresses}"]
 }
 
+resource "aws_route53_record" "workers" {
+  type    = "A"
+  ttl     = "60"
+  zone_id = "${aws_route53_zone.cluster.zone_id}"
+  name    = "workers.${var.cluster_domain}"
+
+  weighted_routing_policy {
+    weight = 90
+  }
+
+  set_identifier = "workers"
+  records        = ["${var.worker_ips}"]
+}
+
+resource "aws_route53_record" "masters" {
+  type    = "A"
+  ttl     = "60"
+  zone_id = "${aws_route53_zone.cluster.zone_id}"
+  name    = "masters.${var.cluster_domain}"
+
+  weighted_routing_policy {
+    weight = 90
+  }
+
+  set_identifier = "masters"
+  records        = ["${var.etcd_ip_addresses}"]
+}
+
+resource "aws_route53_record" "bootstrap" {
+  type    = "A"
+  ttl     = "60"
+  zone_id = "${aws_route53_zone.cluster.zone_id}"
+  name    = "bootstrap.${var.cluster_domain}"
+  records = ["${var.bootstrap_ip}"]
+}
+
 resource "aws_route53_record" "etcd_a_nodes" {
   count   = "${var.etcd_count}"
   type    = "A"

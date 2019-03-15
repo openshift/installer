@@ -1,18 +1,3 @@
-variable "bootstrap_ip" {
-  type        = "string"
-  description = "The IP address in the machine_cidr to apply to the bootstrap."
-}
-
-variable "master_ips" {
-  type        = "list"
-  description = "The IP addresses in the machine_cidr to apply to the masters."
-}
-
-variable "worker_ips" {
-  type        = "list"
-  description = "The IP addresses in the machine_cidr to apply to the masters."
-}
-
 variable "cluster_id" {
   type        = "string"
   description = "This cluster id must be of max length 27 and must have only alphanumeric or hyphen characters."

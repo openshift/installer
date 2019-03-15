@@ -9,9 +9,7 @@ module "network" {
   source = "./network"
 
   # TODO Pass in and check the base domain and cluster domain to look for A records
-  # TODO Compute the number of instances to pass in to for # of IPs
   machine_cidr = "${var.machine_cidr}"
-
   master_count   = "${var.master_count}"
   worker_count   = "${var.worker_count}"
   base_domain    = "${var.base_domain}"
@@ -38,7 +36,6 @@ module "resource_pool" {
   vsphere_resource_pool = "${var.vsphere_resource_pool}"
 }
 
-/*
 module "bootstrap" {
   source = "./bootstrap"
 
@@ -54,7 +51,7 @@ module "bootstrap" {
   vm_template        = "${var.vm_template}"
 }
 
-
+/*
 module "masters" {
   source = "./masters"
 

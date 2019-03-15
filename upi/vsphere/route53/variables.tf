@@ -15,9 +15,8 @@ variable "etcd_ip_addresses" {
 }
 
 variable "bootstrap_ip" {
-  description = "List of string IPs for worker machines."
-  type        = "list"
-  default     = []
+  description = "A String IP for bootstrap machine."
+  type        = "string"
 }
 
 variable "worker_ips" {

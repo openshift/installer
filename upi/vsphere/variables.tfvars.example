@@ -1,6 +1,3 @@
-bootstrap_ip="10.0.0.1"
-master_ips= ["10.0.0.2", "10.0.0.3", "10.0.0.4"]
-worker_ips= ["10.0.0.5", "10.0.0.6", "10.0.0.7"]
 cluster_id="my-cluster"
 vsphere_server="vcsa.vmware.example.com"
 vsphere_user="administrator@vsphere.local"

@@ -3,9 +3,7 @@ data "external" "ping" {
 
   query = {
     cidr = "${var.machine_cidr}"
+    master_count = "${var.master_count}"
+    worker_count = "${var.worker_count}"
   }
-}
-
-output "ip_list" "usable" {
-  value = "${data.external.ping.result.ipaddress}"
 }
