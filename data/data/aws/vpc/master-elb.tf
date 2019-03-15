@@ -46,7 +46,7 @@ resource "aws_lb_target_group" "api_internal" {
     interval            = 10
     port                = 6443
     protocol            = "HTTPS"
-    path                = "/healthz"
+    path                = "/readyz"
   }
 }
 
@@ -68,7 +68,7 @@ resource "aws_lb_target_group" "api_external" {
     interval            = 10
     port                = 6443
     protocol            = "HTTPS"
-    path                = "/healthz"
+    path                = "/readyz"
   }
 }
 
