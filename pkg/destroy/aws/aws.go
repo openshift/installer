@@ -112,7 +112,7 @@ func (o *ClusterUninstaller) Run() error {
 	}
 
 	err = wait.PollImmediateInfinite(
-		time.Second*10,
+		time.Minute*2,
 		func() (done bool, err error) {
 			var loopError error
 			nextTagClients := tagClients[:0]
