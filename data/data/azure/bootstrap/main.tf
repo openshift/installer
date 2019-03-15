@@ -17,6 +17,39 @@ resource "azurerm_storage_account" "ignition" {
   account_replication_type = "LRS"
 }
 
+data "azurerm_storage_account_sas" "ignition" {
+  connection_string = "${azurerm_storage_account.ignition.primary_connection_string}"
+  https_only        = true
+
+  resource_types {
+    service   = false
+    container = false
+    object    = true
+  }
+
+  services {
+    blob  = true
+    queue = false
+    table = false
+    file  = false
+  }
+
+  start  = "${substr(timestamp(), 0, 10)}"
+  expiry = "${substr(timeadd(timestamp(), "24h"), 0, 10)}"
+
+  permissions {
+    read    = true
+    list    = true
+    create  = false
+    add     = false
+    delete  = false
+    process = false
+    write   = false
+    update  = false
+  }
+}
+
+
 resource "azurerm_storage_container" "ignition" {
   resource_group_name   = "${var.resource_group_name}"
   name                  = "ignition"
@@ -41,7 +74,7 @@ resource "azurerm_storage_blob" "ignition" {
 
 data "ignition_config" "redirect" {
   replace {
-    source = "${azurerm_storage_blob.ignition.url}"
+    source = "${azurerm_storage_blob.ignition.url}${data.azurerm_storage_account_sas.ignition.sas}"
   }
 }
 
