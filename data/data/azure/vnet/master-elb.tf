@@ -4,6 +4,7 @@ resource "azurerm_public_ip" "cluster_public_ip" {
   name                = "${var.cluster_id}-pip"
   resource_group_name = "${var.rg_name}"
   allocation_method   = "Static"
+  domain_name_label   = "${var.dns_label}"
 
   tags = "${merge(map(
     "Name", "${var.cluster_id}-pip",
@@ -35,7 +36,7 @@ resource "azurerm_lb_nat_rule" "external_lb_ssh0" {
   name                           = "natRuleSsh0"
   protocol                       = "Tcp"
   frontend_port                  = 22
-  backend_port                   = 22
+  backend_port                   = 2
   frontend_ip_configuration_name = "PublicIPAddress"
 }
 

@@ -31,3 +31,8 @@ variable "tags" {
   default     = {}
   description = "Azure tags to be applied to created resources."
 }
+
+variable "dns_label" {
+  type        = "string"
+  description = "The label used to build the dns name. i.e. <label>.<region>.cloudapp.azure.com"
+}

@@ -35,7 +35,17 @@ variable "subnet_id" {
 
 variable "elb_backend_pool_id" {
   type        = "string"
-  description ="The external load balancer bakend pool id. used to attached NICs"
+  description ="The external load balancer bakend pool id. used to attach the bootstrap NIC"
+}
+
+variable "elb_bootstrap_ssh_natrule_id" {
+  type        = "string"
+  description ="The external load balancer nat rule id for SSH. used to attach the bootstrap NIC"
+}
+
+variable "boot_diag_blob_endpoint" {
+  type = "string"
+  description = "the blob endpoint where machines should store their boot diagnostics."
 }
 
 variable "tags" {

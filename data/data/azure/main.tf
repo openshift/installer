@@ -8,11 +8,6 @@ provider "azurerm" {
    # version = "~>1.5"
 }
 
-data "local_file" "ignition" {
-    filename = "${var.ignition_bootstrap}"
-}
-
-//TODO :
 module "bootstrap" {
   source = "./bootstrap"
   resource_group_name      = "${azurerm_resource_group.main.name}"
@@ -23,8 +18,11 @@ module "bootstrap" {
   ignition                 = "${var.ignition_bootstrap}"
   subnet_id                = "${module.vnet.public_subnet_id}"
   elb_backend_pool_id      = "${module.vnet.lb_backend_pool_id}"
+  elb_bootstrap_ssh_natrule_id = "${module.vnet.bootstrap_ssh_natrule_id}"
   nsg_id                   = "${module.vnet.master_nsg_id}"
-  tags = "${local.tags}"
+  tags                     = "${local.tags}"
+  boot_diag_blob_endpoint  = "${azurerm_storage_account.bootdiag.primary_blob_endpoint}"
+
 }
 
 
@@ -35,7 +33,7 @@ module "vnet" {
   cidr_block = "${var.machine_cidr}"
   cluster_id = "${var.cluster_id}"
   region     = "${var.azure_region}"
-
+  dns_label  = "${var.cluster_id}${random_string.resource_group_suffix.result}"
   tags = "${local.tags}"
 }
 
@@ -46,13 +44,18 @@ resource "random_string" "resource_group_suffix" {
 }
 
 resource "azurerm_resource_group" "main" {
-  name = "${var.cluster_id}-${random_string.resource_group_suffix.result}-rg"
+  name = "${var.cluster_id}-rg-${random_string.resource_group_suffix.result}"
   location = "${var.azure_region}"
 }
 
-//INBOUND NAT SSH on 1st master + NAT rule for each master-> see aks-engine
-//Standard LB
-//Standard PIP
+resource "azurerm_storage_account" "bootdiag" {
+  name = "bootdiagmasters${random_string.resource_group_suffix.result}"
+  resource_group_name      = "${azurerm_resource_group.main.name}"
+  location                 = "${var.azure_region}"
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
+
 //ILB
 
 
