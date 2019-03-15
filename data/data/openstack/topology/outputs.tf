@@ -2,6 +2,10 @@ output "service_port_id" {
   value = "${openstack_networking_port_v2.service_port.id}"
 }
 
+output "service_port_ip" {
+  value = "${openstack_networking_port_v2.service_port.all_fixed_ips[0]}"
+}
+
 output "bootstrap_port_id" {
   value = "${openstack_networking_port_v2.bootstrap_port.id}"
 }

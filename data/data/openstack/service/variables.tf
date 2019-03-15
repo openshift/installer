@@ -31,7 +31,12 @@ variable "flavor_name" {
 
 variable "service_port_id" {
   type        = "string"
-  description = "The subnet ID for the bootstrap node."
+  description = "The subnet ID for the service node."
+}
+
+variable "service_port_ip" {
+  type        = "string"
+  description = "The subnet IP for the service node."
 }
 
 variable "master_ips" {
