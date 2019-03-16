@@ -19,9 +19,31 @@ module "bootstrap" {
   target_group_arns        = "${module.vpc.aws_lb_target_group_arns}"
   target_group_arns_length = "${module.vpc.aws_lb_target_group_arns_length}"
   vpc_id                   = "${module.vpc.vpc_id}"
-  vpc_security_group_ids   = "${list(module.vpc.master_sg_id)}"
+  vpc_security_group_ids   = "${list(module.vpc.master_sg_id, aws_security_group.public_ssh.id)}"
 
   tags = "${local.tags}"
+}
+
+# This SG is only used by the bootstrap node by default. However we leave it around
+# even after the bootstrap node in case a someone wants to run worker nodes in the
+# public subnets. This SG can also be applied to the existing nodes in the private
+# subnets to get connectivity after VPC peering or VPN configuration.
+resource "aws_security_group" "public_ssh" {
+  vpc_id = "${module.vpc.vpc_id}"
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-public-ssh-sg",
+  ), local.tags)}"
+}
+
+resource "aws_security_group_rule" "ssh" {
+  type              = "ingress"
+  security_group_id = "${aws_security_group.public_ssh.id}"
+
+  protocol    = "tcp"
+  from_port   = 22
+  to_port     = 22
+  cidr_blocks = ["0.0.0.0/0"]
 }
 
 module "masters" {
