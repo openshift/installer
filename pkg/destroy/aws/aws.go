@@ -760,7 +760,7 @@ func deleteEC2RouteTablesByVPC(client *ec2.EC2, vpc string, logger logrus.FieldL
 		},
 		func(results *ec2.DescribeRouteTablesOutput, lastPage bool) bool {
 			for _, table := range results.RouteTables {
-				lastError := deleteEC2RouteTableObject(client, table, logger.WithField("table", *table.RouteTableId))
+				lastError = deleteEC2RouteTableObject(client, table, logger.WithField("table", *table.RouteTableId))
 				if lastError != nil {
 					lastError = errors.Wrapf(lastError, "deleting EC2 route table %s", *table.RouteTableId)
 					logger.Info(lastError)
@@ -1254,7 +1254,8 @@ func deleteIAMRole(client *iam.IAM, roleARN arn.ARN, logger logrus.FieldLogger) 
 		&iam.ListInstanceProfilesForRoleInput{RoleName: &name},
 		func(results *iam.ListInstanceProfilesForRoleOutput, lastPage bool) bool {
 			for _, profile := range results.InstanceProfiles {
-				parsed, lastError := arn.Parse(*profile.Arn)
+				var parsed arn.ARN
+				parsed, lastError = arn.Parse(*profile.Arn)
 				if lastError != nil {
 					lastError = errors.Wrap(lastError, "parse ARN for IAM instance profile")
 					logger.Info(lastError)
@@ -1320,7 +1321,7 @@ func deleteIAMUser(client *iam.IAM, id string, logger logrus.FieldLogger) error 
 		&iam.ListAccessKeysInput{UserName: &id},
 		func(results *iam.ListAccessKeysOutput, lastPage bool) bool {
 			for _, key := range results.AccessKeyMetadata {
-				_, lastError := client.DeleteAccessKey(&iam.DeleteAccessKeyInput{
+				_, lastError = client.DeleteAccessKey(&iam.DeleteAccessKeyInput{
 					UserName:    &id,
 					AccessKeyId: key.AccessKeyId,
 				})
