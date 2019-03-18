@@ -1,0 +1,120 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for Openshift Cluster UPI Node Launch (EC2 worker instance)
+
+Parameters:
+  ClusterName:
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9]{0,31})$
+    ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 32 characters
+    Description: A short, representative cluster name to use for hostnames, etc.
+    Type: String
+  RhcosAmi:
+    Description: Current RHEL CoreOS AMI to use for boostrap
+    Type: AWS::EC2::Image::Id
+  WorkerSubnet:
+    Description: The subnets (recommend private) to launch the master nodes into
+    Type: AWS::EC2::Subnet::Id
+  WorkerSecurityGroupId:
+    Description: The master security group ID to associate with master nodes.
+    Type: AWS::EC2::SecurityGroup::Id
+  IgnitionLocation:
+    Default: https://api.$CLUSTER_NAME.$DOMAIN:22623/config/worker
+    Description: Location to fetch bootstrap ignition from. (Recommend to use the autocreated ignition config location.)
+    Type: String
+  CertificateAuthorities:
+    Default: data:text/plain;charset=utf-8;base64,ABC...xYz==
+    Description: Base64 encoded certificate authority string to use.
+    Type: String
+  WorkerInstanceProfileName:
+    Description: IAM profile to associate with master nodes.
+    Type: String
+  WorkerInstanceType:
+    Default: m4.large
+    Type: String
+    AllowedValues:
+    - "m4.large"
+    - "m4.xlarge"
+    - "m4.2xlarge"
+    - "m4.4xlarge"
+    - "m4.8xlarge"
+    - "m4.10xlarge"
+    - "m4.16xlarge"
+    - "c4.large"
+    - "c4.xlarge"
+    - "c4.2xlarge"
+    - "c4.4xlarge"
+    - "c4.8xlarge"
+    - "r4.large"
+    - "r4.xlarge"
+    - "r4.2xlarge"
+    - "r4.4xlarge"
+    - "r4.8xlarge"
+    - "r4.16xlarge"
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "Cluster Information"
+      Parameters:
+      - ClusterName
+    - Label:
+        default: "Host Information"
+      Parameters:
+      - WorkerInstanceType
+      - RhcosAmi
+      - IgnitionLocation
+      - CertificateAuthorities
+      - WorkerSecurityGroupId
+      - WorkerInstanceProfileName
+    - Label:
+        default: "Network Configuration"
+      Parameters:
+      - VpcId
+      - WorkerSubnet
+    ParameterLabels:
+      ClusterName:
+        default: "Cluster Name"
+      VpcId:
+        default: "VPC ID"
+      WorkerSubnet:
+        default: "Worker Subnet"
+      WorkerInstanceType:
+        default: "Worker Instance Type"
+      WorkerInstanceProfileName:
+        default: "Worker Instance Profile Name"
+      RhcosAmi:
+        default: "RHEL CoreOS AMI ID"
+      BootstrapIgnitionLocation:
+        default: "Worker Ignition Source"
+      CertificateAuthorities:
+        default: "Ignition CA String"
+      WorkerSecurityGroupId:
+        default: "Worker Security Group ID"
+
+Resources:
+  Worker0:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref RhcosAmi
+      IamInstanceProfile: !Ref WorkerInstanceProfileName
+      InstanceType: !Ref WorkerInstanceType
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "false"
+        DeviceIndex: "0"
+        GroupSet:
+        - !Ref "WorkerSecurityGroupId"
+        SubnetId: !Ref "WorkerSubnet"
+      UserData:
+        Fn::Base64: !Sub
+        - '{"ignition":{"config":{"append":[{"source":"${SOURCE}","verification":{}}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}","verification":{}}]}},"timeouts":{},"version":"2.2.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}'
+        - {
+          SOURCE: !Ref IgnitionLocation,
+          CA_BUNDLE: !Ref CertificateAuthorities,
+        }
+      Tags:
+      - Key: "Name"
+        Value: !Join ["-", [!Ref ClusterName, "worker"]]
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref ClusterName]]
+        Value: "owned"
+      - Key: "clusterid"
+        Value: !Ref ClusterName

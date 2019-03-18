@@ -1,0 +1,216 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for Openshift Cluster UPI Bootstrap (EC2 Instance, Security Groups and IAM)
+
+Parameters:
+  ClusterName:
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9]{0,31})$
+    ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 32 characters
+    Description: A short, representative cluster name to use for hostnames, etc.
+    Type: String
+  RhcosAmi:
+    Description: Current RHEL CoreOS AMI to use for boostrap
+    Type: AWS::EC2::Image::Id
+  AllowedBootstrapSshCidr:
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|1[0-9]|2[0-9]|3[0-2]))$
+    ConstraintDescription: CIDR block parameter must be in the form x.x.x.x/0-32
+    Default: 0.0.0.0/0
+    Description: CIDR block to allow SSH access to the bootstrap node
+    Type: String
+  PublicSubnet:
+    Description: The public subnet to launch the bootstrap node into
+    Type: AWS::EC2::Subnet::Id
+  MasterSecurityGroupId:
+    Description: The master security group ID (for registering temporary rules)
+    Type: AWS::EC2::SecurityGroup::Id
+  VpcId:
+    Description: The VPC created resources will belong.
+    Type: AWS::EC2::VPC::Id
+  BootstrapIgnitionLocation:
+    Default: s3://my-s3-bucket/bootstrap.ign
+    Description: Location to fetch bootstrap ignition from. (Recommend to use the autocreated cf-templates bucket.)
+    Type: String
+  AutoRegisterELB:
+    Default: "yes"
+    AllowedValues:
+    - "yes"
+    - "no"
+    Description: Do you want to invoke NLB registration (requires Lambda ARN parameter to be supplied)?
+    Type: String
+  RegisterNlbIpTargetsLambdaArn:
+    Description: ARN for NLB IP target registration lambda
+    Type: String
+  ExternalApiTargetGroupArn:
+    Description: ARN for external API load balancer target group
+    Type: String
+  InternalApiTargetGroupArn:
+    Description: ARN for internal API load balancer target group
+    Type: String
+  InternalServiceTargetGroupArn:
+    Description: ARN for internal service load balancer target group
+    Type: String
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "Cluster Information"
+      Parameters:
+      - ClusterName
+    - Label:
+        default: "Host Information"
+      Parameters:
+      - RhcosAmi
+      - BootstrapIgnitionLocation
+      - MasterSecurityGroupId
+    - Label:
+        default: "Network Configuration"
+      Parameters:
+      - VpcId
+      - AllowedBootstrapSshCidr
+      - PublicSubnet
+    - Label:
+        default: "Load Balancer Automation"
+      Parameters:
+      - AutoRegisterELB
+      - RegisterNlbIpTargetsLambdaArn
+      - ExternalApiTargetGroupArn
+      - InternalApiTargetGroupArn
+      - InternalServiceTargetGroupArn
+    ParameterLabels:
+      ClusterName:
+        default: "Cluster Name"
+      VpcId:
+        default: "VPC ID"
+      AllowedBootstrapSshCidr:
+        default: "Allowed SSH Source"
+      PublicSubnet:
+        default: "Public Subnet"
+      RhcosAmi:
+        default: "RHEL CoreOS AMI ID"
+      BootstrapIgnitionLocation:
+        default: "Bootstrap Ignition Source"
+      MasterSecurityGroupId:
+        default: "Master Security Group ID"
+      AutoRegisterELB:
+        default: "Use Provided ELB Automation"
+
+Conditions:
+  DoRegistration: !Equals ["yes", !Ref AutoRegisterELB]
+
+Resources:
+  BootstrapIamRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join ["-", [!Ref ClusterName, "bootstrap", "role"]]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: "Allow"
+          Principal:
+            Service:
+            - "ec2.amazonaws.com"
+          Action:
+          - "sts:AssumeRole"
+      Path: "/"
+      Policies:
+      - PolicyName: !Join ["-", [!Ref ClusterName, "bootstrap", "policy"]]
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+          - Effect: "Allow"
+            Action: "ec2:Describe*"
+            Resource: "*"
+          - Effect: "Allow"
+            Action: "ec2:AttachVolume"
+            Resource: "*"
+          - Effect: "Allow"
+            Action: "ec2:DetachVolume"
+            Resource: "*"
+          - Effect: "Allow"
+            Action: "s3:GetObject"
+            Resource: "*"
+
+  BootstrapInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+      - Ref: "BootstrapIamRole"
+
+  BootstrapSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Join ["-", ["bootstrap-sg", !Ref ClusterName]]
+      GroupDescription: Cluster Bootstrap Security Group
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref AllowedBootstrapSshCidr
+      - IpProtocol: tcp
+        ToPort: 19531
+        FromPort: 19531
+        CidrIp: 0.0.0.0/0
+      VpcId: !Ref VpcId
+
+  BootstrapInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref RhcosAmi
+      IamInstanceProfile: !Ref BootstrapInstanceProfile
+      InstanceType: "i3.large"
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "true"
+        DeviceIndex: "0"
+        GroupSet:
+        - !Ref "BootstrapSecurityGroup"
+        - !Ref "MasterSecurityGroupId"
+        SubnetId: !Ref "PublicSubnet"
+      UserData:
+        Fn::Base64: !Sub
+        - '{"ignition":{"config":{"replace":{"source":"${S3Loc}","verification":{}}},"timeouts":{},"version":"2.1.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}'
+        - {
+          S3Loc: !Ref BootstrapIgnitionLocation
+        }
+      Tags:
+      - Key: "Name"
+        Value: !Join ["-", [!Ref ClusterName, "bootstrap"]]
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref ClusterName]]
+        Value: "Owned"
+
+  RegisterBootstrapApiTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref ExternalApiTargetGroupArn
+      TargetIp: !GetAtt BootstrapInstance.PrivateIp
+
+  RegisterBootstrapInternalApiTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalApiTargetGroupArn
+      TargetIp: !GetAtt BootstrapInstance.PrivateIp
+
+  RegisterBootstrapInternalServiceTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalServiceTargetGroupArn
+      TargetIp: !GetAtt BootstrapInstance.PrivateIp
+
+Outputs:
+  BootstrapInstanceId:
+    Description: Bootstrap Instance ID
+    Value: !Ref BootstrapInstance
+
+  BootstrapPublicIp:
+    Description: The bootstrap node public IP address
+    Value: !GetAtt BootstrapInstance.PublicIp
+
+  BootstrapPrivateIp:
+    Description: The bootstrap node private IP address
+    Value: !GetAtt BootstrapInstance.PrivateIp

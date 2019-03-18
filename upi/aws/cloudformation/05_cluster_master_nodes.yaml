@@ -1,0 +1,368 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Template for Openshift Cluster UPI Node Launch (EC2 master instances)
+
+Parameters:
+  ClusterName:
+    AllowedPattern: ^([a-zA-Z][a-zA-Z0-9]{0,31})$
+    ConstraintDescription: Cluster name must be alphanumeric, start with a letter and a maximum of 32 characters
+    Description: A short, representative cluster name to use for hostnames, etc.
+    Type: String
+  RhcosAmi:
+    Description: Current RHEL CoreOS AMI to use for boostrap
+    Type: AWS::EC2::Image::Id
+  AutoRegisterDNS:
+    Default: "yes"
+    AllowedValues:
+    - "yes"
+    - "no"
+    Description: Do you want to invoke DNS etcd registration (requires Hosted Zone info provided)?
+    Type: String
+  PrivateHostedZoneId:
+    Description: The Route53 private zone ID to register the etcd targets with (e.g Z21IXYZABCZ2A4)
+    Type: String
+  PrivateHostedZoneName:
+    Description: The Route53 zone to register the targets with (No trailing dot - e.g. cluster.mycorp.com)
+    Type: String
+  Master0Subnet:
+    Description: The subnets (recommend private) to launch the master nodes into
+    Type: AWS::EC2::Subnet::Id
+  Master1Subnet:
+    Description: The subnets (recommend private) to launch the master nodes into
+    Type: AWS::EC2::Subnet::Id
+  Master2Subnet:
+    Description: The subnets (recommend private) to launch the master nodes into
+    Type: AWS::EC2::Subnet::Id
+  MasterSecurityGroupId:
+    Description: The master security group ID to associate with master nodes.
+    Type: AWS::EC2::SecurityGroup::Id
+  IgnitionLocation:
+    Default: https://api.$CLUSTER_NAME.$DOMAIN:22623/config/master
+    Description: Location to fetch bootstrap ignition from. (Recommend to use the autocreated ignition config location.)
+    Type: String
+  CertificateAuthorities:
+    Default: data:text/plain;charset=utf-8;base64,ABC...xYz==
+    Description: Base64 encoded certificate authority string to use.
+    Type: String
+  MasterInstanceProfileName:
+    Description: IAM profile to associate with master nodes.
+    Type: String
+  MasterInstanceType:
+    Default: m4.xlarge
+    Type: String
+    AllowedValues:
+    - "m4.xlarge"
+    - "m4.2xlarge"
+    - "m4.4xlarge"
+    - "m4.8xlarge"
+    - "m4.10xlarge"
+    - "m4.16xlarge"
+    - "c4.2xlarge"
+    - "c4.4xlarge"
+    - "c4.8xlarge"
+    - "r4.xlarge"
+    - "r4.2xlarge"
+    - "r4.4xlarge"
+    - "r4.8xlarge"
+    - "r4.16xlarge"
+  AutoRegisterELB:
+    Default: "yes"
+    AllowedValues:
+    - "yes"
+    - "no"
+    Description: Do you want to invoke NLB registration (requires Lambda ARN parameter to be supplied)?
+    Type: String
+  RegisterNlbIpTargetsLambdaArn:
+    Description: ARN for NLB IP target registration lambda (from cluster_infra_upi.yaml; otherwise select "no" for AutoRegisterELB)
+    Type: String
+  ExternalApiTargetGroupArn:
+    Description: ARN for external API load balancer target group (from cluster_infra_upi.yaml; otherwise select "no" for AutoRegisterELB)
+    Type: String
+  InternalApiTargetGroupArn:
+    Description: ARN for internal API load balancer target group (from cluster_infra_upi.yaml; otherwise select "no" for AutoRegisterELB)
+    Type: String
+  InternalServiceTargetGroupArn:
+    Description: ARN for internal service load balancer target group (from cluster_infra_upi.yaml; otherwise select "no" for AutoRegisterELB)
+    Type: String
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    - Label:
+        default: "Cluster Information"
+      Parameters:
+      - ClusterName
+    - Label:
+        default: "Host Information"
+      Parameters:
+      - MasterInstanceType
+      - RhcosAmi
+      - IgnitionLocation
+      - CertificateAuthorities
+      - MasterSecurityGroupId
+      - MasterInstanceProfileName
+    - Label:
+        default: "Network Configuration"
+      Parameters:
+      - VpcId
+      - AllowedBootstrapSshCidr
+      - Master0Subnet
+      - Master1Subnet
+      - Master2Subnet
+    - Label:
+        default: "DNS"
+      Parameters:
+      - AutoRegisterDNS
+      - PrivateHostedZoneName
+      - PrivateHostedZoneId
+    - Label:
+        default: "Load Balancer Automation"
+      Parameters:
+      - AutoRegisterELB
+      - RegisterNlbIpTargetsLambdaArn
+      - ExternalApiTargetGroupArn
+      - InternalApiTargetGroupArn
+      - InternalServiceTargetGroupArn
+    ParameterLabels:
+      ClusterName:
+        default: "Cluster Name"
+      VpcId:
+        default: "VPC ID"
+      Master0Subnet:
+        default: "Master-0 Subnet"
+      Master1Subnet:
+        default: "Master-1 Subnet"
+      Master2Subnet:
+        default: "Master-2 Subnet"
+      MasterInstanceType:
+        default: "Master Instance Type"
+      MasterInstanceProfileName:
+        default: "Master Instance Profile Name"
+      RhcosAmi:
+        default: "RHEL CoreOS AMI ID"
+      BootstrapIgnitionLocation:
+        default: "Master Ignition Source"
+      CertificateAuthorities:
+        default: "Ignition CA String"
+      MasterSecurityGroupId:
+        default: "Master Security Group ID"
+      AutoRegisterDNS:
+        default: "Use Provided DNS Automation"
+      AutoRegisterELB:
+        default: "Use Provided ELB Automation"
+      PrivateHostedZoneName:
+        default: "Private Hosted Zone Name"
+      PrivateHostedZoneId:
+        default: "Private Hosted Zone ID"
+
+Conditions:
+  DoRegistration: !Equals ["yes", !Ref AutoRegisterELB]
+  DoDns: !Equals ["yes", !Ref AutoRegisterDNS]
+
+Resources:
+  Master0:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref RhcosAmi
+      IamInstanceProfile: !Ref MasterInstanceProfileName
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "false"
+        DeviceIndex: "0"
+        GroupSet:
+        - !Ref "MasterSecurityGroupId"
+        SubnetId: !Ref "Master0Subnet"
+      UserData:
+        Fn::Base64: !Sub
+        - '{"ignition":{"config":{"append":[{"source":"${SOURCE}","verification":{}}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}","verification":{}}]}},"timeouts":{},"version":"2.2.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}'
+        - {
+          SOURCE: !Ref IgnitionLocation,
+          CA_BUNDLE: !Ref CertificateAuthorities,
+        }
+      Tags:
+      - Key: "Name"
+        Value: !Join ["-", [!Ref ClusterName, "master", "0"]]
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref ClusterName]]
+        Value: "owned"
+      - Key: "clusterid"
+        Value: !Ref ClusterName
+
+  RegisterMaster0:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref ExternalApiTargetGroupArn
+      TargetIp: !GetAtt Master0.PrivateIp
+
+  RegisterMaster0InternalApiTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalApiTargetGroupArn
+      TargetIp: !GetAtt Master0.PrivateIp
+
+  RegisterMaster0InternalServiceTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalServiceTargetGroupArn
+      TargetIp: !GetAtt Master0.PrivateIp
+
+  Master1:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref RhcosAmi
+      IamInstanceProfile: !Ref MasterInstanceProfileName
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "false"
+        DeviceIndex: "0"
+        GroupSet:
+        - !Ref "MasterSecurityGroupId"
+        SubnetId: !Ref "Master1Subnet"
+      UserData:
+        Fn::Base64: !Sub
+        - '{"ignition":{"config":{"append":[{"source":"${SOURCE}","verification":{}}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}","verification":{}}]}},"timeouts":{},"version":"2.2.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}'
+        - {
+          SOURCE: !Ref IgnitionLocation,
+          CA_BUNDLE: !Ref CertificateAuthorities,
+        }
+      Tags:
+      - Key: "Name"
+        Value: !Join ["-", [!Ref ClusterName, "master", "1"]]
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref ClusterName]]
+        Value: "owned"
+      - Key: "clusterid"
+        Value: !Ref ClusterName
+
+  RegisterMaster1:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref ExternalApiTargetGroupArn
+      TargetIp: !GetAtt Master1.PrivateIp
+
+  RegisterMaster1InternalApiTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalApiTargetGroupArn
+      TargetIp: !GetAtt Master1.PrivateIp
+
+  RegisterMaster1InternalServiceTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalServiceTargetGroupArn
+      TargetIp: !GetAtt Master1.PrivateIp
+
+  Master2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref RhcosAmi
+      IamInstanceProfile: !Ref MasterInstanceProfileName
+      InstanceType: !Ref MasterInstanceType
+      NetworkInterfaces:
+      - AssociatePublicIpAddress: "false"
+        DeviceIndex: "0"
+        GroupSet:
+        - !Ref "MasterSecurityGroupId"
+        SubnetId: !Ref "Master2Subnet"
+      UserData:
+        Fn::Base64: !Sub
+        - '{"ignition":{"config":{"append":[{"source":"${SOURCE}","verification":{}}]},"security":{"tls":{"certificateAuthorities":[{"source":"${CA_BUNDLE}","verification":{}}]}},"timeouts":{},"version":"2.2.0"},"networkd":{},"passwd":{},"storage":{},"systemd":{}}'
+        - {
+          SOURCE: !Ref IgnitionLocation,
+          CA_BUNDLE: !Ref CertificateAuthorities,
+        }
+      Tags:
+      - Key: "Name"
+        Value: !Join ["-", [!Ref ClusterName, "master", "2"]]
+      - Key: !Join ["", ["kubernetes.io/cluster/", !Ref ClusterName]]
+        Value: "owned"
+      - Key: "clusterid"
+        Value: !Ref ClusterName
+
+  RegisterMaster2:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref ExternalApiTargetGroupArn
+      TargetIp: !GetAtt Master2.PrivateIp
+
+  RegisterMaster2InternalApiTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalApiTargetGroupArn
+      TargetIp: !GetAtt Master2.PrivateIp
+
+  RegisterMaster2InternalServiceTarget:
+    Condition: DoRegistration
+    Type: Custom::NLBRegister
+    Properties:
+      ServiceToken: !Ref RegisterNlbIpTargetsLambdaArn
+      TargetArn: !Ref InternalServiceTargetGroupArn
+      TargetIp: !GetAtt Master2.PrivateIp
+
+  EtcdSrvRecords:
+    Condition: DoDns
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref PrivateHostedZoneId
+      Name: !Join [".", ["_etcd-server-ssl._tcp", !Ref PrivateHostedZoneName]]
+      ResourceRecords:
+      - !Join [
+        " ",
+        ["0 10 2380", !Join [".", ["etcd-0", !Ref PrivateHostedZoneName]]],
+      ]
+      - !Join [
+        " ",
+        ["0 10 2380", !Join [".", ["etcd-1", !Ref PrivateHostedZoneName]]],
+      ]
+      - !Join [
+        " ",
+        ["0 10 2380", !Join [".", ["etcd-2", !Ref PrivateHostedZoneName]]],
+      ]
+      TTL: 60
+      Type: SRV
+
+  Etcd0Record:
+    Condition: DoDns
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref PrivateHostedZoneId
+      Name: !Join [".", ["etcd-0", !Ref PrivateHostedZoneName]]
+      ResourceRecords:
+      - !GetAtt Master0.PrivateIp
+      TTL: 60
+      Type: A
+
+  Etcd1Record:
+    Condition: DoDns
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref PrivateHostedZoneId
+      Name: !Join [".", ["etcd-1", !Ref PrivateHostedZoneName]]
+      ResourceRecords:
+      - !GetAtt Master1.PrivateIp
+      TTL: 60
+      Type: A
+
+  Etcd2Record:
+    Condition: DoDns
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: !Ref PrivateHostedZoneId
+      Name: !Join [".", ["etcd-2", !Ref PrivateHostedZoneName]]
+      ResourceRecords:
+      - !GetAtt Master2.PrivateIp
+      TTL: 60
+      Type: A
