@@ -856,6 +856,36 @@ func deleteEC2NetworkInterface(client *ec2.EC2, id string, logger logrus.FieldLo
 	return nil
 }
 
+func deleteEC2NetworkInterfaceByVPC(client *ec2.EC2, vpc string, logger logrus.FieldLogger) error {
+	var lastError error
+	err := client.DescribeNetworkInterfacesPages(
+		&ec2.DescribeNetworkInterfacesInput{
+			Filters: []*ec2.Filter{
+				{
+					Name:   aws.String("vpc-id"),
+					Values: []*string{&vpc},
+				},
+			},
+		},
+		func(results *ec2.DescribeNetworkInterfacesOutput, lastPage bool) bool {
+			for _, networkInterface := range results.NetworkInterfaces {
+				lastError = deleteEC2NetworkInterface(client, *networkInterface.NetworkInterfaceId, logger.WithField("network interface", *networkInterface.NetworkInterfaceId))
+				if lastError != nil {
+					lastError = errors.Wrapf(lastError, "deleting EC2 network interface %s", *networkInterface.NetworkInterfaceId)
+					logger.Info(lastError)
+				}
+			}
+
+			return !lastPage
+		},
+	)
+
+	if lastError != nil {
+		return lastError
+	}
+	return err
+}
+
 func deleteEC2Subnet(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
 	_, err := client.DeleteSubnet(&ec2.DeleteSubnetInput{
 		SubnetId: aws.String(id),
@@ -899,19 +929,18 @@ func deleteEC2VPC(ec2Client *ec2.EC2, elbClient *elb.ELB, elbv2Client *elbv2.ELB
 		return v2lbError
 	}
 
-	// next delete any VPC endpoints associated with the VPC (they are not taggable)
-	err := deleteEC2VPCEndpointsByVPC(ec2Client, id, logger)
-	if err != nil {
-		return err
+	for _, helper := range [](func(client *ec2.EC2, vpc string, logger logrus.FieldLogger) error){
+		deleteEC2NetworkInterfaceByVPC, // not always tagged
+		deleteEC2RouteTablesByVPC,      // not always tagged
+		deleteEC2VPCEndpointsByVPC,     // not taggable
+	} {
+		err := helper(ec2Client, id, logger)
+		if err != nil {
+			return err
+		}
 	}
 
-	// next delete route tables associated with the VPC (not all of them are tagged)
-	err = deleteEC2RouteTablesByVPC(ec2Client, id, logger)
-	if err != nil {
-		return err
-	}
-
-	_, err = ec2Client.DeleteVpc(&ec2.DeleteVpcInput{
+	_, err := ec2Client.DeleteVpc(&ec2.DeleteVpcInput{
 		VpcId: aws.String(id),
 	})
 	if err != nil {
