@@ -760,7 +760,7 @@ func deleteEC2RouteTablesByVPC(client *ec2.EC2, vpc string, logger logrus.FieldL
 		},
 		func(results *ec2.DescribeRouteTablesOutput, lastPage bool) bool {
 			for _, table := range results.RouteTables {
-				lastError := deleteEC2RouteTableObject(client, table, logger.WithField("table", *table.RouteTableId))
+				lastError = deleteEC2RouteTableObject(client, table, logger.WithField("table", *table.RouteTableId))
 				if lastError != nil {
 					lastError = errors.Wrapf(lastError, "deleting EC2 route table %s", *table.RouteTableId)
 					logger.Info(lastError)
@@ -782,6 +782,9 @@ func deleteEC2SecurityGroup(client *ec2.EC2, id string, logger logrus.FieldLogge
 		GroupIds: []*string{aws.String(id)},
 	})
 	if err != nil {
+		if err.(awserr.Error).Code() == "InvalidGroup.NotFound" {
+			return nil
+		}
 		return err
 	}
 
@@ -853,6 +856,36 @@ func deleteEC2NetworkInterface(client *ec2.EC2, id string, logger logrus.FieldLo
 	return nil
 }
 
+func deleteEC2NetworkInterfaceByVPC(client *ec2.EC2, vpc string, logger logrus.FieldLogger) error {
+	var lastError error
+	err := client.DescribeNetworkInterfacesPages(
+		&ec2.DescribeNetworkInterfacesInput{
+			Filters: []*ec2.Filter{
+				{
+					Name:   aws.String("vpc-id"),
+					Values: []*string{&vpc},
+				},
+			},
+		},
+		func(results *ec2.DescribeNetworkInterfacesOutput, lastPage bool) bool {
+			for _, networkInterface := range results.NetworkInterfaces {
+				lastError = deleteEC2NetworkInterface(client, *networkInterface.NetworkInterfaceId, logger.WithField("network interface", *networkInterface.NetworkInterfaceId))
+				if lastError != nil {
+					lastError = errors.Wrapf(lastError, "deleting EC2 network interface %s", *networkInterface.NetworkInterfaceId)
+					logger.Info(lastError)
+				}
+			}
+
+			return !lastPage
+		},
+	)
+
+	if lastError != nil {
+		return lastError
+	}
+	return err
+}
+
 func deleteEC2Subnet(client *ec2.EC2, id string, logger logrus.FieldLogger) error {
 	_, err := client.DeleteSubnet(&ec2.DeleteSubnetInput{
 		SubnetId: aws.String(id),
@@ -896,19 +929,18 @@ func deleteEC2VPC(ec2Client *ec2.EC2, elbClient *elb.ELB, elbv2Client *elbv2.ELB
 		return v2lbError
 	}
 
-	// next delete any VPC endpoints associated with the VPC (they are not taggable)
-	err := deleteEC2VPCEndpointsByVPC(ec2Client, id, logger)
-	if err != nil {
-		return err
+	for _, helper := range [](func(client *ec2.EC2, vpc string, logger logrus.FieldLogger) error){
+		deleteEC2NetworkInterfaceByVPC, // not always tagged
+		deleteEC2RouteTablesByVPC,      // not always tagged
+		deleteEC2VPCEndpointsByVPC,     // not taggable
+	} {
+		err := helper(ec2Client, id, logger)
+		if err != nil {
+			return err
+		}
 	}
 
-	// next delete route tables associated with the VPC (not all of them are tagged)
-	err = deleteEC2RouteTablesByVPC(ec2Client, id, logger)
-	if err != nil {
-		return err
-	}
-
-	_, err = ec2Client.DeleteVpc(&ec2.DeleteVpcInput{
+	_, err := ec2Client.DeleteVpc(&ec2.DeleteVpcInput{
 		VpcId: aws.String(id),
 	})
 	if err != nil {
@@ -1254,7 +1286,8 @@ func deleteIAMRole(client *iam.IAM, roleARN arn.ARN, logger logrus.FieldLogger) 
 		&iam.ListInstanceProfilesForRoleInput{RoleName: &name},
 		func(results *iam.ListInstanceProfilesForRoleOutput, lastPage bool) bool {
 			for _, profile := range results.InstanceProfiles {
-				parsed, lastError := arn.Parse(*profile.Arn)
+				var parsed arn.ARN
+				parsed, lastError = arn.Parse(*profile.Arn)
 				if lastError != nil {
 					lastError = errors.Wrap(lastError, "parse ARN for IAM instance profile")
 					logger.Info(lastError)
@@ -1320,7 +1353,7 @@ func deleteIAMUser(client *iam.IAM, id string, logger logrus.FieldLogger) error 
 		&iam.ListAccessKeysInput{UserName: &id},
 		func(results *iam.ListAccessKeysOutput, lastPage bool) bool {
 			for _, key := range results.AccessKeyMetadata {
-				_, lastError := client.DeleteAccessKey(&iam.DeleteAccessKeyInput{
+				_, lastError = client.DeleteAccessKey(&iam.DeleteAccessKeyInput{
 					UserName:    &id,
 					AccessKeyId: key.AccessKeyId,
 				})
