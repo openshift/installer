@@ -782,6 +782,9 @@ func deleteEC2SecurityGroup(client *ec2.EC2, id string, logger logrus.FieldLogge
 		GroupIds: []*string{aws.String(id)},
 	})
 	if err != nil {
+		if err.(awserr.Error).Code() == "InvalidGroup.NotFound" {
+			return nil
+		}
 		return err
 	}
 
