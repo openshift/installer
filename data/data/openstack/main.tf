@@ -34,6 +34,7 @@ module "service" {
   ignition          = "${var.ignition_bootstrap}"
   lb_floating_ip    = "${var.openstack_lb_floating_ip}"
   service_port_id   = "${module.topology.service_port_id}"
+  service_port_ip   = "${module.topology.service_port_ip}"
   master_ips        = "${module.topology.master_ips}"
   master_port_names = "${module.topology.master_port_names}"
   bootstrap_ip      = "${module.topology.bootstrap_port_ip}"
