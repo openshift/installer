@@ -352,6 +352,11 @@ func waitForInitializedCluster(ctx context.Context, config *rest.Config) error {
 						cov1helpers.FindStatusCondition(cv.Status.Conditions, configv1.OperatorFailing).Message)
 					return false, nil
 				}
+				if cov1helpers.IsStatusConditionTrue(cv.Status.Conditions, configv1.OperatorProgressing) {
+					logrus.Debugf("Still waiting for the cluster to initialize: %v",
+						cov1helpers.FindStatusCondition(cv.Status.Conditions, configv1.OperatorProgressing).Message)
+					return false, nil
+				}
 			}
 			logrus.Debug("Still waiting for the cluster to initialize...")
 			return false, nil
