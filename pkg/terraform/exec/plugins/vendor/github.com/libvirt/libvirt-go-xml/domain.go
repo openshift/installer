@@ -1103,7 +1103,12 @@ type DomainGraphicSpice struct {
 	GL            *DomainGraphicSpiceGL           `xml:"gl"`
 }
 
+type DomainGraphicEGLHeadlessGL struct {
+	RenderNode string `xml:"rendernode,attr,omitempty"`
+}
+
 type DomainGraphicEGLHeadless struct {
+	GL *DomainGraphicEGLHeadlessGL `xml:"gl"`
 }
 
 type DomainGraphic struct {
@@ -1358,9 +1363,14 @@ type DomainHostdev struct {
 }
 
 type DomainMemorydevSource struct {
-	NodeMask string                         `xml:"nodemask,omitempty"`
-	PageSize *DomainMemorydevSourcePagesize `xml:"pagesize"`
-	Path     string                         `xml:"path,omitempty"`
+	NodeMask  string                          `xml:"nodemask,omitempty"`
+	PageSize  *DomainMemorydevSourcePagesize  `xml:"pagesize"`
+	Path      string                          `xml:"path,omitempty"`
+	AlignSize *DomainMemorydevSourceAlignsize `xml:"alignsize"`
+	PMem      *DomainMemorydevSourcePMem      `xml:"pmem"`
+}
+
+type DomainMemorydevSourcePMem struct {
 }
 
 type DomainMemorydevSourcePagesize struct {
@@ -1368,8 +1378,16 @@ type DomainMemorydevSourcePagesize struct {
 	Unit  string `xml:"unit,attr,omitempty"`
 }
 
+type DomainMemorydevSourceAlignsize struct {
+	Value uint64 `xml:",chardata"`
+	Unit  string `xml:"unit,attr,omitempty"`
+}
+
 type DomainMemorydevTargetNode struct {
 	Value uint `xml:",chardata"`
+}
+
+type DomainMemorydevTargetReadOnly struct {
 }
 
 type DomainMemorydevTargetSize struct {
@@ -1382,9 +1400,10 @@ type DomainMemorydevTargetLabel struct {
 }
 
 type DomainMemorydevTarget struct {
-	Size  *DomainMemorydevTargetSize  `xml:"size"`
-	Node  *DomainMemorydevTargetNode  `xml:"node"`
-	Label *DomainMemorydevTargetLabel `xml:"label"`
+	Size     *DomainMemorydevTargetSize     `xml:"size"`
+	Node     *DomainMemorydevTargetNode     `xml:"node"`
+	Label    *DomainMemorydevTargetLabel    `xml:"label"`
+	ReadOnly *DomainMemorydevTargetReadOnly `xml:"readonly"`
 }
 
 type DomainMemorydev struct {
@@ -1950,6 +1969,10 @@ type DomainFeatureCapabilities struct {
 	WakeAlarm      *DomainFeatureCapability `xml:"wake_alarm"`
 }
 
+type DomainFeatureMSRS struct {
+	Unknown string `xml:"unknown,attr"`
+}
+
 type DomainFeatureList struct {
 	PAE          *DomainFeature             `xml:"pae"`
 	ACPI         *DomainFeature             `xml:"acpi"`
@@ -1970,6 +1993,7 @@ type DomainFeatureList struct {
 	NestedHV     *DomainFeatureState        `xml:"nested-hv"`
 	Capabilities *DomainFeatureCapabilities `xml:"capabilities"`
 	VMCoreInfo   *DomainFeatureState        `xml:"vmcoreinfo"`
+	MSRS         *DomainFeatureMSRS         `xml:"msrs"`
 }
 
 type DomainCPUTuneShares struct {
@@ -2083,6 +2107,21 @@ type DomainLXCNamespace struct {
 type DomainLXCNamespaceMap struct {
 	Type  string `xml:"type,attr"`
 	Value string `xml:"value,attr"`
+}
+
+type DomainBHyveCommandlineArg struct {
+	Value string `xml:"value,attr"`
+}
+
+type DomainBHyveCommandlineEnv struct {
+	Name  string `xml:"name,attr"`
+	Value string `xml:"value,attr,omitempty"`
+}
+
+type DomainBHyveCommandline struct {
+	XMLName xml.Name                    `xml:"http://libvirt.org/schemas/domain/bhyve/1.0 commandline"`
+	Args    []DomainBHyveCommandlineArg `xml:"arg"`
+	Envs    []DomainBHyveCommandlineEnv `xml:"env"`
 }
 
 type DomainBlockIOTune struct {
@@ -2207,48 +2246,51 @@ type DomainGenID struct {
 // matching the order of XML elements that libvirt
 // will generate when dumping XML.
 type Domain struct {
-	XMLName              xml.Name             `xml:"domain"`
-	Type                 string               `xml:"type,attr,omitempty"`
-	ID                   *int                 `xml:"id,attr"`
-	Name                 string               `xml:"name,omitempty"`
-	UUID                 string               `xml:"uuid,omitempty"`
-	GenID                *DomainGenID         `xml:"genid"`
-	Title                string               `xml:"title,omitempty"`
-	Description          string               `xml:"description,omitempty"`
-	Metadata             *DomainMetadata      `xml:"metadata"`
-	MaximumMemory        *DomainMaxMemory     `xml:"maxMemory"`
-	Memory               *DomainMemory        `xml:"memory"`
-	CurrentMemory        *DomainCurrentMemory `xml:"currentMemory"`
-	BlockIOTune          *DomainBlockIOTune   `xml:"blkiotune"`
-	MemoryTune           *DomainMemoryTune    `xml:"memtune"`
-	MemoryBacking        *DomainMemoryBacking `xml:"memoryBacking"`
-	VCPU                 *DomainVCPU          `xml:"vcpu"`
-	VCPUs                *DomainVCPUs         `xml:"vcpus"`
-	IOThreads            uint                 `xml:"iothreads,omitempty"`
-	IOThreadIDs          *DomainIOThreadIDs   `xml:"iothreadids"`
-	CPUTune              *DomainCPUTune       `xml:"cputune"`
-	NUMATune             *DomainNUMATune      `xml:"numatune"`
-	Resource             *DomainResource      `xml:"resource"`
-	SysInfo              *DomainSysInfo       `xml:"sysinfo"`
-	Bootloader           string               `xml:"bootloader,omitempty"`
-	BootloaderArgs       string               `xml:"bootloader_args,omitempty"`
-	OS                   *DomainOS            `xml:"os"`
-	IDMap                *DomainIDMap         `xml:"idmap"`
-	Features             *DomainFeatureList   `xml:"features"`
-	CPU                  *DomainCPU           `xml:"cpu"`
-	Clock                *DomainClock         `xml:"clock"`
-	OnPoweroff           string               `xml:"on_poweroff,omitempty"`
-	OnReboot             string               `xml:"on_reboot,omitempty"`
-	OnCrash              string               `xml:"on_crash,omitempty"`
-	PM                   *DomainPM            `xml:"pm"`
-	Perf                 *DomainPerf          `xml:"perf"`
-	Devices              *DomainDeviceList    `xml:"devices"`
-	SecLabel             []DomainSecLabel     `xml:"seclabel"`
+	XMLName        xml.Name              `xml:"domain"`
+	Type           string                `xml:"type,attr,omitempty"`
+	ID             *int                  `xml:"id,attr"`
+	Name           string                `xml:"name,omitempty"`
+	UUID           string                `xml:"uuid,omitempty"`
+	GenID          *DomainGenID          `xml:"genid"`
+	Title          string                `xml:"title,omitempty"`
+	Description    string                `xml:"description,omitempty"`
+	Metadata       *DomainMetadata       `xml:"metadata"`
+	MaximumMemory  *DomainMaxMemory      `xml:"maxMemory"`
+	Memory         *DomainMemory         `xml:"memory"`
+	CurrentMemory  *DomainCurrentMemory  `xml:"currentMemory"`
+	BlockIOTune    *DomainBlockIOTune    `xml:"blkiotune"`
+	MemoryTune     *DomainMemoryTune     `xml:"memtune"`
+	MemoryBacking  *DomainMemoryBacking  `xml:"memoryBacking"`
+	VCPU           *DomainVCPU           `xml:"vcpu"`
+	VCPUs          *DomainVCPUs          `xml:"vcpus"`
+	IOThreads      uint                  `xml:"iothreads,omitempty"`
+	IOThreadIDs    *DomainIOThreadIDs    `xml:"iothreadids"`
+	CPUTune        *DomainCPUTune        `xml:"cputune"`
+	NUMATune       *DomainNUMATune       `xml:"numatune"`
+	Resource       *DomainResource       `xml:"resource"`
+	SysInfo        *DomainSysInfo        `xml:"sysinfo"`
+	Bootloader     string                `xml:"bootloader,omitempty"`
+	BootloaderArgs string                `xml:"bootloader_args,omitempty"`
+	OS             *DomainOS             `xml:"os"`
+	IDMap          *DomainIDMap          `xml:"idmap"`
+	Features       *DomainFeatureList    `xml:"features"`
+	CPU            *DomainCPU            `xml:"cpu"`
+	Clock          *DomainClock          `xml:"clock"`
+	OnPoweroff     string                `xml:"on_poweroff,omitempty"`
+	OnReboot       string                `xml:"on_reboot,omitempty"`
+	OnCrash        string                `xml:"on_crash,omitempty"`
+	PM             *DomainPM             `xml:"pm"`
+	Perf           *DomainPerf           `xml:"perf"`
+	Devices        *DomainDeviceList     `xml:"devices"`
+	SecLabel       []DomainSecLabel      `xml:"seclabel"`
+	KeyWrap        *DomainKeyWrap        `xml:"keywrap"`
+	LaunchSecurity *DomainLaunchSecurity `xml:"launchSecurity"`
+
+	/* Hypervisor namespaces must all be last */
 	QEMUCommandline      *DomainQEMUCommandline
 	LXCNamespace         *DomainLXCNamespace
+	BHyveCommandline     *DomainBHyveCommandline
 	VMWareDataCenterPath *DomainVMWareDataCenterPath
-	KeyWrap              *DomainKeyWrap        `xml:"keywrap"`
-	LaunchSecurity       *DomainLaunchSecurity `xml:"launchSecurity"`
 }
 
 func (d *Domain) Unmarshal(doc string) error {
