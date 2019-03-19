@@ -14,8 +14,8 @@ output "lb_backend_pool_id" {
   value="${local.lb_backend_pool_id}"
 }
 
-output "bootstrap_ssh_natrule_id" {
-  value = "${local.bootstrap_ssh_natrule_id}"
+output "external_lb_id" {
+  value = "${local.external_lb_id}"
 }
 
 output "master_nsg_id" {

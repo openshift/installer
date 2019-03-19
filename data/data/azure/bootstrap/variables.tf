@@ -37,10 +37,9 @@ variable "elb_backend_pool_id" {
   type        = "string"
   description ="The external load balancer bakend pool id. used to attach the bootstrap NIC"
 }
-
-variable "elb_bootstrap_ssh_natrule_id" {
+variable "external_lb_id" {
   type        = "string"
-  description ="The external load balancer nat rule id for SSH. used to attach the bootstrap NIC"
+  description ="The external load balancer id"
 }
 
 variable "boot_diag_blob_endpoint" {

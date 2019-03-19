@@ -12,5 +12,5 @@ locals {
   
   lb_backend_pool_id ="${azurerm_lb_backend_address_pool.master_elb_pool.id}"
 
-  bootstrap_ssh_natrule_id = "${azurerm_lb_nat_rule.external_lb_ssh0.id}"
+  external_lb_id = "${azurerm_lb.external_lb.id}"
 }

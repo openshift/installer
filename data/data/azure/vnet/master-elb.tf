@@ -29,39 +29,6 @@ resource "azurerm_lb_backend_address_pool" "master_elb_pool" {
   name = "${var.cluster_id}-elb-master"
 }
 
-resource "azurerm_lb_nat_rule" "external_lb_ssh0" {
-  resource_group_name            = "${var.rg_name}"
-  enable_floating_ip             = false
-  loadbalancer_id                = "${azurerm_lb.external_lb.id}"
-  name                           = "natRuleSsh0"
-  protocol                       = "Tcp"
-  frontend_port                  = 22
-  backend_port                   = 2
-  frontend_ip_configuration_name = "PublicIPAddress"
-}
-
-resource "azurerm_lb_nat_rule" "external_lb_ssh1" {
-  resource_group_name            = "${var.rg_name}"
-  enable_floating_ip             = false
-  loadbalancer_id                = "${azurerm_lb.external_lb.id}"
-  name                           = "natRuleSsh1"
-  protocol                       = "Tcp"
-  frontend_port                  = 2201
-  backend_port                   = 22
-  frontend_ip_configuration_name = "PublicIPAddress"
-}
-
-resource "azurerm_lb_nat_rule" "external_lb_ssh2" {
-  resource_group_name            = "${var.rg_name}"
-  name                           = "natRuleSsh2"
-  enable_floating_ip             = false
-  loadbalancer_id                = "${azurerm_lb.external_lb.id}"
-  protocol                       = "Tcp"
-  frontend_port                  = 2202
-  backend_port                   = 22
-  frontend_ip_configuration_name = "PublicIPAddress"
-}
-
 resource "azurerm_lb_rule" "external_lb_rule_api_internal" {
   name = "api-internal"
   resource_group_name = "${var.rg_name}"

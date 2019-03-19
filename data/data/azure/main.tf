@@ -18,23 +18,35 @@ module "bootstrap" {
   ignition                 = "${var.ignition_bootstrap}"
   subnet_id                = "${module.vnet.public_subnet_id}"
   elb_backend_pool_id      = "${module.vnet.lb_backend_pool_id}"
-  elb_bootstrap_ssh_natrule_id = "${module.vnet.bootstrap_ssh_natrule_id}"
+  external_lb_id           = "${module.vnet.external_lb_id}"
   nsg_id                   = "${module.vnet.master_nsg_id}"
   tags                     = "${local.tags}"
   boot_diag_blob_endpoint  = "${azurerm_storage_account.bootdiag.primary_blob_endpoint}"
-
 }
 
-
-//rename to vnet
 module "vnet" {
   source = "./vnet"
   rg_name =   "${azurerm_resource_group.main.name}"
   cidr_block = "${var.machine_cidr}"
   cluster_id = "${var.cluster_id}"
   region     = "${var.azure_region}"
-  dns_label  = "${var.cluster_id}${random_string.resource_group_suffix.result}"
+  dns_label  = "${var.cluster_id}"
   tags = "${local.tags}"
+}
+
+module "master" {
+  source = "./master"
+  resource_group_name = "${azurerm_resource_group.main.name}"
+  cluster_id = "${var.cluster_id}"
+  region     = "${var.azure_region}"
+  vm_size    = "${var.azure_bootstrap_vm_type}"
+  ignition   = "${var.ignition_master}"
+  external_lb_id = "${module.vnet.external_lb_id}"
+  elb_backend_pool_id = "${module.vnet.lb_backend_pool_id}"
+  subnet_id = "${module.vnet.public_subnet_id}"
+  instance_count = "${var.master_count}"
+  tags = "${local.tags}"
+  boot_diag_blob_endpoint  = "${azurerm_storage_account.bootdiag.primary_blob_endpoint}"
 }
 
 resource "random_string" "resource_group_suffix" {
@@ -44,7 +56,7 @@ resource "random_string" "resource_group_suffix" {
 }
 
 resource "azurerm_resource_group" "main" {
-  name = "${var.cluster_id}-rg-${random_string.resource_group_suffix.result}"
+  name = "${var.cluster_id}-rg"
   location = "${var.azure_region}"
 }
 
@@ -55,7 +67,5 @@ resource "azurerm_storage_account" "bootdiag" {
   account_tier             = "Standard"
   account_replication_type = "LRS"
 }
-
-//ILB
 
 

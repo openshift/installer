@@ -1,13 +1,13 @@
 
-variable "availability_zones" {
-  type        = "list"
-  description = "List of the availability zones in which to create the masters. The length of this list must match instance_count."
-}
+# variable "availability_zones" {
+#   type        = "list"
+#   description = "List of the availability zones in which to create the masters. The length of this list must match instance_count."
+# }
 
-variable "az_to_subnet_id" {
-  type        = "map"
-  description = "Map from availability zone name to the ID of the subnet in that availability zone"
-}
+# variable "az_to_subnet_id" {
+#   type        = "map"
+#   description = "Map from availability zone name to the ID of the subnet in that availability zone"
+# }
 
 variable "region" {
   type        = "string"
@@ -31,6 +31,14 @@ variable "instance_count" {
   type = "string"
 }
 
+variable "external_lb_id" {
+  type = "string"
+}
+
+variable "elb_backend_pool_id" {
+  type = "string"
+}
+
 variable "ignition_master" {
   type    = "string"
   default = ""
@@ -41,14 +49,15 @@ variable "kubeconfig_content" {
   default = ""
 }
 
-variable "master_subnet_id" {
-  type        = "list"
-  description = "The security group IDs to be applied to the master nodes."
+variable "subnet_id" {
+  type        = "string"
+  description = "The subnet to attach the masters to."
 }
 
-variable "root_volume_size" {
+variable "os_volume_size" {
   type        = "string"
   description = "The size of the volume in gigabytes for the root block device."
+  default     = "100"
 }
 
 variable "tags" {
@@ -62,6 +71,6 @@ variable "boot_diag_blob_endpoint" {
   description = "the blob endpoint where machines should store their boot diagnostics."
 }
 
-variable "user_data_ign" {
+variable "ignition" {
   type = "string"
 }

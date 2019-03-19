@@ -98,12 +98,6 @@ resource "azurerm_network_interface_backend_address_pool_association" "ignition"
   ip_configuration_name = "bootstrap" #must be the same as nic's ip configuration name.
 }
 
-resource "azurerm_network_interface_nat_rule_association" "ignition" {
-  network_interface_id  = "${azurerm_network_interface.ignition.id}"
-  ip_configuration_name = "bootstrap"
-  nat_rule_id           = "${var.elb_bootstrap_ssh_natrule_id}"
-}
-
 resource "azurerm_virtual_machine" "bootstrap" {
   name                  = "${var.cluster_id}-bootstrap"
   location              = "${var.region}"
@@ -113,7 +107,7 @@ resource "azurerm_virtual_machine" "bootstrap" {
 
   delete_os_disk_on_termination = true
   storage_os_disk {
-    name              = "myosdisk1"
+    name              = "bootstraposdisk"
     caching           = "ReadWrite"
     create_option     = "FromImage"
     managed_disk_type = "Premium_LRS"
@@ -123,7 +117,7 @@ resource "azurerm_virtual_machine" "bootstrap" {
   storage_image_reference {
     publisher = "CoreOS"
     offer     = "CoreOS"
-    sku       = "Beta"
+    sku       = "Alpha"
     version   = "latest"
   }
 
@@ -154,10 +148,4 @@ resource "azurerm_virtual_machine" "bootstrap" {
   ), var.tags)}"
 
 }
-
-// TODO :
-// LB?
-// Public IP
-// NSG for SSH (tcp 22) + Journald gateway (tcp 19531)
-// TESTS :)
 
