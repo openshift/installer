@@ -6,7 +6,7 @@ On [supported platforms](../../README.md#supported-platforms), the installer is 
 
 ## Cluster Installation Process
 
-OpenShift is unique in that its management extends all the way down to the operating system itself. Every machine boots with a configuration which references resources hosted in the cluster its joining. This allows the cluster to manage itself as updates are applied. A downside to this approach, however, is that new clusters have no way of starting without external help - every machine in the to-be-created cluster is waiting on the to-be-created cluster.
+OpenShift is unique in that its management extends all the way down to the operating system itself. Every machine boots with a configuration which references resources hosted in the cluster it is joining. This allows the cluster to manage itself as updates are applied. A downside to this approach, however, is that new clusters have no way of starting without external help - every machine in the to-be-created cluster is waiting on the to-be-created cluster.
 
 OpenShift breaks this dependency loop using a temporary bootstrap machine. This bootstrap machine is booted with a concrete [Ignition Config][ignition] which describes how to create the cluster. This machine acts as a temporary control plane whose sole purpose is launching the rest of the cluster.
 
