@@ -84,6 +84,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftConfigConfigmapEtcdMetricsServingCA{},
 		&bootkube.OpenshiftConfigSecretEtcdMetricsClient{},
+		&bootkube.OpenShiftKubeAPIServerOperatorConfigmapUnsupportedCertRotation{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.Pull{},
 	}
@@ -206,6 +207,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftConfigConfigmapEtcdMetricsServingCA{},
 		&bootkube.OpenshiftConfigSecretEtcdMetricsClient{},
+		&bootkube.OpenShiftKubeAPIServerOperatorConfigmapUnsupportedCertRotation{},
 		&bootkube.OpenshiftMachineConfigOperator{},
 		&bootkube.Pull{},
 	} {
