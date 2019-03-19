@@ -54,6 +54,7 @@ var (
 		&machine.Master{},
 		&machine.Worker{},
 		&bootstrap.Bootstrap{},
+		&tls.JournalCertKey{},
 		&cluster.Metadata{},
 	}
 
