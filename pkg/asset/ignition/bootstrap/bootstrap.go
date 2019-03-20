@@ -248,6 +248,7 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 	enabled := map[string]struct{}{
 		"progress.service":                {},
 		"kubelet.service":                 {},
+		"chown-gatewayd-key.service":      {},
 		"systemd-journal-gatewayd.socket": {},
 	}
 
@@ -361,6 +362,8 @@ func readFile(name string, reader io.Reader, templateData interface{}) (finalNam
 }
 
 func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
+	// These files are all added with mode 0644, i.e. readable
+	// by all processes on the system.
 	for _, asset := range []asset.WritableAsset{
 		&manifests.Manifests{},
 		&manifests.Openshift{},
@@ -370,6 +373,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "root", 0644, asset)...)
 	}
 
+	// These files are all added with mode 0600; use for secret keys and the like.
 	for _, asset := range []asset.WritableAsset{
 		&kubeconfig.AdminClient{},
 		&kubeconfig.Kubelet{},
@@ -414,6 +418,7 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		&tls.KubeletServingCABundle{},
 		&tls.MCSCertKey{},
 		&tls.ServiceAccountKeyPair{},
+		&tls.JournalCertKey{},
 	} {
 		dependencies.Get(asset)
 		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "root", 0600, asset)...)
@@ -422,10 +427,6 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	rootCA := &tls.RootCA{}
 	dependencies.Get(rootCA)
 	a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FileFromBytes(filepath.Join(rootDir, rootCA.CertFile().Filename), "root", 0644, rootCA.Cert()))
-
-	journal := &tls.JournalCertKey{}
-	dependencies.Get(journal)
-	a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "systemd-journal-gateway", 0600, journal)...)
 }
 
 func applyTemplateData(template *template.Template, templateData interface{}) string {
