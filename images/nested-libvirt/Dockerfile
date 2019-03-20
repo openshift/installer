@@ -14,7 +14,7 @@ RUN yum install -y \
     epel-release \
     gettext \
     google-cloud-sdk \
-    openssh-clients && \
-    yum --enablerepo=epel-testing install -y nss_wrapper && \
+    openssh-clients \
+    nss_wrapper && \
     yum -y update && \
     yum clean all
