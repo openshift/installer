@@ -37,6 +37,12 @@ variable "elb_backend_pool_id" {
   type        = "string"
   description ="The external load balancer bakend pool id. used to attach the bootstrap NIC"
 }
+
+variable "ilb_backend_pool_id" {
+  type        = "string"
+  description ="The internal load balancer bakend pool id. used to attach the bootstrap NIC"
+}
+
 variable "external_lb_id" {
   type        = "string"
   description ="The external load balancer id"

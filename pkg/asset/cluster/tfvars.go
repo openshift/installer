@@ -122,7 +122,7 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 			Data:     data,
 		})
 	case azure.Name:
-		data, err := azuretfvars.TFVars()
+		data, err := azuretfvars.TFVars(installConfig.Config.ObjectMeta.Name)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}

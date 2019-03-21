@@ -19,6 +19,13 @@ resource "azurerm_network_interface_backend_address_pool_association" "master" {
   ip_configuration_name = "master-${count.index}" #must be the same as nic's ip configuration name.
 }
 
+resource "azurerm_network_interface_backend_address_pool_association" "master_internal" {
+  count = "${var.instance_count}"
+  network_interface_id = "${element(azurerm_network_interface.master.*.id, count.index)}"
+  backend_address_pool_id = "${var.ilb_backend_pool_id}"
+  ip_configuration_name = "master-${count.index}" #must be the same as nic's ip configuration name.
+}
+
 resource "azurerm_lb_nat_rule" "master" {
   resource_group_name            = "${var.resource_group_name}"
   enable_floating_ip             = false

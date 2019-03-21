@@ -12,10 +12,11 @@ type config struct {
 	MasterInstanceType    string            `json:"azure_master_instance_type,omitempty"`
 	Size                  int64             `json:"azure_master_root_volume_size,omitempty"`
 	Region                string            `json:"azure_region,omitempty"`
+	ClusterName           string            `json:"cluster_name,omitempty"`
 }
 
 // TFVars generates AWS-specific Terraform variables launching the cluster.
-func TFVars() ([]byte, error) {
+func TFVars(clustername string) ([]byte, error) {
 	var region = "eastus"
 	var volumeSize int64
 	volumeSize = 30
@@ -25,6 +26,7 @@ func TFVars() ([]byte, error) {
 		BootstrapInstanceType: defaults.InstanceClass(region),
 		MasterInstanceType:    defaults.InstanceClass(region),
 		Size:                  volumeSize,
+		ClusterName:           clustername,
 	}
 
 	return json.MarshalIndent(cfg, "", "  ")

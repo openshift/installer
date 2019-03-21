@@ -39,6 +39,10 @@ variable "elb_backend_pool_id" {
   type = "string"
 }
 
+variable "ilb_backend_pool_id" {
+  type = "string"
+}
+
 variable "ignition_master" {
   type    = "string"
   default = ""

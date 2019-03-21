@@ -11,6 +11,11 @@ resource "azurerm_public_ip" "cluster_public_ip" {
   ), var.tags)}"
 }
 
+data "azurerm_public_ip" "cluster_public_ip" {
+  name                = "${azurerm_public_ip.cluster_public_ip.name}"
+  resource_group_name = "${var.rg_name}"
+}
+
 resource "azurerm_lb" "external_lb" {
   sku                 = "Standard"
   name                = "${var.cluster_id}-elb"

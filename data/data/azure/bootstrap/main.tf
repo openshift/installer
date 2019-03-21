@@ -92,9 +92,15 @@ resource "azurerm_network_interface" "ignition" {
   }
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "ignition" {
+resource "azurerm_network_interface_backend_address_pool_association" "elb_ignition" {
   network_interface_id = "${azurerm_network_interface.ignition.id}"
   backend_address_pool_id = "${var.elb_backend_pool_id}"
+  ip_configuration_name = "bootstrap" #must be the same as nic's ip configuration name.
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "ilb_ignition" {
+  network_interface_id = "${azurerm_network_interface.ignition.id}"
+  backend_address_pool_id = "${var.ilb_backend_pool_id}"
   ip_configuration_name = "bootstrap" #must be the same as nic's ip configuration name.
 }
 

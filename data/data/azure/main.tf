@@ -17,7 +17,8 @@ module "bootstrap" {
   cluster_id               = "${var.cluster_id}"
   ignition                 = "${var.ignition_bootstrap}"
   subnet_id                = "${module.vnet.public_subnet_id}"
-  elb_backend_pool_id      = "${module.vnet.lb_backend_pool_id}"
+  elb_backend_pool_id      = "${module.vnet.elb_backend_pool_id}"
+  ilb_backend_pool_id      = "${module.vnet.ilb_backend_pool_id}"
   external_lb_id           = "${module.vnet.external_lb_id}"
   nsg_id                   = "${module.vnet.master_nsg_id}"
   tags                     = "${local.tags}"
@@ -42,11 +43,23 @@ module "master" {
   vm_size    = "${var.azure_bootstrap_vm_type}"
   ignition   = "${var.ignition_master}"
   external_lb_id = "${module.vnet.external_lb_id}"
-  elb_backend_pool_id = "${module.vnet.lb_backend_pool_id}"
+  elb_backend_pool_id = "${module.vnet.elb_backend_pool_id}"
+  ilb_backend_pool_id = "${module.vnet.ilb_backend_pool_id}"
   subnet_id = "${module.vnet.public_subnet_id}"
   instance_count = "${var.master_count}"
   tags = "${local.tags}"
   boot_diag_blob_endpoint  = "${azurerm_storage_account.bootdiag.primary_blob_endpoint}"
+}
+
+module "dns" {
+  source = "./dns"
+  cluster_domain = "${var.cluster_domain}"
+  base_domain = "${var.base_domain}"
+  cluster_name = "${var.cluster_name}"
+  external_lb_dns_label = "${module.vnet.external_lb_dns_label}"
+  internal_lb_ipaddress = "${module.vnet.internal_lb_ip_address}"
+  resource_group_name = "${azurerm_resource_group.main.name}"
+  internal_dns_resolution_vnet_id = "${module.vnet.vnet_id}"
 }
 
 resource "random_string" "resource_group_suffix" {
