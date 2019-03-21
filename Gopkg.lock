@@ -400,7 +400,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:feb52434ddfdf3589906278bc611ecf89b3bf799133a1eea0ed7abc4dcd46f71"
+  digest = "1:476ab9e1d63eb879d1869f6876704646de0136a428ba7bba8f3804c1e6fb071b"
   name = "github.com/openshift/cloud-credential-operator"
   packages = [
     "pkg/apis/cloudcredential/v1",
@@ -409,7 +409,7 @@
     "version",
   ]
   pruneopts = "NUT"
-  revision = "4ea04acadeb3e5d069ac10a39a2398c4a1beb495"
+  revision = "4b6d10a82cd4949ade8056e5fbbf29e0765a0f47"
 
 [[projects]]
   digest = "1:5543d01772b4474e08f1554ea53cf3eb12660deed37470888cfc1cd66748cab0"
@@ -994,7 +994,6 @@
     "k8s.io/apimachinery/pkg/util/wait",
     "k8s.io/apimachinery/pkg/watch",
     "k8s.io/client-go/kubernetes",
-    "k8s.io/client-go/kubernetes/typed/core/v1",
     "k8s.io/client-go/rest",
     "k8s.io/client-go/tools/cache",
     "k8s.io/client-go/tools/clientcmd",

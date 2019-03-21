@@ -9,6 +9,7 @@ import (
 	ccaws "github.com/openshift/cloud-credential-operator/pkg/aws"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/service/iam"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -107,12 +108,40 @@ func CheckCloudCredCreation(awsClient ccaws.Client, logger log.FieldLogger) (boo
 	return CheckPermissionsAgainstActions(awsClient, credMintingActions, logger)
 }
 
+// getClientDetails will return the *iam.User associated with the provided client's credentials,
+// a boolean indicating whether the user is the 'root' account, and any error encountered
+// while trying to gather the info.
+func getClientDetails(awsClient ccaws.Client) (*iam.User, bool, error) {
+	rootUser := false
+
+	user, err := awsClient.GetUser(nil)
+	if err != nil {
+		return nil, rootUser, fmt.Errorf("error querying username: %v", err)
+	}
+
+	// Detect whether the AWS account's root user is being used
+	parsed, err := arn.Parse(*user.User.Arn)
+	if err != nil {
+		return nil, rootUser, fmt.Errorf("error parsing user's ARN: %v", err)
+	}
+	if parsed.AccountID == *user.User.UserId {
+		rootUser = true
+	}
+
+	return user.User, rootUser, nil
+}
+
 // CheckPermissionsUsingQueryClient will use queryClient to query whether the credentials in targetClient can perform the actions
 // listed in the statementEntries. queryClient will need iam:GetUser and iam:SimulatePrincipalPolicy
 func CheckPermissionsUsingQueryClient(queryClient, targetClient ccaws.Client, statementEntries []minterv1.StatementEntry, logger log.FieldLogger) (bool, error) {
-	targetUsername, err := targetClient.GetUser(nil)
+	targetUser, isRoot, err := getClientDetails(targetClient)
 	if err != nil {
-		return false, fmt.Errorf("error querying current username: %v", err)
+		return false, fmt.Errorf("error gathering AWS credentials details: %v", err)
+	}
+	if isRoot {
+		// warn about using the root creds, and just return that the creds are good enough
+		logger.Warn("Using the AWS account root user is not recommended: https://docs.aws.amazon.com/general/latest/gr/managing-aws-access-keys.html")
+		return true, nil
 	}
 
 	allowList := []*string{}
@@ -123,7 +152,7 @@ func CheckPermissionsUsingQueryClient(queryClient, targetClient ccaws.Client, st
 	}
 
 	results, err := queryClient.SimulatePrincipalPolicy(&iam.SimulatePrincipalPolicyInput{
-		PolicySourceArn: targetUsername.User.Arn,
+		PolicySourceArn: targetUser.Arn,
 		ActionNames:     allowList,
 	})
 	if err != nil {
