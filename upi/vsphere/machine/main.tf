@@ -2,6 +2,21 @@ locals {
   ignition_encoded = "data:text/plain;charset=utf-8;base64,${base64encode(var.ignition)}"
 }
 
+data "vsphere_datastore" "datastore" {
+  name          = "${var.datastore}"
+  datacenter_id = "${var.datacenter_id}"
+}
+
+data "vsphere_network" "network" {
+  name          = "${var.network}"
+  datacenter_id = "${var.datacenter_id}"
+}
+
+data "vsphere_virtual_machine" "template" {
+  name          = "${var.template}"
+  datacenter_id = "${var.datacenter_id}"
+}
+
 data "ignition_file" "hostname" {
   count = "${var.instance_count}"
 
@@ -40,7 +55,7 @@ resource "vsphere_virtual_machine" "vm" {
 
   name             = "${var.name}-${count.index}"
   resource_pool_id = "${var.resource_pool_id}"
-  datastore_id     = "${var.datastore_id}"
+  datastore_id     = "${data.vsphere_datastore.datastore.id}"
   num_cpus         = "4"
   memory           = "8192"
   guest_id         = "other26xLinux64Guest"
@@ -49,19 +64,17 @@ resource "vsphere_virtual_machine" "vm" {
   wait_for_guest_net_routable = false
 
   network_interface {
-    network_id = "${var.network_id}"
+    network_id = "${data.vsphere_network.network.id}"
   }
 
   disk {
-    label = "disk0"
-    size  = 60
-
-    // want to change this to thin provisioned. need to change template.
-    thin_provisioned = false
+    label            = "disk0"
+    size             = 60
+    thin_provisioned = "${data.vsphere_virtual_machine.template.disks.0.thin_provisioned}"
   }
 
   clone {
-    template_uuid = "${var.vm_template_id}"
+    template_uuid = "${data.vsphere_virtual_machine.template.id}"
   }
 
   vapp {
@@ -70,27 +83,3 @@ resource "vsphere_virtual_machine" "vm" {
     }
   }
 }
-
-/*
-			  "networkd": {
-			    "units": [
-			      {
-			        "contents": "[Match]\nName=eth0\n\n[Network]\nDNS=8.8.8.8\nAddress=${var.bootstrap_ip}/${var.network_prefix}\nGateway=${var.gateway}",
-			        "name": "00-eth0.network"
-			      }
-			    ]
-			  },
-*/
-/*
-			    {
-				  "filesystem":"root",
-				  "path":"/etc/sysconfig/network-scripts/ifcfg-eth0",
-				  "contents":
-				  {
-				    "source":"data:,TYPE%3DEthernet%0APROXY_METHOD%3Dnone%0ABROWSER_ONLY%3Dno%0ABOOTPROTO%3Dnone%0ADEFROUTE%3Dyes%0AIPV4_FAILURE_FATAL%3Dno%0AIPV6INIT%3Dyes%0AIPV6_AUTOCONF%3Dyes%0AIPV6_DEFROUTE%3Dyes%0AIPV6_FAILURE_FATAL%3Dno%0AIPV6_ADDR_GEN_MODE%3Dstable-privacy%0ANAME%3Deth0%0AUUID%3Dcc0fcac7-aabd-440a-b0e2-4c98ed3ef8b5%0ADEVICE%3Deth0%0AONBOOT%3Dyes%0AIPADDR%3D${var.bootstrap_ip}%0APREFIX%3D${var.network_prefix}%0AGATEWAY%3D${var.gateway}%0ADNS1%3D8.8.8.8%0A",
-					"verification":{}
-				  },
-				  "mode":420
-				}]
-*/
-

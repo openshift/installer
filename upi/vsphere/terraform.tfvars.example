@@ -40,10 +40,11 @@ vsphere_datacenter = "dc1"
 // Name of the vSphere data store to use for the VMs. The dev cluster uses "nvme-ds1".
 vsphere_datastore = "nvme-ds1"
 
-// CIDR block for the VMs. The dev cluster uses "139.178.89.192/26".
-machine_cidr = "139.178.89.192/26"
-
-// Name of the VM template to clone to create VMs for the cluster. The dev cluster has a template named "rchos-davis-no-ig".
+// Name of the VM template to clone to create VMs for the cluster. The dev cluster has templates named "rhcos-latest" and "rhcos-davis-no-ig".
+// The "rhcos-latest" template is a recent version of rhcos. There is an issue running the journald gateway on the bootstrap machine with the rhel8 rchos.
+// If you want to use the latest rhcos, you should remove the systemd-journal-gatewayd systemd units from the bootstrap ignition config for the
+// time being.
+// The "rhcos-davis-no-ig" template is a rhel7 rchos.
 vm_template = "rhcos-davis-no-ig"
 
 // URL of the bootstrap ignition. This needs to be publicly accessible so that the bootstrap machine can pull the ignition.
