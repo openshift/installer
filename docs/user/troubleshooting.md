@@ -87,9 +87,13 @@ Error signing CSR provided in request from agent: error parsing profile: invalid
 
 This is safe to ignore and merely indicates that the etcd bootstrapping is still in progress. etcd makes use of the CSR APIs provided by Kubernetes to issue and rotate its TLS assets, but these facilities aren't available before etcd has formed quorum. In order to break this dependency loop, a CSR service is run on the bootstrap node which only signs CSRs for etcd. When the Kubelet attempts to go through its TLS bootstrap, it is initially denied because the service it is communicating with only respects CSRs from etcd. After etcd starts and the control plane begins bootstrapping, an approver is scheduled and the Kubelet CSR requests will succeed.
 
-### Installer Fails to Create Resources
+### Installer Fails to Create Infrastructure Resources
 
 The easiest way to get more debugging information from the installer is to check the log file (`.openshift_install.log`) in the install directory. Regardless of the logging level specified, the installer will write its logs in case they need to be inspected retroactively.
+
+If the installer fails with `Error: Error applying plan` in the `Creating infrastructure resources...` phase, there are per-platform pages discussing the detailed error messages:
+
+- [AWS](aws/create-infrastructure-errors.md)
 
 ### Installer Fails to Initialize the Cluster
 
