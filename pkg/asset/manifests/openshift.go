@@ -40,7 +40,6 @@ func (o *Openshift) Name() string {
 func (o *Openshift) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
-		&ClusterK8sIO{},
 		&machines.Worker{},
 		&password.KubeadminPassword{},
 
@@ -55,9 +54,8 @@ func (o *Openshift) Dependencies() []asset.Asset {
 func (o *Openshift) Generate(dependencies asset.Parents) error {
 	installConfig := &installconfig.InstallConfig{}
 	kubeadminPassword := &password.KubeadminPassword{}
-	clusterk8sio := &ClusterK8sIO{}
 	worker := &machines.Worker{}
-	dependencies.Get(installConfig, clusterk8sio, worker, kubeadminPassword)
+	dependencies.Get(installConfig, worker, kubeadminPassword)
 	var cloudCreds cloudCredsSecretData
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -118,7 +116,6 @@ func (o *Openshift) Generate(dependencies asset.Parents) error {
 	assetData := map[string][]byte{
 		"99_binding-discovery.yaml":                             []byte(bindingDiscovery.Files()[0].Data),
 		"99_kubeadmin-password-secret.yaml":                     applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
-		"99_openshift-cluster-api_cluster.yaml":                 clusterk8sio.Raw,
 		"99_openshift-cluster-api_worker-machineset.yaml":       worker.MachineSetRaw,
 		"99_openshift-cluster-api_worker-user-data-secret.yaml": worker.UserDataSecretRaw,
 	}
