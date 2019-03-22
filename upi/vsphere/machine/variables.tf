@@ -20,15 +20,11 @@ variable "resource_pool_id" {
   type = "string"
 }
 
-variable "datastore_id" {
+variable "datastore" {
   type = "string"
 }
 
-variable "network_id" {
-  type = "string"
-}
-
-variable "vm_template_id" {
+variable "network" {
   type = "string"
 }
 
@@ -42,4 +38,12 @@ variable "extra_user_names" {
 
 variable "extra_user_password_hashes" {
   type = "list"
+}
+
+variable "datacenter_id" {
+  type = "string"
+}
+
+variable "template" {
+  type = "string"
 }

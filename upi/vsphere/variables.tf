@@ -72,11 +72,6 @@ variable "cluster_domain" {
   description = "The base DNS zone to add the sub zone to."
 }
 
-variable "machine_cidr" {
-  type        = "string"
-  description = "This is the public network netmask."
-}
-
 /////////
 // Bootstrap machine variables
 /////////
