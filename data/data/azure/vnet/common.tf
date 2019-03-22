@@ -6,7 +6,7 @@ locals {
   // The VPC ID to use to build the rest of the vpc data sources
   vnet_id = "${azurerm_virtual_network.new_vnet.id}"
 
-  subnet_ids    = "${azurerm_subnet.public_subnet.id}"
+  subnet_ids    = "${azurerm_subnet.master_subnet.id}"
 
   lb_fqdn = "${azurerm_lb.external_lb.id}"
   

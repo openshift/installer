@@ -38,7 +38,7 @@ module "master" {
   resource_group_name = "${azurerm_resource_group.main.name}"
   cluster_id = "${var.cluster_id}"
   region     = "${var.azure_region}"
-  vm_size    = "${var.azure_bootstrap_vm_type}"
+  vm_size    = "${var.azure_master_vm_type}"
   ignition   = "${var.ignition_master}"
   external_lb_id = "${module.vnet.external_lb_id}"
   elb_backend_pool_id = "${module.vnet.elb_backend_pool_id}"
@@ -47,6 +47,7 @@ module "master" {
   instance_count = "${var.master_count}"
   tags = "${local.tags}"
   boot_diag_blob_endpoint  = "${azurerm_storage_account.bootdiag.primary_blob_endpoint}"
+  os_volume_size = "${var.azure_master_root_volume_size}"
 }
 
 module "dns" {

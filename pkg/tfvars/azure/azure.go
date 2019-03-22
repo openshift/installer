@@ -15,7 +15,7 @@ type config struct {
 	ClusterName           string            `json:"cluster_name,omitempty"`
 }
 
-// TFVars generates AWS-specific Terraform variables launching the cluster.
+// TFVars generates Azure-specific Terraform variables launching the cluster.
 func TFVars(clustername string) ([]byte, error) {
 	var region = "eastus"
 	var volumeSize int64

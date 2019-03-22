@@ -21,7 +21,7 @@ resource "azurerm_network_security_group" "master" {
 }
 
 resource "azurerm_subnet_network_security_group_association" "master" {
-  subnet_id                 = "${azurerm_subnet.public_subnet.id}"
+  subnet_id                 = "${azurerm_subnet.master_subnet.id}"
   network_security_group_id = "${azurerm_network_security_group.master.id}"
 }
 
