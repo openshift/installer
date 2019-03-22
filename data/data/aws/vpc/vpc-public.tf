@@ -57,13 +57,3 @@ resource "aws_eip" "nat_eip" {
   # https://github.com/coreos/tectonic-installer/issues/1017#issuecomment-307780549
   depends_on = ["aws_internet_gateway.igw"]
 }
-
-resource "aws_nat_gateway" "nat_gw" {
-  count         = "${local.new_az_count}"
-  allocation_id = "${aws_eip.nat_eip.*.id[count.index]}"
-  subnet_id     = "${aws_subnet.public_subnet.*.id[count.index]}"
-
-  tags = "${merge(map(
-    "Name", "${var.cluster_id}-nat-${local.new_subnet_azs[count.index]}",
-  ), var.tags)}"
-}

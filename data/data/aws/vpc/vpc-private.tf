@@ -11,7 +11,7 @@ resource "aws_route" "to_nat_gw" {
   count                  = "${local.new_az_count}"
   route_table_id         = "${aws_route_table.private_routes.*.id[count.index]}"
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = "${element(aws_nat_gateway.nat_gw.*.id, count.index)}"
+  nat_gateway_id         = "${element(aws_nat_gateway.nat_gw.*.id, count.index % length(aws_nat_gateway.nat_gw.*.id))}"
   depends_on             = ["aws_route_table.private_routes"]
 }
 
@@ -34,4 +34,14 @@ resource "aws_route_table_association" "private_routing" {
   count          = "${local.new_az_count}"
   route_table_id = "${aws_route_table.private_routes.*.id[count.index]}"
   subnet_id      = "${aws_subnet.private_subnet.*.id[count.index]}"
+}
+
+resource "aws_nat_gateway" "nat_gw" {
+  count         = "${min(local.new_az_count, 3)}"
+  allocation_id = "${aws_eip.nat_eip.*.id[count.index]}"
+  subnet_id     = "${aws_subnet.public_subnet.*.id[count.index]}"
+
+  tags = "${merge(map(
+    "Name", "${var.cluster_id}-nat-${local.new_subnet_azs[count.index]}",
+  ), var.tags)}"
 }
