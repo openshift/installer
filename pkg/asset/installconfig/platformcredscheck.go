@@ -6,7 +6,9 @@ import (
 	"github.com/gophercloud/utils/openstack/clientconfig"
 	"github.com/openshift/installer/pkg/asset"
 	awsconfig "github.com/openshift/installer/pkg/asset/installconfig/aws"
+	azureconfig "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -51,6 +53,11 @@ func (a *PlatformCredsCheck) Generate(dependencies asset.Parents) error {
 		_, err = clientconfig.GetCloudFromYAML(opts)
 	case libvirt.Name, none.Name, vsphere.Name:
 		// no creds to check
+	case azure.Name:
+		err = azureconfig.GetSession()
+		if err != nil {
+			return errors.Wrap(err, "creating Azure session")
+		}
 	default:
 		err = fmt.Errorf("unknown platform type %q", platform)
 	}

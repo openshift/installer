@@ -71,6 +71,7 @@ func (a *InstallConfig) Generate(parents asset.Parents) error {
 	a.Config.None = platform.None
 	a.Config.OpenStack = platform.OpenStack
 	a.Config.VSphere = platform.VSphere
+	a.Config.Azure = platform.Azure
 
 	if err := a.setDefaults(); err != nil {
 		return errors.Wrap(err, "failed to set defaults for install config")
