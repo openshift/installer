@@ -49,7 +49,6 @@ data "azurerm_storage_account_sas" "ignition" {
   }
 }
 
-
 resource "azurerm_storage_container" "ignition" {
   resource_group_name   = "${var.resource_group_name}"
   name                  = "ignition"
@@ -80,7 +79,7 @@ data "ignition_config" "redirect" {
 
 data "azurerm_subscription" "primary" {}
 
-resource "azurerm_network_interface" "ignition" {
+resource "azurerm_network_interface" "bootstrap" {
   name                = "${var.cluster_id}-bootstrap-nic"
   location            = "${var.region}"
   resource_group_name = "${var.resource_group_name}"
@@ -92,14 +91,14 @@ resource "azurerm_network_interface" "ignition" {
   }
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "elb_ignition" {
-  network_interface_id = "${azurerm_network_interface.ignition.id}"
+resource "azurerm_network_interface_backend_address_pool_association" "elb_bootstrap" {
+  network_interface_id = "${azurerm_network_interface.bootstrap.id}"
   backend_address_pool_id = "${var.elb_backend_pool_id}"
   ip_configuration_name = "bootstrap" #must be the same as nic's ip configuration name.
 }
 
-resource "azurerm_network_interface_backend_address_pool_association" "ilb_ignition" {
-  network_interface_id = "${azurerm_network_interface.ignition.id}"
+resource "azurerm_network_interface_backend_address_pool_association" "ilb_bootstrap" {
+  network_interface_id = "${azurerm_network_interface.bootstrap.id}"
   backend_address_pool_id = "${var.ilb_backend_pool_id}"
   ip_configuration_name = "bootstrap" #must be the same as nic's ip configuration name.
 }
@@ -108,7 +107,7 @@ resource "azurerm_virtual_machine" "bootstrap" {
   name                  = "${var.cluster_id}-bootstrap"
   location              = "${var.region}"
   resource_group_name   = "${var.resource_group_name}"
-  network_interface_ids = ["${azurerm_network_interface.ignition.id}"]
+  network_interface_ids = ["${azurerm_network_interface.bootstrap.id}"]
   vm_size               = "${var.vm_size}"
 
   delete_os_disk_on_termination = true

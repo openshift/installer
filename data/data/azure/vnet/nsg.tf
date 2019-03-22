@@ -1,7 +1,7 @@
 resource "azurerm_network_security_group" "master" {
   name                = "${var.cluster_id}-master-nsg"
   location            = "${var.region}"
-  resource_group_name = "${var.rg_name}"
+  resource_group_name = "${var.resource_group_name}"
 
   security_rule {
     name                       = "AllowSSH"
@@ -33,9 +33,9 @@ resource "azurerm_network_security_rule" "master_mcs" {
   protocol                    = "Tcp"
   source_port_range           = "22623"
   destination_port_range      = "22623"
-  source_address_prefix       = "Internet" //?
+  source_address_prefix       = "Internet"
   destination_address_prefix  = "VirtualNetwork"
-  resource_group_name         = "${var.rg_name}"
+  resource_group_name         = "${var.resource_group_name}"
   
   network_security_group_name = "${azurerm_network_security_group.master.name}"  
 }
@@ -50,7 +50,7 @@ resource "azurerm_network_security_rule" "master_ingress_https" {
   destination_port_range      = "6443"
   source_address_prefix       = "Internet"
   destination_address_prefix  = "VirtualNetwork"
-  resource_group_name         = "${var.rg_name}"
+  resource_group_name         = "${var.resource_group_name}"
   network_security_group_name = "${azurerm_network_security_group.master.name}"
 }
 
@@ -64,6 +64,6 @@ resource "azurerm_network_security_rule" "master_ingress_kube_scheduler" {
   destination_port_range      = "10251"
   source_address_prefix       = "*"
   destination_address_prefix  = "VirtualNetwork" //TODO : restrict to masters
-  resource_group_name         = "${var.rg_name}"
+  resource_group_name         = "${var.resource_group_name}"
   network_security_group_name = "${azurerm_network_security_group.master.name}" 
 }

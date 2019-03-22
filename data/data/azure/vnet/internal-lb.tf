@@ -1,7 +1,7 @@
 resource "azurerm_lb" "internal" {
   sku                 = "Standard"
   name                = "${var.cluster_id}-ilb"
-  resource_group_name = "${var.rg_name}"
+  resource_group_name = "${var.resource_group_name}"
   location            = "${var.region}"
   
   frontend_ip_configuration {
@@ -11,14 +11,14 @@ resource "azurerm_lb" "internal" {
 }
 
 resource "azurerm_lb_backend_address_pool" "master_ilb_pool" {
-  resource_group_name = "${var.rg_name}"
+  resource_group_name = "${var.resource_group_name}"
   loadbalancer_id = "${azurerm_lb.internal.id}"
   name = "${var.cluster_id}-ilb-master"
 }
 
 resource "azurerm_lb_rule" "internal_lb_rule_api_internal" {
   name = "api-internal"
-  resource_group_name = "${var.rg_name}"
+  resource_group_name = "${var.resource_group_name}"
   protocol="Tcp"
   backend_address_pool_id = "${azurerm_lb_backend_address_pool.master_ilb_pool.id}"
   loadbalancer_id = "${azurerm_lb.internal.id}"
@@ -33,7 +33,7 @@ resource "azurerm_lb_rule" "internal_lb_rule_api_internal" {
 
 resource "azurerm_lb_rule" "internal_lb_rule_sint" {
   name = "${var.cluster_id}-sint"
-  resource_group_name = "${var.rg_name}"
+  resource_group_name = "${var.resource_group_name}"
   protocol="Tcp"
   backend_address_pool_id = "${azurerm_lb_backend_address_pool.master_ilb_pool.id}"
   loadbalancer_id = "${azurerm_lb.internal.id}"
@@ -48,7 +48,7 @@ resource "azurerm_lb_rule" "internal_lb_rule_sint" {
 
 resource "azurerm_lb_probe" "internal_lb_probe_sint" {
   name = "sint-probe"
-  resource_group_name = "${var.rg_name}"
+  resource_group_name = "${var.resource_group_name}"
   interval_in_seconds = 10
   number_of_probes = 3
   loadbalancer_id = "${azurerm_lb.internal.id}"
@@ -59,7 +59,7 @@ resource "azurerm_lb_probe" "internal_lb_probe_sint" {
 
 resource "azurerm_lb_probe" "internal_lb_probe_api_internal" {
   name = "api-internal-probe"
-  resource_group_name = "${var.rg_name}"
+  resource_group_name = "${var.resource_group_name}"
   interval_in_seconds = 15
   number_of_probes = 4
   loadbalancer_id = "${azurerm_lb.internal.id}"

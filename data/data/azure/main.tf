@@ -12,22 +12,20 @@ module "bootstrap" {
   source = "./bootstrap"
   resource_group_name      = "${azurerm_resource_group.main.name}"
   region                   = "${var.azure_region}"
-  
   vm_size                  = "${var.azure_bootstrap_vm_type}"
+  
   cluster_id               = "${var.cluster_id}"
   ignition                 = "${var.ignition_bootstrap}"
   subnet_id                = "${module.vnet.public_subnet_id}"
   elb_backend_pool_id      = "${module.vnet.elb_backend_pool_id}"
   ilb_backend_pool_id      = "${module.vnet.ilb_backend_pool_id}"
-  external_lb_id           = "${module.vnet.external_lb_id}"
-  nsg_id                   = "${module.vnet.master_nsg_id}"
   tags                     = "${local.tags}"
   boot_diag_blob_endpoint  = "${azurerm_storage_account.bootdiag.primary_blob_endpoint}"
 }
 
 module "vnet" {
   source = "./vnet"
-  rg_name =   "${azurerm_resource_group.main.name}"
+  resource_group_name =   "${azurerm_resource_group.main.name}"
   cidr_block = "${var.machine_cidr}"
   cluster_id = "${var.cluster_id}"
   region     = "${var.azure_region}"

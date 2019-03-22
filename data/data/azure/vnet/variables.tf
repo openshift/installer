@@ -2,7 +2,7 @@ variable "cidr_block" {
   type = "string"
 }
 
-variable "rg_name" {
+variable "resource_group_name" {
   type = "string"
   description = "Resource group for the deployment"
 }
