@@ -8,6 +8,7 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/vsphere"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -24,6 +25,7 @@ var (
 	// platforms presented to the user in the interactive wizard.
 	PlatformNames = []string{
 		aws.Name,
+		vsphere.Name,
 	}
 	// HiddenPlatformNames is a slice with all the
 	// hidden-but-supported platform names. This list isn't presented
@@ -91,28 +93,32 @@ type Platform struct {
 	// OpenStack is the configuration used when installing on OpenStack.
 	// +optional
 	OpenStack *openstack.Platform `json:"openstack,omitempty"`
+
+	// VSphere is the configuration used when installing on vSphere.
+	// +optional
+	VSphere *vsphere.Platform `json:"vsphere,omitempty"`
 }
 
 // Name returns a string representation of the platform (e.g. "aws" if
 // AWS is non-nil).  It returns an empty string if no platform is
 // configured.
 func (p *Platform) Name() string {
-	if p == nil {
+	switch {
+	case p == nil:
+		return ""
+	case p.AWS != nil:
+		return aws.Name
+	case p.Libvirt != nil:
+		return libvirt.Name
+	case p.None != nil:
+		return none.Name
+	case p.OpenStack != nil:
+		return openstack.Name
+	case p.VSphere != nil:
+		return vsphere.Name
+	default:
 		return ""
 	}
-	if p.AWS != nil {
-		return aws.Name
-	}
-	if p.Libvirt != nil {
-		return libvirt.Name
-	}
-	if p.None != nil {
-		return none.Name
-	}
-	if p.OpenStack != nil {
-		return openstack.Name
-	}
-	return ""
 }
 
 // Networking defines the pod network provider in the cluster.

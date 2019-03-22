@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 var (
@@ -57,6 +58,8 @@ func (i *Infrastructure) Generate(dependencies asset.Parents) error {
 		platform = configv1.LibvirtPlatform
 	case openstack.Name:
 		platform = configv1.OpenStackPlatform
+	case vsphere.Name:
+		platform = configv1.VSpherePlatform
 	default:
 		platform = configv1.NonePlatform
 	}

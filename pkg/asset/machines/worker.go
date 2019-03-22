@@ -22,6 +22,7 @@ import (
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
 
 func defaultAWSMachinePoolPlatform() awstypes.MachinePool {
@@ -128,7 +129,6 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
-		case nonetypes.Name:
 		case openstacktypes.Name:
 			mpool := defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName)
 			mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
@@ -142,6 +142,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}
+		case nonetypes.Name, vspheretypes.Name:
+			// machines are managed directly by users
+			return nil
 		default:
 			return fmt.Errorf("invalid Platform")
 		}

@@ -4,6 +4,7 @@ import (
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/libvirt"
 	"github.com/openshift/installer/pkg/types/openstack"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 // MachinePool is a pool of machines to be installed.
@@ -31,23 +32,27 @@ type MachinePoolPlatform struct {
 
 	// OpenStack is the configuration used when installing on OpenStack.
 	OpenStack *openstack.MachinePool `json:"openstack,omitempty"`
+
+	// VSphere is the configuration used when installing on vSphere.
+	VSphere *vsphere.MachinePool `json:"vsphere,omitempty"`
 }
 
 // Name returns a string representation of the platform (e.g. "aws" if
 // AWS is non-nil).  It returns an empty string if no platform is
 // configured.
 func (p *MachinePoolPlatform) Name() string {
-	if p == nil {
+	switch {
+	case p == nil:
+		return ""
+	case p.AWS != nil:
+		return aws.Name
+	case p.Libvirt != nil:
+		return libvirt.Name
+	case p.OpenStack != nil:
+		return openstack.Name
+	case p.VSphere != nil:
+		return vsphere.Name
+	default:
 		return ""
 	}
-	if p.AWS != nil {
-		return aws.Name
-	}
-	if p.Libvirt != nil {
-		return libvirt.Name
-	}
-	if p.OpenStack != nil {
-		return openstack.Name
-	}
-	return ""
 }

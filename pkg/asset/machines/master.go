@@ -21,6 +21,7 @@ import (
 	libvirttypes "github.com/openshift/installer/pkg/types/libvirt"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -113,8 +114,6 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
-	case nonetypes.Name:
-		return nil
 	case openstacktypes.Name:
 		mpool := defaultOpenStackMachinePoolPlatform(ic.Platform.OpenStack.FlavorName)
 		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
@@ -126,6 +125,9 @@ func (m *Master) Generate(dependencies asset.Parents) error {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
 		openstack.ConfigMasters(machines, clusterID.InfraID)
+	case nonetypes.Name, vspheretypes.Name:
+		// machines are managed directly by users
+		return nil
 	default:
 		return fmt.Errorf("invalid Platform")
 	}

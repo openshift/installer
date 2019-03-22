@@ -13,8 +13,10 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/libvirt"
+	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/openstack"
 	"github.com/openshift/installer/pkg/types/openstack/validation/mock"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 func validInstallConfig() *types.InstallConfig {
@@ -350,7 +352,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform = types.Platform{}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(nil\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\)$`,
+			expectedError: `^platform: Invalid value: types\.Platform{((, )?\w+:\(\*\w+\.Platform\)\(nil\))+}: must specify one of the platforms \(aws, none, openstack, vsphere\)$`,
 		},
 		{
 			name: "multiple platforms",
@@ -359,7 +361,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt = validLibvirtPlatform()
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(0x[0-9a-f]*\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must only specify a single type of platform; cannot use both "aws" and "libvirt"$`,
+			expectedError: `^platform: Invalid value: types\.Platform{((, )?\w+:\(\*\w+\.Platform\)\(\w+\))+}: must only specify a single type of platform; cannot use both "aws" and "libvirt"$`,
 		},
 		{
 			name: "invalid aws platform",
@@ -381,7 +383,7 @@ func TestValidateInstallConfig(t *testing.T) {
 				}
 				return c
 			}(),
-			expectedError: `^platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\)$`,
+			expectedError: `^platform: Invalid value: types\.Platform{((, )?(\w+:\(\*\w+\.Platform\)\(nil\)|Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\)))+}: must specify one of the platforms \(aws, none, openstack, vsphere\)$`,
 		},
 		{
 			name: "invalid libvirt platform",
@@ -393,7 +395,17 @@ func TestValidateInstallConfig(t *testing.T) {
 				c.Platform.Libvirt.URI = ""
 				return c
 			}(),
-			expectedError: `^\[platform: Invalid value: types\.Platform{AWS:\(\*aws\.Platform\)\(nil\), Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\), None:\(\*none\.Platform\)\(nil\), OpenStack:\(\*openstack\.Platform\)\(nil\)}: must specify one of the platforms \(aws, none, openstack\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
+			expectedError: `^\[platform: Invalid value: types\.Platform{((, )?(\w+:\(\*\w+\.Platform\)\(nil\)|Libvirt:\(\*libvirt\.Platform\)\(0x[0-9a-f]*\)))+}: must specify one of the platforms \(aws, none, openstack, vsphere\), platform\.libvirt\.uri: Invalid value: "": invalid URI "" \(no scheme\)]$`,
+		},
+		{
+			name: "valid none platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					None: &none.Platform{},
+				}
+				return c
+			}(),
 		},
 		{
 			name: "valid openstack platform",
@@ -420,6 +432,16 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^platform\.openstack\.cloud: Unsupported value: "": supported values: "test-cloud"$`,
+		},
+		{
+			name: "valid vsphere platform",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					VSphere: &vsphere.Platform{},
+				}
+				return c
+			}(),
 		},
 	}
 	for _, tc := range cases {
