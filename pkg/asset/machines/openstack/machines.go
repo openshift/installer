@@ -113,6 +113,10 @@ func provider(clusterID string, platform *openstack.Platform, mpool *openstack.M
 			},
 		},
 		Trunk: trunkSupportBoolean(trunk),
+		ServerMetadata: map[string]string{
+			"Name":               fmt.Sprintf("%s-%s", clusterID, role),
+			"openshiftClusterID": clusterID,
+		},
 	}, nil
 }
 
