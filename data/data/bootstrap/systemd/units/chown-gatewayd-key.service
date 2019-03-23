@@ -1,0 +1,15 @@
+# In RHEL8 the service uses DynamicUser=yes; we need to work both ways, so hence
+# we hack this by adding the user if it doesn't exist and chown the file, rather
+# than doing it in Ignition.
+# https://github.com/openshift/installer/pull/1445
+[Unit]
+Description=Change ownership of journal-gatewayd.key
+Before=systemd-journal-gatewayd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c "if ! getent passwd systemd-journal-gateway &>/dev/null; then useradd -r systemd-journal-gateway; fi && chown systemd-journal-gateway: /opt/openshift/tls/journal-gatewayd.{crt,key}"
+
+[Install]
+WantedBy=multi-user.target
