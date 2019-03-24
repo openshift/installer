@@ -1,0 +1,35 @@
+# This Dockerfile is a used by CI to test UPI platforms for OpenShift Installer
+# It builds an image containing binaries like jq, terraform, awscli, oc, etc. to allow bringing up UPI infrastructure.
+# It also contains the `upi` directory that contains various terraform and cloud formation templates that are used to create infrastructure resources.
+
+
+FROM registry.svc.ci.openshift.org/openshift/release:golang-1.10 AS builder
+WORKDIR /go/src/github.com/openshift/installer
+COPY . .
+RUN hack/build.sh
+
+FROM registry.svc.ci.openshift.org/openshift/origin-v4.0:base
+COPY --from=registry.svc.ci.openshift.org/openshift/origin-v4.0:cli /usr/bin/oc /bin/oc
+COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install
+COPY --from=builder /go/src/github.com/openshift/installer/upi /var/lib/openshift-install/upi
+
+## epel-release is required for jq
+## gettext is required for envsubst
+RUN yum install --setopt=tsflags=nodocs -y \
+    epel-release \
+    gettext \
+    openssh-clients && \
+    yum update -y && \
+    yum install --setopt=tsflags=nodocs -y \
+    unzip gzip jq awscli util-linux && \
+    yum clean all && rm -rf /var/cache/yum/*
+
+ENV TERRAFORM_VERSION=0.11.11
+RUN curl -O https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip && unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip -d /bin/
+
+RUN mkdir /output && chown 1000:1000 /output
+USER 1000:1000
+ENV PATH /bin
+ENV HOME /output
+WORKDIR /output
+
