@@ -23,7 +23,7 @@ data "vsphere_virtual_machine" "template" {
 }
 
 resource "vsphere_virtual_machine" "vm" {
-  name             = "bootstrap1"
+  name             = "${var.cluster_id}-bootstrap"
   resource_pool_id = "${var.resource_pool_id}"
   datastore_id     = "${data.vsphere_datastore.datastore.id}"
   num_cpus         = "${var.num_cpus}"
@@ -46,8 +46,6 @@ resource "vsphere_virtual_machine" "vm" {
   }
 
   vapp {
-    properties {
-      "guestinfo.coreos.config.data" = 
-    }
+    properties {}
   }
 }

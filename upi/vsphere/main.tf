@@ -9,7 +9,7 @@ module "network" {
   source = "./network"
 
   # TODO Pass in and check the base domain and cluster domain to look for A records
-  machine_cidr = "${var.machine_cidr}"
+  machine_cidr   = "${var.machine_cidr}"
   master_count   = "${var.master_count}"
   worker_count   = "${var.worker_count}"
   base_domain    = "${var.base_domain}"

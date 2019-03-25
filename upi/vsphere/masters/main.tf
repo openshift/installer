@@ -24,7 +24,7 @@ data "vsphere_virtual_machine" "template" {
 
 resource "vsphere_virtual_machine" "vm" {
   count            = "${var.master_count}"
-  name             = "master-${count.index + 1}"
+  name             = "${var.cluster_id}-master-${count.index + 1}"
   resource_pool_id = "${var.resource_pool_id}"
   datastore_id     = "${data.vsphere_datastore.datastore.id}"
   num_cpus         = "${var.num_cpus}"
