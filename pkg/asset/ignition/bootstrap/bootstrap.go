@@ -35,10 +35,6 @@ const (
 	ignitionUser         = "core"
 )
 
-var (
-	defaultReleaseImage = "registry.svc.ci.openshift.org/openshift/origin-release:v4.0"
-)
-
 // bootstrapTemplateData is the data to use to replace values in bootstrap
 // template files.
 type bootstrapTemplateData struct {
@@ -174,10 +170,17 @@ func (a *Bootstrap) getTemplateData(installConfig *types.InstallConfig) (*bootst
 		etcdEndpoints[i] = fmt.Sprintf("https://etcd-%d.%s:2379", i, installConfig.ClusterDomain())
 	}
 
-	releaseImage := defaultReleaseImage
+	var releaseImage string
 	if ri, ok := os.LookupEnv("OPENSHIFT_INSTALL_RELEASE_IMAGE_OVERRIDE"); ok && ri != "" {
 		logrus.Warn("Found override for ReleaseImage. Please be warned, this is not advised")
 		releaseImage = ri
+	} else {
+		var err error
+		releaseImage, err = defaultReleaseImage()
+		if err != nil {
+			return nil, err
+		}
+		logrus.Debugf("Using internal constant for release image %s", releaseImage)
 	}
 
 	return &bootstrapTemplateData{
