@@ -162,6 +162,9 @@ func (w *Worker) Generate(dependencies asset.Parents) error {
 		default:
 			return fmt.Errorf("invalid Platform")
 		}
+		if ic.SSHKey != "" {
+			machineConfigs = append(machineConfigs, machineconfig.ForAuthorizedKeys(ic.SSHKey, "worker"))
+		}
 	}
 
 	w.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "worker", directory)
