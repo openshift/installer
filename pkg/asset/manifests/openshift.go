@@ -2,7 +2,6 @@ package manifests
 
 import (
 	"encoding/base64"
-	"fmt"
 	"path/filepath"
 
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -154,18 +153,8 @@ func (o *Openshift) Load(f asset.FileFetcher) (bool, error) {
 		return false, err
 	}
 
-	masterMachinePattern := fmt.Sprintf(machines.MasterMachineFileName, "*")
 	for _, file := range fileList {
-		filename := filepath.Base(file.Filename)
-		if filename == machines.MasterUserDataFileName {
-			continue
-		}
-
-		matched, err := filepath.Match(masterMachinePattern, filename)
-		if err != nil {
-			return true, err
-		}
-		if matched {
+		if machines.IsMasterManifest(file) {
 			continue
 		}
 
