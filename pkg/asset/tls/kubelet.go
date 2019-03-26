@@ -48,6 +48,7 @@ var _ asset.Asset = (*KubeletClientCABundle)(nil)
 func (a *KubeletClientCABundle) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&KubeletCSRSignerCertKey{},
+		&KubeAPIServerToKubeletCABundle{},
 	}
 }
 
