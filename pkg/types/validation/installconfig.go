@@ -64,13 +64,13 @@ func ValidateInstallConfig(c *types.InstallConfig, openStackValidValuesFetcher o
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("networking"), "networking is required"))
 	}
+	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"), openStackValidValuesFetcher)...)
 	if c.ControlPlane != nil {
-		allErrs = append(allErrs, validateControlPlane(c.ControlPlane, field.NewPath("controlPlane"), c.Platform.Name())...)
+		allErrs = append(allErrs, validateControlPlane(&c.Platform, c.ControlPlane, field.NewPath("controlPlane"))...)
 	} else {
 		allErrs = append(allErrs, field.Required(field.NewPath("controlPlane"), "controlPlane is required"))
 	}
-	allErrs = append(allErrs, validateCompute(c.Compute, field.NewPath("compute"), c.Platform.Name())...)
-	allErrs = append(allErrs, validatePlatform(&c.Platform, field.NewPath("platform"), openStackValidValuesFetcher)...)
+	allErrs = append(allErrs, validateCompute(&c.Platform, c.Compute, field.NewPath("compute"))...)
 	if err := validate.ImagePullSecret(c.PullSecret); err != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("pullSecret"), c.PullSecret, err.Error()))
 	}
@@ -153,7 +153,7 @@ func validateClusterNetwork(n *types.Networking, cn *types.ClusterNetworkEntry, 
 	return allErrs
 }
 
-func validateControlPlane(pool *types.MachinePool, fldPath *field.Path, platform string) field.ErrorList {
+func validateControlPlane(platform *types.Platform, pool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if pool.Name != masterPoolName {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), pool.Name, []string{masterPoolName}))
@@ -161,11 +161,11 @@ func validateControlPlane(pool *types.MachinePool, fldPath *field.Path, platform
 	if pool.Replicas != nil && *pool.Replicas == 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
 	}
-	allErrs = append(allErrs, ValidateMachinePool(pool, fldPath, platform)...)
+	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
 	return allErrs
 }
 
-func validateCompute(pools []types.MachinePool, fldPath *field.Path, platform string) field.ErrorList {
+func validateCompute(platform *types.Platform, pools []types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	poolNames := map[string]bool{}
 	foundPositiveReplicas := false
@@ -181,7 +181,7 @@ func validateCompute(pools []types.MachinePool, fldPath *field.Path, platform st
 		if p.Replicas != nil && *p.Replicas > 0 {
 			foundPositiveReplicas = true
 		}
-		allErrs = append(allErrs, ValidateMachinePool(&p, poolFldPath, platform)...)
+		allErrs = append(allErrs, ValidateMachinePool(platform, &p, poolFldPath)...)
 	}
 	if !foundPositiveReplicas {
 		logrus.Warnf("There are no compute nodes specified. The cluster will not fully initialize without compute nodes.")

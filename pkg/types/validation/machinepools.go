@@ -15,7 +15,7 @@ import (
 )
 
 // ValidateMachinePool checks that the specified machine pool is valid.
-func ValidateMachinePool(p *types.MachinePool, fldPath *field.Path, platform string) field.ErrorList {
+func ValidateMachinePool(platform *types.Platform, p *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
 	if p.Replicas != nil {
 		if *p.Replicas < 0 {
@@ -24,22 +24,23 @@ func ValidateMachinePool(p *types.MachinePool, fldPath *field.Path, platform str
 	} else {
 		allErrs = append(allErrs, field.Required(fldPath.Child("replicas"), "replicas is required"))
 	}
-	allErrs = append(allErrs, validateMachinePoolPlatform(&p.Platform, fldPath.Child("platform"), platform)...)
+	allErrs = append(allErrs, validateMachinePoolPlatform(platform, &p.Platform, fldPath.Child("platform"))...)
 	return allErrs
 }
 
-func validateMachinePoolPlatform(p *types.MachinePoolPlatform, fldPath *field.Path, platform string) field.ErrorList {
+func validateMachinePoolPlatform(platform *types.Platform, p *types.MachinePoolPlatform, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+	platformName := platform.Name()
 	validate := func(n string, value interface{}, validation func(*field.Path) field.ErrorList) {
 		f := fldPath.Child(n)
-		if platform == n {
+		if platformName == n {
 			allErrs = append(allErrs, validation(f)...)
 		} else {
-			allErrs = append(allErrs, field.Invalid(f, value, fmt.Sprintf("cannot specify %q for machine pool when cluster is using %q", n, platform)))
+			allErrs = append(allErrs, field.Invalid(f, value, fmt.Sprintf("cannot specify %q for machine pool when cluster is using %q", n, platformName)))
 		}
 	}
 	if p.AWS != nil {
-		validate(aws.Name, p.AWS, func(f *field.Path) field.ErrorList { return awsvalidation.ValidateMachinePool(p.AWS, f) })
+		validate(aws.Name, p.AWS, func(f *field.Path) field.ErrorList { return awsvalidation.ValidateMachinePool(platform.AWS, p.AWS, f) })
 	}
 	if p.Libvirt != nil {
 		validate(libvirt.Name, p.Libvirt, func(f *field.Path) field.ErrorList { return libvirtvalidation.ValidateMachinePool(p.Libvirt, f) })

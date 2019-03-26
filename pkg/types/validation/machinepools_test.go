@@ -23,38 +23,39 @@ func validMachinePool() *types.MachinePool {
 func TestValidateMachinePool(t *testing.T) {
 	cases := []struct {
 		name     string
+		platform *types.Platform
 		pool     *types.MachinePool
-		platform string
 		valid    bool
 	}{
 		{
 			name:     "minimal",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
 			pool:     validMachinePool(),
-			platform: "aws",
 			valid:    true,
 		},
 		{
-			name: "missing replicas",
+			name:     "missing replicas",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
 			pool: func() *types.MachinePool {
 				p := validMachinePool()
 				p.Replicas = nil
 				return p
 			}(),
-			platform: "aws",
-			valid:    false,
+			valid: false,
 		},
 		{
-			name: "invalid replicas",
+			name:     "invalid replicas",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
 			pool: func() *types.MachinePool {
 				p := validMachinePool()
 				p.Replicas = pointer.Int64Ptr(-1)
 				return p
 			}(),
-			platform: "aws",
-			valid:    false,
+			valid: false,
 		},
 		{
-			name: "valid aws",
+			name:     "valid aws",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
 			pool: func() *types.MachinePool {
 				p := validMachinePool()
 				p.Platform = types.MachinePoolPlatform{
@@ -62,11 +63,11 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				return p
 			}(),
-			platform: "aws",
-			valid:    true,
+			valid: true,
 		},
 		{
-			name: "invalid aws",
+			name:     "invalid aws",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
 			pool: func() *types.MachinePool {
 				p := validMachinePool()
 				p.Platform = types.MachinePoolPlatform{
@@ -78,11 +79,11 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				return p
 			}(),
-			platform: "aws",
-			valid:    false,
+			valid: false,
 		},
 		{
-			name: "valid libvirt",
+			name:     "valid libvirt",
+			platform: &types.Platform{Libvirt: &libvirt.Platform{}},
 			pool: func() *types.MachinePool {
 				p := validMachinePool()
 				p.Platform = types.MachinePoolPlatform{
@@ -90,11 +91,11 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				return p
 			}(),
-			platform: "libvirt",
-			valid:    true,
+			valid: true,
 		},
 		{
-			name: "valid openstack",
+			name:     "valid openstack",
+			platform: &types.Platform{OpenStack: &openstack.Platform{}},
 			pool: func() *types.MachinePool {
 				p := validMachinePool()
 				p.Platform = types.MachinePoolPlatform{
@@ -102,11 +103,11 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				return p
 			}(),
-			platform: "openstack",
-			valid:    true,
+			valid: true,
 		},
 		{
-			name: "mis-matched platform",
+			name:     "mis-matched platform",
+			platform: &types.Platform{Libvirt: &libvirt.Platform{}},
 			pool: func() *types.MachinePool {
 				p := validMachinePool()
 				p.Platform = types.MachinePoolPlatform{
@@ -114,11 +115,11 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				return p
 			}(),
-			platform: "libvirt",
-			valid:    false,
+			valid: false,
 		},
 		{
-			name: "multiple platforms",
+			name:     "multiple platforms",
+			platform: &types.Platform{AWS: &aws.Platform{Region: "us-east-1"}},
 			pool: func() *types.MachinePool {
 				p := validMachinePool()
 				p.Platform = types.MachinePoolPlatform{
@@ -127,13 +128,12 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				return p
 			}(),
-			platform: "aws",
-			valid:    false,
+			valid: false,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateMachinePool(tc.pool, field.NewPath("test-path"), tc.platform).ToAggregate()
+			err := ValidateMachinePool(tc.platform, tc.pool, field.NewPath("test-path")).ToAggregate()
 			if tc.valid {
 				assert.NoError(t, err)
 			} else {
