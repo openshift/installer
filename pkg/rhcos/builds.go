@@ -13,7 +13,7 @@ import (
 
 var (
 	// DefaultChannel is the default RHCOS channel for the cluster.
-	DefaultChannel = "maipo"
+	DefaultChannel = "ootpa"
 
 	// buildName is the name of the build in the channel that will be picked up
 	// empty string means the first one in the build list (latest) will be used
