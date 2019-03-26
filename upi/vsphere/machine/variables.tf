@@ -47,3 +47,7 @@ variable "datacenter_id" {
 variable "template" {
   type = "string"
 }
+
+variable "cluster_id" {
+  type = "string"
+}

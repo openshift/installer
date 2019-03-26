@@ -29,6 +29,7 @@ module "bootstrap" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
+  cluster_id       = "${var.cluster_id}"
 
   extra_user_names           = ["${var.extra_user_names}"]
   extra_user_password_hashes = ["${var.extra_user_password_hashes}"]
@@ -46,6 +47,7 @@ module "control_plane" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
+  cluster_id       = "${var.cluster_id}"
 
   extra_user_names           = ["${var.extra_user_names}"]
   extra_user_password_hashes = ["${var.extra_user_password_hashes}"]
@@ -63,6 +65,7 @@ module "compute" {
   datacenter_id    = "${data.vsphere_datacenter.dc.id}"
   template         = "${var.vm_template}"
   cluster_domain   = "${var.cluster_domain}"
+  cluster_id       = "${var.cluster_id}"
 
   extra_user_names           = ["${var.extra_user_names}"]
   extra_user_password_hashes = ["${var.extra_user_password_hashes}"]
@@ -75,4 +78,5 @@ module "dns" {
   cluster_domain    = "${var.cluster_domain}"
   bootstrap_ip      = "${var.bootstrap_complete ? "" : var.bootstrap_ip}"
   control_plane_ips = "${var.control_plane_ips}"
+  compute_ips       = "${var.compute_ips}"
 }
