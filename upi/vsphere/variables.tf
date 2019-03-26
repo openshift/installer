@@ -124,3 +124,8 @@ variable "compute_instance_count" {
 variable "compute_ignition" {
   type = "string"
 }
+
+variable "compute_ips" {
+  type    = "list"
+  default = []
+}
