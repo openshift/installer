@@ -34,6 +34,7 @@ data "ignition_user" "extra_users" {
 
   name          = "${var.extra_user_names[count.index]}"
   password_hash = "${var.extra_user_password_hashes[count.index]}"
+  groups        = ["sudo"]
 }
 
 data "ignition_config" "ign" {
@@ -53,7 +54,7 @@ data "ignition_config" "ign" {
 resource "vsphere_virtual_machine" "vm" {
   count = "${var.instance_count}"
 
-  name             = "${var.name}-${count.index}"
+  name             = "${var.cluster_id}-${var.name}-${count.index}"
   resource_pool_id = "${var.resource_pool_id}"
   datastore_id     = "${data.vsphere_datastore.datastore.id}"
   num_cpus         = "4"
