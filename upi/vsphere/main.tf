@@ -85,4 +85,5 @@ module "dns" {
   cluster_domain    = "${var.cluster_domain}"
   bootstrap_ip      = "${var.bootstrap_complete ? "" : var.bootstrap_ip}"
   control_plane_ips = "${var.control_plane_ips}"
+  compute_ips       = "${var.compute_ips}"
 }
