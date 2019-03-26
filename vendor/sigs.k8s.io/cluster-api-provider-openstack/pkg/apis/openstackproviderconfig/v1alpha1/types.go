@@ -69,6 +69,13 @@ type OpenstackProviderSpec struct {
 	Trunk bool `json:"trunk,omitempty"`
 
 	RootVolume RootVolume `json:"root_volume,omitempty"`
+
+	// Server tags
+	// Requires Nova api 2.52 minimum!
+	Tags []string `json:"tags,omitempty"`
+
+	// Metadata mapping. Allows you to create a map of key value pairs to add to the server instance.
+	ServerMetadata map[string]string `json:"serverMetadata,omitempty"`
 }
 
 type SecurityGroupParam struct {
@@ -81,18 +88,19 @@ type SecurityGroupParam struct {
 }
 
 type SecurityGroupFilter struct {
-	ID         string `json:"id,omitempty"`
-	Name       string `json:"name,omitempty"`
-	TenantID   string `json:"tenant_id,omitempty"`
-	ProjectID  string `json:"project_id,omitempty"`
-	Limit      int    `json:"limit,omitempty"`
-	Marker     string `json:"marker,omitempty"`
-	SortKey    string `json:"sort_key,omitempty"`
-	SortDir    string `json:"sort_dir,omitempty"`
-	Tags       string `json:"tags,omitempty"`
-	TagsAny    string `json:"tags-any,omitempty"`
-	NotTags    string `json:"not-tags,omitempty"`
-	NotTagsAny string `json:"not-tags-any,omitempty"`
+	ID          string `json:"id,omitempty"`
+	Name        string `json:"name,omitempty"`
+	Description string `json:"description,omitempty"`
+	TenantID    string `json:"tenant_id,omitempty"`
+	ProjectID   string `json:"project_id,omitempty"`
+	Limit       int    `json:"limit,omitempty"`
+	Marker      string `json:"marker,omitempty"`
+	SortKey     string `json:"sort_key,omitempty"`
+	SortDir     string `json:"sort_dir,omitempty"`
+	Tags        string `json:"tags,omitempty"`
+	TagsAny     string `json:"tags-any,omitempty"`
+	NotTags     string `json:"not-tags,omitempty"`
+	NotTagsAny  string `json:"not-tags-any,omitempty"`
 }
 
 type NetworkParam struct {
@@ -109,6 +117,7 @@ type NetworkParam struct {
 type Filter struct {
 	Status       string `json:"status,omitempty"`
 	Name         string `json:"name,omitempty"`
+	Description  string `json:"description,omitempty"`
 	AdminStateUp *bool  `json:"admin_state_up,omitempty"`
 	TenantID     string `json:"tenant_id,omitempty"`
 	ProjectID    string `json:"project_id,omitempty"`
@@ -134,6 +143,7 @@ type SubnetParam struct {
 
 type SubnetFilter struct {
 	Name            string `json:"name,omitempty"`
+	Description     string `json:"description,omitempty"`
 	EnableDHCP      *bool  `json:"enable_dhcp,omitempty"`
 	NetworkID       string `json:"network_id,omitempty"`
 	TenantID        string `json:"tenant_id,omitempty"`
