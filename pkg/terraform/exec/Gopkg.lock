@@ -1326,7 +1326,6 @@
     "github.com/hashicorp/logutils",
     "github.com/hashicorp/terraform/command",
     "github.com/hashicorp/terraform/helper/logging",
-    "github.com/hashicorp/terraform/version",
     "github.com/mitchellh/cli",
   ]
   solver-name = "gps-cdcl"
