@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	igntypes "github.com/coreos/ignition/config/v3_0/types"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"

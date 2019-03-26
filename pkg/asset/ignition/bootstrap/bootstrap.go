@@ -13,7 +13,7 @@ import (
 	"text/template"
 
 	"github.com/coreos/ignition/config/util"
-	igntypes "github.com/coreos/ignition/config/v2_2/types"
+	igntypes "github.com/coreos/ignition/config/v3_0/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -238,7 +238,9 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 		mode = 0600
 	}
 	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
-	ign.Append = appendToFile
+	if appendToFile {
+		ign = ignition.FileAppendFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
+	}
 	a.Config.Storage.Files = append(a.Config.Storage.Files, ign)
 
 	return nil
@@ -290,7 +292,7 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 				return err
 			}
 
-			dropins := []igntypes.SystemdDropin{}
+			dropins := []igntypes.Dropin{}
 			for _, childInfo := range children {
 				file, err := data.Assets.Open(path.Join(dir, childInfo.Name()))
 				if err != nil {
@@ -298,14 +300,15 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 				}
 				defer file.Close()
 
-				childName, contents, err := readFile(childInfo.Name(), file, templateData)
+				childName, cbytes, err := readFile(childInfo.Name(), file, templateData)
 				if err != nil {
 					return err
 				}
 
-				dropins = append(dropins, igntypes.SystemdDropin{
+				contents := string(cbytes)
+				dropins = append(dropins, igntypes.Dropin{
 					Name:     childName,
-					Contents: string(contents),
+					Contents: &contents,
 				})
 			}
 
@@ -319,14 +322,15 @@ func (a *Bootstrap) addSystemdUnits(uri string, templateData *bootstrapTemplateD
 			}
 			a.Config.Systemd.Units = append(a.Config.Systemd.Units, unit)
 		} else {
-			name, contents, err := readFile(childInfo.Name(), file, templateData)
+			name, cbytes, err := readFile(childInfo.Name(), file, templateData)
 			if err != nil {
 				return err
 			}
 
+			contents := string(cbytes)
 			unit := igntypes.Unit{
 				Name:     name,
-				Contents: string(contents),
+				Contents: &contents,
 			}
 			if _, ok := enabled[name]; ok {
 				unit.Enabled = util.BoolToPtr(true)
