@@ -15,13 +15,12 @@
 package validate
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"reflect"
 	"strings"
 
 	json "github.com/ajeddeloh/go-json"
+	"github.com/coreos/ignition/config/util"
 	"github.com/coreos/ignition/config/validate/astjson"
 	"github.com/coreos/ignition/config/validate/astnode"
 	"github.com/coreos/ignition/config/validate/report"
@@ -44,7 +43,7 @@ func ValidateConfig(rawConfig []byte, config interface{}) report.Report {
 		})
 		r.Merge(ValidateWithoutSource(configValue))
 	} else {
-		r.Merge(Validate(configValue, astjson.FromJsonRoot(ast), bytes.NewReader(rawConfig), true))
+		r.Merge(Validate(configValue, astjson.FromJsonRoot(ast), rawConfig, true))
 	}
 	return r
 }
@@ -52,7 +51,7 @@ func ValidateConfig(rawConfig []byte, config interface{}) report.Report {
 // Validate walks down a struct tree calling Validate on every node that implements it, building
 // A report of all the errors, warnings, info, and deprecations it encounters. If checkUnusedKeys
 // is true, Validate will generate warnings for unused keys in the ast, otherwise it will not.
-func Validate(vObj reflect.Value, ast astnode.AstNode, source io.ReadSeeker, checkUnusedKeys bool) (r report.Report) {
+func Validate(vObj reflect.Value, ast astnode.AstNode, source []byte, checkUnusedKeys bool) (r report.Report) {
 	if !vObj.IsValid() {
 		return
 	}
@@ -134,7 +133,7 @@ func getFields(vObj reflect.Value) []field {
 	return ret
 }
 
-func validateStruct(vObj reflect.Value, ast astnode.AstNode, source io.ReadSeeker, checkUnusedKeys bool) report.Report {
+func validateStruct(vObj reflect.Value, ast astnode.AstNode, source []byte, checkUnusedKeys bool) report.Report {
 	r := report.Report{}
 
 	// isFromObject will be true if this struct was unmarshalled from a JSON object.
@@ -149,12 +148,28 @@ func validateStruct(vObj reflect.Value, ast astnode.AstNode, source io.ReadSeeke
 	// Maintain a list of all the tags in the struct for fuzzy matching later.
 	tags := []string{}
 
+	// We need to do duplication checking at the struct level even though its lists that can't have duplicates.
+	// This is because some parts (i.e. links, files, dirs) can't have duplicates across the sum of all their members.
+	// map of field names to sets of strings from Key()
+	dupLists := map[string]map[string]struct{}{}
+	// List of fields that are lists that cannot include duplicates across themselves. Use the first element in the list
+	// to refer to the collective set
+	mergedKeys := map[string]string{}
+	if merger, ok := vObj.Interface().(util.MergesKeys); ok {
+		mergedKeys = merger.MergedKeys()
+	}
+
+	ignoreDupsList := map[string]struct{}{}
+	if ignorer, ok := vObj.Interface().(util.IgnoresDups); ok {
+		ignoreDupsList = ignorer.IgnoreDuplicates()
+	}
+
 	for _, f := range getFields(vObj) {
 		// Default to nil astnode.AstNode if the field's corrosponding node cannot be found.
 		var sub_node astnode.AstNode
 		// Default to passing a nil source if the field's corrosponding node cannot be found.
 		// This ensures the line numbers reported from all sub-structs are 0 and will be changed by AddPosition
-		var src io.ReadSeeker
+		var src []byte
 
 		// Try to determine the json.Node that corrosponds with the struct field
 		if isFromObject {
@@ -194,6 +209,48 @@ func validateStruct(vObj reflect.Value, ast astnode.AstNode, source io.ReadSeeke
 
 		sub_report := Validate(f.Value, sub_node, src, checkUnusedKeys)
 		sub_report.AddPosition(line, col, highlight)
+
+		// duplicate checking time
+		if f.Value.Kind() == reflect.Slice {
+			// get the correct list of dups
+			dupListKey := f.Type.Name
+			if k, ok := mergedKeys[dupListKey]; ok {
+				dupListKey = k
+			}
+			if dupLists[dupListKey] == nil {
+				dupLists[dupListKey] = map[string]struct{}{}
+			}
+
+			if _, ignored := ignoreDupsList[f.Type.Name]; !ignored {
+				for i := 0; i < f.Value.Len(); i++ {
+					key := ""
+					if f.Value.Index(i).Kind() == reflect.String {
+						key = f.Value.Index(i).Convert(reflect.TypeOf("")).Interface().(string)
+					} else {
+						key = f.Value.Index(i).Interface().(util.Keyed).Key()
+					}
+					if _, alreadyDefined := dupLists[dupListKey][key]; alreadyDefined {
+						// duplicate entry!
+						line, col, highlight := 0, 0, ""
+						if sub_node != nil {
+							sub_sub_node, ok := sub_node.SliceChild(i)
+							if sub_sub_node != nil && ok {
+								line, col, highlight = sub_sub_node.ValueLineCol(src)
+							}
+						}
+						sub_report.Add(report.Entry{
+							Message:   fmt.Sprintf("Entry defined by %q is already defined in this config", key),
+							Kind:      report.EntryError,
+							Line:      line,
+							Column:    col,
+							Highlight: highlight,
+						})
+					}
+					dupLists[dupListKey][key] = struct{}{}
+				}
+			}
+		}
+
 		r.Merge(sub_report)
 	}
 	if !isFromObject || !checkUnusedKeys {

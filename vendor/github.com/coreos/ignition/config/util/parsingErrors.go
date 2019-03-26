@@ -15,35 +15,24 @@
 package util
 
 import (
-	"bytes"
-	"errors"
-
-	configErrors "github.com/coreos/ignition/config/shared/errors"
-	"github.com/coreos/ignition/config/v2_3_experimental/types"
+	"github.com/coreos/ignition/config/shared/errors"
 	"github.com/coreos/ignition/config/validate/report"
+	"github.com/coreos/ignition/config/validate/util"
 
 	json "github.com/ajeddeloh/go-json"
-	"go4.org/errorutil"
 )
 
-var (
-	ErrValidConfig = errors.New("HandleParseErrors called with a valid config")
-)
-
-// HandleParseErrors will attempt to unmarshal an invalid rawConfig into the
-// latest config struct, so as to generate a report.Report from the errors. It
-// will always return an error. This is called after config/v* parse functions
-// chain has failed to parse a config.
-func HandleParseErrors(rawConfig []byte) (report.Report, error) {
-	config := types.Config{}
-	err := json.Unmarshal(rawConfig, &config)
+// HandleParseErrors will attempt to unmarshal an invalid rawConfig into "to".
+// If it fails to unmarsh it will generate a report.Report from the errors.
+func HandleParseErrors(rawConfig []byte, to interface{}) (report.Report, error) {
+	err := json.Unmarshal(rawConfig, to)
 	if err == nil {
-		return report.Report{}, ErrValidConfig
+		return report.Report{}, nil
 	}
 
 	// Handle json syntax and type errors first, since they are fatal but have offset info
 	if serr, ok := err.(*json.SyntaxError); ok {
-		line, col, highlight := errorutil.HighlightBytePosition(bytes.NewReader(rawConfig), serr.Offset)
+		line, col, highlight := util.Highlight(rawConfig, serr.Offset)
 		return report.Report{
 				Entries: []report.Entry{{
 					Kind:      report.EntryError,
@@ -53,11 +42,11 @@ func HandleParseErrors(rawConfig []byte) (report.Report, error) {
 					Highlight: highlight,
 				}},
 			},
-			configErrors.ErrInvalid
+			errors.ErrInvalid
 	}
 
 	if terr, ok := err.(*json.UnmarshalTypeError); ok {
-		line, col, highlight := errorutil.HighlightBytePosition(bytes.NewReader(rawConfig), terr.Offset)
+		line, col, highlight := util.Highlight(rawConfig, terr.Offset)
 		return report.Report{
 				Entries: []report.Entry{{
 					Kind:      report.EntryError,
@@ -67,8 +56,8 @@ func HandleParseErrors(rawConfig []byte) (report.Report, error) {
 					Highlight: highlight,
 				}},
 			},
-			configErrors.ErrInvalid
+			errors.ErrInvalid
 	}
 
-	return report.ReportFromError(err, report.EntryError), err
+	return report.ReportFromError(err, report.EntryError), errors.ErrInvalid
 }

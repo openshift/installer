@@ -38,12 +38,13 @@ metadata:
 spec:
   config:
     ignition:
-      config: {}
+      config:
+        replace:
+        source: null
+        verification: {}
       security:
         tls: {}
       timeouts: {}
-      version: 2.2.0
-    networkd: {}
     passwd:
       users:
       - name: core

@@ -13,8 +13,14 @@ import (
 // asset.
 func FilesFromAsset(pathPrefix string, username string, mode int, asset asset.WritableAsset) []ignition.File {
 	var files []ignition.File
+	dup := make(map[string]bool)
 	for _, f := range asset.Files() {
-		files = append(files, FileFromBytes(filepath.Join(pathPrefix, f.Filename), username, mode, f.Data))
+		path := filepath.Join(pathPrefix, f.Filename)
+		if dup[path] {
+			continue
+		}
+		files = append(files, FileFromBytes(path, username, mode, f.Data))
+		dup[path] = true
 	}
 	return files
 }
@@ -27,12 +33,14 @@ func FileFromString(path string, username string, mode int, contents string) ign
 // FileFromBytes creates an ignition-config file with the given contents.
 func FileFromBytes(path string, username string, mode int, contents []byte) ignition.File {
 	source := dataurl.EncodeBytes(contents)
+	overwrite := true
 	return ignition.File{
 		Node: ignition.Node{
 			Path: path,
 			User: ignition.NodeUser{
 				Name: &username,
 			},
+			Overwrite: &overwrite,
 		},
 		FileEmbedded1: ignition.FileEmbedded1{
 			Mode: &mode,
@@ -46,12 +54,14 @@ func FileFromBytes(path string, username string, mode int, contents []byte) igni
 // FileAppendFromBytes ... TODO(runcom)
 func FileAppendFromBytes(path string, username string, mode int, contents []byte) ignition.File {
 	source := dataurl.EncodeBytes(contents)
+	overwrite := true
 	return ignition.File{
 		Node: ignition.Node{
 			Path: path,
 			User: ignition.NodeUser{
 				Name: &username,
 			},
+			Overwrite: &overwrite,
 		},
 		FileEmbedded1: ignition.FileEmbedded1{
 			Mode: &mode,

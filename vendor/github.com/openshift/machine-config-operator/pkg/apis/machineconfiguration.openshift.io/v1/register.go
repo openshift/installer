@@ -40,8 +40,12 @@ func init() {
 func addKnownTypes(scheme *runtime.Scheme) error {
 	scheme.AddKnownTypes(SchemeGroupVersion,
 		&MCOConfig{},
+		&ContainerRuntimeConfig{},
+		&ContainerRuntimeConfigList{},
 		&ControllerConfig{},
 		&ControllerConfigList{},
+		&KubeletConfig{},
+		&KubeletConfigList{},
 		&MachineConfig{},
 		&MachineConfigList{},
 		&MachineConfigPool{},

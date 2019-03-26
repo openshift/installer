@@ -14,20 +14,16 @@
 
 package astnode
 
-import (
-	"io"
-)
-
 // AstNode abstracts the differences between yaml and json nodes, providing a
 // common interface
 type AstNode interface {
 	// ValueLineCol returns the line, column, and highlight string of the value of
 	// this node in the source.
-	ValueLineCol(source io.ReadSeeker) (int, int, string)
+	ValueLineCol(source []byte) (int, int, string)
 
 	// KeyLineCol returns the line, column, and highlight string of the key for the
 	// value of this node in the source.
-	KeyLineCol(source io.ReadSeeker) (int, int, string)
+	KeyLineCol(source []byte) (int, int, string)
 
 	// LiteralValue returns the value of this node.
 	LiteralValue() interface{}

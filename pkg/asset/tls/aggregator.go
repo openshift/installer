@@ -161,7 +161,7 @@ func (a *AggregatorClientCertKey) Generate(dependencies asset.Parents) error {
 		Validity:     ValidityOneDay,
 	}
 
-	return a.SignedCertKey.Generate(cfg, ca, "apiserver-proxy", DoNotAppendParent)
+	return a.SignedCertKey.Generate(cfg, ca, "aggregator-client", DoNotAppendParent)
 }
 
 // Name returns the human-friendly name of the asset.

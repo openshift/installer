@@ -9,11 +9,13 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"text/template"
 
 	"github.com/coreos/ignition/config/util"
 	igntypes "github.com/coreos/ignition/config/v3_0/types"
+	"github.com/coreos/ignition/config/validate"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -136,10 +138,25 @@ func (a *Bootstrap) Generate(dependencies asset.Parents) error {
 		igntypes.PasswdUser{Name: "core", SSHAuthorizedKeys: []igntypes.SSHAuthorizedKey{igntypes.SSHAuthorizedKey(installConfig.Config.SSHKey)}},
 	)
 
+	dup := make(map[string]bool)
+	for _, f := range a.Config.Storage.Files {
+		if dup[f.Path] {
+			fmt.Printf("dup %q\n", f.Path)
+			continue
+		}
+		dup[f.Path] = true
+	}
+
+	rpt := validate.ValidateWithoutSource(reflect.ValueOf(a.Config))
+	if rpt.IsFatal() {
+		return errors.Errorf("invalid Ignition config found: %v", rpt)
+	}
+
 	data, err := json.Marshal(a.Config)
 	if err != nil {
 		return errors.Wrap(err, "failed to Marshal Ignition config")
 	}
+	fmt.Println(string(data))
 	a.File = &asset.File{
 		Filename: bootstrapIgnFilename,
 		Data:     data,
@@ -237,11 +254,34 @@ func (a *Bootstrap) addStorageFiles(base string, uri string, templateData *boots
 	} else {
 		mode = 0600
 	}
-	ign := ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
+	var ign igntypes.File
 	if appendToFile {
-		ign = ignition.FileAppendFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
+		var appended bool
+		for _, f := range a.Config.Storage.Files {
+			if f.Path == strings.TrimSuffix(base, ".template") {
+				ign = ignition.FileAppendFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
+				a.Config.Storage.Files = append(a.Config.Storage.Files, ign)
+				appended = true
+				break
+			}
+		}
+		if !appended {
+			ign = ignition.FileAppendFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
+			a.Config.Storage.Files = append(a.Config.Storage.Files, ign)
+		}
+	} else {
+		var found bool
+		for _, f := range a.Config.Storage.Files {
+			if f.Path == strings.TrimSuffix(base, ".template") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			ign = ignition.FileFromBytes(strings.TrimSuffix(base, ".template"), "root", mode, data)
+			a.Config.Storage.Files = append(a.Config.Storage.Files, ign)
+		}
 	}
-	a.Config.Storage.Files = append(a.Config.Storage.Files, ign)
 
 	return nil
 }
@@ -368,12 +408,21 @@ func readFile(name string, reader io.Reader, templateData interface{}) (finalNam
 func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 	// These files are all added with mode 0644, i.e. readable
 	// by all processes on the system.
+	dup := make(map[string]bool)
 	for _, asset := range []asset.WritableAsset{
 		&manifests.Manifests{},
 		&manifests.Openshift{},
 		&machines.Master{},
 	} {
 		dependencies.Get(asset)
+		files := ignition.FilesFromAsset(rootDir, "root", 0644, asset)
+		for _, f := range files {
+			if dup[f.Path] {
+				fmt.Printf("dup %q \n", f.Path)
+				continue
+			}
+			dup[f.Path] = true
+		}
 		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "root", 0644, asset)...)
 	}
 
@@ -425,6 +474,14 @@ func (a *Bootstrap) addParentFiles(dependencies asset.Parents) {
 		&tls.JournalCertKey{},
 	} {
 		dependencies.Get(asset)
+		files := ignition.FilesFromAsset(rootDir, "root", 0600, asset)
+		for _, f := range files {
+			if dup[f.Path] {
+				fmt.Printf("dup %q \n", f.Path)
+				continue
+			}
+			dup[f.Path] = true
+		}
 		a.Config.Storage.Files = append(a.Config.Storage.Files, ignition.FilesFromAsset(rootDir, "root", 0600, asset)...)
 	}
 

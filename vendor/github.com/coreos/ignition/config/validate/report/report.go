@@ -43,6 +43,33 @@ func ReportFromError(err error, severity entryKind) Report {
 	}
 }
 
+// Helpers to cut verbosity
+func (r *Report) addFromError(err error, severity entryKind) {
+	if err == nil {
+		return
+	}
+	r.Add(Entry{
+		Kind:    severity,
+		Message: err.Error(),
+	})
+}
+
+func (r *Report) AddOnError(err error) {
+	r.addFromError(err, EntryError)
+}
+
+func (r *Report) AddOnWarning(err error) {
+	r.addFromError(err, EntryWarning)
+}
+
+func (r *Report) AddOnInfo(err error) {
+	r.addFromError(err, EntryInfo)
+}
+
+func (r *Report) AddOnDeprecated(err error) {
+	r.addFromError(err, EntryDeprecated)
+}
+
 // Sort sorts the entries by line number, then column number
 func (r *Report) Sort() {
 	sort.Sort(entries(r.Entries))

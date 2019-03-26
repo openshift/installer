@@ -15,11 +15,9 @@
 package astjson
 
 import (
-	"io"
-
 	json "github.com/ajeddeloh/go-json"
 	"github.com/coreos/ignition/config/validate/astnode"
-	"go4.org/errorutil"
+	"github.com/coreos/ignition/config/validate/util"
 )
 
 type JsonNode json.Node
@@ -28,11 +26,11 @@ func FromJsonRoot(n json.Node) JsonNode {
 	return JsonNode(n)
 }
 
-func (n JsonNode) ValueLineCol(source io.ReadSeeker) (int, int, string) {
+func (n JsonNode) ValueLineCol(source []byte) (int, int, string) {
 	return posFromOffset(n.End, source)
 }
 
-func (n JsonNode) KeyLineCol(source io.ReadSeeker) (int, int, string) {
+func (n JsonNode) KeyLineCol(source []byte) (int, int, string) {
 	return posFromOffset(n.KeyEnd, source)
 }
 
@@ -63,11 +61,9 @@ func (n JsonNode) Tag() string {
 }
 
 // wrapper for errorutil that handles missing sources sanely and resets the reader afterwards
-func posFromOffset(offset int, source io.ReadSeeker) (int, int, string) {
+func posFromOffset(offset int, source []byte) (int, int, string) {
 	if source == nil {
 		return 0, 0, ""
 	}
-	line, col, highlight := errorutil.HighlightBytePosition(source, int64(offset))
-	source.Seek(0, 0) // Reset the reader to the start so the next call isn't relative to this position
-	return line, col, highlight
+	return util.Highlight(source, int64(offset))
 }
