@@ -11,6 +11,10 @@ variable "control_plane_ips" {
   type = "list"
 }
 
+variable "compute_ips" {
+  type = "list"
+}
+
 variable "base_domain" {
   description = "The base domain used for public records."
   type        = "string"
