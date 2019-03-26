@@ -45,7 +45,8 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	var machines []machineapi.Machine
 	for idx := int64(0); idx < total; idx++ {
 		az := ""
-		provider, err := provider(clusterID, platform, mpool, osImage, az, role, userDataSecret)
+		trunk := config.Platform.OpenStack.TrunkSupport
+		provider, err := provider(clusterID, platform, mpool, osImage, az, role, userDataSecret, trunk)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -77,7 +78,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, nil
 }
 
-func provider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string) (*openstackprovider.OpenstackProviderSpec, error) {
+func provider(clusterID string, platform *openstack.Platform, mpool *openstack.MachinePool, osImage string, az string, role, userDataSecret string, trunk string) (*openstackprovider.OpenstackProviderSpec, error) {
 
 	return &openstackprovider.OpenstackProviderSpec{
 		TypeMeta: metav1.TypeMeta{
@@ -111,8 +112,17 @@ func provider(clusterID string, platform *openstack.Platform, mpool *openstack.M
 				Name: fmt.Sprintf("%s-%s", clusterID, role),
 			},
 		},
-		// TODO(flaper87): Trunk support missing. Need to add it back
+		Trunk: trunkSupportBoolean(trunk),
 	}, nil
+}
+
+func trunkSupportBoolean(trunkSupport string) (result bool) {
+	if trunkSupport == "1" {
+		result = true
+	} else {
+		result = false
+	}
+	return
 }
 
 // ConfigMasters sets the PublicIP flag and assigns a set of load balancers to the given machines
