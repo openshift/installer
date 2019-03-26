@@ -2,6 +2,7 @@
 
 set -ex
 
+RELEASE_IMAGE="${RELEASE_IMAGE:-quay.io/openshift-release-dev/ocp-release:4.0.0-0.8}"
 RHCOS_BUILD_NAME="${RHCOS_BUILD_NAME:-400.7.20190306.0}"
 
 # shellcheck disable=SC2068
