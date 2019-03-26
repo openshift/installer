@@ -59,6 +59,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&DNS{},
 		&Infrastructure{},
 		&Networking{},
+		&Scheduler{},
 		&tls.RootCA{},
 		&tls.EtcdCA{},
 		&tls.EtcdSignerCertKey{},
@@ -95,8 +96,9 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	dns := &DNS{}
 	network := &Networking{}
 	infra := &Infrastructure{}
+	scheduler := &Scheduler{}
 	installConfig := &installconfig.InstallConfig{}
-	dependencies.Get(installConfig, ingress, dns, network, infra)
+	dependencies.Get(installConfig, ingress, dns, network, infra, scheduler)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -123,6 +125,7 @@ func (m *Manifests) Generate(dependencies asset.Parents) error {
 	m.FileList = append(m.FileList, dns.Files()...)
 	m.FileList = append(m.FileList, network.Files()...)
 	m.FileList = append(m.FileList, infra.Files()...)
+	m.FileList = append(m.FileList, scheduler.Files()...)
 
 	asset.SortFiles(m.FileList)
 
