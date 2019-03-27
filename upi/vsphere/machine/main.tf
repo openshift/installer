@@ -57,7 +57,17 @@ data "ignition_systemd_unit" "restart" {
   count = "${var.instance_count}"
 
   name    = "restart.service"
-  content = "[Unit]\nConditionFirstBoot=yes\n\n[Service]\nType=idle\nExecStart=/sbin/reboot\n\n[Install]\nWantedBy=multi-user.target"
+  content = <<EOF
+[Unit]
+ConditionFirstBoot=yes
+
+[Service]
+Type=idle
+ExecStart=/sbin/reboot
+
+[Install]
+WantedBy=multi-user.target
+  EOF
 }
 
 data "ignition_user" "extra_users" {
