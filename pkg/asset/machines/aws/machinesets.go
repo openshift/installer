@@ -51,9 +51,7 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 				Namespace: "openshift-machine-api",
 				Name:      name,
 				Labels: map[string]string{
-					"machine.openshift.io/cluster-api-cluster":      clusterID,
-					"machine.openshift.io/cluster-api-machine-role": role,
-					"machine.openshift.io/cluster-api-machine-type": role,
+					"machine.openshift.io/cluster-api-cluster": clusterID,
 				},
 			},
 			Spec: machineapi.MachineSetSpec{
@@ -67,10 +65,8 @@ func MachineSets(clusterID string, config *types.InstallConfig, pool *types.Mach
 				Template: machineapi.MachineTemplateSpec{
 					ObjectMeta: metav1.ObjectMeta{
 						Labels: map[string]string{
-							"machine.openshift.io/cluster-api-machineset":   name,
-							"machine.openshift.io/cluster-api-cluster":      clusterID,
-							"machine.openshift.io/cluster-api-machine-role": role,
-							"machine.openshift.io/cluster-api-machine-type": role,
+							"machine.openshift.io/cluster-api-machineset": name,
+							"machine.openshift.io/cluster-api-cluster":    clusterID,
 						},
 					},
 					Spec: machineapi.MachineSpec{
