@@ -1,17 +1,10 @@
 # Canonical internal state definitions for this module.
 # read only: only locals and data source definitions allowed. No resources or module blocks in this file
-// Fetch a list of available AZs
-data "aws_availability_zones" "azs" {
-  state = "available"
-}
 
-// Only reference data sources which are gauranteed to exist at any time (above) in this locals{} block
+// Only reference data sources which are guaranteed to exist at any time (above) in this locals{} block
 locals {
-  // List of possible AZs for each type of subnet
-  new_subnet_azs = "${data.aws_availability_zones.azs.names}"
-
   // How many AZs to create subnets in
-  new_az_count = "${length(local.new_subnet_azs)}"
+  new_az_count = "${length(var.availability_zones)}"
 
   // The VPC ID to use to build the rest of the vpc data sources
   vpc_id = "${aws_vpc.new_vpc.id}"

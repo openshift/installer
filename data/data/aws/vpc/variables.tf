@@ -1,3 +1,8 @@
+variable "availability_zones" {
+  type        = "list"
+  description = "The availability zones in which to provision subnets."
+}
+
 variable "cidr_block" {
   type = "string"
 }

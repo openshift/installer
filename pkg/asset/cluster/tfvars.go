@@ -61,6 +61,7 @@ func (t *TerraformVariables) Dependencies() []asset.Asset {
 		&bootstrap.Bootstrap{},
 		&machine.Master{},
 		&machines.Master{},
+		&machines.Worker{},
 	}
 }
 
@@ -71,8 +72,9 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 	bootstrapIgnAsset := &bootstrap.Bootstrap{}
 	masterIgnAsset := &machine.Master{}
 	mastersAsset := &machines.Master{}
+	workersAsset := &machines.Worker{}
 	rhcosImage := new(rhcos.Image)
-	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, rhcosImage)
+	parents.Get(clusterID, installConfig, bootstrapIgnAsset, masterIgnAsset, mastersAsset, workersAsset, rhcosImage)
 
 	platform := installConfig.Config.Platform.Name()
 	switch platform {
@@ -117,7 +119,15 @@ func (t *TerraformVariables) Generate(parents asset.Parents) error {
 		for i, m := range masters {
 			masterConfigs[i] = m.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
 		}
-		data, err := awstfvars.TFVars(masterConfigs)
+		workers, err := workersAsset.MachineSets()
+		if err != nil {
+			return err
+		}
+		workerConfigs := make([]*awsprovider.AWSMachineProviderConfig, len(workers))
+		for i, m := range workers {
+			workerConfigs[i] = m.Spec.Template.Spec.ProviderSpec.Value.Object.(*awsprovider.AWSMachineProviderConfig)
+		}
+		data, err := awstfvars.TFVars(masterConfigs, workerConfigs)
 		if err != nil {
 			return errors.Wrapf(err, "failed to get %s Terraform variables", platform)
 		}

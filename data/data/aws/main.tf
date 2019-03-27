@@ -72,9 +72,10 @@ module "dns" {
 module "vpc" {
   source = "./vpc"
 
-  cidr_block = "${var.machine_cidr}"
-  cluster_id = "${var.cluster_id}"
-  region     = "${var.aws_region}"
+  cidr_block         = "${var.machine_cidr}"
+  cluster_id         = "${var.cluster_id}"
+  region             = "${var.aws_region}"
+  availability_zones = "${distinct(concat(var.aws_master_availability_zones, var.aws_worker_availability_zones))}"
 
   tags = "${local.tags}"
 }
