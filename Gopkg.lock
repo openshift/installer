@@ -106,14 +106,24 @@
   version = "v18"
 
 [[projects]]
-  digest = "1:1a216755b1570c329bada24deac0032f487c1a5b7c690963c96ad2da9b8c3ec9"
+  digest = "1:fb5b2aed0d774e210c1f2c0893e620cb3fa98957d3b925d0378f93b9613eb605"
   name = "github.com/coreos/ignition"
   packages = [
     "config/shared/errors",
     "config/shared/validations",
     "config/util",
+    "config/v1",
+    "config/v1/types",
+    "config/v2_0",
+    "config/v2_0/types",
+    "config/v2_1",
+    "config/v2_1/types",
+    "config/v2_2",
     "config/v2_2/types",
     "config/v2_3_experimental/types",
+    "config/validate",
+    "config/validate/astjson",
+    "config/validate/astnode",
     "config/validate/report",
   ]
   pruneopts = "NUT"
@@ -440,6 +450,17 @@
   packages = ["pkg/config/clusteroperator/v1helpers"]
   pruneopts = "NUT"
   revision = "4b9f6ceb6598ebd4dd6c9385ef024abf7a18159b"
+
+[[projects]]
+  digest = "1:5bfff65eba275066cdf304a0faf91c7709e0f612ebb9760046adf6035d63ef5c"
+  name = "github.com/openshift/machine-config-operator"
+  packages = [
+    "pkg/apis",
+    "pkg/apis/machineconfiguration.openshift.io/v1",
+  ]
+  pruneopts = "NUT"
+  revision = "7efcbbbcada2af39a505c7a0305c7b32acec0af3"
+  version = "v3.11.0"
 
 [[projects]]
   digest = "1:93b1d84c5fa6d1ea52f4114c37714cddd84d5b78f151b62bb101128dd51399bf"
@@ -966,6 +987,7 @@
     "github.com/openshift/cluster-api-provider-libvirt/pkg/apis/libvirtproviderconfig/v1alpha1",
     "github.com/openshift/cluster-api/pkg/apis/machine/v1beta1",
     "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers",
+    "github.com/openshift/machine-config-operator/pkg/apis/machineconfiguration.openshift.io/v1",
     "github.com/pborman/uuid",
     "github.com/peterbourgon/diskv",
     "github.com/pkg/errors",
