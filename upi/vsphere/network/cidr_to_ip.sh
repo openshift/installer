@@ -42,12 +42,7 @@ function produce_output() {
 
   # check cluster_domain DNS first
   DNS_RECORDS=$(dig +short api.${cluster_domain}| sort)
-  if [ ! -z DNS_RECORDS ]
-  then
-     # delete the bootstrap DNS
-     bootstrap_ip+=""
-     bs_count=$((bs_count+1))
-  fi 
+  
 
   for ENTRY in ${DNS_RECORDS} 
   do
@@ -55,6 +50,8 @@ function produce_output() {
        ping_rc=$?  
        if [[ $ping_rc -eq 0 ]] && [[ $m_count -ne $master_count ]]
        then
+             bootstrap_ip=""
+             bs_count=1
              master_ips+="$ENTRY "
              m_count=$((m_count+1))
        fi
